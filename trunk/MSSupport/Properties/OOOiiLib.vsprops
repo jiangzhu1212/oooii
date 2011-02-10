@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="OOOiiLib"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="&quot;$(oSDK)\ext\FreeImage\Source&quot;;&quot;$(oSDK)\ext\tbb\include&quot;;&quot;$(oSDK)\ext\tlsf&quot;"
+		PreprocessorDefinitions="__TBB_NO_IMPLICIT_LINKAGE"
+	/>
+	<Tool
+		Name="VCLibrarianTool"
+		LinkLibraryDependencies="true"
+		AdditionalDependencies="freeimage$(BuildSuffix).lib tbb$(BuildSuffix).lib tlsf$(BuildSuffix).lib"
+		AdditionalLibraryDirectories="&quot;$(oSDK)\ext\lib\$(PlatformName)\$(CompilerName)&quot;"
+	/>
+</VisualStudioPropertySheet>

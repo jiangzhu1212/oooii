@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="Common"
+	OutputDirectory="$(BinDir)"
+	IntermediateDirectory="$(TmpDir)"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalOptions="/MP"
+		AdditionalIncludeDirectories="&quot;$(oSDK)inc&quot;;&quot;$(oSDK)\ext\FreeImage\Source\OpenEXR\Half&quot;;&quot;$(oSDK)ext\bullet\vectormathlibrary\include&quot;"
+		MinimalRebuild="false"
+		ProgramDataBaseFileName="$(OutDir)\$(TargetName).pdb"
+		DisableSpecificWarnings="4100;4127"
+	/>
+	<Tool
+		Name="VCLibrarianTool"
+		OutputFile="$(OutDir)\$(ProjectName)$(BuildSuffix).lib"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		OutputFile="$(OutDir)\$(BuildPrefix)$(ProjectName).exe"
+		AdditionalLibraryDirectories="$(oSDK)lib\$(PlatformName)\$(CompilerName)"
+	/>
+	<UserMacro
+		Name="oSDK"
+		Value="$(ProjectDir)..\"
+		PerformEnvironmentSet="true"
+	/>
+	<UserMacro
+		Name="LibDir"
+		Value="$(oSDK)lib\$(PlatformName)\$(CompilerName)"
+		PerformEnvironmentSet="true"
+	/>
+	<UserMacro
+		Name="BinDir"
+		Value="$(oSDK)bin\$(PlatformName)"
+		PerformEnvironmentSet="true"
+	/>
+	<UserMacro
+		Name="TmpDir"
+		Value="$(oSDK)tmp\$(PlatformName)\$(CompilerName)\$(ConfigurationName)\$(ProjectName)"
+		PerformEnvironmentSet="true"
+	/>
+	<UserMacro
+		Name="OMEKSDK"
+		Value="$(oSDK)\Omek"
+	/>
+</VisualStudioPropertySheet>

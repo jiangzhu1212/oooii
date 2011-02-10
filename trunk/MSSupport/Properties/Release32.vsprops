@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="Release32"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		Optimization="3"
+		EnableIntrinsicFunctions="true"
+		PreprocessorDefinitions="_NDEBUG;_WIN32"
+		StringPooling="true"
+		RuntimeLibrary="2"
+		WarningLevel="4"
+		WarnAsError="true"
+		DebugInformationFormat="3"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalLibraryDirectories=""
+		GenerateDebugInformation="true"
+		OptimizeReferences="2"
+		EnableCOMDATFolding="2"
+		TargetMachine="1"
+	/>
+	<UserMacro
+		Name="BuildType"
+		Value="Release"
+		PerformEnvironmentSet="true"
+	/>
+	<UserMacro
+		Name="BuildSuffix"
+		Value=""
+		PerformEnvironmentSet="true"
+	/>
+	<UserMacro
+		Name="BuildPrefix"
+		Value=""
+		PerformEnvironmentSet="true"
+	/>
+</VisualStudioPropertySheet>

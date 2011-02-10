@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<VisualStudioToolFile
+	Name="oCustomBuildRules"
+	Version="8.00"
+	>
+	<Rules>
+		<CustomBuildRule
+			Name="FILE2CPP Converter"
+			DisplayName="Convert File To C++"
+			CommandLine="$(BinDir)\$(BuildPrefix)ofile2cpp.exe [PCH] -i &quot;$(InputPath)&quot; -o &quot;$(IntDir)\$(InputName).cpp&quot;"
+			Outputs="$(IntDir)\$(InputName).cpp"
+			FileExtensions="*.ico"
+			ExecutionDescription="Converting to C++..."
+			>
+			<Properties>
+				<StringProperty
+					Name="PCH"
+					DisplayName="Precompiled Header"
+					Category="General"
+					Description="Specify a precompiled header include."
+					Switch="-p [value]"
+				/>
+			</Properties>
+		</CustomBuildRule>
+		<CustomBuildRule
+			Name="FXC"
+			DisplayName="FXC"
+			CommandLine="&quot;$(DXSDK_DIR)\Utilities\bin\x86\fxc.exe&quot; $(InputPath)  /T [Target] /Fh $(IntDir)\$(InputName)ByteCode.h /Vn $(InputName)ByteCode"
+			Outputs="$(IntDir)\$(InputName)ByteCode.h"
+			FileExtensions="*.sh"
+			ExecutionDescription="FXC Compiling $(InputPath) with [Target]"
+			>
+			<Properties>
+				<EnumProperty
+					Name="Target"
+					DisplayName="Target"
+					>
+					<Values>
+						<EnumValue
+							Value="0"
+							Switch="ps_5_0"
+							DisplayName="Pixel Shader"
+						/>
+						<EnumValue
+							Value="1"
+							Switch="vs_5_0"
+							DisplayName="Vertex Shader"
+						/>
+						<EnumValue
+							Value="2"
+							Switch="cs_5_0"
+							DisplayName="Compute shader"
+						/>
+					</Values>
+				</EnumProperty>
+			</Properties>
+		</CustomBuildRule>
+	</Rules>
+</VisualStudioToolFile>

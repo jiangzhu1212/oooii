@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="pch"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		PreprocessorDefinitions="_USE_PCH"
+		UsePrecompiledHeader="2"
+		PrecompiledHeaderThrough="pch.h"
+	/>
+	<UserMacro
+		Name="PCH"
+		Value="1"
+		PerformEnvironmentSet="true"
+	/>
+</VisualStudioPropertySheet>
