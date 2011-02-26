@@ -1,4 +1,4 @@
-/**************************************************************************
+// $(header)
  * The MIT License                                                        *
  * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
  *                                                                        *
@@ -79,8 +79,18 @@ struct oThreadLocalSingletonMgr : public detail::oProcessSingletonTBase<oThreadL
 
 	void AddThreadLocalSingleton(detail::oSingletonBase** ppSingleton)
 	{
-		assert(tlSingletonArray.size() < tlSingletonArray.max_size() && "Fixed-size oArray for thread-local singletons is too small.");
-		oPushBackUnique(tlSingletonArray, ppSingleton);
+		threadlocal_singletons_t::iterator it = tlSingletonArray.begin();
+		for(; it != tlSingletonArray.end(); ++it)
+		{
+			if(**it == *ppSingleton)
+				break;
+		}
+
+		if(it == tlSingletonArray.end())
+		{
+			assert(tlSingletonArray.size() < tlSingletonArray.max_size() && "Fixed-size oArray for thread-local singletons is too small.");
+			tlSingletonArray.push_back(ppSingleton);
+		}
 	}
 
 	void ReleaseThreadLocalSingletons()
