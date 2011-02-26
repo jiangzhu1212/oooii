@@ -26,14 +26,21 @@
 #include <oooii/oByte.h>
 #include "tlsf.h"
 
-oAllocatorTLSF::oAllocatorTLSF(const char* _DebugName, const DESC* _pDesc, bool* _pSuccess)
+const oGUID& oGetGUID( threadsafe const oAllocatorTLSF* threadsafe const * )
+{
+	// {5CFA8784-E09D-40e3-8C7A-C4809577F02F}
+	static const oGUID oIIDAllocatorTLSF = { 0x5cfa8784, 0xe09d, 0x40e3, { 0x8c, 0x7a, 0xc4, 0x80, 0x95, 0x77, 0xf0, 0x2f } };
+	return oIIDAllocatorTLSF;
+}
+
+AllocatorTLSF_Impl::AllocatorTLSF_Impl(const char* _DebugName, const DESC* _pDesc, bool* _pSuccess)
 	: Desc(*_pDesc)
 {
 	*_pSuccess = false;
 	*DebugName = 0;
 	strcpy_s(DebugName, oSAFESTRN(_DebugName));
-	oAllocatorTLSF::Reset();
-	if( !oAllocatorTLSF::IsValid() )
+	AllocatorTLSF_Impl::Reset();
+	if (!AllocatorTLSF_Impl::IsValid())
 	{
 		oSetLastError(EINVAL, "Failed to construct TLSF allocator");
 		return;
@@ -42,29 +49,53 @@ oAllocatorTLSF::oAllocatorTLSF(const char* _DebugName, const DESC* _pDesc, bool*
 	*_pSuccess = true;
 }
 
-oAllocatorTLSF::~oAllocatorTLSF()
+AllocatorTLSF_Impl::~AllocatorTLSF_Impl()
 {
 	oASSERT(Stats.NumAllocations == 0, "Allocator being destroyed with %u allocations still unfreed! This may leave dangling pointers.", Stats.NumAllocations);
-	oASSERT(oAllocatorTLSF::IsValid(), "TLSF Heap is corrupt");
+	oASSERT(AllocatorTLSF_Impl::IsValid(), "TLSF Heap is corrupt");
 	tlsf_destroy(hPool);
 }
 
-void oAllocatorTLSF::GetDesc(DESC* _pDesc)
+bool oAllocatorTLSF::Create(const char* _DebugName, const DESC* _pDesc, oAllocator** _ppAllocator)
+{
+	if (!_pDesc || !_ppAllocator || !_pDesc->pArena || !_pDesc->ArenaSize)
+	{
+		oSetLastError(EINVAL);
+		return false;
+	}
+
+	bool success = false;
+	oCONSTRUCT_PLACEMENT(_ppAllocator, _pDesc->pArena, AllocatorTLSF_Impl(_DebugName, _pDesc, &success));
+	
+	return true;
+}
+
+void AllocatorTLSF_Impl::GetDesc(DESC* _pDesc)
 {
 	*_pDesc = Desc;
 }
 
-void oAllocatorTLSF::GetStats(STATS* _pStats)
+void AllocatorTLSF_Impl::GetStats(STATS* _pStats)
 {
 	*_pStats = Stats;
 }
 
-bool oAllocatorTLSF::IsValid()
+const char* AllocatorTLSF_Impl::GetDebugName() const threadsafe
+{
+	return thread_cast<const char*>(DebugName);
+}
+
+const char* AllocatorTLSF_Impl::GetType() const threadsafe
+{
+	return "TLSF";
+}
+
+bool AllocatorTLSF_Impl::IsValid()
 {
 	return hPool && !tlsf_check_heap(hPool);
 }
 
-void* oAllocatorTLSF::Allocate(size_t _NumBytes, size_t _Alignment)
+void* AllocatorTLSF_Impl::Allocate(size_t _NumBytes, size_t _Alignment)
 {
 	void* p = tlsf_memalign(hPool, _Alignment, __max(_NumBytes, 1));
 	if (p)
@@ -79,7 +110,7 @@ void* oAllocatorTLSF::Allocate(size_t _NumBytes, size_t _Alignment)
 	return p;
 }
 
-void* oAllocatorTLSF::Reallocate(void* _Pointer, size_t _NumBytes)
+void* AllocatorTLSF_Impl::Reallocate(void* _Pointer, size_t _NumBytes)
 {
 	size_t oldBlockSize = _Pointer ? tlsf_block_size(_Pointer) : 0;
 	void* p = tlsf_realloc(hPool, _Pointer, _NumBytes);
@@ -94,7 +125,7 @@ void* oAllocatorTLSF::Reallocate(void* _Pointer, size_t _NumBytes)
 	return 0;
 }
 
-void oAllocatorTLSF::Deallocate(void* _Pointer)
+void AllocatorTLSF_Impl::Deallocate(void* _Pointer)
 {
 	if (_Pointer)
 	{
@@ -106,15 +137,15 @@ void oAllocatorTLSF::Deallocate(void* _Pointer)
 	}
 }
 
-size_t oAllocatorTLSF::GetBlockSize(void* _Pointer)
+size_t AllocatorTLSF_Impl::GetBlockSize(void* _Pointer)
 {
 	return tlsf_block_size(_Pointer);
 }
 
-void oAllocatorTLSF::Reset()
+void AllocatorTLSF_Impl::Reset()
 {
 	memset(&Stats, 0, sizeof(Stats));
-	void* pRealArenaStart = oByteAlign(oByteAdd(Desc.pArena, sizeof(oAllocatorTLSF)), oDEFAULT_MEMORY_ALIGNMENT);
+	void* pRealArenaStart = oByteAlign(oByteAdd(Desc.pArena, sizeof(*this)), oDEFAULT_MEMORY_ALIGNMENT);
 	size_t realArenaSize = Desc.ArenaSize - std::distance((char*)Desc.pArena, (char*)pRealArenaStart);
 	hPool = tlsf_create(pRealArenaStart, realArenaSize);
 	Stats.NumAllocations = 0;
@@ -140,7 +171,7 @@ static void TLSFWalker(void* ptr, size_t size, int used, void* user)
 	ctx->Walker(&b, ctx->pUserData, ctx->Flags);
 }
 
-void oAllocatorTLSF::WalkHeap(WalkerFn _Walker, void* _pUserData, long _Flags)
+void AllocatorTLSF_Impl::WalkHeap(WalkerFn _Walker, void* _pUserData, long _Flags)
 {
 	TLSFContext ctx;
 	ctx.Walker = _Walker;

@@ -25,34 +25,94 @@
 		<CustomBuildRule
 			Name="FXC"
 			DisplayName="FXC"
-			CommandLine="&quot;$(DXSDK_DIR)\Utilities\bin\x86\fxc.exe&quot; $(InputPath)  /T [Target] /Fh $(IntDir)\$(InputName)ByteCode.h /Vn $(InputName)ByteCode"
+			CommandLine="&quot;$(DXSDK_DIR)\Utilities\bin\x86\fxc.exe&quot; /nologo $(InputPath) [EntryPoint] [Includes] [Defines] /T [Target] /Fh $(IntDir)\$(InputName)ByteCode.h /Vn $(InputName)ByteCode"
 			Outputs="$(IntDir)\$(InputName)ByteCode.h"
+			AdditionalDependencies="[AddDep]"
 			FileExtensions="*.sh"
-			ExecutionDescription="FXC Compiling $(InputPath) with [Target]"
+			ExecutionDescription="FXC Compiling $(InputFileName) with [Target]..."
 			>
 			<Properties>
 				<EnumProperty
 					Name="Target"
 					DisplayName="Target"
+					Description="The shader model target of the source."
 					>
 					<Values>
 						<EnumValue
 							Value="0"
-							Switch="ps_5_0"
-							DisplayName="Pixel Shader"
+							Switch="vs_4_0"
+							DisplayName="SM4 Vertex Shader"
 						/>
 						<EnumValue
 							Value="1"
-							Switch="vs_5_0"
-							DisplayName="Vertex Shader"
+							Switch="gs_4_0"
+							DisplayName="SM4 Geometry Shader"
 						/>
 						<EnumValue
 							Value="2"
+							Switch="ps_4_0"
+							DisplayName="SM4 Pixel Shader"
+						/>
+						<EnumValue
+							Value="3"
+							Switch="vs_5_0"
+							DisplayName="SM5 Vertex Shader"
+						/>
+						<EnumValue
+							Value="4"
+							Switch="hs_5_0"
+							DisplayName="SM5 Hull Shader"
+						/>
+						<EnumValue
+							Value="5"
+							Switch="ds_5_0"
+							DisplayName="SM5 Domain Shader"
+						/>
+						<EnumValue
+							Value="6"
+							Switch="gs_5_0"
+							DisplayName="SM5 Geometry Shader"
+						/>
+						<EnumValue
+							Value="7"
+							Switch="ps_5_0"
+							DisplayName="SM5 Pixel Shader"
+						/>
+						<EnumValue
+							Value="8"
 							Switch="cs_5_0"
-							DisplayName="Compute shader"
+							DisplayName="SM5 Compute shader"
 						/>
 					</Values>
 				</EnumProperty>
+				<StringProperty
+					Name="AddDep"
+					DisplayName="Additional Dependencies"
+					Description="Specifies any additional input files to use for the FXC build."
+					Switch="[value];"
+					Delimited="true"
+				/>
+				<StringProperty
+					Name="EntryPoint"
+					DisplayName="Entry Point"
+					Description="The name of the root function for the shader."
+					Switch="/E [value]"
+					DefaultValue="main"
+				/>
+				<StringProperty
+					Name="Includes"
+					DisplayName="Additional Include Directories"
+					Description="Paths to find files included by shaders"
+					Switch="/I [value]"
+					Delimited="true"
+				/>
+				<StringProperty
+					Name="Defines"
+					DisplayName="Defines"
+					Description="Symbol definitions"
+					Switch="/D[value]"
+					Delimited="true"
+				/>
 			</Properties>
 		</CustomBuildRule>
 	</Rules>

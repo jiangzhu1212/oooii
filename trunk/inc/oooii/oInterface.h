@@ -28,8 +28,6 @@
 #include <oooii/oGUID.h>
 #include <oooii/oAssert.h>
 
-extern const oGUID oIIDInterface;
-
 interface oInterface
 {
 	virtual void Reference() threadsafe = 0;
@@ -61,22 +59,32 @@ inline void intrusive_ptr_release(threadsafe oInterface* p) { p->Release(); }
 // macro encapsulates the common procedure that usually follows of checking
 // the pointer itself and success.  It also hooks the memory allocation and
 // asserts that the class author is properly setting oSetLastError on failure
-#define oCONSTRUCT_BASE(_PointerToInstancePointer, object) *_PointerToInstancePointer = new object; if (!*_PointerToInstancePointer) oSetLastError(ENOMEM); else if (!success){ (*_PointerToInstancePointer)->Release(); *_PointerToInstancePointer = 0; }
+
+#define oCONSTRUCT_NEW(_PointerToInstancePointer, object) *_PointerToInstancePointer = new object
+#define oCONSTRUCT_PLACEMENT_NEW(_PointerToInstancePointer, memory, object) *_PointerToInstancePointer = new (memory) object
+#define oCONSTRUCT_BASE_CHECK(_PointerToInstancePointer) if (!*_PointerToInstancePointer) oSetLastError(ENOMEM); else if (!success) { (*_PointerToInstancePointer)->Release(); *_PointerToInstancePointer = 0; }
+#define oCONSTRUCT_BASE(_PointerToInstancePointer, object) oCONSTRUCT_NEW(_PointerToInstancePointer, object); oCONSTRUCT_BASE_CHECK(_PointerToInstancePointer)
+#define oCONSTRUCT_PLACEMENT_BASE(_PointerToInstancePointer, memory, object) oCONSTRUCT_PLACEMENT_NEW(_PointerToInstancePointer, memory, object); oCONSTRUCT_BASE_CHECK(_PointerToInstancePointer)
 #ifndef _DEBUG
-#define oCONSTRUCT oCONSTRUCT_BASE
+	#define oCONSTRUCT oCONSTRUCT_BASE
+	#define oCONSTRUCT_PLACEMENT oCONSTRUCT_PLACEMENT_BASE
 #else
-#define oCONSTRUCT(_PointerToInstancePointer, object) \
-	::size_t ErrorCount = oGetLastErrorCount(); \
-	oCONSTRUCT_BASE(_PointerToInstancePointer, object) \
-	oASSERT( success || oGetLastErrorCount() > ErrorCount, "%s failed but didn't call oSetLastError", #object );
+	#define oCONSTRUCT(_PointerToInstancePointer, object) \
+		::size_t ErrorCount = oGetLastErrorCount(); \
+		oCONSTRUCT_BASE(_PointerToInstancePointer, object) \
+		oASSERT(success || oGetLastErrorCount() > ErrorCount, "%s failed but didn't call oSetLastError", #object);
+	#define oCONSTRUCT_PLACEMENT(_PointerToInstancePointer, memory, object) \
+		::size_t ErrorCount = oGetLastErrorCount(); \
+		oCONSTRUCT_PLACEMENT_BASE(_PointerToInstancePointer, memory, object) \
+		oASSERT(success || oGetLastErrorCount() > ErrorCount, "%s failed but didn't call oSetLastError", #object);
 #endif
 
 // _QI* helper macros are internal, use oDEFINE_TRIVIAL_QUERYINTERFACE*() below
 #define _QIPRE() bool QueryInterface(const oGUID& iid, threadsafe void ** _ppInterface) threadsafe override
-#define _QIIF(IID) { if (iid == (IID) || iid == oIIDInterface)
-#define _QIIF2(baseIID, IID) { if (iid == (IID) || iid == (baseIID) || iid == oIIDInterface)
-#define _QIIF3(baserIID, baseIID, IID) { if (iid == (IID) || iid == (baseIID) || iid == (baserIID) || iid == oIIDInterface)
-#define _QIIF4(basestIID, baserIID, baseIID, IID) { if (iid == (IID) || iid == (baseIID) || iid == (baserIID) || iid == (basestIID) || iid == oIIDInterface)
+#define _QIIF(IID) { if (iid == (IID) || iid == oGetGUID<oInterface>())
+#define _QIIF2(baseIID, IID) { if (iid == (IID) || iid == (baseIID) || iid == oGetGUID<oInterface>())
+#define _QIIF3(baserIID, baseIID, IID) { if (iid == (IID) || iid == (baseIID) || iid == (baserIID) || iid == oGetGUID<oInterface>())
+#define _QIIF4(basestIID, baserIID, baseIID, IID) { if (iid == (IID) || iid == (baseIID) || iid == (baserIID) || iid == (basestIID) || iid == oGetGUID<oInterface>())
 #define _QIPOST()  Reference(), *_ppInterface = this; else *_ppInterface = 0; return !!*_ppInterface; }
 
 #define oDEFINE_NOOP_QUERYINTERFACE() _QIPRE() { return false; }

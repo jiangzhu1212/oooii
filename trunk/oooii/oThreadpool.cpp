@@ -54,9 +54,17 @@ struct oQueuedTask
 // be 800k on 64-bit systems.
 oDEFINE_CONCURRENT_POOLED_NEW_DELETE(oQueuedTask, sQueuedTaskPool, 100000);
 
+const oGUID& oGetGUID( threadsafe const oThreadpool* threadsafe const * )
+{
+	// {E4CEF1FC-6482-4746-A1D8-4145C58A1DBC}
+	static const oGUID oIIDThreadPoolBase = { 0xe4cef1fc, 0x6482, 0x4746, { 0xa1, 0xd8, 0x41, 0x45, 0xc5, 0x8a, 0x1d, 0xbc } };
+	return oIIDThreadPoolBase;
+}
+
 struct Threadpool_ImplBase : public oThreadpool
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oThreadpool>());
 
 	Threadpool_ImplBase(const DESC* _pDesc, bool *_pSuccess);
 	virtual ~Threadpool_ImplBase();
@@ -168,11 +176,19 @@ void Threadpool_Impl_Windows::ScheduleTask(TaskProc _Task, void* _pData) threads
 		oSetLastError(ENOMEM);
 }
 
+const oGUID& oGetGUID( threadsafe const Threadpool_ImplBase* threadsafe const * )
+{
+	// {F602912C-91EF-4f0c-8F23-88A1DD82964C}
+	static const oGUID oIIDThreadpoolWorker = { 0xf602912c, 0x91ef, 0x4f0c, { 0x8f, 0x23, 0x88, 0xa1, 0xdd, 0x82, 0x96, 0x4c } };
+	return oIIDThreadpoolWorker;
+}
+
 struct Threadpool_Impl_OOOii : public Threadpool_ImplBase
 {
 	struct Worker : public oThread::Proc
 	{
 		oDEFINE_REFCOUNT_INTERFACE(RefCount);
+		oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<Threadpool_ImplBase>());
 
 		Worker(threadsafe Threadpool_Impl_OOOii* _pThreadpool);
 

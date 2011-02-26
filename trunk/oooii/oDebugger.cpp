@@ -30,9 +30,10 @@
 #include "oDbgHelp.h"
 #include <float.h>
 
-struct oDebuggerContext : public oSingleton<oDebuggerContext>
+struct oDebuggerContext : public oProcessSingleton<oDebuggerContext>
 {
 	oDebuggerContext()
+		: oProcessSingleton<oDebuggerContext>(true)
 	{
 		_controlfp_s(&OrigFloatExceptions, 0, 0);
 		print("--- oDebugger initialized ---\n");

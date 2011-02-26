@@ -358,7 +358,7 @@ bool CreateFolder(const char* _Path)
 {
 	if (Exists(_Path))
 	{
-		oSetLastError(EEXIST);
+		oSetLastError(EEXIST, "Path %s already exists", _Path);
 		return false;
 	}
 
@@ -443,7 +443,7 @@ bool IsText(const char* _Path)
 
 } // namespace oFile
 
-bool oLoadBuffer(void** _ppOutBuffer, size_t* _pOutSize, void* (*_Allocate)(size_t _Size), const char* _Path, bool _AsText)
+bool oLoadBuffer(void** _ppOutBuffer, size_t* _pOutSize, oFUNCTION<void*(size_t _Size)> _Allocate, const char* _Path, bool _AsText)
 {
 	bool result = false;
 	FILE* f = 0;
@@ -508,6 +508,32 @@ bool oLoadBuffer(void* _pOutBuffer, size_t _SizeofOutBuffer, size_t* _pOutSize, 
 
 	return result;
 }
+
+bool oLoadFileHeader( void* _pHeader, size_t _SizeofHeader, const char* _Path, bool _AsText )
+{
+	FILE* f = 0;
+	if (_pHeader)
+	{
+		errno_t err = fopen_s(&f, _Path, _AsText ? "rt" : "rb");
+		if (!err)
+		{
+			size_t actualSize = fread(_pHeader, 1, _SizeofHeader, f);
+			if (_AsText)
+				((char*)_pHeader)[actualSize] = 0;
+
+			fclose(f);
+
+			return actualSize == _SizeofHeader;
+		}
+		else
+			oSetLastError(err, "Failed to open file %s", oSAFESTRN(_Path));
+	}
+	else
+		oSetLastError(EINVAL, "Invalid parameter");
+
+	return false;
+}
+
 
 bool oSaveBuffer(const char* _Path, const void* _pSource, size_t _SizeofSource, bool _AsText)
 {

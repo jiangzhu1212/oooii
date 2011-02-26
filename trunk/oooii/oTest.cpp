@@ -106,7 +106,7 @@ const char* oTest::GetName() const
 	return oGetSimpleTypename(typeid(*this).name());
 }
 
-static bool CompareImages(const oImage* _pImage1, const oImage* _pImage2, unsigned int _BitFuzziness)
+static unsigned int CountPixelDifferences(const oImage* _pImage1, const oImage* _pImage2, unsigned int _BitFuzziness)
 {
 	oImage::DESC desc1, desc2;
 	_pImage1->GetDesc(&desc1);
@@ -118,21 +118,20 @@ static bool CompareImages(const oImage* _pImage1, const oImage* _pImage2, unsign
 		return false;
 	}
 
-
 	// @oooii-tony: This is ripe for parallelism. oParallelFor is still being
 	// brought up at this time, but should be deployed here.
 
 	const oColor* c1 = (oColor*)_pImage1->GetData();
 	const oColor* c2 = (oColor*)_pImage2->GetData();
 
+	unsigned int nDifferences = 0;
+
 	const size_t nPixels = desc1.Size / sizeof(oColor);
 	for (size_t i = 0; i < nPixels; i++)
-	{
 		if (!oEqual(c1[i], c2[i], _BitFuzziness))
-			return false;
-	}
+			nDifferences++;
 
-	return true;
+	return nDifferences;
 }
 
 bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
@@ -179,8 +178,13 @@ bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 		threadsafe oRef<oBuffer> b;
 		if (!oBuffer::Create(golden, false, &b))
 		{
+			if (!_pImage->Save(output))
+			{
+				oSetLastError(EINVAL, "Output image save failed: %s", output);
+				return false;
+			}
+
 			oSetLastError(ENOENT, "Golden image load failed: %s", golden);
-			_pImage->Save(output, oImage::MEDIUM);
 			return false;
 		}
 
@@ -192,10 +196,21 @@ bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 		}
 	}
 
-	if (!CompareImages(_pImage, GoldenImage, 0))
+	unsigned int nDifferences = CountPixelDifferences(_pImage, GoldenImage, desc.ImageFuzziness);
+
+	oImage::DESC idesc;
+	GoldenImage->GetDesc(&idesc);
+	float percentageDifferent = 100.0f * (nDifferences / static_cast<float>(idesc.Width * idesc.Height));
+
+	if ((100.0f - percentageDifferent) < desc.PixelPercentageMinSuccess)
 	{
-		oSetLastError(EINVAL, "Images did not match");
-		_pImage->Save(output);
+		if (!_pImage->Save(output))
+		{
+			oSetLastError(EINVAL, "Output image save failed: %s", output);
+			return false;
+		}
+
+		oSetLastError(ENOENT, "Golden image compare failed (%.1f%% differences): (Golden)%s != (Output)%s", percentageDifferent, golden, output);
 		return false;
 	}
 
@@ -224,7 +239,13 @@ void oTestManager_Impl::PrintDesc()
 {
 	char cwd[_MAX_PATH];
 	oGetSysPath(cwd, oSYSPATH_CWD);
-	oConsole::printf(0, 0, "Data Path: %s%s\n", *Desc.DataPath ? Desc.DataPath : cwd, *Desc.DataPath ? Desc.DataPath : " (CWD)");
+	char datapath[_MAX_PATH];
+	oCleanPath(datapath, oSAFESTR(Desc.DataPath));
+	oEnsureFileSeparator(datapath);
+	bool dataPathIsCWD = !_stricmp(cwd, datapath);
+
+	oConsole::printf(0, 0, "CWD Path: %s\n", cwd);
+	oConsole::printf(0, 0, "Data Path: %s%s\n", (Desc.DataPath && *Desc.DataPath) ? Desc.DataPath : cwd, dataPathIsCWD ? " (CWD)" : "");
 	oConsole::printf(0, 0, "Golden Path: %s\n", *Desc.GoldenPath ? Desc.GoldenPath : "(null)");
 	oConsole::printf(0, 0, "Output Path: %s\n", *Desc.OutputPath ? Desc.OutputPath : "(null)");
 	oConsole::printf(0, 0, "Random Seed: %u\n", Desc.RandomSeed);
@@ -253,20 +274,18 @@ oTest::RESULT oTestManager_Impl::RunTest(oTest* _pTest, char* _StatusMessage, si
 	oTest::RESULT result = _pTest->Run(_StatusMessage, _SizeofStatusMessage);
 
 	_CrtMemCheckpoint(&after);
-	if (_CrtMemDifference(&difference, &before, &after))
+	if (result != oTest::FAILURE && _CrtMemDifference(&difference, &before, &after))
 	{
-		// @oooii-tony: This mimics prior behavior, but is this appropriate? How
-		// should I handle things that resize internal buffers on first use, so it 
-		// changes the memory footprint, but is not a leak?
-		if (result != oTest::FAILURE)
-		{
-			result = oTest::LEAKS;
-			#ifdef _DEBUG
-				sprintf_s(_StatusMessage, _SizeofStatusMessage, "%u bytes in %u normal blocks, %u bytes in %u CRT blocks", difference.lSizes[_NORMAL_BLOCK], difference.lCounts[_NORMAL_BLOCK], difference.lSizes[_CRT_BLOCK], difference.lCounts[_CRT_BLOCK]);
-			#endif
-		}
+		// @oooii-tony: How should I handle things that resize internal 
+		// buffers on first use, so it changes the memory footprint, but 
+		// is not a leak?
+		result = oTest::LEAKS;
+		#ifdef _DEBUG
+			sprintf_s(_StatusMessage, _SizeofStatusMessage, "%u bytes in %u normal blocks, %u bytes in %u CRT blocks", difference.lSizes[_NORMAL_BLOCK], difference.lCounts[_NORMAL_BLOCK], difference.lSizes[_CRT_BLOCK], difference.lCounts[_CRT_BLOCK]);
+		#endif
 
 		_CrtMemDumpStatistics(&difference);
+		_CrtMemDumpAllObjectsSince(&before);
 	}
 
 	return result;

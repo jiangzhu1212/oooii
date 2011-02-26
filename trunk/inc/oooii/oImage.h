@@ -34,8 +34,6 @@ typedef struct HBITMAP__ *HBITMAP;
 typedef struct HICON__ *HICON;
 #endif
 
-extern const oGUID oIIDImage;
-
 interface oImage : public oInterface
 {
 	enum COMPRESSION

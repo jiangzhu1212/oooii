@@ -34,7 +34,7 @@
 #define oTHREAD_TRACEX(ThreadDebugName, msg, ...) oTRACE("[%u] %s: " msg, oThread::GetCurrentThreadID(), ThreadDebugName, ## __VA_ARGS__)
 #define oTHREAD_TRACE(msg, ...) oTHREAD_TRACEX((oThread::Current() ? oThread::Current()->GetDebugName() : "System Thread"), msg, ## __VA_ARGS__)
 
-struct oMainThreadIdContext : public oSingleton<oMainThreadIdContext>
+struct oMainThreadIdContext : public oProcessSingleton<oMainThreadIdContext>
 {
 	struct Run
 	{
@@ -53,9 +53,16 @@ static oMainThreadIdContext::Run oMainThreadIdContext; // @oooii-tony: ok static
 oTHREADLOCAL HANDLE ghThread = 0;
 oTHREADLOCAL DWORD gThreadId = 0;
 
+const oGUID& oGetGUID( threadsafe const oThread* threadsafe const * )
+{
+	// {A13C6FAC-3F0B-486e-9685-560D3B8C2588}
+	static const oGUID oIIDThread = { 0xa13c6fac, 0x3f0b, 0x486e, { 0x96, 0x85, 0x56, 0xd, 0x3b, 0x8c, 0x25, 0x88 } };
+	return oIIDThread;
+}
 struct Thread_Impl : public oThread
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oThread>());
 
 	Thread_Impl(const char* _DebugName, size_t _StackSize, bool _CreateSuspended, Thread_Impl::Proc* _Proc);
 	~Thread_Impl();
@@ -109,6 +116,11 @@ size_t oThread::GetCurrentThreadID()
 	return ::GetCurrentThreadId();
 }
 
+size_t oThread::GetMainThreadID()
+{
+	return oMainThreadIdContext::Singleton()->Id;
+}
+
 void* oThread::GetCurrentThreadNativeHandle()
 {
 	return ::GetCurrentThread();
@@ -116,7 +128,7 @@ void* oThread::GetCurrentThreadNativeHandle()
 
 bool oThread::CurrentThreadIsMain()
 {
-	return GetCurrentThreadID() == oMainThreadIdContext::Singleton()->Id;
+	return GetCurrentThreadID() == GetMainThreadID();
 }
 
 Thread_Impl::Thread_Impl(const char* _DebugName, size_t _StackSize, bool _CreateSuspended, Thread_Impl::Proc* _Proc)
@@ -182,6 +194,7 @@ DWORD Thread_Impl::WinThreadProc(LPVOID lpdwThreadParam)
 	t->ThreadProc->OnEnd();
 	sCurrent = 0;
 	oTRACE("OnEnd complete, thread user code is complete.");
+	detail::ReleaseThreadLocalSingletons();
 	return 0;
 }
 

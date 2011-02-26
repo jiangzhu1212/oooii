@@ -254,6 +254,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\inc\oooii\oAllocatorTLSF.h"
+				>
+			</File>
+			<File
 				RelativePath="..\inc\oooii\oAssert.h"
 				>
 			</File>
@@ -306,6 +310,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\inc\oooii\oD3D11.h"
+				>
+			</File>
+			<File
 				RelativePath="..\inc\oooii\oDebugger.h"
 				>
 			</File>
@@ -318,6 +326,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\inc\oooii\oEightCC.h"
+				>
+			</File>
+			<File
 				RelativePath="..\inc\oooii\oErrno.h"
 				>
 			</File>
@@ -327,6 +339,10 @@
 			</File>
 			<File
 				RelativePath="..\inc\oooii\oFilterChain.h"
+				>
+			</File>
+			<File
+				RelativePath="..\inc\oooii\oGeometry.h"
 				>
 			</File>
 			<File
@@ -343,6 +359,10 @@
 			</File>
 			<File
 				RelativePath="..\inc\oooii\oHeap.h"
+				>
+			</File>
+			<File
+				RelativePath="..\inc\oooii\oHLSL.h"
 				>
 			</File>
 			<File
@@ -486,6 +506,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\inc\oooii\oTempString.h"
+				>
+			</File>
+			<File
 				RelativePath="..\inc\oooii\oTest.h"
 				>
 			</File>
@@ -578,6 +602,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\oD3D11.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\oDbgHelp.cpp"
 				>
 			</File>
@@ -603,6 +631,10 @@
 			</File>
 			<File
 				RelativePath=".\oFilterChain.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\oGeometry.cpp"
 				>
 			</File>
 			<File
@@ -703,6 +735,10 @@
 			</File>
 			<File
 				RelativePath=".\oSurface.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\oTempString.cpp"
 				>
 			</File>
 			<File
@@ -813,35 +849,35 @@
 				Name="Bullet-Vectormathlib"
 				>
 				<File
-					RelativePath=".\bullet\vectormathlibrary\include\vectormath\scalar\mat_aos.h"
+					RelativePath="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\mat_aos.h"
 					>
 				</File>
 				<File
-					RelativePath=".\bullet\vectormathlibrary\include\vectormath\scalar\mat_aos_d.h"
+					RelativePath="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\mat_aos_d.h"
 					>
 				</File>
 				<File
-					RelativePath=".\bullet\vectormathlibrary\include\vectormath\scalar\quat_aos.h"
+					RelativePath="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\quat_aos.h"
 					>
 				</File>
 				<File
-					RelativePath=".\bullet\vectormathlibrary\include\vectormath\scalar\quat_aos_d.h"
+					RelativePath="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\quat_aos_d.h"
 					>
 				</File>
 				<File
-					RelativePath=".\bullet\vectormathlibrary\include\vectormath\scalar\vec_aos.h"
+					RelativePath="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vec_aos.h"
 					>
 				</File>
 				<File
-					RelativePath=".\bullet\vectormathlibrary\include\vectormath\scalar\vec_aos_d.h"
+					RelativePath="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vec_aos_d.h"
 					>
 				</File>
 				<File
-					RelativePath=".\bullet\vectormathlibrary\include\vectormath\scalar\vectormath_aos.h"
+					RelativePath="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vectormath_aos.h"
 					>
 				</File>
 				<File
-					RelativePath=".\bullet\vectormathlibrary\include\vectormath\scalar\vectormath_aos_d.h"
+					RelativePath="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vectormath_aos_d.h"
 					>
 				</File>
 			</Filter>

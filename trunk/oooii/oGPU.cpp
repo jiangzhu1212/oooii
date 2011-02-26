@@ -26,15 +26,17 @@
 #include <oooii/oStddef.h>
 #include <oooii/oString.h>
 #include <oooii/oWindows.h>
+#include <oooii/oRef.h>
 
 bool oGPU::GetDesc(unsigned int _GPUIndex, oGPU::DESC* _pDesc)
 {
 	#if oDXVER >= oDXVER_10
-	IDXGIFactory* pFactory = oGetDXGIFactorySingleton();
+	oRef<IDXGIFactory> pFactory;
+	oCreateDXGIFactory(&pFactory);
 	if (pFactory)
 	{
 		IDXGIAdapter* pAdapter = 0;
-		if (DXGI_ERROR_NOT_FOUND == oGetDXGIFactorySingleton()->EnumAdapters(_GPUIndex, &pAdapter))
+		if (DXGI_ERROR_NOT_FOUND == pFactory->EnumAdapters(_GPUIndex, &pAdapter))
 			return false;
 
 		DXGI_ADAPTER_DESC desc;
@@ -44,7 +46,7 @@ bool oGPU::GetDesc(unsigned int _GPUIndex, oGPU::DESC* _pDesc)
 		_pDesc->DedicatedSystemMemory = desc.DedicatedSystemMemory;
 		_pDesc->SharedSystemMemory = desc.SharedSystemMemory;
 		_pDesc->Index = _GPUIndex;
-		_pDesc->D3DVersion = oGetD3DVersion(pAdapter);
+		_pDesc->D3DVersion = oDXGIGetD3DVersion(pAdapter);
 		pAdapter->Release();
 		return true;
 	}

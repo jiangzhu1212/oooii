@@ -22,7 +22,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "pch.h"
-#include <oooii/oAllocator.h>
+#include <oooii/oAllocatorTLSF.h>
 #include <oooii/oByte.h>
 #include <oooii/oErrno.h>
 #include <oooii/oMirroredArena.h>
@@ -66,8 +66,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 		oAllocator::DESC desc;
 		desc.pArena = BASE_ADDRESS;
 		desc.ArenaSize = ARENA_SIZE;
-		desc.Type = oAllocator::TLSF;
-		oTESTB(oAllocator::Create("MirroredArenaServer", &desc, &AllocatorServer), "Failed to create allocator for server");
+		oTESTB(oAllocatorTLSF::Create("MirroredArenaServer", &desc, &AllocatorServer), "Failed to create allocator for server");
 	}
 
 	// Copy some test data into the server heap

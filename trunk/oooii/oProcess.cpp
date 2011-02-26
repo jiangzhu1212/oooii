@@ -29,9 +29,17 @@
 #include <string>
 #include <oooii/oWinPSAPI.h>
 
+const oGUID& oGetGUID( threadsafe const oProcess* threadsafe const * )
+{
+	// {EAA75587-9771-4d9e-A2EA-E406AA2E8B8F}
+	static const oGUID oIIDProcess = { 0xeaa75587, 0x9771, 0x4d9e, { 0xa2, 0xea, 0xe4, 0x6, 0xaa, 0x2e, 0x8b, 0x8f } };
+	return oIIDProcess;
+}
+
 struct Process_Impl : public oProcess
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oProcess>());
 
 	Process_Impl(const DESC* _pDesc, bool* _pSuccess);
 	~Process_Impl();
@@ -47,9 +55,11 @@ struct Process_Impl : public oProcess
 	STARTUPINFO StartInfo;
 
 	DESC Desc;
-	HANDLE hPipeRead;
-	HANDLE hPipeWrite;
-	HANDLE hPipeError;
+	HANDLE hOutputRead;
+	HANDLE hOutputWrite;
+	HANDLE hInputRead;
+	HANDLE hInputWrite;
+	HANDLE hErrorWrite;
 	std::string CommandLine;
 	std::string EnvironmentString;
 	oRefCount RefCount;
@@ -126,13 +136,62 @@ size_t oProcess::GetProcessHandle(const char* _pName)
 		return NULL;
 }
 
+size_t oProcess::GetCurrentModuleHandle()
+{
+	static size_t CurrentModule = 0;
+	if(0 == CurrentModule)
+	{
+		HMODULE hMod[1024];
+		DWORD cbNeeded;
+
+		HANDLE hProcess = GetCurrentProcess();
+		oWinPSAPI* pPSAPI = oWinPSAPI::Singleton();
+
+		if(pPSAPI->EnumProcessModules( hProcess, hMod, sizeof(hMod), &cbNeeded))
+		{
+			uintptr_t pointer = reinterpret_cast<uintptr_t>(&CurrentModule);
+
+			unsigned int numModules = cbNeeded / sizeof(HMODULE);
+			for(unsigned int i = 0; i < numModules; i++)
+			{
+				MODULEINFO modInfo;
+				pPSAPI->GetModuleInformation(hProcess, hMod[i], &modInfo, sizeof(modInfo));
+				uintptr_t entryPoint = reinterpret_cast<uintptr_t>(modInfo.EntryPoint);
+
+				char modName[1024];
+				pPSAPI->GetModuleBaseNameA(hProcess, hMod[i], modName, 1024);
+
+				if(pointer >= entryPoint && pointer < entryPoint + modInfo.SizeOfImage)
+				{
+					CurrentModule = reinterpret_cast<size_t>(hMod[i]);
+					break;
+				}
+			}
+		}
+	}
+
+	return CurrentModule;
+}
+
+size_t oProcess::GetMainProcessModuleHandle()
+{
+	HMODULE hMod = 0;
+	DWORD cbNeeded;
+
+	oWinPSAPI::Singleton()->EnumProcessModules(GetCurrentProcess(), &hMod, sizeof(hMod), &cbNeeded);
+
+	return reinterpret_cast<size_t>(hMod);
+}
+
 Process_Impl::Process_Impl(const DESC* _pDesc, bool* _pSuccess)
 	: Desc(*_pDesc)
 	, CommandLine(_pDesc->CommandLine ? _pDesc->CommandLine : "")
 	, EnvironmentString(_pDesc->EnvironmentString ? _pDesc->EnvironmentString : "")
-	, hPipeRead(0)
-	, hPipeWrite(0)
-	, hPipeError(0)
+	, hOutputRead(0)
+	, hOutputWrite(0)
+	, hInputRead(0)
+	, hInputWrite(0)
+	, hErrorWrite(0)
 {
 	Desc.CommandLine = CommandLine.c_str();
 	Desc.EnvironmentString = EnvironmentString.c_str();
@@ -154,21 +213,21 @@ Process_Impl::Process_Impl(const DESC* _pDesc, bool* _pSuccess)
 	{
 		// Based on setup described here: http://support.microsoft.com/kb/190351
 
-		HANDLE hOutputReadTmp = 0, hOutputRead = 0;
-		HANDLE hInputWriteTmp = 0, hInputWrite = 0;
-		if (!CreatePipe(&hOutputReadTmp, &hPipeWrite, &sa, 0))
+		HANDLE hOutputReadTmp = 0;
+		HANDLE hInputWriteTmp = 0;
+		if (!CreatePipe(&hOutputReadTmp, &hOutputWrite, &sa, 0))
 		{
 			*_pSuccess = false;
 			oSetLastError(EPIPE);
 			return;
 		}
 
-		oVB(DuplicateHandle(GetCurrentProcess(), hPipeWrite, GetCurrentProcess(), &hPipeError, 0, TRUE, DUPLICATE_SAME_ACCESS));
+		oVB(DuplicateHandle(GetCurrentProcess(), hOutputWrite, GetCurrentProcess(), &hErrorWrite, 0, TRUE, DUPLICATE_SAME_ACCESS));
 
-		if (!CreatePipe(&hPipeRead, &hInputWriteTmp, &sa, 0))
+		if (!CreatePipe(&hInputRead, &hInputWriteTmp, &sa, 0))
 		{
 			oVB(CloseHandle(hOutputReadTmp));
-			oVB(CloseHandle(hPipeWrite));
+			oVB(CloseHandle(hOutputWrite));
 			*_pSuccess = false;
 			oSetLastError(EPIPE);
 			return;
@@ -180,13 +239,10 @@ Process_Impl::Process_Impl(const DESC* _pDesc, bool* _pSuccess)
 		oVB(CloseHandle(hOutputReadTmp));
 		oVB(CloseHandle(hInputWriteTmp));
 
-		// Create an anonymous pipe to hook std handles
-		oASSERT(_pDesc->StdHandleBufferSize < UINT_MAX, "");
-		*_pSuccess = !!CreatePipe(&hPipeRead, &hPipeWrite, &sa, static_cast<DWORD>(_pDesc->StdHandleBufferSize));
 		StartInfo.dwFlags |= STARTF_USESTDHANDLES;
-		StartInfo.hStdInput = hPipeRead;
-		StartInfo.hStdOutput = hPipeWrite;
-		StartInfo.hStdError = hPipeError;
+		StartInfo.hStdOutput = hOutputWrite;
+		StartInfo.hStdInput = hInputRead;
+		StartInfo.hStdError = hErrorWrite;
 	}
 
 	else
@@ -229,9 +285,11 @@ Process_Impl::~Process_Impl()
 {
 	if (ProcessInfo.hProcess) CloseHandle(ProcessInfo.hProcess);
 	if (ProcessInfo.hThread) CloseHandle(ProcessInfo.hThread);
-	if (hPipeRead) CloseHandle(hPipeRead);
-	if (hPipeWrite) CloseHandle(hPipeWrite);
-	if (hPipeError) CloseHandle(hPipeError);
+	if (hOutputRead) CloseHandle(hOutputRead);
+	if (hOutputWrite) CloseHandle(hOutputWrite);
+	if (hInputRead) CloseHandle(hInputRead);
+	if (hInputWrite) CloseHandle(hInputWrite);
+	if (hErrorWrite) CloseHandle(hErrorWrite);
 }
 
 void Process_Impl::Start() threadsafe
@@ -265,7 +323,7 @@ bool Process_Impl::GetExitCode(int* _pExitCode) const threadsafe
 
 size_t Process_Impl::WriteToStdin(const void* _pSource, size_t _SizeofWrite) threadsafe
 {
-	if (!hPipeWrite)
+	if (!hInputWrite)
 	{
 		oSetLastError(EPIPE);
 		return 0;
@@ -273,13 +331,13 @@ size_t Process_Impl::WriteToStdin(const void* _pSource, size_t _SizeofWrite) thr
 
 	oASSERT(_SizeofWrite <= UINT_MAX, "Windows supports only 32-bit sized writes.");
 	DWORD sizeofWritten = 0;
-	oVB(WriteFile(hPipeWrite, _pSource, static_cast<DWORD>(_SizeofWrite), &sizeofWritten, 0));
+	oVB(WriteFile(hInputWrite, _pSource, static_cast<DWORD>(_SizeofWrite), &sizeofWritten, 0));
 	return sizeofWritten;
 }
 
 size_t Process_Impl::ReadFromStdout(void* _pDestination, size_t _SizeofRead) threadsafe
 {
-	if (!hPipeRead)
+	if (!hOutputRead)
 	{
 		oSetLastError(EPIPE);
 		return 0;
@@ -287,6 +345,6 @@ size_t Process_Impl::ReadFromStdout(void* _pDestination, size_t _SizeofRead) thr
 
 	oASSERT(_SizeofRead <= UINT_MAX, "Windows supports only 32-bit sized reads.");
 	DWORD sizeofRead = 0;
-	oVB(ReadFile(hPipeRead, _pDestination, static_cast<DWORD>(_SizeofRead), &sizeofRead, 0));
+	oVB(ReadFile(hOutputRead, _pDestination, static_cast<DWORD>(_SizeofRead), &sizeofRead, 0));
 	return sizeofRead;
 }

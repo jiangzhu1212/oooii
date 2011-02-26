@@ -52,6 +52,8 @@ interface oMirroredArena : public oInterface
 			: BaseAddress(0)
 			, Size(0)
 			, Usage(READ)
+			, bIsReserved(false)
+			, bIsCommitted(false)
 		{}
 
 		// On create, this is the base address the user will use to allocate memory
@@ -63,6 +65,15 @@ interface oMirroredArena : public oInterface
 
 		// Permissions used on the arena
 		USAGE Usage;
+
+		// True if this memory has been reserved.
+		bool bIsReserved;
+
+		// True if this memory has been committed.
+		bool bIsCommitted;
+
+		// Can only commit on reserved, uncommitted memory.
+		bool bCanCommitMemory(){return (bIsReserved && !bIsCommitted);};
 	};
 
 	// RetrieveChanges will add a header to the returned buffer so query the size here
@@ -110,6 +121,23 @@ interface oMirroredArena : public oInterface
 
 	// Apply the provided change buffer.
 	virtual bool ApplyChanges(const void* _pChangeBuffer) = 0;
+
+	// Reserves a size (determined by _pDesc) of virtual memory.  This marks the 
+	// memory as reserved, but does not allocate and must be called before 
+	// committing the memory.
+	virtual void* VMemoryReserve(DESC& _pDesc) = 0;
+
+	// Releases virtual memory back into the wild.  This will also decomit the
+	// memory, so VMemoryDecommit() does not need to be called when unreserving.
+	virtual void  VMemoryUnreserve(DESC& _pDesc) = 0;
+
+	// Commit already reserved memory to virtual space.  This will fail if the 
+	// memory is not reserved.
+	virtual void* VMemoryCommit(DESC& _pDesc) = 0;
+
+	// Marks the memory as ready to be re-allocated, but keeps it reserved so
+	// malloc and LocalAlloc calls won't write into it.
+	virtual void  VMemoryDecommit(DESC& _pDesc) = 0;
 };
 
 #endif

@@ -31,7 +31,7 @@
 #define _NO_CVCONST_H
 #include <DbgHelp.h>
 
-struct oDbgHelp : public oSingleton<oDbgHelp>
+struct oDbgHelp : public oProcessSingleton<oDbgHelp>
 {
 	// Encapsulation of the details of dynamically linking to DbgHelp.dll and the APIs
 	// needed to report callstack information. Wow this is a lot of redundant typing,

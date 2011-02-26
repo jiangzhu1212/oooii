@@ -31,6 +31,9 @@
 #include <oooii/oStdio.h>
 #include <oooii/oWindows.h>
 #include <oooii/oWinPSAPI.h>
+#include <oooii/oThreading.h>
+#include <oooii/oGUID.h>
+#include <oooii/oString.h>
 #include <map>
 
 void oHeap::Add(STATISTICS* _pStats, const BLOCK_DESC* _pDesc)
@@ -170,24 +173,51 @@ static DWORD GetAccess(oHeap::ACCESS _Access)
 	}
 }
 
-void* oHeap::PagedAllocate(void* _DesiredPointer, size_t _Size, ACCESS _Access)
+// @oooii-will: Reserve pages to virtual memory.  Does not allocate until PagedCommit() 
+// is called, but prevents malloc and LocalAlloc from accessing the reserved memory.
+void* oHeap::PagedReserve(void* _DesiredPointer, size_t _Size, ACCESS _Access)
 {
 	oASSERT(_DesiredPointer, "If you're using this API, you probably want to be explicit about the _DesiredPointer you pass in.");
-	void* p = VirtualAllocEx(GetCurrentProcess(), _DesiredPointer, _Size, MEM_COMMIT|MEM_RESERVE, GetAccess(_Access));
+	void* p = VirtualAllocEx(GetCurrentProcess(), _DesiredPointer, _Size, MEM_RESERVE, GetAccess(_Access));
 	if (p != _DesiredPointer)
 	{
 		oSetLastError(ENOMEM, "VirtualAllocEx return a pointer (0x%p) that is not the same as the requested pointer (0x%p).", _DesiredPointer, p);
 		if (p)
-			PagedDeallocate(p);
+			PagedUnreserve(p);
 		p = 0;
 	}
 
 	return p;
 }
 
-void oHeap::PagedDeallocate(void* _Pointer)
+// @oooii-will: Release reserved virtual memory.  MEM_RELEASE also decommits the memory
+// if PagedDecommit() hasn't been called, yet.
+void oHeap::PagedUnreserve(void* _Pointer)
 {
 	oVB(VirtualFreeEx(GetCurrentProcess(), _Pointer, 0, MEM_RELEASE));
+}
+
+// @oooii-will: Committing reserved pages to virtual memory.  Attempting to commit a 
+// page that is not yet reserved results in an error.
+void* oHeap::PagedCommit(void* _DesiredPointer, size_t _Size, ACCESS _Access)
+{
+	oASSERT(_DesiredPointer, "If you're using this API, you probably want to be explicit about the _DesiredPointer you pass in.");
+	void* p = VirtualAllocEx(GetCurrentProcess(), _DesiredPointer, _Size, MEM_COMMIT, GetAccess(_Access));
+	if (p != _DesiredPointer)
+	{
+		oSetLastError(ENOMEM, "VirtualAllocEx return a pointer (0x%p) that is not the same as the requested pointer (0x%p).", _DesiredPointer, p);
+		if (p)
+			PagedDecommit(p);
+		p = 0;
+	}
+
+	return p;
+}
+
+// @oooii-will: Set committed pages to a reserved state, to be reserved or freed later.
+void oHeap::PagedDecommit(void* _Pointer)
+{
+	oVB(VirtualFreeEx(GetCurrentProcess(), _Pointer, 0, MEM_DECOMMIT));
 }
 
 void oHeap::PagedSetProtection(void* _BaseAddress, size_t _Size, ACCESS _Access)
@@ -209,85 +239,124 @@ template<typename T> struct oStdStaticAllocator
 oDEFINE_STD_ALLOCATOR_VOID_INSTANTIATION(oStdStaticAllocator)
 oDEFINE_STD_ALLOCATOR_OPERATOR_EQUAL(oStdStaticAllocator) { return true; }
 
-struct oProcessStaticHeap
+struct oProcessStaticHeap : public oInterface
 {
 	oProcessStaticHeap()
 		: hHeap(HeapCreate(0, 100 * 1024, 0))
-		, RefCount(1)
 	{
+		InitializeCriticalSection(&SharedPointerCS);
 	}
 
 	~oProcessStaticHeap()
 	{
-		HeapDestroy(hHeap);
+		DeleteCriticalSection(&SharedPointerCS);
+	}
+
+private:
+	struct oMMapFile
+	{
+		oProcessStaticHeap* pProcessStaticHeap;
+		oGUID guid;
+		DWORD processId;
+	};
+public:
+
+	void Reference() threadsafe
+	{
+		Refcount.Reference();
+	}
+	virtual void Release() threadsafe
+	{
+		if( Refcount.Release() )
+		{
+			this->~oProcessStaticHeap();
+			HeapDestroy(hHeap);
+			VirtualFreeEx(GetCurrentProcess(), thread_cast<oProcessStaticHeap*>( this ), 0, MEM_RELEASE);
+		}
 	}
 
 	static oProcessStaticHeap* Singleton()
 	{
-		static oProcessStaticHeap* sInstance = 0; // process-global static
+		static oRef<oProcessStaticHeap> sInstance = 0; // process-global static
 		if (!sInstance)
 		{
-			// Allocate memory at a fixed point at the high end of 
-			// the address space so modules/DLLs loaded into the 
-			// process can all refer to the exact same block of memory.
-			#ifdef _WIN64
-				static const uintptr_t HARDCODED_POINTER = 0x7fffff00000;
-			#else
-				static const uintptr_t HARDCODED_POINTER = 0x7ef00000;
-			#endif
-			sInstance = static_cast<oProcessStaticHeap*>(VirtualAllocEx(GetCurrentProcess(), (void*)HARDCODED_POINTER, sizeof(oProcessStaticHeap), MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE));
-			
-			// if alloc succeeded this is first-instantiation, so run ctor
-			if (sInstance)
-				new (sInstance) oProcessStaticHeap();
-			else // this is another module, so increment ref on the heap
+			static const oGUID heapMMapGuid = { 0x7c5be6d1, 0xc5c2, 0x470e, { 0x85, 0x4a, 0x2b, 0x98, 0x48, 0xf8, 0x8b, 0xa9 } }; // {7C5BE6D1-C5C2-470e-854A-2B9848F88BA9}
+
+			// Filename is "<GUID><CurrentProcessID>"
+			static char mmapFileName[128] = {0};
+			oToString(mmapFileName, heapMMapGuid);
+			sprintf_s(mmapFileName + strlen(mmapFileName), 128 - strlen(mmapFileName), "%u", GetCurrentProcessId());
+
+			// Create a Memory-Mapped File to store the location of the oProcessStaticHeap
+			SetLastError( ERROR_SUCCESS );
+			HANDLE hMMap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(oMMapFile), mmapFileName);
+			assert(hMMap && "Fatal: Could not create memory mapped file for oProcessStaticHeap.");
+
+			oMMapFile* memFile = (oMMapFile*)MapViewOfFile(hMMap, FILE_MAP_WRITE, 0, 0, 0);
+
+			if( hMMap && GetLastError() == ERROR_ALREADY_EXISTS ) // File already exists, loop until it's valid.
 			{
-				sInstance = (oProcessStaticHeap*)HARDCODED_POINTER;
-				sInstance->RefCount++;
+				while(memFile->processId != GetCurrentProcessId() || memFile->guid != heapMMapGuid)
+				{
+					UnmapViewOfFile(memFile);
+					oSleep(0);
+					memFile = (oMMapFile*)MapViewOfFile(hMMap, FILE_MAP_WRITE, 0, 0, 0);
+				}
+
+				// @oooii-kevin: Since sInstance is a ref this does the counting
+ 				sInstance = memFile->pProcessStaticHeap;
 			}
+			else if( hMMap ) // Created new file, now allocate the oProcessStaticHeap instance.
+			{
+				// Allocate memory at the highest possible address then store that value in the Memory-Mapped File for other DLLs to access.
+				*sInstance.address() = static_cast<oProcessStaticHeap*>(VirtualAllocEx(GetCurrentProcess(), NULL, sizeof(oProcessStaticHeap), MEM_COMMIT|MEM_RESERVE|MEM_TOP_DOWN, PAGE_EXECUTE_READWRITE));
+				assert(sInstance && "Fatal: VirtualAllocEx failed for oProcessStaticHeap.");
+				new (sInstance.c_ptr()) oProcessStaticHeap();
+
+				memFile->pProcessStaticHeap = sInstance;
+				memFile->guid = heapMMapGuid;
+				memFile->processId = GetCurrentProcessId();
+			}
+
+			UnmapViewOfFile(memFile);
 		}
 
 		return sInstance;
 	}
 
-	static void Destroy()
-	{
-		oProcessStaticHeap* pStaticHeap = Singleton();
-		if (--pStaticHeap->RefCount == 0)
-		{
-			pStaticHeap->~oProcessStaticHeap();
-			VirtualFreeEx(GetCurrentProcess(), pStaticHeap, 0, MEM_RELEASE);
-		}
-	}
-
 	void* Allocate(size_t _Size) { return HeapAlloc(hHeap, 0, _Size); }
 	void Deallocate(void* _Pointer) { HeapFree(hHeap, 0, _Pointer); }
 
-	bool AllocateShared(const char* _Name, size_t _Size, void** _pPointer);
+	bool AllocateSharedMap(const char* _Name, bool _bThreadUnique, size_t _Size, void** _pPointer);
+	void AllocateSharedUnmap();
 	void DeallocateShared(void* _Pointer);
 
 	inline size_t Hash(const char* _Name) { return oHash_superfast(_Name, static_cast<unsigned int>(strlen(_Name))); }
 
 	HANDLE hHeap;
-	unsigned int RefCount;
+	oRefCount Refcount;
 
 	struct ENTRY
 	{
 		ENTRY()
 			: Pointer(0)
-			, RefCount(1)
 		{}
 		
 		void* Pointer;
-		unsigned int RefCount;
+		char Name[64];
 	};
+
+	// @oooii-kevin: We use a raw critical section here because oProcessStaticHeap needs a very low level lock
+	// system lock that can't possibly trigger any other complex code. 
+	CRITICAL_SECTION SharedPointerCS;
 
 	typedef std::map<size_t, ENTRY, std::less<size_t>, oStdStaticAllocator<std::pair<size_t, ENTRY> > > container_t;
 	container_t SharedPointers;
 };
 
-bool oProcessStaticHeap::AllocateShared(const char* _Name, size_t _Size, void** _pPointer)
+bool oProcessStaticHeap::AllocateSharedMap(const char* _Name, bool _bThreadUnique, size_t _Size, void** _pPointer)
 {
+	EnterCriticalSection(&SharedPointerCS);
 	oASSERT(_Name && _Size && _pPointer, "Invalid parameters to oStaticMap::Allocate()");
 	size_t h = Hash(_Name);
 
@@ -297,29 +366,43 @@ bool oProcessStaticHeap::AllocateShared(const char* _Name, size_t _Size, void** 
 		*_pPointer = oHeap::StaticAllocate(_Size);
 		ENTRY& e = SharedPointers[h];
 		e.Pointer = *_pPointer;
-		assert(e.RefCount == 1);
+		strcpy_s( e.Name, _Name );
+
+		// @oooii-kevin: Only non-thread unique allocations should reference, as they are the only
+		// ones that will Release 
+		//if( !_bThreadUnique )
+		Reference();
+
 		return true;
 	}
 
-	it->second.RefCount++;
 	*_pPointer = it->second.Pointer;
 	return false;
+}
+void oProcessStaticHeap::AllocateSharedUnmap()
+{
+	LeaveCriticalSection(&SharedPointerCS);
 }
 
 void oProcessStaticHeap::DeallocateShared(void* _Pointer)
 {
+	EnterCriticalSection(&SharedPointerCS);
 	for (container_t::iterator it = SharedPointers.begin(); it != SharedPointers.end(); ++it)
 	{
 		if (it->second.Pointer == _Pointer)
 		{
-			if (--it->second.RefCount == 0)
-			{
-				oHeap::StaticDeallocate(it->second.Pointer);
-				SharedPointers.erase(it);
-				return;
-			}
+			// @oooii-kevin: The order here is critical, we need to tell the heap to deallocate first
+			// remove it from the list exit the critical section and then release.  If we release first
+			// we risk destroying the heap and then still neading to access it
+			oHeap::StaticDeallocate(it->second.Pointer);
+			SharedPointers.erase(it);
+			LeaveCriticalSection(&SharedPointerCS);
+			Release();
+			return;
 		}
 	}
+
+	LeaveCriticalSection(&SharedPointerCS);
 }
 
 void* oHeap::StaticAllocate(size_t _Size)
@@ -332,9 +415,14 @@ void oHeap::StaticDeallocate(void* _Pointer)
 	oProcessStaticHeap::Singleton()->Deallocate(_Pointer);
 }
 
-bool oHeap::StaticAllocateShared(const char* _Name, size_t _Size, void** _pPointer)
+bool oHeap::StaticAllocateSharedMap(const char* _Name, bool _bThreadUnique, size_t _Size, void** _pPointer)
 {
-	return oProcessStaticHeap::Singleton()->AllocateShared(_Name, _Size, _pPointer);
+	return oProcessStaticHeap::Singleton()->AllocateSharedMap(_Name, _bThreadUnique, _Size, _pPointer);
+}
+
+void oHeap::StaticAllocateSharedUnmap()
+{
+	return oProcessStaticHeap::Singleton()->AllocateSharedUnmap();
 }
 
 void oHeap::StaticDeallocateShared(void* _Pointer)

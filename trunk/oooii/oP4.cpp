@@ -90,6 +90,9 @@ time_t GetTime(const char* _P4TimeString)
 	return mktime(&t);
 }
 
+//Determine if a given string is the next non-whitespace text in a string.
+#define NEXT_STR_EXISTS(str1, str2, bExists) str1 += strspn(str1, oWHITESPACE); bExists = ((str1 - strstr(str1, str2)) == 0) ? true : false
+
 bool GetClientSpec(CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpecString)
 {
 	// move past commented text
@@ -97,23 +100,34 @@ bool GetClientSpec(CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpecString)
 	c = strstr(c, "views and options.");
 	if (!c) return false;
 	c += strlen("views and options.");
+	bool bNextStrExists;
 
-	if (!oGetKeyValuePair(0, 0, _pClientSpec->Client, ':', oNEWLINE, c, &c))
+	//Client
+	NEXT_STR_EXISTS(c, "Client:", bNextStrExists);
+	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pClientSpec->Client, ':', oNEWLINE, c, &c))
 		return false;
 
 	char tmp[256];
-	if (!oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
+	//Update
+	NEXT_STR_EXISTS(c, "Update:", bNextStrExists);
+	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
 	_pClientSpec->LastUpdated = GetTime(tmp);
 
-	if (!oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
+	//Access
+	NEXT_STR_EXISTS(c, "Access:", bNextStrExists);
+	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
 	_pClientSpec->LastAccessed = GetTime(tmp);
 
-	if (!oGetKeyValuePair(0, 0, _pClientSpec->Owner, ':', oNEWLINE, c, &c))
+	//Owner
+	NEXT_STR_EXISTS(c,"Owner:", bNextStrExists);
+	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pClientSpec->Owner, ':', oNEWLINE, c, &c))
 		return false;
 
-	if (!oGetKeyValuePair(0, 0, _pClientSpec->Host, ':', oNEWLINE, c, &c))
+	//Host
+	NEXT_STR_EXISTS(c, "Host:", bNextStrExists);
+	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pClientSpec->Host, ':', oNEWLINE, c, &c))
 		return false;
 
 	// Description is multi-line...
@@ -126,10 +140,14 @@ bool GetClientSpec(CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpecString)
 	memcpy_s(_pClientSpec->Description, oCOUNTOF(_pClientSpec->Description)-1, c, descLen);
 	_pClientSpec->Description[__min(oCOUNTOF(_pClientSpec->Description)-1, descLen)] = 0;
 
-	if (!oGetKeyValuePair(0, 0, _pClientSpec->Root, ':', oNEWLINE, end, &c))
+	//Root
+	NEXT_STR_EXISTS(end, "Root:", bNextStrExists);
+	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pClientSpec->Root, ':', oNEWLINE, end, &c))
 		return false;
 
-	if (!oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
+	//Options
+	NEXT_STR_EXISTS(c, "Options:", bNextStrExists);
+	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
 
 	_pClientSpec->Allwrite = !strstr(tmp, "noallwrite");
@@ -139,11 +157,15 @@ bool GetClientSpec(CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpecString)
 	_pClientSpec->Modtime = !strstr(tmp, "nomodtime");
 	_pClientSpec->Rmdir = !strstr(tmp, "normdir");
 
-	if (!oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
+	//SubmitOptions
+	NEXT_STR_EXISTS(c, "SubmitOptions:", bNextStrExists);
+	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
 	_pClientSpec->SubmitOptions = GetSubmitOptions(tmp);
 
-	if (!oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
+	//LineEnd
+	NEXT_STR_EXISTS(c, "LineEnd:", bNextStrExists);
+	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
 	_pClientSpec->LineEnd = GetLineEnd(tmp);
 
@@ -165,12 +187,17 @@ static bool Execute(const char* _CommandLine, const char* _CheckValidString, cha
 	if (!oProcess::Create(&desc, &process))
 		return false;
 
-	const unsigned int TIMEOUT = 20000;
+	const unsigned int TIMEOUT = 10000;
 
+	oTRACE("oP4.Executing \"%s\"...", _CommandLine);
 	process->Start();
 	if (!process->Wait(TIMEOUT))
-		oASSERT(false, "Executing \"%s\" timed out after %.01f seconds.", _CommandLine, static_cast<float>(TIMEOUT) / 1000.0f);
+	{
+		oSetLastError(ETIMEDOUT, "Executing \"%s\" timed out after %.01f seconds.", _CommandLine, static_cast<float>(TIMEOUT) / 1000.0f);
+		return false;
+	}
 
+	oTRACE("oP4.ReadFromStdout \"%s\"...", _CommandLine);
 	size_t sizeRead = process->ReadFromStdout(_P4ResponseString, _SizeofP4ResponseString);
 	oASSERT(sizeRead < _SizeofP4ResponseString, "");
 	_P4ResponseString[sizeRead] = 0;

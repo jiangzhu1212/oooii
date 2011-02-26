@@ -59,6 +59,10 @@ char* oNewlinesToDos(char* _StrDestination, size_t _SizeofStrDestination, const 
 			*d++ = '\r';
 		if (d != end)
 			*d++ = *_StrSource++;
+		else
+		{
+			oASSERT(false, "oNewlinesToDos: destination string too small.");
+		}
 	}
 
 	*d = 0;
@@ -1262,3 +1266,4 @@ template<> errno_t oFromString(unsigned long long* _pValue, const char* _StrSour
 template<> errno_t oFromString(float* _pValue, const char* _StrSource) { return _FromString(_pValue, "%f", _StrSource); }
 template<> errno_t oFromString(double* _pValue, const char* _StrSource) { return _FromString(_pValue, "%lf", _StrSource); }
 template<> errno_t oFromString(half* _pValue, const char* _StrSource) { float v; errno_t err = oFromString(&v, _StrSource); *_pValue = v; return err; }
+

@@ -31,7 +31,19 @@
 #include <oooii/oStdio.h>
 #include <oooii/oSTL.h>
 #include <oooii/oThread.h>
+#include <oooii/oTempString.h>
 #include <vector>
+
+template<> const char* oAsString(const oAssert::TYPE& _Type)
+{
+	switch (_Type)
+	{
+		case oAssert::TYPE_TRACE: return "Trace";
+		case oAssert::TYPE_WARNING: return "Warning";
+		case oAssert::TYPE_ASSERT: return "Error";
+		default: oASSUME(0);
+	}
+}
 
 static oAssert::ACTION GetAction(oMsgBox::RESULT _Result)
 {
@@ -46,10 +58,11 @@ static oAssert::ACTION GetAction(oMsgBox::RESULT _Result)
 	return oAssert::IGNORE_ONCE;
 }
 
-struct oAssertContext : oSingleton<oAssertContext>
+struct oAssertContext : oProcessSingleton<oAssertContext>
 {
 	oAssertContext()
-		: LogFile(0)
+		: oProcessSingleton<oAssertContext>(true)
+		, LogFile(0)
 	{
 		oDebugger::Reference();
 		oDebugger::print("--- oAssert initialized ---\n");
@@ -140,18 +153,39 @@ protected:
 	array_t FilteredMessages;
 };
 
-
 static oAssert::ACTION ShowMsgBox(const oAssert::ASSERTION* _pAssertion, oMsgBox::TYPE _Type, const char* _String)
 {
 	static const char* DIALOG_BOX_TITLE = "OOOii Debug Library";
 
-	char format[3 * 1024];
+	char format[64 * 1024];
 	*format = 0;
 	char* end = format + sizeof(format);
 	char* cur = format;
-	cur += sprintf_s(format, "Debug %s!\n%s() %s(%u)\n\n", _Type == oMsgBox::WARN ? "Warning" : "Error", _pAssertion->Function, _pAssertion->Filename, _pAssertion->Line);
+	cur += sprintf_s(format, "Debug %s!\n%s() %s(%u) [%s.%u.%u]\n\n", _Type == oMsgBox::WARN ? "Warning" : "Error", _pAssertion->Function, _pAssertion->Filename, _pAssertion->Line, oGetHostname(), oProcess::GetCurrentProcessID(), oThread::GetCurrentThreadID());
 	strcpy_s(cur, std::distance(cur, end), _String);
 	return GetAction(oMsgBox::printf(_Type, DIALOG_BOX_TITLE, "%s", format));
+}
+
+void PrintCallStackToString( oTempString& str )
+{
+	sprintf_s(str + strlen(str), "\nCall Stack:\n");
+
+	unsigned long long address = 0;
+	size_t offset = 6; // Start offset from where assert occurred, skipping any debug handling code
+
+	while(oDebugger::GetCallstack(&address, 1, offset++))
+	{
+		oDebugger::SYMBOL symbol;
+		if( oDebugger::TranslateSymbol( &symbol, address ) )
+		{
+			if( symbol.Line && symbol.CharOffset )
+				sprintf_s(str + strlen(str), "%s!%s() ./%s Line %i + 0x%0x bytes\n", symbol.Module, symbol.Name, oGetFilebase(symbol.Filename), symbol.Line, symbol.CharOffset);
+			else if( symbol.Line )
+				sprintf_s(str + strlen(str), "%s!%s() ./%s Line %i\n", symbol.Module, symbol.Name, oGetFilebase(symbol.Filename), symbol.Line);
+			else
+				sprintf_s(str + strlen(str), "%s!%s() ./%s\n", symbol.Module, symbol.Name, oGetFilebase(symbol.Filename));
+		}
+	}
 }
 
 oAssert::ACTION OOOiiDefaultPrintMessage(const oAssert::ASSERTION* _pAssertion, const char* _Format, va_list _Args)
@@ -159,32 +193,33 @@ oAssert::ACTION OOOiiDefaultPrintMessage(const oAssert::ASSERTION* _pAssertion, 
 	oAssert::DESC desc;
 	oAssert::GetDesc(&desc);
 
-	// add prefixes to original message
-	char msg[2048];
-	{
-		*msg = 0;
-		char* end = msg + sizeof(msg);
-		char* cur = msg;
+	bool addCallStack = desc.PrintCallstack && (_pAssertion->Type == oAssert::TYPE_ASSERT);
 
+	// add prefixes to original message
+	oTempString msg(addCallStack ? oTempString::BigSize : oTempString::DefaultSize);
+	{
 		if (desc.PrefixFileLine)
-			cur += sprintf_s(cur, std::distance(cur, end), "%s(%u) : ", _pAssertion->Filename, _pAssertion->Line);
+			sprintf_s(msg + strlen(msg), "%s(%u) : ", _pAssertion->Filename, _pAssertion->Line);
+
+		if (desc.PrefixMsgType)
+			sprintf_s(msg + strlen(msg), "%s ", oAsString(_pAssertion->Type));
 
 		if (desc.PrefixThreadId)
-			cur += sprintf_s(cur, std::distance(cur, end), "[%s.%u.%u] ", oGetHostname(), oProcess::GetCurrentProcessID(), oThread::GetCurrentThreadID());
+			sprintf_s(msg + strlen(msg), "[%s.%u.%u] ", oGetHostname(), oProcess::GetCurrentProcessID(), oThread::GetCurrentThreadID());
 
 		if (desc.PrefixMsgId)
-			cur += sprintf_s(cur, std::distance(cur, end), "{0x%08x} ", _pAssertion->MsgId);
-
-		strcpy_s(cur, std::distance(cur, end), _Format);
+			sprintf_s(msg + strlen(msg), "{0x%08x} ", _pAssertion->MsgId);
 	}
 
-	char final[2048];
-	vsprintf_s(final, msg, _Args);
+	vsprintf_s(msg + strlen(msg), _Format, _Args);
+
+	if(addCallStack)
+		PrintCallStackToString(msg);
 
 	// Always print any message to the debugger output
-	oDebugger::print(final);
+	oDebugger::print(msg);
 
-	oAssertContext::Singleton()->Log(final);
+	oAssertContext::Singleton()->Log(msg);
 
 	// Output message
 	oAssert::ACTION action = oAssert::IGNORE_ONCE;
@@ -195,11 +230,11 @@ oAssert::ACTION OOOiiDefaultPrintMessage(const oAssert::ASSERTION* _pAssertion, 
 
 		case oAssert::TYPE_WARNING:
 			if (desc.EnableWarnings)
-				action = ShowMsgBox(_pAssertion, oMsgBox::WARN, final);
+				action = ShowMsgBox(_pAssertion, oMsgBox::WARN, msg);
 			break;
 
 		case oAssert::TYPE_ASSERT:
-			action = ShowMsgBox(_pAssertion, oMsgBox::DEBUG, final);
+			action = ShowMsgBox(_pAssertion, oMsgBox::DEBUG, msg);
 			break;
 
 		default: oASSUME(0);
@@ -212,6 +247,7 @@ oAssert::ACTION oAssertContext::VPrintMessage(const oAssert::ASSERTION* _pAssert
 {
 	if (oContains(FilteredMessages, _pAssertion->MsgId))
 		return oAssert::IGNORE_ONCE;
+	//return oAssert::IGNORE_ONCE;
 
 	if (!Desc.VPrintMessage)
 		return OOOiiDefaultPrintMessage(_pAssertion, _Format, _Args);

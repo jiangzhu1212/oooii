@@ -172,6 +172,32 @@ bool oSurface::IsBlockCompressedFormat(FORMAT _Format)
 	return (_Format <= LAST_FORMAT) ? sFormatDescs[_Format].IsBlockCompressed : false;
 }
 
+bool oSurface::IsDepthFormat(FORMAT _Format)
+{
+	bool result = false;
+
+	switch (_Format)
+	{
+		case D32_FLOAT:
+		case R32_TYPELESS:
+		case D24_UNORM_S8_UINT:
+		case R24_UNORM_X8_TYPELESS:
+		case D32_FLOAT_S8X24_UINT:
+		case R32_FLOAT_X8X24_TYPELESS:
+		case D16_UNORM:
+		case R16_TYPELESS:
+			result = true;
+		default:
+			break;
+	}
+
+	#if oDXVER >= oDXVER_10
+		oASSERT(result == oDXGIIsDepthFormat((DXGI_FORMAT)_Format), "IsDepthFormat result mismatch");
+	#endif
+
+	return result;
+}
+
 bool oSurface::IsUNORM( FORMAT _Format )
 {
 	return (_Format <= LAST_FORMAT) ? sFormatDescs[_Format].IsUNORM : false;

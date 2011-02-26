@@ -167,10 +167,8 @@ namespace oAsyncFileIO
 	struct DESC
 	{
 		const char* Path; // Full file path
-		void* (*Allocate)(size_t _Size); // allocation routine to be called on the IO thread
-		threadsafe oEvent* pCompletionEvent; // (optional) Event to be fired when load is complete
-		void (*Continuation)(RESULT* _pResult, void* _pUserData); // (optional) function to call on the IO thread once the file is done
-		void* pUserData; // (optional) user data for the continuation function (can be null)
+		oFUNCTION< void*(size_t _Size )> Allocate; // allocation routine to be called on the IO thread
+		oFUNCTION< void(RESULT* _pResult) > Continuation; // function to call on the IO thread once the file is done
 	};
 
 	bool InitializeIOThread(size_t _MaxNumQueuedRequests, bool _ExecuteOnMainThread = false);

@@ -55,6 +55,7 @@ interface oThread : public oInterface
 	static bool Create(const char* _DebugName, size_t _StackSize, bool _StartSuspended, Proc* _Proc, threadsafe oThread** _ppThread);
 
 	static size_t GetCurrentThreadID();
+	static size_t GetMainThreadID();
 	static void* GetCurrentThreadNativeHandle();
 	static bool CurrentThreadIsMain();
 

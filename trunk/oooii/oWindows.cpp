@@ -623,7 +623,7 @@ struct HOOK_CONTEXT
 	UNIQUE_PROC(ProcName, 6) \
 	UNIQUE_PROC(ProcName, 7)
 
-struct oWindowsHookContext : public oSingleton<oWindowsHookContext>
+struct oWindowsHookContext : public oProcessSingleton<oWindowsHookContext>
 {
 	UNIQUE_PROCS(HookProc)
 	
@@ -832,6 +832,221 @@ void* oGetWindowContext(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, 
 	return context;
 }
 
+#if oDXVER >= oDXVER_10
+
+typedef HRESULT (__stdcall *CreateDXGIFactoryFn)(REFIID riid, void **ppFactory);
+typedef HRESULT (__stdcall *DWriteCreateFactoryFn)(DWRITE_FACTORY_TYPE factoryType, REFIID iid, IUnknown **factory);
+typedef HRESULT (__stdcall *D2D1CreateFactoryFn)(D2D1_FACTORY_TYPE factoryType, REFIID riid, const D2D1_FACTORY_OPTIONS *pFactoryOptions, void **ppIFactory);
+typedef DWORD (__stdcall *GetThreadIdFn)(HANDLE Thread);
+
+struct oVistaAPIsContext : oProcessSingleton<oVistaAPIsContext>
+{
+	oVistaAPIsContext()
+		: hDXGIModule(0)
+		, hDWriteModule(0)
+		, hD2DModule(0)
+	{
+		if (LoadModules())
+		{
+			if (!GetProcs() || !LoadSingletons())
+			{
+				oASSERT(false, "Could not soft-link to all APIs from DXGI DirectWrite and/or Direct2D.");
+				FreeModules();
+			}
+		}
+	}
+
+	~oVistaAPIsContext()
+	{
+		FreeSingletons();
+		FreeModules();
+	}
+
+	oRef<IDWriteFactory> DWriteFactory;
+	GetThreadIdFn oGetThreadId;
+	CreateDXGIFactoryFn oCreateDXGIFactory;
+	D2D1CreateFactoryFn oD2D1CreateFactory;
+
+protected:
+
+	bool LoadModules()
+	{
+		hDXGIModule = LoadLibraryA("dxgi");
+		hDWriteModule = LoadLibraryA("dwrite");
+		hD2DModule = LoadLibraryA("d2d1");
+		return hDXGIModule && hDWriteModule && hD2DModule;
+	}
+
+	void FreeModules()
+	{
+		oCreateDXGIFactory = 0;
+		oDWriteCreateFactory = 0;
+		oD2D1CreateFactory = 0;
+
+		if (hDXGIModule)
+		{
+			FreeLibrary(hDXGIModule);
+			hDXGIModule = 0;
+		}
+
+		if (hDWriteModule)
+		{
+			FreeLibrary(hD2DModule);
+			hDWriteModule = 0;
+		}
+
+		if (hD2DModule)
+		{
+			FreeLibrary(hD2DModule);
+			hD2DModule = 0;
+		}
+	}
+
+	bool GetProcs()
+	{
+		oCreateDXGIFactory = reinterpret_cast<CreateDXGIFactoryFn>(GetProcAddress(hDXGIModule, "CreateDXGIFactory"));
+		oDWriteCreateFactory = reinterpret_cast<DWriteCreateFactoryFn>(GetProcAddress(hDWriteModule, "DWriteCreateFactory"));
+		oD2D1CreateFactory = reinterpret_cast<D2D1CreateFactoryFn>(GetProcAddress(hD2DModule, "D2D1CreateFactory"));
+		oGetThreadId = reinterpret_cast<GetThreadIdFn>(GetProcAddress(GetModuleHandleA("kernel32"), "GetThreadId"));
+		return oCreateDXGIFactory && oDWriteCreateFactory && oD2D1CreateFactory;
+	}
+
+	bool LoadSingletons()
+	{
+		if (S_OK != oDWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&DWriteFactory))
+			return false;
+		return true;
+	}
+
+	void FreeSingletons()
+	{
+		// @oooii-tony: Because we're creating a shared DWrite interface, this 
+		// isn't always the last ref on the factory
+		//oASSERT(oGetRefCount(DWriteFactory) == 1, "Outstanding refcount (%u) on DWrite interfaces", oGetRefCount(DWriteFactory));
+		DWriteFactory = 0;
+	}
+
+	HMODULE hDXGIModule;
+	HMODULE hDWriteModule;
+	HMODULE hD2DModule;
+
+	DWriteCreateFactoryFn oDWriteCreateFactory;
+};
+
+
+bool oCreateDXGIFactory( IDXGIFactory** _ppFactory )
+{
+	if (S_OK != oVistaAPIsContext::Singleton()->oCreateDXGIFactory(__uuidof(IDXGIFactory), (void**)_ppFactory))
+		return false;
+
+	return true;
+}
+
+bool oD2D1CreateFactory(ID2D1Factory** _ppFactory)
+{
+	return(S_OK == oVistaAPIsContext::Singleton()->oD2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof(ID2D1Factory), 0, (void**)_ppFactory));
+}
+
+IDWriteFactory* oGetDWriteFactorySingleton()
+{
+	return oVistaAPIsContext::Singleton()->DWriteFactory;
+}
+
+float oDXGIGetD3DVersion(IDXGIAdapter* _pAdapter)
+{
+	#if D3D11_MAJOR_VERSION
+		if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D11Device), 0)) return 11.0f;
+	#endif
+	#ifdef _D3D10_1_CONSTANTS
+		if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D10Device1), 0)) return 10.1f;
+	#endif
+	#ifdef _D3D10_CONSTANTS
+		if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D10Device), 0)) return 10.0f;
+	#endif
+	return 0.0f;
+}
+
+bool oDXGIFindOutput(IDXGIFactory* _pFactory, HMONITOR _hMonitor, IDXGIOutput** _ppOutput)
+{
+	if (!_pFactory || !_hMonitor || !_ppOutput) return false;
+
+	*_ppOutput = 0;
+	IDXGIAdapter* pAdapter = 0;
+	unsigned int i = 0;
+	while (!*_ppOutput && DXGI_ERROR_NOT_FOUND != _pFactory->EnumAdapters(i++, &pAdapter))
+	{
+		IDXGIOutput* pOutput = 0;
+
+		unsigned int o = 0;
+		while (DXGI_ERROR_NOT_FOUND != pAdapter->EnumOutputs(o++, &pOutput))
+		{
+			DXGI_OUTPUT_DESC desc;
+			pOutput->GetDesc(&desc);
+			if (desc.Monitor == _hMonitor)
+			{
+				*_ppOutput = pOutput;
+				break;
+			}
+
+			pOutput->Release();
+		}
+
+		pAdapter->Release();
+	}
+
+	return !!*_ppOutput;
+}
+
+bool oDXGIIsDepthFormat(DXGI_FORMAT _Format)
+{
+	switch (_Format)
+	{
+		case DXGI_FORMAT_D32_FLOAT:
+		case DXGI_FORMAT_R32_TYPELESS:
+		case DXGI_FORMAT_D24_UNORM_S8_UINT:
+		case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+		case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+		case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+		case DXGI_FORMAT_D16_UNORM:
+		case DXGI_FORMAT_R16_TYPELESS:
+			return true;
+		default:
+			break;
+	}
+
+	return false;
+}
+
+DXGI_FORMAT oDXGIGetDepthCompatibleFormat(DXGI_FORMAT _TypelessDepthFormat)
+{
+	switch (_TypelessDepthFormat)
+	{
+		case DXGI_FORMAT_R32_TYPELESS: return DXGI_FORMAT_D32_FLOAT;
+		case DXGI_FORMAT_R24_UNORM_X8_TYPELESS: return DXGI_FORMAT_D24_UNORM_S8_UINT;
+		case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS: return DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+		case DXGI_FORMAT_R16_TYPELESS: return DXGI_FORMAT_D16_UNORM;
+		default: return _TypelessDepthFormat;
+	}
+}
+
+DXGI_FORMAT oDXGIGetColorCompatibleFormat(DXGI_FORMAT _DepthFormat)
+{
+	switch (_DepthFormat)
+	{
+		case DXGI_FORMAT_R32_TYPELESS:
+		case DXGI_FORMAT_D32_FLOAT: return DXGI_FORMAT_R32_FLOAT;
+		case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+		case DXGI_FORMAT_D24_UNORM_S8_UINT: return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+		case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+		case DXGI_FORMAT_D32_FLOAT_S8X24_UINT: return DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+		case DXGI_FORMAT_R16_TYPELESS:
+		case DXGI_FORMAT_D16_UNORM: return DXGI_FORMAT_R16_UNORM;
+		default: return _DepthFormat;
+	}
+}
+
+#endif // oDXVER >= oDXVER_10
+
 #if oDXVER >= oDXVER_11
 	float oGetD3DVersion(D3D_FEATURE_LEVEL _Level)
 	{
@@ -847,345 +1062,7 @@ void* oGetWindowContext(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, 
 		}
 	}
 
-	UINT oDX11GetNumElements(D3D11_PRIMITIVE_TOPOLOGY _PrimitiveTopology, UINT _NumPrimitives)
-	{
-		switch (_PrimitiveTopology)
-		{
-			case D3D11_PRIMITIVE_TOPOLOGY_POINTLIST: return _NumPrimitives;
-			case D3D11_PRIMITIVE_TOPOLOGY_LINELIST: return _NumPrimitives * 2;
-			case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP: return _NumPrimitives + 1;
-			case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST: return _NumPrimitives * 3;
-			case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP: return _NumPrimitives + 2;
-			default: oASSUME(0);
-		}
-	}
-
-	UINT oDX11Draw(ID3D11DeviceContext* _pDeviceContext
-		, D3D11_PRIMITIVE_TOPOLOGY _PrimitiveTopology
-		, UINT _NumPrimitives
-		, UINT _NumVertexBuffers
-		, const ID3D11Buffer* const* _ppVertexBuffers
-		, const UINT* _VertexStrides
-		, UINT _IndexOfFirstVertexToDraw
-		, UINT _OffsetToAddToEachVertexIndex
-		, const ID3D11Buffer* _IndexBuffer
-		, bool _32BitIndexBuffer
-		, UINT _IndexOfFirstIndexToDraw
-		, UINT _NumInstances
-		, UINT _IndexOfFirstInstanceIndexToDraw)
-	{
-		const UINT nElements = oDX11GetNumElements(_PrimitiveTopology, _NumPrimitives);
-		static UINT sOffsets[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-
-		// DirectX as an API has a funny definition for const, probably because of 
-		// ref-counting, so consider it a platform-quirk and keep const correctness
-		// above this API, but cast it away as DirectX requires here...
-
-		_pDeviceContext->IASetVertexBuffers(0, _NumVertexBuffers, const_cast<ID3D11Buffer* const*>(_ppVertexBuffers), _VertexStrides, sOffsets);
-		_pDeviceContext->IASetPrimitiveTopology(_PrimitiveTopology);
-
-		if (_IndexBuffer)
-		{
-			_pDeviceContext->IASetIndexBuffer(const_cast<ID3D11Buffer*>(_IndexBuffer), _32BitIndexBuffer ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT, _IndexOfFirstIndexToDraw);
-
-			if (_NumInstances)
-				_pDeviceContext->DrawIndexedInstanced(nElements, _NumInstances, _IndexOfFirstIndexToDraw, _OffsetToAddToEachVertexIndex, _IndexOfFirstInstanceIndexToDraw);
-			else
-				_pDeviceContext->DrawIndexed(nElements, _IndexOfFirstIndexToDraw, _OffsetToAddToEachVertexIndex);
-		}
-
-		else
-		{
-			if (_NumInstances)
-				_pDeviceContext->DrawInstanced(nElements, _NumInstances, _IndexOfFirstVertexToDraw, _IndexOfFirstInstanceIndexToDraw);
-			else
-				_pDeviceContext->Draw(nElements, _IndexOfFirstVertexToDraw);
-		}
-
-		return _NumPrimitives * __min(1, _NumInstances);
-	}
-
-	template<> const char* oAsString(const oD3D11_PIPELINE_STAGE& _Stage)
-	{
-		switch (_Stage)
-		{
-			case oD3D11_PIPELINE_STAGE_VERTEX: return "oD3D11_PIPELINE_STAGE_VERTEX";
-			case oD3D11_PIPELINE_STAGE_HULL: return "oD3D11_PIPELINE_STAGE_HULL";
-			case oD3D11_PIPELINE_STAGE_DOMAIN: return "oD3D11_PIPELINE_STAGE_DOMAIN";
-			case oD3D11_PIPELINE_STAGE_GEOMETRY: return "oD3D11_PIPELINE_STAGE_GEOMETRY";
-			case oD3D11_PIPELINE_STAGE_PIXEL: return "oD3D11_PIPELINE_STAGE_PIXEL";
-			default: oASSUME(0);
-		}
-	}
-
-	const char* oDX11GetShaderProfile(ID3D11Device* _pDevice, oD3D11_PIPELINE_STAGE _Stage)
-	{
-		static const char* sDX9Profiles[] = 
-		{
-			"vs_3_0",
-			0,
-			0,
-			0,
-			"ps_3_0",
-			0,
-		};
-
-		static const char* sDX10Profiles[] = 
-		{
-			"vs_4_0",
-			0,
-			0,
-			"gs_4_0",
-			"ps_4_0",
-			0,
-		};
-
-		static const char* sDX10_1Profiles[] = 
-		{
-			"vs_4_1",
-			0,
-			0,
-			"gs_4_1",
-			"ps_4_1",
-			0,
-		};
-
-		static const char* sDX11Profiles[] = 
-		{
-			"vs_5_0",
-			"hs_5_0",
-			"ds_5_0",
-			"gs_5_0",
-			"ps_5_0",
-			"cs_5_0",
-		};
-
-		const char** profiles = 0;
-		switch (_pDevice->GetFeatureLevel())
-		{
-		case D3D_FEATURE_LEVEL_9_1:
-		case D3D_FEATURE_LEVEL_9_2:
-		case D3D_FEATURE_LEVEL_9_3:
-			profiles = sDX9Profiles;
-			break;
-		case D3D_FEATURE_LEVEL_10_0:
-			profiles = sDX10Profiles;
-			break;
-		case D3D_FEATURE_LEVEL_10_1:
-			profiles = sDX10_1Profiles;
-			break;
-		case D3D_FEATURE_LEVEL_11_0:
-			profiles = sDX11Profiles;
-			break;
-		default:
-			oASSUME(0);
-		}
-
-		const char* profile = profiles[_Stage];
-		if (!profile)
-			oSetLastError(ENOENT, "Shader profile does not exist for D3D%.2f's stage %s", oGetD3DVersion(_pDevice->GetFeatureLevel()), oAsString(_Stage));
-
-		return profile;
-	}
-
-	bool oDX11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _SizeofOutErrorMessageString, ID3DBlob* _pErrorMessages)
-	{
-		if (!_OutErrorMessageString)
-		{
-			oSetLastError(EINVAL);
-			return false;
-		}
-
-		if (_pErrorMessages)
-		{
-			errno_t err = oReplace(_OutErrorMessageString, _SizeofOutErrorMessageString, (const char*)_pErrorMessages->GetBufferPointer(), "%", "%%");
-			if (err)
-			{
-				oSetLastError(err);
-				return false;
-			}
-		}
-
-		else
-			*_OutErrorMessageString = 0;
-
-		return true;
-	}
-
-#endif
-
-#if oDXVER >= oDXVER_10
-
-	typedef HRESULT (__stdcall *CreateDXGIFactoryFn)(REFIID riid, void **ppFactory);
-	typedef HRESULT (__stdcall *DWriteCreateFactoryFn)(DWRITE_FACTORY_TYPE factoryType, REFIID iid, IUnknown **factory);
-	typedef HRESULT (__stdcall *D2D1CreateFactoryFn)(D2D1_FACTORY_TYPE factoryType, REFIID riid, const D2D1_FACTORY_OPTIONS *pFactoryOptions, void **ppIFactory);
-	typedef DWORD (__stdcall *GetThreadIdFn)(HANDLE Thread);
-
-	struct oVistaAPIsContext : oSingleton<oVistaAPIsContext>
-	{
-		oVistaAPIsContext()
-			: hDXGIModule(0)
-			, hDWriteModule(0)
-			, hD2DModule(0)
-		{
-			if (LoadModules())
-			{
-				if (!GetProcs() || !LoadSingletons())
-				{
-					oASSERT(false, "Could not soft-link to all APIs from DXGI DirectWrite and/or Direct2D.");
-					FreeModules();
-				}
-			}
-		}
-
-		~oVistaAPIsContext()
-		{
-			FreeSingletons();
-			FreeModules();
-		}
-
-		oRef<IDXGIFactory> DXGIFactory;
-		oRef<IDWriteFactory> DWriteFactory;
-		oRef<ID2D1Factory> D2DFactory;
-		GetThreadIdFn oGetThreadId;
-
-	protected:
-
-		bool LoadModules()
-		{
-			hDXGIModule = LoadLibraryA("dxgi");
-			hDWriteModule = LoadLibraryA("dwrite");
-			hD2DModule = LoadLibraryA("d2d1");
-			return hDXGIModule && hDWriteModule && hD2DModule;
-		}
-
-		void FreeModules()
-		{
-			oCreateDXGIFactory = 0;
-			oDWriteCreateFactory = 0;
-			oD2D1CreateFactory = 0;
-
-			if (hDXGIModule)
-			{
-				FreeLibrary(hDXGIModule);
-				hDXGIModule = 0;
-			}
-
-			if (hDWriteModule)
-			{
-				FreeLibrary(hD2DModule);
-				hDWriteModule = 0;
-			}
-
-			if (hD2DModule)
-			{
-				FreeLibrary(hD2DModule);
-				hD2DModule = 0;
-			}
-		}
-
-		bool GetProcs()
-		{
-			oCreateDXGIFactory = reinterpret_cast<CreateDXGIFactoryFn>(GetProcAddress(hDXGIModule, "CreateDXGIFactory"));
-			oDWriteCreateFactory = reinterpret_cast<DWriteCreateFactoryFn>(GetProcAddress(hDWriteModule, "DWriteCreateFactory"));
-			oD2D1CreateFactory = reinterpret_cast<D2D1CreateFactoryFn>(GetProcAddress(hD2DModule, "D2D1CreateFactory"));
-			oGetThreadId = reinterpret_cast<GetThreadIdFn>(GetProcAddress(GetModuleHandleA("kernel32"), "GetThreadId"));
-			return oCreateDXGIFactory && oDWriteCreateFactory && oD2D1CreateFactory;
-		}
-
-		bool LoadSingletons()
-		{
-			if (S_OK != oCreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&DXGIFactory))
-				return false;
-			if (S_OK != oDWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&DWriteFactory))
-				return false;
-			if (S_OK != oD2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof(ID2D1Factory), 0, (void**)&D2DFactory))
-				return false;
-			return true;
-		}
-
-		void FreeSingletons()
-		{
-			oASSERT(oGetRefCount(DXGIFactory) == 1, "Outstanding refcount (%u) on DXGI interfaces", oGetRefCount(DXGIFactory));
-			DXGIFactory = 0;
-			// @oooii-tony: Because we're creating a shared DWrite interface, this 
-			// isn't always the last ref on the factory
-			//oASSERT(oGetRefCount(DWriteFactory) == 1, "Outstanding refcount (%u) on DWrite interfaces", oGetRefCount(DWriteFactory));
-			DWriteFactory = 0;
-			oASSERT(oGetRefCount(D2DFactory) == 1, "Outstanding refcount (%u) on D2D interfaces", oGetRefCount(D2DFactory));
-			D2DFactory = 0;
-		}
-
-		HMODULE hDXGIModule;
-		HMODULE hDWriteModule;
-		HMODULE hD2DModule;
-
-		CreateDXGIFactoryFn oCreateDXGIFactory;
-		DWriteCreateFactoryFn oDWriteCreateFactory;
-		D2D1CreateFactoryFn oD2D1CreateFactory;
-	};
-
-	IDXGIFactory* oGetDXGIFactorySingleton()
-	{
-		return oVistaAPIsContext::Singleton()->DXGIFactory;
-	}
-
-	IDWriteFactory* oGetDWriteFactorySingleton()
-	{
-		return oVistaAPIsContext::Singleton()->DWriteFactory;
-	}
-
-	ID2D1Factory* oGetD2DFactorySingleton()
-	{
-		return oVistaAPIsContext::Singleton()->D2DFactory;
-	}
-
-	float oGetD3DVersion(IDXGIAdapter* _pAdapter)
-	{
-		#if D3D11_MAJOR_VERSION
-			if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D11Device), 0)) return 11.0f;
-		#endif
-		#ifdef _D3D10_1_CONSTANTS
-			if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D10Device1), 0)) return 10.1f;
-		#endif
-		#ifdef _D3D10_CONSTANTS
-			if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D10Device), 0)) return 10.0f;
-		#endif
-		return 0.0f;
-	}
-
-	bool oFindDXGIOutput(IDXGIFactory* _pFactory, HMONITOR _hMonitor, IDXGIOutput** _ppOutput)
-	{
-		if (!_pFactory || !_hMonitor || !_ppOutput) return false;
-
-		*_ppOutput = 0;
-		IDXGIAdapter* pAdapter = 0;
-		unsigned int i = 0;
-		while (!*_ppOutput && DXGI_ERROR_NOT_FOUND != _pFactory->EnumAdapters(i++, &pAdapter))
-		{
-			IDXGIOutput* pOutput = 0;
-
-			unsigned int o = 0;
-			while (DXGI_ERROR_NOT_FOUND != pAdapter->EnumOutputs(o++, &pOutput))
-			{
-				DXGI_OUTPUT_DESC desc;
-				pOutput->GetDesc(&desc);
-				if (desc.Monitor == _hMonitor)
-				{
-					*_ppOutput = pOutput;
-					break;
-				}
-
-				pOutput->Release();
-			}
-
-			pAdapter->Release();
-		}
-
-		return !!*_ppOutput;
-	}
-
-#endif
+#endif // oDXVER >= oDXVER_11
 
 unsigned int oGetDisplayDevice(HMONITOR _hMonitor, DISPLAY_DEVICE* _pDevice)
 {

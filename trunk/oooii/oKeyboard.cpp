@@ -341,9 +341,17 @@ char oKeyboard::ToAscii(KEY _Key, bool _IsShiftDown)
 	return 0;
 }
 
+const oGUID& oGetGUID( threadsafe const oKeyboard* threadsafe const * )
+{
+	// {13E8CC08-E3DF-4d09-A0C4-E6AB84EFB714}
+	static const oGUID oIIDKeyboard = { 0x13e8cc08, 0xe3df, 0x4d09, { 0xa0, 0xc4, 0xe6, 0xab, 0x84, 0xef, 0xb7, 0x14 } };
+	return oIIDKeyboard;
+}
+
 struct Keyboard_Impl : public oKeyboard
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oKeyboard>());
 
 	Keyboard_Impl(HWND _hWnd, bool _ShortCircuitChain, bool* pSuccess = 0)
 		: ShortCircuitChain(_ShortCircuitChain)

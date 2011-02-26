@@ -35,7 +35,6 @@ struct TESTIntersection : public oTest
 		float FovY;
 		float AspectRatio;
 		float ZNear;
-		float ZFar;
 	};
 
 	struct EYE
@@ -100,18 +99,18 @@ struct TESTIntersection : public oTest
 
 		static const PERSPECTIVE sPerspectives[] =
 		{
-			{ radians(45.0f), 1.3333f, 0.0001f, 1000.0f },
+			{ radians(45.0f), 1.3333f, 0.0001f },
 		};
 
 		for (size_t p = 0; p < oCOUNTOF(sPerspectives); p++)
 		{
-			float4x4 projection = oCreatePerspective(sPerspectives[p].FovY, sPerspectives[p].AspectRatio, sPerspectives[p].ZNear, sPerspectives[p].ZFar);
+			float4x4 projection = oCreatePerspectiveLH(sPerspectives[p].FovY, sPerspectives[p].AspectRatio, sPerspectives[p].ZNear);
 
 			for (size_t e = 0; e < oCOUNTOF(sEyes); e++)
 			{
-				float4x4 view = oCreateLookAt(sEyes[e].Position, sEyes[e].LookAtPoint, float3(0.0f, 1.0f, 0.0f));
-				float4x4 projection = oCreateOrthographic(-100.0f, 100.0f, -100.0f, 100.0f, 0.01f, 1500.0f);
-				float4x4 vp = oAsVP(view, projection);
+				float4x4 view = oCreateLookAtRH(sEyes[e].Position, sEyes[e].LookAtPoint, float3(0.0f, 1.0f, 0.0f));
+				float4x4 projection = oCreateOrthographicRH(-100.0f, 100.0f, -100.0f, 100.0f, 0.01f, 1500.0f);
+				float4x4 vp = view * projection;
 				oFrustumf frustum(vp);
 
 				// @oooii-tony: Assume the scalar frustcull works to get 'correct' answers

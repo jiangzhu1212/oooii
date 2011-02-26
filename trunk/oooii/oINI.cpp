@@ -89,10 +89,17 @@ bool INIParse(ENTRIES& _Entries, char* _INIBuffer)
 	return true;
 }
 
+const oGUID& oGetGUID( threadsafe const oINI* threadsafe const * )
+{
+	// {2F7482EF-15E2-47a2-A553-F11FB9EFE53B}
+	static const oGUID oIIDINI = { 0x2f7482ef, 0x15e2, 0x47a2, { 0xa5, 0x53, 0xf1, 0x1f, 0xb9, 0xef, 0xe5, 0x3b } };
+	return oIIDINI;
+}
 
 struct oINI_Impl : public oINI
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oINI>());
 
 	oINI_Impl(const char* _DocumentName, const char* _INIString);
 	~oINI_Impl();

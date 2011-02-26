@@ -420,6 +420,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TESTSingletonInteraction.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\TESTSocket.cpp"
 				>
 			</File>

@@ -42,13 +42,14 @@ struct TESTStaticHeapTrivial : public oTest
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		const char* NAME = "TestBuffer";
-		TestStaticContext* c = oHeap::StaticConstructShared<TestStaticContext>(NAME);
+		TestStaticContext* c = oHeap::StaticConstructShared<TestStaticContext>(NAME, false);
 		oTESTB(c && c->Counter == 1234, "Failed to construct context");
 		c->Counter = 4321;
 
-		c = oHeap::StaticConstructShared<TestStaticContext>(NAME);
+		c = oHeap::StaticConstructShared<TestStaticContext>(NAME, false);
 		oTESTB(c && c->Counter == 4321, "Failed to attach context");
 
+		oHeap::StaticDeallocateShared(c);
 		oHeap::StaticDeallocateShared(c);
 		return SUCCESS;
 	}

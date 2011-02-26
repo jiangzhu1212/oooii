@@ -101,10 +101,11 @@ public:
 
 	void resize(size_t _NewSize, T _InitialValue = T())
 	{
-		oASSERT(_NewSize < max_size(), "New size %u too large for oArray"m _NewSize);
+		oASSERT(_NewSize < max_size(), "New size %u too large for oArray", _NewSize);
 
-		for (size_t i = _Size; i >= _NewSize; i--)
-			Array[i].~T();
+		if (_NewSize < Size)
+			for (size_t i = _NewSize; i < Size; i++)
+				Array[i].~T();
 
 		for (size_t i = Size; i < _NewSize; i++)
 			Array[i] = _InitialValue;
@@ -358,5 +359,22 @@ template<typename T> struct oStdEqualTo : public std::binary_function<T, T, int>
 template<> struct oStdEqualTo<const char*> { int operator()(const char* x, const char* y) const { return !strcmp(x, y); } };
 template<typename T> struct oStdEqualToI : public std::binary_function<T, T, int> { int operator()(const T& x, const T& y) const { return x == y; } };
 template<> struct oStdEqualToI<const char*> { int operator()(const char* x, const char* y) const { return !_stricmp(x, y); } };
+
+//////////////////////////////////////////////////////////////////////////
+// OOOii-Kevin: foreach macro that works with std::vector matches 
+// BOOST_FOREACH syntax.  Does not work with any other container type
+//////////////////////////////////////////////////////////////////////////
+#define oFOREACH_BASE( val, col, instance ) \
+	const size_t count##instance = (col).size(); \
+	size_t bLoopOnce##instance = 0; \
+	for(size_t index##instance = 0; index##instance < count##instance; ++index##instance, bLoopOnce##instance = 0 ) \
+	for( val = (col)[ index##instance ]; bLoopOnce##instance == 0; bLoopOnce##instance = 1 )
+
+// Instantiator needed to ensure we have the same instance for all variables __COUNTER__ is called once
+#define oFOREACH_BASE_INSTANTIATOR( val, col, instance ) \
+	oFOREACH_BASE( val, col, instance )
+
+#define oFOREACH( val, col ) \
+	oFOREACH_BASE_INSTANTIATOR( val, col, __COUNTER__ )
 
 #endif

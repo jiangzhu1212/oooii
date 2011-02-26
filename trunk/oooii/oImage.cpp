@@ -33,9 +33,6 @@
 #include <oooii/oWindows.h>
 #include <FreeImage.h>
 
-// {83CECF1C-316F-4ed4-9B20-4180B2ED4B4E}
-const oGUID oIIDImage = { 0x83cecf1c, 0x316f, 0x4ed4, { 0x9b, 0x20, 0x41, 0x80, 0xb2, 0xed, 0x4b, 0x4e } };
-
 oSurface::FORMAT GetSurfaceFormat(FIBITMAP* _pBitmap)
 {
 	oSurface::FORMAT format = oSurface::UNKNOWN;
@@ -164,7 +161,7 @@ int GetSaveFlags(FREE_IMAGE_FORMAT _Format, oImage::COMPRESSION _Compression)
 	return 0;
 }
 
-struct FIStaticInitialization : public oSingleton<FIStaticInitialization>
+struct FIStaticInitialization : public oProcessSingleton<FIStaticInitialization>
 {
 	struct Run
 	{
@@ -193,10 +190,17 @@ struct FIStaticInitialization : public oSingleton<FIStaticInitialization>
 
 FIStaticInitialization::Run sInitializeFreeImage; // @oooii-tony: ok static, we need to run this code exactly once per process, and oSingleton guarantees that.
 
+const oGUID& oGetGUID( threadsafe const oImage* threadsafe const * )
+{
+	// {83CECF1C-316F-4ed4-9B20-4180B2ED4B4E}
+	static const oGUID oIIDImage = { 0x83cecf1c, 0x316f, 0x4ed4, { 0x9b, 0x20, 0x41, 0x80, 0xb2, 0xed, 0x4b, 0x4e } };
+	return oIIDImage;
+}
+
 struct oImage_Impl : public oImage
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_TRIVIAL_QUERYINTERFACE(oIIDImage);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oImage>());
 
 	oImage_Impl(FIBITMAP* _bmp);
 	~oImage_Impl();

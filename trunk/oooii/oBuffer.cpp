@@ -31,9 +31,24 @@
 #include <oooii/oLockFreeQueue.h>
 #include <oooii/oRef.h>
 
+const oGUID& oGetGUID( threadsafe const oBuffer* threadsafe const * )
+{
+	// {714C9432-EBF6-4232-9E2E-90692C294B8B}
+	static const oGUID oIIDBuffer = { 0x714c9432, 0xebf6, 0x4232, { 0x9e, 0x2e, 0x90, 0x69, 0x2c, 0x29, 0x4b, 0x8b } };
+	return oIIDBuffer;
+}
+
+const oGUID& oGetGUID( threadsafe const oBufferPool* threadsafe const * )
+{
+	// {B33BD1BF-EA1C-43d6-9762-38B81BC53717}
+	static const oGUID oIIDBufferPool = { 0xb33bd1bf, 0xea1c, 0x43d6, { 0x97, 0x62, 0x38, 0xb8, 0x1b, 0xc5, 0x37, 0x17 } };
+	return oIIDBufferPool;
+}
+
 struct oBuffer_Impl : public oBuffer
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oBuffer>());
 
 	oBuffer_Impl(const char* _Name, void* _Allocation, size_t _Size, DeallocateFn _DeallocateFn);
 	~oBuffer_Impl();
@@ -63,6 +78,15 @@ bool oBuffer::Create(const char* _Name, void* _Allocation, size_t _Size, Dealloc
 	*_ppBuffer = new oBuffer_Impl(_Name, _Allocation, _Size, _DeallocateFn);
 	return !!*_ppBuffer;
 }
+
+bool oBuffer::Create( const char* _Name, const void* _Allocation, size_t _Size, DeallocateFn _DeallocateFn, threadsafe const oBuffer** _ppBuffer )
+{
+	if (!_Allocation || !_Size) return false;
+	// @oooii-kevin: const_cast is safe here because we guard const correctness by only returning a const pointer
+	*_ppBuffer = new oBuffer_Impl(_Name, const_cast<void*>( _Allocation ), _Size, _DeallocateFn );
+	return !!*_ppBuffer;
+}
+
 
 bool oBuffer::Create(const char* _Path, bool _IsText, threadsafe oBuffer** _ppBuffer)
 {
@@ -149,6 +173,7 @@ const char* oBuffer_Impl::GetName() const threadsafe
 struct oBufferPoolImpl : public oBufferPool
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oBufferPool>());
 
 	oBufferPoolImpl(const char* _Name, void* _Allocation, size_t _AllocationSize, size_t _IndividualBufferSize, oBuffer::DeallocateFn _DeallocateFn, bool* bSuccess);
 	~oBufferPoolImpl();

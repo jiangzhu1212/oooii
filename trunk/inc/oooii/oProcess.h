@@ -53,6 +53,13 @@ interface oProcess : public oInterface
 	static size_t GetCurrentProcessID();
 	static size_t GetProcessHandle(const char* _pName);
 
+	// @oooii-kevin:
+	// Returns the module handle of the caller, hence the static.  This will
+	// be different if called from a specific dll or code that is statically
+	// linked to the exe.
+	static size_t GetCurrentModuleHandle();
+	static size_t GetMainProcessModuleHandle();
+
 	virtual void Start() threadsafe = 0;
 	virtual void Kill(int _ExitCode) threadsafe = 0;
 	virtual bool Wait(unsigned int _TimeoutMS = oINFINITE_WAIT) threadsafe = 0;

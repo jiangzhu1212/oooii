@@ -25,6 +25,7 @@
 #ifndef oooii_h
 #define oooii_h
 #include <oooii/oAllocator.h>
+#include <oooii/oAllocatorTLSF.h>
 #include <oooii/oAssert.h>
 #include <oooii/oAtomic.h>
 #include <oooii/oBarrier.h>

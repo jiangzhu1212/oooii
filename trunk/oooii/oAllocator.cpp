@@ -25,39 +25,9 @@
 #include <oooii/oErrno.h>
 #include "oAllocatorTLSF.h"
 
-bool oAllocator::Create(const char* _DebugName, const DESC* _pDesc, oAllocator** _ppAllocator)
+const oGUID& oGetGUID(threadsafe const oAllocator* threadsafe const * /* = 0 */)
 {
-	if (!_pDesc || !_ppAllocator || !_pDesc->pArena || !_pDesc->ArenaSize)
-	{
-		oSetLastError(EINVAL);
-		return false;
-	}
-
-	bool success = false;
-	*_ppAllocator = 0;
-	switch (_pDesc->Type)
-	{
-		case TLSF:
-			*_ppAllocator = new (_pDesc->pArena) oAllocatorTLSF(_DebugName, _pDesc, &success);
-			break;
-
-		default:
-			oSetLastError(EINVAL);
-			return false;
-	}
-
-	if (!_ppAllocator)
-	{
-		oSetLastError(ENOMEM);
-		return false;
-	}
-
-	else if (!success)
-	{
-		delete *_ppAllocator;
-		*_ppAllocator = 0;
-		return false;
-	}
-
-	return true;
+	// {B429A4E8-B365-4890-AEB5-15E1BE64C573}
+	static const oGUID guid = { 0xb429a4e8, 0xb365, 0x4890, { 0xae, 0xb5, 0x15, 0xe1, 0xbe, 0x64, 0xc5, 0x73 } };
+	return guid;
 }

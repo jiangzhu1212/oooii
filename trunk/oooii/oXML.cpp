@@ -28,6 +28,7 @@
 #include <oooii/oLockedPointer.h>
 #include <oooii/oRef.h>
 #include <oooii/oRefCount.h>
+#include <oooii/oGUID.h>
 
 struct ATTRIBUTE
 {
@@ -101,10 +102,17 @@ void XMLCreateAttributes(char* _XMLDocument, char*& _XMLCurrent, ATTRIBUTES& _At
 	(_Node.Attr == _Attributes.size()) ? _Node.Attr = 0 : _Attributes.push_back(ATTRIBUTE()); // either null the list if no elements added, or push a null terminator
 }
 
+const oGUID& oGetGUID( threadsafe const oXML* threadsafe const * )
+{
+	// {2F544EC3-FE5C-450e-B522-DC6AEC08068E}
+	static const oGUID oIIDXML = { 0x2f544ec3, 0xfe5c, 0x450e, { 0xb5, 0x22, 0xdc, 0x6a, 0xec, 0x8, 0x6, 0x8e } };
+	return oIIDXML;
+}
 
 struct oXML_Impl : public oXML
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oXML>());
 
 	HNODE GetFirstChild(HNODE _hParentNode, const char* _Name = 0) const threadsafe override;
 	HNODE GetNextSibling(HNODE _hPriorSibling, const char* _Name = 0) const threadsafe override;

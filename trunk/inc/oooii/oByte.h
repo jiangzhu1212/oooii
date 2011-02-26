@@ -34,12 +34,9 @@ inline int oByteSwap(int x) { unsigned int r = oByteSwap(*(unsigned int*)&x); re
 inline long long oByteSwap(long long x) { unsigned long long r = oByteSwap(*(unsigned long long*)&x); return *(long long*)&r; }
 
 // Alignment
-inline size_t oByteAlign(size_t value, size_t alignment) { return ((value + alignment - 1) & ~(alignment - 1)); }
-inline void* oByteAlign(void* value, size_t alignment) { return reinterpret_cast<void*>(((reinterpret_cast<size_t>(value) + alignment - 1) & ~(alignment - 1))); }
-inline size_t oByteAlignDown(size_t value, size_t alignment) { return (value & ~(alignment - 1)); }
-inline void* oByteAlignDown(void* value, size_t alignment) { return reinterpret_cast<void*>((reinterpret_cast<size_t>(value) & ~(alignment - 1))); }
-inline bool oIsByteAligned(size_t value, size_t alignment) { return oByteAlign(value, alignment) == value; }
-inline bool oIsByteAligned(void* value, size_t alignment) { return oByteAlign(value, alignment) == value; }
+template<typename T> inline T oByteAlign(T _Value, size_t _Alignment) { return (T)(((size_t)_Value + _Alignment - 1) & ~(_Alignment - 1)); }
+template<typename T> inline T oByteAlignDown(T _Value, size_t _Alignment) { return (T)((size_t)_Value & ~(_Alignment - 1)); }
+template<typename T> inline bool oIsByteAligned(T _Value, size_t _Alignment) { return oByteAlign(_Value, _Alignment) == _Value; }
 
 // Offsets
 template<typename T> inline size_t oBytePadding(T value, size_t alignment) { return static_cast<T>(oByteAlign(value, alignment)) - value; }

@@ -31,6 +31,7 @@ static const char* psapi_dll_functions[] =
 	"EnumProcessModules",
 	"GetModuleBaseNameA",
 	"GetProcessMemoryInfo",
+	"GetModuleInformation",
 };
 
 oWinPSAPI::oWinPSAPI()

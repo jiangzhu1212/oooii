@@ -26,6 +26,11 @@
 #include <oooii/oPath.h>
 #include <oooii/oTest.h>
 
+static const char* sDoubleSlashPath = "c:/my//path";
+static const char* sCleanDoubleSlashPath = "c:/my/path";
+static const char* sUNCPath = "//c/my/path";
+static const char* sCleanUNCPath = "//c/my/path";
+
 struct TESTPath : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
@@ -47,8 +52,13 @@ struct TESTPath : public oTest
 		oTRACE("DESKTOP: %s", path);
 		oTESTB(oGetSysPath(path, oSYSPATH_DESKTOP_ALLUSERS), "Failed to get DESKTOP_ALLUSERS");
 		oTRACE("DESKTOP_ALLUSERS: %s", path);
-		oTESTB(oGetSysPath(path, oSYSPATH_P4ROOT), "Failed to get P4ROOT");
+		oTESTB(oGetSysPath(path, oSYSPATH_P4ROOT), "%s: %s", oGetErrnoString(oGetLastError()), oGetLastErrorDesc());
 		oTRACE("P4ROOT: %s", path);
+
+		oCleanPath(path, sDoubleSlashPath, '/');
+		oTESTB(!strcmp(path, sCleanDoubleSlashPath), "Failed to clean path \"%s\"", sDoubleSlashPath);
+		oCleanPath(path, sUNCPath, '/');
+		oTESTB(!strcmp(path, sCleanUNCPath), "Failed to clean path \"%s\"", sUNCPath);
 
 		return SUCCESS;
 	}

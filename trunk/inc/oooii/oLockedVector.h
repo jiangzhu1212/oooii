@@ -84,6 +84,11 @@ public:
 		return raw_base()->size();
 	}
 
+	inline size_t size() const threadsafe
+	{
+		return raw_base()->size();
+	}
+
 	inline bool empty() threadsafe
 	{
 		oRWMutex::ScopedLock ScopeLock(m_mutex);
@@ -169,6 +174,7 @@ private:
 	// Gives raw unprotected access to the base. Should only be called by functions that are 
 	// protecting the thread safety of the base
 	inline base* raw_base() threadsafe { return thread_cast<base*>( static_cast<threadsafe base*>(this) ); }
+	inline const base* raw_base() const threadsafe { return thread_cast<const base*>( static_cast<const threadsafe base*>(this) ); }
 	oRWMutex m_mutex;
 };
 

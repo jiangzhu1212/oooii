@@ -59,9 +59,17 @@ static void GetButtonState(UINT _uMsg, WPARAM _wParam, oMouse::BUTTON* _pWhich, 
 	}
 }
 
+const oGUID& oGetGUID( threadsafe const oMouse* threadsafe const * )
+{
+	// {B1BB6C2A-1D0C-4824-9F21-FDB817276F2A}
+	static const oGUID oIIDMouse = { 0xb1bb6c2a, 0x1d0c, 0x4824, { 0x9f, 0x21, 0xfd, 0xb8, 0x17, 0x27, 0x6f, 0x2a } };
+	return oIIDMouse;
+}
+
 struct Mouse_Impl : public oMouse
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oMouse>());
 
 	Mouse_Impl(HWND _hWnd, bool _ShortCircuitChain, bool* pSuccess = 0)
 		: ShortCircuitChain(_ShortCircuitChain)

@@ -65,6 +65,7 @@ template<typename T, typename QueueT>
 class TESTQueues_PushAndPop : public oThread::Proc
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oThread::Proc>());
 
 	QueueT* pQueue;
 	size_t NumPushPops;

@@ -26,13 +26,15 @@
 #define oTest_h
 
 #include <oooii/oInterface.h>
+#include <oooii/oImage.h>
 #include <oooii/oFilterChain.h>
 #include <oooii/oNoncopyable.h>
+#include <oooii/oString.h>
 
 #define oTESTERROR(format, ...) do { sprintf_s(_StrStatus, _SizeofStrStatus, format, ## __VA_ARGS__); oTRACE("FAILING: %s", _StrStatus); return oTest::FAILURE; } while(0)
 #define oTESTB(expr, errMsg, ...) do { if (!(expr)) { oTESTERROR(errMsg, ## __VA_ARGS__); } } while(0)
-
-interface oImage;
+#define oTESTI(oImagePointer) oTESTB(TestImage(oImagePointer), "Image compare failed: %s: %s", oGetErrnoString(oGetLastError()), oGetLastErrorDesc());
+#define oTESTI2(oImagePointer, NthFrame) oTESTB(TestImage(oImagePointer, NthFrame), "Image compare (%u%s frame) failed: %s: %s", NthFrame, oOrdinal(NthFrame), oGetErrnoString(oGetLastError()), oGetLastErrorDesc());
 
 template<typename T>
 struct oTestScopedArray
@@ -106,6 +108,8 @@ interface oTestManager : oNoncopyable
 			, StatusColumnWidth(10)
 			, RandomSeed(0)
 			, NumRunIterations(1)
+			, ImageFuzziness(2)
+			, PixelPercentageMinSuccess(100)
 		{}
 
 		const char* TestSuiteName;
@@ -116,6 +120,8 @@ interface oTestManager : oNoncopyable
 		unsigned int StatusColumnWidth;
 		unsigned int RandomSeed;
 		unsigned int NumRunIterations;
+		unsigned int ImageFuzziness;
+		unsigned int PixelPercentageMinSuccess;
 		// @oooii-tony: todo: Add redirect status, redirect printf
 	};
 

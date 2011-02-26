@@ -32,12 +32,14 @@ interface oBuffer : public oInterface
 {
 	typedef oFUNCTION<void(void*)> DeallocateFn;
 
-	// Convenience implementations of common free functions
+	// Convenience implementations of common allocation functions
+	static inline void* New( size_t _Size ) { return new unsigned char[_Size]; }
 	static inline void Delete(void* _Pointer) { delete [] _Pointer; }
 	static inline void Noop(void* _Pointer) {}
 
 	// If _FreeFn is 0, then the allocation is not free automatically
 	static bool Create(const char* _Name, void* _Allocation, size_t _Size, DeallocateFn _DeallocateFn, threadsafe oBuffer** _ppBuffer);
+	static bool Create(const char* _Name, const void* _Allocation, size_t _Size, DeallocateFn _DeallocateFn, threadsafe const oBuffer** _ppBuffer);
 
 	// Load a file into a newly allocated buffer using malloc to allocate the memory.
 	static bool Create(const char* _Path, bool _IsText, threadsafe oBuffer** _ppBuffer);

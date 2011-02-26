@@ -21,47 +21,33 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#pragma once
-#ifndef AllocatorTLSF_Impl_h
-#define AllocatorTLSF_Impl_h
+#ifndef oEightCC_h
+#define oEightCC_h
 
-#include <oooii/oAllocatorTLSF.h>
-#include <oooii/oRefCount.h>
-
-struct AllocatorTLSF_Impl : public oAllocatorTLSF
+// An EightCC is much like a FourCC ( http://en.wikipedia.org/wiki/FourCC ) but twice as long to avoid collisions
+struct oEightCC
 {
-	// Always allocate memory for this struct in the arena specified by the user
-	void* operator new(size_t _Size) { return 0; }
-	void* operator new[](size_t si_Size) { return 0; }
-	void operator delete(void* _Pointer) {}
-	void operator delete[](void* _Pointer) {}
-public:
-	void* operator new(size_t _Size, void* _pMemory) { return _pMemory; }
-	void operator delete(void* _Pointer, void* _pMemory) {}
+	oEightCC()
+	{}
+	oEightCC(long _FourCCA, long _FourCCB)
+	{
+		FourCC[0] = _FourCCA;
+		FourCC[1] = _FourCCB;
+	}
 
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oAllocatorTLSF>());
+	operator long long() const
+	{
+		return EightCC;
+	}
 
-	AllocatorTLSF_Impl(const char* _DebugName, const DESC* _pDesc, bool* _pSuccess);
-	~AllocatorTLSF_Impl();
+	union
+	{
+		long FourCC[2];
+		long long EightCC;
+	};
 
-	void GetDesc(DESC* _pDesc) override;
-	void GetStats(STATS* _pStats) override;
-	const char* GetDebugName() const threadsafe override;
-	const char* GetType() const threadsafe override;
-	bool IsValid() override;
-	void* Allocate(size_t _NumBytes, size_t _Alignment = oDEFAULT_MEMORY_ALIGNMENT) override;
-	void* Reallocate(void* _Pointer, size_t _NumBytes) override;
-	void Deallocate(void* _Pointer) override;
-	size_t GetBlockSize(void* _Pointer) override;
-	void Reset() override;
-	void WalkHeap(WalkerFn _Walker, void* _pUserData, long _Flags = 0) override;
-
-	DESC Desc;
-	STATS Stats;
-	oRefCount RefCount;
-	void* hPool;
-	char DebugName[64];
+	bool operator!=(const oEightCC& _other) const { return _other.EightCC != EightCC; }
+	bool operator==(const oEightCC& _other) const { return _other.EightCC == EightCC; }
 };
 
-#endif
+#endif // oEightCC_h

@@ -69,12 +69,19 @@ namespace oDebugger
 	bool FloatExceptionsEnabled();
 	void EnableFloatExceptions(bool _Enable);
 
-	// gets the address of the function calls from main to the point of calling.
-	// offset is the number of symbols to skip before recording starts
+	// Fills the array pointed to by _pAddresses with up to _NumAddresses
+	// addresses of functions in the current callstack from main(). This
+	// includes every function that led to the GetCallstack() call. Offset
+	// ignores the N functions at the top of the stack so a system can 
+	// simplify/hide details of debug reporting and keep the callstack 
+	// started from the meaningful user code where an error or assertion
+	// occurred.
+	// This returns the actual number of addresses retrieved.
 	size_t GetCallstack(unsigned long long* _pAddresses, size_t _NumAddresses, size_t _Offset);
 	template<size_t size> inline size_t GetCallstack(unsigned long long (&_pAddresses)[size], size_t _Offset) { return GetCallstack(_pAddresses, size, _Offset); }
 
-	// Convert symbol into more descriptive strings
+	// Convert an address as retrieved using GetCallstack() into more 
+	// descriptive strings.
 	bool TranslateSymbol(SYMBOL* _pSymbol, unsigned long long _Address);
 };
 

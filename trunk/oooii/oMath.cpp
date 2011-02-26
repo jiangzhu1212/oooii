@@ -34,7 +34,7 @@
 
 using namespace Vectormath::Aos;
 
-struct oPerlinContext : oSingleton<oPerlinContext>
+struct oPerlinContext : oProcessSingleton<oPerlinContext>
 {
 	oPerlinContext()
 		: P(4,4,1,94)
@@ -71,9 +71,172 @@ quatf slerp(const quatf& a, const quatf& b, float s)
 	return (quatf&)q;
 }
 
+// @oooii-tony: Should this be exposed? I've not seen this function around, but
+// it seems to be a precursor to ROP-style blend operations.
+template<typename T> const TVECTOR3<T> combine(const TVECTOR3<T>& a, const TVECTOR3<T>& b, T aScale, T bScale) { return aScale * a + bScale * b; }
+
+// returns the specified vector with the specified length
+template<typename T> TVECTOR3<T> oScale(const TVECTOR3<T>& a, T newLength)
+{
+	T oldLength = length(a);
+	if (oEqual(oldLength, T(0.0)))
+		return a;
+	return a * (newLength / oldLength);
+}
+
+template<typename T> bool decomposeT(const TMATRIX4<T>& _Matrix, TVECTOR3<T>* _pScale, T* _pShearXY, T* _pShearXZ, T* _pShearYZ, TVECTOR3<T>* _pRotation, TVECTOR3<T>* _pTranslation, TVECTOR4<T>* _pPerspective)
+{
+	/** <citation
+		usage="Adaptation" 
+		reason="Lots of math, code already written" 
+		author="Spencer W. Thomas"
+		description="http://tog.acm.org/resources/GraphicsGems/gemsii/unmatrix.c"
+		license="*** Assumed Public Domain ***"
+		licenseurl="http://tog.acm.org/resources/GraphicsGems/gemsii/unmatrix.c"
+		modification="templatized, changed matrix calls"
+	/>*/
+
+	// Code obtained from Graphics Gems 2 source code unmatrix.c
+
+//int
+//unmatrix( mat, tran )
+//Matrix4 *mat;
+//double tran[16];
+//{
+ 	register int i, j;
+ 	TMATRIX4<T> locmat;
+ 	TMATRIX4<T> pmat, invpmat, tinvpmat;
+ 	/* Vector4 type and functions need to be added to the common set. */
+ 	TVECTOR4<T> prhs, psol;
+ 	TVECTOR3<T> row[3], pdum3;
+
+ 	locmat = _Matrix;
+ 	/* Normalize the matrix. */
+ 	if ( locmat[3][3] == 0 )
+ 		return 0;
+ 	for ( i=0; i<4;i++ )
+ 		for ( j=0; j<4; j++ )
+ 			locmat[i][j] /= locmat[3][3];
+ 	/* pmat is used to solve for perspective, but it also provides
+ 	 * an easy way to test for singularity of the upper 3x3 component.
+ 	 */
+ 	pmat = locmat;
+ 	for ( i=0; i<3; i++ )
+ 		pmat[i][3] = 0;
+ 	pmat[3][3] = 1;
+
+ 	if ( determinant(pmat) == 0.0 )
+ 		return 0;
+
+ 	/* First, isolate perspective.  This is the messiest. */
+ 	if ( locmat[0][3] != 0 || locmat[1][3] != 0 ||
+ 		locmat[2][3] != 0 ) {
+ 		/* prhs is the right hand side of the equation. */
+ 		prhs.x = locmat[0][3];
+ 		prhs.y = locmat[1][3];
+ 		prhs.z = locmat[2][3];
+ 		prhs.w = locmat[3][3];
+
+ 		/* Solve the equation by inverting pmat and multiplying
+ 		 * prhs by the inverse.  (This is the easiest way, not
+ 		 * necessarily the best.)
+ 		 * inverse function (and det4x4, above) from the Matrix
+ 		 * Inversion gem in the first volume.
+ 		 */
+ 		invpmat = invert( pmat );
+		tinvpmat = transpose( invpmat );
+		psol = tinvpmat * prhs;
+ 
+ 		/* Stuff the answer away. */
+		
+ 		_pPerspective->x = psol.x;
+ 		_pPerspective->y = psol.y;
+ 		_pPerspective->z = psol.z;
+ 		_pPerspective->w = psol.w;
+ 		/* Clear the perspective partition. */
+ 		locmat[0][3] = locmat[1][3] =
+ 			locmat[2][3] = 0;
+ 		locmat[3][3] = 1;
+ 	} else		/* No perspective. */
+ 		_pPerspective->x = _pPerspective->y = _pPerspective->z =
+ 			_pPerspective->w = 0;
+
+ 	/* Next take care of translation (easy). */
+ 	for ( i=0; i<3; i++ ) {
+ 		(*_pTranslation)[i] = locmat[3][i];
+ 		locmat[3][i] = 0;
+ 	}
+
+ 	/* Now get scale and shear. */
+ 	for ( i=0; i<3; i++ ) {
+ 		row[i].x = locmat[i][0];
+ 		row[i].y = locmat[i][1];
+ 		row[i].z = locmat[i][2];
+ 	}
+
+ 	/* Compute X scale factor and normalize first row. */
+ 	_pScale->x = length(*(TVECTOR3<T>*)&row[0]);
+ 	*(TVECTOR3<T>*)&row[0] = oScale(*(TVECTOR3<T>*)&row[0], T(1.0));
+
+ 	/* Compute XY shear factor and make 2nd row orthogonal to 1st. */
+ 	*_pShearXY = dot(*(TVECTOR3<T>*)&row[0], *(TVECTOR3<T>*)&row[1]);
+	*(TVECTOR3<T>*)&row[1] = combine(*(TVECTOR3<T>*)&row[1], *(TVECTOR3<T>*)&row[0], T(1.0), -*_pShearXY);
+
+ 	/* Now, compute Y scale and normalize 2nd row. */
+ 	_pScale->y = length(*(TVECTOR3<T>*)&row[1]);
+ 	*(TVECTOR3<T>*)&row[1] = oScale(*(TVECTOR3<T>*)&row[1], T(1.0));
+ 	*_pShearXY /= _pScale->y;
+
+ 	/* Compute XZ and YZ shears, orthogonalize 3rd row. */
+ 	*_pShearXZ = dot(*(TVECTOR3<T>*)&row[0], *(TVECTOR3<T>*)&row[2]);
+	*(TVECTOR3<T>*)&row[2] = combine(*(TVECTOR3<T>*)&row[2], *(TVECTOR3<T>*)&row[0], T(1.0), -*_pShearXZ);
+ 	*_pShearYZ = dot(*(TVECTOR3<T>*)&row[1], *(TVECTOR3<T>*)&row[2]);
+ 	*(TVECTOR3<T>*)&row[2] = combine(*(TVECTOR3<T>*)&row[2], *(TVECTOR3<T>*)&row[1], T(1.0), -*_pShearYZ);
+
+ 	/* Next, get Z scale and normalize 3rd row. */
+ 	_pScale->z = length(*(TVECTOR3<T>*)&row[2]);
+ 	*(TVECTOR3<T>*)&row[2] = oScale(*(TVECTOR3<T>*)&row[2], T(1.0));
+ 	*_pShearXZ /= _pScale->z;
+ 	*_pShearYZ /= _pScale->z;
+ 
+ 	/* At this point, the matrix (in rows[]) is orthonormal.
+ 	 * Check for a coordinate system flip.  If the determinant
+ 	 * is -1, then negate the matrix and the scaling factors.
+ 	 */
+ 	if ( dot( *(TVECTOR3<T>*)&row[0], cross(*(TVECTOR3<T>*)&row[1], *(TVECTOR3<T>*)&row[2]) ) < T(0) )
+ 		for ( i = 0; i < 3; i++ ) {
+ 			(*_pScale)[i] *= T(-1);
+ 			row[i].x *= T(-1);
+ 			row[i].y *= T(-1);
+ 			row[i].z *= T(-1);
+ 		}
+ 
+ 	/* Now, get the rotations out, as described in the gem. */
+ 	_pRotation->y = asin(-row[0].z);
+ 	if ( cos(_pRotation->y) != 0 ) {
+ 		_pRotation->x = atan2(row[1].z, row[2].z);
+ 		_pRotation->z = atan2(row[0].y, row[0].x);
+ 	} else {
+ 		_pRotation->x = atan2(-row[2].x, row[1].y);
+ 		_pRotation->z = 0;
+ 	}
+ 	/* All done! */
+ 	return 1;
+}
+
+bool decompose(const float4x4& _Matrix, float3* _pScale, float* _pShearXY, float* _pShearXZ, float* _pShearZY, float3* _pRotation, float3* _pTranslation, float4* _pPerspective)
+{
+	return decomposeT(_Matrix, _pScale, _pShearXY, _pShearXZ, _pShearZY, _pRotation, _pTranslation, _pPerspective);
+}
+
+bool decompose(const double4x4& _Matrix, double3* _pScale, double* _pShearXY, double* _pShearXZ, double* _pShearZY, double3* _pRotation, double3* _pTranslation, double4* _pPerspective)
+{
+	return decomposeT(_Matrix, _pScale, _pShearXY, _pShearXZ, _pShearZY, _pRotation, _pTranslation, _pPerspective);
+}
+
 float4x4 oCreateRotation(const float3& _Radians)
 {
-	Matrix4 m = Matrix4::rotationZYX((const Vector3&)_Radians);;
+	Matrix4 m = Matrix4::rotationZYX((const Vector3&)_Radians);
 	return (float4x4&)m;
 }
 
@@ -151,22 +314,144 @@ float4x4 oCreateScale(const float3& _Scale)
 	return (float4x4&)m;
 }
 
-float4x4 oCreateLookAt(const float3& _Eye, const float3& _At, const float3& _Up)
+float4x4 oCreateLookAtLH(const float3& _Eye, const float3& _At, const float3& _Up)
 {
-	Matrix4 m = Matrix4::lookAt((const Point3&)_Eye, (const Point3&)_At, (const Vector3&)_Up);
+	float3 z = normalize(_At - _Eye);
+	float3 x = normalize(cross(_Up, z));
+	float3 y = cross(z, x);
+
+	return float4x4(
+		float4(x.x,          y.x,            z.x,           0.0f),
+		float4(x.y,          y.y,            z.y,           0.0f),
+		float4(x.z,          y.z,            z.z,           0.0f),
+		float4(-dot(x, _Eye), -dot(y, _Eye), -dot(z, _Eye), 1.0f));
+}
+
+float4x4 oCreateLookAtRH(const float3& _Eye, const float3& _At, const float3& _Up)
+{
+	float3 z = normalize(_Eye - _At);
+	float3 x = normalize(cross(_Up, z));
+	float3 y = cross(z, x);
+
+	return float4x4(
+		float4(x.x,          y.x,            z.x,           0.0f),
+		float4(x.y,          y.y,            z.y,           0.0f),
+		float4(x.z,          y.z,            z.z,           0.0f),
+		float4(-dot(x, _Eye), -dot(y, _Eye), -dot(z, _Eye), 1.0f));
+}
+
+float4x4 oCreateOrthographicLH(float _Left, float _Right, float _Bottom, float _Top, float _ZNear, float _ZFar)
+{
+	return float4x4(
+		float4(2.0f / (_Right-_Left),         0.0f,                          0.0f,                  0.0f),
+		float4(0.0f,                          2.0f/(_Top-_Bottom),           0.0f,                  0.0f),
+		float4(0.0f,                          0.0f,                          1.0f/(_ZFar-_ZNear),   0.0f),
+		float4((_Left+_Right)/(_Left-_Right), (_Top+_Bottom)/(_Bottom-_Top), _ZNear/(_ZNear-_ZFar), 1.0f));
+}
+
+float4x4 oCreateOrthographicRH(float _Left, float _Right, float _Bottom, float _Top, float _ZNear, float _ZFar)
+{
+	return float4x4(
+		float4(2.0f / (_Right-_Left),         0.0f,                          0.0f,                  0.0f),
+		float4(0.0f,                          2.0f/(_Top-_Bottom),           0.0f,                  0.0f),
+		float4(0.0f,                          0.0f,                          1.0f/(_ZNear-_ZFar),   0.0f),
+		float4((_Left+_Right)/(_Left-_Right), (_Top+_Bottom)/(_Bottom-_Top), _ZNear/(_ZNear-_ZFar), 1.0f));
+}
+
+float4x4 oCreatePerspectiveLH(float _FovYRadians, float _AspectRatio, float _ZNear)
+{
+	float yScale = 1.0f / tanf(_FovYRadians / 2.0f);
+	float xScale = yScale / _AspectRatio;
+
+	// Infinite projection matrix
+	// http://www.google.com/url?sa=t&source=web&cd=2&ved=0CBsQFjAB&url=http%3A%2F%2Fwww.terathon.com%2Fgdc07_lengyel.ppt&rct=j&q=eric%20lengyel%20projection&ei=-NpaTZvWKYLCsAOluNisCg&usg=AFQjCNGkbo93tbmlrXqkbdJg-krdEYNS1A
+	static const float Z_PRECISION = 0.001f;
+
+	return float4x4(
+		float4(xScale, 0.0f, 0.0f, 0.0f),
+		float4(0.0f, yScale, 0.0f, 0.0f),
+		float4(0.0f, 0.0f, (1.0f-Z_PRECISION), 1.0f),
+		float4(0.0f, 0.0f, -_ZNear*(1.0f-Z_PRECISION), 0.0f));
+}
+
+float4x4 oCreatePerspectiveRH(float _FovYRadians, float _AspectRatio, float _ZNear)
+{
+	float yScale = 1.0f / tanf(_FovYRadians / 2.0f);
+	float xScale = yScale / _AspectRatio;
+
+	// Infinite projection matrix
+	// http://www.google.com/url?sa=t&source=web&cd=2&ved=0CBsQFjAB&url=http%3A%2F%2Fwww.terathon.com%2Fgdc07_lengyel.ppt&rct=j&q=eric%20lengyel%20projection&ei=-NpaTZvWKYLCsAOluNisCg&usg=AFQjCNGkbo93tbmlrXqkbdJg-krdEYNS1A
+	static const float Z_PRECISION = 0.001f;
+
+	return float4x4(
+		float4(xScale, 0.0f, 0.0f, 0.0f),
+		float4(0.0f, yScale, 0.0f, 0.0f),
+		float4(0.0f, 0.0f, (1.0f-Z_PRECISION), -1.0f),
+		float4(0.0f, 0.0f, -_ZNear*(1.0f-Z_PRECISION), 0.0f));
+}
+
+float4x4 oCreateOffCenterPerspectiveLH(float _Left, float _Right, float _Bottom, float _Top, float _ZNear)
+{
+	// Infinite projection matrix
+	// http://www.google.com/url?sa=t&source=web&cd=2&ved=0CBsQFjAB&url=http%3A%2F%2Fwww.terathon.com%2Fgdc07_lengyel.ppt&rct=j&q=eric%20lengyel%20projection&ei=-NpaTZvWKYLCsAOluNisCg&usg=AFQjCNGkbo93tbmlrXqkbdJg-krdEYNS1A
+	static const float Z_PRECISION = 0.001f;
+	Matrix4 m = Matrix4(
+		Vector4((2*_ZNear)/(_Right-_Left),     0.0f,                          0.0f,                         0.0f),
+		Vector4(0.0f,                          (2.0f*_ZNear)/(_Top-_Bottom),  0.0f,                         0.0f),
+		Vector4((_Left+_Right)/(_Left-_Right), (_Top+_Bottom)/(_Bottom-_Top), (1.0f-Z_PRECISION),           1.0f),
+		Vector4(0.0f,                          0.0f,                          -_ZNear * (1.0f-Z_PRECISION), 0.0f));
+
 	return (float4x4&)m;
 }
 
-float4x4 oCreatePerspective(float _FovY, float _AspectRatio, float _ZNear, float _ZFar)
+// _OutputTransform Scale, Rotation, Translation (SRT) of the output device plane
+// (i.e. the screen) in the same space as the eye (usually world space)
+float4x4 oCreateOffCenterPerspectiveLH(const float4x4& _OutputTransform, const float3& _EyePosition, float _ZNear)
 {
-	Matrix4 m = Matrix4::perspective(_FovY, _AspectRatio, _ZNear, _ZFar);
-	return (float4x4&)m;
+	// @oooii-tony: This is a blind port of code we used in UE3 to do off-axis 
+	// projection. UE3 looks down +X (yarly!), so this tries to look down -Z, so
+	// there still might be some negation or re-axis-izing that needs to be done.
+
+	oWARN_ONCE("Math not yet confirmed for oCreateOffCenterPerspective(), be careful!");
+
+	// Get the position and dimensions of the output
+	float ShXY, ShXZ, ShZY;
+	float3 outputSize, R, outputPosition;
+	float4 P;
+	decompose(_OutputTransform, &outputSize, &ShXY, &ShXZ, &ShZY, &R, &outputPosition, &P);
+	float3 offset = outputPosition - _EyePosition;
+
+	// Get the basis of the output
+	float3 outputBasisX, outputBasisY, outputBasisZ;
+	oExtractAxes(_OutputTransform, &outputBasisX, &outputBasisY, &outputBasisZ);
+
+	// Get local offsets from the eye to the output
+	float w = dot(outputBasisX, offset);
+	float h = dot(outputBasisY, offset);
+	float d = dot(outputBasisZ, offset);
+
+	// Incorporate user near plane adjustment
+	float zn = __max(d + _ZNear, 3.0f);
+	float depthScale = zn / d;
+
+	return oCreateOffCenterPerspectiveLH(w * depthScale, (w + outputSize.x) * depthScale, h * depthScale, (h + outputSize.y) * depthScale, zn);
 }
 
-float4x4 oCreateOrthographic(float _Left, float _Right, float _Bottom, float _Top, float _ZNear, float _ZFar)
+float4x4 oCreateViewport(float _NDCResolutionX, float _NDCResolutionY, float _NDCRectLeft, float _NDCRectBottom, float _NDCRectWidth, float _NDCRectHeight)
 {
-	Matrix4 m = Matrix4::orthographic(_Left, _Right, _Bottom, _Top, _ZNear, _ZFar);
-	return (float4x4&)m;
+	float2 dim = float2(_NDCResolutionX, _NDCResolutionY);
+
+	float2 NDCMin = (float2(_NDCRectLeft, _NDCRectBottom) / dim) * 2.0f - 1.0f;
+	float2 NDCMax = (float2(_NDCRectLeft + _NDCRectWidth, _NDCRectBottom + _NDCRectHeight) / dim) * 2.0f - 1.0f;
+
+	float2 NDCScale = 2.0f / (NDCMax - NDCMin);
+	float2 NDCTranslate = float2(-1.0f, 1.0f) - NDCMin * float2(NDCScale.x, -NDCScale.y);
+
+	return float4x4(
+		float4(NDCScale.x,     0.0f,           0.0f, 0.0f),
+		float4(0.0f,           NDCScale.y,     0.0f, 0.0f),
+		float4(0.0f,           0.0f,           1.0f, 0.0f),
+		float4(NDCTranslate.x, NDCTranslate.y, 0.0f, 1.0f));
 }
 
 double determinant(const double4x4& _Matrix)
@@ -190,6 +475,20 @@ quatd slerp(const quatd& a, const quatd& b, double s)
 {
 	Quatd q = slerp(s, (const Quatd&)a, (const Quatd&)b);
 	return (quatd&)q;
+}
+
+void oExtractAxes(const float4x4& _Matrix, float3* _pXAxis, float3* _pYAxis, float3* _pZAxis)
+{
+	*_pXAxis = _Matrix.Column0.XYZ();
+	*_pYAxis = _Matrix.Column1.XYZ();
+	*_pZAxis = _Matrix.Column2.XYZ();
+}
+
+void oExtractAxes(const double4x4& _Matrix, double3* _pXAxis, double3* _pYAxis, double3* _pZAxis)
+{
+	*_pXAxis = _Matrix.Column0.XYZ();
+	*_pYAxis = _Matrix.Column1.XYZ();
+	*_pZAxis = _Matrix.Column2.XYZ();
 }
 
 double4x4 oCreateRotation(const double3& _Radians)
@@ -270,42 +569,6 @@ double4x4 oCreateScale(const double3& _Scale)
 {
 	Matrix4d m = Matrix4d::scale((const Vector3d&)_Scale);
 	return (double4x4&)m;
-}
-
-double4x4 oCreateLookAt(const double3& _Eye, const double3& _At, const double3& _Up)
-{
-	Matrix4d m = Matrix4d::lookAt((const Point3d&)_Eye, (const Point3d&)_At, (const Vector3d&)_Up);
-	return (double4x4&)m;
-}
-
-double4x4 oCreatePerspective(double _FovY, double _AspectRatio, double _ZNear, double _ZFar)
-{
-	Matrix4d m = Matrix4d::perspective(_FovY, _AspectRatio, _ZNear, _ZFar);
-	return (double4x4&)m;
-}
-
-double4x4 oCreateOrthographic(double _Left, double _Right, double _Bottom, double _Top, double _ZNear, double _ZFar)
-{
-	Matrix4d m = Matrix4d::orthographic(_Left, _Right, _Bottom, _Top, _ZNear, _ZFar);
-	return (double4x4&)m;
-}
-
-float4x4 oAsWV(const float4x4& _World, const float4x4& _View)
-{
-	// @oooii-tony: Since our matrices are right-handed, concat backwards to be left-handed/d3d compatible
-	return _View * _World;
-}
-
-float4x4 oAsVP(const float4x4& _View, const float4x4& _Projection)
-{
-	// @oooii-tony: Since our matrices are right-handed, concat backwards to be left-handed/d3d compatible
-	return _Projection * _View;
-}
-
-float4x4 oAsWVP(const float4x4& _World, const float4x4& _View, const float4x4& _Projection)
-{
-	// @oooii-tony: Since our matrices are right-handed, concat backwards to be left-handed/d3d compatible
-	return _Projection * _View * _World;
 }
 
 float4x4 oAsReflection(const float4& _ReflectionPlane)

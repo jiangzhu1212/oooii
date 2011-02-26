@@ -308,13 +308,7 @@ struct TESTWindowBase : public oTest
 				{
 					oRef<oImage> snapshot;
 					oTESTB(Window->CreateSnapshot(&snapshot), "Failed to create snapshot");
-
-					if (!this->TestImage(snapshot))
-					{
-						result = FAILURE;
-						sprintf_s(_StrStatus, _SizeofStrStatus, "Image compare failed");
-					}
-
+					oTESTI(snapshot);
 					Window->Close();
 				}
 			}

@@ -32,7 +32,7 @@
 #include <oooii/oString.h>
 #include <half.h>
 
-struct oTypeContext : oSingleton<oTypeContext>
+struct oTypeContext : oProcessSingleton<oTypeContext>
 {
 	typedef oArray<oType::Inspection*, 8> container_t;
 

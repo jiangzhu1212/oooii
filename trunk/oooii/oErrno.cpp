@@ -26,7 +26,7 @@
 #include <oooii/oAssert.h>
 #include <oooii/oSingleton.h>
 
-struct oLastErrorContext : public oSingletonThreadlocal<oLastErrorContext>
+struct oLastErrorContext : public oProcessThreadlocalSingleton<oLastErrorContext>
 {
 	oLastErrorContext()
 		: Count(0)

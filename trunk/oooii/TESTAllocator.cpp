@@ -22,7 +22,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "pch.h"
-#include <oooii/oAllocator.h>
+#include <oooii/oAllocatorTLSF.h>
 #include <oooii/oHeap.h>
 #include <oooii/oMath.h>
 #include <oooii/oRef.h>
@@ -33,29 +33,30 @@ struct TESTAllocator : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		bool notEnoughPhysRam = false;
-#ifdef _M_X64
-		// Allocating more memory than physically available is possible,
-		// but really slowing, so leave some RAM for Windows.
-		oHeap::GLOBAL_HEAP_DESC globalHeapDesc;
-		oHeap::GetGlobalDesc(&globalHeapDesc);
+		bool EnoughPhysRamForFullTest = false;
+		#ifdef _M_X64
+			// Allocating more memory than physically available is possible,
+			// but really slowing, so leave some RAM for Windows.
+			oHeap::GLOBAL_HEAP_DESC globalHeapDesc;
+			oHeap::GetGlobalDesc(&globalHeapDesc);
 
-		// On machines with less memory, it's not a good idea to use all of it.
-		const SIZE_T SIZE = __min(globalHeapDesc.TotalPhysical / 2, 6LL * 1024 * 1024 * 1024);
-		notEnoughPhysRam = (SIZE < 4LL * 1024 * 1024 * 1024);
-#else
-		const size_t SIZE = 500 * 1024 * 1024; // 500 MB
-#endif
+			// On machines with less memory, it's not a good idea to use all of it
+			// because the system would need to page out everything it has to allocate
+			// that much memory, which makes the test take many minutes to run.
+			const size_t SIZE = __min(globalHeapDesc.TotalPhysical / 2, oGB(6));
+			EnoughPhysRamForFullTest = (SIZE <= oGB(4));
+		#else
+			const size_t SIZE = 500 * 1024 * 1024; // 500 MB
+		#endif
 
 		oTestScopedArray<char> arena(SIZE); // bigger than 32-bit's 4 GB limitation
 
 		oAllocator::DESC desc;
 		desc.ArenaSize = arena.GetCount();
-		desc.Type = oAllocator::TLSF;
 		desc.pArena = arena.GetPointer();
 
 		oRef<oAllocator> Allocator;
-		oTESTB(oAllocator::Create("TestAllocator", &desc, &Allocator), "Failed to create a TLSF allocator");
+		oTESTB(oAllocatorTLSF::Create("TestAllocator", &desc, &Allocator), "Failed to create a TLSF allocator");
 
 		const size_t NUM_POINTER_TESTS = 1000;
 		oTestScopedArray<char*> pointers(NUM_POINTER_TESTS);
@@ -130,10 +131,11 @@ struct TESTAllocator : public oTest
 		Allocator->Deallocate(p1);
 		oTESTB(Allocator->IsValid(), "Heap corrupt on Deallocate");
 
-		if (notEnoughPhysRam)
-			sprintf_s(_StrStatus, _SizeofStrStatus, "WARNING: Phys mem < 4 GB, so not a good test");
-		else
-			sprintf_s(_StrStatus, _SizeofStrStatus, "minsize:%u, maxsize:%u", smallestAlloc, largestAlloc);
+		char RAMused[32];
+		oFormatMemorySize(RAMused, SIZE, 1);
+		char MAXsize[32];
+		oFormatMemorySize(MAXsize, largestAlloc, 1);
+		sprintf_s(_StrStatus, _SizeofStrStatus, "%sRAMused: %s, minsize:%u b, maxsize:%s", EnoughPhysRamForFullTest ? "" : "WARNING: system memory not enough to run full test quickly. ", RAMused, smallestAlloc, MAXsize);
 
 		return SUCCESS;
 	}

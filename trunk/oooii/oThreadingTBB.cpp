@@ -32,23 +32,25 @@
 #include <tbb/task_scheduler_init.h>
 using namespace tbb;
 
-class TBBInit : public oSingleton<TBBInit>
+class TBBTaskObserver : public task_scheduler_observer
 {
-	// @oooii-tony: TBB's static init can result in false-positives in the on-exit
-	// leak detector. To work around that, control TBB's lifetime. Also, because
-	// TBB doesn't block on its own cleanup of worker threads, go through a whole 
-	// bunch of headache code to do what TBB should have, wait on all worker 
-	// threads to be finished before exiting.
+public:
+	TBBTaskObserver()
+	{
+		observe();
+	}
 
-	// can't wait at once on more than 64 in one WaitForSingleObject() call, so
-	// assume we won't have more than this for a while.
-	static const size_t MAX_EXPECTED_THREADS = 64;
+	virtual void on_scheduler_exit( bool is_worker )
+	{
+		if(is_worker)
+			detail::ReleaseThreadLocalSingletons();
+	}
+};
 
-	task_scheduler_init* pInit;
-	DWORD TBBThreadIDs[MAX_EXPECTED_THREADS];
-	unsigned int NumTBBThreads;
-
-	static void Noop(size_t _Index) {}
+class TBBInit : public oProcessSingleton<TBBInit>
+{
+	task_scheduler_init* init;
+	TBBTaskObserver* observer;
 
 #ifdef _DEBUG
 	// Allows us to break execution when an access violation occurs
@@ -57,15 +59,20 @@ class TBBInit : public oSingleton<TBBInit>
 		PEXCEPTION_RECORD& pRecord = _pExceptionInfo->ExceptionRecord;
 		if (pRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION)
 		{
-			static const char* ReadError = "Read";
-			static const char* WriteError = "Write";
-			const char* err = ( 0 == pRecord->ExceptionInformation[0] ) ? ReadError : WriteError;
+			// @oooii-mike switched to a plain C assert because it was causing
+			// problems with exceptions occurring during oASSERTs.
 
-			oASSERT( false, "%s access violation at 0x%p", err, pRecord->ExceptionInformation[1] );
+			//static const char* ReadError = "Read";
+			//static const char* WriteError = "Write";
+			//const char* err = ( 0 == pRecord->ExceptionInformation[0] ) ? ReadError : WriteError;
+
+			//oASSERT( false, "%s access violation at 0x%p", err, pRecord->ExceptionInformation[1] );
+			assert(false && "Access violation");
 		}
 		return EXCEPTION_CONTINUE_SEARCH;
 	}
 #endif
+
 
 public:
 	struct Run
@@ -73,41 +80,19 @@ public:
 		Run() { TBBInit::Singleton(); }
 	};
 
-	TBBInit() { Create(); }
-	~TBBInit() { Destroy(); }
-
-	void Recycle() { Destroy(); Create(); }
-
-private:
-
-	void Create()
+	~TBBInit()
 	{
-		NumTBBThreads = 0;
-		oASSERT(task_scheduler_init::default_num_threads() <= MAX_EXPECTED_THREADS, "");
+		//oASSERT(oThread::CurrentThreadIsMain(), "TBB must be deinitialized from Main Thread");
+		delete init;
+		delete observer;
+	}
 
-		DWORD before[MAX_EXPECTED_THREADS];
-		unsigned int nBefore = oGetProcessThreads(before);
 
-		pInit = new tbb::task_scheduler_init();
-
-		// TBB doesn't create worker threads until first use, so get that first use
-		// out of the way here.
-		oParallelFor(&Noop, 0, MAX_EXPECTED_THREADS);
-
-		DWORD after[MAX_EXPECTED_THREADS];
-		unsigned int nAfter = oGetProcessThreads(after);
-
-		// Cull list into just what is different in threads
-		for (size_t i = 0; i < nAfter; i++)
-		{
-			size_t j = 0;
-			for (; j < nBefore; j++)
-				if (after[i] == before[j])
-					break;
-			if (j == nBefore) // not found in before list, so this is a tbb thread
-				TBBThreadIDs[NumTBBThreads++] = after[i];
-		}
-
+	TBBInit()
+	{
+		//oASSERT(oThread::CurrentThreadIsMain(), "TBB must be initialized from Main Thread");
+		observer = new TBBTaskObserver;
+		init = new task_scheduler_init;
 #ifdef _DEBUG
 		// Since we use TBBs task system directly we need to handle exceptions
 		// that may be thrown on task threads.  Typically TBB does this by
@@ -119,28 +104,25 @@ private:
 #endif
 	}
 
-	void Destroy()
+	void Recycle()
 	{
-		// Grab handles to threads before TBB starts destroying them
-		HANDLE hThreads[64]; // max of windows anyway
-		for (size_t i = 0; i < NumTBBThreads; i++)
-			hThreads[i] = OpenThread(SYNCHRONIZE, FALSE, TBBThreadIDs[i]);
-
-		delete pInit;
-
-		// Finally! We can wait for TBB to be completely clean before moving onto
-		// other static cleanup, such as detecting memory leaks.
-		bool timedout = !oWaitMultiple(hThreads, NumTBBThreads, true, 5000);
-
-		for (size_t i = 0; i < NumTBBThreads; i++)
-			oVB(CloseHandle(hThreads[i]));
-
-		if (timedout)
-			oTRACE("Timeout waiting for TBB threads to exit.");
+		// @oooii-kevin: This strange bit of code is based on discussions found here
+		// http://origin-software.intel.com/en-us/forums/showthread.php?t=66757
+		// basically to make certain TBB cleans itself up inside of Recycle we
+		// have to tear down the initialization object and wait for some arbitrary
+		// amount of time before starting it up again, as TBB asynchronously destroys
+		// threads.  If we still see leaking threads, this wait may need to be increased.
+		delete init;
+		oSleep(1000);
+		init = new task_scheduler_init;
 	}
+
 };
 
-static TBBInit::Run sTBBInit; // @oooii-tony: ok static, we just need it to run the singleton before any use code kicks in, and oSingleton guarantees it'll run once per process.
+// @oooii-mike: static initialization of TBBInit from a spawned process that loaded
+// oooiilib from a DLL was being called in a thread for some unknown reason, which
+// caused TBB to incorrectly allocate thread local resources and assert on exit.
+// static TBBInit::Run sTBBInit; // @oooii-tony: ok static, we just need it to run the singleton before any use code kicks in, and oSingleton guarantees it'll run once per process.
 
 void oRecycleScheduler()
 {

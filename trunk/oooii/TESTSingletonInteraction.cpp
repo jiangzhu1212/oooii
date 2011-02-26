@@ -21,47 +21,30 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#pragma once
-#ifndef AllocatorTLSF_Impl_h
-#define AllocatorTLSF_Impl_h
+#include "pch.h"
+#include <oooii/oTest.h>
+#include <oooii/oThreading.h>
+#include "oWinsock.h"
 
-#include <oooii/oAllocatorTLSF.h>
-#include <oooii/oRefCount.h>
-
-struct AllocatorTLSF_Impl : public oAllocatorTLSF
+struct TESTSingletonInteraction : public oTest
 {
-	// Always allocate memory for this struct in the arena specified by the user
-	void* operator new(size_t _Size) { return 0; }
-	void* operator new[](size_t si_Size) { return 0; }
-	void operator delete(void* _Pointer) {}
-	void operator delete[](void* _Pointer) {}
-public:
-	void* operator new(size_t _Size, void* _pMemory) { return _pMemory; }
-	void operator delete(void* _Pointer, void* _pMemory) {}
+	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
+	{
+		#if defined(_WIN32) || defined(_WIN64)
+			// @oooii-kevin: This is to verify singletons aren't leaking 
+			// obug-843, if you disable the AsyncFileIO calls no leak occurs
+			// or if you disable the winsock call, no leak occurs.  It's some
+			// kind of interaction between the two singletons
+			oAsyncFileIO::InitializeIOThread(20);
+			oWinsock::Singleton()->WSAGetLastError();
+			oAsyncFileIO::DeinitializeIOThread();
+			return SUCCESS;
+		#else
+			sprintf_s(_StrStatus, _SizeofStrStatus, "This test is Windows-specific.");
+			return SKIPPED;
+		#endif
+	}
 
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oAllocatorTLSF>());
-
-	AllocatorTLSF_Impl(const char* _DebugName, const DESC* _pDesc, bool* _pSuccess);
-	~AllocatorTLSF_Impl();
-
-	void GetDesc(DESC* _pDesc) override;
-	void GetStats(STATS* _pStats) override;
-	const char* GetDebugName() const threadsafe override;
-	const char* GetType() const threadsafe override;
-	bool IsValid() override;
-	void* Allocate(size_t _NumBytes, size_t _Alignment = oDEFAULT_MEMORY_ALIGNMENT) override;
-	void* Reallocate(void* _Pointer, size_t _NumBytes) override;
-	void Deallocate(void* _Pointer) override;
-	size_t GetBlockSize(void* _Pointer) override;
-	void Reset() override;
-	void WalkHeap(WalkerFn _Walker, void* _pUserData, long _Flags = 0) override;
-
-	DESC Desc;
-	STATS Stats;
-	oRefCount RefCount;
-	void* hPool;
-	char DebugName[64];
 };
 
-#endif
+TESTSingletonInteraction TestSingletonInteraction;

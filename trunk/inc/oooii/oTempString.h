@@ -21,47 +21,55 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// This is a runtime allocated alternative to temporary character buffers.
+// Buffers are allocated when needed and reused when available.
+
 #pragma once
-#ifndef AllocatorTLSF_Impl_h
-#define AllocatorTLSF_Impl_h
+#ifndef oTempString_h
+#define oTempString_h
 
-#include <oooii/oAllocatorTLSF.h>
-#include <oooii/oRefCount.h>
+#include <oooii/oString.h>
 
-struct AllocatorTLSF_Impl : public oAllocatorTLSF
+struct oStringBuffer;
+
+struct oTempString
 {
-	// Always allocate memory for this struct in the arena specified by the user
-	void* operator new(size_t _Size) { return 0; }
-	void* operator new[](size_t si_Size) { return 0; }
-	void operator delete(void* _Pointer) {}
-	void operator delete[](void* _Pointer) {}
-public:
-	void* operator new(size_t _Size, void* _pMemory) { return _pMemory; }
-	void operator delete(void* _Pointer, void* _pMemory) {}
+	static const size_t DefaultSize = (4 * 1024);
+	static const size_t BigSize		= (128 * 1024);
 
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oAllocatorTLSF>());
+	oTempString(size_t _size = DefaultSize);
+	~oTempString();
 
-	AllocatorTLSF_Impl(const char* _DebugName, const DESC* _pDesc, bool* _pSuccess);
-	~AllocatorTLSF_Impl();
+	oTempString(const oTempString& rhs) { *this = rhs; }
+	oTempString& operator=(const oTempString& rhs);
 
-	void GetDesc(DESC* _pDesc) override;
-	void GetStats(STATS* _pStats) override;
-	const char* GetDebugName() const threadsafe override;
-	const char* GetType() const threadsafe override;
-	bool IsValid() override;
-	void* Allocate(size_t _NumBytes, size_t _Alignment = oDEFAULT_MEMORY_ALIGNMENT) override;
-	void* Reallocate(void* _Pointer, size_t _NumBytes) override;
-	void Deallocate(void* _Pointer) override;
-	size_t GetBlockSize(void* _Pointer) override;
-	void Reset() override;
-	void WalkHeap(WalkerFn _Walker, void* _pUserData, long _Flags = 0) override;
+	operator char*();
+	char* c_str();
 
-	DESC Desc;
-	STATS Stats;
-	oRefCount RefCount;
-	void* hPool;
-	char DebugName[64];
+	oTempString operator+(size_t _offset) { return oTempString(pStrBuffer, offset + _offset); }
+	oTempString operator[](size_t _offset) { return oTempString(pStrBuffer, offset + _offset); }
+
+	size_t size() const;
+
+private:
+	oTempString(oStringBuffer* _pStrBuffer, size_t _offset);
+
+	oStringBuffer*	pStrBuffer;
+	size_t			offset;
 };
 
-#endif
+// Common string functions overloads to make it easier to use the safe versions
+
+inline int sprintf_s (oTempString string, const char *format, ...)
+{
+	va_list arglist;
+	va_start(arglist, format);
+	return vsprintf_s(string, string.size(), format, arglist);
+}
+
+inline int vsprintf_s (oTempString string, const char *format, va_list ap) { return vsprintf_s(string, string.size(), format, ap); }
+inline errno_t strcpy_s(oTempString string, const char *strSource){ return strcpy_s(string, string.size(), strSource); }
+
+inline char* oNewlinesToDos(oTempString _StrDestination, const char* _StrSource) { return oNewlinesToDos(_StrDestination, _StrDestination.size(), _StrSource); }
+
+#endif // oTempString_h

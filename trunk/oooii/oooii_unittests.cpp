@@ -31,6 +31,7 @@
 #include <oooii/oMsgBox.h>
 #include <oooii/oPath.h>
 #include <oooii/oTest.h>
+#include <oooii/oThreading.h>
 #include <oooii/oRef.h>
 
 static const char* sTITLE = "OOOii Unit Test Suite";
@@ -50,6 +51,22 @@ static const oOption sCmdLineOptions[] =
 
 void InitEnv()
 {
+	// Situation:
+	// exe statically linked to oooii lib
+	// dll statically linked to oooii lib
+	// exe hard-linked to dll
+	//
+	// In this case we're seeing that it is possible for DllMain 
+	// to be called on a thread that is NOT the main thread. Strange, no?
+	// This would cause TBB, the underlying implementation of oParallelFor
+	// and friends, to be initialized in a non-main thread. This upsets TBB,
+	// so disable static init of TBB and force initialization here in a 
+	// function known to execute on the main thread.
+	//
+	// @oooii-tony: TODO: FIND OUT - why can DllMain execute in a not-main thread?
+
+	oRecycleScheduler();
+
 	oConsole::SetTitle(sTITLE);
 
 	#if defined(_WIN32) || defined (_WIN64)
@@ -164,27 +181,8 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 
 bool GetDataPath(char* _DataPath, size_t _SizeofDataPath, const char* _UserDataPath)
 {
-	// @oooii-tony: Some hard-coded ones that are typical in our dev environment. This should go away
-	static const char* sFallbackPaths[] = 
-	{
-		"../../oooii/",
-	};
-
 	if (_UserDataPath && oFile::Exists(_UserDataPath))
-	{
 		return 0 == strcpy_s(_DataPath, _SizeofDataPath, _UserDataPath);
-	}
-
-	else
-	{
-		for (size_t i = 0; i < oCOUNTOF(sFallbackPaths); i++)
-		{
-			if (oFile::Exists(sFallbackPaths[i]))
-			{
-				return 0 == strcpy_s(_DataPath, _SizeofDataPath, sFallbackPaths[i]);
-			}
-		}
-	}
 
 	// If here, give up to CWD.
 	return oGetSysPath(_DataPath, _SizeofDataPath, oSYSPATH_CWD);
@@ -218,6 +216,8 @@ void SetTestManagerDesc(const PARAMETERS* _pParameters)
 	desc.StatusColumnWidth = 10;
 	desc.RandomSeed = _pParameters->RandomSeed ? _pParameters->RandomSeed : oTimerMS();
 	desc.NumRunIterations = _pParameters->RepeatNumber ? _pParameters->RepeatNumber : 1;
+	desc.ImageFuzziness = 10; // @oooii-tony: FIXME: compression seems to be non-repeatable, so leave a wide margin for error
+	desc.PixelPercentageMinSuccess = 98;
 
 	oTestManager::Singleton()->SetDesc(&desc);
 }

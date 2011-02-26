@@ -125,6 +125,11 @@ template<typename T, typename U> inline T thread_cast(const U& threadsafeObject)
 #define oSAFESTR(str) ((str) ? (str) : "")
 #define oSAFESTRN(str) ((str) ? (str) : "(null)")
 
+#define oKB(n) (n * 1024LL)
+#define oMB(n) (oKB(n) * 1024LL)
+#define oGB(n) (oMB(n) * 1024LL)
+#define oTB(n) (oGB(n) * 1024LL)
+
 // It is often useful to temporarily allocate from the heap. To avoid leaks and
 // keep any error handling simple, use this scoped version. For more complete
 // buffers that have longer lifetimes, see oBuffer.

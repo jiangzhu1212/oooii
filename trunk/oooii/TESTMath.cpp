@@ -68,6 +68,26 @@ struct TESTMath : public oTest
 		box.GetDimensions(&w, &h, &d);
 		oTESTB(oEqual(w, 6.0f) && oEqual(h, 6.0f) && oEqual(d, 6.0f), "oAABoxf::ExtendBy() failed");
 
+		// Test decompose()
+		{
+			float3 testRotDegrees = float3(45.0f, 32.0f, 90.0f);
+			float3 testTx = float3(-14.0f, 70.0f, 32.0f);
+			float3 testScale = float3(17.0f, 2.0f, 3.0f); // negative scale not supported
+
+			// Remember assembly of the matrix must be in the canonical order for the 
+			// same values to come back out through decomposition.
+			float4x4 m = oCreateScale(testScale) * oCreateRotation(radians(testRotDegrees)) * oCreateTranslation(testTx);
+
+			float shearXY, shearXZ, shearZY;
+			float3 scale, rot, tx;
+			float4 persp;
+			decompose(m, &scale, &shearXY, &shearXZ, &shearZY, &rot, &tx, &persp);
+
+			rot = degrees(rot);
+			oTESTB(oEqual(testScale, scale), "Scales are not the same through assembly and decomposition");
+			oTESTB(oEqual(testRotDegrees, rot), "Rotations are not the same through assembly and decomposition");
+			oTESTB(oEqual(testTx, tx), "Translations are not the same through assembly and decomposition");
+		}
 
 		// Test SplitRectOverlap
 		{

@@ -127,8 +127,18 @@ namespace oHeap
 	// access exceptions, specifically marking memory pages as read, read/write,
 	// and guard. If this returns 0, use oGetLastError() to determine why there
 	// was a failure.
-	void* PagedAllocate(void* _DesiredPointer, size_t _Size, ACCESS _Access);
-	void PagedDeallocate(void* _Pointer);
+
+	// @oooii-will: Reserve pages to virtual memory.  Does not allocate until PagedCommit() 
+	// is called, but prevents malloc and LocalAlloc from accessing the reserved memory.
+	void* PagedReserve(void* _DesiredPointer, size_t _Size, ACCESS _Access);
+	// @oooii-will: Release reserved virtual memory.  MEM_RELEASE also decommits the memory
+	// if PagedDecommit() hasn't been called, yet.
+	void PagedUnreserve(void* _Pointer);
+	// @oooii-will: Committing reserved pages to virtual memory.  Attempting to commit a 
+	// page that is not yet reserved results in an error.
+	void* PagedCommit(void* _DesiredPointer, size_t _Size, ACCESS _Access);
+	// @oooii-will: Set committed pages to a reserved state, to be reserved or freed later.
+	void PagedDecommit(void* _Pointer);
 	void PagedSetProtection(void* _BaseAddress, size_t _Size, ACCESS _Access);
 
 	// Work with a special heap that is singularly referenced by any and all
@@ -148,16 +158,22 @@ namespace oHeap
 	// was matched to a pre-existing allocation. If this is false and *_pPointer
 	// is false, it means one of the parameters is invalid. Because oGetLastError()
 	// relies on this API for it's thread-safe static storage, it's mechanism 
-	// cannot be used here.
-	bool StaticAllocateShared(const char* _Name, size_t _Size, void** _pPointer);
+	// cannot be used here.  Calling StaticAllocateSharedMap locks a critical section 
+	// so it is imperative that StaticAllocateSharedUnmap after the caller is finished.
+	bool StaticAllocateSharedMap(const char* _Name, bool _bThreadUnique, size_t _Size, void** _pPointer);
+	void StaticAllocateSharedUnmap();
+	// StaticDeallocateShared will always deallocate, it's up to the user to ensure 
+	// that it isn't needed by another module.
 	void StaticDeallocateShared(void* _Pointer);
 
-	template<typename T> T* StaticConstructShared(const char* _Name)
+	template<typename T> T* StaticConstructShared(const char* _Name, bool _bThreadUnique)
 	{
 		// Support thread-uniqueness for threadlocal pointers
 		T* p = 0;
-		if (StaticAllocateShared(_Name, sizeof(T), (void**)&p))
+		if (StaticAllocateSharedMap(_Name, _bThreadUnique, sizeof(T), (void**)&p))
 			new (p) T();
+
+		StaticAllocateSharedUnmap();
 		return p;
 	}
 

@@ -179,9 +179,6 @@ namespace oAsyncFileIO
 		{
 			strcpy_s(Path, _pDesc->Path);
 			Desc.Path = Path;
-
-			if (Desc.pCompletionEvent)
-				Desc.pCompletionEvent->Reset();
 		}
 
 		RESULT* pResult;
@@ -201,14 +198,10 @@ namespace oAsyncFileIO
 			{
 				pResult->pData = pBuffer;
 				pResult->Size = size;
-				pResult->Result = 0;
+				pResult->Result = err;
 			}
 
-			if (Desc.Continuation)
-				Desc.Continuation(pResult, Desc.pUserData);
-
-			if (Desc.pCompletionEvent)
-				Desc.pCompletionEvent->Set();
+			Desc.Continuation(pResult);
 		}
 	};
 
@@ -269,7 +262,7 @@ namespace oAsyncFileIO
 		oConcurrentQueueOptimisticFIFO<QUEUED_READ*> Queue;
 	};
 
-	struct oAsyncFileIOContext : oSingleton<oAsyncFileIOContext>
+	struct oAsyncFileIOContext : oProcessSingleton<oAsyncFileIOContext>
 	{
 		oAsyncFileIOContext()
 			: Pool("AsycFileIO QUEUED_READ Pool")
@@ -340,6 +333,7 @@ namespace oAsyncFileIO
 			QUEUED_READ* r = (QUEUED_READ*)buf;
 			new (r) QUEUED_READ(_pDesc, _pResult);
 			r->Run();
+			r->~QUEUED_READ();
 		}
 
 		else

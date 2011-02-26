@@ -242,6 +242,7 @@ struct TESTSocketReliable : public oTest
 struct TestUnreliableSenderThread : public oThread::Proc
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<TestUnreliableSenderThread>());
 
 	TestUnreliableSenderThread()
 	{
@@ -337,3 +338,9 @@ struct TESTSocketUnreliable : public oTest
 TESTSocketReliable TestSocketReliable;
 TESTSocketUnreliable TESTSocketUnreliable;
 
+const oGUID& oGetGUID( threadsafe const TestUnreliableSenderThread* threadsafe const * )
+{
+	// {6BCF135D-BA8B-49db-9D56-A6656DEB790A}
+	static const oGUID oIIDTestUnreliableSenderThread = { 0x6bcf135d, 0xba8b, 0x49db, { 0x9d, 0x56, 0xa6, 0x65, 0x6d, 0xeb, 0x79, 0xa } };
+	return oIIDTestUnreliableSenderThread;
+}

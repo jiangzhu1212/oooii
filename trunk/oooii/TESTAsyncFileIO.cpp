@@ -26,9 +26,10 @@
 #include <oooii/oEvent.h>
 #include <oooii/oThreading.h>
 
-void TESTAsyncFileIO_Continuation(oAsyncFileIO::RESULT* _pResult, void* _pUserData)
+void TESTAsyncFileIO_Continuation(oAsyncFileIO::RESULT* _pResult, int* _pUserData, threadsafe oEvent* pEvent)
 {
-	*(int*)_pUserData = 0x13371337;
+	*_pUserData = 0x13371337;
+	pEvent->Set();
 }
 
 struct TESTAsyncFileIO : public oTest
@@ -46,10 +47,7 @@ struct TESTAsyncFileIO : public oTest
 		oAsyncFileIO::DESC desc;
 		desc.Path = testFilePath;
 		desc.Allocate = malloc;
-		desc.pCompletionEvent = &ReadComplete;
-		desc.Continuation = TESTAsyncFileIO_Continuation;
-		desc.pUserData = &continuationResult;
-
+		desc.Continuation = oBIND( TESTAsyncFileIO_Continuation, oBIND1, &continuationResult, &ReadComplete );
 		oAsyncFileIO::RESULT result;
 		memset(&result, 0, sizeof(result));
 

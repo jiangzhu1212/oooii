@@ -438,77 +438,37 @@ inline int oPointToLogicalHeight(HDC _hDC, float _Point) { return oPointToLogica
 
 void oGetScreenDPIScale(float* _pScaleX, float* _pScaleY);
 
-#if oDXVER >= oDXVER_11
-	float oGetD3DVersion(D3D_FEATURE_LEVEL _Level);
-
-	// Returns the number of elements as described the specified topology given
-	// the number of primitives. An element can refer to indices or vertices, but
-	// basically if there are 3 lines, then there are 6 elements. If there are 3
-	// lines in a line string, then there are 4 elements.
-	UINT oDX11GetNumElements(D3D11_PRIMITIVE_TOPOLOGY _PrimitiveTopology, UINT _NumPrimitives);
-
-	// Encapsulate any possible method of drawing in DX11 into one function that
-	// lists out everything one would need to specify. If NULL or 0 is specified 
-	// for various parameters, the proper flavor of draw will be used for drawing.
-	// This returns the number of primitives drawn (more than the specified number
-	// of primitives if instancing is used). This does not set input layout.
-	UINT oDX11Draw(ID3D11DeviceContext* _pDeviceContext
-		, D3D11_PRIMITIVE_TOPOLOGY _PrimitiveTopology
-		, UINT _NumPrimitives
-		, UINT _NumVertexBuffers
-		, const ID3D11Buffer* const* _ppVertexBuffers
-		, const UINT* _VertexStrides
-		, UINT _IndexOfFirstVertexToDraw
-		, UINT _OffsetToAddToEachVertexIndex
-		, const ID3D11Buffer* _IndexBuffer
-		, bool _32BitIndexBuffer
-		, UINT _IndexOfFirstIndexToDraw
-		, UINT _NumInstances = 0 // 0 means don't use instanced drawing
-		, UINT _IndexOfFirstInstanceIndexToDraw = 0);
-
-	enum oD3D11_PIPELINE_STAGE
-	{
-		oD3D11_PIPELINE_STAGE_VERTEX,
-		oD3D11_PIPELINE_STAGE_HULL,
-		oD3D11_PIPELINE_STAGE_DOMAIN,
-		oD3D11_PIPELINE_STAGE_GEOMETRY,
-		oD3D11_PIPELINE_STAGE_PIXEL,
-		oD3D11_PIPELINE_STAGE_COMPUTE,
-	};
-
-	const char* oDX11GetShaderProfile(ID3D11Device* _pDevice, oD3D11_PIPELINE_STAGE _Stage);
-
-	// The error message returned from D3DX11CompileFromMemory is not fit for
-	// passing to printf directly, so pass it to this to create a cleaner string.
-	// _pErrorMessages can be NULL, but if there is a message and there is an 
-	// error filling the specified string buffer.
-	bool oDX11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _SizeofOutErrorMessageString, ID3DBlob* _pErrorMessages);
-
-	// Thin wrapper for D3DX11CompileFromMemory() that handles an annoying feature
-	// where the error messages could be formated such that using them with
-	// printf statements (probably you're very next step if this function fails to
-	// report the compile error) causes bad behavior.
-
-	// @oooii-tony: This function has been inlined because I get a link error in
-	// programs that link to oooii.lib, but don't use DX. Since this is a light
-	// and somewhat "why would you do this" wrapper, inlining for the purposes of 
-	// documentation is how I'll justify my linker error work-around for now.
-
-	bool oDX11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _SizeofOutErrorMessageString, ID3DBlob* _pErrorMessages);
-
-#endif
-
 #if oDXVER >= oDXVER_10
 	// Why do we ever need more than one of these? So wrap details of 
 	// construction here.
-	IDXGIFactory* oGetDXGIFactorySingleton();
-	ID2D1Factory* oGetD2DFactorySingleton();
 	IDWriteFactory* oGetDWriteFactorySingleton();
 
-	float oGetD3DVersion(IDXGIAdapter* _pAdapter);
+	// IDXGIFactory is special as it loads DLLs so it can not be statically held
+	// as it can not be released from DLLmain, so always create it.
+	bool oCreateDXGIFactory(IDXGIFactory** _ppFactory);
+	bool oD2D1CreateFactory(ID2D1Factory** _ppFactory);
+
+	float oDXGIGetD3DVersion(IDXGIAdapter* _pAdapter);
 
 	// Find an output with the specified monitor handle
-	bool oFindDXGIOutput(IDXGIFactory* _pFactory, HMONITOR _hMonitor, IDXGIOutput** _ppOutput);
+	bool oDXGIFindOutput(IDXGIFactory* _pFactory, HMONITOR _hMonitor, IDXGIOutput** _ppOutput);
+
+	// Returns true if the specified format can be bound as a depth-stencil format
+	bool oDXGIIsDepthFormat(DXGI_FORMAT _Format);
+
+	// When creating a texture that can be used with a depth-stencil view and also
+	// as a shader resource view, the texture should be created with a typeless 
+	// flavor of the desired format. This returns the true depth version of that
+	// format.
+	DXGI_FORMAT oDXGIGetDepthCompatibleFormat(DXGI_FORMAT _TypelessDepthFormat);
+
+	// Return the format necessary to use in a shader resource view when reading
+	// from a format used for a depth-stencil view.
+	DXGI_FORMAT oDXGIGetColorCompatibleFormat(DXGI_FORMAT _DepthFormat);
+#endif
+
+#if oDXVER >= oDXVER_11
+	float oGetD3DVersion(D3D_FEATURE_LEVEL _Level);
 #endif
 
 unsigned int oGetWindowDisplayIndex(HWND _hWnd);

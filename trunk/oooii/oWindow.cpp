@@ -64,6 +64,13 @@ void ConvertAlignment(char* _Opts, oWindow::ALIGNMENT _Alignment)
 			*_Opts++ = 'r';
 }
 
+const oGUID& oGetGUID( threadsafe const oWindow_Impl* threadsafe const * )
+{
+	// {85D2B690-422F-43af-BAB1-101118C1F546}
+	static const oGUID oIIDWindow = { 0x85d2b690, 0x422f, 0x43af, { 0xba, 0xb1, 0x10, 0x11, 0x18, 0xc1, 0xf5, 0x46 } };
+	return oIIDWindow;
+}
+
 struct oWindow_Impl : public oWindow
 {
 	enum DRAW_METHOD
@@ -73,6 +80,7 @@ struct oWindow_Impl : public oWindow
 	};
 
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oWindow_Impl>());
 
 	void GetDesc(DESC* _pDesc) const threadsafe override;
 	void SetDesc(const DESC* _pDesc) threadsafe override;
@@ -350,9 +358,13 @@ static bool SetDesc(HWND _hWnd, const oWindow::DESC* _pDesc)
 	return true;
 }
 
+
+
 struct oWindowResizer_Impl : public oWindow::Resizer
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oWindow>());
+	//oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID((volatile const oWindow_Impl *volatile const *) (NULL) ) );
 	oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
 	oWindowResizer_Impl(threadsafe oWindow* _pParentWindow, oWindow::ResizeHandlerFn _ResizeHandlerFn, void* _pUserData)
@@ -415,9 +427,12 @@ struct oWindowResizer_Impl : public oWindow::Resizer
 	oRefCount RefCount;
 };
 
+
+
 struct RoundedBoxGDI : public oWindow::RoundedBox
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<RoundedBoxGDI>());
 	oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
 	inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
@@ -531,9 +546,11 @@ struct RoundedBoxGDI : public oWindow::RoundedBox
 	}
 };
 
+
 struct LineGDI : public oWindow::Line
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<LineGDI>());
 	oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
 	inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
@@ -600,9 +617,12 @@ struct LineGDI : public oWindow::Line
 	}
 };
 
+
+
 struct FontGDI : public oWindow::Font
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<FontGDI>());
 	oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
 	inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
@@ -654,9 +674,12 @@ struct FontGDI : public oWindow::Font
 	oRefCount RefCount;
 };
 
+
+
 struct TextGDI : public oWindow::Text
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<TextGDI>());
 	oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
 	inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
@@ -741,9 +764,12 @@ struct TextGDI : public oWindow::Text
 	UINT StringLength;
 };
 
+
+
 struct PictureGDI : public oWindow::Picture
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<PictureGDI>());
 	oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
 	inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
@@ -933,9 +959,12 @@ struct PictureGDI : public oWindow::Picture
 			);
 	}
 
+
+
 	struct RoundedBoxD2D : public oWindow::RoundedBox
 	{
 		oDEFINE_REFCOUNT_INTERFACE(RefCount);
+		oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<RoundedBoxD2D>());
 		oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
 		inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
@@ -1030,6 +1059,7 @@ struct PictureGDI : public oWindow::Picture
 	struct LineD2D : public oWindow::Line
 	{
 		oDEFINE_REFCOUNT_INTERFACE(RefCount);
+		oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<LineD2D>());
 		oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
 		inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
@@ -1094,9 +1124,11 @@ struct PictureGDI : public oWindow::Picture
 		oRefCount RefCount;
 	};
 
+
 	struct FontD2D : public oWindow::Font
 	{
 		oDEFINE_REFCOUNT_INTERFACE(RefCount);
+		oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<FontD2D>());
 		oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
 		FontD2D(threadsafe oWindow* _pWindow, const DESC* _pDesc)
@@ -1152,6 +1184,7 @@ struct PictureGDI : public oWindow::Picture
 	struct TextD2D : public oWindow::Text
 	{
 		oDEFINE_REFCOUNT_INTERFACE(RefCount);
+		oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<TextD2D>());
 		oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
 		inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
@@ -1255,6 +1288,7 @@ struct PictureGDI : public oWindow::Picture
 	struct PictureD2D : public oWindow::Picture
 	{
 		oDEFINE_REFCOUNT_INTERFACE(RefCount);
+		oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<PictureD2D>());
 		oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
 		inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
@@ -1283,7 +1317,9 @@ struct PictureGDI : public oWindow::Picture
 			if (properties.pixelFormat.format == DXGI_FORMAT_UNKNOWN)
 				return false;
 			properties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
-			oGetD2DFactorySingleton()->GetDesktopDpi(&properties.dpiX, &properties.dpiY);
+			oRef<ID2D1Factory> pFactory;
+			oD2D1CreateFactory(&pFactory);
+			pFactory->GetDesktopDpi(&properties.dpiX, &properties.dpiY);
 			oV(RenderTarget->CreateBitmap(size, 0, 0, &properties, &Bitmap));
 			return !!Bitmap;
 		}
@@ -1390,12 +1426,15 @@ oWindow_Impl::oWindow_Impl(const DESC* _pDesc, const char* _Title, unsigned int 
 	, GDIAntialiasingMultiplier(_pDesc->UseAntialiasing ? 4 : 1)
 	, UseAntialiasing(_pDesc->UseAntialiasing)
 	, Closing(false)
-	#if oDXVER >= oDXVER_10
-		, DrawMethod(oGetD2DFactorySingleton() ? DRAW_USING_D2D : DRAW_USING_GDI)
-	#else
-		, DrawMethod(DRAW_USING_GDI)
-	#endif
+	, DrawMethod(DRAW_USING_GDI)
 {
+#if oDXVER >= oDXVER_10
+	oRef<ID2D1Factory> pFactory;
+	oD2D1CreateFactory(&pFactory);
+
+	DrawMethod = (pFactory ? DRAW_USING_D2D : DRAW_USING_GDI);
+#endif
+
 	if (_FourCCDrawAPI == 'D2D1')
 		DrawMethod = DRAW_USING_D2D;
 	else if (_FourCCDrawAPI == 'GDI ' || _FourCCDrawAPI == 'GDI')
@@ -1538,7 +1577,11 @@ HRESULT oWindow_Impl::CreateDeviceResources()
 			RECT rClient;
 			GetClientRect(hWnd, &rClient);
 			D2D1_SIZE_U size = D2D1::SizeU(rClient.right - rClient.left, rClient.bottom - rClient.top);
-			hr = oGetD2DFactorySingleton()->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(hWnd, size), &RenderTarget);
+			oRef<ID2D1Factory> pFactory;
+			oD2D1CreateFactory(&pFactory);
+			if(pFactory)
+				hr = pFactory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(hWnd, size), &RenderTarget);
+
 			if (SUCCEEDED(hr))
 				RenderTarget->SetAntialiasMode(UseAntialiasing ? D2D1_ANTIALIAS_MODE_PER_PRIMITIVE : D2D1_ANTIALIAS_MODE_ALIASED);
 		}
@@ -1870,4 +1913,81 @@ bool oWindow::Pump(oWindow* _pWindow, bool _CloseOnTimeout, unsigned int _Timeou
 	}
 
 	return true;
+}
+
+const oGUID& oGetGUID( threadsafe const oWindow* threadsafe const * )
+{
+	// {963AD3B4-0F53-4e6f-8D6D-C0FBB3CB58A1}
+	static const oGUID oIIDMWindowResizer = { 0x963ad3b4, 0xf53, 0x4e6f, { 0x8d, 0x6d, 0xc0, 0xfb, 0xb3, 0xcb, 0x58, 0xa1 } };
+	return oIIDMWindowResizer;
+}
+
+const oGUID& oGetGUID( threadsafe const detail::RoundedBoxGDI* threadsafe const * )
+{
+	// {571C1B76-ABB6-4f08-BD32-078919BA2C76}
+	static const oGUID oIIDRoundedBoxGDT = { 0x571c1b76, 0xabb6, 0x4f08, { 0xbd, 0x32, 0x7, 0x89, 0x19, 0xba, 0x2c, 0x76 } };
+	return oIIDRoundedBoxGDT;
+}
+
+
+const oGUID& oGetGUID( threadsafe const detail::LineGDI* threadsafe const * )
+{
+	// {01855CE1-563C-4213-976C-974C8381A252}
+	static const oGUID oIIDLineGDI = { 0x1855ce1, 0x563c, 0x4213, { 0x97, 0x6c, 0x97, 0x4c, 0x83, 0x81, 0xa2, 0x52 } };
+	return oIIDLineGDI;
+}
+
+const oGUID& oGetGUID( threadsafe const detail::TextGDI* threadsafe const * )
+{
+	// {DA612088-F9B9-48a3-80D5-4974697F06D1}
+	static const oGUID oIIDTextGDI = { 0xda612088, 0xf9b9, 0x48a3, { 0x80, 0xd5, 0x49, 0x74, 0x69, 0x7f, 0x6, 0xd1 } };
+	return oIIDTextGDI;
+}
+
+const oGUID& oGetGUID( threadsafe const detail::PictureGDI* threadsafe const * )
+{
+	// {B151EB44-AB77-4049-89B1-DD7E0B8EBB4D}
+	static const oGUID oIIDPictureGDI = { 0xb151eb44, 0xab77, 0x4049, { 0x89, 0xb1, 0xdd, 0x7e, 0xb, 0x8e, 0xbb, 0x4d } };
+	return oIIDPictureGDI;
+}
+
+const oGUID& oGetGUID( threadsafe const detail::FontGDI* threadsafe const * )
+{
+	// {8B0A96BB-31DD-464b-93EF-DCBE3AC9260E}
+	static const oGUID oIIDFontGDI = { 0x8b0a96bb, 0x31dd, 0x464b, { 0x93, 0xef, 0xdc, 0xbe, 0x3a, 0xc9, 0x26, 0xe } };
+	return oIIDFontGDI;
+}
+
+const oGUID& oGetGUID( threadsafe const detail::RoundedBoxD2D* threadsafe const * )
+{
+	// {3D461425-9AF9-4c32-BE4C-F3DE41A4190F}
+	static const oGUID oIIDRoundedBoxD2D = { 0x3d461425, 0x9af9, 0x4c32, { 0xbe, 0x4c, 0xf3, 0xde, 0x41, 0xa4, 0x19, 0xf } };
+	return oIIDRoundedBoxD2D;
+}
+const oGUID& oGetGUID( threadsafe const detail::LineD2D* threadsafe const * )
+{
+	// {2BFDB884-A3FA-4dc8-82DF-EF172C11D785}
+	static const oGUID oIIDLineD2D = { 0x2bfdb884, 0xa3fa, 0x4dc8, { 0x82, 0xdf, 0xef, 0x17, 0x2c, 0x11, 0xd7, 0x85 } };
+	return oIIDLineD2D;
+}
+
+const oGUID& oGetGUID( threadsafe const detail::FontD2D* threadsafe const * )
+{
+	// {6E55C103-4F0F-4da1-8B48-7FBC7885ADE5}
+	static const oGUID oIIDFontD2D = { 0x6e55c103, 0x4f0f, 0x4da1, { 0x8b, 0x48, 0x7f, 0xbc, 0x78, 0x85, 0xad, 0xe5 } };
+	return oIIDFontD2D;
+}
+
+const oGUID& oGetGUID( threadsafe const detail::TextD2D* threadsafe const * )
+{
+	// {0D9885AB-2FBE-4104-ACD4-AC0BDDB942A7}
+	static const oGUID oIIDTextD2D = { 0xd9885ab, 0x2fbe, 0x4104, { 0xac, 0xd4, 0xac, 0xb, 0xdd, 0xb9, 0x42, 0xa7 } };
+	return oIIDTextD2D;
+}
+
+const oGUID& oGetGUID( threadsafe const detail::PictureD2D* threadsafe const * )
+{
+	// {FA8EF1D6-8A42-420b-8DE9-AC3F083E3644}
+	static const oGUID oIIDPictureD2D = { 0xfa8ef1d6, 0x8a42, 0x420b, { 0x8d, 0xe9, 0xac, 0x3f, 0x8, 0x3e, 0x36, 0x44 } };
+	return oIIDPictureD2D;
 }

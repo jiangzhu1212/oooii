@@ -178,13 +178,15 @@ namespace oFile
 // Uses the specified allocator to allocate _OutBuffer and fill it with the 
 // entire contents of the file specified by _Path. Returns false if there was 
 // an error.
-bool oLoadBuffer(void** _ppOutBuffer, size_t* _pOutSize, void* (*_Allocate)(size_t _Size), const char* _Path, bool _AsText);
+bool oLoadBuffer(void** _ppOutBuffer, size_t* _pOutSize, oFUNCTION<void*(size_t _Size)> _Allocate, const char* _Path, bool _AsText);
 
 // Loads into a pre-allocated buffer. This fails with an oGetLastError() of 
 // EINVAL if the buffer is too small to contain the contents of the file.
 bool oLoadBuffer(void* _pOutBuffer, size_t _SizeofOutBuffer, size_t* _pOutSize, const char* _Path, bool _AsText);
 template<typename T, size_t size> inline bool oLoadBuffer(T (&_pOutBuffer)[size], size_t* _pOutSize, const char* _Path, bool _AsText) { return oLoadBuffer(_pOutBuffer, size, _pOutSize, _Path, _AsText); }
 
+// Loads the "header" (known number of bytes at the beginning of a file) into a buffer, returning the actual number of bytes read if the file is smaller than the buffer
+bool oLoadFileHeader(void* _pHeader, size_t _SizeofHeader, const char* _Path, bool _AsText);
 bool oSaveBuffer(const char* _Path, const void* _pSource, size_t _SizeofSource, bool _AsText);
 
 bool oSetEnvironmentVariable(const char* _Name, const char* _Value);

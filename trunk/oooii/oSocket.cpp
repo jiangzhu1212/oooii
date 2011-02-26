@@ -23,6 +23,7 @@
  **************************************************************************/
 #include "pch.h"
 #include <oooii/oSocket.h>
+#include <oooii/oAllocatorTLSF.h>
 #include <oooii/oByte.h>
 #include <oooii/oRef.h>
 #include <oooii/oRefCount.h>
@@ -31,8 +32,8 @@
 #include <oooii/oString.h>
 #include <oooii/oThreading.h>
 #include <oooii/oThread.h>
-#include <oooii/oAllocator.h>
 #include <oooii/oLockFreeQueue.h>
+#include <oooii/oSTL.h>
 #include "oWinsock.h"
 
 oSocket::size_t oWinsockRecvBlocking( SOCKET hSocket, void* _pData, oSocket::size_t _szReceive, unsigned int _Timeout)
@@ -93,9 +94,17 @@ struct CLIENT_PACKET_HEADER
 	oSocket::size_t MessageLength;
 };
 
+const oGUID& oGetGUID( threadsafe const oSocketBlocking* threadsafe const * )
+{
+	// {C58CBDDA-849A-4242-AD95-A9A9C9A84CD1}
+	static const oGUID oIIDSocketBlocking = { 0xc58cbdda, 0x849a, 0x4242, { 0xad, 0x95, 0xa9, 0xa9, 0xc9, 0xa8, 0x4c, 0xd1 } };
+	return oIIDSocketBlocking;
+}
+
 struct SocketBlocking_Impl : public oSocketBlocking
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oSocketBlocking>());
 	oDEFINE_CONST_GETDESC_INTERFACE(Desc, threadsafe);
 
 	SocketBlocking_Impl(const char* _DebugName, const DESC& _Desc, SOCKET _SystemSocket, bool* _pSuccess);
@@ -293,6 +302,13 @@ oSocket::size_t SocketBlocking_Impl::Receive(void* _pDestination, oSocket::size_
 	return header.MessageLength;
 }	
 
+const oGUID& oGetGUID( threadsafe const oSocketAsync* threadsafe const * )
+{
+	// {F2796E31-D633-4377-B3BE-25D4BD0F73C8}
+	static const oGUID oIIDSocketAsync = { 0xf2796e31, 0xd633, 0x4377, { 0xb3, 0xbe, 0x25, 0xd4, 0xbd, 0xf, 0x73, 0xc8 } };
+	return oIIDSocketAsync;
+}
+
 class SocketAsync_Impl : public oSocketAsync
 {
 public:
@@ -328,6 +344,7 @@ public:
 	};
 
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oSocketAsync>());
 	oDEFINE_CONST_GETDESC_INTERFACE(Desc, threadsafe);
 
 	SocketAsync_Impl(SOCKET _hSocket, const char* _DebugName, const char* _Peername, unsigned int _Timeout, bool* _pSuccess);
@@ -426,11 +443,19 @@ bool oSocketAsync::Create( const char* _DebugName, const DESC& _Desc, threadsafe
 	return success;
 }
 
+const oGUID& oGetGUID( threadsafe const oThread::Proc* threadsafe const * )
+{
+	// {F7408D24-F854-48bb-8C51-E12EF2C16519}
+	static const oGUID oIIDSocketAsyncReceiverThread = { 0xf7408d24, 0xf854, 0x48bb, { 0x8c, 0x51, 0xe1, 0x2e, 0xf2, 0xc1, 0x65, 0x19 } };
+	return oIIDSocketAsyncReceiverThread;
+}
+
 class oSocketAsyncReceiverThread : public oThread::Proc
 {
 public:
 	static const int MAX_SERVICEABLE_SOCKETS = 64;
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oThread::Proc>());
 	oSocketAsyncReceiverThread( const char* _pName, bool* _pSuccess);
 	~oSocketAsyncReceiverThread();
 
@@ -472,10 +497,18 @@ private:
 
 };
 
+const oGUID& oGetGUID( threadsafe const oSocketAsyncReceiver* threadsafe const * )
+{
+	// {11071E5B-6767-4fec-8DAD-7B43DE15857B}
+	static const oGUID oIIDSocketClientAsyncReceiver = { 0x11071e5b, 0x6767, 0x4fec, { 0x8d, 0xad, 0x7b, 0x43, 0xde, 0x15, 0x85, 0x7b } };
+	return oIIDSocketClientAsyncReceiver;
+}
+
 class SocketClientAsyncReceiver_Impl : public oSocketAsyncReceiver
 {
 public:
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oSocketAsyncReceiver>());
 	SocketClientAsyncReceiver_Impl(const char* _pDebugName, bool* _pSuccess);
 
 	virtual bool AddSocket(threadsafe oSocketAsync* _pSocket, oFUNCTION<void(void*,oSocket::size_t)> _Callback) threadsafe override;
@@ -653,15 +686,15 @@ void SocketAsync_Impl::BeginSending( oSocket::size_t _MaxOutstandingSends )
 	oAllocator::DESC AllocDesc;
 	AllocDesc.ArenaSize = ArenaSize;
 	AllocDesc.pArena = &(SendManagement.Arena[0]);
-	oVERIFY( oAllocator::Create( "oSocketAsync Allocator", &AllocDesc, &SendManagement.Allocator ) );
+	oVERIFY(oAllocatorTLSF::Create("oSocketAsync Allocator", &AllocDesc, &SendManagement.Allocator));
 }
-
 
 void SocketAsync_Impl::MapSend(oSocket::size_t _MaxSize, void** _ppData) threadsafe
 {
 	oRWMutex::ScopedLock LockSend( SendMutex );
 	*_ppData = NULL;
 
+	// @oooii-kevin: thread_cast safe due to mutex
 	SocketAsync_Impl* pThis = thread_cast<SocketAsync_Impl*>(this);
 
 	SEND_MANAGEMENT* pSendManagement = thread_cast<SEND_MANAGEMENT*>(&SendManagement);
@@ -674,6 +707,7 @@ void SocketAsync_Impl::MapSend(oSocket::size_t _MaxSize, void** _ppData) threads
 	void* pBlob = pSendManagement->Allocator->Allocate( TotalSize );
 	if( !pBlob )
 	{
+		// No memory is available so garbage collect to regain memory
 		pThis->GarbageCollectSend();
 		pBlob = pSendManagement->Allocator->Allocate( TotalSize );
 		if( !pBlob )
@@ -687,8 +721,17 @@ void SocketAsync_Impl::MapSend(oSocket::size_t _MaxSize, void** _ppData) threads
 void SocketAsync_Impl::UnmapSend(oSocket::size_t _ActualSize, void* _pData) threadsafe
 {
 	oRWMutex::ScopedLock LockSend( SendMutex );
+	// @oooii-kevin: thread_cast safe due to mutex
+	SocketAsync_Impl* pThis = thread_cast<SocketAsync_Impl*>(this);
+
 	OverlappedSend* pMessageGroup = (OverlappedSend*)((unsigned char*)_pData - sizeof( OverlappedSend ));
-	oVB( SendManagement.OutstandingSends.TryPush(pMessageGroup) );
+
+	if( !SendManagement.OutstandingSends.TryPush(pMessageGroup) ) 
+	{
+		// We have run out of slots to track existing allocations, so garbage collect to regain slots
+		pThis->GarbageCollectSend();
+		oVERIFY( SendManagement.OutstandingSends.TryPush(pMessageGroup) );
+	}
 	pMessageGroup->Send( hSocket, _pData, _ActualSize );
 }
 
@@ -1098,11 +1141,11 @@ void oSocketAsyncReceiverThread::DropConnection(SocketAsync_Impl* _pConnection)
 	WakeupThreadAndWait();
 
 #ifdef _DEBUG
-	for( std::vector<DEBUG_ConnectionStats>::iterator iter = ConnectedSockets.begin(); iter != ConnectedSockets.end(); ++iter )
+	oFOREACH(DEBUG_ConnectionStats& stats, ConnectedSockets )
 	{
-		if( iter->pSocket == _pConnection )
+		if(stats.pSocket == _pConnection )
 		{
-			iter->DisconnectedTimestamp = oTimer();
+			stats.DisconnectedTimestamp = oTimer();
 			return;
 		}
 	}
@@ -1195,9 +1238,17 @@ void SocketClientAsyncReceiver_Impl::DropSocket(threadsafe oSocketAsync* _pSocke
 	thread_cast<oSocketAsyncReceiverThread*>(ReceiverThread.c_ptr() )->DropConnection(static_cast<SocketAsync_Impl*>( thread_cast<oSocketAsync*>( _pSocket ) ));
 }
 
+const oGUID& oGetGUID( threadsafe const oSocketServer* threadsafe const * )
+{
+	// {EE38455C-A057-4b72-83D2-4E809FF1C059}
+	static const oGUID oIIDSocketServer = { 0xee38455c, 0xa057, 0x4b72, { 0x83, 0xd2, 0x4e, 0x80, 0x9f, 0xf1, 0xc0, 0x59 } };
+	return oIIDSocketServer;
+}
+
 struct SocketServer_Impl : public oSocketServer
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oSocketServer>());
 	oDEFINE_CONST_GETDESC_INTERFACE(Desc, threadsafe);
 
 	SocketServer_Impl(const char* _DebugName, const DESC& _Desc, bool* _pSuccess);
@@ -1333,9 +1384,17 @@ bool SocketServer_Impl::WaitForConnection(threadsafe oSocketBlocking** _ppNewlyC
 	return UNIFIED_WaitForConnection(GetDebugName(), Mutex, hConnectEvent, _TimeoutMS, hSocket, CreateSocketClient, (void**)_ppNewlyConnectedClient);
 }
 
+const oGUID& oGetGUID( threadsafe const oSocketSender* threadsafe const * )
+{
+	// {E826CEC9-A3C4-4fa2-A5A8-AF7DD3F71749}
+	static const oGUID oIIDSocketSender = { 0xe826cec9, 0xa3c4, 0x4fa2, { 0xa5, 0xa8, 0xaf, 0x7d, 0xd3, 0xf7, 0x17, 0x49 } };
+	return oIIDSocketSender;
+}
+
 struct SocketSender_Impl : public oSocketSender
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oSocketSender>());
 
 	SocketSender_Impl(const char* _DebugName, const DESC* _pDesc, bool* _pSuccess);
 	~SocketSender_Impl();
@@ -1379,9 +1438,17 @@ SocketSender_Impl::~SocketSender_Impl()
 		oWinsock::Singleton()->shutdown(hSocket, SD_BOTH);
 }
 
+const oGUID& oGetGUID( threadsafe const oSocketReceiver* threadsafe const * )
+{
+	// {519C36BA-DCE2-461c-8948-2A4BEC128E4B}
+	static const oGUID oIIDSocketReceiver = { 0x519c36ba, 0xdce2, 0x461c, { 0x89, 0x48, 0x2a, 0x4b, 0xec, 0x12, 0x8e, 0x4b } };
+	return oIIDSocketReceiver;
+}
+
 struct SocketReceiver_Impl : public oSocketReceiver
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oSocketReceiver>());
 
 	SocketReceiver_Impl(const char* _DebugName, const DESC* _pDesc, bool* _pSuccess);
 	~SocketReceiver_Impl();

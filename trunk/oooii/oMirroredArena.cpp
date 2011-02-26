@@ -167,6 +167,7 @@ namespace detail {
 	struct oAccessViolationHandler : public oInterface
 	{
 		oDEFINE_REFCOUNT_INTERFACE(RefCount);
+		oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oAccessViolationHandler>());
 
 		oAccessViolationHandler()
 		{
@@ -281,14 +282,29 @@ namespace detail {
 
 } // namespace detail
 
+const oGUID& oGetGUID( threadsafe const detail::oAccessViolationHandler* threadsafe const * )
+{
+	// {12ABACC4-6BBE-4c93-94ED-01442413F92E}
+	static const oGUID oIIDAccessViolationHandler = { 0x12abacc4, 0x6bbe, 0x4c93, { 0x94, 0xed, 0x1, 0x44, 0x24, 0x13, 0xf9, 0x2e } };
+	return oIIDAccessViolationHandler;
+}
+
 inline void intrusive_ptr_lock(threadsafe detail::oAccessViolationHandler* p) { p->Lock(); }
 inline void intrusive_ptr_unlock(threadsafe detail::oAccessViolationHandler* p) { p->Unlock(); }
 inline void intrusive_ptr_lock_read(threadsafe detail::oAccessViolationHandler* p) { p->LockRead(); }
 inline void intrusive_ptr_unlock_read(threadsafe detail::oAccessViolationHandler* p) { p->UnlockRead(); }
 
+const oGUID& oGetGUID( threadsafe const oMirroredArena* threadsafe const * )
+{
+	// {89A0BD51-3ADF-42b6-A6DE-F0B9839168CF}
+	static const oGUID oIIDMirroredArena = { 0x89a0bd51, 0x3adf, 0x42b6, { 0xa6, 0xde, 0xf0, 0xb9, 0x83, 0x91, 0x68, 0xcf } };
+	return oIIDMirroredArena;
+}
+
 struct oMirroredArena_Impl : public oMirroredArena
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oMirroredArena>());
 	oDEFINE_CONST_GETDESC_INTERFACE(Desc, threadsafe);
 
 	oMirroredArena_Impl(const DESC* _pDesc, bool* _pSuccess);
@@ -307,6 +323,11 @@ struct oMirroredArena_Impl : public oMirroredArena
 
 	bool RetrieveChanges(void* _pChangeBuffer, size_t _SizeofChangeBuffer, size_t* _pSizeRetrieved) threadsafe override;
 	bool ApplyChanges(const void* _pChangeBuffer) override;
+
+	void* VMemoryReserve(DESC& _pDesc);
+	void  VMemoryUnreserve(DESC& _pDesc);
+	void* VMemoryCommit(DESC& _pDesc);
+	void  VMemoryDecommit(DESC& _pDesc);
 
 	bool COPYRetrieveChanges(void* _pChangeBuffer, size_t _SizeofChangeBuffer, size_t* _pSizeRetrieved);
 	bool DIFFRetrieveChanges(void* _pChangeBuffer, size_t _SizeofChangeBuffer, size_t* _pSizeRetrieved);
@@ -386,22 +407,27 @@ oMirroredArena_Impl::oMirroredArena_Impl(const DESC* _pDesc, bool* _pSuccess)
 	}
 
 	// Allocate the user space, and a known/fixed offset for the bookkeeping.
-	void* p = oHeap::PagedAllocate(Desc.BaseAddress, Desc.Size, detail::GetAccess(Desc.Usage));
-	if (p != Desc.BaseAddress)
+	void* pReserve = VMemoryReserve(Desc);
+	if (pReserve != Desc.BaseAddress)
+		goto error; // respect last error from PagedAllocate;
+
+	void* pCommit = VMemoryCommit(Desc);
+	if (pCommit != Desc.BaseAddress)
 		goto error; // respect last error from PagedAllocate;
 
 	if (Desc.Usage == READ_WRITE_DIFF)
 	{
-		void* pBookkeeping = oHeap::PagedAllocate(detail::GetBookkeepingBasePointer(Desc.BaseAddress), detail::PAGE_SIZE, detail::GetAccess(READ_WRITE));
+		void* pReserveRWDiff = oHeap::PagedReserve(detail::GetBookkeepingBasePointer(Desc.BaseAddress), detail::PAGE_SIZE, detail::GetAccess(READ_WRITE));
+		void* pBookkeeping = oHeap::PagedCommit(detail::GetBookkeepingBasePointer(Desc.BaseAddress), detail::PAGE_SIZE, detail::GetAccess(READ_WRITE));
 		oVB(pBookkeeping);
 		oASSERT(pBookkeeping == detail::GetBookkeepingBasePointer(Desc.BaseAddress), "Did not allocate bookkeeping memory correctly.");
-		if (!pBookkeeping || pBookkeeping != detail::GetBookkeepingBasePointer(Desc.BaseAddress))
+		if (!pBookkeeping || pBookkeeping != detail::GetBookkeepingBasePointer(Desc.BaseAddress) || pReserveRWDiff != pBookkeeping)
 		{
 			// back out allocations and fail out
 			oSetLastError(ENOMEM, "Failed to allocate bookkeeping pages");
 			if (pBookkeeping)
-				oHeap::PagedDeallocate(pBookkeeping);
-			oHeap::PagedDeallocate(Desc.BaseAddress);
+				oHeap::PagedDecommit(pBookkeeping);
+			VMemoryDecommit(Desc);
 			goto error;
 		}
 
@@ -439,9 +465,9 @@ oMirroredArena_Impl::~oMirroredArena_Impl()
 	#endif
 
 	if (Desc.Usage == READ_WRITE_DIFF)
-		oHeap::PagedDeallocate(detail::GetBookkeepingBasePointer(Desc.BaseAddress));
+		oHeap::PagedUnreserve(detail::GetBookkeepingBasePointer(Desc.BaseAddress));
 
-	oHeap::PagedDeallocate(Desc.BaseAddress);
+	VMemoryUnreserve(Desc);
 }
 
 size_t oMirroredArena_Impl::GetNumDirtyPages() const threadsafe
@@ -680,4 +706,31 @@ bool oMirroredArena_Impl::ApplyChanges(const void* _pChangeBuffer)
 			oSetLastError(EINVAL, "Invalid change buffer specified");
 			return false;
 	}
+}
+
+void* oMirroredArena_Impl::VMemoryReserve(DESC& _pDesc)
+{
+	void* pReserve = oHeap::PagedReserve(Desc.BaseAddress, Desc.Size, detail::GetAccess(Desc.Usage));
+	_pDesc.bIsReserved = (pReserve) ? true : false;
+	return pReserve;
+}
+
+void oMirroredArena_Impl::VMemoryUnreserve(DESC& _pDesc)
+{
+	oHeap::PagedUnreserve(Desc.BaseAddress);
+	_pDesc.bIsReserved = false;
+	_pDesc.bIsCommitted = false; // VirtualFreeEx() also decommits on a MEM_RELEASE.
+}
+
+void* oMirroredArena_Impl::VMemoryCommit(DESC& _pDesc)
+{
+	void* pCommit = oHeap::PagedCommit(Desc.BaseAddress, Desc.Size, detail::GetAccess(Desc.Usage));
+	_pDesc.bIsCommitted = (pCommit) ? true : false;
+	return pCommit;
+}
+
+void oMirroredArena_Impl::VMemoryDecommit(DESC& _pDesc)
+{
+	oHeap::PagedDecommit(Desc.BaseAddress);
+	_pDesc.bIsCommitted = false;
 }

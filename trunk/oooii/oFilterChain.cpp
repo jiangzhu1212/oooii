@@ -45,9 +45,17 @@ struct CompiledFilter : public oFilterChain::FILTER
 	regex CompiledRegularExpression;
 };
 
+const oGUID& oGetGUID( threadsafe const oFilterChain* threadsafe const * )
+{
+	// {C5486617-22A2-4e84-9095-6A8C9E86FF65}
+	static const oGUID oIIDFilterChain = { 0xc5486617, 0x22a2, 0x4e84, { 0x90, 0x95, 0x6a, 0x8c, 0x9e, 0x86, 0xff, 0x65 } };
+	return oIIDFilterChain;
+}
+
 struct FilterChain_Impl : public oFilterChain
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oFilterChain>());
 
 	// If any compilation fails, _StrError will have an error message in it.
 	FilterChain_Impl(const FILTER* _pFilters, size_t _NumFilters, char* _StrError, size_t _SizeofStrError)

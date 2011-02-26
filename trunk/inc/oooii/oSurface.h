@@ -181,6 +181,10 @@ namespace oSurface
 	// Returns true if the specified format is a block-compressed format.
 	bool IsBlockCompressedFormat(FORMAT _Format);
 
+	// Returns true if the specified format is one typically used to write 
+	// Z-buffer depth information.
+	bool IsDepthFormat(FORMAT _Format);
+
 	// Returns true if the specified format is normalized between 0.0f and 1.0f
 	bool IsUNORM(FORMAT _Format);
 

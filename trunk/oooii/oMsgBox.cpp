@@ -28,6 +28,7 @@
 #include <oooii/oStdio.h>
 #include <oooii/oString.h>
 #include <oooii/oWindows.h>
+#include <oooii/oTempString.h>
 
 #if defined(_WIN32) || defined(_WIN64)
 	// Use the Windows Vista UI look. If this causes issues or the dialog not to appear, try other values from processorAchitecture { x86 ia64 amd64 * }
@@ -36,7 +37,7 @@
 
 static const size_t _INFINITE_WAIT = ~0u;
 
-static const size_t kVeryLargeStringLength = 2048;
+static const size_t kVeryLargeStringLength = 60 * 1024;
 
 namespace Control
 {
@@ -262,7 +263,7 @@ oMsgBox::RESULT AssertDialog(oMsgBox::TYPE type, const char* caption, const char
 	const LONG MaxH = MinH + 150;
 
 	RECT rString;
-	char _string[4 * 1024];
+	oTempString _string(oTempString::BigSize);
 
 	calcStringRect(rString, oNewlinesToDos(_string, string), MinW, MinH, MaxW, MaxH);
 
@@ -303,8 +304,9 @@ oMsgBox::RESULT AssertDialog(oMsgBox::TYPE type, const char* caption, const char
 	templateBufferSize += calcTemplateItemSize(strlen(textIcon));
 	templateBufferSize += calcTemplateItemSize(strlen(textBtn4));
 
-	if (templateBufferSize > (sizeof(_string) + 1024)) __debugbreak(); // don't use Assert to avoid recursion
-	char buffer[sizeof(_string) + 1024];
+//	if (templateBufferSize > (sizeof(_string) + 1024)) __debugbreak(); // don't use Assert to avoid recursion
+	oTempString _buffer(oTempString::BigSize);
+	char* buffer = _buffer;
 
 	// Allocate and set up the template header
 	LPDLGTEMPLATE lpTemplate = (LPDLGTEMPLATE)buffer;
@@ -329,7 +331,7 @@ oMsgBox::RESULT AssertDialog(oMsgBox::TYPE type, const char* caption, const char
 
 	DWORD BtnStyle = WS_CHILD|WS_VISIBLE|WS_TABSTOP;
 
-	initializeItem(vcur, _string, Control::kMessageText, Control::kEdit, WS_CHILD|WS_VISIBLE|ES_LEFT|ES_MULTILINE|ES_READONLY|WS_VSCROLL, rString);
+	initializeItem(vcur, _string.c_str(), Control::kMessageText, Control::kEdit, WS_CHILD|WS_VISIBLE|ES_LEFT|ES_MULTILINE|ES_READONLY|WS_VSCROLL, rString);
 	initializeItem(vcur, textBtn0, Control::kAbort, Control::kButton, BtnStyle, rAbort);
 	initializeItem(vcur, textBtn1, Control::kRetry, Control::kButton, BtnStyle|BS_DEFPUSHBUTTON, rDebug);
 	
@@ -389,7 +391,7 @@ oMsgBox::RESULT GetResult(int messageBoxResult)
 
 oMsgBox::RESULT oMsgBox::tvprintf(oMsgBox::TYPE _Type, unsigned int _Timeout, const char* _Title, const char* _Format, va_list args)
 {
-	char msg[4096];
+	oTempString msg(oTempString::BigSize);
 	vsprintf_s(msg, _Format, args);
 	oMsgBox::RESULT result;
 	if (_Type == oMsgBox::DEBUG)

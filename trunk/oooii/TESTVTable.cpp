@@ -50,6 +50,11 @@ struct TESTVTable : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
+		static bool RunOnce = false;
+		if( RunOnce ) // @oooii-kevin: VTAble patching is bootstrap once per-process operation so we can only test it once per run.
+			return SKIPPED;
+
+		RunOnce = true;
 		unsigned char temp[1024];
 		memset( temp, NULL, 1024 );
 

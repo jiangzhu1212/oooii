@@ -30,7 +30,7 @@
 #include <oooii/oThreading.h>
 #include <oooii/oWindows.h>
 
-struct oConsoleContext : public oSingleton<oConsoleContext>
+struct oConsoleContext : public oProcessSingleton<oConsoleContext>
 {
 	oMutex ConsoleLock;
 };

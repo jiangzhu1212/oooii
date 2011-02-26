@@ -21,7 +21,16 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// IMPORTANT NOTES:
+
+// OOOii Math Library. This math library attempts to conform to HLSL (SM5) as 
+// closely as possible. To reduce typing, templates and macros are used 
+// extensively, but the code should still be simpler than the alternative.
+// There are additional APIs as well that extend beyond HLSL as well, but try to 
+// keep the spirit of hlsl in mind.
+//
+//
+// === PLANES ===
+//
 // The plane equation used here is Ax + By + Cz + D = 0, so see sdistance() as 
 // to the implications. Primarily it means that positive D values are in the 
 // direction/on the side of the normal, and negative values are in the opposite
@@ -35,8 +44,31 @@
 // from that normal to the left/-1 side. Likewise the right clip plane is 
 // -1,0,0,1 meaning the normal points inward to the left, and the offset is once
 // again away from that normal to the right/+1 side.
-
-// The float4x4 and float3x3 matrices are OpenGL-style, column-major, right-handed.
+//
+//
+// === MATRICES ===
+// 
+// I don't understand left-handed v. right-handed v. OpenGL v. DirectX matrices: 
+// the whole thing is a mess!
+// Here are the rules of oMath regarding how matrices behave, and you can assign
+// your own description of what they are:
+//
+// Matrices are stored in memory as an array of columns. So technically the 
+// matrices are column-major, but how the memory is laid out it looks like 
+// row-major. Translation is in the 4th COLUMN, but in the debugger it reads
+// left-to-right in a single vector because each COLUMN is a vector.
+//
+// Matrix multiplication is done in-order from left to right. This means if you 
+// want to assemble a typical transform in SRT order it would look like this: 
+// float4x4 transform = ScaleMatrix * RotationMatrix * TransformMatrix
+// OR
+// float4x4 WorldViewProjection = WorldMatrix * ViewMatrix * ProjectionMatrix
+//
+// All multiplication against vectors occur in matrix * vector order. 
+// Unimplemented operator* for vector * matrix enforce this.
+//
+// For graphics components, the identity matrix looks down -Z with Y up, so it's
+// a right-handed coordinate system.
 
 #pragma once
 #ifndef oMath_h
@@ -164,6 +196,10 @@ template<typename T> struct TVECTOR3
 	inline const TVECTOR2<T>& XY() const { return *(TVECTOR2<T>*)this; }
 	inline const TVECTOR2<T>& YZ() const { return *(TVECTOR2<T>*)&y; }
 	oMATH_MEMBER_OPS(TVECTOR3<T>, T);
+
+	static inline TVECTOR3<T> xAxis() { return TVECTOR3<T>(1.0f, 0.0f, 0.0f); }
+	static inline TVECTOR3<T> yAxis() { return TVECTOR3<T>(0.0f, 1.0f, 0.0f); }
+	static inline TVECTOR3<T> zAxis() { return TVECTOR3<T>(0.0f, 0.0f, 1.0f); }
 };
 
 template<typename T> struct TVECTOR4
@@ -184,7 +220,12 @@ template<typename T> struct TVECTOR4
 	inline const TVECTOR2<T>& ZW() const { return *(TVECTOR2<T>*)&z; }
 	inline const TVECTOR3<T>& XYZ() const { return *(TVECTOR3<T>*)&x; }
 	inline const TVECTOR3<T>& YZW() const { return *(TVECTOR3<T>*)&y; }
+	inline T W() const { return w; }
 	oMATH_MEMBER_OPS(TVECTOR4<T>, T);
+
+	static inline TVECTOR4<T> xAxis() { return TVECTOR4<T>(1.0f, 0.0f, 0.0f, 0.0f); }
+	static inline TVECTOR4<T> yAxis() { return TVECTOR4<T>(0.0f, 1.0f, 0.0f, 0.0f); }
+	static inline TVECTOR4<T> zAxis() { return TVECTOR4<T>(0.0f, 0.0f, 1.0f, 0.0f); }
 };
 
 template<typename T> struct TQUATERNION
@@ -230,6 +271,9 @@ template<typename T> struct TMATRIX4
 	TMATRIX4(const TQUATERNION<T>& _Rotation, const TVECTOR3<T>& _Translation) { TMATRIX3<T> r = oCreateRotationQ(_Rotation); *this = TMATRIX4(r, _Translation); }
 	const TVECTOR4<T>& operator[](int i) const { return *(&Column0 + i); }
 	TVECTOR4<T>& operator[](int i) { return *(&Column0 + i); }
+
+	TMATRIX3<T> getUpper3x3() const { return TMATRIX3<T>(Column0.XYZ(), Column1.XYZ(), Column2.XYZ()); }
+	static inline TMATRIX4<T> translation(const TVECTOR3<T>& trans) { return TMATRIX4<T>(TVECTOR4<T>::xAxis(), TVECTOR4<T>::yAxis(), TVECTOR4<T>::zAxis(), TVECTOR4<T>(trans.x, trans.y, trans.z, 1.0f)); }
 };
 
 template<typename T> inline bool operator==(const TQUATERNION<T>& a, const TQUATERNION<T>& b) { return oEqual(a.x, b.x) && oEqual(a.y, b.y) && oEqual(a.z, b.z) && oEqual(a.w, b.w); }
@@ -240,6 +284,7 @@ template<typename T> inline TVECTOR3<T> operator-(const TVECTOR3<T>& a) { return
 template<typename T> inline TVECTOR4<T> operator-(const TVECTOR4<T>& a) { return TVECTOR4<T>(-a.x, -a.y, -a.z, -a.w); }
 template<typename T> inline TVECTOR3<T> operator*(const TMATRIX3<T>& a, const TVECTOR3<T>& b) { return mul(a, b); }
 template<typename T> inline TMATRIX3<T> operator*(const TMATRIX3<T>& a, const TMATRIX3<T>& b) { return mul(a, b); }
+template<typename T> inline TVECTOR3<T> operator*(const TMATRIX4<T>& a, const TVECTOR3<T>& b) { return mul(a, b); }
 template<typename T> inline TVECTOR4<T> operator*(const TMATRIX4<T>& a, const TVECTOR4<T>& b) { return mul(a, b); }
 template<typename T> inline TMATRIX4<T> operator*(const TMATRIX4<T>& a, const TMATRIX4<T>& b) { return mul(a, b); }
 template<typename T> inline TQUATERNION<T> operator*(const TQUATERNION<T>&a, const TQUATERNION<T>& b) { return mul(a, b); }
@@ -653,6 +698,8 @@ template<typename T> inline T faceforward(const T& n, const T& i, const T& ng) {
 template<typename T> inline T normalize(const T& x) { return x / length(x); }
 template<typename T> inline T radians(T degrees) { return degrees * T(oPI) / T(180.0); }
 template<typename T> inline T degrees(T radians) { return radians * T(180.0) / T(oPI); }
+oMATH_ELUFNS(radians);
+oMATH_ELUFNS(degrees);
 template<typename T> inline T distance(const TVECTOR3<T>& a, const TVECTOR3<T>& b) { return length(a-b); }
 template<typename T> inline T reflect(const T& i, const T& n) { return i - 2 * n * dot(i,n); }
 template<typename T> inline T refract(const TVECTOR3<T>& i, const TVECTOR3<T>& n, const T& r) { T c1 = dot(i,n); T c2 = T(1) - r*r * (T(1) - c1*c1); return (c2 < T(0)) ? TVECTOR3<T>(0) : r*i + (sqrt(c2) - r*c1) * n; } // http://www.physicsforums.com/archive/index.php/t-187091.html
@@ -722,6 +769,9 @@ inline float4 asfloat(const double2& value) { oByteSwizzle64 s[2]; s[0].AsDouble
 inline float2 asfloat(const long long& value) { oByteSwizzle64 s; s.AsLongLong = value; return float2(s.AsFloat[0], s.AsFloat[1]); }
 inline float4 asfloat(const longlong2& value) { oByteSwizzle64 s[2]; s[0].AsLongLong = value.x; s[1].AsLongLong = value.y; return float4(s[0].AsFloat[0], s[0].AsFloat[1], s[1].AsFloat[0], s[1].AsFloat[1]); }
 template<typename T> inline float asfloat(const T& value) { return static_cast<float>(value); }
+template<typename T> inline float2 asfloat(const TVECTOR2<T>& value) { return float2(static_cast<float>(value.x), static_cast<float>(value.y)); }
+template<typename T> inline float3 asfloat(const TVECTOR3<T>& value) { return float3(static_cast<float>(value.x), static_cast<float>(value.y), static_cast<float>(value.z)); }
+template<typename T> inline float4 asfloat(const TVECTOR4<T>& value) { return float4(static_cast<float>(value.x), static_cast<float>(value.y), static_cast<float>(value.z), static_cast<float>(value.w)); }
 inline int2 asint(double value) { oByteSwizzle64 s; s.AsDouble = value; return int2(s.AsInt[0], s.AsInt[1]); }
 inline int4 asint(double2 value) { oByteSwizzle64 s[2]; s[0].AsDouble = value.x; s[1].AsDouble = value.y; return int4(s[0].AsInt[0], s[0].AsInt[1], s[1].AsInt[0], s[1].AsInt[1]); }
 inline int2 asint(long long value) { oByteSwizzle64 s; s.AsLongLong = value; return int2(s.AsInt[0], s.AsInt[1]); }
@@ -798,10 +848,12 @@ oMATH_ELUFNS(firstbitlow);
 template<typename T> inline T determinant(const TMATRIX3<T>& _Matrix) { return dot(_Matrix.Column2, cross(_Matrix.Column0, _Matrix.Column1)); }
 template<typename T> T determinant(const TMATRIX4<T>& _Matrix);
 
+// mul(a,b) means a * b, meaning if you want to scale then translate, it would be result = scale * translate
+template<typename T> inline TMATRIX3<T> mul(const TMATRIX3<T>& _Matrix0, const TMATRIX3<T>& _Matrix1) { return TMATRIX3<T>((_Matrix1 * _Matrix1.Column0), (_Matrix1 * _Matrix0.Column1), (_Matrix1 * _Matrix0.Column2)); }
+template<typename T> inline TMATRIX4<T> mul(const TMATRIX4<T>& _Matrix0, const TMATRIX4<T>& _Matrix1) { return TMATRIX4<T>((_Matrix1 * _Matrix0.Column0), (_Matrix1 * _Matrix0.Column1), (_Matrix1 * _Matrix0.Column2), (_Matrix1 * _Matrix0.Column3)); }
 template<typename T> inline TVECTOR3<T> mul(const TMATRIX3<T>& _Matrix, const TVECTOR3<T>& _Vector) { return TVECTOR3<T>(_Matrix[0].x * _Vector.x + _Matrix[1].x * _Vector.y + _Matrix[2].x * _Vector.z, _Matrix[0].y * _Vector.x + _Matrix[1].y * _Vector.y + _Matrix[2].y * _Vector.z, _Matrix[0].z * _Vector.x + _Matrix[1].z * _Vector.y + _Matrix[2].z * _Vector.z); }
-template<typename T> inline TMATRIX3<T> mul(const TMATRIX3<T>& _Matrix0, const TMATRIX3<T>& _Matrix1) { return TMATRIX3<T>((_Matrix0 * _Matrix1.Column0), (_Matrix0 * _Matrix1.Column1), (_Matrix0 * _Matrix1.Column2)); }
+template<typename T> inline TVECTOR3<T> mul(const TMATRIX4<T>& _Matrix, const TVECTOR3<T>& _Vector) { return mul(_Matrix, TVECTOR4<T>(_Vector.x,_Vector.y,_Vector.z,1.0f)).XYZ(); }
 template<typename T> inline TVECTOR4<T> mul(const TMATRIX4<T>& _Matrix, const TVECTOR4<T>& _Vector) { return TVECTOR4<T>(((((_Matrix.Column0.x*_Vector.x) + (_Matrix.Column1.x*_Vector.y)) + (_Matrix.Column2.x*_Vector.z)) + (_Matrix.Column3.x*_Vector.w)), ((((_Matrix.Column0.y*_Vector.x) + (_Matrix.Column1.y*_Vector.y)) + (_Matrix.Column2.y*_Vector.z)) + (_Matrix.Column3.y*_Vector.w)), ((((_Matrix.Column0.z*_Vector.x) + (_Matrix.Column1.z*_Vector.y)) + (_Matrix.Column2.z*_Vector.z)) + (_Matrix.Column3.z*_Vector.w)), ((((_Matrix.Column0.w*_Vector.x) + (_Matrix.Column1.w*_Vector.y)) + (_Matrix.Column2.w*_Vector.z)) + (_Matrix.Column3.w*_Vector.w))); }
-template<typename T> inline TMATRIX4<T> mul(const TMATRIX4<T>& _Matrix0, const TMATRIX4<T>& _Matrix1) { return TMATRIX4<T>((_Matrix0 * _Matrix1.Column0), (_Matrix0 * _Matrix1.Column1), (_Matrix0 * _Matrix1.Column2), (_Matrix0 * _Matrix1.Column3)); }
 template<typename T> inline TQUATERNION<T> mul(const TQUATERNION<T>& _Quaternion0, const TQUATERNION<T>& _Quaternion1) { return TQUATERNION<T>(((((_Quaternion0.w * _Quaternion1.x) + (_Quaternion0.x * _Quaternion1.w)) + (_Quaternion0.y * _Quaternion1.z)) - (_Quaternion0.z * _Quaternion1.y)), ((((_Quaternion0.w * _Quaternion1.y) + (_Quaternion0.y * _Quaternion1.w)) + (_Quaternion0.z * _Quaternion1.x)) - (_Quaternion0.x * _Quaternion1.z)), ((((_Quaternion0.w * _Quaternion1.z) + (_Quaternion0.z * _Quaternion1.w)) + (_Quaternion0.x * _Quaternion1.y)) - (_Quaternion0.y * _Quaternion1.x)), ((((_Quaternion0.w * _Quaternion1.w) - (_Quaternion0.x * _Quaternion1.x)) - (_Quaternion0.y * _Quaternion1.y)) - (_Quaternion0.z * _Quaternion1.z))); }
 template<typename T> inline TMATRIX3<T> transpose(const TMATRIX3<T>& _Matrix) { return TMATRIX3<T>(TVECTOR3<T>(_Matrix.Column0.x, _Matrix.Column1.x, _Matrix.Column2.x), TVECTOR3<T>(_Matrix.Column0.y, _Matrix.Column1.y, _Matrix.Column2.y), TVECTOR3<T>(_Matrix.Column0.z, _Matrix.Column1.z, _Matrix.Column2.z)); }
 template<typename T> inline TMATRIX4<T> transpose(const TMATRIX4<T>& _Matrix) { return TMATRIX4<T>(TVECTOR4<T>(_Matrix.Column0.x, _Matrix.Column1.x, _Matrix.Column2.x, _Matrix.Column3.x), TVECTOR4<T>(_Matrix.Column0.y, _Matrix.Column1.y, _Matrix.Column2.y, _Matrix.Column3.y), TVECTOR4<T>(_Matrix.Column0.z, _Matrix.Column1.z, _Matrix.Column2.z, _Matrix.Column3.z), TVECTOR4<T>(_Matrix.Column0.w, _Matrix.Column1.w, _Matrix.Column2.w, _Matrix.Column3.w)); }
@@ -815,8 +867,31 @@ template<typename T> TQUATERNION<T> slerp(const TQUATERNION<T>& a, const TQUATER
 // _____________________________________________________________________________
 // NON-HLSL
 
-// Rotation is done around the Z axis, then Y, then X.
+// Decomposes the specified matrix into its components as if they were applied 
+// in the following order:
+// ScaleXYZ ShearXY ShearXY ShearZY RotationXYZ TranslationXYZ ProjectionXYZW
+// Returns true if successful, or false if the specified matrix is singular.
+// NOTE: This does not support negative scale well. Rotations might appear 
+// rotated by 180 degrees, and the resulting scale can be the wrong sign.
+template<typename T> bool decompose(const TMATRIX4<T>& _Matrix, TVECTOR3<T>* _pScale, T* _pShearXY, T* _pShearXZ, T* _pShearZY, TVECTOR3<T>* _pRotation, TVECTOR3<T>* _pTranslation, TVECTOR4<T>* _pPerspective);
+
+// Extract components from a matrix. Currently this uses decompose and just hides
+// a bunch of the extra typing that's required.
+template<typename T> TVECTOR3<T> getscale(const TMATRIX4<T>& _Matrix) { T xy, xz, zy; TVECTOR3<T> s, r, t; TVECTOR4<T> p; decompose(_Matrix, &s, &xy, &xz, &zy, &r, &t, &p); return s; }
+template<typename T> TVECTOR3<T> getrotation(const TMATRIX4<T>& _Matrix) { T xy, xz, zy; TVECTOR3<T> s, r, t; TVECTOR4<T> p; decompose(_Matrix, &s, &xy, &xz, &zy, &r, &t, &p); return r; }
+template<typename T> TVECTOR3<T> gettranslation(const TMATRIX4<T>& _Matrix) { T xy, xz, zy; TVECTOR3<T> s, r, t; TVECTOR4<T> p; decompose(_Matrix, &s, &xy, &xz, &zy, &r, &t, &p); return t; }
+
+template<typename T> void oExtractAxes(const TMATRIX4<T>& _Matrix, TVECTOR3<T>* _pXAxis, TVECTOR3<T>* _pYAxis, TVECTOR3<T>* _pZAxis);
+
 template<typename T> TMATRIX4<T> oCreateRotation(const TVECTOR3<T>& _Radians);
+
+// Rotation is done around the Z axis, then Y, then X.
+// Rotation is clockwise when the axis is a vector pointing at the viewer/
+// observer. So to rotate a Y-up vector (0,1,0) to become a +X vector (pointing
+// to the right in either left- or right-handed systems), you would create a 
+// rotation axis of (0,0,-1) and rotate 90 degrees. To rotate (0,1,0) to become 
+// -X, either change the rotation axis to be (0,0,1), OR negate the rotation of 
+// 90 degrees.
 template<typename T> TMATRIX4<T> oCreateRotation(T _Radians, const TVECTOR3<T>& _NormalizedRotationAxis);
 template<typename T> TMATRIX4<T> oCreateRotation(const TVECTOR3<T>& _CurrentVector, const TVECTOR3<T>& _DesiredVector, const TVECTOR3<T>& _DefaultRotationAxis);
 template<typename T> TMATRIX4<T> oCreateRotation(const TQUATERNION<T>& _Quaternion);
@@ -829,32 +904,55 @@ template<typename T> TMATRIX4<T> oCreateTranslation(const TVECTOR3<T>& _Translat
 template<typename T> TMATRIX4<T> oCreateScale(const TVECTOR3<T>& _Scale);
 template<typename T> TMATRIX4<T> oCreateScale(T _Scale) { return oCreateScale(TVECTOR3<T>(_Scale)); }
 
-template<typename T> TMATRIX4<T> oCreateLookAt(const TVECTOR3<T>& _Eye, const TVECTOR3<T>& _At, const TVECTOR3<T>& _Up);
-template<typename T> TMATRIX4<T> oCreatePerspective(T _FovY, T _AspectRatio, T _ZNear, T _ZFar);
-template<typename T> TMATRIX4<T> oCreateOrthographic(T _Left, T _Right, T _Bottom, T _Top, T _ZNear, T _ZFar);
+template<typename T> TMATRIX4<T> oCreateLookAtLH(const TVECTOR3<T>& _Eye, const TVECTOR3<T>& _At, const TVECTOR3<T>& _Up);
+template<typename T> TMATRIX4<T> oCreateLookAtRH(const TVECTOR3<T>& _Eye, const TVECTOR3<T>& _At, const TVECTOR3<T>& _Up);
 
-// more matrix ops. Right-handed vs. left-handed is a headache, so when doing
-// typical graphics operations, use these higher-level functions and let whoever
-// is maintaining the math lib figure out what's best.
-
-// Converts a right-handed view matrix, as can be returned from float4x4::lookAt(),
-// to a left-handed matrix, such as is fit for DirectX. For more details, see:
+// Converts a right-handed view matrix to left-handed, and vice-versa
 // http://msdn.microsoft.com/en-us/library/ee415205(VS.85).aspx
-inline float4x4 oAsViewLH(const float4x4& _ViewRH)
+inline float4x4 oFlipViewHandedness(const float4x4& _View)
 {
-	float4x4 viewLH(_ViewRH);
-	for (int i = 0; i < 4; i++)
-		viewLH[2][i] = -viewLH[2][i];
-	return viewLH;
+	float4x4 m = _View;
+	m.Column2 = -m.Column2;
+	return m;
 }
 
-float4x4 oAsWV(const float4x4& _World, const float4x4& _View);
-float4x4 oAsVP(const float4x4& _View, const float4x4& _Projection);
-float4x4 oAsWVP(const float4x4& _World, const float4x4& _View, const float4x4& _Projection);
+// Creates a perspective projection matrix with an infinite far plane
+template<typename T> TMATRIX4<T> oCreatePerspectiveLH(T _FovYRadians, T _AspectRatio, T _ZNear);
+template<typename T> TMATRIX4<T> oCreatePerspectiveRH(T _FovYRadians, T _AspectRatio, T _ZNear);
+
+template<typename T> TMATRIX4<T> oCreateOrthographicLH(T _Left, T _Right, T _Bottom, T _Top, T _ZNear, T _ZFar);
+template<typename T> TMATRIX4<T> oCreateOrthographicRH(T _Left, T _Right, T _Bottom, T _Top, T _ZNear, T _ZFar);
+
+// Given the corners of the display medium (relative to the origin where the eye
+// is) create an off-axis (off-center) projection matrix.
+template<typename T> TMATRIX4<T> oCreateOffCenterPerspectiveLH(T _Left, T _Right, T _Bottom, T _Top, T _ZNear);
+
+// Create an off-axis (off-center) projection matrix properly sized to the 
+// specified output medium (i.e. the screen if it were transformed in world 
+// space)
+// _OutputTransform: Scale, Rotation, Translation (SRT) of the output device 
+// plane (i.e. the screen) in the same space as the eye (usually world space)
+// _EyePosition: the location of the eye in the same space as _OutputTransform
+// _ZNear: A near plane that is different than the plane of the output 
+// (phyisical glass of the screen). By specifying a near plane that is closer to
+// the eye than the glass plane, an effect of "popping out" 3D can be achieved.
+template<typename T> TMATRIX4<T> oCreateOffCenterPerspectiveLH(const TMATRIX4<T>& _OutputTransform, const TVECTOR3<T>& _EyePosition, T _ZNear);
+
+// Given some information about the render target in NDC space, create a scale
+// and bias transform to create a viewport. Pre-multiply this by the projection
+// matrix to get a sub-projection matrix just for the specified viewport.
+template<typename T> TMATRIX4<T> oCreateViewport(T _NDCResolutionX, T _NDCResolutionY, T _NDCRectLeft, T _NDCRectBottom, T _NDCRectWidth, T _NDCRectHeight);
 
 float4x4 oAsReflection(const float4& _ReflectionPlane);
 void oExtractLookAt(const float4x4& _View, float3* _pEye, float3* _pAt, float3* _pUp, float3* _pRight);
-inline float3 oExtractEye(const float4x4& view) { return -view.Column3.XYZ(); }
+inline float3 oExtractEye(const float4x4& _View) { return -_View.Column3.XYZ(); }
+
+// Rotates the specified vector by the specified normalized quaternion
+template<typename T> inline TVECTOR3<T> oRotateVector(const TQUATERNION<T>& _Rotation, const TVECTOR3<T>& _Vector)
+{
+	// http://code.google.com/p/kri/wiki/Quaternions
+		return _Vector + T(2.0) * cross(_Rotation.XYZ(), cross(_Rotation.XYZ(), _Vector) + _Rotation.w * _Vector);
+}
 
 // This results in a normalized vector that points into the screen as is 
 // needed for arcball-style calculation. An arcball is a sphere around a 
@@ -1074,5 +1172,30 @@ typedef TFRUSTUM<float> oFrustumf;
 // Returns -1 if the frustum partially contains the box, 0 if not at all contained,
 // and 1 if the box is wholly inside the frustum.
 template<typename T> int oContains(const TFRUSTUM<T>& _Frustum, const TAABOX<T,TVECTOR3<T>>& _Box);
+
+template<typename T> class TSPHERE : public TVECTOR4<T>
+{
+public:
+	TSPHERE<T>() {}
+	TSPHERE<T>(const TVECTOR3<T>& position, T radius) : TVECTOR4<T>(position.x, position.y, position.z, radius) {}
+
+	T radius() const { return w; }
+	const TVECTOR3<T>& position() const { return XYZ(); }
+
+	TAABOX<T, TVECTOR3<T>> aabb() const { return TAABOX<T, TVECTOR3<T>>(TVECTOR3<T>(position().x - radius(), position().y - radius(), position().z - radius()), TVECTOR3<T>(position().x + radius(), position().y + radius(), position().z + radius())); }
+};
+
+typedef TSPHERE<float> oSpheref;
+typedef TSPHERE<double> oSphered;
+
+template<typename T> class TPLANE : public TVECTOR4<T>
+{
+public:
+	TPLANE<T>() {}
+	TPLANE<T>(const TVECTOR3<T>& xyz, T d) : TVECTOR4<T>(xyz.x, xyz.y, xyz.z, d) {}
+};
+
+typedef TPLANE<float> oPlanef;
+typedef TPLANE<double> oPlaned;
 
 #endif
