@@ -4,58 +4,19 @@
 #define SYS4Render_h
 
 #include <SYS4/SYS4Render.h>
+#include <SYS4/SYS4RenderState.h>
 
-enum oBLEND_STATE
-{
-	oBLEND_STATE_NONE, // src rgba (opaque)
-	oBLEND_STATE_TEST, // alpha test
-	oBLEND_STATE_ACCUMULATE, // src rgba + dst rgba
-	oBLEND_STATE_ADDITIVE, // src rgb * src a  +  dst rgb
-	oBLEND_STATE_TRANSLUCENT, // src rgb * src a  +  dst rgb * (1 - src a)
-	oBLEND_STATE_PARTIAL_TRANSLUCENT, // treats values above alpha-test threshold as opaque, and then the rest as TRANSLUCENT
-	oBLEND_STATE_COUNT,
-};
+#include <oooii/oInterface.h>
 
-enum oRASTERIZER_STATE
-{
-	oRASTERIZER_STATE_FRONT_FACE,
-	oRASTERIZER_STATE_BACK_FACE,
-	oRASTERIZER_STATE_TWO_SIDED,
-	oRASTERIZER_STATE_FRONT_WIREFRAME,
-	oRASTERIZER_STATE_BACK_WIREFRAME,
-	oRASTERIZER_STATE_TWO_SIDED_WIREFRAME,
-	oRASTERIZER_STATE_FRONT_POINTS,
-	oRASTERIZER_STATE_BACK_POINTS,
-	oRASTERIZER_STATE_TWO_SIDED_POINTS,
-	oRASTERIZER_STATE_COUNT,
-};
-
-enum oSAMPLER_STATE
-{
-	oSAMPLER_STATE_POINT_CLAMP,
-	oSAMPLER_STATE_POINT_WRAP,
-	oSAMPLER_STATE_LINEAR_CLAMP,
-	oSAMPLER_STATE_LINEAR_WRAP,
-	oSAMPLER_STATE_ANISOTROPIC_CLAMP,
-	oSAMPLER_STATE_ANISOTROPIC_WRAP,
-};
-
-enum oMIP_BIAS
-{
-	oMIP_BIAS_NONE,
-	oMIP_BIAS_UP1,
-	oMIP_BIAS_UP2,
-	oMIP_BIAS_DOWN1,
-	oMIP_BIAS_DOWN2,
-	oMIP_BIAS_COUNT,
-};
-
-
-// Need HLSL-C++ header with constant buffers:
-
+// Main SW abstraction for a GPU
 interface oGPUDevice;
+
 interface oGPUDeviceChild : oInterface
 {
+	// All GPU objects are related to a device
+
+	// fill the specified pointer with this child's associated
+	// device. The device's refcount is incremented.
 	virtual void GetDevice(threadsafe oGPUDevice** _ppDevice) const threadsafe = 0;
 };
 
@@ -69,8 +30,15 @@ interface oGPUResource : oGPUDeviceChild
 		CONTEXT,
 	};
 
+	// Returns the type of this resource.
 	virtual TYPE GetType() const threadsafe = 0;
+
+	// Returns the name with which this object was created
 	virtual const char* GetName() const threadsafe = 0;
+
+	// Returns the resolved name of a GPU-friendly cached
+	// version of the original resource specified by GetName()
+	virtual const char* GetCacheName() const threadsafe = 0;
 };
 
 interface oGPUMesh : oGPUResource
@@ -97,8 +65,9 @@ interface oGPUMesh : oGPUResource
 	enum SUBRESOURCE
 	{
 		RANGES,
-		VERTICES,
 		INDICES, // always 32-bit uints when mapped
+		VERTICES,
+		SKINNING, // weights and indices
 	};
 
 	struct RANGE
@@ -113,8 +82,14 @@ interface oGPUMesh : oGPUResource
 	{
 		float3 Position; 
 		float2 Texcoord;
-		quatf ObjectSpaceNormalRotation; // Quaternion to rotate the object space normal map vector or (0.0f, 1.0f, 0.0f) when no normalmap is bound to the object space normal 
-		uint ContinuityID; // Triangles with vertices with the same ID are considered continuous (no edges/creases). This number must be 8-bit [0,255]
+		float3 Normal;
+		float4 Tangent;
+	};
+
+	struct SKINNING
+	{
+		float4 Weights;
+		unsigned char Indices[4];
 	};
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
@@ -283,22 +258,6 @@ interface oGPUDevice : oInterface
 
 	virtual void Begin() = 0;
 	virtual void End() = 0;
-};
-
-struct oHLSLColor
-{
-	oHLSLColor() : Color(0.0f, 0.0f, 0.0f) {}
-	oHLSLColor(const float3& _Color) : Color(_Color) {}
-	oHLSLColor(const oColor& _Color) { float a; oDecomposeColor(_Color, &Color.x, &Color.y, &Color.z, &a); }
-
-	inline operator float3&() { return Color; }
-	inline operator const float3&() const { return Color; }
-	inline operator oColor() const { return oComposeColor(Color.x, Color.y, Color.z, 1.0f); }
-	inline const oHLSLColor& operator=(const oHLSLColor& _Color) { Color = _Color.Color; return *this; }
-	inline const oHLSLColor& operator=(const float3& _Color) { Color = _Color; return *this; }
-	inline const oHLSLColor& operator=(const oColor& _Color) { float a; oDecomposeColor(_Color, &Color.x, &Color.y, &Color.z, &a); return *this; }
-protected:
-	float3 Color;
 };
 
 oAPI bool oCreateGPUDevice(const DESC& _Desc, threadsafe oGPUDevice** _ppDevice);
