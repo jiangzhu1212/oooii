@@ -1,0 +1,103 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\oGfx\oGfx.h" />
+    <ClInclude Include="..\oGfx\oGfxMaterial.h" />
+    <ClInclude Include="..\oGfx\oGfxState.h" />
+    <ClInclude Include="Common\oGfxResourceMixin.h" />
+    <ClInclude Include="D3D11\oD3D11Context.h" />
+    <ClInclude Include="D3D11\oD3D11Device.h" />
+    <ClInclude Include="D3D11\oD3D11Material.h" />
+    <ClInclude Include="D3D11\oD3D11Mesh.h" />
+    <ClInclude Include="D3D11\oD3D11RenderTarget.h" />
+    <ClInclude Include="D3D11\oD3D11Texture.h" />
+    <ClInclude Include="pch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="D3D11\oD3D11Context.cpp" />
+    <ClCompile Include="D3D11\oD3D11Device.cpp" />
+    <ClCompile Include="D3D11\oD3D11Material.cpp" />
+    <ClCompile Include="D3D11\oD3D11Mesh.cpp" />
+    <ClCompile Include="D3D11\oD3D11RenderTarget.cpp" />
+    <ClCompile Include="D3D11\oD3D11Texture.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{54DA59A7-C4BC-4D58-8769-CD52BBFC2C9B}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>oGfx</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Debug64.props" />
+    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Common.props" />
+    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\lib.props" />
+    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\pch.props" />
+    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Release64.props" />
+    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Common.props" />
+    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\lib.props" />
+    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\pch.props" />
+    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

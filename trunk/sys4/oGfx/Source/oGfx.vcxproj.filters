@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source\Common">
+      <UniqueIdentifier>{5d305484-8210-45c8-b269-621bb44370a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\D3D11">
+      <UniqueIdentifier>{a4b99887-06e8-45a2-baa3-28a582af7ea8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oGfx">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Common\oGfxResourceMixin.h">
+      <Filter>Source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D11\oD3D11Context.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D11\oD3D11Device.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D11\oD3D11Material.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D11\oD3D11Mesh.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D11\oD3D11RenderTarget.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D11\oD3D11Texture.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\oGfx\oGfx.h">
+      <Filter>oGfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\oGfx\oGfxMaterial.h">
+      <Filter>oGfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\oGfx\oGfxState.h">
+      <Filter>oGfx</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="D3D11\oD3D11Context.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D11\oD3D11Device.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D11\oD3D11Material.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D11\oD3D11Mesh.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D11\oD3D11RenderTarget.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D11\oD3D11Texture.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
