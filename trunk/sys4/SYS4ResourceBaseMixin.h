@@ -24,7 +24,7 @@
 	oGPUResource::TYPE GetType() const threadsafe override { return MIXINGetType(); } \
 	const char* GetName() const threadsafe override { return MIXINGetName(); } \
 	const char* GetCacheName() const threadsafe override { return MIXINGetCacheName(); } \
-	void GetDesc(interface_type::DESC* _pDesc) const threadsafe { MIXINGetDesc(_pDesc); }
+	void GetDesc(interface_type::DESC* _pDesc) const threadsafe pverride { MIXINGetDesc(_pDesc); }
 
 template<typename InterfaceT, typename ImplementationT, oGPUResource::TYPE Type>
 struct SYS4ResourceBaseMixin
@@ -107,5 +107,29 @@ protected:
 		*_pDesc = thread_cast<desc_type&>(Desc); // safe because it's read-only
 	}
 };
+
+#define SYS4_CHECK_NAME() do { \
+	if (!_Name || !*_Name) \
+	{ oSetLastError(EINVAL, "A proper name must be specified"); \
+		return false; \
+	}} while(0)
+
+#define SYS4_CHECK_OUTPUT(_ppOut) do { \
+	if (!_ppOut) \
+	{ oSetLastError(EINVAL, "A valid address for a mesh pointer must be specified"); \
+		return false; \
+	}} while(0)
+
+#define SYS4_CHECK_PARAMETERS() SYS4_CHECK_NAME(); SYS4_CHECK_OUTPUT()
+
+#define oSYMMERGE(a,b) a##b
+
+#define SYS4_DEFINE_GPURESOURCE_CREATE(_API, _Resource) \
+	bool oSYMMERGE(oSYMMERGE(o, _API), Device)::oSYMMERGE(Create,_Resource)(const char* _Name, const oGPU##_Resource::DESC& _Desc, threadsafe oSYMMERGE(oGPU, _Resource)** _ppResource) threadsafe \
+	{	SYS4_CHECK_PARAMETERS(); \
+		bool success = false; \
+		oCONSTRUCT(_ppResource, oSYMMERGE(oSYMMERGE(o, _API), _Resource)(this, _Desc, &success)); \
+		return success; \
+	}
 
 #endif

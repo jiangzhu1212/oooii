@@ -6,7 +6,7 @@
 #include <SYS4/SYS4Render.h>
 #include "SYS4ResourceBaseMixin.h"
 
-struct oD3D11Mesh : oGPUMesh, oNoncopyable, SYS4ResourceBaseMixin
+struct oD3D11Mesh : oGPUMesh, oNoncopyable, SYS4ResourceBaseMixin<oGPUMesh, oD3D11Mesh, oGPUResource::MESH>
 {
 	SYS4_DEFINE_GPURESOURCE_INTERFACE();
 	

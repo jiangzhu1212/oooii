@@ -24,10 +24,11 @@ interface oGPUResource : oGPUDeviceChild
 {
 	enum TYPE
 	{
-		MESH,
-		TEXTURE,
-		MATERIAL,
 		CONTEXT,
+		MATERIAL,
+		MESH,
+		RENDERTARGET,
+		TEXTURE,
 	};
 
 	// Returns the type of this resource.
@@ -39,6 +40,16 @@ interface oGPUResource : oGPUDeviceChild
 	// Returns the resolved name of a GPU-friendly cached
 	// version of the original resource specified by GetName()
 	virtual const char* GetCacheName() const threadsafe = 0;
+};
+
+interface oGPUMaterial : oGPUResource
+{
+	struct DESC : oCBMaterial
+	{
+		Textures[oTEXTURE_CHANNEL_COUNT]
+	};
+
+	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
 interface oGPUMesh : oGPUResource
@@ -95,8 +106,36 @@ interface oGPUMesh : oGPUResource
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
+interface oGPURenderTarget
+{
+	static const size_t MAX_MRT_COUNT = 8;
+
+	struct DESC
+	{
+		uint Width;
+		uint Height;
+		uint MRTCount;
+		uint ArraySize;
+		oSurface::FORMAT Format[MAX_MRT_COUNT];
+		oSurface::FORMAT DepthStencilFormat; // Use UNKNOWN for no depth
+		oColor ClearColor[MAX_MRT_COUNT];
+		float DepthClearValue;
+		UINT8 StencilClearValue;
+		bool GenerateMips;
+	};
+
+	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+};
+
 interface oGPUTexture : oGPUResource
 {
+	enum TYPE
+	{
+		TEXTURE2D,
+		TEXTURE3D,
+		CUBEMAP,
+	};
+
 	struct DESC
 	{
 		uint Width;
@@ -106,8 +145,7 @@ interface oGPUTexture : oGPUResource
 		uint NumSlices;
 		oSurface::FORMAT ColorFormat;
 		oSurface::FORMAT DepthStencilFormat; // oSurface::UNKNOWN means none
-		bool IsRenderTarget;
-		bool IsCubeMap;
+		TYPE Type;
 
 		DESC()
 			: Width(1)
@@ -117,54 +155,23 @@ interface oGPUTexture : oGPUResource
 			, NumSlices(1)
 			, ColorFormat(oSurface::RGBA)
 			, DepthStencilFormat(oSurface::UNKNOWN)
-			, IsRenderTarget(false)
-			, IsCubeMap(false)
+			, Type(TEXTURE2D)
 		{}
 	};
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
-interface oGPUMaterial : oGPUResource
-{
-	struct DESC
-	{
-		oHLSLColor DiffuseColor;
-		float Opacity; // 0: clear | 1: opaque
-
-		oHLSLColor SpecularColor;
-		float SpecularAmount; // 0: no specular | 1: max specular
-
-		oHLSLColor EmissiveColor;
-		float AlphaTest;
-
-		float2 TexcoordScale;
-		float2 TexcoordBias;
-
-		float2 TexcoordScrollRate;
-		float LightingContribution; // 0: emissive only | 1: phong lighting
-	};
-
-	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
-};
-
-interface oGPUDeviceContext : oGPUResource
+interface oGPUContext : oGPUResource
 {
 	enum PIPELINE_STATE
 	{
-		GE_OPAQUE,
-		GE_ALPHATESTED,
-		GE_ALPHABLENDED,
-		SH_NONSHADOWING,
-		SH_SHADOWING,
-		MA_OPAQUE,
-		MA_ALPHATESTED,
-		MA_ALPHABLENDED,
-		LI_OPAQUE,
-		PI_OPAQUE,
-		PI_ALPHATESTED,
-		PI_ALPHABLENDED,
-		PI_LINES,
+		OPAQUE_GEOMETRY,
+		ALPHATESTED_GEOMETRY,
+		ALPHABLENDED_GEOMETRY,
+		LINES,
+		NONSHADOWING_LIGHTS,
+		SHADOWING_LIGHTS,
 		DEBUG,
 	};
 
@@ -184,6 +191,11 @@ interface oGPUDeviceContext : oGPUResource
 		NUM_DEBUG_VISUALIZATIONS,
 	};
 
+	struct DESC
+	{
+		uint DrawOrder;
+	};
+
 	struct MAPPING
 	{
 		void* pData;
@@ -197,9 +209,6 @@ interface oGPUDeviceContext : oGPUResource
 		float4x4 Projection;
 		PIPELINE_STATE State;
 		DEBUG_VISUALIZATION DebugVisualization;
-		oColor ClearColor;
-		float ClearDepthValue;
-		unsigned char ClearStencilValue;
 	};
 
 	struct LINE
@@ -219,15 +228,15 @@ interface oGPUDeviceContext : oGPUResource
 
 	// Begins recording of GPU command submissions. All rendering for this 
 	// context should occur between Begin() and End().
-	virtual void Begin(const RENDER_STATE& _RenderState) = 0;
+	virtual void Begin(const RENDER_STATE& _RenderState, const oGPURenderTarget* _pRenderTarget) = 0;
 
 	// Ends recording of GPU submissions and caches a command list
 	virtual void End() = 0;
 
-	virtual void SetRasterizerState(RASTERIZER_STATE _RasterizerState) = 0;
-	virtual void SetBlendState(BLEND_STATE _BlendState) = 0;
-	virtual void SetMaterial(const MATERIAL& _Material) = 0;
-	virtual void SetSamplerStates(size_t _StartSlot, size_t _NumSamplerStates, const SAMPLER_STATE* _pSamplerStates, const MIP_BIAS* _pMipBiases) = 0;
+	virtual void SetRasterizerState(oRASTERIZER_STATE _RasterizerState) = 0;
+	virtual void SetBlendState(oBLEND_STATE _BlendState) = 0;
+	virtual void SetMaterial(const oGPUMaterial* _pMaterial) = 0;
+	virtual void SetSamplerStates(size_t _StartSlot, size_t _NumSamplerStates, const oSAMPLER_STATE* _pSamplerStates, const oMIP_BIAS* _pMipBiases) = 0;
 	virtual void SetTextures(size_t _StartSlot, size_t _NumTextures, const oGPUTexture* const* _ppTextures) = 0;
 
 	virtual void Map(oGPUResource* _pResource, size_t _SubresourceIndex) = 0;
@@ -236,30 +245,32 @@ interface oGPUDeviceContext : oGPUResource
 	// Drawing a null mesh draws a full screen quad
 	virtual void Draw(float4x4& _Transform, uint _MeshID, const oGPUMesh* _pMesh, size_t _SectionIndex) = 0;
 
-	virtual LINE* LNBegin(size_t _LineCapacity) = 0;
-	virtual void LNEnd(size_t _NumLines) = 0;
+	//virtual LINE* LNBegin(size_t _LineCapacity) = 0;
+	//virtual void LNEnd(size_t _NumLines) = 0;
 
-	virtual LIGHT* LIBegin(size_t _LightCapacity) = 0;
-	virtual void LIEnd(size_t _NumLights) = 0;
+	//virtual LIGHT* LIBegin(size_t _LightCapacity) = 0;
+	//virtual void LIEnd(size_t _NumLights) = 0;
 };
 
 interface oGPUDevice : oInterface
 {
 	struct DESC
 	{
+		float Version;
 		bool UseSoftwareEmulation;
 		bool EnableDebugReporting;
 	};
 
-	virtual bool CreateMesh(const char* _Name, const oGPUMesh::DESC& _Desc, threadsafe oGPUMesh** _ppMesh) threadsafe = 0;
-	virtual bool CreateTexture(const char* _Name, const oGPUTexture::DESC& _Desc, threadsafe oGPUTexture** _ppTexture) threadsafe = 0;
+	virtual bool CreateContext(const char* _Name, const oGPUContext::DESC& _Desc, oGPUContext** _ppContext) threadsafe = 0;
 	virtual bool CreateMaterial(const char* _Name, const oGPUMaterial::DESC& _Desc, threadsafe oGPUMaterial** _ppMaterial) threadsafe = 0;
-	virtual bool CreateContext(const char* _Name, oGPUDeviceContext** _ppContext) threadsafe = 0;
+	virtual bool CreateMesh(const char* _Name, const oGPUMesh::DESC& _Desc, threadsafe oGPUMesh** _ppMesh) threadsafe = 0;
+	virtual bool CreateRenderTarget(const char* _Name, const oGPURenderTarget::DESC& _Desc, threadsafe oGPURenderTarget** _ppRenderTarget) threadsafe = 0;
+	virtual bool CreateTexture(const char* _Name, const oGPUTexture::DESC& _Desc, threadsafe oGPUTexture** _ppTexture) threadsafe = 0;
 
 	virtual void Begin() = 0;
 	virtual void End() = 0;
 };
 
-oAPI bool oCreateGPUDevice(const DESC& _Desc, threadsafe oGPUDevice** _ppDevice);
+oAPI bool oCreateGPUDevice(const oGPUDevice::DESC& _Desc, threadsafe oGPUDevice** _ppDevice);
 
 #endif
