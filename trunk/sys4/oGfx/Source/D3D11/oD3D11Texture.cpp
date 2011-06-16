@@ -5,6 +5,8 @@
 #include <oooii/oErrno.h>
 #include <oooii/oSurface.h>
 
+#if 0
+
 SYS4_DEFINE_GPURESOURCE_CREATE(Texture)
 
 oD3D11Texture::oD3D11Texture(threadsafe oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, const char* _CacheName, bool* _pSuccess)
@@ -32,3 +34,4 @@ oD3D11Texture::oD3D11Texture(threadsafe oGPUDevice* _pDevice, const DESC& _Desc,
 		default: oASSUME(0);
 	}
 }
+#endif

@@ -3,10 +3,10 @@
 #ifndef oD3D11Texture_h
 #define oD3D11Texture_h
 
-#include <SYS4/SYS4Render.h>
-#include "SYS4ResourceBaseMixin.h"
+#include <oGfx/oGfx.h>
+#include "../Common/oGfxResourceMixin.h"
 
-struct oD3D11Texture : oGPUMesh, oNoncopyable, SYS4ResourceBaseMixin<oGPUTexture, oD3D11Texture, oGPUResource::TEXTURE>
+struct oD3D11Texture : oGPUMesh, oNoncopyable, oGfxResourceMixin<oGPUTexture, oD3D11Texture, oGPUResource::TEXTURE>
 {
 	SYS4_DEFINE_GPURESOURCE_INTERFACE();
 	

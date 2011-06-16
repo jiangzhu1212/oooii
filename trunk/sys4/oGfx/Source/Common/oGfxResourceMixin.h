@@ -4,10 +4,13 @@
 // This implements the details of oInterface, oGPUDeviceChild and
 // oGPUResource that is typical amongst all oGPUResource types.
 #pragma once
-#ifndef SYS4ResourceBaseMixin_h
-#define SYS4ResourceBaseMixin_h
+#ifndef oGfxResourceMixin_h
+#define oGfxResourceMixin_h
 
-#include <SYS4/SYS4Render.h>
+// @oooii-tony: This should go in oStddef.h
+#define oSYMMERGE(a,b) a##b
+
+#include <oGfx/oGfx.h>
 
 #include <oooii/oRef.h>
 #include <oooii/oRefCount.h>
@@ -16,7 +19,7 @@
 // to use a mixin-patterned object to handle the implementation of
 // oGPUResource's virtual interface without introducing multiple
 // inheritance.
-#define SYS4_DEFINE_GPURESOURCE_INTERFACE() \
+#define oGFX_DEFINE_GPURESOURCE_INTERFACE() \
 	void Reference() threadsafe override { MIXINReference(); } \
 	void Release() threadsafe override { MIXINRelease(); } \
 	bool QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe override { return IMPLQueryInterface(_InterfaceID, _ppInterface); } \
@@ -27,7 +30,7 @@
 	void GetDesc(interface_type::DESC* _pDesc) const threadsafe pverride { MIXINGetDesc(_pDesc); }
 
 template<typename InterfaceT, typename ImplementationT, oGPUResource::TYPE Type>
-struct SYS4ResourceBaseMixin
+struct oGfxResourceMixin
 {
 	typedef InterfaceT interface_type;
 	typedef ImplementationT implementation_type;
@@ -44,7 +47,7 @@ protected:
 	threadsafe ImplementationT* This() threadsafe { return static_cast<threadsafe ImplementationT*>(this); }
 	const threadsafe ImplementationT* This() threadsafe const { return static_cast<threadsafe ImplementationT*>(this); }
 
-	SYS4ResourceBaseMixin(threadsafe oGPUDevice* _pDevice, const desc_type& _Desc, const char* _Name, const char* _CacheName)
+	oGfxResourceMixin(threadsafe oGPUDevice* _pDevice, const desc_type& _Desc, const char* _Name, const char* _CacheName)
 		: Device(_pDevice)
 	{
 		Desc = _Desc;
@@ -108,23 +111,21 @@ protected:
 	}
 };
 
-#define SYS4_CHECK_NAME() do { \
+#define oGFX_CHECK_NAME() do { \
 	if (!_Name || !*_Name) \
 	{ oSetLastError(EINVAL, "A proper name must be specified"); \
 		return false; \
 	}} while(0)
 
-#define SYS4_CHECK_OUTPUT(_ppOut) do { \
+#define oGFX_CHECK_OUTPUT(_ppOut) do { \
 	if (!_ppOut) \
 	{ oSetLastError(EINVAL, "A valid address for a mesh pointer must be specified"); \
 		return false; \
 	}} while(0)
 
-#define SYS4_CHECK_PARAMETERS() SYS4_CHECK_NAME(); SYS4_CHECK_OUTPUT()
+#define oGFX_CHECK_PARAMETERS() SYS4_CHECK_NAME(); SYS4_CHECK_OUTPUT()
 
-#define oSYMMERGE(a,b) a##b
-
-#define SYS4_DEFINE_GPURESOURCE_CREATE(_API, _Resource) \
+#define oGFX_DEFINE_GPURESOURCE_CREATE(_API, _Resource) \
 	bool oSYMMERGE(oSYMMERGE(o, _API), Device)::oSYMMERGE(Create,_Resource)(const char* _Name, const oGPU##_Resource::DESC& _Desc, threadsafe oSYMMERGE(oGPU, _Resource)** _ppResource) threadsafe \
 	{	SYS4_CHECK_PARAMETERS(); \
 		bool success = false; \

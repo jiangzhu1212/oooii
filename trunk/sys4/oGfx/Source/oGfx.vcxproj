@@ -58,8 +58,8 @@
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Debug64.props" />
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Common.props" />
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\lib.props" />
-    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\pch.props" />
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+    <Import Project="Properties\oGfxIncludesAndLibs.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -67,8 +67,8 @@
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Release64.props" />
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Common.props" />
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\lib.props" />
-    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\pch.props" />
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+    <Import Project="Properties\oGfxIncludesAndLibs.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
