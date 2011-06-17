@@ -1,30 +1,8 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oMath.h>
-#include <oooii/oStdio.h>
+#include <oooii/oMemory.h>
 #include <oooii/oTest.h>
+#include <oooii/oSTL.h>
 
 #define SIMPLE_TEST
 
@@ -43,9 +21,9 @@ struct TESTIntersection : public oTest
 		float3 LookAtPoint;
 	};
 
-	bool InitializeAGridOfBoxes(oTestScopedArray<oAABoxf>* _pBoxes, size_t _W, size_t _H, size_t _D, float _Size, float _Spacing)
+	bool InitializeAGridOfBoxes(std::vector<oAABoxf>* _pBoxes, size_t _W, size_t _H, size_t _D, float _Size, float _Spacing)
 	{
-		if ((_W * _H * _D) != _pBoxes->GetCount())
+		if ((_W * _H * _D) != _pBoxes->size())
 			return false;
 
 		const float GRID_W = _W * _Size + (_W-1) * _Spacing;
@@ -74,11 +52,11 @@ struct TESTIntersection : public oTest
 		static const float SIZE = 1.0f;
 		static const float SPACING = 10.0f;
 
-		oTestScopedArray<oAABoxf> Boxes(W * H * D);
+		std::vector<oAABoxf> Boxes(W * H * D);
 		InitializeAGridOfBoxes(&Boxes, W, H, D, SIZE, SPACING);
 
-		oTestScopedArray<int> Results(W * H * D);
-		oMemset4(Results.GetPointer(), 0xdeaddead, Results.GetCount() * sizeof(int));
+		std::vector<int> Results(W * H * D);
+		oMemset4(oGetData(Results), 0xdeaddead, oGetDataSize(Results));
 
 		static const EYE sEyes[] =
 		{
@@ -104,7 +82,7 @@ struct TESTIntersection : public oTest
 
 		for (size_t p = 0; p < oCOUNTOF(sPerspectives); p++)
 		{
-			float4x4 projection = oCreatePerspectiveLH(sPerspectives[p].FovY, sPerspectives[p].AspectRatio, sPerspectives[p].ZNear);
+			float4x4 projection = oCreatePerspectiveLH(sPerspectives[p].FovY, sPerspectives[p].AspectRatio, sPerspectives[p].ZNear, -1.0f);
 
 			for (size_t e = 0; e < oCOUNTOF(sEyes); e++)
 			{
@@ -114,10 +92,10 @@ struct TESTIntersection : public oTest
 				oFrustumf frustum(vp);
 
 				// @oooii-tony: Assume the scalar frustcull works to get 'correct' answers
-				for (size_t b = 0; b < Boxes.GetCount(); b++)
+				for (size_t b = 0; b < Boxes.size(); b++)
 					Results[b] = oContains(frustum, Boxes[b]);
 
-				for (size_t b = 0; b < Boxes.GetCount(); b++)
+				for (size_t b = 0; b < Boxes.size(); b++)
 					oTRACE("Box %u: %s contained (0x%08x)", b, (Results[b] == -1) ? "partially" : (Results[b] == 1 ? "wholly" : "not"), Results[b]);
 			}
 		}
@@ -126,4 +104,4 @@ struct TESTIntersection : public oTest
 	}
 };
 
-TESTIntersection TestIntersection;
+oTEST_REGISTER(TESTIntersection);

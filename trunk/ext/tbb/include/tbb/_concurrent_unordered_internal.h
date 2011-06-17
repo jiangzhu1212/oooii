@@ -693,7 +693,7 @@ protected:
         : Traits(hc), my_solist(a),
           my_allocator(a), my_maximum_bucket_size((float) initial_bucket_load)
     {
-        if( n_of_buckets == 0) ++n_of_buckets;
+        __TBB_ASSERT( n_of_buckets, "number of buckets must be greater than 0");
         my_number_of_buckets = 1<<__TBB_Log2((uintptr_t)n_of_buckets*2-1); // round up to power of 2
         internal_init();
     }
@@ -913,13 +913,9 @@ public:
     }
 
     size_type count(const key_type& key) const {
-        if(allow_multimapping) {
-            paircc_t answer = equal_range(key);
-            size_type item_count = internal_distance(answer.first, answer.second);
-            return item_count;
-        } else {
-            return const_cast<self_type*>(this)->internal_find(key) == end()?0:1;
-        }
+        paircc_t answer = equal_range(key);
+        size_type item_count = internal_distance(answer.first, answer.second);
+        return item_count;
     }
 
     std::pair<iterator, iterator> equal_range(const key_type& key) {
@@ -1254,7 +1250,9 @@ private:
             {
                 iterator first = my_solist.get_iterator(it);
                 iterator last = first;
-                do ++last; while( allow_multimapping && last != end() && !my_hash_compare(get_key(*last), key) );
+
+                while( last != end() && !my_hash_compare(get_key(*last), key) )
+                    ++last;
                 return pairii_t(first, last);
             }
         }
@@ -1289,10 +1287,8 @@ private:
         // Grow the table by a factor of 2 if possible and needed
         if ( ((float) total_elements / (float) current_size) > my_maximum_bucket_size )
         {
-            // Double the size of the hash only if size has not changed inbetween loads
-            __TBB_CompareAndSwapW((uintptr_t*)&my_number_of_buckets, uintptr_t(2u*current_size), uintptr_t(current_size) );
-            //Simple "my_number_of_buckets.compare_and_swap( current_size<<1, current_size );" does not work for VC8
-            //due to overzealous compiler warnings in /Wp64 mode
+             // Double the size of the hash only if size has not changed inbetween loads
+            __TBB_CompareAndSwapW((uintptr_t*)&my_number_of_buckets, 2 * current_size, current_size );
         }
     }
 
@@ -1307,7 +1303,7 @@ private:
     // Dynamic sized array (segments)
     //! @return segment index of given index in the array
     static size_type segment_index_of( size_type index ) {
-        return size_type( __TBB_Log2( uintptr_t(index|1) ) );
+        return size_type( __TBB_Log2( index|1 ) );
     }
 
     //! @return the first array index of given segment

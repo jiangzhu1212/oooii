@@ -1,33 +1,10 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oP4.h>
 #include <oooii/oAssert.h>
 #include <oooii/oErrno.h>
-#include <oooii/oProcess.h>
 #include <oooii/oRef.h>
 #include <oooii/oStddef.h>
+#include <oooii/oStdio.h>
 #include <oooii/oString.h>
 #include <time.h>
 
@@ -179,28 +156,8 @@ bool GetClientSpec(CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpecString)
 
 static bool Execute(const char* _CommandLine, const char* _CheckValidString, char* _P4ResponseString, size_t _SizeofP4ResponseString)
 {
-	oProcess::DESC desc;
-	desc.CommandLine = _CommandLine;
-	desc.EnvironmentString = 0;
-	desc.StdHandleBufferSize = 4096;
-	threadsafe oRef<oProcess> process;
-	if (!oProcess::Create(&desc, &process))
+	if (!oExecute(_CommandLine, _P4ResponseString, _SizeofP4ResponseString, 0, 10000))
 		return false;
-
-	const unsigned int TIMEOUT = 10000;
-
-	oTRACE("oP4.Executing \"%s\"...", _CommandLine);
-	process->Start();
-	if (!process->Wait(TIMEOUT))
-	{
-		oSetLastError(ETIMEDOUT, "Executing \"%s\" timed out after %.01f seconds.", _CommandLine, static_cast<float>(TIMEOUT) / 1000.0f);
-		return false;
-	}
-
-	oTRACE("oP4.ReadFromStdout \"%s\"...", _CommandLine);
-	size_t sizeRead = process->ReadFromStdout(_P4ResponseString, _SizeofP4ResponseString);
-	oASSERT(sizeRead < _SizeofP4ResponseString, "");
-	_P4ResponseString[sizeRead] = 0;
 
 	if (!strstr(_P4ResponseString, _CheckValidString))
 	{

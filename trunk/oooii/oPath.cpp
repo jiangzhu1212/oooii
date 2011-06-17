@@ -1,32 +1,9 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oWindows.h>
 #include <oooii/oPath.h>
 #include <oooii/oAssert.h>
 #include <oooii/oErrno.h>
-#include <oooii/oP4.h>
+#include <oooii/oFile.h>
 #include <oooii/oRef.h>
 #include <oooii/oStdio.h>
 #include <oooii/oString.h>
@@ -100,6 +77,15 @@ char* oTrimFilename(char* _Path)
 	return _Path;
 }
 
+char* oTrimFileExtension(char* _Path)
+{
+	char* cur = _Path + strlen(_Path);
+	while (cur >= _Path && *cur != '.')
+		--cur;
+	*cur = 0;
+	return _Path;
+}
+
 errno_t oEnsureFileSeparator(char* _Path, size_t _SizeofPath)
 {
 	size_t len = strlen(_Path);
@@ -148,25 +134,6 @@ errno_t oCleanPath(char* _CleanedPath, size_t _SizeofCleanedPath, const char* _S
 	return 0;
 }
 
-errno_t oGetExePath(char* _ExePath, size_t _SizeofExePath)
-{
-	errno_t err = 0;
-
-	#ifdef UNICODE
-		wchar_t path[_MAX_PATH];
-		DWORD length = GetModuleFileName(GetModuleHandle(0), path, oCOUNTOF(path));
-		if (length == oCOUNTOF(path) && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
-			err = STRUNCATE;
-		oStrConvert(_ExePath, _SizeofExePath, path);
-	#else
-		DWORD length = GetModuleFileName(GetModuleHandle(0), _ExePath, static_cast<DWORD>(_SizeofExePath));
-		if (length == (DWORD)_SizeofExePath && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
-			err = STRUNCATE;
-	#endif
-
-	return err;
-}
-
 errno_t oGetLogFilePath(char* _StrDestination, size_t _SizeofStrDestination, const char* _ExeSuffix)
 {
 	char newExtension[128];
@@ -178,13 +145,13 @@ errno_t oGetLogFilePath(char* _StrDestination, size_t _SizeofStrDestination, con
 	char* ne = newExtension;
 	ne += sprintf_s(ne, oCOUNTOF(newExtension) - std::distance(newExtension, ne), "%s%s_", _ExeSuffix ? "_" : "", oSAFESTR(_ExeSuffix));
 	ne += strftime(ne, oCOUNTOF(newExtension) - std::distance(newExtension, ne), "%Y-%m-%d-%H-%M-%S", &t);
-	ne += sprintf_s(ne, oCOUNTOF(newExtension) - std::distance(newExtension, ne), "-%i", oTimer() );
+	ne += sprintf_s(ne, oCOUNTOF(newExtension) - std::distance(newExtension, ne), "-%i", oGetCurrentProcessID() );
 	strcpy_s(ne, oCOUNTOF(newExtension) - std::distance(newExtension, ne), ".txt");
 
-	errno_t err = oGetExePath(_StrDestination, _SizeofStrDestination);
-	if (err) return err;
+	if (!oGetExePath(_StrDestination, _SizeofStrDestination))
+		return oGetLastError();
 
-	err = oReplaceFileExtension(_StrDestination, _SizeofStrDestination, newExtension);
+	errno_t err = oReplaceFileExtension(_StrDestination, _SizeofStrDestination, newExtension);
 	if (err) return err;
 	return 0;
 }
@@ -317,6 +284,12 @@ bool oFindInPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, cons
 	{
 		cur += strspn(cur, oWHITESPACE);
 
+		if(*cur == ';')
+		{
+			cur++;
+			continue;
+		}
+
 		char* dst = _ResultingFullPath;
 		char* end = dst + _SizeofResultingFullPath - 1;
 		if (*cur == '.' && _DotPath && *_DotPath) // relative path, use cwd
@@ -343,94 +316,9 @@ bool oFindInPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, cons
 		cur++;
 	}
 
+	*_ResultingFullPath = 0;
+	oSetLastError(ENOENT, "Cannot find %s in search path %s", _RelativePath, _SearchPath);
 	return false;
-}
-
-bool GetSVNRoot(char* _RootPath, size_t _SizeofRootPath)
-{
-	return false;
-}
-
-bool oGetSysPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysPath)
-{
-	bool success = true;
-	DWORD nElements = static_cast<DWORD>(_SizeofStrSysPath);
-
-	switch (_SysPath)
-	{
-		case oSYSPATH_APP: GetModuleFileNameA(GetModuleHandle(0), _StrSysPath, nElements); *oGetFilebase(_StrSysPath) = 0; break;
-		case oSYSPATH_CWD: GetCurrentDirectoryA(nElements, _StrSysPath); break;
-		case oSYSPATH_SYS: GetSystemDirectoryA(_StrSysPath, nElements); break;
-		case oSYSPATH_OS: GetWindowsDirectoryA(_StrSysPath, nElements); break;
-		case oSYSPATH_P4ROOT:
-		{
-			oP4::CLIENT_SPEC cspec;
-			success = oP4::GetClientSpec(&cspec);
-			if (success)
-				strcpy_s(_StrSysPath, _SizeofStrSysPath, cspec.Root);
-			break;
-		}
-
-		case oSYSPATH_DEV:
-		{
-			// fixme: find a better way to do this...
-			GetModuleFileNameA(GetModuleHandle(0), _StrSysPath, nElements);
-			success = S_OK == GetLastError();
-			*oGetFilebase(_StrSysPath) = 0;
-			success = 0 == strcat_s(_StrSysPath, _SizeofStrSysPath, "../../../"); // assumes $DEV/bin/$PLATFORM/$BUILDTYPE
-			break;
-		}
-
-		case oSYSPATH_COMPILER_INCLUDES:
-		{
-			// @oooii-tony: Yes, sorta hard-coded but better than trying to get at this
-			// directory elsewhere in user code.
-			success = oGetEnvironmentVariable(_StrSysPath, _SizeofStrSysPath, "VS90COMNTOOLS");
-			if (success)
-			{
-				oEnsureFileSeparator(_StrSysPath, _SizeofStrSysPath);
-				strcat_s(_StrSysPath, _SizeofStrSysPath, "../../VC/include/");
-				oCleanPath(_StrSysPath, _SizeofStrSysPath, _StrSysPath);
-			}
-
-			else
-				oSetLastError(ENOENT, "Failed to find compiler include path becayse env var VS90COMNTOOLS does not exist");
-
-			break;
-		}
-
-		case oSYSPATH_TMP:
-		{
-			DWORD len = GetTempPathA(nElements, _StrSysPath);
-			if (len > 0 && len <= MAX_PATH)
-				break; // otherwise use the desktop (pass through to next case)
-		}
-
-		case oSYSPATH_DESKTOP_ALLUSERS:
-		case oSYSPATH_DESKTOP:
-		{
-			int folder = _SysPath == oSYSPATH_DESKTOP ? CSIDL_DESKTOPDIRECTORY : CSIDL_COMMON_DESKTOPDIRECTORY;
-			if (nElements < MAX_PATH)
-				oTRACE("WARNING: Getting desktop as a system path might fail because the specified buffer is smaller than the platform assumes.");
-			if (!SHGetSpecialFolderPathA(0, _StrSysPath, folder, FALSE))
-				success = false;
-			break;
-		}
-
-		default: oASSUME(0);
-	}
-
-	if (success)
-	{
-		oEnsureFileSeparator(_StrSysPath, _SizeofStrSysPath);
-		success = 0 == oCleanPath(_StrSysPath, _SizeofStrSysPath, _StrSysPath);
-	}
-	return success;
-}
-
-bool oSetCWD(const char* _StrCWD)
-{
-	return !!SetCurrentDirectoryA(_StrCWD);
 }
 
 bool oFindInSysPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, oSYSPATH _SysPath, const char* _RelativePath, const char* _DotPath, oPATH_EXISTS_FUNCTION _PathExists)
@@ -449,51 +337,91 @@ bool oFindInSysPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, o
 
 bool oFindPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, const char* _RelativePath, const char* _DotPath, const char* _ExtraSearchPath, oPATH_EXISTS_FUNCTION _PathExists)
 {
-	bool success = true;
+	if (oIsFullPath(_RelativePath) && _PathExists(_RelativePath) )
+		return 0 == strcpy_s(_ResultingFullPath, _SizeofResultingFullPath, _RelativePath);
 
-	if (oIsFullPath(_ResultingFullPath))
-		success = 0 == strcpy_s(_ResultingFullPath, _SizeofResultingFullPath, _RelativePath);
-	else
+	bool success = oFindInSysPath(_ResultingFullPath, _SizeofResultingFullPath, oSYSPATH_APP, _RelativePath, _DotPath, _PathExists);
+	if (!success) success = oFindInSysPath(_ResultingFullPath, _SizeofResultingFullPath, oSYSPATH_CWD, _RelativePath, _DotPath, _PathExists);
+	if (!success) success = oFindInSysPath(_ResultingFullPath, _SizeofResultingFullPath, oSYSPATH_SYS, _RelativePath, _DotPath, _PathExists);
+	if (!success) success = oFindInSysPath(_ResultingFullPath, _SizeofResultingFullPath, oSYSPATH_OS, _RelativePath, _DotPath, _PathExists);
+	if (!success)
 	{
-		success = oFindInSysPath(_ResultingFullPath, _SizeofResultingFullPath, oSYSPATH_APP, _RelativePath, _DotPath, _PathExists);
-		if (!success) success = oFindInSysPath(_ResultingFullPath, _SizeofResultingFullPath, oSYSPATH_CWD, _RelativePath, _DotPath, _PathExists);
-		if (!success) success = oFindInSysPath(_ResultingFullPath, _SizeofResultingFullPath, oSYSPATH_SYS, _RelativePath, _DotPath, _PathExists);
-		if (!success) success = oFindInSysPath(_ResultingFullPath, _SizeofResultingFullPath, oSYSPATH_OS, _RelativePath, _DotPath, _PathExists);
-		if (!success)
+		char appPath[_MAX_PATH];
+		if (!oFindInSysPath(appPath, oSYSPATH_CWD, _RelativePath, _DotPath, _PathExists))
 		{
-			char appPath[_MAX_PATH];
-			if (!oFindInSysPath(appPath, oSYSPATH_CWD, _RelativePath, _DotPath, _PathExists))
-			{
-				char* envPath;
-				size_t envPathSize;
-				success = 0 == _dupenv_s(&envPath, &envPathSize, "PATH");
-				if (success) success = oFindInPath(_ResultingFullPath, _SizeofResultingFullPath, envPath, _RelativePath, appPath, _PathExists);
-				free(envPath);
-			}
-
-			if (!success) success = oFindInPath(_ResultingFullPath, _SizeofResultingFullPath, _ExtraSearchPath, _RelativePath, appPath, _PathExists);
+			char* envPath;
+			size_t envPathSize;
+			success = 0 == _dupenv_s(&envPath, &envPathSize, "PATH");
+			if (success) success = oFindInPath(_ResultingFullPath, _SizeofResultingFullPath, envPath, _RelativePath, appPath, _PathExists);
+			free(envPath);
 		}
 
-		if (!success)
-			success = 0 == strcpy_s(_ResultingFullPath, _SizeofResultingFullPath, _RelativePath);
+		if (!success) success = oFindInPath(_ResultingFullPath, _SizeofResultingFullPath, _ExtraSearchPath, _RelativePath, appPath, _PathExists);
 	}
 
 	return success;
 }
 
-void oCreateTempPath( char* tempPath, size_t tempPathLength )
+size_t oExtractCommonPath(const char* _path1, const char* _path2)
 {
-	oASSERT( tempPathLength < (size_t)std::numeric_limits<DWORD>::max(), "Path is too long!" );
-	GetTempPath( (DWORD)tempPathLength, tempPath );
-	size_t pathLength = strlen( tempPath );
-
-	bool bFoundUniqueDir = false;
-	while( !bFoundUniqueDir )
+	size_t lastSeperatorIndex = 0;
+	size_t index = 0;
+	while(_path1[index] !=0 && _path2[index] != 0 && index < MAX_PATH)
 	{
-		sprintf_s( tempPath + pathLength, tempPathLength - pathLength, "%i", rand() );
-		bFoundUniqueDir = ( GetFileAttributes(tempPath) == INVALID_FILE_ATTRIBUTES );   
+		if((_path1[index] != _path2[index]) && !(oIsFileSeparator(_path1[index]) && oIsFileSeparator(_path2[index])))
+			break;
+		if(oIsFileSeparator(_path1[index]))
+			lastSeperatorIndex = index;
+		index++;
 	}
-
-	CreateDirectory( tempPath, NULL );
+	++lastSeperatorIndex; //include the final trailing path seperator in the result;
+	return lastSeperatorIndex;
 }
 
+void oMakeRelativePath(char* _relativePath, const char* _fullPath, const char* _referencePath)
+{
+	size_t pathIndex = oExtractCommonPath(_fullPath, _referencePath);
+
+	size_t numPathSeperators = 0;
+
+	size_t index = pathIndex - 1;
+	while(_referencePath[index] !=0 && index < MAX_PATH)
+	{
+		if(oIsFileSeparator(_referencePath[index]) && 0 != _referencePath[index + 1] )
+			numPathSeperators++;
+		index++;
+	}
+	_relativePath[0] = '\0';
+	for (size_t i = 0;i < numPathSeperators;++i)
+	{
+		strcat_s(_relativePath+3*i, MAX_PATH - 3*i, "..\\");
+	}
+	strcat_s(_relativePath+3*numPathSeperators, MAX_PATH-3*numPathSeperators, _fullPath+pathIndex);
+}
+
+size_t oCommonPath( const char* _path1, const char* _path2 )
+{
+	size_t count = __min(strlen(_path1), strlen(_path2) );
+	for( size_t i = 0; i < count; ++i )
+	{
+		char a = _path1[i];
+		char b = _path2[i];
+		if( 0 != _strnicmp( &a, &b, 1 ) )
+		{
+			if( !oIsFileSeparator(a) || !oIsFileSeparator(b) )
+			{
+				// Paths were the same till we reached this, so backup
+				size_t j = i;
+				for(; j > 0; --j )
+				{
+					char c = _path1[j];
+					if( oIsFileSeparator(c) || c == ':' )
+						return j + 1;
+				}
+				return 0;
+			}
+		}
+	}
+
+	return count;
+}

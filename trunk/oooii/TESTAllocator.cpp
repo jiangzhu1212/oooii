@@ -1,32 +1,10 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oAllocatorTLSF.h>
 #include <oooii/oHeap.h>
 #include <oooii/oMath.h>
 #include <oooii/oRef.h>
 #include <oooii/oTest.h>
+#include <oooii/oSTL.h>
 #include <oooii/oWindows.h>
 
 struct TESTAllocator : public oTest
@@ -44,23 +22,23 @@ struct TESTAllocator : public oTest
 			// because the system would need to page out everything it has to allocate
 			// that much memory, which makes the test take many minutes to run.
 			const size_t SIZE = __min(globalHeapDesc.TotalPhysical / 2, oGB(6));
-			EnoughPhysRamForFullTest = (SIZE <= oGB(4));
+			EnoughPhysRamForFullTest = (SIZE > oGB(4));
 		#else
 			const size_t SIZE = 500 * 1024 * 1024; // 500 MB
 		#endif
 
-		oTestScopedArray<char> arena(SIZE); // bigger than 32-bit's 4 GB limitation
+		std::vector<char> arena(SIZE); // SIZE sould be bigger than 32-bit's 4 GB limitation
 
 		oAllocator::DESC desc;
-		desc.ArenaSize = arena.GetCount();
-		desc.pArena = arena.GetPointer();
+		desc.ArenaSize = arena.size();
+		desc.pArena = oGetData(arena);
 
 		oRef<oAllocator> Allocator;
 		oTESTB(oAllocatorTLSF::Create("TestAllocator", &desc, &Allocator), "Failed to create a TLSF allocator");
 
 		const size_t NUM_POINTER_TESTS = 1000;
-		oTestScopedArray<char*> pointers(NUM_POINTER_TESTS);
-		memset(pointers.GetPointer(), 0, sizeof(char*) * pointers.GetCount());
+		std::vector<char*> pointers(NUM_POINTER_TESTS);
+		memset(oGetData(pointers), 0, sizeof(char*) * pointers.size());
 		size_t totalUsed = 0;
 		size_t smallestAlloc = ~0u;
 		size_t largestAlloc = 0;
@@ -141,4 +119,4 @@ struct TESTAllocator : public oTest
 	}
 };
 
-TESTAllocator TestAllocator;
+oTEST_REGISTER(TESTAllocator);

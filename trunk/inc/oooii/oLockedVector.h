@@ -1,71 +1,45 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
+
+// This is a threadsafe vector that locks on all operations. We try to match STL 
+// when possible, but it is not STL compliant as much of STL vector cannot be 
+// made threadsafe easily (iterators, insertion, et cetra) GetLockedSTLVector 
+// can be called to retrieve an STL compliant vector but will block access
+// to the vector until the LockedSTLVector has passed out of scope.
 #pragma once
 #ifndef oLockedVector_h
 #define oLockedVector_h
 
-#include <oooii/oThreading.h>
-#include <vector>
-#include <algorithm>
+#include <oooii/oMutex.h>
+#include <oooii/oSTL.h>
 
-// This is a threadsafe vector that locks
-// on all operations.  We try to match STL
-// when possible, but it is not STL compliant
-// as much of STL vector can not be made
-// threadsafe easily (iterators, insertion, et cetra)
-// GetLockedSTLVector can be called to retrieve
-// an STL compliant vector but will block access
-// to the vector until the LockedSTLVector has passed
-// out of scope
-template<typename T, typename T_ALLOC = std::allocator<T>>
-class oLockedVector : private std::vector<T, T_ALLOC>
+template<typename T_MUTEX, typename T, typename Alloc = std::allocator<T>>
+class oLockedVectorBase : private std::vector<T, Alloc>
 {
 public:
-	oLockedVector( T_ALLOC _Allocator = T_ALLOC() ) : std::vector<T, T_ALLOC>( _Allocator )
+	oLockedVectorBase( Alloc _Allocator = Alloc() ) : std::vector<T, Alloc>( _Allocator )
 	{}
 
-	typedef std::vector<T, T_ALLOC> base;
+	typedef std::vector<T, Alloc> base;
 
 	inline void reserve( size_t size ) threadsafe
 	{
-		oRWMutex::ScopedLock ScopeLock(m_mutex);
+		T_MUTEX::ScopedLock ScopeLock(m_mutex);
 		raw_base()->reserve(size);
 	}
 
 	inline void push_back(const T& element) threadsafe
 	{
-		oRWMutex::ScopedLock ScopeLock(m_mutex);
+		T_MUTEX::ScopedLock ScopeLock(m_mutex);
 		raw_base()->push_back(element);
 	}
 	inline void pop_back() threadsafe
 	{
-		oRWMutex::ScopedLock ScopeLock(m_mutex);
+		T_MUTEX::ScopedLock ScopeLock(m_mutex);
 		raw_base()->pop_back();
 	}
 	inline bool pop_back( T* element ) threadsafe
 	{
-		oRWMutex::ScopedLock ScopeLock(m_mutex);
+		T_MUTEX::ScopedLock ScopeLock(m_mutex);
 		if( raw_base()->size() == 0 )
 			return false;
 
@@ -74,9 +48,9 @@ public:
 		return true;
 	}
 
-	inline void resize( int newSize ) threadsafe
+	inline void resize( size_t newSize ) threadsafe
 	{
-		oRWMutex::ScopedLock ScopeLock(m_mutex);
+		T_MUTEX::ScopedLock ScopeLock(m_mutex);
 		return raw_base()->resize( newSize );
 	}
 	inline size_t size() threadsafe
@@ -89,24 +63,36 @@ public:
 		return raw_base()->size();
 	}
 
-	inline bool empty() threadsafe
+	inline bool empty() const threadsafe
 	{
-		oRWMutex::ScopedLock ScopeLock(m_mutex);
 		return raw_base()->empty();
 	}
 
 	inline void clear() threadsafe
 	{
-		oRWMutex::ScopedLock ScopeLock(m_mutex);
+		T_MUTEX::ScopedLock ScopeLock(m_mutex);
 		return raw_base()->clear();
 	}
 
-	inline void erase( const T& search ) threadsafe
+	inline bool erase( const T& search ) threadsafe
 	{
-		oRWMutex::ScopedLock ScopeLock(m_mutex);
+		T_MUTEX::ScopedLock ScopeLock(m_mutex);
 		base::iterator iter = std::find( raw_base()->begin(), raw_base()->end(), search );
 		if( iter !=  raw_base()->end() )
+		{
 			raw_base()->erase( iter );
+			return true;
+		}
+
+		return false;
+	}
+
+	// sets capacity() to size()
+	inline void trim() threadsafe
+	{
+		T_MUTEX::ScopedLock ScopeLock(m_mutex);
+		base& b = *raw_base();
+		oZeroCapacity(b);
 	}
 
 	// Return true to continue a foreach, return false to short-circuit
@@ -115,7 +101,7 @@ public:
 
 	inline bool foreach( ForeachCallback callback ) threadsafe
 	{
-		oRWMutex::ScopedLock ScopeLock( m_mutex );
+		T_MUTEX::ScopedLock ScopeLock( m_mutex );
 		for( base::iterator iter = raw_base()->begin(); iter != raw_base()->end(); ++iter )
 			if( !callback( *iter ) )
 				return false;
@@ -126,7 +112,7 @@ public:
 	class LockedSTLVector : oNoncopyable
 	{
 	public:
-		LockedSTLVector( threadsafe oRWMutex& mutex, base* rawVector ) :
+		LockedSTLVector( threadsafe T_MUTEX& mutex, base* rawVector ) :
 			m_mutex( mutex )
 				, m_rawVector( rawVector )
 			{
@@ -141,13 +127,13 @@ public:
 			base* operator->() { return m_rawVector; }
 
 	private:
-		threadsafe oRWMutex& m_mutex;
+		threadsafe T_MUTEX& m_mutex;
 		base* m_rawVector;
 	};
 	class ConstLockedSTLVector : oNoncopyable
 	{
 	public:
-		ConstLockedSTLVector( threadsafe oRWMutex& mutex, const base* rawVector ) :
+		ConstLockedSTLVector( threadsafe T_MUTEX& mutex, const base* rawVector ) :
 			m_mutex( mutex )
 				, m_rawVector( rawVector )
 			{
@@ -162,20 +148,27 @@ public:
 			const base* operator->() const { return m_rawVector; }
 
 	private:
-		threadsafe oRWMutex& m_mutex;
+		threadsafe T_MUTEX& m_mutex;
 		const base* m_rawVector;
 	};
 
-
 	LockedSTLVector lock() threadsafe { return LockedSTLVector( m_mutex, raw_base() ); }
-	ConstLockedSTLVector const_lock() const threadsafe { return ConstLockedSTLVector( const_cast<threadsafe oRWMutex&>( m_mutex ), const_cast<base*>( static_cast<const threadsafe base*>(this) ) ); }  // Const_cast necessary to acess mutex.  Const is to protect the underlying object
+	ConstLockedSTLVector const_lock() const threadsafe { return ConstLockedSTLVector( const_cast<threadsafe T_MUTEX&>( m_mutex ), const_cast<base*>( static_cast<const threadsafe base*>(this) ) ); }  // Const_cast necessary to acess mutex.  Const is to protect the underlying object
 
 private:
 	// Gives raw unprotected access to the base. Should only be called by functions that are 
 	// protecting the thread safety of the base
 	inline base* raw_base() threadsafe { return thread_cast<base*>( static_cast<threadsafe base*>(this) ); }
 	inline const base* raw_base() const threadsafe { return thread_cast<const base*>( static_cast<const threadsafe base*>(this) ); }
-	oRWMutex m_mutex;
+	T_MUTEX m_mutex;
 };
 
-#endif //oLockedVector_h
+// A locked vector that uses a lightweight RWMutex but is not recursive
+template<typename T, typename Alloc = std::allocator<T>>
+class oLockedVector : public oLockedVectorBase<oRWMutex, T, Alloc> { public: oLockedVector(Alloc _Allocator = Alloc()) : oLockedVectorBase<oRWMutex, T, Alloc>(_Allocator) {} };
+
+// A locked vector that is recursive using a heavier critical section
+template<typename T, typename Alloc = std::allocator<T>>
+class oRecursiveLockedVector : public oLockedVectorBase<oMutex, T, Alloc> { public: oRecursiveLockedVector(Alloc _Allocator = Alloc()) : oLockedVectorBase<oMutex, T, Alloc>(_Allocator) {} };
+
+#endif

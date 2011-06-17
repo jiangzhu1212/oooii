@@ -1,30 +1,7 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oINI.h>
+#include <oooii/oFile.h>
 #include <oooii/oRef.h>
-#include <oooii/oStdio.h>
 #include <oooii/oString.h>
 #include <oooii/oTest.h>
 
@@ -44,11 +21,11 @@ struct TESTINI : public oTest
 			char iniPath[_MAX_PATH];
 			oTESTB(oTestManager::Singleton()->FindFullPath(iniPath, sFiles[f]), "Failed to find %s", sFiles[f]);
 
-			threadsafe oRef<oINI> ini;
+			oRef<threadsafe oINI> ini;
 			{
 				char* pBuffer = 0;
 				size_t size = 0;
-				oTESTB(oLoadBuffer((void**)&pBuffer, &size, malloc, iniPath, true), "Failed to load %s", iniPath);
+				oTESTB(oFile::LoadBuffer((void**)&pBuffer, &size, malloc, iniPath, true), "Failed to load %s", iniPath);
 				oTESTB(oINI::Create(iniPath, pBuffer, &ini), "Failed to create ini from %s", iniPath);
 				free(pBuffer);
 			}
@@ -71,4 +48,4 @@ struct TESTINI : public oTest
 	}
 };
 
-TESTINI TestINI;
+oTEST_REGISTER(TESTINI);

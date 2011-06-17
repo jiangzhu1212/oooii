@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #pragma once
 #ifndef oWindow_h
 #define oWindow_h
@@ -28,10 +6,12 @@
 #include <oooii/oColor.h>
 #include <oooii/oInterface.h>
 #include <oooii/oSurface.h>
+#include <oooii/oVideoCodec.h>
+#include <oooii/oMath.h>
 
 interface oImage;
 
-interface oWindow : public oInterface
+interface oWindow : oInterface
 {
 	// An OS Window tailored to the needs of simple image display, such as from 
 	// a video feed or 3D rendering.
@@ -56,11 +36,12 @@ interface oWindow : public oInterface
 		SIZEABLE, // OS decoration and user can resize window
 	};
 
-	enum RESIZE_EVENT
+	enum RECT_EVENT
 	{
-		RESIZE_BEGIN,
-		RESIZE_CHANGE,
-		RESIZE_END,
+		RECT_BEGIN,
+		MOVE_OCCURING,
+		RESIZE_OCCURING,
+		RECT_END,
 	};
 
 	enum ALIGNMENT
@@ -90,6 +71,7 @@ interface oWindow : public oInterface
 			, HasFocus(true)
 			, AlwaysOnTop(false)
 			, EnableCloseButton(true)
+			, MSSleepWhenNoFocus(200)
 		{}
 
 		int ClientX;
@@ -103,13 +85,13 @@ interface oWindow : public oInterface
 		bool HasFocus;
 		bool AlwaysOnTop;
 		bool EnableCloseButton;
+		unsigned int MSSleepWhenNoFocus;
 	};
 
-	typedef void (*ResizeHandlerFn)(RESIZE_EVENT _Event, STATE _State, unsigned int _Width, unsigned int _Height, void* _pUserData);
+	typedef oFUNCTION< void(RECT_EVENT _Event, STATE _State, oRECT _Rect )> RectHandlerFn;
 
-	class Child : public oInterface
+	struct Child : oInterface
 	{
-	public:
 		virtual void GetWindow(threadsafe oWindow** _ppWindow) threadsafe = 0;
 
 		// This has an implementation that registers a new child with its
@@ -151,11 +133,11 @@ interface oWindow : public oInterface
 		virtual bool HandleMessage(void* _pPlatformData) = 0;
 	};
 
-	class Resizer : public Child
+	struct Resizer : Child
 	{
 	};
 
-	interface RoundedBox : public Child
+	interface RoundedBox : Child
 	{
 		struct DESC
 		{
@@ -184,7 +166,7 @@ interface oWindow : public oInterface
 		virtual void SetDesc(DESC* _pDesc) threadsafe = 0;
 	};
 
-	interface Line : public Child
+	interface Line : Child
 	{
 		struct DESC
 		{
@@ -209,7 +191,7 @@ interface oWindow : public oInterface
 		virtual void SetDesc(DESC* _pDesc) threadsafe = 0;
 	};
 
-	interface Font : public Child
+	interface Font : Child
 	{
 		enum STYLE
 		{
@@ -238,7 +220,7 @@ interface oWindow : public oInterface
 		virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 	};
 
-	interface Text : public Child
+	interface Text : Child
 	{
 		struct DESC
 		{
@@ -284,7 +266,7 @@ interface oWindow : public oInterface
 		virtual void SetFont(threadsafe Font* _pFont) threadsafe = 0;
 	};
 
-	interface Picture : public Child
+	interface Picture : Child
 	{
 		struct DESC
 		{
@@ -314,24 +296,56 @@ interface oWindow : public oInterface
 		virtual void Copy(const void* _pSourceData, size_t _SourcePitch, bool _FlipHorizontal = false, bool _FlipVertical = false) threadsafe = 0;
 	};
 
+	interface Video : Child
+	{
+		struct DESC
+		{
+			DESC()
+				: X(DEFAULT)
+				, Y(DEFAULT)
+				, Width(DEFAULT)
+				, Height(DEFAULT)
+				, Anchor(MIDDLE_CENTER)
+				, UseFrameTime(false)
+				, StitchVertically(true)
+			{}
+
+			// These dimensions are as-drawn
+			int X; // DEFAULT is 0
+			int Y; // DEFAULT is 0
+			int Width; // use DEFAULT for full size of client window
+			int Height; // use DEFAULT for full size of client window
+			bool UseFrameTime; //play video back at rate specified in stream, if false play back as fast as possible
+			bool StitchVertically;
+
+			// Starting position relative to the parent window's client area
+			ALIGNMENT Anchor;
+		};
+
+		virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+	};
+
+
 	// _____________________________________________________________________________
 	// Factory API
 
 	// If a non-null _pDesc is specified, Open is automatically called during 
 	// Create. For the default draw API, pass 0 to _DrawAPIFourCC. On Windows you 
-	// can force a draw API to either 'D2D1' or 'GDI '.
-	static bool Create(const DESC* _pDesc, const char* _Title, unsigned int _DrawAPIFourCC, oWindow** _ppWindow);
+	// can force a draw API to either 'D2D1' or 'GDI '.  You can also supply a _pAssociatedNativeHandle
+	// which on windows is a D3D10.1 device to use when in 'D2D1' mode
+	static bool Create(const DESC* _pDesc, void* _pAssociatedNativeHandle, const char* _Title, unsigned int _DrawAPIFourCC, oWindow** _ppWindow);
 
 	virtual bool Open(const DESC* _pDesc, const char* _Title = "") = 0;
 	virtual void Close() = 0;
 	virtual bool IsOpen() const threadsafe = 0;
 
-	virtual bool CreateResizer(ResizeHandlerFn _ResizeHandler, void* _pUserData, threadsafe Resizer** _ppResizer) threadsafe = 0;
+	virtual bool CreateResizer(RectHandlerFn _ResizeHandler, threadsafe Resizer** _ppResizer) threadsafe = 0;
 	virtual bool CreateLine(const Line::DESC* _pDesc, threadsafe Line** _ppLine) threadsafe = 0;
 	virtual bool CreateRoundedBox(const RoundedBox::DESC* _pDesc, threadsafe RoundedBox** _ppRoundedBox) threadsafe = 0;
 	virtual bool CreateFont(const Font::DESC* _pDesc, threadsafe Font** _ppFont) threadsafe = 0;
 	virtual bool CreateText(const Text::DESC* _pDesc, threadsafe Font* _pFont, threadsafe Text** _ppText) threadsafe = 0;
 	virtual bool CreatePicture(const Picture::DESC* _pDesc, threadsafe Picture** _ppPicture) threadsafe = 0;
+	virtual bool CreateVideo(const Video::DESC*_pDesc, std::vector<threadsafe oVideoContainer*> &_Containers, threadsafe Video** _ppVideo) threadsafe = 0;
 
 	// _____________________________________________________________________________
 	// Runtime API
@@ -343,7 +357,7 @@ interface oWindow : public oInterface
 	// This should be called at the bottom of the application's main loop only 
 	// if Begin succeeds. It primarily handles operations that occur after all 
 	// other operations are finished, such as overlay drawing.
-	virtual void End() = 0;
+	virtual void End(bool _ForceRefresh = false) = 0;
 
 	// Runs an empty Begin/End loop while the window remains open, so this just 
 	// pumps messages until the user interacts with the window to close it, or 
@@ -371,7 +385,7 @@ interface oWindow : public oInterface
 	virtual bool HasFocus() const = 0;
 	virtual void SetFocus() = 0;
 
-	virtual void* GetNativeHandle() = 0; // returns an HWND on windows
+	virtual void* GetNativeHandle() threadsafe = 0;
 
 	// Creates a snapshot of the window as it appears at the time of this call.
 	virtual bool CreateSnapshot(oImage** _ppImage, bool _IncludeBorder = false) = 0;

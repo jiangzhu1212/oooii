@@ -1,32 +1,10 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oTest.h>
 #include <oooii/oAssert.h>
 #include <oooii/oBuffer.h>
 #include <oooii/oConsole.h>
 #include <oooii/oErrno.h>
+#include <oooii/oFile.h>
 #include <oooii/oFilterChain.h>
 #include <oooii/oHash.h>
 #include <oooii/oImage.h>
@@ -36,6 +14,8 @@
 #include <oooii/oString.h>
 #include <oooii/oRef.h>
 #include <oooii/oProcess.h>
+#include <oooii/oThreading.h>
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <hash_map>
@@ -47,15 +27,14 @@ struct oTestManager_Impl : public oTestManager
 
 	int RunTests(oFilterChain::FILTER* _pTestFilters, size_t _SizeofTestFilters) override;
 	int RunSpecialMode(const char* _Name) override;
-	bool RegisterSpecialMode(oSpecialTest* _pSpecialModeTest) override;
 	bool FindFullPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath) const override;
 
-	oTest::RESULT RunTest(oTest* _pTest, char* _StatusMessage, size_t _SizeofStatusMessage);
+	oTest::RESULT RunTest(RegisterTestBase* _pRegisterTestBase, char* _StatusMessage, size_t _SizeofStatusMessage);
 
 	void PrintDesc();
 	void RegisterSpecialModeTests();
 
-	typedef std::vector<oTest*> tests_t;
+	typedef std::vector<RegisterTestBase*> tests_t;
 	tests_t Tests;
 	DESC Desc;
 	std::string TestSuiteName;
@@ -65,7 +44,7 @@ struct oTestManager_Impl : public oTestManager
 	typedef std::vector<oFilterChain::FILTER> filters_t;
 	filters_t Filters;
 
-	typedef stdext::hash_map<std::string, oTest*> specialmodes_t;
+	typedef stdext::hash_map<std::string, RegisterTestBase*> specialmodes_t;
 	specialmodes_t SpecialModes;
 };
 
@@ -79,103 +58,63 @@ const char* oAsString(oTest::RESULT _Result)
 {
 	switch (_Result)
 	{
-		case oTest::SUCCESS: return "SUCCESS";
-		case oTest::FAILURE: return "FAILURE";
-		case oTest::FILTERED: return "FILTERED";
-		case oTest::SKIPPED: return "SKIPPED";
-		case oTest::LEAKS: return "LEAKS";
-		default: oASSUME(0);
+	case oTest::SUCCESS: return "SUCCESS";
+	case oTest::FAILURE: return "FAILURE";
+	case oTest::FILTERED: return "FILTERED";
+	case oTest::SKIPPED: return "SKIPPED";
+	case oTest::LEAKS: return "LEAKS";
+	default: oASSUME(0);
 	}
 }
 
 oTest::oTest()
 {
-	static_cast<oTestManager_Impl*>(oTestManager::Singleton())->Tests.push_back(this);
 }
 
 oTest::~oTest()
 {
-	oTestManager_Impl::tests_t& tests = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->Tests;
-	oTestManager_Impl::tests_t::iterator it = std::find(tests.begin(), tests.end(), this);
-	if (it != tests.end())
-		tests.erase(it);
 }
-
 const char* oTest::GetName() const
 {
 	return oGetSimpleTypename(typeid(*this).name());
 }
 
-static unsigned int CountPixelDifferences(const oImage* _pImage1, const oImage* _pImage2, unsigned int _BitFuzziness)
+void oTest::BuildPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _TestName, const char* _DataPath, const char* _DataSubpath, const char* _Path, unsigned int _NthImage, const char* _Ext)
 {
-	oImage::DESC desc1, desc2;
-	_pImage1->GetDesc(&desc1);
-	_pImage2->GetDesc(&desc2);
-	
-	if (desc1.Size != desc2.Size)
-	{
-		oSetLastError(EINVAL, "Image sizes don't match.");
-		return false;
-	}
+	char base[_MAX_PATH];
+	if (_Path && *_Path)
+		strcpy_s(base, _Path);
+	else if (_DataSubpath && *_DataSubpath)
+		sprintf_s(base, "%s/%s", _DataPath, _DataSubpath);
+	else
+		sprintf_s(base, "%s", _DataPath);
 
-	// @oooii-tony: This is ripe for parallelism. oParallelFor is still being
-	// brought up at this time, but should be deployed here.
+	if (_NthImage)
+		sprintf_s(_StrDestination, _SizeofStrDestination, "%s/%s%u%s", base, _TestName, _NthImage, _Ext);
+	else
+		sprintf_s(_StrDestination, _SizeofStrDestination, "%s/%s%s", base, _TestName, _Ext);
 
-	const oColor* c1 = (oColor*)_pImage1->GetData();
-	const oColor* c2 = (oColor*)_pImage2->GetData();
-
-	unsigned int nDifferences = 0;
-
-	const size_t nPixels = desc1.Size / sizeof(oColor);
-	for (size_t i = 0; i < nPixels; i++)
-		if (!oEqual(c1[i], c2[i], _BitFuzziness))
-			nDifferences++;
-
-	return nDifferences;
+	oCleanPath(_StrDestination, _SizeofStrDestination, _StrDestination);
 }
 
 bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 {
 	const char* goldenImageExt = ".png";
+	const char* diffImageExt = "_diff.png";
 
 	oTestManager::DESC desc;
 	oTestManager::Singleton()->GetDesc(&desc);
 
 	char golden[_MAX_PATH];
-	{
-		char goldenBase[_MAX_PATH];
-		if (*desc.GoldenPath)
-			strcpy_s(goldenBase, desc.GoldenPath);
-		else
-			sprintf_s(goldenBase, "%s/%s", desc.DataPath, "GoldenImages");
-
-		if (_NthImage)
-			sprintf_s(golden, "%s/%s%u%s", goldenBase, GetName(), _NthImage, goldenImageExt);
-		else
-			sprintf_s(golden, "%s/%s%s", goldenBase, GetName(), goldenImageExt);
-
-		oCleanPath(golden, golden);
-	}
-
+	BuildPath(golden, GetName(), desc.DataPath, "GoldenImages", desc.GoldenPath, _NthImage, goldenImageExt);
 	char output[_MAX_PATH];
-	{
-		char outputBase[_MAX_PATH];
-		if (*desc.OutputPath)
-			strcpy_s(outputBase, desc.OutputPath);
-		else
-			sprintf_s(outputBase, "%s/%s", desc.DataPath, "Output");
-
-		if (_NthImage)
-			sprintf_s(output, "%s/%s%u%s", outputBase, GetName(), _NthImage, goldenImageExt);
-		else
-			sprintf_s(output, "%s/%s%s", outputBase, GetName(), goldenImageExt);
-
-		oCleanPath(output, output);
-	}
+	BuildPath(output, GetName(), desc.DataPath, "Output", desc.OutputPath, _NthImage, goldenImageExt);
+	char diff[_MAX_PATH];
+	BuildPath(diff, GetName(), desc.DataPath, "Output", desc.OutputPath, _NthImage, diffImageExt);
 
 	oRef<oImage> GoldenImage;
 	{
-		threadsafe oRef<oBuffer> b;
+		oRef<threadsafe oBuffer> b;
 		if (!oBuffer::Create(golden, false, &b))
 		{
 			if (!_pImage->Save(output))
@@ -196,25 +135,51 @@ bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 		}
 	}
 
-	unsigned int nDifferences = CountPixelDifferences(_pImage, GoldenImage, desc.ImageFuzziness);
+	oRef<oImage> diffs;
+	unsigned int nDifferences = 0;
 
-	oImage::DESC idesc;
-	GoldenImage->GetDesc(&idesc);
-	float percentageDifferent = 100.0f * (nDifferences / static_cast<float>(idesc.Width * idesc.Height));
+	bool compareSucceeded = _pImage->Compare(GoldenImage, desc.ImageFuzziness, &nDifferences, &diffs, desc.DiffImageMultiplier);
 
-	if ((100.0f - percentageDifferent) < desc.PixelPercentageMinSuccess)
+	float percentageDifferent = 100.0f;
+	if (compareSucceeded)
+	{
+		oImage::DESC idesc;
+		GoldenImage->GetDesc(&idesc);
+		percentageDifferent = 100.0f * (nDifferences / static_cast<float>(idesc.Width * idesc.Height));
+	}
+
+	if (!compareSucceeded || (100.0f - percentageDifferent) < desc.PixelPercentageMinSuccess)
 	{
 		if (!_pImage->Save(output))
 		{
-			oSetLastError(EINVAL, "Output image save failed: %s", output);
+			oSetLastError(EIO, "Output image save failed: %s", output);
 			return false;
 		}
 
-		oSetLastError(ENOENT, "Golden image compare failed (%.1f%% differences): (Golden)%s != (Output)%s", percentageDifferent, golden, output);
+		if (diffs && !diffs->Save(diff))
+		{
+			oSetLastError(EIO, "Diff image save failed: %s", diff);
+			return false;
+		}
+
+		oSetLastError(EINVAL, "Golden image compare failed (%.1f%% differences): (Golden)%s != (Output)%s", percentageDifferent, golden, output);
 		return false;
 	}
 
 	return true;
+}
+
+oTestManager::RegisterTestBase::RegisterTestBase()
+{
+	static_cast<oTestManager_Impl*>(oTestManager::Singleton())->Tests.push_back(this);
+}
+
+oTestManager::RegisterTestBase::~RegisterTestBase()
+{
+	oTestManager_Impl::tests_t& tests = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->Tests;
+	oTestManager_Impl::tests_t::iterator it = std::find(tests.begin(), tests.end(), this);
+	if (it != tests.end())
+		tests.erase(it);
 }
 
 void oTestManager_Impl::GetDesc(DESC* _pDesc)
@@ -255,13 +220,18 @@ void oTestManager_Impl::RegisterSpecialModeTests()
 {
 	for (tests_t::iterator it = Tests.begin(); it != Tests.end(); ++it)
 	{
-		oSpecialTest* pSpecialTest = dynamic_cast<oSpecialTest*>(*it);
-		if (pSpecialTest)
-			RegisterSpecialMode(pSpecialTest);
+		RegisterTestBase* pRTB = *it;
+
+		if (!pRTB->IsSpecialTest())
+			continue;
+
+		const char* Name = oGetSimpleTypename(pRTB->GetTypename());
+		oASSERT(SpecialModes[Name] == 0, "%s already registered", Name);
+		SpecialModes[Name] = *it;
 	}
 }
 
-oTest::RESULT oTestManager_Impl::RunTest(oTest* _pTest, char* _StatusMessage, size_t _SizeofStatusMessage)
+oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, char* _StatusMessage, size_t _SizeofStatusMessage)
 {
 	*_StatusMessage = 0;
 
@@ -269,24 +239,28 @@ oTest::RESULT oTestManager_Impl::RunTest(oTest* _pTest, char* _StatusMessage, si
 
 	#ifdef _DEBUG
 		_CrtMemState before, after, difference;
+		_CrtMemCheckpoint(&before);
 	#endif
-	_CrtMemCheckpoint(&before);
-	oTest::RESULT result = _pTest->Run(_StatusMessage, _SizeofStatusMessage);
+	oTest* pTest = _pRegisterTestBase->New();
+	oTest::RESULT result = pTest->Run(_StatusMessage, _SizeofStatusMessage);
+	delete pTest;
 
-	_CrtMemCheckpoint(&after);
-	if (result != oTest::FAILURE && _CrtMemDifference(&difference, &before, &after))
-	{
-		// @oooii-tony: How should I handle things that resize internal 
-		// buffers on first use, so it changes the memory footprint, but 
-		// is not a leak?
-		result = oTest::LEAKS;
-		#ifdef _DEBUG
+	#ifdef _DEBUG
+		// @oooii-kevin: Due to TBB's static memory initialization and our endemic use of TBB
+		// we need to recycle the scheduler after every test to avoid any spurious memory leaks
+		oRecycleScheduler();
+		_CrtMemCheckpoint(&after);
+		if (result != oTest::FAILURE && _CrtMemDifference(&difference, &before, &after))
+		{
+			// @oooii-tony: How should I handle things that resize internal 
+			// buffers on first use, so it changes the memory footprint, but 
+			// is not a leak?
+			result = oTest::LEAKS;
 			sprintf_s(_StatusMessage, _SizeofStatusMessage, "%u bytes in %u normal blocks, %u bytes in %u CRT blocks", difference.lSizes[_NORMAL_BLOCK], difference.lCounts[_NORMAL_BLOCK], difference.lSizes[_CRT_BLOCK], difference.lCounts[_CRT_BLOCK]);
-		#endif
-
-		_CrtMemDumpStatistics(&difference);
-		_CrtMemDumpAllObjectsSince(&before);
-	}
+			_CrtMemDumpStatistics(&difference);
+			_CrtMemDumpAllObjectsSince(&before);
+		}
+	#endif
 
 	return result;
 }
@@ -299,81 +273,103 @@ int oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, size_t _Siz
 	size_t TotalNumFailed = 0;
 	size_t TotalNumSkipped = 0;
 
+	char timeMessage[512];
+	double allIterationsStartTime = oTimer();
 	for (size_t r = 0; r < Desc.NumRunIterations; r++)
 	{
 		size_t NumSucceeded = 0;
 		size_t NumFailed = 0;
 		size_t NumSkipped = 0;
 
-		threadsafe oRef<oFilterChain> filterChain;
+		oRef<threadsafe oFilterChain> filterChain;
 		if (_pTestFilters && _SizeofTestFilters && !oFilterChain::Create(_pTestFilters, _SizeofTestFilters, &filterChain))
 			return -1;
 
 		// Prepare formatting used to print results
 		char nameSpec[32];
-		sprintf_s(nameSpec, "%%-%us: ", Desc.NameColumnWidth);
+		sprintf_s(nameSpec, "%%-%us", Desc.NameColumnWidth);
 
 		char statusSpec[32];
 		sprintf_s(statusSpec, "%%-%us", Desc.StatusColumnWidth);
 
+		char timeSpec[32];
+		sprintf_s(timeSpec, "%%-%us", Desc.TimeColumnWidth);
+
 		char messageSpec[32];
-		sprintf_s(messageSpec, ": %%s\n");
+		sprintf_s(messageSpec, "%%s\n");
 
 		char statusMessage[512];
 
 		oConsole::printf(0, 0, "========== %s Run %u ==========\n", Desc.TestSuiteName, r+1);
 		PrintDesc();
+
+		// Print table headers
+		{
+			oConsole::printf(0, 0, nameSpec, "TEST NAME");
+			oConsole::printf(0, 0, ": ");
+			oConsole::printf(0, 0, statusSpec, "STATUS");
+			oConsole::printf(0, 0, ": ");
+			oConsole::printf(0, 0, timeSpec, "TIME");
+			oConsole::printf(0, 0, ": ");
+			oConsole::printf(0, 0, messageSpec, "STATUS MESSAGE");
+		}
+
+		double totalTestStartTime = oTimer();
 		for (tests_t::iterator it = Tests.begin(); it != Tests.end(); ++it)
 		{
-			oTest* pTest = *it;
-			oSpecialTest* pSpecialTest = dynamic_cast<oSpecialTest*>(pTest);
+			RegisterTestBase* pRTB = *it;
 
-			if (pTest && !pSpecialTest)
+			if (pRTB && !pRTB->IsSpecialTest())
 			{
 				char TestName[256];
-				strcpy_s(TestName, pTest->GetName());
+				strcpy_s(TestName, oGetSimpleTypename(pRTB->GetTypename()));
 
-				oTRACE("========== Begin %s Run %u ==========", TestName, r+1);
+				double testTime = 0.0;
 
 				oColor fg = 0, bg = 0;
 				oConsole::printf(fg, bg, nameSpec, TestName);
+				oConsole::printf(0, 0, ": ");
 
 				oTest::RESULT result = oTest::FILTERED;
 
 				if (!filterChain || filterChain->Passes(TestName, 0)) // put in skip filter here
 				{
-					result = RunTest(pTest, statusMessage, oCOUNTOF(statusMessage));
+					oTRACE("========== Begin %s Run %u ==========", TestName, r+1);
+					testTime = oTimer();
+					result = RunTest(pRTB, statusMessage, oCOUNTOF(statusMessage));
+					testTime = oTimer() - testTime;
+					oTRACE("========== End %s Run %u ==========", TestName, r+1);
 
 					switch (result)
 					{
-						case oTest::SUCCESS:
-							if (!*statusMessage)
-								sprintf_s(statusMessage, "---");
-							fg = std::Lime;
-							NumSucceeded++;
-							break;
+					case oTest::SUCCESS:
+						if (!*statusMessage)
+							sprintf_s(statusMessage, "---");
+						fg = std::Lime;
+						NumSucceeded++;
+						break;
 
-						case oTest::FAILURE:
-							if (!*statusMessage)
-								sprintf_s(statusMessage, "Failed");
-							bg = std::Red;
-							fg = std::Yellow;
-							NumFailed++;
-							break;
+					case oTest::FAILURE:
+						if (!*statusMessage)
+							sprintf_s(statusMessage, "Failed");
+						bg = std::Red;
+						fg = std::Yellow;
+						NumFailed++;
+						break;
 
-						case oTest::SKIPPED:
-							if (!*statusMessage)
-								sprintf_s(statusMessage, "Skipped");
-							fg = std::Yellow;
-							NumSkipped++;
-							break;
+					case oTest::SKIPPED:
+						if (!*statusMessage)
+							sprintf_s(statusMessage, "Skipped");
+						fg = std::Yellow;
+						NumSkipped++;
+						break;
 
-						case oTest::LEAKS:
-							if (!*statusMessage)
-								sprintf_s(statusMessage, "Leaks memory");
-							fg = std::Yellow;
-							NumFailed++;
-							break;
+					case oTest::LEAKS:
+						if (!*statusMessage)
+							sprintf_s(statusMessage, "Leaks memory");
+						fg = std::Yellow;
+						NumFailed++;
+						break;
 					}
 				}
 
@@ -385,13 +381,23 @@ int oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, size_t _Siz
 				}
 
 				oConsole::printf(fg, bg, statusSpec, oAsString(result));
-				oConsole::printf(0, 0, messageSpec, statusMessage);
+				oConsole::printf(0, 0, ": ");
 
-				oTRACE("========== End %s Run %u ==========", TestName, r+1);
+				fg = 0;
+				if (testTime > Desc.TestReallyTooSlowTimeInSeconds)
+					fg = std::Red;
+				else if (testTime > Desc.TestTooSlowTimeInSeconds)
+					fg = std::Yellow;
+
+				oFormatTimeSize(timeMessage, testTime);
+				oConsole::printf(fg, 0, timeSpec, timeMessage);
+				oConsole::printf(0, 0, ": ");
+				oConsole::printf(0, 0, messageSpec, statusMessage);
 			}
 		}
 
-		oConsole::printf(0, 0, "========== Unit Tests: %u succeeded, %u failed, %u skipped ==========\n", NumSucceeded, NumFailed, NumSkipped);
+		oFormatTimeSize(timeMessage, oTimer() - totalTestStartTime);
+		oConsole::printf(0, 0, "========== Unit Tests: %u succeeded, %u failed, %u skipped in %s ==========\n", NumSucceeded, NumFailed, NumSkipped, timeMessage);
 
 		TotalNumSucceeded += NumSucceeded;
 		TotalNumFailed += NumFailed;
@@ -399,7 +405,10 @@ int oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, size_t _Siz
 	}
 
 	if (Desc.NumRunIterations != 1) // != so we report if somehow a 0 got through to here
-		oConsole::printf(0, 0, "========== %u Iterations: %u succeeded, %u failed, %u skipped ==========\n", Desc.NumRunIterations, TotalNumSucceeded, TotalNumFailed, TotalNumSkipped);
+	{
+		oFormatTimeSize(timeMessage, oTimer() - allIterationsStartTime);
+		oConsole::printf(0, 0, "========== %u Iterations: %u succeeded, %u failed, %u skipped in %s ==========\n", Desc.NumRunIterations, TotalNumSucceeded, TotalNumFailed, TotalNumSkipped, timeMessage);
+	}
 
 	return (TotalNumFailed > 0) ? -1 : 0;
 }
@@ -410,38 +419,38 @@ int oTestManager_Impl::RunSpecialMode(const char* _Name)
 
 	int err = ENOENT;
 
-	oTest* pTest = SpecialModes[_Name];
-	if (pTest)
+	RegisterTestBase* pRTB = SpecialModes[_Name];
+	if (pRTB)
 	{
 		char statusMessage[512];
-		oTest::RESULT result = RunTest(pTest, statusMessage, oCOUNTOF(statusMessage));
-		
+		oTest::RESULT result = RunTest(pRTB, statusMessage, oCOUNTOF(statusMessage));
+
 		switch (result)
 		{
-			case oTest::SUCCESS:
-				printf("SpecialMode %s: Success", _Name);
-				err = 0;
-				break;
+		case oTest::SUCCESS:
+			printf("SpecialMode %s: Success", _Name);
+			err = 0;
+			break;
 
-			case oTest::SKIPPED:
-				printf("SpecialMode %s: Skipped", _Name);
-				err = -4;
-				break;
+		case oTest::SKIPPED:
+			printf("SpecialMode %s: Skipped", _Name);
+			err = -4;
+			break;
 
-			case oTest::FILTERED:
-				printf("SpecialMode %s: Filtered", _Name);
-				err = -3;
-				break;
+		case oTest::FILTERED:
+			printf("SpecialMode %s: Filtered", _Name);
+			err = -3;
+			break;
 
-			case oTest::LEAKS:
-				printf("SpecialMode %s: Leaks", _Name);
-				err = -2;
-				break;
+		case oTest::LEAKS:
+			printf("SpecialMode %s: Leaks", _Name);
+			err = -2;
+			break;
 
-			default:
-				printf("SpecialMode %s: %s", _Name, *statusMessage ? statusMessage : "(no status message)");
-				err = -1;
-				break;
+		default:
+			printf("SpecialMode %s: %s", _Name, *statusMessage ? statusMessage : "(no status message)");
+			err = -1;
+			break;
 		}
 	}
 
@@ -451,24 +460,22 @@ int oTestManager_Impl::RunSpecialMode(const char* _Name)
 	return err;
 }
 
-bool oTestManager_Impl::RegisterSpecialMode(oSpecialTest* _pSpecialModeTest)
-{
-	oTest* pTest = SpecialModes[_pSpecialModeTest->GetName()];
-	if (pTest) return false;
-	SpecialModes[_pSpecialModeTest->GetName()] = _pSpecialModeTest;
-	return true;
-}
-
 bool oTestManager_Impl::FindFullPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath) const
 {
-	char appPath[_MAX_PATH];
-	oGetSysPath(appPath, oSYSPATH_APP);
-	return oFindPath(_StrFullPath, _SizeofStrFullPath, _StrRelativePath, appPath, DataPath.c_str(), oFile::Exists);
+	char RawPath[_MAX_PATH];
+	if (oFindPath(RawPath, _StrRelativePath, NULL, DataPath.c_str(), oFile::Exists))
+	{
+		return 0 == oCleanPath(_StrFullPath, _SizeofStrFullPath, RawPath);
+	}
+
+	return false;
 }
 
-
-bool oTestRunSpecialTest( const char* _SpecialTestName, char* _StrStatus, size_t _SizeofStrStatus, int* _pExitCode, threadsafe interface oProcess** _ppProcess )
+bool oTestRunSpecialTest(const char* _SpecialTestName, char* _StrStatus, size_t _SizeofStrStatus, int* _pExitCode, threadsafe interface oProcess** _ppProcess)
 {
+	if (_ppProcess)
+		*_ppProcess = 0;
+
 	char cmdline[_MAX_PATH + 128];
 	oGetExePath(cmdline);
 	sprintf_s(cmdline, "%s -s %s", cmdline, _SpecialTestName);
@@ -476,24 +483,29 @@ bool oTestRunSpecialTest( const char* _SpecialTestName, char* _StrStatus, size_t
 	desc.CommandLine = cmdline;
 	desc.EnvironmentString = 0;
 	desc.StdHandleBufferSize = 64 * 1024;
-	if (!oProcess::Create(&desc, _ppProcess))
+	oRef<threadsafe oProcess> Process;
+	if (!oProcess::Create(&desc, &Process))
 	{
 		sprintf_s(_StrStatus, _SizeofStrStatus, "Failed to create process for \"%s\"", oSAFESTRN(_SpecialTestName));
 		return false;
 	}
 
-	(*_ppProcess)->Start();
+	Process->Start();
 
 	// If we timeout, that's good, it means the app is still running
-	if ((*_ppProcess)->Wait(200) && (*_ppProcess)->GetExitCode(_pExitCode))
+	if (Process->Wait(200) &&Process->GetExitCode(_pExitCode))
 	{
 		char msg[512];
-		size_t bytes = (*_ppProcess)->ReadFromStdout(msg, oCOUNTOF(msg));
+		size_t bytes = Process->ReadFromStdout(msg, oCOUNTOF(msg));
 		msg[bytes] = 0;
 		sprintf_s(_StrStatus, _SizeofStrStatus, "%s: %s", oSAFESTRN(_SpecialTestName), msg);
-		(*_ppProcess)->Release();
-		*_ppProcess = 0;
 		return false;
+	}
+
+	if (_ppProcess)
+	{
+		Process->Reference();
+		*_ppProcess = Process;
 	}
 
 	return true;

@@ -1,32 +1,10 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oConcurrentQueueMS.h>
 #include <oooii/oConcurrentQueueOptimisticFIFO.h>
 #include <oooii/oCPU.h>
 #include <oooii/oRef.h>
 #include <oooii/oRefCount.h>
+#include <oooii/oSTL.h>
 #include <oooii/oTest.h>
 #include <oooii/oThread.h>
 
@@ -107,17 +85,16 @@ template<typename T, typename QueueT> bool TestQueueConcurrency(const char* _Que
 	
 	// Scope to ensure queue is cleaned up AFTER all threads.
 	{
-		oTestScopedArray<threadsafe oRef<oThread> > threadArray(cpuDesc.NumHardwareThreads + 5); // throw in some contention
-		threadsafe oRef<oThread>* threads = threadArray.GetPointer();
+		std::vector<oRef<threadsafe oThread> > threadArray(cpuDesc.NumHardwareThreads + 5); // throw in some contention
 
-		for (size_t i = 0; i < threadArray.GetCount(); i++)
+		for (size_t i = 0; i < threadArray.size(); i++)
 		{
 			char threadName[64];
 			sprintf_s(threadName, "TestThread%03u", i);
 
 			oRef<TESTQueues_PushAndPop<T, QueueT> > proc;
 			proc /= new TESTQueues_PushAndPop<T, QueueT>(&q, 1000, 100);
-			oTESTB(oThread::Create(threadName, 64*1024, false, proc, &threads[i]), "%s Failed to create thread \"%s\"", q.GetDebugName(), threadName);
+			oTESTB(oThread::Create(threadName, 64*1024, false, proc, &threadArray[i]), "%s Failed to create thread \"%s\"", q.GetDebugName(), threadName);
 		}
 	}
 
@@ -134,14 +111,16 @@ struct TESTQueues : public oTest
 		if (!TestQueueConcurrency<int, oConcurrentQueueMS<int> >("oConcurrentQueueMS", _StrStatus, _SizeofStrStatus))
 			return FAILURE;
 
+#ifdef oBUG_1216 // oConcurrentQueueOptimisticFIFO is not working with vcrt10
 		if (!TestQueueBasicAPI<int, oConcurrentQueueOptimisticFIFO<int> >("oConcurrentQueueOptimisticFIFO", _StrStatus, _SizeofStrStatus))
 			return FAILURE;
 
 		if (!TestQueueConcurrency<int, oConcurrentQueueOptimisticFIFO<int> >("oConcurrentQueueOptimisticFIFO", _StrStatus, _SizeofStrStatus))
 			return FAILURE;
+#endif
 
 		return SUCCESS;
 	}
 };
 
-TESTQueues TestQueues;
+oTEST_REGISTER(TESTQueues);

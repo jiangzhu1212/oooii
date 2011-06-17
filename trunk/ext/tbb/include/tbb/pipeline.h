@@ -157,11 +157,6 @@ private:
     //! Pointer to next filter in the pipeline.
     filter* next_filter_in_pipeline;
 
-    //! has the filter not yet processed all the tokens it will ever see?  
-    //  (pipeline has not yet reached end_of_input or this filter has not yet
-    //  seen the last token produced by input_filter)
-    bool has_more_work();
-
     //! Buffer for incoming tokens, or NULL if not required.
     /** The buffer is required if the filter is serial or follows a thread-bound one. */
     internal::input_buffer* my_input_buffer;

@@ -30,9 +30,14 @@
 #define __TBB_recursive_mutex_H
 
 #if _WIN32||_WIN64
-#include "machine/windows_api.h"
-#else
-#include <pthread.h>
+    #include <windows.h>
+    #if !defined(_WIN32_WINNT)
+    // The following Windows API function is declared explicitly;
+    // otherwise any user would have to specify /D_WIN32_WINNT=0x0400
+    extern "C" BOOL WINAPI TryEnterCriticalSection( LPCRITICAL_SECTION );
+    #endif
+#else /* if not _WIN32||_WIN64 */
+    #include <pthread.h>
 #endif /* _WIN32||_WIN64 */
 
 #include <new>

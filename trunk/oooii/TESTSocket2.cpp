@@ -1,27 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oTest.h>
 #include <oooii/oProcess.h>
 #include <oooii/oRef.h>
@@ -71,6 +48,7 @@ struct TESTSocket2Server : public oSpecialTest
 
 			assembledMessage[cDest++] = msg[cSrc];
 		}
+		assembledMessage[cDest-1] = 0;
 
 		oTESTB(  strcmp( assembledMessage, TESTSocket2Question ) == 0, "Failed to receive expected question.");
 
@@ -102,9 +80,6 @@ struct TESTSocket2Server : public oSpecialTest
 	char msg[_MAX_PATH];
 };
 
-
-TESTSocket2Server TESTSocket2ServerInstance;
-
 struct TESTSocket2 : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
@@ -118,11 +93,10 @@ struct TESTSocket2 : public oTest
 		oRef<threadsafe oSocketAsync> Client;
 		oTESTB(!oSocketAsync::Create("Client", desc, &Client), "Incorrectly created client when server wasn't running", oGetLastErrorDesc());
 		oTESTB(!Client, "Valid client when there shouldnt be one!");
-		threadsafe oRef<oProcess> Server;
 		{
 			int exitcode = 0;
 			char msg[512];
-			oTESTB(oTestRunSpecialTest("TESTSocket2Server", msg, oCOUNTOF(msg), &exitcode, &Server), "%s", msg);
+			oTESTB(oTestRunSpecialTest("TESTSocket2Server", msg, oCOUNTOF(msg), &exitcode), "%s", msg);
 		}
 
 		oTESTB(oSocketAsync::Create("Client", desc, &Client), "Failed to create client", oGetLastErrorDesc());
@@ -180,4 +154,5 @@ struct TESTSocket2 : public oTest
 	}
 };
 
-TESTSocket2 TESTSocket2Instance;
+oTEST_REGISTER(TESTSocket2Server);
+oTEST_REGISTER(TESTSocket2);

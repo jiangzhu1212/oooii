@@ -1,33 +1,10 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
-#include <oooii/oWindows.h>
+// $(header)
 #include <oooii/oSurface.h>
 #include <oooii/oAssert.h>
 #include <oooii/oByte.h>
 #include <oooii/oStddef.h>
 #include <oooii/oMath.h>
+#include <oooii/oMemory.h>
 #include <string.h>
 
 #define LAST_FORMAT oSurface::BC7_UNORM_SRGB
@@ -116,18 +93,18 @@ static const FORMAT_DESC sFormatDescs[] =
 	{ "BC1_TYPELESS", 8, 3, true, false },
 	{ "BC1_UNORM", 8, 3, true, true },
 	{ "BC1_UNORM_SRGB", 8, 3, true, true },
-	{ "BC2_TYPELESS", 0, 4, true, false },
-	{ "BC2_UNORM", 0, 4, true, true },
-	{ "BC2_UNORM_SRGB", 0, 4, true, true },
-	{ "BC3_TYPELESS", 0, 4, true, false },
-	{ "BC3_UNORM", 0, 4, true, true },
-	{ "BC3_UNORM_SRGB", 0, 4, true, true },
-	{ "BC4_TYPELESS", 0, 1, true, false },
-	{ "BC4_UNORM", 0, 1, true, true },
-	{ "BC4_SNORM", 0, 1, true, false },
-	{ "BC5_TYPELESS", 0, 2, true, false },
-	{ "BC5_UNORM", 0, 2, true, true },
-	{ "BC5_SNORM", 0, 2, true, false },
+	{ "BC2_TYPELESS", 16, 4, true, false },
+	{ "BC2_UNORM", 16, 4, true, true },
+	{ "BC2_UNORM_SRGB", 16, 4, true, true },
+	{ "BC3_TYPELESS", 16, 4, true, false },
+	{ "BC3_UNORM", 16, 4, true, true },
+	{ "BC3_UNORM_SRGB", 16, 4, true, true },
+	{ "BC4_TYPELESS", 8, 1, true, false },
+	{ "BC4_UNORM", 8, 1, true, true },
+	{ "BC4_SNORM", 8, 1, true, false },
+	{ "BC5_TYPELESS", 16, 2, true, false },
+	{ "BC5_UNORM", 16, 2, true, true },
+	{ "BC5_SNORM", 16, 2, true, false },
 	{ "B5G6R5_UNORM", sizeof(short), 3, false, true },
 	{ "B5G5R5A1_UNORM", sizeof(short), 4, false, true },
 	{ "B8G8R8A8_UNORM", sizeof(int), 4, false, true },
@@ -137,21 +114,23 @@ static const FORMAT_DESC sFormatDescs[] =
 	{ "B8G8R8A8_UNORM_SRGB", sizeof(int), 4, false, true },
 	{ "B8G8R8X8_TYPELESS", sizeof(int), 4, false, false },
 	{ "B8G8R8X8_UNORM_SRGB", sizeof(int), 4, false, true },
-	{ "BC6H_TYPELESS", 0, 3, true, false }, // @oooii-tony: num channels on BC6 and BC7 
-	{ "BC6H_UF16", 0, 3, true, false },     // formats are suspect. I can't find a real spec 
-	{ "BC6H_SF16", 0, 3, true, false },     // on what's inside, and BC7 seems to support 3- 
-	{ "BC7_TYPELESS", 0, 4, true, false },  // and 4-channel color.
-	{ "BC7_UNORM", 0, 4, true, true },
-	{ "BC7_UNORM_SRGB", 0, 4, true, true },
+	{ "BC6H_TYPELESS", 16, 3, true, false },
+	{ "BC6H_UF16", 16, 3, true, false },
+	{ "BC6H_SF16", 16, 3, true, false },
+	{ "BC7_TYPELESS", 16, 4, true, false },
+	{ "BC7_UNORM", 16, 4, true, true },
+	{ "BC7_UNORM_SRGB", 16, 4, true, true },
 };
 oSTATICASSERT(oCOUNTOF(sFormatDescs) == oSurface::NUM_FORMATS);
 
-#if oDXVER >= oDXVER_10
-unsigned int oSurface::GetDXGIFormat(FORMAT _Format)
-{
-	// @oooii-tony: For now, these are the same exact thing
-		return (unsigned int)(DXGI_FORMAT)_Format;
-}
+#if defined(_WIN32) || defined(_WIN64)
+	int oSurface::GetPlatformFormat(FORMAT _Format)
+	{
+		// @oooii-tony: For now, oSurface::FORMAT and DXGI_FORMAT are the same thing.
+		return static_cast<int>(_Format);
+	}
+#else
+	#error Unsupported platform (oSurface::GetPlatformFormat())
 #endif
 
 const char* oAsString(const oSurface::FORMAT& _Format)
@@ -191,10 +170,6 @@ bool oSurface::IsDepthFormat(FORMAT _Format)
 			break;
 	}
 
-	#if oDXVER >= oDXVER_10
-		oASSERT(result == oDXGIIsDepthFormat((DXGI_FORMAT)_Format), "IsDepthFormat result mismatch");
-	#endif
-
 	return result;
 }
 
@@ -223,19 +198,21 @@ unsigned int oSurface::CalcRowPitch(FORMAT _Format, unsigned int _Mip0Width, uns
 {
 	oASSERT(_Format != UNKNOWN, "Unknown surface format passed to GetRowPitch");
 	unsigned int w = CalcMipDimension(_Format, _Mip0Width, _MipLevel);
+	if (IsBlockCompressedFormat(_Format)) // because the atom is a 4x4 block
+		w /= 4;
 	unsigned int s = GetSize(_Format);
 	return static_cast<unsigned int>(oByteAlign(w * s, sizeof(int)));
 }
 
 unsigned int oSurface::CalcLevelPitch(FORMAT _Format, unsigned int _Mip0Width, unsigned int _Mip0Height, unsigned int _MipLevel)
 {
-	return CalcRowPitch(_Format, _Mip0Height, _MipLevel) * CalcNumRows(_Format, _Mip0Height, _MipLevel);
+	return CalcRowPitch(_Format, _Mip0Width, _MipLevel) * CalcNumRows(_Format, _Mip0Height, _MipLevel);
 }
 
-unsigned int oSurface::CalcSlicePitch(FORMAT _Format, unsigned int _Mip0Width, unsigned int _Mip0Height)
+unsigned int oSurface::CalcSlicePitch(FORMAT _Format, unsigned int _Mip0Width, unsigned int _Mip0Height, unsigned int _NumMips)
 {
 	unsigned int pitch = 0;
-	const unsigned int nMips = CalcMipCount(_Mip0Width, _Mip0Height);
+	const unsigned int nMips = 0 == _NumMips ? CalcMipCount(_Mip0Width, _Mip0Height) : _NumMips;
 	for (unsigned int i = 0; i < nMips; i++)
 		pitch += CalcLevelPitch(_Format, _Mip0Width, _Mip0Height, i);
 	return pitch;
@@ -328,67 +305,6 @@ unsigned int oSurface::CalculateSize(const DESC* _pDesc)
 	unsigned int heightAdjustment = IsBlockCompressedFormat(_pDesc->Format) ? 4 : 1;
 	unsigned int blockAlignedHeight = IsBlockCompressedFormat(_pDesc->Format) ? static_cast<unsigned int>(oByteAlign(_pDesc->Height, 4)) : _pDesc->Height;
 	return rowPitch * (blockAlignedHeight / heightAdjustment);
-}
-
-#if defined (_WIN32) || defined (_WIN64)
-
-void oSurface::GetBMI(void** _ppBMIVoid, const DESC* _pDesc, void* (*_Allocate)(size_t _Size), bool _FlipVertically, oColor _Monochrome8Zero, oColor _Monochrome8One)
-{
-	BITMAPINFO** _ppBMI = (BITMAPINFO**)_ppBMIVoid;
-
-	if (_pDesc && _ppBMI)
-	{
-		const WORD bmiBitCount = (WORD)GetBitSize(_pDesc->Format);
-
-		oASSERT(*_ppBMI || _Allocate, "If no pre-existing BITMAPINFO is specified, then an _Allocate function is required.");
-
-		oASSERT(!IsBlockCompressedFormat(_pDesc->Format), "block compressed formats not supported by BITMAPINFO");
-		const unsigned int pitch = _pDesc->RowPitch ? _pDesc->RowPitch : CalcRowPitch(_pDesc->Format, _pDesc->Width);
-
-		size_t bmiSize = GetBMISize(_pDesc->Format);
-
-		if (!*_ppBMI)
-			*_ppBMI = (BITMAPINFO*)_Allocate(bmiSize);
-		BITMAPINFO* pBMI = *_ppBMI;
-
-		pBMI->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-		pBMI->bmiHeader.biBitCount = bmiBitCount;
-		pBMI->bmiHeader.biClrImportant = 0;
-		pBMI->bmiHeader.biClrUsed = 0;
-		pBMI->bmiHeader.biCompression = BI_RGB;
-		pBMI->bmiHeader.biHeight = (_FlipVertically ? -1 : 1) * (LONG)_pDesc->Height;
-		pBMI->bmiHeader.biWidth = _pDesc->Width;
-		pBMI->bmiHeader.biPlanes = 1;
-		pBMI->bmiHeader.biSizeImage = pitch * _pDesc->Height;
-		pBMI->bmiHeader.biXPelsPerMeter = 0;
-		pBMI->bmiHeader.biYPelsPerMeter = 0;
-
-		if (bmiBitCount == 8)
-		{
-			// BMI doesn't understand 8-bit monochrome, so create a monochrome palette
-			unsigned int r,g,b,a;
-			oDecomposeColor(_Monochrome8Zero, &r, &g, &b, &a);
-			float4 c0(oUBYTEAsUNORM(r), oUBYTEAsUNORM(g), oUBYTEAsUNORM(b), oUBYTEAsUNORM(a));
-
-			oDecomposeColor(_Monochrome8One, &r, &g, &b, &a);
-			float4 c1(oUBYTEAsUNORM(r), oUBYTEAsUNORM(g), oUBYTEAsUNORM(b), oUBYTEAsUNORM(a));
-
-			for (size_t i = 0; i < 256; i++)
-			{
-				float4 c = lerp(c0, c1, oUBYTEAsUNORM(i));
-				RGBQUAD& q = pBMI->bmiColors[i];
-				q.rgbRed = oUNORMAsUBYTE(c.x);
-				q.rgbGreen = oUNORMAsUBYTE(c.y);
-				q.rgbBlue = oUNORMAsUBYTE(c.z);
-				q.rgbReserved = oUNORMAsUBYTE(c.w);
-			}
-		}
-	}
-}
-
-size_t oSurface::GetBMISize(FORMAT _Format)
-{
-	return GetBitSize(_Format) == 8 ? (sizeof(BITMAPINFO) + sizeof(RGBQUAD) * 255) : sizeof(BITMAPINFO);
 }
 
 void oSurface::convert_B8G8R8A8_UNORM_to_YUV420( const unsigned int _Width, const unsigned int _Height, const unsigned char* _pSrcRGBASrc, const size_t _pRGBAPitch, YUV420* _pYUVDst )
@@ -489,6 +405,7 @@ void oSurface::convert_YUV420_to_B8G8R8A8_UNORM( const unsigned int _Width, cons
 			unsigned int pixel = B;
 			pixel |= G << 8;
 			pixel |= R << 16;
+			pixel |= 0xff << 24;
 
 			scanline[x] = pixel;
 		}
@@ -496,4 +413,143 @@ void oSurface::convert_YUV420_to_B8G8R8A8_UNORM( const unsigned int _Width, cons
 }
 
 
-#endif
+
+
+
+
+#include <oooii/oRef.h>
+#include <oooii/oD3D11.h>
+#include <oooii/oD3DX11.h>
+
+bool oSurface::ConvertSurface(const DESC& _srcDesc, const unsigned char* _pSrcSurface, const DESC& _dstDesc, unsigned char* _pDstSurface)
+{
+	HRESULT hr;
+
+	D3D_FEATURE_LEVEL FeatureLevel;
+	oRef<ID3D11Device> D3DDevice;
+	oRef<ID3D11DeviceContext> D3DDeviceContext;
+	hr = oD3D11::Singleton()->D3D11CreateDevice(
+		NULL,
+		D3D_DRIVER_TYPE_HARDWARE,
+		NULL,
+		D3D11_CREATE_DEVICE_DEBUG,
+		NULL,
+		0,
+		D3D11_SDK_VERSION,
+		&D3DDevice,
+		&FeatureLevel,
+		&D3DDeviceContext);
+
+	if(FAILED(hr))
+	{
+		hr = oD3D11::Singleton()->D3D11CreateDevice(
+			NULL,
+			D3D_DRIVER_TYPE_REFERENCE,
+			NULL,
+			0,
+			NULL,
+			0,
+			D3D11_SDK_VERSION,
+			&D3DDevice,
+			&FeatureLevel,
+			&D3DDeviceContext);
+	}
+
+	if(FAILED(hr) || FeatureLevel < D3D_FEATURE_LEVEL_11_0)
+	{
+		oSetLastError(EINVAL, "Failed to create DX11 device!");
+		return false;
+	}
+
+	// unsigned int SrcSize = CalculateSize(&_srcDesc);
+
+	oRef<ID3D11Texture2D> D3DSrcTexture;
+	{
+		D3D11_TEXTURE2D_DESC Desc;
+
+		Desc.Width = _srcDesc.Width;
+		Desc.Height = _srcDesc.Height;
+		Desc.MipLevels = _srcDesc.NumMips;
+		Desc.ArraySize = _srcDesc.NumSlices;
+		Desc.Format = static_cast<DXGI_FORMAT>(GetPlatformFormat(_srcDesc.Format));
+		Desc.SampleDesc.Count = 1;
+		Desc.SampleDesc.Quality = 0;
+		Desc.Usage = D3D11_USAGE_STAGING;
+		Desc.BindFlags = 0;
+		Desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		Desc.MiscFlags = 0;
+
+		D3D11_SUBRESOURCE_DATA SubresourceData;
+		SubresourceData.pSysMem = _pSrcSurface;
+		SubresourceData.SysMemPitch = _srcDesc.RowPitch;
+		SubresourceData.SysMemSlicePitch = _srcDesc.SlicePitch;
+
+		hr = D3DDevice->CreateTexture2D(&Desc, &SubresourceData, &D3DSrcTexture);
+	}
+
+	if(FAILED(hr))
+	{
+		oSetLastError(EINVAL, "Failed to create D3D source texture.");
+		return false;
+	}
+
+	oRef<ID3D11Texture2D> D3DDstTexture;
+	{
+		D3D11_TEXTURE2D_DESC Desc;
+
+		Desc.Width = _dstDesc.Width;
+		Desc.Height = _dstDesc.Height;
+		Desc.MipLevels = _dstDesc.NumMips;
+		Desc.ArraySize = _dstDesc.NumSlices;
+		Desc.Format = static_cast<DXGI_FORMAT>(GetPlatformFormat(_dstDesc.Format));
+		Desc.SampleDesc.Count = 1;
+		Desc.SampleDesc.Quality = 0;
+		Desc.Usage = D3D11_USAGE_STAGING;
+		Desc.BindFlags = 0;
+		Desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+		Desc.MiscFlags = 0;
+
+		D3DDevice->CreateTexture2D(&Desc, NULL, &D3DDstTexture);
+	}
+
+	if(FAILED(hr))
+	{
+		oSetLastError(EINVAL, "Failed to create D3D destination texture.");
+		return false;
+	}
+
+	D3DX11_TEXTURE_LOAD_INFO loadInfo;
+	loadInfo.pSrcBox = NULL;
+	loadInfo.pDstBox = NULL;
+	loadInfo.SrcFirstMip = 0;
+	loadInfo.DstFirstMip = 0;
+	loadInfo.NumMips = _srcDesc.NumMips;
+	loadInfo.SrcFirstElement = 0;
+	loadInfo.DstFirstElement = 0;
+	loadInfo.NumElements = 1;
+	loadInfo.Filter = D3DX11_DEFAULT;
+	loadInfo.MipFilter = D3DX11_DEFAULT;
+
+	hr = oD3DX11::Singleton()->D3DX11LoadTextureFromTexture(D3DDeviceContext, D3DSrcTexture, &loadInfo, D3DDstTexture);
+
+	if(FAILED(hr))
+	{
+		oSetLastError(EINVAL, "Failed to convert texture from format %i to format %i.", _srcDesc.Format, _dstDesc.Format);
+		return false;
+	}
+
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	hr = D3DDeviceContext->Map(D3DDstTexture, 0, D3D11_MAP_READ, 0, &mapped);
+
+	if(FAILED(hr))
+	{
+		oSetLastError(EINVAL, "Failed to map destination texture.");
+		return false;
+	}
+
+	oASSERT(mapped.DepthPitch == _dstDesc.DepthPitch, "Destination Surface is incorrect size for conversion.");
+	memcpy(_pDstSurface, mapped.pData, __min(mapped.DepthPitch, _srcDesc.DepthPitch));
+	D3DDeviceContext->Unmap(D3DDstTexture, 0);
+
+	return true;
+}

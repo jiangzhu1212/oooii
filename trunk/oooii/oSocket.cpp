@@ -1,49 +1,135 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oSocket.h>
 #include <oooii/oAllocatorTLSF.h>
 #include <oooii/oByte.h>
 #include <oooii/oRef.h>
 #include <oooii/oRefCount.h>
+#include <oooii/oMutex.h>
 #include <oooii/oSocket.h>
 #include <oooii/oStdio.h>
+#include <oooii/oSTL.h>
 #include <oooii/oString.h>
 #include <oooii/oThreading.h>
 #include <oooii/oThread.h>
+#include <oooii/oTimerHelpers.h>
 #include <oooii/oLockFreeQueue.h>
-#include <oooii/oSTL.h>
+#include <oooii/oConcurrentPooledAllocator.h>
 #include "oWinsock.h"
+
+// The Internal versions of these structs simply have the private
+// classification removed. In the event that we need to address multiple
+// families of address types in the same program we can convert this to
+// a traditional blob pattern.
+struct oNetHost_Internal
+{
+	unsigned long IP;
+};
+
+struct oNetAddr_Internal
+{
+	oNetHost Host;
+	unsigned short Port;
+};
+
+inline void oNetAddrToSockAddr(const oNetAddr& _NetAddr, SOCKADDR_IN* _pSockAddr)
+{
+	const oNetAddr_Internal* pAddr = reinterpret_cast<const oNetAddr_Internal*>(&_NetAddr);
+	const oNetHost_Internal* pHost = reinterpret_cast<const oNetHost_Internal*>(&pAddr->Host);
+
+	_pSockAddr->sin_addr.s_addr = pHost->IP;
+	_pSockAddr->sin_port = pAddr->Port;
+	_pSockAddr->sin_family = AF_INET;
+}
+
+inline void oSockAddrToNetAddr(const SOCKADDR_IN& _SockAddr, oNetAddr* _pNetAddr)
+{
+	oNetAddr_Internal* pAddr = reinterpret_cast<oNetAddr_Internal*>(_pNetAddr);
+	oNetHost_Internal* pHost = reinterpret_cast<oNetHost_Internal*>(&pAddr->Host);
+
+	pHost->IP = _SockAddr.sin_addr.s_addr;
+	pAddr->Port = _SockAddr.sin_port;
+}
+
+errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const oNetHost& _Host)
+{
+	const oNetHost_Internal* pHost = reinterpret_cast<const oNetHost_Internal*>(&_Host);
+
+	oWinsock* ws = oWinsock::Singleton();
+	unsigned long addr = ws->ntohl(pHost->IP);
+	return(-1 == sprintf_s(_StrDestination, _SizeofStrDestination, "%u.%u.%u.%u", (addr&0xFF000000)>>24, (addr&0xFF0000)>>16, (addr&0xFF00)>>8, addr&0xFF) ? EINVAL : 0);
+}
+
+errno_t oFromString(oNetHost* _pHost, const char* _StrSource)
+{
+	oNetHost_Internal* pHost = reinterpret_cast<oNetHost_Internal*>(_pHost);
+
+	oWinsock* ws = oWinsock::Singleton();
+
+	ADDRINFO* pAddrInfo = NULL;
+	ws->getaddrinfo(_StrSource, NULL, NULL, &pAddrInfo);
+
+	if(!pAddrInfo)
+	{
+		return EINVAL;
+	}
+
+	pHost->IP = ((SOCKADDR_IN*)pAddrInfo->ai_addr)->sin_addr.s_addr;
+
+	return 0;
+}
+
+errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const oNetAddr& _Address)
+{
+	errno_t ret = oToString(_StrDestination, _SizeofStrDestination, _Address.Host);
+
+	if(!ret)
+	{
+		const oNetAddr_Internal* pAddress = reinterpret_cast<const oNetAddr_Internal*>(&_Address);
+		oWinsock* ws = oWinsock::Singleton();
+		size_t len = strlen(_StrDestination);
+		ret = -1 == sprintf_s(_StrDestination + len, _SizeofStrDestination - len, ":%u", ws->ntohs(pAddress->Port)) ? EINVAL : 0;
+	}
+
+	return ret;
+}
+
+errno_t oFromString(oNetAddr* _pAddress, const char* _StrSource)
+{
+	char tempStr[512];
+	oASSERT(strlen(_StrSource) < oCOUNTOF(tempStr)+1, "");
+	strcpy_s(tempStr, _StrSource);
+
+	char* seperator = strstr(tempStr, ":");
+
+	if(!seperator)
+		return EINVAL;
+
+	*seperator = 0;
+
+	oWinsock* ws = oWinsock::Singleton();
+
+	ADDRINFO* pAddrInfo = NULL;
+	ws->getaddrinfo(tempStr, seperator+1, NULL, &pAddrInfo);
+
+	if(!pAddrInfo)
+	{
+		return EINVAL;
+	}
+
+	oSockAddrToNetAddr(*((SOCKADDR_IN*)pAddrInfo->ai_addr), _pAddress);
+
+	return 0;
+}
 
 oSocket::size_t oWinsockRecvBlocking( SOCKET hSocket, void* _pData, oSocket::size_t _szReceive, unsigned int _Timeout)
 {
 	oWinsock* ws = oWinsock::Singleton();
 
 	oSocket::size_t TotalReceived = 0;
+	oScopedPartialTimeout PartialTimeout(&_Timeout);
 	while( _Timeout && TotalReceived < _szReceive )
 	{
-		oScopedPartialTimeout PartialTimeout(&_Timeout);
+		PartialTimeout.UpdateTimeout();
 		if (SOCKET_ERROR == ws->setsockopt(hSocket, SOL_SOCKET, SO_RCVTIMEO,(char *)&_Timeout, sizeof(unsigned int)) ) 
 			goto error;
 
@@ -147,7 +233,7 @@ bool oSocketBlocking::Create(const char* _DebugName, const DESC& _Desc, threadsa
 // @oooii-tony: temporary glue code to keep the new unified oSocketServer 
 // implementation relatively centralized. I haven't thought about how to unify
 // oSocketClient and oSocketClientAsync yet... that's next.
-void* CreateSocketClient(const char* _DebugName, SOCKET _hTarget, const char* _FullPeername, unsigned int _TimeoutMS, bool* _pSuccess)
+oSocket* CreateSocketClient(const char* _DebugName, SOCKET _hTarget, const char* _FullPeername, unsigned int _TimeoutMS, bool* _pSuccess)
 {
 	oSocketBlocking::DESC desc;
 	desc.Peername = _FullPeername;
@@ -397,7 +483,7 @@ private:
 	} SendManagement;
 
 	// Objects necessary to process receives
-	threadsafe oRef<oSocketAsyncReceiver> OwnedReceiver;
+	oRef<threadsafe oSocketAsyncReceiver> OwnedReceiver;
 	struct RECEIVE_MANAGEMENT
 	{
 		WSAOVERLAPPED Overlap;
@@ -450,23 +536,26 @@ const oGUID& oGetGUID( threadsafe const oThread::Proc* threadsafe const * )
 	return oIIDSocketAsyncReceiverThread;
 }
 
-class oSocketAsyncReceiverThread : public oThread::Proc
+class oSocketAsyncReceiverThreadProc : public oThread::Proc
 {
 public:
 	static const int MAX_SERVICEABLE_SOCKETS = 64;
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oThread::Proc>());
-	oSocketAsyncReceiverThread( const char* _pName, bool* _pSuccess);
-	~oSocketAsyncReceiverThread();
+	oSocketAsyncReceiverThreadProc( const char* _pName, bool* _pSuccess);
+	~oSocketAsyncReceiverThreadProc();
 
 	void AddConnection(SocketAsync_Impl* _pConnection);
 	void DropConnection(SocketAsync_Impl* _pConnection);
 
+	inline void SetConnectionEvent() { oWinsock::Singleton()->WSASetEvent(ConnectionEvent); }
+
 	void WakeupThreadAndWait();
 
-private:
+protected:
+	friend struct oSocketAsyncReceiverThread;
+
 	oRefCount RefCount;
-	oRef<threadsafe oThread> Thread;
 	WSAEVENT ConnectionEvent;
 	oEvent ConnectionProcessedEvent;
 	SocketAsync_Impl* AddingConnection;
@@ -493,8 +582,46 @@ private:
 	virtual void OnEnd()
 	{
 	}
+};
 
+struct oSocketAsyncReceiverThread : oInterface
+{
+	static const int MAX_SERVICEABLE_SOCKETS = oSocketAsyncReceiverThreadProc::MAX_SERVICEABLE_SOCKETS;
+	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_NOOP_QUERYINTERFACE();
 
+	oSocketAsyncReceiverThread(const char* _pName, bool* _pSuccess)
+	{
+		*_pSuccess = false;
+		Proc /= new oSocketAsyncReceiverThreadProc(_pName, _pSuccess);
+		if (!*_pSuccess)
+			return;
+
+		if (!oThread::Create(_pName, 64*1024, false, Proc, &Thread))
+			return;
+	}
+
+	~oSocketAsyncReceiverThread()
+	{
+		Thread->Exit();
+
+		// Fire the event one last time which will wake the thread up allowing it to 
+		// shutdown cleanly
+		Proc->SetConnectionEvent();
+
+		oVERIFY(Thread->Wait(2000));
+	}
+
+	inline void AddConnection(SocketAsync_Impl* _pConnection) { Proc->AddConnection(_pConnection); }
+	inline void DropConnection(SocketAsync_Impl* _pConnection) { Proc->DropConnection(_pConnection); }
+	inline void WakeupThreadAndWait() { Proc->WakeupThreadAndWait(); }
+
+protected:
+
+	oRef<threadsafe oThread> Thread;
+	oRef<oSocketAsyncReceiverThreadProc> Proc;
+
+	oRefCount RefCount;
 };
 
 const oGUID& oGetGUID( threadsafe const oSocketAsyncReceiver* threadsafe const * )
@@ -776,18 +903,25 @@ bool SocketAsync_Impl::GetPeername(char* _OutHostname, size_t _SizeofOutHostname
 
 void CALLBACK SocketAsync_Impl::ReceiveCompletionRoutine( IN DWORD dwError, IN DWORD cbTransferred, IN LPWSAOVERLAPPED lpOverlapped, IN DWORD dwFlags )
 {
-	SocketAsync_Impl* pImpl = *(SocketAsync_Impl**)lpOverlapped->hEvent;
-	if( !pImpl )
-		return;
-
 	// Catch any errors here
 	switch( dwError )
 	{
 	// These errors indicate the socket has been destroyed
 	// meaning pImpl is invalid
 	case WSA_OPERATION_ABORTED:
+	case WSAEINVAL:
+		return;
+	}
+
+	if(!lpOverlapped || !lpOverlapped->hEvent)
 		return;
 
+	SocketAsync_Impl* pImpl = *(SocketAsync_Impl**)lpOverlapped->hEvent;
+	if( !pImpl )
+		return;
+
+	switch( dwError )
+	{
 	// These errors indicate network problems and require us to 
 	// terminate the connection 
 	case WSAECONNRESET:
@@ -1074,7 +1208,7 @@ bool SocketAsync_Impl::OverlappedSend::Finished()
 //////////////////////////////////////////////////////////////////////////
 // oSocketClientAsyncReceiverThread
 //////////////////////////////////////////////////////////////////////////
-oSocketAsyncReceiverThread::oSocketAsyncReceiverThread( const char* _pName, bool* _pSuccess )
+oSocketAsyncReceiverThreadProc::oSocketAsyncReceiverThreadProc( const char* _pName, bool* _pSuccess )
 	: AddingConnection(NULL)
 	, DroppingConnection(NULL)
 {
@@ -1084,11 +1218,6 @@ oSocketAsyncReceiverThread::oSocketAsyncReceiverThread( const char* _pName, bool
 	// All events must be created before the thread exists
 	ConnectionEvent = ws->WSACreateEvent();
 
-	if (!oThread::Create(_pName, 64*1024, false, this, &Thread) )
-		return;
-
-	Release(); // prevent circular ref
-		
 	ValidConnection.reserve(MAX_SERVICEABLE_SOCKETS);
 
 #ifdef _DEBUG
@@ -1099,25 +1228,12 @@ oSocketAsyncReceiverThread::oSocketAsyncReceiverThread( const char* _pName, bool
 	
 }
 
-oSocketAsyncReceiverThread::~oSocketAsyncReceiverThread()
+oSocketAsyncReceiverThreadProc::~oSocketAsyncReceiverThreadProc()
 {
-	oWinsock* ws = oWinsock::Singleton();
-
-	if (Thread)
-	{
-		Thread->Exit();
-
-		// Fire the event one last time which will wake the thread up allowing it to 
-		// shutdown cleanly
-		ws->WSASetEvent( ConnectionEvent );
-
-		oVERIFY( Thread->Wait( 2000 ) );
-	}
-
-	ws->WSACloseEvent( ConnectionEvent );
+	oWinsock::Singleton()->WSACloseEvent(ConnectionEvent);
 }
 
-void oSocketAsyncReceiverThread::AddConnection(SocketAsync_Impl* _pConnection)
+void oSocketAsyncReceiverThreadProc::AddConnection(SocketAsync_Impl* _pConnection)
 {
 	// Set the connection as the connection to be added and wake the threading waiting for it to be processed
 	AddingConnection = _pConnection;
@@ -1134,7 +1250,7 @@ void oSocketAsyncReceiverThread::AddConnection(SocketAsync_Impl* _pConnection)
 }
 
 
-void oSocketAsyncReceiverThread::DropConnection(SocketAsync_Impl* _pConnection)
+void oSocketAsyncReceiverThreadProc::DropConnection(SocketAsync_Impl* _pConnection)
 {
 	// Set the connection as the connection to be dropped and wake the threading waiting for it to be processed
 	DroppingConnection = _pConnection;
@@ -1153,16 +1269,14 @@ void oSocketAsyncReceiverThread::DropConnection(SocketAsync_Impl* _pConnection)
 #endif
 }
 
-void oSocketAsyncReceiverThread::WakeupThreadAndWait()
+void oSocketAsyncReceiverThreadProc::WakeupThreadAndWait()
 {
-	oWinsock* ws = oWinsock::Singleton();
-	ws->WSASetEvent( ConnectionEvent );
+	SetConnectionEvent();
 	ConnectionProcessedEvent.Wait();
 	ConnectionProcessedEvent.Reset();
 }
 
-
-void oSocketAsyncReceiverThread::RunIteration()
+void oSocketAsyncReceiverThreadProc::RunIteration()
 {
 	oWinsock* ws = oWinsock::Singleton();
 	if( WSA_WAIT_EVENT_0 == ws->WSAWaitForMultipleEvents(1, &ConnectionEvent, true, WSA_INFINITE, true ) )
@@ -1264,6 +1378,8 @@ private:
 	WSAEVENT hConnectEvent;
 	char DebugName[64];
 	DESC Desc;
+	oMutex AcceptedSocketsMutex;
+	std::vector<oRef<oSocket>> AcceptedSockets;
 };
 
 bool oSocketServer::Create(const char* _DebugName, const DESC& _Desc, threadsafe oSocketServer** _ppSocketServer)
@@ -1325,8 +1441,9 @@ static bool UNIFIED_WaitForConnection(
 	, threadsafe WSAEVENT _hConnectEvent
 	, unsigned int _TimeoutMS
 	, SOCKET _hServerSocket
-	, oFUNCTION<void*(const char* _DebugName, SOCKET _hTarget, const char* _FullHostname, unsigned int _TimeoutMS, bool* _pSuccess)> _CreateClientSocket
-	, void** _ppNewlyConnectedClient)
+	, oFUNCTION<oSocket*(const char* _DebugName, SOCKET _hTarget, const char* _FullHostname, unsigned int _TimeoutMS, bool* _pSuccess)> _CreateClientSocket
+	, threadsafe oMutex& _AcceptedSocketsMutex
+	, threadsafe std::vector<oRef<oSocket>>& _AcceptedSockets)
 {
 	oRWMutex::ScopedLock lock(_Mutex);
 	oWinsock* ws = oWinsock::Singleton();
@@ -1336,35 +1453,45 @@ static bool UNIFIED_WaitForConnection(
 	{
 		sockaddr_in saddr;
 		int size = sizeof(saddr);
-		SOCKET hTarget = ws->accept(_hServerSocket, (sockaddr*)&saddr, &size);
-		if (hTarget != INVALID_SOCKET)
+		ws->WSAResetEvent(_hConnectEvent); // be sure to reset otherwise the wait will always return immediately. however we could have more than 1 waiting to be accepted.
+		SOCKET hTarget;
+		do 
 		{
-			char hostname[_MAX_PATH];
-			char ip[_MAX_PATH];
-			char port[16];
-			oVERIFY(oWinsockGetHostname(hostname, ip, port, hTarget));
-			oTRACE("oSocketServer %s accepting connection from %s:%s (%s:%s)", _ServerDebugName, hostname, port, ip, port);
+			hTarget = ws->accept(_hServerSocket, (sockaddr*)&saddr, &size);
+			if (hTarget != INVALID_SOCKET)
+			{
+				char hostname[_MAX_PATH];
+				char ip[_MAX_PATH];
+				char port[16];
+				oVERIFY(oWinsockGetHostname(hostname, ip, port, hTarget));
+				oTRACE("oSocketServer %s accepting connection from %s:%s (%s:%s)", _ServerDebugName, hostname, port, ip, port);
 
-			char fullHostname[_MAX_PATH];
-			sprintf_s(fullHostname, "%s:%s", hostname, port);
+				char fullHostname[_MAX_PATH];
+				sprintf_s(fullHostname, "%s:%s", hostname, port);
 
-			char debugName[_MAX_PATH];
-			sprintf_s(debugName, "connection to %s", fullHostname);
+				char debugName[_MAX_PATH];
+				sprintf_s(debugName, "connection to %s", fullHostname);
 
-			*_ppNewlyConnectedClient = _CreateClientSocket(debugName, hTarget, fullHostname, _TimeoutMS, &success);
-		}
+				oRef<oSocket> newSocket(_CreateClientSocket(debugName, hTarget, fullHostname, _TimeoutMS, &success), false);
+				{
+					oMutex::ScopedLock lock(_AcceptedSocketsMutex);
+					thread_cast<std::vector<oRef<oSocket>>&>(_AcceptedSockets).push_back(newSocket); // safe because of lock above
+				}
+
+				success = true;
+			}
+		} while (hTarget != INVALID_SOCKET);
 	}
 
 	else
 	{
-		*_ppNewlyConnectedClient = 0;
 		oSetLastError(0); // It's ok if we don't find a connection
 	}
 
 	return success;
 }
 
-void* CreateSocket2(const char* _DebugName, SOCKET _hTarget, const char* _FullHostname, unsigned int _TimeoutMS, bool* _pSuccess)
+oSocket* CreateSocket2(const char* _DebugName, SOCKET _hTarget, const char* _FullHostname, unsigned int _TimeoutMS, bool* _pSuccess)
 {
 	bool success = false;
 	SocketAsync_Impl* pSocket;
@@ -1373,15 +1500,52 @@ void* CreateSocket2(const char* _DebugName, SOCKET _hTarget, const char* _FullHo
 	return pSocket;
 }
 
-bool SocketServer_Impl::WaitForConnection(threadsafe oSocketAsync** _ppNewlyConnectedClient, unsigned int _TimeoutMS) threadsafe
+template<typename T> static inline bool FindTypedSocket(threadsafe oMutex& _AcceptedSocketsMutex, threadsafe std::vector<oRef<oSocket>>& _AcceptedSockets, T** _ppNewlyConnectedClient)
 {
-	return UNIFIED_WaitForConnection(GetDebugName(), Mutex, hConnectEvent, _TimeoutMS, hSocket, CreateSocket2, (void**)_ppNewlyConnectedClient);
+	oMutex::ScopedLock lock(_AcceptedSocketsMutex);
+	std::vector<oRef<oSocket>>& SafeSockets = thread_cast<std::vector<oRef<oSocket>>&>(_AcceptedSockets);
+
+	if (!SafeSockets.empty())
+	{
+		for (std::vector<oRef<oSocket>>::iterator it = SafeSockets.begin(); it != SafeSockets.end(); ++it)
+		{
+			oSocket* s = *it;
+			if (s->QueryInterface(oGetGUID<T>(), (void**)_ppNewlyConnectedClient))
+			{
+				SafeSockets.erase(it);
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
-extern void* CreateSocketClient(const char* _DebugName, SOCKET _hTarget, const char* _FullHostname, unsigned int _TimeoutMS, bool* _pSuccess);
+bool SocketServer_Impl::WaitForConnection(threadsafe oSocketAsync** _ppNewlyConnectedClient, unsigned int _TimeoutMS) threadsafe
+{
+	if (FindTypedSocket(AcceptedSocketsMutex, AcceptedSockets, _ppNewlyConnectedClient))
+		return true;
+
+	bool result = UNIFIED_WaitForConnection(GetDebugName(), Mutex, hConnectEvent, _TimeoutMS, hSocket, CreateSocket2, AcceptedSocketsMutex, AcceptedSockets);
+
+	if (result)
+		result = FindTypedSocket(AcceptedSocketsMutex, AcceptedSockets, _ppNewlyConnectedClient);
+
+	return result;
+}
+
+extern oSocket* CreateSocketClient(const char* _DebugName, SOCKET _hTarget, const char* _FullHostname, unsigned int _TimeoutMS, bool* _pSuccess);
 bool SocketServer_Impl::WaitForConnection(threadsafe oSocketBlocking** _ppNewlyConnectedClient, unsigned int _TimeoutMS) threadsafe
 {
-	return UNIFIED_WaitForConnection(GetDebugName(), Mutex, hConnectEvent, _TimeoutMS, hSocket, CreateSocketClient, (void**)_ppNewlyConnectedClient);
+	if (FindTypedSocket(AcceptedSocketsMutex, AcceptedSockets, _ppNewlyConnectedClient))
+		return true;
+
+	bool result = UNIFIED_WaitForConnection(GetDebugName(), Mutex, hConnectEvent, _TimeoutMS, hSocket, CreateSocketClient, AcceptedSocketsMutex, AcceptedSockets);
+	
+	if (result)
+		result = FindTypedSocket(AcceptedSocketsMutex, AcceptedSockets, _ppNewlyConnectedClient);
+
+	return result;
 }
 
 const oGUID& oGetGUID( threadsafe const oSocketSender* threadsafe const * )
@@ -1435,7 +1599,7 @@ SocketSender_Impl::SocketSender_Impl(const char* _DebugName, const DESC* _pDesc,
 SocketSender_Impl::~SocketSender_Impl()
 {
 	if (hSocket)
-		oWinsock::Singleton()->shutdown(hSocket, SD_BOTH);
+		oWinsockClose(hSocket);
 }
 
 const oGUID& oGetGUID( threadsafe const oSocketReceiver* threadsafe const * )
@@ -1460,6 +1624,15 @@ struct SocketReceiver_Impl : public oSocketReceiver
 		//@oooii-Andrew: since the receiver owns the socket, it's safe to do a thread_cast
 		oMutex::ScopedLock lock(Mutex); 
 		return oWinsockReceive(hSocket, hEvent, _pDestination, _SizeofDestination, _TimeoutMS, thread_cast<int*>(&bCanReceive), thread_cast<sockaddr_in*>(&Source));
+	}
+
+	size_t ReceiveNonBlocking(void* _pDestination, size_t _SizeofDestination) threadsafe
+	{
+		//@oooii-Andrew: since the receiver owns the socket, it's safe to do a thread_cast
+		oMutex::ScopedLock lock(Mutex);
+		size_t bytesReceived = 0;
+		oWinsockReceiveNonBlocking(hSocket, hEvent, _pDestination, _SizeofDestination, thread_cast<sockaddr_in*>(&Source), &bytesReceived);
+		return bytesReceived;
 	}
 
 	DESC Desc;
@@ -1501,7 +1674,7 @@ SocketReceiver_Impl::SocketReceiver_Impl(const char* _DebugName, const DESC* _pD
 SocketReceiver_Impl::~SocketReceiver_Impl()
 {
 	if (hSocket)
-		oWinsock::Singleton()->shutdown(hSocket, SD_BOTH);
+		oWinsockClose(hSocket);
 
 	if (hEvent)
 		oVB(oWinsock::Singleton()->WSACloseEvent(hEvent));
@@ -1531,4 +1704,458 @@ bool oSocketReceiver::Create(const char* _DebugName, const DESC* _pDesc, threads
 	bool success = false;
 	oCONSTRUCT(_ppSocketReceiver, SocketReceiver_Impl(_DebugName, _pDesc, &success));
 	return !!*_ppSocketReceiver;
+}
+
+const oGUID& oGetGUID( threadsafe const oSocketNonBlocking* threadsafe const * )
+{
+	// {85F112A1-3722-4a99-96B4-E055145F0A9F}
+	static const oGUID oIIDSocketNonBlocking = { 0x85f112a1, 0x3722, 0x4a99, { 0x96, 0xb4, 0xe0, 0x55, 0x14, 0x5f, 0xa, 0x9f } };
+	return oIIDSocketNonBlocking;
+}
+
+struct SocketNonBlocking_Impl : public oSocketNonBlocking
+{
+	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oSocketNonBlocking>());
+
+	SocketNonBlocking_Impl(const char* _DebugName, const DESC* _pDesc, bool* _pSuccess);
+	~SocketNonBlocking_Impl();
+
+	virtual bool SendTo(const char* _DestinationAddress, void* _pSource, size_t _SizeofSource) threadsafe;
+	virtual bool ReceiveFrom(char* _OutSourceAddress, void* _pDestination, size_t _SizeofDestination, size_t* _pOutReceiveSize) threadsafe;
+
+	DESC Desc;
+	SOCKET hSocket;
+	WSAEVENT hEvent;
+	oRefCount RefCount;
+	oMutex Mutex;
+	sockaddr_in Source;
+	char DebugName[64];
+};
+
+SocketNonBlocking_Impl::SocketNonBlocking_Impl(const char* _DebugName, const DESC* _pDesc, bool* _pSuccess)
+{
+	*_pSuccess = false;
+	*DebugName = 0;
+	if (_DebugName)
+		strcpy_s(DebugName, _DebugName);
+
+	hEvent = oWinsock::Singleton()->WSACreateEvent();
+
+	char hostname[64];
+	sprintf_s(hostname, "0.0.0.0:%u", _pDesc->Port);
+	hSocket = oWinsockCreate(hostname, oWINSOCK_REUSE_ADDRESS, 0, _pDesc->SendBufferSize, _pDesc->ReceiveBufferSize);
+	if (hSocket == INVALID_SOCKET)
+		return; // pass thru errors set in oWinsockCreate
+
+	if (SOCKET_ERROR == oWinsock::Singleton()->WSAEventSelect(hSocket, hEvent, FD_ALL_EVENTS))
+	{
+		oWINSOCK_SETLASTERROR("WSAEventSelect");
+		return;
+	}
+
+	// oWinsockCreateAddr(&Source, _pDesc->SenderHostname);
+
+	*_pSuccess = true;
+}
+
+SocketNonBlocking_Impl::~SocketNonBlocking_Impl()
+{
+	if (hSocket)
+		oWinsockClose(hSocket);
+
+	if (hEvent)
+		oVB(oWinsock::Singleton()->WSACloseEvent(hEvent));
+}
+
+bool SocketNonBlocking_Impl::SendTo(const char* _DestinationAddress, void* _pSource, size_t _SizeofSource) threadsafe
+{
+	sockaddr_in sockAddr;
+	oWinsockCreateAddr(&sockAddr, _DestinationAddress);
+
+	oMutex::ScopedLock lock(Mutex);
+	return oWinsockSend(hSocket, _pSource, _SizeofSource, &sockAddr);
+}
+
+bool SocketNonBlocking_Impl::ReceiveFrom(char* _OutSourceAddress, void* _pDestination, size_t _SizeofDestination, size_t* _pOutReceiveSize) threadsafe
+{
+	*_pOutReceiveSize = 0;
+	sockaddr_in sourceAddr;
+	{
+		oMutex::ScopedLock lock(Mutex);
+		oWinsockReceiveNonBlocking(hSocket, hEvent, _pDestination, _SizeofDestination, &sourceAddr, _pOutReceiveSize);
+	}
+
+	oWinsockAddrToHostname(&sourceAddr, _OutSourceAddress, 64);
+
+	return true;
+}
+
+bool oSocketNonBlocking::Create(const char* _DebugName, const DESC* _pDesc, threadsafe oSocketNonBlocking** _ppSocketNonBlocking)
+{
+	if (!_DebugName || !_pDesc || !_ppSocketNonBlocking)
+	{
+		oSetLastError(EINVAL);
+		return false;
+	}
+
+	bool success = false;
+	oCONSTRUCT(_ppSocketNonBlocking, SocketNonBlocking_Impl(_DebugName, _pDesc, &success));
+	return !!*_ppSocketNonBlocking;
+}
+
+#define IOCPKEY_SOCKET_OPERATION 0
+#define IOCPKEY_SHUTDOWN 1
+
+const oGUID& oGetGUID( threadsafe const oSocketAsyncUDP* threadsafe const * )
+{
+	// {68F693CE-B01B-4235-A401-787691707365}
+	static const oGUID oIIDSocketAsyncUDP = { 0x68f693ce, 0xb01b, 0x4235, { 0xa4, 0x1, 0x78, 0x76, 0x91, 0x70, 0x73, 0x65 } };
+	return oIIDSocketAsyncUDP;
+}
+
+struct oSocketOp : public WSAOVERLAPPED
+{
+	enum Operation
+	{
+		Op_Recv,
+		Op_Send,
+	};
+
+	oSocketOp()
+	{
+		memset(this, 0, sizeof(WSAOVERLAPPED));
+	}
+
+	WSABUF		buf;
+	SOCKADDR_IN	SockAddr;
+	Operation	Op;
+};
+
+struct oSocketAsyncUDP_IOCPThread : public oThread::Proc
+{
+	typedef oFUNCTION<void(oSocketOp*)> callback_t;
+
+	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oSocketAsyncUDP_IOCPThread>());
+
+	oRefCount RefCount;
+	oRef<threadsafe oThread> Thread;
+	oEvent threadInitialized;
+
+	enum eState
+	{
+		Running,
+		ShuttingDown,
+	};
+
+	oSocketAsyncUDP_IOCPThread(HANDLE _hIOCP, SOCKET _hSocket, callback_t _RecvCallback, callback_t _SendCallback)
+		: State(Running)
+		, hIOCP(_hIOCP)
+		, hSocket(_hSocket)
+		, RecvCallback(_RecvCallback)
+		, SendCallback(_SendCallback)
+	{
+		if (oThread::Create("IOCP Worker Thread", 64*1024, false, this, &Thread))
+		{
+			Release(); // prevent circular ref
+			threadInitialized.Wait();
+		}
+	}
+
+	~oSocketAsyncUDP_IOCPThread()
+	{
+
+	}
+
+	void Wait() threadsafe
+	{
+		if(Thread)
+		{
+			Thread->Exit();
+			Thread->Wait();
+			Thread = 0;
+		}
+	}
+
+	virtual void RunIteration() override
+	{
+		if(State == ShuttingDown)
+			return;
+
+		DWORD numberOfBytes;
+		ULONG_PTR key;
+		oSocketOp* pOverlapped;
+		if(GetQueuedCompletionStatus(hIOCP, &numberOfBytes, &key, (WSAOVERLAPPED**)&pOverlapped, INFINITE))
+		{
+			// oTRACE("Processing completion: Key=%i, Op=%i", key, pOverlapped ? pOverlapped->Op : -1);
+
+			// Ignore all input if the Socket is trying to shut down. The callbacks may no longer exist.
+			if(State == ShuttingDown)
+				return;
+
+			switch(key)
+			{
+			case IOCPKEY_SHUTDOWN:
+				State = ShuttingDown;
+				//Thread->Exit();
+				break;
+
+			case IOCPKEY_SOCKET_OPERATION:
+				oASSERT(pOverlapped, "Socket operation returned NULL overlap struct.");
+
+				switch(pOverlapped->Op)
+				{
+				case oSocketOp::Op_Recv:
+					RecvCallback(pOverlapped);
+					break;
+
+				case oSocketOp::Op_Send:
+					SendCallback(pOverlapped);
+					break;
+
+				default:
+					oASSERT(false, "Unknown socket operation.");
+				}
+				break;
+
+			default:
+				oASSERT(false, "Unknown key returned from GetQueuedCompletionStatus.");
+			}
+		}
+	}
+
+	virtual bool OnBegin() override
+	{
+		bool success = true;
+
+		if (success)
+			threadInitialized.Set();
+		else
+			oASSERT(false, "Error: %s", oGetLastErrorDesc());
+
+		return success;
+	}
+
+	virtual void OnEnd() override
+	{
+
+	}
+
+	void Shutdown() threadsafe
+	{
+		State = ShuttingDown;
+		PostQueuedCompletionStatus(hIOCP, 0, IOCPKEY_SHUTDOWN, NULL);
+	}
+
+	eState		State;
+	HANDLE		hIOCP;
+	SOCKET		hSocket;
+	callback_t	RecvCallback;
+	callback_t	SendCallback;
+};
+
+const oGUID& oGetGUID( threadsafe const oSocketAsyncUDP_IOCPThread* threadsafe const * )
+{
+	// {5F7AC921-CBCA-442a-87D3-0E5828B4F777}
+	static const oGUID guid = { 0x5f7ac921, 0xcbca, 0x442a, { 0x87, 0xd3, 0xe, 0x58, 0x28, 0xb4, 0xf7, 0x77 } };
+	return guid;
+}
+
+struct oSocketAsyncUDP_Impl : public oSocketAsyncUDP
+{
+	typedef std::vector< oRef<threadsafe oSocketAsyncUDP_IOCPThread> > tThreadList;
+	typedef oConcurrentPooledAllocator<oSocketOp> tOpPool;
+
+	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oSocketAsyncUDP>());
+	oDEFINE_CONST_GETDESC_INTERFACE(Desc, threadsafe);
+
+	char		DebugName[64];
+	DESC		Desc;
+	oRefCount	RefCount;
+
+	oSocketAsyncUDP_Impl(const char* _DebugName, const DESC* _pDesc, bool* _pSuccess);
+	~oSocketAsyncUDP_Impl();
+
+	virtual void	Send(void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination) threadsafe override;
+	virtual void	Recv(void* _pBuffer, oSocket::size_t _Size) threadsafe override;
+
+	void			RecvCallback(oSocketOp* pSocketOp);
+	void			SendCallback(oSocketOp* pSocketOp);
+
+	HANDLE		hIOCP;
+	SOCKET		hSocket;
+	tThreadList	WorkerThreads;
+	tOpPool		SocketOpPool;
+};
+
+static const int NUM_SIMULTAENOUS_OPERATIONS = 128;
+
+oSocketAsyncUDP_Impl::oSocketAsyncUDP_Impl(const char* _DebugName, const DESC* _pDesc, bool* _pSuccess)
+	: Desc(*_pDesc)
+	, hSocket(INVALID_SOCKET)
+	, hIOCP(INVALID_HANDLE_VALUE)
+	, SocketOpPool(_DebugName, oPooledAllocatorBase::InitElementCount, NUM_SIMULTAENOUS_OPERATIONS)
+{
+	*_pSuccess = false;
+	*DebugName = 0;
+	if (_DebugName)
+		strcpy_s(DebugName, _DebugName);
+
+	if(Desc.NumThreads <= 0)
+	{
+		SYSTEM_INFO sysInfo;
+		GetSystemInfo(&sysInfo);
+		Desc.NumThreads = sysInfo.dwNumberOfProcessors;
+	}
+
+	hIOCP = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, Desc.NumThreads);
+
+	if(!hIOCP)
+	{
+		oSetLastError(EINVAL, "Could not create I/O Completion Port with NumThreads=%i", Desc.NumThreads);
+		*_pSuccess = false;
+		return;
+	}
+
+	char hostname[64];
+	sprintf_s(hostname, "0.0.0.0:%u", _pDesc->Port);
+	hSocket = oWinsockCreate(hostname, oWINSOCK_REUSE_ADDRESS | oWINSOCK_ALLOW_BROADCAST, 0, _pDesc->SendBufferSize, _pDesc->ReceiveBufferSize);
+	if (hSocket == INVALID_SOCKET)
+		return; // pass thru errors set in oWinsockCreate
+
+	if(hIOCP != CreateIoCompletionPort((HANDLE)hSocket, hIOCP, IOCPKEY_SOCKET_OPERATION, Desc.NumThreads))
+	{
+		oSetLastError(EINVAL, "Could not associate socket with I/O Completion Port");
+		*_pSuccess = false;
+		return;
+	}
+
+	WorkerThreads.resize(Desc.NumThreads);
+	for(int i = 0; i < Desc.NumThreads; i++)
+		WorkerThreads[i] = new oSocketAsyncUDP_IOCPThread(hIOCP, hSocket, oBIND(&oSocketAsyncUDP_Impl::RecvCallback, this, oBIND1), oBIND(&oSocketAsyncUDP_Impl::SendCallback, this, oBIND1));
+
+	*_pSuccess = true;
+}
+
+oSocketAsyncUDP_Impl::~oSocketAsyncUDP_Impl()
+{
+	// Post a shutdown message for each worker to unblock and disable it.
+	for(size_t i = 0; i < WorkerThreads.size(); i++)
+		WorkerThreads[i]->Shutdown();
+
+	for(size_t i = 0; i < WorkerThreads.size(); i++)
+	{
+		WorkerThreads[i]->Wait();
+		WorkerThreads[i] = 0;
+	}
+
+	WorkerThreads.clear();
+
+	if(INVALID_SOCKET != hSocket)
+		oVERIFY(oWinsockClose(hSocket));
+
+	if(INVALID_HANDLE_VALUE != hIOCP)
+		CloseHandle(hIOCP);
+
+	SocketOpPool.Reset();
+}
+
+void oSocketAsyncUDP_Impl::Send(void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination) threadsafe
+{
+	oWinsock* ws = oWinsock::Singleton();
+
+	oSocketOp* pSocketOp = SocketOpPool.Construct();
+
+	pSocketOp->Op = oSocketOp::Op_Send;
+	pSocketOp->buf.len = _Size;
+	pSocketOp->buf.buf = (CHAR*)_pData;
+
+	oNetAddrToSockAddr(_Destination, &pSocketOp->SockAddr);
+
+	static DWORD bytesSent;
+
+	if(0 != ws->WSASendTo(hSocket, &pSocketOp->buf, 1, &bytesSent, 0, (SOCKADDR*)&pSocketOp->SockAddr, sizeof(sockaddr_in), (WSAOVERLAPPED*)pSocketOp, NULL))
+	{
+#ifdef _DEBUG
+		int lastError = ws->WSAGetLastError();
+		oASSERT(lastError == WSA_IO_PENDING, "WSASendTo reported error: %i", lastError);
+#endif
+	}
+}
+
+void oSocketAsyncUDP_Impl::Recv(void* _pBuffer, oSocket::size_t _Size) threadsafe
+{
+	oWinsock* ws = oWinsock::Singleton();
+
+	oSocketOp* pSocketOp = SocketOpPool.Construct();
+
+	pSocketOp->buf.buf = (CHAR*)_pBuffer;
+	pSocketOp->buf.len = _Size;
+	memset(&pSocketOp->SockAddr, 0, sizeof(SOCKADDR_IN));
+	pSocketOp->Op = oSocketOp::Op_Recv;
+
+	static DWORD flags = 0;
+	static int sizeOfSockAddr = sizeof(SOCKADDR_IN);
+
+	static DWORD bytesRecvd;
+
+	ws->WSARecvFrom(hSocket, &pSocketOp->buf, 1, &bytesRecvd, &flags, (SOCKADDR*)&pSocketOp->SockAddr, &sizeOfSockAddr, (WSAOVERLAPPED*)pSocketOp, NULL);
+}
+
+void oSocketAsyncUDP_Impl::RecvCallback(oSocketOp* pSocketOp)
+{
+	oASSERT(pSocketOp && pSocketOp->Op == oSocketOp::Op_Recv, "Invalid Socket operation.");
+
+	DWORD bytesRecvd;
+	DWORD flags;
+
+	oWinsock* ws = oWinsock::Singleton();
+	BOOL result = ws->WSAGetOverlappedResult(hSocket, (WSAOVERLAPPED*)pSocketOp, &bytesRecvd, false, &flags);
+	oASSERT(result, "WSAGetOverlappedResult failed.");
+
+	if(result)
+	{
+		oNetAddr address;
+		oSockAddrToNetAddr(pSocketOp->SockAddr, &address);
+		Desc.RecvCallback(pSocketOp->buf.buf, bytesRecvd, address);
+	}
+
+	SocketOpPool.Destroy(pSocketOp);
+}
+
+void oSocketAsyncUDP_Impl::SendCallback(oSocketOp* pSocketOp)
+{
+	oASSERT(pSocketOp && pSocketOp->Op == oSocketOp::Op_Send, "Invalid Socket operation.");
+
+	DWORD bytesSent;
+	DWORD flags;
+
+	oWinsock* ws = oWinsock::Singleton();
+	BOOL result = ws->WSAGetOverlappedResult(hSocket, (WSAOVERLAPPED*)pSocketOp, &bytesSent, false, &flags);
+	oASSERT(result, "WSAGetOverlappedResult failed.");
+	oASSERT(bytesSent > 0, "Send call sent 0 bytes.");
+
+	if(result)
+	{
+		oNetAddr address;
+		oSockAddrToNetAddr(pSocketOp->SockAddr, &address);
+		Desc.SendCallback(pSocketOp->buf.buf, pSocketOp->buf.len, address);
+	}
+
+	SocketOpPool.Destroy(pSocketOp);
+}
+
+bool oSocketAsyncUDP::Create(const char* _DebugName, const DESC* _pDesc, threadsafe oSocketAsyncUDP** _ppSocket)
+{
+	if (!_DebugName || !_pDesc || !_ppSocket)
+	{
+		oSetLastError(EINVAL);
+		return false;
+	}
+
+	bool success = false;
+	oCONSTRUCT(_ppSocket, oSocketAsyncUDP_Impl(_DebugName, _pDesc, &success));
+	return !!*_ppSocket;
 }

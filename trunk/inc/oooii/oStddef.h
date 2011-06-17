@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #pragma once
 #ifndef oStddef_h
 #define oStddef_h
@@ -50,18 +28,27 @@
 // safety.
 template<typename T, typename U> inline T thread_cast(const U& threadsafeObject) { return const_cast<T>(threadsafeObject); }
 
+#define oCONCAT(x, y) x##y
 #define oSTRINGIZE__(x) #x
 #define oSTRINGIZE(x) oSTRINGIZE__(x)
+#define oBUILD_MSG(msg) __pragma(message(__FILE__ "(" oSTRINGIZE(__LINE__) ") : BUILD: " msg))
 
 #define oCOUNTOF(x) (sizeof(x)/sizeof((x)[0]))
 
 #ifdef _MSC_VER
+
+	#if _MSC_VER >= 1600
+		#define oHAS_RWMUTEX_TRYLOCK
+		#define oHAS_NULLPTR
+	#else
+		#define oCLICKABLE_OUTPUT_REQUIRES_SPACE_COLON
+	#endif
+
 	#pragma warning(disable:4481) // nonstandard extension used: override specifier 'override'
 	// warning c4073: initializers put in library initialization area
 	// valid values for when are: compiler lib user
 	#define	oSTATIC_INIT(when) __pragma(warning(disable:4073)) __pragma(init_seg(when)) __pragma(warning(default:4073))
-	#define __LOC__ __FILE__ "("oSTRINGIZE(__LINE__)") : OOOii: "
-	#define oSTATIC_WARNING(msg) __pragma(message(__LOC__ msg))
+	#define oSTATIC_WARNING(msg) __pragma(message(msg))
 	#define oTHREADLOCAL __declspec(thread)
 	#define oRESTRICT __restrict
 	#define oFORCEINLINE __forceinline
@@ -78,6 +65,7 @@ template<typename T, typename U> inline T thread_cast(const U& threadsafeObject)
 
 #else
 	#define override
+	#error Unsupported compiler (oCOMPILER_???)
 	#error Unsupported platform (oSTATIC_INIT)
 	#error Unsupported platform (oSTATIC_WARNING)
 	#error Unsupported platform (oTHREADLOCAL)
@@ -100,13 +88,20 @@ template<typename T, typename U> inline T thread_cast(const U& threadsafeObject)
 	#define INTERFACE_DEFINED
 #endif
 
+#ifndef oHAS_NULLPTR
+	#define nullptr ((void*)0)
+#endif
+
 #if defined(_DLL) && !defined(oSTATICLIB)
 	#ifdef _EXPORT_SYMBOLS
+		oBUILD_MSG("oAPI exporting dynamic module symbols")
 		#define oAPI __declspec(dllexport)
 	#else
+		oBUILD_MSG("oAPI importing dynamic module symbols")
 		#define oAPI __declspec(dllimport)
 	#endif
 #else
+	oBUILD_MSG("oAPI linking static module symbols")
 	#define oAPI
 #endif
 
@@ -124,34 +119,16 @@ template<typename T, typename U> inline T thread_cast(const U& threadsafeObject)
 
 #define oSAFESTR(str) ((str) ? (str) : "")
 #define oSAFESTRN(str) ((str) ? (str) : "(null)")
+#define oSTRNEXISTS(str) (str && str[0] != '\0')
 
 #define oKB(n) (n * 1024LL)
 #define oMB(n) (oKB(n) * 1024LL)
 #define oGB(n) (oMB(n) * 1024LL)
 #define oTB(n) (oGB(n) * 1024LL)
 
-// It is often useful to temporarily allocate from the heap. To avoid leaks and
-// keep any error handling simple, use this scoped version. For more complete
-// buffers that have longer lifetimes, see oBuffer.
-class oScopedAllocation : oNoncopyable
-{
-	void* Data;
-	size_t Size;
-public:
-	oScopedAllocation(size_t _Size) : Data(new char[_Size]), Size(_Size) {}
-	~oScopedAllocation() { if (Data) delete Data; }
-	inline void* GetData() { return Data; }
-	inline const void* GetData() const { return Data; }
-	template<typename T> inline T* GetData() { return (T*)Data; }
-	template<typename T> inline const T* GetData() const { return (const T*)Data; }
-	inline size_t GetSize() const { return Size; }
-};
-
 // Extensible pattern for uniform conversion of C++ objects (especially enums) to string. 
 // All the user needs to do is define a function of the templated type to add a new type.
 template<typename T> const char* oAsString(const T& _Object);
-
-#define oSTACK_ALLOC(size, alignment) oByteAlign(_alloca(oByteAlign(size, alignment)), alignment);
 
 // Constants used throughout the code for asynchronous/time-based operations. Look to 
 // comments on an API to understand when it is appropriate to use these.
@@ -162,6 +139,8 @@ const static unsigned int oTIMED_OUT = ~0u;
 // namespace, or if the implementation changes to boost, then we're ready here.
 #define oFUNCTION std::tr1::function
 #define oBIND std::tr1::bind
+template<typename T> std::tr1::reference_wrapper<T> oBINDREF__(T& _Value) { return std::tr1::reference_wrapper<T>(_Value); }
+#define oBINDREF oBINDREF__ // #defined so it's the same color as other oBIND elements for Visual Assist, et al.
 #define oBIND1 std::tr1::placeholders::_1
 #define oBIND2 std::tr1::placeholders::_2
 #define oBIND3 std::tr1::placeholders::_3
@@ -180,5 +159,27 @@ typedef oFUNCTION<bool(const char* _Path)> oPATH_EXISTS_FUNCTION;
 // In several utility functiosn it is useful to load an entire small file into
 // a buffer, so define a common signature here.
 typedef oFUNCTION<bool(void* _pDestination, size_t _SizeofDestination, const char* _Path)> oLOAD_BUFFER_FUNCTION;
+
+// 128 bit blob
+struct uint128_t
+{
+	unsigned long long data[2];
+
+	bool operator == (const uint128_t& other ) const
+	{
+		if( other.data[0] != data[0] )
+			return false;
+
+		if( other.data[1] != data[1] )
+			return false;
+
+		return true;
+	}
+
+	bool operator != (const uint128_t& other ) const
+	{
+		return !((*this) == other);
+	}
+};
 
 #endif

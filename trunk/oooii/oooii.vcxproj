@@ -1,0 +1,516 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="vc90_Debug|Win32">
+      <Configuration>vc90_Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="vc90_Debug|x64">
+      <Configuration>vc90_Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="vc90_Release|Win32">
+      <Configuration>vc90_Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="vc90_Release|x64">
+      <Configuration>vc90_Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{8EB33511-EED5-48AC-99F9-EFA2A34BB2DD}</ProjectGuid>
+    <RootNamespace>oooii</RootNamespace>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v90</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v90</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v90</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v90</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="..\MSSupport\oFXC.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\MSSupport\Properties\Release32.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\lib.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLib.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Release32.props" />
+    <Import Project="..\MSSupport\Properties\Msvc90.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\lib.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLib.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\MSSupport\Properties\Debug32.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\lib.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLib.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Debug32.props" />
+    <Import Project="..\MSSupport\Properties\Msvc90.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\lib.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLib.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\MSSupport\Properties\Release64.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\lib.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLib.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Release64.props" />
+    <Import Project="..\MSSupport\Properties\Msvc90.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\lib.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLib.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\MSSupport\Properties\Debug64.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\lib.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLib.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Debug64.props" />
+    <Import Project="..\MSSupport\Properties\Msvc90.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\lib.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLib.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile />
+    <Lib />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">
+    <ClCompile />
+    <Lib />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile />
+    <Lib />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">
+    <ClCompile />
+    <Lib />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib>
+      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
+    </Lib>
+    <ClCompile />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib>
+      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
+    </Lib>
+    <ClCompile />
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\inc\oooii\oAllocator.h" />
+    <ClInclude Include="..\inc\oooii\oAllocatorTLSF.h" />
+    <ClInclude Include="..\inc\oooii\oArcball.h" />
+    <ClInclude Include="..\inc\oooii\oAssert.h" />
+    <ClInclude Include="..\inc\oooii\oAsyncFileIO.h" />
+    <ClInclude Include="..\inc\oooii\oAtof.h" />
+    <ClInclude Include="..\inc\oooii\oAtomic.h" />
+    <ClInclude Include="..\inc\oooii\oBarrier.h" />
+    <ClInclude Include="..\inc\oooii\oBit.h" />
+    <ClInclude Include="..\inc\oooii\oBitStream.h" />
+    <ClInclude Include="..\inc\oooii\oBuffer.h" />
+    <ClInclude Include="..\inc\oooii\oBufferPool.h" />
+    <ClInclude Include="..\inc\oooii\oByte.h" />
+    <ClInclude Include="..\inc\oooii\oCheckedAssignment.h" />
+    <ClInclude Include="..\inc\oooii\oColor.h" />
+    <ClInclude Include="..\inc\oooii\oCommandQueue.h" />
+    <ClInclude Include="..\inc\oooii\oConcurrentIndexAllocator.h" />
+    <ClInclude Include="..\inc\oooii\oConcurrentPooledAllocator.h" />
+    <ClInclude Include="..\inc\oooii\oConcurrentQueueMS.h" />
+    <ClInclude Include="..\inc\oooii\oConcurrentQueueOptimisticFIFO.h" />
+    <ClInclude Include="..\inc\oooii\oConsole.h" />
+    <ClInclude Include="..\inc\oooii\oCPU.h" />
+    <ClInclude Include="..\inc\oooii\oD3D10.h" />
+    <ClInclude Include="..\inc\oooii\oD3D11.h" />
+    <ClInclude Include="..\inc\oooii\oD3DX11.h" />
+    <ClInclude Include="..\inc\oooii\oDebugger.h" />
+    <ClInclude Include="..\inc\oooii\oDescUtil.h" />
+    <ClInclude Include="..\inc\oooii\oDisplay.h" />
+    <ClInclude Include="..\inc\oooii\oEightCC.h" />
+    <ClInclude Include="..\inc\oooii\oErrno.h" />
+    <ClInclude Include="..\inc\oooii\oEvent.h" />
+    <ClInclude Include="..\inc\oooii\oFibering.h" />
+    <ClInclude Include="..\inc\oooii\oFile.h" />
+    <ClInclude Include="..\inc\oooii\oFilterChain.h" />
+    <ClInclude Include="..\inc\oooii\oGeometry.h" />
+    <ClInclude Include="..\inc\oooii\oGPU.h" />
+    <ClInclude Include="..\inc\oooii\oGUID.h" />
+    <ClInclude Include="..\inc\oooii\oHash.h" />
+    <ClInclude Include="..\inc\oooii\oHashString.h" />
+    <ClInclude Include="..\inc\oooii\oHeap.h" />
+    <ClInclude Include="..\inc\oooii\oHLSL.h" />
+    <ClInclude Include="..\inc\oooii\oImage.h" />
+    <ClInclude Include="..\inc\oooii\oIndex.h" />
+    <ClInclude Include="..\inc\oooii\oIndexAllocator.h" />
+    <ClInclude Include="..\inc\oooii\oINI.h" />
+    <ClInclude Include="..\inc\oooii\oInterface.h" />
+    <ClInclude Include="..\inc\oooii\oIntrinsic.h" />
+    <ClInclude Include="..\inc\oooii\oKeyboard.h" />
+    <ClInclude Include="..\inc\oooii\oLibc.h" />
+    <ClInclude Include="..\inc\oooii\oLimits.h" />
+    <ClInclude Include="..\inc\oooii\oLockedPointer.h" />
+    <ClInclude Include="..\inc\oooii\oLockedVector.h" />
+    <ClInclude Include="..\inc\oooii\oLockFreeQueue.h" />
+    <ClInclude Include="..\inc\oooii\oLockFreeRingBuffer.h" />
+    <ClInclude Include="..\inc\oooii\oManipulator.h" />
+    <ClInclude Include="..\inc\oooii\oMath.h" />
+    <ClInclude Include="..\inc\oooii\oMathInternalHLSL.h" />
+    <ClInclude Include="..\inc\oooii\oMathInternalTypes.h" />
+    <ClInclude Include="..\inc\oooii\oMathTypes.h" />
+    <ClInclude Include="..\inc\oooii\oMemory.h" />
+    <ClInclude Include="..\inc\oooii\oMemoryMappedFile.h" />
+    <ClInclude Include="..\inc\oooii\oMetaProgramming.h" />
+    <ClInclude Include="..\inc\oooii\oMirroredArena.h" />
+    <ClInclude Include="..\inc\oooii\oModule.h" />
+    <ClInclude Include="..\inc\oooii\oMouse.h" />
+    <ClInclude Include="..\inc\oooii\oMsgBox.h" />
+    <ClInclude Include="..\inc\oooii\oMutex.h" />
+    <ClInclude Include="..\inc\oooii\oMutexInternal.h" />
+    <ClInclude Include="..\inc\oooii\oNetworking.h" />
+    <ClInclude Include="..\inc\oooii\oNonCopyable.h" />
+    <ClInclude Include="..\inc\oooii\oOBJLoader.h" />
+    <ClInclude Include="..\inc\oooii\oooii.h" />
+    <ClInclude Include="..\inc\oooii\oP4.h" />
+    <ClInclude Include="..\inc\oooii\oPageAllocator.h" />
+    <ClInclude Include="..\inc\oooii\oPath.h" />
+    <ClInclude Include="..\inc\oooii\oPooledAllocator.h" />
+    <ClInclude Include="..\inc\oooii\oProcess.h" />
+    <ClInclude Include="..\inc\oooii\oProcessHeap.h" />
+    <ClInclude Include="..\inc\oooii\oRef.h" />
+    <ClInclude Include="..\inc\oooii\oRefCount.h" />
+    <ClInclude Include="..\inc\oooii\oSerialization.h" />
+    <ClInclude Include="..\inc\oooii\oSingleton.h" />
+    <ClInclude Include="..\inc\oooii\oSize.h" />
+    <ClInclude Include="..\inc\oooii\oSocket.h" />
+    <ClInclude Include="..\inc\oooii\oStdAlloc.h" />
+    <ClInclude Include="..\inc\oooii\oStddef.h" />
+    <ClInclude Include="..\inc\oooii\oStdio.h" />
+    <ClInclude Include="..\inc\oooii\oSTL.h" />
+    <ClInclude Include="..\inc\oooii\oString.h" />
+    <ClInclude Include="..\inc\oooii\oStringID.h" />
+    <ClInclude Include="..\inc\oooii\oSurface.h" />
+    <ClInclude Include="..\inc\oooii\oSwizzle.h" />
+    <ClInclude Include="..\inc\oooii\oTaggedPointer.h" />
+    <ClInclude Include="..\inc\oooii\oTest.h" />
+    <ClInclude Include="..\inc\oooii\oThread.h" />
+    <ClInclude Include="..\inc\oooii\oThreading.h" />
+    <ClInclude Include="..\inc\oooii\oThreadpool.h" />
+    <ClInclude Include="..\inc\oooii\oTimerHelpers.h" />
+    <ClInclude Include="..\inc\oooii\oType.h" />
+    <ClInclude Include="..\inc\oooii\oURI.h" />
+    <ClInclude Include="..\inc\oooii\oVideoCodec.h" />
+    <ClInclude Include="..\inc\oooii\oVTable.h" />
+    <ClInclude Include="..\inc\oooii\oWindow.h" />
+    <ClInclude Include="..\inc\oooii\oWindows.h" />
+    <ClInclude Include="..\inc\oooii\oXML.h" />
+    <ClInclude Include="oAllocatorTLSF.h" />
+    <ClInclude Include="oCRTLeakTracker.h" />
+    <ClInclude Include="oDbgHelp.h" />
+    <ClInclude Include="oKeyState.h" />
+    <ClInclude Include="oMOVFileImpl.h" />
+    <ClInclude Include="oRawDecodeCPU.h" />
+    <ClInclude Include="oRleDecodeCPU.h" />
+    <ClInclude Include="oVideoCodecD3D10.h" />
+    <ClInclude Include="oVP8DecodeCPU.h" />
+    <ClInclude Include="oWebmEncoder.h" />
+    <ClInclude Include="oWebmEncoderCodec.h" />
+    <ClInclude Include="oWebmEncoderCodecRaw420.h" />
+    <ClInclude Include="oWebmEncoderCodecVP8.h" />
+    <ClInclude Include="oWebmFile.h" />
+    <ClInclude Include="oWebmStreaming.h" />
+    <ClInclude Include="oWinPSAPI.h" />
+    <ClInclude Include="oWinsock.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="perlin.h" />
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\mat_aos.h" />
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\mat_aos_d.h" />
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\quat_aos.h" />
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\quat_aos_d.h" />
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vec_aos.h" />
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vec_aos_d.h" />
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vectormath_aos.h" />
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vectormath_aos_d.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="oAllocator.cpp" />
+    <ClCompile Include="oAllocatorTLSF.cpp" />
+    <ClCompile Include="oArcball.cpp" />
+    <ClCompile Include="oAssert.cpp" />
+    <ClCompile Include="oAsyncFileIO.cpp" />
+    <ClCompile Include="oBarrier.cpp" />
+    <ClCompile Include="oBuffer.cpp" />
+    <ClCompile Include="oBufferPool.cpp" />
+    <ClCompile Include="oColor.cpp" />
+    <ClCompile Include="oCommandQueue.cpp" />
+    <ClCompile Include="oConcurrentIndexAllocator.cpp" />
+    <ClCompile Include="oConsole.cpp" />
+    <ClCompile Include="oCPU.cpp" />
+    <ClCompile Include="oCRTLeakTracker.cpp" />
+    <ClCompile Include="oD3D10.cpp" />
+    <ClCompile Include="oD3D11.cpp" />
+    <ClCompile Include="oD3DX11.cpp" />
+    <ClCompile Include="oDbgHelp.cpp" />
+    <ClCompile Include="oDebugger.cpp" />
+    <ClCompile Include="oDisplay.cpp" />
+    <ClCompile Include="oErrno.cpp" />
+    <ClCompile Include="oEvent.cpp" />
+    <ClCompile Include="oFile.cpp" />
+    <ClCompile Include="oFilterChain.cpp" />
+    <ClCompile Include="oGeometry.cpp" />
+    <ClCompile Include="oGPU.cpp" />
+    <ClCompile Include="oGUID.cpp" />
+    <ClCompile Include="oHash.cpp" />
+    <ClCompile Include="oHeap.cpp" />
+    <ClCompile Include="oImage.cpp" />
+    <ClCompile Include="oIndexAllocator.cpp" />
+    <ClCompile Include="oINI.cpp" />
+    <ClCompile Include="oInterface.cpp" />
+    <ClCompile Include="oKeyboard.cpp" />
+    <ClCompile Include="oMath.cpp" />
+    <ClCompile Include="oMemory.cpp" />
+    <ClCompile Include="oMemoryMappedFile.cpp" />
+    <ClCompile Include="oMirroredArena.cpp" />
+    <ClCompile Include="oModule.cpp" />
+    <ClCompile Include="oMouse.cpp" />
+    <ClCompile Include="oMOVFileImpl.cpp" />
+    <ClCompile Include="oMsgBox.cpp" />
+    <ClCompile Include="oMutex.cpp" />
+    <ClCompile Include="oOBJLoader.cpp" />
+    <ClCompile Include="oooii_icon.cpp" />
+    <ClCompile Include="oP4.cpp" />
+    <ClCompile Include="oPageAllocator.cpp" />
+    <ClCompile Include="oPath.cpp" />
+    <ClCompile Include="oProcess.cpp" />
+    <ClCompile Include="oProcessHeap.cpp" />
+    <ClCompile Include="oRawDecodeCPU.cpp" />
+    <ClCompile Include="oRleDecodeCPU.cpp" />
+    <ClCompile Include="oSingleton.cpp" />
+    <ClCompile Include="oSocket.cpp" />
+    <ClCompile Include="oStdio.cpp" />
+    <ClCompile Include="oSTL.cpp" />
+    <ClCompile Include="oString.cpp" />
+    <ClCompile Include="oSurface.cpp" />
+    <ClCompile Include="oTest.cpp" />
+    <ClCompile Include="oThread.cpp" />
+    <ClCompile Include="oThreading.cpp" />
+    <ClCompile Include="oThreadingTBB.cpp" />
+    <ClCompile Include="oThreadpool.cpp" />
+    <ClCompile Include="oTimerHelpers.cpp" />
+    <ClCompile Include="oType.cpp" />
+    <ClCompile Include="oURI.cpp" />
+    <ClCompile Include="oVideoCodec.cpp" />
+    <ClCompile Include="oVideoCodecD3D10.cpp" />
+    <ClCompile Include="oVP8DecodeCPU.cpp" />
+    <ClCompile Include="oVTable.cpp" />
+    <ClCompile Include="oWebmEncoder.cpp" />
+    <ClCompile Include="oWebmEncoderCodec.cpp" />
+    <ClCompile Include="oWebmEncoderCodecRaw420.cpp" />
+    <ClCompile Include="oWebmEncoderCodecVP8.cpp" />
+    <ClCompile Include="oWebmFile.cpp" />
+    <ClCompile Include="oWebmStreaming.cpp" />
+    <ClCompile Include="oWindow.cpp" />
+    <ClCompile Include="oWindows.cpp" />
+    <ClCompile Include="oWinPSAPI.cpp" />
+    <ClCompile Include="oWinsock.cpp" />
+    <ClCompile Include="oXML.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="perlin.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <FXC Include="oHLSLFSQuad.sh">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)inc</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)inc</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)inc</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)inc</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+    </FXC>
+    <FXC Include="oHLSLYUVTORGB.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)inc</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)inc</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)inc</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)inc</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">ps_4_0</ShaderModel>
+    </FXC>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\MSSupport\oFXC.targets" />
+  </ImportGroup>
+</Project>

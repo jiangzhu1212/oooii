@@ -1,27 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oURI.h>
 #include <oooii/oErrno.h>
 #include <oooii/oPath.h>
@@ -64,37 +41,61 @@ bool Decomposition::operator==(const Decomposition& _Other)
 }
 
 // http://tools.ietf.org/html/rfc3986#appendix-B
-static regex reURI("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?", regex_constants::optimize); // @oooii-tony: ok static (duplication won't affect correctness)
-
-errno_t Decompose(const char* _URIReference, char* _Scheme, size_t _SizeofScheme, char* _Authority, size_t _SizeofAuthority, char* _Path, size_t _SizeofPath, char* _Query, size_t _SizeofQuery, char* _Fragment, size_t _SizeofFragment)
+static regex reURI("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?", std::tr1::regex_constants::optimize); // @oooii-tony: ok static (duplication won't affect correctness)
+errno_t Decompose( const char* _pURIReference, std::basic_string<char>* _pScheme /*= NULL*/, std::basic_string<char>* _pAuthority /*= NULL*/, std::basic_string<char>* _pPath /*= NULL*/, std::basic_string<char>* _pQuery /*= NULL*/, std::basic_string<char>* _pFragment /*= NULL*/ )
 {
 	cmatch matches;
-	regex_search(_URIReference, matches, reURI);
-	errno_t err = EINVAL;
-	if (!matches.empty())
+	regex_search(_pURIReference, matches, reURI);
+	if (matches.empty())
 	{
-		err = 0;
-		#define COPY(part, index) do { if (_##part) { errno_t e = oRegexCopy(_##part, _Sizeof##part, matches, index); if (e) err = e; } } while(0)
-		COPY(Scheme, 2);
-		COPY(Authority, 4);
-
-		if (_Path)
-		{
-			char path[MAX_URI];
-			errno_t e = oRegexCopy(path, oCOUNTOF(path), matches, 5);
-			if (e) err = e;
-			int skipLeadingSlash = (*_Path == '/') ? 1 : 0;
-			e = strcpy_s(_Path, _SizeofPath, path+skipLeadingSlash);
-			if (e) err = e;
-		}
-		
-		COPY(Query, 7);
-		COPY(Fragment, 9);
-		#undef COPY
+		oSetLastError(EINVAL, "failed to match specified URI against URI pattern");
+		return EINVAL;
 	}
 
-	return err;
+	#define COPY(part, index) if (_p##part) { *_p##part = std::basic_string<char>( matches[index].first, matches[index].second ); }
+	COPY( Scheme, 2 );
+	COPY( Authority, 4 );
+	COPY( Query, 7);
+	COPY( Fragment, 9 );
+
+	if (_pPath)
+	{
+		cmatch::reference ref =  matches[5];
+		int skipLeadingSlash = (ref.first && *ref.first == '/') ? 1 : 0;
+		*_pPath = std::basic_string<char>( ref.first + skipLeadingSlash, ref.second );
+	}
+	
+	#undef COPY
+
+	return 0;
 }
+
+
+errno_t Decompose(const char* _URIReference, char* _pScheme, size_t _SizeofScheme, char* _pAuthority, size_t _SizeofAuthority, char* _pPath, size_t _SizeofPath, char* _pQuery, size_t _SizeofQuery, char* _pFragment, size_t _SizeofFragment)
+{
+	std::basic_string<char> Scheme;
+	std::basic_string<char> Authority;
+	std::basic_string<char> Path;
+	std::basic_string<char> Query;
+	std::basic_string<char> Fragment;
+
+	errno_t err = Decompose(_URIReference, _pScheme ? &Scheme : NULL, _pAuthority ? &Authority : NULL, _pPath ? &Path : NULL, _pQuery ? &Query : NULL, _pFragment ? &Fragment : NULL );
+	if( 0 != err )
+		return err;
+
+	#define COPY(part) if( _p##part ) { strcpy_s( _p##part, _Sizeof##part, oSAFESTR( ##part.c_str() ) ); }
+	
+	COPY( Scheme );
+	COPY( Authority );
+	COPY( Path );
+	COPY( Query );
+	COPY( Fragment );
+
+	#undef COPY
+
+	return 0;
+}
+
 
 errno_t Normalize(char* _NormalizedURI, size_t _SizeofNormalizedURI, const char* _SourceURI)
 {
@@ -248,9 +249,12 @@ errno_t URIFromAbsolutePath(char* _URI, size_t _SizeofURI, const char* _Absolute
 		*_URI = 0;
 		return 0;
 	}
-	char path[MAX_URI];
-	errno_t err = uriCompatiblePath(path, _AbsolutePath);
+	errno_t err = uriCompatiblePath(_URI, _SizeofURI, _AbsolutePath);
 	if (err) return err;
+
+	// Absolute paths are cleaned on import
+	char path[MAX_URI];
+	oCleanPath(path, _URI);
 	return Recompose(_URI, _SizeofURI, "file", "", path, "", "");
 }
 
@@ -289,7 +293,7 @@ errno_t URIToPath(char* _Path, size_t _SizeofPath, const char* _URI)
 
 	if (isWindows)
 	{
-		if (d.Authority && *d.Authority)
+		if (oSTRNEXISTS( d.Authority ))
 		{
 			SAFECAT("\\\\");
 			SAFECAT(d.Authority);
@@ -395,4 +399,28 @@ errno_t MakeURIRelativeToURIBase(char* _URIReference, size_t _SizeofURIReference
 	return err;
 }
 
+errno_t MakeURIAbsoluteFromURIBase(char* _URIReference, size_t _SizeofURIReference, const char* _URIBase, const char* _URI)
+{
+	errno_t err = 0;
+
+	char* pFileBase;
+	strcpy_s(_URIReference, _SizeofURIReference, _URIBase);
+	pFileBase = oGetFilebase( _URIReference );
+
+	err = oURI::URIToPath( pFileBase, oURI::MAX_URI - strlen(_URIBase), _URI );
+	char fullPath[oURI::MAX_URI];
+	if(!err)
+		err = oURI::URIToPath( fullPath, _URIReference );
+	if(!err)
+		err = oURI::URIFromAbsolutePath(_URIReference, _SizeofURIReference, fullPath); //mostly to clean the path.
+	return err;
+}
+
 } // namespace oURI
+
+// uri case
+template<> errno_t oFromString( char(* _pValue )[oURI::MAX_URI], const char* _StrSource)
+{
+	strcpy_s( *_pValue, oURI::MAX_URI, _StrSource );
+	return 0;
+}

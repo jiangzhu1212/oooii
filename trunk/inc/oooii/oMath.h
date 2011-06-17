@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 
 // OOOii Math Library. This math library attempts to conform to HLSL (SM5) as 
 // closely as possible. To reduce typing, templates and macros are used 
@@ -34,29 +12,21 @@
 // The plane equation used here is Ax + By + Cz + D = 0, so see sdistance() as 
 // to the implications. Primarily it means that positive D values are in the 
 // direction/on the side of the normal, and negative values are in the opposite
-// direction/on the opposite side of the normal.
-// Remember when looking at the plane equation itself, a positive D offset is in 
-// the opposite direction of the normal, and a negative D is in the direction of 
-// the normal. The best example of seeing this is to use oCreateOrthographic to
-// create a -1,1,-1,1,0,1 projection (unit/clip space) and then convert that to 
-// a frustum with oCalcFrustumPlanesRH(). You'll see that the left clip plane is
-// 1,0,0,1 meaning the normal points inward to the right and the offset is away
-// from that normal to the left/-1 side. Likewise the right clip plane is 
-// -1,0,0,1 meaning the normal points inward to the left, and the offset is once
-// again away from that normal to the right/+1 side.
+// direction/on the opposite side of the normal. The best example of seeing this 
+// is to use oCreateOrthographic to create a -1,1,-1,1,0,1 projection (unit/clip 
+// space) and then convert that to a frustum with oCalcFrustumPlanes(). You'll 
+// see that the left clip plane is 1,0,0,-1 meaning the normal points inward to 
+// the right and the offset is away from that normal to the left/-1 side. 
+// Likewise the right clip plane is -1,0,0,-1 meaning the normal points inward 
+// to the left, and the offset is once again away from that normal to the 
+// right/+1 side.
 //
 //
 // === MATRICES ===
 // 
-// I don't understand left-handed v. right-handed v. OpenGL v. DirectX matrices: 
-// the whole thing is a mess!
-// Here are the rules of oMath regarding how matrices behave, and you can assign
-// your own description of what they are:
-//
-// Matrices are stored in memory as an array of columns. So technically the 
-// matrices are column-major, but how the memory is laid out it looks like 
-// row-major. Translation is in the 4th COLUMN, but in the debugger it reads
-// left-to-right in a single vector because each COLUMN is a vector.
+// Matrices are column-major - don't be fooled because matrices are a list of 
+// column vectors, so in the debugger it seems to be row-major, but it is 
+// column-major.
 //
 // Matrix multiplication is done in-order from left to right. This means if you 
 // want to assemble a typical transform in SRT order it would look like this: 
@@ -67,8 +37,7 @@
 // All multiplication against vectors occur in matrix * vector order. 
 // Unimplemented operator* for vector * matrix enforce this.
 //
-// For graphics components, the identity matrix looks down -Z with Y up, so it's
-// a right-handed coordinate system.
+// Both left-handed and right-handed functions are provided where appropriate.
 
 #pragma once
 #ifndef oMath_h
@@ -76,258 +45,31 @@
 
 #include <Math.h>
 #include <float.h>
-#include <half.h>
 #include <oooii/oAssert.h>
+#include <oooii/oBit.h>
 #include <oooii/oLimits.h>
+#include <oooii/oMathTypes.h>
 #include <oooii/oStddef.h>
-#include <oooii/oSwizzle.h>
+
+// _____________________________________________________________________________
+// Common math constants
 
 #define oPI (3.14159265358979323846)
 #define oPIf (float(oPI))
 #define oE (2.71828183)
 #define oEf (float(oE))
 
-#ifndef oMATH_USE_FAST_ASINT
-	#define oMATH_USE_FAST_ASINT 1
-#endif
+#define oDEFAULT_NEAR (10.0f)
+#define oDEFAULT_FAR (10000.0f)
 
-#ifndef oMATH_USE_FAST_RCP
-	#define oMATH_USE_FAST_RCP 1
-#endif
+// NOTE: Epsilon for small float values is not defined. See documentation of ulps
+// below.
 
-#ifndef oMATH_USE_FAST_RSQRT
-	#define oMATH_USE_FAST_RSQRT 1
-#endif
-
-#ifndef oMATH_USE_FAST_LOG2
-	#define oMATH_USE_FAST_LOG2 1
-#endif
+// requires defines
+#include <oooii/oMathInternalHLSL.h>
 
 // _____________________________________________________________________________
-// Fast bit-twiddling
-
-#if defined(_WIN32) || defined(_WIN64)
-
-	#ifdef __cplusplus
-		extern "C" {
-	#endif
-
-	// forward declared to avoid including oWindows.h
-	unsigned char _BitScanForward(unsigned long* Index, unsigned long Mask);
-	unsigned char _BitScanReverse(unsigned long* Index, unsigned long Mask);
-
-	#pragma intrinsic(_BitScanReverse)
-	#pragma intrinsic(_BitScanForward)
-
-	#ifdef _WIN64
-		// forward declared to avoid including oWindows.h
-		unsigned char _BitScanForward64(unsigned long* Index, unsigned __int64 Mask);
-		unsigned char _BitScanReverse64(unsigned long* Index, unsigned __int64 Mask);
-		#pragma intrinsic(_BitScanReverse64)
-		#pragma intrinsic(_BitScanForward64)
-	#endif
-
-	#ifdef __cplusplus
-		}
-	#endif
-
-	// returns 0 if no bits found
-	inline bool oBSR(unsigned int& _Index, unsigned int _Mask) { return !!_BitScanReverse((unsigned long*)&_Index, _Mask); }
-	inline bool oBSF(unsigned int& _Index, unsigned int _Mask) { return !!_BitScanForward((unsigned long*)&_Index, _Mask); }
-	#ifdef _WIN64
-		inline bool oBSR(unsigned int& _Index, unsigned long long _Mask) { return !!_BitScanReverse64((unsigned long*)&_Index, _Mask); }
-		inline bool oBSF(unsigned int& _Index, unsigned long long _Mask) { return !!_BitScanForward64((unsigned long*)&_Index, _Mask); }
-	#endif
-#endif
-
-// _____________________________________________________________________________
-// Vector 2D, 3D, and 4D types
-
-// Internal macros used in the macros below
-#define oMATH_MEMBER_OP(return_t, param_t, op) inline const return_t& operator op##=(const param_t& a) { *this = *this op a; return *this; }
-#define oMATH_ELOP2(op) template<typename T> inline TVECTOR2<T> operator op(const TVECTOR2<T>& a, const TVECTOR2<T>& b) { return TVECTOR2<T>(a.x op b.x, a.y op b.y); } template<typename T> inline TVECTOR2<T> operator op(const TVECTOR2<T>& a, const T& b) { return TVECTOR2<T>(a.x op b, a.y op b); } template<typename T> inline TVECTOR2<T> operator op(const T& a, const TVECTOR2<T>& b) { return TVECTOR2<T>(a op b.x, a op b.y); }
-#define oMATH_ELOP3(op) template<typename T> inline TVECTOR3<T> operator op(const TVECTOR3<T>& a, const TVECTOR3<T>& b) { return TVECTOR3<T>(a.x op b.x, a.y op b.y, a.z op b.z); } template<typename T> inline TVECTOR3<T> operator op(const TVECTOR3<T>& a, const T& b) { return TVECTOR3<T>(a.x op b, a.y op b, a.z op b); } template<typename T> inline TVECTOR3<T> operator op(const T& a, const TVECTOR3<T>& b) { return TVECTOR3<T>(a op b.x, a op b.y, a op b.z); }
-#define oMATH_ELOP4(op) template<typename T> inline TVECTOR4<T> operator op(const TVECTOR4<T>& a, const TVECTOR4<T>& b) { return TVECTOR4<T>(a.x op b.x, a.y op b.y, a.z op b.z, a.w op b.w); } template<typename T> inline TVECTOR4<T> operator op(const TVECTOR4<T>& a, const T& b) { return TVECTOR4<T>(a.x op b, a.y op b, a.z op b, a.w op b); } template<typename T> inline TVECTOR4<T> operator op(const T& a, const TVECTOR4<T>& b) { return TVECTOR4<T>(a op b.x, a op b.y, a op b.z, a op b.w); }
-#define oMATH_ELUFN2(fn) template<typename T> inline TVECTOR2<T> fn(const TVECTOR2<T>& a) { return TVECTOR2<T>(fn(a.x), fn(a.y)); }
-#define oMATH_ELUFN3(fn) template<typename T> inline TVECTOR3<T> fn(const TVECTOR3<T>& a) { return TVECTOR3<T>(fn(a.x), fn(a.y), fn(a.z)); }
-#define oMATH_ELUFN4(fn) template<typename T> inline TVECTOR4<T> fn(const TVECTOR4<T>& a) { return TVECTOR3<T>(fn(a.x), fn(a.y), fn(a.z), fn(a.w)); }
-#define oMATH_ELBFN2(pubfn, implfn) template<typename T> inline TVECTOR2<T> pubfn(const TVECTOR2<T>& a, const TVECTOR2<T>& b) { return TVECTOR2<T>(implfn(a.x, b.x), implfn(a.y, b.y)); }
-#define oMATH_ELBFN3(pubfn, implfn) template<typename T> inline TVECTOR3<T> pubfn(const TVECTOR3<T>& a, const TVECTOR3<T>& b) { return TVECTOR3<T>(implfn(a.x, b.x), implfn(a.y, b.y), implfn(a.z, b.z)); }
-#define oMATH_ELBFN4(pubfn, implfn) template<typename T> inline TVECTOR4<T> pubfn(const TVECTOR4<T>& a, const TVECTOR4<T>& b) { return TVECTOR3<T>(implfn(a.x, b.x), implfn(a.y, b.y), implfn(a.z, b.z), implfn(a.w, b.w)); }
-#define oMATH_EQ2() template<typename T> inline bool operator==(const TVECTOR2<T>& a, const TVECTOR2<T>& b) { return oEqual(a.x, b.x) && oEqual(a.y, b.y); }
-#define oMATH_EQ3() template<typename T> inline bool operator==(const TVECTOR3<T>& a, const TVECTOR3<T>& b) { return oEqual(a.x, b.x) && oEqual(a.y, b.y) && oEqual(a.z, b.z); }
-#define oMATH_EQ4() template<typename T> inline bool operator==(const TVECTOR4<T>& a, const TVECTOR4<T>& b) { return oEqual(a.x, b.x) && oEqual(a.y, b.y) && oEqual(a.z, b.z) && oEqual(a.w, b.w); }
-#define oMATH_NEQ(type) template<typename T> inline bool operator!=(const type& a, const type& b) { return !(a == b); }
-#define oMATH_CMP2(fn,cmp) template<typename T> inline bool fn(const TVECTOR2<T>& a, const TVECTOR2<T>& b) { return a.x cmp b.x && a.y cmp b.y; }
-#define oMATH_CMP3(fn,cmp) template<typename T> inline bool fn(const TVECTOR3<T>& a, const TVECTOR3<T>& b) { return a.x cmp b.x && a.y cmp b.y && a.z cmp b.z; }
-#define oMATH_CMP4(fn,cmp) template<typename T> inline bool fn(const TVECTOR4<T>& a, const TVECTOR4<T>& b) { return a.x cmp b.x && a.y cmp b.y && a.z cmp b.z && a.w cmp b.w; }
-
-// Macros to get through the boilerplate for operators, compares, etc.
-#define oMATH_MEMBER_OPS(type, scalar_t) oMATH_MEMBER_OP(type, scalar_t, *) oMATH_MEMBER_OP(type, scalar_t, /) oMATH_MEMBER_OP(type, scalar_t, +) oMATH_MEMBER_OP(type, scalar_t, -) oMATH_MEMBER_OP(type, type, *) oMATH_MEMBER_OP(type, type, /) oMATH_MEMBER_OP(type, type, +) oMATH_MEMBER_OP(type, type, -)
-#define oMATH_ELOPS(N) oMATH_ELOP##N(*) oMATH_ELOP##N(/) oMATH_ELOP##N(+) oMATH_ELOP##N(-) oMATH_ELOP##N(%)
-#define oMATH_ELUFNS(fn) oMATH_ELUFN2(fn) oMATH_ELUFN3(fn) oMATH_ELUFN4(fn)
-#define oMATH_ELBFNS(pubfn, implfn) oMATH_ELBFN2(pubfn, implfn) oMATH_ELBFN3(pubfn, implfn) oMATH_ELBFN4(pubfn, implfn)
-#define oMATH_CMPS2(type) oMATH_EQ2() oMATH_NEQ(type) oMATH_CMP2(less_than, <) oMATH_CMP2(greater_than, >) oMATH_CMP2(less_than_equal, <=) oMATH_CMP2(greater_than_equal, >=)
-#define oMATH_CMPS3(type) oMATH_EQ3() oMATH_NEQ(type) oMATH_CMP3(less_than, <) oMATH_CMP3(greater_than, >) oMATH_CMP3(less_than_equal, <=) oMATH_CMP3(greater_than_equal, >=)
-#define oMATH_CMPS4(type) oMATH_EQ4() oMATH_NEQ(type) oMATH_CMP4(less_than, <) oMATH_CMP4(greater_than, >) oMATH_CMP4(less_than_equal, <=) oMATH_CMP4(greater_than_equal, >=)
-
-template<typename T> struct TVECTOR2
-{
-	T x,y;
-	inline TVECTOR2() {}
-	inline TVECTOR2(const TVECTOR2& _Vector) : x(_Vector.x), y(_Vector.y) {}
-	inline TVECTOR2(T _XY) : x(_XY), y(_XY) {}
-	inline TVECTOR2(T _X, T _Y) : x(_X), y(_Y) {}
-	const T& operator[](int i) const { return *(&x + i); }
-	T& operator[](int i) { return *(&x + i); }
-	oMATH_MEMBER_OPS(TVECTOR2<T>, T);
-};
-
-template<typename T> struct TVECTOR3
-{
-	T x,y,z;
-	inline TVECTOR3() {};
-	inline TVECTOR3(const TVECTOR3& _Vector) : x(_Vector.x), y(_Vector.y), z(_Vector.z) {}
-	inline TVECTOR3(T _XYZ) : x(_XYZ), y(_XYZ), z(_XYZ) {}
-	inline TVECTOR3(T _X, T _Y, T _Z) : x(_X), y(_Y), z(_Z) {}
-	inline TVECTOR3(const TVECTOR2<T>& _XY, T _Z) : x(_XY.x), y(_XY.y), z(_Z) {}
-	const T& operator[](int i) const { return *(&x + i); }
-	T& operator[](int i) { return *(&x + i); }
-	inline const TVECTOR2<T>& XY() const { return *(TVECTOR2<T>*)this; }
-	inline const TVECTOR2<T>& YZ() const { return *(TVECTOR2<T>*)&y; }
-	oMATH_MEMBER_OPS(TVECTOR3<T>, T);
-
-	static inline TVECTOR3<T> xAxis() { return TVECTOR3<T>(1.0f, 0.0f, 0.0f); }
-	static inline TVECTOR3<T> yAxis() { return TVECTOR3<T>(0.0f, 1.0f, 0.0f); }
-	static inline TVECTOR3<T> zAxis() { return TVECTOR3<T>(0.0f, 0.0f, 1.0f); }
-};
-
-template<typename T> struct TVECTOR4
-{
-	T x,y,z,w;
-	inline TVECTOR4() {};
-	inline TVECTOR4(const TVECTOR4& _Vector) : x(_Vector.x), y(_Vector.y), z(_Vector.z), w(_Vector.w) {}
-	inline TVECTOR4(T _XYZW) : x(_XYZW), y(_XYZW), z(_XYZW), w(_XYZW) {}
-	inline TVECTOR4(const TVECTOR2<T>& _XY, T _Z, T _W) : x(_XY.x), y(_XY.y), z(_Z), w(_Z) {}
-	inline TVECTOR4(const TVECTOR3<T>& _XYZ, T _W) : x(_XYZ.x), y(_XYZ.y), z(_XYZ.z), w(_W) {}
-	inline TVECTOR4(const TVECTOR2<T>& _XY, const TVECTOR2<T>& _ZW) : x(_XY.x), y(_XY.y), z(_ZW.z), w(_ZW.w) {}
-	inline TVECTOR4(T _X, const TVECTOR3<T>& _YZW) : x(_X), y(_YZW.y), z(_YZW.z), w(_YZW.w) {}
-	inline TVECTOR4(T _X, T _Y, T _Z, T _W) : x(_X), y(_Y), z(_Z), w(_W) {}
-	const T& operator[](int i) const { return *(&x + i); }
-	T& operator[](int i) { return *(&x + i); }
-	inline const TVECTOR2<T>& XY() const { return *(TVECTOR2<T>*)&x; }
-	inline const TVECTOR2<T>& YZ() const { return *(TVECTOR2<T>*)&y; }
-	inline const TVECTOR2<T>& ZW() const { return *(TVECTOR2<T>*)&z; }
-	inline const TVECTOR3<T>& XYZ() const { return *(TVECTOR3<T>*)&x; }
-	inline const TVECTOR3<T>& YZW() const { return *(TVECTOR3<T>*)&y; }
-	inline T W() const { return w; }
-	oMATH_MEMBER_OPS(TVECTOR4<T>, T);
-
-	static inline TVECTOR4<T> xAxis() { return TVECTOR4<T>(1.0f, 0.0f, 0.0f, 0.0f); }
-	static inline TVECTOR4<T> yAxis() { return TVECTOR4<T>(0.0f, 1.0f, 0.0f, 0.0f); }
-	static inline TVECTOR4<T> zAxis() { return TVECTOR4<T>(0.0f, 0.0f, 1.0f, 0.0f); }
-};
-
-template<typename T> struct TQUATERNION
-{
-	enum SPECIAL { Identity };
-	T x,y,z,w;
-	inline TQUATERNION() {};
-	inline TQUATERNION(const TQUATERNION& _Quaternion) : x(_Quaternion.x), y(_Quaternion.y), z(_Quaternion.z), w(_Quaternion.w) {}
-	inline TQUATERNION(SPECIAL _Type) : x(0), y(0), z(0), w(1) {}
-	inline TQUATERNION(T _X, T _Y, T _Z, T _W) : x(_X), y(_Y), z(_Z), w(_W) {}
-	const T& operator[](int i) const { return *(&x + i); }
-	T& operator[](int i) { return *(&x + i); }
-};
-
-template<typename T> struct TMATRIX3
-{
-	// Column-major 3x3 matrix
-	enum SPECIAL { Identity };
-	TVECTOR3<T> Column0;
-	TVECTOR3<T> Column1;
-	TVECTOR3<T> Column2;
-	TMATRIX3() {}
-	TMATRIX3(const TMATRIX3& _Matrix) : Column0(_Matrix.Column0), Column1(_Matrix.Column1), Column2(_Matrix.Column2) {}
-	TMATRIX3(const TVECTOR3<T>& _Column0, const TVECTOR3<T>& _Column1, const TVECTOR3<T>& _Column2) : Column0(_Column0), Column1(_Column1), Column2(_Column2) {}
-	TMATRIX3(SPECIAL _Type) : Column0(T(1), T(0), T(0)), Column1(T(0), T(1), T(0)), Column2(T(0), T(0), T(1)) {}
-	const TVECTOR3<T>& operator[](int i) const { return *(&Column0 + i); }
-	TVECTOR3<T>& operator[](int i) { return *(&Column0 + i); }
-};
-
-template<typename T> struct TMATRIX4
-{
-	// Column-major 4x4 matrix
-	enum SPECIAL { Identity };
-	TVECTOR4<T> Column0;
-	TVECTOR4<T> Column1;
-	TVECTOR4<T> Column2;
-	TVECTOR4<T> Column3;
-	TMATRIX4() {}
-	TMATRIX4(const TMATRIX4& _Matrix) : Column0(_Matrix.Column0), Column1(_Matrix.Column1), Column2(_Matrix.Column2), Column3(_Matrix.Column3) {}
-	TMATRIX4(SPECIAL _Type) : Column0(T(1), T(0), T(0), T(0)), Column1(T(0), T(1), T(0), T(0)), Column2(T(0), T(0), T(1), T(0)), Column3(T(0), T(0), T(0), T(1)) {}
-	TMATRIX4(const TVECTOR4<T>& _Column0, const TVECTOR4<T>& _Column1, const TVECTOR4<T>& _Column2, const TVECTOR4<T>& _Column3) : Column0(_Column0), Column1(_Column1), Column2(_Column2), Column3(_Column3) {}
-	TMATRIX4(const TMATRIX3<T>& _ScaleRotation, const TVECTOR3<T>& _Translation) : Column0(_ScaleRotation.Column0, 0), Column1(_ScaleRotation.Column1, 0), Column2(_ScaleRotation.Column2, 0), Column3(_Translation, 0) {}
-	TMATRIX4(const TQUATERNION<T>& _Rotation, const TVECTOR3<T>& _Translation) { TMATRIX3<T> r = oCreateRotationQ(_Rotation); *this = TMATRIX4(r, _Translation); }
-	const TVECTOR4<T>& operator[](int i) const { return *(&Column0 + i); }
-	TVECTOR4<T>& operator[](int i) { return *(&Column0 + i); }
-
-	TMATRIX3<T> getUpper3x3() const { return TMATRIX3<T>(Column0.XYZ(), Column1.XYZ(), Column2.XYZ()); }
-	static inline TMATRIX4<T> translation(const TVECTOR3<T>& trans) { return TMATRIX4<T>(TVECTOR4<T>::xAxis(), TVECTOR4<T>::yAxis(), TVECTOR4<T>::zAxis(), TVECTOR4<T>(trans.x, trans.y, trans.z, 1.0f)); }
-};
-
-template<typename T> inline bool operator==(const TQUATERNION<T>& a, const TQUATERNION<T>& b) { return oEqual(a.x, b.x) && oEqual(a.y, b.y) && oEqual(a.z, b.z) && oEqual(a.w, b.w); }
-template<typename T> inline bool operator!=(const TQUATERNION<T>& a, const TQUATERNION<T>& b) { return !(a == b); }
-
-template<typename T> inline TVECTOR2<T> operator-(const TVECTOR2<T>& a) { return TVECTOR2<T>(-a.x, -a.y); }
-template<typename T> inline TVECTOR3<T> operator-(const TVECTOR3<T>& a) { return TVECTOR3<T>(-a.x, -a.y, -a.z); }
-template<typename T> inline TVECTOR4<T> operator-(const TVECTOR4<T>& a) { return TVECTOR4<T>(-a.x, -a.y, -a.z, -a.w); }
-template<typename T> inline TVECTOR3<T> operator*(const TMATRIX3<T>& a, const TVECTOR3<T>& b) { return mul(a, b); }
-template<typename T> inline TMATRIX3<T> operator*(const TMATRIX3<T>& a, const TMATRIX3<T>& b) { return mul(a, b); }
-template<typename T> inline TVECTOR3<T> operator*(const TMATRIX4<T>& a, const TVECTOR3<T>& b) { return mul(a, b); }
-template<typename T> inline TVECTOR4<T> operator*(const TMATRIX4<T>& a, const TVECTOR4<T>& b) { return mul(a, b); }
-template<typename T> inline TMATRIX4<T> operator*(const TMATRIX4<T>& a, const TMATRIX4<T>& b) { return mul(a, b); }
-template<typename T> inline TQUATERNION<T> operator*(const TQUATERNION<T>&a, const TQUATERNION<T>& b) { return mul(a, b); }
-
-template<typename T>
-inline TVECTOR2<T> oMin(const TVECTOR2<T>& a, const TVECTOR2<T>& b)
-{
-	TVECTOR2<T> mn;
-	mn.x = __min(a.x, b.x);
-	mn.y = __min(a.y, b.y);
-	return mn;
-}
-
-template<typename T>
-inline TVECTOR3<T> oMin(TVECTOR3<T> a, TVECTOR3<T> b)
-{
-	TVECTOR3<T> mn;
-	mn.x = __min(a.x, b.x);
-	mn.y = __min(a.y, b.y);
-	mn.z = __min(a.z, b.z);
-	return mn;
-}
-
-template<typename T>
-inline TVECTOR2<T> oMax(const TVECTOR2<T>& a, const TVECTOR2<T>& b)
-{
-	TVECTOR2<T> mx;
-	mx.x = __max(a.x, b.x);
-	mx.y = __max(a.y, b.y);
-	return mx;
-}
-
-template<typename T>
-inline TVECTOR3<T> oMax(TVECTOR3<T> a, TVECTOR3<T> b)
-{
-	TVECTOR3<T> mx;
-	mx.x = __max(a.x, b.x);
-	mx.y = __max(a.y, b.y);
-	mx.z = __max(a.z, b.z);
-	return mx;
-}
-
-inline long long abs(const long long& x) { return _abs64(x); }
+// Approximate Equality for halfs, floats and doubles
 
 // ulps = "units of last place". Number of float-point steps of error. At various
 // sizes, 1 bit of difference in the floating point number might mean large or
@@ -339,7 +81,7 @@ inline long long abs(const long long& x) { return _abs64(x); }
 
 template<typename T> inline bool oEqual(const T& A, const T& B, int maxUlps = DEFAULT_ULPS) { return A == B; }
 
-template<> inline bool oEqual(const double& A, const double& B, int maxUlps)
+inline bool oEqual(const double& A, const double& B, int maxUlps)
 {
 	typedef long long intT;
 
@@ -371,7 +113,7 @@ template<> inline bool oEqual(const double& A, const double& B, int maxUlps)
 	// $(CitedCodeEnd)
 }
 
-template<> inline bool oEqual(const float& A, const float& B, int maxUlps)
+inline bool oEqual(const float& A, const float& B, int maxUlps)
 {
 	/** <citation
 		usage="Implementation" 
@@ -401,36 +143,13 @@ template<> inline bool oEqual(const float& A, const float& B, int maxUlps)
 	// $(CitedCodeEnd)
 }
 
-inline bool oEqual(const TVECTOR2<float>& a, const TVECTOR2<float>& b, int maxUlps = DEFAULT_ULPS) { return oEqual(a.x, b.x, maxUlps) && oEqual(a.y, b.y, maxUlps); }
-inline bool oEqual(const TVECTOR3<float>& a, const TVECTOR3<float>& b, int maxUlps = DEFAULT_ULPS) { return oEqual(a.x, b.x, maxUlps) && oEqual(a.y, b.y, maxUlps) && oEqual(a.z, b.z, maxUlps); }
-inline bool oEqual(const TVECTOR4<float>& a, const TVECTOR4<float>& b, int maxUlps = DEFAULT_ULPS) { return oEqual(a.x, b.x, maxUlps) && oEqual(a.y, b.y, maxUlps) && oEqual(a.z, b.z, maxUlps) && oEqual(a.w, b.w, maxUlps); }
+inline bool oEqual(const TVEC2<float>& a, const TVEC2<float>& b, int maxUlps = DEFAULT_ULPS) { return oEqual(a.x, b.x, maxUlps) && oEqual(a.y, b.y, maxUlps); }
+inline bool oEqual(const TVEC3<float>& a, const TVEC3<float>& b, int maxUlps = DEFAULT_ULPS) { return oEqual(a.x, b.x, maxUlps) && oEqual(a.y, b.y, maxUlps) && oEqual(a.z, b.z, maxUlps); }
+inline bool oEqual(const TVEC4<float>& a, const TVEC4<float>& b, int maxUlps = DEFAULT_ULPS) { return oEqual(a.x, b.x, maxUlps) && oEqual(a.y, b.y, maxUlps) && oEqual(a.z, b.z, maxUlps) && oEqual(a.w, b.w, maxUlps); }
 
-template<typename T> inline T round(const T& a) { return floor(a + T(0.5)); }
-template<typename T> inline T frac(const T& a) { return a - floor(a); }
+// _____________________________________________________________________________
+// Denormalized float functions
 
-inline bool isfinite(const double& a) { return !!_finite(a); }
-inline bool isfinite(const float& a)
-{
-	#ifdef _M_X64
-		return !!_finitef(a);
-	#else
-		return isfinite((double)a);
-	#endif
-}
-
-template<typename T> inline bool isinf(const T& a) { return !isfinite(a); }
-inline bool isinf(const double& a) { return !isfinite(a); }
-inline bool isnan(const double& a) { return !!_isnan(a); }
-inline bool isnan(const float& a)
-{
-	#ifdef _M_X64
-		return !!_isnanf(a);
-	#else
-		return !!_isnan((double)a);
-	#endif
-}
-
-// NON-HLSL
 inline bool isdenorm(const float& a)
 {
 	int x = *(int*)&a;
@@ -450,422 +169,39 @@ template<typename T> inline T zerodenorm(const T& a)
 	return tmp;
 }
 
-inline double log2(double a) { static const double sCONV = 1.0/log(2.0); return log(a) * sCONV; }
-inline float log2(float val)
-{
-	#if oMATH_USE_FAST_LOG2
-		/** <citation
-			usage="Implementation" 
-			reason="std libs don't have log2" 
-			author="Blaxill"
-			description="http://www.devmaster.net/forums/showthread.php?t=12765"
-			license="*** Assumed Public Domain ***"
-			licenseurl="http://www.devmaster.net/forums/showthread.php?t=12765"
-			modification=""
-		/>*/
-		// $(CitedCodeBegin)
-		int * const    exp_ptr = reinterpret_cast <int *>(&val);
-		int            x = *exp_ptr;
-		const int      log_2 = ((x >> 23) & 255) - 128;
-		x &= ~(255 << 23);
-		x += 127 << 23;
-		*exp_ptr = x;
+// _____________________________________________________________________________
+// Geometry
 
-		val = ((-1.0f/3) * val + 2) * val - 2.0f/3; //(1)
+template<typename T> inline T fresnel(const TVEC3<T>& i, const TVEC3<T>& n) { return 0.02f+0.97f*pow((1-max(dot(i, n))),5); } // http://habibs.wordpress.com/alternative-solutions/
+template<typename T> inline T angle(const TVEC3<T>& a, const TVEC3<T>& b) { return acos(dot(a, b) / (length(a) * length(b))); }
+template<typename T> inline TVEC4<T> oNormalizePlane(const TVEC4<T>& _Plane) { T invLength = rsqrt(dot(_Plane.XYZ(), _Plane.XYZ())); return _Plane * invLength; }
 
-		return (val + log_2);
-		// $(CitedCodeEnd)
-	#else
-		static const double sCONV = 1.0/log(2.0);
-		return log(val) * sCONV;
-	#endif
-}
-
-inline float exp2(float a) { return powf(2.0f, a); }
-inline double exp2(double a) { return pow(2.0, a); }
-template<typename T> inline T frexp(const T& x, T& exp) { int e; T ret = ::frexp(x, &e); exp = static_cast<T>(e); return ret; }
-inline float modf(const float& x, float& ip) { return ::modf(x, &ip); }
-inline double modf(const double& x, double& ip) { return ::modf(x, &ip); }
-template<typename T> inline TVECTOR2<T> modf(const TVECTOR2<T>& x, TVECTOR2<T>& ip) { return TVECTOR2<T>(modf(x.x, ip.x), modf(x.y, ip.y)); }
-template<typename T> inline TVECTOR3<T> modf(const TVECTOR3<T>& x, TVECTOR3<T>& ip) { return TVECTOR3<T>(modf(x.x, ip.x), modf(x.y, ip.y), modf(x.z, ip.z)); }
-template<typename T> inline TVECTOR4<T> modf(const TVECTOR4<T>& x, TVECTOR4<T>& ip) { return TVECTOR4<T>(modf(x.x, ip.x), modf(x.y, ip.y), modf(x.z, ip.z), modf(x.w, ip.w)); }
-template<typename T> inline T smoothstep(const T& minimum, const T& maximum, const T& x) { return x < minimum ? T(0) : (x > maximum ? T(1) : T(-2) * pow((x – minimum) / (maximum – minimum), T(3)) + T(3) * pow((x – minimum) / (maximum – minimum), T(2))); } // http://http.developer.nvidia.com/CgTutorial/cg_tutorial_chapter05.html
-template<typename T> inline T rcp(const T& value) { return T(1) / value; }
-template<> inline float rcp(const float& x)
-{
-	#if oMATH_USE_FAST_RCP
-		/** <citation
-			usage="Implementation" 
-			reason="Because we always need a faster math op." 
-			author="Simon Hughes"
-			description="http://www.codeproject.com/cpp/floatutils.asp?df=100&forumid=208&exp=0&select=950856#xx950856xx"
-			license="CPOL 1.02"
-			licenseurl="http://www.codeproject.com/info/cpol10.aspx"
-			modification="FP_INV made more C++-like, compiler warning fixes"
-		/>*/
-		// $(CitedCodeBegin)
-		// This is about 2.12 times faster than using 1.0f / n 
-			int _i = 2 * 0x3F800000 - *(int*)&x;
-			float r = *(float *)&_i;
-			return r * (2.0f - x * r);
-		// $(CitedCodeEnd)
-	#else
-		return 1.0f / x;
-	#endif
-}
-
-template<typename T> inline T rsqrt(T x) { return T(1) / sqrt(x); }
-template<> inline float rsqrt(float x)
-{
-	#if oMATH_USE_FAST_RSQRT
-		/** <citation
-			usage="Implementation" 
-			reason="Because we always need a faster math op." 
-			author="?"
-			description="http://www.beyond3d.com/content/articles/8/"
-			license="*** Assumed Public Domain ***"
-			licenseurl="http://www.beyond3d.com/content/articles/8/"
-			modification="code standard compliance, fix compiler warnings"
-		/>*/
-		// $(CitedCodeBegin)
-		float xhalf = 0.5f*x;
-		int i = *(int*)&x;
-		i = 0x5f3759df - (i>>1);
-		x = *(float*)&i;
-		x = x*(1.5f - xhalf*x*x);
-		return x;
-		// $(CitedCodeEnd)
-	#else
-		return 1.0f / (float)sqrt(x);
-	#endif
-}
-
-inline unsigned int countbits(unsigned long n)
-{
-	/** <citation
-		usage="Implementation" 
-		reason="std libs don't have bit functions" 
-		author="Gurmeet Singh Manku"
-		description="http://www.codeproject.com/cpp/floatutils.asp?df=100&forumid=208&exp=0&select=950856#xx950856xx"
-		license="*** Assumed Public Domain ***"
-		licenseurl="http://www.codeproject.com/cpp/floatutils.asp?df=100&forumid=208&exp=0&select=950856#xx950856xx"
-		modification=""
-	/>*/
-	// $(CitedCodeBegin)
-	// MIT HAKMEM Count
-	/* works for 32-bit numbers only    */
-	/* fix last line for 64-bit numbers */
-	register unsigned int tmp;
-	tmp = n - ((n >> 1) & 033333333333) - ((n >> 2) & 011111111111);
-	return ((tmp + (tmp >> 3)) & 030707070707) % 63;
-	// $(CitedCodeEnd)
-}
-
-inline unsigned int countbits(unsigned long long i) 
-{
-	/** <citation
-		usage="Implementation" 
-		reason="std libs don't have bit functions" 
-		author="Maciej H"
-		description="http://stackoverflow.com/questions/2709430/count-number-of-bits-in-a-64-bit-long-big-integer"
-		license="*** Assumed Public Domain ***"
-		licenseurl="http://stackoverflow.com/questions/2709430/count-number-of-bits-in-a-64-bit-long-big-integer"
-		modification=""
-	/>*/
-	// $(CitedCodeBegin)
-	// Hamming weight
-	i = i - ((i >> 1) & 0x5555555555555555); 
-	i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333); 
-	return (((i + (i >> 4)) & 0xF0F0F0F0F0F0F0F) * 0x101010101010101) >> 56; 
-	// $(CitedCodeEnd)
-}
-
-inline unsigned int reversebits(unsigned int v)
-{
-	/** <citation
-		usage="Implementation" 
-		reason="std libs don't have bit functions"
-		author="Edwin Freed"
-		description="http://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious"
-		license="*** Assumed Public Domain ***"
-		licenseurl="http://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious"
-		modification=""
-	/>*/
-	// $(CitedCodeBegin)
-	//unsigned int v; // 32-bit word to reverse bit order
-	// swap odd and even bits
-	v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1);
-	// swap consecutive pairs
-	v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2);
-	// swap nibbles ... 
-	v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4);
-	// swap bytes
-	v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8);
-	// swap 2-byte long pairs
-	v = (v >> 16            ) | (v               << 16);
-	return v;
-	// $(CitedCodeEnd)
-}
-
-inline int reversebits(int v) { unsigned int r = reversebits(*(unsigned int*)&v); return *(int*)&r; }
-inline int firstbithigh(unsigned int value) { unsigned int index; return oBSR(index, value) ? index : -1; }
-inline int firstbithigh(int value) { return firstbithigh(*(unsigned int*)&value); }
-inline int firstbitlow(unsigned int value) { unsigned int index; return oBSF(index, value) ? index : -1; }
-inline int firstbitlow(int value) { return firstbitlow(*(unsigned int*)&value); }
-
-#ifdef _M_X64
-	inline int firstbithigh(unsigned long long value) { unsigned int index; return oBSR(index, value) ? index : -1; }
-	inline int firstbithigh(long long value) { return firstbithigh(*(unsigned long long*)&value); }
-	inline int firstbitlow(unsigned long long value) { unsigned int index; return oBSF(index, value) ? index : -1; }
-	inline int firstbitlow(long long value) { return firstbitlow(*(unsigned long long*)&value); }
-#endif
-
-oMATH_ELOPS(2) oMATH_ELOPS(3) oMATH_ELOPS(4)
-oMATH_CMPS2(TVECTOR2<T>) oMATH_CMPS3(TVECTOR3<T>) oMATH_CMPS4(TVECTOR4<T>)
-
-// Float
-oMATH_ELUFNS(abs);
-oMATH_ELUFNS(ceil);
-oMATH_ELUFNS(floor);
-oMATH_ELUFNS(frac);
-oMATH_ELUFNS(round);
-template<typename T> inline T truc(const T& x) { return floor(x); }
-template<typename T> inline bool isfinite(const TVECTOR2<T>& a) { return isfinite(a.x) && isfinite(a.y); }
-template<typename T> inline bool isfinite(const TVECTOR3<T>& a) { return isfinite(a.x) && isfinite(a.y) && isfinite(a.z); }
-template<typename T> inline bool isfinite(const TVECTOR4<T>& a) { return isfinite(a.x) && isfinite(a.y) && isfinite(a.z) && isfinite(a.w); }
-template<typename T> inline bool isinf(const TVECTOR2<T>& a) { return isinf(a.x) && isinf(a.y); }
-template<typename T> inline bool isinf(const TVECTOR3<T>& a) { return isinf(a.x) && isinf(a.y) && isinf(a.z); }
-template<typename T> inline bool isinf(const TVECTOR4<T>& a) { return isinf(a.x) && isinf(a.y) && isinf(a.z) && isinf(a.w); }
-template<typename T> inline bool isnan(const TVECTOR2<T>& a) { return isnan(a.x) && isnan(a.y); }
-template<typename T> inline bool isnan(const TVECTOR3<T>& a) { return isnan(a.x) && isnan(a.y) && isnan(a.z); }
-template<typename T> inline bool isnan(const TVECTOR4<T>& a) { return isnan(a.x) && isnan(a.y) && isnan(a.z) && isnan(a.w); }
-template<typename T> inline bool all(const TVECTOR2<T>& a) { return !oEqual(a.x, T(0)) && !oEqual(a.y, T(0)); }
-template<typename T> inline bool all(const TVECTOR3<T>& a) { return !oEqual(a.x, T(0)) && !oEqual(a.y, T(0)) && !oEqual(a.z, T(0)); }
-template<typename T> inline bool all(const TVECTOR4<T>& a) { return !oEqual(a.x, T(0)) && !oEqual(a.y, T(0)) && !oEqual(a.z, T(0)) && !oEqual(a.w, T(0)); }
-template<typename T> inline bool any(const T& a) { return a != T(0); }
-template<typename T> inline T clamp(const T& x, const T& minimum, const T& maximum) { return __max(__min(x, maximum), minimum); }
-template<typename T> inline T saturate(const T& x) { return clamp<T>(x, T(0.0), T(1.0)); }
-template<typename T> inline T sign(const T& x) { return x < 0 ? T(-1) : (x == 0 ? T(0) : T(1)); }
-template<typename T> inline T step(const T& y, const T& x) { return (x >= y) ? T(1) : T(0); } 
-oMATH_ELBFNS(hlslmax, __max); // not named max to avoid name and macro collision
-oMATH_ELBFNS(hlslmin, __min); // not named max to avoid name and macro collision
-
-// Trig
-oMATH_ELUFNS(acos);
-oMATH_ELUFNS(asin);
-oMATH_ELUFNS(atan);
-oMATH_ELUFNS(cos);
-oMATH_ELUFNS(cosh);
-oMATH_ELUFNS(sin);
-oMATH_ELUFNS(sinh);
-oMATH_ELUFNS(tan);
-oMATH_ELUFNS(tanh);
-oMATH_ELBFNS(atan2, atan2);
-template<typename T> inline void sincos(const T& angleInRadians, T& outSin, T& outCos) { outSin = sin(angleInRadians); outCos = cos(angleInRadians); }
-
-// Advanced
-oMATH_ELUFNS(log);
-oMATH_ELUFNS(log10);
-oMATH_ELUFNS(log2);
-oMATH_ELUFNS(exp);
-oMATH_ELUFNS(exp2);
-oMATH_ELBFNS(ldexp, ldexp); // return x * 2^(exp) float
-oMATH_ELBFNS(frexp, frexp);
-oMATH_ELBFNS(fmod, fmod);
-oMATH_ELUFNS(pow);
-oMATH_ELUFNS(rcp);
-oMATH_ELUFNS(sqrt);
-oMATH_ELUFNS(step);
-oMATH_ELUFNS(smoothstep);
-template<typename T> inline T mad(const T& mvalue, const T& avalue, const T& bvalue) { return mvalue*avalue + bvalue; }
-float noise(float x);
-float noise(const TVECTOR2<float>& x);
-float noise(const TVECTOR3<float>& x);
-// float noise(const TVECTOR4<float>& x); // @oooii-tony: not yet implemented
-
-// 3D
-template<typename T> inline TVECTOR3<T> cross(const TVECTOR3<T>& a, const TVECTOR3<T>& b) { return TVECTOR3<T>(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x); }
-template<typename T> inline T dot(const TVECTOR2<T>& a, const TVECTOR2<T>& b) { return a.x*b.x + a.y*b.y; }
-template<typename T> inline T dot(const TVECTOR3<T>& a, const TVECTOR3<T>& b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
-template<typename T> inline T dot(const TVECTOR4<T>& a, const TVECTOR4<T>& b) { return a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w; }
-template<typename T> inline T length(const TVECTOR3<T>& a) { return sqrt(dot(a, a)); }
-template<typename T> inline const T lerp(const T& a, const T& b, const T& s) { return a + s * (b-a); }
-template<typename T> inline const TVECTOR2<T> lerp(const TVECTOR2<T>& a, const TVECTOR2<T>& b, const T& s) { return a + s * (b-a); }
-template<typename T> inline const TVECTOR3<T> lerp(const TVECTOR3<T>& a, const TVECTOR3<T>& b, const T& s) { return a + s * (b-a); }
-template<typename T> inline const TVECTOR4<T> lerp(const TVECTOR4<T>& a, const TVECTOR4<T>& b, const T& s) { return a + s * (b-a); }
-template<typename T> inline TVECTOR4<T> lit(const T& n_dot_l, const T& n_dot_h, const T& m) { TVECTOR4<T>(T(1), (n_dot_l < 0) ? 0 : n_dot_l, (n_dot_l < 0) || (n_dot_h < 0) ? 0 : (n_dot_h * m), T(1)); }
-template<typename T> inline T faceforward(const T& n, const T& i, const T& ng) { return -n * sign(dot(i, ng)); }
-template<typename T> inline T normalize(const T& x) { return x / length(x); }
-template<typename T> inline T radians(T degrees) { return degrees * T(oPI) / T(180.0); }
-template<typename T> inline T degrees(T radians) { return radians * T(180.0) / T(oPI); }
-oMATH_ELUFNS(radians);
-oMATH_ELUFNS(degrees);
-template<typename T> inline T distance(const TVECTOR3<T>& a, const TVECTOR3<T>& b) { return length(a-b); }
-template<typename T> inline T reflect(const T& i, const T& n) { return i - 2 * n * dot(i,n); }
-template<typename T> inline T refract(const TVECTOR3<T>& i, const TVECTOR3<T>& n, const T& r) { T c1 = dot(i,n); T c2 = T(1) - r*r * (T(1) - c1*c1); return (c2 < T(0)) ? TVECTOR3<T>(0) : r*i + (sqrt(c2) - r*c1) * n; } // http://www.physicsforums.com/archive/index.php/t-187091.html
+// Signed distance from a plane in Ax + By + Cz + D = 0 format (ABC = normalized normal, D = offset)
+// This assumes the plane is normalized.
+// >0 means on the same side as the normal
+// <0 means on the opposite side as the normal
+// 0 means on the plane
+template<typename T> inline T sdistance(const TVEC4<T>& _Plane, const TVEC3<T>& _Point) { return dot(_Plane.XYZ(), _Point) - _Plane.w; }
+template<typename T> inline T distance(const TVEC4<T>& _Plane, const TVEC3<T>& _Point) { return abs(sdistance(_Plane, _Point)); }
 
 // _____________________________________________________________________________
-// Unimplemented
-//D3DCOLORtoUBYTE4
-//dst
+// Quaternion functions
 
-// _____________________________________________________________________________
-// Partial derivatives. These are declared, but unimplemented 
-// because this mere header does not provide enough infrastructure 
-// to produce derivatives.
-template<typename T> T ddx(const T& x);
-template<typename T> T ddx_coarse(const T& x);
-template<typename T> T ddx_fine(const T& x);
-template<typename T> T ddy(const T& x);
-template<typename T> T ddy_coarse(const T& x);
-template<typename T> T ddy_fine(const T& x);
-template<typename T> inline T fwidth(const T& x) { return abs(ddx(x)) + abs(ddy(x)); }
+template<typename T> inline TQUAT<T> mul(const TQUAT<T>& _Quaternion0, const TQUAT<T>& _Quaternion1) { return TQUAT<T>(((((_Quaternion0.w * _Quaternion1.x) + (_Quaternion0.x * _Quaternion1.w)) + (_Quaternion0.y * _Quaternion1.z)) - (_Quaternion0.z * _Quaternion1.y)), ((((_Quaternion0.w * _Quaternion1.y) + (_Quaternion0.y * _Quaternion1.w)) + (_Quaternion0.z * _Quaternion1.x)) - (_Quaternion0.x * _Quaternion1.z)), ((((_Quaternion0.w * _Quaternion1.z) + (_Quaternion0.z * _Quaternion1.w)) + (_Quaternion0.x * _Quaternion1.y)) - (_Quaternion0.y * _Quaternion1.x)), ((((_Quaternion0.w * _Quaternion1.w) - (_Quaternion0.x * _Quaternion1.x)) - (_Quaternion0.y * _Quaternion1.y)) - (_Quaternion0.z * _Quaternion1.z))); }
+template<typename T> TQUAT<T> oSlerp(const TQUAT<T>& a, const TQUAT<T>& b, T s);
 
-// Typedefs
-typedef TVECTOR2<short> short2;
-typedef TVECTOR3<short> short3;
-typedef TVECTOR4<short> short4;
-
-typedef unsigned short ushort;
-typedef TVECTOR2<ushort> ushort2;
-typedef TVECTOR3<ushort> ushort3;
-typedef TVECTOR4<ushort> ushort4;
-
-typedef TVECTOR2<int> int2;
-typedef TVECTOR3<int> int3;
-typedef TVECTOR4<int> int4;
-
-typedef unsigned int uint;
-typedef TVECTOR2<unsigned int> uint2;
-typedef TVECTOR3<unsigned int> uint3;
-typedef TVECTOR4<unsigned int> uint4;
-
-typedef TVECTOR2<long long> longlong2;
-typedef TVECTOR3<long long> longlong3;
-typedef TVECTOR4<long long> longlong4;
-
-typedef TVECTOR2<float> float2;
-typedef TVECTOR3<float> float3;
-typedef TVECTOR4<float> float4;
-
-typedef TVECTOR2<double> double2;
-typedef TVECTOR3<double> double3;
-typedef TVECTOR4<double> double4;
-
-typedef TMATRIX3<float> float3x3;
-typedef TMATRIX4<float> float4x4;
-
-typedef TMATRIX3<double> double3x3;
-typedef TMATRIX4<double> double4x4;
-
-typedef TQUATERNION<float> quatf;
-typedef TQUATERNION<double> quatd;
-
-// Type conversions
-inline double asdouble(unsigned int lowbits, unsigned int highbits) { oByteSwizzle64 s; s.AsUnsignedInt[0] = lowbits; s.AsUnsignedInt[1] = highbits; return s.AsDouble; }
-inline double2 asdouble(const uint2& lowbits, const uint2& highbits) { oByteSwizzle64 s[2]; s[0].AsUnsignedInt[0] = lowbits.x; s[0].AsUnsignedInt[1] = highbits.x; s[1].AsUnsignedInt[0] = lowbits.y; s[1].AsUnsignedInt[1] = highbits.y; return double2(s[0].AsDouble, s[1].AsDouble); }
-inline float2 asfloat(const double& value) { oByteSwizzle64 s; s.AsDouble = value; return float2(s.AsFloat[0], s.AsFloat[1]); }
-inline float4 asfloat(const double2& value) { oByteSwizzle64 s[2]; s[0].AsDouble = value.x; s[1].AsDouble = value.y; return float4(s[0].AsFloat[0], s[0].AsFloat[1], s[1].AsFloat[0], s[1].AsFloat[1]); }
-inline float2 asfloat(const long long& value) { oByteSwizzle64 s; s.AsLongLong = value; return float2(s.AsFloat[0], s.AsFloat[1]); }
-inline float4 asfloat(const longlong2& value) { oByteSwizzle64 s[2]; s[0].AsLongLong = value.x; s[1].AsLongLong = value.y; return float4(s[0].AsFloat[0], s[0].AsFloat[1], s[1].AsFloat[0], s[1].AsFloat[1]); }
-template<typename T> inline float asfloat(const T& value) { return static_cast<float>(value); }
-template<typename T> inline float2 asfloat(const TVECTOR2<T>& value) { return float2(static_cast<float>(value.x), static_cast<float>(value.y)); }
-template<typename T> inline float3 asfloat(const TVECTOR3<T>& value) { return float3(static_cast<float>(value.x), static_cast<float>(value.y), static_cast<float>(value.z)); }
-template<typename T> inline float4 asfloat(const TVECTOR4<T>& value) { return float4(static_cast<float>(value.x), static_cast<float>(value.y), static_cast<float>(value.z), static_cast<float>(value.w)); }
-inline int2 asint(double value) { oByteSwizzle64 s; s.AsDouble = value; return int2(s.AsInt[0], s.AsInt[1]); }
-inline int4 asint(double2 value) { oByteSwizzle64 s[2]; s[0].AsDouble = value.x; s[1].AsDouble = value.y; return int4(s[0].AsInt[0], s[0].AsInt[1], s[1].AsInt[0], s[1].AsInt[1]); }
-inline int2 asint(long long value) { oByteSwizzle64 s; s.AsLongLong = value; return int2(s.AsInt[0], s.AsInt[1]); }
-inline int4 asint(const longlong2& value) { oByteSwizzle64 s[2]; s[0].AsLongLong = value.x; s[1].AsLongLong = value.y; return int4(s[0].AsInt[0], s[0].AsInt[1], s[1].AsInt[0], s[1].AsInt[1]); }
-template<typename T> inline int asint(T value) { return static_cast<int>(value); }
-template<> inline int asint(float f)
+// Rotates the specified vector by the specified normalized quaternion
+template<typename T> inline TVEC3<T> oRotateVector(const TQUAT<T>& _Rotation, const TVEC3<T>& _Vector)
 {
-	#if oMATH_USE_FAST_ASINT
-		/** <citation
-			usage="Implementation" 
-			reason="Because we always need a faster math op." 
-			author="Jonathon Blow"
-			description="http://www.beyond3d.com/content/articles/8/"
-			license="MIT-like"
-			licenseurl="http://www.gdmag.com/resources/code.htm"
-			modification="Renamed, code standard compliance, compiler warning fixes"
-		/>
-		<license>
-			This program is Copyright (c) 2003 Jonathan Blow.  All rights reserved.
-			Permission to use, modify, and distribute a modified version of 
-			this software for any purpose and without fee is hereby granted, 
-			provided that this notice appear in all copies.
-			THE MATERIAL EMBODIED ON THIS SOFTWARE IS PROVIDED TO YOU "AS-IS"
-			AND WITHOUT WARRANTY OF ANY KIND, EXPRESS, IMPLIED OR OTHERWISE,
-			INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY OR
-			FITNESS FOR A PARTICULAR PURPOSE.
-		</license>
-		*/
-		// $(CitedCodeBegin)
-
-		// Blow, Jonathon. "Unified Rendering Level-of-Detail, Part 2." 
-		// Game Developer Magazine, April 2003.
-		// http://www.gdmag.com/resources/code.htm
-		/*
-			This file contains the necessary code to do a fast float-to-int
-			conversion, where the input is an IEEE-754 32-bit floating-point
-			number.  Just call FastInt(f).  The idea here is that C and C++
-			have to do some extremely slow things in order to ensure proper
-			rounding semantics; if you don't care about your integer result
-			precisely conforming to the language spec, then you can use this.
-			FastInt(f) is many many many times faster than (int)(f) in almost
-			all cases.
-		*/
-		const unsigned int DOPED_MAGIC_NUMBER_32 = 0x4b3fffff;
-		f += (float &)DOPED_MAGIC_NUMBER_32;
-		int result = (*(unsigned int*)&f) - DOPED_MAGIC_NUMBER_32;
-		return result;
-		// $(CitedCodeEnd)
-	#else
-		return static_cast<int>(value);
-	#endif
+	// http://code.google.com/p/kri/wiki/Quaternions
+	return _Vector + T(2.0) * cross(_Rotation.XYZ(), cross(_Rotation.XYZ(), _Vector) + _Rotation.w * _Vector);
 }
 
-inline void asuint(double value, unsigned int& a, unsigned int& b) { oByteSwizzle64 s; s.AsDouble = value; a = s.AsUnsignedInt[0]; b = s.AsUnsignedInt[1]; }
-oMATH_ELUFNS(countbits);
-oMATH_ELUFNS(reversebits);
-oMATH_ELUFNS(firstbithigh);
-oMATH_ELUFNS(firstbitlow);
-
-#ifdef _HALF_H_
-	inline float f16tof32(unsigned int value) { half h; h.setBits(static_cast<unsigned short>(value)); return static_cast<float>(h); }
-	template<typename T> inline float2 f16tof32(const float2& value) { return float2(f16tof32(value.x), f16tof32(value.y)); }
-	template<typename T> inline float3 f16tof32(const float3& value) { return float2(f16tof32(value.x), f16tof32(value.y), f16tof32(value.z)); }
-	template<typename T> inline float4 f16tof32(const float4& value) { return float2(f16tof32(value.x), f16tof32(value.y), f16tof32(value.z), f16tof32(value.w)); }
-	inline unsigned int f32tof16(float value) { return half(value).bits(); }
-	template<typename T> inline uint2 f32tof16(const float2& value) { return uint2(f32tof16(value.x), f32tof16(value.y)); }
-	template<typename T> inline uint3 f32tof16(const float3& value) { return uint3(f32tof16(value.x), f32tof16(value.y), f32tof16(value.z)); }
-	template<typename T> inline uint4 f32tof16(const float4& value) { return uint4(f32tof16(value.x), f32tof16(value.y), f32tof16(value.z), f32tof16(value.w)); }
-#endif
-
 // _____________________________________________________________________________
-// Matrix ops
+// Matrix functions
 
-template<typename T> inline T determinant(const TMATRIX3<T>& _Matrix) { return dot(_Matrix.Column2, cross(_Matrix.Column0, _Matrix.Column1)); }
-template<typename T> T determinant(const TMATRIX4<T>& _Matrix);
-
-// mul(a,b) means a * b, meaning if you want to scale then translate, it would be result = scale * translate
-template<typename T> inline TMATRIX3<T> mul(const TMATRIX3<T>& _Matrix0, const TMATRIX3<T>& _Matrix1) { return TMATRIX3<T>((_Matrix1 * _Matrix1.Column0), (_Matrix1 * _Matrix0.Column1), (_Matrix1 * _Matrix0.Column2)); }
-template<typename T> inline TMATRIX4<T> mul(const TMATRIX4<T>& _Matrix0, const TMATRIX4<T>& _Matrix1) { return TMATRIX4<T>((_Matrix1 * _Matrix0.Column0), (_Matrix1 * _Matrix0.Column1), (_Matrix1 * _Matrix0.Column2), (_Matrix1 * _Matrix0.Column3)); }
-template<typename T> inline TVECTOR3<T> mul(const TMATRIX3<T>& _Matrix, const TVECTOR3<T>& _Vector) { return TVECTOR3<T>(_Matrix[0].x * _Vector.x + _Matrix[1].x * _Vector.y + _Matrix[2].x * _Vector.z, _Matrix[0].y * _Vector.x + _Matrix[1].y * _Vector.y + _Matrix[2].y * _Vector.z, _Matrix[0].z * _Vector.x + _Matrix[1].z * _Vector.y + _Matrix[2].z * _Vector.z); }
-template<typename T> inline TVECTOR3<T> mul(const TMATRIX4<T>& _Matrix, const TVECTOR3<T>& _Vector) { return mul(_Matrix, TVECTOR4<T>(_Vector.x,_Vector.y,_Vector.z,1.0f)).XYZ(); }
-template<typename T> inline TVECTOR4<T> mul(const TMATRIX4<T>& _Matrix, const TVECTOR4<T>& _Vector) { return TVECTOR4<T>(((((_Matrix.Column0.x*_Vector.x) + (_Matrix.Column1.x*_Vector.y)) + (_Matrix.Column2.x*_Vector.z)) + (_Matrix.Column3.x*_Vector.w)), ((((_Matrix.Column0.y*_Vector.x) + (_Matrix.Column1.y*_Vector.y)) + (_Matrix.Column2.y*_Vector.z)) + (_Matrix.Column3.y*_Vector.w)), ((((_Matrix.Column0.z*_Vector.x) + (_Matrix.Column1.z*_Vector.y)) + (_Matrix.Column2.z*_Vector.z)) + (_Matrix.Column3.z*_Vector.w)), ((((_Matrix.Column0.w*_Vector.x) + (_Matrix.Column1.w*_Vector.y)) + (_Matrix.Column2.w*_Vector.z)) + (_Matrix.Column3.w*_Vector.w))); }
-template<typename T> inline TQUATERNION<T> mul(const TQUATERNION<T>& _Quaternion0, const TQUATERNION<T>& _Quaternion1) { return TQUATERNION<T>(((((_Quaternion0.w * _Quaternion1.x) + (_Quaternion0.x * _Quaternion1.w)) + (_Quaternion0.y * _Quaternion1.z)) - (_Quaternion0.z * _Quaternion1.y)), ((((_Quaternion0.w * _Quaternion1.y) + (_Quaternion0.y * _Quaternion1.w)) + (_Quaternion0.z * _Quaternion1.x)) - (_Quaternion0.x * _Quaternion1.z)), ((((_Quaternion0.w * _Quaternion1.z) + (_Quaternion0.z * _Quaternion1.w)) + (_Quaternion0.x * _Quaternion1.y)) - (_Quaternion0.y * _Quaternion1.x)), ((((_Quaternion0.w * _Quaternion1.w) - (_Quaternion0.x * _Quaternion1.x)) - (_Quaternion0.y * _Quaternion1.y)) - (_Quaternion0.z * _Quaternion1.z))); }
-template<typename T> inline TMATRIX3<T> transpose(const TMATRIX3<T>& _Matrix) { return TMATRIX3<T>(TVECTOR3<T>(_Matrix.Column0.x, _Matrix.Column1.x, _Matrix.Column2.x), TVECTOR3<T>(_Matrix.Column0.y, _Matrix.Column1.y, _Matrix.Column2.y), TVECTOR3<T>(_Matrix.Column0.z, _Matrix.Column1.z, _Matrix.Column2.z)); }
-template<typename T> inline TMATRIX4<T> transpose(const TMATRIX4<T>& _Matrix) { return TMATRIX4<T>(TVECTOR4<T>(_Matrix.Column0.x, _Matrix.Column1.x, _Matrix.Column2.x, _Matrix.Column3.x), TVECTOR4<T>(_Matrix.Column0.y, _Matrix.Column1.y, _Matrix.Column2.y, _Matrix.Column3.y), TVECTOR4<T>(_Matrix.Column0.z, _Matrix.Column1.z, _Matrix.Column2.z, _Matrix.Column3.z), TVECTOR4<T>(_Matrix.Column0.w, _Matrix.Column1.w, _Matrix.Column2.w, _Matrix.Column3.w)); }
-
-// NON-HLSL
-template<typename T> TMATRIX3<T> invert(const TMATRIX3<T>& _Matrix);
-template<typename T> TMATRIX4<T> invert(const TMATRIX4<T>& _Matrix);
-
-template<typename T> TQUATERNION<T> slerp(const TQUATERNION<T>& a, const TQUATERNION<T>& b, T s);
-
-// _____________________________________________________________________________
-// NON-HLSL
+template<typename T> TMAT3<T> invert(const TMAT3<T>& _Matrix);
+template<typename T> TMAT4<T> invert(const TMAT4<T>& _Matrix);
 
 // Decomposes the specified matrix into its components as if they were applied 
 // in the following order:
@@ -873,17 +209,21 @@ template<typename T> TQUATERNION<T> slerp(const TQUATERNION<T>& a, const TQUATER
 // Returns true if successful, or false if the specified matrix is singular.
 // NOTE: This does not support negative scale well. Rotations might appear 
 // rotated by 180 degrees, and the resulting scale can be the wrong sign.
-template<typename T> bool decompose(const TMATRIX4<T>& _Matrix, TVECTOR3<T>* _pScale, T* _pShearXY, T* _pShearXZ, T* _pShearZY, TVECTOR3<T>* _pRotation, TVECTOR3<T>* _pTranslation, TVECTOR4<T>* _pPerspective);
+template<typename T> bool oDecompose(const TMAT4<T>& _Matrix, TVEC3<T>* _pScale, T* _pShearXY, T* _pShearXZ, T* _pShearZY, TVEC3<T>* _pRotation, TVEC3<T>* _pTranslation, TVEC4<T>* _pPerspective);
 
 // Extract components from a matrix. Currently this uses decompose and just hides
 // a bunch of the extra typing that's required.
-template<typename T> TVECTOR3<T> getscale(const TMATRIX4<T>& _Matrix) { T xy, xz, zy; TVECTOR3<T> s, r, t; TVECTOR4<T> p; decompose(_Matrix, &s, &xy, &xz, &zy, &r, &t, &p); return s; }
-template<typename T> TVECTOR3<T> getrotation(const TMATRIX4<T>& _Matrix) { T xy, xz, zy; TVECTOR3<T> s, r, t; TVECTOR4<T> p; decompose(_Matrix, &s, &xy, &xz, &zy, &r, &t, &p); return r; }
-template<typename T> TVECTOR3<T> gettranslation(const TMATRIX4<T>& _Matrix) { T xy, xz, zy; TVECTOR3<T> s, r, t; TVECTOR4<T> p; decompose(_Matrix, &s, &xy, &xz, &zy, &r, &t, &p); return t; }
+template<typename T> TVEC3<T> oExtractScale(const TMAT4<T>& _Matrix) { T xy, xz, zy; TVEC3<T> s, r, t; TVEC4<T> p; oDecompose(_Matrix, &s, &xy, &xz, &zy, &r, &t, &p); return s; }
+template<typename T> TVEC3<T> oExtractRotation(const TMAT4<T>& _Matrix) { T xy, xz, zy; TVEC3<T> s, r, t; TVEC4<T> p; oDecompose(_Matrix, &s, &xy, &xz, &zy, &r, &t, &p); return r; }
+template<typename T> TVEC3<T> oExtractTranslation(const TMAT4<T>& _Matrix) { T xy, xz, zy; TVEC3<T> s, r, t; TVEC4<T> p; oDecompose(_Matrix, &s, &xy, &xz, &zy, &r, &t, &p); return t; }
 
-template<typename T> void oExtractAxes(const TMATRIX4<T>& _Matrix, TVECTOR3<T>* _pXAxis, TVECTOR3<T>* _pYAxis, TVECTOR3<T>* _pZAxis);
+template<typename T> void oExtractAxes(const TMAT4<T>& _Matrix, TVEC3<T>* _pXAxis, TVEC3<T>* _pYAxis, TVEC3<T>* _pZAxis);
 
-template<typename T> TMATRIX4<T> oCreateRotation(const TVECTOR3<T>& _Radians);
+// returns true of there is a projection/perspective or false if orthographic
+template<typename T> bool oHasPerspective(const TMAT4<T>& _Matrix);
+
+// _____________________________________________________________________________
+// NON-HLSL Matrix creation
 
 // Rotation is done around the Z axis, then Y, then X.
 // Rotation is clockwise when the axis is a vector pointing at the viewer/
@@ -892,40 +232,37 @@ template<typename T> TMATRIX4<T> oCreateRotation(const TVECTOR3<T>& _Radians);
 // rotation axis of (0,0,-1) and rotate 90 degrees. To rotate (0,1,0) to become 
 // -X, either change the rotation axis to be (0,0,1), OR negate the rotation of 
 // 90 degrees.
-template<typename T> TMATRIX4<T> oCreateRotation(T _Radians, const TVECTOR3<T>& _NormalizedRotationAxis);
-template<typename T> TMATRIX4<T> oCreateRotation(const TVECTOR3<T>& _CurrentVector, const TVECTOR3<T>& _DesiredVector, const TVECTOR3<T>& _DefaultRotationAxis);
-template<typename T> TMATRIX4<T> oCreateRotation(const TQUATERNION<T>& _Quaternion);
-template<typename T> TQUATERNION<T> oCreateRotationQ(const TVECTOR3<T>& _Radians);
-template<typename T> TQUATERNION<T> oCreateRotationQ(T _Radians, const TVECTOR3<T>& _NormalizedRotationAxis);
+template<typename T> TMAT4<T> oCreateRotation(const TVEC3<T>& _Radians);
+template<typename T> TMAT4<T> oCreateRotation(const T& _Radians, const TVEC3<T>& _NormalizedRotationAxis);
+template<typename T> TMAT4<T> oCreateRotation(const TVEC3<T>& _CurrenTVEC, const TVEC3<T>& _DesiredVector, const TVEC3<T>& _DefaultRotationAxis);
+template<typename T> TMAT4<T> oCreateRotation(const TQUAT<T>& _Quaternion);
+template<typename T> TQUAT<T> oCreateRotationQ(const TVEC3<T>& _Radians);
+template<typename T> TQUAT<T> oCreateRotationQ(T _Radians, const TVEC3<T>& _NormalizedRotationAxis);
 // There are infinite/undefined solutions when the vectors point in opposite directions
-template<typename T> TQUATERNION<T> oCreateRotationQ(const TVECTOR3<T>& _CurrentVector, const TVECTOR3<T>& _DesiredVector);
-template<typename T> TQUATERNION<T> oCreateRotationQ(const TMATRIX4<T>& _Matrix);
-template<typename T> TMATRIX4<T> oCreateTranslation(const TVECTOR3<T>& _Translation);
-template<typename T> TMATRIX4<T> oCreateScale(const TVECTOR3<T>& _Scale);
-template<typename T> TMATRIX4<T> oCreateScale(T _Scale) { return oCreateScale(TVECTOR3<T>(_Scale)); }
+template<typename T> TQUAT<T> oCreateRotationQ(const TVEC3<T>& _CurrentVector, const TVEC3<T>& _DesiredVector);
+template<typename T> TQUAT<T> oCreateRotationQ(const TMAT4<T>& _Matrix);
+template<typename T> TMAT4<T> oCreateTranslation(const TVEC3<T>& _Translation);
+template<typename T> TMAT4<T> oCreateScale(const TVEC3<T>& _Scale);
+template<typename T> TMAT4<T> oCreateScale(const T& _Scale) { return oCreateScale(TVEC3<T>(_Scale)); }
 
-template<typename T> TMATRIX4<T> oCreateLookAtLH(const TVECTOR3<T>& _Eye, const TVECTOR3<T>& _At, const TVECTOR3<T>& _Up);
-template<typename T> TMATRIX4<T> oCreateLookAtRH(const TVECTOR3<T>& _Eye, const TVECTOR3<T>& _At, const TVECTOR3<T>& _Up);
+template<typename T> TMAT4<T> oCreateLookAtLH(const TVEC3<T>& _Eye, const TVEC3<T>& _At, const TVEC3<T>& _Up);
+template<typename T> TMAT4<T> oCreateLookAtRH(const TVEC3<T>& _Eye, const TVEC3<T>& _At, const TVEC3<T>& _Up);
 
-// Converts a right-handed view matrix to left-handed, and vice-versa
-// http://msdn.microsoft.com/en-us/library/ee415205(VS.85).aspx
-inline float4x4 oFlipViewHandedness(const float4x4& _View)
-{
-	float4x4 m = _View;
-	m.Column2 = -m.Column2;
-	return m;
-}
+// Creates a perspective projection matrix. If _ZFar is less than 0, then an 
+// infinitely far plane is used. Remember precision issues with regard to near
+// and far plane. Because precision on most hardware is distributed 
+// logarithmically so that more precision is near to the view, you can gain more
+// precision across the entire scene by moving out the near plane slightly 
+// relative to bringing in the far plane by a lot.
+template<typename T> TMAT4<T> oCreatePerspectiveLH(T _FovYRadians, T _AspectRatio, T _ZNear = oDEFAULT_NEAR, T _ZFar = oDEFAULT_FAR);
+template<typename T> TMAT4<T> oCreatePerspectiveRH(T _FovYRadians, T _AspectRatio, T _ZNear = oDEFAULT_NEAR, T _ZFar = oDEFAULT_FAR);
 
-// Creates a perspective projection matrix with an infinite far plane
-template<typename T> TMATRIX4<T> oCreatePerspectiveLH(T _FovYRadians, T _AspectRatio, T _ZNear);
-template<typename T> TMATRIX4<T> oCreatePerspectiveRH(T _FovYRadians, T _AspectRatio, T _ZNear);
-
-template<typename T> TMATRIX4<T> oCreateOrthographicLH(T _Left, T _Right, T _Bottom, T _Top, T _ZNear, T _ZFar);
-template<typename T> TMATRIX4<T> oCreateOrthographicRH(T _Left, T _Right, T _Bottom, T _Top, T _ZNear, T _ZFar);
+template<typename T> TMAT4<T> oCreateOrthographicLH(T _Left, T _Right, T _Bottom, T _Top, T _ZNear = oDEFAULT_NEAR, T _ZFar = oDEFAULT_FAR);
+template<typename T> TMAT4<T> oCreateOrthographicRH(T _Left, T _Right, T _Bottom, T _Top, T _ZNear = oDEFAULT_NEAR, T _ZFar = oDEFAULT_FAR);
 
 // Given the corners of the display medium (relative to the origin where the eye
 // is) create an off-axis (off-center) projection matrix.
-template<typename T> TMATRIX4<T> oCreateOffCenterPerspectiveLH(T _Left, T _Right, T _Bottom, T _Top, T _ZNear);
+template<typename T> TMAT4<T> oCreateOffCenterPerspectiveLH(T _Left, T _Right, T _Bottom, T _ZNear = oDEFAULT_NEAR, T _ZFar = oDEFAULT_FAR);
 
 // Create an off-axis (off-center) projection matrix properly sized to the 
 // specified output medium (i.e. the screen if it were transformed in world 
@@ -936,22 +273,50 @@ template<typename T> TMATRIX4<T> oCreateOffCenterPerspectiveLH(T _Left, T _Right
 // _ZNear: A near plane that is different than the plane of the output 
 // (phyisical glass of the screen). By specifying a near plane that is closer to
 // the eye than the glass plane, an effect of "popping out" 3D can be achieved.
-template<typename T> TMATRIX4<T> oCreateOffCenterPerspectiveLH(const TMATRIX4<T>& _OutputTransform, const TVECTOR3<T>& _EyePosition, T _ZNear);
+template<typename T> TMAT4<T> oCreateOffCenterPerspectiveLH(const TMAT4<T>& _OutputTransform, const TVEC3<T>& _EyePosition, T _ZNear = 10.0f);
 
 // Given some information about the render target in NDC space, create a scale
 // and bias transform to create a viewport. Pre-multiply this by the projection
 // matrix to get a sub-projection matrix just for the specified viewport.
-template<typename T> TMATRIX4<T> oCreateViewport(T _NDCResolutionX, T _NDCResolutionY, T _NDCRectLeft, T _NDCRectBottom, T _NDCRectWidth, T _NDCRectHeight);
+template<typename T> TMAT4<T> oCreateViewport(T _NDCResolutionX, T _NDCResolutionY, T _NDCRectLeft, T _NDCRectBottom, T _NDCRectWidth, T _NDCRectHeight);
 
 float4x4 oAsReflection(const float4& _ReflectionPlane);
-void oExtractLookAt(const float4x4& _View, float3* _pEye, float3* _pAt, float3* _pUp, float3* _pRight);
-inline float3 oExtractEye(const float4x4& _View) { return -_View.Column3.XYZ(); }
 
-// Rotates the specified vector by the specified normalized quaternion
-template<typename T> inline TVECTOR3<T> oRotateVector(const TQUATERNION<T>& _Rotation, const TVECTOR3<T>& _Vector)
+// creates a matrix that transforms points from ones that lie on the XY plane (+Z up)
+// to points that lie on plane p
+void oCalcPlaneMatrix(const float4& _Plane, float4x4* _pMatrix);
+
+// _____________________________________________________________________________
+// NON-HLSL View and Projection utility functions
+
+// Converts a right-handed view matrix to left-handed, and vice-versa
+// http://msdn.microsoft.com/en-us/library/ee415205(VS.85).aspx
+inline float4x4 oFlipViewHandedness(const float4x4& _View) { float4x4 m = _View; m.Column2 = -m.Column2; return m; }
+
+// Get the original axis values from a view matrix
+void oExtractLookAt(const float4x4& _View, float3* _pEye, float3* _pAt, float3* _pUp, float3* _pRight);
+
+// Get the world space eye position from a view matrix
+template<typename T> inline TVEC3<T> oExtractEye(const TMAT4<T>& _View) { return invert(_View).Column3.XYZ(); }
+
+// Fills the specified array with planes that point inward in the following 
+// order: left, right, top, bottom, near, far. The planes will be in whatever 
+// space the matrix was in minus one. This means in the space conversion of:
+// Model -> World -> View -> Projection that a projection matrix returned by
+// oCreatePerspective?H() will be in view space. A View * Projection will be
+// in world space, and a WVP matrix will be in model space.
+template<typename T> void oExtractFrustumPlanes(TVEC4<T> _Planes[6], const TMAT4<T>& _Projection, bool _Normalize);
+
+// Calculates the distance from the eye to the near and far planes of the 
+// visible frustum
+template<typename T> inline void oCalculateNearFarPlanesDistance(const TMAT4<T>& _View, const TMAT4<T>& _Projection, T* _pNear, T* _pFar)
 {
-	// http://code.google.com/p/kri/wiki/Quaternions
-		return _Vector + T(2.0) * cross(_Rotation.XYZ(), cross(_Rotation.XYZ(), _Vector) + _Rotation.w * _Vector);
+	// Store the 1/far plane distance so we can calculate view-space depth,
+	// then store it on [0,1] for maximum precision.
+	TFRUSTUM<T> WorldSpaceFrustum(_View * _Projection);
+	const TVEC3<T> eye = oExtractEye(_View);
+	*_pNear = distance(WorldSpaceFrustum.Near, eye);
+	*_pFar = distance(WorldSpaceFrustum.Far, eye);
 }
 
 // This results in a normalized vector that points into the screen as is 
@@ -960,109 +325,170 @@ template<typename T> inline TVECTOR3<T> oRotateVector(const TQUATERNION<T>& _Rot
 // maintaining the specified radius.
 float3 oScreenToVector(const float2& _ScreenPoint, const float2& _ViewportDimensions, float _Radius);
 
-// creates a matrix that transforms points from ones that lie on the XY plane (+Z up)
-// to points that lie on plane p
-void oCalcPlaneMatrix(const float4& _Plane, float4x4* _pMatrix);
-
-template<typename T> inline TVECTOR4<T> oNormalizePlane(const TVECTOR4<T>& _Plane) { T magnitude = length(_Plane.XYZ()); return TVECTOR4<T>(_Plane) / magnitude; }
-
-// Fills the specified array with planes that point inward in the following 
-// order: left, right, top, bottom, near, far. The planes will be in whatever
-// space _Projection is, so using a concatenated matrix will result in planes in
-// that transformed space.
-template<typename T> void oCalcFrustumPlanesRH(TVECTOR4<T>* _pPlanes, const TMATRIX4<T>& _Projection, bool _Normalize)
-{
-	/** <citation
-		usage="Adaptation" 
-		reason="Simple straightforward paper with code to do this important conversion." 
-		author="Gil Gribb & Klaus Hartmann"
-		description="http://www2.ravensoft.com/users/ggribb/plane%20extraction.pdf"
-		license="*** Assumed Public Domain ***"
-		licenseurl="http://www2.ravensoft.com/users/ggribb/plane%20extraction.pdf"
-		modification=""
-	/>*/
-
-	// $(CitedCodeBegin)
-
-	// Left clipping plane
-	_pPlanes[0].x = _Projection.Column0.w + _Projection.Column0.x;
-	_pPlanes[0].y = _Projection.Column1.w + _Projection.Column1.x;
-	_pPlanes[0].z = _Projection.Column2.w + _Projection.Column2.x;
-	_pPlanes[0].w = _Projection.Column3.w + _Projection.Column3.x;
-
-	// Right clipping plane
-	_pPlanes[1].x = _Projection.Column0.w - _Projection.Column0.x;
-	_pPlanes[1].y = _Projection.Column1.w - _Projection.Column1.x;
-	_pPlanes[1].z = _Projection.Column2.w - _Projection.Column2.x;
-	_pPlanes[1].w = _Projection.Column3.w - _Projection.Column3.x;
-
-	// Top clipping plane
-	_pPlanes[2].x = _Projection.Column0.w - _Projection.Column0.y;
-	_pPlanes[2].y = _Projection.Column1.w - _Projection.Column1.y;
-	_pPlanes[2].z = _Projection.Column2.w - _Projection.Column2.y;
-	_pPlanes[2].w = _Projection.Column3.w - _Projection.Column3.y;
-
-	// Bottom clipping plane
-	_pPlanes[3].x = _Projection.Column0.w + _Projection.Column0.y;
-	_pPlanes[3].y = _Projection.Column1.w + _Projection.Column1.y;
-	_pPlanes[3].z = _Projection.Column2.w + _Projection.Column2.y;
-	_pPlanes[3].w = _Projection.Column3.w + _Projection.Column3.y;
-
-	// Near clipping plane
-	_pPlanes[4].x = _Projection.Column0.w + _Projection.Column0.z;
-	_pPlanes[4].y = _Projection.Column1.w + _Projection.Column1.z;
-	_pPlanes[4].z = _Projection.Column2.w + _Projection.Column2.z;
-	_pPlanes[4].w = _Projection.Column3.w + _Projection.Column3.z;
-
-	// Far clipping plane
-	_pPlanes[5].x = _Projection.Column0.w - _Projection.Column0.z;
-	_pPlanes[5].y = _Projection.Column1.w - _Projection.Column1.z;
-	_pPlanes[5].z = _Projection.Column2.w - _Projection.Column2.z;
-	_pPlanes[5].w = _Projection.Column3.w - _Projection.Column3.z;
-
-	if (_Normalize)
-		for (size_t i = 0; i < 6; i++)
-			_pPlanes[i] = oNormalizePlane(_pPlanes[i]);
-
-	// $(CitedCodeEnd)
-}
+// _____________________________________________________________________________
+// Vertex-based mesh utility functions
 
 void oTransformPoints(const float4x4& _Matrix, float3* oRESTRICT _pDestination, unsigned int _DestinationStride, const float3* oRESTRICT _pSource, unsigned int _SourceStride, unsigned int _NumPoints);
 void oTransformVectors(const float4x4& _Matrix, float3* oRESTRICT _pDestination, unsigned int _DestinationStride, const float3* oRESTRICT _pSource, unsigned int _SourceStride, unsigned int _NumVectors);
 
-inline unsigned char oUNORMAsUBYTE(float x) { return static_cast<unsigned char>(floor(x * 255.0f + 0.5f)); }
-inline unsigned short oUNORMAsUSHORT(float x) { return static_cast<unsigned char>(floor(x * 65535.0f + 0.5f)); }
-inline float oUBYTEAsUNORM(size_t c) { return (c & 0xff) / 255.0f; }
-inline float oUSHORTAsUNORM(size_t c) { return (c & 0xffff) / 65535.0f; }
+// Removes indices for degenerate triangles. After calling this function, use
+// oPruneUnindexedVertices() to clean up extra vertices.
+// _pPositions: list of XYZ positions indexed by the index array
+// _NumberOfVertices: The number of vertices in the _pPositions array
+// _pIndices: array of triangles (every 3 specifies a triangle)
+// _NumberOfIndices: The number of indices in the _pIndices array
+// _pNewNumIndices: The new number of indices as a result of removed degenerages
+template<typename T> bool oRemoveDegenerates(const TVEC3<T>* _pPositions, size_t _NumberOfPositions, unsigned int* _pIndices, size_t _NumberOfIndices, size_t* _pNewNumIndices);
 
-template<typename T> inline T fresnel(const TVECTOR3<T>& i, const TVECTOR3<T>& n) { return 0.02f+0.97f*pow((1-max(dot(i, n))),5); } // http://habibs.wordpress.com/alternative-solutions/
-template<typename T> inline T angle(const TVECTOR3<T>& a, const TVECTOR3<T>& b) { return acos(dot(a, b) / (length(a) * length(b))); }
+// Calculates the face normals from the following inputs:
+// _pFaceNormals: output, array to fill with normals. This should be at least as
+//                large as the number of faces in the specified mesh (_NumberOfIndices/3)
+// _pIndices: array of triangles (every 3 specifies a triangle)
+// _NumberOfIndices: The number of indices in the _pIndices array
+// _pPositions: list of XYZ positions for the mesh that are indexed by the index 
+//              array
+// _NumberOfPositions: The number of vertices in the _pPositions array
+// _CCW: If true, triangles are assumed to have their front-face be specified by
+//       the counter-clockwise order of vertices in a triangle. This affects 
+//       which way a normal points.
+//
+// This can return EINVAL if a parameters isn't something that can be used.
+template<typename T> bool oCalculateFaceNormals(TVEC3<T>* _pFaceNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const TVEC3<T>* _pPositions, size_t _NumberOfPositions, bool _CCW = false);
 
-// Signed distance from a plane in Ax + By + Cz + D = 0 format (ABC = normalized normal, D = offset)
-// This assumes the plane is normalized.
-// >0 means on the same side as the normal
-// <0 means on the opposite side as the normal
-// 0 means on the plane
-template<typename T> inline T sdistance(const TVECTOR4<T>& _Plane, const TVECTOR3<T>& _Point) { return dot(_Plane.XYZ(), _Point) + _Plane.w; }
-template<typename T> inline T distance(const TVECTOR4<T>& _Plane, const TVECTOR3<T>& _Point) { return abs(sdistance(_Plane, _Point)); }
+// Calculates the vertex normals by averaging face normals from the following 
+// inputs:
+// _pVertexNormals: output, array to fill with normals. This should be at least 
+//                  as large as the number of vertices in the specified mesh
+//                  (_NumberOfVertices).
+// _pIndices: array of triangles (every 3 specifies a triangle)
+// _NumberOfIndices: The number of indices in the _pIndices array
+// _pPositions: list of XYZ positions for the mesh that are indexed by the index 
+//              array
+// _NumberOfPositions: The number of vertices in the _pPositions array
+// _CCW: If true, triangles are assumed to have their front-face be specified by
+//       the counter-clockwise order of vertices in a triangle. This affects 
+//       which way a normal points.
+// _OverwriteAll: Overwrites any pre-existing data in the array. If this is 
+// false, any zero-length vector will be overwritten. Any length-having vector
+// will not be touched.
+// This can return EINVAL if a parameters isn't something that can be used.
+template<typename T> bool oCalculateVertexNormals(TVEC3<T>* _pVertexNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const TVEC3<T>* _pPositions, size_t _NumberOfPositions, bool _CCW = false, bool _OverwriteAll = true);
 
-inline float4 oCreatePlane(const float3& _PlaneNormal, const float3& _Point) { float3 n = normalize(_PlaneNormal); return float4(n, dot(n, _Point)); }
-inline float4 oNormalizePlane(const float4& _Plane) { float invLength = rsqrt(dot(_Plane.XYZ(), _Plane.XYZ())); return _Plane * invLength; }
+// Calculates the tangent space vector and its handedness from the following
+// inputs:
+// _pTangents: output, array to fill with tangents. This should be at least 
+//             as large as the number of certices in the specified mesh 
+//             (_NumberOfVertices)
+// _pIndices: array of triangles (every 3 specifies a triangle)
+// _NumberOfIndices: The number of indices in the _pIndices array
+// _pPositions: list of XYZ positions for the mesh that are indexed by the index 
+//              array
+// _pNormals: list of normalized normals for the mesh that are indexed by the 
+//            index array
+// _pTexcoords: list of texture coordinates for the mesh that are indexed by the 
+//              index array
+// _NumberOfVertices: The number of vertices in the _pPositions, _pNormals, and 
+//                    _pTexCoords arrays
+void oCalculateTangents(float4* _pTangents, const unsigned int* _pIndices, size_t _NumberOfIndices, const float3* _pPositions, const float3* _pNormals, const float2* _pTexcoords, size_t _NumberOfVertices);
 
-bool oCalculateAreaAndCentriod(float* _pArea, float2* _pCentroid, const float2* _pVertices, size_t _VertexStride, size_t _NumVertices);
+// Allocates and fills an edge list for the mesh described by the specified 
+// indices:
+// _NumberOfVertices: The number of vertices the index array indexes
+// _pIndices: array of triangles (every 3 specifies a triangle)
+// _NumberOfIndices: The number of indices in the _pIndices array
+// _ppEdges: a pointer to receive an allocation and be filled with index pairs 
+//           describing an edge. Use oFreeEdgeList() to free memory the edge 
+//           list allocation. So every two uints in *_ppEdges represents an edge.
+// _pNumberOfEdges: a pointer to receive the number of edge pairs returned
+void oCalculateEdges(size_t _NumberOfVertices, const unsigned int* _pIndices, size_t _NumberOfIndices, unsigned int** _ppEdges, size_t* _pNumberOfEdges);
+void oFreeEdgeList(unsigned int* _pEdges);
 
-// TODO: Add calc the line of intersection
-// bool intersects(float3& linePt, float3& lineDir, const planef& plane1) const
+// If some process modified indices, go through and compact the specified vertex
+// streams. 
+// _pIndices: array of triangles (every 3 specifies a triangle)
+// _NumberOfIndices: The number of indices in the _pIndices array
+// pointers to attributes: any can be NULL if not available
+// _NumberOfVertices: The number of vertices the index array indexes
+// _pNewNumVertices: receives the new count of each of the specified streams of 
+// data
+//
+// All attribute streams will be modified and _pIndices values will be updated
+// to reflect new vertices.
+template<typename T> void oPruneUnindexedVertices(unsigned int* _pIndices, size_t _NumberOfIndices, TVEC3<T>* _pPositions, TVEC3<T>* _pNormals, TVEC4<T>* _pTangents, TVEC2<T>* _pTexcoords0, TVEC2<T>* _pTexcoords1, unsigned int* _pColors, size_t _NumberOfVertices, size_t *_pNewNumVertices);
+
+// Given an array of points, compute the minimize and maximum axis-aligned 
+// corners of the set. (Useful for calculating corners of an axis-aligned 
+// bounding box.
+template<typename T> void oCalculateMinMaxPoints(const TVEC3<T>* oRESTRICT _pPoints, size_t _NumberOfPoints, TVEC3<T>* oRESTRICT _pMinPoint, TVEC3<T>* oRESTRICT _pMaxPoint);
+
+// _____________________________________________________________________________
+// Containment/intersection/base collision
+
 bool oIntersects(float3* _pIntersection, const float4& _Plane0, const float4& _Plane1, const float4& _Plane2);
 
 // Calculate the point on this plane where the line segment
 // described by p0 and p1 intersects.
 bool oIntersects(float3* _pIntersection, const float4& _Plane, const float3& _Point0, const float3& _Point1);
 
+inline bool oContains(const oRECT& _rect, int2 _point) {return _point.x >= _rect.GetMin().x && _point.x <= _rect.GetMax().x && _point.y >= _rect.GetMin().y && _point.y <= _rect.GetMax().y;}
+
+// Returns -1 if the frustum partially contains the box, 0 if not at all contained,
+// and 1 if the box is wholly inside the frustum.
+template<typename T> int oContains(const TFRUSTUM<T>& _Frustum, const TAABOX<T,TVEC3<T>>& _Box);
+template<typename T> int oContains(const TFRUSTUM<T>& _Frustum, const TVEC4<T>& _Sphere);
+template<typename T> int oContains(const TSPHERE<T>& _Sphere, const TAABOX<T,TVEC3<T>>& _Box);
+
+// @oooii-tony: This is only implemented and used for 2D rectangles, so move
+// this inside oMath.cpp so that it's more hidden that it's not fully implemented.
+// Returns a rectangle that is the clipped overlap of this with other
+template<typename T, typename TVec> TAABOX<T, TVec> oClip(const TAABOX<T, TVec>& _BoxA, const TAABOX<T, TVec>& _BoxB)
+{
+	TAABOX<T, TVec> ClippedRect;
+	T ClipTop;
+	T ClipLeft;
+	T ClipWidth;
+	T ClipHeight;
+	{
+		bool BIsLeft = _BoxB.GetMin().x < _BoxA.GetMin().x;
+		const TAABOX<T, TVec>& LRect = BIsLeft ? _BoxB : _BoxA;
+		const TAABOX<T, TVec>& RRect = BIsLeft ? _BoxA : _BoxB;
+
+		ClipLeft = __max( LRect.GetMin().x, RRect.GetMin().x );
+		ClipWidth = __min( LRect.GetMax().x - ClipLeft, RRect.GetMax().x - ClipLeft );
+		if( ClipWidth < 0 )
+			return ClippedRect;
+	}
+	{
+		bool BIsTop = _BoxB.GetMin().y < _BoxA.GetMin().y;
+		const TAABOX<T, TVec>& TRect = BIsTop ? _BoxB : _BoxA;
+		const TAABOX<T, TVec>& BRect = BIsTop ? _BoxA : _BoxB;
+
+		ClipTop = __max(TRect.GetMin().y, BRect.GetMin().y);
+		ClipHeight = __min(TRect.GetMax().y - ClipTop, BRect.GetMax().y - ClipTop);
+		if( ClipHeight < 0 )
+			return ClippedRect;
+	}
+
+	ClippedRect.SetMin(TVec(ClipLeft, ClipTop));
+	ClippedRect.SetMax(TVec(ClipLeft + ClipWidth, ClipTop + ClipHeight));
+
+	return ClippedRect;
+}
+
+// _____________________________________________________________________________
+// NON-HLSL Miscellaneous
+
+inline unsigned char oUNORMAsUBYTE(float x) { return static_cast<unsigned char>(floor(x * 255.0f + 0.5f)); }
+inline unsigned short oUNORMAsUSHORT(float x) { return static_cast<unsigned char>(floor(x * 65535.0f + 0.5f)); }
+inline float oUBYTEAsUNORM(size_t c) { return (c & 0xff) / 255.0f; }
+inline float oUSHORTAsUNORM(size_t c) { return (c & 0xffff) / 65535.0f; }
+
+bool oCalculateAreaAndCentriod(float* _pArea, float2* _pCentroid, const float2* _pVertices, size_t _VertexStride, size_t _NumVertices);
+
 // Determines a location in 3D space based on 4 reference locations and their distances from the location
-template<typename T> T oTrilaterate(const TVECTOR3<T> observers[4], const T distances[4], TVECTOR3<T>* position);
+template<typename T> T oTrilaterate(const TVEC3<T> observers[4], const T distances[4], TVEC3<T>* position);
 template<typename T>
-inline T oTrilaterate(const TVECTOR3<T> observers[4], T distance, TVECTOR3<T>* position)
+inline T oTrilaterate(const TVEC3<T> observers[4], T distance, TVEC3<T>* position)
 {
 	T distances[4];
 	for(int i = 0; i < 4; ++i)
@@ -1070,7 +496,7 @@ inline T oTrilaterate(const TVECTOR3<T> observers[4], T distance, TVECTOR3<T>* p
 	return oTrilaterate(observers, distances, position);	
 }
 // Computes a matrix to move from one coordinate system to another based on 4 known reference locations in the start and end systems assuming uniform units
-template<typename T> bool oCoordinateTransform(const TVECTOR3<T> startCoords[4], const TVECTOR3<T> endCoords[4], TMATRIX4<T> *matrix);
+template<typename T> bool oCoordinateTransform(const TVEC3<T> startCoords[4], const TVEC3<T> endCoords[4], TMAT4<T> *matrix);
 
 // Computes the gaussian weight of a specific sample in a 1D kernel 
 inline float GaussianWeight(float stdDeviation, int sampleIndex)
@@ -1078,37 +504,7 @@ inline float GaussianWeight(float stdDeviation, int sampleIndex)
 	return (1.0f / (sqrt(2.0f * oPIf) * stdDeviation)) * pow(oEf, -((float)(sampleIndex * sampleIndex) / (2.0f * stdDeviation * stdDeviation)));
 }
 
-// _____________________________________________________________________________
-// More complex math structures
-
-template<typename T, typename TVec> class TAABOX
-{
-public:
-	TAABOX() : Min(oNumericLimits<T>::GetMax()), Max(oNumericLimits<T>::GetMin()){}
-	TAABOX(const TAABOX<T,TVec>& box) : Min(box.Min), Max(box.Max) {}
-	TAABOX(const TVec& _Min, const TVec& _Max) : Min(_Min), Max(_Max) {}
-	inline const TAABOX<T,TVec>& operator=(const TVec& _Box) { Min = box.Min; Max = box.Max; return *this; }
-	inline const TVec& GetMin() const { return Min; }
-	inline const TVec& GetMax() const { return Max; }
-	inline void SetMin(const TVec& _Min) { Min = _Min; }
-	inline void SetMax(const TVec& _Max) { Max = _Max; }
-	inline bool IsEmpty() const { return less_than_equal(Max, Min); } 
-	inline void Empty() { Min = TVec(oNumericLimits<T>::GetMax()); Max = TVec(oNumericLimits<T>::GetMin()); }
-	inline TVec GetCenter() const { return Min + (Max - Min) / T(2.0f); }
-	inline T GetBoundingRadius() const { return length(Max-Min) / T(2.0f); }
-	inline void GetDimensions(T* _pWidth, T* _pHeight) const { *_pWidth = Max.x - Min.x; *_pHeight = Max.y - Min.y; }
-	inline void GetDimensions(T* _pWidth, T* _pHeight, T* _pDepth) const { *_pWidth = Max.x - Min.x; *_pHeight = Max.y - Min.y; *_pDepth = Max.z - Min.z; }
-	inline void Transform(const TMATRIX4<T>& _Matrix) { Min = _Matrix * Min; Max = _Matrix * Max; }
-	inline void ExtendBy(const TVec& _Point) { Min = oMin(Min, _Point); Max = oMax(Max, _Point); }
-	inline void ExtendBy(const TAABOX<T,TVec>& _Box) { ExtendBy(_Box.Min); ExtendBy(_Box.Max); }
-protected:
-	TVec Min;
-	TVec Max;
-};
-
-typedef TAABOX<float, TVECTOR3<float>> oAABoxf;
-typedef TAABOX<double, TVECTOR3<float>> oAABoxd;
-typedef TAABOX<int, TVECTOR2<int>> oRECT;
+template<typename T> oRECT oToRect(const T& _Rect);
 
 // Takes a rectangle and breaks it into _MaxNumSplits rectangles
 // where each rectangle's area is a % of the source rectangle approximated 
@@ -1116,86 +512,5 @@ typedef TAABOX<int, TVECTOR2<int>> oRECT;
 // must be 1.0f and decreasing in size.  SplitRect returns the number of splits
 // it could do (which may be less than _MaxNumSplits when the ratios are too small)
 unsigned int SplitRect(const oRECT& _SrcRect, const unsigned int _MaxNumSplits, const float* _pOrderedSplitRatio, const unsigned int _XMultiple, const unsigned int _YMultiple, oRECT* _pSplitResults);
-
-template<typename T> class TFRUSTUM
-{
-public:
-	enum CORNER
-	{
-		LEFT_TOP_NEAR,
-		LEFT_TOP_FAR,
-		LEFT_BOTTOM_NEAR,
-		LEFT_BOTTOM_FAR,
-		RIGHT_TOP_NEAR,
-		RIGHT_TOP_FAR,
-		RIGHT_BOTTOM_NEAR,
-		RIGHT_BOTTOM_FAR,
-	};
-
-	TVECTOR4<T> Left;
-	TVECTOR4<T> Right;
-	TVECTOR4<T> Top;
-	TVECTOR4<T> Bottom;
-	TVECTOR4<T> Near;
-	TVECTOR4<T> Far;
-
-	TFRUSTUM() {}
-
-	// This frustum will be in whatever space the matrix was in... so if solely a 
-	// projection matrix, then the frustum will be in projection space. If a world-
-	// view-projection matrix is specified, then the frustum will be in world-view
-	// space.
-	TFRUSTUM(const TMATRIX4<T>& _Projection) { oCalcFrustumPlanesRH(&Left, _Projection, true); }
-	const TFRUSTUM<T>& operator=(const TMATRIX4<T>& _Projection) { oCalcFrustumPlanesRH(&Left, _Projection, true); return *this; }
-
-	inline const TVECTOR4<T>& GetPlane(unsigned int _Index) const { return (&Near)[_Index]; }
-
-	// Returns true if values are valid or false if planes don't meet in 8 corners.
-	bool CalcCorners(TVECTOR3<T>* _pCorners) const
-	{
-		// @oooii-tony: TODO implement oIntersects for double
-		bool isect = oIntersects(_pCorners[LEFT_TOP_NEAR], Left, Top, Near);
-		isect = isect && oIntersects(_pCorners[LEFT_TOP_FAR], Left, Top, Far);
-		isect = isect && oIntersects(_pCorners[LEFT_BOTTOM_NEAR], Left, Bottom, Near);
-		isect = isect && oIntersects(_pCorners[LEFT_BOTTOM_FAR], Left, Bottom, Far);
-		isect = isect && oIntersects(_pCorners[RIGHT_TOP_NEAR], Right, Top, Near);
-		isect = isect && oIntersects(_pCorners[RIGHT_TOP_FAR], Right, Top, Far);
-		isect = isect && oIntersects(_pCorners[RIGHT_BOTTOM_NEAR], Right, Bottom, Near);
-		isect = isect && oIntersects(_pCorners[RIGHT_BOTTOM_FAR], Right, Bottom, Far);
-		return isect;
-	}
-};
-
-typedef TFRUSTUM<float> oFrustumf;
-//typedef TFRUSTUM<double> oFrustumd; // @oooii-tony: Need an oIntersects for double
-
-// Returns -1 if the frustum partially contains the box, 0 if not at all contained,
-// and 1 if the box is wholly inside the frustum.
-template<typename T> int oContains(const TFRUSTUM<T>& _Frustum, const TAABOX<T,TVECTOR3<T>>& _Box);
-
-template<typename T> class TSPHERE : public TVECTOR4<T>
-{
-public:
-	TSPHERE<T>() {}
-	TSPHERE<T>(const TVECTOR3<T>& position, T radius) : TVECTOR4<T>(position.x, position.y, position.z, radius) {}
-
-	T radius() const { return w; }
-	const TVECTOR3<T>& position() const { return XYZ(); }
-
-	TAABOX<T, TVECTOR3<T>> aabb() const { return TAABOX<T, TVECTOR3<T>>(TVECTOR3<T>(position().x - radius(), position().y - radius(), position().z - radius()), TVECTOR3<T>(position().x + radius(), position().y + radius(), position().z + radius())); }
-};
-
-typedef TSPHERE<float> oSpheref;
-typedef TSPHERE<double> oSphered;
-
-template<typename T> class TPLANE : public TVECTOR4<T>
-{
-public:
-	TPLANE<T>() {}
-	TPLANE<T>(const TVECTOR3<T>& xyz, T d) : TVECTOR4<T>(xyz.x, xyz.y, xyz.z, d) {}
-};
-
-typedef TPLANE<float> oPlanef;
-typedef TPLANE<double> oPlaned;
 
 #endif

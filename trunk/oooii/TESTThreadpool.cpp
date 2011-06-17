@@ -1,27 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oBarrier.h>
 #include <oooii/oEvent.h>
 #include <oooii/oRef.h>
@@ -195,7 +172,6 @@ bool RunParallelForTest(const char* _Name, char* _StrStatus, size_t _SizeofStrSt
 	double end = oTimer();
 	delete [] fractal;
 	sprintf_s(_StrStatus, _SizeofStrStatus, "%s: %u ms", _Name, static_cast<unsigned int>((end - start)*1000.0));
-	oRecycleScheduler();
 	return true;
 }
 
@@ -213,7 +189,7 @@ struct TESTThreadpoolWinTP : public oTest
 		oThreadpool::DESC desc;
 		desc.Implementation = oThreadpool::WINDOWS_THREAD_POOL;
 		desc.NumThreads = ~0u;
-		threadsafe oRef<oThreadpool> tp;
+		oRef<threadsafe oThreadpool> tp;
 		oTESTB(oThreadpool::Create(&desc, &tp), "Failed to create windows thread pool");
 		oTESTB(RunThreadpoolTest("WinTP", tp, _StrStatus, _SizeofStrStatus), "Windows thread pool failed");
 		return SUCCESS;
@@ -227,7 +203,7 @@ struct TESTThreadpoolOOOii : public oTest
 		oThreadpool::DESC desc;
 		desc.Implementation = oThreadpool::OOOII;
 		desc.NumThreads = ~0u;
-		threadsafe oRef<oThreadpool> tp;
+		oRef<threadsafe oThreadpool> tp;
 		oTESTB(oThreadpool::Create(&desc, &tp), "Failed to create OOOii thread pool");
 		oTESTB(RunThreadpoolTest("OOOiiTP", tp, _StrStatus, _SizeofStrStatus), "OOOii thread pool failed");
 		return SUCCESS;
@@ -249,6 +225,6 @@ struct TESTThreadpoolTBB : public oTest
 	int mTestArrayB[mArraySize];
 };
 
-TESTThreadpoolWinTP TestThreadpoolWinTP;
-TESTThreadpoolOOOii TestThreadpoolOOOii;
-TESTThreadpoolTBB TestThreadpoolTBB;
+oTEST_REGISTER(TESTThreadpoolWinTP);
+oTEST_REGISTER(TESTThreadpoolOOOii);
+oTEST_REGISTER(TESTThreadpoolTBB);

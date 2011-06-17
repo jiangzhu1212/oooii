@@ -1,30 +1,7 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oMouse.h>
 #include <oooii/oRefCount.h>
-#include <oooii/oThreading.h>
+#include <oooii/oMutex.h>
 #include <oooii/oWindows.h>
 #include "oKeyState.h"
 
@@ -71,19 +48,19 @@ struct Mouse_Impl : public oMouse
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oMouse>());
 
-	Mouse_Impl(HWND _hWnd, bool _ShortCircuitChain, bool* pSuccess = 0)
-		: ShortCircuitChain(_ShortCircuitChain)
+	Mouse_Impl(DESC _Desc, HWND _hWnd, bool* pSuccess = 0)
+		: Desc(_Desc)
 		, hWnd(_hWnd)
 		, VerticalWheelDelta(0)
 		, HorizontalWheelDelta(0)
 		, MouseWaitCount(0)
 		, CursorVisible(true)
 		, ShouldShowCursor(true)
+		, ButtonDownCount(0)
 	{
 
 		hHook = oSetWindowsHook(WH_MOUSE, MouseHook, this, _hWnd);
-		if (pSuccess)
-			*pSuccess = !!hHook;
+		*pSuccess = !!hHook;
 
 		POINT pt;
 		oVB(GetCursorPos(&pt));
@@ -190,17 +167,18 @@ struct Mouse_Impl : public oMouse
 		if (hWnd && pMHS->hwnd != hWnd)
 			return false;
 
-		// Mouse wheel's idea of focus is a bit different than other messages,
-		// so handle it before the hittest cull
-		if (_wParam == WM_MOUSEWHEEL)
-			HorizontalWheelDelta = GET_WHEEL_DELTA_WPARAM(pMHS->mouseData);
-		if (_wParam == WM_MOUSEHWHEEL)
-			VerticalWheelDelta = GET_WHEEL_DELTA_WPARAM(pMHS->mouseData);
-
 		BUTTON which = NUM_BUTTONS;
-		bool isDown = false;
+		bool isDown = false; 
 
 		GetButtonState(static_cast<UINT>(_wParam), pMHS->mouseData, &which, &isDown);
+		if( NUM_BUTTONS != which )
+		{
+			// Refcount button presses so we know when to clip
+			ButtonDownCount += isDown ? 1 : -1;
+			// Ensure the refcount doesn't go below zero which can occur when the user 
+			// resizes a window (the UP event is received but the DOWN event is not)
+			ButtonDownCount = __max(0, ButtonDownCount);
+		}
 		State.RecordUpDown(which, isDown);
 
 		oMutex::ScopedLock lock(PositionLock);
@@ -211,6 +189,10 @@ struct Mouse_Impl : public oMouse
 			case WM_MOUSEHWHEEL: HorizontalWheelDelta = GET_WHEEL_DELTA_WPARAM(pMHS->mouseData); break;
 			default: break;
 		}
+
+		if( Desc.ClipCursorMouseDown )
+			oClipCursorToClient(hWnd, ButtonDownCount != 0 );
+
 
 		//@oooii-Andrew: change mouse cursor when out of client area
 		POINT pt;
@@ -227,7 +209,7 @@ struct Mouse_Impl : public oMouse
 			SetCursorState(NONE);
 		}
 
-		return ShortCircuitChain;
+		return Desc.ShortCircuitEvents;
 	}
 
 	static LRESULT CALLBACK MouseHook(int _nCode, WPARAM _wParam, LPARAM _lParam, void* _pUserData)
@@ -244,11 +226,12 @@ struct Mouse_Impl : public oMouse
 
 	HHOOK hHook;
 	HWND hWnd;
+	DESC Desc;
 	oRefCount RefCount;
 	POINT Position;
 	int VerticalWheelDelta;
 	int HorizontalWheelDelta;
-	bool ShortCircuitChain;
+	int ButtonDownCount;
 	oMutex PositionLock;
 	mutable oMutex CursorStateLock;
 	oKeyState<NUM_BUTTONS> State;
@@ -274,16 +257,9 @@ oMouse::ScopedWait::~ScopedWait()
 		pMouse->Release();
 }
 
-bool oMouse::Create(void* _AssociatedNativeHandle, bool _ShortCircuitEvents, threadsafe oMouse** _ppMouse)
+bool oMouse::Create(const DESC& _Desc, void* _WindowNativeHandle, threadsafe oMouse** _ppMouse)
 {
-	if (!_AssociatedNativeHandle || !_ppMouse) return false;
 	bool success = false;
-	*_ppMouse = new Mouse_Impl((HWND)_AssociatedNativeHandle, _ShortCircuitEvents, &success);
-	if (*_ppMouse && !success)
-	{
-		delete *_ppMouse;
-		*_ppMouse = 0;
-	}
-
+	oCONSTRUCT( _ppMouse, Mouse_Impl(_Desc, (HWND)_WindowNativeHandle, &success) );
 	return success;
 }

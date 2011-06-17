@@ -1,32 +1,11 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #pragma once
 #ifndef oString_h
 #define oString_h
 
 #include <oooii/oStddef.h>
 #include <ctype.h> // isalnum
+#include <stdarg.h> // va_start
 
 #define oNEWLINE "\r\n"
 #define oWHITESPACE " \t\v\f" oNEWLINE
@@ -56,20 +35,12 @@ inline char* oTrim(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource
 // Replaces any run of whitespace with a single ' ' character. Returns _StrDestination
 char* oPruneWhitespace(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource, char _Replacement = ' ', const char* _ToPrune = oWHITESPACE);
 
-// Converts a unicode 16-bit string to its 8-bit equivalent. If 
-// _SizeofMultiByteString is 0, this returns the required buffer size to hold 
-// the conversion (includes room for the nul terminator). Otherwise, this 
-// returns the length of the string written (not including the nul terminator).
-size_t oStrConvert(char* _MultiByteString, size_t _SizeofMultiByteString, const wchar_t* _StrUnicodeSource);
-
-// Converts a multi-byte 8-bit string to its 16-bit unicode equivalent. If 
-// _NumberOfCharactersInUnicodeString is 0, this returns the NUMBER OF CHARACTERS,
-// (not the number of bytes) required for the destination bufferm including the 
-// nul terminator. Otherwise, this returns the length of the string written.
-size_t oStrConvert(wchar_t* _UnicodeString, size_t _NumberOfCharactersInUnicodeString, const char* _StrMultibyteSource);
-
 // replace all occurrences of strFind in strSource with strReplace and copy the result to strDestination
 errno_t oReplace(char* _StrResult, size_t _SizeofStrResult, const char* _StrSource, const char* _StrFind, const char* _StrReplace);
+
+// Search from the back of the string to find the specified substring
+const char* oStrStrReverse(const char* _Str, const char* _SubStr);
+char* oStrStrReverse(char* _Str, const char* _SubStr);
 
 // Insert one string into another in-place. _InsertionPoint must point into 
 // _StrSource If _ReplacementLength is non-zero, then that number of characters 
@@ -77,7 +48,8 @@ errno_t oReplace(char* _StrResult, size_t _SizeofStrResult, const char* _StrSour
 errno_t oInsert(char* _StrSource, size_t _SizeofStrResult, char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion);
 
 // Essentially a variadic strcat_s
-void oStrAppend( char* string, size_t sizeBuffer, const char* format, ... );
+errno_t oVStrAppend(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args);
+inline errno_t oStrAppend(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); return oVStrAppend(_StrDestination, _SizeofStrDestination, _Format, args); }
 
 // Returns the appropriate suffix [st nd rd th] for a number
 const char* oOrdinal(int _Number);
@@ -104,6 +76,11 @@ inline bool oIsCppID(char c) { return isalnum(c) || c == '_'; }
 // Move to the next id character, or one of the stop chars, whichever is first
 const char* oMoveToNextID(const char* _pCurrent, const char* _Stop = "");
 char* oMoveToNextID(char* _pCurrent, const char* _Stop = "");
+
+// Returns the pointer into _TypeinfoName that represents just the name of the 
+// user type, thus skipping any prefix [enum|class|struct|union]. This does not
+// behave well for built-in types.
+const char* oGetTypeName(const char* _TypeinfoName);
 
 // first param is assumed to be pointing to the open brace. From there this will 
 // find the  brace at the same level of recursion - internal pairs are ignored.
@@ -315,6 +292,8 @@ template<size_t size> inline size_t oStrConvert(char (&_StrDestination)[size], c
 template<size_t size> inline size_t oStrConvert(wchar_t (&_StrDestination)[size], const char* _StrSource) { return oStrConvert(_StrDestination, size, _StrSource); }
 template<size_t size> inline errno_t oReplace(char (&_StrResult)[size], const char* _StrSource, const char* _StrFind, const char* _StrReplace) { return oReplace(_StrResult, size, _StrSource, _StrFind, _StrReplace); }
 template<size_t size> inline errno_t oInsert(char (&_StrSource)[size], char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion) { return oInsert(_StrSource, size, _InsertionPoint, _ReplacementLength, _Insertion); }
+template<size_t size> inline errno_t oVStrAppend(char (&_StrDestination)[size], const char* _Format, va_list _Args) { return oVStrAppend(_StrDestination, size, _Format, _Args); }
+template<size_t size> inline errno_t oStrAppend(char (&_StrDestination)[size], const char* _Format, ...) { va_list args; va_start(args, _Format); return oVStrAppend(_StrDestination, size, _Format, args); }
 template<size_t size> inline errno_t oFormatMemorySize(char (&_StrDestination)[size], unsigned long long _NumBytes, size_t _NumPrecisionDigits) { return oFormatMemorySize(_StrDestination, size, _NumBytes, _NumPrecisionDigits); }
 template<size_t size> inline errno_t oFormatTimeSize(char (&_StrDestination)[size], double _TimeInSeconds) { return oFormatTimeSize(_StrDestination, size, _TimeInSeconds); }
 template<size_t size> inline errno_t oFormatCommas(char (&_StrDestination)[size], int _Number) { return oFormatCommas(_StrDestination, size, _Number); }

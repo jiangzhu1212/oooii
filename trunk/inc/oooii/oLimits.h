@@ -1,32 +1,16 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #pragma once
 #ifndef oLimits_h
 #define oLimits_h
 // @oooii-tony: Using <limits> can conflict with macro definitions of min and
 // max, so unfortunately, don't use it and use this lame renamed under-featured
 // version.
+
+// @oooii-tony: Another lame thing. std::numeric_limit<float>::min() is a 
+// positive value while std::numeric_limit<int>::min() is a negative value, so
+// you can't naively make a template with Min and Max members and set it with
+// std::numeric_limit because it won't behave well with signed numbers in both
+// float and int cases.
 
 #include <float.h>
 #include <limits.h>
@@ -38,6 +22,9 @@ public:
 	static T GetMax() { return T(0); }
 	static T GetEpsilon() { return T(0); }
 	static T GetRoundError() { return T(0); }
+
+	static T GetSignedMin() { return T(0); }
+	static T GetSmallestNonZeroMagnitude() { return T(0); }
 
 	static unsigned int GetNumMantissaBits() { return 0; }
 	static unsigned int GetNumPrecisionDigits() { return 0; }
@@ -53,6 +40,9 @@ public:
 	static T GetEpsilon() { return FLT_EPSILON; }
 	static T GetRoundError() { return 0.5f; }
 
+	static T GetSignedMin() { return -GetMax(); }
+	static T GetSmallestNonZeroMagnitude() { return GetMin(); }
+
 	static unsigned int GetNumMantissaBits() { return FLT_MANT_DIG; }
 	static unsigned int GetNumPrecisionDigits() { return FLT_DIG; }
 	static bool IsSigned() { return true; }
@@ -66,6 +56,9 @@ public:
 	static T GetMax() { return DBL_MAX; };
 	static T GetEpsilon() { return DBL_EPSILON; }
 	static T GetRoundError() { return 0.5; }
+
+	static T GetSignedMin() { return -GetMax(); }
+	static T GetSmallestNonZeroMagnitude() { return GetMin(); }
 
 	static unsigned int GetNumMantissaBits() { return DBL_MANT_DIG; }
 	static unsigned int GetNumPrecisionDigits() { return DBL_DIG; }
@@ -81,6 +74,9 @@ public:
 	static T GetEpsilon() { return LDBL_EPSILON; }
 	static T GetRoundError() { return 0.5; }
 
+	static T GetSignedMin() { return -GetMax(); }
+	static T GetSmallestNonZeroMagnitude() { return GetMin(); }
+
 	static unsigned int GetNumMantissaBits() { return LDBL_MANT_DIG; }
 	static unsigned int GetNumPrecisionDigits() { return LDBL_DIG; }
 	static bool IsSigned() { return true; }
@@ -94,6 +90,9 @@ public:
 	static T GetMax() { return SCHAR_MAX; };
 	static T GetEpsilon() { return 0; }
 	static T GetRoundError() { return 0; }
+
+	static T GetSignedMin() { return GetMin(); }
+	static T GetSmallestNonZeroMagnitude() { return 1; }
 
 	static unsigned int GetNumMantissaBits() { return 0; }
 	static unsigned int GetNumPrecisionDigits() { return 0; }
@@ -109,6 +108,9 @@ public:
 	static T GetEpsilon() { return 0; }
 	static T GetRoundError() { return 0; }
 
+	static T GetSignedMin() { return 0; }
+	static T GetSmallestNonZeroMagnitude() { return 1; }
+
 	static unsigned int GetNumMantissaBits() { return 0; }
 	static unsigned int GetNumPrecisionDigits() { return 0; }
 	static bool IsSigned() { return false; }
@@ -122,6 +124,9 @@ public:
 	static T GetMax() { return SHRT_MAX; };
 	static T GetEpsilon() { return 0; }
 	static T GetRoundError() { return 0; }
+
+	static T GetSignedMin() { return GetMin(); }
+	static T GetSmallestNonZeroMagnitude() { return 1; }
 
 	static unsigned int GetNumMantissaBits() { return 0; }
 	static unsigned int GetNumPrecisionDigits() { return 0; }
@@ -137,6 +142,9 @@ public:
 	static T GetEpsilon() { return 0; }
 	static T GetRoundError() { return 0; }
 
+	static T GetSignedMin() { return 0; }
+	static T GetSmallestNonZeroMagnitude() { return 1; }
+
 	static unsigned int GetNumMantissaBits() { return 0; }
 	static unsigned int GetNumPrecisionDigits() { return 0; }
 	static bool IsSigned() { return false; }
@@ -150,6 +158,9 @@ public:
 	static T GetMax() { return INT_MAX; };
 	static T GetEpsilon() { return 0; }
 	static T GetRoundError() { return 0; }
+
+	static T GetSignedMin() { return GetMin(); }
+	static T GetSmallestNonZeroMagnitude() { return 1; }
 
 	static unsigned int GetNumMantissaBits() { return 0; }
 	static unsigned int GetNumPrecisionDigits() { return 0; }
@@ -165,6 +176,9 @@ public:
 	static T GetEpsilon() { return 0; }
 	static T GetRoundError() { return 0; }
 
+	static T GetSignedMin() { return 0; }
+	static T GetSmallestNonZeroMagnitude() { return 1; }
+
 	static unsigned int GetNumMantissaBits() { return 0; }
 	static unsigned int GetNumPrecisionDigits() { return 0; }
 	static bool IsSigned() { return false; }
@@ -178,6 +192,9 @@ public:
 	static T GetMax() { return LONG_MAX; };
 	static T GetEpsilon() { return 0; }
 	static T GetRoundError() { return 0; }
+
+	static T GetSignedMin() { return GetMin(); }
+	static T GetSmallestNonZeroMagnitude() { return 1; }
 
 	static unsigned int GetNumMantissaBits() { return 0; }
 	static unsigned int GetNumPrecisionDigits() { return 0; }
@@ -193,6 +210,9 @@ public:
 	static T GetEpsilon() { return 0; }
 	static T GetRoundError() { return 0; }
 
+	static T GetSignedMin() { return 0; }
+	static T GetSmallestNonZeroMagnitude() { return 1; }
+
 	static unsigned int GetNumMantissaBits() { return 0; }
 	static unsigned int GetNumPrecisionDigits() { return 0; }
 	static bool IsSigned() { return false; }
@@ -207,6 +227,9 @@ public:
 	static T GetEpsilon() { return 0; }
 	static T GetRoundError() { return 0; }
 
+	static T GetSignedMin() { return GetMin(); }
+	static T GetSmallestNonZeroMagnitude() { return 1; }
+
 	static unsigned int GetNumMantissaBits() { return 0; }
 	static unsigned int GetNumPrecisionDigits() { return 0; }
 	static bool IsSigned() { return true; }
@@ -220,6 +243,9 @@ public:
 	static T GetMax() { return ULLONG_MAX; };
 	static T GetEpsilon() { return 0; }
 	static T GetRoundError() { return 0; }
+
+	static T GetSignedMin() { return 0; }
+	static T GetSmallestNonZeroMagnitude() { return 1; }
 
 	static unsigned int GetNumMantissaBits() { return 0; }
 	static unsigned int GetNumPrecisionDigits() { return 0; }

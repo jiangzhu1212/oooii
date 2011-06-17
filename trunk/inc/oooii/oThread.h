@@ -1,33 +1,11 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #pragma once
 #ifndef oThread_h
 #define oThread_h
 
 #include <oooii/oInterface.h>
 
-interface oThread : public oInterface
+interface oThread : oInterface
 {
 	enum PRIORITY
 	{
@@ -38,7 +16,7 @@ interface oThread : public oInterface
 		PRIORITY_HIGHEST,
 	};
 
-	interface Proc : public oInterface
+	interface Proc : oInterface
 	{
 		// Runs one iteration of the thread's proc. Looping until exit is handled
 		// by the thread itself.
@@ -54,11 +32,6 @@ interface oThread : public oInterface
 
 	static bool Create(const char* _DebugName, size_t _StackSize, bool _StartSuspended, Proc* _Proc, threadsafe oThread** _ppThread);
 
-	static size_t GetCurrentThreadID();
-	static size_t GetMainThreadID();
-	static void* GetCurrentThreadNativeHandle();
-	static bool CurrentThreadIsMain();
-
 	// Returns the current oThread. If the current thread was not created with
 	// oThread::Create(), this returns NULL.
 	static threadsafe oThread* Current();
@@ -71,8 +44,8 @@ interface oThread : public oInterface
 
 	virtual void SetAffinity(size_t _AffinityMask) threadsafe = 0;
 	virtual size_t GetAffinity() const = 0;
-	virtual void SetPriority(PRIORITY _Priority) = 0;
-	virtual PRIORITY GetPriority() const = 0;
+	virtual void SetPriority(PRIORITY _Priority) threadsafe = 0;
+	virtual PRIORITY GetPriority() threadsafe const = 0;
 	virtual void Suspend() threadsafe = 0;
 	virtual void Resume() threadsafe = 0;
 	virtual void Exit() threadsafe = 0;

@@ -1,27 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oDebugger.h>
 #include <oooii/oSingleton.h>
 #include <oooii/oStddef.h>
@@ -30,31 +7,20 @@
 #include "oDbgHelp.h"
 #include <float.h>
 
+#define HARDLINK_DBGHELP
+#define oBUG_921
+  
 struct oDebuggerContext : public oProcessSingleton<oDebuggerContext>
 {
 	oDebuggerContext()
-		: oProcessSingleton<oDebuggerContext>(true)
 	{
 		_controlfp_s(&OrigFloatExceptions, 0, 0);
-		print("--- oDebugger initialized ---\n");
+		oDbgHelp::Singleton()->Reference();
 	}
 
 	~oDebuggerContext()
 	{
-		print("--- oDebugger deinitialized ---\n");
-	}
-
-	void print(const char* _String)
-	{
-		#ifdef UNICODE
-			WCHAR BUF[2048];
-			oStrConvert(BUF, _String);
-		#else
-			const char* BUF = _String;
-		#endif
-
-		oMutex::ScopedLock lock(OutputDebugStringLock);
-		OutputDebugString(BUF);
+		oDbgHelp::Singleton()->Release();
 	}
 
 	void EnableFloatExceptions(bool _Enable)
@@ -63,7 +29,6 @@ struct oDebuggerContext : public oProcessSingleton<oDebuggerContext>
 		_controlfp_s(&dummy, _Enable ? _EM_INEXACT : OrigFloatExceptions, _MCW_EM);
 	}
 
-	oMutex OutputDebugStringLock; // MSDN says to ensure thread safety explicitly
 	unsigned int OrigFloatExceptions;
 };
 
@@ -89,13 +54,26 @@ void oDebugger::EnableFloatExceptions(bool _Enable)
 	oDebuggerContext::Singleton()->EnableFloatExceptions(_Enable);
 }
 
-void oDebugger::ReportLeaksOnExit(bool _Report)
+void oDebugger::ReportLeaksOnExit(bool _Report, bool _UseDefaultReporter)
 {
 	#ifdef _DEBUG
-		const int kLeakCheckFlags = _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF;
-		int flags = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
-		_CrtSetDbgFlag(_Report ? (flags | kLeakCheckFlags) : (flags &~ kLeakCheckFlags));
+		if (_UseDefaultReporter)
+		{
+			const int kLeakCheckFlags = _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF;
+			int flags = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
+			_CrtSetDbgFlag(_Report ? (flags | kLeakCheckFlags) : (flags &~ kLeakCheckFlags));
+		}
+
+		else
 	#endif
+	{
+		#ifdef oBUG_921
+			oCRTWARNING("CRTTracker disabled. See bug 921. No memory leaks will be reported. Use _UseDefaultReporter=true to work around this issue for now.");
+		#else
+			oCRTMallocTracker::Singleton()->Report(_Report);
+			oCRTMallocTracker::Singleton()->Enable(_Report);
+		#endif
+	}
 }
 
 void oDebugger::BreakOnAlloc(long _RequestNumber)
@@ -103,38 +81,10 @@ void oDebugger::BreakOnAlloc(long _RequestNumber)
 	_CrtSetBreakAlloc(_RequestNumber);
 }
 
-void oDebugger::print(const char* _String)
+void oDebugger::Print(const char* _String)
 {
-	oDebuggerContext::Singleton()->print(_String);
-}
-
-int oDebugger::vprintf(const char* _Format, va_list _Args)
-{
-	int n = 0;
-	if (IsAttached())
-	{
-		char s[1024];
-		n = vsprintf_s(s, _Format, _Args);
-		if (n > oCOUNTOF(s))
-		{
-			char* bigS = (char*)_alloca(n+1);
-			n = vsprintf_s(bigS, n+1, _Format, _Args);
-		}
-
-		if (n)
-			print(s);
-	}
-
-	return n;
-}
-
-int oDebugger::printf(const char* _Format, ...)
-{
-	va_list args;
-	va_start(args, _Format);
-	int n = vprintf(_Format, args);
-	va_end(args);
-	return n;
+	// MSDN says to ensure thread safety explicitly with OutputDebugString
+	oThreadsafeOutputDebugStringA(_String);
 }
 
 bool oDebugger::IsAttached()
@@ -209,8 +159,14 @@ size_t oDebugger::GetCallstack(unsigned long long* _pAddresses, size_t _NumberOf
 	size_t n = 0;
 	while (n < _NumberOfAddresses)
 	{
-		if (!oDbgHelp::Singleton()->CallStackWalk64(GetCurrentThread(), &s, &c))
-			break;
+		#ifdef HARDLINK_DBGHELP
+			if (!oDbgHelp::Singleton()->CallStackWalk64_HARDLINKED(GetCurrentThread(), &s, &c))
+		#else
+			if (!oDbgHelp::Singleton()->CallStackWalk64(GetCurrentThread(), &s, &c))
+		#endif
+			{
+				break;
+			}
 
 		if (s.AddrReturn.Offset == 0 || s.AddrReturn.Offset == 0xffffffffcccccccc)
 			break;
@@ -253,7 +209,16 @@ bool oDebugger::TranslateSymbol(SYMBOL* _pSymbol, unsigned long long _Address)
 	DWORD64 displacement = 0;
 	if (oDbgHelp::Singleton()->CallSymGetSymFromAddr64(_Address, &displacement, symbolInfo))
 	{
-		strcpy_s(_pSymbol->Name, symbolInfo->Name);
+		// symbolInfo just contains the first 512 characters and doesn't guarantee
+		// they will be null-terminated, so copy the buffer and ensure there's some
+		// rational terminator
+
+		//strcpy_s(_pSymbol->Name, symbolInfo->Name);
+		memcpy(_pSymbol->Name, symbolInfo->Name, sizeof(_pSymbol->Name)-sizeof(TCHAR));
+		symbolInfo->Name[oCOUNTOF(symbolInfo->Name)-1] = 0;
+		symbolInfo->Name[oCOUNTOF(symbolInfo->Name)-2] = '.';
+		symbolInfo->Name[oCOUNTOF(symbolInfo->Name)-3] = '.';
+		symbolInfo->Name[oCOUNTOF(symbolInfo->Name)-4] = '.';
 		_pSymbol->SymbolOffset = static_cast<unsigned int>(displacement);
 	}
 

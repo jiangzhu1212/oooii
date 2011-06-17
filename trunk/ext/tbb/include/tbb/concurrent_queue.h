@@ -375,7 +375,7 @@ public:
     /** Does not wait for queue to become not full.
         Returns true if item is pushed; false if queue was already full. */
     bool push_if_not_full( const T& source ) {
-        return this->try_push( source );
+        return try_push( source );
     }
 
     //! Attempt to dequeue an item from head of queue.
@@ -384,7 +384,7 @@ public:
         @deprecated Use try_pop()
         */
     bool pop_if_present( T& destination ) {
-        return this->try_pop( destination );
+        return try_pop( destination );
     }
 
     typedef typename concurrent_bounded_queue<T,A>::iterator iterator;

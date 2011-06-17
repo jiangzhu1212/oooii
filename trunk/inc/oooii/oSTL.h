@@ -1,30 +1,10 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 // Collection of some utility functions useful when working with STL
 #pragma once
 #ifndef oSTL_h
 #define oSTL_h
+
+#include <oooii/oAssert.h>
 
 #pragma warning(disable:4530) // C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
 #include <algorithm>
@@ -149,9 +129,7 @@ public:
 
 	iterator erase(iterator _Position)
 	{
-
-
-		return _Position;
+		return erase(_Position,_Position+1);
 	}
 
 	iterator erase(iterator _First, iterator _Last)
@@ -159,7 +137,7 @@ public:
 		for (iterator it = _First; it != _Last; ++it)
 			(*it).~T();
 
-		memcpy(_First, _Last, sizeof(T) * std::distance(_Last, end()));
+		std::copy(_Last,end(),_First);
 		Size -= std::distance(_First, _Last);
 
 		return _First;
@@ -224,6 +202,32 @@ template<typename T, typename containerT, typename predicateT> bool oFindIfAndEr
 	return false;
 }
 
+template<typename containerT> errno_t oToStringT(char* _StrDestination, size_t _SizeofStrDestination, const containerT& _Container)
+{
+	*_StrDestination = 0;
+
+	typename containerT::const_iterator itLast = _Container.end() - 1;
+	for (typename containerT::const_iterator it = _Container.begin(); it != _Container.end(); ++it)
+	{
+		errno_t err = oToString(_StrDestination, _SizeofStrDestination, *it);
+		if (err)
+			return err;
+
+		if (it != itLast)
+		{
+			err = strcat_s(_StrDestination, _SizeofStrDestination, ",");
+			if (err)
+				return err;
+		}
+
+		size_t len = strlen(_StrDestination);
+		_StrDestination += len;
+		_SizeofStrDestination -= len;
+	}
+
+	return 0;
+}
+
 	} // namespace oSTL
 } // namespace detail
 
@@ -236,11 +240,18 @@ template<typename T, size_t N> bool oContains(const oArray<T, N>& _Array, const 
 template<typename T, size_t N> bool oFindAndErase(oArray<T, N>& _Array, const T& _Item) { return oSTL::detail::oFindAndErase<T, oArray<T, N> >(_Array, _Item); }
 template<typename T, size_t N, class predicateT> bool oFindIfAndErase(oArray<T, N>& _Array, const predicateT& _Predicate, T* _pFound = 0) { return oSTL::detail::oFindIfAndErase<T, oArray<T, N> >(_Array, _Predicate, _pFound); }
 
+// Add a new element to the list and return a reference to it.
+template<typename T, size_t N> T* oAppend(oArray<T, N>& _Array) { _Array.resize(_Array.size() + 1); return &_Array.back(); }
+
 // Get the base pointer to the buffer containing the vector
 template <typename T, size_t N> T* oGetData(oArray<T, N>& _Array) { return _Array.empty() ? 0 : _Array.data(); }
 
+template <typename T, size_t N> size_t oGetDataSize(oArray<T, N>& _Array) { return _Array.empty() ? 0 : _Array.size() * sizeof(T); }
+
 // Get the const base pointer to the buffer containing the vector
 template <typename T, size_t N> const T* oGetData(const oArray<T, N>& _Array) { return _Array.empty() ? 0 : _Array.data(); }
+
+template <typename T, size_t N> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const oArray<T, N>& _Array) { return oSTL::detail::oToStringT(_StrDestination, _SizeofStrDestination, _Array); }
 
 // _____________________________________________________________________________
 // std vector utilities
@@ -255,7 +266,7 @@ template<typename T, class Alloc, class Predicate> bool oFindIfAndErase(std::vec
 template <typename T, class Alloc> void oZeroCapacity(std::vector<T, Alloc>& _Vector)
 {
 	// Stroustrup. TC++PL (third edition). Section 16.3.8.
-	std::vector<T, Alloc>().swap(_Vector);
+	std::vector<T, Alloc>(_Vector.get_allocator()).swap(_Vector);
 }
 
 // Just like malloc, reserve can fail to allocate, so check it
@@ -269,11 +280,25 @@ template <typename T> bool oSafeReserve(T& _Container, typename T::size_type _Ca
 	return true;
 }
 
+// Add a new element to the list and return a reference to it.
+template<typename T, class Alloc> T* oAppend(std::vector<T, Alloc>& _Vector) { _Vector.resize(_Vector.size() + 1); return &_Vector.back(); }
+
 // Get the base pointer to the buffer containing the vector
 template <typename T, class Alloc> T* oGetData(std::vector<T, Alloc>& _Vector) { return _Vector.empty() ? 0 : &_Vector.front(); }
 
 // Get the const base pointer to the buffer containing the vector
 template <typename T, class Alloc> const T* oGetData(const std::vector<T, Alloc>& _Vector) { return _Vector.empty() ? 0 : &_Vector.front(); }
+
+template <typename T, class Alloc> size_t oGetDataSize(const std::vector<T, Alloc>& _Vector) { return _Vector.empty() ? 0 : _Vector.size() * sizeof(T); }
+
+template <typename T, class Alloc> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const std::vector<T, Alloc>& _Vector) { return oSTL::detail::oToStringT(_StrDestination, _SizeofStrDestination, _Vector); }
+
+// Removes all duplicates from a std::vector, but reorders the vector to do so.
+template <typename T, class Alloc> void oSortAndRemoveDuplicates(const std::vector<T, Alloc>& _Vector)
+{
+	std::sort(_Vector.begin(), _Vector.end());
+	_Vector.erase(std::unique(_Vector.begin(), _Vector.end()), _Vector.end());
+}
 
 // _____________________________________________________________________________
 // regex helpers
@@ -360,17 +385,18 @@ template<> struct oStdEqualTo<const char*> { int operator()(const char* x, const
 template<typename T> struct oStdEqualToI : public std::binary_function<T, T, int> { int operator()(const T& x, const T& y) const { return x == y; } };
 template<> struct oStdEqualToI<const char*> { int operator()(const char* x, const char* y) const { return !_stricmp(x, y); } };
 
-//////////////////////////////////////////////////////////////////////////
+// _____________________________________________________________________________
 // OOOii-Kevin: foreach macro that works with std::vector matches 
-// BOOST_FOREACH syntax.  Does not work with any other container type
-//////////////////////////////////////////////////////////////////////////
+// BOOST_FOREACH syntax. Does not work with any other container type
+
 #define oFOREACH_BASE( val, col, instance ) \
 	const size_t count##instance = (col).size(); \
 	size_t bLoopOnce##instance = 0; \
 	for(size_t index##instance = 0; index##instance < count##instance; ++index##instance, bLoopOnce##instance = 0 ) \
 	for( val = (col)[ index##instance ]; bLoopOnce##instance == 0; bLoopOnce##instance = 1 )
 
-// Instantiator needed to ensure we have the same instance for all variables __COUNTER__ is called once
+// Instantiator needed to ensure we have the same instance for all variables 
+// __COUNTER__ is called once
 #define oFOREACH_BASE_INSTANTIATOR( val, col, instance ) \
 	oFOREACH_BASE( val, col, instance )
 

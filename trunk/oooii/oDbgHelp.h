@@ -1,32 +1,10 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #pragma once
 #ifndef oDbgHelp_h
 #define oDbgHelp_h
 
+#include <oooii/oModule.h>
 #include <oooii/oSingleton.h>
-#include <oooii/oStdio.h>
 #include <oooii/oWindows.h>
 #define _NO_CVCONST_H
 #include <DbgHelp.h>
@@ -69,11 +47,22 @@ struct oDbgHelp : public oProcessSingleton<oDbgHelp>
 	BOOL (__stdcall *SymGetTypeInfo)(HANDLE hProcess, DWORD64 ModBase, ULONG TypeId, IMAGEHLP_SYMBOL_TYPE_INFO GetType, PVOID pInfo);
 
 	inline BOOL CallStackWalk64(HANDLE hThread, LPSTACKFRAME64 StackFrame, PVOID ContextRecord) const { return StackWalk64(GetImageType(), GetProcess(), hThread, StackFrame, ContextRecord, 0, SymFunctionTableAccess64, SymGetModuleBase64, 0); }
+
+	// Same as CallStackWalk64 above, but uses a hard-linked reference to 
+	// ::StackWalk64. During static deinit, use of dbghelp API after 
+	// _RTC_Terminate causes the application to immediately abort/close/exit and 
+	// thus any subsequent code does not get executed. To avoid this behavior,
+	// dbghelp should be hard-linked. The same oDbgHelp Singleton() API can be 
+	// used and it will evaluate correctly, but of course the library will not be 
+	// hard-linked unless at least one symbol is referred to by the source, so in
+	// that use, use this one function.
+	inline BOOL CallStackWalk64_HARDLINKED(HANDLE hThread, LPSTACKFRAME64 StackFrame, PVOID ContextRecord) const { return ::StackWalk64(GetImageType(), GetProcess(), hThread, StackFrame, ContextRecord, 0, SymFunctionTableAccess64, SymGetModuleBase64, 0); }
+
 	inline BOOL CallSymGetModuleInfo64(DWORD64 dwAddr, PIMAGEHLP_MODULE64 ModuleInfo) const { return SymGetModuleInfo64(GetProcess(), dwAddr, ModuleInfo); }
 	inline BOOL CallSymGetSymFromAddr64(DWORD64 Address, PDWORD64 Displacement, PIMAGEHLP_SYMBOL64 Symbol) const { return SymGetSymFromAddr64(GetProcess(), Address, Displacement, Symbol); }
 	inline BOOL CallSymGetLineFromAddr64(DWORD64 dwAddr, PDWORD pdwDisplacement, PIMAGEHLP_LINE64 Line) const { return SymGetLineFromAddr64(GetProcess(), dwAddr, pdwDisplacement, Line); }
 
-	DWORD GetImageType() const;
+	static DWORD GetImageType();
 	HANDLE GetProcess() const;
 	const char* GetSymbolPath() const;
 	const char* GetSymbolSearchPath() const;
@@ -83,7 +72,7 @@ struct oDbgHelp : public oProcessSingleton<oDbgHelp>
 
 protected:
 	HANDLE hProcess;
-	oHDLL hDbgHelp;
+	oHMODULE hDbgHelp;
 	ModuleLoadedHandler Handler;
 	char SymbolPath[_MAX_PATH];
 	char SymbolSearchPath[_MAX_PATH];

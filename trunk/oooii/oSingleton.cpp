@@ -1,315 +1,207 @@
 // $(header)
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
 #include <oooii/oSingleton.h>
-#include <oooii/oAllocator.h>
-#include <oooii/oAssert.h>
-#include <oooii/oAtomic.h>
-#include <oooii/oStdAlloc.h>
+#include <oooii/oDebugger.h>
+#include <oooii/oModule.h>
+#include <oooii/oProcessHeap.h>
 #include <oooii/oString.h>
 #include <oooii/oThread.h>
 #include <oooii/oThreading.h>
-#include <oooii/oProcess.h>
 #include <oooii/oSTL.h>
+
+#ifdef _DEBUG
+	#define oSINGLETON_TRACE(format, ...) detail::Trace(format, ## __VA_ARGS__)
+#else
+	#define oSINGLETON_TRACE(format, ...) __noop
+#endif
+
+namespace detail {
 
 enum SINGLETON_INIT_STATE
 {
 	UNINITIALIZED,
 	DEINITIALIZED,
 	DEINITIALIZING,
-	DEINITIALIZING_MANAGER,
 	INITIALIZING,
 	INITIALIZED,
 };
 
 #ifdef _DEBUG
-template<> static const char* oAsString(const SINGLETON_INIT_STATE& _State)
+static const char* oAsString(const SINGLETON_INIT_STATE& _State)
 {
 	switch (_State)
 	{
 		case UNINITIALIZED: return "UNINITIALIZED";
 		case DEINITIALIZED: return "DEINITIALIZED";
 		case DEINITIALIZING: return "DEINITIALIZING";
-		case DEINITIALIZING_MANAGER: return "DEINITIALIZING_MANAGER";
 		case INITIALIZING: return "INITIALIZING";
 		default: // special-case Any valid pointer is considered initialized
 		case INITIALIZED: return "INITIALIZED";
 	}
 }
-#endif
-void ReleaseSystemSMGRTest();
 
-// @oooii-mike: manages thread local singletons so they can be destructed at thread exit
-struct oThreadLocalSingletonMgr : public detail::oProcessSingletonTBase<oThreadLocalSingletonMgr>
+// use our own trace because assert and debugger are based on singletons, so 
+// they might be gone or themselves being destructed when we want to print out
+// debug info.
+static void Trace(const char* _Format, ...)
 {
-	//~oThreadLocalSingletonMgr()
-	//{
-	//	oSWAP(ppInstance, (void*)DEINITIALIZING_MANAGER);
-	//}
+	char msg[oKB(4)];
+	va_list args;
+	va_start(args, _Format);
+	vsprintf_s(msg, _Format, args);
+	va_end(args);
+	strcat_s(msg, "\n");
+	oDebugger::Print(msg);
+}
 
-	static oThreadLocalSingletonMgr* Singleton()
+#endif
+
+static void GetUniqueName(char* _StrDestination, size_t _SizeofStrDestination, const char* _TypeInfoName, bool _MakeThreadUnique)
+{
+	sprintf_s(_StrDestination, _SizeofStrDestination, "OOOii.%s", oGetSimpleTypename(_TypeInfoName));
+	if (_MakeThreadUnique)
+		oStrAppend(_StrDestination, _SizeofStrDestination, ".%u", ::GetCurrentThreadId());
+}
+
+template<size_t size> static inline void GetUniqueName(char (&_StrDestination)[size], const char* _TypeInfoName, bool _MakeThreadUnique) { GetUniqueName(_StrDestination, size, _TypeInfoName, _MakeThreadUnique); }
+
+struct oProcessThreadlocalSingletonRegistry : public oProcessThreadlocalSingleton<oProcessThreadlocalSingletonRegistry>
+{
+	oProcessThreadlocalSingletonRegistry()
 	{
-		static oTHREADLOCAL oThreadLocalSingletonMgr* sInstance = 0;
-		if((size_t)sInstance < INITIALIZED)
-			sInstance = 0;
-		ResolveStaticInstance((void**)&sInstance, oBIND( &oProcessSingleton<oThreadLocalSingletonMgr>::ConstructStaticInstance, true ));
-		return sInstance;
+		atexit(AtExit);
 	}
 
-	void AddThreadLocalSingleton(detail::oSingletonBase** ppSingleton)
+	void Register(oSingletonBase* _pSingleton)
 	{
-		threadlocal_singletons_t::iterator it = tlSingletonArray.begin();
-		for(; it != tlSingletonArray.end(); ++it)
-		{
-			if(**it == *ppSingleton)
-				break;
-		}
-
-		if(it == tlSingletonArray.end())
-		{
-			assert(tlSingletonArray.size() < tlSingletonArray.max_size() && "Fixed-size oArray for thread-local singletons is too small.");
-			tlSingletonArray.push_back(ppSingleton);
-		}
+		Singletons.push_back(_pSingleton);
 	}
 
-	void ReleaseThreadLocalSingletons()
-	{
-		oFOREACH(detail::oSingletonBase** ppSingleton, tlSingletonArray)
-		{
-			(*ppSingleton)->Set(1);
-			(*ppSingleton)->Release();
-			ppSingleton = NULL;
-		}
+	static void AtExit();
 
-		Set(1);
-		Release();
-	}
-
-	size_t GetNumSingletons()
-	{
-		return tlSingletonArray.size();
-	}
-
-private:
-	typedef oArray<detail::oSingletonBase**, 1024> threadlocal_singletons_t;
-	threadlocal_singletons_t tlSingletonArray;
+	oArray<oRef<oSingletonBase>, 128> Singletons;
 };
 
-void detail::AddThreadLocalSingleton(oSingletonBase** ppSingleton)
+void oProcessThreadlocalSingletonRegistry::AtExit()
 {
-	oThreadLocalSingletonMgr::Singleton()->AddThreadLocalSingleton(ppSingleton);
+	if (::GetCurrentThreadId() == oWinGetMainThreadID())
+		oReleaseAllProcessThreadlocalSingletons();
 }
 
-void detail::ReleaseThreadLocalSingletons()
+oSingletonBase::oSingletonBase()
+	: ppInstance(0)
+	, hModule(oModule::GetCurrent())
 {
-	oThreadLocalSingletonMgr* pTLSMgr = oThreadLocalSingletonMgr::Singleton();
-	if(pTLSMgr)
-		pTLSMgr->ReleaseThreadLocalSingletons();
 }
 
-// @oooii-mike: Manages singletons to ensure system singletons won't be removed until after all other singletons.
-struct oSystemSingletonMgr : public detail::oProcessSingletonTBase<oSystemSingletonMgr>
+oSingletonBase::~oSingletonBase()
 {
-	oSystemSingletonMgr()
-		: oProcessSingletonTBase<oSystemSingletonMgr>(false,true)
-		, releasingSystemSingletons(false)
-	{
-		Reference();
-	}
-
-	~oSystemSingletonMgr()
-	{
-		oSWAP(ppInstance, (void*)DEINITIALIZING_MANAGER);
-	}
-
-	static oSystemSingletonMgr* Singleton()
-	{
-		static oRef<oSystemSingletonMgr> sInstance = 0;
-		ResolveStaticInstance((void**)sInstance.address(), oBIND( &oProcessSingleton<oSystemSingletonMgr>::ConstructStaticInstance, false ));
-		return sInstance;
-	}
-
-	void Reference() threadsafe
-	{
-		RefCount.Reference();
-	}
-
-	virtual void Release() threadsafe
-	{
-		tPtrArray& sysArray = thread_cast<tPtrArray&>(sysSingletonArray);
-
-		if( RefCount.Release() )
-		{
-			Destroy();
-		}
-		else if(!releasingSystemSingletons)
-		{
-			size_t numRefs = sysArray.size() + oThreadLocalSingletonMgr::Singleton()->GetNumSingletons() + 2;
-
-			if(RefCount == (int)numRefs) 
-			{
-				releasingSystemSingletons = true;
-
-				detail::ReleaseThreadLocalSingletons();
-
-				// Release System Singletons
-				size_t numSingletons = sysArray.size();
-				for(size_t i = 0; i < numSingletons; i++)
-				{
-					sysArray[i]->Release();
-				}
-
-				sysArray.clear();
-
-				Release();
-			}
-		}
-	}
-
-	void AddSystemSingleton(oProcessSingletonBase* pSingleton)
-	{
-		sysSingletonArray.push_back(pSingleton);
-		pSingleton->Reference();
-	}
-
-private:
-	typedef oArray<oProcessSingletonBase*, 64> tPtrArray;
-	tPtrArray sysSingletonArray;
-
-	bool releasingSystemSingletons;
-#ifdef _DEBUG
-	//tPtrArray trackedSingletonArray;
-	void TrackSingleton(oProcessSingletonBase* pSingleton)
-	{
-		//trackedSingletonArray.push_back(pSingleton);
-	}
-#endif
-
-	friend struct detail::oProcessSingletonBase;
-};
-
-inline void intrusive_ptr_release(threadsafe oSystemSingletonMgr* _pSingleton) { _pSingleton->Release(); }
-inline void intrusive_ptr_add_ref(threadsafe oSystemSingletonMgr* _pSingleton) { _pSingleton->Reference(); }
-
-detail::oProcessSingletonBase::oProcessSingletonBase(bool systemSingleton, bool singletonMgr)
-	: ModuleId( oProcess::GetCurrentModuleHandle() )
-{
-	if(systemSingleton)
-		oSystemSingletonMgr::Singleton()->AddSystemSingleton(this);
-
-	if(!singletonMgr)
-	{
-		intrusive_ptr_add_ref(oSystemSingletonMgr::Singleton());
-#ifdef _DEBUG
-		//oSystemSingletonMgr::Singleton()->TrackSingleton(this);
-#endif
-	}
+	char moduleName[_MAX_PATH];
+	oVERIFY(oModule::GetModuleName(moduleName, (oHMODULE)hModule));
+	oSINGLETON_TRACE("--- %s deinitialized in module %s ---", TypeInfoName, moduleName);
 }
 
-detail::oProcessSingletonBase::~oProcessSingletonBase()
-{
-	if((size_t)*ppInstance != DEINITIALIZING_MANAGER)
-		intrusive_ptr_release(oSystemSingletonMgr::Singleton());
-}
-
-void detail::oSingletonBase::Reference() threadsafe
+void oSingletonBase::Reference() threadsafe
 {
 	RefCount.Reference();
 }
 
-void detail::oSingletonBase::Release() threadsafe
+void oSingletonBase::Release() threadsafe
 {
 	if (RefCount.Release())
 	{
-		Destroy();
+		oASSERT(hModule == oModule::GetCurrent(), "Singleton being freed by a module different than the one creating it.");
+		oSWAP(ppInstance, (void*)DEINITIALIZED);
+		this->~oSingletonBase();
+		oProcessHeap::Deallocate(thread_cast<oSingletonBase*>(this)); // safe because we're not using this anymore
 	}
 }
 
-detail::oSingletonBase::oSingletonBase()
-: ppInstance(0)
+void oSingletonBase::CallCtor(void* _Memory, oFUNCTION<void (void*)> _Ctor, void** _ppInstance, const char* _TypeInfoName, bool _IsThreadUnique)
 {
+	_Ctor(_Memory);
+	oSingletonBase* pSingleton = reinterpret_cast<oSingletonBase*>(_Memory);
+	pSingleton->ppInstance = _ppInstance;
+	pSingleton->TypeInfoName = _TypeInfoName;
 
+	if (_IsThreadUnique)
+	{
+		if (strcmp(_TypeInfoName, "detail::oProcessThreadlocalSingletonRegistry")) // protect against infinite loop
+		{
+			oProcessThreadlocalSingletonRegistry::Singleton()->Register(pSingleton);
+			pSingleton->Release();
+		}
+	}
 }
 
-
-bool detail::oSingletonBase::ResolveStaticInstance(void** _ppInstance, oFUNCTION<void*()> _ConstructStaticInstance)
+void oSingletonBase::FindOrCreate(void** _ppInstance, oFUNCTION<void (void*)> _Ctor, const char* _TypeInfoName, size_t _TypeSize, bool _IsProcessUnique, bool _IsThreadUnique)
 {
-	bool constructed = false;
-	// use the pointer as a flag to ensure no one else tries to double-init
-	// the singleton
-	if (UNINITIALIZED == oCAS((size_t*)_ppInstance, INITIALIZING, UNINITIALIZED))
+	// use the pointer as a flag to ensure no one else tries to double-init the 
+	// singleton
+	if (UNINITIALIZED == oCAS((uintptr_t*)_ppInstance, INITIALIZING, UNINITIALIZED))
 	{
-		void* p = _ConstructStaticInstance();
-		static_cast<detail::oSingletonBase*>(p)->ppInstance = _ppInstance;
-		oSWAP(_ppInstance, p); // OK we're done
+		const char* InternalTypeInfoName = oGetTypeName(_TypeInfoName);
 
-		constructed = true;
+		char uniqueName[128];
+
+		oSingletonBase* pSingleton = 0;
+		detail::GetUniqueName(uniqueName, InternalTypeInfoName, _IsThreadUnique);
+
+		if (_IsProcessUnique)
+		{
+			#ifdef _DEBUG
+				char moduleName[_MAX_PATH];
+				oVERIFY(oModule::GetModuleName(moduleName, oModule::GetCurrent()));
+			#endif
+
+			if (oProcessHeap::FindOrAllocate(uniqueName, _TypeSize, oBIND(&oSingletonBase::CallCtor, oBIND1, _Ctor, _ppInstance, InternalTypeInfoName, _IsThreadUnique), (void**)&pSingleton))
+			{
+				oSINGLETON_TRACE("--- %ssingleton %s initialized from module %s ---", _IsProcessUnique ? (_IsThreadUnique ? "Process-wide threadlocal " : "Process-wide ") : "", InternalTypeInfoName, moduleName);
+			}
+
+			else
+			{
+				pSingleton->Reference();
+				oSINGLETON_TRACE("--- %ssingleton %s referenced from module %s ---", _IsProcessUnique ? (_IsThreadUnique ? "Process-wide threadlocal " : "Process-wide ") : "", InternalTypeInfoName, moduleName);
+			}
+		}
+
+		else
+		{
+			// Use static heap to avoid spurious memory leak reports
+			pSingleton = (oSingletonBase*)oProcessHeap::Allocate(_TypeSize);
+		}
+
+		// we're done, so replace module-specific flagged value with actual pointer
+		oSWAP(_ppInstance, pSingleton);
 	}
 
 	else if ((size_t)*_ppInstance == DEINITIALIZED)
-		assert(0 && "Accessing deinitialized Singleton() (static teardown ordering issue)");
+	{
+		oSINGLETON_TRACE("oSingleton: Accessing deinitialized %s (static teardown ordering issue)", oGetTypeName(_TypeInfoName));
+		oCRTASSERT(false, "oSingleton: Accessing deinitialized oSingleton (static teardown ordering issue)");
+	}
 
 	else
 		oSPIN_UNTIL((size_t)*_ppInstance >= INITIALIZED);
 
-#ifdef _DEBUG
-	size_t s = (size_t)*_ppInstance;
-	oASSERT(s >= INITIALIZED, "Singleton failed to initialize (is %s)", oAsString((SINGLETON_INIT_STATE)s));
-#endif
-	return constructed;
+	#ifdef _DEBUG
+		size_t s = (size_t)*_ppInstance;
+		if (s <INITIALIZED)
+			oSINGLETON_TRACE("oSingleton: Initialization for %s failed (state is %s)", oGetTypeName(_TypeInfoName), oAsString((SINGLETON_INIT_STATE)s));
+		oCRTASSERT(s >= INITIALIZED, "oSingleton: Singleton failed to initialize. Check debug output for current state.");
+	#endif
 }
 
-void detail::oSingletonBase::Destroy() threadsafe
+} // namespace detail
+
+void oReleaseAllProcessThreadlocalSingletons()
 {
-	// At base level we just call the destructor directly
-	this->~oSingletonBase();
+	detail::oProcessThreadlocalSingletonRegistry* s = detail::oProcessThreadlocalSingletonRegistry::Singleton(false);
+	if (oIsValidSingletonPointer(s))
+		s->Release();
 }
 
-void detail::oProcessSingletonBase::Destroy() threadsafe
+bool oIsValidSingletonPointer(void* _pSingleton)
 {
-	// Process singleton's need to handle the statically allocated memory
-	// and call the destructor unlike oSingletonBase
-	oASSERT(ModuleId == oProcess::GetCurrentModuleHandle() || ModuleId == oProcess::GetMainProcessModuleHandle(), "Singleton being freed by a module different than the one creating it.");
-	oSWAP(ppInstance, (void*)DEINITIALIZED);
-	this->~oProcessSingletonBase();
-	oHeap::StaticDeallocateShared((void*)this);
-};
-
-const char* detail::oProcessSingletonBase::GetUniqueName(const type_info& _TypeInfo, bool _ThreadUnique)
-{
-	// it's ok to have some extra static copies of this, around, just so we can do 
-	// a quick return of the string for temp use.
-	static oTHREADLOCAL char name[64];
-	sprintf_s(name, "OOOii.%s", oGetSimpleTypename(_TypeInfo.name()));
-	if( _ThreadUnique )
-		oStrAppend( name, oCOUNTOF(name), ".%u", oThread::GetCurrentThreadID() );
-
-	return name;
-}
-
-void detail::oModuleSingletonBase::Destroy() threadsafe
-{
-	this->~oModuleSingletonBase();
-	oHeap::StaticDeallocateShared((void*)this);
+	return (size_t)_pSingleton > detail::INITIALIZED;
 }

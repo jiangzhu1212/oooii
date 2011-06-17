@@ -34,6 +34,8 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#include <sched.h> // sched_yield
+
 #define __TBB_WORDSIZE 8
 #define __TBB_BIG_ENDIAN 1
 
@@ -206,8 +208,8 @@ static inline bool __TBB_machine_trylockbyte(unsigned char &flag){
 //#define __TBB_FetchAndStore8(P,V)  __TBB_machine_fetchstore8(P,V)
 //#define __TBB_FetchAndStoreW(P,V)  __TBB_machine_fetchstore8(P,V)
 
-#undef __TBB_Store8
-#undef __TBB_Load8
+#define __TBB_Store8(P,V) (*P = V)
+#define __TBB_Load8(P)    (*P)
 
 #define __TBB_AtomicOR(P,V) __TBB_machine_or(P,V)
 #define __TBB_AtomicAND(P,V) __TBB_machine_and(P,V)
@@ -226,3 +228,5 @@ static inline bool __TBB_machine_trylockbyte(unsigned char &flag){
 #undef __TBB_LockByte
 
 #define __TBB_TryLockByte(P) __TBB_machine_trylockbyte(P)
+
+#define __TBB_Yield() sched_yield()

@@ -1,7 +1,7 @@
 /* coherent noise function over 1, 2 or 3 dimensions */
 /* (copyright Ken Perlin) */
 
-#include "pch.h"
+
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -1,36 +1,17 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oWindows.h>
 #include <oooii/oAssert.h>
 #include <oooii/oAtomic.h>
 #include <oooii/oColor.h>
 #include <oooii/oDisplay.h>
 #include <oooii/oErrno.h>
+#include <oooii/oProcessHeap.h>
+#include <oooii/oRef.h>
 #include <oooii/oStdio.h>
 #include <oooii/oString.h>
-#include <oooii/oRef.h>
+#include <oooii/oTimerHelpers.h>
+#include <oooii/oMath.h>
+#include "oWinPSAPI.h"
 #include "oWinsock.h"
 #include <tlhelp32.h>
 
@@ -117,7 +98,7 @@ void oUnixTimeToFileTime(time_t _Time, FILETIME* _pFileTime)
 	// Note that LONGLONG is a 64-bit value
 	LONGLONG ll = Int32x32To64(_Time, 10000000) + 116444736000000000;
 	_pFileTime->dwLowDateTime = (DWORD) ll;
-	_pFileTime->dwHighDateTime = ll >>32;
+	_pFileTime->dwHighDateTime = ll >> 32;
 }
 
 time_t oFileTimeToUnixTime(const FILETIME* _pFileTime)
@@ -151,6 +132,15 @@ HRESULT oGetClientScreenRect(HWND _hWnd, RECT* _pRect)
 
 	return hr;
 }
+
+oRECT oToRect(const RECT& _Rect)
+{
+	oRECT rect;
+	rect.SetMin( int2( _Rect.left, _Rect.top ) );
+	rect.SetMax( int2( _Rect.right, _Rect.bottom ) );
+	return rect;
+}
+
 
 bool oIsCursorVisible()
 {
@@ -212,34 +202,13 @@ bool oSetTitle(HWND _hWnd, const char* _Title)
 {
 	if (!_hWnd) return false;
 	if (!_Title) _Title = "";
-
-	#ifdef UNICODE
-		WCHAR T[1024];
-		oStrConvert(T, title);
-	#else
-		const char* T = _Title;
-	#endif
-
-	return TRUE == SendMessage(_hWnd, WM_SETTEXT, 0, (LPARAM)T);
+	return TRUE == SendMessageA(_hWnd, WM_SETTEXT, 0, (LPARAM)_Title);
 }
 
 bool oGetTitle(HWND _hWnd, char* _Title, size_t _SizeofTitle)
 {
 	if (!_hWnd || !_Title) return false;
-	
-	#ifdef UNICODE
-		TCHAR* T = _alloca(_SizeofTitle * sizeof(TCHAR));
-	#else
-		char* T = _Title;
-	#endif
-	
-	LRESULT success = SendMessage(_hWnd, WM_SETTEXT, _SizeofTitle, (LPARAM)T);
-
-	#ifdef UNICODE
-		oStrConvert(_Title, _SizeofTitle, T);
-	#endif
-
-	return success == TRUE;
+	return TRUE == SendMessage(_hWnd, WM_SETTEXT, _SizeofTitle, (LPARAM)_Title);
 }
 
 HICON oIconFromBitmap(HBITMAP _hBmp)
@@ -259,6 +228,63 @@ HICON oIconFromBitmap(HBITMAP _hBmp)
 	}
 
 	return hIcon;
+}
+
+void oAllocateBMI(BITMAPINFO** _ppBITMAPINFO, const oSurface::DESC* _pDesc, oFUNCTION<void*(size_t _Size)> _Allocate, bool _FlipVertically, unsigned int _ARGBMonochrome8Zero, unsigned int _ARGBMonochrome8One)
+{
+	if (_pDesc && _ppBITMAPINFO)
+	{
+		const WORD bmiBitCount = (WORD)GetBitSize(_pDesc->Format);
+
+		oASSERT(*_ppBITMAPINFO || _Allocate, "If no pre-existing BITMAPINFO is specified, then an _Allocate function is required.");
+
+		oASSERT(!IsBlockCompressedFormat(_pDesc->Format), "block compressed formats not supported by BITMAPINFO");
+		const unsigned int pitch = _pDesc->RowPitch ? _pDesc->RowPitch : CalcRowPitch(_pDesc->Format, _pDesc->Width);
+
+		size_t bmiSize = oGetBMISize(_pDesc->Format);
+
+		if (!*_ppBITMAPINFO)
+			*_ppBITMAPINFO = (BITMAPINFO*)_Allocate(bmiSize);
+		BITMAPINFO* pBMI = *_ppBITMAPINFO;
+
+		pBMI->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		pBMI->bmiHeader.biBitCount = bmiBitCount;
+		pBMI->bmiHeader.biClrImportant = 0;
+		pBMI->bmiHeader.biClrUsed = 0;
+		pBMI->bmiHeader.biCompression = BI_RGB;
+		pBMI->bmiHeader.biHeight = (_FlipVertically ? -1 : 1) * (LONG)_pDesc->Height;
+		pBMI->bmiHeader.biWidth = _pDesc->Width;
+		pBMI->bmiHeader.biPlanes = 1;
+		pBMI->bmiHeader.biSizeImage = pitch * _pDesc->Height;
+		pBMI->bmiHeader.biXPelsPerMeter = 0;
+		pBMI->bmiHeader.biYPelsPerMeter = 0;
+
+		if (bmiBitCount == 8)
+		{
+			// BMI doesn't understand 8-bit monochrome, so create a monochrome palette
+			unsigned int r,g,b,a;
+			oDecomposeColor(_ARGBMonochrome8Zero, &r, &g, &b, &a);
+			float4 c0(oUBYTEAsUNORM(r), oUBYTEAsUNORM(g), oUBYTEAsUNORM(b), oUBYTEAsUNORM(a));
+
+			oDecomposeColor(_ARGBMonochrome8One, &r, &g, &b, &a);
+			float4 c1(oUBYTEAsUNORM(r), oUBYTEAsUNORM(g), oUBYTEAsUNORM(b), oUBYTEAsUNORM(a));
+
+			for (size_t i = 0; i < 256; i++)
+			{
+				float4 c = lerp(c0, c1, oUBYTEAsUNORM(i));
+				RGBQUAD& q = pBMI->bmiColors[i];
+				q.rgbRed = oUNORMAsUBYTE(c.x);
+				q.rgbGreen = oUNORMAsUBYTE(c.y);
+				q.rgbBlue = oUNORMAsUBYTE(c.z);
+				q.rgbReserved = oUNORMAsUBYTE(c.w);
+			}
+		}
+	}
+}
+
+size_t oGetBMISize(oSurface::FORMAT _Format)
+{
+	return oSurface::GetBitSize(_Format) == 8 ? (sizeof(BITMAPINFO) + sizeof(RGBQUAD) * 255) : sizeof(BITMAPINFO);
 }
 
 void oResolveRect(const RECT* _pParentRect, const RECT* _pInRect, bool _ClipToParent, RECT* _pOutRect)
@@ -397,16 +423,8 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 		HBITMAP hBMP = CreateCompatibleBitmap(hDC, w, h);
 		HBITMAP hOld = (HBITMAP)SelectObject(hMemDC, hBMP);
 
-		// @oooii-tony: BitBlt only works for the visible portion of the screen,
-		// whereas PrintWindow works with even hidden windows, but doesn't allow
-		// any partial capture.
-		#if 0
-			PrintWindow(_hWnd, hMemDC, _pRect ? 0 : PW_CLIENTONLY);
-		#else
-			SetForegroundWindow(_hWnd);
-			BitBlt(hMemDC, 0, 0, w, h, hDC, r.left, r.top, SRCCOPY);
-		#endif
-
+		oVB(RedrawWindow(_hWnd, 0, 0, RDW_INTERNALPAINT|RDW_INVALIDATE|RDW_UPDATENOW));
+		BitBlt(hMemDC, 0, 0, w, h, hDC, r.left, r.top, SRCCOPY);
 		GetDIBits(hMemDC, hBMP, 0, h, _pImageBuffer, _pBitmapInfo, DIB_RGB_COLORS);
 
 		SelectObject(hMemDC, hOld);
@@ -774,24 +792,17 @@ HRESULT oCreateSimpleWindow(HWND* _pHwnd, WNDPROC _Wndproc, void* _pInstance, co
 	char className[32];
 	sprintf_s(className, "SimpleWindow", _SupportDoubleClicks ? "DblClks" : "");
 
-	#ifdef UNICODE
-		WCHAR CName[128];
-		oStrConvert(classNameW, className);
-	#else
-		const char* CName = className;
-	#endif
-
-	WNDCLASSEX wc;
+	WNDCLASSEXA wc;
 	ZeroMemory(&wc, sizeof(WNDCLASSEX));
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.hInstance = GetModuleHandle(0);
 	wc.lpfnWndProc = _Wndproc;                    
-	wc.lpszClassName = CName;                        
+	wc.lpszClassName = className;                        
 	wc.style = CS_BYTEALIGNCLIENT|CS_HREDRAW|CS_VREDRAW|CS_OWNDC|(_SupportDoubleClicks ? CS_DBLCLKS : 0);
 	wc.hCursor = LoadCursor(0, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)(COLOR_BACKGROUND+1);
 	RegisterClassEx(&wc);
-	*_pHwnd = CreateWindowEx(WS_EX_ACCEPTFILES|WS_EX_APPWINDOW, CName, _Title ? _Title : "", WS_OVERLAPPEDWINDOW, 0, 0, 1, 1, 0, 0, 0, _pInstance);
+	*_pHwnd = CreateWindowExA(WS_EX_ACCEPTFILES|WS_EX_APPWINDOW, className, _Title ? _Title : "", WS_OVERLAPPEDWINDOW, _X, _Y, _Width, _Height, 0, 0, 0, _pInstance);
 	return *_pHwnd ? S_OK : GetLastError();
 }
 
@@ -806,20 +817,11 @@ void* oGetWindowContext(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, 
 	{
 		// a context (probably some 'this' pointer) was passed during the call 
 		// to CreateWindow, so put that in userdata.
-		CREATESTRUCT* cs = (CREATESTRUCT*)_lParam;
+		CREATESTRUCTA* cs = (CREATESTRUCTA*)_lParam;
 		SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)cs->lpCreateParams);
 		#ifdef _DEBUG
-			#ifdef UNICODE
-				char className[32];
-				oStrConvert(className, cs->lpszClass);
-				char title[128];
-				oStrConvert(title, cs->lpszName);
-			#else
-				const char* className = cs->lpszClass;
-				const char* title = cs->lpszName;
-			#endif
 			if (_StrDescription)
-				sprintf_s(_StrDescription, _SizeOfStrDescription, "%s \"%s\" %d,%d %dx%d", className, title, cs->x, cs->y, cs->cx, cs->cy);
+				sprintf_s(_StrDescription, _SizeOfStrDescription, "%s \"%s\" %d,%d %dx%d", cs->lpszClass, cs->lpszName, cs->x, cs->y, cs->cx, cs->cy);
 		#endif
 	}
 
@@ -834,7 +836,7 @@ void* oGetWindowContext(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, 
 
 #if oDXVER >= oDXVER_10
 
-typedef HRESULT (__stdcall *CreateDXGIFactoryFn)(REFIID riid, void **ppFactory);
+typedef HRESULT (__stdcall *CreateDXGIFactoryFn1)(REFIID riid, void **ppFactory);
 typedef HRESULT (__stdcall *DWriteCreateFactoryFn)(DWRITE_FACTORY_TYPE factoryType, REFIID iid, IUnknown **factory);
 typedef HRESULT (__stdcall *D2D1CreateFactoryFn)(D2D1_FACTORY_TYPE factoryType, REFIID riid, const D2D1_FACTORY_OPTIONS *pFactoryOptions, void **ppIFactory);
 typedef DWORD (__stdcall *GetThreadIdFn)(HANDLE Thread);
@@ -845,6 +847,10 @@ struct oVistaAPIsContext : oProcessSingleton<oVistaAPIsContext>
 		: hDXGIModule(0)
 		, hDWriteModule(0)
 		, hD2DModule(0)
+		, oGetThreadId(0)
+		, oCreateDXGIFactory1(0)
+		, oD2D1CreateFactory(0)
+		, oDWriteCreateFactory(0)
 	{
 		if (LoadModules())
 		{
@@ -864,51 +870,51 @@ struct oVistaAPIsContext : oProcessSingleton<oVistaAPIsContext>
 
 	oRef<IDWriteFactory> DWriteFactory;
 	GetThreadIdFn oGetThreadId;
-	CreateDXGIFactoryFn oCreateDXGIFactory;
+	CreateDXGIFactoryFn1 oCreateDXGIFactory1;
 	D2D1CreateFactoryFn oD2D1CreateFactory;
 
 protected:
 
 	bool LoadModules()
 	{
-		hDXGIModule = LoadLibraryA("dxgi");
-		hDWriteModule = LoadLibraryA("dwrite");
-		hD2DModule = LoadLibraryA("d2d1");
+		hDXGIModule = oModule::oSafeLoadLibrary("dxgi");
+		hDWriteModule = oModule::oSafeLoadLibrary("dwrite");
+		hD2DModule = oModule::oSafeLoadLibrary("d2d1");
 		return hDXGIModule && hDWriteModule && hD2DModule;
 	}
 
 	void FreeModules()
 	{
-		oCreateDXGIFactory = 0;
+		oCreateDXGIFactory1 = 0;
 		oDWriteCreateFactory = 0;
 		oD2D1CreateFactory = 0;
 
 		if (hDXGIModule)
 		{
-			FreeLibrary(hDXGIModule);
+			oModule::oSafeFreeLibrary(hDXGIModule);
 			hDXGIModule = 0;
 		}
 
 		if (hDWriteModule)
 		{
-			FreeLibrary(hD2DModule);
+			oModule::oSafeFreeLibrary(hD2DModule);
 			hDWriteModule = 0;
 		}
 
 		if (hD2DModule)
 		{
-			FreeLibrary(hD2DModule);
+			oModule::oSafeFreeLibrary(hD2DModule);
 			hD2DModule = 0;
 		}
 	}
 
 	bool GetProcs()
 	{
-		oCreateDXGIFactory = reinterpret_cast<CreateDXGIFactoryFn>(GetProcAddress(hDXGIModule, "CreateDXGIFactory"));
-		oDWriteCreateFactory = reinterpret_cast<DWriteCreateFactoryFn>(GetProcAddress(hDWriteModule, "DWriteCreateFactory"));
-		oD2D1CreateFactory = reinterpret_cast<D2D1CreateFactoryFn>(GetProcAddress(hD2DModule, "D2D1CreateFactory"));
+		oCreateDXGIFactory1 = reinterpret_cast<CreateDXGIFactoryFn1>(GetProcAddress((HMODULE)hDXGIModule, "CreateDXGIFactory1"));
+		oDWriteCreateFactory = reinterpret_cast<DWriteCreateFactoryFn>(GetProcAddress((HMODULE)hDWriteModule, "DWriteCreateFactory"));
+		oD2D1CreateFactory = reinterpret_cast<D2D1CreateFactoryFn>(GetProcAddress((HMODULE)hD2DModule, "D2D1CreateFactory"));
 		oGetThreadId = reinterpret_cast<GetThreadIdFn>(GetProcAddress(GetModuleHandleA("kernel32"), "GetThreadId"));
-		return oCreateDXGIFactory && oDWriteCreateFactory && oD2D1CreateFactory;
+		return oCreateDXGIFactory1 && oDWriteCreateFactory && oD2D1CreateFactory;
 	}
 
 	bool LoadSingletons()
@@ -926,25 +932,113 @@ protected:
 		DWriteFactory = 0;
 	}
 
-	HMODULE hDXGIModule;
-	HMODULE hDWriteModule;
-	HMODULE hD2DModule;
+	oHMODULE hDXGIModule;
+	oHMODULE hDWriteModule;
+	oHMODULE hD2DModule;
 
 	DWriteCreateFactoryFn oDWriteCreateFactory;
 };
 
 
-bool oCreateDXGIFactory( IDXGIFactory** _ppFactory )
+bool oCreateDXGIFactory( IDXGIFactory1** _ppFactory )
 {
-	if (S_OK != oVistaAPIsContext::Singleton()->oCreateDXGIFactory(__uuidof(IDXGIFactory), (void**)_ppFactory))
+	if (S_OK != oVistaAPIsContext::Singleton()->oCreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)_ppFactory))
 		return false;
 
 	return true;
 }
 
+HRESULT oDXGICreateSwapchain(IUnknown* _pDevice, unsigned int Width, unsigned int Height, DXGI_FORMAT _Fmt, HWND _Hwnd, IDXGISwapChain** _ppSwapChain)
+{
+	DXGI_SWAP_CHAIN_DESC scDesc;
+
+	DXGI_MODE_DESC& ModeDesc = scDesc.BufferDesc;
+	ModeDesc.Format = _Fmt;
+	ModeDesc.Height = Height;
+	ModeDesc.Width = Width;
+
+	DXGI_SAMPLE_DESC& SampleDesc = scDesc.SampleDesc;
+	SampleDesc.Count = 1;
+	SampleDesc.Quality = 0;
+
+	scDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
+	scDesc.BufferCount = 3;
+	scDesc.OutputWindow = _Hwnd;
+	scDesc.Windowed = true;
+	scDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	scDesc.Flags = 0;
+
+	oRef<IDXGIDevice> D3DDevice;
+	oV_RETURN( _pDevice->QueryInterface(&D3DDevice) );
+
+	oRef<IDXGIAdapter> Adapter;
+	oV_RETURN( D3DDevice->GetParent( __uuidof(IDXGIAdapter), (void**)&Adapter ) );
+
+	oRef<IDXGIFactory> Factory;
+	oV_RETURN( Adapter->GetParent( __uuidof(IDXGIFactory), (void**)&Factory ) );
+
+	return Factory->CreateSwapChain( _pDevice, &scDesc, _ppSwapChain );
+}
+
+bool oDXGIGetAdapter( const RECT& _Rect, IDXGIAdapter1** _ppAdapter )
+{
+	oRef<IDXGIFactory1> Factory;
+	if( !oCreateDXGIFactory(&Factory) )
+		return false;
+
+	oRECT WindowRegion = oToRect(_Rect);
+
+	int BestAdapterCoverage = -1;
+	oRef<IDXGIAdapter1> BestAdapter;
+	oRef<IDXGIAdapter1> Adapter;
+	UINT a = 0;
+	while( S_OK == Factory->EnumAdapters1( a++, &Adapter) )
+	{
+		oRef<IDXGIOutput> Output;
+		UINT o = 0;
+		while (DXGI_ERROR_NOT_FOUND != Adapter->EnumOutputs(o++, &Output) )
+		{
+			DXGI_OUTPUT_DESC desc;
+			Output->GetDesc(&desc);
+
+			oRECT MonitorRegion = oToRect( desc.DesktopCoordinates );
+
+			oRECT ClippedRect = oClip(WindowRegion, MonitorRegion);
+			if (ClippedRect.IsEmpty())
+				continue;
+
+			int2 dim = ClippedRect.GetDimensions();
+			
+			int coverage = dim.x * dim.y;
+			if( coverage > BestAdapterCoverage )
+			{
+				BestAdapterCoverage = coverage;
+				BestAdapter = Adapter;
+			}
+		}
+	}
+	if( BestAdapter )
+	{
+		BestAdapter->AddRef();
+		*_ppAdapter = BestAdapter;
+		return true;
+	}
+
+	return false;
+}
+
+
 bool oD2D1CreateFactory(ID2D1Factory** _ppFactory)
 {
-	return(S_OK == oVistaAPIsContext::Singleton()->oD2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof(ID2D1Factory), 0, (void**)_ppFactory));
+	D2D1_FACTORY_OPTIONS opt;
+	opt.debugLevel = 
+#ifdef _DEBUG
+		D2D1_DEBUG_LEVEL_WARNING
+#else
+		D2D1_DEBUG_LEVEL_NONE
+#endif
+	;	
+	return(S_OK == oVistaAPIsContext::Singleton()->oD2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof(ID2D1Factory), &opt, (void**)_ppFactory));
 }
 
 IDWriteFactory* oGetDWriteFactorySingleton()
@@ -1097,6 +1191,30 @@ void oGetVirtualDisplayRect(RECT* _pRect)
 	_pRect->bottom = _pRect->top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
 }
 
+size_t oStrConvert(char* _MultiByteString, size_t _SizeofMultiByteString, const wchar_t* _StrUnicodeSource)
+{
+	#if defined(_WIN32) || defined(_WIN64)
+		size_t bufferSize = (size_t)WideCharToMultiByte(CP_ACP, 0, _StrUnicodeSource, -1, _MultiByteString, static_cast<int>(_SizeofMultiByteString), "?", 0);
+		if (_SizeofMultiByteString && bufferSize)
+			bufferSize--;
+		return bufferSize;
+	#else
+		#error Unsupported platform
+	#endif
+}
+
+size_t oStrConvert(wchar_t* _UnicodeString, size_t _NumberOfCharactersInUnicodeString, const char* _StrMultibyteSource)
+{
+	#if defined(_WIN32) || defined(_WIN64)
+		size_t bufferCount = (size_t)MultiByteToWideChar(CP_ACP, 0, _StrMultibyteSource, -1, _UnicodeString, static_cast<int>(_NumberOfCharactersInUnicodeString));
+		if (_NumberOfCharactersInUnicodeString && bufferCount)
+			bufferCount--;
+		return bufferCount;
+	#else
+		#error Unsupported platform
+	#endif
+}
+
 char* oGetWMDesc(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
 {
 	switch (_uMsg)
@@ -1197,6 +1315,41 @@ void oGetScreenDPIScale(float* _pScaleX, float* _pScaleY)
 	ReleaseDC(0, screen);
 }
 
+static void InitializeCS(void* _Memory)
+{
+	InitializeCriticalSection((CRITICAL_SECTION*)_Memory);
+}
+
+static CRITICAL_SECTION* sOutputDebugStringCS = 0;
+void oThreadsafeOutputDebugStringA_AtExit()
+{
+	DeleteCriticalSection(sOutputDebugStringCS);
+	oProcessHeap::Deallocate(sOutputDebugStringCS);
+	sOutputDebugStringCS = (CRITICAL_SECTION*)0x1;
+}
+
+void oThreadsafeOutputDebugStringA(const char* _OutputString)
+{
+	if (!sOutputDebugStringCS)
+	{
+		if (oProcessHeap::FindOrAllocate("OOOii.OutputDebugStringA.CriticalSection", sizeof(CRITICAL_SECTION), InitializeCS, (void**)&sOutputDebugStringCS))
+			atexit(oThreadsafeOutputDebugStringA_AtExit);
+	}
+
+	// If we're very late into atexit() time, then threadsafety isn't a worry anymore
+	if (sOutputDebugStringCS == (CRITICAL_SECTION*)0x1)
+	{
+		OutputDebugStringA(_OutputString);
+	}
+
+	else
+	{
+		EnterCriticalSection(sOutputDebugStringCS);
+		OutputDebugStringA(_OutputString);
+		LeaveCriticalSection(sOutputDebugStringCS);
+	}
+}
+
 bool oWaitSingle(DWORD _ThreadID, unsigned int _Timeout)
 {
 	HANDLE hThread = OpenThread(SYNCHRONIZE, FALSE, _ThreadID);
@@ -1243,6 +1396,52 @@ DWORD oGetThreadID(HANDLE _hThread)
 	#endif
 }
 
+DWORD oWinGetMainThreadID()
+{
+	// Find the oldest thread - i.e. the one with the minimum creation time
+
+	DWORD mainThreadID = 0;
+
+	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GetCurrentProcessId());
+	if (hSnapshot == INVALID_HANDLE_VALUE)
+		return 0;
+
+	THREADENTRY32 entry;
+	entry.dwSize = sizeof(THREADENTRY32);
+
+	DWORD pid = GetCurrentProcessId();
+	BOOL keepLooking = Thread32First(hSnapshot, &entry);
+	ULONGLONG minCreateTime = MAXULONGLONG;
+	while (keepLooking)
+	{
+		if (entry.th32OwnerProcessID == pid)
+		{
+			HANDLE hThread = OpenThread(THREAD_QUERY_INFORMATION, TRUE, entry.th32ThreadID);
+			if (hThread)
+			{
+				FILETIME tCreate, tExit, tKernel, tUser;
+
+				if (GetThreadTimes(hThread, &tCreate, &tExit, &tKernel, &tUser))
+				{
+					ULONGLONG createTime = ((ULONGLONG)tCreate.dwHighDateTime << 32) | tCreate.dwLowDateTime;
+					if (createTime && createTime < minCreateTime)
+					{
+						minCreateTime = createTime;
+						mainThreadID = entry.th32ThreadID;
+					}
+				}
+
+				oVB(CloseHandle(hThread));
+			}
+		}
+
+		keepLooking = Thread32Next(hSnapshot, &entry);
+	}
+
+	oVB(CloseHandle(hSnapshot));
+	return mainThreadID;
+}
+
 DWORD oGetParentProcessID()
 {
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -1265,6 +1464,64 @@ DWORD oGetParentProcessID()
 
 	oVB(CloseHandle(hSnapshot));
 	return ppid;
+}
+
+HMODULE oGetModule(void* _ModuleFunctionPointer)
+{
+	HMODULE hModule = 0;
+
+	if (_ModuleFunctionPointer)
+		oVB(GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCTSTR)_ModuleFunctionPointer, &hModule));	
+	else
+	{
+		DWORD cbNeeded;
+		oWinPSAPI::Singleton()->EnumProcessModules(GetCurrentProcess(), &hModule, sizeof(hModule), &cbNeeded);
+	}
+	
+	return hModule;
+}
+
+HANDLE oWinGetProcessHandle(const char* _Name)
+{
+	// From http://msdn.microsoft.com/en-us/library/ms682623(v=VS.85).aspx
+	// Get the list of process identifiers.
+
+	DWORD aProcesses[1024], cbNeeded, cProcesses;
+	unsigned int i;
+
+	oWinPSAPI* pPSAPI = oWinPSAPI::Singleton();
+
+	if (!pPSAPI->EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded))
+		return NULL;
+
+	// Calculate how many process identifiers were returned.
+
+	cProcesses = cbNeeded / sizeof(DWORD);
+
+	// Print the name and process identifier for each process.
+
+	for (i = 0; i < cProcesses; i++)
+	{
+		if (aProcesses[i] != 0)
+		{
+			HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ|PROCESS_DUP_HANDLE, FALSE, aProcesses[i]);
+			if (hProcess)
+			{
+				HMODULE hMod;
+				DWORD cbNeeded;
+
+				char szProcessName[MAX_PATH];
+				if (pPSAPI->EnumProcessModules(hProcess, &hMod, sizeof(hMod), &cbNeeded))
+				{
+					pPSAPI->GetModuleBaseNameA(hProcess, hMod, szProcessName, sizeof(szProcessName)/sizeof(char));
+					if (strcmp(szProcessName, _Name) == 0)
+						return hProcess;
+				}
+			}
+		}
+	}
+	
+	return 0;
 }
 
 unsigned int oGetProcessThreads(DWORD* _pThreadIDs, size_t _SizeofThreadIDs)
@@ -1340,6 +1597,23 @@ void oSetThreadNameInDebugger(DWORD _ThreadID, const char* _Name)
 	}
 }
 
+int oGetWindowsErrorDescription(char* _StrDestination, size_t _SizeofStrDestination, HRESULT _hResult)
+{
+	int len = 0;
+	*_StrDestination = 0;
+	FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, 0, static_cast<DWORD>(_hResult), 0, _StrDestination, static_cast<DWORD>(_SizeofStrDestination), 0);
+	if (!*_StrDestination || !memcmp(_StrDestination, "???", 3))
+	{
+		#if defined(_DX9) || defined(_DX10) || defined(_DX11)
+			strcpy_s(_StrDestination, _SizeofStrDestination, DXGetErrorStringA(_hResult));
+		#else
+			len = sprintf_s(_StrDestination, _SizeofStrDestination, "unrecognized error code 0x%08x", _hResult);
+		#endif
+	}
+
+	return len != -1 ? 0 : STRUNCATE;
+}
+
 bool oIsWindows64Bit()
 {
 	if( sizeof( void* ) != 4 ) // If ptr size is larger than 32-bit we must be on 64-bit windows
@@ -1371,6 +1645,16 @@ void oWinsockCreateAddr(sockaddr_in* _pOutSockAddr, const char* _Hostname)
 	_pOutSockAddr->sin_family = AF_INET;
 	_pOutSockAddr->sin_port = ws->htons(port);
 	_pOutSockAddr->sin_addr.s_addr = ws->inet_addr(ws->inet_ntoa(*(in_addr*)*pHost->h_addr_list));
+}
+
+void oWinsockAddrToHostname(sockaddr_in* _pSockAddr, char* _OutHostname, size_t _SizeOfHostname)
+{
+	oWinsock* ws = oWinsock::Singleton();
+
+	unsigned long addr = ws->ntohl(_pSockAddr->sin_addr.s_addr);
+	unsigned short port = ws->ntohs(_pSockAddr->sin_port);
+
+	sprintf_s(_OutHostname, _SizeOfHostname, "%u.%u.%u.%u:%u", (addr&0xFF000000)>>24, (addr&0xFF0000)>>16, (addr&0xFF00)>>8, addr&0xFF, port);
 }
 
 //#define FD_TRACE(TracePrefix, TraceName, FDEvent) oTRACE("%s%s%s: %s (%s)", oSAFESTR(TracePrefix), _TracePrefix ? " " : "", oSAFESTR(TraceName), #FDEvent, oWinsock::GetErrorString(_pNetworkEvents->iErrorCode[FDEvent##_BIT]))
@@ -1524,10 +1808,11 @@ bool oWinsockWait(SOCKET _hSocket, WSAEVENT _hEvent, WSANETWORKEVENTS* _pNetEven
 	bool eventFired = true;
 	unsigned int timeout = _TimeoutMS;
 	_pNetEvents->lNetworkEvents = 0;
+	oScopedPartialTimeout spt(&timeout);
 	while (!_pNetEvents->lNetworkEvents && eventFired)
 	{
 		{
-			oScopedPartialTimeout spt(&timeout);
+			spt.UpdateTimeout();
 			eventFired = oWinsockWaitMultiple(&_hEvent, 1, true, false, timeout);
 			if (eventFired)
 			{
@@ -1626,6 +1911,66 @@ size_t oWinsockReceive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, s
 	return bytesReceived;
 }
 
+bool oWinsockReceiveNonBlocking(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, sockaddr_in* _pSource, size_t* _pBytesReceived)
+{
+	oASSERT(_SizeofDestination < INT_MAX, "Underlying implementation uses 32-bit signed int for buffer size.");
+
+	if (!_pDestination)
+	{
+		oSetLastError(EINVAL, "Must specify a destination buffer");
+		return false;
+	}
+
+	oWinsock* ws = oWinsock::Singleton();
+
+	timeval waitTime;
+	waitTime.tv_sec = 0;
+	waitTime.tv_usec = 0;
+
+	fd_set set;
+	FD_ZERO(&set);
+	FD_SET(_hSocket, &set);
+
+	if(!ws->select(1, &set, NULL, NULL, &waitTime))
+	{
+		_pBytesReceived = 0;
+		return true;
+	}
+
+	int err = 0;
+	int bytesReceived = 0;
+	if (_pSource)
+	{
+		int size = sizeof(sockaddr_in);
+		bytesReceived = ws->recvfrom(_hSocket, (char*)_pDestination, static_cast<int>(_SizeofDestination), 0, (sockaddr*)_pSource, &size);
+	}
+
+	else
+		bytesReceived = ws->recv(_hSocket, (char*)_pDestination, static_cast<int>(_SizeofDestination), 0);
+
+	if (bytesReceived == SOCKET_ERROR)
+	{
+		err = oWinsock::GetErrno(ws->WSAGetLastError());
+		bytesReceived = 0;
+	}
+
+	else if (!bytesReceived)
+	{
+		err = ESHUTDOWN;
+	}
+
+	//else if ((ne.lNetworkEvents & FD_CLOSE) || ((ne.lNetworkEvents & FD_CONNECT) && err))
+	//{
+	//	oSetLastError(oWinsock::GetErrno(ne.iErrorCode[FD_CLOSE_BIT]));
+	//	oSWAP(_pInOutCanReceive, false);
+	//}
+
+	*_pBytesReceived = bytesReceived;
+
+	oSetLastError(err);
+	return(0 == err);
+}
+
 bool oWinsockGetNameBase(char* _OutHostname, size_t _SizeofOutHostname, char* _OutIPAddress, size_t _SizeofOutIPAddress, char* _OutPort, size_t _SizeofOutPort, SOCKET _hSocket, oFUNCTION<int(SOCKET _hSocket, sockaddr* _Name, int* _pNameLen)> _GetSockAddr)
 {
 	oWinsock* ws = oWinsock::Singleton();
@@ -1685,3 +2030,5 @@ bool oWinsockIsConnected(SOCKET _hSocket)
 	char tmp[_MAX_PATH];
 	return oWinsockGetPeername(tmp, oCOUNTOF(tmp), 0, 0, 0, 0, _hSocket);
 }
+
+

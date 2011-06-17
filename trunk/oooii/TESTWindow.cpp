@@ -1,34 +1,12 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oWindows.h>
 #include <oooii/oAssert.h>
-#include <oooii/oRef.h>
+#include <oooii/oFile.h>
 #include <oooii/oImage.h>
 #include <oooii/oKeyboard.h>
 #include <oooii/oMouse.h>
 #include <oooii/oPath.h>
+#include <oooii/oRef.h>
 #include <oooii/oStdio.h>
 #include <oooii/oString.h>
 #include <oooii/oTest.h>
@@ -42,31 +20,34 @@ struct TEST_RESIZE_CONTEXT
 	bool Resizing;
 };
 
-void TESTResizeHandler(oWindow::RESIZE_EVENT _Event, oWindow::STATE _State, unsigned int _Width, unsigned int _Height, void* _pUserData)
+void TESTResizeHandler(oWindow::RECT_EVENT _Event, oWindow::STATE _State, oRECT _Rect, void* _pUserData)
 {
 	TEST_RESIZE_CONTEXT* pContext = static_cast<TEST_RESIZE_CONTEXT*>(_pUserData);
+
+	int2 dim = _Rect.GetDimensions();
+	
 	switch (_Event)
 	{
-	case oWindow::RESIZE_BEGIN:
-		oTRACE("Entering Resize %ux%u -> %ux%u", pContext->OldWidth, pContext->OldHeight, _Width, _Height);
+	case oWindow::RECT_BEGIN:
+		oTRACE("Entering Resize %ux%u -> %ux%u", pContext->OldWidth, pContext->OldHeight, dim.x, dim.y);
 		pContext->Resizing = true;
-		pContext->OldWidth = _Width;
-		pContext->OldHeight = _Height;
+		pContext->OldWidth = dim.x;
+		pContext->OldHeight = dim.y;
 		break;
 
-	case oWindow::RESIZE_CHANGE:
-		oTRACE("Resizing %s %ux%u -> %s %ux%u", oAsString(pContext->OldState), pContext->OldWidth, pContext->OldHeight, oAsString(_State), _Width, _Height);
+	case oWindow::RESIZE_OCCURING:
+		oTRACE("Resizing %s %ux%u -> %s %ux%u", oAsString(pContext->OldState), pContext->OldWidth, pContext->OldHeight, oAsString(_State), dim.x, dim.y);
 		if (!pContext->Resizing)
 		{
 			pContext->OldState = _State;
-			pContext->OldWidth = _Width;
-			pContext->OldHeight = _Height;
+			pContext->OldWidth = dim.x;
+			pContext->OldHeight = dim.y;
 		}
 
 		break;
 
-	case oWindow::RESIZE_END:
-		oTRACE("Exiting Resize %ux%u -> %ux%u", pContext->OldWidth, pContext->OldHeight, _Width, _Height);
+	case oWindow::RECT_END:
+		oTRACE("Exiting Resize %ux%u -> %ux%u", pContext->OldWidth, pContext->OldHeight, dim.x, dim.y);
 		pContext->Resizing = false;
 		break;
 
@@ -98,31 +79,15 @@ struct TESTWindowBase : public oTest
 			desc.HasFocus = true;
 			desc.AlwaysOnTop = false;
 			desc.EnableCloseButton = false;
-			oTESTB(oWindow::Create(&desc, "OOOii oWindow", _DrawAPIFourCC, &Window), "Failed to create window");
-
-			#if defined(_WIN32) || defined (_WIN64)
-				// Load/test OOOii lib icon:
-				extern void GetDescoooii_ico(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
-				const char* BufferName = 0;
-				const void* pBuffer = 0;
-				size_t bufferSize = 0;
-				GetDescoooii_ico(&BufferName, &pBuffer, &bufferSize);
-
-				oRef<oImage> ico;
-				oTESTB(oImage::Create(pBuffer, bufferSize, &ico), "Failed to load icon");
-
-				HICON hIcon = ico->AsIco();
-				oTESTB(Window->SetProperty("Icon", &hIcon), "Failed to set icon");
-				DeleteObject(hIcon);
-			#endif
+			oTESTB(oWindow::Create(&desc, NULL, "OOOii oWindow", _DrawAPIFourCC, &Window), "Failed to create window: %s: %s", oGetErrnoString(oGetLastError()), oGetLastErrorDesc());
 		}
 
-		threadsafe oRef<oWindow::Resizer> Resizer;
+		oRef<threadsafe oWindow::Resizer> Resizer;
 		TEST_RESIZE_CONTEXT resizeContext;
 		memset(&resizeContext, 0, sizeof(resizeContext));
-		oTESTB(Window->CreateResizer(TESTResizeHandler, &resizeContext, &Resizer), "Failed to create resizer");
+		oTESTB(Window->CreateResizer(oBIND(&TESTResizeHandler, oBIND1, oBIND2, oBIND3, &resizeContext ), &Resizer), "Failed to create resizer");
 
-		threadsafe oRef<oWindow::Font> Font;
+		oRef<threadsafe oWindow::Font> Font;
 		{
 			oWindow::Font::DESC desc;
 			strcpy_s(desc.FontName, "Tahoma");
@@ -132,7 +97,7 @@ struct TESTWindowBase : public oTest
 			oTESTB(Window->CreateFont(&desc, &Font), "Failed to create font");
 		}
 
-		threadsafe oRef<oWindow::Text> Text;
+		oRef<threadsafe oWindow::Text> Text;
 		{
 			oWindow::Text::DESC desc;
 			desc.X = oWindow::DEFAULT;
@@ -148,7 +113,7 @@ struct TESTWindowBase : public oTest
 			oTESTB(Window->CreateText(&desc, Font, &Text), "Failed to create text");
 		}
 
-		threadsafe oRef<oWindow::Line> Line;
+		oRef<threadsafe oWindow::Line> Line;
 		{
 			oWindow::Line::DESC desc;
 			desc.X1 = 200;
@@ -160,7 +125,7 @@ struct TESTWindowBase : public oTest
 			oTESTB(Window->CreateLine(&desc, &Line), "Failed to create line");
 		}
 
-		threadsafe oRef<oWindow::RoundedBox> RoundedBox;
+		oRef<threadsafe oWindow::RoundedBox> RoundedBox;
 		{
 			oWindow::RoundedBox::DESC desc;
 			desc.X = 0;
@@ -174,14 +139,14 @@ struct TESTWindowBase : public oTest
 			oTESTB(Window->CreateRoundedBox(&desc, &RoundedBox), "Failed to create rounded box");
 		}
 
-		threadsafe oRef<oWindow::Picture> Picture;
+		oRef<threadsafe oWindow::Picture> Picture;
 		{
 			void* pBuffer = 0;
 			size_t size = 0;
 
 			char imgPath[_MAX_PATH];
 			oTESTB(oTestManager::Singleton()->FindFullPath(imgPath, "oooii.ico"), "Failed to find oooii.ico");
-			oTESTB(oLoadBuffer(&pBuffer, &size, malloc, imgPath, false), "Failed to load test image %s", imgPath);
+			oTESTB(oFile::LoadBuffer(&pBuffer, &size, malloc, imgPath, false), "Failed to load test image %s", imgPath);
 
 			oRef<oImage> Image;
 			oTESTB(oImage::Create(pBuffer, size, &Image), "Failed to create image");
@@ -201,14 +166,17 @@ struct TESTWindowBase : public oTest
 			desc.SurfaceDesc.Format = iDesc.Format;
 
 			oTESTB(Window->CreatePicture(&desc, &Picture), "Failed to create picture");
-			Picture->Copy(Image->GetData(), iDesc.Pitch, false, true);
+			Picture->Copy(Image->Map(), iDesc.Pitch, false, true);
+			Image->Unmap();
 		}
 
-		threadsafe oRef<oKeyboard> Keyboard;
+		oRef<threadsafe oKeyboard> Keyboard;
 		oTESTB(oKeyboard::Create(Window->GetNativeHandle(), true, &Keyboard), "Failed to create keyboard");
 
-		threadsafe oRef<oMouse> Mouse;
-		oTESTB(oMouse::Create(Window->GetNativeHandle(), false, &Mouse), "Failed to create mouse");
+		oRef<threadsafe oMouse> Mouse;
+		oMouse::DESC MouseDesc;
+		MouseDesc.ShortCircuitEvents = false;
+		oTESTB(oMouse::Create(MouseDesc, Window->GetNativeHandle(), &Mouse), "Failed to create mouse");
 
 		bool bShouldPrintUp[oKeyboard::NUM_KEYS];
 		for (size_t i = 0; i < oCOUNTOF(bShouldPrintUp); i++)
@@ -298,11 +266,12 @@ struct TESTWindowBase : public oTest
 
 				Window->End();
 
-				HDC hDC = GetDC((HWND)Window->GetNativeHandle());
+				HWND hWnd = (HWND)Window->GetNativeHandle();
+				HDC hDC = GetDC(hWnd);
 				RECT rClient;
-				GetClientRect((HWND)Window->GetNativeHandle(), &rClient);
+				GetClientRect(hWnd, &rClient);
 				oGDIDrawText(hDC, &rClient, std::Aqua, 0, "rm", "Hello World 2");
-				ReleaseDC((HWND)Window->GetNativeHandle(), hDC);
+				ReleaseDC(hWnd, hDC);
 
 				if ((oTimer() - start) > 1.0)
 				{
@@ -338,5 +307,5 @@ struct TESTWindowGDI : public TESTWindowBase
 	}
 };
 
-TESTWindowD2D TestWindowD2D;
-TESTWindowGDI TestWindowGDI;
+oTEST_REGISTER(TESTWindowD2D);
+oTEST_REGISTER(TESTWindowGDI);

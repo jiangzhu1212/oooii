@@ -308,6 +308,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\oRenderTest.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\oRenderTest.h"
+				>
+			</File>
+			<File
 				RelativePath=".\pch.cpp"
 				>
 				<FileConfiguration
@@ -356,6 +364,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TESTBitStream.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTBroadcastStream.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\TESTBuffer.cpp"
 				>
 			</File>
@@ -364,11 +380,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\TESTCppDependency.cpp"
+				RelativePath=".\TESTCondenseOBJ.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\TESTCPU.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTD3D.cpp"
 				>
 			</File>
 			<File
@@ -384,7 +404,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TESTHash.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTHashString.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\TESTImage.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTImageProcessing.cpp"
 				>
 			</File>
 			<File
@@ -408,6 +440,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TESTMOVRleFileDecode.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTNetMessage.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\TESTParallelFor.cpp"
 				>
 			</File>
@@ -416,11 +456,55 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TESTProcessHeapTrivial.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\TESTQueues.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\TESTSingletonInteraction.cpp"
+				RelativePath=".\TESTRenderer16GPU.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTRendererBasicAlpha.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTRendererCreate.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTRendererDrawLines.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTRendererDrawTri.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTRendererDrawTri2.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTRendererGeometry.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTRendererGeometryLines.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTRendererPickResource.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTRendererTexture.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTRenderNodeServer.cpp"
 				>
 			</File>
 			<File
@@ -432,7 +516,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\TESTStaticHeapTrivial.cpp"
+				RelativePath=".\TESTSocketAsyncUDP.cpp"
 				>
 			</File>
 			<File
@@ -444,7 +528,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TESTURI.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTVideoWindow.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\TESTVTable.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTWebm.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TESTWebmFile.cpp"
 				>
 			</File>
 			<File

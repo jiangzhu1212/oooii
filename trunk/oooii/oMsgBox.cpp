@@ -1,34 +1,11 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oMsgBox.h>
 #include <oooii/oByte.h>
 #include <oooii/oStddef.h>
 #include <oooii/oStdio.h>
+#include <oooii/oSTL.h>
 #include <oooii/oString.h>
 #include <oooii/oWindows.h>
-#include <oooii/oTempString.h>
 
 #if defined(_WIN32) || defined(_WIN64)
 	// Use the Windows Vista UI look. If this causes issues or the dialog not to appear, try other values from processorAchitecture { x86 ia64 amd64 * }
@@ -263,9 +240,9 @@ oMsgBox::RESULT AssertDialog(oMsgBox::TYPE type, const char* caption, const char
 	const LONG MaxH = MinH + 150;
 
 	RECT rString;
-	oTempString _string(oTempString::BigSize);
+	std::vector<char> _string(oKB(128));
 
-	calcStringRect(rString, oNewlinesToDos(_string, string), MinW, MinH, MaxW, MaxH);
+	calcStringRect(rString, oNewlinesToDos(oGetData(_string), oGetDataSize(_string), string), MinW, MinH, MaxW, MaxH);
 
 	// Figure out where interface goes based on string RECT
 	const LONG BtnPanelLeft = (rString.right - BtnPanelW) - FrameSpacingX;
@@ -296,7 +273,7 @@ oMsgBox::RESULT AssertDialog(oMsgBox::TYPE type, const char* caption, const char
 	// Prepare a buffer large enough to hold the template definition
 	size_t captionLen = strlen(caption);
 	size_t templateBufferSize = calcTemplateSize(captionLen, font);
-	templateBufferSize += calcTemplateItemSize(strlen(_string));
+	templateBufferSize += calcTemplateItemSize(strlen(oGetData(_string)));
 	templateBufferSize += calcTemplateItemSize(strlen(textBtn0));
 	templateBufferSize += calcTemplateItemSize(strlen(textBtn1));
 	templateBufferSize += calcTemplateItemSize(strlen(textBtn2));
@@ -305,8 +282,8 @@ oMsgBox::RESULT AssertDialog(oMsgBox::TYPE type, const char* caption, const char
 	templateBufferSize += calcTemplateItemSize(strlen(textBtn4));
 
 //	if (templateBufferSize > (sizeof(_string) + 1024)) __debugbreak(); // don't use Assert to avoid recursion
-	oTempString _buffer(oTempString::BigSize);
-	char* buffer = _buffer;
+	std::vector<char> _buffer(oKB(128));
+	char* buffer = oGetData(_buffer);
 
 	// Allocate and set up the template header
 	LPDLGTEMPLATE lpTemplate = (LPDLGTEMPLATE)buffer;
@@ -331,7 +308,7 @@ oMsgBox::RESULT AssertDialog(oMsgBox::TYPE type, const char* caption, const char
 
 	DWORD BtnStyle = WS_CHILD|WS_VISIBLE|WS_TABSTOP;
 
-	initializeItem(vcur, _string.c_str(), Control::kMessageText, Control::kEdit, WS_CHILD|WS_VISIBLE|ES_LEFT|ES_MULTILINE|ES_READONLY|WS_VSCROLL, rString);
+	initializeItem(vcur, oGetData(_string), Control::kMessageText, Control::kEdit, WS_CHILD|WS_VISIBLE|ES_LEFT|ES_MULTILINE|ES_READONLY|WS_VSCROLL, rString);
 	initializeItem(vcur, textBtn0, Control::kAbort, Control::kButton, BtnStyle, rAbort);
 	initializeItem(vcur, textBtn1, Control::kRetry, Control::kButton, BtnStyle|BS_DEFPUSHBUTTON, rDebug);
 	
@@ -351,9 +328,9 @@ oMsgBox::RESULT AssertDialog(oMsgBox::TYPE type, const char* caption, const char
 	if (int_ptr == -1)
 	{
 		char s[2048];
-		oGetNativeErrorDesc(s, GetLastError());
+		oGetWindowsErrorDescription(s, GetLastError());
 		sprintf_s(s, "DialogBoxIndirectParam failed. %s", s);
-		__debugbreak();
+		__debugbreak(); // debug msgbox called from oASSERTs, so don't recurse into it
 	}
 
 	DeleteObject(hIcon);
@@ -391,13 +368,13 @@ oMsgBox::RESULT GetResult(int messageBoxResult)
 
 oMsgBox::RESULT oMsgBox::tvprintf(oMsgBox::TYPE _Type, unsigned int _Timeout, const char* _Title, const char* _Format, va_list args)
 {
-	oTempString msg(oTempString::BigSize);
-	vsprintf_s(msg, _Format, args);
+	std::vector<char> msg(oKB(128));
+	vsprintf_s(oGetData(msg), oGetDataSize(msg), _Format, args);
 	oMsgBox::RESULT result;
 	if (_Type == oMsgBox::DEBUG)
-		result = AssertDialog(_Type, _Title, msg, _Timeout, 0);
+		result = AssertDialog(_Type, _Title, oGetData(msg), _Timeout, 0);
 	else
-		result = GetResult(MessageBoxTimeout(0, msg, _Title, AsFlags(_Type), 0, _Timeout));
+		result = GetResult(MessageBoxTimeout(0, oGetData(msg), _Title, AsFlags(_Type), 0, _Timeout));
 	return result;
 }
 

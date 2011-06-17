@@ -1,26 +1,6 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
+
+// Interface for accessing common debugger features
 #pragma once
 #ifndef oDebugger_h
 #define oDebugger_h
@@ -46,15 +26,17 @@ namespace oDebugger
 	void Reference();
 	void Release();
 
-	// As it appears in the debugger's UI. nativeHandle of 0 means "this thread"
+	// As it appears in the debugger's UI. _NativeThreadHandle of 0 means 
+	// "this thread"
 	void SetThreadName(const char* _Name, void* _NativeThreadHandle = 0);
 
-	// Format printf-style output to the debugger's output window
-	int vprintf(const char* _Format, va_list _Args);
-	int printf(const char* _Format, ...);
-
-	// Direct-print without any formatting. This can be faster than vprintf/printf
-	void print(const char* _String);
+	// Print to debugger output. Normally this ensures only one thread at a time
+	// can write so no messages get garbled, but doing so requires oSingleton to
+	// be valid to hold onto the mutex. With _EnsureThreadsafety = false, the 
+	// oSingleton is not touched and print() is not threadsafe. This is useful in
+	// late static deinitialization code where the mutex might already be 
+	// destroyed and threading is less of a worry.
+	void Print(const char* _String);
 
 	// True if the debugger is watching this process
 	bool IsAttached();
@@ -63,7 +45,7 @@ namespace oDebugger
 	void BreakOnAlloc(long _RequestNumber);
 
 	// Summarize all malloc()'s not free()'ed
-	void ReportLeaksOnExit(bool _Report = true);
+	void ReportLeaksOnExit(bool _Report = true, bool _UseDefaultReporter = false);
 
 	// Throw more exceptions when bad things happen to floats and doubles
 	bool FloatExceptionsEnabled();

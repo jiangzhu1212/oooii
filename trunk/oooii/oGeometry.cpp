@@ -1,493 +1,1163 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oGeometry.h>
-#include <oooii/oMath.h>
 #include <oooii/oErrno.h>
+#include <oooii/oOBJLoader.h>
+#include <oooii/oRefCount.h>
+#include <oooii/oSTL.h>
 
-float3 float3_zero(0.0f,0.0f,0.0f);
+#define GEO_CONSTRUCT(fnName, SupportedLayout, InputLayout, FaceType) do { bool success = false; oCONSTRUCT(_ppGeometry, oGeometry_Impl(fnName, SupportedLayout, InputLayout, FaceType, &success)); } while (0); \
+	oGeometry_Impl* pGeometry = (oGeometry_Impl*)*_ppGeometry; \
+	if (!pGeometry) return false;
 
-#define Err(a)
-#define ESUCCESS 0
-#define EFAIL 1
-#define ENYI 2
+static const float oVERYSMALL = 0.000001f;
 
-size_t oGeometry::GetNumPrimitives() const
+// we're left-handed at the moment
+static const float3 Z_FACING_EYE(0.0f, 0.0f, -1.0f);
+
+// Utility to find or create midpoints of triangles in a mesh
+// Basically the main inputs are two indices that define an edge.
+// The other parameters are caching values for the results of what
+// happened of either finding a prior midpoint or having to create
+// a new vertex. This function is meant to be called iteratively 
+// while building new midpoints of triangles in a mesh for the 
+// purposes of tessellation. _IndexCurrent should be initialized 
+// to 0 and be left alone. _Start _End and _Mid should be able to
+// accommodate as many edges as are in the mesh. _Positions should 
+// be pre-allocated to the maximum number of possible new 
+// midpoints. For example if you pass just one triangle (3 positions)
+// and tessellate it, then 3 more midpoints will be generated, so
+// positions should be allocated to 6.
+//
+// _Index0: first index of a triangle's edge for which a midpoint is to be found
+// _Index1: second index of a triangle's edge for which a midpoint is to be found
+// _IndexCurrent: This function is called iteratively, so _IndexCurrent keeps 
+//                track of the last index where data was pulled from.
+// _pStart: First half of an edge list structure
+// _pEnd: Last half of an edge list structure
+// _pMid: Keeps a log of the point in the middle of an edge
+//        whether it was found or created
+// _Positions: vertex positions. Sometimes a new vertex needs to be created
+//             for a midpoint, so this will get updated.
+// <other vertex attributes>: If the vectors specified are empty, no work is done
+// For any non-empty vectors, new vertices get their values from lerping the 
+// edge endpoints.
+template<typename T> static unsigned int oFindOrCreateMidpointT(unsigned int _Index0, unsigned int _Index1, unsigned int& _IndexCurrent, unsigned int* _pStart, unsigned int* _pEnd, unsigned int* _pMid, std::vector<TVEC3<T>>& _Positions, std::vector<TVEC3<T>>& _Normals, std::vector<TVEC4<T>>& _Tangents, std::vector<TVEC2<T>>& _Texcoords0, std::vector<TVEC2<T>>& _Texcoords1, std::vector<oColor>& _Colors, std::vector<unsigned int>& _ContinuityIDs)
 {
-	size_t n = Indices.size();
-	switch (PrimitiveType)
+	/** <citation
+		usage="Adaptation" 
+		reason="This is actually cleanup of the original that I now apply to more than just sphere tessellation." 
+		author="Cedric Laugerotte"
+		description="http://student.ulb.ac.be/~claugero/sphere/index.html"
+		license="*** Assumed Public Domain ***"
+		licenseurl="http://student.ulb.ac.be/~claugero/sphere/index.html"
+		modification="More parameterization and separate from original assume-a-sphere algo"
+	/>*/
+
+	for (unsigned int i = 0; i < _IndexCurrent; i++)
 	{
-		case GEOMETRY_PRIMITIVE_POINTLIST: n = GetNumVertices(); break;
-		case GEOMETRY_PRIMITIVE_LINELIST: n /= 2; break;
-		case GEOMETRY_PRIMITIVE_LINESTRIP: n--; break;
-		case GEOMETRY_PRIMITIVE_TRILIST: n /= 3; break;
-		case GEOMETRY_PRIMITIVE_TRISTRIP: n -= 2; break;
-		default: n = 0; break;
+		if (((_pStart[i] == _Index0) && (_pEnd[i] == _Index1)) || ((_pStart[i] == _Index1) && (_pEnd[i] == _Index0)))
+		{
+			unsigned int midpoint = _pMid[i];
+			_IndexCurrent--; // won't underflow b/c we won't get here unless _IndexCurrent is at least 1 (from for loop)
+			_pStart[i] = _pStart[_IndexCurrent];
+			_pEnd[i] = _pEnd[_IndexCurrent];
+			_pMid[i] = _pMid[_IndexCurrent];
+			return midpoint;
+		}
 	}
-	return n;
+
+	// no vert found, make a new one
+
+	_pStart[_IndexCurrent] = _Index0;
+	_pEnd[_IndexCurrent] = _Index1; 
+	_pMid[_IndexCurrent] = static_cast<unsigned int>(_Positions.size());
+
+	_Positions.push_back(lerp(_Positions[_Index0], _Positions[_Index1], 0.5f));
+	if (!_Normals.empty())
+		_Normals.push_back(normalize(_Normals[_Index0] + _Normals[_Index1]));
+	if (!_Tangents.empty())
+	{
+		oASSERT(_Tangents[_Index0].w == _Tangents[_Index1].w, "");
+		_Tangents.push_back(float4(normalize(_Tangents[_Index0].XYZ() + _Tangents[_Index1].XYZ()), _Tangents[_Index0].w));
+	}
+	if (!_Texcoords0.empty())
+		_Texcoords0.push_back(lerp(_Texcoords0[_Index0], _Texcoords0[_Index1], 0.5f));
+	if (!_Texcoords1.empty())
+		_Texcoords1.push_back(lerp(_Texcoords0[_Index1], _Texcoords1[_Index1], 0.5f));
+	if (!_Colors.empty())
+		_Colors.push_back(lerp(_Colors[_Index0], _Colors[_Index1], 0.5f));
+	if (!_ContinuityIDs.empty())
+	{
+		oASSERT(_ContinuityIDs[_Index0] == _ContinuityIDs[_Index1], "");
+		_ContinuityIDs.push_back(_ContinuityIDs[_Index0]);
+	}
+
+	unsigned int midpoint = _pMid[_IndexCurrent++];
+	return midpoint;
+} 
+
+// @oooii-tony: TODO: subdivide is fairly generic. Clean it
+// up to a higher-level static function in this same .cpp,
+// but try to use it for:
+// 4. CreateFrustum(): support a Divide param in the desc
+// 5. CreateCylinder(): for the tube part, do the simple thing and tessellate
+
+// Subdivides each triangle in a mesh by finding the midpoints of each edge and
+// creating a new point there, generating 4 new triangles to replace the prior
+// triangle. This does not duplicate points for triangles that share an edge.
+// _NumEdges: The valid number of edges in the specified mesh must be passed.
+//            This value will be filled with the new edge count after 
+//            subdivision. In this way oSubdivideMesh() can be called 
+//            recursively up to the desired subdivision level.
+// _Indices:  List of indices. This will be modified during subdivision
+// _Positions, _Normals, _Tangents, _Texcoords0, _Texcoords1, _Colors
+template<typename T> static void oSubdivideMeshT(unsigned int& _NumEdges, std::vector<unsigned int>& _Indices, std::vector<TVEC3<T>>& _Positions, std::vector<TVEC3<T>>& _Normals, std::vector<TVEC4<T>>& _Tangents, std::vector<TVEC2<T>>& _Texcoords0, std::vector<TVEC2<T>>& _Texcoords1, std::vector<oColor>& _Colors, std::vector<unsigned int>& _ContinuityIDs)
+{
+	// reserve space for more faces
+	_Positions.reserve(_Positions.size() + 2 * _NumEdges);
+
+	_NumEdges = static_cast<unsigned int>(2 * _Positions.size() + _Indices.size());
+	std::vector<unsigned int> start(_NumEdges);
+	std::vector<unsigned int> end(_NumEdges);
+	std::vector<unsigned int> mid(_NumEdges);
+	std::vector<unsigned int> oldIndices(_Indices);
+
+	_Indices.resize(4 * _Indices.size());
+
+	unsigned int indexFace = 0;
+
+	unsigned int indexCurrent = 0;
+	const unsigned int numFaces = static_cast<unsigned int>(oldIndices.size() / 3);
+	for (unsigned int i = 0; i < numFaces; i++) 
+	{ 
+		unsigned int a = oldIndices[3*i]; 
+		unsigned int b = oldIndices[3*i+1]; 
+		unsigned int c = oldIndices[3*i+2]; 
+
+		unsigned int abMidpoint = oFindOrCreateMidpointT(b, a, indexCurrent, oGetData(start), oGetData(end), oGetData(mid), _Positions, _Normals, _Tangents, _Texcoords0, _Texcoords1, _Colors, _ContinuityIDs);
+		unsigned int bcMidpoint = oFindOrCreateMidpointT(c, b, indexCurrent, oGetData(start), oGetData(end), oGetData(mid), _Positions, _Normals, _Tangents, _Texcoords0, _Texcoords1, _Colors, _ContinuityIDs);
+		unsigned int caMidpoint = oFindOrCreateMidpointT(a, c, indexCurrent, oGetData(start), oGetData(end), oGetData(mid), _Positions, _Normals, _Tangents, _Texcoords0, _Texcoords1, _Colors, _ContinuityIDs);
+
+		_Indices[3*indexFace] = a;
+		_Indices[3*indexFace+1] = abMidpoint;
+		_Indices[3*indexFace+2] = caMidpoint;
+		indexFace++;
+		_Indices[3*indexFace] = caMidpoint;
+		_Indices[3*indexFace+1] = abMidpoint;
+		_Indices[3*indexFace+2] = bcMidpoint;
+		indexFace++;
+		_Indices[3*indexFace] = caMidpoint;
+		_Indices[3*indexFace+1] = bcMidpoint;
+		_Indices[3*indexFace+2] = c;
+		indexFace++;
+		_Indices[3*indexFace] = abMidpoint;
+		_Indices[3*indexFace+1] = b;
+		_Indices[3*indexFace+2] = bcMidpoint;
+		indexFace++;
+	} 
 }
 
-bool oGeometry::IsValid() const
+static void oSubdivideMesh(unsigned int& _NumEdges, std::vector<unsigned int>& _Indices, std::vector<float3>& _Positions, std::vector<float3>& _Normals, std::vector<float4>& _Tangents, std::vector<float2>& _Texcoords0, std::vector<float2>& _Texcoords1, std::vector<oColor>& _Colors, std::vector<unsigned int>& _ContinuityIDs)
 {
-	if (PrimitiveType == GEOMETRY_PRIMITIVE_UNKNOWN) return false;
-	if (Positions.empty()) return false;
-	if (!Normals.empty() && Normals.size() != GetNumVertices()) return false;
-	if (!Tangents.empty() && Tangents.size() != GetNumVertices()) return false;
-	if (!Texcoords.empty() && Texcoords.size() != GetNumVertices()) return false;
-	if (!Colors.empty() && Colors.size() != GetNumVertices()) return false;
+	oSubdivideMeshT(_NumEdges, _Indices, _Positions, _Normals, _Tangents, _Texcoords0, _Texcoords1, _Colors, _ContinuityIDs);
+}
+
+static bool IsSupported(const char* _CreateFunctionName, const oGeometry::LAYOUT& _Supported, const oGeometry::LAYOUT& _Input, oGeometry::FACE_TYPE _FaceType)
+{
+	if (!_Supported.Positions)
+	{
+		oSetLastError(EINVAL, "%s() is not validly implemented", oSAFESTRN(_CreateFunctionName));
+		return false;
+	}
+
+	if (_FaceType == oGeometry::OUTLINE && (_Input.Normals || _Input.Tangents || _Input.Texcoords))
+	{
+		oSetLastError(EINVAL, "Outline face types do not support normals, tangents, or texcoords");
+		return false;
+	}
+
+	if (!_Supported.Normals && _Input.Normals)
+	{
+		oSetLastError(EINVAL, "%s() does not support normals", oSAFESTRN(_CreateFunctionName));
+		return false;
+	}
+
+	if (!_Supported.Tangents && _Input.Tangents)
+	{
+		oSetLastError(EINVAL, "%s() does not support tangents", oSAFESTRN(_CreateFunctionName));
+		return false;
+	}
+
+	if (!_Supported.Texcoords && _Input.Texcoords)
+	{
+		oSetLastError(EINVAL, "%s() does not support texcoords", oSAFESTRN(_CreateFunctionName));
+		return false;
+	}
+
+	if (!_Supported.Colors && _Input.Colors)
+	{
+		oSetLastError(EINVAL, "%s() does not support colors", oSAFESTRN(_CreateFunctionName));
+		return false;
+	}
+
+	if (!_Supported.ContinuityIDs && _Input.ContinuityIDs)
+	{
+		oSetLastError(EINVAL, "%s() does not support continuity IDs", oSAFESTRN(_CreateFunctionName));
+		return false;
+	}
+
+	if (!_Input.Positions)
+	{
+		oSetLastError(EINVAL, "Positions must be specified as true in layout");
+		return false;
+	}
+
+	if (_Input.Tangents && (!_Input.Normals || !_Input.Texcoords))
+	{
+		oSetLastError(EINVAL, "Invalid layout: Tangents require both normals and texcoords");
+		return false;
+	}
+
 	return true;
 }
 
-void oGeometry::Clear()
+static unsigned int CalcNumPrimitives(oGeometry::PRIMITIVE_TYPE _PrimitiveType, size_t _NumIndices, size_t _NumVertices)
 {
-	PrimitiveType = GEOMETRY_PRIMITIVE_UNKNOWN;
-	Indices.clear();
-	Positions.clear();
-	Normals.clear();
-	Tangents.clear();
-	Texcoords.clear();
-	Colors.clear();
-}
-
-void oGeometry::Transform(const float4x4& _Matrix)
-{
-
-	oFOREACH(float3& p, Positions) p = _Matrix * p;
-	float3x3 r = _Matrix.getUpper3x3();
-	oFOREACH(float3& n, Normals) n = r * n;
-	oFOREACH(float4& t, Tangents) t = float4(r * t.XYZ(), t.W());
-}
-
-void oGeometry::CalculateBounds()
-{
-	Bounds.Empty();
-	oFOREACH(float3&p, Positions)
-		Bounds.ExtendBy(p);
-}
-
-static bool IsSupported(const GEOMETRY_LAYOUT* _pSupported, const GEOMETRY_LAYOUT* _pInput)
-{    
-	return !(!_pInput->Positions
-		|| (!_pSupported->Normals && _pInput->Normals)
-		|| (!_pSupported->Tangents && _pInput->Tangents)
-		|| (!_pSupported->Colors && _pInput->Colors)
-		|| (!_pSupported->Texcoords && _pInput->Texcoords));
-}
-
-static GEOMETRY_FACE_TYPE GetOppositeWindingOrder(GEOMETRY_FACE_TYPE type)
-{
-	switch (type)
+	size_t n = _NumIndices;
+	switch (_PrimitiveType)
 	{
-		case GEOMETRY_FACE_SOLID_CW: return GEOMETRY_FACE_SOLID_CCW;
-		case GEOMETRY_FACE_SOLID_CCW: return GEOMETRY_FACE_SOLID_CW;
-		default: break;
+		case oGeometry::POINTLIST: n = _NumVertices; break;
+		case oGeometry::LINELIST: n /= 2; break;
+		case oGeometry::LINESTRIP: n--; break;
+		case oGeometry::TRILIST: n /= 3; break;
+		case oGeometry::TRISTRIP: n -= 2; break;
+		default: n = 0; break;
 	}
-
-	return type;
+	
+	return static_cast<unsigned int>(n);
 }
 
-static float GetNormalSign(GEOMETRY_FACE_TYPE type)
+static float GetNormalSign(oGeometry::FACE_TYPE type)
 {
+	// This geo lib was brought up as CCW, so invert some values for CW systems
+
 	switch (type)
 	{
-		case GEOMETRY_FACE_SOLID_CW: return 1.0f;
-		case GEOMETRY_FACE_SOLID_CCW: return -1.0f;
+		case oGeometry::FRONT_CW: return -1.0f;
+		case oGeometry::FRONT_CCW: return 1.0f;
 		default: break;
 	}
 
 	return 0.0f;
 }
 
+static oGeometry::FACE_TYPE GetOppositeWindingOrder(oGeometry::FACE_TYPE type)
+{
+	switch (type)
+	{
+		case oGeometry::FRONT_CW: return oGeometry::FRONT_CCW;
+		case oGeometry::FRONT_CCW: return oGeometry::FRONT_CW;
+		default: break;
+	}
+
+	return type;
+}
+
 void ChangeWindingOrder(size_t _NumberOfIndices, unsigned int* _pIndices, unsigned int _BaseIndexIndex)
 {
-	oASSERT(/*"core.geometry", */(_BaseIndexIndex % 3) == 0, "Indices is not divisible by 3, so thus is not triangles and cannot be re-winded.");
-	oASSERT(/*"core.geometry", */(_NumberOfIndices % 3) == 0, "Indices is not divisible by 3, so thus is not triangles and cannot be re-winded.");
+	oASSERT((_BaseIndexIndex % 3) == 0, "Indices is not divisible by 3, so thus is not triangles and cannot be re-winded");
+	oASSERT((_NumberOfIndices % 3) == 0, "Indices is not divisible by 3, so thus is not triangles and cannot be re-winded");
 	for (size_t i = _BaseIndexIndex; i < _NumberOfIndices; i += 3)
 		std::swap(_pIndices[i+1], _pIndices[i+2]);
 }
 
 template<typename T, typename A> inline void ChangeWindingOrder(std::vector<T, A>& _Indices, unsigned int _BaseIndexIndex) { ChangeWindingOrder(_Indices.size(), &_Indices[0], _BaseIndexIndex); }
 
-void CalculateFaceNormals(float3* _pFaceNormals
-	, size_t _NumberOfIndices
-	, const unsigned int* _pIndices
-	, size_t _NumberOfVertices
-	, const float3* _pPositions
-	, bool _CCW)
+const oGUID& oGetGUID( threadsafe const oGeometry* threadsafe const * )
 {
-	oASSERT(/*"core.geometry", */(_NumberOfIndices % 3) == 0, "");
-	const float s = _CCW ? 1.0f : -1.0f;
-
-	for (size_t i = 0; i < _NumberOfIndices / 3; i++)
-	{
-		const float3 a = _pPositions[_pIndices[i*3]];
-		const float3 b = _pPositions[_pIndices[i*3+1]];
-		const float3 c = _pPositions[_pIndices[i*3+2]];
-		_pFaceNormals[i] = s * normalize(cross(a - b, a - c));
-	}
+	// {7BA30462-0899-489a-87A8-D897D1CE929E}
+	static const oGUID oIIDGeometry = { 0x7ba30462, 0x899, 0x489a, { 0x87, 0xa8, 0xd8, 0x97, 0xd1, 0xce, 0x92, 0x9e } };
+	return oIIDGeometry;
 }
 
-void CalculateVertexNormals(float3* _pVertexNormals
-	, size_t _NumberOfIndices
-	, const unsigned int* _pIndices
-	, size_t _NumberOfVertices
-	, const float3* _pPositions
-	, bool _CCW)
-{											
-	oASSERT(/*"core.geometry", */(_NumberOfIndices % 3) == 0, "");
-
-	std::vector<float3> faceNormals(_NumberOfIndices / 3, float3_zero);
-	CalculateFaceNormals(&faceNormals[0], _NumberOfIndices, _pIndices, _NumberOfVertices, _pPositions, _CCW);
-
-	const size_t nFaces = _NumberOfIndices / 3;
-
-	// for each vertex, store a list of the faces to which it contributes
-	std::vector<std::vector<size_t> > trianglesUsedByVertex(_NumberOfVertices);
-
-	for (size_t i = 0; i < nFaces; i++)
-	{
-		oPushBackUnique(trianglesUsedByVertex[_pIndices[i*3]], i);
-		oPushBackUnique(trianglesUsedByVertex[_pIndices[i*3+1]], i);
-		oPushBackUnique(trianglesUsedByVertex[_pIndices[i*3+2]], i);
-	}
-
-	// Now go through the list and average the normals
-	for (size_t i = 0; i < _NumberOfVertices; i++)
-	{
-		float3 N = float3_zero;
-		oFOREACH(size_t faceIndex, trianglesUsedByVertex[i])
-			N += faceNormals[faceIndex];
-		_pVertexNormals[i] = normalize(N);
-	}
+const oGUID& oGetGUID( threadsafe const oGeometryFactory* threadsafe const * )
+{
+	// {57FBE80E-60DC-4a7c-8ADC-6CA9B95D6366}
+	static const oGUID oIIDGeometryFactory = { 0x57fbe80e, 0x60dc, 0x4a7c, { 0x8a, 0xdc, 0x6c, 0xa9, 0xb9, 0x5d, 0x63, 0x66 } };
+	return oIIDGeometryFactory;
 }
 
-void CalculateTangents(float4* _pTangents
- , size_t _NumberOfIndices
- , const unsigned int* _pIndices
- , size_t _NumberOfVertices
- , const float3* _pPositions
- , const float3* _pNormals
- , const float2* _pTexcoords)
+struct oGeometry_Impl : public oGeometry
 {
-	/** $(Citation)
-		<citation>
-			<usage type="Implementation" />
-			<author name="Eric Lengyel" />
-			<description url="http://www.terathon.com/code/tangent.html" />
-			<license type="*** Assumed Public Domain ***" url="http://www.terathon.com/code/tangent.html" />
-		</citation>
-	*/
+	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oGeometry>());
 
-	// $(CitedCodeBegin)
-
-	std::vector<float3> tan1(_NumberOfVertices, float3_zero);
-	std::vector<float3> tan2(_NumberOfVertices, float3_zero);
-
-	const size_t count = _NumberOfIndices / 3;
-	for (unsigned int i = 0; i < count; i++)
+	oGeometry_Impl(const char* _CallingFunction, const LAYOUT& _Supported, const LAYOUT& _Input, oGeometry::FACE_TYPE _FaceType, bool* _pSuccess)
+		: FaceType(_FaceType)
+		, PrimitiveType(_FaceType == oGeometry::OUTLINE ? oGeometry::LINELIST : oGeometry::TRILIST)
 	{
-		const unsigned int a = _pIndices[3*i];
-		const unsigned int b = _pIndices[3*i+1];
-		const unsigned int c = _pIndices[3*i+2];
-
-		const float3& Pa = _pPositions[a];
-		const float3& Pb = _pPositions[b];
-		const float3& Pc = _pPositions[c];
-
-		const float x1 = Pb.x - Pa.x;
-		const float x2 = Pc.x - Pa.x;
-		const float y1 = Pb.y - Pa.y;
-		const float y2 = Pc.y - Pa.y;
-		const float z1 = Pb.z - Pa.z;
-		const float z2 = Pc.z - Pa.z;
-        
-		const float2& TCa = _pTexcoords[a];
-		const float2& TCb = _pTexcoords[b];
-		const float2& TCc = _pTexcoords[c];
-
-		const float s1 = TCb.x - TCa.x;
-		const float s2 = TCc.x - TCa.x;
-		const float t1 = TCb.y - TCa.y;
-		const float t2 = TCc.y - TCa.y;
-
-		float r = 1.0f / (s1 * t2 - s2 * t1);
-		float3 s((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
-		float3 t((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
-
-		tan1[a] += s;
-		tan1[b] += s;
-		tan1[c] += s;
-
-		tan2[a] += t;
-		tan2[b] += t;
-		tan2[c] += t;
+		*_pSuccess = IsSupported(_CallingFunction, _Supported, _Input, _FaceType);
 	}
 
-	for (unsigned int i = 0; i < _NumberOfVertices; i++)
+	void GetDesc(DESC* _pDesc) const override;
+	void Transform(const float4x4& _Matrix) override;
+	bool Map(MAPPED* _pMapped) override;
+	void Unmap() override;
+	bool Map(CONST_MAPPED* _pMapped) const override;
+	void Unmap() const override;
+
+	inline void Clear()
 	{
-		// Gram-Schmidt orthogonalize + handedness
-		const float3& n = _pNormals[i];
-		const float3& t = tan1[i];
-		_pTangents[i] = float4(normalize(t - n * dot(n, t)), (dot(static_cast<float3>(cross(n, t)), tan2[i]) < 0.0f) ? -1.0f : 1.0f);
+		Bounds.Clear();
+		Indices.clear();
+		Positions.clear();
+		Normals.clear();
+		Tangents.clear();
+		Texcoords.clear();
+		Colors.clear();
+		ContinuityIDs.clear();
 	}
 
-	// $(CitedCodeEnd)
-}
+	inline void Reserve(size_t _NumIndices, size_t _NumVertices)
+	{
+		Indices.reserve(_NumIndices);
+		Positions.reserve(_NumVertices);
+		Normals.reserve(_NumVertices);
+		Tangents.reserve(_NumVertices);
+		Texcoords.reserve(_NumVertices);
+		ContinuityIDs.reserve(_NumVertices);
+	}
 
-static inline void CalculateVertexNormals(oGeometry* _pGeometry, bool _CCW)
-{
-	_pGeometry->Normals.resize(_pGeometry->GetNumVertices());
-	CalculateVertexNormals(&_pGeometry->Normals[0], _pGeometry->Indices.size(), &_pGeometry->Indices[0], _pGeometry->GetNumVertices(), &_pGeometry->Positions[0], _CCW);
-}
+	void Transform(const float4x4& _Matrix, unsigned int _BaseVertexIndex);
 
-static inline void CalculateTangents(oGeometry* _pGeometry, unsigned int _BaseIndexIndex)
-{
-	_pGeometry->Tangents.resize(_pGeometry->GetNumVertices());
-	CalculateTangents(&_pGeometry->Tangents[0], _pGeometry->Indices.size() - _BaseIndexIndex, &_pGeometry->Indices[_BaseIndexIndex], _pGeometry->GetNumVertices(), &_pGeometry->Positions[0], &_pGeometry->Normals[0], &_pGeometry->Texcoords[0]);
-}
+	inline void CalculateVertexNormals(bool _CCW)
+	{
+		Normals.resize(Positions.size());
+		oCalculateVertexNormals(oGetData(Normals), oGetData(Indices), Indices.size(), oGetData(Positions), Positions.size(), _CCW);
+	}
 
-namespace TerathonEdges {
+	inline void CalculateTangents(unsigned int _BaseIndexIndex)
+	{
+		Tangents.resize(Positions.size());
+		oCalculateTangents(oGetData(Tangents), &Indices[_BaseIndexIndex], Indices.size() - _BaseIndexIndex, oGetData(Positions), oGetData(Normals), oGetData(Texcoords), Positions.size());
+	}
 
-/** $(Citation)
-	<citation>
-		<usage type="Implementation" />
-		<author name="Eric Lengyel" />
-		<description url="http://www.terathon.com/code/edges.html" />
-		<license type="*** Assumed Public Domain ***" url="http://www.terathon.com/code/edges.html" />
-	</citation>
-*/
+	inline void SetColor(oColor _Color, unsigned int _BaseVertexIndex)
+	{
+		Colors.resize(Positions.size());
+		for (size_t i = _BaseVertexIndex; i < Colors.size(); i++)
+			Colors[i] = _Color;
+	}
 
-// (tony) I know this isn't efficient, but I just want to get 
-// something working so I can get a reference against which
-// to test any smarter implementation.
+	inline void SetContinuityID(unsigned int _ID, unsigned int _BaseVertexIndex = 0, unsigned int _NumVertices = ~0u)
+	{
+		ContinuityIDs.resize(Positions.size());
+		const size_t count = __min(_NumVertices, ContinuityIDs.size() - _BaseVertexIndex);
+		for (size_t i = _BaseVertexIndex; i < count; i++)
+			ContinuityIDs[i] = _ID;
+	}
 
-// Some minor changes have been made to use local types and not limit
-// the algo to 65536 indices. ... um, also to make it compile...
+	inline void CalculateBounds()
+	{
+		float3 m, M;
+		oCalculateMinMaxPoints(oGetData(Positions), Positions.size(), &m, &M);
+		Bounds.SetMin(m);
+		Bounds.SetMax(M);
+	}
 
-// $(CitedCodeBegin)
+	inline void PruneUnindexedVertices()
+	{
+		size_t newNumVerts = 0;
+		oPruneUnindexedVertices(oGetData(Indices), Indices.size(), oGetData(Positions), oGetData(Normals), oGetData(Tangents), oGetData(Texcoords), (float2*)0, (unsigned int*)oGetData(Colors), Positions.size(), &newNumVerts);
+		if (newNumVerts != Positions.size())
+		{
+			Positions.resize(newNumVerts);
+			Normals.resize(newNumVerts);
+			Tangents.resize(newNumVerts);
+			Texcoords.resize(newNumVerts);
+			Colors.resize(newNumVerts);
+		}
+	}
 
-// Building an Edge List for an Arbitrary Mesh
-// The following code builds a list of edges for an arbitrary triangle 
-// mesh and has O(n) running time in the number of triangles n in the 
-// _pGeometry-> The edgeArray parameter must point to a previously allocated 
-// array of Edge structures large enough to hold all of the mesh's 
-// edges, which in the worst possible case is 3 times the number of 
-// triangles in the _pGeometry->
+	inline void Subdivide(unsigned int _Divide, unsigned int _NumEdges)
+	{
+		std::vector<float2> dummy;
+		for (size_t i = 0; i < _Divide; i++)
+			oSubdivideMesh(_NumEdges, Indices, Positions, Normals, Tangents, Texcoords, dummy, Colors, ContinuityIDs);
+	}
 
-// An edge list is useful for many geometric algorithms in computer 
-// graphics. In particular, an edge list is necessary for stencil 
-// shadows.
+	// Calculates all derived attributes if not already created
+	// by prior code.
+	inline void Finalize(const LAYOUT& _Layout, const oColor& _Color)
+	{
+		if (FaceType != oGeometry::OUTLINE)
+		{
+			if (_Layout.Normals && Normals.empty())
+				CalculateVertexNormals(FaceType == oGeometry::FRONT_CCW);
+		
+			if (_Layout.Tangents && Tangents.empty())
+				CalculateTangents(0);
+		}
 
-struct Edge
-{
-    unsigned int      vertexIndex[2]; 
-    unsigned int      faceIndex[2];
+		if (_Layout.Colors)
+			SetColor(_Color, 0);
+
+		if (_Layout.ContinuityIDs && ContinuityIDs.empty())
+			SetContinuityID(0);
+
+		if (Ranges.empty())
+		{
+			RANGE r;
+			r.StartIndex = 0;
+			r.NumIndices = static_cast<unsigned int>(Indices.size());
+			Ranges.push_back(r);
+		}
+
+		CalculateBounds();
+	}
+
+	void FillMapped(MAPPED* _pMapped) const;
+
+	std::vector<RANGE> Ranges;
+	std::vector<unsigned int> Indices;
+	std::vector<float3> Positions;
+	std::vector<float3> Normals;
+	std::vector<float4> Tangents;
+	std::vector<float2> Texcoords;
+	std::vector<oColor> Colors;
+	std::vector<unsigned int> ContinuityIDs;
+	FACE_TYPE FaceType;
+	PRIMITIVE_TYPE PrimitiveType;
+	oAABoxf Bounds;
+	oRefCount RefCount;
+	//oRWMutex Mutex;
 };
 
-
-struct Triangle
+void oGeometry_Impl::FillMapped(MAPPED* _pMapped) const
 {
-    unsigned int      index[3];
+	oGeometry_Impl* pThis = const_cast<oGeometry_Impl*>(this);
+
+	_pMapped->pRanges = oGetData(pThis->Ranges);
+	_pMapped->pIndices = oGetData(pThis->Indices);
+	_pMapped->pPositions = oGetData(pThis->Positions);
+	_pMapped->pNormals = oGetData(pThis->Normals);
+	_pMapped->pTangents = oGetData(pThis->Tangents);
+	_pMapped->pTexcoords = oGetData(pThis->Texcoords);
+	_pMapped->pColors = oGetData(pThis->Colors);
+}
+
+void oGeometry_Impl::GetDesc(DESC* _pDesc) const
+{
+	//oRWMutex::ScopedLock lock(Mutex);
+	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @oooii-tony: safe because we locked above
+
+	_pDesc->NumRanges = static_cast<unsigned int>(pLockedThis->Ranges.size());
+	_pDesc->NumVertices = static_cast<unsigned int>(pLockedThis->Positions.size());
+	_pDesc->NumIndices = static_cast<unsigned int>(pLockedThis->Indices.size());
+	_pDesc->NumPrimitives = CalcNumPrimitives(PrimitiveType, pLockedThis->Indices.size(), pLockedThis->Positions.size());
+	_pDesc->FaceType = FaceType;
+	_pDesc->PrimitiveType = PrimitiveType;
+	_pDesc->Bounds = pLockedThis->Bounds;
+	_pDesc->Layout.Positions = !!oGetData(pLockedThis->Positions);
+	_pDesc->Layout.Normals = !!oGetData(pLockedThis->Normals);
+	_pDesc->Layout.Tangents = !!oGetData(pLockedThis->Tangents);
+	_pDesc->Layout.Texcoords = !!oGetData(pLockedThis->Texcoords);
+	_pDesc->Layout.Colors = !!oGetData(pLockedThis->Colors);
+}
+
+void oGeometry_Impl::Transform(const float4x4& _Matrix)
+{
+	//oRWMutex::ScopedLock lock(Mutex);
+	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @oooii-tony: safe because we locked above
+	Bounds.Clear();
+	pLockedThis->Transform(_Matrix, 0);
+}
+
+void oGeometry_Impl::Transform(const float4x4& _Matrix, unsigned int _BaseVertexIndex)
+{
+	for (size_t i = _BaseVertexIndex; i < Positions.size(); i++)
+	{
+		Positions[i] = _Matrix * Positions[i];
+		Bounds.ExtendBy(Positions[i]);
+	}
+
+	float3x3 r = _Matrix.GetUpper3x3();
+
+	for (size_t i = _BaseVertexIndex; i < Normals.size(); i++)
+		Normals[i] = normalize(r * Normals[i]);
+	for (size_t i = _BaseVertexIndex; i < Tangents.size(); i++)
+		Tangents[i] = float4(normalize(r * Tangents[i].XYZ()), Tangents[i].w);
 };
 
-
-long BuildEdges(long vertexCount, long triangleCount,
-                const Triangle *triangleArray, Edge *edgeArray)
+bool oGeometry_Impl::Map(MAPPED* _pMapped)
 {
-    long maxEdgeCount = triangleCount * 3;
-    unsigned int *firstEdge = new unsigned int[vertexCount + maxEdgeCount];
-    unsigned int *nextEdge = firstEdge + vertexCount;
-    
-    for (long a = 0; a < vertexCount; a++) firstEdge[a] = 0xFFFFFFFF;
-    
-    // First pass over all triangles. This finds all the edges satisfying the
-    // condition that the first vertex index is less than the second vertex index
-    // when the direction from the first vertex to the second vertex represents
-    // a counterclockwise winding around the triangle to which the edge belongs.
-    // For each edge found, the edge index is stored in a linked list of edges
-    // belonging to the lower-numbered vertex index i. This allows us to quickly
-    // find an edge in the second pass whose higher-numbered vertex index is i.
-    
-    long edgeCount = 0;
-    const Triangle *triangle = triangleArray;
-    for (long a = 0; a < triangleCount; a++)
-    {
-        long i1 = triangle->index[2];
-        for (long b = 0; b < 3; b++)
-        {
-            long i2 = triangle->index[b];
-            if (i1 < i2)
-            {
-                Edge *edge = &edgeArray[edgeCount];
-                
-                edge->vertexIndex[0] = (unsigned int) i1;
-                edge->vertexIndex[1] = (unsigned int) i2;
-                edge->faceIndex[0] = (unsigned int) a;
-                edge->faceIndex[1] = (unsigned int) a;
-                
-                long edgeIndex = firstEdge[i1];
-                if (edgeIndex == 0xFFFFFFFF)
-                {
-                    firstEdge[i1] = edgeCount;
-                }
-                else
-                {
-                    for (;;)
-                    {
-                        long index = nextEdge[edgeIndex];
-                        if (index == 0xFFFFFFFF)
-                        {
-                            nextEdge[edgeIndex] = edgeCount;
-                            break;
-                        }
-                        
-                        edgeIndex = index;
-                    }
-                }
-                
-                nextEdge[edgeCount] = 0xFFFFFFFF;
-                edgeCount++;
-            }
-            
-            i1 = i2;
-        }
-        
-        triangle++;
-    }
-    
-    // Second pass over all triangles. This finds all the edges satisfying the
-    // condition that the first vertex index is greater than the second vertex index
-    // when the direction from the first vertex to the second vertex represents
-    // a counterclockwise winding around the triangle to which the edge belongs.
-    // For each of these edges, the same edge should have already been found in
-    // the first pass for a different triangle. So we search the list of edges
-    // for the higher-numbered vertex index for the matching edge and fill in the
-    // second triangle index. The maximum number of comparisons in this search for
-    // any vertex is the number of edges having that vertex as an endpoint.
-    
-    triangle = triangleArray;
-    for (long a = 0; a < triangleCount; a++)
-    {
-        long i1 = triangle->index[2];
-        for (long b = 0; b < 3; b++)
-        {
-            long i2 = triangle->index[b];
-            if (i1 > i2)
-            {
-                for (long edgeIndex = firstEdge[i2]; edgeIndex != 0xFFFFFFFF;
-                        edgeIndex = nextEdge[edgeIndex])
-                {
-                    Edge *edge = &edgeArray[edgeIndex];
-                    if ((edge->vertexIndex[1] == (unsigned int)i1) &&
-                            (edge->faceIndex[0] == edge->faceIndex[1]))
-                    {
-                        edge->faceIndex[1] = (unsigned int) a;
-                        break;
-                    }
-                }
-            }
-            
-            i1 = i2;
-        }
-        
-        triangle++;
-    }
-    
-    delete[] firstEdge;
-    return (edgeCount);
+	//Mutex.Lock();
+	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @oooii-tony: safe because we locked above
+	pLockedThis->FillMapped(_pMapped);
+	return true;
 }
 
-// $(CitedCodeEnd)
-
-} // namespace TerathonEdges
-
-static void CalculateEdges(std::vector<std::pair<unsigned int, unsigned int> >& _Edges, size_t _NumVertices, const std::vector<unsigned int>& _Indices)
+void oGeometry_Impl::Unmap()
 {
-	// fixme: pass an allocator to this function so the user can redirect 
-	// what can be a rather large temp allocation.
-
-	const size_t numTriangles = _Indices.size() / 3;
-	oASSERT(/*"core.geometry", */(size_t)((long)_NumVertices) == _NumVertices, "");
-	oASSERT(/*"core.geometry", */(size_t)((long)numTriangles) == numTriangles, "");
-
-	TerathonEdges::Edge* edgeArray = new TerathonEdges::Edge[3 * numTriangles];
-
-	size_t numEdges = static_cast<size_t>(TerathonEdges::BuildEdges(static_cast<long>(_NumVertices), static_cast<long>(numTriangles), (const TerathonEdges::Triangle *)&_Indices[0], edgeArray));
-	_Edges.resize(numEdges);
-	for (size_t i = 0; i < numEdges; i++)
-		_Edges[i] = std::pair<unsigned int, unsigned int>(edgeArray[i].vertexIndex[0], edgeArray[i].vertexIndex[1]);
-
-	delete [] edgeArray;
+	//Mutex.Unlock();
 }
 
-static void PruneIndices(const std::vector<bool>& _Refed, std::vector<unsigned int>& _Indices)
+bool oGeometry_Impl::Map(CONST_MAPPED* _pMapped) const
 {
-	std::vector<unsigned int> sub(_Refed.size(), 0);
-
-	for (unsigned int i = 0; i < _Refed.size(); i++)
-		if (!_Refed[i])
-			for (unsigned int j = i; j < sub.size(); j++)
-				(sub[j])++;
-
-	oFOREACH(unsigned int& in, _Indices)
-		in -= sub[in];
+	//Mutex.LockRead();
+	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @oooii-tony: safe because we locked above
+	pLockedThis->FillMapped((MAPPED*)_pMapped);
+	return true;
 }
 
-template<typename T> static void PruneStream(const std::vector<bool>& _Refed, std::vector<T>& _Stream)
+void oGeometry_Impl::Unmap() const
 {
-	if (_Stream.empty())
-		return;
-	std::vector<bool>::const_iterator itRefed = _Refed.begin();
-	std::vector<T>::iterator r = _Stream.begin(), w = _Stream.begin();
-	while (itRefed != _Refed.end())
+	//Mutex.UnlockRead();
+}
+
+struct oGeometryFactory_Impl : public oGeometryFactory
+{
+	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oGeometry>());
+
+	bool CreateRect(const RECT_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateBox(const BOX_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateFrustum(const FRUSTUM_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateCircle(const CIRCLE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateWasher(const WASHER_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateSphere(const SPHERE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateCylinder(const CYLINDER_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateCone(const CONE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateTorus(const TORUS_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateTeardrop(const TEARDROP_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
+
+	oRefCount RefCount;
+};
+
+bool oGeometryFactory::Create(oGeometryFactory** _ppGeometryFactory)
+{
+	if (!_ppGeometryFactory)
 	{
-		if (*itRefed++)
-			*w++ = *r++;
+		oSetLastError(EINVAL, "NULL pointer specified");
+		return false;
+	}
+
+	*_ppGeometryFactory = new oGeometryFactory_Impl();
+	return !!*_ppGeometryFactory;
+}
+
+namespace RectDetails
+{
+	static void AppendRect(oGeometry_Impl* _pGeometry, const oGeometryFactory::RECT_DESC& _Desc, const oGeometry::LAYOUT& _Layout)
+	{
+		static const float3 kCorners[4] = 
+		{
+			float3(0.0f, 0.0f, 0.0f),
+			float3(1.0f, 0.0f, 0.0f),
+			float3(0.0f, 1.0f, 0.0f),
+			float3(1.0f, 1.0f, 0.0f),
+		};
+
+		static const unsigned int kOutlineIndices[8] = { 0,1, 2,3, 0,2, 1,3 };
+		static const unsigned int kTriIndices[6] = { 0,2,1, 1,2,3 };
+
+		float4x4 m = oCreateScale(float3(_Desc.Width, _Desc.Height, 1.0f));
+		if (_Desc.Centered)
+			m = oCreateTranslation(float3(-0.5f, -0.5f, 0.0f)) * m;
+
+		size_t baseVertexIndex = _pGeometry->Positions.size();
+		for (size_t i = 0; i < oCOUNTOF(kCorners); i++)
+			_pGeometry->Positions.push_back(m * kCorners[i]);
+
+		size_t baseIndexIndex = _pGeometry->Indices.size();
+		if (_Desc.FaceType == oGeometry::OUTLINE)
+		{
+			for (size_t i = 0; i < oCOUNTOF(kOutlineIndices); i++)
+				_pGeometry->Indices.push_back(static_cast<unsigned int>(baseVertexIndex) + kOutlineIndices[i]);
+		}
+
 		else
-			++r;
+		{
+			for (size_t i = 0; i < oCOUNTOF(kTriIndices); i++)
+				_pGeometry->Indices.push_back(static_cast<unsigned int>(baseVertexIndex) + kTriIndices[i]);
+
+			if (_Desc.FaceType == oGeometry::FRONT_CCW)
+				ChangeWindingOrder(_pGeometry->Indices, static_cast<unsigned int>(baseIndexIndex));
+		}
+
+		if (_Layout.Texcoords)
+		{
+			for (size_t i = 0; i < oCOUNTOF(kCorners); i++)
+			{
+				float2 tc = kCorners[i].XY();
+				if (_Desc.FlipTexcoordV)
+					tc.y = 1.0f - tc.y;
+				_pGeometry->Texcoords.push_back(tc);
+			}
+		}
 	}
+
+} // namespace RectDetails
+
+bool oGeometryFactory_Impl::CreateRect(const RECT_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+{
+	static const oGeometry::LAYOUT sSupportedLayout = { true, true, true, true, true, true };
+	GEO_CONSTRUCT("CreateRect", sSupportedLayout, _Layout, _Desc.FaceType);
+
+	RectDetails::AppendRect(pGeometry, _Desc, _Layout);
+
+	if (_Desc.FaceType != oGeometry::OUTLINE)
+		pGeometry->Subdivide(_Desc.Divide, 6);
+
+	if (_Layout.Normals)
+		pGeometry->Normals.assign(pGeometry->Positions.size(), GetNormalSign(_Desc.FaceType) * float3(0.0f, 0.0f, 1.0f));
+	if (_Layout.Tangents)
+		pGeometry->Tangents.assign(pGeometry->Positions.size(), float4(1.0f, 0.0f, 0.0f, 1.0f));
+
+	pGeometry->Finalize(_Layout, _Desc.Color);
+	return true;
 }
 
-static void PruneUnindexedVertices(oGeometry* _pGeometry)
+bool oGeometryFactory_Impl::CreateBox(const BOX_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
 {
-	// clean orphaned vertex values
-	std::vector<bool> refed;
-	refed.assign(_pGeometry->GetNumVertices(), false);
-	oFOREACH(const unsigned int& i, _pGeometry->Indices)
-		refed[i] = true;
-	PruneStream(refed, _pGeometry->Positions);
-	if (!_pGeometry->Normals.empty()) PruneStream(refed, _pGeometry->Normals);
-	if (!_pGeometry->Tangents.empty()) PruneStream(refed, _pGeometry->Tangents);
-	if (!_pGeometry->Texcoords.empty()) PruneStream(refed, _pGeometry->Texcoords);
-	if (!_pGeometry->Colors.empty()) PruneStream(refed, _pGeometry->Colors);
-	PruneIndices(refed, _pGeometry->Indices);
+	static const oGeometry::LAYOUT sSupportedLayout = { true, true, true, true, true, true };
+	GEO_CONSTRUCT("CreateBox", sSupportedLayout, _Layout, _Desc.FaceType);
+
+	const float s = GetNormalSign(_Desc.FaceType);
+	float3 dim = _Desc.Bounds.GetDimensions();
+
+	if (_Desc.FaceType == oGeometry::OUTLINE)
+	{
+		const float4x4 m = oCreateTranslation(float3(_Desc.Bounds.GetCenter()));
+		float3 positions[] =
+		{
+			float3(-dim.x/2.0f,-dim.y/2.0f,-dim.z/2.0f), //left bottom back
+			float3(dim.x/2.0f,-dim.y/2.0f,-dim.z/2.0f), //right bottom back
+			float3(-dim.x/2.0f,-dim.y/2.0f,dim.z/2.0f), //left bottom front
+			float3(dim.x/2.0f,-dim.y/2.0f,dim.z/2.0f), //right bottom front
+			float3(-dim.x/2.0f,dim.y/2.0f,-dim.z/2.0f), //left top back
+			float3(dim.x/2.0f,dim.y/2.0f,-dim.z/2.0f), //right top back
+			float3(-dim.x/2.0f,dim.y/2.0f,dim.z/2.0f), //left top front
+			float3(dim.x/2.0f,dim.y/2.0f,dim.z/2.0f), //right top front
+		};
+		for (unsigned int i = 0;i < oCOUNTOF(positions);++i)
+		{
+			pGeometry->Positions.push_back(m*positions[i]);
+		}
+		unsigned int indices[] = 
+		{
+			0,1, //bottom
+			1,3,
+			3,2,
+			2,0,
+			4,5, //top
+			5,7,
+			7,6,
+			6,4,
+			0,4, //sides
+			1,5,
+			2,6,
+			3,7,
+		};
+		for (unsigned int i = 0;i < oCOUNTOF(indices);++i)
+		{
+			pGeometry->Indices.push_back(indices[i]);
+		}
+	}
+	else
+	{
+		float4x4 tx[6];
+		oCalcPlaneMatrix(float4(-1.0f, 0.0f, 0.0f, s*dim.x/2.0f), &tx[0]);
+		oCalcPlaneMatrix(float4(1.0f, 0.0f, 0.0f, s*dim.x/2.0f), &tx[1]);
+		oCalcPlaneMatrix(float4(0.0f, 1.0f, 0.0f, s*dim.y/2.0f), &tx[2]);
+		oCalcPlaneMatrix(float4(0.0f, -1.0f, 0.0f, s*dim.y/2.0f), &tx[3]);
+		oCalcPlaneMatrix(float4(0.0f, 0.0f, 1.0f, s*dim.z/2.0f), &tx[4]);
+		oCalcPlaneMatrix(float4(0.0f, 0.0f, -1.0f, s*dim.z/2.0f), &tx[5]);
+
+		float boxW[6] = { dim.z, dim.z, dim.x, dim.x, dim.x, dim.x, };
+		float boxH[6] = { dim.y, dim.y, dim.z, dim.z, dim.y, dim.y, };
+
+		const float4x4 m = oCreateTranslation(float3(_Desc.Bounds.GetCenter()));
+		for (unsigned int i = 0; i < 6; i++)
+		{
+			RECT_DESC d;
+			d.FaceType = _Desc.FaceType;
+			d.Width = boxW[i];
+			d.Height = boxH[i];
+			d.Divide = _Desc.Divide;
+			d.Color = _Desc.Color;
+			d.Centered = true;
+			d.FlipTexcoordV = _Desc.FlipTexcoordV;
+			RectDetails::AppendRect(pGeometry, d, _Layout);
+			pGeometry->Transform(tx[i] * m, i * 4);
+		}
+	}
+
+	if (_Desc.FaceType != oGeometry::OUTLINE)
+		pGeometry->Subdivide(_Desc.Divide, 36);
+
+	pGeometry->Finalize(_Layout, _Desc.Color);
+	return true;
 }
 
-void Clip(const oPlanef& _Plane, bool _Clip, oGeometry* _pGeometry)
+namespace FrustumDetails {
+
+	void FillPositions(std::vector<float3>& _Positions, const oFrustumf& _Frustum)
+	{
+		_Positions.resize(8 * 3); // extra verts for normals
+		float3* p = oGetData(_Positions);
+		oVERIFY(_Frustum.ExtractCorners(p));
+
+		// duplicate corners for normals
+		memcpy(p + 8, p, 8 * sizeof(float3));
+		memcpy(p + 16, p, 8 * sizeof(float3));
+	}
+
+	void FillIndices(std::vector<unsigned int>& _Indices)
+	{
+		const unsigned int kIndices[] =
+		{
+			// Left
+			oFrustumf::LEFT_TOP_NEAR,
+			oFrustumf::LEFT_BOTTOM_NEAR,
+			oFrustumf::LEFT_TOP_FAR,
+			oFrustumf::LEFT_TOP_FAR,
+			oFrustumf::LEFT_BOTTOM_NEAR,
+			oFrustumf::LEFT_BOTTOM_FAR,
+
+			// Right
+			oFrustumf::RIGHT_TOP_NEAR,
+			oFrustumf::RIGHT_TOP_FAR,
+			oFrustumf::RIGHT_BOTTOM_FAR,
+			oFrustumf::RIGHT_BOTTOM_FAR,
+			oFrustumf::RIGHT_BOTTOM_NEAR,
+			oFrustumf::RIGHT_TOP_NEAR,
+
+			// Top
+			oFrustumf::LEFT_TOP_NEAR + 8,
+			oFrustumf::LEFT_TOP_FAR + 8,
+			oFrustumf::RIGHT_TOP_FAR + 8,
+			oFrustumf::RIGHT_TOP_FAR + 8,
+			oFrustumf::RIGHT_TOP_NEAR + 8,
+			oFrustumf::LEFT_TOP_NEAR + 8,
+
+			// Bottom
+			oFrustumf::LEFT_BOTTOM_FAR + 8,
+			oFrustumf::LEFT_BOTTOM_NEAR + 8,
+			oFrustumf::RIGHT_BOTTOM_FAR + 8,
+			oFrustumf::RIGHT_BOTTOM_FAR + 8,
+			oFrustumf::LEFT_BOTTOM_NEAR + 8,
+			oFrustumf::RIGHT_BOTTOM_NEAR + 8,
+
+			// Near
+			oFrustumf::LEFT_TOP_NEAR + 16,
+			oFrustumf::RIGHT_TOP_NEAR + 16,
+			oFrustumf::RIGHT_BOTTOM_NEAR + 16,
+			oFrustumf::RIGHT_BOTTOM_NEAR + 16,
+			oFrustumf::LEFT_BOTTOM_NEAR + 16,
+			oFrustumf::LEFT_TOP_NEAR + 16,
+
+			// Far
+			oFrustumf::LEFT_TOP_FAR + 16,
+			oFrustumf::LEFT_BOTTOM_FAR + 16,
+			oFrustumf::RIGHT_BOTTOM_FAR + 16,
+			oFrustumf::RIGHT_BOTTOM_FAR + 16,
+			oFrustumf::RIGHT_TOP_FAR + 16,
+			oFrustumf::LEFT_TOP_FAR + 16,
+		};
+
+		_Indices.resize(oCOUNTOF(kIndices));
+		memcpy(oGetData(_Indices), kIndices, sizeof(kIndices));
+	}
+
+	void FillIndicesOutline(std::vector<unsigned int>& _Indices)
+	{
+		const unsigned int kIndices[] =
+		{
+			// Left
+			oFrustumf::LEFT_TOP_NEAR,
+			oFrustumf::LEFT_TOP_FAR,
+			oFrustumf::LEFT_TOP_FAR,
+			oFrustumf::LEFT_BOTTOM_FAR,
+			oFrustumf::LEFT_BOTTOM_FAR,
+			oFrustumf::LEFT_BOTTOM_NEAR,
+			oFrustumf::LEFT_BOTTOM_NEAR,
+			oFrustumf::LEFT_TOP_NEAR,
+
+			// Right
+			oFrustumf::RIGHT_TOP_NEAR,
+			oFrustumf::RIGHT_TOP_FAR,
+			oFrustumf::RIGHT_TOP_FAR,
+			oFrustumf::RIGHT_BOTTOM_FAR,
+			oFrustumf::RIGHT_BOTTOM_FAR,
+			oFrustumf::RIGHT_BOTTOM_NEAR,
+			oFrustumf::RIGHT_BOTTOM_NEAR,
+			oFrustumf::RIGHT_TOP_NEAR,
+
+
+			// Top
+			oFrustumf::LEFT_TOP_NEAR,
+			oFrustumf::RIGHT_TOP_NEAR,
+			oFrustumf::LEFT_TOP_FAR,
+			oFrustumf::RIGHT_TOP_FAR,
+
+			// Bottom
+			oFrustumf::LEFT_BOTTOM_NEAR,
+			oFrustumf::RIGHT_BOTTOM_NEAR,
+			oFrustumf::LEFT_BOTTOM_FAR,
+			oFrustumf::RIGHT_BOTTOM_FAR,
+		};
+
+		_Indices.resize(oCOUNTOF(kIndices));
+		memcpy(oGetData(_Indices), kIndices, sizeof(kIndices));
+	}
+
+	void FillContinuityIDs(std::vector<unsigned int>& _ContinuityIDs)
+	{
+		static const unsigned int kIDs[] =
+		{
+			0,0,0,0,
+			1,1,1,1,
+			2,2,3,3,
+			2,2,3,3,
+			4,5,4,5,
+			4,5,4,5,
+		};
+
+		_ContinuityIDs.assign(kIDs, kIDs + oCOUNTOF(kIDs));
+	};
+
+} // namespace FrustumDetails
+
+bool oGeometryFactory_Impl::CreateFrustum(const FRUSTUM_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
 {
-	// fixme: (tony) I just wanted this for a skydome, where the 
-	// horizon is hidden anyway, so don't be too smart, just cut 
+	static const oGeometry::LAYOUT sSupportedLayout = { true, true, true, false, true, true };
+	GEO_CONSTRUCT("CreateFrustum", sSupportedLayout, _Layout, _Desc.FaceType);
+
+	FrustumDetails::FillPositions(pGeometry->Positions, _Desc.Bounds);
+	if(_Desc.FaceType != oGeometry::OUTLINE)
+		FrustumDetails::FillIndices(pGeometry->Indices);
+	else
+		FrustumDetails::FillIndicesOutline(pGeometry->Indices);
+
+	if (_Layout.ContinuityIDs)
+		FrustumDetails::FillContinuityIDs(pGeometry->ContinuityIDs);
+
+	if (_Desc.FaceType == oGeometry::FRONT_CCW)
+		ChangeWindingOrder(pGeometry->Indices, 0);
+
+	if (_Desc.FaceType != oGeometry::OUTLINE)
+		pGeometry->Subdivide(_Desc.Divide, 36);
+
+	pGeometry->Finalize(_Layout, _Desc.Color);
+	return true;
+}
+
+namespace CircleDetails
+{
+	// Circle is a bit interesting because vertices are not in CW or CCW order, but rather
+	// evens go up one side and odds go up the other. This allows a straightforward way
+	// of zig-zag tessellating the circle for more uniform shading than a point in the 
+	// center of the circle that radiates outward trifan-style.
+
+	void FillIndices(std::vector<unsigned int>& _Indices, unsigned int _BaseIndexIndex, unsigned int _BaseVertexIndex, unsigned int _Facet, oGeometry::FACE_TYPE _Facetype)
+	{
+		if (_Facetype == oGeometry::OUTLINE)
+		{
+			_Indices.reserve(_Indices.size() + _Facet * 2);
+
+			const unsigned int numEven = (_Facet - 1) / 2;
+			const unsigned int numOdd = (_Facet / 2) - 1; // -1 for transition from 0 to 1, which does not fit the for loop
+
+			for (unsigned int i = 0; i < numEven; i++)
+			{
+				_Indices.push_back(_BaseVertexIndex + i * 2);
+				_Indices.push_back(_BaseVertexIndex + (i + 1) * 2);
+			}
+
+			for (unsigned int i = 0; i < numOdd; i++)
+			{
+				unsigned int idx = i * 2 + 1;
+
+				_Indices.push_back(_BaseVertexIndex + idx);
+				_Indices.push_back(_BaseVertexIndex + idx + 2);
+			}
+
+			// Edge cases are 0 -> 1 and even -> odd
+
+			_Indices.push_back(_BaseVertexIndex);
+			_Indices.push_back(_BaseVertexIndex + 1);
+
+			_Indices.push_back(_BaseVertexIndex + _Facet - 1);
+			_Indices.push_back(_BaseVertexIndex + _Facet - 2);
+		}
+
+		else
+		{
+			const unsigned int count = _Facet - 2;
+			_Indices.reserve(3 * count);
+
+			const unsigned int o[2][2] = { { 2, 1 }, { 1, 2 } };
+			for (unsigned int i = 0; i < count; i++)
+			{
+				_Indices.push_back(_BaseVertexIndex + i);
+				_Indices.push_back(_BaseVertexIndex + i+o[i&0x1][0]);
+				_Indices.push_back(_BaseVertexIndex + i+o[i&0x1][1]);
+			}
+
+			if (_Facetype == oGeometry::FRONT_CCW)
+				ChangeWindingOrder(_Indices, _BaseIndexIndex);
+		}
+	}
+
+	void FillIndicesWasher(std::vector<unsigned int>& _Indices, unsigned int _BaseIndexIndex, unsigned int _BaseVertexIndex, unsigned int _Facet, oGeometry::FACE_TYPE _Facetype)
+	{
+		if (_Facetype == oGeometry::OUTLINE)
+		{
+			CircleDetails::FillIndices(_Indices, _BaseIndexIndex, _BaseVertexIndex, _Facet, _Facetype);
+			CircleDetails::FillIndices(_Indices, _BaseIndexIndex+_Facet*2, _BaseVertexIndex+_Facet, _Facet, _Facetype);
+		}
+
+		else
+		{
+			const unsigned int count = _Facet - 2;
+			_Indices.reserve(6 * (_Facet));
+
+			//end caps done out of loop. connecting first even odd pair
+			_Indices.push_back(_BaseVertexIndex + 0);
+			_Indices.push_back(_BaseVertexIndex + 2);
+			_Indices.push_back(_BaseVertexIndex + 1);
+
+			_Indices.push_back(_BaseVertexIndex + 1);
+			_Indices.push_back(_BaseVertexIndex + 2);
+			_Indices.push_back(_BaseVertexIndex + 3);
+
+			{
+				const unsigned int o[2][4] = { { 1, 4, 5, 4 }, { 4, 1, 4, 5 } };
+				for (unsigned int i = 0; i < count; i++)
+				{
+					_Indices.push_back(_BaseVertexIndex + 2*i);
+					_Indices.push_back(_BaseVertexIndex + 2*i+o[i&0x1][0]);
+					_Indices.push_back(_BaseVertexIndex + 2*i+o[i&0x1][1]);
+
+					_Indices.push_back(_BaseVertexIndex + 2*i+1);
+					_Indices.push_back(_BaseVertexIndex + 2*i+o[i&0x1][2]);
+					_Indices.push_back(_BaseVertexIndex + 2*i+o[i&0x1][3]);
+				}
+			}
+
+			{
+				//end caps done out of loop. connecting last even odd pair
+				const unsigned int o[2][4] = { { 1, 2, 3, 2 }, { 2, 1, 2, 3 } };
+				unsigned int i = _Facet*2-4;
+				_Indices.push_back(_BaseVertexIndex + i);
+				_Indices.push_back(_BaseVertexIndex + i+o[_Facet&0x1][0]);
+				_Indices.push_back(_BaseVertexIndex + i+o[_Facet&0x1][1]);
+
+				_Indices.push_back(_BaseVertexIndex + i+1);
+				_Indices.push_back(_BaseVertexIndex + i+o[_Facet&0x1][2]);
+				_Indices.push_back(_BaseVertexIndex + i+o[_Facet&0x1][3]);
+			}
+
+			if (_Facetype == oGeometry::FRONT_CCW)
+				ChangeWindingOrder(_Indices, _BaseIndexIndex);
+		}
+	}
+
+	void FillPositions(std::vector<float3>& _Positions, float _Radius, unsigned int _Facet, float _ZValue)
+	{
+		_Positions.reserve(_Positions.size() + _Facet);
+		float step = (2.0f * oPIf) / static_cast<float>(_Facet);
+		float curStep2 = 0.0f;
+		float curStep = (2.0f * oPIf) - step;
+		unsigned int k = 0;
+		for (unsigned int i = 0; i < _Facet && k < _Facet; i++, curStep -= step, curStep2 += step)
+		{
+			_Positions.push_back(float3(_Radius * cosf(curStep), _Radius * sinf(curStep), _ZValue));
+			if (++k >= _Facet)
+				break;
+			_Positions.push_back(float3(_Radius * cosf(curStep2), _Radius * sinf(curStep2), _ZValue));
+			if (++k >= _Facet)
+				break;
+		}
+	}
+
+	// For a planar circle, all normals point in the same planar direction
+	void FillNormalsUp(std::vector<float3>& _Normals, size_t _BaseVertexIndex, bool _CCW)
+	{
+		const float s = _CCW ? -1.0f : 1.0f;
+		for (size_t i = _BaseVertexIndex; i < _Normals.size(); i++)
+			_Normals[i] = s * float3(0.0f, 0.0f, 1.0f);
+	}
+
+	// Point normals out from center of circle co-planar with circle. This 
+	// is useful when creating a cylinder.
+	void FillNormalsOut(std::vector<float3>& _Normals, unsigned int __Facet)
+	{
+		FillPositions(_Normals, 1.0f, __Facet, 0.0f);
+	}
+
+	// Optionally does not clear the specified geometry, so this can be used to 
+	// append circles while building cylinders.
+	bool CreateCircleInternal(const oGeometryFactory::CIRCLE_DESC& _Desc
+		, const oGeometry::LAYOUT& _Layout
+		, oGeometry_Impl* _pGeometry
+		, unsigned int _BaseIndexIndex
+		, unsigned int _BaseVertexIndex
+		, bool _Clear
+		, float _ZValue
+		, unsigned int _ContinuityID)
+	{
+		if (_Desc.Radius < oVERYSMALL)
+		{
+			oSetLastError(EINVAL, "Radius is too small");
+			return false;
+		}
+
+		if (_Desc.Facet < 3)
+		{
+			oSetLastError(EINVAL);
+			return false;
+		}
+
+		if (_Clear)
+			_pGeometry->Clear();
+
+		CircleDetails::FillPositions(_pGeometry->Positions, _Desc.Radius, _Desc.Facet, _ZValue);
+		if (_Desc.FaceType == oGeometry::OUTLINE)
+			CircleDetails::FillIndices(_pGeometry->Indices, _BaseIndexIndex, _BaseVertexIndex, _Desc.Facet, _Desc.FaceType);
+		else
+		{
+			CircleDetails::FillIndices(_pGeometry->Indices, _BaseIndexIndex, _BaseVertexIndex, _Desc.Facet, _Desc.FaceType);
+
+			if (_Layout.Normals)
+			{
+				_pGeometry->Normals.resize(_pGeometry->Positions.size());
+				const float3 N = GetNormalSign(_Desc.FaceType) * float3(0.0f, 0.0f, 1.0f);
+				for (size_t i = _BaseVertexIndex; i < _pGeometry->Normals.size(); i++)
+					_pGeometry->Normals[i] = N;
+			}
+		}
+		
+		if (_ContinuityID != ~0u)
+			_pGeometry->SetContinuityID(_ContinuityID, _BaseVertexIndex);
+
+		return true;
+	}
+
+	// Optionally does not clear the specified geometry, so this can be used to 
+	// append circles while building shells.
+	bool CreateWasherInternal(const oGeometryFactory::WASHER_DESC& _Desc
+		, const oGeometry::LAYOUT& _Layout
+		, oGeometry_Impl* _pGeometry
+		, unsigned int _BaseIndexIndex
+		, unsigned int _BaseVertexIndex
+		, bool _Clear
+		, float _ZValue
+		, unsigned int _ContinuityID)
+	{
+		if (_Desc.InnerRadius < oVERYSMALL || _Desc.OuterRadius < oVERYSMALL)
+		{
+			oSetLastError(EINVAL, "Radius is too small");
+			return false;
+		}
+
+		if(_Desc.OuterRadius < _Desc.InnerRadius)
+		{
+			oSetLastError(EINVAL, "Outer Radius must be larger than inner radius");
+			return false;
+		}
+
+		if (_Desc.Facet < 3)
+		{
+			oSetLastError(EINVAL);
+			return false;
+		}
+
+		if (_Clear)
+			_pGeometry->Clear();
+
+		std::vector<float3> innerCircle;
+		std::vector<float3> outerCircle;
+		CircleDetails::FillPositions(innerCircle, _Desc.InnerRadius, _Desc.Facet, _ZValue);
+		CircleDetails::FillPositions(outerCircle, _Desc.OuterRadius, _Desc.Facet, _ZValue);
+		
+		//For outlines, the vertex layout is the full inner circle, followed by the full outer circle
+		if (_Desc.FaceType == oGeometry::OUTLINE)
+		{
+			oFOREACH(const float3& temp, innerCircle)
+			{
+				_pGeometry->Positions.push_back(temp);
+			}
+			oFOREACH(const float3& temp, outerCircle)
+			{
+				_pGeometry->Positions.push_back(temp);
+			}
+			CircleDetails::FillIndicesWasher(_pGeometry->Indices, _BaseIndexIndex, _BaseVertexIndex, _Desc.Facet, _Desc.FaceType);
+		}
+		else //For a mesh, the vertex layout is the similar to a normal circle. interleaved even odd pairs of vertices. For each pair
+			//	first vertex is from inner circle, and second is from outer. even pairs going one direction around the circle, odd going
+			//	the opposite direction.
+		{
+			oASSERT(innerCircle.size() == outerCircle.size(),"oGeometry washer inner circle and outer circle weren't same size.");
+			for (size_t i = 0;i < innerCircle.size(); ++i)
+			{
+				_pGeometry->Positions.push_back(innerCircle[i]);
+				_pGeometry->Positions.push_back(outerCircle[i]);
+			}
+			CircleDetails::FillIndicesWasher(_pGeometry->Indices, _BaseIndexIndex, _BaseVertexIndex, _Desc.Facet, _Desc.FaceType);
+
+			if (_Layout.Normals)
+			{
+				_pGeometry->Normals.resize(_pGeometry->Positions.size());
+				const float3 N = GetNormalSign(_Desc.FaceType) * float3(0.0f, 0.0f, 1.0f);
+				for (size_t i = _BaseVertexIndex; i < _pGeometry->Normals.size(); i++)
+					_pGeometry->Normals[i] = N;
+			}
+		}
+
+		if (_ContinuityID != ~0u)
+			_pGeometry->SetContinuityID(_ContinuityID, _BaseVertexIndex);
+
+		return true;
+	}
+} // namespace CircleDetails
+
+bool oGeometryFactory_Impl::CreateCircle(const CIRCLE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+{
+	static const oGeometry::LAYOUT sSupportedLayout = { true, true, true, false, true, true };
+	GEO_CONSTRUCT("CreateCircle", sSupportedLayout, _Layout, _Desc.FaceType);
+	if (!CircleDetails::CreateCircleInternal(_Desc, _Layout, pGeometry, 0, 0, true, 0.0f, _Layout.ContinuityIDs ? 0 : ~0u))
+	{
+		delete pGeometry;
+		*_ppGeometry = 0;
+		return false;
+	}
+
+	pGeometry->Finalize(_Layout, _Desc.Color);
+	return true;
+}
+
+bool oGeometryFactory_Impl::CreateWasher(const WASHER_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+{
+	static const oGeometry::LAYOUT sSupportedLayout = { true, true, true, false, true, true };
+	GEO_CONSTRUCT("CreateWasher", sSupportedLayout, _Layout, _Desc.FaceType);
+	if (!CircleDetails::CreateWasherInternal(_Desc, _Layout, pGeometry, 0, 0, true, 0.0f, _Layout.ContinuityIDs ? 0 : ~0u))
+	{
+		delete pGeometry;
+		*_ppGeometry = 0;
+		return false;
+	}
+
+	pGeometry->Finalize(_Layout, _Desc.Color);
+	return true;
+}
+
+void Clip(const oPlanef& _Plane, bool _Clip, oGeometry_Impl* _pGeometry)
+{
+	// @oooii-tony: FIXME: I just wanted this for a skydome, where 
+	// the horizon is hidden anyway, so don't be too smart, just cut 
 	// out most of the triangles.
 	oASSERT(/*"core.geometry", */!_Clip, "clipping not yet implemented");
 
@@ -495,10 +1165,14 @@ void Clip(const oPlanef& _Plane, bool _Clip, oGeometry* _pGeometry)
 	std::vector<unsigned int>::iterator it = _pGeometry->Indices.begin();
 	while (it != _pGeometry->Indices.end())
 	{
-		float3 a = _pGeometry->Positions[*it];
-		float3 b = _pGeometry->Positions[*(it+1)];
-		float3 c = _pGeometry->Positions[*(it+2)];
+		// @oooii-tony: FIXME: I've been making things more consistent WRT handedness
+		// and which way normals point, so this sdistance test should be reconfired.
 
+		const float3& a = _pGeometry->Positions[*it];
+		const float3& b = _pGeometry->Positions[*(it+1)];
+		const float3& c = _pGeometry->Positions[*(it+2)];
+
+		oASSERT(false, "@oooii-tony: I flipped signs in sdistance(), so verify sanity here...");
 		float A = sdistance(_Plane, a);
 		float B = sdistance(_Plane, b);
 		float C = sdistance(_Plane, c);
@@ -509,536 +1183,11 @@ void Clip(const oPlanef& _Plane, bool _Clip, oGeometry* _pGeometry)
 			it += 3;
 	}
 
-	PruneUnindexedVertices(_pGeometry);
-}
-
-namespace RectDetails
-{
-
-static void FillIndices(std::vector<unsigned int>& _Indices, unsigned int _DivideW, unsigned int _DivideH, unsigned int _BaseVertexIndex)
-{
-	_Indices.reserve(_Indices.size() + 6 * _DivideW * _DivideH);
-	unsigned int pitch = _DivideW + 1;
-	unsigned int row = 0;
-	for (unsigned int i = 0; i < _DivideH; i++, row += pitch)
-		for (unsigned int j = 0; j < _DivideW; j++)
-		{
-			_Indices.push_back(_BaseVertexIndex + row + j);
-			_Indices.push_back(_BaseVertexIndex + row + pitch + j);
-			_Indices.push_back(_BaseVertexIndex + row + j+1);
-			_Indices.push_back(_BaseVertexIndex + row + pitch + j);
-			_Indices.push_back(_BaseVertexIndex + row + pitch + j+1);
-			_Indices.push_back(_BaseVertexIndex + row + j+1);
-		}
-}
-
-static void FillPositions(std::vector<float3>& _Positions, float _Width, float _Height, unsigned int _DivideW, unsigned int _DivideH, const float4x4& _Transform)
-{
-	_Positions.reserve(_Positions.size() + (_DivideW+1) * (_DivideH+1));
-	float stepX = _Width / static_cast<float>(_DivideW);
-	float stepY = _Height / static_cast<float>(_DivideH);
-	float x, y = -_Height / 2.0f;
-	for (unsigned int i = 0; i <= _DivideH; i++, y += stepY)
-	{
-		x = -_Width / 2.0f;
-		for (unsigned int j = 0; j <= _DivideW; j++, x += stepX)
-			_Positions.push_back(_Transform * float3(x, y, 0.0f));
-	}
-}
-
-static void FillTexcoords(std::vector<float2>& _Texcoords, unsigned int _DivideW, unsigned int _DivideH, GEOMETRY_FACE_TYPE __Facetype, bool _FlipU, bool _FlipV)
-{
-	_Texcoords.reserve(_Texcoords.size() + (_DivideW+1) * (_DivideH+1));
-	float stepU = 1.0f / static_cast<float>(_DivideW);
-	float stepV = 1.0f / static_cast<float>(_DivideH);
-	float u, v = 0.0f;
-	for (unsigned int i = 0; i <= _DivideH; i++)
-	{
-		u = 0.0f;
-		for (unsigned int j = 0; j <= _DivideW; j++, u += stepU)
-		{
-			float2 texcoord;
-			texcoord.x = (__Facetype == GEOMETRY_FACE_SOLID_CCW ? 1.0f - u : u);
-			texcoord.x = (_FlipU ? 1.0f - texcoord.x : texcoord.x);
-			texcoord.y = (_FlipV ? 1.0f - v : v);
-			_Texcoords.push_back(texcoord);
-		}
-
-		v += stepV;
-	}
-}
-
-} // namespace RectDetails
-
-errno_t CreateRect(const GEOMETRY_RECT_DESC* _pDesc, const GEOMETRY_LAYOUT* _pLayout, oGeometry* _pGeometry)
-{
-	if (!_pDesc ||!_pLayout || !_pGeometry) return EINVAL;
-
-	static const GEOMETRY_LAYOUT sSupportedLayout = { true, true, true, true, true };
-	if (!IsSupported(&sSupportedLayout, _pLayout))
-	{
-		Err(/*"core.geometry", */"Invalid layout specified");
-		return EINVAL;
-	}
-
-	if (!_pDesc->DivideW)
-	{
-		Err(/*"core.geometry", */"A non-zero value for DivideW must be specified.");
-		return EINVAL;
-	}
-
-	if (!_pDesc->DivideH)
-	{
-		Err(/*"core.geometry", */"A non-zero value for DivideH must be specified.");
-		return EINVAL;
-	}
-
-	unsigned int divideW = (_pDesc->FaceType == GEOMETRY_FACE_OUTLINE) ? 1 : _pDesc->DivideW;
-	unsigned int divideH = (_pDesc->FaceType == GEOMETRY_FACE_OUTLINE) ? 1 : _pDesc->DivideH;
-
-	_pGeometry->Clear();
-	_pGeometry->PrimitiveType = GEOMETRY_PRIMITIVE_TRILIST;
-
-	float4x4 m(float4x4::Identity);
-	if (!_pDesc->Centered)
-	{
-		m[3] = float4(0.5f, 0.5f, 0.0f, 1.0f);
-	}
-
-	RectDetails::FillPositions(_pGeometry->Positions, _pDesc->Width, _pDesc->Height, divideW, divideH, m);
-	
-	if (_pDesc->FaceType == GEOMETRY_FACE_OUTLINE)
-	{
-		const unsigned int indices[] = { 0,1, 2,3, 0,2, 1,3 };
-		_pGeometry->Indices.resize(oCOUNTOF(indices));
-		memcpy(&_pGeometry->Indices[0], indices, sizeof(indices));
-		_pGeometry->PrimitiveType = GEOMETRY_PRIMITIVE_LINELIST;
-	}
-
-	else
-		RectDetails::FillIndices(_pGeometry->Indices, divideW, divideH, 0);
-
-	if (_pLayout->Texcoords)
-		RectDetails::FillTexcoords(_pGeometry->Texcoords, divideW, divideH, _pDesc->FaceType, _pDesc->FaceType == GEOMETRY_FACE_SOLID_CCW, _pDesc->FlipTexcoordV);
-
-	// FIXME: maybe this needs to be flipped depending on face order?
-	if (_pLayout->Normals)
-		_pGeometry->Normals.assign(_pGeometry->GetNumVertices(), float3::zAxis());
-
-	if (_pLayout->Tangents)
-	{
-		_pGeometry->Tangents.resize(_pGeometry->GetNumVertices());
-		CalculateTangents(&_pGeometry->Tangents[0]
-		 , _pGeometry->Indices.size()
-		 , &_pGeometry->Indices[0]
-		 , _pGeometry->GetNumVertices()
-		 , &_pGeometry->Positions[0]
-		 , &_pGeometry->Normals[0]
-		 , &_pGeometry->Texcoords[0]);
-	}
-
-	if (_pLayout->Colors)
-		_pGeometry->Colors.assign(_pGeometry->GetNumVertices(), _pDesc->Color);
-
-	return ESUCCESS;
-}
-
-namespace BoxDetails
-{
-
-static void FillIndices(std::vector<unsigned int>& _Indices, unsigned int _DivideW, unsigned int _DivideH)
-{
-	unsigned int nFaceVerts = (_DivideW+1) * (_DivideH+1);
-	unsigned int _BaseVertexIndex = 0;
-	_Indices.reserve(_Indices.size() + 6 * 6 * _DivideW * _DivideH); // nFaces * nIndicesPerQuad * nQuadsW * nQuadsH
-	RectDetails::FillIndices(_Indices, _DivideW, _DivideH, _BaseVertexIndex); _BaseVertexIndex += nFaceVerts;
-	RectDetails::FillIndices(_Indices, _DivideW, _DivideH, _BaseVertexIndex); _BaseVertexIndex += nFaceVerts;
-	RectDetails::FillIndices(_Indices, _DivideW, _DivideH, _BaseVertexIndex); _BaseVertexIndex += nFaceVerts;
-	RectDetails::FillIndices(_Indices, _DivideW, _DivideH, _BaseVertexIndex); _BaseVertexIndex += nFaceVerts;
-	RectDetails::FillIndices(_Indices, _DivideW, _DivideH, _BaseVertexIndex); _BaseVertexIndex += nFaceVerts;
-	RectDetails::FillIndices(_Indices, _DivideW, _DivideH, _BaseVertexIndex);
-}
-
-static void FillLines(const oAABoxf& box, oGeometry* _pGeometry)
-{
-	_pGeometry->Indices.reserve(12 * 2);
-	const unsigned int indices[12 * 2] = { 0,1, 2,3, 0,2, 1,3, 4,5, 6,7, 4,6, 5,7, 0,4, 1,5, 2,6, 3,7 };
-	_pGeometry->Indices.resize(oCOUNTOF(indices));
-	memcpy(&_pGeometry->Indices[0], indices, sizeof(indices));
-	
-	_pGeometry->Positions.resize(8);
-	_pGeometry->Positions[0] = float3(box.GetMin().x, box.GetMin().y, box.GetMin().z);
-	_pGeometry->Positions[1] = float3(box.GetMax().x, box.GetMin().y, box.GetMin().z);
-	_pGeometry->Positions[2] = float3(box.GetMin().x, box.GetMax().y, box.GetMin().z);
-	_pGeometry->Positions[3] = float3(box.GetMax().x, box.GetMax().y, box.GetMin().z);
-	_pGeometry->Positions[4] = float3(box.GetMin().x, box.GetMin().y, box.GetMax().z);
-	_pGeometry->Positions[5] = float3(box.GetMax().x, box.GetMin().y, box.GetMax().z);
-	_pGeometry->Positions[6] = float3(box.GetMin().x, box.GetMax().y, box.GetMax().z);
-	_pGeometry->Positions[7] = float3(box.GetMax().x, box.GetMax().y, box.GetMax().z);
-}
-
-} // namespace BoxDetails
-
-errno_t CreateBox(const GEOMETRY_BOX_DESC* _pDesc, const GEOMETRY_LAYOUT* _pLayout, oGeometry* _pGeometry)
-{
-	if (!_pDesc ||!_pLayout || !_pGeometry) return EINVAL;
-
-	static const GEOMETRY_LAYOUT sSupportedLayout = { true, true, true, true, true };
-	if (!IsSupported(&sSupportedLayout, _pLayout))
-	{
-		Err(/*"core.geometry", */"Invalid layout specified");
-		return EINVAL;
-	}
-
-	_pGeometry->Clear();
-	_pGeometry->PrimitiveType = GEOMETRY_PRIMITIVE_TRILIST;
-
-	float s = GetNormalSign(_pDesc->FaceType);
-
-	float w, h, d;
-	_pDesc->Bound.GetDimensions(&w, &h, &d);
-
-	if (_pDesc->FaceType == GEOMETRY_FACE_OUTLINE)
-	{
-		if (_pLayout->Normals || _pLayout->Tangents)
-		{
-			Err(/*"core.geometry", */"Normals and/or tangent cannot be generated when creating a lines-based box.");
-			return EINVAL;
-		}
-
-		BoxDetails::FillLines(_pDesc->Bound, _pGeometry);
-		_pGeometry->PrimitiveType = GEOMETRY_PRIMITIVE_LINELIST;
-	}
-
-	else
-	{
-		if (_pDesc->Divide == 0) return EINVAL;
-
-		unsigned int divideW = _pDesc->Divide, divideH = _pDesc->Divide;
-		BoxDetails::FillIndices(_pGeometry->Indices, divideW, divideH);
-
-		float4x4 top, bottom, front, back, left, right;
-		oCalcPlaneMatrix(oPlanef(float3::yAxis(), s*h/2.0f), &top);
-		oCalcPlaneMatrix(oPlanef(-float3::yAxis(), s*h/2.0f), &bottom);
-		oCalcPlaneMatrix(oPlanef(float3::zAxis(), s*d/2.0f), &front);
-		oCalcPlaneMatrix(oPlanef(-float3::zAxis(), s*d/2.0f), &back);
-		oCalcPlaneMatrix(oPlanef(-float3::xAxis(), s*w/2.0f), &left);
-		oCalcPlaneMatrix(oPlanef(float3::xAxis(), s*w/2.0f), &right);
-
-		const size_t nVertsPerFace = (_pDesc->Divide+1) * (_pDesc->Divide+1);
-		const size_t nVerts = 6 * nVertsPerFace;
-
-		_pGeometry->Positions.reserve(nVerts);
-		RectDetails::FillPositions(_pGeometry->Positions, w, d, divideW, divideH, top);
-		RectDetails::FillPositions(_pGeometry->Positions, w, d, divideW, divideH, bottom);
-		RectDetails::FillPositions(_pGeometry->Positions, w, h, divideW, divideH, front);
-		RectDetails::FillPositions(_pGeometry->Positions, w, h, divideW, divideH, back);
-		RectDetails::FillPositions(_pGeometry->Positions, d, h, divideW, divideH, left);
-		RectDetails::FillPositions(_pGeometry->Positions, d, h, divideW, divideH, right);
-
-		if (_pLayout->Texcoords)
-		{
-			const bool flipU = _pDesc->FaceType == GEOMETRY_FACE_SOLID_CCW;
-			RectDetails::FillTexcoords(_pGeometry->Texcoords, divideW, divideH, _pDesc->FaceType, flipU, _pDesc->FlipTexcoordV);
-			RectDetails::FillTexcoords(_pGeometry->Texcoords, divideW, divideH, _pDesc->FaceType, flipU, _pDesc->FlipTexcoordV);
-			RectDetails::FillTexcoords(_pGeometry->Texcoords, divideW, divideH, _pDesc->FaceType, flipU, _pDesc->FlipTexcoordV);
-			RectDetails::FillTexcoords(_pGeometry->Texcoords, divideW, divideH, _pDesc->FaceType, flipU, _pDesc->FlipTexcoordV);
-			RectDetails::FillTexcoords(_pGeometry->Texcoords, divideW, divideH, _pDesc->FaceType, flipU, _pDesc->FlipTexcoordV);
-			RectDetails::FillTexcoords(_pGeometry->Texcoords, divideW, divideH, _pDesc->FaceType, flipU, _pDesc->FlipTexcoordV);
-		}
-
-		if (_pLayout->Normals)
-		{
-			_pGeometry->Normals.reserve(nVerts);
-			_pGeometry->Normals.insert(_pGeometry->Normals.end(), nVertsPerFace, s*float3::yAxis());
-			_pGeometry->Normals.insert(_pGeometry->Normals.end(), nVertsPerFace, s*-float3::yAxis());
-			_pGeometry->Normals.insert(_pGeometry->Normals.end(), nVertsPerFace, s*float3::zAxis());
-			_pGeometry->Normals.insert(_pGeometry->Normals.end(), nVertsPerFace, s*-float3::zAxis());
-			_pGeometry->Normals.insert(_pGeometry->Normals.end(), nVertsPerFace, s*-float3::xAxis());
-			_pGeometry->Normals.insert(_pGeometry->Normals.end(), nVertsPerFace, s*float3::xAxis());
-		}
-
-		if (_pLayout->Tangents)
-		{
-			_pGeometry->Tangents.resize(_pGeometry->GetNumVertices());
-			CalculateTangents(&_pGeometry->Tangents[0]
-			 , _pGeometry->Indices.size()
-			 , &_pGeometry->Indices[0]
-			 , _pGeometry->GetNumVertices()
-			 , &_pGeometry->Positions[0]
-			 , &_pGeometry->Normals[0]
-			 , &_pGeometry->Texcoords[0]);
-		}
-
-		const float4x4 m = float4x4::translation(float3(_pDesc->Bound.GetMin() - float3(-w/2.0f, -h/2.0f, -d/2.0f)));
-		oFOREACH(float3& p, _pGeometry->Positions)
-			p = m * p;
-	}
-
-	if (_pLayout->Colors)
-		_pGeometry->Colors.assign(_pGeometry->GetNumVertices(), _pDesc->Color);
-
-	return _pGeometry->IsValid() ? ESUCCESS : EFAIL;
-}
-
-namespace CircleDetails
-{
-	// Circle is a bit interesting because vertices are not in CW or CCW order, but rather
-	// evens go up one side and odds go up the other. This allows a straightforward way
-	// of zig-zag tessellating the circle for more uniform shading than a point in the 
-	// center of the circle that radiates outward trifan-style.
-
-void FillIndices(std::vector<unsigned int>& _Indices, unsigned int _BaseVertexIndex, unsigned int __Facet, GEOMETRY_FACE_TYPE __Facetype)
-{
-	if (__Facetype == GEOMETRY_FACE_OUTLINE)
-	{
-		_Indices.reserve(_Indices.size() + __Facet * 2);
-
-		const unsigned int numEven = (__Facet - 1) / 2;
-		const unsigned int numOdd = (__Facet / 2) - 1; // -1 for transition from 0 to 1, which does not fit the for loop
-
-		for (unsigned int i = 0; i < numEven; i++)
-		{
-			_Indices.push_back(_BaseVertexIndex + i * 2);
-			_Indices.push_back(_BaseVertexIndex + (i + 1) * 2);
-		}
-
-		for (unsigned int i = 0; i < numOdd; i++)
-		{
-			unsigned int idx = i * 2 + 1;
-
-			_Indices.push_back(_BaseVertexIndex + idx);
-			_Indices.push_back(_BaseVertexIndex + idx + 2);
-		}
-
-		// Edge cases are 0 -> 1 and even -> odd
-
-		_Indices.push_back(_BaseVertexIndex);
-		_Indices.push_back(_BaseVertexIndex + 1);
-
-		_Indices.push_back(_BaseVertexIndex + __Facet - 1);
-		_Indices.push_back(_BaseVertexIndex + __Facet - 2);
-	}
-
-	else
-	{
-		const unsigned int count = __Facet - 2;
-		_Indices.reserve(3 * count);
-
-		const unsigned int o[2][2] = { { 2, 1 }, { 1, 2 } };
-		for (unsigned int i = 0; i < count; i++)
-		{
-			_Indices.push_back(_BaseVertexIndex + i);
-			_Indices.push_back(_BaseVertexIndex + i+o[i&0x1][0]);
-			_Indices.push_back(_BaseVertexIndex + i+o[i&0x1][1]);
-		}
-
-		if (__Facetype == GEOMETRY_FACE_SOLID_CCW)
-			ChangeWindingOrder(_Indices, 0);
-	}
-}
-
-void FillPositions(std::vector<float3>& _Positions, float _Radius, unsigned int __Facet, float _ZValue)
-{
-	_Positions.reserve(_Positions.size() + __Facet);
-	float step = (2.0f * oPIf) / static_cast<float>(__Facet);
-	float curStep2 = 0.0f;
-	float curStep = (2.0f * oPIf) - step;
-	unsigned int k = 0;
-	for (unsigned int i = 0; i < __Facet && k < __Facet; i++, curStep -= step, curStep2 += step)
-	{
-		_Positions.push_back(float3(_Radius * cosf(curStep), _Radius * sinf(curStep), _ZValue));
-		if (++k >= __Facet)
-			break;
-		_Positions.push_back(float3(_Radius * cosf(curStep2), _Radius * sinf(curStep2), _ZValue));
-		if (++k >= __Facet)
-			break;
-	}
-}
-
-// For a planar circle, all normals point in the same planar direction
-void FillNormalsUp(std::vector<float3>& _Normals, size_t _BaseVertexIndex, bool _CCW)
-{
-	const float s = _CCW ? -1.0f : 1.0f;
-	for (size_t i = _BaseVertexIndex; i < _Normals.size(); i++)
-		_Normals[i] = s * float3::zAxis();
-}
-
-// Point normals out from center of circle co-planar with circle. This 
-// is useful when creating a cylinder.
-void FillNormalsOut(std::vector<float3>& _Normals, unsigned int __Facet)
-{
-	FillPositions(_Normals, 1.0f, __Facet, 0.0f);
-}
-
-// Optionally does not clear the specified geometry, so this can be used to 
-// append circles while building cylinders.
-errno_t CreateCircleInternal(const GEOMETRY_CIRCLE_DESC* _pDesc
-	, const GEOMETRY_LAYOUT* _pLayout
-	, oGeometry* _pGeometry
-	, unsigned int _BaseVertexIndex
-	, bool _Clear
-	, float _ZValue
-	, bool _AllowZeroRadius)
-{
-	if (!_pDesc ||!_pLayout || !_pGeometry) return EINVAL;
-
-	static const GEOMETRY_LAYOUT sSupportedLayout = { true, true, true, false, true };
-	if (!IsSupported(&sSupportedLayout, _pLayout))
-	{
-		Err(/*"core.geometry", */"Invalid layout specified");
-		return EINVAL;
-	}
-
-	if (!_AllowZeroRadius && _pDesc->Radius <= 0.0f) return EINVAL;
-	if (_pDesc->Facet < 3) return EINVAL;
-
-	if (_Clear)
-		_pGeometry->Clear();
-
-	CircleDetails::FillPositions(_pGeometry->Positions, _pDesc->Radius, _pDesc->Facet, _ZValue);
-	if (_pDesc->FaceType == GEOMETRY_FACE_OUTLINE)
-	{
-		if (_pLayout->Normals || _pLayout->Tangents)
-			return EINVAL;
-
-		_pGeometry->PrimitiveType = GEOMETRY_PRIMITIVE_LINELIST;
-		CircleDetails::FillIndices(_pGeometry->Indices, _BaseVertexIndex, _pDesc->Facet, _pDesc->FaceType);
-	}
-
-	else
-	{
-		const unsigned int baseIndexIndex = static_cast<unsigned int>(_pGeometry->Indices.size());
-		
-		_pGeometry->PrimitiveType = GEOMETRY_PRIMITIVE_TRILIST;
-		CircleDetails::FillIndices(_pGeometry->Indices, _BaseVertexIndex, _pDesc->Facet, _pDesc->FaceType);
-
-		if (_pLayout->Normals)
-		{
-			_pGeometry->Normals.resize(_pGeometry->GetNumVertices());
-			const float3 N = GetNormalSign(_pDesc->FaceType) * float3::zAxis();
-			for (size_t i = _BaseVertexIndex; i < _pGeometry->Normals.size(); i++)
-				_pGeometry->Normals[i] = N;
-		}
-
-		if (_pLayout->Tangents)
-			CalculateTangents(_pGeometry, baseIndexIndex);
-	}
-
-	if (_pLayout->Colors)
-	{
-		_pGeometry->Colors.resize(_pGeometry->GetNumVertices());
-		for (size_t i = _BaseVertexIndex; i < _pGeometry->Colors.size(); i++)
-			_pGeometry->Colors[i] = _pDesc->Color;
-	}
-
-	return ESUCCESS;
-}
-
-} // namespace CircleDetails
-
-errno_t CreateCircle(const GEOMETRY_CIRCLE_DESC* _pDesc, const GEOMETRY_LAYOUT* _pLayout, oGeometry* _pGeometry)
-{
-	return CircleDetails::CreateCircleInternal(_pDesc, _pLayout, _pGeometry, 0, true, 0.0f, false);
+	_pGeometry->PruneUnindexedVertices();
 }
 
 namespace SphereDetails
 {
-// Based on http://student.ulb.ac.be/~claugero/sphere/index.html 
-// (avoids vert duplication of more naive algos)
-
-static unsigned int midpoint(unsigned int indexStart
-					   , unsigned int indexEnd
-					   , unsigned int& indexCurrent
-					   , std::vector<unsigned int>& start
-					   , std::vector<unsigned int>& end
-					   , std::vector<unsigned int>& mid
-					   , std::vector<float3>& verts)
-{
-	for (unsigned int i = 0; i < indexCurrent; i++)
-	{
-		if (((start[i] == indexStart) && (end[i] == indexEnd)) || 
-			((start[i] == indexEnd) && (end[i] == indexStart)))
-		{
-			unsigned int midpt = mid[i];
-			indexCurrent--; // won't underflow b/c we won't get here unless indexCurrent is at least 1 (from for loop)
-			start[i] = start[indexCurrent];
-			end[i] = end[indexCurrent];
-			mid[i] = mid[indexCurrent];
-			return midpt;
-		}
-	}
-
-	// no vert found, make a new one
-
-	start[indexCurrent] = indexStart;
-	end[indexCurrent] = indexEnd; 
-	mid[indexCurrent] = static_cast<unsigned int>( verts.size() );
-
-	verts.push_back(normalize(float3(
-		(verts[indexStart].x + verts[indexEnd].x) / 2.0f,
-		(verts[indexStart].y + verts[indexEnd].y) / 2.0f,
-		(verts[indexStart].z + verts[indexEnd].z) / 2.0f)));
-
-	unsigned int midpt = mid[indexCurrent++];
-	return midpt;
-} 
-
-// fixme: (tony) Change this to ChangeWindingOrder when there is a good test case rendering
-static void subdivide(std::vector<float3>& verts, std::vector<unsigned int>& indices, unsigned int& numEdges, bool ccw)
-{
-	// reserve space for more faces
-	verts.reserve( verts.size() + 2*numEdges );
-
-	numEdges = static_cast<unsigned int>(2*verts.size() + indices.size());
-	std::vector<unsigned int> start( numEdges );
-	std::vector<unsigned int> end( numEdges );
-	std::vector<unsigned int> mid( numEdges );
-	std::vector<unsigned int> oldIndices( indices );
-
-	indices.resize( 4 * indices.size() );
-
-	unsigned int indexFace = 0;
-
-	// abstraction for winding order (o = order)
-	unsigned int o[2] = { 1, 2 };
-	if (ccw)
-	{
-		o[0] = 2;
-		o[1] = 1;
-	}
-
-	unsigned int indexCurrent = 0;
-	const unsigned int numFaces = static_cast<unsigned int>(oldIndices.size() / 3);
-	for (unsigned int i = 0; i < numFaces; i++) 
-	{ 
-		unsigned int a = oldIndices[3*i]; 
-		unsigned int b = oldIndices[3*i+1]; 
-		unsigned int c = oldIndices[3*i+2]; 
-
-		unsigned int abMidpoint = midpoint( b, a, indexCurrent, start, end, mid, verts );
-		unsigned int bcMidpoint = midpoint( c, b, indexCurrent, start, end, mid, verts );
-		unsigned int caMidpoint = midpoint( a, c, indexCurrent, start, end, mid, verts );
-
-		indices[3*indexFace] = a;
-		indices[3*indexFace+o[0]] = abMidpoint;
-		indices[3*indexFace+o[1]] = caMidpoint;
-		indexFace++;
-		indices[3*indexFace] = caMidpoint;
-		indices[3*indexFace+o[0]] = abMidpoint;
-		indices[3*indexFace+o[1]] = bcMidpoint;
-		indexFace++;
-		indices[3*indexFace] = caMidpoint;
-		indices[3*indexFace+o[0]] = bcMidpoint;
-		indices[3*indexFace+o[1]] = c;
-		indexFace++;
-		indices[3*indexFace] = abMidpoint;
-		indices[3*indexFace+o[0]] = b;
-		indices[3*indexFace+o[1]] = bcMidpoint;
-		indexFace++;
-	} 
-}
-
 static void tcs(std::vector<float2>& tc, const std::vector<float3>& positions, bool hemisphere)
 {
 	tc.resize(positions.size());
@@ -1095,7 +1244,7 @@ static void fix_apex_tcs_octahedron(std::vector<float2>& tc)
 
 static void fix_apex_tcs_Icosahedron(std::vector<float2>& tc)
 {
-//	Fatal(/*"core.geometry", */"Icosahedron not yet implemented.");
+//	Fatal(/*"core.geometry", */"Icosahedron not yet implemented");
 #if 0
 	const float Us[] = 
 	{
@@ -1146,7 +1295,7 @@ const static float3 sOctahedronVerts[] =
 	float3( 0.0f, -1.0f, 0.0f ),	// 5 near
 	float3( 1.0f, 0.0f, 0.0f ),		// 6 right
 	
-	// fixme: (tony) Gah! after all this time
+	// @oooii-tony: FIXME: Gah! after all this time
 	// I still can't get this texturing right...
 	// so hack it with a redundant vert.
 	float3( 0.0f, 1.0f, 0.0f ),		// 7 far
@@ -1181,7 +1330,7 @@ const static unsigned int sOctahedronNumEdges = 12;
 // http://www.classes.cs.uchicago.edu/archive/2003/fall/23700/docs/handout-04.pdf
 
 
-// fixme: (tony) Find a rotation that produces a single vert at z = +1 and another single vert at z = -1
+// @oooii-tony: FIXME: Find a rotation that produces a single vert at z = +1 and another single vert at z = -1
 
 
 // OK I hate math, but here we go:
@@ -1241,113 +1390,119 @@ const static unsigned int sIcosahedronNumEdges = 30;
 
 } // namespace SphereDetails
 
-errno_t CreateSphere(const GEOMETRY_SPHERE_DESC* _pDesc, const GEOMETRY_LAYOUT* _pLayout, oGeometry* _pGeometry)
+bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
 {
-	if (!_pDesc ||!_pLayout || !_pGeometry) return EINVAL;
+	static const oGeometry::LAYOUT sSupportedLayout = { true, true, true, true, true, true };
+	GEO_CONSTRUCT("CreateSphere", sSupportedLayout, _Layout, _Desc.FaceType);
 
-	static const GEOMETRY_LAYOUT sSupportedLayout = { true, true, true, true, true };
-	if (!IsSupported(&sSupportedLayout, _pLayout))
+	if (_Desc.Icosahedron && _Desc.Divide != 0)
 	{
-		Err(/*"core.geometry", */"Invalid layout specified");
-		return EINVAL;
+		oSetLastError(EINVAL, "Icosahedron subdividing not yet implemented");
+		return false;
 	}
 
-	if (_pDesc->FaceType == GEOMETRY_FACE_OUTLINE && (_pLayout->Normals || _pLayout->Tangents || _pLayout->Texcoords))
+	if (_Desc.Icosahedron && _Layout.Texcoords)
 	{
-		Err(/*"core.geometry", */"Lines aren't compatible with normals tangents or texcoords.");
-		return EINVAL;
+		oSetLastError(EINVAL, "Icosahedron texcoords not yet implemented");
+		return false;
 	}
 
-	if (_pDesc->Icosahedron && _pDesc->Divide != 0)
+	if (_Desc.FaceType == oGeometry::OUTLINE)
 	{
-		Err(/*"core.geometry", */"Icosahedron subdividing not yet implemented.");
-		return ENYI;
+		CIRCLE_DESC c;
+		c.FaceType = _Desc.FaceType;
+		c.Facet = _Desc.OutLineFacet;
+		c.Color = _Desc.Color;
+
+		c.Radius = _Desc.Bounds.GetRadius();
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : ~0u))
+			return false;
+
+		float4x4 m = oCreateRotation(radians(90.0f), float3(1.0f, 0.0f, 0.0f));
+		pGeometry->Transform(m);
+
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : ~0u))
+			return false;
 	}
-
-	if (_pDesc->Icosahedron && _pLayout->Texcoords)
+	else
 	{
-		Err(/*"core.geometry", */"Icosahedron texcoords not yet implemented.");
-		return ENYI;
-	}
+		const float3* srcVerts = _Desc.Icosahedron ? SphereDetails::sIcosahedronVerts : SphereDetails::sOctahedronVerts;
+		const unsigned int* srcIndices = _Desc.Icosahedron ? SphereDetails::sIcosahedronIndices : SphereDetails::sOctahedronIndices;
+		unsigned int numVerts = _Desc.Icosahedron ? SphereDetails::sIcosahedronNumVerts : SphereDetails::sOctahedronNumVerts;
+		unsigned int numFaces = _Desc.Icosahedron ? SphereDetails::sIcosahedronNumFaces : SphereDetails::sOctahedronNumFaces;
+		unsigned int numEdges = _Desc.Icosahedron ? SphereDetails::sIcosahedronNumEdges : SphereDetails::sOctahedronNumEdges;
 
-	const float3* srcVerts = _pDesc->Icosahedron ? SphereDetails::sIcosahedronVerts : SphereDetails::sOctahedronVerts;
-	const unsigned int* srcIndices = _pDesc->Icosahedron ? SphereDetails::sIcosahedronIndices : SphereDetails::sOctahedronIndices;
-	unsigned int numVerts = _pDesc->Icosahedron ? SphereDetails::sIcosahedronNumVerts : SphereDetails::sOctahedronNumVerts;
-	unsigned int numFaces = _pDesc->Icosahedron ? SphereDetails::sIcosahedronNumFaces : SphereDetails::sOctahedronNumFaces;
-	unsigned int numEdges = _pDesc->Icosahedron ? SphereDetails::sIcosahedronNumEdges : SphereDetails::sOctahedronNumEdges;
+		pGeometry->Positions.assign(srcVerts, srcVerts + numVerts);
+		pGeometry->Indices.assign(srcIndices, srcIndices + 3*numFaces);
 
-	_pGeometry->Clear();
-	_pGeometry->PrimitiveType = GEOMETRY_PRIMITIVE_TRILIST;
+		if (_Desc.FaceType == oGeometry::FRONT_CCW)
+			ChangeWindingOrder(pGeometry->Indices, 0);
 
-	_pGeometry->Positions.assign(srcVerts, srcVerts + numVerts);
-	_pGeometry->Indices.assign(srcIndices, srcIndices + 3*numFaces);
+		if (_Desc.FaceType != oGeometry::OUTLINE)
+			pGeometry->Subdivide(_Desc.Divide, numEdges);
 
-	if (_pDesc->FaceType == GEOMETRY_FACE_SOLID_CW)
-		ChangeWindingOrder(_pGeometry->Indices, 0);
-
-	for (unsigned int i = 0; i < _pDesc->Divide; i++)
-		SphereDetails::subdivide(_pGeometry->Positions, _pGeometry->Indices, numEdges, _pDesc->FaceType == GEOMETRY_FACE_SOLID_CW);
-
-	if (!_pDesc->Icosahedron)
-	{
-		if (_pDesc->Hemisphere)
-			Clip(oPlanef(float3::zAxis(), 0.0f), false, _pGeometry);
-
-		oFOREACH(float3& p, _pGeometry->Positions)
-			p = (p * _pDesc->Bound.radius()) + _pDesc->Bound.position();
-
-		if (_pDesc->FaceType == GEOMETRY_FACE_OUTLINE)
+		if (!_Desc.Icosahedron)
 		{
-			if (_pLayout->Normals || _pLayout->Tangents) return EINVAL;
-			if (_pDesc->Hemisphere) return ENYI;
+			if (_Desc.Hemisphere)
+				Clip(oPlanef(float3(0.0f, 0.0f, 1.0f), 0.0f), false, pGeometry);
 
-			_pGeometry->PrimitiveType = GEOMETRY_PRIMITIVE_TRILIST;
-		
-			std::vector<std::pair<unsigned int, unsigned int> > edges;
-			CalculateEdges(edges, _pGeometry->GetNumVertices(), _pGeometry->Indices);
-
-			_pGeometry->Indices.clear();
-			_pGeometry->Indices.reserve(edges.size() * 2);
-			for (size_t i = 0; i < edges.size(); i++)
+			if (_Desc.FaceType == oGeometry::OUTLINE)
 			{
-				_pGeometry->Indices.push_back(edges[i].first);
-				_pGeometry->Indices.push_back(edges[i].second);
+				if (_Desc.Hemisphere)
+				{
+					delete pGeometry;
+					oSetLastError(EINVAL, "Hemisphere not yet supported for this configuration");
+					return false;
+				}
+
+				unsigned int* pEdges = 0;
+				size_t nEdges = 0;
+
+				oCalculateEdges(pGeometry->Positions.size(), oGetData(pGeometry->Indices), pGeometry->Indices.size(), &pEdges, &nEdges);
+
+				pGeometry->Indices.clear();
+				pGeometry->Indices.reserve(nEdges * 2);
+				for (size_t i = 0; i < nEdges; i++)
+				{
+					pGeometry->Indices.push_back(pEdges[i*2]);
+					pGeometry->Indices.push_back(pEdges[i*2+1]);
+				}
+
+				oFreeEdgeList(pEdges);
 			}
 		}
 	}
 
-	if (_pLayout->Texcoords)
+	if (_Layout.Texcoords)
 	{
-		SphereDetails::tcs(_pGeometry->Texcoords, _pGeometry->Positions, _pDesc->Hemisphere);
-		if (_pDesc->Icosahedron)
-			SphereDetails::fix_apex_tcs_Icosahedron(_pGeometry->Texcoords);
+		SphereDetails::tcs(pGeometry->Texcoords, pGeometry->Positions, _Desc.Hemisphere);
+		if (_Desc.Icosahedron)
+			SphereDetails::fix_apex_tcs_Icosahedron(pGeometry->Texcoords);
 		else
-			SphereDetails::fix_apex_tcs_octahedron(_pGeometry->Texcoords);
+			SphereDetails::fix_apex_tcs_octahedron(pGeometry->Texcoords);
 
-		SphereDetails::fix_seam_tcs(_pGeometry->Texcoords, _pGeometry->Indices, 0.85f);
+		SphereDetails::fix_seam_tcs(pGeometry->Texcoords, pGeometry->Indices, 0.85f);
 	}
 
-	if (_pLayout->Normals)
+	if (_Layout.Normals)
 	{
-		_pGeometry->Normals.resize(_pGeometry->GetNumVertices());
-		std::vector<float3>::iterator it = _pGeometry->Positions.begin();
-		oFOREACH(float3& n, _pGeometry->Normals)
+		pGeometry->Normals.resize(pGeometry->Positions.size());
+		std::vector<float3>::iterator it = pGeometry->Positions.begin();
+		oFOREACH(float3& n, pGeometry->Normals)
 			n = normalize(*it++);
 	}
 
-	if (_pLayout->Tangents)
-		CalculateTangents(_pGeometry, 0);
+	oFOREACH(float3& p, pGeometry->Positions)
+		p = (normalize(p) * _Desc.Bounds.GetRadius()) + _Desc.Bounds.GetPosition();
 
-	if (_pLayout->Colors)
-		_pGeometry->Colors.assign(_pGeometry->GetNumVertices(), _pDesc->Color);
-
-	return ESUCCESS;
+	pGeometry->Finalize(_Layout, _Desc.Color);
+	return true;
 }
 
 namespace CylinderDetails
 {
 
-static void FillIndices(std::vector<unsigned int>& _Indices, unsigned int _Facet, unsigned int _BaseVertexIndex, GEOMETRY_FACE_TYPE __Facetype)
+static void FillIndices(std::vector<unsigned int>& _Indices, unsigned int _Facet, unsigned int _BaseVertexIndex, oGeometry::FACE_TYPE _FaceType)
 {
 	unsigned int numEvens = (_Facet + 1) / 2;
 	unsigned int oddsStartI = _Facet - 1 - (_Facet & 0x1);
@@ -1401,16 +1556,14 @@ static void FillIndices(std::vector<unsigned int>& _Indices, unsigned int _Facet
 	_Indices.push_back(_BaseVertexIndex + 1);
 	_Indices.push_back(_BaseVertexIndex + 1 + _Facet);
 
-	if (__Facetype == GEOMETRY_FACE_SOLID_CW)
+	if (_FaceType == oGeometry::FRONT_CCW)
 		ChangeWindingOrder(_Indices, cwoStartIndex);
 }
 
 } // namespace CylinderDetails
 
-errno_t CreateCylinder(const GEOMETRY_CYLINDER_DESC* _pDesc, const GEOMETRY_LAYOUT* _pLayout, oGeometry* _pGeometry)
+bool oGeometryFactory_Impl::CreateCylinder(const CYLINDER_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
 {
-	if (!_pDesc ||!_pLayout || !_pGeometry) return EINVAL;
-
 	// Tangents would be supported if texcoords were supported
 	// Texcoord support is a bit hard b/c it has the same wrap-around problem spheres have.
 	// This means we need to duplicate vertices along the seams and assign a 
@@ -1420,70 +1573,80 @@ errno_t CreateCylinder(const GEOMETRY_CYLINDER_DESC* _pDesc, const GEOMETRY_LAYO
 	// 2. Be able to duplicate that vert and reindex triangles on the (0.0001,0.9999,0) 
 	//    side
 	// 3. Also texture a circle.
-	static const GEOMETRY_LAYOUT sSupportedLayout = { true, false, false, false, true };
-	if (!IsSupported(&sSupportedLayout, _pLayout))
+	static const oGeometry::LAYOUT sSupportedLayout = { true, true, true, false, true, true };
+	GEO_CONSTRUCT("CreateCylinder", sSupportedLayout, _Layout, _Desc.FaceType);
+
+	if (_Desc.Facet < 3)
 	{
-		Err(/*"core.geometry", */"Invalid layout specified");
-		return EINVAL;
+		oSetLastError(EINVAL, "Invalid facet: must be >=3");
+		return false;
 	}
 
-	if (_pDesc->FaceType == GEOMETRY_FACE_OUTLINE && _pLayout->Normals)
-		return EINVAL;
-	
-	if (_pDesc->Facet < 3) return EINVAL;
-	if (_pDesc->Divide == 0) return EINVAL;
-
-	_pGeometry->Clear();
-
-	const float fStep = _pDesc->Height / static_cast<float>(_pDesc->Divide);
-
-	if (_pDesc->FaceType == GEOMETRY_FACE_OUTLINE)
+	if (_Desc.Divide == 0)
 	{
-		_pGeometry->PrimitiveType = GEOMETRY_PRIMITIVE_LINELIST;
+		oSetLastError(EINVAL, "Invalid divide specified");
+		return false;
+	}
 
-		GEOMETRY_CIRCLE_DESC c;
-		c.FaceType = _pDesc->FaceType;
-		c.Facet = _pDesc->Facet;
-		c.Color = _pDesc->Color;
+	const float fStep = _Desc.Height / static_cast<float>(_Desc.Divide);
 
-		for (unsigned int i = 0; i <= _pDesc->Divide; i++)
+	if (_Desc.FaceType == oGeometry::OUTLINE)
+	{
+		CIRCLE_DESC c;
+		c.FaceType = _Desc.FaceType;
+		c.Facet = _Desc.Facet;
+		c.Color = _Desc.Color;
+
+		for (unsigned int i = 0; i <= _Desc.Divide; i++)
 		{
-			c.Radius = lerp(_pDesc->Radius0, _pDesc->Radius1, i/static_cast<float>(_pDesc->Divide));
-			errno_t err = CircleDetails::CreateCircleInternal(&c, _pLayout, _pGeometry, static_cast<unsigned int>(_pGeometry->GetNumVertices()), false, i * fStep, true);
-			if (err) return err;
+			c.Radius = lerp(_Desc.Radius0, _Desc.Radius1, i/static_cast<float>(_Desc.Divide));
+			if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, i * fStep, _Layout.ContinuityIDs ? 0 : ~0u))
+				return false;
 		}
 
-		// Now add lines along _pDesc->Facet points
+		// Now add lines along _Desc.Facet points
 
-		const unsigned int nVertsInOneCircle = static_cast<unsigned int>(_pGeometry->GetNumVertices() / (_pDesc->Divide+1));
-		for (unsigned int i = 0; i < nVertsInOneCircle; i++)
+		const unsigned int nVertsInOneCircle = static_cast<unsigned int>(pGeometry->Positions.size() / (_Desc.Divide+1));
+		pGeometry->Indices.push_back(0);
+		pGeometry->Indices.push_back(0 + nVertsInOneCircle * _Desc.Divide);
+		unsigned int i = 2*_Desc.OutlineVerticalSkip+1;
+		for (; i < nVertsInOneCircle-1; i+=2*(_Desc.OutlineVerticalSkip+1))
 		{
-			_pGeometry->Indices.push_back(i);
-			_pGeometry->Indices.push_back(i + nVertsInOneCircle * _pDesc->Divide);
+			pGeometry->Indices.push_back(i);
+			pGeometry->Indices.push_back(i + nVertsInOneCircle * _Desc.Divide);
+			pGeometry->Indices.push_back(i+1);
+			pGeometry->Indices.push_back(i+1 + nVertsInOneCircle * _Desc.Divide);
+		}
+		if(i < nVertsInOneCircle)
+		{
+			pGeometry->Indices.push_back(i);
+			pGeometry->Indices.push_back(i + nVertsInOneCircle * _Desc.Divide);
 		}
 	}
 
 	else
 	{
-		_pGeometry->PrimitiveType = GEOMETRY_PRIMITIVE_TRILIST;
-		CircleDetails::FillPositions(_pGeometry->Positions, _pDesc->Radius0, _pDesc->Facet, 0.0f);
-		for (unsigned int i = 1; i <= _pDesc->Divide; i++)
+		CircleDetails::FillPositions(pGeometry->Positions, _Desc.Radius0, _Desc.Facet, 0.0f);
+		for (unsigned int i = 1; i <= _Desc.Divide; i++)
 		{
-			CircleDetails::FillPositions(_pGeometry->Positions, lerp(_pDesc->Radius0, _pDesc->Radius1, i/static_cast<float>(_pDesc->Divide)), _pDesc->Facet, i * fStep );
-			CylinderDetails::FillIndices(_pGeometry->Indices, _pDesc->Facet, (i-1) * _pDesc->Facet, _pDesc->FaceType);
+			CircleDetails::FillPositions(pGeometry->Positions, lerp(_Desc.Radius0, _Desc.Radius1, i/static_cast<float>(_Desc.Divide)), _Desc.Facet, i * fStep);
+			CylinderDetails::FillIndices(pGeometry->Indices, _Desc.Facet, (i-1) * _Desc.Facet, _Desc.FaceType);
+
+			if (_Layout.ContinuityIDs)
+				pGeometry->SetContinuityID(0);
 		}
 
-		if (_pLayout->Texcoords)
+		if (_Layout.Texcoords)
 		{
-			_pGeometry->Texcoords.resize(_pGeometry->GetNumVertices());
+			pGeometry->Texcoords.resize(pGeometry->Positions.size());
 
 			size_t i = 0;
-			oFOREACH(float2& c, _pGeometry->Texcoords)
+			oFOREACH(float2& c, pGeometry->Texcoords)
 			{
-				const float3& p = _pGeometry->Positions[i++];
+				const float3& p = pGeometry->Positions[i++];
 
-				float x = ((p.x + _pDesc->Radius0) / (2.0f*_pDesc->Radius0));
-				float v = p.z / _pDesc->Height;
+				float x = ((p.x + _Desc.Radius0) / (2.0f*_Desc.Radius0));
+				float v = p.z / _Desc.Height;
 
 				if (p.y <= 0.0f)
 					c = float2(x * 0.5f, v);
@@ -1492,107 +1655,331 @@ errno_t CreateCylinder(const GEOMETRY_CYLINDER_DESC* _pDesc, const GEOMETRY_LAYO
 			}
 		}
 
-		if (_pDesc->IncludeBase)
+		if (_Desc.IncludeBase)
 		{
-			GEOMETRY_CIRCLE_DESC c;
-			c.FaceType = GetOppositeWindingOrder(_pDesc->FaceType);
-			c.Color = _pDesc->Color;
-			c.Facet = _pDesc->Facet;
-			c.Radius = _pDesc->Radius0;
-			
-			GEOMETRY_LAYOUT layout = *_pLayout;
-			layout.Normals = false; // normals get created later
-			
-			errno_t err = CircleDetails::CreateCircleInternal(&c, &layout, _pGeometry, static_cast<unsigned int>(_pGeometry->GetNumVertices()), false, 0.0f, true);
-			if (err) return err;
+			CIRCLE_DESC c;
+			c.FaceType = _Desc.FaceType;
+			c.Color = _Desc.Color;
+			c.Facet = _Desc.Facet;
+			c.Radius = __max(_Desc.Radius0, oVERYSMALL); // pure 0 causes a degenerate face and thus degenerate normals
 
-			c.FaceType = _pDesc->FaceType;
-			c.Radius = _pDesc->Radius1;
-			err = CircleDetails::CreateCircleInternal(&c, &layout, _pGeometry, static_cast<unsigned int>(_pGeometry->GetNumVertices()), false, _pDesc->Height, true);
-			if (err) return err;
-			
+			oGeometry::LAYOUT layout = _Layout;
+			layout.Normals = false; // normals get created later
+
+			if (!CircleDetails::CreateCircleInternal(c, layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0.0f, _Layout.ContinuityIDs ? 1 : ~0u))
+				return false;
+
+			c.FaceType = GetOppositeWindingOrder(_Desc.FaceType);
+			c.Radius = __max(_Desc.Radius1, oVERYSMALL); // pure 0 causes a degenerate face and thus degenerate normals
+			if (!CircleDetails::CreateCircleInternal(c, layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, _Desc.Height, _Layout.ContinuityIDs ? 2 : ~0u))
+				return false;
+
 			//fixme: implement texcoord generation
-			if (_pLayout->Texcoords)
-				_pGeometry->Texcoords.resize(_pGeometry->GetNumVertices());
+			if (_Layout.Texcoords)
+				pGeometry->Texcoords.resize(pGeometry->Positions.size());
+		}
+	}
+
+	pGeometry->Finalize(_Layout, _Desc.Color);
+	return true;
+}
+
+bool oGeometryFactory_Impl::CreateCone(const CONE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+{
+	CYLINDER_DESC desc;
+	desc.FaceType = _Desc.FaceType;
+	desc.Divide = _Desc.Divide;
+	desc.Facet = _Desc.Facet;
+	desc.Radius0 = _Desc.Radius;
+	desc.Radius1 = oVERYSMALL; // pure 0 causes a degenerate face and thus degenerate normals
+	desc.Height = _Desc.Height;
+	desc.Color = _Desc.Color;
+	desc.IncludeBase = _Desc.IncludeBase;
+	desc.OutlineVerticalSkip = _Desc.OutlineVerticalSkip;
+	return CreateCylinder(desc, _Layout, _ppGeometry);
+}
+
+bool oGeometryFactory_Impl::CreateTorus(const TORUS_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+{
+	static const oGeometry::LAYOUT sSupportedLayout = { true, true, true, true, true, true };
+	GEO_CONSTRUCT("CreateTorus", sSupportedLayout, _Layout, _Desc.FaceType);
+
+	if (_Desc.Facet < 3)
+	{
+		oSetLastError(EINVAL, "Invalid facet: must be >=3");
+		return false;
+	}
+
+	if (_Desc.Divide < 3)
+	{
+		oSetLastError(EINVAL, "Invalid divide: must be >=3");
+		return false;
+	}
+
+	if (_Desc.InnerRadius < 0.0f || _Desc.OuterRadius < 0.0f || _Desc.InnerRadius > _Desc.OuterRadius)
+	{
+		oSetLastError(EINVAL, "Invalid radius");
+		return false;
+	}
+
+	const float kCenterRadius = (_Desc.InnerRadius + _Desc.OuterRadius) / 2.0f;
+	const float kRangeRadius = _Desc.OuterRadius - kCenterRadius;
+
+
+	if (_Desc.FaceType == oGeometry::OUTLINE)
+	{
+		CIRCLE_DESC c;
+		c.FaceType = _Desc.FaceType;
+		c.Facet = _Desc.Facet;
+		c.Color = _Desc.Color;
+
+		//main circle
+		c.Radius = kCenterRadius;
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : ~0u))
+			return false;
+
+		float4x4 m = oCreateRotation(radians(90.0f), float3(1.0f, 0.0f, 0.0f));
+		pGeometry->Transform(m);
+
+		//small circles
+		c.Radius = kRangeRadius;
+		unsigned int nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : ~0u))
+			return false;
+		m = oCreateTranslation(float3(kCenterRadius, 0.0f, 0.0f));
+		pGeometry->Transform(m,nextCircleIndex);
+
+		nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : ~0u))
+			return false;
+		m = oCreateTranslation(float3(-kCenterRadius, 0.0f, 0.0f));
+		pGeometry->Transform(m,nextCircleIndex);
+
+		nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : ~0u))
+			return false;
+		m = oCreateRotation(radians(90.0f), float3(0.0f, 1.0f, 0.0f)) * oCreateTranslation(float3(0.0f, 0.0f, kCenterRadius));
+		pGeometry->Transform(m,nextCircleIndex);
+
+		nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : ~0u))
+			return false;
+		m = oCreateRotation(radians(90.0f), float3(0.0f, 1.0f, 0.0f)) * oCreateTranslation(float3(0.0f, 0.0f, -kCenterRadius));
+		pGeometry->Transform(m,nextCircleIndex);
+	}
+	else
+	{
+		const float kInvDivide = 1.0f / static_cast<float>(_Desc.Divide);
+		const float kInvFacet = 1.0f / static_cast<float>(_Desc.Facet);
+
+		const float kDStep = 2.0f * oPIf / static_cast<float>(_Desc.Divide);
+		const float kFStep = 2.0f * oPIf / static_cast<float>(_Desc.Facet);
+
+		for (unsigned int i = 0; i < _Desc.Divide; i++)
+		{
+			const float2 S(sin(kDStep * i), sin(kDStep * (i+1)));
+			const float2 C(cos(kDStep * i), cos(kDStep * (i+1)));
+
+			for (unsigned int j = 0; j < _Desc.Facet + 1; j++)
+			{
+				const float curFacet = (j % _Desc.Facet) * kFStep;
+				const float fSin = sinf(curFacet);
+				const float fCos = cosf(curFacet);
+
+				for (int k = 0; k < 2; k++)
+				{
+					float3 center = float3(kCenterRadius * C[k], 0.0f, kCenterRadius* S[k]);
+
+					float3 p = float3((kCenterRadius + kRangeRadius * fCos) * C[k], kRangeRadius * fSin, (kCenterRadius + kRangeRadius * fCos) * S[k]);
+
+					if (_Layout.Positions)
+						pGeometry->Positions.push_back(p);
+
+					if (_Layout.Texcoords)
+						pGeometry->Texcoords.push_back(float2(1.0f - (i + k) * kInvDivide, j * kInvFacet));
+
+					if (_Layout.Normals)
+						pGeometry->Normals.push_back(normalize(p - center));
+				}
+			}
 		}
 
-		if (_pLayout->Normals)
-			CalculateVertexNormals(_pGeometry, _pDesc->FaceType == GEOMETRY_FACE_SOLID_CCW);
+		// This creates one long tri-strip, so index it out to keep everything as 
+		// indexed triangles.
 
-		if (_pLayout->Tangents)
-			CalculateTangents(_pGeometry, 0);
-	}
-
-	if (_pLayout->Colors)
-		_pGeometry->Colors.assign(_pGeometry->GetNumVertices(), _pDesc->Color);
-
-	return ESUCCESS;
-}
-
-errno_t CreateCone(const GEOMETRY_CONE_DESC* _pDesc, const GEOMETRY_LAYOUT* _pLayout, oGeometry* _pGeometry)
-{
-	GEOMETRY_CYLINDER_DESC desc;
-	desc.FaceType = _pDesc->FaceType;
-	desc.Divide = _pDesc->Divide;
-	desc.Facet = _pDesc->Facet;
-	desc.Radius0 = _pDesc->Radius;
-	desc.Radius1 = 0.0f;
-	desc.Height = _pDesc->Height;
-	desc.Color = _pDesc->Color;
-	desc.IncludeBase = _pDesc->IncludeBase;
-
-	return CreateCylinder(&desc, _pLayout, _pGeometry);
-}
-
-errno_t CreateGeometryFromOBJ(const char* _pOBJFileString, const GEOMETRY_LAYOUT* _pLoadLayout, oGeometry* _pGeometry)
-{
-	if (!_pOBJFileString ||!_pLoadLayout || !_pGeometry) return EINVAL;
-
-	static const GEOMETRY_LAYOUT sSupportedLayout = { true, true, false, true, false };
-	if (!IsSupported(&sSupportedLayout, _pLoadLayout))
-	{
-		Err(/*"core.geometry", */"Invalid layout specified");
-		return EINVAL;
-	}
-
-	size_t groupCount = 0;
-	char type = 0;
-	float x = 0.0f, y = 0.0f, z = 0.0f;
-	const char* r = _pOBJFileString;
-	while (*(int*)r)
-	{
-		switch (*r)
+		for (unsigned int i = 2; i < pGeometry->Positions.size(); i++)
 		{
-			case 'v':
+			if ((i & 0x1) == 0)
 			{
-					r += sscanf_s(r, "v%c %f %f %f\n", &type, &x, &y, &z);
-					switch (type)
-					{
-						case ' ': _pGeometry->Positions.push_back(float3(x,y,z)); break;
-						case 'n': _pGeometry->Normals.push_back(float3(x,y,z)); break;
-						case 't': _pGeometry->Texcoords.push_back(float2(x,y)); break;
-//						default: Assume(0);
-					}
-
-					break;
+				pGeometry->Indices.push_back(i);
+				pGeometry->Indices.push_back(i-1);
+				pGeometry->Indices.push_back(i-2);
 			}
 
-			case 'g':
-				groupCount++;
-				if (groupCount > 1)
-				{
-					Err(/*"core.geometry", */"Multi-section geometry not yet supported.");
-					return ENYI;
-				}
-
-				break;
-
-			case 'f':
-				break;
+			else
+			{
+				pGeometry->Indices.push_back(i-2);
+				pGeometry->Indices.push_back(i-1);
+				pGeometry->Indices.push_back(i-0);
+			}
 		}
-
-		r += strcspn(r, "\n");
 	}
 
-	return ENYI;
+	if (_Desc.FaceType == oGeometry::FRONT_CCW)
+		ChangeWindingOrder(pGeometry->Indices, 0);
+
+	pGeometry->Finalize(_Layout, _Desc.Color);
+	return true;
+}
+
+namespace TeardropDetails {
+
+template<typename T> TVEC3<T> Eval(const T& _Theta, const T& _Phi)
+{
+	T o = 0.25f;//T(0.5) * (T(1) - cos(_Theta)) * sin(_Theta);
+	T x = o * cos(_Phi);
+	T y = o * sin(_Phi);
+	T z = cos(_Phi);
+	return TVEC3<T>(x, y, z);
+}
+
+} // namespace TeardropDetails
+
+
+void CylinderFillIndices(std::vector<unsigned int>& _Indices, unsigned int _Facet, unsigned int _Divide)
+{
+	for (unsigned int i = 0; i < _Divide; i++)
+	{
+		unsigned int base = i * _Facet;
+		for (unsigned int j = 0; j < _Facet; j++)
+		{
+			// four corners of a quad
+			unsigned int a = base + j;
+			unsigned int b = a + 1;
+			unsigned int c = a + _Facet;
+			unsigned int d = c + 1;
+
+			// Wrap around to the first vert of the circle
+			if (j == _Facet-1)
+			{
+				b -= _Facet;
+				d -= _Facet;
+			}
+
+			_Indices.push_back(a); _Indices.push_back(d); _Indices.push_back(c);
+			_Indices.push_back(a); _Indices.push_back(b); _Indices.push_back(d);
+		}
+	}
+}
+
+bool oGeometryFactory_Impl::CreateTeardrop(const TEARDROP_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+{
+	static const oGeometry::LAYOUT sSupportedLayout = { true, true, true, true, true, true };
+	GEO_CONSTRUCT("CreateTeardrop", sSupportedLayout, _Layout, _Desc.FaceType);
+
+	//if (_Desc.Divide < 3)
+	//{
+	//	oSetLastError(EINVAL, "Invalid divide: must be >=3");
+	//	return false;
+	//}
+
+	if (_Desc.Facet < 3)
+	{
+		oSetLastError(EINVAL, "Invalid facet: must be >=3");
+		return false;
+	}
+
+	const float kUStep = oPIf / static_cast<float>(_Desc.Divide+1);
+	const float kVStep = 2.0f * oPIf / static_cast<float>(_Desc.Facet);
+
+	for (size_t i = 0; i < _Desc.Divide+1; i++)
+	{
+		for (size_t j = 0; j < _Desc.Facet; j++)
+		{
+			const float u = kUStep * i;
+			//const float u1 = kUStep * (i+1);
+			const float v = kVStep * j;
+			//const float v1 = kVStep * (j+1);
+
+			float3 p = TeardropDetails::Eval(u, v);
+
+			pGeometry->Positions.push_back(p);
+			pGeometry->Normals.push_back(normalize(p));
+			//pGeometry->Positions.push_back(TeardropDetails::Eval(u1, v));
+			//pGeometry->Positions.push_back(TeardropDetails::Eval(u1, v1));
+			//pGeometry->Positions.push_back(TeardropDetails::Eval(u, v1));
+		}
+	}
+
+	CylinderFillIndices(pGeometry->Indices, _Desc.Facet, _Desc.Divide);
+
+	//if (_Desc.FaceType == oGeometry::FRONT_CCW)
+	//	ChangeWindingOrder(pGeometry->Indices, 0);
+
+	pGeometry->Finalize(_Layout, _Desc.Color);
+	return true;
+}
+
+#include <oooii/oPath.h>
+#include <oooii/oStdio.h>
+
+bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+{
+	static const oGeometry::LAYOUT sSupportedLayout = { true, true, true, true, true, true };
+	GEO_CONSTRUCT("CreateOBJ", sSupportedLayout, _Layout, oGeometry::FRONT_CW);
+
+	oOBJ obj;
+	if (!oOBJLoad(_Desc.OBJPath, _Desc.OBJString, _Desc.FlipFaces, &obj))
+		return false;
+
+	pGeometry->Positions = obj.Positions;
+	pGeometry->Normals = obj.Normals;
+	pGeometry->Texcoords = obj.Texcoords;
+	pGeometry->Indices = obj.Indices;
+
+	if (!obj.Groups.empty())
+	{
+		pGeometry->ContinuityIDs.resize(pGeometry->Positions.size());
+		for (unsigned int i = 0; i < obj.Groups.size(); i++)
+		{
+			const oOBJ::GROUP& g = obj.Groups[i];
+			const size_t indexEnd = g.StartIndex + g.NumIndices;
+			for (size_t j = g.StartIndex; j < indexEnd; j++)
+				pGeometry->ContinuityIDs[pGeometry->Indices[j]] = i;
+		}
+	}
+
+	pGeometry->Ranges.resize(obj.Groups.size());
+	for (size_t i = 0; i < pGeometry->Ranges.size(); i++)
+	{
+		pGeometry->Ranges[i].StartIndex = obj.Groups[i].StartIndex;
+		pGeometry->Ranges[i].NumIndices = obj.Groups[i].NumIndices;
+	}
+
+	pGeometry->Finalize(_Layout, std::White);
+
+	float3 dim = pGeometry->Bounds.GetDimensions();
+	float s = 1.0f / __max(dim.x, __max(dim.y, dim.z));
+
+	if (!oEqual(s, 1.0f))
+	{
+		float4x4 scale = oCreateScale(s);
+		pGeometry->Transform(scale);
+	}
+#if 0
+	char mtlpath[256];
+	strcpy_s(mtlpath, obj.OBJPath.c_str());
+	oTrimFilename(mtlpath);
+	strcat_s(mtlpath, obj.MaterialLibraryPath.c_str());
+	
+	void* pBuffer = 0;
+	size_t size = 0;
+	oLoadBuffer(&pBuffer, &size, malloc, mtlpath, true);
+
+	std::vector<oOBJ::MATERIAL> mtllib;
+	oLoadMTL(mtlpath, (const char*)pBuffer, &mtllib);
+
+	free(pBuffer);
+#endif
+	return true;
 }

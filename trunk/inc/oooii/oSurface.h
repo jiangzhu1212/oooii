@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #pragma once
 #ifndef oSurface_h
 #define oSurface_h
@@ -177,6 +155,9 @@ namespace oSurface
 
 	// Use oAsString for FORMAT to string conversion
 	FORMAT GetFromString(const char* _EnumString);
+
+	int GetPlatformFormat(FORMAT _Format);
+	template<typename T> inline T GetPlatformFormat(FORMAT _Format) { return static_cast<T>(GetPlatformFormat(_Format)); }
 	
 	// Returns true if the specified format is a block-compressed format.
 	bool IsBlockCompressedFormat(FORMAT _Format);
@@ -212,7 +193,7 @@ namespace oSurface
 	// Returns the size in bytes for one 2D array slice for the described mip chain.
 	// That is, in an array of textures, each texture is a full mip chain, and this
 	// pitch is the number of bytes for the total mip chain of one of those textures.
-	unsigned int CalcSlicePitch(FORMAT _Format, unsigned int _Mip0Width, unsigned int _Mip0Height);
+	unsigned int CalcSlicePitch(FORMAT _Format, unsigned int _Mip0Width, unsigned int _Mip0Height, unsigned int _NumMips = 0);
 
 	// Returns the width, height, or depth dimension of the specified mip level
 	// given mip0's dimension. BCAlign set to true will align the dimension to be 
@@ -269,22 +250,8 @@ namespace oSurface
 	void convert_B8G8R8A8_UNORM_to_YUV420(const unsigned int _Width, const unsigned int _Height, const unsigned char* _pSrcRGBASrc, const size_t _pRGBAPitch, YUV420* _pYUVDst );
 	void convert_YUV420_to_B8G8R8A8_UNORM( const unsigned int _Width, const unsigned int _Height, const YUV420& _YUVSrc, unsigned char* _pSrcRGBADst, const size_t _pRGBAPitch );
 
-	#if defined(_WIN32) || defined(_WIN64)
 
-		unsigned int GetDXGIFormat(FORMAT _Format);
-		
-		// Allocates a new BITMAPINFO (if an 8-bit format, a palette is required
-		// for proper drawing using GDI). If you pass the address of a valid 
-		// pointer you don't need to specify an allocate function, but the size
-		// of the destination BMI must be correct. Use GetBMISize() to ensure
-		// the correct size is available. The first parameter should be a pointer to
-		// a pointer to a BITMAPINFO. void** used here to avoid including Windows.h
-		void GetBMI(void** _ppBITMAPINFO, const DESC* _pDesc, void* (*_Allocate)(size_t _Size), bool _FlipVertically = true, oColor _Monochrome8Zero = std::Black, oColor _Monochrome8One = std::White);
-
-		// 8 bit formats won't render correctly because BITMAPINFO infers 
-		// paletted textures from 8-bit, so allocate enough room for the palette.
-		inline size_t GetBMISize(FORMAT _Format);
-	#endif
+	bool ConvertSurface(const DESC& _srcDesc, const unsigned char* _pSrcSurface, const DESC& _dstDesc, unsigned char* _pDstSurface);
 } // namespace oSurface
 
 #endif

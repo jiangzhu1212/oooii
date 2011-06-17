@@ -1,33 +1,11 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oErrno.h>
 #include <oooii/oEvent.h>
 #include <oooii/oRef.h>
 #include <oooii/oRefCount.h>
 #include <oooii/oSocket.h>
 #include <oooii/oStdio.h>
+#include <oooii/oSTL.h>
 #include <oooii/oTest.h>
 #include <oooii/oThread.h>
 #include <oooii/oProcess.h>
@@ -50,8 +28,8 @@ struct TESTSocketReliableServer : public oSpecialTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{		
-		threadsafe oRef<oSocketServer> Server;
-		threadsafe oRef<oSocketBlocking> Client;
+		oRef<threadsafe oSocketServer> Server;
+		oRef<threadsafe oSocketBlocking> Client;
 
 		unsigned int Timeout = INITIAL_CONNECTION_TIMEOUT;
 		unsigned int Counter = 0;
@@ -64,7 +42,7 @@ struct TESTSocketReliableServer : public oSpecialTest
 		if (Timeout)
 			oTRACE("SERVER: %s waiting for connection...", Server->GetDebugName());
 
-		threadsafe oRef<oSocketBlocking> NewConnection;
+		oRef<threadsafe oSocketBlocking> NewConnection;
 		if (Server->WaitForConnection(&NewConnection, Timeout))
 		{
 			Client = NewConnection;
@@ -147,21 +125,18 @@ struct TESTSocketReliableServer : public oSpecialTest
 	}
 };
 
-TESTSocketReliableServer TESTSocketReliableServer;
-
 struct TESTSocketReliable : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		threadsafe oRef<oProcess> Server;
 		{
 			int exitcode = 0;
 			char msg[512];
-			oTESTB(oTestRunSpecialTest("TESTSocketReliableServer", msg, oCOUNTOF(msg), &exitcode, &Server), "%s", msg);
+			oTESTB(oTestRunSpecialTest("TESTSocketReliableServer", msg, oCOUNTOF(msg), &exitcode), "%s", msg);
 			oSleep( 2000 );
 		}
 
-		threadsafe oRef<oSocketBlocking> Client;
+		oRef<threadsafe oSocketBlocking> Client;
 		{
 			oSocketBlocking::DESC desc;
 			desc.Peername = SERVER_HOSTNAME;
@@ -171,9 +146,9 @@ struct TESTSocketReliable : public oTest
 			oTESTB(oSocketBlocking::Create("Client", desc, &Client), "Failed to create client socket: %s", oGetLastErrorDesc());
 		}
 
-		oScopedAllocation msg(2 * 1024 * 1024);
+		std::vector<char> msg(oMB(2));
 
-		size_t bytesReceived = Client->Receive(msg.GetData(), (oSocket::size_t)msg.GetSize());
+		size_t bytesReceived = Client->Receive(oGetData(msg), (oSocket::size_t)oGetDataSize(msg));
 		if (bytesReceived)
 		{
 			oTRACE("CLIENT: %s received message: %s", Client->GetDebugName(), msg);
@@ -199,21 +174,26 @@ struct TESTSocketReliable : public oTest
 
 		for (size_t i = 0; i < oCOUNTOF(sMessages); i++)
 		{
-			*msg.GetData<char>() = 0;
+			*oGetData(msg) = 0;
 			oTRACE("CLIENT: Waiting to receive data from server (%u)... ", i);
-			size_t bytesReceived = Client->Receive(msg.GetData(), (oSocket::size_t)msg.GetSize());
+			size_t bytesReceived = Client->Receive(oGetData(msg), (oSocket::size_t)oGetDataSize(msg));
 			oTESTB(bytesReceived, "%u == Receive() failed on message %u %s: %s: %s", bytesReceived, i, i == 3 ? "(a large buffer)" : "", oGetErrnoString(oGetLastError()), oGetLastErrorDesc());
 			if (bytesReceived)
 			{
-				oTRACE("CLIENT: received: %s", bytesReceived < 1024 ? msg.GetData() : "A large buffer");
+				oTRACE("CLIENT: received: %s", bytesReceived < 1024 ? oGetData(msg) : "A large buffer");
 
 				if (bytesReceived > 1024)
 				{
 					// check the contents of the message received to make sure we got it
 					// all correctly.
 
-					for (size_t i = 0; i < bytesReceived; i++)
-						oTESTB(static_cast<unsigned char*>(msg.GetData())[i] == 42, "Large buffer compare failed at byte %u", i);
+					for (size_t j = 0; j < bytesReceived; j++)
+						oTESTB((unsigned char)msg[j] == 42, "Large buffer compare failed at byte %u", i);
+
+					oTESTB(i >= (oCOUNTOF(sMessages)-1), "Received end msg from server, but we haven't requested a close yet");
+
+					//Send should fail at this point, so don't test it.
+					break;
 				}
 
 				if (!Client->Send(sMessages[i], (oSocket::size_t)strlen(sMessages[i])+1))
@@ -231,7 +211,7 @@ struct TESTSocketReliable : public oTest
 		}
 
 		// Try to receive data beyond that which is sent to test failure condition
-		bytesReceived = Client->Receive(msg.GetData(), (oSocket::size_t)msg.GetSize());
+		bytesReceived = Client->Receive(oGetData(msg), (oSocket::size_t)oGetDataSize(msg), 1000);
 
 		oTESTB(!bytesReceived, "client should not have received more data");
 
@@ -239,27 +219,17 @@ struct TESTSocketReliable : public oTest
 	}
 };
 
-struct TestUnreliableSenderThread : public oThread::Proc
+struct TestUnreliableSenderThreadProc : public oThread::Proc
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<TestUnreliableSenderThread>());
+	oDEFINE_NOOP_QUERYINTERFACE();
 
-	TestUnreliableSenderThread()
+	TestUnreliableSenderThreadProc()
 	{
-		if (oThread::Create("Sender Thread", 64*1024, false, this, &Thread))
-		{
-			Release(); // prevent circular ref
-			threadInitialized.Wait();
-		}
 	}
 
-	~TestUnreliableSenderThread()
+	~TestUnreliableSenderThreadProc()
 	{
-		if (Thread)
-		{
-			Thread->Exit();
-			Thread->Wait(2000);
-		}
 	}
 
 	void RunIteration()
@@ -298,11 +268,40 @@ struct TestUnreliableSenderThread : public oThread::Proc
 	}
 
 	oEvent threadInitialized;
-	threadsafe oRef<oThread> Thread;
-	threadsafe oRef<oSocketSender> Sender;
+	oRef<threadsafe oSocketSender> Sender;
 	oRefCount RefCount;
 	unsigned int Timeout;
 	unsigned int Counter;
+};
+
+struct TestUnreliableSenderThread : oInterface
+{
+	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<TestUnreliableSenderThread>());
+
+	TestUnreliableSenderThread()
+	{
+		Proc /= new TestUnreliableSenderThreadProc();
+
+		if (oThread::Create("Sender Thread", 64*1024, false, Proc, &Thread))
+			Proc->threadInitialized.Wait();
+	}
+
+	~TestUnreliableSenderThread()
+	{
+		if (Thread)
+		{
+			Thread->Exit();
+			Thread->Wait(2000);
+		}
+	}
+
+protected:
+
+	oRef<threadsafe oThread> Thread;
+	oRef<TestUnreliableSenderThreadProc> Proc;
+
+	oRefCount RefCount;
 };
 
 struct TESTSocketUnreliable : public oTest
@@ -312,7 +311,7 @@ struct TESTSocketUnreliable : public oTest
 		oRef<TestUnreliableSenderThread> Server;
 		Server /= new TestUnreliableSenderThread();
 
-		threadsafe oRef<oSocketReceiver> Receiver;
+		oRef<threadsafe oSocketReceiver> Receiver;
 		{
 			oSocketReceiver::DESC desc;
 			desc.ReceivePort = RECEIVER_PORT;
@@ -335,8 +334,9 @@ struct TESTSocketUnreliable : public oTest
 	}
 };
 
-TESTSocketReliable TestSocketReliable;
-TESTSocketUnreliable TESTSocketUnreliable;
+oTEST_REGISTER(TESTSocketReliableServer);
+oTEST_REGISTER(TESTSocketReliable);
+oTEST_REGISTER(TESTSocketUnreliable);
 
 const oGUID& oGetGUID( threadsafe const TestUnreliableSenderThread* threadsafe const * )
 {

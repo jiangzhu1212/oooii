@@ -1,81 +1,32 @@
 #pragma once
+
+// Enqueues commands such that they are executed in the order they were enqueued,
+// but a command could execute at any time on any thread.
 #ifndef oCommandQueue_h
 #define oCommandQueue_h
 
-#include "oThreading.h"
+#include <oooii/oMutex.h>
 #include <list>
 
-// Issues commands in order asynchronously 
-class oCommandQueue
+struct oCommandQueue
 {
-public:
-	oCommandQueue() :
-	  Enabled(true)
-	  {
-	  }
+	oCommandQueue();
+	~oCommandQueue();
 
-	  void AddCommand(oFUNCTION<void()> _Command) threadsafe
-	  {
-		  // Queue can be disabled during a drain event
-		  if( !Enabled )
-			  return;
+	// Enqueue a command to be executed
+	void Enqueue(oFUNCTION<void()> _Command) threadsafe;
 
-		  // Add this command to the queue
-		  ConsumerLock.Lock();
-		  thread_cast<oCommandQueue*>(this)->Commands.push_back(_Command);
-		  size_t CurrentCommandCount = thread_cast<oCommandQueue*>(this)->Commands.size();
-		  ConsumerLock.Unlock();
-
-		  // If this command is the only one in the queue kick of the execution
-		  if( 1 == CurrentCommandCount )
-		  {
-			  LaunchExecute( _Command );
-		  }
-	  } 
-
-	  void Drain( bool _ReEnable = false)
-	  {
-		  // This has the potential to deadlock but we need to make certain there are no commands in flight before tearing down
-		  // higher level code should ensure against deadlock
-		  Enabled = false;		 
-		  while( !Commands.empty() )
-		  {
-			  oYield();
-		  }
-		  Enabled = _ReEnable;
-	  }
-
-	  ~oCommandQueue()
-	  {
-			Drain();
-	  }
+	// Block until all commands enqueued are executed. If _AllowEnqueues is true,
+	// then Enqueue() calls will append to the command list and thus this Flush
+	// might never return. If _AllowEnqueues is false, then Enqueue calls are 
+	// ignored.
+	void Flush(bool _AllowEnqueues = false) threadsafe;
 
 private:
-
-	void LaunchExecute(oFUNCTION<void()> _Command) threadsafe
-	{
-		oIssueAsyncTask( oBIND(&oCommandQueue::Execute, this, _Command) );
-	}
-	void Execute(oFUNCTION<void()> _Command)
-	{
-		// Execute and clear the command
-		_Command();
-		_Command = NULL;
-
-		// Push the command off the list and execute the next one if available
-		ConsumerLock.Lock();
-		Commands.pop_front();
-	
-		if( !Commands.empty() )
-		{
-			LaunchExecute( Commands.front() );
-		}
-		ConsumerLock.Unlock();
-	}
+	void ExecuteNext() threadsafe;
 	std::list<oFUNCTION<void()>> Commands;
 	oRWMutex ConsumerLock;
 	volatile bool Enabled;
 };
 
-
-#endif // oCommandQueue_h
+#endif

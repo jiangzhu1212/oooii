@@ -30,7 +30,7 @@
 #define __TBB_tbb_thread_H
 
 #if _WIN32||_WIN64
-#include "machine/windows_api.h"
+#include <windows.h>
 #define __TBB_NATIVE_THREAD_ROUTINE unsigned WINAPI
 #define __TBB_NATIVE_THREAD_ROUTINE_PTR(r) unsigned (WINAPI* r)( void* )
 #else
@@ -41,6 +41,7 @@
 
 #include "tbb_stddef.h"
 #include "tick_count.h"
+#include <exception>             // Need std::terminate from here.
 
 #if !TBB_USE_EXCEPTIONS && _MSC_VER
     // Suppress "C++ exception handler used, but unwind semantics are not enabled" warning in STL headers
@@ -82,7 +83,11 @@ namespace internal {
 
         static __TBB_NATIVE_THREAD_ROUTINE start_routine( void* c ) {
             thread_closure_0 *self = static_cast<thread_closure_0*>(c);
-            self->function();
+            __TBB_TRY {
+                self->function();
+            } __TBB_CATCH( ... ) {
+                std::terminate();
+            }
             delete self;
             return 0;
         }
@@ -95,7 +100,11 @@ namespace internal {
         //! Routine passed to Windows's _beginthreadex by thread::internal_start() inside tbb.dll
         static __TBB_NATIVE_THREAD_ROUTINE start_routine( void* c ) {
             thread_closure_1 *self = static_cast<thread_closure_1*>(c);
-            self->function(self->arg1);
+            __TBB_TRY {
+                self->function(self->arg1);
+            } __TBB_CATCH( ... ) {
+                std::terminate();
+            }
             delete self;
             return 0;
         }
@@ -108,7 +117,11 @@ namespace internal {
         //! Routine passed to Windows's _beginthreadex by thread::internal_start() inside tbb.dll
         static __TBB_NATIVE_THREAD_ROUTINE start_routine( void* c ) {
             thread_closure_2 *self = static_cast<thread_closure_2*>(c);
-            self->function(self->arg1, self->arg2);
+            __TBB_TRY {
+                self->function(self->arg1, self->arg2);
+            } __TBB_CATCH( ... ) {
+                std::terminate();
+            }
             delete self;
             return 0;
         }

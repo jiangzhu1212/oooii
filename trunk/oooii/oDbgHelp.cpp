@@ -1,29 +1,5 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <string.h>
-#include <oooii/oAssert.h>
 #include <oooii/oAtomic.h>
 #include <oooii/oStddef.h>
 #include <oooii/oString.h>
@@ -31,7 +7,18 @@
 
 #ifndef _DEBUG
 	#pragma optimize("", off)
-	#pragma warning(disable:4748) // an not protect parameters and local variables from local buffer overrun because optimizations are disabled in function
+	#pragma warning(disable:4748) // can not protect parameters and local variables from local buffer overrun because optimizations are disabled in function
+#endif
+
+#if 0
+	#define oDBGHELP_SymCleanup(_hProcess) \
+	if (SymCleanup) \
+	{	OutputDebugStringA("--- If this is the last line of singleton deinit, it means we're calling SymCleanup and it's prematurely/blindly exiting the app. ---\n"); \
+		SymCleanup(_hProcess); \
+		OutputDebugStringA("--- If you're reading this, there's probably more to come and we've solved calling oDbgHelp before _RTC_Terminate(). ---\n"); \
+	}
+#else
+	#define oDBGHELP_SymCleanup(_hProcess) SymCleanup(_hProcess)
 #endif
 
 namespace detail {
@@ -105,46 +92,26 @@ oDbgHelp::oDbgHelp(HANDLE _hProcess, const char* _SymbolPath, ModuleLoadedHandle
 		{
 			// then for an installed version (32/64-bit)
 			if (detail::GetSDKPath(path, "/Debugging Tools for Windows/dbghelp.dll") && detail::Exists(path))
-				hDbgHelp = oLinkDLL(path, detail::dbghelp_dll_Functions, (void**)&EnumerateLoadedModules64, oCOUNTOF(detail::dbghelp_dll_Functions));
+				hDbgHelp = oModule::Link(path, detail::dbghelp_dll_Functions, (void**)&EnumerateLoadedModules64, oCOUNTOF(detail::dbghelp_dll_Functions));
 
 			if (!hDbgHelp && detail::GetSDKPath(path, "/Debugging Tools for Windows 64-Bit/dbghelp.dll") && detail::Exists(path))
-				hDbgHelp = oLinkDLL(path, detail::dbghelp_dll_Functions, (void**)&EnumerateLoadedModules64, oCOUNTOF(detail::dbghelp_dll_Functions));
+				hDbgHelp = oModule::Link(path, detail::dbghelp_dll_Functions, (void**)&EnumerateLoadedModules64, oCOUNTOF(detail::dbghelp_dll_Functions));
 		}
 	}
 
 	// else punt to wherever the system can find it
 	if (!hDbgHelp)
-		hDbgHelp = oLinkDLL("dbghelp.dll", detail::dbghelp_dll_Functions, (void**)&EnumerateLoadedModules64, oCOUNTOF(detail::dbghelp_dll_Functions));
+		hDbgHelp = oModule::Link("dbghelp.dll", detail::dbghelp_dll_Functions, (void**)&EnumerateLoadedModules64, oCOUNTOF(detail::dbghelp_dll_Functions));
 	
 	if (hDbgHelp)
 	{
 		*SymbolPath = 0;
 		*SymbolSearchPath = 0;
 
-		WCHAR symPath[oCOUNTOF(SymbolPath)];
-		*symPath = 0;
-		if (_SymbolPath)
-		{
-			strcpy_s(SymbolPath, _SymbolPath);
-			oStrConvert(symPath, SymbolPath);
-		}
-
-		#ifdef UNICODE
-			if (pSymInitialize(hProcess, symPath, FALSE))
-		#else
-			if (SymInitialize(hProcess, SymbolPath, FALSE))
-		#endif
+		if (SymInitialize(hProcess, _SymbolPath, FALSE))
 		{
 			SymSetOptions(SymGetOptions() | SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_FAIL_CRITICAL_ERRORS);
-
-			#ifdef UNICODE
-				TCHAR symSearchPath[oCOUNTOF(SymbolSearchPath)];
-				*symSearchPath = 0;
-				if (SymGetSearchPath(detail::hProcess, detail::symSearchPath, oCOUNTOF(detail::symSearchPath)))
-					WideCharToMultiByte(CP_ACP, 0, detail::symSearchPath, -1, SymbolSearchPath, oCOUNTOF(SymbolSearchPath), 0, 0);
-			#else
-				SymGetSearchPath(hProcess, SymbolSearchPath, oCOUNTOF(SymbolSearchPath));
-			#endif
+			SymGetSearchPath(hProcess, SymbolSearchPath, oCOUNTOF(SymbolSearchPath));
 
 			EnumerateLoadedModules64(hProcess, &LoadModule, const_cast<oDbgHelp*>(this));
 			success = !!GetProcess();
@@ -154,22 +121,19 @@ oDbgHelp::oDbgHelp(HANDLE _hProcess, const char* _SymbolPath, ModuleLoadedHandle
 			success = false;
 	}
 
-	oASSERT(success, "Failed to initialze oDbgHelp. You'll probably get an access violation soon when calling a DbgHelp API.");
+	// Don't use assert, because assert depends on debugger, which depends on this,
+	// so using assert would create a cyclic reference.
+	oCRTASSERT(success, "Failed to initialize oDbgHelp. You'll probably get an access violation soon when calling a DbgHelp API.");
 }
 
 oDbgHelp::~oDbgHelp()
 {
-	if (SymCleanup)
-	{
-		SymCleanup(hProcess);
-		hProcess = 0;
-	}
-
+	oDBGHELP_SymCleanup(hProcess);
 	if (hDbgHelp)
-		oUnlinkDLL(hDbgHelp);
+		oModule::Unlink(hDbgHelp);
 }
 
-DWORD oDbgHelp::GetImageType() const
+DWORD oDbgHelp::GetImageType()
 {
 	#ifdef _M_IX86
 		return IMAGE_FILE_MACHINE_I386;

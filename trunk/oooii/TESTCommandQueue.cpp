@@ -1,30 +1,8 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oTest.h>
 #include <oooii/oEvent.h>
 #include <oooii/oCommandQueue.h>
+#include <oooii/oThreading.h>
 
 void SetLocation( size_t index, size_t start, int* array )
 {
@@ -70,19 +48,17 @@ struct TESTCommandQueue : public oTest
 			memset( TestArray, -1, TestSize * sizeof(int ) );
 			TestArray[0] = 0;
 
-			queue.AddCommand( oBIND(&FillArray, TestArray, 1, 1024 ) );
-			queue.AddCommand( oBIND(&FillArray, TestArray, 1024, 2048 ) );
-			queue.AddCommand( oBIND(&FillArray, TestArray, 2048, TestSize ) );
-			queue.AddCommand( oBIND(&CheckTest, TestArray, TestSize, &bResult ) );
-			queue.AddCommand( oBIND(&FireEvent, &FinishedEvent ) );
+			queue.Enqueue( oBIND(&FillArray, TestArray, 1, 1024 ) );
+			queue.Enqueue( oBIND(&FillArray, TestArray, 1024, 2048 ) );
+			queue.Enqueue( oBIND(&FillArray, TestArray, 2048, TestSize ) );
+			queue.Enqueue( oBIND(&CheckTest, TestArray, TestSize, &bResult ) );
+			queue.Enqueue( oBIND(&FireEvent, &FinishedEvent ) );
 			FinishedEvent.Wait();
 			oTESTB( bResult, "oCommandQueue failed to preserver order!");
 		}
-
-		oRecycleScheduler();
 
 		return SUCCESS;
 	}
 };
 
-TESTCommandQueue TESTCommandQueueTest;
+oTEST_REGISTER(TESTCommandQueue);

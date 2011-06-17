@@ -30,8 +30,14 @@
 #error Do not include this file directly; include tbb_machine.h instead
 #endif
 
+#include <stdint.h>
+#include <unistd.h>
 #include <sched.h>
+
+// Definition of __TBB_Yield()
+#ifndef __TBB_Yield
 #define __TBB_Yield()  sched_yield()
+#endif
 
 /* Futex definitions */
 #include <sys/syscall.h>

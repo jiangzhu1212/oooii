@@ -1,28 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
-#include <oooii/oWindows.h>
+// $(header)
 #include <oooii/oAssert.h>
 #include <oooii/oErrno.h>
 #include <oooii/oNonCopyable.h>
@@ -32,12 +8,13 @@
 #include <oooii/oString.h>
 #include <oooii/oSwizzle.h>
 #include <half.h>
+#include <map>
 #include <unordered_map>
 
 using namespace std;
 using namespace std::tr1;
 
-void tolower(char* _String)
+void oToLower(char* _String)
 {
 	while (*_String)
 		*_String++ = static_cast<char>(tolower(*_String));
@@ -107,30 +84,6 @@ char* oPruneWhitespace(char* _StrDestination, size_t _SizeofStrDestination, cons
 	return _StrDestination;
 }
 
-size_t oStrConvert(char* _MultiByteString, size_t _SizeofMultiByteString, const wchar_t* _StrUnicodeSource)
-{
-	#if defined(_WIN32) || defined(_WIN64)
-		size_t bufferSize = (size_t)WideCharToMultiByte(CP_ACP, 0, _StrUnicodeSource, -1, _MultiByteString, static_cast<int>(_SizeofMultiByteString), "?", 0);
-		if (_SizeofMultiByteString && bufferSize)
-			bufferSize--;
-		return bufferSize;
-	#else
-		#error Unsupported platform
-	#endif
-}
-
-size_t oStrConvert(wchar_t* _UnicodeString, size_t _NumberOfCharactersInUnicodeString, const char* _StrMultibyteSource)
-{
-	#if defined(_WIN32) || defined(_WIN64)
-		size_t bufferCount = (size_t)MultiByteToWideChar(CP_ACP, 0, _StrMultibyteSource, -1, _UnicodeString, static_cast<int>(_NumberOfCharactersInUnicodeString));
-		if (_NumberOfCharactersInUnicodeString && bufferCount)
-			bufferCount--;
-		return bufferCount;
-	#else
-		#error Unsupported platform
-	#endif
-}
-
 errno_t oReplace(char* _StrResult, size_t _SizeofStrResult, const char* _StrSource, const char* _StrFind, const char* _StrReplace)
 {
 	if (!_StrResult || !_StrSource) return EINVAL;
@@ -164,6 +117,25 @@ errno_t oReplace(char* _StrResult, size_t _SizeofStrResult, const char* _StrSour
 	return strcpy_s(_StrResult, _SizeofStrResult, _StrSource);
 }
 
+const char* oStrStrReverse(const char* _Str, const char* _SubStr)
+{
+	const char* c = _Str + strlen(_Str) - 1;
+	const size_t SubStrLen = strlen(_SubStr);
+	while (c > _Str)
+	{
+		if (!memcmp(c, _SubStr, SubStrLen))
+			return c;
+
+		c--;
+	}
+	return 0;
+}
+
+char* oStrStrReverse(char* _Str, const char* _SubStr)
+{
+	return const_cast<char*>(oStrStrReverse(static_cast<const char*>(_Str), _SubStr));
+}
+
 errno_t oInsert(char* _StrSource, size_t _SizeofStrResult, char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion)
 {
 	size_t insertionLength = strlen(_Insertion);
@@ -183,14 +155,12 @@ errno_t oInsert(char* _StrSource, size_t _SizeofStrResult, char* _InsertionPoint
 	return 0;
 }
 
-void oStrAppend( char* string, size_t sizeBuffer, const char* format, ... )
+errno_t oVStrAppend(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args)
 {
-	size_t currentPos = strlen( string );
-
-	va_list args;
-	va_start( args, format );
-	vsprintf_s( string + currentPos, sizeBuffer - currentPos, format, args );
-	va_end( args );
+	size_t len = strlen(_StrDestination);
+	if( -1 == vsnprintf_s(_StrDestination + len, _TRUNCATE, _SizeofStrDestination - len, _Format, _Args) )
+		return ENOMEM;
+	return 0;
 }
 
 const char* oOrdinal(int _Number)
@@ -240,6 +210,13 @@ static inline const char* plural(unsigned int n) { return n == 1 ? "" : "s"; }
 
 errno_t oFormatTimeSize(char* _StrDestination, size_t _SizeofStrDestination, double _TimeInSeconds)
 {
+	oASSERT(_TimeInSeconds >= 0.0, "Negative time (did you do start - end instead of end - start?)");
+	if (_TimeInSeconds < 0.0)
+	{
+		oSetLastError(EINVAL, "Negative time (did you do start - end instead of end - start?)");
+		return EINVAL;
+	}
+
 	int result = 0;
 
 	const static double ONE_MINUTE = 60.0;
@@ -324,6 +301,22 @@ char* oMoveToNextID(char* _pCurrent, const char* _Stop)
 	return _pCurrent;
 }
 
+const char* oGetTypeName(const char* _TypeinfoName)
+{
+	static struct { const char* prefix; unsigned int len; } sMapping[] =
+	{
+		{ "enum ", 5 },
+		{ "struct ", 7 },
+		{ "class ", 6 },
+		{ "union ", 6 },
+	};
+
+	for (size_t i = 0; i < oCOUNTOF(sMapping); i++)
+		if (!memcmp(_TypeinfoName, sMapping[i].prefix, sMapping[i].len)) return _TypeinfoName + sMapping[i].len;
+
+	return _TypeinfoName;
+}
+
 const char* oGetNextMatchingBrace(const char* _pPointingAtOpenBrace, char _CloseBrace)
 {
 	int open = 1;
@@ -386,7 +379,7 @@ static oIFDEF_BLOCK::TYPE GetType(const cmatch& _Matches)
 // Match4: else or elseif or empty
 // Match5: if or empty
 // Match6: endif
-static regex reIfdef("#[ \\t]*(if(n?)def)[ \\t]+([a-zA-Z0-9_]+)|#[ \\t]*(else(if)?)|#[ \\t]*(endif)", regex_constants::optimize); // @oooii-tony: ok static (duplication won't affect correctness)
+static regex reIfdef("#[ \\t]*(if(n?)def)[ \\t]+([a-zA-Z0-9_]+)|#[ \\t]*(else(if)?)|#[ \\t]*(endif)", std::tr1::regex_constants::optimize); // @oooii-tony: ok static (duplication won't affect correctness)
 
 bool oGetNextMatchingIfdefBlocks(oIFDEF_BLOCK* _pBlocks, size_t _MaxNumBlocks, size_t *_pNumValidBlocks, const char* _StrSourceCodeBegin, const char* _StrSourceCodeEnd)
 {
@@ -641,7 +634,7 @@ char* oGetStdVectorType(char* _StrDestination, size_t _SizeofStrDestination, con
 	return _StrDestination;
 }
 
-static regex reInclude("#[ \\t]*include[ \\t]+(<|\")([^>\"]+)(?:>|\")", regex_constants::optimize); // @oooii-tony: ok static (duplication won't affect correctness)
+static regex reInclude("#[ \\t]*include[ \\t]+(<|\")([^>\"]+)(?:>|\")", std::tr1::regex_constants::optimize); // @oooii-tony: ok static (duplication won't affect correctness)
 
 bool oGetNextInclude(char* _StrDestination, size_t _SizeofStrDestination, const char** _ppContext)
 {
@@ -785,7 +778,7 @@ static size_t CodifyData(char* _StrDestination, size_t _SizeofStrDestination, co
 	char bufferId[_MAX_PATH];
 	CodifyBufferName(bufferId, _BufferName);
 
-	str += sprintf_s(str, std::distance(str, end), "void GetDesc%s(const char** ppBufferName, const void** ppBuffer, size_t* pSize) { *ppBufferName = \"%s\"; *ppBuffer = sBuffer; *pSize = %ull; }\n", bufferId, oGetFilebase(_BufferName), _SizeofStrDestination);
+	str += sprintf_s(str, std::distance(str, end), "void GetDesc%s(const char** ppBufferName, const void** ppBuffer, size_t* pSize) { *ppBufferName = \"%s\"; *ppBuffer = sBuffer; *pSize = %ull; }\n", bufferId, oGetFilebase(_BufferName), _SizeofBuffer);
 
 	if (str < end)
 		*str++ = 0;
@@ -847,20 +840,20 @@ bool CollectHeaders(headers_t& _Headers, const char* _StrSourceCode, const char*
 	// way?
 
 	// Make an internal copy so we can clean up the defines
-	oScopedAllocation sourceCodeCopy(strlen(_StrSourceCode) + 1);
-	strcpy_s(sourceCodeCopy.GetData<char>(), sourceCodeCopy.GetSize(), _StrSourceCode);
+	std::vector<char> sourceCodeCopy(strlen(_StrSourceCode) + 1);
+	strcpy_s(oGetData(sourceCodeCopy), sourceCodeCopy.capacity(), _StrSourceCode);
 
-	if (!oZeroIfdefs(_Macros, sourceCodeCopy.GetData<char>(), 0))
+	if (!oZeroIfdefs(_Macros, oGetData(sourceCodeCopy), 0))
 		return false;
 
-	const char* pContext = sourceCodeCopy.GetData<const char>();
+	const char* pContext = oGetData(sourceCodeCopy);
 	char headerRelativePath[_MAX_PATH];
 	std::string strHeaderRelativePath;
 	strHeaderRelativePath.reserve(_MAX_PATH);
 
 	char headerFullPath[_MAX_PATH];
 	
-	oScopedAllocation headerCode(200 * 1024);
+	std::vector<char> headerCode(200 * 1024);
 
 	while (oGetNextInclude(headerRelativePath, &pContext))
 	{
@@ -880,13 +873,13 @@ bool CollectHeaders(headers_t& _Headers, const char* _StrSourceCode, const char*
 		// to prevent finding the same include multiple times just above
 		_Headers[strHeaderRelativePath] = headerFullPath;
 
-		if (!_LoadHeaderFile(headerCode.GetData(), headerCode.GetSize(), headerFullPath))
+		if (!_LoadHeaderFile(oGetData(headerCode), headerCode.capacity(), headerFullPath))
 		{
 			oSetLastError(EIO, "Load failed: %s", headerFullPath);
 			return false;
 		}
 
-		if (!CollectHeaders(_Headers, (const char*)headerCode.GetData(), _SourceCodeDirectory, _Macros, _HeaderSearchPath, _PathExists, _LoadHeaderFile))
+		if (!CollectHeaders(_Headers, (const char*)oGetData(headerCode), _SourceCodeDirectory, _Macros, _HeaderSearchPath, _PathExists, _LoadHeaderFile))
 			return false;
 	}
 
@@ -899,10 +892,10 @@ bool oHeadersAreUpToDate(const char* _StrSourceCode, const char* _SourceFullPath
 	HashMacros(macros, _pMacros);
 
 	// Make an internal copy so we can clean up the defines
-	oScopedAllocation sourceCodeCopy(strlen(_StrSourceCode) + 1);
-	strcpy_s(sourceCodeCopy.GetData<char>(), sourceCodeCopy.GetSize(), _StrSourceCode);
+	std::vector<char> sourceCodeCopy(strlen(_StrSourceCode) + 1);
+	strcpy_s(oGetData(sourceCodeCopy), oGetDataSize(sourceCodeCopy), _StrSourceCode);
 
-	if (!oZeroIfdefs(macros, sourceCodeCopy.GetData<char>(), 0))
+	if (!oZeroIfdefs(macros, oGetData(sourceCodeCopy), 0))
 		return false;
 
 	// Get the base point, the specified source file
@@ -919,7 +912,7 @@ bool oHeadersAreUpToDate(const char* _StrSourceCode, const char* _SourceFullPath
 
 	// Hash headers so we don't recurse down deep include trees more than once
 	headers_t headers;
-	if (!CollectHeaders(headers, sourceCodeCopy.GetData<char>(), sourcePath, macros, _HeaderSearchPath, _PathExists, _LoadHeaderFile))
+	if (!CollectHeaders(headers, oGetData(sourceCodeCopy), sourcePath, macros, _HeaderSearchPath, _PathExists, _LoadHeaderFile))
 		return false;
 
 	// Go through unique headers and check dates
@@ -1209,14 +1202,13 @@ template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination
 template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const short & _Value) { return _itoa_s(_Value, _StrDestination, _SizeofStrDestination, 10); }
 template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const unsigned short& _Value) { return sprintf_s(_StrDestination, _SizeofStrDestination, "%hu", _Value); }
 template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const int& _Value) { return _itoa_s(_Value, _StrDestination, _SizeofStrDestination, 10); }
-template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const unsigned int& _Value) { return sprintf_s(_StrDestination, _SizeofStrDestination, "%u", _Value); }
+template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const unsigned int& _Value) { return -1 == sprintf_s(_StrDestination, _SizeofStrDestination, "%u", _Value) ? EINVAL : 0; }
 template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const long& _Value) { return _itoa_s(_Value, _StrDestination, _SizeofStrDestination, 10); }
 template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const unsigned long& _Value) { return sprintf_s(_StrDestination, _SizeofStrDestination, "%u", _Value); }
 template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const long long& _Value) { return _i64toa_s(_Value, _StrDestination, _SizeofStrDestination, 10); }
 template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const unsigned long long& _Value) { return _ui64toa_s(*(int*)&_Value, _StrDestination, _SizeofStrDestination, 10); }
-
-template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const float& _Value) { errno_t err = sprintf_s(_StrDestination, _SizeofStrDestination, "%f", _Value) ? 0 : EINVAL; if (!err) oTrimRight(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return err; }
-template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const double& _Value) { errno_t err = sprintf_s(_StrDestination, _SizeofStrDestination, "%lf", _Value) ? 0 : EINVAL; if (!err) oTrimRight(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return err; }
+template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const float& _Value) { errno_t err = (-1 == sprintf_s(_StrDestination, _SizeofStrDestination, "%f", _Value)) ? EINVAL : 0; if (!err) oTrimRight(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return err; }
+template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const double& _Value) { errno_t err = (-1 == sprintf_s(_StrDestination, _SizeofStrDestination, "%lf", _Value)) ? EINVAL : 0; if (!err) oTrimRight(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return err; }
 template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const half& _Value) { errno_t err = oToString<float>(_StrDestination, _SizeofStrDestination, (float)_Value) ? 0 : EINVAL; if (!err) oTrimRight(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return err; }
 
 // pass-through case

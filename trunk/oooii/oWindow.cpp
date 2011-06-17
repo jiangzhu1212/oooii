@@ -1,27 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oWindows.h>
 #include <oooii/oWindow.h>
 #include <oooii/oAssert.h>
@@ -36,6 +13,8 @@
 #include <oooii/oString.h>
 #include <oooii/oSurface.h>
 #include <oooii/oThreading.h>
+#include <oooii/oD3D10.h>
+#include <oooii/oSTL.h>
 
 template<> const char* oAsString(const oWindow::STATE& _State)
 {
@@ -53,22 +32,15 @@ template<> const char* oAsString(const oWindow::STATE& _State)
 
 void ConvertAlignment(char* _Opts, oWindow::ALIGNMENT _Alignment)
 {
-		if (_Alignment > oWindow::MIDDLE_RIGHT)
-			*_Opts++ = 'b';
-		else if (_Alignment > oWindow::TOP_RIGHT)
-			*_Opts++ = 'm';
+	if (_Alignment > oWindow::MIDDLE_RIGHT)
+		*_Opts++ = 'b';
+	else if (_Alignment > oWindow::TOP_RIGHT)
+		*_Opts++ = 'm';
 
-		if ((_Alignment % 3) == 1)
-			*_Opts++ = 'c';
-		else if ((_Alignment % 3) == 2)
-			*_Opts++ = 'r';
-}
-
-const oGUID& oGetGUID( threadsafe const oWindow_Impl* threadsafe const * )
-{
-	// {85D2B690-422F-43af-BAB1-101118C1F546}
-	static const oGUID oIIDWindow = { 0x85d2b690, 0x422f, 0x43af, { 0xba, 0xb1, 0x10, 0x11, 0x18, 0xc1, 0xf5, 0x46 } };
-	return oIIDWindow;
+	if ((_Alignment % 3) == 1)
+		*_Opts++ = 'c';
+	else if ((_Alignment % 3) == 2)
+		*_Opts++ = 'r';
 }
 
 struct oWindow_Impl : public oWindow
@@ -80,7 +52,7 @@ struct oWindow_Impl : public oWindow
 	};
 
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oWindow_Impl>());
+	bool QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe override;
 
 	void GetDesc(DESC* _pDesc) const threadsafe override;
 	void SetDesc(const DESC* _pDesc) threadsafe override;
@@ -89,26 +61,28 @@ struct oWindow_Impl : public oWindow
 	void Close() override;
 	bool IsOpen() const threadsafe override;
 	bool Begin() override;
-	void End() override;
+	void End(bool _ForceRefresh) override;
 	const char* GetTitle() const override;
 	void SetTitle(const char* _Title) override;
 	bool HasFocus() const override;
 	void SetFocus() override;
-	void* GetNativeHandle() override;
+	void* GetNativeHandle() threadsafe override;
 	const void* GetProperty(const char* _Name) const override;
 	bool SetProperty(const char* _Name, void* _Value) override;
-	bool CreateResizer(ResizeHandlerFn _ResizeHandler, void* _pUserData, threadsafe Resizer** _ppResizer) threadsafe override;
+	bool CreateResizer(RectHandlerFn _ResizeHandler, threadsafe Resizer** _ppResizer) threadsafe override;
 	bool CreateRoundedBox(const RoundedBox::DESC* _pDesc, threadsafe RoundedBox** _ppRoundedBox) threadsafe override;
 	bool CreateLine(const Line::DESC* _pDesc, threadsafe Line** _ppLine) threadsafe override;
 	bool CreateFont(const Font::DESC* _pDesc, threadsafe Font** _ppFont) threadsafe override;
 	bool CreateText(const Text::DESC* _pDesc, threadsafe Font* _pFont, threadsafe Text** _ppText) threadsafe override;
 	bool CreatePicture(const Picture::DESC* _pDesc, threadsafe Picture** _ppPicture) threadsafe override;
+	bool CreateVideo(const Video::DESC*_pDesc, std::vector<threadsafe oVideoContainer*> &_Containers, threadsafe Video** _ppVideo) threadsafe override;
 	bool CreateSnapshot(oImage** _ppImage, bool _IncludeBorder = false) override;
-	oWindow_Impl(const DESC* _pDesc, const char* _Title, unsigned int _FourCCDrawAPI);
+	oWindow_Impl(const DESC* _pDesc, void* _pAssociatedNativeHandle, const char* _Title, unsigned int _FourCCDrawAPI, bool* _pSuccess);
 	~oWindow_Impl();
 
-	oLockedVector<Child*> Children;
+	oRecursiveLockedVector<Child*> Children;  // Children have to be recursive because they can callback into the vector
 	oLockedVector<Picture*>	Pictures;
+	oLockedVector<Video*> Videos;
 	oLockedVector<Line*> Lines;
 	oLockedVector<RoundedBox*> RoundedBoxes;
 	oLockedVector<Text*> Texts;
@@ -128,11 +102,22 @@ struct oWindow_Impl : public oWindow
 	mutable oMutex DescLock;
 	oRefCount RefCount;
 	DRAW_METHOD DrawMethod;
+	unsigned int MSSleepWhenNoFocus;
+
+	oRef<ID3D10Device1> D3DDevice;
+	oRef<IDXGISwapChain> D3DSwapChain;
+	static const DXGI_FORMAT D3DSwapChainFMT = DXGI_FORMAT_B8G8R8A8_UNORM;
+
 	char Title[_MAX_PATH];
 
-#if oDXVER >= oDXVER_10
-	oRef<ID2D1HwndRenderTarget> RenderTarget;
-#endif
+	#if oDXVER >= oDXVER_10
+		// The rendertarget and factory need to be cached on the window to ensure that 
+		// all resources are created from the same objects.  The rendertarget can change
+		// if a resize event occurs
+		oRef<ID2D1Factory> Factory;
+		oRef<ID2D1RenderTarget> RenderTarget;
+		HRESULT CreateRendertarget();
+	#endif
 
 	static bool OpenChild(Child*& pChild) { return pChild->Open(); }
 	static bool CloseChild(Child*& pChild) { pChild->Close(); return true; }
@@ -165,14 +150,14 @@ struct oWindow_Impl : public oWindow
 
 void oWindow::Child::Register()
 {
-	threadsafe oRef<oWindow> w;
+	oRef<threadsafe oWindow> w;
 	GetWindow(&w);
 	static_cast<threadsafe oWindow_Impl*>(w.c_ptr())->AddChild(this);
 }
 
 void oWindow::Child::Unregister()
 {
-	threadsafe oRef<oWindow> w;
+	oRef<threadsafe oWindow> w;
 	GetWindow(&w);
 	static_cast<threadsafe oWindow_Impl*>(w.c_ptr())->RemoveChild(this);
 }
@@ -185,17 +170,17 @@ struct WINPAINT_DESC
 	unsigned int Scale;
 };
 
-static int GetShowCmd(oWindow::STATE _State)
+static int GetShowCmd(oWindow::STATE _State, bool _TakeFocus)
 {
 	switch (_State)
 	{
 		case oWindow::HIDDEN: return SW_HIDE;
-		case oWindow::MINIMIZED: return SW_SHOWMINIMIZED;
+		case oWindow::MINIMIZED: return _TakeFocus ? SW_SHOWMINIMIZED : SW_SHOWMINNOACTIVE;
 		case oWindow::MAXIMIZED: return SW_SHOWMAXIMIZED;
 		default: break;
 	}
 
-	return SW_SHOWNORMAL;
+	return _TakeFocus ? SW_SHOWNORMAL : SW_SHOWNOACTIVATE;
 }
 
 static DWORD GetStyle(oWindow::STYLE _Style)
@@ -254,12 +239,9 @@ static void GetDesc(HWND _hWnd, oWindow::DESC* _pDesc)
 	_pDesc->HasFocus = oHasFocus(_hWnd);
 	_pDesc->AlwaysOnTop = !!(_hWnd == GetTopWindow(0));
 
-	//@oooii-Andrew
 	oWindow_Impl* pThis = (oWindow_Impl*)oGetWindowContext(_hWnd, 0, 0, 0);
 	if (pThis)
-	{
 		_pDesc->EnableCloseButton = pThis->EnableCloseButton;
-	}
 }
 
 static bool SetDesc(HWND _hWnd, const oWindow::DESC* _pDesc)
@@ -302,11 +284,12 @@ static bool SetDesc(HWND _hWnd, const oWindow::DESC* _pDesc)
 
 	// Set up dimension settings
 	// DO I NEED THIS WITH SetWindowLongPtr? SWP_FRAMECHANGED
-	UINT SWPFlags = SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER;
+	UINT SWPFlags = SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE;
 	RECT rCurrent;
 	GetWindowRect(_hWnd, &rCurrent);
 	bool hasMove = false;
 	bool hasResize = false;
+	bool shouldTakeFocus = _pDesc->HasFocus || _pDesc->AlwaysOnTop;
 
 	// maximized takes care of this in ShowWindow below, so don't step on that again in SetWindowPos
 	if (state != oWindow::MAXIMIZED)
@@ -326,8 +309,8 @@ static bool SetDesc(HWND _hWnd, const oWindow::DESC* _pDesc)
 		}
 	}
 
-	if (_pDesc->HasFocus || _pDesc->AlwaysOnTop)
-		SWPFlags &=~ SWP_NOZORDER;
+	if (shouldTakeFocus)
+		SWPFlags &=~ SWP_NOZORDER|SWP_NOACTIVATE;
 
 	//@oooii-Andrew
 	oWindow_Impl* pThis = (oWindow_Impl*)oGetWindowContext(_hWnd, 0, 0, 0);
@@ -339,7 +322,10 @@ static bool SetDesc(HWND _hWnd, const oWindow::DESC* _pDesc)
 	// Here's the next piece, test on cached state, not _pDesc->State
 	// because we may've overridden it with a force hidden.
 	if (currentDesc.State != state || styleChanged)
-		ShowWindow(_hWnd, GetShowCmd(state));
+	{
+		SetWindowPos(_hWnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+		ShowWindow(_hWnd, GetShowCmd(state, shouldTakeFocus));
+	}
 
 	if (hasMove || hasResize || _pDesc->HasFocus)
 		SetWindowPos(_hWnd, _pDesc->AlwaysOnTop ? HWND_TOPMOST : HWND_NOTOPMOST, rDesired.left, rDesired.top, rDesired.right-rDesired.left, rDesired.bottom-rDesired.top, SWPFlags);
@@ -347,18 +333,16 @@ static bool SetDesc(HWND _hWnd, const oWindow::DESC* _pDesc)
 	if (currentDesc.Enabled != _pDesc->Enabled)
 		EnableWindow(_hWnd, _pDesc->Enabled);
 
-	if (_pDesc->HasFocus)
+	if (_pDesc->HasFocus && restate != oWindow::HIDDEN)
 		oSetFocus(_hWnd);
 
 	// And here's the final piece of the hack from above where we force
 	// hide and then show on style change.
 	if (restate != state || styleChanged)
-		ShowWindow(_hWnd, GetShowCmd(restate));
+		ShowWindow(_hWnd, GetShowCmd(restate, shouldTakeFocus));
 
 	return true;
 }
-
-
 
 struct oWindowResizer_Impl : public oWindow::Resizer
 {
@@ -367,10 +351,9 @@ struct oWindowResizer_Impl : public oWindow::Resizer
 	//oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID((volatile const oWindow_Impl *volatile const *) (NULL) ) );
 	oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
-	oWindowResizer_Impl(threadsafe oWindow* _pParentWindow, oWindow::ResizeHandlerFn _ResizeHandlerFn, void* _pUserData)
+	oWindowResizer_Impl(threadsafe oWindow* _pParentWindow, oWindow::RectHandlerFn _ResizeHandlerFn)
 		: Window(_pParentWindow)
-		, ResizeHandler(_ResizeHandlerFn)
-		, pUserData(_pUserData)
+		, RectHandler(_ResizeHandlerFn)
 	{
 		Register();
 	}
@@ -382,11 +365,12 @@ struct oWindowResizer_Impl : public oWindow::Resizer
 
 	bool Open() override
 	{
-		RECT r;
-		GetClientRect((HWND)Window->GetNativeHandle(), &r);
 		oWindow::DESC desc;
 		Window->GetDesc(&desc);
-		ResizeHandler(oWindow::RESIZE_CHANGE, desc.State, r.right - r.left, r.bottom - r.top, pUserData);
+		oRECT rect;
+		rect.SetMin( int2( desc.ClientX, desc.ClientY ) );
+		rect.SetMax( rect.GetMin() + int2( desc.ClientWidth, desc.ClientHeight ) );
+		RectHandler(oWindow::RECT_END, desc.State, rect);
 		return true;
 	}
 
@@ -395,24 +379,28 @@ struct oWindowResizer_Impl : public oWindow::Resizer
 	{
 		CWPSTRUCT* cw = static_cast<CWPSTRUCT*>(_pPlatformData);
 
-		oWindow::DESC desc;
-		Window->GetDesc(&desc);
-
-		RECT r;
-		GetClientRect((HWND)Window->GetNativeHandle(), &r);
-
-		oWindow::RESIZE_EVENT e = oWindow::RESIZE_CHANGE;
+		oWindow::RECT_EVENT e = oWindow::RECT_BEGIN;
 		bool isSizeMsg = true;
 		switch (cw->message)
 		{
-			case WM_ENTERSIZEMOVE: e = oWindow::RESIZE_BEGIN; break;
-			case WM_SIZE: e = oWindow::RESIZE_CHANGE; break;
-			case WM_EXITSIZEMOVE: e = oWindow::RESIZE_END; break;
+			case WM_ENTERSIZEMOVE: e = oWindow::RECT_BEGIN; break;
+			case WM_SIZE: e = oWindow::RESIZE_OCCURING; break;
+			case WM_MOVING: e = oWindow::MOVE_OCCURING; break;
+			case WM_EXITSIZEMOVE: e = oWindow::RECT_END; break;
 			default: isSizeMsg = false;
 		}
 
 		if (isSizeMsg)
-			ResizeHandler(e, desc.State, r.right - r.left, r.bottom - r.top, pUserData);
+		{
+			oWindow::DESC desc;
+			Window->GetDesc(&desc);
+
+			oRECT rect;
+			rect.SetMin( int2( desc.ClientX, desc.ClientY ) );
+			rect.SetMax( rect.GetMin() + int2( desc.ClientWidth, desc.ClientHeight ) );
+
+			RectHandler(e, desc.State, rect );
+		}
 
 		return true;
 	}
@@ -421,13 +409,10 @@ struct oWindowResizer_Impl : public oWindow::Resizer
 	bool Begin() override { return true; }
 	void End() override {}
 
-	oRef<oWindow> Window;
-	oWindow::ResizeHandlerFn ResizeHandler;
-	void* pUserData;
+	oRef<threadsafe oWindow> Window;
+	oWindow::RectHandlerFn RectHandler;
 	oRefCount RefCount;
 };
-
-
 
 struct RoundedBoxGDI : public oWindow::RoundedBox
 {
@@ -435,7 +420,6 @@ struct RoundedBoxGDI : public oWindow::RoundedBox
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<RoundedBoxGDI>());
 	oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
-	inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
 	inline int Scale() threadsafe { return static_cast<threadsafe oWindow_Impl*>(Window.c_ptr())->GDIAntialiasingMultiplier; }
 
 	RoundedBoxGDI(threadsafe oWindow* _pWindow, const DESC* _pDesc)
@@ -471,8 +455,9 @@ struct RoundedBoxGDI : public oWindow::RoundedBox
 		
 		// Minimize the dirty rect
 		{
+			HWND hWnd = (HWND)Window->GetNativeHandle();
 			RECT rClient, rOld, rNew;
-			GetClientRect(Hwnd(), &rClient);
+			GetClientRect(hWnd, &rClient);
 
 			char oldOpts[5] = { 'f',0,0,0,0 };
 			ConvertAlignment(oldOpts+1, Desc.Anchor);
@@ -487,7 +472,7 @@ struct RoundedBoxGDI : public oWindow::RoundedBox
 			if (memcmp(&rOld, &rNew, sizeof(RECT)))
 			{
 				rNew = oBuildRECT(__min(rOld.left, rNew.left), __min(rOld.top, rNew.top), __max(rOld.right, rNew.right), __max(rOld.bottom, rNew.bottom));
-				InvalidateRect(Hwnd(), 0/*&rNew*/, TRUE); // @oooii-tony: This only seems to update if the whole client is invalidated. Why?
+				InvalidateRect(hWnd, 0/*&rNew*/, TRUE); // @oooii-tony: This only seems to update if the whole client is invalidated. Why?
 			}
 		}
 		
@@ -506,7 +491,8 @@ struct RoundedBoxGDI : public oWindow::RoundedBox
 		oGDIScopedSelect SelectBrush(p->hDC, hBrush);
 
 		RECT rClient, rAdjusted;
-		GetClientRect(Hwnd(), &rClient);
+		HWND hWnd = (HWND)Window->GetNativeHandle();
+		GetClientRect(hWnd, &rClient);
 
 		char opts[5] = { 'f',0,0,0,0 };
 		ConvertAlignment(opts+1, Desc.Anchor);
@@ -518,7 +504,7 @@ struct RoundedBoxGDI : public oWindow::RoundedBox
 		RoundRect(p->hDC, rAdjusted.left, rAdjusted.top, rAdjusted.right, rAdjusted.bottom, radius, radius);
 	}
 
-	threadsafe oRef<oWindow> Window;
+	oRef<threadsafe oWindow> Window;
 	HPEN hPen;
 	HBRUSH hBrush;
 	DESC Desc;
@@ -546,14 +532,12 @@ struct RoundedBoxGDI : public oWindow::RoundedBox
 	}
 };
 
-
 struct LineGDI : public oWindow::Line
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<LineGDI>());
 	oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
-	inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
 	inline int Scale() threadsafe { return static_cast<threadsafe oWindow_Impl*>(Window.c_ptr())->GDIAntialiasingMultiplier; }
 
 	LineGDI(threadsafe oWindow* _pWindow, const DESC* _pDesc)
@@ -599,7 +583,7 @@ struct LineGDI : public oWindow::Line
 		Polyline(p->hDC, pt, 2);
 	}
 
-	threadsafe oRef<oWindow> Window;
+	oRef<threadsafe oWindow> Window;
 	HPEN hPen;
 	DESC Desc;
 	mutable oMutex Mutex;
@@ -617,22 +601,19 @@ struct LineGDI : public oWindow::Line
 	}
 };
 
-
-
 struct FontGDI : public oWindow::Font
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<FontGDI>());
 	oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
-	inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
-
 	FontGDI(threadsafe oWindow* _pWindow, const DESC* _pDesc)
 		: Window(_pWindow)
 		, Desc(*_pDesc)
 		, hFont(0)
 	{
-		HDC hdc = GetDC(Hwnd());
+		HWND hWnd = (HWND)Window->GetNativeHandle();
+		HDC hdc = GetDC(hWnd);
 		hFont = oGDICreateFont(
 			_pDesc->FontName
 			, static_cast<int>(_pDesc->PointSize)
@@ -650,7 +631,7 @@ struct FontGDI : public oWindow::Font
 			GetObject(hFont, sizeof(LOGFONT), &lf);
 			oTRACE("GDIFont Created: %s %s%s %s %s", lf.lfFaceName, tm.tmWeight == FW_NORMAL ? "" : "bold", tm.tmItalic ? "italic" : "", oGDIGetCharSet(tm.tmCharSet), oGDIGetFontFamily(tm.tmPitchAndFamily));
 		#endif
-		ReleaseDC(Hwnd(), hdc);
+		ReleaseDC(hWnd, hdc);
 		Register();
 	}
 
@@ -668,21 +649,17 @@ struct FontGDI : public oWindow::Font
 	bool HandleMessage(void* _pPlatformData) override { return true; }
 	void GetDesc(DESC* _pDesc) const threadsafe { *_pDesc = thread_cast<DESC&>(Desc); }
 
-	threadsafe oRef<oWindow> Window;
+	oRef<threadsafe oWindow> Window;
 	HFONT hFont;
 	DESC Desc;
 	oRefCount RefCount;
 };
-
-
 
 struct TextGDI : public oWindow::Text
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<TextGDI>());
 	oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
-
-	inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
 
 	TextGDI(threadsafe oWindow* _pWindow, threadsafe oWindow::Font* _pFont, const DESC* _pDesc)
 		: Window(_pWindow)
@@ -713,14 +690,16 @@ struct TextGDI : public oWindow::Text
 		oMutex::ScopedLock lock(Mutex);
 		TextGDI* pThis = thread_cast<TextGDI*>(this);
 		pThis->Desc = *_pDesc;
-		InvalidateRect(Hwnd(), 0, TRUE);
+		HWND hWnd = (HWND)Window->GetNativeHandle();
+		InvalidateRect(hWnd, 0, TRUE);
 	}
 
 	void SetFont(threadsafe oWindow::Font* _pFont) threadsafe
 	{
 		oMutex::ScopedLock lock(Mutex);
 		Font = _pFont;
-		InvalidateRect(Hwnd(), 0, TRUE);
+		HWND hWnd = (HWND)Window->GetNativeHandle();
+		InvalidateRect(hWnd, 0, TRUE);
 	}
 
 	void HandlePaint(void* _pPlatformData) override
@@ -728,13 +707,15 @@ struct TextGDI : public oWindow::Text
 		WINPAINT_DESC* p = static_cast<WINPAINT_DESC*>(_pPlatformData);
 		oMutex::ScopedLock lock(Mutex);
 
+		HWND hWnd = (HWND)Window->GetNativeHandle();
+
 		RECT rClient, rDesc = oBuildRECTWH(Desc.X, Desc.Y, Desc.Width, Desc.Height), rAdjusted;
-		GetClientRect(Hwnd(), &rClient);
+		GetClientRect(hWnd, &rClient);
 		char opts[5] = { 'f',0,0,0,0 };
 		ConvertAlignment(opts+1, Desc.Anchor);
 		oAdjustRect(&rClient, &rDesc, &rAdjusted, 1, opts);
 		
-		oGDIScopedSelect font(p->hDC, static_cast<FontGDI*>(Font.c_ptr())->hFont);
+		oGDIScopedSelect font(p->hDC, static_cast<threadsafe FontGDI*>(Font.c_ptr())->hFont);
 		
 		opts[0] = 's';
 		ConvertAlignment(opts+1, Desc.Alignment);
@@ -755,8 +736,8 @@ struct TextGDI : public oWindow::Text
 		oVB(oGDIDrawText(p->hDC, &rAdjusted, Desc.Color, 0, opts, Desc.String));
 	}
 
-	threadsafe oRef<oWindow> Window;
-	oRef<oWindow::Font> Font;
+	oRef<threadsafe oWindow> Window;
+	oRef<threadsafe oWindow::Font> Font;
 	DESC Desc;
 	mutable oMutex Mutex;
 	oRefCount RefCount;
@@ -764,15 +745,12 @@ struct TextGDI : public oWindow::Text
 	UINT StringLength;
 };
 
-
-
 struct PictureGDI : public oWindow::Picture
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<PictureGDI>());
 	oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
-	inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
 	inline int Scale() threadsafe { return static_cast<threadsafe oWindow_Impl*>(Window.c_ptr())->GDIAntialiasingMultiplier; }
 
 	PictureGDI(threadsafe oWindow* _pWindow, const Picture::DESC* _pDesc)
@@ -781,7 +759,8 @@ struct PictureGDI : public oWindow::Picture
 		, hBitmap(0)
 		, hFlipBitmap(0)
 	{
-		HDC hdc = GetDC(Hwnd());
+		HWND hWnd = (HWND)Window->GetNativeHandle();
+		HDC hdc = GetDC(hWnd);
 		hBitmap = CreateCompatibleBitmap(hdc, _pDesc->SurfaceDesc.Width, _pDesc->SurfaceDesc.Height);
 
 		// @oooii-tony: just in case the user wants to flip horizontally and 
@@ -790,7 +769,7 @@ struct PictureGDI : public oWindow::Picture
 		// loop.
 		hFlipBitmap = CreateCompatibleBitmap(hdc, _pDesc->SurfaceDesc.Width, _pDesc->SurfaceDesc.Height);
 
-		ReleaseDC(Hwnd(), hdc);
+		ReleaseDC(hWnd, hdc);
 		oASSERT(hBitmap, "");
 		Register();
 		static_cast<threadsafe oWindow_Impl*>(Window.c_ptr())->Pictures.push_back(this);
@@ -828,12 +807,13 @@ struct PictureGDI : public oWindow::Picture
 	{
 		if (hBitmap)
 		{
+			HWND hWnd = (HWND)Window->GetNativeHandle();
 			oMutex::ScopedLock lock(BitmapLock);
 			// Always allocate enough memory for 8-bit formats and avoid a heap 
 			// alloc below
-			BITMAPINFO* pBMI = (BITMAPINFO*)_alloca(oSurface::GetBMISize(Desc.SurfaceDesc.Format));
-			oSurface::GetBMI((void**)&pBMI, thread_cast<oSurface::DESC*>(&Desc.SurfaceDesc), 0, !_FlipVertically); // @oooii-tony: Windows is already flipping it, so if you want to flip it again, undo that
-			HDC hdc = GetDC(Hwnd());
+			BITMAPINFO* pBMI = (BITMAPINFO*)_alloca(oGetBMISize(Desc.SurfaceDesc.Format));
+			oAllocateBMI(&pBMI, thread_cast<oSurface::DESC*>(&Desc.SurfaceDesc), 0, !_FlipVertically); // Windows is already flipping it, so if you want to flip it again, undo that
+			HDC hdc = GetDC(hWnd);
 			HDC htemp = CreateCompatibleDC(hdc);
 
 			int w = _FlipHorizontally ? -(int)Desc.SurfaceDesc.Width : Desc.SurfaceDesc.Width;
@@ -849,9 +829,9 @@ struct PictureGDI : public oWindow::Picture
 			}
 			
 			DeleteDC(htemp);
-			ReleaseDC(Hwnd(), hdc);
+			ReleaseDC(hWnd, hdc);
 
-			InvalidateRect(Hwnd(), 0, FALSE);
+			InvalidateRect(hWnd, 0, FALSE);
 		}
 	}
 
@@ -859,14 +839,15 @@ struct PictureGDI : public oWindow::Picture
 	{
 		WINPAINT_DESC* p = static_cast<WINPAINT_DESC*>(_pPlatformData);
 
+		HWND hWnd = (HWND)Window->GetNativeHandle();
 		RECT rClient, rDesc = oBuildRECTWH(Desc.X, Desc.Y, Desc.Width, Desc.Height), rAdjusted;
-		GetClientRect(Hwnd(), &rClient);
+		GetClientRect(hWnd, &rClient);
 		oAdjustRect(&rClient, &rDesc, &rAdjusted, p->Scale, 0);
 
 		oGDIStretchBitmap(p->hDC, rAdjusted.left, rAdjusted.top, rAdjusted.right-rAdjusted.left, rAdjusted.bottom-rAdjusted.top, hBitmap, SRCCOPY);
 	}
 
-	threadsafe oRef<oWindow> Window;
+	oRef<threadsafe oWindow> Window;
 	HBITMAP hBitmap;
 	HBITMAP hFlipBitmap;
 	oMutex BitmapLock;
@@ -967,9 +948,7 @@ struct PictureGDI : public oWindow::Picture
 		oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<RoundedBoxD2D>());
 		oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
-		inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
-
-		RoundedBoxD2D(threadsafe oWindow* _pWindow, const DESC* _pDesc)
+		RoundedBoxD2D(threadsafe oWindow_Impl* _pWindow, const DESC* _pDesc)
 			: Window(_pWindow)
 			, Desc(*_pDesc)
 		{
@@ -985,11 +964,10 @@ struct PictureGDI : public oWindow::Picture
 
 		bool Open() override
 		{
-			RenderTarget = static_cast<threadsafe oWindow_Impl*>(Window.c_ptr())->RenderTarget;
-			return CreateBrush(Desc.Color, RenderTarget, &Brush) && CreateBrush(Desc.BorderColor, RenderTarget, &BorderBrush);
+			return CreateBrush(Desc.Color, Window->RenderTarget, &Brush) && CreateBrush(Desc.BorderColor, Window->RenderTarget, &BorderBrush);
 		}
 
-		void Close() override { Brush = 0; BorderBrush = 0; RenderTarget = 0; }
+		void Close() override { Brush = 0; BorderBrush = 0; }
 		bool Begin() override { return true; }
 		void End() override {}
 		bool HandleMessage(void* _pPlatformData) override { return true; }
@@ -997,13 +975,13 @@ struct PictureGDI : public oWindow::Picture
 		void SetDesc(DESC* _pDesc) threadsafe override
 		{
 			oMutex::ScopedLock lock(Mutex);
+			HWND hWnd = (HWND)Window->GetNativeHandle();
 
-			//@oooii-Andrew: using thread_cast because I'm locking above.
 			if (Desc.BorderColor != _pDesc->BorderColor)
 			{
 				oRef<ID2D1SolidColorBrush> newBrush;
 				CreateBrush(_pDesc->BorderColor, 
-					thread_cast<ID2D1RenderTarget*>(RenderTarget.c_ptr()), 
+					Window->RenderTarget, 
 					&newBrush);
 				BorderBrush = newBrush;
 			}
@@ -1011,27 +989,28 @@ struct PictureGDI : public oWindow::Picture
 			{
 				oRef<ID2D1SolidColorBrush> newBrush;
 				CreateBrush(_pDesc->Color, 
-					thread_cast<ID2D1RenderTarget*>(RenderTarget.c_ptr()),
+					Window->RenderTarget,
 					&newBrush);
 				Brush = newBrush;
 			}
-			thread_cast<DESC&>(Desc) = *_pDesc;
-			InvalidateRect(Hwnd(), 0, TRUE);
+			thread_cast<DESC&>(Desc) = *_pDesc; // safe because of the lock above
+			InvalidateRect(hWnd, 0, TRUE);
 		}
 
 		void HandlePaint(void* _pPlatformData) override
 		{
 			oMutex::ScopedLock lock(Mutex);
+			HWND hWnd = (HWND)Window->GetNativeHandle();
 
 			D2D1_RECT_F rAdjusted;
-			GetAdjustedRect(Hwnd(), Desc.X, Desc.Y, Desc.Width, Desc.Height, Desc.Anchor, &rAdjusted);
-			oASSERT(RenderTarget, "No render target");
+			GetAdjustedRect(hWnd, Desc.X, Desc.Y, Desc.Width, Desc.Height, Desc.Anchor, &rAdjusted);
+			oASSERT(Window->RenderTarget, "No render target");
 			if (oEqual(Desc.Roundness, 0.0f))
 			{
 				if (!oIsTransparentColor(Desc.Color))
-					RenderTarget->FillRectangle(&rAdjusted, Brush);
+					Window->RenderTarget->FillRectangle(&rAdjusted, Brush);
 				if (!oIsTransparentColor(Desc.BorderColor))
-					RenderTarget->DrawRectangle(&rAdjusted, BorderBrush);
+					Window->RenderTarget->DrawRectangle(&rAdjusted, BorderBrush);
 			}
 
 			else
@@ -1041,14 +1020,13 @@ struct PictureGDI : public oWindow::Picture
 				r.radiusX = Desc.Roundness;
 				r.radiusY = Desc.Roundness;
 				if (!oIsTransparentColor(Desc.Color))
-					RenderTarget->FillRoundedRectangle(&r, Brush);
+					Window->RenderTarget->FillRoundedRectangle(&r, Brush);
 				if (!oIsTransparentColor(Desc.BorderColor))
-					RenderTarget->DrawRoundedRectangle(&r, BorderBrush);
+					Window->RenderTarget->DrawRoundedRectangle(&r, BorderBrush);
 			}
 		}
 
-		threadsafe oRef<oWindow> Window;
-		oRef<ID2D1RenderTarget> RenderTarget;
+		oRef<threadsafe oWindow_Impl> Window;
 		oRef<ID2D1SolidColorBrush> Brush;
 		oRef<ID2D1SolidColorBrush> BorderBrush;
 		DESC Desc;
@@ -1062,9 +1040,7 @@ struct PictureGDI : public oWindow::Picture
 		oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<LineD2D>());
 		oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
-		inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
-
-		LineD2D(threadsafe oWindow* _pWindow, const DESC* _pDesc)
+		LineD2D(threadsafe oWindow_Impl* _pWindow, const DESC* _pDesc)
 			: Window(_pWindow)
 			, Desc(*_pDesc)
 		{
@@ -1080,11 +1056,10 @@ struct PictureGDI : public oWindow::Picture
 
 		bool Open() override
 		{
-			RenderTarget = static_cast<threadsafe oWindow_Impl*>(Window.c_ptr())->RenderTarget;
-			return CreateBrush(Desc.Color, RenderTarget, &Brush) && CreateBrush(Desc.Color, RenderTarget, &Brush);
+			return CreateBrush(Desc.Color, Window->RenderTarget, &Brush) && CreateBrush(Desc.Color, Window->RenderTarget, &Brush);
 		}
 
-		void Close() override { Brush = 0; RenderTarget = 0; }
+		void Close() override { Brush = 0;}
 		bool Begin() override { return true; }
 		void End() override {}
 		bool HandleMessage(void* _pPlatformData) override { return true; }
@@ -1092,32 +1067,33 @@ struct PictureGDI : public oWindow::Picture
 		void SetDesc(DESC* _pDesc) threadsafe override
 		{
 			oMutex::ScopedLock lock(Mutex);
+			HWND hWnd = (HWND)Window->GetNativeHandle();
+
 			//@oooii-Andrew: using thread_cast because I'm locking above
 			if (Desc.Color != _pDesc->Color)
 			{
 				oRef<ID2D1SolidColorBrush> newBrush;
-				CreateBrush(_pDesc->Color, thread_cast<ID2D1RenderTarget*>(RenderTarget.c_ptr()), &newBrush);
+				CreateBrush(_pDesc->Color, Window->RenderTarget, &newBrush);
 				Brush = newBrush;
 			}
 			thread_cast<DESC&>(Desc) = *_pDesc;
-			InvalidateRect(Hwnd(), 0, TRUE);
+			InvalidateRect(hWnd, 0, TRUE);
 		}
 
 		void HandlePaint(void* _pPlatformData) override
 		{
 			oMutex::ScopedLock lock(Mutex);
-			oASSERT(RenderTarget, "No render target");
+			oASSERT(Window->RenderTarget, "No render target");
 			if (!oIsTransparentColor(Desc.Color))
 			{
 				D2D1_POINT_2F p0, p1;
 				p0.x = static_cast<float>(Desc.X1); p0.y = static_cast<float>(Desc.Y1);
 				p1.x = static_cast<float>(Desc.X2); p1.y = static_cast<float>(Desc.Y2);
-				RenderTarget->DrawLine(p0, p1, Brush, static_cast<float>(Desc.Thickness));
+				Window->RenderTarget->DrawLine(p0, p1, Brush, static_cast<float>(Desc.Thickness));
 			}
 		}
 
-		threadsafe oRef<oWindow> Window;
-		oRef<ID2D1RenderTarget> RenderTarget;
+		oRef<threadsafe oWindow_Impl> Window;
 		oRef<ID2D1SolidColorBrush> Brush;
 		DESC Desc;
 		mutable oMutex Mutex;
@@ -1175,7 +1151,7 @@ struct PictureGDI : public oWindow::Picture
 		void GetDesc(DESC* _pDesc) const threadsafe { *_pDesc = thread_cast<DESC&>(Desc); }
 		IDWriteTextFormat* GetFormat() threadsafe { return thread_cast<IDWriteTextFormat*>(Format.c_ptr()); }
 
-		threadsafe oRef<oWindow> Window;
+		oRef<threadsafe oWindow> Window;
 		oRef<IDWriteTextFormat> Format;
 		DESC Desc;
 		oRefCount RefCount;
@@ -1187,9 +1163,7 @@ struct PictureGDI : public oWindow::Picture
 		oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<TextD2D>());
 		oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
-		inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
-
-		TextD2D(threadsafe oWindow* _pWindow, threadsafe oWindow::Font* _pFont, const DESC* _pDesc)
+		TextD2D(threadsafe oWindow_Impl* _pWindow, threadsafe oWindow::Font* _pFont, const DESC* _pDesc)
 			: Window(_pWindow)
 			, Font(_pFont)
 			, Desc(*_pDesc)
@@ -1209,11 +1183,10 @@ struct PictureGDI : public oWindow::Picture
 
 		bool Open() override
 		{
-			RenderTarget = static_cast<threadsafe oWindow_Impl*>(Window.c_ptr())->RenderTarget;
-			return CreateBrush(Desc.Color, RenderTarget, &Brush) && CreateBrush(Desc.ShadowColor, RenderTarget, &ShadowBrush);
+			return CreateBrush(Desc.Color, Window->RenderTarget, &Brush) && CreateBrush(Desc.ShadowColor, Window->RenderTarget, &ShadowBrush);
 		}
 
-		void Close() override { Brush = 0; ShadowBrush = 0; RenderTarget = 0; }
+		void Close() override { Brush = 0; ShadowBrush = 0; }
 		bool Begin() override { return true; }
 		void End() override {}
 		bool HandleMessage(void* _pPlatformData) override { return true; }
@@ -1222,33 +1195,37 @@ struct PictureGDI : public oWindow::Picture
 		void SetDesc(const DESC* _pDesc) threadsafe override
 		{
 			oMutex::ScopedLock lock(Mutex);
+			HWND hWnd = (HWND)Window->GetNativeHandle();
+
 			TextD2D* pThis = thread_cast<TextD2D*>(this);
 			pThis->Desc = *_pDesc;
 			if (Desc.Color != _pDesc->Color)
-				CreateBrush(_pDesc->Color, pThis->RenderTarget, &pThis->Brush);
+				CreateBrush(_pDesc->Color, Window->RenderTarget, &pThis->Brush);
 			if (_pDesc->ShadowColor != Desc.ShadowColor)
-				CreateBrush(_pDesc->ShadowColor, pThis->RenderTarget, &pThis->ShadowBrush);
+				CreateBrush(_pDesc->ShadowColor, Window->RenderTarget, &pThis->ShadowBrush);
 			StringLength = static_cast<UINT>(oStrConvert(pThis->String, _pDesc->String));
-			InvalidateRect(Hwnd(), 0, TRUE);
+			InvalidateRect(hWnd, 0, TRUE);
 		}
 
 		void SetFont(threadsafe oWindow::Font* _pFont) threadsafe
 		{
 			oMutex::ScopedLock lock(Mutex);
+			HWND hWnd = (HWND)Window->GetNativeHandle();
 			Font = _pFont;
-			InvalidateRect(Hwnd(), 0, TRUE);
+			InvalidateRect(hWnd, 0, TRUE);
 		}
 
 		void HandlePaint(void* _pPlatformData) override
 		{
 			D2D1_RECT_F rAdjusted;
-			GetAdjustedRect(Hwnd(), Desc.X, Desc.Y, Desc.Width, Desc.Height, Desc.Anchor, &rAdjusted);
+			HWND hWnd = (HWND)Window->GetNativeHandle();
+			GetAdjustedRect(hWnd, Desc.X, Desc.Y, Desc.Width, Desc.Height, Desc.Anchor, &rAdjusted);
 
 			DWRITE_PARAGRAPH_ALIGNMENT paragraphAlignment;
 			DWRITE_TEXT_ALIGNMENT textAlignment;
 			GetAlignment(Desc.Alignment, &paragraphAlignment, &textAlignment);
 
-			oASSERT(RenderTarget, "No render target");
+			oASSERT(Window->RenderTarget, "No render target");
 
 			oMutex::ScopedLock lock(Mutex);
 
@@ -1266,16 +1243,15 @@ struct PictureGDI : public oWindow::Picture
 				rShadow.top += fdesc.ShadowOffset;
 				rShadow.right += fdesc.ShadowOffset;
 				rShadow.bottom += fdesc.ShadowOffset;
-				RenderTarget->DrawText(String, StringLength, pFormat, rShadow, ShadowBrush);
+				Window->RenderTarget->DrawText(String, StringLength, pFormat, rShadow, ShadowBrush);
 			}
 
 			oASSERT(Brush, "No brush created");
-			RenderTarget->DrawText(String, StringLength, pFormat, rAdjusted, Brush);
+			Window->RenderTarget->DrawText(String, StringLength, pFormat, rAdjusted, Brush);
 		}
 
-		threadsafe oRef<oWindow> Window;
-		oRef<oWindow::Font> Font;
-		oRef<ID2D1RenderTarget> RenderTarget;
+		oRef<threadsafe oWindow_Impl> Window;
+		oRef<threadsafe oWindow::Font> Font;
 		oRef<ID2D1SolidColorBrush> Brush;
 		oRef<ID2D1SolidColorBrush> ShadowBrush;
 		DESC Desc;
@@ -1291,9 +1267,7 @@ struct PictureGDI : public oWindow::Picture
 		oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<PictureD2D>());
 		oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
-		inline HWND Hwnd() threadsafe { return (HWND)thread_cast<oWindow*>(Window.c_ptr())->GetNativeHandle(); }
-
-		PictureD2D(threadsafe oWindow* _pWindow, const Picture::DESC* _pDesc)
+		PictureD2D(threadsafe oWindow_Impl* _pWindow, const Picture::DESC* _pDesc)
 			: Window(_pWindow)
 			, Desc(*_pDesc)
 		{
@@ -1309,25 +1283,22 @@ struct PictureGDI : public oWindow::Picture
 
 		bool Open() override
 		{
-			RenderTarget = static_cast<threadsafe oWindow_Impl*>(Window.c_ptr())->RenderTarget;
-
 			D2D1_SIZE_U size = { Desc.SurfaceDesc.Width, Desc.SurfaceDesc.Height };
 			D2D1_BITMAP_PROPERTIES properties;
 			properties.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
 			if (properties.pixelFormat.format == DXGI_FORMAT_UNKNOWN)
 				return false;
 			properties.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
-			oRef<ID2D1Factory> pFactory;
-			oD2D1CreateFactory(&pFactory);
-			pFactory->GetDesktopDpi(&properties.dpiX, &properties.dpiY);
-			oV(RenderTarget->CreateBitmap(size, 0, 0, &properties, &Bitmap));
+
+
+			Window->Factory->GetDesktopDpi(&properties.dpiX, &properties.dpiY);
+			oV(Window->RenderTarget->CreateBitmap(size, 0, 0, &properties, &Bitmap));
 			return !!Bitmap;
 		}
 
 		void Close() override
 		{
 			Bitmap = 0;
-			RenderTarget = 0;
 		}
 
 		bool Begin() override { return true; }
@@ -1344,21 +1315,23 @@ struct PictureGDI : public oWindow::Picture
 		{
 			if (Bitmap)
 			{
+				HWND hWnd = (HWND)Window->GetNativeHandle();
 				oMutex::ScopedLock lock(BitmapLock);
 				thread_cast<ID2D1Bitmap*>(Bitmap.c_ptr())->CopyFromMemory(0, _pSourceData, (UINT32)_SourcePitch);
 				FlippedHorizontally = _FlipHorizontally;
 				FlippedVertically = _FlipVertically;
-				InvalidateRect(Hwnd(), 0, FALSE); // @oooii-tony: This could be resized to just the area of the bitmap
+				InvalidateRect(hWnd, 0, FALSE); // @oooii-tony: This could be resized to just the area of the bitmap
 			}
 		}
 
 		void HandlePaint(void* _pPlatformData) override
 		{
+			HWND hWnd = (HWND)Window->GetNativeHandle();
 			RECT cr;
-			GetClientRect(Hwnd(), &cr);
+			GetClientRect(hWnd, &cr);
 
 			D2D1_RECT_F r;
-			GetAdjustedRect(Hwnd(), Desc.X, Desc.Y, Desc.Width, Desc.Height, Desc.Anchor, &r);
+			GetAdjustedRect(hWnd, Desc.X, Desc.Y, Desc.Width, Desc.Height, Desc.Anchor, &r);
 
 			float w = r.right - r.left;
 			float h = r.bottom - r.top;
@@ -1380,13 +1353,12 @@ struct PictureGDI : public oWindow::Picture
 				flipMatrix._32 = centerY * 2.0f;
 			}
 
-			RenderTarget->SetTransform(flipMatrix);
-			RenderTarget->DrawBitmap(Bitmap, r);
-			RenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+			Window->RenderTarget->SetTransform(flipMatrix);
+			Window->RenderTarget->DrawBitmap(Bitmap, r);
+			Window->RenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 		}
 
-		threadsafe oRef<oWindow> Window;
-		oRef<ID2D1RenderTarget> RenderTarget;
+		oRef<threadsafe oWindow_Impl> Window;
 		oRef<ID2D1Bitmap> Bitmap;
 		oMutex BitmapLock;
 		DESC Desc;
@@ -1395,15 +1367,112 @@ struct PictureGDI : public oWindow::Picture
 		bool FlippedVertically;
 	};
 
+	struct VideoD2D : public oWindow::Video
+	{
+		oDEFINE_REFCOUNT_INTERFACE(RefCount);
+		oDEFINE_CONST_GETDESC_INTERFACE(Desc, threadsafe );
+		oDEFINE_NOOP_QUERYINTERFACE();
+		oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
+
+		VideoD2D( threadsafe oWindow_Impl* _pWindow, const DESC* _pDesc, std::vector<threadsafe oVideoContainer*> &_pContainers, ID3D10Texture2D* _pBackBuffer, bool* _pSuccess)
+			: Window(_pWindow)
+			, Desc(*_pDesc)
+		{
+			*_pSuccess = false;
+
+			oVideoDecodeD3D10::DESC desc;
+			desc.pContainers = _pContainers;
+			desc.UseFrameTime = Desc.UseFrameTime;
+			desc.StitchVertically = Desc.StitchVertically;
+			if( !oVideoDecodeD3D10::Create( desc, &Decoder ) )
+				return;
+
+			DecoderHandle = Decoder->Register( _pBackBuffer );
+			if( NULL == DecoderHandle )
+				return;
+
+			Register();
+			Window->Videos.push_back(this);
+
+			*_pSuccess = true;
+		}
+		~VideoD2D()
+		{
+			Window->Videos.erase(this);
+			Unregister();
+		}
+
+		bool Open() override
+		{
+			return true;
+		}
+
+		void Close() override
+		{
+		}
+
+		bool Begin() override { return true; }
+		void End() override {}
+
+		bool HandleMessage(void* _pPlatformData) override { return true; }
+
+		void HandlePaint(void* _pPlatformData) override
+		{
+			Decoder->Decode( DecoderHandle );
+		}
+
+		void RegisterDecoder(ID3D10Texture2D* _pBackBuffer)
+		{
+			DecoderHandle = Decoder->Register( _pBackBuffer );
+		}
+		void UnregisterDecoder()
+		{
+			Decoder->Unregister(DecoderHandle);
+		}
+
+		oRef<threadsafe oWindow_Impl> Window;
+		oRef<threadsafe oVideoDecodeD3D10> Decoder;
+		oVideoDecodeD3D10::HDECODE_CONTEXT DecoderHandle;
+		DESC Desc;
+		oRefCount RefCount;
+	};
+
+
 #endif
 
 } // namespace detail
 
-bool oWindow::Create(const DESC* _pDesc, const char* _Title, unsigned int _FourCCDrawAPI, oWindow** _ppWindow)
+bool oWindow::Create(const DESC* _pDesc, void* _pAssociatedNativeHandle, const char* _Title, unsigned int _DrawAPIFourCC, oWindow** _ppWindow)
 {
-	if (!_pDesc || !_ppWindow) return false;
-	*_ppWindow = new oWindow_Impl(_pDesc, _Title, _FourCCDrawAPI);
-	return !!*_ppWindow;
+	if (!_pDesc || !_ppWindow)
+	{
+		oSetLastError(EINVAL);
+		return false;
+	}
+
+	bool success = false;
+	oCONSTRUCT(_ppWindow, oWindow_Impl(_pDesc, _pAssociatedNativeHandle, _Title, _DrawAPIFourCC, &success));
+
+	if (success)
+	{
+		// Load/test OOOii lib icon:
+		extern void GetDescoooii_ico(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
+		const char* BufferName = 0;
+		const void* pBuffer = 0;
+		size_t bufferSize = 0;
+		GetDescoooii_ico(&BufferName, &pBuffer, &bufferSize);
+
+		oRef<oImage> ico;
+		oVERIFY(oImage::Create(pBuffer, bufferSize, &ico));
+
+		HBITMAP hBmp = ico->AsBmp();
+		HICON hIcon = oIconFromBitmap(hBmp);
+		oVERIFY((*_ppWindow)->SetProperty("Icon", &hIcon));
+		DeleteObject(hIcon);
+		DeleteObject(hBmp);
+	}
+
+	return success;
 }
 
 LRESULT CALLBACK oWindow_Impl::StaticWndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
@@ -1414,7 +1483,7 @@ LRESULT CALLBACK oWindow_Impl::StaticWndProc(HWND _hWnd, UINT _uMsg, WPARAM _wPa
 	return pThis ? pThis->WndProc(_hWnd, _uMsg, _wParam, _lParam) : DefWindowProc(_hWnd, _uMsg, _wParam, _lParam);
 }
 
-oWindow_Impl::oWindow_Impl(const DESC* _pDesc, const char* _Title, unsigned int _FourCCDrawAPI)
+oWindow_Impl::oWindow_Impl(const DESC* _pDesc, void* _pAssociatedNativeHandle, const char* _Title, unsigned int _FourCCDrawAPI, bool* _pSuccess)
 	: hWnd(0)
 	, hIcon(0)
 	, hClearBrush(0)
@@ -1428,12 +1497,20 @@ oWindow_Impl::oWindow_Impl(const DESC* _pDesc, const char* _Title, unsigned int 
 	, Closing(false)
 	, DrawMethod(DRAW_USING_GDI)
 {
-#if oDXVER >= oDXVER_10
-	oRef<ID2D1Factory> pFactory;
-	oD2D1CreateFactory(&pFactory);
+	*_pSuccess = false;
 
-	DrawMethod = (pFactory ? DRAW_USING_D2D : DRAW_USING_GDI);
-#endif
+	#if oDXVER >= oDXVER_10
+		oD2D1CreateFactory(&Factory);
+
+		DrawMethod = (Factory ? DRAW_USING_D2D : DRAW_USING_GDI);
+
+		if (DRAW_USING_D2D == DrawMethod && _pAssociatedNativeHandle)
+		{
+			// If we're drawing with D2D and a native handle is supplied it means the caller is trying to supply a D3D10Device1
+			IUnknown* pInterface = (IUnknown*)( _pAssociatedNativeHandle );
+			pInterface->QueryInterface(&D3DDevice);
+		}
+	#endif
 
 	if (_FourCCDrawAPI == 'D2D1')
 		DrawMethod = DRAW_USING_D2D;
@@ -1442,9 +1519,15 @@ oWindow_Impl::oWindow_Impl(const DESC* _pDesc, const char* _Title, unsigned int 
 
 	*Title = 0;
 	if (_pDesc)
-		oWindow_Impl::Open(_pDesc, _Title);
+	{
+		MSSleepWhenNoFocus = _pDesc->MSSleepWhenNoFocus;
+		*_pSuccess = oWindow_Impl::Open(_pDesc, _Title);
+	}
+	else
+		*_pSuccess = true;
 
-	oTRACE("Created window \"%s\" using %s for drawing.", _Title, DrawMethod == DRAW_USING_D2D ? "D2D" : "GDI");
+	if (*_pSuccess)
+		oTRACE("Created window \"%s\" using %s for drawing.", _Title, DrawMethod == DRAW_USING_D2D ? "D2D" : "GDI");
 }
 
 oWindow_Impl::~oWindow_Impl()
@@ -1479,14 +1562,24 @@ bool oWindow_Impl::Open(const oWindow::DESC* _pDesc, const char* _Title)
 	Close();
 	Closing = false;
 	
-	if (FAILED(oCreateSimpleWindow(&hWnd, StaticWndProc, this, _Title)))
+	if (FAILED(oCreateSimpleWindow(&hWnd, StaticWndProc, this, _Title, _pDesc->ClientX, _pDesc->ClientY, _pDesc->ClientWidth, _pDesc->ClientHeight ) ) )
 		return false;
 
 	strcpy_s(Title, _Title);
 
-	oV(CreateDeviceResources());
-	if (!OpenChildren())
+	HRESULT hr = CreateDeviceResources();
+	if (FAILED(hr))
+	{
+		Close();
+		oSetLastErrorNative(hr, "Failed to create Device resources");
 		return false;
+	}
+
+	if (!OpenChildren())
+	{
+		Close();
+		return false;
+	}
 
 	oWindow::DESC wDesc;
 	detail::GetDefaultDesc(hWnd, _pDesc, &wDesc);
@@ -1520,13 +1613,17 @@ bool oWindow_Impl::Begin()
 	if (!hWnd) return false;
 	BeginChildren();
 	oPumpMessages(hWnd);
-	if (!HasFocus())
-		Sleep(200);
+	if ( MSSleepWhenNoFocus > 0 && !HasFocus())
+		Sleep(MSSleepWhenNoFocus);
 	return true;
 }
 
-void oWindow_Impl::End()
+void oWindow_Impl::End(bool _ForceRefresh)
 {
+	if( _ForceRefresh )
+	{
+		InvalidateRect(hWnd, 0, FALSE);
+	}
 	EndChildren();
 }
 
@@ -1551,7 +1648,7 @@ void oWindow_Impl::SetFocus()
 	oSetFocus(hWnd);
 }
 
-void* oWindow_Impl::GetNativeHandle()
+void* oWindow_Impl::GetNativeHandle() threadsafe
 {
 	return hWnd;
 }
@@ -1565,25 +1662,37 @@ const void* oWindow_Impl::GetProperty(const char* _Name) const
 
 	return 0;
 }
-
 HRESULT oWindow_Impl::CreateDeviceResources()
 {
-	HRESULT hr = S_OK;
-
 	#if oDXVER >= oDXVER_10
 
 		if (DrawMethod == DRAW_USING_D2D && !RenderTarget)
 		{
-			RECT rClient;
-			GetClientRect(hWnd, &rClient);
-			D2D1_SIZE_U size = D2D1::SizeU(rClient.right - rClient.left, rClient.bottom - rClient.top);
-			oRef<ID2D1Factory> pFactory;
-			oD2D1CreateFactory(&pFactory);
-			if(pFactory)
-				hr = pFactory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(hWnd, size), &RenderTarget);
+			RECT rWindow;
+			GetWindowRect(hWnd, &rWindow);
+			
+			if (!D3DDevice)
+			{
+				oRef<IDXGIAdapter1> Adapter;
 
-			if (SUCCEEDED(hr))
-				RenderTarget->SetAntialiasMode(UseAntialiasing ? D2D1_ANTIALIAS_MODE_PER_PRIMITIVE : D2D1_ANTIALIAS_MODE_ALIASED);
+				if (!oDXGIGetAdapter(rWindow, &Adapter))
+				{
+					return E_FAIL;
+				}
+
+				HRESULT hr = oD3D10::Singleton()->D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, D3D10_CREATE_DEVICE_BGRA_SUPPORT, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, &D3DDevice);
+
+				if (E_NOINTERFACE == hr)
+				{
+					oTRACE("oWindow: Failed to create D3D 10.1 device, falling back to D3D 10.0.");
+					hr = oD3D10::Singleton()->D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, D3D10_CREATE_DEVICE_BGRA_SUPPORT, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &D3DDevice);
+				}
+
+				oV_RETURN(hr);
+			}
+			
+			oV_RETURN( oDXGICreateSwapchain( D3DDevice, rWindow.right - rWindow.left, rWindow.bottom - rWindow.top, D3DSwapChainFMT, hWnd, &D3DSwapChain ) );
+			oV_RETURN( CreateRendertarget() );
 		}
 		else
 	#endif
@@ -1605,7 +1714,7 @@ HRESULT oWindow_Impl::CreateDeviceResources()
 		ReleaseDC(hWnd, hdc);
 	}
 
-	return hr;
+	return S_OK;
 }
 
 void oWindow_Impl::DiscardDeviceResources()
@@ -1638,10 +1747,10 @@ bool oWindow_Impl::SetProperty(const char* _Name, void* _pValue)
 	return result;
 }
 
-bool oWindow_Impl::CreateResizer(ResizeHandlerFn _ResizeHandler, void* _pUserData, threadsafe Resizer** _ppResizer) threadsafe
+bool oWindow_Impl::CreateResizer(RectHandlerFn _RectHandler, threadsafe Resizer** _ppResizer) threadsafe
 {
-	if (!_ResizeHandler || !_ppResizer) return false;
-	*_ppResizer = new detail::oWindowResizer_Impl(this, _ResizeHandler, _pUserData);
+	if (!_RectHandler || !_ppResizer) return false;
+	*_ppResizer = new detail::oWindowResizer_Impl(this, _RectHandler);
 		return !!*_ppResizer;
 }
 
@@ -1694,6 +1803,25 @@ bool oWindow_Impl::CreatePicture(const Picture::DESC* _pDesc, threadsafe Picture
 	}
 
 	CREATE_DRAWABLE(Picture);
+}
+
+bool oWindow_Impl::CreateVideo(const Video::DESC*_pDesc, std::vector<threadsafe oVideoContainer*> &_Containers, threadsafe Video** _ppDrawable) threadsafe
+{
+	if (!_pDesc || !_ppDrawable) return false;
+
+	if (DrawMethod != DRAW_USING_D2D)
+	{
+		oSetLastError(EINVAL, "GDI currently doesn't support video playback.");
+		return false;
+	}
+
+	bool success = false;
+#if oDXVER >= oDXVER_10
+	oRef<ID3D10Texture2D> D3DRenderTarget;
+	oV( D3DSwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (void**)&D3DRenderTarget ) );
+	oCONSTRUCT(_ppDrawable, detail::VideoD2D(this, _pDesc, _Containers, D3DRenderTarget.c_ptr(), &success ) );
+#endif
+	return success;
 }
 
 bool oWindow_Impl::CreateSnapshot(oImage** _ppImage, bool _IncludeBorder)
@@ -1758,7 +1886,27 @@ BOOL oWindow_Impl::OnResize(UINT _NewWidth, UINT _NewHeight)
 	#if oDXVER >= oDXVER_10
 		if (DrawMethod == DRAW_USING_D2D && RenderTarget)
 		{
-			RenderTarget->Resize(D2D1::SizeU(_NewWidth, _NewHeight));
+			oLockedVector<Video*>::LockedSTLVector vec = Videos.lock();
+			// First tell any videos to unregister so they no longer hold any references to the swapchain
+			oFOREACH( oWindow::Video* pVid, *vec )
+			{
+				static_cast<detail::VideoD2D*>(pVid)->UnregisterDecoder();
+			}
+
+			// Now we can safely resize
+			RenderTarget = NULL;
+			D3DSwapChain->ResizeBuffers( 3, _NewWidth, _NewHeight, D3DSwapChainFMT, 0 );
+			CreateRendertarget();
+
+			// Get the new backbuffer for the swap chain
+			oRef<ID3D10Texture2D> D3DRenderTarget;
+			oV( D3DSwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (void**)&D3DRenderTarget ) );
+
+			// Re-register the videos so they can use the new swapchain
+			oFOREACH( oWindow::Video* pVid, *vec )
+			{
+				static_cast<detail::VideoD2D*>(pVid)->RegisterDecoder(D3DRenderTarget.c_ptr());
+			}
 			return TRUE;
 		}
 		else
@@ -1784,16 +1932,25 @@ BOOL oWindow_Impl::OnPaint(HWND _hWnd)
 			{
 				RenderTarget->BeginDraw();
 				RenderTarget->SetTransform(D2D1::IdentityMatrix());
+
 				float r,g,b,a;
 				oDecomposeColor(ClearColor, &r, &g, &b, &a);
 				RenderTarget->Clear(D2D1::ColorF(r,g,b,a));
 
+				{ // Since videos are drawn with D3D we need to insert our draw right before D2D calls but after the clear
+					RenderTarget->EndDraw();
+					Videos.foreach(oBIND( &oWindow_Impl::PaintChild<oWindow::Video>, oBIND1, (void*)0 ));
+					RenderTarget->BeginDraw();
+				}
+	
 				Pictures.foreach(oBIND( &oWindow_Impl::PaintChild<oWindow::Picture>, oBIND1, (void*)0 ));
 				Lines.foreach(oBIND( &oWindow_Impl::PaintChild<oWindow::Line>, oBIND1, (void*)0 ));
 				RoundedBoxes.foreach(oBIND( &oWindow_Impl::PaintChild<oWindow::RoundedBox>, oBIND1, (void*)0 ));
 				Texts.foreach(oBIND( &oWindow_Impl::PaintChild<oWindow::Text>, oBIND1, (void*)0 ));
 
 				hr = RenderTarget->EndDraw();
+
+				D3DSwapChain->Present(0,0);
 			}
 			else
 		#endif
@@ -1857,42 +2014,79 @@ LRESULT oWindow_Impl::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lP
 
 	switch (_uMsg)
 	{
-	case WM_SIZE:
-		if (OnResize(LOWORD(_lParam), HIWORD(_lParam)))
+		case WM_SIZE:
+			if (OnResize(LOWORD(_lParam), HIWORD(_lParam)))
+				return 0;
+			break;
+
+		// handle WM_ERASEBKGND for flicker-free client area update
+		// http://msdn.microsoft.com/en-us/library/ms969905.aspx
+		case WM_ERASEBKGND:
+			return 1;
+
+		case WM_PRINT:
+		case WM_PRINTCLIENT:
+		case WM_PAINT:
+		case WM_DISPLAYCHANGE:
+			if (OnPaint(_hWnd))
+				return 0;
+			break;
+
+		case WM_CLOSE:
+			if (!EnableCloseButton)	//@oooii-Andrew
+				return 0;
+		case WM_DESTROY:
+			OnClose();
 			return 0;
-		break;
 
-	// handle WM_ERASEBKGND for flicker-free client area update
-	// http://msdn.microsoft.com/en-us/library/ms969905.aspx
-	case WM_ERASEBKGND:
-		return 1;
+		case WM_SYSKEYDOWN:
+		case WM_SYSKEYUP:
+			//if (_wParam == VK_RETURN)
+			//	oTRACE("TOGGLE FULLSCREEN");
+			break;
 
-	case WM_PRINT:
-	case WM_PRINTCLIENT:
-	case WM_PAINT:
-	case WM_DISPLAYCHANGE:
-		if (OnPaint(_hWnd))
-			return 0;
-		break;
-
-	case WM_CLOSE:
-		if (!EnableCloseButton)	//@oooii-Andrew
-			return 0;
-	case WM_DESTROY:
-		OnClose();
-		return 0;
-
-	case WM_SYSKEYDOWN:
-	case WM_SYSKEYUP:
-		//if (_wParam == VK_RETURN)
-		//	oTRACE("TOGGLE FULLSCREEN");
-		break;
-
-	default:
-		break;
+		default:
+			break;
 	}
 
 	return DefWindowProc(_hWnd, _uMsg, _wParam, _lParam);
+}
+
+#if oDXVER >= oDXVER_10
+HRESULT oWindow_Impl::CreateRendertarget()
+{
+	oRef<ID3D10Texture2D> D3DRenderTarget;
+	oV_RETURN( D3DSwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (void**)&D3DRenderTarget ) );
+
+	oRef<IDXGISurface> RTSurface;
+	oV_RETURN(D3DRenderTarget->QueryInterface(&RTSurface));
+
+	D2D1_RENDER_TARGET_PROPERTIES rtProps;
+	rtProps.pixelFormat.format = D3DSwapChainFMT;
+	rtProps.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+	rtProps.dpiX = 0.0f;
+	rtProps.dpiY = 0.0f;
+	rtProps.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+	rtProps.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+	rtProps.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+
+	oV_RETURN(Factory->CreateDxgiSurfaceRenderTarget(RTSurface, &rtProps, &RenderTarget));
+
+	RenderTarget->SetAntialiasMode(UseAntialiasing ? D2D1_ANTIALIAS_MODE_PER_PRIMITIVE : D2D1_ANTIALIAS_MODE_ALIASED);
+	return S_OK;
+}
+#endif
+
+bool oWindow_Impl::QueryInterface( const oGUID& _InterfaceID, threadsafe void** _ppInterface ) threadsafe
+{
+	if (oGetGUID<oWindow>() == _InterfaceID)
+	{
+		Reference();
+		*_ppInterface = this;
+		return true;
+	}
+
+	return false;
 }
 
 bool oWindow::Pump(oWindow* _pWindow, bool _CloseOnTimeout, unsigned int _Timeout)
@@ -1915,6 +2109,17 @@ bool oWindow::Pump(oWindow* _pWindow, bool _CloseOnTimeout, unsigned int _Timeou
 	return true;
 }
 
+template<> errno_t oFromString(oWindow::STYLE *_style, const char* _StrSource)
+{
+	if(_stricmp(_StrSource,"borderless") == 0)
+		*_style = oWindow::BORDERLESS;
+	else if(_stricmp(_StrSource,"fixed") == 0)
+		*_style = oWindow::FIXED;
+	else
+		*_style = oWindow::SIZEABLE;
+	return 0;
+}
+
 const oGUID& oGetGUID( threadsafe const oWindow* threadsafe const * )
 {
 	// {963AD3B4-0F53-4e6f-8D6D-C0FBB3CB58A1}
@@ -1928,7 +2133,6 @@ const oGUID& oGetGUID( threadsafe const detail::RoundedBoxGDI* threadsafe const 
 	static const oGUID oIIDRoundedBoxGDT = { 0x571c1b76, 0xabb6, 0x4f08, { 0xbd, 0x32, 0x7, 0x89, 0x19, 0xba, 0x2c, 0x76 } };
 	return oIIDRoundedBoxGDT;
 }
-
 
 const oGUID& oGetGUID( threadsafe const detail::LineGDI* threadsafe const * )
 {

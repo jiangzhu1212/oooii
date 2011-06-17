@@ -34,7 +34,7 @@
 #define TBB_VERSION_MINOR 0
 
 // Engineering-focused interface version
-#define TBB_INTERFACE_VERSION 5003
+#define TBB_INTERFACE_VERSION 5002
 #define TBB_INTERFACE_VERSION_MAJOR TBB_INTERFACE_VERSION/1000
 
 // The oldest major interface version still supported
@@ -149,7 +149,7 @@ namespace internal {
 #define __TBB_EXPORTED_METHOD
 #endif
 
-#include <cstddef>      /* Need size_t and ptrdiff_t */
+#include <cstddef>      /* Need size_t and ptrdiff_t (the latter on Windows only) from here. */
 
 #if _MSC_VER
 #define __TBB_tbb_windef_H
@@ -161,9 +161,6 @@ namespace internal {
 
 //! The namespace tbb contains all components of the library.
 namespace tbb {
-
-using std::size_t; using std::ptrdiff_t;
-
     //! Type for an assertion handler
     typedef void(*assertion_handler_type)( const char* filename, int line, const char* expression, const char * comment );
 
@@ -215,6 +212,8 @@ class split {
  */
 namespace internal {
 
+using std::size_t;
+
 //! Compile-time constant that is upper bound on cache line/sector size.
 /** It should be used only in situations where having a compile-time upper 
     bound is more useful than a run-time exact answer.
@@ -261,19 +260,15 @@ void __TBB_EXPORTED_FUNC handle_perror( int error_code, const char* aux_info );
 void __TBB_EXPORTED_FUNC runtime_warning( const char* format, ... );
 
 #if TBB_USE_ASSERT
-static void* const poisoned_ptr = reinterpret_cast<void*>(-1);
-
 //! Set p to invalid pointer value.
 template<typename T>
-inline void poison_pointer( T*& p ) { p = reinterpret_cast<T*>(poisoned_ptr); }
-
-/** Expected to be used in assertions only, thus no empty form is defined. **/
-template<typename T>
-inline bool is_poisoned( T* p ) { return p == reinterpret_cast<T*>(poisoned_ptr); }
+inline void poison_pointer( T* & p ) {
+    p = reinterpret_cast<T*>(-1);
+}
 #else
 template<typename T>
 inline void poison_pointer( T* ) {/*do nothing*/}
-#endif /* !TBB_USE_ASSERT */
+#endif /* TBB_USE_ASSERT */
 
 //! Cast pointer from U* to T.
 /** This method should be used sparingly as a last resort for dealing with 

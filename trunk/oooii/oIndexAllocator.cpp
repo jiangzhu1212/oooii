@@ -1,27 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include "oIndexAllocatorInternal.h"
 #include <oooii/oAssert.h>
 #include <oooii/oAtomic.h>
@@ -52,7 +29,6 @@ oIndexAllocatorBase::~oIndexAllocatorBase()
 {
 	if (IsValid())
 	{
-		oASSERT(IsEmpty(), "Index allocator not empty on destruction");
 		oTRACE("Destroying index allocator implicitly: the user-defined arena may not be freed");
 		Deinitialize();
 	}
@@ -77,7 +53,6 @@ void oIndexAllocatorBase::InternalReset()
 void oIndexAllocatorBase::Reset()
 {
 	oASSERT(IsValid(), "Index allocator not valid on call to reset");
-	oASSERT(IsEmpty(), "Index allocator not empty on call to reset");
 	InternalReset();
 }
 
@@ -111,15 +86,17 @@ size_t oIndexAllocatorBase::GetSize() const
 	// another atomic operation in allocate/deallocate, so don't 
 	// do that just for debugging.
 	size_t nFree = 0;
-	unsigned int n = Freelist >> TAG_BITS;
-	while (n != TAGGED_INVALIDINDEX)
+	if (GetCapacity())
 	{
-		nFree++;
-		oASSERT(nFree <= GetCapacity(), "Num free is more than the capacity of %u", GetCapacity());
-		oASSERT(n < GetCapacity(), "while following the freelist, an index is present that is greater than capacity %u", GetCapacity());
-		n = static_cast<unsigned int*>(Arena)[n];
+		unsigned int n = Freelist >> TAG_BITS;
+		while (n != TAGGED_INVALIDINDEX)
+		{
+			nFree++;
+			oASSERT(nFree <= GetCapacity(), "Num free is more than the capacity of %u", GetCapacity());
+			oASSERT(n < GetCapacity(), "while following the freelist, an index is present that is greater than capacity %u", GetCapacity());
+			n = static_cast<unsigned int*>(Arena)[n];
+		}
 	}
-
 	return GetCapacity() - nFree;
 }
 
@@ -136,4 +113,12 @@ size_t oIndexAllocator::GetSize() const
 	}
 
 	return GetCapacity() - nFree;
+}
+
+oIndexAllocator::~oIndexAllocator()
+{
+	if (IsValid())
+	{
+		oASSERT(IsEmpty(), "Index allocator not empty on destruction");
+	}
 }

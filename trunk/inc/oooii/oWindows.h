@@ -1,26 +1,5 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
+
 // This should be included instead of, or at least before <windows.h> to avoid
 // much of the conflict-causing overhead as well as include some useful 
 #pragma once
@@ -31,6 +10,9 @@
 #ifdef _WINDOWS_
 	#pragma message("BAD WINDOWS INCLUDE! Applications should #include <oWindows.h> to prevent extra and sometimes conflicting cruft from being included.")
 #endif
+
+#include <oooii/oStddef.h>
+#include <oooii/oSurface.h>
 
 // _____________________________________________________________________________
 // Simplify the contents of Windows.h
@@ -82,7 +64,9 @@
 // what OS it's running on and sets this appropriately in the build system?
 // I want to maintain compatibility with Vista/XP because we're still 
 // occasionally use HW that has drivers only for XP/Vista.
-#define oFORCE_WIN7_VERSION
+#if (_MSC_VER < 1600)
+	#define oFORCE_WIN7_VERSION
+#endif
 
 #ifdef oFORCE_WIN7_VERSION
 	#define WINVER 0x0601
@@ -92,14 +76,6 @@
 
 #include <windows.h>
 #include <winsock2.h>
-
-#if (_MSC_VER >= 1500)
-	#define oWINDOWS_FEATURE_LEVEL_VISUAL_STUDIO_2008
-#endif
-
-#if (_MSC_VER >= 1600)
-	#define oWINDOWS_FEATURE_LEVEL_VISUAL_STUDIO_2010
-#endif
 
 #define oDXVER_9a 0x0900
 #define oDXVER_9b 0x0901
@@ -158,28 +134,79 @@
 #endif
 
 // _____________________________________________________________________________
+// Error check wrappers. These interpret HRESULTS, so should not be used on 
+// anything but WIN32 API. oVB is for the return FALSE then GetLastError() 
+// pattern, and oV is for direct HRESULT return values.
+
+#ifdef _DEBUG
+	#define oVB(fn) do { if (!(fn)) { oSetLastErrorNative(::GetLastError()); oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, fn, "%s", oGetLastErrorDesc()); } } while(0)
+	#define oV(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) { oSetLastErrorNative(HR__); oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, fn, "%s", oGetLastErrorDesc()); } } while(0)
+#else
+	#define oVB(fn) fn
+	#define oV(fn) fn
+#endif
+
+// _____________________________________________________________________________
+// Wrappers for the Windows-specific crtdbg API. Prefer oASSERT macros found
+// in oAssert.h, but for a few systems that are lower-level than oAssert, these
+// may be necessary.
+
+#ifdef _DEBUG
+	#include <crtdbg.h>
+
+	#define oCRTASSERT(expr, msg, ...) if (!(expr)) { _CrtDbgReport(_CRT_ASSERT, __FILE__, __LINE__, "OOOii Debug Library", #expr "\n\n%s", msg, ## __VA_ARGS__); }
+	#define oCRTWARNING(msg, ...) do { _CrtDbgReport(_CRT_WARN, __FILE__, __LINE__, "OOOii Debug Library", "WARNING: " msg, ## __VA_ARGS__); } while(0)
+	#define oCRTTRACE(msg, ...) do { _CrtDbgReport(_CRT_WARN, __FILE__, __LINE__, "OOOii Debug Library", msg, ## __VA_ARGS__); } while(0)
+
+	// Convenience wrapper for quick scoped leak checking
+	class oLeakCheck
+	{
+		const char* Name;
+		_CrtMemState StartState;
+	public:
+		oLeakCheck(const char* _ConstantName = "") : Name(_ConstantName ? _ConstantName : "(unnamed)") { _CrtMemCheckpoint(&StartState); }
+		~oLeakCheck()
+		{
+			_CrtMemState endState, stateDiff;
+			_CrtMemCheckpoint(&endState);
+			_CrtMemDifference(&stateDiff, &StartState, &endState);
+			oCRTTRACE("---- Mem diff for %s ----", Name);
+			_CrtMemDumpStatistics(&stateDiff);
+		}
+	};
+#else
+	#define oCRTASSERT(expr, msg, ...) __noop
+	#define oCRTWARNING(msg, ...) __noop
+	#define oCRTTRACE(msg, ...) __noop
+#endif
+
+// _____________________________________________________________________________
 // Declare functions that are in Windows DLLs, but not exposed in headers
 
 // Secret function that is not normally exposed in headers.
 // Typically pass 0 for wLanguageId, and specify a timeout
 // for the dialog in milliseconds, returns MB_TIMEDOUT if
 // the timeout is reached.
-int MessageBoxTimeoutA(IN HWND hWnd, IN LPCSTR lpText, 
-		IN LPCSTR lpCaption, IN UINT uType, 
-		IN WORD wLanguageId, IN DWORD dwMilliseconds);
-int MessageBoxTimeoutW(IN HWND hWnd, IN LPCWSTR lpText, 
-		IN LPCWSTR lpCaption, IN UINT uType, 
-		IN WORD wLanguageId, IN DWORD dwMilliseconds);
+int MessageBoxTimeoutA(IN HWND hWnd, IN LPCSTR lpText, IN LPCSTR lpCaption, IN UINT uType, IN WORD wLanguageId, IN DWORD dwMilliseconds);
+int MessageBoxTimeoutW(IN HWND hWnd, IN LPCWSTR lpText, IN LPCWSTR lpCaption, IN UINT uType, IN WORD wLanguageId, IN DWORD dwMilliseconds);
 
 #ifdef UNICODE
-		#define MessageBoxTimeout MessageBoxTimeoutW
+	#define MessageBoxTimeout MessageBoxTimeoutW
 #else
-		#define MessageBoxTimeout MessageBoxTimeoutA
+	#define MessageBoxTimeout MessageBoxTimeoutA
 #endif 
 
 #define MB_TIMEDOUT 32000
 
 #define oWINDOWS_DEFAULT 0x80000000
+
+// oV_RETURN executes a block of code that returns an HRESULT
+// if the HRESULT is not S_OK it returns the HRESULT
+#define oV_RETURN(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) return HR__; } while(0)
+
+// oVB_RETURN executes a block of Windows API code that returns bool and populates
+// oGetLastError() with ::GetLastError() and returns false.
+#define oVB_RETURN(fn) do { if (!(fn)) { oSetLastErrorNative(::GetLastError(), #fn " failed: "); return false; } } while(0)
 
 // _____________________________________________________________________________
 // Smart pointer support
@@ -198,6 +225,12 @@ time_t oFileTimeToUnixTime(const FILETIME* _pFileTime);
 // _____________________________________________________________________________
 // Concurrency
 
+// So many problems would be solved if this were threadsafe! Be careful, using 
+// this in concurrent situations can cause undesired synchronization because of
+// the mutex used to protect messages from being stomped on. NOTE: The mutex is
+// process-wide, no matter what DLLs or how this code was linked.
+void oThreadsafeOutputDebugStringA(const char* _OutputString);
+
 // returns true if wait finished successfully, or false if
 // timed out or otherwise errored out.
 inline bool oWaitSingle(HANDLE _Handle, unsigned int _Timeout = ~0u) { return WAIT_OBJECT_0 == ::WaitForSingleObject(_Handle, _Timeout == ~0u ? INFINITE : _Timeout); }
@@ -212,6 +245,8 @@ bool oWaitMultiple(DWORD* _pThreadIDs, size_t _NumberOfThreadIDs, bool _WaitAll,
 // Hostname is an address or name with a port (i.e. localhost:123 or 127.0.0.1:123)
 // For INADDR_ANY, use 0.0.0.0 as the IP and any appropriate port.
 void oWinsockCreateAddr(sockaddr_in* _pOutSockAddr, const char* _Hostname);
+
+void oWinsockAddrToHostname(sockaddr_in* _pSockAddr, char* _OutHostname, size_t _SizeOfHostname);
 
 // Looks at a WSANETWORKEVENTS struct and returns a summary error. Also traces out
 // detailed information in debug. This is mostly a convenience function.
@@ -270,6 +305,12 @@ bool oWinsockSend(SOCKET _hSocket, const void* _pSource, size_t _SizeofSource, c
 // used to change its state) that is 0 if Receive should not wait because of a 
 // bad socket state, or non-zero if the receive should block on FD_READ events.
 size_t oWinsockReceive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, unsigned int _TimeoutMS, int* _pInOutCanReceive, sockaddr_in* _pSource);
+
+// Returns true on success whether data was received or not. If return is false,
+// use oGetLastError() for more details. It can be that this function returns
+// false and the error status is ESHUTDOWN, meaning a valid and error-free
+// closing of the peer socket has occurred and no further steps should occur.
+bool oWinsockReceiveNonBlocking(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, sockaddr_in* _pSource, size_t* _pBytesReceived);
 
 // Fills the specified buffers with data from the specified socket. Null can be 
 // specified for any one of these to opt out of getting a particular part of the
@@ -345,6 +386,18 @@ inline HICON oGetIcon(HWND _hWnd, bool _BigIcon) { return (HICON)SendMessage(_hW
 inline void oSetIcon(HWND _hWnd, bool _BigIcon, HICON _hIcon) { SendMessage(_hWnd, WM_SETICON, (WPARAM)(_BigIcon ? ICON_BIG : ICON_SMALL), (LPARAM)_hIcon); }
 HICON oIconFromBitmap(HBITMAP _hBmp);
 
+// Allocates a new BITMAPINFO (if an 8-bit format, a palette is required
+// for proper drawing using GDI). If you pass the address of a valid 
+// pointer you don't need to specify an allocate function, but the size
+// of the destination BMI must be correct. Use oGetBMISize() to ensure
+// the correct size is available. The first parameter should be a pointer to
+// a pointer to a BITMAPINFO.
+void oAllocateBMI(BITMAPINFO** _ppBITMAPINFO, const oSurface::DESC* _pDesc, oFUNCTION<void*(size_t _Size)> _Allocate, bool _FlipVertically = true, unsigned int _ARGBMonochrome8Zero = 0xFF000000, unsigned int _ARGBMonochrome8One = 0xFFFFFFFF);
+
+// 8 bit formats won't render correctly because BITMAPINFO infers 
+// paletted textures from 8-bit, so allocate enough room for the palette.
+size_t oGetBMISize(oSurface::FORMAT _Format);
+
 inline RECT oBuildRECT(int _Left, int _Top, int _Right, int _Bottom) { RECT r; r.left = _Left; r.top = _Top; r.right = _Right; r.bottom = _Bottom; return r; }
 inline RECT oBuildRECTWH(int _Left, int _Top, int _Width, int _Height) { RECT r; r.left = _Left; r.top = _Top; r.right = _Width == oWINDOWS_DEFAULT ? oWINDOWS_DEFAULT : (r.left + _Width); r.bottom = _Height == oWINDOWS_DEFAULT ? oWINDOWS_DEFAULT : (r.top + _Height); return r; }
 
@@ -417,10 +470,34 @@ template<size_t size> inline char* oGetWMDesc(char (&_StrDestination)[size], con
 // _____________________________________________________________________________
 // Misc
 
+// Converts a unicode 16-bit string to its 8-bit equivalent. If 
+// _SizeofMultiByteString is 0, this returns the required buffer size to hold 
+// the conversion (includes room for the nul terminator). Otherwise, this 
+// returns the length of the string written (not including the nul terminator).
+size_t oStrConvert(char* _MultiByteString, size_t _SizeofMultiByteString, const wchar_t* _StrUnicodeSource);
+
+// Converts a multi-byte 8-bit string to its 16-bit unicode equivalent. If 
+// _NumberOfCharactersInUnicodeString is 0, this returns the NUMBER OF CHARACTERS,
+// (not the number of bytes) required for the destination bufferm including the 
+// nul terminator. Otherwise, this returns the length of the string written.
+size_t oStrConvert(wchar_t* _UnicodeString, size_t _NumberOfCharactersInUnicodeString, const char* _StrMultibyteSource);
+
 DWORD oGetThreadID(HANDLE _hThread);
+
+DWORD oWinGetMainThreadID();
 
 // Use GetCurrentProcessID() or equivalent for this
 DWORD oGetParentProcessID();
+
+// Returns the current module. Unlike GetModuleHandle(NULL), this returns the
+// module handle containing the specified pointer. A typical use case would be
+// to pass the address of the function calling oGetModule() to return the 
+// current module at that point. If NULL is specified, this returns the handle
+// of the main process module.
+HMODULE oGetModule(void* _ModuleFunctionPointer);
+
+// Returns handle of the active named process
+HANDLE oWinGetProcessHandle(const char* _Name);
 
 // Fills the specified array with the IDs of all threads in this process.
 unsigned int oGetProcessThreads(DWORD* _pThreadIDs, size_t _SizeofThreadIDs);
@@ -429,6 +506,11 @@ template<size_t size> inline unsigned int oGetProcessThreads(DWORD (&_pThreadIDs
 void oSetThreadNameInDebugger(DWORD _ThreadID, const char* _Name);
 
 inline void oSetThreadNameInDebugger(HANDLE _hThread, const char* _Name) { oSetThreadNameInDebugger(oGetThreadID(_hThread), _Name); }
+
+// Fill the specified buffer with a robust description string of the specified
+// HRESULT error code.
+int oGetWindowsErrorDescription(char* _StrDestination, size_t _SizeofStrDestination, HRESULT _hResult);
+template<size_t size> inline int oGetWindowsErrorDescription(char (&_StrDestination)[size], HRESULT _hResult) { return oGetWindowsErrorDescription(_StrDestination, size, _hResult); }
 
 inline float oPointToDIP(float _Point) { return 96.0f * _Point / 72.0f; }
 inline float oDIPToPoint(float _DIP) { return 72.0f * _DIP / 96.0f; }
@@ -445,7 +527,12 @@ void oGetScreenDPIScale(float* _pScaleX, float* _pScaleY);
 
 	// IDXGIFactory is special as it loads DLLs so it can not be statically held
 	// as it can not be released from DLLmain, so always create it.
-	bool oCreateDXGIFactory(IDXGIFactory** _ppFactory);
+	bool oCreateDXGIFactory(IDXGIFactory1** _ppFactory);
+
+	HRESULT oDXGICreateSwapchain(IUnknown* _pDevice, unsigned int Width, unsigned int Height, DXGI_FORMAT _Fmt, HWND _Hwnd, IDXGISwapChain** _ppSwapChain);
+
+	// Returns the adapter that is responsible for the largest screen portion of the supplied _Rect
+	bool oDXGIGetAdapter(const RECT& _Rect, IDXGIAdapter1** _ppAdapter);
 	bool oD2D1CreateFactory(ID2D1Factory** _ppFactory);
 
 	float oDXGIGetD3DVersion(IDXGIAdapter* _pAdapter);
@@ -479,4 +566,10 @@ void oGetVirtualDisplayRect(RECT* _pRect);
 #else
 	#error Unsupported platform
 #endif
+
+#include <oooii/oGUID.h>
+inline const oGUID& oGetGUID(const GUID& _WinGUID)
+{
+	return *reinterpret_cast<const oGUID*>(&_WinGUID);
+}
 #endif

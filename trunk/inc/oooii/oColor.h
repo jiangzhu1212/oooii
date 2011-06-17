@@ -1,26 +1,5 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
+
 // A simple way to pass colors around to APIs that need them along with some 
 // common colors to avoid having poor programmers try to use mspaint to get a
 // pretty color.
@@ -28,16 +7,44 @@
 #ifndef oColor_h
 #define oColor_h
 // Stored in argb, same as a DirectX D3DCOLOR
-typedef unsigned int oColor;
+
+struct oColor
+{
+	unsigned int c;
+
+	oColor() : c(0) {}
+	oColor(unsigned int _C) : c(_C) {}
+
+	operator const unsigned int() const volatile { return c; }
+	operator unsigned int&() { return c; }
+};
+
 inline oColor oComposeColor(unsigned int _R, unsigned int _G, unsigned int _B, unsigned int _A) { return ((_A&0xff)<<24)|((_R&0xff)<<16)|((_G&0xff)<<8)|(_B&0xff); }
 inline oColor oComposeColor(float _R, float _G, float _B, float _A) { return oComposeColor(static_cast<unsigned int>(_R*255.0f), static_cast<unsigned int>(_G*255.0f), static_cast<unsigned int>(_B*255.0f), static_cast<unsigned int>(_A*255.0f)); }
 inline void oDecomposeColor(oColor _Color, unsigned int* _R, unsigned int* _G, unsigned int* _B, unsigned int* _A) { *_B = _Color&0xff; *_G = (_Color>>8)&0xff; *_R = (_Color>>16)&0xff; *_A = (_Color>>24)&0xff; }
 inline void oDecomposeColor(oColor _Color, float* _pR, float* _pG, float* _pB, float* _pA) { unsigned int r, g, b, a; oDecomposeColor(_Color, &r, &g, &b, &a); *_pR = r / 255.0f; *_pG = g / 255.0f; *_pB = b / 255.0f; *_pA = a / 255.0f; }
+inline void oDecomposeColor(oColor _Color, float* _pRGBA) { oDecomposeColor(_Color, &_pRGBA[0], &_pRGBA[1], &_pRGBA[2], &_pRGBA[3]); }
+inline void oDecomposeColorRGB(oColor _Color, float* _pRGB) { float a; oDecomposeColor(_Color, &_pRGB[0], &_pRGB[1], &_pRGB[2], &a); }
+template<typename float4T> inline float4T oDecomposeColor(oColor _Color) { float4T c; oDecomposeColor(_Color, (float*)&c); return c; }
+template<typename float3T> inline float3T oDecomposeColorRGB(oColor _Color) { float3T c; oDecomposeColorRGB(_Color, (float*)&c); return c; }
+inline void oDecomposeColor(oColor _Color, unsigned int *_pRGBA) { oDecomposeColor(_Color, &_pRGBA[0], &_pRGBA[1], &_pRGBA[2], &_pRGBA[3]); }
+inline void oDecomposeColorRGB(oColor _Color, unsigned int *_pRGB) { unsigned int a; oDecomposeColor(_Color, &_pRGB[0], &_pRGB[1], &_pRGB[2], &a); }
 inline float oGetLuminance(oColor _Color) { float _R,_G,_B,_A; oDecomposeColor(_Color, &_R, &_G, &_B, &_A); return 0.2126f*_R + 0.7152f*_G + 0.0722f*_B; }
 inline bool oIsOpaqueColor(oColor _Color) { return ((_Color>>24)&0xff) != 0; }
 inline bool oIsTransparentColor(oColor _Color) { return (_Color&0xff000000) == 0; }
 inline bool oIsTranslucentColor(oColor _Color) { return (_Color&0xff000000) != 0xff000000; }
 inline unsigned int absdiff__(unsigned int a, unsigned int b) { return (a > b) ? (a-b) : (b-a); }
+
+// lerp lerps each channel separately
+inline unsigned int lerp__(unsigned int a, unsigned int b, float s) { return static_cast<unsigned int>(a + s * (b-a)); }
+inline oColor lerp(const oColor& a, const oColor& b, float s)
+{
+	unsigned int ra,ga,ba,aa, rb,gb,bb,ab;
+	oDecomposeColor(a, &ra, &ga, &ba, &aa);
+	oDecomposeColor(b, &rb, &gb, &bb, &ab);
+	return oComposeColor(lerp__(ra,rb,s), lerp__(ga,gb,s), lerp__(ba,bb,s), lerp__(aa,ab,s));
+}
+
 // Sometimes colors are generated from the same hardware, but there is precision
 // variability. In those cases, use this to fuzzy-compare color values
 inline bool oEqual(oColor _Color1, oColor _Color2, unsigned int _BitFuzziness)
@@ -46,6 +53,23 @@ inline bool oEqual(oColor _Color1, oColor _Color2, unsigned int _BitFuzziness)
 	oDecomposeColor(_Color1, &r1, &g1, &b1, &a1);
 	oDecomposeColor(_Color2, &r2, &g2, &b2, &a2);
 	return (absdiff__(r1, r2) <= _BitFuzziness) && (absdiff__(g1, g2) <= _BitFuzziness) && (absdiff__(b1, b2) <= _BitFuzziness) && (absdiff__(a1, a2) <= _BitFuzziness);
+}
+
+// Does a per-component diff and returns the results as an oColor
+inline oColor oDiffColors(oColor _Color1, oColor _Color2, unsigned int _Multiplier = 1)
+{
+	unsigned int r1,g1,b1,a1,r2,g2,b2,a2;
+	oDecomposeColor(_Color1, &r1, &g1, &b1, &a1);
+	oDecomposeColor(_Color2, &r2, &g2, &b2, &a2);
+	return oComposeColor(_Multiplier * absdiff__(r1, r2), _Multiplier * absdiff__(g1, g2), _Multiplier * absdiff__(b1, b2), _Multiplier * absdiff__(a1, a2));
+}
+
+inline oColor oDiffColorsRGB(oColor _Color1, oColor _Color2, unsigned int _Multiplier = 1)
+{
+	unsigned int r1,g1,b1,a1,r2,g2,b2,a2;
+	oDecomposeColor(_Color1, &r1, &g1, &b1, &a1);
+	oDecomposeColor(_Color2, &r2, &g2, &b2, &a2);
+	return oComposeColor(_Multiplier * absdiff__(r1, r2), _Multiplier * absdiff__(g1, g2), _Multiplier * absdiff__(b1, b2), 0xff);
 }
 
 // Hue is in degrees, saturation and value are [0,1]
@@ -194,6 +218,8 @@ namespace std {
 	static const oColor Yellow = 0xFFFFFF00;
 	static const oColor YellowGreen = 0xFF9ACD32;
 	static const oColor OOOiiGreen = 0xFF8DC81D;
+	static const oColor TangentSpaceNormalBlue = 0xFF7F7FFF; // Z-Up
+	static const oColor ObjectSpaceNormalGreen = 0xFF7FFF7F; // Y-Up
 }
 
 #endif

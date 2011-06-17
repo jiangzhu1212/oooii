@@ -38,10 +38,13 @@
 #endif
 
 #include <stdexcept>
-#include <string> // required to construct std exception classes
 
 #if !TBB_USE_EXCEPTIONS && _MSC_VER
     #pragma warning (pop)
+#endif
+
+#if __SUNPRO_CC
+#include <string> // required to construct std exception classes
 #endif
 
 namespace tbb {

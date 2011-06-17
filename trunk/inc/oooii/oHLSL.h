@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 // NOTE: This is a header of utility functions for HLSL (not C++)
 #ifndef oHLSL_h
 #define oHLSL_h
@@ -33,6 +11,39 @@
 	#define oRIGHTHANDED
 #endif
 
+#ifndef oHLSL
+
+	#include <oooii/oColor.h>
+	#include <oooii/oMath.h>
+
+	struct oHLSLColor
+	{
+		// Handle automatic expansion of oColor to float3s. Using this
+		// type allows for a single header to be defined for usage in
+		// both C++ and HLSL.
+
+		oHLSLColor() : Color(0.0f, 0.0f, 0.0f) {}
+		oHLSLColor(const float3& _Color) : Color(_Color) {}
+		oHLSLColor(const oColor& _Color) { float a; oDecomposeColor(_Color, &Color.x, &Color.y, &Color.z, &a); }
+
+		inline operator float3&() { return Color; }
+		inline operator const float3&() const { return Color; }
+		inline operator oColor() const { return oComposeColor(Color.x, Color.y, Color.z, 1.0f); }
+		inline const oHLSLColor& operator=(const oHLSLColor& _Color) { Color = _Color.Color; return *this; }
+		inline const oHLSLColor& operator=(const float3& _Color) { Color = _Color; return *this; }
+		inline const oHLSLColor& operator=(const oColor& _Color) { float a; oDecomposeColor(_Color, &Color.x, &Color.y, &Color.z, &a); return *this; }
+	protected:
+		float3 Color;
+	};
+
+	#define oHLSL_REQUIRED_STRUCT_ALIGNMENT 16
+	#define oHLSLCheckSize(_Struct) oSTATICASSERT(sizeof(_Struct) % oHLSL_REQUIRED_STRUCT_ALIGNMENT) == 0);
+
+#else
+
+#define quatf float4
+#define oHLSLColor float3
+
 #ifdef oRIGHTHANDED
 	static const float3 oVECTOR_TOWARDS_SCREEN = float3(0,0,1);
 	static const float3 oVECTOR_INTO_SCREEN = float3(0,0,-1);
@@ -42,10 +53,11 @@
 #endif
 static const float3 oVECTOR_UP = float3(0,1,0);
 
+static const float4 oZERO = float4(0,0,0,0);
 static const float4 oBLACK = float4(0,0,0,1);
 static const float4 oWHITE = float4(1,1,1,1);
 static const float4 oRED = float4(1,0,0,1);
-static const float4 oGREEN = float4(0,0,1,1);
+static const float4 oGREEN = float4(0,1,0,1);
 static const float4 oBLUE = float4(0,0,1,1);
 static const float4 oYELLOW = float4(1,1,0,1);
 static const float4 oMAGENTA = float4(1,0,1,1);
@@ -86,23 +98,27 @@ float4 oQMul(float4 a, float4 b)
 float3 oQRotate(float4 q, float3 v)
 {
 	// http://code.google.com/p/kri/wiki/Quaternions
-#if 1
-	return v + 2.0*cross(q.xyz, cross(q.xyz,v) + q.w*v);
-#else
-	return v*(q.w*q.w - dot(q.xyz,q.xyz)) + 2.0*q.xyz*dot(q.xyz,v) + 2.0*q.w*cross(q.xyz,v);
-#endif
+	#if 1
+		return v + 2.0*cross(q.xyz, cross(q.xyz,v) + q.w*v);
+	#else
+		return v*(q.w*q.w - dot(q.xyz,q.xyz)) + 2.0*q.xyz*dot(q.xyz,v) + 2.0*q.w*cross(q.xyz,v);
+	#endif
 }
 
-// Returns texcoords where the lower left of the render target is 0,0 and the 
-// upper right is 1,1 given the SV_POSITION (projected position) value and the
-// dimensions of the render target itself.
-float2 oGetScreenSpaceTexcoord(float4 _SVPosition, float2 _RenderTargetDimensions)
+// Returns texcoords of screen: [0,0] upper-left, [1,1] lower-right
+// _SVPosition is a local-space 3D position multiplied by a WVP matrix, so the
+// final projected position that would normally be passed from a vertex shader
+// to a pixel shader.
+// NOTE: There are 2 flavors because the _SVPosition behaves slightly 
+// differently between the result calculated in a vertex shader and what happens
+// to it by the time it gets to the pixel shader.
+float2 oCalculateScreenSpaceTexcoordVS(float4 _SVPosition)
 {
-	return float2(_SVPosition.x / _RenderTargetDimensions.x, _SVPosition.y / -_RenderTargetDimensions.y);
+	float2 Texcoord = _SVPosition.xy / _SVPosition.w;
+	return Texcoord * float2(0.5, -0.5) + 0.5;
 }
 
-// Same as above, but 0,0 is in upper left, 1,1 in lower right
-float2 oGetScreenSpaceTexcoordInvertedY(float4 _SVPosition, float2 _RenderTargetDimensions)
+float2 oCalculateScreenSpaceTexcoordPS(float4 _SVPosition, float2 _RenderTargetDimensions)
 {
 	return _SVPosition.xy / _RenderTargetDimensions;
 }
@@ -110,11 +126,11 @@ float2 oGetScreenSpaceTexcoordInvertedY(float4 _SVPosition, float2 _RenderTarget
 // Returns the eye position in whatever space the view matrix is in.
 float3 oGetEyePosition(float4x4 _ViewMatrix)
 {
-#ifdef oMATRIX_COLUMN_MAJOR
-	return -float3(_ViewMatrix[0].w, _ViewMatrix[1].w, _ViewMatrix[2].w );
-#else
-	return -_ViewMatrix[3].xyz;
-#endif
+	#ifdef oMATRIX_COLUMN_MAJOR
+		return -float3(_ViewMatrix[0].w, _ViewMatrix[1].w, _ViewMatrix[2].w);
+	#else
+		return -_ViewMatrix[3].xyz;
+	#endif
 }
 
 // When writing a normal to a screen buffer, it's not useful to have normals that
@@ -187,9 +203,29 @@ float3 oIDtoColor16Bit(uint ID16Bit)
 	return oHSVtoRGB(HSV);
 }
 
-float oCalcAttenuation(float ConstantFalloff, float LinearFalloff, float QuadraticFalloff, float LightDistance)
+// Classic OpenGL style attenuation
+float oCalculateAttenuation(float ConstantFalloff, float LinearFalloff, float QuadraticFalloff, float LightDistance)
 {
 	return saturate(1 / (ConstantFalloff + LinearFalloff*LightDistance + QuadraticFalloff*LightDistance*LightDistance));
+}
+
+// Attenuates quadratically to a specific bounds of a light. This is useful for
+// screen-space lighting where it is desirable to minimize the number of pixels
+// touched, so the light's effect is 0 at _LightRadius.
+float oCalculateBoundQuadraticAttenuation(float _LightDistanceFromSurface, float _LightRadius, float _Cutoff)
+{
+	// Based on: http://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
+	float denom = (_LightDistanceFromSurface / _LightRadius) + 1;
+	float attenuation = 1 / (denom * denom);
+	return max((attenuation - _Cutoff) / (1 - _Cutoff), 0);
+}
+
+// This is a companion function to oCalculateBoundQuadraticAttenuation and
+// can be used to determine the radius of a screen-space circle inscribed in
+// a quad that will optimally fit exactly the falloff of a point light.
+float oCalculateMaximumDistanceForPointLight(float _LightRadius, float _Cutoff)
+{
+	return _LightRadius * (sqrt(1 / _Cutoff) - 1);
 }
 
 float oCalcLinearFogRatio(float _EyeDistance, float _FogStart, float _FogDistance)
@@ -235,6 +271,15 @@ float3 oSobelSampleNormal(Texture2D _Texture, SamplerState _Sampler, float2 _Tex
 		bl + 2*B + br - tl - 2*T - tr));
 }
 
+// Returns the results of HLSL's lit() with the specified parameters. All 
+// vectors are assumed to be normalized.
+float4 oLit(float3 _SurfaceNormal, float3 _LightVector, float3 _EyeVector, float _SpecularExponent)
+{
+	float NdotL = dot(_SurfaceNormal, _LightVector);
+	float NdotH = dot(_SurfaceNormal, normalize(_LightVector + _EyeVector));
+	return lit(NdotL, NdotH, _SpecularExponent);
+}
+
 // Returns a color resulting from the input parameters consistent with the Phong
 // shading model.
 float4 oPhongShade(float3 _SurfaceNormal // assumed to be normalized, pointing out from the surface
@@ -256,9 +301,7 @@ float4 oPhongShade(float3 _SurfaceNormal // assumed to be normalized, pointing o
 	// cause the compiler to optimize those constants out. If not, decorate this 
 	// with #ifdefs accordingly.
 
-	float NdotL = dot(_SurfaceNormal, _LightVector);
-	float NdotH = dot(_SurfaceNormal, normalize(_LightVector + _EyeVector));
-	float4 Lit = lit(NdotL, NdotH, _Kh);
+	float4 Lit = oLit(_SurfaceNormal, _LightVector, _EyeVector, _Kh);
 	float diffuseCoeff = Lit.y;
 	float ambientCoeff = 1-diffuseCoeff; // so that in-shadow bump mapping isn't completely lost
 	float specularCoeff = Lit.z;
@@ -284,4 +327,18 @@ float4 oHemisphericShade(float3 _SurfaceNormal // assumed to be normalized, poin
 	return lerp(_HemisphericGroundColor, _HemisphericSkyColor, dot(_SurfaceNormal, _SkyVector) * 0.5f + 0.5f);
 }
 
+
+// Generates a clipspace-ish quad based off the SVVertexID semantic
+// VertexID Texcoord Position
+// 0        0,0      -1,1,0	
+// 1        1,0      1,1,0
+// 2        0,1      -1,-1,0
+// 3        1,1      1,-1,0
+void oExtractQuadInfoFromVertexID(in uint _SVVertexID, out float4 _Position, out float2 _Texcoord)
+{
+	_Texcoord = float2(_SVVertexID & 1, _SVVertexID >> 1);
+	_Position = float4(_Texcoord * float2(2.0f, -2.0f) + float2(-1.0f, 1.0f), 0.0f, 1.0f);
+}
+
+#endif
 #endif

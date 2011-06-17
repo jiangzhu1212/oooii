@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 // Socket abstractions for TCP and UDP. Note: Server/Client should be used 
 // together and Sender/Receiver should be used together only, any other 
 // match-up will not work.
@@ -31,7 +9,34 @@
 #include <oooii/oEvent.h>
 #include <oooii/oInterface.h>
 
-interface oSocket : public oInterface
+// A Host is a simple identifier for a net device. This is an IP address
+// for Internet connections. Use oFromString to create a new oNetHost.
+struct oNetHost
+{
+	bool operator==(const oNetHost& rhs) { return (IP == rhs.IP); }
+
+private:
+	unsigned long IP;
+};
+
+errno_t oFromString(oNetHost* _pHost, const char* _StrSource);
+
+// An Address is the combination of a Host and any data used to distinguish
+// it from other connections from the same Host. In Internet terms this is an
+// IP address and a port together. Use oFromString to create a new oNetAddress
+// in the form "<host>:<port>" ex: "google.com:http" or "127.0.0.1:11000".
+struct oNetAddr
+{
+	bool operator==(const oNetAddr& rhs) { return (Host == rhs.Host && Port == rhs.Port); }
+
+	oNetHost Host;
+private:
+	unsigned short Port;
+};
+
+errno_t oFromString(oNetAddr* _pAddress, const char* _StrSource);
+
+interface oSocket : oInterface
 {
 	// For efficiency oSocket uses a size type that matches the underlying implementation
 	typedef unsigned int size_t;
@@ -158,7 +163,7 @@ interface oSocketAsync : public oSocket
 	}
 };
 
-interface oSocketAsyncReceiver : public oInterface
+interface oSocketAsyncReceiver : oInterface
 {
 	typedef oFUNCTION<void(void*,oSocket::size_t)> receiver_callback_t;
 
@@ -177,7 +182,7 @@ interface oSocketAsyncReceiver : public oInterface
 };
 
 interface oSocketBlocking;
-interface oSocketServer : public oInterface
+interface oSocketServer : oInterface
 {
 	// Server-side of a reliable two-way communication pipe (TCP). The server 
 	// merely listens for incoming connections. Use the oSocketClientAsync returned 
@@ -210,9 +215,9 @@ interface oSocketServer : public oInterface
 	virtual bool WaitForConnection(threadsafe oSocketBlocking** _ppNewlyConnectedClient, unsigned int _TimeoutMS = oINFINITE_WAIT) threadsafe = 0;
 };
 
-interface oSocketSender : public oInterface
+interface oSocketSender : oInterface
 {
-	// Broadcast-side of an unreliable, 1-way communication pipe (UDP).
+	// Transmit-side of an unreliable, 1-way communication pipe (UDP).
 
 	struct DESC
 	{
@@ -233,7 +238,7 @@ interface oSocketSender : public oInterface
 	virtual bool Send(const void* _pSource, size_t _SizeofSource) threadsafe = 0;
 };
 
-interface oSocketReceiver : public oInterface
+interface oSocketReceiver : oInterface
 {
 	// Reception-side of an unreliable, 1-way communication pipe (UDP).
 
@@ -258,6 +263,90 @@ interface oSocketReceiver : public oInterface
 	// might mean this buffer contains more than one send's worth of
 	// data.
 	virtual size_t Receive(void* _pDestination, size_t _SizeofDestination, unsigned int _TimeoutMS = oINFINITE_WAIT) threadsafe = 0;
+};
+
+interface oSocketNonBlocking : oInterface
+{
+	// Bidirectional, unreliable, non-blocking socket (UDP).
+
+	struct DESC
+	{
+		DESC()
+			: Port(0)
+			, ReceiveBufferSize(0)
+			, SendBufferSize(0)
+		{}
+
+		// Port is used as the source port for sent packets and is the port
+		// return data will be received on. If left at 0, the OS will choose
+		// this value automatically. It's recommended that this value stay
+		// at 0 except when used for a Server that requires a fixed port value.
+		unsigned short Port;
+
+		size_t ReceiveBufferSize;
+		size_t SendBufferSize;
+	};
+
+	static bool Create(const char* _DebugName, const DESC* _pDesc, threadsafe oSocketNonBlocking** _ppSocketNonBlocking);
+
+	virtual bool SendTo(const char* _DestinationAddress, void* _pSource, size_t _SizeofSource) threadsafe = 0;
+	virtual bool ReceiveFrom(char* _OutSourceAddress, void* _pDestination, size_t _SizeofDestination, size_t* _pOutReceiveSize) threadsafe = 0;
+};
+
+interface oSocketAsyncUDP : oInterface
+{
+	typedef oFUNCTION<void(void*,oSocket::size_t,const oNetAddr&)> on_receive_callback_t;
+	typedef oFUNCTION<void(void*,oSocket::size_t,const oNetAddr&)> on_send_callback_t;
+
+	struct DESC
+	{
+		DESC()
+			: Port(0)
+			, ReceiveBufferSize(0)
+			, SendBufferSize(0)
+			, NumThreads(0)
+		{}
+
+		// Port is used as the source port for sent packets and is the port
+		// return data will be received on. If left at 0, the OS will choose
+		// this value automatically. It's recommended that this value stay
+		// at 0 except when used for a Server that requires a fixed port value.
+		unsigned short Port;
+
+		size_t ReceiveBufferSize;
+		size_t SendBufferSize;
+
+		// If NumThreads is 0 it will be set to the number of processors 
+		// available according to GetSystemInfo.
+		int NumThreads;
+
+		// Called when new data arrives over the network.
+		on_receive_callback_t RecvCallback;
+
+		// Called once a send operation has finished. A buffer passed in for
+		// sending must remain available until this callback is sent.
+		on_send_callback_t SendCallback;
+	};
+
+	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+
+	// An unreliable 2-way communication pipe. This 
+	// implementation is asynchronous and takes aggressive advantages of 
+	// underlying platform-specific optimizations. 
+	static bool Create(const char* _DebugName, const DESC* _pDesc, threadsafe oSocketAsyncUDP** _ppSocket);
+
+	virtual void Send(void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination) threadsafe = 0;
+
+	template<typename T>
+	inline void Send(T* _pData, const oNetAddr& _Destination) threadsafe
+	{
+		Send((void*)_pData, sizeof(T), _Destination);
+	}
+
+	// Queue up a pending receive. The RecvCallback will be called once the
+	// passed in buffer has been filled. You should have one pending receive
+	// for each worker thread to maximize efficiency.
+	virtual void Recv(void* _pBuffer, oSocket::size_t _Size) threadsafe = 0;
 };
 
 #endif

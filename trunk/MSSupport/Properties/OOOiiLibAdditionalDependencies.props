@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalDependencies>dbghelp.lib;freeimage$(oBuildSuffix).lib;tbb$(oBuildSuffix).lib;tlsf$(oBuildSuffix).lib;vpxmt$(oBuildSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(oSDK)\ext\lib\$(Platform)\$(oCompilerName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <ClCompile>
+      <PreprocessorDefinitions>FREEIMAGE_LIB;__TBB_NO_IMPLICIT_LINKAGE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(oSDK)ext\bullet\vectormathlibrary\include;$(oSDK)\ext\FreeImage\Source;$(oSDK)ext\FreeImage\Source\OpenEXR\Half;$(oSDK)\ext\tbb\include;$(oSDK)\ext\tlsf;$(oSDK)\ext\vp8\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>

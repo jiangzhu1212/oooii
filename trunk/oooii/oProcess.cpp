@@ -1,35 +1,12 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oProcess.h>
 #include <oooii/oErrno.h>
 #include <oooii/oRefCount.h>
 #include <oooii/oWindows.h>
 #include <string>
-#include <oooii/oWinPSAPI.h>
+#include "oWinPSAPI.h"
 
-const oGUID& oGetGUID( threadsafe const oProcess* threadsafe const * )
+const oGUID& oGetGUID(threadsafe const oProcess* threadsafe const *)
 {
 	// {EAA75587-9771-4d9e-A2EA-E406AA2E8B8F}
 	static const oGUID oIIDProcess = { 0xeaa75587, 0x9771, 0x4d9e, { 0xa2, 0xea, 0xe4, 0x6, 0xaa, 0x2e, 0x8b, 0x8f } };
@@ -45,9 +22,14 @@ struct Process_Impl : public oProcess
 	~Process_Impl();
 
 	void Start() threadsafe override;
-	void Kill(int _ExitCode) threadsafe override;
+	bool Kill(int _ExitCode) threadsafe override;
 	bool Wait(unsigned int _TimeoutMS = oINFINITE_WAIT) threadsafe override;
+	bool GetCPUTime(unsigned __int64 *_pCPUTime) const threadsafe override;
+	bool GetMemoryWorkingSetSize(size_t *_pWorkingSetSize) const threadsafe;
 	bool GetExitCode(int* _pExitCode) const threadsafe override;
+	size_t GetProcessID() const threadsafe override;
+	size_t GetThreadId() const threadsafe override;
+
 	size_t WriteToStdin(const void* _pSource, size_t _SizeofWrite) threadsafe override;
 	size_t ReadFromStdout(void* _pDestination, size_t _SizeofRead) threadsafe override;
 
@@ -80,109 +62,6 @@ bool oProcess::Create(const DESC* _pDesc, threadsafe oProcess** _ppProcess)
 	return !!*_ppProcess;
 }
 
-size_t oProcess::GetCurrentProcessID()
-{
-	return GetCurrentProcessId();
-}
-
-size_t oProcess::GetProcessHandle(const char* _pName)
-{
-	// From http://msdn.microsoft.com/en-us/library/ms682623(v=VS.85).aspx
-	// Get the list of process identifiers.
-
-	DWORD aProcesses[1024], cbNeeded, cProcesses;
-	unsigned int i;
-
-	oWinPSAPI* pPSAPI = oWinPSAPI::Singleton();
-
-	if ( !pPSAPI->EnumProcesses( aProcesses, sizeof(aProcesses), &cbNeeded ) )
-		return NULL;
-
-	// Calculate how many process identifiers were returned.
-
-	cProcesses = cbNeeded / sizeof(DWORD);
-
-	// Print the name and process identifier for each process.
-
-	for ( i = 0; i < cProcesses; i++ )
-		if( aProcesses[i] != 0 )
-		{
-			// Get a handle to the process.
-
-			HANDLE hProcess = OpenProcess( PROCESS_QUERY_INFORMATION |
-				PROCESS_VM_READ | PROCESS_DUP_HANDLE ,
-				FALSE, aProcesses[i] );
-
-			// Get the process name.
-
-			if (NULL != hProcess )
-			{
-				HMODULE hMod;
-				DWORD cbNeeded;
-
-				char szProcessName[MAX_PATH];
-				if ( pPSAPI->EnumProcessModules( hProcess, &hMod, sizeof(hMod), 
-					&cbNeeded) )
-				{
-					pPSAPI->GetModuleBaseNameA( hProcess, hMod, szProcessName, 
-						sizeof(szProcessName)/sizeof(char) );
-					if( strcmp( szProcessName, _pName ) == 0 )
-					{
-						return (size_t)hProcess;
-					}
-				}
-			}
-		}
-		return NULL;
-}
-
-size_t oProcess::GetCurrentModuleHandle()
-{
-	static size_t CurrentModule = 0;
-	if(0 == CurrentModule)
-	{
-		HMODULE hMod[1024];
-		DWORD cbNeeded;
-
-		HANDLE hProcess = GetCurrentProcess();
-		oWinPSAPI* pPSAPI = oWinPSAPI::Singleton();
-
-		if(pPSAPI->EnumProcessModules( hProcess, hMod, sizeof(hMod), &cbNeeded))
-		{
-			uintptr_t pointer = reinterpret_cast<uintptr_t>(&CurrentModule);
-
-			unsigned int numModules = cbNeeded / sizeof(HMODULE);
-			for(unsigned int i = 0; i < numModules; i++)
-			{
-				MODULEINFO modInfo;
-				pPSAPI->GetModuleInformation(hProcess, hMod[i], &modInfo, sizeof(modInfo));
-				uintptr_t entryPoint = reinterpret_cast<uintptr_t>(modInfo.EntryPoint);
-
-				char modName[1024];
-				pPSAPI->GetModuleBaseNameA(hProcess, hMod[i], modName, 1024);
-
-				if(pointer >= entryPoint && pointer < entryPoint + modInfo.SizeOfImage)
-				{
-					CurrentModule = reinterpret_cast<size_t>(hMod[i]);
-					break;
-				}
-			}
-		}
-	}
-
-	return CurrentModule;
-}
-
-size_t oProcess::GetMainProcessModuleHandle()
-{
-	HMODULE hMod = 0;
-	DWORD cbNeeded;
-
-	oWinPSAPI::Singleton()->EnumProcessModules(GetCurrentProcess(), &hMod, sizeof(hMod), &cbNeeded);
-
-	return reinterpret_cast<size_t>(hMod);
-}
-
 Process_Impl::Process_Impl(const DESC* _pDesc, bool* _pSuccess)
 	: Desc(*_pDesc)
 	, CommandLine(_pDesc->CommandLine ? _pDesc->CommandLine : "")
@@ -208,6 +87,16 @@ Process_Impl::Process_Impl(const DESC* _pDesc, bool* _pSuccess)
 	memset(&ProcessInfo, 0, sizeof(PROCESS_INFORMATION));
 	memset(&StartInfo, 0, sizeof(STARTUPINFO));
 	StartInfo.cb = sizeof(STARTUPINFO);
+
+	if (!Desc.SetFocus || Desc.StartMinimized)
+	{
+		StartInfo.dwFlags |= STARTF_USESHOWWINDOW;
+		
+		if (!Desc.SetFocus)
+			StartInfo.wShowWindow |= (Desc.StartMinimized ? SW_SHOWMINNOACTIVE : SW_SHOWNOACTIVATE);
+		else
+			StartInfo.wShowWindow |= (Desc.StartMinimized ? SW_SHOWMINIMIZED : SW_SHOWDEFAULT);
+	}
 
 	if (Desc.StdHandleBufferSize)
 	{
@@ -297,14 +186,66 @@ void Process_Impl::Start() threadsafe
 	oVB(ResumeThread(ProcessInfo.hThread));
 }
 
-void Process_Impl::Kill(int _ExitCode) threadsafe
+bool Process_Impl::Kill(int _ExitCode) threadsafe
 {
-	oVB(TerminateProcess(ProcessInfo.hProcess, (UINT)_ExitCode));
+	HRESULT hr = TerminateProcess(ProcessInfo.hProcess, (UINT)_ExitCode);
+	if (FAILED(hr))
+	{
+		oSetLastErrorNative(hr);
+		return false;
+	}
+
+	return true;
 }
+
 
 bool Process_Impl::Wait(unsigned int _TimeoutMS) threadsafe
 {
 	return oWaitSingle(ProcessInfo.hProcess, _TimeoutMS);
+}
+
+bool Process_Impl::GetCPUTime(unsigned __int64 *_pCPUTime) const threadsafe
+{
+	FILETIME creationTime;
+	FILETIME exitTime;
+	FILETIME kernelTime;
+	FILETIME userTime;
+
+	if (!GetProcessTimes(ProcessInfo.hProcess, &creationTime, &exitTime, &kernelTime, &userTime))
+	{
+		return false;
+	}
+
+	*_pCPUTime = (Int64ShllMod32(kernelTime.dwHighDateTime, 32) | kernelTime.dwLowDateTime) +
+								  (Int64ShllMod32(userTime.dwHighDateTime, 32) | userTime.dwLowDateTime);
+
+	return true;
+}
+
+bool Process_Impl::GetMemoryWorkingSetSize(size_t *_pWorkingSetSize) const threadsafe
+{
+	PROCESS_MEMORY_COUNTERS_EX m;
+	memset(&m, 0, sizeof(m));
+	m.cb = sizeof(m);
+
+	if (!oWinPSAPI::Singleton()->GetProcessMemoryInfo(ProcessInfo.hProcess, (PROCESS_MEMORY_COUNTERS*)&m, m.cb))
+	{
+		return false;
+	}
+
+	*_pWorkingSetSize = m.WorkingSetSize;
+	return true;
+}
+
+
+size_t Process_Impl::GetThreadId() const threadsafe
+{
+	return ProcessInfo.dwThreadId;
+}
+
+size_t Process_Impl::GetProcessID() const threadsafe
+{
+	return ProcessInfo.dwProcessId;
 }
 
 bool Process_Impl::GetExitCode(int* _pExitCode) const threadsafe

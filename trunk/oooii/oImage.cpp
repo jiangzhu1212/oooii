@@ -1,36 +1,15 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oAssert.h>
+#include <oooii/oColor.h>
 #include <oooii/oErrno.h>
+#include <oooii/oFile.h>
 #include <oooii/oImage.h>
 #include <oooii/oPath.h>
 #include <oooii/oRefCount.h>
 #include <oooii/oSingleton.h>
-#include <oooii/oStdio.h>
-#include <oooii/oThreading.h>
+#include <oooii/oMutex.h>
 #include <oooii/oWindows.h>
+#include <oooii/oBuffer.h>
 #include <FreeImage.h>
 
 oSurface::FORMAT GetSurfaceFormat(FIBITMAP* _pBitmap)
@@ -161,7 +140,10 @@ int GetSaveFlags(FREE_IMAGE_FORMAT _Format, oImage::COMPRESSION _Compression)
 	return 0;
 }
 
-struct FIStaticInitialization : public oProcessSingleton<FIStaticInitialization>
+// @oooii-Andrew: was oProcessSingleton.  This probably needs to be an oModuleSingleton, particularly
+// to fix the ico free image crash where only one module (oOmek) runs the initialization but the exe GestureServer
+// attempts to load the icon.
+struct FIStaticInitialization : public oModuleSingleton<FIStaticInitialization>
 {
 	struct Run
 	{
@@ -184,7 +166,7 @@ struct FIStaticInitialization : public oProcessSingleton<FIStaticInitialization>
 
 	static void FreeImageErrorHandler(FREE_IMAGE_FORMAT fif, const char *message)
 	{
-		oMsgBox::printf(oMsgBox::ERR, "OOOii oImage Interface", "%s format image file: %s", FreeImage_GetFormatFromFIF(fif), message);
+		oWARNA("%s format image file: %s", FreeImage_GetFormatFromFIF(fif), message);
 	}
 };
 
@@ -210,15 +192,21 @@ struct oImage_Impl : public oImage
 
 	void GetDesc(DESC* _pDesc) const threadsafe override;
 
-	void* GetData() threadsafe override;
-	const void* GetData() threadsafe const override;
+	void* Map() threadsafe override;
+	const void* Map() const threadsafe override;
+
+	void Unmap() threadsafe override;
+	void Unmap() const threadsafe override;
+
+	bool Compare(const oImage* _pOtherImage, unsigned int _BitFuzziness, unsigned int* _pNumDifferingPixels = 0, oImage** _ppDiffImage = 0, unsigned int _DiffMultiplier = 1) override;
 
 	bool Save(const char* _Path, COMPRESSION _Compression = NONE) threadsafe override;
 	size_t Save(const char* _Path, void* _pBuffer, size_t _SizeofBuffer, COMPRESSION _Compression = NONE) threadsafe override;
 	
+	bool GetAsRGBA(BYTE* _pOutput, size_t _OutputSize) threadsafe override;
+
 	#if defined(_WIN32) || defined(_WIN64)
 		HBITMAP AsBmp() threadsafe override;
-		HICON AsIco() threadsafe override;
 	#endif
 
 	FIBITMAP* bmp;
@@ -237,6 +225,15 @@ oImage_Impl::oImage_Impl(FIBITMAP* _bmp)
 		FreeImage_Unload(_bmp);
 	}
 
+#ifdef _DEBUG
+	for(int m = FIMD_COMMENTS; m <= FIMD_CUSTOM; m++)
+		if(FreeImage_GetMetadataCount((FREE_IMAGE_MDMODEL)m, bmp))
+		{
+			oWARN("Image contains metadata. FreeImage will leak when unloading this image.");
+			break;
+		}
+#endif // _DEBUG
+
 	oASSERT(FIStaticInitialization::Singleton()->IsInitialized, "FreeImage has not been initialized.");
 }
 
@@ -250,7 +247,7 @@ oImage_Impl::~oImage_Impl()
 void oImage_Impl::FlipHorizontal() threadsafe
 {
 	oRWMutex::ScopedLock lock(Mutex);
-	#ifdef _DEBUG
+	#ifdef oENABLE_ASSERTS
 		BOOL successfulFlipHorizontal = 
 	#endif
 	FreeImage_FlipHorizontal(bmp);
@@ -261,7 +258,7 @@ void oImage_Impl::FlipHorizontal() threadsafe
 void oImage_Impl::FlipVertical() threadsafe
 {
 	oRWMutex::ScopedLock lock(Mutex);
-	#ifdef _DEBUG
+	#ifdef oENABLE_ASSERTS
 		BOOL successfulFlipVertical = 
 	#endif
 	FreeImage_FlipVertical(bmp);
@@ -288,16 +285,87 @@ void oImage_Impl::GetDesc(DESC* _pDesc) const threadsafe
 	_pDesc->Size = oSurface::CalculateSize(&desc);
 }
 
-void* oImage_Impl::GetData() threadsafe
+void* oImage_Impl::Map() threadsafe
 {
-	oRWMutex::ScopedLock lock(Mutex);
+	Mutex.Lock();
 	return FreeImage_GetBits(bmp);
 }
 
-const void* oImage_Impl::GetData() const threadsafe
+const void* oImage_Impl::Map() const threadsafe
 {
-	oRWMutex::ScopedLockRead lock(Mutex);
+	Mutex.LockRead();
 	return FreeImage_GetBits(bmp);
+}
+
+void oImage_Impl::Unmap() threadsafe
+{
+	Mutex.Unlock();
+}
+
+void oImage_Impl::Unmap() const threadsafe
+{
+	Mutex.UnlockRead();
+}
+
+bool oImage_Impl::Compare(const oImage* _pOtherImage, unsigned int _BitFuzziness, unsigned int* _pNumDifferingPixels, oImage** _ppDiffImage, unsigned int _DiffMultiplier)
+{
+	oImage::DESC desc1, desc2;
+	GetDesc(&desc1);
+	_pOtherImage->GetDesc(&desc2);
+
+	if (desc1.Size != desc2.Size)
+	{
+		oSetLastError(EINVAL, "Image sizes don't match.");
+		return false;
+	}
+
+	if (_ppDiffImage)
+	{
+		oImage::DESC desc;
+		desc.Width = desc1.Width;
+		desc.Height = desc1.Height;
+		desc.Format = oSurface::R8G8B8A8_UNORM;
+		desc.Pitch = oSurface::CalcRowPitch(desc.Format, desc.Width);
+		desc.Size = oSurface::CalcLevelPitch(desc.Format, desc.Width, desc.Height);
+		if (!oImage::Create(&desc, _ppDiffImage))
+			return false;
+	}
+
+	// @oooii-tony: This is ripe for parallelism. oParallelFor is still being
+	// brought up at this time, but should be deployed here.
+
+	const oColor* c1 = (oColor*)Map();
+	const oColor* c2 = (oColor*)_pOtherImage->Map();
+
+	unsigned int* diff = (unsigned int*)(_ppDiffImage ? (*_ppDiffImage)->Map() : 0);
+
+	unsigned int nDifferences = 0;
+
+	const size_t nPixels = desc1.Size / sizeof(oColor);
+	for (size_t i = 0; i < nPixels; i++)
+	{
+		if (!oEqual(c1[i], c2[i], _BitFuzziness))
+		{
+			nDifferences++;
+
+			if (diff)
+				diff[i] = oDiffColorsRGB(c1[i], c2[i], _DiffMultiplier);
+		}
+
+		else if (diff)
+			diff[i] = 0xff000000;
+	}
+
+	Unmap();
+	_pOtherImage->Unmap();
+
+	if (_ppDiffImage)
+		(*_ppDiffImage)->Unmap();
+
+	if (_pNumDifferingPixels)
+		*_pNumDifferingPixels = nDifferences;
+
+	return true;
 }
 
 bool oImage_Impl::Save(const char* _Path, COMPRESSION _Compression) threadsafe
@@ -367,24 +435,27 @@ size_t oImage_Impl::Save(const char* _Path, void* _pBuffer, size_t _SizeofBuffer
 	return written;
 }
 
-#if defined(_WIN32) || defined(_WIN64)
-	#include <oooii/oWindows.h>
-
-	HBITMAP oImage_Impl::AsBmp() threadsafe
+bool oImage_Impl::GetAsRGBA(BYTE* _pOutput, size_t _OutputSize) threadsafe
+{
+	size_t size = FreeImage_GetWidth(bmp) * FreeImage_GetHeight(bmp) * 4;
+	if(size > _OutputSize)
 	{
-		oRWMutex::ScopedLockRead lock(Mutex);
-		return CreateDIBitmap(GetDC(0), FreeImage_GetInfoHeader(bmp), CBM_INIT, FreeImage_GetBits(bmp), FreeImage_GetInfo(bmp), DIB_RGB_COLORS);
+		oSetLastError(E2BIG, "Output buffer too small for converted image.");
+		return false;
 	}
 
-	HICON oImage_Impl::AsIco() threadsafe
+	FreeImage_ConvertToRawBits(_pOutput, bmp, FreeImage_GetWidth(bmp) * 4, 32, 0xFF000000, 0x00FF0000, 0x0000FF00);
+
+	// @oooii-mike: FreeImage kindly converts colors to bgra format, ignoring the parameters in ConvertToRawBits, and they need to be converted back:
+	for(size_t i = 0; i+3 < size; i+=4)
 	{
-		oRWMutex::ScopedLockRead lock(Mutex);
-		HBITMAP hBmp = CreateDIBitmap(GetDC(0), FreeImage_GetInfoHeader(bmp), CBM_INIT, FreeImage_GetBits(bmp), FreeImage_GetInfo(bmp), DIB_RGB_COLORS);
-		HICON hIcon = oIconFromBitmap(hBmp);
-		DeleteObject(hBmp);
-		return hIcon;
+		_pOutput[i] ^= _pOutput[i+2];
+		_pOutput[i+2] ^= _pOutput[i];
+		_pOutput[i] ^= _pOutput[i+2];
 	}
-#endif
+
+	return true;
+}
 
 static FIBITMAP* FILoadFromMemory(const void* _pBuffer, size_t _SizeofBuffer)
 {
@@ -410,16 +481,18 @@ static FIBITMAP* FICreate(const oImage::DESC* _pDesc)
 	int bpp = 0;
 	unsigned int r = 0, g = 0, b = 0;
 
+	bpp = static_cast<int>(oSurface::GetBitSize(_pDesc->Format));
+
 	switch (_pDesc->Format)
 	{
 		case oSurface::R8G8B8A8_UNORM:
-			bpp = static_cast<int>(oSurface::GetBitSize(_pDesc->Format));
 			r = FI_RGBA_RED_MASK;
 			g = FI_RGBA_GREEN_MASK;
 			b = FI_RGBA_BLUE_MASK;
 			break;
 
 		default:
+			oSetLastError(EINVAL, "oImage::Create() failed: Unsupported format %s", oAsString(_pDesc->Format));
 			return 0;
 	}
 
@@ -440,4 +513,39 @@ bool oImage::Create(const DESC* _pDesc, oImage** _ppImage)
 	FIBITMAP* bmp = FICreate(_pDesc);
 	*_ppImage = bmp ? new oImage_Impl(bmp) : 0;
 	return !!*_ppImage;
+}
+
+#if defined(_WIN32) || defined(_WIN64)
+	#include <oooii/oWindows.h>
+
+	HBITMAP oImage_Impl::AsBmp() threadsafe
+	{
+		oRWMutex::ScopedLockRead lock(Mutex);
+		return CreateDIBitmap(GetDC(0), FreeImage_GetInfoHeader(bmp), CBM_INIT, FreeImage_GetBits(bmp), FreeImage_GetInfo(bmp), DIB_RGB_COLORS);
+	}
+#endif
+
+void SetConsoleOOOiiIcon()
+{
+	#if defined(_WIN32) || defined (_WIN64)
+		// Load OOOii lib icon
+		extern void GetDescoooii_ico(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
+		const char* BufferName = 0;
+		const void* pBuffer = 0;
+		size_t bufferSize = 0;
+		GetDescoooii_ico(&BufferName, &pBuffer, &bufferSize);
+
+		// This function might be called from static init, so ensure 
+		// FreeImage is up and running.
+		FIStaticInitialization::Singleton();
+
+		oRef<oImage> ico;
+		oVERIFY(oImage::Create(pBuffer, bufferSize, &ico));
+
+		HBITMAP hBmp = ico->AsBmp();
+		HICON hIcon = oIconFromBitmap(hBmp);
+		oSetIcon(GetConsoleWindow(), false, hIcon);
+		DeleteObject(hIcon);
+		DeleteObject(hBmp);
+	#endif
 }

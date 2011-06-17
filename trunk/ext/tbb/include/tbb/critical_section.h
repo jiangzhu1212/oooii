@@ -30,7 +30,7 @@
 #define _TBB_CRITICAL_SECTION_H_
 
 #if _WIN32||_WIN64
-#include "machine/windows_api.h"
+#include <windows.h>
 #else
 #include <pthread.h>
 #include <errno.h>

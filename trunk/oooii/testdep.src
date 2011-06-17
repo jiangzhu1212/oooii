@@ -1,0 +1,14 @@
+// $(header)
+#include "pch.h"
+#include <oooii/oRef.h>
+#include <oooii/oBuffer.h>
+#include <oooii/oStdio.h>
+#include <oooii/oLockedPointer.h>
+#include <oooii/oPath.h>
+#include <oooii/oString.h>
+#include <oooii/oTest.h>
+#include <time.h>
+
+void Afunction()
+{
+}

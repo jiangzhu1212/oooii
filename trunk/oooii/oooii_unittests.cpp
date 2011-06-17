@@ -1,30 +1,8 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include "pch.h"
+// $(header)
 #include <oooii/oAssert.h>
 #include <oooii/oConsole.h>
 #include <oooii/oDebugger.h>
+#include <oooii/oFile.h>
 #include <oooii/oImage.h>
 #include <oooii/oStdio.h>
 #include <oooii/oString.h>
@@ -68,25 +46,6 @@ void InitEnv()
 	oRecycleScheduler();
 
 	oConsole::SetTitle(sTITLE);
-
-	#if defined(_WIN32) || defined (_WIN64)
-		// Load/test OOOii lib icon:
-		extern void GetDescoooii_ico(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
-		const char* BufferName = 0;
-		const void* pBuffer = 0;
-		size_t bufferSize = 0;
-		GetDescoooii_ico(&BufferName, &pBuffer, &bufferSize);
-
-		oRef<oImage> ico;
-		oVERIFY(oImage::Create(pBuffer, bufferSize, &ico));
-
-		HICON hIcon = ico->AsIco();
-
-		oSetIcon(GetConsoleWindow(), false, hIcon);
-
-		DeleteObject(hIcon);
-	#endif
-
 	oDebugger::ReportLeaksOnExit(true);
 
 	// Resize console
@@ -181,14 +140,60 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 
 bool GetDataPath(char* _DataPath, size_t _SizeofDataPath, const char* _UserDataPath)
 {
-	if (_UserDataPath && oFile::Exists(_UserDataPath))
-		return 0 == strcpy_s(_DataPath, _SizeofDataPath, _UserDataPath);
+	if( _UserDataPath && oFindPath(_DataPath, _SizeofDataPath, _UserDataPath, NULL, NULL, oFile::Exists ) )
+		return true;
 
 	// If here, give up to CWD.
 	return oGetSysPath(_DataPath, _SizeofDataPath, oSYSPATH_CWD);
 }
 
 template<size_t size> inline bool GetDataPath(char (&_DataPath)[size], const char* _UserDataPath) { return GetDataPath(_DataPath, size, _UserDataPath); }
+
+struct oNamedFileDesc : oFile::DESC
+{
+	char FileName[_MAX_PATH];
+	static bool NewerToOlder(const oNamedFileDesc& _File1, const oNamedFileDesc& _File2)
+	{
+		return _File1.Written > _File2.Written;
+	}
+};
+
+
+void DeleteOldLogFiles(const char* _SpecialModeName)
+{
+	#ifdef _DEBUG
+		const size_t kLogHistory = 10;
+
+		char logFileWildcard[_MAX_PATH];
+		oGetLogFilePath(logFileWildcard, _SpecialModeName);
+
+		char* p = oStrStrReverse(logFileWildcard, "_");
+		strcpy_s(p, oCOUNTOF(logFileWildcard) - std::distance(logFileWildcard, p), "*.txt");
+
+		std::vector<oNamedFileDesc> logs;
+		logs.reserve(20);
+
+		oNamedFileDesc fd;
+		void* fc = 0;
+		if (oFile::FindFirst(&fd, fd.FileName, logFileWildcard, &fc))
+		{
+			logs.push_back(fd);
+
+			while (oFile::FindNext(&fd, fd.FileName, fc))
+				logs.push_back(fd);
+
+			oVERIFY(oFile::CloseFind(fc));
+		}
+
+		if (logs.size() > kLogHistory)
+		{
+			std::sort(logs.begin(), logs.end(), oNamedFileDesc::NewerToOlder);
+			for (size_t i = kLogHistory; i < logs.size(); i++)
+				oFile::Delete(logs[i].FileName);
+		}
+
+	#endif
+}
 
 void EnableLogFile(const char* _SpecialModeName)
 {
@@ -212,8 +217,9 @@ void SetTestManagerDesc(const PARAMETERS* _pParameters)
 	desc.DataPath = dataPath;
 	desc.GoldenPath = _pParameters->GoldenPath;
 	desc.OutputPath = _pParameters->OutputPath;
-	desc.NameColumnWidth = 36;
-	desc.StatusColumnWidth = 10;
+	desc.NameColumnWidth = 30;
+	desc.TimeColumnWidth = 13;
+	desc.StatusColumnWidth = 9;
 	desc.RandomSeed = _pParameters->RandomSeed ? _pParameters->RandomSeed : oTimerMS();
 	desc.NumRunIterations = _pParameters->RepeatNumber ? _pParameters->RepeatNumber : 1;
 	desc.ImageFuzziness = 10; // @oooii-tony: FIXME: compression seems to be non-repeatable, so leave a wide margin for error
@@ -229,6 +235,7 @@ int main(int argc, const char* argv[])
 	PARAMETERS parameters;
 	ParseCommandLine(argc, argv, &parameters);
 	SetTestManagerDesc(&parameters);
+	DeleteOldLogFiles(parameters.SpecialMode);
 	EnableLogFile(parameters.SpecialMode);
 
 	int result = 0;

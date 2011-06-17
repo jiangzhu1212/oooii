@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 
 // This file contains typical "message only in debug" mode type macros. 
 // oENABLE_ASSERTS can be defined in any build to have the macros do something
@@ -43,8 +21,12 @@
 #define oAssert_h
 
 #include <oooii/oErrno.h>
-#include <oooii/oMsgBox.h>
 #include <stdarg.h>
+#include <stdlib.h>
+
+#ifndef oENABLE_RELEASE_ASSERTS
+	#define oENABLE_RELEASE_ASSERTS 0
+#endif
 
 #ifndef oENABLE_ASSERTS
 	#ifdef _DEBUG
@@ -75,20 +57,20 @@ namespace oAssert
 		const char* Function;
 		const char* Filename;
 		TYPE Type;
+		ACTION DefaultResponse;
 		int Line;
 		int MsgId;
 	};
 
-	typedef ACTION (*VPrintMessageFn)(const ASSERTION* _pAssertion, const char* _Format, va_list _Args);
+	typedef ACTION (*VPrintMessageFn)(const ASSERTION& _Assertion, void* _hLogFile, const char* _Format, va_list _Args);
 
-	ACTION VPrintMessage(const ASSERTION* _pAssertion, const char* _Format, va_list _Args);
-	inline ACTION PrintMessage(const ASSERTION* _pAssertion, const char* _Format, ...) { va_list args; va_start(args, _Format); return VPrintMessage(_pAssertion, _Format, args); }
+	ACTION VPrintMessage(const ASSERTION& _Assertion, const char* _Format, va_list _Args);
+	inline ACTION PrintMessage(const ASSERTION& _Assertion, const char* _Format, ...) { va_list args; va_start(args, _Format); return VPrintMessage(_Assertion, _Format, args); }
 
 	struct DESC
 	{
 		DESC()
-			: VPrintMessage(0)
-			, LogFilePath(0)
+			: LogFilePath(0)
 			, EnableWarnings(true)
 			, PrintCallstack(true)
 			, PrefixFileLine(true)
@@ -97,14 +79,6 @@ namespace oAssert
 			, PrefixMsgId(false)
 		{}
 
-		// User VPrintMessage function. If none is specified, a default one will be
-		// used. The function will be passed an ASSERTION struct containing 
-		// information derived from the usage. If the message is TYPE_TRACE or 
-		// TYPE_WARNING, then Expression will be "!", implying no relevant expression
-		// was specified. From the user function, GetDesc() can be called to 
-		// determine various user-specified options.
-		VPrintMessageFn VPrintMessage;
-		
 		// If specified and a valid, accessible file path, all output through 
 		// PrintMessage should also be recorded to the specified file.
 		const char* LogFilePath;
@@ -121,6 +95,20 @@ namespace oAssert
 	void SetDesc(const DESC* _pDesc);
 	void GetDesc(DESC* _pDesc);
 
+	// Push and pops a user VPrintMessage function. By default there is a 
+	// very low-level reporting system at the base used during early bootstrap
+	// and a more robust reporting system that is pushed when all prerequisits
+	// are initialized. This can return false if the push fails because the
+	// stack is full.
+	bool PushMessageHandler(VPrintMessageFn _VPrintMessage);
+	VPrintMessageFn PopMessageHandler();
+
+	// oAssert is useful even during static init/deinit. The singleton 
+	// initializes on-demand well, but we need this to ensure against premature
+	// deinitialization.
+	void Reference();
+	void Release();
+
 	// Enable PrefixMsgId in the DESC to get the id of any annoying messages to 
 	// be disabled.
 	void AddMessageFilter(int _MsgId);
@@ -132,61 +120,75 @@ namespace oAssert
 
 } // namespace oAssert
 
+// _____________________________________________________________________________
+// Platform-specific macros
+
 #if defined(_WIN32) || defined(_WIN64)
-	#include <crtdbg.h>
 	#define oSTATICASSERT(cond) _STATIC_ASSERT(cond)
 	#define oDEBUGBREAK() __debugbreak()
-	#define PROCESS_ACTION__(action) do { if (action == oAssert::ABORT) ::exit(__LINE__); else if (action == oAssert::BREAK) oDEBUGBREAK(); else if (action == oAssert::IGNORE_ALWAYS) bIgnoreFuture = true; } while(0)
-	#define PREPARE_ASSERTION__(type, cond, msg, a) do { a.Expression = #cond; a.Function = __FUNCTION__; a.Filename = __FILE__; a.Line = __LINE__; a.Type = oAssert::type; a.MsgId = oAssert::GetMsgId(msg); } while(0)
-	#define PRINTMESSAGE__(type, cond, msg, ...) do { static bool bIgnoreFuture = false; if (!bIgnoreFuture) { oAssert::ASSERTION a; PREPARE_ASSERTION__(type, !, msg "\n", a); oAssert::ACTION action = oAssert::PrintMessage(&a, msg "\n", ## __VA_ARGS__); PROCESS_ACTION__(action); } } while(0)
-	#define oTRACEA(msg, ...) PRINTMESSAGE__(TYPE_TRACE, !, msg, ## __VA_ARGS__)
-	#define oWARNA(msg, ...) PRINTMESSAGE__(TYPE_WARNING, !, msg, ## __VA_ARGS__)
-	#define oWARNA_ONCE(msg, ...) do { static bool bIgnoreOnce = false; if (!bIgnoreOnce) { oWARNA(msg, ## __VA_ARGS__); bIgnoreOnce = true; } } while(0)
-	#define oTRACEA_ONCE(msg, ...) do { static bool bIgnoreOnce = false; if (!bIgnoreOnce) { oTRACEA(msg ## __VA_ARGS__); bIgnoreOnce = true; } } while(0)
-	#if oENABLE_ASSERTS == 1
-		#define oASSERT(cond, msg, ...) do { if (!(cond)) { PRINTMESSAGE__(TYPE_ASSERT, cond, msg, ## __VA_ARGS__); } } while(0)
-		#define oWARN(msg, ...) oWARNA(msg, ## __VA_ARGS__)
-		#define oWARN_ONCE(msg, ...) oWARNA_ONCE(msg, ## __VA_ARGS__)
-		#define oTRACE(msg, ...) oTRACEA(msg, ## __VA_ARGS__)
-		#define oTRACE_ONCE(msg, ...) oTRACEA_ONCE(msg, ## __VA_ARGS__)
-		#define oASSUME(x) do { oASSERT(0, "Unexpected code execution"); __assume(0); } while(0)
-		#define oVERIFY(fn) do { if (!(fn)) { PRINTMESSAGE__(TYPE_ASSERT, fn, "Error %s: %s", oGetErrnoString(oGetLastError()), oGetLastErrorDesc()); } } while(0)
+	#define oASSERT_NOOP __noop
+	#define oASSERT_NOEXEC __assume(0)
+#else
+	#error Unsupported platform (oSTATICASSERT)
+	#error Unsupported platform (oDEBUGBREAK)
+	#error Unsupported platform (oASSERT_NOOP)
+	#error Unsupported platform (oASSERT_NOEXEC)
+#endif
 
-		// error check wrappers for WIN32 API. These interpret HRESULTS, so should not 
-		// be used on anything but WIN32 API. oVB is for the return false, GetLastError()
-		// pattern, and oV is for direct HRESULT return values.
-		extern int oGetNativeErrorDesc(char* _StrDestination, size_t _SizeofStrDestination, size_t _NativeError);
-		#define oVB(fn) { if (!(fn)) { HRESULT HR__ = ::GetLastError(); char errDesc[1024]; oGetNativeErrorDesc(errDesc, _countof(errDesc), HR__); PRINTMESSAGE__(TYPE_ASSERT, fn, "HRESULT 0x%08x: %s", HR__, errDesc); } } while(0)
-		#define oV(fn) { HRESULT HR__ = fn; if (FAILED(HR__)) { char errDesc[1024]; oGetNativeErrorDesc(errDesc, _countof(errDesc), HR__); PRINTMESSAGE__(TYPE_ASSERT, fn, "HRESULT 0x%08x: %s", HR__, errDesc); } } while(0)
+// _____________________________________________________________________________
+// Main entry point that ensures all __FILE__ and __LINE__ macros are 
+// accurately expanded as well as ensuring that a break occurs on the instance 
+// of the assert itself rather than inside a utility function.
 
-		// Convenience wrapper for quick scoped leak checking
-		class oLeakCheck
-		{
-			const char* Name;
-			_CrtMemState StartState;
-		public:
-			oLeakCheck(const char* _ConstantName = "") : Name(_ConstantName ? _ConstantName : "(unnamed)") { _CrtMemCheckpoint(&StartState); }
-			~oLeakCheck()
-			{
-				_CrtMemState endState, stateDiff;
-				_CrtMemCheckpoint(&endState);
-				_CrtMemDifference(&stateDiff, &StartState, &endState);
-				oTRACE("---- Mem diff for %s ----", Name);
-				_CrtMemDumpStatistics(&stateDiff);
-			}
-		};
-	#else
-			#define oASSERT(cond, msg, ...) __noop
-			#define oWARN(msg, ...) do { oMsgBox::printf(oMsgBox::WARN, "OOOii Debug Library", "Release Warning!\n%s() %s(%u)\n\n" msg, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__); } while(0)
-			#define oWARN_ONCE(msg, ...) oWARN(msg, ## __VA_ARGS__);
-			#define oTRACE(msg, ...) __noop
-			#define oTRACE_ONCE(msg, ...) __noop
-			#define oASSUME(x) __assume(0)
-			#define oVERIFY(fn) fn
-			#define	oVB(fn) fn
-			#define oV(fn) fn
-		#endif
-	#else
-		#error Unsupported platform
-	#endif
+#if (defined(_DEBUG) && oENABLE_ASSERTS == 1) || oENABLE_RELEASE_ASSERTS == 1
+
+	#define oASSERT_PRINT_MESSAGE(type, defaultresponse, cond, msg, ...) do \
+		{	static bool oAssert_IgnoreFuture = false; \
+			if (!oAssert_IgnoreFuture) \
+			{	oAssert::ASSERTION a; a.Expression = #cond; a.Function = __FUNCTION__; a.Filename = __FILE__; a.Line = __LINE__; a.Type = oAssert::type; a.DefaultResponse = defaultresponse; a.MsgId = oAssert::GetMsgId(msg); \
+				oAssert::ACTION action__ = oAssert::PrintMessage(a, msg "\n", ## __VA_ARGS__); \
+				switch (action__) { case oAssert::ABORT: ::exit(__LINE__); break; case oAssert::BREAK: oDEBUGBREAK(); break; case oAssert::IGNORE_ALWAYS: oAssert_IgnoreFuture = true; break; default: break; } \
+			} \
+		} while(0)
+
+#endif
+
+// _____________________________________________________________________________
+// Always-macros (debug or release)
+
+#if oENABLE_RELEASE_ASSERTS == 1 || oENABLE_ASSERTS == 1
+	#define oTRACEA(msg, ...) oASSERT_PRINT_MESSAGE(TYPE_TRACE, oAssert::IGNORE_ONCE, !, msg, ## __VA_ARGS__)
+	#define oTRACEA_ONCE(msg, ...) oASSERT_PRINT_MESSAGE(TYPE_TRACE, oAssert::IGNORE_ALWAYS, !, msg, ## __VA_ARGS__)
+	#define oWARNA(msg, ...) oASSERT_PRINT_MESSAGE(TYPE_WARNING, oAssert::IGNORE_ONCE, !, msg, ## __VA_ARGS__)
+	#define oWARNA_ONCE(msg, ...) oASSERT_PRINT_MESSAGE(TYPE_WARNING, oAssert::IGNORE_ALWAYS, !, msg, ## __VA_ARGS__)
+	#define oASSERTA(cond, msg, ...) do { if (!(cond)) { oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, cond, msg, ## __VA_ARGS__); } } while(0)
+#else
+	#define oTRACEA(msg, ...) oASSERT_NOOP
+	#define oTRACEA_ONCE(msg, ...) oASSERT_NOOP
+	#define oWARNA(msg, ...) oASSERT_NOOP
+	#define oWARNA_ONCE(msg, ...) oASSERT_NOOP
+	#define oASSERTA(msg, ...) oASSERT_NOOP
+#endif
+
+// _____________________________________________________________________________
+// Debug-only macros
+
+#if oENABLE_ASSERTS == 1
+	#define oTRACE(msg, ...) oASSERT_PRINT_MESSAGE(TYPE_TRACE, oAssert::IGNORE_ONCE, !, msg, ## __VA_ARGS__)
+	#define oTRACE_ONCE(msg, ...) oASSERT_PRINT_MESSAGE(TYPE_TRACE, oAssert::IGNORE_ALWAYS, !, msg, ## __VA_ARGS__)
+	#define oWARN(msg, ...) oASSERT_PRINT_MESSAGE(TYPE_WARNING, oAssert::IGNORE_ONCE, !, msg, ## __VA_ARGS__)
+	#define oWARN_ONCE(msg, ...) oASSERT_PRINT_MESSAGE(TYPE_WARNING, oAssert::IGNORE_ALWAYS, !, msg, ## __VA_ARGS__)
+	#define oASSERT(cond, msg, ...) do { if (!(cond)) { oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, cond, msg, ## __VA_ARGS__); } } while(0)
+	#define oASSUME(x) do { oASSERT(0, "Unexpected code execution"); oASSERT_NOEXEC; } while(0)
+	#define oVERIFY(fn) do { if (!(fn)) { oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, fn, "Error %s: %s", oGetErrnoString(oGetLastError()), oGetLastErrorDesc()); } } while(0)
+#else
+	#define oTRACE(msg, ...) oASSERT_NOOP
+	#define oTRACE_ONCE(msg, ...) oASSERT_NOOP
+	#define oWARN(msg, ...) oASSERT_NOOP
+	#define oWARN_ONCE(msg, ...) oASSERT_NOOP
+	#define oASSERT(msg, ...) oASSERT_NOOP
+	#define oASSUME(x) oASSERT_NOEXEC
+	#define oVERIFY(fn) fn
+#endif
+
 #endif

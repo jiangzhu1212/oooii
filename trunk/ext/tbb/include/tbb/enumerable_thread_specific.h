@@ -33,10 +33,12 @@
 #include "tbb_thread.h"
 #include "cache_aligned_allocator.h"
 #include "aligned_space.h"
+#if __SUNPRO_CC
 #include <string.h>  // for memcpy
+#endif
 
 #if _WIN32||_WIN64
-#include "machine/windows_api.h"
+#include <windows.h>
 #else
 #include <pthread.h>
 #endif

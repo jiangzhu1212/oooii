@@ -1,33 +1,11 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #pragma once
 #ifndef oMouse_h
 #define oMouse_h
 
 #include <oooii/oInterface.h>
 
-interface oMouse : public oInterface
+interface oMouse : oInterface
 {
 	enum BUTTON
 	{
@@ -56,7 +34,18 @@ interface oMouse : public oInterface
 		~ScopedWait();
 	};
 
-	static bool Create(void* _AssociatedNativeHandle, bool _ShortCircuitEvents, threadsafe oMouse** _ppMouse);
+	struct DESC
+	{
+		DESC()
+			: ShortCircuitEvents(false)
+			, ClipCursorMouseDown(true)
+		{}
+		
+		bool ShortCircuitEvents;	// Prevents event handlers below you to not receive events
+		bool ClipCursorMouseDown;	// Clips the cursor to the window if any button is down
+	};
+
+	static bool Create(const DESC& _Desc, void* _WindowNativeHandle, threadsafe oMouse** _ppMouse);
 
 	// On event-driven platforms (Windows) where there isn't an explicit update 
 	// for the application's context, a button might not be able to be determined

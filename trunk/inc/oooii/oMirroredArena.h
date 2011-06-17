@@ -1,33 +1,11 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #pragma once
 #ifndef oMirroredArena_h
 #define oMirroredArena_h
 
 #include <oooii/oInterface.h>
 
-interface oMirroredArena : public oInterface
+interface oMirroredArena : oInterface
 {
 	// Allocates a large block of memory fit to be used with a custom allocator.
 	// This API exposes the platform's memory protection and uses that mechanism
@@ -44,6 +22,7 @@ interface oMirroredArena : public oInterface
 		READ,
 		READ_WRITE,
 		READ_WRITE_DIFF,
+		READ_WRITE_DIFF_NO_EXCEPTIONS,
 	};
 
 	struct DESC
@@ -84,13 +63,13 @@ interface oMirroredArena : public oInterface
 	// Interprets the specified buffer as a change buffer and returns it's total 
 	// size.
 	static size_t GetChangeBufferSize(const void* _pChangeBuffer);
-	
+
 	static bool Create(const DESC* _pDesc, oMirroredArena** _ppMirroredArena);
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 
 	// Returns the number of pages dirtied (written to) at the instantaneous 
-	// moment this is called. Anohter immediate call to this might result in a 
+	// moment this is called. Another immediate call to this might result in a 
 	// different value because any number of threads might be dirtying memory in 
 	// this arena.
 	virtual size_t GetNumDirtyPages() const threadsafe = 0;
@@ -121,6 +100,10 @@ interface oMirroredArena : public oInterface
 
 	// Apply the provided change buffer.
 	virtual bool ApplyChanges(const void* _pChangeBuffer) = 0;
+
+	// Returns true if the specified user memory range has been fully recorded in
+	// the specified change buffer populated by a call to RetrieveChanges.
+	virtual bool IsInChanges(const void* _pAddress, size_t _Size, const void* _pChangeBuffer) const threadsafe = 0;
 
 	// Reserves a size (determined by _pDesc) of virtual memory.  This marks the 
 	// memory as reserved, but does not allocate and must be called before 

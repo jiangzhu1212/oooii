@@ -1,26 +1,5 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
+
 // Allocates indices, which can be used for fixed-size pool 
 // management. The allocated arena will contain a linked list 
 // of free indices, so it must be sized to contain the number 
@@ -60,7 +39,8 @@ class oIndexAllocator : public oIndexAllocatorBase
 {
 public:
 	oIndexAllocator();
-	oIndexAllocator(void* _pArena, size_t _SizeofArena); // call deinitialize explicitly to free arena
+	oIndexAllocator(void* _pArena, size_t _SizeofArena); // call deinitialized explicitly to free arena
+	virtual ~oIndexAllocator();
 
 	virtual size_t GetSize() const override;
 	inline unsigned int Allocate() { unsigned int allocatedIndex = Freelist; Freelist = static_cast<unsigned int*>(Arena)[Freelist]; return allocatedIndex; }
