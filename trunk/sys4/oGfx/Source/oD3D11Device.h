@@ -5,10 +5,19 @@
 
 #include <oGfx/oGfx.h>
 #include <oooii/oNoncopyable.h>
+#include <oooii/oWindows.h>
+#include <vector>
+
+#define oD3D11DEVICE() \
+	oRef<ID3D11Device> D3DDevice; \
+	oVERIFY(Device->QueryInterface(oGetGUID<ID3D11Device>(), &D3DDevice));
 
 struct oD3D11Device : oGfxDevice, oNoncopyable
 {
-	oD3D11Device(ID3D11Device* _pD3DDevice, const oGfxDevice::DESC& _Desc, bool* _pSuccess);
+	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE2(oGetGUID<oD3D11Device>(), oGetGUID<oGfxDevice>());
+
+	oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc, bool* _pSuccess);
 
 	bool CreateCommandList(const char* _Name, const oGfxCommandList::DESC& _Desc, oGfxCommandList** _ppCommandList) threadsafe override;
 	void CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, oGfxPipeline** _ppPipeline) threadsafe override;
@@ -22,12 +31,17 @@ struct oD3D11Device : oGfxDevice, oNoncopyable
 	// API called by other oD3D11* objects
 	void Insert(oGfxCommandList* _pCommandList) threadsafe;
 	void Remove(oGfxCommandList* _pCommandList) threadsafe;
+	void DrawCommandLists() threadsafe;
 
 	oRef<ID3D11Device> D3DDevice;
 	oRef<ID3D11DeviceContext> ImmediateContext;
 
-	oMutex ContextsMutex;
-	oLockedVector<oGfxCommandList*> CommandLists; // non-oRefs to avoid circular refs
+	DESC Desc;
+	oRefCount RefCount;
+
+	oMutex CommandListsMutex;
+	std::vector<oGfxCommandList*> CommandLists; // non-oRefs to avoid circular refs
+	inline std::vector<oGfxCommandList*>& ProtectedCommandLists() threadsafe { return thread_cast<std::vector<oGfxCommandList*>&>(CommandLists); } // safe because this should only be used when protected by CommandListsMutex
 
 	//oD3D11RasterizerState RasterizerState;
 	//oD3D11BlendState BlendState;

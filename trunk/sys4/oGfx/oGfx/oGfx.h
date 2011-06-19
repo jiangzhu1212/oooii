@@ -273,6 +273,8 @@ interface oGfxCommandList : oGfxDeviceChild
 		oColor Color;
 	};
 
+	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+
 	// Begins recording of GPU command submissions. All rendering for this 
 	// context should occur between Begin() and End(). NOTE: If _NumViewports
 	// is 0 and/or _pViewports is NULL, a default full-rendertarget viewport

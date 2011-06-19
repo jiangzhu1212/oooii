@@ -6,8 +6,7 @@
 oDEFINE_GFXDEVICE_CREATE(oD3D11, Texture);
 oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, Texture)
 {
-	oRef<ID3D11Device> D3DDevice = 0;
-	oVERIFY(Device->QueryInterface(oGetGUID<ID3D11Device>(), &D3DDevice));
+	oD3D11DEVICE();
 	
 	switch (_Desc.Type)
 	{

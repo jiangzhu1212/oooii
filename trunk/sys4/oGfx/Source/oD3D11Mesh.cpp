@@ -6,8 +6,7 @@ oDEFINE_GFXDEVICE_CREATE(oD3D11, Mesh);
 oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, Mesh)
 {
 	*_pSuccess = false;
-	oRef<ID3D11Device> D3DDevice = 0;
-	oVERIFY(Device->QueryInterface(oGetGUID<ID3D11Device>(), &D3DDevice));
+	oD3D11DEVICE();
 
 	if (_Desc.NumIndices)
 		oVERIFY(oD3D11CreateIndexBuffer(D3DDevice, _Name, true, 0, _Desc.NumIndices, _Desc.NumIndices < 65535, &Indices));

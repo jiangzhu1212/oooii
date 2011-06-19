@@ -14,8 +14,8 @@
 #include <oooii/oRef.h>
 #include <oooii/oRefCount.h>
 
-#define oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(_oAPI, _ShortTypeName, _ResourceType) \
-	struct _oAPI##_ShortTypeName : oGfx##_ShortTypeName, oGfxDeviceChildMixin<oGfx##_ShortTypeName, _oAPI##_ShortTypeName, oGfxResource::_ResourceType>
+#define oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(_oAPI, _ShortTypeName) \
+	struct _oAPI##_ShortTypeName : oGfx##_ShortTypeName, oGfxDeviceChildMixin<oGfx##_ShortTypeName, _oAPI##_ShortTypeName>
 
 #define oDECLARE_GFXRESOURCE_IMPLEMENTATION(_oAPI, _ShortTypeName, _ResourceType) \
 	struct _oAPI##_ShortTypeName : oGfx##_ShortTypeName, oGfxResourceMixin<oGfx##_ShortTypeName, _oAPI##_ShortTypeName, oGfxResource::_ResourceType>
@@ -176,6 +176,9 @@ protected:
 		oCONSTRUCT(_pp##_TypeShortName, _oAPI##_TypeShortName(this, _Desc, _Name, &success)); \
 		return success; \
 	}
+
+#define oDECLARE_GFXDEVICECHILD_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName(threadsafe oGfxDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess);
+#define oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName::_oAPI##_TypeShortName(threadsafe oGfxDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess) : oGfxDeviceChildMixin(_pDevice, _Name)
 
 #define oDECLARE_GFXRESOURCE_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName(threadsafe oGfxDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess);
 #define oBEGIN_DEFINE_GFXRESOURCE_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName::_oAPI##_TypeShortName(threadsafe oGfxDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess) : oGfxResourceMixin(_pDevice, _Name)

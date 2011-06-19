@@ -21,6 +21,12 @@
     <ClCompile Include="oD3D11Mesh.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="oD3D11Device.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11CommandList.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -42,6 +48,12 @@
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="oD3D11Mesh.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Device.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11CommandList.h">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>

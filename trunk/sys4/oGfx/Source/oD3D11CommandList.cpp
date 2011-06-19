@@ -1,16 +1,15 @@
 // $(header)
-#include "oD3D11Context.h"
-#include <oooii/oD3D11.h>
-#include <oooii/oErrno.h>
+#include "oD3D11CommandList.h"
+#include "oD3D11Device.h"
 
-oDEFINE_GFXRESOURCE_CREATE(Context)
-oBEGIN_DEFINE_GFXAPI_CTOR(D3D11, Context)
+oDEFINE_GFXDEVICE_CREATE(oD3D11, CommandList);
+oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(oD3D11, CommandList)
 {
 	*_pSuccess = false;
-	ID3D11Device* D3DDevice = 0;
-	oVERIFY(Device->QueryInterface(oGetGUID(ID3D11Device), (void**)&D3DDevice));
+	oD3D11DEVICE();
 
-	if (FAILED(D3DDevice->CreateDeferredContext(0, &Context)))
+	HRESULT hr = D3DDevice->CreateDeferredContext(0, &Context);
+	if (FAILED(hr))
 	{
 		char err[128];
 		sprintf_s(err, "Failed to create oGfxDeviceContext %u: ", _Desc.DrawOrder);
@@ -18,31 +17,87 @@ oBEGIN_DEFINE_GFXAPI_CTOR(D3D11, Context)
 		return;
 	}
 
-	static_cast<oD3D11Device*>(Device.c_ptr())->Insert(this);
+	static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->Insert(this);
 
 	*_pSuccess = true;
 }
 
-oD3D11Context::~oD3D11Context()
+oD3D11CommandList::~oD3D11CommandList()
 {
-	static_cast<oD3D11Device*>(Device.c_ptr())->Remove(this);
+	static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->Remove(this);
 }
 
-void oD3D11Context::Begin(const RENDER_STATE& _RenderState)
+void oD3D11CommandList::Begin(
+	const float4x4& View
+	, const float4x4& Projection
+	, const oGfxPipeline* _pPipeline
+	, const oGfxRenderTarget* _pRenderTarget
+	, size_t _NumViewports
+	, const VIEWPORT* _pViewports)
 {
-	//struct RENDER_STATE
-	//{
-	//	float4x4 View;
-	//	float4x4 Projection;
-	//	PIPELINE_STATE State;
-	//	DEBUG_VISUALIZATION DebugVisualization;
-	//	oColor ClearColor;
-	//	float ClearDepthValue;
-	//	unsigned char ClearStencilValue;
-	//};
 }
 
-void oD3D11Context::End()
+void oD3D11CommandList::End()
 {
-	Context->FinishCommandList(FALSE, &Commands);
+	Context->FinishCommandList(FALSE, &CommandList);
+}
+
+void oD3D11CommandList::RSSetState(oRSSTATE _State)
+{
+	oASSERT(0, "RSSetState");
+}
+
+void oD3D11CommandList::OMSetState(oOMSTATE _State)
+{
+	oASSERT(0, "OMSetState");
+}
+
+void oD3D11CommandList::DSSetState(oDSSTATE _State)
+{
+	oASSERT(0, "DSSetState");
+}
+
+void oD3D11CommandList::SASetStates(size_t _StartSlot, size_t _NumStates, const oSASTATE* _pSAStates, const oMBSTATE* _pMBStates)
+{
+	oASSERT(0, "SASetStates");
+}
+
+void oD3D11CommandList::SetTextures(size_t _StartSlot, size_t _NumTextures, const oGfxTexture* const* _ppTextures)
+{
+	oASSERT(0, "SetTextures");
+}
+
+void oD3D11CommandList::SetMaterials(size_t _StartSlot, size_t _NumMaterials, const oGfxMaterial* const* _ppMaterials)
+{
+	oASSERT(0, "SetMaterials");
+}
+
+void oD3D11CommandList::Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPING* _pMapping)
+{
+	oASSERT(0, "Map");
+}
+
+void oD3D11CommandList::Unmap(oGfxResource* _pResource, size_t _SubresourceIndex)
+{
+	oASSERT(0, "Unmap");
+}
+
+void oD3D11CommandList::Clear(CLEAR_TYPE _ClearType)
+{
+	oASSERT(0, "Clear");
+}
+
+void oD3D11CommandList::Draw(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _SectionIndex)
+{
+	oASSERT(0, "Draw");
+}
+
+void oD3D11CommandList::DrawQuad(float4x4& _Transform, uint _MeshID)
+{
+	oASSERT(0, "DrawQuad");
+}
+
+void oD3D11CommandList::DrawLine(uint _LineID, const LINE& _Line)	
+{
+	oASSERT(0, "DrawLine");
 }
