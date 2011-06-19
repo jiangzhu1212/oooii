@@ -1,59 +1,80 @@
 // $(header)
 #pragma once
-#ifndef SYS4Render_h
-#define SYS4Render_h
+#ifndef oGfx_h
+#define oGfx_h
 
-#include <SYS4/SYS4Render.h>
-#include <SYS4/SYS4RenderState.h>
+#include <oGfx/oGfxState.h>
 
 #include <oooii/oInterface.h>
+#include <oooii/oSurface.h>
+#include <oooii/oStringID.h>
 
-// Main SW abstraction for a GPU
-interface oGPUDevice;
+// Main SW abstraction for a graphics processor
+interface oGfxDevice;
 
-interface oGPUDeviceChild : oInterface
+interface oGfxDeviceChild : oInterface
 {
-	// All GPU objects are related to a device
+	// Anything allocated from oGfxDevice is an oGfxDeviceChild
 
-	// fill the specified pointer with this child's associated
-	// device. The device's refcount is incremented.
-	virtual void GetDevice(threadsafe oGPUDevice** _ppDevice) const threadsafe = 0;
+	// fill the specified pointer with this resources's associated
+	// device. The device's ref count is incremented.
+	virtual void GetDevice(threadsafe interface oGfxDevice** _ppDevice) const threadsafe = 0;
+
+	// Returns the name specified at create time
+	virtual const char* GetName() const threadsafe = 0;
 };
 
-interface oGPUResource : oGPUDeviceChild
+interface oGfxResource : oGfxDeviceChild
 {
+	// Anything that contains data intended primarily for readonly
+	// access by the GPU processor is a resource. This does not 
+	// exclude write access, but generally differentiates these
+	// objects from process and target interfaces
+
 	enum TYPE
 	{
-		CONTEXT,
 		MATERIAL,
 		MESH,
-		RENDERTARGET,
 		TEXTURE,
 	};
 
 	// Returns the type of this resource.
 	virtual TYPE GetType() const threadsafe = 0;
-
-	// Returns the name with which this object was created
-	virtual const char* GetName() const threadsafe = 0;
-
-	// Returns the resolved name of a GPU-friendly cached
-	// version of the original resource specified by GetName()
-	virtual const char* GetCacheName() const threadsafe = 0;
 };
 
-interface oGPUMaterial : oGPUResource
+interface oGfxMaterial : oGfxResource
 {
-	struct DESC : oCBMaterial
+	// A material is the package of constants only. Textures
+	// are stored separately. It is up to the user to ensure
+	// that material constants, textures, and pipeline states
+	// match up for the intended effect.
+
+	struct DESC
 	{
-		Textures[oTEXTURE_CHANNEL_COUNT]
+		uint ByteSize;
+		uint ArraySize;
+		bool FrequentUpdate;
+
+		DESC()
+			: ByteSize(0)
+			, ArraySize(1)
+			, FrequentUpdate(false)
+		{}
 	};
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
-interface oGPUMesh : oGPUResource
+interface oGfxMesh : oGfxResource
 {
+	// Represents irregular geometry data sampling and 
+	// the topology connecting those sample points to 
+	// approximate geometry with a surface composed of 
+	// triangles. Ranges of triangles are grouped, but
+	// kept separate from one another so that a 
+	// continuous shape can be constructed by multiple
+	// draw calls, each with a different render state.
+
 	struct DESC
 	{
 		uint NumIndices;
@@ -69,7 +90,6 @@ interface oGPUMesh : oGPUResource
 			, NumRanges(0)
 			, FrequentIndexUpdate(false)
 			, FrequentVertexUpdate(false)
-			, IsAnimated(false)
 		{}
 	};
 
@@ -106,29 +126,15 @@ interface oGPUMesh : oGPUResource
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
-interface oGPURenderTarget
+interface oGfxTexture : oGfxResource
 {
-	static const size_t MAX_MRT_COUNT = 8;
+	// A large buffer filled with surface data. Most often
+	// this is a 2D plane wrapped onto the surface of a screen
+	// or mesh. Indeed a CUBEMAP is an extension of this concept
+	// mapping a view in each of the 6 principal axes onto a plane.
+	// A TEXTURE3D is an approximation of a 3D space by sampling
+	// at discreet planes called slices throughout the volume.
 
-	struct DESC
-	{
-		uint Width;
-		uint Height;
-		uint MRTCount;
-		uint ArraySize;
-		oSurface::FORMAT Format[MAX_MRT_COUNT];
-		oSurface::FORMAT DepthStencilFormat; // Use UNKNOWN for no depth
-		oColor ClearColor[MAX_MRT_COUNT];
-		float DepthClearValue;
-		UINT8 StencilClearValue;
-		bool GenerateMips;
-	};
-
-	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
-};
-
-interface oGPUTexture : oGPUResource
-{
 	enum TYPE
 	{
 		TEXTURE2D,
@@ -153,7 +159,7 @@ interface oGPUTexture : oGPUResource
 			, Depth(1)
 			, NumMips(0)
 			, NumSlices(1)
-			, ColorFormat(oSurface::RGBA)
+			, ColorFormat(oSurface::R8G8B8A8_UNORM)
 			, DepthStencilFormat(oSurface::UNKNOWN)
 			, Type(TEXTURE2D)
 		{}
@@ -162,33 +168,82 @@ interface oGPUTexture : oGPUResource
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
-interface oGPUContext : oGPUResource
+interface oGfxPipeline : oGfxDeviceChild
 {
-	enum PIPELINE_STATE
+	struct DESC
 	{
-		OPAQUE_GEOMETRY,
-		ALPHATESTED_GEOMETRY,
-		ALPHABLENDED_GEOMETRY,
-		LINES,
-		NONSHADOWING_LIGHTS,
-		SHADOWING_LIGHTS,
-		DEBUG,
+		const void* pInputLayout;
+		unsigned int InputLayoutByteWidth;
+		const unsigned char* pVertexShader;
+		const unsigned char* pHullShader;
+		const unsigned char* pDomainShader;
+		const unsigned char* pGeometryShader;
+		const unsigned char* pPixelShader;
+	};
+};
+
+interface oGfxRenderTarget : oGfxDeviceChild
+{
+	// A 2D plane onto which rendering occurs
+
+	// MRT: Multiple Render Target
+	static const size_t MAX_MRT_COUNT = 8;
+	static const size_t DS_INDEX = ~0u;
+
+	struct CLEAR_DESC
+	{
+		oColor ClearColor[MAX_MRT_COUNT];
+		float DepthClearValue;
+		unsigned char StencilClearValue;
 	};
 
-	enum DEBUG_VISUALIZATION
+	struct DESC
 	{
-		LIT,
-		GE_VIEWSPACE_LINEAR_DEPTH,
-		GE_VIEWSPACE_NORMALS,
-		GE_VIEWSPACE_NORMALS_X,
-		GE_VIEWSPACE_NORMALS_Y,
-		GE_VIEWSPACE_NORMALS_Z,
-		GE_CONTINUITY_IDS,
-		GE_INSTANCE_IDS,
-		GE_SPECULAR_EXPONENT,
-		LI_DIFFUSE,
-		LI_SPECULAR,
-		NUM_DEBUG_VISUALIZATIONS,
+		uint Width;
+		uint Height;
+		uint MRTCount;
+		uint ArraySize;
+		oSurface::FORMAT Format[MAX_MRT_COUNT];
+		oSurface::FORMAT DepthStencilFormat; // Use UNKNOWN for no depth
+		CLEAR_DESC ClearDesc;
+		bool GenerateMips;
+	};
+
+	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+
+	// Modifies the values for clearing without modifying 
+	// other topology descriptions
+	virtual void SetClearDesc(const CLEAR_DESC& _ClearDesc) threadsafe = 0;
+
+	// Resizes all buffers without changing formats and 
+	// other topology descriptions
+	virtual void Resize(uint _Width, uint _Height) threadsafe = 0;
+};
+
+interface oGfxCommandList : oGfxDeviceChild
+{
+	// A container for a list of commands issued by the user
+	// to the graphics device. All operations herein are 
+	// single-threaded. Separate command lists can be built
+	// in different threads.
+
+	enum CLEAR_TYPE
+	{
+		DEPTH,
+		STENCIL,
+		DEPTH_STENCIL,
+		COLOR,
+		COLOR_DEPTH,
+		COLOR_STENCIL,
+		COLOR_DEPTH_STENCIL,
+	};
+
+	struct VIEWPORT
+	{
+		float TopLeftX;
+		float TopLeftY;
+		float Width;
+		float Height;
 	};
 
 	struct DESC
@@ -203,14 +258,6 @@ interface oGPUContext : oGPUResource
 		uint SlicePitch;
 	};
 	
-	struct RENDER_STATE
-	{
-		float4x4 View;
-		float4x4 Projection;
-		PIPELINE_STATE State;
-		DEBUG_VISUALIZATION DebugVisualization;
-	};
-
 	struct LINE
 	{
 		float3 Start;
@@ -227,33 +274,73 @@ interface oGPUContext : oGPUResource
 	};
 
 	// Begins recording of GPU command submissions. All rendering for this 
-	// context should occur between Begin() and End().
-	virtual void Begin(const RENDER_STATE& _RenderState, const oGPURenderTarget* _pRenderTarget) = 0;
+	// context should occur between Begin() and End(). NOTE: If _NumViewports
+	// is 0 and/or _pViewports is NULL, a default full-rendertarget viewport
+	// will be calculated and used.
+	virtual void Begin(
+		const float4x4& View
+		, const float4x4& Projection
+		, const oGfxPipeline* _pPipeline
+		, const oGfxRenderTarget* _pRenderTarget
+		, size_t _NumViewports
+		, const VIEWPORT* _pViewports) = 0;
 
 	// Ends recording of GPU submissions and caches a command list
 	virtual void End() = 0;
 
-	virtual void SetRasterizerState(oRASTERIZER_STATE _RasterizerState) = 0;
-	virtual void SetBlendState(oBLEND_STATE _BlendState) = 0;
-	virtual void SetMaterial(const oGPUMaterial* _pMaterial) = 0;
-	virtual void SetSamplerStates(size_t _StartSlot, size_t _NumSamplerStates, const oSAMPLER_STATE* _pSamplerStates, const oMIP_BIAS* _pMipBiases) = 0;
-	virtual void SetTextures(size_t _StartSlot, size_t _NumTextures, const oGPUTexture* const* _ppTextures) = 0;
+	// Set the reasterization state in this context
+	virtual void RSSetState(oRSSTATE _State) = 0;
 
-	virtual void Map(oGPUResource* _pResource, size_t _SubresourceIndex) = 0;
-	virtual void Unmap(oGPUResource* _pResource, size_t _SubresourceIndex) = 0;
-	
-	// Drawing a null mesh draws a full screen quad
-	virtual void Draw(float4x4& _Transform, uint _MeshID, const oGPUMesh* _pMesh, size_t _SectionIndex) = 0;
+	// Set the output merger (blend) state in this context
+	virtual void OMSetState(oOMSTATE _State) = 0;
 
-	//virtual LINE* LNBegin(size_t _LineCapacity) = 0;
-	//virtual void LNEnd(size_t _NumLines) = 0;
+	// Set the depth-stencil state in this context
+	virtual void DSSetState(oDSSTATE _State) = 0;
 
-	//virtual LIGHT* LIBegin(size_t _LightCapacity) = 0;
-	//virtual void LIEnd(size_t _NumLights) = 0;
+	// Set the texture sampler states in this context
+	virtual void SASetStates(size_t _StartSlot, size_t _NumStates, const oSASTATE* _pSAStates, const oMBSTATE* _pMBStates) = 0;
+
+	// Set the textures in this context
+	virtual void SetTextures(size_t _StartSlot, size_t _NumTextures, const oGfxTexture* const* _ppTextures) = 0;
+
+	// Set the material constants in this context
+	virtual void SetMaterials(size_t _StartSlot, size_t _NumMaterials, const oGfxMaterial* const* _ppMaterials) = 0;
+
+	// Maps the specified resource and returns a pointer to a writable 
+	// buffer. It is up to the user to ensure sizes and protect against
+	// memory overwrites. The mapped buffer is not readable, i.e. does
+	// not have the buffer's current/prior value in it. This is a 
+	// necessary behavior so the graphics device does not have to keep
+	// a copy or stall while it sync's data to the buffer. 
+	// The value of _SubresourceIndex indicates:
+	// Material: The nth material as specified by ArraySize
+	// Mesh: A oMesh::SUBRESOURCE value
+	// Texture: A value returned by oSurface::CalculateSubresource()
+	virtual void Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPING* _pMapping) = 0;
+	virtual void Unmap(oGfxResource* _pResource, size_t _SubresourceIndex) = 0;
+
+	// Uses a render target's CLEAR_DESC to clear all associated buffers
+	// according to the type of clear specified here.
+	virtual void Clear(CLEAR_TYPE _ClearType) = 0;
+
+	// Submits an oGfxMesh for drawing using the current state
+	// of the command list.
+	virtual void Draw(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _SectionIndex) = 0;
+
+	// Draws a quad in clip space (-1,-1 top-left to 1,1 bottom-right)
+	// with texture coords in screen space (0,0 top-left to 1,1 bottom right)
+	// If View, Projection, and _Transform are all identity, this would
+	// be a fullscreen quad.
+	virtual void DrawQuad(float4x4& _Transform, uint _MeshID) = 0;
+
+	// Draws a worldspace line
+	virtual void DrawLine(uint _LineID, const LINE& _Line) = 0;
 };
 
-interface oGPUDevice : oInterface
+interface oGfxDevice : oInterface
 {
+	// Main SW abstraction for a graphics processor
+
 	struct DESC
 	{
 		float Version;
@@ -261,16 +348,18 @@ interface oGPUDevice : oInterface
 		bool EnableDebugReporting;
 	};
 
-	virtual bool CreateContext(const char* _Name, const oGPUContext::DESC& _Desc, oGPUContext** _ppContext) threadsafe = 0;
-	virtual bool CreateMaterial(const char* _Name, const oGPUMaterial::DESC& _Desc, threadsafe oGPUMaterial** _ppMaterial) threadsafe = 0;
-	virtual bool CreateMesh(const char* _Name, const oGPUMesh::DESC& _Desc, threadsafe oGPUMesh** _ppMesh) threadsafe = 0;
-	virtual bool CreateRenderTarget(const char* _Name, const oGPURenderTarget::DESC& _Desc, threadsafe oGPURenderTarget** _ppRenderTarget) threadsafe = 0;
-	virtual bool CreateTexture(const char* _Name, const oGPUTexture::DESC& _Desc, threadsafe oGPUTexture** _ppTexture) threadsafe = 0;
+	virtual bool CreateCommandList(const char* _Name, const oGfxCommandList::DESC& _Desc, oGfxCommandList** _ppCommandList) threadsafe = 0;
+	virtual void CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, oGfxPipeline** _ppPipeline) threadsafe = 0;
+	virtual bool CreateRenderTarget(const char* _Name, const oGfxRenderTarget::DESC& _Desc, oGfxRenderTarget** _ppRenderTarget) threadsafe = 0;
+	virtual bool CreateMaterial(const char* _Name, const oGfxMaterial::DESC& _Desc, oGfxMaterial** _ppMaterial) threadsafe = 0;
+	virtual bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe = 0;
+	virtual bool CreateTexture(const char* _Name, const oGfxTexture::DESC& _Desc, oGfxTexture** _ppTexture) threadsafe = 0;
 
-	virtual void Begin() = 0;
-	virtual void End() = 0;
+	// Submits all command lists in their draw order
+	virtual void Submit() = 0;
 };
 
-oAPI bool oCreateGPUDevice(const oGPUDevice::DESC& _Desc, threadsafe oGPUDevice** _ppDevice);
+oAPI bool oGfxCreateDevice(const oGfxDevice::DESC& _Desc, threadsafe oGfxDevice** _ppDevice);
+oAPI const char* oGfxGetResourceTypename(const threadsafe oGfxResource::TYPE _Type);
 
 #endif

@@ -29,7 +29,7 @@
 	#define oTEXTURE_CHANNEL_COUNT 7
 #endif
 
-struct oCBMaterial
+struct oGfxMaterialConstants
 {
 	oHLSLColor Emissive;
 	float AlphaTest; // [0,1]
@@ -44,7 +44,7 @@ struct oCBMaterial
 	float Unused2;
 
 	#ifndef oHLSL
-		oCBMaterial()
+		oGfxMaterialConstants()
 			: Emissive(std::Black)
 			, AlphaTest(0.0f)
 			, Diffuse(std::White)

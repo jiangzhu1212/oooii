@@ -1,52 +1,60 @@
 // $(header)
 #pragma once
-#ifndef SYS4RenderState_h
-#define SYS4RenderState_h
+#ifndef oGfxState_h
+#define oGfxState_h
 
-enum oBLEND_STATE
+enum oOMSTATE // Output Merge (Blend) State
 {
-	oBLEND_STATE_NONE, // src rgba (opaque)
-	oBLEND_STATE_TEST, // alpha test
-	oBLEND_STATE_ACCUMULATE, // src rgba + dst rgba
-	oBLEND_STATE_ADDITIVE, // src rgb * src a  +  dst rgb
-	oBLEND_STATE_TRANSLUCENT, // src rgb * src a  +  dst rgb * (1 - src a)
-	oBLEND_STATE_PARTIAL_TRANSLUCENT, // treats values above alpha-test threshold as opaque, and then the rest as TRANSLUCENT
-	oBLEND_STATE_COUNT,
+	oOM_NONE, // src rgba (opaque)
+	oOM_TEST, // alpha test
+	oOM_ACCUMULATE, // src rgba + dst rgba
+	oOM_ADDITIVE, // src rgb * src a  +  dst rgb
+	oOM_TRANSLUCENT, // src rgb * src a  +  dst rgb * (1 - src a)
+	oOM_PARTIAL_TRANSLUCENT, // treats values above alpha-test threshold as opaque, and then the rest as TRANSLUCENT
+	oOM_COUNT,
 };
 
-enum oRASTERIZER_STATE
+enum oRSSTATE // Rasterizer State
 {
-	oRASTERIZER_STATE_FRONT_FACE,
-	oRASTERIZER_STATE_BACK_FACE,
-	oRASTERIZER_STATE_TWO_SIDED,
-	oRASTERIZER_STATE_FRONT_WIREFRAME,
-	oRASTERIZER_STATE_BACK_WIREFRAME,
-	oRASTERIZER_STATE_TWO_SIDED_WIREFRAME,
-	oRASTERIZER_STATE_FRONT_POINTS,
-	oRASTERIZER_STATE_BACK_POINTS,
-	oRASTERIZER_STATE_TWO_SIDED_POINTS,
-	oRASTERIZER_STATE_COUNT,
+	oRS_FRONT_FACE,
+	oRS_BACK_FACE,
+	oRS_TWO_SIDED,
+	oRS_FRONT_WIREFRAME,
+	oRS_BACK_WIREFRAME,
+	oRS_TWO_SIDED_WIREFRAME,
+	oRS_FRONT_POINTS,
+	oRS_BACK_POINTS,
+	oRS_TWO_SIDED_POINTS,
+	oRS_COUNT,
 };
 
-enum oSAMPLER_STATE
+enum oDSSTATE // Depth-Stencil State
 {
-	oSAMPLER_STATE_POINT_CLAMP,
-	oSAMPLER_STATE_POINT_WRAP,
-	oSAMPLER_STATE_LINEAR_CLAMP,
-	oSAMPLER_STATE_LINEAR_WRAP,
-	oSAMPLER_STATE_ANISOTROPIC_CLAMP,
-	oSAMPLER_STATE_ANISOTROPIC_WRAP,
-	oSAMPLER_STATE_COUNT,
+	oDS_NONE,
+	oDS_TEST_AND_WRITE,
+	oDS_TEST,
+	oDS_STATE_COUNT,
 };
 
-enum oMIP_BIAS
+enum oSASTATE // Sampler State
 {
-	oMIP_BIAS_NONE,
-	oMIP_BIAS_UP1,
-	oMIP_BIAS_UP2,
-	oMIP_BIAS_DOWN1,
-	oMIP_BIAS_DOWN2,
-	oMIP_BIAS_COUNT,
+	oSA_POINT_CLAMP,
+	oSA_POINT_WRAP,
+	oSA_LINEAR_CLAMP,
+	oSA_LINEAR_WRAP,
+	oSA_ANISOTROPIC_CLAMP,
+	oSA_ANISOTROPIC_WRAP,
+	oSA_COUNT,
+};
+
+enum oMBSTATE // Mip-Bias State
+{
+	oMB_NONE,
+	oMB_UP1,
+	oMB_UP2,
+	oMB_DOWN1,
+	oMB_DOWN2,
+	oMB_COUNT,
 };
 
 #endif
