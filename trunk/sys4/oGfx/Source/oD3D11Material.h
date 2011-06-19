@@ -3,15 +3,14 @@
 #ifndef oD3D11Material_h
 #define oD3D11Material_h
 
-#include <SYS4/SYS4Render.h>
-#include "SYS4ResourceBaseMixin.h"
+#include <oGfx/oGfx.h>
+#include "oGfxCommon.h"
+#include <oooii/oD3D11.h>
 
-struct oD3D11Material : oGPUMesh, oNoncopyable, SYS4ResourceBaseMixin<oGPUMaterial, oD3D11Material, oGPUResource::MATERIAL>
+oDECLARE_GFXRESOURCE_IMPLEMENTATION(oD3D11, Material, MATERIAL)
 {
-	SYS4_DEFINE_GPURESOURCE_INTERFACE();
-	
-	oD3D11Material(threadsafe oGPUDevice* _pDevice, const DESC& _Desc, bool* _pSuccess);
-
+	oDEFINE_GFXRESOURCE_INTERFACE();
+	oDECLARE_GFXRESOURCE_CTOR(oD3D11, Material);
 	oRef<ID3D11Buffer> Constants;
 };
 

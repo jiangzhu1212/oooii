@@ -1,14 +1,13 @@
 // $(header)
-#include "SYS3D3D11RenderTarget.h"
-#include "SYS4D3D11Device.h"
+#include "oD3D11RenderTarget.h"
+#include "oD3D11Device.h"
 #include <oooii/oD3D11.h>
 #include <oooii/oErrno.h>
 #include <oooii/oSurface.h>
 
-SYS4_DEFINE_GPURESOURCE_CREATE(RenderTarget)
+oDEFINE_GFXRESOURCE_CREATE(RenderTarget)
 
-oD3D11RenderTarget::oD3D11RenderTarget(threadsafe oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, const char* _CacheName, bool* _pSuccess)
-	: SYS4ResourceBaseMixin(_pDevice, _Desc, _Name, _CacheName)
+oBEGIN_DEFINE_GFXAPI_CTOR(D3D11, RenderTarget)
 {
 	ID3D11Device* D3DDevice = 0;
 	oVERIFY(Device->QueryInterface(oGetGUID(ID3D11Device), (void**)&D3DDevice));

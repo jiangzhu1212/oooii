@@ -11,29 +11,22 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\oGfx\oGfx.h" />
-    <ClInclude Include="..\oGfx\oGfxMaterial.h" />
-    <ClInclude Include="..\oGfx\oGfxState.h" />
-    <ClInclude Include="Common\oGfxResourceMixin.h" />
-    <ClInclude Include="D3D11\oD3D11Context.h" />
-    <ClInclude Include="D3D11\oD3D11Device.h" />
-    <ClInclude Include="D3D11\oD3D11Material.h" />
-    <ClInclude Include="D3D11\oD3D11Mesh.h" />
-    <ClInclude Include="D3D11\oD3D11RenderTarget.h" />
-    <ClInclude Include="D3D11\oD3D11Texture.h" />
-    <ClInclude Include="pch.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="D3D11\oD3D11Context.cpp" />
-    <ClCompile Include="D3D11\oD3D11Device.cpp" />
-    <ClCompile Include="D3D11\oD3D11Material.cpp" />
-    <ClCompile Include="D3D11\oD3D11Mesh.cpp" />
-    <ClCompile Include="D3D11\oD3D11RenderTarget.cpp" />
-    <ClCompile Include="D3D11\oD3D11Texture.cpp" />
+    <ClCompile Include="oD3D11Material.cpp" />
+    <ClCompile Include="oD3D11Mesh.cpp" />
+    <ClCompile Include="oD3D11Texture.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\oGfx\oGfx.h" />
+    <ClInclude Include="..\oGfx\oGfxState.h" />
+    <ClInclude Include="oD3D11Material.h" />
+    <ClInclude Include="oD3D11Mesh.h" />
+    <ClInclude Include="oD3D11Texture.h" />
+    <ClInclude Include="oGfxCommon.h" />
+    <ClInclude Include="pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{54DA59A7-C4BC-4D58-8769-CD52BBFC2C9B}</ProjectGuid>
@@ -57,6 +50,7 @@
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Msvc100.props" />
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Debug64.props" />
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Common.props" />
+    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\pch.props" />
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\lib.props" />
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
     <Import Project="Properties\oGfxIncludesAndLibs.props" />
@@ -66,6 +60,7 @@
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Msvc100.props" />
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Release64.props" />
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\Common.props" />
+    <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\pch.props" />
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\lib.props" />
     <Import Project="..\..\..\OOOiiRT\Branches\OOOii-OpenSource\SDK\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
     <Import Project="Properties\oGfxIncludesAndLibs.props" />

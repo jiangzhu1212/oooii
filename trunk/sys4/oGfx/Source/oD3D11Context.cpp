@@ -1,12 +1,10 @@
 // $(header)
-#include "SYS3D3D11Context.h"
+#include "oD3D11Context.h"
 #include <oooii/oD3D11.h>
 #include <oooii/oErrno.h>
 
-SYS4_DEFINE_GPURESOURCE_CREATE(Context)
-
-oD3D11Context::oD3D11Context(threadsafe oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, const char* _CacheName, bool* _pSuccess)
-	: SYS4ResourceBaseMixin(_pDevice, _Desc, _Name, _CacheName)
+oDEFINE_GFXRESOURCE_CREATE(Context)
+oBEGIN_DEFINE_GFXAPI_CTOR(D3D11, Context)
 {
 	*_pSuccess = false;
 	ID3D11Device* D3DDevice = 0;
@@ -15,7 +13,7 @@ oD3D11Context::oD3D11Context(threadsafe oGPUDevice* _pDevice, const DESC& _Desc,
 	if (FAILED(D3DDevice->CreateDeferredContext(0, &Context)))
 	{
 		char err[128];
-		sprintf_s(err, "Failed to create oGPUDeviceContext %u: ", _Desc.DrawOrder);
+		sprintf_s(err, "Failed to create oGfxDeviceContext %u: ", _Desc.DrawOrder);
 		oSetLastErrorNative(hr, err);
 		return;
 	}

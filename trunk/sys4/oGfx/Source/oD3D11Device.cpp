@@ -15,15 +15,15 @@ template<typename T, typename containerT, class CompareT> size_t oSortedInsert(c
 
 template<typename T, typename Alloc, class CompareT> size_t oSortedInsert(std::vector<T, Alloc>& _Vector, const T& _Item) { return oSTL::detail::oSortedInsert<T, std::vector<T, Alloc>, CompareT>(_Vector, _Item, _Compare); }
 
-bool ByDrawOrder(const oGPUDeviceContext* _pContext1, const oGPUDeviceContext* _pContext2)
+bool ByDrawOrder(const oGfxDeviceContext* _pContext1, const oGfxDeviceContext* _pContext2)
 {
-	oGPUDeviceContext::DESC d1, d2;
+	oGfxDeviceContext::DESC d1, d2;
 	_pContext1->GetDesc(&d1);
 	_pContext2->GetDesc(&d2);
 	return d1.DrawOrder < d2.DrawOrder;
 };
 
-bool oCreateGPUDevice(const oGPUDevice::DESC& _Desc, threadsafe oGPUDevice** _ppDevice)
+bool oCreateGPUDevice(const oGfxDevice::DESC& _Desc, threadsafe oGfxDevice** _ppDevice)
 {
 	oRef<IDXGIFactory1> pFactory;
 	oCreateDXGIFactory(&pFactory);
@@ -67,7 +67,7 @@ bool oCreateGPUDevice(const oGPUDevice::DESC& _Desc, threadsafe oGPUDevice** _pp
 	return success;
 }
 
-oD3D11Device::oD3D11Device(ID3D11Device* _pD3DDevice, const oGPUDevice::DESC& _Desc, bool* _pSuccess)
+oD3D11Device::oD3D11Device(ID3D11Device* _pD3DDevice, const oGfxDevice::DESC& _Desc, bool* _pSuccess)
 	: D3DDevice(_pDevice)
 	, Desc(_Desc)
 	, RasterizerState(_pDevice)
@@ -82,13 +82,13 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pD3DDevice, const oGPUDevice::DESC& _D
 	// TODO: Create system-wide resources
 }
 
-void oD3D11Device::Insert(oGPUContext* _pContext) threadsafe
+void oD3D11Device::Insert(oGfxContext* _pContext) threadsafe
 {
 	oMutex::ScopedLock lock(ContextsMutex);
 	oSortedInsert(Contexts, _pContext, ByDrawOrder);
 }
 
-void oD3D11Device::Remove(oGPUContext* _pContext) threadsafe
+void oD3D11Device::Remove(oGfxContext* _pContext) threadsafe
 {
 	oMutex::ScopedLock lock(ContextsMutex);
 	oFindAndErase(Contexts, _pContext);

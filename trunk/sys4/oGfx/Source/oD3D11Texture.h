@@ -4,14 +4,13 @@
 #define oD3D11Texture_h
 
 #include <oGfx/oGfx.h>
-#include "../Common/oGfxResourceMixin.h"
+#include "oGfxCommon.h"
+#include <oooii/oD3D11.h>
 
-struct oD3D11Texture : oGPUMesh, oNoncopyable, oGfxResourceMixin<oGPUTexture, oD3D11Texture, oGPUResource::TEXTURE>
+oDECLARE_GFXRESOURCE_IMPLEMENTATION(oD3D11, Texture, TEXTURE)
 {
-	SYS4_DEFINE_GPURESOURCE_INTERFACE();
-	
-	oD3D11Texture(threadsafe oGPUDevice* _pDevice, const DESC& _Desc, bool* _pSuccess);
-
+	oDEFINE_GFXRESOURCE_INTERFACE();
+	oDECLARE_GFXRESOURCE_CTOR(oD3D11, Texture);
 	oRef<ID3D11Texture2D> Texture;
 	oRef<ID3D11ShaderResourceView> SRV;
 };

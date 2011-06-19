@@ -3,15 +3,14 @@
 #ifndef oD3D11Mesh_h
 #define oD3D11Mesh_h
 
-#include <SYS4/SYS4Render.h>
-#include "SYS4ResourceBaseMixin.h"
+#include <oGfx/oGfx.h>
+#include "oGfxCommon.h"
+#include <oooii/oD3D11.h>
 
-struct oD3D11Mesh : oGPUMesh, oNoncopyable, SYS4ResourceBaseMixin<oGPUMesh, oD3D11Mesh, oGPUResource::MESH>
+oDECLARE_GFXRESOURCE_IMPLEMENTATION(oD3D11, Mesh, MESH)
 {
-	SYS4_DEFINE_GPURESOURCE_INTERFACE();
-	
-	oD3D11Mesh(threadsafe oGPUDevice* _pDevice, const DESC& _Desc, bool* _pSuccess);
-
+	oDEFINE_GFXRESOURCE_INTERFACE();
+	oDECLARE_GFXRESOURCE_CTOR(oD3D11, Mesh);
 	std::vector<RANGE> Ranges;
 	oRef<ID3D11Buffer> Indices;
 	oRef<ID3D11Buffer> Vertices;
