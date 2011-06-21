@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClCompile Include="oD3D11CommandList.cpp" />
     <ClCompile Include="oD3D11Device.cpp" />
+    <ClCompile Include="oD3D11LineList.cpp" />
     <ClCompile Include="oD3D11Material.cpp" />
     <ClCompile Include="oD3D11Mesh.cpp" />
     <ClCompile Include="oD3D11Pipeline.cpp" />
@@ -28,6 +29,7 @@
     <ClInclude Include="..\oGfx\oGfxState.h" />
     <ClInclude Include="oD3D11CommandList.h" />
     <ClInclude Include="oD3D11Device.h" />
+    <ClInclude Include="oD3D11LineList.h" />
     <ClInclude Include="oD3D11Material.h" />
     <ClInclude Include="oD3D11Mesh.h" />
     <ClInclude Include="oD3D11Pipeline.h" />
