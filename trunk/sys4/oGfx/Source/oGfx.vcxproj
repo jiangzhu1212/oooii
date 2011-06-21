@@ -15,6 +15,7 @@
     <ClCompile Include="oD3D11Device.cpp" />
     <ClCompile Include="oD3D11Material.cpp" />
     <ClCompile Include="oD3D11Mesh.cpp" />
+    <ClCompile Include="oD3D11Pipeline.cpp" />
     <ClCompile Include="oD3D11RenderTarget.cpp" />
     <ClCompile Include="oD3D11Texture.cpp" />
     <ClCompile Include="pch.cpp">
@@ -29,6 +30,7 @@
     <ClInclude Include="oD3D11Device.h" />
     <ClInclude Include="oD3D11Material.h" />
     <ClInclude Include="oD3D11Mesh.h" />
+    <ClInclude Include="oD3D11Pipeline.h" />
     <ClInclude Include="oD3D11RenderTarget.h" />
     <ClInclude Include="oD3D11Texture.h" />
     <ClInclude Include="oGfxCommon.h" />
