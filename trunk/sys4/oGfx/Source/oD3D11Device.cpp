@@ -4,6 +4,13 @@
 #include <oooii/oD3D11.h>
 #include <oooii/oErrno.h>
 
+const oGUID& oGetGUID(threadsafe const ID3D11Device* threadsafe const *)
+{
+	// {DB6F6DDB-AC77-4E88-8253-819DF9BBF140}
+	static const oGUID oIID_ID3D11Device = { 0xdb6f6ddb, 0xac77, 0x4e88, { 0x82, 0x53, 0x81, 0x9d, 0xf9, 0xbb, 0xf1, 0x40 } };
+	return oIID_ID3D11Device;
+}
+
 template<typename T, typename containerT, class CompareT> size_t oSortedInsert(containerT& _Container, const T& _Item, CompareT _Compare)
 {
 	containerT::iterator it = _Container.begin();
@@ -72,16 +79,18 @@ bool oGfxCreateDevice(const oGfxDevice::DESC& _Desc, threadsafe oGfxDevice** _pp
 oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc, bool* _pSuccess)
 	: D3DDevice(_pDevice)
 	, Desc(_Desc)
-	//, RasterizerState(_pDevice)
-	//, BlendState(_pDevice)
-	//, DepthStencilState(_pDevice)
-	//, SamplerState(_pDevice)
+	, RSState(_pDevice)
+	, OMState(_pDevice)
+	, DSState(_pDevice)
+	, SAState(_pDevice)
 {
 	*_pSuccess = false;
 	D3DDevice->GetImmediateContext(&ImmediateContext);
 
 	// TODO: Create shaders/pipeline resources
 	// TODO: Create system-wide resources
+
+	*_pSuccess = true;
 }
 
 void oD3D11Device::Insert(oGfxCommandList* _pCommandList) threadsafe

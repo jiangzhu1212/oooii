@@ -15,6 +15,7 @@
     <ClCompile Include="oD3D11Device.cpp" />
     <ClCompile Include="oD3D11Material.cpp" />
     <ClCompile Include="oD3D11Mesh.cpp" />
+    <ClCompile Include="oD3D11RenderTarget.cpp" />
     <ClCompile Include="oD3D11Texture.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -28,6 +29,7 @@
     <ClInclude Include="oD3D11Device.h" />
     <ClInclude Include="oD3D11Material.h" />
     <ClInclude Include="oD3D11Mesh.h" />
+    <ClInclude Include="oD3D11RenderTarget.h" />
     <ClInclude Include="oD3D11Texture.h" />
     <ClInclude Include="oGfxCommon.h" />
     <ClInclude Include="pch.h" />

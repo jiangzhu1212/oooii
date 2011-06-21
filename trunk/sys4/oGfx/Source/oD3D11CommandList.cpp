@@ -31,7 +31,7 @@ void oD3D11CommandList::Begin(
 	const float4x4& View
 	, const float4x4& Projection
 	, const oGfxPipeline* _pPipeline
-	, const oGfxRenderTarget* _pRenderTarget
+	, const oGfxRenderTarget2* _pRenderTarget
 	, size_t _NumViewports
 	, const VIEWPORT* _pViewports)
 {

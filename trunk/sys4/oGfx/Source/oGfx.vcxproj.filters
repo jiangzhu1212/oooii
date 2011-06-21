@@ -27,6 +27,9 @@
     <ClCompile Include="oD3D11CommandList.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="oD3D11RenderTarget.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -54,6 +57,9 @@
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="oD3D11CommandList.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11RenderTarget.h">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
