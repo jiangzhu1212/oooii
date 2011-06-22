@@ -1,23 +1,17 @@
 // $(header)
 #include "oD3D11CommandList.h"
-#include "oD3D11Device.h"
 #include "oD3D11LineList.h"
 #include "oD3D11Material.h"
 #include "oD3D11Mesh.h"
+#include "oD3D11Pipeline.h"
 #include "oD3D11Texture.h"
+#include <oGfx/oGfxHLSL.h>
 
 oDEFINE_GFXDEVICE_CREATE(oD3D11, CommandList);
 oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(oD3D11, CommandList)
 {
 	*_pSuccess = false;
 	oD3D11DEVICE();
-
-	// Cache pointers to often-used state locally
-	oD3D11Device* pDevice = thread_cast<oD3D11Device*>(static_cast<threadsafe oD3D11Device*>(Device.c_ptr())); // Safe because we're read-only accessing pointer values
-	pOMState = &pDevice->OMState;
-	pRSState = &pDevice->RSState;
-	pDSState = &pDevice->DSState;
-	pSAState = &pDevice->SAState;
 
 	HRESULT hr = D3DDevice->CreateDeferredContext(0, &Context);
 	if (FAILED(hr))
@@ -38,14 +32,76 @@ oD3D11CommandList::~oD3D11CommandList()
 	static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->Remove(this);
 }
 
+static void SetRenderTarget(ID3D11DeviceContext* _pDeviceContext, const oGfxRenderTarget2::DESC& _RTDesc, const oGfxRenderTarget2* _pRenderTarget)
+{
+	const oD3D11RenderTarget2* pRT = static_cast<const oD3D11RenderTarget2*>(_pRenderTarget);
+	_pDeviceContext->OMSetRenderTargets(_RTDesc.MRTCount, (ID3D11RenderTargetView* const*)pRT->RTVs, (ID3D11DepthStencilView*)pRT->DSV.c_ptr());
+}
+
+static void SetViewports(ID3D11DeviceContext* _pDeviceContext, const oGfxRenderTarget2::DESC& _RTDesc, size_t _NumViewports, const oGfxCommandList::VIEWPORT* _pViewports)
+{
+	D3D11_VIEWPORT Viewports[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
+	if (_NumViewports && _pViewports)
+	{
+		for (size_t i = 0; i < _NumViewports; i++)
+		{
+			memcpy(&Viewports[i], &_pViewports[i], sizeof(oGfxCommandList::VIEWPORT));
+			Viewports[i].MinDepth = 0.0f;
+			Viewports[i].MaxDepth = 1.0f;
+		}
+	}
+
+	else
+	{
+		_NumViewports = 1;
+		Viewports[0].TopLeftX = 0.0f;
+		Viewports[0].TopLeftY = 0.0f;
+		Viewports[0].Width = static_cast<float>(_RTDesc.Width);
+		Viewports[0].Height = static_cast<float>(_RTDesc.Height);
+		Viewports[0].MinDepth = 0.0f;
+		Viewports[0].MaxDepth = 1.0f;
+	}
+
+	_pDeviceContext->RSSetViewports(static_cast<uint>(_NumViewports), Viewports);
+}
+
+static void SetViewConstants(ID3D11DeviceContext* _pDeviceContext, ID3D11Buffer* _pViewConstants, const float4x4& _View, const float4x4& _Projection, const oGfxRenderTarget2::DESC& _RTDesc, size_t _RenderTargetIndex)
+{
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	_pDeviceContext->Map(_pViewConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+	oGfxViewConstants* V = (oGfxViewConstants*)mapped.pData;
+	V->Set(_View, _Projection, asfloat(uint2(_RTDesc.Width, _RTDesc.Height)), static_cast<uint>(_RenderTargetIndex));
+	_pDeviceContext->Unmap(_pViewConstants, 0);
+	oD3D11SetConstantBuffers(_pDeviceContext, 0, 1, &_pViewConstants);
+}
+
+static void SetPipeline(ID3D11DeviceContext* _pDeviceContext, const oGfxPipeline* _pPipeline)
+{
+	oD3D11Pipeline* p = const_cast<oD3D11Pipeline*>(static_cast<const oD3D11Pipeline*>(_pPipeline));
+	_pDeviceContext->IASetInputLayout(p->InputLayout);
+	_pDeviceContext->VSSetShader(p->VertexShader, 0, 0);
+	_pDeviceContext->HSSetShader(p->HullShader, 0, 0);
+	_pDeviceContext->DSSetShader(p->DomainShader, 0, 0);
+	_pDeviceContext->GSSetShader(p->GeometryShader, 0, 0);
+	_pDeviceContext->PSSetShader(p->PixelShader, 0, 0);
+}
+
 void oD3D11CommandList::Begin(
-	const float4x4& View
-	, const float4x4& Projection
+	const float4x4& _View
+	, const float4x4& _Projection
 	, const oGfxPipeline* _pPipeline
 	, const oGfxRenderTarget2* _pRenderTarget
+	, size_t _RenderTargetIndex
 	, size_t _NumViewports
 	, const VIEWPORT* _pViewports)
 {
+	oASSERT(_pRenderTarget, "A render target must be specified");
+	oGfxRenderTarget2::DESC RTDesc;
+	_pRenderTarget->GetDesc(&RTDesc);
+	SetRenderTarget(Context, RTDesc, _pRenderTarget);
+	SetViewports(Context, RTDesc, _NumViewports, _pViewports);
+	SetViewConstants(Context, D3DDevice()->ViewConstants, _View, _Projection, RTDesc, _RenderTargetIndex);
+	SetPipeline(Context, _pPipeline);
 }
 
 void oD3D11CommandList::End()
@@ -58,22 +114,22 @@ void oD3D11CommandList::RSSetState(oRSSTATE _State)
 	// @oooii-tony: TODO: Move oD3D11BlendState's enum to be oRS_STATE
 	oASSERT(0, "Enums are not current compatible");
 	//oSTATICASSERT(oOM_COUNT == oD3D11BlendState::NUM_STATES);
-	pOMState->SetState(Context, (oD3D11BlendState::STATE)_State);
+	D3DDevice()->OMState.SetState(Context, (oD3D11BlendState::STATE)_State);
 }
 
 void oD3D11CommandList::OMSetState(oOMSTATE _State)
 {
-	pOMState->SetState(Context, (oD3D11BlendState::STATE)_State);
+	D3DDevice()->OMState.SetState(Context, (oD3D11BlendState::STATE)_State);
 }
 
 void oD3D11CommandList::DSSetState(oDSSTATE _State)
 {
-	pDSState->SetState(Context, (oD3D11DepthStencilState::STATE)_State);
+	D3DDevice()->DSState.SetState(Context, (oD3D11DepthStencilState::STATE)_State);
 }
 
 void oD3D11CommandList::SASetStates(size_t _StartSlot, size_t _NumStates, const oSASTATE* _pSAStates, const oMBSTATE* _pMBStates)
 {
-	pSAState->SetState(Context, _StartSlot, reinterpret_cast<const oD3D11SamplerState::SAMPLER_STATE*>(_pSAStates), reinterpret_cast<const oD3D11SamplerState::MIP_BIAS_LEVEL*>(_pMBStates), _NumStates);
+	D3DDevice()->SAState.SetState(Context, _StartSlot, reinterpret_cast<const oD3D11SamplerState::SAMPLER_STATE*>(_pSAStates), reinterpret_cast<const oD3D11SamplerState::MIP_BIAS_LEVEL*>(_pMBStates), _NumStates);
 }
 
 void oD3D11CommandList::SetTextures(size_t _StartSlot, size_t _NumTextures, const oGfxTexture* const* _ppTextures)
@@ -107,8 +163,9 @@ static ID3D11Resource* GetResourceBuffer(oGfxResource* _pResource, size_t _Subre
 			{
 				case oGfxMesh::RANGES: oASSERT(0, "Ranges are not an ID3D11Buffer");
 				case oGfxMesh::INDICES: return static_cast<oD3D11Mesh*>(_pResource)->Indices.c_ptr();
-				case oGfxMesh::VERTICES: return static_cast<oD3D11Mesh*>(_pResource)->Vertices.c_ptr();
-				case oGfxMesh::SKINNING: return static_cast<oD3D11Mesh*>(_pResource)->Skinning.c_ptr();
+				case oGfxMesh::VERTICES0: return static_cast<oD3D11Mesh*>(_pResource)->Vertices[0].c_ptr();
+				case oGfxMesh::VERTICES1: return static_cast<oD3D11Mesh*>(_pResource)->Vertices[1].c_ptr();
+				case oGfxMesh::VERTICES2: return static_cast<oD3D11Mesh*>(_pResource)->Vertices[2].c_ptr();
 				default: oASSUME(0);
 			}
 		}
@@ -192,22 +249,32 @@ void oD3D11CommandList::Draw(float4x4& _Transform, uint _MeshID, const oGfxMesh*
 		oASSERT(InputLayout, "No InputLayout specified");
 	}
 	#endif
-	oASSERT(M->Vertices, "No geometry vertices specified");
+	oASSERT(M->Vertices[0], "No geometry vertices specified");
 
-	oD3D_BUFFER_TOPOLOGY VertTopo;
-	oD3D11GetBufferDescription(M->Vertices, &VertTopo);
+	oGfxMesh::DESC desc;
+	M->GetDesc(&desc);
 
-	const ID3D11Buffer* pVertices = M->Vertices;
-	UINT VertexStride = VertTopo.ElementStride;
-
+	const ID3D11Buffer* pVertices[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+	UINT Strides[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+	size_t nVertexBuffers = 0;
+	for (size_t i = 0; i < oCOUNTOF(M->Vertices); i++)
+	{
+		if (M->Vertices)
+		{
+			pVertices[nVertexBuffers] = M->Vertices[i];
+			Strides[nVertexBuffers] = desc.VertexByteSize[i];
+			nVertexBuffers++;
+		}
+	}
+	
 	D3D11_PRIMITIVE_TOPOLOGY topology;
 	Context->IAGetPrimitiveTopology(&topology);
 
 	oD3D11Draw(Context
 		, oD3D11GetNumElements(topology, NumTriangles)
-		, 1
-		, &pVertices
-		, &VertexStride
+		, nVertexBuffers
+		, pVertices
+		, Strides
 		, MinVertex
 		, 0
 		, M->Indices.c_ptr()
@@ -244,7 +311,7 @@ void oD3D11CommandList::Draw(uint _LineListID, const oGfxLineList* _pLineList)
 		, 0);
 }
 
-void oD3D11CommandList::DrawQuad(float4x4& _Transform, uint _MeshID)
+void oD3D11CommandList::DrawQuad(float4x4& _Transform, uint _QuadID)
 {
 	oD3D11DrawSVQuad(Context);
 }

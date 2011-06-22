@@ -13,8 +13,7 @@ oDECLARE_GFXRESOURCE_IMPLEMENTATION(oD3D11, Mesh, MESH)
 	oDECLARE_GFXRESOURCE_CTOR(oD3D11, Mesh);
 	std::vector<RANGE> Ranges;
 	oRef<ID3D11Buffer> Indices;
-	oRef<ID3D11Buffer> Vertices;
-	oRef<ID3D11Buffer> Skinning;
+	oRef<ID3D11Buffer> Vertices[3];
 };
 
 #endif

@@ -10,7 +10,6 @@ enum oOMSTATE // Output Merge (Blend) State
 	oOM_ACCUMULATE, // src rgba + dst rgba
 	oOM_ADDITIVE, // src rgb * src a  +  dst rgb
 	oOM_TRANSLUCENT, // src rgb * src a  +  dst rgb * (1 - src a)
-	oOM_PARTIAL_TRANSLUCENT, // treats values above alpha-test threshold as opaque, and then the rest as TRANSLUCENT
 	oOM_COUNT,
 };
 

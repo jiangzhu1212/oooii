@@ -6,6 +6,7 @@
 #include <oGfx/oGfx.h>
 #include "oGfxCommon.h"
 #include "oD3D11RenderTarget.h"
+#include "oD3D11Device.h"
 #include <oooii/oD3D11.h>
 
 oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
@@ -17,10 +18,11 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	void GetDesc(DESC* _pDesc) const threadsafe override;
 
 	void Begin(
-		const float4x4& View
-		, const float4x4& Projection
+		const float4x4& _View
+		, const float4x4& _Projection
 		, const oGfxPipeline* _pPipeline
 		, const oGfxRenderTarget2* _pRenderTarget
+		, size_t _RenderTargetIndex
 		, size_t _NumViewports
 		, const VIEWPORT* _pViewports) override;
 
@@ -44,10 +46,11 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	DESC Desc;
 
 	oD3D11RenderTarget2* pRenderTarget;
-	oD3D11BlendState* pOMState;
-	oD3D11RasterizerState* pRSState;
-	oD3D11DepthStencilState* pDSState;
-	oD3D11SamplerState* pSAState;
+
+	// Shortcut to a bunch of typecasting
+	// This thread_cast is safe because oD3D11CommandList is single-threaded
+	// and most access is to get at common/safe resources
+	inline oD3D11Device* D3DDevice() { return thread_cast<oD3D11Device*>(static_cast<threadsafe oD3D11Device*>(Device.c_ptr())); }
 };
 
 #endif

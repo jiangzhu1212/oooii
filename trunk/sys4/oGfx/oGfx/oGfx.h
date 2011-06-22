@@ -33,6 +33,7 @@ interface oGfxResource : oGfxDeviceChild
 
 	enum TYPE
 	{
+		LINELIST,
 		MATERIAL,
 		MESH,
 		TEXTURE,
@@ -40,6 +41,27 @@ interface oGfxResource : oGfxDeviceChild
 
 	// Returns the type of this resource.
 	virtual TYPE GetType() const threadsafe = 0;
+};
+
+interface oGfxLineList : oGfxResource
+{
+	struct DESC
+	{
+		uint MaxNumLines;
+		uint NumLines;
+	};
+
+	struct LINE
+	{
+		float3 Start;
+		oColor StartColor;
+		float3 End;
+		oColor EndColor;
+	};
+
+	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+	virtual void Resize(uint _MaxNumLines) = 0;
+	virtual void SetNumLines(uint _NumLines) = 0;
 };
 
 interface oGfxMaterial : oGfxResource
@@ -77,28 +99,35 @@ interface oGfxMesh : oGfxResource
 
 	struct DESC
 	{
+		uint VertexByteSize[3];
 		uint NumIndices;
 		uint NumVertices;
 		uint NumRanges;
 		oAABoxf LocalSpaceBounds;
 		bool FrequentIndexUpdate;
-		bool FrequentVertexUpdate;
+		bool FrequentVertexUpdate[3];
 
 		DESC()
 			: NumIndices(0)
 			, NumVertices(0)
 			, NumRanges(0)
 			, FrequentIndexUpdate(false)
-			, FrequentVertexUpdate(false)
-		{}
+		{
+			for (size_t i = 0; i < oCOUNTOF(VertexByteSize); i++)
+			{
+				VertexByteSize[i] = 0;
+				FrequentVertexUpdate[i] = false;
+			}
+		}
 	};
 
 	enum SUBRESOURCE
 	{
 		RANGES,
 		INDICES, // always 32-bit uints when mapped
-		VERTICES,
-		SKINNING, // weights and indices
+		VERTICES0,
+		VERTICES1,
+		VERTICES2,
 	};
 
 	struct RANGE
@@ -107,20 +136,6 @@ interface oGfxMesh : oGfxResource
 		uint NumTriangles;
 		uint MinVertex; // min/max indices of vertices that will be  
 		uint MaxVertex; // accessed by this range
-	};
-
-	struct VERTEX
-	{
-		float3 Position; 
-		float2 Texcoord;
-		float3 Normal;
-		float4 Tangent;
-	};
-
-	struct SKINNING
-	{
-		float4 Weights;
-		unsigned char Indices[4];
 	};
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
@@ -174,15 +189,15 @@ interface oGfxPipeline : oGfxDeviceChild
 	{
 		const void* pInputLayout;
 		unsigned int InputLayoutByteWidth;
-		const unsigned char* pVertexShader;
-		const unsigned char* pHullShader;
-		const unsigned char* pDomainShader;
-		const unsigned char* pGeometryShader;
-		const unsigned char* pPixelShader;
+		const unsigned char* pVSByteCode;
+		const unsigned char* pHSByteCode;
+		const unsigned char* pDSByteCode;
+		const unsigned char* pGSByteCode;
+		const unsigned char* pPSByteCode;
 	};
 };
 
-interface oGfxRenderTarget : oGfxDeviceChild
+interface oGfxRenderTarget2 : oGfxDeviceChild
 {
 	// A 2D plane onto which rendering occurs
 
@@ -195,6 +210,14 @@ interface oGfxRenderTarget : oGfxDeviceChild
 		oColor ClearColor[MAX_MRT_COUNT];
 		float DepthClearValue;
 		unsigned char StencilClearValue;
+
+		CLEAR_DESC()
+			: DepthClearValue(1.0f)
+			, StencilClearValue(0)
+		{
+			for (size_t i = 0; i < MAX_MRT_COUNT; i++)
+				ClearColor[i] = 0;
+		}
 	};
 
 	struct DESC
@@ -207,6 +230,18 @@ interface oGfxRenderTarget : oGfxDeviceChild
 		oSurface::FORMAT DepthStencilFormat; // Use UNKNOWN for no depth
 		CLEAR_DESC ClearDesc;
 		bool GenerateMips;
+
+		DESC()
+			: Width(256)
+			, Height(256)
+			, MRTCount(1)
+			, ArraySize(1)
+			, DepthStencilFormat(oSurface::UNKNOWN)
+			, GenerateMips(false)
+		{
+			for (size_t i = 0; i < MAX_MRT_COUNT; i++)
+				Format[i] = oSurface::UNKNOWN;
+		}
 	};
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
@@ -217,7 +252,7 @@ interface oGfxRenderTarget : oGfxDeviceChild
 
 	// Resizes all buffers without changing formats and 
 	// other topology descriptions
-	virtual void Resize(uint _Width, uint _Height) threadsafe = 0;
+	virtual void Resize(uint _Width, uint _Height) = 0;
 };
 
 interface oGfxCommandList : oGfxDeviceChild
@@ -258,14 +293,6 @@ interface oGfxCommandList : oGfxDeviceChild
 		uint SlicePitch;
 	};
 	
-	struct LINE
-	{
-		float3 Start;
-		oColor StartColor;
-		float3 End;
-		oColor EndColor;
-	};
-
 	struct LIGHT
 	{
 		float3 Position;
@@ -280,10 +307,11 @@ interface oGfxCommandList : oGfxDeviceChild
 	// is 0 and/or _pViewports is NULL, a default full-rendertarget viewport
 	// will be calculated and used.
 	virtual void Begin(
-		const float4x4& View
-		, const float4x4& Projection
+		const float4x4& _View
+		, const float4x4& _Projection
 		, const oGfxPipeline* _pPipeline
-		, const oGfxRenderTarget* _pRenderTarget
+		, const oGfxRenderTarget2* _pRenderTarget
+		, size_t _RenderTargetIndex
 		, size_t _NumViewports
 		, const VIEWPORT* _pViewports) = 0;
 
@@ -327,16 +355,17 @@ interface oGfxCommandList : oGfxDeviceChild
 
 	// Submits an oGfxMesh for drawing using the current state
 	// of the command list.
-	virtual void Draw(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _SectionIndex) = 0;
+	virtual void Draw(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex) = 0;
+
+	// Draws a set of worldspace lines. Use Map/Unmap to set up line lists
+	// writing an array of type oGfxLineList::LINEs.
+	virtual void Draw(uint _LineListID, const oGfxLineList* _pLineList) = 0;
 
 	// Draws a quad in clip space (-1,-1 top-left to 1,1 bottom-right)
 	// with texture coords in screen space (0,0 top-left to 1,1 bottom right)
 	// If View, Projection, and _Transform are all identity, this would
 	// be a fullscreen quad.
-	virtual void DrawQuad(float4x4& _Transform, uint _MeshID) = 0;
-
-	// Draws a worldspace line
-	virtual void DrawLine(uint _LineID, const LINE& _Line) = 0;
+	virtual void DrawQuad(float4x4& _Transform, uint _QuadID) = 0;
 };
 
 interface oGfxDevice : oInterface
@@ -351,8 +380,9 @@ interface oGfxDevice : oInterface
 	};
 
 	virtual bool CreateCommandList(const char* _Name, const oGfxCommandList::DESC& _Desc, oGfxCommandList** _ppCommandList) threadsafe = 0;
-	virtual void CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, oGfxPipeline** _ppPipeline) threadsafe = 0;
-	virtual bool CreateRenderTarget(const char* _Name, const oGfxRenderTarget::DESC& _Desc, oGfxRenderTarget** _ppRenderTarget) threadsafe = 0;
+	virtual bool CreateLineList(const char* _Name, const oGfxLineList::DESC& _Desc, oGfxLineList** _ppLineList) threadsafe = 0;
+	virtual bool CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, oGfxPipeline** _ppPipeline) threadsafe = 0;
+	virtual bool CreateRenderTarget2(const char* _Name, const oGfxRenderTarget2::DESC& _Desc, oGfxRenderTarget2** _ppRenderTarget) threadsafe = 0;
 	virtual bool CreateMaterial(const char* _Name, const oGfxMaterial::DESC& _Desc, oGfxMaterial** _ppMaterial) threadsafe = 0;
 	virtual bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe = 0;
 	virtual bool CreateTexture(const char* _Name, const oGfxTexture::DESC& _Desc, oGfxTexture** _ppTexture) threadsafe = 0;

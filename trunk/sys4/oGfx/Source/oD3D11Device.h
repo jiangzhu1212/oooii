@@ -4,6 +4,7 @@
 #define oD3D11Device_h
 
 #include <oGfx/oGfx.h>
+#include <oGfx/oGfxHLSL.h>
 #include <oooii/oNoncopyable.h>
 #include <oooii/oWindows.h>
 #include <oooii/oD3D11.h>
@@ -48,6 +49,8 @@ struct oD3D11Device : oGfxDevice, oNoncopyable
 
 	oRef<ID3D11Device> D3DDevice;
 	oRef<ID3D11DeviceContext> ImmediateContext;
+	oRef<ID3D11Buffer> ViewConstants;
+	oRef<ID3D11Buffer> DrawConstants;
 
 	DESC Desc;
 	oRefCount RefCount;
