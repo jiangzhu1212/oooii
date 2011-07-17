@@ -2,6 +2,7 @@
 #include <oooii/oDebugger.h>
 #include <oooii/oSingleton.h>
 #include <oooii/oStddef.h>
+#include <oooii/oString.h>
 #include <oooii/oThreading.h>
 #include <oooii/oWindows.h>
 #include "oDbgHelp.h"
@@ -215,10 +216,7 @@ bool oDebugger::TranslateSymbol(SYMBOL* _pSymbol, unsigned long long _Address)
 
 		//strcpy_s(_pSymbol->Name, symbolInfo->Name);
 		memcpy(_pSymbol->Name, symbolInfo->Name, sizeof(_pSymbol->Name)-sizeof(TCHAR));
-		symbolInfo->Name[oCOUNTOF(symbolInfo->Name)-1] = 0;
-		symbolInfo->Name[oCOUNTOF(symbolInfo->Name)-2] = '.';
-		symbolInfo->Name[oCOUNTOF(symbolInfo->Name)-3] = '.';
-		symbolInfo->Name[oCOUNTOF(symbolInfo->Name)-4] = '.';
+		oAddTruncationElipse(_pSymbol->Name);
 		_pSymbol->SymbolOffset = static_cast<unsigned int>(displacement);
 	}
 

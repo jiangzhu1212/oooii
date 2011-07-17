@@ -28,7 +28,7 @@ struct oSingletonBase : oNoncopyable, oInterface
 	// on oDbgHelp for stack traces for memory leaks. oAssert references oDebugger
 	// and oDebugger references oDbgHelp, ensuring ultimately that oDbgHelp is 
 	// available to very late for any debug reporting.
-	virtual void Reference() threadsafe;
+	virtual int Reference() threadsafe;
 	virtual void Release() threadsafe;
 
 protected:

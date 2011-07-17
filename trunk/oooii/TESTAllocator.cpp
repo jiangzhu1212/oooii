@@ -4,6 +4,7 @@
 #include <oooii/oMath.h>
 #include <oooii/oRef.h>
 #include <oooii/oTest.h>
+#include <oooii/oStdio.h>
 #include <oooii/oSTL.h>
 #include <oooii/oWindows.h>
 
@@ -21,13 +22,21 @@ struct TESTAllocator : public oTest
 			// On machines with less memory, it's not a good idea to use all of it
 			// because the system would need to page out everything it has to allocate
 			// that much memory, which makes the test take many minutes to run.
-			const size_t SIZE = __min(globalHeapDesc.TotalPhysical / 2, oGB(6));
+			const size_t SIZE = __min(globalHeapDesc.TotalPhysical / 2, oMB(4500));
 			EnoughPhysRamForFullTest = (SIZE > oGB(4));
 		#else
 			const size_t SIZE = 500 * 1024 * 1024; // 500 MB
 		#endif
 
-		std::vector<char> arena(SIZE); // SIZE sould be bigger than 32-bit's 4 GB limitation
+		char strArenaSize[32];
+		oFormatMemorySize(strArenaSize, SIZE, 2);
+		oTRACE("Allocating %s arena using CRT... (SLOW! OS has to defrag virtual memory to get a linear run of this size)", strArenaSize);
+		
+		#ifdef _DEBUG
+			double CRTstart = oTimer();
+		#endif
+		std::vector<char> arena(SIZE); // SIZE should be bigger than 32-bit's 4 GB limitation
+		oTRACE("Allocation took %.02f seconds", (oTimer() - CRTstart));
 
 		oAllocator::DESC desc;
 		desc.ArenaSize = arena.size();
@@ -40,7 +49,7 @@ struct TESTAllocator : public oTest
 		std::vector<char*> pointers(NUM_POINTER_TESTS);
 		memset(oGetData(pointers), 0, sizeof(char*) * pointers.size());
 		size_t totalUsed = 0;
-		size_t smallestAlloc = ~0u;
+		size_t smallestAlloc = oINVALID_SIZE_T;
 		size_t largestAlloc = 0;
 
 		for (size_t numRuns = 0; numRuns < 1; numRuns++)

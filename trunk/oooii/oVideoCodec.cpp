@@ -9,6 +9,10 @@
 #include "oRleDecodeCPU.h"
 #include "oWebmFile.h"
 #include "oRawDecodeCPU.h"  
+#include "oImageDecodeCPU.h"
+#include "oImageSequence.h"
+#include "oVideoRTPImpl.h"
+#include <oooii/oImage.h>
 
 const oGUID& oGetGUID(threadsafe const oVideoContainer* threadsafe const * /* = 0 */)
 {
@@ -51,6 +55,12 @@ bool oVideoDecodeCPU::Create( threadsafe oVideoContainer* _pContainer, threadsaf
 			oCONSTRUCT( _ppFrameDecoder, oRawDecodeCPU( _pContainer, &success) );
 		}
 		break;
+
+	case oVideoContainer::OIMAGE:
+		{
+			oCONSTRUCT( _ppFrameDecoder, oImageDecodeCPU( _pContainer, &success) );
+		}
+		break;
 	}
 
 	return success;
@@ -86,6 +96,10 @@ bool oVideoFile::Create( const char* _pFileName, const oVideoContainer::DESC& _D
 		{
 			Desc.ContainerType = oVideoContainer::WEBM_CONTAINER;
 		}
+		else if( oImage::IsSupportedFileType(_pFileName))
+		{
+			Desc.ContainerType = oVideoContainer::IMAGE_SEQUENCE_CONTAINER;
+		}
 		else
 		{
 			oSetLastError(EBADFD, "Unknown file extension");
@@ -104,6 +118,11 @@ bool oVideoFile::Create( const char* _pFileName, const oVideoContainer::DESC& _D
 	case oVideoContainer::WEBM_CONTAINER:
 		{
 			oCONSTRUCT( _ppVideoFile, oWebmFile( _pFileName, Desc, &success) );
+		}
+		break;
+	case oVideoContainer::IMAGE_SEQUENCE_CONTAINER:
+		{
+			oCONSTRUCT( _ppVideoFile, oImageSequence( _pFileName, Desc, &success) );
 		}
 		break;
 	}
@@ -139,6 +158,12 @@ bool oVideoStream::Create( const oVideoContainer::DESC& _Desc, threadsafe oVideo
 			oCONSTRUCT( _ppVideoStream, oWebmStreaming( _Desc, &success) );
 		}
 		break;
+
+		case oVideoContainer::OOII_RTP_CONTAINER:
+		{
+			oCONSTRUCT( _ppVideoStream, oVideoRTPSequencerImpl( _Desc, &success ) );
+		}
+		break;
 		
 		default:
 			oSetLastError(EINVAL,"Unsupported container format requested for oVideoStream");
@@ -147,3 +172,7 @@ bool oVideoStream::Create( const oVideoContainer::DESC& _Desc, threadsafe oVideo
 
 	return success;
 }
+
+
+
+

@@ -11,12 +11,43 @@
 #include <oooii/oString.h>
 #include <oooii/oTimerHelpers.h>
 #include <oooii/oMath.h>
+#include "oWinDWMAPI.h"
 #include "oWinPSAPI.h"
 #include "oWinsock.h"
+#include <time.h>
 #include <tlhelp32.h>
+#include <shellapi.h>
+#include <Windowsx.h>
 
 // Use the Windows Vista UI look. If this causes issues or the dialog not to appear, try other values from processorAchitecture { x86 ia64 amd64 * }
 #pragma comment(linker, "\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+
+bool oWinSetLastError(HRESULT _hResult, const char* _ErrorDescPrefix)
+{
+	if (_hResult == oWINDOWS_DEFAULT)
+		_hResult = ::GetLastError();
+
+	char err[2048];
+	char* p = err;
+	size_t count = oCOUNTOF(err);
+	if (_ErrorDescPrefix)
+	{
+		size_t len = sprintf_s(err, "%s", _ErrorDescPrefix);
+		p += len;
+		count -= len;
+	}
+
+	size_t len = sprintf_s(p, count, "HRESULT 0x%08x: ", _hResult);
+	p += len;
+	count -= len;
+
+	if (oGetWindowsErrorDescription(p, count, _hResult))
+		return false;
+
+	// @oooii-tony: it would be nice to convert the errno a bit better, but that's
+	// a lot of typing! Maybe one day...
+	return oSetLastError(EINVAL, err);
+}
 
 // Link to MessageBoxTimeout based on code from:
 // http://www.codeproject.com/KB/cpp/MessageBoxTimeout.aspx
@@ -107,6 +138,86 @@ time_t oFileTimeToUnixTime(const FILETIME* _pFileTime)
 	// this ought to be the reverse of to_filetime
 	LONGLONG ll = ((LONGLONG)_pFileTime->dwHighDateTime << 32) | _pFileTime->dwLowDateTime;
 	return static_cast<time_t>((ll - 116444736000000000) / 10000000);
+}
+
+void oUnixTimeToSystemTime(time_t _Time, SYSTEMTIME* _pSystemTime)
+{
+	FILETIME ft;
+	oUnixTimeToFileTime(_Time, &ft);
+	FileTimeToSystemTime(&ft, _pSystemTime);
+}
+
+time_t oSystemTimeToUnixTime(const SYSTEMTIME* _pSystemTime)
+{
+	FILETIME ft;
+	SystemTimeToFileTime(_pSystemTime, &ft);
+	return oFileTimeToUnixTime(&ft);
+}
+
+struct SCHEDULED_FUNCTION_CONTEXT
+{
+	HANDLE hTimer;
+	oFUNCTION<void()> OnTimer;
+	time_t ScheduledTime;
+	char DebugName[64];
+};
+
+static void CALLBACK ExecuteScheduledFunctionAndCleanup(LPVOID lpArgToCompletionRoutine, DWORD dwTimerLowValue, DWORD dwTimerHighValue)
+{
+	SCHEDULED_FUNCTION_CONTEXT& Context = *(SCHEDULED_FUNCTION_CONTEXT*)lpArgToCompletionRoutine;
+	if (Context.OnTimer)
+	{
+		#ifdef _DEBUG
+			char strDiff[64];
+			oFormatTimeSize(strDiff, (double)(time(nullptr) - Context.ScheduledTime));
+			oTRACE("Running scheduled function \"%s\" %s after it was scheduled", oSAFESTRN(Context.DebugName), strDiff);
+		#endif
+
+		Context.OnTimer();
+		oTRACE("Finished scheduled function \"%s\"", oSAFESTRN(Context.DebugName));
+	}
+	oVB(CloseHandle((HANDLE)Context.hTimer));
+	delete &Context;
+}
+
+bool oScheduleFunction(const char* _DebugName, time_t _AbsoluteTime, bool _Alertable, oFUNCTION<void()> _Function)
+{
+	SCHEDULED_FUNCTION_CONTEXT& Context = *new SCHEDULED_FUNCTION_CONTEXT();
+	Context.hTimer = CreateWaitableTimer(nullptr, TRUE, nullptr);
+	oASSERT(Context.hTimer, "CreateWaitableTimer failed LastError=0x%08x", GetLastError());
+	Context.OnTimer = _Function;
+	Context.ScheduledTime = _AbsoluteTime;
+
+	if (_DebugName && *_DebugName)
+		strcpy_s(Context.DebugName, oSAFESTR(_DebugName));
+	else
+		Context.DebugName[0] = 0;
+
+	Context.ScheduledTime = time(nullptr);
+
+	FILETIME ft;
+	oUnixTimeToFileTime(_AbsoluteTime, &ft);
+
+	#ifdef _DEBUG
+		oDateTime then;
+		oConvertDateTime(&then, _AbsoluteTime);
+		char strTime[64];
+		char strDiff[64];
+		oToString(strTime, then);
+		oFormatTimeSize(strDiff, (double)(_AbsoluteTime - Context.ScheduledTime));
+		oTRACE("Setting timer to run function \"%s\" at %s (%s from now)", oSAFESTRN(Context.DebugName), strTime, strDiff);
+	#endif
+
+		LARGE_INTEGER liDueTime;
+
+		liDueTime.QuadPart = -100000000LL;
+	if (!SetWaitableTimer(Context.hTimer, &liDueTime, 0, ExecuteScheduledFunctionAndCleanup, (LPVOID)&Context, _Alertable ? TRUE : FALSE))
+	{
+		oWinSetLastError();
+		return false;
+	}
+
+	return true;
 }
 
 HRESULT oGetClientScreenRect(HWND _hWnd, RECT* _pRect)
@@ -423,7 +534,7 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 		HBITMAP hBMP = CreateCompatibleBitmap(hDC, w, h);
 		HBITMAP hOld = (HBITMAP)SelectObject(hMemDC, hBMP);
 
-		oVB(RedrawWindow(_hWnd, 0, 0, RDW_INTERNALPAINT|RDW_INVALIDATE|RDW_UPDATENOW));
+		oVB(RedrawWindow(_hWnd, 0, 0, RDW_INVALIDATE|RDW_UPDATENOW));
 		BitBlt(hMemDC, 0, 0, w, h, hDC, r.left, r.top, SRCCOPY);
 		GetDIBits(hMemDC, hBMP, 0, h, _pImageBuffer, _pBitmapInfo, DIB_RGB_COLORS);
 
@@ -722,7 +833,7 @@ void oPumpMessages(HWND _hWnd, unsigned int _TimeoutMS)
 {
 	MSG msg;
 	unsigned int start = oTimerMS();
-	while (PeekMessage(&msg, _hWnd, 0, 0, PM_REMOVE) && (_TimeoutMS == ~0u || (oTimerMS() - start) < _TimeoutMS))
+	while (PeekMessage(&msg, _hWnd, 0, 0, PM_REMOVE) && (_TimeoutMS == oINFINITE_WAIT || (oTimerMS() - start) < _TimeoutMS))
 		TranslateMessage(&msg), DispatchMessage(&msg);
 }
 
@@ -762,6 +873,28 @@ oWINDOWS_VERSION oGetWindowsVersion()
 	}
 
 	return oWINDOWS_UNKNOWN;
+}
+
+const char* oAsString(const oWINDOWS_VERSION& _Version)
+{
+	switch (_Version)
+	{
+		case oWINDOWS_2000: return "Windows 2000";
+		case oWINDOWS_XP: return "Windows XP";
+		case oWINDOWS_XP_PRO_64BIT: return "Windows XP Pro 64-bit";
+		case oWINDOWS_SERVER_2003: return "Windows Server 2003";
+		case oWINDOWS_HOME_SERVER: return "Windows Home Server";
+		case oWINDOWS_SERVER_2003R2: return "Windows Server 2003R2";
+		case oWINDOWS_VISTA: return "Windows Vista";
+		case oWINDOWS_SERVER_2008: return "Windows Server 2008";
+		case oWINDOWS_SERVER_2008R2: return "Windows Server 2008R2";
+		case oWINDOWS_7: return "Windows 7";
+		case oWINDOWS_UNKNOWN:
+		default:
+			break;
+	}
+
+	return "unknown Windows version";
 }
 
 bool oConvertEnvStringToEnvBlock(char* _EnvBlock, size_t _SizeofEnvBlock, const char* _EnvString, char _Delimiter)
@@ -832,6 +965,222 @@ void* oGetWindowContext(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, 
 	}
 
 	return context;
+}
+
+void oRestoreWindow(HWND _hWnd)
+{
+	// There's a known issue that a simple ShowWindow doesn't
+	// always work on some minimized apps. The WAR seems to be
+	// to set focus to anything else, then try to restore the 
+	// app.
+
+	HWND hProgMan = FindWindow(0, "Program Manager");
+	oASSERT(hProgMan, "Program Manager not found");
+	oSetFocus(hProgMan);
+	oSetFocus(_hWnd);
+	ShowWindow(_hWnd, SW_SHOWDEFAULT);
+}
+
+void oRespectfulAnimateWindow(HWND _hWnd, const RECT* _pFrom, const RECT* _pTo)
+{
+	ANIMATIONINFO ai;
+	ai.cbSize = sizeof(ai);
+	SystemParametersInfo(SPI_GETANIMATION, sizeof(ai), &ai, 0);
+	if (ai.iMinAnimate)
+		oV(DrawAnimatedRects(_hWnd, IDANI_CAPTION, _pFrom, _pTo));
+}
+
+void oTaskbarGetRect(RECT* _pRect)
+{
+	APPBARDATA abd;
+	abd.cbSize = sizeof(abd);
+	SHAppBarMessage(ABM_GETTASKBARPOS, &abd);
+	*_pRect = abd.rc;
+}
+
+HWND oTrayGetHwnd()
+{
+	static const char* sHierarchy[] = 
+	{
+		"Shell_TrayWnd",
+		"TrayNotifyWnd",
+		"SysPager",
+		"ToolbarWindow32",
+	};
+
+	size_t i = 0;
+	HWND hWnd = FindWindow(sHierarchy[i++], nullptr);
+	while (hWnd && i < oCOUNTOF(sHierarchy))
+		hWnd = FindWindowEx(hWnd, nullptr, sHierarchy[i++], nullptr);
+
+	return hWnd;
+}
+
+// This API can be used to determine if the specified
+// icon exists at all.
+bool oTrayGetIconRect(HWND _hWnd, UINT _ID, RECT* _pRect)
+{
+	NOTIFYICONIDENTIFIER nii;
+	memset(&nii, 0, sizeof(nii));
+	nii.cbSize = sizeof(nii);
+	nii.hWnd = _hWnd;
+	nii.uID = _ID;
+	HRESULT hr = Shell_NotifyIconGetRect(&nii, _pRect);
+	return SUCCEEDED(hr);
+}
+
+void oTrayShowIcon(HWND _hWnd, UINT _ID, UINT _CallbackMessage, HICON _hIcon, bool _Show)
+{
+	NOTIFYICONDATA nid;
+	memset(&nid, 0, sizeof(nid));
+	nid.cbSize = sizeof(nid);
+	nid.hWnd = _hWnd;
+	nid.hIcon = _hIcon ? _hIcon : oGetIcon(_hWnd, false);
+	if (!nid.hIcon)
+		nid.hIcon = oGetIcon(_hWnd, true);
+	nid.uID = _ID;
+	nid.uCallbackMessage = _CallbackMessage;
+	nid.uFlags = NIF_ICON | (_CallbackMessage ? NIF_MESSAGE : 0);
+	nid.uVersion = NOTIFYICON_VERSION_4;
+	oV(Shell_NotifyIcon(_Show ? NIM_ADD : NIM_DELETE, &nid));
+
+	// Ensure we know exactly what version behavior we're dealing with
+	if (_Show)
+		oV(Shell_NotifyIcon(NIM_SETVERSION, &nid));
+}
+
+void oTraySetFocus()
+{
+	oV(Shell_NotifyIcon(NIM_SETFOCUS, nullptr));
+}
+
+struct REMOVE_TRAY_ICON
+{
+	HWND hWnd;
+	UINT ID;
+	UINT TimeoutMS;
+};
+
+static DWORD WINAPI oTrayScheduleIconHide_Proc(LPVOID lpParameter)
+{
+	REMOVE_TRAY_ICON* pRTI = (REMOVE_TRAY_ICON*)lpParameter;
+	Sleep(pRTI->TimeoutMS);
+	oTRACE("Auto-closing tray icon HWND=0x%p ID=%u", pRTI->hWnd, pRTI->ID);
+	oTrayShowIcon(pRTI->hWnd, pRTI->ID, 0, 0, false);
+	delete pRTI;
+	ExitThread(0);
+}
+
+static void oTrayScheduleIconHide(HWND _hWnd, UINT _ID, unsigned int _TimeoutMS)
+{
+	REMOVE_TRAY_ICON* pRTI = new REMOVE_TRAY_ICON();
+	pRTI->hWnd = _hWnd;
+	pRTI->ID = _ID;
+	pRTI->TimeoutMS = _TimeoutMS;
+
+	#ifdef _DEBUG
+		HANDLE hThread = 
+	#endif
+	CreateThread(nullptr, oKB(64), oTrayScheduleIconHide_Proc, pRTI, 0, nullptr);
+	oASSERT(hThread, "");
+}
+
+bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const char* _Title, const char* _Message)
+{
+	NOTIFYICONDATA nid;
+	memset(&nid, 0, sizeof(nid));
+	nid.cbSize = sizeof(nid);
+	nid.hWnd = _hWnd;
+	nid.hIcon = _hIcon ? _hIcon : oGetIcon(_hWnd, false);
+	if (!nid.hIcon)
+		nid.hIcon = oGetIcon(_hWnd, true);
+	nid.uID = _ID;
+	nid.uFlags = NIF_INFO;
+	nid.uTimeout = __max(__min(_TimeoutMS, 30000), 10000);
+
+	// MS recommends truncating at 200 for English: http://msdn.microsoft.com/en-us/library/bb773352(v=vs.85).aspx
+	strcpy_s(nid.szInfo, 201, oSAFESTR(_Message));
+	oAddTruncationElipse(nid.szInfo, 201);
+
+	// MS recommends truncating at 48 for English: http://msdn.microsoft.com/en-us/library/bb773352(v=vs.85).aspx
+	strcpy_s(nid.szInfoTitle, 49, oSAFESTR(_Title));
+
+	nid.dwInfoFlags = NIIF_NOSOUND | NIIF_RESPECT_QUIET_TIME;
+
+	RECT r;
+	if (!oTrayGetIconRect(_hWnd, _ID, &r))
+	{
+		UINT timeout = 0;
+		switch (oGetWindowsVersion())
+		{
+			case oWINDOWS_2000:
+			case oWINDOWS_XP:
+			case oWINDOWS_SERVER_2003:
+				timeout = nid.uTimeout;
+				break;
+			default:
+			{
+				ULONG duration = 0;
+				oV(SystemParametersInfo(SPI_GETMESSAGEDURATION, 0, &duration, 0));
+				timeout = (UINT)duration * 1000;
+				break;
+			};
+		}
+
+		oTrayShowIcon(_hWnd, _ID, 0, _hIcon, true);
+		if (timeout != oINFINITE_WAIT)
+			oTrayScheduleIconHide(_hWnd, _ID, timeout);
+	}
+
+	if (!Shell_NotifyIcon(NIM_MODIFY, &nid))
+	{
+		oWinSetLastError();
+		return false;
+	}
+
+	return true;
+}
+
+void oTrayDecodeCallbackMessageParams(WPARAM _wParam, LPARAM _lParam, UINT* _pNotificationEvent, UINT* _pID, int* _pX, int* _pY)
+{
+	// http://msdn.microsoft.com/en-us/library/bb773352(v=vs.85).aspx
+	// Search for uCallbackMessage
+
+	*_pNotificationEvent = LOWORD(_lParam);
+	*_pID = HIWORD(_lParam);
+	if (_pX)
+		*_pX = GET_X_LPARAM(_wParam);
+	if (_pY)
+		*_pY = GET_Y_LPARAM(_wParam);
+}
+
+// false means animate from sys tray out to window position
+static void oTrayRespectfulAnimateWindow(HWND _hWnd, bool _ToSysTray)
+{
+	RECT rDesktop, rWindow;
+	GetWindowRect(GetDesktopWindow(), &rDesktop);
+	GetWindowRect(_hWnd, &rWindow);
+	rDesktop.left = rDesktop.right;
+	rDesktop.top = rDesktop.bottom;
+	RECT* from = _ToSysTray ? &rWindow : &rDesktop;
+	RECT* to = _ToSysTray ? &rDesktop : &rWindow;
+	oRespectfulAnimateWindow(_hWnd, from, to);
+}
+
+void oTrayMinimize(HWND _hWnd, UINT _CallbackMessage, HICON _hIcon)
+{
+	oTrayRespectfulAnimateWindow(_hWnd, true);
+	ShowWindow(_hWnd, SW_HIDE);
+	oTrayShowIcon(_hWnd, 0, _CallbackMessage, _hIcon, true);
+}
+
+void oTrayRestore(HWND _hWnd)
+{
+	oTrayRespectfulAnimateWindow(_hWnd, false);
+	ShowWindow(_hWnd, SW_SHOW);
+	SetActiveWindow(_hWnd);
+	SetForegroundWindow(_hWnd);
+	oTrayShowIcon(_hWnd, 0, 0, 0, false);
 }
 
 #if oDXVER >= oDXVER_10
@@ -948,14 +1297,17 @@ bool oCreateDXGIFactory( IDXGIFactory1** _ppFactory )
 	return true;
 }
 
-HRESULT oDXGICreateSwapchain(IUnknown* _pDevice, unsigned int Width, unsigned int Height, DXGI_FORMAT _Fmt, HWND _Hwnd, IDXGISwapChain** _ppSwapChain)
+HRESULT oDXGICreateSwapchain(IUnknown* _pDevice, unsigned int Width, unsigned int Height, unsigned int RefreshRateN, unsigned int RefreshRateD, DXGI_FORMAT _Fmt, HWND _Hwnd, IDXGISwapChain** _ppSwapChain)
 {
 	DXGI_SWAP_CHAIN_DESC scDesc;
+	ZeroMemory( &scDesc, sizeof( scDesc ) );
 
 	DXGI_MODE_DESC& ModeDesc = scDesc.BufferDesc;
 	ModeDesc.Format = _Fmt;
 	ModeDesc.Height = Height;
 	ModeDesc.Width = Width;
+	ModeDesc.RefreshRate.Numerator = RefreshRateN;
+	ModeDesc.RefreshRate.Denominator = RefreshRateD;
 
 	DXGI_SAMPLE_DESC& SampleDesc = scDesc.SampleDesc;
 	SampleDesc.Count = 1;
@@ -966,8 +1318,7 @@ HRESULT oDXGICreateSwapchain(IUnknown* _pDevice, unsigned int Width, unsigned in
 	scDesc.OutputWindow = _Hwnd;
 	scDesc.Windowed = true;
 	scDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-	scDesc.Flags = 0;
-
+	
 	oRef<IDXGIDevice> D3DDevice;
 	oV_RETURN( _pDevice->QueryInterface(&D3DDevice) );
 
@@ -1174,7 +1525,7 @@ unsigned int oGetDisplayDevice(HMONITOR _hMonitor, DISPLAY_DEVICE* _pDevice)
 		}
 	}
 
-	return ~0u;
+	return oINVALID;
 }
 
 unsigned int oGetWindowDisplayIndex(HWND _hWnd)
@@ -1466,6 +1817,30 @@ DWORD oGetParentProcessID()
 	return ppid;
 }
 
+struct oGetWindowFromThreadID_Context 
+{
+	DWORD ThreadID;
+	HWND hWnd;
+};
+
+BOOL CALLBACK oGetWindowFromThreadID_ENUM(HWND _hWnd, LPARAM _lParam)
+{
+	oGetWindowFromThreadID_Context& ctx = *(oGetWindowFromThreadID_Context*)_lParam;
+	DWORD tid = ::GetWindowThreadProcessId(_hWnd, nullptr);
+	if (ctx.ThreadID == tid)
+		ctx.hWnd = _hWnd;
+	return !ctx.hWnd;
+}
+
+HWND oGetWindowFromThreadID(DWORD _ThreadID)
+{
+	oGetWindowFromThreadID_Context ctx;
+	ctx.ThreadID = _ThreadID;
+	ctx.hWnd = 0;
+	::EnumWindows(oGetWindowFromThreadID_ENUM, (LPARAM)&ctx);
+	return ctx.hWnd;
+}
+
 HMODULE oGetModule(void* _ModuleFunctionPointer)
 {
 	HMODULE hModule = 0;
@@ -1616,14 +1991,21 @@ int oGetWindowsErrorDescription(char* _StrDestination, size_t _SizeofStrDestinat
 
 bool oIsWindows64Bit()
 {
-	if( sizeof( void* ) != 4 ) // If ptr size is larger than 32-bit we must be on 64-bit windows
+	if (sizeof(void*) != 4) // If ptr size is larger than 32-bit we must be on 64-bit windows
 		return true;
 
 	// If ptr size is 4 bytes then we're a 32-bit process so check if we're running under
 	// wow64 which would indicate that we're on a 64-bit system
-	BOOL bWow64 = 0;
-	IsWow64Process( GetCurrentProcess(), &bWow64 );
-	return bWow64 != 0;
+	BOOL bWow64 = FALSE;
+	IsWow64Process(GetCurrentProcess(), &bWow64);
+	return !!bWow64;
+}
+
+bool oIsAeroEnabled()
+{
+	BOOL enabled = FALSE;
+	oV(oWinDWMAPI::Singleton()->DwmIsCompositionEnabled(&enabled));
+	return !!enabled;
 }
 
 void oWinsockCreateAddr(sockaddr_in* _pOutSockAddr, const char* _Hostname)
@@ -1786,7 +2168,7 @@ bool oWinsockClose(SOCKET _hSocket)
 	return true;
 }
 
-bool oWinsockWaitMultiple(WSAEVENT* _pHandles, size_t _NumberOfHandles, bool _WaitAll, bool _Alertable, unsigned int _Timeout)
+bool oWinsockWaitMultiple(WSAEVENT* _pHandles, size_t _NumberOfHandles, bool _WaitAll, bool _Alertable, unsigned int _TimeoutMS)
 {
 	// @oooii-tony: there is something called "spurious wakeups" (Google it for 
 	// more info) that can signal an event though no user-space event has been 
@@ -1797,7 +2179,7 @@ bool oWinsockWaitMultiple(WSAEVENT* _pHandles, size_t _NumberOfHandles, bool _Wa
 	// event is waited on. If something funky occurs in this wait, start debugging 
 	// with more "spurious wakeup" investigation.
 
-	return WSA_WAIT_TIMEOUT != oWinsock::Singleton()->WSAWaitForMultipleEvents(static_cast<DWORD>(_NumberOfHandles), _pHandles, _WaitAll, _Timeout == ~0u ? WSA_INFINITE : _Timeout, _Alertable);
+	return WSA_WAIT_TIMEOUT != oWinsock::Singleton()->WSAWaitForMultipleEvents(static_cast<DWORD>(_NumberOfHandles), _pHandles, _WaitAll, _TimeoutMS == oINFINITE_WAIT ? WSA_INFINITE : _TimeoutMS, _Alertable);
 }
 
 // If the socket was created using oWinSockCreate (WSAEventSelect()), this function can 

@@ -28,6 +28,9 @@ struct TESTSocket2Server : public oSpecialTest
 		oRef<threadsafe oSocketAsyncReceiver> Receiver;
 		oTESTB( oSocketAsyncReceiver::Create( "TESTSocketServerReceiver", &Receiver ), "Failed to create receiver!" );
 
+		oEvent ServerStarted("ServerStarted", "OOOii.TESTSocket2.ServerStarted");
+		ServerStarted.Set();
+
 		oRef<threadsafe oSocketAsync> Client;
 		oTESTB( Server->WaitForConnection( &Client, 3000 ), "Failed to connect client");
 
@@ -91,15 +94,18 @@ struct TESTSocket2 : public oTest
 		desc.MaxReceiveSize = 16;
 
 		oRef<threadsafe oSocketAsync> Client;
-		oTESTB(!oSocketAsync::Create("Client", desc, &Client), "Incorrectly created client when server wasn't running", oGetLastErrorDesc());
+		oTESTB(!oSocketAsync::Create("Client", desc, &Client), "Incorrectly created client when server wasn't running: %s", oGetLastErrorDesc());
 		oTESTB(!Client, "Valid client when there shouldnt be one!");
 		{
+			oEvent ServerStarted("ServerStarted", "OOOii.TESTSocket2.ServerStarted");
+
 			int exitcode = 0;
 			char msg[512];
 			oTESTB(oTestRunSpecialTest("TESTSocket2Server", msg, oCOUNTOF(msg), &exitcode), "%s", msg);
+			oTESTB(ServerStarted.Wait(10000), "Timed out waiting for TESTSocket2Server to start.");
 		}
 
-		oTESTB(oSocketAsync::Create("Client", desc, &Client), "Failed to create client", oGetLastErrorDesc());
+		oTESTB(oSocketAsync::Create("Client", desc, &Client), "Failed to create client: %s", oGetLastErrorDesc());
 
 		oRef<threadsafe oSocketAsyncReceiver> Receiver;
 		oTESTB( oSocketAsyncReceiver::Create( "TestSocket2Reciever", &Receiver ), "Failed to create receiver!" );

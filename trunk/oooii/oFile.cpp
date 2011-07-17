@@ -82,7 +82,11 @@ bool FindNext( DESC* _pDesc, char (&_Path)[_MAX_PATH], void* _pFindContext )
 	if (!FindNextFile(ctx->hContext, &fd))
 		return false;
 	detail::convert(_pDesc, &fd);
-	strcpy_s(_Path, fd.cFileName);
+
+	//FindFirst keeps the path, make sure FindNext stays consistent with that, and also keeps the path.
+	strcpy_s(_Path, ctx->Wildcard);
+	oTrimFilename(_Path);
+	strcat_s(_Path, fd.cFileName);
 
 	return true;
 }
@@ -142,7 +146,7 @@ bool Touch(FILE* _File, time_t _PosixTimestamp)
 	oUnixTimeToFileTime(_PosixTimestamp, &time);
 	if (!SetFileTime(hFile, 0, 0, &time))
 	{
-		oSetLastErrorNative(::GetLastError());
+		oWinSetLastError();
 		return false;
 	}
 	
@@ -160,7 +164,7 @@ bool MarkReadOnly(const char* _Path, bool _ReadOnly)
 
 	if (!SetFileAttributesA(_Path, attrib))
 	{
-		oSetLastErrorNative(::GetLastError());
+		oWinSetLastError();
 		return false;
 	}
 
@@ -178,7 +182,7 @@ bool MarkHidden(const char* _Path, bool _Hidden)
 
 	if (!SetFileAttributesA(_Path, attrib))
 	{
-		oSetLastErrorNative(::GetLastError());
+		oWinSetLastError();
 		return false;
 	}
 

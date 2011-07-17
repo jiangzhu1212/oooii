@@ -11,6 +11,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <deque>
+#include "oVideoHelpers.h"
 
 struct WebmTrack
 {
@@ -36,11 +37,9 @@ public:
 
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oWebmStreaming>());
+	oDEFINE_VIDEO_MUTEXED_MAP_INTERFACE(oWebmStreaming, VideoFrameLock);
 	oWebmStreaming( const oVideoContainer::DESC& _Desc, bool* _pSuccess);
 	~oWebmStreaming();
-
-	virtual void MapFrame(void** _ppFrameData, size_t* _szData, bool* _pValid, size_t *_decodedFrameNumber) threadsafe;
-	virtual void UnmapFrame() threadsafe;
 
 	//If we haven't decoded the header yet, then we don't have anything meaningful to return.
 	virtual void GetDesc(DESC* _pDesc) const threadsafe override
@@ -48,7 +47,7 @@ public:
 		if(VideoTrack != -1) *_pDesc = thread_cast<DESC&>(Desc);
 	}
 
-	virtual void PushByteStream(void* _pData, size_t _SzData) threadsafe;
+	virtual void PushByteStream(const void* _pData, size_t _SzData) threadsafe;
 
 	//If true then PushByteStream will parse the webm data until it has one 
 	//	full frame of data ready to be decoded, and then will save how much
@@ -58,13 +57,13 @@ public:
 	bool HasEncodedFrame() const threadsafe {return !thread_cast<oWebmStreaming*>(this)->EncodedVideoFrames.empty();}
 	unsigned long long GetLastFrameIndex() threadsafe const {return LastClusterIndex;}
 private:
+	oDECLARE_VIDEO_MAP_INTERFACE();
+
 	//Don't drop frames when getting a new iframe unless we are at least this number of frames ahead
 	const static unsigned int MIN_FRAMES_AHEAD_TO_DISCARD = 2; 
 
 	void CheckForHeaderInfo();
-	void MapFrameInternal(void** _ppFrameData, size_t* _szData, bool* _pValid, size_t *_decodedFrameNumber);
-	void UnmapFrameInternal();
-	void PushByteStreamInternal(void* _pData, size_t _SzData);
+	void PushByteStreamInternal(const void* _pData, size_t _SzData);
 
 	bool ReadEBML(unsigned long long& _Data, bool _StripSize);
 	bool ReadEBMLHeader(HEADER& _Header);

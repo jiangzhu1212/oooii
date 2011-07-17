@@ -16,6 +16,7 @@ interface oMemoryMappedFile : oInterface
 
 	virtual unsigned long long GetFileSize() const threadsafe = 0;
 
+	// If _Size is zero the entire file is mapped from _Offset to the end of the file
 	virtual void* Map(unsigned long long _Offset, unsigned int _Size) threadsafe = 0;
 	virtual void Unmap() threadsafe = 0;
 };

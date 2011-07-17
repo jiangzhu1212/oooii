@@ -39,7 +39,7 @@ void oD3D11InitBufferDesc(D3D11_BUFFER_DESC* _pDesc, D3D11_BIND_FLAG _BindFlag, 
 
 #define oDEBUG_CHECK_BUFFER(fnName, ppOut) \
 	if (FAILED(hr)) \
-	{	oSetLastErrorNative(::GetLastError(), #fnName " failed: "); \
+	{	oWinSetLastError(oWINDOWS_DEFAULT, #fnName " failed: "); \
 		return false; \
 	} \
 	else if (_DebugName && *_DebugName) \
@@ -1042,67 +1042,4 @@ oD3D11ScopedMessageDisabler::~oD3D11ScopedMessageDisabler()
 		pInfoQueue->PopStorageFilter();
 		pInfoQueue->Release();
 	#endif
-}
-
-struct QUAD_VERTEX
-{
-	float x, y, z;
-	float u, v;
-};
-
-DEPRECATED_oD3D11Quad::DEPRECATED_oD3D11Quad(ID3D11Device* _pDevice, bool _CCWWinding)
-{
-	static const float DIM = 1.0f;
-	static const float Z = 0.0f;
-	QUAD_VERTEX QuadVertices[6] = 
-	{
-		{ -DIM, -DIM, Z, 0.0f, 0.0f },
-		{ -DIM, DIM, Z, 0.0f, 1.0f },
-		{ DIM, -DIM, Z, 1.0f, 0.0f },
-
-		{ DIM, -DIM, Z, 1.0f, 0.0f },
-		{ -DIM, DIM, Z, 0.0f, 1.0f },
-		{ DIM, DIM, Z, 1.0f, 1.0f },
-	};
-
-	if (_CCWWinding)
-	{
-		std::swap(QuadVertices[1], QuadVertices[2]);
-		std::swap(QuadVertices[4], QuadVertices[5]);
-	}
-
-	oVERIFY(oD3D11CreateVertexBuffer(_pDevice, "DEPRECATED_oD3D11Quad", false, QuadVertices, 6, sizeof(QUAD_VERTEX), &Vertices));
-}
-
-void DEPRECATED_oD3D11Quad::Draw(ID3D11DeviceContext* _pDeviceContext)
-{
-	// The quad uses only positions and texcoords. If using a more general-purpose
-	// shader, there can be whining from D3D11's debug layer, so squelch that 
-	// because we don't need other params if we're calling this API.
-	#ifdef _DEBUG
-		D3D11_MESSAGE_ID messageIDs [] = { D3D11_MESSAGE_ID_DEVICE_DRAW_CONSTANT_BUFFER_TOO_SMALL };
-		oD3D11ScopedMessageDisabler DisableConstantBufferTooSmall(_pDeviceContext, messageIDs, oCOUNTOF(messageIDs));
-	#endif
-
-	UINT stride = sizeof(QUAD_VERTEX);
-	oD3D11Draw(_pDeviceContext, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 2, 1, Vertices.address(), &stride, 0, 0, 0, false, 0);
-}
-
-void DEPRECATED_oD3D11Quad::DrawInstanced(ID3D11DeviceContext* _pDeviceContext, size_t _NumInstances, const ID3D11Buffer* _pInstanceBuffer, size_t _InstanceStride)
-{
-	const ID3D11Buffer* ppVertices[2] = { Vertices, _pInstanceBuffer };
-	const UINT pStrides[2] = { sizeof(QUAD_VERTEX), static_cast<UINT>(_InstanceStride) };
-	oD3D11Draw(_pDeviceContext
-		, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST
-		, 2
-		, 2
-		, ppVertices
-		, pStrides
-		, 0
-		, 0
-		, 0
-		, 0
-		, 0
-		, _NumInstances
-		, 0);
 }

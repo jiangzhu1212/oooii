@@ -579,8 +579,8 @@ Header::sanityCheck (bool isTiled) const
 
     float pixelAspectRatio = this->pixelAspectRatio();
 
-    const float MIN_PIXEL_ASPECT_RATIO = 1e-6;
-    const float MAX_PIXEL_ASPECT_RATIO = 1e+6;
+    const float MIN_PIXEL_ASPECT_RATIO = 1e-6f;
+    const float MAX_PIXEL_ASPECT_RATIO = 1e+6f;
 
     if (pixelAspectRatio < MIN_PIXEL_ASPECT_RATIO ||
 	pixelAspectRatio > MAX_PIXEL_ASPECT_RATIO)

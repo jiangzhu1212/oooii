@@ -56,6 +56,7 @@ struct TESTMOVRleFileDecode: public oTest
 			desc.HasFocus = true;
 			desc.AlwaysOnTop = false;
 			desc.EnableCloseButton = true;
+			desc.MSSleepWhenNoFocus = 0;
 			oTESTB(oWindow::Create(&desc, NULL, "OOOii oWindow", 0, &Window), "Failed to create window");
 
 

@@ -103,6 +103,7 @@ struct TESTWebm: public oTest
 			desc.HasFocus = true;
 			desc.AlwaysOnTop = false;
 			desc.EnableCloseButton = true;
+			desc.MSSleepWhenNoFocus = 0;
 			oTESTB(oWindow::Create(&desc, NULL,  "OOOii oWindow", 0, &Window), "Failed to create window");
 
 
@@ -130,7 +131,7 @@ struct TESTWebm: public oTest
 		while(!VideoFile->HasFinished())
 		{
 			oTESTB(Decoder->Decode(&EncoderFrame, &DecodedFrameCount), "Failed to decode a frame" );
-			oTESTB(DecodedFrameCount == FrameCount, "decoded frame count was not the expected value");
+			oTESTB(DecodedFrameCount == (size_t)FrameCount, "decoded frame count was not the expected value");
 
 			bool forceIFrame = false;
 			if(!(FrameCount%48)) //force every 48th frame to be an iframe.
@@ -143,7 +144,7 @@ struct TESTWebm: public oTest
 
 			oSurface::YUV420 DecoderFrame;
 			VP8Decoder->Decode( &DecoderFrame, &DecodedFrameCount );
-			oTESTB(DecodedFrameCount == FrameCount, "decoded frame count was not the expected value");
+			oTESTB(DecodedFrameCount == (size_t)FrameCount, "decoded frame count was not the expected value");
 
 			oSurface::convert_YUV420_to_B8G8R8A8_UNORM( MovDesc.Width, MovDesc.Height, DecoderFrame, pFrame, RGBFramestride );
 

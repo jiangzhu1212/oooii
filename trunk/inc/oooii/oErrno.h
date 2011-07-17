@@ -32,11 +32,6 @@ size_t oGetLastErrorCount();
 // returns more descriptive text set by oSetLastError()
 const char* oGetLastErrorDesc();
 
-// Given the specified platform-specific error code (HRESULT on Windows), set
-// both the closest errno value and the platform-specific description associated
-// with the error code.
-bool oSetLastErrorNative(unsigned int _NativeErrorCode, const char* _ErrorDescPrefix = 0);
-
 #ifdef _MSC_VER
 #include <errno.h>
 

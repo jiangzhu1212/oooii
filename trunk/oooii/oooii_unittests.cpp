@@ -45,6 +45,13 @@ void InitEnv()
 
 	oRecycleScheduler();
 
+	oTRACEA("Aero is %sactive", oSysGUIUsesGPUCompositing() ? "" : "in");
+
+	// IOCP needs to be initialized or it will show up as a leak in the first test
+	// to use it.
+	extern void InitializeIOCP();
+	InitializeIOCP();
+
 	oConsole::SetTitle(sTITLE);
 	oDebugger::ReportLeaksOnExit(true);
 
@@ -245,8 +252,10 @@ int main(int argc, const char* argv[])
 	else
 	{
 		result = oTestManager::Singleton()->RunTests(parameters.Filters.empty() ? 0 : &parameters.Filters[0], parameters.Filters.size());
+
+		oMsgBox::tprintf(result ? oMsgBox::NOTIFY_ERR : oMsgBox::NOTIFY, 10000, "OOOii Unit Tests", "Completed%s", result ? " with errors" : " successfully");
 		if (oDebugger::IsAttached())
-			oMsgBox::printf(oMsgBox::INFO, sTITLE, "oooii_unittests completed%s", result ? " with errors" : " successfully");
+			oMsgBox::printf(result ? oMsgBox::ERR : oMsgBox::INFO, sTITLE, "oooii_unittests completed%s", result ? " with errors" : " successfully");
 	}
 
 	return result;

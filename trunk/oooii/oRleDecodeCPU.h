@@ -19,17 +19,17 @@ public:
 	virtual bool Decode(oSurface::YUV420* _pFrame, size_t *_decodedFrameNumber) threadsafe;
 
 private:
-	template<typename T> void ReadRle(T& _item,unsigned int _numItems = 1)
+	template<typename T> void ReadRle(T& _item, unsigned int* _pInOutDataIndex, const oVideoContainer::MAPPED& _Mapped, unsigned int _numItems = 1)
 	{
 		unsigned int numBytes = _numItems*sizeof(T);
-		if(numBytes+DataIndex >= DataSize)
+		if(numBytes+(*_pInOutDataIndex) >= _Mapped.DataSize)
 			return;
-		memcpy(&_item,oByteAdd(Data,DataIndex),numBytes);
-		DataIndex += numBytes;
+		memcpy(&_item,oByteAdd(_Mapped.pFrameData,*_pInOutDataIndex),numBytes);
+		*_pInOutDataIndex += numBytes;
 	}
-	template<typename T> void ReadRleSwap(T& _item,unsigned int _numItems = 1)
+	template<typename T> void ReadRleSwap(T& _item, unsigned int* _pInOutDataIndex, const oVideoContainer::MAPPED& _Mapped, unsigned int _numItems = 1)
 	{
-		ReadRle(_item,_numItems);
+		ReadRle(_item,_pInOutDataIndex,_Mapped,_numItems);
 		_item = oByteSwap(_item);
 	}
 	bool DecodeInternal(oSurface::YUV420* _pFrame, size_t *_decodedFrameNumber);
@@ -42,9 +42,6 @@ private:
 
 	oRef<threadsafe oVideoContainer> Container;
 	oMutex DecodeLock;
-	void *Data;
-	size_t DataSize;
-	unsigned int DataIndex;
 };
 
 #endif //oVP8DecodeCPU_h

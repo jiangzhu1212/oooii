@@ -21,18 +21,11 @@ struct TESTVideoWindow : public oTest
 		VDDesc.ClientWidth = Desc.Width;
 		VDDesc.ClientHeight =  Desc.Height;
 		VDDesc.HasFocus = false;
+		VDDesc.MSSleepWhenNoFocus = 0;
 
 		oRef<oWindow> Window;
 		oWindow::Create( &VDDesc, NULL, "TestVideoPlayer", 0, &Window );
-
-		oRef<threadsafe oWindow::Video> Video;
-		{
-			oWindow::Video::DESC desc;
-			std::vector<threadsafe oVideoContainer*> containers;
-			containers.push_back(VideoFile);
-			Window->CreateVideo(&desc, containers, &Video );
-		}
-
+		
 		oRef<threadsafe oWindow::Font> Font;
 		{
 			oWindow::Font::DESC desc;
@@ -59,6 +52,18 @@ struct TESTVideoWindow : public oTest
 			oTESTB(Window->CreateText(&desc, Font, &Text), "Failed to create text");
 		}
 
+		//be sure to flush any paints before creating the video. each paint decodes a frame. don't want to throw off the test image
+		Window->Begin();
+		Window->End(true, true);
+
+		oRef<threadsafe oWindow::Video> Video;
+		{
+			oWindow::Video::DESC desc;
+			std::vector<threadsafe oVideoContainer*> containers;
+			containers.push_back(VideoFile);
+			Window->CreateVideo(&desc, containers, &Video );
+		}
+
 		int Frame = 0;
 		while( !VideoFile->HasFinished() )
 		{
@@ -69,7 +74,7 @@ struct TESTVideoWindow : public oTest
 				oTESTB( TestImage(snapshot, Frame), "Image compare frame %i failed", Frame );
 			}
 			Window->Begin();
-			Window->End(true);
+			Window->End(true, true);
 		}
 
 		return SUCCESS;

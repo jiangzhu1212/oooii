@@ -128,7 +128,7 @@ bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 		}
 
 		oLockedPointer<oBuffer> pLockedBuffer(b);
-		if (!oImage::Create(pLockedBuffer->GetData(), pLockedBuffer->GetSize(), &GoldenImage))
+		if (!oImage::Create(pLockedBuffer->GetData(), pLockedBuffer->GetSize(), oSurface::UNKNOWN, &GoldenImage))
 		{
 			oSetLastError(EINVAL, "Corrupt/unloadable golden image file: %s", golden);
 			return false;
@@ -397,7 +397,10 @@ int oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, size_t _Siz
 		}
 
 		oFormatTimeSize(timeMessage, oTimer() - totalTestStartTime);
-		oConsole::printf(0, 0, "========== Unit Tests: %u succeeded, %u failed, %u skipped in %s ==========\n", NumSucceeded, NumFailed, NumSkipped, timeMessage);
+    if ((NumSucceeded + NumFailed == 0))
+  		oConsole::printf(0, 0, "========== Unit Tests: ERROR NO TESTS RUN ==========\n");
+    else
+		  oConsole::printf(0, 0, "========== Unit Tests: %u succeeded, %u failed, %u skipped in %s ==========\n", NumSucceeded, NumFailed, NumSkipped, timeMessage);
 
 		TotalNumSucceeded += NumSucceeded;
 		TotalNumFailed += NumFailed;
@@ -410,7 +413,10 @@ int oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, size_t _Siz
 		oConsole::printf(0, 0, "========== %u Iterations: %u succeeded, %u failed, %u skipped in %s ==========\n", Desc.NumRunIterations, TotalNumSucceeded, TotalNumFailed, TotalNumSkipped, timeMessage);
 	}
 
-	return (TotalNumFailed > 0) ? -1 : 0;
+  if ((TotalNumFailed > 0) || (TotalNumSucceeded + TotalNumFailed == 0))
+    return -1;
+
+  return 0;
 }
 
 int oTestManager_Impl::RunSpecialMode(const char* _Name)

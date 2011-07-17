@@ -1,5 +1,8 @@
 // $(header)
-// NOTE: This is a header of utility functions for HLSL (not C++)
+// NOTE: This header is compiled both by HLSL and C++
+#ifndef oHLSL
+	#pragma once
+#endif
 #ifndef oHLSL_h
 #define oHLSL_h
 
@@ -9,6 +12,11 @@
 
 #ifndef oRIGHTHANDED
 	#define oRIGHTHANDED
+#endif
+
+// This is used below in oConvertShininessToSpecularExponent
+#ifndef oMAX_SPECULAR_EXPONENT
+	#define oMAX_SPECULAR_EXPONENT 2000.0
 #endif
 
 #ifndef oHLSL
@@ -153,6 +161,34 @@ float3 oHalfToFullSphere(float2 Nxy)
 	return -float3(2 * z * Nxy.x, 2 * z * Nxy.y, (2 * z * z) - 1);
 }
 
+// Given the rotation of a normal from oVECTOR_UP, create a half-
+// sphere encoded version fit for use in deferred rendering
+float2 oEncodeQuaternionNormal(float4 _NormalRotationQuaternion, bool _IsFrontFace)
+{
+	float3 up = _IsFrontFace ? oVECTOR_UP : -oVECTOR_UP;
+	return oFullToHalfSphere(oQRotate(normalize(_NormalRotationQuaternion), up));
+}
+
+// Returns a normal as encoded by oEncodeQuaternionNormal()
+float3 oDecodeQuaternionNormal(float2 _EncodedQuaternionNormal)
+{
+	return oHalfToFullSphere(_EncodedQuaternionNormal);
+}
+
+// Converts a 3D normalized vector into an RGB color
+// (typically for encoding a normal)
+float3 oColorizeVector(float3 _NormalizedVector)
+{
+	return _NormalizedVector * float3(0.5, 0.5, -0.5) + 0.5;
+}
+
+// Converts a normalized vector stored as RGB color
+// back to a vector
+float3 oDecolorizeVector(float3 _RGBVector)
+{
+	return _RGBVector * float3(2.0, 2.0, -2.0) - 1;
+}
+
 // Convert from HSV (HSL) color space to RGB
 float3 oHSVtoRGB(float3 HSV)
 {
@@ -183,24 +219,38 @@ uint oUnmaskedRand(uint Seed)
 // (i.e. 13,14,15) have significantly different colors.
 float3 oIDtoColor8Bit(uint ID8Bit)
 {
-	uint H = oUnmaskedRand(ID8Bit+1); // +1 ensures a non-black color for 0
-	uint S = oUnmaskedRand(H);
-	uint V = oUnmaskedRand(S);
-
-	float3 HSV = ((uint3(H,S,V) >> 16) & 0xff) / 255.0;
-	return oHSVtoRGB(HSV);
+	uint R = oUnmaskedRand(ID8Bit);
+	uint G = oUnmaskedRand(R);
+	uint B = oUnmaskedRand(G);
+	return (uint3(R,G,B) & 0xff) / 255.0;
 }
 
 // Given an integer ID [0,65535], return a color that ensures IDs near each other 
 // (i.e. 13,14,15) have significantly different colors.
 float3 oIDtoColor16Bit(uint ID16Bit)
 {
-	uint H = oUnmaskedRand(ID16Bit+1); // +1 ensures a non-black color for 0
-	uint S = oUnmaskedRand(H);
-	uint V = oUnmaskedRand(S);
+	uint R = oUnmaskedRand(ID16Bit);
+	uint G = oUnmaskedRand(R);
+	uint B = oUnmaskedRand(G);
+	return (uint3(R,G,B) & 0xffff) / 65535.0;
+}
 
-	float3 HSV = ((uint3(H,S,V) >> 16) & 0xffff) / 65535.0;
-	return oHSVtoRGB(HSV);
+// Shininess is a float value on [0,1] that describes
+// a value between minimum (0) specular and a maximum 
+// (system-defined) specular exponent value.
+uint oEncodeShininess(float _Shininess)
+{
+	return _Shininess * 255.0;
+}
+
+float oDecodeShininess(uint _EncodedShininess)
+{
+	return _EncodedShininess / 255.0f;
+}
+
+float oConvertShininessToSpecularExponent(float _Shininess)
+{
+	return _Shininess * oMAX_SPECULAR_EXPONENT;
 }
 
 // Classic OpenGL style attenuation

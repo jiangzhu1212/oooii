@@ -53,17 +53,15 @@ bool oWebmFile::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppI
 	return false;
 }
 
-void oWebmFile::MapFrameInternal(void** _ppFrameData, size_t* _szData, bool* _pValid, size_t *_decodedFrameNumber)
+bool oWebmFile::MapNOLOCK(MAPPED* _pMapped)
 {
-	if(FileIndex >= MemoryMappedFrame->GetFileSize()) // end of file
+	if (FileIndex >= MemoryMappedFrame->GetFileSize())
 	{
-		*_ppFrameData = NULL;
-		*_szData = 0;
-		*_pValid = true;
 		Finished = true;
-		return;
+		return oVideoReturnEndOfFile(_pMapped);
 	}
-	if(!WebmStreaming->HasEncodedFrame())
+
+	if (!WebmStreaming->HasEncodedFrame())
 	{
 		unsigned int sizeToMap = static_cast<unsigned int>(__min(MemoryMappedFrame->GetFileSize()-FileIndex,VIEW_SIZE));
 		void* view = MemoryMappedFrame->Map(FileIndex,sizeToMap);
@@ -71,13 +69,14 @@ void oWebmFile::MapFrameInternal(void** _ppFrameData, size_t* _szData, bool* _pV
 		FileIndex += WebmStreaming->GetDataConsumed();
 		MemoryMappedFrame->Unmap();
 	}
-	WebmStreaming->MapFrame(_ppFrameData, _szData, _pValid, _decodedFrameNumber);
+	WebmStreaming->Map(_pMapped);
+	return true;
 }
 
-void oWebmFile::UnmapFrameInternal()
+void oWebmFile::UnmapNOLOCK()
 {
-	WebmStreaming->UnmapFrame();
-	if(FileIndex >= MemoryMappedFrame->GetFileSize() && !WebmStreaming->HasEncodedFrame()) // end of file
+	WebmStreaming->Unmap();
+	if (FileIndex >= MemoryMappedFrame->GetFileSize() && !WebmStreaming->HasEncodedFrame()) // end of file
 	{
 		Finished = true;
 	}

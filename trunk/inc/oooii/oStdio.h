@@ -26,6 +26,35 @@ inline unsigned int oTimerMS() { return static_cast<unsigned int>(oTimerMSF()); 
 bool oExecute(const char* _CommandLine, char* _StrStdout, size_t _SizeofStrStdOut, int* _pExitCode = 0, unsigned int _ExecutionTimeout = oINFINITE_WAIT);
 
 // _____________________________________________________________________________
+// Calendar Time API
+
+struct oDateTime
+{
+	unsigned short Year; // The full year.
+	unsigned short Month; // [1,12] (January - December)
+	unsigned short DayOfWeek; // [0,6] (Sunday - Saturday)
+	unsigned short Day; // [1,31]
+	unsigned short Hour; // [0,23]
+	unsigned short Minute; // [0,59]
+	unsigned short Second; // [0,59]
+	unsigned short Milliseconds; // [0,999]
+};
+
+// 0 means equal
+// >0 _DateTime1 > _DateTime2 (1 is later/more in the future than 2)
+// <0 _DateTime1 < _DateTime2 (1 is eariler/more in the past than 2)
+int oCompareDateTime(const oDateTime& _DateTime1, const oDateTime& _DateTime2);
+
+// Get the current time in oDataTime format
+bool oGetDateTime(oDateTime* _pDateTime);
+
+time_t oConvertDateTime(const oDateTime& _DateTime);
+void oConvertDateTime(oDateTime* _DateTime, time_t _Time);
+
+// oToString and oFromString support a standard format:
+// YYYY/MM/DD HH:MM:SS:MMS (3 digits of milliseconds)
+
+// _____________________________________________________________________________
 // Environment API
 
 enum oSYSPATH
@@ -65,6 +94,27 @@ template<size_t size> inline bool oGetEnvironmentVariable(char (&_Value)[size], 
 
 // Fills _StrEnvironment with all environment variables delimited by '\n'
 bool oGetEnvironmentString(char* _StrEnvironment, size_t _SizeofStrEnvironment);
+
+bool oSysGUIUsesGPUCompositing();
+
+// Set a time (preferably in the future) when a sleeping system should wake up
+// Obviously a wakeup API cannot be called while the computer is system, so
+// before using platform API to put the system to sleep, set up when it is to 
+// reawake.
+bool oScheduleWakeupAbsolute(time_t _AbsoluteTime, oFUNCTION<void()> _OnWake);
+bool oScheduleWakeupRelative(unsigned int _TimeFromNowInMilliseconds, oFUNCTION<void()> _OnWake);
+
+// Allow system to go to sleep (probably to default behavior), but more usefully
+// setting this to false will prevent a computer going to sleep and leave it in
+// a server-like mode (ES_AWAYMODE_REQUIRED on Windows) for long processes such
+// as video processing.
+void oSysAllowSleep(bool _Allow);
+
+class oScopedDisableSystemSleep
+{
+	oScopedDisableSystemSleep() { oSysAllowSleep(false); }
+	~oScopedDisableSystemSleep() { oSysAllowSleep(true); }
+};
 
 // _____________________________________________________________________________
 // Templated-on-size versions of the above API

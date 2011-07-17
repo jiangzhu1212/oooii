@@ -98,7 +98,7 @@ struct TESTMath : public oTest
 		for( int i = 0; i < NumberOfRects; ++i )
 			totalWeight += BrokenRectWeights[i];
 
-		oTESTB( oEqual( totalWeight, 1.0f ), "Test failed to distribute random weight evenly" );
+		oTESTB( oEqual( totalWeight, 1.0f, 20 ), "Test failed to distribute random weight evenly (totalWeight = %f)", totalWeight );
 
 		oRECT srcRect;
 		srcRect.SetMin( 0 );

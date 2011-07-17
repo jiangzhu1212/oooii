@@ -24,9 +24,11 @@ interface oWindow : oInterface
 	enum STATE
 	{
 		HIDDEN, // Window is invisible, but exists
+		TRAYIZED, // Window is hidden, but has its icon placed in the system tray
 		RESTORED, // Window is in normal sub-screen-size mode
 		MINIMIZED, // Window is reduces to iconic or taskbar size
 		MAXIMIZED, // Window takes up the entire screen
+		FULL_SCREEN, // Window takes exclusive access to screen, and will not have a title bar, border, ect regardless of its style
 	};
 
 	enum STYLE
@@ -64,6 +66,8 @@ interface oWindow : oInterface
 			, ClientY(DEFAULT)
 			, ClientWidth(DEFAULT)
 			, ClientHeight(DEFAULT)
+			, RefreshRateN(0)
+			, RefreshRateD(0)
 			, State(RESTORED)
 			, Style(SIZEABLE)
 			, UseAntialiasing(false)
@@ -72,12 +76,15 @@ interface oWindow : oInterface
 			, AlwaysOnTop(false)
 			, EnableCloseButton(true)
 			, MSSleepWhenNoFocus(200)
+			, LockToVsync(false)
 		{}
 
 		int ClientX;
 		int ClientY;
 		int ClientWidth;
 		int ClientHeight;
+		unsigned int RefreshRateN; //refresh rate is specified as a rational. use 0/0 to let system decide. This is only a request, it may not be honored.
+		unsigned int RefreshRateD; //refresh rate denominator
 		STATE State;
 		STYLE Style;
 		bool UseAntialiasing;
@@ -86,6 +93,7 @@ interface oWindow : oInterface
 		bool AlwaysOnTop;
 		bool EnableCloseButton;
 		unsigned int MSSleepWhenNoFocus;
+		bool LockToVsync;
 	};
 
 	typedef oFUNCTION< void(RECT_EVENT _Event, STATE _State, oRECT _Rect )> RectHandlerFn;
@@ -308,6 +316,7 @@ interface oWindow : oInterface
 				, Anchor(MIDDLE_CENTER)
 				, UseFrameTime(false)
 				, StitchVertically(true)
+				, NVIDIASurround(false)
 			{}
 
 			// These dimensions are as-drawn
@@ -316,7 +325,8 @@ interface oWindow : oInterface
 			int Width; // use DEFAULT for full size of client window
 			int Height; // use DEFAULT for full size of client window
 			bool UseFrameTime; //play video back at rate specified in stream, if false play back as fast as possible
-			bool StitchVertically;
+			bool StitchVertically; 
+			bool NVIDIASurround; //If true it is assumed there are 3 monitors arranged horizontally, with NVIDIA Surround enabled.
 
 			// Starting position relative to the parent window's client area
 			ALIGNMENT Anchor;
@@ -357,12 +367,15 @@ interface oWindow : oInterface
 	// This should be called at the bottom of the application's main loop only 
 	// if Begin succeeds. It primarily handles operations that occur after all 
 	// other operations are finished, such as overlay drawing.
-	virtual void End(bool _ForceRefresh = false) = 0;
+	// If _blockUntilPainted is true, this function will block until all painting
+	// has completed. Try to avoid blocking, its mostly only useful in unittest or 
+	// the rare case you must be sure the painting is finished when this function returns.
+	virtual void End(bool _ForceRefresh = false, bool _blockUntilPainted = false) = 0;
 
 	// Runs an empty Begin/End loop while the window remains open, so this just 
 	// pumps messages until the user interacts with the window to close it, or 
 	// the time is reached.
-	static bool Pump(oWindow* _pWindow, bool _CloseOnTimeout, unsigned int _Timeout = ~0u);
+	static bool Pump(oWindow* _pWindow, bool _CloseOnTimeout, unsigned int _Timeout = oINFINITE_WAIT);
 
 	// _____________________________________________________________________________
 	// Accessors/Mutators

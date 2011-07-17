@@ -197,7 +197,7 @@ namespace RobustPrintMessage
 		}
 
 		// Output message
-		oAssert::ACTION action = oAssert::IGNORE_ONCE;
+		oAssert::ACTION action = _Assertion.DefaultResponse;
 		switch (_Assertion.Type)
 		{
 			case oAssert::TYPE_TRACE:

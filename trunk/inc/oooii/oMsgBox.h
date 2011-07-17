@@ -15,6 +15,10 @@ struct oMsgBox
 		YESNO,
 		ERR,
 		DEBUG,
+		NOTIFY,
+		NOTIFY_INFO,
+		NOTIFY_WARN,
+		NOTIFY_ERR,
 	};
 
 	enum RESULT

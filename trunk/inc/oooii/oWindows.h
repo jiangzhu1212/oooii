@@ -139,8 +139,8 @@
 // pattern, and oV is for direct HRESULT return values.
 
 #ifdef _DEBUG
-	#define oVB(fn) do { if (!(fn)) { oSetLastErrorNative(::GetLastError()); oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, fn, "%s", oGetLastErrorDesc()); } } while(0)
-	#define oV(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) { oSetLastErrorNative(HR__); oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, fn, "%s", oGetLastErrorDesc()); } } while(0)
+	#define oVB(fn) do { if (!(fn)) { oWinSetLastError(::GetLastError()); oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, fn, "%s", oGetLastErrorDesc()); } } while(0)
+	#define oV(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) { oWinSetLastError(HR__); oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, fn, "%s", oGetLastErrorDesc()); } } while(0)
 #else
 	#define oVB(fn) fn
 	#define oV(fn) fn
@@ -200,13 +200,18 @@ int MessageBoxTimeoutW(IN HWND hWnd, IN LPCWSTR lpText, IN LPCWSTR lpCaption, IN
 
 #define oWINDOWS_DEFAULT 0x80000000
 
+// Given the specified HRESULT, set both the closest errno value and the 
+// platform-specific description associated with the error code.
+// if oWINDOWS_DEFAULT is specified, ::GetLastError() is used
+bool oWinSetLastError(HRESULT _hResult = oWINDOWS_DEFAULT, const char* _ErrorDescPrefix = 0);
+
 // oV_RETURN executes a block of code that returns an HRESULT
 // if the HRESULT is not S_OK it returns the HRESULT
 #define oV_RETURN(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) return HR__; } while(0)
 
 // oVB_RETURN executes a block of Windows API code that returns bool and populates
 // oGetLastError() with ::GetLastError() and returns false.
-#define oVB_RETURN(fn) do { if (!(fn)) { oSetLastErrorNative(::GetLastError(), #fn " failed: "); return false; } } while(0)
+#define oVB_RETURN(fn) do { if (!(fn)) { oWinSetLastError(oWINDOWS_DEFAULT, #fn " failed: "); return false; } } while(0)
 
 // _____________________________________________________________________________
 // Smart pointer support
@@ -218,9 +223,16 @@ inline void intrusive_ptr_release(IUnknown* unk) { unk->Release(); }
 // _____________________________________________________________________________
 // Time conversion
 
-static const FILETIME oFTPreserve = { ~0u, ~0u };
+static const FILETIME oFTPreserve = { oINVALID, oINVALID };
 void oUnixTimeToFileTime(time_t _Time, FILETIME* _pFileTime);
 time_t oFileTimeToUnixTime(const FILETIME* _pFileTime);
+
+void oUnixTimeToSystemTime(time_t _Time, SYSTEMTIME* _pSystemTime);
+time_t oSystemTimeToUnixTime(const SYSTEMTIME* _pSystemTime);
+
+// Uses a waitable timer to call the specified function at the specified time.
+// If _Alertable is true, this can wake up a sleeping system.
+bool oScheduleFunction(const char* _DebugName, time_t _AbsoluteTime, bool _Alertable, oFUNCTION<void()> _Function);
 
 // _____________________________________________________________________________
 // Concurrency
@@ -233,11 +245,11 @@ void oThreadsafeOutputDebugStringA(const char* _OutputString);
 
 // returns true if wait finished successfully, or false if
 // timed out or otherwise errored out.
-inline bool oWaitSingle(HANDLE _Handle, unsigned int _Timeout = ~0u) { return WAIT_OBJECT_0 == ::WaitForSingleObject(_Handle, _Timeout == ~0u ? INFINITE : _Timeout); }
-inline bool oWaitMultiple(HANDLE* _pHandles, size_t _NumberOfHandles, bool _WaitAll, unsigned int _Timeout = ~0u) { return WAIT_ABANDONED_0 > ::WaitForMultipleObjects(static_cast<DWORD>(_NumberOfHandles), _pHandles, _WaitAll, _Timeout == ~0u ? INFINITE : _Timeout); }
+inline bool oWaitSingle(HANDLE _Handle, unsigned int _TimeoutMS = oINFINITE_WAIT) { return WAIT_OBJECT_0 == ::WaitForSingleObject(_Handle, _TimeoutMS == oINVALID ? INFINITE : _TimeoutMS); }
+inline bool oWaitMultiple(HANDLE* _pHandles, size_t _NumberOfHandles, bool _WaitAll, unsigned int _TimeoutMS = oINFINITE_WAIT) { return WAIT_ABANDONED_0 > ::WaitForMultipleObjects(static_cast<DWORD>(_NumberOfHandles), _pHandles, _WaitAll, _TimeoutMS == ~0u ? INFINITE : _TimeoutMS); }
 
-bool oWaitSingle(DWORD _ThreadID, unsigned int _Timeout = ~0u);
-bool oWaitMultiple(DWORD* _pThreadIDs, size_t _NumberOfThreadIDs, bool _WaitAll, unsigned int _Timeout = ~0u);
+bool oWaitSingle(DWORD _ThreadID, unsigned int _Timeout = oINFINITE_WAIT);
+bool oWaitMultiple(DWORD* _pThreadIDs, size_t _NumberOfThreadIDs, bool _WaitAll, unsigned int _TimeoutMS = oINFINITE_WAIT);
 
 // _____________________________________________________________________________
 // Winsock
@@ -285,13 +297,13 @@ bool oWinsockClose(SOCKET _hSocket);
 
 // This wrapper on WinSocks specialized event/wait system to make it look like
 // the above oWait*'s
-bool oWinsockWaitMultiple(WSAEVENT* _pHandles, size_t _NumberOfHandles, bool _WaitAll, bool _Alertable, unsigned int _Timeout = ~0u);
+bool oWinsockWaitMultiple(WSAEVENT* _pHandles, size_t _NumberOfHandles, bool _WaitAll, bool _Alertable, unsigned int _TimeoutMS = oINFINITE_WAIT);
 
 // If the socket was created using oSocketCreate (WSAEventSelect()), this function can 
 // be used to wait on that event and receive any events breaking the wait. This 
 // function handles "spurious waits", so if using WSANETWORKEVENTS structs, use
 // this wrapper always.
-bool oWinsockWait(SOCKET _hSocket, WSAEVENT _hEvent, WSANETWORKEVENTS* _pNetEvents, unsigned int _TimeoutMS = ~0u);
+bool oWinsockWait(SOCKET _hSocket, WSAEVENT _hEvent, WSANETWORKEVENTS* _pNetEvents, unsigned int _TimeoutMS = oINFINITE_WAIT);
 
 // Returns true if all data was sent. If false, use oGetLastError() for more details.
 bool oWinsockSend(SOCKET _hSocket, const void* _pSource, size_t _SizeofSource, const sockaddr_in* _pDestination);
@@ -357,6 +369,8 @@ enum oWINDOWS_VERSION
 oWINDOWS_VERSION oGetWindowsVersion();
 bool oIsWindows64Bit();
 
+bool oIsAeroEnabled();
+
 // Some Windows API take string blocks, that is one buffer of 
 // nul-separated strings that end in a nul terminator. This is
 // often not convenient to construct, so allow construction in
@@ -381,6 +395,50 @@ HRESULT oGetClientScreenRect(HWND _hWnd, RECT* _pRect);
 
 inline bool oHasFocus(HWND _hWnd) { return _hWnd == ::GetForegroundWindow(); }
 inline void oSetFocus(HWND _hWnd) { if (!_hWnd) return; ::SetForegroundWindow(_hWnd); ::SetActiveWindow(_hWnd); ::SetFocus(_hWnd); }
+
+// Restore a minimized window to what it was before it was minimized. In more
+// complex cases, like full-screen DirectX apps there needs to be a little 
+// more than just ShowWindow() to ensure proper behavior, which is why this
+// API exists. NOTE: In such DX cases remember to not try to change the window
+// state immediately as various context-switch resources may still be in flight,
+// so allow a window to come to rest as minimized fully before calling this to
+// restore the window.
+void oRestoreWindow(HWND _hWnd);
+
+// Respects user settings as to whether window animated transitions are on
+void oRespectfulAnimateWindow(HWND _hWnd, const RECT* _pDestinationRect);
+
+// Return the HWND of the "system tray" or "notification area"
+HWND oTrayGetHwnd();
+
+// Get the rectangle of the specified icon. Returns true
+// if the rect is valid, or false if the icon doesn't 
+// exist, so this can be used to determine if the icon 
+// exists at all.
+bool oTrayGetIconRect(HWND _hWnd, UINT _ID, RECT* _pRect);
+
+// Icons are identified by the HWND and the ID. If a CallbackMessage is not 
+// zero, then this is a message that can be handled in the HWND's WNDPROC. Use 
+// WM_USER+n for the custom code. If HICON is 0, the icon from the HWND will be 
+// used. If HICON is valid it will be used. All lifetime management is up to the 
+// user.
+void oTrayShowIcon(HWND _hWnd, UINT _ID, UINT _CallbackMessage, HICON _hIcon, bool _Show);
+
+// Sets the focus on the tray itself, not any icon in it
+void oTraySetFocus();
+
+// Once an icon has been created with oTrayShowIcon, use this to display a 
+// message on it. If _hIcon is null, then the _hWnd's 
+bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const char* _Title, const char* _Message);
+
+// Helper function for the WNDPROC that handles the _CallbackMessage specified above
+void oTrayDecodeCallbackMessageParams(WPARAM _wParam, LPARAM _lParam, UINT* _pNotificationEvent, UINT* _pID, int* _pX, int* _pY);
+
+// Minimize a window to the tray (animates a window to the tray)
+void oTrayMinimize(HWND _hWnd, UINT _CallbackMessage, HICON _hIcon);
+
+// Animates an existing tray icon to a restored window
+void oTrayRestore(HWND _hWnd);
 
 inline HICON oGetIcon(HWND _hWnd, bool _BigIcon) { return (HICON)SendMessage(_hWnd, WM_GETICON, (WPARAM)(_BigIcon ? ICON_BIG : ICON_SMALL), 0); }
 inline void oSetIcon(HWND _hWnd, bool _BigIcon, HICON _hIcon) { SendMessage(_hWnd, WM_SETICON, (WPARAM)(_BigIcon ? ICON_BIG : ICON_SMALL), (LPARAM)_hIcon); }
@@ -458,7 +516,7 @@ inline HHOOK oSetWindowsHook(int _idHook, oHOOKPROC _pHookProc, void* _pUserData
 
 // Pump the specified window's message pump for the specified time, by default
 // infinitely/until it runs out of messages.
-void oPumpMessages(HWND _hWnd, unsigned int _TimeoutMS = ~0u);
+void oPumpMessages(HWND _hWnd, unsigned int _TimeoutMS = oINFINITE_WAIT);
 
 // Fills _StrDestination with a string of the WM_* message and details 
 // about the parameters, useful for printing out details for debugging.
@@ -468,26 +526,19 @@ inline char* oGetWMDesc(char* _StrDestination, size_t _SizeofStrDestination, con
 template<size_t size> inline char* oGetWMDesc(char (&_StrDestination)[size], const CWPSTRUCT* _pCWPStruct) { return oGetWMDesc(_StrDestination, size, _pCWPStruct); }
 
 // _____________________________________________________________________________
-// Misc
-
-// Converts a unicode 16-bit string to its 8-bit equivalent. If 
-// _SizeofMultiByteString is 0, this returns the required buffer size to hold 
-// the conversion (includes room for the nul terminator). Otherwise, this 
-// returns the length of the string written (not including the nul terminator).
-size_t oStrConvert(char* _MultiByteString, size_t _SizeofMultiByteString, const wchar_t* _StrUnicodeSource);
-
-// Converts a multi-byte 8-bit string to its 16-bit unicode equivalent. If 
-// _NumberOfCharactersInUnicodeString is 0, this returns the NUMBER OF CHARACTERS,
-// (not the number of bytes) required for the destination bufferm including the 
-// nul terminator. Otherwise, this returns the length of the string written.
-size_t oStrConvert(wchar_t* _UnicodeString, size_t _NumberOfCharactersInUnicodeString, const char* _StrMultibyteSource);
+// Identification/ID Conversion API
 
 DWORD oGetThreadID(HANDLE _hThread);
 
 DWORD oWinGetMainThreadID();
 
-// Use GetCurrentProcessID() or equivalent for this
 DWORD oGetParentProcessID();
+
+// Uses EnumWindows to find the top-level HWND associated with the specified
+// _ThreadID. _ThreadID should be the main thread of the process, so either use
+// a thread ID given to you by an API closely associated with process work or
+// use oWinGetMainThreadID() for the current application.
+HWND oGetWindowFromThreadID(DWORD _ThreadID);
 
 // Returns the current module. Unlike GetModuleHandle(NULL), this returns the
 // module handle containing the specified pointer. A typical use case would be
@@ -512,6 +563,21 @@ inline void oSetThreadNameInDebugger(HANDLE _hThread, const char* _Name) { oSetT
 int oGetWindowsErrorDescription(char* _StrDestination, size_t _SizeofStrDestination, HRESULT _hResult);
 template<size_t size> inline int oGetWindowsErrorDescription(char (&_StrDestination)[size], HRESULT _hResult) { return oGetWindowsErrorDescription(_StrDestination, size, _hResult); }
 
+// _____________________________________________________________________________
+// Misc
+
+// Converts a unicode 16-bit string to its 8-bit equivalent. If 
+// _SizeofMultiByteString is 0, this returns the required buffer size to hold 
+// the conversion (includes room for the nul terminator). Otherwise, this 
+// returns the length of the string written (not including the nul terminator).
+size_t oStrConvert(char* _MultiByteString, size_t _SizeofMultiByteString, const wchar_t* _StrUnicodeSource);
+
+// Converts a multi-byte 8-bit string to its 16-bit unicode equivalent. If 
+// _NumberOfCharactersInUnicodeString is 0, this returns the NUMBER OF CHARACTERS,
+// (not the number of bytes) required for the destination bufferm including the 
+// nul terminator. Otherwise, this returns the length of the string written.
+size_t oStrConvert(wchar_t* _UnicodeString, size_t _NumberOfCharactersInUnicodeString, const char* _StrMultibyteSource);
+
 inline float oPointToDIP(float _Point) { return 96.0f * _Point / 72.0f; }
 inline float oDIPToPoint(float _DIP) { return 72.0f * _DIP / 96.0f; }
 
@@ -529,7 +595,7 @@ void oGetScreenDPIScale(float* _pScaleX, float* _pScaleY);
 	// as it can not be released from DLLmain, so always create it.
 	bool oCreateDXGIFactory(IDXGIFactory1** _ppFactory);
 
-	HRESULT oDXGICreateSwapchain(IUnknown* _pDevice, unsigned int Width, unsigned int Height, DXGI_FORMAT _Fmt, HWND _Hwnd, IDXGISwapChain** _ppSwapChain);
+	HRESULT oDXGICreateSwapchain(IUnknown* _pDevice, unsigned int Width, unsigned int Height, unsigned int RefreshRateN, unsigned int RefreshRateD, DXGI_FORMAT _Fmt, HWND _Hwnd, IDXGISwapChain** _ppSwapChain);
 
 	// Returns the adapter that is responsible for the largest screen portion of the supplied _Rect
 	bool oDXGIGetAdapter(const RECT& _Rect, IDXGIAdapter1** _ppAdapter);

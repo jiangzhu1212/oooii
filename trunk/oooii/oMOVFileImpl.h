@@ -7,6 +7,7 @@
 #include <oooii/oMemoryMappedFile.h>
 #include <oooii/oMutex.h>
 #include <oooii/oRef.h>
+#include "oVideoHelpers.h"
 
 struct oAtomHeader
 {
@@ -23,28 +24,24 @@ class oMOVFileImpl : public oVideoFile
 public:
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_CONST_GETDESC_INTERFACE(Desc,threadsafe);
+	oDEFINE_VIDEO_MUTEXED_MAP_INTERFACE(oMOVFileImpl, Mutex);
 	oMOVFileImpl( const char* _pFileName, const oVideoContainer::DESC& _Desc, bool* _pSuccess);
 	~oMOVFileImpl();
 
 	bool QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe override;
 
-	virtual bool HasFinished() const override { return CurrentFrame >= NumberOfFrames;}
+	virtual bool HasFinished() const override
+	{ 
+		if(Desc.EndingFrame == -1)
+			return CurrentFrame >= NumberOfFrames;
+		else
+			return CurrentFrame >= static_cast<unsigned int>(Desc.EndingFrame);
+	}
 
-	virtual void MapFrame(void** _ppFrameData, size_t* _szData, bool* _pValid, size_t *_decodedFrameNumber) threadsafe override
-	{
-		Mutex.Lock();
-		thread_cast<oMOVFileImpl*>(this)->MapFrameInternal(_ppFrameData,_szData,_pValid, _decodedFrameNumber);
-	}
-	virtual void UnmapFrame() threadsafe override
-	{
-		thread_cast<oMOVFileImpl*>(this)->UnmapFrameInternal();
-		Mutex.Unlock();
-	}
 	void Restart() threadsafe override { oMutex::ScopedLock lock(Mutex); CurrentFrame = 0;}
 
 private:
-	void MapFrameInternal(void** _ppFrameData, size_t* _szData, bool* _pValid, size_t *_decodedFrameNumber);
-	void UnmapFrameInternal();
+	oDECLARE_VIDEO_MAP_INTERFACE();
 	//_searchToken is a '.' delimited list of fourcc codes for the atom types. strings don't need to be null terminated.
 	void FindAtoms(std::vector<oAtomHeader> &_results,const char *_searchToken,const oAtomHeader * const _startAtom = NULL);
 	void FindAtoms(std::vector<oAtomHeader> &_results,const std::vector<const char*> &_searchTokens,unsigned int _searchIndex);

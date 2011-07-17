@@ -352,7 +352,10 @@ oMOVFileImpl::oMOVFileImpl(const char* _pFileName, const oVideoContainer::DESC& 
 	}
 	FrameFileOffsets = FTell();
 
-	CurrentFrame = 0;
+	if(Desc.StartingFrame == -1)
+		CurrentFrame = 0;
+	else
+		CurrentFrame = Desc.StartingFrame;
 
 	if(!oMemoryMappedFile::Create(FileName,&MemoryMappedFrame))
 	{
@@ -530,15 +533,10 @@ void oMOVFileImpl::FindAtoms(std::vector<oAtomHeader> &_results,const char *_sea
 	FindAtoms(_results,_searchTokens,0);
 }
 
-void oMOVFileImpl::MapFrameInternal(void** _ppFrameData, size_t* _szData, bool* _pValid, size_t *_decodedFrameNumber)
+bool oMOVFileImpl::MapNOLOCK(MAPPED* _pMapped)
 {
-	if(HasFinished())
-	{
-		oSetLastError(EINVAL,"MOV file %s: Failed decoding. There are no more frames to decode",FileName);
-		*_szData = 0;
-		*_pValid = false;
-		return;
-	}
+	if (HasFinished())
+		return oVideoReturnEndOfFile(_pMapped);
 
 	bool succeeded = true;
 
@@ -553,14 +551,14 @@ void oMOVFileImpl::MapFrameInternal(void** _ppFrameData, size_t* _szData, bool* 
 	RleChunkSize = static_cast<unsigned int>(__max(RleChunkSize,maxFrameSize));
 	unsigned __int64 framePosition = FTell();
 
-	*_szData = RleChunkSize;
-	*_ppFrameData = MemoryMappedFrame->Map(framePosition, RleChunkSize);
-	if(_decodedFrameNumber)
-		*_decodedFrameNumber = CurrentFrame;
-	*_pValid = true;
+	_pMapped->DataSize = RleChunkSize;
+	_pMapped->pFrameData = MemoryMappedFrame->Map(framePosition, RleChunkSize);
+	_pMapped->DecodedFrameNumber = CurrentFrame;
+
+	return true;
 }
 
-void oMOVFileImpl::UnmapFrameInternal()
+void oMOVFileImpl::UnmapNOLOCK()
 {
 	MemoryMappedFrame->Unmap();
 	CurrentFrame++;

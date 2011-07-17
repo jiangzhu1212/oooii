@@ -18,36 +18,34 @@ oRawDecodeCPU::~oRawDecodeCPU()
 {
 }
 
-bool oRawDecodeCPU::DecodeInternal(oSurface::YUV420* _pFrame, size_t *_decodedFrameNumber)
+bool oRawDecodeCPU::DecodeInternal(oSurface::YUV420* _pFrame, size_t* _pDecodedFrameNumber)
 {
-	void *data;
-	size_t dataSize;
-	bool valid;
-	Container->MapFrame(&data, &dataSize, &valid, _decodedFrameNumber);
-	if(!valid || dataSize == 0)
+	oVideoContainer::MAPPED mapped;
+	bool result = Container->Map(&mapped);
+	if (result)
 	{
-		Container->UnmapFrame();
-		return false;
+		if (_pDecodedFrameNumber)
+			*_pDecodedFrameNumber = mapped.DecodedFrameNumber;
+
+		oVideoContainer::DESC desc;
+		Container->GetDesc(&desc);
+
+		size_t yPixelCount = desc.Width * desc.Height;
+		size_t uvPixelCount = yPixelCount / 4;
+		WorkBuffer.resize(yPixelCount + 2*uvPixelCount);
+		_pFrame->pY = &WorkBuffer[0];
+		_pFrame->pU = &WorkBuffer[yPixelCount];
+		_pFrame->pV = &WorkBuffer[yPixelCount+uvPixelCount];
+		memcpy(_pFrame->pY, mapped.pFrameData, yPixelCount);
+		memcpy(_pFrame->pU, oByteAdd(mapped.pFrameData, yPixelCount), uvPixelCount);
+		memcpy(_pFrame->pV, oByteAdd(mapped.pFrameData, yPixelCount+uvPixelCount), uvPixelCount);
+		_pFrame->UVPitch = desc.Width/2;
+		_pFrame->YPitch = desc.Width;
+
+		Container->Unmap();
 	}
 
-	oVideoContainer::DESC desc;
-	Container->GetDesc(&desc);
-
-	size_t yPixelCount = desc.Width * desc.Height;
-	size_t uvPixelCount = yPixelCount / 4;
-	WorkBuffer.resize(yPixelCount + 2*uvPixelCount);
-	_pFrame->pY = &WorkBuffer[0];
-	_pFrame->pU = &WorkBuffer[yPixelCount];
-	_pFrame->pV = &WorkBuffer[yPixelCount+uvPixelCount];
-	memcpy(_pFrame->pY, data, yPixelCount);
-	memcpy(_pFrame->pU, oByteAdd(data, yPixelCount), uvPixelCount);
-	memcpy(_pFrame->pV, oByteAdd(data, yPixelCount+uvPixelCount), uvPixelCount);
-	_pFrame->UVPitch = desc.Width/2;
-	_pFrame->YPitch = desc.Width;
-
-	Container->UnmapFrame();
-
-	return true;
+	return result;
 }
 
 bool oRawDecodeCPU::Decode(oSurface::YUV420* _pFrame, size_t *_decodedFrameNumber) threadsafe

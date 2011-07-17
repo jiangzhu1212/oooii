@@ -173,9 +173,10 @@ void Thread_Impl::Exit() threadsafe
 bool Thread_Impl::Wait(unsigned int _TimeoutMS) threadsafe
 {
 	DWORD result = WaitForSingleObject(hThread, _TimeoutMS);
-	#ifdef _DEBUG
-		oSetLastErrorNative(::GetLastError());
-		oASSERT(result == WAIT_TIMEOUT || result == WAIT_OBJECT_0, "Wait failed: %s", oGetLastErrorDesc());
-	#endif
+
+	oASSERT(result == WAIT_TIMEOUT || result == WAIT_OBJECT_0, "Wait failed: %s", oGetLastErrorDesc());
+	if (result == WAIT_TIMEOUT)
+		oSetLastError(ETIMEDOUT, "Thread %s timed out after %u ms", GetDebugName(), _TimeoutMS);
+
 	return result != WAIT_TIMEOUT;
 }

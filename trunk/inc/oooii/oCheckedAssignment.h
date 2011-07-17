@@ -22,10 +22,10 @@
 	template<typename U> inline void CheckValid(const U& _Value, const char* _Op) const {}
 
 #define oDEFINE_VALIDITY_CHECK(_TemplateTypeVariable, _InvalidValue) \
-	template<typename U> inline void CheckValid(const U& _Value, const char* _Op) const { oASSERT(static_cast<_TemplateTypeVariable(_Value) != (_InvalidValue), "Specified %s with a value not in a valid state", _Op); }
+	template<typename U> inline void CheckValid(const U& _Value, const char* _Op) const { oASSERT(static_cast<_TemplateTypeVariable>(_Value) != (_InvalidValue), "Specified %s with a value not in a valid state", _Op); }
 
 #define oDEFINE_CHECKED_OPERATORS(_ClassName, _TemplateTypeVariable, _InternalValueVariable) \
-	template<typename U> _ClassName(const _ClassName<U>& _Other) : _InternalValueVariable(_Other._InternalValueVariable) { CheckValid(_Other._InternalValueVariable, "ctor"); CheckMax(_Other._InternalValueVariable, "ctor"); } \
+	template<typename U> _ClassName<_TemplateTypeVariable>(const _ClassName<U>& _Other) : _InternalValueVariable(static_cast<_TemplateTypeVariable>(_Other.c_type())) { CheckValid(_Other.c_type(), "ctor"); CheckMax(_Other.c_type(), "ctor"); } \
 	template<typename U> const _ClassName& operator=(const U& _Value) { CheckValid(_Value, "assignment"); CheckMax(_Value, "assignment"); _InternalValueVariable = static_cast<_TemplateTypeVariable>(_Value); return *this; } \
 	template<typename U> const _ClassName& operator+=(const U& _Value) { CheckValid(_Value, "sum"); CheckValid(_InternalValueVariable + _Value, "sum"); CheckMax(_InternalValueVariable + _Value, "sum"); _InternalValueVariable += _Value; return *this; } \
 	template<typename U> const _ClassName& operator-=(const U& _Value) { CheckValid(_Value, "difference"); CheckValid(_InternalValueVariable - _Value, "difference"); CheckMax(_InternalValueVariable - _Value, "difference"); CheckIsSmaller(_Value); _InternalValueVariable -= _Value; return *this; } \
@@ -35,6 +35,8 @@
 	template<typename U> const _ClassName operator-(const U& _Value) const { CheckValid(_Value, "difference"); CheckIsSmaller(_Value); return _ClassName(_InternalValueVariable - _Value); } \
 	template<typename U> const _ClassName operator*(const U& _Value) const { CheckValid(_InternalValueVariable * _Value, "product"); CheckMax(_InternalValueVariable * _Value, "product"); return _ClassName(_InternalValueVariable * _Value); } \
 	template<typename U> const _ClassName operator/(const U& _Value) const { CheckIsNonzero(_Value); CheckValid(_InternalValueVariable / _Value, "quotient"); return _ClassName(_InternalValueVariable / _Value); } \
+	template<typename U> const _ClassName operator<<(const U& _Value) const { CheckMax(_InternalValueVariable << _Value, "<<"); CheckValid(_InternalValueVariable << _Value, "<<"); return _ClassName(_InternalValueVariable << _Value); } \
+	template<typename U> const _ClassName operator>>(const U& _Value) const { CheckValid(_InternalValueVariable >> _Value, ">>"); return _ClassName(_InternalValueVariable >> _Value); } \
 	template<typename U> bool operator==(const U& _Value) const { CheckThisMax<U>(); CheckMax(_Value, "equal"); return _InternalValueVariable == _Value; } \
 	template<typename U> bool operator!=(const U& _Value) const { CheckThisMax<U>(); CheckMax(_Value, "not equal"); return _InternalValueVariable != _Value; } \
 	template<typename U> bool operator<(const U& _Value) const { CheckValid(_Value, "less than"); CheckThisMax<U>(); CheckMax(_Value, "less than"); return _InternalValueVariable < _Value; } \

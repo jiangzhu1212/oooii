@@ -14,8 +14,8 @@
 
 struct TEST_RESIZE_CONTEXT
 {
-	unsigned int OldWidth;
-	unsigned int OldHeight;
+	int2 OldPos;
+	int2 OldDimensions;
 	oWindow::STATE OldState;
 	bool Resizing;
 };
@@ -24,39 +24,102 @@ void TESTResizeHandler(oWindow::RECT_EVENT _Event, oWindow::STATE _State, oRECT 
 {
 	TEST_RESIZE_CONTEXT* pContext = static_cast<TEST_RESIZE_CONTEXT*>(_pUserData);
 
+	int2 pos = _Rect.GetMin();
 	int2 dim = _Rect.GetDimensions();
 	
 	switch (_Event)
 	{
-	case oWindow::RECT_BEGIN:
-		oTRACE("Entering Resize %ux%u -> %ux%u", pContext->OldWidth, pContext->OldHeight, dim.x, dim.y);
-		pContext->Resizing = true;
-		pContext->OldWidth = dim.x;
-		pContext->OldHeight = dim.y;
-		break;
+		case oWindow::RECT_BEGIN:
+			oTRACE("Entering Resize %ux%u -> %ux%u", pContext->OldDimensions.x, pContext->OldDimensions.y, dim.x, dim.y);
+			pContext->Resizing = true;
+			pContext->OldDimensions = dim;
+			break;
 
-	case oWindow::RESIZE_OCCURING:
-		oTRACE("Resizing %s %ux%u -> %s %ux%u", oAsString(pContext->OldState), pContext->OldWidth, pContext->OldHeight, oAsString(_State), dim.x, dim.y);
-		if (!pContext->Resizing)
+		case oWindow::RESIZE_OCCURING:
+			oTRACE("Resizing %s %ux%u -> %s %ux%u", oAsString(pContext->OldState), pContext->OldDimensions.x, pContext->OldDimensions.y, oAsString(_State), dim.x, dim.y);
+			if (!pContext->Resizing)
+			{
+				pContext->OldState = _State;
+				pContext->OldDimensions = dim;
+			}
+
+			break;
+
+		case oWindow::RECT_END:
+			oTRACE("Exiting Resize %ux%u -> %ux%u", pContext->OldDimensions.x, pContext->OldDimensions.y, dim.x, dim.y);
+			pContext->Resizing = false;
+			break;
+
+		case oWindow::MOVE_OCCURING:
 		{
-			pContext->OldState = _State;
-			pContext->OldWidth = dim.x;
-			pContext->OldHeight = dim.y;
+			oTRACE("Moving %ux%u -> %ux%u", pContext->OldPos.x, pContext->OldPos.y, pos.x, pos.y);
+			pContext->OldPos = pos;
+			break;
 		}
 
-		break;
-
-	case oWindow::RECT_END:
-		oTRACE("Exiting Resize %ux%u -> %ux%u", pContext->OldWidth, pContext->OldHeight, dim.x, dim.y);
-		pContext->Resizing = false;
-		break;
-
-	default: oASSUME(0);
+		default: oASSUME(0);
 	}
 }
 
 struct TESTWindowBase : public oTest
 {
+	void TraceKeyState(threadsafe oKeyboard* _pKeyboard, bool _bShouldPrintUp[oKeyboard::NUM_KEYS])
+	{
+		if (_pKeyboard)
+		{
+			for (size_t i = 0; i < oKeyboard::NUM_KEYS; i++)
+			{
+				oKeyboard::KEY k = (oKeyboard::KEY)i;
+
+				if (_pKeyboard->IsPressed(k))
+					oTRACE("%s pressed", oAsString(k));
+				else if (_pKeyboard->IsDown(k))
+					oTRACE("%s down", oAsString(k));
+				else if (_pKeyboard->IsReleased(k))
+				{
+					oTRACE("%s released", oAsString(k));
+					_bShouldPrintUp[i] = true;
+				}
+
+				else if (_bShouldPrintUp[i] && _pKeyboard->IsUp(k))
+				{
+					oTRACE("%s up", oAsString(k));
+					_bShouldPrintUp[i] = false;
+				}
+			}
+		}
+	}
+
+	void TraceMouseState(threadsafe oMouse* _pMouse, bool _bMouseShouldPrintUp[oMouse::NUM_BUTTONS])
+	{
+		int x, y, v = 0, h = 0;
+		_pMouse->GetPosition(&x, &y, &v, &h);
+
+		if (v) oTRACE("mouse vwheel: %d", v);
+		if (h) oTRACE("mouse hwheel: %d", h);
+
+		for (size_t i = 0; i < oMouse::NUM_BUTTONS; i++)
+		{
+			oMouse::BUTTON b = (oMouse::BUTTON)i;
+
+			if (_pMouse->IsPressed(b))
+				oTRACE("%s pressed", oAsString(b));
+			else if (_pMouse->IsDown(b))
+				oTRACE("%s down", oAsString(b));
+			else if (_pMouse->IsReleased(b))
+			{
+				oTRACE("%s released", oAsString(b));
+				_bMouseShouldPrintUp[i] = true;
+			}
+
+			else if (_bMouseShouldPrintUp[i] && _pMouse->IsUp(b))
+			{
+				oTRACE("%s up", oAsString(b));
+				_bMouseShouldPrintUp[i] = false;
+			}
+		}
+	}
+
 	RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, int _DrawAPIFourCC)
 	{
 		if (!_DrawAPIFourCC && oGetWindowsVersion() < oWINDOWS_7)
@@ -79,6 +142,7 @@ struct TESTWindowBase : public oTest
 			desc.HasFocus = true;
 			desc.AlwaysOnTop = false;
 			desc.EnableCloseButton = false;
+			desc.MSSleepWhenNoFocus = 0;
 			oTESTB(oWindow::Create(&desc, NULL, "OOOii oWindow", _DrawAPIFourCC, &Window), "Failed to create window: %s: %s", oGetErrnoString(oGetLastError()), oGetLastErrorDesc());
 		}
 
@@ -149,7 +213,7 @@ struct TESTWindowBase : public oTest
 			oTESTB(oFile::LoadBuffer(&pBuffer, &size, malloc, imgPath, false), "Failed to load test image %s", imgPath);
 
 			oRef<oImage> Image;
-			oTESTB(oImage::Create(pBuffer, size, &Image), "Failed to create image");
+			oTESTB(oImage::Create(pBuffer, size, oSurface::UNKNOWN, &Image), "Failed to create image");
 			free(pBuffer);
 			oImage::DESC iDesc;
 			Image->GetDesc(&iDesc);
@@ -209,60 +273,8 @@ struct TESTWindowBase : public oTest
 
 			if (Window->Begin())
 			{
-				// TRACE keyboard state
-				if (Keyboard)
-				{
-					for (size_t i = 0; i < oKeyboard::NUM_KEYS; i++)
-					{
-						oKeyboard::KEY k = (oKeyboard::KEY)i;
-
-						if (Keyboard->IsPressed(k))
-							oTRACE("%s pressed", oAsString(k));
-						else if (Keyboard->IsDown(k))
-							oTRACE("%s down", oAsString(k));
-						else if (Keyboard->IsReleased(k))
-						{
-							oTRACE("%s released", oAsString(k));
-							bShouldPrintUp[i] = true;
-						}
-
-						else if (bShouldPrintUp[i] && Keyboard->IsUp(k))
-						{
-							oTRACE("%s up", oAsString(k));
-							bShouldPrintUp[i] = false;
-						}
-					}
-				}
-
-				// TRACE mouse state
-				{
-					int x, y, v = 0, h = 0;
-					Mouse->GetPosition(&x, &y, &v, &h);
-
-					if (v) oTRACE("mouse vwheel: %d", v);
-					if (h) oTRACE("mouse hwheel: %d", h);
-
-					for (size_t i = 0; i < oMouse::NUM_BUTTONS; i++)
-					{
-						oMouse::BUTTON b = (oMouse::BUTTON)i;
-
-						if (Mouse->IsPressed(b))
-							oTRACE("%s pressed", oAsString(b));
-						else if (Mouse->IsDown(b))
-							oTRACE("%s down", oAsString(b));
-						else if (Mouse->IsReleased(b))
-						{
-							oTRACE("%s released", oAsString(b));
-							bMouseShouldPrintUp[i] = true;
-						}
-
-						else if (bMouseShouldPrintUp[i] && Mouse->IsUp(b))
-						{
-							oTRACE("%s up", oAsString(b));
-							bMouseShouldPrintUp[i] = false;
-						}
-					}
-				}
+				TraceKeyState(Keyboard, bShouldPrintUp);
+				TraceMouseState(Mouse, bMouseShouldPrintUp);
 
 				Window->End();
 

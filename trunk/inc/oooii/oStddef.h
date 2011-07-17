@@ -35,6 +35,11 @@ template<typename T, typename U> inline T thread_cast(const U& threadsafeObject)
 
 #define oCOUNTOF(x) (sizeof(x)/sizeof((x)[0]))
 
+// Use "-1" with unsigned values to indicate a bad/uninitialized state. Be 
+// careful with size_t values because oINVALID will result in 0x00000000ffffffff
+// on 64-bit systems. Use oINVALID_SIZE_T to ensure all bits are set.
+#define oINVALID (~0u)
+
 #ifdef _MSC_VER
 
 	#if _MSC_VER >= 1600
@@ -57,9 +62,11 @@ template<typename T, typename U> inline T thread_cast(const U& threadsafeObject)
 	// without the Windows header.
 	#ifdef _WIN64
 		#define oDEFAULT_MEMORY_ALIGNMENT 16
+		#define oINVALID_SIZE_T (~0ull)
 		#define o64BIT 1
 	#else
 		#define oDEFAULT_MEMORY_ALIGNMENT 8
+		#define oINVALID_SIZE_T (~0u)
 		#define o32BIT 1
 	#endif
 
@@ -72,6 +79,7 @@ template<typename T, typename U> inline T thread_cast(const U& threadsafeObject)
 	#error Unsupported platform (oRESTRICT)
 	#error Unsupported platform (oFORCEINLINE)
 	#error Unsupported platform (oDEFAULT_MEMORY_ALIGNMENT)
+	#error Unsupported platform (oINVALID_SIZE_T)
 	#error Unsupported platform (o??BIT)
 #endif
 
@@ -89,7 +97,7 @@ template<typename T, typename U> inline T thread_cast(const U& threadsafeObject)
 #endif
 
 #ifndef oHAS_NULLPTR
-	#define nullptr ((void*)0)
+	#define nullptr NULL
 #endif
 
 #if defined(_DLL) && !defined(oSTATICLIB)
@@ -132,8 +140,8 @@ template<typename T> const char* oAsString(const T& _Object);
 
 // Constants used throughout the code for asynchronous/time-based operations. Look to 
 // comments on an API to understand when it is appropriate to use these.
-const static unsigned int oINFINITE_WAIT = ~0u;
-const static unsigned int oTIMED_OUT = ~0u;
+const static unsigned int oINFINITE_WAIT = oINVALID;
+const static unsigned int oTIMED_OUT = oINVALID;
 
 // #define all the colors out of this so that when it's no longer in the tr1 
 // namespace, or if the implementation changes to boost, then we're ready here.

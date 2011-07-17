@@ -84,16 +84,17 @@ struct oProcessHeapContextImpl : oProcessHeapContext
 
 protected:
 
-
 	struct ENTRY
 	{
 		ENTRY()
 			: Pointer(0)
+			, InitThreadID(0)
 		{
 			*Name = 0;
 		}
 
 		void* Pointer;
+		unsigned int InitThreadID; // threadID of init, and where deinit will probably take place
 		char Name[64];
 	};
 
@@ -126,9 +127,9 @@ public:
 		IsValid = true;
 	}
 
-	void Reference() threadsafe override
+	int Reference() threadsafe override
 	{
-		RefCount.Reference();
+		return RefCount.Reference();
 	}
 
 	void Release() threadsafe override
@@ -174,16 +175,44 @@ void oProcessHeapContextImpl::AtExit()
 
 void oProcessHeapContextImpl::ReportLeaks()
 {
-	char buf[oKB(1)];
-	OutputDebugStringA("========== Process Heap Leak Report ==========\n");
+	// freeing of singletons is done with atexit(). So ignore leaks that were 
+	// created on this thread because they will potentially be freed after this
+	// report. The traces for singleton lifetimes should indicate threadID of 
+	// freeing, so if there are any after this report that don't match the threadID
+	// of this report, that would be bad.
+
+	// do a pre-scane to see if it's worth printing two lines to the log
+
+	unsigned int nLeaks = 0;
 	for (container_t::const_iterator it = pSharedPointers->begin(); it != pSharedPointers->end(); ++it)
 	{
-		sprintf_s(buf, "%s\n", it->second.Name);
-		OutputDebugStringA(buf);
+		if (it->second.InitThreadID != oGetCurrentThreadID())
+			nLeaks++;
 	}
 
-	sprintf_s(buf, "========== Process Heap Leak Report: %u Leaks ==========\n", pSharedPointers->size());
-	OutputDebugStringA(buf);
+	if (nLeaks)
+	{
+		char buf[oKB(1)];
+		sprintf_s(buf, "========== Process Heap Leak Report (thread %u) ==========\n", oGetCurrentThreadID());
+		OutputDebugStringA(buf);
+		for (container_t::const_iterator it = pSharedPointers->begin(); it != pSharedPointers->end(); ++it)
+		{
+			if (it->second.InitThreadID != oGetCurrentThreadID())
+			{
+				sprintf_s(buf, "%s\n", it->second.Name);
+				oThreadsafeOutputDebugStringA(buf);
+				nLeaks++;
+			}
+		}
+
+		sprintf_s(buf, "========== Process Heap Leak Report: %u Leaks ==========\n", nLeaks);
+		oThreadsafeOutputDebugStringA(buf);
+	}
+
+	else
+	{
+		OutputDebugStringA("========== Process Heap Leak Report: 0 Leaks ==========\n");
+	}
 }
 
 
@@ -203,6 +232,7 @@ bool oProcessHeapContextImpl::FindOrAllocate(const char* _Name, size_t _Size, oF
 
 		ENTRY& e = (*pSharedPointers)[h];
 		e.Pointer = *_pPointer;
+		e.InitThreadID = oGetCurrentThreadID();
 		oCRTASSERT(strlen(_Name) < (oCOUNTOF(e.Name)-1), "oProcessHeap::FindOrAllocate(): _Name must be less than 64 characters long.");
 		strcpy_s(e.Name, _Name);
 

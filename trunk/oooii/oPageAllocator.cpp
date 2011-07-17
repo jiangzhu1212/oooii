@@ -49,7 +49,7 @@ void* oPageAllocator::Reserve(void* _DesiredPointer, size_t _Size, bool _ReadWri
 	void* p = VirtualAllocEx(GetCurrentProcess(), _DesiredPointer, _Size, flAllocationType, GetAccess(_ReadWrite));
 	if (_DesiredPointer && p != _DesiredPointer)
 	{
-		oSetLastError(ENOMEM, "VirtualAllocEx return a pointer (0x%p) that is not the same as the requested pointer (0x%p).", _DesiredPointer, p);
+		oSetLastError(ENOMEM, "VirtualAllocEx return a pointer (0x%p) that is not the same as the requested pointer (0x%p).", p, _DesiredPointer);
 		if (p) Unreserve(p);
 		p = 0;
 	}

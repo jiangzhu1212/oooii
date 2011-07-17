@@ -6,54 +6,131 @@
 
 #include <oHLSLYUVTORGBByteCode.h>
 
-void oVideoDecodeD3D10SimpleYUV::DecodePartition(size_t _index,std::vector<D3D10_MAPPED_TEXTURE2D> &_MappedTextures)
+void oVideoDecodeD3D10SimpleYUV::DecodePartitionVerticalStitch(size_t _index, std::vector<D3D10_MAPPED_TEXTURE2D> &_MappedTextures)
 {
 	oSurface::YUV420 YUVTexturePartition = YUVTexture;
-	unsigned int MappedYOffset = 0;
-	unsigned int MappedUVOffset = 0;
 
-	if(Desc.StitchVertically)
+	unsigned int startRow = static_cast<unsigned int>(ConDescs[0].Height * _index);
+	// @oooii-eric: TODO: This code is a waste for VP8, get rid of it when possible. VP8 doesn't use the supplied buffer, but some of our other codecs too. see comment in oVideoCodec.h
+	YUVTexturePartition.pY += startRow*YUVTexture.YPitch;
+	YUVTexturePartition.pU += (startRow/2)*YUVTexture.UVPitch;
+	YUVTexturePartition.pV += (startRow/2)*YUVTexture.UVPitch;
+
+	size_t decodedFrameNumber;
+	if( !CPUDecoders[_index]->Decode(thread_cast<oSurface::YUV420*>( &YUVTexturePartition ), &decodedFrameNumber) )
+		return;
+
+	unsigned int MappedYOffset = startRow*_MappedTextures[0].RowPitch;
+	unsigned int MappedUVOffset = (startRow/2)*_MappedTextures[1].RowPitch;
+
+	oMemcpy2d( oByteAdd(_MappedTextures[0].pData,MappedYOffset), _MappedTextures[0].RowPitch, YUVTexturePartition.pY, YUVTexturePartition.YPitch, ConDescs[_index].Width, ConDescs[_index].Height );
+	oMemcpy2d( oByteAdd(_MappedTextures[1].pData,MappedUVOffset), _MappedTextures[1].RowPitch, YUVTexturePartition.pU, YUVTexturePartition.UVPitch, ConDescs[_index].Width/2, ConDescs[_index].Height / 2 );
+	oMemcpy2d( oByteAdd( _MappedTextures[2].pData,MappedUVOffset), _MappedTextures[2].RowPitch, YUVTexturePartition.pV, YUVTexturePartition.UVPitch, ConDescs[_index].Width/2, ConDescs[_index].Height / 2 );
+
+	DecodedFrameNumbers[_index] = decodedFrameNumber; //definitely some false sharing here, so do last which should keep it from costing any real performance.
+}
+
+void oVideoDecodeD3D10SimpleYUV::DecodePartitionHorizontalStitch(size_t _index, std::vector<D3D10_MAPPED_TEXTURE2D> &_MappedTextures)
+{
+	oSurface::YUV420 YUVTexturePartition = YUVTexture;
+
+	unsigned int startColumn = static_cast<unsigned int>(ConDescs[0].Width * _index);
+	YUVTexturePartition.pY += startColumn;
+	YUVTexturePartition.pU += (startColumn/2);
+	YUVTexturePartition.pV += (startColumn/2);
+
+	size_t decodedFrameNumber;
+	if( !CPUDecoders[_index]->Decode(thread_cast<oSurface::YUV420*>( &YUVTexturePartition ), &decodedFrameNumber) )
+		return;
+
+	unsigned int MappedYOffset = startColumn;
+	unsigned int MappedUVOffset = (startColumn/2);
+
+	oMemcpy2d( oByteAdd(_MappedTextures[0].pData,MappedYOffset), _MappedTextures[0].RowPitch, YUVTexturePartition.pY, YUVTexturePartition.YPitch, ConDescs[_index].Width, ConDescs[_index].Height );
+	oMemcpy2d( oByteAdd(_MappedTextures[1].pData,MappedUVOffset), _MappedTextures[1].RowPitch, YUVTexturePartition.pU, YUVTexturePartition.UVPitch, ConDescs[_index].Width/2, ConDescs[_index].Height / 2 );
+	oMemcpy2d( oByteAdd( _MappedTextures[2].pData,MappedUVOffset), _MappedTextures[2].RowPitch, YUVTexturePartition.pV, YUVTexturePartition.UVPitch, ConDescs[_index].Width/2, ConDescs[_index].Height / 2 );
+
+	DecodedFrameNumbers[_index] = decodedFrameNumber; //definitely some false sharing here, so do last which should keep it from costing any real performance.
+}
+
+void oVideoDecodeD3D10SimpleYUV::DecodePartitionVerticalStitchSurround(size_t _index,std::vector<D3D10_MAPPED_TEXTURE2D> &_MappedTextures)
+{
+	oSurface::YUV420 YUVTexturePartition = YUVTexture;
+
+	unsigned int startRow = static_cast<unsigned int>(ConDescs[0].Height * _index);
+	YUVTexturePartition.pY += startRow*YUVTexture.YPitch;
+	YUVTexturePartition.pU += (startRow/2)*YUVTexture.UVPitch;
+	YUVTexturePartition.pV += (startRow/2)*YUVTexture.UVPitch;
+
+	size_t decodedFrameNumber;
+	if( !CPUDecoders[_index]->Decode(thread_cast<oSurface::YUV420*>( &YUVTexturePartition ), &decodedFrameNumber) )
+		return;
+
+	unsigned int CurrentDestRow = startRow % StitchedHeight;
+	unsigned int CurrentColumn = 2 - (startRow / StitchedHeight); //The 2 is because the top of the video needs to go on the right most third of the destination, ect.
+	
+	unsigned int rowsLeft = ConDescs[_index].Height;
+	while(rowsLeft)
 	{
-		unsigned int startRow = 0;
-		for (unsigned int i = 0;i < _index;++i)
+		unsigned int rowsToCopy = rowsLeft;
+		if(CurrentDestRow + rowsToCopy > StitchedHeight)
 		{
-			startRow += ConDescs[i].Height;
+			rowsToCopy = StitchedHeight - CurrentDestRow;
 		}
-		YUVTexturePartition.pY += startRow*YUVTexture.YPitch;
-		YUVTexturePartition.pU += (startRow/2)*YUVTexture.UVPitch;
-		YUVTexturePartition.pV += (startRow/2)*YUVTexture.UVPitch;
-		MappedYOffset = startRow*_MappedTextures[0].RowPitch;
-		MappedUVOffset = (startRow/2)*_MappedTextures[1].RowPitch;
+
+		unsigned int MappedYOffset = CurrentDestRow*_MappedTextures[0].RowPitch + CurrentColumn*ConDescs[_index].Width;
+		unsigned int MappedUVOffset = (CurrentDestRow/2)*_MappedTextures[1].RowPitch + CurrentColumn*ConDescs[_index].Width/2;
+
+		oMemcpy2d( oByteAdd(_MappedTextures[0].pData,MappedYOffset), _MappedTextures[0].RowPitch, YUVTexturePartition.pY, YUVTexturePartition.YPitch, ConDescs[_index].Width, rowsToCopy );
+		oMemcpy2d( oByteAdd(_MappedTextures[1].pData,MappedUVOffset), _MappedTextures[1].RowPitch, YUVTexturePartition.pU, YUVTexturePartition.UVPitch, ConDescs[_index].Width/2, rowsToCopy / 2 );
+		oMemcpy2d( oByteAdd( _MappedTextures[2].pData,MappedUVOffset), _MappedTextures[2].RowPitch, YUVTexturePartition.pV, YUVTexturePartition.UVPitch, ConDescs[_index].Width/2, rowsToCopy / 2 );
+
+		YUVTexturePartition.pY += rowsToCopy*YUVTexturePartition.YPitch;
+		YUVTexturePartition.pU += (rowsToCopy/2)*YUVTexturePartition.UVPitch;
+		YUVTexturePartition.pV += (rowsToCopy/2)*YUVTexturePartition.UVPitch;
+
+		rowsLeft -= rowsToCopy;
+		CurrentDestRow = 0; //After the first copy, the next will always start at top of a surround split.
+		CurrentColumn--;
 	}
-	else
-	{
-		unsigned int startColumn = 0;
-		for (unsigned int i = 0;i < _index;++i)
-		{
-			startColumn += ConDescs[i].Width;
-		}
-		YUVTexturePartition.pY += startColumn;
-		YUVTexturePartition.pU += (startColumn/2);
-		YUVTexturePartition.pV += (startColumn/2);
-		MappedYOffset = startColumn;
-		MappedUVOffset = (startColumn/2);
-	}
+
+	DecodedFrameNumbers[_index] = decodedFrameNumber; //definitely some false sharing here, so do last which should keep it from costing any real performance.
+}
+
+void oVideoDecodeD3D10SimpleYUV::DecodePartitionHorizontalStitchSurround(size_t _index,std::vector<D3D10_MAPPED_TEXTURE2D> &_MappedTextures)
+{
+	oSurface::YUV420 YUVTexturePartition = YUVTexture;
+
+	unsigned int startColumn = static_cast<unsigned int>(ConDescs[0].Width * _index);
+	YUVTexturePartition.pY += startColumn;
+	YUVTexturePartition.pU += (startColumn/2);
+	YUVTexturePartition.pV += (startColumn/2);
 
 	size_t decodedFrameNumber;
 	if( !CPUDecoders[_index]->Decode(thread_cast<oSurface::YUV420*>( &YUVTexturePartition ), &decodedFrameNumber) )
 		return;
 	
-	oMemcpy2d( oByteAdd(_MappedTextures[0].pData,MappedYOffset), _MappedTextures[0].RowPitch, YUVTexturePartition.pY, YUVTexturePartition.YPitch, ConDescs[_index].Width, ConDescs[_index].Height );
-	oMemcpy2d( oByteAdd(_MappedTextures[1].pData,MappedUVOffset), _MappedTextures[1].RowPitch, YUVTexturePartition.pU, YUVTexturePartition.UVPitch, ConDescs[_index].Width/2, ConDescs[_index].Height / 2 );
-	oMemcpy2d(oByteAdd( _MappedTextures[2].pData,MappedUVOffset), _MappedTextures[2].RowPitch, YUVTexturePartition.pV, YUVTexturePartition.UVPitch, ConDescs[_index].Width/2, ConDescs[_index].Height / 2 );
-	
+	for (int i = 0;i < 3; ++i)
+	{
+		unsigned int MappedYOffset = static_cast<unsigned int>(i*(StitchedWidth/3) + _index*ConDescs[_index].Width);
+		unsigned int MappedUVOffset = MappedYOffset/2;
+
+		oMemcpy2d( oByteAdd(_MappedTextures[0].pData,MappedYOffset), _MappedTextures[0].RowPitch, YUVTexturePartition.pY, YUVTexturePartition.YPitch, ConDescs[_index].Width, StitchedHeight );
+		oMemcpy2d( oByteAdd(_MappedTextures[1].pData,MappedUVOffset), _MappedTextures[1].RowPitch, YUVTexturePartition.pU, YUVTexturePartition.UVPitch, ConDescs[_index].Width/2, StitchedHeight / 2 );
+		oMemcpy2d( oByteAdd(_MappedTextures[2].pData,MappedUVOffset), _MappedTextures[2].RowPitch, YUVTexturePartition.pV, YUVTexturePartition.UVPitch, ConDescs[_index].Width/2, StitchedHeight / 2 );
+
+		YUVTexturePartition.pY += StitchedHeight*YUVTexturePartition.YPitch;
+		YUVTexturePartition.pU += (StitchedHeight/2)*YUVTexturePartition.UVPitch;
+		YUVTexturePartition.pV += (StitchedHeight/2)*YUVTexturePartition.UVPitch;
+	}
+
 	DecodedFrameNumbers[_index] = decodedFrameNumber; //definitely some false sharing here, so do last which should keep it from costing any real performance.
 }
 
 bool oVideoDecodeD3D10SimpleYUV::Decode(HDECODE_CONTEXT _ctx, size_t *_decodedFrameNumber) threadsafe
 {
 	GPU_CONTEXT* pGPUContext = reinterpret_cast<GPU_CONTEXT*>(_ctx);
-
+	
 	bool decodeFrame = false;
 	if(!Desc.UseFrameTime)
 		decodeFrame = true;
@@ -72,33 +149,18 @@ bool oVideoDecodeD3D10SimpleYUV::Decode(HDECODE_CONTEXT _ctx, size_t *_decodedFr
 
 	if(decodeFrame)
 	{
-		ID3D10Texture2D* pYTexture = pGPUContext->TextureList.Textures[0];
-		ID3D10Texture2D* pUTexture = pGPUContext->TextureList.Textures[1];
-		ID3D10Texture2D* pVTexture = pGPUContext->TextureList.Textures[2];
-		std::vector<D3D10_MAPPED_TEXTURE2D> MappedTextures;
-		MappedTextures.resize(3);
-		oV( pYTexture->Map(0, D3D10_MAP_WRITE_DISCARD, 0, &(MappedTextures[0]) ) );
-		oV( pUTexture->Map(0, D3D10_MAP_WRITE_DISCARD, 0, &(MappedTextures[1]) ) );
-		oV( pVTexture->Map(0, D3D10_MAP_WRITE_DISCARD, 0, &(MappedTextures[2]) ) );
+		DecodeEvent.Wait();
+		oSWAP(&CurrentDisplayFrame,(CurrentDisplayFrame+1)&1);
 
-		size_t numDecoders = thread_cast<oVideoDecodeD3D10SimpleYUV*>(this)->CPUDecoders.size();
-		thread_cast<oVideoDecodeD3D10SimpleYUV*>(this)->DecodedFrameNumbers.resize(numDecoders);
-		oParallelFor(oBIND(&oVideoDecodeD3D10SimpleYUV::DecodePartition, thread_cast<oVideoDecodeD3D10SimpleYUV*>(this), oBIND1, MappedTextures), 0, numDecoders);
-
-		pYTexture->Unmap(0);
-		pUTexture->Unmap(0);
-		pVTexture->Unmap(0);
-
-		if(_decodedFrameNumber)
-			*_decodedFrameNumber = thread_cast<oVideoDecodeD3D10SimpleYUV*>(this)->DecodedFrameNumbers[0];
-		for(unsigned int i = 1; i < numDecoders; ++i)
-		{
-			oASSERT(thread_cast<oVideoDecodeD3D10SimpleYUV*>(this)->DecodedFrameNumbers[i] == thread_cast<oVideoDecodeD3D10SimpleYUV*>(this)->DecodedFrameNumbers[0], "A partition in split vp8 decoding mode, decoded a diffrent frame number than other partitions.");
-		}
+		DecodeEvent.Reset();
+		oIssueAsyncTask(oBIND(&oVideoDecodeD3D10SimpleYUV::DecodeFrameTask, thread_cast<oVideoDecodeD3D10SimpleYUV*>(this), pGPUContext));
 	}
 
+	if(_decodedFrameNumber)
+		*_decodedFrameNumber = LastDecodedFrame;
+
 	Device->PSSetSamplers(0, 1, pGPUContext->BilinearSampler.address() );
-	Device->PSSetShaderResources(0, 3, pGPUContext->TextureList.SRVs[0].address() );
+	Device->PSSetShaderResources(0, 3, pGPUContext->TextureList[CurrentDisplayFrame].SRVs[0].address() );
 
 	Device->RSSetViewports(1, &pGPUContext->VP);
 	
@@ -114,7 +176,7 @@ bool oVideoDecodeD3D10SimpleYUV::Decode(HDECODE_CONTEXT _ctx, size_t *_decodedFr
 }
 
 oVideoDecodeD3D10SimpleYUV::oVideoDecodeD3D10SimpleYUV(DESC _desc, std::vector<oRef<threadsafe oVideoDecodeCPU>> &_CPUDecoders, bool* _pSuccess )
-	: CPUDecoders(_CPUDecoders), Desc(_desc), StitchedWidth(0), StitchedHeight(0)
+	: CPUDecoders(_CPUDecoders), Desc(_desc), StitchedWidth(0), StitchedHeight(0), LastDecodedFrame(0), CurrentDisplayFrame(0)
 {
 	*_pSuccess = false;
 
@@ -163,7 +225,8 @@ oVideoDecodeD3D10SimpleYUV::oVideoDecodeD3D10SimpleYUV(DESC _desc, std::vector<o
 		StitchedWidth = ConDescs[0].Width;
 	else
 		StitchedHeight = ConDescs[0].Height;
-
+	
+	//Note that for some codecs like VP8 this buffer will not get used. This space is just in case a decoder doesn't provide its own space.
 	unsigned int FullPixels = StitchedWidth * StitchedHeight;
 	LuminancePlane.resize( FullPixels );
 	UChromQuarterPlane.resize( FullPixels / 4 );
@@ -176,10 +239,30 @@ oVideoDecodeD3D10SimpleYUV::oVideoDecodeD3D10SimpleYUV(DESC _desc, std::vector<o
 	YUVTexture.pV = &VChromQuarterPlane[0];
 	YUVTexture.UVPitch = StitchedWidth / 2;
 
+	if(Desc.NVIDIASurround)
+	{
+		StitchedWidth *= 3;
+		StitchedHeight /= 3;
+	}
+
 	FrameTime = ConDescs[0].FrameTimeNumerator/static_cast<double>(ConDescs[0].FrameTimeDenominator);
 	LastFrameTime = oTimer() - FrameTime;
 
+	if(Desc.NVIDIASurround && Desc.StitchVertically)
+		DecodePartition = oBIND(&oVideoDecodeD3D10SimpleYUV::DecodePartitionVerticalStitchSurround, thread_cast<oVideoDecodeD3D10SimpleYUV*>(this), oBIND1, oBIND2);
+	if(Desc.NVIDIASurround && !Desc.StitchVertically)
+		DecodePartition = oBIND(&oVideoDecodeD3D10SimpleYUV::DecodePartitionHorizontalStitchSurround, thread_cast<oVideoDecodeD3D10SimpleYUV*>(this), oBIND1, oBIND2);
+	if(!Desc.NVIDIASurround && Desc.StitchVertically)
+		DecodePartition = oBIND(&oVideoDecodeD3D10SimpleYUV::DecodePartitionVerticalStitch, thread_cast<oVideoDecodeD3D10SimpleYUV*>(this), oBIND1, oBIND2);
+	if(!Desc.NVIDIASurround && !Desc.StitchVertically)
+		DecodePartition = oBIND(&oVideoDecodeD3D10SimpleYUV::DecodePartitionHorizontalStitch, thread_cast<oVideoDecodeD3D10SimpleYUV*>(this), oBIND1, oBIND2);
+
 	*_pSuccess = true;
+}
+
+oVideoDecodeD3D10SimpleYUV::~oVideoDecodeD3D10SimpleYUV()
+{
+	DecodeEvent.Wait();
 }
 
 oVideoDecodeD3D10::HDECODE_CONTEXT oVideoDecodeD3D10SimpleYUV::Register(interface ID3D10Texture2D* _pDestinationTexture) threadsafe
@@ -236,28 +319,15 @@ oVideoDecodeD3D10::HDECODE_CONTEXT oVideoDecodeD3D10SimpleYUV::Register(interfac
 		VP.Width = TexDesc.Width;
 	}
 
-	oD3D10TextureList<3>& YUVTextures = GPU_Context.TextureList;
-
-	// Create the luminance texture
-	if( !YUVTextures.Create(0, Device, StitchedWidth, StitchedHeight, DXGI_FORMAT_R8_UNORM ) )
-	{
-		oSetLastError(EINVAL, "Failed to create D3D10 texture!");
+	if(!CreateTextureSet(0, GPU_Context, Device))
 		return NULL;
-	}
-
-	// Create the two chrominance textures
-	if( !YUVTextures.Create(1, Device, StitchedWidth / 2, StitchedHeight / 2, DXGI_FORMAT_R8_UNORM ) )
-	{
-		oSetLastError(EINVAL, "Failed to create D3D10 texture!");
+	if(!CreateTextureSet(1, GPU_Context, Device))
 		return NULL;
-	}
 
-	if( !YUVTextures.Create(2, Device, StitchedWidth / 2, StitchedHeight / 2, DXGI_FORMAT_R8_UNORM ) )
-	{
-		oSetLastError(EINVAL, "Failed to create D3D10 texture!");
-		return NULL;
-	}
 	(*pRawMap)[_pDestinationTexture] = GPU_Context;
+
+	DecodeEvent.Reset();
+	oIssueAsyncTask(oBIND(&oVideoDecodeD3D10SimpleYUV::DecodeFrameTask, thread_cast<oVideoDecodeD3D10SimpleYUV*>(this), &(*pRawMap)[_pDestinationTexture]));
 
 	return reinterpret_cast<oVideoDecodeD3D10::HDECODE_CONTEXT>(&(*pRawMap)[_pDestinationTexture]);
 }
@@ -276,5 +346,62 @@ void oVideoDecodeD3D10SimpleYUV::Unregister(HDECODE_CONTEXT _Context) threadsafe
 			return;
 		}
 	}
+}
 
+bool oVideoDecodeD3D10SimpleYUV::CreateTextureSet(unsigned int _index, GPU_CONTEXT &_context, ID3D10Device *_device) threadsafe
+{
+	oD3D10TextureList<3>& YUVTextures = _context.TextureList[_index];
+
+	// Create the luminance texture
+	if( !YUVTextures.Create(0, _device, StitchedWidth, StitchedHeight, DXGI_FORMAT_R8_UNORM ) )
+	{
+		oSetLastError(EINVAL, "Failed to create D3D10 texture!");
+		return false;
+	}
+
+	// Create the two chrominance textures
+	if( !YUVTextures.Create(1, _device, StitchedWidth / 2, StitchedHeight / 2, DXGI_FORMAT_R8_UNORM ) )
+	{
+		oSetLastError(EINVAL, "Failed to create D3D10 texture!");
+		return false;
+	}
+
+	if( !YUVTextures.Create(2, _device, StitchedWidth / 2, StitchedHeight / 2, DXGI_FORMAT_R8_UNORM ) )
+	{
+		oSetLastError(EINVAL, "Failed to create D3D10 texture!");
+		return false;
+	}
+
+	return true;
+};
+
+void oVideoDecodeD3D10SimpleYUV::DecodeFrameTask(GPU_CONTEXT* _pGPUContext)
+{
+	unsigned int NextDisplayFrame = (CurrentDisplayFrame+1)&1;
+	ID3D10Texture2D* pYTexture = _pGPUContext->TextureList[NextDisplayFrame].Textures[0];
+	ID3D10Texture2D* pUTexture = _pGPUContext->TextureList[NextDisplayFrame].Textures[1];
+	ID3D10Texture2D* pVTexture = _pGPUContext->TextureList[NextDisplayFrame].Textures[2];
+	std::vector<D3D10_MAPPED_TEXTURE2D> MappedTextures;
+	MappedTextures.resize(3);
+	oV( pYTexture->Map(0, D3D10_MAP_WRITE_DISCARD, 0, &(MappedTextures[0]) ) );
+	oV( pUTexture->Map(0, D3D10_MAP_WRITE_DISCARD, 0, &(MappedTextures[1]) ) );
+	oV( pVTexture->Map(0, D3D10_MAP_WRITE_DISCARD, 0, &(MappedTextures[2]) ) );
+
+	size_t numDecoders = thread_cast<oVideoDecodeD3D10SimpleYUV*>(this)->CPUDecoders.size();
+	thread_cast<oVideoDecodeD3D10SimpleYUV*>(this)->DecodedFrameNumbers.resize(numDecoders);
+	
+	oParallelFor(oBIND(thread_cast<oVideoDecodeD3D10SimpleYUV*>(this)->DecodePartition, oBIND1, MappedTextures), 0, numDecoders);
+	
+	pYTexture->Unmap(0);
+	pUTexture->Unmap(0);
+	pVTexture->Unmap(0);
+
+	LastDecodedFrame = thread_cast<oVideoDecodeD3D10SimpleYUV*>(this)->DecodedFrameNumbers[0];
+	for(unsigned int i = 1; i < numDecoders; ++i)
+	{
+		oASSERT(thread_cast<oVideoDecodeD3D10SimpleYUV*>(this)->DecodedFrameNumbers[i] == thread_cast<oVideoDecodeD3D10SimpleYUV*>(this)->DecodedFrameNumbers[0], "A partition in split vp8 decoding mode, decoded a diffrent frame number than other partitions.");
+	}
+
+
+	DecodeEvent.Set();
 }

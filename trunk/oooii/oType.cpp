@@ -44,8 +44,8 @@ static const char* sCppNames[] =
 
 static size_t sCppSizes[] = 
 {
-	~0u,
-	~0u,
+	oINVALID_SIZE_T,
+	oINVALID_SIZE_T,
 	sizeof(bool),
 	sizeof(char),
 	sizeof(unsigned char),
@@ -331,10 +331,10 @@ size_t oType::GetSize() const
 	for (oTypeContext::container_t::iterator it = ti.begin(); it != ti.end(); ++it)
 	{
 		size_t s = (*it)->GetSize(*this);
-		if (s != ~0u) return s;
+		if (s != oINVALID) return s;
 	}
 
-	return ~0u;
+	return oINVALID;
 }
 
 void oType::RegisterInspection(Inspection* _pTypeInspection)

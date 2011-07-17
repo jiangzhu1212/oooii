@@ -116,6 +116,10 @@ namespace oSurface
 		BC7_TYPELESS,
 		BC7_UNORM,
 		BC7_UNORM_SRGB,
+//formats below here are not currently directly loadable to directx.
+		R8G8B8_UNORM,
+// YUV420 is sequential instead of interleaved. U and V are stored at quarter resolution
+		YUV420_UNORM, 
 		NUM_FORMATS,
 	};
 
@@ -239,6 +243,7 @@ namespace oSurface
 
 	struct YUV420
 	{
+		YUV420() : pY(nullptr), pU(nullptr), pV(nullptr), YPitch(0), UVPitch(0) {}
 		unsigned char* pY; // Luminance at full resolution
 		unsigned char* pU; // Chrominance U at quarter resolution
 		unsigned char* pV; // Chrominance V at quarter resolution
@@ -246,8 +251,9 @@ namespace oSurface
 		size_t YPitch; // Luminance (Y) pitch
 		size_t UVPitch; // Chrominance (UV) pitch
 	};
-
-	void convert_B8G8R8A8_UNORM_to_YUV420(const unsigned int _Width, const unsigned int _Height, const unsigned char* _pSrcRGBASrc, const size_t _pRGBAPitch, YUV420* _pYUVDst );
+	
+	void convert_B8G8R8_UNORM_to_YUV420(const unsigned int _Width, const unsigned int _Height, const unsigned char* _pSrcRGBSrc, const size_t _pRGBPitch, YUV420* _pYUVDst, bool _yflip = false);
+	void convert_B8G8R8A8_UNORM_to_YUV420(const unsigned int _Width, const unsigned int _Height, const unsigned char* _pSrcRGBASrc, const size_t _pRGBAPitch, YUV420* _pYUVDst, bool _yflip = false);
 	void convert_YUV420_to_B8G8R8A8_UNORM( const unsigned int _Width, const unsigned int _Height, const YUV420& _YUVSrc, unsigned char* _pSrcRGBADst, const size_t _pRGBAPitch );
 
 

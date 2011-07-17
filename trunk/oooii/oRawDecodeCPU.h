@@ -17,10 +17,10 @@ public:
 	oRawDecodeCPU( threadsafe oVideoContainer* _pContainer,  bool* _pSuccess);
 	~oRawDecodeCPU();
 
-	virtual bool Decode(oSurface::YUV420* _pFrame, size_t *_decodedFrameNumber) threadsafe;
+	virtual bool Decode(oSurface::YUV420* _pFrame, size_t* _pDecodedFrameNumber) threadsafe;
 
 private:
-	bool DecodeInternal(oSurface::YUV420* _pFrame, size_t *_decodedFrameNumber);
+	bool DecodeInternal(oSurface::YUV420* _pFrame, size_t* _pDecodedFrameNumber);
 
 	oRefCount RefCount;
 

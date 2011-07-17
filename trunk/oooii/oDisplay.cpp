@@ -20,7 +20,7 @@ unsigned int oDisplay::GetPrimary()
 		index++;
 	}
 
-	return ~0u;
+	return oINVALID;
 }
 
 void oDisplay::GetVirtualRect(int* _pX, int* _pY, int* _pWidth, int* _pHeight)
@@ -139,4 +139,21 @@ bool oDisplay::SetDesc(unsigned int _Index, const DESC* _pDesc)
 		return false;
 
 	return SetDescByName(dev.DeviceName, _pDesc);
+}
+
+void oDisplay::SetPowerOn(bool _On)
+{
+	static const LPARAM OFF = 2;
+	static const LPARAM LOWPOWER = 1;
+	static const LPARAM ON = -1;
+	SendMessage(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, _On ? ON : LOWPOWER);
+}
+
+bool oDisplay::IsPowerOn(unsigned int _Index)
+{
+	DESC d;
+	GetDesc(_Index, &d); // assume all monitors power up and down at the same rate
+	BOOL isOn = FALSE;
+	GetDevicePowerState((HMONITOR)d.NativeHandle, &isOn);
+	return !!isOn;
 }

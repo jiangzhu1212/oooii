@@ -114,7 +114,7 @@ Threadpool_Impl_Windows::Threadpool_Impl_Windows(const DESC* _pDesc, bool *_pSuc
 	SetThreadpoolCallbackCleanupGroup(&TPEnvironment, TPCleanupGroup, CleanupGroupCancelCallback);
 
 	DWORD dwNumThreads = Desc.NumThreads;
-	if (dwNumThreads == ~0u)
+	if (dwNumThreads == oINVALID)
 	{
 		oCPU::DESC cpu;
 		oCPU::GetDesc(0, &cpu);
@@ -205,7 +205,7 @@ Threadpool_Impl_OOOii::Threadpool_Impl_OOOii(const DESC* _pDesc, bool *_pSuccess
 
 	size_t nThreads = _pDesc->NumThreads;
 
-	if (nThreads == ~0u)
+	if (nThreads == oINVALID)
 	{
 		oCPU::DESC cpu;
 		oCPU::GetDesc(0, &cpu);

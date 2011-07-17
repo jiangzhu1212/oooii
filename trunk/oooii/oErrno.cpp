@@ -2,7 +2,6 @@
 #include <oooii/oErrno.h>
 #include <oooii/oAssert.h>
 #include <oooii/oSingleton.h>
-#include <oooii/oWindows.h>
 
 struct oLastErrorContext : public oProcessThreadlocalSingleton<oLastErrorContext>
 {
@@ -49,30 +48,6 @@ const char* oGetLastErrorDesc()
 {
 	const char* desc = oLastErrorContext::Singleton()->Desc;
 	return *desc ? desc : oGetErrnoDesc(oGetLastError());
-}
-
-bool oSetLastErrorNative(unsigned int _NativeErrorCode, const char* _ErrorDescPrefix)
-{
-	char err[2048];
-	char* p = err;
-	size_t count = oCOUNTOF(err);
-	if (_ErrorDescPrefix)
-	{
-		size_t len = sprintf_s(err, "%s", _ErrorDescPrefix);;
-		p += len;
-		count -= len;
-	}
-
-	size_t len = sprintf_s(p, count, "HRESULT 0x%08x: ", _NativeErrorCode);
-	p += len;
-	count -= len;
-
-	if (oGetWindowsErrorDescription(p, count, (HRESULT)_NativeErrorCode))
-		return false;
-
-	// @oooii-tony: it would be nice to convert the errno a bit better, but that's
-	// a lot of typing! Maybe one day...
-	return oSetLastError(EINVAL, err);
 }
 
 const char* oGetErrnoString(int _Errno)

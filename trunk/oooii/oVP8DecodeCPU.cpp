@@ -56,43 +56,47 @@ void oVP8DecodeCPU::InitializeVP8()
 	}
 }
 
-bool oVP8DecodeCPU::DecodeInternal(oSurface::YUV420* _pFrame, size_t *_decodedFrameNumber)
+bool oVP8DecodeCPU::DecodeInternal(oSurface::YUV420* _pFrame, size_t* _pDecodedFrameNumber)
 {
-	void *data;
-	size_t dataSize;
-	bool valid;
-	Container->MapFrame(&data, &dataSize, &valid, _decodedFrameNumber);
-	if(!valid || dataSize == 0)
+	if (_pDecodedFrameNumber)
+		*_pDecodedFrameNumber = oINVALID_SIZE_T;
+
+	oVideoContainer::MAPPED mapped;
+	if (Container->Map(&mapped))
 	{
-		Container->UnmapFrame();
-		return false;
+		if (_pDecodedFrameNumber)
+			*_pDecodedFrameNumber = mapped.DecodedFrameNumber;
+
+		// @oooii-tony can this be moved outside the map call so it doesn't have to 
+		// call unmap if it fails?
+		InitializeVP8();
+		if(!IsInitialized)
+		{
+			Container->Unmap();
+			return false;
+		}
+
+		vpx_codec_decode(&Context, (const uint8_t*)mapped.pFrameData, (unsigned int)mapped.DataSize, nullptr, 0 );
+
+		// We don't need to loop over the iterator as we always drain the frame immediately after calling decode
+		vpx_codec_iter_t  iter = NULL;
+		vpx_image_t* pImage = vpx_codec_get_frame(&Context, &iter );
+		oASSERT( pImage, "Failed to retrieve frame");
+		oASSERT( VP8_FRAME_FORMAT == pImage->fmt, "Unknown frame format" );
+		oASSERT( pImage->stride[VPX_PLANE_U] == pImage->stride[VPX_PLANE_V], "Expected U and V planes to have equal stride" );
+
+		_pFrame->pY = pImage->planes[VPX_PLANE_Y];
+		_pFrame->pU = pImage->planes[VPX_PLANE_U];
+		_pFrame->pV = pImage->planes[VPX_PLANE_V];
+
+		_pFrame->UVPitch = pImage->stride[VPX_PLANE_U];
+		_pFrame->YPitch = pImage->stride[VPX_PLANE_Y];
+
+		Container->Unmap();
+		return true;
 	}
-	InitializeVP8();
-	if(!IsInitialized)
-	{
-		Container->UnmapFrame();
-		return false;
-	}
 
-	vpx_codec_decode(&Context, (const uint8_t*)data, (unsigned int)dataSize, NULL, 0 );
-
-	// We don't need to loop over the iterator as we always drain the frame immediately after calling decode
-	vpx_codec_iter_t  iter = NULL;
-	vpx_image_t* pImage = vpx_codec_get_frame(&Context, &iter );
-	oASSERT( pImage, "Failed to retrieve frame");
-	oASSERT( VP8_FRAME_FORMAT == pImage->fmt, "Unknown frame format" );
-	oASSERT( pImage->stride[VPX_PLANE_U] == pImage->stride[VPX_PLANE_V], "Expected U and V planes to have equal stride" );
-
-	_pFrame->pY = pImage->planes[VPX_PLANE_Y];
-	_pFrame->pU = pImage->planes[VPX_PLANE_U];
-	_pFrame->pV = pImage->planes[VPX_PLANE_V];
-
-	_pFrame->UVPitch = pImage->stride[VPX_PLANE_U];
-	_pFrame->YPitch = pImage->stride[VPX_PLANE_Y];
-
-	Container->UnmapFrame();
-
-	return true;
+	return false;
 }
 
 bool oVP8DecodeCPU::Decode(oSurface::YUV420* _pFrame, size_t *_decodedFrameNumber) threadsafe

@@ -191,7 +191,7 @@ bool Process_Impl::Kill(int _ExitCode) threadsafe
 	HRESULT hr = TerminateProcess(ProcessInfo.hProcess, (UINT)_ExitCode);
 	if (FAILED(hr))
 	{
-		oSetLastErrorNative(hr);
+		oWinSetLastError(hr);
 		return false;
 	}
 

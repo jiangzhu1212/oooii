@@ -25,11 +25,12 @@ void oMemset4(void* _pDestination, long _Value, size_t _NumBytes)
 	s.AsInt = _Value;
 
 	// Duff's device up to alignment
+	// http://en.wikipedia.org/wiki/Duff's_device
 	switch (nPrefixBytes)
 	{
-		case 3: *pPrefix = s.AsChar[3];
-		case 2: *pPrefix = s.AsChar[2];
-		case 1: *pPrefix = s.AsChar[1];
+		case 3: *pPrefix++ = s.AsChar[3];
+		case 2: *pPrefix++ = s.AsChar[2];
+		case 1: *pPrefix++ = s.AsChar[1];
 		case 0: break;
 		default: oASSUME(0);
 	}
@@ -39,6 +40,7 @@ void oMemset4(void* _pDestination, long _Value, size_t _NumBytes)
 		*p++ = _Value;
 
 	// Duff's device any remaining bytes
+	// http://en.wikipedia.org/wiki/Duff's_device
 	switch (nPostfixBytes)
 	{
 		case 3: *pPrefix++ = s.AsChar[3];

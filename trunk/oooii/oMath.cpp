@@ -771,8 +771,6 @@ void oTransformVectors(const float4x4& _Matrix, float3* oRESTRICT _pDestination,
 
 template<typename T> bool oRemoveDegeneratesT(const TVEC3<T>* _pPositions, size_t _NumberOfPositions, unsigned int* _pIndices, size_t _NumberOfIndices, size_t* _pNewNumIndices)
 {
-	const unsigned int kInvalidIndex = ~0u;
-
 	if ((_NumberOfIndices % 3) != 0)
 	{
 		oSetLastError(EINVAL, "_NumberOfIndices must be a multiple of 3");
@@ -797,16 +795,16 @@ template<typename T> bool oRemoveDegeneratesT(const TVEC3<T>* _pPositions, size_
 
 		if (oEqual(cross(a - b, a - c), 0.0f))
 		{
-			_pIndices[I] = kInvalidIndex;
-			_pIndices[J] = kInvalidIndex;
-			_pIndices[K] = kInvalidIndex;
+			_pIndices[I] = oINVALID;
+			_pIndices[J] = oINVALID;
+			_pIndices[K] = oINVALID;
 		}
 	}
 
 	*_pNewNumIndices = _NumberOfIndices;
 	for (size_t i = 0; i < *_pNewNumIndices; i++)
 	{
-		if (_pIndices[i] == kInvalidIndex)
+		if (_pIndices[i] == oINVALID)
 		{
 			memcpy(&_pIndices[i], &_pIndices[i+1], sizeof(unsigned int) * (_NumberOfIndices - i - 1));
 			i--;

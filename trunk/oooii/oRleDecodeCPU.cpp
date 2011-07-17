@@ -27,93 +27,98 @@ bool oRleDecodeCPU::DecodeInternal(oSurface::YUV420* _pFrame, size_t *_decodedFr
 {
 	oVideoContainer::DESC Desc;
 	Container->GetDesc(&Desc);
-
 	oASSERT(Desc.ContainerType == oVideoContainer::MOV_CONTAINER && Desc.CodecType == oVideoContainer::RLE_CODEC,"Tried to use the RLE decoder with a container that doesn't contain rle data");
 
-	bool valid;
-	Container->MapFrame(&Data, &DataSize, &valid, _decodedFrameNumber);
-	if(!valid || DataSize == 0)
+	if (_decodedFrameNumber)
+		*_decodedFrameNumber = oINVALID_SIZE_T;
+
+	oVideoContainer::MAPPED mapped;
+	if (Container->Map(&mapped))
 	{
-		return false;
-	}
-	DataIndex = 0;
+		if (_decodedFrameNumber)
+			*_decodedFrameNumber = mapped.DecodedFrameNumber;
+
+		unsigned int DataIndex = 0;
 	 
-	unsigned short Header = 0;
-	ReadRleSwap(Header);
+		unsigned short Header = 0;
+		ReadRleSwap(Header, &DataIndex, mapped);
 	 
- 	unsigned short SkipLines = 0;
- 	unsigned short NumLines = static_cast<unsigned short>(Desc.Height);
- 	unsigned int Line = 0;
- 	if (Header == 0x08)
- 	{
- 		ReadRleSwap(SkipLines);
- 		DataIndex += 2; //unused data
- 
- 		ReadRleSwap(NumLines);
-		DataIndex += 2; //unused data
- 	}
- 	if(DataIndex >= DataSize)
- 	{
- 		oSetLastError(EINVAL,"Failed decoding Rle. Failed read header and/or skip lines");
- 		return false;
- 	}
- 
- 	unsigned int DecodeOffset = Desc.Width*SkipLines;
- 
- 	struct RGBColor
- 	{
- 		unsigned char Red;
- 		unsigned char Green;
- 		unsigned char Blue;
- 	};
- 	RGBColor* oRESTRICT pixelRun = (RGBColor*)oSTACK_ALLOC(128*sizeof(RGBColor),4);
- 
- 	unsigned char SkipCode = 0;
- 	ReadRle(SkipCode);
- 	while (SkipCode != 0 && Line < NumLines)
- 	{
- 		DecodeOffset += SkipCode-1;
- 
- 		char RleCode = 0;
- 		ReadRle(RleCode);
- 		if(RleCode == 0 || RleCode == -1)
+ 		unsigned short SkipLines = 0;
+ 		unsigned short NumLines = static_cast<unsigned short>(Desc.Height);
+ 		unsigned int Line = 0;
+ 		if (Header == 0x08)
  		{
- 			ReadRle(SkipCode);
- 			if(RleCode == -1)
- 				Line++;
+ 			ReadRleSwap(SkipLines, &DataIndex, mapped);
+ 			DataIndex += 2; //unused data
+ 
+ 			ReadRleSwap(NumLines, &DataIndex, mapped);
+			DataIndex += 2; //unused data
  		}
- 		else if(RleCode > 0)
+ 	
+		if (DataIndex >= mapped.DataSize)
  		{
-			if(DataIndex+sizeof(RGBColor)*RleCode < DataSize)
-			{
-				memcpy(pixelRun,oByteAdd(Data,DataIndex),sizeof(RGBColor)*RleCode);
-				DataIndex += sizeof(RGBColor)*RleCode;
-				for (int i = 0;i < RleCode;++i)
-				{
-					BGRADecodeFrame[DecodeOffset] = (pixelRun[i].Blue) | (pixelRun[i].Green<<8) | (pixelRun[i].Red<<16) | 0xFF000000;
-					DecodeOffset++;
-				}
-			}
- 		}
- 		else
- 		{
- 			RGBColor pixel;
- 			ReadRle(pixel);
- 			unsigned int BGRAColor = (pixel.Blue) | (pixel.Green<<8) | (pixel.Red<<16) | 0xFF000000;
- 			oMemset4(&BGRADecodeFrame[DecodeOffset],BGRAColor,(-RleCode)*sizeof(unsigned int));
- 			DecodeOffset += -RleCode;
- 		}
- 		if(DataIndex >= DataSize)
- 		{
- 			oSetLastError(EINVAL,"Failed decoding Rle. failed while decoding rle data");
+ 			oSetLastError(EINVAL, "Failed decoding Rle. Failed read header and/or skip lines");
+			Container->Unmap();
  			return false;
  		}
- 	}
  
- 	// @oooii-eric would probably be faster to convert to yuv for each line as its decoded, for better cache locality. but early testing didn't show any improvement.
- 	oSurface::convert_B8G8R8A8_UNORM_to_YUV420(Desc.Width, Desc.Height, reinterpret_cast<unsigned char*>(&BGRADecodeFrame[0]), Desc.Width*sizeof(unsigned int), _pFrame );
+ 		unsigned int DecodeOffset = Desc.Width*SkipLines;
+ 
+ 		struct RGBColor
+ 		{
+ 			unsigned char Red;
+ 			unsigned char Green;
+ 			unsigned char Blue;
+ 		};
+ 		RGBColor* oRESTRICT pixelRun = (RGBColor*)oSTACK_ALLOC(128*sizeof(RGBColor),4);
+ 
+ 		unsigned char SkipCode = 0;
+ 		ReadRle(SkipCode, &DataIndex, mapped);
+ 		while (SkipCode != 0 && Line < NumLines)
+ 		{
+ 			DecodeOffset += SkipCode-1;
+ 
+ 			char RleCode = 0;
+ 			ReadRle(RleCode, &DataIndex, mapped);
+ 			if(RleCode == 0 || RleCode == -1)
+ 			{
+ 				ReadRle(SkipCode, &DataIndex, mapped);
+ 				if(RleCode == -1)
+ 					Line++;
+ 			}
+ 			else if(RleCode > 0)
+ 			{
+				if(DataIndex+sizeof(RGBColor)*RleCode < mapped.DataSize)
+				{
+					memcpy(pixelRun,oByteAdd(mapped.pFrameData,DataIndex),sizeof(RGBColor)*RleCode);
+					DataIndex += sizeof(RGBColor)*RleCode;
+					for (int i = 0;i < RleCode;++i)
+					{
+						BGRADecodeFrame[DecodeOffset] = (pixelRun[i].Blue) | (pixelRun[i].Green<<8) | (pixelRun[i].Red<<16) | 0xFF000000;
+						DecodeOffset++;
+					}
+				}
+ 			}
+ 			else
+ 			{
+ 				RGBColor pixel;
+ 				ReadRle(pixel, &DataIndex, mapped);
+ 				unsigned int BGRAColor = (pixel.Blue) | (pixel.Green<<8) | (pixel.Red<<16) | 0xFF000000;
+ 				oMemset4(&BGRADecodeFrame[DecodeOffset],BGRAColor,(-RleCode)*sizeof(unsigned int));
+ 				DecodeOffset += -RleCode;
+ 			}
+ 			if(DataIndex >= mapped.DataSize)
+ 			{
+ 				oSetLastError(EINVAL,"Failed decoding Rle. failed while decoding rle data");
+ 				return false;
+ 			}
+ 		}
+ 
+ 		// @oooii-eric would probably be faster to convert to yuv for each line as its decoded, for better cache locality. but early testing didn't show any improvement.
+ 		oSurface::convert_B8G8R8A8_UNORM_to_YUV420(Desc.Width, Desc.Height, reinterpret_cast<unsigned char*>(&BGRADecodeFrame[0]), Desc.Width*sizeof(unsigned int), _pFrame );
 
-	Container->UnmapFrame();
+		Container->Unmap();
+	}
 
 	return true;
 }

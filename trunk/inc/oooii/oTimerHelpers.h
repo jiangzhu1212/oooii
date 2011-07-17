@@ -32,8 +32,8 @@ class oScopedPartialTimeout
 public:
 	// Pointer to a timeout value to update. It should be initialized to the user-
 	// specified timeout initially and then allowed to be updated throughout. If 
-	// the value of the timeout is ~0u (oINFINITE_WAIT), then this class doesn't
-	// update the value, thus allowing the ~0u value to be propagated.
+	// the value of the timeout is oINFINITE_WAIT, then this class doesn't
+	// update the value, thus allowing the oINFINITE_WAIT value to be propagated.
 	oScopedPartialTimeout(unsigned int* _pTimeoutMSCountdown);
 	~oScopedPartialTimeout();
 	// Updates the timeout in the same way that destructor does

@@ -12,8 +12,6 @@
 	#pragma comment(linker, "\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 
-static const size_t _INFINITE_WAIT = ~0u;
-
 static const size_t kVeryLargeStringLength = 60 * 1024;
 
 namespace Control
@@ -76,6 +74,10 @@ LPCSTR toIcon(oMsgBox::TYPE type)
 		IDI_QUESTION,
 		IDI_ERROR,
 		IDI_ERROR,
+		IDI_INFORMATION,
+		IDI_INFORMATION,
+		IDI_WARNING,
+		IDI_ERROR,
 	};
 
 	if (type >= oCOUNTOF(map))
@@ -118,9 +120,9 @@ static INT_PTR CALLBACK WndDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
 	case WM_INITDIALOG:
 	{
 		DialogParams& p = *(DialogParams*)lParam;
-		if (p.timeoutMS != _INFINITE_WAIT)
+		if (p.timeoutMS != oINFINITE_WAIT)
 			SetTimer(hwnd, 1, p.timeoutMS, WndDialogTimerProc);
-		if (p.disableTimeoutMS != _INFINITE_WAIT)
+		if (p.disableTimeoutMS != oINFINITE_WAIT)
 			SetTimer(hwnd, 2, p.disableTimeoutMS, WndDialogTimerProc);
 		SendDlgItemMessage(hwnd, Control::kIcon, STM_SETICON, (WPARAM)p.hIcon, 0);
 		return false;
@@ -313,7 +315,7 @@ oMsgBox::RESULT AssertDialog(oMsgBox::TYPE type, const char* caption, const char
 	initializeItem(vcur, textBtn1, Control::kRetry, Control::kButton, BtnStyle|BS_DEFPUSHBUTTON, rDebug);
 	
 	DWORD dwStyleIgnore = BtnStyle;
-	if (ignoreDisableTimeoutMS != _INFINITE_WAIT)
+	if (ignoreDisableTimeoutMS != oINFINITE_WAIT)
 		dwStyleIgnore |= WS_DISABLED;
 	
 	initializeItem(vcur, textBtn2, Control::kIgnore, Control::kButton, dwStyleIgnore, rIgnore);
@@ -370,11 +372,31 @@ oMsgBox::RESULT oMsgBox::tvprintf(oMsgBox::TYPE _Type, unsigned int _Timeout, co
 {
 	std::vector<char> msg(oKB(128));
 	vsprintf_s(oGetData(msg), oGetDataSize(msg), _Format, args);
-	oMsgBox::RESULT result;
-	if (_Type == oMsgBox::DEBUG)
-		result = AssertDialog(_Type, _Title, oGetData(msg), _Timeout, 0);
-	else
-		result = GetResult(MessageBoxTimeout(0, oGetData(msg), _Title, AsFlags(_Type), 0, _Timeout));
+	oMsgBox::RESULT result = YES;
+	HICON hIcon = 0;
+
+	switch (_Type)
+	{
+		case oMsgBox::DEBUG:
+			result = AssertDialog(_Type, _Title, oGetData(msg), _Timeout, 0);
+			break;
+		
+		case NOTIFY_INFO:
+		case NOTIFY_WARN:
+		case NOTIFY_ERR:
+			hIcon = LoadIcon(0, toIcon(_Type));
+			// pass thru
+
+		case oMsgBox::NOTIFY:
+			oVERIFY(oTrayShowMessage(oGetWindowFromThreadID(oWinGetMainThreadID()), 0, hIcon, __max(2000, _Timeout), _Title, oGetData(msg)));
+			result = CONTINUE;
+			break;
+
+		default:
+			result = GetResult(MessageBoxTimeout(0, oGetData(msg), _Title, AsFlags(_Type), 0, _Timeout));
+			break;
+	}
+
 	return result;
 }
 
@@ -387,7 +409,7 @@ oMsgBox::RESULT oMsgBox::tprintf(oMsgBox::TYPE _Type, unsigned int _Timeout, con
 
 oMsgBox::RESULT oMsgBox::vprintf(oMsgBox::TYPE _Type, const char* _Title, const char* _Format, va_list args)
 {
-	return tvprintf(_Type, _INFINITE_WAIT, _Title, _Format, args);
+	return tvprintf(_Type, oINFINITE_WAIT, _Title, _Format, args);
 }
 
 oMsgBox::RESULT oMsgBox::printf(oMsgBox::TYPE _Type, const char* _Title, const char* _Format, ...)

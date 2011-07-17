@@ -304,7 +304,6 @@ interface oSocketAsyncUDP : oInterface
 			: Port(0)
 			, ReceiveBufferSize(0)
 			, SendBufferSize(0)
-			, NumThreads(0)
 		{}
 
 		// Port is used as the source port for sent packets and is the port
@@ -315,10 +314,6 @@ interface oSocketAsyncUDP : oInterface
 
 		size_t ReceiveBufferSize;
 		size_t SendBufferSize;
-
-		// If NumThreads is 0 it will be set to the number of processors 
-		// available according to GetSystemInfo.
-		int NumThreads;
 
 		// Called when new data arrives over the network.
 		on_receive_callback_t RecvCallback;

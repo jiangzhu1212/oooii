@@ -164,10 +164,16 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile />
     <Lib />
+    <ClCompile>
+      <DisableSpecificWarnings>4244;4189;4201;4355;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">
     <ClCompile />
     <Lib />
+    <ClCompile>
+      <DisableSpecificWarnings>4244;4189;4201;4355;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Midl>
@@ -175,6 +181,9 @@
     </Midl>
     <ClCompile />
     <Lib />
+    <ClCompile>
+      <DisableSpecificWarnings>4244;4189;4201;4355;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">
     <Midl>
@@ -182,14 +191,23 @@
     </Midl>
     <ClCompile />
     <Lib />
+    <ClCompile>
+      <DisableSpecificWarnings>4244;4189;4201;4355;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile />
     <Lib />
+    <ClCompile>
+      <DisableSpecificWarnings>4244;4189;4201;4355;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">
     <ClCompile />
     <Lib />
+    <ClCompile>
+      <DisableSpecificWarnings>4244;4189;4201;4355;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Midl>
@@ -200,6 +218,9 @@
       <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
     </Lib>
     <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>4244;4189;4201;4355;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">
     <Midl>
@@ -210,6 +231,9 @@
       <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
     </Lib>
     <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>4244;4189;4201;4355;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\inc\oooii\oAllocator.h" />
@@ -228,6 +252,7 @@
     <ClInclude Include="..\inc\oooii\oCheckedAssignment.h" />
     <ClInclude Include="..\inc\oooii\oColor.h" />
     <ClInclude Include="..\inc\oooii\oCommandQueue.h" />
+    <ClInclude Include="..\inc\oooii\oCommandQueueSingleThread.h" />
     <ClInclude Include="..\inc\oooii\oConcurrentIndexAllocator.h" />
     <ClInclude Include="..\inc\oooii\oConcurrentPooledAllocator.h" />
     <ClInclude Include="..\inc\oooii\oConcurrentQueueMS.h" />
@@ -253,6 +278,7 @@
     <ClInclude Include="..\inc\oooii\oHashString.h" />
     <ClInclude Include="..\inc\oooii\oHeap.h" />
     <ClInclude Include="..\inc\oooii\oHLSL.h" />
+    <ClInclude Include="..\inc\oooii\oHLSLDeferredView.h" />
     <ClInclude Include="..\inc\oooii\oImage.h" />
     <ClInclude Include="..\inc\oooii\oIndex.h" />
     <ClInclude Include="..\inc\oooii\oIndexAllocator.h" />
@@ -320,11 +346,15 @@
     <ClInclude Include="oAllocatorTLSF.h" />
     <ClInclude Include="oCRTLeakTracker.h" />
     <ClInclude Include="oDbgHelp.h" />
+    <ClInclude Include="oImageSequence.h" />
     <ClInclude Include="oKeyState.h" />
     <ClInclude Include="oMOVFileImpl.h" />
+    <ClInclude Include="oImageDecodeCPU.h" />
     <ClInclude Include="oRawDecodeCPU.h" />
     <ClInclude Include="oRleDecodeCPU.h" />
     <ClInclude Include="oVideoCodecD3D10.h" />
+    <ClInclude Include="oVideoHelpers.h" />
+    <ClInclude Include="oVideoRTPImpl.h" />
     <ClInclude Include="oVP8DecodeCPU.h" />
     <ClInclude Include="oWebmEncoder.h" />
     <ClInclude Include="oWebmEncoderCodec.h" />
@@ -332,6 +362,7 @@
     <ClInclude Include="oWebmEncoderCodecVP8.h" />
     <ClInclude Include="oWebmFile.h" />
     <ClInclude Include="oWebmStreaming.h" />
+    <ClInclude Include="oWinDWMAPI.h" />
     <ClInclude Include="oWinPSAPI.h" />
     <ClInclude Include="oWinsock.h" />
     <ClInclude Include="pch.h" />
@@ -356,6 +387,7 @@
     <ClCompile Include="oBufferPool.cpp" />
     <ClCompile Include="oColor.cpp" />
     <ClCompile Include="oCommandQueue.cpp" />
+    <ClCompile Include="oCommandQueueSingleThread.cpp" />
     <ClCompile Include="oConcurrentIndexAllocator.cpp" />
     <ClCompile Include="oConsole.cpp" />
     <ClCompile Include="oCPU.cpp" />
@@ -376,9 +408,11 @@
     <ClCompile Include="oHash.cpp" />
     <ClCompile Include="oHeap.cpp" />
     <ClCompile Include="oImage.cpp" />
+    <ClCompile Include="oImageSequence.cpp" />
     <ClCompile Include="oIndexAllocator.cpp" />
     <ClCompile Include="oINI.cpp" />
     <ClCompile Include="oInterface.cpp" />
+    <ClCompile Include="oIOCP.cpp" />
     <ClCompile Include="oKeyboard.cpp" />
     <ClCompile Include="oMath.cpp" />
     <ClCompile Include="oMemory.cpp" />
@@ -394,6 +428,7 @@
     <ClCompile Include="oP4.cpp" />
     <ClCompile Include="oPageAllocator.cpp" />
     <ClCompile Include="oPath.cpp" />
+    <ClCompile Include="oImageDecodeCPU.cpp" />
     <ClCompile Include="oProcess.cpp" />
     <ClCompile Include="oProcessHeap.cpp" />
     <ClCompile Include="oRawDecodeCPU.cpp" />
@@ -414,6 +449,7 @@
     <ClCompile Include="oURI.cpp" />
     <ClCompile Include="oVideoCodec.cpp" />
     <ClCompile Include="oVideoCodecD3D10.cpp" />
+    <ClCompile Include="oVideoRTPImpl.cpp" />
     <ClCompile Include="oVP8DecodeCPU.cpp" />
     <ClCompile Include="oVTable.cpp" />
     <ClCompile Include="oWebmEncoder.cpp" />
@@ -424,6 +460,7 @@
     <ClCompile Include="oWebmStreaming.cpp" />
     <ClCompile Include="oWindow.cpp" />
     <ClCompile Include="oWindows.cpp" />
+    <ClCompile Include="oWinDWMAPI.cpp" />
     <ClCompile Include="oWinPSAPI.cpp" />
     <ClCompile Include="oWinsock.cpp" />
     <ClCompile Include="oXML.cpp" />

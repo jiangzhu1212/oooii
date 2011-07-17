@@ -5,6 +5,7 @@
 #define oSTL_h
 
 #include <oooii/oAssert.h>
+#include <oooii/oStddef.h>
 
 #pragma warning(disable:4530) // C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
 #include <algorithm>
@@ -13,6 +14,7 @@
 #include <string>
 #include <vector>
 #include <regex>
+#include <unordered_map>
 #pragma warning(default:4530)
 
 template<typename T, size_t N> class oArray
@@ -385,6 +387,12 @@ template<> struct oStdEqualTo<const char*> { int operator()(const char* x, const
 template<typename T> struct oStdEqualToI : public std::binary_function<T, T, int> { int operator()(const T& x, const T& y) const { return x == y; } };
 template<> struct oStdEqualToI<const char*> { int operator()(const char* x, const char* y) const { return !_stricmp(x, y); } };
 
+
+// std::hash function that returns exactly the same value as passed in. This is 
+// useful where some other object caches hash values that then can be used 
+// directly in an unordered_set.
+template<typename T> struct oNoopHash : public std::unary_function<T, size_t> { size_t operator()(const T& v) const { return static_cast<size_t>(v); } };
+
 // _____________________________________________________________________________
 // OOOii-Kevin: foreach macro that works with std::vector matches 
 // BOOST_FOREACH syntax. Does not work with any other container type
@@ -402,5 +410,16 @@ template<> struct oStdEqualToI<const char*> { int operator()(const char* x, cons
 
 #define oFOREACH( val, col ) \
 	oFOREACH_BASE_INSTANTIATOR( val, col, __COUNTER__ )
+
+// @oooii-eric: Seems like this should go somewhere else, just not sure where. In particular this forces pulling in ostddef.h
+//	For very simple RAII cases, that are not worthy of there own class
+struct oRAII
+{
+	oRAII(oFUNCTION<void ()> _onDestroy): OnDestroy(_onDestroy) {}
+	oRAII(oFUNCTION<void ()> _onCreate, oFUNCTION<void ()> _onDestroy): OnDestroy(_onDestroy) {_onCreate();}
+	~oRAII() {OnDestroy();}
+private:
+	oFUNCTION<void()> OnDestroy;
+};
 
 #endif

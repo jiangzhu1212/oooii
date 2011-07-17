@@ -101,15 +101,11 @@ struct Mouse_Impl : public oMouse
 	{
 		oMutex::ScopedLock lock(CursorStateLock);
 		CURSOR_STATE state = thread_cast<Mouse_Impl*>(this)->GetCursorStateUnsafe();
-		LPCTSTR cursor = IDC_ARROW;
 		if (_State == WAITING_FOREGROUND)
 		{
-			cursor = IDC_WAIT;
 			MouseWaitCount++;
 		}
-		if (_State == WAITING_BACKGROUND) cursor = IDC_APPSTARTING;
-
-		if (_State == NORMAL)
+		else if (_State == NORMAL)
 		{
 			MouseWaitCount--;
 			//@oooii-Andrew: Only return mouse state to Normal if MouseWaitCount is 0
@@ -118,17 +114,38 @@ struct Mouse_Impl : public oMouse
 			else
 				return state;
 		}
+		RequestedState = _State;
 
+		POINT pt; //just to force a mouse move (force our state change to get picked up) if the mouse happens to be in our window.
+		GetCursorPos(&pt);
+		SetCursorPos(pt.x, pt.y);
+
+		return state;
+	}
+
+	void SetCursorStateInternal(CURSOR_STATE _State) threadsafe
+	{
+		oMutex::ScopedLock lock(CursorStateLock);
+		if(_State == CurrentState)
+			return;
+
+		LPCTSTR cursor = IDC_ARROW;
+		if (_State == WAITING_FOREGROUND)
+		{
+			cursor = IDC_WAIT;
+		}
+		if (_State == WAITING_BACKGROUND) cursor = IDC_APPSTARTING;
+		
 		if (_State == NONE)
 			while (ShowCursor(false) > -1) {}
 		else
 			ShowCursor(true);
-
+		
 		SetCursor(LoadCursor(0, cursor));
 		SetClassLongPtr(hWnd, -12, (LONG_PTR)LoadCursor(0, cursor)); // GCLP_HCURSOR = -12
 		ShouldShowCursor = CursorVisible = _State != NONE;
-
-		return state;
+		
+		CurrentState = _State;
 	}
 
 	CURSOR_STATE GetCursorStateUnsafe() const
@@ -201,12 +218,16 @@ struct Mouse_Impl : public oMouse
 
 		if (pt.y < 0 && !CursorVisible)
 		{
-			SetCursorState(NORMAL);
+			SetCursorStateInternal(NORMAL);
 			ShouldShowCursor = false;
 		}
 		else if (!ShouldShowCursor && CursorVisible && pt.y >= 0)
 		{
-			SetCursorState(NONE);
+			SetCursorStateInternal(NONE);
+		}
+		else
+		{
+			SetCursorStateInternal(RequestedState);
 		}
 
 		return Desc.ShortCircuitEvents;
@@ -238,6 +259,8 @@ struct Mouse_Impl : public oMouse
 	int MouseWaitCount;
 	bool CursorVisible;
 	bool ShouldShowCursor;
+	CURSOR_STATE RequestedState;
+	CURSOR_STATE CurrentState;
 };
 
 oMouse::ScopedWait::ScopedWait(threadsafe oMouse* _pMouse, CURSOR_STATE _State)

@@ -21,9 +21,12 @@ struct oCommandQueue
 	// might never return. If _AllowEnqueues is false, then Enqueue calls are 
 	// ignored.
 	void Flush(bool _AllowEnqueues = false) threadsafe;
-
-private:
+protected:
 	void ExecuteNext() threadsafe;
+	bool Empty();
+	void Disable() {Enabled = false;}
+private:
+	virtual void IssueCommand() threadsafe;
 	std::list<oFUNCTION<void()>> Commands;
 	oRWMutex ConsumerLock;
 	volatile bool Enabled;

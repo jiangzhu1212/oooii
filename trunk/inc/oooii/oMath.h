@@ -172,7 +172,7 @@ template<typename T> inline T zerodenorm(const T& a)
 // _____________________________________________________________________________
 // Geometry
 
-template<typename T> inline T fresnel(const TVEC3<T>& i, const TVEC3<T>& n) { return 0.02f+0.97f*pow((1-max(dot(i, n))),5); } // http://habibs.wordpress.com/alternative-solutions/
+template<typename T> inline T fresnel(const TVEC3<T>& i, const TVEC3<T>& n) { return 0.02f+0.97f*pow((1-oMax(dot(i, n))),5); } // http://habibs.wordpress.com/alternative-solutions/
 template<typename T> inline T angle(const TVEC3<T>& a, const TVEC3<T>& b) { return acos(dot(a, b) / (length(a) * length(b))); }
 template<typename T> inline TVEC4<T> oNormalizePlane(const TVEC4<T>& _Plane) { T invLength = rsqrt(dot(_Plane.XYZ(), _Plane.XYZ())); return _Plane * invLength; }
 

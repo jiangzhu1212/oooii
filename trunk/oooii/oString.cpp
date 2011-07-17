@@ -84,6 +84,16 @@ char* oPruneWhitespace(char* _StrDestination, size_t _SizeofStrDestination, cons
 	return _StrDestination;
 }
 
+char* oAddTruncationElipse(char* _StrDestination, size_t _SizeofStrDestination)
+{
+	oASSERT(_SizeofStrDestination >= 4, "String is too short for an elipse.");
+	_StrDestination[_SizeofStrDestination-1] = '\0';
+	_StrDestination[_SizeofStrDestination-2] = '.';
+	_StrDestination[_SizeofStrDestination-3] = '.';
+	_StrDestination[_SizeofStrDestination-4] = '.';
+	return _StrDestination;
+}
+
 errno_t oReplace(char* _StrResult, size_t _SizeofStrResult, const char* _StrSource, const char* _StrFind, const char* _StrReplace)
 {
 	if (!_StrResult || !_StrSource) return EINVAL;
@@ -946,6 +956,7 @@ bool oStrTokFinishedSuccessfully(char** _ppContext)
 void oCloseStrTok(char** _ppContext)
 {
 	char* start = *_ppContext;
+	*_ppContext = nullptr;
 	start += strlen(start);
 	char* origAlloc = *reinterpret_cast<char**>(start+1);
 	free(origAlloc);
@@ -1210,6 +1221,7 @@ template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination
 template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const float& _Value) { errno_t err = (-1 == sprintf_s(_StrDestination, _SizeofStrDestination, "%f", _Value)) ? EINVAL : 0; if (!err) oTrimRight(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return err; }
 template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const double& _Value) { errno_t err = (-1 == sprintf_s(_StrDestination, _SizeofStrDestination, "%lf", _Value)) ? EINVAL : 0; if (!err) oTrimRight(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return err; }
 template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const half& _Value) { errno_t err = oToString<float>(_StrDestination, _SizeofStrDestination, (float)_Value) ? 0 : EINVAL; if (!err) oTrimRight(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return err; }
+template<> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const std::string& _Value) { return strcpy_s(_StrDestination, _SizeofStrDestination, _Value.c_str()); }
 
 // pass-through case
 template<> errno_t oFromString(const char** _pValue, const char* _StrSource)

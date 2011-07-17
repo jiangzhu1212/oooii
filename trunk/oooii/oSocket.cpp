@@ -14,6 +14,7 @@
 #include <oooii/oTimerHelpers.h>
 #include <oooii/oLockFreeQueue.h>
 #include <oooii/oConcurrentPooledAllocator.h>
+#include "oIOCP.h"
 #include "oWinsock.h"
 
 // The Internal versions of these structs simply have the private
@@ -1804,9 +1805,6 @@ bool oSocketNonBlocking::Create(const char* _DebugName, const DESC* _pDesc, thre
 	return !!*_ppSocketNonBlocking;
 }
 
-#define IOCPKEY_SOCKET_OPERATION 0
-#define IOCPKEY_SHUTDOWN 1
-
 const oGUID& oGetGUID( threadsafe const oSocketAsyncUDP* threadsafe const * )
 {
 	// {68F693CE-B01B-4235-A401-787691707365}
@@ -1832,139 +1830,8 @@ struct oSocketOp : public WSAOVERLAPPED
 	Operation	Op;
 };
 
-struct oSocketAsyncUDP_IOCPThread : public oThread::Proc
-{
-	typedef oFUNCTION<void(oSocketOp*)> callback_t;
-
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oSocketAsyncUDP_IOCPThread>());
-
-	oRefCount RefCount;
-	oRef<threadsafe oThread> Thread;
-	oEvent threadInitialized;
-
-	enum eState
-	{
-		Running,
-		ShuttingDown,
-	};
-
-	oSocketAsyncUDP_IOCPThread(HANDLE _hIOCP, SOCKET _hSocket, callback_t _RecvCallback, callback_t _SendCallback)
-		: State(Running)
-		, hIOCP(_hIOCP)
-		, hSocket(_hSocket)
-		, RecvCallback(_RecvCallback)
-		, SendCallback(_SendCallback)
-	{
-		if (oThread::Create("IOCP Worker Thread", 64*1024, false, this, &Thread))
-		{
-			Release(); // prevent circular ref
-			threadInitialized.Wait();
-		}
-	}
-
-	~oSocketAsyncUDP_IOCPThread()
-	{
-
-	}
-
-	void Wait() threadsafe
-	{
-		if(Thread)
-		{
-			Thread->Exit();
-			Thread->Wait();
-			Thread = 0;
-		}
-	}
-
-	virtual void RunIteration() override
-	{
-		if(State == ShuttingDown)
-			return;
-
-		DWORD numberOfBytes;
-		ULONG_PTR key;
-		oSocketOp* pOverlapped;
-		if(GetQueuedCompletionStatus(hIOCP, &numberOfBytes, &key, (WSAOVERLAPPED**)&pOverlapped, INFINITE))
-		{
-			// oTRACE("Processing completion: Key=%i, Op=%i", key, pOverlapped ? pOverlapped->Op : -1);
-
-			// Ignore all input if the Socket is trying to shut down. The callbacks may no longer exist.
-			if(State == ShuttingDown)
-				return;
-
-			switch(key)
-			{
-			case IOCPKEY_SHUTDOWN:
-				State = ShuttingDown;
-				//Thread->Exit();
-				break;
-
-			case IOCPKEY_SOCKET_OPERATION:
-				oASSERT(pOverlapped, "Socket operation returned NULL overlap struct.");
-
-				switch(pOverlapped->Op)
-				{
-				case oSocketOp::Op_Recv:
-					RecvCallback(pOverlapped);
-					break;
-
-				case oSocketOp::Op_Send:
-					SendCallback(pOverlapped);
-					break;
-
-				default:
-					oASSERT(false, "Unknown socket operation.");
-				}
-				break;
-
-			default:
-				oASSERT(false, "Unknown key returned from GetQueuedCompletionStatus.");
-			}
-		}
-	}
-
-	virtual bool OnBegin() override
-	{
-		bool success = true;
-
-		if (success)
-			threadInitialized.Set();
-		else
-			oASSERT(false, "Error: %s", oGetLastErrorDesc());
-
-		return success;
-	}
-
-	virtual void OnEnd() override
-	{
-
-	}
-
-	void Shutdown() threadsafe
-	{
-		State = ShuttingDown;
-		PostQueuedCompletionStatus(hIOCP, 0, IOCPKEY_SHUTDOWN, NULL);
-	}
-
-	eState		State;
-	HANDLE		hIOCP;
-	SOCKET		hSocket;
-	callback_t	RecvCallback;
-	callback_t	SendCallback;
-};
-
-const oGUID& oGetGUID( threadsafe const oSocketAsyncUDP_IOCPThread* threadsafe const * )
-{
-	// {5F7AC921-CBCA-442a-87D3-0E5828B4F777}
-	static const oGUID guid = { 0x5f7ac921, 0xcbca, 0x442a, { 0x87, 0xd3, 0xe, 0x58, 0x28, 0xb4, 0xf7, 0x77 } };
-	return guid;
-}
-
 struct oSocketAsyncUDP_Impl : public oSocketAsyncUDP
 {
-	typedef std::vector< oRef<threadsafe oSocketAsyncUDP_IOCPThread> > tThreadList;
 	typedef oConcurrentPooledAllocator<oSocketOp> tOpPool;
 
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
@@ -1981,12 +1848,13 @@ struct oSocketAsyncUDP_Impl : public oSocketAsyncUDP
 	virtual void	Send(void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination) threadsafe override;
 	virtual void	Recv(void* _pBuffer, oSocket::size_t _Size) threadsafe override;
 
+	void			IOCPCallback(oHandle& _Handle, void* _pOp);
+
 	void			RecvCallback(oSocketOp* pSocketOp);
 	void			SendCallback(oSocketOp* pSocketOp);
 
-	HANDLE		hIOCP;
+	oRef<oIOCP>	IOCP;
 	SOCKET		hSocket;
-	tThreadList	WorkerThreads;
 	tOpPool		SocketOpPool;
 };
 
@@ -1995,7 +1863,6 @@ static const int NUM_SIMULTAENOUS_OPERATIONS = 128;
 oSocketAsyncUDP_Impl::oSocketAsyncUDP_Impl(const char* _DebugName, const DESC* _pDesc, bool* _pSuccess)
 	: Desc(*_pDesc)
 	, hSocket(INVALID_SOCKET)
-	, hIOCP(INVALID_HANDLE_VALUE)
 	, SocketOpPool(_DebugName, oPooledAllocatorBase::InitElementCount, NUM_SIMULTAENOUS_OPERATIONS)
 {
 	*_pSuccess = false;
@@ -2003,18 +1870,9 @@ oSocketAsyncUDP_Impl::oSocketAsyncUDP_Impl(const char* _DebugName, const DESC* _
 	if (_DebugName)
 		strcpy_s(DebugName, _DebugName);
 
-	if(Desc.NumThreads <= 0)
+	if(!oIOCP::Create(_DebugName, &IOCP))
 	{
-		SYSTEM_INFO sysInfo;
-		GetSystemInfo(&sysInfo);
-		Desc.NumThreads = sysInfo.dwNumberOfProcessors;
-	}
-
-	hIOCP = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, Desc.NumThreads);
-
-	if(!hIOCP)
-	{
-		oSetLastError(EINVAL, "Could not create I/O Completion Port with NumThreads=%i", Desc.NumThreads);
+		oSetLastError(EINVAL, "Could not create IOCP.");
 		*_pSuccess = false;
 		return;
 	}
@@ -2023,41 +1881,23 @@ oSocketAsyncUDP_Impl::oSocketAsyncUDP_Impl(const char* _DebugName, const DESC* _
 	sprintf_s(hostname, "0.0.0.0:%u", _pDesc->Port);
 	hSocket = oWinsockCreate(hostname, oWINSOCK_REUSE_ADDRESS | oWINSOCK_ALLOW_BROADCAST, 0, _pDesc->SendBufferSize, _pDesc->ReceiveBufferSize);
 	if (hSocket == INVALID_SOCKET)
-		return; // pass thru errors set in oWinsockCreate
+		return; // pass through errors set in oWinsockCreate
 
-	if(hIOCP != CreateIoCompletionPort((HANDLE)hSocket, hIOCP, IOCPKEY_SOCKET_OPERATION, Desc.NumThreads))
+	oHandle handle = reinterpret_cast<oHandle>(hSocket);
+	if(!IOCP->RegisterHandle(handle, oBIND(&oSocketAsyncUDP_Impl::IOCPCallback, this, oBIND1, oBIND2)))
 	{
 		oSetLastError(EINVAL, "Could not associate socket with I/O Completion Port");
 		*_pSuccess = false;
 		return;
 	}
 
-	WorkerThreads.resize(Desc.NumThreads);
-	for(int i = 0; i < Desc.NumThreads; i++)
-		WorkerThreads[i] = new oSocketAsyncUDP_IOCPThread(hIOCP, hSocket, oBIND(&oSocketAsyncUDP_Impl::RecvCallback, this, oBIND1), oBIND(&oSocketAsyncUDP_Impl::SendCallback, this, oBIND1));
-
 	*_pSuccess = true;
 }
 
 oSocketAsyncUDP_Impl::~oSocketAsyncUDP_Impl()
 {
-	// Post a shutdown message for each worker to unblock and disable it.
-	for(size_t i = 0; i < WorkerThreads.size(); i++)
-		WorkerThreads[i]->Shutdown();
-
-	for(size_t i = 0; i < WorkerThreads.size(); i++)
-	{
-		WorkerThreads[i]->Wait();
-		WorkerThreads[i] = 0;
-	}
-
-	WorkerThreads.clear();
-
 	if(INVALID_SOCKET != hSocket)
 		oVERIFY(oWinsockClose(hSocket));
-
-	if(INVALID_HANDLE_VALUE != hIOCP)
-		CloseHandle(hIOCP);
 
 	SocketOpPool.Reset();
 }
@@ -2102,6 +1942,22 @@ void oSocketAsyncUDP_Impl::Recv(void* _pBuffer, oSocket::size_t _Size) threadsaf
 	static DWORD bytesRecvd;
 
 	ws->WSARecvFrom(hSocket, &pSocketOp->buf, 1, &bytesRecvd, &flags, (SOCKADDR*)&pSocketOp->SockAddr, &sizeOfSockAddr, (WSAOVERLAPPED*)pSocketOp, NULL);
+}
+
+void oSocketAsyncUDP_Impl::IOCPCallback(oHandle& _Handle, void* _pOp)
+{
+	oSocketOp* pSocketOp = static_cast<oSocketOp*>(_pOp);
+	switch(pSocketOp->Op)
+	{
+	case oSocketOp::Op_Recv:
+		RecvCallback(pSocketOp);
+		break;
+	case oSocketOp::Op_Send:
+		SendCallback(pSocketOp);
+		break;
+	default:
+		oASSERT(false, "Unknown socket operation.");
+	}
 }
 
 void oSocketAsyncUDP_Impl::RecvCallback(oSocketOp* pSocketOp)

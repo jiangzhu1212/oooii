@@ -35,6 +35,11 @@ inline char* oTrim(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource
 // Replaces any run of whitespace with a single ' ' character. Returns _StrDestination
 char* oPruneWhitespace(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource, char _Replacement = ' ', const char* _ToPrune = oWHITESPACE);
 
+// Overwrites the specified buffer's last 4 bytes of capacity with "...\0" so if
+// some strcpy were truncated, this would add a bit more visual sugar that the
+// truncation took place.
+char* oAddTruncationElipse(char* _StrDestination, size_t _SizeofStrDestination);
+
 // replace all occurrences of strFind in strSource with strReplace and copy the result to strDestination
 errno_t oReplace(char* _StrResult, size_t _SizeofStrResult, const char* _StrSource, const char* _StrFind, const char* _StrReplace);
 
@@ -288,6 +293,7 @@ template<size_t size> inline char* oTrimLeft(char (&_Trimmed)[size], const char*
 template<size_t size> inline char* oTrimRight(char (&_Trimmed)[size], const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return oTrimRight(_Trimmed, size, _StrSource, _ToTrim); }
 template<size_t size> inline char* oTrim(char (&_Trimmed)[size], const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return oTrim(_Trimmed, size, _StrSource, _ToTrim); }
 template<size_t size> inline char* oPruneWhitespace(char (&_StrDestination)[size], const char* _StrSource, char _Replacement = ' ', const char* _ToPrune = oWHITESPACE) { return oPruneWhitespace(_StrDestination, size, _StrSource, _Replacement, _ToPrune); }
+template<size_t size> inline char* oAddTruncationElipse(char (&_StrDestination)[size]) { return oAddTruncationElipse(_StrDestination, size); }
 template<size_t size> inline size_t oStrConvert(char (&_StrDestination)[size], const wchar_t* _StrSource) { return oStrConvert(_StrDestination, size, _StrSource); }
 template<size_t size> inline size_t oStrConvert(wchar_t (&_StrDestination)[size], const char* _StrSource) { return oStrConvert(_StrDestination, size, _StrSource); }
 template<size_t size> inline errno_t oReplace(char (&_StrResult)[size], const char* _StrSource, const char* _StrFind, const char* _StrReplace) { return oReplace(_StrResult, size, _StrSource, _StrFind, _StrReplace); }

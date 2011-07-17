@@ -4,35 +4,35 @@
 #include <oooii/oCommandQueue.h>
 #include <oooii/oThreading.h>
 
-void SetLocation( size_t index, size_t start, int* array )
-{
-	int startValue = array[start - 1];
-	array[index] = startValue + (int)(index + 1 - start );
-}
-
-void FillArray( int* array, size_t start, size_t end )
-{
-	oParallelFor( oBIND( &SetLocation, oBIND1, start, array ), start, end );
-}
-
-void FireEvent( oEvent* event )
-{
-	event->Set();
-}
-
-void CheckTest( int* array, size_t size, bool* result )
-{
-	*result = false;
-	for( size_t i = 0; i < size; ++i )
-	{
-		if( array[i] != (int)i)
-			return;
-	}
-	*result = true;
-}
-
 struct TESTCommandQueue : public oTest
 {
+	static void SetLocation( size_t index, size_t start, int* array )
+	{
+		int startValue = array[start - 1];
+		array[index] = startValue + (int)(index + 1 - start );
+	}
+
+	static void FillArray( int* array, size_t start, size_t end )
+	{
+		oParallelFor( oBIND( &SetLocation, oBIND1, start, array ), start, end );
+	}
+
+	static void FireEvent( oEvent* event )
+	{
+		event->Set();
+	}
+
+	static void CheckTest( int* array, size_t size, bool* result )
+	{
+		*result = false;
+		for( size_t i = 0; i < size; ++i )
+		{
+			if( array[i] != (int)i)
+				return;
+		}
+		*result = true;
+	}
+
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oCommandQueue queue;

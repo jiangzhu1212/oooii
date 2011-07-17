@@ -97,12 +97,12 @@ oSingletonBase::~oSingletonBase()
 {
 	char moduleName[_MAX_PATH];
 	oVERIFY(oModule::GetModuleName(moduleName, (oHMODULE)hModule));
-	oSINGLETON_TRACE("--- %s deinitialized in module %s ---", TypeInfoName, moduleName);
+	oSINGLETON_TRACE("--- %s deinitialized in module %s, thread %u ---", TypeInfoName, moduleName, oGetCurrentThreadID());
 }
 
-void oSingletonBase::Reference() threadsafe
+int oSingletonBase::Reference() threadsafe
 {
-	RefCount.Reference();
+	return RefCount.Reference();
 }
 
 void oSingletonBase::Release() threadsafe
@@ -155,13 +155,13 @@ void oSingletonBase::FindOrCreate(void** _ppInstance, oFUNCTION<void (void*)> _C
 
 			if (oProcessHeap::FindOrAllocate(uniqueName, _TypeSize, oBIND(&oSingletonBase::CallCtor, oBIND1, _Ctor, _ppInstance, InternalTypeInfoName, _IsThreadUnique), (void**)&pSingleton))
 			{
-				oSINGLETON_TRACE("--- %ssingleton %s initialized from module %s ---", _IsProcessUnique ? (_IsThreadUnique ? "Process-wide threadlocal " : "Process-wide ") : "", InternalTypeInfoName, moduleName);
+				oSINGLETON_TRACE("--- %ssingleton %s initialized from module %s, thread %u ---", _IsProcessUnique ? (_IsThreadUnique ? "Process-wide threadlocal " : "Process-wide ") : "", InternalTypeInfoName, moduleName, oGetCurrentThreadID());
 			}
 
 			else
 			{
 				pSingleton->Reference();
-				oSINGLETON_TRACE("--- %ssingleton %s referenced from module %s ---", _IsProcessUnique ? (_IsThreadUnique ? "Process-wide threadlocal " : "Process-wide ") : "", InternalTypeInfoName, moduleName);
+				oSINGLETON_TRACE("--- %ssingleton %s referenced from module %s, thread %u ---", _IsProcessUnique ? (_IsThreadUnique ? "Process-wide threadlocal " : "Process-wide ") : "", InternalTypeInfoName, moduleName, oGetCurrentThreadID());
 			}
 		}
 

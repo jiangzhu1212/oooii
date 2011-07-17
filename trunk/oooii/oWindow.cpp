@@ -15,19 +15,23 @@
 #include <oooii/oThreading.h>
 #include <oooii/oD3D10.h>
 #include <oooii/oSTL.h>
+#include <oooii/oThread.h>
+#include <oooii/oEvent.h>
+
+static const unsigned int oWM_CLOSE = WM_USER;
+static const unsigned int oWM_TRAY = WM_USER+1;
 
 template<> const char* oAsString(const oWindow::STATE& _State)
 {
 	switch (_State)
 	{
 		case oWindow::HIDDEN: return "hidden";
+		case oWindow::TRAYIZED: return "trayized";
 		case oWindow::RESTORED: return "restored";
 		case oWindow::MINIMIZED: return "minimized";
 		case oWindow::MAXIMIZED: return "maximized";
-		default: break;
+		default: oASSUME(0);
 	}
-
-	return "unknown";
 }
 
 void ConvertAlignment(char* _Opts, oWindow::ALIGNMENT _Alignment)
@@ -43,12 +47,93 @@ void ConvertAlignment(char* _Opts, oWindow::ALIGNMENT _Alignment)
 		*_Opts++ = 'r';
 }
 
+struct oWindow_Impl;
+
+class oMsgPumpProc : public oThread::Proc, oNoncopyable
+{
+public:
+	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oMsgPumpProc>());
+
+	void RunIteration() override;
+
+	bool OnBegin() override;
+
+	void OnEnd() override {}
+
+	// This will not be valid until the window is created. call WaitUntilOpened first to be sure this is valid.
+	HWND GetHwnd() const {return Hwnd;}
+	// This should be called instead of DestroyWindow which wont do anything if called externally to this thread.
+	void Destroy() const { PostMessage(Hwnd, oWM_CLOSE, 0, 0); } 
+	// Window is guaranteed to be destroyed when this is returned. The thread itself will still be running,
+	//	but will be doing nothing.
+	void WaitUntilClosed() { CloseEvent.Wait(); }
+	// Window is guaranteed to created. It may not be painted yet though. Although its promised that it will on its own shortly if not.
+	void WaitUntilOpened() { OpenEvent.Wait(); }
+
+	oMsgPumpProc(const oWindow::DESC* _pDesc, const char* _Title, oWindow_Impl *WImpl, WNDPROC _winProc);
+
+private:
+
+	oRefCount RefCount;
+	HWND Hwnd;
+	oWindow::DESC Desc;
+	char Title[_MAX_PATH];
+	WNDPROC WinProc;
+	oWindow_Impl *WImpl;
+	oEvent OpenEvent;
+	oEvent CloseEvent;
+};
+
+const oGUID& oGetGUID( threadsafe const oMsgPumpProc* threadsafe const * )
+{
+	// {dc741266-a1b8-49a9-864d-42e9bfd3cd5c}
+	static const oGUID oIIDoMsgPumpProc = { 0xdc741266, 0xa1b8, 0x49a9, { 0x86, 0x4d, 0x42, 0xe9, 0xbf, 0xd3, 0xcd, 0x5c } };
+	return oIIDoMsgPumpProc; 
+}
+
+oMsgPumpProc::oMsgPumpProc(const oWindow::DESC* _pDesc, const char* _Title, oWindow_Impl *_wImpl, WNDPROC _winProc) : 
+	Desc(*_pDesc), WinProc(_winProc), WImpl(_wImpl)
+{
+	// The window itself must be created from the thread, so save everything so it can be created in OnBegin.
+	strcpy_s(Title, _Title);
+	CloseEvent.Reset();
+	OpenEvent.Reset();
+}
+
+void oMsgPumpProc::RunIteration()
+{
+	MSG msg;
+	if(GetMessage(&msg, Hwnd, 0, 0) <= 0) //either an error or WM_QUIT
+	{
+		CloseEvent.Set();
+	}
+	else
+	{
+		TranslateMessage(&msg);
+		if (msg.message == oWM_CLOSE)
+			DestroyWindow(Hwnd);
+		else
+			DispatchMessage(&msg);
+	}
+}
+
+bool oMsgPumpProc::OnBegin()
+{
+	if (FAILED(oCreateSimpleWindow(&Hwnd, WinProc, WImpl, Title, Desc.ClientX,  Desc.ClientY,  Desc.ClientWidth,  Desc.ClientHeight ) ) )
+		return false;
+
+	OpenEvent.Set();
+	return true;
+}
+
 struct oWindow_Impl : public oWindow
 {
 	enum DRAW_METHOD
 	{
 		DRAW_USING_GDI,
 		DRAW_USING_D2D,
+		DRAW_USING_DX11,
 	};
 
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
@@ -61,7 +146,7 @@ struct oWindow_Impl : public oWindow
 	void Close() override;
 	bool IsOpen() const threadsafe override;
 	bool Begin() override;
-	void End(bool _ForceRefresh) override;
+	void End(bool _ForceRefresh, bool _blockUntilPainted) override;
 	const char* GetTitle() const override;
 	void SetTitle(const char* _Title) override;
 	bool HasFocus() const override;
@@ -97,17 +182,26 @@ struct oWindow_Impl : public oWindow
 	HBITMAP hOffscreenBmp; // let Windows to cleartyped-text
 	oColor ClearColor;
 	bool UseAntialiasing;
+	bool LockToVsync;
 	bool Closing;
 	bool EnableCloseButton;
 	mutable oMutex DescLock;
 	oRefCount RefCount;
 	DRAW_METHOD DrawMethod;
 	unsigned int MSSleepWhenNoFocus;
+	unsigned int RefreshRateN; //hold onto refresh rate
+	unsigned int RefreshRateD; 
 
 	oRef<ID3D10Device1> D3DDevice;
+	oRef<ID3D11Device> D3D11Device;
+	oRef<ID3D11RenderTargetView> D3D11View;
 	oRef<IDXGISwapChain> D3DSwapChain;
 	static const DXGI_FORMAT D3DSwapChainFMT = DXGI_FORMAT_B8G8R8A8_UNORM;
+	oMutex ResizeMutex;
 
+	oRef<oMsgPumpProc> MsgPumpProc;
+	oRef<threadsafe oThread> MsgPumpThread;
+	
 	char Title[_MAX_PATH];
 
 	#if oDXVER >= oDXVER_10
@@ -175,6 +269,7 @@ static int GetShowCmd(oWindow::STATE _State, bool _TakeFocus)
 	switch (_State)
 	{
 		case oWindow::HIDDEN: return SW_HIDE;
+		case oWindow::TRAYIZED: return SW_HIDE;
 		case oWindow::MINIMIZED: return _TakeFocus ? SW_SHOWMINIMIZED : SW_SHOWMINNOACTIVE;
 		case oWindow::MAXIMIZED: return SW_SHOWMAXIMIZED;
 		default: break;
@@ -219,13 +314,13 @@ static void GetDesc(HWND _hWnd, oWindow::DESC* _pDesc)
 {
 	RECT rClient;
 	oGetClientScreenRect(_hWnd, &rClient);
-
 	_pDesc->ClientX = rClient.left;
 	_pDesc->ClientY = rClient.top;
 	_pDesc->ClientWidth = rClient.right - rClient.left;
 	_pDesc->ClientHeight = rClient.bottom - rClient.top;
 
-	if (!IsWindowVisible(_hWnd)) _pDesc->State = oWindow::HIDDEN;
+	if (oTrayGetIconRect(_hWnd, 0, &rClient) && !IsWindowVisible(_hWnd)) _pDesc->State = oWindow::TRAYIZED;
+	else if (!IsWindowVisible(_hWnd)) _pDesc->State = oWindow::HIDDEN;
 	else if (IsIconic(_hWnd)) _pDesc->State = oWindow::MINIMIZED;
 	else if (IsZoomed(_hWnd)) _pDesc->State = oWindow::MAXIMIZED;
 	else _pDesc->State = oWindow::RESTORED;
@@ -247,7 +342,6 @@ static void GetDesc(HWND _hWnd, oWindow::DESC* _pDesc)
 static bool SetDesc(HWND _hWnd, const oWindow::DESC* _pDesc)
 {
 	if (!_hWnd || !_pDesc) return false;
-	oPumpMessages(_hWnd);
 
 	oWindow::DESC currentDesc;
 	GetDesc(_hWnd, &currentDesc);
@@ -289,10 +383,10 @@ static bool SetDesc(HWND _hWnd, const oWindow::DESC* _pDesc)
 	GetWindowRect(_hWnd, &rCurrent);
 	bool hasMove = false;
 	bool hasResize = false;
-	bool shouldTakeFocus = _pDesc->HasFocus || _pDesc->AlwaysOnTop;
+	bool shouldTakeFocus = state != oWindow::TRAYIZED && (_pDesc->HasFocus || _pDesc->AlwaysOnTop);
 
 	// maximized takes care of this in ShowWindow below, so don't step on that again in SetWindowPos
-	if (state != oWindow::MAXIMIZED)
+	if (state != oWindow::MAXIMIZED && state != oWindow::FULL_SCREEN)
 	{
 		// if moved, clear the no move flag
 		if (rCurrent.left != rDesired.left || rCurrent.top != rDesired.top)
@@ -312,12 +406,9 @@ static bool SetDesc(HWND _hWnd, const oWindow::DESC* _pDesc)
 	if (shouldTakeFocus)
 		SWPFlags &=~ SWP_NOZORDER|SWP_NOACTIVATE;
 
-	//@oooii-Andrew
 	oWindow_Impl* pThis = (oWindow_Impl*)oGetWindowContext(_hWnd, 0, 0, 0);
 	if (pThis)
-	{
 		pThis->EnableCloseButton = _pDesc->EnableCloseButton;
-	}
 
 	// Here's the next piece, test on cached state, not _pDesc->State
 	// because we may've overridden it with a force hidden.
@@ -333,13 +424,20 @@ static bool SetDesc(HWND _hWnd, const oWindow::DESC* _pDesc)
 	if (currentDesc.Enabled != _pDesc->Enabled)
 		EnableWindow(_hWnd, _pDesc->Enabled);
 
-	if (_pDesc->HasFocus && restate != oWindow::HIDDEN)
+	if (_pDesc->HasFocus && (restate != oWindow::HIDDEN && restate != oWindow::TRAYIZED))
 		oSetFocus(_hWnd);
 
 	// And here's the final piece of the hack from above where we force
 	// hide and then show on style change.
 	if (restate != state || styleChanged)
 		ShowWindow(_hWnd, GetShowCmd(restate, shouldTakeFocus));
+
+	// Handle the visibility of an associated tray icon
+	if (state == oWindow::TRAYIZED && currentDesc.State != oWindow::TRAYIZED)
+		oTrayMinimize(_hWnd, oWM_TRAY, 0);
+
+	else if (state != oWindow::TRAYIZED && currentDesc.State == oWindow::TRAYIZED)
+		oTrayRestore(_hWnd);
 
 	return true;
 }
@@ -392,14 +490,24 @@ struct oWindowResizer_Impl : public oWindow::Resizer
 
 		if (isSizeMsg)
 		{
-			oWindow::DESC desc;
-			Window->GetDesc(&desc);
+			// @oooii-eric: Have to be careful on calling anything that locks from the msg pump thread. It can cause deadlocks. So 
+			//	don't use GetDesc here. Deadlocks are caused because any msg based windows api call will block until the msg pump
+			//	thread processes it. the the msg pump thread is blocked on a mutex at the same time it will deadlock.
+			RECT rClient;
+			HWND hwnd = (HWND)Window->GetNativeHandle();
+			oGetClientScreenRect(hwnd, &rClient);
+
+			oWindow::STATE state;
+			if (!IsWindowVisible(hwnd)) state = oWindow::HIDDEN;
+			else if (IsIconic(hwnd)) state = oWindow::MINIMIZED;
+			else if (IsZoomed(hwnd)) state = oWindow::MAXIMIZED;
+			else state = oWindow::RESTORED;
 
 			oRECT rect;
-			rect.SetMin( int2( desc.ClientX, desc.ClientY ) );
-			rect.SetMax( rect.GetMin() + int2( desc.ClientWidth, desc.ClientHeight ) );
+			rect.SetMin( int2( rClient.left, rClient.top ) );
+			rect.SetMax( rect.GetMin() + int2( rClient.right - rClient.left, rClient.bottom - rClient.top ) );
 
-			RectHandler(e, desc.State, rect );
+			RectHandler(e, state, rect );
 		}
 
 		return true;
@@ -1384,6 +1492,8 @@ struct PictureGDI : public oWindow::Picture
 			desc.pContainers = _pContainers;
 			desc.UseFrameTime = Desc.UseFrameTime;
 			desc.StitchVertically = Desc.StitchVertically;
+			desc.NVIDIASurround = Desc.NVIDIASurround;
+
 			if( !oVideoDecodeD3D10::Create( desc, &Decoder ) )
 				return;
 
@@ -1463,7 +1573,7 @@ bool oWindow::Create(const DESC* _pDesc, void* _pAssociatedNativeHandle, const c
 		GetDescoooii_ico(&BufferName, &pBuffer, &bufferSize);
 
 		oRef<oImage> ico;
-		oVERIFY(oImage::Create(pBuffer, bufferSize, &ico));
+		oVERIFY(oImage::Create(pBuffer, bufferSize, oSurface::UNKNOWN, &ico));
 
 		HBITMAP hBmp = ico->AsBmp();
 		HICON hIcon = oIconFromBitmap(hBmp);
@@ -1494,12 +1604,25 @@ oWindow_Impl::oWindow_Impl(const DESC* _pDesc, void* _pAssociatedNativeHandle, c
 	, ClearColor(std::Black)
 	, GDIAntialiasingMultiplier(_pDesc->UseAntialiasing ? 4 : 1)
 	, UseAntialiasing(_pDesc->UseAntialiasing)
+	, LockToVsync(_pDesc->LockToVsync)
 	, Closing(false)
 	, DrawMethod(DRAW_USING_GDI)
 {
 	*_pSuccess = false;
 
 	#if oDXVER >= oDXVER_10
+	if(_FourCCDrawAPI == 'DX11' && _pAssociatedNativeHandle)
+	{
+		IUnknown* pInterface = (IUnknown*)( _pAssociatedNativeHandle );
+		pInterface->QueryInterface(&D3D11Device);
+		DrawMethod = DRAW_USING_DX11;
+	}
+	else if(_FourCCDrawAPI == 'GDI ' || _FourCCDrawAPI == 'GDI')
+	{
+		DrawMethod = DRAW_USING_GDI;
+	}
+	else
+	{
 		oD2D1CreateFactory(&Factory);
 
 		DrawMethod = (Factory ? DRAW_USING_D2D : DRAW_USING_GDI);
@@ -1510,13 +1633,9 @@ oWindow_Impl::oWindow_Impl(const DESC* _pDesc, void* _pAssociatedNativeHandle, c
 			IUnknown* pInterface = (IUnknown*)( _pAssociatedNativeHandle );
 			pInterface->QueryInterface(&D3DDevice);
 		}
+	}
 	#endif
-
-	if (_FourCCDrawAPI == 'D2D1')
-		DrawMethod = DRAW_USING_D2D;
-	else if (_FourCCDrawAPI == 'GDI ' || _FourCCDrawAPI == 'GDI')
-		DrawMethod = DRAW_USING_GDI;
-
+	
 	*Title = 0;
 	if (_pDesc)
 	{
@@ -1533,6 +1652,8 @@ oWindow_Impl::oWindow_Impl(const DESC* _pDesc, void* _pAssociatedNativeHandle, c
 oWindow_Impl::~oWindow_Impl()
 {
 	Close();
+	MsgPumpThread = nullptr;
+	MsgPumpProc = nullptr;
 	DiscardDeviceResources();
 }
 
@@ -1542,6 +1663,21 @@ void oWindow_Impl::GetDesc(oWindow::DESC* _pDesc) const threadsafe
 	oMutex::ScopedLock lock(DescLock);
 	detail::GetDesc(hWnd, _pDesc);
 	_pDesc->UseAntialiasing = UseAntialiasing;
+	_pDesc->LockToVsync = LockToVsync;
+	_pDesc->RefreshRateN = RefreshRateN;
+	_pDesc->RefreshRateD = RefreshRateD;
+	if(D3DSwapChain)
+	{
+		BOOL isFullScreen;
+		oWindow_Impl *nonConstThis = const_cast<oWindow_Impl*>(this); //GetFullscreenState isn't const correct.
+		nonConstThis->D3DSwapChain->GetFullscreenState(&isFullScreen, nullptr);
+		if(isFullScreen)
+			_pDesc->State = FULL_SCREEN;
+		DXGI_SWAP_CHAIN_DESC swapChainDesc;
+		nonConstThis->D3DSwapChain->GetDesc(&swapChainDesc);
+		_pDesc->RefreshRateN = swapChainDesc.BufferDesc.RefreshRate.Numerator;
+		_pDesc->RefreshRateD = swapChainDesc.BufferDesc.RefreshRate.Denominator;
+	}
 }
 
 void oWindow_Impl::SetDesc(const oWindow::DESC* _pDesc) threadsafe
@@ -1549,6 +1685,20 @@ void oWindow_Impl::SetDesc(const oWindow::DESC* _pDesc) threadsafe
 	oASSERT(hWnd, "");
 	oMutex::ScopedLock lock(DescLock);
 	detail::SetDesc(hWnd, _pDesc);
+	LockToVsync = _pDesc->LockToVsync;
+	RefreshRateN = _pDesc->RefreshRateN;
+	RefreshRateD = _pDesc->RefreshRateD;
+	if(D3DSwapChain)
+	{
+		if(_pDesc->State == FULL_SCREEN)
+		{
+			D3DSwapChain->SetFullscreenState(TRUE, nullptr);
+		}
+		else 
+		{
+			D3DSwapChain->SetFullscreenState(FALSE, nullptr);
+		}
+	}
 }
 
 unsigned int oWindow_Impl::GetDisplayIndex() const threadsafe
@@ -1562,16 +1712,22 @@ bool oWindow_Impl::Open(const oWindow::DESC* _pDesc, const char* _Title)
 	Close();
 	Closing = false;
 	
-	if (FAILED(oCreateSimpleWindow(&hWnd, StaticWndProc, this, _Title, _pDesc->ClientX, _pDesc->ClientY, _pDesc->ClientWidth, _pDesc->ClientHeight ) ) )
-		return false;
+	MsgPumpProc /= new oMsgPumpProc(_pDesc, _Title, this, StaticWndProc);
+	oThread::Create("oWindow Message pump Thread", oKB(64), false, MsgPumpProc.c_ptr(), &MsgPumpThread);
+	MsgPumpProc->WaitUntilOpened();
+
+	hWnd = MsgPumpProc->GetHwnd();
 
 	strcpy_s(Title, _Title);
+
+	RefreshRateN = _pDesc->RefreshRateN;
+	RefreshRateD = _pDesc->RefreshRateD;
 
 	HRESULT hr = CreateDeviceResources();
 	if (FAILED(hr))
 	{
 		Close();
-		oSetLastErrorNative(hr, "Failed to create Device resources");
+		oWinSetLastError(hr, "Failed to create Device resources");
 		return false;
 	}
 
@@ -1583,7 +1739,8 @@ bool oWindow_Impl::Open(const oWindow::DESC* _pDesc, const char* _Title)
 
 	oWindow::DESC wDesc;
 	detail::GetDefaultDesc(hWnd, _pDesc, &wDesc);
-	return detail::SetDesc(hWnd, &wDesc);
+	SetDesc(&wDesc);
+	return true;
 }
 
 void oWindow_Impl::Close()
@@ -1591,14 +1748,13 @@ void oWindow_Impl::Close()
 	oMutex::ScopedLock lock(DescLock);
 	if (hWnd)
 	{
-		DESC desc;
-		detail::GetDesc(hWnd, &desc);
-		desc.State = HIDDEN;
-		detail::SetDesc(hWnd, &desc);
+		if(D3DSwapChain) //can't delete a swap chain while in full screen mode
+			D3DSwapChain->SetFullscreenState(FALSE, nullptr);
 		Closing = true;
 		CloseChildren();
+		MsgPumpProc->Destroy();
+		MsgPumpProc->WaitUntilClosed();
 		DiscardDeviceResources();
-		DestroyWindow(hWnd);
 		hWnd = 0;
 	}
 }
@@ -1612,17 +1768,61 @@ bool oWindow_Impl::Begin()
 {
 	if (!hWnd) return false;
 	BeginChildren();
-	oPumpMessages(hWnd);
 	if ( MSSleepWhenNoFocus > 0 && !HasFocus())
 		Sleep(MSSleepWhenNoFocus);
+	if(DrawMethod == DRAW_USING_DX11)
+	{
+		oMutex::ScopedLock lock(ResizeMutex);
+		oASSERT(D3DSwapChain, "Missing swap chain");
+
+		ID3D11DeviceContext *pImmediateContext;
+		D3D11Device->GetImmediateContext(&pImmediateContext);
+
+		DXGI_SWAP_CHAIN_DESC scdesc;
+		D3DSwapChain->GetDesc(&scdesc);
+
+		oWindow::DESC wDesc;
+		GetDesc(&wDesc);
+		D3D11_VIEWPORT v;
+		v.TopLeftX = 0.0f;
+		v.TopLeftY = 0.0f;
+		v.Width = static_cast<float>(scdesc.BufferDesc.Width);
+		v.Height = static_cast<float>(scdesc.BufferDesc.Height);
+		v.MinDepth = 0.0f;
+		v.MaxDepth = 1.0f;
+		pImmediateContext->RSSetViewports(1, &v);
+
+		pImmediateContext->OMSetRenderTargets( 1, D3D11View.address(), NULL );
+	}
+
 	return true;
 }
 
-void oWindow_Impl::End(bool _ForceRefresh)
+void oWindow_Impl::End(bool _ForceRefresh, bool _blockUntilPainted)
 {
-	if( _ForceRefresh )
+	if(DrawMethod == DRAW_USING_DX11)
 	{
-		InvalidateRect(hWnd, 0, FALSE);
+		oMutex::ScopedLock lock(ResizeMutex);
+		oASSERT(D3DSwapChain, "Missing swap chain");
+		D3DSwapChain->Present(LockToVsync ? 1 : 0,0);
+	}
+	else
+	{
+		if( _ForceRefresh && !_blockUntilPainted )
+		{
+			InvalidateRect(hWnd, 0, FALSE);
+		}
+		else if( !_ForceRefresh && _blockUntilPainted) //this combo is rarely useful
+		{
+			//this will block until onpaint has finished. If there is no update region though, it will be a no-op
+			UpdateWindow(hWnd);
+		}
+		else if( _ForceRefresh && _blockUntilPainted )
+		{
+			//This is the same as calling InvalidateRect followed by UpdateWindow except it is atomic.
+			// i.e. its guaranteed to only generate 1 paint msg, where calling the 2 functions may generate 1 or 2 depending on luck.
+			RedrawWindow(hWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW); 
+		}
 	}
 	EndChildren();
 }
@@ -1666,7 +1866,16 @@ HRESULT oWindow_Impl::CreateDeviceResources()
 {
 	#if oDXVER >= oDXVER_10
 
-		if (DrawMethod == DRAW_USING_D2D && !RenderTarget)
+		if(DrawMethod == DRAW_USING_DX11 && !RenderTarget)
+		{
+			RECT rWindow;
+			GetWindowRect(hWnd, &rWindow);
+
+			oMutex::ScopedLock lock(ResizeMutex);
+			oV_RETURN( oDXGICreateSwapchain( D3D11Device, rWindow.right - rWindow.left, rWindow.bottom - rWindow.top, RefreshRateN, RefreshRateD, D3DSwapChainFMT, hWnd, &D3DSwapChain ) );
+			oV_RETURN( CreateRendertarget() );
+		}
+		else if (DrawMethod == DRAW_USING_D2D && !RenderTarget)
 		{
 			RECT rWindow;
 			GetWindowRect(hWnd, &rWindow);
@@ -1691,7 +1900,7 @@ HRESULT oWindow_Impl::CreateDeviceResources()
 				oV_RETURN(hr);
 			}
 			
-			oV_RETURN( oDXGICreateSwapchain( D3DDevice, rWindow.right - rWindow.left, rWindow.bottom - rWindow.top, D3DSwapChainFMT, hWnd, &D3DSwapChain ) );
+			oV_RETURN( oDXGICreateSwapchain( D3DDevice, rWindow.right - rWindow.left, rWindow.bottom - rWindow.top, RefreshRateN, RefreshRateD, D3DSwapChainFMT, hWnd, &D3DSwapChain ) );
 			oV_RETURN( CreateRendertarget() );
 		}
 		else
@@ -1849,7 +2058,7 @@ bool oWindow_Impl::CreateSnapshot(oImage** _ppImage, bool _IncludeBorder)
 	memcpy(oByteAdd(buf, sizeof(bmfh)), &bmi, sizeof(bmi));
 	oGDIScreenCaptureWindow(hWnd, pRect, oByteAdd(buf, sizeof(bmfh) + sizeof(bmi)), bmi.bmiHeader.biSizeImage, &bmi);
 
-	bool result = oImage::Create(buf, bufSize, _ppImage);
+	bool result = oImage::Create(buf, bufSize, oSurface::UNKNOWN, _ppImage);
 	delete [] buf;
 
 	return result;
@@ -1884,8 +2093,16 @@ bool oWindow_Impl::HandleChildrenMessages(HWND hwnd, UINT uMsg, WPARAM wParam, L
 BOOL oWindow_Impl::OnResize(UINT _NewWidth, UINT _NewHeight)
 {
 	#if oDXVER >= oDXVER_10
-		if (DrawMethod == DRAW_USING_D2D && RenderTarget)
+
+		if (DrawMethod == DRAW_USING_DX11 && RenderTarget)
 		{
+			oMutex::ScopedLock lock(ResizeMutex);
+			D3DSwapChain->ResizeBuffers( 3, _NewWidth, _NewHeight, D3DSwapChainFMT, 0 );
+			CreateRendertarget();
+		}
+		else if (DrawMethod == DRAW_USING_D2D && RenderTarget)
+		{
+			oMutex::ScopedLock lock(ResizeMutex);
 			oLockedVector<Video*>::LockedSTLVector vec = Videos.lock();
 			// First tell any videos to unregister so they no longer hold any references to the swapchain
 			oFOREACH( oWindow::Video* pVid, *vec )
@@ -1922,6 +2139,10 @@ BOOL oWindow_Impl::OnResize(UINT _NewWidth, UINT _NewHeight)
 
 BOOL oWindow_Impl::OnPaint(HWND _hWnd)
 {
+	RECT rect;
+	if(GetUpdateRect(_hWnd, &rect, false) == 0) //shouldn't happen but windows docs say it can in rare cases, don't bother painting if nothing to paint.
+		return TRUE;
+
 	PAINTSTRUCT ps;
 	oVB(BeginPaint(_hWnd, &ps));
 	HRESULT hr = CreateDeviceResources();
@@ -1950,7 +2171,7 @@ BOOL oWindow_Impl::OnPaint(HWND _hWnd)
 
 				hr = RenderTarget->EndDraw();
 
-				D3DSwapChain->Present(0,0);
+				D3DSwapChain->Present(LockToVsync ? 1 : 0,0);
 			}
 			else
 		#endif
@@ -2033,8 +2254,9 @@ LRESULT oWindow_Impl::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lP
 			break;
 
 		case WM_CLOSE:
-			if (!EnableCloseButton)	//@oooii-Andrew
+			if (!EnableCloseButton)
 				return 0;
+
 		case WM_DESTROY:
 			OnClose();
 			return 0;
@@ -2044,6 +2266,38 @@ LRESULT oWindow_Impl::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lP
 			//if (_wParam == VK_RETURN)
 			//	oTRACE("TOGGLE FULLSCREEN");
 			break;
+
+		case oWM_TRAY:
+		{
+			UINT Notification = 0, ID = 0;
+			int X = 0, Y = 0;
+			oTrayDecodeCallbackMessageParams(_wParam, _lParam, &Notification, &ID, &X, &Y);
+
+			// @oooii-tony: This is very basic, because really a tray icon
+			// either needs a context menu (no api for that yet) or it needs
+			// to put up tooltips (no api yet). So basically TRAYIZED is all 
+			// just a min-to-tray feature at the moment, and here's what
+			// gets out of it.
+
+			if (Notification == WM_LBUTTONUP || Notification == WM_RBUTTONUP)
+			{
+				oWindow::DESC d;
+				GetDesc(&d);
+				d.State = oWindow::RESTORED;
+				SetDesc(&d);
+			}
+
+			// @oooii-tony: TODO: Add the unidentified messages to oGetWMDesc
+			if (Notification != WM_MOUSEMOVE)
+			{
+				#ifdef _DEBUG
+					char str[1024];
+					oTRACE("oWM_TRAY: %s", oGetWMDesc(str, _hWnd, Notification, 0, 0));
+				#endif
+			}
+
+			break;
+		}
 
 		default:
 			break;
@@ -2055,24 +2309,33 @@ LRESULT oWindow_Impl::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lP
 #if oDXVER >= oDXVER_10
 HRESULT oWindow_Impl::CreateRendertarget()
 {
-	oRef<ID3D10Texture2D> D3DRenderTarget;
-	oV_RETURN( D3DSwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (void**)&D3DRenderTarget ) );
+	if(DrawMethod == DRAW_USING_DX11)
+	{
+		oRef<ID3D11Texture2D> D3DRenderTarget;
+		oV_RETURN( D3DSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&D3DRenderTarget ) );
+		D3D11Device->CreateRenderTargetView( D3DRenderTarget, NULL,	&D3D11View );
+	}
+	else
+	{
+		oRef<ID3D10Texture2D> D3DRenderTarget;
+		oV_RETURN( D3DSwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (void**)&D3DRenderTarget ) );
 
-	oRef<IDXGISurface> RTSurface;
-	oV_RETURN(D3DRenderTarget->QueryInterface(&RTSurface));
+		oRef<IDXGISurface> RTSurface;
+		oV_RETURN(D3DRenderTarget->QueryInterface(&RTSurface));
 
-	D2D1_RENDER_TARGET_PROPERTIES rtProps;
-	rtProps.pixelFormat.format = D3DSwapChainFMT;
-	rtProps.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
-	rtProps.dpiX = 0.0f;
-	rtProps.dpiY = 0.0f;
-	rtProps.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
-	rtProps.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
-	rtProps.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+		D2D1_RENDER_TARGET_PROPERTIES rtProps;
+		rtProps.pixelFormat.format = D3DSwapChainFMT;
+		rtProps.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+		rtProps.dpiX = 0.0f;
+		rtProps.dpiY = 0.0f;
+		rtProps.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+		rtProps.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+		rtProps.usage = D2D1_RENDER_TARGET_USAGE_NONE;
 
-	oV_RETURN(Factory->CreateDxgiSurfaceRenderTarget(RTSurface, &rtProps, &RenderTarget));
+		oV_RETURN(Factory->CreateDxgiSurfaceRenderTarget(RTSurface, &rtProps, &RenderTarget));
 
-	RenderTarget->SetAntialiasMode(UseAntialiasing ? D2D1_ANTIALIAS_MODE_PER_PRIMITIVE : D2D1_ANTIALIAS_MODE_ALIASED);
+		RenderTarget->SetAntialiasMode(UseAntialiasing ? D2D1_ANTIALIAS_MODE_PER_PRIMITIVE : D2D1_ANTIALIAS_MODE_ALIASED);
+	}
 	return S_OK;
 }
 #endif
@@ -2097,7 +2360,7 @@ bool oWindow::Pump(oWindow* _pWindow, bool _CloseOnTimeout, unsigned int _Timeou
 		if (_pWindow->Begin())
 			_pWindow->End();
 
-		if (_Timeout != ~0u && (oTimerMS() - time) > _Timeout)
+		if (_Timeout != oINFINITE_WAIT && (oTimerMS() - time) > _Timeout)
 		{
 			if (_CloseOnTimeout)
 				_pWindow->Close();

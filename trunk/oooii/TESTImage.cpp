@@ -25,7 +25,7 @@ struct TESTImage : public oTest
 		oLockedPointer<oBuffer> lockedBuffer1(buffer1);
 
 		oRef<oImage> image1;
-		oTESTB(oImage::Create(lockedBuffer1->GetData(), lockedBuffer1->GetSize(), &image1), "Image create failed: %s", FullPath);
+		oTESTB(oImage::Create(lockedBuffer1->GetData(), lockedBuffer1->GetSize(), oSurface::UNKNOWN, &image1), "Image create failed: %s", FullPath);
 
 		oTESTB(image1->Save(tmp, oImage::HIGH), "Save failed: %s", tmp);
 
@@ -38,7 +38,7 @@ struct TESTImage : public oTest
 		oTESTB(!memcmp(lockedBuffer1->GetData(), lockedBuffer2->GetData(), lockedBuffer1->GetSize()), "Save did not write the same bit pattern as was loaded");
 
 		oRef<oImage> image2;
-		oTESTB(oImage::Create(lockedBuffer2->GetData(), lockedBuffer2->GetSize(), &image2), "Image create failed: %s", tmp);
+		oTESTB(oImage::Create(lockedBuffer2->GetData(), lockedBuffer2->GetSize(), oSurface::UNKNOWN, &image2), "Image create failed: %s", tmp);
 
 		// Compare that the bits written are the same as the bits read
 

@@ -10,6 +10,7 @@
 #include <oooii/oPageAllocator.h>
 #include <oooii/oRef.h>
 #include <oooii/oRefCount.h>
+#include <oooii/oSize.h>
 #include <oooii/oStdio.h>
 #include <oooii/oSTL.h>
 #include <oooii/oSwizzle.h>
@@ -561,7 +562,7 @@ bool oMirroredArena_Impl::DINERetrieveChanges(void* _pChangeBuffer, size_t _Size
 	DWORD Flags = (_pChangeBuffer && _SizeofChangeBuffer) ? WRITE_WATCH_FLAG_RESET : 0; // only reset if we're really going to write out diffs
 	if (0 != GetWriteWatch(Flags, Desc.BaseAddress, Desc.Size, ppDirtyPages, &nDirtyPages, &pageSize))
 	{
-		oSetLastErrorNative(GetLastError());
+		oWinSetLastError();
 		return false;
 	}
 
@@ -801,7 +802,7 @@ bool oMirroredArena_Impl::IsInChanges(const void* _pAddress, size_t _Size, const
 	{
 		case 'COPY':
 		{
-			if (_pAddress < Desc.BaseAddress || _pAddress >= oByteAdd(Desc.BaseAddress, pChangeHeader->Size))
+			if (_pAddress < Desc.BaseAddress || _pAddress >= oByteAdd(Desc.BaseAddress, oSize32(pChangeHeader->Size)))
 				return false;
 
 			size_t offset = oByteDiff(_pAddress, Desc.BaseAddress);

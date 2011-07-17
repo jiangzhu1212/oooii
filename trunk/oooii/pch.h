@@ -9,8 +9,6 @@
 // anything that conflicts with the rest of the codebase and see
 // how long we can live like this before needing a better solution.
 
-#ifdef OPAQUE
-	#undef OPAQUE
-#endif
+
 
 #endif

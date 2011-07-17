@@ -25,6 +25,9 @@
     <Filter Include="Headers\oFoundation">
       <UniqueIdentifier>{24dfa143-a688-4ab6-a1d2-c0615cb3594d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Windows Soft-Link">
+      <UniqueIdentifier>{4f23875d-6e9f-491f-b4bb-c2e3d3d000b5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\inc\oooii\oooii.h">
@@ -36,16 +39,7 @@
     <ClInclude Include="oCRTLeakTracker.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="oDbgHelp.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="oKeyState.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="oWinPSAPI.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="oWinsock.h">
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">
@@ -414,6 +408,9 @@
     <ClInclude Include="..\inc\oooii\oCheckedAssignment.h">
       <Filter>Headers\oCore</Filter>
     </ClInclude>
+    <ClInclude Include="..\inc\oooii\oCommandQueueSingleThread.h">
+      <Filter>Headers\ForCodeReview</Filter>
+    </ClInclude>
     <ClInclude Include="..\inc\oooii\oCommandQueue.h">
       <Filter>Headers\oCore</Filter>
     </ClInclude>
@@ -422,6 +419,36 @@
     </ClInclude>
     <ClInclude Include="..\inc\oooii\oStringID.h">
       <Filter>Headers\oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="oImageSequence.h">
+      <Filter>Source\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="oImageDecodeCPU.h">
+      <Filter>Source\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oooii\oHLSLDeferredView.h">
+      <Filter>Headers\oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="oWinsock.h">
+      <Filter>Source\Windows Soft-Link</Filter>
+    </ClInclude>
+    <ClInclude Include="oWinPSAPI.h">
+      <Filter>Source\Windows Soft-Link</Filter>
+    </ClInclude>
+    <ClInclude Include="oDbgHelp.h">
+      <Filter>Source\Windows Soft-Link</Filter>
+    </ClInclude>
+    <ClInclude Include="oWinDWMAPI.h">
+      <Filter>Source\Windows Soft-Link</Filter>
+    </ClInclude>
+    <ClInclude Include="oVideoRTPImpl.h">
+      <Filter>Source\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="oVideoHelpers.h">
+      <Filter>Source\Video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oooii\oIOCP.h">
+      <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -465,9 +492,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oD3D11.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oDbgHelp.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oDebugger.cpp">
@@ -596,12 +620,6 @@
     <ClCompile Include="oWindows.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oWinPSAPI.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oWinsock.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oXML.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -672,6 +690,33 @@
       <Filter>Source\Video</Filter>
     </ClCompile>
     <ClCompile Include="oCommandQueue.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oCommandQueueSingleThread.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oImageSequence.cpp">
+      <Filter>Source\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="oImageDecodeCPU.cpp">
+      <Filter>Source\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinsock.cpp">
+      <Filter>Source\Windows Soft-Link</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinPSAPI.cpp">
+      <Filter>Source\Windows Soft-Link</Filter>
+    </ClCompile>
+    <ClCompile Include="oDbgHelp.cpp">
+      <Filter>Source\Windows Soft-Link</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinDWMAPI.cpp">
+      <Filter>Source\Windows Soft-Link</Filter>
+    </ClCompile>
+    <ClCompile Include="oVideoRTPImpl.cpp">
+      <Filter>Source\Video</Filter>
+    </ClCompile>
+    <ClCompile Include="oIOCP.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

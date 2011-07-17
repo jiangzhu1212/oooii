@@ -494,7 +494,7 @@ struct oD3D11RenderTarget
 		COLOR_DEPTH_STENCIL,
 	};
 
-	static const size_t DEPTH_STENCIL_INDEX = ~0u;
+	static const size_t DEPTH_STENCIL_INDEX = oINVALID_SIZE_T;
 
 	struct DESC
 	{
@@ -595,32 +595,6 @@ struct oD3D11ScopedMessageDisabler
 
 protected:
 	ID3D11InfoQueue* pInfoQueue;
-};
-
-struct DEPRECATED_oD3D11Quad // use oD3D11DrawSVQuad() instead
-{
-	// A quad with the following properties:
-	// 6 vertices, 2 triangles
-	// selectable winding
-	// draw using non-indexed triangles
-	// from [-1,-1,0] to [1,1,0]
-	// texcoords from [0,0] at [-1,-1,0] to [1,1] at [1,1,0]
-	// When untransformed (WVP == identity) this is full-screen
-
-	// Draw() requires an InputLayout with at least:
-	// const D3D11_INPUT_ELEMENT_DESC InputLayoutDesc[] = 
-	// {
-	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//  ... other channels ...
-	// };
-
-	DEPRECATED_oD3D11Quad(ID3D11Device* _pDevice, bool _CCWWinding = false);
-	void Draw(ID3D11DeviceContext* _pDeviceContext);
-	void DrawInstanced(ID3D11DeviceContext* _pDeviceContext, size_t _NumInstances, const ID3D11Buffer* _pInstanceBuffer, size_t _InstanceStride);
-
-protected:
-	oRef<ID3D11Buffer> Vertices;
 };
 
 #endif

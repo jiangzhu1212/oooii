@@ -24,11 +24,11 @@ interface oThreadpool : oInterface
 	{
 		DESC()
 			: Implementation(WINDOWS_THREAD_POOL)
-			, NumThreads(~0u)
+			, NumThreads(oINVALID)
 		{}
 
 		IMPLEMENTATION Implementation;
-		unsigned int NumThreads; // specify ~0u for same number as HW threads. 0 or 1 means single-threaded.
+		unsigned int NumThreads; // specify oINVALID for same number as HW threads. 0 or 1 means single-threaded.
 	};
 
 	typedef void (*TaskProc)(void* _pData);

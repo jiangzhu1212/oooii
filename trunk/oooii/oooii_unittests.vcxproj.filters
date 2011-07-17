@@ -111,6 +111,18 @@
     <ClCompile Include="TestWebmRaw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TESTCommandQueueSingleThread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TESTRendererDebugVisualization.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TESTCondenseFBX.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TESTVideoRTP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

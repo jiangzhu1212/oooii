@@ -38,7 +38,7 @@ oWebmEncoderCodecVP8::oWebmEncoderCodecVP8(const oVideoEncodeCPU::DESC &_Desc, b
 		return;
 	}
 
-	unsigned int BitRate = 0;
+	unsigned int BitRate = _Desc.BitRate;
 	if( (unsigned int )-1 == _Desc.BitRate )
 		BitRate = _Desc.Width * _Desc.Height * VP8Cfg.rc_target_bitrate / VP8Cfg.g_w / VP8Cfg.g_h; 
 

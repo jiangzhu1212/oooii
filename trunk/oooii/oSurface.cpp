@@ -120,6 +120,8 @@ static const FORMAT_DESC sFormatDescs[] =
 	{ "BC7_TYPELESS", 16, 4, true, false },
 	{ "BC7_UNORM", 16, 4, true, true },
 	{ "BC7_UNORM_SRGB", 16, 4, true, true },
+	{ "R8G8B8_UNORM", 3 * sizeof(char), 3, false, true },
+	{ "YUV420_UNORM", 3 * sizeof(char), 3, false, true },
 };
 oSTATICASSERT(oCOUNTOF(sFormatDescs) == oSurface::NUM_FORMATS);
 
@@ -307,7 +309,39 @@ unsigned int oSurface::CalculateSize(const DESC* _pDesc)
 	return rowPitch * (blockAlignedHeight / heightAdjustment);
 }
 
-void oSurface::convert_B8G8R8A8_UNORM_to_YUV420( const unsigned int _Width, const unsigned int _Height, const unsigned char* _pSrcRGBASrc, const size_t _pRGBAPitch, YUV420* _pYUVDst )
+struct SourceYModNormal
+{
+	unsigned int operator()(unsigned int _y, unsigned int _height) { return _y;}
+};
+
+struct SourceYModFlip
+{
+	unsigned int operator()(unsigned int _y, unsigned int _height) { return (_height - _y -1);}
+};
+
+struct ExtractRGBFromBGR
+{
+	void operator()(int &_r, int &_g, int &_b, const unsigned char* oRESTRICT _RGBLine, unsigned int _x) 
+	{
+		_r = _RGBLine[3*_x+2];
+		_g = _RGBLine[3*_x+1];
+		_b = _RGBLine[3*_x];
+	}
+};
+
+struct ExtractRGBFromBGRA
+{
+	void operator()(int &_r, int &_g, int &_b, const unsigned char* oRESTRICT _RGBLine, unsigned int _x) 
+	{
+		_r = _RGBLine[4*_x+2];
+		_g = _RGBLine[4*_x+1];
+		_b = _RGBLine[4*_x];
+	}
+};
+
+template<typename SourceYMod, typename ExtractRGB>
+void convert_B8G8R8_UNORM_to_YUV420(const unsigned int _Width, const unsigned int _Height, const unsigned char* _pSrcRGBSrc,
+	const size_t _pRGBPitch, oSurface::YUV420* _pYUVDst, SourceYMod _sourceYMod, ExtractRGB _extractRGB )
 {
 	// Convert from RGB to YUV
 	const unsigned int HalfWidth = _Width / 2;
@@ -327,17 +361,15 @@ void oSurface::convert_B8G8R8A8_UNORM_to_YUV420( const unsigned int _Width, cons
 	for( unsigned int y = 0; y < _Height; ++y )
 	{
 		// RGB src
-		const unsigned int* oRESTRICT RGBLine = oByteAdd( (const unsigned int* oRESTRICT)_pSrcRGBASrc, y * _pRGBAPitch );
+		const unsigned char* oRESTRICT RGBLine = oByteAdd( (const unsigned char* oRESTRICT)_pSrcRGBSrc, _sourceYMod(y, _Height) * _pRGBPitch );
 
 		// Planar destinations
 		unsigned char* oRESTRICT YLine = oByteAdd( pDestY, y * YPitch );
-		
+
 		for( unsigned int x = 0; x < _Width; ++x )
 		{
-			unsigned int pixel = RGBLine[x];
-			int R = ( pixel >> 16 ) & 0x000000FF;
-			int G = ( pixel >> 8 ) & 0x000000FF;
-			int B = ( pixel & 0x000000FF );
+			int R, G, B;
+			_extractRGB(R, G, B, RGBLine, x);
 
 			int Y = ( (  66 * R + 129 * G +  25 * B + 128) >> 8) +  16;
 			int U = ( ( -38 * R -  74 * G + 112 * B + 128) >> 8) + 128;
@@ -365,6 +397,22 @@ void oSurface::convert_B8G8R8A8_UNORM_to_YUV420( const unsigned int _Width, cons
 			memset( uTemp, 0, TempSz );
 		}
 	}
+}
+
+void oSurface::convert_B8G8R8_UNORM_to_YUV420(const unsigned int _Width, const unsigned int _Height, const unsigned char* _pSrcRGBSrc, const size_t _pRGBPitch, YUV420* _pYUVDst, bool _yflip )
+{
+	if(_yflip)
+		convert_B8G8R8_UNORM_to_YUV420(_Width, _Height, _pSrcRGBSrc, _pRGBPitch, _pYUVDst, SourceYModFlip(), ExtractRGBFromBGR());
+	else
+		convert_B8G8R8_UNORM_to_YUV420(_Width, _Height, _pSrcRGBSrc, _pRGBPitch, _pYUVDst, SourceYModNormal(), ExtractRGBFromBGR());
+}
+
+void oSurface::convert_B8G8R8A8_UNORM_to_YUV420( const unsigned int _Width, const unsigned int _Height, const unsigned char* _pSrcRGBASrc, const size_t _pRGBAPitch, YUV420* _pYUVDst, bool _yflip )
+{
+	if(_yflip)
+		convert_B8G8R8_UNORM_to_YUV420(_Width, _Height, _pSrcRGBASrc, _pRGBAPitch, _pYUVDst, SourceYModFlip(), ExtractRGBFromBGRA());
+	else
+		convert_B8G8R8_UNORM_to_YUV420(_Width, _Height, _pSrcRGBASrc, _pRGBAPitch, _pYUVDst, SourceYModNormal(), ExtractRGBFromBGRA());
 }
 
 void oSurface::convert_YUV420_to_B8G8R8A8_UNORM( const unsigned int _Width, const unsigned int _Height, const YUV420& _YUVSrc, unsigned char* _pSrcRGBADst, const size_t _pRGBAPitch )
@@ -530,8 +578,9 @@ bool oSurface::ConvertSurface(const DESC& _srcDesc, const unsigned char* _pSrcSu
 	loadInfo.Filter = D3DX11_DEFAULT;
 	loadInfo.MipFilter = D3DX11_DEFAULT;
 
+	oTRACE("D3DX11LoadTextureFromTexture begin 0x%p (can take a while)...", D3DDstTexture);
 	hr = oD3DX11::Singleton()->D3DX11LoadTextureFromTexture(D3DDeviceContext, D3DSrcTexture, &loadInfo, D3DDstTexture);
-
+	oTRACE("D3DX11LoadTextureFromTexture end 0x%p", D3DDstTexture);
 	if(FAILED(hr))
 	{
 		oSetLastError(EINVAL, "Failed to convert texture from format %i to format %i.", _srcDesc.Format, _dstDesc.Format);

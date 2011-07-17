@@ -33,7 +33,7 @@ struct oDisplay
 	{
 		DESC()
 			: NativeHandle(0)
-			, Index(~0u)
+			, Index(oINVALID)
 			, X(DEFAULT)
 			, Y(DEFAULT)
 			, WorkareaX(DEFAULT)
@@ -67,7 +67,14 @@ struct oDisplay
 	static bool GetDesc(unsigned int _Index, DESC* _pDesc);
 	static bool SetDesc(unsigned int _Index, const DESC* _pDesc);
 
-	static unsigned int GetPrimary(); // returns ~0u if none found
+	// Turns all monitors on or sets them to a low-power state
+	static void SetPowerOn(bool _On);
+
+	// Returns true if the specified nth monitor is powered on (not off or in a 
+	// low-power state)
+	static bool IsPowerOn(unsigned int _Index);
+
+	static unsigned int GetPrimary(); // returns oINVALID if none found
 	static unsigned int GetNumDisplays();
 	static void GetVirtualRect(int* _pX, int* _pY, int* _pWidth, int* _pHeight);
 };

@@ -216,19 +216,7 @@ void oWebmStreaming::ParseSimpleBlock(const HEADER& _Header)
 	memcpy(oGetData(EncodedVideoFrames.back()),PacketData+PacketIndex+4,static_cast<size_t>( _Header.Size-4 ));
 }
 
-void oWebmStreaming::MapFrame(void** _ppFrameData, size_t* _szData, bool* _pValid, size_t *_decodedFrameNumber) threadsafe
-{
-	VideoFrameLock.Lock();
-	thread_cast<oWebmStreaming*>(this)->MapFrameInternal(_ppFrameData, _szData, _pValid, _decodedFrameNumber);
-}
-
-void oWebmStreaming::UnmapFrame() threadsafe
-{
-	thread_cast<oWebmStreaming*>(this)->UnmapFrameInternal();
-	VideoFrameLock.Unlock();
-}
-
-void oWebmStreaming::PushByteStream(void* _pData, size_t _SzData) threadsafe
+void oWebmStreaming::PushByteStream(const void* _pData, size_t _SzData) threadsafe
 {
 	if(InvalidStream)
 		return;
@@ -237,23 +225,18 @@ void oWebmStreaming::PushByteStream(void* _pData, size_t _SzData) threadsafe
 	thread_cast<oWebmStreaming*>(this)->PushByteStreamInternal(_pData,_SzData);
 }
 
-void oWebmStreaming::MapFrameInternal(void** _ppFrameData, size_t* _szData, bool* _pValid, size_t *_decodedFrameNumber)
+bool oWebmStreaming::MapNOLOCK(MAPPED* _pMapped)
 {
-	if(EncodedVideoFrames.empty())
-	{
-		*_szData = 0;
-		*_ppFrameData = NULL;
-		*_pValid = true;
-		return;
-	}
-	*_ppFrameData = oGetData(EncodedVideoFrames.front());
-	*_szData = oGetDataSize(EncodedVideoFrames.front());
-	if(_decodedFrameNumber)
-		*_decodedFrameNumber = CurrentFrame;
-	*_pValid = true;
+	if (EncodedVideoFrames.empty())
+		return oVideoReturnEndOfFile(_pMapped);
+
+	_pMapped->pFrameData = oGetData(EncodedVideoFrames.front());
+	_pMapped->DataSize = oGetDataSize(EncodedVideoFrames.front());
+	_pMapped->DecodedFrameNumber = CurrentFrame;
+	return true;
 }
 
-void oWebmStreaming::UnmapFrameInternal()
+void oWebmStreaming::UnmapNOLOCK()
 {
 	if(!EncodedVideoFrames.empty())
 	{
@@ -262,7 +245,7 @@ void oWebmStreaming::UnmapFrameInternal()
 	}
 }
 
-void oWebmStreaming::PushByteStreamInternal(void* _pData, size_t _SzData)
+void oWebmStreaming::PushByteStreamInternal(const void* _pData, size_t _SzData)
 {
 	PacketData = (unsigned char*)_pData;
 	oASSERT(_SzData < oNumericLimits<unsigned int>::GetMax(),"webm stream reader only supports packets less than 4G currently (and actually probably a lot less than that practically)");

@@ -47,8 +47,11 @@ struct TESTSocketAsyncUDP : public oTest
 
 			Socket = _Socket.c_ptr();
 
-			Socket->GetDesc(&desc);
-			for(int i = 0; i < desc.NumThreads; i++)
+			SYSTEM_INFO sysInfo;
+			GetSystemInfo(&sysInfo);
+			unsigned long NumThreads = sysInfo.dwNumberOfProcessors;
+
+			for(unsigned long i = 0; i < NumThreads; i++)
 			{
 				Socket->Recv(RecvBuf[i], MSG_SIZE);
 			}

@@ -11,6 +11,7 @@
 #include <oooii/oWindows.h>
 #include <oooii/oBuffer.h>
 #include <FreeImage.h>
+#include <oooii/oSTL.h>
 
 oSurface::FORMAT GetSurfaceFormat(FIBITMAP* _pBitmap)
 {
@@ -166,7 +167,7 @@ struct FIStaticInitialization : public oModuleSingleton<FIStaticInitialization>
 
 	static void FreeImageErrorHandler(FREE_IMAGE_FORMAT fif, const char *message)
 	{
-		oWARNA("%s format image file: %s", FreeImage_GetFormatFromFIF(fif), message);
+		oASSERT(false, "%s format image file: %s", FreeImage_GetFormatFromFIF(fif), message);
 	}
 };
 
@@ -184,8 +185,13 @@ struct oImage_Impl : public oImage
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oImage>());
 
-	oImage_Impl(FIBITMAP* _bmp);
+	oImage_Impl(FIBITMAP* _bmp, oSurface::FORMAT _Format);
 	~oImage_Impl();
+
+	void Cleanup();
+	bool Create(FIBITMAP* _bmp, oSurface::FORMAT _Format);
+
+	bool Update(const void* _pBuffer, size_t _SizeOfBuffer) threadsafe override;
 
 	void FlipHorizontal() threadsafe override;
 	void FlipVertical() threadsafe override;
@@ -203,26 +209,78 @@ struct oImage_Impl : public oImage
 	bool Save(const char* _Path, COMPRESSION _Compression = NONE) threadsafe override;
 	size_t Save(const char* _Path, void* _pBuffer, size_t _SizeofBuffer, COMPRESSION _Compression = NONE) threadsafe override;
 	
-	bool GetAsRGBA(BYTE* _pOutput, size_t _OutputSize) threadsafe override;
-
+	bool GetAsRGBA(BYTE* _pOutput, size_t _OutputSize, bool _topDown) threadsafe override;
+	bool GetAsBGRA(unsigned char* _pOutput, size_t _OutputSize, bool _topDown) threadsafe override;
+	
 	#if defined(_WIN32) || defined(_WIN64)
 		HBITMAP AsBmp() threadsafe override;
 	#endif
+
+	DESC Desc; //only used for YUV format.
+	std::vector<unsigned char> YUVData; //Support texture arrays in YUV format.
+	oSurface::YUV420 YUVFrame;
 
 	FIBITMAP* bmp;
 	oRefCount RefCount;
 	oRWMutex Mutex;
 };
 
-oImage_Impl::oImage_Impl(FIBITMAP* _bmp)
+oImage_Impl::oImage_Impl(FIBITMAP* _bmp, oSurface::FORMAT _Format)
 	: bmp(_bmp)
 {
+	Create(_bmp, _Format);
+
+	oASSERT(FIStaticInitialization::Singleton()->IsInitialized, "FreeImage has not been initialized.");
+}
+
+oImage_Impl::~oImage_Impl()
+{
+	Cleanup();
+
+}
+
+bool oImage_Impl::Create(FIBITMAP* _bmp, oSurface::FORMAT _Format) 
+{
+	bmp = _bmp;
+
 	FREE_IMAGE_COLOR_TYPE colorType = FreeImage_GetColorType(_bmp);
 
-	if (colorType == FIC_RGB)
+	// @oooii-eric: TODO: Only a handful of conversions currently supported. should support all.
+	if (colorType == FIC_RGB && _Format != oSurface::R8G8B8_UNORM)
 	{
 		bmp = FreeImage_ConvertTo32Bits(_bmp);
 		FreeImage_Unload(_bmp);
+	}
+
+	if (_Format == oSurface::YUV420_UNORM)
+	{
+		Desc.Width = FreeImage_GetWidth(bmp);
+		Desc.Height = FreeImage_GetHeight(bmp);
+		unsigned int pitch = FreeImage_GetPitch(bmp);
+		unsigned int YSize = Desc.Width*Desc.Height;
+		unsigned int UVSize = YSize/4;
+
+		YUVData.resize(YSize+UVSize*2);
+		YUVFrame.pY = &YUVData[0];
+		YUVFrame.pU = &YUVData[YSize];
+		YUVFrame.pV = &YUVData[YSize+UVSize];
+		YUVFrame.YPitch = Desc.Width;
+		YUVFrame.UVPitch = Desc.Width/2;
+
+		Desc.Pitch = static_cast<unsigned int>(YUVFrame.YPitch);
+		Desc.Format = oSurface::YUV420_UNORM;
+		Desc.Size = static_cast<unsigned int>(YUVData.size());
+
+		if (colorType == FIC_RGBALPHA)
+		{
+			oSurface::convert_B8G8R8A8_UNORM_to_YUV420(Desc.Width, Desc.Height, FreeImage_GetBits(bmp), pitch, &YUVFrame, true);
+		}
+		else if (colorType == FIC_RGB)
+		{
+			oSurface::convert_B8G8R8_UNORM_to_YUV420(Desc.Width, Desc.Height, FreeImage_GetBits(bmp), pitch, &YUVFrame, true);
+		}
+		FreeImage_Unload(bmp);
+		bmp = nullptr;
 	}
 
 #ifdef _DEBUG
@@ -234,10 +292,10 @@ oImage_Impl::oImage_Impl(FIBITMAP* _bmp)
 		}
 #endif // _DEBUG
 
-	oASSERT(FIStaticInitialization::Singleton()->IsInitialized, "FreeImage has not been initialized.");
+		return true;
 }
 
-oImage_Impl::~oImage_Impl()
+void oImage_Impl::Cleanup() 
 {
 	oASSERT(FIStaticInitialization::Singleton()->IsInitialized, "FreeImage has not been initialized.");
 	if (bmp)
@@ -269,32 +327,45 @@ void oImage_Impl::GetDesc(DESC* _pDesc) const threadsafe
 {
 	oRWMutex::ScopedLockRead lock(Mutex);
 
-	_pDesc->Pitch = FreeImage_GetPitch(bmp);
-	_pDesc->Width = FreeImage_GetWidth(bmp);
-	_pDesc->Height = FreeImage_GetHeight(bmp);
-	_pDesc->Format = GetSurfaceFormat(bmp);
+	if(bmp)
+	{
+		_pDesc->Pitch = FreeImage_GetPitch(bmp);
+		_pDesc->Width = FreeImage_GetWidth(bmp);
+		_pDesc->Height = FreeImage_GetHeight(bmp);
+		_pDesc->Format = GetSurfaceFormat(bmp);
 
-	oSurface::DESC desc;
-	desc.RowPitch = _pDesc->Pitch;
-	desc.Width = _pDesc->Width;
-	desc.Height = _pDesc->Height;
-	desc.NumSlices = 1;
-	desc.NumMips = 1;
-	desc.SlicePitch = 0;
-	desc.Format = _pDesc->Format;
-	_pDesc->Size = oSurface::CalculateSize(&desc);
+		oSurface::DESC desc;
+		desc.RowPitch = _pDesc->Pitch;
+		desc.Width = _pDesc->Width;
+		desc.Height = _pDesc->Height;
+		desc.NumSlices = 1;
+		desc.NumMips = 1;
+		desc.SlicePitch = 0;
+		desc.Format = _pDesc->Format;
+		_pDesc->Size = oSurface::CalculateSize(&desc);
+	}
+	else
+	{
+		*_pDesc = thread_cast<oImage_Impl*>(this)->Desc;
+	}
 }
 
 void* oImage_Impl::Map() threadsafe
 {
 	Mutex.Lock();
-	return FreeImage_GetBits(bmp);
+	if(bmp)
+		return FreeImage_GetBits(bmp);
+	else
+		return &thread_cast<oImage_Impl*>(this)->YUVData[0];
 }
 
 const void* oImage_Impl::Map() const threadsafe
 {
 	Mutex.LockRead();
-	return FreeImage_GetBits(bmp);
+	if(bmp)
+		return FreeImage_GetBits(bmp);
+	else
+		return &thread_cast<oImage_Impl*>(this)->YUVData[0];
 }
 
 void oImage_Impl::Unmap() threadsafe
@@ -435,16 +506,11 @@ size_t oImage_Impl::Save(const char* _Path, void* _pBuffer, size_t _SizeofBuffer
 	return written;
 }
 
-bool oImage_Impl::GetAsRGBA(BYTE* _pOutput, size_t _OutputSize) threadsafe
+bool oImage_Impl::GetAsRGBA(BYTE* _pOutput, size_t _OutputSize, bool _topDown) threadsafe
 {
 	size_t size = FreeImage_GetWidth(bmp) * FreeImage_GetHeight(bmp) * 4;
-	if(size > _OutputSize)
-	{
-		oSetLastError(E2BIG, "Output buffer too small for converted image.");
+	if(!GetAsBGRA(_pOutput, _OutputSize, _topDown))
 		return false;
-	}
-
-	FreeImage_ConvertToRawBits(_pOutput, bmp, FreeImage_GetWidth(bmp) * 4, 32, 0xFF000000, 0x00FF0000, 0x0000FF00);
 
 	// @oooii-mike: FreeImage kindly converts colors to bgra format, ignoring the parameters in ConvertToRawBits, and they need to be converted back:
 	for(size_t i = 0; i+3 < size; i+=4)
@@ -456,6 +522,19 @@ bool oImage_Impl::GetAsRGBA(BYTE* _pOutput, size_t _OutputSize) threadsafe
 
 	return true;
 }
+
+bool oImage_Impl::GetAsBGRA(unsigned char* _pOutput, size_t _OutputSize, bool _topDown) threadsafe
+{
+	size_t size = FreeImage_GetWidth(bmp) * FreeImage_GetHeight(bmp) * 4;
+	if(size > _OutputSize)
+	{
+		oSetLastError(E2BIG, "Output buffer too small for converted image.");
+		return false;
+	}
+	FreeImage_ConvertToRawBits(_pOutput, bmp, FreeImage_GetWidth(bmp) * 4, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, _topDown);
+
+	return true;
+};
 
 static FIBITMAP* FILoadFromMemory(const void* _pBuffer, size_t _SizeofBuffer)
 {
@@ -491,6 +570,12 @@ static FIBITMAP* FICreate(const oImage::DESC* _pDesc)
 			b = FI_RGBA_BLUE_MASK;
 			break;
 
+		case oSurface::R8G8B8_UNORM:
+			r = FI_RGBA_RED_MASK;
+			g = FI_RGBA_GREEN_MASK;
+			b = FI_RGBA_BLUE_MASK;
+			break;
+
 		default:
 			oSetLastError(EINVAL, "oImage::Create() failed: Unsupported format %s", oAsString(_pDesc->Format));
 			return 0;
@@ -499,11 +584,25 @@ static FIBITMAP* FICreate(const oImage::DESC* _pDesc)
 	return FreeImage_Allocate(_pDesc->Width, _pDesc->Height, bpp, r, g, b);
 }
 
-bool oImage::Create(const void* _pBuffer, size_t _SizeofBuffer, oImage** _ppImage)
+bool oImage_Impl::Update(const void* _pBuffer, size_t _SizeOfBuffer) threadsafe
+{
+	oRWMutex::ScopedLock lock(Mutex);
+	oImage_Impl *lockedThis = thread_cast<oImage_Impl*>(this);
+
+	lockedThis->Cleanup();
+
+	if (!_pBuffer || !_SizeOfBuffer) return false;
+
+	oSurface::FORMAT format = bmp ? oSurface::R8G8B8A8_UNORM : oSurface::YUV420_UNORM;
+	bmp = FILoadFromMemory(_pBuffer, _SizeOfBuffer);
+	return lockedThis->Create(bmp, format);
+};
+
+bool oImage::Create(const void* _pBuffer, size_t _SizeofBuffer, oSurface::FORMAT _Format, oImage** _ppImage)
 {
 	if (!_pBuffer || !_SizeofBuffer || !_ppImage) return false;
 	FIBITMAP* bmp = FILoadFromMemory(_pBuffer, _SizeofBuffer);
-	*_ppImage = bmp ? new oImage_Impl(bmp) : 0;
+	*_ppImage = bmp ? new oImage_Impl(bmp, _Format) : 0;
 	return !!*_ppImage;
 }
 
@@ -511,7 +610,7 @@ bool oImage::Create(const DESC* _pDesc, oImage** _ppImage)
 {
 	if (!_pDesc || !_ppImage) return false;
 	FIBITMAP* bmp = FICreate(_pDesc);
-	*_ppImage = bmp ? new oImage_Impl(bmp) : 0;
+	*_ppImage = bmp ? new oImage_Impl(bmp, _pDesc->Format) : 0;
 	return !!*_ppImage;
 }
 
@@ -540,7 +639,7 @@ void SetConsoleOOOiiIcon()
 		FIStaticInitialization::Singleton();
 
 		oRef<oImage> ico;
-		oVERIFY(oImage::Create(pBuffer, bufferSize, &ico));
+		oVERIFY(oImage::Create(pBuffer, bufferSize, oSurface::UNKNOWN, &ico));
 
 		HBITMAP hBmp = ico->AsBmp();
 		HICON hIcon = oIconFromBitmap(hBmp);
@@ -548,4 +647,20 @@ void SetConsoleOOOiiIcon()
 		DeleteObject(hIcon);
 		DeleteObject(hBmp);
 	#endif
+}
+
+bool oImage::IsSupportedFileType(const char* _Path)
+{
+	FREE_IMAGE_FORMAT format = FIF_UNKNOWN;
+	format = FreeImage_GetFileType(_Path);
+	if(format != FIF_UNKNOWN)
+		return true;
+	else
+	{
+		format = FreeImage_GetFIFFromFilename(_Path);
+		if(format != FIF_UNKNOWN)
+			return true;
+		else
+			return false;
+	}
 }

@@ -5,6 +5,7 @@
 #include <oooii/oVideoCodec.h>
 #include <oooii/oMutex.h>
 #include <map>
+#include <oooii/oEvent.h>
 
 template<size_t _Size>
 struct oD3D10TextureList
@@ -46,13 +47,31 @@ public:
 	oDEFINE_REFCOUNT_INTERFACE(Refcount);
 	oDEFINE_NOOP_QUERYINTERFACE();
 	oVideoDecodeD3D10SimpleYUV(DESC _desc, std::vector<oRef<threadsafe oVideoDecodeCPU>> &_CPUDecoders, bool* _pSuccess);
+	~oVideoDecodeD3D10SimpleYUV();
 
 	virtual HDECODE_CONTEXT Register(interface ID3D10Texture2D* _pDestinationTexture ) threadsafe;
 	virtual void Unregister(HDECODE_CONTEXT) threadsafe;
 	virtual bool Decode(HDECODE_CONTEXT, size_t *_decodedFrameNumber) threadsafe;
 
 private:
-	void DecodePartition(size_t _index,std::vector<D3D10_MAPPED_TEXTURE2D> &_MappedTextures);
+	void DecodePartitionVerticalStitch(size_t _index,std::vector<D3D10_MAPPED_TEXTURE2D> &_MappedTextures);
+	void DecodePartitionHorizontalStitch(size_t _index,std::vector<D3D10_MAPPED_TEXTURE2D> &_MappedTextures);
+	void DecodePartitionVerticalStitchSurround(size_t _index,std::vector<D3D10_MAPPED_TEXTURE2D> &_MappedTextures);
+	void DecodePartitionHorizontalStitchSurround(size_t _index,std::vector<D3D10_MAPPED_TEXTURE2D> &_MappedTextures);
+	oFUNCTION<void (size_t, std::vector<D3D10_MAPPED_TEXTURE2D>&)> DecodePartition;
+	
+	struct GPU_CONTEXT
+	{
+		oRef<ID3D10RenderTargetView> RTV;
+		D3D10_VIEWPORT VP;
+		oRef<ID3D10SamplerState> BilinearSampler;
+		oD3D10TextureList<3> TextureList[2]; // double buffered
+		oD3D10FullscreenQuad Quad;
+	};
+
+	bool CreateTextureSet(unsigned int _index, GPU_CONTEXT &_context, ID3D10Device *_device) threadsafe;
+	void DecodeFrameTask(GPU_CONTEXT* _pGPUContext);
+
 	std::vector<size_t> DecodedFrameNumbers;
 
 	std::vector<oVideoContainer::DESC> ConDescs;
@@ -63,16 +82,7 @@ private:
 	std::vector<unsigned char> LuminancePlane;
 	std::vector<unsigned char> UChromQuarterPlane;
 	std::vector<unsigned char> VChromQuarterPlane;
-
-	struct GPU_CONTEXT
-	{
-		oRef<ID3D10RenderTargetView> RTV;
-		D3D10_VIEWPORT VP;
-		oRef<ID3D10SamplerState> BilinearSampler;
-		oD3D10TextureList<3> TextureList;
-		oD3D10FullscreenQuad Quad;
-	};
-
+	
 	oRWMutex YUVMapMutex;
 	typedef std::map<void*, GPU_CONTEXT> yuv_map_t;
 	yuv_map_t YUVMap;
@@ -82,6 +92,10 @@ private:
 
 	unsigned int StitchedWidth;
 	unsigned int StitchedHeight;
+
+	oEvent DecodeEvent;
+	size_t LastDecodedFrame;
+	volatile unsigned int CurrentDisplayFrame;
 };
 
 

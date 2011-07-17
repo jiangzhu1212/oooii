@@ -7,11 +7,13 @@
 #include <oooii/oRef.h>
 #include <oooii/oMemoryMappedFile.h>
 #include "oWebmStreaming.h"
+#include "oVideoHelpers.h"
 
 class oWebmFile : public oVideoFile
 {
 public:
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_VIDEO_MUTEXED_MAP_INTERFACE(oWebmFile, Mutex);
 	oWebmFile( const char* _pFileName, const oVideoContainer::DESC& _Desc, bool* _pSuccess);
 	~oWebmFile();
 
@@ -22,23 +24,11 @@ public:
 		WebmStreaming->GetDesc(_pDesc);
 	}
 
-	virtual bool HasFinished() const override { return Finished;}
-
-	virtual void MapFrame(void** _ppFrameData, size_t* _szData, bool* _pValid, size_t *_decodedFrameNumber) threadsafe override
-	{
-		Mutex.Lock();
-		thread_cast<oWebmFile*>(this)->MapFrameInternal(_ppFrameData,_szData,_pValid, _decodedFrameNumber);
-	}
-	virtual void UnmapFrame() threadsafe override
-	{
-		thread_cast<oWebmFile*>(this)->UnmapFrameInternal();
-		Mutex.Unlock();
-	}
+	bool HasFinished() const override { return Finished; }
 	void Restart() threadsafe override { oMutex::ScopedLock lock(Mutex); FileIndex = DataStartIndex; Finished = false;}
 
 private:
-	void MapFrameInternal(void** _ppFrameData, size_t* _szData, bool* _pValid, size_t *_decodedFrameNumber);
-	void UnmapFrameInternal();
+	oDECLARE_VIDEO_MAP_INTERFACE();
 
 	oRefCount RefCount;
 	char FileName[_MAX_PATH];

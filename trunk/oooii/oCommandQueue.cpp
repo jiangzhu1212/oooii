@@ -43,7 +43,7 @@ void oCommandQueue::Enqueue(oFUNCTION<void()> _Command) threadsafe
 
 		// If this command is the only one in the queue kick of the execution
 		if (1 == CurrentCommandCount)
-			oIssueAsyncTask(oBIND(&oCommandQueue::ExecuteNext, pThis ));
+			IssueCommand();
 	}
 }
 
@@ -60,7 +60,18 @@ void oCommandQueue::ExecuteNext() threadsafe
 	pThis->Commands.pop_front();
 
 	if (!pThis->Commands.empty())
-		oIssueAsyncTask(oBIND(&oCommandQueue::ExecuteNext, pThis));
+		IssueCommand();
 
 	ConsumerLock.Unlock();
+}
+
+void oCommandQueue::IssueCommand() threadsafe
+{
+	oIssueAsyncTask(oBIND(&oCommandQueue::ExecuteNext, this));
+}
+
+bool oCommandQueue::Empty()
+{
+	oRWMutex::ScopedLockRead lock(ConsumerLock);
+	return Commands.empty();
 }

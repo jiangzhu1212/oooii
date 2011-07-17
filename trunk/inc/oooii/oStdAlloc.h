@@ -10,7 +10,7 @@
 	template<typename U> struct rebind { typedef ClassName<U> other; }; \
 	pointer address(reference p) const { return &p; } \
 	const_pointer address(const_reference p) const { return &p; } \
-	size_type max_size() const { return static_cast<size_type>(~0u) / sizeof(value_type); } \
+	size_type max_size() const { return static_cast<size_type>(oINVALID_SIZE_T) / sizeof(value_type); } \
 	void construct(pointer p) { ::new (static_cast<void*>(p)) T(); } \
 	void construct(pointer p, const T& val) { ::new (static_cast<void*>(p)) T(val); } \
 	void destroy(pointer p) { p->~T(); }

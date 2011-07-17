@@ -117,7 +117,7 @@ public:
 	errno_t FromString(void* _pDestination, const char* _ValueAsString) const; // writes a string value of this type to memory
 	errno_t ToString(char* _StrDestination, size_t _SizeofStrDestination, const void* _pSource) const; // writes a string value from memory of this type
 	template<size_t size> errno_t ToString(char (&_StrDestination)[size], const void* _pSource) const { return ToString(_StrDestination, size, _pSource); }
-	size_t GetSize() const; // Returns ~0u if size could not be determined.
+	size_t GetSize() const; // Returns oINVALID_SIZE_T if size could not be determined.
 
 	// Type flag accessors
 	inline static int GetUnmodified(int _Type) { return _Type&0x3fffffff; }

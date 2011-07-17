@@ -61,7 +61,7 @@ void MandelbrotTask(size_t _Index, void* _pData, unsigned int _X1, unsigned int 
 	unsigned char *fractal_image = (unsigned char *)_pData;
 	for (unsigned int y=0; y<SWARM_SIZE; y++)
 	{
-		unsigned int index = _X1 == ~0u ? static_cast<unsigned int>(_Index) : ((y+_Y1)*FRACTAL_SIZE+_X1);
+		unsigned int index = _X1 == oINVALID ? static_cast<unsigned int>(_Index) : ((y+_Y1)*FRACTAL_SIZE+_X1);
 		unsigned char *dest = &fractal_image[index];
 		for (unsigned int x=0; x<SWARM_SIZE; x++)
 		{
@@ -167,7 +167,7 @@ bool RunParallelForTest(const char* _Name, char* _StrStatus, size_t _SizeofStrSt
 
 	unsigned char* fractal = new unsigned char[FRACTAL_SIZE*FRACTAL_SIZE];
 
-	oParallelFor(oBIND(&RatcliffJobSwarm::MandelbrotTask, oBIND1, fractal, ~0u, 0, x1, y1, xscale, yscale), 0, taskCount);
+	oParallelFor(oBIND(&RatcliffJobSwarm::MandelbrotTask, oBIND1, fractal, oINVALID, 0, x1, y1, xscale, yscale), 0, taskCount);
 
 	double end = oTimer();
 	delete [] fractal;
@@ -188,7 +188,7 @@ struct TESTThreadpoolWinTP : public oTest
 	{
 		oThreadpool::DESC desc;
 		desc.Implementation = oThreadpool::WINDOWS_THREAD_POOL;
-		desc.NumThreads = ~0u;
+		desc.NumThreads = oINVALID;
 		oRef<threadsafe oThreadpool> tp;
 		oTESTB(oThreadpool::Create(&desc, &tp), "Failed to create windows thread pool");
 		oTESTB(RunThreadpoolTest("WinTP", tp, _StrStatus, _SizeofStrStatus), "Windows thread pool failed");
@@ -202,7 +202,7 @@ struct TESTThreadpoolOOOii : public oTest
 	{
 		oThreadpool::DESC desc;
 		desc.Implementation = oThreadpool::OOOII;
-		desc.NumThreads = ~0u;
+		desc.NumThreads = oINVALID;
 		oRef<threadsafe oThreadpool> tp;
 		oTESTB(oThreadpool::Create(&desc, &tp), "Failed to create OOOii thread pool");
 		oTESTB(RunThreadpoolTest("OOOiiTP", tp, _StrStatus, _SizeofStrStatus), "OOOii thread pool failed");
