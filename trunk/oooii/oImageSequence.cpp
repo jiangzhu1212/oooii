@@ -1,3 +1,4 @@
+// $(header)
 #include "oImageSequence.h"
 #include <oooii/oFile.h>
 #include <oooii/oPath.h>

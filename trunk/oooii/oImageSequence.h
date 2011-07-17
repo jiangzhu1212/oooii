@@ -1,3 +1,4 @@
+// $(header)
 #pragma once
 #ifndef oImageSequence_h
 #define oImageSequence_h
