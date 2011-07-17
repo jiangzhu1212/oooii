@@ -1,3 +1,4 @@
+// $(header)
 #pragma once
 #ifndef oMOVFileImpl_h
 #define oMOVFileImpl_h

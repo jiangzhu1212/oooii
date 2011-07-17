@@ -1,10 +1,10 @@
-#pragma once
-
+// $(header)
 // Enqueues commands such that they are executed in the order they were enqueued,
 // A single thread will be created, and all commands will execute on this new thread.
 // Should almost always use oCommandQueue instead of this class. Use this class
 // only if you have a really good reason to want commands to always be executed
 // from the same thread.
+#pragma once
 #ifndef oCommandQueueSingleThread_h
 #define oCommandQueueSingleThread_h
 

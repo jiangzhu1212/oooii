@@ -1,3 +1,4 @@
+// $(header)
 #pragma once
 #ifndef oRleDecodeCPU_h
 #define oRleDecodeCPU_h

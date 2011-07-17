@@ -1,3 +1,4 @@
+// $(header)
 #pragma once
 #ifndef oMetaProgramming_h
 #define oMetaProgramming_h
