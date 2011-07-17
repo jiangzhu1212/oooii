@@ -1,7 +1,7 @@
-#pragma once
-
+// $(header)
 // Enqueues commands such that they are executed in the order they were enqueued,
 // but a command could execute at any time on any thread.
+#pragma once
 #ifndef oCommandQueue_h
 #define oCommandQueue_h
 

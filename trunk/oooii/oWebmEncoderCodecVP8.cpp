@@ -1,3 +1,4 @@
+// $(header)
 #include "oWebmEncoderCodecVP8.h"
 
 static const vpx_img_fmt VP8_FRAME_FORMAT = VPX_IMG_FMT_I420;

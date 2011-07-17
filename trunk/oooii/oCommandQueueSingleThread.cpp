@@ -1,3 +1,4 @@
+// $(header)
 #include <oooii/oCommandQueueSingleThread.h>
 #include <oooii/oRefCount.h>
 

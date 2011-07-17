@@ -1,3 +1,4 @@
+// $(header)
 #pragma once
 #ifndef oWebmEncoder_h
 #define oWebmEncoder_h

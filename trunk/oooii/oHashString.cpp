@@ -1,3 +1,4 @@
+// $(header)
 #include <oooii/oHashString.h>
 
 
