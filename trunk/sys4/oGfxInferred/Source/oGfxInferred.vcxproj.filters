@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{20e852c1-5ad0-43a1-961b-f15859e5ab8e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oGfxInferred">
+      <UniqueIdentifier>{eeb8506b-15ac-476b-8b32-9959c35a9cbd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Shaders">
+      <UniqueIdentifier>{2c0b0ee7-8251-4d9b-b3b8-4489ac2a21ed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Shaders\D3D11">
+      <UniqueIdentifier>{3e69891e-a633-4e04-8b3f-4a25623b5b81}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oGfxInferredRenderer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11InferredPipeline.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\oGfxInferred\oGfxInferred.h">
+      <Filter>oGfxInferred</Filter>
+    </ClInclude>
+    <ClInclude Include="oGfxResourceManager.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\D3D11\oHLSLInferred.h">
+      <Filter>Source\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\D3D11\oGLBufferAccessors.h">
+      <Filter>Source\Shaders</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <FXC Include="Shaders\D3D11\DBGPSContinuity.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\DBGPSDepth.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\DBGPSInstances.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\DBGPSNormals.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\DBGPSNormalsX.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\DBGPSNormalsY.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\DBGPSNormalsZ.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\DBGPSShininess.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\DBLPSDiffuse.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\DBLPSSpecular.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\GEPSBlend.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\GEPSOpaque.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\GEPSTest.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\GEVS.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\LIPSNonShadowing.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\LIPSShadowing.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\LNPS.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\LNVS.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\MAPSBlend.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\MAPSOpaque.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\MAPSTest.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\PIPSBlend.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\PIPSLine.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\PIPSOpaque.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+    <FXC Include="Shaders\D3D11\PIPSTest.sh">
+      <Filter>Source\Shaders\D3D11</Filter>
+    </FXC>
+  </ItemGroup>
+</Project>

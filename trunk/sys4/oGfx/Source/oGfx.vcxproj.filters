@@ -74,5 +74,8 @@
     <ClInclude Include="oD3D11LineList.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="..\oGfx\oGfxHLSL.h">
+      <Filter>oGfx</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

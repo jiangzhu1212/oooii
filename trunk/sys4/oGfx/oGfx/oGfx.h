@@ -3,8 +3,66 @@
 #ifndef oGfx_h
 #define oGfx_h
 
+/**
+Texture Streaming
+Insomniac does the stream top-mip, keep all others in memory,
+like we did for Spiderman3, so why not just do that all the time?
+(until MegaTexture)
+
+With very large textures coming, it'd be better to control the
+upper N mips, but this means that really each upload package
+needs to be individually loaded, so really separate files:
+
+1. All low mips (might not be streamable) with reference to hi mips
+2. Top mip-2
+3. Top mip-1
+4. Top mip
+
+So:
+
+Start: Brick.psd: 4k x 4k
+Create:
+4. Brick.otx
+3. Brick.ot2
+2. Brick.ot1
+1. Brick.ot0
+
+struct oTEXTURE_DESC
+{
+	unsigned short Width;
+	unsigned short Height;
+	unsigned short Depth;
+	unsigned short ArraySize : 15;
+	bool IsCube : 1;
+	unsigned short ColorFormat;
+	unsigned short DepthStencilFormat;
+};
+
+struct oTEXTURE_FILE_HEADER
+{
+	unsigned int Cookie;
+	unsigned short MajorVersion;
+	unsigned short MinorVersion;
+	unsigned short MipStart;
+	unsigned short MipEnd;
+	oTEXTURE_DESC Desc;
+};
+
+The body must be:
+
+for each item in array
+	for each depth slice
+		highest->lowest mip in order
+
+So, map a dynamic buffer, 
+fill with updates until buffer is full
+queue matched CopySubresources()
+
+*/
+
 #include <oGfx/oGfxState.h>
 
+#include <oooii/oColor.h>
 #include <oooii/oInterface.h>
 #include <oooii/oSurface.h>
 #include <oooii/oStringID.h>
@@ -18,7 +76,7 @@ interface oGfxDeviceChild : oInterface
 
 	// fill the specified pointer with this resources's associated
 	// device. The device's ref count is incremented.
-	virtual void GetDevice(threadsafe interface oGfxDevice** _ppDevice) const threadsafe = 0;
+	virtual void GetDevice(threadsafe oGfxDevice** _ppDevice) const threadsafe = 0;
 
 	// Returns the name specified at create time
 	virtual const char* GetName() const threadsafe = 0;
@@ -185,16 +243,26 @@ interface oGfxTexture : oGfxResource
 
 interface oGfxPipeline : oGfxDeviceChild
 {
+	struct VERTEX_ATTRIBUTE
+	{
+		const char* Name;
+		uint Index;
+		oSurface::FORMAT Format;
+		uint InputSlot;
+	};
+
 	struct DESC
 	{
-		const void* pInputLayout;
-		unsigned int InputLayoutByteWidth;
-		const unsigned char* pVSByteCode;
-		const unsigned char* pHSByteCode;
-		const unsigned char* pDSByteCode;
-		const unsigned char* pGSByteCode;
-		const unsigned char* pPSByteCode;
+		const VERTEX_ATTRIBUTE* pAttributes;
+		uint NumAttributes;
+		const uchar* pVSByteCode;
+		const uchar* pHSByteCode;
+		const uchar* pDSByteCode;
+		const uchar* pGSByteCode;
+		const uchar* pPSByteCode;
 	};
+
+	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
 interface oGfxRenderTarget2 : oGfxDeviceChild
@@ -383,6 +451,7 @@ interface oGfxDevice : oInterface
 	virtual bool CreateLineList(const char* _Name, const oGfxLineList::DESC& _Desc, oGfxLineList** _ppLineList) threadsafe = 0;
 	virtual bool CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, oGfxPipeline** _ppPipeline) threadsafe = 0;
 	virtual bool CreateRenderTarget2(const char* _Name, const oGfxRenderTarget2::DESC& _Desc, oGfxRenderTarget2** _ppRenderTarget) threadsafe = 0;
+	virtual bool CreateRenderTarget2(const char* _Name, const oWindow* _pWindow, oGfxRenderTarget2** _ppRenderTarget) threadsafe = 0;
 	virtual bool CreateMaterial(const char* _Name, const oGfxMaterial::DESC& _Desc, oGfxMaterial** _ppMaterial) threadsafe = 0;
 	virtual bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe = 0;
 	virtual bool CreateTexture(const char* _Name, const oGfxTexture::DESC& _Desc, oGfxTexture** _ppTexture) threadsafe = 0;
@@ -392,6 +461,6 @@ interface oGfxDevice : oInterface
 };
 
 oAPI bool oGfxCreateDevice(const oGfxDevice::DESC& _Desc, threadsafe oGfxDevice** _ppDevice);
-oAPI const char* oGfxGetResourceTypename(const threadsafe oGfxResource::TYPE _Type);
+oAPI const char* oAsString(const oGfxResource::TYPE& _Type);
 
 #endif

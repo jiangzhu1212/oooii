@@ -26,6 +26,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\oGfx\oGfx.h" />
+    <ClInclude Include="..\oGfx\oGfxHLSL.h" />
     <ClInclude Include="..\oGfx\oGfxState.h" />
     <ClInclude Include="oD3D11CommandList.h" />
     <ClInclude Include="oD3D11Device.h" />
@@ -39,7 +40,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{54DA59A7-C4BC-4D58-8769-CD52BBFC2C9B}</ProjectGuid>
+    <ProjectGuid>{FE5B314F-5795-4F8D-8984-89F996666203}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>oGfx</RootNamespace>
   </PropertyGroup>

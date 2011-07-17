@@ -5,55 +5,55 @@
 
 enum oOMSTATE // Output Merge (Blend) State
 {
-	oOM_NONE, // src rgba (opaque)
-	oOM_TEST, // alpha test
-	oOM_ACCUMULATE, // src rgba + dst rgba
-	oOM_ADDITIVE, // src rgb * src a  +  dst rgb
-	oOM_TRANSLUCENT, // src rgb * src a  +  dst rgb * (1 - src a)
-	oOM_COUNT,
+	oOMOPAQUE, // Output.rgba = Source.rgba
+	oOMTEST, // Same as oOMOPAQUE, test is done in user code
+	oOMACCUMULATE, // Output.rgba = Source.rgba + Destination.rgba
+	oOMADDITIVE, // Output.rgb = Source.rgb * Source.a + Destination.rgb
+	oOMTRANSLUCENT, // Output.rgb = Source.rgb * Source.a + Destination.rgb * (1 - Source.a)
+	oOMNUMSTATES,
 };
 
 enum oRSSTATE // Rasterizer State
 {
-	oRS_FRONT_FACE,
-	oRS_BACK_FACE,
-	oRS_TWO_SIDED,
-	oRS_FRONT_WIREFRAME,
-	oRS_BACK_WIREFRAME,
-	oRS_TWO_SIDED_WIREFRAME,
-	oRS_FRONT_POINTS,
-	oRS_BACK_POINTS,
-	oRS_TWO_SIDED_POINTS,
-	oRS_COUNT,
+	oRSFRONTFACE,
+	oRSBACKFACE,
+	oRSTWOSIDEDFACE,
+	oRSFRONTWIRE,
+	oRSBACKWIRE,
+	oRSTWOSIDEDWIRE,
+	oRSFRONTPOINTS,
+	oRSBACKPOINTS,
+	oRSTWOSIDEDPOINTS,
+	oRSNUMSTATES,
 };
 
 enum oDSSTATE // Depth-Stencil State
 {
-	oDS_NONE,
-	oDS_TEST_AND_WRITE,
-	oDS_TEST,
-	oDS_STATE_COUNT,
+	oDSNONE,
+	oDSTESTANDWRITE,
+	oDSTEST,
+	oDSNUMSTATES,
 };
 
 enum oSASTATE // Sampler State
 {
-	oSA_POINT_CLAMP,
-	oSA_POINT_WRAP,
-	oSA_LINEAR_CLAMP,
-	oSA_LINEAR_WRAP,
-	oSA_ANISOTROPIC_CLAMP,
-	oSA_ANISOTROPIC_WRAP,
-	oSA_COUNT,
+	oSAPOINTCLAMP,
+	oSAPOINTWRAP,
+	oSALINEARCLAMP,
+	oSALINEARWRAP,
+	oSAANISOCLAMP,
+	oSAANISOWRAP,
+	oSANUMSTATES,
 };
 
 enum oMBSTATE // Mip-Bias State
 {
-	oMB_NONE,
-	oMB_UP1,
-	oMB_UP2,
-	oMB_DOWN1,
-	oMB_DOWN2,
-	oMB_COUNT,
+	oMBNONE,
+	oMBUP1,
+	oMBUP2,
+	oMBDOWN1,
+	oMBDOWN2,
+	oMBNUMSTATES,
 };
 
 #endif
