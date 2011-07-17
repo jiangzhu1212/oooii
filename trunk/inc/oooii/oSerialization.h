@@ -1,3 +1,4 @@
+// $(header)
 // Functions to help in making sure files written are the same in debug and release builds. In particular unwritten parts of descriptions can have fixed values in debug, and random values in release.
 #pragma once
 #ifndef oSerialization_h
