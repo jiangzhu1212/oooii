@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 
 // Utility functions for interacting with the platform at a very basic level.
 
@@ -67,8 +45,11 @@ struct oDateTime
 // <0 _DateTime1 < _DateTime2 (1 is eariler/more in the past than 2)
 int oCompareDateTime(const oDateTime& _DateTime1, const oDateTime& _DateTime2);
 
-// Get the current time in oDataTime format
+// Get the current UTC time in oDataTime format
 bool oGetDateTime(oDateTime* _pDateTime);
+
+// Converts UTC time to the current local time
+bool oGetLocalDateTime(const oDateTime& _UTCTime, oDateTime* _pLocalTime);
 
 time_t oConvertDateTime(const oDateTime& _DateTime);
 void oConvertDateTime(oDateTime* _DateTime, time_t _Time);
@@ -99,8 +80,14 @@ bool oGetSysPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysPath)
 // Returns the name of this computer
 bool oGetHostname(char* _Hostname, size_t _SizeofHostName);
 
-// Wrapper for use assert/debug macros ONLY because it's returning thread-shared memory
-inline const char* oGetHostname() { static char buf[512]; oGetHostname(buf, sizeof(buf)); return buf; }
+inline const char* oGetHostname() { static char oTHREADLOCAL buf[512]; oGetHostname(buf, sizeof(buf)); return buf; }
+
+// Returns a string indicating the host, process id and thread id of where this
+// function was called from.
+bool oGetExecutionPath(char* _ExecutionPath, size_t _SizeofExecutionPath);
+
+// Wrapper for use assert/debug macros ONLY because it's returning temp memory
+inline const char* oGetExecutionPath() { static char oTHREADLOCAL buf[512]; oGetExecutionPath(buf, sizeof(buf)); return buf; }
 
 // Returns the full path to the name of the file that is executing in this 
 // process

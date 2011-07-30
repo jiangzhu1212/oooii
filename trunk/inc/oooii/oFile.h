@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 
 // File-related utilities. These are implemented using the basic 
 // fopen/platform API - nothing particularly asynchronous or otherwise
@@ -35,6 +13,8 @@
 
 namespace oFile
 {
+	oDECLARE_HANDLE(Handle)
+
 	// NOTE: Prefer using LoadBuffer and SaveBuffer when possible
 	struct ScopedFile
 	{
@@ -42,10 +22,15 @@ namespace oFile
 		// (ScopedFile myFile(myPath, "wb"); if (!myFile) return kFailure;)
 		ScopedFile(const char* _Path, const char* _Mode);
 		~ScopedFile();
-		operator FILE*() { return pFile; }
-		operator bool() const { return !!pFile; }
+		// @oooii-eric: TODO: Should get rid of the FILE* casts.
+		operator FILE*() const { return (FILE*)FileHandle; }
+		operator FILE*() { return (FILE*)FileHandle; }
+		operator Handle() const { return FileHandle; }
+		operator Handle() { return FileHandle; }
+		operator bool() const { return !!FileHandle; }
+		operator bool() { return !!FileHandle; }
 	protected:
-		FILE* pFile;
+		Handle FileHandle;
 		char Path[_MAX_PATH];
 	};
 
@@ -65,33 +50,36 @@ namespace oFile
 		bool Offline:1;
 	};
 
+	bool Open(const char* _Path, bool _ForWrite, bool _AsText, oFile::Handle* _phFile);
+	bool Close(oFile::Handle _hFile);
+
+	unsigned long long Tell(oFile::Handle _hFile);
+	bool Seek(oFile::Handle _hFile, long long _Offset, int _Origin = SEEK_SET);
+
+	// NOTE: FRead's _SizeofDestination is the maximum number of bytes that can be
+	// read into _pDestination before memory corruption would occur.
+	size_t FRead(void* _pDestination, size_t _SizeofDestination, unsigned long long _ReadSize, Handle _hFile);
+	size_t FWrite(const void* _pDestination, size_t _Size, Handle _hFile, bool _Flush = false);
+
+	bool AtEndOfFile(Handle _hFile);
+	
 	// Get's the descriptoin for a file.  Returns false if the file doesn't exist
 	bool GetDesc(const char* _Path, DESC* _pDesc); 
 
-	// Find first file prefixed with the specified wildcard. If this returns 
-	// true, then context can be passed to oFindNextFile and must be closed when 
-	// finished by using CloseFind. If this returns false, context will be NULL 
-	// and thus not need to be closed. False is returned if there are no more 
-	// matches.
-	bool FindFirst(DESC* _pDesc, char (&_Path)[_MAX_PATH], const char* _Wildcard, void** _pFindContext);
-	
-	// Iterate on a context created using FindFirst. False means there are no
-	// more files.
-	bool FindNext(DESC* _pDesc, char (&_Path)[_MAX_PATH], void* _pFindContext);
-
-	// This call must be made on the find context created with a successful call 
-	// to FindFirst. If FindFirst fails, CloseFind should not be called.
-	bool CloseFind(void* _pFindContext);
+	// Go through all files matching the specified wildcard and call the specified 
+	// function that will contain the details of each file. The function should 
+	// return true to continue to the next file, or false to abort the enumeration.
+	bool EnumFiles(const char* _WildcardPath, oFUNCTION<bool(const char* _FullPath, const DESC& _Desc)> _EnumFunction);
 
 	// Returns size of an open file. This may open and close the file on some 
 	// systems.
-	size_t GetSize(FILE* _File);
+	unsigned long long GetSize(oFile::Handle _hFile);
 
 	bool Touch(const char* _Path, time_t _PosixTimestamp);
 
 	// Remember, the file must've been open with read access 
 	// (i.e. fopen(..., "wb" or "wt"))
-	bool Touch(FILE* _File, time_t _PosixTimestamp);
+	bool Touch(oFile::Handle _hFile, time_t _PosixTimestamp);
 
 	bool MarkReadOnly(const char* _Path, bool _ReadOnly = true);
 
@@ -113,11 +101,14 @@ namespace oFile
 	// Returns true if the specified file is a text file using the criteria found
 	// in Perl, that is if a block in the beginning of the file contains less 
 	// than a certain percentage of bytes that are 128 < byte < 0.
-	bool IsText(FILE* _File);
+	bool IsText(oFile::Handle _hFile);
 	bool IsText(const char* _Path);
 
-	inline bool IsBinary(FILE* _File) { return !IsText(_File); }
+	inline bool IsBinary(oFile::Handle _hFile) { return !IsText(_hFile); }
 	inline bool IsBinary(const char* _Path) { return !IsText(_Path); }
+
+	bool MemMap(void* _HintPointer, unsigned long long _Size, bool _ReadOnly, oFile::Handle _hFile, unsigned long long _Offset, void** _ppMappedMemory);
+	bool MemUnmap(void* _MappedPointer);
 
 	// Uses the specified allocator to allocate _OutBuffer and fill it with the 
 	// entire contents of the file specified by _Path. Returns false if there was 

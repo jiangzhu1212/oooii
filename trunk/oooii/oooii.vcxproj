@@ -243,7 +243,6 @@
     <ClInclude Include="..\inc\oooii\oAsyncFileIO.h" />
     <ClInclude Include="..\inc\oooii\oAtof.h" />
     <ClInclude Include="..\inc\oooii\oAtomic.h" />
-    <ClInclude Include="..\inc\oooii\oBarrier.h" />
     <ClInclude Include="..\inc\oooii\oBit.h" />
     <ClInclude Include="..\inc\oooii\oBitStream.h" />
     <ClInclude Include="..\inc\oooii\oBuffer.h" />
@@ -258,6 +257,7 @@
     <ClInclude Include="..\inc\oooii\oConcurrentQueueMS.h" />
     <ClInclude Include="..\inc\oooii\oConcurrentQueueOptimisticFIFO.h" />
     <ClInclude Include="..\inc\oooii\oConsole.h" />
+    <ClInclude Include="..\inc\oooii\oCountdownLatch.h" />
     <ClInclude Include="..\inc\oooii\oCPU.h" />
     <ClInclude Include="..\inc\oooii\oD3D10.h" />
     <ClInclude Include="..\inc\oooii\oD3D11.h" />
@@ -322,6 +322,7 @@
     <ClInclude Include="..\inc\oooii\oSingleton.h" />
     <ClInclude Include="..\inc\oooii\oSize.h" />
     <ClInclude Include="..\inc\oooii\oSocket.h" />
+    <ClInclude Include="..\inc\oooii\oStandards.h" />
     <ClInclude Include="..\inc\oooii\oStdAlloc.h" />
     <ClInclude Include="..\inc\oooii\oStddef.h" />
     <ClInclude Include="..\inc\oooii\oStdio.h" />
@@ -346,22 +347,8 @@
     <ClInclude Include="oAllocatorTLSF.h" />
     <ClInclude Include="oCRTLeakTracker.h" />
     <ClInclude Include="oDbgHelp.h" />
-    <ClInclude Include="oImageSequence.h" />
+    <ClInclude Include="oIOCP.h" />
     <ClInclude Include="oKeyState.h" />
-    <ClInclude Include="oMOVFileImpl.h" />
-    <ClInclude Include="oImageDecodeCPU.h" />
-    <ClInclude Include="oRawDecodeCPU.h" />
-    <ClInclude Include="oRleDecodeCPU.h" />
-    <ClInclude Include="oVideoCodecD3D10.h" />
-    <ClInclude Include="oVideoHelpers.h" />
-    <ClInclude Include="oVideoRTPImpl.h" />
-    <ClInclude Include="oVP8DecodeCPU.h" />
-    <ClInclude Include="oWebmEncoder.h" />
-    <ClInclude Include="oWebmEncoderCodec.h" />
-    <ClInclude Include="oWebmEncoderCodecRaw420.h" />
-    <ClInclude Include="oWebmEncoderCodecVP8.h" />
-    <ClInclude Include="oWebmFile.h" />
-    <ClInclude Include="oWebmStreaming.h" />
     <ClInclude Include="oWinDWMAPI.h" />
     <ClInclude Include="oWinPSAPI.h" />
     <ClInclude Include="oWinsock.h" />
@@ -382,7 +369,6 @@
     <ClCompile Include="oArcball.cpp" />
     <ClCompile Include="oAssert.cpp" />
     <ClCompile Include="oAsyncFileIO.cpp" />
-    <ClCompile Include="oBarrier.cpp" />
     <ClCompile Include="oBuffer.cpp" />
     <ClCompile Include="oBufferPool.cpp" />
     <ClCompile Include="oColor.cpp" />
@@ -390,6 +376,7 @@
     <ClCompile Include="oCommandQueueSingleThread.cpp" />
     <ClCompile Include="oConcurrentIndexAllocator.cpp" />
     <ClCompile Include="oConsole.cpp" />
+    <ClCompile Include="oCountdownLatch.cpp" />
     <ClCompile Include="oCPU.cpp" />
     <ClCompile Include="oCRTLeakTracker.cpp" />
     <ClCompile Include="oD3D10.cpp" />
@@ -408,7 +395,6 @@
     <ClCompile Include="oHash.cpp" />
     <ClCompile Include="oHeap.cpp" />
     <ClCompile Include="oImage.cpp" />
-    <ClCompile Include="oImageSequence.cpp" />
     <ClCompile Include="oIndexAllocator.cpp" />
     <ClCompile Include="oINI.cpp" />
     <ClCompile Include="oInterface.cpp" />
@@ -420,7 +406,6 @@
     <ClCompile Include="oMirroredArena.cpp" />
     <ClCompile Include="oModule.cpp" />
     <ClCompile Include="oMouse.cpp" />
-    <ClCompile Include="oMOVFileImpl.cpp" />
     <ClCompile Include="oMsgBox.cpp" />
     <ClCompile Include="oMutex.cpp" />
     <ClCompile Include="oOBJLoader.cpp" />
@@ -428,13 +413,11 @@
     <ClCompile Include="oP4.cpp" />
     <ClCompile Include="oPageAllocator.cpp" />
     <ClCompile Include="oPath.cpp" />
-    <ClCompile Include="oImageDecodeCPU.cpp" />
     <ClCompile Include="oProcess.cpp" />
     <ClCompile Include="oProcessHeap.cpp" />
-    <ClCompile Include="oRawDecodeCPU.cpp" />
-    <ClCompile Include="oRleDecodeCPU.cpp" />
     <ClCompile Include="oSingleton.cpp" />
     <ClCompile Include="oSocket.cpp" />
+    <ClCompile Include="oStandards.cpp" />
     <ClCompile Include="oStdio.cpp" />
     <ClCompile Include="oSTL.cpp" />
     <ClCompile Include="oString.cpp" />
@@ -447,17 +430,7 @@
     <ClCompile Include="oTimerHelpers.cpp" />
     <ClCompile Include="oType.cpp" />
     <ClCompile Include="oURI.cpp" />
-    <ClCompile Include="oVideoCodec.cpp" />
-    <ClCompile Include="oVideoCodecD3D10.cpp" />
-    <ClCompile Include="oVideoRTPImpl.cpp" />
-    <ClCompile Include="oVP8DecodeCPU.cpp" />
     <ClCompile Include="oVTable.cpp" />
-    <ClCompile Include="oWebmEncoder.cpp" />
-    <ClCompile Include="oWebmEncoderCodec.cpp" />
-    <ClCompile Include="oWebmEncoderCodecRaw420.cpp" />
-    <ClCompile Include="oWebmEncoderCodecVP8.cpp" />
-    <ClCompile Include="oWebmFile.cpp" />
-    <ClCompile Include="oWebmStreaming.cpp" />
     <ClCompile Include="oWindow.cpp" />
     <ClCompile Include="oWindows.cpp" />
     <ClCompile Include="oWinDWMAPI.cpp" />
@@ -511,39 +484,39 @@
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
     </FXC>
-    <FXC Include="oHLSLYUVTORGB.sh">
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)inc</Includes>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">$(SolutionDir)inc</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)inc</Includes>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">$(SolutionDir)inc</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)inc</Includes>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">$(SolutionDir)inc</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)inc</Includes>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">$(SolutionDir)inc</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">oHLSL</Defines>
+    <FXC Include="oHLSLPassthrough.sh">
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">vs_4_0</ShaderModel>
     </FXC>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

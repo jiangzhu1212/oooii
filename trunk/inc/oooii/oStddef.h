@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #pragma once
 #ifndef oStddef_h
 #define oStddef_h
@@ -53,7 +31,12 @@ template<typename T, typename U> inline T thread_cast(const U& threadsafeObject)
 #define oCONCAT(x, y) x##y
 #define oSTRINGIZE__(x) #x
 #define oSTRINGIZE(x) oSTRINGIZE__(x)
-#define oBUILD_MSG(msg) __pragma(message(__FILE__ "(" oSTRINGIZE(__LINE__) ") : BUILD: " msg))
+
+#ifdef oENABLE_BUILD_MESSAGES // define this in the compiler command line, mostly for debugging
+	#define oBUILD_MSG(msg) __pragma(message(__FILE__ "(" oSTRINGIZE(__LINE__) ") : BUILD: " msg))
+#else
+	#define oBUILD_MSG(msg)
+#endif
 
 #define oCOUNTOF(x) (sizeof(x)/sizeof((x)[0]))
 

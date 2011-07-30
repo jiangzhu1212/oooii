@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oAssert.h>
 #include <oooii/oConsole.h>
 #include <oooii/oDebugger.h>
@@ -46,6 +24,7 @@ static const oOption sCmdLineOptions[] =
 	{ "golden-images", 'g', "path", "Path where all known-good \"golden\" images are stored. The current working directory is used by default." },
 	{ "output", 'o', "path", "Path where all logging and error images are created." },
 	{ "repeat-number", 'n', "Repeat the test a certain number of times." },
+	{ "disable-timeouts", 'd', "Disable timeouts, mainly while debugging." },
 	{ 0,0,0,0 }
 };
 
@@ -101,6 +80,7 @@ struct PARAMETERS
 	const char* OutputPath;
 	unsigned int RandomSeed;
 	unsigned int RepeatNumber;
+	bool EnableTimeouts;
 };
 
 void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
@@ -112,6 +92,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 	_pParameters->OutputPath = NULL;
 	_pParameters->RandomSeed = 0;
 	_pParameters->RepeatNumber = 1;
+	_pParameters->EnableTimeouts = true;
 
 	const char* value = 0;
 	char ch = oOptTok(&value, _Argc, _Argv, sCmdLineOptions);
@@ -159,6 +140,9 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 				_pParameters->RepeatNumber = atoi(value);
 				break;
 
+			case 'd':
+				_pParameters->EnableTimeouts = false;
+
 			default:
 				break;
 		}
@@ -187,41 +171,35 @@ struct oNamedFileDesc : oFile::DESC
 	}
 };
 
+static bool PushBackNFDs(const char* _Path, const oFile::DESC& _Desc, std::vector<oNamedFileDesc>& _NFDs)
+{
+	oNamedFileDesc nfd;
+	reinterpret_cast<oFile::DESC&>(nfd) = _Desc;
+	strcpy_s(nfd.FileName, _Path);
+	_NFDs.push_back(nfd);
+	return true;
+}
 
 void DeleteOldLogFiles(const char* _SpecialModeName)
 {
-	#ifdef _DEBUG
-		const size_t kLogHistory = 10;
+	const size_t kLogHistory = 10;
 
-		char logFileWildcard[_MAX_PATH];
-		oGetLogFilePath(logFileWildcard, _SpecialModeName);
+	char logFileWildcard[_MAX_PATH];
+	oGetLogFilePath(logFileWildcard, _SpecialModeName);
 
-		char* p = oStrStrReverse(logFileWildcard, "_");
-		strcpy_s(p, oCOUNTOF(logFileWildcard) - std::distance(logFileWildcard, p), "*.txt");
+	char* p = oStrStrReverse(logFileWildcard, "_");
+	strcpy_s(p, oCOUNTOF(logFileWildcard) - std::distance(logFileWildcard, p), "*.txt");
 
-		std::vector<oNamedFileDesc> logs;
-		logs.reserve(20);
+	std::vector<oNamedFileDesc> logs;
+	logs.reserve(20);
+	oFile::EnumFiles(logFileWildcard, oBIND(PushBackNFDs, oBIND1, oBIND2, oBINDREF(logs)));
 
-		oNamedFileDesc fd;
-		void* fc = 0;
-		if (oFile::FindFirst(&fd, fd.FileName, logFileWildcard, &fc))
-		{
-			logs.push_back(fd);
-
-			while (oFile::FindNext(&fd, fd.FileName, fc))
-				logs.push_back(fd);
-
-			oVERIFY(oFile::CloseFind(fc));
-		}
-
-		if (logs.size() > kLogHistory)
-		{
-			std::sort(logs.begin(), logs.end(), oNamedFileDesc::NewerToOlder);
-			for (size_t i = kLogHistory; i < logs.size(); i++)
-				oFile::Delete(logs[i].FileName);
-		}
-
-	#endif
+	if (logs.size() > kLogHistory)
+	{
+		std::sort(logs.begin(), logs.end(), oNamedFileDesc::NewerToOlder);
+		for (size_t i = kLogHistory; i < logs.size(); i++)
+			oFile::Delete(logs[i].FileName);
+	}
 }
 
 void EnableLogFile(const char* _SpecialModeName)
@@ -253,8 +231,63 @@ void SetTestManagerDesc(const PARAMETERS* _pParameters)
 	desc.NumRunIterations = _pParameters->RepeatNumber ? _pParameters->RepeatNumber : 1;
 	desc.ImageFuzziness = 10; // @oooii-tony: FIXME: compression seems to be non-repeatable, so leave a wide margin for error
 	desc.PixelPercentageMinSuccess = 98;
+	desc.EnableSpecialTestTimeouts = _pParameters->EnableTimeouts;
 
 	oTestManager::Singleton()->SetDesc(&desc);
+}
+
+static bool FindDuplicateProcessInstanceByName(unsigned int _ProcessID, unsigned int _ParentProcessID, const char* _ProcessExePath, unsigned int _IgnorePID, const char* _FindName, unsigned int* _pOutPID)
+{
+	if (_IgnorePID != _ProcessID && !_stricmp(_FindName, _ProcessExePath))
+	{
+		*_pOutPID = _ProcessID;
+		return false;
+	}
+
+	return true;
+}
+
+bool TerminateDuplicateInstances(const char* _Name)
+{
+	unsigned int ThisID = oProcessGetCurrentID();
+	unsigned int duplicatePID = 0;
+	oProcessEnum(oBIND(FindDuplicateProcessInstanceByName, oBIND1, oBIND2, oBIND3, ThisID, _Name, &duplicatePID));
+	while (duplicatePID)
+	{
+		oMsgBox::RESULT result = oMsgBox::tprintf(oMsgBox::YESNO, 20000, sTITLE, "An instance of the unittest executable was found at process %u. Do you want to kill it now? (no means this application will exit)", duplicatePID);
+		if (result == oMsgBox::NO)
+			return false;
+
+		oProcessTerminate(duplicatePID, ECANCELED);
+		if (!oProcessWaitExit(duplicatePID, 5000))
+			oMsgBox::tprintf(oMsgBox::WARN, 20000, sTITLE, "Cannot terminate stale process %u, please end this process before continuing.", duplicatePID);
+
+		duplicatePID = 0;
+		oProcessEnum(oBIND(FindDuplicateProcessInstanceByName, oBIND1, oBIND2, oBIND3, ThisID, _Name, &duplicatePID));
+	}
+
+	return true;
+}
+
+bool EnsureOneInstanceIsRunning()
+{
+	// Scan for both release and debug builds already running
+	char path[_MAX_PATH];
+	oVERIFY(oGetExePath(path));
+
+	char name[_MAX_PATH];
+	oGetFilebase(name, path);
+	if (_memicmp("DEBUG-", name, 6))
+		sprintf_s(name, "DEBUG-%s", oGetFilebase(path));
+
+	strcat_s(name, oGetFileExtension(path));
+
+	if (!TerminateDuplicateInstances(name))
+		return false;
+	if (!TerminateDuplicateInstances(name+6))
+		return false;
+
+	return true;
 }
 
 int main(int argc, const char* argv[])
@@ -273,12 +306,23 @@ int main(int argc, const char* argv[])
 		result = oTestManager::Singleton()->RunSpecialMode(parameters.SpecialMode);
 	else
 	{
-		result = oTestManager::Singleton()->RunTests(parameters.Filters.empty() ? 0 : &parameters.Filters[0], parameters.Filters.size());
+		if (EnsureOneInstanceIsRunning())
+			result = oTestManager::Singleton()->RunTests(parameters.Filters.empty() ? 0 : &parameters.Filters[0], parameters.Filters.size());
+		else
+			result = oTest::SKIPPED;
 
-		oMsgBox::tprintf(result ? oMsgBox::NOTIFY_ERR : oMsgBox::NOTIFY, 10000, "OOOii Unit Tests", "Completed%s", result ? " with errors" : " successfully");
-		if (oDebugger::IsAttached())
-			oMsgBox::printf(result ? oMsgBox::ERR : oMsgBox::INFO, sTITLE, "oooii_unittests completed%s", result ? " with errors" : " successfully");
+		oMsgBox::tprintf(result ? oMsgBox::NOTIFY_ERR : oMsgBox::NOTIFY, 10000, sTITLE, "Completed%s", result ? " with errors" : " successfully");
+		if (oProcessHasDebuggerAttached())
+		{
+			system("echo.");
+			system("pause");
+		}
 	}
+
+	if (parameters.SpecialMode)
+		oTRACE("Unit test (special mode %s) exiting with result: %s", parameters.SpecialMode, oAsString((oTest::RESULT)result));
+	else
+		oTRACE("Unit test exiting with result: %s", oAsString((oTest::RESULT)result));
 
 	return result;
 }

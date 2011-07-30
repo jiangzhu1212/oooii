@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oMath.h>
 #include <oooii/oAssert.h>
 #include <oooii/oByte.h>
@@ -1554,6 +1532,9 @@ int oContains(const oSpheref& _Sphere, const oAABoxf& _Box)
 errno_t oFromString(float2* _pValue, const char* _StrSource)
 {
 	if (!_pValue || !_StrSource) return EINVAL;
+	_StrSource += strcspn(_StrSource, "0123456789+-.");
+	if (!*_StrSource) return EINVAL;
+
 	const char* end = 0;
 	end = _StrSource + strcspn(_StrSource, " ");
 	if (!*end) return EINVAL;
@@ -1566,6 +1547,9 @@ errno_t oFromString(float2* _pValue, const char* _StrSource)
 errno_t oFromString(float3* _pValue, const char* _StrSource)
 {
 	if (!_pValue || !_StrSource) return EINVAL;
+	_StrSource += strcspn(_StrSource, "0123456789+-.");
+	if (!*_StrSource) return EINVAL;
+
 	const char* end = 0;
 	end = _StrSource + strcspn(_StrSource, " ");
 	if (!*end) return EINVAL;
@@ -1581,6 +1565,9 @@ errno_t oFromString(float3* _pValue, const char* _StrSource)
 errno_t oFromString(float4* _pValue, const char* _StrSource)
 {
 	if (!_pValue || !_StrSource) return EINVAL;
+	_StrSource += strcspn(_StrSource, "0123456789+-.");
+	if (!*_StrSource) return EINVAL;
+
 	const char* end = 0;
 	end = _StrSource + strcspn(_StrSource, " ");
 	if (!*end) return EINVAL;
@@ -1604,6 +1591,9 @@ errno_t oFromString(quatf* _pValue, const char* _StrSource)
 
 errno_t oFromString(float4x4* _pValue, const char* _StrSource)
 {
+	_StrSource += strcspn(_StrSource, "0123456789+-.");
+	if (!*_StrSource) return EINVAL;
+
 	// Read in-order, then transpose
 	const char* end = 0;
 	float* f = (float*)_pValue;
@@ -1621,6 +1611,9 @@ errno_t oFromString(float4x4* _pValue, const char* _StrSource)
 errno_t oFromString(int2* _pValue, const char* _StrSource)
 {
 	if (!_pValue || !_StrSource) return EINVAL;
+	_StrSource += strcspn(_StrSource, "0123456789+-");
+	if (!*_StrSource) return EINVAL;
+
 	const char* end = 0;
 	end = _StrSource + strcspn(_StrSource, " ");
 	if (!*end) return EINVAL;
@@ -1634,6 +1627,9 @@ errno_t oFromString(int2* _pValue, const char* _StrSource)
 errno_t oFromString(int3* _pValue, const char* _StrSource)
 {
 	if (!_pValue || !_StrSource) return EINVAL;
+	_StrSource += strcspn(_StrSource, "0123456789+-");
+	if (!*_StrSource) return EINVAL;
+
 	const char* end = 0;
 	end = _StrSource + strcspn(_StrSource, " ");
 	if (!*end) return EINVAL;
@@ -1650,6 +1646,9 @@ errno_t oFromString(int3* _pValue, const char* _StrSource)
 errno_t oFromString(int4* _pValue, const char* _StrSource)
 {
 	if (!_pValue || !_StrSource) return EINVAL;
+	_StrSource += strcspn(_StrSource, "0123456789+-");
+	if (!*_StrSource) return EINVAL;
+
 	const char* end = 0;
 	end = _StrSource + strcspn(_StrSource, " ");
 	if (!*end) return EINVAL;
@@ -1668,6 +1667,9 @@ errno_t oFromString(int4* _pValue, const char* _StrSource)
 errno_t oFromString(uint2* _pValue, const char* _StrSource)
 {
 	if (!_pValue || !_StrSource) return EINVAL;
+	_StrSource += strcspn(_StrSource, "0123456789+");
+	if (!*_StrSource) return EINVAL;
+
 	const char* end = 0;
 	end = _StrSource + strcspn(_StrSource, " ");
 	if (!*end) return EINVAL;
@@ -1681,6 +1683,9 @@ errno_t oFromString(uint2* _pValue, const char* _StrSource)
 errno_t oFromString(uint3* _pValue, const char* _StrSource)
 {
 	if (!_pValue || !_StrSource) return EINVAL;
+	_StrSource += strcspn(_StrSource, "0123456789+");
+	if (!*_StrSource) return EINVAL;
+
 	const char* end = 0;
 	end = _StrSource + strcspn(_StrSource, " ");
 	if (!*end) return EINVAL;
@@ -1697,6 +1702,9 @@ errno_t oFromString(uint3* _pValue, const char* _StrSource)
 errno_t oFromString(uint4* _pValue, const char* _StrSource)
 {
 	if (!_pValue || !_StrSource) return EINVAL;
+	_StrSource += strcspn(_StrSource, "0123456789+");
+	if (!*_StrSource) return EINVAL;
+	
 	const char* end = 0;
 	end = _StrSource + strcspn(_StrSource, " ");
 	if (!*end) return EINVAL;
@@ -1712,6 +1720,18 @@ errno_t oFromString(uint4* _pValue, const char* _StrSource)
 	return 0;
 }
 
+errno_t oFromString(oRECT* _pValue, const char* _StrSource)
+{
+	if (!_pValue) return EINVAL;
+	int4 temp;
+	errno_t err = oFromString(&temp, _StrSource);
+	if(err != 0)
+		return err;
+	_pValue->SetMin(int2(temp.x, temp.y));
+	_pValue->SetMax(int2(temp.z, temp.w));
+	return 0;
+}
+
 errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const float2& _Value) { return sprintf_s(_StrDestination, _SizeofStrDestination, "%f %f", _Value.x, _Value.y); }
 errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const float3& _Value) { return sprintf_s(_StrDestination, _SizeofStrDestination, "%f %f %f", _Value.x, _Value.y, _Value.z); }
 errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const float4& _Value) { return sprintf_s(_StrDestination, _SizeofStrDestination, "%f %f %f %f", _Value.x, _Value.y, _Value.z, _Value.w); }
@@ -1722,6 +1742,7 @@ errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const int
 errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const uint2& _Value) { return sprintf_s(_StrDestination, _SizeofStrDestination, "%u %u", _Value.x, _Value.y); }
 errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const uint3& _Value) { return sprintf_s(_StrDestination, _SizeofStrDestination, "%u %u %u", _Value.x, _Value.y, _Value.z); }
 errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const uint4& _Value) { return sprintf_s(_StrDestination, _SizeofStrDestination, "%u %u %u %u", _Value.x, _Value.y, _Value.z, _Value.w); }
+errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const oRECT& _Value) { return sprintf_s(_StrDestination, _SizeofStrDestination, "%u %u %u %u", _Value.GetMin().x, _Value.GetMin().y, _Value.GetMax().x, _Value.GetMax().y); }
 
 errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const float4x4& _Value)
 {

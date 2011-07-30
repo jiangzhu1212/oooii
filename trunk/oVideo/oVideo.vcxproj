@@ -1,0 +1,209 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{731EA328-4A4D-4D70-8C01-778174C98BB9}</ProjectGuid>
+    <RootNamespace>oStubStaticLib</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="..\MSSupport\oFXC.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\MSSupport\Properties\Release32.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\dll.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\MSSupport\Properties\Debug32.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\dll.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\MSSupport\Properties\Release64.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\dll.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\MSSupport\Properties\Debug64.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\dll.props" />
+    <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Link>
+      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(oTmpDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <Link>
+      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(oTmpDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <AdditionalIncludeDirectories>$(oTmpDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <AdditionalIncludeDirectories>$(oTmpDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\inc\oVideo\oVideoCodec.h" />
+    <ClInclude Include="..\inc\oVideo\oVideoRTPStream.h" />
+    <ClInclude Include="oImageDecodeCPU.h" />
+    <ClInclude Include="oImageSequence.h" />
+    <ClInclude Include="oMOVFileImpl.h" />
+    <ClInclude Include="oRawDecodeCPU.h" />
+    <ClInclude Include="oRleDecodeCPU.h" />
+    <ClInclude Include="oVideoCodecD3D10.h" />
+    <ClInclude Include="oVideoHelpers.h" />
+    <ClInclude Include="oVideoRTPImpl.h" />
+    <ClInclude Include="oVP8DecodeCPU.h" />
+    <ClInclude Include="oWebmEncoder.h" />
+    <ClInclude Include="oWebmEncoderCodec.h" />
+    <ClInclude Include="oWebmEncoderCodecRaw420.h" />
+    <ClInclude Include="oWebmEncoderCodecVP8.h" />
+    <ClInclude Include="oWebmFile.h" />
+    <ClInclude Include="oWebmStreaming.h" />
+    <ClInclude Include="pch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\oooii\oooii.vcxproj">
+      <Project>{8eb33511-eed5-48ac-99f9-efa2a34bb2dd}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="oImageDecodeCPU.cpp" />
+    <ClCompile Include="oImageSequence.cpp" />
+    <ClCompile Include="oMOVFileImpl.cpp" />
+    <ClCompile Include="oRawDecodeCPU.cpp" />
+    <ClCompile Include="oRleDecodeCPU.cpp" />
+    <ClCompile Include="oVideoCodec.cpp" />
+    <ClCompile Include="oVideoCodecD3D.cpp" />
+    <ClCompile Include="oVideoCodecD3D10.cpp" />
+    <ClCompile Include="oVideoRTPImpl.cpp" />
+    <ClCompile Include="oVideoRTPStream.cpp" />
+    <ClCompile Include="oVP8DecodeCPU.cpp" />
+    <ClCompile Include="oWebmEncoder.cpp" />
+    <ClCompile Include="oWebmEncoderCodec.cpp" />
+    <ClCompile Include="oWebmEncoderCodecRaw420.cpp" />
+    <ClCompile Include="oWebmEncoderCodecVP8.cpp" />
+    <ClCompile Include="oWebmFile.cpp" />
+    <ClCompile Include="oWebmStreaming.cpp" />
+    <ClCompile Include="oWebXFile.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="exports.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <FXC Include="oHLSLYUVTORGB.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)inc\oooii\oHLSL.h</AdditionalDependencies>
+    </FXC>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\MSSupport\oFXC.targets" />
+  </ImportGroup>
+</Project>

@@ -24,3 +24,14 @@ The batch file configures Windows for the fastest possible reboot on BSOD, basic
 o a time-taking mem dump write
 o the recovery boot screen
 o on-boot popups describing errors
+
+== oFilterDebugOutput ==
+
+Given a text file of entries, this will create a new text file of entries with lines filtered out according to the following ruleset:
+
+oFilterDebugOutput srcfile -i iregex -e eregex [-e eregex -i iregex ...]
+
+o There can be as many filters as desired
+o Filters override each other from right to left, so the leftmost filter is the weakest. The idea is to be able to exclude all lines with a word like "leak" in them, but then include that one line with "leak in my system-of-interest" or something like that.
+o iregex's if matched against a line will make that line included unless the iregex is overridden by a later exclusion
+o eregex's if matched against a line will make that line excluded skipped in writing the new file unless the eregex is overridden by a later inclusion

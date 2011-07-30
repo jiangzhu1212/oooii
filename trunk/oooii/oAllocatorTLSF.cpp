@@ -1,28 +1,7 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include "oAllocatorTLSF.h"
 #include <oooii/oByte.h>
+#include <oooii/oString.h>
 #include "tlsf.h"
 
 const oGUID& oGetGUID( threadsafe const oAllocatorTLSF* threadsafe const * )
@@ -36,7 +15,6 @@ AllocatorTLSF_Impl::AllocatorTLSF_Impl(const char* _DebugName, const DESC* _pDes
 	: Desc(*_pDesc)
 {
 	*_pSuccess = false;
-	*DebugName = 0;
 	strcpy_s(DebugName, oSAFESTRN(_DebugName));
 	AllocatorTLSF_Impl::Reset();
 	if (!AllocatorTLSF_Impl::IsValid())
@@ -48,9 +26,21 @@ AllocatorTLSF_Impl::AllocatorTLSF_Impl(const char* _DebugName, const DESC* _pDes
 	*_pSuccess = true;
 }
 
+void TraceAllocated(void* ptr, size_t size, int used, void* user)
+{
+	if (used)
+	{
+		char mem[64];
+		oFormatMemorySize(mem, size, 2);
+		oTRACE("TLSF LEAK %s: 0x%p %s", (const char*)user, ptr, mem);
+	}
+}
+
 AllocatorTLSF_Impl::~AllocatorTLSF_Impl()
 {
-	oASSERT(Stats.NumAllocations == 0, "Allocator being destroyed with %u allocations still unfreed! This may leave dangling pointers.", Stats.NumAllocations);
+	if (Stats.NumAllocations != 0)
+		tlsf_walk_heap(hPool, TraceAllocated, DebugName);
+	oASSERT(Stats.NumAllocations == 0, "Allocator %s being destroyed with %u allocations still unfreed! This may leave dangling pointers. See trace for addresses.", DebugName, Stats.NumAllocations);
 	oASSERT(AllocatorTLSF_Impl::IsValid(), "TLSF Heap is corrupt");
 	tlsf_destroy(hPool);
 }

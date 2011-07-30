@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 
 // This should be included instead of, or at least before <windows.h> to avoid
 // much of the conflict-causing overhead as well as include some useful 
@@ -82,20 +60,6 @@
 #include <math.h>
 #pragma warning (default:4985)
 
-// @oooii-tony: How can I define this in such a way that MSVC is just aware of 
-// what OS it's running on and sets this appropriately in the build system?
-// I want to maintain compatibility with Vista/XP because we're still 
-// occasionally use HW that has drivers only for XP/Vista.
-#if (_MSC_VER < 1600)
-	#define oFORCE_WIN7_VERSION
-#endif
-
-#ifdef oFORCE_WIN7_VERSION
-	#define WINVER 0x0601
-	#define NTDDI_WIN7 WINVER
-	#define _WIN32_WINNT_WIN7 WINVER
-#endif
-
 #include <windows.h>
 #include <winsock2.h>
 
@@ -115,28 +79,52 @@
 #if (defined(NTDDI_WIN7) && (NTDDI_VERSION >= NTDDI_WIN7))
 	#define oDXVER oDXVER_11
 #elif (defined(NTDDI_LONGHORN) && (NTDDI_VERSION >= NTDDI_LONGHORN)) || (defined(NTDDI_VISTA) && (NTDDI_VERSION >= NTDDI_VISTA))
-	#define oDXVER oDXVER_10_1
+	#define oDXVER oDXVER_11 //oDXVER_10_1
 #else
 	#define oDXVER oDXVER_9c
 #endif
 
 // mostly for debugging...
-#ifdef oMESSAGE_WINDOWS_VERSION
-	#if (defined(NTDDI_WIN7) && (NTDDI_VERSION >= NTDDI_WIN7))
-		#pragma message("PLATFORM: Windows7")
-	#elif (defined(NTDDI_VISTA) && (NTDDI_VERSION >= NTDDI_VISTA))
-		#pragma message("PLATFORM: Windows Vista")
-	#elif (defined(NTDDI_LONGHORN) && (NTDDI_VERSION >= NTDDI_LONGHORN))
-		#pragma message("PLATFORM: Longhorn")
-	#elif (defined(NTDDI_WINXP) && (NTDDI_VERSION >= NTDDI_WINXP))
-		#pragma message("PLATFORM: XP")
-	#endif
+#if (defined(NTDDI_WIN7) && (NTDDI_VERSION >= NTDDI_WIN7))
+	oBUILD_MSG("PLATFORM: Windows7")
+	#define oWINDOWS_HAS_TRAY_NOTIFYICONIDENTIFIER
+	#define oWINDOWS_HAS_TRAY_QUIETTIME
+#elif (defined(NTDDI_VISTA) && (NTDDI_VERSION >= NTDDI_VISTA))
+	oBUILD_MSG("PLATFORM: Windows Vista")
+#elif (defined(NTDDI_LONGHORN) && (NTDDI_VERSION >= NTDDI_LONGHORN))
+	oBUILD_MSG("PLATFORM: Windows Longhorn")
+#elif (defined(NTDDI_WINXP) && (NTDDI_VERSION >= NTDDI_WINXP))
+	oBUILD_MSG("PLATFORM: Windows XP")
+#endif
 
-	#if (_MSC_VER >= 1600)
-		#pragma message("COMPILER: with Visual Studio 2010")
-	#elif (_MSC_VER >= 1500)
-		#pragma message("COMPILER: Visual Studio 2008")
-	#endif
+#if (_MSC_VER >= 1600)
+	oBUILD_MSG("COMPILER: Visual Studio 2010")
+#elif (_MSC_VER >= 1500)
+	oBUILD_MSG("COMPILER: Visual Studio 2008")
+#endif
+
+#if oDXVER >= oDXVER_13_1
+	oBUILD_MSG("DIRECTX: 13.1")
+#elif oDXVER >= oDXVER_13
+	oBUILD_MSG("DIRECTX: 13.0")
+#elif oDXVER >= oDXVER_12_1
+	oBUILD_MSG("DIRECTX: 12.1")
+#elif oDXVER >= oDXVER_12
+	oBUILD_MSG("DIRECTX: 12.0")
+#elif oDXVER >= oDXVER_11_1
+	oBUILD_MSG("DIRECTX: 11.1")
+#elif oDXVER >= oDXVER_11
+	oBUILD_MSG("DIRECTX: 11.0")
+#elif oDXVER >= oDXVER_10_1
+	oBUILD_MSG("DIRECTX: 10.1")
+#elif oDXVER >= oDXVER_10
+	oBUILD_MSG("DIRECTX: 10.0")
+#elif oDXVER >= oDXVER_9c
+	oBUILD_MSG("DIRECTX: 9.0c")
+#elif oDXVER >= oDXVER_9b
+	oBUILD_MSG("DIRECTX: 9.0b")
+#elif oDXVER >= oDXVER_9a
+	oBUILD_MSG("DIRECTX: 9.0a")
 #endif
 
 #include <shlobj.h>
@@ -161,8 +149,8 @@
 // pattern, and oV is for direct HRESULT return values.
 
 #ifdef _DEBUG
-	#define oVB(fn) do { if (!(fn)) { oWinSetLastError(::GetLastError()); oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, fn, "%s", oGetLastErrorDesc()); } } while(0)
-	#define oV(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) { oWinSetLastError(HR__); oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, fn, "%s", oGetLastErrorDesc()); } } while(0)
+	#define oVB(fn) do { if (!(fn)) { oWinSetLastError(::GetLastError()); oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, fn, "%s", oGetLastErrorDesc()); } } while(false)
+	#define oV(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) { oWinSetLastError(HR__); oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, fn, "%s", oGetLastErrorDesc()); } } while(false)
 #else
 	#define oVB(fn) fn
 	#define oV(fn) fn
@@ -177,8 +165,8 @@
 	#include <crtdbg.h>
 
 	#define oCRTASSERT(expr, msg, ...) if (!(expr)) { _CrtDbgReport(_CRT_ASSERT, __FILE__, __LINE__, "OOOii Debug Library", #expr "\n\n%s", msg, ## __VA_ARGS__); }
-	#define oCRTWARNING(msg, ...) do { _CrtDbgReport(_CRT_WARN, __FILE__, __LINE__, "OOOii Debug Library", "WARNING: " msg, ## __VA_ARGS__); } while(0)
-	#define oCRTTRACE(msg, ...) do { _CrtDbgReport(_CRT_WARN, __FILE__, __LINE__, "OOOii Debug Library", msg, ## __VA_ARGS__); } while(0)
+	#define oCRTWARNING(msg, ...) do { _CrtDbgReport(_CRT_WARN, __FILE__, __LINE__, "OOOii Debug Library", "WARNING: " msg, ## __VA_ARGS__); } while(false)
+	#define oCRTTRACE(msg, ...) do { _CrtDbgReport(_CRT_WARN, __FILE__, __LINE__, "OOOii Debug Library", msg, ## __VA_ARGS__); } while(false)
 
 	// Convenience wrapper for quick scoped leak checking
 	class oLeakCheck
@@ -229,11 +217,11 @@ bool oWinSetLastError(HRESULT _hResult = oWINDOWS_DEFAULT, const char* _ErrorDes
 
 // oV_RETURN executes a block of code that returns an HRESULT
 // if the HRESULT is not S_OK it returns the HRESULT
-#define oV_RETURN(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) return HR__; } while(0)
+#define oV_RETURN(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) return HR__; } while(false)
 
 // oVB_RETURN executes a block of Windows API code that returns bool and populates
 // oGetLastError() with ::GetLastError() and returns false.
-#define oVB_RETURN(fn) do { if (!(fn)) { oWinSetLastError(oWINDOWS_DEFAULT, #fn " failed: "); return false; } } while(0)
+#define oVB_RETURN(fn) do { if (!(fn)) { oWinSetLastError(oWINDOWS_DEFAULT, #fn " failed: "); return false; } } while(false)
 
 // _____________________________________________________________________________
 // Smart pointer support
@@ -267,11 +255,23 @@ void oThreadsafeOutputDebugStringA(const char* _OutputString);
 
 // returns true if wait finished successfully, or false if
 // timed out or otherwise errored out.
-inline bool oWaitSingle(HANDLE _Handle, unsigned int _TimeoutMS = oINFINITE_WAIT) { return WAIT_OBJECT_0 == ::WaitForSingleObject(_Handle, _TimeoutMS == oINVALID ? INFINITE : _TimeoutMS); }
-inline bool oWaitMultiple(HANDLE* _pHandles, size_t _NumberOfHandles, bool _WaitAll, unsigned int _TimeoutMS = oINFINITE_WAIT) { return WAIT_ABANDONED_0 > ::WaitForMultipleObjects(static_cast<DWORD>(_NumberOfHandles), _pHandles, _WaitAll, _TimeoutMS == ~0u ? INFINITE : _TimeoutMS); }
+bool oWaitSingle(HANDLE _Handle, unsigned int _TimeoutMS = oINFINITE_WAIT);
+
+// If _pWaitBreakingIndex is nullptr, this waits for all handles to be 
+// unblocked. If a valid pointer, then it is filled with the index of the handle
+// that unblocked the wait.
+bool oWaitMultiple(HANDLE* _pHandles, size_t _NumberOfHandles, size_t* _pWaitBreakingIndex = nullptr, unsigned int _TimeoutMS = oINFINITE_WAIT);
 
 bool oWaitSingle(DWORD _ThreadID, unsigned int _Timeout = oINFINITE_WAIT);
-bool oWaitMultiple(DWORD* _pThreadIDs, size_t _NumberOfThreadIDs, bool _WaitAll, unsigned int _TimeoutMS = oINFINITE_WAIT);
+bool oWaitMultiple(DWORD* _pThreadIDs, size_t _NumberOfThreadIDs, size_t* _pWaitBreakingIndex = nullptr, unsigned int _TimeoutMS = oINFINITE_WAIT);
+
+template<typename GetNativeHandleT> inline bool oTWaitMultiple(threadsafe GetNativeHandleT** _ppWaitable, size_t _NumWaitables, size_t* _pWaitBreakingIndex = nullptr, unsigned int _TimeoutMS = oINFINITE_WAIT)
+{
+	HANDLE handles[64]; // 64 is a windows limit
+	for (size_t i = 0; i < _NumWaitables; i++)
+		handles[i] = static_cast<HANDLE>(_ppWaitable[i]->GetNativeHandle());
+	return oWaitMultiple(handles, _NumWaitables, _pWaitBreakingIndex, _TimeoutMS);
+}
 
 // _____________________________________________________________________________
 // Winsock
@@ -528,6 +528,8 @@ bool oSetTitle(HWND _hWnd, const char* title);
 bool oGetTitle(HWND _hWnd, char* title, size_t numberOfElements);
 template<size_t size> inline bool oGetTitle(HWND _hWnd, char (&_Title)[size]) { return oGetTitle(_hWnd, _Title, size); }
 
+void oSetAlwaysOnTop(HWND _hWnd, bool _AlwaysOnTop);
+
 // @oooii-tony: A wrapper for SetWindowsHookEx that includes a user-specified context.
 // (Is there a way to do this?! Please someone let me know!)
 typedef LRESULT (CALLBACK* oHOOKPROC)(int _nCode, WPARAM _wParam, LPARAM _lParam, void* _pUserData);
@@ -548,13 +550,58 @@ inline char* oGetWMDesc(char* _StrDestination, size_t _SizeofStrDestination, con
 template<size_t size> inline char* oGetWMDesc(char (&_StrDestination)[size], const CWPSTRUCT* _pCWPStruct) { return oGetWMDesc(_StrDestination, size, _pCWPStruct); }
 
 // _____________________________________________________________________________
+// Dialog box helpers
+
+enum oWINDOWS_DIALOG_ITEM_TYPE
+{
+	oDLG_BUTTON,
+	oDLG_EDITBOX,
+	oDLG_LABEL_LEFT_ALIGNED,
+	oDLG_LABEL_CENTERED,
+	oDLG_LABEL_RIGHT_ALIGNED,
+	oDLG_LARGELABEL,
+	oDLG_ICON,
+	oDLG_LISTBOX,
+	oDLG_SCROLLBAR,
+	oDLG_COMBOBOX,
+};
+
+struct oWINDOWS_DIALOG_ITEM
+{
+	const char* Text;
+	oWINDOWS_DIALOG_ITEM_TYPE Type;
+	WORD ItemID;
+	RECT Rect;
+	bool Enabled;
+	bool Visible;
+	bool TabStop;
+};
+
+struct oWINDOWS_DIALOG_DESC
+{
+	const char* Font;
+	const char* Caption;
+	const oWINDOWS_DIALOG_ITEM* pItems;
+	UINT NumItems;
+	UINT FontPointSize;
+	RECT Rect;
+	bool Center; // if true, ignores Rect.left, Rect.top positioning
+	bool SetForeground;
+	bool Enabled;
+	bool Visible;
+	bool AlwaysOnTop;
+};
+
+LPDLGTEMPLATE oDlgNewTemplate(const oWINDOWS_DIALOG_DESC& _Desc);
+void oDlgDeleteTemplate(LPDLGTEMPLATE _lpDlgTemplate);
+
+// _____________________________________________________________________________
 // Identification/ID Conversion API
 
+// Converts a standard C file handle from fopen to a windows handle
+HANDLE oGetFileHandle(FILE* _File);
+
 DWORD oGetThreadID(HANDLE _hThread);
-
-DWORD oWinGetMainThreadID();
-
-DWORD oGetParentProcessID();
 
 // Uses EnumWindows to find the top-level HWND associated with the specified
 // _ThreadID. _ThreadID should be the main thread of the process, so either use
@@ -569,12 +616,23 @@ HWND oGetWindowFromThreadID(DWORD _ThreadID);
 // of the main process module.
 HMODULE oGetModule(void* _ModuleFunctionPointer);
 
-// Returns handle of the active named process
-HANDLE oWinGetProcessHandle(const char* _Name);
+// Returns true if _pOutProcessID has been filled with the ID of the specified
+// process image name (exe name). If this returns false, check oGetLastError()
+// for more information.
+bool oWinGetProcessID(const char* _Name, DWORD* _pOutProcessID);
 
-// Fills the specified array with the IDs of all threads in this process.
-unsigned int oGetProcessThreads(DWORD* _pThreadIDs, size_t _SizeofThreadIDs);
-template<size_t size> inline unsigned int oGetProcessThreads(DWORD (&_pThreadIDs)[size]) { return oGetProcessThreads(_pThreadIDs, size); }
+// Call the specified function for each thread in the current process. The 
+// function should return true to keep enumerating, or false to exit early. This
+// function returns false if there is a failure, check oGetLastError() for more
+// information.
+bool oEnumProcessThreads(DWORD _ProcessID, oFUNCTION<bool(DWORD _ThreadID, DWORD _ParentProcessID)> _Function);
+
+// Call the specified function for each of the child processes of the current
+// process. The function should return true to keep enumerating, or false to
+// exit early. This function returns false if there is a failure, check 
+// oGetLastError() for more information. The error can be ECHILD if there are no 
+// child processes.
+bool oWinEnumProcesses(oFUNCTION<bool(DWORD _ProcessID, DWORD _ParentProcessID, const char* _ProcessExePath)> _Function);
 
 void oSetThreadNameInDebugger(DWORD _ThreadID, const char* _Name);
 
@@ -617,10 +675,10 @@ void oGetScreenDPIScale(float* _pScaleX, float* _pScaleY);
 	// as it can not be released from DLLmain, so always create it.
 	bool oCreateDXGIFactory(IDXGIFactory1** _ppFactory);
 
-	HRESULT oDXGICreateSwapchain(IUnknown* _pDevice, unsigned int Width, unsigned int Height, unsigned int RefreshRateN, unsigned int RefreshRateD, DXGI_FORMAT _Fmt, HWND _Hwnd, IDXGISwapChain** _ppSwapChain);
+	HRESULT oDXGICreateSwapchain(IUnknown* _pDevice, unsigned int Width, unsigned int Height, unsigned int RefreshRateN, unsigned int RefreshRateD, DXGI_FORMAT _Fmt, HWND _hWnd, IDXGISwapChain** _ppSwapChain);
 
-	// Returns the adapter that is responsible for the largest screen portion of the supplied _Rect
-	bool oDXGIGetAdapter(const RECT& _Rect, IDXGIAdapter1** _ppAdapter);
+	// Returns the adapter and corresponding monitor that is responsible for the largest screen portion of the supplied _Rect
+	bool oDXGIGetAdapterWithMonitor(const RECT& _Rect, IDXGIAdapter1** _ppAdapter, IDXGIOutput** _ppOutput);
 	bool oD2D1CreateFactory(ID2D1Factory** _ppFactory);
 
 	float oDXGIGetD3DVersion(IDXGIAdapter* _pAdapter);

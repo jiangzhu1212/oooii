@@ -1,28 +1,7 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oAssert.h>
 #include <oooii/oDebugger.h>
+#include <oooii/oFile.h>
 #include <oooii/oHash.h>
 #include <oooii/oMsgBox.h>
 #include <oooii/oPath.h>
@@ -180,7 +159,7 @@ namespace RobustPrintMessage
 				cur += sprintf_s(cur, std::distance(cur, end), "%s ", oAsString(_Assertion.Type));
 
 			if (_Desc.PrefixThreadId)
-				cur += sprintf_s(cur, std::distance(cur, end), "[%s.%u.%u] ", oGetHostname(), oGetCurrentProcessID(), oGetCurrentThreadID());
+				cur += sprintf_s(cur, std::distance(cur, end), "%s ", oGetExecutionPath());
 
 			if (_Desc.PrefixMsgId)
 				cur += sprintf_s(cur, std::distance(cur, end), "{0x%08x} ", _Assertion.MsgId);
@@ -194,6 +173,8 @@ namespace RobustPrintMessage
 
 	oAssert::ACTION OOOiiDefaultPrintMessage(const oAssert::ASSERTION& _Assertion, void* _hLogFile, const char* _Format, va_list _Args)
 	{
+		oFile::Handle hLogFile = (oFile::Handle)_hLogFile;
+
 		oAssert::DESC desc;
 		oAssert::GetDesc(&desc);
 
@@ -212,11 +193,8 @@ namespace RobustPrintMessage
 
 		// And to log file
 
-		if (_hLogFile)
-		{
-			fwrite(msg, strlen(msg), 1, (FILE*)_hLogFile);
-			fflush((FILE*)_hLogFile);
-		}
+		if (hLogFile)
+			oFile::FWrite(msg, strlen(msg), hLogFile, true);
 
 		// Output message
 		oAssert::ACTION action = _Assertion.DefaultResponse;
@@ -226,12 +204,13 @@ namespace RobustPrintMessage
 				break;
 
 			case oAssert::TYPE_WARNING:
-				if (desc.EnableWarnings)
+				if (desc.PromptWarnings)
 					action = ShowMsgBox(_Assertion, oMsgBox::WARN, msg);
 				break;
 
 			case oAssert::TYPE_ASSERT:
-				action = ShowMsgBox(_Assertion, oMsgBox::DEBUG, msg);
+				if (desc.PromptAsserts)
+					action = ShowMsgBox(_Assertion, oMsgBox::DEBUG, msg);
 				break;
 
 			default: oASSUME(0);
@@ -244,7 +223,7 @@ namespace RobustPrintMessage
 struct oAssertContext : oProcessSingleton<oAssertContext>
 {
 	oAssertContext()
-		: LogFile(0)
+		: hLogFile(0)
 	{
 		PushMessageHandler(OOOiiLowLevelPrintMessage);
 
@@ -257,8 +236,8 @@ struct oAssertContext : oProcessSingleton<oAssertContext>
 
 	~oAssertContext()
 	{
-		if (LogFile)
-			fclose(LogFile);
+		if (hLogFile)
+			oFile::Close(hLogFile);
 
 		oDebugger::Release();
 	}
@@ -278,29 +257,42 @@ struct oAssertContext : oProcessSingleton<oAssertContext>
 			oCleanPath(tmp, Desc.LogFilePath);
 			if (0 != _stricmp(LogPath, tmp))
 			{
-				if (LogFile)
+				if (hLogFile)
 				{
-					fclose(LogFile);
-					LogFile = 0;
+					oFile::Close(hLogFile);
+					hLogFile = 0;
 				}
 
-				if (0 != fopen_s(&LogFile, tmp, "wt"))
+				if (!oFile::Open(tmp, true, true, &hLogFile))
 				{
-					*LogPath = 0;
-					oWARN("Failed to open log file \"%s\"", oSAFESTR(tmp));
+					// ensure the dir exists before giving up
+					char tmpdir[_MAX_PATH];
+					strcpy_s(tmpdir, tmp);
+					*oGetFilebase(tmpdir) = 0;
+					if (oFile::CreateFolder(tmpdir) || oGetLastError() == EEXIST)
+					{
+						if (!oFile::Open(tmp, true, true, &hLogFile))
+						{
+							*LogPath = 0;
+							oWARN("Failed to open log file \"%s\"", oSAFESTR(tmp));
+						}
+					}
 
-					// make a copy of the path and attach it to the desc for future
-					// GetDesc() calls.
-					strcpy_s(LogPath, tmp);
-					Desc.LogFilePath = LogPath;
+					else
+						oWARN("Failed to create path for log file \"%s\"", oSAFESTR(tmp));
 				}
 			}
+
+			// make a copy of the path and attach it to the desc for future
+			// GetDesc() calls and reassign pointer.
+			strcpy_s(LogPath, tmp);
+			Desc.LogFilePath = LogPath;
 		}
 
-		else if (LogFile)
+		else if (hLogFile)
 		{
-			fclose(LogFile);
-			LogFile = 0;
+			oFile::Close(hLogFile);
+			hLogFile = 0;
 		}
 	}
 
@@ -334,7 +326,7 @@ struct oAssertContext : oProcessSingleton<oAssertContext>
 		if (!oContains(FilteredMessages, _Assertion.MsgId) && !VPrintMessageStack.empty())
 		{
 			oAssert::VPrintMessageFn VPrintMessage = VPrintMessageStack.back();
-			return VPrintMessage(_Assertion, LogFile, _Format, _Args);
+			return VPrintMessage(_Assertion, hLogFile, _Format, _Args);
 		}
 
 		return oAssert::IGNORE_ONCE;
@@ -344,7 +336,7 @@ struct oAssertContext : oProcessSingleton<oAssertContext>
 	void RemoveMessageFilter(int _MsgId) { oFindAndErase(FilteredMessages, _MsgId); }
 
 protected:
-	FILE* LogFile;
+	oFile::Handle hLogFile;
 	char LogPath[_MAX_PATH];
 	oAssert::DESC Desc;
 	typedef oArray<int, 256> array_t;

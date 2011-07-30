@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 // Socket abstractions for TCP and UDP. Note: Server/Client should be used 
 // together and Sender/Receiver should be used together only, any other 
 // match-up will not work.
@@ -352,7 +330,7 @@ interface oSocketAsyncUDP : oInterface
 	// underlying platform-specific optimizations. 
 	static bool Create(const char* _DebugName, const DESC* _pDesc, threadsafe oSocketAsyncUDP** _ppSocket);
 
-	virtual void Send(void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination) threadsafe = 0;
+	virtual void Send(const void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination) threadsafe = 0;
 
 	template<typename T>
 	inline void Send(T* _pData, const oNetAddr& _Destination) threadsafe
@@ -361,8 +339,9 @@ interface oSocketAsyncUDP : oInterface
 	}
 
 	// Queue up a pending receive. The RecvCallback will be called once the
-	// passed in buffer has been filled. You should have one pending receive
-	// for each worker thread to maximize efficiency.
+	// passed in buffer has been filled with the data from a single packet.
+	// You should have one pending receive for each worker thread to maximize 
+	// efficiency.
 	virtual void Recv(void* _pBuffer, oSocket::size_t _Size) threadsafe = 0;
 };
 

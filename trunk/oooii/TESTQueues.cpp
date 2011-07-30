@@ -1,29 +1,9 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oConcurrentQueueMS.h>
 #include <oooii/oConcurrentQueueOptimisticFIFO.h>
+#include <oooii/oBuffer.h>
 #include <oooii/oCPU.h>
+#include <oooii/oLockedPointer.h>
 #include <oooii/oRef.h>
 #include <oooii/oRefCount.h>
 #include <oooii/oSTL.h>
@@ -123,6 +103,56 @@ template<typename T, typename QueueT> bool TestQueueConcurrency(const char* _Que
 	return true;
 }
 
+void DeleteAndCount(void* _pPointer, size_t* _pCounter)
+{
+	(*_pCounter)++;
+	delete [] _pPointer;
+}
+
+template<typename QueueT> oTest::RESULT TestQueueNonTrivialContents(const char* _QueueName, char* _StrStatus, size_t _SizeofStrStatus)
+{
+	QueueT q(_QueueName);
+
+	static const size_t kNumBuffers = 3;
+	static const size_t kBufferSize = oKB(1);
+
+	size_t numDeleted = 0;
+	
+	// Create a list of buffers and push them onto the queue, then lose the refs
+	// of the original buffers.
+	{
+
+		oRef<threadsafe oBuffer> Buffers[kNumBuffers];
+		for (size_t i = 0; i < kNumBuffers; i++)
+		{
+			char name[32];
+			sprintf_s(name, "TestBuffer%02u", i);
+
+			void* p = new char[kBufferSize];
+			memset(p, 123, kBufferSize);
+			oTESTB(p, "Out of memory allocating test buffers");
+			oTESTB(oBuffer::Create(name, p, kBufferSize, oBIND(DeleteAndCount, oBIND1, &numDeleted), &Buffers[i]), "Failed to create test buffer %u", i);
+			q.Push(Buffers[i]);
+		}
+	}
+	oTESTB(numDeleted == 0, "Test buffers were deleted when the queue should be holding a reference");
+
+	oRef<threadsafe oBuffer> b;
+	while (q.TryPop(b))
+	{
+		oLockedPointer<oBuffer> pBuffer(b);
+		const char* p = pBuffer->GetData<const char>();
+		for (size_t i = 0; i < kBufferSize; i++)
+			oTESTB(*p++ == 123, "Buffer mismatch on %u%s byte", i, oOrdinal((int)i));
+	}
+
+	b = nullptr;
+
+	oTESTB(q.IsEmpty() && numDeleted == kNumBuffers, "Queue is retaining a reference to an element though it's supposed to be empty.");
+
+	return oTest::SUCCESS;
+}
+
 struct TESTQueues : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
@@ -133,13 +163,16 @@ struct TESTQueues : public oTest
 		if (!TestQueueConcurrency<int, oConcurrentQueueMS<int> >("oConcurrentQueueMS", _StrStatus, _SizeofStrStatus))
 			return FAILURE;
 
-#ifdef oBUG_1216 // oConcurrentQueueOptimisticFIFO is not working with vcrt10
-		if (!TestQueueBasicAPI<int, oConcurrentQueueOptimisticFIFO<int> >("oConcurrentQueueOptimisticFIFO", _StrStatus, _SizeofStrStatus))
+		if (SUCCESS != TestQueueNonTrivialContents<oConcurrentQueueMS<oRef<threadsafe oBuffer> > >("oConcurrentQueueMS", _StrStatus, _SizeofStrStatus))
 			return FAILURE;
 
-		if (!TestQueueConcurrency<int, oConcurrentQueueOptimisticFIFO<int> >("oConcurrentQueueOptimisticFIFO", _StrStatus, _SizeofStrStatus))
-			return FAILURE;
-#endif
+		#ifdef oBUG_1216 // oConcurrentQueueOptimisticFIFO is not working with vcrt10
+			if (!TestQueueBasicAPI<int, oConcurrentQueueOptimisticFIFO<int> >("oConcurrentQueueOptimisticFIFO", _StrStatus, _SizeofStrStatus))
+				return FAILURE;
+
+			if (!TestQueueConcurrency<int, oConcurrentQueueOptimisticFIFO<int> >("oConcurrentQueueOptimisticFIFO", _StrStatus, _SizeofStrStatus))
+				return FAILURE;
+		#endif
 
 		return SUCCESS;
 	}

@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 
 // Soft-link D3D10 and some utility functions to address common challenges in 
 // D3D10.
@@ -32,6 +10,7 @@
 #include <oooii/oRef.h>
 #include <oooii/oSingleton.h>
 #include <oooii/oWindows.h>
+#include <oooii/oMathTypes.h>
 #include <vector>
 
 struct oD3D10 : oModuleSingleton<oD3D10>
@@ -96,12 +75,30 @@ struct oD3D10FullscreenQuad
 	void Create(ID3D10Device* _pDevice, const BYTE* _pPixelShaderByteCode, size_t _szBiteCode);
 	void Draw(ID3D10Device* _pDevice);
 
-private:
+protected:
+	void CreateStates(ID3D10Device* _pDevice);
+	void SetStates(ID3D10Device* _pDevice);
+
 	oD3D10ShaderState::STATE ShaderState;
 	oRef<ID3D10RasterizerState> RasterState;
 	oRef<ID3D10DepthStencilState> DepthState;
 	oRef<ID3D10BlendState> BlendState;
 };
 
+struct oD3D10ScreenQuad : private oD3D10FullscreenQuad
+{
+	void Create(ID3D10Device* _pDevice, const BYTE* _pPixelShaderByteCode, size_t _szBiteCode);
+	void Draw(ID3D10Device* _pDevice, oRECTF _Destination, oRECTF _Source);
+
+private:
+	struct VSIN
+	{
+		float2 Position;
+		float2 Texcoord;
+	};
+
+	oRef<ID3D10InputLayout> VertexLayout;
+	oRef<ID3D10Buffer> VertexBuffer;
+};
 
 #endif //oD3D10_h

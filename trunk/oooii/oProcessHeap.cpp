@@ -1,32 +1,12 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oProcessHeap.h>
 #include <oooii/oStdAlloc.h>
 #include <oooii/oHash.h>
 #include <oooii/oInterface.h>
+#include <oooii/oModule.h>
 #include <oooii/oRef.h>
 #include <oooii/oRefCount.h>
+#include <oooii/oStdio.h>
 #include <oooii/oString.h>
 #include <oooii/oThreading.h>
 #include <oooii/oWindows.h>
@@ -147,6 +127,12 @@ public:
 		pSharedPointers = new container_t;
 		atexit(AtExit);
 		IsValid = true;
+		
+		char moduleName[_MAX_PATH];
+		oVERIFY(oModule::GetModuleName(moduleName, oModule::GetCurrent()));
+		char buf[oKB(1)];
+		sprintf_s(buf, "%s ProcessHeap initialized from module %s\n", oGetExecutionPath(), moduleName);
+		oThreadsafeOutputDebugStringA(buf);
 	}
 
 	int Reference() threadsafe override
@@ -181,6 +167,14 @@ public:
 	static void AtExit();
 };
 
+#define oPROCESS_HEAP_OUTPUT_LEAKS(_NumLeaks) do \
+{	char moduleName[_MAX_PATH]; \
+	oVERIFY(oModule::GetModuleName(moduleName, oModule::GetCurrent())); \
+	char buf[oKB(1)]; \
+	sprintf_s(buf, "========== Process Heap Leak Report: %u Leaks %s ==========\n", _NumLeaks, oGetExecutionPath()); \
+	oThreadsafeOutputDebugStringA(buf); \
+} while(false)
+
 bool oProcessHeapContextImpl::IsValid = false;
 void oProcessHeapContextImpl::AtExit()
 {
@@ -190,9 +184,7 @@ void oProcessHeapContextImpl::AtExit()
 	}
 
 	else
-	{
-		OutputDebugStringA("========== Process Heap Leak Report: 0 Leaks ==========\n");
-	}
+		oPROCESS_HEAP_OUTPUT_LEAKS(0);
 }
 
 void oProcessHeapContextImpl::ReportLeaks()
@@ -208,32 +200,34 @@ void oProcessHeapContextImpl::ReportLeaks()
 	unsigned int nLeaks = 0;
 	for (container_t::const_iterator it = pSharedPointers->begin(); it != pSharedPointers->end(); ++it)
 	{
-		if (it->second.InitThreadID != oGetCurrentThreadID())
+		if (it->second.InitThreadID != oThreadGetCurrentID())
 			nLeaks++;
 	}
 
+	char moduleName[_MAX_PATH];
+	oVERIFY(oModule::GetModuleName(moduleName, oModule::GetCurrent()));
+	
+	char buf[oKB(1)];
+	
 	if (nLeaks)
 	{
-		char buf[oKB(1)];
-		sprintf_s(buf, "========== Process Heap Leak Report (thread %u) ==========\n", oGetCurrentThreadID());
-		OutputDebugStringA(buf);
+		sprintf_s(buf, "========== Process Heap Leak Report %s (Module %s) ==========\n", oGetExecutionPath(), moduleName);
+		oThreadsafeOutputDebugStringA(buf);
 		for (container_t::const_iterator it = pSharedPointers->begin(); it != pSharedPointers->end(); ++it)
 		{
-			if (it->second.InitThreadID != oGetCurrentThreadID())
+			if (it->second.InitThreadID != oThreadGetCurrentID())
 			{
 				sprintf_s(buf, "%s\n", it->second.Name);
 				oThreadsafeOutputDebugStringA(buf);
-				nLeaks++;
 			}
 		}
 
-		sprintf_s(buf, "========== Process Heap Leak Report: %u Leaks ==========\n", nLeaks);
-		oThreadsafeOutputDebugStringA(buf);
+		oPROCESS_HEAP_OUTPUT_LEAKS(nLeaks);
 	}
 
 	else
 	{
-		OutputDebugStringA("========== Process Heap Leak Report: 0 Leaks ==========\n");
+		oPROCESS_HEAP_OUTPUT_LEAKS(0);
 	}
 }
 
@@ -254,7 +248,7 @@ bool oProcessHeapContextImpl::FindOrAllocate(const char* _Name, size_t _Size, oF
 
 		ENTRY& e = (*pSharedPointers)[h];
 		e.Pointer = *_pPointer;
-		e.InitThreadID = oGetCurrentThreadID();
+		e.InitThreadID = oThreadGetCurrentID();
 		oCRTASSERT(strlen(_Name) < (oCOUNTOF(e.Name)-1), "oProcessHeap::FindOrAllocate(): _Name must be less than 64 characters long.");
 		strcpy_s(e.Name, _Name);
 

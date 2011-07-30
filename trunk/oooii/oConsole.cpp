@@ -1,32 +1,11 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oConsole.h>
 #include <oooii/oAssert.h>
 #include <oooii/oErrno.h>
 #include <oooii/oSingleton.h>
 #include <oooii/oStddef.h>
 #include <oooii/oMutex.h>
+#include <oooii/oThreading.h>
 #include <oooii/oWindows.h>
 
 struct oConsoleContext : public oProcessSingleton<oConsoleContext>
@@ -97,6 +76,24 @@ static WORD SetConsoleColor(HANDLE _hStream, oColor _Foreground, oColor _Backgro
 	return wOriginalAttributes;
 }
 
+static bool FindParentProcessID(DWORD _ProcessID, DWORD _ParentProcessID, const char* _ProcessExePath, unsigned int _SearchProcessID, unsigned int* _pOutSearchParentProcessID)
+{
+	if (_SearchProcessID == _ProcessID)
+	{
+		*_pOutSearchParentProcessID = _ParentProcessID;
+		return false;
+	}
+
+	return true;
+}
+
+unsigned int oProcessGetParentID(unsigned int _ProcessID)
+{
+	unsigned int ppid = 0;
+	oProcessEnum(oBIND(FindParentProcessID, oBIND1, oBIND2, oBIND3, _ProcessID, &ppid));
+	return ppid;
+}
+
 void* oConsole::GetNativeHandle()
 {
 	return GetConsoleWindow();
@@ -118,7 +115,7 @@ void oConsole::GetDesc(DESC* _pDesc)
 
 	if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info))
 	{
-		if (GetLastError() == ERROR_INVALID_HANDLE && oGetParentProcessID())
+		if (GetLastError() == ERROR_INVALID_HANDLE && oProcessGetParentID(oProcessGetCurrentID()))
 		{
 			oSetLastError(EPERM, "Failed to access console because this is a child process.");
 			return;
@@ -157,7 +154,7 @@ void oConsole::SetDesc(const DESC* _pDesc)
 	c.Y = (SHORT)desc.BufferHeight;
 	if (!SetConsoleScreenBufferSize(hConsole, c))
 	{
-		if (GetLastError() == ERROR_INVALID_HANDLE && oGetParentProcessID())
+		if (GetLastError() == ERROR_INVALID_HANDLE && oProcessGetParentID(oProcessGetCurrentID()))
 		{
 			oSetLastError(EPERM, "Failed to access console because this is a child process.");
 			return;

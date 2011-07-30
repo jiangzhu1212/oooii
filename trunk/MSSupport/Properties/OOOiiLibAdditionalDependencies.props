@@ -13,7 +13,7 @@
     <ClCompile>
       <PreprocessorDefinitions>FREEIMAGE_LIB;__TBB_NO_IMPLICIT_LINKAGE;NOMINMAX;_USE_MATH_DEFINES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(oSDK)ext\bullet\vectormathlibrary\include;$(oSDK)\ext\FreeImage\Source;$(oSDK)ext\FreeImage\Source\OpenEXR\Half;$(oSDK)\ext\tbb\include;$(oSDK)\ext\tlsf;$(oSDK)\ext\vp8\include;$(oSDK)\ext\lzma\c;$(oSDK)\ext\snappy;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>4512;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup />

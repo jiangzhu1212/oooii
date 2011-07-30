@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oErrno.h>
 #include <oooii/oAssert.h>
 #include <oooii/oSingleton.h>
@@ -88,6 +66,7 @@ const char* oGetErrnoString(int _Errno)
 		case EBADMSG: return "EBADMSG";
 		case EBUSY: return "EBUSY";
 		case ECANCELED: return "ECANCELED";
+		case EEOF: return "EEOF";
 		case ECHILD: return "ECHILD";
 		case ECONNABORTED: return "ECONNABORTED";
 		case ECONNREFUSED: return "ECONNREFUSED";
@@ -207,7 +186,9 @@ const char* oGetErrnoString(int _Errno)
 		default: break;
 	}
 
-	return 0;
+	static oTHREADLOCAL char buf[64];
+	sprintf_s(buf, "Unhandled errno_t %u", _Errno);
+	return buf;
 }
 
 const char* oGetErrnoDesc(errno_t _Errno)
@@ -226,6 +207,7 @@ const char* oGetErrnoDesc(errno_t _Errno)
 		case EBADMSG: return "Bad message";
 		case EBUSY: return "Device or resource busy";
 		case ECANCELED: return "Operation canceled";
+		case EEOF: return "End of file";
 		case ECHILD: return "No child processes";
 		case ECONNABORTED: return "Connection aborted";
 		case ECONNREFUSED: return "Connection refused";
@@ -257,7 +239,7 @@ const char* oGetErrnoDesc(errno_t _Errno)
 		case ENETUNREACH: return "Network unreachable";
 		case ENFILE: return "Too many files open in system";
 		case ENOBUFS: return "No buffer space available";
-		case ENODATA: return "No message is available on the STREAM head read queue.";
+		case ENODATA: return "No message is available on the STREAM head read queue";
 		case ENODEV: return "No such device";
 		case ENOENT: return "No such file or directory";
 		case ENOEXEC: return "Executable file format error";
@@ -267,8 +249,8 @@ const char* oGetErrnoDesc(errno_t _Errno)
 		case ENOMSG: return "No message of the desired type";
 		case ENOPROTOOPT: return "Protocol not available";
 		case ENOSPC: return "No space left on device";
-		case ENOSR: return "No STREAM resources ";
-		case ENOSTR: return "Not a STREAM ";
+		case ENOSR: return "No STREAM resources";
+		case ENOSTR: return "Not a STREAM";
 		case ENOSYS: return "Function not supported";
 		case ENOTCONN: return "The socket is not connected";
 		case ENOTDIR: return "Not a directory";
@@ -345,5 +327,7 @@ const char* oGetErrnoDesc(errno_t _Errno)
 		default: break;
 	}
 
-	return "Unknown error";
+	static oTHREADLOCAL char buf[64];
+	sprintf_s(buf, "Undescribed errno_t %u", _Errno);
+	return buf;
 }

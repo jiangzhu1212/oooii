@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oPath.h>
 #include <oooii/oAssert.h>
 #include <oooii/oErrno.h>
@@ -157,23 +135,30 @@ errno_t oCleanPath(char* _CleanedPath, size_t _SizeofCleanedPath, const char* _S
 
 errno_t oGetLogFilePath(char* _StrDestination, size_t _SizeofStrDestination, const char* _ExeSuffix)
 {
-	char newExtension[128];
 	time_t theTime;
 	time(&theTime);
 	tm t;
 	localtime_s(&t, &theTime);
 
-	char* ne = newExtension;
-	ne += sprintf_s(ne, oCOUNTOF(newExtension) - std::distance(newExtension, ne), "%s%s_", _ExeSuffix ? "_" : "", oSAFESTR(_ExeSuffix));
-	ne += strftime(ne, oCOUNTOF(newExtension) - std::distance(newExtension, ne), "%Y-%m-%d-%H-%M-%S", &t);
-	ne += sprintf_s(ne, oCOUNTOF(newExtension) - std::distance(newExtension, ne), "-%i", oGetCurrentProcessID() );
-	strcpy_s(ne, oCOUNTOF(newExtension) - std::distance(newExtension, ne), ".txt");
-
 	if (!oGetExePath(_StrDestination, _SizeofStrDestination))
 		return oGetLastError();
 
-	errno_t err = oReplaceFileExtension(_StrDestination, _SizeofStrDestination, newExtension);
+	char fn[128];
+	char* p = oGetFilebase(_StrDestination);
+	strcpy_s(fn, p);
+	oTrimFileExtension(fn);
+	p += sprintf_s(p, _SizeofStrDestination - std::distance(_StrDestination, p), "Logs/");
+	p += strftime(p, _SizeofStrDestination - std::distance(_StrDestination, p), "%Y-%m-%d-%H-%M-%S_", &t);
+	p += sprintf_s(p, _SizeofStrDestination - std::distance(_StrDestination, p), "%s", fn);
+
+	errno_t err = 0;
+	if (_ExeSuffix)
+		p += sprintf_s(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%s", _ExeSuffix);
+
+	p += sprintf_s(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%i.txt", oProcessGetCurrentID());
+	err = oCleanPath(_StrDestination, _SizeofStrDestination, _StrDestination);
 	if (err) return err;
+
 	return 0;
 }
 

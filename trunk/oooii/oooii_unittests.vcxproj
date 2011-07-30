@@ -227,6 +227,9 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\oVideo\oVideo.vcxproj">
+      <Project>{731ea328-4a4d-4d70-8c01-778174c98bb9}</Project>
+    </ProjectReference>
     <ProjectReference Include="oooii.vcxproj">
       <Project>{8eb33511-eed5-48ac-99f9-efa2a34bb2dd}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>

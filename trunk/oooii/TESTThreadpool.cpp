@@ -1,27 +1,5 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include <oooii/oBarrier.h>
+// $(header)
+#include <oooii/oCountdownLatch.h>
 #include <oooii/oEvent.h>
 #include <oooii/oRef.h>
 #include <oooii/oStdio.h>
@@ -100,7 +78,7 @@ void MandelbrotTask(size_t _Index, void* _pData, unsigned int _X1, unsigned int 
 class MandelbrotJob
 {
 public:
-	void Schedule(threadsafe oThreadpool* _pThreadpool, threadsafe oBarrier* _pBarrier, unsigned int x1, unsigned int y1, double fx, double fy, double xscale, double yscale, unsigned char* dest)
+	void Schedule(threadsafe oThreadpool* _pThreadpool, threadsafe oCountdownLatch* _pLatch, unsigned int x1, unsigned int y1, double fx, double fy, double xscale, double yscale, unsigned char* dest)
 	{
     mFX = fx;
     mFY = fy;
@@ -109,8 +87,7 @@ public:
     mData = dest;
     mX1 = x1;
     mY1 = y1;
-		pBarrier = _pBarrier;
-		pBarrier->Reference();
+		pLatch = _pLatch;
 		_pThreadpool->ScheduleTask(TaskProc, this);
 	}
 
@@ -122,7 +99,7 @@ public:
 	void Run()
 	{
 		MandelbrotTask(0, mData, mX1, mY1, mFX, mFY, mXscale, mYscale);
-		pBarrier->Release();
+		pLatch->Release();
 	}
 
 private:
@@ -131,7 +108,7 @@ private:
   double mXscale;
   double mYscale;
 	void* mData;
-	threadsafe oBarrier* pBarrier;
+	threadsafe oCountdownLatch* pLatch;
   unsigned int mX1;
   unsigned int mY1;
 };
@@ -158,13 +135,13 @@ bool RunThreadpoolTest(const char* _Name, threadsafe oThreadpool* _pThreadpool, 
 	unsigned char* fractal = new unsigned char[FRACTAL_SIZE*FRACTAL_SIZE];
 	RatcliffJobSwarm::MandelbrotJob* next_job = jobs;
 
-	oBarrier barrier;
+	oCountdownLatch latch("WorkDone", taskCount);
 
 	for (unsigned int y=0; y<FRACTAL_SIZE; y+=SWARM_SIZE)
 		for (unsigned int x=0; x<FRACTAL_SIZE; x+=SWARM_SIZE, next_job++)
-			next_job->Schedule(_pThreadpool, &barrier, x, y, x1, y1, xscale, yscale, fractal);
+			next_job->Schedule(_pThreadpool, &latch, x, y, x1, y1, xscale, yscale, fractal);
 
-	barrier.Wait();
+	latch.Wait();
 	double end = oTimer();
 	delete fractal;
 	delete jobs;

@@ -12,12 +12,13 @@
     <OutDir>$(oBinDir)</OutDir>
     <IntDir>$(oTmpDir)</IntDir>
     <TargetName>$(oBuildPrefix)$(ProjectName)</TargetName>
+    <LibraryPath>$(oLibDir);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>$(oSDK)inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
-      <DisableSpecificWarnings>4100;4127;4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4189;4100;4127;4503;4512;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <StringPooling>true</StringPooling>
       <WarningLevel>Level4</WarningLevel>
       <TreatWarningAsError>true</TreatWarningAsError>

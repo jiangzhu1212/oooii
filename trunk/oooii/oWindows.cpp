@@ -1,41 +1,24 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oWindows.h>
 #include <oooii/oAssert.h>
 #include <oooii/oAtomic.h>
+#include <oooii/oByte.h>
 #include <oooii/oColor.h>
 #include <oooii/oDisplay.h>
 #include <oooii/oErrno.h>
 #include <oooii/oProcessHeap.h>
 #include <oooii/oRef.h>
+#include <oooii/oSize.h>
 #include <oooii/oStdio.h>
+#include <oooii/oSTL.h>
 #include <oooii/oString.h>
 #include <oooii/oTimerHelpers.h>
 #include <oooii/oMath.h>
+#include <oooii/oMutex.h>
 #include "oWinDWMAPI.h"
 #include "oWinPSAPI.h"
 #include "oWinsock.h"
+#include <io.h>
 #include <time.h>
 #include <tlhelp32.h>
 #include <shellapi.h>
@@ -342,6 +325,13 @@ bool oGetTitle(HWND _hWnd, char* _Title, size_t _SizeofTitle)
 {
 	if (!_hWnd || !_Title) return false;
 	return TRUE == SendMessage(_hWnd, WM_SETTEXT, _SizeofTitle, (LPARAM)_Title);
+}
+
+void oSetAlwaysOnTop(HWND _hWnd, bool _AlwaysOnTop)
+{
+	RECT r;
+	GetWindowRect(_hWnd, &r);
+	::SetWindowPos(_hWnd, _AlwaysOnTop ? HWND_TOPMOST : HWND_TOP, r.left, r.top, r.right - r.left, r.bottom - r.top, IsWindowVisible(_hWnd) ? SWP_SHOWWINDOW : SWP_HIDEWINDOW);
 }
 
 HICON oIconFromBitmap(HBITMAP _hBmp)
@@ -980,6 +970,13 @@ void* oGetWindowContext(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, 
 		#endif
 	}
 
+	else if (_uMsg == WM_INITDIALOG)
+	{
+		// dialogs don't use CREATESTRUCT, so assume it's directly the context
+		SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)_lParam);
+		context = (void*)_lParam;
+	}
+
 	else
 	{
 		// For any other message, grab the context and return it
@@ -1042,14 +1039,128 @@ HWND oTrayGetHwnd()
 // icon exists at all.
 bool oTrayGetIconRect(HWND _hWnd, UINT _ID, RECT* _pRect)
 {
-	NOTIFYICONIDENTIFIER nii;
-	memset(&nii, 0, sizeof(nii));
-	nii.cbSize = sizeof(nii);
-	nii.hWnd = _hWnd;
-	nii.uID = _ID;
-	HRESULT hr = Shell_NotifyIconGetRect(&nii, _pRect);
-	return SUCCEEDED(hr);
+	#ifdef oWINDOWS_HAS_TRAY_NOTIFYICONIDENTIFIER
+		NOTIFYICONIDENTIFIER nii;
+		memset(&nii, 0, sizeof(nii));
+		nii.cbSize = sizeof(nii);
+		nii.hWnd = _hWnd;
+		nii.uID = _ID;
+		HRESULT hr = Shell_NotifyIconGetRect(&nii, _pRect);
+		return SUCCEEDED(hr);
+	#else
+		// http://social.msdn.microsoft.com/forums/en-US/winforms/thread/4ac8d81e-f281-4b32-9407-e663e6c234ae/
+	
+		HWND hTray = oTrayGetHwnd();
+		DWORD TrayProcID;
+		GetWindowThreadProcessId(hTray, &TrayProcID);
+		HANDLE hTrayProc = OpenProcess(PROCESS_ALL_ACCESS, 0, TrayProcID);
+		bool success = false;
+		if (!hTrayProc)
+		{
+			TBBUTTON* lpBI = (TBBUTTON*)VirtualAllocEx(hTrayProc, nullptr, sizeof(TBBUTTON), MEM_COMMIT, PAGE_READWRITE);
+			int nButtons = (int)SendMessage(hTray, TB_BUTTONCOUNT, 0, 0);
+			for (int i = 0; i < nButtons; i++)
+			{
+				if (SendMessage(hTray, TB_GETBUTTON, i, (LPARAM)lpBI))
+				{
+					TBBUTTON bi;
+					DWORD extraData[2];
+					ReadProcessMemory(hTrayProc, lpBI, &bi, sizeof(TBBUTTON), NULL);
+					ReadProcessMemory(hTrayProc, (LPCVOID)bi.dwData, extraData, sizeof(DWORD) * 2, nullptr);
+					HWND IconNotifiesThisHwnd = (HWND)extraData[0];
+					UINT IconID = extraData[1];
+
+					if (_hWnd == IconNotifiesThisHwnd && _ID == IconID)
+					{
+						RECT r;
+						RECT* lpRect = (RECT*)VirtualAllocEx(hTrayProc, nullptr, sizeof(RECT), MEM_COMMIT, PAGE_READWRITE);
+						SendMessage(hTray, TB_GETITEMRECT, i, (LPARAM)lpRect);
+						ReadProcessMemory(hTrayProc, lpRect, &r, sizeof(RECT), nullptr);
+						VirtualFreeEx(hTrayProc, lpRect, 0, MEM_RELEASE);
+						MapWindowPoints(hTray, nullptr, (LPPOINT)&r, 2);
+						success = true;
+						break;
+					}
+				}
+			}
+
+			VirtualFreeEx(hTrayProc, lpBI, 0, MEM_RELEASE);
+			CloseHandle(hTrayProc);
+		}
+
+		return success;
+	#endif
 }
+
+struct REMOVE_TRAY_ICON
+{
+	HWND hWnd;
+	UINT ID;
+	UINT TimeoutMS;
+};
+
+bool operator==(const REMOVE_TRAY_ICON& _RTI1, const REMOVE_TRAY_ICON& _RTI2) { return _RTI1.hWnd == _RTI2.hWnd && _RTI1.ID == _RTI2.ID; }
+
+struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
+{
+	oTrayCleanup()
+		: AllowInteraction(true)
+	{}
+
+	~oTrayCleanup()
+	{
+		oRWMutex::ScopedLock lock(Mutex);
+
+		if (!Removes.empty())
+		{
+			char buf[oKB(1)];
+			sprintf_s(buf, "oWindows Trace %s Cleaning up tray icons\n", oGetExecutionPath());
+			oThreadsafeOutputDebugStringA(buf);
+		}
+
+		AllowInteraction = false;
+		for (size_t i = 0; i < Removes.size(); i++)
+			oTrayShowIcon(Removes[i].hWnd, Removes[i].ID, 0, 0, false);
+
+		Removes.clear();
+	}
+
+	void Register(HWND _hWnd, UINT _ID)
+	{
+		if (!AllowInteraction)
+			return;
+
+		if (Removes.size() < Removes.capacity())
+		{
+			REMOVE_TRAY_ICON rti;
+			rti.hWnd = _hWnd;
+			rti.ID = _ID;
+			rti.TimeoutMS = 0;
+			oRWMutex::ScopedLock lock(Mutex);
+			Removes.push_back(rti);
+		}
+		else
+			oThreadsafeOutputDebugStringA("--- Too many tray icons registered for cleanup: ignoring. ---");
+	}
+
+	void Unregister(HWND _hWnd, UINT _ID)
+	{
+		if (!AllowInteraction)
+			return;
+
+		REMOVE_TRAY_ICON rti;
+		rti.hWnd = _hWnd;
+		rti.ID = _ID;
+		rti.TimeoutMS = 0;
+
+		oRWMutex::ScopedLock lock(Mutex);
+		oFindAndErase(Removes, rti);
+	}
+
+	oArray<REMOVE_TRAY_ICON, 20> Removes;
+	oRWMutex Mutex;
+	volatile bool AllowInteraction;
+};
 
 void oTrayShowIcon(HWND _hWnd, UINT _ID, UINT _CallbackMessage, HICON _hIcon, bool _Show)
 {
@@ -1066,22 +1177,27 @@ void oTrayShowIcon(HWND _hWnd, UINT _ID, UINT _CallbackMessage, HICON _hIcon, bo
 	nid.uVersion = NOTIFYICON_VERSION_4;
 	oV(Shell_NotifyIcon(_Show ? NIM_ADD : NIM_DELETE, &nid));
 
-	// Ensure we know exactly what version behavior we're dealing with
+	oTrayCleanup* pTrayCleanup = oTrayCleanup::Singleton();
 	if (_Show)
+	{
+		// Ensure we know exactly what version behavior we're dealing with
 		oV(Shell_NotifyIcon(NIM_SETVERSION, &nid));
+
+		if (oIsValidSingletonPointer(pTrayCleanup))
+			pTrayCleanup->Register(_hWnd, _ID);
+	}
+
+	else
+	{
+		if (oIsValidSingletonPointer(pTrayCleanup))
+			pTrayCleanup->Unregister(_hWnd, _ID);
+	}
 }
 
 void oTraySetFocus()
 {
 	oV(Shell_NotifyIcon(NIM_SETFOCUS, nullptr));
 }
-
-struct REMOVE_TRAY_ICON
-{
-	HWND hWnd;
-	UINT ID;
-	UINT TimeoutMS;
-};
 
 static DWORD WINAPI oTrayScheduleIconHide_Proc(LPVOID lpParameter)
 {
@@ -1127,7 +1243,11 @@ bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const
 	// MS recommends truncating at 48 for English: http://msdn.microsoft.com/en-us/library/bb773352(v=vs.85).aspx
 	strcpy_s(nid.szInfoTitle, 49, oSAFESTR(_Title));
 
-	nid.dwInfoFlags = NIIF_NOSOUND | NIIF_RESPECT_QUIET_TIME;
+	nid.dwInfoFlags = NIIF_NOSOUND;
+
+	#ifdef oWINDOWS_HAS_TRAY_QUIETTIME
+		nid.dwInfoFlags |= NIIF_RESPECT_QUIET_TIME;
+	#endif
 
 	RECT r;
 	if (!oTrayGetIconRect(_hWnd, _ID, &r))
@@ -1319,7 +1439,7 @@ bool oCreateDXGIFactory( IDXGIFactory1** _ppFactory )
 	return true;
 }
 
-HRESULT oDXGICreateSwapchain(IUnknown* _pDevice, unsigned int Width, unsigned int Height, unsigned int RefreshRateN, unsigned int RefreshRateD, DXGI_FORMAT _Fmt, HWND _Hwnd, IDXGISwapChain** _ppSwapChain)
+HRESULT oDXGICreateSwapchain(IUnknown* _pDevice, unsigned int Width, unsigned int Height, unsigned int RefreshRateN, unsigned int RefreshRateD, DXGI_FORMAT _Fmt, HWND _hWnd, IDXGISwapChain** _ppSwapChain)
 {
 	DXGI_SWAP_CHAIN_DESC scDesc;
 	ZeroMemory( &scDesc, sizeof( scDesc ) );
@@ -1337,7 +1457,7 @@ HRESULT oDXGICreateSwapchain(IUnknown* _pDevice, unsigned int Width, unsigned in
 
 	scDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
 	scDesc.BufferCount = 3;
-	scDesc.OutputWindow = _Hwnd;
+	scDesc.OutputWindow = _hWnd;
 	scDesc.Windowed = true;
 	scDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	
@@ -1353,7 +1473,7 @@ HRESULT oDXGICreateSwapchain(IUnknown* _pDevice, unsigned int Width, unsigned in
 	return Factory->CreateSwapChain( _pDevice, &scDesc, _ppSwapChain );
 }
 
-bool oDXGIGetAdapter( const RECT& _Rect, IDXGIAdapter1** _ppAdapter )
+bool oDXGIGetAdapterWithMonitor(const RECT& _Rect, IDXGIAdapter1** _ppAdapter, IDXGIOutput** _ppOutput)
 {
 	oRef<IDXGIFactory1> Factory;
 	if( !oCreateDXGIFactory(&Factory) )
@@ -1363,7 +1483,9 @@ bool oDXGIGetAdapter( const RECT& _Rect, IDXGIAdapter1** _ppAdapter )
 
 	int BestAdapterCoverage = -1;
 	oRef<IDXGIAdapter1> BestAdapter;
+	oRef<IDXGIOutput> BestOutput;
 	oRef<IDXGIAdapter1> Adapter;
+	
 	UINT a = 0;
 	while( S_OK == Factory->EnumAdapters1( a++, &Adapter) )
 	{
@@ -1387,13 +1509,16 @@ bool oDXGIGetAdapter( const RECT& _Rect, IDXGIAdapter1** _ppAdapter )
 			{
 				BestAdapterCoverage = coverage;
 				BestAdapter = Adapter;
+				BestOutput = Output;
 			}
 		}
 	}
 	if( BestAdapter )
 	{
 		BestAdapter->AddRef();
+		BestOutput->AddRef();
 		*_ppAdapter = BestAdapter;
+		*_ppOutput = BestOutput;
 		return true;
 	}
 
@@ -1723,6 +1848,39 @@ void oThreadsafeOutputDebugStringA(const char* _OutputString)
 	}
 }
 
+bool oWaitSingle(HANDLE _Handle, unsigned int _TimeoutMS)
+{
+	return WAIT_OBJECT_0 == ::WaitForSingleObject(_Handle, _TimeoutMS == oINVALID ? INFINITE : _TimeoutMS);
+}
+
+bool oWaitMultiple(HANDLE* _pHandles, size_t _NumberOfHandles, size_t* _pWaitBreakingIndex, unsigned int _TimeoutMS)
+{
+	oASSERT(_NumberOfHandles <= 64, "Windows has a limit of 64 handles that can be waited on by WaitForMultipleObjects");
+	DWORD result = ::WaitForMultipleObjects(static_cast<DWORD>(_NumberOfHandles), _pHandles, !_pWaitBreakingIndex, _TimeoutMS == oINFINITE_WAIT ? INFINITE : _TimeoutMS);
+
+	if (result == WAIT_FAILED)
+	{
+		oWinSetLastError();
+		return false;
+	}
+
+	else if (result == WAIT_TIMEOUT)
+	{
+		oSetLastError(ETIMEDOUT);
+		return false;
+	}
+
+	else if (_pWaitBreakingIndex)
+	{
+		if (result >= WAIT_ABANDONED_0) 
+			*_pWaitBreakingIndex = result - WAIT_ABANDONED_0;
+		else
+			*_pWaitBreakingIndex = result - WAIT_OBJECT_0;
+	}
+
+	return true;
+}
+
 bool oWaitSingle(DWORD _ThreadID, unsigned int _Timeout)
 {
 	HANDLE hThread = OpenThread(SYNCHRONIZE, FALSE, _ThreadID);
@@ -1731,7 +1889,7 @@ bool oWaitSingle(DWORD _ThreadID, unsigned int _Timeout)
 	return result;
 }
 
-bool oWaitMultiple(DWORD* _pThreadIDs, size_t _NumberOfThreadIDs, bool _WaitAll, unsigned int _Timeout)
+bool oWaitMultiple(DWORD* _pThreadIDs, size_t _NumberOfThreadIDs, size_t* _pWaitBreakingIndex, unsigned int _Timeout)
 {
 	if (!_pThreadIDs || !_NumberOfThreadIDs || _NumberOfThreadIDs >= 64)
 	{
@@ -1743,12 +1901,17 @@ bool oWaitMultiple(DWORD* _pThreadIDs, size_t _NumberOfThreadIDs, bool _WaitAll,
 	for (size_t i = 0; i < _NumberOfThreadIDs; i++)
 		hThreads[i] = OpenThread(SYNCHRONIZE, FALSE, _pThreadIDs[i]);
 
-	bool result = oWaitMultiple(hThreads, _NumberOfThreadIDs, _WaitAll, _Timeout);
+	bool result = oWaitMultiple(hThreads, _NumberOfThreadIDs, _pWaitBreakingIndex, _Timeout);
 	
 	for (size_t i = 0; i < _NumberOfThreadIDs; i++)
 		oVB(CloseHandle(hThreads[i]));
 
 	return result;
+}
+
+HANDLE oGetFileHandle(FILE* _File)
+{
+	return (HANDLE)_get_osfhandle(_fileno(_File));
 }
 
 DWORD oGetThreadID(HANDLE _hThread)
@@ -1767,76 +1930,6 @@ DWORD oGetThreadID(HANDLE _hThread)
 		oTRACE("oGetThreadID doesn't behave properly on versions of Windows prior to Vista because GetThreadId(HANDLE _hThread) didn't exist.");
 		return 0;
 	#endif
-}
-
-DWORD oWinGetMainThreadID()
-{
-	// Find the oldest thread - i.e. the one with the minimum creation time
-
-	DWORD mainThreadID = 0;
-
-	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GetCurrentProcessId());
-	if (hSnapshot == INVALID_HANDLE_VALUE)
-		return 0;
-
-	THREADENTRY32 entry;
-	entry.dwSize = sizeof(THREADENTRY32);
-
-	DWORD pid = GetCurrentProcessId();
-	BOOL keepLooking = Thread32First(hSnapshot, &entry);
-	ULONGLONG minCreateTime = MAXULONGLONG;
-	while (keepLooking)
-	{
-		if (entry.th32OwnerProcessID == pid)
-		{
-			HANDLE hThread = OpenThread(THREAD_QUERY_INFORMATION, TRUE, entry.th32ThreadID);
-			if (hThread)
-			{
-				FILETIME tCreate, tExit, tKernel, tUser;
-
-				if (GetThreadTimes(hThread, &tCreate, &tExit, &tKernel, &tUser))
-				{
-					ULONGLONG createTime = ((ULONGLONG)tCreate.dwHighDateTime << 32) | tCreate.dwLowDateTime;
-					if (createTime && createTime < minCreateTime)
-					{
-						minCreateTime = createTime;
-						mainThreadID = entry.th32ThreadID;
-					}
-				}
-
-				oVB(CloseHandle(hThread));
-			}
-		}
-
-		keepLooking = Thread32Next(hSnapshot, &entry);
-	}
-
-	oVB(CloseHandle(hSnapshot));
-	return mainThreadID;
-}
-
-DWORD oGetParentProcessID()
-{
-	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	if (hSnapshot == INVALID_HANDLE_VALUE)
-		return 0;
-
-	DWORD ppid = 0;
-
-	PROCESSENTRY32 entry;
-	entry.dwSize = sizeof(entry);
-	DWORD pid = GetCurrentProcessId();
-	BOOL keepLooking = Process32First(hSnapshot, &entry);
-	while (keepLooking)
-	{
-		if (pid == entry.th32ProcessID)
-			ppid = entry.th32ParentProcessID;
-		entry.dwSize = sizeof(entry);
-		keepLooking = !ppid && Process32Next(hSnapshot, &entry);
-	}
-
-	oVB(CloseHandle(hSnapshot));
-	return ppid;
 }
 
 struct oGetWindowFromThreadID_Context 
@@ -1878,30 +1971,29 @@ HMODULE oGetModule(void* _ModuleFunctionPointer)
 	return hModule;
 }
 
-HANDLE oWinGetProcessHandle(const char* _Name)
+bool oWinGetProcessID(const char* _Name, DWORD* _pOutProcessID)
 {
 	// From http://msdn.microsoft.com/en-us/library/ms682623(v=VS.85).aspx
 	// Get the list of process identifiers.
 
-	DWORD aProcesses[1024], cbNeeded, cProcesses;
-	unsigned int i;
-
+	*_pOutProcessID = 0;
 	oWinPSAPI* pPSAPI = oWinPSAPI::Singleton();
 
-	if (!pPSAPI->EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded))
-		return NULL;
-
-	// Calculate how many process identifiers were returned.
-
-	cProcesses = cbNeeded / sizeof(DWORD);
-
-	// Print the name and process identifier for each process.
-
-	for (i = 0; i < cProcesses; i++)
+	DWORD ProcessIDs[1024], cbNeeded;
+	if (!pPSAPI->EnumProcesses(ProcessIDs, sizeof(ProcessIDs), &cbNeeded))
 	{
-		if (aProcesses[i] != 0)
+		oWinSetLastError();
+		return false;
+	}
+
+	bool truncationResult = true;
+	const size_t nProcessIDs = cbNeeded / sizeof(DWORD);
+
+	for (size_t i = 0; i < nProcessIDs; i++)
+	{
+		if (ProcessIDs[i] != 0)
 		{
-			HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ|PROCESS_DUP_HANDLE, FALSE, aProcesses[i]);
+			HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ|PROCESS_DUP_HANDLE, FALSE, ProcessIDs[i]);
 			if (hProcess)
 			{
 				HMODULE hMod;
@@ -1911,53 +2003,98 @@ HANDLE oWinGetProcessHandle(const char* _Name)
 				if (pPSAPI->EnumProcessModules(hProcess, &hMod, sizeof(hMod), &cbNeeded))
 				{
 					pPSAPI->GetModuleBaseNameA(hProcess, hMod, szProcessName, sizeof(szProcessName)/sizeof(char));
-					if (strcmp(szProcessName, _Name) == 0)
-						return hProcess;
+					CloseHandle(hProcess);
+					if (_stricmp(szProcessName, _Name) == 0)
+					{
+						*_pOutProcessID = ProcessIDs[i];
+						return true;
+					}
 				}
 			}
 		}
 	}
-	
-	return 0;
+
+	if (sizeof(ProcessIDs) == cbNeeded)
+	{
+		oSetLastError(STRUNCATE, "There are more than %u processes on the system currently, oWinGetProcessID needs to be more general-purpose.", oCOUNTOF(ProcessIDs));
+		truncationResult = false;
+	}
+
+	else
+		oSetLastError(ESRCH);
+
+	return false;
 }
 
-unsigned int oGetProcessThreads(DWORD* _pThreadIDs, size_t _SizeofThreadIDs)
+bool oEnumProcessThreads(DWORD _ProcessID, oFUNCTION<bool(DWORD _ThreadID, DWORD _ParentProcessID)> _Function)
 {
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GetCurrentProcessId());
 	if (hSnapshot == INVALID_HANDLE_VALUE)
-		return 0;
-
-	unsigned int nThreads = 0;
+	{
+		oSetLastError(EINVAL, "Failed to get a snapshot of current process");
+		return false;
+	}
 
 	THREADENTRY32 entry;
 	entry.dwSize = sizeof(THREADENTRY32);
 
-	DWORD pid = GetCurrentProcessId();
 	BOOL keepLooking = Thread32First(hSnapshot, &entry);
-	bool overrun = false;
+
+	if (!keepLooking)
+	{
+		oSetLastError(ENOENT, "No process threads found");
+		return false;
+	}
+
 	while (keepLooking)
 	{
-		if (pid == entry.th32OwnerProcessID)
-		{
-			if (_pThreadIDs && nThreads < _SizeofThreadIDs)
-			{
-				if (pid == entry.th32OwnerProcessID)
-					_pThreadIDs[nThreads] = entry.th32ThreadID;
-			}
-			else
-				overrun = true;
-
-			nThreads++;
-		}
-
+		if (_ProcessID == entry.th32OwnerProcessID && _Function)
+			if (!_Function(entry.th32ThreadID, entry.th32OwnerProcessID))
+				break;
 		keepLooking = Thread32Next(hSnapshot, &entry);
 	}
 
-	if (overrun)
-		oSetLastError(EINVAL, "Buffer not large enough");
+	oVB(CloseHandle(hSnapshot));
+	return true;
+}
+
+bool oWinEnumProcesses(oFUNCTION<bool(DWORD _ProcessID, DWORD _ParentProcessID, const char* _ProcessExePath)> _Function)
+{
+	if (!_Function)
+	{
+		oSetLastError(EINVAL);
+		return false;
+	}
+
+	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (hSnapshot == INVALID_HANDLE_VALUE)
+	{
+		oSetLastError(EINVAL, "Failed to get a snapshot of current process");
+		return false;
+	}
+
+	DWORD ppid = 0;
+
+	PROCESSENTRY32 entry;
+	entry.dwSize = sizeof(entry);
+	BOOL keepLooking = Process32First(hSnapshot, &entry);
+
+	if (!keepLooking)
+	{
+		oSetLastError(ECHILD);
+		return false;
+	}
+
+	while (keepLooking)
+	{
+		if (!_Function(entry.th32ProcessID, entry.th32ParentProcessID, entry.szExeFile))
+			break;
+		entry.dwSize = sizeof(entry);
+		keepLooking = !ppid && Process32Next(hSnapshot, &entry);
+	}
 
 	oVB(CloseHandle(hSnapshot));
-	return nThreads;
+	return true;
 }
 
 #pragma pack(push,8)
@@ -2435,4 +2572,140 @@ bool oWinsockIsConnected(SOCKET _hSocket)
 	return oWinsockGetPeername(tmp, oCOUNTOF(tmp), 0, 0, 0, 0, _hSocket);
 }
 
+static WORD oDlgGetClass(oWINDOWS_DIALOG_ITEM_TYPE _Type)
+{
+	switch (_Type)
+	{
+		case oDLG_BUTTON: return 0x0080;
+		case oDLG_EDITBOX: return 0x0081;
+		case oDLG_LABEL_LEFT_ALIGNED: return 0x0082;
+		case oDLG_LABEL_CENTERED: return 0x0082;
+		case oDLG_LABEL_RIGHT_ALIGNED: return 0x0082;
+		case oDLG_LARGELABEL: return 0x0081; // an editbox with a particular style set
+		case oDLG_ICON: return 0x0082; // (it's really a label with no text and a picture with SS_ICON style)
+		case oDLG_LISTBOX: return 0x0083;
+		case oDLG_SCROLLBAR: return 0x0084;
+		case oDLG_COMBOBOX: return 0x0085;
+		default: oASSUME(0);
+	}
+}
 
+static size_t oDlgCalcTextSize(const char* _Text)
+{
+	return sizeof(WCHAR) * (strlen(oSAFESTR(_Text)) + 1);
+}
+
+static size_t oDlgCalcTemplateSize(const char* _MenuName, const char* _ClassName, const char* _Caption, const char* _FontName)
+{
+	size_t size = sizeof(DLGTEMPLATE) + sizeof(WORD); // extra word for font size if we specify it
+	size += oDlgCalcTextSize(_MenuName);
+	size += oDlgCalcTextSize(_ClassName);
+	size += oDlgCalcTextSize(_Caption);
+	size += oDlgCalcTextSize(_FontName);
+	return oByteAlign(size, sizeof(DWORD)); // align to DWORD because dialog items need DWORD alignment, so make up for any padding here
+}
+
+static size_t oDlgCalcTemplateItemSize(const char* _Text)
+{
+	return oByteAlign(sizeof(DLGITEMTEMPLATE) +
+		2 * sizeof(WORD) + // will keep it simple 0xFFFF and the ControlClass
+		oDlgCalcTextSize(_Text) + // text
+		sizeof(WORD), // 0x0000. This is used for data to be passed to WM_CREATE, bypass this for now
+		sizeof(DWORD)); // in size calculations, ensure everything is DWORD-aligned
+}
+
+static WORD* oDlgCopyString(WORD* _pDestination, const char* _String)
+{
+	if (!_String) _String = "";
+	size_t len = strlen(_String);
+	oStrConvert((WCHAR*)_pDestination, len+1, _String);
+	return oByteAdd(_pDestination, (len+1) * sizeof(WCHAR));
+}
+
+// Returns a DWORD-aligned pointer to where to write the first item
+static LPDLGITEMTEMPLATE oDlgInitialize(const oWINDOWS_DIALOG_DESC& _Desc, LPDLGTEMPLATE _lpDlgTemplate)
+{
+	// Set up the dialog box itself
+	DWORD style = WS_POPUP|DS_MODALFRAME;
+	if (_Desc.SetForeground) style |= DS_SETFOREGROUND;
+	if (_Desc.Center) style |= DS_CENTER;
+	if (_Desc.Caption) style |= WS_CAPTION;
+	if (_Desc.Font && *_Desc.Font) style |= DS_SETFONT;
+	if (_Desc.Visible) style |= WS_VISIBLE;
+	if (!_Desc.Enabled) style |= WS_DISABLED;
+
+	_lpDlgTemplate->style = style;
+	_lpDlgTemplate->dwExtendedStyle = _Desc.AlwaysOnTop ? WS_EX_TOPMOST : 0;
+	_lpDlgTemplate->cdit = WORD(_Desc.NumItems);
+	_lpDlgTemplate->x = 0;
+	_lpDlgTemplate->y = 0;
+	_lpDlgTemplate->cx = short(_Desc.Rect.right - _Desc.Rect.left);
+	_lpDlgTemplate->cy = short(_Desc.Rect.bottom - _Desc.Rect.top);
+
+	// Fill in dialog data menu, class, caption and font
+	WORD* p = (WORD*)(_lpDlgTemplate+1);
+	p = oDlgCopyString(p, nullptr); // no menu
+	p = oDlgCopyString(p, nullptr); // use default class
+	p = oDlgCopyString(p, _Desc.Caption);
+	
+	if (style & DS_SETFONT)
+	{
+		*p++ = WORD(_Desc.FontPointSize);
+		p = oDlgCopyString(p, _Desc.Font);
+	}
+
+	return (LPDLGITEMTEMPLATE)oByteAlign(p, sizeof(DWORD));
+}
+#pragma warning(disable:4505)
+// Returns a DWORD-aligned pointer to the next place to write a DLGITEMTEMPLATE
+static LPDLGITEMTEMPLATE oDlgItemInitialize(const oWINDOWS_DIALOG_ITEM& _Desc, LPDLGITEMTEMPLATE _lpDlgItemTemplate)
+{
+	DWORD style = WS_CHILD;
+	if (!_Desc.Enabled) style |= WS_DISABLED;
+	if (_Desc.Visible) style |= WS_VISIBLE;
+	if (_Desc.TabStop) style |= WS_TABSTOP;
+	
+	switch (_Desc.Type)
+	{
+		case oDLG_ICON: style |= SS_ICON; break;
+		case oDLG_LABEL_LEFT_ALIGNED: style |= SS_LEFT|SS_ENDELLIPSIS; break;
+		case oDLG_LABEL_CENTERED: style |= SS_CENTER|SS_ENDELLIPSIS; break;
+		case oDLG_LABEL_RIGHT_ALIGNED: style |= SS_RIGHT|SS_ENDELLIPSIS; break;
+		case oDLG_LARGELABEL: style |= ES_LEFT|ES_MULTILINE|ES_READONLY|WS_VSCROLL; break;
+		default: break;
+	}
+	
+	_lpDlgItemTemplate->style = style;
+	_lpDlgItemTemplate->dwExtendedStyle = WS_EX_NOPARENTNOTIFY;
+	_lpDlgItemTemplate->x = short(_Desc.Rect.left);
+	_lpDlgItemTemplate->y = short(_Desc.Rect.top);
+	_lpDlgItemTemplate->cx = short(_Desc.Rect.right - _Desc.Rect.left);
+	_lpDlgItemTemplate->cy = short(_Desc.Rect.bottom - _Desc.Rect.top);
+	_lpDlgItemTemplate->id = _Desc.ItemID;
+	WORD* p = oByteAdd((WORD*)_lpDlgItemTemplate, sizeof(DLGITEMTEMPLATE));
+	*p++ = 0xFFFF; // flag that a simple ControlClass is to follow
+	*p++ = oDlgGetClass(_Desc.Type);
+	p = oDlgCopyString(p, _Desc.Text);
+	*p++ = 0x0000; // no WM_CREATE data
+	return (LPDLGITEMTEMPLATE)oByteAlign(p, sizeof(DWORD));
+}
+
+void oDlgDeleteTemplate(LPDLGTEMPLATE _lpDlgTemplate)
+{
+	delete [] _lpDlgTemplate;
+}
+
+LPDLGTEMPLATE oDlgNewTemplate(const oWINDOWS_DIALOG_DESC& _Desc)
+{
+	size_t templateSize = oDlgCalcTemplateSize(nullptr, nullptr, _Desc.Caption, _Desc.Font);
+	for (UINT i = 0; i < _Desc.NumItems; i++)
+		templateSize += oDlgCalcTemplateItemSize(_Desc.pItems[i].Text);
+
+	LPDLGTEMPLATE lpDlgTemplate = (LPDLGTEMPLATE)new char[templateSize];
+	LPDLGITEMTEMPLATE lpItem = oDlgInitialize(_Desc, lpDlgTemplate);
+	
+	for (UINT i = 0; i < _Desc.NumItems; i++)
+		lpItem = oDlgItemInitialize(_Desc.pItems[i], lpItem);
+
+	return lpDlgTemplate;
+}

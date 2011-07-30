@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 
 // A thread-safe queue that uses atomics to ensure concurrency.
 #pragma once
@@ -40,6 +18,13 @@ class oConcurrentQueueMS
 		description="http://www.cs.rochester.edu/research/synchronization/pseudocode/queues.html"
 	/>*/
 
+	// NOTE: This algorithm is a little unfortunate because it keeps an extra head
+	// pointer around. For simple types this isn't a big deal, but for example if 
+	// the element type is a ref-counted smart pointer, the extra head kept around
+	// keeps a ref on the object that isn't released until the whole queue is 
+	// released. To better support nontrivial types the dtor of the element is
+	// called on the zombie head once the element is popped.
+
 	struct NODE
 	{
 		NODE(const T& _Element) : Next(0, 0), Value(_Element) {}
@@ -57,7 +42,7 @@ public:
 	oConcurrentQueueMS(const char* _DebugName, oPooledAllocatorBase::PoolInitType _Type = oPooledAllocatorBase::InitElementCount, size_t _Value = 100000, const Alloc& _Allocator = Alloc())
 		: Pool(_DebugName, _Type, _Value, _Allocator)
 	{
-		NODE* n = Pool.Construct(T(0));
+		NODE* n = Pool.Construct(T());
 		Head = Tail = PTR(n, 0);
 	}
 
@@ -66,7 +51,7 @@ public:
 		oASSERT(IsEmpty(), "oConcurrentQueueMS %s not empty", GetDebugName());
 		NODE* n = Head;
 		Head = Tail = PTR(0, 0);
-		Pool.Destroy(n);
+		Pool.Deallocate(n); // because the head value is destroyed in TryPop, don't double-destroy here.
 	}
 
 	bool TryPush(const T& _Element) threadsafe
@@ -114,13 +99,14 @@ public:
 				else
 				{
 					_Element = next->Value;
+					next->Value.~T();
 					if (PTR::CAS(&Head, PTR(next, h.GetTag()+1), h))
 						break;
 				}
 			}
 		}
 
-		Pool.Destroy(h);
+		Pool.Deallocate(h); // dtor called explicitly above, so just deallocate
 		return true;
 	}
 

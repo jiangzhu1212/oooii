@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 
 // This file contains typical "message only in debug" mode type macros. 
 // oENABLE_ASSERTS can be defined in any build to have the macros do something
@@ -93,7 +71,8 @@ namespace oAssert
 	{
 		DESC()
 			: LogFilePath(0)
-			, EnableWarnings(true)
+			, PromptAsserts(true)
+			, PromptWarnings(true)
 			, PrintCallstack(true)
 			, PrefixFileLine(true)
 			, PrefixThreadId(true)
@@ -104,7 +83,8 @@ namespace oAssert
 		// If specified and a valid, accessible file path, all output through 
 		// PrintMessage should also be recorded to the specified file.
 		const char* LogFilePath;
-		bool EnableWarnings:1;
+		bool PromptAsserts:1;
+		bool PromptWarnings:1;
 		bool PrintCallstack:1;
 		bool PrefixFileLine:1;
 		bool PrefixThreadId:1;
@@ -171,7 +151,7 @@ namespace oAssert
 				oAssert::ACTION action__ = oAssert::PrintMessage(a, msg "\n", ## __VA_ARGS__); \
 				switch (action__) { case oAssert::ABORT: ::exit(__LINE__); break; case oAssert::BREAK: oDEBUGBREAK(); break; case oAssert::IGNORE_ALWAYS: oAssert_IgnoreFuture = true; break; default: break; } \
 			} \
-		} while(0)
+		} while(false)
 
 #endif
 
@@ -183,7 +163,7 @@ namespace oAssert
 	#define oTRACEA_ONCE(msg, ...) oASSERT_PRINT_MESSAGE(TYPE_TRACE, oAssert::IGNORE_ALWAYS, !, msg, ## __VA_ARGS__)
 	#define oWARNA(msg, ...) oASSERT_PRINT_MESSAGE(TYPE_WARNING, oAssert::IGNORE_ONCE, !, msg, ## __VA_ARGS__)
 	#define oWARNA_ONCE(msg, ...) oASSERT_PRINT_MESSAGE(TYPE_WARNING, oAssert::IGNORE_ALWAYS, !, msg, ## __VA_ARGS__)
-	#define oASSERTA(cond, msg, ...) do { if (!(cond)) { oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, cond, msg, ## __VA_ARGS__); } } while(0)
+	#define oASSERTA(cond, msg, ...) do { if (!(cond)) { oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, cond, msg, ## __VA_ARGS__); } } while(false)
 #else
 	#define oTRACEA(msg, ...) oASSERT_NOOP
 	#define oTRACEA_ONCE(msg, ...) oASSERT_NOOP
@@ -200,9 +180,9 @@ namespace oAssert
 	#define oTRACE_ONCE(msg, ...) oASSERT_PRINT_MESSAGE(TYPE_TRACE, oAssert::IGNORE_ALWAYS, !, msg, ## __VA_ARGS__)
 	#define oWARN(msg, ...) oASSERT_PRINT_MESSAGE(TYPE_WARNING, oAssert::IGNORE_ONCE, !, msg, ## __VA_ARGS__)
 	#define oWARN_ONCE(msg, ...) oASSERT_PRINT_MESSAGE(TYPE_WARNING, oAssert::IGNORE_ALWAYS, !, msg, ## __VA_ARGS__)
-	#define oASSERT(cond, msg, ...) do { if (!(cond)) { oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, cond, msg, ## __VA_ARGS__); } } while(0)
-	#define oASSUME(x) do { oASSERT(0, "Unexpected code execution"); oASSERT_NOEXEC; } while(0)
-	#define oVERIFY(fn) do { if (!(fn)) { oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, fn, "Error %s: %s", oGetErrnoString(oGetLastError()), oGetLastErrorDesc()); } } while(0)
+	#define oASSERT(cond, msg, ...) do { if (!(cond)) { oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, cond, msg, ## __VA_ARGS__); } } while(false)
+	#define oASSUME(x) do { oASSERT(0, "Unexpected code execution"); oASSERT_NOEXEC; } while(false)
+	#define oVERIFY(fn) do { if (!(fn)) { oASSERT_PRINT_MESSAGE(TYPE_ASSERT, oAssert::IGNORE_ONCE, fn, "Error %s: %s", oGetErrnoString(oGetLastError()), oGetLastErrorDesc()); } } while(false)
 #else
 	#define oTRACE(msg, ...) oASSERT_NOOP
 	#define oTRACE_ONCE(msg, ...) oASSERT_NOOP

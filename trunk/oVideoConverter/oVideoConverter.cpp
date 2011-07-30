@@ -1,27 +1,6 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <iostream>
+#include "oVideoCache.h"
 
 static const char* sTITLE = "OOOii Video Converter";
 
@@ -131,7 +110,7 @@ void EncodeFirstPass(size_t _index,std::vector<oRef<oVideoEncodeCPU>> &_WebmEnco
 }
 
 void EncodeSecondPass(size_t _index,std::vector<oRef<oVideoEncodeCPU>> &_WebmEncoders,std::vector<oSurface::YUV420> &_EncoderFrame, bool _forecIFrame,
-					  unsigned int _PacketStreamSize, std::vector<FILE*> &_OutputFiles, std::vector<oRef<threadsafe oVideoStream>> &_decoders)
+					  unsigned int _PacketStreamSize, std::vector<FILE*> &_OutputFiles, std::vector<oRef<oVideoStream>> &_decoders)
 {
 	size_t packetSz = 0;
 	unsigned char *PacketStream = new unsigned char[_PacketStreamSize];
@@ -167,15 +146,17 @@ int main(int argc, const char* argv[])
 	oVideoContainer::DESC MovDesc;
 	MovDesc.StartingFrame = parameters.FirstFrame;
 	MovDesc.EndingFrame = parameters.LastFrame;
-	oRef<threadsafe oVideoDecodeCPU> Decoder;
+	oRef<oVideoDecodeCPU> Decoder;
 	if(!oVideoFile::Create( parameters.InputFile, MovDesc, &VideoFile ))
 	{
+		std::cout << oGetLastErrorDesc() << std::endl;
 		std::cout << "couldn't create input file decoder" << std::endl;
 		return 1;
 	}
 	VideoFile->GetDesc(&MovDesc);
 	if(!oVideoDecodeCPU::Create( VideoFile, &Decoder))
 	{
+		std::cout << oGetLastErrorDesc() << std::endl;
 		std::cout << "couldn't create input file decoder" << std::endl;
 		return 1;
 	}
@@ -183,7 +164,7 @@ int main(int argc, const char* argv[])
 	if(!parameters.OutputFile[0])
 	{
 		strcpy_s(parameters.OutputFile,_MAX_PATH,parameters.InputFile);
-		oReplaceFileExtension(parameters.OutputFile,".webm");
+		oReplaceFileExtension(parameters.OutputFile,".webx");
 	}
 
 	if(strcmp(parameters.InputFile,parameters.OutputFile) == 0)
@@ -220,7 +201,24 @@ int main(int argc, const char* argv[])
 	std::vector<unsigned char> UChromQuarterPlane;
 	std::vector<unsigned char> VChromQuarterPlane;
 
-	unsigned int FullPixels = MovDesc.Width*MovDesc.Height;
+	std::vector<unsigned char> PaddedLuminancePlane;
+	std::vector<unsigned char> PaddedUChromQuarterPlane;
+	std::vector<unsigned char> PaddedVChromQuarterPlane;
+
+	int2 PaddedDimensions = MovDesc.Dimensions;
+
+	if(parameters.SplitVerticly)
+	{
+		if(PaddedDimensions.y%parameters.SplitCount != 0 || ((PaddedDimensions.y/parameters.SplitCount)&1) != 0)
+			PaddedDimensions.y = (((PaddedDimensions.y/parameters.SplitCount)&~1) + 2)*parameters.SplitCount;
+	}
+	else
+	{
+		if(PaddedDimensions.x%parameters.SplitCount != 0 || ((PaddedDimensions.x/parameters.SplitCount)&1) != 0)
+			PaddedDimensions.x = (((PaddedDimensions.x/parameters.SplitCount)&~1) + 2)*parameters.SplitCount;
+	}
+
+	unsigned int FullPixels = PaddedDimensions.x*PaddedDimensions.y;
 	unsigned int YPartition = 0;
 	unsigned int YOffset = 0;
 	unsigned int UVPartition = 0;
@@ -232,49 +230,61 @@ int main(int argc, const char* argv[])
 	}
 	else
 	{
-		YOffset = MovDesc.Width/parameters.SplitCount;
-		UVOffset = MovDesc.Width/(2*parameters.SplitCount);
+		YOffset = PaddedDimensions.x/parameters.SplitCount;
+		UVOffset = PaddedDimensions.x/(2*parameters.SplitCount);
 	}
 
 	LuminancePlane.resize( FullPixels );
 	UChromQuarterPlane.resize( FullPixels / 4 );
 	VChromQuarterPlane.resize( FullPixels / 4 );
+	PaddedLuminancePlane.resize( FullPixels );
+	PaddedUChromQuarterPlane.resize( FullPixels / 4 );
+	PaddedVChromQuarterPlane.resize( FullPixels / 4 );
+
+	memset(&PaddedLuminancePlane[0], 16, PaddedLuminancePlane.size());
+	memset(&PaddedUChromQuarterPlane[0], 128, PaddedUChromQuarterPlane.size());
+	memset(&PaddedVChromQuarterPlane[0], 128, PaddedVChromQuarterPlane.size());
 
 	oSurface::YUV420 EncoderFrame;
 	EncoderFrame.pY = &LuminancePlane[0];
-	EncoderFrame.YPitch = MovDesc.Width;
+	EncoderFrame.YPitch = PaddedDimensions.x;
 
 	EncoderFrame.pU = &UChromQuarterPlane[0];
 	EncoderFrame.pV = &VChromQuarterPlane[0];
-	EncoderFrame.UVPitch = MovDesc.Width / 2;
+	EncoderFrame.UVPitch = PaddedDimensions.x / 2;
 
 	std::vector<oRef<oVideoEncodeCPU>> WebmEncoders;
 	WebmEncoders.resize(parameters.SplitCount);
 	oVideoEncodeCPU::DESC WebmDesc;
-
+	
 	unsigned int SplitWidth;
 	unsigned int SplitHeight;
 
 	if(parameters.SplitVerticly)
 	{
-		SplitWidth =  MovDesc.Width;
-		SplitHeight = MovDesc.Height/parameters.SplitCount;
+		SplitWidth =  PaddedDimensions.x;
+		SplitHeight = PaddedDimensions.y/parameters.SplitCount;
 	}
 	else
 	{
-		SplitWidth =  MovDesc.Width/parameters.SplitCount;
-		SplitHeight = MovDesc.Height;
+		SplitWidth =  PaddedDimensions.x/parameters.SplitCount;
+		SplitHeight = PaddedDimensions.y;
 	}
 
-	if(strncmp(oGetFileExtension(parameters.OutputFile),"webm",3))
+	if(strncmp(oGetFileExtension(parameters.OutputFile),".webm",5) == 0 || strncmp(oGetFileExtension(parameters.OutputFile),".webx",5) == 0)
 	{
 		WebmDesc.ContainerType = oVideoEncodeCPU::WEBM_CONTAINER;
 		WebmDesc.CodecType = oVideoEncodeCPU::VP8_CODEC;
 		WebmDesc.Quality = parameters.EncodeQuality;
-		WebmDesc.Width =  SplitWidth;
-		WebmDesc.Height = SplitHeight;
+		WebmDesc.Dimensions.x =  SplitWidth;
+		WebmDesc.Dimensions.y = SplitHeight;
 		if(parameters.FrameRate == -1)
 		{
+			if(MovDesc.FrameTimeDenominator == 0 || MovDesc.FrameTimeNumerator == 0)
+			{
+				std::cout << "input movie doesn't have any frame rate information. You must specify this info on the commandline using -r" << std::endl;
+				return 1;
+			}
 			WebmDesc.FrameTimeNumerator = MovDesc.FrameTimeNumerator; 
 			WebmDesc.FrameTimeDenominator = MovDesc.FrameTimeDenominator;
 		}
@@ -289,6 +299,7 @@ int main(int argc, const char* argv[])
 		{
 			if(!oVideoEncodeCPU::Create( WebmDesc, &(WebmEncoders[i]) ))
 			{
+				std::cout << oGetLastErrorDesc() << std::endl;
 				std::cout << "couldn't create output file encoder" << std::endl;
 				return 1;
 			}
@@ -296,7 +307,7 @@ int main(int argc, const char* argv[])
 	}
 	else
 	{
-		std::cout << "oVideoConverter currently only outputs webm files." << std::endl;
+		std::cout << "oVideoConverter currently only outputs webm and webx files." << std::endl;
 		char buf[2048];
 		printf("%s", oOptDoc(buf, oGetFilebase(argv[0]), sCmdLineOptions));
 		return 1;
@@ -315,7 +326,7 @@ int main(int argc, const char* argv[])
 		}
 	}
 
-	std::vector<oRef<threadsafe oVideoStream>> StreamDecoders;
+	std::vector<oRef<oVideoStream>> StreamDecoders;
 	if(parameters.ShowPreview)
 	{
 		StreamDecoders.resize(parameters.SplitCount);
@@ -325,13 +336,14 @@ int main(int argc, const char* argv[])
 		{
 			if(!oVideoStream::Create( streamDesc, &(StreamDecoders[i]) ))
 			{
+				std::cout << oGetLastErrorDesc() << std::endl;
 				std::cout << "failed to create preview decoder" << std::endl;
 				parameters.ShowPreview = false;
 			}
 		}
 	}
 
-	unsigned int PacketStreamSize = MovDesc.Width*MovDesc.Height*4;
+	unsigned int PacketStreamSize = PaddedDimensions.x*PaddedDimensions.y*4;
 	unsigned char *PacketStream = new unsigned char[PacketStreamSize];
 
 	size_t packetSz = 0;
@@ -343,7 +355,7 @@ int main(int argc, const char* argv[])
 			StreamDecoders[i]->PushByteStream(PacketStream,packetSz);
 	}
 
-	std::vector<oRef<threadsafe oVideoDecodeCPU>> VP8Decoders;
+	std::vector<oRef<oVideoDecodeCPU>> VP8Decoders;
 	if(parameters.ShowPreview)
 	{
 		VP8Decoders.resize(parameters.SplitCount);
@@ -351,6 +363,7 @@ int main(int argc, const char* argv[])
 		{
 			if(!oVideoDecodeCPU::Create( StreamDecoders[i], &(VP8Decoders[i]) ))
 			{
+				std::cout << oGetLastErrorDesc() << std::endl;
 				std::cout << "failed to create preview decoder" << std::endl;
 				parameters.ShowPreview = false;
 			}
@@ -366,8 +379,8 @@ int main(int argc, const char* argv[])
 		oWindow::DESC desc;
 		desc.ClientX = oWindow::DEFAULT;
 		desc.ClientY = oWindow::DEFAULT;
-		desc.ClientWidth = MovDesc.Width/4; //preview will show a smaller window than the video itself
-		desc.ClientHeight = MovDesc.Height/4;
+		desc.ClientWidth = MovDesc.Dimensions.x/4; //preview will show a smaller window than the video itself
+		desc.ClientHeight = MovDesc.Dimensions.y/4;
 		desc.State = oWindow::RESTORED;
 		desc.Style = oWindow::FIXED;
 		desc.UseAntialiasing = false;
@@ -382,8 +395,8 @@ int main(int argc, const char* argv[])
 		}
 
 		oWindow::Picture::DESC picDesc;
-		picDesc.SurfaceDesc.Width = MovDesc.Width;
-		picDesc.SurfaceDesc.Height = MovDesc.Height;
+		picDesc.SurfaceDesc.Width = MovDesc.Dimensions.x;
+		picDesc.SurfaceDesc.Height = MovDesc.Dimensions.y;
 		picDesc.SurfaceDesc.Format = oSurface::B8G8R8A8_UNORM;
 		picDesc.SurfaceDesc.RowPitch = oSurface::GetSize(picDesc.SurfaceDesc.Format) * picDesc.SurfaceDesc.Width;
 		picDesc.SurfaceDesc.NumMips = 1;
@@ -398,6 +411,7 @@ int main(int argc, const char* argv[])
 
 		if(!Window->CreatePicture( &picDesc, &Picture ))
 		{
+			std::cout << oGetLastErrorDesc() << std::endl;
 			std::cout << "failed to create preview window" << std::endl;
 			parameters.ShowPreview = false;
 		}
@@ -408,20 +422,36 @@ int main(int argc, const char* argv[])
 	std::vector<oSurface::YUV420> EncoderFrames;
 	EncoderFrames.resize(parameters.SplitCount);
 
+	oVideoCache FrameCache("frameCache.bin", PaddedDimensions.y);
+
+	oSurface::YUV420 PaddedFrame;
+	PaddedFrame.YPitch = PaddedDimensions.x;
+	PaddedFrame.UVPitch = PaddedDimensions.x / 2;
+	PaddedFrame.pY = &PaddedLuminancePlane[0];
+	PaddedFrame.pU = &PaddedUChromQuarterPlane[0];
+	PaddedFrame.pV = &PaddedVChromQuarterPlane[0];
+
 	if(parameters.TwoPass)
 	{
 		while(!VideoFile->HasFinished())
 		{
 			if(!Decoder->Decode(&EncoderFrame))
 			{
+				std::cout << oGetLastErrorDesc() << std::endl;
 				std::cout << "Failed to decode a frame. input file is probably corrupt" << std::endl;
 				return 1;
 			}
 
+			oMemcpy2d( &PaddedLuminancePlane[0], PaddedDimensions.x, EncoderFrame.pY, EncoderFrame.YPitch, MovDesc.Dimensions.x, MovDesc.Dimensions.y );
+			oMemcpy2d( &PaddedUChromQuarterPlane[0], PaddedDimensions.x / 2, EncoderFrame.pU, EncoderFrame.UVPitch, MovDesc.Dimensions.x / 2, MovDesc.Dimensions.y / 2 );
+			oMemcpy2d( &PaddedVChromQuarterPlane[0], PaddedDimensions.x / 2, EncoderFrame.pV, EncoderFrame.UVPitch, MovDesc.Dimensions.x / 2, MovDesc.Dimensions.y / 2 );
+			
+			FrameCache.CacheFrame(PaddedFrame);
+
 			//Note that for now a decoder may or may not provide its own data.
 			for (unsigned int i = 0;i < parameters.SplitCount;++i)
 			{
-				EncoderFrames[i] = EncoderFrame;
+				EncoderFrames[i] = PaddedFrame;
 				EncoderFrames[i].pY += YPartition*i+YOffset*i;
 				EncoderFrames[i].pU += UVPartition*i+UVOffset*i;
 				EncoderFrames[i].pV += UVPartition*i+UVOffset*i;
@@ -439,19 +469,48 @@ int main(int argc, const char* argv[])
 		for (unsigned int i = 0;i < parameters.SplitCount;++i)
 			WebmEncoders[i]->StartSecondPass();
 		VideoFile->Restart();
+		FrameCache.StartSecondPass();
+
+		EncoderFrame.pY = &LuminancePlane[0];
+		EncoderFrame.YPitch = PaddedDimensions.x;
+		EncoderFrame.pU = &UChromQuarterPlane[0];
+		EncoderFrame.pV = &VChromQuarterPlane[0];
+		EncoderFrame.UVPitch = PaddedDimensions.x / 2;
+
 		FrameCount = 0;
 	}
 
-	size_t RGBFramestride = MovDesc.Width * 4;
+	size_t RGBFramestride = MovDesc.Dimensions.x * 4;
 
-	unsigned char* pFrame = new unsigned char[MovDesc.Width*MovDesc.Height*sizeof(unsigned int)];
-
-	while(!VideoFile->HasFinished())
+	unsigned char* pFrame = new unsigned char[PaddedDimensions.x*PaddedDimensions.y*sizeof(unsigned int)];
+	
+	while(!VideoFile->HasFinished() && (!parameters.TwoPass || !FrameCache.HasFinished()))
 	{
-		if(!Decoder->Decode(&EncoderFrame))
+		if(parameters.TwoPass)
 		{
-			std::cout << "Failed to decode a frame. input file is probably corrupt" << std::endl;
-			return 1;
+			FrameCache.ReadBackFrame(PaddedFrame);
+		}
+		else
+		{
+			if(!Decoder->Decode(&EncoderFrame))
+			{
+				std::cout << oGetLastErrorDesc() << std::endl;
+				std::cout << "Failed to decode a frame. input file is probably corrupt" << std::endl;
+				return 1;
+			}
+
+			oMemcpy2d( &PaddedLuminancePlane[0], PaddedDimensions.x, EncoderFrame.pY, EncoderFrame.YPitch, MovDesc.Dimensions.x, MovDesc.Dimensions.y );
+			oMemcpy2d( &PaddedUChromQuarterPlane[0], PaddedDimensions.x / 2, EncoderFrame.pU, EncoderFrame.UVPitch, MovDesc.Dimensions.x / 2, MovDesc.Dimensions.y / 2 );
+			oMemcpy2d( &PaddedVChromQuarterPlane[0], PaddedDimensions.x / 2, EncoderFrame.pV, EncoderFrame.UVPitch, MovDesc.Dimensions.x / 2, MovDesc.Dimensions.y / 2 );
+		}
+
+		//Note that for now a decoder may or may not provide its own data.
+		for (unsigned int i = 0;i < parameters.SplitCount;++i)
+		{
+			EncoderFrames[i] = PaddedFrame;
+			EncoderFrames[i].pY += YPartition*i+YOffset*i;
+			EncoderFrames[i].pU += UVPartition*i+UVOffset*i;
+			EncoderFrames[i].pV += UVPartition*i+UVOffset*i;
 		}
 
 		bool forceIFrame = false;
@@ -468,13 +527,13 @@ int main(int argc, const char* argv[])
 
 				unsigned char* pPartition = pFrame;
 				if(parameters.SplitVerticly)
-					pPartition += MovDesc.Width*SplitHeight*i*4;
+					pPartition += PaddedDimensions.x*SplitHeight*i*4;
 				else
 					pPartition += SplitWidth*i*4;
 				oSurface::convert_YUV420_to_B8G8R8A8_UNORM( SplitWidth, SplitHeight, DecoderFrame, pPartition, RGBFramestride );
 			}
 
-			Picture->Copy( &pFrame[0], MovDesc.Width * sizeof( int ) );
+			Picture->Copy( &pFrame[0], PaddedDimensions.x * sizeof( int ) );
 			Window->Begin();
 			Window->End();
 		}
@@ -487,6 +546,11 @@ int main(int argc, const char* argv[])
 
 	for (unsigned int i = 0;i < parameters.SplitCount;++i)
 		fclose(OutputFileHandles[i]);
+
+	if(strncmp(oGetFileExtension(parameters.OutputFile),".webx",5) == 0)
+	{
+		oVideo::CreateWebXFile(((const char**)&OutputFiles[0]), oSize32(OutputFiles.size()), parameters.OutputFile, parameters.SplitVerticly);
+	}
 
 	double endTime = oTimer();
 

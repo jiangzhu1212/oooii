@@ -1,29 +1,7 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oTest.h>
 #include <oooii/oooii.h>
-#include <oooii/oVideoCodec.h>
+#include <oVideo/oVideoCodec.h>
 
 struct TESTWebmFile: public oTest
 {
@@ -43,27 +21,27 @@ struct TESTWebmFile: public oTest
 		oTESTB( oVideoFile::Create( sequence, MovDesc, &VideoFile ), oGetLastErrorDesc() );
 		VideoFile->GetDesc(&MovDesc);
 
-		oRef<threadsafe oVideoDecodeCPU> Decoder;
+		oRef<oVideoDecodeCPU> Decoder;
 		oTESTB( oVideoDecodeCPU::Create( VideoFile, &Decoder), "Failed to create decoder" );
 
 		std::vector<unsigned char> LuminancePlane;
 		std::vector<unsigned char> UChromQuarterPlane;
 		std::vector<unsigned char> VChromQuarterPlane;
 
-		unsigned int FullPixels = MovDesc.Width*MovDesc.Height;
+		unsigned int FullPixels = MovDesc.Dimensions.x*MovDesc.Dimensions.y;
 		LuminancePlane.resize( FullPixels );
 		UChromQuarterPlane.resize( FullPixels / 4 );
 		VChromQuarterPlane.resize( FullPixels / 4 );
 
 		oSurface::YUV420 EncoderFrame;
 		EncoderFrame.pY = &LuminancePlane[0];
-		EncoderFrame.YPitch = MovDesc.Width;
+		EncoderFrame.YPitch = MovDesc.Dimensions.x;
 
 		EncoderFrame.pU = &UChromQuarterPlane[0];
 		EncoderFrame.pV = &VChromQuarterPlane[0];
-		EncoderFrame.UVPitch = MovDesc.Width / 2;
+		EncoderFrame.UVPitch = MovDesc.Dimensions.x / 2;
 
-		unsigned char* pFrame = new unsigned char[MovDesc.Width*MovDesc.Height*sizeof(unsigned int)];
+		unsigned char* pFrame = new unsigned char[MovDesc.Dimensions.x*MovDesc.Dimensions.y*sizeof(unsigned int)];
 
 		// Create a test window to visualize things
 		oRef<oWindow> Window;
@@ -74,8 +52,8 @@ struct TESTWebmFile: public oTest
 			oWindow::DESC desc;
 			desc.ClientX = oWindow::DEFAULT;
 			desc.ClientY = oWindow::DEFAULT;
-			desc.ClientWidth = MovDesc.Width;
-			desc.ClientHeight = MovDesc.Height;
+			desc.ClientWidth = MovDesc.Dimensions.x;
+			desc.ClientHeight = MovDesc.Dimensions.y;
 			desc.State = oWindow::RESTORED;
 			desc.Style = oWindow::FIXED;
 			desc.UseAntialiasing = false;
@@ -88,8 +66,8 @@ struct TESTWebmFile: public oTest
 
 
 			oWindow::Picture::DESC picDesc;
-			picDesc.SurfaceDesc.Width = MovDesc.Width;
-			picDesc.SurfaceDesc.Height = MovDesc.Height;
+			picDesc.SurfaceDesc.Width = MovDesc.Dimensions.x;
+			picDesc.SurfaceDesc.Height = MovDesc.Dimensions.y;
 			picDesc.SurfaceDesc.Format = oSurface::B8G8R8A8_UNORM;
 			picDesc.SurfaceDesc.RowPitch = oSurface::GetSize(picDesc.SurfaceDesc.Format) * picDesc.SurfaceDesc.Width;
 			picDesc.SurfaceDesc.NumMips = 1;
@@ -105,7 +83,7 @@ struct TESTWebmFile: public oTest
 			oTESTB(Window->CreatePicture( &picDesc, &Picture ), "Failed to create window picture" );
 		}
 
-		size_t RGBFramestride = MovDesc.Width * 4;
+		size_t RGBFramestride = MovDesc.Dimensions.x * 4;
 		int FrameCount = 0;
 		size_t DecodedFrameCount = 0;
 		while(!VideoFile->HasFinished())
@@ -113,20 +91,20 @@ struct TESTWebmFile: public oTest
 			oTESTB(Decoder->Decode(&EncoderFrame, &DecodedFrameCount), "Failed to decode a frame" );
 			oTESTB(DecodedFrameCount == (size_t)FrameCount, "decoded frame count was not the expected value");
 
-			oSurface::convert_YUV420_to_B8G8R8A8_UNORM( MovDesc.Width, MovDesc.Height, EncoderFrame, pFrame, RGBFramestride );
+			oSurface::convert_YUV420_to_B8G8R8A8_UNORM( MovDesc.Dimensions.x, MovDesc.Dimensions.y, EncoderFrame, pFrame, RGBFramestride );
 
 			if( ++FrameCount == 10 )
 			{
 				oRef<oImage> snapshot;
 				oImage::DESC ImageDesc;
 				ImageDesc.Format = oSurface::R8G8B8A8_UNORM;
-				ImageDesc.Height = MovDesc.Height;
-				ImageDesc.Width = MovDesc.Width;
-				ImageDesc.Pitch = oSurface::CalcRowPitch(oSurface::R8G8B8A8_UNORM, MovDesc.Width );
-				ImageDesc.Size = oSurface::CalcLevelPitch(oSurface::R8G8B8A8_UNORM, MovDesc.Width, MovDesc.Height);
+				ImageDesc.Height = MovDesc.Dimensions.y;
+				ImageDesc.Width = MovDesc.Dimensions.x;
+				ImageDesc.Pitch = oSurface::CalcRowPitch(oSurface::R8G8B8A8_UNORM, MovDesc.Dimensions.x );
+				ImageDesc.Size = oSurface::CalcLevelPitch(oSurface::R8G8B8A8_UNORM, MovDesc.Dimensions.x, MovDesc.Dimensions.y);
 
 				oTESTB(oImage::Create(&ImageDesc, &snapshot), "Failed to create snapshot");
-				memcpy(snapshot->Map(), pFrame, RGBFramestride * MovDesc.Height);
+				memcpy(snapshot->Map(), pFrame, RGBFramestride * MovDesc.Dimensions.y);
 				snapshot->Unmap();
 				snapshot->FlipVertical();
 
@@ -135,7 +113,7 @@ struct TESTWebmFile: public oTest
 
 			if(DevMode)
 			{
-				Picture->Copy( &pFrame[0], MovDesc.Width * sizeof( int ) );
+				Picture->Copy( &pFrame[0], MovDesc.Dimensions.x * sizeof( int ) );
 				Window->Begin();
 				Window->End();
 			}

@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oAllocatorTLSF.h>
 #include <oooii/oByte.h>
 #include <oooii/oErrno.h>
@@ -41,18 +19,16 @@ const static size_t ARENA_SIZE = 512 * 1024;
 static const unsigned int TEST1[] = { 0, 1, 2, 3, 4, 5, 6, };
 static const char* TEST2[] = { "This is a test", "This is only a test", "We now return you to " };
 
-#define oTESTB_MIR(fn, msg, ...) do { if (!(expr)) { sprintf_s(_StrStatus, _SizeofStrStatus, format, ## __VA_ARGS__); oTRACE("FAILING: %s", _StrStatus); goto FailureLabel; } } while(0)
+#define oTESTB_MIR(fn, msg, ...) do { if (!(expr)) { sprintf_s(_StrStatus, _SizeofStrStatus, format, ## __VA_ARGS__); oTRACE("FAILING: %s", _StrStatus); goto FailureLabel; } } while(false)
 
 static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirroredArena::USAGE _Usage)
 {
 	oRef<threadsafe oProcess> Client;
 	{
-		oEvent ServerStarted("ServerStarted", "OOOii.TESTMirroredArena.ServerStarted");
-
 		int exitcode = 0;
 		char msg[512];
-		oTESTB(oTestRunSpecialTest("TESTMirroredArenaClient", msg, oCOUNTOF(msg), &exitcode, &Client), "%s", msg);
-		oTESTB(ServerStarted.Wait(10000), "Timed out waiting for TESTMirroredArenaClient to start.");
+		oTESTB(oSpecialTest::CreateProcess("TESTMirroredArenaClient", &Client), "");
+		oTESTB(oSpecialTest::Start(Client, msg, oCOUNTOF(msg), &exitcode), "%s", msg);
 	}
 
 	oRef<oMirroredArena> MirroredArenaServer;
@@ -215,11 +191,10 @@ struct TESTMirroredArenaClient : public oSpecialTest
 			desc.MaxNumConnections = 1;
 			oTRACE("%s: MirroredArenaClient server about to be created", GetName());
 			oTESTB(oSocketServer::Create("MirroredArena Client's connection Server", desc, &server), "Failed to create server");
-			oEvent ServerStarted("ServerStarted", "OOOii.TESTMirroredArena.ServerStarted");
-			ServerStarted.Set();
 		}
 
 		oTRACE("%s: MirroredArenaClient server created", GetName());
+		NotifyReady();
 
 		oRef<threadsafe oSocketBlocking> client;
 		oTESTB(server->WaitForConnection(&client, WAIT_FOR_CONNECTION_TIMEOUT), "WaitForConnection failed");

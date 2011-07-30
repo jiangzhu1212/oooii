@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oStdio.h>
 #include <oooii/oAssert.h>
 #include <oooii/oPath.h>
@@ -28,6 +6,7 @@
 #include <oooii/oProcess.h>
 #include <oooii/oRef.h>
 #include <oooii/oStddef.h>
+#include <oooii/oThreading.h>
 #include <oooii/oWindows.h>
 #include <io.h>
 #include <regex>
@@ -135,6 +114,18 @@ bool oGetHostname(char* _Hostname, size_t _SizeofHostname)
 	return true;
 }
 
+// @oooii-tony: Move this to a "standard policy" code module
+bool oGetExecutionPath(char* _ExecutionPath, size_t _SizeofExecutionPath)
+{
+	if (-1 == sprintf_s(_ExecutionPath, _SizeofExecutionPath, "[%s.%u.%u]", oGetHostname(), oProcessGetCurrentID(), oThreadGetCurrentID()))
+	{
+		oSetLastError(STRUNCATE);
+		return false;
+	}
+
+	return true;
+}
+
 bool oGetExePath(char* _ExePath, size_t _SizeofExePath)
 {
 	DWORD length = GetModuleFileNameA(GetModuleHandle(0), _ExePath, static_cast<DWORD>(_SizeofExePath));
@@ -197,7 +188,7 @@ int oCompareDateTime(const oDateTime& _DateTime1, const oDateTime& _DateTime2)
 	time_t time1 = oConvertDateTime(_DateTime1);
 	time_t time2 = oConvertDateTime(_DateTime2);
 	if (time1 == time2)
-		return _DateTime1.Milliseconds > _DateTime2.Milliseconds ? 1 : -1;
+		return _DateTime1.Milliseconds > _DateTime2.Milliseconds ? 1 : (_DateTime1.Milliseconds < _DateTime2.Milliseconds) ? -1 : 0;
 	else return time1 > time2 ? 1 : -1;
 }
 
@@ -210,11 +201,22 @@ bool oGetDateTime(oDateTime* _pDateTime)
 	}
 	
 	SYSTEMTIME st;
-	GetLocalTime(&st);
+	GetSystemTime(&st);
 
 	oSTATICASSERT(sizeof(SYSTEMTIME) == sizeof(oDateTime));
 	memcpy(_pDateTime, &st, sizeof(st));
 	return true;
+}
+
+bool oGetLocalDateTime(const oDateTime& _UTCTime, oDateTime* _pLocalTime)
+{
+	if (!_pLocalTime)
+	{
+		oSetLastError(EINVAL, "A valid address to receive an oDateTime must be specified.");
+		return false;
+	}
+
+	return !!SystemTimeToTzSpecificLocalTime(nullptr, (const LPSYSTEMTIME)&_UTCTime, (LPSYSTEMTIME)_pLocalTime);
 }
 
 time_t oConvertDateTime(const oDateTime& _DateTime)
@@ -313,6 +315,5 @@ void oSysAllowSleep(bool _Allow)
 	}
 
 	EXECUTION_STATE next = _Allow ? ES_CONTINUOUS : (ES_CONTINUOUS|ES_SYSTEM_REQUIRED|ES_AWAYMODE_REQUIRED);
-	EXECUTION_STATE prior = SetThreadExecutionState(next);
-	oASSERT(prior != 0, "SetThreadExecutionState failed.");
+	oVB( SetThreadExecutionState(next) );
 }

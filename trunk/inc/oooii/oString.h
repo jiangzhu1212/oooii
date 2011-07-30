@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #pragma once
 #ifndef oString_h
 #define oString_h
@@ -306,6 +284,30 @@ char* oOptDoc(char* _StrDestination, size_t _SizeofStrDestination, const char* _
 
 template<typename T> errno_t oToString(char* _StrDestination, size_t _SizeofStrDestination, const T& _Value);
 template<typename T> errno_t oFromString(T* _pValue, const char* _StrSource);
+
+// Helper code assuming comma delineated vector of objects
+template<typename T>
+errno_t oFromString( std::vector<T>* _pVec, const char* _StrSource)
+{
+	char* ctx = NULL;
+	const char* token = oStrTok(_StrSource, ",", &ctx);
+	while (token)
+	{
+		T obj;
+		errno_t res = oFromString(&obj, token );
+		if( 0 != res )
+		{
+			oCloseStrTok(&ctx);
+			_pVec->clear(); // Incomplete so clear
+			return res;
+		}
+
+		_pVec->push_back(obj);
+		token = oStrTok(0, ",", &ctx);
+	}
+	return 0;
+}
+
 
 // _____________________________________________________________________________
 // Templated-on-size versions of the above API

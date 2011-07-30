@@ -1,29 +1,8 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oProcess.h>
 #include <oooii/oErrno.h>
 #include <oooii/oRefCount.h>
+#include <oooii/oThreading.h>
 #include <oooii/oWindows.h>
 #include <string>
 #include "oWinPSAPI.h"
@@ -39,6 +18,7 @@ struct Process_Impl : public oProcess
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oGetGUID<oProcess>());
+	oDEFINE_CONST_GETDESC_INTERFACE(Desc, threadsafe);
 
 	Process_Impl(const DESC* _pDesc, bool* _pSuccess);
 	~Process_Impl();
@@ -46,11 +26,9 @@ struct Process_Impl : public oProcess
 	void Start() threadsafe override;
 	bool Kill(int _ExitCode) threadsafe override;
 	bool Wait(unsigned int _TimeoutMS = oINFINITE_WAIT) threadsafe override;
-	bool GetCPUTime(unsigned __int64 *_pCPUTime) const threadsafe override;
-	bool GetMemoryWorkingSetSize(size_t *_pWorkingSetSize) const threadsafe;
 	bool GetExitCode(int* _pExitCode) const threadsafe override;
-	size_t GetProcessID() const threadsafe override;
-	size_t GetThreadId() const threadsafe override;
+	unsigned int GetProcessID() const threadsafe override;
+	unsigned int GetThreadID() const threadsafe override;
 
 	size_t WriteToStdin(const void* _pSource, size_t _SizeofWrite) threadsafe override;
 	size_t ReadFromStdout(void* _pDestination, size_t _SizeofRead) threadsafe override;
@@ -81,13 +59,16 @@ bool oProcess::Create(const DESC* _pDesc, threadsafe oProcess** _ppProcess)
 		*_ppProcess = 0;
 	}
 
+	if (*_ppProcess)
+		oTRACE("Process %u created (attach to this in a debugger to get breakpoints)", (*_ppProcess)->GetProcessID());
+
 	return !!*_ppProcess;
 }
 
 Process_Impl::Process_Impl(const DESC* _pDesc, bool* _pSuccess)
 	: Desc(*_pDesc)
-	, CommandLine(_pDesc->CommandLine ? _pDesc->CommandLine : "")
-	, EnvironmentString(_pDesc->EnvironmentString ? _pDesc->EnvironmentString : "")
+	, CommandLine(oSAFESTR(_pDesc->CommandLine))
+	, EnvironmentString(oSAFESTR(_pDesc->EnvironmentString))
 	, hOutputRead(0)
 	, hOutputWrite(0)
 	, hInputRead(0)
@@ -210,62 +191,20 @@ void Process_Impl::Start() threadsafe
 
 bool Process_Impl::Kill(int _ExitCode) threadsafe
 {
-	HRESULT hr = TerminateProcess(ProcessInfo.hProcess, (UINT)_ExitCode);
-	if (FAILED(hr))
-	{
-		oWinSetLastError(hr);
-		return false;
-	}
-
-	return true;
+	return oProcessTerminate(ProcessInfo.dwProcessId, (unsigned int)_ExitCode);
 }
-
 
 bool Process_Impl::Wait(unsigned int _TimeoutMS) threadsafe
 {
 	return oWaitSingle(ProcessInfo.hProcess, _TimeoutMS);
 }
 
-bool Process_Impl::GetCPUTime(unsigned __int64 *_pCPUTime) const threadsafe
-{
-	FILETIME creationTime;
-	FILETIME exitTime;
-	FILETIME kernelTime;
-	FILETIME userTime;
-
-	if (!GetProcessTimes(ProcessInfo.hProcess, &creationTime, &exitTime, &kernelTime, &userTime))
-	{
-		return false;
-	}
-
-	*_pCPUTime = (Int64ShllMod32(kernelTime.dwHighDateTime, 32) | kernelTime.dwLowDateTime) +
-								  (Int64ShllMod32(userTime.dwHighDateTime, 32) | userTime.dwLowDateTime);
-
-	return true;
-}
-
-bool Process_Impl::GetMemoryWorkingSetSize(size_t *_pWorkingSetSize) const threadsafe
-{
-	PROCESS_MEMORY_COUNTERS_EX m;
-	memset(&m, 0, sizeof(m));
-	m.cb = sizeof(m);
-
-	if (!oWinPSAPI::Singleton()->GetProcessMemoryInfo(ProcessInfo.hProcess, (PROCESS_MEMORY_COUNTERS*)&m, m.cb))
-	{
-		return false;
-	}
-
-	*_pWorkingSetSize = m.WorkingSetSize;
-	return true;
-}
-
-
-size_t Process_Impl::GetThreadId() const threadsafe
+unsigned int Process_Impl::GetThreadID() const threadsafe
 {
 	return ProcessInfo.dwThreadId;
 }
 
-size_t Process_Impl::GetProcessID() const threadsafe
+unsigned int Process_Impl::GetProcessID() const threadsafe
 {
 	return ProcessInfo.dwProcessId;
 }

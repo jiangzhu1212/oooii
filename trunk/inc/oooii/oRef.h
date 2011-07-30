@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 
 // A simple intrusive smart pointer implementation. This requires the user to 
 // define the following unqualified API:
@@ -73,7 +51,7 @@
 template<class T> struct oRef
 {
 	oRef() : _p(0) {}
-	~oRef() { if (_p) intrusive_ptr_release(_p); }
+	~oRef() { if (_p) intrusive_ptr_release(_p); _p = nullptr; }
 
 	oRef(const oRef<T>& rhs)
 	{
@@ -94,15 +72,15 @@ template<class T> struct oRef
 		if (_p) intrusive_ptr_release(_p);
 		_p = rhs;
 		if (_p) intrusive_ptr_add_ref(_p);
-		return thread_cast<oRef<T>&>( *this );
+		return thread_cast<oRef<T>&>(*this);
 	}
 	
 	oRef<T>& operator=(const oRef<T>& rhs) threadsafe
 	{
 		if (_p) intrusive_ptr_release(_p);
-		_p = const_cast<T*>( rhs.c_ptr() ); // const_cast is ok because we're casting away the constness of the oRef and not the underlying type
+		_p = const_cast<T*>(rhs.c_ptr()); // const_cast is ok because we're casting away the constness of the oRef and not the underlying type
 		if (_p) intrusive_ptr_add_ref(_p);
-		return thread_cast<oRef<T>&>( *this );
+		return thread_cast<oRef<T>&>(*this);
 	}
 	
 	// Assign without incrementing the new value's refcount. Sometimes
@@ -122,12 +100,12 @@ template<class T> struct oRef
 	operator const T*() const threadsafe { return _p; }
 
 	// & is used during creation where it is expected that the resulting action 
-	// will leave us with a refcount of one, therefore first assign to NULL 
+	// will leave us with a refcount of one, therefore first assign to nullptr 
 	// clearing out any prior reference. Careful, because if used in other 
 	// contexts this will clear the pointer inappropriately. Use myRef.address()
 	// to pass the direct pointer value's address.
 	T** operator &() threadsafe { (*this) = NULL; return thread_cast<T**>(&_p); } // & is used during creation where it is expected that the resulting action will leave us with a refcount of one, therefore first assign to NULL clearing out any prior reference
-	const T** operator &() const threadsafe { (*this) = NULL; return &_p; } // & is used during creation where it is expected that the resulting action will leave us with a refcount of one, therefore first assign to NULL clearing out any prior reference
+	const T** operator &() const threadsafe { (*this) = nullptr; return &_p; } // & is used during creation where it is expected that the resulting action will leave us with a refcount of one, therefore first assign to NULL clearing out any prior reference
 	
 	T* c_ptr() threadsafe { return _p; }
 	const T* c_ptr() const threadsafe { return _p; }

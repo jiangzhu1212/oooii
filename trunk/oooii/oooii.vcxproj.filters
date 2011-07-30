@@ -19,9 +19,6 @@
     <Filter Include="Headers\ForCodeReview">
       <UniqueIdentifier>{fc522b7c-0c3f-442a-98f0-306d06c7d0a6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Video">
-      <UniqueIdentifier>{f5355f31-bcdb-44a8-a1bf-2d684c63bfd4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Headers\oFoundation">
       <UniqueIdentifier>{24dfa143-a688-4ab6-a1d2-c0615cb3594d}</UniqueIdentifier>
     </Filter>
@@ -145,15 +142,6 @@
       <Filter>Headers\oPlatform</Filter>
     </ClInclude>
     <ClInclude Include="..\inc\oooii\oColor.h">
-      <Filter>Headers\oCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\inc\oooii\oMsgBox.h">
-      <Filter>Headers\oCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\inc\oooii\oMouse.h">
-      <Filter>Headers\oCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\inc\oooii\oKeyboard.h">
       <Filter>Headers\oCore</Filter>
     </ClInclude>
     <ClInclude Include="..\inc\oooii\oGUID.h">
@@ -306,9 +294,6 @@
     <ClInclude Include="..\inc\oooii\oManipulator.h">
       <Filter>Headers\oCore</Filter>
     </ClInclude>
-    <ClInclude Include="..\inc\oooii\oBarrier.h">
-      <Filter>Headers\oPlatform</Filter>
-    </ClInclude>
     <ClInclude Include="..\inc\oooii\oArcball.h">
       <Filter>Headers\oCore</Filter>
     </ClInclude>
@@ -331,9 +316,6 @@
       <Filter>Headers\oPlatform</Filter>
     </ClInclude>
     <ClInclude Include="..\inc\oooii\oSurface.h">
-      <Filter>Headers\oCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\inc\oooii\oMutexInternal.h">
       <Filter>Headers\oCore</Filter>
     </ClInclude>
     <ClInclude Include="..\inc\oooii\oBuffer.h">
@@ -372,39 +354,6 @@
     <ClInclude Include="..\inc\oooii\oPath.h">
       <Filter>Headers\oCore</Filter>
     </ClInclude>
-    <ClInclude Include="oMOVFileImpl.h">
-      <Filter>Source\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="oVP8DecodeCPU.h">
-      <Filter>Source\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="oVideoCodecD3D10.h">
-      <Filter>Source\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="oWebmEncoder.h">
-      <Filter>Source\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="oWebmFile.h">
-      <Filter>Source\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="oWebmStreaming.h">
-      <Filter>Source\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="oRleDecodeCPU.h">
-      <Filter>Source\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="oWebmEncoderCodec.h">
-      <Filter>Source\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="oWebmEncoderCodecVP8.h">
-      <Filter>Source\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="oWebmEncoderCodecRaw420.h">
-      <Filter>Source\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="oRawDecodeCPU.h">
-      <Filter>Source\Video</Filter>
-    </ClInclude>
     <ClInclude Include="..\inc\oooii\oCheckedAssignment.h">
       <Filter>Headers\oCore</Filter>
     </ClInclude>
@@ -419,12 +368,6 @@
     </ClInclude>
     <ClInclude Include="..\inc\oooii\oStringID.h">
       <Filter>Headers\oCore</Filter>
-    </ClInclude>
-    <ClInclude Include="oImageSequence.h">
-      <Filter>Source\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="oImageDecodeCPU.h">
-      <Filter>Source\Video</Filter>
     </ClInclude>
     <ClInclude Include="..\inc\oooii\oHLSLDeferredView.h">
       <Filter>Headers\oCore</Filter>
@@ -441,14 +384,26 @@
     <ClInclude Include="oWinDWMAPI.h">
       <Filter>Source\Windows Soft-Link</Filter>
     </ClInclude>
-    <ClInclude Include="oVideoRTPImpl.h">
-      <Filter>Source\Video</Filter>
+    <ClInclude Include="..\inc\oooii\oMouse.h">
+      <Filter>Headers\oPlatform</Filter>
     </ClInclude>
-    <ClInclude Include="oVideoHelpers.h">
-      <Filter>Source\Video</Filter>
+    <ClInclude Include="..\inc\oooii\oMsgBox.h">
+      <Filter>Headers\oPlatform</Filter>
     </ClInclude>
-    <ClInclude Include="..\inc\oooii\oIOCP.h">
-      <Filter>Source</Filter>
+    <ClInclude Include="..\inc\oooii\oKeyboard.h">
+      <Filter>Headers\oPlatform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oooii\oMutexInternal.h">
+      <Filter>Headers\oFoundation</Filter>
+    </ClInclude>
+    <ClInclude Include="oIOCP.h">
+      <Filter>Source\Windows Soft-Link</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oooii\oStandards.h">
+      <Filter>Headers\oPlatform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oooii\oCountdownLatch.h">
+      <Filter>Headers\oPlatform</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -462,9 +417,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oAssert.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oBarrier.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oBuffer.cpp">
@@ -653,53 +605,11 @@
     <ClCompile Include="oTimerHelpers.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oMOVFileImpl.cpp">
-      <Filter>Source\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="oVideoCodec.cpp">
-      <Filter>Source\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="oVideoCodecD3D10.cpp">
-      <Filter>Source\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="oVP8DecodeCPU.cpp">
-      <Filter>Source\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="oWebmEncoder.cpp">
-      <Filter>Source\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="oWebmFile.cpp">
-      <Filter>Source\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="oWebmStreaming.cpp">
-      <Filter>Source\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="oRleDecodeCPU.cpp">
-      <Filter>Source\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="oWebmEncoderCodec.cpp">
-      <Filter>Source\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="oWebmEncoderCodecVP8.cpp">
-      <Filter>Source\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="oWebmEncoderCodecRaw420.cpp">
-      <Filter>Source\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="oRawDecodeCPU.cpp">
-      <Filter>Source\Video</Filter>
-    </ClCompile>
     <ClCompile Include="oCommandQueue.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oCommandQueueSingleThread.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oImageSequence.cpp">
-      <Filter>Source\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="oImageDecodeCPU.cpp">
-      <Filter>Source\Video</Filter>
     </ClCompile>
     <ClCompile Include="oWinsock.cpp">
       <Filter>Source\Windows Soft-Link</Filter>
@@ -713,10 +623,13 @@
     <ClCompile Include="oWinDWMAPI.cpp">
       <Filter>Source\Windows Soft-Link</Filter>
     </ClCompile>
-    <ClCompile Include="oVideoRTPImpl.cpp">
-      <Filter>Source\Video</Filter>
-    </ClCompile>
     <ClCompile Include="oIOCP.cpp">
+      <Filter>Source\Windows Soft-Link</Filter>
+    </ClCompile>
+    <ClCompile Include="oStandards.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oCountdownLatch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -724,7 +637,7 @@
     <FXC Include="oHLSLFSQuad.sh">
       <Filter>Source</Filter>
     </FXC>
-    <FXC Include="oHLSLYUVTORGB.sh">
+    <FXC Include="oHLSLPassthrough.sh">
       <Filter>Source</Filter>
     </FXC>
   </ItemGroup>

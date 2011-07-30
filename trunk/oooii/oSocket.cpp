@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oSocket.h>
 #include <oooii/oAllocatorTLSF.h>
 #include <oooii/oByte.h>
@@ -1867,7 +1845,7 @@ struct oSocketAsyncUDP_Impl : public oSocketAsyncUDP
 	oSocketAsyncUDP_Impl(const char* _DebugName, const DESC* _pDesc, bool* _pSuccess);
 	~oSocketAsyncUDP_Impl();
 
-	virtual void	Send(void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination) threadsafe override;
+	virtual void	Send(const void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination) threadsafe override;
 	virtual void	Recv(void* _pBuffer, oSocket::size_t _Size) threadsafe override;
 
 	void			IOCPCallback(oHandle& _Handle, void* _pOp);
@@ -1924,11 +1902,13 @@ oSocketAsyncUDP_Impl::~oSocketAsyncUDP_Impl()
 	SocketOpPool.Reset();
 }
 
-void oSocketAsyncUDP_Impl::Send(void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination) threadsafe
+void oSocketAsyncUDP_Impl::Send(const void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination) threadsafe
 {
 	oWinsock* ws = oWinsock::Singleton();
 
 	oSocketOp* pSocketOp = SocketOpPool.Construct();
+
+	oASSERT(pSocketOp, "SocketOpPool is empty, you're sending too fast.");
 
 	pSocketOp->Op = oSocketOp::Op_Send;
 	pSocketOp->buf.len = _Size;

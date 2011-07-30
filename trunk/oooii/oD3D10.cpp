@@ -1,31 +1,10 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oD3D10.h>
 #include <oooii/oSTL.h>
 #include <oooii/oMath.h>
 #include <oooii/oModule.h>
 #include <oHLSLFSQuadByteCode.h>
+#include <oHLSLPassthroughByteCode.h>
 
 static const char* d3d10_dll_functions[] = 
 {
@@ -195,6 +174,13 @@ void oD3D10ShaderState::STATE::SetState( ID3D10Device* _pDevice )
 
 void oD3D10FullscreenQuad::Create(ID3D10Device* _pDevice, const BYTE* _pPixelShaderByteCode, size_t _szBiteCode)
 {
+	CreateStates(_pDevice);
+
+	oD3D10ShaderState::CreateShaders( _pDevice, &ShaderState, oHLSLFSQuadByteCode, oCOUNTOF( oHLSLFSQuadByteCode), NULL, 0, _pPixelShaderByteCode, _szBiteCode );
+}
+
+void oD3D10FullscreenQuad::CreateStates(ID3D10Device* _pDevice)
+{
 	{ // Create our one and only raster state
 		D3D10_RASTERIZER_DESC RasterDesc;
 		memset(&RasterDesc, NULL, sizeof( D3D10_RASTERIZER_DESC ) );
@@ -213,11 +199,9 @@ void oD3D10FullscreenQuad::Create(ID3D10Device* _pDevice, const BYTE* _pPixelSha
 		BlendDesc.RenderTargetWriteMask[0] = D3D10_COLOR_WRITE_ENABLE_ALL;
 		oV( _pDevice->CreateBlendState(&BlendDesc, &BlendState) );
 	}
-
-	oD3D10ShaderState::CreateShaders( _pDevice, &ShaderState, oHLSLFSQuadByteCode, oCOUNTOF( oHLSLFSQuadByteCode), NULL, 0, _pPixelShaderByteCode, _szBiteCode );
 }
 
-void oD3D10FullscreenQuad::Draw( ID3D10Device* _pDevice )
+void oD3D10FullscreenQuad::SetStates(ID3D10Device* _pDevice)
 {
 	ShaderState.SetState(_pDevice);
 	_pDevice->RSSetState(RasterState);
@@ -225,11 +209,69 @@ void oD3D10FullscreenQuad::Draw( ID3D10Device* _pDevice )
 	static const FLOAT sBlendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	_pDevice->OMSetBlendState(BlendState, sBlendFactor, 0xffffffff);
 	_pDevice->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+}
+
+void oD3D10FullscreenQuad::Draw( ID3D10Device* _pDevice )
+{
+	SetStates(_pDevice);
 
 	ID3D10Buffer *pNullBuffer[] = { NULL };
 	unsigned pStrides[] = { 0 };
 	unsigned pOffsets[] = { 0 };
 	_pDevice->IASetVertexBuffers(0, 1, pNullBuffer, pStrides, pOffsets);
 
+	_pDevice->Draw( 4, 0 );
+}
+
+void oD3D10ScreenQuad::Create(ID3D10Device* _pDevice, const BYTE* _pPixelShaderByteCode, size_t _szBiteCode)
+{
+	CreateStates(_pDevice);
+
+	{ // Vertex Buffer
+		D3D10_BUFFER_DESC BufferDesc;
+		memset( &BufferDesc, NULL, sizeof( D3D10_BUFFER_DESC ) );
+		BufferDesc.ByteWidth = sizeof(VSIN) * 4;
+		BufferDesc.Usage = D3D10_USAGE_DYNAMIC;
+		BufferDesc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
+		BufferDesc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
+		oV( _pDevice->CreateBuffer(&BufferDesc, nullptr, &VertexBuffer) );
+	}
+
+	{
+		D3D10_INPUT_ELEMENT_DESC layout[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, 
+			D3D10_INPUT_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, 
+			D3D10_INPUT_PER_VERTEX_DATA, 0 },
+		};
+		oV(_pDevice->CreateInputLayout(layout, 2, oHLSLPassthroughByteCode, oCOUNTOF( oHLSLPassthroughByteCode), &VertexLayout));
+	}
+
+	oD3D10ShaderState::CreateShaders( _pDevice, &ShaderState, oHLSLPassthroughByteCode, oCOUNTOF( oHLSLPassthroughByteCode), NULL, 0, _pPixelShaderByteCode, _szBiteCode );
+}
+
+void oD3D10ScreenQuad::Draw( ID3D10Device* _pDevice , oRECTF _Destination, oRECTF _Source)
+{
+	SetStates(_pDevice);
+
+	VSIN *buffer;
+	VertexBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**)&buffer);
+	buffer[0].Position = float2(_Destination.GetMin().x, _Destination.GetMax().y);
+	buffer[0].Texcoord = _Source.GetMin();
+	buffer[1].Position = _Destination.GetMax();
+	buffer[1].Texcoord = float2(_Source.GetMax().x, _Source.GetMin().y);
+	buffer[2].Position = _Destination.GetMin();
+	buffer[2].Texcoord = float2(_Source.GetMin().x, _Source.GetMax().y);
+	buffer[3].Position = float2(_Destination.GetMax().x, _Destination.GetMin().y);
+	buffer[3].Texcoord = _Source.GetMax();
+	VertexBuffer->Unmap();
+
+	ID3D10Buffer *pNullBuffer[] = { VertexBuffer.c_ptr() };
+	unsigned pStrides[] = { sizeof(VSIN) };
+	unsigned pOffsets[] = { 0 };
+	_pDevice->IASetInputLayout( VertexLayout );
+	_pDevice->IASetVertexBuffers(0, 1, pNullBuffer, pStrides, pOffsets);
+	
 	_pDevice->Draw( 4, 0 );
 }

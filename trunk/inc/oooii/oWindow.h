@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #pragma once
 #ifndef oWindow_h
 #define oWindow_h
@@ -28,7 +6,7 @@
 #include <oooii/oColor.h>
 #include <oooii/oInterface.h>
 #include <oooii/oSurface.h>
-#include <oooii/oVideoCodec.h>
+#include <oVideo/oVideoCodec.h>
 #include <oooii/oMath.h>
 
 interface oImage;
@@ -338,7 +316,7 @@ interface oWindow : oInterface
 				, Anchor(MIDDLE_CENTER)
 				, UseFrameTime(false)
 				, StitchVertically(true)
-				, NVIDIASurround(false)
+				, AllowCatchUp(true)
 			{}
 
 			// These dimensions are as-drawn
@@ -348,7 +326,9 @@ interface oWindow : oInterface
 			int Height; // use DEFAULT for full size of client window
 			bool UseFrameTime; //play video back at rate specified in stream, if false play back as fast as possible
 			bool StitchVertically; 
-			bool NVIDIASurround; //If true it is assumed there are 3 monitors arranged horizontally, with NVIDIA Surround enabled.
+			oRECT SourceRects[24]; // video outside this rect will get discarded. You still have to pay the performance cost for decoding that video though.
+			oRECT DestRects[24]; // video outside this rect will get discarded. You still have to pay the performance cost for decoding that video though.
+			bool AllowCatchUp; // If true allow any containers that have fallen behind, to catch up. If false an assert will be thrown if containers don't alll decode the same frame.
 
 			// Starting position relative to the parent window's client area
 			ALIGNMENT Anchor;
@@ -377,7 +357,7 @@ interface oWindow : oInterface
 	virtual bool CreateFont(const Font::DESC* _pDesc, threadsafe Font** _ppFont) threadsafe = 0;
 	virtual bool CreateText(const Text::DESC* _pDesc, threadsafe Font* _pFont, threadsafe Text** _ppText) threadsafe = 0;
 	virtual bool CreatePicture(const Picture::DESC* _pDesc, threadsafe Picture** _ppPicture) threadsafe = 0;
-	virtual bool CreateVideo(const Video::DESC*_pDesc, std::vector<threadsafe oVideoContainer*> &_Containers, threadsafe Video** _ppVideo) threadsafe = 0;
+	virtual bool CreateVideo(const Video::DESC*_pDesc, oVideoContainer** _ppVideos, size_t _NumVideos, threadsafe Video** _ppVideo) threadsafe = 0;
 
 	// _____________________________________________________________________________
 	// Runtime API

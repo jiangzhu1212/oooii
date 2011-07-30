@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 #include <oooii/oWindows.h>
 #include <oooii/oWindow.h>
 #include <oooii/oAssert.h>
@@ -182,9 +160,9 @@ struct oWindow_Impl : public oWindow
 	bool CreateFont(const Font::DESC* _pDesc, threadsafe Font** _ppFont) threadsafe override;
 	bool CreateText(const Text::DESC* _pDesc, threadsafe Font* _pFont, threadsafe Text** _ppText) threadsafe override;
 	bool CreatePicture(const Picture::DESC* _pDesc, threadsafe Picture** _ppPicture) threadsafe override;
-	bool CreateVideo(const Video::DESC*_pDesc, std::vector<threadsafe oVideoContainer*> &_Containers, threadsafe Video** _ppVideo) threadsafe override;
+	bool CreateVideo(const Video::DESC*_pDesc, oVideoContainer** _ppVideos, size_t _NumVideos, threadsafe Video** _ppVideo) threadsafe override;
 	bool CreateSnapshot(oImage** _ppImage, bool _IncludeBorder = false) override;
-	oWindow_Impl(const DESC* _pDesc, void* _pAssociatedNativeHandle, const char* _Title, unsigned int _FourCCDrawAPI, bool* _pSuccess);
+	oWindow_Impl(const DESC& Desc, void* _pAssociatedNativeHandle, const char* _Title, unsigned int _FourCCDrawAPI, bool* _pSuccess);
 	~oWindow_Impl();
 
 	oRecursiveLockedVector<Child*> Children;  // Children have to be recursive because they can callback into the vector
@@ -204,6 +182,9 @@ struct oWindow_Impl : public oWindow
 	HBITMAP hOffscreenBmp; // let Windows to cleartyped-text
 	oColor ClearColor;
 	bool UseAntialiasing;
+	bool Fullscreen;
+	unsigned int FullscreenWidth;
+	unsigned int FullscreenHeight;
 	bool LockToVsync;
 	bool Closing;
 	bool EnableCloseButton;
@@ -330,6 +311,32 @@ static void GetDefaultDesc(HWND _hWnd, const oWindow::DESC* _pInDesc, oWindow::D
 
 	if (_pInDesc->ClientY == oWindow::DEFAULT)
 		_pOutDesc->ClientY = (displayDesc.ModeDesc.Height - _pOutDesc->ClientHeight) / 2;
+}
+
+static void GetFullscreenDimensions(const oWindow::DESC& _Desc, unsigned int* _pWidth, unsigned int* _pHeight)
+{
+	// This adjusts the description to match the actual dimensions
+	// of the monitor that region would primarily reside on.
+	RECT WindowRect;
+	WindowRect.left = oWindow::DEFAULT == _Desc.ClientX ? 0 : _Desc.ClientX;
+	WindowRect.top = oWindow::DEFAULT == _Desc.ClientY ? 0 : _Desc.ClientY;
+	WindowRect.right = WindowRect.left + ( oWindow::DEFAULT == _Desc.ClientWidth ? 640 : _Desc.ClientWidth );
+	WindowRect.bottom = WindowRect.top + ( oWindow::DEFAULT == _Desc.ClientHeight ? 480 : _Desc.ClientHeight );
+
+	oRef<IDXGIAdapter1> Adapter;
+	oRef<IDXGIOutput> Output;
+	if( !oDXGIGetAdapterWithMonitor(WindowRect, &Adapter, &Output ) )
+	{
+		*_pWidth = 0;
+		*_pHeight = 0;
+		return;
+	}
+
+	DXGI_OUTPUT_DESC OutputDesc;
+	Output->GetDesc(&OutputDesc);
+	const RECT& Coord = OutputDesc.DesktopCoordinates;
+	*_pWidth = Coord.right - Coord.left;
+	*_pHeight = Coord.bottom - Coord.top;
 }
 
 static void GetDesc(HWND _hWnd, oWindow::DESC* _pDesc)
@@ -1504,24 +1511,44 @@ struct PictureGDI : public oWindow::Picture
 		oDEFINE_NOOP_QUERYINTERFACE();
 		oDEFINE_GETINTERFACE_INTERFACE(threadsafe, GetWindow, threadsafe, oWindow, Window);
 
-		VideoD2D( threadsafe oWindow_Impl* _pWindow, const DESC* _pDesc, std::vector<threadsafe oVideoContainer*> &_pContainers, ID3D10Texture2D* _pBackBuffer, bool* _pSuccess)
+		VideoD2D( threadsafe oWindow_Impl* _pWindow, const DESC* _pDesc, oVideoContainer** _ppVideos, size_t _NumVideos, ID3D10Texture2D* _pBackBuffer, bool* _pSuccess)
 			: Window(_pWindow)
 			, Desc(*_pDesc)
 		{
 			*_pSuccess = false;
 
+			bool (__stdcall *CreateDecode)(oVideoDecodeD3D10::DESC _desc, oVideoContainer** _ppContainers, size_t _NumVideos, oVideoDecodeD3D10** _ppDecoder) = NULL;
+			// Softlink oVideo
+			{
+				static const char* DLLName =
+#if _DEBUG
+					"oVideoD.dll";
+#else
+					"oVideo.dll";
+#endif
+				// @oooii-kevin: This is obtained via dumpbin /EXPORTS
+				const char* CreateDecodeName = "?Create@oVideoDecodeD3D10@@SA_NUDESC@1@PEAPEAUoVideoContainer@@_KPEAPEAU1@@Z";
+				VideoDLL = oModule::Link(DLLName, &CreateDecodeName, (void**)&CreateDecode, 1 );
+				if( !VideoDLL )
+				{
+					oSetLastError(EINVAL, "Can't load %s", DLLName );
+					return;
+				}
+			}
+
+
 			oVideoDecodeD3D10::DESC desc;
-			desc.pContainers = _pContainers;
 			desc.UseFrameTime = Desc.UseFrameTime;
 			desc.StitchVertically = Desc.StitchVertically;
-			desc.NVIDIASurround = Desc.NVIDIASurround;
+			memcpy(desc.SourceRects, Desc.SourceRects, sizeof(Desc.SourceRects));
+			memcpy(desc.DestRects, Desc.DestRects, sizeof(Desc.DestRects));
+			desc.AllowCatchUp = Desc.AllowCatchUp;
 
-			if( !oVideoDecodeD3D10::Create( desc, &Decoder ) )
+			if( !CreateDecode( desc, _ppVideos, _NumVideos, &Decoder ) )
 				return;
 
-			DecoderHandle = Decoder->Register( _pBackBuffer );
-			if( NULL == DecoderHandle )
-				return;
+			if( !Decoder->Register( _pBackBuffer ) )
+ 				return;
 
 			Register();
 			Window->Videos.push_back(this);
@@ -1532,6 +1559,7 @@ struct PictureGDI : public oWindow::Picture
 		{
 			Window->Videos.erase(this);
 			Unregister();
+			oModule::Unlink(VideoDLL);
 		}
 
 		bool Open() override
@@ -1550,23 +1578,23 @@ struct PictureGDI : public oWindow::Picture
 
 		void HandlePaint(void* _pPlatformData) override
 		{
-			Decoder->Decode( DecoderHandle );
+			Decoder->Decode( );
 		}
 
 		void RegisterDecoder(ID3D10Texture2D* _pBackBuffer)
 		{
-			DecoderHandle = Decoder->Register( _pBackBuffer );
+			Decoder->Register( _pBackBuffer );
 		}
 		void UnregisterDecoder()
 		{
-			Decoder->Unregister(DecoderHandle);
+			Decoder->Unregister();
 		}
 
 		oRef<threadsafe oWindow_Impl> Window;
-		oRef<threadsafe oVideoDecodeD3D10> Decoder;
-		oVideoDecodeD3D10::HDECODE_CONTEXT DecoderHandle;
+		oRef<oVideoDecodeD3D10> Decoder;
 		DESC Desc;
 		oRefCount RefCount;
+		oHMODULE VideoDLL;
 	};
 
 
@@ -1583,7 +1611,7 @@ bool oWindow::Create(const DESC* _pDesc, void* _pAssociatedNativeHandle, const c
 	}
 
 	bool success = false;
-	oCONSTRUCT(_ppWindow, oWindow_Impl(_pDesc, _pAssociatedNativeHandle, _Title, _DrawAPIFourCC, &success));
+	oCONSTRUCT(_ppWindow, oWindow_Impl(*_pDesc, _pAssociatedNativeHandle, _Title, _DrawAPIFourCC, &success));
 
 	if (success)
 	{
@@ -1615,7 +1643,7 @@ LRESULT CALLBACK oWindow_Impl::StaticWndProc(HWND _hWnd, UINT _uMsg, WPARAM _wPa
 	return pThis ? pThis->WndProc(_hWnd, _uMsg, _wParam, _lParam) : DefWindowProc(_hWnd, _uMsg, _wParam, _lParam);
 }
 
-oWindow_Impl::oWindow_Impl(const DESC* _pDesc, void* _pAssociatedNativeHandle, const char* _Title, unsigned int _FourCCDrawAPI, bool* _pSuccess)
+oWindow_Impl::oWindow_Impl(const DESC& _Desc, void* _pAssociatedNativeHandle, const char* _Title, unsigned int _FourCCDrawAPI, bool* _pSuccess)
 	: hWnd(0)
 	, hIcon(0)
 	, hClearBrush(0)
@@ -1624,13 +1652,14 @@ oWindow_Impl::oWindow_Impl(const DESC* _pDesc, void* _pAssociatedNativeHandle, c
 	, hOffscreenBmp(0)
 	, hOffscreenDC(0)
 	, ClearColor(std::Black)
-	, GDIAntialiasingMultiplier(_pDesc->UseAntialiasing ? 4 : 1)
-	, UseAntialiasing(_pDesc->UseAntialiasing)
-	, LockToVsync(_pDesc->LockToVsync)
+	, GDIAntialiasingMultiplier(_Desc.UseAntialiasing ? 4 : 1)
+	, UseAntialiasing(_Desc.UseAntialiasing)
+	, LockToVsync(_Desc.LockToVsync)
 	, Closing(false)
 	, DrawMethod(DRAW_USING_GDI)
 {
 	*_pSuccess = false;
+	detail::GetFullscreenDimensions(_Desc, &FullscreenWidth, &FullscreenHeight);
 
 	#if oDXVER >= oDXVER_10
 	if(_FourCCDrawAPI == 'DX11' && _pAssociatedNativeHandle)
@@ -1659,13 +1688,9 @@ oWindow_Impl::oWindow_Impl(const DESC* _pDesc, void* _pAssociatedNativeHandle, c
 	#endif
 	
 	*Title = 0;
-	if (_pDesc)
-	{
-		MSSleepWhenNoFocus = _pDesc->MSSleepWhenNoFocus;
-		*_pSuccess = oWindow_Impl::Open(_pDesc, _Title);
-	}
-	else
-		*_pSuccess = true;
+
+	MSSleepWhenNoFocus = _Desc.MSSleepWhenNoFocus;
+	*_pSuccess = oWindow_Impl::Open(&_Desc, _Title);
 
 	if (*_pSuccess)
 		oTRACE("Created window \"%s\" using %s for drawing.", _Title, DrawMethod == DRAW_USING_D2D ? "D2D" : "GDI");
@@ -1706,21 +1731,12 @@ void oWindow_Impl::SetDesc(const oWindow::DESC* _pDesc) threadsafe
 {
 	oASSERT(hWnd, "");
 	oMutex::ScopedLock lock(DescLock);
+
+	Fullscreen = (_pDesc->State == FULL_SCREEN);
 	detail::SetDesc(hWnd, _pDesc);
 	LockToVsync = _pDesc->LockToVsync;
 	RefreshRateN = _pDesc->RefreshRateN;
 	RefreshRateD = _pDesc->RefreshRateD;
-	if(D3DSwapChain)
-	{
-		if(_pDesc->State == FULL_SCREEN)
-		{
-			D3DSwapChain->SetFullscreenState(TRUE, nullptr);
-		}
-		else 
-		{
-			D3DSwapChain->SetFullscreenState(FALSE, nullptr);
-		}
-	}
 }
 
 unsigned int oWindow_Impl::GetDisplayIndex() const threadsafe
@@ -1905,8 +1921,9 @@ HRESULT oWindow_Impl::CreateDeviceResources()
 			if (!D3DDevice)
 			{
 				oRef<IDXGIAdapter1> Adapter;
+				oRef<IDXGIOutput> Output;
 
-				if (!oDXGIGetAdapter(rWindow, &Adapter))
+				if (!oDXGIGetAdapterWithMonitor(rWindow, &Adapter, &Output))
 				{
 					return E_FAIL;
 				}
@@ -2036,9 +2053,9 @@ bool oWindow_Impl::CreatePicture(const Picture::DESC* _pDesc, threadsafe Picture
 	CREATE_DRAWABLE(Picture);
 }
 
-bool oWindow_Impl::CreateVideo(const Video::DESC*_pDesc, std::vector<threadsafe oVideoContainer*> &_Containers, threadsafe Video** _ppDrawable) threadsafe
+bool oWindow_Impl::CreateVideo(const Video::DESC*_pDesc, oVideoContainer** _ppVideos, size_t _NumVideos, threadsafe Video** _ppVideo) threadsafe
 {
-	if (!_pDesc || !_ppDrawable) return false;
+	if (!_pDesc || !_ppVideo) return false;
 
 	if (DrawMethod != DRAW_USING_D2D)
 	{
@@ -2050,7 +2067,7 @@ bool oWindow_Impl::CreateVideo(const Video::DESC*_pDesc, std::vector<threadsafe 
 #if oDXVER >= oDXVER_10
 	oRef<ID3D10Texture2D> D3DRenderTarget;
 	oV( D3DSwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (void**)&D3DRenderTarget ) );
-	oCONSTRUCT(_ppDrawable, detail::VideoD2D(this, _pDesc, _Containers, D3DRenderTarget.c_ptr(), &success ) );
+	oCONSTRUCT(_ppVideo, detail::VideoD2D(this, _pDesc, _ppVideos, _NumVideos, D3DRenderTarget.c_ptr(), &success ) );
 #endif
 	return success;
 }
@@ -2116,39 +2133,49 @@ BOOL oWindow_Impl::OnResize(UINT _NewWidth, UINT _NewHeight)
 {
 	#if oDXVER >= oDXVER_10
 
-		if (DrawMethod == DRAW_USING_DX11 && RenderTarget)
+	if(D3DSwapChain)
+	{
+		if( Fullscreen )
 		{
-			oMutex::ScopedLock lock(ResizeMutex);
-			D3DSwapChain->ResizeBuffers( 3, _NewWidth, _NewHeight, D3DSwapChainFMT, 0 );
-			CreateRendertarget();
+			_NewWidth = FullscreenWidth;
+			_NewHeight = FullscreenHeight;
 		}
-		else if (DrawMethod == DRAW_USING_D2D && RenderTarget)
+		D3DSwapChain->SetFullscreenState(Fullscreen, nullptr);
+	}
+
+	if (DrawMethod == DRAW_USING_DX11 && RenderTarget)
+	{
+		oMutex::ScopedLock lock(ResizeMutex);
+		D3DSwapChain->ResizeBuffers( 3, _NewWidth, _NewHeight, D3DSwapChainFMT, 0 );
+		CreateRendertarget();
+	}
+	else if (DrawMethod == DRAW_USING_D2D && RenderTarget)
+	{
+		oMutex::ScopedLock lock(ResizeMutex);
+		oLockedVector<Video*>::LockedSTLVector vec = Videos.lock();
+		// First tell any videos to unregister so they no longer hold any references to the swapchain
+		oFOREACH( oWindow::Video* pVid, *vec )
 		{
-			oMutex::ScopedLock lock(ResizeMutex);
-			oLockedVector<Video*>::LockedSTLVector vec = Videos.lock();
-			// First tell any videos to unregister so they no longer hold any references to the swapchain
-			oFOREACH( oWindow::Video* pVid, *vec )
-			{
-				static_cast<detail::VideoD2D*>(pVid)->UnregisterDecoder();
-			}
-
-			// Now we can safely resize
-			RenderTarget = NULL;
-			D3DSwapChain->ResizeBuffers( 3, _NewWidth, _NewHeight, D3DSwapChainFMT, 0 );
-			CreateRendertarget();
-
-			// Get the new backbuffer for the swap chain
-			oRef<ID3D10Texture2D> D3DRenderTarget;
-			oV( D3DSwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (void**)&D3DRenderTarget ) );
-
-			// Re-register the videos so they can use the new swapchain
-			oFOREACH( oWindow::Video* pVid, *vec )
-			{
-				static_cast<detail::VideoD2D*>(pVid)->RegisterDecoder(D3DRenderTarget.c_ptr());
-			}
-			return TRUE;
+			static_cast<detail::VideoD2D*>(pVid)->UnregisterDecoder();
 		}
-		else
+
+		// Now we can safely resize
+		RenderTarget = NULL;
+		D3DSwapChain->ResizeBuffers( 3, _NewWidth, _NewHeight, D3DSwapChainFMT, 0 );
+		CreateRendertarget();
+
+		// Get the new backbuffer for the swap chain
+		oRef<ID3D10Texture2D> D3DRenderTarget;
+		oV( D3DSwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (void**)&D3DRenderTarget ) );
+
+		// Re-register the videos so they can use the new swapchain
+		oFOREACH( oWindow::Video* pVid, *vec )
+		{
+			static_cast<detail::VideoD2D*>(pVid)->RegisterDecoder(D3DRenderTarget.c_ptr());
+		}
+		return TRUE;
+	}
+	else
 	#endif
 	if (DrawMethod == DRAW_USING_GDI && hOffscreenDC)
 	{

@@ -6,7 +6,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
-    <LibraryPath>$(DXSDK_DIR)Lib\x64;$(oSDK)ext\FBX\FbxSdk\2012.1\lib\vs2010\x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(DXSDK_DIR)Lib\x64;$(oSDK)ext\FBX\FbxSdk\2012.1\lib\vs2010\x64;$(oSDK)ext\glut\glutx64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>

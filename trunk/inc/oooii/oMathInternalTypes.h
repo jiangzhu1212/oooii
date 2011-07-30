@@ -1,26 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// $(header)
 
 // This is an internal header that contains the macros and templates for 
 // defining math types such as vectors and matrices. This is not intended to be 
@@ -209,6 +187,22 @@ template<typename T, typename TVec> struct TAABOX
 	inline void ExtendBy(const TVec& _Point) { Min = oMin(Min, _Point); Max = oMax(Max, _Point); }
 	inline void ExtendBy(const TAABOX<T, TVec>& _Box) { ExtendBy(_Box.Min); ExtendBy(_Box.Max); }
 	inline void ExtractCorners(TVEC3<T> _Corners[8]) const { _Corners[0] = Min; _Corners[1] = float3(Max.x, Min.y, Min.z); _Corners[2] = float3(Min.x, Max.y, Min.z); _Corners[3] = float3(Max.x, Max.y, Min.z); _Corners[4] = float3(Min.x, Min.y, Max.z); _Corners[5] = float3(Max.x, Min.y, Max.z); _Corners[6] = float3(Min.x, Max.y, Max.z); _Corners[7] = Max; }
+	inline void Translate(TVec _translation) { Min += _translation; Max += _translation;}
+	
+	// Returns true if _other is completely contained by this bounding box
+	inline bool Contains(const TAABOX<T,TVec>& _other) const 
+	{
+		TVec MyMin = Min;
+		TVec OtherMin = _other.Min;
+		SwapIfGreater(MyMin, OtherMin);
+	    if( MyMin != Min )
+	         return false;
+
+		TVec MyMax = Max;
+		TVec OtherMax = _other.Max;
+		SwapIfGreater(OtherMax, MyMax);
+		return OtherMax == _other.Max;
+    }
 
 	// Transforming a bounding box naively can generate a min point that has 
 	// values larger than the max point (think about rotating a box 180 degrees,
@@ -227,10 +221,10 @@ protected:
 	TVec Min;
 	TVec Max;
 
-	template<typename T> inline void Swap(T& a, T& b) { T c = a; a = b; b = c; }
-	template<typename T> inline void SwapIfGreater(oMathNS::TVEC2<T>& a, oMathNS::TVEC2<T>& b) { if (a.x > b.x) Swap(a.x, b.x); if (a.y > b.y) Swap(a.y, b.y); }
-	template<typename T> inline void SwapIfGreater(oMathNS::TVEC3<T>& a, oMathNS::TVEC3<T>& b) { if (a.x > b.x) Swap(a.x, b.x); if (a.y > b.y) Swap(a.y, b.y); if (a.z > b.z) Swap(a.z, b.z); }
-	template<typename T> inline void SwapIfGreater(oMathNS::TVEC4<T>& a, oMathNS::TVEC4<T>& b) { if (a.x > b.x) Swap(a.x, b.x); if (a.y > b.y) Swap(a.y, b.y); if (a.z > b.z) Swap(a.z, b.z); if (a.w > b.w) Swap(a.w, b.w); }
+	template<typename T> inline void Swap(T& a, T& b) const { T c = a; a = b; b = c; }
+	template<typename T> inline void SwapIfGreater(oMathNS::TVEC2<T>& a, oMathNS::TVEC2<T>& b) const { if (a.x > b.x) Swap(a.x, b.x); if (a.y > b.y) Swap(a.y, b.y); }
+	template<typename T> inline void SwapIfGreater(oMathNS::TVEC3<T>& a, oMathNS::TVEC3<T>& b) const { if (a.x > b.x) Swap(a.x, b.x); if (a.y > b.y) Swap(a.y, b.y); if (a.z > b.z) Swap(a.z, b.z); }
+	template<typename T> inline void SwapIfGreater(oMathNS::TVEC4<T>& a, oMathNS::TVEC4<T>& b) const { if (a.x > b.x) Swap(a.x, b.x); if (a.y > b.y) Swap(a.y, b.y); if (a.z > b.z) Swap(a.z, b.z); if (a.w > b.w) Swap(a.w, b.w); }
 };
 
 template<typename T> struct TPLANE : public TVEC4<T>
