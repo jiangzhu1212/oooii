@@ -4,7 +4,7 @@ title Installing Copyright...
 
 rem DIRS must be all in quotes, and then each dir must be wrapped in its own 
 rem quotes and not end with a slash. Each path should be delimited by one space.
-set DIRS=""." "../inc/oooii" "../oVideoConverter" "../oFile2cpp""
+set DIRS=""." "../inc/oooii" "../inc/oVideo" "../oVideoConverter" "../oFile2cpp" "../oVideo""
 
 choice /c YNC /m "Do you need the files checked out of Perforce: Yes, No, Cancel?"
 if ERRORLEVEL 3 goto Cancel
