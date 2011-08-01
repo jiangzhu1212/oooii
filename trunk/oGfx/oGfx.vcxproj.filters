@@ -42,6 +42,12 @@
     <ClCompile Include="oD3D11Pipeline.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
+    <ClCompile Include="oD3D11InstanceList.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oGfxCommon.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -81,6 +87,9 @@
       <Filter>Source\D3D11</Filter>
     </ClInclude>
     <ClInclude Include="oD3D11Pipeline.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11InstanceList.h">
       <Filter>Source\D3D11</Filter>
     </ClInclude>
   </ItemGroup>

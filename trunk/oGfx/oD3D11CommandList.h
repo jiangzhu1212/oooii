@@ -11,11 +11,10 @@
 
 oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 {
+	oDEFINE_CONST_GETDESC_INTERFACE(Desc, threadsafe);
 	oDEFINE_GFXDEVICECHILD_INTERFACE();
 	oDECLARE_GFXDEVICECHILD_CTOR(oD3D11, CommandList);
 	~oD3D11CommandList();
-
-	void GetDesc(DESC* _pDesc) const threadsafe override;
 
 	void Begin(
 		const float4x4& _View
@@ -35,9 +34,9 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	void SetTextures(size_t _StartSlot, size_t _NumTextures, const oGfxTexture* const* _ppTextures) override;
 	void SetMaterials(size_t _StartSlot, size_t _NumMaterials, const oGfxMaterial* const* _ppMaterials) override;
 	void Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPING* _pMapping) override;
-	void Unmap(oGfxResource* _pResource, size_t _SubresourceIndex) override;
+	void Unmap(oGfxResource* _pResource, size_t _SubresourceIndex, size_t _NewCount = 1) override;
 	void Clear(CLEAR_TYPE _ClearType) override;
-	void DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxMeshInstances* _pMeshInstances = nullptr) override;
+	void DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxInstanceList* _pInstanceList = nullptr) override;
 	void DrawLines(uint _LineListID, const oGfxLineList* _pLineList) override;
 	void DrawQuad(float4x4& _Transform, uint _MeshID) override;
 

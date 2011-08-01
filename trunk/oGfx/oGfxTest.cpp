@@ -1,13 +1,12 @@
 // $(header)
 
-#include <oooii/oWindows.h>
-
-#include <oooii/oMsgBox.h>
+#include <oooii/oWindows.h> // Move all this code to somewhere that isn't windows so we don't have to include this.
 
 #include <oooii/oKeyboard.h>
 #include <oooii/oMouse.h>
 #include <oooii/oWindow.h>
 
+#include <oGfx/oGfx.h>
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -32,6 +31,15 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	}
 
 	Mouse->SetCursorState(oMouse::NORMAL);
+
+	oRef<threadsafe oGfxDevice> GfxDevice;
+	{
+		oGfxDevice::DESC d;
+		d.EnableDebugReporting = true;
+		d.UseSoftwareEmulation = false;
+		d.Version = 11.0f;
+		oVERIFY(oGfxCreateDevice(d, &GfxDevice));
+	}
 
 	while (Window->IsOpen())
 	{

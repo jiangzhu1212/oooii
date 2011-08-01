@@ -121,6 +121,8 @@ struct oGfxResourceMixin : oGfxDeviceChildMixinBase<InterfaceT, ImplementationT>
 		, ID(oGfxDeviceResourceHash(_Name, Type))
 	{}
 
+	inline threadsafe desc_type* GetDirectDesc() threadsafe { return &Desc; }
+
 protected:
 
 	desc_type Desc;

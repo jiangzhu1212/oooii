@@ -38,6 +38,7 @@ interface oGfxResource : oGfxDeviceChild
 
 	enum TYPE
 	{
+		INSTANCELIST,
 		LINELIST,
 		MATERIAL,
 		MESH,
@@ -49,6 +50,32 @@ interface oGfxResource : oGfxDeviceChild
 
 	// Returns an ID for this resource fit for use as a hash
 	virtual uint GetID() const threadsafe = 0;
+};
+
+interface oGfxInstanceList : oGfxResource
+{
+	// Contains instance data for drawing instances
+	// of a mesh. The contents of each instance's data
+	// is user-defined using IAELEMENTs. This
+	// is more or less a different semantic of vertex
+	// attributes
+
+	struct DESC
+	{
+		const oIAELEMENT* pElements;
+		uint NumElements;
+		uint MaxNumInstances;
+		uint NumInstances;
+
+		DESC()
+			: pElements(nullptr)
+			, NumElements(0)
+			, MaxNumInstances(0)
+			, NumInstances(0)
+		{}
+	};
+
+	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
 interface oGfxLineList : oGfxResource
@@ -80,8 +107,6 @@ interface oGfxLineList : oGfxResource
 	};
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
-	virtual void Resize(uint _MaxNumLines) = 0;
-	virtual void SetNumLines(uint _NumLines) = 0;
 };
 
 interface oGfxMaterial : oGfxResource
@@ -159,34 +184,6 @@ interface oGfxMesh : oGfxResource
 	};
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
-};
-
-interface oGfxMeshInstances : oGfxResource
-{
-	// Contains instance data for drawing instances
-	// of a mesh. The contents of each instance's data
-	// is user-defined using IAELEMENTs. This
-	// is more or less a different semantic of vertex
-	// attributes
-
-	struct DESC
-	{
-		const oIAELEMENT* pElements;
-		uint NumElements;
-		uint MaxNumInstances;
-		uint NumInstances;
-
-		DESC()
-			: pElements(nullptr)
-			, NumElements(0)
-			, MaxNumInstances(0)
-			, NumInstances(0)
-		{}
-	};
-
-	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
-	virtual void Resize(uint _MaxNumInstances) = 0;
-	virtual void SetNumInstances(uint _NumInstances) = 0;
 };
 
 interface oGfxTexture : oGfxResource
@@ -410,7 +407,12 @@ interface oGfxCommandList : oGfxDeviceChild
 	// Mesh: A oMesh::SUBRESOURCE value
 	// Texture: A value returned by oSurface::CalculateSubresource()
 	virtual void Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPING* _pMapping) = 0;
-	virtual void Unmap(oGfxResource* _pResource, size_t _SubresourceIndex) = 0;
+	
+	// Unmaps a resource mapped with the above Map() call. _NewCount is 
+	// used by oGfxLineList and oGfxInstanceList to indicate how many of
+	// the entries are now valid. The parameter is ignored by other 
+	// resources.
+	virtual void Unmap(oGfxResource* _pResource, size_t _SubresourceIndex, size_t _NewCount = 1) = 0;
 
 	// Uses a render target's CLEAR_DESC to clear all associated buffers
 	// according to the type of clear specified here.
@@ -418,7 +420,7 @@ interface oGfxCommandList : oGfxDeviceChild
 
 	// Submits an oGfxMesh for drawing using the current state of the 
 	// command list.
-	virtual void DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxMeshInstances* _pMeshInstances = nullptr) = 0;
+	virtual void DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxInstanceList* _pInstanceList = nullptr) = 0;
 
 	// Draws a set of worldspace lines. Use Map/Unmap to set up line lists
 	// writing an array of type oGfxLineList::LINEs.
@@ -449,7 +451,7 @@ interface oGfxDevice : oInterface
 	virtual bool CreateRenderTarget2(const char* _Name, threadsafe oWindow* _pWindow, oGfxRenderTarget2** _ppRenderTarget) threadsafe = 0;
 	virtual bool CreateMaterial(const char* _Name, const oGfxMaterial::DESC& _Desc, oGfxMaterial** _ppMaterial) threadsafe = 0;
 	virtual bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe = 0;
-	virtual bool CreateMeshInstances(const char* _Name, const oGfxMeshInstances::DESC& _Desc, oGfxMeshInstances** _ppMeshInstances) threadsafe = 0;
+	virtual bool CreateInstanceList(const char* _Name, const oGfxInstanceList::DESC& _Desc, oGfxInstanceList** _ppInstanceList) threadsafe = 0;
 	virtual bool CreateTexture(const char* _Name, const oGfxTexture::DESC& _Desc, oGfxTexture** _ppTexture) threadsafe = 0;
 
 	// Submits all command lists in their draw order

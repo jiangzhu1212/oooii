@@ -1,5 +1,6 @@
 // $(header)
 #include "oD3D11CommandList.h"
+#include "oD3D11InstanceList.h"
 #include "oD3D11LineList.h"
 #include "oD3D11Material.h"
 #include "oD3D11Mesh.h"
@@ -150,13 +151,34 @@ void oD3D11CommandList::SetMaterials(size_t _StartSlot, size_t _NumMaterials, co
 	oD3D11SetConstantBuffers(Context, _StartSlot, _NumMaterials, CBs);
 }
 
-static ID3D11Resource* GetResourceBuffer(oGfxResource* _pResource, size_t _SubresourceIndex)
+static ID3D11Resource* GetResourceBuffer(oGfxResource* _pResource, size_t _SubresourceIndex, size_t _NewCount = oINVALID)
 {
 	switch (_pResource->GetType())
 	{
+		case oGfxResource::INSTANCELIST:
+		{
+			oD3D11InstanceList* il = static_cast<oD3D11InstanceList*>(_pResource);
+			if (_NewCount != oINVALID)
+			{
+				threadsafe oD3D11InstanceList::DESC* pDesc = il->GetDirectDesc();
+				oSWAP(&pDesc->NumInstances, oSize32(_NewCount));
+			}
+			return il->Instances.c_ptr();
+		}
+
+		case oGfxResource::LINELIST:
+		{
+			oD3D11LineList* ll = static_cast<oD3D11LineList*>(_pResource);
+			if (_NewCount != oINVALID)
+			{
+				threadsafe oD3D11LineList::DESC* pDesc = ll->GetDirectDesc();
+				oSWAP(&pDesc->NumLines, oSize32(_NewCount));
+			}
+			return ll->Lines.c_ptr();
+		}
+
 		case oGfxResource::TEXTURE: return static_cast<oD3D11Texture*>(_pResource)->Texture.c_ptr();
 		case oGfxResource::MATERIAL: return static_cast<oD3D11Material*>(_pResource)->Constants.c_ptr();
-		case oGfxResource::LINELIST: return static_cast<oD3D11LineList*>(_pResource)->Lines.c_ptr();
 		case oGfxResource::MESH:
 		{
 			switch (_SubresourceIndex)
@@ -183,7 +205,7 @@ void oD3D11CommandList::Map(oGfxResource* _pResource, size_t _SubresourceIndex, 
 	_pMapping->SlicePitch = mapped.DepthPitch;
 }
 
-void oD3D11CommandList::Unmap(oGfxResource* _pResource, size_t _SubresourceIndex)
+void oD3D11CommandList::Unmap(oGfxResource* _pResource, size_t _SubresourceIndex, size_t _NewCount)
 {
 	Context->Unmap(GetResourceBuffer(_pResource, _SubresourceIndex), static_cast<UINT>(_SubresourceIndex));
 }
@@ -218,8 +240,10 @@ void oD3D11CommandList::Clear(CLEAR_TYPE _ClearType)
 		Context->ClearDepthStencilView(pRT->DSV, sClearFlags[_ClearType], pRT->Desc.ClearDesc.DepthClearValue, pRT->Desc.ClearDesc.StencilClearValue);
 }
 
-void oD3D11CommandList::DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxMeshInstances* _pMeshInstances)
+void oD3D11CommandList::DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxInstanceList* _pInstanceList)
 {
+	oASSERT(!_pInstanceList, "Instanced drawing not yet implemented");
+
 	const oD3D11Mesh* M = static_cast<const oD3D11Mesh*>(_pMesh);
 
 	uint StartIndex = 0;

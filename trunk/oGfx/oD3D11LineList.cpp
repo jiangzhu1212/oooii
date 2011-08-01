@@ -5,26 +5,9 @@
 oDEFINE_GFXDEVICE_CREATE(oD3D11, LineList);
 oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, LineList)
 {
-	Desc.MaxNumLines = 0;
-	Desc.NumLines = _Desc.NumLines;
-	Resize(_Desc.MaxNumLines);
-	*_pSuccess = true;
-}
-
-void oD3D11LineList::Resize(uint _MaxNumLines)
-{
+	*_pSuccess = false;
 	oD3D11DEVICE();
-
-	if (!_MaxNumLines)
-		Lines = 0;
-	else if (_MaxNumLines != Desc.MaxNumLines)
-	{
-		oVERIFY(oD3D11CreateVertexBuffer(D3DDevice, Name, true, 0, _MaxNumLines, sizeof(LINE), &Lines));
-		Desc.MaxNumLines = _MaxNumLines;
-	}
-}
-
-void oD3D11LineList::SetNumLines(uint _NumLines)
-{
-	Desc.NumLines = _NumLines;
+	oVERIFY(oD3D11CreateVertexBuffer(D3DDevice, Name, true, 0, Desc.MaxNumLines, sizeof(LINE), &Lines));
+	Desc.NumLines = 0;
+	*_pSuccess = true;
 }

@@ -4,6 +4,13 @@
 #include <oooii/oD3D11.h>
 #include <oooii/oErrno.h>
 
+const oGUID& oGetGUID(threadsafe const oD3D11Device* threadsafe const *)
+{
+	// {882CABF3-9344-40BE-B3F9-A17A2F920751}
+	static const oGUID oIID_D3D11Device = { 0x882cabf3, 0x9344, 0x40be, { 0xb3, 0xf9, 0xa1, 0x7a, 0x2f, 0x92, 0x7, 0x51 } };
+	return oIID_D3D11Device;
+}
+
 const oGUID& oGetGUID(threadsafe const ID3D11Device* threadsafe const *)
 {
 	// {DB6F6DDB-AC77-4E88-8253-819DF9BBF140}
