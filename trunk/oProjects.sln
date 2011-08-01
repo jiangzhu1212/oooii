@@ -14,6 +14,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "oVideoConverter", "oVideoCo
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "oVideo", "oVideo\oVideo.vcxproj", "{731EA328-4A4D-4D70-8C01-778174C98BB9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "oGfx", "oGfx\oGfx.vcxproj", "{FC6B7C0D-91A9-4582-9D61-2A76950474EB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -102,6 +104,22 @@ Global
 		{731EA328-4A4D-4D70-8C01-778174C98BB9}.vc90_Release|Win32.Build.0 = Release|Win32
 		{731EA328-4A4D-4D70-8C01-778174C98BB9}.vc90_Release|x64.ActiveCfg = Release|x64
 		{731EA328-4A4D-4D70-8C01-778174C98BB9}.vc90_Release|x64.Build.0 = Release|x64
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.Debug|Win32.Build.0 = Debug|Win32
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.Debug|x64.ActiveCfg = Debug|x64
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.Debug|x64.Build.0 = Debug|x64
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.Release|Win32.ActiveCfg = Release|Win32
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.Release|Win32.Build.0 = Release|Win32
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.Release|x64.ActiveCfg = Release|x64
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.Release|x64.Build.0 = Release|x64
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.vc90_Debug|Win32.ActiveCfg = vc90_Debug|Win32
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.vc90_Debug|Win32.Build.0 = vc90_Debug|Win32
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.vc90_Debug|x64.ActiveCfg = vc90_Debug|x64
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.vc90_Debug|x64.Build.0 = vc90_Debug|x64
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.vc90_Release|Win32.ActiveCfg = vc90_Release|Win32
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.vc90_Release|Win32.Build.0 = vc90_Release|Win32
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.vc90_Release|x64.ActiveCfg = vc90_Release|x64
+		{FC6B7C0D-91A9-4582-9D61-2A76950474EB}.vc90_Release|x64.Build.0 = vc90_Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

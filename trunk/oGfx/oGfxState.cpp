@@ -1,5 +1,5 @@
 // $(header)
-#include <"oGfx/"oGfxState.h>
+#include <oGfx/oGfxState.h>
 
 #define GFX_STATE_ASSTRING(_Count, _State) \
 	oSTATICASSERT(_Count == oCOUNTOF(sStrings)); \

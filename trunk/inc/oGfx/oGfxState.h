@@ -4,6 +4,8 @@
 #ifndef oGfxState_h
 #define oGfxState_h
 
+#include <oooii/oSurface.h>
+
 enum oOMSTATE // Output Merge (Blend) State
 {
 	oOMOPAQUE, // Output.rgba = Source.rgba
@@ -57,7 +59,7 @@ enum oMBSTATE // Mip-Bias State
 	oMBNUMSTATES,
 };
 
-enum oIAELEMENT
+struct oIAELEMENT
 {
 	const char* Name;
 	uint Index;
