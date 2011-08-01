@@ -12,7 +12,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 {
 	oRef<oWindow> Window;
 	{
+		// @oooii-tony: If X is specified, but Y is intended to be default,
+		// then bad things happen. We should find out why.
 		oWindow::DESC d;
+		d.ClientX = 1000;
+		d.ClientY = 200;
 		d.ClientWidth = 800;
 		d.ClientHeight = 600;
 		d.Style = oWindow::FIXED;
@@ -40,6 +44,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		d.Version = 10.0f;
 		oVERIFY(oGfxCreateDevice(d, &GfxDevice));
 	}
+
+	oRef<oGfxRenderTarget2> RenderTarget;
+	oVERIFY(GfxDevice->CreateRenderTarget2("Output", Window, oSurface::R32_TYPELESS, &RenderTarget));
 
 	while (Window->IsOpen())
 	{

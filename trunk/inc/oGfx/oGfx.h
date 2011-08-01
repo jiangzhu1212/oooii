@@ -448,7 +448,7 @@ interface oGfxDevice : oInterface
 	virtual bool CreateLineList(const char* _Name, const oGfxLineList::DESC& _Desc, oGfxLineList** _ppLineList) threadsafe = 0;
 	virtual bool CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, oGfxPipeline** _ppPipeline) threadsafe = 0;
 	virtual bool CreateRenderTarget2(const char* _Name, const oGfxRenderTarget2::DESC& _Desc, oGfxRenderTarget2** _ppRenderTarget) threadsafe = 0;
-	virtual bool CreateRenderTarget2(const char* _Name, threadsafe oWindow* _pWindow, oGfxRenderTarget2** _ppRenderTarget) threadsafe = 0;
+	virtual bool CreateRenderTarget2(const char* _Name, threadsafe oWindow* _pWindow, oSurface::FORMAT _DepthStencilFormat, oGfxRenderTarget2** _ppRenderTarget) threadsafe = 0;
 	virtual bool CreateMaterial(const char* _Name, const oGfxMaterial::DESC& _Desc, oGfxMaterial** _ppMaterial) threadsafe = 0;
 	virtual bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe = 0;
 	virtual bool CreateInstanceList(const char* _Name, const oGfxInstanceList::DESC& _Desc, oGfxInstanceList** _ppInstanceList) threadsafe = 0;

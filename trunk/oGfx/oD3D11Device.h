@@ -22,14 +22,16 @@ struct oD3D11Device : oGfxDevice, oNoncopyable
 	// Interface API
 
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_TRIVIAL_QUERYINTERFACE2(oGetGUID<oD3D11Device>(), oGetGUID<oGfxDevice>());
+
+	bool QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe override;
+
 	oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc, bool* _pSuccess);
 
 	bool CreateCommandList(const char* _Name, const oGfxCommandList::DESC& _Desc, oGfxCommandList** _ppCommandList) threadsafe override;
 	bool CreateLineList(const char* _Name, const oGfxLineList::DESC& _Desc, oGfxLineList** _ppLineList) threadsafe override;
 	bool CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, oGfxPipeline** _ppPipeline) threadsafe override;
 	bool CreateRenderTarget2(const char* _Name, const oGfxRenderTarget2::DESC& _Desc, oGfxRenderTarget2** _ppRenderTarget) threadsafe override;
-	bool CreateRenderTarget2(const char* _Name, threadsafe oWindow* _pWindow, oGfxRenderTarget2** _ppRenderTarget) threadsafe override;
+	bool CreateRenderTarget2(const char* _Name, threadsafe oWindow* _pWindow, oSurface::FORMAT _DepthStencilFormat, oGfxRenderTarget2** _ppRenderTarget) threadsafe override;
 	bool CreateMaterial(const char* _Name, const oGfxMaterial::DESC& _Desc, oGfxMaterial** _ppMaterial) threadsafe override;
 	bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe override;
 	bool CreateInstanceList(const char* _Name, const oGfxInstanceList::DESC& _Desc, oGfxInstanceList** _ppInstanceList) threadsafe override;

@@ -103,6 +103,24 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc
 	*_pSuccess = true;
 }
 
+bool oD3D11Device::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe
+{
+	*_ppInterface = nullptr;
+	if (_InterfaceID == oGetGUID<oD3D11Device>() || _InterfaceID == oGetGUID<oGfxDevice>())
+	{
+		Reference();
+		*_ppInterface = this;
+	}
+
+	else if (_InterfaceID == oGetGUID<ID3D11Device>())
+	{
+		D3DDevice->AddRef();
+		*_ppInterface = D3DDevice;
+	}
+
+	return !!*_ppInterface;
+}
+
 void oD3D11Device::Insert(oGfxCommandList* _pCommandList) threadsafe
 {
 	oMutex::ScopedLock lock(CommandListsMutex);
