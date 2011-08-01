@@ -69,12 +69,12 @@ bool oGfxCreateDevice(const oGfxDevice::DESC& _Desc, threadsafe oGfxDevice** _pp
 		if (oGetD3DVersion(FeatureLevel) == _Desc.Version)
 			break;
 
-		D3DDevice = 0;
+		D3DDevice = nullptr;
 	}
 
 	if (!D3DDevice)
 	{
-		oSetLastError(ENOSYS, "Version %.03f of the GPU driver could not be found", _Desc.Version);
+		oSetLastError(ENOSYS, "Version %.01f of the GPU driver could not be found", _Desc.Version);
 		return false;
 	}
 
