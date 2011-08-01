@@ -37,7 +37,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		oGfxDevice::DESC d;
 		d.EnableDebugReporting = true;
 		d.UseSoftwareEmulation = false;
-		d.Version = 11.0f;
+		d.Version = 10.0f;
 		oVERIFY(oGfxCreateDevice(d, &GfxDevice));
 	}
 

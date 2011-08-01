@@ -106,7 +106,6 @@
     <Import Project="..\MSSupport\Properties\Msvc100.props" />
     <Import Project="..\MSSupport\Properties\Release32.props" />
     <Import Project="..\MSSupport\Properties\Common.props" />
-    <Import Project="..\MSSupport\Properties\lib.props" />
     <Import Project="..\MSSupport\Properties\pch.props" />
     <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
   </ImportGroup>
@@ -115,7 +114,6 @@
     <Import Project="..\MSSupport\Properties\Msvc100.props" />
     <Import Project="..\MSSupport\Properties\Debug32.props" />
     <Import Project="..\MSSupport\Properties\Common.props" />
-    <Import Project="..\MSSupport\Properties\lib.props" />
     <Import Project="..\MSSupport\Properties\pch.props" />
     <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
   </ImportGroup>
@@ -124,7 +122,6 @@
     <Import Project="..\MSSupport\Properties\Msvc100.props" />
     <Import Project="..\MSSupport\Properties\Release64.props" />
     <Import Project="..\MSSupport\Properties\Common.props" />
-    <Import Project="..\MSSupport\Properties\lib.props" />
     <Import Project="..\MSSupport\Properties\pch.props" />
     <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
   </ImportGroup>
@@ -133,7 +130,6 @@
     <Import Project="..\MSSupport\Properties\Msvc100.props" />
     <Import Project="..\MSSupport\Properties\Debug64.props" />
     <Import Project="..\MSSupport\Properties\Common.props" />
-    <Import Project="..\MSSupport\Properties\lib.props" />
     <Import Project="..\MSSupport\Properties\pch.props" />
     <Import Project="..\MSSupport\Properties\OOOiiLibAdditionalDependencies.props" />
   </ImportGroup>
@@ -150,6 +146,7 @@
     <Lib />
     <ClCompile>
       <DisableSpecificWarnings>4244;4189;4201;4355;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <PreprocessorDefinitions>oSTATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|Win32'">
@@ -167,6 +164,7 @@
     <Lib />
     <ClCompile>
       <DisableSpecificWarnings>4244;4189;4201;4355;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <PreprocessorDefinitions>oSTATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Debug|x64'">
@@ -184,6 +182,7 @@
     <Lib />
     <ClCompile>
       <DisableSpecificWarnings>4244;4189;4201;4355;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <PreprocessorDefinitions>oSTATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Release|Win32'">
@@ -204,6 +203,7 @@
     <ClCompile />
     <ClCompile>
       <DisableSpecificWarnings>4244;4189;4201;4355;4018;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <PreprocessorDefinitions>oSTATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc90_Release|x64'">
