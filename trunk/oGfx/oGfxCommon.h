@@ -56,7 +56,7 @@ protected:
 	oGfxDeviceChildMixinBase(threadsafe oGfxDevice* _pDevice, const char* _Name)
 		: Device(_pDevice)
 	{
-		strcpy_s(Name, oSAFESTRN(Name));
+		strcpy_s(Name, oSAFESTRN(_Name));
 	}
 
 	inline int MIXINReference() threadsafe
