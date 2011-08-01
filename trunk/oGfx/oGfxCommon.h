@@ -23,7 +23,7 @@
 // Place this macro in the implementation class of an oGfxDeviceChild
 // If the derivation is also an oGfxResource, use the other macro below.
 #define oDEFINE_GFXDEVICECHILD_INTERFACE() \
-	void Reference() threadsafe override { MIXINReference(); } \
+	int Reference() threadsafe override { return MIXINReference(); } \
 	void Release() threadsafe override { MIXINRelease(); } \
 	bool QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe override { return MIXINQueryInterface(_InterfaceID, _ppInterface); } \
 	void GetDevice(threadsafe oGfxDevice** _ppDevice) const threadsafe { MIXINGetDevice(_ppDevice); } \
@@ -32,7 +32,10 @@
 // Place this macro in the implementation class of an oGfxResource
 #define oDEFINE_GFXRESOURCE_INTERFACE() oDEFINE_GFXDEVICECHILD_INTERFACE() \
 	oGfxResource::TYPE GetType() const threadsafe override { return MIXINGetType(); } \
+	uint GetID() const threadsafe override { return MIXINGetID(); } \
 	void GetDesc(interface_type::DESC* _pDesc) const threadsafe override { MIXINGetDesc(_pDesc); }
+
+inline uint oGfxDeviceResourceHash(const char* _SourceName, oGfxResource::TYPE _Type) { return oHash_superfasti(_SourceName, static_cast<uint>(strlen(_SourceName)), _Type); }
 
 template<typename InterfaceT, typename ImplementationT>
 struct oGfxDeviceChildMixinBase : oNoncopyable
@@ -56,9 +59,9 @@ protected:
 		strcpy_s(Name, oSAFESTRN(Name));
 	}
 
-	inline void MIXINReference() threadsafe
+	inline int MIXINReference() threadsafe
 	{
-		RefCount.Reference();
+		return RefCount.Reference();
 	}
 	
 	inline void MIXINRelease() threadsafe
@@ -115,11 +118,13 @@ struct oGfxResourceMixin : oGfxDeviceChildMixinBase<InterfaceT, ImplementationT>
 
 	oGfxResourceMixin(threadsafe oGfxDevice* _pDevice, const char* _Name)
 		: oGfxDeviceChildMixinBase(_pDevice, _Name)
+		, ID(oGfxDeviceResourceHash(_Name, Type))
 	{}
 
 protected:
 
 	desc_type Desc;
+	uint ID;
 
 	inline bool MIXINQueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe
 	{
@@ -143,6 +148,11 @@ protected:
 	inline oGfxResource::TYPE MIXINGetType() const threadsafe
 	{
 		return Type;
+	}
+
+	inline uint MIXINGetID() const threadsafe
+	{
+		return ID;
 	}
 
 	inline void MIXINGetDesc(desc_type* _pDesc) const threadsafe

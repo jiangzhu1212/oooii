@@ -3,6 +3,20 @@
 #include "oD3D11Device.h"
 #include <oooii/oSurface.h>
 
+bool oD3D11Device::CreateRenderTarget2(const char* _Name, threadsafe oWindow* _pWindow, oGfxRenderTarget2** _ppRenderTarget) threadsafe
+{
+	oGFXCREATE_CHECK_NAME();
+	if (!_pWindow)
+	{
+		oSetLastError(EINVAL, "A window to associate with this new render target must be specified");
+		return false;
+	}
+
+	bool success = false;
+	oCONSTRUCT(_ppRenderTarget, oD3D11RenderTarget2(this, _pWindow, _Name, &success)); \
+	return success;
+}
+
 oDEFINE_GFXDEVICE_CREATE(oD3D11, RenderTarget2);
 oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(oD3D11, RenderTarget2)
 {
@@ -12,6 +26,13 @@ oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(oD3D11, RenderTarget2)
 	Desc.Height = 0;
 	Resize(_Desc.Width, _Desc.Height);
 	*_pSuccess = true;
+}
+
+oD3D11RenderTarget2::oD3D11RenderTarget2(threadsafe oGfxDevice* _pDevice, threadsafe oWindow* _pWindow, const char* _Name, bool* _pSuccess)
+	: oGfxDeviceChildMixin(_pDevice, _Name)
+{
+	// Not yet implemented
+	*_pSuccess = false;
 }
 
 void oD3D11RenderTarget2::GetDesc(DESC* _pDesc) const threadsafe

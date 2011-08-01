@@ -37,8 +37,8 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	void Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPING* _pMapping) override;
 	void Unmap(oGfxResource* _pResource, size_t _SubresourceIndex) override;
 	void Clear(CLEAR_TYPE _ClearType) override;
-	void Draw(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex) override;
-	void Draw(uint _LineListID, const oGfxLineList* _pLineList) override;
+	void DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxMeshInstances* _pMeshInstances = nullptr) override;
+	void DrawLines(uint _LineListID, const oGfxLineList* _pLineList) override;
 	void DrawQuad(float4x4& _Transform, uint _MeshID) override;
 
 	oRef<ID3D11DeviceContext> Context;

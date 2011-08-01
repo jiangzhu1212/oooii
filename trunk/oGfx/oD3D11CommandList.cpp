@@ -5,7 +5,7 @@
 #include "oD3D11Mesh.h"
 #include "oD3D11Pipeline.h"
 #include "oD3D11Texture.h"
-#include <oGfx/oGfxHLSL.h>
+#include <oGfx/oGfxDrawConstants.h>
 
 oDEFINE_GFXDEVICE_CREATE(oD3D11, CommandList);
 oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(oD3D11, CommandList)
@@ -18,7 +18,7 @@ oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(oD3D11, CommandList)
 	{
 		char err[128];
 		sprintf_s(err, "Failed to create oGfxDeviceContext %u: ", _Desc.DrawOrder);
-		oSetLastErrorNative(hr, err);
+		oWinSetLastError(hr, err);
 		return;
 	}
 
@@ -69,7 +69,7 @@ static void SetViewConstants(ID3D11DeviceContext* _pDeviceContext, ID3D11Buffer*
 {
 	D3D11_MAPPED_SUBRESOURCE mapped;
 	_pDeviceContext->Map(_pViewConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-	oGfxViewConstants* V = (oGfxViewConstants*)mapped.pData;
+	oDeferredViewConstants* V = (oDeferredViewConstants*)mapped.pData;
 	V->Set(_View, _Projection, asfloat(uint2(_RTDesc.Width, _RTDesc.Height)), static_cast<uint>(_RenderTargetIndex));
 	_pDeviceContext->Unmap(_pViewConstants, 0);
 	oD3D11SetConstantBuffers(_pDeviceContext, 0, 1, &_pViewConstants);
@@ -218,7 +218,7 @@ void oD3D11CommandList::Clear(CLEAR_TYPE _ClearType)
 		Context->ClearDepthStencilView(pRT->DSV, sClearFlags[_ClearType], pRT->Desc.ClearDesc.DepthClearValue, pRT->Desc.ClearDesc.StencilClearValue);
 }
 
-void oD3D11CommandList::Draw(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex)
+void oD3D11CommandList::DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxMeshInstances* _pMeshInstances)
 {
 	const oD3D11Mesh* M = static_cast<const oD3D11Mesh*>(_pMesh);
 
@@ -282,7 +282,7 @@ void oD3D11CommandList::Draw(float4x4& _Transform, uint _MeshID, const oGfxMesh*
 		, StartIndex);
 }
 
-void oD3D11CommandList::Draw(uint _LineListID, const oGfxLineList* _pLineList)
+void oD3D11CommandList::DrawLines(uint _LineListID, const oGfxLineList* _pLineList)
 {
 	// Set up draw buffer
 

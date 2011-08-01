@@ -87,8 +87,8 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc
 	*_pSuccess = false;
 	D3DDevice->GetImmediateContext(&ImmediateContext);
 
-	oD3D11_CHECK_STRUCT_SIZE(oGfxViewConstants);
-	oVERIFY(oD3D11CreateConstantBuffer(D3DDevice, "oGfxDevice::ViewConstants", true, 0, sizeof(oGfxViewConstants), 1, &ViewConstants));
+	oD3D11_CHECK_STRUCT_SIZE(oDeferredViewConstants);
+	oVERIFY(oD3D11CreateConstantBuffer(D3DDevice, "oGfxDevice::ViewConstants", true, 0, sizeof(oDeferredViewConstants), 1, &ViewConstants));
 
 	oD3D11_CHECK_STRUCT_SIZE(oGfxDrawConstants);
 	oVERIFY(oD3D11CreateConstantBuffer(D3DDevice, "oGfxDevice::DrawConstants", true, 0, sizeof(oGfxDrawConstants), 1, &DrawConstants));

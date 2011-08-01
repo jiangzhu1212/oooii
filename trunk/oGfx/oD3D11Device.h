@@ -4,7 +4,7 @@
 #define oD3D11Device_h
 
 #include <oGfx/oGfx.h>
-#include <oGfx/oGfxHLSL.h>
+#include <oGfx/oGfxDrawConstants.h>
 #include <oooii/oNoncopyable.h>
 #include <oooii/oWindows.h>
 #include <oooii/oD3D11.h>
@@ -29,8 +29,10 @@ struct oD3D11Device : oGfxDevice, oNoncopyable
 	bool CreateLineList(const char* _Name, const oGfxLineList::DESC& _Desc, oGfxLineList** _ppLineList) threadsafe override;
 	bool CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, oGfxPipeline** _ppPipeline) threadsafe override;
 	bool CreateRenderTarget2(const char* _Name, const oGfxRenderTarget2::DESC& _Desc, oGfxRenderTarget2** _ppRenderTarget) threadsafe override;
+	bool CreateRenderTarget2(const char* _Name, threadsafe oWindow* _pWindow, oGfxRenderTarget2** _ppRenderTarget) threadsafe override;
 	bool CreateMaterial(const char* _Name, const oGfxMaterial::DESC& _Desc, oGfxMaterial** _ppMaterial) threadsafe override;
 	bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe override;
+	bool CreateMeshInstances(const char* _Name, const oGfxMeshInstances::DESC& _Desc, oGfxMeshInstances** _ppMeshInstances) threadsafe override;
 	bool CreateTexture(const char* _Name, const oGfxTexture::DESC& _Desc, oGfxTexture** _ppTexture) threadsafe override;
 
 	void Submit() override;

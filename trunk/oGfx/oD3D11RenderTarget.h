@@ -10,6 +10,7 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget2)
 {
 	oDEFINE_GFXDEVICECHILD_INTERFACE();
 	oDECLARE_GFXDEVICECHILD_CTOR(oD3D11, RenderTarget2);
+	oD3D11RenderTarget2(threadsafe oGfxDevice* _pDevice, threadsafe oWindow* _pWindow, const char* _Name, bool* _pSuccess);
 
 	void GetDesc(DESC* _pDesc) const threadsafe override;
 	void SetClearDesc(const CLEAR_DESC& _ClearDesc) threadsafe override;

@@ -7,6 +7,9 @@
     <Filter Include="oGfx">
       <UniqueIdentifier>{16f4291d-2486-4ac6-8721-b1ae9862fa7b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\D3D11">
+      <UniqueIdentifier>{832fe2c2-b3e5-4239-ad59-0bf0862b743d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -14,6 +17,30 @@
     </ClCompile>
     <ClCompile Include="oGfxState.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11LineList.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11RenderTarget.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Texture.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Device.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11CommandList.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Material.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Mesh.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Pipeline.cpp">
+      <Filter>Source\D3D11</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -25,6 +52,36 @@
     </ClInclude>
     <ClInclude Include="..\inc\oGfx\oGfxState.h">
       <Filter>oGfx</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11LineList.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11RenderTarget.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Texture.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="oGfxCommon.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Device.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oGfx\oGfxDrawConstants.h">
+      <Filter>oGfx</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11CommandList.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Material.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Mesh.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Pipeline.h">
+      <Filter>Source\D3D11</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

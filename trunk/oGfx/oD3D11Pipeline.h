@@ -10,6 +10,7 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, Pipeline)
 {
 	oDEFINE_GFXDEVICECHILD_INTERFACE();
 	oDECLARE_GFXDEVICECHILD_CTOR(oD3D11, Pipeline);
+	~oD3D11Pipeline();
 
 	void GetDesc(DESC* _pDesc) const threadsafe override;
 
@@ -20,8 +21,8 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, Pipeline)
 	oRef<ID3D11GeometryShader> GeometryShader;
 	oRef<ID3D11PixelShader> PixelShader;
 
-	VERTEX_ATTRIBUTE* pAttributes;
-	unsigned int NumAttributes;
+	oIAELEMENT* pElements;
+	unsigned int NumElements;
 };
 
 #endif

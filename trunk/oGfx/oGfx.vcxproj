@@ -35,6 +35,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="oD3D11CommandList.cpp" />
+    <ClCompile Include="oD3D11Device.cpp" />
+    <ClCompile Include="oD3D11LineList.cpp" />
+    <ClCompile Include="oD3D11Material.cpp" />
+    <ClCompile Include="oD3D11Mesh.cpp" />
+    <ClCompile Include="oD3D11Pipeline.cpp" />
+    <ClCompile Include="oD3D11RenderTarget.cpp" />
+    <ClCompile Include="oD3D11Texture.cpp" />
     <ClCompile Include="oGfxState.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -49,7 +57,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\inc\oGfx\oGfx.h" />
+    <ClInclude Include="..\inc\oGfx\oGfxDrawConstants.h" />
     <ClInclude Include="..\inc\oGfx\oGfxState.h" />
+    <ClInclude Include="oD3D11CommandList.h" />
+    <ClInclude Include="oD3D11Device.h" />
+    <ClInclude Include="oD3D11LineList.h" />
+    <ClInclude Include="oD3D11Material.h" />
+    <ClInclude Include="oD3D11Mesh.h" />
+    <ClInclude Include="oD3D11Pipeline.h" />
+    <ClInclude Include="oD3D11RenderTarget.h" />
+    <ClInclude Include="oD3D11Texture.h" />
+    <ClInclude Include="oGfxCommon.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
