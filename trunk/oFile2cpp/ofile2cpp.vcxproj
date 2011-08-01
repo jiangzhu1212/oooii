@@ -21,10 +21,6 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D7283A6E-6614-4AD6-969C-54528F7432C3}</ProjectGuid>
     <RootNamespace>ofile2cpp</RootNamespace>
-    <SccProjectName>SAK</SccProjectName>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccProvider>SAK</SccProvider>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">

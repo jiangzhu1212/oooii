@@ -22,10 +22,6 @@
     <ProjectGuid>{5EC1936E-8395-46EA-B0CD-62202E77A9A6}</ProjectGuid>
     <RootNamespace>oStubStaticLib</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <SccProjectName>SAK</SccProjectName>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccProvider>SAK</SccProvider>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
