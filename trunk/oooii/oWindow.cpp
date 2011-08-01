@@ -361,6 +361,16 @@ static void GetFullscreenDimensions(const oWindow::DESC& _Desc, unsigned int* _p
 	*_pHeight = Coord.bottom - Coord.top;
 }
 
+static oWindow::STATE GetState(HWND _hWnd)
+{
+	RECT r;
+	if (oTrayGetIconRect(_hWnd, 0, &r) && !IsWindowVisible(_hWnd)) return oWindow::TRAYIZED;
+	else if (!IsWindowVisible(_hWnd)) return oWindow::HIDDEN;
+	else if (IsIconic(_hWnd)) return oWindow::MINIMIZED;
+	else if (IsZoomed(_hWnd)) return oWindow::MAXIMIZED;
+	else return oWindow::RESTORED;
+}
+
 static void GetDesc(HWND _hWnd, oWindow::DESC* _pDesc)
 {
 	RECT rClient;
@@ -369,12 +379,7 @@ static void GetDesc(HWND _hWnd, oWindow::DESC* _pDesc)
 	_pDesc->ClientY = rClient.top;
 	_pDesc->ClientWidth = rClient.right - rClient.left;
 	_pDesc->ClientHeight = rClient.bottom - rClient.top;
-
-	if (oTrayGetIconRect(_hWnd, 0, &rClient) && !IsWindowVisible(_hWnd)) _pDesc->State = oWindow::TRAYIZED;
-	else if (!IsWindowVisible(_hWnd)) _pDesc->State = oWindow::HIDDEN;
-	else if (IsIconic(_hWnd)) _pDesc->State = oWindow::MINIMIZED;
-	else if (IsZoomed(_hWnd)) _pDesc->State = oWindow::MAXIMIZED;
-	else _pDesc->State = oWindow::RESTORED;
+	_pDesc->State = GetState(_hWnd);
 
 	LONG_PTR style = GetWindowLongPtr(_hWnd, GWL_STYLE);
 	if (style & WS_THICKFRAME) _pDesc->Style = oWindow::SIZEABLE;
@@ -547,12 +552,7 @@ struct oWindowResizer_Impl : public oWindow::Resizer
 			RECT rClient;
 			HWND hwnd = (HWND)Window->GetNativeHandle();
 			oGetClientScreenRect(hwnd, &rClient);
-
-			oWindow::STATE state;
-			if (!IsWindowVisible(hwnd)) state = oWindow::HIDDEN;
-			else if (IsIconic(hwnd)) state = oWindow::MINIMIZED;
-			else if (IsZoomed(hwnd)) state = oWindow::MAXIMIZED;
-			else state = oWindow::RESTORED;
+			oWindow::STATE state = GetState(hwnd);
 
 			oRECT rect;
 			rect.SetMin( int2( rClient.left, rClient.top ) );
@@ -2411,12 +2411,19 @@ HRESULT oWindow_Impl::CreateRendertarget()
 }
 #endif
 
-bool oWindow_Impl::QueryInterface( const oGUID& _InterfaceID, threadsafe void** _ppInterface ) threadsafe
+bool oWindow_Impl::QueryInterface( const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe
 {
 	if (oGetGUID<oWindow>() == _InterfaceID)
 	{
 		Reference();
 		*_ppInterface = this;
+		return true;
+	}
+
+	else if (__uuidof(IDXGISwapChain) == *(const GUID*)&_InterfaceID)
+	{
+		D3DSwapChain->AddRef();
+		*_ppInterface = D3DSwapChain;
 		return true;
 	}
 
