@@ -1,0 +1,26 @@
+How to build OpenSSL-1.0.0e
+
+Install Activestate perl
+http://www.activestate.com/activeperl
+
+32-bit:
+- Open Visual Studio 2010 Command Prompt
+- Navigate to the openssl-1.0.0e directory
+> perl configure VC-WIN32 no-asm --prefix=c:/tmp_open_ssl
+(note the forward slash, also not this directory does not seem to be used at all!)
+> ms\do_ms.bat
+> nmake -f ms\ntdll.mak
+- When it is done, you will have a bunch of dlls, libs, and exes in a folder created in openssl-1.0.0e\out32dll
+
+64-bit:
+(Note: this will clobber 32-bit - best to do this on a fresh sync)
+- Open Visual Studion 2010 x64 Cross Tools Command Prompt (note: this is a different command prompt than used above)
+- Navigate to the openssl-1.0.0e directory
+> perl configure VC-WIN64A
+> ms\do_ms.bat
+> nmake -f ms\ntdll.mak
+- When it is done, you will have a bunch of dlls, libs, and exes in a folder created in openssl-1.0.0e\out32dll
+(The dlls are still called 32, but they are 64-bit)
+
+
+- Andrew

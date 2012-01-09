@@ -1,0 +1,295 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{8EB33511-EED5-48AC-99F9-EFA2A34BB2DD}</ProjectGuid>
+    <RootNamespace>oPlatform</RootNamespace>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
+    <ProjectName>oPlatform</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="..\MSSupport\oFXC.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\MSSupport\Properties\Release32.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\lib.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\AdditionalDepsOuroboros.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\MSSupport\Properties\Debug32.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\lib.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\AdditionalDepsOuroboros.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\MSSupport\Properties\Release64.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\lib.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\AdditionalDepsOuroboros.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\MSSupport\Properties\Debug64.props" />
+    <Import Project="..\MSSupport\Properties\Common.props" />
+    <Import Project="..\MSSupport\Properties\lib.props" />
+    <Import Project="..\MSSupport\Properties\pch.props" />
+    <Import Project="..\MSSupport\Properties\AdditionalDepsOuroboros.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib>
+      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
+    </Lib>
+    <ClCompile />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\inc\oPlatform\oCamera.h" />
+    <ClInclude Include="..\inc\oPlatform\oConsole.h" />
+    <ClInclude Include="..\inc\oPlatform\oCPU.h" />
+    <ClInclude Include="..\inc\oPlatform\oCRTHeap.h" />
+    <ClInclude Include="..\inc\oPlatform\oD2D.h" />
+    <ClInclude Include="..\inc\oPlatform\oD3D10.h" />
+    <ClInclude Include="..\inc\oPlatform\oD3D11.h" />
+    <ClInclude Include="..\inc\oPlatform\oD3DX11.h" />
+    <ClInclude Include="..\inc\oPlatform\oDateTime.h" />
+    <ClInclude Include="..\inc\oPlatform\oDispatchQueueConcurrentWTP.h" />
+    <ClInclude Include="..\inc\oPlatform\oDisplay.h" />
+    <ClInclude Include="..\inc\oPlatform\oDXGI.h" />
+    <ClInclude Include="..\inc\oPlatform\oEvent.h" />
+    <ClInclude Include="..\inc\oPlatform\oFile.h" />
+    <ClInclude Include="..\inc\oPlatform\oGDI.h" />
+    <ClInclude Include="..\inc\oPlatform\oGPU.h" />
+    <ClInclude Include="..\inc\oPlatform\oKeyboard.h" />
+    <ClInclude Include="..\inc\oPlatform\oMirroredArena.h" />
+    <ClInclude Include="..\inc\oPlatform\oMouse.h" />
+    <ClInclude Include="..\inc\oPlatform\oMsgBox.h" />
+    <ClInclude Include="..\inc\oPlatform\oPageAllocator.h" />
+    <ClInclude Include="..\inc\oPlatform\oPlatform.h" />
+    <ClInclude Include="..\inc\oPlatform\oProcess.h" />
+    <ClInclude Include="..\inc\oPlatform\oProcessHeap.h" />
+    <ClInclude Include="..\inc\oPlatform\oProgressBar.h" />
+    <ClInclude Include="..\inc\oPlatform\oSerialCom.h" />
+    <ClInclude Include="..\inc\oPlatform\oSocket.h" />
+    <ClInclude Include="..\inc\oPlatform\oSystem.h" />
+    <ClInclude Include="..\inc\oPlatform\oThreadX.h" />
+    <ClInclude Include="..\inc\oPlatform\oWinAsString.h" />
+    <ClInclude Include="..\inc\oPlatform\oWinCursor.h" />
+    <ClInclude Include="..\inc\oPlatform\oWindow.h" />
+    <ClInclude Include="..\inc\oPlatform\oWindows.h" />
+    <ClInclude Include="..\inc\oPlatform\oWindowUI.h" />
+    <ClInclude Include="..\inc\oPlatform\oWinRect.h" />
+    <ClInclude Include="..\inc\oPlatform\oWinTray.h" />
+    <ClInclude Include="..\inc\oPlatform\oWinWindowing.h" />
+    <ClInclude Include="..\inc\oPlatform\oDebugger.h" />
+    <ClInclude Include="..\inc\oPlatform\oHLSL.h" />
+    <ClInclude Include="..\inc\oPlatform\oHLSLDeferredView.h" />
+    <ClInclude Include="..\inc\oPlatform\oImage.h" />
+    <ClInclude Include="..\inc\oPlatform\oModule.h" />
+    <ClInclude Include="..\inc\oPlatform\oP4.h" />
+    <ClInclude Include="..\inc\oPlatform\oReporting.h" />
+    <ClInclude Include="..\inc\oPlatform\oSingleton.h" />
+    <ClInclude Include="..\inc\oPlatform\oStandards.h" />
+    <ClInclude Include="..\inc\oPlatform\oStddef.h" />
+    <ClInclude Include="..\inc\oPlatform\oTest.h" />
+    <ClInclude Include="..\inc\oPlatform\oVTable.h" />
+    <ClInclude Include="oCamera_QEdit.h" />
+    <ClInclude Include="oCRTLeakTracker.h" />
+    <ClInclude Include="oD2DWindowUI.h" />
+    <ClInclude Include="oDbgHelp.h" />
+    <ClInclude Include="oGDIWindowUI.h" />
+    <ClInclude Include="oIOCP.h" />
+    <ClInclude Include="oKeyState.h" />
+    <ClInclude Include="oOpenSSL.h" />
+    <ClInclude Include="oSpinlockEx.h" />
+    <ClInclude Include="oStaticMutex.h" />
+    <ClInclude Include="oTaskPool.h" />
+    <ClInclude Include="oWindowUIElementBaseMixin.h" />
+    <ClInclude Include="oWinDWMAPI.h" />
+    <ClInclude Include="oWinPowrProf.h" />
+    <ClInclude Include="oWinPSAPI.h" />
+    <ClInclude Include="oWinsock.h" />
+    <ClInclude Include="pch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="oCamera.cpp" />
+    <ClCompile Include="oConsole.cpp" />
+    <ClCompile Include="oCPU.cpp" />
+    <ClCompile Include="oCRTHeap.cpp" />
+    <ClCompile Include="oCRTLeakTracker.cpp" />
+    <ClCompile Include="oD2D.cpp" />
+    <ClCompile Include="oD2DWindowUI.cpp" />
+    <ClCompile Include="oD3D10.cpp" />
+    <ClCompile Include="oD3D11.cpp" />
+    <ClCompile Include="oD3DX11.cpp" />
+    <ClCompile Include="oDateTime.cpp" />
+    <ClCompile Include="oDbgHelp.cpp" />
+    <ClCompile Include="oDebugger.cpp" />
+    <ClCompile Include="oDispatchQueueConcurrentWTP.cpp" />
+    <ClCompile Include="oDisplay.cpp" />
+    <ClCompile Include="oDXGI.cpp" />
+    <ClCompile Include="oEvent.cpp" />
+    <ClCompile Include="oFile.cpp" />
+    <ClCompile Include="oFileGeneric.cpp" />
+    <ClCompile Include="oGDI.cpp" />
+    <ClCompile Include="oGDIWindowUI.cpp" />
+    <ClCompile Include="oGPU.cpp" />
+    <ClCompile Include="oImage.cpp" />
+    <ClCompile Include="oIOCP.cpp" />
+    <ClCompile Include="oKeyboard.cpp" />
+    <ClCompile Include="oMirroredArena.cpp" />
+    <ClCompile Include="oModule.cpp" />
+    <ClCompile Include="oMouse.cpp" />
+    <ClCompile Include="oMsgBox.cpp" />
+    <ClCompile Include="oooii_icon.cpp" />
+    <ClCompile Include="oOpenSSL.cpp" />
+    <ClCompile Include="oP4.cpp" />
+    <ClCompile Include="oPageAllocator.cpp" />
+    <ClCompile Include="oProcess.cpp" />
+    <ClCompile Include="oProcessHeap.cpp" />
+    <ClCompile Include="oProgressBar.cpp" />
+    <ClCompile Include="oReporting.cpp" />
+    <ClCompile Include="oSerialCom.cpp" />
+    <ClCompile Include="oSingleton.cpp" />
+    <ClCompile Include="oSocket.cpp" />
+    <ClCompile Include="oStandards.cpp" />
+    <ClCompile Include="oSystem.cpp" />
+    <ClCompile Include="oTaskPool.cpp" />
+    <ClCompile Include="oTBBTask.cpp" />
+    <ClCompile Include="oTest.cpp" />
+    <ClCompile Include="oThreadX.cpp" />
+    <ClCompile Include="oVTable.cpp" />
+    <ClCompile Include="oWinAsString.cpp" />
+    <ClCompile Include="oWindow.cpp" />
+    <ClCompile Include="oWindows.cpp" />
+    <ClCompile Include="oWindowUI.cpp" />
+    <ClCompile Include="oWinDWMAPI.cpp" />
+    <ClCompile Include="oWinPowrProf.cpp" />
+    <ClCompile Include="oWinPSAPI.cpp" />
+    <ClCompile Include="oWinRect.cpp" />
+    <ClCompile Include="oWinsock.cpp" />
+    <ClCompile Include="oWinTray.cpp" />
+    <ClCompile Include="oWinWindowing.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FXC Include="oHLSLFSQuad.sh">
+      <FileType>Document</FileType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)inc\oPlatform\oHLSL.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)inc\oPlatform\oHLSL.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)inc\oPlatform\oHLSL.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)inc</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)inc\oPlatform\oHLSL.h</AdditionalDependencies>
+    </FXC>
+    <FXC Include="oHLSLPassthrough.sh">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+    </FXC>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\MSSupport\oFXC.targets" />
+  </ImportGroup>
+</Project>

@@ -1,0 +1,495 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="oBasis">
+      <UniqueIdentifier>{0205deb0-07d7-43ad-987c-226495a27be1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{df617b51-647a-4727-b495-484e5b457685}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBasis\C++11">
+      <UniqueIdentifier>{6b94dbb8-d0cd-4e71-a8b5-9b1c2ad9a2be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBasis\Concurrency">
+      <UniqueIdentifier>{320b6a2d-fc14-4a41-897c-bf272e90a82e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBasis\Allocators">
+      <UniqueIdentifier>{97c96529-0f01-4436-949a-df83f37c1d28}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBasis\String Parsing">
+      <UniqueIdentifier>{d77a4985-cdb4-44e3-9573-80500f36c46d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Bullet-Vectormathlib">
+      <UniqueIdentifier>{81bf6063-2edd-4914-95db-4552841bdc2f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBasis\Language Enhancements">
+      <UniqueIdentifier>{5a5a209c-4864-4ac5-96c1-29cc98fd9fdf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBasis\Types">
+      <UniqueIdentifier>{7cb7b979-c6c7-4ef7-89fb-67abfa0c31e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBasis\Concurrency\C++11 Threadsafe Wrappers">
+      <UniqueIdentifier>{1255fe03-68ef-43b1-8daa-3c6797cfa595}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="oWinHeaders.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oHash.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oBasis.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oBit.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oByte.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="oIndexAllocatorInternal.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oByteSwizzle.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oAlgorithm.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oFilterChain.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oStringize.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oStdAtomic.h">
+      <Filter>oBasis\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oStdTypeTraits.h">
+      <Filter>oBasis\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oStdChrono.h">
+      <Filter>oBasis\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oStdMutex.h">
+      <Filter>oBasis\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oStdRatio.h">
+      <Filter>oBasis\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oStdThread.h">
+      <Filter>oBasis\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oConcurrentIndexAllocator.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oConcurrentQueue.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oLockFreeQueue.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oLockedPointer.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oIndexAllocator.h">
+      <Filter>oBasis\Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oStdAllocator.h">
+      <Filter>oBasis\Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oTaggedPointer.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oString.h">
+      <Filter>oBasis\String Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oURI.h">
+      <Filter>oBasis\String Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oStringID.h">
+      <Filter>oBasis\String Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oPath.h">
+      <Filter>oBasis\String Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oAtof.h">
+      <Filter>oBasis\String Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oThreadsafe.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oLimits.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oEqual.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oAssert.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oCheckedAssignment.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oCallable.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oError.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oMemory.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oLockedVector.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oCSV.h">
+      <Filter>oBasis\String Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oINI.h">
+      <Filter>oBasis\String Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oXML.h">
+      <Filter>oBasis\String Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="perlin.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oMath.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oMathInternalHLSL.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\mat_aos.h">
+      <Filter>Source\Bullet-Vectormathlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vectormath_aos_d.h">
+      <Filter>Source\Bullet-Vectormathlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\mat_aos_d.h">
+      <Filter>Source\Bullet-Vectormathlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\quat_aos.h">
+      <Filter>Source\Bullet-Vectormathlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\quat_aos_d.h">
+      <Filter>Source\Bullet-Vectormathlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vec_aos.h">
+      <Filter>Source\Bullet-Vectormathlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vec_aos_d.h">
+      <Filter>Source\Bullet-Vectormathlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ext\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vectormath_aos.h">
+      <Filter>Source\Bullet-Vectormathlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oNonCopyable.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oMacros.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oOperators.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oIntrinsic.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oLibc.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oArcball.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oColor.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oGUID.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oUint128.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oRefCount.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oRef.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oMathTypes.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oMathInternalTypes.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oInterface.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oFixedString.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oArray.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oOBJLoader.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oInvalid.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oOSC.h">
+      <Filter>oBasis\String Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oTimer.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oEightCC.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oFourCC.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oNTPTime.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="oAllocatorTLSF.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oAllocator.h">
+      <Filter>oBasis\Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oAllocatorTLSF.h">
+      <Filter>oBasis\Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oBuffer.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oBufferPool.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oFor.h">
+      <Filter>oBasis\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oOnScopeExit.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oSize.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oBackoff.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oStdConditionVariable.h">
+      <Filter>oBasis\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oPlatformFeatures.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oDispatchQueue.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oDispatchQueuePrivate.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oTask.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oCountdownLatch.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oDispatchQueueGlobal.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oFunction.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oMutex.h">
+      <Filter>oBasis\Concurrency\C++11 Threadsafe Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oConditionVariable.h">
+      <Filter>oBasis\Concurrency\C++11 Threadsafe Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oThread.h">
+      <Filter>oBasis\Concurrency\C++11 Threadsafe Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oMeshUtil.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oGeometry.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oDispatchQueueConcurrent.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oFiber.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oLeakTracker.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oSurface.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oLinearAllocator.h">
+      <Filter>oBasis\Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oUnorderedMap.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oBlockAllocatorFixed.h">
+      <Filter>oBasis\Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oBlockAllocatorGrowable.h">
+      <Filter>oBasis\Allocators</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="oStdChrono.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oStdMutex.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oStdThread.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oHash.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oEqual.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oIndexAllocator.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oConcurrentIndexAllocator.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oMemory.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oPath.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oAlgorithm.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oString.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oStringize.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oGUID.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oURI.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oColor.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oError.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oOSC.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oCppParsing.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oINI.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oInterface.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oXML.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oCSV.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oMath.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="perlin.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oSurface.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oArcball.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oFixedString.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oOBJLoader.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oFourCC.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oEightCC.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oNTPTime.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oAllocator.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oAllocatorTLSF.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oBuffer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oBufferPool.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oStdConditionVariable.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oDispatchQueuePrivate.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oDispatchQueue.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oDispatchQueueGlobal.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oGeometry.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oMeshUtil.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oDispatchQueueConcurrent.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oLeakTracker.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oBlockAllocatorFixed.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oBlockAllocatorGrowable.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oTimer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
