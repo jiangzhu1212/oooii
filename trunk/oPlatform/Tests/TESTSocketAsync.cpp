@@ -63,6 +63,7 @@ static const char TESTSocketTCP1[] = "I hate Dickens.";
 
 static const char* TESTSocketTCPServer = "localhost:4545";
 static const unsigned int TESTSocketTCPTimeout = 2000;
+static const int TESTNumUDPAttempts = 20;
 
 struct TESTSocketAsync : public oTest
 {
@@ -74,9 +75,9 @@ struct TESTSocketAsync : public oTest
 		GenericCallback()
 			: SendCount(0)
 		{
-			void* pData = new char[oCOUNTOF(TESTSocketMessage)];
-			memset(pData, NULL, oCOUNTOF(TESTSocketMessage));
-			oBufferCreate("Generic Callback buffer", pData, oCOUNTOF(TESTSocketMessage), oBuffer::Delete, &ReceiveBuffer);
+			void* pData = new char[sizeof(TESTSocketMessage)];
+			memset(pData, NULL, sizeof(TESTSocketMessage));
+			oBufferCreate("Generic Callback buffer", pData, sizeof(TESTSocketMessage), oBuffer::Delete, &ReceiveBuffer);
 		}
 
 		void ProcessSocketReceive(void*_pData, oSocket::size_t _SizeData, const oNetAddr& _Addr, interface oSocket* _pSocket) threadsafe override
@@ -99,7 +100,7 @@ struct TESTSocketAsync : public oTest
 		oStd::atomic_uint ReceiveCount;
 		oRefCount Refcount;
 
-		oRef<threadsafe oBuffer> ReceiveBuffer;
+		oRef<oBuffer> ReceiveBuffer;
 	};
 
 	RESULT TestUDPServerASYNC(char* _StrStatus, size_t _SizeofStrStatus, unsigned short Port)
@@ -110,7 +111,7 @@ struct TESTSocketAsync : public oTest
 		
 
 		oRef<GenericCallback> Sender( new GenericCallback, false );
-
+		
 		SocketDesc.Style = oSocket::ASYNC;
 		SocketDesc.AsyncSettings.Callback = Sender;
 
@@ -125,9 +126,8 @@ struct TESTSocketAsync : public oTest
 
 		for(unsigned int i = 0; i < SocketDesc.AsyncSettings.MaxSimultaneousMessages; ++i)
 		{
-			Socket->SendTo(TESTSocketMessage, oCOUNTOF(TESTSocketMessage), Addr);
+			Socket->SendTo(TESTSocketMessage, sizeof(TESTSocketMessage), Addr);
 		}
-
 		oSleep(1000);
 		oTESTB(Sender->SendCount.fetch_add(0) == SocketDesc.AsyncSettings.MaxSimultaneousMessages, "UDPSender: Failed to account for all sends");
 
@@ -237,40 +237,60 @@ struct TESTSocketAsync : public oTest
 		}
 
 		// Create our server thread
-		oRef<threadsafe oDispatchQueue> ServerThread;
+		oRef<threadsafe oDispatchQueuePrivate> ServerThread;
 		oTESTB(oDispatchQueueCreatePrivate("TESTSocket Server thread", 1000, &ServerThread), "Failed to create private dispatch queue");
 		oOnScopeExit onexit([&] { ServerThread->Join(); });
 		static const unsigned short TestPort = 30777;
 
 		// Test UDP Async
 		{
-			// Issue server command
-			ServerResult = FAILURE;
-			oFUNCTION<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> Func = oBIND(&TESTSocketAsync::TestUDPServerASYNC, this, oBIND1, oBIND2, TestPort);
-			ServerThread->Dispatch(oBIND(&TESTSocketAsync::RunServer, this, Func));
+			// UDP is unreliable, seems especially so on localhost, so if we fail to receive our response back, try again.
+			// Most of the time this test will pass on the first try.  Sometimes it may take more tries.
+			// We fail after TESTNumUDPAttempts times.  The test is successful if we receive our message back.
+			bool bSuccess = false;
+			int totalCount;
+			for (totalCount = 0; totalCount < TESTNumUDPAttempts; ++totalCount)
+			{
+				// Issue server command
+				ServerResult = FAILURE;
+				oFUNCTION<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> Func = oBIND(&TESTSocketAsync::TestUDPServerASYNC, this, oBIND1, oBIND2, TestPort);
+				ServerThread->Dispatch(oBIND(&TESTSocketAsync::RunServer, this, Func));
 
-			oSocket::DESC SocketDesc;
-			SocketDesc.Protocol = oSocket::UDP;
-			oSocketPortSet(TestPort, &SocketDesc.Addr);
+				oSocket::DESC SocketDesc;
+				SocketDesc.Protocol = oSocket::UDP;
+				oSocketPortSet(TestPort, &SocketDesc.Addr);
 
-			oRef<GenericCallback> Callback(new GenericCallback, false );
+				oRef<GenericCallback> Callback(new GenericCallback, false );
 
-			SocketDesc.Style = oSocket::ASYNC;
-			SocketDesc.AsyncSettings.Callback = Callback;
+				SocketDesc.Style = oSocket::ASYNC;
+				SocketDesc.AsyncSettings.Callback = Callback;
 
-			oRef<threadsafe oSocket> Socket;
-			oTESTB(oSocketCreate("Test UDP", SocketDesc, &Socket), oErrorGetLastString());
+				oRef<threadsafe oSocket> Socket;
+				oTESTB(oSocketCreate("Test UDP", SocketDesc, &Socket), oErrorGetLastString());
 
-			// Initiate the first receive
-			Callback->InitiateReceive(Socket);
+				// Initiate the first receive
+				Callback->InitiateReceive(Socket);
 
-			ServerThread->Flush();
-			oTESTB(SUCCESS == ServerResult, ServerResultString);
+				ServerThread->Flush();
+				oTESTB(SUCCESS == ServerResult, ServerResultString);
 
-			oLockedPointer<oBuffer> Locked(Callback->ReceiveBuffer);
-			oTESTB(0 == memcmp(Locked->GetData(), TESTSocketMessage, oCOUNTOF(TESTSocketMessage)), "Receive failed to get message");
+				oLockedPointer<oBuffer> Locked(Callback->ReceiveBuffer);
+				void *pTest = Locked->GetData();
+				if (0 == memcmp(Locked->GetData(), TESTSocketMessage, sizeof(TESTSocketMessage)))
+				{
+					bSuccess = true;
+					break;
+				}
+			}
+
+			if (bSuccess)
+				sprintf_s(_StrStatus, _SizeofStrStatus, "UDP Tests Successful: (%i tries)", totalCount + 1);
+			else
+			{
+				oTESTB(bSuccess, "Receive failed to get message (%i tries)", totalCount + 1);
+			}
 		}
-
+		
 		// Test TCP and oMSG Async
 		oSocket::PROTOCOL Protocols[] = {oSocket::TCP, oSocket::oMSG};
 		for(int i = 0; i < oCOUNTOF(Protocols); ++i)

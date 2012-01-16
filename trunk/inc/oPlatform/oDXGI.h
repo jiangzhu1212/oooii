@@ -27,6 +27,7 @@
 #define oDXGI_h
 
 #include <oBasis/oSurface.h>
+#include <oBasis/oVersion.h>
 #include <oPlatform/oWindows.h>
 
 #if oDXVER >= oDXVER_10
@@ -66,7 +67,7 @@
 
 	// Returns the numeric version of the highest level of D2D the specified 
 	// adapter supports.
-	float oDXGIGetD3DVersion(IDXGIAdapter* _pAdapter);
+	oVersion oDXGIGetD3DVersion(IDXGIAdapter* _pAdapter);
 
 	// A bit of syntactic sugar on top of GetParent()
 	bool oDXGIGetAdapter(IDXGIObject* _pObject, IDXGIAdapter1** _ppAdapter);

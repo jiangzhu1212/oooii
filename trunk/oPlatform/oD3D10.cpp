@@ -37,7 +37,7 @@ static const char* d3d10_dll_functions[] =
 
 oD3D10::oD3D10()
 {
-	hD3D10 = oModuleLink("d3d10_1.dll", d3d10_dll_functions, (void**)&D3D10CreateDevice1, oCOUNTOF(d3d10_dll_functions));
+	hD3D10 = oModuleLinkSafe("d3d10_1.dll", d3d10_dll_functions, (void**)&D3D10CreateDevice1, oCOUNTOF(d3d10_dll_functions));
 	oASSERT(hD3D10, "");
 }
 
@@ -78,13 +78,31 @@ bool oD3D10CreateDevice(const int2& _VirtualDesktopPosition, ID3D10Device1** _pp
 	return true;
 }
 
-bool oD3D10CreateSnapshot(ID3D10Texture2D* _pRenderTarget, oImage** _ppImage)
+bool oD3D10CreateImage(ID3D10Texture2D* _pSourceTexture, oImage** _ppImage)
 {
-	if (!_pRenderTarget || !_ppImage)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
+	D3D10_TEXTURE2D_DESC d;
+	_pSourceTexture->GetDesc(&d);
+
+	const unsigned int RowSize = static_cast<unsigned int>(d.Width * oSurfaceGetSize(oSURFACE_B8G8R8A8_UNORM));
+	oImage::DESC idesc;
+	idesc.RowPitch = RowSize;
+	idesc.Dimensions.x = d.Width;
+	idesc.Dimensions.y = d.Height;
+	idesc.Format = oImage::BGRA32;
+	oVERIFY(oImageCreate("Snapshot image", idesc, _ppImage));
+	void* pData = (*_ppImage)->GetData();
+
+	D3D10_MAPPED_TEXTURE2D mapped;
+	oV(_pSourceTexture->Map(0, D3D10_MAP_READ, 0, &mapped));
+	(*_ppImage)->CopyData(mapped.pData, mapped.RowPitch, oImage::FlipVertical);
+	_pSourceTexture->Unmap(0);
+	return true;
+}
+
+bool oD3D10CreateSnapshot(ID3D10Texture2D* _pRenderTarget, ID3D10Texture2D** _ppCPUTexture)
+{
+	if (!_pRenderTarget || !_ppCPUTexture)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	oRef<ID3D10Device> D3D10Device;
 	_pRenderTarget->GetDevice(&D3D10Device);
@@ -94,33 +112,22 @@ bool oD3D10CreateSnapshot(ID3D10Texture2D* _pRenderTarget, oImage** _ppImage)
 	d.BindFlags = 0;
 	d.Usage = D3D10_USAGE_STAGING;
 	d.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
-	oRef<ID3D10Texture2D> CPUTexture;
-	oV(D3D10Device->CreateTexture2D(&d, nullptr, &CPUTexture));
-	D3D10Device->CopyResource(CPUTexture, _pRenderTarget);
+	oV(D3D10Device->CreateTexture2D(&d, nullptr, _ppCPUTexture));
+	D3D10Device->CopyResource(*_ppCPUTexture, _pRenderTarget);
 	D3D10Device->Flush();
-
-	const unsigned int RowSize = static_cast<unsigned int>(d.Width * oSurfaceGetSize(oSURFACE_B8G8R8A8_UNORM));
-	oImage::DESC idesc;
-	idesc.Pitch = RowSize;
-	idesc.Dimensions.x = d.Width;
-	idesc.Dimensions.y = d.Height;
-	idesc.Format = oSURFACE_B8G8R8A8_UNORM;
-	oVERIFY(oImageCreate("Snapshot image", &idesc, _ppImage));
-	void* pData = (*_ppImage)->GetData();
-
-	D3D10_MAPPED_TEXTURE2D mapped;
-	oV(CPUTexture->Map(0, D3D10_MAP_READ, 0, &mapped));
-	
-	if (mapped.RowPitch != RowSize || idesc.Pitch != RowSize)
-		oMemcpy2d(pData, idesc.Pitch, mapped.pData, mapped.RowPitch, RowSize, d.Height);
-	else
-		memcpy(pData, mapped.pData, RowSize * d.Height);
-
-	CPUTexture->Unmap(0);
-
-	(*_ppImage)->FlipVertical();
-
 	return true;
+}
+
+bool oD3D10CreateSnapshot(ID3D10Texture2D* _pRenderTarget, oImage** _ppImage)
+{
+	if (!_pRenderTarget || !_ppImage)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	oRef<ID3D10Texture2D> CPUTexture;
+	if (!oD3D10CreateSnapshot(_pRenderTarget, &CPUTexture))
+		return false; // pass through error
+
+	return oD3D10CreateImage(CPUTexture, _ppImage);
 }
 
 class oD3D10DeviceManagerImpl : public oD3D10DeviceManager

@@ -83,7 +83,6 @@ struct oTest : oModuleSingleton<oTest>
 	// verified as being correct. If valid, then this returns true. If the images
 	// differ, then the test image that failed will be written to the OutputPath.
 	bool TestImage(oImage* _pImage, unsigned int _NthImage = 0);
-	bool TestImageAgainstGoldenImage(oImage* _pImage, const oImage * goldenImage);
 
 	virtual RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) = 0;
 	static void BuildPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _TestName, const char* _DataPath, const char* _DataSubpath, const char* _Path, unsigned int _NthImage, const char* _Ext);

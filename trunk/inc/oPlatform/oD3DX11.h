@@ -41,6 +41,8 @@ struct oD3DX11 : oModuleSingleton<oD3DX11>
 
 	HRESULT (__stdcall *D3DX11CreateTextureFromMemory)(ID3D11Device *pDevice, LPCVOID pSrcData, SIZE_T SrcDataSize, D3DX11_IMAGE_LOAD_INFO *pLoadInfo, ID3DX11ThreadPump *pPump, ID3D11Resource **ppTexture, HRESULT *pHResult);
 	HRESULT (__stdcall *D3DX11LoadTextureFromTexture)(ID3D11DeviceContext *pContext, ID3D11Resource *pSrcTexture, D3DX11_TEXTURE_LOAD_INFO *pLoadInfo, ID3D11Resource *pDstTexture);
+	HRESULT (__stdcall *D3DX11SaveTextureToFileA)(ID3D11DeviceContext *pContext, ID3D11Resource *pSrcTexture, D3DX11_IMAGE_FILE_FORMAT DestFormat, LPCTSTR pDestFile);
+	HRESULT (__stdcall *D3DX11SaveTextureToMemory)(ID3D11DeviceContext *pContext, ID3D11Resource *pSrcTexture, D3DX11_IMAGE_FILE_FORMAT DestFormat, LPD3D10BLOB *ppDestBuf, UINT Flags);
 
 protected:
 	oHMODULE hD3DX11;

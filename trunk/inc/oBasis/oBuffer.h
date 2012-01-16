@@ -58,10 +58,8 @@ interface oBuffer : oLockableInterface
 	virtual const char* GetName() const threadsafe = 0;
 };
 
-// If _FreeFn is 0, then the allocation is not free automatically
+// If _FreeFn is nullptr, then the allocation is not freed automatically
 bool oBufferCreate(const char* _Name, void* _Allocation, size_t _Size, oBuffer::DeallocateFn _DeallocateFn, oBuffer** _ppBuffer);
 bool oBufferCreate(const char* _Name, const void* _Allocation, size_t _Size, oBuffer::DeallocateFn _DeallocateFn, const oBuffer** _ppBuffer);
-bool oBufferCreate(const char* _Name, void* _Allocation, size_t _Size, oBuffer::DeallocateFn _DeallocateFn, threadsafe oBuffer** _ppBuffer);
-bool oBufferCreate(const char* _Name, const void* _Allocation, size_t _Size, oBuffer::DeallocateFn _DeallocateFn, threadsafe const oBuffer** _ppBuffer);
 
 #endif

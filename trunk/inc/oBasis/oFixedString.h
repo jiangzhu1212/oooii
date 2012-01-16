@@ -101,4 +101,14 @@ template<size_t CAPACITY> int sprintf_s(oFixedString<char, CAPACITY>& _StrDestin
 template<size_t CAPACITY> int strcat_s(oFixedString<char, CAPACITY>& _StrDestination, const char* _Source) { return strcat_s(_StrDestination.c_str(), _StrDestination.capacity(), _Source); }
 template<size_t CAPACITY> int strncpy_s(oFixedString<char, CAPACITY>& _StrDestination, const char* _Source, size_t _Count) { return strncpy_s(_StrDestination.c_str(), _StrDestination.capacity(), _Source, _Count); }
 
+template<typename CHAR_T, size_t CAPACITY>
+bool oFromString(oFixedString<CHAR_T, CAPACITY> *_pValue, const char* _StrSource)
+{
+	oASSERT(strlen(_StrSource) < CAPACITY, "oFixedString wasn't large enough to hold string passed to oFromString");
+
+	*_pValue = _StrSource;
+
+	return true;
+}
+
 #endif

@@ -25,6 +25,8 @@
 #ifndef oGPU_h
 #define oGPU_h
 
+#include <oBasis/oVersion.h>
+
 struct oGPU_DESC
 {
 	char Description[128];
@@ -32,10 +34,14 @@ struct oGPU_DESC
 	size_t DedicatedSystemMemory;
 	size_t SharedSystemMemory;
 	unsigned int Index;
-	float D3DVersion;
+	oVersion D3DVersion;
 };
 
 // Returns false if the specified GPU doesn't exist.
 bool oGPUEnum(unsigned int _Index, oGPU_DESC* _pDesc);
+
+// Returns false if there isn't an nth GPU that supports the specified minimum 
+// feature level.
+bool oGPUFindD3DCapable(unsigned int _NthMatch, const oVersion& _MinimumFeatureLevel, oGPU_DESC* _pDesc);
 
 #endif

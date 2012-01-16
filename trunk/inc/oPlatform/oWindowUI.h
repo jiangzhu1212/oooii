@@ -30,7 +30,7 @@
 #include <oBasis/oFixedString.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oMath.h>
-#include <oBasis/oSurface.h>
+#include <oPlatform/oImage.h>
 
 enum oANCHOR
 {
@@ -182,7 +182,7 @@ interface oWindowUIPicture : oWindowUIElement
 		int2 Position; // Relative to the anchor
 		int2 Size; // oDEFAULT will use parent's Size
 		oANCHOR Anchor; // Relative to parent window's client area
-		oSURFACE_DESC SurfaceDesc; // Desc of underlying bitmap data. Copy expects input in this format.
+		oImage::DESC ImageDesc; // Desc of underlying bitmap data. Copy expects input in this format.
 	};
 
 	virtual void GetDesc(DESC* _pDesc) threadsafe = 0;

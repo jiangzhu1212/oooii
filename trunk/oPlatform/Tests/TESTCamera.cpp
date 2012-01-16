@@ -122,12 +122,9 @@ int ShowAllCameras()
 		Contexts[i].Window->SetTitle(Title);
 
 		oWindowUIPicture::DESC pd;
-		pd.SurfaceDesc.Dimensions.x = cd.Mode.Size.x;
-		pd.SurfaceDesc.Dimensions.y = cd.Mode.Size.y;
-		pd.SurfaceDesc.Dimensions.z = 1;
-		pd.SurfaceDesc.RowPitch = cd.Mode.Size.x * oSurfaceGetSize(cd.Mode.Format); // @oooii-tony: Is this always true? no alignment?
-		pd.SurfaceDesc.Format = cd.Mode.Format;
-		pd.SurfaceDesc.NumMips = 1;
+		pd.ImageDesc.Dimensions = cd.Mode.Size;
+		pd.ImageDesc.Format = oImageFormatFromSurfaceFormat(cd.Mode.Format);
+		pd.ImageDesc.RowPitch = oImageCalcRowPitch(pd.ImageDesc.Format, pd.ImageDesc.Dimensions.x); // @oooii-tony: Is this always true? no alignment?
 
 		oVERIFY(oWindowUIPictureCreate(pd, Contexts[i].Window, &Contexts[i].Picture));
 

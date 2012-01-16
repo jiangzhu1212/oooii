@@ -83,6 +83,7 @@ static bool& GetThreadlocalTrackingEnabled()
 
 void oLeakTracker::EnableThreadlocalTracking(bool _Enabled) threadsafe
 {
+	oLockGuard<oRecursiveMutex> Lock(Mutex);
 	InInternalProcesses = true;
 	GetThreadlocalTrackingEnabled() = _Enabled;
 	InInternalProcesses = false;
@@ -95,23 +96,6 @@ void oLeakTracker::OnAllocation(uintptr_t _AllocationID, size_t _Size, const cha
 	{
 		InInternalProcesses = true;
 		oLeakTracker* pThis = thread_cast<oLeakTracker*>(this); // protected by mutex above
-
-
-
-		std::map<int,int> test;
-
-		test[10] = 10;
-
-		oFindAndErase(test, 10);
-
-
-
-
-
-
-
-
-
 
 		#if oENABLE_RELEASE_ASSERTS == 1 || oENABLE_ASSERTS == 1
 			bool erased = 

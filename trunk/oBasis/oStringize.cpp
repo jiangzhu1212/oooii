@@ -21,9 +21,10 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oString.h>
+#include <oBasis/oStringize.h>
 #include <oBasis/oMacros.h>
 #include <oBasis/oPlatformFeatures.h>
+#include <oBasis/oString.h>
 #include <half.h>
 #include <string>
 
@@ -89,3 +90,23 @@ bool oFromString(unsigned long long* _pValue, const char* _StrSource) { return _
 bool oFromString(float* _pValue, const char* _StrSource) { return _FromString(_pValue, "%f", _StrSource); }
 bool oFromString(double* _pValue, const char* _StrSource) { return _FromString(_pValue, "%lf", _StrSource); }
 bool oFromString(half* _pValue, const char* _StrSource) { float v; if (!oFromString(&v, _StrSource)) return false; *_pValue = v; return true; }
+
+char* oAsStringFlags(char* _StrDestination, size_t _SizeofStrDestination, unsigned int _Flags, const char* _AllZerosValue, oFUNCTION<const char*(unsigned int _SingleFlag)> _AsString)
+{
+	*_StrDestination = 0;
+	unsigned int Mask = 0x80000000;
+
+	if (_Flags == 0)
+		sprintf_s(_StrDestination, _SizeofStrDestination, oSAFESTRN(_AllZerosValue));
+	else
+	{
+		while (Mask)
+		{
+			if (_Flags & Mask)
+				oStrAppend(_StrDestination, _SizeofStrDestination, "%s%s", *_StrDestination == 0 ? "" : "|", _AsString(_Flags & Mask));
+			Mask >>= 1;
+		}
+	}
+
+	return _StrDestination;
+}

@@ -188,7 +188,7 @@ bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 
 	oRef<oImage> GoldenImage;
 	{
-		oRef<threadsafe oBuffer> b;
+		oRef<oBuffer> b;
 		if (!oBufferCreate(golden, false, &b))
 		{
 			if (!oImageSave(_pImage, output))
@@ -224,11 +224,10 @@ bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 	testDescOverrides.DiffImageMultiplier = desc.DefaultDiffImageMultiplier;
 	OverrideTestDesc(testDescOverrides);
 
-  float rmsError = FLT_MAX;
-	bool compareSucceeded = oImageCompare(_pImage, GoldenImage, testDescOverrides.colorChannelTolerance, rmsError, &diffs, testDescOverrides.DiffImageMultiplier);
+  float RMSError = 0.0f;
+	bool compareSucceeded = oImageCompare(_pImage, GoldenImage, testDescOverrides.colorChannelTolerance, &RMSError, &diffs, testDescOverrides.DiffImageMultiplier);
 
-
-	if (!compareSucceeded || (rmsError > testDescOverrides.maxRMSError))
+	if (!compareSucceeded || (RMSError > testDescOverrides.maxRMSError))
 	{
 		if (!oImageSave(_pImage, output))
 			return oErrorSetLast(oERROR_IO, "Output image save failed: %s", output);
@@ -236,68 +235,8 @@ bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 		if (diffs && !oImageSave(diffs, diff))
 			return oErrorSetLast(oERROR_IO, "Diff image save failed: %s", diff);
 
-		return oErrorSetLast(oERROR_GENERIC, "Golden image compare failed (%f RMS Error, Max Allowed %f): (Golden)%s != (Output)%s", 
-      rmsError, testDescOverrides.maxRMSError, golden.c_str(), output.c_str());
-	}
-
-	return true;
-}
-
-
-bool oTest::TestImageAgainstGoldenImage(oImage* _pImage, const oImage * GoldenImage)
-{
-	//const char* goldenImageExt = ".png";
-	const char* diffImageExt = "_diff.png";
-  
-  oTestManager::DESC desc;
-	oTestManager::Singleton()->GetDesc(&desc);
-
-	//oStringPath golden;
-	//BuildPath(golden.c_str(), GetName(), desc.DataPath, "GoldenImages", desc.GoldenPath, _NthImage, goldenImageExt);
-	//oStringPath output;
-	//BuildPath(output.c_str(), GetName(), desc.DataPath, "Output", desc.OutputPath, 0, goldenImageExt);
-	oStringPath diff;
-	BuildPath(diff.c_str(), GetName(), desc.DataPath, "Output", desc.OutputPath, 0, diffImageExt);
-
-
-	oRef<oImage> diffs;
-	unsigned int nDifferences = 0;
-
-	// Compare dimensions/format before going into pixels
-	{
-		oImage::DESC iDesc, gDesc;
-		_pImage->GetDesc(&iDesc);
-		GoldenImage->GetDesc(&gDesc);
-
-		if (iDesc.Dimensions != gDesc.Dimensions)
-			return oErrorSetLast(oERROR_GENERIC, "Golden image compare failed because the images are different dimensions (test is %ix%i, golden is %ix%i)", iDesc.Dimensions.x, iDesc.Dimensions.y, gDesc.Dimensions.x, gDesc.Dimensions.y);
-
-		if (iDesc.Format != gDesc.Format)
-			return oErrorSetLast(oERROR_GENERIC, "Golden image compare failed because the images are different formats (test is %s, golden is %s", oAsString(iDesc.Format), oAsString(gDesc.Format));
-	}
-
-	oTest::DESC testDescOverrides;
-	testDescOverrides.DiffImageMultiplier = desc.DefaultDiffImageMultiplier;
-  testDescOverrides.maxRMSError = desc.maxRMSError;
-  testDescOverrides.colorChannelTolerance = desc.colorChannelTolerance;
-  
-	OverrideTestDesc(testDescOverrides);
-
-  float rmsError;
-	bool compareSucceeded = oImageCompare(_pImage, GoldenImage, testDescOverrides.colorChannelTolerance, rmsError, &diffs, testDescOverrides.DiffImageMultiplier);
-
-
-
-	if (!compareSucceeded || (rmsError > testDescOverrides.maxRMSError))
-	{
-		//if (!oImageSave(_pImage, output))
-		//	return oErrorSetLast(oERROR_IO, "Output image save failed: %s", output);
-
-		if (diffs && !oImageSave(diffs, diff))
-			return oErrorSetLast(oERROR_IO, "Diff image save failed: %s", diff);
-
-		return oErrorSetLast(oERROR_GENERIC, "Golden image compare failed (%f RMS Error, Max Allowed %f): (Golden)%s != (Output)%s", 
-      rmsError, testDescOverrides.maxRMSError, GoldenImage->GetName(), _pImage->GetName());
+		return oErrorSetLast(oERROR_GENERIC, "Golden image compare failed (%.03f RMS Error, Max Allowed %f): (Golden)%s != (Output)%s", 
+      RMSError, testDescOverrides.maxRMSError, golden.c_str(), output.c_str());
 	}
 
 	return true;

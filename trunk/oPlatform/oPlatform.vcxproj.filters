@@ -213,9 +213,6 @@
     <ClInclude Include="..\inc\oPlatform\oImage.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
-    <ClInclude Include="oTaskPool.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="..\inc\oPlatform\oDispatchQueueConcurrentWTP.h">
       <Filter>Headers\Concurrency</Filter>
     </ClInclude>
@@ -235,6 +232,9 @@
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="oOpenSSL.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="FreeImageHelpers.h">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
@@ -410,9 +410,6 @@
     <ClCompile Include="oDateTime.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oTaskPool.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oDispatchQueueConcurrentWTP.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -423,6 +420,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oOpenSSL.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="FreeImageHelpers.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

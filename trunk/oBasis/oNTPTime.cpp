@@ -33,6 +33,7 @@ bool oNTPTimeFromPosix(time_t _PosixTime, oNTPTime* _pNTPTime)
 	unsigned long long t = _PosixTime + SEC_FROM_1900_TO_1970;
 	if (t < static_cast<unsigned long long>(_PosixTime))
 		return oErrorSetLast(oERROR_AT_CAPACITY, "Time rollover occurred when converting from Posix to NTP time");
+	*_pNTPTime = t;
 	return true;
 }
 

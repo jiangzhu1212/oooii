@@ -208,12 +208,12 @@ oGDIWindowUIPicture::oGDIWindowUIPicture(const DESC& _Desc, threadsafe oWindow* 
 	: oWindowUIElementBaseMixin(_Desc, _pWindow)
 {
 	oGDIScopedGetDC hDC((HWND)Window->GetNativeHandle());
-	hBitmap = CreateCompatibleBitmap(hDC, _Desc.SurfaceDesc.Dimensions.x, _Desc.SurfaceDesc.Dimensions.y);
+	hBitmap = CreateCompatibleBitmap(hDC, _Desc.ImageDesc.Dimensions.x, _Desc.ImageDesc.Dimensions.y);
 	// Anticipating continuous capture, that is usually flipped compared
 	// to what Windows expects, allocate an extra buffer. The performance
 	// benefits are worth the memory hit. If not, promote this action to
 	// a flag/hint on the DESC.
-	hFlipBitmap = CreateCompatibleBitmap(hDC, _Desc.SurfaceDesc.Dimensions.x, _Desc.SurfaceDesc.Dimensions.y);
+	hFlipBitmap = CreateCompatibleBitmap(hDC, _Desc.ImageDesc.Dimensions.x, _Desc.ImageDesc.Dimensions.y);
 	oHOOK_ONEVENT(oGDIWindowUIPicture);
 	*_pSuccess = true;
 }
@@ -229,22 +229,22 @@ void oGDIWindowUIPicture::Copy(const void* _pSourceData, size_t _SourcePitch, bo
 	// Always allocate enough memory for 8-bit formats and avoid a heap 
 	// alloc below
 	const DESC& d = MIXINGetDesc();
-	BITMAPINFO* pBMI = (BITMAPINFO*)_alloca(oGetBMISize(d.SurfaceDesc.Format));
-	oAllocateBMI(&pBMI, thread_cast<oSURFACE_DESC&>(d.SurfaceDesc), 0, !_FlipVertically); // Windows is already flipping it, so if you want to flip it again, undo that
+	BITMAPINFO* pBMI = (BITMAPINFO*)_alloca(oGetBMISize(d.ImageDesc.Format));
+	oAllocateBMI(&pBMI, thread_cast<oImage::DESC&>(d.ImageDesc), 0, !_FlipVertically); // Windows is already flipping it, so if you want to flip it again, undo that
 	oGDIScopedGetDC hdc(hWnd);
 	HDC htemp = CreateCompatibleDC(hdc);
 
-	int w = _FlipHorizontally ? -(int)d.SurfaceDesc.Dimensions.x : d.SurfaceDesc.Dimensions.x;
-	int h = _FlipVertically ? d.SurfaceDesc.Dimensions.y : -(int)d.SurfaceDesc.Dimensions.y;
+	int w = _FlipHorizontally ? -(int)d.ImageDesc.Dimensions.x : d.ImageDesc.Dimensions.x;
+	int h = _FlipVertically ? d.ImageDesc.Dimensions.y : -(int)d.ImageDesc.Dimensions.y;
 
 	oLockGuard<oSharedMutex> lock(BitmapMutex);
 	if (!_FlipHorizontally && !_FlipVertically)
-		SetDIBits(htemp, hBitmap, 0, d.SurfaceDesc.Dimensions.y, _pSourceData, pBMI, DIB_RGB_COLORS);
+		SetDIBits(htemp, hBitmap, 0, d.ImageDesc.Dimensions.y, _pSourceData, pBMI, DIB_RGB_COLORS);
 	else
 	{
-		SetDIBits(htemp, hFlipBitmap, 0, d.SurfaceDesc.Dimensions.y, _pSourceData, pBMI, DIB_RGB_COLORS);
+		SetDIBits(htemp, hFlipBitmap, 0, d.ImageDesc.Dimensions.y, _pSourceData, pBMI, DIB_RGB_COLORS);
 		SelectObject(htemp, hBitmap);
-		oGDIStretchBitmap(htemp, w < 0 ? d.SurfaceDesc.Dimensions.x : 0, h < 0 ? d.SurfaceDesc.Dimensions.y : 0, w, h, hFlipBitmap, SRCCOPY);
+		oGDIStretchBitmap(htemp, w < 0 ? d.ImageDesc.Dimensions.x : 0, h < 0 ? d.ImageDesc.Dimensions.y : 0, w, h, hFlipBitmap, SRCCOPY);
 	}
 
 	DeleteDC(htemp);

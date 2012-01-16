@@ -69,7 +69,7 @@ static void NotifyAll(oStd::condition_variable& _ConditionVariable, oStd::thread
 
 bool oBasisTest_oDispatchQueuePrivate()
 {
-	oRef<threadsafe oDispatchQueue> q;
+	oRef<threadsafe oDispatchQueuePrivate> q;
 	oTESTB(oDispatchQueueCreatePrivate("TESTDispatchQueuePrivate", 100, &q), "Failed to create private dispatch queue");
 	oOnScopeExit JoinQueue([&] { q->Join(); });
 

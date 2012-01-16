@@ -25,6 +25,7 @@
 #include <oBasis/oAssert.h>
 #include <oBasis/oSize.h>
 #include <oBasis/oError.h>
+#include <oPlatform/oMsgBox.h>
 #include <oPlatform/oSystem.h>
 #include <oPlatform/oWindows.h>
 #include <oPlatform/oProcessHeap.h>
@@ -50,32 +51,50 @@ oHMODULE oModuleLink(const char* _ModuleName, const char** _pInterfaceFunctionNa
 	}
 	
 	hModule = (oHMODULE)oThreadsafeLoadLibrary(dllPath);
+	if (!hModule)
+	{
+		oErrorSetLast(oERROR_IO, "The application has failed to start because %s was not found. Re-installing the application may fix the problem.", oSAFESTRN(dllPath));
+		return hModule;
+	}
 
 	memset(_ppInterfaces, 0, sizeof(void*) * _CountofInterfaces);
-
-	bool allInterfacesAcquired = false;
-	if (hModule)
+	bool allInterfacesAcquired = true;
+	for (unsigned int i = 0; i < _CountofInterfaces; i++)
 	{
-		allInterfacesAcquired = true;
-		for (unsigned int i = 0; i < _CountofInterfaces; i++)
+		_ppInterfaces[i] = GetProcAddress((HMODULE)hModule, _pInterfaceFunctionNames[i]);
+		if (!_ppInterfaces[i])
 		{
-			_ppInterfaces[i] = GetProcAddress((HMODULE)hModule, _pInterfaceFunctionNames[i]);
-			if (!_ppInterfaces[i])
-			{
-				oTRACE("Can't find %s::%s", _ModuleName, _pInterfaceFunctionNames[i]);
-				allInterfacesAcquired = false;
-			}
+			oTRACE("Can't find %s::%s", _ModuleName, _pInterfaceFunctionNames[i]);
+			allInterfacesAcquired = false;
 		}
 	}
 
-	else
-		oASSERT(false, "Could not load %s", dllPath);
-
 	if (hModule && !allInterfacesAcquired)
 	{
-		oErrorSetLast(oERROR_NOT_FOUND, "Could not create all interfaces from %s. This might be because the DLLs are out of date, try copying newer versions into the bin dir for this application.", dllPath);
+		oErrorSetLast(oERROR_NOT_FOUND, "Could not create all interfaces from %s. This might be because the DLLs are out of date, try copying a newer version of the DLL into the bin dir for this application.", dllPath);
 		oThreadsafeFreeLibrary((HMODULE)hModule);
 		hModule = nullptr;
+	}
+
+	return hModule;
+}
+
+oHMODULE oModuleLinkSafe(const char* _ModuleName, const char** _pInterfaceFunctionNames, void** _ppInterfaces, size_t _CountofInterfaces)
+{
+	oHMODULE hModule = oModuleLink(_ModuleName, _pInterfaceFunctionNames, _ppInterfaces, _CountofInterfaces);
+	if (!hModule)
+	{
+		oMSGBOX_DESC d;
+		d.Type = oMSGBOX_ERR;
+		d.TimeoutMS = oInfiniteWait;
+		d.ParentNativeHandle = nullptr;
+		char path[_MAX_PATH];
+		oSystemGetPath(path, oSYSPATH_APP_FULL);
+		char buf[_MAX_PATH];
+		sprintf_s(buf, "%s - Unable To Locate Component", oGetFilebase(path));
+		d.Title = buf;
+		oMsgBox(d, "%s", oErrorGetLastString());
+		std::terminate();
 	}
 
 	return hModule;

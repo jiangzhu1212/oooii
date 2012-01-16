@@ -77,9 +77,14 @@ void oMemset4(void* _pDestination, long _Value, size_t _NumBytes)
 
 void oMemcpy2d(void* oRESTRICT _pDestination, size_t _DestinationPitch, const void* oRESTRICT _pSource, size_t _SourcePitch, size_t _SourceRowSize, size_t _NumRows)
 {
-	const void* end = oByteAdd(_pDestination, _DestinationPitch, _NumRows);
-	for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _DestinationPitch), _pSource = oByteAdd(_pSource, _SourcePitch))
-		memcpy(_pDestination, _pSource, _SourceRowSize);
+	if (_DestinationPitch == _SourcePitch)
+		memcpy(_pDestination, _pSource, _SourcePitch * _NumRows);
+	else
+	{
+		const void* end = oByteAdd(_pDestination, _DestinationPitch, _NumRows);
+		for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _DestinationPitch), _pSource = oByteAdd(_pSource, _SourcePitch))
+			memcpy(_pDestination, _pSource, _SourceRowSize);
+	}
 }
 
 template<typename T> inline T* oByteSub(T* _Pointer, size_t _NumBytes) { return reinterpret_cast<T*>(((char*)_Pointer) - _NumBytes); }

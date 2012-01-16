@@ -113,7 +113,7 @@ protected:
 	oEvent Complete;
 	oEvent Stopped;
 
-	oRef<threadsafe oDispatchQueue> MessageQueue;
+	oRef<threadsafe oDispatchQueuePrivate> MessageQueue;
 };
 
 oDEFINE_DLGPROC(oWinProgressBar, StaticWndProc);

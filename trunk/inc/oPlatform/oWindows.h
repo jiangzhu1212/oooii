@@ -36,6 +36,7 @@
 #include <oBasis/oGUID.h>
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oSurface.h>
+#include <oPlatform/oImage.h>
 #include <oPlatform/oStddef.h>
 
 // _____________________________________________________________________________
@@ -412,11 +413,12 @@ HICON oIconFromBitmap(HBITMAP _hBmp);
 // of the destination BMI must be correct. Use oGetBMISize() to ensure
 // the correct size is available. The first parameter should be a pointer to
 // a pointer to a BITMAPINFO.
-void oAllocateBMI(BITMAPINFO** _ppBITMAPINFO, const oSURFACE_DESC& _Desc, oFUNCTION<void*(size_t _Size)> _Allocate, bool _FlipVertically = true, unsigned int _ARGBMonochrome8Zero = 0xFF000000, unsigned int _ARGBMonochrome8One = 0xFFFFFFFF);
+void oAllocateBMI(BITMAPINFO** _ppBITMAPINFO, const oImage::DESC& _Desc, oFUNCTION<void*(size_t _Size)> _Allocate, bool _FlipVertically = true, unsigned int _ARGBMonochrome8Zero = 0xFF000000, unsigned int _ARGBMonochrome8One = 0xFFFFFFFF);
 
 // 8 bit formats won't render correctly because BITMAPINFO infers 
 // paletted textures from 8-bit, so allocate enough room for the palette.
 size_t oGetBMISize(oSURFACE_FORMAT _Format);
+inline size_t oGetBMISize(oImage::FORMAT _Format) { return oGetBMISize(oImageFormatToSurfaceFormat(_Format)); }
 
 oSURFACE_FORMAT oGetFormat(const BITMAPINFOHEADER& _BitmapInfoHeader);
 
@@ -483,8 +485,7 @@ struct oWINDOWS_VIDEO_DRIVER_DESC
 		ATI,
 	};
 
-	int MajorVersion;
-	int MinorVersion;
+	oVersion Version;
 	oStringL Desc;
 	GPU_VENDOR Vendor;
 };
@@ -566,7 +567,7 @@ bool oWinExitWindows(UINT _uFlags, DWORD _dwReason);
 void oGetScreenDPIScale(float* _pScaleX, float* _pScaleY);
 
 #if oDXVER >= oDXVER_11
-	float oGetD3DVersion(D3D_FEATURE_LEVEL _Level);
+	oVersion oGetD3DVersion(D3D_FEATURE_LEVEL _Level);
 #endif
 
 unsigned int oWinGetDisplayDevice(HMONITOR _hMonitor, DISPLAY_DEVICE* _pDevice);

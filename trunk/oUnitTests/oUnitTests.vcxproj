@@ -224,6 +224,10 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\oPlatform\Tests\TESTD3D.cpp" />
+    <ClCompile Include="..\oPlatform\Tests\TESTGetVideoDriverDesc.cpp" />
+    <ClCompile Include="..\oPlatform\Tests\TESTGPU.cpp" />
+    <ClCompile Include="..\oPlatform\Tests\TESTImage.cpp" />
     <ClCompile Include="oUnitTests.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -231,11 +235,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\oPlatform\TESTD3D.cpp" />
-    <ClCompile Include="..\oPlatform\TESTGetVideoDriverDesc.cpp" />
-    <ClCompile Include="..\oPlatform\TESTGPU.cpp" />
-    <ClCompile Include="..\oPlatform\TESTHash.cpp" />
-    <ClCompile Include="..\oPlatform\TESTImage.cpp" />
     <ClCompile Include="..\oPlatform\Tests\TESTBasis.cpp" />
     <ClCompile Include="..\oPlatform\Tests\TESTCamera.cpp" />
     <ClCompile Include="..\oPlatform\Tests\TESTCPU.cpp" />

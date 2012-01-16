@@ -254,7 +254,7 @@ bool oFileUnmap(void* _MappedPointer)
 }
 
 #include <oBasis/oBuffer.h>
-bool oBufferCreate(const char* _Path, bool _IsText, threadsafe oBuffer** _ppBuffer)
+bool oBufferCreate(const char* _Path, bool _IsText, oBuffer** _ppBuffer)
 {
 	void* b = nullptr;
 	size_t size = 0;

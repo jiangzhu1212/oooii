@@ -29,6 +29,7 @@
 #ifndef oFile_h
 #define oFile_h
 
+#include <oBasis/oSize.h>
 #include <oBasis/oByte.h>
 #include <oBasis/oFunction.h>
 #include <cstdio>
@@ -57,7 +58,7 @@ struct oFILE_DESC
 	time_t Created;
 	time_t Accessed;
 	time_t Written;
-	unsigned long long Size;
+	oSize64 Size;
 	bool Directory:1;
 	bool Archive:1;
 	bool Compressed:1;
@@ -129,7 +130,7 @@ oAPI bool oFileMap(void* _HintPointer, unsigned long long _Size, bool _ReadOnly,
 oAPI bool oFileUnmap(void* _MappedPointer);
 
 // (oBuffer support) Load a file into a newly allocated buffer using malloc to allocate the memory.
-bool oBufferCreate(const char* _Path, bool _IsText, threadsafe interface oBuffer** _ppBuffer);
+bool oBufferCreate(const char* _Path, bool _IsText, interface oBuffer** _ppBuffer);
 
 class oScopedFile
 {

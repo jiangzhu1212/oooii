@@ -69,7 +69,7 @@
 
 	struct oDLLKernel32 : oModuleSingleton<oDLLKernel32>
 	{	oHMODULE hModule;
-		oDLLKernel32() : hModule(oModuleLink("kernel32.dll", kernel32_dll_functions, (void**)&GetThreadId)) { oASSERT(hModule, ""); }
+		oDLLKernel32() : hModule(oModuleLinkSafe("kernel32.dll", kernel32_dll_functions, (void**)&GetThreadId)) { oASSERT(hModule, ""); }
 		~oDLLKernel32() { oModuleUnlink(hModule); }
 
 		DWORD (__stdcall *GetThreadId)(HANDLE Thread);
@@ -112,6 +112,15 @@ bool oWinSetLastError(HRESULT _hResult, const char* _ErrorDescPrefix)
 
 	// @oooii-tony: it would be nice to convert the errno a bit better, but that's
 	// a lot of typing! Maybe one day...
+	switch(_hResult)
+	{
+	case ERROR_FILE_NOT_FOUND:
+	case ERROR_PATH_NOT_FOUND:
+		return oErrorSetLast(oERROR_NOT_FOUND, err);
+	case ERROR_ACCESS_DENIED:
+	case ERROR_SHARING_VIOLATION:
+		return oErrorSetLast(oERROR_REFUSED, err);
+	}
 	return oErrorSetLast(oERROR_PLATFORM, err);
 }
 
@@ -313,16 +322,14 @@ HICON oIconFromBitmap(HBITMAP _hBmp)
 	return hIcon;
 }
 
-void oAllocateBMI(BITMAPINFO** _ppBITMAPINFO, const oSURFACE_DESC& _Desc, oFUNCTION<void*(size_t _Size)> _Allocate, bool _FlipVertically, unsigned int _ARGBMonochrome8Zero, unsigned int _ARGBMonochrome8One)
+void oAllocateBMI(BITMAPINFO** _ppBITMAPINFO, const oImage::DESC& _Desc, oFUNCTION<void*(size_t _Size)> _Allocate, bool _FlipVertically, unsigned int _ARGBMonochrome8Zero, unsigned int _ARGBMonochrome8One)
 {
 	if (_ppBITMAPINFO)
 	{
-		const WORD bmiBitCount = (WORD)oSurfaceGetBitSize(_Desc.Format);
+		const WORD bmiBitCount = static_cast<WORD>(oImageGetBitSize(_Desc.Format));
 
 		oASSERT(*_ppBITMAPINFO || _Allocate, "If no pre-existing BITMAPINFO is specified, then an _Allocate function is required.");
-
-		oASSERT(!oSurfaceIsBlockCompressedFormat(_Desc.Format), "block compressed formats not supported by BITMAPINFO");
-		const unsigned int pitch = _Desc.RowPitch ? _Desc.RowPitch : oSurfaceCalcRowPitch(_Desc.Format, _Desc.Dimensions.x);
+		const unsigned int pitch = _Desc.RowPitch ? _Desc.RowPitch : oImageCalcRowPitch(_Desc.Format, _Desc.Dimensions.x);
 
 		size_t bmiSize = oGetBMISize(_Desc.Format);
 
@@ -614,16 +621,16 @@ void oTaskbarGetRect(RECT* _pRect)
 }
 
 #if oDXVER >= oDXVER_11
-	float oGetD3DVersion(D3D_FEATURE_LEVEL _Level)
+	oVersion oGetD3DVersion(D3D_FEATURE_LEVEL _Level)
 	{
 		switch (_Level)
 		{
-			case D3D_FEATURE_LEVEL_11_0: return 11.0f;
-			case D3D_FEATURE_LEVEL_10_1: return 10.1f;
-			case D3D_FEATURE_LEVEL_10_0: return 10.0f;
-			case D3D_FEATURE_LEVEL_9_3: return 9.3f;
-			case D3D_FEATURE_LEVEL_9_2: return 9.2f;
-			case D3D_FEATURE_LEVEL_9_1: return 9.1f;
+			case D3D_FEATURE_LEVEL_11_0: return oVersion(11,0);
+			case D3D_FEATURE_LEVEL_10_1: return oVersion(10,1);
+			case D3D_FEATURE_LEVEL_10_0: return oVersion(10,0);
+			case D3D_FEATURE_LEVEL_9_3: return oVersion(9,3);
+			case D3D_FEATURE_LEVEL_9_2: return oVersion(9,2);
+			case D3D_FEATURE_LEVEL_9_1: return oVersion(9,1);
 			oNODEFAULT;
 		}
 	}
@@ -1300,41 +1307,39 @@ bool oWinVideoDriverIsUpToDate()
 	oWinGetVideoDriverDesc(&desc);
 
 	const char* VendorName = "Unknown";
-	int RequiredVersionMajor = -1;
-	int RequiredVersionMinor = -1;
+	oVersion RequiredVersion;
 
 	bool bCompatibleVersion = false;
 	switch (desc.Vendor)
 	{
 		case oWINDOWS_VIDEO_DRIVER_DESC::NVIDIA:
 			VendorName = "NVIDIA";
-			RequiredVersionMajor = oNVVER_MAJOR;
-			RequiredVersionMinor = oNVVER_MINOR;
+			RequiredVersion = oVersion(oNVVER_MAJOR, oNVVER_MINOR);
 			break;
 
 		case oWINDOWS_VIDEO_DRIVER_DESC::ATI:
 			VendorName = "ATI";
-			RequiredVersionMajor = oATIVER_MAJOR;
-			RequiredVersionMinor = oATIVER_MINOR;
+			RequiredVersion = oVersion(oATIVER_MAJOR, oATIVER_MINOR);
 			break;
 		
 		default:
 			return oErrorSetLast(oERROR_NOT_FOUND, "unrecognized video driver type");
 	}
 
-	if (desc.MajorVersion != RequiredVersionMajor || desc.MinorVersion != RequiredVersionMinor)
-		return oErrorSetLast(oERROR_GENERIC, "incompatible %s video driver version. current: %d.%d / required: %d.%d", VendorName, desc.MajorVersion, desc.MinorVersion, RequiredVersionMajor, RequiredVersionMinor);
+	if (desc.Version != RequiredVersion)
+		return oErrorSetLast(oERROR_GENERIC, "incompatible %s video driver version. current: %d.%d / required: %d.%d", VendorName, desc.Version.Major, desc.Version.Minor, RequiredVersion.Major, RequiredVersion.Minor);
 
 	return true;
 }
 
-static bool ParseVersionStringNV(const char* _VersionString, int* _pMajorVersion, int* _pMinorVersion)
-{
-	// NVIDIA's version string is of the form "x.xx.xM.MMmm" where
-	// MMM is the major version and mm is the minor version.
-	static std::regex reNVVersionString("[0-9]+\\.[0-9]+\\.[0-9]+([0-9])\\.([0-9][0-9])([0-9]+)");
+// NVIDIA's version string is of the form "x.xx.xM.MMmm" where
+// MMM is the major version and mm is the minor version.
+// (outside function below so this doesn't get tracked as a leak)
+static std::regex reNVVersionString("[0-9]+\\.[0-9]+\\.[0-9]+([0-9])\\.([0-9][0-9])([0-9]+)");
 
-	if (!_VersionString || !_pMajorVersion || !_pMinorVersion)
+static bool ParseVersionStringNV(const char* _VersionString, oVersion* _pVersion)
+{
+	if (!_VersionString || !_pVersion)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	std::cmatch matches;
@@ -1346,27 +1351,28 @@ static bool ParseVersionStringNV(const char* _VersionString, int* _pMajorVersion
 	major[1] = *matches[2].first;
 	major[2] = *(matches[2].first+1);
 	major[3] = 0;
-	*_pMajorVersion = atoi(major);
-	*_pMinorVersion = atoi(matches[3].first);
+	_pVersion->Major = atoi(major);
+	_pVersion->Minor = atoi(matches[3].first);
 
 	return true;
 }
 
-static bool ParseVersionStringATI(const char* _VersionString, int* _pMajorVersion, int* _pMinorVersion)
-{
-	// ATI's version string is of the form M.mm.x.x where
-	// M is the major version and mm is the minor version.
-	static std::regex reATIVersionString("([0-9]+)\\.([0-9]+)\\.[0-9]+\\.[0-9]+");
+// ATI's version string is of the form M.mm.x.x where
+// M is the major version and mm is the minor version.
+// (outside function below so this doesn't get tracked as a leak)
+static std::regex reATIVersionString("([0-9]+)\\.([0-9]+)\\.[0-9]+\\.[0-9]+");
 
-	if (!_VersionString || !_pMajorVersion || !_pMinorVersion)
+static bool ParseVersionStringATI(const char* _VersionString, oVersion* _pVersion)
+{
+	if (!_VersionString || !_pVersion)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	std::cmatch matches;
 	if (!regex_match(_VersionString, matches, reATIVersionString))
 		return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified string \"%s\" is not a well-formed ATI version string", oSAFESTRN(_VersionString));
 
-	*_pMajorVersion = atoi(matches[1].first);
-	*_pMinorVersion = atoi(matches[2].first);
+	_pVersion->Major = atoi(matches[1].first);
+	_pVersion->Minor = atoi(matches[2].first);
 
 	return true;
 }
@@ -1415,20 +1421,19 @@ bool oWinGetVideoDriverDesc(oWINDOWS_VIDEO_DRIVER_DESC* _pDesc)
 		if (strstr(_pDesc->Desc, "NVIDIA"))
 		{
 			_pDesc->Vendor = oWINDOWS_VIDEO_DRIVER_DESC::NVIDIA;
-			oVERIFY(ParseVersionStringNV(version, &_pDesc->MajorVersion, &_pDesc->MinorVersion));
+			oVERIFY(ParseVersionStringNV(version, &_pDesc->Version));
 		}
 		
 		else if (strstr(_pDesc->Desc, "ATI"))
 		{
 			_pDesc->Vendor = oWINDOWS_VIDEO_DRIVER_DESC::ATI;
-			oVERIFY(ParseVersionStringATI(version, &_pDesc->MajorVersion, &_pDesc->MinorVersion));
+			oVERIFY(ParseVersionStringATI(version, &_pDesc->Version));
 		}
 
 		else
 		{
 			_pDesc->Vendor = oWINDOWS_VIDEO_DRIVER_DESC::UNKNOWN;
-			_pDesc->MajorVersion = 0;
-			_pDesc->MinorVersion = 0;
+			_pDesc->Version = oVersion();
 		}
 	}
 	

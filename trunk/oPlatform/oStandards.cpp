@@ -98,10 +98,11 @@ void* oLoadStandardIcon()
 	GetDescoooii_ico(&BufferName, &pBuffer, &bufferSize);
 
 	oRef<oImage> ico;
-	oVERIFY(oImageCreate("Icon image",pBuffer, bufferSize, &ico));
+	oVERIFY(oImageCreate("Icon image", pBuffer, bufferSize, &ico));
 
 	#if defined(_WIN32) || defined (_WIN64)
-		oGDIScopedObject<HBITMAP> hBmp = AsBmp(ico);
+		oGDIScopedObject<HBITMAP> hBmp;
+		oVERIFY(oImageCreateBitmap(ico, (HBITMAP*)&hBmp));
 		return oIconFromBitmap(hBmp);
 	#else
 		return nullptr;

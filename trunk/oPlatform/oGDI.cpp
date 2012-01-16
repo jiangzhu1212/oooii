@@ -36,7 +36,7 @@ static const char* oWinMSIMG32_exports[] =
 
 struct oWinMSIMG32 : oModuleSingleton<oWinMSIMG32>
 {
-	oWinMSIMG32() { hModule = oModuleLink("msimg32.dll", oWinMSIMG32_exports, (void**)&AlphaBlend); oASSERT(hModule, ""); }
+	oWinMSIMG32() { hModule = oModuleLinkSafe("msimg32.dll", oWinMSIMG32_exports, (void**)&AlphaBlend); oASSERT(hModule, ""); }
 	~oWinMSIMG32() { oModuleUnlink(hModule); }
 
 public:

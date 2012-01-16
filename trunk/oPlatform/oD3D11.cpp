@@ -24,8 +24,11 @@
 #include <oPlatform/oD3D11.h>
 #include <oBasis/oAssert.h>
 #include <oBasis/oByte.h>
+#include <oPlatform/oD3DX11.h>
 #include <oPlatform/oDXGI.h>
+#include <oPlatform/oGPU.h>
 #include <oPlatform/oImage.h>
+#include <oPlatform/oSystem.h>
 #include <oBasis/oMemory.h>
 #include <cerrno>
 
@@ -42,13 +45,91 @@ static const char* d3d11_dll_functions[] =
 
 oD3D11::oD3D11()
 {
-	hD3D11 = oModuleLink("d3d11.dll", d3d11_dll_functions, (void**)&D3D11CreateDevice, oCOUNTOF(d3d11_dll_functions));
+	hD3D11 = oModuleLinkSafe("d3d11.dll", d3d11_dll_functions, (void**)&D3D11CreateDevice, oCOUNTOF(d3d11_dll_functions));
 	oASSERT(hD3D11, "");
 }
 
 oD3D11::~oD3D11()
 {
 	oModuleUnlink(hD3D11);
+}
+
+bool oD3D11CreateDevice(const oD3D11_DEVICE_DESC& _Desc, ID3D11Device** _ppDevice)
+{
+	if (!_ppDevice || _Desc.MinimumAPIFeatureLevel < oVersion(9,0))
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	// First evaluate which HW index to use
+	unsigned int GPUIndex = 0;
+	switch (_Desc.GPUIndexType)
+	{
+		case oD3D11_DEVICE_DESC::INDEX_HARDWARE:
+			GPUIndex = __max(0, _Desc.GPUIndex);
+			break;
+
+		case oD3D11_DEVICE_DESC::INDEX_CAPABLE:
+		{
+			// Debug multi-GPU issues on a one-GPU system by spoofing all GPU requests
+			// to the first capable GPU.
+
+			unsigned int CapableIndex = __max(0, _Desc.GPUIndex);
+			if (CapableIndex)
+			{
+				bool ForceOneGPU = false;
+				char StrForceOneGPU[32];
+				if (oSystemGetEnvironmentVariable(StrForceOneGPU, "OOOii.D3D11.ForceOneGPU"))
+					ForceOneGPU = !_stricmp("true", StrForceOneGPU) || !_stricmp("t", StrForceOneGPU) || !!atoi(StrForceOneGPU);
+
+				if (ForceOneGPU)
+					CapableIndex = 0;
+			}
+
+			oGPU_DESC GPUDesc;
+			if (!oGPUFindD3DCapable(CapableIndex, _Desc.MinimumAPIFeatureLevel, &GPUDesc))
+				return false; // pass through error
+			GPUIndex = GPUDesc.Index;
+			break;
+		}
+
+		oNODEFAULT;
+	}
+
+	// Now use the GPU index to go get a real adapter interface and then on into
+	// the device creation
+	
+	oRef<IDXGIFactory1> DXGIFactory;
+	if (!oDXGICreateFactory(&DXGIFactory))
+		return oErrorSetLast(oERROR_NOT_FOUND, "Failed to create DXGI factory");
+
+	oRef<IDXGIAdapter> DXGIAdapter;
+	if (DXGI_ERROR_NOT_FOUND == DXGIFactory->EnumAdapters(GPUIndex, &DXGIAdapter))
+		return oErrorSetLast(oERROR_NOT_FOUND, "An IDXGIAdapter could not be found to meet the feature level specified (DX %d.%d)", _Desc.MinimumAPIFeatureLevel.Major, _Desc.MinimumAPIFeatureLevel.Minor);
+
+	D3D_FEATURE_LEVEL FeatureLevel;
+	oD3D11::Singleton()->D3D11CreateDevice(
+		_Desc.Accelerated ? DXGIAdapter : nullptr
+		, _Desc.Accelerated ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_REFERENCE
+		, 0
+		, _Desc.Debug ? D3D11_CREATE_DEVICE_DEBUG : 0
+		, nullptr
+		, 0
+		, D3D11_SDK_VERSION
+		, _ppDevice
+		, &FeatureLevel
+		, nullptr);
+
+	oVersion D3DVersion = oGetD3DVersion(FeatureLevel);
+	if (D3DVersion < _Desc.MinimumAPIFeatureLevel)
+	{
+		if (*_ppDevice) 
+		{
+			(*_ppDevice)->Release();
+			*_ppDevice = nullptr;
+		}
+		return oErrorSetLast(oERROR_NOT_FOUND, "Failed to create an ID3D11Device with a minimum feature set of DX %d.%d!", _Desc.MinimumAPIFeatureLevel.Major, _Desc.MinimumAPIFeatureLevel.Minor);
+	}
+
+	return true;
 }
 
 void oD3D11InitBufferDesc(D3D11_BUFFER_DESC* _pDesc, D3D11_BIND_FLAG _BindFlag, bool _CPUWritable, size_t _Size, size_t _Count)
@@ -126,7 +207,7 @@ bool oD3D11CreateShaderResourceView(const char* _DebugName, ID3D11Resource* _pTe
 	// If a depth-stencil resource is specified we have to convert the specified 
 	// format to a compatible color one
 	D3D11_SHADER_RESOURCE_VIEW_DESC srv;
-	D3D11_SHADER_RESOURCE_VIEW_DESC* pSRV = (desc.BindFlags & D3D11_BIND_DEPTH_STENCIL) ? &srv : 0;
+	D3D11_SHADER_RESOURCE_VIEW_DESC* pSRV = (desc.BindFlags & D3D11_BIND_DEPTH_STENCIL) ? &srv : nullptr;
 	if (pSRV)
 	{
 		srv.Format = oDXGIGetColorCompatibleFormat(desc.Format);
@@ -195,33 +276,29 @@ bool oD3D11CreateRenderTargetView(const char* _DebugName, ID3D11Resource* _pText
 
 bool oD3D11CreateRenderTarget(ID3D11Device* _pDevice, const char* _DebugName, unsigned int _Width, unsigned int _Height, unsigned int _ArraySize, DXGI_FORMAT _Format, ID3D11Texture2D** _ppRenderTarget, ID3D11View** _ppRenderTargetView, ID3D11ShaderResourceView** _ppShaderResourceView)
 {
-	*_ppRenderTarget = 0;
+	*_ppRenderTarget = nullptr;
 
 	if (_ppRenderTargetView)
-		*_ppRenderTargetView = 0;
+		*_ppRenderTargetView = nullptr;
 
 	if (_ppShaderResourceView)
-		*_ppShaderResourceView = 0;
+		*_ppShaderResourceView = nullptr;
 
-	if (!oD3D11CreateTexture2D(_pDevice, _DebugName, _Width, _Height, _ArraySize, _Format, oD3D11_RENDER_TARGET, _ppRenderTarget, _ppShaderResourceView))
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "oD3D11CreateTexture2D failed, check DX debug output");
-		return false;
-	}
+	if (!oD3D11CreateTexture2D(_pDevice, _DebugName, _Width, _Height, _ArraySize, _Format, oD3D11_RENDER_TARGET, nullptr, _ppRenderTarget, _ppShaderResourceView))
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "oD3D11CreateTexture2D failed, check DX debug output");
 
 	if (_ppRenderTargetView && !oD3D11CreateRenderTargetView(_DebugName, *_ppRenderTarget, _ppRenderTargetView))
 	{
 		(*_ppRenderTarget)->Release();
-		*_ppRenderTarget = 0;
+		*_ppRenderTarget = nullptr;
 
 		if (_ppShaderResourceView && *_ppShaderResourceView)
 		{
 			(*_ppShaderResourceView)->Release();
-			*_ppShaderResourceView = 0;
+			*_ppShaderResourceView = nullptr;
 		}
 
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "oD3D11CreateRenderTargetView failed, check DX debug output");
-		return false;
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "oD3D11CreateRenderTargetView failed, check DX debug output");
 	}
 
 	return true;
@@ -237,17 +314,17 @@ bool oD3D11SetDebugName(ID3D11DeviceChild* _pDeviceChild, const char* _Name)
 	return true;
 }
 
-bool oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11DeviceChild* _pDeviceChild)
+char* oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11DeviceChild* _pDeviceChild)
 {
 	UINT size = static_cast<UINT>(_SizeofStrDestination);
 	oRef<ID3D11Device> D3DDevice;
 	const_cast<ID3D11DeviceChild*>(_pDeviceChild)->GetDevice(&D3DDevice);
 	UINT CreationFlags = D3DDevice->GetCreationFlags();
 	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
-		return S_OK == const_cast<ID3D11DeviceChild*>(_pDeviceChild)->GetPrivateData(oWKPDID_D3DDebugObjectName, &size, _StrDestination);
+		return S_OK == const_cast<ID3D11DeviceChild*>(_pDeviceChild)->GetPrivateData(oWKPDID_D3DDebugObjectName, &size, _StrDestination) ? _StrDestination : "(null)";
 	else
 		strcpy_s(_StrDestination, _SizeofStrDestination, "non-debug device child");
-	return true;
+	return _StrDestination;
 }
 
 bool oD3D11SetBufferDescription(ID3D11Buffer* _pBuffer, const oD3D_BUFFER_TOPOLOGY& _Topology)
@@ -501,28 +578,175 @@ void oD3D11GetTextureDesc(ID3D11Resource* _pResource, oD3D11_TEXTURE_DESC* _pDes
 	}
 }
 
-bool oD3D11CreateTexture2D(ID3D11Device* _pDevice, const char* _DebugName, UINT _Width, UINT _Height, UINT _ArraySize, DXGI_FORMAT _Format, oD3D11_TEXTURE_CREATION_TYPE _CreationType, ID3D11Texture2D** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView)
+bool oD3D11CopyToBuffer(ID3D11Texture2D* _pTexture, void* _pBuffer, size_t _BufferRowPitch, bool _FlipVertical)
+{
+	oRef<ID3D11Device> D3DDevice;
+	_pTexture->GetDevice(&D3DDevice);
+	oRef<ID3D11DeviceContext> D3DDeviceContext;
+	D3DDevice->GetImmediateContext(&D3DDeviceContext);
+
+	D3D11_TEXTURE2D_DESC desc;
+	_pTexture->GetDesc(&desc);
+
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	HRESULT hr = D3DDeviceContext->Map(_pTexture, 0, D3D11_MAP_READ, 0, &mapped);
+	if (FAILED(hr))
+		return oWinSetLastError(hr);
+
+	if (_FlipVertical)
+		oMemcpy2dVFlip(_pBuffer, _BufferRowPitch, mapped.pData, mapped.RowPitch, oSurfaceCalcRowPitch(oDXGIToSurfaceFormat(desc.Format), desc.Width), oSurfaceCalcNumRows(oDXGIToSurfaceFormat(desc.Format), desc.Height));
+	else
+		oMemcpy2d(_pBuffer, _BufferRowPitch, mapped.pData, mapped.RowPitch, oSurfaceCalcRowPitch(oDXGIToSurfaceFormat(desc.Format), desc.Width), oSurfaceCalcNumRows(oDXGIToSurfaceFormat(desc.Format), desc.Height));
+
+	D3DDeviceContext->Unmap(_pTexture, 0);
+	return true;
+}
+
+static void oD3D11GetUsageAndFlags(oD3D11_TEXTURE_CREATION_TYPE _CreationType, DXGI_FORMAT _Format, UINT* _pMipLevels, D3D11_USAGE* _pUsage, UINT* _pBindFlags, UINT* _pCPUAccessFlags, UINT* _pMiscFlags)
+{
+	bool IsRenderTarget = false;
+	switch (_CreationType)
+	{
+		case oD3D11_DYNAMIC_TEXTURE:
+			*_pMipLevels = 1;
+			*_pUsage = D3D11_USAGE_DYNAMIC;
+			*_pBindFlags = D3D11_BIND_SHADER_RESOURCE;
+			*_pCPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			*_pMiscFlags = 0;
+			break;
+		case oD3D11_MIPPED_TEXTURE:
+			*_pMipLevels = 0;
+			*_pUsage = D3D11_USAGE_DEFAULT;
+			*_pBindFlags = D3D11_BIND_SHADER_RESOURCE;
+			*_pCPUAccessFlags = 0;
+			*_pMiscFlags = 0;
+			break;
+		case oD3D11_STAGING_TEXTURE:
+			*_pMipLevels = 1;
+			*_pUsage = D3D11_USAGE_STAGING;
+			*_pBindFlags = 0;
+			*_pCPUAccessFlags = D3D11_CPU_ACCESS_READ;
+			*_pMiscFlags = 0;
+			break;
+		case oD3D11_RENDER_TARGET:
+			*_pMipLevels = 1;
+			*_pUsage = D3D11_USAGE_DEFAULT;
+			*_pBindFlags = D3D11_BIND_SHADER_RESOURCE;
+			*_pCPUAccessFlags = 0;
+			*_pMiscFlags = 0;
+			IsRenderTarget = true;
+			break;
+		case oD3D11_MIPPED_RENDER_TARGET:
+			*_pMipLevels = 0;
+			*_pUsage = D3D11_USAGE_DEFAULT;
+			*_pBindFlags = D3D11_BIND_SHADER_RESOURCE;
+			*_pCPUAccessFlags = 0;
+			*_pMiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+			IsRenderTarget = true;
+			break;
+		oNODEFAULT;
+	}
+
+	if (oDXGIIsDepthFormat(_Format))
+		*_pBindFlags |= D3D11_BIND_DEPTH_STENCIL;
+	else if (_CreationType == oD3D11_RENDER_TARGET || _CreationType == oD3D11_MIPPED_RENDER_TARGET)
+		*_pBindFlags |= D3D11_BIND_RENDER_TARGET;
+}
+
+const char* oAsString(const D3D11_BIND_FLAG& _Flag)
+{
+	switch (_Flag)
+	{
+		case D3D11_BIND_VERTEX_BUFFER: return "D3D11_BIND_VERTEX_BUFFER";
+		case D3D11_BIND_INDEX_BUFFER: return "D3D11_BIND_INDEX_BUFFER";
+		case D3D11_BIND_CONSTANT_BUFFER: return "D3D11_BIND_CONSTANT_BUFFER";
+		case D3D11_BIND_SHADER_RESOURCE: return "D3D11_BIND_SHADER_RESOURCE";
+		case D3D11_BIND_STREAM_OUTPUT: return "D3D11_BIND_STREAM_OUTPUT";
+		case D3D11_BIND_RENDER_TARGET: return "D3D11_BIND_RENDER_TARGET";
+		case D3D11_BIND_DEPTH_STENCIL: return "D3D11_BIND_DEPTH_STENCIL";
+		case D3D11_BIND_UNORDERED_ACCESS: return "D3D11_BIND_UNORDERED_ACCESS";
+		//case D3D11_BIND_DECODER: return "D3D11_BIND_DECODER";
+		//case D3D11_BIND_VIDEO_ENCODER: return "D3D11_BIND_VIDEO_ENCODER";
+		oNODEFAULT;
+	}
+}
+
+const char* oAsString(const D3D11_USAGE& _Usage)
+{
+	switch (_Usage)
+	{
+		case D3D11_USAGE_DEFAULT: return "D3D11_USAGE_DEFAULT";
+		case D3D11_USAGE_IMMUTABLE: return "D3D11_USAGE_IMMUTABLE";
+		case D3D11_USAGE_DYNAMIC: return "D3D11_USAGE_DYNAMIC";
+		case D3D11_USAGE_STAGING: return "D3D11_USAGE_STAGING";
+		oNODEFAULT;
+	}
+}
+
+const char* oAsString(const D3D11_CPU_ACCESS_FLAG& _Flag)
+{
+	switch (_Flag)
+	{
+		case D3D11_CPU_ACCESS_WRITE: return "D3D11_CPU_ACCESS_WRITE";
+		case D3D11_CPU_ACCESS_READ: return "D3D11_CPU_ACCESS_READ";
+		oNODEFAULT;
+	}
+}
+
+const char* oAsString(const D3D11_RESOURCE_MISC_FLAG& _Flag)
+{
+	switch (_Flag)
+	{
+		case D3D11_RESOURCE_MISC_GENERATE_MIPS: return "D3D11_RESOURCE_MISC_GENERATE_MIPS";
+		case D3D11_RESOURCE_MISC_SHARED: return "D3D11_RESOURCE_MISC_SHARED";
+		case D3D11_RESOURCE_MISC_TEXTURECUBE: return "D3D11_RESOURCE_MISC_TEXTURECUBE";
+		case D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS: return "D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS";
+		case D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS: return "D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS";
+		case D3D11_RESOURCE_MISC_BUFFER_STRUCTURED: return "D3D11_RESOURCE_MISC_BUFFER_STRUCTURED";
+		case D3D11_RESOURCE_MISC_RESOURCE_CLAMP: return "D3D11_RESOURCE_MISC_RESOURCE_CLAMP";
+		case D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX: return "D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX";
+		case D3D11_RESOURCE_MISC_GDI_COMPATIBLE: return "D3D11_RESOURCE_MISC_GDI_COMPATIBLE";
+		//case D3D11_RESOURCE_MISC_SHARED_NTHANDLE: return "D3D11_RESOURCE_MISC_SHARED_NTHANDLE";
+		//case D3D11_RESOURCE_MISC_RESTRICTED_CONTENT: return "D3D11_RESOURCE_MISC_RESTRICTED_CONTENT";
+		//case D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE: return "D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE";
+		//case D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE_DRIVER: return "D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE_DRIVER";
+		oNODEFAULT;
+	}
+}
+
+
+
+void oD3D11DebugTraceTexture2DDesc(const D3D11_TEXTURE2D_DESC& _Desc, const char* _Prefix = "\t")
+{
+	#define oD3D11_TRACE_UINT(x) oTRACE("%s" #x "=%u", oSAFESTR(_Prefix), _Desc.x)
+	#define oD3D11_TRACE_ENUM(x) oTRACE("%s" #x "=%s", oSAFESTR(_Prefix), oAsString(_Desc.x))
+	#define oD3D11_TRACE_FLAGS(_FlagEnumType, _FlagsVar, _AllZeroString) do { char buf[512]; oAsStringFlags(buf, _Desc._FlagsVar, _AllZeroString, [&](unsigned int _SingleFlag) { return oAsString(static_cast<_FlagEnumType>(_SingleFlag)); } ); oTRACE("%s" #_FlagsVar "=%s", oSAFESTR(_Prefix), buf); } while(false)
+
+	oD3D11_TRACE_UINT(Width);
+	oD3D11_TRACE_UINT(Height);
+	oD3D11_TRACE_UINT(MipLevels);
+	oD3D11_TRACE_UINT(ArraySize);
+	oD3D11_TRACE_ENUM(Format);
+	oD3D11_TRACE_UINT(SampleDesc.Count);
+	oD3D11_TRACE_UINT(SampleDesc.Quality);
+	oD3D11_TRACE_ENUM(Usage);
+	oD3D11_TRACE_FLAGS(D3D11_BIND_FLAG, BindFlags, "(none)");
+	oD3D11_TRACE_FLAGS(D3D11_CPU_ACCESS_FLAG, CPUAccessFlags, "(none)");
+	oD3D11_TRACE_FLAGS(D3D11_RESOURCE_MISC_FLAG, MiscFlags, "(none)");
+}
+
+bool oD3D11CreateTexture2D(ID3D11Device* _pDevice, const char* _DebugName, UINT _Width, UINT _Height, UINT _ArraySize, DXGI_FORMAT _Format, oD3D11_TEXTURE_CREATION_TYPE _CreationType, D3D11_SUBRESOURCE_DATA* _pInitData, ID3D11Texture2D** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView)
 {
 	D3D11_TEXTURE2D_DESC desc;
 	desc.Width = _Width;
 	desc.Height = _Height;
-	desc.MipLevels = (_CreationType == oD3D11_MIPPED_TEXTURE || _CreationType == oD3D11_MIPPED_RENDER_TARGET) ? 0 : 1;
 	desc.ArraySize = __max(1, _ArraySize);
 	desc.Format = _Format;
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
-	desc.Usage = (_CreationType == oD3D11_DYNAMIC_TEXTURE) ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_DEFAULT;
-	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	oD3D11GetUsageAndFlags(_CreationType, desc.Format, &desc.MipLevels, &desc.Usage, &desc.BindFlags, &desc.CPUAccessFlags, &desc.MiscFlags);
 
-	if (oDXGIIsDepthFormat(_Format))
-		desc.BindFlags |= D3D11_BIND_DEPTH_STENCIL;
-	else if (_CreationType == oD3D11_RENDER_TARGET || _CreationType == oD3D11_MIPPED_RENDER_TARGET)
-		desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
-
-	desc.CPUAccessFlags = (_CreationType == oD3D11_DYNAMIC_TEXTURE) ? D3D11_CPU_ACCESS_WRITE : 0;
-	desc.MiscFlags = (_CreationType == oD3D11_MIPPED_RENDER_TARGET) ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
-
-	HRESULT hr = _pDevice->CreateTexture2D(&desc, 0, _ppTexture);
+	HRESULT hr = _pDevice->CreateTexture2D(&desc, _pInitData, _ppTexture);
 	oDEBUG_CHECK_BUFFER(oD3D11CreateTexture2D, _ppTexture);
 
 	if (_ppShaderResourceView && !oD3D11CreateShaderResourceView(_DebugName, *_ppTexture, _ppShaderResourceView))
@@ -531,13 +755,68 @@ bool oD3D11CreateTexture2D(ID3D11Device* _pDevice, const char* _DebugName, UINT 
 	return true;
 }
 
-bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, interface oImage** _ppImage)
+bool oD3D11CreateTexture2D(ID3D11Device* _pDevice, const char* _DebugName, oD3D11_TEXTURE_CREATION_TYPE _CreationType, const oImage* _pImage, ID3D11Texture2D** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView)
 {
-	if (!_pRenderTarget || !_ppImage)
+	if (!_pDevice || !_pImage || !_ppTexture || _ppShaderResourceView)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	oImage::DESC IDesc;
+	_pImage->GetDesc(&IDesc);
+
+	oSURFACE_FORMAT SurfaceFormat = oImageFormatToSurfaceFormat(IDesc.Format);
+	D3D11_SUBRESOURCE_DATA InitData;
+	InitData.pSysMem = _pImage->GetData();
+	InitData.SysMemPitch = oSurfaceCalcRowPitch(SurfaceFormat, IDesc.Dimensions.x);
+	InitData.SysMemSlicePitch = oSurfaceCalcLevelPitch(SurfaceFormat, IDesc.Dimensions);
+
+	oRef<ID3D11Texture2D> D3DTexture;
+	if (!oD3D11CreateTexture2D(_pDevice
+		, "oImage Conversion"
+		, IDesc.Dimensions.x
+		, IDesc.Dimensions.y
+		, 1
+		, oDXGIFromSurfaceFormat(SurfaceFormat)
+		, _CreationType
+		, &InitData
+		, &D3DTexture
+		, nullptr))
+		return false; // pass through error
+
+	return true;
+}
+
+D3DX11_IMAGE_FILE_FORMAT oD3D11GetFormatFromPath(const char* _Path)
+{
+	const char* ext = oGetFileExtension(_Path);
+
+	struct EXT_MAPPING
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
+		const char* Extension;
+		D3DX11_IMAGE_FILE_FORMAT Format;
+	};
+
+	static EXT_MAPPING sExtensions[] =
+	{
+		{ ".bmp", D3DX11_IFF_BMP }, 
+		{ ".jpg", D3DX11_IFF_JPG }, 
+		{ ".png", D3DX11_IFF_PNG }, 
+		{ ".dds", D3DX11_IFF_DDS }, 
+		{ ".tif", D3DX11_IFF_TIFF }, 
+		{ ".gif", D3DX11_IFF_GIF }, 
+		{ ".wmp", D3DX11_IFF_WMP },
+	};
+
+	for (size_t i = 0; i < oCOUNTOF(sExtensions); i++)
+		if (!_stricmp(sExtensions[i].Extension, ext))
+			return sExtensions[i].Format;
+
+	return D3DX11_IFF_DDS;
+}
+
+static bool oD3D11CreateCPUTextureCopy(ID3D11Texture2D* _pRenderTarget, ID3D11Texture2D** _ppCPUCopy)
+{
+	if (!_pRenderTarget || !_ppCPUCopy)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	oRef<ID3D11Device> D3D11Device;
 	_pRenderTarget->GetDevice(&D3D11Device);
@@ -546,33 +825,247 @@ bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, interface oImage** _p
 
 	D3D11_TEXTURE2D_DESC d;
 	_pRenderTarget->GetDesc(&d);
-	d.BindFlags = 0;
-	d.Usage = D3D11_USAGE_STAGING;
-	d.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-	oRef<ID3D11Texture2D> CPUTexture;
-	oV(D3D11Device->CreateTexture2D(&d, nullptr, &CPUTexture));
-	D3D11DeviceContext->CopyResource(CPUTexture, _pRenderTarget);
+	oD3D11GetUsageAndFlags(oD3D11_STAGING_TEXTURE, d.Format, &d.MipLevels, &d.Usage, &d.BindFlags, &d.CPUAccessFlags, &d.MiscFlags);
+	oV(D3D11Device->CreateTexture2D(&d, nullptr, _ppCPUCopy));
+	D3D11DeviceContext->CopyResource(*_ppCPUCopy, _pRenderTarget);
 	D3D11DeviceContext->Flush();
+	return true;
+}
+
+bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, interface oImage** _ppImage)
+{
+	if (!_pRenderTarget || !_ppImage)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	oRef<ID3D11Texture2D> CPUTexture;
+	if (!oD3D11CreateCPUTextureCopy(_pRenderTarget, &CPUTexture))
+		return false; // pass through error
+
+	D3D11_TEXTURE2D_DESC d;
+	CPUTexture->GetDesc(&d);
 
 	const unsigned int RowSize = static_cast<unsigned int>(d.Width * oSurfaceGetSize(oSURFACE_B8G8R8A8_UNORM));
 	oImage::DESC idesc;
-	idesc.Pitch = RowSize;
+	idesc.RowPitch = RowSize;
 	idesc.Dimensions.x = d.Width;
 	idesc.Dimensions.y = d.Height;
-	idesc.Format = oSURFACE_B8G8R8A8_UNORM;
-	oVERIFY(oImageCreate("Temp Image", &idesc, _ppImage));
-	void* pIData = (*_ppImage)->GetData();
-	D3D11_MAPPED_SUBRESOURCE mapped;
-	oV(D3D11DeviceContext->Map(CPUTexture, 0, D3D11_MAP_READ, 0, &mapped));
+	idesc.Format = oImage::BGRA32;
+	oVERIFY(oImageCreate("Temp Image", idesc, _ppImage));
+	return oD3D11CopyToBuffer(CPUTexture, (*_ppImage)->GetData(), idesc.RowPitch, true); // pass error through
+}
+
+bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path)
+{
+	if (!_pRenderTarget || !oSTRVALID(_Path))
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	oRef<ID3D11Texture2D> D3DTexture;
+	if (!oD3D11CreateCPUTextureCopy(_pRenderTarget, &D3DTexture))
+		return false; // pass through error
+
+	oRef<ID3D11Device> D3DDevice;
+	D3DTexture->GetDevice(&D3DDevice);
+	oRef<ID3D11DeviceContext> D3DImmediateContext;
+	D3DDevice->GetImmediateContext(&D3DImmediateContext);
+
+	oV(oD3DX11::Singleton()->D3DX11SaveTextureToFileA(D3DImmediateContext, D3DTexture, _Format, _Path));
+	return true;
+}
+
+bool oD3D11Save(ID3D11Texture2D* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer)
+{
+	if (!_pTexture || !_pBuffer || !_SizeofBuffer)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	oRef<ID3D11Device> D3DDevice;
+	_pTexture->GetDevice(&D3DDevice);
+	oRef<ID3D11DeviceContext> D3DImmediateContext;
+	D3DDevice->GetImmediateContext(&D3DImmediateContext);
+
+	oRef<ID3D10Blob> Blob;
+	oV(oD3DX11::Singleton()->D3DX11SaveTextureToMemory(D3DImmediateContext, _pTexture, _Format, &Blob, 0));
+
+	if (Blob->GetBufferSize() > _SizeofBuffer)
+		return oErrorSetLast(oERROR_AT_CAPACITY, "Buffer is too small for image");
+
+	memcpy(_pBuffer, Blob->GetBufferPointer(), Blob->GetBufferSize());
+	return true;
+}
+
+bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer)
+{
+	oRef<ID3D11Device> D3DDevice;
+	if (!oD3D11CreateDevice(oD3D11_DEVICE_DESC(), &D3DDevice))
+		return false; // pass through error
+
+	oRef<ID3D11Texture2D> D3DTexture;
+	if (!oD3D11CreateTexture2D(D3DDevice, "oD3D11Save temp texture", oD3D11_DYNAMIC_TEXTURE, _pImage, &D3DTexture, nullptr))
+		return false; // pass through error
+
+	return oD3D11Save(D3DTexture, _Format, _pBuffer, _SizeofBuffer); // pass through error
+}
+
+bool oD3D11Save(ID3D11Texture2D* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path)
+{
+	if (!_pTexture || !oSTRVALID(_Path))
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	oRef<ID3D11Texture2D> CPUAccessibleTexture;
+	oD3D11_TEXTURE_DESC desc;
+	oD3D11GetTextureDesc(_pTexture, &desc);
+	if (desc.CPUAccessFlags & D3D11_CPU_ACCESS_READ)
+		CPUAccessibleTexture = _pTexture;
+	else if (!oD3D11CreateCPUTextureCopy(_pTexture, &CPUAccessibleTexture))
+	{
+		char buf[256];
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified texture \"%s\" is not CPU-accessible and a copy could not be made", oD3D11GetDebugName(buf, _pTexture));
+	}
+
+	oRef<ID3D11Device> D3DDevice;
+	CPUAccessibleTexture->GetDevice(&D3DDevice);
+	oRef<ID3D11DeviceContext> D3DImmediateContext;
+	D3DDevice->GetImmediateContext(&D3DImmediateContext);
+
+	oV(D3DX11SaveTextureToFileA(D3DImmediateContext, CPUAccessibleTexture, _Format, _Path));
+	return true;
+}
+
+bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path)
+{
+	oD3D11_DEVICE_DESC deviceDesc;
+	oRef<ID3D11Device> D3DDevice;
+	if (!oD3D11CreateDevice(deviceDesc, &D3DDevice))
+		return false; // pass through error
+
+	oImage::DESC IDesc;
+	_pImage->GetDesc(&IDesc);
+
+	oSURFACE_FORMAT SurfaceFormat = oImageFormatToSurfaceFormat(IDesc.Format);
+
+	D3D11_SUBRESOURCE_DATA InitData;
+	InitData.pSysMem = _pImage->GetData();
+	InitData.SysMemPitch = oSurfaceCalcRowPitch(SurfaceFormat, IDesc.Dimensions.x);
+	InitData.SysMemSlicePitch = oSurfaceCalcLevelPitch(SurfaceFormat, IDesc.Dimensions);
+
+	oRef<ID3D11Texture2D> D3DTexture;
+	if (!oD3D11CreateTexture2D(D3DDevice
+		, "oImage Conversion"
+		, IDesc.Dimensions.x
+		, IDesc.Dimensions.y
+		, 1
+		, oDXGIFromSurfaceFormat(SurfaceFormat)
+		, oD3D11_DYNAMIC_TEXTURE
+		, &InitData
+		, &D3DTexture
+		, nullptr))
+		return false; // pass through error
+
+	return oD3D11Save(D3DTexture, _Format, _Path); // pass through error
+}
+
+bool oD3D11Load(ID3D11Device* _pDevice, DXGI_FORMAT _ForceFormat, oD3D11_TEXTURE_CREATION_TYPE _CreationType, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, ID3D11Resource** _ppTexture)
+{
+	D3DX11_IMAGE_LOAD_INFO li;
+	li.Width = D3DX11_DEFAULT;
+	li.Height = D3DX11_DEFAULT;
+	li.Depth = D3DX11_DEFAULT;
+	li.FirstMipLevel = D3DX11_DEFAULT;
+	li.Format = _ForceFormat == DXGI_FORMAT_UNKNOWN ? DXGI_FORMAT_FROM_FILE : _ForceFormat;
+	oD3D11GetUsageAndFlags(_CreationType, li.Format, &li.MipLevels, &li.Usage, &li.BindFlags, &li.CpuAccessFlags, &li.MiscFlags);
+	li.Filter = D3DX11_DEFAULT;
+	li.MipFilter = D3DX11_DEFAULT;
+	li.pSrcInfo = nullptr;
+
+	HRESULT hr = oD3DX11::Singleton()->D3DX11CreateTextureFromMemory(_pDevice
+		, _pBuffer
+		, _SizeofBuffer
+		, &li
+		, nullptr
+		, _ppTexture
+		, nullptr);
+
+	if (FAILED(hr))
+		return oWinSetLastError(hr);
+
+	oVB(oD3D11SetDebugName(*_ppTexture, _DebugName));
+
+	return true;
+}
+
+bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, DXGI_FORMAT _NewFormat, ID3D11Texture2D** _ppDestinationTexture)
+{
+	if (!_pSourceTexture || !_ppDestinationTexture)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	D3D11_TEXTURE2D_DESC desc;
+	_pSourceTexture->GetDesc(&desc);
+
+	if (_NewFormat == DXGI_FORMAT_BC7_UNORM)
+	{
+		if (oD3D11EncodeBC7(_pSourceTexture, true, _ppDestinationTexture))
+			return true;
+		oTRACE("GPU BC7 encode failed, falling back to CPU encode (may take a while)...");
+	}
 	
-	if (mapped.RowPitch != RowSize || idesc.Pitch != RowSize)
-		oMemcpy2d(pIData, idesc.Pitch, mapped.pData, mapped.RowPitch, RowSize, d.Height);
-	else
-		memcpy(pIData, mapped.pData, RowSize * d.Height);
+	else if (_NewFormat == DXGI_FORMAT_BC6H_SF16)
+	{
+		if (oD3D11EncodeBC6HS(_pSourceTexture, true, _ppDestinationTexture))
+			return true;
+		oTRACE("GPU BC6HS encode failed, falling back to CPU encode (may take a while)...");
+	}
 
-	D3D11DeviceContext->Unmap(CPUTexture, 0);
+	else if (_NewFormat == DXGI_FORMAT_BC6H_UF16)
+	{
+		if (oD3D11EncodeBC6HU(_pSourceTexture, true, _ppDestinationTexture))
+			return true;
+		oTRACE("GPU BC6HU encode failed, falling back to CPU encode (may take a while)...");
+	}
 
-	(*_ppImage)->FlipVertical();
+	else if (desc.Format == DXGI_FORMAT_BC6H_SF16 || desc.Format == DXGI_FORMAT_BC6H_UF16 || desc.Format == DXGI_FORMAT_BC7_UNORM)
+	{
+		// Decode requires a CPU-accessible source because CS4x can't sample from
+		// BC7 or BC6, so make a copy if needed
+
+		oRef<ID3D11Texture2D> CPUAccessible;
+		if (desc.CPUAccessFlags & D3D11_CPU_ACCESS_READ)
+			CPUAccessible = _pSourceTexture;
+		else if (!oD3D11CreateCPUTextureCopy(_pSourceTexture, &CPUAccessible))
+		{
+			char buf[256];
+			return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified texture \"%s\" is not CPU-accessible and a copy could not be made", oD3D11GetDebugName(buf, _pSourceTexture));
+		}
+
+		oRef<ID3D11Texture2D> NewTexture;
+		if (!oD3D11DecodeBC6orBC7(CPUAccessible, true, &NewTexture))
+			return false; // pass through error
+
+		NewTexture->GetDesc(&desc);
+		if (_NewFormat == desc.Format)
+		{
+			*_ppDestinationTexture = NewTexture;
+			(*_ppDestinationTexture)->AddRef();
+			return true;
+		}
+
+		// recurse now that we've got a more vanilla format
+		return oD3D11Convert(NewTexture, _NewFormat, _ppDestinationTexture);
+	}
+		
+	oRef<ID3D11Device> D3DDevice;
+	_pSourceTexture->GetDevice(&D3DDevice);
+
+	oRef<ID3D11Texture2D> NewTexture;
+	if (!oD3D11CreateTexture2D(D3DDevice, "Temp", desc.Width, desc.Height, desc.ArraySize, _NewFormat, oD3D11_STAGING_TEXTURE, nullptr, &NewTexture, nullptr))
+		return false; // pass through error
+
+	oRef<ID3D11DeviceContext> D3DContext;
+	D3DDevice->GetImmediateContext(&D3DContext);
+	HRESULT hr = oD3DX11::Singleton()->D3DX11LoadTextureFromTexture(D3DContext, _pSourceTexture, nullptr, NewTexture);
+	if (FAILED(hr))
+		return oWinSetLastError(hr);
+
+	*_ppDestinationTexture = NewTexture;
+	(*_ppDestinationTexture)->AddRef();
 
 	return true;
 }

@@ -38,8 +38,13 @@ oDECLARE_HANDLE(oHMODULE);
 // the app path and append a build suffix. If an extension is included as part 
 // of the (i.e. "dbghelp.dll") then this will pass _ModuleName through to the
 // platform calls unmodified.
-oHMODULE oModuleLink(const char* _ModuleName, const char** _InterfaceFunctionNames, void** _ppInterfaces, size_t _CountofInterfaces);
-template<size_t size> inline oHMODULE oModuleLink(const char* _ModuleName, const char* (&_InterfaceFunctionNames)[size], void** _ppInterfaces) { return oModuleLink(_ModuleName, _InterfaceFunctionNames, _ppInterfaces, size);}
+oHMODULE oModuleLink(const char* _ModuleName, const char** _pInterfaceFunctionNames, void** _ppInterfaces, size_t _CountofInterfaces);
+template<size_t size> oHMODULE oModuleLink(const char* _ModuleName, const char* (&_InterfaceFunctionNames)[size], void** _ppInterfaces) { return oModuleLink(_ModuleName, _InterfaceFunctionNames, _ppInterfaces, size);}
+
+// Calls oModuleLink, then checks for error, presenting a dialog box informing
+// the user that the DLL or functions are missing and then std::terminates.
+oHMODULE oModuleLinkSafe(const char* _ModuleName, const char** _pInterfaceFunctionNames, void** _ppInterfaces, size_t _CountofInterfaces);
+template<size_t size> oHMODULE oModuleLinkSafe(const char* _ModuleName, const char* (&_InterfaceFunctionNames)[size], void** _ppInterfaces) { return oModuleLinkSafe(_ModuleName, _InterfaceFunctionNames, _ppInterfaces, size);}
 
 // Ensure ALL interfaces/memory/pointers from the module are unloaded by this 
 // point, otherwise you'll get what looks like a valid object, but a bad virtual 
@@ -54,6 +59,6 @@ oHMODULE oModuleGetCurrent();
 // Fill the specified string with the name of the specified module. If this 
 // fails the function returns false; use oErrorGetLast() for more details
 bool oModuleGetName(char* _StrDestination, size_t _SizeofStrDestination, oHMODULE _hModule);
-template<size_t size> inline bool oModuleGetName(char (&_StrDestination)[size], oHMODULE _hModule) { return oModuleGetName(_StrDestination, size, _hModule); }
+template<size_t size> bool oModuleGetName(char (&_StrDestination)[size], oHMODULE _hModule) { return oModuleGetName(_StrDestination, size, _hModule); }
 
 #endif

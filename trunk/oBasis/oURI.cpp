@@ -34,11 +34,11 @@ using namespace std::tr1;
 
 oURIParts::oURIParts(const char* _Scheme, const char* _Authority, const char* _Path, const char* _Query, const char* _Fragment)
 {
-	strcpy_s(Scheme, oSAFESTR(_Scheme));
-	strcpy_s(Authority, oSAFESTR(_Authority));
-	strcpy_s(Path, oSAFESTR(_Path));
-	strcpy_s(Query, oSAFESTR(_Query));
-	strcpy_s(Fragment, oSAFESTR(_Fragment));
+	strcpy_s(Scheme.c_str(), oSAFESTR(_Scheme));
+	strcpy_s(Authority.c_str(), oSAFESTR(_Authority));
+	strcpy_s(Path.c_str(), oSAFESTR(_Path));
+	strcpy_s(Query.c_str(), oSAFESTR(_Query));
+	strcpy_s(Fragment.c_str(), oSAFESTR(_Fragment));
 }
 
 // Copies a begin/end iterator range into the specified destination as a string
@@ -364,7 +364,7 @@ char* oURIEnsureFileExtension(char* _URIReferenceWithExtension, size_t _SizeofUR
 		oURIParts parts;
 		if (!oURIDecompose(_SourceURIReference, &parts))
 			return nullptr;
-		oReplaceFileExtension(parts.Path, _Extension);
+		oReplaceFileExtension(parts.Path.c_str(), _Extension);
 		if (!oURIRecompose(_URIReferenceWithExtension, _SizeofURIReferenceWithExtension, parts))
 			return nullptr;
 	}

@@ -60,25 +60,22 @@
     <ClCompile Include="oUnitTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\oPlatform\TESTGPU.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\oPlatform\TESTD3D.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\oPlatform\TESTGetVideoDriverDesc.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\oPlatform\TESTImage.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
     <ClCompile Include="..\oPlatform\Tests\TESTVTable.cpp">
       <Filter>Source Files\oPlatformTests</Filter>
     </ClCompile>
     <ClCompile Include="..\oPlatform\Tests\TESTWindow.cpp">
       <Filter>Source Files\oPlatformTests</Filter>
     </ClCompile>
-    <ClCompile Include="..\oPlatform\TESTHash.cpp">
+    <ClCompile Include="..\oPlatform\Tests\TESTD3D.cpp">
+      <Filter>Source Files\oPlatformTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\oPlatform\Tests\TESTGetVideoDriverDesc.cpp">
+      <Filter>Source Files\oPlatformTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\oPlatform\Tests\TESTGPU.cpp">
+      <Filter>Source Files\oPlatformTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\oPlatform\Tests\TESTImage.cpp">
       <Filter>Source Files\oPlatformTests</Filter>
     </ClCompile>
   </ItemGroup>

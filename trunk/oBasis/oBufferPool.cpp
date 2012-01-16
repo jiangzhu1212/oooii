@@ -47,7 +47,7 @@ struct oBufferPoolImpl : public oBufferPool
 	char Name[_MAX_PATH];
 	oRefCount RefCount;
 	oBuffer::DeallocateFn Dealloc;
-	oLockFreeQueue<oRef<threadsafe oBuffer>> FreeBuffers;
+	oLockFreeQueue<oRef<oBuffer>> FreeBuffers;
 	unsigned int BufferCount;
 	threadsafe size_t IndividualBufferSize;
 	void* pPoolBase;
@@ -69,7 +69,7 @@ oBufferPoolImpl::oBufferPoolImpl(const char* _Name, void* _pAllocation, size_t _
 	const unsigned char* pPoolEnd = (unsigned char*)pPoolBase + _AllocationSize;
 	while( pNextAlloc + IndividualBufferSize < pPoolEnd )
 	{
-		oRef<threadsafe oBuffer> FreeBuffer;
+		oRef<oBuffer> FreeBuffer;
 
 		if (!oBufferCreate(BufferName, pNextAlloc, IndividualBufferSize, oBIND(&oBufferPoolImpl::DestroyBuffer, this, oBIND1), &FreeBuffer))
 			return;
@@ -97,7 +97,7 @@ oBufferPoolImpl::~oBufferPoolImpl()
 	oASSERT( FreeBuffers.unsafe_size() == BufferCount, "Buffers have not been returned to the pool!" );
 	
 	// Pop all the references off so they go out of scope
-	oRef<threadsafe oBuffer> FreeBuffer;
+	oRef<oBuffer> FreeBuffer;
 	while( FreeBuffers.try_pop(FreeBuffer) )
 	{
 
@@ -125,7 +125,7 @@ void oBufferPoolImpl::DestroyBuffer(void* _pBufer) threadsafe
 		}
 
 		// Pool is still alive so recycle this memory back into the pool
-		oRef<threadsafe oBuffer> FreeBuffer;
+		oRef<oBuffer> FreeBuffer;
 		// Threadcasts safe because size and name don't change
 		if (!oBufferCreate(thread_cast<const char*>(BufferName), _pBufer, thread_cast<size_t&>(IndividualBufferSize), oBIND(&oBufferPoolImpl::DestroyBuffer, this, oBIND1), &FreeBuffer))
 			return;
@@ -141,12 +141,9 @@ bool oBufferPoolImpl::GetFreeBuffer(threadsafe oBuffer** _ppBuffer) threadsafe
 		(*_ppBuffer)->Release();
 		*_ppBuffer = nullptr;
 	}
-	oRef<threadsafe oBuffer> FreeBuffer;
+	oRef<oBuffer> FreeBuffer;
 	if( !FreeBuffers.try_pop(FreeBuffer) )
-	{
-		oErrorSetLast(oERROR_NOT_FOUND, "There are no free buffers left in the oBufferPool");
-		return false;
-	}
+		return oErrorSetLast(oERROR_NOT_FOUND, "There are no free buffers left in the oBufferPool");
 
 	*_ppBuffer = FreeBuffer;
 	FreeBuffer->Reference();

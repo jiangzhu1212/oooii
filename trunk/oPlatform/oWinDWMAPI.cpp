@@ -52,7 +52,7 @@ static const char* dwmapi_dll_functions[] =
 
 oWinDWMAPI::oWinDWMAPI()
 {
-	hDWM = oModuleLink("Dwmapi.dll", dwmapi_dll_functions, (void**)&DwmDefWindowProc, oCOUNTOF(dwmapi_dll_functions));
+	hDWM = oModuleLinkSafe("Dwmapi.dll", dwmapi_dll_functions, (void**)&DwmDefWindowProc, oCOUNTOF(dwmapi_dll_functions));
 	oASSERT(hDWM, "");
 }
 

@@ -21,7 +21,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oDispatchQueuePrivate.h>
+#include <oBasis/oDispatchQueueGlobal.h>
 #include <oBasis/oError.h>
 #include <oBasis/oOnScopeExit.h>
 #include <oBasis/oRef.h>
@@ -57,8 +57,8 @@ static void NotifyAll(oStd::condition_variable& _ConditionVariable, oStd::thread
 
 bool oBasisTest_oDispatchQueueGlobal()
 {
-	oRef<threadsafe oDispatchQueue> q;
-	oTESTB(oDispatchQueueCreatePrivate("TESTDispatchQueueGlobal", 100, &q), "Failed to create global dispatch queue");
+	oRef<threadsafe oDispatchQueueGlobal> q;
+	oTESTB(oDispatchQueueCreateGlobal("TESTDispatchQueueGlobal", 100, &q), "Failed to create global dispatch queue");
 	oOnScopeExit JoinQueue([&] { q->Join(); });
 
 	static const size_t TestSize = 4096;

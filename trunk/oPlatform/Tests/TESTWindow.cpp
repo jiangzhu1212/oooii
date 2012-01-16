@@ -241,21 +241,16 @@ struct TESTWindowBase : public oTest
 				return false;
 			free(pBuffer);
 
-			oImage::DESC ImageDesc;
-			Image->GetDesc(&ImageDesc);
 
 			oWindowUIPicture::DESC d;
 			d.Position = int2(0, 0);
 			d.Size = int2(100, 100);
 			d.Anchor = oTOPCENTER;
-			d.SurfaceDesc.Dimensions.x = ImageDesc.Dimensions.x;
-			d.SurfaceDesc.Dimensions.y = ImageDesc.Dimensions.y;
-			d.SurfaceDesc.RowPitch = ImageDesc.Pitch;
-			d.SurfaceDesc.Format = ImageDesc.Format;
+			Image->GetDesc(&d.ImageDesc);
 
 			if (!oWindowUIPictureCreate(d, _pWindow, &_Elements.Picture))
 				return false;
-			_Elements.Picture->Copy(Image->GetData(), ImageDesc.Pitch, false, true);
+			_Elements.Picture->Copy(Image->GetData(), d.ImageDesc.RowPitch, false, true);
 		}
 
 		memset(&_Elements.ResizeContext, 0, sizeof(_Elements.ResizeContext));

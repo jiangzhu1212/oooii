@@ -36,13 +36,13 @@
 #include <exception> // std::terminate
 #include <list>
 
-struct oDispatchQueuePrivate : oDispatchQueue
+struct oDispatchQueuePrivate_Impl : oDispatchQueuePrivate
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_TRIVIAL_QUERYINTERFACE2(oDispatchQueue, oDispatchQueuePrivate);
+	oDEFINE_TRIVIAL_QUERYINTERFACE2(oDispatchQueue, oDispatchQueuePrivate_Impl);
 
-	oDispatchQueuePrivate(const char* _DebugName, size_t _InitialTaskCapacity, bool* _pSuccess);
-	~oDispatchQueuePrivate();
+	oDispatchQueuePrivate_Impl(const char* _DebugName, size_t _InitialTaskCapacity, bool* _pSuccess);
+	~oDispatchQueuePrivate_Impl();
 
 	bool Dispatch(oTASK _Task) threadsafe override;
 	void Flush() threadsafe override;
@@ -101,7 +101,7 @@ protected:
 	void WaitForExecutionThreadToSleep() threadsafe;
 };
 
-const oGUID& oGetGUID(threadsafe const oDispatchQueuePrivate* threadsafe const*)
+const oGUID& oGetGUID(threadsafe const oDispatchQueuePrivate_Impl* threadsafe const*)
 {
 	// {FF7615D2-C7C4-486A-927A-343EBCEA7363}
 	static const oGUID IIDDispatchQueuePrivate = { 0xff7615d2, 0xc7c4, 0x486a, { 0x92, 0x7a, 0x34, 0x3e, 0xbc, 0xea, 0x73, 0x63 } };
@@ -109,14 +109,14 @@ const oGUID& oGetGUID(threadsafe const oDispatchQueuePrivate* threadsafe const*)
 }
 
 // _DebugName must be a constant string
-oDispatchQueuePrivate::oDispatchQueuePrivate(const char* _DebugName, size_t _InitialTaskCapacity, bool* _pSuccess)
+oDispatchQueuePrivate_Impl::oDispatchQueuePrivate_Impl(const char* _DebugName, size_t _InitialTaskCapacity, bool* _pSuccess)
 	: Tasks() // @oooii-tony: TODO _TaskCapacity cannot be done trivially with std::list/queue/deque... a new allocator needs to be made... so do that later.
 	, AllowEnqueues(true)
 	, Running(false)
 	, Initialized(false)
 	, DebugName(_DebugName)
 {
-	ExecutionThread = oThread(&oDispatchQueuePrivate::WorkerThreadProc, this);
+	ExecutionThread = oThread(&oDispatchQueuePrivate_Impl::WorkerThreadProc, this);
 	
 	// Don't wait here because this could be called from static init and since 
 	// oStd::thread uses CRT-compatible _beginthreadex, it blocks waiting for
@@ -127,7 +127,7 @@ oDispatchQueuePrivate::oDispatchQueuePrivate(const char* _DebugName, size_t _Ini
 	*_pSuccess = true;
 }
 
-oDispatchQueuePrivate::~oDispatchQueuePrivate()
+oDispatchQueuePrivate_Impl::~oDispatchQueuePrivate_Impl()
 {
 	WaitExecutionThreadInitialized();
 	if (Joinable())
@@ -137,28 +137,28 @@ oDispatchQueuePrivate::~oDispatchQueuePrivate()
 	}
 }
 
-bool oDispatchQueueCreatePrivate(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueue** _ppDispatchQueue)
+bool oDispatchQueueCreatePrivate(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueuePrivate** _ppDispatchQueue)
 {
 	bool success = false;
-	oCONSTRUCT(_ppDispatchQueue, oDispatchQueuePrivate(_DebugName, _InitialTaskCapacity, &success));
+	oCONSTRUCT(_ppDispatchQueue, oDispatchQueuePrivate_Impl(_DebugName, _InitialTaskCapacity, &success));
 	return !!*_ppDispatchQueue;
 }
 
-void oDispatchQueuePrivate::WaitExecutionThreadInitialized() threadsafe
+void oDispatchQueuePrivate_Impl::WaitExecutionThreadInitialized() threadsafe
 {
 	oBackoff bo;
 	while (!Initialized)
 		bo.Pause();
 }
 
-void oDispatchQueuePrivate::WaitForExecutionThreadToSleep() threadsafe
+void oDispatchQueuePrivate_Impl::WaitForExecutionThreadToSleep() threadsafe
 {
 	WaitExecutionThreadInitialized();
 	while (!ProtectedTasks().empty()) // concurrency is protected by the Lock below, not this test, so the cast is ok
 		oLockGuard<oMutex> Lock(QueueMutex);
 }
 
-void oDispatchQueuePrivate::WorkerThreadProc()
+void oDispatchQueuePrivate_Impl::WorkerThreadProc()
 {
 	oTASK Task;
 	bool PopSucceeded = false;
@@ -187,7 +187,7 @@ void oDispatchQueuePrivate::WorkerThreadProc()
 	oEndThread();
 }
 
-bool oDispatchQueuePrivate::Dispatch(oTASK _Task) threadsafe
+bool oDispatchQueuePrivate_Impl::Dispatch(oTASK _Task) threadsafe
 {
 	oASSERT(_Task, "An invalid task is being dispatched");
 	bool Scheduled = false;
@@ -207,14 +207,14 @@ bool oDispatchQueuePrivate::Dispatch(oTASK _Task) threadsafe
 	return Scheduled;
 }
 
-void oDispatchQueuePrivate::Flush() threadsafe
+void oDispatchQueuePrivate_Impl::Flush() threadsafe
 {
 	AllowEnqueues.exchange(false);
 	WaitForExecutionThreadToSleep();
 	AllowEnqueues.exchange(true);
 }
 
-void oDispatchQueuePrivate::Join() threadsafe
+void oDispatchQueuePrivate_Impl::Join() threadsafe
 {
 	if (Joinable())
 	{

@@ -73,4 +73,9 @@
 #define oDECLARE_HANDLE(_HandleName) typedef struct _HandleName##__tag {}* _HandleName;
 #define oDECLARE_DERIVED_HANDLE(_BaseHandleName, _DerivedHandleName) typedef struct _DerivedHandleName##__tag : public _BaseHandleName##__tag {}* _DerivedHandleName;
 
+// Extensible enum: C++11 uses this pattern especially in <mutex> that makes 
+// enum-style solutions more compatible with method overloading and templating
+#define oDECLARE_FLAG(_Name) struct _Name##Flag {}; static const _Name##Flag _Name
+#define oDEFINE_FLAG(_Namespace, _Name) const _Namespace::_Name##Flag _Namespace::_Name
+
 #endif

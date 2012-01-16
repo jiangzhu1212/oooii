@@ -29,6 +29,10 @@
 
 #include <oBasis/oDispatchQueue.h>
 
-oAPI bool oDispatchQueueCreatePrivate(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueue** _ppDispatchQueue);
+interface oDispatchQueuePrivate : oDispatchQueue
+{
+};
+
+oAPI bool oDispatchQueueCreatePrivate(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueuePrivate** _ppDispatchQueue);
 
 #endif

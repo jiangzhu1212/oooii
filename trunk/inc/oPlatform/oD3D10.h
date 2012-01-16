@@ -30,6 +30,7 @@
 
 #include <oBasis/oRef.h>
 #include <oBasis/oMathTypes.h>
+#include <oPlatform/oImage.h>
 #include <oPlatform/oModule.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oWindows.h>
@@ -40,7 +41,7 @@ struct oD3D10 : oModuleSingleton<oD3D10>
 	oD3D10();
 	~oD3D10();
 
-	HRESULT (__stdcall *D3D10CreateDevice1)( IDXGIAdapter *pAdapter, D3D10_DRIVER_TYPE DriverType, HMODULE Software, UINT Flags, D3D10_FEATURE_LEVEL1 HardwareLevel, UINT SDKVersion, ID3D10Device1 **ppDevice);
+	HRESULT (__stdcall *D3D10CreateDevice1)(IDXGIAdapter *pAdapter, D3D10_DRIVER_TYPE DriverType, HMODULE Software, UINT Flags, D3D10_FEATURE_LEVEL1 HardwareLevel, UINT SDKVersion, ID3D10Device1 **ppDevice);
 
 protected:
 	oHMODULE hD3D10;
@@ -51,7 +52,11 @@ protected:
 // returned.
 bool oD3D10CreateDevice(const int2& _VirtualDesktopPosition, ID3D10Device1** _ppDevice);
 
-bool oD3D10CreateSnapshot(ID3D10Texture2D* _pRenderTarget, interface oImage** _ppImage);
+bool oD3D10CreateImage(ID3D10Texture2D* _pSourceTexture, oImage** _ppImage);
+
+bool oD3D10CreateSnapshot(ID3D10Texture2D* _pRenderTarget, ID3D10Texture2D** _ppCPUTexture);
+
+bool oD3D10CreateSnapshot(ID3D10Texture2D* _pRenderTarget, oImage** _ppImage);
 
 interface oD3D10DeviceManager : oInterface
 {

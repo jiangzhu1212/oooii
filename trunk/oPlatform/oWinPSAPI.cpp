@@ -35,7 +35,7 @@ static const char* psapi_dll_functions[] =
 
 oWinPSAPI::oWinPSAPI()
 {
-	hPSAPI = oModuleLink("psapi.dll", psapi_dll_functions, (void**)&EnumProcesses, oCOUNTOF(psapi_dll_functions));
+	hPSAPI = oModuleLinkSafe("psapi.dll", psapi_dll_functions, (void**)&EnumProcesses, oCOUNTOF(psapi_dll_functions));
 	oASSERT(hPSAPI, "");
 }
 

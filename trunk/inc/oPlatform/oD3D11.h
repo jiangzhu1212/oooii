@@ -28,11 +28,14 @@
 #ifndef oD3D11_h
 #define oD3D11_h
 
-#include <oPlatform/oModule.h>
 #include <oBasis/oRef.h>
+#include <oPlatform/oModule.h>
+#include <oPlatform/oImage.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oWindows.h>
 #include <vector>
+
+#include <oBC6HBC7EncoderDecoder.h>
 
 // _____________________________________________________________________________
 // Soft-link
@@ -47,6 +50,40 @@ struct oD3D11 : oModuleSingleton<oD3D11>
 protected:
 	oHMODULE hD3D11;
 };
+
+struct oD3D11_DEVICE_DESC
+{
+	enum INDEX_TYPE
+	{
+		INDEX_HARDWARE, // indexes with the same index oGPUEnum uses (all on system as system reports them)
+		INDEX_CAPABLE, // indexes starting at the first device capable of meeting the DESC requirements
+	};
+
+	oD3D11_DEVICE_DESC()
+		: GPUIndexType(INDEX_CAPABLE)
+		, GPUIndex(0)
+		, MinimumAPIFeatureLevel(11,0)
+		, VirtualDesktopPosition(oDEFAULT, oDEFAULT)
+		, Accelerated(true)
+		, Debug(false)
+	{}
+
+	// if GPUIndex is oInvalid, the value 0 (meaning first-found) will be used, so
+	// if the desired behavior is use whatever the first capable HW is, use 
+	// INDEX_CAPABLE for GPUIndexType and oInvalid for GPUIndex.
+	INDEX_TYPE GPUIndexType; 
+	int GPUIndex; // Use this to specify a particular GPU without searching for a best-match (oInvalid for "don't care")
+	oVersion MinimumAPIFeatureLevel; // Look for a GPU with at least this feature set. This should be the D3D/OGL version number
+	int2 VirtualDesktopPosition; // Use int2(oDEFAULT, oDEFAULT) for "don't care"
+	bool Accelerated; // if false, use a reference or emulation version
+	bool Debug;
+};
+
+// There are quite a few options when creating a device, especially when debug
+// tools and multi-GPU systems are considered, so present enumerated options and
+// a central place for ensuring all features and developement tools are 
+// supported.
+bool oD3D11CreateDevice(const oD3D11_DEVICE_DESC& _Desc, ID3D11Device** _ppDevice);
 
 // _____________________________________________________________________________
 // Texture API
@@ -83,6 +120,12 @@ void oD3D11GetTextureDesc(ID3D11Resource* _pResource, oD3D11_TEXTURE_DESC* _pDes
 bool oD3D11CreateShaderResourceView(const char* _DebugName, ID3D11Resource* _pTexture, ID3D11ShaderResourceView** _ppShaderResourceView);
 bool oD3D11CreateRenderTargetView(const char* _DebugName, ID3D11Resource* _pTexture, ID3D11View** _ppView);
 
+// Copies the contents of the specified texture to _pBuffer, which is assumed to
+// be properly allocated to receive the contents. If _FlipVertical is true, then
+// the bitmap data will be copied such that the destination will be upside-down 
+// compared to the source.
+bool oD3D11CopyToBuffer(ID3D11Texture2D* _pTexture, void* _pBuffer, size_t _BufferRowPitch, bool _FlipVertical = false);
+
 // If a depth format is specified, this binds D3D11_BIND_DEPTH_STENCIL instead of
 // D3D11_BIND_RENDER_TARGET.
 
@@ -90,13 +133,43 @@ enum oD3D11_TEXTURE_CREATION_TYPE
 {
 	oD3D11_DYNAMIC_TEXTURE,
 	oD3D11_MIPPED_TEXTURE,
+	oD3D11_STAGING_TEXTURE,
 	oD3D11_RENDER_TARGET,
 	oD3D11_MIPPED_RENDER_TARGET,
 };
 
-bool oD3D11CreateTexture2D(ID3D11Device* _pDevice, const char* _DebugName, UINT _Width, UINT _Height, UINT _ArraySize, DXGI_FORMAT _Format, oD3D11_TEXTURE_CREATION_TYPE _CreationType, ID3D11Texture2D** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView);
+bool oD3D11CreateTexture2D(ID3D11Device* _pDevice, const char* _DebugName, UINT _Width, UINT _Height, UINT _ArraySize, DXGI_FORMAT _Format, oD3D11_TEXTURE_CREATION_TYPE _CreationType, D3D11_SUBRESOURCE_DATA* _pInitData, ID3D11Texture2D** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView);
+bool oD3D11CreateTexture2D(ID3D11Device* _pDevice, const char* _DebugName, oD3D11_TEXTURE_CREATION_TYPE _CreationType, const oImage* _pImage, ID3D11Texture2D** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView);
 
-bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, interface oImage** _ppImage);
+bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, oImage** _ppImage);
+bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, const char* _Path);
+
+// Returns an IFF based on the extension specified in the file path
+D3DX11_IMAGE_FILE_FORMAT oD3D11GetFormatFromPath(const char* _Path);
+
+// Saves image to the specified memory buffer, which must be allocated large
+// enough to receive the specified image as its file form.
+// NOTE: BC6HS, BX6HU and BC7 are brand new formats that seemingly no one on 
+// earth supprots. The only way to really know if it works is to use a BC6/7
+// format as a texture, or convert a BC6/7 DDS back to something else and view
+// that result in a tool.
+
+bool oD3D11Save(ID3D11Texture2D* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer);
+bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer);
+
+// Saves image directly to the specified path. If _Format is UNKNOWN, then a 
+// format will be derived from the extension of the specified path.
+bool oD3D11Save(ID3D11Texture2D* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path);
+bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path);
+
+// Creates a new texture by parsing _pBuffer as a D3DX11-supported file format
+// Specify DXGI_FORMAT_UNKNOWN or DXGI_FORMAT_FROM_FILE for the "don't care"
+// option for _ForceFormat.
+bool oD3D11Load(ID3D11Device* _pDevice, DXGI_FORMAT _ForceFormat, oD3D11_TEXTURE_CREATION_TYPE _CreationType, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, ID3D11Resource** _ppTexture);
+
+// Uses GPU acceleration for BC6H and BC7 conversions if the source is in the 
+// correct format. All other conversions go through D3DX11LoadTextureFromTexture
+bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, DXGI_FORMAT _NewFormat, ID3D11Texture2D** _ppDestinationTexture);
 
 // _____________________________________________________________________________
 // Buffer Creation API
@@ -119,7 +192,8 @@ inline bool oD3D11CreateRenderTarget(ID3D11Device* _pDevice, const char* _DebugN
 bool oD3D11SetDebugName(ID3D11DeviceChild* _pDeviceChild, const char* _Name);
 
 // Fills the specified buffer with the string set with oD3D11SetDebugName().
-bool oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11DeviceChild* _pDeviceChild);
+char* oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11DeviceChild* _pDeviceChild);
+template<size_t size> char* oD3D11GetDebugName(char (&_StrDestination)[size], const ID3D11DeviceChild* _pDeviceChild) { return oD3D11GetDebugName(_StrDestination, size, _pDeviceChild); }
 
 struct oD3D_BUFFER_TOPOLOGY
 {

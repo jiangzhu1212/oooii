@@ -28,7 +28,8 @@
 
 #include <oBasis/oMacros.h> // oCOUNTOF
 #include <oBasis/oPlatformFeatures.h> // nullptr
-#include <stdlib.h> // _MAX_PATH
+#include <oBasis/oFixedString.h>
+
 
 #define oMAX_SCHEME 32
 #define oMAX_URI 512
@@ -40,11 +41,11 @@ struct oURIParts
 	oURIParts(const char* _Scheme, const char* _Authority, const char* _Path, const char* _Query, const char* _Fragment);
 	inline void Clear() { *Scheme = *Authority = *Path = *Query = *Fragment = 0; }
 
-	char Scheme[oMAX_SCHEME];
-	char Authority[oMAX_URI];
-	char Path[_MAX_PATH];
-	char Query[oMAX_URI];
-	char Fragment[oMAX_URI];
+	oFixedString<char, oMAX_SCHEME> Scheme;
+	oStringURI Authority;
+	oStringPath Path;
+	oStringURI Query;
+	oStringURI Fragment;
 };
 
 // Given a URI or URI reference, separate out the various components

@@ -307,13 +307,13 @@ bool oFileCompare(const char* _Path1, const char* _Path2)
   if (!oFileExists(_Path2))
     return false;
 
-  oRef<threadsafe oBuffer> buffer1;
+  oRef<oBuffer> buffer1;
   if (!oBufferCreate(_Path1, false, &buffer1))
     return false;
 
   oLockedPointer<oBuffer> lockedBuffer1(buffer1);
 
-  oRef<threadsafe oBuffer> buffer2;
+  oRef<oBuffer> buffer2;
   if (!oBufferCreate(_Path2, false, &buffer2))
     return false;
 

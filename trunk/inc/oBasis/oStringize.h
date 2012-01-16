@@ -29,6 +29,8 @@
 #ifndef oStringize_h
 #define oStringize_h
 
+#include <oBasis/oFunction.h>
+
 // Returns _StrDestination if successful, or nullptr if the parameters are 
 // invalid or too small.
 template<typename T> char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const T& _Value);
@@ -41,5 +43,10 @@ template<typename T> bool oFromString(T* _pValue, const char* _StrSource);
 // Returns a const string representation of the specified value. This is most
 // useful for enums when the object's value never changes.
 template<typename T> const char* oAsString(const T& _Value);
+
+// Fills the specified buffer with the flags converted to strings using the 
+// specified function to convert each flag to a string.
+char* oAsStringFlags(char* _StrDestination, size_t _SizeofStrDestination, unsigned int _Flags, const char* _AllZerosValue, oFUNCTION<const char*(unsigned int _SingleFlag)> _AsString);
+template<size_t size> char* oAsStringFlags(char (&_StrDestination)[size], unsigned int _Flags, const char* _AllZerosValue, oFUNCTION<const char*(unsigned int _SingleFlag)> _AsString) { return oAsStringFlags(_StrDestination, size, _Flags, _AllZerosValue, _AsString); }
 
 #endif

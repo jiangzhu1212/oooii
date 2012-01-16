@@ -76,7 +76,7 @@ void InitEnv()
 
 	// IOCP needs to be initialized or it will show up as a leak in the first test
 	// to use it.
-	extern void InitializeIOCP();
+	void InitializeIOCP();
 	InitializeIOCP();
 
 	oConsole::SetTitle(sTITLE);

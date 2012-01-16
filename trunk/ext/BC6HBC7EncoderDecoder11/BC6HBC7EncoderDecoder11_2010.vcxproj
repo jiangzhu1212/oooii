@@ -1,0 +1,439 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Profile|Win32">
+      <Configuration>Profile</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Profile|x64">
+      <Configuration>Profile</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>BC6HBC7EncoderDecoder11</ProjectName>
+    <ProjectGuid>{43DB3679-731E-471D-A909-29BD1B97CBB0}</ProjectGuid>
+    <RootNamespace>BC6HBC7EncoderDecoder11</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|X64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|X64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|X64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="..\..\MSSupport\oFXC.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\MSSupport\Properties\Common.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\..\MSSupport\Properties\Release32.props" />
+    <Import Project="..\..\MSSupport\Properties\Common.props" />
+    <Import Project="..\..\MSSupport\Properties\lib.props" />
+    <Import Project="..\..\MSSupport\Properties\AdditionalDepsOuroboros.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\..\MSSupport\Properties\Debug32.props" />
+    <Import Project="..\..\MSSupport\Properties\Common.props" />
+    <Import Project="..\..\MSSupport\Properties\lib.props" />
+    <Import Project="..\..\MSSupport\Properties\AdditionalDepsOuroboros.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\MSSupport\Properties\Common.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\..\MSSupport\Properties\Release64.props" />
+    <Import Project="..\..\MSSupport\Properties\Common.props" />
+    <Import Project="..\..\MSSupport\Properties\lib.props" />
+    <Import Project="..\..\MSSupport\Properties\AdditionalDepsOuroboros.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\MSSupport\Properties\Msvc100.props" />
+    <Import Project="..\..\MSSupport\Properties\Debug64.props" />
+    <Import Project="..\..\MSSupport\Properties\Common.props" />
+    <Import Project="..\..\MSSupport\Properties\lib.props" />
+    <Import Project="..\..\MSSupport\Properties\AdditionalDepsOuroboros.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ExecutablePath>$(DXSDK_DIR)Utilities\bin\x86;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(DXSDK_DIR)Include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|X64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|X64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <GenerateManifest>true</GenerateManifest>
+    <ExecutablePath>$(DXSDK_DIR)Utilities\bin\x86;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(DXSDK_DIR)Include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|X64'">
+    <LinkIncremental>false</LinkIncremental>
+    <GenerateManifest>true</GenerateManifest>
+    <ExecutablePath>$(DXSDK_DIR)Utilities\bin\x64;$(DXSDK_DIR)Utilities\bin\x86;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(DXSDK_DIR)Include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(DXSDK_DIR)Lib\x64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>D3DXFX_LARGEADDRESS_HANDLE;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+    <Manifest />
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <Lib>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|X64'">
+    <ClCompile>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>D3DXFX_LARGEADDRESS_HANDLE;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+    <Manifest />
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <Lib />
+    <Lib>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>D3DXFX_LARGEADDRESS_HANDLE;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+    <Manifest />
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <Lib>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|X64'">
+    <ClCompile>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>D3DXFX_LARGEADDRESS_HANDLE;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+    <Manifest />
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <Lib>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <OpenMPSupport>false</OpenMPSupport>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <AdditionalIncludeDirectories>..\..\DXUT11\Core;..\..\DXUT11\Optional;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;PROFILE;_CONSOLE;D3DXFX_LARGEADDRESS_HANDLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>d3dcompiler.lib;d3dx11.lib;d3dx9.lib;dxerr.lib;dxguid.lib;winmm.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <LargeAddressAware>true</LargeAddressAware>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <TargetMachine>MachineX86</TargetMachine>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+      <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
+    </Link>
+    <Manifest>
+      <EnableDPIAwareness>true</EnableDPIAwareness>
+    </Manifest>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|X64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <OpenMPSupport>false</OpenMPSupport>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <AdditionalIncludeDirectories>..\..\DXUT11\Core;..\..\DXUT11\Optional;%(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;PROFILE;_CONSOLE;D3DXFX_LARGEADDRESS_HANDLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>d3dcompiler.lib;d3dx11.lib;d3dx9.lib;dxerr.lib;dxguid.lib;winmm.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <LargeAddressAware>true</LargeAddressAware>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <TargetMachine>MachineX64</TargetMachine>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+      <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
+    </Link>
+    <Manifest>
+      <EnableDPIAwareness>true</EnableDPIAwareness>
+    </Manifest>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="directx.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="BC6HBC7EncoderDecoder11.cpp" />
+    <ClCompile Include="BC6HEncodeDecode.cpp" />
+    <ClCompile Include="BC7EncodeDecode.cpp" />
+    <ClCompile Include="utils.cpp" />
+    <CLInclude Include="BC6HEncodeDecode.h" />
+    <CLInclude Include="BC7EncodeDecode.h" />
+    <ClInclude Include="oBC6HBC7EncoderDecoder.h" />
+    <CLInclude Include="utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="BC6HDecode.hlsl" />
+    <None Include="BC6HEncode.hlsl" />
+    <None Include="BC7Decode.hlsl" />
+    <None Include="BC7Encode.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <CLInclude Include="resource.h" />
+    <ResourceCompile Include="BC6HBC7EncoderDecoder11.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <FXC Include="BC6HDecode.sh">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cs_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="BC6HEncode_EncodeBlockCS.sh">
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EncodeBlockCS</EntryPoint>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cs_4_0</ShaderModel>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EncodeBlockCS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">EncodeBlockCS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">EncodeBlockCS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">EncodeBlockCS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Release|x64'">EncodeBlockCS</EntryPoint>
+    </FXC>
+    <FXC Include="BC6HEncode_TryModeG10CS.sh">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cs_4_0</ShaderModel>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TryModeG10CS</EntryPoint>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cs_4_0</ShaderModel>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TryModeG10CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">TryModeG10CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">TryModeG10CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">TryModeG10CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TryModeG10CS</EntryPoint>
+    </FXC>
+    <FXC Include="BC6HEncode_TryModeLE10CS.sh">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cs_4_0</ShaderModel>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TryModeLE10CS</EntryPoint>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cs_4_0</ShaderModel>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TryModeLE10CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">TryModeLE10CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">TryModeLE10CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">TryModeLE10CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TryModeLE10CS</EntryPoint>
+    </FXC>
+    <FXC Include="BC7Decode.sh">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cs_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="BC7Encode_EncodeBlockCS.sh">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cs_4_0</ShaderModel>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EncodeBlockCS</EntryPoint>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cs_4_0</ShaderModel>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EncodeBlockCS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">EncodeBlockCS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">EncodeBlockCS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">EncodeBlockCS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Release|x64'">EncodeBlockCS</EntryPoint>
+    </FXC>
+    <FXC Include="BC7Encode_TryMode02CS.sh">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cs_4_0</ShaderModel>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TryMode02CS</EntryPoint>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cs_4_0</ShaderModel>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TryMode02CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">TryMode02CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">TryMode02CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">TryMode02CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TryMode02CS</EntryPoint>
+    </FXC>
+    <FXC Include="BC7Encode_TryMode137CS.sh">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cs_4_0</ShaderModel>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TryMode137CS</EntryPoint>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cs_4_0</ShaderModel>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TryMode137CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">TryMode137CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">TryMode137CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">TryMode137CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TryMode137CS</EntryPoint>
+    </FXC>
+    <FXC Include="BC7Encode_TryMode456CS.sh">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cs_4_0</ShaderModel>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TryMode456CS</EntryPoint>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">cs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cs_4_0</ShaderModel>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TryMode456CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">TryMode456CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">TryMode456CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">TryMode456CS</EntryPoint>
+      <EntryPoint Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TryMode456CS</EntryPoint>
+    </FXC>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\..\MSSupport\oFXC.targets" />
+  </ImportGroup>
+</Project>

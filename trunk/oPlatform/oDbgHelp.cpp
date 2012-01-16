@@ -123,16 +123,16 @@ oDbgHelp::oDbgHelp(HANDLE _hProcess, const char* _SymbolPath, ModuleLoadedHandle
 		{
 			// then for an installed version (32/64-bit)
 			if (detail::GetSDKPath(path, "/Debugging Tools for Windows/dbghelp.dll") && detail::Exists(path))
-				hDbgHelp = oModuleLink(path, detail::dbghelp_dll_Functions, (void**)&EnumerateLoadedModules64, oCOUNTOF(detail::dbghelp_dll_Functions));
+				hDbgHelp = oModuleLinkSafe(path, detail::dbghelp_dll_Functions, (void**)&EnumerateLoadedModules64, oCOUNTOF(detail::dbghelp_dll_Functions));
 
 			if (!hDbgHelp && detail::GetSDKPath(path, "/Debugging Tools for Windows 64-Bit/dbghelp.dll") && detail::Exists(path))
-				hDbgHelp = oModuleLink(path, detail::dbghelp_dll_Functions, (void**)&EnumerateLoadedModules64, oCOUNTOF(detail::dbghelp_dll_Functions));
+				hDbgHelp = oModuleLinkSafe(path, detail::dbghelp_dll_Functions, (void**)&EnumerateLoadedModules64, oCOUNTOF(detail::dbghelp_dll_Functions));
 		}
 	}
 
 	// else punt to wherever the system can find it
 	if (!hDbgHelp)
-		hDbgHelp = oModuleLink("dbghelp.dll", detail::dbghelp_dll_Functions, (void**)&EnumerateLoadedModules64, oCOUNTOF(detail::dbghelp_dll_Functions));
+		hDbgHelp = oModuleLinkSafe("dbghelp.dll", detail::dbghelp_dll_Functions, (void**)&EnumerateLoadedModules64, oCOUNTOF(detail::dbghelp_dll_Functions));
 	
 	if (hDbgHelp)
 	{

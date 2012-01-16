@@ -27,9 +27,29 @@
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oPlatform/oWindows.h>
-#include "oTaskPool.h"
 
 #if defined(_WIN32) || defined(_WIN64)
+
+struct oTASKPooled
+{
+public:
+	static oTASKPooled* Create(oTASK _Task, threadsafe oBlockAllocatorGrowableT<oTASKPooled>* _pPool)
+	{
+		return new(_pPool->Allocate()) oTASKPooled(_Task, _pPool);
+	}
+	inline void operator()() { Task(); this->~oTASKPooled(); pPool->Deallocate(this); }
+	
+private:
+	oTASKPooled(oTASK _Task, threadsafe oBlockAllocatorGrowableT<oTASKPooled>* _pPool)
+		: Task(_Task)
+		, pPool(_pPool)
+	{}
+	~oTASKPooled()
+	{}
+
+	oTASK Task;
+	threadsafe oBlockAllocatorGrowableT<oTASKPooled>* pPool;
+};
 
 struct oDispatchQueueConcurrentWTP : oDispatchQueueConcurrent
 {
@@ -53,8 +73,9 @@ struct oDispatchQueueConcurrentWTP : oDispatchQueueConcurrent
 	oStd::atomic_bool AllowEnqueue;
 	oStd::atomic_bool IsJoinable;
 	oRefCount RefCount;
+	oBlockAllocatorGrowableT<oTASKPooled> Pool;
 
-	static VOID CALLBACK WorkCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_WORK Work) { (*(oTask*)Context)(); }
+	static VOID CALLBACK WorkCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_WORK Work) { (*(oTASKPooled*)Context)(); }
 };
 
 const oGUID& oGetGUID(threadsafe const oDispatchQueueConcurrentWTP* threadsafe const*)
@@ -122,7 +143,8 @@ bool oDispatchQueueConcurrentWTP::Dispatch(oTASK _Task) threadsafe
 			_Task();
 		else
 		{
-			PTP_WORK TPWork = CreateThreadpoolWork(WorkCallback, oTaskPoolAllocate(_Task), (PTP_CALLBACK_ENVIRON)&TPEnvironment);
+			oTASKPooled* pTask = oTASKPooled::Create(_Task, &Pool);
+			PTP_WORK TPWork = CreateThreadpoolWork(WorkCallback, pTask, (PTP_CALLBACK_ENVIRON)&TPEnvironment);
 			SubmitThreadpoolWork(TPWork);
 		}
 

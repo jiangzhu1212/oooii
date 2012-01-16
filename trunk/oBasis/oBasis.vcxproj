@@ -118,6 +118,7 @@
     <ClInclude Include="..\inc\oBasis\oUint128.h" />
     <ClInclude Include="..\inc\oBasis\oUnorderedMap.h" />
     <ClInclude Include="..\inc\oBasis\oURI.h" />
+    <ClInclude Include="..\inc\oBasis\oVersion.h" />
     <ClInclude Include="..\inc\oBasis\oXML.h" />
     <ClInclude Include="oAllocatorTLSF.h" />
     <ClInclude Include="oIndexAllocatorInternal.h" />
@@ -182,9 +183,12 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0110F712-0D38-4A54-9849-52786B26481B}</ProjectGuid>
     <RootNamespace>oBasis</RootNamespace>
-    <SccProjectName>Perforce Project</SccProjectName>
-    <SccLocalPath>..</SccLocalPath>
-    <SccProvider>MSSCCI:Perforce SCM</SccProvider>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">

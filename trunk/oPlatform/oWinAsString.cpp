@@ -293,35 +293,14 @@ const char* oWinAsStringSWP(unsigned int _SWPCode)
 	return "unrecognized SWPCode";
 }
 
-static char* oWinParseFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _uFlags, const char* _NullValue, const char* (*oWinAsStringFn)(UINT _Code))
-{
-	*_StrDestination = 0;
-	UINT Mask = 0x80000000;
-
-	if (_uFlags == 0)
-		sprintf_s(_StrDestination, _SizeofStrDestination, _NullValue);
-	else
-	{
-		bool atLeastOne = false;
-		while (Mask)
-		{
-			if (_uFlags & Mask)
-				oStrAppend(_StrDestination, _SizeofStrDestination, "%s%s", *_StrDestination == 0 ? "" : "|", oWinAsStringFn(_uFlags & Mask));
-			Mask >>= 1;
-		}
-	}
-
-	return _StrDestination;
-}
-
 char* oWinParseStyleFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSFlags)
 {
-	return oWinParseFlags(_StrDestination, _SizeofStrDestination, _WSFlags, oWinAsStringWS(WS_OVERLAPPED), oWinAsStringWS);
+	return oAsStringFlags(_StrDestination, _SizeofStrDestination, _WSFlags, oWinAsStringWS(WS_OVERLAPPED), [&](unsigned int _Flag) { return oWinAsStringWS(_Flag); });
 }
 
 char* oWinParseSWPFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _SWPFlags)
 {
-	return oWinParseFlags(_StrDestination, _SizeofStrDestination, _SWPFlags, "0", oWinAsStringSWP);
+	return oAsStringFlags(_StrDestination, _SizeofStrDestination, _SWPFlags, "0", [&](unsigned int _Flag) { return oWinAsStringSWP(_Flag); });
 }
 
 char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)

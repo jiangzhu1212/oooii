@@ -86,7 +86,7 @@ bool oSystemSetEnvironmentVariable(const char* _Name, const char* _Value);
 char* oSystemGetEnvironmentVariable(char* _Value, size_t _SizeofValue, const char* _Name);
 
 // Fills _StrEnvironment with all environment variables delimited by '\n'
-char* oGetEnvironmentString(char* _StrEnvironment, size_t _SizeofStrEnvironment);
+char* oSystemGetEnvironmentString(char* _StrEnvironment, size_t _SizeofStrEnvironment);
 
 enum oSYSPATH
 {

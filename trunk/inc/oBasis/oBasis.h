@@ -108,5 +108,6 @@
 #include <oBasis/oUint128.h>
 #include <oBasis/oUnorderedMap.h>
 #include <oBasis/oURI.h>
+#include <oBasis/oVersion.h>
 #include <oBasis/oXML.h>
 #endif

@@ -31,7 +31,7 @@ static const char* d3dx11_dll_functions[] =
 
 oD3DX11::oD3DX11()
 {
-	hD3DX11 = oModuleLink("d3dx11_43.dll", d3dx11_dll_functions, (void**)&D3DX11CreateTextureFromMemory, oCOUNTOF(d3dx11_dll_functions));
+	hD3DX11 = oModuleLinkSafe("d3dx11_43.dll", d3dx11_dll_functions, (void**)&D3DX11CreateTextureFromMemory, oCOUNTOF(d3dx11_dll_functions));
 	oASSERT(hD3DX11, "");
 }
 

@@ -245,10 +245,10 @@ bool oD2DWindowUIText::OnEvent(oWindow::EVENT _Event, unsigned int _SuperSampleS
 oD2DWindowUIPicture::oD2DWindowUIPicture(const DESC& _Desc, threadsafe oWindow* _pWindow, bool* _pSuccess)
 	: oWindowUIElementBaseMixin(_Desc, _pWindow)
 	, CPUBitmap(nullptr)
-	, CPUBitmapRowPitch(oSurfaceGetSize(oSURFACE_B8G8R8A8_UNORM) * _Desc.SurfaceDesc.Dimensions.x) // // We'll be converting to RGBA from RGB in Copy()
+	, CPUBitmapRowPitch(oImageCalcRowPitch(oImage::BGRA32, _Desc.ImageDesc.Dimensions.x)) // We'll be converting to RGBA from RGB in Copy()
 {
-	CPUBitmap = new char[CPUBitmapRowPitch * _Desc.SurfaceDesc.Dimensions.y];
-	memset(CPUBitmap, 0, CPUBitmapRowPitch * _Desc.SurfaceDesc.Dimensions.y);
+	CPUBitmap = new char[CPUBitmapRowPitch * _Desc.ImageDesc.Dimensions.y];
+	memset(CPUBitmap, 0, CPUBitmapRowPitch * _Desc.ImageDesc.Dimensions.y);
 	oHOOK_ONEVENT(oD2DWindowUIPicture);
 	*_pSuccess = HookID != oInvalid;
 }
@@ -302,12 +302,12 @@ void oD2DWindowUIPicture::Copy(const void* _pSourceData, size_t _SourcePitch, bo
 
 	const DESC& d = MIXINGetDesc();
 
-	if (oSurfaceIsAlphaFormat(d.SurfaceDesc.Format))
-		oMemcpy2dPreMultiplyAlpha(static_cast<oColor*>(CPUBitmap), CPUBitmapRowPitch, static_cast<const oColor*>(_pSourceData), _SourcePitch, d.SurfaceDesc.Dimensions.x * sizeof(oColor), d.SurfaceDesc.Dimensions.y);
-	else if (3 == oSurfaceGetSize(d.SurfaceDesc.Format))
-		oMemcpy2d24To32Bit(static_cast<oColor*>(CPUBitmap), CPUBitmapRowPitch, _pSourceData, _SourcePitch, d.SurfaceDesc.Dimensions.x * 3, d.SurfaceDesc.Dimensions.y);
+	if (oImageIsAlphaFormat(d.ImageDesc.Format))
+		oMemcpy2dPreMultiplyAlpha(static_cast<oColor*>(CPUBitmap), CPUBitmapRowPitch, static_cast<const oColor*>(_pSourceData), _SourcePitch, d.ImageDesc.Dimensions.x * sizeof(oColor), d.ImageDesc.Dimensions.y);
+	else if (3 == oImageGetSize(d.ImageDesc.Format))
+		oMemcpy2d24To32Bit(static_cast<oColor*>(CPUBitmap), CPUBitmapRowPitch, _pSourceData, _SourcePitch, d.ImageDesc.Dimensions.x * 3, d.ImageDesc.Dimensions.y);
 	else
-		oMemcpy2d(CPUBitmap, CPUBitmapRowPitch, _pSourceData, _SourcePitch, d.SurfaceDesc.Dimensions.x * sizeof(oColor), d.SurfaceDesc.Dimensions.y);
+		oMemcpy2d(CPUBitmap, CPUBitmapRowPitch, _pSourceData, _SourcePitch, d.ImageDesc.Dimensions.x * sizeof(oColor), d.ImageDesc.Dimensions.y);
 	
 	BitmapDirty = true;
 	FlippedHorizontally = _FlipHorizontally;
@@ -336,7 +336,7 @@ bool oD2DWindowUIPicture::OnEvent(oWindow::EVENT _Event, unsigned int _SuperSamp
 		case oWindow::RESIZED:
 		{
 			const DESC& d = MIXINGetDesc();
-			if (!oD2DCreateBitmap(D2DRenderTarget, d.SurfaceDesc.Dimensions.xy(), oSURFACE_B8G8R8A8_UNORM, &Bitmap))
+			if (!oD2DCreateBitmap(D2DRenderTarget, d.ImageDesc.Dimensions, oSURFACE_B8G8R8A8_UNORM, &Bitmap))
 				return false;
 			ApplyCPUBitmap();
 			break;

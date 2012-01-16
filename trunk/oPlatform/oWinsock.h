@@ -46,7 +46,7 @@
 // Call oErrorSetLast() with errno_t equivalent, but also include WSA error and extended desc in description
 #define oWINSOCK_SETLASTERROR(strFnName) oErrorSetLast(oERROR_IO, "oWinsock::" strFnName " failed %s(%d): %s", oWinsock::AsString(oWinsock::Singleton()->WSAGetLastError()), oWinsock::Singleton()->WSAGetLastError(), oWinsock::GetErrorDesc(oWinsock::Singleton()->WSAGetLastError()))
 
-struct oWinsock : public oModuleSingleton<oWinsock>
+struct oWinsock : public oProcessSingleton<oWinsock>
 {
 	// NOTE: gai_strerror is an inline function, so does not need to be linked
 	// against or called from this oWinSock interface.
@@ -206,6 +206,8 @@ struct oWinsock : public oModuleSingleton<oWinsock>
 	bool GetFunctionPointer_GetAcceptExSockaddrs(SOCKET s, LPFN_GETACCEPTEXSOCKADDRS* ppGetAcceptExSockaddrs);
 	bool GetFunctionPointer_TransmitPackets(SOCKET s, LPFN_TRANSMITPACKETS* ppTransmitPackets);
 	bool GetFunctionPointer_WSARecvMsg(SOCKET s, LPFN_WSARECVMSG* ppWSARecvMsg);
+
+	static const oGUID GUID;
 
 protected:
 	oHMODULE hMswsock;

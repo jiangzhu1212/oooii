@@ -267,7 +267,7 @@ protected:
 	DESC PendingDesc; // buffer returned by Map (sync'ed to Desc first so Map == GetDesc)
 	DESC PreFullscreenDesc; // desc as it was before a fullscreen state was set.
 	oTASK RunFunction; // cache the binding of this->Run();
-	oRef<threadsafe oDispatchQueue> MessageQueue;
+	oRef<threadsafe oDispatchQueuePrivate> MessageQueue;
 
 	std::vector<HookFn> Hooks;
 

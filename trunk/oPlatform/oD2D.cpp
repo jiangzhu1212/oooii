@@ -33,7 +33,7 @@
 static const char* oWinD2D_exports[] = { "D2D1CreateFactory", };
 struct oWinD2D : oModuleSingleton<oWinD2D>
 {
-	oWinD2D() { hModule = oModuleLink("d2d1.dll", oWinD2D_exports, (void**)&D2D1CreateFactory); oVERIFY(hModule); }
+	oWinD2D() { hModule = oModuleLinkSafe("d2d1.dll", oWinD2D_exports, (void**)&D2D1CreateFactory); oVERIFY(hModule); }
 	~oWinD2D() { oModuleUnlink(hModule); }
 public:
 	HRESULT (__stdcall *D2D1CreateFactory)(D2D1_FACTORY_TYPE factoryType, REFIID riid, const D2D1_FACTORY_OPTIONS *pFactoryOptions, void **ppIFactory);
@@ -47,7 +47,7 @@ struct oWinDWrite : oModuleSingleton<oWinDWrite>
 {
 	oWinDWrite()
 	{
-		hModule = oModuleLink("dwrite.dll", oWinDWrite_exports, (void**)&DWriteCreateFactory);
+		hModule = oModuleLinkSafe("dwrite.dll", oWinDWrite_exports, (void**)&DWriteCreateFactory);
 		oVERIFY(hModule);
 		// Create a single shared one of these and always use it
 		if (S_OK != DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&DWriteFactory))

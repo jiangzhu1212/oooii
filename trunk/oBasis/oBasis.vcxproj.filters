@@ -348,6 +348,9 @@
     <ClInclude Include="..\inc\oBasis\oBlockAllocatorGrowable.h">
       <Filter>oBasis\Allocators</Filter>
     </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oVersion.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oStdChrono.cpp">

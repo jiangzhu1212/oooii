@@ -177,6 +177,7 @@
     <ClInclude Include="..\inc\oPlatform\oStddef.h" />
     <ClInclude Include="..\inc\oPlatform\oTest.h" />
     <ClInclude Include="..\inc\oPlatform\oVTable.h" />
+    <ClInclude Include="FreeImageHelpers.h" />
     <ClInclude Include="oCamera_QEdit.h" />
     <ClInclude Include="oCRTLeakTracker.h" />
     <ClInclude Include="oD2DWindowUI.h" />
@@ -187,7 +188,6 @@
     <ClInclude Include="oOpenSSL.h" />
     <ClInclude Include="oSpinlockEx.h" />
     <ClInclude Include="oStaticMutex.h" />
-    <ClInclude Include="oTaskPool.h" />
     <ClInclude Include="oWindowUIElementBaseMixin.h" />
     <ClInclude Include="oWinDWMAPI.h" />
     <ClInclude Include="oWinPowrProf.h" />
@@ -196,6 +196,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="FreeImageHelpers.cpp" />
     <ClCompile Include="oCamera.cpp" />
     <ClCompile Include="oConsole.cpp" />
     <ClCompile Include="oCPU.cpp" />
@@ -238,7 +239,6 @@
     <ClCompile Include="oSocket.cpp" />
     <ClCompile Include="oStandards.cpp" />
     <ClCompile Include="oSystem.cpp" />
-    <ClCompile Include="oTaskPool.cpp" />
     <ClCompile Include="oTBBTask.cpp" />
     <ClCompile Include="oTest.cpp" />
     <ClCompile Include="oThreadX.cpp" />

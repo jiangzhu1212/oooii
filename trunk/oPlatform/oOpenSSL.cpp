@@ -45,7 +45,7 @@ static const char* openssl_dll_functions[] =
 
 oOpenSSL::oOpenSSL()
 {
-	hOpenSSL = oModuleLink("ssleay32.dll", openssl_dll_functions, (void**)&SSL_library_init, oCOUNTOF(openssl_dll_functions));
+	hOpenSSL = oModuleLinkSafe("ssleay32.dll", openssl_dll_functions, (void**)&SSL_library_init, oCOUNTOF(openssl_dll_functions));
 	oASSERT(hOpenSSL, "");
 }
 

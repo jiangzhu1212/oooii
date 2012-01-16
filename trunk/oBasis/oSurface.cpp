@@ -251,7 +251,7 @@ unsigned int oSurfaceCalcRowPitch(oSURFACE_FORMAT _Format, unsigned int _Mip0Wid
 	if (oSurfaceIsBlockCompressedFormat(_Format)) // because the atom is a 4x4 block
 		w /= 4;
 	unsigned int s = oSurfaceGetSize(_Format);
-	return static_cast<unsigned int>(oByteAlign(w * s, sizeof(int)));
+	return static_cast<unsigned int>(oByteAlign(w * s, sFormatDescs[_Format].Size));
 }
 
 unsigned int oSurfaceCalcLevelPitch(oSURFACE_FORMAT _Format, int2 _MipDimensions, unsigned int _MipLevel)

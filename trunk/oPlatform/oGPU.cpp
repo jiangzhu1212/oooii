@@ -35,7 +35,7 @@ bool oGPUEnum(unsigned int _Index, oGPU_DESC* _pDesc)
 		{
 			IDXGIAdapter* pAdapter = 0;
 			if (DXGI_ERROR_NOT_FOUND == pFactory->EnumAdapters(_Index, &pAdapter))
-				return false;
+				return oErrorSetLast(oERROR_END_OF_FILE, "Index %u not found", _Index);
 
 			DXGI_ADAPTER_DESC desc;
 			pAdapter->GetDesc(&desc);
@@ -51,5 +51,23 @@ bool oGPUEnum(unsigned int _Index, oGPU_DESC* _pDesc)
 	#else
 		oTRACE("oGPUEnum not yet implemented on pre-DX10 Windows");
 	#endif
-	return false;
+
+	return oErrorSetLast(oERROR_NOT_FOUND, "oGPUEnum not yet implemented on pre-DX10 Windows");
+}
+
+bool oGPUFindD3DCapable(unsigned int _NthMatch, const oVersion& _MinimumFeatureLevel, oGPU_DESC* _pDesc)
+{
+	unsigned int UserGPUIndex = oInvalid;
+	unsigned int D3DGPUIndex = oInvalid;
+	while (oGPUEnum(++D3DGPUIndex, _pDesc))
+	{
+		if (_pDesc->D3DVersion >= _MinimumFeatureLevel)
+		{
+			if (++UserGPUIndex == _NthMatch)
+				return true;
+		}
+	}
+
+	memset(_pDesc, 0, sizeof(oGPU_DESC));
+	return oErrorSetLast(oERROR_END_OF_FILE, "Index _NthMatch=%u is greater than the number of GPUs on the current system (%u)", _NthMatch, D3DGPUIndex);
 }

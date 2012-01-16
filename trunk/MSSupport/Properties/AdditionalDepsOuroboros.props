@@ -5,12 +5,12 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <Link>
-      <AdditionalDependencies>D3DX11.lib;D3DCompiler.lib;D3DX10.lib;wininet.lib;freeimage$(oBuildSuffix).lib;tbb$(oBuildSuffix).lib;tlsf$(oBuildSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3DX11.lib;D3DCompiler.lib;D3DX10.lib;wininet.lib;freeimage$(oBuildSuffix).lib;tbb$(oBuildSuffix).lib;tlsf$(oBuildSuffix).lib;BC6HBC7EncoderDecoder11$(oBuildSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(oSDK)\ext\lib\$(Platform)\$(oCompilerName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <ClCompile>
       <PreprocessorDefinitions>FREEIMAGE_LIB;__TBB_NO_IMPLICIT_LINKAGE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(oSDK)\ext\FreeImage\Source;$(oSDK)ext\FreeImage\Source\OpenEXR\Half;$(oSDK)\ext\tbb\include;$(oSDK)\ext\OpenSSL\openssl-1.0.0e\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(oSDK)\ext\FreeImage\Source;$(oSDK)ext\FreeImage\Source\OpenEXR\Half;$(oSDK)\ext\tbb\include;$(oSDK)\ext\OpenSSL\openssl-1.0.0e\include;$(oSDK)\ext\BC6HBC7EncoderDecoder11;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
   </ItemDefinitionGroup>

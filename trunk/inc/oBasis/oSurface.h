@@ -252,4 +252,11 @@ inline void oSurfaceUnpackSubresource(unsigned int _Subresource, unsigned int _N
 unsigned int oSurfaceCalcSize(const oSURFACE_DESC& _Desc);
 unsigned int oSurfaceCalcSize(oSURFACE_FORMAT _Format, unsigned int _Width, unsigned int _Height);
 
+inline unsigned int oSurfaceCalcSize(oSURFACE_FORMAT _Format, const int2& _Dimensions)
+{
+	// @oooii-tony: Code base is migrating towards "if it's a simple type, just use int",
+	// so cast away unsigned-ness for now.
+	return oSurfaceCalcSize(_Format, static_cast<unsigned int>(_Dimensions.x), static_cast<unsigned int>(_Dimensions.y));
+}
+
 #endif

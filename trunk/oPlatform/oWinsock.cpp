@@ -183,16 +183,19 @@ const static unsigned int kWinsockMinorVersion = 2;
 
 #define oTRACE_WINSOCK_LIFETIME(strState) oTRACE("oWinsock v%u.%u " strState, kWinsockMajorVersion, kWinsockMinorVersion)
 
+// {4B890E26-15E8-47C5-8A5A-FF9A0673EE7E}
+const oGUID oWinsock::GUID = { 0x4b890e26, 0x15e8, 0x47c5, { 0x8a, 0x5a, 0xff, 0x9a, 0x6, 0x73, 0xee, 0x7e } };
+
 oWinsock::oWinsock()
 {
 	oTRACE_WINSOCK_LIFETIME("initializing...");
 
 	oReportingReference();
 
-	hWs2_32 = oModuleLink("ws2_32.dll", detail::ws2_32_dll_Functions, (void**)&accept, oCOUNTOF(detail::ws2_32_dll_Functions));
+	hWs2_32 = oModuleLinkSafe("ws2_32.dll", detail::ws2_32_dll_Functions, (void**)&accept, oCOUNTOF(detail::ws2_32_dll_Functions));
 	oASSERT(hWs2_32, "Failed to load and link ws2_32.dll");
 
-	hMswsock = oModuleLink("mswsock.dll", detail::mswsock_dll_Functions, (void**)&AcceptEx, oCOUNTOF(detail::mswsock_dll_Functions));
+	hMswsock = oModuleLinkSafe("mswsock.dll", detail::mswsock_dll_Functions, (void**)&AcceptEx, oCOUNTOF(detail::mswsock_dll_Functions));
 	oASSERT(hMswsock, "Failed to load and link mswsock.dll");
 
 	//hFwpucint = oModule::Link("fwpucint.dll", detail::fwpucint_dll_Functions, (void**)&WSADeleteSocketPeerTargetName, oCOUNTOF(detail::fwpucint_dll_Functions));
@@ -306,35 +309,35 @@ errno_t oWinsock::GetErrno(int _WSAWinSockError)
 bool oWinsock::GetFunctionPointer_ConnectEx(SOCKET s, LPFN_CONNECTEX* ppConnectEx)
 {
 	DWORD dwBytesReturned = 0;
-	GUID guid = WSAID_CONNECTEX;
+	oGUID guid = WSAID_CONNECTEX;
 	return SOCKET_ERROR != oWinsock::Singleton()->WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), ppConnectEx, sizeof(LPFN_CONNECTEX), &dwBytesReturned, 0, 0);
 }
 
 bool oWinsock::GetFunctionPointer_DisconnectEx(SOCKET s, LPFN_DISCONNECTEX* ppDisconnectEx)
 {
 	DWORD dwBytesReturned = 0;
-	GUID guid = WSAID_DISCONNECTEX;
+	oGUID guid = WSAID_DISCONNECTEX;
 	return SOCKET_ERROR != oWinsock::Singleton()->WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), ppDisconnectEx, sizeof(LPFN_DISCONNECTEX), &dwBytesReturned, 0, 0);
 }
 
 bool oWinsock::GetFunctionPointer_GetAcceptExSockaddrs(SOCKET s, LPFN_GETACCEPTEXSOCKADDRS* ppGetAcceptExSockaddrs)
 {
 	DWORD dwBytesReturned = 0;
-	GUID guid = WSAID_GETACCEPTEXSOCKADDRS;
+	oGUID guid = WSAID_GETACCEPTEXSOCKADDRS;
 	return SOCKET_ERROR != oWinsock::Singleton()->WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), ppGetAcceptExSockaddrs, sizeof(LPFN_GETACCEPTEXSOCKADDRS), &dwBytesReturned, 0, 0);
 }
 
 bool oWinsock::GetFunctionPointer_TransmitPackets(SOCKET s, LPFN_TRANSMITPACKETS* ppTransmitPackets)
 {
 	DWORD dwBytesReturned = 0;
-	GUID guid = WSAID_TRANSMITPACKETS;
+	oGUID guid = WSAID_TRANSMITPACKETS;
 	return SOCKET_ERROR != oWinsock::Singleton()->WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), ppTransmitPackets, sizeof(LPFN_TRANSMITPACKETS), &dwBytesReturned, 0, 0);
 }
 
 bool oWinsock::GetFunctionPointer_WSARecvMsg(SOCKET s, LPFN_WSARECVMSG* ppWSARecvMsg)
 {
 	DWORD dwBytesReturned = 0;
-	GUID guid = WSAID_WSARECVMSG;
+	oGUID guid = WSAID_WSARECVMSG;
 	return SOCKET_ERROR != oWinsock::Singleton()->WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), ppWSARecvMsg, sizeof(LPFN_WSARECVMSG), &dwBytesReturned, 0, 0);
 }
 
