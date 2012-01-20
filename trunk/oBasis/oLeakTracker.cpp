@@ -35,6 +35,7 @@
 oLeakTracker::oLeakTracker(GetCallstackFn _GetCallstack, GetCallstackSymbolStringFn _GetCallstackSymbolString, PrintFn _Print, bool _ReportHexAllocationID, bool _CaptureCallstack, allocations_t::allocator_type _Allocator)
 	: InInternalProcesses(false)
 	, Allocations(0, allocations_t::hasher(), allocations_t::key_equal(), allocations_t::key_less(), _Allocator)
+	, DelayLatch("Report Delay", 1)
 	, CurrentContext(0)
 {
 	Desc.GetCallstack = _GetCallstack;
@@ -48,6 +49,8 @@ oLeakTracker::oLeakTracker(const DESC& _Desc, allocations_t::allocator_type _All
 	: Desc(_Desc)
 	, InInternalProcesses(false)
 	, Allocations(0, allocations_t::hasher(), allocations_t::key_equal(), allocations_t::key_less(), _Allocator)
+	, DelayLatch("Report Delay", 1)
+	, CurrentContext(0)
 {
 }
 
@@ -165,6 +168,10 @@ bool oLeakTracker::Report(bool _AllContexts) threadsafe
 	oStringL buf;
 	oStringS memsize;
 
+	DelayLatch.Release();
+	if (!DelayLatch.Wait(5000)) // some delayed frees might be in threads that get stomped on (thus no exit code runs) during static deinit, so don't wait forever
+		oTRACE("WARNING: a delay on the leak report count was added, but has yet to be released. The timeout has been reached, so this report will include delayed releases that haven't (yet) occurred.");
+
 	oLockGuard<oRecursiveMutex> Lock(Mutex);
 	oLeakTracker* pThis = thread_cast<oLeakTracker*>(this); // protected by mutex above
 
@@ -235,6 +242,8 @@ bool oLeakTracker::Report(bool _AllContexts) threadsafe
 			pThis->Desc.Print(Footer);
 		}
 	}
+
+	DelayLatch.Reset(1);
 
 	return nLeaks > 0;
 }

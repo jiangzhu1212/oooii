@@ -79,6 +79,9 @@ oAPI unsigned long long oFileWrite(oHFILE _hFile, const void* _pSource, unsigned
 oAPI unsigned long long oFileGetSize(oHFILE _hFile);
 oAPI bool oFileAtEnd(oHFILE _hFile);
 oAPI bool oFileGetDesc(const char* _Path, oFILE_DESC* _pDesc);
+
+// The EnumFunction should return true to continue enummeration, false to 
+// short-circuit and end early.
 oAPI bool oFileEnum(const char* _WildcardPath, oFUNCTION<bool(const char* _FullPath, const oFILE_DESC& _Desc)> _EnumFunction);
 oAPI bool oFileTouch(oHFILE _hFile, time_t _PosixTimestamp);
 oAPI bool oFileMarkReadOnly(const char* _Path, bool _ReadOnly = true);

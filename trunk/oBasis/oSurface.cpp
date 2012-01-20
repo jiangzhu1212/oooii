@@ -26,6 +26,7 @@
 #include <oBasis/oByte.h>
 #include <oBasis/oMacros.h>
 #include <oBasis/oMemory.h>
+#include <oBasis/oMath.h>
 #include <cstring>
 
 struct BIT_SIZE
@@ -274,6 +275,14 @@ unsigned int oSurfaceCalcMipDimension(oSURFACE_FORMAT _Format, unsigned int _Mip
 	oASSERT(_MipLevel == 0 || oIsPow2(_Mip0Dimension), "Mipchain dimensions must be a power of 2");
 	unsigned int d = __max(1, _Mip0Dimension >> _MipLevel);
 	return oSurfaceIsBlockCompressedFormat(_Format) ? static_cast<unsigned int>(oByteAlign(d, 4)) : d;
+}
+
+int2 oSurfaceCalcMipDimensionsNP2(int2 _Mip0Dimensions, unsigned int _MipLevel /*= 0*/)
+{
+	int2 d = _Mip0Dimensions >> _MipLevel;
+	d &= 0xffffffe; //always even except for 1x1's
+	d = oMax(d, int2(1,1));
+	return d;
 }
 
 unsigned int oSurfaceCalcNumRows(oSURFACE_FORMAT _Format, unsigned int _Mip0Height, unsigned int _MipLevel)

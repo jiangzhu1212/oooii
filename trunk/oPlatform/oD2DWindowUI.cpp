@@ -42,7 +42,7 @@ oD2DWindowUILine::~oD2DWindowUILine()
 	oUNHOOK_ONEVENT();
 }
 
-bool oD2DWindowUILine::OnEvent(oWindow::EVENT _Event, unsigned int _SuperSampleScale, const oWindow::DESC& _Desc)
+bool oD2DWindowUILine::OnEvent(oWindow::EVENT _Event, const float3& _Position, int _SuperSampleScale)
 {
 	oRef<ID2D1RenderTarget> D2DRenderTarget;
 	oVERIFY(Window->QueryInterface((const oGUID&)__uuidof(ID2D1RenderTarget), &D2DRenderTarget));
@@ -86,7 +86,7 @@ oD2DWindowUIBox::~oD2DWindowUIBox()
 	oUNHOOK_ONEVENT();
 }
 
-bool oD2DWindowUIBox::OnEvent(oWindow::EVENT _Event, unsigned int _SuperSampleScale, const oWindow::DESC& _Desc)
+bool oD2DWindowUIBox::OnEvent(oWindow::EVENT _Event, const float3& _Position, int _SuperSampleScale)
 {
 	oRef<ID2D1RenderTarget> D2DRenderTarget;
 	oVERIFY(Window->QueryInterface((const oGUID&)__uuidof(ID2D1RenderTarget), &D2DRenderTarget));
@@ -190,7 +190,7 @@ void oD2DWindowUIText::SetText(const char* _Text) threadsafe
 	Window->Refresh(false);
 }
 
-bool oD2DWindowUIText::OnEvent(oWindow::EVENT _Event, unsigned int _SuperSampleScale, const oWindow::DESC& _Desc)
+bool oD2DWindowUIText::OnEvent(oWindow::EVENT _Event, const float3& _Position, int _SuperSampleScale)
 {
 	oRef<ID2D1RenderTarget> D2DRenderTarget;
 	oVERIFY(Window->QueryInterface((const oGUID&)__uuidof(ID2D1RenderTarget), &D2DRenderTarget));
@@ -324,7 +324,7 @@ void oD2DWindowUIPicture::ApplyCPUBitmap() threadsafe
 	BitmapDirty = false;
 }
 
-bool oD2DWindowUIPicture::OnEvent(oWindow::EVENT _Event, unsigned int _SuperSampleScale, const oWindow::DESC& _Desc)
+bool oD2DWindowUIPicture::OnEvent(oWindow::EVENT _Event, const float3& _Position, int _SuperSampleScale)
 {
 	oRef<ID2D1RenderTarget> D2DRenderTarget;
 	oVERIFY(Window->QueryInterface((const oGUID&)__uuidof(ID2D1RenderTarget), &D2DRenderTarget));

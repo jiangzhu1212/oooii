@@ -64,21 +64,14 @@ bool oDXGICreateFactory(IDXGIFactory1** _ppFactory)
 {
 	HRESULT hr = oWinDXGI::Singleton()->CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)_ppFactory); 
 	if (FAILED(hr))
-	{
-		oWinSetLastError(hr);
-		return false;
-	}
-
+		return oWinSetLastError(hr);
 	return true;
 }
 
 bool oDXGICreateSwapChain(IUnknown* _pDevice, bool _Fullscreen, UINT _Width, UINT _Height, DXGI_FORMAT _Format, UINT RefreshRateN, UINT RefreshRateD, HWND _hWnd, IDXGISwapChain** _ppSwapChain)
 {
 	if (!_pDevice)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	DXGI_SWAP_CHAIN_DESC d;
 	d.BufferDesc.Width = _Width;
@@ -135,10 +128,7 @@ static DXGI_RATIONAL oDXGIGetRefreshRate(int _RefreshRate)
 bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, bool _Fullscreen, const int2& _FullscreenSize, int _FullscreenRefreshRate)
 {
 	if (!_pSwapChain)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	DXGI_SWAP_CHAIN_DESC SCDesc;
 	
@@ -148,10 +138,7 @@ bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, bool _Fullscreen, cons
 	_pSwapChain->GetDesc(&SCDesc);
 
 	if (GetCurrentThreadId() != GetWindowThreadProcessId(SCDesc.OutputWindow, nullptr))
-	{
-		oErrorSetLast(oERROR_WRONG_THREAD, "oDXGISetFullscreenState called from thread %d for hwnd %x pumping messages on thread %d", GetCurrentThreadId(), SCDesc.OutputWindow, GetWindowThreadProcessId(SCDesc.OutputWindow, nullptr));
-		return false;
-	}
+		return oErrorSetLast(oERROR_WRONG_THREAD, "oDXGISetFullscreenState called from thread %d for hwnd %x pumping messages on thread %d", GetCurrentThreadId(), SCDesc.OutputWindow, GetWindowThreadProcessId(SCDesc.OutputWindow, nullptr));
 
 	oRef<IDXGIOutput> Output;
 	HRESULT HR = _pSwapChain->GetContainingOutput(&Output);
@@ -260,10 +247,7 @@ struct oSCREEN_MODE
 bool oDXGISetPreFullscreenMode(IDXGISwapChain* _pSwapChain, const int2& _Size, int _RefreshRate)
 {
 	if (!_pSwapChain)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	oSCREEN_MODE mode;
 	mode.Size = _Size;
@@ -275,19 +259,13 @@ bool oDXGISetPreFullscreenMode(IDXGISwapChain* _pSwapChain, const int2& _Size, i
 bool oDXGIGetPreFullscreenMode(IDXGISwapChain* _pSwapChain, int2* _pSize, int* _pRefreshRate)
 {
 	if (!_pSwapChain || !_pSwapChain || !_pRefreshRate)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	UINT size;
 	oSCREEN_MODE mode;
 	oVB_RETURN2(_pSwapChain->GetPrivateData(oWKPDID_PreFullscreenMode, &size, &mode));
 	if (size != sizeof(oSCREEN_MODE))
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "Size retreived (%u) does not match size requested (%u)", size, sizeof(oSCREEN_MODE));
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Size retreived (%u) does not match size requested (%u)", size, sizeof(oSCREEN_MODE));
 
 	*_pSize = mode.Size;
 	*_pRefreshRate = mode.RefreshRate;
@@ -311,10 +289,7 @@ oVersion oDXGIGetD3DVersion(IDXGIAdapter* _pAdapter)
 bool oDXGIEnumOutputs(IDXGIFactory* _pFactory, oFUNCTION<bool(unsigned int _AdapterIndex, IDXGIAdapter* _pAdapter, unsigned int _OutputIndex, IDXGIOutput* _pOutput)> _EnumFunction)
 {
 	if (!_pFactory || !_EnumFunction)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	oRef<IDXGIAdapter> Adapter;
 	unsigned int a = 0;
@@ -425,10 +400,8 @@ bool oDXGIIsDepthFormat(DXGI_FORMAT _Format)
 		case DXGI_FORMAT_R16_TYPELESS:
 			return true;
 		default:
-			break;
+			return false;
 	}
-
-	return false;
 }
 
 DXGI_FORMAT oDXGIGetDepthCompatibleFormat(DXGI_FORMAT _TypelessDepthFormat)

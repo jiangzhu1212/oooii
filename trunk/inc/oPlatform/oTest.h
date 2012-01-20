@@ -28,6 +28,7 @@
 #define oTest_h
 
 #include <oBasis/oFilterChain.h>
+#include <oBasis/oFixedString.h>
 #include <oBasis/oString.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oNoncopyable.h>
@@ -35,6 +36,7 @@
 
 #define oTESTERROR(format, ...) do { sprintf_s(_StrStatus, _SizeofStrStatus, format, ## __VA_ARGS__); oTRACE("FAILING: %s (oErrorGetLast() == %s (%s))", _StrStatus, oAsString(oErrorGetLast()), oErrorGetLastString()); return oTest::FAILURE; } while(false)
 #define oTESTB(expr, errMsg, ...) do { if (!(expr)) { oTESTERROR(errMsg, ## __VA_ARGS__); } } while(false)
+#define oTESTB0(expr) do { if (!(expr)) { sprintf_s(_StrStatus, _SizeofStrStatus, "%s: %s", oAsString(oErrorGetLast()), oErrorGetLastString()); return oTest::FAILURE; } } while(false)
 #define oTESTI(oImagePointer) oTESTB(TestImage(oImagePointer), "Image compare failed: %s: %s", oAsString(oErrorGetLast()), oErrorGetLastString());
 #define oTESTI2(oImagePointer, NthFrame) oTESTB(TestImage(oImagePointer, NthFrame), "Image compare (%u%s frame) failed: %s: %s", NthFrame, oOrdinal(NthFrame), oAsString(oErrorGetLast()), oErrorGetLastString());
 
@@ -74,9 +76,27 @@ struct oTest : oModuleSingleton<oTest>
 		NUM_TEST_RESULTS,
 	};
 
+	enum PATH_TYPE
+	{
+		EXECUTABLES,
+		DATA,
+		GOLDEN_BINARIES,
+		GOLDEN_IMAGES,
+		TEMP,
+		INPUT,
+		OUTPUT,
+	};
+
+	oDECLARE_FLAG(FileMustExist);
+
 	oTest();
 	virtual ~oTest();
 	virtual const char* GetName() const;
+
+	// Does a memcmp against a golden binary files that is named consistently with
+	// the test (like golden images) but uses the specified file extension so that
+	// the golden binary can still be opened from the operating system.
+	bool TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _FileExtension, unsigned int _NthImage = 0);
 
 	// Visual tests should prepare an oImage and then use this API to submit the
 	// test image to be compared against a "golden" image, one that has been 
@@ -85,9 +105,6 @@ struct oTest : oModuleSingleton<oTest>
 	bool TestImage(oImage* _pImage, unsigned int _NthImage = 0);
 
 	virtual RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) = 0;
-	static void BuildPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _TestName, const char* _DataPath, const char* _DataSubpath, const char* _Path, unsigned int _NthImage, const char* _Ext);
-
-	template<size_t size> inline void BuildPath(char (&_StrDestination)[size], const char* _TestName, const char* _DataPath, const char* _DataSubpath, const char* _Path, unsigned int _NthImage, const char* _Ext) { BuildPath(_StrDestination, size, _TestName, _DataPath, _DataSubpath, _Path, _NthImage, _Ext); }
 
 	struct DESC //These values will default to test manager desc defaults
 	{
@@ -98,6 +115,25 @@ struct oTest : oModuleSingleton<oTest>
 
 	};
 	virtual void OverrideTestDesc(DESC &_desc) {}
+
+	// Always specify resources for read/write as relative paths from the Data 
+	// root directories specified in the DESC and use this method in tests to 
+	// resolve those relative paths to absolute paths. This returns false if the 
+	// path could not be built. If _PathMustExist, failure includes if the file 
+	// could not be found.
+	inline bool BuildPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath, PATH_TYPE _PathType) const { return BuildPath(_StrFullPath, _SizeofStrFullPath, _StrRelativePath, _PathType, false); }
+	inline bool BuildPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath, PATH_TYPE _PathType, const FileMustExistFlag&) const { return BuildPath(_StrFullPath, _SizeofStrFullPath, _StrRelativePath, _PathType, true); }
+
+	template<size_t size> bool BuildPath(char (&_StrFullPath)[size], const char* _StrRelativePath, PATH_TYPE _PathType) { return BuildPath(_StrFullPath, size, _StrRelativePath, _PathType, false); }
+	template<size_t size> bool BuildPath(char (&_StrFullPath)[size], const char* _StrRelativePath, PATH_TYPE _PathType, const FileMustExistFlag&) { return BuildPath(_StrFullPath, size, _StrRelativePath, _PathType, true); }
+
+	template<size_t size> bool BuildPath(oFixedString<char, size>& _StrDestination, const char* _StrRelativePath, PATH_TYPE _PathType) { return BuildPath(_StrDestination, _StrDestination.capacity(), _StrRelativePath, _PathType, false); }
+	template<size_t size> bool BuildPath(oFixedString<char, size>& _StrDestination, const char* _StrRelativePath, PATH_TYPE _PathType, const FileMustExistFlag&) { return BuildPath(_StrDestination, _StrDestination.capacity(), _StrRelativePath, _PathType, true); }
+
+	bool FindInputFile(oStringPath& _FullPath, const char* _StrRelativePath) { return BuildPath(_FullPath, _FullPath.capacity(), _StrRelativePath, INPUT, FileMustExist); }
+
+private:
+	virtual bool BuildPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath, PATH_TYPE _PathType, bool _PathMustExist) const;
 };
 
 // Special tests are ones that are new processes spawned 
@@ -163,8 +199,12 @@ interface oTestManager : oNoncopyable
 		DESC()
 			: TestSuiteName(0)
 			, DataPath(0)
-			, GoldenPath(0)
-			, OutputPath(0)
+			, ExecutablesPath(nullptr)
+			, GoldenBinariesPath(nullptr)
+			, GoldenImagesPath(nullptr)
+			, TempPath(nullptr)
+			, InputPath(nullptr)
+			, OutputPath(nullptr)
 			, NameColumnWidth(20)
 			, TimeColumnWidth(10)
 			, StatusColumnWidth(10)
@@ -182,7 +222,11 @@ interface oTestManager : oNoncopyable
 
 		const char* TestSuiteName;
 		const char* DataPath;
-		const char* GoldenPath;
+		const char* ExecutablesPath;
+		const char* GoldenBinariesPath;
+		const char* GoldenImagesPath;
+		const char* TempPath;
+		const char* InputPath;
 		const char* OutputPath;
 		unsigned int NameColumnWidth;
 		unsigned int TimeColumnWidth;
@@ -208,14 +252,11 @@ interface oTestManager : oNoncopyable
 	// RunTests can fail due to a bad compilation of filters. If this returns -1, check oErrorGetLast() for more
 	// details.
 	virtual oTest::RESULT RunTests(oFilterChain::FILTER* _pTestFilters, size_t _SizeofTestFilters) = 0;
-	template<size_t size> inline oTest::RESULT RunTests(oFilterChain::FILTER (&_pTestFilters)[size]) { return RunTests(_pDesc, _pTestFilters, size); }
+	template<size_t size> oTest::RESULT RunTests(oFilterChain::FILTER (&_pTestFilters)[size]) { return RunTests(_pDesc, _pTestFilters, size); }
 
 	// Special mode re-runs the test exe for tests that need a client-server 
 	// multi-process setup.
 	virtual oTest::RESULT RunSpecialMode(const char* _Name) = 0;
-
-	virtual bool FindFullPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath) const = 0;
-	template<size_t size> inline bool FindFullPath(char (&_StrFullPath)[size], const char* _StrRelativePath) { return FindFullPath(_StrFullPath, size, _StrRelativePath); }
 };
 
 #endif

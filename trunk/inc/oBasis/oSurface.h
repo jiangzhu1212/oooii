@@ -214,6 +214,13 @@ unsigned int oSurfaceCalcSlicePitch(oSURFACE_FORMAT _Format, int2 _MipDimensions
 // compatible with 4x4 block compression. All dimensions must be a power of 2.
 unsigned int oSurfaceCalcMipDimension(oSURFACE_FORMAT _Format, unsigned int _Mip0Dimension, unsigned int _MipLevel = 0);
 
+// Returns the width and height dimension of the specified mip level
+// given mip0's dimension. This version does not require power of 2.
+// Not compatible with 4x4 block compression. If the requested mip would
+// not be an even number, it is rounded down to the next even number. All
+// returned dimensions will be even for both width and height.
+int2 oSurfaceCalcMipDimensionsNP2(int2 _Mip0Dimensions, unsigned int _MipLevel = 0);
+
 // Returns the number of rows in a mip with the specified height in pixels.
 // Block compressed formats have 1/4 the rows size their pitch includes 4 rows
 // at a time.

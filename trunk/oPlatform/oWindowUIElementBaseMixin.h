@@ -50,7 +50,7 @@
 	_ClassName(const DESC& _Desc, threadsafe oWindow* _pWindow, bool* _pSuccess); \
 	~_ClassName();
 
-#define oDECLARE_ONEVENT() bool OnEvent(oWindow::EVENT _Event, unsigned int _SuperSampleScale, const oWindow::DESC& _Desc);
+#define oDECLARE_ONEVENT() bool OnEvent(oWindow::EVENT _Event, const float3& _Position, int _SuperSampleScale);
 
 // Can't put this in the mixin because it's ctor executes before the derived 
 // one - fields might not be initialized at that time.

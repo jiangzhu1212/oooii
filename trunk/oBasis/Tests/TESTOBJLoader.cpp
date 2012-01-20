@@ -228,7 +228,7 @@ bool oBasisTest_oOBJLoader(const oBasisTestServices& _Services)
 	// Performance
 	{
 		static const char* BenchmarkFilename = "Test/Geometry/buddha.obj";
-		oTESTB(_Services.ResolvePath(path.c_str(), path.capacity(), BenchmarkFilename), "Failed to resolve the path for \"%s\"", BenchmarkFilename);
+		oTESTB(_Services.ResolvePath(path.c_str(), path.capacity(), BenchmarkFilename, true), "not found: %s", BenchmarkFilename);
 		oTESTB(oCleanPath(path.c_str(), path.capacity(), path), "Failed to clean path on \"%s\"", path);
 
 		oOBJ obj;

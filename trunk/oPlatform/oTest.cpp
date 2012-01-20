@@ -34,6 +34,7 @@
 #include <oPlatform/oDebugger.h> // needed to ensure leak tracker is up before oTestManager
 #include <oPlatform/oEvent.h> // inter-process event required to sync "special tests" as they launch a new process
 #include <oPlatform/oFile.h> // needed for oFileExists... this could be passed through as an oFUNCTION
+#include <oPlatform/oGPU.h> // needed for oGPUEnum so we can generate different images for AMD cards when appropriate
 #include <oPlatform/oImage.h> // the crux of most tests... going to be hard to get rid of this dependency
 #include <oPlatform/oMsgBox.h> // only used to notify about zombies
 #include <oPlatform/oProgressBar.h> // only really so it itself can be tested, but perhaps this can be moved to a unit test?
@@ -70,8 +71,6 @@ struct oTestManager_Impl : public oTestManager
 
 	oTest::RESULT RunTests(oFilterChain::FILTER* _pTestFilters, size_t _SizeofTestFilters) override;
 	oTest::RESULT RunSpecialMode(const char* _Name) override;
-	bool FindFullPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath) const override;
-
 	oTest::RESULT RunTest(RegisterTestBase* _pRegisterTestBase, char* _StatusMessage, size_t _SizeofStatusMessage);
 
 	void PrintDesc();
@@ -79,6 +78,8 @@ struct oTestManager_Impl : public oTestManager
 	void RegisterZombies();
 	bool KillZombies(const char* _Name);
 	bool KillZombies();
+
+	bool BuildPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath, oTest::PATH_TYPE _PathType, bool _FileMustExist) const;
 
 	inline void Report(oConsoleReporting::REPORT_TYPE _Type, const char* _Format, ...) { va_list args; va_start(args, _Format); oConsoleReporting::VReport(_Type, _Format, args); }
 	inline void ReportSep() { Report(oConsoleReporting::DEFAULT, "%c ", 179); }
@@ -90,10 +91,16 @@ struct oTestManager_Impl : public oTestManager
 	typedef std::vector<RegisterTestBase*> tests_t;
 	tests_t Tests;
 	DESC Desc;
+	oGPU_DESC GPUs[8];
+	unsigned int NumGPUs;
 	bool ShowProgressBar;
 	std::string TestSuiteName;
 	std::string DataPath;
-	std::string GoldenPath;
+	std::string ExecutablesPath;
+	std::string GoldenBinariesPath;
+	std::string GoldenImagesPath;
+	std::string TempPath;
+	std::string InputPath;
 	std::string OutputPath;
 	typedef std::vector<oFilterChain::FILTER> filters_t;
 	filters_t Filters;
@@ -140,6 +147,8 @@ oTestManager* oTestManager::Singleton()
 	return oTestManagerImplSingleton::Singleton()->pImpl;
 }
 
+oDEFINE_FLAG(oTest, FileMustExist);
+
 oTest::oTest()
 {
 }
@@ -148,12 +157,17 @@ oTest::~oTest()
 {
 }
 
+bool oTest::BuildPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath, PATH_TYPE _PathType, bool _FileMustExist) const
+{
+	return static_cast<oTestManager_Impl*>(oTestManager::Singleton())->BuildPath(_StrFullPath, _SizeofStrFullPath, _StrRelativePath, _PathType, _FileMustExist);
+}
+
 const char* oTest::GetName() const
 {
 	return oGetTypename(typeid(*this).name());
 }
 
-void oTest::BuildPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _TestName, const char* _DataPath, const char* _DataSubpath, const char* _Path, unsigned int _NthImage, const char* _Ext)
+static void BuildDataPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _TestName, const char* _DataPath, const char* _DataSubpath, const char* _Path, unsigned int _NthItem, const char* _Ext)
 {
 	oStringPath base;
 	if (_Path && *_Path)
@@ -163,41 +177,120 @@ void oTest::BuildPath(char* _StrDestination, size_t _SizeofStrDestination, const
 	else
 		sprintf_s(base, "%s", _DataPath);
 
-	if (_NthImage)
-		sprintf_s(_StrDestination, _SizeofStrDestination, "%s/%s%u%s", base.c_str(), _TestName, _NthImage, _Ext);
+	if (_NthItem)
+		sprintf_s(_StrDestination, _SizeofStrDestination, "%s/%s%u%s", base.c_str(), _TestName, _NthItem, _Ext);
 	else
 		sprintf_s(_StrDestination, _SizeofStrDestination, "%s/%s%s", base.c_str(), _TestName, _Ext);
 
 	oCleanPath(_StrDestination, _SizeofStrDestination, _StrDestination);
 }
 
+template<size_t size> void BuildDataPath(char (&_StrDestination)[size], const char* _TestName, const char* _DataPath, const char* _DataSubpath, const char* _Path, unsigned int _NthItem, const char* _Ext) { BuildDataPath(_StrDestination, size, _TestName, _DataPath, _DataSubpath, _Path, _NthItem, _Ext); }
+
+bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _FileExtension, unsigned int _NthBinary)
+{
+	oTestManager::DESC desc;
+	oTestManager::Singleton()->GetDesc(&desc);
+	oGPU_VENDOR GPUVendor = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->GPUs[0].Vendor; // @oooii-tony: Make this more elegant
+
+	oStringPath golden;
+	BuildDataPath(golden.c_str(), GetName(), desc.DataPath, "GoldenBinaries", desc.GoldenBinariesPath, _NthBinary, _FileExtension);
+	oStringPath goldenAMD;
+	char ext[32];
+	sprintf_s(ext, "_AMD%s", _FileExtension);
+	BuildDataPath(goldenAMD.c_str(), GetName(), desc.DataPath, "GoldenBinaries", desc.GoldenBinariesPath, _NthBinary, ext);
+	oStringPath output;
+	BuildDataPath(output.c_str(), GetName(), desc.DataPath, "Output", desc.OutputPath, _NthBinary, _FileExtension);
+
+	oRef<oBuffer> GoldenBinary;
+	{
+		if (GPUVendor == oGPU_VENDOR_AMD)
+		{
+			// Try to load a more-specific golden binary, but if it's not there it's
+			// ok to try to use the default one.
+			oBufferCreate(goldenAMD, false, &GoldenBinary);
+		}
+
+		if (!GoldenBinary)
+		{
+			if (!oBufferCreate(golden, false, &GoldenBinary))
+			{
+				if (GPUVendor != oGPU_VENDOR_NVIDIA)
+				{
+					oStringPath outputAMD;
+					char ext[32];
+					sprintf_s(ext, "_AMD%s", _FileExtension);
+					BuildDataPath(outputAMD.c_str(), GetName(), desc.DataPath, "Output", desc.OutputPath, _NthBinary, ext);
+					oWARN("Shared Golden Images are only valid if generated from an NVIDIA card. Note: it may be appropriate to check this in as an AMD-specific card to %s if there's a difference in golden images between NVIDIA and AMD.", outputAMD.c_str());
+				}
+
+				if (!oFileSave(output, _pBuffer, _SizeofBuffer, oFILE_OPEN_BIN_WRITE))
+					return oErrorSetLast(oERROR_INVALID_PARAMETER, "Output binary save failed: %s", output.c_str());
+				return oErrorSetLast(oERROR_NOT_FOUND, "Golden binary load failed: %s", golden.c_str());
+			}
+		}
+	}
+
+	if (_SizeofBuffer != GoldenBinary->GetSize())
+	{
+		char testSize[32], goldenSize[32];
+		oFormatMemorySize(testSize, _SizeofBuffer, 2);
+		oFormatMemorySize(goldenSize, GoldenBinary->GetSize(), 2);
+		return oErrorSetLast(oERROR_GENERIC, "Golden binary compare failed because the binaries are different sizes (test is %s, golden is %s)");
+	}
+
+	if (memcmp(_pBuffer, GoldenBinary->GetData(), GoldenBinary->GetSize()))
+		return oErrorSetLast(oERROR_GENERIC, "Golden binary compare failed because the bytes differ");
+	return true;
+}
+
 bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 {
 	const char* goldenImageExt = ".png";
+	const char* goldenImageExtAMD = "_AMD.png";
 	const char* diffImageExt = "_diff.png";
 
 	oTestManager::DESC desc;
 	oTestManager::Singleton()->GetDesc(&desc);
+	oGPU_VENDOR GPUVendor = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->GPUs[0].Vendor; // @oooii-tony: Make this more elegant
 
 	oStringPath golden;
-	BuildPath(golden.c_str(), GetName(), desc.DataPath, "GoldenImages", desc.GoldenPath, _NthImage, goldenImageExt);
+	BuildDataPath(golden.c_str(), GetName(), desc.DataPath, "GoldenImages", desc.GoldenImagesPath, _NthImage, goldenImageExt);
+	oStringPath goldenAMD;
+	BuildDataPath(goldenAMD.c_str(), GetName(), desc.DataPath, "GoldenImages", desc.GoldenImagesPath, _NthImage, goldenImageExtAMD);
 	oStringPath output;
-	BuildPath(output.c_str(), GetName(), desc.DataPath, "Output", desc.OutputPath, _NthImage, goldenImageExt);
+	BuildDataPath(output.c_str(), GetName(), desc.DataPath, "Output", desc.OutputPath, _NthImage, goldenImageExt);
 	oStringPath diff;
-	BuildPath(diff.c_str(), GetName(), desc.DataPath, "Output", desc.OutputPath, _NthImage, diffImageExt);
+	BuildDataPath(diff.c_str(), GetName(), desc.DataPath, "Output", desc.OutputPath, _NthImage, diffImageExt);
 
 	oRef<oImage> GoldenImage;
 	{
 		oRef<oBuffer> b;
-		if (!oBufferCreate(golden, false, &b))
+		if (GPUVendor == oGPU_VENDOR_AMD)
 		{
-			if (!oImageSave(_pImage, output))
-				return oErrorSetLast(oERROR_INVALID_PARAMETER, "Output image save failed: %s", output.c_str());
-			return oErrorSetLast(oERROR_NOT_FOUND, "Golden image load failed: %s", golden.c_str());
+			// Try to load a more-specific golden image, but if it's not there it's ok
+			// to try to use the default one.
+			oBufferCreate(goldenAMD, false, &b);
 		}
 
-		oLockedPointer<oBuffer> pLockedBuffer(b);
-		if (!oImageCreate(golden, pLockedBuffer->GetData(), pLockedBuffer->GetSize(), oImage::ForceAlpha, &GoldenImage))
+		if (!b)
+		{
+			if (!oBufferCreate(golden, false, &b))
+			{
+				if (GPUVendor != oGPU_VENDOR_NVIDIA)
+				{
+					oStringPath outputAMD;
+					BuildDataPath(outputAMD.c_str(), GetName(), desc.DataPath, "Output", desc.OutputPath, _NthImage, goldenImageExtAMD);
+					oWARN("Shared Golden Images are only valid if generated from an NVIDIA card. Note: it may be appropriate to check this in as an AMD-specific card to %s if there's a difference in golden images between NVIDIA and AMD.", outputAMD.c_str());
+				}
+
+				if (!oImageSave(_pImage, output))
+					return oErrorSetLast(oERROR_INVALID_PARAMETER, "Output image save failed: %s", output.c_str());
+				return oErrorSetLast(oERROR_NOT_FOUND, "Golden image load failed: %s", golden.c_str());
+			}
+		}
+
+		if (!oImageCreate(golden, b->GetData(), b->GetSize(), oImage::ForceAlpha, &GoldenImage))
 			return oErrorSetLast(oERROR_INVALID_PARAMETER, "Corrupt/unloadable golden image file: %s", golden);
 	}
 
@@ -214,7 +307,7 @@ bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 			return oErrorSetLast(oERROR_GENERIC, "Golden image compare failed because the images are different dimensions (test is %ix%i, golden is %ix%i)", iDesc.Dimensions.x, iDesc.Dimensions.y, gDesc.Dimensions.x, gDesc.Dimensions.y);
 
 		if (iDesc.Format != gDesc.Format)
-			return oErrorSetLast(oERROR_GENERIC, "Golden image compare failed because the images are different formats (test is %s, golden is %s", oAsString(iDesc.Format), oAsString(gDesc.Format));
+			return oErrorSetLast(oERROR_GENERIC, "Golden image compare failed because the images are different formats (test is %s, golden is %s)", oAsString(iDesc.Format), oAsString(gDesc.Format));
 	}
 
 	oTest::DESC testDescOverrides;
@@ -350,12 +443,34 @@ void oTestManager_Impl::SetDesc(DESC* _pDesc)
 	oSystemGetPath(defaultDataPath.c_str(), oSYSPATH_DATA);
 
 	DataPath = _pDesc->DataPath ? _pDesc->DataPath : defaultDataPath;
-	GoldenPath = _pDesc->GoldenPath ? _pDesc->GoldenPath : (DataPath + "GoldenImages");
-	OutputPath = _pDesc->OutputPath ? _pDesc->OutputPath : (DataPath + "FailedImageCompares");
+	if (_pDesc->ExecutablesPath)
+		ExecutablesPath = _pDesc->ExecutablesPath;
+	else
+	{
+		oStringPath exes(defaultDataPath);
+		#ifdef o64BIT
+			strcat_s(exes.c_str(), "../bin/x64/");
+		#elif o32BIT
+			strcat_s(exes.c_str(), "../bin/win32/");
+		#else
+			#error Unknown bitness
+		#endif
+		ExecutablesPath = oCleanPath(exes.c_str(), exes);
+	}
+
+	GoldenBinariesPath = _pDesc->GoldenBinariesPath ? _pDesc->GoldenBinariesPath : (DataPath + "GoldenBinaries/");
+	GoldenImagesPath = _pDesc->GoldenImagesPath ? _pDesc->GoldenImagesPath : (DataPath + "GoldenImages/");
+	TempPath = _pDesc->TempPath ? _pDesc->TempPath : (DataPath + "Temp/");
+	InputPath = _pDesc->InputPath ? _pDesc->InputPath : DataPath;
+	OutputPath = _pDesc->OutputPath ? _pDesc->OutputPath : (DataPath + "FailedImageCompares/");
 	Desc = *_pDesc;
 	Desc.TestSuiteName = TestSuiteName.c_str();
 	Desc.DataPath = DataPath.c_str();
-	Desc.GoldenPath = GoldenPath.c_str();
+	Desc.ExecutablesPath = ExecutablesPath.c_str();
+	Desc.GoldenBinariesPath = GoldenBinariesPath.c_str();
+	Desc.GoldenImagesPath = GoldenImagesPath.c_str();
+	Desc.TempPath = TempPath.c_str();
+	Desc.InputPath = InputPath.c_str();
 	Desc.OutputPath = OutputPath.c_str();
 }
 
@@ -370,10 +485,20 @@ void oTestManager_Impl::PrintDesc()
 
 	Report(oConsoleReporting::INFO, "CWD Path: %s\n", cwd);
 	Report(oConsoleReporting::INFO, "Data Path: %s%s\n", (Desc.DataPath && *Desc.DataPath) ? Desc.DataPath : cwd, dataPathIsCWD ? " (CWD)" : "");
-	Report(oConsoleReporting::INFO, "Golden Path: %s\n", *Desc.GoldenPath ? Desc.GoldenPath : "(null)");
+	Report(oConsoleReporting::INFO, "Executables Path: %s\n", *Desc.ExecutablesPath ? Desc.ExecutablesPath : "(null)");
+	Report(oConsoleReporting::INFO, "Golden Binaries Path: %s\n", *Desc.GoldenImagesPath ? Desc.GoldenImagesPath : "(null)");
+	Report(oConsoleReporting::INFO, "Golden Images Path: %s\n", *Desc.GoldenImagesPath ? Desc.GoldenImagesPath : "(null)");
+	Report(oConsoleReporting::INFO, "Temp Path: %s\n", *Desc.TempPath ? Desc.TempPath : "(null)");
+	Report(oConsoleReporting::INFO, "Input Path: %s\n", *Desc.InputPath ? Desc.InputPath : "(null)");
 	Report(oConsoleReporting::INFO, "Output Path: %s\n", *Desc.OutputPath ? Desc.OutputPath : "(null)");
 	Report(oConsoleReporting::INFO, "Random Seed: %u\n", Desc.RandomSeed);
 	Report(oConsoleReporting::INFO, "Special Test Timeouts: %sabled\n", Desc.EnableSpecialTestTimeouts ? "en" : "dis");
+
+	for (unsigned int i = 0; i < NumGPUs; i++)
+	{
+		Report(oConsoleReporting::INFO, "Video Card %u: %s\n", i, GPUs[i].GPUDescription);
+		Report(oConsoleReporting::INFO, "Video Driver %u: %s v%d.%d D3D %d.%d capable\n", i, GPUs[i].DriverDescription, GPUs[i].DriverVersion.Major, GPUs[i].DriverVersion.Minor, GPUs[i].D3DVersion.Major, GPUs[i].D3DVersion.Minor);
+	}
 }
 
 void oTestManager_Impl::RegisterSpecialModeTests()
@@ -482,6 +607,11 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 
 	srand(Desc.RandomSeed);
 
+	if (!oFileDelete(TempPath.c_str()) && oErrorGetLast() != oERROR_NOT_FOUND)
+		oVERIFY(false && "oFileDelete(TempPath.c_str())");
+
+	// @oooii-tony: Moving other stuff that are false-positives here so I can see
+	// them all...
 	oCRTLeakTracker::Singleton()->NewContext();
 
 	oTest* pTest = _pRegisterTestBase->New();
@@ -536,6 +666,23 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 
 	// Ensure - regardless of linkage order - that tests appear in alphabetical order
 	std::sort(Tests.begin(), Tests.end(), SortAlphabetically);
+
+	// This can't be set in the ctor because the ctor could happen at static init
+	// time and the underlying code relies on a statically compiled regex. If that
+	// regex weren't statically compiled, it would either be slow or could report
+	// as a leak if it were a function-local static.
+	{
+		unsigned int GPUI = 0;
+		while (oGPUEnum(GPUI, &GPUs[GPUI]))
+		{
+			if (GPUI > oCOUNTOF(GPUs))
+				oWARN("There are more GPUs attached to the system than we have storage for! Only holding information for the first %d", oCOUNTOF(GPUs));
+
+			GPUI++;
+		}
+
+		NumGPUs = GPUI;
+	}
 
 	size_t TotalNumSucceeded = 0;
 	size_t TotalNumFailed = 0;
@@ -818,13 +965,28 @@ oTest::RESULT oTestManager_Impl::RunSpecialMode(const char* _Name)
 	return result;
 }
 
-bool oTestManager_Impl::FindFullPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath) const
+bool oTestManager_Impl::BuildPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath, oTest::PATH_TYPE _PathType, bool _FileMustExist) const
 {
-	oStringPath RawPath;
-	if (oSystemFindPath(RawPath.c_str(), _StrRelativePath, nullptr, DataPath.c_str(), oFileExists))
+	const char* root = nullptr;
+	switch (_PathType)
 	{
-		return !!oCleanPath(_StrFullPath, _SizeofStrFullPath, RawPath);
+		case oTest::EXECUTABLES: root = Desc.ExecutablesPath; break;
+		case oTest::DATA: root = Desc.DataPath; break;
+		case oTest::GOLDEN_BINARIES: root = Desc.GoldenBinariesPath; break;
+		case oTest::GOLDEN_IMAGES: root = Desc.GoldenImagesPath;	break;
+		case oTest::TEMP: root = Desc.TempPath; break;
+		case oTest::INPUT: root = Desc.InputPath; break;
+		case oTest::OUTPUT: root = Desc.OutputPath; break;
+		oNODEFAULT;
 	}
 
-	return false;
+	oStringPath RawPath(root);
+	oEnsureSeparator(RawPath.c_str());
+	strcat_s(RawPath, _StrRelativePath);
+	if (!oCleanPath(_StrFullPath, _SizeofStrFullPath, RawPath))
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	if (_FileMustExist && !oFileExists(_StrFullPath))
+		return oErrorSetLast(oERROR_NOT_FOUND, "not found: %s", _StrFullPath);
+	return true;
 }

@@ -28,6 +28,7 @@
 #ifndef oLeakTracker_h
 #define oLeakTracker_h
 
+#include <oBasis/oCountdownLatch.h>
 #include <oBasis/oFixedString.h>
 #include <oBasis/oFunction.h>
 #include <oBasis/oLinearAllocator.h>
@@ -143,13 +144,16 @@ public:
 	// unit tests or level loads.
 	void NewContext() threadsafe;
 
+	void ReferenceDelay() threadsafe { DelayLatch.Reference(); }
+	void ReleaseDelay() threadsafe { DelayLatch.Release(); }
+
 private:
 	allocations_t Allocations;
 
 	bool InInternalProcesses; // don't track allocations this object itself makes just to do the tracking (trust that this won't leak too!)
 	DESC Desc;
 	oRecursiveMutex Mutex;
-
+	oCountdownLatch DelayLatch;
 	unsigned int CurrentContext;
 };
 

@@ -62,10 +62,13 @@ bool CreateBlotterWindow(threadsafe oWindow** _ppBlotter)
 	return oWindowCreate(d, nullptr, oWindow::USE_DEFAULT, _ppBlotter);
 }
 
-bool TESTOnEvent(oWindow::EVENT _Event, unsigned int _SuperSampleScale, const oWindow::DESC& _Desc, threadsafe oWindow* _pWindow, TEST_RESIZE_CONTEXT* _pTestContext)
+bool TESTOnEvent(oWindow::EVENT _Event, const float3& _Position, int _SuperSampleScale, threadsafe oWindow* _pWindow, TEST_RESIZE_CONTEXT* _pTestContext)
 {
-	int2 pos = _Desc.ClientPosition;
-	int2 dim = _Desc.ClientSize;
+	oWindow::DESC desc;
+	_pWindow->GetDesc(&desc);
+
+	int2 pos = desc.ClientPosition;
+	int2 dim = desc.ClientSize;
 	
 	switch (_Event)
 	{
@@ -74,10 +77,10 @@ bool TESTOnEvent(oWindow::EVENT _Event, unsigned int _SuperSampleScale, const oW
 			break;
 
 		case oWindow::RESIZED:
-			oTRACE("Resized %s %dx%d -> %s %dx%d", oAsString(_pTestContext->OldState), _pTestContext->OldDimensions.x, _pTestContext->OldDimensions.y, oAsString(_Desc.State), dim.x, dim.y);
+			oTRACE("Resized %s %dx%d -> %s %dx%d", oAsString(_pTestContext->OldState), _pTestContext->OldDimensions.x, _pTestContext->OldDimensions.y, oAsString(desc.State), dim.x, dim.y);
 			if (!_pTestContext->Resizing)
 			{
-				_pTestContext->OldState = _Desc.State;
+				_pTestContext->OldState = desc.State;
 				_pTestContext->OldDimensions = dim;
 			}
 			break;
@@ -229,8 +232,8 @@ struct TESTWindowBase : public oTest
 			void* pBuffer = 0;
 			size_t size = 0;
 
-			char imgPath[_MAX_PATH];
-			if (!oTestManager::Singleton()->FindFullPath(imgPath, "oooii.ico"))
+			oStringPath imgPath;
+			if (!FindInputFile(imgPath, "oooii.ico"))
 				return oErrorSetLast(oERROR_NOT_FOUND, "Could not find %s", "oooii.ico");
 
 			if (!oFileLoad(&pBuffer, &size, malloc, imgPath, false))

@@ -1890,7 +1890,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// copy TIFF metadata (must be done after FreeImage_Allocate)
 
-			ReadMetadata(tif, dib);
+			//ReadMetadata(tif, dib); // @oooii-tony: Disable reading metadata because it causes leaks that I can't figure out how to squash from client code
 
 			return (FIBITMAP *)dib;
 

@@ -109,6 +109,19 @@ static FIBITMAP* FILoad(const void* _pBuffer, size_t _SizeofBuffer, bool _LoadBi
 			if (fif != FIF_UNKNOWN && FreeImage_FIFSupportsReading(fif))
 				bmp = FreeImage_LoadFromMemory(fif, m, 0 /*_LoadBitmap ? 0 : FIF_LOAD_NOPIXELS*/);
 
+			// NOTE: This oWARN below should not trigger anymore because FreeImage 
+			// source has been modified to not absorb metadata. Maybe newer FreeImage
+			// versions will have fixed the leak, but for now we're not using metadata
+			// so losing this load functionality won't affect OOOii code.
+			#ifdef _DEBUG
+				for (int i = FIMD_COMMENTS; i <= FIMD_CUSTOM; i++)
+					if(FreeImage_GetMetadataCount((FREE_IMAGE_MDMODEL)i, bmp))
+					{
+						oWARN_ONCE("An oImage contains metadata. FreeImage will leak when unloading this image.");
+						break;
+					}
+			#endif
+
 			FreeImage_CloseMemory(m);
 		}
 	}

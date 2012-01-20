@@ -23,6 +23,7 @@
  **************************************************************************/
 #include <oBasis/oMath.h>
 #include <oBasis/oAssert.h>
+#include <oBasis/oAtof.h>
 #include <oBasis/oByte.h>
 #include <oBasis/oError.h>
 #include <oBasis/oLimits.h>
@@ -1156,9 +1157,10 @@ bool oFromString(float2* _pValue, const char* _StrSource)
 	const char* end = 0;
 	end = _StrSource + strcspn(_StrSource, " ");
 	if (!*end) return false;
-	_pValue->x = static_cast<float>(atof(_StrSource));
+
+	if (!oAtof(_StrSource, &_pValue->x)) return false;
 	_StrSource = end + 1;
-	_pValue->y = static_cast<float>(atof(_StrSource));
+	if (!oAtof(_StrSource, &_pValue->y)) return false;
 	return true;
 }
 
@@ -1171,12 +1173,12 @@ bool oFromString(float3* _pValue, const char* _StrSource)
 	const char* end = 0;
 	end = _StrSource + strcspn(_StrSource, " ");
 	if (!*end) return false;
-	_pValue->x = static_cast<float>(atof(_StrSource));
+	if (!oAtof(_StrSource, &_pValue->x)) return false;
 	_StrSource = end + 1;
 	end += 1 + strcspn(_StrSource, " ");
-	_pValue->y = static_cast<float>(atof(_StrSource));
+	if (!oAtof(_StrSource, &_pValue->y)) return false;
 	_StrSource = end + 1;
-	_pValue->z = static_cast<float>(atof(_StrSource));
+	if (!oAtof(_StrSource, &_pValue->z)) return false;
 	return true;
 }
 
@@ -1189,15 +1191,15 @@ bool oFromString(float4* _pValue, const char* _StrSource)
 	const char* end = 0;
 	end = _StrSource + strcspn(_StrSource, " ");
 	if (!*end) return false;
-	_pValue->x = static_cast<float>(atof(_StrSource));
+	if (!oAtof(_StrSource, &_pValue->x)) return false;
 	_StrSource = end + 1;
 	end += 1 + strcspn(_StrSource, " ");
-	_pValue->y = static_cast<float>(atof(_StrSource));
+	if (!oAtof(_StrSource, &_pValue->y)) return false;
 	_StrSource = end + 1;
 	end += 1 + strcspn(_StrSource, " ");
-	_pValue->z = static_cast<float>(atof(_StrSource));
+	if (!oAtof(_StrSource, &_pValue->z)) return false;
 	_StrSource = end + 1;
-	_pValue->w = static_cast<float>(atof(_StrSource));
+	if (!oAtof(_StrSource, &_pValue->w)) return false;
 	return true;
 }
 
@@ -1218,7 +1220,7 @@ bool oFromString(float4x4* _pValue, const char* _StrSource)
 	for (size_t i = 0; i < 16; i++)
 	{
 		end = _StrSource + strcspn(_StrSource, " ");
-		f[i] = static_cast<float>(atof(_StrSource));
+		if (!oAtof(_StrSource, &f[i])) return false;
 		_StrSource += strcspn(_StrSource, " ");
 	}
 

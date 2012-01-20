@@ -42,9 +42,16 @@ static size_t GetTotalPhysicalMemory()
 	return static_cast<size_t>(stats.TotalPhysical);
 }
 
-static void oInitBasisServices(oBasisTestServices* _pServices)
+static bool ResolvePath(char* _ResolvedFullPath, size_t _SizeofResolvedFullPath, const char* _RelativePath, bool _PathMustExist, oTest* _pTest)
 {
-	_pServices->ResolvePath = oBIND(&oTestManager::FindFullPath, oTestManager::Singleton(), oBIND1, oBIND2, oBIND3);
+	if (_PathMustExist)	
+		return _pTest->BuildPath(_ResolvedFullPath, _SizeofResolvedFullPath, _RelativePath, oTest::DATA, oTest::FileMustExist);
+	else return _pTest->BuildPath(_ResolvedFullPath, _SizeofResolvedFullPath, _RelativePath, oTest::DATA);
+}
+
+static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
+{
+	_pServices->ResolvePath = oBIND(ResolvePath, oBIND1, oBIND2, oBIND3, oBIND4, _pTest);
 	_pServices->AllocateAndLoadBuffer = oBIND(oFileLoad2, oBIND1, oBIND2, malloc, oBIND3, oBIND4);
 	_pServices->DeallocateLoadedBuffer = free;
 	_pServices->Rand = rand;
@@ -70,7 +77,7 @@ static void oInitBasisServices(oBasisTestServices* _pServices)
 	struct oCONCAT(BASIS_, _BasisTestName) : oTest \
 	{	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override \
 		{	oBasisTestServices Services; \
-			oInitBasisServices(&Services); \
+			oInitBasisServices(this, &Services); \
 			oTESTB(oCONCAT(oBasisTest_, _BasisTestName)(Services), "%s", oErrorGetLastString()); \
 			sprintf_s(_StrStatus, _SizeofStrStatus, "%s", oErrorGetLastString()); \
 			return SUCCESS; \

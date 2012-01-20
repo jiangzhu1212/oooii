@@ -200,15 +200,6 @@ struct oImageImpl : public oImage
 		oMemcpy2dVFlip(_pDestinationBuffer, _DestinationRowPitch, FreeImage_GetBits(FIBitmap), d.RowPitch, d.Dimensions.x * oImageGetSize(d.Format), d.Dimensions.y);
 	}
 
-#ifdef oBug_1911
-	void HACKFlipVertical() threadsafe override
-	{
-		oLockGuard<oSharedMutex> Lock(Mutex);
-
-		if (!FreeImage_FlipVertical(FIBitmap))
-			oASSERT(false, "FreeImage_FlipVertical failed");
-	}
-#endif
 	bool HACKResize(const int2& _NewSize) threadsafe override
 	{
 		if (_NewSize.x < 0 || _NewSize.y < 0)
@@ -384,6 +375,10 @@ bool oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format, o
 
 	oConstLockedPointer<oImage> LockedImage(_pImage);
 	FIBITMAP* FIBitmap = ((oImageImpl*)LockedImage.c_ptr())->Bitmap();
+
+	oStringPath parent(_Path);
+	*oGetFilebase(parent) = 0;
+	oFileCreateFolder(parent);
 
 	if (!FreeImage_Save(fif, FIBitmap, _Path, FIGetSaveFlags(fif, _CompressionLevel)))
 		return oErrorSetLast(oERROR_IO, "Failed to save oImage \"%s\" to path \"%s\"", _pImage->GetName(), _Path);

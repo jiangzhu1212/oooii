@@ -47,6 +47,8 @@
 	#endif
 #endif
 
+static const float3 ZERO3 = float3(0.0f, 0.0f, 0.0f);
+
 const oGUID& oGetGUID(threadsafe const oHDC* threadsafe const*)
 {
 	// {DBF01A90-3C5A-46D2-A1E3-501ACF5D1BEE}
@@ -227,7 +229,7 @@ protected:
 	inline oWinWindow* QThis() threadsafe { return thread_cast<oWinWindow*>(this); }
 	inline const oWinWindow* QThis() const threadsafe { return thread_cast<oWinWindow*>(this); }
 
-	bool CallHooks(EVENT _Event, void* _pDrawContext, DRAW_MODE _DrawMode, unsigned int _SuperSampleScale, const DESC& _Desc);
+	bool CallHooks(EVENT _Event, void* _pDrawContext, DRAW_MODE _DrawMode, const float3& _Position, int _Value);
 
 	void Initialize(oERROR* _pError, char* _pErrorString, size_t _szErrorString);
 	void Deinitialize();
@@ -370,7 +372,7 @@ void oWinWindow::Initialize(oERROR* _pError, char* _pErrorString, size_t _szErro
 
 void oWinWindow::Deinitialize()
 {
-	CallHooks(RESIZING, nullptr, DrawMode, SuperSampleScale(), Desc);
+	CallHooks(RESIZING, nullptr, DrawMode, ZERO3, SuperSampleScale());
 	if (Desc.State == FULLSCREEN)
 	{
 		DESC copy = Desc;
@@ -411,7 +413,7 @@ bool oWinWindow::CreateDevices(HWND _hWnd, IUnknown* _pUserSpecifiedDevice)
 
 				RECT r = ResolveRect(_hWnd, Desc.ClientPosition, Desc.ClientSize, false);
 				if (!_pUserSpecifiedDevice || E_NOINTERFACE == _pUserSpecifiedDevice->QueryInterface(&D3D10Device))
-					oVB_RETURN2(oD3D10CreateDevice(oWinRectCenter(r), &D3D10Device));
+					oVERIFY(oD3D10CreateDevice(oWinRectCenter(r), &D3D10Device));
 			
 				break;
 			}
@@ -451,7 +453,7 @@ bool oWinWindow::CreateDeviceResources(HWND _hWnd)
 				oVB_RETURN2(D3D11Device->CreateRenderTargetView(RT, nullptr, &D3D11RenderTargetView));
 				if (!oD2DCreateRenderTarget(D2DFactory, DXGISwapChain, SWAP_CHAIN_FORMAT, Desc.UseAntialiasing, &D2DRenderTarget))
 					return false;
-				CallHooks(RESIZED, D2DRenderTarget, DrawMode, 1, Desc);
+				CallHooks(RESIZED, D2DRenderTarget, DrawMode, ZERO3, 1);
 				break;
 			}
 
@@ -462,7 +464,7 @@ bool oWinWindow::CreateDeviceResources(HWND _hWnd)
 				oVB_RETURN2(DXGISwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (void**)&D3D10RenderTarget));
 				if (!oD2DCreateRenderTarget(D2DFactory, DXGISwapChain, SWAP_CHAIN_FORMAT, Desc.UseAntialiasing, &D2DRenderTarget))
 					return false;
-				CallHooks(RESIZED, D2DRenderTarget, DrawMode, 1, Desc);
+				CallHooks(RESIZED, D2DRenderTarget, DrawMode, ZERO3, 1);
 				break;
 			}
 		#endif
@@ -478,7 +480,7 @@ bool oWinWindow::CreateDeviceResources(HWND _hWnd)
 			SelectObject(hOffscreenAADC, hOffscreenAABmp);
 			SelectObject(hOffscreenDC, hOffscreenBmp);
 			ReleaseDC(_hWnd, hDC);
-			CallHooks(RESIZED, hOffscreenDC, DrawMode, SuperSampleScale(), Desc);
+			CallHooks(RESIZED, hOffscreenDC, DrawMode, ZERO3, SuperSampleScale());
 			break;
 		}
 
@@ -490,7 +492,7 @@ bool oWinWindow::CreateDeviceResources(HWND _hWnd)
 
 bool oWinWindow::DestroyDeviceResources()
 {
-	CallHooks(RESIZING, nullptr, DrawMode, SuperSampleScale(), Desc);
+	CallHooks(RESIZING, nullptr, DrawMode, ZERO3, SuperSampleScale());
 
 	#if oDXVER >= oDXVER_10
 		D2DRenderTarget = nullptr;
@@ -507,12 +509,12 @@ bool oWinWindow::DestroyDeviceResources()
 	return true;
 }
 
-bool oWinWindow::CallHooks(EVENT _Event, void* _pDrawContext, DRAW_MODE _DrawMode, unsigned int _SuperSampleScale, const DESC& _Desc)
+bool oWinWindow::CallHooks(EVENT _Event, void* _pDrawContext, DRAW_MODE _DrawMode, const float3& _Position, int _SuperSampleScale)
 {
 	bool result = true;
 	for (std::vector<HookFn>::iterator it = Hooks.begin(); it != Hooks.end(); ++it)
 		if (*it)
-			if (!(*it)(_Event, _SuperSampleScale, _Desc))
+			if (!(*it)(_Event, _Position, _SuperSampleScale))
 				result = false;
 	return result;
 }
@@ -638,18 +640,18 @@ bool oWinWindow::D2DPaint(HWND _hWnd, bool _Force)
 		oV(D2DRenderTarget->EndDraw());
 	}
 
-	CallHooks(DRAW_BACKBUFFER, D2DRenderTarget, DrawMode, 1, Desc);
+	CallHooks(DRAW_BACKBUFFER, D2DRenderTarget, DrawMode, ZERO3, 1);
 
 	D2DRenderTarget->BeginDraw();
 	D2DRenderTarget->SetTransform(D2D1::IdentityMatrix());
 
-	CallHooks(DRAW_UIAA, D2DRenderTarget, DrawMode, 1, Desc);
-	CallHooks(DRAW_UI, D2DRenderTarget, DrawMode, 1, Desc);
+	CallHooks(DRAW_UIAA, D2DRenderTarget, DrawMode, ZERO3, 1);
+	CallHooks(DRAW_UI, D2DRenderTarget, DrawMode, ZERO3, 1);
 
 	oV(D2DRenderTarget->EndDraw());
 	oV(DXGISwapChain->Present(Desc.FullscreenVSync ? 1 : 0, 0));
 
-	CallHooks(DRAW_FRONTBUFFER, D2DRenderTarget, DrawMode, 1, Desc);
+	CallHooks(DRAW_FRONTBUFFER, D2DRenderTarget, DrawMode,  ZERO3, 1);
 	return true;
 }
 
@@ -658,8 +660,8 @@ bool oWinWindow::GDIPaint(HWND _hWnd, HDC _hDC, bool _Force)
 	RECT r;
 	oVB(GetClientRect(_hWnd, &r));
 	FillRect(hOffscreenAADC, &r, hClearBrush);
-	CallHooks(DRAW_BACKBUFFER, hOffscreenAADC, DrawMode, SuperSampleScale(), Desc);
-	CallHooks(DRAW_UIAA, hOffscreenAADC, DrawMode, SuperSampleScale(), Desc);
+	CallHooks(DRAW_BACKBUFFER, hOffscreenAADC, DrawMode, ZERO3, SuperSampleScale());
+	CallHooks(DRAW_UIAA, hOffscreenAADC, DrawMode, ZERO3, SuperSampleScale());
 
 	int oldMode = GetStretchBltMode(hOffscreenDC);
 	SetStretchBltMode(hOffscreenDC, HALFTONE);
@@ -669,10 +671,10 @@ bool oWinWindow::GDIPaint(HWND _hWnd, HDC _hDC, bool _Force)
 
 	StretchBlt(hOffscreenDC, r.left, r.top, Size.x, Size.y, hOffscreenAADC, 0, 0, SSSize.x, SSSize.y, SRCCOPY);
 	SetStretchBltMode(hOffscreenDC, oldMode);
-	CallHooks(DRAW_UI, hOffscreenDC, DrawMode, 1, Desc);
+	CallHooks(DRAW_UI, hOffscreenDC, DrawMode, ZERO3, 1);
 
 	BitBlt(_hDC, r.left, r.top, oWinRectW(r), oWinRectH(r), hOffscreenDC, 0, 0, SRCCOPY);
-	CallHooks(DRAW_FRONTBUFFER, _hDC, DrawMode, 1, Desc);
+	CallHooks(DRAW_FRONTBUFFER, _hDC, DrawMode, ZERO3, 1);
 
 	return true;
 }
@@ -803,7 +805,7 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 			return 0;
 
 		case WM_CLOSE:
-			if (CallHooks(CLOSING, nullptr, DrawMode, 1, Desc))
+			if (CallHooks(CLOSING, nullptr, DrawMode, ZERO3, 1))
 			{
 				if (CloseConfirmed.compare_exchange(false, true))
 				{
@@ -816,7 +818,7 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 			return 0;
 
 		case WM_DESTROY:
-			CallHooks(CLOSED, nullptr, DrawMode, 1, Desc);
+			CallHooks(CLOSED, nullptr, DrawMode, ZERO3, 1);
 			return 0;
 
 		// ALT-F4 turns into a WM_CLOSE in DefWindowProc() on key down... up is too late
@@ -1176,7 +1178,7 @@ unsigned int oWinWindow::Hook(HookFn _Hook) threadsafe
 
 void oWinWindow::Hook1(HookFn _Hook, threadsafe oEvent* _pDone, size_t* _pIndex, oERROR* _pLastError, char* _StrLastError, size_t _SizeofStrLastError)
 {
-	bool result = _Hook(RESIZED, SuperSampleScale(), Desc);
+	bool result = _Hook(RESIZED, ZERO3, SuperSampleScale());
 	if (result)
 	{
 		*_pIndex = oSparseSet(Hooks, _Hook);
@@ -1209,7 +1211,7 @@ void oWinWindow::Unhook(unsigned int _HookID) threadsafe
 void oWinWindow::Unhook1(size_t _Index, threadsafe oEvent* _pDone)
 {
 	oTRACE("HWND 0x%x Unhook1(%u)", hWnd, _Index);
-	Hooks[_Index](RESIZING, SuperSampleScale(), Desc);
+	Hooks[_Index](RESIZING, ZERO3, SuperSampleScale());
 	Hooks[_Index] = nullptr;
 	InvalidateRect(hWnd, nullptr, FALSE);
 	_pDone->Set();

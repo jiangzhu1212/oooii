@@ -31,7 +31,7 @@
 
 struct oBasisTestServices
 {
-	oFUNCTION<bool(char* _ResolvedFullPath, size_t _SizeofResolvedFullPath, const char* _RelativePath)> ResolvePath;
+	oFUNCTION<bool(char* _ResolvedFullPath, size_t _SizeofResolvedFullPath, const char* _RelativePath, bool _PathMustExist)> ResolvePath;
 	oFUNCTION<bool(void** _ppBuffer, size_t* _pSize, const char* _FullPath, bool _AsText)> AllocateAndLoadBuffer;
 	oFUNCTION<void(void* _pBuffer)> DeallocateLoadedBuffer;
 	oFUNCTION<int()> Rand;

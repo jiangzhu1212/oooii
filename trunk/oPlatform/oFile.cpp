@@ -234,6 +234,14 @@ bool oFileMarkHidden(const char* _Path, bool _Hidden)
 	return true;
 }
 
+bool oFileDelete1(const char* _Path, const oFILE_DESC& _Desc)
+{
+	const char* filebase = oGetFilebase(_Path);
+	if (strcmp("..", filebase) && strcmp(".", filebase))
+		oFileDelete(_Path);
+	return true;
+}
+
 bool oFileDelete(const char* _Path)
 {
 	oFILE_DESC d;
@@ -242,6 +250,15 @@ bool oFileDelete(const char* _Path)
 
 	if (d.Directory)
 	{
+		// First clear out all contents, then the dir can be removed
+
+		char wildcard[_MAX_PATH];
+		strcpy_s(wildcard, _Path);
+		oEnsureSeparator(wildcard);
+		strcat_s(wildcard, "*");
+
+		oVERIFY(oFileEnum(wildcard, oFileDelete1));
+
 		if (!RemoveDirectory(_Path))
 			return oWinSetLastError();
 	}

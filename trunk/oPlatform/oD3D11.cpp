@@ -26,6 +26,7 @@
 #include <oBasis/oByte.h>
 #include <oPlatform/oD3DX11.h>
 #include <oPlatform/oDXGI.h>
+#include <oPlatform/oFile.h>
 #include <oPlatform/oGPU.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oSystem.h>
@@ -106,7 +107,7 @@ bool oD3D11CreateDevice(const oD3D11_DEVICE_DESC& _Desc, ID3D11Device** _ppDevic
 		return oErrorSetLast(oERROR_NOT_FOUND, "An IDXGIAdapter could not be found to meet the feature level specified (DX %d.%d)", _Desc.MinimumAPIFeatureLevel.Major, _Desc.MinimumAPIFeatureLevel.Minor);
 
 	D3D_FEATURE_LEVEL FeatureLevel;
-	oD3D11::Singleton()->D3D11CreateDevice(
+	oVB_RETURN2(oD3D11::Singleton()->D3D11CreateDevice(
 		_Desc.Accelerated ? DXGIAdapter : nullptr
 		, _Desc.Accelerated ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_REFERENCE
 		, 0
@@ -116,7 +117,7 @@ bool oD3D11CreateDevice(const oD3D11_DEVICE_DESC& _Desc, ID3D11Device** _ppDevic
 		, D3D11_SDK_VERSION
 		, _ppDevice
 		, &FeatureLevel
-		, nullptr);
+		, nullptr));
 
 	oVersion D3DVersion = oGetD3DVersion(FeatureLevel);
 	if (D3DVersion < _Desc.MinimumAPIFeatureLevel)
@@ -129,6 +130,7 @@ bool oD3D11CreateDevice(const oD3D11_DEVICE_DESC& _Desc, ID3D11Device** _ppDevic
 		return oErrorSetLast(oERROR_NOT_FOUND, "Failed to create an ID3D11Device with a minimum feature set of DX %d.%d!", _Desc.MinimumAPIFeatureLevel.Major, _Desc.MinimumAPIFeatureLevel.Minor);
 	}
 
+	oVERIFY(oD3D11SetDebugName(*_ppDevice, oSAFESTRN(_Desc.DebugName)));
 	return true;
 }
 
@@ -304,13 +306,37 @@ bool oD3D11CreateRenderTarget(ID3D11Device* _pDevice, const char* _DebugName, un
 	return true;
 }
 
+bool oD3D11SetDebugName(ID3D11Device* _pDevice, const char* _Name)
+{
+	if (!_pDevice || !_Name)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	UINT CreationFlags = _pDevice->GetCreationFlags();
+	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
+	{
+		HRESULT hr = _pDevice->SetPrivateData(oWKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(_Name) + 1), _Name);
+		if (FAILED(hr))
+			return oWinSetLastError(hr);
+	}
+
+	return true;
+}
+
 bool oD3D11SetDebugName(ID3D11DeviceChild* _pDeviceChild, const char* _Name)
 {
+	if (!_pDeviceChild || !_Name)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
 	oRef<ID3D11Device> D3DDevice;
 	_pDeviceChild->GetDevice(&D3DDevice);
 	UINT CreationFlags = D3DDevice->GetCreationFlags();
 	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
-		return S_OK == _pDeviceChild->SetPrivateData(oWKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(_Name) + 1), _Name);
+	{
+		HRESULT hr = _pDeviceChild->SetPrivateData(oWKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(_Name) + 1), _Name);
+		if (FAILED(hr))
+			return oWinSetLastError(hr);
+	}
+
 	return true;
 }
 
@@ -423,19 +449,13 @@ const char* oD3D11GetShaderProfile(ID3D11Device* _pDevice, oD3D11_PIPELINE_STAGE
 bool oD3D11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _SizeofOutErrorMessageString, ID3DBlob* _pErrorMessages)
 {
 	if (!_OutErrorMessageString)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	if (_pErrorMessages)
 	{
 		errno_t err = oReplace(_OutErrorMessageString, _SizeofOutErrorMessageString, (const char*)_pErrorMessages->GetBufferPointer(), "%", "%%");
 		if (err)
-		{
-			oErrorSetLast(err == STRUNCATE ? oERROR_AT_CAPACITY : oERROR_INVALID_PARAMETER);
-			return false;
-		}
+			return oErrorSetLast(err == STRUNCATE ? oERROR_AT_CAPACITY : oERROR_INVALID_PARAMETER);
 	}
 
 	else
@@ -895,7 +915,7 @@ bool oD3D11Save(ID3D11Texture2D* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, vo
 bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer)
 {
 	oRef<ID3D11Device> D3DDevice;
-	if (!oD3D11CreateDevice(oD3D11_DEVICE_DESC(), &D3DDevice))
+	if (!oD3D11CreateDevice(oD3D11_DEVICE_DESC("oD3D11Save Temp Device"), &D3DDevice))
 		return false; // pass through error
 
 	oRef<ID3D11Texture2D> D3DTexture;
@@ -926,13 +946,19 @@ bool oD3D11Save(ID3D11Texture2D* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, co
 	oRef<ID3D11DeviceContext> D3DImmediateContext;
 	D3DDevice->GetImmediateContext(&D3DImmediateContext);
 
+	oStringPath ParentPath(_Path);
+	*oGetFilebase(ParentPath) = 0;
+
+	if (!oFileCreateFolder(ParentPath) && oErrorGetLast() != oERROR_REDUNDANT)
+		return false; // pass through error
+
 	oV(D3DX11SaveTextureToFileA(D3DImmediateContext, CPUAccessibleTexture, _Format, _Path));
 	return true;
 }
 
 bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path)
 {
-	oD3D11_DEVICE_DESC deviceDesc;
+	oD3D11_DEVICE_DESC deviceDesc("oD3D11Save Temp Device");
 	oRef<ID3D11Device> D3DDevice;
 	if (!oD3D11CreateDevice(deviceDesc, &D3DDevice))
 		return false; // pass through error
@@ -1184,7 +1210,7 @@ void oD3D11CopyStructs(ID3D11DeviceContext* _pDeviceContext, ID3D11Buffer* _pBuf
 	}
 }
 
-oD3D11RasterizerState::oD3D11RasterizerState(ID3D11Device* _pDevice)
+oD3D11RasterizerState::oD3D11RasterizerState(const char* _DebugNamePrefix, ID3D11Device* _pDevice)
 {
 	static const D3D11_FILL_MODE sFills[] = 
 	{
@@ -1223,6 +1249,7 @@ oD3D11RasterizerState::oD3D11RasterizerState(ID3D11Device* _pDevice)
 		desc.FillMode = sFills[i];
 		desc.CullMode = sCulls[i];
 		oV(_pDevice->CreateRasterizerState(&desc, &States[i]));
+		oV(oD3D11SetDebugName(States[i], _DebugNamePrefix));
 	}
 }
 
@@ -1238,8 +1265,10 @@ oD3D11RasterizerState::~oD3D11RasterizerState()
 		States[i]->Release();
 }
 
-oD3D11BlendState::oD3D11BlendState(ID3D11Device* _pDevice)
+oD3D11BlendState::oD3D11BlendState(const char* _DebugName, ID3D11Device* _pDevice)
 {
+	oASSERT(_pDevice, "A valid ID3D11Device must be specified");
+
 	static const D3D11_RENDER_TARGET_BLEND_DESC sBlends[] =
 	{
 		{ FALSE, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_COLOR_WRITE_ENABLE_ALL },
@@ -1256,6 +1285,7 @@ oD3D11BlendState::oD3D11BlendState(ID3D11Device* _pDevice)
 		desc.IndependentBlendEnable = FALSE;
 		desc.RenderTarget[0] = sBlends[i];
 		oV(_pDevice->CreateBlendState(&desc, &States[i]));
+		oV(oD3D11SetDebugName(States[i], _DebugName));
 	}
 }
 
@@ -1277,8 +1307,10 @@ void oD3D11BlendState::SetDefaultState(ID3D11DeviceContext* _pDeviceContext)
 	_pDeviceContext->OMSetBlendState(0, sBlendFactor, 0xffffffff);
 }
 
-oD3D11DepthStencilState::oD3D11DepthStencilState(ID3D11Device* _pDevice)
+oD3D11DepthStencilState::oD3D11DepthStencilState(const char* _DebugNamePrefix, ID3D11Device* _pDevice)
 {
+	oASSERT(_pDevice, "A valid ID3D11Device must be specified");
+
 	D3D11_DEPTH_STENCIL_DESC desc = {0};
 
 	oV(_pDevice->CreateDepthStencilState(&desc, &States[DEPTH_STENCIL_OFF]));
@@ -1290,6 +1322,9 @@ oD3D11DepthStencilState::oD3D11DepthStencilState(ID3D11Device* _pDevice)
 
 	desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
 	oV(_pDevice->CreateDepthStencilState(&desc, &States[DEPTH_TEST]));
+
+	for (size_t i = 0; i < NUM_STATES; i++)
+		oV(oD3D11SetDebugName(States[i], _DebugNamePrefix));
 }
 
 oD3D11DepthStencilState::~oD3D11DepthStencilState()
@@ -1298,8 +1333,10 @@ oD3D11DepthStencilState::~oD3D11DepthStencilState()
 		States[i]->Release();
 }
 
-oD3D11SamplerState::oD3D11SamplerState(ID3D11Device* _pDevice)
+oD3D11SamplerState::oD3D11SamplerState(const char* _DebugNamePrefix, ID3D11Device* _pDevice)
 {
+	oASSERT(_pDevice, "A valid ID3D11Device must be specified");
+
 	static const D3D11_FILTER sFilters[] = 
 	{
 		D3D11_FILTER_MIN_MAG_MIP_POINT,
@@ -1346,6 +1383,7 @@ oD3D11SamplerState::oD3D11SamplerState(ID3D11Device* _pDevice)
 		{
 			desc.MipLODBias = sBiases[bias];
 			_pDevice->CreateSamplerState(&desc, &States[state][bias]);
+			oV(oD3D11SetDebugName(States[state][bias], _DebugNamePrefix));
 		}
 	}
 }
@@ -1392,29 +1430,46 @@ void oD3D11ShaderState::SetState(ID3D11DeviceContext* _pDeviceContext, size_t _I
 	oASSERT(_Index < States.size(), "Invalid shader state %u specified.", _Index);
 	STATE& s = States[_Index];
 	_pDeviceContext->IASetInputLayout(s.InputLayout);
-	_pDeviceContext->VSSetShader(s.VertexShader, 0, 0);
-	_pDeviceContext->HSSetShader(s.HullShader, 0, 0);
-	_pDeviceContext->DSSetShader(s.DomainShader, 0, 0);
-	_pDeviceContext->GSSetShader(s.GeometryShader, 0, 0);
-	_pDeviceContext->PSSetShader(s.PixelShader, 0, 0);
+	_pDeviceContext->VSSetShader(s.VertexShader, nullptr, 0);
+	_pDeviceContext->HSSetShader(s.HullShader, nullptr, 0);
+	_pDeviceContext->DSSetShader(s.DomainShader, nullptr, 0);
+	_pDeviceContext->GSSetShader(s.GeometryShader, nullptr, 0);
+	_pDeviceContext->PSSetShader(s.PixelShader, nullptr, 0);
 }
 
 void oD3D11ShaderState::ClearState(ID3D11DeviceContext* _pDeviceContext)
 {
 	_pDeviceContext->IASetInputLayout(0);
-	_pDeviceContext->VSSetShader(0, 0, 0);
-	_pDeviceContext->HSSetShader(0, 0, 0);
-	_pDeviceContext->DSSetShader(0, 0, 0);
-	_pDeviceContext->GSSetShader(0, 0, 0);
-	_pDeviceContext->PSSetShader(0, 0, 0);
+	_pDeviceContext->VSSetShader(nullptr, nullptr, 0);
+	_pDeviceContext->HSSetShader(nullptr, nullptr, 0);
+	_pDeviceContext->DSSetShader(nullptr, nullptr, 0);
+	_pDeviceContext->GSSetShader(nullptr, nullptr, 0);
+	_pDeviceContext->PSSetShader(nullptr, nullptr, 0);
 }
 
-void oD3D11ShaderState::RegisterState(size_t _Index, STATE& _State)
+static void oD3D11SetDebugName(oD3D11ShaderState::STATE* _pState, const char* _DebugNamePrefix)
+{
+	if (_DebugNamePrefix)
+	{
+		static const char* sStrings[] = { "InputLayout", "VertexShader", "HullShader", "DomainShader", "GeometryShader", "PixelShader" };
+		char fullname[512];
+		ID3D11DeviceChild** ppChild = (ID3D11DeviceChild**)&_pState->InputLayout;
+		for (size_t i = 0; i < (sizeof(oD3D11ShaderState::STATE)/sizeof(void*)); i++, ppChild++)
+		{
+			sprintf_s(fullname, "%s.%s", oSAFESTRN(_DebugNamePrefix), sStrings[i]);
+			if (*ppChild)
+				oV(oD3D11SetDebugName(*ppChild, fullname));
+		}
+	}
+}
+
+void oD3D11ShaderState::RegisterState(const char* _DebugNamePrefix, size_t _Index, STATE& _State)
 {
 	oSafeSet(States, _Index, _State);
+	oD3D11SetDebugName(&States[_Index], _DebugNamePrefix);
 }
 
-void oD3D11ShaderState::RegisterStates(ID3D11Device* _pDevice, const STATE_BYTE_CODE* _pStates, size_t _NumStates)
+void oD3D11ShaderState::RegisterStates(const char* _DebugNamePrefix, ID3D11Device* _pDevice, const STATE_BYTE_CODE* _pStates, size_t _NumStates)
 {
 	// @oooii-tony: TODO: Optimize this so that shaders get shared
 
@@ -1422,12 +1477,13 @@ void oD3D11ShaderState::RegisterStates(ID3D11Device* _pDevice, const STATE_BYTE_
 	for (unsigned int i = 0; i < _NumStates; i++)
 	{
 		s.Clear();
-		oD3D11ShaderState::CreateState(_pDevice, &s, _pStates[i].InputLayoutDesc, _pStates[i].NumInputElements, _pStates[i].pVertexShader, _pStates[i].pHullShader, _pStates[i].pDomainShader, _pStates[i].pGeometryShader, _pStates[i].pPixelShader);
-		RegisterState(i, s);
+		oD3D11ShaderState::CreateState(_pStates[i].DebugName, _pDevice, &s, _pStates[i].InputLayoutDesc, _pStates[i].NumInputElements, _pStates[i].pVertexShader, _pStates[i].pHullShader, _pStates[i].pDomainShader, _pStates[i].pGeometryShader, _pStates[i].pPixelShader);
+		RegisterState(nullptr, i, s);
 	}
 }
 
-void oD3D11ShaderState::CreateState(ID3D11Device* _pDevice
+void oD3D11ShaderState::CreateState(const char* _DebugNamePrefix
+																		 , ID3D11Device* _pDevice
 																		 , oD3D11ShaderState::STATE* _pState
 																		 , const D3D11_INPUT_ELEMENT_DESC* _pElements, size_t _NumElements
 																		 , const BYTE* _pByteCodeVS, size_t _SizeofByteCodeVS
@@ -1448,6 +1504,8 @@ void oD3D11ShaderState::CreateState(ID3D11Device* _pDevice
 		oV(_pDevice->CreateGeometryShader(_pByteCodeGS, _SizeofByteCodeGS, 0, &_pState->GeometryShader));
 	if (_pByteCodePS)
 		oV(_pDevice->CreatePixelShader(_pByteCodePS, _SizeofByteCodePS, 0, &_pState->PixelShader));
+
+	oD3D11SetDebugName(_pState, _DebugNamePrefix);
 }
 
 oD3D11RenderTarget::oD3D11RenderTarget(const char* _DebugName, ID3D11Device* _pDevice)

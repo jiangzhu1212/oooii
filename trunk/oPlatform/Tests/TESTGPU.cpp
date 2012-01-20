@@ -40,7 +40,7 @@ struct TESTGPU : public oTest
 		oFormatMemorySize(VRAMSize, desc.VRAM, 1);
 		char SharedSize[64];
 		oFormatMemorySize(SharedSize, desc.SharedSystemMemory, 1);
-		sprintf_s(_StrStatus, _SizeofStrStatus, "%s D3D %d.%d %s (%s shared)", desc.Description, desc.D3DVersion.Major, desc.D3DVersion.Minor, VRAMSize, SharedSize);
+		sprintf_s(_StrStatus, _SizeofStrStatus, "%s D3D %d.%d %s (%s shared) running on %s v%d.%d drivers (%s)", desc.GPUDescription, desc.D3DVersion.Major, desc.D3DVersion.Minor, VRAMSize, SharedSize, oAsString(desc.Vendor), desc.DriverVersion.Major, desc.DriverVersion.Minor, desc.DriverDescription);
 
 		return SUCCESS;
 	}

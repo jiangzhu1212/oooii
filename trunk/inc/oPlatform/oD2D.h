@@ -37,7 +37,7 @@
 	D2D1::ColorF oD2DColor(oColor _Color);
 
 	inline D2D1_POINT_2F oD2DAsPOINT(const float2& _P) { D2D1_POINT_2F p; p.x = _P.x; p.y = _P.y; return p; }
-	inline D2D1_POINT_2F oD2DAsPOINT(const int2& _P) { return oD2DAsPOINT(asfloat(_P)); }
+	inline D2D1_POINT_2F oD2DAsPOINT(const int2& _P) { return oD2DAsPOINT(oCastAsFloat(_P)); }
 	inline float2 oD2DAsFloat2(const D2D1_POINT_2F& _Point2F) { return float2(_Point2F.x, _Point2F.y); }
 	inline float2 oD2DAsFloat2(const D2D1_SIZE_F& _SizeF) { return float2(_SizeF.width, _SizeF.height); }
 	inline D2D1::ColorF oD2DAsColorF(oColor _Color) { float r,g,b,a; oColorDecompose(_Color, &r, &g, &b, &a); return D2D1::ColorF(r,g,b,a); }

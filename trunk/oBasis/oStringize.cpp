@@ -22,6 +22,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oStringize.h>
+#include <oBasis/oAtof.h>
 #include <oBasis/oMacros.h>
 #include <oBasis/oPlatformFeatures.h>
 #include <oBasis/oString.h>
@@ -87,7 +88,7 @@ bool oFromString(long* _pValue, const char* _StrSource) { return _FromString(_pV
 bool oFromString(unsigned long* _pValue, const char* _StrSource) { return _FromString(_pValue, "%u", _StrSource); }
 bool oFromString(long long* _pValue, const char* _StrSource) { return _FromString(_pValue, "%lld", _StrSource); }
 bool oFromString(unsigned long long* _pValue, const char* _StrSource) { return _FromString(_pValue, "%llu", _StrSource); }
-bool oFromString(float* _pValue, const char* _StrSource) { return _FromString(_pValue, "%f", _StrSource); }
+bool oFromString(float* _pValue, const char* _StrSource) { oCHK; return oAtof(_StrSource, _pValue); }
 bool oFromString(double* _pValue, const char* _StrSource) { return _FromString(_pValue, "%lf", _StrSource); }
 bool oFromString(half* _pValue, const char* _StrSource) { float v; if (!oFromString(&v, _StrSource)) return false; *_pValue = v; return true; }
 

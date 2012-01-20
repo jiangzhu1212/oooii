@@ -36,7 +36,7 @@ oGDIWindowUILine::~oGDIWindowUILine()
 	Window->Unhook(HookID);
 }
 
-bool oGDIWindowUILine::OnEvent(oWindow::EVENT _Event, unsigned int _SuperSampleScale, const oWindow::DESC& _Desc)
+bool oGDIWindowUILine::OnEvent(oWindow::EVENT _Event, const float3& _Position, int _SuperSampleScale)
 {
 	switch (_Event)
 	{
@@ -76,7 +76,7 @@ oGDIWindowUIBox::~oGDIWindowUIBox()
 	oUNHOOK_ONEVENT();
 }
 
-bool oGDIWindowUIBox::OnEvent(oWindow::EVENT _Event, unsigned int _SuperSampleScale, const oWindow::DESC& _Desc)
+bool oGDIWindowUIBox::OnEvent(oWindow::EVENT _Event, const float3& _Position, int _SuperSampleScale)
 {
 	switch (_Event)
 	{
@@ -165,7 +165,7 @@ void oGDIWindowUIText::SetText(const char* _Text) threadsafe
 	Window->Refresh(false, &r);
 }
 
-bool oGDIWindowUIText::OnEvent(oWindow::EVENT _Event, unsigned int _SuperSampleScale, const oWindow::DESC& _Desc)
+bool oGDIWindowUIText::OnEvent(oWindow::EVENT _Event, const float3& _Position, int _SuperSampleScale)
 {
 	switch (_Event)
 	{
@@ -252,7 +252,7 @@ void oGDIWindowUIPicture::Copy(const void* _pSourceData, size_t _SourcePitch, bo
 	Window->Refresh(false, &r);
 }
 
-bool oGDIWindowUIPicture::OnEvent(oWindow::EVENT _Event, unsigned int _SuperSampleScale, const oWindow::DESC& _Desc)
+bool oGDIWindowUIPicture::OnEvent(oWindow::EVENT _Event, const float3& _Position, int _SuperSampleScale)
 {
 	switch (_Event)
 	{

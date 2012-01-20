@@ -39,5 +39,6 @@ bool oBasisTest_oEightCC()
 	oTESTB(oFromString(&fcc, fccStr), "oFromSTring on oEightCC failed 1");
 	oTESTB(oEightCC('GEOM', 'ETRY') == fcc, "oFromSTring on oEightCC failed 2");
 
+	oErrorSetLast(oERROR_NONE, "");
 	return true;
 }

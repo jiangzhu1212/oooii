@@ -280,8 +280,6 @@ template<typename T> void oExtractFrustumPlanes(TVEC4<T> _Planes[6], const TMAT4
 // are valid or false if planes don't meet in 8 corners.
 template<typename T> bool oExtractFrustumCorners(TVEC3<T> _Corners[8], const TFRUSTUM<T>& _Frustum);
 
-
-
 // This results in a normalized vector that points into the screen as is 
 // needed for arcball-style calculation. An arcball is a sphere around a 
 // focus point that is used to rotate an eye point around that focus while 
@@ -363,6 +361,24 @@ template<typename T, typename TVec> TAABOX<T, TVec> oClip(const TAABOX<T, TVec>&
 
 // _____________________________________________________________________________
 // NON-HLSL Miscellaneous
+
+// asfloat() does a reinterpret_cast (analyzes bits separate from value). 
+// oCastAsFloat does a static_cast.
+template<typename T> float oCastAsFloat(const T& value) { return static_cast<float>(value); }
+template<typename T> float2 oCastAsFloat(const TVEC2<T>& value) { return float2(oCastAsFloat(value.x), oCastAsFloat(value.y)); }
+template<typename T> float3 oCastAsFloat(const TVEC3<T>& value) { return float3(oCastAsFloat(value.x), oCastAsFloat(value.y), oCastAsFloat(value.z)); }
+template<typename T> float4 oCastAsFloat(const TVEC4<T>& value) { return float4(oCastAsFloat(value.x), oCastAsFloat(value.y), oCastAsFloat(value.z), oCastAsFloat(value.w)); }
+template<typename T> float4x4 oCastAsFloat(const TMAT4<T>& value) { return float4x4(oCastAsFloat(value.Column0), oCastAsFloat(value.Column1), oCastAsFloat(value.Column2), oCastAsFloat(value.Column3)); }
+
+template<typename T> int oCastAsInt(const T& value) { return static_cast<int>(value); }
+template<typename T> int2 oCastAsInt(const TVEC2<T>& value) { return int2(oCastAsInt(value.x), oCastAsInt(value.y)); }
+template<typename T> int3 oCastAsInt(const TVEC3<T>& value) { return int3(oCastAsInt(value.x), oCastAsInt(value.y), oCastAsInt(value.z)); }
+template<typename T> int4 oCastAsInt(const TVEC4<T>& value) { return int4(oCastAsInt(value.x), oCastAsInt(value.y), oCastAsInt(value.z), oCastAsInt(value.w)); }
+
+template<typename T> uint oCastAsUint(const T& value) { return static_cast<uint>(value); }
+template<typename T> uint2 oCastAsUint(const TVEC2<T>& value) { return uint2(oCastAsUint(value.x), oCastAsUint(value.y)); }
+template<typename T> uint3 oCastAsUint(const TVEC3<T>& value) { return uint3(oCastAsUint(value.x), oCastAsUint(value.y), oCastAsUint(value.z)); }
+template<typename T> uint4 oCastAsUint(const TVEC4<T>& value) { return uint4(oCastAsUint(value.x), oCastAsUint(value.y), oCastAsUint(value.z), oCastAsUint(value.w)); }
 
 inline unsigned char oUNORMAsUBYTE(float x) { return static_cast<unsigned char>(floor(x * 255.0f + 0.5f)); }
 inline unsigned short oUNORMAsUSHORT(float x) { return static_cast<unsigned char>(floor(x * 65535.0f + 0.5f)); }

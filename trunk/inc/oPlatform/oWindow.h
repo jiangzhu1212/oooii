@@ -94,14 +94,18 @@ interface oWindow : oInterface
 
 	enum EVENT
 	{
-		RESIZING,
-		RESIZED,
-		CLOSING,
-		CLOSED,
-		DRAW_BACKBUFFER,
-		DRAW_UIAA,
-		DRAW_UI,
-		DRAW_FRONTBUFFER,
+		RESIZING, // Value is the supersample scalar (see Hook() for more details)
+		RESIZED, // Value is the supersample scalar (see Hook() for more details)
+		CLOSING, // Value is the supersample scalar (see Hook() for more details)
+		CLOSED, // Value is the supersample scalar (see Hook() for more details)
+		DRAW_BACKBUFFER, // Value is the supersample scalar (see Hook() for more details)
+		DRAW_UIAA, // Value is the supersample scalar (see Hook() for more details)
+		DRAW_UI, // Value is the supersample scalar (see Hook() for more details)
+		DRAW_FRONTBUFFER, // Value is the supersample scalar (see Hook() for more details)
+
+		KEY_DOWN, // Value is an X11 keysym as defined in oX11KeyboardSymbols.h
+		KEY_UP, // Value is an X11 keysym as defined in oX11KeyboardSymbols.h
+		POINTER_MOVE, // Value will be oKB_VoidSymbol as defined in oX11KeyboardSymbols.h
 	};
 
 	enum ALIGNMENT
@@ -160,13 +164,26 @@ interface oWindow : oInterface
 		oColor ClearColor;
 	};
 
-	// The return value is ignored by most events. However CLOSING functions should 
-	// return true in the general case, or false to disallow the closing of a window. 
-	// Only one false is required to abort closing. CLOSING is only issued from user 
-	// interaction. Programmatic closing of a window skips directly to CLOSED.
-	// Use QueryInterface() and GetDrawMode() to obtain the correct system resources.
-	// for responding to events.
-	typedef oFUNCTION<bool(EVENT _Event, unsigned int _SuperSampleScale, const DESC& _Desc)> HookFn;
+	// The return value is ignored by most events. However CLOSING functions 
+	// should return true in the general case, or false to disallow the closing 
+	// of a window. Only one false is required to abort closing. CLOSING is only 
+	// issued from user interaction. Programmatic closing of a window skips 
+	// directly to CLOSED. Use QueryInterface() and GetDrawMode() to obtain the 
+	// correct system resources from this oWindow.
+	// Value is a supersampler scalar for most window events for systems that 
+	// require rendering to an oversized offscreen buffer to do software 
+	// supersampling (it is 1 for systems that don't require that). For user input 
+	// events, _Value is an X11 keysym. See oX11KeyboardSymbols.h for more details.
+	// _Position will be float3(0,0,0) for most window events, but will provide
+	// valid data for user input events. The DELTA for the mouse wheel is in the
+	// Z value.
+
+	// NOTE: Hooks are run IN THE oWINDOW THREAD. Each oWindow instances has its
+	// own thread because of platform requirements, so it is important to note 
+	// that any use of Hook functions to control application logic (such as a KB
+	// hook to change a value) should be handled in a threadsafe manner.
+
+	typedef oFUNCTION<bool(EVENT _Event, const float3& _Position, int Value)> HookFn;
 
 	// Redraws the client area, optionally blocking and/or specifying a limited area
 	// for update.

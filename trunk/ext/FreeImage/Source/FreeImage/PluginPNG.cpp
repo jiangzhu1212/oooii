@@ -592,7 +592,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// get possible metadata (it can be located both before and after the image data)
 
-			ReadMetadata(png_ptr, info_ptr, dib);
+			//ReadMetadata(png_ptr, info_ptr, dib); // @oooii-tony: Disable reading metadata because it causes leaks that I can't figure out how to squash from client code
 
 			if (png_ptr) {
 				// clean up after the read, and free any memory allocated - REQUIRED

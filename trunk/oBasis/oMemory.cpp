@@ -77,7 +77,7 @@ void oMemset4(void* _pDestination, long _Value, size_t _NumBytes)
 
 void oMemcpy2d(void* oRESTRICT _pDestination, size_t _DestinationPitch, const void* oRESTRICT _pSource, size_t _SourcePitch, size_t _SourceRowSize, size_t _NumRows)
 {
-	if (_DestinationPitch == _SourcePitch)
+	if (_DestinationPitch == _SourcePitch && _SourcePitch == _SourceRowSize)
 		memcpy(_pDestination, _pSource, _SourcePitch * _NumRows);
 	else
 	{

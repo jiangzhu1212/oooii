@@ -49,10 +49,7 @@ oD3D10::~oD3D10()
 bool oD3D10CreateDevice(const int2& _VirtualDesktopPosition, ID3D10Device1** _ppDevice)
 {
 	if (!_ppDevice)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	oRef<IDXGIFactory1> Factory;
 	if (!oDXGICreateFactory(&Factory))
@@ -65,14 +62,21 @@ bool oD3D10CreateDevice(const int2& _VirtualDesktopPosition, ID3D10Device1** _pp
 	oRef<IDXGIAdapter1> Adapter;
 	oVB_RETURN2(Output->GetParent(__uuidof(IDXGIAdapter1), (void**)&Adapter));
 
-	if (E_NOINTERFACE == oD3D10::Singleton()->D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, nullptr, D3D10_CREATE_DEVICE_BGRA_SUPPORT, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, _ppDevice))
+	HRESULT hr = oD3D10::Singleton()->D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, nullptr, D3D10_CREATE_DEVICE_BGRA_SUPPORT, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, _ppDevice);
+	switch (hr)
 	{
-		oTRACE("Failed to create D3D 10.1 device, falling back to D3D 10.0.");
-		if (FAILED(oD3D10::Singleton()->D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, nullptr, D3D10_CREATE_DEVICE_BGRA_SUPPORT, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, _ppDevice)))
+		case S_OK:
+			break;
+
+		case E_NOINTERFACE:
 		{
-			oErrorSetLast(oERROR_NOT_FOUND, "No D3D 10 or 10.1 device could be found");
-			return false;
+			oTRACE("Failed to create D3D 10.1 device, falling back to D3D 10.0.");
+			if (FAILED(oD3D10::Singleton()->D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, nullptr, D3D10_CREATE_DEVICE_BGRA_SUPPORT, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, _ppDevice)))
+				return oErrorSetLast(oERROR_NOT_FOUND, "No D3D 10 or 10.1 device could be found");
+			break;
 		}
+		default:
+			return oWinSetLastError(hr);
 	}
 
 	return true;

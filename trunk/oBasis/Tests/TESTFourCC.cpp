@@ -39,5 +39,6 @@ bool oBasisTest_oFourCC()
 	oTESTB(oFromString(&fcc, fccStr), "oFromSTring on oFourCC failed 1");
 	oTESTB(oFourCC('RGBA') == fcc, "oFromSTring on oFourCC failed 2");
 
+	oErrorSetLast(oERROR_NONE, "");
 	return true;
 }

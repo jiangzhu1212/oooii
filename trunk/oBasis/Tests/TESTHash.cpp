@@ -31,8 +31,8 @@ bool oBasisTest_oHash(const oBasisTestServices& _Services)
 	static const char* TestFile = "Test/Textures/lena_1.png";
 
 	oStringPath path;
-	if (!_Services.ResolvePath(path, path.capacity(), TestFile))
-		return oErrorSetLast(oERROR_NOT_FOUND, "%s not found", TestFile);
+	if (!_Services.ResolvePath(path, path.capacity(), TestFile, true))
+		return oErrorSetLast(oERROR_NOT_FOUND, "not found: %s", TestFile);
 
 	void* pBuffer = nullptr;
 	size_t Size = 0;

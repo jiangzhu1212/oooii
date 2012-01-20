@@ -59,14 +59,17 @@ struct oD3D11_DEVICE_DESC
 		INDEX_CAPABLE, // indexes starting at the first device capable of meeting the DESC requirements
 	};
 
-	oD3D11_DEVICE_DESC()
-		: GPUIndexType(INDEX_CAPABLE)
+	oD3D11_DEVICE_DESC(const char* _DebugName)
+		: DebugName(_DebugName)
+		, GPUIndexType(INDEX_CAPABLE)
 		, GPUIndex(0)
 		, MinimumAPIFeatureLevel(11,0)
 		, VirtualDesktopPosition(oDEFAULT, oDEFAULT)
 		, Accelerated(true)
 		, Debug(false)
 	{}
+
+	const char* DebugName;
 
 	// if GPUIndex is oInvalid, the value 0 (meaning first-found) will be used, so
 	// if the desired behavior is use whatever the first capable HW is, use 
@@ -189,6 +192,7 @@ inline bool oD3D11CreateRenderTarget(ID3D11Device* _pDevice, const char* _DebugN
 inline bool oD3D11CreateRenderTarget(ID3D11Device* _pDevice, const char* _DebugName, UINT _Width, UINT _Height, UINT _ArraySize, DXGI_FORMAT _Format, ID3D11Texture2D** _ppRenderTarget, ID3D11DepthStencilView** _ppRenderTargetView, ID3D11ShaderResourceView** _ppShaderResourceView) { return oD3D11CreateRenderTarget(_pDevice, _DebugName, _Width, _Height, _ArraySize, _Format, _ppRenderTarget, (ID3D11View**)_ppRenderTargetView, _ppShaderResourceView); }
 
 // Set a name that appears in D3D11's debug layer
+bool oD3D11SetDebugName(ID3D11Device* _pDevice, const char* _Name);
 bool oD3D11SetDebugName(ID3D11DeviceChild* _pDeviceChild, const char* _Name);
 
 // Fills the specified buffer with the string set with oD3D11SetDebugName().
@@ -348,7 +352,7 @@ struct oD3D11RasterizerState
 		NUM_STATES,
 	};
 
-	oD3D11RasterizerState(ID3D11Device* _pDevice);
+	oD3D11RasterizerState(const char* _DebugNamePrefix, ID3D11Device* _pDevice);
 	~oD3D11RasterizerState();
 	void SetState(ID3D11DeviceContext* _pDeviceContext, STATE _State);
 	inline void SetDefaultState(ID3D11DeviceContext* _pDeviceContext) { _pDeviceContext->RSSetState(0); }
@@ -368,7 +372,7 @@ struct oD3D11BlendState
 		NUM_STATES,
 	};
 
-	oD3D11BlendState(ID3D11Device* _pDevice);
+	oD3D11BlendState(const char* _DebugNamePrefix, ID3D11Device* _pDevice);
 	~oD3D11BlendState();
 	void SetState(ID3D11DeviceContext* _pDeviceContext, STATE _State);
 	void SetDefaultState(ID3D11DeviceContext* _pDeviceContext);
@@ -387,7 +391,7 @@ struct oD3D11DepthStencilState
 		NUM_STATES,
 	};
 
-	oD3D11DepthStencilState(ID3D11Device* _pDevice);
+	oD3D11DepthStencilState(const char* _DebugNamePrefix, ID3D11Device* _pDevice);
 	~oD3D11DepthStencilState();
 	inline void SetState(ID3D11DeviceContext* _pDeviceContext, STATE _State) { _pDeviceContext->OMSetDepthStencilState(States[_State], 0); }
 	inline void SetDefaultState(ID3D11DeviceContext* _pDeviceContext) { _pDeviceContext->OMSetDepthStencilState(0, 0); }
@@ -428,7 +432,7 @@ struct oD3D11SamplerState
 		PIXEL_SHADER,
 	};
 
-	oD3D11SamplerState(ID3D11Device* _pDevice);
+	oD3D11SamplerState(const char* _DebugNamePrefix, ID3D11Device* _pDevice);
 	~oD3D11SamplerState();
 
 	// Set samplers only for a specific pipeline state
@@ -455,6 +459,7 @@ struct oD3D11ShaderState
 	// instance of this struct.
 	struct STATE_BYTE_CODE
 	{
+		const char* DebugName;
 		const D3D11_INPUT_ELEMENT_DESC* InputLayoutDesc;
 		size_t NumInputElements;
 		const BYTE* pVertexShader;
@@ -496,17 +501,18 @@ struct oD3D11ShaderState
 	// object - so they'll already have a ref - and then turn over ownership to 
 	// an instance of this object. So rather than adding extra user code to 
 	// release after calling this function, just skip the internal reference.
-	void RegisterState(size_t _Index, STATE& _State);
+	void RegisterState(const char* _DebugNamePrefix, size_t _Index, STATE& _State);
 
 	// Given the source material for a STATE, create the elements and register it
 	// with this object.
-	void RegisterStates(ID3D11Device* _pDevice, const STATE_BYTE_CODE* _pStates, size_t _NumStates);
-	template<size_t size> inline void RegisterStates(ID3D11Device* _pDevice, const STATE_BYTE_CODE (&_pStates)[size]) { return RegisterStates(_pDevice, _pStates, size); }
+	void RegisterStates(const char* _DebugNamePrefix, ID3D11Device* _pDevice, const STATE_BYTE_CODE* _pStates, size_t _NumStates);
+	template<size_t size> inline void RegisterStates(const char* _DebugNamePrefix, ID3D11Device* _pDevice, const STATE_BYTE_CODE (&_pStates)[size]) { return RegisterStates(_DebugNamePrefix, _pDevice, _pStates, size); }
 
 	// From the specified byte code, fill the specified STATE struct with 
 	// shaders. This does no changing of ref counts to prior pointers. NULL is
 	// allowed for unused stages.
-	static void CreateState(ID3D11Device* _pDevice
+	static void CreateState(const char* _DebugNamePrefix
+		, ID3D11Device* _pDevice
 		, STATE* _pState
 		, const D3D11_INPUT_ELEMENT_DESC* _pElements, size_t _NumElements
 		, const BYTE* _pByteCodeVS, size_t _SizeofByteCodeVS
@@ -518,7 +524,8 @@ struct oD3D11ShaderState
 	// compiled into code/a fixed array, here's a templated version to simplify
 	// the code.
 	template<size_t I, size_t V, size_t H, size_t D, size_t G, size_t P>
-	static inline void CreateState(ID3D11Device* _pDevice
+	static void CreateState(const char* _DebugNamePrefix
+		, ID3D11Device* _pDevice
 		, STATE* _pState
 		, const D3D11_INPUT_ELEMENT_DESC (&_pElements)[I]
 		, const BYTE (&_pByteCodeVS)[V]
@@ -527,11 +534,12 @@ struct oD3D11ShaderState
 		, const BYTE (&_pByteCodeGS)[G]
 		, const BYTE (&_pByteCodePS)[P])
 	{
-		CreateState(_pDevice, _pState, _pElements, I, _pByteCodeVS, V, _pByteCodeHS, H, _pByteCodeDS, D, _pByteCodeGS, G, _pByteCodePS, P);
+		CreateState(_DebugNamePrefix, _pDevice, _pState, _pElements, I, _pByteCodeVS, V, _pByteCodeHS, H, _pByteCodeDS, D, _pByteCodeGS, G, _pByteCodePS, P);
 	}
 
 	// Flavor that uses the size that's already inside the byte code itself
-	static inline void CreateState(ID3D11Device* _pDevice
+	static inline void CreateState(const char* _DebugNamePrefix
+		, ID3D11Device* _pDevice
 		, STATE* _pState
 		, const D3D11_INPUT_ELEMENT_DESC* _pElements, size_t _NumElements
 		, const BYTE* _pByteCodeVS
@@ -540,7 +548,7 @@ struct oD3D11ShaderState
 		, const BYTE* _pByteCodeGS
 		, const BYTE* _pByteCodePS)
 	{
-		CreateState(_pDevice, _pState, _pElements, _NumElements
+		CreateState(_DebugNamePrefix, _pDevice, _pState, _pElements, _NumElements
 			, _pByteCodeVS, oD3D11GetEncodedByteCodeSize(_pByteCodeVS)
 			, _pByteCodeHS, oD3D11GetEncodedByteCodeSize(_pByteCodeHS)
 			, _pByteCodeDS, oD3D11GetEncodedByteCodeSize(_pByteCodeDS)
@@ -548,7 +556,8 @@ struct oD3D11ShaderState
 			, _pByteCodePS, oD3D11GetEncodedByteCodeSize(_pByteCodePS));
 	}
 
-	template<size_t I> static inline void CreateState(ID3D11Device* _pDevice
+	template<size_t I> static void CreateState(const char* _DebugNamePrefix
+		, ID3D11Device* _pDevice
 		, STATE* _pState
 		, const D3D11_INPUT_ELEMENT_DESC (&_pElements)[I]
 		, const BYTE* _pByteCodeVS
@@ -557,7 +566,7 @@ struct oD3D11ShaderState
 		, const BYTE* _pByteCodeGS
 		, const BYTE* _pByteCodePS)
 	{
-		CreateState(_pDevice, _pState, _pElements, I
+		CreateState(_DebugNamePrefix, _pDevice, _pState, _pElements, I
 			, _pByteCodeVS, oD3D11GetEncodedByteCodeSize(_pByteCodeVS)
 			, _pByteCodeHS, oD3D11GetEncodedByteCodeSize(_pByteCodeHS)
 			, _pByteCodeDS, oD3D11GetEncodedByteCodeSize(_pByteCodeDS)

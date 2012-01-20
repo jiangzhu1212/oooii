@@ -101,7 +101,13 @@ bool oWinSetLastError(HRESULT _hResult, const char* _ErrorDescPrefix)
 		count -= len;
 	}
 
-	size_t len = sprintf_s(p, count, " (HRESULT 0x%08x: ", _hResult);
+	size_t len = 0;
+	const char* HRAsString = oWinAsStringHR(_hResult);
+	if ('u' == *HRAsString)
+		len = sprintf_s(p, count, " (HRESULT 0x%08x: ", _hResult);
+	else
+		len = sprintf_s(p, count, " (%s: ", HRAsString);
+
 	p += len;
 	count -= len;
 
@@ -110,16 +116,16 @@ bool oWinSetLastError(HRESULT _hResult, const char* _ErrorDescPrefix)
 
 	strcat_s(p, count, ")");
 
-	// @oooii-tony: it would be nice to convert the errno a bit better, but that's
-	// a lot of typing! Maybe one day...
-	switch(_hResult)
+	switch (_hResult)
 	{
-	case ERROR_FILE_NOT_FOUND:
-	case ERROR_PATH_NOT_FOUND:
-		return oErrorSetLast(oERROR_NOT_FOUND, err);
-	case ERROR_ACCESS_DENIED:
-	case ERROR_SHARING_VIOLATION:
-		return oErrorSetLast(oERROR_REFUSED, err);
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+			return oErrorSetLast(oERROR_NOT_FOUND, err);
+		case ERROR_ACCESS_DENIED:
+		case ERROR_SHARING_VIOLATION:
+			return oErrorSetLast(oERROR_REFUSED, err);
+		case E_OUTOFMEMORY:
+			return oErrorSetLast(oERROR_AT_CAPACITY, err);
 	}
 	return oErrorSetLast(oERROR_PLATFORM, err);
 }
@@ -1317,9 +1323,9 @@ bool oWinVideoDriverIsUpToDate()
 			RequiredVersion = oVersion(oNVVER_MAJOR, oNVVER_MINOR);
 			break;
 
-		case oWINDOWS_VIDEO_DRIVER_DESC::ATI:
-			VendorName = "ATI";
-			RequiredVersion = oVersion(oATIVER_MAJOR, oATIVER_MINOR);
+		case oWINDOWS_VIDEO_DRIVER_DESC::AMD:
+			VendorName = "AMD";
+			RequiredVersion = oVersion(oAMDVER_MAJOR, oAMDVER_MINOR);
 			break;
 		
 		default:
@@ -1357,19 +1363,19 @@ static bool ParseVersionStringNV(const char* _VersionString, oVersion* _pVersion
 	return true;
 }
 
-// ATI's version string is of the form M.mm.x.x where
+// AMD's version string is of the form M.mm.x.x where
 // M is the major version and mm is the minor version.
 // (outside function below so this doesn't get tracked as a leak)
-static std::regex reATIVersionString("([0-9]+)\\.([0-9]+)\\.[0-9]+\\.[0-9]+");
+static std::regex reAMDVersionString("([0-9]+)\\.([0-9]+)\\.[0-9]+\\.[0-9]+");
 
-static bool ParseVersionStringATI(const char* _VersionString, oVersion* _pVersion)
+static bool ParseVersionStringAMD(const char* _VersionString, oVersion* _pVersion)
 {
 	if (!_VersionString || !_pVersion)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	std::cmatch matches;
-	if (!regex_match(_VersionString, matches, reATIVersionString))
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified string \"%s\" is not a well-formed ATI version string", oSAFESTRN(_VersionString));
+	if (!regex_match(_VersionString, matches, reAMDVersionString))
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified string \"%s\" is not a well-formed AMD version string", oSAFESTRN(_VersionString));
 
 	_pVersion->Major = atoi(matches[1].first);
 	_pVersion->Minor = atoi(matches[2].first);
@@ -1389,8 +1395,6 @@ bool oWinGetVideoDriverDesc(oWINDOWS_VIDEO_DRIVER_DESC* _pDesc)
 
 	oV(CoInitializeEx(nullptr, COINIT_MULTITHREADED));
 	oOnScopeExit OnScopeExit([&] { CoUninitialize(); });
-
-	oV(CoInitializeSecurity(nullptr, -1, nullptr, nullptr, RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE, nullptr, EOAC_NONE, nullptr));
 
 	oRef<IWbemLocator> WbemLocator;
 	oV(CoCreateInstance((const GUID&)oGUID_CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, (const IID&)oGUID_IID_WbemLocator, (LPVOID *) &WbemLocator));
@@ -1424,10 +1428,10 @@ bool oWinGetVideoDriverDesc(oWINDOWS_VIDEO_DRIVER_DESC* _pDesc)
 			oVERIFY(ParseVersionStringNV(version, &_pDesc->Version));
 		}
 		
-		else if (strstr(_pDesc->Desc, "ATI"))
+		else if (strstr(_pDesc->Desc, "ATI") || strstr(_pDesc->Desc, "AMD"))
 		{
-			_pDesc->Vendor = oWINDOWS_VIDEO_DRIVER_DESC::ATI;
-			oVERIFY(ParseVersionStringATI(version, &_pDesc->Version));
+			_pDesc->Vendor = oWINDOWS_VIDEO_DRIVER_DESC::AMD;
+			oVERIFY(ParseVersionStringAMD(version, &_pDesc->Version));
 		}
 
 		else

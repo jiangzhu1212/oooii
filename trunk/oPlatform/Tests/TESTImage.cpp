@@ -37,32 +37,29 @@ struct TESTImage : public oTest
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oStringPath path;
-		oTESTB(oTestManager::Singleton()->FindFullPath(path.c_str(), testImage), "Failed to find \"%s\"", testImage);
+		oTESTB0(FindInputFile(path, testImage));
 
 		oStringPath tmp;
-		oTESTB(oSystemGetPath(tmp.c_str(), oSYSPATH_TMP), "Failed to find platform temp folder");
-		strcat_s(tmp.c_str(), testImage);
+		oTESTB0(BuildPath(tmp, oGetFilebase(testImage), oTest::TEMP));
 
 		oRef<oBuffer> buffer1;
 		oTESTB(oBufferCreate(path.c_str(), false, &buffer1), "Load failed: %s", path.c_str());
-		oLockedPointer<oBuffer> lockedBuffer1(buffer1);
 
 		oRef<oImage> image1;
-		oTESTB(oImageCreate(path.c_str(), lockedBuffer1->GetData(), lockedBuffer1->GetSize(), &image1), "Image create failed: %s", path.c_str());
+		oTESTB(oImageCreate(path.c_str(), buffer1->GetData(), buffer1->GetSize(), &image1), "Image create failed: %s", path.c_str());
 
 		oTESTB(oImageSave(image1, oImage::UNKNOWN_FILE, oImage::HIGH_COMPRESSION, tmp), "Save failed: %s", tmp);
 
 		oRef<oBuffer> buffer2;
 		oTESTB(oBufferCreate(tmp, false, &buffer2), "Load failed: %s", tmp);
-		oLockedPointer<oBuffer> lockedBuffer2(buffer2);
 
 		// Compare that what we saved is the same as what we loaded
 
-		oTESTB(lockedBuffer1->GetSize() == lockedBuffer2->GetSize(), "Buffer size mismatch (orig %u bytes, saved-and-reloaded %u bytes)", lockedBuffer1->GetSize(), lockedBuffer2->GetSize());
-		oTESTB(!memcmp(lockedBuffer1->GetData(), lockedBuffer2->GetData(), lockedBuffer1->GetSize()), "Save did not write the same bit pattern as was loaded");
+		oTESTB(buffer1->GetSize() == buffer2->GetSize(), "Buffer size mismatch (orig %u bytes, saved-and-reloaded %u bytes)", buffer1->GetSize(), buffer2->GetSize());
+		oTESTB(!memcmp(buffer1->GetData(), buffer2->GetData(), buffer1->GetSize()), "Save did not write the same bit pattern as was loaded");
 
 		oRef<oImage> image2;
-		oTESTB(oImageCreate(path.c_str(), lockedBuffer2->GetData(), lockedBuffer2->GetSize(), &image2), "Image create failed: %s", tmp);
+		oTESTB(oImageCreate(path.c_str(), buffer2->GetData(), buffer2->GetSize(), &image2), "Image create failed: %s", tmp);
 
 		// Compare that the bits written are the same as the bits read
 

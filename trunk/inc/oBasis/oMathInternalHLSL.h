@@ -58,21 +58,21 @@
 // Operators
 
 // mul(a,b) means a * b, meaning if you want to scale then translate, it would be result = scale * translate
-template<typename T> inline TMAT3<T> mul(const TMAT3<T>& _Matrix0, const TMAT3<T>& _Matrix1) { return TMAT3<T>((_Matrix1 * _Matrix1.Column0), (_Matrix1 * _Matrix0.Column1), (_Matrix1 * _Matrix0.Column2)); }
-template<typename T> inline TMAT4<T> mul(const TMAT4<T>& _Matrix0, const TMAT4<T>& _Matrix1) { return TMAT4<T>((_Matrix1 * _Matrix0.Column0), (_Matrix1 * _Matrix0.Column1), (_Matrix1 * _Matrix0.Column2), (_Matrix1 * _Matrix0.Column3)); }
-template<typename T> inline TVEC3<T> mul(const TMAT3<T>& _Matrix, const TVEC3<T>& _Vector) { return TVEC3<T>(_Matrix[0].x * _Vector.x + _Matrix[1].x * _Vector.y + _Matrix[2].x * _Vector.z, _Matrix[0].y * _Vector.x + _Matrix[1].y * _Vector.y + _Matrix[2].y * _Vector.z, _Matrix[0].z * _Vector.x + _Matrix[1].z * _Vector.y + _Matrix[2].z * _Vector.z); }
-template<typename T> inline TVEC3<T> mul(const TMAT4<T>& _Matrix, const TVEC3<T>& _Vector) { return mul(_Matrix, TVEC4<T>(_Vector.x,_Vector.y,_Vector.z,1.0f)).XYZ(); }
-template<typename T> inline TVEC4<T> mul(const TMAT4<T>& _Matrix, const TVEC4<T>& _Vector) { return TVEC4<T>(((((_Matrix.Column0.x*_Vector.x) + (_Matrix.Column1.x*_Vector.y)) + (_Matrix.Column2.x*_Vector.z)) + (_Matrix.Column3.x*_Vector.w)), ((((_Matrix.Column0.y*_Vector.x) + (_Matrix.Column1.y*_Vector.y)) + (_Matrix.Column2.y*_Vector.z)) + (_Matrix.Column3.y*_Vector.w)), ((((_Matrix.Column0.z*_Vector.x) + (_Matrix.Column1.z*_Vector.y)) + (_Matrix.Column2.z*_Vector.z)) + (_Matrix.Column3.z*_Vector.w)), ((((_Matrix.Column0.w*_Vector.x) + (_Matrix.Column1.w*_Vector.y)) + (_Matrix.Column2.w*_Vector.z)) + (_Matrix.Column3.w*_Vector.w))); }
-template<typename T> inline T mad(const T& mvalue, const T& avalue, const T& bvalue) { return mvalue*avalue + bvalue; }
+template<typename T> TMAT3<T> mul(const TMAT3<T>& _Matrix0, const TMAT3<T>& _Matrix1) { return TMAT3<T>((_Matrix1 * _Matrix1.Column0), (_Matrix1 * _Matrix0.Column1), (_Matrix1 * _Matrix0.Column2)); }
+template<typename T> TMAT4<T> mul(const TMAT4<T>& _Matrix0, const TMAT4<T>& _Matrix1) { return TMAT4<T>((_Matrix1 * _Matrix0.Column0), (_Matrix1 * _Matrix0.Column1), (_Matrix1 * _Matrix0.Column2), (_Matrix1 * _Matrix0.Column3)); }
+template<typename T> TVEC3<T> mul(const TMAT3<T>& _Matrix, const TVEC3<T>& _Vector) { return TVEC3<T>(_Matrix[0].x * _Vector.x + _Matrix[1].x * _Vector.y + _Matrix[2].x * _Vector.z, _Matrix[0].y * _Vector.x + _Matrix[1].y * _Vector.y + _Matrix[2].y * _Vector.z, _Matrix[0].z * _Vector.x + _Matrix[1].z * _Vector.y + _Matrix[2].z * _Vector.z); }
+template<typename T> TVEC3<T> mul(const TMAT4<T>& _Matrix, const TVEC3<T>& _Vector) { return mul(_Matrix, TVEC4<T>(_Vector.x,_Vector.y,_Vector.z,1.0f)).XYZ(); }
+template<typename T> TVEC4<T> mul(const TMAT4<T>& _Matrix, const TVEC4<T>& _Vector) { return TVEC4<T>(((((_Matrix.Column0.x*_Vector.x) + (_Matrix.Column1.x*_Vector.y)) + (_Matrix.Column2.x*_Vector.z)) + (_Matrix.Column3.x*_Vector.w)), ((((_Matrix.Column0.y*_Vector.x) + (_Matrix.Column1.y*_Vector.y)) + (_Matrix.Column2.y*_Vector.z)) + (_Matrix.Column3.y*_Vector.w)), ((((_Matrix.Column0.z*_Vector.x) + (_Matrix.Column1.z*_Vector.y)) + (_Matrix.Column2.z*_Vector.z)) + (_Matrix.Column3.z*_Vector.w)), ((((_Matrix.Column0.w*_Vector.x) + (_Matrix.Column1.w*_Vector.y)) + (_Matrix.Column2.w*_Vector.z)) + (_Matrix.Column3.w*_Vector.w))); }
+template<typename T> T mad(const T& mvalue, const T& avalue, const T& bvalue) { return mvalue*avalue + bvalue; }
 
 // _____________________________________________________________________________
 // HLSL Matrix operations
 
-template<typename T> inline T determinant(const TMAT3<T>& _Matrix) { return dot(_Matrix.Column2, cross(_Matrix.Column0, _Matrix.Column1)); }
+template<typename T> T determinant(const TMAT3<T>& _Matrix) { return dot(_Matrix.Column2, cross(_Matrix.Column0, _Matrix.Column1)); }
 template<typename T> T determinant(const TMAT4<T>& _Matrix);
 
-template<typename T> inline TMAT3<T> transpose(const TMAT3<T>& _Matrix) { return TMAT3<T>(TVEC3<T>(_Matrix.Column0.x, _Matrix.Column1.x, _Matrix.Column2.x), TVEC3<T>(_Matrix.Column0.y, _Matrix.Column1.y, _Matrix.Column2.y), TVEC3<T>(_Matrix.Column0.z, _Matrix.Column1.z, _Matrix.Column2.z)); }
-template<typename T> inline TMAT4<T> transpose(const TMAT4<T>& _Matrix) { return TMAT4<T>(TVEC4<T>(_Matrix.Column0.x, _Matrix.Column1.x, _Matrix.Column2.x, _Matrix.Column3.x), TVEC4<T>(_Matrix.Column0.y, _Matrix.Column1.y, _Matrix.Column2.y, _Matrix.Column3.y), TVEC4<T>(_Matrix.Column0.z, _Matrix.Column1.z, _Matrix.Column2.z, _Matrix.Column3.z), TVEC4<T>(_Matrix.Column0.w, _Matrix.Column1.w, _Matrix.Column2.w, _Matrix.Column3.w)); }
+template<typename T> TMAT3<T> transpose(const TMAT3<T>& _Matrix) { return TMAT3<T>(TVEC3<T>(_Matrix.Column0.x, _Matrix.Column1.x, _Matrix.Column2.x), TVEC3<T>(_Matrix.Column0.y, _Matrix.Column1.y, _Matrix.Column2.y), TVEC3<T>(_Matrix.Column0.z, _Matrix.Column1.z, _Matrix.Column2.z)); }
+template<typename T> TMAT4<T> transpose(const TMAT4<T>& _Matrix) { return TMAT4<T>(TVEC4<T>(_Matrix.Column0.x, _Matrix.Column1.x, _Matrix.Column2.x, _Matrix.Column3.x), TVEC4<T>(_Matrix.Column0.y, _Matrix.Column1.y, _Matrix.Column2.y, _Matrix.Column3.y), TVEC4<T>(_Matrix.Column0.z, _Matrix.Column1.z, _Matrix.Column2.z, _Matrix.Column3.z), TVEC4<T>(_Matrix.Column0.w, _Matrix.Column1.w, _Matrix.Column2.w, _Matrix.Column3.w)); }
 
 // _____________________________________________________________________________
 // Permutate bit operations to vector types
@@ -135,48 +135,50 @@ inline int asint(float f)
 
 inline double asdouble(unsigned int lowbits, unsigned int highbits) { oByteSwizzle64 s; s.AsUnsignedInt[0] = lowbits; s.AsUnsignedInt[1] = highbits; return s.AsDouble; }
 inline double2 asdouble(const uint2& lowbits, const uint2& highbits) { oByteSwizzle64 s[2]; s[0].AsUnsignedInt[0] = lowbits.x; s[0].AsUnsignedInt[1] = highbits.x; s[1].AsUnsignedInt[0] = lowbits.y; s[1].AsUnsignedInt[1] = highbits.y; return double2(s[0].AsDouble, s[1].AsDouble); }
-template<typename T> inline double2 asdouble(const TVEC2<T>& value) { return double2(static_cast<double>(value.x), static_cast<double>(value.y)); }
-template<typename T> inline double3 asdouble(const TVEC3<T>& value) { return double3(static_cast<double>(value.x), static_cast<double>(value.y), static_cast<double>(value.z)); }
-template<typename T> inline double4 asdouble(const TVEC4<T>& value) { return double4(static_cast<double>(value.x), static_cast<double>(value.y), static_cast<double>(value.z), static_cast<double>(value.w)); }
-template<typename T> inline double4x4 asdouble(const TMAT4<T>& value) { return double4x4(asdouble(value.Column0), asdouble(value.Column1), asdouble(value.Column2), asdouble(value.Column3)); }
+template<typename T> double asdouble(const T& value) { return *(double*)&value; }
+template<typename T> double2 asdouble(const TVEC2<T>& value) { return double2(asdouble(value.x), asdouble(value.y)); }
+template<typename T> double3 asdouble(const TVEC3<T>& value) { return double3(asdouble(value.x), asdouble(value.y), asdouble(value.z)); }
+template<typename T> double4 asdouble(const TVEC4<T>& value) { return double4(asdouble(value.x), asdouble(value.y), asdouble(value.z), asdouble(value.w)); }
+template<typename T> double4x4 asdouble(const TMAT4<T>& value) { return double4x4(asdouble(value.Column0), asdouble(value.Column1), asdouble(value.Column2), asdouble(value.Column3)); }
 inline float2 asfloat(const double& value) { oByteSwizzle64 s; s.AsDouble = value; return float2(s.AsFloat[0], s.AsFloat[1]); }
 inline float4 asfloat(const double2& value) { oByteSwizzle64 s[2]; s[0].AsDouble = value.x; s[1].AsDouble = value.y; return float4(s[0].AsFloat[0], s[0].AsFloat[1], s[1].AsFloat[0], s[1].AsFloat[1]); }
 inline float2 asfloat(const llong& value) { oByteSwizzle64 s; s.AsLongLong = value; return float2(s.AsFloat[0], s.AsFloat[1]); }
 inline float4 asfloat(const llong2& value) { oByteSwizzle64 s[2]; s[0].AsLongLong = value.x; s[1].AsLongLong = value.y; return float4(s[0].AsFloat[0], s[0].AsFloat[1], s[1].AsFloat[0], s[1].AsFloat[1]); }
-template<typename T> inline float asfloat(const T& value) { return static_cast<float>(value); }
-template<typename T> inline float2 asfloat(const TVEC2<T>& value) { return float2(static_cast<float>(value.x), static_cast<float>(value.y)); }
-template<typename T> inline float3 asfloat(const TVEC3<T>& value) { return float3(static_cast<float>(value.x), static_cast<float>(value.y), static_cast<float>(value.z)); }
-template<typename T> inline float4 asfloat(const TVEC4<T>& value) { return float4(static_cast<float>(value.x), static_cast<float>(value.y), static_cast<float>(value.z), static_cast<float>(value.w)); }
-template<typename T> inline float4x4 asfloat(const TMAT4<T>& value) { return float4x4(asfloat(value.Column0), asfloat(value.Column1), asfloat(value.Column2), asfloat(value.Column3)); }
+template<typename T> float asfloat(const T& value) { return *(float*)&value; }
+template<typename T> float2 asfloat(const TVEC2<T>& value) { return float2(asfloat(value.x), asfloat(value.y)); }
+template<typename T> float3 asfloat(const TVEC3<T>& value) { return float3(asfloat(value.x), asfloat(value.y), asfloat(value.z)); }
+template<typename T> float4 asfloat(const TVEC4<T>& value) { return float4(asfloat(value.x), asfloat(value.y), asfloat(value.z), asfloat(value.w)); }
+template<typename T> float4x4 asfloat(const TMAT4<T>& value) { return float4x4(asfloat(value.Column0), asfloat(value.Column1), asfloat(value.Column2), asfloat(value.Column3)); }
 inline int2 asint(double value) { oByteSwizzle64 s; s.AsDouble = value; return int2(s.AsInt[0], s.AsInt[1]); }
 inline int4 asint(double2 value) { oByteSwizzle64 s[2]; s[0].AsDouble = value.x; s[1].AsDouble = value.y; return int4(s[0].AsInt[0], s[0].AsInt[1], s[1].AsInt[0], s[1].AsInt[1]); }
 inline int2 asint(long long value) { oByteSwizzle64 s; s.AsLongLong = value; return int2(s.AsInt[0], s.AsInt[1]); }
 inline int4 asint(const llong2& value) { oByteSwizzle64 s[2]; s[0].AsLongLong = value.x; s[1].AsLongLong = value.y; return int4(s[0].AsInt[0], s[0].AsInt[1], s[1].AsInt[0], s[1].AsInt[1]); }
-template<typename T> inline int2 asint(const TVEC2<T>& value) { return int2(static_cast<int>(value.x), static_cast<int>(value.y)); }
-template<typename T> inline int3 asint(const TVEC3<T>& value) { return int3(static_cast<int>(value.x), static_cast<int>(value.y), static_cast<int>(value.z)); }
-template<typename T> inline int4 asint(const TVEC4<T>& value) { return int4(static_cast<int>(value.x), static_cast<int>(value.y), static_cast<int>(value.z), static_cast<int>(value.w)); }
-template<typename T> inline int asint(T value) { return static_cast<int>(value); }
+template<typename T> int asint(const T& value) { return *(int*)&value; }
+template<typename T> int2 asint(const TVEC2<T>& value) { return int2(asint(value.x), asint(value.y)); }
+template<typename T> int3 asint(const TVEC3<T>& value) { return int3(asint(value.x), asint(value.y), asint(value.z)); }
+template<typename T> int4 asint(const TVEC4<T>& value) { return int4(asint(value.x), asint(value.y), asint(value.z), asint(value.w)); }
 
 inline void asuint(double value, unsigned int& a, unsigned int& b) { oByteSwizzle64 s; s.AsDouble = value; a = s.AsUnsignedInt[0]; b = s.AsUnsignedInt[1]; }
-template<typename T> inline uint2 asuint(const TVEC2<T>& value) { return uint2(static_cast<uint>(value.x), static_cast<uint>(value.y)); }
-template<typename T> inline uint3 asuint(const TVEC3<T>& value) { return uint3(static_cast<uint>(value.x), static_cast<uint>(value.y), static_cast<uint>(value.z)); }
-template<typename T> inline uint4 asuint(const TVEC4<T>& value) { return uint4(static_cast<uint>(value.x), static_cast<uint>(value.y), static_cast<uint>(value.z), static_cast<uint>(value.w)); }
+template<typename T> uint asuint(const T& value) { return *(uint*)&value; }
+template<typename T> uint2 asuint(const TVEC2<T>& value) { return uint2(asuint(value.x), asuint(value.y)); }
+template<typename T> uint3 asuint(const TVEC3<T>& value) { return uint3(asuint(value.x), asuint(value.y), asuint(value.z)); }
+template<typename T> uint4 asuint(const TVEC4<T>& value) { return uint4(asuint(value.x), asuint(value.y), asuint(value.z), asuint(value.w)); }
 
 #ifdef _HALF_H_
 	inline float f16tof32(unsigned int value) { half h; h.setBits(static_cast<unsigned short>(value)); return static_cast<float>(h); }
-	template<typename T> inline float2 f16tof32(const float2& value) { return float2(f16tof32(value.x), f16tof32(value.y)); }
-	template<typename T> inline float3 f16tof32(const float3& value) { return float2(f16tof32(value.x), f16tof32(value.y), f16tof32(value.z)); }
-	template<typename T> inline float4 f16tof32(const float4& value) { return float2(f16tof32(value.x), f16tof32(value.y), f16tof32(value.z), f16tof32(value.w)); }
+	template<typename T> float2 f16tof32(const float2& value) { return float2(f16tof32(value.x), f16tof32(value.y)); }
+	template<typename T> float3 f16tof32(const float3& value) { return float2(f16tof32(value.x), f16tof32(value.y), f16tof32(value.z)); }
+	template<typename T> float4 f16tof32(const float4& value) { return float2(f16tof32(value.x), f16tof32(value.y), f16tof32(value.z), f16tof32(value.w)); }
 	inline unsigned int f32tof16(float value) { return half(value).bits(); }
-	template<typename T> inline uint2 f32tof16(const float2& value) { return uint2(f32tof16(value.x), f32tof16(value.y)); }
-	template<typename T> inline uint3 f32tof16(const float3& value) { return uint3(f32tof16(value.x), f32tof16(value.y), f32tof16(value.z)); }
-	template<typename T> inline uint4 f32tof16(const float4& value) { return uint4(f32tof16(value.x), f32tof16(value.y), f32tof16(value.z), f32tof16(value.w)); }
+	template<typename T> uint2 f32tof16(const float2& value) { return uint2(f32tof16(value.x), f32tof16(value.y)); }
+	template<typename T> uint3 f32tof16(const float3& value) { return uint3(f32tof16(value.x), f32tof16(value.y), f32tof16(value.z)); }
+	template<typename T> uint4 f32tof16(const float4& value) { return uint4(f32tof16(value.x), f32tof16(value.y), f32tof16(value.z), f32tof16(value.w)); }
 #endif
 
 // _____________________________________________________________________________
 // Introspection for halfs, floats and doubles
 
-template<typename T> inline T sign(const T& x) { return x < 0 ? T(-1) : (x == 0 ? T(0) : T(1)); }
+template<typename T> T sign(const T& x) { return x < 0 ? T(-1) : (x == 0 ? T(0) : T(1)); }
 
 inline bool isfinite(const float& a)
 {
@@ -197,21 +199,21 @@ inline bool isnan(const float& a)
 }
 
 inline bool isfinite(const double& a) { return !!_finite(a); }
-template<typename T> inline bool isinf(const T& a) { return !isfinite(a); }
+template<typename T> bool isinf(const T& a) { return !isfinite(a); }
 inline bool isinf(const double& a) { return !isfinite(a); }
 inline bool isnan(const double& a) { return !!_isnan(a); }
-template<typename T> inline bool isfinite(const TVEC2<T>& a) { return isfinite(a.x) && isfinite(a.y); }
-template<typename T> inline bool isfinite(const TVEC3<T>& a) { return isfinite(a.x) && isfinite(a.y) && isfinite(a.z); }
-template<typename T> inline bool isfinite(const TVEC4<T>& a) { return isfinite(a.x) && isfinite(a.y) && isfinite(a.z) && isfinite(a.w); }
-template<typename T> inline bool isinf(const TVEC2<T>& a) { return isinf(a.x) || isinf(a.y); }
-template<typename T> inline bool isinf(const TVEC3<T>& a) { return isinf(a.x) || isinf(a.y) || isinf(a.z); }
-template<typename T> inline bool isinf(const TVEC4<T>& a) { return isinf(a.x) || isinf(a.y) || isinf(a.z) || isinf(a.w); }
-template<typename T> inline bool isnan(const TVEC2<T>& a) { return isnan(a.x) || isnan(a.y); }
-template<typename T> inline bool isnan(const TVEC3<T>& a) { return isnan(a.x) || isnan(a.y) || isnan(a.z); }
-template<typename T> inline bool isnan(const TVEC4<T>& a) { return isnan(a.x) || isnan(a.y) || isnan(a.z) || isnan(a.w); }
-template<typename T> inline bool isdenorm(const TVEC2<T>& a) { return isdenorm(a.x) || isdenorm(a.y); }
-template<typename T> inline bool isdenorm(const TVEC3<T>& a) { return isdenorm(a.x) || isdenorm(a.y) || isdenorm(a.z); }
-template<typename T> inline bool isdenorm(const TVEC4<T>& a) { return isdenorm(a.x) || isdenorm(a.y) || isdenorm(a.z) || isdenorm(a.w); }
+template<typename T> bool isfinite(const TVEC2<T>& a) { return isfinite(a.x) && isfinite(a.y); }
+template<typename T> bool isfinite(const TVEC3<T>& a) { return isfinite(a.x) && isfinite(a.y) && isfinite(a.z); }
+template<typename T> bool isfinite(const TVEC4<T>& a) { return isfinite(a.x) && isfinite(a.y) && isfinite(a.z) && isfinite(a.w); }
+template<typename T> bool isinf(const TVEC2<T>& a) { return isinf(a.x) || isinf(a.y); }
+template<typename T> bool isinf(const TVEC3<T>& a) { return isinf(a.x) || isinf(a.y) || isinf(a.z); }
+template<typename T> bool isinf(const TVEC4<T>& a) { return isinf(a.x) || isinf(a.y) || isinf(a.z) || isinf(a.w); }
+template<typename T> bool isnan(const TVEC2<T>& a) { return isnan(a.x) || isnan(a.y); }
+template<typename T> bool isnan(const TVEC3<T>& a) { return isnan(a.x) || isnan(a.y) || isnan(a.z); }
+template<typename T> bool isnan(const TVEC4<T>& a) { return isnan(a.x) || isnan(a.y) || isnan(a.z) || isnan(a.w); }
+template<typename T> bool isdenorm(const TVEC2<T>& a) { return isdenorm(a.x) || isdenorm(a.y); }
+template<typename T> bool isdenorm(const TVEC3<T>& a) { return isdenorm(a.x) || isdenorm(a.y) || isdenorm(a.z); }
+template<typename T> bool isdenorm(const TVEC4<T>& a) { return isdenorm(a.x) || isdenorm(a.y) || isdenorm(a.z) || isdenorm(a.w); }
 
 // _____________________________________________________________________________
 // Component selection for halfs, floats and doubles
@@ -224,13 +226,13 @@ oMATH_ELUFNS(round);
 #if (_MSC_VER < 1600)
 inline long long abs(const long long& x) { return _abs64(x); }
 #endif
-template<typename T> inline T round(const T& a) { return floor(a + T(0.5)); }
-template<typename T> inline T frac(const T& a) { return a - floor(a); }
-template<typename T> inline T truc(const T& x) { return floor(x); }
-template<typename T> inline bool all(const TVEC2<T>& a) { return !oEqual(a.x, T(0)) && !oEqual(a.y, T(0)); }
-template<typename T> inline bool all(const TVEC3<T>& a) { return !oEqual(a.x, T(0)) && !oEqual(a.y, T(0)) && !oEqual(a.z, T(0)); }
-template<typename T> inline bool all(const TVEC4<T>& a) { return !oEqual(a.x, T(0)) && !oEqual(a.y, T(0)) && !oEqual(a.z, T(0)) && !oEqual(a.w, T(0)); }
-template<typename T> inline bool any(const T& a) { return a != T(0); }
+template<typename T> T round(const T& a) { return floor(a + T(0.5)); }
+template<typename T> T frac(const T& a) { return a - floor(a); }
+template<typename T> T truc(const T& x) { return floor(x); }
+template<typename T> bool all(const TVEC2<T>& a) { return !oEqual(a.x, T(0)) && !oEqual(a.y, T(0)); }
+template<typename T> bool all(const TVEC3<T>& a) { return !oEqual(a.x, T(0)) && !oEqual(a.y, T(0)) && !oEqual(a.z, T(0)); }
+template<typename T> bool all(const TVEC4<T>& a) { return !oEqual(a.x, T(0)) && !oEqual(a.y, T(0)) && !oEqual(a.z, T(0)) && !oEqual(a.w, T(0)); }
+template<typename T> bool any(const T& a) { return a != T(0); }
 
 // _____________________________________________________________________________
 // Trigonometry
@@ -239,33 +241,33 @@ oMATH_ELUFNS(cos); oMATH_ELUFNS(acos); oMATH_ELUFNS(cosh);
 oMATH_ELUFNS(sin); oMATH_ELUFNS(asin); oMATH_ELUFNS(sinh);
 oMATH_ELUFNS(tan); oMATH_ELUFNS(atan); oMATH_ELUFNS(tanh);
 oMATH_ELBFNS(atan2, atan2);
-template<typename T> inline void sincos(const T& angleInRadians, T& outSin, T& outCos) { outSin = sin(angleInRadians); outCos = cos(angleInRadians); }
+template<typename T> void sincos(const T& angleInRadians, T& outSin, T& outCos) { outSin = sin(angleInRadians); outCos = cos(angleInRadians); }
 
 // _____________________________________________________________________________
 // Geometry
 
 oMATH_ELUFNS(radians);
 oMATH_ELUFNS(degrees);
-template<typename T> inline TVEC3<T> cross(const TVEC3<T>& a, const TVEC3<T>& b) { return TVEC3<T>(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x); }
-template<typename T> inline T dot(const TVEC2<T>& a, const TVEC2<T>& b) { return a.x*b.x + a.y*b.y; }
-template<typename T> inline T dot(const TVEC3<T>& a, const TVEC3<T>& b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
-template<typename T> inline T dot(const TVEC4<T>& a, const TVEC4<T>& b) { return a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w; }
-template<typename T> inline T length(const TVEC2<T>& a) { return sqrt(dot(a, a)); }
-template<typename T> inline T length(const TVEC3<T>& a) { return sqrt(dot(a, a)); }
-template<typename T> inline T length(const TVEC4<T>& a) { return sqrt(dot(a, a)); }
-template<typename T> inline const T lerp(const T& a, const T& b, const T& s) { return a + s * (b-a); }
-template<typename T> inline const TVEC2<T> lerp(const TVEC2<T>& a, const TVEC2<T>& b, const T& s) { return a + s * (b-a); }
-template<typename T> inline const TVEC3<T> lerp(const TVEC3<T>& a, const TVEC3<T>& b, const T& s) { return a + s * (b-a); }
-template<typename T> inline const TVEC4<T> lerp(const TVEC4<T>& a, const TVEC4<T>& b, const T& s) { return a + s * (b-a); }
-template<typename T> inline TVEC4<T> lit(const T& n_dot_l, const T& n_dot_h, const T& m) { TVEC4<T>(T(1), (n_dot_l < 0) ? 0 : n_dot_l, (n_dot_l < 0) || (n_dot_h < 0) ? 0 : (n_dot_h * m), T(1)); }
-template<typename T> inline T faceforward(const T& n, const T& i, const T& ng) { return -n * sign(dot(i, ng)); }
-template<typename T> inline T normalize(const T& x) { return x / length(x); }
-template<typename T> inline T radians(T degrees) { return degrees * T(3.14159265358979323846) / T(180.0); }
-template<typename T> inline T degrees(T radians) { return radians * T(180.0) / T(3.14159265358979323846); }
-template<typename T> inline T distance(const TVEC2<T>& a, const TVEC2<T>& b) { return length(a-b); }
-template<typename T> inline T distance(const TVEC3<T>& a, const TVEC3<T>& b) { return length(a-b); }
-template<typename T> inline T reflect(const T& i, const T& n) { return i - 2 * n * dot(i,n); }
-template<typename T> inline T refract(const TVEC3<T>& i, const TVEC3<T>& n, const T& r) { T c1 = dot(i,n); T c2 = T(1) - r*r * (T(1) - c1*c1); return (c2 < T(0)) ? TVEC3<T>(0) : r*i + (sqrt(c2) - r*c1) * n; } // http://www.physicsforums.com/archive/index.php/t-187091.html
+template<typename T> TVEC3<T> cross(const TVEC3<T>& a, const TVEC3<T>& b) { return TVEC3<T>(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x); }
+template<typename T> T dot(const TVEC2<T>& a, const TVEC2<T>& b) { return a.x*b.x + a.y*b.y; }
+template<typename T> T dot(const TVEC3<T>& a, const TVEC3<T>& b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
+template<typename T> T dot(const TVEC4<T>& a, const TVEC4<T>& b) { return a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w; }
+template<typename T> T length(const TVEC2<T>& a) { return sqrt(dot(a, a)); }
+template<typename T> T length(const TVEC3<T>& a) { return sqrt(dot(a, a)); }
+template<typename T> T length(const TVEC4<T>& a) { return sqrt(dot(a, a)); }
+template<typename T> const T lerp(const T& a, const T& b, const T& s) { return a + s * (b-a); }
+template<typename T> const TVEC2<T> lerp(const TVEC2<T>& a, const TVEC2<T>& b, const T& s) { return a + s * (b-a); }
+template<typename T> const TVEC3<T> lerp(const TVEC3<T>& a, const TVEC3<T>& b, const T& s) { return a + s * (b-a); }
+template<typename T> const TVEC4<T> lerp(const TVEC4<T>& a, const TVEC4<T>& b, const T& s) { return a + s * (b-a); }
+template<typename T> TVEC4<T> lit(const T& n_dot_l, const T& n_dot_h, const T& m) { TVEC4<T>(T(1), (n_dot_l < 0) ? 0 : n_dot_l, (n_dot_l < 0) || (n_dot_h < 0) ? 0 : (n_dot_h * m), T(1)); }
+template<typename T> T faceforward(const T& n, const T& i, const T& ng) { return -n * sign(dot(i, ng)); }
+template<typename T> T normalize(const T& x) { return x / length(x); }
+template<typename T> T radians(T degrees) { return degrees * T(3.14159265358979323846) / T(180.0); }
+template<typename T> T degrees(T radians) { return radians * T(180.0) / T(3.14159265358979323846); }
+template<typename T> T distance(const TVEC2<T>& a, const TVEC2<T>& b) { return length(a-b); }
+template<typename T> T distance(const TVEC3<T>& a, const TVEC3<T>& b) { return length(a-b); }
+template<typename T> T reflect(const T& i, const T& n) { return i - 2 * n * dot(i,n); }
+template<typename T> T refract(const TVEC3<T>& i, const TVEC3<T>& n, const T& r) { T c1 = dot(i,n); T c2 = T(1) - r*r * (T(1) - c1*c1); return (c2 < T(0)) ? TVEC3<T>(0) : r*i + (sqrt(c2) - r*c1) * n; } // http://www.physicsforums.com/archive/index.php/t-187091.html
 
 // _____________________________________________________________________________
 // Algebra
@@ -281,14 +283,14 @@ oMATH_ELUFNS(rcp);
 inline double log2(double a) { static const double sCONV = 1.0/log(2.0); return log(a) * sCONV; }
 inline float exp2(float a) { return powf(2.0f, a); }
 inline double exp2(double a) { return pow(2.0, a); }
-template<typename T> inline T frexp(const T& x, T& exp) { int e; T ret = ::frexp(x, &e); exp = static_cast<T>(e); return ret; }
+template<typename T> T frexp(const T& x, T& exp) { int e; T ret = ::frexp(x, &e); exp = static_cast<T>(e); return ret; }
 inline float modf(const float& x, float& ip) { return ::modf(x, &ip); }
 inline double modf(const double& x, double& ip) { return ::modf(x, &ip); }
-template<typename T> inline TVEC2<T> modf(const TVEC2<T>& x, TVEC2<T>& ip) { return TVEC2<T>(modf(x.x, ip.x), modf(x.y, ip.y)); }
-template<typename T> inline TVEC3<T> modf(const TVEC3<T>& x, TVEC3<T>& ip) { return TVEC3<T>(modf(x.x, ip.x), modf(x.y, ip.y), modf(x.z, ip.z)); }
-template<typename T> inline TVEC4<T> modf(const TVEC4<T>& x, TVEC4<T>& ip) { return TVEC4<T>(modf(x.x, ip.x), modf(x.y, ip.y), modf(x.z, ip.z), modf(x.w, ip.w)); }
-template<typename T> inline T rsqrt(T x) { return T(1) / sqrt(x); }
-template<typename T> inline T rcp(const T& value) { return T(1) / value; }
+template<typename T> TVEC2<T> modf(const TVEC2<T>& x, TVEC2<T>& ip) { return TVEC2<T>(modf(x.x, ip.x), modf(x.y, ip.y)); }
+template<typename T> TVEC3<T> modf(const TVEC3<T>& x, TVEC3<T>& ip) { return TVEC3<T>(modf(x.x, ip.x), modf(x.y, ip.y), modf(x.z, ip.z)); }
+template<typename T> TVEC4<T> modf(const TVEC4<T>& x, TVEC4<T>& ip) { return TVEC4<T>(modf(x.x, ip.x), modf(x.y, ip.y), modf(x.z, ip.z), modf(x.w, ip.w)); }
+template<typename T> T rsqrt(T x) { return T(1) / sqrt(x); }
+template<typename T> T rcp(const T& value) { return T(1) / value; }
 
 inline float log2(float val)
 {
@@ -375,10 +377,10 @@ oMATH_ELBFNS(oMax, __max); // not named max to avoid stdc macro collision
 oMATH_ELBFNS(oMin, __min); // not named min to avoid stdc macro collision
 oMATH_ELUFNS(step);
 oMATH_ELUFNS(smoothstep);
-template<typename T> inline T smoothstep(const T& minimum, const T& maximum, const T& x) { return x < minimum ? T(0) : (x > maximum ? T(1) : T(-2) * pow((x – minimum) / (maximum – minimum), T(3)) + T(3) * pow((x – minimum) / (maximum – minimum), T(2))); } // http://http.developer.nvidia.com/CgTutorial/cg_tutorial_chapter05.html
-template<typename T> inline T clamp(const T& x, const T& minimum, const T& maximum) { return __max(__min(x, maximum), minimum); }
-template<typename T> inline T saturate(const T& x) { return clamp<T>(x, T(0.0), T(1.0)); }
-template<typename T> inline T step(const T& y, const T& x) { return (x >= y) ? T(1) : T(0); } 
+template<typename T> T smoothstep(const T& minimum, const T& maximum, const T& x) { return x < minimum ? T(0) : (x > maximum ? T(1) : T(-2) * pow((x – minimum) / (maximum – minimum), T(3)) + T(3) * pow((x – minimum) / (maximum – minimum), T(2))); } // http://http.developer.nvidia.com/CgTutorial/cg_tutorial_chapter05.html
+template<typename T> T clamp(const T& x, const T& minimum, const T& maximum) { return __max(__min(x, maximum), minimum); }
+template<typename T> T saturate(const T& x) { return clamp<T>(x, T(0.0), T(1.0)); }
+template<typename T> T step(const T& y, const T& x) { return (x >= y) ? T(1) : T(0); } 
 
 // _____________________________________________________________________________
 // Randomization
@@ -396,7 +398,7 @@ template<typename T> T ddx_fine(const T& x);
 template<typename T> T ddy(const T& x);
 template<typename T> T ddy_coarse(const T& x);
 template<typename T> T ddy_fine(const T& x);
-template<typename T> inline T fwidth(const T& x) { return abs(ddx(x)) + abs(ddy(x)); }
+template<typename T> T fwidth(const T& x) { return abs(ddx(x)) + abs(ddy(x)); }
 //D3DCOLORtoUBYTE4
 //dst
 

@@ -40,8 +40,6 @@
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oSurface.h>
 
-#define oBug_1911
-
 interface oImage : oBuffer
 {
 	// !!! DO NOT ADD API WITHOUT REVIEW TO THIS CLASS !!!
@@ -117,15 +115,6 @@ interface oImage : oBuffer
 	virtual void CopyDataTo(void* _pDestinationBuffer, size_t _DestinationRowPitch) const threadsafe = 0;
 	virtual void CopyDataTo(void* _pDestinationBuffer, size_t _DestinationRowPitch, const FlipVerticalFlag&) const threadsafe = 0;
 
-#ifdef oBug_1911
-	// @oooii-tony: Inclusion of this API is temporary AND SHOULD NOT BE TAKEN AS
-	// A MODEL TO ADD FORMAT SWIZZLING OF ANY KIND TO THIS CLASS. This is a hack
-	// to get around Window's flipped bitmaps while usage is scrubbed to have more
-	// direct conversions. Prefer using CopyData with the FlipVertical flag to 
-	// do the flip while moving data from another source into this oImage.
-	virtual void HACKFlipVertical() threadsafe = 0;
-
-#endif
 	// @oooii-tony: Inclusion of this API is temporary AND SHOULD NOT BE TAKEN AS
 	// A MODEL TO ADD FORMAT SWIZZLING OF ANY KIND TO THIS CLASS. This is a hack
 	// to get around current usage but we'll be coming back to this to reevaluate

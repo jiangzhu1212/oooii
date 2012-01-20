@@ -26,6 +26,28 @@
 #include <oPlatform/oDXGI.h>
 #include <oBasis/oRef.h>
 
+const char* oAsString(const oGPU_VENDOR& _Vendor)
+{
+	switch (_Vendor)
+	{
+		case oGPU_VENDOR_UNKNOWN: return "Unknown Vendor";
+		case oGPU_VENDOR_NVIDIA: return "NVIDIA";
+		case oGPU_VENDOR_AMD: return "AMD";
+		oNODEFAULT;
+	}
+}
+
+static oGPU_VENDOR ToVendor(oWINDOWS_VIDEO_DRIVER_DESC::GPU_VENDOR _Vendor)
+{
+	switch (_Vendor)
+	{
+		case oWINDOWS_VIDEO_DRIVER_DESC::UNKNOWN: return oGPU_VENDOR_UNKNOWN;
+		case oWINDOWS_VIDEO_DRIVER_DESC::NVIDIA: return oGPU_VENDOR_NVIDIA;
+		case oWINDOWS_VIDEO_DRIVER_DESC::AMD: return oGPU_VENDOR_AMD;
+		oNODEFAULT;
+	}
+}
+
 bool oGPUEnum(unsigned int _Index, oGPU_DESC* _pDesc)
 {
 	#if oDXVER >= oDXVER_10
@@ -39,13 +61,19 @@ bool oGPUEnum(unsigned int _Index, oGPU_DESC* _pDesc)
 
 			DXGI_ADAPTER_DESC desc;
 			pAdapter->GetDesc(&desc);
-			oStrConvert(_pDesc->Description, oCOUNTOF(_pDesc->Description), desc.Description);
+			oStrConvert(_pDesc->GPUDescription, oCOUNTOF(_pDesc->GPUDescription), desc.Description);
 			_pDesc->VRAM = desc.DedicatedVideoMemory;
 			_pDesc->DedicatedSystemMemory = desc.DedicatedSystemMemory;
 			_pDesc->SharedSystemMemory = desc.SharedSystemMemory;
 			_pDesc->Index = _Index;
 			_pDesc->D3DVersion = oDXGIGetD3DVersion(pAdapter);
 			pAdapter->Release();
+			
+			oWINDOWS_VIDEO_DRIVER_DESC VDDesc;
+			oWinGetVideoDriverDesc(&VDDesc);
+			_pDesc->Vendor = ToVendor(VDDesc.Vendor);
+			strcpy_s(_pDesc->DriverDescription, VDDesc.Desc);
+			_pDesc->DriverVersion = VDDesc.Version;
 			return true;
 		}
 	#else

@@ -29,7 +29,7 @@
 
 struct TESTBCEncodeDecode : public oTest
 {
-	bool LoadOriginalAndSaveConverted(char* _StrStatus, size_t _SizeofStrStatus, ID3D11Device* _pDevice, DXGI_FORMAT _TargetFormat, const char* _OriginalPath, const char* _ConvertedPath)
+	RESULT LoadOriginalAndSaveConverted(char* _StrStatus, size_t _SizeofStrStatus, ID3D11Device* _pDevice, DXGI_FORMAT _TargetFormat, const char* _OriginalPath, const char* _ConvertedPath)
 	{
 		oRef<oBuffer> OriginalFile;
 		oTESTB(oBufferCreate(_OriginalPath, false, &OriginalFile), "Failed to load %s", _OriginalPath);
@@ -42,10 +42,10 @@ struct TESTBCEncodeDecode : public oTest
 
 		oFileDelete(_ConvertedPath);
 		oTESTB(oD3D11Save(ConvertedTexture, D3DX11_IFF_DDS, _ConvertedPath), "Failed to save %s", _ConvertedPath);
-		return true;
+		return oTest::SUCCESS;
 	}
 
-	bool LoadConvertedAndConvertToImage(char* _StrStatus, size_t _SizeofStrStatus, ID3D11Device* _pDevice, const char* _ConvertedPath, oImage** _ppConvertedImage)
+	RESULT LoadConvertedAndConvertToImage(char* _StrStatus, size_t _SizeofStrStatus, ID3D11Device* _pDevice, const char* _ConvertedPath, oImage** _ppConvertedImage)
 	{
 		oRef<oBuffer> ConvertedFile;
 		oTESTB(oBufferCreate(_ConvertedPath, false, &ConvertedFile), "Failed to load %s", _ConvertedPath);
@@ -70,39 +70,42 @@ struct TESTBCEncodeDecode : public oTest
 
 		*_ppConvertedImage = ConvertedImage;
 		(*_ppConvertedImage)->Reference();
-		return true;
+		return oTest::SUCCESS;
 	}
 
-	bool ConvertAndTest(char* _StrStatus, size_t _SizeofStrStatus, ID3D11Device* _pDevice, DXGI_FORMAT _TargetFormat, const char* _FilenameSuffix, unsigned int _NthText)
+	RESULT ConvertAndTest(char* _StrStatus, size_t _SizeofStrStatus, ID3D11Device* _pDevice, DXGI_FORMAT _TargetFormat, const char* _FilenameSuffix, unsigned int _NthTest)
 	{
 		static const char* TestImageFilename = "Test/Textures/lena_1.png";
 
 		oStringPath ImagePath;
-		oTESTB(oTestManager::Singleton()->FindFullPath(ImagePath.c_str(), TestImageFilename), "Failed to find %s", TestImageFilename);
-
-		oStringPath ConvertedPath;
-		oTESTB(oSystemGetPath(ConvertedPath.c_str(), oSYSPATH_TMP), "Could not find temp dir");
+		oTESTB0(FindInputFile(ImagePath, TestImageFilename));
 
 		char base[64];
 		oGetFilebase(base, ImagePath);
-		oStrAppend(ConvertedPath.c_str(), "%s%s.dds", base, _FilenameSuffix);
+		char fn[64];
+		sprintf_s(fn, "%s%s.dds", base, _FilenameSuffix);
+
+		oStringPath ConvertedPath;
+		oTESTB0(BuildPath(ConvertedPath, fn, oTest::TEMP));
 
 		oTRACE("Converting image to %s (may take a while)...", oAsString(_TargetFormat));
-		if (!LoadOriginalAndSaveConverted(_StrStatus, _SizeofStrStatus, _pDevice, _TargetFormat, ImagePath, ConvertedPath))
-			return false;
+		RESULT res = LoadOriginalAndSaveConverted(_StrStatus, _SizeofStrStatus, _pDevice, _TargetFormat, ImagePath, ConvertedPath);
+		if (SUCCESS != res)
+			return res;
 
 		oTRACE("Converting image back from %s (may take a while)...", oAsString(_TargetFormat));
 		oRef<oImage> ConvertedImage;
-		if (!LoadConvertedAndConvertToImage(_StrStatus, _SizeofStrStatus, _pDevice, ConvertedPath, &ConvertedImage))
-			return false;
+		res = LoadConvertedAndConvertToImage(_StrStatus, _SizeofStrStatus, _pDevice, ConvertedPath, &ConvertedImage);
+		if (SUCCESS != res)
+				return res;
 
-		oTESTI2(ConvertedImage, _NthText);
-		return true;
+		oTESTI2(ConvertedImage, _NthTest);
+		return SUCCESS;
 	}
 
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oD3D11_DEVICE_DESC DeviceDesc;
+		oD3D11_DEVICE_DESC DeviceDesc("TESTBCEncDec Temp Device");
 		#ifdef _DEBUG
 			DeviceDesc.Debug = true;
 		#endif
@@ -113,14 +116,17 @@ struct TESTBCEncodeDecode : public oTest
 			oTESTB(oD3D11CreateDevice(DeviceDesc, &D3DDevice), "Failed to create device");
 		}
 
-		if (!ConvertAndTest(_StrStatus, _SizeofStrStatus, D3DDevice, DXGI_FORMAT_BC7_UNORM, "_BC7", 0))
-			return oTest::FAILURE;
+		RESULT res = ConvertAndTest(_StrStatus, _SizeofStrStatus, D3DDevice, DXGI_FORMAT_BC7_UNORM, "_BC7", 0);
+		if (SUCCESS != res)
+			return res;
 
-		if (!ConvertAndTest(_StrStatus, _SizeofStrStatus, D3DDevice, DXGI_FORMAT_BC6H_SF16, "_BC6HS", 1))
-			return oTest::FAILURE;
+		res = ConvertAndTest(_StrStatus, _SizeofStrStatus, D3DDevice, DXGI_FORMAT_BC6H_SF16, "_BC6HS", 1);
+		if (SUCCESS != res)
+			return res;
 
-		if (!ConvertAndTest(_StrStatus, _SizeofStrStatus, D3DDevice, DXGI_FORMAT_BC6H_UF16, "_BC6HU", 2))
-			return oTest::FAILURE;
+		res = ConvertAndTest(_StrStatus, _SizeofStrStatus, D3DDevice, DXGI_FORMAT_BC6H_UF16, "_BC6HU", 2);
+		if (SUCCESS != res)
+			return res;
 
 		return SUCCESS;
 	}

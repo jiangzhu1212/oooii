@@ -27,13 +27,23 @@
 
 #include <oBasis/oVersion.h>
 
+enum oGPU_VENDOR
+{
+	oGPU_VENDOR_UNKNOWN,
+	oGPU_VENDOR_NVIDIA,
+	oGPU_VENDOR_AMD,
+};
+
 struct oGPU_DESC
 {
-	char Description[128];
+	char GPUDescription[128];
+	char DriverDescription[128];
 	size_t VRAM;
 	size_t DedicatedSystemMemory;
 	size_t SharedSystemMemory;
 	unsigned int Index;
+	oGPU_VENDOR Vendor;
+	oVersion DriverVersion;
 	oVersion D3DVersion;
 };
 

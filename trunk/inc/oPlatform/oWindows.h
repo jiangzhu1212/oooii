@@ -108,8 +108,8 @@
 
 // @oooii-eric: TODO: Set to ATI catalyst 11.9 which is what I have currently. Some unit tests don't pass with this driver version however. (bcencodedecode, condenseobj)
 //	Note that ATI driver version does not follow from the catalyst version naturally
-#define oATIVER_MAJOR 8
-#define oATIVER_MINOR 892
+#define oAMDVER_MAJOR 8
+#define oAMDVER_MINOR 892
 
 // Define something like WINVER, but for DX functionality
 #if (defined(NTDDI_WIN7) && (NTDDI_VERSION >= NTDDI_WIN7))
@@ -482,7 +482,7 @@ struct oWINDOWS_VIDEO_DRIVER_DESC
 	{
 		UNKNOWN,
 		NVIDIA,
-		ATI,
+		AMD,
 	};
 
 	oVersion Version;

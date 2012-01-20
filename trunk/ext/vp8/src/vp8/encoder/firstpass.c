@@ -63,6 +63,8 @@ extern const int vp8_gf_boost_qadjustment[QINDEX_RANGE];
 #define POW1 (double)cpi->oxcf.two_pass_vbrbias/100.0
 #define POW2 (double)cpi->oxcf.two_pass_vbrbias/100.0
 
+#define MAX(x,y) (((x)>(y))?(x):(y))
+
 static int vscale_lookup[7] = {0, 1, 1, 2, 2, 3, 3};
 static int hscale_lookup[7] = {0, 0, 1, 1, 2, 2, 3};
 
@@ -927,7 +929,7 @@ extern const int vp8_bits_per_mb[2][QINDEX_RANGE];
 static int estimate_max_q(VP8_COMP *cpi, double section_err, int section_target_bandwitdh, int Height, int Width)
 {
     int Q;
-    int num_mbs = ((Height * Width) / (16 * 16));
+    int num_mbs = MAX((Height * Width) / (16 * 16), 1); //oooii-eric. fix divide by 0 error below. seems like the divide should round up instead of down to me though
     int target_norm_bits_per_mb;
 
     double err_per_mb = section_err / num_mbs;
@@ -1027,7 +1029,7 @@ static int estimate_max_q(VP8_COMP *cpi, double section_err, int section_target_
 static int estimate_q(VP8_COMP *cpi, double section_err, int section_target_bandwitdh, int Height, int Width)
 {
     int Q;
-    int num_mbs = ((Height * Width) / (16 * 16));
+    int num_mbs = MAX((Height * Width) / (16 * 16), 1); //oooii-eric. fix divide by 0 error below. seems like the divide should round up instead of down to me though
     int target_norm_bits_per_mb;
 
     double err_per_mb = section_err / num_mbs;
@@ -1078,7 +1080,7 @@ static int estimate_q(VP8_COMP *cpi, double section_err, int section_target_band
 static int estimate_kf_group_q(VP8_COMP *cpi, double section_err, int section_target_bandwitdh, int Height, int Width, double group_iiratio)
 {
     int Q;
-    int num_mbs = ((Height * Width) / (16 * 16));
+    int num_mbs = MAX((Height * Width) / (16 * 16), 1); //oooii-eric. fix divide by 0 error below. seems like the divide should round up instead of down to me though
     int target_norm_bits_per_mb = (512 * section_target_bandwitdh) / num_mbs;
     int bits_per_mb_at_this_q;
 
@@ -1177,7 +1179,7 @@ static int estimate_cq(VP8_COMP *cpi, double section_err,
                        int section_target_bandwitdh, int Height, int Width)
 {
     int Q;
-    int num_mbs = ((Height * Width) / (16 * 16));
+    int num_mbs = MAX((Height * Width) / (16 * 16), 1); //oooii-eric. fix divide by 0 error below. seems like the divide should round up instead of down to me though
     int target_norm_bits_per_mb;
 
     double err_per_mb = section_err / num_mbs;

@@ -47,5 +47,6 @@ bool oBasisTest_oCountdownLatch()
 {
 	oTESTB(TestLatch(5), "oCountdownLatch failed to wait until the latch was released.");
 	oTESTB(TestLatch(1), "oCountdownLatch failed to wait until the latch was released.");
+	oErrorSetLast(oERROR_NONE, "");
 	return true;
 }

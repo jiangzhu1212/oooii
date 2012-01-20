@@ -218,11 +218,16 @@ void oTraySetFocus()
 	oV(Shell_NotifyIcon(NIM_SETFOCUS, nullptr));
 }
 
+// Because this can call a timeout value that can occur after a synchronous 
+// report leaks, ensure we wait for it before reporting a false positive...
+#include "oCRTLeakTracker.h"
+
 static void DeferredHideIcon(HWND _hWnd, UINT _ID, unsigned int _TimeoutMS)
 {
 	Sleep(_TimeoutMS);
 	oTRACE("Auto-closing tray icon HWND=0x%p ID=%u", _hWnd, _ID);
 	oTrayShowIcon(_hWnd, _ID, 0, 0, false);
+	oCRTLeakTracker::Singleton()->ReleaseDelay();
 }
 
 static void oTrayScheduleIconHide(HWND _hWnd, UINT _ID, unsigned int _TimeoutMS)
@@ -279,7 +284,10 @@ bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const
 
 		oTrayShowIcon(_hWnd, _ID, 0, _hIcon, true);
 		if (timeout != oINFINITE_WAIT)
+		{
+			oCRTLeakTracker::Singleton()->ReferenceDelay();
 			oTrayScheduleIconHide(_hWnd, _ID, timeout);
+		}
 	}
 
 	if (!Shell_NotifyIcon(NIM_MODIFY, &nid))

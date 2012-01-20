@@ -44,6 +44,7 @@ char* oWinParseSWPFlags(char* _StrDestination, size_t _SizeofStrDestination, UIN
 char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam);
 inline char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, const CWPSTRUCT* _pCWPStruct) { return oWinParseWMMessage(_StrDestination, _SizeofStrDestination, _pCWPStruct->hwnd, _pCWPStruct->message, _pCWPStruct->wParam, _pCWPStruct->lParam); }
 
+const char* oWinAsStringHR(HRESULT _hResult);
 const char* oWinAsStringHR_DXGI(HRESULT _hResult);
 const char* oWinAsStringHR_VFW(HRESULT _hResult);
 const char* oWinAsStringDISP(UINT _DISPCode);

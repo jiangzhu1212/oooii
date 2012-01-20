@@ -45,6 +45,7 @@ static const oOption sCmdLineOptions[] =
 	{ "path", 'p', "path", "Path where all test data is loaded from. The current working directory is used by default." },
 	{ "special-mode", 's', "mode", "Run the test harness in a special mode (used mostly by multi-process/client-server unit tests)" },
 	{ "random-seed", 'r', "seed", "Set the random seed to be used for this run. This is reset at the start of each test." },
+	{ "golden-binaries", 'b', "path", "Path where all known-good \"golden\" images are stored. The current working directory is used by default." },
 	{ "golden-images", 'g', "path", "Path where all known-good \"golden\" images are stored. The current working directory is used by default." },
 	{ "output", 'o', "path", "Path where all logging and error images are created." },
 	{ "repeat-number", 'n', "nRuntimes", "Repeat the test a certain number of times." },
@@ -101,7 +102,8 @@ struct PARAMETERS
 	std::vector<oFilterChain::FILTER> Filters;
 	const char* SpecialMode;
 	const char* DataPath;
-	const char* GoldenPath;
+	const char* GoldenBinariesPath;
+	const char* GoldenImagesPath;
 	const char* OutputPath;
 	unsigned int RandomSeed;
 	unsigned int RepeatNumber;
@@ -115,7 +117,8 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 	_pParameters->Filters.clear();
 	_pParameters->SpecialMode = nullptr;
 	_pParameters->DataPath = nullptr;
-	_pParameters->GoldenPath = nullptr;
+	_pParameters->GoldenBinariesPath = nullptr;
+	_pParameters->GoldenImagesPath = nullptr;
 	_pParameters->OutputPath = nullptr;
 	_pParameters->RandomSeed = 0;
 	_pParameters->RepeatNumber = 1;
@@ -157,8 +160,12 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 				_pParameters->RandomSeed = atoi(value) ? atoi(value) : 1; // ensure it's not 0, meaning choose randomly
 				break;
 
+			case 'b':
+				_pParameters->GoldenBinariesPath = value;
+				break;
+
 			case 'g':
-				_pParameters->GoldenPath = value;
+				_pParameters->GoldenImagesPath = value;
 				break;
 
 			case 'o':
@@ -255,7 +262,8 @@ void SetTestManagerDesc(const PARAMETERS* _pParameters)
 	oTestManager::DESC desc;
 	desc.TestSuiteName = sTITLE;
 	desc.DataPath = dataPath;
-	desc.GoldenPath = _pParameters->GoldenPath;
+	desc.GoldenBinariesPath = _pParameters->GoldenBinariesPath;
+	desc.GoldenImagesPath = _pParameters->GoldenImagesPath;
 	desc.OutputPath = _pParameters->OutputPath;
 	desc.NameColumnWidth = 32;
 	desc.TimeColumnWidth = 13;
@@ -359,11 +367,22 @@ int main(int argc, const char* argv[])
 		else
 			result = oTest::SKIPPED;
 
-		oMSGBOX_DESC mb;
-		mb.Type = result ? oMSGBOX_NOTIFY_ERR : oMSGBOX_NOTIFY;
-		mb.TimeoutMS = 10000;
-		mb.Title = sTITLE;
-		oMsgBox(mb, "Completed%s", result ? " with errors" : " successfully");
+		bool ShowTrayStatus = false;
+
+		// This is really just a unit test for wintray. Disabled because of the async
+		// nature of the WinTray teardown causes either a delay or a false positive
+		// mem leak report.
+		// ShowTrayStatus = true;
+
+		if (ShowTrayStatus)
+		{
+			oMSGBOX_DESC mb;
+			mb.Type = result ? oMSGBOX_NOTIFY_ERR : oMSGBOX_NOTIFY;
+			mb.TimeoutMS = 10000;
+			mb.Title = sTITLE;
+			oMsgBox(mb, "Completed%s", result ? " with errors" : " successfully");
+		}
+
 		if (oProcessHasDebuggerAttached(oProcessGetCurrentID()))
 		{
 			system("echo.");

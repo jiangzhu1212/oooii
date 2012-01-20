@@ -61,6 +61,9 @@ struct oCRTLeakTracker : oProcessSingleton<oCRTLeakTracker>
 
 	static const oGUID GUID;
 
+	inline void ReferenceDelay() threadsafe { pLeakTracker->ReferenceDelay(); }
+	inline void ReleaseDelay() threadsafe { pLeakTracker->ReleaseDelay(); }
+
 protected:
 
 	static int MallocHook(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line);

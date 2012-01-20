@@ -356,6 +356,21 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, HW
 	return _StrDestination;
 }
 
+const char* oWinAsStringHR(HRESULT _hResult)
+{
+	switch (_hResult)
+	{
+		case E_NOINTERFACE: return "E_NOINTERFACE";
+		case E_OUTOFMEMORY: return "E_OUTOFMEMORY";
+		case E_FAIL: return "E_FAIL";
+		case E_ACCESSDENIED: return "E_ACCESSDENIED";
+		case E_INVALIDARG: return "E_INVALIDARG";
+		case S_OK: return "S_OK";
+		case S_FALSE: return "S_FALSE";
+		default: return "unrecognized HRESULT";
+	}
+}
+
 const char* oWinAsStringHR_DXGI(HRESULT _hResult)
 {
 	switch (_hResult)
@@ -375,10 +390,8 @@ const char* oWinAsStringHR_DXGI(HRESULT _hResult)
 		case DXGI_ERROR_NOT_CURRENTLY_AVAILABLE: return "DXGI_ERROR_NOT_CURRENTLY_AVAILABLE";
 		case DXGI_ERROR_REMOTE_CLIENT_DISCONNECTED: return "DXGI_ERROR_REMOTE_CLIENT_DISCONNECTED";
 		case DXGI_ERROR_REMOTE_OUTOFMEMORY: return "DXGI_ERROR_REMOTE_OUTOFMEMORY";
-		default: break;
+		default: return "unrecognized DXGI HRESULT";
 	}
-
-	return "unrecognized DXGI HRESULT";
 }
 
 const char* oWinAsStringHR_VFW(HRESULT _hResult)
@@ -389,10 +402,8 @@ const char* oWinAsStringHR_VFW(HRESULT _hResult)
 		case VFW_E_NOT_CONNECTED: return "VFW_E_NOT_CONNECTED";
 		case VFW_E_NOT_STOPPED: return "VFW_E_NOT_STOPPED";
 		case VFW_E_WRONG_STATE: return "VFW_E_WRONG_STATE";
-		default: break;
+		default: return "unrecognized VFW HRESULT";
 	}
-
-	return "unrecognized VFW HRESULT";
 }
 
 bool oWinParseHRESULT(char* _StrDestination, size_t _SizeofStrDestination, HRESULT _hResult)
@@ -421,10 +432,7 @@ bool oWinParseHRESULT(char* _StrDestination, size_t _SizeofStrDestination, HRESU
 	}
 
 	if (len == -1)
-	{
-		oErrorSetLast(oERROR_AT_CAPACITY);
-		return false;
-	}
+		return oErrorSetLast(oERROR_AT_CAPACITY);
 
 	return true;
 }
@@ -441,8 +449,6 @@ const char* oWinAsStringDISP(UINT _DISPCode)
 		case DISP_CHANGE_NOTUPDATED: return "DISP_CHANGE_NOTUPDATED";
 		case DISP_CHANGE_RESTART: return "DISP_CHANGE_RESTART";
 		case DISP_CHANGE_SUCCESSFUL: return "DISP_CHANGE_SUCCESSFUL";
-		default: break;
+		default: return "unrecognized DISPCode";
 	}
-
-	return "unrecognized DISPCode";
 }

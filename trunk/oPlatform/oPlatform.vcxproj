@@ -177,6 +177,7 @@
     <ClInclude Include="..\inc\oPlatform\oStddef.h" />
     <ClInclude Include="..\inc\oPlatform\oTest.h" />
     <ClInclude Include="..\inc\oPlatform\oVTable.h" />
+    <ClInclude Include="..\inc\oPlatform\oX11KeyboardSymbols.h" />
     <ClInclude Include="FreeImageHelpers.h" />
     <ClInclude Include="oCamera_QEdit.h" />
     <ClInclude Include="oCRTLeakTracker.h" />
