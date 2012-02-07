@@ -65,6 +65,7 @@ struct TESTDebugger : public oTest
 				static const char* sExpectedStack[] = 
 				{
 					"TESTDebugger::Run",
+					"oTestManager_Impl::RunTest",
 					"oTestManager_Impl::RunTests",
 					"main",
 					"__tmainCRTStartup",

@@ -35,9 +35,9 @@ const oGUID& oGetGUID(threadsafe const oAllocatorTLSF* threadsafe const *)
 
 AllocatorTLSF_Impl::AllocatorTLSF_Impl(const char* _DebugName, const DESC& _Desc, bool* _pSuccess)
 	: Desc(_Desc)
+	, DebugName(_DebugName)
 {
 	*_pSuccess = false;
-	strcpy_s(DebugName, oSAFESTRN(_DebugName));
 	AllocatorTLSF_Impl::Reset();
 	if (!AllocatorTLSF_Impl::IsValid())
 	{
@@ -60,7 +60,7 @@ void TraceAllocated(void* ptr, size_t size, int used, void* user)
 AllocatorTLSF_Impl::~AllocatorTLSF_Impl()
 {
 	if (Stats.NumAllocations != 0)
-		tlsf_walk_heap(hPool, TraceAllocated, DebugName);
+		tlsf_walk_heap(hPool, TraceAllocated, (void*)DebugName->c_str());
 	oASSERT(Stats.NumAllocations == 0, "Allocator %s being destroyed with %u allocations still unfreed! This may leave dangling pointers. See trace for addresses.", DebugName, Stats.NumAllocations);
 	oASSERT(AllocatorTLSF_Impl::IsValid(), "TLSF Heap is corrupt");
 	tlsf_destroy(hPool);
@@ -87,7 +87,7 @@ void AllocatorTLSF_Impl::GetStats(STATS* _pStats)
 
 const char* AllocatorTLSF_Impl::GetDebugName() const threadsafe
 {
-	return thread_cast<const char*>(DebugName);
+	return DebugName->c_str();
 }
 
 const char* AllocatorTLSF_Impl::GetType() const threadsafe

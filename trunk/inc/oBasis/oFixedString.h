@@ -65,11 +65,11 @@ public:
 
 	array_ref c_str() { return s; }
 	const_array_ref c_str() const { return s; }
-	const_array_ref c_str() const volatile { return thread_cast<const_array_ref>(s); }
+	const_array_ref c_str() const threadsafe { return thread_cast<const_array_ref>(s); }
 
 	operator CHAR_T*() { return s; }
 	operator const CHAR_T*() const { return s; }
-	operator const CHAR_T*() const volatile { return thread_cast<const CHAR_T*>(s); }
+	operator const CHAR_T*() const threadsafe { return thread_cast<const CHAR_T*>(s); }
 };
 
 // Prefer one of these fixed types over defining your own to reduce the number

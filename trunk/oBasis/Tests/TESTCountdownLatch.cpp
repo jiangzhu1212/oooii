@@ -23,20 +23,25 @@
  **************************************************************************/
 #include <oBasis/oCountdownLatch.h>
 #include <oBasis/oTask.h>
-#include <oBasis/oBasis.h>
+#include <oBasis/oThread.h>
 #include "oBasisTestCommon.h"
 
 static bool TestLatch(int _Count)
 {
 	int latchCount = _Count;
 	int count = 0;
+	oMutex Mutex;
 		oCountdownLatch latch("TestLatch", latchCount);
 	for (int i = 0; i < latchCount; i++)
 		oTaskIssueAsync([&,i]
 		{
-			oSleep(500);
+			oSleep(100 * (i + 1)); // stagger the sleeps to simulate doing work that takes a variable amount of time
+			{
+				// Lock before incrementing count because there are several threads may be accessing this at the same time
+				oLockGuard<oMutex> Lock(Mutex);
+				count++;
+			}
 			latch.Release();
-			count++;
 		});
 
 	latch.Wait();

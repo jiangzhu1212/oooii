@@ -70,7 +70,7 @@ size_t FICalculateSize(FIBITMAP* _bmp)
 
 static void FIGetAllocateParams(const oImage::DESC& _Desc, int* pBpp, unsigned int* pRedMask, unsigned int* pGreenMask, unsigned int* pBlueMask)
 {
-	*pBpp = static_cast<int>(oSurfaceGetBitSize(oImageFormatToSurfaceFormat(_Desc.Format)));
+	*pBpp = oImageGetBitSize(_Desc.Format);
 	*pRedMask = *pGreenMask = *pBlueMask = 0;
 	switch (_Desc.Format)
 	{
@@ -141,7 +141,32 @@ FIBITMAP* FILoad(const void* _pBuffer, size_t _SizeofBuffer, const FILoadHeaderO
 
 HBITMAP FIAllocateBMP(FIBITMAP* _bmp)
 {
-	return CreateDIBitmap(GetDC(0), FreeImage_GetInfoHeader(_bmp), CBM_INIT, FreeImage_GetBits(_bmp), FreeImage_GetInfo(_bmp), DIB_RGB_COLORS);
+	HDC hDC = GetDC(0);
+	HBITMAP hBmp = CreateDIBitmap(hDC, FreeImage_GetInfoHeader(_bmp), CBM_INIT, FreeImage_GetBits(_bmp), FreeImage_GetInfo(_bmp), DIB_RGB_COLORS);
+	ReleaseDC(NULL, hDC);
+	return hBmp;
+}
+
+void FICopyBits(FIBITMAP* _DstFIBitmap, HBITMAP _SrcHBmp)
+{
+	// The GetDIBits function clears the biClrUsed and biClrImportant BITMAPINFO members (dont't know why) 
+	// So we save these infos below. This is needed for palettized images only. 
+	int nColors = FreeImage_GetColorsUsed(_DstFIBitmap);
+	HDC hDC = GetDC(NULL);
+	int Success = GetDIBits(hDC, _SrcHBmp, 0, FreeImage_GetHeight(_DstFIBitmap), FreeImage_GetBits(_DstFIBitmap), FreeImage_GetInfo(_DstFIBitmap), DIB_RGB_COLORS);
+	ReleaseDC(NULL, hDC);
+	// restore BITMAPINFO members
+	FreeImage_GetInfoHeader(_DstFIBitmap)->biClrUsed = nColors;
+	FreeImage_GetInfoHeader(_DstFIBitmap)->biClrImportant = nColors;
+}
+
+FIBITMAP* FIAllocateFIBITMAP(HBITMAP _hBmp)
+{
+	BITMAP bm;
+	GetObject(_hBmp, sizeof(BITMAP), (LPSTR)&bm);
+	FIBITMAP* bmp = FreeImage_Allocate(bm.bmWidth, bm.bmHeight, bm.bmBitsPixel);
+	FICopyBits(bmp, _hBmp);
+	return bmp;
 }
 
 oImage::FORMAT FIGetImageFormat(FIBITMAP* _pBitmap)

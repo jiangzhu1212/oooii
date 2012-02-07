@@ -25,6 +25,8 @@
 #include <oBasis/oAssert.h>
 #include <oBasis/oBackoff.h>
 #include <oBasis/oConditionVariable.h>
+#include <oBasis/oFixedString.h>
+#include <oBasis/oInitOnce.h>
 #include <oBasis/oNonCopyable.h>
 #include <oBasis/oMacros.h>
 #include <oBasis/oMutex.h>
@@ -48,7 +50,7 @@ struct oDispatchQueuePrivate_Impl : oDispatchQueuePrivate
 	void Flush() threadsafe override;
 	bool Joinable() const threadsafe override { return ExecutionThread.joinable(); }
 	void Join() threadsafe override;
-	const char* GetDebugName() const threadsafe override { return thread_cast<const char*>(DebugName); /* string is immutable, so this cast is ok */ }
+	const char* GetDebugName() const threadsafe override { return DebugName->c_str(); }
 
 protected:
 	// A concurrent queue has its own atomics for queue state and for allocation
@@ -89,8 +91,8 @@ protected:
 	oStd::atomic_bool Initialized;
 
 	// If there are several of these floating around, it helps to have their name
-	// available. This is initialized with a constant string in the ctor
-	const char* DebugName;
+	// available.
+	oInitOnce<oStringS> DebugName;
 
 	oRefCount RefCount;
 
@@ -162,7 +164,7 @@ void oDispatchQueuePrivate_Impl::WorkerThreadProc()
 {
 	oTASK Task;
 	bool PopSucceeded = false;
-	oTaskRegisterThisThread(DebugName);
+	oTaskRegisterThisThread(*DebugName);
 	Running.exchange(true);
 	Initialized.exchange(true);
 

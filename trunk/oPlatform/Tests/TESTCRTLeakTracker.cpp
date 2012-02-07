@@ -33,6 +33,7 @@ struct TESTCRTLeakTracker : public oTest
 	// Test is wrapped in RunTest so we can properly unwind on failure
 	RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus)
 	{
+#ifdef _DEBUG
 		oCRTLeakTracker* pTracker = oCRTLeakTracker::Singleton();
 		oTESTB(!pTracker->ReportLeaks(), "Outstanding leaks detected at start of test");
 
@@ -60,7 +61,9 @@ struct TESTCRTLeakTracker : public oTest
 		AllocEvent.Wait();
 		oTESTB(pTracker->ReportLeaks(), "Tracker failed to detect char leak from different thread");
 		delete pCharAllocThreaded;
-
+#else
+		sprintf_s(_StrStatus, _SizeofStrStatus, "Not available in Release");
+#endif
 		return SUCCESS;
 	}
 

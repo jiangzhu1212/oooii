@@ -358,7 +358,7 @@ void oAllocateBMI(BITMAPINFO** _ppBITMAPINFO, const oImage::DESC& _Desc, oFUNCTI
 		if (bmiBitCount == 8)
 		{
 			// BMI doesn't understand 8-bit monochrome, so create a monochrome palette
-			unsigned int r,g,b,a;
+			int r,g,b,a;
 			oColorDecompose(_ARGBMonochrome8Zero, &r, &g, &b, &a);
 			float4 c0(oUBYTEAsUNORM(r), oUBYTEAsUNORM(g), oUBYTEAsUNORM(b), oUBYTEAsUNORM(a));
 
@@ -380,7 +380,7 @@ void oAllocateBMI(BITMAPINFO** _ppBITMAPINFO, const oImage::DESC& _Desc, oFUNCTI
 
 size_t oGetBMISize(oSURFACE_FORMAT _Format)
 {
-	return oSurfaceGetBitSize(_Format) == 8 ? (sizeof(BITMAPINFO) + sizeof(RGBQUAD) * 255) : sizeof(BITMAPINFO);
+	return oSurfaceFormatGetBitSize(_Format) == 8 ? (sizeof(BITMAPINFO) + sizeof(RGBQUAD) * 255) : sizeof(BITMAPINFO);
 }
 
 oSURFACE_FORMAT oGetFormat(const BITMAPINFOHEADER& _BitmapInfoHeader)
@@ -1616,20 +1616,23 @@ double oWinSystemCalculateCPUUsage(unsigned long long* _pPreviousIdleTime, unsig
 
 bool oWinSystemIs64BitBinary(const char* _StrPath)
 {
-	oHFILE hFile = nullptr;
-	if (!oFileOpen(_StrPath, oFILE_OPEN_BIN_READ, &hFile))
-		return false;
-
 	bool result = false;
 	void* mapped = nullptr;
-	if (oFileMap(nullptr, oFileGetSize(hFile), true, hFile, 0, &mapped))
+
+	oFILE_DESC FDesc;
+	if (!oFileGetDesc(_StrPath, &FDesc))
+		return false; // pass through error
+
+	oFileRange r;
+	r.Offset = 0;
+	r.Size = FDesc.Size;
+
+	if (oFileMap(_StrPath, false, r, &mapped))
 	{
 		IMAGE_NT_HEADERS* pHeader = oDbgHelp::Singleton()->ImageNtHeader(mapped);
 		result = pHeader->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64;
 		oVERIFY(oFileUnmap(mapped));
 	}
-
-	oFileClose(hFile);
 
 	return result;
 }

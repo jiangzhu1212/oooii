@@ -129,6 +129,30 @@ bool oD3D11CreateRenderTargetView(const char* _DebugName, ID3D11Resource* _pText
 // compared to the source.
 bool oD3D11CopyToBuffer(ID3D11Texture2D* _pTexture, void* _pBuffer, size_t _BufferRowPitch, bool _FlipVertical = false);
 
+// Copies the entire subresource of one on-GPU resource to another on-GPU 
+// resource. All requirements of D3D11 must be met for the resources (see D3D11 
+// documentation on CopySubresourceRegion).
+void oD3D11CopySubresource2D(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pDstResource, UINT _DstSubresource, ID3D11Resource* _pSrcResource, UINT _SrcSubresource);
+
+// Copies a subregion of a subresource from an on-GPU resource to another on-GPU
+// resource. All requirements of D3D11 must be met for the resources (see D3D11 
+// documentation on CopySubresourceRegion).
+void oD3D11CopySubresourceRegion2D(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pDstResource, UINT _DstSubresource, const int2& _DstTopLeft, ID3D11Resource* _pSrcResource, UINT _SrcSubresource, const int2& _SrcTopLeft, const int2& _NumPixels);
+
+// Copies all mips from the source resource to the destination resource. All 
+// requirements of D3D11 must be met for the resources (see D3D11 documentation 
+// on CopySubresourceRegion). If the source has less mips than the destination,
+// then it leaves any other mips untouched. If the source has more mips than the
+// destination, then only what fits is copied. If the dimensions are largely
+// mismatched such that only very small mip levels evaluate to the same 
+// dimensions, no work will be done because these are copied from the top-most
+// commmon dimension down, so the logic will early-out before mip levels might 
+// match up. This function is intended to simplify updating versions of the same
+// texture with different mipmap levels (i.e. one with all mips, and one with 
+// all mips but the very large top mip) and is not robust in a any-to-any 
+// resource mapping.
+bool oD3D11CopyMipTail2D(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pDstResource, ID3D11Resource* _pSrcResource, int _Slice);
+
 // If a depth format is specified, this binds D3D11_BIND_DEPTH_STENCIL instead of
 // D3D11_BIND_RENDER_TARGET.
 
@@ -141,8 +165,10 @@ enum oD3D11_TEXTURE_CREATION_TYPE
 	oD3D11_MIPPED_RENDER_TARGET,
 };
 
+bool oD3D11CreateTexture1D(ID3D11Device* _pDevice, const char* _DebugName, UINT _Width, UINT _ArraySize, DXGI_FORMAT _Format, oD3D11_TEXTURE_CREATION_TYPE _CreationType, D3D11_SUBRESOURCE_DATA* _pInitData, ID3D11Texture1D** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView);
 bool oD3D11CreateTexture2D(ID3D11Device* _pDevice, const char* _DebugName, UINT _Width, UINT _Height, UINT _ArraySize, DXGI_FORMAT _Format, oD3D11_TEXTURE_CREATION_TYPE _CreationType, D3D11_SUBRESOURCE_DATA* _pInitData, ID3D11Texture2D** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView);
 bool oD3D11CreateTexture2D(ID3D11Device* _pDevice, const char* _DebugName, oD3D11_TEXTURE_CREATION_TYPE _CreationType, const oImage* _pImage, ID3D11Texture2D** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView);
+bool oD3D11CreateTexture3D(ID3D11Device* _pDevice, const char* _DebugName, UINT _Width, UINT _Height, UINT _Depth, DXGI_FORMAT _Format, oD3D11_TEXTURE_CREATION_TYPE _CreationType, D3D11_SUBRESOURCE_DATA* _pInitData, ID3D11Texture3D** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView);
 
 bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, oImage** _ppImage);
 bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, const char* _Path);
@@ -173,6 +199,11 @@ bool oD3D11Load(ID3D11Device* _pDevice, DXGI_FORMAT _ForceFormat, oD3D11_TEXTURE
 // Uses GPU acceleration for BC6H and BC7 conversions if the source is in the 
 // correct format. All other conversions go through D3DX11LoadTextureFromTexture
 bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, DXGI_FORMAT _NewFormat, ID3D11Texture2D** _ppDestinationTexture);
+
+// Use the above oD3D11Convert(), but the parameters could be CPU buffers. This
+// means there's a copy-in and a copy-out to set up the source and destination
+// textures for the internal call.
+bool oD3D11Convert(ID3D11Device* _pDevice, D3D11_MAPPED_SUBRESOURCE& _Destination, DXGI_FORMAT _DestinationFormat, D3D11_SUBRESOURCE_DATA& _Source, DXGI_FORMAT _SourceFormat, const int2& _MipDimensions);
 
 // _____________________________________________________________________________
 // Buffer Creation API

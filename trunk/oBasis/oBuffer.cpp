@@ -23,6 +23,8 @@
  **************************************************************************/
 #include <oBasis/oBuffer.h>
 #include <oBasis/oAssert.h>
+#include <oBasis/oFixedString.h>
+#include <oBasis/oInitOnce.h>
 #include <oBasis/oLockedPointer.h>
 #include <oBasis/oMutex.h>
 #include <oBasis/oRef.h>
@@ -52,7 +54,7 @@ struct oBuffer_Impl : public oBuffer
 	const char* GetName() const threadsafe override;
 
 	void* Allocation;
-	char Name[_MAX_PATH];
+	oInitOnce<oStringURI> Name;
 	size_t Size;
 	DeallocateFn Deallocate;
 	mutable oSharedMutex RWMutex;
@@ -90,15 +92,13 @@ oBuffer_Impl::oBuffer_Impl(const char* _Name, void* _Allocation, size_t _Size, D
 	: Allocation(_Allocation)
 	, Size(_Size)
 	, Deallocate(_DeallocateFn)
+	, Name(_Name)
 {
 	if (!Allocation || !Size)
 	{
 		oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return;
 	}
-
-	*Name = 0;
-	if (_Name)
-		strcpy_s(Name, _Name);
 
 	*_pSuccess = true;
 }
@@ -126,5 +126,5 @@ size_t oBuffer_Impl::GetSize() const
 
 const char* oBuffer_Impl::GetName() const threadsafe
 {
-	return thread_cast<const char*>(Name);
+	return Name->c_str();
 }

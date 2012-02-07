@@ -31,6 +31,7 @@
 #include <oBasis/oInterface.h>
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oSurface.h>
+#include <oPlatform/oX11KeyboardSymbols.h>
 
 #if defined(_WIN32) || defined (_WIN64)
 	// To minimize flicker on Windows, offscreen HDCs are used in GDI (legacy)
@@ -89,7 +90,6 @@ interface oWindow : oInterface
 		USE_DEFAULT, // This will make the decision to use the most performant API for the current system
 		USE_GDI, // HDC hDC = (HDC)_pContext
 		USE_D2D, // ID2D1RenderTarget* pD2DRT = (ID2D1RenderTarget*)_pContext
-		USE_DX11, // ID3D11RenderTargetView* pD3D11RTV = (ID3D11RenderTargetView*)_pContext
 	};
 
 	enum EVENT
@@ -141,6 +141,8 @@ interface oWindow : oInterface
 			, AllowUserShowMouse(false)
 			, AllowUserFullscreenToggle(false)
 			, AllowUserKeyboardClose(false)
+			, SupportDoubleClicks(false)
+			, SupportTouchEvents(false)
 		{}
 
 		int2 ClientPosition; // Position of the user area (not OS decoration/frame) of the window
@@ -160,7 +162,8 @@ interface oWindow : oInterface
 		bool AllowUserShowMouse; // Enable Alt-F1 to toggle between set mouse state and visible
 		bool AllowUserFullscreenToggle; // Enable Alt-Enter to toggle to fullscreen in windows
 		bool AllowUserKeyboardClose; // Enable Alt-F4 to close in windows
-
+		bool SupportDoubleClicks;
+		bool SupportTouchEvents; // If true then the window receives touch events from a touch panel, otherwise the window will only receive mouse events
 		oColor ClearColor;
 	};
 
@@ -216,6 +219,9 @@ interface oWindow : oInterface
 	// interaction or internal updates.
 	virtual DESC* Map() threadsafe = 0;
 	virtual void Unmap() threadsafe = 0;
+
+	virtual void SendKey(EVENT _KeyEvent, oKEYBOARD_KEY _Key) threadsafe = 0;
+	virtual void SendMouseMove(float2 _Position) threadsafe = 0;
 
 	virtual DRAW_MODE GetDrawMode() const threadsafe = 0;
 	virtual void* GetNativeHandle() threadsafe = 0;

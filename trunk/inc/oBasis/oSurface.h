@@ -25,11 +25,56 @@
 // you want to call them) are used in many different places in many different 
 // ways, so encapsulate the commodity code which they all typically need such 
 // as a consistent description, string conversion, size inspection, etc. 
+
+// === DEFINITIONS ===
+// SURFACE: A surface is the single buffer that can be bound to a modern 
+// hardware texture sampler, or a SW emulator of such hardware. You get one 
+// pointer. If you need more than that (YUV formats) then the format is not a 
+// surface as defined here. It contains all slices of all mip chains.
+
+// ELEMENT: The 'pixel', but when considering block-compressed formats an 
+// element is the 4x4 block of pixels that is the minimal atom used in BC 
+// strategies.
+
+// CHANNEL: One scalar value in an element, i.e. the R or the G channel of an 
+// RGB element.
+
+// MIP LEVEL: A 2D subregion of a surface that most closely resembles an image
+// i.e. it is the 2D subregion that contains color data for a particular usage.
+
+// MIP CHAIN: All mip levels from the full-sized one at mip0 to a 1x1x1 mip 
+// level. Each level in between is 1/2 the size of its predecessor.
+
+// ROW PITCH: The number of bytes to get to the next scanline of a given mip 
+// level
+
+// ROW SIZE: The number of bytes to copy when copying a scanline. Size != Pitch,
+// so be careful to use these concepts separately because there can be 
+// significant padding between scanlines.
+
+// SLICE: A mip chain arranged in an accessible way (see oSURFACE_LAYOUT). A 
+// slice can represent one mip chain in a texture array or a slice of a 3D 
+// texture or a face of a cube maps
+
+// SUBRESOURCE: an index into the repeating pattern of slices that contain mip
+// chains. This encapsulates two indices into which is often more convenient
+// when passing around the system.
+
+// POSITION: The pixel coordinates from the upper left corner into a mip level 
+// where the upper left of a tile begins
+
+// TILE: A 2D subregion of a mip. A tile is the atom on which surface streaming 
+// might operate and the size of a tile is often choosen to balance the workload 
+// of decompressing or synthesizing a tile vs. how fine that processing gets 
+// divided amongst threads.
+
 #pragma once
 #ifndef oSurface_h
 #define oSurface_h
 
+#include <oBasis/oInvalid.h>
 #include <oBasis/oMathTypes.h>
+#include <oBasis/oSize.h>
 
 enum oSURFACE_FORMAT
 {
@@ -139,131 +184,227 @@ enum oSURFACE_FORMAT
 	oSURFACE_NUM_FORMATS,
 };
 
+enum oSURFACE_LAYOUT
+{
+	// NONE: no mip chain, so RowSize == RowPitch
+	// TIGHT: mips are right next to each other, the naive/initial thing a person
+	//        might do where next-scanline strides are the same as valid data so
+	//        the next-scanline stride also changes with each mip level.
+	// VERTICAL: Mip0 takes up the full scanline width of the buffer, and Mip1 is 
+	//           just "under" that with Mip2 to the right, them mip3 to the right, 
+	//           so the next-scanline stride is always the stride of the first 
+	//           mip's scanlines
+	// HORIZONTAL: Mip0 is followed in 2D space immediately to its right by Mip1 
+	//             and mip2 is below that, aligned to the right edge of Mip0. The 
+	//             next-scanline stride is the stride of Mip0 plus the stride of 
+	//             mip1.
+	// +--------+ +--------+ +--------+ +--------+----+
+	// |        | |        | |        | |        |    |
+	// |  None  | | Tight  | |  Vert  | |  Horz  |    |
+	// |        | |        | |        | |        +--+-+
+	// |        | |        | |        | |        |  |
+	// +--------+ +----+-+-+ +--------+ +--------+--+
+	//            |    |     |    | |+
+	//            |    |     |    +-+
+	//            +--+-+     +----+
+	//            |  |
+	//            +-++
+	//            +-+
+	//            +
+
+	oSURFACE_LAYOUT_IMAGE,
+	oSURFACE_LAYOUT_TIGHT,
+	oSURFACE_LAYOUT_HORIZONTAL,
+	oSURFACE_LAYOUT_VERTICAL,
+};
+
 struct oSURFACE_DESC
 {
 	oSURFACE_DESC()
-		: Dimensions(0,0,0)
-		, NumMips(0)
-		, RowPitch(0)
-		, DepthPitch(0)
+		: Dimensions(oInvalid, oInvalid)
+		, NumSlices(1)
 		, Format(oSURFACE_UNKNOWN)
+		, Layout(oSURFACE_LAYOUT_TIGHT)
 	{}
 
-	int3 Dimensions;
-
-	unsigned int NumMips; // 1 is the count of an image with no mips
-	unsigned int RowPitch;
-		
-	union
-	{
-		unsigned int DepthPitch;
-		unsigned int SlicePitch;
-	};
-
+	int2 Dimensions;
+	int NumSlices;
 	oSURFACE_FORMAT Format;
+	oSURFACE_LAYOUT Layout;
 };
+
+struct oSURFACE_SUBRESOURCE_DESC
+{
+	int2 Dimensions;
+	int MipLevel;
+	int Slice;
+};
+
+struct oSURFACE_TILE_DESC
+{
+	int2 Position;
+	int MipLevel;
+	int Slice;
+};
+
+// _____________________________________________________________________________
+// oSURFACE_FORMAT introspection
 
 // oAsString returns string form of enum. oToString does the same to a buffer,
 // and oFromString matches an enum string to its value.
 
 	// Returns true if the specified format is a block-compressed format.
-bool oSurfaceIsBlockCompressedFormat(oSURFACE_FORMAT _Format);
+bool oSurfaceFormatIsBlockCompressed(oSURFACE_FORMAT _Format);
 
 // Returns true if the specified format is one typically used to write 
 // Z-buffer depth information.
-bool oSurfaceIsDepthFormat(oSURFACE_FORMAT _Format);
+bool oSurfaceFormatIsDepth(oSURFACE_FORMAT _Format);
 
 // Retursn true of the specified format includes RGB and A or S. SRGB formats
 // will result in true from this function.
-bool oSurfaceIsAlphaFormat(oSURFACE_FORMAT _Format);
+bool oSurfaceFormatIsAlpha(oSURFACE_FORMAT _Format);
 
 // Returns true if the specified format is normalized between 0.0f and 1.0f
-bool oSurfaceIsUNORM(oSURFACE_FORMAT _Format);
+bool oSurfaceFormatIsUNORM(oSURFACE_FORMAT _Format);
 
 // Returns the number of separate channels used for a pixel. For example RGB 
 // has 3 channels, XRGB has 4, RGBA has 4.
-unsigned int oSurfaceGetNumChannels(oSURFACE_FORMAT _Format);
+int oSurfaceFormatGetNumChannels(oSURFACE_FORMAT _Format);
 
 // Returns the number of bytes required to store the smallest atom of a 
 // surface. For single-bit image formats, this will return 1. For tiled 
 // formats this will return the byte size of 1 tile.
-unsigned int oSurfaceGetSize(oSURFACE_FORMAT _Format);
+int oSurfaceFormatGetSize(oSURFACE_FORMAT _Format);
 
 // Get number of bits per format. This includes any X bits as described in
 // the format enum.
-unsigned int oSurfaceGetBitSize(oSURFACE_FORMAT _Format);
+int oSurfaceFormatGetBitSize(oSURFACE_FORMAT _Format);
 
 // Returns the number of bits per channel
 void oSurfaceGetChannelBitSize(oSURFACE_FORMAT _Format, int* _pNBitsR, int* _pNBitsG, int* _pNBitsB, int* _pNBitsA);
 
-// Returns the size in bytes for one row for the described mip chain. 
-// This does a bit more than a simple multiply because it takes into 
-// consideration block compressed formats.
-unsigned int oSurfaceCalcRowPitch(oSURFACE_FORMAT _Format, unsigned int _Mip0Width, unsigned int _MipLevel = 0);
+// _____________________________________________________________________________
+// Mip Level (1 2D plane/slice, a simple image) introspection
 
-// Returns the size in bytes for one mip level for the described mip chain
-unsigned int oSurfaceCalcLevelPitch(oSURFACE_FORMAT _Format, int2 _MipDimensions, unsigned int _MipLevel = 0);
-
-// Returns the size in bytes for one 2D array slice for the described mip chain.
-// That is, in an array of textures, each texture is a full mip chain, and this
-// pitch is the number of bytes for the total mip chain of one of those textures.
-unsigned int oSurfaceCalcSlicePitch(oSURFACE_FORMAT _Format, int2 _MipDimensions, unsigned int _NumMips = 0);
+// Returns the number of mipmaps generated from the specified dimensions down to 
+// a 1x1 mip level.
+int oSurfaceCalcNumMips(oSURFACE_LAYOUT _Layout, const int2& _Mip0Dimensions);
+int oSurfaceCalcNumMips(oSURFACE_LAYOUT _Layout, const int3& _Mip0Dimensions);
 
 // Returns the width, height, or depth dimension of the specified mip level
-// given mip0's dimension. BCAlign set to true will align the dimension to be 
-// compatible with 4x4 block compression. All dimensions must be a power of 2.
-unsigned int oSurfaceCalcMipDimension(oSURFACE_FORMAT _Format, unsigned int _Mip0Dimension, unsigned int _MipLevel = 0);
+// given mip0's dimension. This appropriately pads BC formats and conforms to 
+// hardware-expected sizes all the way down to 1x1. Because oSurface is meant to
+// be used with hardware-compatible surfaces, all dimensions must be a power 
+// of 2.
+int2 oSurfaceMipCalcDimensions(oSURFACE_FORMAT _Format, const int2& _Mip0Dimensions, int _MipLevel = 0);
+int3 oSurfaceMipCalcDimensions(oSURFACE_FORMAT _Format, const int3& _Mip0Dimensions, int _MipLevel = 0);
 
-// Returns the width and height dimension of the specified mip level
-// given mip0's dimension. This version does not require power of 2.
-// Not compatible with 4x4 block compression. If the requested mip would
-// not be an even number, it is rounded down to the next even number. All
-// returned dimensions will be even for both width and height.
-int2 oSurfaceCalcMipDimensionsNP2(int2 _Mip0Dimensions, unsigned int _MipLevel = 0);
+// Calculate mip dimensions for non-power-of-2 textures using the D3D/OGL2.0
+// floor convention: http://www.opengl.org/registry/specs/ARB/texture_non_power_of_two.txt
+int2 oSurfaceMipCalcDimensionsNPOT(oSURFACE_FORMAT _Format, const int2& _Mip0Dimensions, int _MipLevel = 0);
+int3 oSurfaceMipCalcDimensionsNPOT(oSURFACE_FORMAT _Format, const int3& _Mip0Dimensions, int _MipLevel = 0);
 
-// Returns the number of rows in a mip with the specified height in pixels.
-// Block compressed formats have 1/4 the rows size their pitch includes 4 rows
-// at a time.
-unsigned int oSurfaceCalcNumRows(oSURFACE_FORMAT _Format, unsigned int _Mip0Height, unsigned int _MipLevel = 0);
+// Returns the size in bytes for one row of valid data for the specified mip 
+// level. This does a bit more than a simple multiply because it takes into 
+// consideration block compressed formats. This IS NOT the calculation to use to
+// get to the next scanline of data unless it can be guaranteed that there is
+// no padding nor is the valid data merely a subregion of a larger 2D plane, but 
+// this IS the calculate for the number of bytes in the current scanline.
+oSize64 oSurfaceMipCalcRowSize(oSURFACE_FORMAT _Format, int _MipWidth);
+inline oSize64 oSurfaceMipCalcRowSize(oSURFACE_FORMAT _Format, const int2& _MipDimensions) { return oSurfaceMipCalcRowSize(_Format, _MipDimensions.x); }
 
-// Returns the number of mip levels for the specified dimensions
-unsigned int oSurfaceCalcMipCount(int2 _MipDimensions);
+// Returns the number of bytes to increment to get to the next row of a 2D 
+// surface. Do not read or write using this value as padding may be used for 
+// other reasons such as internal data or to store other elements/mip levels.
+oSize64 oSurfaceMipCalcRowPitch(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel = 0);
 
-// Returns the size necessary for all mip levels for the specified dimensions.
-unsigned int oSurfaceCalcBufferSize(oSURFACE_FORMAT _Format, int2 _MipDimensions, unsigned int _NumSlices);
+// Returns the number of rows in a mip level with the specified height in 
+// pixels. Block compressed formats have 1/4 the rows since their pitch includes 
+// 4 rows at a time.
+int oSurfaceMipCalcNumRows(oSURFACE_FORMAT _Format, int _MipHeight);
+inline int oSurfaceMipCalcNumRows(oSURFACE_FORMAT _Format, const int2& _MipDimensions) { return oSurfaceMipCalcNumRows(_Format, _MipDimensions.y); }
 
-// Returns the number of bytes required to contain the subresource (mip level
-// from a particular slice)
-unsigned int oSurfaceCalcSubresourceSize(oSURFACE_FORMAT _Format, int2 _MipDimensions, unsigned int _NumSlices, unsigned int _Subresource);
+// Returns the size in bytes for the specified mip level. CAREFUL, this does not 
+// always imply the size that should be passed to memcpy. Ensure you have 
+// enforced that there is no scanline padding or that data using these 
+// calculations aren't a subregion in a larger surface.
+oSize64 oSurfaceMipCalcSize(oSURFACE_FORMAT _Format, const int2& _MipDimensions);
 
-// Returns the number of bytes into a mip chain where the specified level begins.
-unsigned int oSurfaceCalcLevelOffset(oSURFACE_FORMAT _Format, int2 _MipDimensions, unsigned int _MipLevel = 0);
+// Returns the number of bytes from the start of Mip0 where the upper left
+// corner of the specified mip level's data begins. The dimensions must always
+// be specified as the mip0 dimensions since this is a cumulative offset.
+oSize64 oSurfaceMipCalcOffset(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel = 0);
 
-// Returns the number of bytes into a buffer where the specified subresource 
-// (mip level from a particular slice) begins.
-unsigned int oSurfaceCalcBufferOffset(oSURFACE_FORMAT _Format, int2 _MipDimensions, unsigned int _NumSlices, unsigned int _Subresource);
+// Returns the number of tiles required to hold the full resolition specified by 
+// _MipDimensions. If tile dimensions don't divide perfectly into the mip 
+// dimensions the extra tile required to store the difference is included in 
+// this calculation.
+int2 oSurfaceMipCalcDimensionsInTiles(const int2& _MipDimensions, const int2& _TileDimensions);
+
+// Returns the number of tiles required to store all data for a mip of the 
+// specified dimensions.
+int oSurfaceMipCalcNumTiles(const int2& _MipDimensions, const int2& _TileDimensions);
+
+// _____________________________________________________________________________
+// Slice/Surface introspection
+
+// Returns the size in bytes for one 2D array slide for the described mip chain.
+// That is, in an array of textures, each texture is a full mip chain, and this
+// pitch is the number of bytes for the total mip chain of one of those textures.
+// This is the same as calculating the size of a mip page as described by 
+// oSURFACE_LAYOUT.
+oSize64 oSurfaceSliceCalcPitch(const oSURFACE_DESC& _SurfaceDesc);
+
+// Returns the number of tiles required to store all data for all mips in a 
+// slice.
+int oSurfaceSliceCalcNumTiles(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDimensions);
+
+// Calculates the size for a total buffer of 2d/3d textures by summing the 
+// various mip chain pages. 3D textures are just an array of 2D textures where
+// the array count (slice count) is equal to the z dimension, so for an 
+// int3(8,8,4) 3D texture make a desc with Dimensions = int2(8,8) and 
+// NumSlices = 4.
+// http://www.cs.umbc.edu/~olano/s2006c03/ch02.pdf
+// "Texture3D behaves identically to a Texture2DArray with n array slices where 
+// n is the depth (3rd dimension) of the Texture3D."
+oSize64 oSurfaceCalcSize(const oSURFACE_DESC& _SurfaceDesc);
+
+// _____________________________________________________________________________
+// Subresource API
 
 // To simplify the need for much of the above API, interfaces should be 
 // developed that take a subresource id and internally use these API to
 // translate that into the proper byte locations and sizes. 
-inline unsigned int oSurfaceCalcSubresource(unsigned int _MipLevel, unsigned int _SliceIndex, unsigned int _NumMips) { return _MipLevel + (_SliceIndex * _NumMips); }
+inline int oSurfaceCalcSubresource(int _MipLevel, int _SliceIndex, int _NumMips) { return _MipLevel + (_SliceIndex * _NumMips); }
 
-// Given a known number of mips, convert a subresource back into slice and 
-// mip level 
-inline void oSurfaceUnpackSubresource(unsigned int _Subresource, unsigned int _NumMips, unsigned int* _pMipLevel, unsigned int* _pSliceIndex)
-{
-	*_pSliceIndex = _Subresource / _NumMips;
-	*_pMipLevel = _Subresource % _NumMips;
-}
+// Fills the subresource desc with the dimensions and mip information for a 
+// given subresource.
+void oSurfaceSubresourceGetDesc(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, oSURFACE_SUBRESOURCE_DESC* _pSubresourceDesc);
 
-unsigned int oSurfaceCalcSize(const oSURFACE_DESC& _Desc);
-unsigned int oSurfaceCalcSize(oSURFACE_FORMAT _Format, unsigned int _Width, unsigned int _Height);
+// Returns the number of bytes required to contain the subresource (mip level
+// from a particular slice) when what you got is a subresource as returned from
+// oSurfaceCalcSubresource().
+oSize64 oSurfaceSubresourceCalcSize(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_SUBRESOURCE_DESC& _SubresourceDesc);
+inline oSize64 oSurfaceSubresourceCalcSize(const oSURFACE_DESC& _SurfaceDesc, int _Subresource) { oSURFACE_SUBRESOURCE_DESC ssrd; oSurfaceSubresourceGetDesc(_SurfaceDesc, _Subresource, &ssrd); return oSurfaceSubresourceCalcSize(_SurfaceDesc, ssrd); }
 
-inline unsigned int oSurfaceCalcSize(oSURFACE_FORMAT _Format, const int2& _Dimensions)
-{
-	// @oooii-tony: Code base is migrating towards "if it's a simple type, just use int",
-	// so cast away unsigned-ness for now.
-	return oSurfaceCalcSize(_Format, static_cast<unsigned int>(_Dimensions.x), static_cast<unsigned int>(_Dimensions.y));
-}
+// _____________________________________________________________________________
+// Tile API
+
+// Returns the nth mip where the mip level best-fits into a tile. i.e. several
+// tiles are no longer required to store all the mip data, and all mip levels
+// after the one returned by this function can together fit into one mip level.
+int oSurfaceTileCalcBestFitMipLevel(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDimensions);
+
+// Given the specified position, return the tile ID. This also will update 
+// _TileDesc.Position start position that is aligned to the tile, which might be 
+// different if a less rigorous value is chosen for _Position. Tile IDs are 
+// calculated from the top-left and count up left-to-right, then top-to-bottom,
+// then to the next smaller mip as described by oSURFACE_LAYOUT, then continues
+// counting into the top level mip of the next slice and so on.
+int oSurfaceCalcTile(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDimensions, oSURFACE_TILE_DESC& _InOutTileDesc);
+
+// Fill in values for mip level, slice, and position in mip (pixel coordinates 
+// from upper left) for the tile specified by _TileID.
+void oSurfaceTileGetDesc(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDimensions, int _TileID, oSURFACE_TILE_DESC* _pTileDesc);
 
 #endif

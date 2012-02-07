@@ -23,6 +23,8 @@
  **************************************************************************/
 #include <oBasis/oDispatchQueueGlobal.h>
 #include <oBasis/oAssert.h>
+#include <oBasis/oFixedString.h>
+#include <oBasis/oInitOnce.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oMutex.h>
@@ -41,11 +43,11 @@ struct oDispatchQueueGlobal_Impl : public oDispatchQueueGlobal
 	virtual void Flush() threadsafe override;
 	virtual void Join() threadsafe override;
 	virtual bool Joinable() const threadsafe override{ return IsJoinable; }
-	virtual const char* GetDebugName() const threadsafe { return thread_cast<const char*>(DebugName); }
+	virtual const char* GetDebugName() const threadsafe { return DebugName->c_str(); }
 
 	void ExecuteNext(oRef<threadsafe oDispatchQueueGlobal_Impl> _SelfRef, unsigned int _ExecuteKey) threadsafe;
 
-	const char* DebugName;
+	oInitOnce<oStringS> DebugName;
 	typedef std::list<oTASK > tasks_t;
 	tasks_t Tasks;
 	oSharedMutex TaskLock;

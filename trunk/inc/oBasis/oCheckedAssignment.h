@@ -32,6 +32,7 @@
 
 #include <oBasis/oAssert.h>
 #include <oBasis/oLimits.h>
+#include <typeinfo>
 #include <type_traits>
 
 #define oDEFINE_RANGE_CHECKS(_ClassName, _TemplateTypeVariable, _InternalValueVariable, _MaxValidValue) \

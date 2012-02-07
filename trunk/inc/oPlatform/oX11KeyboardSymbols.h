@@ -1,4 +1,8 @@
 // $(noheader)
+
+#pragma once
+#ifndef oX11KeyboardSymbols_h
+#define oX11KeyboardSymbols_h
 /* $XConsortium: keysymdef.h,v 1.21 94/08/28 16:17:06 rws Exp $*/
 
 /***********************************************************
@@ -81,6 +85,24 @@ enum oKEYBOARD_KEY
 	oKB_Touch7 = 0xFFF7,
 	oKB_Touch8 = 0xFFF8,
 	oKB_Touch9 = 0xFFF9,
+
+	// Microsoft / Windows keyboard media keys
+	oKB_Volume_Down = 0x1008FF11,
+	oKB_Volume_Mute = 0x1008FF12,
+	oKB_Volume_Up = 0x1008FF13,
+	oKB_Media_Play_Pause = 0x1008FF14,
+	oKB_Media_Stop = 0x1008FF15,
+	oKB_Media_Prev_Track = 0x1008FF16,
+	oKB_Media_Next_Track = 0x1008FF17,
+	oKB_Launch_Mail = 0x1008FF19,
+	oKB_Browser_Search = 0x1008FF1B,
+	oKB_Browser_Home = 0x1008FF1F,
+	oKB_Browser_Back = 0x1008FF26,
+	oKB_Browser_Forward = 0x1008FF27,
+	oKB_Browser_Stop = 0x1008FF28,
+	oKB_Browser_Refresh = 0x1008FF29,
+	oKB_Browser_Favorites = 0x1008FF30,
+	oKB_Launch_Media_Select = 0x1008FF32,
 
 oKB_VoidSymbol = 0xFFFFFF, /* void symbol*/
  
@@ -365,24 +387,24 @@ oKB_Pointer_Down = 0xFEE3,
 oKB_Pointer_UpLeft = 0xFEE4, 
 oKB_Pointer_UpRight = 0xFEE5, 
 oKB_Pointer_DownLeft = 0xFEE6, 
-oKB_Pointer_DownRight = 0xFEE7, 
-oKB_Pointer_Button_Dflt = 0xFEE8, 
-oKB_Pointer_Button1 = 0xFEE9, 
-oKB_Pointer_Button2 = 0xFEEA, 
-oKB_Pointer_Button3 = 0xFEEB, 
-oKB_Pointer_Button4 = 0xFEEC, 
+oKB_Pointer_DownRight = 0xFEE7,    /* oooii-tony: Add some more visually pleasing versions for pointer buttons */
+oKB_Pointer_Button_Dflt = 0xFEE8, oKB_Pointer_Button_Left = 0xFEE8, 
+oKB_Pointer_Button1 = 0xFEE9, oKB_Pointer_Button_Right = 0xFEE9, 
+oKB_Pointer_Button2 = 0xFEEA, oKB_Pointer_Button_Middle = 0xFEEA, 
+oKB_Pointer_Button3 = 0xFEEB, oKB_Pointer_Button_Back = 0xFEEB, 
+oKB_Pointer_Button4 = 0xFEEC, oKB_Pointer_Button_Forward = 0xFEEC, 
 oKB_Pointer_Button5 = 0xFEED, 
-oKB_Pointer_DblClick_Dflt = 0xFEEE, 
-oKB_Pointer_DblClick1 = 0xFEEF, 
-oKB_Pointer_DblClick2 = 0xFEF0, 
-oKB_Pointer_DblClick3 = 0xFEF1, 
-oKB_Pointer_DblClick4 = 0xFEF2, 
+oKB_Pointer_DblClick_Dflt = 0xFEEE, oKB_Pointer_DblClick_Left = 0xFEEE, 
+oKB_Pointer_DblClick1 = 0xFEEF, oKB_Pointer_DblClick_Right = 0xFEEF, 
+oKB_Pointer_DblClick2 = 0xFEF0, oKB_Pointer_DblClick_Middle = 0xFEF0, 
+oKB_Pointer_DblClick3 = 0xFEF1, oKB_Pointer_DblClick_Back = 0xFEF1, 
+oKB_Pointer_DblClick4 = 0xFEF2, oKB_Pointer_DblClick_Forward = 0xFEF2, 
 oKB_Pointer_DblClick5 = 0xFEF3, 
-oKB_Pointer_Drag_Dflt = 0xFEF4, 
-oKB_Pointer_Drag1 = 0xFEF5, 
-oKB_Pointer_Drag2 = 0xFEF6, 
-oKB_Pointer_Drag3 = 0xFEF7, 
-oKB_Pointer_Drag4 = 0xFEF8, 
+oKB_Pointer_Drag_Dflt = 0xFEF4, oKB_Pointer_Drag_Left = 0xFEF4, 
+oKB_Pointer_Drag1 = 0xFEF5, oKB_Pointer_Drag_Right = 0xFEF5, 
+oKB_Pointer_Drag2 = 0xFEF6, oKB_Pointer_Drag_Middle = 0xFEF6, 
+oKB_Pointer_Drag3 = 0xFEF7, oKB_Pointer_Drag_Back = 0xFEF7, 
+oKB_Pointer_Drag4 = 0xFEF8, oKB_Pointer_Drag_Forward = 0xFEF8, 
  
 oKB_Pointer_EnableKeys = 0xFEF9, 
 oKB_Pointer_Accelerate = 0xFEFA, 
@@ -1580,5 +1602,6 @@ oKB_Hangul_J_YeorinHieuh = 0xefa,
 oKB_Korean_Won = 0xeff, 
  
 #endif/* XK_KOREAN*/
+};
 
-#endif
+#endif // oX11KeyboardSymbols_h

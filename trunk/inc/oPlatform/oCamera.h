@@ -33,7 +33,7 @@ interface oCamera : oInterface
 {
 	struct MODE
 	{
-		int2 Size;
+		int2 Dimensions;
 		oSURFACE_FORMAT Format;
 		int BitRate;
 	};

@@ -66,6 +66,16 @@ FIBITMAP* FILoad(const void* _pBuffer, size_t _SizeofBuffer, const FILoadHeaderO
 // DeleteObject() when finished with the HBITMAP.
 HBITMAP FIAllocateBMP(FIBITMAP* _bmp);
 
+// Copies to a FreeImage bitmap from a Windows-compatible DIB as used in 
+// GDI-type APIs. Use FreeImage_Unload() when finished with the return bitmap.
+// _hBmp remains valid after this call.
+FIBITMAP* FIAllocateFIBITMAP(HBITMAP _hBmp);
+
+// Copies the pixel data from an HBITMAP to an FIBITMAP of exactly the same
+// topology. This isn't all that robust, so if you get it wrong there will 
+// probably be memory corruption.
+void FICopyBits(FIBITMAP* _DstFIBitmap, HBITMAP _SrcHBmp);
+
 oImage::FORMAT FIGetImageFormat(FIBITMAP* _pBitmap);
 
 // Returns the proper FreeImage save flags for the specified compression level

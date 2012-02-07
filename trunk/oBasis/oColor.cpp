@@ -64,18 +64,18 @@ void oColorDecomposeToHSV(oColor _Color, float* _pH, float* _pS, float* _pV)
 
 size_t oColorFindClosest(oColor _TestColor, const oColor* _pPaletteColors, size_t _NumPaletteColors)
 {
-	unsigned int test[4], p[4];
+	int test[4], p[4];
 	oColorDecompose(_TestColor, test);
 
 	size_t closest = oNumericLimits<size_t>::GetMax();
-	unsigned int minDelta = oNumericLimits<unsigned int>::GetMax();
+	int minDelta = oNumericLimits<int>::GetMax();
 	for (size_t i = 0; i < _NumPaletteColors; i++)
 	{
 		oColorDecompose(_pPaletteColors[i], p);
-		unsigned int delta = 0;
+		int delta = 0;
 		for (size_t e = 0; e < 4; e++)
 		{
-			unsigned int eDelta = test[e] - p[e];
+			int eDelta = test[e] - p[e];
 			eDelta *= eDelta;
 			delta += eDelta; // sum the square of the per-element difference
 		}
@@ -268,7 +268,7 @@ bool oFromString(oColor* _pValue, const char* _StrSource)
 	return false;
 }
 
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const uint4& _Value);
+char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const int4& _Value);
 
 char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oColor& _Value)
 {
@@ -276,7 +276,7 @@ char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oColo
 	if (!strcmp("Unrec", c))
 		return 0 == strcpy_s(_StrDestination, _SizeofStrDestination, c) ? _StrDestination : nullptr;
 
-	uint4 color;
-	oColorDecompose(_Value, (unsigned int*)&color);
+	int4 color;
+	oColorDecompose(_Value, (int*)&color);
 	return ::oToString(_StrDestination, _SizeofStrDestination, color);
 }

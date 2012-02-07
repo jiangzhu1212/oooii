@@ -22,6 +22,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oINI.h>
+#include <oBasis/oFixedString.h>
+#include <oBasis/oInitOnce.h>
 #include <oBasis/oRefCount.h>
 #include <vector>
 
@@ -42,6 +44,7 @@ bool INIParse(ENTRIES& _Entries, char* _INIBuffer)
 	INI_ENTRY::value_type lastSectionIndex = 0;
 	INI_ENTRY s = {0}, k = {0};
 	bool link = false;
+	_Entries.reserve(100);
 	_Entries.clear();
 	_Entries.push_back(s); // make 0 to be a null object
 
@@ -103,8 +106,8 @@ struct oINI_Impl : public oINI
 	oINI_Impl(const char* _DocumentName, const char* _INIString);
 	~oINI_Impl();
 
-	inline INI_ENTRY& Entry(HENTRY _hEntry) const threadsafe { return thread_cast<ENTRIES&>(Entries)[(size_t)_hEntry]; }
-	inline INI_ENTRY& Entry(HSECTION _hSection) const threadsafe { return thread_cast<ENTRIES&>(Entries)[(size_t)_hSection]; }
+	inline const INI_ENTRY& Entry(HENTRY _hEntry) const threadsafe { return (*Entries)[(size_t)_hEntry]; }
+	inline const INI_ENTRY& Entry(HSECTION _hSection) const threadsafe { return (*Entries)[(size_t)_hSection]; }
 
 	size_t GetDocumentSize() const threadsafe override;
 	const char* GetDocumentName() const threadsafe override;
@@ -112,16 +115,16 @@ struct oINI_Impl : public oINI
 	HENTRY GetEntry(HSECTION _hSection, const char* _Key) const threadsafe override;
 
 	const char* GetSectionName(HSECTION _hSection) const threadsafe override { return _hSection ? (Data + Entry(_hSection).Name) : ""; }
-	HSECTION GetFirstSection() const threadsafe override { return thread_cast<ENTRIES&>(Entries).size() > 1 ? HSECTION(1) : 0; }
+	HSECTION GetFirstSection() const threadsafe override { return Entries->size() > 1 ? HSECTION(1) : 0; }
 	HSECTION GetNextSection(HSECTION _hPriorSection) const threadsafe override { return _hPriorSection ? HSECTION(Entry(_hPriorSection).Next) : 0; }
 	HENTRY GetFirstEntry(HSECTION _hSection) const threadsafe override { return HENTRY(Entry(_hSection).Value); }
 	HENTRY GetNextEntry(HENTRY _hPriorEntry) const threadsafe override { return HENTRY(Entry(_hPriorEntry).Next); }
 	const char* GetKey(HENTRY _hEntry) const threadsafe override { return _hEntry ? Data + Entry(_hEntry).Name : ""; }
 	const char* GetValue(HENTRY _hEntry) const threadsafe override { return _hEntry ? Data + Entry(_hEntry).Value : ""; }
 
-	char DocumentName[_MAX_PATH];
 	char* Data;
-	ENTRIES Entries;
+	oInitOnce<oStringURI> DocumentName;
+	oInitOnce<ENTRIES> Entries;
 	oRefCount RefCount;
 };
 
@@ -134,22 +137,21 @@ bool oINICreate(const char* _DocumentName, const char* _INIString, threadsafe oI
 
 size_t oINI_Impl::GetDocumentSize() const threadsafe
 {
-	return sizeof(*this) + strlen(Data) + 1 + thread_cast<ENTRIES&>(Entries).capacity() * sizeof(ENTRIES::value_type);
+	return sizeof(*this) + strlen(Data) + 1 + Entries->capacity() * sizeof(ENTRIES::value_type);
 }
 
 const char* oINI_Impl::GetDocumentName() const threadsafe
 {
-	return thread_cast<const char*>(DocumentName);
+	return DocumentName->c_str();
 }
 
 oINI_Impl::oINI_Impl(const char* _DocumentName, const char* _INIString)
+	: DocumentName(_DocumentName)
 {
-	strcpy_s(DocumentName, oSAFESTR(_DocumentName));
 	size_t numberOfElements = strlen(oSAFESTR(_INIString))+1;
 	Data = new char[numberOfElements];
 	strcpy_s(Data, numberOfElements, oSAFESTR(_INIString));
-	Entries.reserve(100);
-	INIParse(Entries, Data);
+	INIParse(Entries.Initialize(), Data);
 }
 
 oINI_Impl::~oINI_Impl()

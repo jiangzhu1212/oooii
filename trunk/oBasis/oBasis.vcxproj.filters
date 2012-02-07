@@ -351,6 +351,12 @@
     <ClInclude Include="..\inc\oBasis\oVersion.h">
       <Filter>oBasis\Types</Filter>
     </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oSurfaceFill.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oInitOnce.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oStdChrono.cpp">
@@ -492,6 +498,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oTimer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oSurfaceFill.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

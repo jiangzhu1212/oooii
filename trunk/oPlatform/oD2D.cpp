@@ -98,7 +98,7 @@ D2D1_PIXEL_FORMAT GetFormat(oSURFACE_FORMAT _Format)
 {
 	D2D1_PIXEL_FORMAT f;
 	f.format = oDXGIFromSurfaceFormat(_Format);
-	f.alphaMode = oSurfaceIsAlphaFormat(_Format) ? D2D1_ALPHA_MODE_PREMULTIPLIED : D2D1_ALPHA_MODE_IGNORE;
+	f.alphaMode = oSurfaceFormatIsAlpha(_Format) ? D2D1_ALPHA_MODE_PREMULTIPLIED : D2D1_ALPHA_MODE_IGNORE;
 	return f;
 }
 

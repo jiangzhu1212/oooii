@@ -202,6 +202,16 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 	oStringPath output;
 	BuildDataPath(output.c_str(), GetName(), desc.DataPath, "Output", desc.OutputPath, _NthBinary, _FileExtension);
 
+	bool bSaveTestBuffer = false;
+	oOnScopeExit SaveTestBuffer([&]
+	{
+		if (bSaveTestBuffer)
+		{
+			if (!oFileSave(output, _pBuffer, _SizeofBuffer, false))
+				oErrorSetLast(oERROR_INVALID_PARAMETER, "Output binary save failed: %s", output.c_str());
+		}
+	});
+
 	oRef<oBuffer> GoldenBinary;
 	{
 		if (GPUVendor == oGPU_VENDOR_AMD)
@@ -224,8 +234,7 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 					oWARN("Shared Golden Images are only valid if generated from an NVIDIA card. Note: it may be appropriate to check this in as an AMD-specific card to %s if there's a difference in golden images between NVIDIA and AMD.", outputAMD.c_str());
 				}
 
-				if (!oFileSave(output, _pBuffer, _SizeofBuffer, oFILE_OPEN_BIN_WRITE))
-					return oErrorSetLast(oERROR_INVALID_PARAMETER, "Output binary save failed: %s", output.c_str());
+				bSaveTestBuffer = true;
 				return oErrorSetLast(oERROR_NOT_FOUND, "Golden binary load failed: %s", golden.c_str());
 			}
 		}
@@ -236,11 +245,16 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 		char testSize[32], goldenSize[32];
 		oFormatMemorySize(testSize, _SizeofBuffer, 2);
 		oFormatMemorySize(goldenSize, GoldenBinary->GetSize(), 2);
+		bSaveTestBuffer = true;
 		return oErrorSetLast(oERROR_GENERIC, "Golden binary compare failed because the binaries are different sizes (test is %s, golden is %s)");
 	}
 
 	if (memcmp(_pBuffer, GoldenBinary->GetData(), GoldenBinary->GetSize()))
+	{
+		bSaveTestBuffer = true;
 		return oErrorSetLast(oERROR_GENERIC, "Golden binary compare failed because the bytes differ");
+	}
+
 	return true;
 }
 
@@ -876,7 +890,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 				else if (testDuration > Desc.TestTooSlowTimeInSeconds)
 					ReportType = oConsoleReporting::WARN;
 
-				oFormatTimeSize(timeMessage.c_str(), round(testDuration));
+				oFormatTimeSize(timeMessage.c_str(), round(testDuration), true);
 				Report(ReportType, timeSpec, timeMessage);
 				ReportSep();
 				Report(oConsoleReporting::DEFAULT, messageSpec, statusMessage);

@@ -26,6 +26,7 @@
 #include <oPlatform/oFile.h>
 #include <oPlatform/oSystem.h> // oSystemGetPath
 #include <oBasis/oError.h>
+#include "oFileInternal.h"
 
 bool oFileIsText(oHFILE _hFile)
 {
@@ -188,13 +189,18 @@ bool oFileLoadHeader(void* _pHeader, size_t _SizeofHeader, const char* _Path, bo
 	return true;
 }
 
-bool oFileSave(const char* _Path, const void* _pSource, size_t _SizeofSource, oFILE_OPEN _Open)
+bool oFileSave(const char* _Path, const void* _pSource, size_t _SizeofSource, bool _AsText, bool _AppendToExistingFile)
 {
-	if (!oSTRVALID(_Path) || !_pSource || _Open == oFILE_OPEN_BIN_READ || _Open == oFILE_OPEN_TEXT_READ)
+	if (!oSTRVALID(_Path) || !_pSource)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	oHFILE hFile = nullptr;
-	if (!oFileOpen(_Path, _Open, &hFile))
+
+	int Open = _AsText ? oFILE_OPEN_TEXT_WRITE : oFILE_OPEN_BIN_WRITE;
+	if (_AppendToExistingFile)
+		Open++;
+
+	if (!oFileOpen(_Path, static_cast<oFILE_OPEN>(Open), &hFile))
 		return false; // propagate oFileOpen error
 
 	unsigned long long actualWritten = oFileWrite(hFile, _pSource, _SizeofSource);
@@ -207,49 +213,6 @@ bool oFileSave(const char* _Path, const void* _pSource, size_t _SizeofSource, oF
 		return oErrorSetLast(oERROR_IO, "Expected to write %s, but wrote %s to file %s", oFormatMemorySize(source, _SizeofSource, 2), oFormatMemorySize(actual, actualWritten, 2), _Path);
 	}
 
-	return true;
-}
-
-bool oFileMap(void* _HintPointer, unsigned long long _Size, bool _ReadOnly, oHFILE _hFile, unsigned long long _Offset, void** _ppMappedMemory)
-{
-	if (_HintPointer)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "_HintPointer must currently be nullptr.");
-
-	if (!_hFile)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "A valid file handle must be specified.");
-
-	SYSTEM_INFO si;
-	GetSystemInfo(&si);
-	oByteSwizzle64 alignedOffset;
-	alignedOffset.AsUnsignedLongLong = oByteAlignDown(_Offset, si.dwAllocationGranularity);
-	unsigned long long offsetPadding = _Offset - alignedOffset.AsUnsignedLongLong;
-	unsigned long long alignedSize = _Size + offsetPadding;
-	HANDLE hFile = oGetFileHandle((FILE*)_hFile);
-	
-	HANDLE hMapped = CreateFileMapping(hFile, nullptr, _ReadOnly ? PAGE_READONLY : PAGE_READWRITE, 0, 0, nullptr);
-	if (!hMapped)
-		return oWinSetLastError();
-
-	void* p = MapViewOfFile(hMapped, _ReadOnly ? FILE_MAP_READ : FILE_MAP_WRITE, alignedOffset.AsUnsignedInt[1], alignedOffset.AsUnsignedInt[0], oSize64( alignedSize ));
-	if (!p)
-		return oWinSetLastError();
-
-	CloseHandle(hMapped); // there's still a ref held by MapViewOfFile, but why keep 2? This allows just the one release in MemUnMap when calling UnmapViewOfFile()
-
-	*_ppMappedMemory = oByteAdd(p, oSize64( offsetPadding ));
-	return true;
-}
-
-bool oFileUnmap(void* _MappedPointer)
-{
-	SYSTEM_INFO si;
-	GetSystemInfo(&si);
-	void* p = oByteAlignDown(_MappedPointer, si.dwAllocationGranularity);
-	if (!UnmapViewOfFile(p))
-	{
-		oWinSetLastError();
-		return false;
-	}
 	return true;
 }
 

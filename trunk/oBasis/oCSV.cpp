@@ -23,21 +23,20 @@
  **************************************************************************/
 #include <oBasis/oCSV.h>
 #include <oBasis/oAssert.h>
+#include <oBasis/oFixedString.h>
+#include <oBasis/oInitOnce.h>
 #include <oBasis/oMacros.h>
 #include <oBasis/oRefCount.h>
 #include <vector>
 
 typedef std::vector<std::vector<const char*> > RECORDS;
 
-bool CSVParse(RECORDS* _pRecords, char* _CSVDestination, const char* _CSVSource)
+bool CSVParse(RECORDS& _OutRecords, char* _CSVDestination, const char* _CSVSource)
 {
-	if (!_pRecords || !oSTRVALID(_CSVSource) || !_CSVDestination)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
-	RECORDS& R = *_pRecords;
-	R.resize(1);
+	_OutRecords.reserve(100);
+	if (!oSTRVALID(_CSVSource) || !_CSVDestination)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+	_OutRecords.resize(1);
 	size_t nRowCommas = 0;
 	bool inquotes = false;
 	const char* r = _CSVSource;
@@ -64,9 +63,9 @@ bool CSVParse(RECORDS* _pRecords, char* _CSVDestination, const char* _CSVSource)
 
 			*w++ = '\0';
 			r += strspn(r, oNEWLINE);
-			R.back().push_back(entryStart);
-			R.resize(R.size() + 1);
-			R.back().reserve(R[R.size()-2].size());
+			_OutRecords.back().push_back(entryStart);
+			_OutRecords.resize(_OutRecords.size() + 1);
+			_OutRecords.back().reserve(_OutRecords[_OutRecords.size()-2].size());
 			entryStart = w;
 			if (*r == 0)
 				break;
@@ -80,7 +79,7 @@ bool CSVParse(RECORDS* _pRecords, char* _CSVDestination, const char* _CSVSource)
 				{
 					*w++ = '\0';
 					r++;
-					R.back().push_back(entryStart);
+					_OutRecords.back().push_back(entryStart);
 					entryStart = w;
 				}
 				else
@@ -110,28 +109,27 @@ struct oCSVImpl : oCSV
 	~oCSVImpl();
 
 	size_t GetDocumentSize() const threadsafe override;
-	const char* GetDocumentName() const threadsafe override { return thread_cast<const char*>(DocumentName); }
-	size_t GetNumRows() const threadsafe override { return thread_cast<RECORDS&>(Records).size(); }
+	const char* GetDocumentName() const threadsafe override { return DocumentName->c_str(); }
+	size_t GetNumRows() const threadsafe override { return Records->size(); }
 	size_t GetNumColumns() const threadsafe override { return NumColumns; }
 	const char* GetElement(size_t _ColumnIndex, size_t _RowIndex) const threadsafe override;
 
-	char DocumentName[_MAX_PATH];
 	char* Data;
 	size_t NumColumns;
-	RECORDS Records;
+	oInitOnce<oStringURI> DocumentName;
+	oInitOnce<RECORDS> Records;
 	oRefCount RefCount;
 };
 
 oCSVImpl::oCSVImpl(const char* _DocumentName, const char* _CSVString, bool* _pSuccess)
 	: NumColumns(0)
+	, DocumentName(_DocumentName)
 {
-	strcpy_s(DocumentName, oSAFESTR(_DocumentName));
 	size_t numberOfElements = strlen(oSAFESTR(_CSVString))+1;
 	Data = new char[numberOfElements];
-	Records.reserve(100);
-	*_pSuccess = CSVParse(&Records, Data, oSAFESTR(_CSVString));
+	*_pSuccess = CSVParse(Records.Initialize(), Data, oSAFESTR(_CSVString));
 	if (*_pSuccess)
-		for (RECORDS::const_iterator it = Records.begin(); it != Records.end(); ++it)
+		for (RECORDS::const_iterator it = Records->begin(); it != Records->end(); ++it)
 			NumColumns = __max(NumColumns, it->size());
 }
 
@@ -154,17 +152,15 @@ bool oCSVCreate(const char* _DocumentName, const char* _CSVString, threadsafe oC
 
 size_t oCSVImpl::GetDocumentSize() const threadsafe
 {
-	RECORDS& R = thread_cast<RECORDS&>(Records);
-	size_t size = sizeof(*this) + strlen(Data) + 1 + R.capacity() * sizeof(RECORDS::value_type);
-	for (RECORDS::const_iterator it = R.begin(); it != R.end(); ++it)
+	size_t size = sizeof(*this) + strlen(Data) + 1 + Records->capacity() * sizeof(RECORDS::value_type);
+	for (RECORDS::const_iterator it = Records->begin(); it != Records->end(); ++it)
 		size += it->capacity() * sizeof(RECORDS::value_type::value_type);
 	return size;
 }
 
 const char* oCSVImpl::GetElement(size_t _ColumnIndex, size_t _RowIndex) const threadsafe
 {
-	RECORDS& R = thread_cast<RECORDS&>(Records);
-	if (_RowIndex < R.size() && _ColumnIndex < R[_RowIndex].size())
-		return R[_RowIndex][_ColumnIndex];
+	if (_RowIndex < Records->size() && _ColumnIndex < (*Records)[_RowIndex].size())
+		return (*Records)[_RowIndex][_ColumnIndex];
 	return "";
 }

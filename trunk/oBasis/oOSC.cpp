@@ -29,6 +29,10 @@
 
 #define oUNKNOWN_SIZE SIZE_MAX
 
+// If a nullptr is serialized as a string, we still need to identify that the
+// occurance happened, so write a special character.
+static const char NULL_STRING = -1;
+
 template<typename T> static T oOSCPlatformEndianSwap(const T& _X)
 {
 	#ifdef oLITTLEENDIAN
@@ -89,16 +93,10 @@ template<typename ptr_t>
 bool oOSCVisitStructFieldsInternal(oFUNCTION<void(int, ptr_t _pField, size_t)> _Visitor, const char* _TypeTags, ptr_t _pStruct, size_t _SizeofStruct, char* _pOptionalPatchTags = nullptr)
 {
 	if (!_Visitor || !_TypeTags || !_pStruct || !_SizeofStruct)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "null value");
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "null value");
 
 	if (*_TypeTags != ',')
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "TypeTags must start with a ',' character");
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "TypeTags must start with a ',' character");
 
 	auto tag = _TypeTags;
 	auto patchTag = _pOptionalPatchTags;
@@ -111,8 +109,7 @@ bool oOSCVisitStructFieldsInternal(oFUNCTION<void(int, ptr_t _pField, size_t)> _
 			if( p == end && ( *tag == 0 || *tag == '[' || *tag == ']' ) )  // If we finish on any of these tags it's ok since they do not expect valid data
 				return true;
 
-			oErrorSetLast(oERROR_INVALID_PARAMETER, "Tag string \"%s\" has run past the size of the struct pointed to by pointer 0x%p", _TypeTags, _pStruct);
-			return false;
+			return oErrorSetLast(oERROR_INVALID_PARAMETER, "Tag string \"%s\" has run past the size of the struct pointed to by pointer 0x%p", _TypeTags, _pStruct);
 		}
 
 		if(patchTag)
@@ -395,7 +392,7 @@ static void* NextString(void* _pDestination, size_t _SizeofDestination, const ch
 	oASSERT(oIsByteAligned(_pDestination, 4), "");
 	if (_String)
 		return CopyNextBuffer(_pDestination, _SizeofDestination, _String, strlen(_String) + 1);
-	return _pDestination;
+	return CopyNextBuffer(_pDestination, _SizeofDestination, &NULL_STRING, 1);
 }
 
 static void* NextBlob(void* _pDestination, size_t _SizeofDestination, const void* _pBuffer, size_t _SizeofBuffer)
@@ -437,7 +434,7 @@ static void* NextString(void* _pDestination, const char* _String)
 	oASSERT(oIsByteAligned(_String, 4), "");
 	// assign pointer into message buffer
 	const char** s = (const char**)oByteAlign(_pDestination, sizeof(const char**));
-	*s = (const char*)_String;
+	*s = *(const char*)_String == NULL_STRING ? nullptr : (const char*)_String;
 	return oByteAdd(s, sizeof(const char*));
 }
 
@@ -520,4 +517,30 @@ bool oOSCDeserializeMessageToStruct(const void* _pMessage, void* _pStruct, size_
 	void* pend = oByteAdd(_pStruct, _SizeofStruct);
 
 	return oOSCVisitMessageTypeTags(tags, args, oBIND(oOSCDeserializer, oBIND1, oBIND2, oBIND3, &p, pend));
+}
+
+static bool IsBoolTag(char _TypeTag)
+{
+	return _TypeTag == 'T' || _TypeTag == 'F' || _TypeTag == 't' || _TypeTag == 'f';
+}
+
+bool oOSCTypeTagsMatch(const char* _TypeTags0, const char* _TypeTags1)
+{
+	if (!_TypeTags0 || *_TypeTags0 != ',' || !_TypeTags1 || *_TypeTags1 != ',')
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	size_t len0 = strlen(_TypeTags0);
+	size_t len1 = strlen(_TypeTags1);
+	if (len0 != len1)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	while (*_TypeTags0)
+	{
+		if (*_TypeTags0 != *_TypeTags1 && (!IsBoolTag(*_TypeTags0) || !IsBoolTag(*_TypeTags1)))
+			return oErrorSetLast(oERROR_GENERIC, "tags mismatch");
+		_TypeTags0++;
+		_TypeTags1++;
+	}
+
+	return true;
 }

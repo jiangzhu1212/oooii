@@ -36,6 +36,9 @@
 int oGDIPointToLogicalHeight(HDC _hDC, int _Point);
 int oGDIPointToLogicalHeight(HDC _hDC, float _Point);
 
+// Converts a specified pixel height into the font point size to fit
+int oGDIPixelsToPoints(HDC _hDC, int _PixelHeight);
+
 class oGDIScopedSelect
 {
 	HDC hDC;

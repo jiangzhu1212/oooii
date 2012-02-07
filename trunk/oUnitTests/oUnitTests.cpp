@@ -266,7 +266,7 @@ void SetTestManagerDesc(const PARAMETERS* _pParameters)
 	desc.GoldenImagesPath = _pParameters->GoldenImagesPath;
 	desc.OutputPath = _pParameters->OutputPath;
 	desc.NameColumnWidth = 32;
-	desc.TimeColumnWidth = 13;
+	desc.TimeColumnWidth = 5;
 	desc.StatusColumnWidth = 9;
 	desc.RandomSeed = _pParameters->RandomSeed ? _pParameters->RandomSeed : (unsigned int)oStd::chrono::high_resolution_clock::now().time_since_epoch().count();
 	desc.NumRunIterations = _pParameters->RepeatNumber ? _pParameters->RepeatNumber : 1;

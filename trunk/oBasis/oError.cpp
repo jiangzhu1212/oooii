@@ -47,6 +47,7 @@ const char* oAsString(const oERROR& _Error)
 		case oERROR_IO: return "oERROR_IO";
 		case oERROR_REFUSED: return "oERROR_REFUSED";
 		case oERROR_PLATFORM: return "oERROR_PLATFORM";
+		case oERROR_CORRUPT: return "oERROR_CORRUPT";
 		oNODEFAULT;
 	}
 }
@@ -70,6 +71,7 @@ const char* oErrorGetDefaultString(const oERROR& _Error)
 		case oERROR_IO: return "IO error occurred";
 		case oERROR_REFUSED: return "access refused";
 		case oERROR_PLATFORM: return "platform error occurred";
+		case oERROR_CORRUPT: return "data is corrupt";
 		oNODEFAULT;
 	}
 }

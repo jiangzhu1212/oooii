@@ -261,7 +261,7 @@ errno_t oFormatTimeSize(char* _StrDestination, size_t _SizeofStrDestination, dou
 	APPEND_TIME(millisecond, "ms");
 
 	if (!oneWritten)
-		oStrAppend(_StrDestination, _SizeofStrDestination, "0 %s", _Abbreviated ? "s" : "seconds");
+		oStrAppend(_StrDestination, _SizeofStrDestination, "0%s", _Abbreviated ? "s" : " seconds");
 
 	return -1 == result ? ERANGE : 0;
 }
@@ -340,6 +340,15 @@ bool oGetKeyValuePair(char* _KeyDestination, size_t _SizeofKeyDestination, char*
 		*_ppLeftOff = end;
 
 	return true;
+}
+
+errno_t oStrcpy(char *_StrDestination, size_t _NumberOfElements, const char *_StrSource)
+{
+	errno_t error = strcpy_s(_StrDestination, _NumberOfElements, _StrSource);
+	// zero rest of buffer - because in debug strcpy_s fills buffer with fefefefe, we want to zero out the buffer after copying
+	if (error == 0)
+		memset(_StrDestination + strlen(_StrDestination), 0, _NumberOfElements - strlen(_StrDestination)); 
+	return error;
 }
 
 bool oStrTokFinishedSuccessfully(char** _ppContext)

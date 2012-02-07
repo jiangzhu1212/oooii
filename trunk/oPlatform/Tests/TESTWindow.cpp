@@ -28,12 +28,11 @@
 #include <oPlatform/oFile.h>
 #include <oPlatform/oGDI.h>
 #include <oPlatform/oImage.h>
-#include <oPlatform/oKeyboard.h>
-#include <oPlatform/oMouse.h>
 #include <oPlatform/oSystem.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/oWindow.h>
 #include <oPlatform/oWindowUI.h>
+#include <oPlatform\oX11KeyboardSymbols.h>
 
 class oScopedGPUCompositing
 {	bool Prior;
@@ -94,6 +93,23 @@ bool TESTOnEvent(oWindow::EVENT _Event, const float3& _Position, int _SuperSampl
 			oVERIFY(oGDIDrawText(hDC, rClient, oMIDDLERIGHT, std::Aqua, 0, true, "Hello World 2"));
 			break;
 		}
+
+		case oWindow::KEY_DOWN:
+		{
+			oTRACE("Got key down: %s", oAsString((oKEYBOARD_KEY)_SuperSampleScale));
+			break;
+		}
+
+		case oWindow::KEY_UP:
+		{
+			oTRACE("Got key up: %s", oAsString((oKEYBOARD_KEY)_SuperSampleScale));
+			break;
+		}
+		case oWindow::POINTER_MOVE:
+		{
+			oTRACE("MOUSE MOVE: %f %f, Wheel Move %f and BUTTON DOWN: %s", _Position.x, _Position.y, _Position.z, oAsString((oKEYBOARD_KEY)_SuperSampleScale));
+		}
+		break;
 	}
 
 	return true;
@@ -263,63 +279,6 @@ struct TESTWindowBase : public oTest
 		return true;
 	}
 
-	void TraceKeyState(threadsafe oKeyboard* _pKeyboard, bool _bShouldPrintUp[oKeyboard::NUM_KEYS])
-	{
-		if (_pKeyboard)
-		{
-			for (size_t i = 0; i < oKeyboard::NUM_KEYS; i++)
-			{
-				oKeyboard::KEY k = (oKeyboard::KEY)i;
-
-				if (_pKeyboard->IsPressed(k))
-					oTRACE("%s pressed", oAsString(k));
-				else if (_pKeyboard->IsDown(k))
-					oTRACE("%s down", oAsString(k));
-				else if (_pKeyboard->IsReleased(k))
-				{
-					oTRACE("%s released", oAsString(k));
-					_bShouldPrintUp[i] = true;
-				}
-
-				else if (_bShouldPrintUp[i] && _pKeyboard->IsUp(k))
-				{
-					oTRACE("%s up", oAsString(k));
-					_bShouldPrintUp[i] = false;
-				}
-			}
-		}
-	}
-
-	void TraceMouseState(threadsafe oMouse* _pMouse, bool _bMouseShouldPrintUp[oMouse::NUM_BUTTONS])
-	{
-		int x, y, v = 0, h = 0;
-		_pMouse->GetPosition(&x, &y, &v, &h);
-
-		if (v) oTRACE("mouse vwheel: %d", v);
-		if (h) oTRACE("mouse hwheel: %d", h);
-
-		for (size_t i = 0; i < oMouse::NUM_BUTTONS; i++)
-		{
-			oMouse::BUTTON b = (oMouse::BUTTON)i;
-
-			if (_pMouse->IsPressed(b))
-				oTRACE("%s pressed", oAsString(b));
-			else if (_pMouse->IsDown(b))
-				oTRACE("%s down", oAsString(b));
-			else if (_pMouse->IsReleased(b))
-			{
-				oTRACE("%s released", oAsString(b));
-				_bMouseShouldPrintUp[i] = true;
-			}
-
-			else if (_bMouseShouldPrintUp[i] && _pMouse->IsUp(b))
-			{
-				oTRACE("%s up", oAsString(b));
-				_bMouseShouldPrintUp[i] = false;
-			}
-		}
-	}
-
 	RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oWindow::DRAW_MODE _DrawMode)
 	{
 		// NOTE: There's a lot of transitions that don't seem to settle correctly 
@@ -329,12 +288,13 @@ struct TESTWindowBase : public oTest
 		// each to confirm sanity. Also it seems that even with the black backdrop
 		// for some of these test that sometimes a pixel can sneak in, so check the
 		// upper left and upper right corner pixels - they ought to be black.
+		const bool InteractiveTest = false;	// Interactive test will print all keys presses, mouse moves and mouse buttons presses to the output
 		const bool ExhaustiveTest = false; 
 		const bool DevMode = false;
 
-		if ((_DrawMode == oWindow::USE_D2D || _DrawMode == oWindow::USE_DX11) && oGetWindowsVersion() < oWINDOWS_7)
+		if (_DrawMode == oWindow::USE_D2D && oGetWindowsVersion() < oWINDOWS_7)
 		{
-			sprintf_s(_StrStatus, _SizeofStrStatus, "D2D or DX11 is not supported on Windows versions prior to Windows7");
+			sprintf_s(_StrStatus, _SizeofStrStatus, "D2D is not supported on Windows versions prior to Windows7");
 			return SKIPPED;
 		}
 
@@ -342,6 +302,8 @@ struct TESTWindowBase : public oTest
 		{
 			oWindow::DESC d;
 			d.ClientPosition = int2(1100, oDEFAULT);
+			d.SupportDoubleClicks = InteractiveTest; // Support double clicks when running interact test to make sure double click events work correctly
+			d.SupportTouchEvents = InteractiveTest; // Support touch panels
 			oRef<threadsafe oWindow> Window;
 			oTESTB(oWindowCreate(d, nullptr, _DrawMode, &Window), "");
 			Window->SetTitle("DevMode");
@@ -351,6 +313,16 @@ struct TESTWindowBase : public oTest
 			oStringPath path;
 			oSystemGetPath(path.c_str(), path.capacity(), oSYSPATH_DESKTOP);
 			strcat_s(path, "/test.bmp");
+
+			// Interactive test is for testing keyboard
+			if (InteractiveTest)
+			{
+				oTRACE("Keyboard Test Mode: Enter Key...");
+				while (1)
+				{
+					oSleep(100);
+				}
+			}
 
 			if (DevMode)
 			{

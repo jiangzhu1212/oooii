@@ -225,9 +225,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\oPlatform\Tests\TESTD3D.cpp" />
+    <ClCompile Include="..\oPlatform\Tests\TESTFileMap.cpp" />
     <ClCompile Include="..\oPlatform\Tests\TESTGetVideoDriverDesc.cpp" />
     <ClCompile Include="..\oPlatform\Tests\TESTGPU.cpp" />
     <ClCompile Include="..\oPlatform\Tests\TESTImage.cpp" />
+    <ClCompile Include="..\oPlatform\Tests\TESTSurfaceFill.cpp" />
     <ClCompile Include="oUnitTests.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

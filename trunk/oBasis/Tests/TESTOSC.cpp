@@ -30,7 +30,7 @@
 
 struct TEST
 {
-	static const char* GetTypeTags() { return ",Tc3Tih[fff]iTTs2f1sicbi[iiii]dIfbP"; }
+	static const char* GetTypeTags() { return ",Tc3Tih[fff]iTTs2f1sicbsi[iiii]dIfbP"; }
 
 	bool blA;
 	char c1;
@@ -52,6 +52,7 @@ struct TEST
 	// Expected padding
 	int b1size;
 	const void* b1;
+	const char* NullString;
 	int int4;
 	int intArray[4];
 	double double1;
@@ -84,6 +85,7 @@ void AssignTestValues(TEST* _pTest, const void* _pBuffer1, int _SizeofBuffer1, c
 	_pTest->c2 = 'K';
 	_pTest->b1size = _SizeofBuffer1;
 	_pTest->b1 = _pBuffer1;
+	_pTest->NullString = nullptr;
 	_pTest->int4 = 4;
 	_pTest->intArray[0] = 100;
 	_pTest->intArray[1] = 101;
@@ -119,6 +121,7 @@ bool operator==(const TEST& x, const TEST& y)
 		&& x.c2 == y.c2
 		&& x.b1size == y.b1size
 		&& !memcmp(x.b1, y.b1, x.b1size)
+		&& x.NullString == y.NullString
 		&& x.int4 == y.int4
 		&& x.intArray[0] == y.intArray[0]
 		&& x.intArray[1] == y.intArray[1]

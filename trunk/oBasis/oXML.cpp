@@ -23,6 +23,8 @@
  **************************************************************************/
 #include <oBasis/oXML.h>
 #include <oBasis/oAssert.h>
+#include <oBasis/oFixedString.h>
+#include <oBasis/oInitOnce.h>
 #include <oBasis/oLockedPointer.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
@@ -129,24 +131,36 @@ struct oXML_Impl : public oXML
 	oXML_Impl(const DESC& _Desc, bool* _pSuccess);
 	~oXML_Impl();
 
-	inline ATTRIBUTE& Attribute(HATTR _hAttribute) const threadsafe { return thread_cast<ATTRIBUTES&>(Attributes)[(size_t)_hAttribute]; }
-	inline NODE& Node(HNODE _hNode) const threadsafe { return thread_cast<NODES&>(Nodes)[(size_t)_hNode]; }
+	inline const ATTRIBUTE& Attribute(HATTR _hAttribute) const threadsafe { return (*Attributes)[(size_t)_hAttribute]; }
+	inline const NODE& Node(HNODE _hNode) const threadsafe { return (*Nodes)[(size_t)_hNode]; }
 
-	HNODE CreateNextNode(char*& _XML, HNODE _hParentNode, HNODE _hPreviousNode);
+	void CreateNodes(NODES& _Nodes, ATTRIBUTES& _Attributes, char*& _XML, size_t _EstimatedNumNodes, size_t _EstimatedNumAttributes);
+	
+	HNODE CreateNextNode(NODES& _Nodes, ATTRIBUTES& _Attributes, char*& _XML, HNODE _hParentNode, HNODE _hPreviousNode);
 
 	char* Data() const threadsafe { return XMLData; }
 
 	static void DeleteCopy(const char* XMLData) { delete [] XMLData; }
 
-	char DocumentName[_MAX_PATH];
 	char* XMLData;
 	oFUNCTION<void(const char* _XMLString)> XMLDeleter;
-	ATTRIBUTES Attributes;
-	NODES Nodes;
+	oInitOnce<oStringURI> DocumentName;
+	oInitOnce<ATTRIBUTES> Attributes;
+	oInitOnce<NODES> Nodes;
 	oRefCount RefCount;
 };
 
-oXML::HNODE oXML_Impl::CreateNextNode(char*& _XML, HNODE _hParentNode, HNODE _hPreviousNode)
+void oXML_Impl::CreateNodes(NODES& _Nodes, ATTRIBUTES& _Attributes, char*& _XML, size_t _EstimatedNumNodes, size_t _EstimatedNumAttributes)
+{
+	// Use up slot 0 so it can be used as a null handle
+	_Nodes.reserve(_EstimatedNumNodes);
+	_Nodes.push_back(NODE());
+	_Attributes.reserve(_EstimatedNumAttributes);
+	_Attributes.push_back(ATTRIBUTE());
+	CreateNextNode(_Nodes, _Attributes, _XML, 0, 0);
+}
+
+oXML::HNODE oXML_Impl::CreateNextNode(NODES& _Nodes, ATTRIBUTES& _Attributes, char*& _XML, HNODE _hParentNode, HNODE _hPreviousNode)
 {
 	XMLScanToData(_XML);
 	NODE n;
@@ -155,7 +169,7 @@ oXML::HNODE oXML_Impl::CreateNextNode(char*& _XML, HNODE _hParentNode, HNODE _hP
 	bool veryEarlyOut = *_XML == '/';
 	bool process = *_XML != '>' && !veryEarlyOut;
 	*_XML++ = 0;
-	if (process) XMLCreateAttributes(Data(), _XML, Attributes, n);
+	if (process) XMLCreateAttributes(Data(), _XML, _Attributes, n);
 	if (!veryEarlyOut)
 	{
 		if (*_XML != '/') n.Value = static_cast<NODE::value_type>(std::distance(Data(), _XML++)), _XML += strcspn(_XML, "<");
@@ -163,17 +177,17 @@ oXML::HNODE oXML_Impl::CreateNextNode(char*& _XML, HNODE _hParentNode, HNODE _hP
 		else n.Value = 0;
 	}
 	else n.Value = 0;
-	NODE::value_type newNode = static_cast<NODE::value_type>(Nodes.size());
-	if (_hParentNode) Node(_hParentNode).Down = newNode;
-	if (_hPreviousNode) Node(_hPreviousNode).Next = newNode;
-	Nodes.push_back(n);
+	NODE::value_type newNode = static_cast<NODE::value_type>(_Nodes.size());
+	if (_hParentNode) _Nodes[(size_t)_hParentNode].Down = newNode;
+	if (_hPreviousNode) _Nodes[(size_t)_hPreviousNode].Next = newNode;
+	_Nodes.push_back(n);
 	XMLOverwriteSpecialCharacters(Data()+n.Name), XMLOverwriteSpecialCharacters(Data()+n.Value);
 	if (!veryEarlyOut && *_XML != '/') // recurse on children nodes
 	{
 		HNODE parent = HNODE(newNode);
 		HNODE prev = 0;
 		while (*(_XML+1) != '/')
-			prev = CreateNextNode(_XML, parent, prev), parent = 0; // assign parent to 0 so it isn't reassigned the head of the child list
+			prev = CreateNextNode(_Nodes, _Attributes, _XML, parent, prev), parent = 0; // assign parent to 0 so it isn't reassigned the head of the child list
 		_XML += strcspn(_XML+2, ">") + 1;
 		_XML += strcspn(_XML, "<");
 	}
@@ -182,9 +196,9 @@ oXML::HNODE oXML_Impl::CreateNextNode(char*& _XML, HNODE _hParentNode, HNODE _hP
 }
 
 oXML_Impl::oXML_Impl(const DESC& _Desc, bool* _pSuccess)
+	: DocumentName(_Desc.DocumentName)
 {
 	*_pSuccess = false;
-	strcpy_s(DocumentName, oSAFESTR(_Desc.DocumentName));
 
 	if (_Desc.CopyXMLString)
 	{
@@ -200,17 +214,10 @@ oXML_Impl::oXML_Impl(const DESC& _Desc, bool* _pSuccess)
 		XMLDeleter = _Desc.FreeXMLString;
 	}
 
-	// Use up slot 0 so it can be used as a null handle
-	Attributes.reserve(_Desc.EstimatedNumAttributes);
-	Attributes.push_back(ATTRIBUTE());
-
-	Nodes.reserve(_Desc.EstimatedNumNodes);
-	Nodes.push_back(NODE());
-
 	char* p = XMLData;
 	char* s = p + strcspn(p, "<");
 	*p = 0; // empty strings point to p, and with this assignment properly to the empty string
-	CreateNextNode(s, 0, 0);
+	CreateNodes(Nodes.Initialize(), Attributes.Initialize(), s, _Desc.EstimatedNumNodes, _Desc.EstimatedNumAttributes);
 	*_pSuccess = true;
 }
 
@@ -262,12 +269,12 @@ oXML::HATTR oXML_Impl::GetNextAttribute(HATTR _hAttribute) const threadsafe
 
 size_t oXML_Impl::GetDocumentSize() const threadsafe
 {
-	return sizeof(*this) + strlen(Data()) + 1 + thread_cast<NODES&>(Nodes).capacity() * sizeof(NODES::value_type) + thread_cast<ATTRIBUTES&>(Attributes).capacity() * sizeof(ATTRIBUTES::value_type);
+	return sizeof(*this) + strlen(Data()) + 1 + Nodes->capacity() * sizeof(NODES::value_type) + Attributes->capacity() * sizeof(ATTRIBUTES::value_type);
 }
 
 const char* oXML_Impl::GetDocumentName() const threadsafe
 {
-	return thread_cast<const char*>(DocumentName);
+	return DocumentName->c_str();
 }
 
 const char* oXML_Impl::GetNodeName(HNODE _hNode) const threadsafe

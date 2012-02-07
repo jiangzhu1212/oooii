@@ -44,7 +44,7 @@ class oConditionVariable
 	oConditionVariable(oConditionVariable const&); /* = delete */
 	oConditionVariable& operator=(oConditionVariable const&); /* = delete */
 
-	oStd::cv_status wait_for(oUniqueLock<oMutex>& _Lock, unsigned int _TimeoutMS);
+	oStd::cv_status::value wait_for(oUniqueLock<oMutex>& _Lock, unsigned int _TimeoutMS);
 
 public:
 	oConditionVariable() {}
@@ -62,7 +62,7 @@ public:
 	}
 
 	template <typename Clock, typename Duration>
-	oStd::cv_status wait_until(oUniqueLock<oMutex>& _Lock, const oStd::chrono::time_point<Clock, Duration>& _AbsoluteTime) threadsafe
+	oStd::cv_status::value wait_until(oUniqueLock<oMutex>& _Lock, const oStd::chrono::time_point<Clock, Duration>& _AbsoluteTime) threadsafe
 	{
 		return CV().wait_until(L(_Lock), _AbsoluteTime);
 	}
@@ -74,7 +74,7 @@ public:
 	}
 
 	template <typename Rep, typename Period>
-	oStd::cv_status wait_for(oUniqueLock<oMutex>& _Lock, const oStd::chrono::duration<Rep, Period>& _RelativeTime) threadsafe
+	oStd::cv_status::value wait_for(oUniqueLock<oMutex>& _Lock, const oStd::chrono::duration<Rep, Period>& _RelativeTime) threadsafe
 	{
 		return CV().wait_for(L(_Lock), _RelativeTime);
 	}

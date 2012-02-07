@@ -53,8 +53,6 @@
 typedef oFUNCTION<void(int _Type, void* _pField, size_t _SizeofField)> oOSCVisitorFn;
 typedef oFUNCTION<void(int _Type, const void* _pField, size_t _SizeofField)> oOSCVisitorConstFn;
 
-
-
 // This function correctly traverses fields in a specified struct that is 
 // trivial, meaning:
 // o Struct does not inherit from any base struct, so has no end-of-struct 
@@ -135,10 +133,15 @@ size_t oOSCSerializeStructToMessage(const char* _Address, const char* _TypeTags,
 // 4-byte aligned.  Any strings and or blobs will point back into the original message.
 bool oOSCDeserializeMessageToStruct(const void* _pMessage, void* _pStruct, size_t _SizeofStruct);
 
+// Prefer using this to verify an expected type tag versus a messages type tags
+// over a string compare because we bake bool values into the type tag itself
+// using T/F since there is no bool type in OSC, so T==F F==T T==T F==F in this
+// compare.
+bool oOSCTypeTagsMatch(const char* _TypeTags0, const char* _TypeTags1);
+
 // Templated on type of struct versions of the above API
 template<typename T> inline bool oOSCVisitStructFields(const char* _TypeTags, const T* _pStruct, oOSCVisitorFn _Visitor) { return oOSCVisitStructFields(_TypeTags, _pStruct, sizeof(T), _Visitor); }
 template<typename T> inline size_t oOSCCalculateArgumentsDataSize(const char* _TypeTags, const T& _Struct) { return oOSCCalculateArgumentsDataSize(_TypeTags, &_Struct, sizeof(T)); }
 template<typename T> inline size_t oOSCSerializeStructToMessage(const char* _Address, const char* _TypeTags, const T& _Struct, void* _pDestination, size_t _SizeofDestination) { return oOSCSerializeStructToMessage(_Address, _TypeTags, &_Struct, sizeof(T), _pDestination, _SizeofDestination); }
 template<typename T> inline bool oOSCDeserializeMessageToStruct(const void* _pMessage, T* _pStruct ) { return oOSCDeserializeMessageToStruct(_pMessage, _pStruct, sizeof(T)); }
 #endif
-

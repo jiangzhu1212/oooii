@@ -40,10 +40,8 @@
 #include <oPlatform/oFile.h>
 #include <oPlatform/oGPU.h>
 #include <oPlatform/oImage.h>
-#include <oPlatform/oKeyboard.h>
 #include <oPlatform/oMirroredArena.h>
 #include <oPlatform/oModule.h>
-#include <oPlatform/oMouse.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oP4.h>
 #include <oPlatform/oPageAllocator.h>

@@ -78,6 +78,12 @@
     <ClCompile Include="..\oPlatform\Tests\TESTImage.cpp">
       <Filter>Source Files\oPlatformTests</Filter>
     </ClCompile>
+    <ClCompile Include="..\oPlatform\Tests\TESTFileMap.cpp">
+      <Filter>Source Files\oPlatformTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\oPlatform\Tests\TESTSurfaceFill.cpp">
+      <Filter>Source Files\oPlatformTests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

@@ -87,9 +87,12 @@ bool oD3D10CreateImage(ID3D10Texture2D* _pSourceTexture, oImage** _ppImage)
 	D3D10_TEXTURE2D_DESC d;
 	_pSourceTexture->GetDesc(&d);
 
-	const unsigned int RowSize = static_cast<unsigned int>(d.Width * oSurfaceGetSize(oSURFACE_B8G8R8A8_UNORM));
+	oImage::FORMAT ImageFormat = oImageFormatFromSurfaceFormat(oDXGIToSurfaceFormat(d.Format));
+	if (ImageFormat == oImage::UNKNOWN)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified texture's format %s is not supported by oImage", oAsString(d.Format));
+
 	oImage::DESC idesc;
-	idesc.RowPitch = RowSize;
+	idesc.RowPitch = oImageCalcRowSize(ImageFormat, d.Width);
 	idesc.Dimensions.x = d.Width;
 	idesc.Dimensions.y = d.Height;
 	idesc.Format = oImage::BGRA32;

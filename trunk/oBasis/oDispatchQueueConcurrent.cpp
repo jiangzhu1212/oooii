@@ -27,6 +27,7 @@
 #include <oBasis/oConditionVariable.h>
 #include <oBasis/oError.h>
 #include <oBasis/oFor.h>
+#include <oBasis/oInitOnce.h>
 #include <oBasis/oMutex.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
@@ -80,20 +81,21 @@ struct oDispatchQueueConcurrent_Impl : oDispatchQueueConcurrent
 
 	bool Dispatch(oTASK _Task) threadsafe override;
 	void Flush() threadsafe override;
-	bool Joinable() const threadsafe override { return NeverResizesWorkers().size() >= 1 && NeverResizesWorkers()[0]->Joinable(); }
+	bool Joinable() const threadsafe override { return Workers->size() >= 1 && Workers->front()->Joinable(); }
 	void Join() threadsafe override;
 	const char* GetDebugName() const threadsafe override { return Tasks.debug_name(); }
 	void WaitForWorkersToSleep() threadsafe;
 
 	typedef std::vector<oWorkerThread*> workers_t;
-	workers_t Workers;
-
-	workers_t& NeverResizesWorkers() const threadsafe { return thread_cast<workers_t&>(Workers); } // thread_cast is safe because the workers list never resizes
+	oInitOnce<workers_t> Workers;
 
 	typedef oConcurrentQueue<oTASK> queue_t;
 	queue_t Tasks;
+
 	oStd::atomic_bool AllowEnqueues;
 	oRefCount RefCount;
+
+	void InitializeWorkers(workers_t& _Workers);
 };
 
 const oGUID& oGetGUID(threadsafe const oDispatchQueueConcurrent_Impl* threadsafe const*)
@@ -132,13 +134,18 @@ void oWorkerThread::Proc()
 	oEndThread();
 }
 
+void oDispatchQueueConcurrent_Impl::InitializeWorkers(workers_t& _Workers)
+{
+	_Workers.resize(oThread::hardware_concurrency());
+	for (size_t i = 0; i < _Workers.size(); i++)
+		_Workers[i] = new oWorkerThread(this);
+}
+
 oDispatchQueueConcurrent_Impl::oDispatchQueueConcurrent_Impl(const char* _DebugName, size_t _InitialTaskCapacity, bool* _pSuccess)
 	: Tasks(_DebugName, _InitialTaskCapacity)
 	, AllowEnqueues(true)
 {
-	Workers.resize(oThread::hardware_concurrency());
-	for (size_t i = 0; i < Workers.size(); i++)
-		Workers[i] = new oWorkerThread(this);
+	InitializeWorkers(Workers.Initialize());
 	*_pSuccess = true;
 }
 
@@ -150,7 +157,7 @@ oDispatchQueueConcurrent_Impl::~oDispatchQueueConcurrent_Impl()
 		std::terminate();
 	}
 
-	oFOR(oWorkerThread* w, Workers)
+	oFOR(oWorkerThread* w, *Workers)
 		delete w;
 }
 
@@ -158,12 +165,12 @@ bool oDispatchQueueConcurrent_Impl::Dispatch(oTASK _Task) threadsafe
 {
 	if (AllowEnqueues)
 	{
-		if (NeverResizesWorkers().empty())
+		if (Workers->empty())
 			_Task();
 		else
 		{
 			Tasks.push(_Task);
-			oFOR(oWorkerThread* w, NeverResizesWorkers())
+			oFOR(oWorkerThread* w, *Workers)
 				w->WakeUp();
 		}
 		
@@ -176,7 +183,7 @@ bool oDispatchQueueConcurrent_Impl::Dispatch(oTASK _Task) threadsafe
 void oDispatchQueueConcurrent_Impl::Flush() threadsafe
 {
 	AllowEnqueues.exchange(false);
-	oFOR(oWorkerThread* w, NeverResizesWorkers())
+	oFOR(oWorkerThread* w, *Workers)
 		w->Flush();
 	AllowEnqueues.exchange(true);
 }
@@ -184,7 +191,7 @@ void oDispatchQueueConcurrent_Impl::Flush() threadsafe
 void oDispatchQueueConcurrent_Impl::Join() threadsafe
 {
 	Flush();
-	oFOR(oWorkerThread* w, NeverResizesWorkers())
+	oFOR(oWorkerThread* w, *Workers)
 		w->Join();
 };
 

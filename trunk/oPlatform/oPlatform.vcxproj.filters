@@ -105,12 +105,6 @@
     <ClInclude Include="..\inc\oPlatform\oSystem.h">
       <Filter>Headers\Peripherals</Filter>
     </ClInclude>
-    <ClInclude Include="..\inc\oPlatform\oMouse.h">
-      <Filter>Headers\Peripherals</Filter>
-    </ClInclude>
-    <ClInclude Include="..\inc\oPlatform\oKeyboard.h">
-      <Filter>Headers\Peripherals</Filter>
-    </ClInclude>
     <ClInclude Include="..\inc\oPlatform\oGPU.h">
       <Filter>Headers\Peripherals</Filter>
     </ClInclude>
@@ -166,9 +160,6 @@
       <Filter>Headers\Windows API Convenience Wrappers</Filter>
     </ClInclude>
     <ClInclude Include="..\inc\oPlatform\oWinAsString.h">
-      <Filter>Headers\Windows API Convenience Wrappers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\inc\oPlatform\oWinCursor.h">
       <Filter>Headers\Windows API Convenience Wrappers</Filter>
     </ClInclude>
     <ClInclude Include="..\inc\oPlatform\oWindows.h">
@@ -240,6 +231,9 @@
     <ClInclude Include="..\inc\oPlatform\oX11KeyboardSymbols.h">
       <Filter>Headers\UI</Filter>
     </ClInclude>
+    <ClInclude Include="..\inc\oPlatform\oVKToX11Keyboard.h">
+      <Filter>Headers\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oConsole.cpp">
@@ -263,13 +257,7 @@
     <ClCompile Include="oImage.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oKeyboard.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oMirroredArena.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oMouse.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oMsgBox.cpp">
@@ -426,6 +414,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="FreeImageHelpers.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oVKToX11Keyboard.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

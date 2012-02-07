@@ -144,9 +144,7 @@
     <ClInclude Include="..\inc\oPlatform\oFile.h" />
     <ClInclude Include="..\inc\oPlatform\oGDI.h" />
     <ClInclude Include="..\inc\oPlatform\oGPU.h" />
-    <ClInclude Include="..\inc\oPlatform\oKeyboard.h" />
     <ClInclude Include="..\inc\oPlatform\oMirroredArena.h" />
-    <ClInclude Include="..\inc\oPlatform\oMouse.h" />
     <ClInclude Include="..\inc\oPlatform\oMsgBox.h" />
     <ClInclude Include="..\inc\oPlatform\oPageAllocator.h" />
     <ClInclude Include="..\inc\oPlatform\oPlatform.h" />
@@ -157,8 +155,8 @@
     <ClInclude Include="..\inc\oPlatform\oSocket.h" />
     <ClInclude Include="..\inc\oPlatform\oSystem.h" />
     <ClInclude Include="..\inc\oPlatform\oThreadX.h" />
+    <ClInclude Include="..\inc\oPlatform\oVKToX11Keyboard.h" />
     <ClInclude Include="..\inc\oPlatform\oWinAsString.h" />
-    <ClInclude Include="..\inc\oPlatform\oWinCursor.h" />
     <ClInclude Include="..\inc\oPlatform\oWindow.h" />
     <ClInclude Include="..\inc\oPlatform\oWindows.h" />
     <ClInclude Include="..\inc\oPlatform\oWindowUI.h" />
@@ -222,10 +220,8 @@
     <ClCompile Include="oGPU.cpp" />
     <ClCompile Include="oImage.cpp" />
     <ClCompile Include="oIOCP.cpp" />
-    <ClCompile Include="oKeyboard.cpp" />
     <ClCompile Include="oMirroredArena.cpp" />
     <ClCompile Include="oModule.cpp" />
-    <ClCompile Include="oMouse.cpp" />
     <ClCompile Include="oMsgBox.cpp" />
     <ClCompile Include="oooii_icon.cpp" />
     <ClCompile Include="oOpenSSL.cpp" />
@@ -243,6 +239,7 @@
     <ClCompile Include="oTBBTask.cpp" />
     <ClCompile Include="oTest.cpp" />
     <ClCompile Include="oThreadX.cpp" />
+    <ClCompile Include="oVKToX11Keyboard.cpp" />
     <ClCompile Include="oVTable.cpp" />
     <ClCompile Include="oWinAsString.cpp" />
     <ClCompile Include="oWindow.cpp" />

@@ -27,13 +27,13 @@
 #include <oBasis/oError.h>
 #include <oBasis/oFixedString.h>
 #include <oPlatform/oDebugger.h>
-#include <oPlatform/oFile.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oSystem.h>
 #include "oDbgHelp.h"
+#include "oFileInternal.h"
 
-template<> const char* oAsString(const oASSERT_TYPE& _Type)
+const char* oAsString(const oASSERT_TYPE& _Type)
 {
 	switch (_Type)
 	{
@@ -47,7 +47,6 @@ template<> const char* oAsString(const oASSERT_TYPE& _Type)
 struct oReportingContext : oProcessSingleton<oReportingContext>
 {
 	oReportingContext();
-	~oReportingContext();
 
 	void SetDesc(const oREPORTING_DESC& _Desc);
 	inline void GetDesc(oREPORTING_DESC* _pDesc) { *_pDesc = Desc; }
@@ -56,12 +55,12 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 	inline void AddFilter(size_t _AssertionID) { oPushBackUnique(FilteredMessages, _AssertionID); }
 	inline void RemoveFilter(size_t _AssertionID) { oFindAndErase(FilteredMessages, _AssertionID); }
 	oASSERT_ACTION VPrint(const oASSERTION& _Assertion, const char* _Format, va_list _Args);
-	static oASSERT_ACTION DefaultVPrint(const oASSERTION& _Assertion, void* _hLogFile, const char* _Format, va_list _Args);
+	static oASSERT_ACTION DefaultVPrint(const oASSERTION& _Assertion, threadsafe oFileWriter* _pLogFile, const char* _Format, va_list _Args);
 	static const oGUID GUID;
 
 protected:
 	oRef<oDbgHelp> DbgHelp;
-	oHFILE hLogFile;
+	oRef<threadsafe oFileWriter> LogFile;
 	oStringPath LogPath;
 	oREPORTING_DESC Desc;
 	typedef oArray<size_t, 256> array_t;
@@ -75,15 +74,65 @@ const oGUID oReportingContext::GUID = { 0x338d483b, 0x7793, 0x4be1, { 0x90, 0xb1
 
 oReportingContext::oReportingContext()
 	: DbgHelp(oDbgHelp::Singleton())
-	, hLogFile(nullptr)
 {
 	PushReporter(DefaultVPrint);
 }
 
-oReportingContext::~oReportingContext()
+struct oLogWriter : oFileWriter
 {
-	if (hLogFile)
-		oFileClose(hLogFile);
+	// @oooii-tony: Temporary - Flush operations around IOCP assume files are 
+	// closed out, but here in logging land, we keep the log file open. So 
+	// implement a stop-gap while we figure out something smarter to do and retain
+	// the oFileWriter interface broadcast to the user-callback for reporting.
+
+	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_NOOP_QUERYINTERFACE();
+
+	oRefCount RefCount;
+	oHFILE hFile;
+	oInitOnce<oStringPath> Path;
+
+	oLogWriter(const char* _Path, bool* _pSuccess)
+		: hFile(nullptr)
+		, Path(_Path)
+	{
+		*_pSuccess = oFileOpen(_Path, oFILE_OPEN_BIN_WRITE, &hFile);
+	}
+
+	~oLogWriter()
+	{
+		if (hFile)
+			oFileClose(hFile);
+	}
+
+	void DispatchWrite(const void* _pData, const oFileRange& _Range, callback_t _Callback) threadsafe override { oASSERT(false, "Don't call this"); }
+	bool Write(const void* _pData, const oFileRange& _Range) threadsafe override
+	{
+		if (_Range.Offset == ~0ull)
+		{
+			if (!oFileSeek(hFile, 0, oSEEK_END))
+				return false; // pass through error
+		}
+		
+		else if (!oFileSeek(hFile, _Range.Offset))
+			return false; // pass through error
+
+		return _Range.Size == oFileWrite(hFile, _pData, _Range.Size); // pass through error
+	}
+
+	void GetDesc(oFILE_DESC* _pDesc) threadsafe override
+	{
+		oVERIFY(oFileGetDesc(*Path, _pDesc));
+	}
+
+	const char* GetPath() const threadsafe override { return *Path; }
+};
+
+static bool oLogFileWriterCreate(const char* _Path, threadsafe oFileWriter** _ppFileWriter)
+{
+	bool success = false;
+	oCONSTRUCT(_ppFileWriter, oLogWriter(_Path, &success));
+	return success;
 }
 
 void oReportingContext::SetDesc(const oREPORTING_DESC& _Desc)
@@ -97,28 +146,11 @@ void oReportingContext::SetDesc(const oREPORTING_DESC& _Desc)
 		oCleanPath(tmp.c_str(), tmp.capacity(), Desc.LogFilePath);
 		if (_stricmp(LogPath, tmp))
 		{
-			if (hLogFile)
+			LogFile = nullptr;
+			if (!oLogFileWriterCreate(tmp, &LogFile))
 			{
-				oFileClose(hLogFile);
-				hLogFile = nullptr;
-			}
-
-			if (!oFileOpen(tmp, oFILE_OPEN_TEXT_WRITE, &hLogFile))
-			{
-				// ensure the dir exists before giving up
-				oStringPath tmpdir = tmp;
-				*oGetFilebase(tmpdir.c_str()) = 0;
-				if (oFileCreateFolder(tmpdir) || oErrorGetLast() == oERROR_REDUNDANT)
-				{
-					if (!oFileOpen(tmp, oFILE_OPEN_TEXT_WRITE, &hLogFile))
-					{
-						LogPath.clear();
-						oWARN("Failed to open log file \"%s\"", tmp.c_str());
-					}
-				}
-
-				else
-					oWARN("Failed to create path for log file \"%s\"", tmp.c_str());
+				LogPath.clear();
+				oWARN("Failed to open log file \"%s\"\n%s: %s", tmp.c_str(), oAsString(oErrorGetLast()), oErrorGetLastString());
 			}
 		}
 
@@ -128,11 +160,8 @@ void oReportingContext::SetDesc(const oREPORTING_DESC& _Desc)
 		Desc.LogFilePath = LogPath.c_str();
 	}
 
-	else if (hLogFile)
-	{
-		oFileClose(hLogFile);
-		hLogFile = 0;
-	}
+	else 
+		LogFile = nullptr;
 }
 
 bool oReportingContext::PushReporter(oReportingVPrint _Reporter)
@@ -165,7 +194,7 @@ oASSERT_ACTION oReportingContext::VPrint(const oASSERTION& _Assertion, const cha
 	if (!oContains(FilteredMessages, _Assertion.ID) && !VPrintStack.empty())
 	{
 		oReportingVPrint VPrintMessage = VPrintStack.back();
-		return VPrintMessage(_Assertion, hLogFile, _Format, _Args);
+		return VPrintMessage(_Assertion, LogFile, _Format, _Args);
 	}
 
 	return oASSERT_IGNORE_ONCE;
@@ -347,10 +376,8 @@ TRUNCATION:
 
 template<size_t size> inline char* FormatAssertMessage(char (&_StrDestination)[size], const oREPORTING_DESC& _Desc, const oASSERTION& _Assertion, const char* _Format, va_list _Args) { return FormatAssertMessage(_StrDestination, size, _Desc, _Assertion, _Format, _Args); }
 
-oASSERT_ACTION oReportingContext::DefaultVPrint(const oASSERTION& _Assertion, void* _hLogFile, const char* _Format, va_list _Args)
+oASSERT_ACTION oReportingContext::DefaultVPrint(const oASSERTION& _Assertion, threadsafe oFileWriter* _pLogFile, const char* _Format, va_list _Args)
 {
-	oHFILE hLogFile = (oHFILE)_hLogFile;
-
 	oREPORTING_DESC desc;
 	oReportingGetDesc(&desc);
 
@@ -369,8 +396,13 @@ oASSERT_ACTION oReportingContext::DefaultVPrint(const oASSERTION& _Assertion, vo
 
 	// And to log file
 
-	if (hLogFile)
-		oFileWrite(hLogFile, msg, strlen(msg), true);
+	if (_pLogFile)
+	{
+		oFileRange r;
+		r.Offset = oFILE_APPEND;
+		r.Size = strlen(msg);
+		_pLogFile->Write(msg, r);
+	}
 
 	// Output message
 	oASSERT_ACTION action = _Assertion.DefaultResponse;

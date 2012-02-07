@@ -37,6 +37,7 @@
 #include <oPlatform/oWinWindowing.h>
 #include <oPlatform/oWinAsString.h>
 #include <windowsx.h>
+#include <oPlatform/oVKToX11Keyboard.h>
 
 #if oDXVER >= oDXVER_10
 	#include <oPlatform/oD2D.h>
@@ -95,7 +96,6 @@ const char* oAsString(const oWindow::DRAW_MODE& _DrawMode)
 		case oWindow::USE_DEFAULT: return "USE_DEFAULT";
 		case oWindow::USE_GDI: return "USE_GDI";
 		case oWindow::USE_D2D: return "USE_D2D";
-		case oWindow::USE_DX11: return "USE_DX11";
 		oNODEFAULT;
 	}
 }
@@ -212,6 +212,8 @@ struct oWinWindow : oWindow
 	void GetDesc(DESC* _pDesc) threadsafe override;
 	DESC* Map() threadsafe override;
 	void Unmap() threadsafe override;
+	void SendKey(EVENT _KeyEvent, oKEYBOARD_KEY _Key) threadsafe override;
+	void SendMouseMove(float2 _Position) threadsafe override;
 	void Refresh(bool _Blocking = true, const oRECT* _pDirtyRect = nullptr) threadsafe override;
 	char* GetTitle(char* _StrDestination, size_t _SizeofStrDestination) const threadsafe override;
 	void SetTitle(const char* _Title) threadsafe override;
@@ -231,12 +233,13 @@ protected:
 
 	bool CallHooks(EVENT _Event, void* _pDrawContext, DRAW_MODE _DrawMode, const float3& _Position, int _Value);
 
-	void Initialize(oERROR* _pError, char* _pErrorString, size_t _szErrorString);
+	void Initialize(oERROR* _pError, char* _pErrorString, size_t _SizeofErrorString, bool _bSupportDoubleClicks);
 	void Deinitialize();
 	void Run();
 
 	bool CreateDevices(HWND _hWnd, IUnknown* _pUserSpecifiedDevice);
 	bool CreateDeviceResources(HWND _hWnd);
+	bool CreateGDIResources(HWND _hWnd, const oColor& _ClearColor);
 	bool DestroyDeviceResources();
 	bool D2DPaint(HWND _hWnd, bool _Force = false);
 	bool GDIPaint(HWND _hWnd, HDC _hDC, bool _Force = false);
@@ -249,6 +252,8 @@ protected:
 	void CreateSnapshot1(oImage** _ppImage, bool _IncludeBorder, threadsafe oEvent* _pDone, bool* _pSuccess);
 	void Hook1(HookFn _Hook, threadsafe oEvent* _pDone, size_t* _pIndex, oERROR* _pLastError, char* _StrLastError, size_t _SizeofStrLastError);
 	void Unhook1(size_t _Index, threadsafe oEvent* _pDone);
+	void SendKey1(EVENT _KeyEvent, oKEYBOARD_KEY _Key);
+	void SendMouseMove1(float2 _Position);
 	void ToggleFullscreen();
 	void DestroyWindow1();
 
@@ -329,7 +334,7 @@ oWinWindow::oWinWindow(const DESC& _Desc, void* _pAssociatedNativeHandle, DRAW_M
 	
 	oERROR InitError = oERROR_NONE;
 	oFixedString<char, 256> ErrorStr;
-	MessageQueue->Dispatch(oBIND(&oWinWindow::Initialize, this, &InitError, ErrorStr.c_str(), ErrorStr.capacity() ));
+	MessageQueue->Dispatch(oBIND(&oWinWindow::Initialize, this, &InitError, ErrorStr.c_str(), ErrorStr.capacity(), Desc.SupportDoubleClicks));
 	MessageQueue->Flush();
 	oASSERT(hWnd, "hWnd must be initialized by now (flush isn't blocking properly?)");
 	if (oERROR_NONE != InitError)
@@ -355,19 +360,27 @@ oWinWindow::oWinWindow(const DESC& _Desc, void* _pAssociatedNativeHandle, DRAW_M
 oWinWindow::~oWinWindow()
 {
 	MessageQueue->Dispatch(oBIND(&oWinWindow::Deinitialize, this));
-	oWinWake(hWnd);
+	if (hWnd)
+		oWinWake(hWnd);
 	MessageQueue->Join();
 }
 
-void oWinWindow::Initialize(oERROR* _pError, char* _pErrorString, size_t _szErrorString)
+void oWinWindow::Initialize(oERROR* _pError, char* _pErrorString, size_t _SizeofErrorString, bool _bSupportDoubleClicks)
 {
 	oStd::thread::id id = oStd::this_thread::get_id();
-	if (!oWinCreate(&hWnd, StaticWndProc, this, false, *(unsigned int*)&id))
+	if (!oWinCreate(&hWnd, StaticWndProc, this, _bSupportDoubleClicks, *(unsigned int*)&id))
 	{
 		*_pError = oErrorGetLast();
-		sprintf_s(_pErrorString, _szErrorString, oErrorGetLastString() );
+		sprintf_s(_pErrorString, _SizeofErrorString, oErrorGetLastString());
 	}
-	oTRACE("hWND valid");
+	if (hWnd)
+		oTRACE("hWND valid");
+	else
+		oTRACE("hWND ctor failed");
+
+	// If we want to use a touch interface we need to register the window as a touch window
+	if (Desc.SupportTouchEvents)
+		RegisterTouchWindow(hWnd, 0);
 }
 
 void oWinWindow::Deinitialize()
@@ -381,7 +394,10 @@ void oWinWindow::Deinitialize()
 	}
 
 	if (hWnd)
+	{
 		MessageQueue->Dispatch(oBIND(&oWinWindow::DestroyWindow1, this));
+		oWinWake(hWnd);
+	}
 }
 
 void oWinWindow::DestroyWindow1()
@@ -393,14 +409,17 @@ void oWinWindow::DestroyWindow1()
 bool oWinWindow::CreateDevices(HWND _hWnd, IUnknown* _pUserSpecifiedDevice)
 {
 	#if oDXVER >= oDXVER_10
+		if (_pUserSpecifiedDevice)
+		{
+			if (E_NOINTERFACE == _pUserSpecifiedDevice->QueryInterface(&D3D11Device))
+			{
+				if (E_NOINTERFACE == _pUserSpecifiedDevice->QueryInterface(&D3D10Device))
+					return oWinSetLastError(E_NOINTERFACE);
+			}
+		}
 
 		switch (DrawMode)
 		{
-			case USE_DX11:
-				if (!_pUserSpecifiedDevice || E_NOINTERFACE == _pUserSpecifiedDevice->QueryInterface(&D3D11Device))
-					return oWinSetLastError(E_NOINTERFACE);
-				break;
-
 			case USE_GDI:
 				// No devices associated with GDI
 				break;
@@ -410,10 +429,12 @@ bool oWinWindow::CreateDevices(HWND _hWnd, IUnknown* _pUserSpecifiedDevice)
 				oD2DCreateFactory(&D2DFactory);
 				if (!D2DFactory)
 					return oWinSetLastError(E_NOINTERFACE);
-
-				RECT r = ResolveRect(_hWnd, Desc.ClientPosition, Desc.ClientSize, false);
-				if (!_pUserSpecifiedDevice || E_NOINTERFACE == _pUserSpecifiedDevice->QueryInterface(&D3D10Device))
+				
+				if (!D3D10Device)
+				{
+					RECT r = ResolveRect(_hWnd, Desc.ClientPosition, Desc.ClientSize, false);
 					oVERIFY(oD3D10CreateDevice(oWinRectCenter(r), &D3D10Device));
+				}
 			
 				break;
 			}
@@ -421,18 +442,35 @@ bool oWinWindow::CreateDevices(HWND _hWnd, IUnknown* _pUserSpecifiedDevice)
 			oNODEFAULT;
 		}
 
-		if (DrawMode == USE_D2D || DrawMode == USE_DX11)
-		{
-			RECT rClient;
-			oVB_RETURN(GetClientRect(_hWnd, &rClient));
-			oASSERT(D3D10Device || D3D11Device, "D3D Device should have been resolved by now");
-			IUnknown* pD3DDevice = D3D11Device;
-			if (!pD3DDevice)
-				pD3DDevice = D3D10Device;
-			oVB_RETURN2(oDXGICreateSwapChain(pD3DDevice, false, oWinRectW(rClient), oWinRectH(rClient), DXGI_FORMAT_B8G8R8A8_UNORM, 0, 0, _hWnd, &DXGISwapChain));
-		}
+		oASSERT((DrawMode == USE_GDI && !_pUserSpecifiedDevice) || (_pUserSpecifiedDevice && (D3D10Device || D3D11Device)) || (DrawMode == USE_D2D && D3D10Device), "D3D Device should have been resolved by now");
+
+		RECT rClient;
+		oVB_RETURN(GetClientRect(_hWnd, &rClient));
+		IUnknown* pD3DDevice = D3D11Device;
+		if (!pD3DDevice)
+			pD3DDevice = D3D10Device;
+		oVB_RETURN2(oDXGICreateSwapChain(pD3DDevice, false, oWinRectW(rClient), oWinRectH(rClient), DXGI_FORMAT_B8G8R8A8_UNORM, 0, 0, _hWnd, &DXGISwapChain));
+
 	#endif
 
+	return true;
+}
+
+bool oWinWindow::CreateGDIResources(HWND _hWnd, const oColor& _ClearColor)
+{
+	RECT rClient;
+	oVB(GetClientRect(_hWnd, &rClient));
+
+	hClearBrush = oGDICreateBrush(_ClearColor);
+	HDC hDC = GetDC(_hWnd);
+	hOffscreenAADC = CreateCompatibleDC(hDC);
+	hOffscreenDC = CreateCompatibleDC(hOffscreenAADC);
+	hOffscreenAABmp = CreateCompatibleBitmap(hDC, SuperSampleScale() * oWinRectW(rClient), SuperSampleScale() * oWinRectH(rClient));
+	hOffscreenBmp = CreateCompatibleBitmap(hDC, oWinRectW(rClient), oWinRectH(rClient));
+	SelectObject(hOffscreenAADC, hOffscreenAABmp);
+	SelectObject(hOffscreenDC, hOffscreenBmp);
+	ReleaseDC(_hWnd, hDC);
+	CallHooks(RESIZED, hOffscreenDC, DrawMode, ZERO3, SuperSampleScale());
 	return true;
 }
 
@@ -441,29 +479,29 @@ bool oWinWindow::CreateDeviceResources(HWND _hWnd)
 	RECT rClient;
 	oVB(GetClientRect(_hWnd, &rClient));
 
+	oASSERT(DrawMode == USE_GDI || ((D3D11Device || D3D10Device) && DXGISwapChain), "Device and SwapChain should be resolved by now. Check ctor.");
+
+	#if oDXVER >= oDXVER_10
+		if (D3D11Device)
+		{
+			oRef<ID3D11Texture2D> RT;
+			oVB_RETURN2(DXGISwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
+			oVB_RETURN2(D3D11Device->CreateRenderTargetView(RT, nullptr, &D3D11RenderTargetView));
+		}
+
+		if (D3D10Device)
+		{
+			oVB_RETURN2(DXGISwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (void**)&D3D10RenderTarget));
+		}
+	#endif
+
 	switch (DrawMode)
 	{
 		#if oDXVER >= oDXVER_10
-			case USE_DX11:
-			{
-				oASSERT(D3D10Device, "D3D11Device should be resolved by now. Check ctor.");
-				oASSERT(DXGISwapChain, "DXGISwapChain should be resolved by now. Check ctor.");
-				oRef<ID3D11Texture2D> RT;
-				oVB_RETURN2(DXGISwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
-				oVB_RETURN2(D3D11Device->CreateRenderTargetView(RT, nullptr, &D3D11RenderTargetView));
-				if (!oD2DCreateRenderTarget(D2DFactory, DXGISwapChain, SWAP_CHAIN_FORMAT, Desc.UseAntialiasing, &D2DRenderTarget))
-					return false;
-				CallHooks(RESIZED, D2DRenderTarget, DrawMode, ZERO3, 1);
-				break;
-			}
-
 			case USE_D2D:
 			{
-				oASSERT(D3D10Device, "D3D10Device should be resolved by now. Check ctor.");
-				oASSERT(DXGISwapChain, "DXGISwapChain should be resolved by now. Check ctor.");
-				oVB_RETURN2(DXGISwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (void**)&D3D10RenderTarget));
 				if (!oD2DCreateRenderTarget(D2DFactory, DXGISwapChain, SWAP_CHAIN_FORMAT, Desc.UseAntialiasing, &D2DRenderTarget))
-					return false;
+					return false; // pass through error
 				CallHooks(RESIZED, D2DRenderTarget, DrawMode, ZERO3, 1);
 				break;
 			}
@@ -471,16 +509,7 @@ bool oWinWindow::CreateDeviceResources(HWND _hWnd)
 
 		case USE_GDI:
 		{
-			hClearBrush = oGDICreateBrush(Desc.ClearColor);
-			HDC hDC = GetDC(_hWnd);
-			hOffscreenAADC = CreateCompatibleDC(hDC);
-			hOffscreenDC = CreateCompatibleDC(hOffscreenAADC);
-			hOffscreenAABmp = CreateCompatibleBitmap(hDC, SuperSampleScale() * oWinRectW(rClient), SuperSampleScale() * oWinRectH(rClient));
-			hOffscreenBmp = CreateCompatibleBitmap(hDC, oWinRectW(rClient), oWinRectH(rClient));
-			SelectObject(hOffscreenAADC, hOffscreenAABmp);
-			SelectObject(hOffscreenDC, hOffscreenBmp);
-			ReleaseDC(_hWnd, hDC);
-			CallHooks(RESIZED, hOffscreenDC, DrawMode, ZERO3, SuperSampleScale());
+			oVERIFY(CreateGDIResources(_hWnd, Desc.ClearColor));
 			break;
 		}
 
@@ -826,13 +855,94 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 		case WM_SYSKEYDOWN:
 			if (_wParam == VK_F4 && !Desc.AllowUserKeyboardClose)
 				return 0;
+			CallHooks(KEY_DOWN, nullptr, DrawMode, ZERO3, TranslateKeyToX11(_wParam));
 			break;
 
 		case WM_SYSKEYUP:
 			if (_wParam == VK_RETURN && Desc.AllowUserFullscreenToggle)
 				MessageQueue->Dispatch(oBIND(&oWinWindow::ToggleFullscreen, QThis()));
+			CallHooks(KEY_UP, nullptr, DrawMode, ZERO3, TranslateKeyToX11(_wParam));
 			break;
 
+		case WM_TOUCH:
+			{
+				UINT numTouches = LOWORD(_wParam);
+				TOUCHINPUT inputs[MAX_TOUCHES];
+				numTouches = numTouches > MAX_TOUCHES ? MAX_TOUCHES : numTouches;
+
+				if (numTouches > 0)
+				{
+					if (GetTouchInputInfo((HTOUCHINPUT)_lParam, numTouches, inputs, sizeof(TOUCHINPUT)))
+					{
+						for (UINT i = 0; i < numTouches; ++i)
+						{
+							CallHooks(KEY_DOWN, nullptr, DrawMode, float3((float)(inputs[i].x / 100), (float)(inputs[i].y / 100), 0), TranslateTouchToX11(i));
+						}
+						CloseTouchInputHandle((HTOUCHINPUT)_lParam);
+					}
+				}
+			}
+			break;
+
+		// APPCOMMAND is fired whenever a media keyboard button is pressed (such as play/pause)
+		// this only fires the key down.  Regular and system key down messages do not fire for media keys
+		case WM_APPCOMMAND:
+			if (GET_DEVICE_LPARAM(_lParam) == FAPPCOMMAND_KEY)
+				CallHooks(KEY_DOWN, nullptr, DrawMode, ZERO3, TranslateAppCommandToX11Key(_lParam));
+			break;
+		case WM_KEYDOWN:
+			CallHooks(KEY_DOWN, nullptr, DrawMode, ZERO3, TranslateKeyToX11(_wParam));
+			break;
+		case WM_KEYUP:
+			CallHooks(KEY_UP, nullptr, DrawMode, ZERO3, TranslateKeyToX11(_wParam));
+			break;
+
+		// Mouse move / dragging
+		// With the Dell Touch Screen drivers installed it seems that WM_MOUSEMOVE is called continously, even if the mouse is not moved
+		// Uninstalling the drivers fixes this.  This could cause a problem for oRemoteInput, since all WM_MOUSEMOVE messages are sent
+		// over the netowrk
+		case WM_MOUSEMOVE:
+			CallHooks(POINTER_MOVE, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(_wParam, oMS_MouseDrag));
+			break;
+
+		// We will treat the mouse wheel delta returned from GET_WHEEL_DELTA_WPARAM as the z axis of the mouse position.  This is a relative delta of the mouse wheel and not an abolute position
+		case WM_MOUSEWHEEL:
+			CallHooks(POINTER_MOVE, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), (float)GET_WHEEL_DELTA_WPARAM(_wParam)), TranslateMouseToX11(_wParam, oMS_MouseDrag));
+			break;
+
+		// Mouse buttons
+		case WM_LBUTTONDOWN:
+		case WM_RBUTTONDOWN:
+		case WM_MBUTTONDOWN:
+			CallHooks(KEY_DOWN, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(_wParam, oMS_MouseClick));
+			break;
+		case WM_XBUTTONDOWN:
+			CallHooks(KEY_DOWN, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? MK_XBUTTON1 : MK_XBUTTON2, oMS_MouseClick));
+			break;
+
+		// Mouse double clicks
+		case WM_LBUTTONDBLCLK:
+		case WM_RBUTTONDBLCLK:
+		case WM_MBUTTONDBLCLK:
+			CallHooks(KEY_DOWN, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(_wParam, oMS_MouseDoubleClick));
+			break;
+		case WM_XBUTTONDBLCLK:
+			CallHooks(KEY_DOWN, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? MK_XBUTTON1 : MK_XBUTTON2, oMS_MouseDoubleClick));
+			break;
+
+		// for mouse button up _wParam only tells the keys that are down.
+		case WM_LBUTTONUP:
+			CallHooks(KEY_UP, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(MK_LBUTTON, oMS_MouseClick));
+			break;
+		case WM_RBUTTONUP:
+			CallHooks(KEY_UP, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(MK_RBUTTON, oMS_MouseClick));
+			break;
+		case WM_MBUTTONUP:
+			CallHooks(KEY_UP, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(MK_MBUTTON, oMS_MouseClick));
+			break;
+		case WM_XBUTTONUP:
+			CallHooks(KEY_UP, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? MK_XBUTTON1 : MK_XBUTTON2, oMS_MouseClick));
+			break;
 		default:
 			break;
 	}
@@ -943,6 +1053,28 @@ void oWinWindow::Unmap() threadsafe
 	DescMutex.unlock();
 	MessageQueue->Dispatch(oBIND(&oWinWindow::SetDesc, QThis(), thread_cast<DESC&>(PendingDesc)));
 	oWinWake(hWnd);
+}
+
+void oWinWindow::SendKey(EVENT _KeyEvent, oKEYBOARD_KEY _Key) threadsafe
+{
+	MessageQueue->Dispatch(oBIND(&oWinWindow::SendKey1, QThis(), _KeyEvent, _Key));
+	oWinWake(hWnd);
+}
+
+void oWinWindow::SendKey1(EVENT _KeyEvent, oKEYBOARD_KEY _Key)
+{
+	CallHooks(_KeyEvent, nullptr, DrawMode, ZERO3, _Key);
+}
+
+void oWinWindow::SendMouseMove(float2 _Position) threadsafe
+{
+	MessageQueue->Dispatch(oBIND(&oWinWindow::SendMouseMove1, QThis(), _Position));
+	oWinWake(hWnd);
+}
+
+void oWinWindow::SendMouseMove1(float2 _Position)
+{
+	CallHooks(oWindow::POINTER_MOVE, nullptr, DrawMode, float3(_Position.x, _Position.y, 0), 0);
 }
 
 void oWinWindow::SetDesc(DESC _Desc)

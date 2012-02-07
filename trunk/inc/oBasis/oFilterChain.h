@@ -33,6 +33,8 @@
 #define oFilterChain_h
 
 #include <oBasis/oAlgorithm.h>
+#include <oBasis/oError.h>
+#include <oBasis/oInitOnce.h>
 #include <oBasis/oThreadsafe.h>
 #include <vector>
 
@@ -53,9 +55,9 @@ public:
 		TYPE Type;
 	};
 
-	oFilterChain(const FILTER* _pFilters, size_t _NumFilters, char* _StrError, size_t _SizeofStrError, bool* _pSuccess) { *_pSuccess = Compile(_pFilters, _NumFilters, _StrError, _SizeofStrError); }
-	template<size_t num> oFilterChain(const FILTER (&_pFilters)[num], char* _StrError, size_t _SizeofStrError, bool* _pSuccess) { *_pSuccess = Compile(_pFilters, num, _StrError, _SizeofStrError); }
-	template<size_t num, size_t size> oFilterChain(const FILTER (&_pFilters)[num], char (&_StrError)[size], bool* _pSuccess) { *_pSuccess = Compile(_pFilters, num, _StrError, size); }
+	oFilterChain(const FILTER* _pFilters, size_t _NumFilters, char* _StrError, size_t _SizeofStrError, bool* _pSuccess) { *_pSuccess = Compile(Filters.Initialize(), _pFilters, _NumFilters, _StrError, _SizeofStrError); }
+	template<size_t num> oFilterChain(const FILTER (&_pFilters)[num], char* _StrError, size_t _SizeofStrError, bool* _pSuccess) { *_pSuccess = Compile(Filters.Initialize(), _pFilters, num, _StrError, _SizeofStrError); }
+	template<size_t num, size_t size> oFilterChain(const FILTER (&_pFilters)[num], char (&_StrError)[size], bool* _pSuccess) { *_pSuccess = Compile(Filters.Initialize(), _pFilters, num, _StrError, size); }
 
 	// Returns true if one of the symbols specified passes all filters.
 	// A pass is a match to an include-type pattern or a mismatch to an
@@ -64,13 +66,12 @@ public:
 	// excluding C++ symbols (sym1) in various source files (sym2).)
 	bool Passes(const char* _Symbol1, const char* _Symbol2 = nullptr, bool _PassesWhenEmpty = true) const threadsafe
 	{
-		filters_t& filters = thread_cast<filters_t&>(Filters); // contents are mutable, so any thread can read at any time
-		if (filters.empty()) return _PassesWhenEmpty;
+		if (Filters->empty()) return _PassesWhenEmpty;
 		// Initialize starting value to the opposite of inclusion, thus setting up
 		// the first filter as defining the most general set from which subsequent
 		// filters will reduce.
-		bool passes = filters[0].first == EXCLUDE1 || filters[0].first == EXCLUDE2;
-		for (filters_t::const_iterator it = filters.begin(); it != filters.end(); ++it)
+		bool passes = (*Filters)[0].first == EXCLUDE1 || (*Filters)[0].first == EXCLUDE2;
+		for (filters_t::const_iterator it = Filters->begin(); it != Filters->end(); ++it)
 		{
 			const char* s = _Symbol1;
 			if (it->first == INCLUDE2 || it->first == EXCLUDE2) s = _Symbol2;
@@ -82,24 +83,23 @@ public:
 
 private:
 	typedef std::vector<std::pair<TYPE, std::tr1::regex> > filters_t;
-	filters_t Filters;
+	oInitOnce<filters_t> Filters;
 
 	// Compile an ordered list of regular expressions that will mark symbols as 
 	// either included or excluded.
-	bool Compile(const FILTER* _pFilters, size_t _NumFilters, char* _StrError, size_t _SizeofStrError)
+	bool Compile(filters_t& _CompiledFilters, const FILTER* _pFilters, size_t _NumFilters, char* _StrError, size_t _SizeofStrError)
 	{
-		Filters.clear();
-		Filters.reserve(_NumFilters);
+		_CompiledFilters.reserve(_NumFilters);
 		for (size_t i = 0; _pFilters && _pFilters->RegularExpression && i < _NumFilters; i++, _pFilters++)
 		{
 			std::tr1::regex re;
 			if (!oTryCompileRegex(re, _StrError, _SizeofStrError, _pFilters->RegularExpression, std::tr1::regex_constants::icase))
 			{
-				Filters.clear();
-				return false;
+				_CompiledFilters.clear();
+				return oErrorSetLast(oERROR_INVALID_PARAMETER, "A regular expression could not be compiled: \"%s\"", _pFilters->RegularExpression);
 			}
 
-			Filters.push_back(filters_t::value_type(_pFilters->Type, re));
+			_CompiledFilters.push_back(filters_t::value_type(_pFilters->Type, re));
 		}
 
 		return true;

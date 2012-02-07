@@ -21,50 +21,47 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// Ouroboros encapsulates file handles so that usage options are limited only to 
+// the most performant and threadsafe code paths. However some interfaces still
+// require the fopen-style API, so we're not going to delete it, but hide it 
+// here.
+// REALLY REALLY TRY HARD NOT TO USE THESE API. If oFileReader/oFileWriter do
+// not do what you want, discuss the issue with someone.
 #pragma once
-#ifndef AllocatorTLSF_Impl_h
-#define AllocatorTLSF_Impl_h
+#ifndef oFileInternal_h
+#define oFileInternal_h
 
-#include <oBasis/oAllocatorTLSF.h>
-#include <oBasis/oFixedString.h>
-#include <oBasis/oInitOnce.h>
-#include <oBasis/oRefCount.h>
+#include <oPlatform/oFile.h>
 
-interface oAllocatorTLSF;
-struct AllocatorTLSF_Impl : public oAllocator
+oDECLARE_HANDLE(oHFILE);
+
+enum oFILE_SEEK
 {
-	// Always allocate memory for this struct in the arena specified by the user
-	void* operator new(size_t _Size) { return 0; }
-	void* operator new[](size_t si_Size) { return 0; }
-	void operator delete(void* _Pointer) {}
-	void operator delete[](void* _Pointer) {}
-public:
-	void* operator new(size_t _Size, void* _pMemory) { return _pMemory; }
-	void operator delete(void* _Pointer, void* _pMemory) {}
-
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_TRIVIAL_QUERYINTERFACE(oAllocatorTLSF);
-
-	AllocatorTLSF_Impl(const char* _DebugName, const DESC& _Desc, bool* _pSuccess);
-	~AllocatorTLSF_Impl();
-
-	void GetDesc(DESC* _pDesc) override;
-	void GetStats(STATS* _pStats) override;
-	const char* GetDebugName() const threadsafe override;
-	const char* GetType() const threadsafe override;
-	bool IsValid() override;
-	void* Allocate(size_t _NumBytes, size_t _Alignment = oDEFAULT_MEMORY_ALIGNMENT) override;
-	void* Reallocate(void* _Pointer, size_t _NumBytes) override;
-	void Deallocate(void* _Pointer) override;
-	size_t GetBlockSize(void* _Pointer) override;
-	void Reset() override;
-	void WalkHeap(oFUNCTION<void(void* _Pointer, size_t _Size, bool _Used)> _HeapWalker) override;
-
-	DESC Desc;
-	STATS Stats;
-	oRefCount RefCount;
-	void* hPool;
-	oInitOnce<oStringS> DebugName;
+	oSEEK_SET,
+	oSEEK_CUR,
+	oSEEK_END,
 };
+
+enum oFILE_OPEN
+{
+	oFILE_OPEN_BIN_READ,
+	oFILE_OPEN_BIN_WRITE,
+	oFILE_OPEN_BIN_APPEND,
+	oFILE_OPEN_TEXT_READ,
+	oFILE_OPEN_TEXT_WRITE,
+	oFILE_OPEN_TEXT_APPEND,
+};
+
+bool oFileOpen(const char* _Path, oFILE_OPEN _Open, oHFILE* _phFile);
+bool oFileClose(oHFILE _hFile);
+unsigned long long oFileTell(oHFILE _hFile);
+bool oFileSeek(oHFILE _hFile, long long _Offset, oFILE_SEEK _Origin = oSEEK_SET);
+unsigned long long oFileRead(oHFILE _hFile, void* _pDestination, unsigned long long _SizeofDestination, unsigned long long _ReadSize);
+unsigned long long oFileWrite(oHFILE _hFile, const void* _pSource, unsigned long long _WriteSize, bool _Flush = false);
+unsigned long long oFileGetSize(oHFILE _hFile);
+bool oFileAtEnd(oHFILE _hFile);
+bool oFileTouch(oHFILE _hFile, time_t _PosixTimestamp);
+bool oFileIsText(oHFILE _hFile);
+inline bool oFileIsBinary(oHFILE _hFile) { return !oFileIsText(_hFile); }
 
 #endif

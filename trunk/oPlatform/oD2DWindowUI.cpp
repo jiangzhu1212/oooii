@@ -186,7 +186,7 @@ void oD2DWindowUIText::SetFont(threadsafe oWindowUIFont* _pFont) threadsafe
 void oD2DWindowUIText::SetText(const char* _Text) threadsafe
 {
 	oLockGuard<oSharedMutex> lock(FontTextMutex);
-	thread_cast<oD2DWindowUIText*>(this)->Text = oSAFESTR(_Text);
+	thread_cast<oD2DWindowUIText*>(this)->Text = oSAFESTR(_Text); // safe because of the lock above
 	Window->Refresh(false);
 }
 

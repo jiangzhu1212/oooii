@@ -25,6 +25,8 @@
 #include <oBasis/oSize.h>
 #include <oBasis/oError.h>
 #include <oPlatform/oWindows.h>
+#include "oIOCP.h"
+#include "oFileInternal.h"
 #include <cstdio>
 
 struct FIND_CONTEXT
@@ -33,7 +35,7 @@ struct FIND_CONTEXT
 	char Wildcard[_MAX_PATH];
 };
 
-template<typename WIN32_TYPE> void oFileConvert(oFILE_DESC* _pDesc, const WIN32_TYPE* _pData)
+template<typename WIN32_TYPE> static void oFileConvert(oFILE_DESC* _pDesc, const WIN32_TYPE* _pData)
 {
 	_pDesc->Created = oFileTimeToUnixTime(&_pData->ftCreationTime);
 	_pDesc->Accessed = oFileTimeToUnixTime(&_pData->ftLastAccessTime);
@@ -56,6 +58,376 @@ static bool oFileSetLastError()
 	char strerr[256];
 	strerror_s(strerr, err);
 	return oErrorSetLast(oERROR_IO, "%s", strerr);
+}
+
+static void oSetIOCPOpOffset(oIOCPOp* _op, oSize64 _offset)
+{
+	_op->Offset = _offset.c_type()&0xffffffff;
+	_op->OffsetHigh = _offset>>32;
+}
+
+struct oFileReader_Impl : public oFileReader
+{
+	oDEFINE_REFCOUNT_IOCP_INTERFACE(Refcount, IOCP);
+	oDEFINE_NOOP_QUERYINTERFACE();
+
+	struct Operation
+	{
+		void		*pData;
+		oFileRange Range;
+		callback_t  Callback;
+	};
+
+	oFileReader_Impl(const char* _Path, bool* _pSuccess)
+		: IOCP(nullptr)
+		, Path(_Path)
+	{
+		if( strlen(_Path) > Path->capacity() )
+			return;
+
+		hFile = nullptr;
+		*_pSuccess = true;
+
+		hFile = CreateFile(GetPath(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+		if (hFile == INVALID_HANDLE_VALUE)
+		{
+			oWinSetLastError();
+			*_pSuccess = false;
+			return;
+		}
+		else
+		{
+			oFILE_DESC FDesc;
+
+			oFileGetDesc(_Path, &FDesc);
+			FileDesc.Initialize(FDesc);
+			oIOCP::DESC IOCPDesc;
+
+			IOCPDesc.Handle = hFile;
+			IOCPDesc.IOCompletionRoutine = oBIND(&oFileReader_Impl::IOCPCallback, this, oBIND1);
+			IOCPDesc.MaxOperations = 16;
+			IOCPDesc.PrivateDataSize = sizeof(Operation);
+
+			if(!oIOCPCreate(IOCPDesc, this, &IOCP))
+			{
+				oErrorSetLast(oERROR_INVALID_PARAMETER, "Could not create IOCP.");
+				CloseHandle(hFile);
+				*_pSuccess = false;
+				return;
+			}
+		}
+	}
+
+	~oFileReader_Impl()
+	{
+		if (hFile != INVALID_HANDLE_VALUE)
+			CloseHandle(hFile);
+	}
+
+	void IOCPCallback(oIOCPOp* _pIOCPOp)
+	{
+		Operation* pOp;
+		_pIOCPOp->GetPrivateData(&pOp);
+
+		pOp->Callback(true, pOp->pData, pOp->Range, this );
+		_pIOCPOp->DestructPrivateData<Operation>();
+		IOCP->ReturnOp(_pIOCPOp);
+	}
+
+	void DispatchRead(void* _pData, const oFileRange& _Range, callback_t _Callback) threadsafe override
+	{
+		if ((_Range.Offset + _Range.Size) <= (unsigned long long)FileDesc->Size)
+		{
+			oIOCPOp* pIOCPOp = IOCP->AcquireSocketOp();
+			if( !pIOCPOp )
+			{
+				oErrorSetLast(oERROR_AT_CAPACITY, "IOCPOpPool is empty, you're sending too fast.");
+				_Callback(false, _pData, _Range, this);
+				return;
+			}
+
+			Operation* pOp;
+			pIOCPOp->ConstructPrivateData(&pOp);
+			oSetIOCPOpOffset(pIOCPOp, _Range.Offset);
+			pOp->pData = _pData;
+			pOp->Callback = _Callback;
+			pOp->Range = _Range;
+
+			DWORD numBytesRead;
+
+			ReadFile(hFile, _pData, _Range.Size, &numBytesRead, (WSAOVERLAPPED*)pIOCPOp);
+		}
+		else
+		{
+			oErrorSetLast(oERROR_IO, "Specified range will read past file size");
+			_Callback(false, _pData, _Range, this);
+			return;
+		}
+	}
+
+	bool Read(void* _pData, const oFileRange& _Range) threadsafe
+	{
+		bool bSuccess = false;
+		oCountdownLatch Latch("Sync Read Latch", 1);
+		oFileReader::callback_t Callback =
+			[&](bool _Success, const void* _pData, const oFileRange& _Range, threadsafe interface oFileReader* _pFile)
+		{
+			bSuccess = _Success;
+			Latch.Release();
+		};
+
+		DispatchRead(_pData, _Range, Callback);
+
+		Latch.Wait();
+
+		return bSuccess;
+	}
+
+	void GetDesc(oFILE_DESC* _pDesc) threadsafe override
+	{
+		*_pDesc = *FileDesc;
+	}
+
+	const char* GetPath() const threadsafe
+	{
+		return Path->c_str();
+	}
+
+	oInitOnce<oFILE_DESC> FileDesc;
+	oIOCP*		IOCP;
+	oRefCount Refcount;
+	oInitOnce<oStringPath> Path;
+	oHandle hFile;
+};
+
+oAPI bool oFileReaderCreate(const char* _pFilePath, threadsafe oFileReader** _ppReadFile)
+{
+	bool success = false;
+	oCONSTRUCT(_ppReadFile, oFileReader_Impl(_pFilePath, &success));
+	return success;
+}
+
+struct oFileReaderWindowed_Impl : oFileReader
+{
+	oDEFINE_REFCOUNT_INTERFACE(Refcount);
+	oDEFINE_NOOP_QUERYINTERFACE();
+
+	oFileReaderWindowed_Impl(threadsafe oFileReader* _pReader, const oFileRange& _Window, bool* _pSuccess)
+		: Reader(_pReader)
+		, WindowStart(_Window.Offset)
+		, WindowEnd(_Window.Offset + _Window.Size)
+	{
+		if(!Reader)
+		{
+			oErrorSetLast(oERROR_INVALID_PARAMETER, "Failed to specify reader");
+			return;
+		}
+
+		oFILE_DESC FDesc;
+		Reader->GetDesc(&FDesc);
+
+		if (*WindowStart > FDesc.Size || *WindowEnd > FDesc.Size)
+		{
+			oErrorSetLast(oERROR_INVALID_PARAMETER, "Window is outside of the file's range");
+			return;
+		}
+
+		FDesc.Size = *WindowEnd - *WindowStart; // patch the file size
+		FileDesc.Initialize(FDesc);
+		*_pSuccess = true;
+	}
+
+	bool WindowRange(const oFileRange& _Range, oFileRange* _pWindowedRange) threadsafe
+	{
+		oSize64 Start = *WindowStart + _Range.Offset; 
+
+		if(Start > *WindowEnd)
+			return false;
+
+		oSize64 End = Start + _Range.Size;
+
+		if(End > *WindowEnd)
+			return false;
+
+		_pWindowedRange->Offset = Start;
+		_pWindowedRange->Size = End - Start;
+		return true;
+	}
+	virtual void GetDesc(oFILE_DESC* _pDesc) threadsafe override
+	{
+		*_pDesc = *FileDesc;
+	}
+	virtual const char* GetPath() const threadsafe override
+	{
+		return Reader->GetPath();
+	}
+	virtual void DispatchRead(void* _pData, const oFileRange& _Range, callback_t _Callback) threadsafe override
+	{
+		oFileRange Range;
+		if(!WindowRange(_Range, &Range))
+		{
+			oErrorSetLast(oERROR_IO, "Specified range will read past file size");
+			_Callback(false, _pData, _Range, this);
+			return;
+		}
+
+		return Reader->DispatchRead(_pData, Range, _Callback);
+	}
+	virtual bool Read(void* _pData, const oFileRange& _Range) threadsafe override
+	{
+		oFileRange Range;
+		if(!WindowRange(_Range, &Range))
+		{
+			oErrorSetLast(oERROR_IO, "Specified range will read past file size");
+			return false;
+		}
+
+		return Reader->Read(_pData, _Range);
+	}
+
+	oRefCount Refcount;
+	oInitOnce<oFILE_DESC> FileDesc;
+	oRef<threadsafe oFileReader> Reader;
+	oInitOnce<oSize64> WindowStart;
+	oInitOnce<oSize64> WindowEnd;
+};
+oAPI bool oFileReaderCreateWindowed( threadsafe oFileReader* _pReader, const oFileRange& _Window, threadsafe oFileReader** _ppReadFile )
+{
+	bool success = false;
+	oCONSTRUCT(_ppReadFile, oFileReaderWindowed_Impl(_pReader, _Window, &success));
+	return success;
+}
+
+struct oFileWriter_Impl : public oFileWriter
+{
+	oDEFINE_REFCOUNT_IOCP_INTERFACE(Refcount, IOCP);
+	oDEFINE_NOOP_QUERYINTERFACE();
+
+	struct Operation
+	{
+		const void		*pData;
+		oFileRange Range;
+		callback_t  Callback;
+	};
+
+	oFileWriter_Impl(const char* _Path, bool* _pSuccess)
+		: IOCP(nullptr)
+		, Path(_Path)
+	{
+		if( strlen(_Path) > Path->capacity() )
+			return;
+
+		hFile = nullptr;
+		*_pSuccess = true;
+
+		oStringPath parent(_Path);
+		*oGetFilebase(parent) = 0;
+
+		if (!oFileCreateFolder(parent) && oErrorGetLast() != oERROR_REDUNDANT)
+			return; // pass through error
+
+		hFile = CreateFile(GetPath(), GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_FLAG_OVERLAPPED, NULL);
+		if (hFile == INVALID_HANDLE_VALUE)
+		{
+			oWinSetLastError();
+			*_pSuccess = false;
+			return;
+		}
+		else
+		{
+			oIOCP::DESC IOCPDesc;
+
+			IOCPDesc.Handle = hFile;
+			IOCPDesc.IOCompletionRoutine = oBIND(&oFileWriter_Impl::IOCPCallback, this, oBIND1);
+			IOCPDesc.MaxOperations = 16;
+			IOCPDesc.PrivateDataSize = sizeof(Operation);
+
+			if(!oIOCPCreate(IOCPDesc, this, &IOCP))
+			{
+				oErrorSetLast(oERROR_INVALID_PARAMETER, "Could not create IOCP.");
+				CloseHandle(hFile);
+				*_pSuccess = false;
+				return;
+			}
+		}
+	}
+
+	~oFileWriter_Impl()
+	{
+		if (hFile != INVALID_HANDLE_VALUE)
+			CloseHandle(hFile);
+	}
+
+	void IOCPCallback(oIOCPOp* _pIOCPOp)
+	{
+		Operation* pOp;
+		_pIOCPOp->GetPrivateData(&pOp);
+
+		pOp->Callback(true, pOp->pData, pOp->Range, this );
+		_pIOCPOp->DestructPrivateData<Operation>();
+		IOCP->ReturnOp(_pIOCPOp);
+	}
+
+	void GetDesc(oFILE_DESC* _pDesc) threadsafe override
+	{
+		oFileGetDesc(GetPath(), _pDesc);
+	}
+
+	void DispatchWrite(const void* _pData, const oFileRange& _Range, callback_t _Callback) threadsafe override
+	{
+		oIOCPOp* pIOCPOp = IOCP->AcquireSocketOp();
+		if( !pIOCPOp )
+		{
+			oErrorSetLast(oERROR_AT_CAPACITY, "IOCPOpPool is empty, you're sending too fast.");
+			return;
+		}
+
+		Operation* pOp;
+		pIOCPOp->ConstructPrivateData(&pOp);
+		oSetIOCPOpOffset(pIOCPOp, _Range.Offset);
+		pOp->pData = _pData;
+		pOp->Callback = _Callback;
+		pOp->Range = _Range;
+
+		DWORD numBytesRead;
+		WriteFile(hFile, _pData, _Range.Size, &numBytesRead, (WSAOVERLAPPED*)pIOCPOp);
+	}
+
+	bool Write(const void* _pData, const oFileRange& _Range) threadsafe
+	{
+		bool bSuccess = false;
+		oCountdownLatch Latch("Sync Write Latch", 1);
+		oFileWriter::callback_t Callback =
+			[&](bool _Success, const void* _pData, const oFileRange& _Range, threadsafe interface oFileWriter* _pFile)
+		{
+			bSuccess = _Success;
+			Latch.Release();
+		};
+
+		DispatchWrite(_pData, _Range, Callback);
+
+		Latch.Wait();
+
+		return bSuccess;
+	}
+
+	const char* GetPath() const threadsafe
+	{
+		return Path->c_str();
+	}
+
+	oIOCP* IOCP;
+	oRefCount Refcount;
+	oInitOnce<oStringPath> Path;
+	oHandle hFile;
+
+};
+
+oAPI bool oFileWriterCreate(const char* _pFilePath, threadsafe oFileWriter** _ppWriteFile)
+{
+	bool success = false;
+	oCONSTRUCT(_ppWriteFile, oFileWriter_Impl(_pFilePath, &success));
+	return success;
 }
 
 bool oFileExists(const char* _Path)
@@ -299,7 +671,7 @@ bool oFileCreateFolder(const char* _Path)
 }
 
 // This is platform specific because it is different on windows
-oAPI void oFileMakeText( char* _pBinaryFile, size_t _szBinaryFile )
+void oFileMakeText( char* _pBinaryFile, size_t _szBinaryFile )
 {
 	size_t s = 0;
 	for(size_t e = 0; e < _szBinaryFile; ++s, ++e )
@@ -314,36 +686,49 @@ oAPI void oFileMakeText( char* _pBinaryFile, size_t _szBinaryFile )
 	_pBinaryFile[__min( s, _szBinaryFile - 1)] = 0;
 }
 
-
-
-bool oFileCompare(const char* _Path1, const char* _Path2)
+bool oFileMap(const char* _Path, bool _ReadOnly, const oFileRange& _MapRange, void** _ppMappedMemory)
 {
-  if (!oFileExists(_Path1))
-    return false;
+	oHFILE hFile;
+	if (!oFileOpen(_Path, _ReadOnly ? oFILE_OPEN_BIN_READ : oFILE_OPEN_BIN_WRITE, &hFile))
+		return false; // pass through error
 
-  if (!oFileExists(_Path2))
-    return false;
+	SYSTEM_INFO si;
+	GetSystemInfo(&si);
+	oByteSwizzle64 alignedOffset;
+	alignedOffset.AsUnsignedLongLong = oByteAlignDown(_MapRange.Offset, si.dwAllocationGranularity);
+	unsigned long long offsetPadding = _MapRange.Offset - alignedOffset.AsUnsignedLongLong;
+	unsigned long long alignedSize = _MapRange.Size + offsetPadding;
 
-  oRef<oBuffer> buffer1;
-  if (!oBufferCreate(_Path1, false, &buffer1))
-    return false;
+	HANDLE FileHandle = oGetFileHandle((FILE*)hFile);
 
-  oLockedPointer<oBuffer> lockedBuffer1(buffer1);
+	DWORD fProtect = _ReadOnly ? PAGE_READONLY : PAGE_READWRITE;
+	HANDLE hMapped = CreateFileMapping(FileHandle, nullptr, fProtect, 0, 0, nullptr);
+	if (!hMapped)
+		return oWinSetLastError();
 
-  oRef<oBuffer> buffer2;
-  if (!oBufferCreate(_Path2, false, &buffer2))
-    return false;
+	void* p = MapViewOfFile(hMapped, fProtect == PAGE_READONLY ? FILE_MAP_READ : FILE_MAP_WRITE, alignedOffset.AsUnsignedInt[1], alignedOffset.AsUnsignedInt[0], oSize64(alignedSize));
+	if (!p)
+		return oWinSetLastError();
 
-  oLockedPointer<oBuffer> lockedBuffer2(buffer2);
+	// Detach the file from C-lib, but also decrement the ref count on the HANDLE
+	if (!oFileClose(hFile))
+		return false; // pass through error
 
-  // Compare with Golden Image
-  if (lockedBuffer1->GetSize() != lockedBuffer2->GetSize())
-    return false;
+	// Close the ref held by CreateFileMapping
+	CloseHandle(hMapped);
+	*_ppMappedMemory = oByteAdd(p, oSize64(offsetPadding));
 
-  if(memcmp(lockedBuffer1->GetData(), lockedBuffer2->GetData(), lockedBuffer1->GetSize()) != 0)
-    return false;
+	// So now we exit with a ref count of 1 on the underlying HANDLE, that held by
+	// MapViewOfFile, that way the file is fully closed when oFileUnmap is called.
+	return true;
+}
 
-  return true;
-
-
+bool oFileUnmap(void* _MappedPointer)
+{
+	SYSTEM_INFO si;
+	GetSystemInfo(&si);
+	void* p = oByteAlignDown(_MappedPointer, si.dwAllocationGranularity);
+	if (!UnmapViewOfFile(p))
+		return oWinSetLastError();
+	return true;
 }

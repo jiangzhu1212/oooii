@@ -50,7 +50,7 @@
 
 namespace oStd {
 
-enum /*class*/ cv_status { no_timeout, timeout };
+/*enum class*/ namespace cv_status { enum value { no_timeout, timeout }; };
 
 class condition_variable
 {
@@ -59,7 +59,7 @@ class condition_variable
 	condition_variable(condition_variable const&); /* = delete */
 	condition_variable& operator=(condition_variable const&); /* = delete */
 
-	cv_status wait_for(unique_lock<mutex>& _Lock, unsigned int _TimeoutMS);
+	cv_status::value wait_for(unique_lock<mutex>& _Lock, unsigned int _TimeoutMS);
 
 public:
 	condition_variable();
@@ -78,7 +78,7 @@ public:
 	}
 
 	template <typename Clock, typename Duration>
-	cv_status wait_until(unique_lock<mutex>& _Lock, const chrono::time_point<Clock, Duration>& _AbsoluteTime)
+	cv_status::value wait_until(unique_lock<mutex>& _Lock, const chrono::time_point<Clock, Duration>& _AbsoluteTime)
 	{
 		chrono::high_resolution_clock::duration duration = time_point_cast<chrono::high_resolution_clock::time_point>(_AbsoluteTime) - chrono::high_resolution_clock::now();
 		return wait_for(_Lock, duration);
@@ -98,7 +98,7 @@ public:
 	}
 
 	template <typename Rep, typename Period>
-	cv_status wait_for(unique_lock<mutex>& _Lock, const chrono::duration<Rep, Period>& _RelativeTime)
+	cv_status::value wait_for(unique_lock<mutex>& _Lock, const chrono::duration<Rep, Period>& _RelativeTime)
 	{
 		chrono::milliseconds ms = chrono::duration_cast<chrono::milliseconds>(_RelativeTime);
 		return wait_for(_Lock, static_cast<unsigned int>(ms.count()));
@@ -109,7 +109,7 @@ public:
 	{
 		while (!_Predicate())
 		{
-			cv_status status = wait_for(_Lock, _RelativeTime);
+			cv_status::value status = wait_for(_Lock, _RelativeTime);
 			if (status == timeout)
 				return _Predicate();
 		}

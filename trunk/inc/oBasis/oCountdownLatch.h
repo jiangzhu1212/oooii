@@ -113,11 +113,11 @@ public:
 	// reaches zero. Returns false if this times out, true otherwise.
 	inline bool Wait(unsigned int _TimeoutMS) threadsafe
 	{
-		oStd::cv_status status = oStd::no_timeout;
+		oStd::cv_status::value status = oStd::cv_status::no_timeout;
 		oUniqueLock<oMutex> Lock(Mutex);
-		while (oStd::no_timeout == status && NumOutstanding > 0)
+		while (oStd::cv_status::no_timeout == status && NumOutstanding > 0)
 			status = ZeroReferences.wait_for(Lock, oStd::chrono::milliseconds(_TimeoutMS));
-		return oStd::no_timeout == status;
+		return oStd::cv_status::no_timeout == status;
 	}
 };
 

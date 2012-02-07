@@ -51,6 +51,22 @@ public:
 
 } // namespace detail
 
+template<typename T> detail::oSizeT<T> operator*(const detail::oSizeT<T>& a, const detail::oSizeT<T>& b) { return a.operator*(b); }
+template<typename T, typename U> detail::oSizeT<T> operator*(const U& a, const detail::oSizeT<T>& b) { return b * a; }
+
+template<typename T> detail::oSizeT<T> operator+(const detail::oSizeT<T>& a, const detail::oSizeT<T>& b) { return a.operator+(b); }
+template<typename T, typename U> detail::oSizeT<T> operator+(const U& a, const detail::oSizeT<T>& b) { return b + a; }
+
+template<typename T, typename U> bool operator<(const U& a, const detail::oSizeT<T>& b) { return !(b >= a); }
+template<typename T, typename U> bool operator<=(const U& a, const detail::oSizeT<T>& b) { return !(b > a); }
+template<typename T, typename U> bool operator>(const U& a, const detail::oSizeT<T>& b) { return !(b <= a); }
+template<typename T, typename U> bool operator>=(const U& a, const detail::oSizeT<T>& b) { return !(b < a); }
+
+template<typename T> bool operator<(const detail::oSizeT<T>& a, const detail::oSizeT<T>& b) { return a.operator<(b); }
+template<typename T> bool operator<=(const detail::oSizeT<T>& a, const detail::oSizeT<T>& b) { return a.operator<=(b); }
+template<typename T> bool operator>(const detail::oSizeT<T>& a, const detail::oSizeT<T>& b) { return a.operator>(b); }
+template<typename T> bool operator>=(const detail::oSizeT<T>& a, const detail::oSizeT<T>& b) { return a.operator>=(b); }
+
 typedef detail::oSizeT<unsigned short> oSize16;
 typedef detail::oSizeT<unsigned int> oSize32;
 typedef detail::oSizeT<unsigned long long> oSize64;

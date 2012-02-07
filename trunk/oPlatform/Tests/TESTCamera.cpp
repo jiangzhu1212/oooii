@@ -61,7 +61,7 @@ int ShowAllCameras()
 		if (oCameraEnum(index++, &Camera))
 		{
 			oCamera::MODE mode;
-			mode.Size = int2(640, 480);
+			mode.Dimensions = int2(640, 480);
 			mode.Format = oSURFACE_R8G8B8_UNORM;
 			mode.BitRate = ~0u;
 
@@ -74,7 +74,7 @@ int ShowAllCameras()
 				oMSGBOX_DESC d;
 				d.Type = oMSGBOX_ERR;
 				d.Title = "oCamera Test";
-				oMsgBox(d, "Camera %s does not support mode %s %dx%d", Camera->GetName(), oAsString(mode.Format), mode.Size.x, mode.Size.y);
+				oMsgBox(d, "Camera %s does not support mode %s %dx%d", Camera->GetName(), oAsString(mode.Format), mode.Dimensions.x, mode.Dimensions.y);
 				continue;
 			}
 
@@ -113,16 +113,16 @@ int ShowAllCameras()
 
 		oWindow::DESC d;
 		d.BackgroundSleepMS = 0;
-		d.ClientSize = cd.Mode.Size;
+		d.ClientSize = cd.Mode.Dimensions;
 		d.ClientPosition = int2(30, 30) * int2(oSize32(i + 1), oSize32(i + 1));
 		oVERIFY(oWindowCreate(d, nullptr, oWindow::USE_DEFAULT, &Contexts[i].Window));
 
 		oStringM Title;
-		sprintf_s(Title, "%s (%dx%d %s)", Contexts[i].Camera->GetName(), cd.Mode.Size.x, cd.Mode.Size.y, oAsString(cd.Mode.Format));
+		sprintf_s(Title, "%s (%dx%d %s)", Contexts[i].Camera->GetName(), cd.Mode.Dimensions.x, cd.Mode.Dimensions.y, oAsString(cd.Mode.Format));
 		Contexts[i].Window->SetTitle(Title);
 
 		oWindowUIPicture::DESC pd;
-		pd.ImageDesc.Dimensions = cd.Mode.Size;
+		pd.ImageDesc.Dimensions = cd.Mode.Dimensions;
 		pd.ImageDesc.Format = oImageFormatFromSurfaceFormat(cd.Mode.Format);
 		pd.ImageDesc.RowPitch = oImageCalcRowPitch(pd.ImageDesc.Format, pd.ImageDesc.Dimensions.x); // @oooii-tony: Is this always true? no alignment?
 

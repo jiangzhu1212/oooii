@@ -55,6 +55,7 @@ enum oERROR
 	oERROR_IO, // an IO error occurred
 	oERROR_REFUSED, // request actively denied by server/subsystem
 	oERROR_PLATFORM, // underlying platform error - check string for specifics
+	oERROR_CORRUPT, // File/buffer/message is corrupt
 };
 
 // Sets a thread_local value and string that can be retrieved with API described

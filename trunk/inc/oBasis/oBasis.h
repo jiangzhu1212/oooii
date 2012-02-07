@@ -101,6 +101,7 @@
 #include <oBasis/oStringID.h>
 #include <oBasis/oStringize.h>
 #include <oBasis/oSurface.h>
+#include <oBasis/oSurfaceFill.h>
 #include <oBasis/oTask.h>
 #include <oBasis/oThread.h>
 #include <oBasis/oThreadsafe.h>

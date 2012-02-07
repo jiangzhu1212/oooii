@@ -109,6 +109,7 @@ interface oImage : oBuffer
 	// bitmap data into this oImage's store without changing topology information.
 	virtual void CopyData(const void* _pSourceBuffer, size_t _SourceRowPitch) threadsafe = 0;
 	virtual void CopyData(const void* _pSourceBuffer, size_t _SourceRowPitch, const FlipVerticalFlag&) threadsafe = 0;
+	virtual void CopyData(struct HBITMAP__* _hBitmap) threadsafe = 0;
 	
 	// Assumes the destination buffer is the same format and sized correctly and 
 	// copies this oImage's bitmap data into the destination buffer.
@@ -140,11 +141,34 @@ oAPI oSURFACE_FORMAT oImageFormatToSurfaceFormat(oImage::FORMAT _Format);
 // Returns the format as interpreted from the extension of the file
 oAPI oImage::FILE_FORMAT oImageFormatFromExtension(const char* _URIReference);
 
-inline unsigned int oImageCalcRowPitch(oImage::FORMAT _Format, int _Width) { return oSurfaceCalcRowPitch(oImageFormatToSurfaceFormat(_Format), _Width); }
-inline unsigned int oImageGetBitSize(oImage::FORMAT _Format) { return oSurfaceGetBitSize(oImageFormatToSurfaceFormat(_Format)); }
-inline unsigned int oImageGetSize(oImage::FORMAT _Format) { return oSurfaceGetSize(oImageFormatToSurfaceFormat(_Format)); }
-inline unsigned int oImageCalcSize(oImage::FORMAT _Format, const int2& _Dimensions) { return oSurfaceCalcSize(oImageFormatToSurfaceFormat(_Format), _Dimensions); }
-inline bool oImageIsAlphaFormat(oImage::FORMAT _Format) { return oSurfaceIsAlphaFormat(oImageFormatToSurfaceFormat(_Format)); }
+// Wrappers for oSurface API that constrain things to the policies of oImage.
+
+inline void oImageGetSurfaceDesc(const oImage* _pImage, oSURFACE_DESC* _pSurfaceDesc)
+{
+	oImage::DESC IDesc;
+	_pImage->GetDesc(&IDesc);
+
+	oSURFACE_DESC SDesc;
+	_pSurfaceDesc->Dimensions = IDesc.Dimensions;
+	_pSurfaceDesc->Format = oImageFormatToSurfaceFormat(IDesc.Format);
+	_pSurfaceDesc->Layout = oSURFACE_LAYOUT_IMAGE;
+};
+
+inline int oImageCalcRowSize(oImage::FORMAT _Format, int _Width) { return oSurfaceMipCalcRowSize(oImageFormatToSurfaceFormat(_Format), _Width); }
+
+inline int oImageCalcRowPitch(oImage::FORMAT _Format, int _Width)
+{
+	oSURFACE_DESC d;
+	d.Dimensions = int2(_Width,1);
+	d.Format = oImageFormatToSurfaceFormat(_Format);
+	d.Layout = oSURFACE_LAYOUT_IMAGE;
+	return oSurfaceMipCalcRowPitch(d);
+}
+
+inline int oImageGetBitSize(oImage::FORMAT _Format) { return oSurfaceFormatGetBitSize(oImageFormatToSurfaceFormat(_Format)); }
+inline int oImageGetSize(oImage::FORMAT _Format) { return oSurfaceFormatGetSize(oImageFormatToSurfaceFormat(_Format)); }
+inline int oImageCalcSize(oImage::FORMAT _Format, const int2& _Dimensions) { return oSurfaceMipCalcSize(oImageFormatToSurfaceFormat(_Format), _Dimensions); }
+inline bool oImageIsAlphaFormat(oImage::FORMAT _Format) { return oSurfaceFormatIsAlpha(oImageFormatToSurfaceFormat(_Format)); }
 
 // _____________________________________________________________________________
 // Creation code (image format parsing)
@@ -178,6 +202,9 @@ oAPI bool oImageCreate(const char* _Name, const oImage::DESC& _Desc, oImage** _p
 // platform HBITMAP. Use DeleteObject() when finished with the HBITMAP.
 oAPI bool oImageCreateBitmap(const threadsafe oImage* _pSourceImage, struct HBITMAP__** _ppBitmap);
 
+// Creates a copy of the specified Windows HBITMAP as a new oImage.
+oAPI bool oImageCreate(const char* _Name, struct HBITMAP__* _pBitmap, oImage** _ppImage);
+
 // _____________________________________________________________________________
 // Load/Save (heavy on platform I/O)
 
@@ -202,5 +229,24 @@ oAPI bool oImageLoad(const char* _Path, const oImage::ForceAlphaFlag&, oImage** 
 // function returns true AND RootMeanSquare is below a threashold the client 
 // code finds acceptable.
 oAPI bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _pImage2, unsigned int _BitTolerance, float* _pRootMeanSquare = nullptr, oImage** _ppDiffImage = nullptr, unsigned int _DiffMultiplier = 1);
+
+
+// @oooii-tony: FIXME: I'm not quite sure where this function belongs yet... its
+// tooltime (so not in renderer), it's platform-dependent (so not in oSurface)
+// but at least this is a move from oYUVImage where it really didn't fit in.
+
+// Convert the format of a surface into another format in another surface. This
+// uses GPU acceleration for BC6H/7 and is currently a pass-through to D3DX11's
+// conversion functions at the moment. Check debug logs if this function seems
+// to hang because if for whatever reason the CPU/SW version of the BC6H/7
+// codec is used, it can take a VERY long time.
+bool oSurfaceConvert(
+	void* oRESTRICT _pDestination
+	, size_t _DestinationRowPitch
+	, oSURFACE_FORMAT _DestinationFormat
+	, const void* oRESTRICT _pSource
+	, size_t _SourceRowPitch
+	, oSURFACE_FORMAT _SourceFormat
+	, const int2& _MipDimensions);
 
 #endif

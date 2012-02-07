@@ -76,6 +76,7 @@ void* oBlockAllocatorFixed::Allocate(size_t _BlockSize) threadsafe
 		New.Index = *pFreeIndex;
 		New.Tag = Old.Tag + 1;
 	} while (!oStd::atomic_compare_exchange(&NextAvailable.All, New.All, Old.All));
+	*pFreeIndex = static_cast<index_type>(Old.All); // it can be useful to have this for index allocators, so assign the index of this newly allocated pointer
 	return reinterpret_cast<void*>(pFreeIndex);
 }
 

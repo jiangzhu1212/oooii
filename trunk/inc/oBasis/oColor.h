@@ -33,25 +33,25 @@
 
 struct oColor
 {
-	unsigned int c;
+	int c;
 
 	oColor() : c(0) {}
-	oColor(unsigned int _C) : c(_C) {}
+	oColor(int _C) : c(_C) {}
 
-	operator const unsigned int() const volatile { return c; }
-	operator unsigned int&() { return c; }
+	operator const int() const volatile { return c; }
+	operator int&() { return c; }
 };
 
-inline oColor oColorCompose(unsigned int _R, unsigned int _G, unsigned int _B, unsigned int _A) { return ((_A&0xff)<<24)|((_R&0xff)<<16)|((_G&0xff)<<8)|(_B&0xff); }
-inline oColor oColorCompose(float _R, float _G, float _B, float _A) { return oColorCompose(static_cast<unsigned int>(_R*255.0f), static_cast<unsigned int>(_G*255.0f), static_cast<unsigned int>(_B*255.0f), static_cast<unsigned int>(_A*255.0f)); }
-inline void oColorDecompose(oColor _Color, unsigned int* _R, unsigned int* _G, unsigned int* _B, unsigned int* _A) { *_B = _Color&0xff; *_G = (_Color>>8)&0xff; *_R = (_Color>>16)&0xff; *_A = (_Color>>24)&0xff; }
-inline void oColorDecompose(oColor _Color, float* _pR, float* _pG, float* _pB, float* _pA) { unsigned int r, g, b, a; oColorDecompose(_Color, &r, &g, &b, &a); *_pR = r / 255.0f; *_pG = g / 255.0f; *_pB = b / 255.0f; *_pA = a / 255.0f; }
+inline oColor oColorCompose(int _R, int _G, int _B, int _A) { return ((_A&0xff)<<24)|((_R&0xff)<<16)|((_G&0xff)<<8)|(_B&0xff); }
+inline oColor oColorCompose(float _R, float _G, float _B, float _A) { return oColorCompose(static_cast<int>(_R*255.0f), static_cast<int>(_G*255.0f), static_cast<int>(_B*255.0f), static_cast<int>(_A*255.0f)); }
+inline void oColorDecompose(oColor _Color, int* _R, int* _G, int* _B, int* _A) { *_B = _Color&0xff; *_G = (_Color>>8)&0xff; *_R = (_Color>>16)&0xff; *_A = (_Color>>24)&0xff; }
+inline void oColorDecompose(oColor _Color, float* _pR, float* _pG, float* _pB, float* _pA) { int r, g, b, a; oColorDecompose(_Color, &r, &g, &b, &a); *_pR = r / 255.0f; *_pG = g / 255.0f; *_pB = b / 255.0f; *_pA = a / 255.0f; }
 inline void oColorDecompose(oColor _Color, float* _pBGRA) { oColorDecompose(_Color, &_pBGRA[0], &_pBGRA[1], &_pBGRA[2], &_pBGRA[3]); }
 inline void oColorDecomposeRGB(oColor _Color, float* _pRGB) { float a; oColorDecompose(_Color, &_pRGB[0], &_pRGB[1], &_pRGB[2], &a); }
 template<typename float4T> inline float4T oColorDecompose(oColor _Color) { float4T c; oColorDecompose(_Color, (float*)&c); return c; }
 template<typename float3T> inline float3T oColorDecomposeRGB(oColor _Color) { float3T c; oColorDecomposeRGB(_Color, (float*)&c); return c; }
-inline void oColorDecompose(oColor _Color, unsigned int *_pBGRA) { oColorDecompose(_Color, &_pBGRA[0], &_pBGRA[1], &_pBGRA[2], &_pBGRA[3]); }
-inline void oColorDecomposeRGB(oColor _Color, unsigned int *_pRGB) { unsigned int a; oColorDecompose(_Color, &_pRGB[0], &_pRGB[1], &_pRGB[2], &a); }
+inline void oColorDecompose(oColor _Color, int *_pBGRA) { oColorDecompose(_Color, &_pBGRA[0], &_pBGRA[1], &_pBGRA[2], &_pBGRA[3]); }
+inline void oColorDecomposeRGB(oColor _Color, int *_pRGB) { int a; oColorDecompose(_Color, &_pRGB[0], &_pRGB[1], &_pRGB[2], &a); }
 inline float oGetLuminance(oColor _Color) { float _R,_G,_B,_A; oColorDecompose(_Color, &_R, &_G, &_B, &_A); return 0.2126f*_R + 0.7152f*_G + 0.0722f*_B; }
 inline bool oIsOpaqueColor(oColor _Color) { return ((_Color>>24)&0xff) != 0; }
 inline bool oIsTransparentColor(oColor _Color) { return (_Color&0xff000000) == 0; }
@@ -59,8 +59,8 @@ inline bool oIsTranslucentColor(oColor _Color) { return (_Color&0xff000000) != 0
 
 namespace detail {
 
-inline unsigned int absdiff(unsigned int a, unsigned int b) { return (a > b) ? (a-b) : (b-a); }
-inline unsigned int lerp(unsigned int a, unsigned int b, float s) { return static_cast<unsigned int>(a + s * (b-a)); }
+inline int absdiff(int a, int b) { return (a > b) ? (a-b) : (b-a); }
+inline int lerp(int a, int b, float s) { return static_cast<int>(a + s * (b-a) + 0.5f); }
 
 } // detail
 
@@ -72,38 +72,38 @@ template<size_t size> inline size_t oColorFindClosest(oColor _TestColor, const o
 // lerp lerps each channel separately
 inline oColor lerp(const oColor& a, const oColor& b, float s)
 {
-	unsigned int ra,ga,ba,aa, rb,gb,bb,ab;
+	int ra,ga,ba,aa, rb,gb,bb,ab;
 	oColorDecompose(a, &ra, &ga, &ba, &aa); oColorDecompose(b, &rb, &gb, &bb, &ab);
 	return oColorCompose(detail::lerp(ra,rb,s), detail::lerp(ga,gb,s), detail::lerp(ba,bb,s), detail::lerp(aa,ab,s));
 }
 
 // Sometimes colors are generated from the same hardware, but there is precision
 // variability. In those cases, use this to fuzzy-compare color values
-inline bool oEqual(oColor _Color1, oColor _Color2, unsigned int _BitFuzziness)
+inline bool oEqual(oColor _Color1, oColor _Color2, int _BitFuzziness)
 {
-	unsigned int r1,g1,b1,a1,r2,g2,b2,a2;
+	int r1,g1,b1,a1,r2,g2,b2,a2;
 	oColorDecompose(_Color1, &r1, &g1, &b1, &a1); oColorDecompose(_Color2, &r2, &g2, &b2, &a2);
 	return (detail::absdiff(r1, r2) <= _BitFuzziness) && (detail::absdiff(g1, g2) <= _BitFuzziness) && (detail::absdiff(b1, b2) <= _BitFuzziness) && (detail::absdiff(a1, a2) <= _BitFuzziness);
 }
 
 inline bool oEqual(oColor _Color1, oColor _Color2)
 {
-	unsigned int r1,g1,b1,a1,r2,g2,b2,a2;
+	int r1,g1,b1,a1,r2,g2,b2,a2;
 	oColorDecompose(_Color1, &r1, &g1, &b1, &a1); oColorDecompose(_Color2, &r2, &g2, &b2, &a2);
 	return ((r1 == r2) && (g1 == g2) && (b1 == b2) && (a1 == a2));
 }
 
 // Does a per-component diff and returns the results as an oColor
-inline oColor oColorDiff(oColor _Color1, oColor _Color2, unsigned int _Multiplier = 1)
+inline oColor oColorDiff(oColor _Color1, oColor _Color2, int _Multiplier = 1)
 {
-	unsigned int r1,g1,b1,a1,r2,g2,b2,a2;
+	int r1,g1,b1,a1,r2,g2,b2,a2;
 	oColorDecompose(_Color1, &r1, &g1, &b1, &a1); oColorDecompose(_Color2, &r2, &g2, &b2, &a2);
 	return oColorCompose(_Multiplier * detail::absdiff(r1, r2), _Multiplier * detail::absdiff(g1, g2), _Multiplier * detail::absdiff(b1, b2), _Multiplier * detail::absdiff(a1, a2));
 }
 
-inline oColor oColorDiffRGB(oColor _Color1, oColor _Color2, unsigned int _Multiplier = 1)
+inline oColor oColorDiffRGB(oColor _Color1, oColor _Color2, int _Multiplier = 1)
 {
-	unsigned int r1,g1,b1,a1,r2,g2,b2,a2;
+	int r1,g1,b1,a1,r2,g2,b2,a2;
 	oColorDecompose(_Color1, &r1, &g1, &b1, &a1); oColorDecompose(_Color2, &r2, &g2, &b2, &a2);
 	return oColorCompose(_Multiplier * detail::absdiff(r1, r2), _Multiplier * detail::absdiff(g1, g2), _Multiplier * detail::absdiff(b1, b2), 0xff);
 }

@@ -45,7 +45,7 @@ void oStd::condition_variable::notify_all()
 	WakeAllConditionVariable((PCONDITION_VARIABLE)&Footprint);
 }
 
-oStd::cv_status oStd::condition_variable::wait_for(oStd::unique_lock<mutex>& _Lock, unsigned int _TimeoutMS)
+oStd::cv_status::value oStd::condition_variable::wait_for(oStd::unique_lock<mutex>& _Lock, unsigned int _TimeoutMS)
 {
 	oASSERT(_Lock.mutex(), "Invalid mutex");
 	oASSERT(_Lock.owns_lock(), "Lock must own the mutex lock");
@@ -53,10 +53,10 @@ oStd::cv_status oStd::condition_variable::wait_for(oStd::unique_lock<mutex>& _Lo
 	{
 		DWORD err = GetLastError();
 		oASSERT(err == ERROR_TIMEOUT || err == WAIT_TIMEOUT, "");
-		return oStd::timeout;
+		return oStd::cv_status::timeout;
 	}
 
-	return oStd::no_timeout;
+	return oStd::cv_status::no_timeout;
 }
 
 void oStd::condition_variable::wait(oStd::unique_lock<oStd::mutex>& _Lock)

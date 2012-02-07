@@ -22,6 +22,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oCamera.h>
+#include <oBasis/oInitOnce.h>
 #include <oBasis/oLimits.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
@@ -220,14 +221,14 @@ void _DeleteMediaType(AM_MEDIA_TYPE *pmt)
 
 static GUID oDSGetMediaSubType(oSURFACE_FORMAT _Format)
 {
-	size_t size = oSurfaceGetSize(_Format);
+	size_t size = oSurfaceFormatGetSize(_Format);
 	if (size == 2)
 		return (const GUID&)oGUID_MEDIASUBTYPE_RGB565;
 	else if (size == 3)
 		return (const GUID&)oGUID_MEDIASUBTYPE_RGB24;
 	else if (size == 4)
 	{
-		if (oSurfaceIsAlphaFormat(_Format))
+		if (oSurfaceFormatIsAlpha(_Format))
 			return (const GUID&)oGUID_MEDIASUBTYPE_ARGB32;
 		else
 			return (const GUID&)oGUID_MEDIASUBTYPE_RGB32;
@@ -291,7 +292,7 @@ protected:
 	oStd::atomic_uint RingBufferReadIndex;
 	unsigned int MonotonicCounter;
 	unsigned int ID;
-	oStringM Name;
+	oInitOnce<oStringM> Name;
 	volatile bool Running;
 
 	struct FRAME
@@ -343,7 +344,7 @@ void oDSCamera::ResizeTarget(const MODE& _Mode)
 {
 	MonotonicCounter = 0;
 	RingBufferReadIndex.exchange(0);
-	size_t frameSize = oSurfaceGetSize(_Mode.Format) * _Mode.Size.x * _Mode.Size.y;
+	size_t frameSize = oSurfaceMipCalcSize(_Mode.Format, _Mode.Dimensions);
 	for (size_t i = 0; i < oCOUNTOF(RingBuffer); i++)
 	{
 		RingBuffer[i].SampleTime = 0.0;
@@ -364,10 +365,7 @@ void oDSCamera::DestroyOutput()
 bool oDSCamera::RecreateOutput(const MODE& _Mode)
 {
 	if (GUID_NULL == oDSGetMediaSubType(_Mode.Format))
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "Unsupported format %s", oAsString(_Mode.Format));
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Unsupported format %s", oAsString(_Mode.Format));
 
 	// Create an output node and attach it to the input
 	CoCreateInstance((const GUID&)oGUID_CLSID_SampleGrabber, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&VideoOutput));
@@ -390,10 +388,7 @@ bool oDSCamera::RecreateOutput(const MODE& _Mode)
 		}
 	}
 	if (!connectedFilters)
-	{
-		oErrorSetLast(oERROR_NOT_FOUND, "Could not connect VideoOutput filter");
-		return false;
-	}
+		return oErrorSetLast(oERROR_NOT_FOUND, "Could not connect VideoOutput filter");
 
 	// Now get it as a SampleGrabber and set up its parameters
 	oV(VideoOutput->QueryInterface(IID_PPV_ARGS(&SampleGrabber)));
@@ -404,10 +399,7 @@ bool oDSCamera::RecreateOutput(const MODE& _Mode)
 	outputType.majortype = (const GUID&)oGUID_MEDIATYPE_Video;
 	outputType.subtype = oDSGetMediaSubType(_Mode.Format);
 	if (outputType.subtype == GUID_NULL)
-	{
-		oErrorSetLast(oERROR_NOT_FOUND, "Unsupported format: %s", oAsString(_Mode.Format));
-		return false;
-	}
+		return oErrorSetLast(oERROR_NOT_FOUND, "Unsupported format: %s", oAsString(_Mode.Format));
 
 	oV(SampleGrabber->SetMediaType(&outputType));
 	return true;
@@ -421,7 +413,7 @@ void oDSCamera::GetDesc(DESC* _pDesc) threadsafe
 
 const char* oDSCamera::GetName() const threadsafe
 {
-	return thread_cast<oStringM&>(Name);
+	return *Name;
 }
 
 unsigned int oDSCamera::GetID() const threadsafe
@@ -453,26 +445,26 @@ static bool operator<(const oCamera::MODE& _This, const oCamera::MODE& _That)
 	if (nBitsA1 >= nBitsA2)
 		return false;
 
-	if (!oSurfaceIsBlockCompressedFormat(_This.Format) && oSurfaceIsBlockCompressedFormat(_That.Format))
+	if (!oSurfaceFormatIsBlockCompressed(_This.Format) && oSurfaceFormatIsBlockCompressed(_That.Format))
 		return false;
 
-	size_t thisSize = oSurfaceGetSize(_This.Format);
-	size_t thatSize = oSurfaceGetSize(_That.Format);
+	size_t thisSize = oSurfaceFormatGetSize(_This.Format);
+	size_t thatSize = oSurfaceFormatGetSize(_That.Format);
 
 	if (thisSize < thatSize)
 		return true;
 
 	if (thisSize == thatSize)
 	{
-		if (_This.Size.x < _That.Size.x)
+		if (_This.Dimensions.x < _That.Dimensions.x)
 			return true;
 
-		if (_This.Size.x == _This.Size.x)
+		if (_This.Dimensions.x == _This.Dimensions.x)
 		{
-			if (_This.Size.y < _That.Size.y)
+			if (_This.Dimensions.y < _That.Dimensions.y)
 				return true;
 
-			if (_This.Size.y == _That.Size.y)
+			if (_This.Dimensions.y == _That.Dimensions.y)
 			{
 				if (_This.BitRate < _That.BitRate)
 					return true;
@@ -495,7 +487,7 @@ static float Distance(const oCamera::MODE& _ModeToMatch, const oCamera::MODE _Te
 	oSurfaceGetChannelBitSize(_TestMode.Format, &nBitsR2, &nBitsG2, &nBitsB2, &nBitsA2);
 
 	int FormatDiff = sqDiff(nBitsR1, nBitsR2) + sqDiff(nBitsG1, nBitsG2) + sqDiff(nBitsB1, nBitsB2) + sqDiff(nBitsA1, nBitsA2);
-	int2 SizeDiff = sqDiff(_ModeToMatch.Size, _TestMode.Size);
+	int2 SizeDiff = sqDiff(_ModeToMatch.Dimensions, _TestMode.Dimensions);
 	int BitRateDiff = sqDiff(_ModeToMatch.BitRate, _TestMode.BitRate);
 
 	return kFormatWeight*FormatDiff + kWidthWeight*SizeDiff.x + kHeightWeight*SizeDiff.y + kBitRateWeight*BitRateDiff;
@@ -530,10 +522,7 @@ bool oDSCamera::FindClosestMatchingMode(const MODE& _ModeToMatch, MODE* _pCloses
 bool oDSCamera::GetSetModeList(unsigned int* _pNumModes, MODE* _pModes, const MODE* _pNewMode) threadsafe
 {
 	if (!_pNumModes && (!_pNewMode || (_pNewMode && !_pModes)))
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	*_pNumModes = 0;
 	int nCapabilities = 0;
@@ -542,10 +531,7 @@ bool oDSCamera::GetSetModeList(unsigned int* _pNumModes, MODE* _pModes, const MO
 	oASSERT(sizeofConfigStruct == sizeof(VIDEO_STREAM_CONFIG_CAPS), "");
 
 	if (!nCapabilities)
-	{
-		oErrorSetLast(oERROR_NOT_FOUND);
-		return false;
-	}
+		return oErrorSetLast(oERROR_NOT_FOUND);
 
 	MODE testMode;
 	VIDEO_STREAM_CONFIG_CAPS scc;
@@ -562,7 +548,7 @@ bool oDSCamera::GetSetModeList(unsigned int* _pNumModes, MODE* _pModes, const MO
 			{
 				MODE& m = _pModes ? _pModes[(*_pNumModes)] : testMode;
 				m.Format = format;
-				m.Size = int2(pVideoHeader->bmiHeader.biWidth, pVideoHeader->bmiHeader.biHeight);
+				m.Dimensions = int2(pVideoHeader->bmiHeader.biWidth, pVideoHeader->bmiHeader.biHeight);
 				m.BitRate = static_cast<int>(pVideoHeader->dwBitRate);
 				if (_pNewMode && !memcmp(_pNewMode, &m, sizeof(MODE)))
 				{
@@ -582,10 +568,7 @@ bool oDSCamera::GetSetModeList(unsigned int* _pNumModes, MODE* _pModes, const MO
 		std::sort(_pModes, _pModes + *_pNumModes);
 
 	if (_pNewMode)
-	{
-		oErrorSetLast(oERROR_NOT_FOUND, "Mode not valid %s %dx%d", oAsString(_pNewMode->Format), _pNewMode->Size.x, _pNewMode->Size.y);
-		return false;
-	}
+		return oErrorSetLast(oERROR_NOT_FOUND, "Mode not valid %s %dx%d", oAsString(_pNewMode->Format), _pNewMode->Dimensions.x, _pNewMode->Dimensions.y);
 
 	return true;
 }
@@ -597,27 +580,21 @@ bool oDSCamera::GetModeList(unsigned int* _pNumModes, MODE* _pModes) threadsafe
 
 float oDSCamera::GetFPS() const threadsafe
 {
-	FRAME& f = thread_cast<oDSCamera*>(this)->RingBuffer[RingBufferReadIndex];
+	FRAME& f = thread_cast<oDSCamera*>(this)->RingBuffer[RingBufferReadIndex]; // const read and RingBufferReadIndex is updated atomically
 	return static_cast<float>(f.Frame / f.SampleTime);
 }
 
 bool oDSCamera::SetMode(const MODE& _Mode) threadsafe
 {
 	if (GUID_NULL == oDSGetMediaSubType(_Mode.Format))
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "Unsupported format %s", oAsString(_Mode.Format));
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Unsupported format %s", oAsString(_Mode.Format));
 
 	MODE closest;
 	if (!FindClosestMatchingMode(_Mode, &closest))
 		return false;
 
 	if (memcmp(&closest, &_Mode, sizeof(MODE)))
-	{
-		oErrorSetLast(oERROR_NOT_FOUND, "Unsupported mode specified: %s %dx%d", oAsString(_Mode.Format), _Mode.Size.x, _Mode.Size.y);
-		return false;
-	}
+		return oErrorSetLast(oERROR_NOT_FOUND, "Unsupported mode specified: %s %dx%d", oAsString(_Mode.Format), _Mode.Dimensions.x, _Mode.Dimensions.y);
 
 	oLockGuard<oSharedMutex> lock(DescMutex);
 	oDSCamera* pThis = thread_cast<oDSCamera*>(this); // protected by Mutex above
@@ -679,8 +656,13 @@ bool oDSCamera::Map(MAPPED* _pMapped) threadsafe
 		DescMutex.lock_shared();
 		oDSCamera* pThis = thread_cast<oDSCamera*>(this); // protected by Mutex above
 		unsigned int index = RingBufferReadIndex;
+		
+		oSURFACE_DESC d;
+		d.Dimensions = thread_cast<DESC&>(Desc).Mode.Dimensions;
+		d.Format = Desc.Mode.Format;
+		d.Layout = oSURFACE_LAYOUT_IMAGE;
 		_pMapped->pData = oGetData(pThis->RingBuffer[index].Data);
-		_pMapped->RowPitch = Desc.Mode.Size.x * oSurfaceGetSize(Desc.Mode.Format);
+		_pMapped->RowPitch = oSurfaceMipCalcRowPitch(d);
 		_pMapped->Frame = pThis->RingBuffer[index].Frame;
 	}
 
@@ -701,7 +683,7 @@ unsigned int oDSCamera::CalculateSourceRowPitch() const
 {
 	// BITMAPINFOHEADER rules, BITMAPs are aligned to 4 pixels per row when 
 	// allocating the image size.
-	return oByteAlign(Desc.Mode.Size.x, 4) * oSurfaceGetSize(Desc.Mode.Format);
+	return oByteAlign(Desc.Mode.Dimensions.x, 4) * oSurfaceFormatGetSize(Desc.Mode.Format);
 }
 
 bool oDSCamera::BufferCB(double _SampleTime, void* _pBuffer, size_t _SizeofBuffer)
@@ -718,8 +700,15 @@ bool oDSCamera::BufferCB(double _SampleTime, void* _pBuffer, size_t _SizeofBuffe
 			return false;
 		f.Frame = MonotonicCounter++;
 		f.SampleTime = _SampleTime;
-		size_t DestRowPitch = Desc.Mode.Size.x * oSurfaceGetSize(Desc.Mode.Format);
-		oMemcpy2dVFlip(oGetData(f.Data), DestRowPitch, _pBuffer, CalculateSourceRowPitch(), DestRowPitch, Desc.Mode.Size.y);
+		oSURFACE_DESC d;
+		d.Dimensions = thread_cast<DESC&>(Desc).Mode.Dimensions;
+		d.Format = Desc.Mode.Format;
+		d.Layout = oSURFACE_LAYOUT_IMAGE;
+
+		int DestRowPitch = oSurfaceMipCalcRowPitch(d);
+		int DestRowSize = oSurfaceMipCalcRowSize(Desc.Mode.Format, Desc.Mode.Dimensions);
+		int NumRows = oSurfaceMipCalcNumRows(Desc.Mode.Format, Desc.Mode.Dimensions);
+		oMemcpy2dVFlip(oGetData(f.Data), DestRowPitch, _pBuffer, CalculateSourceRowPitch(), DestRowSize, NumRows);
 		RingBufferReadIndex.exchange(WriteIndex);
 	}
 
@@ -741,21 +730,15 @@ static bool oDSMonikerEnum(unsigned int _Index, IMoniker** _ppMoniker)
 
 	oRef<IEnumMoniker> EnumMoniker;
 	HRESULT hr = DevEnum->CreateClassEnumerator((const GUID&)oGUID_CLSID_VideoInputDeviceCategory, &EnumMoniker, 0);
-	if (S_OK != hr)
-	{
-		oErrorSetLast(oERROR_NOT_FOUND, "No video input devices found%s", oIsWindows64Bit() ? " (might be because of a 32-bit driver on 64-bit Windows)" : "");
-		return false;
-	}
+	if (FAILED(hr))
+		return oErrorSetLast(oERROR_NOT_FOUND, "No video input devices found%s", oIsWindows64Bit() ? " (might be because of a 32-bit driver on 64-bit Windows)" : "");
 
 	std::vector<oRef<IMoniker> > Monikers;
 	Monikers.resize(_Index + 1);
 
 	ULONG nFetched = 0;
 	if (FAILED(EnumMoniker->Next(oSize32(Monikers.size()), &Monikers[0], &nFetched)) || (nFetched <= _Index))
-	{
-		oErrorSetLast(oERROR_NOT_FOUND);
-		return false;
-	}
+		return oErrorSetLast(oERROR_NOT_FOUND);
 
 	*_ppMoniker = Monikers[_Index];
 	(*_ppMoniker)->AddRef();
@@ -795,10 +778,7 @@ bool oCameraEnum(unsigned int _Index, threadsafe oCamera** _ppCamera)
 	*_ppCamera = nullptr;
 
 	//if (oIsWindows64Bit())
-	//{
-	//	oErrorSetLast(oERROR_NOT_FOUND, "oCamera is not supported in 64-bit builds because of the lack of valid 64-bit camera drivers or a way of reliably determining if a camera returned uses 32- or 64-bit drivers.");
-	//	return false;
-	//}
+	//	return oErrorSetLast(oERROR_NOT_FOUND, "oCamera is not supported in 64-bit builds because of the lack of valid 64-bit camera drivers or a way of reliably determining if a camera returned uses 32- or 64-bit drivers.");
 
 	oV(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED));
 	oOnScopeExit OnScopeExit([&] { CoUninitialize(); });
@@ -821,10 +801,7 @@ bool oCameraEnum(unsigned int _Index, threadsafe oCamera** _ppCamera)
 
 	oRef<IBaseFilter> BaseFilter;
 	if (FAILED(Moniker->BindToObject(nullptr, nullptr, (const GUID&)oGUID_IID_IBaseFilter, (void**)&BaseFilter)))
-	{
-		oErrorSetLast(oERROR_NOT_FOUND, "Found device \"%s\" (ID=0x%x), but could not bind an interface for it", Name.c_str(), MonikerID);
-		return false;
-	}
+		return oErrorSetLast(oERROR_NOT_FOUND, "Found device \"%s\" (ID=0x%x), but could not bind an interface for it", Name.c_str(), MonikerID);
 
 	bool running = Moniker->IsRunning(nullptr, nullptr, nullptr) == S_OK;
 
@@ -833,10 +810,7 @@ bool oCameraEnum(unsigned int _Index, threadsafe oCamera** _ppCamera)
 	oRef<ICaptureGraphBuilder2> CaptureGraphBuilder;
 	oRef<IGraphBuilder> GraphBuilder;
 	if (!oDSCreateCaptureGraphBuilder(&CaptureGraphBuilder, &GraphBuilder))
-	{
-		oWinSetLastError();
-		return false;
-	}
+		return oWinSetLastError();
 
 	if (SUCCEEDED(GraphBuilder->AddFilter(BaseFilter, L"Video Input")))
 	{

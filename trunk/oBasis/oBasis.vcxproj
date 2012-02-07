@@ -69,6 +69,7 @@
     <ClInclude Include="..\inc\oBasis\oHash.h" />
     <ClInclude Include="..\inc\oBasis\oIndexAllocator.h" />
     <ClInclude Include="..\inc\oBasis\oINI.h" />
+    <ClInclude Include="..\inc\oBasis\oInitOnce.h" />
     <ClInclude Include="..\inc\oBasis\oInterface.h" />
     <ClInclude Include="..\inc\oBasis\oIntrinsic.h" />
     <ClInclude Include="..\inc\oBasis\oInvalid.h" />
@@ -110,6 +111,7 @@
     <ClInclude Include="..\inc\oBasis\oStringID.h" />
     <ClInclude Include="..\inc\oBasis\oStringize.h" />
     <ClInclude Include="..\inc\oBasis\oSurface.h" />
+    <ClInclude Include="..\inc\oBasis\oSurfaceFill.h" />
     <ClInclude Include="..\inc\oBasis\oTaggedPointer.h" />
     <ClInclude Include="..\inc\oBasis\oTask.h" />
     <ClInclude Include="..\inc\oBasis\oThread.h" />
@@ -169,6 +171,7 @@
     <ClCompile Include="oString.cpp" />
     <ClCompile Include="oStringize.cpp" />
     <ClCompile Include="oSurface.cpp" />
+    <ClCompile Include="oSurfaceFill.cpp" />
     <ClCompile Include="oTimer.cpp" />
     <ClCompile Include="oURI.cpp" />
     <ClCompile Include="oXML.cpp" />

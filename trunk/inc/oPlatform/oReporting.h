@@ -57,7 +57,7 @@ struct oREPORTING_DESC
 	bool PrefixMsgId;
 };
 
-typedef oASSERT_ACTION (*oReportingVPrint)(const oASSERTION& _Assertion, void* _hLogFile, const char* _Format, va_list _Args);
+typedef oASSERT_ACTION (*oReportingVPrint)(const oASSERTION& _Assertion, threadsafe interface oFileWriter* _pLogFile, const char* _Format, va_list _Args);
 
 // Some objects use reporting in init/deinit, and those objects might be part of
 // static init/deinit. To ensure oReporting resources are available during that

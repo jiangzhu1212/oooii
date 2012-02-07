@@ -21,50 +21,43 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#pragma once
-#ifndef AllocatorTLSF_Impl_h
-#define AllocatorTLSF_Impl_h
 
-#include <oBasis/oAllocatorTLSF.h>
-#include <oBasis/oFixedString.h>
-#include <oBasis/oInitOnce.h>
-#include <oBasis/oRefCount.h>
+#include <oPlatform/oFile.h>
+#include <oPlatform/oTest.h>
 
-interface oAllocatorTLSF;
-struct AllocatorTLSF_Impl : public oAllocator
+struct TESTFileMap : public oTest
 {
-	// Always allocate memory for this struct in the arena specified by the user
-	void* operator new(size_t _Size) { return 0; }
-	void* operator new[](size_t si_Size) { return 0; }
-	void operator delete(void* _Pointer) {}
-	void operator delete[](void* _Pointer) {}
-public:
-	void* operator new(size_t _Size, void* _pMemory) { return _pMemory; }
-	void operator delete(void* _Pointer, void* _pMemory) {}
+	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
+	{
+		static const char* testPath = "Test/Textures/lena_1.png";
+		
+		oStringPath path;
+		oTESTB0(FindInputFile(path, testPath));
 
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_TRIVIAL_QUERYINTERFACE(oAllocatorTLSF);
+		oFileRange r;
+		{
+			oFILE_DESC FDesc;
+			oTESTB0(oFileGetDesc(path, &FDesc));
+			r.Offset = 0;
+			r.Size = FDesc.Size;
+		}
 
-	AllocatorTLSF_Impl(const char* _DebugName, const DESC& _Desc, bool* _pSuccess);
-	~AllocatorTLSF_Impl();
+		void* mapped = nullptr;
+		oTESTB0(oFileMap(path, true, r, &mapped));
+		oOnScopeExit OSEUnmap([&] { if (mapped) oFileUnmap(mapped); }); // safety unmap if we fail for some non-mapping reason
 
-	void GetDesc(DESC* _pDesc) override;
-	void GetStats(STATS* _pStats) override;
-	const char* GetDebugName() const threadsafe override;
-	const char* GetType() const threadsafe override;
-	bool IsValid() override;
-	void* Allocate(size_t _NumBytes, size_t _Alignment = oDEFAULT_MEMORY_ALIGNMENT) override;
-	void* Reallocate(void* _Pointer, size_t _NumBytes) override;
-	void Deallocate(void* _Pointer) override;
-	size_t GetBlockSize(void* _Pointer) override;
-	void Reset() override;
-	void WalkHeap(oFUNCTION<void(void* _Pointer, size_t _Size, bool _Used)> _HeapWalker) override;
+		void* loaded = nullptr;
+		size_t loadedSize = 0;
+		oTESTB0(oFileLoad(&loaded, &loadedSize, malloc, path, false));
+		oOnScopeExit OSEFreeLoadedBuffer([&] { if (loaded) free(loaded); });
 
-	DESC Desc;
-	STATS Stats;
-	oRefCount RefCount;
-	void* hPool;
-	oInitOnce<oStringS> DebugName;
+		oTESTB(r.Size == loadedSize, "mismatch: mapped and loaded file sizes");
+		oTESTB(!memcmp(loaded, mapped, r.Size), "memcmp failed between mapped and loaded files");
+		oTESTB0(oFileUnmap(mapped));
+		mapped = nullptr; // signal OSEUnmap to not re-unmap
+
+		return SUCCESS;
+	}
 };
 
-#endif
+oTEST_REGISTER(TESTFileMap);

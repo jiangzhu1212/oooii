@@ -106,7 +106,7 @@ int main(int argc, const char* argv[])
 			char* w = pCppBuffer + sprintf_s(pCppBuffer, cppBufferSize, "// $(header)\n%s", pchHeader);
 			w += oCodifyData(w, std::distance(w, pCppBufferEnd), opts.InputPath, pFileBuffer, fileBufferSize, sizeof(unsigned int));
 
-			if (oFileSave(opts.OutputPath, pCppBuffer, strlen(pCppBuffer), oFILE_OPEN_TEXT_WRITE))
+			if (oFileSave(opts.OutputPath, pCppBuffer, strlen(pCppBuffer), true))
 				rv = 0;
 
 			free(pFileBuffer);

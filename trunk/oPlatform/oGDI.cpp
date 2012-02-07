@@ -46,14 +46,20 @@ protected:
 	oHMODULE hModule;
 };
 
-int oPointToLogicalHeight(HDC _hDC, int _Point)
+int oGDIPixelsToPoints(HDC _hDC, int _PixelHeight)
+{
+	int dpiY = GetDeviceCaps(_hDC, LOGPIXELSY);
+	return MulDiv(72, _PixelHeight, dpiY);
+}
+
+int oGDIPointToLogicalHeight(HDC _hDC, int _Point)
 {
 	return -MulDiv(_Point, GetDeviceCaps(_hDC, LOGPIXELSY), 72);
 }
 
-int oPointToLogicalHeight(HDC _hDC, float _Point)
+int oGDIPointToLogicalHeight(HDC _hDC, float _Point)
 {
-	return oPointToLogicalHeight(_hDC, static_cast<int>(_Point));
+	return oGDIPointToLogicalHeight(_hDC, static_cast<int>(_Point + 0.5f));
 }
 
 bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer, size_t _SizeofImageBuffer, BITMAPINFO* _pBitmapInfo)
@@ -236,12 +242,12 @@ BOOL oGDIStretchBlendBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, H
 	return bResult;
 }
 
-bool oGDIDrawText(HDC _hDC, const RECT& _rTextBox, oANCHOR _Alignment, oColor _Foreground, oColor _Background, bool _SingleLine, const char* _Text)
+static bool oGDIDrawText(HDC _hDC, const RECT& _rTextBox, oANCHOR _Alignment, oColor _Foreground, oColor _Background, bool _SingleLine, const char* _Text, RECT* _pActual)
 {
-	unsigned int r,g,b,a;
+	int r,g,b,a;
 	oColorDecompose(_Foreground, &r, &g, &b, &a);
 
-	unsigned int br,bg,bb,ba;
+	int br,bg,bb,ba;
 	oColorDecompose(_Background, &br, &bg, &bb, &ba);
 
 	if (!a)
@@ -278,6 +284,9 @@ bool oGDIDrawText(HDC _hDC, const RECT& _rTextBox, oANCHOR _Alignment, oColor _F
 		uFormat |= DT_SINGLELINE;
 	}
 
+	if (_pActual)
+		uFormat |= DT_CALCRECT;
+
 	int oldBkMode = 0;
 	COLORREF oldBkColor = 0;
 
@@ -288,7 +297,17 @@ bool oGDIDrawText(HDC _hDC, const RECT& _rTextBox, oANCHOR _Alignment, oColor _F
 	
 	COLORREF oldColor = SetTextColor(_hDC, RGB(r,g,b));
 	RECT rect = _rTextBox;
-	DrawText(_hDC, _Text, -1, &rect, uFormat);
+	if (!_pActual)
+		_pActual = &rect;
+	else
+	{
+		_pActual->top = 0;
+		_pActual->left = 0;
+		_pActual->right = 1;
+		_pActual->bottom = 1;
+	}
+
+	DrawText(_hDC, _Text, -1, _pActual, uFormat);
 	SetTextColor(_hDC, oldColor);
 
 	if (ba)
@@ -299,16 +318,26 @@ bool oGDIDrawText(HDC _hDC, const RECT& _rTextBox, oANCHOR _Alignment, oColor _F
 	return true;
 }
 
+bool oGDICalcTextBox(HDC _hDC, RECT* _prTextBox, oANCHOR _Alignment, oColor _Foreground, oColor _Background, bool _SingleLine, const char* _Text)
+{
+	return oGDIDrawText(_hDC, *_prTextBox, _Alignment, _Foreground, _Background, _SingleLine, _Text, _prTextBox);
+}
+
+bool oGDIDrawText(HDC _hDC, const RECT& _rTextBox, oANCHOR _Alignment, oColor _Foreground, oColor _Background, bool _SingleLine, const char* _Text)
+{
+	return oGDIDrawText(_hDC, _rTextBox, _Alignment, _Foreground, _Background, _SingleLine, _Text, nullptr);
+}
+
 HPEN oGDICreatePen(oColor _Color, int _Width)
 {
-	unsigned int r,g,b,a;
+	int r,g,b,a;
 	oColorDecompose(_Color, &r, &g, &b, &a);
 	return CreatePen(a ? PS_SOLID : PS_NULL, _Width, RGB(r,g,b));
 }
 
 HBRUSH oGDICreateBrush(oColor _Color)
 {
-	unsigned int r,g,b,a;
+	int r,g,b,a;
 	oColorDecompose(_Color, &r, &g, &b, &a);
 	return a ? CreateSolidBrush(RGB(r,g,b)) : (HBRUSH)GetStockObject(HOLLOW_BRUSH);
 }
@@ -317,7 +346,7 @@ HFONT oGDICreateFont(const char* _FontName, int _PointSize, bool _Bold, bool _It
 {
 		HDC hDC = GetDC(GetDesktopWindow());
 		HFONT hFont = CreateFont(
-			oPointToLogicalHeight(hDC, _PointSize)
+			oGDIPointToLogicalHeight(hDC, _PointSize)
 			, 0
 			, 0
 			, 0
@@ -379,4 +408,42 @@ const char* oGDIGetCharSet(BYTE _tmCharSet)
 	}
 
 	return "Unknown";
+}
+
+int oGDIEstimatePointSize(int _PixelHeight)
+{
+	// http://reeddesign.co.uk/test/points-pixels.html
+	switch (_PixelHeight)
+	{
+		case 8: return 6;
+		case 9: return 7;
+		case 11: return 8;
+		case 12: return 9;
+		case 13: return 10;
+		case 15: return 11;
+		case 16: return 12;
+		case 17: return 13;
+		case 19: return 14;
+		case 21: return 15;
+		case 22: return 16;
+		case 23: return 17;
+		case 24: return 18;
+		case 26: return 20;
+		case 29: return 22;
+		case 32: return 24;
+		case 35: return 26;
+		case 36: return 27;
+		case 37: return 28;
+		case 38: return 29;
+		case 40: return 30;
+		case 42: return 32;
+		case 45: return 34;
+		case 48: return 36;
+		default: break;
+	}
+
+	if (_PixelHeight < 8)
+		return 4;
+	
+	return static_cast<int>((_PixelHeight * 36.0f / 48.0f) + 0.5f);
 }

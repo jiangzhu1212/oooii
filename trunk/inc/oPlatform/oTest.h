@@ -206,7 +206,7 @@ interface oTestManager : oNoncopyable
 			, InputPath(nullptr)
 			, OutputPath(nullptr)
 			, NameColumnWidth(20)
-			, TimeColumnWidth(10)
+			, TimeColumnWidth(8)
 			, StatusColumnWidth(10)
 			, RandomSeed(0)
 			, NumRunIterations(1)

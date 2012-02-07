@@ -163,6 +163,17 @@ struct oImageImpl : public oImage
 		*_pSuccess = !!FIBitmap;
 	}
 
+	#if defined(_WIN32) || defined(_WIN64)
+		oImageImpl(const char* _Name, HBITMAP _hBmp, bool* _pSuccess)
+			: FIBitmap(FIAllocateFIBITMAP(_hBmp))
+			, Name(_Name)
+		{
+			if (!FIBitmap)
+				oErrorSetLast(oERROR_GENERIC, "Failed to create oImage %s", Name);
+			*_pSuccess = !!FIBitmap;
+		}
+	#endif
+
 	~oImageImpl()
 	{
 		FreeImage_Unload(FIBitmap);
@@ -182,6 +193,13 @@ struct oImageImpl : public oImage
 		DESC d;
 		GetDesc(&d);
 		oMemcpy2dVFlip(FreeImage_GetBits(FIBitmap), d.RowPitch, _pSourceBuffer, _SourceRowPitch, d.Dimensions.x * oImageGetSize(d.Format), d.Dimensions.y);
+	}
+
+	void CopyData(struct HBITMAP__* _hBitmap) threadsafe override
+	{
+		#if defined(_WIN32) || defined(_WIN64)
+		FICopyBits(FIBitmap, _hBitmap);
+		#endif
 	}
 
 	void CopyDataTo(void* _pDestinationBuffer, size_t _DestinationRowPitch) const threadsafe
@@ -306,6 +324,16 @@ bool oImageCreate(const char* _Name, const oImage::DESC& _Desc, oImage** _ppImag
 		return !!_ppBitmap;
 	}
 
+	bool oImageCreate(const char* _Name, struct HBITMAP__* _pBitmap, oImage** _ppImage)
+	{
+		if (!_pBitmap || !_ppImage)
+			return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+		bool success = false;
+		oCONSTRUCT(_ppImage, oImageImpl(_Name, _pBitmap, &success));
+		return success;
+	}
+
 #endif
 
 static size_t oImageSave(FIBITMAP* _bmp, oImage::FILE_FORMAT _Format, oImage::COMPRESSION_LEVEL _CompressionLevel, void* _pBuffer, size_t _SizeofBuffer)
@@ -406,6 +434,10 @@ bool oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format, o
 	FIBITMAP* FIBitmap = ((oImageImpl*)LockedImage.c_ptr())->Bitmap();
 	FIBITMAP* FIBitmap24 = FreeImage_ConvertTo24Bits(FIBitmap);
 
+	oStringPath parent(_Path);
+	*oGetFilebase(parent) = 0;
+	oFileCreateFolder(parent);
+
 	bool result = !!FreeImage_Save(fif, FIBitmap, _Path, FIGetSaveFlags(fif, _CompressionLevel));
 	FreeImage_Unload(FIBitmap24);
 
@@ -465,7 +497,7 @@ bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _
 	{
 		descDiff.Dimensions = ImgDesc1.Dimensions;
 		descDiff.Format = oImage::BGRA32;
-		descDiff.RowPitch = oSurfaceCalcRowPitch(oImageFormatToSurfaceFormat(descDiff.Format), descDiff.Dimensions.x);
+		descDiff.RowPitch = oImageCalcRowPitch(descDiff.Format, descDiff.Dimensions.x);
 		if (!oImageCreate("Temp image", descDiff, _ppDiffImage))
 			return false; // pass through error
 	}
@@ -487,16 +519,12 @@ bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _
 		// exact for RMS
 		if (!oEqual(c1[i], c2[i], _BitTolerance))
 		{
-			unsigned int r1,g1,b1,a1,r2,g2,b2,a2;
-			oColorDecompose(c1[i], &r1, &g1, &b1, &a1); 
-			oColorDecompose(c2[i], &r2, &g2, &b2, &a2);
+			int4 bgra1, bgra2;
+			oColorDecompose(c1[i], (int*)&bgra1); 
+			oColorDecompose(c2[i], (int*)&bgra2);
 
-			unsigned int dr = r1 - r2;
-			unsigned int dg = g1 - g2;
-			unsigned int db = b1 - b2;
-			unsigned int da = a1 - a2;
-
-			RMSAccum += dr * dr + dg * dg + db * db + da * da;
+			int4 d = bgra1 - bgra2;
+			RMSAccum += dot(d,d);
 
 			if (diff)
 				diff[i] = oColorDiffRGB(c1[i], c2[i], _DiffMultiplier);
@@ -509,4 +537,45 @@ bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _
 		*_pRootMeanSquare = sqrt(RMSAccum / nPixels);
 
 	return true;
+}
+
+// @oooii-tony: FIXME: I am not quite sure where this belongs... it was in 
+// oYUVImage which was a not-good place, especially since we now define oYUVImage
+// as something OTHER than a surface. Convert doesn't belong in oSurface.h at
+// the moment because that's in oBasis, which is platform-independent code and
+// this convert implementation is decidedly platform-dependent. Conversion 
+// happens in a tool, which makes putting the conversion in the renderer less
+// appealing, even though currently conversion requires a D3DDevice to function.
+// So from oYUVImage to oImage is a very small improvement until a better home
+// reveals itself...
+#include <oPlatform/oD3D11.h>
+#include <oPlatform/oDXGI.h>
+bool oSurfaceConvert(
+	void* oRESTRICT _pDestination
+	, size_t _DestinationRowPitch
+	, oSURFACE_FORMAT _DestinationFormat
+	, const void* oRESTRICT _pSource
+	, size_t _SourceRowPitch
+	, oSURFACE_FORMAT _SourceFormat
+	, const int2& _MipDimensions)
+{
+	oD3D11_DEVICE_DESC DeviceDesc("oSurfaceConvert Temp Device");
+	oRef<ID3D11Device> D3DDevice;
+	if (!oD3D11CreateDevice(DeviceDesc, &D3DDevice))
+	{
+		DeviceDesc.Accelerated = false;
+		if (!oD3D11CreateDevice(DeviceDesc, &D3DDevice))
+			return false; // pass through error
+	}
+
+	D3D11_MAPPED_SUBRESOURCE Destination;
+	Destination.pData = _pDestination;
+	Destination.RowPitch = oSize64(_DestinationRowPitch);
+	Destination.DepthPitch = 0;
+
+	D3D11_SUBRESOURCE_DATA Source;
+	Source.pSysMem = _pSource;
+	Source.SysMemPitch = oSize64(_SourceRowPitch);
+	Source.SysMemSlicePitch = 0;
+	return oD3D11Convert(D3DDevice, Destination, oDXGIFromSurfaceFormat(_DestinationFormat), Source, oDXGIFromSurfaceFormat(_SourceFormat), _MipDimensions);
 }

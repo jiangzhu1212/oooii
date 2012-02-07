@@ -21,59 +21,33 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#pragma once
-#ifndef oMouse_h
-#define oMouse_h
+// Simple utilities for filling a 2D surface with color in various patterns. 
+// This is useful in generating debug images/textures for infrastructure 
+// bringup.
+#ifndef oSurfaceFill_h
+#define oSurfaceFill_h
 
-#include <oBasis/oInterface.h>
+#include <oBasis/oColor.h>
+#include <oBasis/oFunction.h>
+#include <oBasis/oMathTypes.h>
 
-interface oMouse : oInterface
-{
-	enum BUTTON
-	{
-		BUTTON_LEFT,
-		BUTTON_MIDDLE,
-		BUTTON_RIGHT,
-		BUTTON_FORWARD,
-		BUTTON_BACKWARD,
-		NUM_BUTTONS,
-	};
+// Fills the specified 32-bit BGRA (oColor) buffer with the specified solid 
+// color.
+void oSurfaceFillSolid(oColor* _pColors, size_t _RowPitch, const int2& _Dimensions, const oColor& _Color);
 
-	struct DESC
-	{
-		DESC()
-			: ShortCircuitEvents(false)
-			, ClipCursorMouseDown(true)
-		{}
-		
-		bool ShortCircuitEvents;	// Prevents event handlers below you to not receive events
-		bool ClipCursorMouseDown;	// Clips the cursor to the window if any button is down
-	};
+// Fills the specified 32-bit BGRA (oColor buffer) with a checkerboard pattern
+// of the specified dimensions and two colors.
+void oSurfaceFillCheckerboard(oColor* _pColors, size_t _RowPitch, const int2& _Dimensions, const int2& _GridDimensions, const oColor& _Color0, const oColor& _Color1);
 
-	// On event-driven platforms (Windows) where there isn't an explicit update 
-	// for the application's context, a button might not be able to be determined
-	// as "still down from last frame" until the next event fires. In order to
-	// work around this, call this function once a frame and it will change all
-	// pressed keys from last frame into down keys and all released keys into up 
-	// keyss.
-	virtual void Update() threadsafe = 0;
+// Fills the specified 32-bit BGRA buffer with a gradient that goes between the
+// 4 specified colors at the corners of the image.
+void oSurfaceFillGradient(oColor* _pColors, size_t _RowPitch, const int2& _Dimensions, oColor _CornerColors[4]);
 
-	// Default unpressed state of a button
-	virtual bool IsUp(BUTTON _Button) const threadsafe = 0;
+// This draws a rectangle at [(0,0),_GridDim-int2(1,1)] in the specified color,
+// thus producing a grid pattern.
+void oSurfaceFillGridLines(oColor* _pColors, size_t _RowPitch, const int2& _Dimensions, const int2& _GridDimensions, const oColor& _GridColor);
 
-	// True on first frame of a transition from down to up
-	virtual bool IsReleased(BUTTON _Button) const threadsafe  = 0;
-
-	// Raw state ignoring key repeat
-	virtual bool IsDown(BUTTON _Button) const threadsafe = 0;
-
-	// Returns true the first time the key goes from up to down, and again 
-	// according to platform key repeat settings.
-	virtual bool IsPressed(BUTTON _Button) const threadsafe = 0;
-
-	virtual void GetPosition(int *_pX, int *_pY, int *_pVerticalWheelDelta = 0, int *_pHorizontalWheelDelta = 0) threadsafe = 0;
-};
-
-oAPI bool oMouseCreate(const oMouse::DESC& _Desc, void* _WindowNativeHandle, threadsafe oMouse** _ppMouse);
+// This iterates through each grid box and calls the _DrawText function
+bool oSurfaceFillGridNumbers(const int2& _Dimensions, const int2& _GridDimensions, oFUNCTION<bool(const int2& _DrawBoxPosition, const int2& _DrawBoxSize, const char* _Text)> _DrawText);
 
 #endif

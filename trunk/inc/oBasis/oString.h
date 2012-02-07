@@ -96,6 +96,13 @@ char* oConvertFourcc(char* _StrDestination, size_t _SizeofStrDestination, int _F
 bool oGetKeyValuePair(char* _KeyDestination, size_t _SizeofKeyDestination, char* _ValueDestination, size_t _SizeofValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0);
 
 // _____________________________________________________________________________
+// String Copy
+// Copies a string to a zeroed out buffer.
+// Because in debug strcpy_s, strncpy_s, etc bad the buffer with fefefe, we have our own oStrcpy which ensures that the entire buffer is nulled before
+// copying
+errno_t oStrcpy(char *_StrDestination, size_t _NumberOfElements, const char *_StrSource);
+
+// _____________________________________________________________________________
 // String tokenization
 
 // Like strtok_s, except you can additionally specify open and close scope chars 

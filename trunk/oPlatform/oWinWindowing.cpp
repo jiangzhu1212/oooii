@@ -49,8 +49,8 @@ bool oWinCreate(HWND* _pHwnd, WNDPROC _Wndproc, void* _pThis, bool _SupportDoubl
 		return oWinSetLastError();
 
 	*_pHwnd = CreateWindowEx(WS_EX_ACCEPTFILES|WS_EX_APPWINDOW, className, "", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, 0, _pThis);
-	if( !*_pHwnd )
-		return oWinSetLastError();
+	if (!*_pHwnd)
+		return false; // pass through error
 
 	return true;
 }

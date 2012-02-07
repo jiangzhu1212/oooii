@@ -598,6 +598,18 @@ void oD3D11GetTextureDesc(ID3D11Resource* _pResource, oD3D11_TEXTURE_DESC* _pDes
 	}
 }
 
+static void oD3D11Memcpy2d(void* _pDestination, size_t _DestinationRowPitch, bool _FlipVertical, const D3D11_MAPPED_SUBRESOURCE& _Mapped, const D3D11_TEXTURE2D_DESC& _TextureDesc)
+{
+	oSURFACE_FORMAT Format = oDXGIToSurfaceFormat(_TextureDesc.Format);
+	int RowSize = oSurfaceMipCalcRowSize(Format, _TextureDesc.Width);
+	int NumRows = oSurfaceMipCalcNumRows(Format, _TextureDesc.Height);
+
+	if (_FlipVertical)
+		oMemcpy2dVFlip(_pDestination, _DestinationRowPitch, _Mapped.pData, _Mapped.RowPitch, RowSize, NumRows);
+	else
+		oMemcpy2d(_pDestination, _DestinationRowPitch, _Mapped.pData, _Mapped.RowPitch, RowSize, NumRows);
+}
+
 bool oD3D11CopyToBuffer(ID3D11Texture2D* _pTexture, void* _pBuffer, size_t _BufferRowPitch, bool _FlipVertical)
 {
 	oRef<ID3D11Device> D3DDevice;
@@ -613,12 +625,90 @@ bool oD3D11CopyToBuffer(ID3D11Texture2D* _pTexture, void* _pBuffer, size_t _Buff
 	if (FAILED(hr))
 		return oWinSetLastError(hr);
 
-	if (_FlipVertical)
-		oMemcpy2dVFlip(_pBuffer, _BufferRowPitch, mapped.pData, mapped.RowPitch, oSurfaceCalcRowPitch(oDXGIToSurfaceFormat(desc.Format), desc.Width), oSurfaceCalcNumRows(oDXGIToSurfaceFormat(desc.Format), desc.Height));
-	else
-		oMemcpy2d(_pBuffer, _BufferRowPitch, mapped.pData, mapped.RowPitch, oSurfaceCalcRowPitch(oDXGIToSurfaceFormat(desc.Format), desc.Width), oSurfaceCalcNumRows(oDXGIToSurfaceFormat(desc.Format), desc.Height));
+	oD3D11Memcpy2d(_pBuffer, _BufferRowPitch, _FlipVertical, mapped, desc);
 
 	D3DDeviceContext->Unmap(_pTexture, 0);
+	return true;
+}
+
+void oD3D11CopySubresource2D(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pDstResource, UINT _DstSubresource, ID3D11Resource* _pSrcResource, UINT _SrcSubresource)
+{
+#ifdef _DEBUG
+	oRef<ID3D11Device> Dev1, Dev2, Dev3;
+	_pDeviceContext->GetDevice(&Dev1);
+	_pSrcResource->GetDevice(&Dev2);
+	_pDstResource->GetDevice(&Dev2);
+	oASSERT(Dev1 == Dev2 && Dev2 == Dev3, "Context and resources are not from the same device");
+
+	oD3D11_TEXTURE_DESC DstDesc;
+	oD3D11GetTextureDesc(_pDstResource, &DstDesc);
+	oASSERT(DstDesc.Depth == 1, "3D textures not yet supported.");
+#endif
+	_pDeviceContext->CopySubresourceRegion(_pDstResource, _DstSubresource, 0, 0, 0, _pSrcResource, _SrcSubresource, nullptr);
+}
+
+void oD3D11CopySubresourceRegion2D(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pDstResource, UINT _DstSubresource, const int2& _DstTopLeft, ID3D11Resource* _pSrcResource, UINT _SrcSubresource, const int2& _SrcTopLeft, const int2& _NumPixels)
+{
+	#ifdef _DEBUG
+		oRef<ID3D11Device> Dev1, Dev2, Dev3;
+		_pDeviceContext->GetDevice(&Dev1);
+		_pSrcResource->GetDevice(&Dev2);
+		_pDstResource->GetDevice(&Dev2);
+		oASSERT(Dev1 == Dev2 && Dev2 == Dev3, "Context and resources are not from the same device");
+
+		oD3D11_TEXTURE_DESC DstDesc;
+		oD3D11GetTextureDesc(_pDstResource, &DstDesc);
+		oASSERT(DstDesc.Depth == 1, "3D textures not yet supported.");
+	#endif
+
+	D3D11_BOX SrcBox;
+	SrcBox.left = _SrcTopLeft.x;
+	SrcBox.top = _SrcTopLeft.y;
+	SrcBox.front = 0;
+	SrcBox.right = _SrcTopLeft.x + _NumPixels.x;
+	SrcBox.bottom = _SrcTopLeft.y + _NumPixels.y;
+	SrcBox.back = 1;
+	_pDeviceContext->CopySubresourceRegion(_pDstResource, _DstSubresource, _DstTopLeft.x, _DstTopLeft.y, 0, _pSrcResource, _SrcSubresource, &SrcBox);
+}
+
+bool oD3D11CopyMipTail2D(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pDstResource, ID3D11Resource* _pSrcResource, int _Slice)
+{
+	oD3D11_TEXTURE_DESC DstDesc, SrcDesc;
+	oD3D11GetTextureDesc(_pDstResource, &DstDesc);
+	oD3D11GetTextureDesc(_pSrcResource, &SrcDesc);
+	oASSERT(DstDesc.Depth == 1, "3D textures not yet supported.");
+	oASSERT(SrcDesc.Depth == 1, "3D textures not yet supported.");
+
+	int2 DstMipDim = int2(DstDesc.Width, DstDesc.Height);
+	int2 SrcMipDim = int2(SrcDesc.Width, SrcDesc.Height);
+	UINT DstMipLevel = 0;
+	UINT SrcMipLevel = 0;
+
+	while (any_greater_than(SrcMipDim, DstMipDim))
+		SrcMipDim = oSurfaceMipCalcDimensions(oDXGIToSurfaceFormat(SrcDesc.Format), SrcMipDim, ++SrcMipLevel);
+
+	while (any_greater_than(DstMipDim, SrcMipDim))
+		DstMipDim = oSurfaceMipCalcDimensions(oDXGIToSurfaceFormat(DstDesc.Format), DstMipDim, ++DstMipLevel);
+
+	if (SrcMipDim != DstMipDim)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Mip chain sizes do not align");
+
+	while (true)
+	{
+		UINT DstSubresource = D3D11CalcSubresource(DstMipLevel, _Slice, DstDesc.MipLevels);
+		UINT SrcSubresource = D3D11CalcSubresource(SrcMipLevel, _Slice, SrcDesc.MipLevels);
+
+		oD3D11CopySubresource2D(_pDeviceContext, _pDstResource, DstSubresource, _pSrcResource, SrcSubresource);
+
+		DstMipLevel++;
+		if (DstMipLevel >= DstDesc.MipLevels)
+			break;
+
+		SrcMipLevel++;
+		if (SrcMipLevel >= SrcDesc.MipLevels)
+			break;
+	}
+
 	return true;
 }
 
@@ -755,6 +845,23 @@ void oD3D11DebugTraceTexture2DDesc(const D3D11_TEXTURE2D_DESC& _Desc, const char
 	oD3D11_TRACE_FLAGS(D3D11_RESOURCE_MISC_FLAG, MiscFlags, "(none)");
 }
 
+bool oD3D11CreateTexture1D(ID3D11Device* _pDevice, const char* _DebugName, UINT _Width, UINT _ArraySize, DXGI_FORMAT _Format, oD3D11_TEXTURE_CREATION_TYPE _CreationType, D3D11_SUBRESOURCE_DATA* _pInitData, ID3D11Texture1D** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView)
+{
+	D3D11_TEXTURE1D_DESC desc;
+	desc.Width = _Width;
+  desc.ArraySize = _ArraySize;
+  desc.Format = _Format;
+	oD3D11GetUsageAndFlags(_CreationType, desc.Format, &desc.MipLevels, &desc.Usage, &desc.BindFlags, &desc.CPUAccessFlags, &desc.MiscFlags);
+
+	HRESULT hr = _pDevice->CreateTexture1D(&desc, _pInitData, _ppTexture);
+	oDEBUG_CHECK_BUFFER(oD3D11CreateTexture1D, _ppTexture);
+
+	if (_ppShaderResourceView && !oD3D11CreateShaderResourceView(_DebugName, *_ppTexture, _ppShaderResourceView))
+		return false;
+
+	return true;
+}
+
 bool oD3D11CreateTexture2D(ID3D11Device* _pDevice, const char* _DebugName, UINT _Width, UINT _Height, UINT _ArraySize, DXGI_FORMAT _Format, oD3D11_TEXTURE_CREATION_TYPE _CreationType, D3D11_SUBRESOURCE_DATA* _pInitData, ID3D11Texture2D** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView)
 {
 	D3D11_TEXTURE2D_DESC desc;
@@ -780,27 +887,43 @@ bool oD3D11CreateTexture2D(ID3D11Device* _pDevice, const char* _DebugName, oD3D1
 	if (!_pDevice || !_pImage || !_ppTexture || _ppShaderResourceView)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
-	oImage::DESC IDesc;
-	_pImage->GetDesc(&IDesc);
-
-	oSURFACE_FORMAT SurfaceFormat = oImageFormatToSurfaceFormat(IDesc.Format);
 	D3D11_SUBRESOURCE_DATA InitData;
+	oSURFACE_DESC SDesc;
+	oImageGetSurfaceDesc(_pImage, &SDesc);
 	InitData.pSysMem = _pImage->GetData();
-	InitData.SysMemPitch = oSurfaceCalcRowPitch(SurfaceFormat, IDesc.Dimensions.x);
-	InitData.SysMemSlicePitch = oSurfaceCalcLevelPitch(SurfaceFormat, IDesc.Dimensions);
+	InitData.SysMemPitch = oSurfaceMipCalcRowPitch(SDesc);
+	InitData.SysMemSlicePitch = oSurfaceSliceCalcPitch(SDesc);
 
 	oRef<ID3D11Texture2D> D3DTexture;
 	if (!oD3D11CreateTexture2D(_pDevice
 		, "oImage Conversion"
-		, IDesc.Dimensions.x
-		, IDesc.Dimensions.y
+		, SDesc.Dimensions.x
+		, SDesc.Dimensions.y
 		, 1
-		, oDXGIFromSurfaceFormat(SurfaceFormat)
+		, oDXGIFromSurfaceFormat(SDesc.Format)
 		, _CreationType
 		, &InitData
 		, &D3DTexture
 		, nullptr))
 		return false; // pass through error
+
+	return true;
+}
+
+bool oD3D11CreateTexture3D(ID3D11Device* _pDevice, const char* _DebugName, UINT _Width, UINT _Height, UINT _Depth, DXGI_FORMAT _Format, oD3D11_TEXTURE_CREATION_TYPE _CreationType, D3D11_SUBRESOURCE_DATA* _pInitData, ID3D11Texture3D** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView)
+{	
+	D3D11_TEXTURE3D_DESC desc;
+	desc.Width = _Width;
+	desc.Height = _Height;
+	desc.Depth = _Depth;
+  desc.Format = _Format;
+	oD3D11GetUsageAndFlags(_CreationType, desc.Format, &desc.MipLevels, &desc.Usage, &desc.BindFlags, &desc.CPUAccessFlags, &desc.MiscFlags);
+
+	HRESULT hr = _pDevice->CreateTexture3D(&desc, _pInitData, _ppTexture);
+	oDEBUG_CHECK_BUFFER(oD3D11CreateTexture3D, _ppTexture);
+
+	if (_ppShaderResourceView && !oD3D11CreateShaderResourceView(_DebugName, *_ppTexture, _ppShaderResourceView))
+		return false;
 
 	return true;
 }
@@ -864,9 +987,12 @@ bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, interface oImage** _p
 	D3D11_TEXTURE2D_DESC d;
 	CPUTexture->GetDesc(&d);
 
-	const unsigned int RowSize = static_cast<unsigned int>(d.Width * oSurfaceGetSize(oSURFACE_B8G8R8A8_UNORM));
+	oImage::FORMAT ImageFormat = oImageFormatFromSurfaceFormat(oDXGIToSurfaceFormat(d.Format));
+	if (ImageFormat == oImage::UNKNOWN)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified texture's format %s is not supported by oImage", oAsString(d.Format));
+
 	oImage::DESC idesc;
-	idesc.RowPitch = RowSize;
+	idesc.RowPitch = oImageCalcRowSize(ImageFormat, d.Width);
 	idesc.Dimensions.x = d.Width;
 	idesc.Dimensions.y = d.Height;
 	idesc.Format = oImage::BGRA32;
@@ -963,27 +1089,8 @@ bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, const c
 	if (!oD3D11CreateDevice(deviceDesc, &D3DDevice))
 		return false; // pass through error
 
-	oImage::DESC IDesc;
-	_pImage->GetDesc(&IDesc);
-
-	oSURFACE_FORMAT SurfaceFormat = oImageFormatToSurfaceFormat(IDesc.Format);
-
-	D3D11_SUBRESOURCE_DATA InitData;
-	InitData.pSysMem = _pImage->GetData();
-	InitData.SysMemPitch = oSurfaceCalcRowPitch(SurfaceFormat, IDesc.Dimensions.x);
-	InitData.SysMemSlicePitch = oSurfaceCalcLevelPitch(SurfaceFormat, IDesc.Dimensions);
-
 	oRef<ID3D11Texture2D> D3DTexture;
-	if (!oD3D11CreateTexture2D(D3DDevice
-		, "oImage Conversion"
-		, IDesc.Dimensions.x
-		, IDesc.Dimensions.y
-		, 1
-		, oDXGIFromSurfaceFormat(SurfaceFormat)
-		, oD3D11_DYNAMIC_TEXTURE
-		, &InitData
-		, &D3DTexture
-		, nullptr))
+	if (!oD3D11CreateTexture2D(D3DDevice, "oD3D11Save Temp Texture", oD3D11_DYNAMIC_TEXTURE, _pImage, &D3DTexture, nullptr))
 		return false; // pass through error
 
 	return oD3D11Save(D3DTexture, _Format, _Path); // pass through error
@@ -1094,6 +1201,31 @@ bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, DXGI_FORMAT _NewFormat, ID3
 	(*_ppDestinationTexture)->AddRef();
 
 	return true;
+}
+
+bool oD3D11Convert(ID3D11Device* _pDevice, D3D11_MAPPED_SUBRESOURCE& _Destination, DXGI_FORMAT _DestinationFormat, D3D11_SUBRESOURCE_DATA& _Source, DXGI_FORMAT _SourceFormat, const int2& _MipDimensions)
+{
+	oRef<ID3D11Texture2D> SourceTexture;
+	if (!oD3D11CreateTexture2D(_pDevice
+		, "Temp Source Surface"
+		, _MipDimensions.x
+		, _MipDimensions.y
+		, 1
+		, _SourceFormat
+		, oD3D11_DYNAMIC_TEXTURE
+		, &_Source
+		, &SourceTexture
+		, nullptr))
+		return false; // pass through error
+
+	oRef<ID3D11Texture2D> DestinationTexture;
+	oTRACE("oD3D11Convert begin 0x%p (can take a while)...", DestinationTexture);
+	bool convertSuccessful = oD3D11Convert(SourceTexture, _DestinationFormat, &DestinationTexture);
+	oTRACE("oD3D11Convert end 0x%p", DestinationTexture);
+	if (!convertSuccessful)
+		return false; // pass through error
+
+	return oD3D11CopyToBuffer(DestinationTexture, _Destination.pData, _Destination.RowPitch); // pass through error
 }
 
 size_t oD3D11GetNumElements(D3D11_PRIMITIVE_TOPOLOGY _PrimitiveTopology, size_t _NumPrimitives)
