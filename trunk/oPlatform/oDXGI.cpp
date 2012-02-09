@@ -28,6 +28,7 @@
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oWinRect.h>
 #include <oPlatform/oWinWindowing.h>
+#include <oPlatform/oD3D11.h>
 
 #if oDXVER >= oDXVER_10
 
@@ -157,7 +158,7 @@ bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, bool _Fullscreen, cons
 
 		if (FAILED(_pSwapChain->GetContainingOutput(&Output)))
 		{
-			oStringM WinTitle;
+			oStringL WinTitle;
 			oWinGetTitle(SCDesc.OutputWindow, WinTitle.c_str(), WinTitle.capacity());
 			oErrorSetLast(oERROR_REFUSED, "SetFullscreenState failed on adapter \"%s\" because the IDXGISwapChain created with the associated window entitled \"%s\" was created with another adapter. Cross-adapter exclusive mode is not currently (DXGI 1.1) supported.", oStringS(adesc.Description), WinTitle);
 		}
@@ -272,7 +273,7 @@ bool oDXGIGetPreFullscreenMode(IDXGISwapChain* _pSwapChain, int2* _pSize, int* _
 	return true;
 }
 
-oVersion oDXGIGetD3DVersion(IDXGIAdapter* _pAdapter)
+oVersion oDXGIGetInterfaceVersion(IDXGIAdapter* _pAdapter)
 {
 	#if D3D11_MAJOR_VERSION
 		if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D11Device), 0)) return oVersion(11,0);
@@ -284,6 +285,31 @@ oVersion oDXGIGetD3DVersion(IDXGIAdapter* _pAdapter)
 		if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D10Device), 0)) return oVersion(10,0);
 	#endif
 	return oVersion();
+}
+
+oVersion oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter)
+{
+#if D3D11_MAJOR_VERSION
+	if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D11Device), 0))
+	{
+		// Note that the out-device is null, thus this isn't that expensive a call
+		D3D_FEATURE_LEVEL FeatureLevel;
+		oV(oD3D11::Singleton()->D3D11CreateDevice(
+			_pAdapter
+			, D3D_DRIVER_TYPE_UNKNOWN
+			, nullptr
+			, 0
+			, nullptr
+			, 0
+			, D3D11_SDK_VERSION
+			, nullptr
+			, &FeatureLevel
+			, nullptr));
+
+		return oD3D11GetFeatureVersion(FeatureLevel);
+	}
+#endif
+	return oDXGIGetInterfaceVersion(_pAdapter);
 }
 
 bool oDXGIEnumOutputs(IDXGIFactory* _pFactory, oFUNCTION<bool(unsigned int _AdapterIndex, IDXGIAdapter* _pAdapter, unsigned int _OutputIndex, IDXGIOutput* _pOutput)> _EnumFunction)

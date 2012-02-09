@@ -94,8 +94,8 @@ protected:
 	void Initialize(bool* _pSuccess);
 	void Run();
 	void Deinitialize();
-	void SetText(bool _TextValid, oStringM _Text, bool _SubtextValid, oStringM _Subtext); // by copy so oBIND retains string in Enqueue
-	void SetTitle(oStringM _Title); // by copy so oBIND retains string in Enqueue
+	void SetText(bool _TextValid, oStringL _Text, bool _SubtextValid, oStringL _Subtext); // by copy so oBIND retains string in Enqueue
+	void SetTitle(oStringL _Title); // by copy so oBIND retains string in Enqueue
 	void SetDesc(DESC _Desc); // by copy so oBIND retains string in Enqueue
 
 	DESC Desc;
@@ -268,18 +268,18 @@ void oWinProgressBar::Unmap() threadsafe
 	oWinWake(hDialog);
 }
 
-void oWinProgressBar::SetTitle(oStringM _Title)
+void oWinProgressBar::SetTitle(oStringL _Title)
 {
 	oWinSetTitle(hDialog, _Title);
 }
 
 void oWinProgressBar::SetTitle(const char* _Title) threadsafe
 {
-	MessageQueue->Dispatch(oBIND(&oWinProgressBar::SetTitle, thread_cast<oWinProgressBar*>(this), oStringM(oSAFESTR(_Title))));
+	MessageQueue->Dispatch(oBIND(&oWinProgressBar::SetTitle, thread_cast<oWinProgressBar*>(this), oStringL(oSAFESTR(_Title))));
 	oWinWake(hDialog);
 }
 
-void oWinProgressBar::SetText(bool _TextValid, oStringM _Text, bool _SubtextValid, oStringM _Subtext)
+void oWinProgressBar::SetText(bool _TextValid, oStringL _Text, bool _SubtextValid, oStringL _Subtext)
 {
 	if (_TextValid)
 		oSetDlgItemTextTruncated(hDialog, TEXT, _Text);
@@ -291,7 +291,7 @@ void oWinProgressBar::SetText(const char* _Text, const char* _Subtext) threadsaf
 {
 	if (_Text || _Subtext)
 	{
-		MessageQueue->Dispatch(oBIND(&oWinProgressBar::SetText, thread_cast<oWinProgressBar*>(this), !!_Text, oStringM(oSAFESTRN(_Text)), !!_Subtext, oStringM(oSAFESTRN(_Subtext))));
+		MessageQueue->Dispatch(oBIND(&oWinProgressBar::SetText, thread_cast<oWinProgressBar*>(this), !!_Text, oStringL(oSAFESTRN(_Text)), !!_Subtext, oStringL(oSAFESTRN(_Subtext))));
 		oWinWake(hDialog);
 	}
 }

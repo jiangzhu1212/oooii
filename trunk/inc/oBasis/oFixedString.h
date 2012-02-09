@@ -75,40 +75,39 @@ public:
 // Prefer one of these fixed types over defining your own to reduce the number
 // of template instantiations.
 typedef oFixedString<char, 64> oStringS;
-typedef oFixedString<char, 512> oStringM;
-typedef oFixedString<char, 2048> oStringL;
-typedef oFixedString<char, 4096> oStringXL;
+typedef oFixedString<char, 128> oStringM;
+typedef oFixedString<char, 512> oStringL;
+typedef oFixedString<char, 2048> oStringXL;
+typedef oFixedString<char, 4096> oStringML;
 
-typedef oStringM oStringPath;
-typedef oStringM oStringURI;
+typedef oStringL oStringPath;
+typedef oStringL oStringURI;
 
 typedef oFixedString<wchar_t, 64> oWStringS;
-typedef oFixedString<wchar_t, 512> oWStringM;
-typedef oFixedString<wchar_t, 2048> oWStringL;
-typedef oFixedString<wchar_t, 4096> oWStringXL;
+typedef oFixedString<wchar_t, 128> oWStringM;
+typedef oFixedString<wchar_t, 512> oWStringL;
+typedef oFixedString<wchar_t, 2048> oWStringXL;
+typedef oFixedString<wchar_t, 4096> oWStringXXL;
 
-typedef oWStringM oWStringPath;
-typedef oWStringM oWStringURI;
+typedef oWStringL oWStringPath;
+typedef oWStringL oWStringURI;
 
-// Add support for some super-generic functions, but how to move forward from 
-// here? Do all APIs support oFixedString? Or does oFixedString add support for
-// all APIs in this header?
+// _____________________________________________________________________________
+// Support for stdc functions
 
-template<typename T, size_t CAPACITY> char* oToString(oFixedString<char, CAPACITY>& _StrDestination, const T& _Value) { return oToString(_StrDestination.c_str(), _StrDestination.capacity(), _Value); }
-template<size_t CAPACITY> errno_t oStrAppend(oFixedString<char, CAPACITY>& _StrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); return oVStrAppend(_StrDestination.c_str(), _StrDestination.capacity(), _Format, args); }
 template<size_t CAPACITY> int vsprintf_s(oFixedString<char, CAPACITY>& _StrDestination, const char* _Format, va_list _Args) { return vsprintf_s(_StrDestination.c_str(), _StrDestination.capacity(), _Format, _Args); }
 template<size_t CAPACITY> int sprintf_s(oFixedString<char, CAPACITY>& _StrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); return vsprintf_s(_StrDestination, _Format, args); }
 template<size_t CAPACITY> int strcat_s(oFixedString<char, CAPACITY>& _StrDestination, const char* _Source) { return strcat_s(_StrDestination.c_str(), _StrDestination.capacity(), _Source); }
 template<size_t CAPACITY> int strncpy_s(oFixedString<char, CAPACITY>& _StrDestination, const char* _Source, size_t _Count) { return strncpy_s(_StrDestination.c_str(), _StrDestination.capacity(), _Source, _Count); }
 
-template<typename CHAR_T, size_t CAPACITY>
-bool oFromString(oFixedString<CHAR_T, CAPACITY> *_pValue, const char* _StrSource)
-{
-	oASSERT(strlen(_StrSource) < CAPACITY, "oFixedString wasn't large enough to hold string passed to oFromString");
+// _____________________________________________________________________________
+// (partial) Support for oString.h functions (add them as needed)
 
-	*_pValue = _StrSource;
-
-	return true;
-}
+template<typename T, size_t CAPACITY> char* oToString(oFixedString<char, CAPACITY>& _StrDestination, const T& _Value) { return oToString(_StrDestination.c_str(), _StrDestination.capacity(), _Value); }
+template<typename CHAR_T, size_t CAPACITY> bool oFromString(oFixedString<CHAR_T, CAPACITY> *_pValue, const char* _StrSource) { oASSERT(strlen(_StrSource) < CAPACITY, "oFixedString wasn't large enough to hold string passed to oFromString"); *_pValue = _StrSource; return true; }
+template<size_t CAPACITY> errno_t oStrAppend(oFixedString<char, CAPACITY>& _StrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); return oVStrAppend(_StrDestination.c_str(), _StrDestination.capacity(), _Format, args); }
+template<size_t CAPACITY> errno_t oFormatMemorySize(oFixedString<char, CAPACITY>& _StrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits) { return oFormatMemorySize(_StrDestination, _StrDestination.capacity(), _NumBytes, _NumPrecisionDigits); }
+template<size_t CAPACITY> errno_t oFormatTimeSize(oFixedString<char, CAPACITY>& _StrDestination, double _TimeInSeconds, bool _Abbreviated = false) { return oFormatTimeSize(_StrDestination, _StrDestination.capacity(), _TimeInSeconds, _Abbreviated); }
+template<size_t CAPACITY> errno_t oFormatCommas(oFixedString<char, CAPACITY>& _StrDestination, int _Number) { return oFormatCommas(_StrDestination, _StrDestination.capacity(), _Number); }
 
 #endif

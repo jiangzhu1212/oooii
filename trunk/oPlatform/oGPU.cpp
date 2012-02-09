@@ -37,13 +37,12 @@ const char* oAsString(const oGPU_VENDOR& _Vendor)
 	}
 }
 
-static oGPU_VENDOR ToVendor(oWINDOWS_VIDEO_DRIVER_DESC::GPU_VENDOR _Vendor)
+const char* oAsString(const oGPU_API& _API)
 {
-	switch (_Vendor)
+	switch (_API)
 	{
-		case oWINDOWS_VIDEO_DRIVER_DESC::UNKNOWN: return oGPU_VENDOR_UNKNOWN;
-		case oWINDOWS_VIDEO_DRIVER_DESC::NVIDIA: return oGPU_VENDOR_NVIDIA;
-		case oWINDOWS_VIDEO_DRIVER_DESC::AMD: return oGPU_VENDOR_AMD;
+		case oGPU_API_D3D: return "Direct3D";
+		case oGPU_API_OGL: return "OpenGL";
 		oNODEFAULT;
 	}
 }
@@ -55,25 +54,28 @@ bool oGPUEnum(unsigned int _Index, oGPU_DESC* _pDesc)
 		oDXGICreateFactory(&pFactory);
 		if (pFactory)
 		{
-			IDXGIAdapter* pAdapter = 0;
-			if (DXGI_ERROR_NOT_FOUND == pFactory->EnumAdapters(_Index, &pAdapter))
+			oRef<IDXGIAdapter> Adapter;
+			if (DXGI_ERROR_NOT_FOUND == pFactory->EnumAdapters(_Index, &Adapter))
 				return oErrorSetLast(oERROR_END_OF_FILE, "Index %u not found", _Index);
 
 			DXGI_ADAPTER_DESC desc;
-			pAdapter->GetDesc(&desc);
-			oStrConvert(_pDesc->GPUDescription, oCOUNTOF(_pDesc->GPUDescription), desc.Description);
+			Adapter->GetDesc(&desc);
+
+			oWINDOWS_VIDEO_DRIVER_DESC VDDesc;
+			oWinGetVideoDriverDesc(&VDDesc);
+
+			_pDesc->GPUDescription = desc.Description;
+			_pDesc->DriverDescription = VDDesc.Desc;
 			_pDesc->VRAM = desc.DedicatedVideoMemory;
 			_pDesc->DedicatedSystemMemory = desc.DedicatedSystemMemory;
 			_pDesc->SharedSystemMemory = desc.SharedSystemMemory;
 			_pDesc->Index = _Index;
-			_pDesc->D3DVersion = oDXGIGetD3DVersion(pAdapter);
-			pAdapter->Release();
-			
-			oWINDOWS_VIDEO_DRIVER_DESC VDDesc;
-			oWinGetVideoDriverDesc(&VDDesc);
-			_pDesc->Vendor = ToVendor(VDDesc.Vendor);
-			strcpy_s(_pDesc->DriverDescription, VDDesc.Desc);
+			_pDesc->Vendor = VDDesc.Vendor;
+			_pDesc->API = oGPU_API_D3D; // @oooii-tony: No work toward OGL support has been started
 			_pDesc->DriverVersion = VDDesc.Version;
+			_pDesc->FeatureVersion = oDXGIGetFeatureLevel(Adapter);
+			_pDesc->InterfaceVersion = oDXGIGetInterfaceVersion(Adapter);
+
 			return true;
 		}
 	#else
@@ -89,7 +91,7 @@ bool oGPUFindD3DCapable(unsigned int _NthMatch, const oVersion& _MinimumFeatureL
 	unsigned int D3DGPUIndex = oInvalid;
 	while (oGPUEnum(++D3DGPUIndex, _pDesc))
 	{
-		if (_pDesc->D3DVersion >= _MinimumFeatureLevel)
+		if (_pDesc->FeatureVersion >= _MinimumFeatureLevel)
 		{
 			if (++UserGPUIndex == _NthMatch)
 				return true;

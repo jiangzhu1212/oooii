@@ -117,7 +117,7 @@ int ShowAllCameras()
 		d.ClientPosition = int2(30, 30) * int2(oSize32(i + 1), oSize32(i + 1));
 		oVERIFY(oWindowCreate(d, nullptr, oWindow::USE_DEFAULT, &Contexts[i].Window));
 
-		oStringM Title;
+		oStringL Title;
 		sprintf_s(Title, "%s (%dx%d %s)", Contexts[i].Camera->GetName(), cd.Mode.Dimensions.x, cd.Mode.Dimensions.y, oAsString(cd.Mode.Format));
 		Contexts[i].Window->SetTitle(Title);
 

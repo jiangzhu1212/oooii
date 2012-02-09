@@ -34,13 +34,13 @@ struct TESTGPU : public oTest
 		oGPU_DESC desc;
 		oTESTB(oGPUEnum(0, &desc), "%s: %s", oAsString(oErrorGetLast()), oErrorGetLastString());
 		oTESTB(desc.Index == 0, "Index is incorrect");
-		oTESTB(desc.D3DVersion >= oVersion(9,0), "Invalid version retrieved");
+		oTESTB(desc.FeatureVersion >= oVersion(9,0), "Invalid version retrieved");
 
 		char VRAMSize[64];
 		oFormatMemorySize(VRAMSize, desc.VRAM, 1);
 		char SharedSize[64];
 		oFormatMemorySize(SharedSize, desc.SharedSystemMemory, 1);
-		sprintf_s(_StrStatus, _SizeofStrStatus, "%s D3D %d.%d %s (%s shared) running on %s v%d.%d drivers (%s)", desc.GPUDescription, desc.D3DVersion.Major, desc.D3DVersion.Minor, VRAMSize, SharedSize, oAsString(desc.Vendor), desc.DriverVersion.Major, desc.DriverVersion.Minor, desc.DriverDescription);
+		sprintf_s(_StrStatus, _SizeofStrStatus, "%s %s %d.%d feature level %d.%d %s (%s shared) running on %s v%d.%d drivers (%s)", desc.GPUDescription, oAsString(desc.API), desc.InterfaceVersion.Major, desc.InterfaceVersion.Minor, desc.FeatureVersion.Major, desc.FeatureVersion.Minor, VRAMSize, SharedSize, oAsString(desc.Vendor), desc.DriverVersion.Major, desc.DriverVersion.Minor, desc.DriverDescription);
 
 		return SUCCESS;
 	}

@@ -64,7 +64,7 @@ struct oGDIWindowUIText : oWindowUIText, oWindowUIElementBaseMixin<oWindowUIText
 protected:
 	oSharedMutex FontStringMutex;
 	oRef<threadsafe oWindowUIFont> Font;
-	oStringL Text;
+	oStringXL Text;
 };
 
 struct oGDIWindowUIPicture : oWindowUIPicture, oWindowUIElementBaseMixin<oWindowUIPicture, oGDIWindowUIPicture>

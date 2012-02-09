@@ -73,7 +73,7 @@ protected:
 	oRef<threadsafe oWindowUIFont> Font;
 	oRef<ID2D1SolidColorBrush> Brush;
 	oRef<ID2D1SolidColorBrush> ShadowBrush;
-	oWStringL Text;
+	oWStringXL Text;
 };
 
 struct oD2DWindowUIPicture : oWindowUIPicture, oWindowUIElementBaseMixin<oWindowUIPicture, oD2DWindowUIPicture>

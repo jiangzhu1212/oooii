@@ -292,7 +292,7 @@ protected:
 	oStd::atomic_uint RingBufferReadIndex;
 	unsigned int MonotonicCounter;
 	unsigned int ID;
-	oInitOnce<oStringM> Name;
+	oInitOnce<oStringURI> Name;
 	volatile bool Running;
 
 	struct FRAME
@@ -752,7 +752,7 @@ bool oDSGetStringProperty(char* _StrDestination, size_t _SizeofStrDestination, I
 	oVB_RETURN2(_pMoniker->BindToStorage(nullptr, nullptr, IID_IPropertyBag, (void**)&PropertyBag));
 	VARIANT varName;
 	VariantInit(&varName);
-	oWStringM PropertyName = _Property;
+	oWStringL PropertyName = _Property;
 	oVB_RETURN2(PropertyBag->Read(PropertyName.c_str(), &varName, 0));
 	oStrConvert(_StrDestination, _SizeofStrDestination, varName.bstrVal);
 	VariantClear(&varName);
@@ -787,7 +787,7 @@ bool oCameraEnum(unsigned int _Index, threadsafe oCamera** _ppCamera)
 	if (!oDSMonikerEnum(_Index, &Moniker))
 		return false;
 
-	oStringM Name;
+	oStringURI Name;
 	oDSGetStringProperty(Name.c_str(), Name.capacity(), Moniker, "FriendlyName");
 	//oStringM Description;
 	//oDSGetStringProperty(Description.c_str(), Description.capacity(), Moniker, "Description");

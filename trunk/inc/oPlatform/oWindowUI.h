@@ -164,7 +164,7 @@ interface oWindowUIText : oWindowUIElement
 	virtual void SetFont(threadsafe oWindowUIFont* _pFont) threadsafe = 0;
 	virtual void GetFont(threadsafe oWindowUIFont** _ppFont) threadsafe = 0;
 	virtual void SetText(const char* _Text) threadsafe = 0;
-	inline void VPrint(const char* _Format, va_list _Args) threadsafe { oStringL s; vsprintf_s(s, _Format, _Args); SetText(s.c_str()); }
+	inline void VPrint(const char* _Format, va_list _Args) threadsafe { oStringXL s; vsprintf_s(s, _Format, _Args); SetText(s.c_str()); }
 
 	inline void Print(const char* _Format, ...) threadsafe { va_list args; va_start(args, _Format); VPrint(_Format, args); }
 };

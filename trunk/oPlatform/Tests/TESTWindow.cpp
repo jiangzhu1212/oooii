@@ -387,7 +387,7 @@ struct TESTWindowBase : public oTest
 		d.HasFocus = true;
 		d.AlwaysOnTop = true;
 
-		oStringM Title;
+		oStringL Title;
 
 		UI_ELEMENTS Elements;
 		oRef<threadsafe oWindow> Window;

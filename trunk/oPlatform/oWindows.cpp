@@ -626,23 +626,6 @@ void oTaskbarGetRect(RECT* _pRect)
 	*_pRect = abd.rc;
 }
 
-#if oDXVER >= oDXVER_11
-	oVersion oGetD3DVersion(D3D_FEATURE_LEVEL _Level)
-	{
-		switch (_Level)
-		{
-			case D3D_FEATURE_LEVEL_11_0: return oVersion(11,0);
-			case D3D_FEATURE_LEVEL_10_1: return oVersion(10,1);
-			case D3D_FEATURE_LEVEL_10_0: return oVersion(10,0);
-			case D3D_FEATURE_LEVEL_9_3: return oVersion(9,3);
-			case D3D_FEATURE_LEVEL_9_2: return oVersion(9,2);
-			case D3D_FEATURE_LEVEL_9_1: return oVersion(9,1);
-			oNODEFAULT;
-		}
-	}
-
-#endif // oDXVER >= oDXVER_11
-
 unsigned int oWinGetDisplayDevice(HMONITOR _hMonitor, DISPLAY_DEVICE* _pDevice)
 {
 	MONITORINFOEX mi;
@@ -1318,12 +1301,12 @@ bool oWinVideoDriverIsUpToDate()
 	bool bCompatibleVersion = false;
 	switch (desc.Vendor)
 	{
-		case oWINDOWS_VIDEO_DRIVER_DESC::NVIDIA:
+		case oGPU_VENDOR_NVIDIA:
 			VendorName = "NVIDIA";
 			RequiredVersion = oVersion(oNVVER_MAJOR, oNVVER_MINOR);
 			break;
 
-		case oWINDOWS_VIDEO_DRIVER_DESC::AMD:
+		case oGPU_VENDOR_AMD:
 			VendorName = "AMD";
 			RequiredVersion = oVersion(oAMDVER_MAJOR, oAMDVER_MINOR);
 			break;
@@ -1424,19 +1407,19 @@ bool oWinGetVideoDriverDesc(oWINDOWS_VIDEO_DRIVER_DESC* _pDesc)
 		oStringS version = vtProp.bstrVal;
 		if (strstr(_pDesc->Desc, "NVIDIA"))
 		{
-			_pDesc->Vendor = oWINDOWS_VIDEO_DRIVER_DESC::NVIDIA;
+			_pDesc->Vendor = oGPU_VENDOR_NVIDIA;
 			oVERIFY(ParseVersionStringNV(version, &_pDesc->Version));
 		}
 		
 		else if (strstr(_pDesc->Desc, "ATI") || strstr(_pDesc->Desc, "AMD"))
 		{
-			_pDesc->Vendor = oWINDOWS_VIDEO_DRIVER_DESC::AMD;
+			_pDesc->Vendor = oGPU_VENDOR_AMD;
 			oVERIFY(ParseVersionStringAMD(version, &_pDesc->Version));
 		}
 
 		else
 		{
-			_pDesc->Vendor = oWINDOWS_VIDEO_DRIVER_DESC::UNKNOWN;
+			_pDesc->Vendor = oGPU_VENDOR_UNKNOWN;
 			_pDesc->Version = oVersion();
 		}
 	}

@@ -245,7 +245,7 @@ protected:
 	bool GDIPaint(HWND _hWnd, HDC _hDC, bool _Force = false);
 	
 	// Some of these have params specified by-copy so oBIND keeps the param copy when enqueued.
-	void SetTitle1(oStringM _Title);
+	void SetTitle1(oStringL _Title);
 	void SetIcon(HICON _hIcon);
 	void SetCursor(HCURSOR _hCursor);
 	void SetDesc(DESC _Desc);
@@ -315,7 +315,7 @@ oWinWindow::oWinWindow(const DESC& _Desc, void* _pAssociatedNativeHandle, DRAW_M
 	, PreFullscreenDesc(_Desc)
 	, DrawMode(CheckDefaultDrawMode(_DrawMode))
 	, hWnd(nullptr)
-	, pUserSpecifiedDevice(nullptr)
+	, pUserSpecifiedDevice((IUnknown*)_pAssociatedNativeHandle)
 	, CloseConfirmed(false)
 {
 	*_pSuccess = false;
@@ -977,11 +977,11 @@ char* oWinWindow::GetTitle(char* _StrDestination, size_t _SizeofStrDestination) 
 
 void oWinWindow::SetTitle(const char* _Title) threadsafe
 {
-	MessageQueue->Dispatch(oBIND(&oWinWindow::SetTitle1, QThis(), oStringM(oSAFESTR(_Title))));
+	MessageQueue->Dispatch(oBIND(&oWinWindow::SetTitle1, QThis(), oStringL(oSAFESTR(_Title))));
 	oWinWake(hWnd);
 }
 
-void oWinWindow::SetTitle1(oStringM _Title)
+void oWinWindow::SetTitle1(oStringL _Title)
 {
 	oWinSetTitle(hWnd, _Title);
 }
@@ -1113,7 +1113,7 @@ void oWinWindow::SetDesc(DESC _Desc)
 			{
 				if (oERROR_REFUSED == oErrorGetLast())
 				{
-					oStringM title;
+					oStringL title;
 					oMSGBOX_DESC mb;
 					mb.Type = oMSGBOX_ERR;
 					mb.Title = GetTitle(title.c_str(), title.capacity());
@@ -1292,7 +1292,7 @@ unsigned int oWinWindow::Hook(HookFn _Hook) threadsafe
 {
 	oASSERT(_Hook, "A valid hook function must be specified");
 	oERROR err = oERROR_NONE;
-	oStringL ErrStr;
+	oStringXL ErrStr;
 	oEvent IndexValid;
 	size_t index = oInvalid;
 	MessageQueue->Dispatch(oBIND(&oWinWindow::Hook1, QThis(), _Hook, &IndexValid, &index, &err, ErrStr.c_str(), ErrStr.capacity()));

@@ -116,13 +116,16 @@ bool oOBJLoadMTL(const char* _MTLPath, const char* _MTLString, std::vector<oOBJ:
 	return true;
 }
 
-inline void ParseString(oStringM& _StrDestination, const char* r)
+static inline void ParseString(char* _StrDestination, size_t _SizeofStrDestination, const char* r)
 {
 	MoveToWhitespace(&r); MovePastWhitespace(&r);
 	const char* start = r;
 	MoveToEndOfLine(&r);
-	strncpy_s(_StrDestination, start, std::distance(start, r));
+	size_t len = std::distance(start, r);
+	strncpy_s(_StrDestination, _SizeofStrDestination, start, len);
 }
+
+template<size_t size> static inline void ParseString(oFixedString<char, size>& _StrDestination, const char* r) { ParseString(_StrDestination, _StrDestination.capacity(), r); }
 
 class ObjLoader
 {
@@ -230,16 +233,16 @@ public:
 		#ifdef _DEBUG
 			if (IndexMapMallocBytes)
 			{
-				char reserved[128];
+				oStringM reserved;
 				oFormatMemorySize(reserved, InternalReserve, 2);
-				char additional[128];
+				oStringM additional;
 				oFormatMemorySize(additional, IndexMapMallocBytes, 2);
 				oTRACE("oOBJLoader: %s index_map required %s of additional mallocs beyond the _InternalReserve of %s", pOBJ->OBJPath.c_str(), additional, reserved);
 			}
 		#endif
 		
 		oTRACE("OBJ: Slow operation: Beginning teardown of pVertIndexMap for %s...", pOBJ->OBJPath.c_str());
-		char timeStr[128];
+		oStringM timeStr;
 		double start = oTimer();
 		delete pVertIndexMap;
 		oFormatTimeSize(timeStr, oTimer() - start);

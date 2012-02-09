@@ -46,6 +46,7 @@
     <ClInclude Include="..\inc\oBasis\oCallable.h" />
     <ClInclude Include="..\inc\oBasis\oCheckedAssignment.h" />
     <ClInclude Include="..\inc\oBasis\oColor.h" />
+    <ClInclude Include="..\inc\oBasis\oCompression.h" />
     <ClInclude Include="..\inc\oBasis\oConcurrentIndexAllocator.h" />
     <ClInclude Include="..\inc\oBasis\oConcurrentQueue.h" />
     <ClInclude Include="..\inc\oBasis\oConditionVariable.h" />
@@ -138,6 +139,7 @@
     <ClCompile Include="oBuffer.cpp" />
     <ClCompile Include="oBufferPool.cpp" />
     <ClCompile Include="oColor.cpp" />
+    <ClCompile Include="oCompression.cpp" />
     <ClCompile Include="oConcurrentIndexAllocator.cpp" />
     <ClCompile Include="oCppParsing.cpp" />
     <ClCompile Include="oCSV.cpp" />

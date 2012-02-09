@@ -25,6 +25,7 @@
 #ifndef oGPU_h
 #define oGPU_h
 
+#include <oBasis/oFixedString.h>
 #include <oBasis/oVersion.h>
 
 enum oGPU_VENDOR
@@ -34,17 +35,25 @@ enum oGPU_VENDOR
 	oGPU_VENDOR_AMD,
 };
 
+enum oGPU_API
+{
+	oGPU_API_D3D,
+	oGPU_API_OGL,
+};
+
 struct oGPU_DESC
 {
-	char GPUDescription[128];
-	char DriverDescription[128];
+	oStringM GPUDescription;
+	oStringM DriverDescription;
 	size_t VRAM;
 	size_t DedicatedSystemMemory;
 	size_t SharedSystemMemory;
 	unsigned int Index;
 	oGPU_VENDOR Vendor;
+	oGPU_API API;
 	oVersion DriverVersion;
-	oVersion D3DVersion;
+	oVersion FeatureVersion; // What underlying feature level can be HW accelerated
+	oVersion InterfaceVersion; // what underlying API can be used
 };
 
 // Returns false if the specified GPU doesn't exist.

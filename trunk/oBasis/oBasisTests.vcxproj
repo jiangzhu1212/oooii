@@ -30,6 +30,7 @@
     <ClCompile Include="Tests\TESTBlockAllocatorFixed.cpp" />
     <ClCompile Include="Tests\TESTBlockAllocatorGrowable.cpp" />
     <ClCompile Include="Tests\TESTBuffer.cpp" />
+    <ClCompile Include="Tests\TESTCompression.cpp" />
     <ClCompile Include="Tests\TESTConcurrentStack.cpp" />
     <ClCompile Include="Tests\TESTCountdownLatch.cpp" />
     <ClCompile Include="Tests\TESTCSV.cpp" />

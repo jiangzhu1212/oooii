@@ -165,7 +165,7 @@ bool oLeakTracker::FindAllocation(uintptr_t _AllocationID, ALLOCATION_DESC* _pDe
 
 bool oLeakTracker::Report(bool _AllContexts) threadsafe
 {
-	oStringL buf;
+	oStringXL buf;
 	oStringS memsize;
 
 	DelayLatch.Release();

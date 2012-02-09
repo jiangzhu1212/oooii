@@ -263,7 +263,7 @@ private:
 	FIBITMAP* FIBitmap;
 	oRefCount RefCount;
 	oSharedMutex Mutex;
-	oStringM Name;
+	oStringURI Name;
 };
 
 const oGUID& oGetGUID( threadsafe const oImage* threadsafe const * )

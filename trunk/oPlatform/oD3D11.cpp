@@ -119,7 +119,7 @@ bool oD3D11CreateDevice(const oD3D11_DEVICE_DESC& _Desc, ID3D11Device** _ppDevic
 		, &FeatureLevel
 		, nullptr));
 
-	oVersion D3DVersion = oGetD3DVersion(FeatureLevel);
+	oVersion D3DVersion = oD3D11GetFeatureVersion(FeatureLevel);
 	if (D3DVersion < _Desc.MinimumAPIFeatureLevel)
 	{
 		if (*_ppDevice) 
@@ -132,6 +132,20 @@ bool oD3D11CreateDevice(const oD3D11_DEVICE_DESC& _Desc, ID3D11Device** _ppDevic
 
 	oVERIFY(oD3D11SetDebugName(*_ppDevice, oSAFESTRN(_Desc.DebugName)));
 	return true;
+}
+
+oVersion oD3D11GetFeatureVersion(D3D_FEATURE_LEVEL _Level)
+{
+	switch (_Level)
+	{
+	case D3D_FEATURE_LEVEL_11_0: return oVersion(11,0);
+	case D3D_FEATURE_LEVEL_10_1: return oVersion(10,1);
+	case D3D_FEATURE_LEVEL_10_0: return oVersion(10,0);
+	case D3D_FEATURE_LEVEL_9_3: return oVersion(9,3);
+	case D3D_FEATURE_LEVEL_9_2: return oVersion(9,2);
+	case D3D_FEATURE_LEVEL_9_1: return oVersion(9,1);
+		oNODEFAULT;
+	}
 }
 
 void oD3D11InitBufferDesc(D3D11_BUFFER_DESC* _pDesc, D3D11_BIND_FLAG _BindFlag, bool _CPUWritable, size_t _Size, size_t _Count)
@@ -441,7 +455,7 @@ const char* oD3D11GetShaderProfile(ID3D11Device* _pDevice, oD3D11_PIPELINE_STAGE
 
 	const char* profile = profiles[_Stage];
 	if (!profile)
-		oErrorSetLast(oERROR_NOT_FOUND, "Shader profile does not exist for D3D%.2f's stage %s", oGetD3DVersion(_pDevice->GetFeatureLevel()), oAsString(_Stage));
+		oErrorSetLast(oERROR_NOT_FOUND, "Shader profile does not exist for D3D%.2f's stage %s", oD3D11GetFeatureVersion(_pDevice->GetFeatureLevel()), oAsString(_Stage));
 
 	return profile;
 }

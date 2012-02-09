@@ -105,10 +105,7 @@ D2D1_PIXEL_FORMAT GetFormat(oSURFACE_FORMAT _Format)
 bool oD2DCreateRenderTarget(ID2D1Factory* _pD2DFactory, IDXGISwapChain* _pSwapChain, oSURFACE_FORMAT _Format, bool _UseAntialiasing, ID2D1RenderTarget** _ppRenderTarget)
 {
 	if (!_pD2DFactory || !_ppRenderTarget)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	oRef<ID3D10Texture2D> RT;
 	oVB_RETURN2(_pSwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (void**)&RT));
@@ -147,17 +144,13 @@ bool oD2DCreateBitmap(ID2D1RenderTarget* _pRenderTarget, const int2& _Size, oSUR
 	HRESULT hr = _pRenderTarget->CreateBitmap(size, 0, 0, &properties, _ppBitmap);
 	if (hr == oWINCODEC_ERR_UNSUPPORTEDPIXELFORMAT)
 	{
-		oStringM err;
+		oStringL err;
 		sprintf_s(err, "%s%s is incompatible with the specified render target", oAsString(_Format), properties.pixelFormat.alphaMode == D2D1_ALPHA_MODE_PREMULTIPLIED ? " with pre-multipled alpha" : "");
-		oWinSetLastError(hr, err);
-		return false;
+		return oWinSetLastError(hr, err);
 	}
 
 	else if (hr)
-	{
-		oWinSetLastError(hr);
-		return false;
-	}
+		return oWinSetLastError(hr);
 
 	return true;
 }
@@ -165,10 +158,7 @@ bool oD2DCreateBitmap(ID2D1RenderTarget* _pRenderTarget, const int2& _Size, oSUR
 bool oD2DDrawRoundedRect(ID2D1RenderTarget* _pRenderTarget, const D2D1_ROUNDED_RECT& _Rect, ID2D1Brush* _pFillBrush, ID2D1Brush* _pBorderBrush)
 {
 	if (!_pRenderTarget)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	if (oEqual(_Rect.radiusX, 0.0f) && oEqual(_Rect.radiusY, 0.0f))
 	{
@@ -192,10 +182,7 @@ bool oD2DDrawRoundedRect(ID2D1RenderTarget* _pRenderTarget, const D2D1_ROUNDED_R
 bool oD2DSetAlignment(IDWriteTextFormat* _pDWTextFormat, oANCHOR _Alignment)
 {
 	if (!_pDWTextFormat)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	DWRITE_TEXT_ALIGNMENT TAlign;
 	switch (_Alignment % 3)

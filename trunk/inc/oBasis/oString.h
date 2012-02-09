@@ -27,6 +27,7 @@
 
 #include <oBasis/oMacros.h>
 #include <stdarg.h> // va_start
+#include <stddef.h> // errno_t
 
 // _____________________________________________________________________________
 // String cleanup

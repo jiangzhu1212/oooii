@@ -54,6 +54,7 @@ oAPI bool oBasisTest_oAtof(const oBasisTestServices& _Services);
 oAPI bool oBasisTest_oBuffer(const oBasisTestServices& _Services);
 oAPI bool oBasisTest_oBlockAllocatorFixed();
 oAPI bool oBasisTest_oBlockAllocatorGrowable();
+oAPI bool oBasisTest_oCompression(const oBasisTestServices& _Services);
 oAPI bool oBasisTest_oConcurrentStack();
 oAPI bool oBasisTest_oCSV();
 

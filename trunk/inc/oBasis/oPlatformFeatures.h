@@ -122,4 +122,6 @@
 	#define oAPI
 #endif
 
+typedef unsigned char uchar;
+
 #endif

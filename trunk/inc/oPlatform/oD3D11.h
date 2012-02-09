@@ -88,6 +88,9 @@ struct oD3D11_DEVICE_DESC
 // supported.
 bool oD3D11CreateDevice(const oD3D11_DEVICE_DESC& _Desc, ID3D11Device** _ppDevice);
 
+// Converts the specified D3D_FEATURE_LEVEL into an oVersion.
+oVersion oD3D11GetFeatureVersion(D3D_FEATURE_LEVEL _Level);
+
 // _____________________________________________________________________________
 // Texture API
 

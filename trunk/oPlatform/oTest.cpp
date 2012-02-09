@@ -354,7 +354,7 @@ bool oSpecialTest::CreateProcess(const char* _SpecialTestName, threadsafe interf
 	if (!_SpecialTestName || !_ppProcess)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
-	oStringXL cmdline;
+	oStringML cmdline;
 	if (!oSystemGetPath(cmdline.c_str(), oSYSPATH_APP_FULL))
 		return oErrorSetLast(oERROR_NOT_FOUND);
 
@@ -399,7 +399,7 @@ bool oSpecialTest::Start(threadsafe interface oProcess* _pProcess, char* _StrSta
 	// If we timeout on ending, that's good, it means the app is still running
 	if ((_pProcess->Wait(200) && _pProcess->GetExitCode(_pExitCode)))
 	{
-		oStringL msg;
+		oStringXL msg;
 		size_t bytes = _pProcess->ReadFromStdout(msg.c_str(), msg.capacity());
 		msg[bytes] = 0;
 		if (bytes)
@@ -511,7 +511,7 @@ void oTestManager_Impl::PrintDesc()
 	for (unsigned int i = 0; i < NumGPUs; i++)
 	{
 		Report(oConsoleReporting::INFO, "Video Card %u: %s\n", i, GPUs[i].GPUDescription);
-		Report(oConsoleReporting::INFO, "Video Driver %u: %s v%d.%d D3D %d.%d capable\n", i, GPUs[i].DriverDescription, GPUs[i].DriverVersion.Major, GPUs[i].DriverVersion.Minor, GPUs[i].D3DVersion.Major, GPUs[i].D3DVersion.Minor);
+		Report(oConsoleReporting::INFO, "Video Driver %u: %s v%d.%d %s %d.%d interface running %d.%d features\n", i, GPUs[i].DriverDescription, GPUs[i].DriverVersion.Major, GPUs[i].DriverVersion.Minor, oAsString(GPUs[i].API), GPUs[i].InterfaceVersion.Major, GPUs[i].InterfaceVersion.Minor, GPUs[i].FeatureVersion.Major, GPUs[i].FeatureVersion.Minor);
 	}
 }
 
@@ -723,7 +723,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 
 		oVERIFY(oProgressBarCreate(PBDesc, oConsole::GetNativeHandle(), &ProgressBar));
 
-		oStringL title;
+		oStringXL title;
 		oConsole::GetTitle(title.c_str());
 		ProgressBar->SetTitle(title);
 	}
@@ -753,7 +753,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	oCRTLeakTracker::Singleton()->Enable(Desc.EnableLeakTracking);
 	oCRTLeakTracker::Singleton()->CaptureCallstack(Desc.CaptureCallstackForTestLeaks);
 
-	oStringL timeMessage;
+	oStringXL timeMessage;
 	double allIterationsStartTime = oTimer();
 	for (size_t r = 0; r < Desc.NumRunIterations; r++)
 	{
@@ -773,7 +773,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 		oStringS messageSpec;
 		sprintf_s(messageSpec, "%%s\n");
 
-		oStringL statusMessage;
+		oStringXL statusMessage;
 
 		Report(oConsoleReporting::DEFAULT, "========== %s Run %u ==========\n", Desc.TestSuiteName, r+1);
 		PrintDesc();
@@ -947,7 +947,7 @@ oTest::RESULT oTestManager_Impl::RunSpecialMode(const char* _Name)
 	RegisterTestBase* pRTB = SpecialModes[_Name];
 	if (pRTB)
 	{
-		oStringL statusMessage;
+		oStringXL statusMessage;
 		result = RunTest(pRTB, statusMessage.c_str(), statusMessage.capacity());
 		switch (result)
 		{

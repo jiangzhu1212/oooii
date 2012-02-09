@@ -67,7 +67,17 @@
 
 	// Returns the numeric version of the highest level of D2D the specified 
 	// adapter supports.
-	oVersion oDXGIGetD3DVersion(IDXGIAdapter* _pAdapter);
+	
+	// Returns the highest DirectX version number of the API interface that can be 
+	// instantiated (i.e. whether you can create an ID3D10Device or an 
+	// ID3D11Device). This is related more to the OS version than the HW 
+	// capabilities.
+	oVersion oDXGIGetInterfaceVersion(IDXGIAdapter* _pAdapter);
+
+	// Returns the highest D3D feature level version that can be HW accelerated by 
+	// the specified adapter. For example even though an ID3D11Device can be 
+	// instantiated the HW may only support DX10 features.
+	oVersion oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter);
 
 	// A bit of syntactic sugar on top of GetParent()
 	bool oDXGIGetAdapter(IDXGIObject* _pObject, IDXGIAdapter1** _ppAdapter);

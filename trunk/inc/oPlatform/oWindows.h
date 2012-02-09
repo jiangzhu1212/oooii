@@ -36,6 +36,7 @@
 #include <oBasis/oGUID.h>
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oSurface.h>
+#include <oPlatform/oGPU.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oStddef.h>
 
@@ -478,16 +479,9 @@ void oDlgDeleteTemplate(LPDLGTEMPLATE _lpDlgTemplate);
 
 struct oWINDOWS_VIDEO_DRIVER_DESC
 {
-	enum GPU_VENDOR
-	{
-		UNKNOWN,
-		NVIDIA,
-		AMD,
-	};
-
 	oVersion Version;
-	oStringL Desc;
-	GPU_VENDOR Vendor;
+	oStringM Desc;
+	oGPU_VENDOR Vendor;
 };
 
 bool oWinGetVideoDriverDesc(oWINDOWS_VIDEO_DRIVER_DESC* _pDesc);
@@ -565,10 +559,6 @@ inline void oSetThreadNameInDebugger(HANDLE _hThread, const char* _Name) { oSetT
 bool oWinExitWindows(UINT _uFlags, DWORD _dwReason);
 
 void oGetScreenDPIScale(float* _pScaleX, float* _pScaleY);
-
-#if oDXVER >= oDXVER_11
-	oVersion oGetD3DVersion(D3D_FEATURE_LEVEL _Level);
-#endif
 
 unsigned int oWinGetDisplayDevice(HMONITOR _hMonitor, DISPLAY_DEVICE* _pDevice);
 
