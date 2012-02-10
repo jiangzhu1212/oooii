@@ -32,7 +32,7 @@ struct TESTBCEncodeDecode : public oTest
 	RESULT LoadOriginalAndSaveConverted(char* _StrStatus, size_t _SizeofStrStatus, ID3D11Device* _pDevice, DXGI_FORMAT _TargetFormat, const char* _OriginalPath, const char* _ConvertedPath)
 	{
 		oRef<oBuffer> OriginalFile;
-		oTESTB(oBufferCreate(_OriginalPath, false, &OriginalFile), "Failed to load %s", _OriginalPath);
+		oTESTB(oBufferCreate(_OriginalPath, &OriginalFile), "Failed to load %s", _OriginalPath);
 
 		oRef<ID3D11Texture2D> OriginalAsTexture;
 		oTESTB(oD3D11Load(_pDevice, DXGI_FORMAT_FROM_FILE, oD3D11_DYNAMIC_TEXTURE, "Source Texture", OriginalFile->GetData(), OriginalFile->GetSize(), (ID3D11Resource**)&OriginalAsTexture), "Failed to parse %s", OriginalFile->GetName());
@@ -48,7 +48,7 @@ struct TESTBCEncodeDecode : public oTest
 	RESULT LoadConvertedAndConvertToImage(char* _StrStatus, size_t _SizeofStrStatus, ID3D11Device* _pDevice, const char* _ConvertedPath, oImage** _ppConvertedImage)
 	{
 		oRef<oBuffer> ConvertedFile;
-		oTESTB(oBufferCreate(_ConvertedPath, false, &ConvertedFile), "Failed to load %s", _ConvertedPath);
+		oTESTB(oBufferCreate(_ConvertedPath, &ConvertedFile), "Failed to load %s", _ConvertedPath);
 
 		oRef<ID3D11Texture2D> ConvertedFileAsTexture;
 		oTESTB(oD3D11Load(_pDevice, DXGI_FORMAT_FROM_FILE, oD3D11_DYNAMIC_TEXTURE, "Converted Texture", ConvertedFile->GetData(), ConvertedFile->GetSize(), (ID3D11Resource**)&ConvertedFileAsTexture), "Failed to parse %s", ConvertedFile->GetName());

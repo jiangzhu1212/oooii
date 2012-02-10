@@ -99,73 +99,81 @@ char* oFileCreateTempFolder(char* _TempPath, size_t _SizeofTempPath)
 	return result ? _TempPath : nullptr;
 }
 
-bool oFileLoad(void** _ppOutBuffer, size_t* _pOutSize, oFUNCTION<void*(size_t _Size)> _Allocate, const char* _Path, bool _AsText)
+static bool oFileLoad_OpenAndSize(oHFILE* _phFile, size_t* _pSize, const char* _Path)
+{
+	if (!oFileOpen(_Path, oFILE_OPEN_BIN_READ, _phFile))
+		return false; // propagate oFileOpen error
+
+	*_pSize = detail::oSizeT<size_t>(oFileGetSize(*_phFile));
+	return true;
+}
+
+static bool oFileLoad_ReadAndClose(void* _pOutBuffer, size_t _SizeofOutBuffer, size_t* _pOutSize, size_t _ReadSize, oHFILE _hFile, const char* _Path, bool _AsString)
+{
+	oOnScopeExit closeFile([&] { oVERIFY(oFileClose(_hFile)); }); // right now we're passing through the eror from read, so if close is going to overwrite that error, let's take a look first with the oVERIFY
+
+	if (_ReadSize > _SizeofOutBuffer) // ReadSize has +1 for nul terminator in it
+	{
+		oStringS fileSize, outSize;
+		return oErrorSetLast(oERROR_AT_CAPACITY, "Size of out buffer (%s) is not large enough to hold the %s of file %s", oFormatMemorySize(outSize, _SizeofOutBuffer, 2), oFormatMemorySize(fileSize, _ReadSize, 2), _Path);
+	}
+
+	unsigned long long actualSize = oFileRead(_hFile, _pOutBuffer, _SizeofOutBuffer, _ReadSize);
+	if (!actualSize)
+		return false;
+
+	if (_AsString)
+		((char*)_pOutBuffer)[actualSize] = 0;
+	if (_pOutSize)
+		*_pOutSize = detail::oSizeT<size_t>(actualSize + (_AsString ? 1 : 0));
+
+	return true;
+}
+
+bool oFileLoad(void** _ppOutBuffer, size_t* _pOutSize, oFUNCTION<void*(size_t _Size)> _Allocate, const char* _Path, bool _AsString)
 {
 	if (!_ppOutBuffer || !_Allocate || !oSTRVALID(_Path))
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	oHFILE hFile = nullptr;
-	if (!oFileOpen(_Path, _AsText ? oFILE_OPEN_TEXT_READ : oFILE_OPEN_BIN_READ, &hFile))
-		return false; // propagate oFileOpen error
+	size_t size = 0;
+	if (!oFileLoad_OpenAndSize(&hFile, &size, _Path))
+		return false; // pass through error
 
-	size_t size = detail::oSizeT<size_t>(oFileGetSize(hFile) + (_AsText ? 1 : 0)); // for nul terminator
-	*_ppOutBuffer = _Allocate(size);
+	*_ppOutBuffer = _Allocate(size + (_AsString ? 1 : 0));
 	if (!*_ppOutBuffer)
 	{
-		char fileSize[64];
+		oStringS fileSize;
+		oFileClose(hFile);
 		return oErrorSetLast(oERROR_AT_CAPACITY, "Out of memory allocating %s", oFormatMemorySize(fileSize, size, 2));
 	}
-	size_t actualSize = detail::oSizeT<size_t>(oFileRead(hFile, *_ppOutBuffer, size, size));
-	if (!actualSize)
-	{
-		oVERIFY(oFileClose(hFile));
-		return false; // propagate oFileRead error (might get overwritten by oFileClose, hence the oVERIFY to keep this logic simple for now)
-	}
 
-	if (_AsText)
-		((char*)(*_ppOutBuffer))[actualSize] = 0;
-	if (_pOutSize)
-		*_pOutSize = actualSize;
+	if (!oFileLoad_ReadAndClose(*_ppOutBuffer, size, _pOutSize, size, hFile, _Path, _AsString))
+		return false; // pass through error
 
-	oFileClose(hFile);
 	return true;
 }
 
-bool oFileLoad(void* _pOutBuffer, size_t _SizeofOutBuffer, size_t* _pOutSize, const char* _Path, bool _AsText)
+bool oFileLoad(void* _pOutBuffer, size_t _SizeofOutBuffer, size_t* _pOutSize, const char* _Path, bool _AsString)
 {
 	if (!_pOutBuffer || !oSTRVALID(_Path))
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	oHFILE hFile = nullptr;
-	if (!oFileOpen(_Path, _AsText ? oFILE_OPEN_TEXT_READ : oFILE_OPEN_BIN_READ, &hFile))
-		return false; // propagate oFileOpen error
+	size_t size = 0;
+	if (!oFileLoad_OpenAndSize(&hFile, &size, _Path))
+		return false; // pass through error
 
-	unsigned long long size = oFileGetSize(hFile) + (_AsText ? 1 : 0); // for nul terminator
-	if (size > _SizeofOutBuffer)
-	{
-		char fileSize[64];
-		char outSize[64];
-		return oErrorSetLast(oERROR_AT_CAPACITY, "Size of out buffer (%s) is not large enough to hold the %s of file %s", oFormatMemorySize(outSize, _SizeofOutBuffer, 2), oFormatMemorySize(fileSize, size, 2), _Path);
-	}
+	if (!oFileLoad_ReadAndClose(_pOutBuffer, _SizeofOutBuffer, _pOutSize, size, hFile, _Path, _AsString))
+		return false; // pass through error
 
-	size_t actualSize = detail::oSizeT<size_t>(oFileRead(hFile, _pOutBuffer, size, size));
-	if (!actualSize)
-	{
-		oVERIFY(oFileClose(hFile));
-		return false; // propagate oFileRead error (might get overwritten by oFileClose, hence the oVERIFY to keep this logic simple for now)
-	}
-
-	if (_AsText)
-		((char*)(_pOutBuffer))[actualSize] = 0;
-	if (_pOutSize)
-		*_pOutSize = actualSize;
-
-	oFileClose(hFile);
 	return true;
 }
 
-bool oFileLoadHeader(void* _pHeader, size_t _SizeofHeader, const char* _Path, bool _AsText)
+bool oFileLoadHeader(void* _pHeader, size_t _SizeofHeader, const char* _Path)
 {
+	const bool _AsText = false;
+
 	if (!_pHeader || !_SizeofHeader || !oSTRVALID(_Path))
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 	
@@ -217,10 +225,10 @@ bool oFileSave(const char* _Path, const void* _pSource, size_t _SizeofSource, bo
 }
 
 #include <oBasis/oBuffer.h>
-bool oBufferCreate(const char* _Path, bool _IsText, oBuffer** _ppBuffer)
+bool oBufferCreate(const char* _Path, oBuffer** _ppBuffer, bool _AsString)
 {
 	void* b = nullptr;
 	size_t size = 0;
-	bool success = oFileLoad(&b, &size, malloc, _Path, _IsText);
+	bool success = oFileLoad(&b, &size, malloc, _Path, _AsString);
 	return success ? oBufferCreate(_Path, b, size, free, _ppBuffer) : success;
 }

@@ -179,15 +179,19 @@ static bool TestCorrectness(const oOBJ& _OBJ)
 
 	static const unsigned int sExpectedIndices[] = { 0,2,1,3,0,1,4,6,5,7,6,4,8,10,9,8,9,11,12,14,13,15,14,12,16,18,17,17,18,19,20,22,21,22,23,21, };
 
+	oTESTB(oCOUNTOF(sExpectedVertices) == _OBJ.Positions.size(), "Position counts do not match in obj file \"%s\"", _OBJ.OBJPath.c_str());
 	for (size_t i = 0; i < _OBJ.Positions.size(); i++)
 		oTESTB(oEqual(sExpectedVertices[i], _OBJ.Positions[i]), "Position %u does not match in obj file \"%s\"", i, _OBJ.OBJPath.c_str());
-			
+	
+	oTESTB(oCOUNTOF(sExpectedNormals) == _OBJ.Normals.size(), "Normal counts do not match in obj file \"%s\"", _OBJ.OBJPath.c_str());
 	for (size_t i = 0; i < oCOUNTOF(sExpectedNormals); i++)
 		oTESTB(oEqual(sExpectedNormals[i], _OBJ.Normals[i]), "Normal %u does not match in obj file \"%s\"", i, _OBJ.OBJPath.c_str());
 
-	for (size_t i = 0; i < oCOUNTOF(sExpectedVertices); i++)
-		oTESTB(oEqual(sExpectedVertices[i], _OBJ.Positions[i]), "Texcoord %u does not match in obj file \"%s\"", i, _OBJ.OBJPath.c_str());
+	oTESTB(oCOUNTOF(sExpectedTexcoords) == _OBJ.Texcoords.size(), "Texcoord counts do not match in obj file \"%s\"", _OBJ.OBJPath.c_str());
+	for (size_t i = 0; i < oCOUNTOF(sExpectedTexcoords); i++)
+		oTESTB(oEqual(sExpectedTexcoords[i], _OBJ.Texcoords[i]), "Texcoord %u does not match in obj file \"%s\"", i, _OBJ.OBJPath.c_str());
 
+	oTESTB(oCOUNTOF(sExpectedIndices) == _OBJ.Indices.size(), "Index counts do not match in obj file \"%s\"", _OBJ.OBJPath.c_str());
 	for (size_t i = 0; i < oCOUNTOF(sExpectedIndices); i++)
 		oTESTB(oEqual(sExpectedIndices[i], _OBJ.Indices[i]), "Index %u does not match in obj file \"%s\"", i, _OBJ.OBJPath.c_str());
 
@@ -211,6 +215,7 @@ static bool TestCorrectness(const oOBJ& _OBJ)
 		oTESTB(sExpectedGroups[i].NumIndices == _OBJ.Groups[i].NumIndices, "Group %u does not match in obj file \"%s\"", i, _OBJ.OBJPath.c_str());
 	}
 
+	oErrorSetLast(oERROR_NONE);
 	return true;
 }
 
@@ -222,7 +227,7 @@ bool oBasisTest_oOBJLoader(const oBasisTestServices& _Services)
 	{
 		oOBJ obj;
 		oTESTB(oOBJLoad("Correctness (cube) obj", CorrectnessTestOBJ, false, oKB(100), &obj), "Failed to parse correctness (cube) obj file");
-		oTESTB(TestCorrectness(obj), "Incorrect parsing for correctness (cube) obj file");
+		oTESTB0(TestCorrectness(obj));
 	}
 
 	// Performance

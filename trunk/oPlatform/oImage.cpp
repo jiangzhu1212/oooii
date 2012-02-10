@@ -453,7 +453,7 @@ bool oImageLoad(const char* _Path, oImage** _ppImage)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	oRef<oBuffer> FileData;
-	if (!oBufferCreate(_Path, false, &FileData))
+	if (!oBufferCreate(_Path, &FileData))
 		return false; // pass error through
 
 	return oImageCreate(_Path, FileData->GetData(), FileData->GetSize(), _ppImage); // pass through error
@@ -465,7 +465,7 @@ bool oImageLoad(const char* _Path, const oImage::ForceAlphaFlag&, oImage** _ppIm
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	oRef<oBuffer> FileData;
-	if (!oBufferCreate(_Path, false, &FileData))
+	if (!oBufferCreate(_Path, &FileData))
 		return false; // pass error through
 
 	return oImageCreate(_Path, FileData->GetData(), FileData->GetSize(), oImage::ForceAlpha, _ppImage); // pass through error

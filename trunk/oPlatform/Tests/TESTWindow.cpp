@@ -252,14 +252,13 @@ struct TESTWindowBase : public oTest
 			if (!FindInputFile(imgPath, "oooii.ico"))
 				return oErrorSetLast(oERROR_NOT_FOUND, "Could not find %s", "oooii.ico");
 
-			if (!oFileLoad(&pBuffer, &size, malloc, imgPath, false))
+			if (!oFileLoad(&pBuffer, &size, malloc, imgPath))
 				return false;
 
 			oRef<oImage> Image;
 			if (!oImageCreate(imgPath, pBuffer, size, &Image))
 				return false;
 			free(pBuffer);
-
 
 			oWindowUIPicture::DESC d;
 			d.Position = int2(0, 0);

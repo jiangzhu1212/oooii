@@ -218,12 +218,12 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 		{
 			// Try to load a more-specific golden binary, but if it's not there it's
 			// ok to try to use the default one.
-			oBufferCreate(goldenAMD, false, &GoldenBinary);
+			oBufferCreate(goldenAMD, &GoldenBinary);
 		}
 
 		if (!GoldenBinary)
 		{
-			if (!oBufferCreate(golden, false, &GoldenBinary))
+			if (!oBufferCreate(golden, &GoldenBinary))
 			{
 				if (GPUVendor != oGPU_VENDOR_NVIDIA)
 				{
@@ -284,12 +284,12 @@ bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 		{
 			// Try to load a more-specific golden image, but if it's not there it's ok
 			// to try to use the default one.
-			oBufferCreate(goldenAMD, false, &b);
+			oBufferCreate(goldenAMD, &b);
 		}
 
 		if (!b)
 		{
-			if (!oBufferCreate(golden, false, &b))
+			if (!oBufferCreate(golden, &b))
 			{
 				if (GPUVendor != oGPU_VENDOR_NVIDIA)
 				{
@@ -497,8 +497,8 @@ void oTestManager_Impl::PrintDesc()
 	oEnsureSeparator(datapath.c_str());
 	bool dataPathIsCWD = !_stricmp(cwd, datapath);
 
-	Report(oConsoleReporting::INFO, "CWD Path: %s\n", cwd);
-	Report(oConsoleReporting::INFO, "Data Path: %s%s\n", (Desc.DataPath && *Desc.DataPath) ? Desc.DataPath : cwd, dataPathIsCWD ? " (CWD)" : "");
+	Report(oConsoleReporting::INFO, "CWD Path: %s\n", cwd.c_str());
+	Report(oConsoleReporting::INFO, "Data Path: %s%s\n", (Desc.DataPath && *Desc.DataPath) ? Desc.DataPath : cwd.c_str(), dataPathIsCWD ? " (CWD)" : "");
 	Report(oConsoleReporting::INFO, "Executables Path: %s\n", *Desc.ExecutablesPath ? Desc.ExecutablesPath : "(null)");
 	Report(oConsoleReporting::INFO, "Golden Binaries Path: %s\n", *Desc.GoldenImagesPath ? Desc.GoldenImagesPath : "(null)");
 	Report(oConsoleReporting::INFO, "Golden Images Path: %s\n", *Desc.GoldenImagesPath ? Desc.GoldenImagesPath : "(null)");
@@ -510,8 +510,8 @@ void oTestManager_Impl::PrintDesc()
 
 	for (unsigned int i = 0; i < NumGPUs; i++)
 	{
-		Report(oConsoleReporting::INFO, "Video Card %u: %s\n", i, GPUs[i].GPUDescription);
-		Report(oConsoleReporting::INFO, "Video Driver %u: %s v%d.%d %s %d.%d interface running %d.%d features\n", i, GPUs[i].DriverDescription, GPUs[i].DriverVersion.Major, GPUs[i].DriverVersion.Minor, oAsString(GPUs[i].API), GPUs[i].InterfaceVersion.Major, GPUs[i].InterfaceVersion.Minor, GPUs[i].FeatureVersion.Major, GPUs[i].FeatureVersion.Minor);
+		Report(oConsoleReporting::INFO, "Video Card %u: %s\n", i, GPUs[i].GPUDescription.c_str());
+		Report(oConsoleReporting::INFO, "Video Driver %u: %s v%d.%d %s %d.%d interface running %d.%d features\n", i, GPUs[i].DriverDescription.c_str(), GPUs[i].DriverVersion.Major, GPUs[i].DriverVersion.Minor, oAsString(GPUs[i].API), GPUs[i].InterfaceVersion.Major, GPUs[i].InterfaceVersion.Minor, GPUs[i].FeatureVersion.Major, GPUs[i].FeatureVersion.Minor);
 	}
 }
 
@@ -801,7 +801,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 				
 				double testDuration = 0.0;
 
-				Report(oConsoleReporting::DEFAULT, nameSpec, TestName);
+				Report(oConsoleReporting::DEFAULT, nameSpec, TestName.c_str());
 				ReportSep();
 
 				oTest::RESULT result = oTest::FILTERED;
@@ -891,9 +891,9 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 					ReportType = oConsoleReporting::WARN;
 
 				oFormatTimeSize(timeMessage.c_str(), round(testDuration), true);
-				Report(ReportType, timeSpec, timeMessage);
+				Report(ReportType, timeSpec, timeMessage.c_str());
 				ReportSep();
-				Report(oConsoleReporting::DEFAULT, messageSpec, statusMessage);
+				Report(oConsoleReporting::DEFAULT, messageSpec, statusMessage.c_str());
 			}
 		}
 

@@ -29,9 +29,9 @@
 // @oooii-tony: For some reason oBIND'ing oFileLoad directly doesn't work...
 // maybe the templates get confused with the various flavors? Anyway, here's an
 // exact wrapper just to change the name of the function.
-static bool oFileLoad2(void** _ppOutBuffer, size_t* _pOutSize, oFUNCTION<void*(size_t _Size)> _Allocate, const char* _Path, bool _AsText)
+static bool oFileLoad2(void** _ppOutBuffer, size_t* _pOutSize, oFUNCTION<void*(size_t _Size)> _Allocate, const char* _Path, bool _AsString)
 {
-	return oFileLoad(_ppOutBuffer, _pOutSize, _Allocate, _Path, _AsText);
+	return oFileLoad(_ppOutBuffer, _pOutSize, _Allocate, _Path, _AsString);
 }
 
 static size_t GetTotalPhysicalMemory()

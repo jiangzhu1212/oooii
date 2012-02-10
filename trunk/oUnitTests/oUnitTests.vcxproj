@@ -79,10 +79,6 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSDK)ext\FBX\FbxSdk\2012.1\lib\vs2010\x64;$(LibraryPath)</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSDK)ext\FBX\FbxSdk\2012.1\lib\vs2010\x64;$(LibraryPath)</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSDK)ext\FBX\FbxSdk\2012.1\lib\vs2010\x86;$(LibraryPath)</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSDK)ext\FBX\FbxSdk\2012.1\lib\vs2010\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Label="Globals">
     <SccProjectName />

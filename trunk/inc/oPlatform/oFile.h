@@ -180,22 +180,21 @@ oAPI bool oFileTouch(const char* _Path, time_t _PosixTimestamp);
 oAPI char* oFileCreateTempFolder(char* _TempPath, size_t _SizeofTempPath);
 template<size_t size> char* oFileCreateTempFolder(char (&_TempPath)[size]) { return oFileCreateTempFolder(_TempPath, size); }
 
-// Replaces platform-specific line endings with '\n'.
-oAPI void oFileMakeText(char* _pBinaryFile, size_t _szBinaryFile);
-
 // Uses the specified _Allocate function to allocate a buffer and read the whole
-// file into that buffer.
-oAPI bool oFileLoad(void** _ppOutBuffer, size_t* _pOutSize, oFUNCTION<void*(size_t _Size)> _Allocate, const char* _Path, bool _AsText);
-template<typename T> bool oFileLoad(T** _ppOutBuffer, size_t* _pOutSize, oFUNCTION<void*(size_t _Size)> _Allocate, const char* _Path, bool _AsText) { return oFileLoad((void**)_ppOutBuffer, _pOutSize, _Allocate, _Path, _AsText); }
+// file into that buffer. if _AsString is true, an extra byte is appended and 
+// set to the nul terminator. This makes loading text files as a string 
+// convenient however this reads the file as binary and does not alter newlines.
+oAPI bool oFileLoad(void** _ppOutBuffer, size_t* _pOutSize, oFUNCTION<void*(size_t _Size)> _Allocate, const char* _Path, bool _AsString = false);
+template<typename T> bool oFileLoad(T** _ppOutBuffer, size_t* _pOutSize, oFUNCTION<void*(size_t _Size)> _Allocate, const char* _Path, bool _AsString = false) { return oFileLoad((void**)_ppOutBuffer, _pOutSize, _Allocate, _Path, _AsString); }
 
 // Loads into a pre-allocated buffer. This fails with an oErrorGetLast() of 
 // EINVAL if the buffer is too small to contain the contents of the file.
-oAPI bool oFileLoad(void* _pOutBuffer, size_t _SizeofOutBuffer, size_t* _pOutSize, const char* _Path, bool _AsText);
-template<typename T, size_t size> bool oFileLoad(T (&_pOutBuffer)[size], size_t* _pOutSize, const char* _Path, bool _AsText) { return oFileLoad(_pOutBuffer, size, _pOutSize, _Path, _AsText); }
+oAPI bool oFileLoad(void* _pOutBuffer, size_t _SizeofOutBuffer, size_t* _pOutSize, const char* _Path, bool _AsString = false);
+template<typename T, size_t size> bool oFileLoad(T (&_pOutBuffer)[size], size_t* _pOutSize, const char* _Path, bool _AsString = false) { return oFileLoad(_pOutBuffer, size, _pOutSize, _Path, _AsString); }
 
 // Loads the "header" (known number of bytes at the beginning of a file) into a buffer, returning the actual number of bytes read if the file is smaller than the buffer
-oAPI bool oFileLoadHeader(void* _pHeader, size_t _SizeofHeader, const char* _Path, bool _AsText);
-template<typename T> bool oFileLoadHeader(T* _pHeader, const char* _Path, bool _AsText) { return oFileLoadHeader(_pHeader, sizeof(T), _Path, _AsText); }
+oAPI bool oFileLoadHeader(void* _pHeader, size_t _SizeofHeader, const char* _Path);
+template<typename T> bool oFileLoadHeader(T* _pHeader, const char* _Path) { return oFileLoadHeader(_pHeader, sizeof(T), _Path); }
 
 // Writes the entire buffer to the specified file. Open is specified to allow 
 // text and write v. append specification. Any read Open will result in this
@@ -211,6 +210,6 @@ oAPI bool oFileMap(const char* _Path, bool _ReadOnly, const oFileRange& _MapRang
 oAPI bool oFileUnmap(void* _MappedPointer);
 
 // (oBuffer support) Load a file into a newly allocated buffer using malloc to allocate the memory.
-bool oBufferCreate(const char* _Path, bool _IsText, interface oBuffer** _ppBuffer);
+bool oBufferCreate(const char* _Path, interface oBuffer** _ppBuffer, bool _AsString = false);
 
 #endif

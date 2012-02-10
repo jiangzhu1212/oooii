@@ -670,22 +670,6 @@ bool oFileCreateFolder(const char* _Path)
 	return true;
 }
 
-// This is platform specific because it is different on windows
-void oFileMakeText( char* _pBinaryFile, size_t _szBinaryFile )
-{
-	size_t s = 0;
-	for(size_t e = 0; e < _szBinaryFile; ++s, ++e )
-	{
-		if( _pBinaryFile[e] == '\r' && _pBinaryFile[e + 1] == '\n')
-		{
-			++e;
-		}
-		_pBinaryFile[s] = _pBinaryFile[e];
-	}
-
-	_pBinaryFile[__min( s, _szBinaryFile - 1)] = 0;
-}
-
 bool oFileMap(const char* _Path, bool _ReadOnly, const oFileRange& _MapRange, void** _ppMappedMemory)
 {
 	oHFILE hFile;

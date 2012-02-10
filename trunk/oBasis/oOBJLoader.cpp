@@ -61,9 +61,12 @@ namespace performance_detail {
 	static SetupWhitespace AutoSetupWhitespace;
 } // namespace performance_detail
 
+inline bool IsNewline(int c) { return performance_detail::gNewline[c]; }
+
 inline void MovePastWhitespace(const char** _CurPos) { while(**_CurPos && performance_detail::gPastWhitespace[**_CurPos]) ++*_CurPos; }
 inline void MoveToWhitespace(const char** _CurPos) { while(**_CurPos && !performance_detail::gToWhitespace[**_CurPos]) ++*_CurPos; }
-inline void MoveToEndOfLine(const char** _CurPos) { while(**_CurPos && **_CurPos != '\n') ++*_CurPos; }
+inline void MoveToEndOfLine(const char** _CurPos) { while(**_CurPos && !IsNewline(**_CurPos)) ++*_CurPos; }
+inline void MovePastNewline(const char** _CurPos) { while(**_CurPos && IsNewline(**_CurPos)) ++*_CurPos; }
 
 bool oOBJLoadMTL(const char* _MTLPath, const char* _MTLString, std::vector<oOBJ::MATERIAL>* _pMTLLibrary)
 {
@@ -109,8 +112,7 @@ bool oOBJLoadMTL(const char* _MTLPath, const char* _MTLString, std::vector<oOBJ:
 				break;
 		}
 		MoveToEndOfLine(&r);
-		while(*r == '\n' || *r == '\r')
-			r++;
+		MovePastNewline(&r);
 	}
 
 	return true;
@@ -161,8 +163,7 @@ public:
 				break;
 			}
 			MoveToEndOfLine(&r);
-			while(*r == '\n' || *r == '\r')
-				r++;
+			MovePastNewline(&r);
 		}
 
 		r = _OBJString;
@@ -197,8 +198,7 @@ public:
 				break;
 			}
 			MoveToEndOfLine(&r);
-			while(*r == '\n' || *r == '\r')
-				r++;
+			MovePastNewline(&r);
 		}
 
 		if (parsedAGroup)
@@ -304,7 +304,7 @@ private:
 		MovePastWhitespace(&r);
 
 		int p = 0;
-		while(p < 4 && *r != 0 && *r != '\n')
+		while(p < 4 && *r != 0 && !IsNewline(*r))
 		{
 			bool foundSlash = false;
 
@@ -316,7 +316,7 @@ private:
 				if(indexType == 2)
 					break;
 
-				while(*r != '/' && *r != ' ' && *r != 0 && *r != '\n')
+				while(*r != '/' && *r != ' ' && *r != 0 && !IsNewline(*r))
 					r++;
 
 				while(*r == '/')

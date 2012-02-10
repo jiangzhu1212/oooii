@@ -43,7 +43,7 @@ struct TESTImage : public oTest
 		oTESTB0(BuildPath(tmp, oGetFilebase(testImage), oTest::TEMP));
 
 		oRef<oBuffer> buffer1;
-		oTESTB(oBufferCreate(path.c_str(), false, &buffer1), "Load failed: %s", path.c_str());
+		oTESTB(oBufferCreate(path.c_str(), &buffer1), "Load failed: %s", path.c_str());
 
 		oRef<oImage> image1;
 		oTESTB(oImageCreate(path.c_str(), buffer1->GetData(), buffer1->GetSize(), &image1), "Image create failed: %s", path.c_str());
@@ -51,7 +51,7 @@ struct TESTImage : public oTest
 		oTESTB(oImageSave(image1, oImage::UNKNOWN_FILE, oImage::HIGH_COMPRESSION, tmp), "Save failed: %s", tmp);
 
 		oRef<oBuffer> buffer2;
-		oTESTB(oBufferCreate(tmp, false, &buffer2), "Load failed: %s", tmp);
+		oTESTB(oBufferCreate(tmp, &buffer2), "Load failed: %s", tmp);
 
 		// Compare that what we saved is the same as what we loaded
 

@@ -39,7 +39,6 @@ typedef std::vector<INI_ENTRY> ENTRIES;
 
 bool INIParse(ENTRIES& _Entries, char* _INIBuffer)
 {
-	#define WHITESPACE " \n\t\v\r"
 	char* c = _INIBuffer;
 	INI_ENTRY::value_type lastSectionIndex = 0;
 	INI_ENTRY s = {0}, k = {0};
@@ -50,11 +49,11 @@ bool INIParse(ENTRIES& _Entries, char* _INIBuffer)
 
 	while (*c)
 	{
-		c += strspn(c, WHITESPACE); // move past whitespace
+		c += strspn(c, oWHITESPACE); // move past whitespace
 		switch (*c)
 		{
 			case ';': // comment, move to end of line
-				c += strcspn(c, "\n"), c++;
+				c += strcspn(c, oNEWLINE), c++;
 				break;
 			case '[': // start of section, record it
 				s.Name = static_cast<INI_ENTRY::value_type>(std::distance(_INIBuffer, c+1));
@@ -68,26 +67,24 @@ bool INIParse(ENTRIES& _Entries, char* _INIBuffer)
 				if (_Entries.size() <= 1) return false; // key/val pairs outside of section context
 				k.Next = 0;
 				k.Name = static_cast<INI_ENTRY::value_type>(std::distance(_INIBuffer, c));
-				c += strcspn(c, "=" WHITESPACE); // move to end of key
+				c += strcspn(c, "=" oWHITESPACE); // move to end of key
 				bool atSep = *c == '=';
 				*c++ = 0;
 				if (!atSep) c += strcspn(c, "=") + 1; // if we moved to whitespace, continue beyond it
-				c += strspn(c, WHITESPACE); // move past whitespace
+				c += strspn(c, oWHITESPACE); // move past whitespace
 				k.Value = static_cast<INI_ENTRY::value_type>(std::distance(_INIBuffer, c));
-				c += strcspn(c, "\n;"); // move to end of line or a comment
+				c += strcspn(c, oNEWLINE ";"); // move to end of line or a comment
 				if (link) _Entries.back().Next = static_cast<INI_ENTRY::value_type>(_Entries.size());
 				link = true;
 				if (!_Entries[lastSectionIndex].Value) _Entries[lastSectionIndex].Value = static_cast<INI_ENTRY::value_type>(_Entries.size());
 				_Entries.push_back(k);
-				while (--c >= _INIBuffer && strchr(WHITESPACE, *c)); // trim right whitespace
+				while (--c >= _INIBuffer && strchr(oWHITESPACE, *c)); // trim right whitespace
 				if (!*(++c)) break; // if there is no more, just exit
 				*c = 0;
-				c += 1 + strcspn(c, "\n"); // move to end of line
+				c += 1 + strcspn(c, oNEWLINE); // move to end of line
 				break;
 		}
 	}
-
-	#undef WHITESPACE
 	return true;
 }
 

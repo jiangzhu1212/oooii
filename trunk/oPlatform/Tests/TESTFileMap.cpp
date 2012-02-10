@@ -48,7 +48,7 @@ struct TESTFileMap : public oTest
 
 		void* loaded = nullptr;
 		size_t loadedSize = 0;
-		oTESTB0(oFileLoad(&loaded, &loadedSize, malloc, path, false));
+		oTESTB0(oFileLoad(&loaded, &loadedSize, malloc, path));
 		oOnScopeExit OSEFreeLoadedBuffer([&] { if (loaded) free(loaded); });
 
 		oTESTB(r.Size == loadedSize, "mismatch: mapped and loaded file sizes");
