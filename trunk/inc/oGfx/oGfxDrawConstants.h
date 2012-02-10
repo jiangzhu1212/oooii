@@ -6,8 +6,8 @@
 #ifndef oGfxDrawConstants_h
 #define oGfxDrawConstants_h
 
-#include <oooii/oHLSL.h>
-#include <oooii/oHLSLDeferredView.h>
+#include <oPlatform/oHLSL.h>
+#include <oPlatform/oHLSLDeferredView.h>
 
 struct oGfxDrawConstants
 {

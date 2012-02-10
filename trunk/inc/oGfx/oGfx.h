@@ -6,14 +6,6 @@
 #define oGfx_h
 
 #include <oGfx/oGfxState.h>
-#include <oooii/oColor.h>
-#include <oooii/oInterface.h>
-#include <oooii/oSurface.h>
-
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// Move to oooii lib
-typedef unsigned char uchar;
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 // Main SW abstraction for a graphics processor
 interface oGfxDevice;
@@ -25,7 +17,7 @@ interface oGfxDeviceChild : oInterface
 	// device. The device's ref count is incremented.
 	virtual void GetDevice(threadsafe oGfxDevice** _ppDevice) const threadsafe = 0;
 
-	// Returns the name specified at create time
+	// Returns the identifier as specified at create time.
 	virtual const char* GetName() const threadsafe = 0;
 };
 
@@ -51,6 +43,7 @@ interface oGfxResource : oGfxDeviceChild
 	// Returns an ID for this resource fit for use as a hash
 	virtual uint GetID() const threadsafe = 0;
 };
+#if 0
 
 interface oGfxInstanceList : oGfxResource
 {
@@ -227,7 +220,7 @@ interface oGfxTexture : oGfxResource
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
-
+#endif
 interface oGfxPipeline : oGfxDeviceChild
 {
 	// A pipeline is the result of setting all stages
@@ -257,7 +250,7 @@ interface oGfxPipeline : oGfxDeviceChild
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
-
+#if 0
 // @oooii-tony: The following dominoes fall if not labelled with a 2:
 // 1. There are resource-uniform macros that munge APIs and names
 // 2. The D3D11 impl is called oD3D11RenderTarget
@@ -432,37 +425,43 @@ interface oGfxCommandList : oGfxDeviceChild
 	// be a fullscreen quad.
 	virtual void DrawQuad(float4x4& _Transform, uint _QuadID) = 0;
 };
-
+#endif
 interface oGfxDevice : oInterface
 {
 	// Main SW abstraction for a graphics processor
 
 	struct DESC
 	{
-		float Version;
+		DESC()
+			: Version(11, 0)
+			, UseSoftwareEmulation(false)
+			, EnableDebugReporting(false)
+		{}
+
+		oVersion Version;
 		bool UseSoftwareEmulation;
 		bool EnableDebugReporting;
 	};
 
-	virtual bool CreateCommandList(const char* _Name, const oGfxCommandList::DESC& _Desc, oGfxCommandList** _ppCommandList) threadsafe = 0;
-	virtual bool CreateLineList(const char* _Name, const oGfxLineList::DESC& _Desc, oGfxLineList** _ppLineList) threadsafe = 0;
+	//virtual bool CreateCommandList(const char* _Name, const oGfxCommandList::DESC& _Desc, oGfxCommandList** _ppCommandList) threadsafe = 0;
+	//virtual bool CreateLineList(const char* _Name, const oGfxLineList::DESC& _Desc, oGfxLineList** _ppLineList) threadsafe = 0;
 	virtual bool CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, oGfxPipeline** _ppPipeline) threadsafe = 0;
-	virtual bool CreateRenderTarget2(const char* _Name, const oGfxRenderTarget2::DESC& _Desc, oGfxRenderTarget2** _ppRenderTarget) threadsafe = 0;
-	virtual bool CreateRenderTarget2(const char* _Name, threadsafe oWindow* _pWindow, oSurface::FORMAT _DepthStencilFormat, oGfxRenderTarget2** _ppRenderTarget) threadsafe = 0;
-	virtual bool CreateMaterial(const char* _Name, const oGfxMaterial::DESC& _Desc, oGfxMaterial** _ppMaterial) threadsafe = 0;
-	virtual bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe = 0;
-	virtual bool CreateInstanceList(const char* _Name, const oGfxInstanceList::DESC& _Desc, oGfxInstanceList** _ppInstanceList) threadsafe = 0;
-	virtual bool CreateTexture(const char* _Name, const oGfxTexture::DESC& _Desc, oGfxTexture** _ppTexture) threadsafe = 0;
+	//virtual bool CreateRenderTarget2(const char* _Name, const oGfxRenderTarget2::DESC& _Desc, oGfxRenderTarget2** _ppRenderTarget) threadsafe = 0;
+	//virtual bool CreateRenderTarget2(const char* _Name, threadsafe oWindow* _pWindow, oSurface::FORMAT _DepthStencilFormat, oGfxRenderTarget2** _ppRenderTarget) threadsafe = 0;
+	//virtual bool CreateMaterial(const char* _Name, const oGfxMaterial::DESC& _Desc, oGfxMaterial** _ppMaterial) threadsafe = 0;
+	//virtual bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe = 0;
+	//virtual bool CreateInstanceList(const char* _Name, const oGfxInstanceList::DESC& _Desc, oGfxInstanceList** _ppInstanceList) threadsafe = 0;
+	//virtual bool CreateTexture(const char* _Name, const oGfxTexture::DESC& _Desc, oGfxTexture** _ppTexture) threadsafe = 0;
 
 	// Submits all command lists in their draw order
-	virtual void Submit() = 0;
+	//virtual void Submit() = 0;
 };
 
-oAPI bool oGfxCreateDevice(const oGfxDevice::DESC& _Desc, threadsafe oGfxDevice** _ppDevice);
-
+oAPI bool oGfxDeviceCreate(const oGfxDevice::DESC& _Desc, threadsafe oGfxDevice** _ppDevice);
+#if 0
 oAPI const char* oAsString(const oGfxResource::TYPE& _Type);
 oAPI const char* oAsString(const oGfxMesh::SUBRESOURCE& _Subresource);
 oAPI const char* oAsString(const oGfxTexture::TYPE& _Type);
 oAPI const char* oAsString(const oGfxCommandList::CLEAR_TYPE& _Type);
-
+#endif
 #endif

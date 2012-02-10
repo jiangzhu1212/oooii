@@ -24,6 +24,7 @@
 #pragma once
 #ifndef pch_h
 #define pch_h
-#include <oooii/oooii.h>
-#include <oooii/oLibc.h>
+#include <oBasis/oBasis.h>
+#include <oBasis/oLibc.h>
+#include <oPlatform/oPlatform.h>
 #endif

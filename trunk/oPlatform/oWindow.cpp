@@ -721,8 +721,8 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 	{
 		// handle WM_ERASEBKGND for flicker-free client area update
 		// http://msdn.microsoft.com/en-us/library/ms969905.aspx
-		case WM_ERASEBKGND:
-			return 1;
+		//case WM_ERASEBKGND:
+		//	return 1;
 
 		case WM_DISPLAYCHANGE:
 			Refresh(false);
@@ -829,9 +829,28 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 		}
 
 		case WM_CREATE:
+			{
+				//HWND btn = CreateWindow("BUTTON", "P&ush Me", WS_TABSTOP|WS_CHILD|WS_VISIBLE|BS_PUSHBUTTON, 10, 10, 150, 30, _hWnd, (HMENU)12, nullptr, nullptr);
+				//HWND sta = CreateWindow("STATIC", "Hello!", WS_TABSTOP|WS_CHILD|WS_VISIBLE|SS_ENDELLIPSIS|SS_LEFT, 10, 50, 150, 30, _hWnd, (HMENU)13, nullptr, nullptr);
+
+				HWND grp = CreateWindow("BUTTON", "Group", WS_CHILD|WS_VISIBLE|BS_GROUPBOX, 200, 40, 100, 100, _hWnd, (HMENU)-1, GetModuleHandle(NULL), nullptr);
+
+				HWND btn2 = CreateWindow("BUTTON", "Push Me 1", WS_GROUP|WS_TABSTOP|WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON, 200, 10, 100, 30, _hWnd, (HMENU)1, GetModuleHandle(NULL), nullptr);
+				HWND btn3 = CreateWindow("BUTTON", "Push Me 2", WS_TABSTOP|WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON, 200, 50, 100, 30, _hWnd, (HMENU)222, GetModuleHandle(NULL), nullptr);
+				HWND btn4 = CreateWindow("BUTTON", "Push Me 3", WS_TABSTOP|WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON, 200, 90, 100, 30, _hWnd, (HMENU)344, GetModuleHandle(NULL), nullptr);
+
+				//HFONT hFont = oGDICreateFont("Tahoma", 8, false, false, false);
+				//SendMessage(btn, WM_SETFONT, (WPARAM)hFont, 1);
+				//SendMessage(sta, WM_SETFONT, (WPARAM)hFont, 1);
+				//SendMessage(grp, WM_SETFONT, (WPARAM)hFont, 1);
+				//SendMessage(btn2, WM_SETFONT, (WPARAM)hFont, 1);
+				//SendMessage(btn3, WM_SETFONT, (WPARAM)hFont, 1);
+				//SendMessage(btn4, WM_SETFONT, (WPARAM)hFont, 1);
+
 			if (!CreateDevices(_hWnd, pUserSpecifiedDevice))
 				return -1;
 			return 0;
+			}
 
 		case WM_CLOSE:
 			if (CallHooks(CLOSING, nullptr, DrawMode, ZERO3, 1))
@@ -943,6 +962,11 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 		case WM_XBUTTONUP:
 			CallHooks(KEY_UP, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? MK_XBUTTON1 : MK_XBUTTON2, oMS_MouseClick));
 			break;
+
+		case WM_COMMAND:
+			oTRACE("WM_COMMAND: HI:%d, LO:%d, HWND%p", HIWORD(_wParam), LOWORD(_wParam), _lParam);
+			break;
+
 		default:
 			break;
 	}

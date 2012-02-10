@@ -22,7 +22,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oGfxCommon.h"
-
+#if 0
 const oGUID& oGetGUID(threadsafe const oGfxCommandList* threadsafe const *)
 {
 	// {272A9B3E-64BC-4D20-845E-D4EE3F0ED890}
@@ -99,3 +99,4 @@ const oGUID& oGetGUID(threadsafe const oGfxTexture* threadsafe const *)
 	static const oGUID oIID_GfxTexture = { 0x19374525, 0xcc8, 0x445b, { 0x80, 0xed, 0xa6, 0xd2, 0xff, 0x13, 0x36, 0x2c } };
 	return oIID_GfxTexture;
 }
+#endif

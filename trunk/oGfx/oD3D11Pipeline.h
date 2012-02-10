@@ -26,7 +26,7 @@
 #define oD3D11Pipline_h
 
 #include "oGfxCommon.h"
-#include <oooii/oD3D11.h>
+#include <oPlatform/oD3D11.h>
 
 oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, Pipeline)
 {

@@ -23,8 +23,8 @@
  **************************************************************************/
 #include "oD3D11Device.h"
 #include "oD3D11CommandList.h"
-#include <oooii/oD3D11.h>
-#include <oooii/oErrno.h>
+#include <oPlatform/oD3D11.h>
+#include <oPlatform/oDXGI.h>
 
 const oGUID& oGetGUID(threadsafe const oD3D11Device* threadsafe const *)
 {
@@ -52,6 +52,7 @@ template<typename T, typename containerT, class CompareT> size_t oSortedInsert(c
 
 template<typename T, typename Alloc, class CompareT> size_t oSortedInsert(std::vector<T, Alloc>& _Vector, const T& _Item) { return oSTL::detail::oSortedInsert<T, std::vector<T, Alloc>, CompareT>(_Vector, _Item, _Compare); }
 
+#if 0
 bool ByDrawOrder(const oGfxCommandList* _pCommandList1, const oGfxCommandList* _pCommandList2)
 {
 	oGfxCommandList::DESC d1, d2;
@@ -59,59 +60,31 @@ bool ByDrawOrder(const oGfxCommandList* _pCommandList1, const oGfxCommandList* _
 	_pCommandList2->GetDesc(&d2);
 	return d1.DrawOrder < d2.DrawOrder;
 };
+#endif
 
-bool oGfxCreateDevice(const oGfxDevice::DESC& _Desc, threadsafe oGfxDevice** _ppDevice)
+bool oGfxDeviceCreate(const oGfxDevice::DESC& _Desc, threadsafe oGfxDevice** _ppDevice)
 {
-	oRef<IDXGIFactory1> pFactory;
-	oCreateDXGIFactory(&pFactory);
-	if (!pFactory)
-	{
-		oSetLastError(ENOSYS, "Failed to create DXGI factory");
-		return false;
-	}
+	oD3D11_DEVICE_DESC DevDesc("oGfxDevice");
+	DevDesc.MinimumAPIFeatureLevel = _Desc.Version;
+	DevDesc.Accelerated = !_Desc.UseSoftwareEmulation;
+	DevDesc.Debug = _Desc.EnableDebugReporting;
 
-	oRef<ID3D11Device> D3DDevice;
-	oRef<IDXGIAdapter> pAdapter;
-	UINT index = 0;
-	while (DXGI_ERROR_NOT_FOUND != pFactory->EnumAdapters(index++, &pAdapter))
-	{
-		D3D_FEATURE_LEVEL FeatureLevel;
-		oD3D11::Singleton()->D3D11CreateDevice(
-			_Desc.UseSoftwareEmulation ? 0 : pAdapter
-			, _Desc.UseSoftwareEmulation ? D3D_DRIVER_TYPE_REFERENCE : D3D_DRIVER_TYPE_UNKNOWN
-			, 0
-			, _Desc.EnableDebugReporting ? D3D11_CREATE_DEVICE_DEBUG : 0
-			, 0
-			, 0
-			, D3D11_SDK_VERSION
-			, &D3DDevice
-			, &FeatureLevel
-			, 0);
-
-		if (oGetD3DVersion(FeatureLevel) == _Desc.Version)
-			break;
-
-		D3DDevice = nullptr;
-	}
-
-	if (!D3DDevice)
-	{
-		oSetLastError(ENOSYS, "Version %.01f of the GPU driver could not be found", _Desc.Version);
-		return false;
-	}
+	oRef<ID3D11Device> Device;
+	if (!oD3D11CreateDevice(DevDesc, &Device))
+		return false; // pass through error
 
 	bool success = false;
-	oCONSTRUCT(_ppDevice, oD3D11Device(D3DDevice, _Desc, &success));
+	oCONSTRUCT(_ppDevice, oD3D11Device(Device, _Desc, &success));
 	return success;
 }
 
 oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc, bool* _pSuccess)
 	: D3DDevice(_pDevice)
 	, Desc(_Desc)
-	, RSState(_pDevice)
-	, OMState(_pDevice)
-	, DSState(_pDevice)
-	, SAState(_pDevice)
+	//, RSState(_pDevice)
+	//, OMState(_pDevice)
+	//, DSState(_pDevice)
+	//, SAState(_pDevice)
 {
 	*_pSuccess = false;
 	D3DDevice->GetImmediateContext(&ImmediateContext);
@@ -143,31 +116,34 @@ bool oD3D11Device::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _
 	return !!*_ppInterface;
 }
 
-void oD3D11Device::Insert(oGfxCommandList* _pCommandList) threadsafe
-{
-	oMutex::ScopedLock lock(CommandListsMutex);
-	oSortedInsert(ProtectedCommandLists(), _pCommandList, ByDrawOrder);
-}
-
-void oD3D11Device::Remove(oGfxCommandList* _pCommandList) threadsafe
-{
-	oMutex::ScopedLock lock(CommandListsMutex);
-	oFindAndErase(ProtectedCommandLists(), _pCommandList);
-}
-
-void oD3D11Device::DrawCommandLists() threadsafe
-{
-	oMutex::ScopedLock lock(CommandListsMutex);
-
-	for (std::vector<oGfxCommandList*>::iterator it = ProtectedCommandLists().begin(); it != ProtectedCommandLists().end(); ++it)
-	{
-		oD3D11CommandList* c = static_cast<oD3D11CommandList*>(*it);
-		ImmediateContext->ExecuteCommandList(c->CommandList, FALSE);
-		c->CommandList = 0;
-	}
-}
-
-void oD3D11Device::Submit()
-{
-	DrawCommandLists();
-}
+//void oD3D11Device::Insert(oGfxCommandList* _pCommandList) threadsafe
+//{
+//	oMutex::ScopedLock lock(CommandListsMutex);
+//	oSortedInsert(ProtectedCommandLists(), _pCommandList, ByDrawOrder);
+//}
+//
+//void oD3D11Device::Remove(oGfxCommandList* _pCommandList) threadsafe
+//{
+//	oMutex::ScopedLock lock(CommandListsMutex);
+//	oFindAndErase(ProtectedCommandLists(), _pCommandList);
+//}
+//
+//void oD3D11Device::DrawCommandLists() threadsafe
+//{
+//	oMutex::ScopedLock lock(CommandListsMutex);
+//
+//	for (std::vector<oGfxCommandList*>::iterator it = ProtectedCommandLists().begin(); it != ProtectedCommandLists().end(); ++it)
+//	{
+//		oD3D11CommandList* c = static_cast<oD3D11CommandList*>(*it);
+//		if (c->CommandList)
+//		{
+//			ImmediateContext->ExecuteCommandList(c->CommandList, FALSE);
+//			c->CommandList = nullptr;
+//		}
+//	}
+//}
+//
+//void oD3D11Device::Submit()
+//{
+//	DrawCommandLists();
+//}

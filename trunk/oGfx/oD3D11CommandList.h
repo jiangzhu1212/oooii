@@ -29,8 +29,8 @@
 #include "oGfxCommon.h"
 #include "oD3D11RenderTarget.h"
 #include "oD3D11Device.h"
-#include <oooii/oD3D11.h>
-
+#include <oPlatform/oD3D11.h>
+#if 0
 oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 {
 	oDEFINE_CONST_GETDESC_INTERFACE(Desc, threadsafe);
@@ -74,4 +74,5 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	inline oD3D11Device* D3DDevice() { return thread_cast<oD3D11Device*>(static_cast<threadsafe oD3D11Device*>(Device.c_ptr())); }
 };
 
+#endif
 #endif

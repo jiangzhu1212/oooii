@@ -4,7 +4,7 @@
 #ifndef oGfxState_h
 #define oGfxState_h
 
-#include <oooii/oSurface.h>
+#include <oBasis/oSurface.h>
 
 enum oOMSTATE // Output Merge (Blend) State
 {
@@ -63,7 +63,7 @@ struct oIAELEMENT
 {
 	const char* Name;
 	uint Index;
-	oSurface::FORMAT Format;
+	oSURFACE_FORMAT Format;
 	uint InputSlot;
 };
 

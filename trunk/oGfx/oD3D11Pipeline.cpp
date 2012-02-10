@@ -23,7 +23,7 @@
  **************************************************************************/
 #include "oD3D11Pipeline.h"
 #include "oD3D11Device.h"
-#include <oooii/oSurface.h>
+#include <oPlatform/oDXGI.h>
 
 static void oInitializeInputElementDesc(D3D11_INPUT_ELEMENT_DESC* _pInputElementDescs, size_t _MaxNumInputElementDescs, const oIAELEMENT* _pVertexElements, size_t _NumVertexElements)
 {
@@ -35,7 +35,7 @@ static void oInitializeInputElementDesc(D3D11_INPUT_ELEMENT_DESC* _pInputElement
 
 		el.SemanticName = e.Name;
 		el.SemanticIndex = e.Index;
-		el.Format = oSurface::GetPlatformFormat<DXGI_FORMAT>(e.Format);
+		el.Format = oDXGIFromSurfaceFormat(e.Format);
 		el.InputSlot = e.InputSlot;
 		el.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
 		el.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;

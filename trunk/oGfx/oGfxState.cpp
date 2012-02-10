@@ -22,9 +22,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGfx/oGfxState.h>
+#include <oBasis/oAssert.h>
+#include <oBasis/oMacros.h>
 
 #define GFX_STATE_ASSTRING(_Count, _State) \
-	oSTATICASSERT(_Count == oCOUNTOF(sStrings)); \
+	static_assert(_Count == oCOUNTOF(sStrings), #_State " counts don't match"); \
 	oASSERT(_State >= 0 && _State < _Count, "Out of range"); \
 	return sStrings[_State];
 

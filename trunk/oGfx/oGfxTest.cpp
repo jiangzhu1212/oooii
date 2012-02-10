@@ -22,8 +22,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 
-#include <oooii/oWindows.h> // Move all this code to somewhere that isn't windows so we don't have to include this.
-
 #include <oooii/oKeyboard.h>
 #include <oooii/oMouse.h>
 #include <oooii/oWindow.h>
@@ -42,6 +40,8 @@ protected:
 	oRef<threadsafe oKeyboard> Keyboard;
 	oRef<threadsafe oMouse> Mouse;
 	oRef<threadsafe oGfxDevice> Device;
+	oRef<oGfxCommandList> CommandList;
+	oRef<oGfxPipeline> TestPipeline;
 	oRef<threadsafe oWindow::Resizer> Resizer;
 	oRef<oGfxRenderTarget2> RenderTarget;
 };
@@ -75,9 +75,19 @@ oApp::oApp()
 		d.UseSoftwareEmulation = false;
 		d.Version = 10.0f;
 		oVERIFY(oGfxCreateDevice(d, &Device));
+		oVERIFY(Window->CreateResizer(oBIND(&oApp::OnResize, this, oBIND1, oBIND2, oBIND3), &Resizer));
 	}
 
-	oVERIFY(Window->CreateResizer(oBIND(&oApp::OnResize, this, oBIND1, oBIND2, oBIND3), &Resizer));
+	{
+		oGfxCommandList::DESC d;
+		d.DrawOrder = 0;
+		oVERIFY(Device->CreateCommandList("CmdList", d, &CommandList));
+	}
+
+	{
+		oGfxPipeline::DESC d;
+		oVERIFY(Device->CreatePipeline("TestPipeline", d, &TestPipeline));
+	}
 
 	//oVERIFY(Device->CreateRenderTarget2("Output", Window, oSurface::R32_TYPELESS, &RenderTarget));
 
@@ -105,9 +115,20 @@ void oApp::Run()
 	while (Window->IsOpen())
 	{
 		Window->Begin();
+
+		//CommandList->Begin(float4x4(float4x4::Identity), float4x4(float4x4::Identity),
+
+		//CommandList->Clear(oGfxCommandList::COLOR_DEPTH_STENCIL);
+
+		//CommandList->End();
+
+		// @oooii-tony: Fix this threadcast (can submit be made threadsafe?)
+		thread_cast<oGfxDevice*>(Device.c_ptr())->Submit();
 		Window->End();
 	}
 }
+
+#include <oooii/oWindows.h> // Move all this code to somewhere that isn't windows so we don't have to include this.
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {

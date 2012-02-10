@@ -31,25 +31,37 @@
 
 #include <oGfx/oGfx.h>
 
-#include <oooii/oErrno.h>
-#include <oooii/oNoncopyable.h>
-#include <oooii/oRef.h>
-#include <oooii/oRefCount.h>
+#include <oBasis/oError.h>
+#include <oBasis/oFixedString.h>
+#include <oBasis/oInitOnce.h>
+#include <oBasis/oNoncopyable.h>
+#include <oBasis/oRef.h>
+#include <oBasis/oRefCount.h>
 
+// Use this instead of "struct oMyDerivedClass" to enforce naming consistency and allow
+// for any shared code changes to happen in a central place. If the type is derived from
+// oGfxResource, use the other version below.
 #define oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(_oAPI, _ShortTypeName) \
 	struct _oAPI##_ShortTypeName : oGfx##_ShortTypeName, oGfxDeviceChildMixin<oGfx##_ShortTypeName, _oAPI##_ShortTypeName>
 
+// Use this instead of "struct oMyDerivedClass" to enforce naming consistency and allow
+// for any shared code changes to happen in a central place.
 #define oDECLARE_GFXRESOURCE_IMPLEMENTATION(_oAPI, _ShortTypeName, _ResourceType) \
 	struct _oAPI##_ShortTypeName : oGfx##_ShortTypeName, oGfxResourceMixin<oGfx##_ShortTypeName, _oAPI##_ShortTypeName, oGfxResource::_ResourceType>
 
 // Place this macro in the implementation class of an oGfxDeviceChild
 // If the derivation is also an oGfxResource, use the other macro below.
+// Basically this defines the virtual interface in terms of the inline
+// mixins, basically copy-pasting the code into place, but the MIXIN
+// implementations used different-typed but similar structs. In this 
+// way these macros link the templated base class to the generic virtual
+// interface in a way that does not complicate the vtable.
 #define oDEFINE_GFXDEVICECHILD_INTERFACE() \
 	int Reference() threadsafe override { return MIXINReference(); } \
 	void Release() threadsafe override { MIXINRelease(); } \
 	bool QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe override { return MIXINQueryInterface(_InterfaceID, _ppInterface); } \
 	void GetDevice(threadsafe oGfxDevice** _ppDevice) const threadsafe { MIXINGetDevice(_ppDevice); } \
-	const char* GetName() const threadsafe override { return MIXINGetName(); }
+	const char* GetName() const threadsafe override { return MIXINGetURI(); }
 
 // Place this macro in the implementation class of an oGfxResource
 #define oDEFINE_GFXRESOURCE_INTERFACE() oDEFINE_GFXDEVICECHILD_INTERFACE() \
@@ -57,6 +69,9 @@
 	uint GetID() const threadsafe override { return MIXINGetID(); } \
 	void GetDesc(interface_type::DESC* _pDesc) const threadsafe override { MIXINGetDesc(_pDesc); }
 
+// The one true hash. This is a persistent hash that can be used at tool time 
+// and at runtime and should be capable of uniquely identifying any resource 
+// in the system.
 inline uint oGfxDeviceResourceHash(const char* _SourceName, oGfxResource::TYPE _Type) { return oHash_superfasti(_SourceName, static_cast<uint>(strlen(_SourceName)), _Type); }
 
 template<typename InterfaceT, typename ImplementationT>
@@ -67,9 +82,12 @@ struct oGfxDeviceChildMixinBase : oNoncopyable
 
 protected:
 	oRef<threadsafe oGfxDevice> Device;
-	char Name[oURI::MAX_URIREF];
+	oInitOnce<oStringURI> Name;
 	oRefCount RefCount;
 
+	// Because of the vtable and the desire to work on the actual class and not
+	// really this epherial mixin, use This() rather than 'this' for most local
+	// operations.
 	ImplementationT* This() { return static_cast<ImplementationT*>(this); }
 	const ImplementationT* This() const { return static_cast<ImplementationT*>(this); }
 	threadsafe ImplementationT* This() threadsafe { return static_cast<threadsafe ImplementationT*>(this); }
@@ -77,9 +95,8 @@ protected:
 
 	oGfxDeviceChildMixinBase(threadsafe oGfxDevice* _pDevice, const char* _Name)
 		: Device(_pDevice)
-	{
-		strcpy_s(Name, oSAFESTRN(_Name));
-	}
+		, Name(_Name)
+	{}
 
 	inline int MIXINReference() threadsafe
 	{
@@ -88,7 +105,8 @@ protected:
 	
 	inline void MIXINRelease() threadsafe
 	{
-		if (RefCount.Release()) delete This();
+		if (RefCount.Release())
+			delete This();
 	}
 
 	inline void MIXINGetDevice(threadsafe oGfxDevice** _ppDevice) const threadsafe
@@ -98,9 +116,9 @@ protected:
 		*_ppDevice = pDevice;
 	}
 
-	inline const char* MIXINGetName() const threadsafe
+	inline const char* MIXINGetURI() const threadsafe
 	{
-		return thread_cast<const char*>(Name); // safe because it's read-only
+		return *Name;
 	}
 };
 
@@ -115,7 +133,7 @@ protected:
 
 	inline bool MIXINQueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe
 	{
-		*_ppInterface = 0;
+		*_ppInterface = nullptr;
 
 		if (_InterfaceID == oGetGUID<oGfxDeviceChild>() || _InterfaceID == oGetGUID<InterfaceT>())
 		{
@@ -189,20 +207,23 @@ protected:
 
 #define DEVICE(_API) static_cast<oCONCAT(oCONCAT(o, _API), Device)>(Device.c_ptr())->oCONCAT(_API, Device)
 
+// Confirm that _Name is a valid string
 #define oGFXCREATE_CHECK_NAME() do { \
-	if (!_Name || !*_Name) \
-	{ oSetLastError(EINVAL, "A proper name must be specified"); \
-		return false; \
+	if (!oSTRVALID(_Name)) \
+	{ return oErrorSetLast(oERROR_INVALID_PARAMETER, "A proper name must be specified"); \
 	}} while(0)
 
+// Confirm the output has been specified
 #define oGFXCREATE_CHECK_OUTPUT(_ppOut) do { \
 	if (!_ppOut) \
-	{ oSetLastError(EINVAL, "A valid address for a mesh pointer must be specified"); \
-		return false; \
+	{ return oErrorSetLast(oERROR_INVALID_PARAMETER, "A valid address for an output pointer must be specified"); \
 	}} while(0)
 
+// Check all things typical in Create<resource>() functions
 #define oGFXCREATE_CHECK_PARAMETERS(_ppOut) oGFXCREATE_CHECK_NAME(); oGFXCREATE_CHECK_OUTPUT(_ppOut)
 
+// Wrap the boilerplate Create implementations in case we decide to play around with where device
+// children's memory comes from.
 #define oDEFINE_GFXDEVICE_CREATE(_oAPI, _TypeShortName) \
 	bool _oAPI##Device::Create##_TypeShortName(const char* _Name, const oGfx##_TypeShortName::DESC& _Desc, oGfx##_TypeShortName** _pp##_TypeShortName) threadsafe \
 	{	oGFXCREATE_CHECK_PARAMETERS(_pp##_TypeShortName); \
@@ -211,6 +232,7 @@ protected:
 		return success; \
 	}
 
+// Centralize the signature of the ctors for base types in case system-wide changes need to be made
 #define oDECLARE_GFXDEVICECHILD_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName(threadsafe oGfxDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess);
 #define oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName::_oAPI##_TypeShortName(threadsafe oGfxDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess) : oGfxDeviceChildMixin(_pDevice, _Name)
 

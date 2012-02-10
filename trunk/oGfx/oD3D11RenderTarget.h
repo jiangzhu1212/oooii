@@ -26,9 +26,8 @@
 #define oD3D11RenderTarget2_h
 
 #include "oGfxCommon.h"
-#include <oooii/oD3D11.h>
-#include <oooii/oWindow.h>
-
+#include <oPlatform/oD3D11.h>
+#if 0
 oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget2)
 {
 	oDEFINE_GFXDEVICECHILD_INTERFACE();
@@ -64,4 +63,5 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget2)
 	DESC Desc;
 };
 
+#endif
 #endif

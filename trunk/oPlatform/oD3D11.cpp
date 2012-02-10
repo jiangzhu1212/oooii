@@ -838,8 +838,6 @@ const char* oAsString(const D3D11_RESOURCE_MISC_FLAG& _Flag)
 	}
 }
 
-
-
 void oD3D11DebugTraceTexture2DDesc(const D3D11_TEXTURE2D_DESC& _Desc, const char* _Prefix = "\t")
 {
 	#define oD3D11_TRACE_UINT(x) oTRACE("%s" #x "=%u", oSAFESTR(_Prefix), _Desc.x)
