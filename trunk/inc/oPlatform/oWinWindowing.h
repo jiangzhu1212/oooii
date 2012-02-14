@@ -42,6 +42,10 @@
 // of a class. See oWinGetWrapper for more details.
 bool oWinCreate(HWND* _pHwnd, WNDPROC _Wndproc, void* _pThis = nullptr, bool _SupportDoubleClicks = false, unsigned int _ClassUniqueID = 0);
 
+// Returns the window class's hbrBackground value. This is a non-counted 
+// reference, so no lifetime management should be performed on the HBRUSH.
+HBRUSH oWinGetBackgroundBrush(HWND _hWnd);
+
 // This function simplifies the association of a 'this' pointer with the HWND. 
 // In the WndProc passed to oWinCreate, call this early to get the pointer 
 // passed as _pThis. Then user code can convert quickly from the static 
@@ -178,5 +182,140 @@ void oWinCursorSetVisible(bool _Visible = true);
 
 bool oWinCursorGetPosition(HWND _hWnd, int2* _ClientPosition);
 bool oWinCursorSetPosition(HWND _hWnd, const int2& _ClientPosition);
+
+struct oScopedHWND
+{
+	oScopedHWND()
+		: hWnd(nullptr)
+	{}
+
+	oScopedHWND(HWND _hWnd)
+		: hWnd(_hWnd)
+	{}
+
+	oScopedHWND(oScopedHWND&& _hWnd)
+		: hWnd(_hWnd.hWnd)
+	{
+		_hWnd.hWnd = nullptr;
+	}
+
+	const oScopedHWND& operator=(HWND _hWnd)
+	{
+		if (hWnd)
+			oVB(DestroyWindow(hWnd));
+		hWnd = _hWnd;
+	}
+
+	const oScopedHWND& operator=(oScopedHWND&& _hWnd)
+	{
+		if (hWnd)
+			oVB(DestroyWindow(hWnd));
+		hWnd = _hWnd;
+		_hWnd.hWnd = nullptr;
+	}
+
+	~oScopedHWND()
+	{
+		if (hWnd)
+			oVB(DestroyWindow(hWnd));
+	}
+
+	operator HWND() { return hWnd; }
+
+private:
+
+	HWND hWnd;
+};
+
+enum oWINDOW_CONTROL_TYPE
+{
+	oWINDOW_CONTROL_UNKNOWN,
+	oWINDOW_CONTROL_GROUPBOX,
+	oWINDOW_CONTROL_BUTTON,
+	oWINDOW_CONTROL_BUTTON_DEFAULT,
+	oWINDOW_CONTROL_CHECKBOX,
+	oWINDOW_CONTROL_RADIOBUTTON,
+	oWINDOW_CONTROL_LABEL,
+	oWINDOW_CONTROL_LABEL_SELECTABLE,
+	oWINDOW_CONTROL_TEXTBOX,
+	oWINDOW_CONTROL_COMBOBOX,
+	oWINDOW_CONTROL_COMBOTEXTBOX,
+	oWINDOW_CONTROL_PROGRESSBAR,
+};
+
+struct oWINDOW_CONTROL_DESC
+{
+	oWINDOW_CONTROL_DESC()
+		: hParent(nullptr)
+		, Type(oWINDOW_CONTROL_UNKNOWN)
+		, Text("")
+		, Position(oInvalid, oInvalid)
+		, Dimensions(oInvalid, oInvalid)
+		, ID(oInvalid)
+		, StartsNewGroup(false)
+	{}
+
+	// All controls must have a parent
+	HWND hParent;
+
+	// Type of control to create
+	oWINDOW_CONTROL_TYPE Type;
+
+	// Primary text to display on element. If type is a combobox, then this text
+	// should be a list of entries for the combobox delimited by '|'. For example:
+	// "Entry1|Entry2|Entry3".
+	const char* Text;
+	int2 Position;
+	int2 Dimensions;
+	unsigned short ID;
+	bool StartsNewGroup;
+};
+
+// When finished with this HWND, use DestroyWindow() to free it.
+HWND oWinControlCreate(const oWINDOW_CONTROL_DESC& _Desc);
+
+// This will probably return oWINDOW_CONTROL_UNKNOWN for any control not created
+// with oWinControlCreate().
+oWINDOW_CONTROL_TYPE oWinControlGetType(HWND _hWnd);
+
+unsigned short oWinControlGetID(HWND _hWnd);
+HWND oWinControlGetFromID(HWND _hParent, unsigned short _ID);
+
+void oWinControlSetText(HWND _hWnd, const char* _Text);
+
+char* oWinControlGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, bool _OnlySelected = false);
+template<size_t size> char* oWinControlGetText(char (&_StrDestination)[size], HWND _hWnd, bool _OnlySelected = false) { return oWinControlGetText(_StrDestination, size, _hWnd, _OnlySelected); }
+
+// Only callable on CHECKBOX and RADIOBUTTON types
+bool oWinControlSetChecked(HWND _hWnd, bool _Checked);
+
+// Returns true if the specified _hWnd is a CHECKBOX or RADIOBUTTON and the 
+// checked state is true (returns false for any other tri-state state. This
+// explicitly sets oERROR_NONE if the false returned is legitimately that the
+// control is valid and unchecked, so any other error value is relevant to the
+// execution of this code.
+bool oWinControlIsChecked(HWND _hWnd);
+
+// Appends the list item to the end of the list defined by the specified _hWnd.
+// Valid for: COMBOBOX, COMBOTEXTBOX
+bool oWinControlAddListItem(HWND _hWnd, const char* _ListItemText);
+
+// Removes all entries from the specified list.
+// Valid for: COMBOBOX, COMBOTEXTBOX
+bool oWinControlClearListItems(HWND _hWnd);
+
+// Returns index of the specified _ListItemText in the specified list. If not 
+// found, this returns CB_ERR - check oErrorGetLast for more information.
+// Valid for: COMBOBOX, COMBOTEXTBOX
+int oWinControlFindListItem(HWND _hWnd, const char* _ListItemText);
+
+// Sets the specified index as the selected item/text for the combobox
+// Valid for: COMBOBOX, COMBOTEXTBOX
+bool oWinControlSelect(HWND _hWnd, int _Index);
+
+// Applies a selection highlight to the specified _hWnd's text according to the
+// specified range. Use oWinControlGetText() with _OnlySelected set to true to
+// get just the selected text.
+bool oWinControlSelect(HWND _hWnd, int _StartIndex, int _Length);
 
 #endif

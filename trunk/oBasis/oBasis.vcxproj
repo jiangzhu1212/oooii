@@ -118,6 +118,7 @@
     <ClInclude Include="..\inc\oBasis\oThread.h" />
     <ClInclude Include="..\inc\oBasis\oThreadsafe.h" />
     <ClInclude Include="..\inc\oBasis\oTimer.h" />
+    <ClInclude Include="..\inc\oBasis\oTypes.h" />
     <ClInclude Include="..\inc\oBasis\oUint128.h" />
     <ClInclude Include="..\inc\oBasis\oUnorderedMap.h" />
     <ClInclude Include="..\inc\oBasis\oURI.h" />

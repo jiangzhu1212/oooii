@@ -280,6 +280,10 @@ template<typename T> void oExtractFrustumPlanes(TVEC4<T> _Planes[6], const TMAT4
 // are valid or false if planes don't meet in 8 corners.
 template<typename T> bool oExtractFrustumCorners(TVEC3<T> _Corners[8], const TFRUSTUM<T>& _Frustum);
 
+// Calculates the distance from the eye to the near plane and 1/distance to 
+// the far plane of the visible frustum.
+template<typename T> void oCalculateNearInverseFarPlanesDistance(const TMAT4<T>& _View, const TMAT4<T>& _Projection, T* _pNearDistance, T* _pInverseFarDistance);
+
 // This results in a normalized vector that points into the screen as is 
 // needed for arcball-style calculation. An arcball is a sphere around a 
 // focus point that is used to rotate an eye point around that focus while 

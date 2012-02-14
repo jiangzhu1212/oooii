@@ -342,6 +342,13 @@ HBRUSH oGDICreateBrush(oColor _Color)
 	return a ? CreateSolidBrush(RGB(r,g,b)) : (HBRUSH)GetStockObject(HOLLOW_BRUSH);
 }
 
+COLORREF oGDIGetBrushColor(HBRUSH _hBrush)
+{
+	LOGBRUSH lb;
+	GetObject(_hBrush, sizeof(LOGBRUSH), &lb);
+	return lb.lbColor;
+}
+
 HFONT oGDICreateFont(const char* _FontName, int _PointSize, bool _Bold, bool _Italics, bool _Underline)
 {
 		HDC hDC = GetDC(GetDesktopWindow());

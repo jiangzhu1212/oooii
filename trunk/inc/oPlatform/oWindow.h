@@ -98,6 +98,7 @@ interface oWindow : oInterface
 		RESIZED, // Value is the supersample scalar (see Hook() for more details)
 		CLOSING, // Value is the supersample scalar (see Hook() for more details)
 		CLOSED, // Value is the supersample scalar (see Hook() for more details)
+		COMMAND, // Value is the ID of the element for which the command occured
 		DRAW_BACKBUFFER, // Value is the supersample scalar (see Hook() for more details)
 		DRAW_UIAA, // Value is the supersample scalar (see Hook() for more details)
 		DRAW_UI, // Value is the supersample scalar (see Hook() for more details)
@@ -186,7 +187,7 @@ interface oWindow : oInterface
 	// that any use of Hook functions to control application logic (such as a KB
 	// hook to change a value) should be handled in a threadsafe manner.
 
-	typedef oFUNCTION<bool(EVENT _Event, const float3& _Position, int Value)> HookFn;
+	typedef oFUNCTION<bool(EVENT _Event, const float3& _Position, int _Value)> HookFn;
 
 	// Redraws the client area, optionally blocking and/or specifying a limited area
 	// for update.
@@ -199,7 +200,8 @@ interface oWindow : oInterface
 
 	virtual char* GetTitle(char* _StrDestination, size_t _SizeofStrDestination) const threadsafe = 0;
 	template<size_t size> inline char* GetTitle(char (&_StrDestination)[size]) const threadsafe { return GetTitle(_StrDestination, size); }
-	virtual void SetTitle(const char* _Title) threadsafe = 0;
+	virtual void SetTitle(const char* _Format, va_list _Args) threadsafe = 0;
+	inline void SetTitle(const char* _Format, ...) threadsafe { va_list args; va_start(args, _Format); SetTitle(_Format, args); va_end(args); }
 
 	virtual bool HasFocus() const threadsafe = 0;
 	virtual void SetFocus() threadsafe = 0;
@@ -221,7 +223,7 @@ interface oWindow : oInterface
 	virtual void Unmap() threadsafe = 0;
 
 	virtual void SendKey(EVENT _KeyEvent, oKEYBOARD_KEY _Key) threadsafe = 0;
-	virtual void SendMouseMove(float2 _Position) threadsafe = 0;
+	virtual void SendMouseMove(const float2& _Position) threadsafe = 0;
 
 	virtual DRAW_MODE GetDrawMode() const threadsafe = 0;
 	virtual void* GetNativeHandle() threadsafe = 0;

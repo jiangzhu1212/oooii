@@ -21,32 +21,15 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// A nothing class designed to control the difference between setting an integer
-// type to all 0xff's based on type. Mainly this should be used as an initializer
-// for unsigned int types or counting types.
+// Types used throughout the codebase
 #pragma once
-#ifndef oInvalid_h
-#define oInvalid_h
+#ifndef oTypes_h
+#define oTypes_h
 
-class oInvalid_t
-{
-public:
-	operator char() const { return -1; }
-	operator unsigned char() const { return static_cast<unsigned char>(~0u & 0xff); }
-	operator short() const { return -1; }
-	operator unsigned short() const { return static_cast<unsigned short>(~0u & 0xffff); }
-	operator int() const { return -1; }
-	operator unsigned int() const { return ~0u; }
-	operator unsigned long() const { return ~0u; }
-	operator unsigned long long() const { return ~0ull; }
-};
-
-const oInvalid_t oInvalid;
-
-template<typename T> bool operator==(const oInvalid_t& _Invalid, const T& _Value) { return (T)_Invalid == _Value; }
-template<typename T> bool operator==(const T& _Value, const oInvalid_t& _Invalid) { return _Invalid == _Value; }
-
-template<typename T> bool operator!=(const oInvalid_t& _Invalid, const T& _Value) { return !((T)_Invalid == _Value); }
-template<typename T> bool operator!=(const T& _Value, const oInvalid_t& _Invalid) { return !((T)_Invalid == _Value); }
+typedef unsigned char uchar;
+typedef unsigned short ushort;
+typedef unsigned int uint;
+typedef long long llong;
+typedef unsigned long long ullong;
 
 #endif

@@ -491,9 +491,14 @@ threadsafe
 thread_local
 nullptr
 uint128
+uchar
+uchar2
+uchar3
+uchar4
 short2
 short3
 short4
+ushort
 ushort2
 ushort3
 ushort4

@@ -807,6 +807,32 @@ bool oExtractFrustumCorners(float3 _Corners[8], const oFrustumf& _Frustum)
 	return oExtractFrustumCornersT(_Corners, _Frustum);
 }
 
+template<typename T> void oCalculateNearInverseFarPlanesDistance(const TMAT4<T>& _View, const TMAT4<T>& _Projection, T* _pNearDistance, T* _pInverseFarDistance)
+{
+  T C = _Projection[2][2];
+  T D = _Projection[3][2];
+
+  if (oEqual(C, T(0)))
+    *_pNearDistance = T(0);
+  else
+    *_pNearDistance = (-D / C);
+
+  if (oEqual(C, T(1)) || oEqual(D, T(0)))
+    *_pInverseFarDistance = fabs(D);  
+  else
+    *_pInverseFarDistance = (T(1) - C) / D;
+}
+
+void oCalculateNearInverseFarPlanesDistance(const float4x4& _View, const float4x4& _Projection, float* _pNearDistance, float* _pInverseFarDistance)
+{
+	return oCalculateNearInverseFarPlanesDistance<float>(_View, _Projection, _pNearDistance, _pInverseFarDistance);
+}
+
+void oCalculateNearInverseFarPlanesDistance(const double4x4& _View, const double4x4& _Projection, double* _pNearDistance, double* _pInverseFarDistance)
+{
+	return oCalculateNearInverseFarPlanesDistance<double>(_View, _Projection, _pNearDistance, _pInverseFarDistance);
+}
+
 bool oCalculateAreaAndCentriod(float* _pArea, float2* _pCentroid, const float2* _pVertices, size_t _VertexStride, size_t _NumVertices)
 {
 	// Bashein, Gerard, Detmer, Paul R. "Graphics Gems IV." 

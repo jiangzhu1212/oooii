@@ -48,6 +48,29 @@
 	#endif
 #endif
 
+struct SYNC_RETURN
+{
+	oEvent Finished;
+	oERROR Err;
+	oStringM ErrString;
+
+	bool Error()
+	{
+		Err = oErrorGetLast();
+		ErrString = oErrorGetLastString();
+		Finished.Set();
+		return false;
+	}
+
+	bool Success()
+	{
+		Err = oERROR_NONE;
+		ErrString = "";
+		Finished.Set();
+		return true;
+	}
+};
+
 static const float3 ZERO3 = float3(0.0f, 0.0f, 0.0f);
 
 const oGUID& oGetGUID(threadsafe const oHDC* threadsafe const*)
@@ -213,10 +236,10 @@ struct oWinWindow : oWindow
 	DESC* Map() threadsafe override;
 	void Unmap() threadsafe override;
 	void SendKey(EVENT _KeyEvent, oKEYBOARD_KEY _Key) threadsafe override;
-	void SendMouseMove(float2 _Position) threadsafe override;
+	void SendMouseMove(const float2& _Position) threadsafe override;
 	void Refresh(bool _Blocking = true, const oRECT* _pDirtyRect = nullptr) threadsafe override;
 	char* GetTitle(char* _StrDestination, size_t _SizeofStrDestination) const threadsafe override;
-	void SetTitle(const char* _Title) threadsafe override;
+	void SetTitle(const char* _Format, va_list _Args) threadsafe override;
 	bool HasFocus() const threadsafe override;
 	void SetFocus() threadsafe override;
 	DRAW_MODE GetDrawMode() const threadsafe;
@@ -231,15 +254,36 @@ protected:
 	inline oWinWindow* QThis() threadsafe { return thread_cast<oWinWindow*>(this); }
 	inline const oWinWindow* QThis() const threadsafe { return thread_cast<oWinWindow*>(this); }
 
+	inline bool IsWindowThread() const threadsafe { return oStd::this_thread::get_id() == thread_cast<oWinWindow*>(this)->MessageQueueThreadID; }
+
+	inline void Run(const oTASK& _Task) threadsafe
+	{
+		if (IsWindowThread())
+			_Task();
+		else if (hWnd)
+		{
+			MessageQueue->Dispatch(_Task);
+			oWinWake(hWnd);
+		}
+	}
+
+	inline bool FinishSync(SYNC_RETURN& _SyncReturn) const threadsafe
+	{
+		oWinWake(hWnd);
+		_SyncReturn.Finished.Wait();
+		oErrorSetLast(_SyncReturn.Err, _SyncReturn.ErrString);
+		return _SyncReturn.Err == oERROR_NONE;
+	}
+
 	bool CallHooks(EVENT _Event, void* _pDrawContext, DRAW_MODE _DrawMode, const float3& _Position, int _Value);
 
-	void Initialize(oERROR* _pError, char* _pErrorString, size_t _SizeofErrorString, bool _bSupportDoubleClicks);
+	void Initialize(bool _bSupportDoubleClicks, SYNC_RETURN* _pSyncReturn);
 	void Deinitialize();
 	void Run();
 
 	bool CreateDevices(HWND _hWnd, IUnknown* _pUserSpecifiedDevice);
 	bool CreateDeviceResources(HWND _hWnd);
-	bool CreateGDIResources(HWND _hWnd, const oColor& _ClearColor);
+	bool CreateGDIResources(HWND _hWnd);
 	bool DestroyDeviceResources();
 	bool D2DPaint(HWND _hWnd, bool _Force = false);
 	bool GDIPaint(HWND _hWnd, HDC _hDC, bool _Force = false);
@@ -249,9 +293,9 @@ protected:
 	void SetIcon(HICON _hIcon);
 	void SetCursor(HCURSOR _hCursor);
 	void SetDesc(DESC _Desc);
-	void CreateSnapshot1(oImage** _ppImage, bool _IncludeBorder, threadsafe oEvent* _pDone, bool* _pSuccess);
-	void Hook1(HookFn _Hook, threadsafe oEvent* _pDone, size_t* _pIndex, oERROR* _pLastError, char* _StrLastError, size_t _SizeofStrLastError);
-	void Unhook1(size_t _Index, threadsafe oEvent* _pDone);
+	void CreateSnapshot1(oImage** _ppImage, bool _IncludeBorder, SYNC_RETURN* _pSyncReturn);
+	void Hook1(HookFn _Hook, size_t* _pIndex, SYNC_RETURN* _pSyncReturn);
+	void Unhook1(size_t _Index, SYNC_RETURN* _pSyncReturn);
 	void SendKey1(EVENT _KeyEvent, oKEYBOARD_KEY _Key);
 	void SendMouseMove1(float2 _Position);
 	void ToggleFullscreen();
@@ -261,9 +305,8 @@ protected:
 	{
 		bool UseRect;
 		oRECT Rect;
-		oEvent* pEvent;
 	};
-	void Refresh1(REFRESH _Refresh);
+	void Refresh1(REFRESH _Refresh, SYNC_RETURN* _pSyncReturn);
 
 	oDECLARE_WNDPROC(, WndProc);
 	oDECLARE_WNDPROC(static, StaticWndProc);
@@ -275,6 +318,7 @@ protected:
 	DESC PreFullscreenDesc; // desc as it was before a fullscreen state was set.
 	oTASK RunFunction; // cache the binding of this->Run();
 	oRef<threadsafe oDispatchQueuePrivate> MessageQueue;
+	oStd::thread::id MessageQueueThreadID;
 
 	std::vector<HookFn> Hooks;
 
@@ -332,16 +376,11 @@ oWinWindow::oWinWindow(const DESC& _Desc, void* _pAssociatedNativeHandle, DRAW_M
 		PendingDesc.State = RESTORED;
 	}
 	
-	oERROR InitError = oERROR_NONE;
-	oFixedString<char, 256> ErrorStr;
-	MessageQueue->Dispatch(oBIND(&oWinWindow::Initialize, this, &InitError, ErrorStr.c_str(), ErrorStr.capacity(), Desc.SupportDoubleClicks));
-	MessageQueue->Flush();
-	oASSERT(hWnd, "hWnd must be initialized by now (flush isn't blocking properly?)");
-	if (oERROR_NONE != InitError)
-	{
-		oErrorSetLast(InitError, ErrorStr);
+	SYNC_RETURN r;
+	
+	MessageQueue->Dispatch(oBIND(&oWinWindow::Initialize, QThis(), Desc.SupportDoubleClicks, &r));
+	if (!FinishSync(r))
 		return;
-	}
 
 	MessageQueue->Dispatch(RunFunction);
 	Map(); Unmap();
@@ -359,28 +398,33 @@ oWinWindow::oWinWindow(const DESC& _Desc, void* _pAssociatedNativeHandle, DRAW_M
 
 oWinWindow::~oWinWindow()
 {
-	MessageQueue->Dispatch(oBIND(&oWinWindow::Deinitialize, this));
-	if (hWnd)
-		oWinWake(hWnd);
+	Run(oBIND(&oWinWindow::Deinitialize, this));
 	MessageQueue->Join();
 }
 
-void oWinWindow::Initialize(oERROR* _pError, char* _pErrorString, size_t _SizeofErrorString, bool _bSupportDoubleClicks)
+void oWinWindow::Initialize(bool _bSupportDoubleClicks, SYNC_RETURN* _pSyncReturn)
 {
-	oStd::thread::id id = oStd::this_thread::get_id();
-	if (!oWinCreate(&hWnd, StaticWndProc, this, _bSupportDoubleClicks, *(unsigned int*)&id))
+	MessageQueueThreadID = oStd::this_thread::get_id();
+	if (!oWinCreate(&hWnd, StaticWndProc, this, _bSupportDoubleClicks, oAsUint(MessageQueueThreadID)))
 	{
-		*_pError = oErrorGetLast();
-		sprintf_s(_pErrorString, _SizeofErrorString, oErrorGetLastString());
+		_pSyncReturn->Error();
 	}
-	if (hWnd)
-		oTRACE("hWND valid");
-	else
-		oTRACE("hWND ctor failed");
 
-	// If we want to use a touch interface we need to register the window as a touch window
-	if (Desc.SupportTouchEvents)
-		RegisterTouchWindow(hWnd, 0);
+	else
+	{
+		if (hWnd)
+			oTRACE("hWND valid");
+		else
+			oTRACE("hWND ctor failed");
+
+		// If we want to use a touch interface we need to register the window as a touch window
+		if (Desc.SupportTouchEvents)
+			RegisterTouchWindow(hWnd, 0);
+
+		hClearBrush = oGDICreateBrush(Desc.ClearColor);
+
+		_pSyncReturn->Success();
+	}
 }
 
 void oWinWindow::Deinitialize()
@@ -394,10 +438,7 @@ void oWinWindow::Deinitialize()
 	}
 
 	if (hWnd)
-	{
-		MessageQueue->Dispatch(oBIND(&oWinWindow::DestroyWindow1, this));
-		oWinWake(hWnd);
-	}
+		Run(oBIND(&oWinWindow::DestroyWindow1, this));
 }
 
 void oWinWindow::DestroyWindow1()
@@ -456,12 +497,11 @@ bool oWinWindow::CreateDevices(HWND _hWnd, IUnknown* _pUserSpecifiedDevice)
 	return true;
 }
 
-bool oWinWindow::CreateGDIResources(HWND _hWnd, const oColor& _ClearColor)
+bool oWinWindow::CreateGDIResources(HWND _hWnd)
 {
 	RECT rClient;
 	oVB(GetClientRect(_hWnd, &rClient));
 
-	hClearBrush = oGDICreateBrush(_ClearColor);
 	HDC hDC = GetDC(_hWnd);
 	hOffscreenAADC = CreateCompatibleDC(hDC);
 	hOffscreenDC = CreateCompatibleDC(hOffscreenAADC);
@@ -509,7 +549,7 @@ bool oWinWindow::CreateDeviceResources(HWND _hWnd)
 
 		case USE_GDI:
 		{
-			oVERIFY(CreateGDIResources(_hWnd, Desc.ClearColor));
+			oVERIFY(CreateGDIResources(_hWnd));
 			break;
 		}
 
@@ -529,7 +569,6 @@ bool oWinWindow::DestroyDeviceResources()
 		D3D10RenderTarget = nullptr;
 	#endif
 
-	hClearBrush = nullptr;
 	hOffscreenAABmp = nullptr;
 	hOffscreenBmp = nullptr;
 	hOffscreenAADC = nullptr;
@@ -649,10 +688,13 @@ void oWinWindow::Run()
 			oSleep(Desc.BackgroundSleepMS);
 
 		MSG msg;
-		if (GetMessage(&msg, hWnd, 0, 0) > 0)
+		if (GetMessage(&msg, nullptr, 0, 0) > 0)
 		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+			if (!IsDialogMessage(hWnd, &msg))
+			{
+				TranslateMessage(&msg); 
+				DispatchMessage(&msg);
+			}
 		}
 
 		MessageQueue->Dispatch(RunFunction);
@@ -715,14 +757,17 @@ bool oWinWindow::GDIPaint(HWND _hWnd, HDC _hDC, bool _Force)
 	oDEFINE_WNDPROC(oWinWindow, StaticWndProc);
 #endif
 
+float3 Float3(LPARAM _lParam) { return float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0.0f); }
+float3 Float3(LPARAM _lParam, WPARAM _wParam) { return float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), (float)GET_WHEEL_DELTA_WPARAM(_wParam)); }
+
 LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
 {
 	switch (_uMsg)
 	{
 		// handle WM_ERASEBKGND for flicker-free client area update
 		// http://msdn.microsoft.com/en-us/library/ms969905.aspx
-		//case WM_ERASEBKGND:
-		//	return 1;
+		case WM_ERASEBKGND:
+			return 1;
 
 		case WM_DISPLAYCHANGE:
 			Refresh(false);
@@ -829,28 +874,9 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 		}
 
 		case WM_CREATE:
-			{
-				//HWND btn = CreateWindow("BUTTON", "P&ush Me", WS_TABSTOP|WS_CHILD|WS_VISIBLE|BS_PUSHBUTTON, 10, 10, 150, 30, _hWnd, (HMENU)12, nullptr, nullptr);
-				//HWND sta = CreateWindow("STATIC", "Hello!", WS_TABSTOP|WS_CHILD|WS_VISIBLE|SS_ENDELLIPSIS|SS_LEFT, 10, 50, 150, 30, _hWnd, (HMENU)13, nullptr, nullptr);
-
-				HWND grp = CreateWindow("BUTTON", "Group", WS_CHILD|WS_VISIBLE|BS_GROUPBOX, 200, 40, 100, 100, _hWnd, (HMENU)-1, GetModuleHandle(NULL), nullptr);
-
-				HWND btn2 = CreateWindow("BUTTON", "Push Me 1", WS_GROUP|WS_TABSTOP|WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON, 200, 10, 100, 30, _hWnd, (HMENU)1, GetModuleHandle(NULL), nullptr);
-				HWND btn3 = CreateWindow("BUTTON", "Push Me 2", WS_TABSTOP|WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON, 200, 50, 100, 30, _hWnd, (HMENU)222, GetModuleHandle(NULL), nullptr);
-				HWND btn4 = CreateWindow("BUTTON", "Push Me 3", WS_TABSTOP|WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON, 200, 90, 100, 30, _hWnd, (HMENU)344, GetModuleHandle(NULL), nullptr);
-
-				//HFONT hFont = oGDICreateFont("Tahoma", 8, false, false, false);
-				//SendMessage(btn, WM_SETFONT, (WPARAM)hFont, 1);
-				//SendMessage(sta, WM_SETFONT, (WPARAM)hFont, 1);
-				//SendMessage(grp, WM_SETFONT, (WPARAM)hFont, 1);
-				//SendMessage(btn2, WM_SETFONT, (WPARAM)hFont, 1);
-				//SendMessage(btn3, WM_SETFONT, (WPARAM)hFont, 1);
-				//SendMessage(btn4, WM_SETFONT, (WPARAM)hFont, 1);
-
 			if (!CreateDevices(_hWnd, pUserSpecifiedDevice))
 				return -1;
 			return 0;
-			}
 
 		case WM_CLOSE:
 			if (CallHooks(CLOSING, nullptr, DrawMode, ZERO3, 1))
@@ -869,8 +895,14 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 			CallHooks(CLOSED, nullptr, DrawMode, ZERO3, 1);
 			return 0;
 
-		// ALT-F4 turns into a WM_CLOSE in DefWindowProc() on key down... up is too late
-		// Other than situations like this
+		case WM_COMMAND:
+		{
+			CallHooks(COMMAND, nullptr, DrawMode, ZERO3, GET_WM_COMMAND_ID(_wParam, _lParam));
+			return 0;
+		}
+
+		// ALT-F4 turns into a WM_CLOSE in DefWindowProc() on key down... up is too 
+		// late other than situations like this
 		case WM_SYSKEYDOWN:
 			if (_wParam == VK_F4 && !Desc.AllowUserKeyboardClose)
 				return 0;
@@ -903,8 +935,9 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 			}
 			break;
 
-		// APPCOMMAND is fired whenever a media keyboard button is pressed (such as play/pause)
-		// this only fires the key down.  Regular and system key down messages do not fire for media keys
+		// APPCOMMAND is fired whenever a media keyboard button is pressed (such as 
+		// play/pause) this only fires the key down. Regular and system key down 
+		// messages do not fire for media keys
 		case WM_APPCOMMAND:
 			if (GET_DEVICE_LPARAM(_lParam) == FAPPCOMMAND_KEY)
 				CallHooks(KEY_DOWN, nullptr, DrawMode, ZERO3, TranslateAppCommandToX11Key(_lParam));
@@ -921,52 +954,47 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 		// Uninstalling the drivers fixes this.  This could cause a problem for oRemoteInput, since all WM_MOUSEMOVE messages are sent
 		// over the netowrk
 		case WM_MOUSEMOVE:
-			CallHooks(POINTER_MOVE, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(_wParam, oMS_MouseDrag));
+			CallHooks(POINTER_MOVE, nullptr, DrawMode, Float3(_lParam), TranslateMouseToX11(_wParam, oMS_MouseDrag));
 			break;
 
 		// We will treat the mouse wheel delta returned from GET_WHEEL_DELTA_WPARAM as the z axis of the mouse position.  This is a relative delta of the mouse wheel and not an abolute position
 		case WM_MOUSEWHEEL:
-			CallHooks(POINTER_MOVE, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), (float)GET_WHEEL_DELTA_WPARAM(_wParam)), TranslateMouseToX11(_wParam, oMS_MouseDrag));
+			CallHooks(POINTER_MOVE, nullptr, DrawMode, Float3(_lParam, _wParam), TranslateMouseToX11(_wParam, oMS_MouseDrag));
 			break;
 
 		// Mouse buttons
 		case WM_LBUTTONDOWN:
 		case WM_RBUTTONDOWN:
 		case WM_MBUTTONDOWN:
-			CallHooks(KEY_DOWN, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(_wParam, oMS_MouseClick));
+			CallHooks(KEY_DOWN, nullptr, DrawMode, Float3(_lParam), TranslateMouseToX11(_wParam, oMS_MouseClick));
 			break;
 		case WM_XBUTTONDOWN:
-			CallHooks(KEY_DOWN, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? MK_XBUTTON1 : MK_XBUTTON2, oMS_MouseClick));
+			CallHooks(KEY_DOWN, nullptr, DrawMode, Float3(_lParam), TranslateMouseToX11(GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? MK_XBUTTON1 : MK_XBUTTON2, oMS_MouseClick));
 			break;
 
 		// Mouse double clicks
 		case WM_LBUTTONDBLCLK:
 		case WM_RBUTTONDBLCLK:
 		case WM_MBUTTONDBLCLK:
-			CallHooks(KEY_DOWN, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(_wParam, oMS_MouseDoubleClick));
+			CallHooks(KEY_DOWN, nullptr, DrawMode, Float3(_lParam), TranslateMouseToX11(_wParam, oMS_MouseDoubleClick));
 			break;
 		case WM_XBUTTONDBLCLK:
-			CallHooks(KEY_DOWN, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? MK_XBUTTON1 : MK_XBUTTON2, oMS_MouseDoubleClick));
+			CallHooks(KEY_DOWN, nullptr, DrawMode, Float3(_lParam), TranslateMouseToX11(GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? MK_XBUTTON1 : MK_XBUTTON2, oMS_MouseDoubleClick));
 			break;
 
 		// for mouse button up _wParam only tells the keys that are down.
 		case WM_LBUTTONUP:
-			CallHooks(KEY_UP, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(MK_LBUTTON, oMS_MouseClick));
+			CallHooks(KEY_UP, nullptr, DrawMode, Float3(_lParam), TranslateMouseToX11(MK_LBUTTON, oMS_MouseClick));
 			break;
 		case WM_RBUTTONUP:
-			CallHooks(KEY_UP, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(MK_RBUTTON, oMS_MouseClick));
+			CallHooks(KEY_UP, nullptr, DrawMode, Float3(_lParam), TranslateMouseToX11(MK_RBUTTON, oMS_MouseClick));
 			break;
 		case WM_MBUTTONUP:
-			CallHooks(KEY_UP, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(MK_MBUTTON, oMS_MouseClick));
+			CallHooks(KEY_UP, nullptr, DrawMode, Float3(_lParam), TranslateMouseToX11(MK_MBUTTON, oMS_MouseClick));
 			break;
 		case WM_XBUTTONUP:
-			CallHooks(KEY_UP, nullptr, DrawMode, float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0), TranslateMouseToX11(GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? MK_XBUTTON1 : MK_XBUTTON2, oMS_MouseClick));
+			CallHooks(KEY_UP, nullptr, DrawMode, Float3(_lParam), TranslateMouseToX11(GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? MK_XBUTTON1 : MK_XBUTTON2, oMS_MouseClick));
 			break;
-
-		case WM_COMMAND:
-			oTRACE("WM_COMMAND: HI:%d, LO:%d, HWND%p", HIWORD(_wParam), LOWORD(_wParam), _lParam);
-			break;
-
 		default:
 			break;
 	}
@@ -999,10 +1027,11 @@ char* oWinWindow::GetTitle(char* _StrDestination, size_t _SizeofStrDestination) 
 	return oWinGetTitle(hWnd, _StrDestination, _SizeofStrDestination) ? _StrDestination : nullptr;
 }
 
-void oWinWindow::SetTitle(const char* _Title) threadsafe
+void oWinWindow::SetTitle(const char* _Format, va_list _Args) threadsafe
 {
-	MessageQueue->Dispatch(oBIND(&oWinWindow::SetTitle1, QThis(), oStringL(oSAFESTR(_Title))));
-	oWinWake(hWnd);
+	oStringL title;
+	vsprintf_s(title, _Format, _Args);
+	Run(oBIND(&oWinWindow::SetTitle1, QThis(), title));
 }
 
 void oWinWindow::SetTitle1(oStringL _Title)
@@ -1026,24 +1055,20 @@ bool oWinWindow::SetProperty(const char* _Name, void* _pValue)
 	bool result = false;
 	if (hWnd && _Name)
 	{
+		result = true;
+
 		if (!_stricmp("Icon", _Name))
-		{
-			MessageQueue->Dispatch(oBIND(&oWinWindow::SetIcon, QThis(), *(HICON*)_pValue));
-			result = true;
-		}
+			Run(oBIND(&oWinWindow::SetIcon, QThis(), *(HICON*)_pValue));
 		
 		else if (!_stricmp("Cursor", _Name))
-		{
-			MessageQueue->Dispatch(oBIND(&oWinWindow::SetCursor, QThis(), *(HCURSOR*)_pValue));
-			result = true;
-		}
+			Run(oBIND(&oWinWindow::SetCursor, QThis(), *(HCURSOR*)_pValue));
+
+		else
+			result = oErrorSetLast(oERROR_NOT_FOUND, "property %s was not found", oSAFESTRN(_Name));
 	}
 
 	else
 		oTRACE("HWND INVALID!!");
-
-	if (result)
-		oWinWake(hWnd);
 
 	return result;
 }
@@ -1075,14 +1100,12 @@ oWindow::DESC* oWinWindow::Map() threadsafe
 void oWinWindow::Unmap() threadsafe
 {
 	DescMutex.unlock();
-	MessageQueue->Dispatch(oBIND(&oWinWindow::SetDesc, QThis(), thread_cast<DESC&>(PendingDesc)));
-	oWinWake(hWnd);
+	Run(oBIND(&oWinWindow::SetDesc, QThis(), thread_cast<DESC&>(PendingDesc)));
 }
 
 void oWinWindow::SendKey(EVENT _KeyEvent, oKEYBOARD_KEY _Key) threadsafe
 {
-	MessageQueue->Dispatch(oBIND(&oWinWindow::SendKey1, QThis(), _KeyEvent, _Key));
-	oWinWake(hWnd);
+	Run(oBIND(&oWinWindow::SendKey1, QThis(), _KeyEvent, _Key));
 }
 
 void oWinWindow::SendKey1(EVENT _KeyEvent, oKEYBOARD_KEY _Key)
@@ -1090,10 +1113,9 @@ void oWinWindow::SendKey1(EVENT _KeyEvent, oKEYBOARD_KEY _Key)
 	CallHooks(_KeyEvent, nullptr, DrawMode, ZERO3, _Key);
 }
 
-void oWinWindow::SendMouseMove(float2 _Position) threadsafe
+void oWinWindow::SendMouseMove(const float2& _Position) threadsafe
 {
-	MessageQueue->Dispatch(oBIND(&oWinWindow::SendMouseMove1, QThis(), _Position));
-	oWinWake(hWnd);
+	Run(oBIND(&oWinWindow::SendMouseMove1, QThis(), _Position));
 }
 
 void oWinWindow::SendMouseMove1(float2 _Position)
@@ -1213,22 +1235,17 @@ void oWinWindow::Refresh(bool _Blocking, const oRECT* _pDirtyRect) threadsafe
 
 	if (_Blocking)
 	{
-		oEvent done;
-		r.pEvent = &done;
-		MessageQueue->Dispatch(oBIND(&oWinWindow::Refresh1, QThis(), r));
-		oWinWake(hWnd);
-		done.Wait();
+		oASSERT(!IsWindowThread(), "This code could be better refactored to handle self-thread calls to Refresh().");
+		SYNC_RETURN ret;
+		MessageQueue->Dispatch(oBIND(&oWinWindow::Refresh1, QThis(), r, &ret));
+		FinishSync(ret);
 	}
 	
 	else
-	{
-		r.pEvent = nullptr;
-		MessageQueue->Dispatch(oBIND(&oWinWindow::Refresh1, QThis(), r));
-		oWinWake(hWnd);
-	}
+		Run(oBIND(&oWinWindow::Refresh1, QThis(), r, nullptr));
 }
 
-void oWinWindow::Refresh1(REFRESH _Refresh)
+void oWinWindow::Refresh1(REFRESH _Refresh, SYNC_RETURN* _pSyncReturn)
 {
 	RECT r;
 	RECT* pRect = nullptr;
@@ -1237,11 +1254,11 @@ void oWinWindow::Refresh1(REFRESH _Refresh)
 		r = oWinRectWH(_Refresh.Rect.GetMin(), _Refresh.Rect.GetDimensions());
 		pRect = &r;
 	}
-	
-	if (_Refresh.pEvent)
+
+	if (_pSyncReturn)
 	{
 		oVB(RedrawWindow(hWnd, pRect, nullptr, RDW_UPDATENOW|RDW_INVALIDATE));
-		_Refresh.pEvent->Set();
+		_pSyncReturn->Success();
 	}
 
 	else
@@ -1262,17 +1279,13 @@ void oWinWindow::ToggleFullscreen()
 
 bool oWinWindow::CreateSnapshot(oImage** _ppImage, bool _IncludeBorder) threadsafe
 {
-	oEvent Finished;
-	bool success = false;
-	MessageQueue->Dispatch(oBIND(&oWinWindow::CreateSnapshot1, QThis(), _ppImage, _IncludeBorder, &Finished, &success));
-	oWinWake(hWnd);
-	Finished.Wait();
-	return success;
+	SYNC_RETURN r;
+	MessageQueue->Dispatch(oBIND(&oWinWindow::CreateSnapshot1, QThis(), _ppImage, _IncludeBorder, &r));
+	return FinishSync(r);
 }
 
-void oWinWindow::CreateSnapshot1(oImage** _ppImage, bool _IncludeBorder, threadsafe oEvent* _pDone, bool* _pSuccess)
+void oWinWindow::CreateSnapshot1(oImage** _ppImage, bool _IncludeBorder, SYNC_RETURN* _pSyncReturn)
 {
-	*_pSuccess = false;
 	oTRACE("HWND 0x%x CreateSnapshot1(%s)", hWnd, _IncludeBorder ? "true" : "false");
 
 	if (Desc.State == FULLSCREEN && DXGISwapChain)
@@ -1289,8 +1302,7 @@ void oWinWindow::CreateSnapshot1(oImage** _ppImage, bool _IncludeBorder, threads
 		else
 		{
 			oErrorSetLast(oERROR_NOT_FOUND, "Unsupported fullscreen render target - snapshot cannot be created");
-			*_pSuccess = false;
-			_pDone->Set();
+			_pSyncReturn->Error();
 			return;
 		}
 	}
@@ -1302,37 +1314,35 @@ void oWinWindow::CreateSnapshot1(oImage** _ppImage, bool _IncludeBorder, threads
 		SetFocus(); // Windows doesn't do well with hidden contents.
 		if (oGDIScreenCaptureWindow(hWnd, _IncludeBorder, malloc, &buf, &size))
 		{
-			*_pSuccess = oImageCreate("Screen capture", buf, size, oImage::ForceAlpha, _ppImage);
-			if (buf)
-				free(buf);
+			oOnScopeExit freeBuf([&] { if (buf) free(buf); });
+			if (!oImageCreate("Screen capture", buf, size, _ppImage))
+			{
+				_pSyncReturn->Error();
+				return;
+			}
+		}
+
+		else
+		{
+			_pSyncReturn->Error();
+			return;
 		}
 	}
 
-	*_pSuccess = true;
-	_pDone->Set();
+	_pSyncReturn->Success();
 }
 
 unsigned int oWinWindow::Hook(HookFn _Hook) threadsafe
 {
 	oASSERT(_Hook, "A valid hook function must be specified");
-	oERROR err = oERROR_NONE;
-	oStringXL ErrStr;
-	oEvent IndexValid;
+	SYNC_RETURN r;
 	size_t index = oInvalid;
-	MessageQueue->Dispatch(oBIND(&oWinWindow::Hook1, QThis(), _Hook, &IndexValid, &index, &err, ErrStr.c_str(), ErrStr.capacity()));
-	oWinWake(hWnd);
-	IndexValid.Wait();
-
-	if (err)
-	{
-		oErrorSetLast(err, ErrStr);
-		return oInvalid;
-	}
-
-	return static_cast<unsigned int>(index);
+	MessageQueue->Dispatch(oBIND(&oWinWindow::Hook1, QThis(), _Hook, &index, &r));
+	FinishSync(r);
+	return r.Err == oERROR_NONE ? static_cast<unsigned int>(index) : oInvalid;
 }
 
-void oWinWindow::Hook1(HookFn _Hook, threadsafe oEvent* _pDone, size_t* _pIndex, oERROR* _pLastError, char* _StrLastError, size_t _SizeofStrLastError)
+void oWinWindow::Hook1(HookFn _Hook, size_t* _pIndex, SYNC_RETURN* _pSyncReturn)
 {
 	bool result = _Hook(RESIZED, ZERO3, SuperSampleScale());
 	if (result)
@@ -1340,35 +1350,31 @@ void oWinWindow::Hook1(HookFn _Hook, threadsafe oEvent* _pDone, size_t* _pIndex,
 		*_pIndex = oSparseSet(Hooks, _Hook);
 		oTRACE("HWND 0x%x Hook1(%u)", hWnd, *_pIndex);
 		InvalidateRect(hWnd, nullptr, FALSE);
+		_pSyncReturn->Success();
 	}
 
 	else
 	{
 		oTRACE("HWND 0x%x Hook1() failed: %s: %s", hWnd, oAsString(oErrorGetLast()), oErrorGetLastString());
-		*_pIndex = oInvalid;
-		*_pLastError = oErrorGetLast();
-		strcpy_s(_StrLastError, _SizeofStrLastError, oErrorGetLastString());
+		_pSyncReturn->Error();
 	}
-
-	_pDone->Set();
 }
 
 void oWinWindow::Unhook(unsigned int _HookID) threadsafe
 {
 	if (_HookID != oInvalid)
 	{
-		oEvent HookRemoved;
-		MessageQueue->Dispatch(oBIND(&oWinWindow::Unhook1, QThis(), _HookID, &HookRemoved));
-		oWinWake(hWnd);
-		HookRemoved.Wait();
+		SYNC_RETURN r;
+		MessageQueue->Dispatch(oBIND(&oWinWindow::Unhook1, QThis(), _HookID, &r));
+		FinishSync(r);
 	}
 }
 
-void oWinWindow::Unhook1(size_t _Index, threadsafe oEvent* _pDone)
+void oWinWindow::Unhook1(size_t _Index, SYNC_RETURN* _pSyncReturn)
 {
 	oTRACE("HWND 0x%x Unhook1(%u)", hWnd, _Index);
 	Hooks[_Index](RESIZING, ZERO3, SuperSampleScale());
 	Hooks[_Index] = nullptr;
 	InvalidateRect(hWnd, nullptr, FALSE);
-	_pDone->Set();
+	_pSyncReturn->Success();
 }

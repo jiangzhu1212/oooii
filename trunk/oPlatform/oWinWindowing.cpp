@@ -27,6 +27,7 @@
 #include <oBasis/oStdChrono.h>
 #include <oPlatform/oWinRect.h>
 #include <oPlatform/oWinAsString.h>
+#include <WindowsX.h>
 
 bool oWinCreate(HWND* _pHwnd, WNDPROC _Wndproc, void* _pThis, bool _SupportDoubleClicks, unsigned int _ClassUniqueID)
 {
@@ -53,6 +54,11 @@ bool oWinCreate(HWND* _pHwnd, WNDPROC _Wndproc, void* _pThis, bool _SupportDoubl
 		return false; // pass through error
 
 	return true;
+}
+
+HBRUSH oWinGetBackgroundBrush(HWND _hWnd)
+{
+	return (HBRUSH)GetClassLongPtr(_hWnd, GCLP_HBRBACKGROUND);
 }
 
 void* oWinGetThis(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
@@ -308,13 +314,17 @@ bool oWinAnimate(HWND _hWnd, const RECT& _From, const RECT& _To)
 bool oWinSetTitle(HWND _hWnd, const char* _Title)
 {
 	oWINV(_hWnd);
-	return !!SendMessageA(_hWnd, WM_SETTEXT, 0, (LPARAM)oSAFESTR(_Title));
+	if (!SetWindowText(_hWnd, _Title))
+		return oWinSetLastError();
+	return true;
 }
 
 bool oWinGetTitle(HWND _hWnd, char* _Title, size_t _SizeofTitle)
 {
 	oWINV(_hWnd);
-	return !!SendMessageA(_hWnd, WM_GETTEXT, _SizeofTitle, (LPARAM)_Title);
+	if (!GetWindowText(_hWnd, _Title, static_cast<int>(_SizeofTitle)))
+		return oWinSetLastError();
+	return true;
 }
 
 bool oWinGetAlwaysOnTop(HWND _hWnd)
@@ -461,6 +471,343 @@ bool oWinSetCursor(HWND _hWnd, HCURSOR _hCursor)
 	return true;
 }
 
+void oWinButtonSetChecked(HWND _hWndButton, bool _Checked)
+{
+	Button_SetCheck(_hWndButton, _Checked ? BST_CHECKED : BST_UNCHECKED);
+}
 
+bool oWinButtonGetChecked(HWND _hWndButton)
+{
+	return BST_CHECKED == Button_GetState(_hWndButton);
+}
 
+void oWinElementSetText(HWND _hWndElement, const char* _Text)
+{
+	oVB(SetWindowText(_hWndElement, _Text));
+}
 
+int oWinComboboxGetTextIndex(HWND _hWndCombobox, const char* _Text)
+{
+	int index = ComboBox_FindStringExact(_hWndCombobox, -1, _Text);
+	if (index == CB_ERR)
+		oErrorSetLast(oERROR_NOT_FOUND, "Text %s was not found in combobox", oSAFESTRN(_Text));
+	return index;
+}
+
+bool oWinComboboxSetSelection(HWND _hWndCombobox, int _Index)
+{
+	if (CB_ERR == ComboBox_SetCurSel(_hWndCombobox, _Index))
+		return oErrorSetLast(oERROR_NOT_FOUND, "Index %d was not found in combobox", _Index);
+	return true;
+}
+
+bool oWinComboboxSetSelection(HWND _hWndCombobox, const char* _Text)
+{
+	int index = oWinComboboxGetTextIndex(_hWndCombobox, _Text);
+	if (-1 == index)
+		return false; // pass through error
+	return oWinComboboxSetSelection(_hWndCombobox, index);
+}
+
+bool oWinComboboxGetSelectedText(HWND _hWndCombobox, char* _StrDestination, size_t _SizeofStrDestination)
+{
+	size_t len = ComboBox_GetTextLength(_hWndCombobox);
+	if (len >= _SizeofStrDestination)
+		return oErrorSetLast(oERROR_AT_CAPACITY, "Buffer too small to receive string");
+	ComboBox_GetText(_hWndCombobox, _StrDestination, static_cast<int>(_SizeofStrDestination));
+	return true;
+}
+
+void oWinComboboxClear(HWND _hWndCombobox)
+{
+	ComboBox_ResetContent(_hWndCombobox);
+}
+
+bool oWinComboboxAppendStrings(HWND _hWndCombobox, const char* _Tokens, const char* _Separator)
+{
+	char* ctx = nullptr;
+	const char* tok = oStrTok(_Tokens, _Separator, &ctx);
+	while (tok)
+	{
+		ComboBox_AddString(_hWndCombobox, tok);
+		tok = oStrTok(nullptr, _Separator, &ctx);
+	}
+
+	if (!oStrTokFinishedSuccessfully(&ctx))
+		return oErrorSetLast(oERROR_CORRUPT, "Failed to parse tokenized string for combobox values");
+	return true;
+}
+
+static DWORD GetStyle(oWINDOW_CONTROL_TYPE _Type, bool _StartsNewGroup)
+{
+	static const DWORD sStyle[] =
+	{
+		0,
+		WS_VISIBLE|WS_CHILD|BS_GROUPBOX,
+		WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_PUSHBUTTON,
+		WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_DEFPUSHBUTTON,
+		WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_AUTOCHECKBOX,
+		WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_AUTORADIOBUTTON,
+		WS_VISIBLE|WS_CHILD|SS_SIMPLE|SS_WORDELLIPSIS,
+		WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_READONLY|ES_NOHIDESEL|ES_AUTOHSCROLL,
+		WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_NOHIDESEL|ES_AUTOHSCROLL,
+		WS_VISIBLE|WS_CHILD|WS_TABSTOP|CBS_DROPDOWNLIST|CBS_HASSTRINGS,
+		WS_VISIBLE|WS_CHILD|WS_TABSTOP|CBS_DROPDOWN|CBS_HASSTRINGS,
+		WS_VISIBLE|WS_CHILD
+	};
+
+	DWORD dwStyle = sStyle[_Type];
+	if (_StartsNewGroup)
+		dwStyle |= WS_GROUP;
+	return dwStyle;
+}
+
+static const char* GetClass(oWINDOW_CONTROL_TYPE _Type)
+{
+	static const char* sClass[] =
+	{
+		"Unknown",
+		"Button",
+		"Button",
+		"Button",
+		"Button",
+		"Button",
+		"Static",
+		"Edit",
+		"Edit",
+		"Combobox",
+		"Combobox",
+		PROGRESS_CLASS,
+	};
+
+	return sClass[_Type];
+}
+
+HWND oWinControlCreate(const oWINDOW_CONTROL_DESC& _Desc)
+{
+	if (!_Desc.hParent || _Desc.Type == oWINDOW_CONTROL_UNKNOWN)
+		return (HWND)oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	const bool IsListControl = _Desc.Type == oWINDOW_CONTROL_COMBOBOX || _Desc.Type == oWINDOW_CONTROL_COMBOTEXTBOX;
+
+	HWND hWnd = CreateWindowEx(
+		_Desc.Type == oWINDOW_CONTROL_TEXTBOX ? WS_EX_CLIENTEDGE : 0
+		, GetClass(_Desc.Type)
+		, IsListControl ? "" : oSAFESTR(_Desc.Text)
+		, GetStyle(_Desc.Type, _Desc.StartsNewGroup)
+		, _Desc.Position.x
+		, _Desc.Position.y
+		, _Desc.Dimensions.x
+		, _Desc.Dimensions.y
+		, _Desc.hParent
+		, (HMENU)_Desc.ID
+		, nullptr
+		, nullptr);
+
+	if (hWnd)
+	{
+		SendMessage(hWnd, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), 1);
+
+		if (IsListControl)
+		{
+			if (!oWinComboboxAppendStrings(hWnd, _Desc.Text, "|"))
+				return nullptr; // pass through last error
+
+			oWinComboboxSetSelection(hWnd, 0);
+		}
+	}
+
+	else
+		oWinSetLastError();
+
+	return hWnd;
+}
+
+oWINDOW_CONTROL_TYPE oWinControlGetType(HWND _hWnd)
+{
+	oStringM ClassName;
+	if (!GetClassName(_hWnd, ClassName, static_cast<int>(ClassName.capacity())))
+		return oWINDOW_CONTROL_UNKNOWN;
+	
+	if (!_stricmp("Button", ClassName))
+	{
+		LONG dwStyle = 0xff & GetWindowLong(_hWnd, GWL_STYLE);
+		switch (dwStyle)
+		{
+			case BS_GROUPBOX: return oWINDOW_CONTROL_GROUPBOX;
+			case BS_PUSHBUTTON: return oWINDOW_CONTROL_BUTTON;
+			case BS_DEFPUSHBUTTON: return oWINDOW_CONTROL_BUTTON_DEFAULT;
+			case BS_AUTOCHECKBOX: return oWINDOW_CONTROL_CHECKBOX;
+			case BS_AUTORADIOBUTTON: return oWINDOW_CONTROL_RADIOBUTTON;
+			default: return oWINDOW_CONTROL_UNKNOWN;
+		}
+	}
+
+	else if (!_stricmp("Static", ClassName))
+	{
+		LONG dwStyle = 0xff & GetWindowLong(_hWnd, GWL_STYLE);
+		switch (dwStyle)
+		{
+			case SS_SIMPLE: return oWINDOW_CONTROL_LABEL;
+			default: return oWINDOW_CONTROL_UNKNOWN;
+		}
+	}
+
+	else if (!_stricmp("Edit", ClassName))
+	{
+		DWORD dwStyle = 0xffff & (DWORD)GetWindowLong(_hWnd, GWL_STYLE);
+
+		if (dwStyle == (dwStyle & GetStyle(oWINDOW_CONTROL_LABEL_SELECTABLE, false))) return oWINDOW_CONTROL_LABEL_SELECTABLE;
+		else if (dwStyle == (dwStyle & GetStyle(oWINDOW_CONTROL_TEXTBOX, false))) return oWINDOW_CONTROL_TEXTBOX;
+		else return oWINDOW_CONTROL_UNKNOWN;
+	}
+
+	else if (!_stricmp("ComboBox", ClassName))
+	{
+		LONG dwStyle = 0xf & GetWindowLong(_hWnd, GWL_STYLE);
+		switch (dwStyle)
+		{
+			case CBS_DROPDOWNLIST: return oWINDOW_CONTROL_COMBOBOX;
+			case CBS_DROPDOWN: return oWINDOW_CONTROL_COMBOTEXTBOX;
+			default: return oWINDOW_CONTROL_UNKNOWN;
+		}
+	}
+
+	else if (!_stricmp(PROGRESS_CLASS, ClassName))
+	{
+		return oWINDOW_CONTROL_PROGRESSBAR;
+	}
+
+	return oWINDOW_CONTROL_UNKNOWN;
+}
+
+unsigned short oWinControlGetID(HWND _hWnd)
+{
+	return static_cast<unsigned short>(GetDlgCtrlID(_hWnd));
+}
+
+HWND oWinControlGetFromID(HWND _hParent, unsigned short _ID)
+{
+	return GetDlgItem(_hParent, _ID);
+}
+
+void oWinControlSetText(HWND _hWnd, const char* _Text)
+{
+	oVB(SetWindowText(_hWnd, _Text));
+}
+
+char* oWinControlGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, bool _OnlySelected)
+{
+	unsigned int start = 0, end = 0;
+
+	size_t len = 0;
+
+	if (_OnlySelected)
+	{
+		SendMessage(_hWnd, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
+		len = end - start;
+	}
+
+	else
+		len = GetWindowTextLength(_hWnd);
+
+	if (len >= _SizeofStrDestination)
+	{
+		oErrorSetLast(oERROR_AT_CAPACITY, "Buffer too small to receive string");
+		return nullptr;
+	}
+
+	if (!GetWindowText(_hWnd, _StrDestination, static_cast<int>(_SizeofStrDestination)))
+	{
+		oWinSetLastError();
+		return nullptr;
+	}
+
+	if (_OnlySelected && start != end)
+	{
+		if (start)
+			strcpy_s(_StrDestination, _SizeofStrDestination, _StrDestination + start);
+		_StrDestination[len] = 0;
+	}
+
+	return _StrDestination;
+}
+
+bool oWinControlSetChecked(HWND _hWnd, bool _Checked)
+{
+	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
+	if (type != oWINDOW_CONTROL_CHECKBOX && type != oWINDOW_CONTROL_RADIOBUTTON)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+	Button_SetCheck(_hWnd, _Checked ? BST_CHECKED : BST_UNCHECKED);
+	return true;
+}
+
+bool oWinControlIsChecked(HWND _hWnd)
+{
+	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
+	if (type != oWINDOW_CONTROL_CHECKBOX && type != oWINDOW_CONTROL_RADIOBUTTON)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	oErrorSetLast(oERROR_NONE);
+	LRESULT State = Button_GetState(_hWnd);
+	return (State & BST_CHECKED) == BST_CHECKED;
+}
+
+bool oWinControlAddListItem(HWND _hWnd, const char* _ListItemText)
+{
+	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
+	if (type != oWINDOW_CONTROL_COMBOBOX && type != oWINDOW_CONTROL_COMBOTEXTBOX)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	int result = ComboBox_AddString(_hWnd, _ListItemText);
+	if (result == CB_ERRSPACE)
+		return oErrorSetLast(oERROR_AT_CAPACITY, "String too long");
+	return true;
+}
+
+bool oWinControlClearListItems(HWND _hWnd)
+{
+	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
+	if (type != oWINDOW_CONTROL_COMBOBOX && type != oWINDOW_CONTROL_COMBOTEXTBOX)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	ComboBox_ResetContent(_hWnd);
+	return true;
+}
+
+int oWinControlFindListItem(HWND _hWnd, const char* _ListItemText)
+{
+	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
+	if (type != oWINDOW_CONTROL_COMBOBOX && type != oWINDOW_CONTROL_COMBOTEXTBOX)
+	{
+		oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return CB_ERR;
+	}
+
+	int index = ComboBox_FindStringExact(_hWnd, 0, _ListItemText);
+	if (index == CB_ERR)
+		oErrorSetLast(oERROR_NOT_FOUND, "Text %s was not found in combobox", oSAFESTRN(_ListItemText));
+
+	return index;
+}
+
+bool oWinControlSelect(HWND _hWnd, int _Index)
+{
+	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
+	if (type != oWINDOW_CONTROL_COMBOBOX && type != oWINDOW_CONTROL_COMBOTEXTBOX)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	if (CB_ERR == ComboBox_SetCurSel(_hWnd, _Index))
+		return oErrorSetLast(oERROR_NOT_FOUND, "Index %d was not found in list control", _Index);
+	return true;
+}
+
+bool oWinControlSelect(HWND _hWnd, int _StartIndex, int _Length)
+{
+	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
+	if (type != oWINDOW_CONTROL_TEXTBOX && type != oWINDOW_CONTROL_COMBOTEXTBOX && type != oWINDOW_CONTROL_LABEL_SELECTABLE)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+
+	Edit_SetSel(_hWnd, _StartIndex, _StartIndex+_Length);
+	return true;
+}

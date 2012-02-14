@@ -266,6 +266,23 @@ const char* oWinAsStringWA(unsigned int _WACode)
 	return "unrecognized WACode";
 }
 
+const char* oWinAsStringBST(unsigned int _BSTCode)
+{
+	switch (_BSTCode)
+	{
+		case BST_CHECKED: return "BST_CHECKED";
+		case BST_DROPDOWNPUSHED: return "BST_DROPDOWNPUSHED";
+		case BST_FOCUS: return "BST_FOCUS";
+		case BST_HOT: return "BST_HOT";
+		case BST_INDETERMINATE: return "BST_INDETERMINATE";
+		case BST_PUSHED: return "BST_PUSHED";
+		case BST_UNCHECKED: return "BST_UNCHECKED";
+		default: break;
+	}
+
+	return "unrecognized BSTCode";
+}
+
 const char* oWinAsStringSWP(unsigned int _SWPCode)
 {
 	switch (_SWPCode)

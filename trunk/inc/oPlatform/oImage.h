@@ -115,18 +115,6 @@ interface oImage : oBuffer
 	// copies this oImage's bitmap data into the destination buffer.
 	virtual void CopyDataTo(void* _pDestinationBuffer, size_t _DestinationRowPitch) const threadsafe = 0;
 	virtual void CopyDataTo(void* _pDestinationBuffer, size_t _DestinationRowPitch, const FlipVerticalFlag&) const threadsafe = 0;
-
-	// @oooii-tony: Inclusion of this API is temporary AND SHOULD NOT BE TAKEN AS
-	// A MODEL TO ADD FORMAT SWIZZLING OF ANY KIND TO THIS CLASS. This is a hack
-	// to get around current usage but we'll be coming back to this to reevaluate
-	// this API.
-	virtual bool HACKResize(const int2& _NewSize) threadsafe = 0;
-
-	// Removes alpha channel
-	virtual void HACKTo24Bit() threadsafe = 0;
-
-	// Adds an opaque alpha channel
-	virtual void HACKTo32Bit() threadsafe = 0;
 };
 
 // _____________________________________________________________________________

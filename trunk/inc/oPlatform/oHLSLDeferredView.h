@@ -36,45 +36,6 @@
 	#define oHLSL_DEFERRED_VIEW_CONSTANT_BUFFER_INDEX b0
 #endif
 
-#ifndef oHLSL
-// Calculates the distance from the eye to the near and far planes of the 
-// visible frustum
-void oCalculateNearInverseFarPlanesDistance(const TMAT4<float>& _View, 
-  const TMAT4<float>& _Projection, float* _pNearDistance, float* _pInverseFarDistance)
-{
-	// Store the 1/far plane distance so we can calculate view-space depth,
-	// then store it on [0,1] for maximum precision.
-	/*TFRUSTUM<T> WorldSpaceFrustum(_View * _Projection);
-	const TVEC3<T> eye = oExtractEye(_View);
-	*_pNear = distance(WorldSpaceFrustum.Near, eye);
-	*_pFar = distance(WorldSpaceFrustum.Far, eye);
-  */
-
-  //
-  // @oooii-doug: Better way is to derive the near/far values from the projection matrix directly
-  //
-  // f = D / (1 - C)
-  // n = - (D / C)  
-
-  float C = _Projection[2][2];
-  float D = _Projection[3][2];
-
-  if (C == 0.0f)
-    *_pNearDistance = 0.f;
-  else
-    *_pNearDistance = (-D / C);
-
-  if (C == 1.0f || D == 0.0f)
-  {
-    *_pInverseFarDistance = fabs(D);  
-  }
-  else
-    *_pInverseFarDistance = (1.0f - C) / D;
-
-}
-
-#endif
-
 struct oDeferredViewConstants
 {
 	#ifdef oHLSL

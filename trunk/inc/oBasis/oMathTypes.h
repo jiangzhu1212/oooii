@@ -29,25 +29,26 @@
 #define oMathTypes_h
 
 #include <oBasis/oMathInternalTypes.h>
+#include <oBasis/oTypes.h>
+
+typedef TVEC2<char> char2; typedef TVEC2<uchar> uchar2;
+typedef TVEC3<char> char3; typedef TVEC3<uchar> uchar3;
+typedef TVEC4<char> char4; typedef TVEC4<uchar> uchar4;
 
 // _____________________________________________________________________________
 // HLSL types
 
-typedef unsigned short ushort;
 typedef TVEC2<short> short2; typedef TVEC2<ushort> ushort2;
 typedef TVEC3<short> short3; typedef TVEC3<ushort> ushort3;
 typedef TVEC4<short> short4; typedef TVEC4<ushort> ushort4;
 
-typedef unsigned int uint;
 typedef TVEC2<int> int2; typedef TVEC2<uint> uint2;
 typedef TVEC3<int> int3; typedef TVEC3<uint> uint3;
 typedef TVEC4<int> int4; typedef TVEC4<uint> uint4;
 
-typedef long long llong;
-typedef unsigned long long ullong;
-typedef TVEC2<long long> llong2; typedef TVEC2<ullong> ullong2;
-typedef TVEC3<long long> llong3; typedef TVEC3<ullong> ullong3;
-typedef TVEC4<long long> llong4; typedef TVEC4<ullong> ullong4;
+typedef TVEC2<llong> llong2; typedef TVEC2<ullong> ullong2;
+typedef TVEC3<llong> llong3; typedef TVEC3<ullong> ullong3;
+typedef TVEC4<llong> llong4; typedef TVEC4<ullong> ullong4;
 
 typedef TVEC2<float> float2; typedef TVEC2<double> double2;
 typedef TVEC3<float> float3; typedef TVEC3<double> double3;

@@ -211,6 +211,10 @@ bool oGDIDrawText(HDC _hDC, const RECT& _rTextBox, oANCHOR _Alignment, oColor _F
 // object. (width == 0 means "default")
 HPEN oGDICreatePen(oColor _Color, int _Width = 0);
 HBRUSH oGDICreateBrush(oColor _Color);
+
+// Returns the COLORREF of the specified brush
+COLORREF oGDIGetBrushColor(HBRUSH _hBrush);
+
 HFONT oGDICreateFont(const char* _FontName, int _PointSize, bool _Bold, bool _Italics, bool _Underline);
 
 const char* oGDIGetFontFamily(BYTE _tmPitchAndFamily);

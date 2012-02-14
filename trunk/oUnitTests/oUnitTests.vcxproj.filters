@@ -83,6 +83,12 @@
     </ClCompile>
     <ClCompile Include="..\oPlatform\Tests\TESTSurfaceFill.cpp">
       <Filter>Source Files\oPlatformTests</Filter>
+	</ClCompile>
+    <ClCompile Include="..\oVideo\Tests\TESTMediaStreamer.cpp">
+      <Filter>Source Files\oVideoTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\oStaging\Tests\TESToYUVImageConversions.cpp">
+      <Filter>Source Files\oStagingTests</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

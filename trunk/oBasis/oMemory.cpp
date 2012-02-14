@@ -75,6 +75,49 @@ void oMemset4(void* _pDestination, long _Value, size_t _NumBytes)
 	}
 }
 
+void oMemset2(void* _pDestination, short _Value, size_t _NumBytes)
+{
+	// Sets an int value at a time. This is probably slower than c's memset, but 
+	// this sets a full int value rather than a char value.
+
+	// First move _pDestination up to long alignment
+
+	char* pPrefix = (char*)_pDestination;
+	short* p = (short*)oByteAlign(_pDestination, sizeof(_Value));
+	size_t nPrefixBytes = oByteDiff(pPrefix, _pDestination);
+	short* pEnd = oByteAdd(p, _NumBytes - nPrefixBytes);
+	char* pPostfix = (char*)oByteAlignDown(pEnd, sizeof(_Value));
+	size_t nPostfixBytes = oByteDiff(pEnd, pPostfix);
+
+	oASSERT(oByteAdd(_pDestination, _NumBytes) == pEnd, "");
+	oASSERT(oByteAdd(_pDestination, _NumBytes) == oByteAdd(pPostfix, nPostfixBytes), "");
+
+	oByteSwizzle16 s;
+	s.AsShort = _Value;
+
+	// Duff's device up to alignment
+	// http://en.wikipedia.org/wiki/Duff's_device
+	switch (nPrefixBytes)
+	{
+	case 1: *pPrefix++ = s.AsChar[1];
+	case 0: break;
+	default: oASSERT_NOEXECUTION;
+	}
+
+	// Do aligned assignment
+	while (p < (short*)pPostfix)
+		*p++ = _Value;
+
+	// Duff's device any remaining bytes
+	// http://en.wikipedia.org/wiki/Duff's_device
+	switch (nPostfixBytes)
+	{
+	case 1: *pPrefix++ = s.AsChar[1];
+	case 0: break;
+	default: oASSERT_NOEXECUTION;
+	}
+}
+
 void oMemcpy2d(void* oRESTRICT _pDestination, size_t _DestinationPitch, const void* oRESTRICT _pSource, size_t _SourcePitch, size_t _SourceRowSize, size_t _NumRows)
 {
 	if (_DestinationPitch == _SourcePitch && _SourcePitch == _SourceRowSize)
@@ -102,6 +145,14 @@ void oMemset2d(void* _pDestination, size_t _Pitch, int _Value, size_t _SetPitch,
 	const void* end = oByteAdd(_pDestination, _Pitch, _NumRows);
 	for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _Pitch))
 		memset(_pDestination, _Value, _SetPitch);
+}
+
+void oMemset2d2(void* _pDestination, size_t _Pitch, short _Value, size_t _SetPitch, size_t _NumRows)
+{
+	oASSERT((_SetPitch % sizeof(_Value)) == 0, "");
+	const void* end = oByteAdd(_pDestination, _Pitch, _NumRows);
+	for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _Pitch))
+		oMemset2(_pDestination, _Value, _SetPitch);
 }
 
 void oMemset2d4(void* _pDestination, size_t _Pitch, long _Value, size_t _SetPitch, size_t _NumRows)

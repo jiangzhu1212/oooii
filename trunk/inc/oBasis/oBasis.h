@@ -106,6 +106,7 @@
 #include <oBasis/oThread.h>
 #include <oBasis/oThreadsafe.h>
 #include <oBasis/oTimer.h>
+#include <oBasis/oTypes.h>
 #include <oBasis/oUint128.h>
 #include <oBasis/oUnorderedMap.h>
 #include <oBasis/oURI.h>

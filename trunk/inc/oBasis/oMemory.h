@@ -42,6 +42,7 @@
 // c's memset, but this sets a full int value rather than
 // a char value. This is useful for setting 0xdeadbeef or 
 // 0xfeeefeee to memory rather than memset's dede or fefefe.
+void oMemset2(void* _pDestination, short _Value, size_t _NumBytes);
 void oMemset4(void* _pDestination, long _Value, size_t _NumBytes);
 
 // 2D copies for copying image data, stuff that's easier to 
@@ -72,6 +73,7 @@ void oMemcpy2dVFlip(void* oRESTRICT _pDestination, size_t _DestinationPitch, con
 void oMemset2d(void* _pDestination, size_t _Pitch, int _Value, size_t _SetPitch, size_t _NumRows);
 
 // sets words at a time.
+void oMemset2d2(void* _pDestination, size_t _Pitch, short _Value, size_t _SetPitch, size_t _NumRows);
 void oMemset2d4(void* _pDestination, size_t _Pitch, long _Value, size_t _SetPitch, size_t _NumRows);
 
 // Copies asymmetrical memory. This is most applicable when converting from AOS

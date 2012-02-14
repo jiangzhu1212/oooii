@@ -217,48 +217,7 @@ struct oImageImpl : public oImage
 		GetDesc(&d);
 		oMemcpy2dVFlip(_pDestinationBuffer, _DestinationRowPitch, FreeImage_GetBits(FIBitmap), d.RowPitch, d.Dimensions.x * oImageGetSize(d.Format), d.Dimensions.y);
 	}
-
-	bool HACKResize(const int2& _NewSize) threadsafe override
-	{
-		if (_NewSize.x < 0 || _NewSize.y < 0)
-			return oErrorSetLast(oERROR_INVALID_PARAMETER);
-
-		oLockGuard<oSharedMutex> Lock(Mutex);
-
-		DESC desc;
-		GetDesc(&desc);
-
-		if (_NewSize.x == desc.Dimensions.x && _NewSize.y == desc.Dimensions.y)
-			return oErrorSetLast(oERROR_REDUNDANT, "oImage %s is already sized to [%d,%d]", GetName(), _NewSize.x, _NewSize.y);
-
-		FIBITMAP* FIRescaled = FreeImage_Rescale(FIBitmap, _NewSize.x, _NewSize.y, FILTER_BICUBIC);
-		if (!FIRescaled)
-			oErrorSetLast(oERROR_GENERIC, "Failed to resize oImage %s [%d,%d] -> [%d,%d]", GetName(), desc.Dimensions.x, desc.Dimensions.y, _NewSize.x, _NewSize.y);
-
-		FreeImage_Unload(FIBitmap);
-		FIBitmap = FIRescaled;
-		return true;
-	}
-
-	void HACKTo24Bit() threadsafe override
-	{
-		oLockGuard<oSharedMutex> Lock(Mutex);
-		FIBITMAP* FIBitmap24 = FreeImage_ConvertTo24Bits(FIBitmap);
-		oASSERT(FIBitmap24, "FreeImage_ConvertTo24Bits failed");
-		FreeImage_Unload(FIBitmap);
-		FIBitmap = FIBitmap24;
-	}
-
-	// Adds an opaque alpha channel
-	virtual void HACKTo32Bit() threadsafe override
-	{
-		oLockGuard<oSharedMutex> Lock(Mutex);
-		FIBITMAP* FIBitmap32 = FreeImage_ConvertTo32Bits(FIBitmap);
-		oASSERT(FIBitmap32, "FreeImage_ConvertTo32Bits failed");
-		FreeImage_Unload(FIBitmap);
-		FIBitmap = FIBitmap32;
-	}
-
+	
 private:
 	FIBITMAP* FIBitmap;
 	oRefCount RefCount;
@@ -380,7 +339,7 @@ size_t oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format,
 	oConstLockedPointer<oImage> LockedImage(_pImage);
 	FIBITMAP* FIBitmap = ((oImageImpl*)LockedImage.c_ptr())->Bitmap();
 	FIBITMAP* FIBitmap24 = FreeImage_ConvertTo24Bits(FIBitmap);
-	size_t written = oImageSave(FIBitmap, _Format, _CompressionLevel, _pBuffer, _SizeofBuffer);
+	size_t written = oImageSave(FIBitmap24, _Format, _CompressionLevel, _pBuffer, _SizeofBuffer);
 	FreeImage_Unload(FIBitmap24);
 	return written; // pass through error
 }
@@ -438,7 +397,7 @@ bool oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format, o
 	*oGetFilebase(parent) = 0;
 	oFileCreateFolder(parent);
 
-	bool result = !!FreeImage_Save(fif, FIBitmap, _Path, FIGetSaveFlags(fif, _CompressionLevel));
+	bool result = !!FreeImage_Save(fif, FIBitmap24, _Path, FIGetSaveFlags(fif, _CompressionLevel));
 	FreeImage_Unload(FIBitmap24);
 
 	if (!result)
@@ -483,8 +442,8 @@ bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _
 	_pImage1->GetDesc(&ImgDesc1);
 	_pImage2->GetDesc(&ImgDesc2);
 
-	if (ImgDesc1.Format != oImage::BGRA32 || ImgDesc1.Format != ImgDesc2.Format)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "oImages must be in BGRA32 format to be compared. (%s v. %s)", oAsString(ImgDesc1.Format), oAsString(ImgDesc2.Format));
+	if (ImgDesc1.Format != ImgDesc2.Format)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "oImages must be in in the same format to be compared. (%s v. %s)", oAsString(ImgDesc1.Format), oAsString(ImgDesc2.Format));
 
 	if (ImgDesc1.Dimensions != ImgDesc2.Dimensions)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER, "oImages differ in dimensions. ([%dx%d] v. [%dx%d])", ImgDesc1.Dimensions.x, ImgDesc1.Dimensions.y, ImgDesc2.Dimensions.x, ImgDesc2.Dimensions.y);
@@ -496,41 +455,35 @@ bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _
 	if (_ppDiffImage)
 	{
 		descDiff.Dimensions = ImgDesc1.Dimensions;
-		descDiff.Format = oImage::BGRA32;
+		descDiff.Format = ImgDesc1.Format;
 		descDiff.RowPitch = oImageCalcRowPitch(descDiff.Format, descDiff.Dimensions.x);
 		if (!oImageCreate("Temp image", descDiff, _ppDiffImage))
 			return false; // pass through error
 	}
 
-	oColor* diff = nullptr;
+	unsigned char* diff = nullptr;
 	if (_ppDiffImage)
-		diff = static_cast<oColor*>((*_ppDiffImage)->GetData());
+		diff = static_cast<unsigned char*>((*_ppDiffImage)->GetData());
 
+	int elementSize = oSurfaceFormatGetSize(oImageFormatToSurfaceFormat(ImgDesc1.Format));
 	// @oooii-tony: This is ripe for parallelism. Optimize this using oParallelFor..
-	const oColor* c1 = static_cast<const oColor*>(LockedImage1->GetData());
-	const oColor* c2 = static_cast<const oColor*>(LockedImage2->GetData());
+	const unsigned char* c1 = static_cast<const unsigned char*>(LockedImage1->GetData());
+	const unsigned char* c2 = static_cast<const unsigned char*>(LockedImage2->GetData());
 
-	const size_t nPixels = (*_ppDiffImage)->GetSize() / sizeof(oColor);
+	const size_t nPixels = (*_ppDiffImage)->GetSize() / sizeof(elementSize);
 
 	float RMSAccum = 0.0f;
 
 	for (size_t i = 0; i < nPixels; i++)
 	{
-		// exact for RMS
-		if (!oEqual(c1[i], c2[i], _BitTolerance))
+		for (int j = 0; j < elementSize; j++)
 		{
-			int4 bgra1, bgra2;
-			oColorDecompose(c1[i], (int*)&bgra1); 
-			oColorDecompose(c2[i], (int*)&bgra2);
-
-			int4 d = bgra1 - bgra2;
-			RMSAccum += dot(d,d);
-
-			if (diff)
-				diff[i] = oColorDiffRGB(c1[i], c2[i], _DiffMultiplier);
+			int sample1 = c1[i*elementSize+j];
+			int sample2 = c2[i*elementSize+j];
+			int d = abs(sample1 - sample2);
+			RMSAccum += d*d;
+			diff[i*elementSize+j] = static_cast<unsigned char>(clamp(d, 0, 255));
 		}
-		else if (diff)
-			diff[i] = std::Black;
 	}
 
 	if (_pRootMeanSquare)

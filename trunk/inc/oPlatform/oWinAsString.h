@@ -35,6 +35,7 @@ const char* oWinAsStringSW(unsigned int _SWCode);
 const char* oWinAsStringWM(unsigned int _uMsg);
 const char* oWinAsStringWS(unsigned int _WSFlag);
 const char* oWinAsStringWA(unsigned int _WACode);
+const char* oWinAsStringBST(unsigned int _BSTCode);
 
 char* oWinParseStyleFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSFlags);
 char* oWinParseSWPFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _SWPFlags);

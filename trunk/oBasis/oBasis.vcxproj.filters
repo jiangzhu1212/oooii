@@ -357,7 +357,12 @@
     <ClInclude Include="..\inc\oBasis\oInitOnce.h">
       <Filter>oBasis\Concurrency</Filter>
     </ClInclude>
-    <ClInclude Include="..\inc\oBasis\oCompression.h" />
+    <ClInclude Include="..\inc\oBasis\oTypes.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oCompression.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oStdChrono.cpp">

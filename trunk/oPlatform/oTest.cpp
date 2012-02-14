@@ -277,6 +277,8 @@ bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 	oStringPath diff;
 	BuildDataPath(diff.c_str(), GetName(), desc.DataPath, "Output", desc.OutputPath, _NthImage, diffImageExt);
 
+	oImage::DESC iDesc, gDesc;
+	_pImage->GetDesc(&iDesc);
 	oRef<oImage> GoldenImage;
 	{
 		oRef<oBuffer> b;
@@ -304,8 +306,16 @@ bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 			}
 		}
 
-		if (!oImageCreate(golden, b->GetData(), b->GetSize(), oImage::ForceAlpha, &GoldenImage))
-			return oErrorSetLast(oERROR_INVALID_PARAMETER, "Corrupt/unloadable golden image file: %s", golden);
+		if(oImageIsAlphaFormat(iDesc.Format)) //if source has alpha, force loading an opaque alpha for golden image as well.
+		{
+			if (!oImageCreate(golden, b->GetData(), b->GetSize(), oImage::ForceAlphaFlag(), &GoldenImage))
+				return oErrorSetLast(oERROR_INVALID_PARAMETER, "Corrupt/unloadable golden image file: %s", golden);
+		}
+		else
+		{
+			if (!oImageCreate(golden, b->GetData(), b->GetSize(), &GoldenImage))
+				return oErrorSetLast(oERROR_INVALID_PARAMETER, "Corrupt/unloadable golden image file: %s", golden);
+		}
 	}
 
 	oRef<oImage> diffs;
@@ -313,15 +323,17 @@ bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 
 	// Compare dimensions/format before going into pixels
 	{
-		oImage::DESC iDesc, gDesc;
-		_pImage->GetDesc(&iDesc);
 		GoldenImage->GetDesc(&gDesc);
 
 		if (iDesc.Dimensions != gDesc.Dimensions)
 			return oErrorSetLast(oERROR_GENERIC, "Golden image compare failed because the images are different dimensions (test is %ix%i, golden is %ix%i)", iDesc.Dimensions.x, iDesc.Dimensions.y, gDesc.Dimensions.x, gDesc.Dimensions.y);
 
 		if (iDesc.Format != gDesc.Format)
+		{
+			if (!oImageSave(_pImage, output))
+				return oErrorSetLast(oERROR_IO, "Output image save failed: %s", output);
 			return oErrorSetLast(oERROR_GENERIC, "Golden image compare failed because the images are different formats (test is %s, golden is %s)", oAsString(iDesc.Format), oAsString(gDesc.Format));
+		}
 	}
 
 	oTest::DESC testDescOverrides;
