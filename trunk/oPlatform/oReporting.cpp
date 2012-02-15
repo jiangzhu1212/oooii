@@ -96,6 +96,14 @@ struct oLogWriter : oFileWriter
 		: hFile(nullptr)
 		, Path(_Path)
 	{
+		oStringPath parent(_Path);
+		*oGetFilebase(parent) = 0;
+		if (!oFileCreateFolder(parent))
+		{
+			*_pSuccess = false;
+			return; // pass through error
+		}
+
 		*_pSuccess = oFileOpen(_Path, oFILE_OPEN_BIN_WRITE, &hFile);
 	}
 

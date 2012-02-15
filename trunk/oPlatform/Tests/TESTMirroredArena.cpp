@@ -82,6 +82,12 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 	// Copy some test data into the server heap
 
 	unsigned int* test1 = static_cast<unsigned int*>(AllocatorServer->Allocate(sizeof(TEST1)));
+
+	// Ignore asserts about leaving dangling memory because if that's so, it's 
+	// probably because the test failed somewhere else, so have THAT error come
+	// through, not the fact that we aborted before fully tidying up.
+	oOnScopeExit OSEReset([&] { AllocatorServer->Reset(); } );
+
 	oTESTB(test1, "test1 allocation failed");
 	memcpy(test1, TEST1, sizeof(TEST1));
 
