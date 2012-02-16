@@ -87,9 +87,9 @@ interface oWindow : oInterface
 	// the window moves and resizes.
 	enum DRAW_MODE
 	{
-		USE_DEFAULT, // This will make the decision to use the most performant API for the current system
-		USE_GDI, // HDC hDC = (HDC)_pContext
-		USE_D2D, // ID2D1RenderTarget* pD2DRT = (ID2D1RenderTarget*)_pContext
+		USE_DEFAULT,
+		USE_GDI,
+		USE_D2D,
 	};
 
 	enum EVENT
@@ -98,7 +98,7 @@ interface oWindow : oInterface
 		RESIZED, // Value is the supersample scalar (see Hook() for more details)
 		CLOSING, // Value is the supersample scalar (see Hook() for more details)
 		CLOSED, // Value is the supersample scalar (see Hook() for more details)
-		COMMAND, // Value is the ID of the element for which the command occured
+		COMMAND, // Value is the ID of the element for which the command occurred
 		DRAW_BACKBUFFER, // Value is the supersample scalar (see Hook() for more details)
 		DRAW_UIAA, // Value is the supersample scalar (see Hook() for more details)
 		DRAW_UI, // Value is the supersample scalar (see Hook() for more details)
@@ -129,16 +129,15 @@ interface oWindow : oInterface
 			, ClientSize(oDEFAULT, oDEFAULT)
 			, FullscreenSize(oDEFAULT, oDEFAULT)
 			, FullscreenRefreshRate(oDEFAULT)
-			, BackgroundSleepMS(200)
 			, State(RESTORED)
 			, Style(SIZEABLE)
 			, CursorState(ARROW)
+			, ClearColor(std::Black)
 			, Enabled(true)
 			, HasFocus(true)
 			, AlwaysOnTop(false)
 			, FullscreenVSync(true)
 			, UseAntialiasing(false)
-			, ClearColor(std::Black)
 			, AllowUserShowMouse(false)
 			, AllowUserFullscreenToggle(false)
 			, AllowUserKeyboardClose(false)
@@ -155,17 +154,19 @@ interface oWindow : oInterface
 		STATE State;
 		STYLE Style;
 		CURSOR_STATE CursorState; // Applies when cursor is over the client area
+		oColor ClearColor;
 		bool Enabled;
 		bool HasFocus;
 		bool AlwaysOnTop;
 		bool FullscreenVSync;
-		bool UseAntialiasing;
+		bool AutoClear; // Clears the back of the window to the ClearColor. If false, it is up to a hook to clear the code (in DRAW_BACKBUFFER)
+		bool UseAntialiasing; // Anti-aliasing is implemented as super-sampling unless HW-accelerated which can mean a degradation of performance
+		bool EnableUIDrawing; // If disabled DRAW_UIAA and DRAW_UI events will be disabled. This can significantly speed up a rendering application by reducing platform-required resolves
 		bool AllowUserShowMouse; // Enable Alt-F1 to toggle between set mouse state and visible
 		bool AllowUserFullscreenToggle; // Enable Alt-Enter to toggle to fullscreen in windows
 		bool AllowUserKeyboardClose; // Enable Alt-F4 to close in windows
 		bool SupportDoubleClicks;
 		bool SupportTouchEvents; // If true then the window receives touch events from a touch panel, otherwise the window will only receive mouse events
-		oColor ClearColor;
 	};
 
 	// The return value is ignored by most events. However CLOSING functions 

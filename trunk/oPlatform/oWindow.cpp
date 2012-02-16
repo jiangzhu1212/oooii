@@ -71,8 +71,6 @@ struct SYNC_RETURN
 	}
 };
 
-static const float3 ZERO3 = float3(0.0f, 0.0f, 0.0f);
-
 const oGUID& oGetGUID(threadsafe const oHDC* threadsafe const*)
 {
 	// {DBF01A90-3C5A-46D2-A1E3-501ACF5D1BEE}
@@ -429,7 +427,7 @@ void oWinWindow::Initialize(bool _bSupportDoubleClicks, SYNC_RETURN* _pSyncRetur
 
 void oWinWindow::Deinitialize()
 {
-	CallHooks(RESIZING, nullptr, DrawMode, ZERO3, SuperSampleScale());
+	CallHooks(RESIZING, nullptr, DrawMode, oZERO3, SuperSampleScale());
 	if (Desc.State == FULLSCREEN)
 	{
 		DESC copy = Desc;
@@ -502,15 +500,20 @@ bool oWinWindow::CreateGDIResources(HWND _hWnd)
 	RECT rClient;
 	oVB(GetClientRect(_hWnd, &rClient));
 
-	HDC hDC = GetDC(_hWnd);
-	hOffscreenAADC = CreateCompatibleDC(hDC);
-	hOffscreenDC = CreateCompatibleDC(hOffscreenAADC);
-	hOffscreenAABmp = CreateCompatibleBitmap(hDC, SuperSampleScale() * oWinRectW(rClient), SuperSampleScale() * oWinRectH(rClient));
+	oGDIScopedGetDC hDC(_hWnd);
+	hOffscreenDC = CreateCompatibleDC(hDC);
+
 	hOffscreenBmp = CreateCompatibleBitmap(hDC, oWinRectW(rClient), oWinRectH(rClient));
-	SelectObject(hOffscreenAADC, hOffscreenAABmp);
 	SelectObject(hOffscreenDC, hOffscreenBmp);
-	ReleaseDC(_hWnd, hDC);
-	CallHooks(RESIZED, hOffscreenDC, DrawMode, ZERO3, SuperSampleScale());
+
+	if (Desc.UseAntialiasing)
+	{
+		hOffscreenAADC = CreateCompatibleDC(hDC);
+		hOffscreenAABmp = CreateCompatibleBitmap(hDC, SuperSampleScale() * oWinRectW(rClient), SuperSampleScale() * oWinRectH(rClient));
+		SelectObject(hOffscreenAADC, hOffscreenAABmp);
+	}
+
+	CallHooks(RESIZED, hOffscreenDC, DrawMode, oZERO3, SuperSampleScale());
 	return true;
 }
 
@@ -542,7 +545,7 @@ bool oWinWindow::CreateDeviceResources(HWND _hWnd)
 			{
 				if (!oD2DCreateRenderTarget(D2DFactory, DXGISwapChain, SWAP_CHAIN_FORMAT, Desc.UseAntialiasing, &D2DRenderTarget))
 					return false; // pass through error
-				CallHooks(RESIZED, D2DRenderTarget, DrawMode, ZERO3, 1);
+				CallHooks(RESIZED, D2DRenderTarget, DrawMode, oZERO3, 1);
 				break;
 			}
 		#endif
@@ -561,7 +564,7 @@ bool oWinWindow::CreateDeviceResources(HWND _hWnd)
 
 bool oWinWindow::DestroyDeviceResources()
 {
-	CallHooks(RESIZING, nullptr, DrawMode, ZERO3, SuperSampleScale());
+	CallHooks(RESIZING, nullptr, DrawMode, oZERO3, SuperSampleScale());
 
 	#if oDXVER >= oDXVER_10
 		D2DRenderTarget = nullptr;
@@ -648,9 +651,12 @@ bool oWinWindow::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _pp
 		return true;
 	}
 
-	else if (oGetGUID<oHDCAA>() == _InterfaceID && hOffscreenAADC)
+	else if (oGetGUID<oHDCAA>() == _InterfaceID)
 	{
-		*_ppInterface = hOffscreenAADC;
+		if (hOffscreenAADC)
+			*_ppInterface = hOffscreenAADC;
+		else
+			*_ppInterface = hOffscreenDC;
 		return true;
 	}
 
@@ -684,9 +690,6 @@ void oWinWindow::Run()
 {
 	if (hWnd)
 	{
-		if (Desc.BackgroundSleepMS && !oWinHasFocus(hWnd))
-			oSleep(Desc.BackgroundSleepMS);
-
 		MSG msg;
 		if (GetMessage(&msg, nullptr, 0, 0) > 0)
 		{
@@ -704,49 +707,93 @@ void oWinWindow::Run()
 bool oWinWindow::D2DPaint(HWND _hWnd, bool _Force)
 {
 	oASSERT(D2DRenderTarget, "D2DRenderTarget not properly created");
-	// Clear the buffer. This is kinda lame. Maybe Clear() should just be pushed to the user?
+	if (Desc.AutoClear)
 	{
 		D2DRenderTarget->BeginDraw();
 		D2DRenderTarget->Clear(oD2DAsColorF(Desc.ClearColor));
 		oV(D2DRenderTarget->EndDraw());
 	}
 
-	CallHooks(DRAW_BACKBUFFER, D2DRenderTarget, DrawMode, ZERO3, 1);
+	// @oooii-tony: Should begin happen before DRAW_BACKBUFFER? Or let the user
+	// do that, but then we gotta do it again below for UI rendering.
 
-	D2DRenderTarget->BeginDraw();
-	D2DRenderTarget->SetTransform(D2D1::IdentityMatrix());
+	CallHooks(DRAW_BACKBUFFER, D2DRenderTarget, DrawMode, oZERO3, 1);
 
-	CallHooks(DRAW_UIAA, D2DRenderTarget, DrawMode, ZERO3, 1);
-	CallHooks(DRAW_UI, D2DRenderTarget, DrawMode, ZERO3, 1);
+	if (Desc.EnableUIDrawing)
+	{
+		D2DRenderTarget->BeginDraw();
+		D2DRenderTarget->SetTransform(D2D1::IdentityMatrix());
 
-	oV(D2DRenderTarget->EndDraw());
+		CallHooks(DRAW_UIAA, D2DRenderTarget, DrawMode, oZERO3, 1);
+		CallHooks(DRAW_UI, D2DRenderTarget, DrawMode, oZERO3, 1);
+
+		oV(D2DRenderTarget->EndDraw());
+	}
+
 	oV(DXGISwapChain->Present(Desc.FullscreenVSync ? 1 : 0, 0));
-
-	CallHooks(DRAW_FRONTBUFFER, D2DRenderTarget, DrawMode,  ZERO3, 1);
+	
+	CallHooks(DRAW_FRONTBUFFER, D2DRenderTarget, DrawMode,  oZERO3, 1);
 	return true;
 }
 
 bool oWinWindow::GDIPaint(HWND _hWnd, HDC _hDC, bool _Force)
 {
+	// @oooii-tony: NOTES:
+	// 1. If there are no AA UI elements, there's no reason to upscale, then downscale
+	// 2. If there are no AA or regular UI elements, there's no reason to copy offscreen and back
+	// 3. If there's no DRAW_BACKBUFFER handler, but UI elements, clear the offscreen buffer (AA) instead of hDC
+	// 4. If there's no DRAW, no UI, then clear the hDC
+
 	RECT r;
 	oVB(GetClientRect(_hWnd, &r));
-	FillRect(hOffscreenAADC, &r, hClearBrush);
-	CallHooks(DRAW_BACKBUFFER, hOffscreenAADC, DrawMode, ZERO3, SuperSampleScale());
-	CallHooks(DRAW_UIAA, hOffscreenAADC, DrawMode, ZERO3, SuperSampleScale());
-
-	int oldMode = GetStretchBltMode(hOffscreenDC);
-	SetStretchBltMode(hOffscreenDC, HALFTONE);
-	
 	int2 Size = oWinRectSize(r);
 	int2 SSSize = Size * SuperSampleScale();
 
-	StretchBlt(hOffscreenDC, r.left, r.top, Size.x, Size.y, hOffscreenAADC, 0, 0, SSSize.x, SSSize.y, SRCCOPY);
-	SetStretchBltMode(hOffscreenDC, oldMode);
-	CallHooks(DRAW_UI, hOffscreenDC, DrawMode, ZERO3, 1);
+	HDC hAADC = Desc.UseAntialiasing ? hOffscreenAADC : hOffscreenDC;
 
-	BitBlt(_hDC, r.left, r.top, oWinRectW(r), oWinRectH(r), hOffscreenDC, 0, 0, SRCCOPY);
-	CallHooks(DRAW_FRONTBUFFER, _hDC, DrawMode, ZERO3, 1);
+	// Start with a blank slate
+	if (Desc.AutoClear)
+		FillRect(_hDC, &r, hClearBrush);
 
+	// Have the user fill the majority of the pixels
+	CallHooks(DRAW_BACKBUFFER, hOffscreenDC, DrawMode, oZERO3, 1);
+	
+	// Show whatever the user did if using a HW-accelerated device
+	if (DXGISwapChain)
+		oV(DXGISwapChain->Present(Desc.FullscreenVSync ? 1 : 0, 0));
+
+	// @oooii-tony: Maybe this should be a separate callback and we can look to
+	// what's hooked? Or an explicit boolean that allows us to logically keep UI
+	// components around but toggle whether they're rendered.
+	if (Desc.EnableUIDrawing)
+	{
+		// Resolve that render to the offscreen buffer
+		if (Desc.UseAntialiasing)
+			StretchBlt(hAADC, 0, 0, SSSize.x, SSSize.y, _hDC, 0, 0, Size.x, Size.y, SRCCOPY);
+		else
+			BitBlt(hOffscreenDC, 0, 0, Size.x, Size.y, _hDC, 0, 0, SRCCOPY);
+	
+		// Draw UI elements at-super-res (or regular res)
+		CallHooks(DRAW_UIAA, hAADC, DrawMode, oZERO3, SuperSampleScale());
+
+		// If drawn at super-res, resolve back down to regular res
+		if (Desc.UseAntialiasing)
+		{
+			int oldMode = GetStretchBltMode(hOffscreenDC);
+			SetStretchBltMode(hOffscreenDC, HALFTONE);
+			StretchBlt(hOffscreenDC, r.left, r.top, Size.x, Size.y, hAADC, 0, 0, SSSize.x, SSSize.y, SRCCOPY);
+			SetStretchBltMode(hOffscreenDC, oldMode);
+		}
+
+		// Now draw things like text that have their own AA
+		CallHooks(DRAW_UI, hOffscreenDC, DrawMode, oZERO3, 1);
+
+		// Copy back to the visible buffer
+		BitBlt(_hDC, r.left, r.top, oWinRectW(r), oWinRectH(r), hOffscreenDC, 0, 0, SRCCOPY);
+	}
+
+	// One final immediate-mode hook
+	CallHooks(DRAW_FRONTBUFFER, _hDC, DrawMode, oZERO3, 1);
 	return true;
 }
 
@@ -802,16 +849,10 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 		case WM_SETCURSOR:
 		{
 			if (LOWORD(_lParam) == HTCLIENT)
-			{
 				oWinSetCursorState(_hWnd, Desc.CursorState, hCursor);
-				break;
-			}
-
 			else
-			{
 				oWinCursorSetVisible(true);
-				break;
-			}
+			break;
 		}
 
 		case WM_MOVE:
@@ -879,7 +920,7 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 			return 0;
 
 		case WM_CLOSE:
-			if (CallHooks(CLOSING, nullptr, DrawMode, ZERO3, 1))
+			if (CallHooks(CLOSING, nullptr, DrawMode, oZERO3, 1))
 			{
 				if (CloseConfirmed.compare_exchange(false, true))
 				{
@@ -892,12 +933,12 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 			return 0;
 
 		case WM_DESTROY:
-			CallHooks(CLOSED, nullptr, DrawMode, ZERO3, 1);
+			CallHooks(CLOSED, nullptr, DrawMode, oZERO3, 1);
 			return 0;
 
 		case WM_COMMAND:
 		{
-			CallHooks(COMMAND, nullptr, DrawMode, ZERO3, GET_WM_COMMAND_ID(_wParam, _lParam));
+			CallHooks(COMMAND, nullptr, DrawMode, oZERO3, GET_WM_COMMAND_ID(_wParam, _lParam));
 			return 0;
 		}
 
@@ -906,13 +947,13 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 		case WM_SYSKEYDOWN:
 			if (_wParam == VK_F4 && !Desc.AllowUserKeyboardClose)
 				return 0;
-			CallHooks(KEY_DOWN, nullptr, DrawMode, ZERO3, TranslateKeyToX11(_wParam));
+			CallHooks(KEY_DOWN, nullptr, DrawMode, oZERO3, TranslateKeyToX11(_wParam));
 			break;
 
 		case WM_SYSKEYUP:
 			if (_wParam == VK_RETURN && Desc.AllowUserFullscreenToggle)
 				MessageQueue->Dispatch(oBIND(&oWinWindow::ToggleFullscreen, QThis()));
-			CallHooks(KEY_UP, nullptr, DrawMode, ZERO3, TranslateKeyToX11(_wParam));
+			CallHooks(KEY_UP, nullptr, DrawMode, oZERO3, TranslateKeyToX11(_wParam));
 			break;
 
 		case WM_TOUCH:
@@ -940,13 +981,13 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 		// messages do not fire for media keys
 		case WM_APPCOMMAND:
 			if (GET_DEVICE_LPARAM(_lParam) == FAPPCOMMAND_KEY)
-				CallHooks(KEY_DOWN, nullptr, DrawMode, ZERO3, TranslateAppCommandToX11Key(_lParam));
+				CallHooks(KEY_DOWN, nullptr, DrawMode, oZERO3, TranslateAppCommandToX11Key(_lParam));
 			break;
 		case WM_KEYDOWN:
-			CallHooks(KEY_DOWN, nullptr, DrawMode, ZERO3, TranslateKeyToX11(_wParam));
+			CallHooks(KEY_DOWN, nullptr, DrawMode, oZERO3, TranslateKeyToX11(_wParam));
 			break;
 		case WM_KEYUP:
-			CallHooks(KEY_UP, nullptr, DrawMode, ZERO3, TranslateKeyToX11(_wParam));
+			CallHooks(KEY_UP, nullptr, DrawMode, oZERO3, TranslateKeyToX11(_wParam));
 			break;
 
 		// Mouse move / dragging
@@ -1110,7 +1151,7 @@ void oWinWindow::SendKey(EVENT _KeyEvent, oKEYBOARD_KEY _Key) threadsafe
 
 void oWinWindow::SendKey1(EVENT _KeyEvent, oKEYBOARD_KEY _Key)
 {
-	CallHooks(_KeyEvent, nullptr, DrawMode, ZERO3, _Key);
+	CallHooks(_KeyEvent, nullptr, DrawMode, oZERO3, _Key);
 }
 
 void oWinWindow::SendMouseMove(const float2& _Position) threadsafe
@@ -1176,8 +1217,8 @@ void oWinWindow::SetDesc(DESC _Desc)
 			}
 
 			// Because oDXGISetFullscreenState flushes the message queue, we could end
-			// up eating an oWinWake() message from another thread, so send another just
-			// in case...
+			// up eating an oWinWake() message from another thread, so send another 
+			// just in case...
 			oWinWake(hWnd);
 		}
 
@@ -1344,7 +1385,7 @@ unsigned int oWinWindow::Hook(HookFn _Hook) threadsafe
 
 void oWinWindow::Hook1(HookFn _Hook, size_t* _pIndex, SYNC_RETURN* _pSyncReturn)
 {
-	bool result = _Hook(RESIZED, ZERO3, SuperSampleScale());
+	bool result = _Hook(RESIZED, oZERO3, SuperSampleScale());
 	if (result)
 	{
 		*_pIndex = oSparseSet(Hooks, _Hook);
@@ -1373,7 +1414,7 @@ void oWinWindow::Unhook(unsigned int _HookID) threadsafe
 void oWinWindow::Unhook1(size_t _Index, SYNC_RETURN* _pSyncReturn)
 {
 	oTRACE("HWND 0x%x Unhook1(%u)", hWnd, _Index);
-	Hooks[_Index](RESIZING, ZERO3, SuperSampleScale());
+	Hooks[_Index](RESIZING, oZERO3, SuperSampleScale());
 	Hooks[_Index] = nullptr;
 	InvalidateRect(hWnd, nullptr, FALSE);
 	_pSyncReturn->Success();

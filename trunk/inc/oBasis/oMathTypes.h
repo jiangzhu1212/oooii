@@ -68,4 +68,11 @@ typedef TAABOX<float, TVEC3<float>> oAABoxf; typedef TAABOX<double, TVEC3<float>
 typedef TAABOX<int, TVEC2<int>> oRECT;
 typedef TAABOX<float, TVEC2<float>> oRECTF;
 
+// _____________________________________________________________________________
+// Commonly used values
+
+static const float2 oZERO2(0.0f, 0.0f);
+static const float3 oZERO3(0.0f, 0.0f, 0.0f);
+static const float4 oZERO4(0.0f, 0.0f, 0.0f, 0.0f);
+
 #endif

@@ -98,7 +98,7 @@ struct oLogWriter : oFileWriter
 	{
 		oStringPath parent(_Path);
 		*oGetFilebase(parent) = 0;
-		if (!oFileCreateFolder(parent))
+		if (!oFileCreateFolder(parent) && oErrorGetLast() != oERROR_REDUNDANT)
 		{
 			*_pSuccess = false;
 			return; // pass through error

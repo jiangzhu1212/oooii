@@ -67,6 +67,7 @@ template<typename T> bool operator<=(const detail::oSizeT<T>& a, const detail::o
 template<typename T> bool operator>(const detail::oSizeT<T>& a, const detail::oSizeT<T>& b) { return a.operator>(b); }
 template<typename T> bool operator>=(const detail::oSizeT<T>& a, const detail::oSizeT<T>& b) { return a.operator>=(b); }
 
+typedef detail::oSizeT<unsigned char> oSize8;
 typedef detail::oSizeT<unsigned short> oSize16;
 typedef detail::oSizeT<unsigned int> oSize32;
 typedef detail::oSizeT<unsigned long long> oSize64;
