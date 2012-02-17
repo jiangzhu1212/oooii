@@ -29,6 +29,7 @@ const oGUID& oGetGUID(threadsafe const oGfxCommandList* threadsafe const *)
 	static const oGUID oIID_GfxCommandList = { 0x272a9b3e, 0x64bc, 0x4d20, { 0x84, 0x5e, 0xd4, 0xee, 0x3f, 0xe, 0xd8, 0x90 } };
 	return oIID_GfxCommandList;
 }
+#endif
 
 const oGUID& oGetGUID(threadsafe const oGfxDevice* threadsafe const *)
 {
@@ -50,6 +51,8 @@ const oGUID& oGetGUID(threadsafe const oGfxResource* threadsafe const *)
 	static const oGUID oIID_GfxResource = { 0xd5a0e41c, 0xab91, 0x496e, { 0x8d, 0x5d, 0xa3, 0x35, 0xa9, 0x27, 0x78, 0xa2 } };
 	return oIID_GfxResource;
 }
+
+#if 0
 
 const oGUID& oGetGUID(threadsafe const oGfxInstanceList* threadsafe const *)
 {
@@ -78,14 +81,14 @@ const oGUID& oGetGUID(threadsafe const oGfxMesh* threadsafe const *)
 	static const oGUID oIID_GfxMesh = { 0xcdaa61db, 0xd52a, 0x44c1, { 0x86, 0x43, 0xd3, 0x2f, 0x5, 0xb2, 0x32, 0x6c } };
 	return oIID_GfxMesh;
 }
-
+#endif
 const oGUID& oGetGUID(threadsafe const oGfxPipeline* threadsafe const *)
 {
 	// {2401B122-EB19-4CEF-B3BE-9543C003B896}
 	static const oGUID oIID_GfxPipeline = { 0x2401b122, 0xeb19, 0x4cef, { 0xb3, 0xbe, 0x95, 0x43, 0xc0, 0x3, 0xb8, 0x96 } };
 	return oIID_GfxPipeline;
 }
-
+#if 0
 const oGUID& oGetGUID(threadsafe const oGfxRenderTarget2* threadsafe const *)
 {
 	// {E7F8FD41-737A-4AC5-A3C0-EB04876C6071}
