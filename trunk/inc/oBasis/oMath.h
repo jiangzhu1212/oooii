@@ -419,4 +419,10 @@ template<typename T> oRECT oToRect(const T& _Rect);
 // it could do (which may be less than _MaxNumSplits when the ratios are too small)
 unsigned int SplitRect(const oRECT& _SrcRect, const unsigned int _MaxNumSplits, const float* _pOrderedSplitRatio, const unsigned int _XMultiple, const unsigned int _YMultiple, oRECT* _pSplitResults);
 
+// Forward biorthogonal CDF 9/7 wavelet transform, transforms in place
+void oCDF97Fwd(float* _pValues, size_t _szValues);
+
+// Inverse biorthogonal CDF 9/7 wavelet transform, transforms in place
+void oCDF97Inv(float* _pValues, size_t _szValues);
+
 #endif

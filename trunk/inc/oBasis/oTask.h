@@ -65,6 +65,9 @@ inline void oTaskRunSerial(oTASK* _pFunctions, size_t _NumFunctions)
 }
 template<size_t size> void oTaskRunSerial(oTASK (&_pFunctions)[size]) { oTaskRunSerial(_pFunctions, size); }
 
+// Runs the specified task (a drop-in debug replacement for oTaskIssueAsync)
+inline void oTaskIssueSerial(oTASK _Task) { _Task(); }
+
 // oParallelFor is a wrapper for TBB parallel for that takes a single threaded
 // for loop and turns it into a loop that can be executed on several threads
 // when it returns the loop has completed executing

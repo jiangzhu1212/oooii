@@ -56,6 +56,7 @@ enum oERROR
 	oERROR_REFUSED, // request actively denied by server/subsystem
 	oERROR_PLATFORM, // underlying platform error - check string for specifics
 	oERROR_CORRUPT, // File/buffer/message is corrupt
+	oERROR_LEAKS, // The operation was logically successful, but resources remain inappropriately allocated (mostly a unit test return value)
 };
 
 // Sets a thread_local value and string that can be retrieved with API described

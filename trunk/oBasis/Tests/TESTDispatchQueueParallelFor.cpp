@@ -28,6 +28,7 @@
 bool oBasisTest_oDispatchQueueParallelFor()
 {
 	oTESTB(RatcliffJobSwarm::RunParallelForTest("oDispatchQueueParallelFor"), "Ratcliff parallel for test failed");
+	oBug_1938_EXIT();
 	//oErrorSetLast(oERROR_NONE); // Allow pass-thru of RunDispatchQueueTest result
 	return true;
 }

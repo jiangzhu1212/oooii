@@ -48,6 +48,7 @@ const char* oAsString(const oERROR& _Error)
 		case oERROR_REFUSED: return "oERROR_REFUSED";
 		case oERROR_PLATFORM: return "oERROR_PLATFORM";
 		case oERROR_CORRUPT: return "oERROR_CORRUPT";
+		case oERROR_LEAKS: return "oERROR_LEAKS";
 		oNODEFAULT;
 	}
 }
@@ -72,6 +73,7 @@ const char* oErrorGetDefaultString(const oERROR& _Error)
 		case oERROR_REFUSED: return "access refused";
 		case oERROR_PLATFORM: return "platform error occurred";
 		case oERROR_CORRUPT: return "data is corrupt";
+		case oERROR_LEAKS: return "resource(s) are not cleaned up";
 		oNODEFAULT;
 	}
 }

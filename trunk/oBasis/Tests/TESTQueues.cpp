@@ -166,6 +166,7 @@ bool oBasisTest_oConcurrentQueue()
 		return false;
 	if (!TestQueueNonTrivialContents<oConcurrentQueue<oRef<threadsafe oTestBuffer> > >(n))
 		return false;
+
 	return true;
 }
 

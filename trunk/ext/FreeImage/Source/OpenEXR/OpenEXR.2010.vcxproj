@@ -22,10 +22,14 @@
     <ProjectName>OpenEXR</ProjectName>
     <ProjectGuid>{17A4874B-0606-4687-90B6-F91F8CB3B8AF}</ProjectGuid>
     <RootNamespace>OpenEXR</RootNamespace>
-    <SccProjectName>SAK</SccProjectName>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccProvider>SAK</SccProvider>
+    <SccProjectName>
+    </SccProjectName>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -249,6 +253,7 @@
     <ClCompile Include="IlmImf\ImfStandardAttributes.cpp" />
     <ClCompile Include="IlmImf\ImfStdIO.cpp" />
     <ClCompile Include="IlmImf\ImfStringAttribute.cpp" />
+    <ClCompile Include="IlmImf\ImfStringVectorAttribute.cpp" />
     <ClCompile Include="IlmImf\ImfTestFile.cpp" />
     <ClCompile Include="IlmImf\ImfThreading.cpp" />
     <ClCompile Include="IlmImf\ImfTileDescriptionAttribute.cpp" />
@@ -289,6 +294,7 @@
     <ClInclude Include="IlmImf\ImfBoxAttribute.h" />
     <ClInclude Include="IlmImf\ImfChannelList.h" />
     <ClInclude Include="IlmImf\ImfChannelListAttribute.h" />
+    <ClInclude Include="IlmImf\\ImfCheckedArithmetic.h" />
     <ClInclude Include="IlmImf\ImfChromaticities.h" />
     <ClInclude Include="IlmImf\ImfChromaticitiesAttribute.h" />
     <ClInclude Include="IlmImf\ImfCompression.h" />
@@ -333,6 +339,7 @@
     <ClInclude Include="IlmImf\ImfStandardAttributes.h" />
     <ClInclude Include="IlmImf\ImfStdIO.h" />
     <ClInclude Include="IlmImf\ImfStringAttribute.h" />
+    <ClInclude Include="IlmImf\ImfStringVectorAttribute.h" />
     <ClInclude Include="IlmImf\ImfTestFile.h" />
     <ClInclude Include="IlmImf\ImfThreading.h" />
     <ClInclude Include="IlmImf\ImfTileDescription.h" />

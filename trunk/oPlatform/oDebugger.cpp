@@ -201,7 +201,7 @@ bool oDebuggerTranslateSymbol(oDEBUGGER_SYMBOL* _pSymbol, unsigned long long _Sy
 
 		//strcpy_s(_pSymbol->Name, symbolInfo->Name);
 		memcpy(_pSymbol->Name, symbolInfo->Name, sizeof(_pSymbol->Name)-sizeof(TCHAR));
-		oAddTruncationElipse(_pSymbol->Name);
+		oAddTruncationElipse(_pSymbol->Name, _pSymbol->Name.capacity());
 		_pSymbol->SymbolOffset = static_cast<unsigned int>(displacement);
 	}
 
@@ -250,11 +250,11 @@ int oDebuggerSymbolSPrintf(char* _Buffer, size_t _SizeofBuffer, unsigned long lo
 			*_pIsStdBind = false;
 
 		if (s.Line && s.CharOffset)
-			rv = _snprintf_s(_Buffer, _SizeofBuffer, _TRUNCATE, "%s%s!%s() ./%s Line %i + 0x%0x bytes\n", _PrefixString, s.Module, s.Name, oGetFilebase(s.Filename), s.Line, s.CharOffset);
+			rv = _snprintf_s(_Buffer, _SizeofBuffer, _TRUNCATE, "%s%s!%s() ./%s Line %i + 0x%0x bytes\n", _PrefixString, s.Module.c_str(), s.Name.c_str(), oGetFilebase(s.Filename), s.Line, s.CharOffset);
 		else if (s.Line)
-			rv = _snprintf_s(_Buffer, _SizeofBuffer, _TRUNCATE, "%s%s!%s() ./%s Line %i\n", _PrefixString, s.Module, s.Name, oGetFilebase(s.Filename), s.Line);
+			rv = _snprintf_s(_Buffer, _SizeofBuffer, _TRUNCATE, "%s%s!%s() ./%s Line %i\n", _PrefixString, s.Module.c_str(), s.Name.c_str(), oGetFilebase(s.Filename), s.Line);
 		else
-			rv = _snprintf_s(_Buffer, _SizeofBuffer, _TRUNCATE, "%s%s!%s() ./%s\n", _PrefixString, s.Module, s.Name, oGetFilebase(s.Filename));
+			rv = _snprintf_s(_Buffer, _SizeofBuffer, _TRUNCATE, "%s%s!%s() ./%s\n", _PrefixString, s.Module.c_str(), s.Name.c_str(), oGetFilebase(s.Filename));
 	}
 
 	return rv;

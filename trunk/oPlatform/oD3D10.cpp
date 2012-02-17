@@ -119,6 +119,7 @@ bool oD3D10CreateSnapshot(ID3D10Texture2D* _pRenderTarget, ID3D10Texture2D** _pp
 	d.BindFlags = 0;
 	d.Usage = D3D10_USAGE_STAGING;
 	d.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+	d.MiscFlags = 0; // ensure any flags, like GDI compatibility, are cleared
 	oV(D3D10Device->CreateTexture2D(&d, nullptr, _ppCPUTexture));
 	D3D10Device->CopyResource(*_ppCPUTexture, _pRenderTarget);
 	D3D10Device->Flush();

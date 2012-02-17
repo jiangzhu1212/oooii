@@ -80,10 +80,19 @@
     <ClCompile Include="..\FreeImage\Conversion8.cpp">
       <Filter>Source Files\Conversion</Filter>
     </ClCompile>
+    <ClCompile Include="..\FreeImage\ConversionFloat.cpp">
+      <Filter>Source Files\Conversion</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FreeImage\ConversionRGB16.cpp">
+      <Filter>Source Files\Conversion</Filter>
+    </ClCompile>
     <ClCompile Include="..\FreeImage\ConversionRGBF.cpp">
       <Filter>Source Files\Conversion</Filter>
     </ClCompile>
     <ClCompile Include="..\FreeImage\ConversionType.cpp">
+      <Filter>Source Files\Conversion</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FreeImage\ConversionUINT16.cpp">
       <Filter>Source Files\Conversion</Filter>
     </ClCompile>
     <ClCompile Include="..\FreeImage\Halftoning.cpp">

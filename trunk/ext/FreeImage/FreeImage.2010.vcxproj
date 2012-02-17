@@ -22,10 +22,14 @@
     <ProjectName>FreeImage</ProjectName>
     <ProjectGuid>{B39ED2B3-D53A-4077-B957-930979A3577D}</ProjectGuid>
     <RootNamespace>FreeImage</RootNamespace>
-    <SccProjectName>SAK</SccProjectName>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccProvider>SAK</SccProvider>
+    <SccProjectName>
+    </SccProjectName>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -336,8 +340,11 @@ copy Source\FreeImage.h Dist</Command>
     <ClCompile Include="Source\FreeImage\Conversion32.cpp" />
     <ClCompile Include="Source\FreeImage\Conversion4.cpp" />
     <ClCompile Include="Source\FreeImage\Conversion8.cpp" />
+    <ClCompile Include="Source\FreeImage\ConversionFloat.cpp" />
+    <ClCompile Include="Source\FreeImage\ConversionRGB16.cpp" />
     <ClCompile Include="Source\FreeImage\ConversionRGBF.cpp" />
     <ClCompile Include="Source\FreeImage\ConversionType.cpp" />
+    <ClCompile Include="Source\FreeImage\ConversionUINT16.cpp" />
     <ClCompile Include="Source\FreeImage\Halftoning.cpp" />
     <ClCompile Include="Source\FreeImage\tmoColorConvert.cpp" />
     <ClCompile Include="Source\FreeImage\tmoDrago03.cpp" />

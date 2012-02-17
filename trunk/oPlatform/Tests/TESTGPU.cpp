@@ -36,11 +36,10 @@ struct TESTGPU : public oTest
 		oTESTB(desc.Index == 0, "Index is incorrect");
 		oTESTB(desc.FeatureVersion >= oVersion(9,0), "Invalid version retrieved");
 
-		char VRAMSize[64];
+		oStringS VRAMSize, SharedSize;
 		oFormatMemorySize(VRAMSize, desc.VRAM, 1);
-		char SharedSize[64];
 		oFormatMemorySize(SharedSize, desc.SharedSystemMemory, 1);
-		sprintf_s(_StrStatus, _SizeofStrStatus, "%s %s %d.%d feature level %d.%d %s (%s shared) running on %s v%d.%d drivers (%s)", desc.GPUDescription, oAsString(desc.API), desc.InterfaceVersion.Major, desc.InterfaceVersion.Minor, desc.FeatureVersion.Major, desc.FeatureVersion.Minor, VRAMSize, SharedSize, oAsString(desc.Vendor), desc.DriverVersion.Major, desc.DriverVersion.Minor, desc.DriverDescription);
+		sprintf_s(_StrStatus, _SizeofStrStatus, "%s %s %d.%d feature level %d.%d %s (%s shared) running on %s v%d.%d drivers (%s)", desc.GPUDescription.c_str(), oAsString(desc.API), desc.InterfaceVersion.Major, desc.InterfaceVersion.Minor, desc.FeatureVersion.Major, desc.FeatureVersion.Minor, VRAMSize.c_str(), SharedSize.c_str(), oAsString(desc.Vendor), desc.DriverVersion.Major, desc.DriverVersion.Minor, desc.DriverDescription.c_str());
 
 		return SUCCESS;
 	}

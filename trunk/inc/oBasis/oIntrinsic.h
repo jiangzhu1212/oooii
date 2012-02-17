@@ -86,21 +86,28 @@ long _InterlockedCompareExchange(long volatile *Destination, long ExChange, long
 #endif
 
 #ifdef o64BIT
-	void* _InterlockedCompareExchangePointer(void* volatile *Destination, void* Exchange, void* Comperand);
 	void* _InterlockedExchangePointer(void* volatile *Target, void* Value);
+	void* _InterlockedCompareExchangePointer(void* volatile *Destination, void* Exchange, void* Comperand);
+
+	#pragma intrinsic(_InterlockedExchangePointer)
+	#pragma intrinsic(_InterlockedCompareExchangePointer)
+#else
+	inline void* _InterlockedExchangePointer(void* volatile *Target, void* Value) { return (void*)_InterlockedExchange((long volatile*)Target, (long)Value); }
+	inline void* _InterlockedCompareExchangePointer(void* volatile *Destination, void* Exchange, void* Comperand) { return (void*)_InterlockedCompareExchange((long volatile*)Destination, (long)(long*)Exchange, (long)(long*)Comperand); }
+#endif
+
+#ifdef oHAS_64BIT_ATOMICS
 	long long _InterlockedIncrement64(long long volatile *Addend);
 	long long _InterlockedDecrement64(long long volatile *Addend);
 	long long _InterlockedExchange64(long long volatile *Target, long long Value);
 	long long _InterlockedCompareExchange64(long long volatile *Destination, long long ExChange, long long Comperand);
-	#pragma intrinsic(_InterlockedExchangePointer)
-	#pragma intrinsic(_InterlockedCompareExchangePointer)
-	#pragma intrinsic(_InterlockedIncrement64)
-	#pragma intrinsic(_InterlockedDecrement64)
-	#pragma intrinsic(_InterlockedExchange64)
-	#pragma intrinsic(_InterlockedCompareExchange64)
-#else
-	inline void* _InterlockedCompareExchangePointer(void* volatile *Destination, void* Exchange, void* Comperand) { return (void*)_InterlockedCompareExchange((long volatile*)Destination, (long)(long*)Exchange, (long)(long*)Comperand); }
-	inline void* _InterlockedExchangePointer(void* volatile *Target, void* Value) { return (void*)_InterlockedExchange((long volatile*)Target, (long)Value); }
+
+	#ifdef o64BIT
+		#pragma intrinsic(_InterlockedIncrement64)
+		#pragma intrinsic(_InterlockedDecrement64)
+		#pragma intrinsic(_InterlockedExchange64)
+		#pragma intrinsic(_InterlockedCompareExchange64)
+	#endif
 #endif
 
 #ifdef __cplusplus

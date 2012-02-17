@@ -109,6 +109,9 @@
     <ClInclude Include="openjpeg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="opj_config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="opj_includes.h">
       <Filter>Header Files</Filter>
     </ClInclude>

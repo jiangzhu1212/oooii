@@ -27,6 +27,17 @@
 
 #include <oBasis/oError.h>
 
+#ifdef o32BIT
+	// @oooii-tony: I think tbb is registering as leaks out of this test because
+	// they're not reported when a serial execution (no exercise of tbb) occurs and
+	// this allocator just allocates one big arena from malloc, so it shouldn't be
+	// several smaller allocs, whereas TBB might behave that way.
+	#define oBug_1938
+	#define oBug_1938_EXIT() do { if (1) {return oErrorSetLast(oERROR_LEAKS, "oBug_1938: Concurrency test is done serially to avoid reports of a leak that is probably from TBB. Thus this does not confirm concurrency works."); } } while(0)
+#else
+	#define oBug_1938_EXIT() do {} while(0)
+#endif
+
 #define oTESTB0(test) do { if (!(test)) return false; } while(false) // pass through error
 #define oTESTB(test, msg, ...) do { if (!(test)) return oErrorSetLast(oERROR_GENERIC, msg, ## __VA_ARGS__); } while(false)
 

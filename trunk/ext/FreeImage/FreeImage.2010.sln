@@ -20,45 +20,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenEXR", "Source\OpenEXR\O
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibOpenJPEG", "Source\LibOpenJPEG\LibOpenJPEG.2010.vcxproj", "{E3536C28-A7F1-4B53-8E52-7D2232F9E098}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibRawLite", "Source\LibRawLite\LibRawLite.2010.vcxproj", "{07F662C1-1323-42AB-B6AF-FBFD34A7437A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibRaw", "Source\LibRawLite\LibRawLite.2010.vcxproj", "{07F662C1-1323-42AB-B6AF-FBFD34A7437A}"
 EndProject
 Global
-	GlobalSection(SourceCodeControl) = preSolution
-		SccNumberOfProjects = 12
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = FreeImage.2010.vcxproj
-		SccLocalPath1 = .
-		SccProjectUniqueName2 = Source\\FreeImageLib\\FreeImageLib.2010.vcxproj
-		SccLocalPath2 = .
-		SccProjectFilePathRelativizedFromConnection2 = Source\\FreeImageLib\\
-		SccProjectUniqueName3 = Wrapper\\FreeImagePlus\\FreeImagePlus.2010.vcxproj
-		SccLocalPath3 = .
-		SccProjectFilePathRelativizedFromConnection3 = Wrapper\\FreeImagePlus\\
-		SccProjectUniqueName4 = Source\\LibJPEG\\LibJPEG.2010.vcxproj
-		SccLocalPath4 = .
-		SccProjectFilePathRelativizedFromConnection4 = Source\\LibJPEG\\
-		SccProjectUniqueName5 = Source\\LibMNG\\LibMNG.2010.vcxproj
-		SccLocalPath5 = .
-		SccProjectFilePathRelativizedFromConnection5 = Source\\LibMNG\\
-		SccProjectUniqueName6 = Source\\LibPNG\\LibPNG.2010.vcxproj
-		SccLocalPath6 = .
-		SccProjectFilePathRelativizedFromConnection6 = Source\\LibPNG\\
-		SccProjectUniqueName7 = Source\\LibTIFF\\LibTIFF.2010.vcxproj
-		SccLocalPath7 = .
-		SccProjectFilePathRelativizedFromConnection7 = Source\\LibTIFF\\
-		SccProjectUniqueName8 = Source\\ZLib\\ZLib.2010.vcxproj
-		SccLocalPath8 = .
-		SccProjectFilePathRelativizedFromConnection8 = Source\\ZLib\\
-		SccProjectUniqueName9 = Source\\OpenEXR\\OpenEXR.2010.vcxproj
-		SccLocalPath9 = .
-		SccProjectFilePathRelativizedFromConnection9 = Source\\OpenEXR\\
-		SccProjectUniqueName10 = Source\\LibOpenJPEG\\LibOpenJPEG.2010.vcxproj
-		SccLocalPath10 = .
-		SccProjectFilePathRelativizedFromConnection10 = Source\\LibOpenJPEG\\
-		SccProjectUniqueName11 = Source\\LibRawLite\\LibRawLite.2010.vcxproj
-		SccLocalPath11 = .
-		SccProjectFilePathRelativizedFromConnection11 = Source\\LibRawLite\\
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64

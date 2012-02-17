@@ -102,6 +102,7 @@ bool oBasisTest_oDispatchQueuePrivate()
 		oTESTB(!WrongThread, "oDispatchQueuePrivate command was not executing on the correct thread.");
 	}
 
+	oBug_1938_EXIT();
 	oErrorSetLast(oERROR_NONE);
 	return true;
 }

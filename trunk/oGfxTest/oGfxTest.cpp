@@ -78,12 +78,13 @@ int main(int argc, char* argv[])
 	oWindow::DESC WinDesc;
 	WinDesc.Style = oWindow::FIXED;
 	WinDesc.AutoClear = false;
+	WinDesc.EnableUIDrawing = true;
 	WinDesc.UseAntialiasing = false;
 	WinDesc.AllowUserFullscreenToggle = true;
 
 	oRef<threadsafe oWindow> Window;
 	oVERIFY(oWindowCreate(WinDesc, D3D11Device, oWindow::USE_GDI, &Window));
-	Window->SetTitle("oGfxTest");
+	Window->SetTitle("User-Specified D3D11 Test");
 
 	// Set up a UI to ensure rendering doesn't stomp on its compositing
 	oWindowUIBox::DESC BoxDesc;
@@ -109,17 +110,17 @@ int main(int argc, char* argv[])
 	TextDesc.Size = BoxDesc.Size;
 	TextDesc.Anchor = BoxDesc.Anchor;
 	TextDesc.Alignment = oMIDDLECENTER;
-	
+
 	oRef<threadsafe oWindowUIText> Text;
 	oVERIFY(oWindowUITextCreate(TextDesc, Window, &Text));
 	Text->SetFont(Font);
-	Text->SetText("OOOii UI Renders");
+	Text->SetText("D3D11 Test");
 
 	Window->Hook(oBIND(Render, oBIND1, oBIND2, oBIND3, Window.c_ptr()));
 
 	while (Window->IsOpen())
 	{
-		oSleep(20);
+		oSleep(200);
 
 		Window->Refresh(false);
 	}

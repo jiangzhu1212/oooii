@@ -120,17 +120,21 @@ static bool oBasisTest_oBlockAllocatorFixed_Concurrency()
 	oMemset4(tests, 0xdeadc0de, sizeof(tests));
 
 	oCountdownLatch latch("Sync", NumBlocks);
-	
-	for (int i = 0; i < NumBlocks; i++)
-	oTaskIssueAsync([&,i]
-	{
-		tests[i] = pAllocator->Create(&destructed[i]);
-		tests[i]->Value = i;
-		if (i & 0x1)
-			pAllocator->Destroy(NumBlocks, tests[i]);
 
-		latch.Release();
-	});
+	for (int i = 0; i < NumBlocks; i++)
+#ifdef oBug_1938
+		oTaskIssueSerial([&,i]
+#else
+		oTaskIssueAsync([&,i]
+#endif
+		{
+			tests[i] = pAllocator->Create(&destructed[i]);
+			tests[i]->Value = i;
+			if (i & 0x1)
+				pAllocator->Destroy(NumBlocks, tests[i]);
+
+			latch.Release();
+		});
 
 	latch.Wait();
 
@@ -158,7 +162,7 @@ bool oBasisTest_oBlockAllocatorFixed()
 
 	if (!oBasisTest_oBlockAllocatorFixed_Concurrency())
 		return false;
-
+	oBug_1938_EXIT();
 	oErrorSetLast(oERROR_NONE, "");
 	return true;
 }

@@ -160,6 +160,7 @@ const char* oWinAsStringWM(unsigned int _uMsg)
 		case WM_NCCREATE: return "WM_NCCREATE";
 		case WM_NCDESTROY: return "WM_NCDESTROY";
 		case WM_NCPAINT: return "WM_NCPAINT";
+		case WM_NOTIFY: return "WM_NOTIFY";
 		case WM_NULL: return "WM_NULL";
 		case WM_PAINT: return "WM_PAINT";
 		case WM_PRINT: return "WM_PRINT";
@@ -283,6 +284,39 @@ const char* oWinAsStringBST(unsigned int _BSTCode)
 	return "unrecognized BSTCode";
 }
 
+const char* oWinAsStringNM(unsigned int _NMCode)
+{
+	switch (_NMCode)
+	{
+		case NM_CHAR: return "NM_CHAR";
+		case NM_CUSTOMDRAW: return "NM_CUSTOMDRAW";
+		case NM_CUSTOMTEXT: return "NM_CUSTOMTEXT";
+		case NM_FONTCHANGED: return "NM_FONTCHANGED";
+		case NM_GETCUSTOMSPLITRECT: return "NM_GETCUSTOMSPLITRECT";
+		case NM_HOVER: return "NM_HOVER";
+		case NM_KEYDOWN: return "NM_KEYDOWN";
+		case NM_KILLFOCUS: return "NM_KILLFOCUS";
+		case NM_LDOWN: return "NM_LDOWN";
+		case NM_NCHITTEST: return "NM_NCHITTEST";
+		case NM_OUTOFMEMORY: return "NM_OUTOFMEMORY";
+		case NM_RDOWN: return "NM_RDOWN";
+		case NM_RELEASEDCAPTURE: return "NM_RELEASEDCAPTURE";
+		case NM_RETURN: return "NM_RETURN";
+		case NM_SETCURSOR: return "NM_SETCURSOR";
+		case NM_SETFOCUS: return "NM_SETFOCUS";
+		case NM_THEMECHANGED: return "NM_THEMECHANGED";
+		case NM_TOOLTIPSCREATED: return "NM_TOOLTIPSCREATED";
+		//case NM_TVSTATEIMAGECHANGING: return "NM_TVSTATEIMAGECHANGING"; // same as NM_CUSTOMTEXT
+		case NM_CLICK: return "NM_CLICK";
+		case NM_DBLCLK: return "NM_DBLCLK";
+		case NM_RCLICK: return "NM_RCLICK";
+		case NM_RDBLCLK: return "NM_RDBLCLK";
+		default: break;
+	}
+
+	return "unrecognized NMCode";
+}
+
 const char* oWinAsStringSWP(unsigned int _SWPCode)
 {
 	switch (_SWPCode)
@@ -317,7 +351,7 @@ char* oWinParseStyleFlags(char* _StrDestination, size_t _SizeofStrDestination, U
 
 char* oWinParseSWPFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _SWPFlags)
 {
-	return oAsStringFlags(_StrDestination, _SizeofStrDestination, _SWPFlags, "0", [&](unsigned int _Flag) { return oWinAsStringSWP(_Flag); });
+	return oAsStringFlags(_StrDestination, _SizeofStrDestination, _SWPFlags & 0x07ff, "0", [&](unsigned int _Flag) { return oWinAsStringSWP(_Flag); });
 }
 
 char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
@@ -363,11 +397,15 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, HW
 		case WM_CTLCOLORMSGBOX: sprintf_s(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORMSGBOX HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
 		case WM_CTLCOLORSCROLLBAR: sprintf_s(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORSCROLLBAR HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
 		case WM_CTLCOLORSTATIC: sprintf_s(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORSTATIC HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
+		case WM_NOTIFY: { const NMHDR& h = *(NMHDR*)_lParam; sprintf_s(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_NOTIFY from hwndFrom=0x%x idFrom=%d notification code=%s", _hWnd, h.hwndFrom, h.idFrom, oWinAsStringNM(h.code)); break; }
 		default:
-			sprintf_s(_StrDestination, _SizeofStrDestination, "HWND 0x%x %s", _hWnd, oWinAsStringWM(_uMsg));
-			if (*_StrDestination == 'u') // unrecognized
+		{
+			const char* WMStr = oWinAsStringWM(_uMsg);
+			sprintf_s(_StrDestination, _SizeofStrDestination, "HWND 0x%x %s", _hWnd, WMStr);
+			if (*WMStr == 'u') // unrecognized
 				sprintf_s(_StrDestination, _SizeofStrDestination, "HWND 0x%x Unrecognized uMsg=0x%x (%u)", _hWnd, _uMsg, _uMsg); break;
 			break;
+		}
 	}
 
 	return _StrDestination;

@@ -246,7 +246,7 @@ public:
 		double start = oTimer();
 		delete pVertIndexMap;
 		oFormatTimeSize(timeStr, oTimer() - start);
-		oTRACE("OBJ: %s for teardown of pVertIndexMap for %s. Specify a larger _InternalReserve to reduce this time", timeStr, pOBJ->OBJPath.c_str());
+		oTRACE("OBJ: %s for teardown of pVertIndexMap for %s. Specify a larger _InternalReserve to reduce this time", timeStr.c_str(), pOBJ->OBJPath.c_str());
 		free(a.pAllocator);
 	}
 

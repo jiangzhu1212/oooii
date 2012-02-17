@@ -90,11 +90,19 @@ bool oDXGICreateSwapChain(IUnknown* _pDevice, bool _Fullscreen, UINT _Width, UIN
 	d.Windowed = !_Fullscreen;
 	d.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	
-	// @oooii-tony: 8/31/2011, DX Jun2010 SDK: If DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE 
-	// is specified, DXGISwapChain can cause a DXGI_ERROR_DEVICE_REMOVED when 
-	// going from fullscreen to windowed, basically indicating a crash in the driver.
-	//d.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
 	d.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
+	#if 1
+		// @oooii-tony: 8/31/2011, DX Jun2010 SDK: If DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE 
+		// is specified, DXGISwapChain can cause a DXGI_ERROR_DEVICE_REMOVED when 
+		// going from fullscreen to windowed, basically indicating a crash in the driver.
+
+		// @oooii-tony: 2/15/2012, DX Jun2010 SDK: This seems not to crash anymore -
+		// so it was probably a driver bug. Reenable this for now to play around again
+		// with GDI interop to prevent flicker.
+
+		d.Flags |= DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
+	#endif
 	
 	oRef<IDXGIDevice> D3DDevice;
 	oVB_RETURN2(_pDevice->QueryInterface(&D3DDevice));

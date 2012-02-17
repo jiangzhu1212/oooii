@@ -220,6 +220,8 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\oPlatform\Tests\TESTBCEncodeDecode.cpp" />
+    <ClCompile Include="..\oPlatform\Tests\TESTCRTLeakTracker.cpp" />
     <ClCompile Include="..\oPlatform\Tests\TESTD3D.cpp" />
     <ClCompile Include="..\oPlatform\Tests\TESTFileMap.cpp" />
     <ClCompile Include="..\oPlatform\Tests\TESTGetVideoDriverDesc.cpp" />

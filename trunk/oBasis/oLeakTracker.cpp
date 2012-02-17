@@ -204,9 +204,9 @@ bool oLeakTracker::Report(bool _AllContexts) threadsafe
 			if (Desc.ReportAllocationIDAsHex)
 			{
 				if (d.Path && *d.Path)
-					sprintf_s(buf, "%s(%u) : {0x%p} %s\n", d.Path, d.Line, d.AllocationID, memsize);
+					sprintf_s(buf, "%s(%u) : {0x%p} %s\n", d.Path, d.Line, d.AllocationID, memsize.c_str());
 				else
-					sprintf_s(buf, "<no filename> : {0x%p} %s (probably a call to ::new(size_t))\n", d.AllocationID, memsize);
+					sprintf_s(buf, "<no filename> : {0x%p} %s (probably a call to ::new(size_t))\n", d.AllocationID, memsize.c_str());
 			}
 
 			else
@@ -214,7 +214,7 @@ bool oLeakTracker::Report(bool _AllContexts) threadsafe
 				if (d.Path && *d.Path)
 					sprintf_s(buf, "%s(%u) : {%d} %s\n", d.Path, d.Line, d.AllocationID, memsize);
 				else
-					sprintf_s(buf, "<no filename> : {%d} %s (probably a call to ::new(size_t))\n", d.AllocationID, memsize);
+					sprintf_s(buf, "<no filename> : {%d} %s (probably a call to ::new(size_t))\n", d.AllocationID, memsize.c_str());
 			}
 
 			pThis->Desc.Print(buf);
@@ -238,7 +238,7 @@ bool oLeakTracker::Report(bool _AllContexts) threadsafe
 			oStringS strTotalLeakBytes;
 			oFormatMemorySize(strTotalLeakBytes.c_str(), totalLeakBytes, 2);
 			oStringM Footer;
-			sprintf_s(Footer, "========== Leak Report: %u Leaks %s ==========\n", nLeaks, strTotalLeakBytes);
+			sprintf_s(Footer, "========== Leak Report: %u Leaks %s ==========\n", nLeaks, strTotalLeakBytes.c_str());
 			pThis->Desc.Print(Footer);
 		}
 	}

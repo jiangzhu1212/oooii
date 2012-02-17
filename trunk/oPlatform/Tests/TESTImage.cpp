@@ -72,14 +72,9 @@ struct TESTImage : public oTest
 		for (size_t i = 0; i < nPixels; i++)
 			oTESTB(c1[i] == c2[i], "Pixel mismatch: %u [%u,%u]", i, i % i1Desc.Dimensions.x, i / i1Desc.Dimensions.x);
 
-	#if 0
-		// Not quite ready for this: The API support in FreeImage inside oImage doesn't have this until a later version
-		// but when we upgrade, reenable this.
-		// Check that loading just the header of the file works
 		oImage::DESC descFromHeader;
-		oTESTB(oImageCreateDesc(lockedBuffer1->GetData(), lockedBuffer1->GetSize(), &descFromHeader), "Failed to load DESC only");
-		oTESTB(!memcmp(&desc, &descFromHeader, sizeof(oImage::DESC)), "Comparison of load full file and load from header failed");
-	#endif
+		oTESTB(oImageGetDesc(buffer1->GetData(), buffer1->GetSize(), &descFromHeader), "Failed to load DESC only");
+		oTESTB(!memcmp(&i1Desc, &descFromHeader, sizeof(oImage::DESC)), "Comparison of load full file and load from header failed");
 
 		return SUCCESS;
 	}

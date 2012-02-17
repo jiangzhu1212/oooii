@@ -91,6 +91,12 @@ template<typename T> inline T* oWinGetThis(HWND _hWnd, UINT _uMsg, WPARAM _wPara
 	return pThis ? pThis->WndProc(_hWnd, _uMsg, _wParam, _lParam) : DefWindowProc(_hWnd, _uMsg, _wParam, _lParam); \
 }
 
+// Dispatches a single message from the Windows message queue. If _WaitForNext is true,
+// the calling thread will sleep (GetMessage). If _WaitForNext is false, then PeekMessage
+// is used. If this returns false, it means a new message was not processed. If the 
+// message queue is valid and empty, oErrorGetLast() will return oERROR_END_OF_FILE.
+bool oWinProcessSingleMessage(HWND _hWnd, bool _WaitForNext = true);
+
 // Pump the specified window's message pump for the specified time, by default
 // infinitely/until it runs out of messages.
 bool oWinPumpMessages(HWND _hWnd, unsigned int _TimeoutMS = oINFINITE_WAIT);
@@ -240,6 +246,7 @@ enum oWINDOW_CONTROL_TYPE
 	oWINDOW_CONTROL_TEXTBOX,
 	oWINDOW_CONTROL_COMBOBOX,
 	oWINDOW_CONTROL_COMBOTEXTBOX,
+	oWINDOW_CONTROL_TAB,
 	oWINDOW_CONTROL_PROGRESSBAR,
 };
 

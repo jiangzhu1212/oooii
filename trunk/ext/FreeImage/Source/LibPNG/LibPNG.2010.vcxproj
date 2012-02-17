@@ -22,10 +22,14 @@
     <ProjectName>LibPNG</ProjectName>
     <ProjectGuid>{7DB10B50-CE00-4D7A-B322-6824F05D2FCB}</ProjectGuid>
     <RootNamespace>LibPNG</RootNamespace>
-    <SccProjectName>SAK</SccProjectName>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccProvider>SAK</SccProvider>
+    <SccProjectName>
+    </SccProjectName>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -198,7 +202,6 @@
   <ItemGroup>
     <ClCompile Include="png.c" />
     <ClCompile Include="pngerror.c" />
-    <ClCompile Include="pnggccrd.c" />
     <ClCompile Include="pngget.c" />
     <ClCompile Include="pngmem.c" />
     <ClCompile Include="pngpread.c" />
@@ -208,7 +211,6 @@
     <ClCompile Include="pngrutil.c" />
     <ClCompile Include="pngset.c" />
     <ClCompile Include="pngtrans.c" />
-    <ClCompile Include="pngvcrd.c" />
     <ClCompile Include="pngwio.c" />
     <ClCompile Include="pngwrite.c" />
     <ClCompile Include="pngwtran.c" />
@@ -217,6 +219,11 @@
   <ItemGroup>
     <ClInclude Include="png.h" />
     <ClInclude Include="pngconf.h" />
+    <ClInclude Include="pngdebug.h" />
+    <ClInclude Include="pnginfo.h" />
+    <ClInclude Include="pnglibconf.h" />
+    <ClInclude Include="pngpriv.h" />
+    <ClInclude Include="pngstruct.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

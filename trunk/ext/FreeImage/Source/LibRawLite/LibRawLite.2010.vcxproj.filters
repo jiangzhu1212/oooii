@@ -33,6 +33,9 @@
     <ClCompile Include="internal\dcraw_fileio.cpp">
       <Filter>Source Files\internal</Filter>
     </ClCompile>
+    <ClCompile Include="internal\demosaic_packs.cpp">
+      <Filter>Source Files\internal</Filter>
+    </ClCompile>
     <ClCompile Include="src\libraw_c_api.cpp">
       <Filter>Source Files\libraw</Filter>
     </ClCompile>

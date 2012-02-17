@@ -23,6 +23,7 @@
  **************************************************************************/
 #include <oBasis/oRef.h>
 #include <oBasis/oString.h>
+#include <oPlatform/oD3D11.h>
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oFile.h>
@@ -32,7 +33,7 @@
 #include <oPlatform/oTest.h>
 #include <oPlatform/oWindow.h>
 #include <oPlatform/oWindowUI.h>
-#include <oPlatform\oX11KeyboardSymbols.h>
+#include <oPlatform/oX11KeyboardSymbols.h>
 
 class oScopedGPUCompositing
 {	bool Prior;
@@ -303,6 +304,7 @@ struct TESTWindowBase : public oTest
 			d.ClientPosition = int2(1100, oDEFAULT);
 			d.SupportDoubleClicks = InteractiveTest; // Support double clicks when running interact test to make sure double click events work correctly
 			d.SupportTouchEvents = InteractiveTest; // Support touch panels
+			d.AllowUserFullscreenToggle = DevMode;
 			oRef<threadsafe oWindow> Window;
 			oTESTB(oWindowCreate(d, nullptr, _DrawMode, &Window), "");
 			Window->SetTitle("DevMode");
@@ -317,7 +319,7 @@ struct TESTWindowBase : public oTest
 			if (InteractiveTest)
 			{
 				oTRACE("Keyboard Test Mode: Enter Key...");
-				while (1)
+				while (Window->IsOpen())
 				{
 					oSleep(100);
 				}
@@ -592,5 +594,110 @@ struct TESTWindowGDI : public TESTWindowBase
 	}
 };
 
+struct TESTWindowD3D11 : public TESTWindowBase
+{
+	// @oooii-tony: NOTE: This is more of a bring-up test than a unit test at the 
+	// moment. Enable this if there's a problem creating the oWindow with a user-
+	// specified ID3D11Device
+
+	bool Render(oWindow::EVENT _Event, const float3& _Position, int _Value, threadsafe oWindow* _pWindow)
+	{
+		switch (_Event)
+		{
+			case oWindow::DRAW_BACKBUFFER:
+			{
+				static int counter = 0;
+
+				const FLOAT RGBA[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+				const FLOAT RGBA2[] = { 0.0f, 0.0f, 1.0f, 1.0f };
+
+				oRef<ID3D11Device> D3D11Device;
+				oVERIFY(_pWindow->QueryInterface((const oGUID&)__uuidof(ID3D11Device), &D3D11Device));
+
+				oRef<ID3D11DeviceContext> DevContext;
+				D3D11Device->GetImmediateContext(&DevContext);
+
+				oRef<ID3D11RenderTargetView> RTV;
+				oVERIFY(_pWindow->QueryInterface((const oGUID&)__uuidof(ID3D11RenderTargetView), &RTV));
+
+				DevContext->ClearRenderTargetView(RTV, (counter++ & 0x1)?RGBA:RGBA2);
+
+				DevContext->Flush();
+				break;
+			}
+
+		default:
+			break;
+		}
+		 
+		return true;
+	}
+
+	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus)
+	{
+		oD3D11_DEVICE_DESC DevDesc("TestDevice");
+		DevDesc.MinimumAPIFeatureLevel = oVersion(10,0);
+		DevDesc.Debug = true;
+
+		oRef<ID3D11Device> D3D11Device;
+		oTESTB0(oD3D11CreateDevice(DevDesc, &D3D11Device));
+
+		oWindow::DESC WinDesc;
+		WinDesc.Style = oWindow::FIXED;
+		WinDesc.AutoClear = false;
+		WinDesc.EnableUIDrawing = true;
+		WinDesc.UseAntialiasing = false;
+		WinDesc.AllowUserFullscreenToggle = true;
+
+		oRef<threadsafe oWindow> Window;
+		oVERIFY(oWindowCreate(WinDesc, D3D11Device, oWindow::USE_GDI, &Window));
+		Window->SetTitle("User-Specified D3D11 Test");
+
+		// Set up a UI to ensure rendering doesn't stomp on its compositing
+		oWindowUIBox::DESC BoxDesc;
+		BoxDesc.Position = int2(-20,-20);
+		BoxDesc.Size = int2(130,30);
+		BoxDesc.Anchor = oBOTTOMRIGHT;
+		BoxDesc.Color = std::OOOiiGreen;
+		BoxDesc.BorderColor = std::White;
+		BoxDesc.Roundness = 10.0f;
+
+		oRef<threadsafe oWindowUIBox> Box;
+		oVERIFY(oWindowUIBoxCreate(BoxDesc, Window, &Box));
+
+		oWindowUIFont::DESC FontDesc;
+		FontDesc.FontName = "Tahoma";
+		FontDesc.PointSize = 10;
+
+		oRef<threadsafe oWindowUIFont> Font;
+		oVERIFY(oWindowUIFontCreate(FontDesc, Window, &Font));
+
+		oWindowUIText::DESC TextDesc;
+		TextDesc.Position = BoxDesc.Position;
+		TextDesc.Size = BoxDesc.Size;
+		TextDesc.Anchor = BoxDesc.Anchor;
+		TextDesc.Alignment = oMIDDLECENTER;
+
+		oRef<threadsafe oWindowUIText> Text;
+		oVERIFY(oWindowUITextCreate(TextDesc, Window, &Text));
+		Text->SetFont(Font);
+		Text->SetText("D3D11 Test");
+
+		Window->Hook(oBIND(&TESTWindowD3D11::Render, this, oBIND1, oBIND2, oBIND3, Window.c_ptr()));
+
+		while (Window->IsOpen())
+		{
+			static int ctr = 0;
+
+			oSleep(200);
+
+			Window->Refresh(false);
+		}
+
+		return SUCCESS;
+	}
+};
+
 oTEST_REGISTER(TESTWindowD2D);
 oTEST_REGISTER(TESTWindowGDI);
+//oTEST_REGISTER(TESTWindowD3D11);

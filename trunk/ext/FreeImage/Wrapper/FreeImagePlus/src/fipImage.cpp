@@ -222,6 +222,27 @@ BOOL fipImage::isGrayscale() const {
 }
 
 ///////////////////////////////////////////////////////////////////
+// Thumbnail access
+
+BOOL fipImage::getThumbnail(fipImage& image) const {
+	image = FreeImage_Clone( FreeImage_GetThumbnail(_dib) );
+	return image.isValid();
+}
+
+BOOL fipImage::setThumbnail(const fipImage& image) {
+	return FreeImage_SetThumbnail(_dib, (FIBITMAP*)image._dib);
+}
+
+BOOL fipImage::hasThumbnail() const {
+	return (FreeImage_GetThumbnail(_dib) != NULL);
+}
+
+BOOL fipImage::clearThumbnail() {
+	return FreeImage_SetThumbnail(_dib, NULL);
+}
+
+
+///////////////////////////////////////////////////////////////////
 // Pixel access
 
 BYTE* fipImage::accessPixels() const {
@@ -596,13 +617,36 @@ BOOL fipImage::dither(FREE_IMAGE_DITHER algorithm) {
 	return FALSE;
 }
 
+BOOL fipImage::convertToFloat() {
+	if(_dib) {
+		FIBITMAP *dib = FreeImage_ConvertToFloat(_dib);
+		return replace(dib);
+	}
+	return FALSE;
+}
+
 BOOL fipImage::convertToRGBF() {
 	if(_dib) {
 		FIBITMAP *dib = FreeImage_ConvertToRGBF(_dib);
 		return replace(dib);
 	}
 	return FALSE;
+}
 
+BOOL fipImage::convertToUINT16() {
+	if(_dib) {
+		FIBITMAP *dib = FreeImage_ConvertToUINT16(_dib);
+		return replace(dib);
+	}
+	return FALSE;
+}
+
+BOOL fipImage::convertToRGB16() {
+	if(_dib) {
+		FIBITMAP *dib = FreeImage_ConvertToRGB16(_dib);
+		return replace(dib);
+	}
+	return FALSE;
 }
 
 BOOL fipImage::toneMapping(FREE_IMAGE_TMO tmo, double first_param, double second_param, double third_param, double fourth_param) {

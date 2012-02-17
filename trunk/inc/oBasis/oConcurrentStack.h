@@ -35,26 +35,20 @@
 #include <oBasis/oThreadsafe.h>
 
 template<typename T
-	#ifdef o64BIT
 		, size_t nTagBits = 4
 		, size_t nSizeBits = 12
 		, size_t nPointerBits = 48
-	#else
-		, size_t nTagBits = 2
-		, size_t nSizeBits = 4
-		, size_t nPointerBits = 26
-	#endif
 >
 class oConcurrentStack
 {
 	union header_t
 	{
-		uintptr_t All;
+		unsigned long long All;
 		struct
 		{
-			uintptr_t Tag : nTagBits;
-			uintptr_t Size : nSizeBits;
-			uintptr_t pHead : nPointerBits;
+			unsigned long long Tag : nTagBits;
+			unsigned long long Size : nSizeBits;
+			unsigned long long pHead : nPointerBits;
 		};
 	};
 

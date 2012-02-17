@@ -35,5 +35,3 @@
 #include "ImathBox.h"
 
 // this file is necessary for template instantiation on windows
-
-void oImathBoxAvoidNoPublicSymbolsWarning() {}

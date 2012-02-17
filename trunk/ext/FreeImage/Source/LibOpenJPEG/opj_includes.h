@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, Hervé Drolon, FreeImage Team
+ * Copyright (c) 2005, Herve Drolon, FreeImage Team
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ Most compilers implement their own version of this keyword ...
 */
 #ifndef INLINE
 	#if defined(_MSC_VER)
-		#define INLINE __inline
+		#define INLINE __forceinline
 	#elif defined(__GNUC__)
 		#define INLINE __inline__
 	#elif defined(__MWERKS__)
@@ -86,19 +86,21 @@ Most compilers implement their own version of this keyword ...
 	#endif
 #endif
 
-/* MSVC does not have lrintf */
-#ifdef _MSC_VER
+/* MSVC and Borland C do not have lrintf */
+#if defined(_MSC_VER) || defined(__BORLANDC__)
 static INLINE long lrintf(float f){
-	int i;
-#ifdef M_X86
-	_asm{
-		fld f
-		fistp i
-	};
+#ifdef _M_X64
+    return (long)((f>0.0f) ? (f + 0.5f):(f -0.5f));
 #else
-	i = (int)(f > 0.0f ? +0.5f : -0.5f);
+    int i;
+ 
+    _asm{
+        fld f
+        fistp i
+    };
+ 
+    return i;
 #endif
-	return i;
 }
 #endif
 
@@ -127,7 +129,7 @@ static INLINE long lrintf(float f){
 
 /* JPWL>> */
 #ifdef USE_JPWL
-#include "../jpwl/jpwl.h"
+#include "./jpwl/jpwl.h"
 #endif /* USE_JPWL */
 /* <<JPWL */
 

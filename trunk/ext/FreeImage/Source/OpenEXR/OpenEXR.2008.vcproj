@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="OpenEXR"
 	ProjectGUID="{17A4874B-0606-4687-90B6-F91F8CB3B8AF}"
 	RootNamespace="OpenEXR"
@@ -20,9 +20,10 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(TmpDir)"
+			OutputDirectory=".\Release"
+			IntermediateDirectory=".\Release"
 			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;..\..\..\..\MSSupport\Properties\Common.vsprops;..\..\..\..\MSSupport\Properties\Msvc90.vsprops;..\..\..\..\MSSupport\Properties\Release32.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
@@ -44,20 +45,27 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				OmitFramePointers="true"
 				AdditionalIncludeDirectories="./;./IlmImf;./Imath;./Iex;./Half;./IlmThread;../ZLib"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE"
 				StringPooling="true"
-				MinimalRebuild="false"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="false"
 				ForceConformanceInForLoopScope="true"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=""
+				AssemblerListingLocation=".\Release/"
+				ObjectFile=".\Release/"
+				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
-				WarnAsError="false"
 				SuppressStartupBanner="true"
-				DebugInformationFormat="0"
+				Detect64BitPortabilityProblems="false"
+				CompileAs="0"
 				DisableSpecificWarnings="4290"
 			/>
 			<Tool
@@ -73,6 +81,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile=".\Release\OpenEXR.lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -93,9 +102,10 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(TmpDir)"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;..\..\..\..\MSSupport\Properties\Common.vsprops;..\..\..\..\MSSupport\Properties\Msvc90.vsprops;..\..\..\..\MSSupport\Properties\Release64.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
@@ -118,20 +128,27 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				OmitFramePointers="true"
 				AdditionalIncludeDirectories="./;./IlmImf;./Imath;./Iex;./Half;./IlmThread;../ZLib"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE"
 				StringPooling="true"
-				MinimalRebuild="false"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="false"
 				ForceConformanceInForLoopScope="true"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=""
+				AssemblerListingLocation=".\Release/"
+				ObjectFile=".\Release/"
+				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
-				WarnAsError="false"
 				SuppressStartupBanner="true"
-				DebugInformationFormat="0"
+				Detect64BitPortabilityProblems="false"
+				CompileAs="0"
 				DisableSpecificWarnings="4290"
 			/>
 			<Tool
@@ -147,6 +164,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile=".\Release\OpenEXR.lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -167,9 +185,10 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(TmpDir)"
+			OutputDirectory=".\Debug"
+			IntermediateDirectory=".\Debug"
 			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;..\..\..\..\MSSupport\Properties\Common.vsprops;..\..\..\..\MSSupport\Properties\Msvc90.vsprops;..\..\..\..\MSSupport\Properties\Debug32.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
@@ -191,13 +210,23 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="0"
 				AdditionalIncludeDirectories="./;./IlmImf;./Imath;./Iex;./Half;./IlmThread;../ZLib"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE"
-				MinimalRebuild="false"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=""
+				AssemblerListingLocation=".\Debug/"
+				ObjectFile=".\Debug/"
+				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
-				DebugInformationFormat="0"
+				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="4"
+				CompileAs="0"
 				DisableSpecificWarnings="4290"
 			/>
 			<Tool
@@ -213,6 +242,8 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile=".\Debug\OpenEXR.lib"
+				SuppressStartupBanner="true"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -232,9 +263,10 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(TmpDir)"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;..\..\..\..\MSSupport\Properties\Common.vsprops;..\..\..\..\MSSupport\Properties\Msvc90.vsprops;..\..\..\..\MSSupport\Properties\Debug64.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
@@ -257,13 +289,23 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="0"
 				AdditionalIncludeDirectories="./;./IlmImf;./Imath;./Iex;./Half;./IlmThread;../ZLib"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE"
-				MinimalRebuild="false"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=""
+				AssemblerListingLocation=".\Debug/"
+				ObjectFile=".\Debug/"
+				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
-				DebugInformationFormat="0"
+				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				CompileAs="0"
 				DisableSpecificWarnings="4290"
 			/>
 			<Tool
@@ -279,6 +321,8 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile=".\Debug\OpenEXR.lib"
+				SuppressStartupBanner="true"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -481,6 +525,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\IlmImf\ImfStringVectorAttribute.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\IlmImf\ImfTestFile.cpp"
 					>
 				</File>
@@ -662,6 +710,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\IlmImf\ImfCheckedArithmetic.h"
+					>
+				</File>
+				<File
 					RelativePath=".\IlmImf\ImfChromaticities.h"
 					>
 				</File>
@@ -835,6 +887,10 @@
 				</File>
 				<File
 					RelativePath=".\IlmImf\ImfStringAttribute.h"
+					>
+				</File>
+				<File
+					RelativePath=".\IlmImf\ImfStringVectorAttribute.h"
 					>
 				</File>
 				<File

@@ -72,7 +72,7 @@ namespace oStd {
 	template<> inline int atomic_decrement(int* _X) { return (int)_InterlockedDecrement((long*)_X); }
 	template<> inline long atomic_decrement(long* _X) { return _InterlockedDecrement(_X); }
 
-	#ifdef o64BIT
+	#ifdef oHAS_64BIT_ATOMICS
 		template<> inline long long atomic_exchange<long long>(volatile long long* _X, long long _Y) { return _InterlockedExchange64(_X, _Y); }
 		template<> inline double atomic_exchange<double>(volatile double* _X, double _Y) { long long L = _InterlockedExchange64((volatile long long*)_X, *(long long*)&_Y); return *(double*)&L; }
 		template<> inline bool atomic_compare_exchange<long long>(volatile long long* _X, long long _New, long long _Old) { return _InterlockedCompareExchange64(_X, _New, _Old) == _Old; }

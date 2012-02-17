@@ -63,7 +63,11 @@ bool oBasisTest_oBlockAllocatorGrowable()
 
 	oCountdownLatch latch("Sync", NumBlocks);
 	for (int i = 0; i < NumBlocks; i++)
+	#ifdef oBug_1938
+		oTaskIssueSerial([&,i]
+	#else
 		oTaskIssueAsync([&,i]
+	#endif
 		{
 			tests[i] = pAllocator->Create(&destructed[i]);
 			tests[i]->Value = i;
@@ -87,7 +91,11 @@ bool oBasisTest_oBlockAllocatorGrowable()
 
 	latch.Reset(NumBlocks);
 	for (int i = 0; i < NumBlocks; i++)
+	#ifdef oBug_1938
+		oTaskIssueSerial([&,i]
+	#else
 		oTaskIssueAsync([&,i]
+	#endif
 		{
 			pAllocator->Deallocate(tests[i]);
 			latch.Release();
@@ -106,15 +114,19 @@ bool oBasisTest_oBlockAllocatorGrowable()
 
 	latch.Reset(NumBlocks);
 	for (int i = 0; i < NumBlocks; i++)
+	#ifdef oBug_1938
+		oTaskIssueSerial([&,i]
+	#else
 		oTaskIssueAsync([&,i]
-	{
-		tests[i] = pAllocator->Create(&destructed[i]);
-		tests[i]->Value = i;
-		if (i & 0x1)
-			pAllocator->Destroy(tests[i]);
+	#endif
+		{
+			tests[i] = pAllocator->Create(&destructed[i]);
+			tests[i]->Value = i;
+			if (i & 0x1)
+				pAllocator->Destroy(tests[i]);
 
-		latch.Release();
-	});
+			latch.Release();
+		});
 
 	latch.Wait();
 	
@@ -129,6 +141,7 @@ bool oBasisTest_oBlockAllocatorGrowable()
 		}
 	}
 
+	oBug_1938_EXIT();
 	oErrorSetLast(oERROR_NONE, "");
 	return true;
 }

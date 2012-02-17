@@ -98,6 +98,7 @@ typedef oWStringL oWStringURI;
 template<size_t CAPACITY> int vsprintf_s(oFixedString<char, CAPACITY>& _StrDestination, const char* _Format, va_list _Args) { return vsprintf_s(_StrDestination.c_str(), _StrDestination.capacity(), _Format, _Args); }
 template<size_t CAPACITY> int sprintf_s(oFixedString<char, CAPACITY>& _StrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); return vsprintf_s(_StrDestination, _Format, args); }
 template<size_t CAPACITY> int strcat_s(oFixedString<char, CAPACITY>& _StrDestination, const char* _Source) { return strcat_s(_StrDestination.c_str(), _StrDestination.capacity(), _Source); }
+template<size_t CAPACITY> int strcpy_s(oFixedString<char, CAPACITY>& _StrDestination, const char* _Source) { return strcpy_s(_StrDestination.c_str(), _StrDestination.capacity(), _Source); }
 template<size_t CAPACITY> int strncpy_s(oFixedString<char, CAPACITY>& _StrDestination, const char* _Source, size_t _Count) { return strncpy_s(_StrDestination.c_str(), _StrDestination.capacity(), _Source, _Count); }
 
 // _____________________________________________________________________________

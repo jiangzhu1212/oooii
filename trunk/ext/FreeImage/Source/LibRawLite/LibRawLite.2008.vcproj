@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
-	Name="LibRawLite"
+	Version="9,00"
+	Name="LibRaw"
 	ProjectGUID="{07F662C1-1323-42AB-B6AF-FBFD34A7437A}"
 	RootNamespace="LibRawLite"
 	Keyword="Win32Proj"
@@ -21,9 +21,9 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(TmpDir)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
-			InheritedPropertySheets="..\..\..\..\MSSupport\Properties\Common.vsprops;..\..\..\..\MSSupport\Properties\Msvc90.vsprops;..\..\..\..\MSSupport\Properties\Debug32.vsprops"
 			CharacterSet="1"
 			>
 			<Tool
@@ -43,12 +43,17 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="0"
 				AdditionalIncludeDirectories="./"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL;LIBRAW_LIBRARY_BUILD;NO_LCMS"
-				MinimalRebuild="false"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="0"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="4"
+				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -61,6 +66,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile=".\Debug\LibRawLite.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -81,9 +87,9 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(TmpDir)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="4"
-			InheritedPropertySheets="..\..\..\..\MSSupport\Properties\Common.vsprops;..\..\..\..\MSSupport\Properties\Msvc90.vsprops;..\..\..\..\MSSupport\Properties\Debug64.vsprops"
 			CharacterSet="1"
 			>
 			<Tool
@@ -104,12 +110,18 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="0"
 				AdditionalIncludeDirectories="./"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL;LIBRAW_LIBRARY_BUILD;NO_LCMS"
-				MinimalRebuild="false"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				OpenMP="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="0"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -122,6 +134,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile=".\Debug\LibRawLite.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -142,9 +155,9 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(TmpDir)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
-			InheritedPropertySheets="..\..\..\..\MSSupport\Properties\Common.vsprops;..\..\..\..\MSSupport\Properties\Msvc90.vsprops;..\..\..\..\MSSupport\Properties\Release32.vsprops"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -165,17 +178,23 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				OmitFramePointers="true"
 				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="./"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL;NO_LCMS;LIBRAW_LIBRARY_BUILD"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL"
 				StringPooling="true"
-				MinimalRebuild="false"
+				RuntimeLibrary="0"
+				BufferSecurityCheck="false"
+				OpenMP="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				WarnAsError="false"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="0"
+				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -188,6 +207,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile=".\Release\LibRawLite.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -207,9 +227,9 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(TmpDir)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="4"
-			InheritedPropertySheets="..\..\..\..\MSSupport\Properties\Common.vsprops;..\..\..\..\MSSupport\Properties\Msvc90.vsprops;..\..\..\..\MSSupport\Properties\Release64.vsprops"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -231,17 +251,22 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				OmitFramePointers="true"
 				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="./"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL;NO_LCMS;LIBRAW_LIBRARY_BUILD"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL"
 				StringPooling="true"
-				MinimalRebuild="false"
+				RuntimeLibrary="0"
+				BufferSecurityCheck="false"
+				OpenMP="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				WarnAsError="false"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="0"
+				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -254,6 +279,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile=".\Release\LibRawLite.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -289,6 +315,10 @@
 				</File>
 				<File
 					RelativePath=".\internal\dcraw_fileio.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\internal\demosaic_packs.cpp"
 					>
 				</File>
 			</Filter>

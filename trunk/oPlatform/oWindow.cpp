@@ -283,6 +283,8 @@ protected:
 	bool CreateDeviceResources(HWND _hWnd);
 	bool CreateGDIResources(HWND _hWnd);
 	bool DestroyDeviceResources();
+	bool ResizeDevice(const int2& _NewSize, bool _IsBeingMinimized, bool _UpdateClientSize = true);
+
 	bool D2DPaint(HWND _hWnd, bool _Force = false);
 	bool GDIPaint(HWND _hWnd, HDC _hDC, bool _Force = false);
 	
@@ -347,6 +349,11 @@ protected:
 	oGDIScopedObject<HBRUSH> hClearBrush;
 	oGDIScopedDC hOffscreenAADC;
 	oGDIScopedDC hOffscreenDC;
+	
+	// NOTE: This is transient, i.e. is only valid when the render target is locked
+	// for GDI rendering.
+	HDC hRenderDC;
+
 	oGDIScopedObject<HBITMAP> hOffscreenAABmp; // AA shapes
 	oGDIScopedObject<HBITMAP> hOffscreenBmp; // AA is handled on text with cleartype, so let that pass through
 };
@@ -359,6 +366,7 @@ oWinWindow::oWinWindow(const DESC& _Desc, void* _pAssociatedNativeHandle, DRAW_M
 	, hWnd(nullptr)
 	, pUserSpecifiedDevice((IUnknown*)_pAssociatedNativeHandle)
 	, CloseConfirmed(false)
+	, hRenderDC(nullptr)
 {
 	*_pSuccess = false;
 	RunFunction = oBIND(&oWinWindow::Run, this);
@@ -580,6 +588,39 @@ bool oWinWindow::DestroyDeviceResources()
 	return true;
 }
 
+bool oWinWindow::ResizeDevice(const int2& _NewSize, bool _IsBeingMinimized, bool _UpdateClientSize)
+{
+	oVERIFY(DestroyDeviceResources());
+	#if oDXVER >= oDXVER_10
+		if (DXGISwapChain && !_IsBeingMinimized)
+		{
+			DXGI_SWAP_CHAIN_DESC d;
+			DXGISwapChain->GetDesc(&d);
+			HRESULT HR = DXGISwapChain->ResizeBuffers(d.BufferCount, _NewSize.x, _NewSize.y, d.BufferDesc.Format, d.Flags);
+			if (HR == DXGI_ERROR_INVALID_CALL)
+			{
+				oMSGBOX_DESC mb;
+				mb.ParentNativeHandle = hWnd;
+				mb.Type = oMSGBOX_ERR;
+				oErrorSetLast(oERROR_REFUSED, "DXGISwapChain->ResizeBuffers() cannot occur because there still are dependent resources in client code. Ensure all dependent resources are freed on the PRERESIZING event when implementing a SizeMove hook.");
+				oMsgBox(mb, oErrorGetLastString());
+				return false;
+			}
+			else if (FAILED(HR))
+				return oWinSetLastError(HR);
+		}
+	#endif
+
+	if (_UpdateClientSize)
+	{
+		oLockGuard<oSharedMutex> lock(DescMutex);
+		PendingDesc.ClientSize = Desc.ClientSize = _NewSize;
+	}
+
+	oVERIFY(CreateDeviceResources(hWnd));
+	return true;
+}
+
 bool oWinWindow::CallHooks(EVENT _Event, void* _pDrawContext, DRAW_MODE _DrawMode, const float3& _Position, int _SuperSampleScale)
 {
 	bool result = true;
@@ -656,13 +697,21 @@ bool oWinWindow::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _pp
 		if (hOffscreenAADC)
 			*_ppInterface = hOffscreenAADC;
 		else
-			*_ppInterface = hOffscreenDC;
+		{
+			if (Desc.State == FULLSCREEN && hRenderDC)
+				*_ppInterface = hRenderDC;
+			else
+				*_ppInterface = hOffscreenDC;
+		}
 		return true;
 	}
 
 	else if (oGetGUID<oHDC>() == _InterfaceID && hOffscreenDC)
 	{
-		*_ppInterface = hOffscreenDC;
+		if (Desc.State == FULLSCREEN && hRenderDC)
+			*_ppInterface = hRenderDC;
+		else
+			*_ppInterface = hOffscreenDC;
 		return true;
 	}
 
@@ -738,62 +787,161 @@ bool oWinWindow::D2DPaint(HWND _hWnd, bool _Force)
 
 bool oWinWindow::GDIPaint(HWND _hWnd, HDC _hDC, bool _Force)
 {
-	// @oooii-tony: NOTES:
-	// 1. If there are no AA UI elements, there's no reason to upscale, then downscale
-	// 2. If there are no AA or regular UI elements, there's no reason to copy offscreen and back
-	// 3. If there's no DRAW_BACKBUFFER handler, but UI elements, clear the offscreen buffer (AA) instead of hDC
-	// 4. If there's no DRAW, no UI, then clear the hDC
+	oASSERT(!Desc.UseAntialiasing || hOffscreenAADC, "Supersampling buffer not initialized");
 
 	RECT r;
 	oVB(GetClientRect(_hWnd, &r));
 	int2 Size = oWinRectSize(r);
 	int2 SSSize = Size * SuperSampleScale();
 
-	HDC hAADC = Desc.UseAntialiasing ? hOffscreenAADC : hOffscreenDC;
+	const bool IsHWFullscreen = Desc.State == FULLSCREEN && DXGISwapChain;
 
 	// Start with a blank slate
 	if (Desc.AutoClear)
-		FillRect(_hDC, &r, hClearBrush);
+	{
+		if (!IsHWFullscreen || Desc.UseAntialiasing)
+		{
+			if (Desc.UseAntialiasing)
+			{
+				RECT rSS = r;
+				rSS.right = SSSize.x;
+				rSS.bottom = SSSize.y;
+				FillRect(hOffscreenAADC, &rSS, hClearBrush);
+			}
+			else
+				FillRect(hOffscreenDC, &r, hClearBrush);
+		}
+
+		else
+			FillRect(_hDC, &r, hClearBrush);
+	}
 
 	// Have the user fill the majority of the pixels
-	CallHooks(DRAW_BACKBUFFER, hOffscreenDC, DrawMode, oZERO3, 1);
-	
-	// Show whatever the user did if using a HW-accelerated device
-	if (DXGISwapChain)
-		oV(DXGISwapChain->Present(Desc.FullscreenVSync ? 1 : 0, 0));
+	CallHooks(DRAW_BACKBUFFER, nullptr, DrawMode, oZERO3, 1);
 
-	// @oooii-tony: Maybe this should be a separate callback and we can look to
-	// what's hooked? Or an explicit boolean that allows us to logically keep UI
-	// components around but toggle whether they're rendered.
+	// Get an HDC for the render target
+	oRef<IDXGISurface1> DXGISurface;
+	if (DXGISwapChain && Desc.EnableUIDrawing)
+	{
+		oRef<IUnknown> SurfaceContainer;
+
+		if (D3D11RenderTargetView)
+			D3D11RenderTargetView->GetResource((ID3D11Resource**)&SurfaceContainer);
+
+		else if (D3D10RenderTarget)
+			SurfaceContainer = D3D10RenderTarget;
+
+		if (SUCCEEDED(SurfaceContainer->QueryInterface(__uuidof(IDXGISurface1),(void**)&DXGISurface)))
+		{
+			if (FAILED(DXGISurface->GetDC(false, &hRenderDC)))
+				return oWinSetLastError();
+		}
+	}
+
+	// We're going to render UI elements, so copy render results to an offscreen 
+	// buffer.
+	// @oooii-tony: Don't need to resolve the hDC because it'll be 100% overwritten
+	// by hOffscreenDC or hRenderDC.
+	//if (!IsHWFullscreen && Desc.EnableUIDrawing)
+	//{
+	//	if (Desc.UseAntialiasing)
+	//		StretchBlt(hOffscreenAADC, 0, 0, SSSize.x, SSSize.y, _hDC, 0, 0, Size.x, Size.y, SRCCOPY);
+	//	else
+	//		BitBlt(hOffscreenDC, 0, 0, Size.x, Size.y, _hDC, 0, 0, SRCCOPY);
+	//}
+
 	if (Desc.EnableUIDrawing)
 	{
-		// Resolve that render to the offscreen buffer
+		// Render super-sampled elements
+		HDC hSSDC = hOffscreenDC;
 		if (Desc.UseAntialiasing)
-			StretchBlt(hAADC, 0, 0, SSSize.x, SSSize.y, _hDC, 0, 0, Size.x, Size.y, SRCCOPY);
-		else
-			BitBlt(hOffscreenDC, 0, 0, Size.x, Size.y, _hDC, 0, 0, SRCCOPY);
-	
-		// Draw UI elements at-super-res (or regular res)
-		CallHooks(DRAW_UIAA, hAADC, DrawMode, oZERO3, SuperSampleScale());
+			hSSDC = hOffscreenAADC;
+		else if (IsHWFullscreen)
+			hSSDC = hRenderDC;
 
-		// If drawn at super-res, resolve back down to regular res
+		// Resolve the rendered target to the buffer
+		if (hRenderDC)
+		{
+			if (hSSDC == hOffscreenDC)
+				BitBlt(hOffscreenDC, 0, 0, Size.x, Size.y, hRenderDC, 0, 0, SRCCOPY);
+			else if (hSSDC == hOffscreenAADC)
+				StretchBlt(hOffscreenAADC, 0, 0, SSSize.x, SSSize.y, hRenderDC, 0, 0, Size.x, Size.y, SRCCOPY);
+		}
+
+		CallHooks(DRAW_UIAA, hSSDC, DrawMode, oZERO3, SuperSampleScale());
+
+		// If UseAntialiasing is false, the UIAA resolves to the non-super-sized 
+		// buffer so there's no need for a resolve. But if UseAntialiasing is true, we 
+		// need to do the downsampling now.
 		if (Desc.UseAntialiasing)
 		{
 			int oldMode = GetStretchBltMode(hOffscreenDC);
 			SetStretchBltMode(hOffscreenDC, HALFTONE);
-			StretchBlt(hOffscreenDC, r.left, r.top, Size.x, Size.y, hAADC, 0, 0, SSSize.x, SSSize.y, SRCCOPY);
+			StretchBlt(hOffscreenDC, r.left, r.top, Size.x, Size.y, hOffscreenAADC, 0, 0, SSSize.x, SSSize.y, SRCCOPY);
 			SetStretchBltMode(hOffscreenDC, oldMode);
 		}
 
-		// Now draw things like text that have their own AA
-		CallHooks(DRAW_UI, hOffscreenDC, DrawMode, oZERO3, 1);
+		{
+			// Force QueryInterface to resolve to hOffscreenDC for the DRAW_UI callback
+			HDC hOld = hRenderDC;
+			if (!IsHWFullscreen || Desc.UseAntialiasing)
+				hRenderDC = nullptr;
 
-		// Copy back to the visible buffer
-		BitBlt(_hDC, r.left, r.top, oWinRectW(r), oWinRectH(r), hOffscreenDC, 0, 0, SRCCOPY);
+			// Render non-super-sampled (might be cleartype'ed though) elements
+			CallHooks(DRAW_UI, Desc.State == FULLSCREEN ? hRenderDC : hOffscreenDC, DrawMode, oZERO3, 1);
+
+			hRenderDC = hOld;
+		}
+		
+		if (!IsHWFullscreen || Desc.UseAntialiasing)
+			BitBlt(IsHWFullscreen ? hRenderDC : _hDC, r.left, r.top, oWinRectW(r), oWinRectH(r), hOffscreenDC, 0, 0, SRCCOPY);
 	}
 
-	// One final immediate-mode hook
-	CallHooks(DRAW_FRONTBUFFER, _hDC, DrawMode, oZERO3, 1);
+	CallHooks(DRAW_FRONTBUFFER, IsHWFullscreen ? hRenderDC : _hDC, DrawMode, oZERO3, 1);
+
+	if (DXGISurface && hRenderDC)
+	{
+		oV(DXGISurface->ReleaseDC(nullptr));
+		hRenderDC = nullptr;
+	}
+
+	if (DXGISwapChain && (!Desc.EnableUIDrawing || IsHWFullscreen))
+		oV(DXGISwapChain->Present(Desc.FullscreenVSync ? 1 : 0, 0));
+
+	// windowed, no UI, no AA
+	// X Present
+
+	// windowed, no UI, AA
+	// X Present
+
+	// windowed, yes UI, no AA
+	// X BitBlt render to hOffscreen
+	// X render UI to hOffscreen
+	// X BitBlt to win hDC
+
+	// windowed, yes UI, AA
+	// X StretchBlt render to hAA
+	// X render UI to hAA
+	// X StretchBlt to hOffscreen
+	// X BitBlt to win hDC
+
+	// fullscreen, no UI, no AA
+	// X Present
+
+	// fullscreen, no UI, AA
+	// X Present
+
+	// fullscreen, UI, no AA
+	// X Render UI to mapped render hDC
+	// X Present??
+
+	// fullscreen UI, AA
+	// X StretchBlt render hDC to hAA
+	// X render UIAA
+	// X StretchBlt to hOffscreen
+	// X render UI
+	// X blt to render hDC
+
 	return true;
 }
 
@@ -893,6 +1041,8 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 
 		case WM_SIZE:
 		{
+			oVERIFY(ResizeDevice(int2(GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)), _wParam == SIZE_MINIMIZED));
+			/*
 			oVERIFY(DestroyDeviceResources());
 			#if oDXVER >= oDXVER_10
 				if (DXGISwapChain && _wParam != SIZE_MINIMIZED)
@@ -911,6 +1061,7 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 				PendingDesc.ClientSize = Desc.ClientSize = int2(GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam));
 			}
 			oVERIFY(CreateDeviceResources(_hWnd));
+			*/
 			return 0;
 		}
 
@@ -1258,8 +1409,14 @@ void oWinWindow::SetDesc(DESC _Desc)
 		oVERIFY(oWinSetState(hWnd, oAsWinState(_Desc.State), _Desc.HasFocus));
 	}
 
+	bool AAChange = _Desc.UseAntialiasing != Desc.UseAntialiasing;
+	bool UIChange = _Desc.EnableUIDrawing != Desc.EnableUIDrawing;
+
 	oLockGuard<oSharedMutex> lock(DescMutex);
 	Desc = _Desc;
+
+	if (AAChange || UIChange)
+		oVERIFY(ResizeDevice(_Desc.ClientSize, _Desc.State == oWindow::MINIMIZED, false));
 }
 
 bool oWinWindow::IsOpen() const threadsafe

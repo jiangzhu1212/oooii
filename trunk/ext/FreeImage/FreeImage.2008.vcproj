@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="FreeImage"
 	ProjectGUID="{B39ED2B3-D53A-4077-B957-930979A3577D}"
 	RootNamespace="FreeImage"
@@ -20,9 +20,10 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(LibDir)"
+			OutputDirectory=".\Release"
+			IntermediateDirectory=".\Release"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;..\..\MSSupport\Properties\Common.vsprops;..\..\MSSupport\Properties\Msvc90.vsprops;..\..\MSSupport\Properties\dll.vsprops;..\..\MSSupport\Properties\Release32.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
@@ -117,9 +118,10 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(LibDir)"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;..\..\MSSupport\Properties\Common.vsprops;..\..\MSSupport\Properties\Msvc90.vsprops;..\..\MSSupport\Properties\dll.vsprops;..\..\MSSupport\Properties\Release64.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
@@ -157,13 +159,14 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
+				OpenMP="true"
 				PrecompiledHeaderFile=".\Release/FreeImage.pch"
 				AssemblerListingLocation=".\Release/"
 				ObjectFile=".\Release/"
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				CompileAs="0"
 			/>
 			<Tool
@@ -214,9 +217,10 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(LibDir)"
+			OutputDirectory=".\Debug"
+			IntermediateDirectory=".\Debug"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;..\..\MSSupport\Properties\Common.vsprops;..\..\MSSupport\Properties\Msvc90.vsprops;..\..\MSSupport\Properties\dll.vsprops;..\..\MSSupport\Properties\Debug32.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
@@ -247,9 +251,18 @@
 				Optimization="0"
 				AdditionalIncludeDirectories="Source;Source\ZLib;Source\DeprecationManager;Source\OpenEXR\Half;Source\OpenEXR\Iex;Source\OpenEXR\IlmImf;Source\OpenEXR\Imath;Source\OpenEXR\IlmThread"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OPJ_STATIC;FREEIMAGE_EXPORTS;_CRT_SECURE_NO_DEPRECATE;LIBRAW_NODLL"
-				SmallerTypeCheck="false"
+				StringPooling="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
 				PrecompiledHeaderFile=".\Debug/FreeImage.pch"
+				AssemblerListingLocation=".\Debug/"
+				ObjectFile=".\Debug/"
+				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
+				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="4"
+				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -299,9 +312,10 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(LibDir)"
+			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
+			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;..\..\MSSupport\Properties\Common.vsprops;..\..\MSSupport\Properties\Msvc90.vsprops;..\..\MSSupport\Properties\dll.vsprops;..\..\MSSupport\Properties\Debug64.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
@@ -334,9 +348,17 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OPJ_STATIC;FREEIMAGE_EXPORTS;_CRT_SECURE_NO_DEPRECATE;LIBRAW_NODLL"
 				StringPooling="true"
 				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				OpenMP="true"
 				PrecompiledHeaderFile=".\Debug/FreeImage.pch"
+				AssemblerListingLocation=".\Debug/"
+				ObjectFile=".\Debug/"
+				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -432,7 +454,7 @@
 				Name="Plugins"
 				>
 				<File
-					RelativePath=".\Source\FreeImage\J2KHelper.cpp"
+					RelativePath="Source\FreeImage\J2KHelper.cpp"
 					>
 				</File>
 				<File
@@ -452,7 +474,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PluginEXR.cpp"
+					RelativePath="Source\FreeImage\PluginEXR.cpp"
 					>
 				</File>
 				<File
@@ -476,11 +498,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PluginJ2K.cpp"
+					RelativePath="Source\FreeImage\PluginJ2K.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PluginJP2.cpp"
+					RelativePath="Source\FreeImage\PluginJP2.cpp"
 					>
 				</File>
 				<File
@@ -504,11 +526,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PluginPFM.cpp"
+					RelativePath="Source\FreeImage\PluginPFM.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PluginPICT.cpp"
+					RelativePath="Source\FreeImage\PluginPICT.cpp"
 					>
 				</File>
 				<File
@@ -528,7 +550,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PluginRAW.cpp"
+					RelativePath="Source\FreeImage\PluginRAW.cpp"
 					>
 				</File>
 				<File
@@ -556,11 +578,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PSDParser.cpp"
+					RelativePath="Source\FreeImage\PSDParser.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\TIFFLogLuv.cpp"
+					RelativePath="Source\FreeImage\TIFFLogLuv.cpp"
 					>
 				</File>
 			</Filter>
@@ -596,11 +618,23 @@
 					>
 				</File>
 				<File
+					RelativePath="Source\FreeImage\ConversionFloat.cpp"
+					>
+				</File>
+				<File
+					RelativePath="Source\FreeImage\ConversionRGB16.cpp"
+					>
+				</File>
+				<File
 					RelativePath="Source\FreeImage\ConversionRGBF.cpp"
 					>
 				</File>
 				<File
 					RelativePath="Source\FreeImage\ConversionType.cpp"
+					>
+				</File>
+				<File
+					RelativePath="Source\FreeImage\ConversionUINT16.cpp"
 					>
 				</File>
 				<File
@@ -616,7 +650,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\tmoFattal02.cpp"
+					RelativePath="Source\FreeImage\tmoFattal02.cpp"
 					>
 				</File>
 				<File
@@ -644,7 +678,7 @@
 				Name="DeprecationMgr"
 				>
 				<File
-					RelativePath=".\Source\DeprecationManager\Deprecated.cpp"
+					RelativePath="Source\DeprecationManager\Deprecated.cpp"
 					>
 				</File>
 				<File
@@ -734,7 +768,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Source\FreeImage\PSDParser.h"
+				RelativePath="Source\FreeImage\PSDParser.h"
 				>
 			</File>
 			<File
@@ -754,7 +788,7 @@
 			Name="Toolkit Files"
 			>
 			<File
-				RelativePath=".\Source\FreeImageToolkit\Background.cpp"
+				RelativePath="Source\FreeImageToolkit\Background.cpp"
 				>
 			</File>
 			<File
@@ -790,7 +824,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Source\FreeImageToolkit\MultigridPoissonSolver.cpp"
+				RelativePath="Source\FreeImageToolkit\MultigridPoissonSolver.cpp"
 				>
 			</File>
 			<File

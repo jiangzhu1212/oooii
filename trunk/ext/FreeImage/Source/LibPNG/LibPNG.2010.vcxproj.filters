@@ -17,9 +17,6 @@
     <ClCompile Include="pngerror.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pnggccrd.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="pngget.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -47,9 +44,6 @@
     <ClCompile Include="pngtrans.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pngvcrd.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="pngwio.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -68,6 +62,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="pngconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pngdebug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pnginfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pnglibconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pngpriv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pngstruct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

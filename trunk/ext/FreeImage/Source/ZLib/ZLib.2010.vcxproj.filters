@@ -23,9 +23,6 @@
     <ClCompile Include="deflate.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gzio.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="infback.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -71,9 +68,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="zconf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="zconf.in.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="zlib.h">

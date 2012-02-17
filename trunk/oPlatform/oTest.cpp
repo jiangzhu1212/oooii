@@ -242,11 +242,11 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 
 	if (_SizeofBuffer != GoldenBinary->GetSize())
 	{
-		char testSize[32], goldenSize[32];
+		oStringS testSize, goldenSize;
 		oFormatMemorySize(testSize, _SizeofBuffer, 2);
 		oFormatMemorySize(goldenSize, GoldenBinary->GetSize(), 2);
 		bSaveTestBuffer = true;
-		return oErrorSetLast(oERROR_GENERIC, "Golden binary compare failed because the binaries are different sizes (test is %s, golden is %s)");
+		return oErrorSetLast(oERROR_GENERIC, "Golden binary compare failed because the binaries are different sizes (test is %s, golden is %s)", testSize.c_str(), goldenSize.c_str());
 	}
 
 	if (memcmp(_pBuffer, GoldenBinary->GetData(), GoldenBinary->GetSize()))
@@ -309,12 +309,12 @@ bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 		if(oImageIsAlphaFormat(iDesc.Format)) //if source has alpha, force loading an opaque alpha for golden image as well.
 		{
 			if (!oImageCreate(golden, b->GetData(), b->GetSize(), oImage::ForceAlphaFlag(), &GoldenImage))
-				return oErrorSetLast(oERROR_INVALID_PARAMETER, "Corrupt/unloadable golden image file: %s", golden);
+				return oErrorSetLast(oERROR_INVALID_PARAMETER, "Corrupt/unloadable golden image file: %s", golden.c_str());
 		}
 		else
 		{
 			if (!oImageCreate(golden, b->GetData(), b->GetSize(), &GoldenImage))
-				return oErrorSetLast(oERROR_INVALID_PARAMETER, "Corrupt/unloadable golden image file: %s", golden);
+				return oErrorSetLast(oERROR_INVALID_PARAMETER, "Corrupt/unloadable golden image file: %s", golden.c_str());
 		}
 	}
 
@@ -349,10 +349,10 @@ bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
 	if (!compareSucceeded || (RMSError > testDescOverrides.maxRMSError))
 	{
 		if (!oImageSave(_pImage, output))
-			return oErrorSetLast(oERROR_IO, "Output image save failed: %s", output);
+			return oErrorSetLast(oERROR_IO, "Output image save failed: %s", output.c_str());
 
 		if (diffs && !oImageSave(diffs, diff))
-			return oErrorSetLast(oERROR_IO, "Diff image save failed: %s", diff);
+			return oErrorSetLast(oERROR_IO, "Diff image save failed: %s", diff.c_str());
 
 		return oErrorSetLast(oERROR_GENERIC, "Golden image compare failed (%.03f RMS Error, Max Allowed %f): (Golden)%s != (Output)%s", 
       RMSError, testDescOverrides.maxRMSError, golden.c_str(), output.c_str());
@@ -370,7 +370,7 @@ bool oSpecialTest::CreateProcess(const char* _SpecialTestName, threadsafe interf
 	if (!oSystemGetPath(cmdline.c_str(), oSYSPATH_APP_FULL))
 		return oErrorSetLast(oERROR_NOT_FOUND);
 
-	sprintf_s(cmdline, "%s -s %s", cmdline, _SpecialTestName);
+	sprintf_s(cmdline, "%s -s %s", cmdline.c_str(), _SpecialTestName);
 	oProcess::DESC desc;
 	desc.CommandLine = cmdline;
 	desc.EnvironmentString = 0;
@@ -415,7 +415,7 @@ bool oSpecialTest::Start(threadsafe interface oProcess* _pProcess, char* _StrSta
 		size_t bytes = _pProcess->ReadFromStdout(msg.c_str(), msg.capacity());
 		msg[bytes] = 0;
 		if (bytes)
-			sprintf_s(_StrStatus, _SizeofStrStatus, "%s: %s", SpecialTestName, msg);
+			sprintf_s(_StrStatus, _SizeofStrStatus, "%s: %s", SpecialTestName, msg.c_str());
 		return false;
 	}
 
@@ -831,11 +831,11 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 							ProgressBar->SetText(TestName);
 						}
 
-						oTRACE("========== Begin %s Run %u ==========", TestName, r+1);
+						oTRACE("========== Begin %s Run %u ==========", TestName.c_str(), r+1);
 						double testStart = oTimer();
 						result = RunTest(pRTB, statusMessage.c_str(), statusMessage.capacity());
 						testDuration = oTimer() - testStart;
-						oTRACE("========== End %s Run %u ==========", TestName, r+1);
+						oTRACE("========== End %s Run %u ==========", TestName.c_str(), r+1);
 						Count[result]++;
 
 						if (ShowProgressBar)
@@ -918,7 +918,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
     if ((NumSucceeded + NumFailed + NumLeaks == 0))
   		Report(oConsoleReporting::ERR, "========== Unit Tests: ERROR NO TESTS RUN ==========\n");
     else
-		  Report(oConsoleReporting::INFO, "========== Unit Tests: %u succeeded, %u failed, %u skipped in %s ==========\n", NumSucceeded, NumFailed + NumLeaks, NumSkipped, timeMessage);
+		  Report(oConsoleReporting::INFO, "========== Unit Tests: %u succeeded, %u failed, %u skipped in %s ==========\n", NumSucceeded, NumFailed + NumLeaks, NumSkipped, timeMessage.c_str());
 
 		TotalNumSucceeded += NumSucceeded;
 		TotalNumFailed += NumFailed;
@@ -935,7 +935,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	if (Desc.NumRunIterations != 1) // != so we report if somehow a 0 got through to here
 	{
 		oFormatTimeSize(timeMessage.c_str(), round(oTimer() - allIterationsStartTime));
-		Report(oConsoleReporting::INFO, "========== %u Iterations: %u succeeded, %u failed, %u skipped in %s ==========\n", Desc.NumRunIterations, TotalNumSucceeded, TotalNumFailed + TotalNumLeaks, TotalNumSkipped, timeMessage);
+		Report(oConsoleReporting::INFO, "========== %u Iterations: %u succeeded, %u failed, %u skipped in %s ==========\n", Desc.NumRunIterations, TotalNumSucceeded, TotalNumFailed + TotalNumLeaks, TotalNumSkipped, timeMessage.c_str());
 	}
 
 	if ((TotalNumSucceeded + TotalNumFailed + TotalNumLeaks) == 0)

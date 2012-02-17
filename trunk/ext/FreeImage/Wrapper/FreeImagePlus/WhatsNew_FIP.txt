@@ -5,6 +5,31 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+July 17th, 2011
++ [Herve Drolon] added fipImage::convertToRGB16
+
+February 26th, 2011
++ [Herve Drolon] added fipImage::convertToFloat
+
+November 14th, 2010
++ [Herve Drolon] added getThumbnail, setThumbnail, hasThumbnail, clearThumbnail to fipImage
+
+November 7th, 2010
++ [Herve Drolon] added fipImage::convertToUINT16
+
+October 9th, 2010
+* [Herve Drolon] fixed fipWinImage::setToneMappingOperator when displaying RGBA HDR images
+
+April 18th, 2010
++ [Herve Drolon] added new multi-page functions
+	added fipMemoryIO:close
+	added fipMemoryIO:loadMultiPage
+	added fipMemoryIO:saveMultiPage
+	added fipMultiPage:FIMULTIBITMAP*
+	added fipMultiPage:open(FreeImageIO *io, fi_handle handle, int flags = 0)
+	added fipMultiPage:saveToHandle
+	added fipMultiPage:saveToMemory
+
 October 24th, 2009
 ! [Herve Drolon] fixed the '65535' width/height/pitch size limitation (need recompilation as several prototypes changed)
 

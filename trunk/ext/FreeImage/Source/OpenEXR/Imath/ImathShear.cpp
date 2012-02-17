@@ -52,5 +52,3 @@ namespace Imath {
 
 
 } // namespace Imath
-
-void oImathShearAvoidNoPublicSymbolsWarning() {}

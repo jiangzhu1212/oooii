@@ -27,6 +27,7 @@
 #include <oBasis/oStdChrono.h>
 #include <oPlatform/oWinRect.h>
 #include <oPlatform/oWinAsString.h>
+#include "oWinCommCtrl.h"
 #include <WindowsX.h>
 
 bool oWinCreate(HWND* _pHwnd, WNDPROC _Wndproc, void* _pThis, bool _SupportDoubleClicks, unsigned int _ClassUniqueID)
@@ -105,28 +106,44 @@ void* oWinGetThis(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
 		return nullptr; \
 	}
 
-using namespace oStd::chrono;
-bool oWinPumpMessages(HWND _hWnd, unsigned int _TimeoutMS)
+bool oWinProcessSingleMessage(HWND _hWnd, bool _WaitForNext)
 {
 	oWINV(_hWnd);
 	MSG msg;
-	high_resolution_clock::time_point start = high_resolution_clock::now();
-	while (PeekMessage(&msg, _hWnd, 0, 0, PM_REMOVE))
+	bool HasMessage = false;
+	if (_WaitForNext)
+		HasMessage = GetMessage(&msg, nullptr, 0, 0) > 0;
+	else
+		HasMessage = !!PeekMessage(&msg, _hWnd, 0, 0, PM_REMOVE);
+
+	if (HasMessage)
 	{
-		if (_TimeoutMS == oINFINITE_WAIT || oSeconds(high_resolution_clock::now() - start) < milliseconds(_TimeoutMS))
+		if (!IsDialogMessage(_hWnd, &msg))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
 
-		else
-		{
-			oErrorSetLast(oERROR_TIMEOUT);
-			return false;
-		}
+		return true;
 	}
 
-	return true;
+	return oErrorSetLast(oERROR_END_OF_FILE);
+}
+
+using namespace oStd::chrono;
+bool oWinPumpMessages(HWND _hWnd, unsigned int _TimeoutMS)
+{
+	high_resolution_clock::time_point start = high_resolution_clock::now();
+
+	while (oWinProcessSingleMessage(_hWnd, false))
+	{
+		if (_TimeoutMS == oINFINITE_WAIT || oSeconds(high_resolution_clock::now() - start) < milliseconds(_TimeoutMS))
+			continue;
+
+		return oErrorSetLast(oERROR_TIMEOUT);
+	}
+
+	return oErrorGetLast() == oERROR_END_OF_FILE;
 }
 
 bool oWinWake(HWND _hWnd)
@@ -170,7 +187,7 @@ bool oWinGetEnabled(HWND _hWnd)
 bool oWinSetEnabled(HWND _hWnd, bool _Enabled)
 {
 	oWINV(_hWnd);
-	oVB_RETURN(EnableWindow(_hWnd, BOOL(_Enabled)));
+	EnableWindow(_hWnd, BOOL(_Enabled));
 	return true;
 }
 
@@ -553,6 +570,7 @@ static DWORD GetStyle(oWINDOW_CONTROL_TYPE _Type, bool _StartsNewGroup)
 		WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_NOHIDESEL|ES_AUTOHSCROLL,
 		WS_VISIBLE|WS_CHILD|WS_TABSTOP|CBS_DROPDOWNLIST|CBS_HASSTRINGS,
 		WS_VISIBLE|WS_CHILD|WS_TABSTOP|CBS_DROPDOWN|CBS_HASSTRINGS,
+		WS_VISIBLE|WS_CHILD|WS_TABSTOP,
 		WS_VISIBLE|WS_CHILD
 	};
 
@@ -577,10 +595,31 @@ static const char* GetClass(oWINDOW_CONTROL_TYPE _Type)
 		"Edit",
 		"Combobox",
 		"Combobox",
+		WC_TABCONTROL,
 		PROGRESS_CLASS,
 	};
 
 	return sClass[_Type];
+}
+
+static LRESULT CALLBACK Ouroboros_TabSubclassProc_MatchLabelBackground(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, UINT_PTR _uIdSubclass, DWORD_PTR _dwRefData)
+{
+	if (_uIdSubclass == 0xc001c0de)
+	{
+		switch (_uMsg)
+		{
+			case WM_CTLCOLORSTATIC:
+			{
+				HBRUSH hBrush = oWinGetBackgroundBrush(_hWnd);
+				return (INT_PTR)hBrush;
+			}
+
+			default:
+				break;
+		}
+	}
+
+	return oWinCommCtrl::Singleton()->DefSubclassProc(_hWnd, _uMsg, _wParam, _lParam);
 }
 
 HWND oWinControlCreate(const oWINDOW_CONTROL_DESC& _Desc)
@@ -589,7 +628,6 @@ HWND oWinControlCreate(const oWINDOW_CONTROL_DESC& _Desc)
 		return (HWND)oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	const bool IsListControl = _Desc.Type == oWINDOW_CONTROL_COMBOBOX || _Desc.Type == oWINDOW_CONTROL_COMBOTEXTBOX;
-
 	HWND hWnd = CreateWindowEx(
 		_Desc.Type == oWINDOW_CONTROL_TEXTBOX ? WS_EX_CLIENTEDGE : 0
 		, GetClass(_Desc.Type)
@@ -614,6 +652,15 @@ HWND oWinControlCreate(const oWINDOW_CONTROL_DESC& _Desc)
 				return nullptr; // pass through last error
 
 			oWinComboboxSetSelection(hWnd, 0);
+		}
+
+		else if (_Desc.Type == oWINDOW_CONTROL_TAB)
+		{
+			if (!oWinCommCtrl::Singleton()->SetWindowSubclass(hWnd, Ouroboros_TabSubclassProc_MatchLabelBackground, 0xc001c0de, (DWORD_PTR)nullptr))
+			{
+				DestroyWindow(hWnd);
+				hWnd = nullptr;
+			}
 		}
 	}
 
@@ -673,7 +720,12 @@ oWINDOW_CONTROL_TYPE oWinControlGetType(HWND _hWnd)
 		}
 	}
 
-	else if (!_stricmp(PROGRESS_CLASS, ClassName))
+	else if (!_stricmp(GetClass(oWINDOW_CONTROL_TAB), ClassName))
+	{
+		return oWINDOW_CONTROL_TAB;
+	}
+
+	else if (!_stricmp(GetClass(oWINDOW_CONTROL_PROGRESSBAR), ClassName))
 	{
 		return oWINDOW_CONTROL_PROGRESSBAR;
 	}
@@ -756,37 +808,97 @@ bool oWinControlIsChecked(HWND _hWnd)
 bool oWinControlAddListItem(HWND _hWnd, const char* _ListItemText)
 {
 	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
-	if (type != oWINDOW_CONTROL_COMBOBOX && type != oWINDOW_CONTROL_COMBOTEXTBOX)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+	switch (type)
+	{
+		case oWINDOW_CONTROL_COMBOBOX:
+		case oWINDOW_CONTROL_COMBOTEXTBOX:
+		{
+			int result = ComboBox_AddString(_hWnd, _ListItemText);
+			if (result == CB_ERRSPACE)
+				return oErrorSetLast(oERROR_AT_CAPACITY, "String too long");
+			break;
+		}
 
-	int result = ComboBox_AddString(_hWnd, _ListItemText);
-	if (result == CB_ERRSPACE)
-		return oErrorSetLast(oERROR_AT_CAPACITY, "String too long");
+		case oWINDOW_CONTROL_TAB:
+		{
+			TCITEM item;
+			item.mask = TCIF_TEXT;
+			item.pszText = (LPSTR)_ListItemText;
+			if (-1 == TabCtrl_InsertItem(_hWnd, TabCtrl_GetItemCount(_hWnd), &item))
+				return oWinSetLastError();
+			break;
+		}
+
+		default:
+			return oErrorSetLast(oERROR_INVALID_PARAMETER);
+	}
+
 	return true;
 }
 
 bool oWinControlClearListItems(HWND _hWnd)
 {
 	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
-	if (type != oWINDOW_CONTROL_COMBOBOX && type != oWINDOW_CONTROL_COMBOTEXTBOX)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+	switch (type)
+	{
+		case oWINDOW_CONTROL_COMBOBOX:
+		case oWINDOW_CONTROL_COMBOTEXTBOX:
+			ComboBox_ResetContent(_hWnd);
+			break;
+		case oWINDOW_CONTROL_TAB:
+			if (!TabCtrl_DeleteAllItems(_hWnd))
+				return oWinSetLastError();
+			break;
+		default:
+			return oErrorSetLast(oERROR_INVALID_PARAMETER);
+	}
 
-	ComboBox_ResetContent(_hWnd);
 	return true;
 }
 
 int oWinControlFindListItem(HWND _hWnd, const char* _ListItemText)
 {
+	int index = CB_ERR;
 	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
-	if (type != oWINDOW_CONTROL_COMBOBOX && type != oWINDOW_CONTROL_COMBOTEXTBOX)
+	switch (type)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return CB_ERR;
-	}
+		case oWINDOW_CONTROL_COMBOBOX:
+		case oWINDOW_CONTROL_COMBOTEXTBOX:
+		{
+			int index = ComboBox_FindStringExact(_hWnd, 0, _ListItemText);
+			if (index == CB_ERR)
+				oErrorSetLast(oERROR_NOT_FOUND, "Text %s was not found in combobox", oSAFESTRN(_ListItemText));
+			break;
+		}
 
-	int index = ComboBox_FindStringExact(_hWnd, 0, _ListItemText);
-	if (index == CB_ERR)
-		oErrorSetLast(oERROR_NOT_FOUND, "Text %s was not found in combobox", oSAFESTRN(_ListItemText));
+		case oWINDOW_CONTROL_TAB:
+		{
+			oStringL text;
+			TCITEM item;
+			item.mask = TCIF_TEXT;
+			item.pszText = (LPSTR)text.c_str();
+			item.cchTextMax = static_cast<int>(text.capacity());
+
+			const int kCount = TabCtrl_GetItemCount(_hWnd);
+			for (int i = 0; i < kCount; i++)
+			{
+				if (TabCtrl_GetItem(_hWnd, i, &item))
+				{
+					if (!strcmp(text, _ListItemText))
+					{
+						index = i;
+						break;
+					}
+				}
+			}
+
+			break;
+		}
+
+		default:
+			oErrorSetLast(oERROR_INVALID_PARAMETER);
+			break;
+	}
 
 	return index;
 }
@@ -794,11 +906,23 @@ int oWinControlFindListItem(HWND _hWnd, const char* _ListItemText)
 bool oWinControlSelect(HWND _hWnd, int _Index)
 {
 	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
-	if (type != oWINDOW_CONTROL_COMBOBOX && type != oWINDOW_CONTROL_COMBOTEXTBOX)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+	switch (type)
+	{
+		case oWINDOW_CONTROL_COMBOBOX:
+		case oWINDOW_CONTROL_COMBOTEXTBOX:
+			if (CB_ERR == ComboBox_SetCurSel(_hWnd, _Index))
+				return oErrorSetLast(oERROR_NOT_FOUND, "Index %d was not found in list control", _Index);
+			break;
 
-	if (CB_ERR == ComboBox_SetCurSel(_hWnd, _Index))
-		return oErrorSetLast(oERROR_NOT_FOUND, "Index %d was not found in list control", _Index);
+		case oWINDOW_CONTROL_TAB:
+			if (-1 == TabCtrl_SetCurSel(_hWnd, _Index))
+				return oErrorSetLast(oERROR_INVALID_PARAMETER);
+			break;
+
+		default:
+			return oErrorSetLast(oERROR_INVALID_PARAMETER);
+	}
+
 	return true;
 }
 

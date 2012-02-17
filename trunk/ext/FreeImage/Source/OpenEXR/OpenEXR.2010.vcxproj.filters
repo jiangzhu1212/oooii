@@ -178,6 +178,9 @@
     <ClCompile Include="IlmImf\ImfStringAttribute.cpp">
       <Filter>Source Files\IlmImf Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IlmImf\ImfStringVectorAttribute.cpp">
+      <Filter>Source Files\IlmImf Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="IlmImf\ImfTestFile.cpp">
       <Filter>Source Files\IlmImf Source Files</Filter>
     </ClCompile>
@@ -426,6 +429,9 @@
     <ClInclude Include="IlmImf\ImfStringAttribute.h">
       <Filter>Header Files\IlmImf Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IlmImf\ImfStringVectorAttribute.h">
+      <Filter>Header Files\IlmImf Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="IlmImf\ImfTestFile.h">
       <Filter>Header Files\IlmImf Header Files</Filter>
     </ClInclude>
@@ -602,6 +608,9 @@
     </ClInclude>
     <ClInclude Include="IlmThread\IlmThreadSemaphore.h">
       <Filter>Header Files\IlmThread Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IlmImf\\ImfCheckedArithmetic.h">
+      <Filter>Header Files\IlmImf Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

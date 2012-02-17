@@ -104,10 +104,9 @@ static FIBITMAP* FILoad(const void* _pBuffer, size_t _SizeofBuffer, bool _LoadBi
 		FIMEMORY* m = FreeImage_OpenMemory((BYTE*)_pBuffer, (DWORD)_SizeofBuffer);
 		if (m)
 		{
-			oASSERT(_LoadBitmap, "FIF_LOAD_NOPIXELS isn't supported in this version of FreeImage (upgrade!) You can ignore this assertion and behavior will be correct, the code will just load the body of the image");
 			FREE_IMAGE_FORMAT fif = FreeImage_GetFileTypeFromMemory(m, 0);
 			if (fif != FIF_UNKNOWN && FreeImage_FIFSupportsReading(fif))
-				bmp = FreeImage_LoadFromMemory(fif, m, 0 /*_LoadBitmap ? 0 : FIF_LOAD_NOPIXELS*/);
+				bmp = FreeImage_LoadFromMemory(fif, m, _LoadBitmap ? 0 : FIF_LOAD_NOPIXELS);
 
 			// NOTE: This oWARN below should not trigger anymore because FreeImage 
 			// source has been modified to not absorb metadata. Maybe newer FreeImage

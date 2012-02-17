@@ -43,7 +43,10 @@
 	// code should take no delete or release action with the pointer used here.
 	// HDCs are reallocated when RESIZING and RESIZED events occur, so client code
 	// should not retain a cached reference but rather resolve the HDC explicitly 
-	// at draw time.
+	// at draw time. Also the same logical HDC (i.e. non-antialised) be be 
+	// different depending on draw mode (FULLSCREEN draws directly to render 
+	// target where windowed might be to an emulated back-buffer), so only query
+	// and use these immediately when needed.
 	oDECLARE_HANDLE(oHDC);
 	oDECLARE_HANDLE(oHDCAA);
 	const oGUID& oGetGUID(threadsafe const oHDC* threadsafe const* = 0);
@@ -133,11 +136,13 @@ interface oWindow : oInterface
 			, Style(SIZEABLE)
 			, CursorState(ARROW)
 			, ClearColor(std::Black)
+			, AutoClear(false)
 			, Enabled(true)
 			, HasFocus(true)
 			, AlwaysOnTop(false)
 			, FullscreenVSync(true)
 			, UseAntialiasing(false)
+			, EnableUIDrawing(true)
 			, AllowUserShowMouse(false)
 			, AllowUserFullscreenToggle(false)
 			, AllowUserKeyboardClose(false)

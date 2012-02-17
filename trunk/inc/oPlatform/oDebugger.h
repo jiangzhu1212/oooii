@@ -27,6 +27,7 @@
 #define oDebugger_h
 
 #include <stdarg.h>
+#include <oBasis/oFixedString.h>
 #include <oBasis/oStdThread.h>
 
 // Sets the name of the specified thread in the debugger's UI. If the default ID
@@ -58,9 +59,9 @@ template<size_t size> inline size_t oDebuggerGetCallstack(unsigned long long (&_
 struct oDEBUGGER_SYMBOL
 {
 	unsigned long long Address;
-	char Module[512];
-	char Name[512];
-	char Filename[512];
+	oStringL Module;
+	oStringL Name;
+	oStringL Filename;
 	unsigned int SymbolOffset;
 	unsigned int Line;
 	unsigned int CharOffset;

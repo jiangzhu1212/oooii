@@ -22,9 +22,12 @@
     <ProjectName>FreeImageLib</ProjectName>
     <ProjectGuid>{9E219DF2-315D-478E-8A07-8960C377CE1E}</ProjectGuid>
     <RootNamespace>FreeImageLib</RootNamespace>
-    <SccProjectName>Perforce Project</SccProjectName>
-    <SccLocalPath>..\..</SccLocalPath>
-    <SccProvider>MSSCCI:Perforce SCM</SccProvider>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -56,6 +59,7 @@
     <Import Project="..\..\..\..\MSSupport\Properties\Msvc100.props" />
     <Import Project="..\..\..\..\MSSupport\Properties\Release32.props" />
     <Import Project="..\..\..\..\MSSupport\Properties\Common.props" />
+    <Import Project="..\..\..\..\MSSupport\Properties\FreeImage.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -63,6 +67,7 @@
     <Import Project="..\..\..\..\MSSupport\Properties\Msvc100.props" />
     <Import Project="..\..\..\..\MSSupport\Properties\Debug32.props" />
     <Import Project="..\..\..\..\MSSupport\Properties\Common.props" />
+    <Import Project="..\..\..\..\MSSupport\Properties\FreeImage.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -70,6 +75,7 @@
     <Import Project="..\..\..\..\MSSupport\Properties\Msvc100.props" />
     <Import Project="..\..\..\..\MSSupport\Properties\Release64.props" />
     <Import Project="..\..\..\..\MSSupport\Properties\Common.props" />
+    <Import Project="..\..\..\..\MSSupport\Properties\FreeImage.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -77,6 +83,7 @@
     <Import Project="..\..\..\..\MSSupport\Properties\Msvc100.props" />
     <Import Project="..\..\..\..\MSSupport\Properties\Debug64.props" />
     <Import Project="..\..\..\..\MSSupport\Properties\Common.props" />
+    <Import Project="..\..\..\..\MSSupport\Properties\FreeImage.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -214,8 +221,11 @@ copy ..\FreeImage.h ..\..\Dist
     <ClCompile Include="..\FreeImage\Conversion32.cpp" />
     <ClCompile Include="..\FreeImage\Conversion4.cpp" />
     <ClCompile Include="..\FreeImage\Conversion8.cpp" />
+    <ClCompile Include="..\FreeImage\ConversionFloat.cpp" />
+    <ClCompile Include="..\FreeImage\ConversionRGB16.cpp" />
     <ClCompile Include="..\FreeImage\ConversionRGBF.cpp" />
     <ClCompile Include="..\FreeImage\ConversionType.cpp" />
+    <ClCompile Include="..\FreeImage\ConversionUINT16.cpp" />
     <ClCompile Include="..\FreeImage\Halftoning.cpp" />
     <ClCompile Include="..\FreeImage\tmoColorConvert.cpp" />
     <ClCompile Include="..\FreeImage\tmoDrago03.cpp" />

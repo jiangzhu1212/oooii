@@ -31,6 +31,7 @@ bool oBasisTest_oDispatchQueueConcurrent()
 	oRef<threadsafe oDispatchQueueConcurrent> q;
 	oTESTB(oDispatchQueueCreateConcurrent("Test Concurrent Dispatch Queue", 100000, &q), "Failed to create concurrent dispatch queue");
 	oTESTB(RatcliffJobSwarm::RunDispatchQueueTest("oDispatchQueueConcurrent", q), "concurrent dispatch queue failed");
+	oBug_1938_EXIT();
 	//oErrorSetLast(oERROR_NONE); // Allow pass-thru of RunDispatchQueueTest result
 	return true;
 }

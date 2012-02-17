@@ -187,6 +187,7 @@
     <ClInclude Include="oOpenSSL.h" />
     <ClInclude Include="oSpinlockEx.h" />
     <ClInclude Include="oStaticMutex.h" />
+    <ClInclude Include="oWinCommCtrl.h" />
     <ClInclude Include="oWindowUIElementBaseMixin.h" />
     <ClInclude Include="oWinDWMAPI.h" />
     <ClInclude Include="oWinPowrProf.h" />
@@ -242,6 +243,7 @@
     <ClCompile Include="oVKToX11Keyboard.cpp" />
     <ClCompile Include="oVTable.cpp" />
     <ClCompile Include="oWinAsString.cpp" />
+    <ClCompile Include="oWinCommCtrl.cpp" />
     <ClCompile Include="oWindow.cpp" />
     <ClCompile Include="oWindows.cpp" />
     <ClCompile Include="oWindowUI.cpp" />

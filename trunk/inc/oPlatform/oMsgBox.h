@@ -58,7 +58,7 @@ struct oMSGBOX_DESC
 		: Type(oMSGBOX_INFO)
 		, TimeoutMS(oINFINITE_WAIT)
 		, ParentNativeHandle(nullptr)
-		, Title("")
+		, Title(nullptr)
 	{}
 
 	oMSGBOX_TYPE Type;
