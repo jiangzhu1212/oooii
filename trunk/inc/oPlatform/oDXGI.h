@@ -100,6 +100,9 @@
 	// Returns true if the specified format can be bound as a depth-stencil format
 	bool oDXGIIsDepthFormat(DXGI_FORMAT _Format);
 
+	// Returns true if the specified format can be bound as a shader resource
+	bool oDXGIIsShaderResourceCompatibleFormat(DXGI_FORMAT _Format);
+
 	// When creating a texture that can be used with a depth-stencil view and also
 	// as a shader resource view, the texture should be created with a typeless 
 	// flavor of the desired format. This returns the true depth version of that

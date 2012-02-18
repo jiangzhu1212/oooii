@@ -771,6 +771,9 @@ static void oD3D11GetUsageAndFlags(oD3D11_TEXTURE_CREATION_TYPE _CreationType, D
 		oNODEFAULT;
 	}
 
+	if (!oDXGIIsShaderResourceCompatibleFormat(_Format))
+		*_pBindFlags &=~ D3D11_BIND_SHADER_RESOURCE;
+
 	if (oDXGIIsDepthFormat(_Format))
 		*_pBindFlags |= D3D11_BIND_DEPTH_STENCIL;
 	else if (_CreationType == oD3D11_RENDER_TARGET || _CreationType == oD3D11_MIPPED_RENDER_TARGET)
@@ -888,8 +891,13 @@ bool oD3D11CreateTexture2D(ID3D11Device* _pDevice, const char* _DebugName, UINT 
 	HRESULT hr = _pDevice->CreateTexture2D(&desc, _pInitData, _ppTexture);
 	oDEBUG_CHECK_BUFFER(oD3D11CreateTexture2D, _ppTexture);
 
-	if (_ppShaderResourceView && !oD3D11CreateShaderResourceView(_DebugName, *_ppTexture, _ppShaderResourceView))
-		return false;
+	if (_ppShaderResourceView)
+	{
+		if ((desc.BindFlags & D3D11_BIND_SHADER_RESOURCE) == 0)
+			*_ppShaderResourceView = nullptr;
+		else if (!oD3D11CreateShaderResourceView(_DebugName, *_ppTexture, _ppShaderResourceView))
+			return false;
+	}
 
 	return true;
 }
