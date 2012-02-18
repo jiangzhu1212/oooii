@@ -345,7 +345,6 @@ interface oGfxCommandList : oGfxDeviceChild
 	
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 
-#if 0
 	// Begins recording of GPU command submissions. All rendering for this 
 	// context should occur between Begin() and End(). NOTE: If _NumViewports
 	// is 0 and/or _pViewports is nullptr, a default full-rendertarget 
@@ -354,14 +353,14 @@ interface oGfxCommandList : oGfxDeviceChild
 		const float4x4& _View
 		, const float4x4& _Projection
 		, const oGfxPipeline* _pPipeline
-		, const oGfxRenderTarget* _pRenderTarget
+		, oGfxRenderTarget* _pRenderTarget
 		, size_t _RenderTargetIndex
 		, size_t _NumViewports
 		, const VIEWPORT* _pViewports) = 0;
 
 	// Ends recording of GPU submissions and caches a command list
 	virtual void End() = 0;
-
+#if 0
 	// Set the rasterization state in this context
 	virtual void RSSetState(oRSSTATE _State) = 0;
 
@@ -435,18 +434,18 @@ interface oGfxDevice : oInterface
 		bool EnableDebugReporting;
 	};
 
-	virtual bool CreateCommandList(const char* _Name, const oGfxCommandList::DESC& _Desc, threadsafe oGfxCommandList** _ppCommandList) threadsafe = 0;
+	virtual bool CreateCommandList(const char* _Name, const oGfxCommandList::DESC& _Desc, oGfxCommandList** _ppCommandList) threadsafe = 0;
 	//virtual bool CreateLineList(const char* _Name, const oGfxLineList::DESC& _Desc, oGfxLineList** _ppLineList) threadsafe = 0;
-	virtual bool CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, threadsafe oGfxPipeline** _ppPipeline) threadsafe = 0;
-	virtual bool CreateRenderTarget(const char* _Name, const oGfxRenderTarget::DESC& _Desc, threadsafe oGfxRenderTarget** _ppRenderTarget) threadsafe = 0;
-	virtual bool CreateRenderTarget(const char* _Name, threadsafe oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, threadsafe oGfxRenderTarget** _ppRenderTarget) threadsafe = 0;
+	virtual bool CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, oGfxPipeline** _ppPipeline) threadsafe = 0;
+	virtual bool CreateRenderTarget(const char* _Name, const oGfxRenderTarget::DESC& _Desc, oGfxRenderTarget** _ppRenderTarget) threadsafe = 0;
+	virtual bool CreateRenderTarget(const char* _Name, threadsafe oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, oGfxRenderTarget** _ppRenderTarget) threadsafe = 0;
 	//virtual bool CreateMaterial(const char* _Name, const oGfxMaterial::DESC& _Desc, oGfxMaterial** _ppMaterial) threadsafe = 0;
 	//virtual bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe = 0;
 	//virtual bool CreateInstanceList(const char* _Name, const oGfxInstanceList::DESC& _Desc, oGfxInstanceList** _ppInstanceList) threadsafe = 0;
 	//virtual bool CreateTexture(const char* _Name, const oGfxTexture::DESC& _Desc, oGfxTexture** _ppTexture) threadsafe = 0;
 
 	// Submits all command lists in their draw order
-	virtual void Submit() = 0;
+	virtual void Submit() threadsafe = 0;
 };
 
 oAPI bool oGfxDeviceCreate(const oGfxDevice::DESC& _Desc, threadsafe oGfxDevice** _ppDevice);

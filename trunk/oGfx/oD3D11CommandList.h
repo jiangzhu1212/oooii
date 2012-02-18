@@ -38,16 +38,16 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	oDECLARE_GFXDEVICECHILD_CTOR(oD3D11, CommandList);
 	~oD3D11CommandList();
 
-	//void Begin(
-	//	const float4x4& _View
-	//	, const float4x4& _Projection
-	//	, const oGfxPipeline* _pPipeline
-	//	, const oGfxRenderTarget2* _pRenderTarget
-	//	, size_t _RenderTargetIndex
-	//	, size_t _NumViewports
-	//	, const VIEWPORT* _pViewports) override;
+	void Begin(
+		const float4x4& _View
+		, const float4x4& _Projection
+		, const oGfxPipeline* _pPipeline
+		, oGfxRenderTarget* _pRenderTarget
+		, size_t _RenderTargetIndex
+		, size_t _NumViewports
+		, const VIEWPORT* _pViewports) override;
 
-	//void End() override;
+	void End() override;
 
 	//void RSSetState(oRSSTATE _State) override;
 	//void OMSetState(oOMSTATE _State) override;

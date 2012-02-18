@@ -26,7 +26,7 @@
 //#include "oD3D11LineList.h"
 //#include "oD3D11Material.h"
 //#include "oD3D11Mesh.h"
-//#include "oD3D11Pipeline.h"
+#include "oD3D11Pipeline.h"
 //#include "oD3D11Texture.h"
 #include <oGfx/oGfxDrawConstants.h>
 
@@ -55,15 +55,7 @@ oD3D11CommandList::~oD3D11CommandList()
 	oDEVICE_UNREGISTER_THIS();
 }
 
-#if 0
-
-static void SetRenderTarget(ID3D11DeviceContext* _pDeviceContext, const oGfxRenderTarget2::DESC& _RTDesc, const oGfxRenderTarget2* _pRenderTarget)
-{
-	const oD3D11RenderTarget2* pRT = static_cast<const oD3D11RenderTarget2*>(_pRenderTarget);
-	_pDeviceContext->OMSetRenderTargets(_RTDesc.MRTCount, (ID3D11RenderTargetView* const*)pRT->RTVs, (ID3D11DepthStencilView*)pRT->DSV.c_ptr());
-}
-
-static void SetViewports(ID3D11DeviceContext* _pDeviceContext, const oGfxRenderTarget2::DESC& _RTDesc, size_t _NumViewports, const oGfxCommandList::VIEWPORT* _pViewports)
+static void SetViewports(ID3D11DeviceContext* _pDeviceContext, const oGfxRenderTarget::DESC& _RTDesc, size_t _NumViewports, const oGfxCommandList::VIEWPORT* _pViewports)
 {
 	D3D11_VIEWPORT Viewports[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
 	if (_NumViewports && _pViewports)
@@ -81,8 +73,8 @@ static void SetViewports(ID3D11DeviceContext* _pDeviceContext, const oGfxRenderT
 		_NumViewports = 1;
 		Viewports[0].TopLeftX = 0.0f;
 		Viewports[0].TopLeftY = 0.0f;
-		Viewports[0].Width = static_cast<float>(_RTDesc.Width);
-		Viewports[0].Height = static_cast<float>(_RTDesc.Height);
+		Viewports[0].Width = static_cast<float>(_RTDesc.Dimensions.x);
+		Viewports[0].Height = static_cast<float>(_RTDesc.Dimensions.y);
 		Viewports[0].MinDepth = 0.0f;
 		Viewports[0].MaxDepth = 1.0f;
 	}
@@ -90,40 +82,46 @@ static void SetViewports(ID3D11DeviceContext* _pDeviceContext, const oGfxRenderT
 	_pDeviceContext->RSSetViewports(static_cast<uint>(_NumViewports), Viewports);
 }
 
-static void SetViewConstants(ID3D11DeviceContext* _pDeviceContext, ID3D11Buffer* _pViewConstants, const float4x4& _View, const float4x4& _Projection, const oGfxRenderTarget2::DESC& _RTDesc, size_t _RenderTargetIndex)
+
+static void SetViewConstants(ID3D11DeviceContext* _pDeviceContext, ID3D11Buffer* _pViewConstants, const float4x4& _View, const float4x4& _Projection, const oGfxRenderTarget::DESC& _RTDesc, size_t _RenderTargetIndex)
 {
-	D3D11_MAPPED_SUBRESOURCE mapped;
-	_pDeviceContext->Map(_pViewConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-	oDeferredViewConstants* V = (oDeferredViewConstants*)mapped.pData;
-	V->Set(_View, _Projection, asfloat(uint2(_RTDesc.Width, _RTDesc.Height)), static_cast<uint>(_RenderTargetIndex));
-	_pDeviceContext->Unmap(_pViewConstants, 0);
-	oD3D11SetConstantBuffers(_pDeviceContext, 0, 1, &_pViewConstants);
+	//D3D11_MAPPED_SUBRESOURCE mapped;
+	//_pDeviceContext->Map(_pViewConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+	//oDeferredViewConstants* V = (oDeferredViewConstants*)mapped.pData;
+	//V->Set(_View, _Projection, asfloat(uint2(_RTDesc.Width, _RTDesc.Height)), static_cast<uint>(_RenderTargetIndex));
+	//_pDeviceContext->Unmap(_pViewConstants, 0);
+	//oD3D11SetConstantBuffers(_pDeviceContext, 0, 1, &_pViewConstants);
 }
 
 static void SetPipeline(ID3D11DeviceContext* _pDeviceContext, const oGfxPipeline* _pPipeline)
 {
-	oD3D11Pipeline* p = const_cast<oD3D11Pipeline*>(static_cast<const oD3D11Pipeline*>(_pPipeline));
-	_pDeviceContext->IASetInputLayout(p->InputLayout);
-	_pDeviceContext->VSSetShader(p->VertexShader, 0, 0);
-	_pDeviceContext->HSSetShader(p->HullShader, 0, 0);
-	_pDeviceContext->DSSetShader(p->DomainShader, 0, 0);
-	_pDviceContext->GSSetShader(p->GeometryShader, 0, 0);
-	_pDeviceContext->PSSetShader(p->PixelShader, 0, 0);
+	//oD3D11Pipeline* p = const_cast<oD3D11Pipeline*>(static_cast<const oD3D11Pipeline*>(_pPipeline));
+	//_pDeviceContext->IASetInputLayout(p->InputLayout);
+	//_pDeviceContext->VSSetShader(p->VertexShader, 0, 0);
+	//_pDeviceContext->HSSetShader(p->HullShader, 0, 0);
+	//_pDeviceContext->DSSetShader(p->DomainShader, 0, 0);
+	//_pDeviceContext->GSSetShader(p->GeometryShader, 0, 0);
+	//_pDeviceContext->PSSetShader(p->PixelShader, 0, 0);
 }
 
 void oD3D11CommandList::Begin(
 	const float4x4& _View
 	, const float4x4& _Projection
 	, const oGfxPipeline* _pPipeline
-	, const oGfxRenderTarget2* _pRenderTarget
+	, oGfxRenderTarget* _pRenderTarget
 	, size_t _RenderTargetIndex
 	, size_t _NumViewports
 	, const VIEWPORT* _pViewports)
 {
 	oASSERT(_pRenderTarget, "A render target must be specified");
-	oGfxRenderTarget2::DESC RTDesc;
+
+	static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->CLNotifyBegin();
+
+	oGfxRenderTarget::DESC RTDesc;
 	_pRenderTarget->GetDesc(&RTDesc);
-	SetRenderTarget(Context, RTDesc, _pRenderTarget);
+	pRenderTarget = static_cast<oD3D11RenderTarget*>(_pRenderTarget);
+	Context->OMSetRenderTargets(RTDesc.MRTCount, (ID3D11RenderTargetView* const*)pRenderTarget->RTVs, (ID3D11DepthStencilView*)pRenderTarget->DSV.c_ptr());
+
 	SetViewports(Context, RTDesc, _NumViewports, _pViewports);
 	SetViewConstants(Context, D3DDevice()->ViewConstants, _View, _Projection, RTDesc, _RenderTargetIndex);
 	SetPipeline(Context, _pPipeline);
@@ -131,9 +129,13 @@ void oD3D11CommandList::Begin(
 
 void oD3D11CommandList::End()
 {
+	pRenderTarget = nullptr;
 	Context->FinishCommandList(FALSE, &CommandList);
-}
 
+	oD3D11DEVICE();
+	static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->CLNotifyEnd();
+}
+#if 0
 void oD3D11CommandList::RSSetState(oRSSTATE _State)
 {
 	// @oooii-tony: TODO: Move oD3D11BlendState's enum to be oRS_STATE
@@ -242,10 +244,10 @@ void oD3D11CommandList::Clear(CLEAR_TYPE _ClearType)
 	if (_ClearType >= COLOR)
 	{
 		FLOAT c[4];
-		for (int i = 0; i < pRT->Desc.ArraySize; i++)
+		for (int i = 0; i < pRenderTarget->Desc.ArraySize; i++)
 		{
-			oColorDecompose(pRT->Desc.ClearDesc.ClearColor[i], c);
-			Context->ClearRenderTargetView(pRT->RTVs[i], c);
+			oColorDecompose(pRenderTarget->Desc.ClearDesc.ClearColor[i], c);
+			Context->ClearRenderTargetView(pRenderTarget->RTVs[i], c);
 		}
 	}
 
@@ -260,8 +262,8 @@ void oD3D11CommandList::Clear(CLEAR_TYPE _ClearType)
 		D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL,
 	};
 
-	if (pRT->DSV && _ClearType != COLOR)
-		Context->ClearDepthStencilView(pRT->DSV, sClearFlags[_ClearType], pRT->Desc.ClearDesc.DepthClearValue, pRT->Desc.ClearDesc.StencilClearValue);
+	if (pRenderTarget->DSV && _ClearType != COLOR)
+		Context->ClearDepthStencilView(pRenderTarget->DSV, sClearFlags[_ClearType], pRenderTarget->Desc.ClearDesc.DepthClearValue, pRenderTarget->Desc.ClearDesc.StencilClearValue);
 }
 #if 0
 void oD3D11CommandList::DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxInstanceList* _pInstanceList)

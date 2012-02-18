@@ -81,21 +81,18 @@ public:
 			{
 				static int counter = 0;
 
-				const FLOAT RGBA[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-				const FLOAT RGBA2[] = { 0.0f, 0.0f, 1.0f, 1.0f };
+				oGfxRenderTarget::CLEAR_DESC cd;
+				cd.ClearColor[0] = (counter++ & 0x1) ? std::White : std::Blue;
+				GfxRenderTarget->SetClearDesc(cd);
 
-				oRef<ID3D11Device> D3D11Device;
-				oVERIFY(Window->QueryInterface((const oGUID&)__uuidof(ID3D11Device), &D3D11Device));
+				GfxCommandList->Begin(float4x4::Identity, float4x4::Identity, nullptr, GfxRenderTarget.c_ptr(), 0, 0, nullptr);
+				
+				GfxCommandList->Clear(oGfxCommandList::COLOR_DEPTH_STENCIL);
 
-				oRef<ID3D11DeviceContext> DevContext;
-				D3D11Device->GetImmediateContext(&DevContext);
+				GfxCommandList->End();
 
-				oRef<ID3D11RenderTargetView> RTV;
-				oVERIFY(Window->QueryInterface((const oGUID&)__uuidof(ID3D11RenderTargetView), &RTV));
+				GfxDevice->Submit();
 
-				DevContext->ClearRenderTargetView(RTV, (counter++ & 0x1)?RGBA:RGBA2);
-
-				DevContext->Flush();
 				break;
 			}
 
@@ -112,8 +109,8 @@ private:
 
 	oRef<threadsafe oWindow> Window;
 	oRef<threadsafe oGfxDevice> GfxDevice;
-	oRef<threadsafe oGfxRenderTarget> GfxRenderTarget;
-	oRef<threadsafe oGfxCommandList> GfxCommandList;
+	oRef<oGfxRenderTarget> GfxRenderTarget;
+	oRef<oGfxCommandList> GfxCommandList;
 	unsigned int WinHook;
 };
 
@@ -123,6 +120,7 @@ int main(int argc, char* argv[])
 
 	// _____________________________________________________________________________
 	// Set up a UI to ensure rendering doesn't stomp on its compositing
+
 	oWindowUIBox::DESC BoxDesc;
 	BoxDesc.Position = int2(-20,-20);
 	BoxDesc.Size = int2(130,30);

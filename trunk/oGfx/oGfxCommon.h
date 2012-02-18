@@ -225,7 +225,7 @@ protected:
 // Wrap the boilerplate Create implementations in case we decide to play around with where device
 // children's memory comes from.
 #define oDEFINE_GFXDEVICE_CREATE(_oAPI, _TypeShortName) \
-	bool _oAPI##Device::Create##_TypeShortName(const char* _Name, const oGfx##_TypeShortName::DESC& _Desc, threadsafe oGfx##_TypeShortName** _pp##_TypeShortName) threadsafe \
+	bool _oAPI##Device::Create##_TypeShortName(const char* _Name, const oGfx##_TypeShortName::DESC& _Desc, oGfx##_TypeShortName** _pp##_TypeShortName) threadsafe \
 	{	oGFXCREATE_CHECK_PARAMETERS(_pp##_TypeShortName); \
 		bool success = false; \
 		oCONSTRUCT(_pp##_TypeShortName, _oAPI##_TypeShortName(this, _Desc, _Name, &success)); \

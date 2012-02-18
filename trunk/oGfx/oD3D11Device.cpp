@@ -115,21 +115,33 @@ bool oD3D11Device::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _
 	return !!*_ppInterface;
 }
 
-void oD3D11Device::Insert(oGfxCommandList* _pCommandList) threadsafe
+void oD3D11Device::CLInsert(oGfxCommandList* _pCommandList) threadsafe
 {
-	oLockGuard<oMutex> lock(CommandListsMutex);
+	oLockGuard<oMutex> lock(CommandListsInsertRemoveMutex);
 	oSortedInsert(ProtectedCommandLists(), _pCommandList, ByDrawOrder);
 }
 
-void oD3D11Device::Remove(oGfxCommandList* _pCommandList) threadsafe
+void oD3D11Device::CLRemove(oGfxCommandList* _pCommandList) threadsafe
 {
-	oLockGuard<oMutex> lock(CommandListsMutex);
+	oLockGuard<oMutex> lock(CommandListsInsertRemoveMutex);
 	oFindAndErase(ProtectedCommandLists(), _pCommandList);
+}
+
+void oD3D11Device::CLNotifyBegin() threadsafe
+{
+	CommandListsBeginEndMutex.lock_shared();
+}
+
+void oD3D11Device::CLNotifyEnd() threadsafe
+{
+	CommandListsBeginEndMutex.unlock_shared();
 }
 
 void oD3D11Device::DrawCommandLists() threadsafe
 {
-	oLockGuard<oMutex> lock(CommandListsMutex);
+	oLockGuard<oMutex> lock1(CommandListsInsertRemoveMutex);
+	oLockGuard<oSharedMutex> lock2(CommandListsBeginEndMutex);
+
 	oFOR(oGfxCommandList* pGfxCommandList, ProtectedCommandLists())
 	{
 		oD3D11CommandList* c = static_cast<oD3D11CommandList*>(pGfxCommandList);
@@ -141,7 +153,7 @@ void oD3D11Device::DrawCommandLists() threadsafe
 	}
 }
 
-void oD3D11Device::Submit()
+void oD3D11Device::Submit() threadsafe
 {
 	DrawCommandLists();
 }

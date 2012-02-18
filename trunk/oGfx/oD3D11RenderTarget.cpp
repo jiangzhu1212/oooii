@@ -26,7 +26,7 @@
 #include <oBasis/oSurface.h>
 #include <oPlatform/oDXGI.h>
 
-bool oD3D11Device::CreateRenderTarget(const char* _Name, threadsafe oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, threadsafe oGfxRenderTarget** _ppRenderTarget) threadsafe
+bool oD3D11Device::CreateRenderTarget(const char* _Name, threadsafe oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, oGfxRenderTarget** _ppRenderTarget) threadsafe
 {
 	oGFXCREATE_CHECK_NAME();
 	if (!_pWindow)
@@ -60,12 +60,16 @@ oD3D11RenderTarget::oD3D11RenderTarget(threadsafe oGfxDevice* _pDevice, threadsa
 		return;
 	}
 
-	HRESULT hr = DXGISwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&Texture[0]);
-	if (FAILED(hr))
+	if (!Window->QueryInterface((const oGUID&)__uuidof(ID3D11RenderTargetView), &RTVs[0]))
 	{
-		oWinSetLastError(hr);
+		oErrorSetLast(oERROR_NOT_FOUND, "Could not find an ID3D11RenderTargetView in the specified oWindow");
 		return;
 	}
+
+	RTVs[0]->GetResource((ID3D11Resource**)&Texture[0]);
+
+	if (!oD3D11CreateShaderResourceView("oWindow.oD3D11RenderTarget.SRV", Texture[0], &SRVs[0]))
+		return; // pass through error
 
 	Desc.MRTCount = 1;
 	Desc.ArraySize = 1;
