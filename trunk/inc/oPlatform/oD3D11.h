@@ -615,7 +615,7 @@ protected:
 // _____________________________________________________________________________
 // Common rendering building blocks
 
-struct oD3D11RenderTarget
+struct oD3D11OffscreenRenderTarget
 {
 	// Wrapper for MRT render targets that simplify operations that occur in 
 	// similar manners across all targets such as lifetime, resize, clear, and
@@ -666,7 +666,7 @@ struct oD3D11RenderTarget
 		UINT8 StencilClearValue;
 	};
 
-	oD3D11RenderTarget(const char* _DebugName, ID3D11Device* _pDevice);
+	oD3D11OffscreenRenderTarget(const char* _DebugName, ID3D11Device* _pDevice);
 
 	inline const char* GetDebugName() const { return DebugName; }
 

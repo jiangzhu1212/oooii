@@ -1652,19 +1652,19 @@ void oD3D11ShaderState::CreateState(const char* _DebugNamePrefix
 	oD3D11SetDebugName(_pState, _DebugNamePrefix);
 }
 
-oD3D11RenderTarget::oD3D11RenderTarget(const char* _DebugName, ID3D11Device* _pDevice)
+oD3D11OffscreenRenderTarget::oD3D11OffscreenRenderTarget(const char* _DebugName, ID3D11Device* _pDevice)
 	: Device(_pDevice)
 {
 	strcpy_s(DebugName, _DebugName);
 	memset(&Desc, 0, sizeof(Desc));
 }
 
-void oD3D11RenderTarget::GetDesc(DESC* _pDesc) const
+void oD3D11OffscreenRenderTarget::GetDesc(DESC* _pDesc) const
 {
 	*_pDesc = Desc;
 }
 
-void oD3D11RenderTarget::SetDesc(const DESC& _Desc)
+void oD3D11OffscreenRenderTarget::SetDesc(const DESC& _Desc)
 {
 	bool needsResize = !!memcmp(&Desc, &_Desc, offsetof(DESC, ClearColor)) && _Desc.Width && _Desc.Height;
 	Desc = _Desc;
@@ -1672,16 +1672,16 @@ void oD3D11RenderTarget::SetDesc(const DESC& _Desc)
 		Resize(Desc.Width, Desc.Height);
 }
 
-size_t oD3D11RenderTarget::GetNumSRVs() const
+size_t oD3D11OffscreenRenderTarget::GetNumSRVs() const
 {
 	return Desc.NumTargets + (SRVDepth ? 1 : 0);
 }
 
-void oD3D11RenderTarget::Resize(unsigned int _Width, unsigned int _Height)
+void oD3D11OffscreenRenderTarget::Resize(unsigned int _Width, unsigned int _Height)
 {
 	if (_Width != Desc.Width || _Height != Desc.Height)
 	{
-		oTRACE("oD3D11RenderTarget \"%s\" resizing %ux%u -> %ux%u", DebugName, Desc.Width, Desc.Height, _Width, _Height);
+		oTRACE("oD3D11OffscreenRenderTarget \"%s\" resizing %ux%u -> %ux%u", DebugName, Desc.Width, Desc.Height, _Width, _Height);
 
 		Desc.Width = _Width;
 		Desc.Height = _Height;
@@ -1716,7 +1716,7 @@ void oD3D11RenderTarget::Resize(unsigned int _Width, unsigned int _Height)
 	}
 }
 
-void oD3D11RenderTarget::Clear(ID3D11DeviceContext* _pDeviceContext, CLEAR_TYPE _ClearType)
+void oD3D11OffscreenRenderTarget::Clear(ID3D11DeviceContext* _pDeviceContext, CLEAR_TYPE _ClearType)
 {
 	if (_ClearType >= COLOR)
 	{
@@ -1739,17 +1739,17 @@ void oD3D11RenderTarget::Clear(ID3D11DeviceContext* _pDeviceContext, CLEAR_TYPE 
 		_pDeviceContext->ClearDepthStencilView(DSV, clearFlags[_ClearType], Desc.DepthClearValue, Desc.StencilClearValue);
 }
 
-void oD3D11RenderTarget::SetRenderTargets(ID3D11DeviceContext* _pDeviceContext)
+void oD3D11OffscreenRenderTarget::SetRenderTargets(ID3D11DeviceContext* _pDeviceContext)
 {
 	_pDeviceContext->OMSetRenderTargets(Desc.NumTargets, (ID3D11RenderTargetView* const*)RTVs, DSV);
 }
 
-void oD3D11RenderTarget::SetDefaultViewport(ID3D11DeviceContext* _pDeviceContext)
+void oD3D11OffscreenRenderTarget::SetDefaultViewport(ID3D11DeviceContext* _pDeviceContext)
 {
 	oD3D11SetFullTargetViewport(_pDeviceContext, RTVs[0]);
 }
 
-void oD3D11RenderTarget::SetShaderResources(ID3D11DeviceContext* _pDeviceContext, size_t _StartSlot)
+void oD3D11OffscreenRenderTarget::SetShaderResources(ID3D11DeviceContext* _pDeviceContext, size_t _StartSlot)
 {
 	ID3D11ShaderResourceView* srvs[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
 	memcpy(srvs, SRVs, Desc.NumTargets * sizeof(ID3D11ShaderResourceView*));
@@ -1757,7 +1757,7 @@ void oD3D11RenderTarget::SetShaderResources(ID3D11DeviceContext* _pDeviceContext
 	_pDeviceContext->PSSetShaderResources(static_cast<UINT>(_StartSlot), Desc.NumTargets + (SRVDepth ? 1 : 0), srvs);
 }
 
-void oD3D11RenderTarget::SetSingleShaderResource(ID3D11DeviceContext* _pDeviceContext, size_t _RenderTargetIndex, size_t _StartSlot)
+void oD3D11OffscreenRenderTarget::SetSingleShaderResource(ID3D11DeviceContext* _pDeviceContext, size_t _RenderTargetIndex, size_t _StartSlot)
 {
 	if (_RenderTargetIndex == DEPTH_STENCIL_INDEX)
 		_pDeviceContext->PSSetShaderResources(static_cast<UINT>(_StartSlot), 1, &SRVDepth);
@@ -1768,7 +1768,7 @@ void oD3D11RenderTarget::SetSingleShaderResource(ID3D11DeviceContext* _pDeviceCo
 	}
 }
 
-void oD3D11RenderTarget::SetCSShaderResources(ID3D11DeviceContext* _pDeviceContext, size_t _StartSlot)
+void oD3D11OffscreenRenderTarget::SetCSShaderResources(ID3D11DeviceContext* _pDeviceContext, size_t _StartSlot)
 {
 	ID3D11ShaderResourceView* srvs[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
 	memcpy(srvs, SRVs, Desc.NumTargets * sizeof(ID3D11ShaderResourceView*));
