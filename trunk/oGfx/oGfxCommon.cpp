@@ -22,14 +22,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oGfxCommon.h"
-#if 0
+
 const oGUID& oGetGUID(threadsafe const oGfxCommandList* threadsafe const *)
 {
 	// {272A9B3E-64BC-4D20-845E-D4EE3F0ED890}
 	static const oGUID oIID_GfxCommandList = { 0x272a9b3e, 0x64bc, 0x4d20, { 0x84, 0x5e, 0xd4, 0xee, 0x3f, 0xe, 0xd8, 0x90 } };
 	return oIID_GfxCommandList;
 }
-#endif
 
 const oGUID& oGetGUID(threadsafe const oGfxDevice* threadsafe const *)
 {
@@ -88,14 +87,14 @@ const oGUID& oGetGUID(threadsafe const oGfxPipeline* threadsafe const *)
 	static const oGUID oIID_GfxPipeline = { 0x2401b122, 0xeb19, 0x4cef, { 0xb3, 0xbe, 0x95, 0x43, 0xc0, 0x3, 0xb8, 0x96 } };
 	return oIID_GfxPipeline;
 }
-#if 0
-const oGUID& oGetGUID(threadsafe const oGfxRenderTarget2* threadsafe const *)
+
+const oGUID& oGetGUID(threadsafe const oGfxRenderTarget* threadsafe const *)
 {
 	// {E7F8FD41-737A-4AC5-A3C0-EB04876C6071}
 	static const oGUID oIID_GfxRenderTarget2 = { 0xe7f8fd41, 0x737a, 0x4ac5, { 0xa3, 0xc0, 0xeb, 0x4, 0x87, 0x6c, 0x60, 0x71 } };
 	return oIID_GfxRenderTarget2;
 }
-
+#if 0
 const oGUID& oGetGUID(threadsafe const oGfxTexture* threadsafe const *)
 {
 	// {19374525-0CC8-445B-80ED-A6D2FF13362C}

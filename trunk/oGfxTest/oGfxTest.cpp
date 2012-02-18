@@ -29,63 +29,99 @@
 
 #include <oGfx/oGfx.h>
 
-bool Render(oWindow::EVENT _Event, const float3& _Position, int _Value, threadsafe oWindow* _pWindow)
+class oRenderTest
 {
-	switch (_Event)
+public:
+
+	oRenderTest()
 	{
-		case oWindow::DRAW_BACKBUFFER:
+		oGfxDevice::DESC DevDesc;
+		DevDesc.Version = oVersion(10,0);
+		DevDesc.UseSoftwareEmulation = false;
+		DevDesc.EnableDebugReporting = true;
+		oVERIFY(oGfxDeviceCreate(DevDesc, &GfxDevice));
+
+		oRef<ID3D11Device> D3D11Device;
+		oVERIFY(GfxDevice->QueryInterface((const oGUID&)__uuidof(ID3D11Device), &D3D11Device));
+
+		oWindow::DESC WinDesc;
+		WinDesc.Style = oWindow::SIZEABLE;
+		WinDesc.AutoClear = false;
+		WinDesc.EnableUIDrawing = true;
+		WinDesc.UseAntialiasing = false;
+		WinDesc.AllowUserFullscreenToggle = true;
+		oVERIFY(oWindowCreate(WinDesc, D3D11Device, oWindow::USE_GDI, &Window));
+		Window->SetTitle("User-Specified D3D11 Test");
+
+		oGfxCommandList::DESC CmdListDesc;
+		CmdListDesc.DrawOrder = 0;
+
+		oVERIFY(GfxDevice->CreateCommandList("Test CommandList", CmdListDesc, &GfxCommandList));
+
+		WinHook = Window->Hook(oBIND(&oRenderTest::Render, this, oBIND1, oBIND2, oBIND3));
+	}
+
+	~oRenderTest()
+	{
+		Window->Unhook(WinHook);
+	}
+
+	bool Render(oWindow::EVENT _Event, const float3& _Position, int _Value)
+	{
+		switch (_Event)
 		{
-			static int counter = 0;
+			case oWindow::RESIZING:
+				GfxRenderTarget = nullptr;
+				break;
+			case oWindow::RESIZED:
+				oVERIFY(GfxDevice->CreateRenderTarget("Test RenderTarget", Window, oSURFACE_D24_UNORM_S8_UINT, &GfxRenderTarget));
+				break;
 
-			const FLOAT RGBA[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-			const FLOAT RGBA2[] = { 0.0f, 0.0f, 1.0f, 1.0f };
+			case oWindow::DRAW_BACKBUFFER:
+			{
+				static int counter = 0;
 
-			oRef<ID3D11Device> D3D11Device;
-			oVERIFY(_pWindow->QueryInterface((const oGUID&)__uuidof(ID3D11Device), &D3D11Device));
+				const FLOAT RGBA[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+				const FLOAT RGBA2[] = { 0.0f, 0.0f, 1.0f, 1.0f };
 
-			oRef<ID3D11DeviceContext> DevContext;
-			D3D11Device->GetImmediateContext(&DevContext);
-			
-			oRef<ID3D11RenderTargetView> RTV;
-			oVERIFY(_pWindow->QueryInterface((const oGUID&)__uuidof(ID3D11RenderTargetView), &RTV));
+				oRef<ID3D11Device> D3D11Device;
+				oVERIFY(Window->QueryInterface((const oGUID&)__uuidof(ID3D11Device), &D3D11Device));
 
-			DevContext->ClearRenderTargetView(RTV, (counter++ & 0x1)?RGBA:RGBA2);
+				oRef<ID3D11DeviceContext> DevContext;
+				D3D11Device->GetImmediateContext(&DevContext);
 
-			DevContext->Flush();
-			break;
-		}
+				oRef<ID3D11RenderTargetView> RTV;
+				oVERIFY(Window->QueryInterface((const oGUID&)__uuidof(ID3D11RenderTargetView), &RTV));
+
+				DevContext->ClearRenderTargetView(RTV, (counter++ & 0x1)?RGBA:RGBA2);
+
+				DevContext->Flush();
+				break;
+			}
 
 		default:
 			break;
+		}
+
+		return true;
 	}
 
-	return true;
-}
+	inline threadsafe oWindow* GetWindow() threadsafe { return Window; }
+
+private:
+
+	oRef<threadsafe oWindow> Window;
+	oRef<threadsafe oGfxDevice> GfxDevice;
+	oRef<threadsafe oGfxRenderTarget> GfxRenderTarget;
+	oRef<threadsafe oGfxCommandList> GfxCommandList;
+	unsigned int WinHook;
+};
 
 int main(int argc, char* argv[])
 {
-	oGfxDevice::DESC DevDesc;
-	DevDesc.Version = oVersion(10,0);
-	DevDesc.UseSoftwareEmulation = false;
-	DevDesc.EnableDebugReporting = true;
+	oRenderTest RenderTest;
 
-	oRef<threadsafe oGfxDevice> GfxDevice;
-	oVERIFY(oGfxDeviceCreate(DevDesc, &GfxDevice));
-
-	oRef<ID3D11Device> D3D11Device;
-	oVERIFY(GfxDevice->QueryInterface((const oGUID&)__uuidof(ID3D11Device), &D3D11Device));
-
-	oWindow::DESC WinDesc;
-	WinDesc.Style = oWindow::FIXED;
-	WinDesc.AutoClear = false;
-	WinDesc.EnableUIDrawing = true;
-	WinDesc.UseAntialiasing = false;
-	WinDesc.AllowUserFullscreenToggle = true;
-
-	oRef<threadsafe oWindow> Window;
-	oVERIFY(oWindowCreate(WinDesc, D3D11Device, oWindow::USE_GDI, &Window));
-	Window->SetTitle("User-Specified D3D11 Test");
-
+	// _____________________________________________________________________________
 	// Set up a UI to ensure rendering doesn't stomp on its compositing
 	oWindowUIBox::DESC BoxDesc;
 	BoxDesc.Position = int2(-20,-20);
@@ -96,14 +132,14 @@ int main(int argc, char* argv[])
 	BoxDesc.Roundness = 10.0f;
 
 	oRef<threadsafe oWindowUIBox> Box;
-	oVERIFY(oWindowUIBoxCreate(BoxDesc, Window, &Box));
+	oVERIFY(oWindowUIBoxCreate(BoxDesc, RenderTest.GetWindow(), &Box));
 
 	oWindowUIFont::DESC FontDesc;
 	FontDesc.FontName = "Tahoma";
 	FontDesc.PointSize = 10;
 
 	oRef<threadsafe oWindowUIFont> Font;
-	oVERIFY(oWindowUIFontCreate(FontDesc, Window, &Font));
+	oVERIFY(oWindowUIFontCreate(FontDesc, RenderTest.GetWindow(), &Font));
 
 	oWindowUIText::DESC TextDesc;
 	TextDesc.Position = BoxDesc.Position;
@@ -112,17 +148,18 @@ int main(int argc, char* argv[])
 	TextDesc.Alignment = oMIDDLECENTER;
 
 	oRef<threadsafe oWindowUIText> Text;
-	oVERIFY(oWindowUITextCreate(TextDesc, Window, &Text));
+	oVERIFY(oWindowUITextCreate(TextDesc, RenderTest.GetWindow(), &Text));
 	Text->SetFont(Font);
 	Text->SetText("D3D11 Test");
 
-	Window->Hook(oBIND(Render, oBIND1, oBIND2, oBIND3, Window.c_ptr()));
+	// _____________________________________________________________________________
+	// Set up rendering components
 
-	while (Window->IsOpen())
+	while (RenderTest.GetWindow()->IsOpen())
 	{
 		oSleep(200);
 
-		Window->Refresh(false);
+		RenderTest.GetWindow()->Refresh(false);
 	}
 
 	return 0;

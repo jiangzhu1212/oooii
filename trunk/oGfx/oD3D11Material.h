@@ -27,7 +27,7 @@
 
 #include <oGfx/oGfx.h>
 #include "oGfxCommon.h"
-#include <oooii/oD3D11.h>
+#include <oPlatform/oD3D11.h>
 
 oDECLARE_GFXRESOURCE_IMPLEMENTATION(oD3D11, Material, MATERIAL)
 {

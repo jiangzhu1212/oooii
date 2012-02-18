@@ -36,6 +36,10 @@
 	oRef<ID3D11Device> D3DDevice; \
 	oVERIFY(Device->QueryInterface(oGetGUID<ID3D11Device>(), &D3DDevice));
 
+// Call reg/unreg from device children implementations
+#define oDEVICE_REGISTER_THIS() static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->Insert(this)
+#define oDEVICE_UNREGISTER_THIS() static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->Remove(this)
+
 const oGUID& oGetGUID(threadsafe const ID3D11Device* threadsafe const *);
 
 struct oD3D11Device : oGfxDevice, oNoncopyable
@@ -49,28 +53,27 @@ struct oD3D11Device : oGfxDevice, oNoncopyable
 
 	oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc, bool* _pSuccess);
 
-	//bool CreateCommandList(const char* _Name, const oGfxCommandList::DESC& _Desc, oGfxCommandList** _ppCommandList) threadsafe override;
+	bool CreateCommandList(const char* _Name, const oGfxCommandList::DESC& _Desc, threadsafe oGfxCommandList** _ppCommandList) threadsafe override;
 	//bool CreateLineList(const char* _Name, const oGfxLineList::DESC& _Desc, oGfxLineList** _ppLineList) threadsafe override;
-	bool CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, oGfxPipeline** _ppPipeline) threadsafe override;
-	//bool CreateRenderTarget2(const char* _Name, const oGfxRenderTarget2::DESC& _Desc, oGfxRenderTarget2** _ppRenderTarget) threadsafe override;
-	//bool CreateRenderTarget2(const char* _Name, threadsafe oWindow* _pWindow, oSurface::FORMAT _DepthStencilFormat, oGfxRenderTarget2** _ppRenderTarget) threadsafe override;
+	bool CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, threadsafe oGfxPipeline** _ppPipeline) threadsafe override;
+	bool CreateRenderTarget(const char* _Name, const oGfxRenderTarget::DESC& _Desc, threadsafe oGfxRenderTarget** _ppRenderTarget) threadsafe override;
+	bool CreateRenderTarget(const char* _Name, threadsafe oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, threadsafe oGfxRenderTarget** _ppRenderTarget) threadsafe override;
 	//bool CreateMaterial(const char* _Name, const oGfxMaterial::DESC& _Desc, oGfxMaterial** _ppMaterial) threadsafe override;
 	//bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe override;
 	//bool CreateInstanceList(const char* _Name, const oGfxInstanceList::DESC& _Desc, oGfxInstanceList** _ppInstanceList) threadsafe override;
 	//bool CreateTexture(const char* _Name, const oGfxTexture::DESC& _Desc, oGfxTexture** _ppTexture) threadsafe override;
-#if 0
 
 	void Submit() override;
 
 	// _____________________________________________________________________________
 	// Implementation API
-	
+#	
 	void Insert(oGfxCommandList* _pCommandList) threadsafe;
 	void Remove(oGfxCommandList* _pCommandList) threadsafe;
 	void DrawCommandLists() threadsafe;
 
 	inline std::vector<oGfxCommandList*>& ProtectedCommandLists() threadsafe { return thread_cast<std::vector<oGfxCommandList*>&>(CommandLists); } // safe because this should only be used when protected by CommandListsMutex
-
+#if 0
 	// _____________________________________________________________________________
 	// Members
 #endif
@@ -81,10 +84,10 @@ struct oD3D11Device : oGfxDevice, oNoncopyable
 
 	DESC Desc;
 	oRefCount RefCount;
-#if 0
+
 	oMutex CommandListsMutex;
 	std::vector<oGfxCommandList*> CommandLists; // non-oRefs to avoid circular refs
-
+#if 0
 	oD3D11RasterizerState RSState;
 	oD3D11BlendState OMState;
 	oD3D11DepthStencilState DSState;

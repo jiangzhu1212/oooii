@@ -250,20 +250,14 @@ interface oGfxPipeline : oGfxDeviceChild
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
-#if 0
-// @oooii-tony: The following dominoes fall if not labelled with a 2:
-// 1. There are resource-uniform macros that munge APIs and names
-// 2. The D3D11 impl is called oD3D11RenderTarget
-// 3. There is already a legacy oD3D11RenderTarget in oooii's oD3D11.h that is in use.
-// The plan is to migrate all code to oGfx and remove/relocate oD3D11.h
-// For now the workaround is to change the name of the object
-interface oGfxRenderTarget2 : oGfxDeviceChild
+
+interface oGfxRenderTarget : oGfxDeviceChild
 {
 	// A 2D plane onto which rendering occurs
 
 	// MRT: Multiple Render Target
-	static const size_t MAX_MRT_COUNT = 8;
-	static const size_t DS_INDEX = ~0u;
+	static const int MAX_MRT_COUNT = 8;
+	static const int DS_INDEX = ~0u;
 
 	struct CLEAR_DESC
 	{
@@ -275,32 +269,28 @@ interface oGfxRenderTarget2 : oGfxDeviceChild
 			: DepthClearValue(1.0f)
 			, StencilClearValue(0)
 		{
-			for (size_t i = 0; i < MAX_MRT_COUNT; i++)
-				ClearColor[i] = 0;
+			oINIT_ARRAY(ClearColor, 0);
 		}
 	};
 
 	struct DESC
 	{
-		uint Width;
-		uint Height;
-		uint MRTCount;
-		uint ArraySize;
-		oSurface::FORMAT Format[MAX_MRT_COUNT];
-		oSurface::FORMAT DepthStencilFormat; // Use UNKNOWN for no depth
+		int2 Dimensions;
+		int MRTCount;
+		int ArraySize;
+		oSURFACE_FORMAT Format[MAX_MRT_COUNT];
+		oSURFACE_FORMAT DepthStencilFormat; // Use UNKNOWN for no depth
 		CLEAR_DESC ClearDesc;
 		bool GenerateMips;
 
 		DESC()
-			: Width(256)
-			, Height(256)
+			: Dimensions(oInvalid, oInvalid)
 			, MRTCount(1)
 			, ArraySize(1)
-			, DepthStencilFormat(oSurface::UNKNOWN)
+			, DepthStencilFormat(oSURFACE_UNKNOWN)
 			, GenerateMips(false)
 		{
-			for (size_t i = 0; i < MAX_MRT_COUNT; i++)
-				Format[i] = oSurface::UNKNOWN;
+			oINIT_ARRAY(Format, oSURFACE_UNKNOWN);
 		}
 	};
 
@@ -312,7 +302,7 @@ interface oGfxRenderTarget2 : oGfxDeviceChild
 
 	// Resizes all buffers without changing formats and 
 	// other topology descriptions
-	virtual void Resize(uint _Width, uint _Height) = 0;
+	virtual void Resize(const int2& _NewDimensions) = 0;
 };
 
 interface oGfxCommandList : oGfxDeviceChild
@@ -343,7 +333,7 @@ interface oGfxCommandList : oGfxDeviceChild
 
 	struct DESC
 	{
-		uint DrawOrder;
+		int DrawOrder;
 	};
 
 	struct MAPPING
@@ -355,6 +345,7 @@ interface oGfxCommandList : oGfxDeviceChild
 	
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 
+#if 0
 	// Begins recording of GPU command submissions. All rendering for this 
 	// context should occur between Begin() and End(). NOTE: If _NumViewports
 	// is 0 and/or _pViewports is nullptr, a default full-rendertarget 
@@ -363,7 +354,7 @@ interface oGfxCommandList : oGfxDeviceChild
 		const float4x4& _View
 		, const float4x4& _Projection
 		, const oGfxPipeline* _pPipeline
-		, const oGfxRenderTarget2* _pRenderTarget
+		, const oGfxRenderTarget* _pRenderTarget
 		, size_t _RenderTargetIndex
 		, size_t _NumViewports
 		, const VIEWPORT* _pViewports) = 0;
@@ -406,11 +397,11 @@ interface oGfxCommandList : oGfxDeviceChild
 	// the entries are now valid. The parameter is ignored by other 
 	// resources.
 	virtual void Unmap(oGfxResource* _pResource, size_t _SubresourceIndex, size_t _NewCount = 1) = 0;
-
+#endif
 	// Uses a render target's CLEAR_DESC to clear all associated buffers
 	// according to the type of clear specified here.
 	virtual void Clear(CLEAR_TYPE _ClearType) = 0;
-
+#if 0
 	// Submits an oGfxMesh for drawing using the current state of the 
 	// command list.
 	virtual void DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxInstanceList* _pInstanceList = nullptr) = 0;
@@ -424,8 +415,9 @@ interface oGfxCommandList : oGfxDeviceChild
 	// If View, Projection, and _Transform are all identity, this would
 	// be a fullscreen quad.
 	virtual void DrawQuad(float4x4& _Transform, uint _QuadID) = 0;
-};
 #endif
+};
+
 interface oGfxDevice : oInterface
 {
 	// Main SW abstraction for a graphics processor
@@ -443,18 +435,18 @@ interface oGfxDevice : oInterface
 		bool EnableDebugReporting;
 	};
 
-	//virtual bool CreateCommandList(const char* _Name, const oGfxCommandList::DESC& _Desc, oGfxCommandList** _ppCommandList) threadsafe = 0;
+	virtual bool CreateCommandList(const char* _Name, const oGfxCommandList::DESC& _Desc, threadsafe oGfxCommandList** _ppCommandList) threadsafe = 0;
 	//virtual bool CreateLineList(const char* _Name, const oGfxLineList::DESC& _Desc, oGfxLineList** _ppLineList) threadsafe = 0;
-	virtual bool CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, oGfxPipeline** _ppPipeline) threadsafe = 0;
-	//virtual bool CreateRenderTarget2(const char* _Name, const oGfxRenderTarget2::DESC& _Desc, oGfxRenderTarget2** _ppRenderTarget) threadsafe = 0;
-	//virtual bool CreateRenderTarget2(const char* _Name, threadsafe oWindow* _pWindow, oSurface::FORMAT _DepthStencilFormat, oGfxRenderTarget2** _ppRenderTarget) threadsafe = 0;
+	virtual bool CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, threadsafe oGfxPipeline** _ppPipeline) threadsafe = 0;
+	virtual bool CreateRenderTarget(const char* _Name, const oGfxRenderTarget::DESC& _Desc, threadsafe oGfxRenderTarget** _ppRenderTarget) threadsafe = 0;
+	virtual bool CreateRenderTarget(const char* _Name, threadsafe oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, threadsafe oGfxRenderTarget** _ppRenderTarget) threadsafe = 0;
 	//virtual bool CreateMaterial(const char* _Name, const oGfxMaterial::DESC& _Desc, oGfxMaterial** _ppMaterial) threadsafe = 0;
 	//virtual bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe = 0;
 	//virtual bool CreateInstanceList(const char* _Name, const oGfxInstanceList::DESC& _Desc, oGfxInstanceList** _ppInstanceList) threadsafe = 0;
 	//virtual bool CreateTexture(const char* _Name, const oGfxTexture::DESC& _Desc, oGfxTexture** _ppTexture) threadsafe = 0;
 
 	// Submits all command lists in their draw order
-	//virtual void Submit() = 0;
+	virtual void Submit() = 0;
 };
 
 oAPI bool oGfxDeviceCreate(const oGfxDevice::DESC& _Desc, threadsafe oGfxDevice** _ppDevice);

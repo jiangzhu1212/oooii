@@ -22,12 +22,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oD3D11CommandList.h"
-#include "oD3D11InstanceList.h"
-#include "oD3D11LineList.h"
-#include "oD3D11Material.h"
-#include "oD3D11Mesh.h"
-#include "oD3D11Pipeline.h"
-#include "oD3D11Texture.h"
+//#include "oD3D11InstanceList.h"
+//#include "oD3D11LineList.h"
+//#include "oD3D11Material.h"
+//#include "oD3D11Mesh.h"
+//#include "oD3D11Pipeline.h"
+//#include "oD3D11Texture.h"
 #include <oGfx/oGfxDrawConstants.h>
 
 oDEFINE_GFXDEVICE_CREATE(oD3D11, CommandList);
@@ -45,15 +45,17 @@ oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(oD3D11, CommandList)
 		return;
 	}
 
-	static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->Insert(this);
+	oDEVICE_REGISTER_THIS();
 
 	*_pSuccess = true;
 }
 
 oD3D11CommandList::~oD3D11CommandList()
 {
-	static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->Remove(this);
+	oDEVICE_UNREGISTER_THIS();
 }
+
+#if 0
 
 static void SetRenderTarget(ID3D11DeviceContext* _pDeviceContext, const oGfxRenderTarget2::DESC& _RTDesc, const oGfxRenderTarget2* _pRenderTarget)
 {
@@ -105,7 +107,7 @@ static void SetPipeline(ID3D11DeviceContext* _pDeviceContext, const oGfxPipeline
 	_pDeviceContext->VSSetShader(p->VertexShader, 0, 0);
 	_pDeviceContext->HSSetShader(p->HullShader, 0, 0);
 	_pDeviceContext->DSSetShader(p->DomainShader, 0, 0);
-	_pDeviceContext->GSSetShader(p->GeometryShader, 0, 0);
+	_pDviceContext->GSSetShader(p->GeometryShader, 0, 0);
 	_pDeviceContext->PSSetShader(p->PixelShader, 0, 0);
 }
 
@@ -231,18 +233,18 @@ void oD3D11CommandList::Unmap(oGfxResource* _pResource, size_t _SubresourceIndex
 {
 	Context->Unmap(GetResourceBuffer(_pResource, _SubresourceIndex), static_cast<UINT>(_SubresourceIndex));
 }
-
+#endif
 void oD3D11CommandList::Clear(CLEAR_TYPE _ClearType)
 {
 	oASSERT(pRenderTarget, "No oGfxRenderTarget specified for %s %s", typeid(*this), GetName());
-	oD3D11RenderTarget2* pRT = static_cast<oD3D11RenderTarget2*>(pRenderTarget);
+	oD3D11RenderTarget* pRT = static_cast<oD3D11RenderTarget*>(pRenderTarget);
 
 	if (_ClearType >= COLOR)
 	{
-		for (uint i = 0; i < pRT->Desc.ArraySize; i++)
+		FLOAT c[4];
+		for (int i = 0; i < pRT->Desc.ArraySize; i++)
 		{
-			FLOAT c[4];
-			oDecomposeColor(pRT->Desc.ClearDesc.ClearColor[i], c);
+			oColorDecompose(pRT->Desc.ClearDesc.ClearColor[i], c);
 			Context->ClearRenderTargetView(pRT->RTVs[i], c);
 		}
 	}
@@ -261,7 +263,7 @@ void oD3D11CommandList::Clear(CLEAR_TYPE _ClearType)
 	if (pRT->DSV && _ClearType != COLOR)
 		Context->ClearDepthStencilView(pRT->DSV, sClearFlags[_ClearType], pRT->Desc.ClearDesc.DepthClearValue, pRT->Desc.ClearDesc.StencilClearValue);
 }
-
+#if 0
 void oD3D11CommandList::DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxInstanceList* _pInstanceList)
 {
 	oASSERT(!_pInstanceList, "Instanced drawing not yet implemented");
@@ -361,3 +363,5 @@ void oD3D11CommandList::DrawQuad(float4x4& _Transform, uint _QuadID)
 {
 	oD3D11DrawSVQuad(Context);
 }
+
+#endif
