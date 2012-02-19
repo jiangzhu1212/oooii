@@ -80,13 +80,139 @@ bool oGfxDeviceCreate(const oGfxDevice::DESC& _Desc, threadsafe oGfxDevice** _pp
 oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc, bool* _pSuccess)
 	: D3DDevice(_pDevice)
 	, Desc(_Desc)
-	//, RSState(_pDevice)
-	//, OMState(_pDevice)
-	//, DSState(_pDevice)
-	//, SAState(_pDevice)
 {
 	*_pSuccess = false;
+
+	if (!oD3D11SetDebugName(_pDevice, _Desc.DebugName))
+		return; // pass through error
+
 	D3DDevice->GetImmediateContext(&ImmediateContext);
+
+	oStringL StateName;
+
+	// OMStates
+	{
+		static const D3D11_RENDER_TARGET_BLEND_DESC sBlends[] =
+		{
+			{ FALSE, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_COLOR_WRITE_ENABLE_ALL },
+			{ FALSE, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_COLOR_WRITE_ENABLE_ALL },
+			{ TRUE, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_COLOR_WRITE_ENABLE_ALL },
+			{ TRUE, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_BLEND_ZERO, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_COLOR_WRITE_ENABLE_ALL },
+			{ TRUE, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_OP_ADD, D3D11_BLEND_ZERO, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_COLOR_WRITE_ENABLE_ALL },
+		};
+		static_assert(oCOUNTOF(sBlends) == oOMNUMSTATES, "");
+
+		D3D11_BLEND_DESC desc = {0};
+		for (size_t i = 0; i < oCOUNTOF(OMStates); i++)
+		{
+
+			desc.AlphaToCoverageEnable = FALSE;
+			desc.IndependentBlendEnable = FALSE;
+			desc.RenderTarget[0] = sBlends[i];
+			oV(_pDevice->CreateBlendState(&desc, &OMStates[i]));
+			sprintf_s(StateName, "%s.%s", _Desc.DebugName.c_str(), oAsString((oOMSTATE)i));
+			oV(oD3D11SetDebugName(OMStates[i], StateName));
+		}
+	}
+
+	// RSStates
+	{
+		static const D3D11_FILL_MODE sFills[] = 
+		{
+			D3D11_FILL_SOLID,
+			D3D11_FILL_SOLID,
+			D3D11_FILL_SOLID,
+			D3D11_FILL_WIREFRAME,
+			D3D11_FILL_WIREFRAME,
+			D3D11_FILL_WIREFRAME,
+			D3D11_FILL_SOLID,
+			D3D11_FILL_SOLID,
+			D3D11_FILL_SOLID,
+		};
+		static_assert(oCOUNTOF(sFills) == oRSNUMSTATES, "");
+
+		static const D3D11_CULL_MODE sCulls[] = 
+		{
+			D3D11_CULL_BACK,
+			D3D11_CULL_FRONT,
+			D3D11_CULL_NONE,
+			D3D11_CULL_BACK,
+			D3D11_CULL_FRONT,
+			D3D11_CULL_NONE,
+			D3D11_CULL_BACK,
+			D3D11_CULL_FRONT,
+			D3D11_CULL_NONE,
+		};
+		static_assert(oCOUNTOF(sCulls) == oRSNUMSTATES, "");
+
+		D3D11_RASTERIZER_DESC desc;
+		memset(&desc, 0, sizeof(desc));
+		desc.DepthClipEnable = TRUE;
+
+		for (size_t i = 0; i < oCOUNTOF(RSStates); i++)
+		{
+			desc.FillMode = sFills[i];
+			desc.CullMode = sCulls[i];
+			oV(_pDevice->CreateRasterizerState(&desc, &RSStates[i]));
+			sprintf_s(StateName, "%s.%s", _Desc.DebugName.c_str(), oAsString((oRSSTATE)i));
+			oV(oD3D11SetDebugName(RSStates[i], StateName));
+		}
+
+	}
+
+	// SAStates
+	{
+		static const D3D11_FILTER sFilters[] = 
+		{
+			D3D11_FILTER_MIN_MAG_MIP_POINT,
+			D3D11_FILTER_MIN_MAG_MIP_POINT,
+			D3D11_FILTER_MIN_MAG_MIP_LINEAR,
+			D3D11_FILTER_MIN_MAG_MIP_LINEAR,
+			D3D11_FILTER_COMPARISON_ANISOTROPIC,
+			D3D11_FILTER_COMPARISON_ANISOTROPIC,
+		};
+		static_assert(oCOUNTOF(sFilters) == oSANUMSTATES, "");
+
+		static const D3D11_TEXTURE_ADDRESS_MODE sAddresses[] = 
+		{
+			D3D11_TEXTURE_ADDRESS_CLAMP,
+			D3D11_TEXTURE_ADDRESS_WRAP,
+			D3D11_TEXTURE_ADDRESS_CLAMP,
+			D3D11_TEXTURE_ADDRESS_WRAP,
+			D3D11_TEXTURE_ADDRESS_CLAMP,
+			D3D11_TEXTURE_ADDRESS_WRAP,
+		};
+		static_assert(oCOUNTOF(sAddresses) == oSANUMSTATES, "");
+
+		static const FLOAT sBiases[] =
+		{
+			0.0f,
+			-1.0f,
+			-2.0f,
+			1.0f,
+			2.0f,
+		};
+		static_assert(oCOUNTOF(sBiases) == oMBNUMSTATES, "");
+
+		D3D11_SAMPLER_DESC desc;
+		memset(&desc, 0, sizeof(desc));
+		for (size_t state = 0; state < oSANUMSTATES; state++)
+		{
+			desc.Filter = sFilters[state];
+			desc.AddressU = desc.AddressV = desc.AddressW = sAddresses[state];
+			desc.MaxLOD = FLT_MAX; // documented default
+			desc.MaxAnisotropy = 16; // documented default
+			desc.ComparisonFunc = D3D11_COMPARISON_NEVER;  // documented default
+
+			for (size_t bias = 0; bias < oMBNUMSTATES; bias++)
+			{
+				desc.MipLODBias = sBiases[bias];
+				_pDevice->CreateSamplerState(&desc, &SAStates[state][bias]);
+				sprintf_s(StateName, "%s.%s.%s", _Desc.DebugName.c_str(), oAsString((oSASTATE)state), oAsString((oMBSTATE)bias));
+				oV(oD3D11SetDebugName(SAStates[state][bias], StateName));
+			}
+		}
+	}
 
 	oD3D11_CHECK_STRUCT_SIZE(oDeferredViewConstants);
 	oVERIFY(oD3D11CreateConstantBuffer(D3DDevice, "oGfxDevice::ViewConstants", true, 0, sizeof(oDeferredViewConstants), 1, &ViewConstants));

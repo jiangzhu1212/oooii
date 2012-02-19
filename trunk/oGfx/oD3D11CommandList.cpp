@@ -82,7 +82,6 @@ static void SetViewports(ID3D11DeviceContext* _pDeviceContext, const oGfxRenderT
 	_pDeviceContext->RSSetViewports(static_cast<uint>(_NumViewports), Viewports);
 }
 
-
 static void SetViewConstants(ID3D11DeviceContext* _pDeviceContext, ID3D11Buffer* _pViewConstants, const float4x4& _View, const float4x4& _Projection, const oGfxRenderTarget::DESC& _RTDesc, size_t _RenderTargetIndex)
 {
 	//D3D11_MAPPED_SUBRESOURCE mapped;
@@ -135,30 +134,33 @@ void oD3D11CommandList::End()
 
 	oDEVICE_UNLOCK_SUBMIT();
 }
-#if 0
+
 void oD3D11CommandList::RSSetState(oRSSTATE _State)
 {
-	// @oooii-tony: TODO: Move oD3D11BlendState's enum to be oRS_STATE
-	oASSERT(0, "Enums are not current compatible");
-	//oSTATICASSERT(oOM_COUNT == oD3D11BlendState::NUM_STATES);
-	D3DDevice()->OMState.SetState(Context, (oD3D11BlendState::STATE)_State);
+	Context->RSSetState(D3DDevice()->RSStates[_State]);
 }
 
 void oD3D11CommandList::OMSetState(oOMSTATE _State)
 {
-	D3DDevice()->OMState.SetState(Context, (oD3D11BlendState::STATE)_State);
+	static const FLOAT sBlendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	Context->OMSetBlendState(D3DDevice()->OMStates[_State], sBlendFactor, 0xffffffff);
 }
 
 void oD3D11CommandList::DSSetState(oDSSTATE _State)
 {
-	D3DDevice()->DSState.SetState(Context, (oD3D11DepthStencilState::STATE)_State);
+	Context->OMSetDepthStencilState(D3DDevice()->DSStates[_State], 0);
 }
 
 void oD3D11CommandList::SASetStates(size_t _StartSlot, size_t _NumStates, const oSASTATE* _pSAStates, const oMBSTATE* _pMBStates)
 {
-	D3DDevice()->SAState.SetState(Context, _StartSlot, reinterpret_cast<const oD3D11SamplerState::SAMPLER_STATE*>(_pSAStates), reinterpret_cast<const oD3D11SamplerState::MIP_BIAS_LEVEL*>(_pMBStates), _NumStates);
+	ID3D11SamplerState* Samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
+	oASSERT(oCOUNTOF(Samplers) > _NumStates, "Too many samplers specified");
+	for (size_t i = 0; i < _NumStates; i++)
+		Samplers[i] = D3DDevice()->SAStates[_pSAStates[i]][_pMBStates[i]];
+	
+	oD3D11SetSamplers(Context, static_cast<UINT>(_StartSlot), static_cast<UINT>(_NumStates), Samplers);
 }
-
+#if 0
 void oD3D11CommandList::SetTextures(size_t _StartSlot, size_t _NumTextures, const oGfxTexture* const* _ppTextures)
 {
 	const ID3D11ShaderResourceView* SRVs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];

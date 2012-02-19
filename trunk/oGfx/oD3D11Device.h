@@ -84,6 +84,14 @@ struct oD3D11Device : oGfxDevice, oNoncopyable
 #endif
 	oRef<ID3D11Device> D3DDevice;
 	oRef<ID3D11DeviceContext> ImmediateContext;
+	// @oooii-tony:
+	// This repeats what's in oD3D11, but this is designed to replace the oD3D11 components,
+	// so this will be favored eventually...
+	oRef<ID3D11BlendState> OMStates[oOMNUMSTATES];
+	oRef<ID3D11RasterizerState> RSStates[oRSNUMSTATES];
+	oRef<ID3D11DepthStencilState> DSStates[oDSNUMSTATES];
+	oRef<ID3D11SamplerState> SAStates[oSANUMSTATES][oMBNUMSTATES];
+
 	oRef<ID3D11Buffer> ViewConstants;
 	oRef<ID3D11Buffer> DrawConstants;
 
@@ -93,12 +101,6 @@ struct oD3D11Device : oGfxDevice, oNoncopyable
 	oMutex CommandListsInsertRemoveMutex;
 	oSharedMutex CommandListsBeginEndMutex;
 	std::vector<oGfxCommandList*> CommandLists; // non-oRefs to avoid circular refs
-#if 0
-	oD3D11RasterizerState RSState;
-	oD3D11BlendState OMState;
-	oD3D11DepthStencilState DSState;
-	oD3D11SamplerState SAState;
-#endif
 
 	//oD3D11ShaderState PipelineShaderState;
 	//oD3D11ShaderState DebugShaderState;

@@ -150,6 +150,10 @@ public:
 				GfxRenderTarget->SetClearDesc(cd);
 
 				GfxCommandList->Begin(float4x4::Identity, float4x4::Identity, PLForwardColor, GfxRenderTarget, 0, 0, nullptr);
+
+				GfxCommandList->OMSetState(oOMOPAQUE);
+				GfxCommandList->RSSetState(oRSFRONTFACE);
+				GfxCommandList->DSSetState(oDSNONE);
 				
 				GfxCommandList->Clear(oGfxCommandList::COLOR_DEPTH_STENCIL);
 

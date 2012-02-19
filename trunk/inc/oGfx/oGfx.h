@@ -360,7 +360,7 @@ interface oGfxCommandList : oGfxDeviceChild
 
 	// Ends recording of GPU submissions and caches a command list
 	virtual void End() = 0;
-#if 0
+
 	// Set the rasterization state in this context
 	virtual void RSSetState(oRSSTATE _State) = 0;
 
@@ -373,6 +373,7 @@ interface oGfxCommandList : oGfxDeviceChild
 	// Set the texture sampler states in this context
 	virtual void SASetStates(size_t _StartSlot, size_t _NumStates, const oSASTATE* _pSAStates, const oMBSTATE* _pMBStates) = 0;
 
+#if 0
 	// Set the textures in this context
 	virtual void SetTextures(size_t _StartSlot, size_t _NumTextures, const oGfxTexture* const* _ppTextures) = 0;
 
@@ -425,11 +426,13 @@ interface oGfxDevice : oInterface
 	struct DESC
 	{
 		DESC()
-			: Version(11, 0)
+			: DebugName("oGfxDevice")
+			, Version(11, 0)
 			, UseSoftwareEmulation(false)
 			, EnableDebugReporting(false)
 		{}
 
+		oStringS DebugName;
 		oVersion Version;
 		bool UseSoftwareEmulation;
 		bool EnableDebugReporting;

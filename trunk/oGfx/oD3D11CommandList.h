@@ -49,10 +49,10 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 
 	void End() override;
 
-	//void RSSetState(oRSSTATE _State) override;
-	//void OMSetState(oOMSTATE _State) override;
-	//void DSSetState(oDSSTATE _State) override;
-	//void SASetStates(size_t _StartSlot, size_t _NumStates, const oSASTATE* _pSAStates, const oMBSTATE* _pMBStates) override;
+	void RSSetState(oRSSTATE _State) override;
+	void OMSetState(oOMSTATE _State) override;
+	void DSSetState(oDSSTATE _State) override;
+	void SASetStates(size_t _StartSlot, size_t _NumStates, const oSASTATE* _pSAStates, const oMBSTATE* _pMBStates) override;
 	//void SetTextures(size_t _StartSlot, size_t _NumTextures, const oGfxTexture* const* _ppTextures) override;
 	//void SetMaterials(size_t _StartSlot, size_t _NumMaterials, const oGfxMaterial* const* _ppMaterials) override;
 	void Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPED* _pMapped) override;
