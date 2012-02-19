@@ -390,7 +390,7 @@ interface oGfxCommandList : oGfxDeviceChild
 	// Material: The nth material as specified by ArraySize
 	// Mesh: A oMesh::SUBRESOURCE value
 	// Texture: A value returned by oSurface::CalculateSubresource()
-	virtual void Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPED* _pMapped) = 0;
+	virtual bool Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPED* _pMapped) = 0;
 	
 	// Unmaps a resource mapped with the above Map() call. _NewCount is 
 	// used by oGfxLineList and oGfxInstanceList to indicate how many of

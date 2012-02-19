@@ -87,6 +87,8 @@ public:
 		oGeometry::DESC GeoDesc;
 		BoxGeo->GetDesc(&GeoDesc);
 
+#if 0
+
 		oGfxMesh::DESC MeshDesc;
 		MeshDesc.NumIndices = GeoDesc.NumIndices;
 		MeshDesc.NumVertices = GeoDesc.NumVertices;
@@ -106,7 +108,7 @@ public:
 		GfxCommandList->Map(GfxMesh, oGfxMesh::INDICES, &mappedI);
 		GfxCommandList->Map(GfxMesh, oGfxMesh::VERTICES0, &mappedV);
 
-		oGfxMesh::RANGE r = *(oGfxMesh::RANGE*)mappedR.pData;
+		oGfxMesh::RANGE& r = *(oGfxMesh::RANGE*)mappedR.pData;
 		r.StartTriangle = 0;
 		r.NumTriangles = MeshDesc.NumIndices / 3;
 		r.MinVertex = 0;
@@ -121,6 +123,46 @@ public:
 		GfxCommandList->Unmap(GfxMesh, oGfxMesh::VERTICES0);
 		GfxCommandList->Unmap(GfxMesh, oGfxMesh::INDICES);
 		GfxCommandList->Unmap(GfxMesh, oGfxMesh::RANGES);
+
+#else
+		oGfxMesh::DESC MeshDesc;
+		MeshDesc.NumIndices = 3;
+		MeshDesc.NumVertices = 3;
+		MeshDesc.NumRanges = 1;
+		MeshDesc.LocalSpaceBounds = oAABoxf(float3(-100.0f), float3(100.0f));
+		MeshDesc.FrequentIndexUpdate = true;
+		MeshDesc.FrequentVertexUpdate[0] = true;
+		MeshDesc.pElements = PLDesc.pElements;
+		MeshDesc.NumElements = PLDesc.NumElements;
+		oVERIFY(GfxDevice->CreateMesh("oGfxTest Mesh", MeshDesc, &GfxMesh));
+
+		oGfxCommandList::MAPPED mappedR, mappedI, mappedV;
+		oVERIFY(GfxCommandList->Map(GfxMesh, oGfxMesh::RANGES, &mappedR));
+		oVERIFY(GfxCommandList->Map(GfxMesh, oGfxMesh::INDICES, &mappedI));
+		oVERIFY(GfxCommandList->Map(GfxMesh, oGfxMesh::VERTICES0, &mappedV));
+
+		oGfxMesh::RANGE& r = *(oGfxMesh::RANGE*)mappedR.pData;
+		r.StartTriangle = 0;
+		r.NumTriangles = MeshDesc.NumIndices / 3;
+		r.MinVertex = 0;
+		r.MaxVertex = MeshDesc.NumVertices;
+
+		const uint indices[] = {0,1,2};
+		memcpy(mappedI.pData, indices, sizeof(uint) * MeshDesc.NumIndices);
+
+		size_t VertexStride = oGfxCalcInterleavedVertexSize(MeshDesc.pElements, MeshDesc.NumElements, 0);
+		
+		const float3 P[] = { float3(0.0f, 0.33f, 0.1f), float3(0.33f,-0.33f,0.1f), float3(-0.33f,-0.33f,0.1f), };
+		const float2 T[] = { float2(0.0f, 0.0f), float2(0.0f, 0.0f), float2(0.0f, 0.0f), };
+		
+		oMemcpyAsym(mappedV.pData, VertexStride, P, sizeof(float3), MeshDesc.NumVertices);
+		oMemcpyAsym(oByteAdd(mappedV.pData, sizeof(float3)), VertexStride, T, sizeof(float2), MeshDesc.NumVertices);
+
+		GfxCommandList->Unmap(GfxMesh, oGfxMesh::VERTICES0);
+		GfxCommandList->Unmap(GfxMesh, oGfxMesh::INDICES);
+		GfxCommandList->Unmap(GfxMesh, oGfxMesh::RANGES);
+
+#endif
 
 		WinHook = Window->Hook(oBIND(&oRenderTest::Render, this, oBIND1, oBIND2, oBIND3));
 	}
@@ -152,10 +194,12 @@ public:
 				GfxCommandList->Begin(float4x4::Identity, float4x4::Identity, PLForwardColor, GfxRenderTarget, 0, 0, nullptr);
 
 				GfxCommandList->OMSetState(oOMOPAQUE);
-				GfxCommandList->RSSetState(oRSFRONTFACE);
+				GfxCommandList->RSSetState(oRSTWOSIDEDFACE);
 				GfxCommandList->DSSetState(oDSNONE);
 				
 				GfxCommandList->Clear(oGfxCommandList::COLOR_DEPTH_STENCIL);
+
+				GfxCommandList->DrawMesh(oCreateTranslation(float3(0.0f,0.0f,0.1f)), 0, GfxMesh, ~0u, nullptr);
 
 				GfxCommandList->End();
 

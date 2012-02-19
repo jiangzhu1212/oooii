@@ -41,8 +41,12 @@ oDECLARE_GFXRESOURCE_IMPLEMENTATION(oD3D11, Mesh, MESH)
 	oRef<ID3D11Buffer> Vertices[3];
 	uint VertexStrides[3];
 
-	inline RANGE* LockRanges() threadsafe { RangesMutex.lock(); return oGetData(thread_cast<oD3D11Mesh*>(this)->Ranges); } // safe because this is a Map/Lock API
-	inline void UnlockRanges() threadsafe { RangesMutex.unlock(); }
+	bool Uses16BitIndices;
+	D3D11_MAPPED_SUBRESOURCE MappedIndices;
+	uint* p32BitIndices;
+
+	bool Map(ID3D11DeviceContext* _pDeviceContext, size_t _SubresourceIndex, oGfxCommandList::MAPPED* _pMapped);
+	void Unmap(ID3D11DeviceContext* _pDeviceContext, size_t _SubresourceIndex);
 };
 
 #endif

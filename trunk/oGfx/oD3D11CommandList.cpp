@@ -224,31 +224,32 @@ static ID3D11Resource* GetResourceBuffer(oGfxResource* _pResource, size_t _Subre
 	}
 }
 
-void oD3D11CommandList::Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPED* _pMapped)
+bool oD3D11CommandList::Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPED* _pMapped)
 {
-	if (_pResource->GetType() == oGfxResource::MESH && _SubresourceIndex == oGfxMesh::RANGES)
-	{
-		_pMapped->pData = static_cast<oD3D11Mesh*>(_pResource)->LockRanges();
-		_pMapped->RowPitch = sizeof(oGfxMesh::RANGE);
-		_pMapped->SlicePitch = 0;
-	}
+	if (_pResource->GetType() == oGfxResource::MESH)
+		return static_cast<oD3D11Mesh*>(_pResource)->Map(Context, _SubresourceIndex, _pMapped);
 
 	else
 	{
 		D3D11_MAPPED_SUBRESOURCE mapped;
 		UINT D3D11SubresourceIndex = 0;
 		ID3D11Resource* pD3D11Resource = GetResourceBuffer(_pResource, _SubresourceIndex, &D3D11SubresourceIndex);
-		oV(Context->Map(pD3D11Resource, D3D11SubresourceIndex, D3D11_MAP_WRITE_DISCARD, 0, &mapped));
+		if (!Context->Map(pD3D11Resource, D3D11SubresourceIndex, D3D11_MAP_WRITE_DISCARD, 0, &mapped))
+			return oWinSetLastError();
+
 		_pMapped->pData = mapped.pData;
 		_pMapped->RowPitch = mapped.RowPitch;
 		_pMapped->SlicePitch = mapped.DepthPitch;
 	}
+
+	return true;
 }
 
 void oD3D11CommandList::Unmap(oGfxResource* _pResource, size_t _SubresourceIndex, size_t _NewCount)
 {
-	if (_pResource->GetType() == oGfxResource::MESH && _SubresourceIndex == oGfxMesh::RANGES)
-		static_cast<oD3D11Mesh*>(_pResource)->UnlockRanges();
+	if (_pResource->GetType() == oGfxResource::MESH)
+		static_cast<oD3D11Mesh*>(_pResource)->Unmap(Context, _SubresourceIndex);
+
 	else
 	{
 		UINT D3D11SubresourceIndex = 0;
