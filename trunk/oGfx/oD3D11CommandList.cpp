@@ -85,12 +85,12 @@ static void SetViewports(ID3D11DeviceContext* _pDeviceContext, const oGfxRenderT
 
 static void SetViewConstants(ID3D11DeviceContext* _pDeviceContext, ID3D11Buffer* _pViewConstants, const float4x4& _View, const float4x4& _Projection, const oGfxRenderTarget::DESC& _RTDesc, size_t _RenderTargetIndex)
 {
-	//D3D11_MAPPED_SUBRESOURCE mapped;
-	//_pDeviceContext->Map(_pViewConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-	//oDeferredViewConstants* V = (oDeferredViewConstants*)mapped.pData;
-	//V->Set(_View, _Projection, asfloat(uint2(_RTDesc.Width, _RTDesc.Height)), static_cast<uint>(_RenderTargetIndex));
-	//_pDeviceContext->Unmap(_pViewConstants, 0);
-	//oD3D11SetConstantBuffers(_pDeviceContext, 0, 1, &_pViewConstants);
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	_pDeviceContext->Map(_pViewConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+	oDeferredViewConstants* V = (oDeferredViewConstants*)mapped.pData;
+	V->Set(_View, _Projection, oCastAsFloat(_RTDesc.Dimensions), static_cast<uint>(_RenderTargetIndex));
+	_pDeviceContext->Unmap(_pViewConstants, 0);
+	oD3D11SetConstantBuffers(_pDeviceContext, 0, 1, &_pViewConstants);
 }
 
 static void SetPipeline(ID3D11DeviceContext* _pDeviceContext, const oGfxPipeline* _pPipeline)
