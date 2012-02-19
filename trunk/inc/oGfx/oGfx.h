@@ -43,7 +43,6 @@ interface oGfxResource : oGfxDeviceChild
 	// Returns an ID for this resource fit for use as a hash
 	virtual uint GetID() const threadsafe = 0;
 };
-#if 0
 
 interface oGfxInstanceList : oGfxResource
 {
@@ -70,7 +69,7 @@ interface oGfxInstanceList : oGfxResource
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
-
+#if 0
 interface oGfxLineList : oGfxResource
 {
 	struct DESC
@@ -402,11 +401,11 @@ interface oGfxCommandList : oGfxDeviceChild
 	// Uses a render target's CLEAR_DESC to clear all associated buffers
 	// according to the type of clear specified here.
 	virtual void Clear(CLEAR_TYPE _ClearType) = 0;
-#if 0
+
 	// Submits an oGfxMesh for drawing using the current state of the 
 	// command list.
-	virtual void DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxInstanceList* _pInstanceList = nullptr) = 0;
-
+	virtual void DrawMesh(const float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxInstanceList* _pInstanceList = nullptr) = 0;
+#if 0
 	// Draws a set of worldspace lines. Use Map/Unmap to set up line lists
 	// writing an array of type oGfxLineList::LINEs.
 	virtual void DrawLines(uint _LineListID, const oGfxLineList* _pLineList) = 0;

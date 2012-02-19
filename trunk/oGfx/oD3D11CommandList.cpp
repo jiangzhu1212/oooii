@@ -22,7 +22,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oD3D11CommandList.h"
-//#include "oD3D11InstanceList.h"
+#include "oD3D11InstanceList.h"
 //#include "oD3D11LineList.h"
 //#include "oD3D11Material.h"
 #include "oD3D11Mesh.h"
@@ -32,6 +32,7 @@
 
 oDEFINE_GFXDEVICE_CREATE(oD3D11, CommandList);
 oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(oD3D11, CommandList)
+	, pRenderTarget(nullptr)
 {
 	*_pSuccess = false;
 	oD3D11DEVICE();
@@ -285,8 +286,8 @@ void oD3D11CommandList::Clear(CLEAR_TYPE _ClearType)
 	if (pRenderTarget->DSV && _ClearType != COLOR)
 		Context->ClearDepthStencilView(pRenderTarget->DSV, sClearFlags[_ClearType], pRenderTarget->Desc.ClearDesc.DepthClearValue, pRenderTarget->Desc.ClearDesc.StencilClearValue);
 }
-#if 0
-void oD3D11CommandList::DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxInstanceList* _pInstanceList)
+
+void oD3D11CommandList::DrawMesh(const float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxInstanceList* _pInstanceList)
 {
 	oASSERT(!_pInstanceList, "Instanced drawing not yet implemented");
 
@@ -329,19 +330,18 @@ void oD3D11CommandList::DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxM
 	size_t nVertexBuffers = 0;
 	for (size_t i = 0; i < oCOUNTOF(M->Vertices); i++)
 	{
-		if (M->Vertices)
+		if (M->Vertices[i])
 		{
 			pVertices[nVertexBuffers] = M->Vertices[i];
-			Strides[nVertexBuffers] = desc.VertexByteSize[i];
+			Strides[nVertexBuffers] = M->VertexStrides[i];
 			nVertexBuffers++;
 		}
 	}
 	
-	D3D11_PRIMITIVE_TOPOLOGY topology;
-	Context->IAGetPrimitiveTopology(&topology);
+	Context->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	oD3D11Draw(Context
-		, oD3D11GetNumElements(topology, NumTriangles)
+		, NumTriangles
 		, nVertexBuffers
 		, pVertices
 		, Strides
@@ -351,7 +351,7 @@ void oD3D11CommandList::DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxM
 		, true
 		, StartIndex);
 }
-
+#if 0
 void oD3D11CommandList::DrawLines(uint _LineListID, const oGfxLineList* _pLineList)
 {
 	// Set up draw buffer

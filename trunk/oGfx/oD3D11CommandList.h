@@ -58,7 +58,7 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	void Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPED* _pMapped) override;
 	void Unmap(oGfxResource* _pResource, size_t _SubresourceIndex, size_t _NewCount = 1) override;
 	void Clear(CLEAR_TYPE _ClearType) override;
-	//void DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxInstanceList* _pInstanceList = nullptr) override;
+	void DrawMesh(const float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxInstanceList* _pInstanceList = nullptr) override;
 	//void DrawLines(uint _LineListID, const oGfxLineList* _pLineList) override;
 	//void DrawQuad(float4x4& _Transform, uint _MeshID) override;
 

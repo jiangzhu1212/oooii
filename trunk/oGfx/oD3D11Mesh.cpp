@@ -29,6 +29,7 @@ oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, Mesh)
 {
 	*_pSuccess = false;
 	oD3D11DEVICE();
+	oINIT_ARRAY(VertexStrides, 0);
 
 	Ranges.resize(_Desc.NumRanges);
 
@@ -40,11 +41,11 @@ oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, Mesh)
 		oStringL name;
 		for (uint i = 0; i < oCOUNTOF(Vertices); i++)
 		{
-			uint VertexByteSize = oGfxCalcInterleavedVertexSize(_Desc.pElements, _Desc.NumElements, i);
-			if (VertexByteSize)
+			VertexStrides[i] = oGfxCalcInterleavedVertexSize(_Desc.pElements, _Desc.NumElements, i);
+			if (VertexStrides[i])
 			{
 				sprintf_s(name, "%sVertices[%02u]", _Name, i);
-				oVERIFY(oD3D11CreateVertexBuffer(D3DDevice, name, true, 0, _Desc.NumVertices, VertexByteSize, &Vertices[i]));
+				oVERIFY(oD3D11CreateVertexBuffer(D3DDevice, name, true, 0, _Desc.NumVertices, VertexStrides[i], &Vertices[i]));
 			}
 		}
 	}

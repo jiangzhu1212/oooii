@@ -39,6 +39,7 @@ oDECLARE_GFXRESOURCE_IMPLEMENTATION(oD3D11, Mesh, MESH)
 	std::vector<RANGE> Ranges;
 	oRef<ID3D11Buffer> Indices;
 	oRef<ID3D11Buffer> Vertices[3];
+	uint VertexStrides[3];
 
 	inline RANGE* LockRanges() threadsafe { RangesMutex.lock(); return oGetData(thread_cast<oD3D11Mesh*>(this)->Ranges); } // safe because this is a Map/Lock API
 	inline void UnlockRanges() threadsafe { RangesMutex.unlock(); }
