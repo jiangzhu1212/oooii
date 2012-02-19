@@ -24,6 +24,8 @@
 #include "oD3D11InstanceList.h"
 #include "oD3D11Device.h"
 
+#if 0
+
 oDEFINE_GFXDEVICE_CREATE(oD3D11, InstanceList);
 oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, InstanceList)
 {
@@ -48,3 +50,4 @@ oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, InstanceList)
 
 	*_pSuccess = true;
 }
+#endif

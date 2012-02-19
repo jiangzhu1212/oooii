@@ -24,7 +24,7 @@
 #pragma once
 #ifndef oD3D11Material_h
 #define oD3D11Material_h
-
+#if 0
 #include <oGfx/oGfx.h>
 #include "oGfxCommon.h"
 #include <oPlatform/oD3D11.h>
@@ -36,4 +36,5 @@ oDECLARE_GFXRESOURCE_IMPLEMENTATION(oD3D11, Material, MATERIAL)
 	oRef<ID3D11Buffer> Constants;
 };
 
+#endif
 #endif

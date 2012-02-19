@@ -24,7 +24,7 @@
 #pragma once
 #ifndef oD3D11LineList_h
 #define oD3D11LineList_h
-
+#if 0
 #include <oGfx/oGfx.h>
 #include "oGfxCommon.h"
 #include <oPlatform/oD3D11.h>
@@ -36,4 +36,5 @@ oDECLARE_GFXRESOURCE_IMPLEMENTATION(oD3D11, LineList, LINELIST)
 	oRef<ID3D11Buffer> Lines;
 };
 
+#endif
 #endif

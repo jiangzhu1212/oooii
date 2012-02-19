@@ -21,21 +21,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#pragma once
-#ifndef oD3D11Texture_h
-#define oD3D11Texture_h
-#if 0
-#include <oGfx/oGfx.h>
-#include "oGfxCommon.h"
-#include <oPlatform/oD3D11.h>
+#include <oPlatform/oWindows.h>
+#include <oGfxTestPSByteCode.h>
+#include <oGfxTestVSByteCode.h>
 
-oDECLARE_GFXRESOURCE_IMPLEMENTATION(oD3D11, Texture, TEXTURE)
-{
-	oDEFINE_GFXRESOURCE_INTERFACE();
-	oDECLARE_GFXRESOURCE_CTOR(oD3D11, Texture);
-	oRef<ID3D11Texture2D> Texture;
-	oRef<ID3D11ShaderResourceView> SRV;
-};
-
-#endif
-#endif

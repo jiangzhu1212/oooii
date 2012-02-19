@@ -23,7 +23,7 @@
  **************************************************************************/
 #include "oD3D11LineList.h"
 #include "oD3D11Device.h"
-
+#if 0
 oDEFINE_GFXDEVICE_CREATE(oD3D11, LineList);
 oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, LineList)
 {
@@ -33,3 +33,4 @@ oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, LineList)
 	Desc.NumLines = 0;
 	*_pSuccess = true;
 }
+#endif

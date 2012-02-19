@@ -24,7 +24,7 @@
 #pragma once
 #ifndef oD3D11Mesh_h
 #define oD3D11Mesh_h
-
+#if 0
 #include <oGfx/oGfx.h>
 #include "oGfxCommon.h"
 #include <oPlatform/oD3D11.h>
@@ -38,4 +38,5 @@ oDECLARE_GFXRESOURCE_IMPLEMENTATION(oD3D11, Mesh, MESH)
 	oRef<ID3D11Buffer> Vertices[3];
 };
 
+#endif
 #endif

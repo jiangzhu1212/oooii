@@ -23,7 +23,7 @@
  **************************************************************************/
 #include "oD3D11Mesh.h"
 #include "oD3D11Device.h"
-
+#if 0
 oDEFINE_GFXDEVICE_CREATE(oD3D11, Mesh);
 oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, Mesh)
 {
@@ -48,3 +48,4 @@ oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, Mesh)
 
 	*_pSuccess = true;
 }
+#endif

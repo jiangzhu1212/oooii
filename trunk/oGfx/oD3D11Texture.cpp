@@ -23,8 +23,8 @@
  **************************************************************************/
 #include "oD3D11Texture.h"
 #include "oD3D11Device.h"
-#include <oooii/oSurface.h>
-
+#include <oBasis/oSurface.h>
+#if 0
 oDEFINE_GFXDEVICE_CREATE(oD3D11, Texture);
 oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, Texture)
 {
@@ -49,3 +49,4 @@ oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, Texture)
 		default: oASSUME(0);
 	}
 }
+#endif
