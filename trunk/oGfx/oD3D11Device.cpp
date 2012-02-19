@@ -77,6 +77,14 @@ bool oGfxDeviceCreate(const oGfxDevice::DESC& _Desc, threadsafe oGfxDevice** _pp
 	return success;
 }
 
+template<typename StateT, size_t size> bool StateExists(size_t _Index, StateT (&_States)[size])
+{
+	for (size_t j = 0; j < _Index; j++)
+		if (_States[_Index] == _States[j])
+			return true;
+	return false;
+}
+
 oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc, bool* _pSuccess)
 	: D3DDevice(_pDevice)
 	, Desc(_Desc)
@@ -105,13 +113,16 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc
 		D3D11_BLEND_DESC desc = {0};
 		for (size_t i = 0; i < oCOUNTOF(OMStates); i++)
 		{
-
 			desc.AlphaToCoverageEnable = FALSE;
 			desc.IndependentBlendEnable = FALSE;
 			desc.RenderTarget[0] = sBlends[i];
 			oV(_pDevice->CreateBlendState(&desc, &OMStates[i]));
-			sprintf_s(StateName, "%s.%s", _Desc.DebugName.c_str(), oAsString((oOMSTATE)i));
-			oV(oD3D11SetDebugName(OMStates[i], StateName));
+
+			if (!StateExists(i, OMStates))
+			{
+				sprintf_s(StateName, "%s.%s", _Desc.DebugName.c_str(), oAsString((oOMSTATE)i));
+				oV(oD3D11SetDebugName(OMStates[i], StateName));
+			}
 		}
 	}
 
@@ -154,10 +165,13 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc
 			desc.FillMode = sFills[i];
 			desc.CullMode = sCulls[i];
 			oV(_pDevice->CreateRasterizerState(&desc, &RSStates[i]));
-			sprintf_s(StateName, "%s.%s", _Desc.DebugName.c_str(), oAsString((oRSSTATE)i));
-			oV(oD3D11SetDebugName(RSStates[i], StateName));
+	
+			if (!StateExists(i, RSStates))
+			{
+				sprintf_s(StateName, "%s.%s", _Desc.DebugName.c_str(), oAsString((oRSSTATE)i));
+				oV(oD3D11SetDebugName(RSStates[i], StateName));
+			}
 		}
-
 	}
 
 	// SAStates
