@@ -67,6 +67,9 @@ struct oIAELEMENT
 	uint InputSlot;
 };
 
+oAPI uint oGfxCalcInterleavedVertexSize(const oIAELEMENT* _pElements, size_t _NumElements, uint _InputSlot);
+template<size_t size> uint oGfxCalcInterleavedVertexSize(const oIAELEMENT (&_pElements)[size], uint _InputSlot) { return oGfxCalcInterleavedVertexSize(_pElements, size, _InputSlot); }
+
 oAPI const char* oAsString(const oOMSTATE& _OMState);
 oAPI const char* oAsString(const oRSSTATE& _RSState);
 oAPI const char* oAsString(const oDSSTATE& _DSState);

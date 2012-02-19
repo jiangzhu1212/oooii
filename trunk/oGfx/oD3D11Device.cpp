@@ -127,12 +127,12 @@ void oD3D11Device::CLRemove(oGfxCommandList* _pCommandList) threadsafe
 	oFindAndErase(ProtectedCommandLists(), _pCommandList);
 }
 
-void oD3D11Device::CLNotifyBegin() threadsafe
+void oD3D11Device::CLLockSubmit() threadsafe
 {
 	CommandListsBeginEndMutex.lock_shared();
 }
 
-void oD3D11Device::CLNotifyEnd() threadsafe
+void oD3D11Device::CLUnlockSubmit() threadsafe
 {
 	CommandListsBeginEndMutex.unlock_shared();
 }

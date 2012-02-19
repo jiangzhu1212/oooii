@@ -40,6 +40,9 @@
 #define oDEVICE_REGISTER_THIS() static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->CLInsert(this)
 #define oDEVICE_UNREGISTER_THIS() static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->CLRemove(this)
 
+#define oDEVICE_LOCK_SUBMIT() static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->CLLockSubmit()
+#define oDEVICE_UNLOCK_SUBMIT() static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->CLUnlockSubmit()
+
 const oGUID& oGetGUID(threadsafe const ID3D11Device* threadsafe const *);
 
 struct oD3D11Device : oGfxDevice, oNoncopyable
@@ -59,7 +62,7 @@ struct oD3D11Device : oGfxDevice, oNoncopyable
 	bool CreateRenderTarget(const char* _Name, const oGfxRenderTarget::DESC& _Desc, oGfxRenderTarget** _ppRenderTarget) threadsafe override;
 	bool CreateRenderTarget(const char* _Name, threadsafe oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, oGfxRenderTarget** _ppRenderTarget) threadsafe override;
 	//bool CreateMaterial(const char* _Name, const oGfxMaterial::DESC& _Desc, oGfxMaterial** _ppMaterial) threadsafe override;
-	//bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe override;
+	bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe override;
 	//bool CreateInstanceList(const char* _Name, const oGfxInstanceList::DESC& _Desc, oGfxInstanceList** _ppInstanceList) threadsafe override;
 	//bool CreateTexture(const char* _Name, const oGfxTexture::DESC& _Desc, oGfxTexture** _ppTexture) threadsafe override;
 
@@ -70,8 +73,8 @@ struct oD3D11Device : oGfxDevice, oNoncopyable
 #	
 	void CLInsert(oGfxCommandList* _pCommandList) threadsafe;
 	void CLRemove(oGfxCommandList* _pCommandList) threadsafe;
-	void CLNotifyBegin() threadsafe;
-	void CLNotifyEnd() threadsafe;
+	void CLLockSubmit() threadsafe;
+	void CLUnlockSubmit() threadsafe;
 	void DrawCommandLists() threadsafe;
 
 	inline std::vector<oGfxCommandList*>& ProtectedCommandLists() threadsafe { return thread_cast<std::vector<oGfxCommandList*>&>(CommandLists); } // safe because this should only be used when protected by CommandListsMutex

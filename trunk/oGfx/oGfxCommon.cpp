@@ -73,14 +73,14 @@ const oGUID& oGetGUID(threadsafe const oGfxMaterial* threadsafe const *)
 	static const oGUID oIID_GfxMaterial = { 0xe4b3cb37, 0x2fd7, 0x4bf5, { 0x8c, 0xbb, 0x69, 0x23, 0xf0, 0x18, 0x5a, 0x51 } };
 	return oIID_GfxMaterial;
 }
-
+#endif
 const oGUID& oGetGUID(threadsafe const oGfxMesh* threadsafe const *)
 {
 	// {CDAA61DB-D52A-44C1-8643-D32F05B2326C}
 	static const oGUID oIID_GfxMesh = { 0xcdaa61db, 0xd52a, 0x44c1, { 0x86, 0x43, 0xd3, 0x2f, 0x5, 0xb2, 0x32, 0x6c } };
 	return oIID_GfxMesh;
 }
-#endif
+
 const oGUID& oGetGUID(threadsafe const oGfxPipeline* threadsafe const *)
 {
 	// {2401B122-EB19-4CEF-B3BE-9543C003B896}
@@ -100,5 +100,69 @@ const oGUID& oGetGUID(threadsafe const oGfxTexture* threadsafe const *)
 	// {19374525-0CC8-445B-80ED-A6D2FF13362C}
 	static const oGUID oIID_GfxTexture = { 0x19374525, 0xcc8, 0x445b, { 0x80, 0xed, 0xa6, 0xd2, 0xff, 0x13, 0x36, 0x2c } };
 	return oIID_GfxTexture;
+}
+#endif
+
+
+#if 0
+bool oGfxCreateMeshFromGeometry(const char* _MeshName
+	, const oGeometry* _pGeometry
+	, threadsafe oGfxDevice* _pDevice
+	, oGfxCommandList* _pCommandList
+	, oGfxMesh** _ppMesh)
+{
+	oGeometry::DESC GeoDesc;
+	_pGeometry->GetDesc(&GeoDesc);
+
+	oGeometry::MAPPED GeoMapped;
+	if (!_pGeometry->Map(&GeoMapped))
+		return oErrorSetLast(oERROR_GENERIC, "Failed to map geometry");
+	oOnScopeExit OSEUnmapGeo([&] { _pGeometry->Unmap(); });
+
+	uint VertexByteSize = 0;
+	if (GeoDesc.Layout.Positions)
+		VertexByteSize += sizeof(float3);
+	if (GeoDesc.Layout.Normals)
+		VertexByteSize += sizeof(float3);
+	if (GeoDesc.Layout.Tangents)
+		VertexByteSize += sizeof(float4);
+	if (GeoDesc.Layout.Texcoords)
+		VertexByteSize += sizeof(float2);
+	if (GeoDesc.Layout.Colors)
+		VertexByteSize += sizeof(oColor);
+
+	oGfxMesh::DESC MeshDesc;
+	MeshDesc.VertexByteSize[0] = VertexByteSize;
+	MeshDesc.NumIndices = GeoDesc.NumIndices;
+	MeshDesc.NumVertices = GeoDesc.NumVertices;
+	MeshDesc.NumRanges = 1;
+	MeshDesc.LocalSpaceBounds = GeoDesc.Bounds;
+	MeshDesc.FrequentIndexUpdate = false;
+	MeshDesc.FrequentVertexUpdate[0] = false;
+
+	if (!_pDevice->CreateMesh(_MeshName, MeshDesc, _ppMesh))
+		return false; // pass through error
+
+	oGfxCommandList::MAPPING mappedRanges, mappedIndices, mappedVertices;
+	oVERIFY(_pCommandList->Map(*_ppMesh, oGfxMesh::RANGES, &mappedRanges));
+	oVERIFY(_pCommandList->Map(*_ppMesh, oGfxMesh::INDICES, &mappedIndices));
+	oVERIFY(_pCommandList->Map(*_ppMesh, oGfxMesh::VERTICES0, &mappedVertices));
+
+	oGfxMesh::RANGE r = *(oGfxMesh::RANGE*)mappedRanges.pData;
+	r.StartTriangle = 0;
+	r.NumTriangles = GeoDesc.NumIndices / 3;
+	r.MinVertex = 0;
+	r.MaxVertex = MeshDesc.NumVertices;
+
+	memcpy(mappedIndices.pData, GeoMapped.pIndices, sizeof(unsigned int) * MeshDesc.NumIndices);
+	memcpy(mappedVertices.pData, GeoMapped.pPositions
+
+	oMemcpyAsym(void* oRESTRICT _pDestination, size_t _DestinationStride, const void* oRESTRICT _pSource, size_t _SourceStride, size_t _NumElements);
+	
+	_pCommandList->Unmap(*_ppMesh, oGfxMesh::VERTICES0);
+	_pCommandList->Unmap(*_ppMesh, oGfxMesh::INDICES);
+	_pCommandList->Unmap(*_ppMesh, oGfxMesh::RANGES);
+
+	return 
 }
 #endif

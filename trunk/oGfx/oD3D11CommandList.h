@@ -55,8 +55,8 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	//void SASetStates(size_t _StartSlot, size_t _NumStates, const oSASTATE* _pSAStates, const oMBSTATE* _pMBStates) override;
 	//void SetTextures(size_t _StartSlot, size_t _NumTextures, const oGfxTexture* const* _ppTextures) override;
 	//void SetMaterials(size_t _StartSlot, size_t _NumMaterials, const oGfxMaterial* const* _ppMaterials) override;
-	//void Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPING* _pMapping) override;
-	//void Unmap(oGfxResource* _pResource, size_t _SubresourceIndex, size_t _NewCount = 1) override;
+	void Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPED* _pMapped) override;
+	void Unmap(oGfxResource* _pResource, size_t _SubresourceIndex, size_t _NewCount = 1) override;
 	void Clear(CLEAR_TYPE _ClearType) override;
 	//void DrawMesh(float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxInstanceList* _pInstanceList = nullptr) override;
 	//void DrawLines(uint _LineListID, const oGfxLineList* _pLineList) override;

@@ -24,19 +24,24 @@
 #pragma once
 #ifndef oD3D11Mesh_h
 #define oD3D11Mesh_h
-#if 0
+
 #include <oGfx/oGfx.h>
 #include "oGfxCommon.h"
+#include <oBasis/oAlgorithm.h>
 #include <oPlatform/oD3D11.h>
+#include <vector>
 
 oDECLARE_GFXRESOURCE_IMPLEMENTATION(oD3D11, Mesh, MESH)
 {
 	oDEFINE_GFXRESOURCE_INTERFACE();
 	oDECLARE_GFXRESOURCE_CTOR(oD3D11, Mesh);
+	oMutex RangesMutex;
 	std::vector<RANGE> Ranges;
 	oRef<ID3D11Buffer> Indices;
 	oRef<ID3D11Buffer> Vertices[3];
+
+	inline RANGE* LockRanges() threadsafe { RangesMutex.lock(); return oGetData(thread_cast<oD3D11Mesh*>(this)->Ranges); } // safe because this is a Map/Lock API
+	inline void UnlockRanges() threadsafe { RangesMutex.unlock(); }
 };
 
-#endif
 #endif

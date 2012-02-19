@@ -124,20 +124,15 @@ interface oGfxMaterial : oGfxResource
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
-
+#endif
 interface oGfxMesh : oGfxResource
 {
-	// Represents irregular geometry data sampling and 
-	// the topology connecting those sample points to 
-	// approximate geometry with a surface composed of 
-	// triangles. Ranges of triangles are grouped, but
-	// kept separate from one another so that a 
-	// continuous shape can be constructed by multiple
-	// draw calls, each with a different render state.
+	// Ranges of triangles are grouped, but kept separate from one 
+	// another so that a continuous shape can be constructed by 
+	// multiple draw calls, each with a different render state.
 
 	struct DESC
 	{
-		uint VertexByteSize[3];
 		uint NumIndices;
 		uint NumVertices;
 		uint NumRanges;
@@ -145,17 +140,22 @@ interface oGfxMesh : oGfxResource
 		bool FrequentIndexUpdate;
 		bool FrequentVertexUpdate[3];
 
+		// A copy of the underlying data is not made for this pointer
+		// because the intended usage pattern is that all possible 
+		// geometry layouts are defined statically in code and 
+		// referenced from there.
+		const oIAELEMENT* pElements;
+		uint NumElements;
+
 		DESC()
 			: NumIndices(0)
 			, NumVertices(0)
 			, NumRanges(0)
 			, FrequentIndexUpdate(false)
+			, pElements(nullptr)
+			, NumElements(0)
 		{
-			for (size_t i = 0; i < oCOUNTOF(VertexByteSize); i++)
-			{
-				VertexByteSize[i] = 0;
-				FrequentVertexUpdate[i] = false;
-			}
+			oINIT_ARRAY(FrequentVertexUpdate, false);
 		}
 	};
 
@@ -178,7 +178,7 @@ interface oGfxMesh : oGfxResource
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
-
+#if 0
 interface oGfxTexture : oGfxResource
 {
 	// A large buffer filled with surface data. Most often
@@ -213,8 +213,8 @@ interface oGfxTexture : oGfxResource
 		uint Depth;
 		uint NumMips; // 0 means auto-gen mips
 		uint NumSlices;
-		oSurface::FORMAT ColorFormat;
-		oSurface::FORMAT DepthStencilFormat; // oSurface::UNKNOWN means none
+		oSURFACE_FORMAT ColorFormat;
+		oSURFACE_FORMAT DepthStencilFormat; // oSURFACE_FORMATUNKNOWN means none
 		TYPE Type;
 	};
 
@@ -336,7 +336,7 @@ interface oGfxCommandList : oGfxDeviceChild
 		int DrawOrder;
 	};
 
-	struct MAPPING
+	struct MAPPED
 	{
 		void* pData;
 		uint RowPitch;
@@ -378,6 +378,7 @@ interface oGfxCommandList : oGfxDeviceChild
 
 	// Set the material constants in this context
 	virtual void SetMaterials(size_t _StartSlot, size_t _NumMaterials, const oGfxMaterial* const* _ppMaterials) = 0;
+#endif
 
 	// Maps the specified resource and returns a pointer to a writable 
 	// buffer. It is up to the user to ensure sizes and protect against
@@ -389,14 +390,14 @@ interface oGfxCommandList : oGfxDeviceChild
 	// Material: The nth material as specified by ArraySize
 	// Mesh: A oMesh::SUBRESOURCE value
 	// Texture: A value returned by oSurface::CalculateSubresource()
-	virtual void Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPING* _pMapping) = 0;
+	virtual void Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPED* _pMapped) = 0;
 	
 	// Unmaps a resource mapped with the above Map() call. _NewCount is 
 	// used by oGfxLineList and oGfxInstanceList to indicate how many of
 	// the entries are now valid. The parameter is ignored by other 
 	// resources.
 	virtual void Unmap(oGfxResource* _pResource, size_t _SubresourceIndex, size_t _NewCount = 1) = 0;
-#endif
+
 	// Uses a render target's CLEAR_DESC to clear all associated buffers
 	// according to the type of clear specified here.
 	virtual void Clear(CLEAR_TYPE _ClearType) = 0;
@@ -440,7 +441,7 @@ interface oGfxDevice : oInterface
 	virtual bool CreateRenderTarget(const char* _Name, const oGfxRenderTarget::DESC& _Desc, oGfxRenderTarget** _ppRenderTarget) threadsafe = 0;
 	virtual bool CreateRenderTarget(const char* _Name, threadsafe oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, oGfxRenderTarget** _ppRenderTarget) threadsafe = 0;
 	//virtual bool CreateMaterial(const char* _Name, const oGfxMaterial::DESC& _Desc, oGfxMaterial** _ppMaterial) threadsafe = 0;
-	//virtual bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe = 0;
+	virtual bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe = 0;
 	//virtual bool CreateInstanceList(const char* _Name, const oGfxInstanceList::DESC& _Desc, oGfxInstanceList** _ppInstanceList) threadsafe = 0;
 	//virtual bool CreateTexture(const char* _Name, const oGfxTexture::DESC& _Desc, oGfxTexture** _ppTexture) threadsafe = 0;
 

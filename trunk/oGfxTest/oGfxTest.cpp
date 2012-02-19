@@ -64,6 +64,64 @@ public:
 		oVERIFY(oD3D11GetPipelineDesc(oGFX_FOWARD_COLOR, &PLDesc));
 		oVERIFY(GfxDevice->CreatePipeline("oGfxTest.Forward.Color", PLDesc, &PLForwardColor));
 
+		oRef<oGeometryFactory> GeoFactory;
+		oVERIFY(oGeometryFactoryCreate(&GeoFactory));
+
+		oGeometry::LAYOUT BoxLayout;
+		memset(&BoxLayout, 0, sizeof(oGeometry::LAYOUT));
+		BoxLayout.Positions = true;
+		BoxLayout.Texcoords = true;
+		BoxLayout.Normals = true;
+		BoxLayout.Colors = true;
+
+		oGeometryFactory::BOX_DESC BoxDesc;
+		BoxDesc.FaceType = oGeometry::FRONT_CCW;
+		BoxDesc.Bounds = oAABoxf(float3(-0.5f), float3(0.5f));
+		BoxDesc.Divide = 4;
+		BoxDesc.Color = std::White;
+		BoxDesc.FlipTexcoordV = false;
+
+		oRef<oGeometry> BoxGeo;
+		oVERIFY(GeoFactory->Create(BoxDesc, BoxLayout, &BoxGeo));
+
+		oGeometry::DESC GeoDesc;
+		BoxGeo->GetDesc(&GeoDesc);
+
+		oGfxMesh::DESC MeshDesc;
+		MeshDesc.NumIndices = GeoDesc.NumIndices;
+		MeshDesc.NumVertices = GeoDesc.NumVertices;
+		MeshDesc.NumRanges = 1;
+		MeshDesc.LocalSpaceBounds = GeoDesc.Bounds;
+		MeshDesc.FrequentIndexUpdate = false;
+		MeshDesc.FrequentVertexUpdate[0] = false;
+		MeshDesc.pElements = PLDesc.pElements;
+		MeshDesc.NumElements = PLDesc.NumElements;
+		oVERIFY(GfxDevice->CreateMesh("oGfxTest Mesh", MeshDesc, &GfxMesh));
+
+		oGeometry::MAPPED GeoMapped;
+		BoxGeo->Map(&GeoMapped);
+
+		oGfxCommandList::MAPPED mappedR, mappedI, mappedV;
+		GfxCommandList->Map(GfxMesh, oGfxMesh::RANGES, &mappedR);
+		GfxCommandList->Map(GfxMesh, oGfxMesh::INDICES, &mappedI);
+		GfxCommandList->Map(GfxMesh, oGfxMesh::VERTICES0, &mappedV);
+
+		oGfxMesh::RANGE r = *(oGfxMesh::RANGE*)mappedR.pData;
+		r.StartTriangle = 0;
+		r.NumTriangles = MeshDesc.NumIndices / 3;
+		r.MinVertex = 0;
+		r.MaxVertex = MeshDesc.NumVertices;
+
+		memcpy(mappedI.pData, GeoMapped.pIndices, sizeof(uint) * MeshDesc.NumIndices);
+
+		size_t VertexStride = oGfxCalcInterleavedVertexSize(MeshDesc.pElements, MeshDesc.NumElements, 0);
+		oMemcpyAsym(mappedV.pData, VertexStride, GeoMapped.pPositions, sizeof(float3), MeshDesc.NumVertices);
+		oMemcpyAsym(oByteAdd(mappedV.pData, sizeof(float3)), VertexStride, GeoMapped.pTexcoords, sizeof(float2), MeshDesc.NumVertices);
+
+		GfxCommandList->Unmap(GfxMesh, oGfxMesh::VERTICES0);
+		GfxCommandList->Unmap(GfxMesh, oGfxMesh::INDICES);
+		GfxCommandList->Unmap(GfxMesh, oGfxMesh::RANGES);
+
 		WinHook = Window->Hook(oBIND(&oRenderTest::Render, this, oBIND1, oBIND2, oBIND3));
 	}
 
@@ -118,6 +176,7 @@ private:
 	oRef<oGfxRenderTarget> GfxRenderTarget;
 	oRef<oGfxCommandList> GfxCommandList;
 	oRef<oGfxPipeline> PLForwardColor;
+	oRef<oGfxMesh> GfxMesh;
 	unsigned int WinHook;
 };
 
