@@ -46,6 +46,8 @@ static void oInitializeInputElementDesc(D3D11_INPUT_ELEMENT_DESC* _pInputElement
 oDEFINE_GFXDEVICE_CREATE(oD3D11, Pipeline);
 oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(oD3D11, Pipeline)
 {
+	*_pSuccess = false;
+
 	oASSERT(_Desc.NumElements > 0, "At least one vertex element must be specified");
 	NumElements = _Desc.NumElements;
 	pElements = new oIAELEMENT[NumElements];
@@ -67,6 +69,8 @@ oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(oD3D11, Pipeline)
 		oV(D3DDevice->CreateGeometryShader(_Desc.pGSByteCode, oD3D11GetEncodedByteCodeSize(_Desc.pGSByteCode), 0, &GeometryShader));
 	if (_Desc.pPSByteCode)
 		oV(D3DDevice->CreatePixelShader(_Desc.pPSByteCode, oD3D11GetEncodedByteCodeSize(_Desc.pPSByteCode), 0, &PixelShader));
+
+	*_pSuccess = true;
 }
 
 oD3D11Pipeline::~oD3D11Pipeline()

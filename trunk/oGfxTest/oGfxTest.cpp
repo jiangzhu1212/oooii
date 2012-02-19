@@ -29,6 +29,8 @@
 
 #include <oGfx/oGfx.h>
 
+#include "oGfxTestPipeline.h"
+
 class oRenderTest
 {
 public:
@@ -58,6 +60,10 @@ public:
 
 		oVERIFY(GfxDevice->CreateCommandList("Test CommandList", CmdListDesc, &GfxCommandList));
 
+		oGfxPipeline::DESC PLDesc;
+		oVERIFY(oD3D11GetPipelineDesc(oGFX_FOWARD_COLOR, &PLDesc));
+		oVERIFY(GfxDevice->CreatePipeline("oGfxTest.Forward.Color", PLDesc, &PLForwardColor));
+
 		WinHook = Window->Hook(oBIND(&oRenderTest::Render, this, oBIND1, oBIND2, oBIND3));
 	}
 
@@ -85,7 +91,7 @@ public:
 				cd.ClearColor[0] = (counter++ & 0x1) ? std::White : std::Blue;
 				GfxRenderTarget->SetClearDesc(cd);
 
-				GfxCommandList->Begin(float4x4::Identity, float4x4::Identity, nullptr, GfxRenderTarget.c_ptr(), 0, 0, nullptr);
+				GfxCommandList->Begin(float4x4::Identity, float4x4::Identity, PLForwardColor, GfxRenderTarget, 0, 0, nullptr);
 				
 				GfxCommandList->Clear(oGfxCommandList::COLOR_DEPTH_STENCIL);
 
@@ -111,6 +117,7 @@ private:
 	oRef<threadsafe oGfxDevice> GfxDevice;
 	oRef<oGfxRenderTarget> GfxRenderTarget;
 	oRef<oGfxCommandList> GfxCommandList;
+	oRef<oGfxPipeline> PLForwardColor;
 	unsigned int WinHook;
 };
 
@@ -151,7 +158,7 @@ int main(int argc, char* argv[])
 	Text->SetText("D3D11 Test");
 
 	// _____________________________________________________________________________
-	// Set up rendering components
+	// Main loop
 
 	while (RenderTest.GetWindow()->IsOpen())
 	{

@@ -44,7 +44,7 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, Pipeline)
 	oRef<ID3D11PixelShader> PixelShader;
 
 	oIAELEMENT* pElements;
-	unsigned int NumElements;
+	uint NumElements;
 };
 
 #endif

@@ -95,13 +95,14 @@ static void SetViewConstants(ID3D11DeviceContext* _pDeviceContext, ID3D11Buffer*
 
 static void SetPipeline(ID3D11DeviceContext* _pDeviceContext, const oGfxPipeline* _pPipeline)
 {
-	//oD3D11Pipeline* p = const_cast<oD3D11Pipeline*>(static_cast<const oD3D11Pipeline*>(_pPipeline));
-	//_pDeviceContext->IASetInputLayout(p->InputLayout);
-	//_pDeviceContext->VSSetShader(p->VertexShader, 0, 0);
-	//_pDeviceContext->HSSetShader(p->HullShader, 0, 0);
-	//_pDeviceContext->DSSetShader(p->DomainShader, 0, 0);
-	//_pDeviceContext->GSSetShader(p->GeometryShader, 0, 0);
-	//_pDeviceContext->PSSetShader(p->PixelShader, 0, 0);
+	oASSERT(_pPipeline, "A pipline must be specified");
+	oD3D11Pipeline* p = const_cast<oD3D11Pipeline*>(static_cast<const oD3D11Pipeline*>(_pPipeline));
+	_pDeviceContext->IASetInputLayout(p->InputLayout);
+	_pDeviceContext->VSSetShader(p->VertexShader, 0, 0);
+	_pDeviceContext->HSSetShader(p->HullShader, 0, 0);
+	_pDeviceContext->DSSetShader(p->DomainShader, 0, 0);
+	_pDeviceContext->GSSetShader(p->GeometryShader, 0, 0);
+	_pDeviceContext->PSSetShader(p->PixelShader, 0, 0);
 }
 
 void oD3D11CommandList::Begin(

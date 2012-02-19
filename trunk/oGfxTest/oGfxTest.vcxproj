@@ -197,6 +197,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="oGfxTestHLSL.h" />
+    <ClInclude Include="oGfxTestPipeline.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="resource.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

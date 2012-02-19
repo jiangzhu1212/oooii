@@ -21,31 +21,17 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "oGfxTestPipeline.h"
-#include <oPlatform/oWindows.h>
-#include <oGfxTestPSByteCode.h>
-#include <oGfxTestVSByteCode.h>
+#pragma once
+#ifndef oGfxTestPipeline_h
+#define oGfxTestPipeline_h
 
-static const oIAELEMENT IAElements[] = 
+#include <oGfx/oGfx.h>
+
+enum oGFXTEST_PIPELINE
 {
-	{ "POSITION", 0, oSURFACE_R32G32B32_FLOAT, 0 },
-	{ "TEXCOORD", 0, oSURFACE_R32G32_FLOAT, 0 },
+	oGFX_FOWARD_COLOR,
 };
 
-bool oD3D11GetPipelineDesc(oGFXTEST_PIPELINE _Pipeline, oGfxPipeline::DESC* _pDesc)
-{
-	memset(_pDesc, 0, sizeof(*_pDesc));
-	switch (_Pipeline)
-	{
-		case oGFX_FOWARD_COLOR:
-			_pDesc->pElements = IAElements;
-			_pDesc->NumElements = oCOUNTOF(IAElements);
-			_pDesc->pVSByteCode = oGfxTestVSByteCode;
-			_pDesc->pPSByteCode = oGfxTestPSByteCode;
-			return true;
-		default:
-			break;
-	}
+bool oD3D11GetPipelineDesc(oGFXTEST_PIPELINE _Pipeline, oGfxPipeline::DESC* _pDesc);
 
-	return false;
-}
+#endif
