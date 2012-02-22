@@ -30,23 +30,40 @@
 
 #include <oGfx/oGfxDrawConstants.h>
 
+// LS: Local Space
+// WS: World Space
+// SS: Screen Space
+// VS: View Space
+
 struct VSIN
 {
-	float3 Position : POSITION;
-	float3 Normal : NORMAL;
+	float3 LSPosition : POSITION;
+	float3 LSNormal : NORMAL;
 	float2 Texcoord : TEXCOORD;
 };
 
 struct VSOUT
 {
-	float4 ScreenSpacePosition : SV_Position;
-	float3 PositionWS : POSITION;
-	float3 NormalWS : NORMAL;
+	float4 SSPosition : SV_Position;
+	float3 WSPosition : POSITION;
+	float3 WSNormal : NORMAL;
 };
 
 struct PSOUT
 {
 	float4 Color;
+};
+
+struct VSLINEIN
+{
+	float3 LSPosition : POSITION;
+	float4 Color : COLOR;
+};
+
+struct VSLINEOUT
+{
+	float4 SSPosition : SV_Position;
+	float4 Color : COLOR;
 };
 
 #endif

@@ -56,7 +56,7 @@ struct oD3D11Device : oGfxDevice, oNoncopyable
 	oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc, bool* _pSuccess);
 
 	bool CreateCommandList(const char* _Name, const oGfxCommandList::DESC& _Desc, oGfxCommandList** _ppCommandList) threadsafe override;
-	//bool CreateLineList(const char* _Name, const oGfxLineList::DESC& _Desc, oGfxLineList** _ppLineList) threadsafe override;
+	bool CreateLineList(const char* _Name, const oGfxLineList::DESC& _Desc, oGfxLineList** _ppLineList) threadsafe override;
 	bool CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, oGfxPipeline** _ppPipeline) threadsafe override;
 	bool CreateRenderTarget(const char* _Name, const oGfxRenderTarget::DESC& _Desc, oGfxRenderTarget** _ppRenderTarget) threadsafe override;
 	bool CreateRenderTarget(const char* _Name, threadsafe oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, oGfxRenderTarget** _ppRenderTarget) threadsafe override;

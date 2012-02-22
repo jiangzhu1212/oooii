@@ -23,7 +23,7 @@
  **************************************************************************/
 #include "oD3D11CommandList.h"
 #include "oD3D11InstanceList.h"
-//#include "oD3D11LineList.h"
+#include "oD3D11LineList.h"
 //#include "oD3D11Material.h"
 #include "oD3D11Mesh.h"
 #include "oD3D11Pipeline.h"
@@ -40,6 +40,9 @@ const oGUID& oGetGUID(threadsafe const oD3D11CommandList* threadsafe const *)
 oDEFINE_GFXDEVICE_CREATE(oD3D11, CommandList);
 oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(oD3D11, CommandList)
 	, pRenderTarget(nullptr)
+	, View(float4x4::Identity)
+	, Projection(float4x4::Identity)
+	, RSState(oRSFRONTFACE)
 {
 	*_pSuccess = false;
 	oD3D11DEVICE();
@@ -173,6 +176,7 @@ void oD3D11CommandList::End()
 void oD3D11CommandList::RSSetState(oRSSTATE _State)
 {
 	Context->RSSetState(D3DDevice()->RSStates[_State]);
+	RSState = _State;
 }
 
 void oD3D11CommandList::OMSetState(oOMSTATE _State)
@@ -229,21 +233,21 @@ static ID3D11Resource* GetResourceBuffer(oGfxResource* _pResource, size_t _Subre
 		//	return il->Instances.c_ptr();
 		//}
 
-		//case oGfxResource::LINELIST:
-		//{
-		//	oD3D11LineList* ll = static_cast<oD3D11LineList*>(_pResource);
-		//	if (_NewCount != oINVALID)
-		//	{
-		//		threadsafe oD3D11LineList::DESC* pDesc = ll->GetDirectDesc();
-		//		oSWAP(&pDesc->NumLines, oSize32(_NewCount));
-		//	}
-		//	return ll->Lines.c_ptr();
-		//}
+		case oGfxResource::LINELIST:
+		{
+			oASSERT(0, "Deprecated");
+			oD3D11LineList* ll = static_cast<oD3D11LineList*>(_pResource);
+			if (_NewCount != oInvalid)
+				ll->GetDirectDesc()->NumLines = oSize32(_NewCount);
+			return ll->Lines;
+		}
 
 		//case oGfxResource::TEXTURE: return static_cast<oD3D11Texture*>(_pResource)->Texture.c_ptr();
 		//case oGfxResource::MATERIAL: return static_cast<oD3D11Material*>(_pResource)->Constants.c_ptr();
 		case oGfxResource::MESH:
 		{
+			oASSERT(0, "Deprecated");
+
 			switch (_SubresourceIndex)
 			{
 				case oGfxMesh::RANGES: oASSERT(0, "Ranges are not an ID3D11Buffer");
@@ -260,35 +264,38 @@ static ID3D11Resource* GetResourceBuffer(oGfxResource* _pResource, size_t _Subre
 
 bool oD3D11CommandList::Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPED* _pMapped)
 {
-	if (_pResource->GetType() == oGfxResource::MESH)
-		return static_cast<oD3D11Mesh*>(_pResource)->Map(Context, _SubresourceIndex, _pMapped);
-
-	else
+	switch (_pResource->GetType())
 	{
-		D3D11_MAPPED_SUBRESOURCE mapped;
-		UINT D3D11SubresourceIndex = 0;
-		ID3D11Resource* pD3D11Resource = GetResourceBuffer(_pResource, _SubresourceIndex, &D3D11SubresourceIndex);
-		if (!Context->Map(pD3D11Resource, D3D11SubresourceIndex, D3D11_MAP_WRITE_DISCARD, 0, &mapped))
-			return oWinSetLastError();
+		case oGfxResource::MESH: return static_cast<oD3D11Mesh*>(_pResource)->Map(Context, _SubresourceIndex, _pMapped);
+		case oGfxResource::LINELIST:return static_cast<oD3D11LineList*>(_pResource)->Map(Context, _pMapped);
+		default:
+		{
+			D3D11_MAPPED_SUBRESOURCE mapped;
+			UINT D3D11SubresourceIndex = 0;
+			ID3D11Resource* pD3D11Resource = GetResourceBuffer(_pResource, _SubresourceIndex, &D3D11SubresourceIndex);
+			if (!Context->Map(pD3D11Resource, D3D11SubresourceIndex, D3D11_MAP_WRITE_DISCARD, 0, &mapped))
+				return oWinSetLastError();
 
-		_pMapped->pData = mapped.pData;
-		_pMapped->RowPitch = mapped.RowPitch;
-		_pMapped->SlicePitch = mapped.DepthPitch;
+			_pMapped->pData = mapped.pData;
+			_pMapped->RowPitch = mapped.RowPitch;
+			_pMapped->SlicePitch = mapped.DepthPitch;
+			return true;
+		}
 	}
-
-	return true;
 }
 
 void oD3D11CommandList::Unmap(oGfxResource* _pResource, size_t _SubresourceIndex, size_t _NewCount)
 {
-	if (_pResource->GetType() == oGfxResource::MESH)
-		static_cast<oD3D11Mesh*>(_pResource)->Unmap(Context, _SubresourceIndex);
-
-	else
+	switch (_pResource->GetType())
 	{
-		UINT D3D11SubresourceIndex = 0;
-		ID3D11Resource* pD3D11Resource = GetResourceBuffer(_pResource, _SubresourceIndex, &D3D11SubresourceIndex);
-		Context->Unmap(pD3D11Resource, D3D11SubresourceIndex);
+		case oGfxResource::MESH: static_cast<oD3D11Mesh*>(_pResource)->Unmap(Context, _SubresourceIndex); return;
+		case oGfxResource::LINELIST: return static_cast<oD3D11LineList*>(_pResource)->Unmap(Context, _NewCount == oInvalid ? 0 : oSize32(_NewCount)); return;
+		default:
+		{
+			UINT D3D11SubresourceIndex = 0;
+			ID3D11Resource* pD3D11Resource = GetResourceBuffer(_pResource, _SubresourceIndex, &D3D11SubresourceIndex, _NewCount);
+			Context->Unmap(pD3D11Resource, D3D11SubresourceIndex);
+		}
 	}
 }
 
@@ -369,9 +376,9 @@ void oD3D11CommandList::DrawMesh(const float4x4& _Transform, uint _MeshID, const
 			nVertexBuffers++;
 		}
 	}
-	
+
 	oD3D11Draw(Context
-		, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST
+		, RSState >= oRSFRONTPOINTS ? D3D11_PRIMITIVE_TOPOLOGY_POINTLIST : D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST
 		, NumTriangles
 		, nVertexBuffers
 		, pVertices
@@ -381,10 +388,13 @@ void oD3D11CommandList::DrawMesh(const float4x4& _Transform, uint _MeshID, const
 		, M->Indices
 		, StartIndex);
 }
-#if 0
-void oD3D11CommandList::DrawLines(uint _LineListID, const oGfxLineList* _pLineList)
+
+void oD3D11CommandList::DrawLines(const float4x4& _Transform, uint _LineListID, const oGfxLineList* _pLineList)
 {
 	// Set up draw buffer
+
+	uint DrawID = D3DDevice()->IncrementDrawID();
+	SetDrawConstants(Context, D3DDevice()->DrawConstants, _Transform, View, Projection, _LineListID, DrawID);
 
 	struct REAL_LINE_VERTEX
 	{
@@ -406,11 +416,9 @@ void oD3D11CommandList::DrawLines(uint _LineListID, const oGfxLineList* _pLineLi
 		, &VertexStride
 		, 0
 		, 0
-		, 0
-		, false
-		, 0);
+		, nullptr);
 }
-
+#if 0
 void oD3D11CommandList::DrawQuad(float4x4& _Transform, uint _QuadID)
 {
 	oD3D11DrawSVQuad(Context);

@@ -51,8 +51,6 @@ const oGUID& oGetGUID(threadsafe const oGfxResource* threadsafe const *)
 	return oIID_GfxResource;
 }
 
-#if 0
-
 const oGUID& oGetGUID(threadsafe const oGfxInstanceList* threadsafe const *)
 {
 // {4738B5E2-FECE-4478-8349-6121906D6A2C}
@@ -66,7 +64,7 @@ const oGUID& oGetGUID(threadsafe const oGfxLineList* threadsafe const *)
 	static const oGUID oIID_GfxLineList = { 0x2b15d13c, 0xd0dd, 0x4573, { 0xb6, 0x4b, 0x3f, 0x0, 0x2, 0x87, 0xfb, 0x2e } };
 	return oIID_GfxLineList;
 }
-
+#if 0
 const oGUID& oGetGUID(threadsafe const oGfxMaterial* threadsafe const *)
 {
 	// {E4B3CB37-2FD7-4BF5-8CBB-6923F0185A51}

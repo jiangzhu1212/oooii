@@ -23,14 +23,31 @@
  **************************************************************************/
 #include "oD3D11LineList.h"
 #include "oD3D11Device.h"
-#if 0
+
 oDEFINE_GFXDEVICE_CREATE(oD3D11, LineList);
 oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, LineList)
 {
+	Desc = _Desc;
 	*_pSuccess = false;
 	oD3D11DEVICE();
-	oVERIFY(oD3D11CreateVertexBuffer(D3DDevice, Name, true, 0, Desc.MaxNumLines, sizeof(LINE), &Lines));
+	oVERIFY(oD3D11CreateVertexBuffer(D3DDevice, _Name, true, 0, Desc.MaxNumLines, sizeof(LINE), &Lines));
 	Desc.NumLines = 0;
 	*_pSuccess = true;
 }
-#endif
+
+bool oD3D11LineList::Map(ID3D11DeviceContext* _pContext, oGfxCommandList::MAPPED* _pMapped)
+{
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	if (FAILED(_pContext->Map(Lines, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
+		return oWinSetLastError();
+	_pMapped->pData = mapped.pData;
+	_pMapped->RowPitch = mapped.RowPitch;
+	_pMapped->SlicePitch = mapped.DepthPitch;
+	return true;
+}
+
+void oD3D11LineList::Unmap(ID3D11DeviceContext* _pContext, uint _NewNumLines)
+{
+	_pContext->Unmap(Lines, 0);
+	Desc.NumLines = _NewNumLines;
+}

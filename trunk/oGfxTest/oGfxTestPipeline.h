@@ -30,6 +30,14 @@
 enum oGFXTEST_PIPELINE
 {
 	oGFX_FOWARD_COLOR,
+	oGFX_LINE,
+};
+
+struct oGFXTEST_VERTEX
+{
+	float3 Position;
+	float3 Normal;
+	float2 Texcoord;
 };
 
 bool oD3D11GetPipelineDesc(oGFXTEST_PIPELINE _Pipeline, oGfxPipeline::DESC* _pDesc);

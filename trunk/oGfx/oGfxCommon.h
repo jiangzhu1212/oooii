@@ -163,12 +163,13 @@ struct oGfxResourceMixin : oGfxDeviceChildMixinBase<InterfaceT, ImplementationT>
 {
 	typedef typename InterfaceT::DESC desc_type;
 
-	oGfxResourceMixin(threadsafe oGfxDevice* _pDevice, const char* _Name)
+	oGfxResourceMixin(threadsafe oGfxDevice* _pDevice, const typename InterfaceT::DESC& _Desc, const char* _Name)
 		: oGfxDeviceChildMixinBase(_pDevice, _Name)
+		, Desc(_Desc)
 		, ID(oGfxDeviceResourceHash(_Name, Type))
 	{}
 
-	inline threadsafe desc_type* GetDirectDesc() threadsafe { return &Desc; }
+	inline desc_type* GetDirectDesc() { return &Desc; }
 
 protected:
 
@@ -244,6 +245,6 @@ protected:
 #define oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName::_oAPI##_TypeShortName(threadsafe oGfxDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess) : oGfxDeviceChildMixin(_pDevice, _Name)
 
 #define oDECLARE_GFXRESOURCE_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName(threadsafe oGfxDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess);
-#define oBEGIN_DEFINE_GFXRESOURCE_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName::_oAPI##_TypeShortName(threadsafe oGfxDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess) : oGfxResourceMixin(_pDevice, _Name)
+#define oBEGIN_DEFINE_GFXRESOURCE_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName::_oAPI##_TypeShortName(threadsafe oGfxDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess) : oGfxResourceMixin(_pDevice, _Desc, _Name)
 
 #endif

@@ -24,7 +24,7 @@
 #pragma once
 #ifndef oD3D11LineList_h
 #define oD3D11LineList_h
-#if 0
+
 #include <oGfx/oGfx.h>
 #include "oGfxCommon.h"
 #include <oPlatform/oD3D11.h>
@@ -34,7 +34,9 @@ oDECLARE_GFXRESOURCE_IMPLEMENTATION(oD3D11, LineList, LINELIST)
 	oDEFINE_GFXRESOURCE_INTERFACE();
 	oDECLARE_GFXRESOURCE_CTOR(oD3D11, LineList);
 	oRef<ID3D11Buffer> Lines;
+
+	bool Map(ID3D11DeviceContext* _pContext, oGfxCommandList::MAPPED* _pMapped);
+	void Unmap(ID3D11DeviceContext* _pContext, uint _NewNumLines);
 };
 
-#endif
 #endif

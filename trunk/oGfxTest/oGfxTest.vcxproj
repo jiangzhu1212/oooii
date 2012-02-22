@@ -222,6 +222,42 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
+    <FXC Include="oGfxTestLinePS.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)inc;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)inc;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)inc;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)inc;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)oGfxTestHLSL.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)oGfxTestHLSL.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)oGfxTestHLSL.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)oGfxTestHLSL.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="oGfxTestLineVS.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)inc;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)inc;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)inc;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)inc;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)oGfxTestHLSL.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)oGfxTestHLSL.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)oGfxTestHLSL.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)oGfxTestHLSL.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+    </FXC>
     <FXC Include="oGfxTestPS.sh">
       <FileType>Document</FileType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>

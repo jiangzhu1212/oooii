@@ -3,23 +3,23 @@
 
 PSOUT main(VSOUT In) : SV_Target
 {
-	float3 L = normalize(float3(2, 2, -4));
-
 	float3 E = oGetEyePosition(DeferredViewConstants.View);
+	float3 L = normalize(E);
 
 	PSOUT Out = (PSOUT)0;
-	Out.Color = oPhongShade(normalize(In.NormalWS)
+	Out.Color = oPhongShade(normalize(In.WSNormal)
 									, -L
-									, normalize(E - In.PositionWS)
+									, normalize(E - In.WSPosition)
 									, 1
 									, oRED
 									, oBLACK
 									, oBLUE
 									, oWHITE
 									, 128
-									, float4(0,0,0,0)
-									, float4(0,0,0,0)
+									, oZERO
+									, oZERO
 									, oWHITE.xyz
 									, 1);
+	//Out.Color = oBLUE;
 	return Out;
 }

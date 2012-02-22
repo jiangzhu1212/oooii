@@ -59,11 +59,17 @@ public:
 		oGfxCommandList::DESC CmdListDesc;
 		CmdListDesc.DrawOrder = 0;
 
-		oVERIFY(GfxDevice->CreateCommandList("Test CommandList", CmdListDesc, &GfxCommandList));
+		oVERIFY(GfxDevice->CreateCommandList("Test.CommandList.Geo", CmdListDesc, &GfxCommandList));
+
+		CmdListDesc.DrawOrder = 1;
+		oVERIFY(GfxDevice->CreateCommandList("Test.CommandList.Lines", CmdListDesc, &GfxCommandListLines));
 
 		oGfxPipeline::DESC PLDesc;
 		oVERIFY(oD3D11GetPipelineDesc(oGFX_FOWARD_COLOR, &PLDesc));
 		oVERIFY(GfxDevice->CreatePipeline("oGfxTest.Forward.Color", PLDesc, &PLForwardColor));
+		
+		//oVERIFY(oD3D11GetPipelineDesc(oGFX_LINE, &PLDesc));
+		//oVERIFY(GfxDevice->CreatePipeline("oGfxTest.Forward.Lines", PLDesc, &PLLines));
 
 		oRef<oGeometryFactory> GeoFactory;
 		oVERIFY(oGeometryFactoryCreate(&GeoFactory));
@@ -102,6 +108,15 @@ public:
 		oGeometry::CONST_MAPPED GeoMapped;
 		BoxGeo->Map(&GeoMapped);
 
+		oGfxLineList::DESC LLDesc;
+		LLDesc.MaxNumLines = MeshDesc.NumVertices;
+		LLDesc.NumLines = 0;
+		oVERIFY(GfxDevice->CreateLineList("oGfxTest.LineList", LLDesc, &GfxLineList));
+
+		oGfxCommandList::MAPPED LLMapped;
+		oVERIFY(GfxCommandList->Map(GfxLineList, 0, &LLMapped));
+		oGfxLineList::LINE* pLines = static_cast<oGfxLineList::LINE*>(LLMapped.pData);
+
 		oGfxCommandList::MAPPED mappedR, mappedI, mappedV;
 		oVERIFY(GfxCommandList->Map(GfxMesh, oGfxMesh::RANGES, &mappedR));
 		oVERIFY(GfxCommandList->Map(GfxMesh, oGfxMesh::INDICES, &mappedI));
@@ -121,11 +136,23 @@ public:
 		oMemcpyAsym(oByteAdd(mappedV.pData, sizeof(float3)), VertexStride, GeoMapped.pNormals, sizeof(float3), MeshDesc.NumVertices);
 		oMemcpyAsym(oByteAdd(mappedV.pData, sizeof(float3) * 2), VertexStride, GeoMapped.pTexcoords, sizeof(float2), MeshDesc.NumVertices);
 
+		const float kNormalScale = 1.1f;
+		oGFXTEST_VERTEX* pVertices = static_cast<oGFXTEST_VERTEX*>(mappedV.pData);
+		for (size_t i = 0; i < LLDesc.MaxNumLines; i++)
+		{
+			pLines[i].Start = pVertices[i].Position;
+			pLines[i].End = pLines[i].Start + (pVertices[i].Normal * kNormalScale);
+			pLines[i].StartColor = pLines[i].EndColor = std::Red;
+		}
+
 		GfxCommandList->Unmap(GfxMesh, oGfxMesh::VERTICES0);
 		GfxCommandList->Unmap(GfxMesh, oGfxMesh::INDICES);
 		GfxCommandList->Unmap(GfxMesh, oGfxMesh::RANGES);
 
+		GfxCommandList->Unmap(GfxLineList, 0, LLDesc.MaxNumLines);
+
 		BoxGeo->Unmap();
+
 		WinHook = Window->Hook(oBIND(&oRenderTest::HandleWindowsEvents, this, oBIND1, oBIND2, oBIND3));
 	}
 
@@ -153,10 +180,19 @@ public:
 
 		GfxCommandList->Clear(oGfxCommandList::COLOR_DEPTH_STENCIL);
 
+		//GfxCommandListLines->Begin(V, P, PLLines, GfxRenderTarget, 0, 0, nullptr);
+
+		GfxCommandListLines->OMSetState(oOMOPAQUE);
+		GfxCommandListLines->RSSetState(oRSTWOSIDEDFACE);
+		GfxCommandListLines->DSSetState(oDSTEST);
+
+
 		{
 			oLockGuard<oMutex> lock(DrawMutex);
 
 			GfxCommandList->DrawMesh(MeshTx, 0, GfxMesh, ~0u, nullptr);
+			
+			//GfxCommandList->DrawLines(MeshTx, 1, GfxLineList);
 		}
 
 		GfxCommandList->End();
@@ -213,9 +249,12 @@ private:
 	oRef<threadsafe oGfxDevice> GfxDevice;
 	oRef<oGfxRenderTarget> GfxRenderTarget;
 	oRef<oGfxCommandList> GfxCommandList;
+	oRef<oGfxCommandList> GfxCommandListLines;
 	oRef<oGfxPipeline> PLForwardColor;
+	oRef<oGfxPipeline> PLLines;
 	oMutex DrawMutex;
 	oRef<oGfxMesh> GfxMesh;
+	oRef<oGfxLineList> GfxLineList;
 	unsigned int WinHook;
 };
 

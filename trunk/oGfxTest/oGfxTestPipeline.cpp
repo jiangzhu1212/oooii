@@ -23,6 +23,8 @@
  **************************************************************************/
 #include "oGfxTestPipeline.h"
 #include <oPlatform/oWindows.h>
+#include <oGfxTestLinePSByteCode.h>
+#include <oGfxTestLineVSByteCode.h>
 #include <oGfxTestPSByteCode.h>
 #include <oGfxTestVSByteCode.h>
 
@@ -33,16 +35,30 @@ static const oIAELEMENT IAElements[] =
 	{ "TEXCOORD", 0, oSURFACE_R32G32_FLOAT, 0 },
 };
 
+static const oIAELEMENT IAElements_Line[] = 
+{
+	{ "POSITION", 0, oSURFACE_R32G32B32_FLOAT, 0 },
+	{ "COLOR", 0, oSURFACE_B8G8R8A8_UNORM, 0 },
+};
+
 bool oD3D11GetPipelineDesc(oGFXTEST_PIPELINE _Pipeline, oGfxPipeline::DESC* _pDesc)
 {
 	memset(_pDesc, 0, sizeof(*_pDesc));
 	switch (_Pipeline)
 	{
 		case oGFX_FOWARD_COLOR:
+			oASSERT(sizeof(oGFXTEST_VERTEX) == oGfxCalcInterleavedVertexSize(IAElements, 0), "Mismatched oGFXTEST_VERTEX size");
 			_pDesc->pElements = IAElements;
 			_pDesc->NumElements = oCOUNTOF(IAElements);
 			_pDesc->pVSByteCode = oGfxTestVSByteCode;
 			_pDesc->pPSByteCode = oGfxTestPSByteCode;
+			return true;
+
+		case oGFX_LINE:
+			_pDesc->pElements = IAElements_Line;
+			_pDesc->NumElements = oCOUNTOF(IAElements_Line);
+			_pDesc->pVSByteCode = oGfxTestLineVSByteCode;
+			_pDesc->pPSByteCode = oGfxTestLinePSByteCode;
 			return true;
 		default:
 			break;

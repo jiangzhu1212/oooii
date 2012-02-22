@@ -53,9 +53,6 @@
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="..\inc\oGfx\oGfx.h">
-      <Filter>oGfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\inc\oGfx\oGfxState.h">
       <Filter>oGfx</Filter>
     </ClInclude>
@@ -91,6 +88,9 @@
     </ClInclude>
     <ClInclude Include="oD3D11InstanceList.h">
       <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oGfx\oGfx.h">
+      <Filter>oGfx</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

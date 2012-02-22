@@ -69,7 +69,7 @@ interface oGfxInstanceList : oGfxResource
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
-#if 0
+
 interface oGfxLineList : oGfxResource
 {
 	struct DESC
@@ -83,12 +83,14 @@ interface oGfxLineList : oGfxResource
 		uint NumLines;
 	};
 
+	// Shader parameters such as oIAELEMENTs and vertex shader inputs 
+	// should match a float3 position and an ABGR uint color.
 	struct LINE
 	{
 		LINE()
-			: Start(float3(0.0f, 0.0f, 0.0f))
+			: Start(0.0f)
 			, StartColor(std::Black)
-			, End(float3(0.0f, 0.0f, 0.0f))
+			, End(0.0f)
 			, EndColor(std::Black)
 		{}
 
@@ -101,6 +103,7 @@ interface oGfxLineList : oGfxResource
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
+#if 0
 interface oGfxMaterial : oGfxResource
 {
 	// A material is the package of constants only. Textures
@@ -405,11 +408,11 @@ interface oGfxCommandList : oGfxDeviceChild
 	// Submits an oGfxMesh for drawing using the current state of the 
 	// command list.
 	virtual void DrawMesh(const float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxInstanceList* _pInstanceList = nullptr) = 0;
-#if 0
+
 	// Draws a set of worldspace lines. Use Map/Unmap to set up line lists
 	// writing an array of type oGfxLineList::LINEs.
-	virtual void DrawLines(uint _LineListID, const oGfxLineList* _pLineList) = 0;
-
+	virtual void DrawLines(const float4x4& _Transform, uint _LineListID, const oGfxLineList* _pLineList) = 0;
+#if 0
 	// Draws a quad in clip space (-1,-1 top-left to 1,1 bottom-right)
 	// with texture coords in screen space (0,0 top-left to 1,1 bottom right)
 	// If View, Projection, and _Transform are all identity, this would
@@ -438,7 +441,7 @@ interface oGfxDevice : oInterface
 	};
 
 	virtual bool CreateCommandList(const char* _Name, const oGfxCommandList::DESC& _Desc, oGfxCommandList** _ppCommandList) threadsafe = 0;
-	//virtual bool CreateLineList(const char* _Name, const oGfxLineList::DESC& _Desc, oGfxLineList** _ppLineList) threadsafe = 0;
+	virtual bool CreateLineList(const char* _Name, const oGfxLineList::DESC& _Desc, oGfxLineList** _ppLineList) threadsafe = 0;
 	virtual bool CreatePipeline(const char* _Name, const oGfxPipeline::DESC& _Desc, oGfxPipeline** _ppPipeline) threadsafe = 0;
 	virtual bool CreateRenderTarget(const char* _Name, const oGfxRenderTarget::DESC& _Desc, oGfxRenderTarget** _ppRenderTarget) threadsafe = 0;
 	virtual bool CreateRenderTarget(const char* _Name, threadsafe oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, oGfxRenderTarget** _ppRenderTarget) threadsafe = 0;
@@ -456,10 +459,10 @@ interface oGfxDevice : oInterface
 };
 
 oAPI bool oGfxDeviceCreate(const oGfxDevice::DESC& _Desc, threadsafe oGfxDevice** _ppDevice);
-#if 0
+
 oAPI const char* oAsString(const oGfxResource::TYPE& _Type);
 oAPI const char* oAsString(const oGfxMesh::SUBRESOURCE& _Subresource);
-oAPI const char* oAsString(const oGfxTexture::TYPE& _Type);
+//oAPI const char* oAsString(const oGfxTexture::TYPE& _Type);
 oAPI const char* oAsString(const oGfxCommandList::CLEAR_TYPE& _Type);
-#endif
+
 #endif
