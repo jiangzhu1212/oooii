@@ -9,7 +9,7 @@ PSOUT main(VSOUT In) : SV_Target
 	PSOUT Out = (PSOUT)0;
 	Out.Color = oPhongShade(normalize(In.WSNormal)
 									, -L
-									, normalize(E - In.WSPosition)
+									, normalize(In.WSPosition - E)
 									, 1
 									, oRED
 									, oBLACK
