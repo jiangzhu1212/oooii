@@ -190,7 +190,7 @@ bool oD3D11CreateIndexBuffer(ID3D11Device* _pDevice, const char* _DebugName, boo
 	t.ElementStride = _Use16BitIndices ? sizeof(unsigned short) : sizeof(unsigned int);
 
 	D3D11_BUFFER_DESC desc;
-	oD3D11InitBufferDesc(&desc, D3D11_BIND_INDEX_BUFFER, _CPUWrite, t.ElementStride * t.ElementCount, 1);
+	oD3D11InitBufferDesc(&desc, D3D11_BIND_INDEX_BUFFER, _CPUWrite, t.ElementStride, t.ElementCount);
 	D3D11_SUBRESOURCE_DATA SRD;
 	SRD.pSysMem = _pIndices;
 	HRESULT hr = _pDevice->CreateBuffer(&desc, _pIndices ? &SRD : 0, _ppIndexBuffer);
@@ -1265,16 +1265,15 @@ void oD3D11Draw(ID3D11DeviceContext* _pDeviceContext
 							 , size_t _NumElements
 							 , size_t _NumVertexBuffers
 							 , const ID3D11Buffer* const* _ppVertexBuffers
-							 , const unsigned int* _VertexStrides
+							 , const UINT* _VertexStrides
 							 , size_t _IndexOfFirstVertexToDraw
 							 , size_t _OffsetToAddToEachVertexIndex
 							 , const ID3D11Buffer* _IndexBuffer
-							 , bool _32BitIndexBuffer
 							 , size_t _IndexOfFirstIndexToDraw
 							 , size_t _NumInstances
 							 , size_t _IndexOfFirstInstanceIndexToDraw)
 {
-	static UINT sOffsets[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	UINT sOffsets[16] = {0};
 
 	// DirectX as an API has a funny definition for const, probably because of 
 	// ref-counting, so consider it a platform-quirk and keep const correctness
@@ -1284,7 +1283,11 @@ void oD3D11Draw(ID3D11DeviceContext* _pDeviceContext
 
 	if (_IndexBuffer)
 	{
-		_pDeviceContext->IASetIndexBuffer(const_cast<ID3D11Buffer*>(_IndexBuffer), _32BitIndexBuffer ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT, static_cast<UINT>(_IndexOfFirstIndexToDraw * (_32BitIndexBuffer ? 4 : 2)));
+		oD3D_BUFFER_TOPOLOGY t;
+		if (!oD3D11GetBufferDescription(_IndexBuffer, &t))
+			oASSERT(false, "oD3D11Draw: The index buffer passed must have had oD3D11SetBufferDescription on it with appropriate values.");
+
+		_pDeviceContext->IASetIndexBuffer(const_cast<ID3D11Buffer*>(_IndexBuffer), (t.ElementStride == 4) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT, static_cast<UINT>(_IndexOfFirstIndexToDraw * t.ElementStride));
 
 		if (_NumInstances)
 			_pDeviceContext->DrawIndexedInstanced(static_cast<UINT>(_NumElements), static_cast<UINT>(_NumInstances), static_cast<UINT>(_IndexOfFirstIndexToDraw), static_cast<UINT>(_OffsetToAddToEachVertexIndex), static_cast<UINT>(_IndexOfFirstInstanceIndexToDraw));

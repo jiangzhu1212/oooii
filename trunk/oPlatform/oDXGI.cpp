@@ -306,7 +306,7 @@ oVersion oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter)
 			_pAdapter
 			, D3D_DRIVER_TYPE_UNKNOWN
 			, nullptr
-			, 0
+			, D3D11_CREATE_DEVICE_DEBUG // squelches a warning
 			, nullptr
 			, 0
 			, D3D11_SDK_VERSION

@@ -308,15 +308,14 @@ size_t oD3D11GetNumElements(D3D11_PRIMITIVE_TOPOLOGY _PrimitiveTopology, size_t 
 // lists out everything one would need to specify. If NULL or 0 is specified 
 // for various parameters, the proper flavor of draw will be used for drawing.
 void oD3D11Draw(ID3D11DeviceContext* _pDeviceContext
-							 , size_t _NumElements // vertices or indices use oD3D11GetNumElements() to calculate this from number of primitives
+							 , size_t _NumElements
 							 , size_t _NumVertexBuffers
 							 , const ID3D11Buffer* const* _ppVertexBuffers
 							 , const UINT* _VertexStrides
 							 , size_t _IndexOfFirstVertexToDraw
 							 , size_t _OffsetToAddToEachVertexIndex
 							 , const ID3D11Buffer* _IndexBuffer
-							 , bool _32BitIndexBuffer
-							 , size_t _IndexOfFirstIndexToDraw
+							 , size_t _IndexOfFirstIndexToDraw = 0
 							 , size_t _NumInstances = 0 // 0 means don't use instanced drawing
 							 , size_t _IndexOfFirstInstanceIndexToDraw = 0);
 
@@ -331,14 +330,13 @@ inline void oD3D11Draw(ID3D11DeviceContext* _pDeviceContext
 							 , size_t _IndexOfFirstVertexToDraw
 							 , size_t _OffsetToAddToEachVertexIndex
 							 , const ID3D11Buffer* _IndexBuffer
-							 , bool _32BitIndexBuffer
-							 , size_t _IndexOfFirstIndexToDraw
+							 , size_t _IndexOfFirstIndexToDraw = 0
 							 , size_t _NumInstances = 0 // 0 means don't use instanced drawing
 							 , size_t _IndexOfFirstInstanceIndexToDraw = 0)
 {
 	_pDeviceContext->IASetPrimitiveTopology(_PrimitiveTopology);
 	const size_t nElements = oD3D11GetNumElements(_PrimitiveTopology, _NumPrimitives);
-	oD3D11Draw(_pDeviceContext, nElements, _NumVertexBuffers, _ppVertexBuffers, _VertexStrides, _IndexOfFirstVertexToDraw, _OffsetToAddToEachVertexIndex, _IndexBuffer, _32BitIndexBuffer, _IndexOfFirstIndexToDraw, _NumInstances, _IndexOfFirstInstanceIndexToDraw);
+	oD3D11Draw(_pDeviceContext, nElements, _NumVertexBuffers, _ppVertexBuffers, _VertexStrides, _IndexOfFirstVertexToDraw, _OffsetToAddToEachVertexIndex, _IndexBuffer, _IndexOfFirstIndexToDraw, _NumInstances, _IndexOfFirstInstanceIndexToDraw);
 }
 
 // A neat little trick when drawing quads, fullscreen or otherwise. Submits a 

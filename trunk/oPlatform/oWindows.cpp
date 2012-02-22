@@ -1376,7 +1376,7 @@ bool oWinGetVideoDriverDesc(oWINDOWS_VIDEO_DRIVER_DESC* _pDesc)
 	// DC12A687-737F-11CF-884D-00AA004B2E24
 	static const oGUID oGUID_IID_WbemLocator = { 0xdc12a687, 0x737f, 0x11cf, { 0x88, 0x4D, 0x00, 0xAA, 0x00, 0x4B, 0x2E, 0x24 } };
 
-	oV(CoInitializeEx(nullptr, COINIT_MULTITHREADED));
+	CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 	oOnScopeExit OnScopeExit([&] { CoUninitialize(); });
 
 	oRef<IWbemLocator> WbemLocator;

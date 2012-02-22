@@ -381,7 +381,7 @@ struct oGeometry_Impl : public oGeometry
 	inline void Subdivide(unsigned int _Divide, unsigned int _NumEdges)
 	{
 		std::vector<float2> dummy;
-		for (size_t i = 0; i < _Divide; i++)
+		for (size_t i = 1; i < _Divide; i++)
 			oSubdivideMesh(_NumEdges, Indices, Positions, Normals, Tangents, Texcoords, dummy, Colors, ContinuityIDs);
 	}
 
