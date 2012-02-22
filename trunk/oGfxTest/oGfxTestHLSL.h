@@ -33,11 +33,15 @@
 struct VSIN
 {
 	float3 Position : POSITION;
+	float3 Normal : NORMAL;
+	float2 Texcoord : TEXCOORD;
 };
 
 struct VSOUT
 {
 	float4 ScreenSpacePosition : SV_Position;
+	float3 PositionWS : POSITION;
+	float3 NormalWS : NORMAL;
 };
 
 struct PSOUT

@@ -63,6 +63,13 @@
 	void GetDevice(threadsafe oGfxDevice** _ppDevice) const threadsafe { MIXINGetDevice(_ppDevice); } \
 	const char* GetName() const threadsafe override { return MIXINGetURI(); }
 
+#define oDEFINE_GFXDEVICECHILD_INTERFACE_EXPLICIT_QI() \
+	int Reference() threadsafe override { return MIXINReference(); } \
+	void Release() threadsafe override { MIXINRelease(); } \
+	bool QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe override; \
+	void GetDevice(threadsafe oGfxDevice** _ppDevice) const threadsafe { MIXINGetDevice(_ppDevice); } \
+	const char* GetName() const threadsafe override { return MIXINGetURI(); }
+
 // Place this macro in the implementation class of an oGfxResource
 #define oDEFINE_GFXRESOURCE_INTERFACE() oDEFINE_GFXDEVICECHILD_INTERFACE() \
 	oGfxResource::TYPE GetType() const threadsafe override { return MIXINGetType(); } \
@@ -135,7 +142,7 @@ protected:
 	{
 		*_ppInterface = nullptr;
 
-		if (_InterfaceID == oGetGUID<oGfxDeviceChild>() || _InterfaceID == oGetGUID<InterfaceT>())
+		if (_InterfaceID == oGetGUID<oGfxDeviceChild>() || _InterfaceID == oGetGUID<InterfaceT>() || _InterfaceID == oGetGUID<ImplementationT>())
 		{
 			This()->Reference();
 			*_ppInterface = This();

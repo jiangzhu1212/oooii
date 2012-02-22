@@ -47,6 +47,7 @@ public:
 		oVERIFY(GfxDevice->QueryInterface((const oGUID&)__uuidof(ID3D11Device), &D3D11Device));
 
 		oWindow::DESC WinDesc;
+		WinDesc.State = oWindow::HIDDEN; // Don't show window until it's got some valid content
 		WinDesc.Style = oWindow::SIZEABLE;
 		WinDesc.AutoClear = false;
 		WinDesc.EnableUIDrawing = true;
@@ -77,7 +78,7 @@ public:
 		oGeometryFactory::BOX_DESC BoxDesc;
 		BoxDesc.FaceType = oGeometry::FRONT_CCW;
 		BoxDesc.Bounds = oAABoxf(float3(-0.5f), float3(0.5f));
-		BoxDesc.Divide = 4;
+		BoxDesc.Divide = 1;
 		BoxDesc.Color = std::White;
 		BoxDesc.FlipTexcoordV = false;
 
@@ -87,54 +88,19 @@ public:
 		oGeometry::DESC GeoDesc;
 		BoxGeo->GetDesc(&GeoDesc);
 
-#if 0
-
 		oGfxMesh::DESC MeshDesc;
 		MeshDesc.NumIndices = GeoDesc.NumIndices;
 		MeshDesc.NumVertices = GeoDesc.NumVertices;
-		MeshDesc.NumRanges = 1;
+		MeshDesc.NumRanges = GeoDesc.NumRanges;
 		MeshDesc.LocalSpaceBounds = GeoDesc.Bounds;
-		MeshDesc.FrequentIndexUpdate = false;
-		MeshDesc.FrequentVertexUpdate[0] = false;
-		MeshDesc.pElements = PLDesc.pElements;
-		MeshDesc.NumElements = PLDesc.NumElements;
-		oVERIFY(GfxDevice->CreateMesh("oGfxTest Mesh", MeshDesc, &GfxMesh));
-
-		oGeometry::MAPPED GeoMapped;
-		BoxGeo->Map(&GeoMapped);
-
-		oGfxCommandList::MAPPED mappedR, mappedI, mappedV;
-		GfxCommandList->Map(GfxMesh, oGfxMesh::RANGES, &mappedR);
-		GfxCommandList->Map(GfxMesh, oGfxMesh::INDICES, &mappedI);
-		GfxCommandList->Map(GfxMesh, oGfxMesh::VERTICES0, &mappedV);
-
-		oGfxMesh::RANGE& r = *(oGfxMesh::RANGE*)mappedR.pData;
-		r.StartTriangle = 0;
-		r.NumTriangles = MeshDesc.NumIndices / 3;
-		r.MinVertex = 0;
-		r.MaxVertex = MeshDesc.NumVertices;
-
-		memcpy(mappedI.pData, GeoMapped.pIndices, sizeof(uint) * MeshDesc.NumIndices);
-
-		size_t VertexStride = oGfxCalcInterleavedVertexSize(MeshDesc.pElements, MeshDesc.NumElements, 0);
-		oMemcpyAsym(mappedV.pData, VertexStride, GeoMapped.pPositions, sizeof(float3), MeshDesc.NumVertices);
-		oMemcpyAsym(oByteAdd(mappedV.pData, sizeof(float3)), VertexStride, GeoMapped.pTexcoords, sizeof(float2), MeshDesc.NumVertices);
-
-		GfxCommandList->Unmap(GfxMesh, oGfxMesh::VERTICES0);
-		GfxCommandList->Unmap(GfxMesh, oGfxMesh::INDICES);
-		GfxCommandList->Unmap(GfxMesh, oGfxMesh::RANGES);
-
-#else
-		oGfxMesh::DESC MeshDesc;
-		MeshDesc.NumIndices = 3;
-		MeshDesc.NumVertices = 3;
-		MeshDesc.NumRanges = 1;
-		MeshDesc.LocalSpaceBounds = oAABoxf(float3(-100.0f), float3(100.0f));
 		MeshDesc.FrequentIndexUpdate = true;
 		MeshDesc.FrequentVertexUpdate[0] = true;
 		MeshDesc.pElements = PLDesc.pElements;
 		MeshDesc.NumElements = PLDesc.NumElements;
 		oVERIFY(GfxDevice->CreateMesh("oGfxTest Mesh", MeshDesc, &GfxMesh));
+
+		oGeometry::CONST_MAPPED GeoMapped;
+		BoxGeo->Map(&GeoMapped);
 
 		oGfxCommandList::MAPPED mappedR, mappedI, mappedV;
 		oVERIFY(GfxCommandList->Map(GfxMesh, oGfxMesh::RANGES, &mappedR));
@@ -143,28 +109,24 @@ public:
 
 		oGfxMesh::RANGE& r = *(oGfxMesh::RANGE*)mappedR.pData;
 		r.StartTriangle = 0;
-		r.NumTriangles = MeshDesc.NumIndices / 3;
+		r.NumTriangles = GeoDesc.NumPrimitives;
 		r.MinVertex = 0;
 		r.MaxVertex = MeshDesc.NumVertices;
 
-		const uint indices[] = {0,1,2};
-		memcpy(mappedI.pData, indices, sizeof(uint) * MeshDesc.NumIndices);
+		memcpy(mappedI.pData, GeoMapped.pIndices, sizeof(uint) * GeoDesc.NumIndices);
 
 		size_t VertexStride = oGfxCalcInterleavedVertexSize(MeshDesc.pElements, MeshDesc.NumElements, 0);
-		
-		const float3 P[] = { float3(0.0f, 0.33f, 0.1f), float3(0.33f,-0.33f,0.1f), float3(-0.33f,-0.33f,0.1f), };
-		const float2 T[] = { float2(0.0f, 0.0f), float2(0.0f, 0.0f), float2(0.0f, 0.0f), };
-		
-		oMemcpyAsym(mappedV.pData, VertexStride, P, sizeof(float3), MeshDesc.NumVertices);
-		oMemcpyAsym(oByteAdd(mappedV.pData, sizeof(float3)), VertexStride, T, sizeof(float2), MeshDesc.NumVertices);
+
+		oMemcpyAsym(mappedV.pData, VertexStride, GeoMapped.pPositions, sizeof(float3), MeshDesc.NumVertices);
+		oMemcpyAsym(oByteAdd(mappedV.pData, sizeof(float3)), VertexStride, GeoMapped.pNormals, sizeof(float3), MeshDesc.NumVertices);
+		oMemcpyAsym(oByteAdd(mappedV.pData, sizeof(float3) * 2), VertexStride, GeoMapped.pTexcoords, sizeof(float2), MeshDesc.NumVertices);
 
 		GfxCommandList->Unmap(GfxMesh, oGfxMesh::VERTICES0);
 		GfxCommandList->Unmap(GfxMesh, oGfxMesh::INDICES);
 		GfxCommandList->Unmap(GfxMesh, oGfxMesh::RANGES);
 
-#endif
-
-		WinHook = Window->Hook(oBIND(&oRenderTest::Render, this, oBIND1, oBIND2, oBIND3));
+		BoxGeo->Unmap();
+		WinHook = Window->Hook(oBIND(&oRenderTest::HandleWindowsEvents, this, oBIND1, oBIND2, oBIND3));
 	}
 
 	~oRenderTest()
@@ -172,7 +134,38 @@ public:
 		Window->Unhook(WinHook);
 	}
 
-	bool Render(oWindow::EVENT _Event, const float3& _Position, int _Value)
+	bool Render()
+	{
+		if (!GfxDevice->BeginFrame())
+			return false; // pass through error
+
+		float4x4 V = oCreateLookAtLH(float3(0.0f, 0.0f, -4.0f), oZERO3, float3(0.0f, 1.0f, 0.0f));
+		
+		oGfxRenderTarget::DESC RTDesc;
+		GfxRenderTarget->GetDesc(&RTDesc);
+		float4x4 P = oCreatePerspectiveLH(oPIf/4.0f, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
+
+		GfxCommandList->Begin(V, P, PLForwardColor, GfxRenderTarget, 0, 0, nullptr);
+
+		GfxCommandList->OMSetState(oOMOPAQUE);
+		GfxCommandList->RSSetState(oRSTWOSIDEDFACE);
+		GfxCommandList->DSSetState(oDSTESTANDWRITE);
+
+		GfxCommandList->Clear(oGfxCommandList::COLOR_DEPTH_STENCIL);
+
+		{
+			oLockGuard<oMutex> lock(DrawMutex);
+
+			GfxCommandList->DrawMesh(MeshTx, 0, GfxMesh, ~0u, nullptr);
+		}
+
+		GfxCommandList->End();
+
+		GfxDevice->EndFrame();
+		return true;
+	}
+
+	bool HandleWindowsEvents(oWindow::EVENT _Event, const float3& _Position, int _Value)
 	{
 		switch (_Event)
 		{
@@ -180,33 +173,16 @@ public:
 				GfxRenderTarget = nullptr;
 				break;
 			case oWindow::RESIZED:
-				oVERIFY(GfxDevice->CreateRenderTarget("Test RenderTarget", Window, oSURFACE_D24_UNORM_S8_UINT, &GfxRenderTarget));
-				break;
-
-			case oWindow::DRAW_BACKBUFFER:
 			{
-				static int counter = 0;
-
+				oVERIFY(GfxDevice->CreateRenderTarget("Test RenderTarget", Window, oSURFACE_D24_UNORM_S8_UINT, &GfxRenderTarget));
 				oGfxRenderTarget::CLEAR_DESC cd;
-				cd.ClearColor[0] = (counter++ & 0x1) ? std::White : std::Blue;
+				cd.ClearColor[0] = oColorCompose(0.1f, 0.1f, 0.1f, 1.0f);
 				GfxRenderTarget->SetClearDesc(cd);
-
-				GfxCommandList->Begin(float4x4::Identity, float4x4::Identity, PLForwardColor, GfxRenderTarget, 0, 0, nullptr);
-
-				GfxCommandList->OMSetState(oOMOPAQUE);
-				GfxCommandList->RSSetState(oRSTWOSIDEDFACE);
-				GfxCommandList->DSSetState(oDSNONE);
-				
-				GfxCommandList->Clear(oGfxCommandList::COLOR_DEPTH_STENCIL);
-
-				GfxCommandList->DrawMesh(oCreateTranslation(float3(0.0f,0.0f,0.1f)), 0, GfxMesh, ~0u, nullptr);
-
-				GfxCommandList->End();
-
-				GfxDevice->Submit();
-
 				break;
 			}
+
+			case oWindow::DRAW_BACKBUFFER:
+				return Render();
 
 		default:
 			break;
@@ -217,6 +193,20 @@ public:
 
 	inline threadsafe oWindow* GetWindow() threadsafe { return Window; }
 
+	inline void LockDraw()
+	{
+		DrawMutex.lock();
+	}
+
+	inline void UnlockDraw()
+	{
+		DrawMutex.unlock();
+	}
+
+	float4x4 MeshTx;
+
+	inline uint GetFrameID() const threadsafe { return GfxDevice->GetFrameID(); }
+
 private:
 
 	oRef<threadsafe oWindow> Window;
@@ -224,6 +214,7 @@ private:
 	oRef<oGfxRenderTarget> GfxRenderTarget;
 	oRef<oGfxCommandList> GfxCommandList;
 	oRef<oGfxPipeline> PLForwardColor;
+	oMutex DrawMutex;
 	oRef<oGfxMesh> GfxMesh;
 	unsigned int WinHook;
 };
@@ -267,10 +258,28 @@ int main(int argc, char* argv[])
 	// _____________________________________________________________________________
 	// Main loop
 
+	// Don't show window until it's got some valid content
+	RenderTest.Render();
+	RenderTest.Render();
+	oWindow::DESC* pDesc = RenderTest.GetWindow()->Map();
+	pDesc->State = oWindow::RESTORED;
+	RenderTest.GetWindow()->Unmap();
+
+	float3 MeshRotationRates(0.002f, 0.01f, 0.003f);
+	float3 MeshRotation(0.0f, 0.0f, 0.0f);
+
 	while (RenderTest.GetWindow()->IsOpen())
 	{
-		oSleep(200);
+		RenderTest.LockDraw();
 
+		uint FrameID = RenderTest.GetFrameID();
+		MeshRotation = fmod(MeshRotationRates * oCastAsFloat(FrameID), float3(2.0f * oPIf));
+		
+		RenderTest.MeshTx = oCreateRotation(MeshRotation);
+
+		RenderTest.UnlockDraw();
+
+		oSleep(16);
 		RenderTest.GetWindow()->Refresh(false);
 	}
 

@@ -447,8 +447,12 @@ interface oGfxDevice : oInterface
 	//virtual bool CreateInstanceList(const char* _Name, const oGfxInstanceList::DESC& _Desc, oGfxInstanceList** _ppInstanceList) threadsafe = 0;
 	//virtual bool CreateTexture(const char* _Name, const oGfxTexture::DESC& _Desc, oGfxTexture** _ppTexture) threadsafe = 0;
 
-	// Submits all command lists in their draw order
-	virtual void Submit() threadsafe = 0;
+	// All oGfxCommandList calls, including Begin()/End(), must be between BeginFrame() and EndFrame().
+	// BeginFrame() sets up frame-wide values and allocations. EndFrame() submits all oGfxCommandLists.
+	virtual bool BeginFrame() threadsafe = 0;
+	virtual void EndFrame() threadsafe = 0;
+
+	virtual uint GetFrameID() const threadsafe = 0;
 };
 
 oAPI bool oGfxDeviceCreate(const oGfxDevice::DESC& _Desc, threadsafe oGfxDevice** _ppDevice);

@@ -29,6 +29,7 @@
 static const oIAELEMENT IAElements[] = 
 {
 	{ "POSITION", 0, oSURFACE_R32G32B32_FLOAT, 0 },
+	{ "NORMAL", 0, oSURFACE_R32G32B32_FLOAT, 0 },
 	{ "TEXCOORD", 0, oSURFACE_R32G32_FLOAT, 0 },
 };
 

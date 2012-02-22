@@ -34,7 +34,7 @@
 oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 {
 	oDEFINE_CONST_GETDESC_INTERFACE(Desc, threadsafe);
-	oDEFINE_GFXDEVICECHILD_INTERFACE();
+	oDEFINE_GFXDEVICECHILD_INTERFACE_EXPLICIT_QI();
 	oDECLARE_GFXDEVICECHILD_CTOR(oD3D11, CommandList);
 	~oD3D11CommandList();
 
@@ -67,6 +67,9 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	DESC Desc;
 
 	oD3D11RenderTarget* pRenderTarget;
+	// @oooii-tony: Should the whole view constants struct be retained? or explicitly not retained to keep things encapsulated?
+	float4x4 View;
+	float4x4 Projection;
 
 	// Shortcut to a bunch of typecasting
 	// This thread_cast is safe because oD3D11CommandList is single-threaded

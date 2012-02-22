@@ -88,6 +88,8 @@ template<typename StateT, size_t size> bool StateExists(size_t _Index, StateT (&
 oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc, bool* _pSuccess)
 	: D3DDevice(_pDevice)
 	, Desc(_Desc)
+	, DrawID(oInvalid)
+	, FrameID(oInvalid)
 {
 	*_pSuccess = false;
 
@@ -229,10 +231,10 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc
 	}
 
 	oD3D11_CHECK_STRUCT_SIZE(oDeferredViewConstants);
-	oVERIFY(oD3D11CreateConstantBuffer(D3DDevice, "oGfxDevice::ViewConstants", true, 0, sizeof(oDeferredViewConstants), 1, &ViewConstants));
+	oVERIFY(oD3D11CreateConstantBuffer(D3DDevice, "oGfxDevice.ViewConstants", true, 0, sizeof(oDeferredViewConstants), 1, &ViewConstants));
 
 	oD3D11_CHECK_STRUCT_SIZE(oGfxDrawConstants);
-	oVERIFY(oD3D11CreateConstantBuffer(D3DDevice, "oGfxDevice::DrawConstants", true, 0, sizeof(oGfxDrawConstants), 1, &DrawConstants));
+	oVERIFY(oD3D11CreateConstantBuffer(D3DDevice, "oGfxDevice.DrawConstants", true, 0, sizeof(oGfxDrawConstants), 1, &DrawConstants));
 
 	*_pSuccess = true;
 }
@@ -246,10 +248,16 @@ bool oD3D11Device::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _
 		*_ppInterface = this;
 	}
 
-	else if (_InterfaceID == oGetGUID<ID3D11Device>())
+	else if (_InterfaceID == (const oGUID&)__uuidof(ID3D11Device))
 	{
 		D3DDevice->AddRef();
 		*_ppInterface = D3DDevice;
+	}
+
+	else if (_InterfaceID == (const oGUID&)__uuidof(ID3D11DeviceContext))
+	{
+		ImmediateContext->AddRef();
+		*_ppInterface = ImmediateContext;
 	}
 
 	return !!*_ppInterface;
@@ -293,7 +301,19 @@ void oD3D11Device::DrawCommandLists() threadsafe
 	}
 }
 
-void oD3D11Device::Submit() threadsafe
+bool oD3D11Device::BeginFrame() threadsafe
+{
+	DrawID = 0;
+	oStd::atomic_increment(&FrameID);
+	return true;
+}
+
+void oD3D11Device::EndFrame() threadsafe
 {
 	DrawCommandLists();
+}
+
+uint oD3D11Device::GetFrameID() const threadsafe
+{
+	return FrameID;
 }

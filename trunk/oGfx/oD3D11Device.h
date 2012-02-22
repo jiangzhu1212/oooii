@@ -51,7 +51,6 @@ struct oD3D11Device : oGfxDevice, oNoncopyable
 	// Interface API
 
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-
 	bool QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe override;
 
 	oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc, bool* _pSuccess);
@@ -66,15 +65,21 @@ struct oD3D11Device : oGfxDevice, oNoncopyable
 	//bool CreateInstanceList(const char* _Name, const oGfxInstanceList::DESC& _Desc, oGfxInstanceList** _ppInstanceList) threadsafe override;
 	//bool CreateTexture(const char* _Name, const oGfxTexture::DESC& _Desc, oGfxTexture** _ppTexture) threadsafe override;
 
-	void Submit() threadsafe override;
+	bool BeginFrame() threadsafe override;
+	void EndFrame() threadsafe override;
+
+	uint GetFrameID() const threadsafe override;
+
 
 	// _____________________________________________________________________________
 	// Implementation API
-#	
+
 	void CLInsert(oGfxCommandList* _pCommandList) threadsafe;
 	void CLRemove(oGfxCommandList* _pCommandList) threadsafe;
 	void CLLockSubmit() threadsafe;
 	void CLUnlockSubmit() threadsafe;
+	inline uint IncrementDrawID() threadsafe { return oStd::atomic_increment(&DrawID); }
+	inline uint GetDrawID() const threadsafe { return DrawID; }
 	void DrawCommandLists() threadsafe;
 
 	inline std::vector<oGfxCommandList*>& ProtectedCommandLists() threadsafe { return thread_cast<std::vector<oGfxCommandList*>&>(CommandLists); } // safe because this should only be used when protected by CommandListsMutex
@@ -97,6 +102,8 @@ struct oD3D11Device : oGfxDevice, oNoncopyable
 
 	DESC Desc;
 	oRefCount RefCount;
+	uint DrawID;
+	uint FrameID;
 
 	oMutex CommandListsInsertRemoveMutex;
 	oSharedMutex CommandListsBeginEndMutex;

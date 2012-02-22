@@ -38,6 +38,8 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget)
 	void SetClearDesc(const CLEAR_DESC& _ClearDesc) threadsafe override;
 	void Resize(const int2& _NewDimensions) override;
 
+	inline void Set(ID3D11DeviceContext* _pContext) { _pContext->OMSetRenderTargets(Desc.MRTCount, (ID3D11RenderTargetView* const*)RTVs, DSV); }
+
 	oRef<ID3D11Texture2D> Texture[MAX_MRT_COUNT];
 	oRef<ID3D11RenderTargetView> RTVs[MAX_MRT_COUNT];
 	oRef<ID3D11ShaderResourceView> SRVs[MAX_MRT_COUNT];
@@ -50,15 +52,9 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget)
 	// query it constantly for up-to-date DESC information.
 	oRef<threadsafe oWindow> Window;
 
-
-
-
-
 	// Creates the depth buffer according to the Desc.DepthStencilFormat value
 	void RecreateDepthBuffer(const int2& _Dimensions);
 
-
-	
 	oSharedMutex DescMutex;
 	DESC Desc;
 };

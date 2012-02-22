@@ -30,6 +30,13 @@
 //#include "oD3D11Texture.h"
 #include <oGfx/oGfxDrawConstants.h>
 
+const oGUID& oGetGUID(threadsafe const oD3D11CommandList* threadsafe const *)
+{
+	// {2D6106C4-7741-41CD-93DE-2C2A9BCD9163}
+	static const oGUID oIID_D3D11CommandList = { 0x2d6106c4, 0x7741, 0x41cd, { 0x93, 0xde, 0x2c, 0x2a, 0x9b, 0xcd, 0x91, 0x63 } };
+	return oIID_D3D11CommandList;
+}
+
 oDEFINE_GFXDEVICE_CREATE(oD3D11, CommandList);
 oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(oD3D11, CommandList)
 	, pRenderTarget(nullptr)
@@ -54,6 +61,20 @@ oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(oD3D11, CommandList)
 oD3D11CommandList::~oD3D11CommandList()
 {
 	oDEVICE_UNREGISTER_THIS();
+}
+
+bool oD3D11CommandList::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe
+{
+	if (MIXINQueryInterface(_InterfaceID, _ppInterface))
+		return true;
+
+	else if (_InterfaceID == (const oGUID&)__uuidof(ID3D11DeviceContext))
+	{
+		Context->AddRef();
+		*_ppInterface = Context;
+	}
+
+	return !!*_ppInterface;
 }
 
 static void SetViewports(ID3D11DeviceContext* _pDeviceContext, const oGfxRenderTarget::DESC& _RTDesc, size_t _NumViewports, const oGfxCommandList::VIEWPORT* _pViewports)
@@ -93,6 +114,16 @@ static void SetViewConstants(ID3D11DeviceContext* _pDeviceContext, ID3D11Buffer*
 	oD3D11SetConstantBuffers(_pDeviceContext, 0, 1, &_pViewConstants);
 }
 
+static void SetDrawConstants(ID3D11DeviceContext* _pDeviceContext, ID3D11Buffer* _pDrawConstants, const float4x4& _World, const float4x4& _View, const float4x4& _Projection, uint _ObjectID, uint _DrawID)
+{
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	_pDeviceContext->Map(_pDrawConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+	oGfxDrawConstants* D = (oGfxDrawConstants*)mapped.pData;
+	D->Set(_World, _View, _Projection, _ObjectID, _DrawID);
+	_pDeviceContext->Unmap(_pDrawConstants, 0);
+	oD3D11SetConstantBuffers(_pDeviceContext, 1, 1, &_pDrawConstants);
+}
+
 static void SetPipeline(ID3D11DeviceContext* _pDeviceContext, const oGfxPipeline* _pPipeline)
 {
 	oASSERT(_pPipeline, "A pipline must be specified");
@@ -116,13 +147,16 @@ void oD3D11CommandList::Begin(
 {
 	oASSERT(_pRenderTarget, "A render target must be specified");
 
+	// Retain values used until End()
 	oDEVICE_LOCK_SUBMIT();
+	View = _View;
+	Projection = _Projection;
+	pRenderTarget = static_cast<oD3D11RenderTarget*>(_pRenderTarget);
 
+	// Set per-commandlist state to begin rendering
+	pRenderTarget->Set(Context);
 	oGfxRenderTarget::DESC RTDesc;
 	_pRenderTarget->GetDesc(&RTDesc);
-	pRenderTarget = static_cast<oD3D11RenderTarget*>(_pRenderTarget);
-	Context->OMSetRenderTargets(RTDesc.MRTCount, (ID3D11RenderTargetView* const*)pRenderTarget->RTVs, (ID3D11DepthStencilView*)pRenderTarget->DSV.c_ptr());
-
 	SetViewports(Context, RTDesc, _NumViewports, _pViewports);
 	SetViewConstants(Context, D3DDevice()->ViewConstants, _View, _Projection, RTDesc, _RenderTargetIndex);
 	SetPipeline(Context, _pPipeline);
@@ -260,7 +294,7 @@ void oD3D11CommandList::Unmap(oGfxResource* _pResource, size_t _SubresourceIndex
 
 void oD3D11CommandList::Clear(CLEAR_TYPE _ClearType)
 {
-	oASSERT(pRenderTarget, "No oGfxRenderTarget specified for %s %s", typeid(*this), GetName());
+	oASSERT(pRenderTarget, "No oGfxRenderTarget specified for %s %s", typeid(*this).name(), GetName());
 	oD3D11RenderTarget* pRT = static_cast<oD3D11RenderTarget*>(pRenderTarget);
 
 	if (_ClearType >= COLOR)
@@ -292,19 +326,19 @@ void oD3D11CommandList::DrawMesh(const float4x4& _Transform, uint _MeshID, const
 {
 	oASSERT(!_pInstanceList, "Instanced drawing not yet implemented");
 
+	uint DrawID = D3DDevice()->IncrementDrawID();
+	SetDrawConstants(Context, D3DDevice()->DrawConstants, _Transform, View, Projection, _MeshID, DrawID);
+
 	const oD3D11Mesh* M = static_cast<const oD3D11Mesh*>(_pMesh);
+	oGfxMesh::DESC desc;
+	M->GetDesc(&desc);
 
 	uint StartIndex = 0;
 	uint NumTriangles = 0;
 	uint MinVertex = 0;
 
 	if (_RangeIndex == ~0u)
-	{
-		oD3D_BUFFER_TOPOLOGY t;
-		oD3D11GetBufferDescription(M->Indices, &t);
-		NumTriangles = t.ElementCount / 3;
-	}
-
+		NumTriangles = desc.NumIndices / 3;
 	else
 	{
 		oASSERT(_RangeIndex < M->Ranges.size(), "");
@@ -323,12 +357,9 @@ void oD3D11CommandList::DrawMesh(const float4x4& _Transform, uint _MeshID, const
 	#endif
 	oASSERT(M->Vertices[0], "No geometry vertices specified");
 
-	oGfxMesh::DESC desc;
-	M->GetDesc(&desc);
-
 	const ID3D11Buffer* pVertices[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
 	UINT Strides[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
-	size_t nVertexBuffers = 0;
+	uint nVertexBuffers = 0;
 	for (size_t i = 0; i < oCOUNTOF(M->Vertices); i++)
 	{
 		if (M->Vertices[i])
@@ -339,17 +370,15 @@ void oD3D11CommandList::DrawMesh(const float4x4& _Transform, uint _MeshID, const
 		}
 	}
 	
-	Context->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
 	oD3D11Draw(Context
+		, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST
 		, NumTriangles
 		, nVertexBuffers
 		, pVertices
 		, Strides
 		, MinVertex
 		, 0
-		, M->Indices.c_ptr()
-		, true
+		, M->Indices
 		, StartIndex);
 }
 #if 0

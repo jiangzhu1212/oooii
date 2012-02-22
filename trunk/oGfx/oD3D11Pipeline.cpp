@@ -43,6 +43,13 @@ static void oInitializeInputElementDesc(D3D11_INPUT_ELEMENT_DESC* _pInputElement
 	}
 }
 
+const oGUID& oGetGUID(threadsafe const oD3D11Pipeline* threadsafe const *)
+{
+	// {772E2A04-4C2D-447A-8DA8-91F258EFA68C}
+	static const oGUID oIID_D3D11Pipeline = { 0x772e2a04, 0x4c2d, 0x447a, { 0x8d, 0xa8, 0x91, 0xf2, 0x58, 0xef, 0xa6, 0x8c } };
+	return oIID_D3D11Pipeline;
+}
+
 oDEFINE_GFXDEVICE_CREATE(oD3D11, Pipeline);
 oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(oD3D11, Pipeline)
 {
