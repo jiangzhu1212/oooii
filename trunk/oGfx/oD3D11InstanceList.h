@@ -34,5 +34,8 @@ oDECLARE_GFXRESOURCE_IMPLEMENTATION(oD3D11, InstanceList, INSTANCELIST)
 	oDEFINE_GFXRESOURCE_INTERFACE();
 	oDECLARE_GFXRESOURCE_CTOR(oD3D11, InstanceList);
 	oRef<ID3D11Buffer> Instances;
+
+	bool Map(ID3D11DeviceContext* _pContext, oGfxCommandList::MAPPED* _pMapped);
+	void Unmap(ID3D11DeviceContext* _pContext, uint _NewNumInstances);
 };
 #endif

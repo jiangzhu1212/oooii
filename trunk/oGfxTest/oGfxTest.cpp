@@ -164,6 +164,15 @@ public:
 		ILDesc.NumInstances = 0;
 		oVERIFY(GfxDevice->CreateInstanceList("oGfxTest.InstanceList", ILDesc, &GfxInstanceList));
 
+		oGfxCommandList::MAPPED ILMapped;
+		GfxCommandList->Map(GfxInstanceList, 0, &ILMapped);
+		for (int i = 0; i < 6; i++)
+		{
+			((oGFXTEST_INSTANCE*)ILMapped.pData)[i].Translation = oZERO3;
+			((oGFXTEST_INSTANCE*)ILMapped.pData)[i].Rotation = quatf::Identity;
+		}
+		GfxCommandList->Unmap(GfxInstanceList, 0, 1);
+
 		WinHook = Window->Hook(oBIND(&oRenderTest::HandleWindowsEvents, this, oBIND1, oBIND2, oBIND3));
 	}
 
@@ -186,19 +195,32 @@ public:
 		GfxCommandList->Begin(V, P, GfxRenderTarget, 0, 0, nullptr);
 		GfxCommandList->Clear(oGfxCommandList::COLOR_DEPTH_STENCIL);
 
+		float3 tx;
+		quatf rot;
 		{
 			oLockGuard<oMutex> lock(DrawMutex);
-
-			GfxCommandList->SetPipeline(PLForwardColor);
-			GfxCommandList->OMSetState(oOMOPAQUE);
-			GfxCommandList->RSSetState(oRSFRONTFACE);
-			GfxCommandList->DSSetState(oDSTESTANDWRITE);
-			GfxCommandList->DrawMesh(MeshTx, 0, GfxMesh, ~0u, nullptr);
-			
-			GfxCommandList->SetPipeline(PLLines);
-			GfxCommandListLines->DSSetState(oDSTEST);
-			GfxCommandList->DrawLines(MeshTx, 1, GfxLineList);
+			tx = oExtractTranslation(MeshTx);
+			rot = oCreateRotationQ(MeshTx);
 		}
+
+		oGfxCommandList::MAPPED ILMapped;
+		GfxCommandList->Map(GfxInstanceList, 0, &ILMapped);
+		for (int i = 0; i < 6; i++)
+		{
+			((oGFXTEST_INSTANCE*)ILMapped.pData)[i].Translation = tx;
+			((oGFXTEST_INSTANCE*)ILMapped.pData)[i].Rotation = rot;
+		}
+		GfxCommandList->Unmap(GfxInstanceList, 0, 1);
+
+		GfxCommandList->SetPipeline(PLForwardInstancedColor);
+		GfxCommandList->OMSetState(oOMOPAQUE);
+		GfxCommandList->RSSetState(oRSFRONTFACE);
+		GfxCommandList->DSSetState(oDSTESTANDWRITE);
+		GfxCommandList->DrawMesh(/*MeshTx*/float4x4::Identity, 0, GfxMesh, ~0u, GfxInstanceList);
+			
+		GfxCommandList->SetPipeline(PLLines);
+		GfxCommandListLines->DSSetState(oDSTEST);
+		GfxCommandList->DrawLines(MeshTx, 1, GfxLineList);
 
 		GfxCommandList->End();
 

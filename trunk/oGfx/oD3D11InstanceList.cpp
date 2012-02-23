@@ -34,3 +34,20 @@ oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, InstanceList)
 	Desc.NumElements = 0;
 	*_pSuccess = true;
 }
+
+bool oD3D11InstanceList::Map(ID3D11DeviceContext* _pContext, oGfxCommandList::MAPPED* _pMapped)
+{
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	if (FAILED(_pContext->Map(Instances, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
+		return oWinSetLastError();
+	_pMapped->pData = mapped.pData;
+	_pMapped->RowPitch = mapped.RowPitch;
+	_pMapped->SlicePitch = mapped.DepthPitch;
+	return true;
+}
+
+void oD3D11InstanceList::Unmap(ID3D11DeviceContext* _pContext, uint _NewNumInstances)
+{
+	_pContext->Unmap(Instances, 0);
+	Desc.NumInstances = _NewNumInstances;
+}

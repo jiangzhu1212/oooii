@@ -228,67 +228,25 @@ void oD3D11CommandList::SetMaterials(size_t _StartSlot, size_t _NumMaterials, co
 	oD3D11SetConstantBuffers(Context, _StartSlot, _NumMaterials, CBs);
 }
 #endif
-static ID3D11Resource* GetResourceBuffer(oGfxResource* _pResource, size_t _SubresourceIndex, UINT* _pD3DSubresourceIndex, size_t _NewCount = oInvalid)
-{
-	switch (_pResource->GetType())
-	{
-		//case oGfxResource::INSTANCELIST:
-		//{
-		//	oD3D11InstanceList* il = static_cast<oD3D11InstanceList*>(_pResource);
-		//	if (_NewCount != oInvalid)
-		//	{
-		//		threadsafe oD3D11InstanceList::DESC* pDesc = il->GetDirectDesc();
-		//		oSWAP(&pDesc->NumInstances, oSize32(_NewCount));
-		//	}
-		//	return il->Instances.c_ptr();
-		//}
-
-		case oGfxResource::LINELIST:
-		{
-			oASSERT(0, "Deprecated");
-			oD3D11LineList* ll = static_cast<oD3D11LineList*>(_pResource);
-			if (_NewCount != oInvalid)
-				ll->GetDirectDesc()->NumLines = oSize32(_NewCount);
-			return ll->Lines;
-		}
-
-		//case oGfxResource::TEXTURE: return static_cast<oD3D11Texture*>(_pResource)->Texture.c_ptr();
-		//case oGfxResource::MATERIAL: return static_cast<oD3D11Material*>(_pResource)->Constants.c_ptr();
-		case oGfxResource::MESH:
-		{
-			oASSERT(0, "Deprecated");
-
-			switch (_SubresourceIndex)
-			{
-				case oGfxMesh::RANGES: oASSERT(0, "Ranges are not an ID3D11Buffer");
-				case oGfxMesh::INDICES: *_pD3DSubresourceIndex = 0; return static_cast<oD3D11Mesh*>(_pResource)->Indices.c_ptr();
-				case oGfxMesh::VERTICES0: *_pD3DSubresourceIndex = 0; return static_cast<oD3D11Mesh*>(_pResource)->Vertices[0].c_ptr();
-				case oGfxMesh::VERTICES1: *_pD3DSubresourceIndex = 0; return static_cast<oD3D11Mesh*>(_pResource)->Vertices[1].c_ptr();
-				case oGfxMesh::VERTICES2: *_pD3DSubresourceIndex = 0; return static_cast<oD3D11Mesh*>(_pResource)->Vertices[2].c_ptr();
-				oNODEFAULT;
-			}
-		}
-		oNODEFAULT;
-	}
-}
-
 bool oD3D11CommandList::Map(oGfxResource* _pResource, size_t _SubresourceIndex, MAPPED* _pMapped)
 {
 	switch (_pResource->GetType())
 	{
-		case oGfxResource::MESH: return static_cast<oD3D11Mesh*>(_pResource)->Map(Context, _SubresourceIndex, _pMapped);
+		case oGfxResource::INSTANCELIST:return static_cast<oD3D11InstanceList*>(_pResource)->Map(Context, _pMapped);
 		case oGfxResource::LINELIST:return static_cast<oD3D11LineList*>(_pResource)->Map(Context, _pMapped);
+		case oGfxResource::MESH: return static_cast<oD3D11Mesh*>(_pResource)->Map(Context, _SubresourceIndex, _pMapped);
 		default:
 		{
-			D3D11_MAPPED_SUBRESOURCE mapped;
-			UINT D3D11SubresourceIndex = 0;
-			ID3D11Resource* pD3D11Resource = GetResourceBuffer(_pResource, _SubresourceIndex, &D3D11SubresourceIndex);
-			if (!Context->Map(pD3D11Resource, D3D11SubresourceIndex, D3D11_MAP_WRITE_DISCARD, 0, &mapped))
-				return oWinSetLastError();
+			oASSERT(0, "stale code");
+			//D3D11_MAPPED_SUBRESOURCE mapped;
+			//UINT D3D11SubresourceIndex = 0;
+			//ID3D11Resource* pD3D11Resource = GetResourceBuffer(_pResource, _SubresourceIndex, &D3D11SubresourceIndex);
+			//if (!Context->Map(pD3D11Resource, D3D11SubresourceIndex, D3D11_MAP_WRITE_DISCARD, 0, &mapped))
+			//	return oWinSetLastError();
 
-			_pMapped->pData = mapped.pData;
-			_pMapped->RowPitch = mapped.RowPitch;
-			_pMapped->SlicePitch = mapped.DepthPitch;
+			//_pMapped->pData = mapped.pData;
+			//_pMapped->RowPitch = mapped.RowPitch;
+			//_pMapped->SlicePitch = mapped.DepthPitch;
 			return true;
 		}
 	}
@@ -298,13 +256,15 @@ void oD3D11CommandList::Unmap(oGfxResource* _pResource, size_t _SubresourceIndex
 {
 	switch (_pResource->GetType())
 	{
+		case oGfxResource::INSTANCELIST: static_cast<oD3D11InstanceList*>(_pResource)->Unmap(Context, _NewCount == oInvalid ? 0 : oSize32(_NewCount)); return;
+		case oGfxResource::LINELIST: static_cast<oD3D11LineList*>(_pResource)->Unmap(Context, _NewCount == oInvalid ? 0 : oSize32(_NewCount)); return;
 		case oGfxResource::MESH: static_cast<oD3D11Mesh*>(_pResource)->Unmap(Context, _SubresourceIndex); return;
-		case oGfxResource::LINELIST: return static_cast<oD3D11LineList*>(_pResource)->Unmap(Context, _NewCount == oInvalid ? 0 : oSize32(_NewCount)); return;
 		default:
 		{
-			UINT D3D11SubresourceIndex = 0;
-			ID3D11Resource* pD3D11Resource = GetResourceBuffer(_pResource, _SubresourceIndex, &D3D11SubresourceIndex, _NewCount);
-			Context->Unmap(pD3D11Resource, D3D11SubresourceIndex);
+			oASSERT(0, "stale code");
+			//UINT D3D11SubresourceIndex = 0;
+			//ID3D11Resource* pD3D11Resource = GetResourceBuffer(_pResource, _SubresourceIndex, &D3D11SubresourceIndex, _NewCount);
+			//Context->Unmap(pD3D11Resource, D3D11SubresourceIndex);
 		}
 	}
 }
@@ -341,8 +301,6 @@ void oD3D11CommandList::Clear(CLEAR_TYPE _ClearType)
 
 void oD3D11CommandList::DrawMesh(const float4x4& _Transform, uint _MeshID, const oGfxMesh* _pMesh, size_t _RangeIndex, const oGfxInstanceList* _pInstanceList)
 {
-	oASSERT(!_pInstanceList, "Instanced drawing not yet implemented");
-
 	uint DrawID = D3DDevice()->IncrementDrawID();
 	SetDrawConstants(Context, D3DDevice()->DrawConstants, _Transform, View, Projection, _MeshID, DrawID);
 
@@ -374,6 +332,9 @@ void oD3D11CommandList::DrawMesh(const float4x4& _Transform, uint _MeshID, const
 	#endif
 	oASSERT(M->Vertices[0], "No geometry vertices specified");
 
+	// @oooii-tony: Make this directly map to an input slot!
+	// Don't "tighten" the vertices here.
+
 	const ID3D11Buffer* pVertices[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
 	UINT Strides[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
 	uint nVertexBuffers = 0;
@@ -387,6 +348,21 @@ void oD3D11CommandList::DrawMesh(const float4x4& _Transform, uint _MeshID, const
 		}
 	}
 
+	uint NumInstances = 0;
+	if (_pInstanceList)
+	{
+		oGfxInstanceList::DESC ILDesc;
+		_pInstanceList->GetDesc(&ILDesc);
+		oASSERT(ILDesc.InputSlot >= nVertexBuffers, "Mesh defines vertices in the instance input slot");
+		pVertices[ILDesc.InputSlot] = static_cast<const oD3D11InstanceList*>(_pInstanceList)->Instances;
+		Strides[ILDesc.InputSlot] = oGfxCalcInterleavedVertexSize(ILDesc.pElements, ILDesc.NumElements, ILDesc.InputSlot);
+
+		// @oooii-tony: Because of the packing... fix this when the above fix to vertex packing is fixed
+		nVertexBuffers++;
+
+		NumInstances = ILDesc.NumInstances;
+	}
+
 	oD3D11Draw(Context
 		, RSState >= oRSFRONTPOINTS ? D3D11_PRIMITIVE_TOPOLOGY_POINTLIST : D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST
 		, NumTriangles
@@ -396,7 +372,8 @@ void oD3D11CommandList::DrawMesh(const float4x4& _Transform, uint _MeshID, const
 		, MinVertex
 		, 0
 		, M->Indices
-		, StartIndex);
+		, StartIndex
+		, NumInstances);
 }
 
 void oD3D11CommandList::DrawLines(const float4x4& _Transform, uint _LineListID, const oGfxLineList* _pLineList)

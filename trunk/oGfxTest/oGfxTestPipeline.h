@@ -41,6 +41,12 @@ struct oGFXTEST_VERTEX
 	float2 Texcoord;
 };
 
+struct oGFXTEST_INSTANCE
+{
+	float3 Translation;
+	quatf Rotation;
+};
+
 bool oD3D11GetPipelineDesc(oGFXTEST_PIPELINE _Pipeline, oGfxPipeline::DESC* _pDesc);
 
 #endif
