@@ -332,19 +332,16 @@ void oD3D11CommandList::DrawMesh(const float4x4& _Transform, uint _MeshID, const
 	#endif
 	oASSERT(M->Vertices[0], "No geometry vertices specified");
 
-	// @oooii-tony: Make this directly map to an input slot!
-	// Don't "tighten" the vertices here.
-
 	const ID3D11Buffer* pVertices[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
 	UINT Strides[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
 	uint nVertexBuffers = 0;
-	for (size_t i = 0; i < oCOUNTOF(M->Vertices); i++)
+	for (uint i = 0; i < oCOUNTOF(M->Vertices); i++)
 	{
 		if (M->Vertices[i])
 		{
-			pVertices[nVertexBuffers] = M->Vertices[i];
-			Strides[nVertexBuffers] = M->VertexStrides[i];
-			nVertexBuffers++;
+			pVertices[i] = M->Vertices[i];
+			Strides[i] = M->VertexStrides[i];
+			nVertexBuffers = __max(nVertexBuffers, i+1);
 		}
 	}
 
@@ -356,10 +353,7 @@ void oD3D11CommandList::DrawMesh(const float4x4& _Transform, uint _MeshID, const
 		oASSERT(ILDesc.InputSlot >= nVertexBuffers, "Mesh defines vertices in the instance input slot");
 		pVertices[ILDesc.InputSlot] = static_cast<const oD3D11InstanceList*>(_pInstanceList)->Instances;
 		Strides[ILDesc.InputSlot] = oGfxCalcInterleavedVertexSize(ILDesc.pElements, ILDesc.NumElements, ILDesc.InputSlot);
-
-		// @oooii-tony: Because of the packing... fix this when the above fix to vertex packing is fixed
-		nVertexBuffers++;
-
+		nVertexBuffers = __max(nVertexBuffers, ILDesc.InputSlot+1);
 		NumInstances = ILDesc.NumInstances;
 	}
 

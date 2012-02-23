@@ -38,8 +38,8 @@ oDECLARE_GFXRESOURCE_IMPLEMENTATION(oD3D11, Mesh, MESH)
 	oMutex RangesMutex;
 	std::vector<RANGE> Ranges;
 	oRef<ID3D11Buffer> Indices;
-	oRef<ID3D11Buffer> Vertices[3];
-	uint VertexStrides[3];
+	oRef<ID3D11Buffer> Vertices[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+	uint VertexStrides[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
 
 	bool Uses16BitIndices;
 	D3D11_MAPPED_SUBRESOURCE MappedIndices;

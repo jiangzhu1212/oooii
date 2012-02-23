@@ -195,28 +195,27 @@ public:
 		GfxCommandList->Begin(V, P, GfxRenderTarget, 0, 0, nullptr);
 		GfxCommandList->Clear(oGfxCommandList::COLOR_DEPTH_STENCIL);
 
-		float3 tx;
-		quatf rot;
-		{
-			oLockGuard<oMutex> lock(DrawMutex);
-			tx = oExtractTranslation(MeshTx);
-			rot = oCreateRotationQ(MeshTx);
-		}
-
 		oGfxCommandList::MAPPED ILMapped;
 		GfxCommandList->Map(GfxInstanceList, 0, &ILMapped);
-		for (int i = 0; i < 6; i++)
 		{
-			((oGFXTEST_INSTANCE*)ILMapped.pData)[i].Translation = tx;
-			((oGFXTEST_INSTANCE*)ILMapped.pData)[i].Rotation = rot;
+			oGFXTEST_INSTANCE* pInstances = (oGFXTEST_INSTANCE*)ILMapped.pData;
+			oLockGuard<oMutex> lock(DrawMutex);
+			pInstances[0].Translation = oExtractTranslation(InstancedMeshTx0);
+			pInstances[0].Rotation = oCreateRotationQ(InstancedMeshTx0);
+			pInstances[1].Translation = oExtractTranslation(InstancedMeshTx1);
+			pInstances[1].Rotation = oCreateRotationQ(InstancedMeshTx1);
 		}
-		GfxCommandList->Unmap(GfxInstanceList, 0, 1);
+		GfxCommandList->Unmap(GfxInstanceList, 0, 2);
 
-		GfxCommandList->SetPipeline(PLForwardInstancedColor);
 		GfxCommandList->OMSetState(oOMOPAQUE);
 		GfxCommandList->RSSetState(oRSFRONTFACE);
 		GfxCommandList->DSSetState(oDSTESTANDWRITE);
-		GfxCommandList->DrawMesh(/*MeshTx*/float4x4::Identity, 0, GfxMesh, ~0u, GfxInstanceList);
+
+		GfxCommandList->SetPipeline(PLForwardColor);
+		GfxCommandList->DrawMesh(MeshTx, 0, GfxMesh, ~0u);
+
+		GfxCommandList->SetPipeline(PLForwardInstancedColor);
+		GfxCommandList->DrawMesh(float4x4::Identity, 0, GfxMesh, ~0u, GfxInstanceList);
 			
 		GfxCommandList->SetPipeline(PLLines);
 		GfxCommandListLines->DSSetState(oDSTEST);
@@ -267,6 +266,8 @@ public:
 	}
 
 	float4x4 MeshTx;
+	float4x4 InstancedMeshTx0;
+	float4x4 InstancedMeshTx1;
 
 	inline uint GetFrameID() const threadsafe { return GfxDevice->GetFrameID(); }
 
@@ -343,7 +344,9 @@ int main(int argc, char* argv[])
 		uint FrameID = RenderTest.GetFrameID();
 		MeshRotation = fmod(MeshRotationRates * oCastAsFloat(FrameID), float3(2.0f * oPIf));
 		
-		RenderTest.MeshTx = oCreateRotation(MeshRotation);
+		RenderTest.MeshTx = oCreateRotation(MeshRotation) * oCreateTranslation(float3(-1.0f, 0.0f, 0.0f));
+		RenderTest.InstancedMeshTx0 = oCreateRotation(MeshRotation) * oCreateTranslation(float3(1.0f, 0.66f, 0.0f));
+		RenderTest.InstancedMeshTx1 = oCreateRotation(MeshRotation) * oCreateTranslation(float3(1.0f, -0.66f, 0.0f));
 
 		RenderTest.UnlockDraw();
 
