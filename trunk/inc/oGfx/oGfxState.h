@@ -65,6 +65,7 @@ struct oIAELEMENT
 	uint Index;
 	oSURFACE_FORMAT Format;
 	uint InputSlot;
+	bool Instanced;
 };
 
 oAPI uint oGfxCalcInterleavedVertexSize(const oIAELEMENT* _pElements, size_t _NumElements, uint _InputSlot);

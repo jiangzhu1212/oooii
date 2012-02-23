@@ -54,14 +54,19 @@ interface oGfxInstanceList : oGfxResource
 
 	struct DESC
 	{
+		// Elements points to a full pipeline's expected inputs. InputSlots 
+		// specifies which of these elements will be populated in this instance 
+		// list.
 		const oIAELEMENT* pElements;
 		uint NumElements;
+		uint InputSlot;
 		uint MaxNumInstances;
 		uint NumInstances;
 
 		DESC()
 			: pElements(nullptr)
 			, NumElements(0)
+			, InputSlot(oInvalid)
 			, MaxNumInstances(0)
 			, NumInstances(0)
 		{}
@@ -448,7 +453,7 @@ interface oGfxDevice : oInterface
 	virtual bool CreateRenderTarget(const char* _Name, threadsafe oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, oGfxRenderTarget** _ppRenderTarget) threadsafe = 0;
 	//virtual bool CreateMaterial(const char* _Name, const oGfxMaterial::DESC& _Desc, oGfxMaterial** _ppMaterial) threadsafe = 0;
 	virtual bool CreateMesh(const char* _Name, const oGfxMesh::DESC& _Desc, oGfxMesh** _ppMesh) threadsafe = 0;
-	//virtual bool CreateInstanceList(const char* _Name, const oGfxInstanceList::DESC& _Desc, oGfxInstanceList** _ppInstanceList) threadsafe = 0;
+	virtual bool CreateInstanceList(const char* _Name, const oGfxInstanceList::DESC& _Desc, oGfxInstanceList** _ppInstanceList) threadsafe = 0;
 	//virtual bool CreateTexture(const char* _Name, const oGfxTexture::DESC& _Desc, oGfxTexture** _ppTexture) threadsafe = 0;
 
 	// All oGfxCommandList calls, including Begin()/End(), must be between BeginFrame() and EndFrame().

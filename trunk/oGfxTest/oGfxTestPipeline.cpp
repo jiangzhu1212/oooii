@@ -27,18 +27,28 @@
 #include <oGfxTestLineVSByteCode.h>
 #include <oGfxTestPSByteCode.h>
 #include <oGfxTestVSByteCode.h>
+#include <oGfxTestInstancedVSByteCode.h>
 
 static const oIAELEMENT IAElements[] = 
 {
-	{ "POSITION", 0, oSURFACE_R32G32B32_FLOAT, 0 },
-	{ "NORMAL", 0, oSURFACE_R32G32B32_FLOAT, 0 },
-	{ "TEXCOORD", 0, oSURFACE_R32G32_FLOAT, 0 },
+	{ "POSITION", 0, oSURFACE_R32G32B32_FLOAT, 0, false },
+	{ "NORMAL", 0, oSURFACE_R32G32B32_FLOAT, 0, false },
+	{ "TEXCOORD", 0, oSURFACE_R32G32_FLOAT, 0, false },
+};
+
+static const oIAELEMENT IAElements_Instanced[] = 
+{
+	{ "POSITION", 0, oSURFACE_R32G32B32_FLOAT, 0, false },
+	{ "NORMAL", 0, oSURFACE_R32G32B32_FLOAT, 0, false },
+	{ "TEXCOORD", 0, oSURFACE_R32G32_FLOAT, 0, false },
+	{ "TRANSLATION", 0, oSURFACE_R32G32B32_FLOAT, 1, true },
+	{ "ROTATION", 0, oSURFACE_R32G32B32A32_FLOAT, 1, true },
 };
 
 static const oIAELEMENT IAElements_Line[] = 
 {
-	{ "POSITION", 0, oSURFACE_R32G32B32_FLOAT, 0 },
-	{ "COLOR", 0, oSURFACE_B8G8R8A8_UNORM, 0 },
+	{ "POSITION", 0, oSURFACE_R32G32B32_FLOAT, 0, false },
+	{ "COLOR", 0, oSURFACE_B8G8R8A8_UNORM, 0, false },
 };
 
 bool oD3D11GetPipelineDesc(oGFXTEST_PIPELINE _Pipeline, oGfxPipeline::DESC* _pDesc)
@@ -46,11 +56,18 @@ bool oD3D11GetPipelineDesc(oGFXTEST_PIPELINE _Pipeline, oGfxPipeline::DESC* _pDe
 	memset(_pDesc, 0, sizeof(*_pDesc));
 	switch (_Pipeline)
 	{
-		case oGFX_FOWARD_COLOR:
+		case oGFX_FORWARD_COLOR:
 			oASSERT(sizeof(oGFXTEST_VERTEX) == oGfxCalcInterleavedVertexSize(IAElements, 0), "Mismatched oGFXTEST_VERTEX size");
 			_pDesc->pElements = IAElements;
 			_pDesc->NumElements = oCOUNTOF(IAElements);
 			_pDesc->pVSByteCode = oGfxTestVSByteCode;
+			_pDesc->pPSByteCode = oGfxTestPSByteCode;
+			return true;
+
+		case oGFX_FORWARD_COLOR_INSTANCED:
+			_pDesc->pElements = IAElements_Instanced;
+			_pDesc->NumElements = oCOUNTOF(IAElements_Instanced);
+			_pDesc->pVSByteCode = oGfxTestInstancedVSByteCode;
 			_pDesc->pPSByteCode = oGfxTestPSByteCode;
 			return true;
 

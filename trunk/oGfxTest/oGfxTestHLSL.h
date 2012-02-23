@@ -42,6 +42,18 @@ struct VSIN
 	float2 Texcoord : TEXCOORD;
 };
 
+struct VSININSTANCED
+{
+	// Per-vertex
+	float3 LSPosition : POSITION;
+	float3 LSNormal : NORMAL;
+	float2 Texcoord : TEXCOORD;
+
+	// Per-instance
+	float3 Translation : TRANSLATION;
+	float4 Rotation : ROTATION;
+};
+
 struct VSOUT
 {
 	float4 SSPosition : SV_Position;

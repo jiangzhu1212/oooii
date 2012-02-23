@@ -34,5 +34,8 @@
     <FXC Include="oGfxTestLineVS.sh">
       <Filter>Shaders</Filter>
     </FXC>
+    <FXC Include="oGfxTestInstancedVS.sh">
+      <Filter>Shaders</Filter>
+    </FXC>
   </ItemGroup>
 </Project>

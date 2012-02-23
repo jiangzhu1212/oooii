@@ -30,7 +30,6 @@ oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, Mesh)
 	, Uses16BitIndices(_Desc.NumIndices < 65535)
 {
 	*_pSuccess = false;
-	Desc = _Desc;
 	MappedIndices.pData = nullptr;
 
 	oINIT_ARRAY(VertexStrides, 0);

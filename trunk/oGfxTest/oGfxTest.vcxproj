@@ -222,6 +222,24 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
+    <FXC Include="oGfxTestInstancedVS.sh">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)inc;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)inc;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)inc;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)inc;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)oGfxTestHLSL.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)oGfxTestHLSL.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)oGfxTestHLSL.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)oGfxTestHLSL.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
     <FXC Include="oGfxTestLinePS.sh">
       <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)inc;%(Includes)</Includes>
       <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)inc;%(Includes)</Includes>

@@ -38,8 +38,8 @@ static void oInitializeInputElementDesc(D3D11_INPUT_ELEMENT_DESC* _pInputElement
 		el.Format = oDXGIFromSurfaceFormat(e.Format);
 		el.InputSlot = e.InputSlot;
 		el.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-		el.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-		el.InstanceDataStepRate = 0;
+		el.InputSlotClass = e.Instanced ? D3D11_INPUT_PER_INSTANCE_DATA : D3D11_INPUT_PER_VERTEX_DATA;
+		el.InstanceDataStepRate = e.Instanced ? 1 : 0;
 	}
 }
 

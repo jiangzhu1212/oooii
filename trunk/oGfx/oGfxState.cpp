@@ -100,9 +100,25 @@ const char* oAsString(const oMBSTATE& _MBState)
 
 uint oGfxCalcInterleavedVertexSize(const oIAELEMENT* _pElements, size_t _NumElements, uint _InputSlot)
 {
+	bool IsFirstRun = true;
+	bool IsInstanceList = false;
+
 	uint size = 0;
 	for (size_t i = 0; i < _NumElements; i++)
+	{
 		if (_InputSlot == _pElements[i].InputSlot)
+		{
+			if (IsFirstRun)
+			{
+				IsInstanceList = _pElements[i].Instanced;
+				IsFirstRun = false;
+			}
+
+			else
+				oASSERT(IsInstanceList == _pElements[i].Instanced, "Elements in the same slot must either be all instanced or all not instanced.");
+
 			size += oSurfaceFormatGetSize(_pElements[i].Format);
+		}
+	}
 	return size;
 }

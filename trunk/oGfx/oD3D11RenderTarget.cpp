@@ -47,7 +47,6 @@ const oGUID& oGetGUID(threadsafe const oD3D11RenderTarget* threadsafe const *)
 oDEFINE_GFXDEVICE_CREATE(oD3D11, RenderTarget);
 oBEGIN_DEFINE_GFXDEVICECHILD_CTOR(oD3D11, RenderTarget)
 {
-	Desc = _Desc;
 	// nullify width/height to force allocation in this call to resize
 	Desc.Dimensions = int2(0,0);
 	Resize(_Desc.Dimensions);

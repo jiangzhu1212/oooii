@@ -27,7 +27,6 @@
 oDEFINE_GFXDEVICE_CREATE(oD3D11, LineList);
 oBEGIN_DEFINE_GFXRESOURCE_CTOR(oD3D11, LineList)
 {
-	Desc = _Desc;
 	*_pSuccess = false;
 	oD3D11DEVICE();
 	oVERIFY(oD3D11CreateVertexBuffer(D3DDevice, _Name, true, 0, Desc.MaxNumLines, sizeof(LINE), &Lines));

@@ -64,10 +64,13 @@ public:
 		CmdListDesc.DrawOrder = 1;
 		oVERIFY(GfxDevice->CreateCommandList("Test.CommandList.Lines", CmdListDesc, &GfxCommandListLines));
 
-		oGfxPipeline::DESC PLForwardDesc, PLLinesDesc;
-		oVERIFY(oD3D11GetPipelineDesc(oGFX_FOWARD_COLOR, &PLForwardDesc));
+		oGfxPipeline::DESC PLForwardDesc, PLForwardInstancedDesc, PLLinesDesc;
+		oVERIFY(oD3D11GetPipelineDesc(oGFX_FORWARD_COLOR, &PLForwardDesc));
 		oVERIFY(GfxDevice->CreatePipeline("oGfxTest.Forward.Color", PLForwardDesc, &PLForwardColor));
 		
+		oVERIFY(oD3D11GetPipelineDesc(oGFX_FORWARD_COLOR_INSTANCED, &PLForwardInstancedDesc));
+		oVERIFY(GfxDevice->CreatePipeline("oGfxTest.ForwardInstanced.Color", PLForwardInstancedDesc, &PLForwardInstancedColor));
+
 		oVERIFY(oD3D11GetPipelineDesc(oGFX_LINE, &PLLinesDesc));
 		oVERIFY(GfxDevice->CreatePipeline("oGfxTest.Forward.Lines", PLLinesDesc, &PLLines));
 
@@ -152,6 +155,14 @@ public:
 		GfxCommandList->Unmap(GfxLineList, 0, LLDesc.MaxNumLines);
 
 		BoxGeo->Unmap();
+
+		oGfxInstanceList::DESC ILDesc;
+		ILDesc.pElements = PLForwardInstancedDesc.pElements;
+		ILDesc.NumElements = PLForwardInstancedDesc.NumElements;
+		ILDesc.InputSlot = 1;
+		ILDesc.MaxNumInstances = 6;
+		ILDesc.NumInstances = 0;
+		oVERIFY(GfxDevice->CreateInstanceList("oGfxTest.InstanceList", ILDesc, &GfxInstanceList));
 
 		WinHook = Window->Hook(oBIND(&oRenderTest::HandleWindowsEvents, this, oBIND1, oBIND2, oBIND3));
 	}
@@ -246,8 +257,10 @@ private:
 	oRef<oGfxCommandList> GfxCommandListLines;
 	oRef<oGfxPipeline> PLForwardColor;
 	oRef<oGfxPipeline> PLLines;
+	oRef<oGfxPipeline> PLForwardInstancedColor;
 	oMutex DrawMutex;
 	oRef<oGfxMesh> GfxMesh;
+	oRef<oGfxInstanceList> GfxInstanceList;
 	oRef<oGfxLineList> GfxLineList;
 	unsigned int WinHook;
 };
