@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="oGfxTest.cpp" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="oGfxTestPipeline.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="oGfxTestHLSL.h">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="oGfxTestPipeline.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="oGfxTest.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{149e1c25-8d18-4f32-b9a3-94d67cf6ab34}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <FXC Include="oGfxTestPS.sh">
+      <Filter>Shaders</Filter>
+    </FXC>
+    <FXC Include="oGfxTestVS.sh">
+      <Filter>Shaders</Filter>
+    </FXC>
+    <FXC Include="oGfxTestLinePS.sh">
+      <Filter>Shaders</Filter>
+    </FXC>
+    <FXC Include="oGfxTestLineVS.sh">
+      <Filter>Shaders</Filter>
+    </FXC>
+  </ItemGroup>
+</Project>
