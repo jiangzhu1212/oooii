@@ -127,22 +127,9 @@ static void SetDrawConstants(ID3D11DeviceContext* _pDeviceContext, ID3D11Buffer*
 	oD3D11SetConstantBuffers(_pDeviceContext, 1, 1, &_pDrawConstants);
 }
 
-static void SetPipeline(ID3D11DeviceContext* _pDeviceContext, const oGfxPipeline* _pPipeline)
-{
-	oASSERT(_pPipeline, "A pipline must be specified");
-	oD3D11Pipeline* p = const_cast<oD3D11Pipeline*>(static_cast<const oD3D11Pipeline*>(_pPipeline));
-	_pDeviceContext->IASetInputLayout(p->InputLayout);
-	_pDeviceContext->VSSetShader(p->VertexShader, 0, 0);
-	_pDeviceContext->HSSetShader(p->HullShader, 0, 0);
-	_pDeviceContext->DSSetShader(p->DomainShader, 0, 0);
-	_pDeviceContext->GSSetShader(p->GeometryShader, 0, 0);
-	_pDeviceContext->PSSetShader(p->PixelShader, 0, 0);
-}
-
 void oD3D11CommandList::Begin(
 	const float4x4& _View
 	, const float4x4& _Projection
-	, const oGfxPipeline* _pPipeline
 	, oGfxRenderTarget* _pRenderTarget
 	, size_t _RenderTargetIndex
 	, size_t _NumViewports
@@ -162,7 +149,6 @@ void oD3D11CommandList::Begin(
 	_pRenderTarget->GetDesc(&RTDesc);
 	SetViewports(Context, RTDesc, _NumViewports, _pViewports);
 	SetViewConstants(Context, D3DDevice()->ViewConstants, _View, _Projection, RTDesc, _RenderTargetIndex);
-	SetPipeline(Context, _pPipeline);
 }
 
 void oD3D11CommandList::End()
@@ -171,6 +157,30 @@ void oD3D11CommandList::End()
 	Context->FinishCommandList(FALSE, &CommandList);
 
 	oDEVICE_UNLOCK_SUBMIT();
+}
+
+void oD3D11CommandList::SetPipeline(const oGfxPipeline* _pPipeline)
+{
+	if (_pPipeline)
+	{
+		oD3D11Pipeline* p = const_cast<oD3D11Pipeline*>(static_cast<const oD3D11Pipeline*>(_pPipeline));
+		Context->IASetInputLayout(p->InputLayout);
+		Context->VSSetShader(p->VertexShader, 0, 0);
+		Context->HSSetShader(p->HullShader, 0, 0);
+		Context->DSSetShader(p->DomainShader, 0, 0);
+		Context->GSSetShader(p->GeometryShader, 0, 0);
+		Context->PSSetShader(p->PixelShader, 0, 0);
+	}
+
+	else
+	{
+		Context->IASetInputLayout(nullptr);
+		Context->VSSetShader(nullptr, nullptr, 0);
+		Context->HSSetShader(nullptr, nullptr, 0);
+		Context->DSSetShader(nullptr, nullptr, 0);
+		Context->GSSetShader(nullptr, nullptr, 0);
+		Context->PSSetShader(nullptr, nullptr, 0);
+	}
 }
 
 void oD3D11CommandList::RSSetState(oRSSTATE _State)

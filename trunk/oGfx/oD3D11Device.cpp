@@ -160,6 +160,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGfxDevice::DESC& _Desc
 
 		D3D11_RASTERIZER_DESC desc;
 		memset(&desc, 0, sizeof(desc));
+		desc.FrontCounterClockwise = FALSE;
 		desc.DepthClipEnable = TRUE;
 
 		for (size_t i = 0; i < oCOUNTOF(RSStates); i++)

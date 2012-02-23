@@ -354,7 +354,6 @@ interface oGfxCommandList : oGfxDeviceChild
 	virtual void Begin(
 		const float4x4& _View
 		, const float4x4& _Projection
-		, const oGfxPipeline* _pPipeline
 		, oGfxRenderTarget* _pRenderTarget
 		, size_t _RenderTargetIndex
 		, size_t _NumViewports
@@ -362,6 +361,8 @@ interface oGfxCommandList : oGfxDeviceChild
 
 	// Ends recording of GPU submissions and caches a command list
 	virtual void End() = 0;
+
+	virtual void SetPipeline(const oGfxPipeline* _pPipeline) = 0;
 
 	// Set the rasterization state in this context
 	virtual void RSSetState(oRSSTATE _State) = 0;

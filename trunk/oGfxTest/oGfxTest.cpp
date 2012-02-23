@@ -64,12 +64,12 @@ public:
 		CmdListDesc.DrawOrder = 1;
 		oVERIFY(GfxDevice->CreateCommandList("Test.CommandList.Lines", CmdListDesc, &GfxCommandListLines));
 
-		oGfxPipeline::DESC PLDesc;
-		oVERIFY(oD3D11GetPipelineDesc(oGFX_FOWARD_COLOR, &PLDesc));
-		oVERIFY(GfxDevice->CreatePipeline("oGfxTest.Forward.Color", PLDesc, &PLForwardColor));
+		oGfxPipeline::DESC PLForwardDesc, PLLinesDesc;
+		oVERIFY(oD3D11GetPipelineDesc(oGFX_FOWARD_COLOR, &PLForwardDesc));
+		oVERIFY(GfxDevice->CreatePipeline("oGfxTest.Forward.Color", PLForwardDesc, &PLForwardColor));
 		
-		//oVERIFY(oD3D11GetPipelineDesc(oGFX_LINE, &PLDesc));
-		//oVERIFY(GfxDevice->CreatePipeline("oGfxTest.Forward.Lines", PLDesc, &PLLines));
+		oVERIFY(oD3D11GetPipelineDesc(oGFX_LINE, &PLLinesDesc));
+		oVERIFY(GfxDevice->CreatePipeline("oGfxTest.Forward.Lines", PLLinesDesc, &PLLines));
 
 		oRef<oGeometryFactory> GeoFactory;
 		oVERIFY(oGeometryFactoryCreate(&GeoFactory));
@@ -82,7 +82,7 @@ public:
 		BoxLayout.Colors = true;
 
 		oGeometryFactory::BOX_DESC BoxDesc;
-		BoxDesc.FaceType = oGeometry::FRONT_CCW;
+		BoxDesc.FaceType = oGeometry::FRONT_CW;
 		BoxDesc.Bounds = oAABoxf(float3(-0.5f), float3(0.5f));
 		BoxDesc.Divide = 1;
 		BoxDesc.Color = std::White;
@@ -101,8 +101,8 @@ public:
 		MeshDesc.LocalSpaceBounds = GeoDesc.Bounds;
 		MeshDesc.FrequentIndexUpdate = true;
 		MeshDesc.FrequentVertexUpdate[0] = true;
-		MeshDesc.pElements = PLDesc.pElements;
-		MeshDesc.NumElements = PLDesc.NumElements;
+		MeshDesc.pElements = PLForwardDesc.pElements;
+		MeshDesc.NumElements = PLForwardDesc.NumElements;
 		oVERIFY(GfxDevice->CreateMesh("oGfxTest Mesh", MeshDesc, &GfxMesh));
 
 		oGeometry::CONST_MAPPED GeoMapped;
@@ -136,7 +136,7 @@ public:
 		oMemcpyAsym(oByteAdd(mappedV.pData, sizeof(float3)), VertexStride, GeoMapped.pNormals, sizeof(float3), MeshDesc.NumVertices);
 		oMemcpyAsym(oByteAdd(mappedV.pData, sizeof(float3) * 2), VertexStride, GeoMapped.pTexcoords, sizeof(float2), MeshDesc.NumVertices);
 
-		const float kNormalScale = 1.1f;
+		const float kNormalScale = 0.2f;
 		oGFXTEST_VERTEX* pVertices = static_cast<oGFXTEST_VERTEX*>(mappedV.pData);
 		for (size_t i = 0; i < LLDesc.MaxNumLines; i++)
 		{
@@ -172,27 +172,21 @@ public:
 		GfxRenderTarget->GetDesc(&RTDesc);
 		float4x4 P = oCreatePerspectiveLH(oPIf/4.0f, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
 
-		GfxCommandList->Begin(V, P, PLForwardColor, GfxRenderTarget, 0, 0, nullptr);
-
-		GfxCommandList->OMSetState(oOMOPAQUE);
-		GfxCommandList->RSSetState(oRSTWOSIDEDFACE);
-		GfxCommandList->DSSetState(oDSTESTANDWRITE);
-
+		GfxCommandList->Begin(V, P, GfxRenderTarget, 0, 0, nullptr);
 		GfxCommandList->Clear(oGfxCommandList::COLOR_DEPTH_STENCIL);
-
-		//GfxCommandListLines->Begin(V, P, PLLines, GfxRenderTarget, 0, 0, nullptr);
-
-		GfxCommandListLines->OMSetState(oOMOPAQUE);
-		GfxCommandListLines->RSSetState(oRSTWOSIDEDFACE);
-		GfxCommandListLines->DSSetState(oDSTEST);
-
 
 		{
 			oLockGuard<oMutex> lock(DrawMutex);
 
+			GfxCommandList->SetPipeline(PLForwardColor);
+			GfxCommandList->OMSetState(oOMOPAQUE);
+			GfxCommandList->RSSetState(oRSFRONTFACE);
+			GfxCommandList->DSSetState(oDSTESTANDWRITE);
 			GfxCommandList->DrawMesh(MeshTx, 0, GfxMesh, ~0u, nullptr);
 			
-			//GfxCommandList->DrawLines(MeshTx, 1, GfxLineList);
+			GfxCommandList->SetPipeline(PLLines);
+			GfxCommandListLines->DSSetState(oDSTEST);
+			GfxCommandList->DrawLines(MeshTx, 1, GfxLineList);
 		}
 
 		GfxCommandList->End();

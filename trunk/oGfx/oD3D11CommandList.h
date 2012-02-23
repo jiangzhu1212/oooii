@@ -41,7 +41,6 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	void Begin(
 		const float4x4& _View
 		, const float4x4& _Projection
-		, const oGfxPipeline* _pPipeline
 		, oGfxRenderTarget* _pRenderTarget
 		, size_t _RenderTargetIndex
 		, size_t _NumViewports
@@ -49,6 +48,7 @@ oDECLARE_GFXDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 
 	void End() override;
 
+	void SetPipeline(const oGfxPipeline* _pPipeline) override;
 	void RSSetState(oRSSTATE _State) override;
 	void OMSetState(oOMSTATE _State) override;
 	void DSSetState(oDSSTATE _State) override;
