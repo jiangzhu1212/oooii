@@ -46,7 +46,7 @@ inline RECT oWinRectTranslate(const RECT& _rRect, int _Translation) { return oWi
 inline RECT oWinRectScale(const RECT& _rRect, const int2& _Scale) { RECT r = _rRect; r.left *= _Scale.x; r.top *= _Scale.y; r.right *= _Scale.x; r.bottom *= _Scale.y; return r; }
 inline RECT oWinRectScale(const RECT& _rRect, int _Scale) { return oWinRectScale(_rRect, int2(_Scale, _Scale)); }
 
-inline RECT oWinClip(const RECT& _rContainer, const RECT& _ToBeClipped) { RECT r = _ToBeClipped; r.left = __max(r.left, _rContainer.left); r.top = __max(r.top, _rContainer.top); r.right = __max(r.right, _rContainer.right); r.bottom = __max(r.bottom, _rContainer.bottom); return r; }
+inline RECT oWinClip(const RECT& _rContainer, const RECT& _ToBeClipped) { RECT r = _ToBeClipped; r.left = __max(r.left, _rContainer.left); r.top = __max(r.top, _rContainer.top); r.right = __min(r.right, _rContainer.right); r.bottom = __min(r.bottom, _rContainer.bottom); return r; }
 inline bool oWinRectContains(const RECT& _rContainer, const int2& _Point) { return _Point.x >= _rContainer.left && _Point.x <= _rContainer.right && _Point.y >= _rContainer.top && _Point.y <= _rContainer.bottom; }
 
 // Returns a RECT that is positioned to accomodate _Position, _Size and _Anchor

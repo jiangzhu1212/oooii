@@ -308,10 +308,6 @@ copy ..\FreeImage.h ..\..\Dist
     <None Include="..\..\Whatsnew.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LibJPEG\LibJPEG.2010.vcxproj">
-      <Project>{5e1d4e5f-e10c-4ba3-b663-f33014fd21d9}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
     <ProjectReference Include="..\LibMNG\LibMNG.2010.vcxproj">
       <Project>{912a2d43-35a3-4af2-b2eb-0d81effda6dc}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>

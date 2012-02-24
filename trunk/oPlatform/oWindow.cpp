@@ -356,6 +356,8 @@ protected:
 
 	oGDIScopedObject<HBITMAP> hOffscreenAABmp; // AA shapes
 	oGDIScopedObject<HBITMAP> hOffscreenBmp; // AA is handled on text with cleartype, so let that pass through
+
+	HMENU hMenu; // retain hMenu through fullscreen
 };
 
 oWinWindow::oWinWindow(const DESC& _Desc, void* _pAssociatedNativeHandle, DRAW_MODE _DrawMode, bool* _pSuccess)
@@ -367,6 +369,7 @@ oWinWindow::oWinWindow(const DESC& _Desc, void* _pAssociatedNativeHandle, DRAW_M
 	, pUserSpecifiedDevice((IUnknown*)_pAssociatedNativeHandle)
 	, CloseConfirmed(false)
 	, hRenderDC(nullptr)
+	, hMenu(nullptr)
 {
 	*_pSuccess = false;
 	RunFunction = oBIND(&oWinWindow::Run, this);
@@ -451,6 +454,8 @@ void oWinWindow::DestroyWindow1()
 {
 	oVB(DestroyWindow(hWnd));
 	hWnd = nullptr;
+	if (hMenu)
+		oVB(DestroyMenu(hMenu));
 }
 
 bool oWinWindow::CreateDevices(HWND _hWnd, IUnknown* _pUserSpecifiedDevice)
@@ -739,16 +744,7 @@ void oWinWindow::Run()
 {
 	if (hWnd)
 	{
-		MSG msg;
-		if (GetMessage(&msg, nullptr, 0, 0) > 0)
-		{
-			if (!IsDialogMessage(hWnd, &msg))
-			{
-				TranslateMessage(&msg); 
-				DispatchMessage(&msg);
-			}
-		}
-
+		oWinProcessSingleMessage(hWnd, true);
 		MessageQueue->Dispatch(RunFunction);
 	}
 }
@@ -908,40 +904,6 @@ bool oWinWindow::GDIPaint(HWND _hWnd, HDC _hDC, bool _Force)
 	if (DXGISwapChain && (!Desc.EnableUIDrawing || IsHWFullscreen))
 		oV(DXGISwapChain->Present(Desc.FullscreenVSync ? 1 : 0, 0));
 
-	// windowed, no UI, no AA
-	// X Present
-
-	// windowed, no UI, AA
-	// X Present
-
-	// windowed, yes UI, no AA
-	// X BitBlt render to hOffscreen
-	// X render UI to hOffscreen
-	// X BitBlt to win hDC
-
-	// windowed, yes UI, AA
-	// X StretchBlt render to hAA
-	// X render UI to hAA
-	// X StretchBlt to hOffscreen
-	// X BitBlt to win hDC
-
-	// fullscreen, no UI, no AA
-	// X Present
-
-	// fullscreen, no UI, AA
-	// X Present
-
-	// fullscreen, UI, no AA
-	// X Render UI to mapped render hDC
-	// X Present??
-
-	// fullscreen UI, AA
-	// X StretchBlt render hDC to hAA
-	// X render UIAA
-	// X StretchBlt to hOffscreen
-	// X render UI
-	// X blt to render hDC
-
 	return true;
 }
 
@@ -1042,26 +1004,6 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 		case WM_SIZE:
 		{
 			oVERIFY(ResizeDevice(int2(GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)), _wParam == SIZE_MINIMIZED));
-			/*
-			oVERIFY(DestroyDeviceResources());
-			#if oDXVER >= oDXVER_10
-				if (DXGISwapChain && _wParam != SIZE_MINIMIZED)
-				{
-					DXGI_SWAP_CHAIN_DESC d;
-					DXGISwapChain->GetDesc(&d);
-					HRESULT HR = DXGISwapChain->ResizeBuffers(d.BufferCount, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam), d.BufferDesc.Format, d.Flags);
-					if (HR == DXGI_ERROR_INVALID_CALL)
-						oASSERTA(false, "DXGISwapChain->ResizeBuffers() cannot occur because there still are dependent resources in client code. Ensure all dependent resources are freed on the PRERESIZING event when implementing a SizeMove hook.");
-					else
-						oV(HR);
-				}
-			#endif
-			{
-				oLockGuard<oSharedMutex> lock(DescMutex);
-				PendingDesc.ClientSize = Desc.ClientSize = int2(GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam));
-			}
-			oVERIFY(CreateDeviceResources(_hWnd));
-			*/
 			return 0;
 		}
 
@@ -1326,6 +1268,9 @@ void oWinWindow::SetDesc(DESC _Desc)
 	// used to get a screen onto which fullscreen will be applied.
 	if (_Desc.State == FULLSCREEN && Desc.State != FULLSCREEN)
 	{
+		hMenu = GetMenu(hWnd);
+		oVB(SetMenu(hWnd, nullptr));
+
 		// Move to the monitor we're going to go fullscreen on. Doing it here rather
 		// than directly going fullscreen on an adapter allows us to call 
 		// ResizeTarget in the MS-recommended way.
@@ -1405,6 +1350,10 @@ void oWinWindow::SetDesc(DESC _Desc)
 		RECT rClient = ResolveRect(hWnd, _Desc.ClientPosition, _Desc.ClientSize, _Desc.State == FULLSCREEN);
 		_Desc.ClientPosition = oWinRectPosition(rClient);
 		_Desc.ClientSize = oWinRectSize(rClient);
+
+		oVB(SetMenu(hWnd, hMenu));
+		hMenu = nullptr;
+
 		oVERIFY(oWinSetStyle(hWnd, oAsWinStyle(_Desc.Style), &rClient));
 		oVERIFY(oWinSetState(hWnd, oAsWinState(_Desc.State), _Desc.HasFocus));
 	}

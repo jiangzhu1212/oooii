@@ -62,6 +62,8 @@ half4
 if
 in
 inout
+row_major
+column_major
 int
 int2
 int3
@@ -164,6 +166,8 @@ uint2
 uint3
 uint4
 uniform
+groupshared
+precise
 unpack_2half
 unpack_4clamp1s
 void
@@ -340,7 +344,6 @@ h1texcompare2D
 x1texcompare2D
 x1texcompare2D
 x1texcompare2D
-
 VertexShader
 PixelShader
 vs_2_0

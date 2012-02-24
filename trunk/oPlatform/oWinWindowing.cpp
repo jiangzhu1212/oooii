@@ -50,7 +50,7 @@ bool oWinCreate(HWND* _pHwnd, WNDPROC _Wndproc, void* _pThis, bool _SupportDoubl
 	if (0 == RegisterClassEx(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
 		return oWinSetLastError();
 
-	*_pHwnd = CreateWindowEx(WS_EX_ACCEPTFILES|WS_EX_APPWINDOW, className, "", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, 0, _pThis);
+	*_pHwnd = CreateWindowEx(WS_EX_ACCEPTFILES|WS_EX_APPWINDOW, className, "", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, nullptr, _pThis);
 	if (!*_pHwnd)
 		return false; // pass through error
 
@@ -291,7 +291,7 @@ bool oWinSetStyle(HWND _hWnd, oWINDOW_STYLE _Style, const RECT* _prClient)
 	else
 		oVB_RETURN(oWinGetClientScreenRect(_hWnd, &r));
 
-	oVB_RETURN(AdjustWindowRect(&r, dwAllFlags, FALSE));
+	oVB_RETURN(AdjustWindowRect(&r, dwAllFlags, !!GetMenu(_hWnd)));
 
 	SetLastError(0); // http://msdn.microsoft.com/en-us/library/ms644898(VS.85).aspx
 	oVB_RETURN(SetWindowLongPtr(_hWnd, GWL_STYLE, dwAllFlags));
@@ -570,8 +570,8 @@ static DWORD GetStyle(oWINDOW_CONTROL_TYPE _Type, bool _StartsNewGroup)
 		WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_NOHIDESEL|ES_AUTOHSCROLL,
 		WS_VISIBLE|WS_CHILD|WS_TABSTOP|CBS_DROPDOWNLIST|CBS_HASSTRINGS,
 		WS_VISIBLE|WS_CHILD|WS_TABSTOP|CBS_DROPDOWN|CBS_HASSTRINGS,
+		WS_VISIBLE|WS_CHILD,
 		WS_VISIBLE|WS_CHILD|WS_TABSTOP,
-		WS_VISIBLE|WS_CHILD
 	};
 
 	DWORD dwStyle = sStyle[_Type];
@@ -595,8 +595,8 @@ static const char* GetClass(oWINDOW_CONTROL_TYPE _Type)
 		"Edit",
 		"Combobox",
 		"Combobox",
-		WC_TABCONTROL,
 		PROGRESS_CLASS,
+		WC_TABCONTROL,
 	};
 
 	return sClass[_Type];
@@ -933,5 +933,70 @@ bool oWinControlSelect(HWND _hWnd, int _StartIndex, int _Length)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	Edit_SetSel(_hWnd, _StartIndex, _StartIndex+_Length);
+	return true;
+}
+
+HMENU oWinMenuCreate(bool _IsWindowMenu)
+{
+	return _IsWindowMenu ? CreateMenu() : CreatePopupMenu();
+}
+
+void oWinMenuSet(HWND _hWnd, HMENU _hMenu)
+{
+	oVB(SetMenu(_hWnd, _hMenu));
+}
+
+void oWinMenuAddSubmenu(HMENU _hParentMenu, HMENU _hSubmenu, const char* _Text)
+{
+	oVB(AppendMenu(_hParentMenu, MF_STRING | MF_POPUP, (UINT_PTR)_hSubmenu, _Text));
+}
+
+void oWinMenuAddMenuItem(HMENU _hParentMenu, int _MenuItemID, const char* _Text)
+{
+	oVB(AppendMenu(_hParentMenu, MF_STRING, (UINT_PTR)_MenuItemID, _Text));
+}
+
+void oWinMenuAddSeparator(HMENU _hParentMenu)
+{
+	oVB(AppendMenu(_hParentMenu, MF_SEPARATOR, 0, nullptr));
+}
+
+void oWinMenuCheck(HMENU _hMenu, int _MenuItemID, bool _Checked)
+{
+	if (-1 == CheckMenuItem(_hMenu, (UINT)_MenuItemID, MF_BYCOMMAND | (_Checked ? MF_CHECKED : MF_UNCHECKED)))
+		oASSERT(false, "MenuItemID not found in the specified menu");
+}
+
+bool oWinMenuIsChecked(HMENU _hMenu, int _MenuItemID)
+{
+	MENUITEMINFO mii;
+	ZeroMemory(&mii, sizeof(mii));
+	mii.cbSize = sizeof(mii);
+	mii.fMask = MIIM_STATE;
+	if (!GetMenuItemInfo(_hMenu, (UINT)_MenuItemID, FALSE, &mii))
+		return oWinSetLastError();
+
+	if (mii.fState & MFS_CHECKED)
+		return true;
+
+	oErrorSetLast(oERROR_NONE);
+	return false;
+}
+
+void oWinMenuEnable(HMENU _hMenu, int _MenuItemID, bool _Enabled)
+{
+	if (-1 == EnableMenuItem(_hMenu, (UINT)_MenuItemID, MF_BYCOMMAND | (_Enabled ? MF_ENABLED : MF_GRAYED)))
+		oASSERT(false, "MenuItemID not found in the specified menu");
+}
+
+bool oWinMenuIsEnabled(HMENU _hMenu, int _MenuItemID)
+{
+	MENUITEMINFO mii;
+	ZeroMemory(&mii, sizeof(mii));
+	mii.cbSize = sizeof(mii);
+	mii.fMask = MIIM_STATE;
+	oVB(GetMenuItemInfo(_hMenu, (UINT)_MenuItemID, FALSE, &mii));
+	if (mii.fState & (MF_GRAYED|MF_DISABLED))
+		return false;
 	return true;
 }

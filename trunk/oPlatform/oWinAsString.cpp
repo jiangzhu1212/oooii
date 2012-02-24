@@ -160,7 +160,9 @@ const char* oWinAsStringWM(unsigned int _uMsg)
 		case WM_NCCREATE: return "WM_NCCREATE";
 		case WM_NCDESTROY: return "WM_NCDESTROY";
 		case WM_NCPAINT: return "WM_NCPAINT";
+		case WM_NCLBUTTONDOWN: return "WM_NCLBUTTONDOWN";
 		case WM_NOTIFY: return "WM_NOTIFY";
+		case WM_NOTIFYFORMAT: return "WM_NOTIFYFORMAT";
 		case WM_NULL: return "WM_NULL";
 		case WM_PAINT: return "WM_PAINT";
 		case WM_PRINT: return "WM_PRINT";
@@ -342,6 +344,55 @@ const char* oWinAsStringSWP(unsigned int _SWPCode)
 	}
 
 	return "unrecognized SWPCode";
+}
+
+const char* oWinAsStringGWL(unsigned int _GWLCode)
+{
+	switch (_GWLCode)
+	{
+		#ifndef _WIN64
+			case GWL_WNDPROC: return "GWL_WNDPROC";
+			case GWL_HINSTANCE: return "GWL_HINSTANCE";
+			case GWL_HWNDPARENT: return "GWL_HWNDPARENT";
+			case GWL_USERDATA: return "GWL_USERDATA";
+		#endif
+		case GWL_STYLE: return "GWL_STYLE";
+		case GWL_EXSTYLE: return "GWL_EXSTYLE";
+		case GWL_ID: return "GWL_ID";
+		default: break;
+	}
+
+	return "unrecognized GWLCode";
+}
+
+const char* oWinAsStringGWLP(unsigned int _GWLPCode)
+{
+	switch (_GWLPCode)
+	{
+		case GWLP_WNDPROC: return "GWLP_WNDPROC";
+		case GWLP_HINSTANCE: return "GWLP_HINSTANCE";
+		case GWLP_HWNDPARENT: return "GWLP_HWNDPARENT";
+		case GWLP_USERDATA: return "GWLP_USERDATA";
+		case GWLP_ID: return "GWLP_ID";
+		default: break;
+	}
+
+	return "unrecognized GWLPCode";
+}
+
+const char* oWinAsStringTCN(unsigned int _TCNCode)
+{
+	switch (_TCNCode)
+	{
+		case TCN_KEYDOWN: return "TCN_KEYDOWN";
+		case TCN_SELCHANGE: return "TCN_SELCHANGE";
+		case TCN_SELCHANGING: return "TCN_SELCHANGING";
+		case TCN_GETOBJECT: return "TCN_GETOBJECT";
+		case TCN_FOCUSCHANGE: return "TCN_FOCUSCHANGE";
+		default: break;
+	}
+
+	return "unrecognized TCNCode";
 }
 
 char* oWinParseStyleFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSFlags)

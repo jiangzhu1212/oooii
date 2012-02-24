@@ -71,7 +71,7 @@ template<typename T> inline T* oWinGetThis(HWND _hWnd, UINT _uMsg, WPARAM _wPara
 
 #define oDEFINE_WNDPROC_DEBUG(_ClassName, _Name) \
 	LRESULT CALLBACK _ClassName::_Name(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam) \
-	{	char WM[1024]; \
+	{	char WM[1024]; *WM = 0; \
 		oTRACE("%s", oWinParseWMMessage(WM, _hWnd, _uMsg, _wParam, _lParam)); \
 		_ClassName* pThis = oWinGetThis<_ClassName>(_hWnd, _uMsg, _wParam, _lParam); \
 		return pThis ? pThis->WndProc(_hWnd, _uMsg, _wParam, _lParam) : DefWindowProc(_hWnd, _uMsg, _wParam, _lParam); \
@@ -228,6 +228,12 @@ struct oScopedHWND
 
 	operator HWND() { return hWnd; }
 
+	HWND* operator &() { return &hWnd; } 
+	const HWND* operator &() const { return &hWnd; } 
+
+	HWND c_ptr() { return hWnd; }
+	const HWND c_ptr() const { return hWnd; }
+
 private:
 
 	HWND hWnd;
@@ -236,6 +242,8 @@ private:
 enum oWINDOW_CONTROL_TYPE
 {
 	oWINDOW_CONTROL_UNKNOWN,
+
+	// Most controls send a WM_COMMAND unless otherwise documented
 	oWINDOW_CONTROL_GROUPBOX,
 	oWINDOW_CONTROL_BUTTON,
 	oWINDOW_CONTROL_BUTTON_DEFAULT,
@@ -246,8 +254,12 @@ enum oWINDOW_CONTROL_TYPE
 	oWINDOW_CONTROL_TEXTBOX,
 	oWINDOW_CONTROL_COMBOBOX,
 	oWINDOW_CONTROL_COMBOTEXTBOX,
-	oWINDOW_CONTROL_TAB,
 	oWINDOW_CONTROL_PROGRESSBAR,
+
+	// NOTE: Tabs send WM_NOTIFY messages
+	// The passed NMHDR::code includes:
+	// TCN_KEYDOWN, TCN_SELCHANGE, TCN_SELCHANGING, TCN_GETOBJECT, TCN_FOCUSCHANGE
+	oWINDOW_CONTROL_TAB,
 };
 
 struct oWINDOW_CONTROL_DESC
@@ -288,6 +300,9 @@ oWINDOW_CONTROL_TYPE oWinControlGetType(HWND _hWnd);
 unsigned short oWinControlGetID(HWND _hWnd);
 HWND oWinControlGetFromID(HWND _hParent, unsigned short _ID);
 
+inline void oWinControlEnable(HWND _hWnd, bool _Enabled = true) { oWinSetEnabled(_hWnd, _Enabled); }
+inline bool oWinControlIsEnabled(HWND _hWnd) { return oWinGetEnabled(_hWnd); }
+
 void oWinControlSetText(HWND _hWnd, const char* _Text);
 
 char* oWinControlGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, bool _OnlySelected = false);
@@ -324,5 +339,32 @@ bool oWinControlSelect(HWND _hWnd, int _Index);
 // specified range. Use oWinControlGetText() with _OnlySelected set to true to
 // get just the selected text.
 bool oWinControlSelect(HWND _hWnd, int _StartIndex, int _Length);
+
+// If _IsWindowMenu is true, the returned HMENU can be passed to the creation 
+// parameter for an HWND (as in oWinCreate above). If false, this creates a 
+// "popup" menu, the kind used in submenus or right-click menus.
+// NOTE: A menu should be created and associated with an HWND before calling 
+// oWinSetStyle because all adjustments to RECT size are client rect-based, and
+// having a menu can alter that. To fix the situation, it's possible to call
+// oWinSetStyle again after a menu has been added to ensure client dimensions 
+// are as-specified.
+HMENU oWinMenuCreate(bool _IsWindowMenu = false);
+
+// Transfer ownership of HMENU lifetime to HWND and show it. Setting a null 
+// _hMenu will deassociate the HMENU and client code is responsible for its
+// lifetime.
+void oWinMenuSet(HWND _hWnd, HMENU _hMenu);
+
+void oWinMenuAddSubmenu(HMENU _hParentMenu, HMENU _hSubmenu, const char* _Text);
+
+void oWinMenuAddMenuItem(HMENU _hParentMenu, int _MenuItemID, const char* _Text);
+
+void oWinMenuAddSeparator(HMENU _hParentMenu);
+
+void oWinMenuCheck(HMENU _hMenu, int _MenuItemID, bool _Checked = true);
+bool oWinMenuIsChecked(HMENU _hMenu, int _MenuItemID);
+
+void oWinMenuEnable(HMENU _hMenu, int _MenuItemID, bool _Enabled = true);
+bool oWinMenuIsEnabled(HMENU _hMenu, int _MenuItemID);
 
 #endif

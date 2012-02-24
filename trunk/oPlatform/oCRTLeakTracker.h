@@ -59,6 +59,12 @@ struct oCRTLeakTracker : oProcessSingleton<oCRTLeakTracker>
 
 	int OnMallocEvent(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line);
 
+	// In rare low-level systems that need to persist after leaks have been 
+	// reported, it is helpful not to report those allocations as a leak. For 
+	// example a log file that is going to retain the leak report itself should
+	// not be reported as a leak. DO NOT USE THIS TO JUST FIX LEAK REPORTS!
+	void UntrackAllocation(void* _Pointer);
+
 	static const oGUID GUID;
 
 	inline void ReferenceDelay() threadsafe { pLeakTracker->ReferenceDelay(); }
@@ -68,7 +74,6 @@ protected:
 
 	static int MallocHook(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line);
 
-	oRef<oDbgHelp> DbgHelp;
 	oMutex Mutex;
 	oLeakTracker* pLeakTracker;
 	size_t NonLinearBytes;

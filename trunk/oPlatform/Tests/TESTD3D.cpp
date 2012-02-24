@@ -43,7 +43,7 @@ struct TESTD3D : public oTest
 			oTESTB(S_OK == D3DDevice->QueryInterface(&DXGIDevice), "Failed to create DXGIDevice");
 
 			oRef<IDXGIAdapter> Adapter;
-			oTESTB(S_OK == DXGIDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&Adapter), "Failed to get adapter from device");
+			oTESTB(S_OK == DXGIDevice->GetAdapter(&Adapter), "Failed to get adapter from device");
 
 			oRef<IDXGIOutput> Output;
 			oTESTB(DXGI_ERROR_NOT_FOUND != Adapter->EnumOutputs(0, &Output), "No output found");

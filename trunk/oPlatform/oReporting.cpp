@@ -31,6 +31,7 @@
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oSystem.h>
 #include "oDbgHelp.h"
+#include "oCRTLeakTracker.h"
 #include "oFileInternal.h"
 
 const char* oAsString(const oASSERT_TYPE& _Type)
@@ -160,6 +161,8 @@ void oReportingContext::SetDesc(const oREPORTING_DESC& _Desc)
 				LogPath.clear();
 				oWARN("Failed to open log file \"%s\"\n%s: %s", tmp.c_str(), oAsString(oErrorGetLast()), oErrorGetLastString());
 			}
+
+			oCRTLeakTracker::Singleton()->UntrackAllocation(thread_cast<oFileWriter*>(LogFile.c_ptr())); // thread cast ok, we're still in initialization
 		}
 
 		// make a copy of the path and attach it to the desc for future

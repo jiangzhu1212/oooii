@@ -59,7 +59,7 @@
 #define NOKERNEL
 #define NOMCX
 #define NOMEMMGR
-#define NOMENUS
+//#define NOMENUS // we support creating menus in oWinWindowing.h
 #define NOMETAFILE
 #define NOOPENFILE
 #define NOPROFILER

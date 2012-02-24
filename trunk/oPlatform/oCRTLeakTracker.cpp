@@ -39,10 +39,11 @@ const static size_t kTrackingInternalReserve = oMB(4);
 
 oCRTLeakTracker::oCRTLeakTracker()
 	: NonLinearBytes(0)
-	, DbgHelp(oDbgHelp::Singleton())
 	, Enabled(false)
 	, OriginalAllocHook(nullptr)
 {
+	oReportingReference(); // reporting keeps a log file... don't track that
+
 	pLeakTracker = new oLeakTracker(oDebuggerGetCallstack, oDebuggerSymbolSPrintf, oDebuggerPrint, false, false
 		, oStdLinearAllocator<oLeakTracker::allocations_t::value_type>(untracked_malloc(kTrackingInternalReserve)
 			, kTrackingInternalReserve, &NonLinearBytes, untracked_malloc, untracked_free));
@@ -50,8 +51,6 @@ oCRTLeakTracker::oCRTLeakTracker()
 	sInstanceForDeferredRelease = this;
 	Reference(); // keep an extra references to ourselves so that malloc is always hooked
 	atexit(AtExit); // then free it at the very end
-
-	oReportingReference();
 }
 
 oCRTLeakTracker::~oCRTLeakTracker()
@@ -158,4 +157,9 @@ int oCRTLeakTracker::MallocHook(int _AllocationType, void* _UserData, size_t _Si
 	}
 
 	return sInstanceForDeferredRelease->OnMallocEvent(_AllocationType, _UserData, _Size, _BlockType, _RequestNumber, _Path, _Line);
+}
+
+void oCRTLeakTracker::UntrackAllocation(void* _Pointer)
+{
+	pLeakTracker->OnDeallocation(oCRTHeapGetAllocationID(_Pointer));
 }

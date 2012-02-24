@@ -31,50 +31,70 @@
 #include <oPlatform/oTest.h>
 
 static const char* testImage = "Test/Textures/lena_1.png";
+static const char* testImageJpg = "Test/Textures/lena_1.jpg";
 
 struct TESTImage : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oStringPath path;
-		oTESTB0(FindInputFile(path, testImage));
+		{
+			oStringPath path;
+			oTESTB0(FindInputFile(path, testImage));
 
-		oStringPath tmp;
-		oTESTB0(BuildPath(tmp, oGetFilebase(testImage), oTest::TEMP));
+			oStringPath tmp;
+			oTESTB0(BuildPath(tmp, oGetFilebase(testImage), oTest::TEMP));
 
-		oRef<oBuffer> buffer1;
-		oTESTB(oBufferCreate(path.c_str(), &buffer1), "Load failed: %s", path.c_str());
+			oRef<oBuffer> buffer1;
+			oTESTB(oBufferCreate(path.c_str(), &buffer1), "Load failed: %s", path.c_str());
 
-		oRef<oImage> image1;
-		oTESTB(oImageCreate(path.c_str(), buffer1->GetData(), buffer1->GetSize(), &image1), "Image create failed: %s", path.c_str());
+			oRef<oImage> image1;
+			oTESTB(oImageCreate(path.c_str(), buffer1->GetData(), buffer1->GetSize(), &image1), "Image create failed: %s", path.c_str());
 
-		oTESTB(oImageSave(image1, oImage::UNKNOWN_FILE, oImage::HIGH_COMPRESSION, tmp), "Save failed: %s", tmp);
+			oTESTB(oImageSave(image1, oImage::UNKNOWN_FILE, oImage::HIGH_COMPRESSION, tmp), "Save failed: %s", tmp);
 
-		oRef<oBuffer> buffer2;
-		oTESTB(oBufferCreate(tmp, &buffer2), "Load failed: %s", tmp);
+			oRef<oBuffer> buffer2;
+			oTESTB(oBufferCreate(tmp, &buffer2), "Load failed: %s", tmp);
 
-		// Compare that what we saved is the same as what we loaded
+			// Compare that what we saved is the same as what we loaded
 
-		oTESTB(buffer1->GetSize() == buffer2->GetSize(), "Buffer size mismatch (orig %u bytes, saved-and-reloaded %u bytes)", buffer1->GetSize(), buffer2->GetSize());
-		oTESTB(!memcmp(buffer1->GetData(), buffer2->GetData(), buffer1->GetSize()), "Save did not write the same bit pattern as was loaded");
+			oTESTB(buffer1->GetSize() == buffer2->GetSize(), "Buffer size mismatch (orig %u bytes, saved-and-reloaded %u bytes)", buffer1->GetSize(), buffer2->GetSize());
+			oTESTB(!memcmp(buffer1->GetData(), buffer2->GetData(), buffer1->GetSize()), "Save did not write the same bit pattern as was loaded");
 
-		oRef<oImage> image2;
-		oTESTB(oImageCreate(path.c_str(), buffer2->GetData(), buffer2->GetSize(), &image2), "Image create failed: %s", tmp);
+			oRef<oImage> image2;
+			oTESTB(oImageCreate(path.c_str(), buffer2->GetData(), buffer2->GetSize(), &image2), "Image create failed: %s", tmp);
 
-		// Compare that the bits written are the same as the bits read
+			// Compare that the bits written are the same as the bits read
 
-		const oColor* c1 = (const oColor*)image1->GetData();
-		const oColor* c2 = (const oColor*)image2->GetData();
+			const oColor* c1 = (const oColor*)image1->GetData();
+			const oColor* c2 = (const oColor*)image2->GetData();
 
-		oImage::DESC i1Desc;
-		image1->GetDesc(&i1Desc);	
-		const size_t nPixels = image1->GetSize() / sizeof(oColor);
-		for (size_t i = 0; i < nPixels; i++)
-			oTESTB(c1[i] == c2[i], "Pixel mismatch: %u [%u,%u]", i, i % i1Desc.Dimensions.x, i / i1Desc.Dimensions.x);
+			oImage::DESC i1Desc;
+			image1->GetDesc(&i1Desc);	
+			const size_t nPixels = image1->GetSize() / sizeof(oColor);
+			for (size_t i = 0; i < nPixels; i++)
+				oTESTB(c1[i] == c2[i], "Pixel mismatch: %u [%u,%u]", i, i % i1Desc.Dimensions.x, i / i1Desc.Dimensions.x);
 
-		oImage::DESC descFromHeader;
-		oTESTB(oImageGetDesc(buffer1->GetData(), buffer1->GetSize(), &descFromHeader), "Failed to load DESC only");
-		oTESTB(!memcmp(&i1Desc, &descFromHeader, sizeof(oImage::DESC)), "Comparison of load full file and load from header failed");
+			oImage::DESC descFromHeader;
+			oTESTB(oImageGetDesc(buffer1->GetData(), buffer1->GetSize(), &descFromHeader), "Failed to load DESC only");
+			oTESTB(!memcmp(&i1Desc, &descFromHeader, sizeof(oImage::DESC)), "Comparison of load full file and load from header failed");
+		}
+
+		//TEST jpeg loading
+		{
+			oStringPath path;
+			oTESTB0(FindInputFile(path, testImageJpg));
+
+			oRef<oBuffer> buffer1;
+			oTESTB(oBufferCreate(path.c_str(), &buffer1), "Load failed: %s", path.c_str());
+
+			oRef<oImage> image1;
+			{
+				oScopedTraceTimer timer("***************** free image jpeg load time");
+				oTESTB(oImageCreate(path.c_str(), buffer1->GetData(), buffer1->GetSize(), &image1), "Image create failed: %s", path.c_str());
+			}
+
+			oTESTI2(image1, 0);
+		}
 
 		return SUCCESS;
 	}

@@ -276,6 +276,10 @@ int oSurfaceFormatGetNumChannels(oSURFACE_FORMAT _Format);
 // formats this will return the byte size of 1 tile.
 int oSurfaceFormatGetSize(oSURFACE_FORMAT _Format);
 
+// Returns the minimum dimensions the format supports.  For most formats
+// this is 1,1 but for block formats it can be something else
+int2 oSurfaceFormatGetMinDimensions(oSURFACE_FORMAT _Format);
+
 // Get number of bits per format. This includes any X bits as described in
 // the format enum.
 int oSurfaceFormatGetBitSize(oSURFACE_FORMAT _Format);
@@ -335,7 +339,7 @@ oSize64 oSurfaceMipCalcSize(oSURFACE_FORMAT _Format, const int2& _MipDimensions)
 // be specified as the mip0 dimensions since this is a cumulative offset.
 oSize64 oSurfaceMipCalcOffset(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel = 0);
 
-// Returns the number of tiles required to hold the full resolition specified by 
+// Returns the number of tiles required to hold the full resolution specified by 
 // _MipDimensions. If tile dimensions don't divide perfectly into the mip 
 // dimensions the extra tile required to store the difference is included in 
 // this calculation.
