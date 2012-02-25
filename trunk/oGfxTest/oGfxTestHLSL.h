@@ -52,6 +52,7 @@ struct VSININSTANCED
 	// Per-instance
 	float3 Translation : TRANSLATION;
 	float4 Rotation : ROTATION;
+	uint InstanceID : SV_InstanceID;
 };
 
 struct VSOUT
@@ -59,6 +60,7 @@ struct VSOUT
 	float4 SSPosition : SV_Position;
 	float3 WSPosition : POSITION;
 	float3 WSNormal : NORMAL;
+	float4 Color : Color;
 };
 
 struct PSOUT

@@ -11,9 +11,9 @@ PSOUT main(VSOUT In) : SV_Target
 									, L
 									, normalize(E - In.WSPosition)
 									, 1
-									, oRED
+									, In.Color * 0.1
 									, oBLACK
-									, oBLUE
+									, In.Color
 									, oWHITE
 									, 128
 									, oZERO
