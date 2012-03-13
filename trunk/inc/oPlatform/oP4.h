@@ -25,69 +25,102 @@
 #ifndef oP4_h
 #define oP4_h
 
-#include <stdlib.h> // _MAX_PATH
+#include <oBasis/oFixedString.h>
 
-namespace oP4
+enum oP4_OPEN_TYPE
 {
-	enum SUBMIT_OPTIONS
-	{
-		SUBMIT_UNCHANGED,
-		SUBMIT_UNCHANGED_REOPEN,
-		REVERT_UNCHANGED,
-		REVERT_UNCHANGED_REOPEN,
-		LEAVE_UNCHANGED,
-		LEAVE_UNCHANGED_REOPEN,
-	};
-
-	enum LINE_END
-	{
-		LOCAL,
-		UNIX,
-		MAC,
-		WIN,
-		SHARE,
-	};
-
-	struct CLIENT_SPEC
-	{
-		char Client[256];
-		char Owner[256];
-		char Host[256];
-		char Description[2048];
-		char Root[_MAX_PATH];
-		char View[4096];
-		time_t LastUpdated;
-		time_t LastAccessed;
-		SUBMIT_OPTIONS SubmitOptions;
-		LINE_END LineEnd;
-		bool Allwrite:1;
-		bool Clobber:1;
-		bool Compress:1;
-		bool Locked:1;
-		bool Modtime:1;
-		bool Rmdir:1;
-	};
-
-	oP4::SUBMIT_OPTIONS GetSubmitOptions(const char* _P4String);
-	oP4::LINE_END GetLineEnd(const char* _P4String);
-	time_t GetTime(const char* _P4TimeString);
-	bool GetClientSpec(CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpecString);
-
-	bool GetClientSpecString(char* _P4ClientSpecString, size_t _SizeofP4ClientSpecString);
-	template<size_t size> inline bool GetClientSpecString(char (&_P4ClientSpecString)[size]) { return GetClientSpecString(_P4ClientSpecString, size); }
-
-	inline bool GetClientSpec(CLIENT_SPEC* _pClientSpec)
-	{
-		char tmp[3*1024];
-		if (!GetClientSpecString(tmp))
-			return false;
-		return GetClientSpec(_pClientSpec, tmp);
-	}
-
-	bool MarkForEdit(const char* _Path);
-	bool MarkForAdd(const char* _Path);
-	bool MarkForDelete(const char* _Path);
-	bool Revert(const char* _Path);
+	oP4_OPEN_FOR_EDIT,
+	oP4_OPEN_FOR_ADD,
+	oP4_OPEN_FOR_DELETE,
 };
+
+enum oP4_SUBMIT_OPTIONS
+{
+	oP4_SUBMIT_UNCHANGED,
+	oP4_SUBMIT_UNCHANGED_REOPEN,
+	oP4_REVERT_UNCHANGED,
+	oP4_REVERT_UNCHANGED_REOPEN,
+	oP4_LEAVE_UNCHANGED,
+	oP4_LEAVE_UNCHANGED_REOPEN,
+};
+
+enum oP4_LINE_END
+{
+	oP4_LINE_END_LOCAL,
+	oP4_LINE_END_UNIX,
+	oP4_LINE_END_MAC,
+	oP4_LINE_END_WIN,
+	oP4_LINE_END_SHARE,
+};
+
+struct oP4_FILE_DESC
+{
+	oP4_FILE_DESC()
+		: OpenType(oP4_OPEN_FOR_EDIT)
+		, Revision(0)
+		, Changelist(0)
+		, IsText(true)
+	{}
+
+	oStringURI Path;
+	oP4_OPEN_TYPE OpenType;
+	int Revision;
+	int Changelist; // oInvalid is the default changelist
+	bool IsText;
+};
+
+struct oP4_CLIENT_SPEC
+{
+	oStringM Client;
+	oStringM Owner;
+	oStringM Host;
+	oStringXL Description;
+	oStringPath Root;
+	oStringXXL View;
+	time_t LastUpdated;
+	time_t LastAccessed;
+	oP4_SUBMIT_OPTIONS SubmitOptions;
+	oP4_LINE_END LineEnd;
+	bool Allwrite;
+	bool Clobber;
+	bool Compress;
+	bool Locked;
+	bool Modtime;
+	bool Rmdir;
+};
+
+// _____________________________________________________________________________
+// Direct communication API with P4... mostly these wrap a spawn-command as if 
+// typing the P4 command line at a prompt. The output is captured and returned.
+
+oAPI bool oP4GetClientSpecString(char* _StrDestination, size_t _SizeofStrDestination);
+template<size_t size> inline bool oP4GetClientSpecString(char (&_StrDestination)[size]) { return oP4GetClientSpecString(_StrDestination, size); }
+template<size_t CAPACITY> inline bool oP4GetClientSpecString(oFixedString<char, CAPACITY>& _StrDestination) { return oP4GetClientSpecString(_StrDestination, _StrDestination.capacity()); }
+
+oAPI bool oP4Open(oP4_OPEN_TYPE _Type, const char* _Path);
+oAPI bool oP4Revert(const char* _Path);
+
+// Returns the number of validly poulated _pOpenedFiles, or oInvalid in case of 
+// error.
+size_t oP4ListOpened(oP4_FILE_DESC* _pOpenedFiles, size_t _MaxNumOpenedFiles);
+template<size_t size> size_t oP4ListOpened(oP4_FILE_DESC (&_pOpenedFiles)[size]) { return oP4ListOpened(_pOpenedFiles, size); }
+
+// _____________________________________________________________________________
+// P4 String Parsing: convert the raw string as returned by one of the above
+// calls and turn it into a more manageable struct.
+
+oAPI time_t oP4ParseTime(const char* _P4TimeString);
+oAPI bool oP4ParseClientSpec(oP4_CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpecString);
+
+// _____________________________________________________________________________
+// Higher-level/convenience API
+
+inline bool oP4GetClientSpec(oP4_CLIENT_SPEC* _pClientSpec)
+{
+	oStringXXL tmp;
+	if (!oP4GetClientSpecString(tmp))
+		return false; // pass through error
+	return oP4ParseClientSpec(_pClientSpec, tmp);
+}
 
 #endif

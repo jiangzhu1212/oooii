@@ -99,7 +99,13 @@ struct TESTBCEncodeDecode : public oTest
 		if (SUCCESS != res)
 				return res;
 
-		oTESTI2(ConvertedImage, _NthTest);
+		// Even on different series AMD cards there is a bit of variation, so use a 
+		// more forgiving tolerance
+		if (_TargetFormat == DXGI_FORMAT_BC7_UNORM)
+			oTESTI_CUSTOM_TOLERANCE(ConvertedImage, _NthTest, oDEFAULT, 7.2f, oDEFAULT);
+		else
+			oTESTI2(ConvertedImage, _NthTest);
+
 		return SUCCESS;
 	}
 

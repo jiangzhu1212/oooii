@@ -217,11 +217,14 @@ char* oURIToPath(char* _Path, size_t _SizeofPath, const char* _URI)
 		licenseurl="http://research.scea.com/scea_shared_source_license.html"
 	/>*/
 
-	#define SAFECAT(str) do { errno_t ERR = strcat_s(_Path, _SizeofPath, str); if (ERR) return false; } while(false)
+	#define SAFECAT(str) do { errno_t ERR = strcat_s(PathTmp, _SizeofPath, str); if (ERR) return false; } while(false)
 
-	*_Path = 0;
+	char* PathTmp = (char*)_alloca(_SizeofPath);
+
+	*PathTmp = 0;
 	if (!oSTRVALID(_URI))
-		return _Path;
+		return nullptr;
+
 	oURIParts parts;
 	if (!oURIDecompose(_URI, &parts))
 		return nullptr;
@@ -241,10 +244,10 @@ char* oURIToPath(char* _Path, size_t _SizeofPath, const char* _URI)
 			SAFECAT(parts.Authority);
 		}
 
-		if (oIsUNCPath(_Path))
+		if (oIsUNCPath(PathTmp))
 			p++;
 
-		if (_Path[0] == '/' && _Path[2] == ':')
+		if (PathTmp[0] == '/' && PathTmp[2] == ':')
 			p++;
 
 		char* p2 = p;
@@ -260,7 +263,7 @@ char* oURIToPath(char* _Path, size_t _SizeofPath, const char* _URI)
 	}
 
 	SAFECAT(p);
-	if (oReplace(_Path, _SizeofPath, _Path, "%20", " "))
+	if (oReplace(_Path, _SizeofPath, PathTmp, "%20", " "))
 		return nullptr;
 
 	if (*_URI && !*_Path)

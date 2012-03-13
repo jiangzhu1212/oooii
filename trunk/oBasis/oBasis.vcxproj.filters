@@ -132,9 +132,6 @@
     <ClInclude Include="..\inc\oBasis\oAssert.h">
       <Filter>oBasis\Language Enhancements</Filter>
     </ClInclude>
-    <ClInclude Include="..\inc\oBasis\oCheckedAssignment.h">
-      <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
     <ClInclude Include="..\inc\oBasis\oCallable.h">
       <Filter>oBasis\Language Enhancements</Filter>
     </ClInclude>
@@ -279,9 +276,6 @@
     <ClInclude Include="..\inc\oBasis\oOnScopeExit.h">
       <Filter>oBasis</Filter>
     </ClInclude>
-    <ClInclude Include="..\inc\oBasis\oSize.h">
-      <Filter>oBasis\Types</Filter>
-    </ClInclude>
     <ClInclude Include="..\inc\oBasis\oBackoff.h">
       <Filter>oBasis\Concurrency</Filter>
     </ClInclude>
@@ -362,6 +356,15 @@
     </ClInclude>
     <ClInclude Include="..\inc\oBasis\oCompression.h">
       <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oStdFuture.h">
+      <Filter>oBasis\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\oInt.h">
+      <Filter>oBasis\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\oBasis\SafeInt3.h">
+      <Filter>oBasis\Types</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -510,6 +513,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oCompression.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oVersion.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

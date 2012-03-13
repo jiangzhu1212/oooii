@@ -26,7 +26,7 @@
 #include <oBasis/oRefCount.h>
 #include <oPlatform/oWindows.h>
 #include <string>
-#include "oWinPSAPI.h"
+#include "SoftLink/oWinPSAPI.h"
 
 const oGUID& oGetGUID(threadsafe const oProcess* threadsafe const *)
 {
@@ -305,11 +305,11 @@ static bool FindProcessByName(unsigned int _ProcessID, unsigned int _ParentProce
 	return true;
 }
 
-bool oProcessExists(const char* _Name)
+unsigned int oProcessGetID(const char* _Name)
 {
 	unsigned int pid = 0;
 	oProcessEnum(oBIND(FindProcessByName, oBIND1, oBIND2, oBIND3, _Name, &pid));
-	return pid != 0;
+	return pid;
 }
 
 bool oProcessHasDebuggerAttached(unsigned int _ProcessID)

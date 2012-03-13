@@ -50,6 +50,8 @@
 
 namespace oStd {
 
+namespace detail { class promised_base; }
+
 /*enum class*/ namespace cv_status { enum value { no_timeout, timeout }; };
 
 class condition_variable
@@ -59,6 +61,7 @@ class condition_variable
 	condition_variable(condition_variable const&); /* = delete */
 	condition_variable& operator=(condition_variable const&); /* = delete */
 
+	friend class detail::promised_base;
 	cv_status::value wait_for(unique_lock<mutex>& _Lock, unsigned int _TimeoutMS);
 
 public:

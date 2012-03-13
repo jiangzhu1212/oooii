@@ -31,6 +31,7 @@
 #include <oBasis/oInterface.h>
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oSurface.h>
+#include <oPlatform/oGUI.h>
 #include <oPlatform/oX11KeyboardSymbols.h>
 
 #if defined(_WIN32) || defined (_WIN64)
@@ -55,35 +56,6 @@
 
 interface oWindow : oInterface
 {
-	enum STATE
-	{
-		HIDDEN, // Window is invisible, but exists
-		RESTORED, // Window is in normal sub-screen-size mode
-		MINIMIZED, // Window is reduces to iconic or taskbar size
-		MAXIMIZED, // Window takes up the entire screen
-		FULLSCREEN, // Window takes exclusive access to screen, and will not have a title bar, border, etc regardless of its style, position or other parameters
-	};
-
-	enum CURSOR_STATE
-	{
-		NONE,
-		ARROW,
-		HAND,
-		HELP,
-		NOTALLOWED,
-		WAIT_FOREGROUND,
-		WAIT_BACKGROUND,
-		USER,
-	};
-
-	enum STYLE
-	{
-		BORDERLESS, // There is no OS decoration of the client area
-		FIXED, // There is OS decoration but no user resize is allowed
-		DIALOG, // There is OS decoration, but closing the window is not allowed
-		SIZEABLE, // OS decoration and user can resize window
-	};
-
 	// Draw mode exposes the underlying platform API used for widget rendering.
 	// Based on this, OnDraw()'s void* _pContext can be C-cast to different types
 	// as specified below. Do not hold onto this object because it is transient as 
@@ -132,9 +104,9 @@ interface oWindow : oInterface
 			, ClientSize(oDEFAULT, oDEFAULT)
 			, FullscreenSize(oDEFAULT, oDEFAULT)
 			, FullscreenRefreshRate(oDEFAULT)
-			, State(RESTORED)
-			, Style(SIZEABLE)
-			, CursorState(ARROW)
+			, State(oGUI_WINDOW_RESTORED)
+			, Style(oGUI_WINDOW_SIZEABLE)
+			, CursorState(oGUI_CURSOR_ARROW)
 			, ClearColor(std::Black)
 			, AutoClear(false)
 			, Enabled(true)
@@ -146,7 +118,6 @@ interface oWindow : oInterface
 			, AllowUserShowMouse(false)
 			, AllowUserFullscreenToggle(false)
 			, AllowUserKeyboardClose(false)
-			, SupportDoubleClicks(false)
 			, SupportTouchEvents(false)
 		{}
 
@@ -156,9 +127,9 @@ interface oWindow : oInterface
 		int FullscreenRefreshRate; // Display refresh rate when in fullscreen state (ignored in any non-fullscreen state)
 		int BackgroundSleepMS; // Sleep this long when not the foreground window
 
-		STATE State;
-		STYLE Style;
-		CURSOR_STATE CursorState; // Applies when cursor is over the client area
+		oGUI_WINDOW_STATE State;
+		oGUI_WINDOW_STYLE Style;
+		oGUI_CURSOR_STATE CursorState; // Applies when cursor is over the client area
 		oColor ClearColor;
 		bool Enabled;
 		bool HasFocus;
@@ -170,7 +141,6 @@ interface oWindow : oInterface
 		bool AllowUserShowMouse; // Enable Alt-F1 to toggle between set mouse state and visible
 		bool AllowUserFullscreenToggle; // Enable Alt-Enter to toggle to fullscreen in windows
 		bool AllowUserKeyboardClose; // Enable Alt-F4 to close in windows
-		bool SupportDoubleClicks;
 		bool SupportTouchEvents; // If true then the window receives touch events from a touch panel, otherwise the window will only receive mouse events
 	};
 

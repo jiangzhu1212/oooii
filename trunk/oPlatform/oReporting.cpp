@@ -28,9 +28,10 @@
 #include <oBasis/oFixedString.h>
 #include <oPlatform/oDebugger.h>
 #include <oPlatform/oMsgBox.h>
+#include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oSystem.h>
-#include "oDbgHelp.h"
+#include "SoftLink/oWinDbgHelp.h"
 #include "oCRTLeakTracker.h"
 #include "oFileInternal.h"
 
@@ -59,8 +60,24 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 	static oASSERT_ACTION DefaultVPrint(const oASSERTION& _Assertion, threadsafe oFileWriter* _pLogFile, const char* _Format, va_list _Args);
 	static const oGUID GUID;
 
+	static oReportingContext* Singleton()
+	{
+		// Construction of a singleton currently goes ProcessHeap->CRTLeakTracker->ReportingContext,
+		// so if this is the first time through, then we'll get a circular reference to an uninit'ed Singleton
+		// So the first time, ensure we construct everything below this before really going in.
+		static bool once = false;
+		if (!once)
+		{
+			oProcessHeapLock();
+			oProcessHeapUnlock();
+			once = true;
+		}
+
+		return oProcessSingleton<oReportingContext>::Singleton();
+	}
+
 protected:
-	oRef<oDbgHelp> DbgHelp;
+	oRef<oWinDbgHelp> DbgHelp;
 	oRef<threadsafe oFileWriter> LogFile;
 	oStringPath LogPath;
 	oREPORTING_DESC Desc;
@@ -74,7 +91,7 @@ protected:
 const oGUID oReportingContext::GUID = { 0x338d483b, 0x7793, 0x4be1, { 0x90, 0xb1, 0x4b, 0xb9, 0x86, 0xb3, 0xec, 0x2d } };
 
 oReportingContext::oReportingContext()
-	: DbgHelp(oDbgHelp::Singleton())
+	: DbgHelp(oWinDbgHelp::Singleton())
 {
 	PushReporter(DefaultVPrint);
 }

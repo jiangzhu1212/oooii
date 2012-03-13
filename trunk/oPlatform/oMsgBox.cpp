@@ -24,10 +24,11 @@
 #include <oPlatform/oMsgBox.h>
 #include <oBasis/oByte.h>
 #include <oPlatform/oStddef.h>
-#include <oPlatform/oWinTray.h>
-#include <oPlatform/oWinRect.h>
-#include <oPlatform/oWinWindowing.h>
 #include <oPlatform/oWinAsString.h>
+#include <oPlatform/oWinCursor.h>
+#include <oPlatform/oWinRect.h>
+#include <oPlatform/oWinTray.h>
+#include <oPlatform/oWinWindowing.h>
 
 #if defined(_WIN32) || defined(_WIN64)
 	// Use the Windows Vista UI look. If this causes issues or the dialog not to appear, try other values from processorAchitecture { x86 ia64 amd64 * }
@@ -335,7 +336,7 @@ namespace WFNWCV
 					POINT p = {0,0};
 					ClientToScreen(hParent, &p);
 					RECT rCentered = oWinRectWH(int2(p.x, p.y) + (oWinRectSize(rParent) - oWinRectSize(rChild)) / 2, int2(oDEFAULT, oDEFAULT));
-					oWinSetStyle(_hWnd, oWinGetStyle(_hWnd), &rCentered);
+					oWinSetStyle(_hWnd, oWinGetStyle(_hWnd), false, &rCentered);
 				}
 				break;
 			}

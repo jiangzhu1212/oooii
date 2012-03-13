@@ -29,6 +29,11 @@
 #include <half.h>
 #include <string>
 
+const char* oAsString(const bool& _Bool)
+{
+	return _Bool ? "true" : "false";
+}
+
 char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const char* const & _Value)
 {
 	return 0 == strcpy_s(_StrDestination, _SizeofStrDestination, oSAFESTRN(_Value)) ? _StrDestination : nullptr;

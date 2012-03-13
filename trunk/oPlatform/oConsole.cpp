@@ -23,7 +23,6 @@
  **************************************************************************/
 #include <oPlatform/oConsole.h>
 #include <oBasis/oAssert.h>
-#include <oBasis/oSize.h>
 #include <oBasis/oError.h>
 #include <oBasis/oFixedString.h>
 #include <oBasis/oMutex.h>
@@ -279,12 +278,12 @@ void oConsole::GetTitle(char* _strDestination, size_t _SizeofStrDestination)
 
 void oConsole::SetCursorPosition(const int2& _Position)
 {
-	COORD c = { oSize16(_Position.x), oSize16(_Position.y) };
+	COORD c = { oUShort(_Position.x), oUShort(_Position.y) };
 	if (c.X == DEFAULT || c.Y == DEFAULT)
 	{
 		int2 p = GetCursorPosition();
-		if (c.X == DEFAULT) c.X = oSize16(p.x);
-		if (c.Y == DEFAULT) c.Y = oSize16(p.y);
+		if (c.X == DEFAULT) c.X = oUShort(p.x);
+		if (c.Y == DEFAULT) c.Y = oUShort(p.y);
 	}
 
 	oVB(SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c));

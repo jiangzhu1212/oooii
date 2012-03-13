@@ -25,25 +25,6 @@
 #include "oD2DWindowUI.h"
 #include "oGDIWindowUI.h"
 
-const char* oAsString(const oANCHOR& _Anchor)
-{
-	switch (_Anchor)
-	{
-		case oTOPLEFT: return "oTOPLEFT";
-		case oTOPCENTER: return "oTOPCENTER";
-		case oTOPRIGHT: return "oTOPRIGHT";
-		case oMIDDLELEFT: return "oMIDDLELEFT";
-		case oMIDDLECENTER: return "oMIDDLECENTER";
-		case oMIDDLERIGHT: return "oMIDDLERIGHT";
-		case oBOTTOMLEFT: return "oBOTTOMLEFT";
-		case oBOTTOMCENTER: return "oBOTTOMCENTER";
-		case oBOTTOMRIGHT: return "oBOTTOMRIGHT";
-		case oFITPARENT: return "oFITPARENT";
-		default: break;
-	}
-	return "Unrecognized oANCHOR";
-}
-
 template<typename InterfaceT, typename GDIImplT, typename D2DImplT> bool oWindowUIElementCreate(const typename InterfaceT::DESC& _Desc, threadsafe oWindow* _pWindow, threadsafe InterfaceT** _ppElement)
 {
 	if (!_pWindow || !_ppElement)

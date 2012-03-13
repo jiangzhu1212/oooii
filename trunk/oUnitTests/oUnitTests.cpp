@@ -21,7 +21,6 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oSize.h>
 #include <oBasis/oString.h>
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oConsole.h>
@@ -30,6 +29,7 @@
 #include <oPlatform/oImage.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oTest.h>
+#include <oPlatform/oP4.h>
 #include <oPlatform/oProcess.h>
 #include <oPlatform/oStandards.h>
 #include <oPlatform/oSystem.h>
@@ -112,6 +112,24 @@ struct PARAMETERS
 	bool EnableLeakTracking;
 };
 
+static bool oBasisHasChanges()
+{
+	oP4_FILE_DESC test[128];
+	size_t nOpenFiles = oP4ListOpened(test);
+	
+	// If we can't connect to P4, then always run all tests.
+	if (nOpenFiles == oInvalid)
+	{
+		oTRACE("NOTE: If P4 is installed and accessible through env vars, oUnitTests will detect if any oBasis files have been modified and if not, it will automatically skip all oBasis tests when no other filter is specified.");
+		return true;
+	}
+
+	for (size_t i = 0; i < nOpenFiles; i++)
+		if (strstr(test[i].Path, "oBasis"))
+			return true;
+	return false;
+}
+
 void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 {
 	_pParameters->Filters.clear();
@@ -148,51 +166,31 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 				break;
 			}
 
-			case 'p':
-				_pParameters->DataPath = value;
-				break;
-
-			case 's':
-				_pParameters->SpecialMode = value;
-				break;
-
-			case 'r':
-				_pParameters->RandomSeed = atoi(value) ? atoi(value) : 1; // ensure it's not 0, meaning choose randomly
-				break;
-
-			case 'b':
-				_pParameters->GoldenBinariesPath = value;
-				break;
-
-			case 'g':
-				_pParameters->GoldenImagesPath = value;
-				break;
-
-			case 'o':
-				_pParameters->OutputPath = value;
-				break;
-
-			case 'n':
-				_pParameters->RepeatNumber = atoi(value);
-				break;
-
-			case 'd':
-				_pParameters->EnableTimeouts = false;
-				break;
-
-			case 'c':
-				_pParameters->CaptureCallstackForTestLeaks = true;
-				break;
-
-			case '_':
-				_pParameters->EnableLeakTracking = false;
-				break;
-
-			default:
-				break;
+			case 'p': _pParameters->DataPath = value; break;
+			case 's': _pParameters->SpecialMode = value; break;
+			case 'r': _pParameters->RandomSeed = atoi(value) ? atoi(value) : 1;  break; // ensure it's not 0, meaning choose randomly
+			case 'b': _pParameters->GoldenBinariesPath = value; break;
+			case 'g': _pParameters->GoldenImagesPath = value; break;
+			case 'o': _pParameters->OutputPath = value; break;
+			case 'n': _pParameters->RepeatNumber = atoi(value); break;
+			case 'd': _pParameters->EnableTimeouts = false; break;
+			case 'c': _pParameters->CaptureCallstackForTestLeaks = true; break;
+			case '_': _pParameters->EnableLeakTracking = false; break;
+			default: break;
 		}
 
 		ch = oOptTok(&value, 0, 0, 0);
+	}
+
+	// @ooii-tony: Disabled in the OpenSource distro because running the unit tests is the only proof of life in the Ouroboros branch
+	static bool IsOpenSourceDistribution = true;
+
+	// oBasis is pretty stable these days, only test if there are changes.
+	if (_pParameters->Filters.empty() && !oBasisHasChanges() && !IsOpenSourceDistribution)
+	{
+		_pParameters->Filters.resize(_pParameters->Filters.size() + 1);
+		_pParameters->Filters.back().Type = oFilterChain::EXCLUDE1;
+		_pParameters->Filters.back().RegularExpression = "BASIS_.*";
 	}
 }
 

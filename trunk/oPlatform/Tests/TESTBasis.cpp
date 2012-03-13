@@ -61,7 +61,8 @@ static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
 // Tests from oBasis follow a common form, so as a convenience and 
 // centralization, use this macro to get through the boilerplate bridging from
 // that test call to oTest's infrastructure.
-#define oTEST_REGISTER_BASIS_TEST(_BasisTestName) \
+
+#define oTEST_WRAP_BASIS_TEST(_BasisTestName) \
 	bool oCONCAT(oBasisTest_, _BasisTestName)(); \
 	struct oCONCAT(BASIS_, _BasisTestName) : oTest \
 	{	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override \
@@ -69,8 +70,19 @@ static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
 			sprintf_s(_StrStatus, _SizeofStrStatus, "%s", oErrorGetLastString()); \
 			return SUCCESS; \
 		} \
-	}; \
+	};
+
+#define oTEST_REGISTER_BASIS_TEST(_BasisTestName) \
+	oTEST_WRAP_BASIS_TEST(_BasisTestName) \
 	oTEST_REGISTER(oCONCAT(BASIS_, _BasisTestName))
+
+#define oTEST_REGISTER_BASIS_TEST_BUGGED(_BasisTestName, _Bug) \
+	oTEST_WRAP_BASIS_TEST(_BasisTestName) \
+	oTEST_REGISTER_BUGGED(oCONCAT(BASIS_, _BasisTestName), _Bug)
+
+#define oTEST_REGISTER_BASIS_TEST_BUGGED32(_BasisTestName, _Bug) \
+	oTEST_WRAP_BASIS_TEST(_BasisTestName) \
+	oTEST_REGISTER_BUGGED32(oCONCAT(BASIS_, _BasisTestName), _Bug)
 
 #define oTEST_REGISTER_BASIS_TEST_WITH_SERVICES(_BasisTestName) \
 	bool oCONCAT(oBasisTest_, _BasisTestName)(); \
@@ -108,9 +120,10 @@ oTEST_REGISTER_BASIS_TEST(oFourCC);
 oTEST_REGISTER_BASIS_TEST_WITH_SERVICES(oHash);
 oTEST_REGISTER_BASIS_TEST(oIndexAllocator);
 oTEST_REGISTER_BASIS_TEST(oINI);
+oTEST_REGISTER_BASIS_TEST(oInt);
 oTEST_REGISTER_BASIS_TEST(oLinearAllocator);
 oTEST_REGISTER_BASIS_TEST_WITH_SERVICES(oOBJLoader);
-oTEST_REGISTER_BASIS_TEST(oOSC);
+oTEST_REGISTER_BASIS_TEST_BUGGED32(oOSC, 1956);
 oTEST_REGISTER_BASIS_TEST(oPath);
 oTEST_REGISTER_BASIS_TEST(oURI);
 oTEST_REGISTER_BASIS_TEST(oXML);

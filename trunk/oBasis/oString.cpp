@@ -109,9 +109,11 @@ char* oAddTruncationElipse(char* _StrDestination, size_t _SizeofStrDestination)
 	return _StrDestination;
 }
 
-errno_t oReplace(char* _StrResult, size_t _SizeofStrResult, const char* _StrSource, const char* _StrFind, const char* _StrReplace)
+errno_t oReplace(char* oRESTRICT _StrResult, size_t _SizeofStrResult, const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace)
 {
 	if (!_StrResult || !_StrSource) return EINVAL;
+	oASSERT(_StrResult != _StrSource, "_StrResult and _StrSource cannot be the same buffer");
+	if (_StrResult == _StrSource) return EINVAL;
 	if (!_StrFind)
 		return strcpy_s(_StrResult, _SizeofStrResult, _StrSource);
 	if (!_StrReplace)

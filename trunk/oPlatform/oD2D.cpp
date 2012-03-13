@@ -27,47 +27,10 @@
 #include <oPlatform/oModule.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oDXGI.h>
+#include "SoftLink/oWinD2D.h"
+#include "SoftLink/oWinDWrite.h"
 
 #if oDXVER >= oDXVER_10
-
-static const char* oWinD2D_exports[] = { "D2D1CreateFactory", };
-struct oWinD2D : oModuleSingleton<oWinD2D>
-{
-	oWinD2D() { hModule = oModuleLinkSafe("d2d1.dll", oWinD2D_exports, (void**)&D2D1CreateFactory); oVERIFY(hModule); }
-	~oWinD2D() { oModuleUnlink(hModule); }
-public:
-	HRESULT (__stdcall *D2D1CreateFactory)(D2D1_FACTORY_TYPE factoryType, REFIID riid, const D2D1_FACTORY_OPTIONS *pFactoryOptions, void **ppIFactory);
-
-protected:
-	oHMODULE hModule;
-};
-
-static const char* oWinDWrite_exports[] = { "DWriteCreateFactory", };
-struct oWinDWrite : oModuleSingleton<oWinDWrite>
-{
-	oWinDWrite()
-	{
-		hModule = oModuleLinkSafe("dwrite.dll", oWinDWrite_exports, (void**)&DWriteCreateFactory);
-		oVERIFY(hModule);
-		// Create a single shared one of these and always use it
-		if (S_OK != DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&DWriteFactory))
-			oASSERT(false, "Failed to create a DirectWrite Factory");
-	}
-
-	~oWinDWrite()
-	{
-		DWriteFactory = nullptr;
-		oModuleUnlink(hModule);
-	}
-
-public:
-	inline IDWriteFactory* GetDWriteFactory() { return DWriteFactory; }
-	HRESULT (__stdcall *DWriteCreateFactory)(DWRITE_FACTORY_TYPE factoryType, REFIID iid, IUnknown **factory);
-
-protected:
-	oHMODULE hModule;
-	oRef<IDWriteFactory> DWriteFactory;
-};
 
 D2D1::ColorF oD2DColor(oColor _Color)
 {
@@ -179,7 +142,7 @@ bool oD2DDrawRoundedRect(ID2D1RenderTarget* _pRenderTarget, const D2D1_ROUNDED_R
 	return true;
 }
 
-bool oD2DSetAlignment(IDWriteTextFormat* _pDWTextFormat, oANCHOR _Alignment)
+bool oD2DSetAlignment(IDWriteTextFormat* _pDWTextFormat, oGUI_ALIGNMENT _Alignment)
 {
 	if (!_pDWTextFormat)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);

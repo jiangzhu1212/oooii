@@ -1241,10 +1241,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			struct jpeg_decompress_struct cinfo;
 			struct jpeg_error_mgr jerr;
+			struct oooii_jpeg_memory_alloc jalloc;
 
 			// step 1: allocate and initialize JPEG decompression object
 
 			cinfo.err = jpeg_std_error(&jerr);
+			cinfo.alloc = oooii_jpeg_std_alloc(&jalloc); //OOOII custom alloc support
 
 			jerr.error_exit     = jpeg_error_exit;
 			jerr.output_message = jpeg_output_message;
@@ -1461,10 +1463,12 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 			struct jpeg_compress_struct cinfo;
 			struct jpeg_error_mgr jerr;
+			struct oooii_jpeg_memory_alloc jalloc;
 
 			// Step 1: allocate and initialize JPEG compression object
 
 			cinfo.err = jpeg_std_error(&jerr);
+			cinfo.alloc = oooii_jpeg_std_alloc(&jalloc); //OOOII custom alloc support
 
 			jerr.error_exit     = jpeg_error_exit;
 			jerr.output_message = jpeg_output_message;

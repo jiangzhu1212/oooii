@@ -515,6 +515,11 @@ bool oWinSystemAllServicesInSteadyState();
 // be called as a regular interval for refreshing the current CPU usage.
 double oWinSystemCalculateCPUUsage(unsigned long long* _pPreviousIdleTime, unsigned long long* _pPreviousSystemTime);
 
+// Spawns the application associated with the specified _DocumentName and opens
+// that document. For example: open a text file using Notepad or a URL using 
+// Explorer.
+bool oWinSystemOpenDocument(const char* _DocumentName, bool _ForEdit = false);
+
 // _____________________________________________________________________________
 // Identification/ID Conversion API
 

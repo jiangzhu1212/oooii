@@ -31,6 +31,7 @@
 #define oFixedString_h
 
 #include <oBasis/oThreadsafe.h>
+#include <oBasis/oFunction.h>
 #include <stddef.h>
 
 template<typename CHAR_T> size_t oFixedStringLength(const CHAR_T* _StrSource);
@@ -78,7 +79,7 @@ typedef oFixedString<char, 64> oStringS;
 typedef oFixedString<char, 128> oStringM;
 typedef oFixedString<char, 512> oStringL;
 typedef oFixedString<char, 2048> oStringXL;
-typedef oFixedString<char, 4096> oStringML;
+typedef oFixedString<char, 4096> oStringXXL;
 
 typedef oStringL oStringPath;
 typedef oStringL oStringURI;
@@ -104,11 +105,25 @@ template<size_t CAPACITY> int strncpy_s(oFixedString<char, CAPACITY>& _StrDestin
 // _____________________________________________________________________________
 // (partial) Support for oString.h functions (add them as needed)
 
+// oString.h
 template<typename T, size_t CAPACITY> char* oToString(oFixedString<char, CAPACITY>& _StrDestination, const T& _Value) { return oToString(_StrDestination.c_str(), _StrDestination.capacity(), _Value); }
 template<typename CHAR_T, size_t CAPACITY> bool oFromString(oFixedString<CHAR_T, CAPACITY> *_pValue, const char* _StrSource) { oASSERT(strlen(_StrSource) < CAPACITY, "oFixedString wasn't large enough to hold string passed to oFromString"); *_pValue = _StrSource; return true; }
+template<size_t CAPACITY> bool oGetKeyValuePair(oFixedString<char, CAPACITY>& _KeyDestination, char* _ValueDestination, size_t _SizeofValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return oGetKeyValuePair(_KeyDestination, _KeyDestination.capacity(), _ValueDestination, _SizeofValueDestination, _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
+template<size_t CAPACITY> bool oGetKeyValuePair(char* _KeyDestination, size_t _SizeofKeyDestination, oFixedString<char, CAPACITY>& _ValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return oGetKeyValuePair(_KeyDestination, _SizeofKeyDestination, _ValueDestination, _ValueDestination.capacity(), _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
+template<size_t KEY_CAPACITY, size_t VALUE_CAPACITY> bool oGetKeyValuePair(oFixedString<char, KEY_CAPACITY>& _KeyDestination, oFixedString<char, VALUE_CAPACITY>& _ValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return oGetKeyValuePair(_KeyDestination, _KeyDestination.capacity(), _ValueDestination, _ValueDestination.capacity(), _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
 template<size_t CAPACITY> errno_t oStrAppend(oFixedString<char, CAPACITY>& _StrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); return oVStrAppend(_StrDestination.c_str(), _StrDestination.capacity(), _Format, args); }
 template<size_t CAPACITY> errno_t oFormatMemorySize(oFixedString<char, CAPACITY>& _StrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits) { return oFormatMemorySize(_StrDestination, _StrDestination.capacity(), _NumBytes, _NumPrecisionDigits); }
 template<size_t CAPACITY> errno_t oFormatTimeSize(oFixedString<char, CAPACITY>& _StrDestination, double _TimeInSeconds, bool _Abbreviated = false) { return oFormatTimeSize(_StrDestination, _StrDestination.capacity(), _TimeInSeconds, _Abbreviated); }
 template<size_t CAPACITY> errno_t oFormatCommas(oFixedString<char, CAPACITY>& _StrDestination, int _Number) { return oFormatCommas(_StrDestination, _StrDestination.capacity(), _Number); }
+template<size_t CAPACITY> errno_t oReplace(oFixedString<char, CAPACITY>& _StrDestination, const char* _StrSource, const char* _StrFind, const char* _StrReplace) { return oReplace(_StrDestination, _StrDestination.capacity(), _StrSource, _StrFind, _StrReplace); }
+template<size_t CAPACITY> char* oAddTruncationElipse(oFixedString<char, CAPACITY>& _StrDestination) { return oAddTruncationElipse(_StrDestination, _StrDestination.capacity()); }
+
+// oPath.h
+template<size_t CAPACITY> inline char* oGetFilebase(oFixedString<char, CAPACITY>& _StrDestination, const char* _Path) { return oGetFilebase(_StrDestination, _StrDestination.capacity(), _Path); }
+template<size_t CAPACITY> inline char* oReplaceFileExtension(oFixedString<char, CAPACITY>& _Path, const char* _Extension) { return oReplaceFileExtension(_Path, _Path.capacity(), _Extension); }
+template<size_t CAPACITY> inline char* oEnsureSeparator(oFixedString<char, CAPACITY>& _Path) { return oEnsureSeparator(_Path, _Path.capacity()); }
+template<size_t CAPACITY> inline char* oCleanPath(oFixedString<char, CAPACITY>& _Path, const char* _SourcePath, char _FileSeparator = '/') { return oCleanPath(_Path, _Path.capacity(), _SourcePath, _FileSeparator); }
+template<size_t CAPACITY> inline char* oMakeRelativePath(oFixedString<char, CAPACITY>& _Path, const char* _FullPath, const char* _BasePath, char _FileSeparator = '/') { return oMakeRelativePath(_StrDestination, _StrDestination.capacity(), _FullPath, _BasePath, _FileSeparator); }
+template<size_t CAPACITY> inline char* oFindInPath(oFixedString<char, CAPACITY>& _Path, const char* _SearchPath, const char* _RelativePath, const char* _DotPath, oFUNCTION<bool(const char* _Path)> _PathExists) { return oFindInPath(_StrDestination, _StrDestination.capacity(), _SearchPath, _RelativePath, _DotPath, _PathExists); }
 
 #endif

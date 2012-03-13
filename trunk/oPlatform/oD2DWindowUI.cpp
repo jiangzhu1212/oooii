@@ -25,7 +25,6 @@
 #include <oBasis/oByte.h>
 #include <oPlatform/oD2D.h>
 #include <oBasis/oMemory.h>
-#include <oBasis/oSize.h>
 #include <oPlatform/oWinRect.h>
 #include <oPlatform/oWinWindowing.h>
 
@@ -131,22 +130,24 @@ bool oD2DWindowUIBox::OnEvent(oWindow::EVENT _Event, const float3& _Position, in
 oD2DWindowUIFont::oD2DWindowUIFont(const DESC& _Desc, threadsafe oWindow* _pWindow, bool* _pSuccess)
 	: oWindowUIElementBaseMixin(_Desc, _pWindow)
 {
-	oWStringS FName = _Desc.FontName;
+	oASSERT(!_Desc.FontDesc.Underline && !_Desc.FontDesc.StrikeOut, "Underline and StrikeOut are not supported");
+
+	oWStringS FName = _Desc.FontDesc.FontName;
 	oV(oD2DGetSharedDWriteFactory()->CreateTextFormat(
 		FName
-		, 0
-		, (_Desc.Style == BOLD || _Desc.Style == BOLDITALIC) ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_NORMAL
-		, (_Desc.Style == ITALIC || _Desc.Style == BOLDITALIC) ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL
+		, nullptr
+		, _Desc.FontDesc.Bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_NORMAL
+		, _Desc.FontDesc.Italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL
 		, DWRITE_FONT_STRETCH_NORMAL
-		, oPointToDIP(_Desc.PointSize)
+		, oPointToDIP(_Desc.FontDesc.PointSize)
 		, L"en-us"
 		, &Format
 		));
 
 	#ifdef _DEBUG
-		oV(Format->GetFontFamilyName(FName.c_str(), oSize32(FName.capacity())));
+		oV(Format->GetFontFamilyName(FName.c_str(), oUInt(FName.capacity())));
 		oStringS fontFamilyName = FName;
-		oV(Format->GetLocaleName(FName.c_str(), oSize32(FName.capacity())));
+		oV(Format->GetLocaleName(FName.c_str(), oUInt(FName.capacity())));
 		oStringS locale = FName;
 		oTRACE("DWriteFont Created: %s %s%s %s", fontFamilyName.c_str(), Format->GetFontWeight() == DWRITE_FONT_WEIGHT_REGULAR ? "" : "bold", Format->GetFontStyle() == DWRITE_FONT_STYLE_ITALIC ? "italic" : "", locale.c_str());
 	#endif
@@ -226,11 +227,11 @@ bool oD2DWindowUIText::OnEvent(oWindow::EVENT _Event, const float3& _Position, i
 					Font->GetDesc(&fdesc);
 					D2D1_RECT_F rShadow = rAdjusted; rShadow.left += fdesc.ShadowOffset; rShadow.top += fdesc.ShadowOffset; rShadow.right += fdesc.ShadowOffset; rShadow.bottom += fdesc.ShadowOffset;
 					ShadowBrush->SetColor(oD2DColor(d.ShadowColor));
-					D2DRenderTarget->DrawText(Text.c_str(), oSize32(Text.size()), pFormat, rShadow, ShadowBrush);
+					D2DRenderTarget->DrawText(Text.c_str(), oUInt(Text.size()), pFormat, rShadow, ShadowBrush);
 				}
 
 				Brush->SetColor(oD2DColor(d.Color));
-				D2DRenderTarget->DrawText(Text.c_str(), oSize32(Text.size()), pFormat, rAdjusted, Brush);
+				D2DRenderTarget->DrawText(Text.c_str(), oUInt(Text.size()), pFormat, rAdjusted, Brush);
 			}
 			break;
 		}

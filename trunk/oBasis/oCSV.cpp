@@ -56,11 +56,7 @@ bool CSVParse(RECORDS& _OutRecords, char* _CSVDestination, const char* _CSVSourc
 		if (strchr(oNEWLINE, *r) || *r == 0)
 		{
 			if (inquotes)
-			{
-				oErrorSetLast(oERROR_INVALID_PARAMETER, "Parsing failure");
-				return false;
-			}
-
+				return oErrorSetLast(oERROR_INVALID_PARAMETER, "Parsing failure");
 			*w++ = '\0';
 			r += strspn(r, oNEWLINE);
 			_OutRecords.back().push_back(entryStart);

@@ -29,8 +29,8 @@
 #include <oBasis/oString.h>
 #include <oPlatform/oSocket.h>
 #include "oIOCP.h"
-#include "oWinsock.h"
-#include "oOpenSSL.h"
+#include "SoftLink/oWinsock.h"
+#include "SoftLink/oOpenSSL.h"
 
 // The Internal versions of these structs simply have the private
 // classification removed. In the event that we need to address multiple
@@ -222,8 +222,8 @@ struct SocketBlocking_Impl : public oSocketEncrypted
 	SocketBlocking_Impl(const char* _DebugName, const DESC& _Desc, SOCKET _SystemSocket, bool* _pSuccess);
 	~SocketBlocking_Impl();
 
-	bool Send(const void* _pSource, oSocket::size_t _SizeofSource) threadsafe override; //, unsigned int _TimeoutMS /*= oINFINITE_WAIT */) threadsafe override;
-	bool SendTo(const void* _pSource, oSocket::size_t _SizeofSource, const oNetAddr& _DestinationAddr) threadsafe override;//, unsigned int _TimeoutMS = oINFINITE_WAIT) threadsafe override;
+	bool Send(const void* _pSource, oSocket::size_t _SizeofSource, const void* _pBody, oSocket::size_t _SizeBody) threadsafe override; //, unsigned int _TimeoutMS /*= oINFINITE_WAIT */) threadsafe override;
+	bool SendTo(const void* _pSource, oSocket::size_t _SizeofSource, const oNetAddr& _DestinationAddr, const void* _pBody, oSocket::size_t _SizeBody) threadsafe override;//, unsigned int _TimeoutMS = oINFINITE_WAIT) threadsafe override;
 	oSocket::size_t Recv(void* _pDestination, oSocket::size_t _SizeofDestination) threadsafe override;
 	
 	bool SendEncrypted(const void* _pData, oSocket::size_t _Size) threadsafe override;
@@ -304,7 +304,7 @@ SocketBlocking_Impl::~SocketBlocking_Impl()
 		oVERIFY(oWinsockClose(hSocket));
 }
 
-bool SocketBlocking_Impl::SendTo(const void* _pSource, oSocket::size_t _SizeofSource, const oNetAddr& _DestinationAddr) threadsafe
+bool SocketBlocking_Impl::SendTo(const void* _pSource, oSocket::size_t _SizeofSource, const oNetAddr& _DestinationAddr, const void* _pBody, oSocket::size_t _SizeBody) threadsafe
 {
 	unsigned int _TimeoutMS = Desc.BlockingSettings.SendTimeout;
 
@@ -336,6 +336,9 @@ bool SocketBlocking_Impl::SendTo(const void* _pSource, oSocket::size_t _SizeofSo
 	}
 
 	if(SOCKET_ERROR == ws->sendto(hSocket, (const char*)_pSource, _SizeofSource, 0, (const sockaddr*)&sendToAddr, sizeof(sockaddr_in)))
+		return false;
+
+	if(_pBody &&  ws->sendto(hSocket, (const char*)_pBody, _SizeBody, 0, (const sockaddr*)&sendToAddr, sizeof(sockaddr_in)))
 		return false;
 
 	return true;
@@ -375,9 +378,9 @@ oSocket::size_t SocketBlocking_Impl::RecvEncrypted(void* _pBuffer, oSocket::size
 }
 
 // @oooii-will: Now using SendTo for all SocketBlocking send commands
-bool SocketBlocking_Impl::Send(const void* _pSource, oSocket::size_t _SizeofSource) threadsafe
+bool SocketBlocking_Impl::Send(const void* _pSource, oSocket::size_t _SizeofSource, const void* _pBody, oSocket::size_t _SizeBody) threadsafe
 {
-	return SendTo(_pSource, _SizeofSource, thread_cast<oNetAddr &>(Desc.Addr));
+	return SendTo(_pSource, _SizeofSource, thread_cast<oNetAddr &>(Desc.Addr), _pBody, _SizeBody);
 }
 
 oSocket::size_t SocketBlocking_Impl::Recv(void* _pDestination, oSocket::size_t _SizeofDestination) threadsafe
@@ -663,10 +666,10 @@ struct oSocketAsyncoMSG : public oSocketAsyncCallback
 	virtual void ProcessSocketReceive(void*_pData, oSocket::size_t _SizeData, const oNetAddr& _Addr, interface oSocket* _pSocket) threadsafe override;
 	virtual void ProcessSocketSend(void*_pData, oSocket::size_t _SizeData, const oNetAddr& _Addr, interface oSocket* _pSocket) threadsafe override;
 
-	bool PrepareHeader(const void* _pData, oSocket::size_t _Size, WSABUF* pHeader) threadsafe;
+	bool PrepareHeader(oSocket::size_t _Size, WSABUF* pHeader) threadsafe;
 	void ReleaseHeader(const WSABUF& _Header) threadsafe;
 
-	oSocket::size_t ProtocolCanRecv(void* _pData, oSocket::size_t _Size) threadsafe;
+	oSocket::size_t ProtocolCanRecv(oSocket::size_t _Size) threadsafe;
 private:
 	void ProcessSocketReceiveInternal(void*_pData, oSocket::size_t _SizeData, const oNetAddr& _Addr, interface oSocket* _pSocket);
 
@@ -704,7 +707,7 @@ void oSocketAsyncoMSG::ProcessSocketSend(void*_pData, oSocket::size_t _SizeData,
 	Callback->ProcessSocketSend(_pData, _SizeData, _Addr, _pSocket);
 };
 
-oSocket::size_t oSocketAsyncoMSG::ProtocolCanRecv(void* _pData, oSocket::size_t _Size) threadsafe
+oSocket::size_t oSocketAsyncoMSG::ProtocolCanRecv(oSocket::size_t _Size) threadsafe
 {
 	if(MaximumReceiveSize.compare_exchange(0, _Size) || ProtocolRecvOverride)
 	{
@@ -716,7 +719,7 @@ oSocket::size_t oSocketAsyncoMSG::ProtocolCanRecv(void* _pData, oSocket::size_t 
 	return 0;
 }
 
-bool oSocketAsyncoMSG::PrepareHeader(const void* _pData, oSocket::size_t _Size, WSABUF* pHeader) threadsafe
+bool oSocketAsyncoMSG::PrepareHeader(oSocket::size_t _Size, WSABUF* pHeader) threadsafe
 {
 	CLIENT_PACKET_HEADER* pPacketHeader = HeaderPool.Allocate();
 	oASSERT(pPacketHeader, "Failed to allocate header");
@@ -827,7 +830,7 @@ struct oSocketAsync_Impl : public oSocket
 		};
 
 		WSABUF		Header;
-		WSABUF		Payload;
+		WSABUF		Payload[2];
 		SOCKADDR_IN	SockAddr;
 		TYPE		Type;
 	};
@@ -839,15 +842,15 @@ struct oSocketAsync_Impl : public oSocket
 
 	oSocketAsync_Impl(const char* _DebugName, const DESC& _Desc, SOCKET _hTarget, bool* _pSuccess);
 	~oSocketAsync_Impl();
-	virtual bool Send(const void* _pData, oSocket::size_t _Size) threadsafe override;
-	virtual bool SendTo(const void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination) threadsafe override;
+	virtual bool Send(const void* _pData, oSocket::size_t _Size, const void* _pBody, oSocket::size_t _SizeBody) threadsafe override;
+	virtual bool SendTo(const void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination, const void* _pBody, oSocket::size_t _SizeBody) threadsafe override;
 	virtual oSocket::size_t Recv(void* _pBuffer, oSocket::size_t _Size) threadsafe override;
 
-	bool SendToInternal(const void* _pData, oSocket::size_t _Size, const SOCKADDR_IN& _Destination) threadsafe;
+	bool SendToInternal(const void* _pData, oSocket::size_t _Size, const SOCKADDR_IN& _Destination, const void* _pBody, oSocket::size_t _SizeBody) threadsafe;
 	
-	static bool					NOPPrepareHeader(const void* _pData, oSocket::size_t _Size, WSABUF* pHeader);
+	static bool					NOPPrepareHeader(oSocket::size_t _Size, WSABUF* pHeader);
 	static void					NOPReleaseHeader(const WSABUF& _Header);
-	static oSocket::size_t		NOPProtocolCanRecv(void* _pData, oSocket::size_t _Size);
+	static oSocket::size_t		NOPProtocolCanRecv(oSocket::size_t _Size);
 
 	void			IOCPCallback(oIOCPOp* _pSocketOp);
 
@@ -855,9 +858,9 @@ struct oSocketAsync_Impl : public oSocket
 	SOCKET		hSocket;
 	oRef<threadsafe oSocketAsyncCallback> InternalCallback;
 
-	oFUNCTION<bool(const void* _pData, oSocket::size_t _Size, WSABUF* pHeader)> PrepareSend;
+	oFUNCTION<bool(oSocket::size_t _Size, WSABUF* pHeader)> PrepareSend;
 	oFUNCTION<void(const WSABUF& _Header)> ReleaseHeader;
-	oFUNCTION<oSocket::size_t(void* _pData, oSocket::size_t _Size)> ProtocolCanRecv;
+	oFUNCTION<oSocket::size_t(oSocket::size_t _Size)> ProtocolCanRecv;
 };
 
 oSocketAsync_Impl::oSocketAsync_Impl(const char* _DebugName, const DESC& _Desc, SOCKET _hTarget, bool* _pSuccess)
@@ -917,15 +920,15 @@ oSocketAsync_Impl::oSocketAsync_Impl(const char* _DebugName, const DESC& _Desc, 
 	{
 		oRef<oSocketAsyncoMSG> oMSGCallback(new oSocketAsyncoMSG(InternalCallback, Desc.AsyncSettings.MaxSimultaneousMessages), false);
 		InternalCallback = oMSGCallback;
-		PrepareSend = oBIND(&oSocketAsyncoMSG::PrepareHeader, oMSGCallback.c_ptr(), oBIND1, oBIND2, oBIND3);
+		PrepareSend = oBIND(&oSocketAsyncoMSG::PrepareHeader, oMSGCallback.c_ptr(), oBIND1, oBIND2);
 		ReleaseHeader = oBIND(&oSocketAsyncoMSG::ReleaseHeader, oMSGCallback.c_ptr(), oBIND1);
-		ProtocolCanRecv = oBIND(&oSocketAsyncoMSG::ProtocolCanRecv, oMSGCallback.c_ptr(), oBIND1, oBIND2);
+		ProtocolCanRecv = oBIND(&oSocketAsyncoMSG::ProtocolCanRecv, oMSGCallback.c_ptr(), oBIND1);
 	}
 	else // Setup the raw protocol callbacks
 	{
-		PrepareSend = oBIND(&oSocketAsync_Impl::NOPPrepareHeader, oBIND1, oBIND2, oBIND3);
+		PrepareSend = oBIND(&oSocketAsync_Impl::NOPPrepareHeader, oBIND1, oBIND2);
 		ReleaseHeader = oBIND(&oSocketAsync_Impl::NOPReleaseHeader, oBIND1);
-		ProtocolCanRecv = oBIND(&oSocketAsync_Impl::NOPProtocolCanRecv, oBIND1, oBIND2);
+		ProtocolCanRecv = oBIND(&oSocketAsync_Impl::NOPProtocolCanRecv, oBIND1);
 	}
 
 	*_pSuccess = true;
@@ -945,15 +948,15 @@ oSocketAsync_Impl::~oSocketAsync_Impl()
 }
 
 
-bool oSocketAsync_Impl::Send(const void* _pData, oSocket::size_t _Size) threadsafe
+bool oSocketAsync_Impl::Send(const void* _pData, oSocket::size_t _Size, const void* _pBody, oSocket::size_t _SizeBody) threadsafe
 {
 	if(UDP == Desc.Protocol)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Socket is connectionless.  Send is invalid");
 
-	return SendToInternal(_pData, _Size, thread_cast<SOCKADDR_IN&>(Saddr)); // thread_cast safe because Saddr never changes
+	return SendToInternal(_pData, _Size, thread_cast<SOCKADDR_IN&>(Saddr), _pBody, _SizeBody); // thread_cast safe because Saddr never changes
 }
 
-bool oSocketAsync_Impl::SendTo(const void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination) threadsafe
+bool oSocketAsync_Impl::SendTo(const void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination, const void* _pBody, oSocket::size_t _SizeBody) threadsafe
 {
 	if(UDP != Desc.Protocol)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Socket is connected.  SendTo is invalid");
@@ -961,10 +964,10 @@ bool oSocketAsync_Impl::SendTo(const void* _pData, oSocket::size_t _Size, const 
 	SOCKADDR_IN Saddr;
 	oNetAddrToSockAddr(_Destination, &Saddr);
 
-	 return SendToInternal(_pData, _Size, Saddr);
+	 return SendToInternal(_pData, _Size, Saddr, _pBody, _SizeBody);
 }
 
-bool oSocketAsync_Impl::SendToInternal(const void* _pData, oSocket::size_t _Size, const SOCKADDR_IN& _Destination) threadsafe
+bool oSocketAsync_Impl::SendToInternal(const void* _pHeader, oSocket::size_t _SizeHeader, const SOCKADDR_IN& _Destination, const void* _pBody, oSocket::size_t _SizeBody) threadsafe
 {
 	oWinsock* ws = oWinsock::Singleton();
 
@@ -975,19 +978,21 @@ bool oSocketAsync_Impl::SendToInternal(const void* _pData, oSocket::size_t _Size
 	Operation* pOp;
 	pIOCPOp->GetPrivateData(&pOp);
 	pOp->Type = Operation::Op_Send;
-	pOp->Payload.len = _Size;
-	pOp->Payload.buf = (CHAR*)_pData;
+	pOp->Payload[0].len = _SizeHeader;
+	pOp->Payload[0].buf = (CHAR*)_pHeader;
+	pOp->Payload[1].len = _SizeBody;
+	pOp->Payload[1].buf = (CHAR*)_pBody;
 	pOp->SockAddr = _Destination;
 
 	static DWORD bytesSent;
 
-	WSABUF* pBuff = &pOp->Payload;
-	unsigned int BuffCount = 1;
+	WSABUF* pBuff = pOp->Payload;
+	unsigned int BuffCount = _pBody ? 2 : 1;
 
-	if(thread_cast<oSocketAsync_Impl*>(this)->PrepareSend(_pData, _Size, &pOp->Header))
+	if(thread_cast<oSocketAsync_Impl*>(this)->PrepareSend(_SizeHeader + (_pBody ? _SizeBody : 0), &pOp->Header))
 	{
 		pBuff = &pOp->Header;
-		BuffCount = 2;
+		++BuffCount;
 	}
 
 	if(0 != ws->WSASendTo(hSocket, pBuff, BuffCount, &bytesSent, 0, (SOCKADDR*)&pOp->SockAddr, sizeof(sockaddr_in), (WSAOVERLAPPED*)pIOCPOp, nullptr))
@@ -1012,7 +1017,7 @@ oSocket::size_t oSocketAsync_Impl::Recv(void* _pBuffer, oSocket::size_t _Size) t
 		return 0;
 	}
 
-	oSocket::size_t RecvSize = thread_cast<oSocketAsync_Impl*>(this)->ProtocolCanRecv(_pBuffer, _Size);
+	oSocket::size_t RecvSize = thread_cast<oSocketAsync_Impl*>(this)->ProtocolCanRecv(_Size);
 	if(0 == RecvSize)
 	{
 		IOCP->ReturnOp(pIOCPOp);
@@ -1023,8 +1028,8 @@ oSocket::size_t oSocketAsync_Impl::Recv(void* _pBuffer, oSocket::size_t _Size) t
 	Operation* pOp;
 	pIOCPOp->GetPrivateData(&pOp);
 
-	pOp->Payload.buf = (CHAR*)_pBuffer;
-	pOp->Payload.len = RecvSize;
+	pOp->Payload[0].buf = (CHAR*)_pBuffer;
+	pOp->Payload[0].len = RecvSize;
 	memset(&pOp->SockAddr, 0, sizeof(SOCKADDR_IN));
 	pOp->Type = Operation::Op_Recv;
 
@@ -1033,12 +1038,12 @@ oSocket::size_t oSocketAsync_Impl::Recv(void* _pBuffer, oSocket::size_t _Size) t
 
 	static DWORD bytesRecvd;
 
-	ws->WSARecvFrom(hSocket, &pOp->Payload, 1, &bytesRecvd, &flags, (SOCKADDR*)&pOp->SockAddr, &sizeOfSockAddr, (WSAOVERLAPPED*)pIOCPOp, nullptr);
+	ws->WSARecvFrom(hSocket, pOp->Payload, 1, &bytesRecvd, &flags, (SOCKADDR*)&pOp->SockAddr, &sizeOfSockAddr, (WSAOVERLAPPED*)pIOCPOp, nullptr);
 
 	return RecvSize;
 }
 
-bool oSocketAsync_Impl::NOPPrepareHeader(const void* _pData, oSocket::size_t _Size, WSABUF* pHeader)
+bool oSocketAsync_Impl::NOPPrepareHeader(oSocket::size_t _Size, WSABUF* pHeader)
 {
 	// By default most raw protocols have no user space header
 	return false;
@@ -1049,7 +1054,7 @@ void oSocketAsync_Impl::NOPReleaseHeader(const WSABUF& _Header)
 	// By default most raw protocols have no user space header
 }
 
-oSocket::size_t oSocketAsync_Impl::NOPProtocolCanRecv(void* _pData, oSocket::size_t _Size)
+oSocket::size_t oSocketAsync_Impl::NOPProtocolCanRecv(oSocket::size_t _Size)
 {
 	// By default most raw protocols can always receive
 	return _Size;
@@ -1065,7 +1070,7 @@ void oSocketAsync_Impl::IOCPCallback(oIOCPOp* pIOCPOp)
 	{
 		Operation* pOp;
 		pIOCPOp->GetPrivateData(&pOp);
-		pData = pOp->Payload.buf;
+		pData = pOp->Payload[0].buf;
 		oSockAddrToNetAddr(pOp->SockAddr, &address);
 		Type = pOp->Type;
 		Header = pOp->Header;

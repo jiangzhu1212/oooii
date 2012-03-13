@@ -64,7 +64,7 @@ oKEYBOARD_KEY TranslateMouseToX11(WPARAM _wParam, oMOUSE_BUTTON_STATE _ButtonSta
 				break;
 		}
 		break;
-	case MK_RBUTTON:
+	case MK_MBUTTON:
 		switch (_ButtonState)
 		{
 			case oMS_MouseClick:
@@ -78,7 +78,7 @@ oKEYBOARD_KEY TranslateMouseToX11(WPARAM _wParam, oMOUSE_BUTTON_STATE _ButtonSta
 				break;
 		}
 		break;
-	case MK_MBUTTON:
+	case MK_RBUTTON:
 		switch (_ButtonState)
 		{
 			case oMS_MouseClick:
@@ -247,32 +247,32 @@ UINT TranslateX11KeyboardToVK(oKEYBOARD_KEY _Key)
 	{
 		switch (_Key)
 		{
-			case oKB_A: case oKB_a: vkKey = 'a'; break;
-			case oKB_B: case oKB_b: vkKey = 'b'; break;
-			case oKB_C: case oKB_c: vkKey = 'c'; break;
-			case oKB_D: case oKB_d: vkKey = 'd'; break;
-			case oKB_E: case oKB_e: vkKey = 'e'; break;
-			case oKB_F: case oKB_f: vkKey = 'f'; break;
-			case oKB_G: case oKB_g: vkKey = 'g'; break;
-			case oKB_H: case oKB_h: vkKey = 'h'; break;
-			case oKB_I: case oKB_i: vkKey = 'i'; break;
-			case oKB_J: case oKB_j: vkKey = 'j'; break;
-			case oKB_K: case oKB_k: vkKey = 'k'; break;
-			case oKB_L: case oKB_l: vkKey = 'l'; break;
-			case oKB_M: case oKB_m: vkKey = 'm'; break;
-			case oKB_N: case oKB_n: vkKey = 'n'; break;
-			case oKB_O: case oKB_o: vkKey = 'o'; break;
-			case oKB_P: case oKB_p: vkKey = 'p'; break;
-			case oKB_Q: case oKB_q: vkKey = 'q'; break;
-			case oKB_R: case oKB_r: vkKey = 'r'; break;
-			case oKB_S: case oKB_s: vkKey = 's'; break;
-			case oKB_T: case oKB_t: vkKey = 't'; break;
-			case oKB_U: case oKB_u: vkKey = 'u'; break;
-			case oKB_V: case oKB_v: vkKey = 'v'; break;
-			case oKB_W: case oKB_w: vkKey = 'w'; break;
-			case oKB_X: case oKB_x: vkKey = 'x'; break;
-			case oKB_Y: case oKB_y: vkKey = 'y'; break;
-			case oKB_Z: case oKB_z: vkKey = 'z'; break;
+			case oKB_A: case oKB_a: vkKey = 'A'; break;
+			case oKB_B: case oKB_b: vkKey = 'B'; break;
+			case oKB_C: case oKB_c: vkKey = 'C'; break;
+			case oKB_D: case oKB_d: vkKey = 'D'; break;
+			case oKB_E: case oKB_e: vkKey = 'E'; break;
+			case oKB_F: case oKB_f: vkKey = 'F'; break;
+			case oKB_G: case oKB_g: vkKey = 'G'; break;
+			case oKB_H: case oKB_h: vkKey = 'H'; break;
+			case oKB_I: case oKB_i: vkKey = 'I'; break;
+			case oKB_J: case oKB_j: vkKey = 'J'; break;
+			case oKB_K: case oKB_k: vkKey = 'K'; break;
+			case oKB_L: case oKB_l: vkKey = 'L'; break;
+			case oKB_M: case oKB_m: vkKey = 'M'; break;
+			case oKB_N: case oKB_n: vkKey = 'N'; break;
+			case oKB_O: case oKB_o: vkKey = 'O'; break;
+			case oKB_P: case oKB_p: vkKey = 'P'; break;
+			case oKB_Q: case oKB_q: vkKey = 'Q'; break;
+			case oKB_R: case oKB_r: vkKey = 'R'; break;
+			case oKB_S: case oKB_s: vkKey = 'S'; break;
+			case oKB_T: case oKB_t: vkKey = 'T'; break;
+			case oKB_U: case oKB_u: vkKey = 'U'; break;
+			case oKB_V: case oKB_v: vkKey = 'V'; break;
+			case oKB_W: case oKB_w: vkKey = 'W'; break;
+			case oKB_X: case oKB_x: vkKey = 'X'; break;
+			case oKB_Y: case oKB_y: vkKey = 'Y'; break;
+			case oKB_Z: case oKB_z: vkKey = 'Z'; break;
 			case oKB_bracketleft: case oKB_braceleft: vkKey = '['; break;;
 			case oKB_backslash: case oKB_bar: vkKey = '\\'; break;
 			case oKB_bracketright: case oKB_braceright: vkKey = ']'; break;

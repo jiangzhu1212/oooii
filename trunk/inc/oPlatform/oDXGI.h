@@ -50,20 +50,39 @@
 	// must be called from the same thread that created the window and is 
 	// processing its messages. If not, it will return false and oErrorGetLast()
 	// will return EWRONGTHREAD. _RefreshRate will be expanded in a manner to
-	// take maximum advantage of HW acceleration (enable swap-not-blit). When
-	// setting _Fullscreen false, this will restore the desktop to whatever 
-	// settings were ACTIVE when oDXGISetFullscreenState was called with 
-	// _Fullscreen set to true. It uses oDXGISetPreFullscreenMode to do this 
-	// because the default DXGI behavior is to restore to registry (original)
-	// settings and ignore any state the user might've set in the application.
-	bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, bool _Fullscreen, const int2& _FullscreenSize = int2(oDEFAULT, oDEFAULT), int _FullscreenRefreshRate = oDEFAULT);
+	// take maximum advantage of HW acceleration (enable swap-not-blit). If 
+	// _RememberCurrentState is true, the current display settings will be 
+	// recorded if going to fullscreen, and restored if going to windowed mode.
+	// If false, nothing will be recorded on fullscreen, and the registry 
+	// settings will be used.
 
-	// Associates the specified parameters with the specified swap chain through
-	// PrivateData.
-	bool oDXGISetPreFullscreenMode(IDXGISwapChain* _pSwapChain, const int2& _Size, int _RefreshRate);
+	struct oDXGI_FULLSCREEN_STATE
+	{
+		oDXGI_FULLSCREEN_STATE()
+			: Size(oDEFAULT, oDEFAULT)
+			, RefreshRate(oDEFAULT)
+			, Fullscreen(false)
+			, RememberCurrentSettings(false)
+		{}
 
-	// Retrieves any prior value set.
-	bool oDXGIGetPreFullscreenMode(IDXGISwapChain* _pSwapChain, int2* _pSize, int* _pRefreshRate);
+		int2 Size;
+		int RefreshRate;
+		bool Fullscreen;
+		bool RememberCurrentSettings;
+	};
+
+	bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, const oDXGI_FULLSCREEN_STATE& _State);
+
+	// Locks and returns the HDC for the render target associated with the 
+	// specified swap chain. Don't render while this HDC is valid!
+	bool oDXGIGetDC(IDXGISwapChain* _pSwapChain, HDC* _phDC);
+	bool oDXGIGetDC(ID3D11RenderTargetView* _pRTV, HDC* _phDC);
+
+	// Call this when finished with the HDC from oD3D11GetRenderTargetHDC. After 
+	// this call, rendering is OK again. Optionally hint to the driver what region
+	// of the HDC was dirtied.
+	bool oDXGIReleaseDC(IDXGISwapChain* _pSwapChain, RECT* _pDirtyRect = nullptr);
+	bool oDXGIReleaseDC(ID3D11RenderTargetView* _pRTV, RECT* _pDirtyRect = nullptr);
 
 	// Returns the numeric version of the highest level of D2D the specified 
 	// adapter supports.
@@ -80,7 +99,9 @@
 	oVersion oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter);
 
 	// A bit of syntactic sugar on top of GetParent()
+	bool oDXGIGetAdapter(IDXGIObject* _pObject, IDXGIAdapter** _ppAdapter);
 	bool oDXGIGetAdapter(IDXGIObject* _pObject, IDXGIAdapter1** _ppAdapter);
+	bool oDXGIGetFactory(IDXGIObject* _pObject, IDXGIFactory** _ppFactory);
 	bool oDXGIGetFactory(IDXGIObject* _pObject, IDXGIFactory1** _ppFactory);
 
 	// List all outputs in DXGI-ordinal order.

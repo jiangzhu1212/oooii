@@ -28,7 +28,6 @@
 #ifndef oFile_h
 #define oFile_h
 
-#include <oBasis/oSize.h>
 #include <oBasis/oByte.h>
 #include <oBasis/oFunction.h>
 #include <cstdio>
@@ -43,7 +42,7 @@ struct oFILE_DESC
 	time_t Created;
 	time_t Accessed;
 	time_t Written;
-	oSize64 Size;
+	oULLong Size;
 	bool Directory:1;
 	bool Archive:1;
 	bool Compressed:1;
@@ -67,10 +66,10 @@ struct oFileRange
 	{}
 
 	// Offset from base of file for reading/writing to begin
-	oSize64 Offset;
+	oULLong Offset;
 
 	// Number of bytes to read/write starting at the offset
-	oSize64 Size;
+	oULLong Size;
 };
 
 interface oFile : oInterface

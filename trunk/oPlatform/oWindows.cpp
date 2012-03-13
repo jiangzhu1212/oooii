@@ -30,19 +30,20 @@
 #include <oBasis/oMutex.h>
 #include <oBasis/oPath.h>
 #include <oBasis/oRef.h>
-#include <oBasis/oSize.h>
 #include <oBasis/oString.h>
 #include <oPlatform/oDateTime.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oFile.h>
+#include <oPlatform/oModule.h>
 #include <oPlatform/oProcessHeap.h>
+#include <oPlatform/oSingleton.h>
 #include <oPlatform/oSystem.h>
 #include <oPlatform/oWinRect.h>
 #include <oPlatform/oWinAsString.h>
-#include "oDbgHelp.h"
-#include "oWinDWMAPI.h"
-#include "oWinPSAPI.h"
-#include "oWinsock.h"
+#include "SoftLink/oWinDbgHelp.h"
+#include "SoftLink/oWinKernel32.h"
+#include "SoftLink/oWinDWMAPI.h"
+#include "SoftLink/oWinPSAPI.h"
 #include "oStaticMutex.h"
 #include <io.h>
 #include <time.h>
@@ -54,28 +55,6 @@
 
 // Use the Windows Vista UI look. If this causes issues or the dialog not to appear, try other values from processorAchitecture { x86 ia64 amd64 * }
 #pragma comment(linker, "\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-
-// _____________________________________________________________________________
-// Soft links that are still too small to deserve their own source. Prefer soft
-// linking to hard linking so the DLL does not have to be loaded in smaller apps
-// that use oooii lib.
-
-#if oDXVER >= oDXVER_10
-
-	static const char* kernel32_dll_functions[] = 
-	{
-		"GetThreadId",
-	};
-
-	struct oDLLKernel32 : oModuleSingleton<oDLLKernel32>
-	{	oHMODULE hModule;
-		oDLLKernel32() : hModule(oModuleLinkSafe("kernel32.dll", kernel32_dll_functions, (void**)&GetThreadId)) { oASSERT(hModule, ""); }
-		~oDLLKernel32() { oModuleUnlink(hModule); }
-
-		DWORD (__stdcall *GetThreadId)(HANDLE Thread);
-	};
-
-#endif 
 
 // _____________________________________________________________________________
 
@@ -932,7 +911,7 @@ DWORD oGetThreadID(HANDLE _hThread)
 		if (!_hThread)
 			ID = GetCurrentThreadId();
 		else if (oGetWindowsVersion() >= oWINDOWS_VISTA)
-			ID = oDLLKernel32::Singleton()->GetThreadId((HANDLE)_hThread);
+			ID = oWinKernel32::Singleton()->GetThreadId((HANDLE)_hThread);
 		else
 			oTRACE("WARNING: oGetThreadID doesn't work with non-zero thread handles on versions of Windows prior to Vista.");
 			// todo: Traverse all threads in the system to find the one with the specified handle, then from that struct return the ID.
@@ -943,6 +922,7 @@ DWORD oGetThreadID(HANDLE _hThread)
 		return 0;
 	#endif
 }
+
 HMODULE oGetModule(void* _ModuleFunctionPointer)
 {
 	HMODULE hModule = 0;
@@ -1496,7 +1476,7 @@ bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestinatio
 
 		// There's some env vars to resolve, so prepare for that
 		oStringPath SystemRootPath;
-		GetEnvironmentVariable("SYSTEMROOT", SystemRootPath.c_str(), oSize32(SystemRootPath.capacity()));
+		GetEnvironmentVariable("SYSTEMROOT", SystemRootPath.c_str(), oUInt(SystemRootPath.capacity()));
 
 		strcpy_s(_StrDestination, _SizeofStrDestination, pQSC->lpBinaryPathName);
 		char* lpFirstOccurance = nullptr;
@@ -1597,6 +1577,20 @@ double oWinSystemCalculateCPUUsage(unsigned long long* _pPreviousIdleTime, unsig
 	return CPUUsage; 
 }
 
+bool oWinSystemOpenDocument(const char* _DocumentName, bool _ForEdit)
+{
+	int hr = (int)ShellExecuteA(nullptr, _ForEdit ? "edit" : "open", _DocumentName, nullptr, nullptr, SW_SHOW);
+
+	if (32 > hr)
+	{
+		if (hr == 0)
+			return oErrorSetLast(oERROR_AT_CAPACITY, "The operating system is out of memory or resources.");
+		return oWinSetLastError();
+	}
+
+	return true;
+}
+
 bool oWinSystemIs64BitBinary(const char* _StrPath)
 {
 	bool result = false;
@@ -1612,7 +1606,7 @@ bool oWinSystemIs64BitBinary(const char* _StrPath)
 
 	if (oFileMap(_StrPath, false, r, &mapped))
 	{
-		IMAGE_NT_HEADERS* pHeader = oDbgHelp::Singleton()->ImageNtHeader(mapped);
+		IMAGE_NT_HEADERS* pHeader = oWinDbgHelp::Singleton()->ImageNtHeader(mapped);
 		result = pHeader->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64;
 		oVERIFY(oFileUnmap(mapped));
 	}

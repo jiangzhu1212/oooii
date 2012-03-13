@@ -68,6 +68,7 @@ public:
 	static unsigned int GetNumMantissaBits() { return FLT_MANT_DIG; }
 	static unsigned int GetNumPrecisionDigits() { return FLT_DIG; }
 	static bool IsSigned() { return true; }
+	static float quiet_NaN() { int NaN = 0x7fc00000; return *(float*)&NaN; }
 };
 
 template<> class oNumericLimits<double>

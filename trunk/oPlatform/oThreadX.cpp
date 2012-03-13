@@ -28,7 +28,7 @@
 #include <oPlatform/oFile.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oWindows.h>
-#include "oWinPSAPI.h"
+#include "SoftLink/oWinPSAPI.h"
 
 static bool FindOldestAndThusMainThread(unsigned int _ThreadID, unsigned int _ProcessID, ULONGLONG* _pMinCreateTime, unsigned int* _pOutMainThreadID)
 {

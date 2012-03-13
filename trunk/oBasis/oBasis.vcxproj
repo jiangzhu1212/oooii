@@ -44,7 +44,6 @@
     <ClInclude Include="..\inc\oBasis\oByte.h" />
     <ClInclude Include="..\inc\oBasis\oByteSwizzle.h" />
     <ClInclude Include="..\inc\oBasis\oCallable.h" />
-    <ClInclude Include="..\inc\oBasis\oCheckedAssignment.h" />
     <ClInclude Include="..\inc\oBasis\oColor.h" />
     <ClInclude Include="..\inc\oBasis\oCompression.h" />
     <ClInclude Include="..\inc\oBasis\oConcurrentIndexAllocator.h" />
@@ -71,6 +70,7 @@
     <ClInclude Include="..\inc\oBasis\oIndexAllocator.h" />
     <ClInclude Include="..\inc\oBasis\oINI.h" />
     <ClInclude Include="..\inc\oBasis\oInitOnce.h" />
+    <ClInclude Include="..\inc\oBasis\oInt.h" />
     <ClInclude Include="..\inc\oBasis\oInterface.h" />
     <ClInclude Include="..\inc\oBasis\oIntrinsic.h" />
     <ClInclude Include="..\inc\oBasis\oInvalid.h" />
@@ -99,11 +99,11 @@
     <ClInclude Include="..\inc\oBasis\oPlatformFeatures.h" />
     <ClInclude Include="..\inc\oBasis\oRef.h" />
     <ClInclude Include="..\inc\oBasis\oRefCount.h" />
-    <ClInclude Include="..\inc\oBasis\oSize.h" />
     <ClInclude Include="..\inc\oBasis\oStdAllocator.h" />
     <ClInclude Include="..\inc\oBasis\oStdAtomic.h" />
     <ClInclude Include="..\inc\oBasis\oStdChrono.h" />
     <ClInclude Include="..\inc\oBasis\oStdConditionVariable.h" />
+    <ClInclude Include="..\inc\oBasis\oStdFuture.h" />
     <ClInclude Include="..\inc\oBasis\oStdMutex.h" />
     <ClInclude Include="..\inc\oBasis\oStdRatio.h" />
     <ClInclude Include="..\inc\oBasis\oStdThread.h" />
@@ -124,6 +124,7 @@
     <ClInclude Include="..\inc\oBasis\oURI.h" />
     <ClInclude Include="..\inc\oBasis\oVersion.h" />
     <ClInclude Include="..\inc\oBasis\oXML.h" />
+    <ClInclude Include="..\inc\oBasis\SafeInt3.h" />
     <ClInclude Include="oAllocatorTLSF.h" />
     <ClInclude Include="oIndexAllocatorInternal.h" />
     <ClInclude Include="oWinHeaders.h" />
@@ -177,6 +178,7 @@
     <ClCompile Include="oSurfaceFill.cpp" />
     <ClCompile Include="oTimer.cpp" />
     <ClCompile Include="oURI.cpp" />
+    <ClCompile Include="oVersion.cpp" />
     <ClCompile Include="oXML.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

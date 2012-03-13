@@ -27,7 +27,6 @@
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oMemory.h>
-#include <oBasis/oSize.h>
 #include <oBasis/oMutex.h>
 #include <oBasis/oFixedString.h>
 #include <oPlatform/oWindows.h>
@@ -737,7 +736,7 @@ static bool oDSMonikerEnum(unsigned int _Index, IMoniker** _ppMoniker)
 	Monikers.resize(_Index + 1);
 
 	ULONG nFetched = 0;
-	if (FAILED(EnumMoniker->Next(oSize32(Monikers.size()), &Monikers[0], &nFetched)) || (nFetched <= _Index))
+	if (FAILED(EnumMoniker->Next(oUInt(Monikers.size()), &Monikers[0], &nFetched)) || (nFetched <= _Index))
 		return oErrorSetLast(oERROR_NOT_FOUND);
 
 	*_ppMoniker = Monikers[_Index];

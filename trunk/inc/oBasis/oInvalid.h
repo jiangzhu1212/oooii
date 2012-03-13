@@ -37,7 +37,9 @@ public:
 	operator unsigned short() const { return static_cast<unsigned short>(~0u & 0xffff); }
 	operator int() const { return -1; }
 	operator unsigned int() const { return ~0u; }
+	operator long() const { return -1; }
 	operator unsigned long() const { return ~0u; }
+	operator long long() const { return -1; }
 	operator unsigned long long() const { return ~0ull; }
 };
 

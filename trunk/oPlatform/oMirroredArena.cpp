@@ -31,7 +31,6 @@
 #include <oBasis/oMutex.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
-#include <oBasis/oSize.h>
 #include <oPlatform/oPageAllocator.h>
 #include <oPlatform/oWindows.h>
 
@@ -817,7 +816,7 @@ bool oMirroredArena_Impl::IsInChanges(const void* _pAddress, size_t _Size, const
 	{
 		case 'COPY':
 		{
-			if (_pAddress < Desc.BaseAddress || _pAddress >= oByteAdd(Desc.BaseAddress, oSize32(pChangeHeader->Size)))
+			if (_pAddress < Desc.BaseAddress || _pAddress >= oByteAdd(Desc.BaseAddress, oUInt(pChangeHeader->Size)))
 				return false;
 
 			size_t offset = oByteDiff(_pAddress, Desc.BaseAddress);

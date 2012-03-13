@@ -72,9 +72,9 @@
 #ifndef oSurface_h
 #define oSurface_h
 
+#include <oBasis/oInt.h>
 #include <oBasis/oInvalid.h>
 #include <oBasis/oMathTypes.h>
-#include <oBasis/oSize.h>
 
 enum oSURFACE_FORMAT
 {
@@ -314,13 +314,13 @@ int3 oSurfaceMipCalcDimensionsNPOT(oSURFACE_FORMAT _Format, const int3& _Mip0Dim
 // get to the next scanline of data unless it can be guaranteed that there is
 // no padding nor is the valid data merely a subregion of a larger 2D plane, but 
 // this IS the calculate for the number of bytes in the current scanline.
-oSize64 oSurfaceMipCalcRowSize(oSURFACE_FORMAT _Format, int _MipWidth);
-inline oSize64 oSurfaceMipCalcRowSize(oSURFACE_FORMAT _Format, const int2& _MipDimensions) { return oSurfaceMipCalcRowSize(_Format, _MipDimensions.x); }
+oULLong oSurfaceMipCalcRowSize(oSURFACE_FORMAT _Format, int _MipWidth);
+inline oULLong oSurfaceMipCalcRowSize(oSURFACE_FORMAT _Format, const int2& _MipDimensions) { return oSurfaceMipCalcRowSize(_Format, _MipDimensions.x); }
 
 // Returns the number of bytes to increment to get to the next row of a 2D 
 // surface. Do not read or write using this value as padding may be used for 
 // other reasons such as internal data or to store other elements/mip levels.
-oSize64 oSurfaceMipCalcRowPitch(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel = 0);
+oULLong oSurfaceMipCalcRowPitch(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel = 0);
 
 // Returns the number of rows in a mip level with the specified height in 
 // pixels. Block compressed formats have 1/4 the rows since their pitch includes 
@@ -332,12 +332,12 @@ inline int oSurfaceMipCalcNumRows(oSURFACE_FORMAT _Format, const int2& _MipDimen
 // always imply the size that should be passed to memcpy. Ensure you have 
 // enforced that there is no scanline padding or that data using these 
 // calculations aren't a subregion in a larger surface.
-oSize64 oSurfaceMipCalcSize(oSURFACE_FORMAT _Format, const int2& _MipDimensions);
+oULLong oSurfaceMipCalcSize(oSURFACE_FORMAT _Format, const int2& _MipDimensions);
 
 // Returns the number of bytes from the start of Mip0 where the upper left
 // corner of the specified mip level's data begins. The dimensions must always
 // be specified as the mip0 dimensions since this is a cumulative offset.
-oSize64 oSurfaceMipCalcOffset(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel = 0);
+oULLong oSurfaceMipCalcOffset(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel = 0);
 
 // Returns the number of tiles required to hold the full resolution specified by 
 // _MipDimensions. If tile dimensions don't divide perfectly into the mip 
@@ -357,7 +357,7 @@ int oSurfaceMipCalcNumTiles(const int2& _MipDimensions, const int2& _TileDimensi
 // pitch is the number of bytes for the total mip chain of one of those textures.
 // This is the same as calculating the size of a mip page as described by 
 // oSURFACE_LAYOUT.
-oSize64 oSurfaceSliceCalcPitch(const oSURFACE_DESC& _SurfaceDesc);
+oULLong oSurfaceSliceCalcPitch(const oSURFACE_DESC& _SurfaceDesc);
 
 // Returns the number of tiles required to store all data for all mips in a 
 // slice.
@@ -371,7 +371,7 @@ int oSurfaceSliceCalcNumTiles(const oSURFACE_DESC& _SurfaceDesc, const int2& _Ti
 // http://www.cs.umbc.edu/~olano/s2006c03/ch02.pdf
 // "Texture3D behaves identically to a Texture2DArray with n array slices where 
 // n is the depth (3rd dimension) of the Texture3D."
-oSize64 oSurfaceCalcSize(const oSURFACE_DESC& _SurfaceDesc);
+oULLong oSurfaceCalcSize(const oSURFACE_DESC& _SurfaceDesc);
 
 // _____________________________________________________________________________
 // Subresource API
@@ -388,8 +388,8 @@ void oSurfaceSubresourceGetDesc(const oSURFACE_DESC& _SurfaceDesc, int _Subresou
 // Returns the number of bytes required to contain the subresource (mip level
 // from a particular slice) when what you got is a subresource as returned from
 // oSurfaceCalcSubresource().
-oSize64 oSurfaceSubresourceCalcSize(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_SUBRESOURCE_DESC& _SubresourceDesc);
-inline oSize64 oSurfaceSubresourceCalcSize(const oSURFACE_DESC& _SurfaceDesc, int _Subresource) { oSURFACE_SUBRESOURCE_DESC ssrd; oSurfaceSubresourceGetDesc(_SurfaceDesc, _Subresource, &ssrd); return oSurfaceSubresourceCalcSize(_SurfaceDesc, ssrd); }
+oULLong oSurfaceSubresourceCalcSize(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_SUBRESOURCE_DESC& _SubresourceDesc);
+inline oULLong oSurfaceSubresourceCalcSize(const oSURFACE_DESC& _SurfaceDesc, int _Subresource) { oSURFACE_SUBRESOURCE_DESC ssrd; oSurfaceSubresourceGetDesc(_SurfaceDesc, _Subresource, &ssrd); return oSurfaceSubresourceCalcSize(_SurfaceDesc, ssrd); }
 
 // _____________________________________________________________________________
 // Tile API

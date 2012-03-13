@@ -93,7 +93,7 @@ struct TESTSocketAsync : public oTest
 		void InitiateReceive(threadsafe oSocket* _pSocket) threadsafe
 		{
 			oLockedPointer<oBuffer> LockedBuffer(ReceiveBuffer);
-			_pSocket->Recv(LockedBuffer->GetData(), oSize32(LockedBuffer->GetSize()));
+			_pSocket->Recv(LockedBuffer->GetData(), oUInt(LockedBuffer->GetSize()));
 		}
 
 		oStd::atomic_uint SendCount;
@@ -195,7 +195,7 @@ struct TESTSocketAsync : public oTest
 		oRef<threadsafe oSocket> Socket;
 		oTESTB(Server->WaitForConnection(Settings, &Socket, TESTSocketTCPTimeout), "Failed to make a connection within 2 seconds");
 
-		Receiver->ExpectedMessageLength = oSize32(strlen(TESTSocketTCP0)) + 1;
+		Receiver->ExpectedMessageLength = oUInt(strlen(TESTSocketTCP0)) + 1;
 
 
 		oSocket::DESC Desc;
@@ -327,7 +327,10 @@ struct TESTSocketAsync : public oTest
 			SocketDesc.AsyncSettings.Callback = Sender;
 			oRef<threadsafe oSocket> Socket;
 			oTESTB(oSocketCreate("Test UDP", SocketDesc, &Socket), oErrorGetLastString());
-			Socket->Send(TESTSocketTCP0, oCOUNTOF(TESTSocketTCP0));
+
+			// Split the send into two parts
+			oSocket::size_t Split = 128;
+			Socket->Send(TESTSocketTCP0, Split, oByteAdd(TESTSocketTCP0, Split), oCOUNTOF(TESTSocketTCP0) - Split);
 
 			ServerThread->Flush();
 			oTESTB(SUCCESS == ServerResult, ServerResultString);

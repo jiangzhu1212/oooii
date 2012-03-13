@@ -28,6 +28,7 @@
 #include <oBasis/oStdChrono.h>
 #include <oBasis/oInterface.h>
 #include <oPlatform/oWindows.h>
+#include <oPlatform/oEvent.h>
 
 typedef HANDLE oHandle;
 
@@ -80,6 +81,10 @@ struct oIOCP : public oInterface
 	virtual void ReturnOp(oIOCPOp* _pIOCPOp) = 0;
 };
 
+// Waits for the event in an active state, meaning the thread will work on any 
+// IOCP tasks that may queue up.  This is useful when IOCP work spawns additional
+// IOCP work that is needed immediately.
+oAPI void oIOCPActiveWait(oEvent* _pEvent, unsigned int _TimeoutMS = oINFINITE_WAIT);
 
 // The Parent IO object (socket, fileIO...) which is creating the IOCP must provide
 // a valid pointer to its interface as the IOCP must manage its lifetime.  Due to how

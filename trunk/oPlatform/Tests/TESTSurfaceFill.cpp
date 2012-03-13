@@ -52,8 +52,12 @@ bool oImageCreateNumberedGrid(const int2& _Dimensions, const int2& _GridDimensio
 		oGDIScopedGetDC hScreenDC(0);
 		oGDIScopedDC hDC(CreateCompatibleDC(hScreenDC));
 
-		int PtSize = static_cast<int>((oGDIPixelsToPoints(hDC, _GridDimensions.y) * 0.33f) + 0.5f);
-		oGDIScopedObject<HFONT> hFont(oGDICreateFont("Tahoma", PtSize, PtSize < 15, false, false));
+		oGUI_FONT_DESC fd;
+		fd.FontName = "Tahoma";
+		fd.PointSize = (oGDILogicalHeightToPoint(hDC, _GridDimensions.y) * 0.33f);
+		fd.Bold = fd.PointSize < 15;
+
+		oGDIScopedObject<HFONT> hFont(oGDICreateFont(fd));
 
 		oGDIScopedSelect SelectBmp(hDC, hBmp);
 		oGDIScopedSelect SelectFont(hDC, hFont);
@@ -62,7 +66,7 @@ bool oImageCreateNumberedGrid(const int2& _Dimensions, const int2& _GridDimensio
 			[&](const int2& _DrawBoxPosition, const int2& _DrawBoxSize, const char* _Text)->bool
 		{
 			RECT r = oWinRectWH(_DrawBoxPosition, _DrawBoxSize);
-			return oGDIDrawText(hDC, r, oMIDDLECENTER, _NumberColor, 0, true, _Text);
+			return oGDIDrawText(hDC, r, oGUI_ALIGNMENT_MIDDLE_CENTER, _NumberColor, 0, true, _Text);
 		}))
 			return false; // pass through error
 

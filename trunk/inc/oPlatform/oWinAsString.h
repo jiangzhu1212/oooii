@@ -41,6 +41,7 @@ const char* oWinAsStringSWP(unsigned int _SWPCode);
 const char* oWinAsStringGWL(unsigned int _GWLCode);
 const char* oWinAsStringGWLP(unsigned int _GWLPCode);
 const char* oWinAsStringTCN(unsigned int _TCNCode);
+const char* oWinAsStringCDERR(unsigned int _CDERRCode); // common dialog errors
 
 char* oWinParseStyleFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSFlags);
 char* oWinParseSWPFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _SWPFlags);

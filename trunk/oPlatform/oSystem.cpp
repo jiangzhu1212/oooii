@@ -26,7 +26,7 @@
 #include <oPlatform/oP4.h>
 #include <oPlatform/oProcess.h>
 #include <oPlatform/oWindows.h>
-#include "oWinPowrProf.h"
+#include "SoftLink/oWinPowrProf.h"
 
 bool oSystemGetHeapStats(oSYSTEM_HEAP_STATS* _pStats)
 {
@@ -212,7 +212,7 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 {
 	bool ensureSeparator = true;
 	bool success = true;
-	DWORD nElements = oSize32(_SizeofStrSysPath);
+	DWORD nElements = oUInt(_SizeofStrSysPath);
 
 	switch (_SysPath)
 	{
@@ -248,8 +248,8 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 		case oSYSPATH_OS: GetWindowsDirectoryA(_StrSysPath, nElements); break;
 		case oSYSPATH_P4ROOT:
 		{
-			oP4::CLIENT_SPEC cspec;
-			success = oP4::GetClientSpec(&cspec);
+			oP4_CLIENT_SPEC cspec;
+			success = oP4GetClientSpec(&cspec);
 			if (success)
 				strcpy_s(_StrSysPath, _SizeofStrSysPath, cspec.Root);
 			break;

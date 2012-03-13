@@ -29,25 +29,14 @@
 #include <oPlatform/oWinRect.h>
 #include <oPlatform/oWinWindowing.h>
 #include <oPlatform/oD3D11.h>
+#include "SoftLink/oWinDXGI.h"
 
 #if oDXVER >= oDXVER_10
 
 // {CF4B314B-E3BC-4DCF-BDE7-86040A0ED295}
 static const GUID oWKPDID_PreFullscreenMode = { 0xcf4b314b, 0xe3bc, 0x4dcf, { 0xbd, 0xe7, 0x86, 0x4, 0xa, 0xe, 0xd2, 0x95 } };
 
-static const char* oWinDXGI_exports[] = 
-{
-	"CreateDXGIFactory1",
-};
-
-struct oWinDXGI : oModuleSingleton<oWinDXGI>
-{
-	oWinDXGI() { hModule = oModuleLinkSafe("dxgi.dll", oWinDXGI_exports, (void**)&CreateDXGIFactory1, oCOUNTOF(oWinDXGI_exports)); oASSERT(hModule, ""); }
-	~oWinDXGI() { oModuleUnlink(hModule); }
-	HRESULT (__stdcall *CreateDXGIFactory1)(REFIID riid, void **ppFactory);
-protected:
-	oHMODULE hModule;
-};
+const oGUID& oGetGUID(threadsafe const IDXGISwapChain* threadsafe const*) { return (const oGUID&)__uuidof(IDXGISwapChain); }
 
 oSURFACE_FORMAT oDXGIToSurfaceFormat(DXGI_FORMAT _Format)
 {
@@ -108,7 +97,7 @@ bool oDXGICreateSwapChain(IUnknown* _pDevice, bool _Fullscreen, UINT _Width, UIN
 	oVB_RETURN2(_pDevice->QueryInterface(&D3DDevice));
 
 	oRef<IDXGIAdapter> Adapter;
-	oVB_RETURN2(D3DDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&Adapter));
+	oVB_RETURN2(D3DDevice->GetAdapter(&Adapter));
 
 	oRef<IDXGIFactory> Factory;
 	oVB_RETURN2(Adapter->GetParent(__uuidof(IDXGIFactory), (void**)&Factory));
@@ -134,21 +123,28 @@ static DXGI_RATIONAL oDXGIGetRefreshRate(int _RefreshRate)
 	return r;
 }
 
-bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, bool _Fullscreen, const int2& _FullscreenSize, int _FullscreenRefreshRate)
+bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, const oDXGI_FULLSCREEN_STATE& _State)
 {
+	// This function is overly complex for a few reasons:
+	// DXGI can error out and/or deadlock if not careful, so this function puts on the traing wheels
+	// DXGI API is insufficient to get max HW performance. This double-sets render targets to ensure
+	// HW fullscreen perf is optimal
+	// Restoring windowed mode uses registry settings, not last settings, so support that as well.
+
 	if (!_pSwapChain)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
-	DXGI_SWAP_CHAIN_DESC SCDesc;
-	
 	// Confirm we're on the same thread as the message pump
 	// http://msdn.microsoft.com/en-us/library/ee417025(v=vs.85).aspx
 	// "Multithreading and DXGI"
+	DXGI_SWAP_CHAIN_DESC SCDesc;
 	_pSwapChain->GetDesc(&SCDesc);
 
 	if (GetCurrentThreadId() != GetWindowThreadProcessId(SCDesc.OutputWindow, nullptr))
 		return oErrorSetLast(oERROR_WRONG_THREAD, "oDXGISetFullscreenState called from thread %d for hwnd %x pumping messages on thread %d", GetCurrentThreadId(), SCDesc.OutputWindow, GetWindowThreadProcessId(SCDesc.OutputWindow, nullptr));
 
+	// Go fullscreen on whatever output is the current one (client code should position window on 
+	// output for fullscreen first).
 	oRef<IDXGIOutput> Output;
 	HRESULT HR = _pSwapChain->GetContainingOutput(&Output);
 	if (HR == DXGI_ERROR_UNSUPPORTED)
@@ -167,7 +163,7 @@ bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, bool _Fullscreen, cons
 		if (FAILED(_pSwapChain->GetContainingOutput(&Output)))
 		{
 			oStringL WinTitle;
-			oWinGetTitle(SCDesc.OutputWindow, WinTitle.c_str(), WinTitle.capacity());
+			oWinGetText(WinTitle.c_str(), WinTitle.capacity(), SCDesc.OutputWindow);
 			oErrorSetLast(oERROR_REFUSED, "SetFullscreenState failed on adapter \"%s\" because the IDXGISwapChain created with the associated window entitled \"%s\" was created with another adapter. Cross-adapter exclusive mode is not currently (DXGI 1.1) supported.", oStringS(adesc.Description), WinTitle);
 		}
 		else 
@@ -181,16 +177,21 @@ bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, bool _Fullscreen, cons
 	DXGI_OUTPUT_DESC ODesc;
 	Output->GetDesc(&ODesc);
 
-	if (_Fullscreen)
-		oDXGISetPreFullscreenMode(_pSwapChain, oWinRectSize(ODesc.DesktopCoordinates), static_cast<int>(oDXGIGetRefreshRate(SCDesc.BufferDesc)));
+	if (_State.Fullscreen && _State.RememberCurrentSettings)
+	{
+		oDISPLAY_MODE mode;
+		mode.Size = oWinRectSize(ODesc.DesktopCoordinates);
+		mode.RefreshRate = static_cast<int>(oDXGIGetRefreshRate(SCDesc.BufferDesc));
+		oVB_RETURN2(_pSwapChain->SetPrivateData(oWKPDID_PreFullscreenMode, sizeof(mode), &mode));
+	}
 
-	SCDesc.BufferDesc.Width = _FullscreenSize.x == oDEFAULT ? oWinRectW(ODesc.DesktopCoordinates) : _FullscreenSize.x;
-	SCDesc.BufferDesc.Height = _FullscreenSize.y == oDEFAULT ? oWinRectH(ODesc.DesktopCoordinates) : _FullscreenSize.y;
+	SCDesc.BufferDesc.Width = _State.Size.x == oDEFAULT ? oWinRectW(ODesc.DesktopCoordinates) : _State.Size.x;
+	SCDesc.BufferDesc.Height = _State.Size.y == oDEFAULT ? oWinRectH(ODesc.DesktopCoordinates) : _State.Size.y;
 
-	if (_FullscreenRefreshRate == oDEFAULT)
+	if (_State.RefreshRate == oDEFAULT)
 		SCDesc.BufferDesc.RefreshRate = oDXGIGetRefreshRate(0);
 	else
-		SCDesc.BufferDesc.RefreshRate = oDXGIGetRefreshRate(_FullscreenRefreshRate);
+		SCDesc.BufferDesc.RefreshRate = oDXGIGetRefreshRate(_State.RefreshRate);
 
 	DXGI_MODE_DESC closestMatch;
 	oV(Output->FindClosestMatchingMode(&SCDesc.BufferDesc, &closestMatch, nullptr));
@@ -202,18 +203,17 @@ bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, bool _Fullscreen, cons
 	// in which case the evaluation of which output the window is on will change.
 	oWinSetPosition(SCDesc.OutputWindow, int2(ODesc.DesktopCoordinates.left, ODesc.DesktopCoordinates.top));
 
-	if (_Fullscreen)
+	if (_State.Fullscreen)
 	{
 		_pSwapChain->ResizeBuffers(SCDesc.BufferCount, closestMatch.Width, closestMatch.Height, SCDesc.BufferDesc.Format, SCDesc.Flags);
-
 		oVB_RETURN2(_pSwapChain->ResizeTarget(&closestMatch));
 	}
 
-	oVB_RETURN2(_pSwapChain->SetFullscreenState(_Fullscreen, nullptr));
+	oVB_RETURN2(_pSwapChain->SetFullscreenState(_State.Fullscreen, nullptr));
 	// Ensure the refresh rate is matched against the fullscreen mode
 	// http://msdn.microsoft.com/en-us/library/ee417025(v=vs.85).aspx
 	// "Full-Screen Issues"
-	if (_Fullscreen)
+	if (_State.Fullscreen)
 	{
 		_pSwapChain->GetDesc(&SCDesc);
 		SCDesc.BufferDesc.RefreshRate.Numerator = 0;
@@ -223,27 +223,38 @@ bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, bool _Fullscreen, cons
 
 	else
 	{
-		// Restore prior resolution (not the one necessarily saved in the registry)
-		oDISPLAY_MODE mode;
-  		oVERIFY(oDXGIGetPreFullscreenMode(_pSwapChain, &mode.Size, &mode.RefreshRate));
+		unsigned int DispIndex = oDXGIFindDisplayIndex(Output);
 
-		#ifdef _DEBUG
-			oStringS rate;
-			if (mode.RefreshRate == oDEFAULT)
-				sprintf_s(rate, "defaultHz");
-			else
-				sprintf_s(rate, "%dHz", mode.RefreshRate);
-			oTRACE("Restoring prior display mode of %dx%d@%s", mode.Size.x, mode.Size.y, rate.c_str());
-		#endif
+		if (_State.RememberCurrentSettings)
+		{
+			// Restore prior resolution (not the one necessarily saved in the registry)
+			oDISPLAY_MODE mode;
+			UINT size;
+			oVB_RETURN2(_pSwapChain->GetPrivateData(oWKPDID_PreFullscreenMode, &size, &mode));
+			if (size != sizeof(oDISPLAY_MODE))
+				return oErrorSetLast(oERROR_INVALID_PARAMETER, "Failed to restore prior display state: size retrieved (%u) does not match size requested (%u)", size, sizeof(oDISPLAY_MODE));
 
-		oVERIFY(oDisplaySetMode(oDXGIFindDisplayIndex(Output), mode));
+			#ifdef _DEBUG
+				oStringS rate;
+				if (mode.RefreshRate == oDEFAULT)
+					sprintf_s(rate, "defaultHz");
+				else
+					sprintf_s(rate, "%dHz", mode.RefreshRate);
+				oTRACE("Restoring prior display mode of %dx%d@%s", mode.Size.x, mode.Size.y, rate.c_str());
+			#endif
+
+			oVERIFY(oDisplaySetMode(DispIndex, mode));
+		}
+
+		else
+			oVERIFY(oDisplayResetMode(DispIndex));
 	}
 
 	// If we're calling a function called "SetFullscreenState", it'd be nice if 
 	// the swapchain/window was actually IN that state when we came out of this 
 	// call, so sit here and don't allow anyone else to be tricksy until we've
 	// flushed the SetFullScreenState messages.
-	oWinPumpMessages(SCDesc.OutputWindow, 60000);
+	oWinFlushMessages(SCDesc.OutputWindow, 30000);
 	return true;
 }
 
@@ -253,31 +264,44 @@ struct oSCREEN_MODE
 	int RefreshRate;
 };
 
-bool oDXGISetPreFullscreenMode(IDXGISwapChain* _pSwapChain, const int2& _Size, int _RefreshRate)
+bool oDXGIGetDC(ID3D11RenderTargetView* _pRTV, HDC* _phDC)
 {
-	if (!_pSwapChain)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
-
-	oSCREEN_MODE mode;
-	mode.Size = _Size;
-	mode.RefreshRate = _RefreshRate;
-	oVB_RETURN2(_pSwapChain->SetPrivateData(oWKPDID_PreFullscreenMode, sizeof(mode), &mode));
+	oRef<ID3D11Resource> RT;
+	_pRTV->GetResource(&RT);
+	oRef<IDXGISurface1> DXGISurface;
+	oVB_RETURN2(RT->QueryInterface(&DXGISurface));
+	oVB_RETURN2(DXGISurface->GetDC(false, _phDC));
 	return true;
 }
 
-bool oDXGIGetPreFullscreenMode(IDXGISwapChain* _pSwapChain, int2* _pSize, int* _pRefreshRate)
+bool oDXGIReleaseDC(ID3D11RenderTargetView* _pRTV, RECT* _pDirtyRect)
 {
-	if (!_pSwapChain || !_pSwapChain || !_pRefreshRate)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+	oRef<ID3D11Resource> RT;
+	_pRTV->GetResource(&RT);
+	oRef<IDXGISurface1> DXGISurface;
+	oVB_RETURN2(RT->QueryInterface(&DXGISurface));
+	oVB_RETURN2(DXGISurface->ReleaseDC(_pDirtyRect));
+	return true;
+}
 
-	UINT size;
-	oSCREEN_MODE mode;
-	oVB_RETURN2(_pSwapChain->GetPrivateData(oWKPDID_PreFullscreenMode, &size, &mode));
-	if (size != sizeof(oSCREEN_MODE))
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Size retreived (%u) does not match size requested (%u)", size, sizeof(oSCREEN_MODE));
+bool oDXGIGetDC(IDXGISwapChain* _pSwapChain, HDC* _phDC)
+{
+	oRef<ID3D11Texture2D> RT;
+	oVB_RETURN2(_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
+	oRef<IDXGISurface1> DXGISurface;
+	oVB_RETURN2(RT->QueryInterface(&DXGISurface));
+	oVB_RETURN2(DXGISurface->GetDC(false, _phDC));
 
-	*_pSize = mode.Size;
-	*_pRefreshRate = mode.RefreshRate;
+	return true;
+}
+
+bool oDXGIReleaseDC(IDXGISwapChain* _pSwapChain, RECT* _pDirtyRect)
+{
+	oRef<ID3D11Texture2D> RT;
+	oVB_RETURN2(_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
+	oRef<IDXGISurface1> DXGISurface;
+	oVB_RETURN2(RT->QueryInterface(&DXGISurface));
+	oVB_RETURN2(DXGISurface->ReleaseDC(_pDirtyRect));
 	return true;
 }
 
@@ -379,11 +403,33 @@ bool oDXGIFindOutput(IDXGIFactory* _pFactory, const int2& _VirtualDesktopPositio
 	return result && !!*_ppOutput;
 }
 
+bool oDXGIGetAdapter(IDXGIObject* _pObject, IDXGIAdapter** _ppAdapter)
+{
+	if (_pObject)
+	{
+		oVB_RETURN2(_pObject->GetParent(__uuidof(IDXGIAdapter), (void**)_ppAdapter));
+		return true;
+	}
+
+	return false;
+}
+
 bool oDXGIGetAdapter(IDXGIObject* _pObject, IDXGIAdapter1** _ppAdapter)
 {
 	if (_pObject)
 	{
 		oVB_RETURN2(_pObject->GetParent(__uuidof(IDXGIAdapter1), (void**)_ppAdapter));
+		return true;
+	}
+
+	return false;
+}
+
+bool oDXGIGetFactory(IDXGIObject* _pObject, IDXGIFactory** _ppFactory)
+{
+	if (_pObject)
+	{
+		oVB_RETURN2(_pObject->GetParent(__uuidof(IDXGIFactory), (void**)_ppFactory));
 		return true;
 	}
 

@@ -33,9 +33,10 @@
 #include <oPlatform/oImage.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oStandards.h>
+#include <oPlatform/oWinAsString.h>
+#include <oPlatform/oWinCursor.h>
 #include <oPlatform/oWinRect.h>
 #include <oPlatform/oWinWindowing.h>
-#include <oPlatform/oWinAsString.h>
 #include <windowsx.h>
 #include <oPlatform/oVKToX11Keyboard.h>
 
@@ -85,31 +86,6 @@ const oGUID& oGetGUID(threadsafe const oHDCAA* threadsafe const*)
 	return oGUID_HDCAA;
 }
 
-const char* oAsString(const oWindow::STATE& _State)
-{
-	switch (_State)
-	{
-		case oWindow::HIDDEN: return "hidden";
-		case oWindow::RESTORED: return "restored";
-		case oWindow::MINIMIZED: return "minimized";
-		case oWindow::MAXIMIZED: return "maximized";
-		case oWindow::FULLSCREEN: return "fullscreen";
-		oNODEFAULT;
-	}
-}
-
-const char* oAsString(const oWindow::STYLE& _Style)
-{
-	switch (_Style)
-	{
-		case oWindow::BORDERLESS: return "borderless";
-		case oWindow::FIXED: return "fixed";
-		case oWindow::DIALOG: return "dialog";
-		case oWindow::SIZEABLE: return "sizeable";
-		oNODEFAULT;
-	}
-}
-
 const char* oAsString(const oWindow::DRAW_MODE& _DrawMode)
 {
 	switch (_DrawMode)
@@ -119,60 +95,6 @@ const char* oAsString(const oWindow::DRAW_MODE& _DrawMode)
 		case oWindow::USE_D2D: return "USE_D2D";
 		oNODEFAULT;
 	}
-}
-
-bool oFromString(oWindow::STYLE* _pStyle, const char* _StrSource)
-{
-	if (!_stricmp(_StrSource,"borderless"))
-		*_pStyle = oWindow::BORDERLESS;
-	else if (!_stricmp(_StrSource,"fixed"))
-		*_pStyle = oWindow::FIXED;
-	else if (!_stricmp(_StrSource,"dialog"))
-		*_pStyle = oWindow::DIALOG;
-	else
-		*_pStyle = oWindow::SIZEABLE;
-	return true;
-}
-
-static oWINDOW_STATE oAsWinState(oWindow::STATE _State)
-{
-	static const oWINDOW_STATE sStates[] = 
-	{
-		oWINDOW_HIDDEN,
-		oWINDOW_RESTORED,
-		oWINDOW_MINIMIZED,
-		oWINDOW_MAXIMIZED,
-		oWINDOW_RESTORED,
-	};
-	return sStates[_State];
-}
-
-//static oWindow::STATE oAsState(oWINDOW_STATE _State) { return static_cast<oWindow::STATE>(_State-1); }
-static oWINDOW_STYLE oAsWinStyle(oWindow::STYLE _Style) { return static_cast<oWINDOW_STYLE>(_Style); }
-//static oWindow::STYLE oAsStyle(oWINDOW_STYLE _Style) { return static_cast<oWindow::STYLE>(_Style); }
-
-static HCURSOR oWinGetCursor(oWindow::CURSOR_STATE _CursorState)
-{
-	LPSTR cursors[] =
-	{
-		0,
-		IDC_ARROW,
-		IDC_HAND,
-		IDC_HELP,
-		IDC_NO,
-		IDC_WAIT,
-		IDC_APPSTARTING,
-		0,
-	};
-
-	return LoadCursor(nullptr, cursors[_CursorState]);
-}
-
-static void oWinSetCursorState(HWND _hWnd, oWindow::CURSOR_STATE _CursorState, HCURSOR _hUserCursor = nullptr)
-{
-	HCURSOR hCursor = _CursorState == oWindow::USER ? _hUserCursor : oWinGetCursor(_CursorState);
-	oWinSetCursor(_hWnd, hCursor);
-	oWinCursorSetVisible(_CursorState != oWindow::NONE);
 }
 
 static oWindow::DRAW_MODE CheckDefaultDrawMode(oWindow::DRAW_MODE _Mode)
@@ -275,7 +197,7 @@ protected:
 
 	bool CallHooks(EVENT _Event, void* _pDrawContext, DRAW_MODE _DrawMode, const float3& _Position, int _Value);
 
-	void Initialize(bool _bSupportDoubleClicks, SYNC_RETURN* _pSyncReturn);
+	void Initialize(SYNC_RETURN* _pSyncReturn);
 	void Deinitialize();
 	void Run();
 
@@ -308,8 +230,7 @@ protected:
 	};
 	void Refresh1(REFRESH _Refresh, SYNC_RETURN* _pSyncReturn);
 
-	oDECLARE_WNDPROC(, WndProc);
-	oDECLARE_WNDPROC(static, StaticWndProc);
+	oDECLARE_WNDPROC(oWinWindow);
 
 	// DESC/accessor/mutator support
 	oSharedMutex DescMutex;
@@ -378,16 +299,16 @@ oWinWindow::oWinWindow(const DESC& _Desc, void* _pAssociatedNativeHandle, DRAW_M
 		return;
 
 	// init to something not fullscreen in case is started in fullscreen
-	PreFullscreenDesc.State = RESTORED; 
-	if (_Desc.State == FULLSCREEN)
+	PreFullscreenDesc.State = oGUI_WINDOW_RESTORED;
+	if (_Desc.State == oGUI_WINDOW_FULLSCREEN)
 	{
-		Desc.State = RESTORED;
-		PendingDesc.State = RESTORED;
+		Desc.State = oGUI_WINDOW_RESTORED;
+		PendingDesc.State = oGUI_WINDOW_RESTORED;
 	}
 	
 	SYNC_RETURN r;
 	
-	MessageQueue->Dispatch(oBIND(&oWinWindow::Initialize, QThis(), Desc.SupportDoubleClicks, &r));
+	MessageQueue->Dispatch(oBIND(&oWinWindow::Initialize, QThis(), &r));
 	if (!FinishSync(r))
 		return;
 
@@ -395,7 +316,7 @@ oWinWindow::oWinWindow(const DESC& _Desc, void* _pAssociatedNativeHandle, DRAW_M
 	Map(); Unmap();
 	oTRACE("Created HWND %x using %s for drawing", hWnd, oAsString(DrawMode));
 
-	if (_Desc.State == FULLSCREEN)
+	if (_Desc.State == oGUI_WINDOW_FULLSCREEN)
 	{
 		DESC* d = Map();
 		*d = _Desc;
@@ -411,10 +332,10 @@ oWinWindow::~oWinWindow()
 	MessageQueue->Join();
 }
 
-void oWinWindow::Initialize(bool _bSupportDoubleClicks, SYNC_RETURN* _pSyncReturn)
+void oWinWindow::Initialize(SYNC_RETURN* _pSyncReturn)
 {
 	MessageQueueThreadID = oStd::this_thread::get_id();
-	if (!oWinCreate(&hWnd, StaticWndProc, this, _bSupportDoubleClicks, oAsUint(MessageQueueThreadID)))
+	if (!oWinCreate(&hWnd, StaticWndProc, this, oAsUint(MessageQueueThreadID)))
 	{
 		_pSyncReturn->Error();
 	}
@@ -439,10 +360,10 @@ void oWinWindow::Initialize(bool _bSupportDoubleClicks, SYNC_RETURN* _pSyncRetur
 void oWinWindow::Deinitialize()
 {
 	CallHooks(RESIZING, nullptr, DrawMode, oZERO3, SuperSampleScale());
-	if (Desc.State == FULLSCREEN)
+	if (Desc.State == oGUI_WINDOW_FULLSCREEN)
 	{
 		DESC copy = Desc;
-		copy.State = RESTORED;
+		copy.State = oGUI_WINDOW_RESTORED;
 		SetDesc(copy);
 	}
 
@@ -703,7 +624,7 @@ bool oWinWindow::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _pp
 			*_ppInterface = hOffscreenAADC;
 		else
 		{
-			if (Desc.State == FULLSCREEN && hRenderDC)
+			if (Desc.State == oGUI_WINDOW_FULLSCREEN && hRenderDC)
 				*_ppInterface = hRenderDC;
 			else
 				*_ppInterface = hOffscreenDC;
@@ -713,7 +634,7 @@ bool oWinWindow::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _pp
 
 	else if (oGetGUID<oHDC>() == _InterfaceID && hOffscreenDC)
 	{
-		if (Desc.State == FULLSCREEN && hRenderDC)
+		if (Desc.State == oGUI_WINDOW_FULLSCREEN && hRenderDC)
 			*_ppInterface = hRenderDC;
 		else
 			*_ppInterface = hOffscreenDC;
@@ -744,7 +665,7 @@ void oWinWindow::Run()
 {
 	if (hWnd)
 	{
-		oWinProcessSingleMessage(hWnd, true);
+		oWinDispatchMessage(hWnd, nullptr, true);
 		MessageQueue->Dispatch(RunFunction);
 	}
 }
@@ -790,7 +711,7 @@ bool oWinWindow::GDIPaint(HWND _hWnd, HDC _hDC, bool _Force)
 	int2 Size = oWinRectSize(r);
 	int2 SSSize = Size * SuperSampleScale();
 
-	const bool IsHWFullscreen = Desc.State == FULLSCREEN && DXGISwapChain;
+	const bool IsHWFullscreen = Desc.State == oGUI_WINDOW_FULLSCREEN && DXGISwapChain;
 
 	// Start with a blank slate
 	if (Desc.AutoClear)
@@ -884,7 +805,7 @@ bool oWinWindow::GDIPaint(HWND _hWnd, HDC _hDC, bool _Force)
 				hRenderDC = nullptr;
 
 			// Render non-super-sampled (might be cleartype'ed though) elements
-			CallHooks(DRAW_UI, Desc.State == FULLSCREEN ? hRenderDC : hOffscreenDC, DrawMode, oZERO3, 1);
+			CallHooks(DRAW_UI, Desc.State == oGUI_WINDOW_FULLSCREEN ? hRenderDC : hOffscreenDC, DrawMode, oZERO3, 1);
 
 			hRenderDC = hOld;
 		}
@@ -907,18 +828,17 @@ bool oWinWindow::GDIPaint(HWND _hWnd, HDC _hDC, bool _Force)
 	return true;
 }
 
-//#define DEBUGGING_WINDOWS_MESSAGES
-#ifdef DEBUGGING_WINDOWS_MESSAGES
-	oDEFINE_WNDPROC_DEBUG(oWinWindow, StaticWndProc);
-#else
-	oDEFINE_WNDPROC(oWinWindow, StaticWndProc);
-#endif
-
 float3 Float3(LPARAM _lParam) { return float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), 0.0f); }
 float3 Float3(LPARAM _lParam, WPARAM _wParam) { return float3((float)GET_X_LPARAM(_lParam), (float)GET_Y_LPARAM(_lParam), (float)GET_WHEEL_DELTA_WPARAM(_wParam)); }
 
 LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
 {
+	if (0)
+	{
+		oStringXL s;
+		oTRACE("%s", oWinParseWMMessage(s, s.capacity(), _hWnd, _uMsg, _wParam, _lParam));
+	}
+
 	switch (_uMsg)
 	{
 		// handle WM_ERASEBKGND for flicker-free client area update
@@ -1018,7 +938,7 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 				if (CloseConfirmed.compare_exchange(false, true))
 				{
 					DESC* d = Map();
-					d->State = HIDDEN;
+					d->State = oGUI_WINDOW_HIDDEN;
 					Unmap();
 				}
 			}
@@ -1158,7 +1078,7 @@ void oWinWindow::SetFocus() threadsafe
 
 char* oWinWindow::GetTitle(char* _StrDestination, size_t _SizeofStrDestination) const threadsafe
 {
-	return oWinGetTitle(hWnd, _StrDestination, _SizeofStrDestination) ? _StrDestination : nullptr;
+	return oWinGetText(_StrDestination, _SizeofStrDestination, hWnd) ? _StrDestination : nullptr;
 }
 
 void oWinWindow::SetTitle(const char* _Format, va_list _Args) threadsafe
@@ -1170,7 +1090,7 @@ void oWinWindow::SetTitle(const char* _Format, va_list _Args) threadsafe
 
 void oWinWindow::SetTitle1(oStringL _Title)
 {
-	oWinSetTitle(hWnd, _Title);
+	oWinSetText(hWnd, _Title);
 }
 
 const void* oWinWindow::GetProperty(const char* _Name) const
@@ -1266,7 +1186,7 @@ void oWinWindow::SetDesc(DESC _Desc)
 	
 	// going to fullscreen completely discards state and style. Position is only
 	// used to get a screen onto which fullscreen will be applied.
-	if (_Desc.State == FULLSCREEN && Desc.State != FULLSCREEN)
+	if (_Desc.State == oGUI_WINDOW_FULLSCREEN && Desc.State != oGUI_WINDOW_FULLSCREEN)
 	{
 		hMenu = GetMenu(hWnd);
 		oVB(SetMenu(hWnd, nullptr));
@@ -1285,14 +1205,20 @@ void oWinWindow::SetDesc(DESC _Desc)
 		oWinSetPosition(hWnd, _Desc.ClientPosition);
 
 		PreFullscreenDesc = Desc;
-		if (PreFullscreenDesc.State == FULLSCREEN)
-			PreFullscreenDesc.State = RESTORED;
+		if (PreFullscreenDesc.State == oGUI_WINDOW_FULLSCREEN)
+			PreFullscreenDesc.State = oGUI_WINDOW_RESTORED;
 
 		oTRACE("HWND %x Windowed->Fullscreen", hWnd);
 		
 		if (DXGISwapChain)
 		{
-			if (!oDXGISetFullscreenState(DXGISwapChain, true, _Desc.FullscreenSize, _Desc.FullscreenRefreshRate))
+			oDXGI_FULLSCREEN_STATE FSState;
+			FSState.Fullscreen = true;
+			FSState.Size = _Desc.FullscreenSize;
+			FSState.RefreshRate = _Desc.FullscreenRefreshRate;
+			FSState.RememberCurrentSettings = true;
+
+			if (!oDXGISetFullscreenState(DXGISwapChain, FSState))
 			{
 				if (oERROR_REFUSED == oErrorGetLast())
 				{
@@ -1303,7 +1229,7 @@ void oWinWindow::SetDesc(DESC _Desc)
 					mb.ParentNativeHandle = hWnd;
 					oMsgBox(mb, oErrorGetLastString());
 					oWindow::DESC	copy = _Desc;
-					copy.State = RESTORED;
+					copy.State = oGUI_WINDOW_RESTORED;
 					SetDesc(copy);
 					return;
 				}
@@ -1324,19 +1250,23 @@ void oWinWindow::SetDesc(DESC _Desc)
 			oDISPLAY_DESC dd;
 			oVERIFY(oDisplayEnum(oWinGetDisplayIndex(hWnd), &dd));
 			RECT r = oWinRectWH(dd.WorkareaPosition, dd.Mode.Size);
-			oVERIFY(oWinSetStyle(hWnd, oAsWinStyle(oWindow::BORDERLESS), &r));
-			oVERIFY(oWinSetState(hWnd, oAsWinState(oWindow::RESTORED), true));
+			oVERIFY(oWinSetStyle(hWnd, oGUI_WINDOW_BORDERLESS, false, &r));
+			oVERIFY(oWinSetState(hWnd, oGUI_WINDOW_RESTORED, true));
 		}
 	}
 
 	else 
 	{
-		if (Desc.State == FULLSCREEN && _Desc.State != FULLSCREEN)
+		if (Desc.State == oGUI_WINDOW_FULLSCREEN && _Desc.State != oGUI_WINDOW_FULLSCREEN)
 		{
 			oTRACE("HWND %x Fullscreen->Windowed", hWnd);
 			if (DXGISwapChain)
 			{
-				oVERIFY(oDXGISetFullscreenState(DXGISwapChain, false));
+				oDXGI_FULLSCREEN_STATE FSState;
+				FSState.Fullscreen = false;
+				FSState.RememberCurrentSettings = true;
+
+				oVERIFY(oDXGISetFullscreenState(DXGISwapChain, FSState));
 				oWinWake(hWnd);
 			}
 
@@ -1347,15 +1277,15 @@ void oWinWindow::SetDesc(DESC _Desc)
 			}
 		}
 
-		RECT rClient = ResolveRect(hWnd, _Desc.ClientPosition, _Desc.ClientSize, _Desc.State == FULLSCREEN);
+		RECT rClient = ResolveRect(hWnd, _Desc.ClientPosition, _Desc.ClientSize, _Desc.State == oGUI_WINDOW_FULLSCREEN);
 		_Desc.ClientPosition = oWinRectPosition(rClient);
 		_Desc.ClientSize = oWinRectSize(rClient);
 
 		oVB(SetMenu(hWnd, hMenu));
 		hMenu = nullptr;
 
-		oVERIFY(oWinSetStyle(hWnd, oAsWinStyle(_Desc.Style), &rClient));
-		oVERIFY(oWinSetState(hWnd, oAsWinState(_Desc.State), _Desc.HasFocus));
+		oVERIFY(oWinSetStyle(hWnd, _Desc.Style, false, &rClient));
+		oVERIFY(oWinSetState(hWnd, _Desc.State, _Desc.HasFocus));
 	}
 
 	bool AAChange = _Desc.UseAntialiasing != Desc.UseAntialiasing;
@@ -1365,7 +1295,7 @@ void oWinWindow::SetDesc(DESC _Desc)
 	Desc = _Desc;
 
 	if (AAChange || UIChange)
-		oVERIFY(ResizeDevice(_Desc.ClientSize, _Desc.State == oWindow::MINIMIZED, false));
+		oVERIFY(ResizeDevice(_Desc.ClientSize, _Desc.State == oGUI_WINDOW_MINIMIZED, false));
 }
 
 bool oWinWindow::IsOpen() const threadsafe
@@ -1414,12 +1344,12 @@ void oWinWindow::Refresh1(REFRESH _Refresh, SYNC_RETURN* _pSyncReturn)
 
 void oWinWindow::ToggleFullscreen()
 {
-	if (Desc.State == FULLSCREEN)
+	if (Desc.State == oGUI_WINDOW_FULLSCREEN)
 		SetDesc(PreFullscreenDesc);
 	else
 	{
 		DESC newDesc = PreFullscreenDesc = Desc;
-		newDesc.State = FULLSCREEN;
+		newDesc.State = oGUI_WINDOW_FULLSCREEN;
 		SetDesc(newDesc);
 	}
 }
@@ -1435,7 +1365,7 @@ void oWinWindow::CreateSnapshot1(oImage** _ppImage, bool _IncludeBorder, SYNC_RE
 {
 	oTRACE("HWND 0x%x CreateSnapshot1(%s)", hWnd, _IncludeBorder ? "true" : "false");
 
-	if (Desc.State == FULLSCREEN && DXGISwapChain)
+	if (Desc.State == oGUI_WINDOW_FULLSCREEN && DXGISwapChain)
 	{
 		if (D3D10RenderTarget)
 			oVERIFY(oD3D10CreateSnapshot(D3D10RenderTarget, _ppImage));
@@ -1459,7 +1389,7 @@ void oWinWindow::CreateSnapshot1(oImage** _ppImage, bool _IncludeBorder, SYNC_RE
 		void* buf = nullptr;
 		size_t size = 0;
 		SetFocus(); // Windows doesn't do well with hidden contents.
-		if (oGDIScreenCaptureWindow(hWnd, _IncludeBorder, malloc, &buf, &size))
+		if (oGDIScreenCaptureWindow(hWnd, _IncludeBorder, malloc, &buf, &size, true))
 		{
 			oOnScopeExit freeBuf([&] { if (buf) free(buf); });
 			if (!oImageCreate("Screen capture", buf, size, _ppImage))
@@ -1520,8 +1450,11 @@ void oWinWindow::Unhook(unsigned int _HookID) threadsafe
 void oWinWindow::Unhook1(size_t _Index, SYNC_RETURN* _pSyncReturn)
 {
 	oTRACE("HWND 0x%x Unhook1(%u)", hWnd, _Index);
-	Hooks[_Index](RESIZING, oZERO3, SuperSampleScale());
-	Hooks[_Index] = nullptr;
-	InvalidateRect(hWnd, nullptr, FALSE);
+	if (_Index < Hooks.size())
+	{
+		Hooks[_Index](RESIZING, oZERO3, SuperSampleScale());
+		Hooks[_Index] = nullptr;
+		InvalidateRect(hWnd, nullptr, FALSE);
+	}
 	_pSyncReturn->Success();
 }

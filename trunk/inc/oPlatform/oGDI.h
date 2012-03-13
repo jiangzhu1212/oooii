@@ -36,8 +36,9 @@
 int oGDIPointToLogicalHeight(HDC _hDC, int _Point);
 int oGDIPointToLogicalHeight(HDC _hDC, float _Point);
 
-// Converts a specified pixel height into the font point size to fit
-int oGDIPixelsToPoints(HDC _hDC, int _PixelHeight);
+// Goes the opposite way of oGDIPointToLogicalHeight() and returns point size
+int oGDILogicalHeightToPoint(HDC _hDC, int _Height);
+float oGDILogicalHeightToPointF(HDC _hDC, int _Height);
 
 class oGDIScopedSelect
 {
@@ -186,7 +187,7 @@ public:
 // pImageBuffer can be NULL, in which case only _pBitmapInfo is filled out.
 // For RECT, either specify a client-space rectangle, or NULL to capture the 
 // window including the frame.
-bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer, size_t _SizeofImageBuffer, BITMAPINFO* _pBitmapInfo);
+bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer, size_t _SizeofImageBuffer, BITMAPINFO* _pBitmapInfo, bool _RedrawWindow);
 
 // Given an allocator, this will allocate the properly-sized buffer and fill it
 // with the captured window image using the above oGDIScreenCaptureWindow() API.
@@ -195,16 +196,20 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 // there is still a chance of failure, so whether this succeeds or fails, check
 // *_ppBuffer and if not nullptr, then ensure it is freed to prevent a memory 
 // leak.
-bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, oFUNCTION<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize);
+bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, oFUNCTION<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize, bool _RedrawWindow);
 
 // _dwROP is one of the raster operations from BitBlt()
 BOOL oGDIDrawBitmap(HDC _hDC, INT _X, INT _Y, HBITMAP _hBitmap, DWORD _dwROP);
 BOOL oGDIStretchBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, HBITMAP _hBitmap, DWORD _dwROP);
 BOOL oGDIStretchBlendBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, HBITMAP _hBitmap);
 
+// Uses the currently bound pen and brush to draw a box (also can be used to 
+// draw a circle if a high roundness is used).
+bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness = 0);
+
 // Draws text using GDI. Text is fix in the specified box and aligned in that
 // box according to the specified alignment.
-bool oGDIDrawText(HDC _hDC, const RECT& _rTextBox, oANCHOR _Alignment, oColor _Foreground, oColor _Background, bool _SingleLine, const char* _Text);
+bool oGDIDrawText(HDC _hDC, const RECT& _rTextBox, oGUI_ALIGNMENT _Alignment, oColor _Foreground, oColor _Background, bool _SingleLine, const char* _Text);
 
 // If color alpha is true 0, then a null/empty objects is returned. Use 
 // DeleteObject on the value returned from these functions when finish with the
@@ -215,7 +220,10 @@ HBRUSH oGDICreateBrush(oColor _Color);
 // Returns the COLORREF of the specified brush
 COLORREF oGDIGetBrushColor(HBRUSH _hBrush);
 
-HFONT oGDICreateFont(const char* _FontName, int _PointSize, bool _Bold, bool _Italics, bool _Underline);
+int2 oGDIGetIconSize(HICON _hIcon);
+
+HFONT oGDICreateFont(const oGUI_FONT_DESC& _Desc);
+void oGDIGetFontDesc(HFONT _hFont, oGUI_FONT_DESC* _pDesc);
 
 const char* oGDIGetFontFamily(BYTE _tmPitchAndFamily);
 const char* oGDIGetCharSet(BYTE _tmCharSet);

@@ -23,24 +23,24 @@
  **************************************************************************/
 #include <oPlatform/oWinRect.h>
 
-RECT oWinRectResolve(const RECT& _rParent, const int2& _Position, const int2& _Size, oANCHOR _Anchor, bool _Clip)
+RECT oWinRectResolve(const RECT& _rParent, const int2& _Position, const int2& _Size, oGUI_ALIGNMENT _Alignment, bool _Clip)
 {
 	int2 psz = oWinRectSize(_rParent);
 	int2 csz = _Size;
-	if (csz.x == oDEFAULT) csz.x = psz.y;
+	if (csz.x == oDEFAULT) csz.x = psz.x;
 	if (csz.y == oDEFAULT) csz.y = psz.y;
 
 	int2 cpos = _Position;
 	if (cpos.x == oDEFAULT) cpos.x = 0;
 	if (cpos.y == oDEFAULT) cpos.y = 0;
 
-	// preserve user-specified offset if there was one separately from moving 
-	// around the child position according to _Anchor
-	int2 offset = _Position;
-	if (offset.x == oDEFAULT) offset.x = 0;
-	if (offset.y == oDEFAULT) offset.y = 0;
+	int2 code = int2(_Alignment % 3, _Alignment / 3);
 
-	int2 code = int2(_Anchor % 3, _Anchor / 3);
+	// preserve user-specified offset if there was one separately from moving 
+	// around the child position according to _Alignment
+	int2 offset = _Position;
+	if (offset.x == oDEFAULT || code.x == 0) offset.x = 0;
+	if (offset.y == oDEFAULT || code.y == 0) offset.y = 0;
 
 	// All this stuff is top-left by default, so adjust for center/middle and 
 	// right/bottom

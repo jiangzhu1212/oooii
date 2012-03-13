@@ -28,33 +28,21 @@
 #include <oPlatform/oModule.h>
 #include <oPlatform/oWinRect.h>
 #include <oPlatform/oWinWindowing.h>
-
-static const char* oWinMSIMG32_exports[] = 
-{
-	"AlphaBlend",
-};
-
-struct oWinMSIMG32 : oModuleSingleton<oWinMSIMG32>
-{
-	oWinMSIMG32() { hModule = oModuleLinkSafe("msimg32.dll", oWinMSIMG32_exports, (void**)&AlphaBlend); oASSERT(hModule, ""); }
-	~oWinMSIMG32() { oModuleUnlink(hModule); }
-
-public:
-	BOOL (__stdcall *AlphaBlend)(HDC hdcDest, int xoriginDest, int yoriginDest, int wDest, int hDest, HDC hdcSrc, int xoriginSrc, int yoriginSrc, int wSrc, int hSrc, BLENDFUNCTION ftn);
-
-protected:
-	oHMODULE hModule;
-};
-
-int oGDIPixelsToPoints(HDC _hDC, int _PixelHeight)
-{
-	int dpiY = GetDeviceCaps(_hDC, LOGPIXELSY);
-	return MulDiv(72, _PixelHeight, dpiY);
-}
+#include "SoftLink/oWinMSIMG32.h"
 
 int oGDIPointToLogicalHeight(HDC _hDC, int _Point)
 {
 	return -MulDiv(_Point, GetDeviceCaps(_hDC, LOGPIXELSY), 72);
+}
+
+int oGDILogicalHeightToPoint(HDC _hDC, int _Height)
+{
+	return MulDiv(_Height, 72, GetDeviceCaps(_hDC, LOGPIXELSY));
+}
+
+float oGDILogicalHeightToPointF(HDC _hDC, int _Height)
+{
+	return (_Height * 72.0f) / (float)GetDeviceCaps(_hDC, LOGPIXELSY);
 }
 
 int oGDIPointToLogicalHeight(HDC _hDC, float _Point)
@@ -62,7 +50,7 @@ int oGDIPointToLogicalHeight(HDC _hDC, float _Point)
 	return oGDIPointToLogicalHeight(_hDC, static_cast<int>(_Point + 0.5f));
 }
 
-bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer, size_t _SizeofImageBuffer, BITMAPINFO* _pBitmapInfo)
+bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer, size_t _SizeofImageBuffer, BITMAPINFO* _pBitmapInfo, bool _RedrawWindow)
 {
 	RECT r;
 	if (_pRect)
@@ -133,8 +121,9 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 
 		HBITMAP hBMP = CreateCompatibleBitmap(hDC, size.x, size.y);
 		HBITMAP hOld = (HBITMAP)SelectObject(hMemDC, hBMP);
+		if (_RedrawWindow)
+			oVB(RedrawWindow(_hWnd, 0, 0, RDW_INVALIDATE|RDW_UPDATENOW));
 
-		oVB(RedrawWindow(_hWnd, 0, 0, RDW_INVALIDATE|RDW_UPDATENOW));
 		BitBlt(hMemDC, 0, 0, size.x, size.y, hDC, r.left, r.top, SRCCOPY);
 		GetDIBits(hMemDC, hBMP, 0, size.y, _pImageBuffer, _pBitmapInfo, DIB_RGB_COLORS);
 
@@ -146,7 +135,7 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 	return true;
 }
 
-bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, oFUNCTION<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize)
+bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, oFUNCTION<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize, bool _RedrawWindow)
 {
 	if (!_Allocate || !_ppBuffer || !_pBufferSize)
 	{
@@ -166,7 +155,7 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, oFUNCTION<void*(si
 	if (_IncludeBorder)
 		pRect = nullptr;
 
-	if (oGDIScreenCaptureWindow(_hWnd, pRect, nullptr, 0, &bmi))
+	if (oGDIScreenCaptureWindow(_hWnd, pRect, nullptr, 0, &bmi, _RedrawWindow))
 	{
 		BITMAPFILEHEADER bmfh;
 		memset(&bmfh, 0, sizeof(bmfh));
@@ -178,7 +167,7 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, oFUNCTION<void*(si
 		*_ppBuffer = _Allocate(*_pBufferSize);
 		memcpy(*_ppBuffer, &bmfh, sizeof(bmfh));
 		memcpy(oByteAdd(*_ppBuffer, sizeof(bmfh)), &bmi, sizeof(bmi));
-		return oGDIScreenCaptureWindow(_hWnd, pRect, oByteAdd(*_ppBuffer, sizeof(bmfh) + sizeof(bmi)), bmi.bmiHeader.biSizeImage, &bmi);
+		return oGDIScreenCaptureWindow(_hWnd, pRect, oByteAdd(*_ppBuffer, sizeof(bmfh) + sizeof(bmi)), bmi.bmiHeader.biSizeImage, &bmi, _RedrawWindow);
 	}
 
 	return false;
@@ -242,7 +231,16 @@ BOOL oGDIStretchBlendBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, H
 	return bResult;
 }
 
-static bool oGDIDrawText(HDC _hDC, const RECT& _rTextBox, oANCHOR _Alignment, oColor _Foreground, oColor _Background, bool _SingleLine, const char* _Text, RECT* _pActual)
+bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness)
+{
+	if (_EdgeRoundness)
+		RoundRect(_hDC, _rBox.left, _rBox.top, _rBox.right, _rBox.bottom, _EdgeRoundness, _EdgeRoundness);
+	else if (!Rectangle(_hDC, _rBox.left, _rBox.top, _rBox.right, _rBox.bottom))
+		return oWinSetLastError();
+	return true;
+}
+
+static bool oGDIDrawText(HDC _hDC, const RECT& _rTextBox, oGUI_ALIGNMENT _Alignment, oColor _Foreground, oColor _Background, bool _SingleLine, const char* _Text, RECT* _pActual)
 {
 	int r,g,b,a;
 	oColorDecompose(_Foreground, &r, &g, &b, &a);
@@ -318,12 +316,12 @@ static bool oGDIDrawText(HDC _hDC, const RECT& _rTextBox, oANCHOR _Alignment, oC
 	return true;
 }
 
-bool oGDICalcTextBox(HDC _hDC, RECT* _prTextBox, oANCHOR _Alignment, oColor _Foreground, oColor _Background, bool _SingleLine, const char* _Text)
+bool oGDICalcTextBox(HDC _hDC, RECT* _prTextBox, oGUI_ALIGNMENT _Alignment, oColor _Foreground, oColor _Background, bool _SingleLine, const char* _Text)
 {
 	return oGDIDrawText(_hDC, *_prTextBox, _Alignment, _Foreground, _Background, _SingleLine, _Text, _prTextBox);
 }
 
-bool oGDIDrawText(HDC _hDC, const RECT& _rTextBox, oANCHOR _Alignment, oColor _Foreground, oColor _Background, bool _SingleLine, const char* _Text)
+bool oGDIDrawText(HDC _hDC, const RECT& _rTextBox, oGUI_ALIGNMENT _Alignment, oColor _Foreground, oColor _Background, bool _SingleLine, const char* _Text)
 {
 	return oGDIDrawText(_hDC, _rTextBox, _Alignment, _Foreground, _Background, _SingleLine, _Text, nullptr);
 }
@@ -349,27 +347,60 @@ COLORREF oGDIGetBrushColor(HBRUSH _hBrush)
 	return lb.lbColor;
 }
 
-HFONT oGDICreateFont(const char* _FontName, int _PointSize, bool _Bold, bool _Italics, bool _Underline)
+int2 oGDIGetIconSize(HICON _hIcon)
 {
-		HDC hDC = GetDC(GetDesktopWindow());
-		HFONT hFont = CreateFont(
-			oGDIPointToLogicalHeight(hDC, _PointSize)
-			, 0
-			, 0
-			, 0
-			, _Bold ? FW_BOLD : FW_NORMAL
-			, _Italics
-			, _Underline
-			, FALSE
-			, DEFAULT_CHARSET
-			, OUT_DEFAULT_PRECIS
-			, CLIP_DEFAULT_PRECIS
-			, CLEARTYPE_QUALITY
-			, DEFAULT_PITCH
-			, _FontName);
+	ICONINFO ii;
+	BITMAP b;
+	if (GetIconInfo(_hIcon, &ii))
+	{
+		if (ii.hbmColor)
+		{
+			if (GetObject(ii.hbmColor, sizeof(b), &b))
+				return int2(b.bmWidth, b.bmHeight);
+		}
 
-	ReleaseDC(GetDesktopWindow(), hDC);
+		else
+		{
+			if (GetObject(ii.hbmMask, sizeof(b), &b))
+				return int2(b.bmWidth, b.bmHeight);
+		}
+	}
+
+	return int2(-1,-1);
+}
+
+HFONT oGDICreateFont(const oGUI_FONT_DESC& _Desc)
+{
+	oGDIScopedGetDC hDC(GetDesktopWindow());
+	HFONT hFont = CreateFont(
+		oGDIPointToLogicalHeight(hDC, _Desc.PointSize)
+		, 0
+		, 0
+		, 0
+		, _Desc.Bold ? FW_BOLD : FW_NORMAL
+		, _Desc.Italic
+		, _Desc.Underline
+		, _Desc.StrikeOut
+		, DEFAULT_CHARSET
+		, OUT_DEFAULT_PRECIS
+		, CLIP_DEFAULT_PRECIS
+		, CLEARTYPE_QUALITY
+		, DEFAULT_PITCH
+		, _Desc.FontName);
 	return hFont;
+}
+
+void oGDIGetFontDesc(HFONT _hFont, oGUI_FONT_DESC* _pDesc)
+{
+	LOGFONT lf = {0};
+	::GetObject(_hFont, sizeof(lf), &lf);
+	_pDesc->FontName = lf.lfFaceName;
+	_pDesc->Bold = lf.lfWeight > FW_NORMAL;
+	_pDesc->Italic = !!lf.lfItalic;
+	_pDesc->Underline = !!lf.lfUnderline;
+	_pDesc->StrikeOut = !!lf.lfStrikeOut;
+	oGDIScopedGetDC hDC(GetDesktopWindow());
+	_pDesc->PointSize = oGDILogicalHeightToPointF(hDC, lf.lfHeight);
 }
 
 const char* oGDIGetFontFamily(BYTE _tmPitchAndFamily)

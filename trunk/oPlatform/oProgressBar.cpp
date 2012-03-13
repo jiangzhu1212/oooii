@@ -270,7 +270,7 @@ void oWinProgressBar::Unmap() threadsafe
 
 void oWinProgressBar::SetTitle(oStringL _Title)
 {
-	oWinSetTitle(hDialog, _Title);
+	oWinSetText(hDialog, _Title);
 }
 
 void oWinProgressBar::SetTitle(const char* _Title) threadsafe

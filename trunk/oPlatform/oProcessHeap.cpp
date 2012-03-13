@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <map>
 #include "oCRTLeakTracker.h"
+#include "SoftLink/oWinDbgHelp.h"
 
 struct oProcessHeapContext : oInterface
 {
@@ -155,10 +156,15 @@ public:
 		oVERIFY(oModuleGetName(moduleName, oModuleGetCurrent()));
 		char buf[oKB(1)];
 		char syspath[_MAX_PATH];
-		sprintf_s(buf, "%s(%d): {%s} %s ProcessHeap initialized\n", __FILE__, __LINE__, oGetFilebase(moduleName), oSystemGetPath(syspath, oSYSPATH_EXECUTION));
+		sprintf_s(buf, "%s(%d): {%s} %s ProcessHeap initialized at 0x%p\n", __FILE__, __LINE__, oGetFilebase(moduleName), oSystemGetPath(syspath, oSYSPATH_EXECUTION), this);
 		oThreadsafeOutputDebugStringA(buf);
 
-		oDbgHelp::Singleton()->Reference(); // needed now that we print out callstacks
+		// DbgHelp is needed by the most base functionality that goes through static
+		// init such as heap and process heap leak reporting as well as traces. The
+		// lib also has the nasty habit of simply terminating the process if not 
+		// initialized and a call is made, so force this to stay around as long as 
+		// the idea of the process is around.
+		oWinDbgHelp::Singleton()->Reference();
 	}
 
 	int Reference() threadsafe override
@@ -232,8 +238,10 @@ void oProcessHeapContextImpl::AtExit()
 		oProcessHeapContextImpl::Singleton()->ReportLeaks();
 	else
 		oProcessHeapOutputLeakReportFooter(0);
-
-	oDbgHelp::Singleton()->Release(); // needed now that we print out callstacks. Release here and not in dtor because being a singleton this needs oProcessHeap to be valid
+	
+	// Release here and not in dtor because being a singleton this needs 
+	// oProcessHeap to be valid
+	oWinDbgHelp::Singleton()->Release();
 }
 
 bool oProcessHeapContextImpl::IsTBBEntry(container_t::const_iterator it)
@@ -275,9 +283,9 @@ bool oProcessHeapContextImpl::ShouldConsider(container_t::const_iterator it)
 	//if (IsTBBEntry(it))
 	//	return false;
 
-	// Special-case oDbgHelp since we're using it so very late for IsTBBEntry
+	// Special-case oWinDbgHelp since we're using it so very late for IsTBBEntry
 	// and printing callstacks.
-	if (!strcmp("oDbgHelp", it->second.DebugName))
+	if (!strcmp("oWinDbgHelp", it->second.DebugName))
 	{
 		oInterface* i = static_cast<oInterface*>(it->second.Pointer);
 		int r = i->Reference() - 1;

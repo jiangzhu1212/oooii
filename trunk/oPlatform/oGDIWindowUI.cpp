@@ -105,13 +105,7 @@ oGDIWindowUIFont::oGDIWindowUIFont(const DESC& _Desc, threadsafe oWindow* _pWind
 	: oWindowUIElementBaseMixin(_Desc, _pWindow)
 {
 	oGDIScopedGetDC hDC((HWND)Window->GetNativeHandle());
-	hFont = oGDICreateFont(
-		_Desc.FontName
-		, static_cast<int>(_Desc.PointSize)
-		, _Desc.Style == BOLD || _Desc.Style == BOLDITALIC
-		, _Desc.Style == ITALIC || _Desc.Style == BOLDITALIC
-		, false);
-
+	hFont = oGDICreateFont(_Desc.FontDesc);
 	#ifdef _DEBUG
 		// Use this to get the actual font used
 		oGDIScopedSelect font(hDC, hFont);

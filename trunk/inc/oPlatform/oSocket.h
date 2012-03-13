@@ -148,12 +148,16 @@ interface oSocket : oInterface
 	// Failure cases: 
 	// oERROR_INVALID_PARAMETER: This can occur when a call to Send is made on a connectionless based protocol (i.e. UDP)
 	// oERROR_AT_CAPACITY: This can occur when the MaxSimultaneousMessages has been exhausted
-	virtual bool Send(const void* _pData, oSocket::size_t _Size) threadsafe = 0;
+	// Send will send the provided header using the socket's protocol.  The user can optionally send a body as well that will
+	// be linearized with the header on receive
+	virtual bool Send(const void* _pHeader, oSocket::size_t _SizeHeader, const void* _pBody = nullptr, oSocket::size_t _SizeBody = oInvalid) threadsafe = 0;
 
 	// Failure cases: 
 	// oERROR_INVALID_PARAMETER: This can occur when a call to SendTo is made on a connection based protocol (i.e. TCP)
 	// oERROR_AT_CAPACITY: This can occur when the MaxSimultaneousMessages has been exhausted
-	virtual bool SendTo(const void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination) threadsafe = 0;
+	// SendTo will send the provided header using the socket's protocol.  The user can optionally send a body as well that will
+	// be linearized with the header on receive
+	virtual bool SendTo(const void* _pHeader, oSocket::size_t _SizeHeader, const oNetAddr& _Destination, const void* _pBody = nullptr, oSocket::size_t _SizeBody = 0) threadsafe = 0;
 
 	// Queue up a pending receive. The RecvCallback will be called once the
 	// passed in buffer has been filled with the data from a single packet.

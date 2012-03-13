@@ -37,8 +37,9 @@
 #define oTESTERROR(format, ...) do { sprintf_s(_StrStatus, _SizeofStrStatus, format, ## __VA_ARGS__); oTRACE("FAILING: %s (oErrorGetLast() == %s (%s))", _StrStatus, oAsString(oErrorGetLast()), oErrorGetLastString()); return oErrorGetLast() == oERROR_LEAKS ? oTest::LEAKS : oTest::FAILURE; } while(false)
 #define oTESTB(expr, errMsg, ...) do { if (!(expr)) { oTESTERROR(errMsg, ## __VA_ARGS__); } } while(false)
 #define oTESTB0(expr) do { if (!(expr)) { sprintf_s(_StrStatus, _SizeofStrStatus, "%s: %s", oAsString(oErrorGetLast()), oErrorGetLastString()); return oTest::FAILURE; } } while(false)
-#define oTESTI(oImagePointer) oTESTB(TestImage(oImagePointer), "Image compare failed: %s: %s", oAsString(oErrorGetLast()), oErrorGetLastString());
-#define oTESTI2(oImagePointer, NthFrame) oTESTB(TestImage(oImagePointer, NthFrame), "Image compare (%u%s frame) failed: %s: %s", NthFrame, oOrdinal(NthFrame), oAsString(oErrorGetLast()), oErrorGetLastString());
+#define oTESTI(oImagePointer) oTESTB0(TestImage(oImagePointer));
+#define oTESTI2(oImagePointer, NthFrame) oTESTB0(TestImage(oImagePointer, NthFrame));
+#define oTESTI_CUSTOM_TOLERANCE(oImagePointer, NthFrame, ColorChannelTolerance, MaxRMSError, DiffImageMultiplier) oTESTB0(TestImage(oImagePointer, NthFrame, ColorChannelTolerance, MaxRMSError, DiffImageMultiplier))
 
 // _____________________________________________________________________________
 // User registration macros
@@ -54,6 +55,12 @@
 // info on the known issue.
 #define oTEST_REGISTER_BUGGED(_TestClassName, _BugNumber) oTestManager::RegisterTest<_TestClassName> oCONCAT(_TestClassName, _Instance)(_BugNumber, oTest::BUGGED)
 
+#ifdef o64BIT
+	#define oTEST_REGISTER_BUGGED32(_TestClassName, _BugNumber) oTEST_REGISTER(_TestClassName)
+#else
+	#define oTEST_REGISTER_BUGGED32(_TestClassName, _BugNumber) oTEST_REGISTER_BUGGED(_TestClassName, _BugNumber)
+#endif
+
 // Use this when it is appropriate to commit a test, but it's not quite ready 
 // yet. Specify an ID in the project's bug database for more info on the 
 // emerging test.
@@ -61,7 +68,7 @@
 
 interface oImage;
 
-struct oTest : oModuleSingleton<oTest>
+struct oTest : oProcessSingleton<oTest>
 {
 	enum RESULT
 	{
@@ -89,6 +96,15 @@ struct oTest : oModuleSingleton<oTest>
 
 	oDECLARE_FLAG(FileMustExist);
 
+	struct TEST_IMAGE_DESC
+	{
+		// These values are 
+
+		int ColorChannelTolerance;
+		float MaxRMSError;
+		unsigned int DiffImageMultiplier;
+	};
+
 	oTest();
 	virtual ~oTest();
 	virtual const char* GetName() const;
@@ -102,19 +118,13 @@ struct oTest : oModuleSingleton<oTest>
 	// test image to be compared against a "golden" image, one that has been 
 	// verified as being correct. If valid, then this returns true. If the images
 	// differ, then the test image that failed will be written to the OutputPath.
-	bool TestImage(oImage* _pImage, unsigned int _NthImage = 0);
+	// It may make sense in rare cases to explicitly override default test system 
+	// policies for image comparisons. If so, _ColorChannelTolerance, 
+	// _MaxRMSError, and _DiffImageMultiplier can be overridden, else the default
+	// values specified here will be replaced with values from oTestManager::DESC.
+	bool TestImage(oImage* _pImage, unsigned int _NthImage = 0, int _ColorChannelTolerance = oDEFAULT, float _MaxRMSError = -1.0f, unsigned int _DiffImageMultiplier = oDEFAULT);
 
 	virtual RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) = 0;
-
-	struct DESC //These values will default to test manager desc defaults
-	{
-    int colorChannelTolerance;
-    float maxRMSError; //@oooii-doug rms error is a better gauge of image error than this
-
-    unsigned int DiffImageMultiplier;
-
-	};
-	virtual void OverrideTestDesc(DESC &_desc) {}
 
 	// Always specify resources for read/write as relative paths from the Data 
 	// root directories specified in the DESC and use this method in tests to 
@@ -134,14 +144,13 @@ struct oTest : oModuleSingleton<oTest>
 
 private:
 	virtual bool BuildPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath, PATH_TYPE _PathType, bool _PathMustExist) const;
+	virtual bool TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const char* _FailedImagePath, unsigned int _NthImage, int _ColorChannelTolerance = oDEFAULT, float _MaxRMSError = -1.0f, unsigned int _DiffImageMultiplier = oDEFAULT);
 };
 
-// Special tests are ones that are new processes spawned 
-// from a regular test used to test more complex inter-
-// process functionality, such as a client-server model. 
-// By deriving from this class, it means the user will 
-// handle when this spawns and the test system will 
-// otherwise skip over this.
+// Special tests are ones that are new processes spawned from a regular test 
+// used to test more complex inter-process functionality, such as a client-
+// server model. By deriving from this class, it means the user will handle when 
+// this spawns and the test system will otherwise skip over this.
 struct oSpecialTest : public oTest
 {
 	// Create a process (suspended) for running the unit test in a special mode.
@@ -210,9 +219,9 @@ interface oTestManager : oNoncopyable
 			, StatusColumnWidth(10)
 			, RandomSeed(0)
 			, NumRunIterations(1)
-			, maxRMSError(1.0f)
-      , colorChannelTolerance(0)
-			, DefaultDiffImageMultiplier(8)
+			, MaxRMSError(1.0f)
+      , ColorChannelTolerance(0)
+			, DiffImageMultiplier(8)
 			, TestTooSlowTimeInSeconds(10.0f)
 			, TestReallyTooSlowTimeInSeconds(20.0f)
 			, EnableSpecialTestTimeouts(true)
@@ -233,9 +242,9 @@ interface oTestManager : oNoncopyable
 		unsigned int StatusColumnWidth;
 		unsigned int RandomSeed;
 		unsigned int NumRunIterations;
-    unsigned int colorChannelTolerance;
-		float maxRMSError;
-		unsigned int DefaultDiffImageMultiplier;
+    unsigned int ColorChannelTolerance;
+		float MaxRMSError;
+		unsigned int DiffImageMultiplier;
 		float TestTooSlowTimeInSeconds;
 		float TestReallyTooSlowTimeInSeconds;
 		bool EnableSpecialTestTimeouts;

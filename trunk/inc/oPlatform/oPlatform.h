@@ -39,6 +39,7 @@
 #include <oPlatform/oEvent.h>
 #include <oPlatform/oFile.h>
 #include <oPlatform/oGPU.h>
+#include <oPlatform/oGUI.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oMirroredArena.h>
 #include <oPlatform/oModule.h>

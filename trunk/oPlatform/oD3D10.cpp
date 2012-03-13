@@ -27,24 +27,9 @@
 #include <oPlatform/oDXGI.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oModule.h>
+#include "SoftLink/oWinD3D10.h"
 #include <oHLSLFSQuadByteCode.h>
 #include <oHLSLPassthroughByteCode.h>
-
-static const char* d3d10_dll_functions[] = 
-{
-	"D3D10CreateDevice1",
-};
-
-oD3D10::oD3D10()
-{
-	hD3D10 = oModuleLinkSafe("d3d10_1.dll", d3d10_dll_functions, (void**)&D3D10CreateDevice1, oCOUNTOF(d3d10_dll_functions));
-	oASSERT(hD3D10, "");
-}
-
-oD3D10::~oD3D10()
-{
-	oModuleUnlink(hD3D10);
-}
 
 bool oD3D10CreateDevice(const int2& _VirtualDesktopPosition, ID3D10Device1** _ppDevice)
 {
@@ -62,7 +47,7 @@ bool oD3D10CreateDevice(const int2& _VirtualDesktopPosition, ID3D10Device1** _pp
 	oRef<IDXGIAdapter1> Adapter;
 	oVB_RETURN2(Output->GetParent(__uuidof(IDXGIAdapter1), (void**)&Adapter));
 
-	HRESULT hr = oD3D10::Singleton()->D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, nullptr, D3D10_CREATE_DEVICE_BGRA_SUPPORT, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, _ppDevice);
+	HRESULT hr = oWinD3D10::Singleton()->D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, nullptr, D3D10_CREATE_DEVICE_BGRA_SUPPORT, D3D10_FEATURE_LEVEL_10_1, D3D10_1_SDK_VERSION, _ppDevice);
 	switch (hr)
 	{
 		case S_OK:
@@ -71,7 +56,7 @@ bool oD3D10CreateDevice(const int2& _VirtualDesktopPosition, ID3D10Device1** _pp
 		case E_NOINTERFACE:
 		{
 			oTRACE("Failed to create D3D 10.1 device, falling back to D3D 10.0.");
-			if (FAILED(oD3D10::Singleton()->D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, nullptr, D3D10_CREATE_DEVICE_BGRA_SUPPORT, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, _ppDevice)))
+			if (FAILED(oWinD3D10::Singleton()->D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, nullptr, D3D10_CREATE_DEVICE_BGRA_SUPPORT, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, _ppDevice)))
 				return oErrorSetLast(oERROR_NOT_FOUND, "No D3D 10 or 10.1 device could be found");
 			break;
 		}
@@ -168,12 +153,7 @@ oD3D10DeviceManagerImpl::oD3D10DeviceManagerImpl(const DESC& _Desc, bool* _pSucc
 	: Desc(_Desc)
 {
 	*_pSuccess = false;
-	oD3D10* pD3D10 = oD3D10::Singleton();
-	if(!pD3D10)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "Failed to load D3D10");
-		return;
-	}
+	oWinD3D10* pD3D10 = oWinD3D10::Singleton();
 
 	oRef<IDXGIFactory1> Factory;
 	oDXGICreateFactory(&Factory);

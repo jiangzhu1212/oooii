@@ -57,8 +57,8 @@ interface oInterface
 	// that client code that knows enough to specify a specific GUID will also 
 	// know the type that is expected to be returned.
 	virtual bool QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe = 0;
-	template<typename T> inline bool QueryInterface(const oGUID& _InterfaceID, T** _ppInterface) threadsafe { T* pInterface = 0; *_ppInterface = (QueryInterface(_InterfaceID, (threadsafe void**)&pInterface) ? pInterface : 0); return !!*_ppInterface; }
-	template<typename T> inline bool QueryInterface( T** _ppInterface) threadsafe { return QueryInterface( oGetGUID( _ppInterface ), _ppInterface ); }
+	template<typename T> inline bool QueryInterface(const oGUID& _InterfaceID, T** _ppInterface) threadsafe { return QueryInterface(_InterfaceID, (threadsafe void**)_ppInterface); }
+	template<typename T> inline bool QueryInterface(T** _ppInterface) threadsafe { return QueryInterface(oGetGUID(_ppInterface), _ppInterface); }
 };
 
 inline void intrusive_ptr_add_ref(threadsafe oInterface* p)

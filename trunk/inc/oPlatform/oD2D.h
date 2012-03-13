@@ -64,7 +64,7 @@
 	bool oD2DDrawRoundedRect(ID2D1RenderTarget* _pRenderTarget, const D2D1_ROUNDED_RECT& _Rect, ID2D1Brush* _pFillBrush, ID2D1Brush* _pBorderBrush);
 
 	// Handles conversion to DWrite types that is two separate enums
-	bool oD2DSetAlignment(IDWriteTextFormat* _pDWTextFormat, oANCHOR _Alignment);
+	bool oD2DSetAlignment(IDWriteTextFormat* _pDWTextFormat, oGUI_ALIGNMENT _Alignment);
 
 #endif
 #endif

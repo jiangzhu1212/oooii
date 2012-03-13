@@ -21,7 +21,6 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-
 // Soft-link D3D10 and some utility functions to address common challenges in 
 // D3D10.
 #pragma once
@@ -32,20 +31,8 @@
 #include <oBasis/oMathTypes.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oModule.h>
-#include <oPlatform/oSingleton.h>
 #include <oPlatform/oWindows.h>
 #include <vector>
-
-struct oD3D10 : oModuleSingleton<oD3D10>
-{
-	oD3D10();
-	~oD3D10();
-
-	HRESULT (__stdcall *D3D10CreateDevice1)(IDXGIAdapter *pAdapter, D3D10_DRIVER_TYPE DriverType, HMODULE Software, UINT Flags, D3D10_FEATURE_LEVEL1 HardwareLevel, UINT SDKVersion, ID3D10Device1 **ppDevice);
-
-protected:
-	oHMODULE hD3D10;
-};
 
 // Resolves the specified position to an adapter and creates an ID3D10Device
 // interface from that adapter. If 10.1 isn't supported, a 10.0 device is 

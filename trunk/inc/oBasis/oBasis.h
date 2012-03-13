@@ -41,7 +41,6 @@
 #include <oBasis/oByte.h>
 #include <oBasis/oByteSwizzle.h>
 #include <oBasis/oCallable.h>
-#include <oBasis/oCheckedAssignment.h>
 #include <oBasis/oColor.h>
 #include <oBasis/oConcurrentIndexAllocator.h>
 #include <oBasis/oConditionVariable.h>
@@ -65,6 +64,7 @@
 #include <oBasis/oHash.h>
 #include <oBasis/oIndexAllocator.h>
 #include <oBasis/oINI.h>
+#include <oBasis/oInt.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oIntrinsic.h>
 #include <oBasis/oInvalid.h>
@@ -88,7 +88,6 @@
 #include <oBasis/oPlatformFeatures.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
-#include <oBasis/oSize.h>
 #include <oBasis/oStdAllocator.h>
 #include <oBasis/oStdAtomic.h>
 #include <oBasis/oStdChrono.h>

@@ -27,7 +27,6 @@
 #include <oPlatform/oCRTHeap.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oReporting.h>
-#include "oDbgHelp.h"
 
 // {F253EA65-29FC-47D0-9E2E-400DAC41D861}
 const oGUID oCRTLeakTracker::GUID = { 0xf253ea65, 0x29fc, 0x47d0, { 0x9e, 0x2e, 0x40, 0xd, 0xac, 0x41, 0xd8, 0x61 } };

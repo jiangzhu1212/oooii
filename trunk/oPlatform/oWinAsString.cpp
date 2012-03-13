@@ -26,6 +26,7 @@
 #include <oBasis/oError.h>
 #include <Windowsx.h>
 #include <DShow.h>
+#include <CDErr.h>
 
 const char* oWinAsStringHT(unsigned int _HTCode)
 {
@@ -120,6 +121,7 @@ const char* oWinAsStringWM(unsigned int _uMsg)
 		case WM_ACTIVATEAPP: return "WM_ACTIVATEAPP";
 		case WM_APPCOMMAND: return "WM_APPCOMMAND";
 		case WM_CANCELMODE: return "WM_CANCELMODE";
+		case WM_CAPTURECHANGED: return "WM_CAPTURECHANGED";
 		case WM_CHAR: return "WM_CHAR";
 		case WM_CHILDACTIVATE: return "WM_CHILDACTIVATE";
 		case WM_CLOSE: return "WM_CLOSE";
@@ -136,21 +138,26 @@ const char* oWinAsStringWM(unsigned int _uMsg)
 		case WM_DWMNCRENDERINGCHANGED: return "WM_DWMNCRENDERINGCHANGED";
 		case WM_DWMWINDOWMAXIMIZEDCHANGE: return "WM_DWMWINDOWMAXIMIZEDCHANGE";
 		case WM_ENABLE: return "WM_ENABLE";
+		case WM_ENTERIDLE: return "WM_ENTERIDLE";
 		case WM_ENTERSIZEMOVE: return "WM_ENTERSIZEMOVE";
 		case WM_ERASEBKGND: return "WM_ERASEBKGND";
 		case WM_EXITSIZEMOVE: return "WM_EXITSIZEMOVE";
+		case WM_GETDLGCODE: return "WM_GETDLGCODE";
 		case WM_GETICON: return "WM_GETICON";
 		case WM_GETMINMAXINFO: return "WM_GETMINMAXINFO";
 		case WM_GETTEXT: return "WM_GETTEXT";
 		case WM_GETTEXTLENGTH: return "WM_GETTEXTLENGTH";
+		case WM_HELP: return "WM_HELP";
 		case WM_HOTKEY: return "WM_HOTKEY";
 		case WM_ICONERASEBKGND: return "WM_ICONERASEBKGND";
+		case WM_INITMENUPOPUP: return "WM_INITMENUPOPUP";
 		case WM_INPUTLANGCHANGE: return "WM_INPUTLANGCHANGE";
 		case WM_INPUTLANGCHANGEREQUEST: return "WM_INPUTLANGCHANGEREQUEST";
 		case WM_KEYDOWN: return "WM_KEYDOWN";
 		case WM_KEYUP: return "WM_KEYUP";
 		case WM_KILLFOCUS: return "WM_KILLFOCUS";
 		case WM_MEASUREITEM: return "WM_MEASUREITEM";
+		case WM_MENUSELECT: return "WM_MENUSELECT";
 		case WM_MOVE: return "WM_MOVE";
 		case WM_MOVING: return "WM_MOVING";
 		case WM_NCMOUSEMOVE: return "WM_NCMOUSEMOVE";
@@ -221,6 +228,9 @@ const char* oWinAsStringWM(unsigned int _uMsg)
 		case WM_UPDATEUISTATE: return "WM_UPDATEUISTATE";
 		case WM_CHANGEUISTATE: return "WM_CHANGEUISTATE";
 		case WM_QUERYUISTATE: return "WM_QUERYUISTATE";
+		case 0x91: return "Theme Service internal message 0x91";
+		case 0x92: return "Theme Service internal message 0x92";
+		case 0x93: return "Theme Service internal message 0x93";
 		default: break;
 	}
 	return "unrecognized WMCODE";
@@ -395,6 +405,53 @@ const char* oWinAsStringTCN(unsigned int _TCNCode)
 	return "unrecognized TCNCode";
 }
 
+const char* oWinAsStringCDERR(unsigned int _CDERRCode)
+{
+	switch (_CDERRCode)
+	{
+		case CDERR_DIALOGFAILURE: return "CDERR_DIALOGFAILURE";
+		case CDERR_GENERALCODES: return "CDERR_GENERALCODES";
+		case CDERR_STRUCTSIZE: return "CDERR_STRUCTSIZE";
+		case CDERR_INITIALIZATION: return "CDERR_INITIALIZATION";
+		case CDERR_NOTEMPLATE: return "CDERR_NOTEMPLATE";
+		case CDERR_NOHINSTANCE: return "CDERR_NOHINSTANCE";
+		case CDERR_LOADSTRFAILURE: return "CDERR_LOADSTRFAILURE";
+		case CDERR_FINDRESFAILURE: return "CDERR_FINDRESFAILURE";
+		case CDERR_LOADRESFAILURE: return "CDERR_LOADRESFAILURE";
+		case CDERR_LOCKRESFAILURE: return "CDERR_LOCKRESFAILURE";
+		case CDERR_MEMALLOCFAILURE: return "CDERR_MEMALLOCFAILURE";
+		case CDERR_MEMLOCKFAILURE: return "CDERR_MEMLOCKFAILURE";
+		case CDERR_NOHOOK: return "CDERR_NOHOOK";
+		case CDERR_REGISTERMSGFAIL: return "CDERR_REGISTERMSGFAIL";
+		case PDERR_PRINTERCODES: return "PDERR_PRINTERCODES";
+		case PDERR_SETUPFAILURE: return "PDERR_SETUPFAILURE";
+		case PDERR_PARSEFAILURE: return "PDERR_PARSEFAILURE";
+		case PDERR_RETDEFFAILURE: return "PDERR_RETDEFFAILURE";
+		case PDERR_LOADDRVFAILURE: return "PDERR_LOADDRVFAILURE";
+		case PDERR_GETDEVMODEFAIL: return "PDERR_GETDEVMODEFAIL";
+		case PDERR_INITFAILURE: return "PDERR_INITFAILURE";
+		case PDERR_NODEVICES: return "PDERR_NODEVICES";
+		case PDERR_NODEFAULTPRN: return "PDERR_NODEFAULTPRN";
+		case PDERR_DNDMMISMATCH: return "PDERR_DNDMMISMATCH";
+		case PDERR_CREATEICFAILURE: return "PDERR_CREATEICFAILURE";
+		case PDERR_PRINTERNOTFOUND: return "PDERR_PRINTERNOTFOUND";
+		case PDERR_DEFAULTDIFFERENT: return "PDERR_DEFAULTDIFFERENT";
+		case CFERR_CHOOSEFONTCODES: return "CFERR_CHOOSEFONTCODES";
+		case CFERR_NOFONTS: return "CFERR_NOFONTS";
+		case CFERR_MAXLESSTHANMIN: return "CFERR_MAXLESSTHANMIN";
+		case FNERR_FILENAMECODES: return "FNERR_FILENAMECODES";
+		case FNERR_SUBCLASSFAILURE: return "FNERR_SUBCLASSFAILURE";
+		case FNERR_INVALIDFILENAME: return "FNERR_INVALIDFILENAME";
+		case FNERR_BUFFERTOOSMALL: return "FNERR_BUFFERTOOSMALL";
+		case FRERR_FINDREPLACECODES: return "FRERR_FINDREPLACECODES";
+		case FRERR_BUFFERLENGTHZERO: return "FRERR_BUFFERLENGTHZERO";
+		case CCERR_CHOOSECOLORCODES: return "CCERR_CHOOSECOLORCODES";
+	default: break;
+	}
+
+	return "unrecognized CDERR";
+}
+
 char* oWinParseStyleFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSFlags)
 {
 	return oAsStringFlags(_StrDestination, _SizeofStrDestination, _WSFlags, oWinAsStringWS(WS_OVERLAPPED), [&](unsigned int _Flag) { return oWinAsStringWS(_Flag); });
@@ -448,7 +505,7 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, HW
 		case WM_CTLCOLORMSGBOX: sprintf_s(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORMSGBOX HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
 		case WM_CTLCOLORSCROLLBAR: sprintf_s(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORSCROLLBAR HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
 		case WM_CTLCOLORSTATIC: sprintf_s(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORSTATIC HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
-		case WM_NOTIFY: { const NMHDR& h = *(NMHDR*)_lParam; sprintf_s(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_NOTIFY from hwndFrom=0x%x idFrom=%d notification code=%s", _hWnd, h.hwndFrom, h.idFrom, oWinAsStringNM(h.code)); break; }
+		case WM_NOTIFY: { const NMHDR& h = *(NMHDR*)_lParam; sprintf_s(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_NOTIFY WPARAM=%u from hwndFrom=0x%x idFrom=%d notification code=%s", _hWnd, _wParam, h.hwndFrom, h.idFrom, oWinAsStringNM(h.code)); break; }
 		default:
 		{
 			const char* WMStr = oWinAsStringWM(_uMsg);
@@ -466,6 +523,38 @@ const char* oWinAsStringHR(HRESULT _hResult)
 {
 	switch (_hResult)
 	{
+		// From WinError.h
+		//case ERROR_INVALID_FUNCTION: return "ERROR_INVALID_FUNCTION"; // same value as S_FALSE
+		case ERROR_FILE_NOT_FOUND: return "ERROR_FILE_NOT_FOUND";
+		case ERROR_PATH_NOT_FOUND: return "ERROR_PATH_NOT_FOUND";
+		case ERROR_TOO_MANY_OPEN_FILES: return "ERROR_TOO_MANY_OPEN_FILES";
+		case ERROR_ACCESS_DENIED: return "ERROR_ACCESS_DENIED";
+		case ERROR_INVALID_HANDLE: return "ERROR_INVALID_HANDLE";
+		case ERROR_ARENA_TRASHED: return "ERROR_ARENA_TRASHED";
+		case ERROR_NOT_ENOUGH_MEMORY: return "ERROR_NOT_ENOUGH_MEMORY";
+		case ERROR_INVALID_BLOCK: return "ERROR_INVALID_BLOCK";
+		case ERROR_BAD_ENVIRONMENT: return "ERROR_BAD_ENVIRONMENT";
+		case ERROR_BAD_FORMAT: return "ERROR_BAD_FORMAT";
+		case ERROR_INVALID_ACCESS: return "ERROR_INVALID_ACCESS";
+		case ERROR_INVALID_DATA: return "ERROR_INVALID_DATA";
+		case ERROR_OUTOFMEMORY: return "ERROR_OUTOFMEMORY";
+		case ERROR_INVALID_DRIVE: return "ERROR_INVALID_DRIVE";
+		case ERROR_CURRENT_DIRECTORY: return "ERROR_CURRENT_DIRECTORY";
+		case ERROR_NOT_SAME_DEVICE: return "ERROR_NOT_SAME_DEVICE";
+		case ERROR_NO_MORE_FILES: return "ERROR_NO_MORE_FILES";
+		case ERROR_WRITE_PROTECT: return "ERROR_WRITE_PROTECT";
+		case ERROR_BAD_UNIT: return "ERROR_BAD_UNIT";
+		case ERROR_NOT_READY: return "ERROR_NOT_READY";
+		case ERROR_BAD_COMMAND: return "ERROR_BAD_COMMAND";
+		case ERROR_CRC: return "ERROR_CRC";
+		case ERROR_BAD_LENGTH: return "ERROR_BAD_LENGTH";
+		case ERROR_SEEK: return "ERROR_SEEK";
+		case ERROR_NOT_DOS_DISK: return "ERROR_NOT_DOS_DISK";
+		case ERROR_WRITE_FAULT: return "ERROR_WRITE_FAULT";
+		case ERROR_READ_FAULT: return "ERROR_READ_FAULT";
+		case ERROR_SHARING_VIOLATION: return "ERROR_SHARING_VIOLATION";
+		case ERROR_LOCK_VIOLATION: return "ERROR_LOCK_VIOLATION";
+		case ERROR_WRONG_DISK: return "ERROR_WRONG_DISK";
 		case E_NOINTERFACE: return "E_NOINTERFACE";
 		case E_OUTOFMEMORY: return "E_OUTOFMEMORY";
 		case E_FAIL: return "E_FAIL";

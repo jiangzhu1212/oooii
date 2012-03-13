@@ -30,6 +30,7 @@
 #define oByte_h
 
 #include <stddef.h>
+#include <oBasis/oInt.h>
 
 // Alignment
 template<typename T> T oByteAlign(T _Value, size_t _Alignment) { return (T)(((size_t)_Value + _Alignment - 1) & ~(_Alignment - 1)); }
@@ -57,6 +58,7 @@ inline int oByteSwap(int x) { unsigned int r = oByteSwap(*(unsigned int*)&x); re
 inline long long oByteSwap(long long x) { unsigned long long r = oByteSwap(*(unsigned long long*)&x); return *(long long*)&r; }
 inline float oByteSwap(float x) { unsigned int r = oByteSwap(*(unsigned int*)&x); return *(float*)&r; }
 inline double oByteSwap(double x) { unsigned long long r = oByteSwap(*(unsigned long long*)&x); return *(double*)&r; }
+template<typename T> SafeInt<T> oByteSwap(SafeInt<T> x) { return oByteSwap((T)x); }
 
 // Validation
 

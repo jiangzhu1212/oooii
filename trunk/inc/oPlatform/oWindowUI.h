@@ -30,23 +30,8 @@
 #include <oBasis/oFixedString.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oMath.h>
+#include <oPlatform/oGUI.h>
 #include <oPlatform/oImage.h>
-
-enum oANCHOR
-{
-	oTOPLEFT,
-	oTOPCENTER,
-	oTOPRIGHT,
-	oMIDDLELEFT,
-	oMIDDLECENTER,
-	oMIDDLERIGHT,
-	oBOTTOMLEFT,
-	oBOTTOMCENTER,
-	oBOTTOMRIGHT,
-	oFITPARENT,
-};
-
-oAPI const char* oAsString(const oANCHOR& _Anchor);
 
 interface oWindow;
 interface oWindowUIElement : oInterface
@@ -83,7 +68,7 @@ interface oWindowUIBox : oWindowUIElement
 		DESC()
 			: Position(oDEFAULT, oDEFAULT)
 			, Size(oDEFAULT, oDEFAULT)
-			, Anchor(oMIDDLECENTER)
+			, Anchor(oGUI_ALIGNMENT_MIDDLE_CENTER)
 			, Color(std::White)
 			, BorderColor(std::Black)
 			, Roundness(10.0f)
@@ -91,7 +76,7 @@ interface oWindowUIBox : oWindowUIElement
 		
 		int2 Position; // Relative to the anchor
 		int2 Size; // oDEFAULT will use parent's Size
-		oANCHOR Anchor; // Relative to parent window's client area
+		oGUI_ALIGNMENT Anchor; // Relative to parent window's client area
 		oColor Color;
 		oColor BorderColor;
 		float Roundness;
@@ -104,26 +89,9 @@ interface oWindowUIBox : oWindowUIElement
 
 interface oWindowUIFont : oWindowUIElement
 {
-	enum STYLE
-	{
-		NORMAL,
-		BOLD,
-		ITALIC,
-		BOLDITALIC,
-	};
-
 	struct DESC
 	{
-		DESC()
-			: FontName("Tahoma")
-			, Style(NORMAL)
-			, PointSize(10.0f)
-			, ShadowOffset(1.0f)
-		{}
-
-		oStringS FontName;
-		STYLE Style;
-		float PointSize; // Like in MS Word and such.
+		oGUI_FONT_DESC FontDesc;
 		float ShadowOffset; // In points. Bigger fonts will require bigger offsets.
 	};
 
@@ -137,8 +105,8 @@ interface oWindowUIText : oWindowUIElement
 		DESC()
 			: Position(oDEFAULT, oDEFAULT)
 			, Size(oDEFAULT, oDEFAULT)
-			, Anchor(oMIDDLECENTER)
-			, Alignment(oMIDDLECENTER)
+			, Anchor(oGUI_ALIGNMENT_MIDDLE_CENTER)
+			, Alignment(oGUI_ALIGNMENT_MIDDLE_CENTER)
 			, Color(std::White)
 			, ShadowColor(std::Black)
 			, MultiLine(false)
@@ -146,12 +114,12 @@ interface oWindowUIText : oWindowUIElement
 
 		int2 Position; // Relative to the anchor
 		int2 Size; // oDEFAULT will use parent's Size
-		oANCHOR Anchor; // Relative to parent window's client area
+		oGUI_ALIGNMENT Anchor; // Relative to parent window's client area
 
 		// Alignment within the logical rect defined above. For text that
 		// is centered no matter the window size, specify MIDDLE_CENTER for
 		// both Anchor and Alignment.
-		oANCHOR Alignment;
+		oGUI_ALIGNMENT Alignment;
 
 		oColor Color;
 		oColor ShadowColor; // Specify 0 to have unshadowed text
@@ -176,12 +144,12 @@ interface oWindowUIPicture : oWindowUIElement
 		DESC()
 			: Position(oDEFAULT, oDEFAULT)
 			, Size(oDEFAULT, oDEFAULT)
-			, Anchor(oMIDDLECENTER)
+			, Anchor(oGUI_ALIGNMENT_MIDDLE_CENTER)
 		{}
 
 		int2 Position; // Relative to the anchor
 		int2 Size; // oDEFAULT will use parent's Size
-		oANCHOR Anchor; // Relative to parent window's client area
+		oGUI_ALIGNMENT Anchor; // Relative to parent window's client area
 		oImage::DESC ImageDesc; // Desc of underlying bitmap data. Copy expects input in this format.
 	};
 

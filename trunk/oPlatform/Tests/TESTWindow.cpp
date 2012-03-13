@@ -29,10 +29,14 @@
 #include <oPlatform/oFile.h>
 #include <oPlatform/oGDI.h>
 #include <oPlatform/oImage.h>
+#include <oPlatform/oMsgBox.h>
 #include <oPlatform/oSystem.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/oWindow.h>
 #include <oPlatform/oWindowUI.h>
+#include <oPlatform/oWinCursor.h>
+#include <oPlatform/oWinDialog.h>
+#include <oPlatform/oWinMenu.h>
 #include <oPlatform/oX11KeyboardSymbols.h>
 
 class oScopedGPUCompositing
@@ -46,7 +50,7 @@ struct TEST_RESIZE_CONTEXT
 {
 	int2 OldPos;
 	int2 OldDimensions;
-	oWindow::STATE OldState;
+	oGUI_WINDOW_STATE OldState;
 	bool Resizing;
 };
 
@@ -57,8 +61,8 @@ struct TEST_RESIZE_CONTEXT
 bool CreateBlotterWindow(threadsafe oWindow** _ppBlotter)
 {
 	oWindow::DESC d;
-	d.Style = oWindow::BORDERLESS;
-	d.State = oWindow::MAXIMIZED;
+	d.Style = oGUI_WINDOW_BORDERLESS;
+	d.State = oGUI_WINDOW_MAXIMIZED;
 	return oWindowCreate(d, nullptr, oWindow::USE_DEFAULT, _ppBlotter);
 }
 
@@ -91,7 +95,7 @@ bool TESTOnEvent(oWindow::EVENT _Event, const float3& _Position, int _SuperSampl
 			oGDIScopedGetDC hDC(hWnd);
 			RECT rClient;
 			oVB(GetClientRect(hWnd, &rClient));
-			oVERIFY(oGDIDrawText(hDC, rClient, oMIDDLERIGHT, std::Aqua, 0, true, "Hello World 2"));
+			oVERIFY(oGDIDrawText(hDC, rClient, oGUI_ALIGNMENT_MIDDLE_RIGHT, std::Aqua, 0, true, "Hello World 2"));
 			break;
 		}
 
@@ -168,7 +172,7 @@ struct TESTWindowBase : public oTest
 		{
 			oWindowUIBox::DESC d;
 			d.Size = int2(140, 70);
-			d.Anchor = oTOPLEFT;
+			d.Anchor = oGUI_ALIGNMENT_TOP_LEFT;
 			d.Color = std::Red;
 			d.BorderColor = std::White;
 			d.Roundness = 100.0f;
@@ -178,7 +182,7 @@ struct TESTWindowBase : public oTest
 		{
 			oWindowUIBox::DESC d;
 			d.Size = int2(100, 70);
-			d.Anchor = oTOPRIGHT;
+			d.Anchor = oGUI_ALIGNMENT_TOP_RIGHT;
 			d.Color = std::Black;
 			d.BorderColor = std::White;
 			d.Roundness = 0.0f;
@@ -189,7 +193,7 @@ struct TESTWindowBase : public oTest
 		{
 			oWindowUIBox::DESC d;
 			d.Size = int2(70, 70);
-			d.Anchor = oBOTTOMLEFT;
+			d.Anchor = oGUI_ALIGNMENT_BOTTOM_LEFT;
 			d.Color = std::Blue;
 			d.BorderColor = std::SkyBlue;
 			d.Roundness = 10.0f;
@@ -200,7 +204,7 @@ struct TESTWindowBase : public oTest
 		{
 			oWindowUIBox::DESC d;
 			d.Size = int2(70, 70);
-			d.Anchor = oBOTTOMRIGHT;
+			d.Anchor = oGUI_ALIGNMENT_BOTTOM_RIGHT;
 			d.Color = std::SlateGray;
 			d.BorderColor = std::White;
 			d.Roundness = 100.0f;
@@ -212,7 +216,7 @@ struct TESTWindowBase : public oTest
 			oWindowUIBox::DESC d;
 			d.Position = int2(0, 0);
 			d.Size = int2(400, 280);
-			d.Anchor = oMIDDLECENTER;
+			d.Anchor = oGUI_ALIGNMENT_MIDDLE_CENTER;
 			d.Color = std::BurlyWood;
 			d.BorderColor = std::Sienna;
 			d.Roundness = 10.0f;
@@ -222,9 +226,9 @@ struct TESTWindowBase : public oTest
 
 		{
 			oWindowUIFont::DESC d;
-			d.FontName = "Tahoma";
-			d.Style = oWindowUIFont::ITALIC;
-			d.PointSize = 24.0f;
+			d.FontDesc.FontName = "Tahoma";
+			d.FontDesc.Italic = true;
+			d.FontDesc.PointSize = 24.0f;
 			d.ShadowOffset = 1.0f;
 			if (!oWindowUIFontCreate(d, _pWindow, &_Elements.Font))
 				return false;
@@ -234,8 +238,8 @@ struct TESTWindowBase : public oTest
 			oWindowUIText::DESC d;
 			d.Position = int2(oDEFAULT, oDEFAULT);
 			d.Size = int2(400, 280);
-			d.Anchor = oMIDDLECENTER;
-			d.Alignment = oMIDDLECENTER;
+			d.Anchor = oGUI_ALIGNMENT_MIDDLE_CENTER;
+			d.Alignment = oGUI_ALIGNMENT_MIDDLE_CENTER;
 			d.Color = std::White;
 			d.ShadowColor = std::Black;
 			d.MultiLine = true;
@@ -264,7 +268,7 @@ struct TESTWindowBase : public oTest
 			oWindowUIPicture::DESC d;
 			d.Position = int2(0, 0);
 			d.Size = int2(100, 100);
-			d.Anchor = oTOPCENTER;
+			d.Anchor = oGUI_ALIGNMENT_TOP_CENTER;
 			Image->GetDesc(&d.ImageDesc);
 
 			if (!oWindowUIPictureCreate(d, _pWindow, &_Elements.Picture))
@@ -302,7 +306,6 @@ struct TESTWindowBase : public oTest
 		{
 			oWindow::DESC d;
 			d.ClientPosition = int2(1100, oDEFAULT);
-			d.SupportDoubleClicks = InteractiveTest; // Support double clicks when running interact test to make sure double click events work correctly
 			d.SupportTouchEvents = InteractiveTest; // Support touch panels
 			d.AllowUserFullscreenToggle = DevMode;
 			oRef<threadsafe oWindow> Window;
@@ -363,26 +366,26 @@ struct TESTWindowBase : public oTest
 		// _____________________________________________________________________________
 		// First test initial startup in various configurations
 
-		oWindow::STYLE Styles[] = 
+		oGUI_WINDOW_STYLE Styles[] = 
 		{
-			oWindow::BORDERLESS,
-			oWindow::FIXED,
-			oWindow::DIALOG,
-			oWindow::SIZEABLE,
+			oGUI_WINDOW_BORDERLESS,
+			oGUI_WINDOW_FIXED,
+			oGUI_WINDOW_DIALOG,
+			oGUI_WINDOW_SIZEABLE,
 		};
 
-		oWindow::STATE States[] =
+		oGUI_WINDOW_STATE States[] =
 		{
-			oWindow::HIDDEN,
-			oWindow::RESTORED,
-			oWindow::MINIMIZED,
-			oWindow::MAXIMIZED,
-			oWindow::FULLSCREEN,
+			oGUI_WINDOW_HIDDEN,
+			oGUI_WINDOW_RESTORED,
+			oGUI_WINDOW_MINIMIZED,
+			oGUI_WINDOW_MAXIMIZED,
+			oGUI_WINDOW_FULLSCREEN,
 		};
 
 		oWindow::DESC d;
 		d.ClientSize = int2(640, 480);
-		d.CursorState = oWindow::WAIT_FOREGROUND;
+		d.CursorState = oGUI_CURSOR_WAIT_FOREGROUND;
 		d.UseAntialiasing = true;
 		d.Enabled = true;
 		d.HasFocus = true;
@@ -414,7 +417,7 @@ struct TESTWindowBase : public oTest
 				Elements.Clear();
 				Window = nullptr;
 
-				d.Style = static_cast<oWindow::STYLE>(style);
+				d.Style = static_cast<oGUI_WINDOW_STYLE>(style);
 				sprintf_s(Title, "Startup: %s/%s", oAsString(d.State), oAsString(d.Style));
 
 				oTESTB(oWindowCreate(d, nullptr, _DrawMode, &Window), "oWindowCreate failed");
@@ -518,13 +521,13 @@ struct TESTWindowBase : public oTest
 
 						oSleep(1000); // HACK
 
-						if (States[state] == oWindow::FULLSCREEN)
+						if (States[state] == oGUI_WINDOW_FULLSCREEN)
 							oSleep(500);
 						else
 							oSleep(200);
 
 						// Hidden/Minimized destination states won't have any visuals to capture
-						if (States[state] != oWindow::HIDDEN && States[state] != oWindow::MINIMIZED)
+						if (States[state] != oGUI_WINDOW_HIDDEN && States[state] != oGUI_WINDOW_MINIMIZED)
 						{
 							oTESTB(Window->CreateSnapshot(&Snapshot, true), "Snapshot failed");
 							if (!TestImage(Snapshot, ImageIndex))
@@ -547,13 +550,13 @@ struct TESTWindowBase : public oTest
 
 						oSleep(1000); // HACK
 
-						if (States[state2] == oWindow::FULLSCREEN)
+						if (States[state2] == oGUI_WINDOW_FULLSCREEN)
 							oSleep(500);
 						else
 							oSleep(200);
 
 						// Hidden/Minimized destination states won't have any visuals to capture
-						if (States[state2] != oWindow::HIDDEN && States[state2] != oWindow::MINIMIZED)
+						if (States[state2] != oGUI_WINDOW_HIDDEN && States[state2] != oGUI_WINDOW_MINIMIZED)
 						{
 							oTESTB(Window->CreateSnapshot(&Snapshot, true), "Snapshot failed");
 							if (!TestImage(Snapshot, ImageIndex))
@@ -594,668 +597,5 @@ struct TESTWindowGDI : public TESTWindowBase
 	}
 };
 
-struct TESTWindowD3D11 : public TESTWindowBase
-{
-	// @oooii-tony: NOTE: This is more of a bring-up test than a unit test at the 
-	// moment. Enable this if there's a problem creating the oWindow with a user-
-	// specified ID3D11Device
-
-	bool Render(oWindow::EVENT _Event, const float3& _Position, int _Value, threadsafe oWindow* _pWindow)
-	{
-		switch (_Event)
-		{
-			case oWindow::DRAW_BACKBUFFER:
-			{
-				static int counter = 0;
-
-				const FLOAT RGBA[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-				const FLOAT RGBA2[] = { 0.0f, 0.0f, 1.0f, 1.0f };
-
-				oRef<ID3D11Device> D3D11Device;
-				oVERIFY(_pWindow->QueryInterface((const oGUID&)__uuidof(ID3D11Device), &D3D11Device));
-
-				oRef<ID3D11DeviceContext> DevContext;
-				D3D11Device->GetImmediateContext(&DevContext);
-
-				oRef<ID3D11RenderTargetView> RTV;
-				oVERIFY(_pWindow->QueryInterface((const oGUID&)__uuidof(ID3D11RenderTargetView), &RTV));
-
-				DevContext->ClearRenderTargetView(RTV, (counter++ & 0x1)?RGBA:RGBA2);
-
-				DevContext->Flush();
-				break;
-			}
-
-		default:
-			break;
-		}
-		 
-		return true;
-	}
-
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus)
-	{
-		oD3D11_DEVICE_DESC DevDesc("TestDevice");
-		DevDesc.MinimumAPIFeatureLevel = oVersion(10,0);
-		DevDesc.Debug = true;
-
-		oRef<ID3D11Device> D3D11Device;
-		oTESTB0(oD3D11CreateDevice(DevDesc, &D3D11Device));
-
-		oWindow::DESC WinDesc;
-		WinDesc.Style = oWindow::FIXED;
-		WinDesc.AutoClear = false;
-		WinDesc.EnableUIDrawing = true;
-		WinDesc.UseAntialiasing = false;
-		WinDesc.AllowUserFullscreenToggle = true;
-
-		oRef<threadsafe oWindow> Window;
-		oVERIFY(oWindowCreate(WinDesc, D3D11Device, oWindow::USE_GDI, &Window));
-		Window->SetTitle("User-Specified D3D11 Test");
-
-		// Set up a UI to ensure rendering doesn't stomp on its compositing
-		oWindowUIBox::DESC BoxDesc;
-		BoxDesc.Position = int2(-20,-20);
-		BoxDesc.Size = int2(130,30);
-		BoxDesc.Anchor = oBOTTOMRIGHT;
-		BoxDesc.Color = std::OOOiiGreen;
-		BoxDesc.BorderColor = std::White;
-		BoxDesc.Roundness = 10.0f;
-
-		oRef<threadsafe oWindowUIBox> Box;
-		oVERIFY(oWindowUIBoxCreate(BoxDesc, Window, &Box));
-
-		oWindowUIFont::DESC FontDesc;
-		FontDesc.FontName = "Tahoma";
-		FontDesc.PointSize = 10;
-
-		oRef<threadsafe oWindowUIFont> Font;
-		oVERIFY(oWindowUIFontCreate(FontDesc, Window, &Font));
-
-		oWindowUIText::DESC TextDesc;
-		TextDesc.Position = BoxDesc.Position;
-		TextDesc.Size = BoxDesc.Size;
-		TextDesc.Anchor = BoxDesc.Anchor;
-		TextDesc.Alignment = oMIDDLECENTER;
-
-		oRef<threadsafe oWindowUIText> Text;
-		oVERIFY(oWindowUITextCreate(TextDesc, Window, &Text));
-		Text->SetFont(Font);
-		Text->SetText("D3D11 Test");
-
-		Window->Hook(oBIND(&TESTWindowD3D11::Render, this, oBIND1, oBIND2, oBIND3, Window.c_ptr()));
-
-		while (Window->IsOpen())
-		{
-			static int ctr = 0;
-
-			oSleep(200);
-
-			Window->Refresh(false);
-		}
-
-		return SUCCESS;
-	}
-};
-
-#include <oPlatform/oWinWindowing.h>
-#include <oPlatform/oWinAsString.h>
-#include <oPlatform/oWinRect.h>
-
-class oWindowUITest
-{
-public:
-
-	oWindowUITest(bool* _pSuccess);
-	~oWindowUITest();
-
-	void Run();
-
-	oDECLARE_WNDPROC(, WndProc);
-	oDECLARE_WNDPROC(static, StaticWndProc);
-
-private:
-
-	enum
-	{
-		MENU_FILE_OPEN,
-		MENU_FILE_EXIT,
-		MENU_EDIT_CUT,
-		MENU_EDIT_COPY,
-		MENU_EDIT_PASTE,
-		MENU_VIEW_SOLID,
-		MENU_VIEW_WIREFRAME,
-		MENU_HELP_ABOUT,
-	};
-
-	HWND hTopLevel;
-	HMENU hMenu;
-	HMENU hFileMenu;
-	HMENU hEditMenu;
-	HMENU hViewMenu;
-	HMENU hHelpMenu;
-	bool Running;
-};
-
-oWindowUITest::oWindowUITest(bool* _pSuccess)
-	: hTopLevel(nullptr)
-	, Running(true)
-	, hMenu(oWinMenuCreate(true))
-	, hFileMenu(oWinMenuCreate())
-	, hEditMenu(oWinMenuCreate())
-	, hViewMenu(oWinMenuCreate())
-	, hHelpMenu(oWinMenuCreate())
-{
-	*_pSuccess = false;
-
-	if (!oWinCreate(&hTopLevel, StaticWndProc, this, true))
-		return; // pass through error
-
-	oWINDOW_CONTROL_DESC ButtonDesc;
-	ButtonDesc.hParent = hTopLevel;
-	ButtonDesc.Type = oWINDOW_CONTROL_BUTTON;
-	ButtonDesc.Text = "&Push Me";
-	ButtonDesc.Position = int2(10,10);
-	ButtonDesc.Dimensions = int2(100,20);
-	ButtonDesc.ID = 0;
-	ButtonDesc.StartsNewGroup = false;
-
-	oWinControlCreate(ButtonDesc);
-
-	oWinMenuAddSubmenu(hMenu, hFileMenu, "&File");
-	oWinMenuAddMenuItem(hFileMenu, MENU_FILE_OPEN, "&Open...");
-	oWinMenuAddSeparator(hFileMenu);
-	oWinMenuAddMenuItem(hFileMenu, MENU_FILE_EXIT, "E&xit");
-	oWinMenuAddSubmenu(hMenu, hEditMenu, "&Edit");
-	oWinMenuAddMenuItem(hEditMenu, MENU_EDIT_CUT, "Cu&t");
-	oWinMenuAddMenuItem(hEditMenu, MENU_EDIT_COPY, "&Copy");
-	oWinMenuAddMenuItem(hEditMenu, MENU_EDIT_PASTE, "&Paste");
-	oWinMenuAddSubmenu(hMenu, hViewMenu, "&View");
-	oWinMenuAddMenuItem(hViewMenu, MENU_VIEW_SOLID, "&Solid");
-	oWinMenuCheck(hViewMenu, MENU_VIEW_SOLID, true);
-	oWinMenuAddMenuItem(hViewMenu, MENU_VIEW_WIREFRAME, "&Wireframe");
-	oWinMenuAddSubmenu(hMenu, hHelpMenu, "&Help");
-	oWinMenuAddMenuItem(hHelpMenu, MENU_HELP_ABOUT, "&About...");
-	oWinMenuSet(hTopLevel, hMenu);
-
-	RECT rDesktop;
-	GetClientRect(GetDesktopWindow(), &rDesktop);
-	RECT r = oWinRectResolve(rDesktop, int2(0,0), int2(640,480), oMIDDLECENTER, true);
-
-	if (!oWinSetStyle(hTopLevel, oWINDOW_SIZEABLE, &r))
-		return;
-
-	*_pSuccess = true;
-}
-
-oWindowUITest::~oWindowUITest()
-{
-	if (hTopLevel)
-		DestroyWindow(hTopLevel);
-}
-
-void oWindowUITest::Run()
-{
-	oWinSetState(hTopLevel, oWINDOW_RESTORED);
-
-	bool More = false;
-	while (Running || More)
-		More = oWinProcessSingleMessage(hTopLevel, true);
-}
-
-//#define DEBUGGING_WINDOWS_MESSAGES
-#ifdef DEBUGGING_WINDOWS_MESSAGES
-	oDEFINE_WNDPROC_DEBUG(oWindowUITest, StaticWndProc);
-#else
-	oDEFINE_WNDPROC(oWindowUITest, StaticWndProc);
-#endif
-
-LRESULT oWindowUITest::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
-{
-	switch (_uMsg)
-	{
-		case WM_CLOSE:
-			Running = false;
-			PostQuitMessage(0);
-			return 0;
-
-		case WM_COMMAND:
-			if (HIWORD(_wParam) == 0)
-			{
-				switch (LOWORD(_wParam))
-				{
-					case MENU_FILE_OPEN:
-						break;
-					case MENU_FILE_EXIT:
-						PostMessage(_hWnd, WM_CLOSE, 0, 0);
-						break;
-					case MENU_EDIT_CUT:
-						break;
-					case MENU_EDIT_COPY:
-						break;
-					case MENU_EDIT_PASTE:
-						break;
-					case MENU_VIEW_SOLID:
-						oWinMenuCheck(hViewMenu, MENU_VIEW_SOLID, true);
-						oWinMenuCheck(hViewMenu, MENU_VIEW_WIREFRAME, false);
-						oWinMenuEnable(hFileMenu, MENU_FILE_EXIT);
-						break;
-					case MENU_VIEW_WIREFRAME:
-						oWinMenuCheck(hViewMenu, MENU_VIEW_SOLID, false);
-						oWinMenuCheck(hViewMenu, MENU_VIEW_WIREFRAME, true);
-						oWinMenuEnable(hFileMenu, MENU_FILE_EXIT, false);
-						break;
-					case MENU_HELP_ABOUT:
-						break;
-					default:
-						break;
-				}
-
-				if (oWinMenuIsChecked(hViewMenu, MENU_VIEW_SOLID))
-					oTRACE("View Solid");
-				else if (oWinMenuIsChecked(hViewMenu, MENU_VIEW_WIREFRAME))
-					oTRACE("View Wireframe");
-				else
-					oTRACE("View Nothing");
-
-				oTRACE("Exit is %sabled", oWinMenuIsEnabled(hFileMenu, MENU_FILE_EXIT) ? "en" : "dis");
-			}
-
-			return 0;
-
-		default:
-			break;
-	}
-
-	return DefWindowProc(_hWnd, _uMsg, _wParam, _lParam);
-}
-
-struct TESTWindowUI : public oTest
-{
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus)
-	{
-		bool success = false;
-		oWindowUITest test(&success);
-		oTESTB0(success);
-		test.Run();
-		return SUCCESS;
-	}
-};
-
-class oSystemProperties
-{
-	enum Controls
-	{
-		TAB,
-
-		BT_OK,
-		BT_CANCEL,
-		BT_APPLY,
-
-		AD_GB_PERF,
-		AD_GB_USER,
-		AD_GB_STARTUP,
-		AD_LB_ADMIN,
-		AD_LB_PERF,
-		AD_LB_USER,
-		AD_LB_STARTUP,
-		AD_BT_PERF,
-		AD_BT_USER,
-		AD_BT_STARTUP,
-		AD_BT_ENV,
-	};
-
-public:
-	oSystemProperties(bool* _pSuccess);
-	~oSystemProperties();
-
-	oDECLARE_WNDPROC(, WndProc);
-	oDECLARE_WNDPROC(static, StaticWndProc);
-
-	void Run();
-
-private:
-	HWND hTopLevel;
-	HWND hTab;
-};
-
-oSystemProperties::oSystemProperties(bool* _pSuccess)
-{
-	*_pSuccess = false;
-	if (!oWinCreate(&hTopLevel, StaticWndProc, this, true))
-		return;
-
-	if (!oWinSetTitle(hTopLevel, "System Properties"))
-		return;
-
-	RECT r;
-	r.left = 100;
-	r.top = 100;
-	r.right = 510;
-	r.bottom = 540;
-	if (!oWinSetStyle(hTopLevel, oWINDOW_DIALOG, &r))
-		return;
-
-	if (!oWinSetState(hTopLevel, oWINDOW_RESTORED))
-		return;
-	{
-		oWINDOW_CONTROL_DESC ctl;
-		ctl.hParent = hTopLevel;
-		ctl.Type = oWINDOW_CONTROL_BUTTON_DEFAULT;
-		ctl.Text = "OK";
-		ctl.Position = int2(168,410);
-		ctl.Dimensions = int2(74,23);
-		ctl.ID = BT_OK;
-		ctl.StartsNewGroup = false;
-		oVERIFY(oWinControlCreate(ctl));
-
-		ctl.Type = oWINDOW_CONTROL_BUTTON;
-		ctl.Text = "Cancel";
-		ctl.Position.x += ctl.Dimensions.x + 7;
-		ctl.ID = BT_CANCEL;
-		oVERIFY(oWinControlCreate(ctl));
-
-		ctl.Text = "&Apply";
-		ctl.Position.x += ctl.Dimensions.x + 7;
-		ctl.ID = BT_APPLY;
-		HWND hApply = oWinControlCreate(ctl);
-		oVERIFY(oWinSetEnabled(hApply, false));
-	}
-
-	{
-		oWINDOW_CONTROL_DESC ctl;
-		ctl.hParent = hTopLevel;
-		ctl.Type = oWINDOW_CONTROL_TAB;
-		ctl.Text = "SysPropTabs";
-		ctl.Position = int2(5,4);
-		ctl.Dimensions = int2(400,400);
-		ctl.ID = TAB;
-		ctl.StartsNewGroup = false;
-		hTab = oWinControlCreate(ctl);
-		oVERIFY(oWinControlAddListItem(hTab, "Computer Name"));
-		oVERIFY(oWinControlAddListItem(hTab, "Hardware"));
-		oVERIFY(oWinControlAddListItem(hTab, "Advanced"));
-		oVERIFY(oWinControlAddListItem(hTab, "System Protection"));
-		oVERIFY(oWinControlAddListItem(hTab, "Remote"));
-
-		oVERIFY(oWinControlSelect(hTab, oWinControlFindListItem(hTab, "Advanced")));
-	}
-
-	RECT rTab;
-	GetClientRect(hTab, &rTab);
-
-	oWINDOW_CONTROL_DESC ctl;
-	ctl.hParent = hTab;
-	ctl.Type = oWINDOW_CONTROL_GROUPBOX;
-	ctl.Text = "Performance";
-	ctl.Position = int2(rTab.left + 21,63);
-	ctl.Dimensions = int2(oWinRectW(rTab) - 42, 85);
-	ctl.ID = AD_GB_PERF;
-	ctl.StartsNewGroup = false;
-	oVERIFY(oWinControlCreate(ctl));
-
-	ctl.Text = "User Profiles";
-	ctl.Position.y += ctl.Dimensions.y + 8;
-	ctl.ID = AD_GB_USER;
-	oVERIFY(oWinControlCreate(ctl));
-
-	ctl.Text = "Startup and Recovery";
-	ctl.Position.y += ctl.Dimensions.y + 8;
-	ctl.ID = AD_GB_STARTUP;
-	oVERIFY(oWinControlCreate(ctl));
-
-	ctl.Type = oWINDOW_CONTROL_LABEL;
-	ctl.Position = int2(rTab.left + 21,33);
-	ctl.Dimensions = int2(oWinRectW(rTab) - 42, 20);
-	ctl.Text = "You must be logged on as an Administrator to make most of these changes.";
-	ctl.ID = AD_LB_ADMIN;
-	oVERIFY(oWinControlCreate(ctl));
-
-	*_pSuccess = true;
-}
-
-oSystemProperties::~oSystemProperties()
-{
-	if (hTopLevel)
-		DestroyWindow(hTopLevel);
-}
-
-void oSystemProperties::Run()
-{
-	while (oWinProcessSingleMessage(hTopLevel));
-}
-
-//#define DEBUGGING_WINDOWS_MESSAGES
-#ifdef DEBUGGING_WINDOWS_MESSAGES
-oDEFINE_WNDPROC_DEBUG(oSystemProperties, StaticWndProc);
-#else
-oDEFINE_WNDPROC(oSystemProperties, StaticWndProc);
-#endif
-
-LRESULT oSystemProperties::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
-{
-	switch (_uMsg)
-	{
-		case WM_CLOSE:
-			PostQuitMessage(0);
-			return 0;
-
-		case WM_NOTIFY:
-		{
-			const NMHDR& n = *(NMHDR*)_lParam;
-			if (n.hwndFrom == hTab && n.idFrom == TAB)
-			{
-				oTRACE("TCN Code = %s", oWinAsStringTCN(n.code));
-			}
-
-			break;
-		}
-
-		case WM_COMMAND:
-		{
- 			switch (LOWORD(_wParam))
-			{
-				case BT_OK: PostQuitMessage(0); break;
-				case BT_CANCEL: PostQuitMessage(0); break;
-				case BT_APPLY: oWinSetEnabled((HWND)_lParam, false); break;
-				case AD_GB_PERF: break;
-				case AD_GB_USER: break;
-				case AD_GB_STARTUP: break;
-				case AD_LB_ADMIN: break;
-				case AD_LB_PERF: break;
-				case AD_LB_USER: break;
-				case AD_LB_STARTUP: break;
-				case AD_BT_PERF: break;
-				case AD_BT_USER: break;
-				case AD_BT_STARTUP: break;
-				case AD_BT_ENV: break;
-				default:
-					break;
-			}
-
-			if (LOWORD(_wParam) != BT_APPLY)
-				oWinSetEnabled((HWND)_lParam, true);
-			break;
-		}
-
-	default:
-		break;
-	}
-
-	return DefWindowProc(_hWnd, _uMsg, _wParam, _lParam);
-}
-
-struct TESTWindowUISystemProperties : public oTest
-{
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus)
-	{
-		bool success = false;
-		oSystemProperties test(&success);
-		oTESTB0(success);
-		test.Run();
-		return SUCCESS;
-	}
-};
-
-class WindowInWindow
-{
-public:
-	WindowInWindow(bool* _pSuccess)
-		: hTopLevel(nullptr)
-		, Running(true)
-	{
-		*_pSuccess = false;
-
-		if (!oWinCreate(&hTopLevel, StaticWndProc, this, true))
-			return; // pass through error
-
-		RECT rDesktop;
-		GetClientRect(GetDesktopWindow(), &rDesktop);
-		RECT r = oWinRectResolve(rDesktop, int2(0,0), int2(640,480), oMIDDLECENTER, true);
-
-		oWinSetTitle(hTopLevel, "Window In Window Test");
-
-		if (!oWinSetStyle(hTopLevel, oWINDOW_SIZEABLE, &r))
-			return;
-
-		oD3D11_DEVICE_DESC DevDesc("TestDevice");
-		DevDesc.MinimumAPIFeatureLevel = oVersion(10,0);
-		DevDesc.Debug = true;
-
-		oRef<ID3D11Device> D3D11Device;
-		oVERIFY(oD3D11CreateDevice(DevDesc, &D3D11Device));
-
-		oWindow::DESC WinDesc;
-		WinDesc.Style = oWindow::BORDERLESS;
-		WinDesc.ClientPosition = int2(20,20);
-		WinDesc.ClientSize = int2(100,100);
-
-		if (!oWindowCreate(WinDesc, D3D11Device, oWindow::USE_GDI, &MediaWindow))
-			return;
-
-		MediaWindow->Hook(oBIND(&WindowInWindow::Render, this, oBIND1, oBIND2, oBIND3, MediaWindow.c_ptr()));
-
-		//SetWindowLongPtr((HWND)MediaWindow->GetNativeHandle(), GWLP_HWNDPARENT, (LONG_PTR)hTopLevel.c_ptr());
-
-		SetParent((HWND)MediaWindow->GetNativeHandle(), hTopLevel);
-
-		oWINDOW_CONTROL_DESC ButtonDesc;
-		ButtonDesc.hParent = hTopLevel;
-		ButtonDesc.Type = oWINDOW_CONTROL_BUTTON;
-		ButtonDesc.Text = "&Push Me";
-		ButtonDesc.Position = int2(120,20);
-		ButtonDesc.Dimensions = int2(100,25);
-		ButtonDesc.ID = 0;
-		ButtonDesc.StartsNewGroup = false;
-
-		oWinControlCreate(ButtonDesc);
-
-		*_pSuccess = true;
-	}
-
-	~WindowInWindow()
-	{
-		SetParent((HWND)MediaWindow->GetNativeHandle(), nullptr);
-	}
-
-	bool Render(oWindow::EVENT _Event, const float3& _Position, int _Value, threadsafe oWindow* _pWindow)
-	{
-		switch (_Event)
-		{
-			case oWindow::DRAW_BACKBUFFER:
-			{
-				static int counter = 0;
-
-				const FLOAT RGBA[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-				const FLOAT RGBA2[] = { 0.0f, 0.0f, 1.0f, 1.0f };
-
-				oRef<ID3D11Device> D3D11Device;
-				oVERIFY(_pWindow->QueryInterface((const oGUID&)__uuidof(ID3D11Device), &D3D11Device));
-
-				oRef<ID3D11DeviceContext> DevContext;
-				D3D11Device->GetImmediateContext(&DevContext);
-
-				oRef<ID3D11RenderTargetView> RTV;
-				oVERIFY(_pWindow->QueryInterface((const oGUID&)__uuidof(ID3D11RenderTargetView), &RTV));
-
-				DevContext->ClearRenderTargetView(RTV, (counter++ & 0x1)?RGBA:RGBA2);
-
-				DevContext->Flush();
-				break;
-			}
-
-		default:
-			break;
-		}
-
-		return true;
-	}
-
-	void Run()
-	{
-		oWinSetState(hTopLevel, oWINDOW_RESTORED);
-		bool More = false;
-		double time = oTimer();
-		while (Running || More)
-		{
-			More = oWinProcessSingleMessage(hTopLevel, true);
-
-			if (time < (oTimer() + 0.2))
-				MediaWindow->Refresh(false);
-		}
-	}
-
-	oDECLARE_WNDPROC(, WndProc);
-	oDECLARE_WNDPROC(static, StaticWndProc);
-
-private:
-	oRef<oWindow> MediaWindow;
-	oScopedHWND hTopLevel;
-	bool Running;
-};
-
-//#define DEBUGGING_WINDOWS_MESSAGES
-#ifdef DEBUGGING_WINDOWS_MESSAGES
-	oDEFINE_WNDPROC_DEBUG(WindowInWindow, StaticWndProc);
-#else
-	oDEFINE_WNDPROC(WindowInWindow, StaticWndProc);
-#endif
-
-LRESULT WindowInWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
-{
-	switch (_uMsg)
-	{
-		case WM_SIZE:
-			if (MediaWindow)
-				MediaWindow->Refresh();
-			break;
-
-		case WM_CLOSE:
-			Running = false;
-			PostQuitMessage(0);
-			return 0;
-		default:
-			break;
-	}
-
-	return DefWindowProc(_hWnd, _uMsg, _wParam, _lParam);
-}
-
-struct TESTWindowInWindow : public oTest
-{
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus)
-	{
-		bool success = false;
-		WindowInWindow test(&success);
-		oTESTB0(success);
-		test.Run();
-		return SUCCESS;
-	}
-};
-
 oTEST_REGISTER(TESTWindowD2D);
 oTEST_REGISTER(TESTWindowGDI);
-//oTEST_REGISTER(TESTWindowD3D11);
-//oTEST_REGISTER(TESTWindowUI);
-//oTEST_REGISTER(TESTWindowUISystemProperties);
-//oTEST_REGISTER(TESTWindowInWindow);

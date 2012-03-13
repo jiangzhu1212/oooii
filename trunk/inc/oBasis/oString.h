@@ -26,6 +26,7 @@
 #define oString_h
 
 #include <oBasis/oMacros.h>
+#include <oBasis/oPlatformFeatures.h>
 #include <stdarg.h> // va_start
 #include <stddef.h> // errno_t
 
@@ -60,7 +61,7 @@ char* oPruneWhitespace(char* _StrDestination, size_t _SizeofStrDestination, cons
 char* oAddTruncationElipse(char* _StrDestination, size_t _SizeofStrDestination);
 
 // replace all occurrences of strFind in strSource with strReplace and copy the result to strDestination
-errno_t oReplace(char* _StrResult, size_t _SizeofStrResult, const char* _StrSource, const char* _StrFind, const char* _StrReplace);
+errno_t oReplace(char* oRESTRICT _StrResult, size_t _SizeofStrResult, const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace);
 
 // Search from the back of the string to find the specified substring
 const char* oStrStrReverse(const char* _Str, const char* _SubStr);

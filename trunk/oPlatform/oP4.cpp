@@ -30,52 +30,189 @@
 #include <oPlatform/oSystem.h>
 #include <time.h>
 
-template<> const char* oAsString(const oP4::SUBMIT_OPTIONS& _Value)
+static bool oP4IsExecutionError(const char* _P4ResponseString)
+{
+	static const char* sErrStrings[] =
+	{
+		"host unknown",
+		"use 'client' command to create it",
+	};
+
+	for (size_t i = 0; i < oCOUNTOF(sErrStrings); i++)
+	if (strstr(_P4ResponseString, sErrStrings[i]))
+		return true;
+	return false;
+}
+
+static bool oP4Execute(const char* _CommandLine, const char* _CheckValidString, char* _P4ResponseString, size_t _SizeofP4ResponseString)
+{
+	if (!oSystemExecute(_CommandLine, _P4ResponseString, _SizeofP4ResponseString, 0, 5000))
+		return false; // pass through error
+	if (oP4IsExecutionError(_P4ResponseString) || (oSTRVALID(_CheckValidString) && !strstr(_P4ResponseString, _CheckValidString)))
+		return oErrorSetLast(oERROR_NOT_FOUND, _P4ResponseString);
+	return true;
+}
+
+template<typename T, size_t Capacity> inline bool oP4Execute(const char* _CommandLine, const char* _CheckValidString, oFixedString<T, Capacity>& _P4ResponseString) { return oP4Execute(_CommandLine, _CheckValidString, _P4ResponseString, _P4ResponseString.capacity()); }
+
+const char* oAsString(const oP4_OPEN_TYPE& _Value)
 {
 	switch (_Value)
 	{
-		case oP4::SUBMIT_UNCHANGED: return "submitunchanged";
-		case oP4::SUBMIT_UNCHANGED_REOPEN: return "submitunchanged+reopen";
-		case oP4::REVERT_UNCHANGED: return "revertunchanged";
-		case oP4::REVERT_UNCHANGED_REOPEN: return "revertunchanged+reopen";
-		case oP4::LEAVE_UNCHANGED: return "leaveunchanged";
-		case oP4::LEAVE_UNCHANGED_REOPEN: return "leaveunchanged+reopen";
+		case oP4_OPEN_FOR_EDIT: return "edit";
+		case oP4_OPEN_FOR_ADD: return "add";
+		case oP4_OPEN_FOR_DELETE: return "delete";
 		oNODEFAULT;
 	}
 }
 
-template<> const char* oAsString(const oP4::LINE_END& _Value)
+bool oFromString(oP4_OPEN_TYPE* _pValue, const char* _StrSource)
+{
+	for (size_t i = 0; i <= oP4_OPEN_FOR_DELETE; i++)
+	{
+		if (!strcmp(_StrSource, oAsString((oP4_OPEN_TYPE)i)))
+		{
+			*_pValue = (oP4_OPEN_TYPE)i;
+			return true;
+		}
+	}
+	return false;
+}
+
+const char* oAsString(const oP4_SUBMIT_OPTIONS& _Value)
 {
 	switch (_Value)
 	{
-		case oP4::LOCAL: return "local";
-		case oP4::UNIX: return "unix";
-		case oP4::MAC: return "mac";
-		case oP4::WIN: return "win";
-		case oP4::SHARE: return "share";
+		case oP4_SUBMIT_UNCHANGED: return "submitunchanged";
+		case oP4_SUBMIT_UNCHANGED_REOPEN: return "submitunchanged+reopen";
+		case oP4_REVERT_UNCHANGED: return "revertunchanged";
+		case oP4_REVERT_UNCHANGED_REOPEN: return "revertunchanged+reopen";
+		case oP4_LEAVE_UNCHANGED: return "leaveunchanged";
+		case oP4_LEAVE_UNCHANGED_REOPEN: return "leaveunchanged+reopen";
+		oNODEFAULT;
+	}
+}
+
+bool oFromString(oP4_SUBMIT_OPTIONS* _pValue, const char* _StrSource)
+{
+	for (size_t i = 0; i <= oP4_LEAVE_UNCHANGED_REOPEN; i++)
+	{
+		if (!strcmp(_StrSource, oAsString((oP4_SUBMIT_OPTIONS)i)))
+		{
+			*_pValue = (oP4_SUBMIT_OPTIONS)i;
+			return true;
+		}
+	}
+	return false;
+}
+
+const char* oAsString(const oP4_LINE_END& _Value)
+{
+	switch (_Value)
+	{
+		case oP4_LINE_END_LOCAL: return "local";
+		case oP4_LINE_END_UNIX: return "unix";
+		case oP4_LINE_END_MAC: return "mac";
+		case oP4_LINE_END_WIN: return "win";
+		case oP4_LINE_END_SHARE: return "share";
  		oNODEFAULT;
 	}
 }
 
-namespace oP4 {
-
-oP4::SUBMIT_OPTIONS GetSubmitOptions(const char* _P4String)
+bool oFromString(oP4_LINE_END* _pValue, const char* _StrSource)
 {
-	for (size_t i = 0; i <= oP4::LEAVE_UNCHANGED_REOPEN; i++)
-		if (!strcmp(_P4String, oAsString((oP4::SUBMIT_OPTIONS)i)))
-			return (oP4::SUBMIT_OPTIONS)i;
-	return oP4::SUBMIT_UNCHANGED;
+	for (size_t i = 0; i <= oP4_LINE_END_SHARE; i++)
+	{
+		if (!strcmp(_StrSource, oAsString((oP4_LINE_END)i)))
+		{
+			*_pValue = (oP4_LINE_END)i;
+			return true;
+		}
+	}
+	return false;
 }
 
-oP4::LINE_END GetLineEnd(const char* _P4String)
+bool oP4GetClientSpecString(char* _P4ClientSpecString, size_t _SizeofP4ClientSpecString)
 {
-	for (size_t i = 0; i <= oP4::SHARE; i++)
-		if (!strcmp(_P4String, oAsString((oP4::LINE_END)i)))
-			return (oP4::LINE_END)i;
-	return oP4::LOCAL;
+	return oP4Execute("p4 client -o", "# A Perforce Client", _P4ClientSpecString, _SizeofP4ClientSpecString);
 }
 
-time_t GetTime(const char* _P4TimeString)
+bool oP4Open(oP4_OPEN_TYPE _Type, const char* _Path)
+{
+	oStringXL cmdline, validstring, response;
+	sprintf_s(cmdline, "p4 %s \"%s\"", oAsString(_Type), oSAFESTR(_Path));
+	sprintf_s(validstring, " - opened for %s", oAsString(_Type));
+	return oP4Execute(cmdline, validstring, response);
+}
+
+bool oP4Revert(const char* _Path)
+{
+	oStringXL cmdline, response;
+	sprintf_s(cmdline, "p4 revert \"%s\"", _Path);
+	return oP4Execute(cmdline, ", reverted", response);
+}
+
+size_t oP4ListOpened(oP4_FILE_DESC* _pOpenedFiles, size_t _MaxNumOpenedFiles)
+{
+	oStringXL cmdline;
+	std::vector<char> response;
+	response.resize(oKB(100));
+	sprintf_s(cmdline, "p4 opened -m %u", _MaxNumOpenedFiles);
+	if (!oP4Execute(cmdline, nullptr, oGetData(response), response.size()))
+		return oInvalid; // pass through error
+
+	if (!strncmp("File(s) not", oGetData(response), 11))
+	{
+		oErrorSetLast(oERROR_END_OF_FILE, "%s", oGetData(response));
+		return 0;
+	}
+
+	char* c = oGetData(response);
+	char* end = c + strlen(c);
+
+	size_t i = 0;
+	while (c < end)
+	{
+		char* hash = c + strcspn(c, "#");
+		char* dash = hash + strcspn(hash, "-");
+
+		*hash = 0;
+		_pOpenedFiles[i].Path = c;
+
+		*dash = 0;
+		_pOpenedFiles[i].Revision = atoi(hash+1);
+
+		char* attribs = dash+1;
+		c = attribs + strcspn(attribs, oNEWLINE);
+		*c = 0;
+
+		char* ctx = nullptr;
+		char* tok = oStrTok(attribs, " ", &ctx);
+		oFromString(&_pOpenedFiles[i].OpenType, tok);
+
+		tok = oStrTok(nullptr, " ", &ctx);
+		if (!strcmp("default", tok))
+			_pOpenedFiles[i].Changelist = oInvalid;
+
+		tok = oStrTok(nullptr, " ", &ctx);
+		if (strcmp("change", tok))
+			_pOpenedFiles[i].Changelist = atoi(tok);
+
+		tok = oStrTok(nullptr, " ", &ctx);
+		_pOpenedFiles[i].IsText = !strcmp("(text)", tok);
+
+		oStrTokClose(&ctx);
+
+		c = c + 1 + strspn(c + 1, oNEWLINE);
+		i++;
+		if (i >= _MaxNumOpenedFiles)
+			break;
+	}
+
+	return i;
+}
+
+time_t oP4ParseTime(const char* _P4TimeString)
 {
 	int Y,M,D,h,m,s;
 	sscanf_s(_P4TimeString, "%d/%d/%d %d:%d:%d", &Y,&M,&D,&h,&m,&s);
@@ -89,11 +226,11 @@ time_t GetTime(const char* _P4TimeString)
 	return mktime(&t);
 }
 
-//Determine if a given string is the next non-whitespace text in a string.
-#define NEXT_STR_EXISTS(str1, str2, bExists) str1 += strspn(str1, oWHITESPACE); bExists = ((str1 - strstr(str1, str2)) == 0) ? true : false
-
-bool GetClientSpec(CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpecString)
+bool oP4ParseClientSpec(oP4_CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpecString)
 {
+	// Determine if a given string is the next non-whitespace text in a string.
+	#define NEXT_STR_EXISTS(str1, str2, bExists) str1 += strspn(str1, oWHITESPACE); bExists = ((str1 - strstr(str1, str2)) == 0) ? true : false
+
 	// move past commented text
 	const char* c = _P4ClientSpecString;
 	c = strstr(c, "views and options.");
@@ -111,13 +248,13 @@ bool GetClientSpec(CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpecString)
 	NEXT_STR_EXISTS(c, "Update:", bNextStrExists);
 	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
-	_pClientSpec->LastUpdated = GetTime(tmp);
+	_pClientSpec->LastUpdated = oP4ParseTime(tmp);
 
 	//Access
 	NEXT_STR_EXISTS(c, "Access:", bNextStrExists);
 	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
-	_pClientSpec->LastAccessed = GetTime(tmp);
+	_pClientSpec->LastAccessed = oP4ParseTime(tmp);
 
 	//Owner
 	NEXT_STR_EXISTS(c,"Owner:", bNextStrExists);
@@ -160,13 +297,15 @@ bool GetClientSpec(CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpecString)
 	NEXT_STR_EXISTS(c, "SubmitOptions:", bNextStrExists);
 	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
-	_pClientSpec->SubmitOptions = GetSubmitOptions(tmp);
+	if (!oFromString(&_pClientSpec->SubmitOptions, tmp))
+		return false;
 
 	//LineEnd
 	NEXT_STR_EXISTS(c, "LineEnd:", bNextStrExists);
 	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
-	_pClientSpec->LineEnd = GetLineEnd(tmp);
+	if (!oFromString(&_pClientSpec->LineEnd, tmp))
+		return false;
 
 	// View is multi-line...
 	c += strspn(c, oWHITESPACE);
@@ -174,59 +313,5 @@ bool GetClientSpec(CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpecString)
 	strcpy_s(_pClientSpec->View, c);
 
 	return true;
+	#undef NEXT_STR_EXISTS
 }
-
-static bool Execute(const char* _CommandLine, const char* _CheckValidString, char* _P4ResponseString, size_t _SizeofP4ResponseString)
-{
-	if (!oSystemExecute(_CommandLine, _P4ResponseString, _SizeofP4ResponseString, 0, 10000))
-		return false;
-
-	if (!strstr(_P4ResponseString, _CheckValidString))
-	{
-		oErrorSetLast(oERROR_NOT_FOUND, _P4ResponseString);
-		return false;
-	}
-
-	return true;
-}
-
-template<size_t size> inline bool Execute(const char* _CommandLine, const char* _CheckValidString, char (&_P4ResponseString)[size]) { return Execute(_CommandLine, _CheckValidString, _P4ResponseString, size); }
-
-bool GetClientSpecString(char* _P4ClientSpecString, size_t _SizeofP4ClientSpecString)
-{
-	return Execute("p4 client -o", "# A Perforce Client", _P4ClientSpecString, _SizeofP4ClientSpecString);
-}
-
-bool MarkForEdit(const char* _Path)
-{
-	char cmdline[1024];
-	char response[1024];
-	sprintf_s(cmdline, "p4 edit \"%s\"", _Path);
-	return Execute(cmdline, " - opened for edit", response);
-}
-
-bool MarkForAdd(const char* _Path)
-{
-	char cmdline[1024];
-	char response[1024];
-	sprintf_s(cmdline, "p4 add \"%s\"", _Path);
-	return Execute(cmdline, " - opened for add", response);
-}
-
-bool MarkForDelete(const char* _Path)
-{
-	char cmdline[1024];
-	char response[1024];
-	sprintf_s(cmdline, "p4 delete \"%s\"", _Path);
-	return Execute(cmdline, " - opened for delete", response);
-}
-
-bool Revert(const char* _Path)
-{
-	char cmdline[1024];
-	char response[1024];
-	sprintf_s(cmdline, "p4 revert \"%s\"", _Path);
-	return Execute(cmdline, ", reverted", response);
-}
-
-} // namespace oP4

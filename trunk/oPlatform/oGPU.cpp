@@ -85,6 +85,52 @@ bool oGPUEnum(unsigned int _Index, oGPU_DESC* _pDesc)
 	return oErrorSetLast(oERROR_NOT_FOUND, "oGPUEnum not yet implemented on pre-DX10 Windows");
 }
 
+unsigned int oGPUFindIndex(void* _NativeAdapterRelatedObject)
+{
+	IUnknown* pUnk = static_cast<IUnknown*>(_NativeAdapterRelatedObject);
+
+	oRef<IDXGIAdapter> DeviceAdapter;
+	if (FAILED(pUnk->QueryInterface(&DeviceAdapter)))
+	{
+		oRef<IDXGIDevice> DXGIDevice;
+		if FAILED(pUnk->QueryInterface(&DXGIDevice))
+		{
+			oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified object is not a recognizable native object");
+			return oInvalid;
+		}
+
+		if (FAILED(DXGIDevice->GetAdapter(&DeviceAdapter)))
+		{
+			oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified object is not a recognizable native object");
+			return oInvalid;
+		}
+	}
+
+	oRef<IDXGIFactory> DXGIFactory;
+	if (!oDXGIGetFactory(DeviceAdapter, &DXGIFactory))
+	{
+		// pass through last error
+		return oInvalid;
+	}
+
+	DXGI_ADAPTER_DESC DeviceAdapterDesc, AdapterDesc;
+	DeviceAdapter->GetDesc(&DeviceAdapterDesc);
+
+	unsigned int index = 0;
+	oRef<IDXGIAdapter> Adapter;
+	while (DXGI_ERROR_NOT_FOUND != DXGIFactory->EnumAdapters(index, &Adapter))
+	{
+		Adapter->GetDesc(&AdapterDesc);
+		if (!memcmp(&DeviceAdapterDesc.AdapterLuid, &AdapterDesc.AdapterLuid, sizeof(LUID)))
+			return index;
+		Adapter = nullptr;
+		index++;
+	}
+
+	oErrorSetLast(oERROR_END_OF_FILE, "The specified object's index could not be found");
+	return oInvalid;
+}
+
 bool oGPUFindD3DCapable(unsigned int _NthMatch, const oVersion& _MinimumFeatureLevel, oGPU_DESC* _pDesc)
 {
 	unsigned int UserGPUIndex = oInvalid;

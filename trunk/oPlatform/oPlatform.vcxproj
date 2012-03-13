@@ -135,7 +135,6 @@
     <ClInclude Include="..\inc\oPlatform\oD2D.h" />
     <ClInclude Include="..\inc\oPlatform\oD3D10.h" />
     <ClInclude Include="..\inc\oPlatform\oD3D11.h" />
-    <ClInclude Include="..\inc\oPlatform\oD3DX11.h" />
     <ClInclude Include="..\inc\oPlatform\oDateTime.h" />
     <ClInclude Include="..\inc\oPlatform\oDispatchQueueConcurrentWTP.h" />
     <ClInclude Include="..\inc\oPlatform\oDisplay.h" />
@@ -144,6 +143,7 @@
     <ClInclude Include="..\inc\oPlatform\oFile.h" />
     <ClInclude Include="..\inc\oPlatform\oGDI.h" />
     <ClInclude Include="..\inc\oPlatform\oGPU.h" />
+    <ClInclude Include="..\inc\oPlatform\oGUI.h" />
     <ClInclude Include="..\inc\oPlatform\oMirroredArena.h" />
     <ClInclude Include="..\inc\oPlatform\oMsgBox.h" />
     <ClInclude Include="..\inc\oPlatform\oPageAllocator.h" />
@@ -157,10 +157,14 @@
     <ClInclude Include="..\inc\oPlatform\oThreadX.h" />
     <ClInclude Include="..\inc\oPlatform\oVKToX11Keyboard.h" />
     <ClInclude Include="..\inc\oPlatform\oWinAsString.h" />
+    <ClInclude Include="..\inc\oPlatform\oWinCursor.h" />
+    <ClInclude Include="..\inc\oPlatform\oWinDialog.h" />
     <ClInclude Include="..\inc\oPlatform\oWindow.h" />
     <ClInclude Include="..\inc\oPlatform\oWindows.h" />
     <ClInclude Include="..\inc\oPlatform\oWindowUI.h" />
+    <ClInclude Include="..\inc\oPlatform\oWinMenu.h" />
     <ClInclude Include="..\inc\oPlatform\oWinRect.h" />
+    <ClInclude Include="..\inc\oPlatform\oWinStatusBar.h" />
     <ClInclude Include="..\inc\oPlatform\oWinTray.h" />
     <ClInclude Include="..\inc\oPlatform\oWinWindowing.h" />
     <ClInclude Include="..\inc\oPlatform\oDebugger.h" />
@@ -180,20 +184,28 @@
     <ClInclude Include="oCamera_QEdit.h" />
     <ClInclude Include="oCRTLeakTracker.h" />
     <ClInclude Include="oD2DWindowUI.h" />
-    <ClInclude Include="oDbgHelp.h" />
     <ClInclude Include="oGDIWindowUI.h" />
     <ClInclude Include="oIOCP.h" />
     <ClInclude Include="oKeyState.h" />
-    <ClInclude Include="oOpenSSL.h" />
     <ClInclude Include="oSpinlockEx.h" />
     <ClInclude Include="oStaticMutex.h" />
-    <ClInclude Include="oWinCommCtrl.h" />
     <ClInclude Include="oWindowUIElementBaseMixin.h" />
-    <ClInclude Include="oWinDWMAPI.h" />
-    <ClInclude Include="oWinPowrProf.h" />
-    <ClInclude Include="oWinPSAPI.h" />
-    <ClInclude Include="oWinsock.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="SoftLink\oD3DX11.h" />
+    <ClInclude Include="SoftLink\oOpenSSL.h" />
+    <ClInclude Include="SoftLink\oWinCommCtrl.h" />
+    <ClInclude Include="SoftLink\oWinD2D.h" />
+    <ClInclude Include="SoftLink\oWinD3D10.h" />
+    <ClInclude Include="SoftLink\oWinDbgHelp.h" />
+    <ClInclude Include="SoftLink\oWinDWMAPI.h" />
+    <ClInclude Include="SoftLink\oWinDWrite.h" />
+    <ClInclude Include="SoftLink\oWinDXGI.h" />
+    <ClInclude Include="SoftLink\oWinKernel32.h" />
+    <ClInclude Include="SoftLink\oWinMSIMG32.h" />
+    <ClInclude Include="SoftLink\oWinPowrProf.h" />
+    <ClInclude Include="SoftLink\oWinPSAPI.h" />
+    <ClInclude Include="SoftLink\oWinsock.h" />
+    <ClInclude Include="SoftLink\oWinSoftLinkCommon.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FreeImageHelpers.cpp" />
@@ -206,9 +218,7 @@
     <ClCompile Include="oD2DWindowUI.cpp" />
     <ClCompile Include="oD3D10.cpp" />
     <ClCompile Include="oD3D11.cpp" />
-    <ClCompile Include="oD3DX11.cpp" />
     <ClCompile Include="oDateTime.cpp" />
-    <ClCompile Include="oDbgHelp.cpp" />
     <ClCompile Include="oDebugger.cpp" />
     <ClCompile Include="oDispatchQueueConcurrentWTP.cpp" />
     <ClCompile Include="oDisplay.cpp" />
@@ -219,13 +229,14 @@
     <ClCompile Include="oGDI.cpp" />
     <ClCompile Include="oGDIWindowUI.cpp" />
     <ClCompile Include="oGPU.cpp" />
+    <ClCompile Include="oGUI.cpp" />
     <ClCompile Include="oImage.cpp" />
+    <ClCompile Include="oInvisible_ico.cpp" />
     <ClCompile Include="oIOCP.cpp" />
     <ClCompile Include="oMirroredArena.cpp" />
     <ClCompile Include="oModule.cpp" />
     <ClCompile Include="oMsgBox.cpp" />
     <ClCompile Include="oooii_icon.cpp" />
-    <ClCompile Include="oOpenSSL.cpp" />
     <ClCompile Include="oP4.cpp" />
     <ClCompile Include="oPageAllocator.cpp" />
     <ClCompile Include="oProcess.cpp" />
@@ -243,15 +254,14 @@
     <ClCompile Include="oVKToX11Keyboard.cpp" />
     <ClCompile Include="oVTable.cpp" />
     <ClCompile Include="oWinAsString.cpp" />
-    <ClCompile Include="oWinCommCtrl.cpp" />
+    <ClCompile Include="oWinCursor.cpp" />
+    <ClCompile Include="oWinDialog.cpp" />
     <ClCompile Include="oWindow.cpp" />
     <ClCompile Include="oWindows.cpp" />
     <ClCompile Include="oWindowUI.cpp" />
-    <ClCompile Include="oWinDWMAPI.cpp" />
-    <ClCompile Include="oWinPowrProf.cpp" />
-    <ClCompile Include="oWinPSAPI.cpp" />
+    <ClCompile Include="oWinMenu.cpp" />
     <ClCompile Include="oWinRect.cpp" />
-    <ClCompile Include="oWinsock.cpp" />
+    <ClCompile Include="oWinStatusBar.cpp" />
     <ClCompile Include="oWinTray.cpp" />
     <ClCompile Include="oWinWindowing.cpp" />
     <ClCompile Include="pch.cpp">
@@ -260,6 +270,20 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="SoftLink\oD3DX11.cpp" />
+    <ClCompile Include="SoftLink\oOpenSSL.cpp" />
+    <ClCompile Include="SoftLink\oWinCommCtrl.cpp" />
+    <ClCompile Include="SoftLink\oWinD2D.cpp" />
+    <ClCompile Include="SoftLink\oWinD3D10.cpp" />
+    <ClCompile Include="SoftLink\oWinDbgHelp.cpp" />
+    <ClCompile Include="SoftLink\oWinDWMAPI.cpp" />
+    <ClCompile Include="SoftLink\oWinDWrite.cpp" />
+    <ClCompile Include="SoftLink\oWinDXGI.cpp" />
+    <ClCompile Include="SoftLink\oWinKernel32.cpp" />
+    <ClCompile Include="SoftLink\oWinMSIMG32.cpp" />
+    <ClCompile Include="SoftLink\oWinPowrProf.cpp" />
+    <ClCompile Include="SoftLink\oWinPSAPI.cpp" />
+    <ClCompile Include="SoftLink\oWinsock.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FXC Include="oHLSLFSQuad.sh">

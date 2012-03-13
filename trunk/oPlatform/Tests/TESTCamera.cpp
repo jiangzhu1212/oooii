@@ -30,7 +30,6 @@
 #include <oPlatform/oCamera.h>
 #include <oBasis/oRef.h>
 #include <oPlatform/oMsgBox.h>
-#include <oBasis/oSize.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/oWindow.h>
 #include <oPlatform/oWindowUI.h>
@@ -114,7 +113,7 @@ int ShowAllCameras()
 		oWindow::DESC d;
 		d.BackgroundSleepMS = 0;
 		d.ClientSize = cd.Mode.Dimensions;
-		d.ClientPosition = int2(30, 30) * int2(oSize32(i + 1), oSize32(i + 1));
+		d.ClientPosition = int2(30, 30) * int2(oUInt(i + 1), oUInt(i + 1));
 		oVERIFY(oWindowCreate(d, nullptr, oWindow::USE_DEFAULT, &Contexts[i].Window));
 
 		oStringL Title;
@@ -132,8 +131,8 @@ int ShowAllCameras()
 		oVERIFY(oWindowUIFontCreate(fd, Contexts[i].Window, &Contexts[i].Font));
 
 		oWindowUIText::DESC td;
-		td.Anchor = oTOPLEFT;
-		td.Alignment = oMIDDLELEFT;
+		td.Anchor = oGUI_ALIGNMENT_TOP_LEFT;
+		td.Alignment = oGUI_ALIGNMENT_MIDDLE_LEFT;
 		td.Color = std::OOOiiGreen;
 		td.Position = int2(10,10);
 		td.Size = int2(150,0);

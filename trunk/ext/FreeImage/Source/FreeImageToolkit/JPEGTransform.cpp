@@ -101,6 +101,8 @@ LosslessTransform(const FilenameIO *filenameIO, FREE_IMAGE_JPEG_OPERATION operat
 	jpeg_decompress_struct srcinfo;
 	jpeg_compress_struct dstinfo;
 	jpeg_error_mgr jsrcerr, jdsterr;
+	oooii_jpeg_memory_alloc jsralloc, jdstalloc;
+
 	jvirt_barray_ptr *src_coef_arrays = NULL;
 	jvirt_barray_ptr *dst_coef_arrays = NULL;
 	// Support for copying optional markers from source to destination file
@@ -159,12 +161,14 @@ LosslessTransform(const FilenameIO *filenameIO, FREE_IMAGE_JPEG_OPERATION operat
 
 		// Initialize the JPEG decompression object with default error handling
 		srcinfo.err = jpeg_std_error(&jsrcerr);
+		srcinfo.alloc = oooii_jpeg_std_alloc(&jsralloc); //OOOII custom alloc support
 		srcinfo.err->error_exit = ls_jpeg_error_exit;
 		srcinfo.err->output_message = ls_jpeg_output_message;
 		jpeg_create_decompress(&srcinfo);
 
 		// Initialize the JPEG compression object with default error handling
 		dstinfo.err = jpeg_std_error(&jdsterr);
+		dstinfo.alloc = oooii_jpeg_std_alloc(&jdstalloc); //OOOII custom alloc support
 		dstinfo.err->error_exit = ls_jpeg_error_exit;
 		dstinfo.err->output_message = ls_jpeg_output_message;
 		jpeg_create_compress(&dstinfo);

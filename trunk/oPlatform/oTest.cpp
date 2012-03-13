@@ -258,107 +258,157 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 	return true;
 }
 
-bool oTest::TestImage(oImage* _pImage, unsigned int _NthImage)
+bool oTest::TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const char* _FailedImagePath, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier)
 {
-	const char* goldenImageExt = ".png";
-	const char* goldenImageExtAMD = "_AMD.png";
-	const char* diffImageExt = "_diff.png";
+	size_t commonPathLength = oGetCommonBaseLength(_GoldenImagePath, _FailedImagePath);
+	const char* gPath = _GoldenImagePath + commonPathLength;
+	const char* fPath = _FailedImagePath + commonPathLength;
 
-	oTestManager::DESC desc;
-	oTestManager::Singleton()->GetDesc(&desc);
-	oGPU_VENDOR GPUVendor = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->GPUs[0].Vendor; // @oooii-tony: Make this more elegant
+	oImage::DESC iDesc;
+	_pTestImage->GetDesc(&iDesc);
 
-	oStringPath golden;
-	BuildDataPath(golden.c_str(), GetName(), desc.DataPath, "GoldenImages", desc.GoldenImagesPath, _NthImage, goldenImageExt);
-	oStringPath goldenAMD;
-	BuildDataPath(goldenAMD.c_str(), GetName(), desc.DataPath, "GoldenImages", desc.GoldenImagesPath, _NthImage, goldenImageExtAMD);
-	oStringPath output;
-	BuildDataPath(output.c_str(), GetName(), desc.DataPath, "Output", desc.OutputPath, _NthImage, goldenImageExt);
-	oStringPath diff;
-	BuildDataPath(diff.c_str(), GetName(), desc.DataPath, "Output", desc.OutputPath, _NthImage, diffImageExt);
-
-	oImage::DESC iDesc, gDesc;
-	_pImage->GetDesc(&iDesc);
 	oRef<oImage> GoldenImage;
 	{
 		oRef<oBuffer> b;
-		if (GPUVendor == oGPU_VENDOR_AMD)
-		{
-			// Try to load a more-specific golden image, but if it's not there it's ok
-			// to try to use the default one.
-			oBufferCreate(goldenAMD, &b);
-		}
+		if (!oBufferCreate(_GoldenImagePath, &b))
+			return oErrorSetLast(oERROR_NOT_FOUND, "Load failed: (Golden)...%s", gPath);
 
-		if (!b)
-		{
-			if (!oBufferCreate(golden, &b))
-			{
-				if (GPUVendor != oGPU_VENDOR_NVIDIA)
-				{
-					oStringPath outputAMD;
-					BuildDataPath(outputAMD.c_str(), GetName(), desc.DataPath, "Output", desc.OutputPath, _NthImage, goldenImageExtAMD);
-					oWARN("Shared Golden Images are only valid if generated from an NVIDIA card. Note: it may be appropriate to check this in as an AMD-specific card to %s if there's a difference in golden images between NVIDIA and AMD.", outputAMD.c_str());
-				}
+		if (!oImageCreate(_GoldenImagePath, b->GetData(), b->GetSize(), &GoldenImage))
+			return oErrorSetLast(oERROR_CORRUPT, "Corrupt Image: (Golden)...%s", gPath);
 
-				if (!oImageSave(_pImage, output))
-					return oErrorSetLast(oERROR_INVALID_PARAMETER, "Output image save failed: %s", output.c_str());
-				return oErrorSetLast(oERROR_NOT_FOUND, "Golden image load failed: %s", golden.c_str());
-			}
-		}
-
-		if(oImageIsAlphaFormat(iDesc.Format)) //if source has alpha, force loading an opaque alpha for golden image as well.
-		{
-			if (!oImageCreate(golden, b->GetData(), b->GetSize(), oImage::ForceAlphaFlag(), &GoldenImage))
-				return oErrorSetLast(oERROR_INVALID_PARAMETER, "Corrupt/unloadable golden image file: %s", golden.c_str());
-		}
+		bool success = false;
+		if (oImageIsAlphaFormat(iDesc.Format))
+			success = oImageCreate(_GoldenImagePath, b->GetData(), b->GetSize(), oImage::ForceAlpha, &GoldenImage);
 		else
-		{
-			if (!oImageCreate(golden, b->GetData(), b->GetSize(), &GoldenImage))
-				return oErrorSetLast(oERROR_INVALID_PARAMETER, "Corrupt/unloadable golden image file: %s", golden.c_str());
-		}
+			success = oImageCreate(_GoldenImagePath, b->GetData(), b->GetSize(), &GoldenImage);
+
+		if (!success)
+			return oErrorSetLast(oERROR_CORRUPT, "Corrupt Image: (Golden)...%s", gPath);
 	}
 
-	oRef<oImage> diffs;
-	unsigned int nDifferences = 0;
+	oImage::DESC gDesc;
+	GoldenImage->GetDesc(&gDesc);
 
 	// Compare dimensions/format before going into pixels
 	{
-		GoldenImage->GetDesc(&gDesc);
-
 		if (iDesc.Dimensions != gDesc.Dimensions)
-			return oErrorSetLast(oERROR_GENERIC, "Golden image compare failed because the images are different dimensions (test is %ix%i, golden is %ix%i)", iDesc.Dimensions.x, iDesc.Dimensions.y, gDesc.Dimensions.x, gDesc.Dimensions.y);
+		{
+			if (!oImageSave(_pTestImage, _FailedImagePath))
+				return oErrorSetLast(oERROR_IO, "Save failed: (Output)...%s", fPath);
+			return oErrorSetLast(oERROR_GENERIC, "Differing dimensions: (Output %dx%d)...%s != (Golden %dx%d)...%s", iDesc.Dimensions.x, iDesc.Dimensions.y, fPath, gDesc.Dimensions.x, gDesc.Dimensions.y, gPath);
+		}
 
 		if (iDesc.Format != gDesc.Format)
 		{
-			if (!oImageSave(_pImage, output))
-				return oErrorSetLast(oERROR_IO, "Output image save failed: %s", output);
-			return oErrorSetLast(oERROR_GENERIC, "Golden image compare failed because the images are different formats (test is %s, golden is %s)", oAsString(iDesc.Format), oAsString(gDesc.Format));
+			if (!oImageSave(_pTestImage, _FailedImagePath))
+				return oErrorSetLast(oERROR_IO, "Save failed: (Output)...%s", fPath);
+			return oErrorSetLast(oERROR_GENERIC, "Differing formats: (Golden %s)...%s != (Output %s)...%s", oAsString(gDesc.Format), gPath, oAsString(iDesc.Format), fPath);
 		}
 	}
 
-	oTest::DESC testDescOverrides;
-	testDescOverrides.maxRMSError = desc.maxRMSError;
-	testDescOverrides.colorChannelTolerance = desc.colorChannelTolerance;
-  
-	testDescOverrides.DiffImageMultiplier = desc.DefaultDiffImageMultiplier;
-	OverrideTestDesc(testDescOverrides);
-
-  float RMSError = 0.0f;
-	bool compareSucceeded = oImageCompare(_pImage, GoldenImage, testDescOverrides.colorChannelTolerance, &RMSError, &diffs, testDescOverrides.DiffImageMultiplier);
-
-	if (!compareSucceeded || (RMSError > testDescOverrides.maxRMSError))
+	// Resolve parameter settings against global settings
 	{
-		if (!oImageSave(_pImage, output))
-			return oErrorSetLast(oERROR_IO, "Output image save failed: %s", output.c_str());
+		oTestManager::DESC TestDesc;
+		oTestManager::Singleton()->GetDesc(&TestDesc);
 
-		if (diffs && !oImageSave(diffs, diff))
-			return oErrorSetLast(oERROR_IO, "Diff image save failed: %s", diff.c_str());
+		if (_ColorChannelTolerance == oDEFAULT)
+			_ColorChannelTolerance = TestDesc.ColorChannelTolerance;
+		if (_MaxRMSError < 0.0f)
+			_MaxRMSError = TestDesc.MaxRMSError;
+		if (_DiffImageMultiplier == oDEFAULT)
+			_DiffImageMultiplier = TestDesc.DiffImageMultiplier;
+	}
 
-		return oErrorSetLast(oERROR_GENERIC, "Golden image compare failed (%.03f RMS Error, Max Allowed %f): (Golden)%s != (Output)%s", 
-      RMSError, testDescOverrides.maxRMSError, golden.c_str(), output.c_str());
+	// Do the real test
+	oRef<oImage> diffs;
+	float RMSError = 0.0f;
+	bool compareSucceeded = oImageCompare(_pTestImage, GoldenImage, _ColorChannelTolerance, &RMSError, &diffs, _DiffImageMultiplier);
+
+	// Save out test image and diffs if there is a non-similar result.
+	if (!compareSucceeded || (RMSError > _MaxRMSError))
+	{
+		if (!oImageSave(_pTestImage, _FailedImagePath))
+			return oErrorSetLast(oERROR_IO, "Save failed: (Output)...%s", fPath);
+
+		oStringPath diffPath(_FailedImagePath);
+		oReplaceFileExtension(diffPath, diffPath.capacity(), "_diff.png");
+		const char* dPath = diffPath.c_str() + commonPathLength;
+
+		if (diffs && !oImageSave(diffs, diffPath))
+			return oErrorSetLast(oERROR_IO, "Save failed: (Diff)...%s", dPath);
+
+		return oErrorSetLast(oERROR_GENERIC, "Compare failed: %.03f RMS error (threshold %.03f): (Output)...%s != (Golden)...%s", RMSError, _MaxRMSError, fPath, gPath);
 	}
 
 	return true;
+}
+
+struct DriverPaths
+{
+	oStringPath Generic;
+	oStringPath VendorSpecific;
+	oStringPath CardSpecific;
+	oStringPath DriverSpecific;
+};
+
+static bool oInitialize(const char* _RootPath, const char* _Filename, const oGPU_DESC& _GPUDesc, DriverPaths* _pDriverPaths)
+{
+	_pDriverPaths->Generic = _RootPath;
+	oEnsureSeparator(_pDriverPaths->Generic);
+	oCleanPath(_pDriverPaths->Generic, _pDriverPaths->Generic);
+
+	sprintf_s(_pDriverPaths->VendorSpecific, "%s%s/", _pDriverPaths->Generic.c_str(), oAsString(_GPUDesc.Vendor));
+
+	oStringPath tmp;
+	sprintf_s(tmp, "%s%s/", _pDriverPaths->VendorSpecific.c_str(), _GPUDesc.GPUDescription.c_str());
+	oReplace(_pDriverPaths->CardSpecific, tmp, " ", "_");
+
+	oStringS driverVer;
+	sprintf_s(_pDriverPaths->DriverSpecific, "%s%s/", _pDriverPaths->CardSpecific.c_str(), oToString(driverVer, _GPUDesc.DriverVersion));
+
+	oStrAppend(_pDriverPaths->Generic, _Filename);
+	oStrAppend(_pDriverPaths->VendorSpecific, _Filename);
+	oStrAppend(_pDriverPaths->CardSpecific, _Filename);
+	oStrAppend(_pDriverPaths->DriverSpecific, _Filename);
+
+	return true;
+}
+
+bool oTest::TestImage(oImage* _pTestImage, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier)
+{
+	// Check: GoldenDir/CardName/DriverVersion/GoldenImage
+	// Then Check: GoldenDir/CardName/GoldenImage
+	// Then Check: GoldenDir/GoldenImage
+
+	oTestManager::DESC TestDesc;
+	oTestManager::Singleton()->GetDesc(&TestDesc);
+
+	const oGPU_DESC& GPUDesc = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->GPUs[0]; // @oooii-tony: Make this more elegant
+
+	oStringS nthImageBuf;
+	oStringPath Filename;
+	sprintf_s(Filename, "%s%s.png", GetName(), _NthImage == 0 ? "" : oToString(nthImageBuf, _NthImage));
+
+	DriverPaths GoldenPaths, FailurePaths;
+	oVERIFY(oInitialize(TestDesc.GoldenImagesPath, Filename, GPUDesc, &GoldenPaths));
+	oVERIFY(oInitialize(TestDesc.OutputPath, Filename, GPUDesc, &FailurePaths));
+
+	if (oFileExists(GoldenPaths.DriverSpecific))
+		return TestImage(_pTestImage, GoldenPaths.DriverSpecific, FailurePaths.DriverSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier);
+
+	else if (oFileExists(GoldenPaths.VendorSpecific))
+		return TestImage(_pTestImage, GoldenPaths.CardSpecific, FailurePaths.VendorSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier);
+
+	else if (oFileExists(GoldenPaths.CardSpecific))
+		return TestImage(_pTestImage, GoldenPaths.CardSpecific, FailurePaths.CardSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier);
+
+	else if (oFileExists(GoldenPaths.Generic))
+		return TestImage(_pTestImage, GoldenPaths.Generic, FailurePaths.Generic, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier);
+
+	if (!oImageSave(_pTestImage, FailurePaths.DriverSpecific))
+		return oErrorSetLast(oERROR_IO, "Save failed: (Output)%s", FailurePaths.DriverSpecific.c_str());
+
+	return oErrorSetLast(oERROR_NOT_FOUND, "Not found: (Golden).../%s Test Image saved to %s", Filename, FailurePaths.DriverSpecific.c_str());
 }
 
 bool oSpecialTest::CreateProcess(const char* _SpecialTestName, threadsafe interface oProcess** _ppProcess)
@@ -366,7 +416,7 @@ bool oSpecialTest::CreateProcess(const char* _SpecialTestName, threadsafe interf
 	if (!_SpecialTestName || !_ppProcess)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
-	oStringML cmdline;
+	oStringXL cmdline;
 	if (!oSystemGetPath(cmdline.c_str(), oSYSPATH_APP_FULL))
 		return oErrorSetLast(oERROR_NOT_FOUND);
 
@@ -686,6 +736,17 @@ static bool SortAlphabetically(oTestManager::RegisterTestBase* _Test1, oTestMana
 
 oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, size_t _SizeofTestFilters)
 {
+	unsigned int pidFraps = oProcessGetID("fraps.exe");
+	if (pidFraps)
+	{
+		oMSGBOX_DESC mb;
+		mb.Title = "Ouroboros Environment Discovery";
+		mb.Type = oMSGBOX_YESNO;
+		oMSGBOX_RESULT r = oMsgBox(mb, "Fraps is running. This will cause golden images to fail because the fraps overlay will appear as part of the captured image.\n\nWould you like to terminate fraps now?");
+		if (r == oMSGBOX_YES)
+			oVERIFY(oProcessTerminate(pidFraps, oInvalid));
+	}
+
 	RegisterZombies();
 
 	RegisterSpecialModeTests();

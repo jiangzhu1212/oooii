@@ -24,13 +24,13 @@
 #include <oPlatform/oD3D11.h>
 #include <oBasis/oAssert.h>
 #include <oBasis/oByte.h>
-#include <oPlatform/oD3DX11.h>
+#include <oBasis/oMemory.h>
 #include <oPlatform/oDXGI.h>
 #include <oPlatform/oFile.h>
 #include <oPlatform/oGPU.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oSystem.h>
-#include <oBasis/oMemory.h>
+#include "SoftLink/oD3DX11.h"
 #include <cerrno>
 
 // {13BA565C-4766-49C4-8C1C-C1F459F00A65}
@@ -39,6 +39,11 @@ static const GUID oWKPDID_oD3DBufferTopology = { 0x13ba565c, 0x4766, 0x49c4, { 0
 // Value obtained from D3Dcommon.h and reproduced here because of soft-linking
 static const GUID oWKPDID_D3DDebugObjectName = { 0x429b8c22, 0x9188, 0x4b0c, { 0x87, 0x42, 0xac, 0xb0, 0xbf, 0x85, 0xc2, 0x00} };
 
+const oGUID& oGetGUID(threadsafe const ID3D11Device* threadsafe const*) { return (const oGUID&)__uuidof(ID3D11Device); }
+const oGUID& oGetGUID(threadsafe const ID3D11DeviceContext* threadsafe const*) { return (const oGUID&)__uuidof(ID3D11DeviceContext); }
+const oGUID& oGetGUID(threadsafe const ID3D11RenderTargetView* threadsafe const*) { return (const oGUID&)__uuidof(ID3D11RenderTargetView); }
+const oGUID& oGetGUID(threadsafe const ID3D11Texture2D* threadsafe const*) { return (const oGUID&)__uuidof(ID3D11Texture2D); }
+
 static const char* d3d11_dll_functions[] = 
 {
 	"D3D11CreateDevice",
@@ -46,14 +51,17 @@ static const char* d3d11_dll_functions[] =
 
 oD3D11::oD3D11()
 {
-	hD3D11 = oModuleLinkSafe("d3d11.dll", d3d11_dll_functions, (void**)&D3D11CreateDevice, oCOUNTOF(d3d11_dll_functions));
-	oASSERT(hD3D11, "");
+	hModule = oModuleLinkSafe("d3d11.dll", d3d11_dll_functions, (void**)&D3D11CreateDevice, oCOUNTOF(d3d11_dll_functions));
+	oASSERT(hModule, "");
 }
 
 oD3D11::~oD3D11()
 {
-	oModuleUnlink(hD3D11);
+	oModuleUnlink(hModule);
 }
+
+// {2BCF2584-3DE9-4192-89D3-0787E4DE32F9}
+const oGUID oD3D11::GUID = { 0x2bcf2584, 0x3de9, 0x4192, { 0x89, 0xd3, 0x7, 0x87, 0xe4, 0xde, 0x32, 0xf9 } };
 
 bool oD3D11CreateDevice(const oD3D11_DEVICE_DESC& _Desc, ID3D11Device** _ppDevice)
 {
@@ -1114,6 +1122,34 @@ bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, const c
 		return false; // pass through error
 
 	return oD3D11Save(D3DTexture, _Format, _Path); // pass through error
+}
+
+bool oD3D11Load(ID3D11Device* _pDevice, DXGI_FORMAT _ForceFormat, oD3D11_TEXTURE_CREATION_TYPE _CreationType, const char* _DebugName, const char* _Path, ID3D11Resource** _ppTexture)
+{
+	D3DX11_IMAGE_LOAD_INFO li;
+	li.Width = D3DX11_DEFAULT;
+	li.Height = D3DX11_DEFAULT;
+	li.Depth = D3DX11_DEFAULT;
+	li.FirstMipLevel = D3DX11_DEFAULT;
+	li.Format = _ForceFormat == DXGI_FORMAT_UNKNOWN ? DXGI_FORMAT_FROM_FILE : _ForceFormat;
+	oD3D11GetUsageAndFlags(_CreationType, li.Format, &li.MipLevels, &li.Usage, &li.BindFlags, &li.CpuAccessFlags, &li.MiscFlags);
+	li.Filter = D3DX11_DEFAULT;
+	li.MipFilter = D3DX11_DEFAULT;
+	li.pSrcInfo = nullptr;
+
+	HRESULT hr = oD3DX11::Singleton()->D3DX11CreateTextureFromFile(_pDevice
+		, _Path
+		, &li
+		, nullptr
+		, _ppTexture
+		, nullptr);
+
+	if (FAILED(hr))
+		return oWinSetLastError(hr);
+
+	oVB(oD3D11SetDebugName(*_ppTexture, _DebugName));
+
+	return true;
 }
 
 bool oD3D11Load(ID3D11Device* _pDevice, DXGI_FORMAT _ForceFormat, oD3D11_TEXTURE_CREATION_TYPE _CreationType, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, ID3D11Resource** _ppTexture)

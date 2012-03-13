@@ -90,6 +90,24 @@
     <ClCompile Include="..\oPlatform\Tests\TESTBCEncodeDecode.cpp">
       <Filter>Source Files\oPlatformTests</Filter>
     </ClCompile>
+    <ClCompile Include="..\oVideo\Tests\TESTMediaWebmJpeg.cpp">
+      <Filter>Source Files\oVideoTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\oVideo\Tests\TESTMediaStreamerVideoWindow.cpp">
+      <Filter>Source Files\oVideoTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\oStaging\Tests\TESTJpeg.cpp">
+      <Filter>Source Files\oStagingTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\oStaging\Tests\TESTWindowInWindow.cpp">
+      <Filter>Source Files\oStagingTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\oStaging\Tests\TESTWindowSysDialog.cpp">
+      <Filter>Source Files\oStagingTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\oStaging\Tests\TESTWindowControls.cpp">
+      <Filter>Source Files\oStagingTests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

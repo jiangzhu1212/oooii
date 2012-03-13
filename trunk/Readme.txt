@@ -20,4 +20,14 @@ find this is not the case, please contact the author at arciuolo@oooii.com.
 All comments, feedback and recommendations on better implementations are welcome 
 at arciuolo@gmail.com.
 
+!!! NOTE !!!
+oGfx and oGfxTest are BRAND NEW and are intended to be an external proof-of-
+concept that the open-source version of Ouroboros is ready to be able to build a
+renderer on top of it. The internal render is VERY different, distributed, cloud
+-based, actually has features, etc. oGfx is done in my copious spare time, so 
+its progress is underwhelming and mostly results in more internal work to 
+Ouroboros itself.
+
+So forgive oGfx for now, but everything else...
+
 Enjoy!

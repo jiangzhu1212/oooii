@@ -28,6 +28,7 @@
 #define oStddef_h
 
 #include <oBasis/oMacros.h>
+#include <oBasis/oInt.h>
 #include <oBasis/oInvalid.h>
 #include <oBasis/oNoncopyable.h>
 #include <oBasis/oPlatformFeatures.h>

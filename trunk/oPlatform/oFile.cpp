@@ -22,7 +22,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oFile.h>
-#include <oBasis/oSize.h>
 #include <oBasis/oError.h>
 #include <oPlatform/oWindows.h>
 #include "oIOCP.h"
@@ -60,9 +59,9 @@ static bool oFileSetLastError()
 	return oErrorSetLast(oERROR_IO, "%s", strerr);
 }
 
-static void oSetIOCPOpOffset(oIOCPOp* _op, oSize64 _offset)
+static void oSetIOCPOpOffset(oIOCPOp* _op, oULLong _offset)
 {
-	_op->Offset = _offset.c_type()&0xffffffff;
+	_op->Offset = _offset & 0xffffffff;
 	_op->OffsetHigh = _offset>>32;
 }
 
@@ -239,12 +238,12 @@ struct oFileReaderWindowed_Impl : oFileReader
 
 	bool WindowRange(const oFileRange& _Range, oFileRange* _pWindowedRange) threadsafe
 	{
-		oSize64 Start = *WindowStart + _Range.Offset; 
+		oULLong Start = *WindowStart + _Range.Offset; 
 
 		if(Start > *WindowEnd)
 			return false;
 
-		oSize64 End = Start + _Range.Size;
+		oULLong End = Start + _Range.Size;
 
 		if(End > *WindowEnd)
 			return false;
@@ -288,8 +287,8 @@ struct oFileReaderWindowed_Impl : oFileReader
 	oRefCount Refcount;
 	oInitOnce<oFILE_DESC> FileDesc;
 	oRef<threadsafe oFileReader> Reader;
-	oInitOnce<oSize64> WindowStart;
-	oInitOnce<oSize64> WindowEnd;
+	oInitOnce<oULLong> WindowStart;
+	oInitOnce<oULLong> WindowEnd;
 };
 oAPI bool oFileReaderCreateWindowed( threadsafe oFileReader* _pReader, const oFileRange& _Window, threadsafe oFileReader** _ppReadFile )
 {
@@ -482,8 +481,8 @@ bool oFileSeek(oHFILE _hFile, long long _Offset, oFILE_SEEK _Origin)
 
 unsigned long long oFileRead(oHFILE _hFile, void* _pDestination, unsigned long long _SizeofDestination, unsigned long long _ReadSize)
 {
-	detail::oSizeT<size_t> CheckedReadSize(_ReadSize);
-	detail::oSizeT<size_t> CheckedSizeofDestination(_SizeofDestination);
+	oSizeT CheckedReadSize(_ReadSize);
+	oSizeT CheckedSizeofDestination(_SizeofDestination);
 	size_t bytesRead = fread_s(_pDestination, CheckedSizeofDestination, 1, CheckedReadSize, (FILE*)_hFile);
 	if (CheckedReadSize != bytesRead)
 	{
@@ -498,7 +497,7 @@ unsigned long long oFileRead(oHFILE _hFile, void* _pDestination, unsigned long l
 
 unsigned long long oFileWrite(oHFILE _hFile, const void* _pSource, unsigned long long _WriteSize, bool _Flush )
 {
-	detail::oSizeT<size_t> CheckedWriteSize(_WriteSize);
+	oSizeT CheckedWriteSize(_WriteSize);
 	size_t bytesWritten = fwrite(_pSource, 1, CheckedWriteSize, (FILE*)_hFile);
 	if (CheckedWriteSize != bytesWritten)
 		oFileSetLastError();
@@ -690,7 +689,7 @@ bool oFileMap(const char* _Path, bool _ReadOnly, const oFileRange& _MapRange, vo
 	if (!hMapped)
 		return oWinSetLastError();
 
-	void* p = MapViewOfFile(hMapped, fProtect == PAGE_READONLY ? FILE_MAP_READ : FILE_MAP_WRITE, alignedOffset.AsUnsignedInt[1], alignedOffset.AsUnsignedInt[0], oSize64(alignedSize));
+	void* p = MapViewOfFile(hMapped, fProtect == PAGE_READONLY ? FILE_MAP_READ : FILE_MAP_WRITE, alignedOffset.AsUnsignedInt[1], alignedOffset.AsUnsignedInt[0], oULLong(alignedSize));
 	if (!p)
 		return oWinSetLastError();
 
@@ -700,7 +699,7 @@ bool oFileMap(const char* _Path, bool _ReadOnly, const oFileRange& _MapRange, vo
 
 	// Close the ref held by CreateFileMapping
 	CloseHandle(hMapped);
-	*_ppMappedMemory = oByteAdd(p, oSize64(offsetPadding));
+	*_ppMappedMemory = oByteAdd(p, oULLong(offsetPadding));
 
 	// So now we exit with a ref count of 1 on the underlying HANDLE, that held by
 	// MapViewOfFile, that way the file is fully closed when oFileUnmap is called.

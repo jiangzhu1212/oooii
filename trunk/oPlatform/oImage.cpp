@@ -523,12 +523,12 @@ bool oSurfaceConvert(
 
 	D3D11_MAPPED_SUBRESOURCE Destination;
 	Destination.pData = _pDestination;
-	Destination.RowPitch = oSize64(_DestinationRowPitch);
+	Destination.RowPitch = oULLong(_DestinationRowPitch);
 	Destination.DepthPitch = 0;
 
 	D3D11_SUBRESOURCE_DATA Source;
 	Source.pSysMem = _pSource;
-	Source.SysMemPitch = oSize64(_SourceRowPitch);
+	Source.SysMemPitch = oULLong(_SourceRowPitch);
 	Source.SysMemSlicePitch = 0;
 	return oD3D11Convert(D3DDevice, Destination, oDXGIFromSurfaceFormat(_DestinationFormat), Source, oDXGIFromSurfaceFormat(_SourceFormat), _MipDimensions);
 }

@@ -86,7 +86,7 @@ public:
 	}
 
 	typedef oStd::condition_variable::native_handle_type native_handle_type;
-	native_handle_type nativfe_handle() threadsafe { return CV().native_handle(); }
+	native_handle_type native_handle() threadsafe { return CV().native_handle(); }
 };
 
 #endif

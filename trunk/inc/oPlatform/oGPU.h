@@ -57,10 +57,17 @@ struct oGPU_DESC
 };
 
 // Returns false if the specified GPU doesn't exist.
-bool oGPUEnum(unsigned int _Index, oGPU_DESC* _pDesc);
+oAPI bool oGPUEnum(unsigned int _Index, oGPU_DESC* _pDesc);
+
+// If an object is created that has been associated with a particular GPU, try
+// to reverse lookup its index. If the specified object is invalid or the GPU
+// index could not be found, oInvalid is returned. NOTE: 
+// _NativeAdapterRelatedObject must be a platform expected value, such as an 
+// IUnknown on Windows.
+oAPI unsigned int oGPUFindIndex(void* _NativeAdapterRelatedObject);
 
 // Returns false if there isn't an nth GPU that supports the specified minimum 
 // feature level.
-bool oGPUFindD3DCapable(unsigned int _NthMatch, const oVersion& _MinimumFeatureLevel, oGPU_DESC* _pDesc);
+oAPI bool oGPUFindD3DCapable(unsigned int _NthMatch, const oVersion& _MinimumFeatureLevel, oGPU_DESC* _pDesc);
 
 #endif

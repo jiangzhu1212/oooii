@@ -25,7 +25,6 @@
 #include <oBasis/oByte.h>
 #include <oBasis/oError.h>
 #include <oBasis/oMacros.h>
-#include <oBasis/oSize.h>
 #include <snappy/snappy.h>
 #include <Lzma/C/LzmaLib.h>
 
@@ -87,7 +86,7 @@ inline const oCOMPRESS_HEADER& hdr(const void* _pCompressedBuffer) { return *(oC
 bool oCompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource, oCOMPRESSION_TRADEOFF _Tradeoff, size_t* _pActualCompressedSize)
 {
 	oCOMPRESS_HEADER& header = hdr(_pDestination);
-	header.UncompressedSize = oSize32(_SizeofSource);
+	header.UncompressedSize = oUInt(_SizeofSource);
 	
 	switch (_Tradeoff)
 	{

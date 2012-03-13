@@ -88,30 +88,33 @@ interface oProcess : oInterface
 oAPI bool oProcessCreate(const oProcess::DESC& _Desc, threadsafe oProcess** _ppProcess);
 
 // Returns the ID of the calling process
-unsigned int oProcessGetCurrentID();
+oAPI unsigned int oProcessGetCurrentID();
 
 // Call the specified function for each of the child processes of the current
 // process. The function should return true to keep enumerating, or false to
 // exit early. This function returns false if there is a failure, check 
 // oErrorGetLast() for more information. The error can be oERROR_NOT_FOUND 
 // if there are no child processes.
-bool oProcessEnum(oFUNCTION<bool(unsigned int _ProcessID, unsigned int _ParentProcessID, const char* _ProcessExePath)> _Function);
+oAPI bool oProcessEnum(oFUNCTION<bool(unsigned int _ProcessID, unsigned int _ParentProcessID, const char* _ProcessExePath)> _Function);
 
 // Wait for a process to exit/finish
-bool oProcessWaitExit(unsigned int _ProcessID, unsigned int _TimeoutMS = oINFINITE_WAIT);
+oAPI bool oProcessWaitExit(unsigned int _ProcessID, unsigned int _TimeoutMS = oINFINITE_WAIT);
 
-// Returns true if the named process is active and running
-bool oProcessExists(const char* _Name);
+// Returns the id of specified process, or 0 if none found
+oAPI unsigned int oProcessGetID(const char* _Name);
+
+// Returns true if the specified process exists, or false if it does not
+inline bool oProcessExists(const char* _Name) { return 0 != oProcessGetID(_Name); }
 
 // Returns true if the specified process has a debugger, remote or otherwise,
 // attached.
-bool oProcessHasDebuggerAttached(unsigned int _ProcessID);
+oAPI bool oProcessHasDebuggerAttached(unsigned int _ProcessID);
 
 // Unceremoniously ends the specified process
-bool oProcessTerminate(unsigned int _ProcessID, unsigned int _ExitCode, bool _Recursive = true);
+oAPI bool oProcessTerminate(unsigned int _ProcessID, unsigned int _ExitCode, bool _Recursive = true);
 
 // Unceremoniously end all processes that are children of the current process.
-void oProcessTerminateChildren(unsigned int _ProcessID, unsigned int _ExitCode, bool _Recursive = true);
+oAPI void oProcessTerminateChildren(unsigned int _ProcessID, unsigned int _ExitCode, bool _Recursive = true);
 
 struct oPROCESS_MEMORY_STATS
 {
@@ -125,7 +128,7 @@ struct oPROCESS_MEMORY_STATS
 
 // Fills the specified stats struct with summary memory usage information about
 // the specified process.
-bool oProcessGetMemoryStats(unsigned int _ProcessID, oPROCESS_MEMORY_STATS* _pStats);
+oAPI bool oProcessGetMemoryStats(unsigned int _ProcessID, oPROCESS_MEMORY_STATS* _pStats);
 
 struct oPROCESS_TIME_STATS
 {
@@ -135,14 +138,14 @@ struct oPROCESS_TIME_STATS
 	time_t UserTime;
 };
 
-bool oProcessGetTimeStats(unsigned int _ProcessID, oPROCESS_TIME_STATS* _pStats);
+oAPI bool oProcessGetTimeStats(unsigned int _ProcessID, oPROCESS_TIME_STATS* _pStats);
 
 // Returns overall system CPU percentage [0,100] usage. This requires keeping
 // values around from a previous run. These should be initialized to 0 to 
 // indicate there's no prior value and from then on this function should be 
 // called regularly with those addresses passed in to retain the previous 
 // sample's values. The values should be unique per process queried.
-double oProcessCalculateCPUUsage(unsigned int _ProcessID, unsigned long long* _pPreviousSystemTime, unsigned long long* _pPreviousProcessTime);
+oAPI double oProcessCalculateCPUUsage(unsigned int _ProcessID, unsigned long long* _pPreviousSystemTime, unsigned long long* _pPreviousProcessTime);
 
 struct oPROCESS_ALLOC_DESC
 {

@@ -24,89 +24,259 @@
 #include <oPlatform/oWinWindowing.h>
 #include <oBasis/oAssert.h>
 #include <oBasis/oFixedString.h>
+#include <oBasis/oLimits.h>
 #include <oBasis/oStdChrono.h>
-#include <oPlatform/oWinRect.h>
+#include <oPlatform/oDisplay.h>
+#include <oPlatform/oGDI.h>
 #include <oPlatform/oWinAsString.h>
-#include "oWinCommCtrl.h"
+#include <oPlatform/oWinRect.h>
+#include <oPlatform/oWinStatusBar.h>
+#include "SoftLink/oWinCommCtrl.h"
 #include <WindowsX.h>
+#include <Commdlg.h>
+#include <CdErr.h>
+#include <Shellapi.h>
 
-bool oWinCreate(HWND* _pHwnd, WNDPROC _Wndproc, void* _pThis, bool _SupportDoubleClicks, unsigned int _ClassUniqueID)
+// @oooii-tony: Confirmation of hWnd being on the specified thread is disabled
+// for now... I think it might be trying to access the HWND before it's fully
+// constructed. First get the massive integration done, then come back to this.
+
+#define oWINV(_hWnd) \
+	if (!oWinExists(_hWnd)) \
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid HWND %p specified", _hWnd); \
+	if (0 && !oWinIsWindowThread(_hWnd)) \
+		return oErrorSetLast(oERROR_WRONG_THREAD, "This function must be called on the window thread %d for %p", oAsUint(oStd::this_thread::get_id()), _hWnd);
+
+#define oWINVP(_hWnd) \
+	if (!oWinExists(_hWnd)) \
+		{ oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid HWND %p specified", _hWnd); return nullptr; } \
+	if (0 && !oWinIsWindowThread(_hWnd)) \
+		{ oErrorSetLast(oERROR_WRONG_THREAD, "This function must be called on the window thread %d for %p", oAsUint(oStd::this_thread::get_id()), _hWnd); return nullptr; }
+
+inline bool oErrorSetLastBadType(HWND _hControl, oGUI_CONTROL_TYPE _Type) { return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified %s %p (%d) is not valid for this operation", oAsString(_Type), _hControl, GetDlgCtrlID(_hControl)); }
+
+inline bool oErrorSetLastBadIndex(HWND _hControl, oGUI_CONTROL_TYPE _Type, int _SubItemIndex) { return oErrorSetLast(oERROR_NOT_FOUND, "_SubItemIndex %d was not found in %s %p (%d)", _SubItemIndex, oAsString(_Type), _hControl, GetDlgCtrlID(_hControl)); }
+
+inline HWND oWinControlGetBuddy(HWND _hControl) { return (HWND)SendMessage(_hControl, UDM_GETBUDDY, 0, 0); }
+
+bool oWinCreate(HWND* _phWnd, WNDPROC _Wndproc, void* _pThis, uint _ClassUniqueID)
 {
-	if (!_pHwnd)
+	if (!_phWnd)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
-	char className[32];
-	sprintf_s(className, "OOOii.Window%s%u", _SupportDoubleClicks ? "DblClks" : "", _ClassUniqueID);
+	oStringS ClassName;
+	sprintf_s(ClassName, "Ouroboros.Window.%u", _ClassUniqueID);
 
 	WNDCLASSEXA wc;
 	ZeroMemory(&wc, sizeof(WNDCLASSEX));
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.hInstance = GetModuleHandle(0);
-	wc.lpfnWndProc = _Wndproc;                    
-	wc.lpszClassName = className;                        
-	wc.style = CS_BYTEALIGNCLIENT|CS_HREDRAW|CS_VREDRAW|CS_OWNDC|(_SupportDoubleClicks ? CS_DBLCLKS : 0);
+	wc.lpfnWndProc = _Wndproc ? _Wndproc : DefWindowProc;                    
+	wc.lpszClassName = ClassName;                        
+	wc.style = CS_BYTEALIGNCLIENT|CS_HREDRAW|CS_VREDRAW|CS_OWNDC|CS_DBLCLKS;
 	wc.hCursor = LoadCursor(0, IDC_ARROW);
 	wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
 	if (0 == RegisterClassEx(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
 		return oWinSetLastError();
 
-	*_pHwnd = CreateWindowEx(WS_EX_ACCEPTFILES|WS_EX_APPWINDOW, className, "", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, nullptr, _pThis);
-	if (!*_pHwnd)
-		return false; // pass through error
+	*_phWnd = CreateWindowEx(WS_EX_ACCEPTFILES|WS_EX_APPWINDOW, ClassName, "", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, nullptr, _pThis);
+	if (!*_phWnd)
+	{
+		if (GetLastError() == S_OK)
+			return oErrorSetLast(oERROR_GENERIC, "CreateWindowEx returned a null HWND (failure condition) but GetLastError is S_OK. This implies that user handling of a WM_CREATE message failed, so start looking there.");
+		return oWinSetLastError();
+	}
+
+	oTRACE("HWND %p running on thread %d (0x%x)", *_phWnd, oAsUint(oStd::this_thread::get_id()), oAsUint(oStd::this_thread::get_id()));
 
 	return true;
-}
-
-HBRUSH oWinGetBackgroundBrush(HWND _hWnd)
-{
-	return (HBRUSH)GetClassLongPtr(_hWnd, GCLP_HBRBACKGROUND);
 }
 
 void* oWinGetThis(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
 {
 	if (!_hWnd)
-		return 0;
+		return nullptr;
 
-	void* context = 0;
+	void* context = nullptr;
 
-	if (_uMsg == WM_CREATE)
+	switch (_uMsg)
+	{
+		case WM_CREATE:
 	{
 		// a context (probably some 'this' pointer) was passed during the call 
 		// to CreateWindow, so put that in userdata.
 		CREATESTRUCTA* cs = (CREATESTRUCTA*)_lParam;
 		SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)cs->lpCreateParams);
 		context = (void*)cs->lpCreateParams;
+			break;
 	}
 
-	else if (_uMsg == WM_INITDIALOG)
-	{
+		case WM_INITDIALOG:
 		// dialogs don't use CREATESTRUCT, so assume it's directly the context
 		SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)_lParam);
 		context = (void*)_lParam;
-	}
+			break;
 
-	else
-	{
+		default:
 		// For any other message, grab the context and return it
 		context = _hWnd ? (void*)GetWindowLongPtr(_hWnd, GWLP_USERDATA) : 0;
+			break;
 	}
 
 	return context;
 }
 
-#define oWINV(_hWnd) \
-	if (!oWinExists(_hWnd)) \
-	{	oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid HWND %p specified", _hWnd); \
-		return false; \
+oStd::thread::id oWinGetWindowThread(HWND _hWnd)
+{
+	oStd::thread::id ID;
+	if (IsWindow(_hWnd))
+		(uint&)ID = GetWindowThreadProcessId(_hWnd, nullptr);
+	return ID;
+}
+
+// A wrapper for MS's GetWindow() that changes the rules of traversal. The rules 
+// for the "next" window are: _hWnd's first child, if not then the next 
+// sibling, and if at end of sibling list then the first child of _hWnd's parent 
+// (what should be the first sibling in _hWnd's sibling list. If the next window 
+// has a "buddy" window (UPDOWN control), then the buddy becomes the next, since 
+// it controls the events of the other buddy anyway.
+static HWND oWinGetNextWindow(HWND _hWnd)
+{
+	oWINVP(_hWnd);
+	HWND hNext = GetWindow(_hWnd, GW_CHILD);
+	if (!hNext)
+		hNext = GetWindow(_hWnd, GW_HWNDNEXT);
+	if (!hNext) // try wrap around
+		hNext = GetWindow(GetParent(_hWnd), GW_HWNDFIRST);
+
+	if (hNext)
+	{
+		HWND hBuddy = oWinControlGetBuddy(hNext);
+		if (hBuddy)
+			hNext = hBuddy;
 	}
 
-#define oWINVP(_hWnd) \
-	if (!oWinExists(_hWnd)) \
-	{	oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid HWND %p specified", _hWnd); \
-		return nullptr; \
+	return hNext;
+}
+
+// Returns the last HWND in the specified _hWnd's child list. If not a parent, 
+// then this returns nullptr.
+static HWND oWinGetLastChild(HWND _hWnd)
+{
+	oWINVP(_hWnd);
+	HWND hChild = GetWindow(_hWnd, GW_CHILD);
+	if (hChild)
+	{
+		HWND hLastChild = GetWindow(hChild, GW_HWNDLAST);
+		if (hLastChild) hChild = hLastChild;
+	}
+	return hChild;
+}
+
+// A wrapper for MS's GetWindow() that changes the rules of traversal. The rules
+// for the "prev" window are: _hWnd's previous sibling, if at start of sibling 
+// list, then get the last child of _hWnd, else get the last child of _hWnd's
+// parent.
+static HWND oWinGetPrevWindow(HWND _hWnd)
+{
+	oWINVP(_hWnd);
+	HWND hPrev = GetWindow(_hWnd, GW_HWNDPREV);
+	if (!hPrev)
+	{
+		hPrev = GetParent(_hWnd);
+		if (hPrev && !GetParent(hPrev)) // don't pop up to top-level window, stay in controls
+			hPrev = nullptr;
 	}
 
-bool oWinProcessSingleMessage(HWND _hWnd, bool _WaitForNext)
+	else
+	{
+		HWND hLastChild = oWinGetLastChild(hPrev);
+		if (hLastChild) hPrev = hLastChild;
+	}
+
+	if (!hPrev) // try wrap around
+	{
+		hPrev = GetWindow(_hWnd, GW_HWNDLAST);
+		HWND hLastChild = oWinGetLastChild(hPrev);
+		if (hLastChild) hPrev = hLastChild;
+	}
+
+	return hPrev;
+}
+
+// Cycles through all next windows until the next valid tabstop is found
+static HWND oWinGetNextTabStop()
+{
+	HWND hCurrent = GetFocus();
+	HWND hNext = oWinGetNextWindow(hCurrent);
+	while (hNext != hCurrent && hNext && !oWinControlIsTabStop(hNext))
+		hNext = oWinGetNextWindow(hNext);
+	return hNext;
+}
+
+// Cycles through all prev windows until the prev valid tabstop is found
+static HWND oWinGetPrevTabStop()
+{
+	HWND hCurrent = GetFocus();
+	HWND hPrev = oWinGetPrevWindow(hCurrent);
+	while (hPrev != hCurrent && hPrev && !oWinControlIsTabStop(hPrev))
+		hPrev = oWinGetPrevWindow(hPrev);
+	return hPrev;
+}
+
+// No Wisdom from Google has yielded a rational Microsoft-way of hadnling 
+// Ctrl-Tab and Shift-Ctrl-Tab in a way consistent with Microsoft-system 
+// dialogs. This function wraps IsDialogMessage in a way that seems to conform
+// more to MS standards than their own function by intercepting WM_KEYDOWN for
+// VK_TAB.
+static bool oIsDialogMessageEx(HWND _hWnd, MSG* _pMsg)
+{
+	oWINVP(_hWnd);
+	if (_pMsg->message == WM_KEYDOWN && _pMsg->wParam == VK_TAB)
+	{
+		bool CtrlDown = (GetKeyState(VK_LCONTROL) & 0x1000) || (GetKeyState(VK_RCONTROL) & 0x1000);
+		bool ShiftDown = (GetKeyState(VK_LSHIFT) & 0x1000) || (GetKeyState(VK_RSHIFT) & 0x1000);
+		if (CtrlDown)
+		{
+			// @oooii-tony: Hmm, this won't behave well with multiple tab controls in
+			// a single window
+			HWND hTab = FindWindowEx(_hWnd, nullptr, WC_TABCONTROL, nullptr);
+			while (hTab && (!IsWindowEnabled(hTab) || !IsWindowVisible(hTab)))
+				hTab = FindWindowEx(_hWnd, hTab, WC_TABCONTROL, nullptr);
+
+			if (hTab)
+			{
+				NMHDR n;
+				n.hwndFrom = hTab;
+				n.idFrom = GetDlgCtrlID(hTab);
+				n.code = TCN_SELCHANGING;
+				// @oooii-tony: Not sure what this should be because the docs say it 
+				// isn't the case that n.idFrom is the ID to use, but I always observe 
+				// the values being the same in debug spew
+				WPARAM w = n.idFrom;
+				SendMessage(_hWnd, WM_NOTIFY, w, (LPARAM)&n);
+				oWinControlSelectSubItemRelative(hTab, ShiftDown ? -1 : 1);
+				n.code = TCN_SELCHANGE;
+				SendMessage(_hWnd, WM_NOTIFY, w, (LPARAM)&n);
+				return true;
+			}
+		}
+
+		else
+		{
+			HWND hNext = ShiftDown ? oWinGetPrevTabStop() : oWinGetNextTabStop();
+			if (hNext)
+			{
+				oWinSetFocus(hNext);
+				return true;
+			}
+		}
+	}
+
+	return !!IsDialogMessage(_hWnd, _pMsg);
+}
+
+bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext)
 {
 	oWINV(_hWnd);
 	MSG msg;
@@ -118,7 +288,11 @@ bool oWinProcessSingleMessage(HWND _hWnd, bool _WaitForNext)
 
 	if (HasMessage)
 	{
-		if (!IsDialogMessage(_hWnd, &msg))
+		bool HasMessage = !!TranslateAccelerator(_hWnd, _hAccel, &msg);
+		if (!HasMessage)
+			HasMessage = oIsDialogMessageEx(_hWnd, &msg);
+
+		if (!HasMessage)
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -131,11 +305,12 @@ bool oWinProcessSingleMessage(HWND _hWnd, bool _WaitForNext)
 }
 
 using namespace oStd::chrono;
-bool oWinPumpMessages(HWND _hWnd, unsigned int _TimeoutMS)
+bool oWinFlushMessages(HWND _hWnd, uint _TimeoutMS)
 {
+	oWINV(_hWnd);
 	high_resolution_clock::time_point start = high_resolution_clock::now();
 
-	while (oWinProcessSingleMessage(_hWnd, false))
+	while (oWinDispatchMessage(_hWnd, nullptr, false))
 	{
 		if (_TimeoutMS == oINFINITE_WAIT || oSeconds(high_resolution_clock::now() - start) < milliseconds(_TimeoutMS))
 			continue;
@@ -150,6 +325,16 @@ bool oWinWake(HWND _hWnd)
 {
 	oWINV(_hWnd);
 	return !!PostMessage(_hWnd, WM_NULL, 0, 0);
+}
+
+bool oWinSetOwner(HWND _hWnd, HWND _hOwner)
+{
+	// Yes, you've read this right... Check the community add-ons:
+	// http://msdn.microsoft.com/en-us/library/windows/desktop/ms633591(v=vs.85).aspx
+	SetLastError(S_OK);
+	if (!SetWindowLongPtr(_hWnd, GWLP_HWNDPARENT, (LONG_PTR)_hOwner) && GetLastError() != S_OK)
+		return oWinSetLastError();
+	return true;
 }
 
 bool oWinExists(HWND _hWnd)
@@ -177,41 +362,32 @@ bool oWinSetFocus(HWND _hWnd, bool _Focus)
 		return oWinSetFocus(GetNextWindow(_hWnd, GW_HWNDNEXT), true);
 }
 
-bool oWinGetEnabled(HWND _hWnd)
+bool oWinIsEnabled(HWND _hWnd)
 {
 	oWINV(_hWnd);
 	oVB_RETURN(IsWindowEnabled(_hWnd));
 	return true;
 }
 
-bool oWinSetEnabled(HWND _hWnd, bool _Enabled)
+bool oWinEnable(HWND _hWnd, bool _Enabled)
 {
 	oWINV(_hWnd);
 	EnableWindow(_hWnd, BOOL(_Enabled));
 	return true;
 }
 
-oWINDOW_STATE oWinGetState(HWND _hWnd)
+bool oWinIsAlwaysOnTop(HWND _hWnd)
 {
-	if (!oWinExists(_hWnd)) return oWINDOW_NONEXISTANT;
-	else if (!IsWindowVisible(_hWnd)) return oWINDOW_HIDDEN;
-	else if (IsIconic(_hWnd)) return oWINDOW_MINIMIZED;
-	else if (IsZoomed(_hWnd)) return oWINDOW_MAXIMIZED;
-	else return oWINDOW_RESTORED;
+	oWINV(_hWnd);
+	return !!(GetWindowLong(_hWnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
 }
 
-// Returns a value fit to be passed to ShowWindow()
-static int oWinGetShowCommand(oWINDOW_STATE _State, bool _TakeFocus)
+bool oWinSetAlwaysOnTop(HWND _hWnd, bool _AlwaysOnTop)
 {
-	switch (_State)
-	{
-		case oWINDOW_NONEXISTANT: return SW_HIDE;
-		case oWINDOW_HIDDEN: return SW_HIDE;
-		case oWINDOW_MINIMIZED: return _TakeFocus ? SW_SHOWMINIMIZED : SW_SHOWMINNOACTIVE;
-		case oWINDOW_MAXIMIZED: return SW_SHOWMAXIMIZED;
-		case oWINDOW_RESTORED: return _TakeFocus ? SW_SHOWNORMAL : SW_SHOWNOACTIVATE;
-		oNODEFAULT;
-	}
+	oWINV(_hWnd);
+	RECT r;
+	oVB_RETURN(GetWindowRect(_hWnd, &r));
+	return !!::SetWindowPos(_hWnd, _AlwaysOnTop ? HWND_TOPMOST : HWND_TOP, r.left, r.top, oWinRectW(r), oWinRectH(r), IsWindowVisible(_hWnd) ? SWP_SHOWWINDOW : SWP_HIDEWINDOW);
 }
 
 bool oWinRestore(HWND _hWnd)
@@ -225,14 +401,37 @@ bool oWinRestore(HWND _hWnd)
 	return true;
 }
 
-bool oWinSetState(HWND _hWnd, oWINDOW_STATE _State, bool _TakeFocus)
+oGUI_WINDOW_STATE oWinGetState(HWND _hWnd)
+{
+	if (!oWinExists(_hWnd)) return oGUI_WINDOW_NONEXISTANT;
+	else if (!IsWindowVisible(_hWnd)) return oGUI_WINDOW_HIDDEN;
+	else if (IsIconic(_hWnd)) return oGUI_WINDOW_MINIMIZED;
+	else if (IsZoomed(_hWnd)) return oGUI_WINDOW_MAXIMIZED;
+	else return oGUI_WINDOW_RESTORED;
+}
+
+// Returns a value fit to be passed to ShowWindow()
+static int oWinGetShowCommand(oGUI_WINDOW_STATE _State, bool _TakeFocus)
+{
+	switch (_State)
+	{
+		case oGUI_WINDOW_NONEXISTANT: return SW_HIDE;
+		case oGUI_WINDOW_HIDDEN: return SW_HIDE;
+		case oGUI_WINDOW_MINIMIZED: return _TakeFocus ? SW_SHOWMINIMIZED : SW_SHOWMINNOACTIVE;
+		case oGUI_WINDOW_MAXIMIZED: return SW_SHOWMAXIMIZED;
+		case oGUI_WINDOW_RESTORED: return _TakeFocus ? SW_SHOWNORMAL : SW_SHOWNOACTIVATE;
+		oNODEFAULT;
+	}
+}
+
+bool oWinSetState(HWND _hWnd, oGUI_WINDOW_STATE _State, bool _TakeFocus)
 {
 	oWINV(_hWnd);
 
 	// There's a known issue that a simple ShowWindow doesn't always work on 
 	// some minimized apps. The WAR seems to be to set focus to anything else, 
 	// then try to restore the app.
-	if (_TakeFocus && oWinGetState(_hWnd) == oWINDOW_MINIMIZED && _State > oWINDOW_MINIMIZED)
+	if (_TakeFocus && oWinGetState(_hWnd) == oGUI_WINDOW_MINIMIZED && _State > oGUI_WINDOW_MINIMIZED)
 	{
 		HWND hProgMan = FindWindow(nullptr, "Program Manager");
 		oASSERT(hProgMan, "Program Manager not found");
@@ -244,29 +443,30 @@ bool oWinSetState(HWND _hWnd, oWINDOW_STATE _State, bool _TakeFocus)
 	return true;
 }
 
-oWINDOW_STYLE oWinGetStyle(HWND _hWnd)
+oGUI_WINDOW_STYLE oWinGetStyle(HWND _hWnd)
 {
 	#define oFIXED_STYLE (WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX)
-
 	LONG_PTR style = GetWindowLongPtr(_hWnd, GWL_STYLE);
-	if ((style & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) return oWINDOW_SIZEABLE;
-	else if ((style & oFIXED_STYLE) == oFIXED_STYLE) return oWINDOW_FIXED;
-	else if ((style & WS_POPUP) == WS_POPUP) return oWINDOW_BORDERLESS;
-	return oWINDOW_DIALOG;
+	if ((style & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) return oGUI_WINDOW_SIZEABLE;
+	else if ((style & oFIXED_STYLE) == oFIXED_STYLE) return oGUI_WINDOW_FIXED;
+	else if ((style & WS_POPUP) == WS_POPUP) return oGUI_WINDOW_BORDERLESS;
+	else if ((style & WS_CHILD) == WS_CHILD) return oGUI_WINDOW_EMBEDDED;
+	return oGUI_WINDOW_DIALOG;
 }
 
-static DWORD oWinGetStyle(oWINDOW_STYLE _Style)
+static DWORD oWinGetStyle(oGUI_WINDOW_STYLE _Style)
 {
 	switch (_Style)
 	{
-		case oWINDOW_BORDERLESS: return WS_POPUP;
-		case oWINDOW_DIALOG: return WS_CAPTION;
-		case oWINDOW_FIXED: return WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX;
+		case oGUI_WINDOW_EMBEDDED: return WS_CHILD;
+		case oGUI_WINDOW_BORDERLESS: return WS_POPUP;
+		case oGUI_WINDOW_DIALOG: return WS_CAPTION;
+		case oGUI_WINDOW_FIXED: return WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX;
 		default: return WS_OVERLAPPEDWINDOW;
 	}
 }
 
-bool oWinSetStyle(HWND _hWnd, oWINDOW_STYLE _Style, const RECT* _prClient)
+bool oWinSetStyle(HWND _hWnd, oGUI_WINDOW_STYLE _Style, bool _HasStatusBar, const RECT* _prClient)
 {
 	oWINV(_hWnd);
 
@@ -284,18 +484,46 @@ bool oWinSetStyle(HWND _hWnd, oWINDOW_STYLE _Style, const RECT* _prClient)
 	if (_prClient)
 	{
 		r = *_prClient;
+
+		// Don't do a NOSIZE because we need to adjust for statusbar
 		if (r.right == oDEFAULT || r.bottom == oDEFAULT)
-			uFlags |= SWP_NOSIZE;
+		{
+			RECT rCurrent;
+			GetClientRect(_hWnd, &rCurrent);
+			if (r.right == oDEFAULT) r.right = rCurrent.right;
+			if (r.bottom == oDEFAULT) r.bottom = rCurrent.bottom;
+		}
+
+		if (_HasStatusBar)
+			oWinStatusBarAdjustClientRect(_hWnd, &r);
 	}
 
 	else
-		oVB_RETURN(oWinGetClientScreenRect(_hWnd, &r));
+		oVB_RETURN(oWinGetClientScreenRect(_hWnd, _HasStatusBar, &r));
 
-	oVB_RETURN(AdjustWindowRect(&r, dwAllFlags, !!GetMenu(_hWnd)));
+	bool HasMenu = !!GetMenu(_hWnd);
+
+	oVB_RETURN(AdjustWindowRect(&r, dwAllFlags, HasMenu));
 
 	SetLastError(0); // http://msdn.microsoft.com/en-us/library/ms644898(VS.85).aspx
 	oVB_RETURN(SetWindowLongPtr(_hWnd, GWL_STYLE, dwAllFlags));
 	oVB_RETURN(SetWindowPos(_hWnd, 0, r.left, r.top, oWinRectW(r), oWinRectH(r), uFlags));
+	return true;
+}
+
+bool oWinGetClientScreenRect(HWND _hWnd, bool _HasStatusBar, RECT* _pRect)
+{
+	oWINV(_hWnd);
+	if (!_pRect)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+	oVB_RETURN(GetClientRect(_hWnd, _pRect));
+
+	if (_HasStatusBar)
+		oWinStatusBarAdjustClientRect(_hWnd, _pRect);
+
+	POINT p = { _pRect->left, _pRect->top };
+	oVB_RETURN(ClientToScreen(_hWnd, &p));
+	*_pRect = oWinRectTranslate(*_pRect, p);
 	return true;
 }
 
@@ -311,9 +539,18 @@ int2 oWinGetPosition(HWND _hWnd)
 bool oWinSetPosition(HWND _hWnd, const int2& _ScreenPosition)
 {
 	oWINV(_hWnd);
-	RECT r = oWinRectWH(_ScreenPosition, int2(100,100));
+	RECT r = oWinRectWH(_ScreenPosition, int2(0,0));
 	oVB_RETURN(AdjustWindowRect(&r, oWinGetStyle(oWinGetStyle(_hWnd)), FALSE));
 	oVB_RETURN(SetWindowPos(_hWnd, 0, r.left, r.top, 0, 0, SWP_NOSIZE|SWP_NOZORDER));
+	return true;
+}
+
+bool oWinSetPositionAndSize(HWND _hWnd, const int2& _Position, const int2& _Size)
+{
+	oWINV(_hWnd);
+	RECT r = oWinRectWH(_Position, _Size);
+	oVB_RETURN(AdjustWindowRect(&r, oWinGetStyle(oWinGetStyle(_hWnd)), FALSE));
+	oVB_RETURN(SetWindowPos(_hWnd, 0, r.left, r.top, 0, 0, SWP_NOZORDER));
 	return true;
 }
 
@@ -328,289 +565,267 @@ bool oWinAnimate(HWND _hWnd, const RECT& _From, const RECT& _To)
 	return true;
 }
 
-bool oWinSetTitle(HWND _hWnd, const char* _Title)
+RECT oWinGetParentRect(HWND _hWnd, HWND _hExplicitParent)
 {
-	oWINV(_hWnd);
-	if (!SetWindowText(_hWnd, _Title))
-		return oWinSetLastError();
-	return true;
+	HWND hParent = _hExplicitParent ? _hExplicitParent : GetParent(_hWnd);
+	RECT rParent;
+	if (hParent)
+		GetClientRect(hParent, &rParent);
+	else
+	{
+		oDISPLAY_DESC DDesc;
+		oDisplayEnum(oWinGetDisplayIndex(_hWnd), &DDesc);
+		rParent = oWinRectWH(DDesc.WorkareaPosition, DDesc.WorkareaSize);
+	}
+	return rParent;
 }
 
-bool oWinGetTitle(HWND _hWnd, char* _Title, size_t _SizeofTitle)
-{
-	oWINV(_hWnd);
-	if (!GetWindowText(_hWnd, _Title, static_cast<int>(_SizeofTitle)))
-		return oWinSetLastError();
-	return true;
-}
-
-bool oWinGetAlwaysOnTop(HWND _hWnd)
-{
-	oWINV(_hWnd);
-	return !!(GetWindowLong(_hWnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
-}
-
-bool oWinSetAlwaysOnTop(HWND _hWnd, bool _AlwaysOnTop)
-{
-	oWINV(_hWnd);
-	RECT r;
-	oVB_RETURN(GetWindowRect(_hWnd, &r));
-	return !!::SetWindowPos(_hWnd, _AlwaysOnTop ? HWND_TOPMOST : HWND_TOP, r.left, r.top, oWinRectW(r), oWinRectH(r), IsWindowVisible(_hWnd) ? SWP_SHOWWINDOW : SWP_HIDEWINDOW);
-}
-
-HICON oWinGetIcon(HWND _hWnd, bool _BigIcon)
-{
-	oWINV(_hWnd);
-	return (HICON)SendMessage(_hWnd, WM_GETICON, (WPARAM)(_BigIcon ? ICON_BIG : ICON_SMALL), 0);
-}
-
-bool oWinSetIcon(HWND _hWnd, HICON _hIcon, bool _BigIcon)
-{
-	oWINV(_hWnd);
-	return !!SendMessage(_hWnd, WM_SETICON, (WPARAM)(_BigIcon ? ICON_BIG : ICON_SMALL), (LPARAM)_hIcon);
-}
-
-unsigned int oWinGetDisplayIndex(HWND _hWnd)
+uint oWinGetDisplayIndex(HWND _hWnd)
 {
 	DISPLAY_DEVICE dev;
 	return oWinGetDisplayDevice(MonitorFromWindow(_hWnd, MONITOR_DEFAULTTONEAREST), &dev);
 }
 
-struct WFIND
+HBRUSH oWinGetBackgroundBrush(HWND _hWnd)
 {
-	DWORD ThreadID;
-	const char* Title;
-	HWND hWnd;
-};
+	return (HBRUSH)GetClassLongPtr(_hWnd, GCLP_HBRBACKGROUND);
+}
 
-bool oWinGetClientScreenRect(HWND _hWnd, RECT* _pRect)
+HFONT oWinGetFont(HWND _hWnd)
+{
+	return (HFONT)SendMessage(_hWnd, WM_GETFONT, 0, 0);
+}
+
+HFONT oWinGetDefaultFont()
+{
+	return (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+}
+
+bool oWinSetFont(HWND _hWnd, HFONT _hFont)
 {
 	oWINV(_hWnd);
-	if (!_pRect)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
-	
-	oVB_RETURN(GetClientRect(_hWnd, _pRect));
-	POINT p = { _pRect->left, _pRect->top };
-	oVB_RETURN(ClientToScreen(_hWnd, &p));
-	_pRect->left = p.x;
-	_pRect->top = p.y;
-	_pRect->right += p.x;
-	_pRect->bottom += p.y;
+	if (!_hFont)
+		_hFont = oWinGetDefaultFont();
+	SendMessage(_hWnd, WM_SETFONT, (WPARAM)_hFont, TRUE);
 	return true;
 }
 
-bool oWinCursorSetClipped(HWND _hWnd, bool _Clipped)
+bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex)
 {
 	oWINV(_hWnd);
-
-	if (_Clipped)
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hWnd);
+	switch (type)
 	{
-		RECT r;
-		oWinGetClientScreenRect(_hWnd, &r);
-		oVB_RETURN(ClipCursor(&r));
-	}
+		case oGUI_CONTROL_COMBOBOX:
+		case oGUI_CONTROL_COMBOTEXTBOX:
+		if (_SubItemIndex != oInvalid)
+		{
+			oVERIFY(oWinControlDeleteSubItem(_hWnd, _Text, _SubItemIndex));
+			oVERIFY(oWinControlInsertSubItem(_hWnd, _Text, _SubItemIndex));
+		}
+		break;
 
-	else
-		oVB_RETURN(ClipCursor(0));
+		case oGUI_CONTROL_TAB:
+		{
+			TCITEM tci;
+			memset(&tci, 0, sizeof(tci));
+			tci.dwStateMask = TCIF_TEXT;
+			tci.pszText = (LPSTR)_Text;
 
-	return true;
-}
+			if (!TabCtrl_SetItem(_hWnd, _SubItemIndex, &tci))
+				return oWinSetLastError();
 
-bool oWinCursorGetClipped(HWND _hWnd)
-{
-	oWINV(_hWnd);
-	RECT rClip, rClient;
-	oVB_RETURN(GetClipCursor(&rClip));
-	oVB_RETURN(GetClientRect(_hWnd, &rClient));
-	return !memcmp(&rClip, &rClient, sizeof(RECT));
-}
+			break;
+		}
 
-bool oWinCursorIsVisible()
-{
-	CURSORINFO ci;
-	ci.cbSize = sizeof(CURSORINFO);
-	GetCursorInfo(&ci);
-	return ci.flags == CURSOR_SHOWING;
-}
+		case oGUI_CONTROL_FLOATBOX:
+		case oGUI_CONTROL_FLOATBOX_SPINNER:
+				return oErrorSetLast(oERROR_INVALID_PARAMETER, "For FloatBoxes and FloatBoxSpinners, use oWinControlSetValue instead.");
 
-void oWinCursorSetVisible(bool _Visible)
-{
-	if (_Visible)
-		while (ShowCursor(true) < 0) {}
-	else
-		while (ShowCursor(false) > -1) {}
-}
-
-bool oWinCursorGetPosition(HWND _hWnd, int2* _pClientPosition)
-{
-	oWINV(_hWnd);
-	if (!_pClientPosition)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
+		default: 
+			if (!SetWindowText(_hWnd, _Text))
+				return oWinSetLastError();
 	}
 
-	POINT p;
-	oVB_RETURN(GetCursorPos(&p));
-	oVB_RETURN(ScreenToClient(_hWnd, &p));
-	_pClientPosition->x = p.x;
-	_pClientPosition->y = p.y;
 	return true;
 }
 
-bool oWinCursorSetPosition(HWND _hWnd, const int2& _ClientPosition)
-{
-	oWINV(_hWnd);
-	POINT p = { _ClientPosition.x, _ClientPosition.y };
-	oVB_RETURN(ClientToScreen(_hWnd, &p));
-	oVB_RETURN(SetCursorPos(p.x, p.y));
-	return true;
-}
-
-HCURSOR oWinGetCursor(HWND _hWnd)
+char* oWinGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, int _SubItemIndex)
 {
 	oWINVP(_hWnd);
-	return (HCURSOR)GetClassLongPtr(_hWnd, GCLP_HCURSOR);
+	oGUI_CONTROL_TYPE type = oGUI_CONTROL_UNKNOWN;
+	if (_SubItemIndex != oInvalid)
+		type = oWinControlGetType(_hWnd);
+	switch (type)
+	{
+		case oGUI_CONTROL_COMBOBOX:
+		case oGUI_CONTROL_COMBOTEXTBOX:
+		{
+			size_t len = (size_t)ComboBox_GetLBTextLen(_hWnd, _SubItemIndex);
+			if (len > _SizeofStrDestination)
+			{
+				oErrorSetLast(oERROR_AT_CAPACITY);
+				return nullptr;
+			}
+			else
+			{
+				if (CB_ERR != ComboBox_GetLBText(_hWnd, _SubItemIndex, _StrDestination))
+					return _StrDestination;
+			}
+		}
+
+		case oGUI_CONTROL_TAB:
+		{
+			TCITEM item;
+			item.mask = TCIF_TEXT;
+			item.pszText = (LPSTR)_StrDestination;
+			item.cchTextMax = oInt(_SizeofStrDestination);
+			if (TabCtrl_GetItem(_hWnd, _SubItemIndex, &item))
+				return _StrDestination;
+			else
+			{
+				oWinSetLastError();
+				return nullptr;
+			}
+		}
+
+		default:
+			if (GetWindowText(_hWnd, _StrDestination, oInt(_SizeofStrDestination)))
+				return _StrDestination;
+			else
+			{
+				oWinSetLastError();
+				return nullptr;
+			}
+	}
 }
 
-bool oWinSetCursor(HWND _hWnd, HCURSOR _hCursor)
+HICON oWinGetIcon(HWND _hWnd, bool _BigIcon)
 {
 	oWINVP(_hWnd);
-	if (0 == SetClassLongPtr(_hWnd, GCLP_HCURSOR, (LONG_PTR)_hCursor))
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hWnd);
+	switch (type)
 	{
-		oWinSetLastError();
-		return false;
+		case oGUI_CONTROL_ICON: return (HICON)SendMessage(_hWnd, STM_GETICON, 0, 0);
+		default: return (HICON)SendMessage(_hWnd, WM_GETICON, (WPARAM)(_BigIcon ? ICON_BIG : ICON_SMALL), 0);
 	}
-	
-	return true;
 }
 
-void oWinButtonSetChecked(HWND _hWndButton, bool _Checked)
+bool oWinSetIcon(HWND _hWnd, HICON _hIcon, bool _BigIcon)
 {
-	Button_SetCheck(_hWndButton, _Checked ? BST_CHECKED : BST_UNCHECKED);
-}
-
-bool oWinButtonGetChecked(HWND _hWndButton)
-{
-	return BST_CHECKED == Button_GetState(_hWndButton);
-}
-
-void oWinElementSetText(HWND _hWndElement, const char* _Text)
-{
-	oVB(SetWindowText(_hWndElement, _Text));
-}
-
-int oWinComboboxGetTextIndex(HWND _hWndCombobox, const char* _Text)
-{
-	int index = ComboBox_FindStringExact(_hWndCombobox, -1, _Text);
-	if (index == CB_ERR)
-		oErrorSetLast(oERROR_NOT_FOUND, "Text %s was not found in combobox", oSAFESTRN(_Text));
-	return index;
-}
-
-bool oWinComboboxSetSelection(HWND _hWndCombobox, int _Index)
-{
-	if (CB_ERR == ComboBox_SetCurSel(_hWndCombobox, _Index))
-		return oErrorSetLast(oERROR_NOT_FOUND, "Index %d was not found in combobox", _Index);
-	return true;
-}
-
-bool oWinComboboxSetSelection(HWND _hWndCombobox, const char* _Text)
-{
-	int index = oWinComboboxGetTextIndex(_hWndCombobox, _Text);
-	if (-1 == index)
-		return false; // pass through error
-	return oWinComboboxSetSelection(_hWndCombobox, index);
-}
-
-bool oWinComboboxGetSelectedText(HWND _hWndCombobox, char* _StrDestination, size_t _SizeofStrDestination)
-{
-	size_t len = ComboBox_GetTextLength(_hWndCombobox);
-	if (len >= _SizeofStrDestination)
-		return oErrorSetLast(oERROR_AT_CAPACITY, "Buffer too small to receive string");
-	ComboBox_GetText(_hWndCombobox, _StrDestination, static_cast<int>(_SizeofStrDestination));
-	return true;
-}
-
-void oWinComboboxClear(HWND _hWndCombobox)
-{
-	ComboBox_ResetContent(_hWndCombobox);
-}
-
-bool oWinComboboxAppendStrings(HWND _hWndCombobox, const char* _Tokens, const char* _Separator)
-{
-	char* ctx = nullptr;
-	const char* tok = oStrTok(_Tokens, _Separator, &ctx);
-	while (tok)
+	oWINVP(_hWnd);
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hWnd);
+	switch (type)
 	{
-		ComboBox_AddString(_hWndCombobox, tok);
-		tok = oStrTok(nullptr, _Separator, &ctx);
+		case oGUI_CONTROL_ICON: SendMessage(_hWnd, STM_SETICON, (WPARAM)_hIcon, 0); break;
+		default: SendMessage(_hWnd, WM_SETICON, (WPARAM)(_BigIcon ? ICON_BIG : ICON_SMALL), (LPARAM)_hIcon); break;
+	}
+	return true;
+}
+
+static const char* oSubclassFloatBoxFormat = "%.04f";
+static UINT_PTR oSubclassFloatBoxID = 0x13370000;
+static LRESULT CALLBACK oSubclassProcFloatBox(HWND _hControl, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, UINT_PTR _uIdSubclass, DWORD_PTR _dwRefData)
+{
+	if (_uIdSubclass == oSubclassFloatBoxID)
+	{
+		switch (_uMsg)
+		{
+			case WM_KILLFOCUS:
+			{
+				oStringM text;
+				GetWindowText(_hControl, text, (int)text.capacity());
+				float f = 0.0f;
+				oAtof(text, &f);
+				sprintf_s(text, oSubclassFloatBoxFormat, f);
+				SetWindowText(_hControl, text);
+				break;
+			}
+
+			case WM_SETTEXT:
+			{
+				float f = 0.0f;
+				oStringM text = (const wchar_t*)_lParam; // handle wchar
+				if (!oAtof(text, &f))
+					return FALSE;
+				
+				// Ensure consistent formatting
+				sprintf_s(text, oSubclassFloatBoxFormat, f);
+				oWStringM wtext = text;
+				oWinCommCtrl::Singleton()->DefSubclassProc(_hControl, _uMsg, _wParam, (LPARAM)wtext.c_str());
+				return FALSE;
+			}
+
+			case WM_GETDLGCODE:
+			{
+				// probably copy/paste, so let that through
+				if ((GetKeyState(VK_LCONTROL) & 0x1000) || (GetKeyState(VK_RCONTROL) & 0x1000))
+					return DLGC_WANTALLKEYS;
+
+				oStringM text;
+				GetWindowText(_hControl, text, (int)text.capacity());
+
+				// refresh/commit if the user presses enter
+				if (_wParam == VK_RETURN)
+				{
+					SetWindowText(_hControl, text.c_str());
+					SendMessage(_hControl, EM_SETSEL, text.length(), text.length());
+					return DLGC_WANTARROWS;
+				}
+
+				// Only consider allowable keys at all
+				static const WPARAM sAllowableKeys[] = 
+				{
+					'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', '-', '+',
+					VK_BACK, VK_DELETE, VK_HOME, VK_END,
+				};
+				int i = 0;
+				for (; i < oCOUNTOF(sAllowableKeys); i++)
+					if (sAllowableKeys[i] == _wParam) break;
+				
+				if (i >= oCOUNTOF(sAllowableKeys))
+					return DLGC_WANTARROWS;
+
+				DWORD dwStart = oInvalid, dwEnd = oInvalid;
+				SendMessage(_hControl, EM_GETSEL, (WPARAM)&dwStart, (LPARAM)&dwEnd);
+
+				// allow only one '.', unless it's in the selecte d text about to be replaced
+				bool selHasDot = false;
+				for (DWORD i = dwStart; i < dwEnd; i++)
+					if (text[i] == '.')
+					{
+						selHasDot = true;
+						break;
+					}
+
+				if (!selHasDot && _wParam == '.' && strchr(text, '.'))
+					return DLGC_WANTARROWS;
+
+				// only one of either + or -, and it better be at the front
+				if ((_wParam == '+' || _wParam == '-') && (dwStart != 0 || strchr(text, '+') || strchr(text, '-')))
+					return DLGC_WANTARROWS;
+
+				return DLGC_WANTALLKEYS;
+			}
+
+			default:
+				break;
+		}
 	}
 
-	if (!oStrTokFinishedSuccessfully(&ctx))
-		return oErrorSetLast(oERROR_CORRUPT, "Failed to parse tokenized string for combobox values");
-	return true;
+	return oWinCommCtrl::Singleton()->DefSubclassProc(_hControl, _uMsg, _wParam, _lParam);
 }
 
-static DWORD GetStyle(oWINDOW_CONTROL_TYPE _Type, bool _StartsNewGroup)
+static UINT_PTR oSubclassTabID = 0x13370001;
+static LRESULT CALLBACK oSubclassProcTab(HWND _hControl, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, UINT_PTR _uIdSubclass, DWORD_PTR _dwRefData)
 {
-	static const DWORD sStyle[] =
-	{
-		0,
-		WS_VISIBLE|WS_CHILD|BS_GROUPBOX,
-		WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_PUSHBUTTON,
-		WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_DEFPUSHBUTTON,
-		WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_AUTOCHECKBOX,
-		WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_AUTORADIOBUTTON,
-		WS_VISIBLE|WS_CHILD|SS_SIMPLE|SS_WORDELLIPSIS,
-		WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_READONLY|ES_NOHIDESEL|ES_AUTOHSCROLL,
-		WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_NOHIDESEL|ES_AUTOHSCROLL,
-		WS_VISIBLE|WS_CHILD|WS_TABSTOP|CBS_DROPDOWNLIST|CBS_HASSTRINGS,
-		WS_VISIBLE|WS_CHILD|WS_TABSTOP|CBS_DROPDOWN|CBS_HASSTRINGS,
-		WS_VISIBLE|WS_CHILD,
-		WS_VISIBLE|WS_CHILD|WS_TABSTOP,
-	};
-
-	DWORD dwStyle = sStyle[_Type];
-	if (_StartsNewGroup)
-		dwStyle |= WS_GROUP;
-	return dwStyle;
-}
-
-static const char* GetClass(oWINDOW_CONTROL_TYPE _Type)
-{
-	static const char* sClass[] =
-	{
-		"Unknown",
-		"Button",
-		"Button",
-		"Button",
-		"Button",
-		"Button",
-		"Static",
-		"Edit",
-		"Edit",
-		"Combobox",
-		"Combobox",
-		PROGRESS_CLASS,
-		WC_TABCONTROL,
-	};
-
-	return sClass[_Type];
-}
-
-static LRESULT CALLBACK Ouroboros_TabSubclassProc_MatchLabelBackground(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, UINT_PTR _uIdSubclass, DWORD_PTR _dwRefData)
-{
-	if (_uIdSubclass == 0xc001c0de)
+	if (_uIdSubclass == oSubclassTabID)
 	{
 		switch (_uMsg)
 		{
 			case WM_CTLCOLORSTATIC:
 			{
-				HBRUSH hBrush = oWinGetBackgroundBrush(_hWnd);
+				HBRUSH hBrush = oWinGetBackgroundBrush(_hControl);
 				return (INT_PTR)hBrush;
 			}
 
@@ -619,50 +834,146 @@ static LRESULT CALLBACK Ouroboros_TabSubclassProc_MatchLabelBackground(HWND _hWn
 		}
 	}
 
-	return oWinCommCtrl::Singleton()->DefSubclassProc(_hWnd, _uMsg, _wParam, _lParam);
+	return oWinCommCtrl::Singleton()->DefSubclassProc(_hControl, _uMsg, _wParam, _lParam);
 }
 
-HWND oWinControlCreate(const oWINDOW_CONTROL_DESC& _Desc)
+static bool OnCreateAddSubItems(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
 {
-	if (!_Desc.hParent || _Desc.Type == oWINDOW_CONTROL_UNKNOWN)
-		return (HWND)oErrorSetLast(oERROR_INVALID_PARAMETER);
+	if (strchr(_Desc.Text, '|'))
+	{
+		if (!oWinControlAddSubItems(_hControl, _Desc.Text))
+			return false;
+		if (!oWinControlSelectSubItem(_hControl, 0))
+			return false;
+	}
 
-	const bool IsListControl = _Desc.Type == oWINDOW_CONTROL_COMBOBOX || _Desc.Type == oWINDOW_CONTROL_COMBOTEXTBOX;
+	return true;
+}
+
+static bool OnCreateTab(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
+{
+	if (!oWinCommCtrl::Singleton()->SetWindowSubclass(_hControl, oSubclassProcTab, oSubclassTabID, (DWORD_PTR)nullptr))
+		return false;
+	return OnCreateAddSubItems(_hControl, _Desc);
+}
+
+static bool OnCreateFloatBox(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
+{
+	if (!oWinCommCtrl::Singleton()->SetWindowSubclass(_hControl, oSubclassProcFloatBox, oSubclassFloatBoxID, (DWORD_PTR)nullptr))
+		return false;
+
+	SetWindowText(_hControl, _Desc.Text);
+	return true;
+}
+
+static bool OnCreateIcon(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
+{
+	oWinControlSetIcon(_hControl, (HICON)_Desc.Text);
+	return true;
+}
+
+static bool OnCreateFloatBoxSpinner(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
+{
+	oGUI_CONTROL_DESC ActualFloatBoxDesc = _Desc;
+	ActualFloatBoxDesc.Type = oGUI_CONTROL_FLOATBOX;
+	HWND hActualFloatBox = oWinControlCreate(ActualFloatBoxDesc);
+	if (hActualFloatBox)
+	{
+		SendMessage(_hControl, UDM_SETBUDDY, (WPARAM)hActualFloatBox, 0);
+		SendMessage(_hControl, UDM_SETRANGE32, (WPARAM)oNumericLimits<int>::GetSignedMin(), (LPARAM)oNumericLimits<int>::GetMax());
+	}
+
+	else
+		return oWinSetLastError();
+
+	return true;
+}
+
+static int2 GetSizeExplicit(const oGUI_CONTROL_DESC& _Desc)
+{
+	return _Desc.Size;
+}
+
+static int2 GetSizeIcon(const oGUI_CONTROL_DESC& _Desc)
+{
+	int2 iconSize = oGDIGetIconSize((HICON)_Desc.Text);
+	if (_Desc.Size.x != oDEFAULT) iconSize.x = _Desc.Size.x;
+	if (_Desc.Size.y != oDEFAULT) iconSize.y = _Desc.Size.y;
+	return iconSize;
+}
+
+struct CONTROL_CREATION_DESC
+{
+	const char* ClassName;
+	DWORD dwStyle;
+	DWORD dwExStyle;
+	bool SetText;
+	bool (*FinishCreation)(HWND _hControl, const oGUI_CONTROL_DESC& _Desc);
+	int2 (*GetSize)(const oGUI_CONTROL_DESC& _Desc);
+};
+
+static const CONTROL_CREATION_DESC& oWinControlGetCreationDesc(oGUI_CONTROL_TYPE _Type)
+{
+	// === IF ADDING A NEW TYPE, MAKE SURE YOU ADD AN ENTRY TO oWinControlGetType ===
+
+	static const CONTROL_CREATION_DESC sDescs[] = 
+	{
+		{ "Unknown", 0, 0, false, nullptr, GetSizeExplicit, },
+		{ "Button", WS_VISIBLE|WS_CHILD|BS_GROUPBOX, 0, true, nullptr, GetSizeExplicit, },
+		{ "Button", WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_PUSHBUTTON, 0, true, nullptr, GetSizeExplicit, },
+		{ "Button", WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_AUTOCHECKBOX, 0, true, nullptr, GetSizeExplicit, },
+		{ "Button", WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_AUTORADIOBUTTON, 0, true, nullptr, GetSizeExplicit, },
+		{ "Static", WS_VISIBLE|WS_CHILD|SS_SIMPLE|SS_WORDELLIPSIS, 0, true, nullptr, GetSizeExplicit, },
+		{ "SysLink", WS_VISIBLE|WS_CHILD|WS_TABSTOP|LWS_NOPREFIX, 0, true, nullptr, GetSizeExplicit, },
+		{ "Edit", WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_READONLY|ES_NOHIDESEL|ES_AUTOHSCROLL, 0, true, nullptr, GetSizeExplicit, },
+		{ "Static", WS_VISIBLE|WS_CHILD|SS_ICON|SS_REALSIZECONTROL, 0, false, OnCreateIcon, GetSizeIcon, },
+		{ "Edit", WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_NOHIDESEL|ES_AUTOHSCROLL, WS_EX_CLIENTEDGE, 0, nullptr, GetSizeExplicit, },
+		{ "Edit", WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_NOHIDESEL|ES_AUTOHSCROLL|ES_RIGHT, WS_EX_CLIENTEDGE, false, OnCreateFloatBox, GetSizeExplicit, },
+		{ UPDOWN_CLASS, WS_VISIBLE|WS_CHILD|WS_TABSTOP|UDS_ALIGNRIGHT|UDS_ARROWKEYS|UDS_HOTTRACK|UDS_NOTHOUSANDS|UDS_WRAP, 0,false, OnCreateFloatBoxSpinner, GetSizeExplicit, },
+		{ "Combobox", WS_VISIBLE|WS_CHILD|WS_TABSTOP|CBS_DROPDOWNLIST|CBS_HASSTRINGS, 0, false, OnCreateAddSubItems, GetSizeExplicit, },
+		{ "Combobox", WS_VISIBLE|WS_CHILD|WS_TABSTOP|CBS_DROPDOWN|CBS_HASSTRINGS, 0, false, OnCreateAddSubItems, GetSizeExplicit, },
+		{ PROGRESS_CLASS, WS_VISIBLE|WS_CHILD, 0, true, nullptr, GetSizeExplicit, },
+		{ WC_TABCONTROL, WS_VISIBLE|WS_CHILD|WS_TABSTOP, WS_EX_CONTROLPARENT, true, OnCreateTab, GetSizeExplicit, },
+	};
+	static_assert(oGUI_NUM_CONTROLS == oCOUNTOF(sDescs), "oGUI_NUM_CONTROLS count mismatch");
+	return sDescs[_Type];
+}
+
+HWND oWinControlCreate(const oGUI_CONTROL_DESC& _Desc)
+{
+	if (!_Desc.hParent || _Desc.Type == oGUI_CONTROL_UNKNOWN)
+		return (HWND)oErrorSetLast(oERROR_INVALID_PARAMETER);
+	oWINVP((HWND)_Desc.hParent);
+
+	const CONTROL_CREATION_DESC& CCDesc = oWinControlGetCreationDesc(_Desc.Type);
+	int2 size = CCDesc.GetSize(_Desc);
+
 	HWND hWnd = CreateWindowEx(
-		_Desc.Type == oWINDOW_CONTROL_TEXTBOX ? WS_EX_CLIENTEDGE : 0
-		, GetClass(_Desc.Type)
-		, IsListControl ? "" : oSAFESTR(_Desc.Text)
-		, GetStyle(_Desc.Type, _Desc.StartsNewGroup)
+		CCDesc.dwExStyle
+		, CCDesc.ClassName
+		, CCDesc.SetText ? oSAFESTR(_Desc.Text) : ""
+		, CCDesc.dwStyle | (_Desc.StartsNewGroup ? WS_GROUP : 0)
 		, _Desc.Position.x
 		, _Desc.Position.y
-		, _Desc.Dimensions.x
-		, _Desc.Dimensions.y
-		, _Desc.hParent
+		, size.x
+		, size.y
+		, (HWND)_Desc.hParent
 		, (HMENU)_Desc.ID
 		, nullptr
 		, nullptr);
 
 	if (hWnd)
 	{
-		SendMessage(hWnd, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), 1);
-
-		if (IsListControl)
+		oWinControlSetFont(hWnd, (HFONT)_Desc.hFont);
+		if (CCDesc.FinishCreation)
 		{
-			if (!oWinComboboxAppendStrings(hWnd, _Desc.Text, "|"))
-				return nullptr; // pass through last error
-
-			oWinComboboxSetSelection(hWnd, 0);
-		}
-
-		else if (_Desc.Type == oWINDOW_CONTROL_TAB)
-		{
-			if (!oWinCommCtrl::Singleton()->SetWindowSubclass(hWnd, Ouroboros_TabSubclassProc_MatchLabelBackground, 0xc001c0de, (DWORD_PTR)nullptr))
-			{
-				DestroyWindow(hWnd);
+			if (!CCDesc.FinishCreation(hWnd, _Desc))
+				{
+					DestroyWindow(hWnd);
 				hWnd = nullptr;
 			}
-		}
-	}
+				}
+				}
 
 	else
 		oWinSetLastError();
@@ -670,221 +981,198 @@ HWND oWinControlCreate(const oWINDOW_CONTROL_DESC& _Desc)
 	return hWnd;
 }
 
-oWINDOW_CONTROL_TYPE oWinControlGetType(HWND _hWnd)
+bool oWinControlDefaultOnNotify(HWND _hControl, const NMHDR& _NotifyMessageHeader, LRESULT* _plResult)
 {
-	oStringM ClassName;
-	if (!GetClassName(_hWnd, ClassName, static_cast<int>(ClassName.capacity())))
-		return oWINDOW_CONTROL_UNKNOWN;
-	
-	if (!_stricmp("Button", ClassName))
+	oWINV(_hControl);
+	bool ShortCircuit = false;
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_NotifyMessageHeader.hwndFrom);
+	switch (type)
 	{
-		LONG dwStyle = 0xff & GetWindowLong(_hWnd, GWL_STYLE);
-		switch (dwStyle)
+		case oGUI_CONTROL_FLOATBOX_SPINNER:
+			if (_NotifyMessageHeader.code == UDN_DELTAPOS)
+			{
+				HWND hBuddyFloatBox =oWinControlGetBuddy(_NotifyMessageHeader.hwndFrom);
+				if (hBuddyFloatBox)
+				{
+					const NMUPDOWN& ud = (const NMUPDOWN&)_NotifyMessageHeader;
+					float f = oWinControlGetFloat(hBuddyFloatBox);
+					oWinControlSetValue(hBuddyFloatBox, f + 0.01f * ud.iDelta);
+				}
+			}
+			ShortCircuit = true;
+			break;
+
+		case oGUI_CONTROL_LABEL_HYPERLINK:
 		{
-			case BS_GROUPBOX: return oWINDOW_CONTROL_GROUPBOX;
-			case BS_PUSHBUTTON: return oWINDOW_CONTROL_BUTTON;
-			case BS_DEFPUSHBUTTON: return oWINDOW_CONTROL_BUTTON_DEFAULT;
-			case BS_AUTOCHECKBOX: return oWINDOW_CONTROL_CHECKBOX;
-			case BS_AUTORADIOBUTTON: return oWINDOW_CONTROL_RADIOBUTTON;
-			default: return oWINDOW_CONTROL_UNKNOWN;
+			if (_NotifyMessageHeader.code == NM_CLICK || _NotifyMessageHeader.code == NM_RETURN)
+			{
+				const NMLINK& NMLink = (const NMLINK&)_NotifyMessageHeader;
+				oStringXL asMultiByte(NMLink.item.szUrl);
+				oVERIFY(oWinSystemOpenDocument(asMultiByte));
+			}
+
+			ShortCircuit = true;
+			break;
 		}
+		default: break;
 	}
 
-	else if (!_stricmp("Static", ClassName))
-	{
-		LONG dwStyle = 0xff & GetWindowLong(_hWnd, GWL_STYLE);
-		switch (dwStyle)
-		{
-			case SS_SIMPLE: return oWINDOW_CONTROL_LABEL;
-			default: return oWINDOW_CONTROL_UNKNOWN;
-		}
-	}
+	if (_plResult)
+		*_plResult = FALSE;
 
-	else if (!_stricmp("Edit", ClassName))
-	{
-		DWORD dwStyle = 0xffff & (DWORD)GetWindowLong(_hWnd, GWL_STYLE);
-
-		if (dwStyle == (dwStyle & GetStyle(oWINDOW_CONTROL_LABEL_SELECTABLE, false))) return oWINDOW_CONTROL_LABEL_SELECTABLE;
-		else if (dwStyle == (dwStyle & GetStyle(oWINDOW_CONTROL_TEXTBOX, false))) return oWINDOW_CONTROL_TEXTBOX;
-		else return oWINDOW_CONTROL_UNKNOWN;
-	}
-
-	else if (!_stricmp("ComboBox", ClassName))
-	{
-		LONG dwStyle = 0xf & GetWindowLong(_hWnd, GWL_STYLE);
-		switch (dwStyle)
-		{
-			case CBS_DROPDOWNLIST: return oWINDOW_CONTROL_COMBOBOX;
-			case CBS_DROPDOWN: return oWINDOW_CONTROL_COMBOTEXTBOX;
-			default: return oWINDOW_CONTROL_UNKNOWN;
-		}
-	}
-
-	else if (!_stricmp(GetClass(oWINDOW_CONTROL_TAB), ClassName))
-	{
-		return oWINDOW_CONTROL_TAB;
-	}
-
-	else if (!_stricmp(GetClass(oWINDOW_CONTROL_PROGRESSBAR), ClassName))
-	{
-		return oWINDOW_CONTROL_PROGRESSBAR;
-	}
-
-	return oWINDOW_CONTROL_UNKNOWN;
+	return ShortCircuit;
 }
 
-unsigned short oWinControlGetID(HWND _hWnd)
+int oWinControlGetNumSubItems(HWND _hControl)
 {
-	return static_cast<unsigned short>(GetDlgCtrlID(_hWnd));
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
+	switch (type)
+	{
+	case oGUI_CONTROL_COMBOBOX:
+	case oGUI_CONTROL_COMBOTEXTBOX: return ComboBox_GetCount(_hControl);
+	case oGUI_CONTROL_TAB: return TabCtrl_GetItemCount(_hControl);
+	default: return 0;
+	}
 }
 
-HWND oWinControlGetFromID(HWND _hParent, unsigned short _ID)
+bool oWinControlClearSubItems(HWND _hControl)
 {
-	return GetDlgItem(_hParent, _ID);
-}
+	oWINV(_hControl);
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
+	switch (type)
+			{
+		case oGUI_CONTROL_COMBOBOX:
+		case oGUI_CONTROL_COMBOTEXTBOX:
+			ComboBox_ResetContent(_hControl);
+			return true;
+		case oGUI_CONTROL_TAB:
+			if (!TabCtrl_DeleteAllItems(_hControl))
+				return oWinSetLastError();
+			return true;
+		default:
+				break;
+			}
 
-void oWinControlSetText(HWND _hWnd, const char* _Text)
-{
-	oVB(SetWindowText(_hWnd, _Text));
-}
-
-char* oWinControlGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, bool _OnlySelected)
-{
-	unsigned int start = 0, end = 0;
-
-	size_t len = 0;
-
-	if (_OnlySelected)
-	{
-		SendMessage(_hWnd, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
-		len = end - start;
-	}
-
-	else
-		len = GetWindowTextLength(_hWnd);
-
-	if (len >= _SizeofStrDestination)
-	{
-		oErrorSetLast(oERROR_AT_CAPACITY, "Buffer too small to receive string");
-		return nullptr;
-	}
-
-	if (!GetWindowText(_hWnd, _StrDestination, static_cast<int>(_SizeofStrDestination)))
-	{
-		oWinSetLastError();
-		return nullptr;
-	}
-
-	if (_OnlySelected && start != end)
-	{
-		if (start)
-			strcpy_s(_StrDestination, _SizeofStrDestination, _StrDestination + start);
-		_StrDestination[len] = 0;
-	}
-
-	return _StrDestination;
-}
-
-bool oWinControlSetChecked(HWND _hWnd, bool _Checked)
-{
-	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
-	if (type != oWINDOW_CONTROL_CHECKBOX && type != oWINDOW_CONTROL_RADIOBUTTON)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
-	Button_SetCheck(_hWnd, _Checked ? BST_CHECKED : BST_UNCHECKED);
 	return true;
 }
 
-bool oWinControlIsChecked(HWND _hWnd)
+int oWinControlInsertSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex)
 {
-	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
-	if (type != oWINDOW_CONTROL_CHECKBOX && type != oWINDOW_CONTROL_RADIOBUTTON)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
-
-	oErrorSetLast(oERROR_NONE);
-	LRESULT State = Button_GetState(_hWnd);
-	return (State & BST_CHECKED) == BST_CHECKED;
-}
-
-bool oWinControlAddListItem(HWND _hWnd, const char* _ListItemText)
-{
-	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
+	oWINV(_hControl);
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case oWINDOW_CONTROL_COMBOBOX:
-		case oWINDOW_CONTROL_COMBOTEXTBOX:
-		{
-			int result = ComboBox_AddString(_hWnd, _ListItemText);
-			if (result == CB_ERRSPACE)
-				return oErrorSetLast(oERROR_AT_CAPACITY, "String too long");
-			break;
+		case oGUI_CONTROL_COMBOBOX:
+		case oGUI_CONTROL_COMBOTEXTBOX:
+			{
+			int index = CB_ERR;
+			if (_SubItemIndex >= 0 && _SubItemIndex < ComboBox_GetCount(_hControl))
+				index = ComboBox_AddString(_hControl, _SubItemText);
+			else
+				index = ComboBox_InsertString(_hControl, _SubItemIndex, _SubItemIndex);
+
+			if (CB_ERRSPACE)
+				{
+				oErrorSetLast(oERROR_AT_CAPACITY, "String is too large");
+				index = CB_ERR;
+				}
+
+				else
+				oErrorSetLastBadIndex(_hControl, type, _SubItemIndex);
+
+			return index;
 		}
 
-		case oWINDOW_CONTROL_TAB:
-		{
+		case oGUI_CONTROL_TAB:
+				{
 			TCITEM item;
 			item.mask = TCIF_TEXT;
-			item.pszText = (LPSTR)_ListItemText;
-			if (-1 == TabCtrl_InsertItem(_hWnd, TabCtrl_GetItemCount(_hWnd), &item))
-				return oWinSetLastError();
-			break;
+			item.pszText = (LPSTR)_SubItemText;
+			int count = TabCtrl_GetItemCount(_hControl);
+			int index = TabCtrl_InsertItem(_hControl, ((_SubItemIndex >= 0) ? _SubItemIndex : count), &item);
+			if (CB_ERR == index)
+				oErrorSetLastBadIndex(_hControl, type, _SubItemIndex);
+			return index;
 		}
 
 		default:
-			return oErrorSetLast(oERROR_INVALID_PARAMETER);
-	}
+			break;
+				}
 
-	return true;
+	oErrorSetLastBadType(_hControl, type);
+	return oInvalid;
 }
 
-bool oWinControlClearListItems(HWND _hWnd)
+bool oWinControlDeleteSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex)
 {
-	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
+	oWINV(_hControl);
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case oWINDOW_CONTROL_COMBOBOX:
-		case oWINDOW_CONTROL_COMBOTEXTBOX:
-			ComboBox_ResetContent(_hWnd);
+		case oGUI_CONTROL_COMBOBOX:
+		case oGUI_CONTROL_COMBOTEXTBOX:
+		{
+			if (_SubItemIndex >= 0)
+				ComboBox_DeleteString(_hControl, _SubItemIndex);
 			break;
-		case oWINDOW_CONTROL_TAB:
-			if (!TabCtrl_DeleteAllItems(_hWnd))
-				return oWinSetLastError();
+			}
+
+		case oGUI_CONTROL_TAB:
+			TabCtrl_DeleteItem(_hControl, _SubItemIndex);
 			break;
-		default:
-			return oErrorSetLast(oERROR_INVALID_PARAMETER);
-	}
+
+			default:
+				break;
+		}
 
 	return true;
 }
 
-int oWinControlFindListItem(HWND _hWnd, const char* _ListItemText)
+bool oWinControlAddSubItems(HWND _hControl, const char* _DelimitedString, char _Delimiter)
+{
+	oWINV(_hControl);
+	char delim[2] = { _Delimiter, 0 };
+	char* ctx = nullptr;
+	const char* tok = oStrTok(_DelimitedString, delim, &ctx);
+	while (tok)
+	{
+		oWinControlInsertSubItem(_hControl, tok, oInvalid);
+		tok = oStrTok(nullptr, delim, &ctx);
+	}
+
+	if (!oStrTokFinishedSuccessfully(&ctx))
+		return oErrorSetLast(oERROR_CORRUPT, "Failed to parse tokenized string for combobox values");
+	return true;
+}
+
+int oWinControlFindSubItem(HWND _hControl, const char* _SubItemText)
 {
 	int index = CB_ERR;
-	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case oWINDOW_CONTROL_COMBOBOX:
-		case oWINDOW_CONTROL_COMBOTEXTBOX:
+		case oGUI_CONTROL_COMBOBOX:
+		case oGUI_CONTROL_COMBOTEXTBOX:
 		{
-			int index = ComboBox_FindStringExact(_hWnd, 0, _ListItemText);
+			int index = ComboBox_FindStringExact(_hControl, 0, _SubItemText);
 			if (index == CB_ERR)
-				oErrorSetLast(oERROR_NOT_FOUND, "Text %s was not found in combobox", oSAFESTRN(_ListItemText));
+				oErrorSetLast(oERROR_NOT_FOUND, "Text %s was not found in %s %p (%d)", oSAFESTRN(_SubItemText), oAsString(type), _hControl, GetDlgCtrlID(_hControl));
 			break;
 		}
 
-		case oWINDOW_CONTROL_TAB:
+		case oGUI_CONTROL_TAB:
 		{
-			oStringL text;
+			oStringM text;
 			TCITEM item;
 			item.mask = TCIF_TEXT;
 			item.pszText = (LPSTR)text.c_str();
 			item.cchTextMax = static_cast<int>(text.capacity());
-
-			const int kCount = TabCtrl_GetItemCount(_hWnd);
+			const int kCount = TabCtrl_GetItemCount(_hControl);
 			for (int i = 0; i < kCount; i++)
 			{
-				if (TabCtrl_GetItem(_hWnd, i, &item))
+				if (TabCtrl_GetItem(_hControl, i, &item))
 				{
-					if (!strcmp(text, _ListItemText))
+					if (!strcmp(text, _SubItemText))
 					{
 						index = i;
 						break;
@@ -895,108 +1183,348 @@ int oWinControlFindListItem(HWND _hWnd, const char* _ListItemText)
 			break;
 		}
 
-		default:
-			oErrorSetLast(oERROR_INVALID_PARAMETER);
-			break;
+	default:
+		oErrorSetLastBadType(_hControl, type);
+		break;
 	}
 
 	return index;
 }
 
-bool oWinControlSelect(HWND _hWnd, int _Index)
+bool oWinControlSelectSubItem(HWND _hControl, int _SubItemIndex)
 {
-	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case oWINDOW_CONTROL_COMBOBOX:
-		case oWINDOW_CONTROL_COMBOTEXTBOX:
-			if (CB_ERR == ComboBox_SetCurSel(_hWnd, _Index))
-				return oErrorSetLast(oERROR_NOT_FOUND, "Index %d was not found in list control", _Index);
+		case oGUI_CONTROL_COMBOBOX:
+		case oGUI_CONTROL_COMBOTEXTBOX:
+			if (CB_ERR == ComboBox_SetCurSel(_hControl, _SubItemIndex))
+				return oErrorSetLastBadIndex(_hControl, type, _SubItemIndex);
 			break;
 
-		case oWINDOW_CONTROL_TAB:
-			if (-1 == TabCtrl_SetCurSel(_hWnd, _Index))
-				return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		case oGUI_CONTROL_TAB:
+			if (-1 == TabCtrl_SetCurSel(_hControl, _SubItemIndex))
+				return oErrorSetLastBadIndex(_hControl, type, _SubItemIndex);
 			break;
 
 		default:
-			return oErrorSetLast(oERROR_INVALID_PARAMETER);
+			oErrorSetLastBadType(_hControl, type);
 	}
 
 	return true;
 }
 
-bool oWinControlSelect(HWND _hWnd, int _StartIndex, int _Length)
+bool oWinControlSelectSubItemRelative(HWND _hControl, int _Offset)
 {
-	oWINDOW_CONTROL_TYPE type = oWinControlGetType(_hWnd);
-	if (type != oWINDOW_CONTROL_TEXTBOX && type != oWINDOW_CONTROL_COMBOTEXTBOX && type != oWINDOW_CONTROL_LABEL_SELECTABLE)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
+	int next = -1, count = 0;
+	switch (type)
+	{
+		case oGUI_CONTROL_COMBOBOX:
+		case oGUI_CONTROL_COMBOTEXTBOX:
+			count = ComboBox_GetCount(_hControl);
+			next = ComboBox_GetCurSel(_hControl) + _Offset;
+			while (next < 0) next += count;
+			while (next >= count) next -= count;
+			if (CB_ERR == ComboBox_SetCurSel(_hControl, next))
+				return oErrorSetLastBadIndex(_hControl, type, next);
+			break;
 
-	Edit_SetSel(_hWnd, _StartIndex, _StartIndex+_Length);
+		case oGUI_CONTROL_TAB:
+			count = TabCtrl_GetItemCount(_hControl);
+			next = TabCtrl_GetCurSel(_hControl) + _Offset;
+			while (next < 0) next += count;
+			while (next >= count) next -= count;
+			if (-1 == TabCtrl_SetCurSel(_hControl, next))
+				return oErrorSetLastBadIndex(_hControl, type, next);
+			break;
+
+		default:
+			oErrorSetLastBadType(_hControl, type);
+	}
+
 	return true;
 }
 
-HMENU oWinMenuCreate(bool _IsWindowMenu)
+int oWinControlGetSelectedSubItem(HWND _hControl)
 {
-	return _IsWindowMenu ? CreateMenu() : CreatePopupMenu();
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
+	switch (type)
+	{
+		case oGUI_CONTROL_COMBOBOX:
+		case oGUI_CONTROL_COMBOTEXTBOX: return ComboBox_GetCurSel(_hControl);
+		case oGUI_CONTROL_TAB: return TabCtrl_GetCurSel(_hControl);
+		default: break;
+	}
+	return oInvalid;
 }
 
-void oWinMenuSet(HWND _hWnd, HMENU _hMenu)
+oGUI_CONTROL_TYPE oWinControlGetType(HWND _hControl)
 {
-	oVB(SetMenu(_hWnd, _hMenu));
+	oStringM ClassName;
+	if (!GetClassName(_hControl, ClassName, static_cast<int>(ClassName.capacity())))
+		return oGUI_CONTROL_UNKNOWN;
+	
+	if (!_stricmp("Button", ClassName))
+	{
+		LONG dwStyle = 0xff & GetWindowLong(_hControl, GWL_STYLE);
+		switch (dwStyle)
+		{
+			case BS_GROUPBOX: return oGUI_CONTROL_GROUPBOX;
+			case BS_PUSHBUTTON: 
+			case BS_DEFPUSHBUTTON: return oGUI_CONTROL_BUTTON;
+			case BS_AUTOCHECKBOX: return oGUI_CONTROL_CHECKBOX;
+			case BS_AUTORADIOBUTTON: return oGUI_CONTROL_RADIOBUTTON;
+			default: return oGUI_CONTROL_UNKNOWN;
+		}
+	}
+
+	else if (!_stricmp("Static", ClassName))
+	{
+		LONG dwStyle = 0xff & GetWindowLong(_hControl, GWL_STYLE);
+		if (dwStyle & SS_ICON)
+			return oGUI_CONTROL_ICON;
+		else if (dwStyle & SS_SIMPLE)
+			return oGUI_CONTROL_LABEL;
+		else
+			return oGUI_CONTROL_UNKNOWN;
+	}
+
+	else if (!_stricmp("Edit", ClassName))
+	{
+		DWORD dwStyle = 0xffff & (DWORD)GetWindowLong(_hControl, GWL_STYLE);
+		if (dwStyle == (dwStyle & oWinControlGetCreationDesc(oGUI_CONTROL_LABEL_SELECTABLE).dwStyle))
+			return oGUI_CONTROL_LABEL_SELECTABLE;
+
+			DWORD_PTR data;
+		if (oWinCommCtrl::Singleton()->GetWindowSubclass(_hControl, oSubclassProcFloatBox, oSubclassFloatBoxID, &data))
+			return oGUI_CONTROL_FLOATBOX;
+
+		else if (dwStyle == (dwStyle & oWinControlGetCreationDesc(oGUI_CONTROL_TEXTBOX).dwStyle))
+			return oGUI_CONTROL_TEXTBOX;
+
+		else
+			return oGUI_CONTROL_UNKNOWN;
+	}
+
+	else if (!_stricmp("ComboBox", ClassName))
+	{
+		LONG dwStyle = 0xf & GetWindowLong(_hControl, GWL_STYLE);
+		switch (dwStyle)
+		{
+			case CBS_DROPDOWNLIST: return oGUI_CONTROL_COMBOBOX;
+			case CBS_DROPDOWN: return oGUI_CONTROL_COMBOTEXTBOX;
+			default: return oGUI_CONTROL_UNKNOWN;
+		}
+	}
+
+	else if (!_stricmp(oWinControlGetCreationDesc(oGUI_CONTROL_FLOATBOX_SPINNER).ClassName, ClassName))
+		return oGUI_CONTROL_FLOATBOX_SPINNER;
+
+	else if (!_stricmp(oWinControlGetCreationDesc(oGUI_CONTROL_LABEL_HYPERLINK).ClassName, ClassName))
+		return oGUI_CONTROL_LABEL_HYPERLINK;
+
+	else if (!_stricmp(oWinControlGetCreationDesc(oGUI_CONTROL_TAB).ClassName, ClassName))
+	{
+		// Don't identify a generic tab as an oGUI tab, only ones that
+		// behave properly
+		DWORD_PTR data;
+		if (oWinCommCtrl::Singleton()->GetWindowSubclass(_hControl, oSubclassProcTab, oSubclassTabID, &data))
+			return oGUI_CONTROL_TAB;
+		return oGUI_CONTROL_UNKNOWN;
+	}
+	else if (!_stricmp(oWinControlGetCreationDesc(oGUI_CONTROL_PROGRESSBAR).ClassName, ClassName))
+		return oGUI_CONTROL_PROGRESSBAR;
+	return oGUI_CONTROL_UNKNOWN;
 }
 
-void oWinMenuAddSubmenu(HMENU _hParentMenu, HMENU _hSubmenu, const char* _Text)
+bool oWinControlIsTabStop(HWND _hControl)
 {
-	oVB(AppendMenu(_hParentMenu, MF_STRING | MF_POPUP, (UINT_PTR)_hSubmenu, _Text));
+	oWINV(_hControl);
+	return IsWindowEnabled(_hControl) && IsWindowVisible(_hControl) && ((GetWindowLong(_hControl, GWL_STYLE) & WS_TABSTOP) == WS_TABSTOP);
 }
 
-void oWinMenuAddMenuItem(HMENU _hParentMenu, int _MenuItemID, const char* _Text)
+int oWinControlGetID(HWND _hControl)
 {
-	oVB(AppendMenu(_hParentMenu, MF_STRING, (UINT_PTR)_MenuItemID, _Text));
+	return GetDlgCtrlID(_hControl);
 }
 
-void oWinMenuAddSeparator(HMENU _hParentMenu)
+HWND oWinControlGetFromID(HWND _hParent, unsigned short _ID)
 {
-	oVB(AppendMenu(_hParentMenu, MF_SEPARATOR, 0, nullptr));
+	return GetDlgItem(_hParent, _ID);
 }
 
-void oWinMenuCheck(HMENU _hMenu, int _MenuItemID, bool _Checked)
+RECT oWinControlGetRect(HWND _hControl)
 {
-	if (-1 == CheckMenuItem(_hMenu, (UINT)_MenuItemID, MF_BYCOMMAND | (_Checked ? MF_CHECKED : MF_UNCHECKED)))
-		oASSERT(false, "MenuItemID not found in the specified menu");
+	RECT r;
+	GetClientRect(_hControl, &r);
+	HWND hParent = GetParent(_hControl);
+	if (hParent)
+		MapWindowPoints(_hControl, hParent, (LPPOINT)&r, 2);
+	return r;
 }
 
-bool oWinMenuIsChecked(HMENU _hMenu, int _MenuItemID)
+char* oWinControlGetSelectedText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hControl)
 {
-	MENUITEMINFO mii;
-	ZeroMemory(&mii, sizeof(mii));
-	mii.cbSize = sizeof(mii);
-	mii.fMask = MIIM_STATE;
-	if (!GetMenuItemInfo(_hMenu, (UINT)_MenuItemID, FALSE, &mii))
-		return oWinSetLastError();
+	oWINVP(_hControl);
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
+	switch (type)
+	{
+	case oGUI_CONTROL_FLOATBOX_SPINNER:
+		_hControl = oWinControlGetBuddy(_hControl);
+		// pass through
+	case oGUI_CONTROL_TEXTBOX:
+	case oGUI_CONTROL_COMBOTEXTBOX:
+	case oGUI_CONTROL_FLOATBOX:
+	{
+			uint start = 0, end = 0;
+			SendMessage(_hControl, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
+			size_t len = end - start;
+	if (len >= _SizeofStrDestination)
+	{
+		oErrorSetLast(oERROR_AT_CAPACITY, "Buffer too small to receive string");
+		return nullptr;
+	}
 
-	if (mii.fState & MFS_CHECKED)
-		return true;
+			if (!GetWindowText(_hControl, _StrDestination, oInt(_SizeofStrDestination)))
+	{
+		oWinSetLastError();
+		return nullptr;
+	}
 
-	oErrorSetLast(oERROR_NONE);
-	return false;
+			if (start != end)
+	{
+		if (start)
+			strcpy_s(_StrDestination, _SizeofStrDestination, _StrDestination + start);
+		_StrDestination[len] = 0;
+	}
+
+	return _StrDestination;
+		}
+
+		default:
+		oErrorSetLastBadType(_hControl, type);
+		return nullptr;
+	}
 }
 
-void oWinMenuEnable(HMENU _hMenu, int _MenuItemID, bool _Enabled)
+bool oWinControlSelect(HWND _hControl, int _StartIndex, int _Length)
 {
-	if (-1 == EnableMenuItem(_hMenu, (UINT)_MenuItemID, MF_BYCOMMAND | (_Enabled ? MF_ENABLED : MF_GRAYED)))
-		oASSERT(false, "MenuItemID not found in the specified menu");
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
+	switch (type)
+	{
+		case oGUI_CONTROL_FLOATBOX_SPINNER:
+			_hControl = oWinControlGetBuddy(_hControl);
+			// pass thru
+		case oGUI_CONTROL_FLOATBOX:
+		case oGUI_CONTROL_TEXTBOX:
+		case oGUI_CONTROL_COMBOTEXTBOX:
+		case oGUI_CONTROL_LABEL_SELECTABLE:
+			Edit_SetSel(_hControl, _StartIndex, _StartIndex+_Length);
+			return true;
+		default:
+			return oErrorSetLastBadType(_hControl, type);
+	}
 }
 
-bool oWinMenuIsEnabled(HMENU _hMenu, int _MenuItemID)
+bool oWinControlSetValue(HWND _hControl, float _Value)
 {
-	MENUITEMINFO mii;
-	ZeroMemory(&mii, sizeof(mii));
-	mii.cbSize = sizeof(mii);
-	mii.fMask = MIIM_STATE;
-	oVB(GetMenuItemInfo(_hMenu, (UINT)_MenuItemID, FALSE, &mii));
-	if (mii.fState & (MF_GRAYED|MF_DISABLED))
-		return false;
+	oWINV(_hControl);
+	oStringM text;
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
+	switch (type)
+	{
+		case oGUI_CONTROL_FLOATBOX_SPINNER:
+			_hControl = oWinControlGetBuddy(_hControl);
+			// pass through
+		default:
+			sprintf_s(text, oSubclassFloatBoxFormat, _Value);
+			oVB(SetWindowText(_hControl, text));
+			return true;
+	}
+}
+
+float oWinControlGetFloat(HWND _hControl)
+{
+	oStringM text;
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
+	switch (type)
+	{
+		case oGUI_CONTROL_FLOATBOX_SPINNER:
+			_hControl = oWinControlGetBuddy(_hControl);
+			// pass through
+		default: 
+			GetWindowText(_hControl, text.c_str(), (int)text.capacity());
+			break;
+	}
+
+	float f = 0.0f;
+	if (!oAtof(text, &f))
+		return oNumericLimits<float>::quiet_NaN();
+	return f;
+}
+
+bool oWinControlSetIcon(HWND _hControl, HICON _hIcon, int _SubItemIndex)
+{
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
+	switch (type)
+	{
+		case oGUI_CONTROL_ICON:
+			if (_SubItemIndex != oInvalid)
+				return oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid _SubItemIndex");
+			SendMessage(_hControl, STM_SETICON, (WPARAM)_hIcon, 0);
+			return true;
+		default:
+			return oErrorSetLastBadType(_hControl, type);
+	}
+}
+
+HICON oWinControlGetIcon(HWND _hControl, int _SubItemIndex)
+{
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
+	switch (type)
+	{
+		case oGUI_CONTROL_ICON:
+			if (_SubItemIndex != oInvalid)
+		{
+				oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid _SubItemIndex");
+	return nullptr;
+	}
+			return oWinGetIcon(_hControl);
+		default:
+			oErrorSetLastBadType(_hControl, type);
+			return nullptr;
+	}
+}
+
+bool oWinControlIsChecked(HWND _hControl)
+{
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
+	switch (type)
+	{
+		case oGUI_CONTROL_CHECKBOX:
+		case oGUI_CONTROL_RADIOBUTTON:
+	{
+			oErrorSetLast(oERROR_NONE);
+			LRESULT State = Button_GetState(_hControl);
+			return (State & BST_CHECKED) == BST_CHECKED;
+			}
+		default:
+			return oErrorSetLastBadType(_hControl, type);
+	}
+}
+
+bool oWinControlSetChecked(HWND _hControl, bool _Checked)
+{
+	oWINV(_hControl);
+	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
+	switch (type)
+	{
+		case oGUI_CONTROL_CHECKBOX:
+		case oGUI_CONTROL_RADIOBUTTON:
+			Button_SetCheck(_hControl, _Checked ? BST_CHECKED : BST_UNCHECKED);
 	return true;
+		default:
+			return oErrorSetLastBadType(_hControl, type);
+	}
 }

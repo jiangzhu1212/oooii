@@ -23,7 +23,6 @@
  **************************************************************************/
 #include <oPlatform/oModule.h>
 #include <oBasis/oAssert.h>
-#include <oBasis/oSize.h>
 #include <oBasis/oError.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oSystem.h>
@@ -118,7 +117,7 @@ oHMODULE oModuleGetCurrent()
 
 bool oModuleGetName(char* _StrDestination, size_t _SizeofStrDestination, oHMODULE _hModule)
 {
-	size_t length = static_cast<size_t>(GetModuleFileNameA((HMODULE)_hModule, _StrDestination, oSize32(_SizeofStrDestination)));
+	size_t length = static_cast<size_t>(GetModuleFileNameA((HMODULE)_hModule, _StrDestination, oUInt(_SizeofStrDestination)));
 	if (length+1 == _SizeofStrDestination && GetLastError())
 	{
 		oErrorSetLast(oERROR_INVALID_PARAMETER);

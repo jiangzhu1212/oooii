@@ -88,17 +88,16 @@ bool oMoveMouseCursorOffscreen()
 	oDisplayGetVirtualRect(&p, &sz);
 	return !!SetCursorPos(p.x + sz.x, p.y-1);
 }
-void* oLoadStandardIcon()
+
+void* oLoadIcon(oFUNCTION<void(const char** _ppBufferName, const void** _ppBuffer, size_t* _pSizeofBuffer)> _BufferGetDesc)
 {
-	// Load/test OOOii lib icon:
-	extern void GetDescoooii_ico(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
 	const char* BufferName = nullptr;
 	const void* pBuffer = nullptr;
-	size_t bufferSize = 0;
-	GetDescoooii_ico(&BufferName, &pBuffer, &bufferSize);
+	size_t sizeofBuffer = 0;
+	_BufferGetDesc(&BufferName, &pBuffer, &sizeofBuffer);
 
 	oRef<oImage> ico;
-	oVERIFY(oImageCreate("Icon image", pBuffer, bufferSize, &ico));
+	oVERIFY(oImageCreate(BufferName, pBuffer, sizeofBuffer, &ico));
 
 	#if defined(_WIN32) || defined (_WIN64)
 		oGDIScopedObject<HBITMAP> hBmp;
@@ -107,6 +106,18 @@ void* oLoadStandardIcon()
 	#else
 		return nullptr;
 	#endif
+}
+
+void* oLoadInvisibleIcon()
+{
+	extern void GetDescoInvisible_ico(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
+	return oLoadIcon(GetDescoInvisible_ico);
+}
+
+void* oLoadStandardIcon()
+{
+	extern void GetDescoooii_ico(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
+	return oLoadIcon(GetDescoooii_ico);
 }
 
 errno_t oGetLogFilePath(char* _StrDestination, size_t _SizeofStrDestination, const char* _ExeSuffix)

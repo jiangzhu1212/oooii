@@ -104,7 +104,7 @@ static bool oFileLoad_OpenAndSize(oHFILE* _phFile, size_t* _pSize, const char* _
 	if (!oFileOpen(_Path, oFILE_OPEN_BIN_READ, _phFile))
 		return false; // propagate oFileOpen error
 
-	*_pSize = detail::oSizeT<size_t>(oFileGetSize(*_phFile));
+	*_pSize = oSizeT(oFileGetSize(*_phFile));
 	return true;
 }
 
@@ -125,7 +125,7 @@ static bool oFileLoad_ReadAndClose(void* _pOutBuffer, size_t _SizeofOutBuffer, s
 	if (_AsString)
 		((char*)_pOutBuffer)[actualSize] = 0;
 	if (_pOutSize)
-		*_pOutSize = detail::oSizeT<size_t>(actualSize + (_AsString ? 1 : 0));
+		*_pOutSize = oSizeT(actualSize + (_AsString ? 1 : 0));
 
 	return true;
 }

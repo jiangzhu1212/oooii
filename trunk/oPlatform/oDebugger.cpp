@@ -24,7 +24,7 @@
 #include <oPlatform/oDebugger.h>
 #include <oBasis/oString.h>
 #include <oPlatform/oCRTHeap.h>
-#include "oDbgHelp.h"
+#include "SoftLink/oWinDbgHelp.h"
 
 #pragma pack(push,8)
 typedef struct tagTHREADNAME_INFO
@@ -149,7 +149,7 @@ size_t oDebuggerGetCallstack(unsigned long long* _pSymbols, size_t _NumSymbols, 
 	size_t n = 0;
 	while (n < _NumSymbols)
 	{
-		if (!oDbgHelp::Singleton()->CallStackWalk64(GetCurrentThread(), &s, &c))
+		if (!oWinDbgHelp::Singleton()->CallStackWalk64(GetCurrentThread(), &s, &c))
 		{
 			break;
 		}
@@ -181,7 +181,7 @@ bool oDebuggerTranslateSymbol(oDEBUGGER_SYMBOL* _pSymbol, unsigned long long _Sy
 	module.SizeOfStruct = sizeof(module);
 
 	_pSymbol->Address = _Symbol;
-	if (oDbgHelp::Singleton()->CallSymGetModuleInfo64(_Symbol, &module))
+	if (oWinDbgHelp::Singleton()->CallSymGetModuleInfo64(_Symbol, &module))
 		strcpy_s(_pSymbol->Module, module.ModuleName);
 	else
 		success = false;
@@ -193,7 +193,7 @@ bool oDebuggerTranslateSymbol(oDEBUGGER_SYMBOL* _pSymbol, unsigned long long _Sy
 	symbolInfo->MaxNameLength = oCOUNTOF(_pSymbol->Name);
 
 	DWORD64 displacement = 0;
-	if (oDbgHelp::Singleton()->CallSymGetSymFromAddr64(_Symbol, &displacement, symbolInfo))
+	if (oWinDbgHelp::Singleton()->CallSymGetSymFromAddr64(_Symbol, &displacement, symbolInfo))
 	{
 		// symbolInfo just contains the first 512 characters and doesn't guarantee
 		// they will be null-terminated, so copy the buffer and ensure there's some
@@ -213,7 +213,7 @@ bool oDebuggerTranslateSymbol(oDEBUGGER_SYMBOL* _pSymbol, unsigned long long _Sy
 	line.SizeOfStruct = sizeof(line);
 
 	DWORD disp;
-	if (oDbgHelp::Singleton()->CallSymGetLineFromAddr64(_Symbol, &disp, &line))
+	if (oWinDbgHelp::Singleton()->CallSymGetLineFromAddr64(_Symbol, &disp, &line))
 	{
 		strcpy_s(_pSymbol->Filename, line.FileName);
 		_pSymbol->Line = line.LineNumber;

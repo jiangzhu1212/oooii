@@ -193,15 +193,25 @@ char* oCleanPath(char* _CleanedPath, size_t _SizeofCleanedPath, const char* _Sou
 	return _CleanedPath;
 }
 
+template<typename T> static bool oXOr(const T& _A, const T& _B)
+{
+	return (_A && !_B) || (!_A && _B);
+}
+
+template<typename T, typename Pr> static bool oXOr(const T& _A, const T& _B, Pr _Pred)
+{
+	return (_Pred(_A) && !_Pred(_B)) || (!_Pred(_A) && _Pred(_B));
+}
+
 size_t oGetCommonBaseLength(const char* _Path1, const char* _Path2, bool _CaseInsensitive)
 {
 	size_t lastSeparatorLen = 0;
 	size_t len = 0;
 	if (oSTRVALID(_Path1) && oSTRVALID(_Path2))
 	{
-		while (true)
+		while (_Path1[len] && _Path2[len])
 		{
-			int a,b;
+			int a, b;
 			if (_CaseInsensitive)
 			{
 				a = toupper(_Path1[len]);
@@ -214,11 +224,13 @@ size_t oGetCommonBaseLength(const char* _Path1, const char* _Path2, bool _CaseIn
 				b = _Path2[len];
 			}
 
-			if (a != b || (oIsSeparator(a) && !oIsSeparator(b)) || (!oIsSeparator(a) || oIsSeparator(b)))
+			if (a != b || oXOr(a, b, oIsSeparator))
 				break;
 
 			if (oIsSeparator(a) || oIsSeparator(b))
 				lastSeparatorLen = len;
+			
+			len++;
 		}
 	}
 

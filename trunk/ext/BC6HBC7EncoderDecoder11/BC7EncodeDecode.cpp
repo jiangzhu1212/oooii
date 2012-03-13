@@ -97,6 +97,22 @@ HRESULT CGPUBC7Encoder::GPU_BC7EncodeAndSave( ID3D11Texture2D* pSourceTexture, D
     return hr;
 }
 
+// @oooii-tony: From Ouroboros lib:
+template<typename T> T* oByteAdd(T* _Pointer, size_t _NumBytes) { return reinterpret_cast<T*>(((char*)_Pointer) + _NumBytes); }
+template<typename T, typename U> T* oByteAdd(T* _RelativePointer, U* _BasePointer) { return reinterpret_cast<T*>(((char*)_RelativePointer) + reinterpret_cast<size_t>(_BasePointer)); }
+template<typename T> T* oByteAdd(T* _Pointer, size_t _Stride, size_t _Count) { return reinterpret_cast<T*>(((char*)_Pointer) + _Stride * _Count); }
+static void oMemcpy2d(void* __restrict _pDestination, size_t _DestinationPitch, const void* __restrict _pSource, size_t _SourcePitch, size_t _SourceRowSize, size_t _NumRows)
+{
+	if (_DestinationPitch == _SourcePitch && _SourcePitch == _SourceRowSize)
+		memcpy(_pDestination, _pSource, _SourcePitch * _NumRows);
+	else
+	{
+		const void* end = oByteAdd(_pDestination, _DestinationPitch, _NumRows);
+		for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _DestinationPitch), _pSource = oByteAdd(_pSource, _SourcePitch))
+			memcpy(_pDestination, _pSource, _SourceRowSize);
+	}
+}
+
 HRESULT CGPUBC7Encoder::GPU_SaveToFile( ID3D11Device* pDevice, ID3D11DeviceContext* pContext,
                                         ID3D11Texture2D* pSrcTexture,
                                         WCHAR* strFilename,
@@ -164,7 +180,17 @@ HRESULT CGPUBC7Encoder::GPU_SaveToFile( ID3D11Device* pDevice, ID3D11DeviceConte
 
     pContext->Map( pReadbackbuf, 0, D3D11_MAP_READ, 0, &mappedSrc );
     pContextFL11->Map( pDstTexture, 0, D3D11_MAP_WRITE, 0, &mappedDst );    
-    memcpy( mappedDst.pData, mappedSrc.pData, desc.Height * desc.Width * sizeof(BufferBC7) / BLOCK_SIZE );
+
+		// Replace original memcpy that assumes RowPitch are the same for src and 
+		// dst with one that will take into account differing pitches
+		//memcpy( mappedDst.pData, mappedSrc.pData, desc.Height * desc.Width * sizeof(BufferBC7) / BLOCK_SIZE );
+
+		size_t SourceRowSize = sizeof(BufferBC7) * desc.Width / BLOCK_SIZE_X;
+		size_t NumRows = desc.Height / BLOCK_SIZE_Y;
+
+		// source pitch == source row size because we're copying out of a regular buffer, not a texture
+		oMemcpy2d(mappedDst.pData, mappedDst.RowPitch, mappedSrc.pData, SourceRowSize, SourceRowSize, NumRows);
+
     pContext->Unmap( pReadbackbuf, 0 );
     pContextFL11->Unmap( pDstTexture, 0 );
 

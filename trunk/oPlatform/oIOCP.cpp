@@ -63,6 +63,24 @@ private:
 	oRefCount					ParentRefCount;
 };
 
+bool IOCPCompletionRoutine(HANDLE _hIOCP, unsigned int _TimeoutMS = INFINITE)
+{
+	DWORD numberOfBytes;
+	ULONG_PTR key;
+	oIOCPOp* pSocketOp;
+
+	if(GetQueuedCompletionStatus(_hIOCP, &numberOfBytes, &key, (WSAOVERLAPPED**)&pSocketOp, _TimeoutMS))
+	{
+		// Ignore all input if the Socket is trying to shut down. The callbacks may no longer exist.
+		if( key == IOCPKEY_SHUTDOWN)
+			return false;
+
+		oIOCPContext::CallBackUser(pSocketOp);
+	}
+
+	return true;
+}
+
 void IOCPThread(HANDLE	_hIOCP, unsigned int _Index, oCountdownLatch* _pLatch)
 {
 	oFixedString<char, 64> Name;
@@ -73,18 +91,8 @@ void IOCPThread(HANDLE	_hIOCP, unsigned int _Index, oCountdownLatch* _pLatch)
 
 	while(1)
 	{
-		DWORD numberOfBytes;
-		ULONG_PTR key;
-		oIOCPOp* pSocketOp;
-
-		if(GetQueuedCompletionStatus(_hIOCP, &numberOfBytes, &key, (WSAOVERLAPPED**)&pSocketOp, INFINITE))
-		{
-			// Ignore all input if the Socket is trying to shut down. The callbacks may no longer exist.
-			if( key == IOCPKEY_SHUTDOWN)
-				break;
-
-			oIOCPContext::CallBackUser(pSocketOp);
-		}
+		if(!IOCPCompletionRoutine(_hIOCP))
+			break;
 	} 
 
 	oEndThread();
@@ -181,7 +189,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 		CheckForOrphans();
 
 		ULONG_PTR key = reinterpret_cast<ULONG_PTR>(_Handle);
-		if(hIOCP != CreateIoCompletionPort(_Handle, hIOCP, key, oSize32(WorkerThreads.size()) ))
+		if(hIOCP != CreateIoCompletionPort(_Handle, hIOCP, key, oUInt(WorkerThreads.size()) ))
 		{
 			oErrorSetLast(oERROR_INVALID_PARAMETER, "Could not associate handle with I/O Completion Port");
 			return nullptr;
@@ -198,6 +206,18 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 		OrphanedContexts.push_back(Context);
 		CheckForOrphans();
 		--OustandingContextCount;
+	}
+
+	void ActiveWait(oEvent* _pEvent, unsigned int _TimeoutMS)
+	{
+		oScopedPartialTimeout Timeout(&_TimeoutMS);
+		while(_TimeoutMS && !_pEvent->Wait(0))
+		{
+			if(!IOCPCompletionRoutine(hIOCP, 0) ) // Re-post the shutdown key if we pulled one out of the IOCP system as ActiveWait is done outside of the normal worker thread routine
+				PostQueuedCompletionStatus(hIOCP, 0, IOCPKEY_SHUTDOWN, nullptr);
+
+			Timeout.UpdateTimeout();
+		}
 	}
 
 	static const oGUID GUID;
@@ -221,7 +241,7 @@ private:
 
 	}
 
-	const static unsigned int DEAD_SOCKET_OP_TIMEOUT_SECONDS = 15; 
+	const static unsigned int DEAD_SOCKET_OP_TIMEOUT_SECONDS = 2; 
 
 	struct oIOCPOrphan
 	{
@@ -385,5 +405,10 @@ const oGUID& oGetGUID( threadsafe const oIOCP* threadsafe const * )
 	// {5574C1B0-7F26-4A32-9A9A-93C17201060D}
 	static const oGUID guid = { 0x5574c1b0, 0x7f26, 0x4a32, { 0x9a, 0x9a, 0x93, 0xc1, 0x72, 0x1, 0x6, 0xd } };
 	return guid;
+}
+
+oAPI void oIOCPActiveWait(oEvent* _pEvent, unsigned int _TimeoutMS)
+{
+	oIOCP_Singleton::Singleton()->ActiveWait(_pEvent, _TimeoutMS);
 }
 

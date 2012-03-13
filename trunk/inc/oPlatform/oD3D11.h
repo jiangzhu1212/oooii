@@ -40,15 +40,16 @@
 // _____________________________________________________________________________
 // Soft-link
 
-struct oD3D11 : oModuleSingleton<oD3D11>
+struct oD3D11 : oProcessSingleton<oD3D11>
 {
+	static const oGUID GUID;
 	oD3D11();
 	~oD3D11();
 
 	HRESULT (__stdcall *D3D11CreateDevice)(IDXGIAdapter* pAdapter, D3D_DRIVER_TYPE DriverType, HMODULE Software, UINT Flags, CONST D3D_FEATURE_LEVEL* pFeatureLevels, UINT FeatureLevels, UINT SDKVersion, ID3D11Device** ppDevice, D3D_FEATURE_LEVEL* pFeatureLevel, ID3D11DeviceContext** ppImmediateContext);
 
 protected:
-	oHMODULE hD3D11;
+	oHMODULE hModule;
 };
 
 struct oD3D11_DEVICE_DESC
@@ -125,6 +126,7 @@ struct oD3D11_TEXTURE_DESC
 void oD3D11GetTextureDesc(ID3D11Resource* _pResource, oD3D11_TEXTURE_DESC* _pDesc);
 bool oD3D11CreateShaderResourceView(const char* _DebugName, ID3D11Resource* _pTexture, ID3D11ShaderResourceView** _ppShaderResourceView);
 bool oD3D11CreateRenderTargetView(const char* _DebugName, ID3D11Resource* _pTexture, ID3D11View** _ppView);
+template<typename T> bool oD3D11CreateRenderTargetView(const char* _DebugName, ID3D11Resource* _pTexture, T** _ppView) { return oD3D11CreateRenderTargetView(_DebugName, _pTexture, (ID3D11View**)_ppView); }
 
 // Copies the contents of the specified texture to _pBuffer, which is assumed to
 // be properly allocated to receive the contents. If _FlipVertical is true, then
@@ -197,6 +199,7 @@ bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, const c
 // Creates a new texture by parsing _pBuffer as a D3DX11-supported file format
 // Specify DXGI_FORMAT_UNKNOWN or DXGI_FORMAT_FROM_FILE for the "don't care"
 // option for _ForceFormat.
+bool oD3D11Load(ID3D11Device* _pDevice, DXGI_FORMAT _ForceFormat, oD3D11_TEXTURE_CREATION_TYPE _CreationType, const char* _DebugName, const char* _Path, ID3D11Resource** _ppTexture);
 bool oD3D11Load(ID3D11Device* _pDevice, DXGI_FORMAT _ForceFormat, oD3D11_TEXTURE_CREATION_TYPE _CreationType, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, ID3D11Resource** _ppTexture);
 
 // Uses GPU acceleration for BC6H and BC7 conversions if the source is in the 

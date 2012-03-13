@@ -77,6 +77,7 @@ oAPI bool oBasisTest_oFourCC();
 oAPI bool oBasisTest_oHash(const oBasisTestServices& _Services);
 oAPI bool oBasisTest_oIndexAllocator();
 oAPI bool oBasisTest_oINI();
+oAPI bool oBasisTest_oInt();
 oAPI bool oBasisTest_oLinearAllocator();
 oAPI bool oBasisTest_oConcurrentIndexAllocator();
 oAPI bool oBasisTest_oMath();
