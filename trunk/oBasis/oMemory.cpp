@@ -118,28 +118,6 @@ void oMemset2(void* _pDestination, short _Value, size_t _NumBytes)
 	}
 }
 
-void oMemcpy2d(void* oRESTRICT _pDestination, size_t _DestinationPitch, const void* oRESTRICT _pSource, size_t _SourcePitch, size_t _SourceRowSize, size_t _NumRows)
-{
-	if (_DestinationPitch == _SourcePitch && _SourcePitch == _SourceRowSize)
-		memcpy(_pDestination, _pSource, _SourcePitch * _NumRows);
-	else
-	{
-		const void* end = oByteAdd(_pDestination, _DestinationPitch, _NumRows);
-		for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _DestinationPitch), _pSource = oByteAdd(_pSource, _SourcePitch))
-			memcpy(_pDestination, _pSource, _SourceRowSize);
-	}
-}
-
-template<typename T> inline T* oByteSub(T* _Pointer, size_t _NumBytes) { return reinterpret_cast<T*>(((char*)_Pointer) - _NumBytes); }
-
-void oMemcpy2dVFlip(void* oRESTRICT _pDestination, size_t _DestinationPitch, const void* oRESTRICT _pSource, size_t _SourcePitch, size_t _SourceRowSize, size_t _NumRows)
-{
-	const void* pFlippedSource = oByteAdd(_pSource, _SourcePitch, _NumRows - 1);
-	const void* end = oByteAdd(_pDestination, _DestinationPitch, _NumRows);
-	for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _DestinationPitch), pFlippedSource = oByteSub(pFlippedSource, _SourcePitch))
-		memcpy(_pDestination, pFlippedSource, _SourceRowSize);
-}
-
 void oMemset2d(void* _pDestination, size_t _Pitch, int _Value, size_t _SetPitch, size_t _NumRows)
 {
 	const void* end = oByteAdd(_pDestination, _Pitch, _NumRows);
@@ -163,14 +141,7 @@ void oMemset2d4(void* _pDestination, size_t _Pitch, long _Value, size_t _SetPitc
 		oMemset4(_pDestination, _Value, _SetPitch);
 }
 
-void oMemcpyAsym(void* oRESTRICT _pDestination, size_t _DestinationStride, const void* oRESTRICT _pSource, size_t _SourceStride, size_t _NumElements)
-{
-	const void* end = oByteAdd(_pDestination, _DestinationStride, _NumElements);
-	for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _DestinationStride), _pSource = oByteAdd(_pSource, _SourceStride))
-		memcpy(_pDestination, _pSource, _SourceStride);
-}
-
-void oMemcpyToUshort(unsigned short* _pDestination, const unsigned int* _pSource, size_t _NumElements)
+void oMemcpyToUshort( unsigned short* _pDestination, const unsigned int* _pSource, size_t _NumElements )
 {
 	const unsigned int* end = &_pSource[_NumElements];
 	while (_pSource < end)
@@ -180,7 +151,7 @@ void oMemcpyToUshort(unsigned short* _pDestination, const unsigned int* _pSource
 	}
 }
 
-void oMemcpyToUint(unsigned int* _pDestination, const unsigned short* _pSource, size_t _NumElements)
+void oMemcpyToUint( unsigned int* _pDestination, const unsigned short* _pSource, size_t _NumElements )
 {
 	const unsigned short* end = &_pSource[_NumElements];
 	while (_pSource < end)

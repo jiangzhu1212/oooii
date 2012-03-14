@@ -96,7 +96,6 @@ Function FileLoadAsString(strSrcPath)
 		If Len(str) = 0 Then str = ""
 
 	On Error Goto 0
-
 	FileLoadAsString = str
 End Function
 
@@ -187,6 +186,30 @@ Function ArrayFromString(string, strToken)
 End Function
 
 '
+' Goes through an array of strings and returns the number of characters that are
+' the same at the beginning of all strings
+'
+Function StringArrayGetCommonPrefixLength(strarrStrings)
+    Dim prefixLen
+    prefixLen = 0
+    Dim len0
+    len0 = Len(strarrStrings(0))
+    Dim cc
+    While prefixLen < Len0
+        cc = Mid(strarrStrings(0), prefixLen+1, 1)
+        Dim i
+        For i = 0 To UBound(strarrStrings)
+            If Mid(strarrStrings(i), prefixLen+1, 1) <> cc Then
+                StringArrayGetCommonPrefixLength = prefixLen
+                Exit Function
+            End If
+        Next
+        prefixLen = prefixLen + 1
+    WEnd
+    StringArrayGetCommonPrefixLength = 0
+End Function
+
+'
 ' Finds strFind in strSearch and replaces it with strReplacement
 ' inline. This returns the position of the first character after 
 ' the insertion.
@@ -245,7 +268,7 @@ End Function
 Sub Main()
 
     Dim FileTypesToIgnore
-  FileTypesToIgnore = ".ico .png .bmp .jpg .xml .ini .vcproj .vcxproj .sln .bak .filters .user"
+    FileTypesToIgnore = ".ico .png .bmp .jpg .xml .ini .vcproj .vcxproj .sln .bak .filters .user"
 
     Dim vbInformation
     vbInformation = 64
@@ -257,35 +280,46 @@ Sub Main()
 	args = ScriptGetArgumentArray()
 
 	If UBound(args) < 2 Then
-		MsgBox "Usage: " & WScript.ScriptName & " <Macro> <ReplacementFile.txt> <RootPath>", vbInformation, "InstallCopyright"
+		MsgBox "Usage: " & WScript.ScriptName & " <Macro> <ReplacementFile.txt> <RootPath1> <RootPath2> <RootPath...>", vbInformation, "InstallCopyright"
 		WScript.Quit 0
 	End If
 
-	Dim copyright, macro
-	copyright = FileLoadAsString(args(1))
+	Dim macro, copyright
 	macro = "// $(" & args(0) & ")"
-	
+	copyright = FileLoadAsString(args(1))
+
+    if Len(copyright) = 0 Then
+        MsgBox "Failed to load copyright """ & args(1) & """", vbCritical, "InstallCopyright: " & args(0)
+        WScript.Quit 0
+    End If 
+
 	Dim strNoMacroFileList
 
 	Dim fso, root, folder
 	Set fso = CreateObject("Scripting.FileSystemObject")
 
-    On Error Resume Next
-	    Set root = fso.GetFolder(fso.GetAbsolutePathName(args(2)))
-        If root Is Nothing Then
-            MsgBox "Failed to find folder """ & args(2) & """. (this cannot be a filename)", vbCritical, "InstallCopyright: " & args(0)
-            WScript.Quit 0
-        End If
-    On Error Goto 0
+    Dim argI
+    For argI = 2 To UBound(args)
+        On Error Resume Next
+	        Set root = fso.GetFolder(fso.GetAbsolutePathName(args(argI)))
+            If root Is Nothing Then
+                MsgBox "Failed to find folder """ & args(argI) & """. (this cannot be a filename)", vbCritical, "InstallCopyright: " & args(0)
+                WScript.Quit 0
+            End If
+        On Error Goto 0
 
-    ReplaceAllInFolder root, macro, copyright, FileTypesToIgnore, strNoMacroFileList
-    
+        ReplaceAllInFolder root, macro, copyright, FileTypesToIgnore, strNoMacroFileList
+    Next
+
     Dim summary
     summary = "Done inserting copyright."
 	
     If Len(strNoMacroFileList) <> 0 Then
         Dim arr
         arr = ArrayFromString(strNoMacroFileList, ";")
+
+        Dim commonLen
+        commonLen = StringArrayGetCommonPrefixLength(arr)
 
         summary = summary & " The following files did not contain the macro """ & args(0) & """:"
 
@@ -294,7 +328,7 @@ Sub Main()
 
         Dim i
         For i = LBound(arr) To Upper
-            summary = summary & vbNewline & arr(i)
+            summary = summary & vbNewline & Mid(arr(i), commonLen)
         Next
 
         If Ubound(arr) > 15 Then

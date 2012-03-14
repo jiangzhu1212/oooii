@@ -29,6 +29,8 @@
 
 #define oUNKNOWN_SIZE SIZE_MAX
 
+#define oASSERT_ALIGNED(_pDestination) oASSERT(oIsByteAligned(_pDestination, 4), "The destination pointer must be 4-byte aligned");
+
 // If a nullptr is serialized as a string, we still need to identify that the
 // occurance happened, so write a special character.
 static const char NULL_STRING = -1;
@@ -42,55 +44,110 @@ template<typename T> static T oOSCPlatformEndianSwap(const T& _X)
 	#endif
 }
 
+// Field alignment is in terms of offset from base struct pointer, not absolute
+// memory. This is really apparent when there are double-word types, such as 
+// long longs on 32-bit builds.
+void* MoveToNextField(const void* _pStructBase, const void* _pUnalignedEndOfLastField, size_t _AlignmentOfNextField)
+{
+	ptrdiff_t offset = oByteDiff(_pUnalignedEndOfLastField, _pStructBase);
+	return oByteAdd((void*)_pStructBase, oByteAlign(offset, _AlignmentOfNextField));
+}
+
+size_t SizeofFixedString(int _Type)
+{
+	return (_Type - '0') * 64 * sizeof(char);
+}
+
+template<typename ptr_t>
+struct Visitor
+{
+	typedef oFUNCTION<void(int _Type, ptr_t _pField, size_t _SizeofField)> Fn;
+};
+
 namespace STRUCT {
 
 // STRUCT* Aligns to the size of type and visits data at that address and then
 // returns a pointer just after the read field
 
-template<typename ptr_t, typename fn_t>
-static ptr_t VisitNextIntrinsic(int _Type, ptr_t _pField, size_t _SizeofField, const fn_t& _Visitor)
+template<typename ptr_t>
+static ptr_t VisitNextIntrinsic(int _Type, ptr_t _pStructBase, ptr_t _pField, size_t _SizeofField, const typename Visitor<ptr_t>::Fn& _Visitor)
 {
-	auto p = oByteAlign(_pField, _SizeofField);
+	void* p = MoveToNextField(_pStructBase, _pField, _SizeofField);
 	_Visitor(_Type, p, _SizeofField);
 	return oByteAdd(p, _SizeofField);
 }
 
 template<typename ptr_t>
-static ptr_t VisitNextChar( ptr_t _pField, const oFUNCTION<void(int, ptr_t _pField, size_t)>& _Visitor)
+static ptr_t VisitNextChar(ptr_t _pStructBase, ptr_t _pField, const typename Visitor<ptr_t>::Fn& _Visitor)
 {
 	_Visitor('c', _pField, sizeof(char));
 	return oByteAdd(_pField, sizeof(char));
 }
 
 template<typename ptr_t>
-static ptr_t VisitNextString( ptr_t _pField, const oFUNCTION<void(int, ptr_t _pField, size_t)>& _Visitor)
+static ptr_t VisitNextString(ptr_t _pStructBase, ptr_t _pField, const typename Visitor<ptr_t>::Fn& _Visitor)
 {
-	auto p = oByteAlign(_pField, sizeof(const char*));
-	_Visitor('s', p, sizeof(const char*));
+	void* p = MoveToNextField(_pStructBase, _pField, sizeof(const char*));
+	const char* s = *(const char**)p;
+	_Visitor('s', p, s ? (strlen(s)+1) : sizeof(NULL_STRING));
 	return oByteAdd(p, sizeof(ptr_t));
 }
 
 template<typename ptr_t>
-static ptr_t VisitNextFixedString(int _Type, ptr_t _pField, const oFUNCTION<void(int, ptr_t _pField, size_t)>& _Visitor)
+static ptr_t VisitNextFixedString(int _Type, ptr_t _pStructBase, ptr_t _pField, const typename Visitor<ptr_t>::Fn& _Visitor)
 {
-	auto p = (ptr_t)oByteAlign(_pField, sizeof(char));
+	void* p = MoveToNextField(_pStructBase, _pField, sizeof(char));
 	_Visitor(_Type, p, strlen((const char*)p)+1);
-	return oByteAdd(p, (_Type - '0') * 64 * sizeof(char));
+	return oByteAdd(p, SizeofFixedString(_Type));
 }
 
 template<typename ptr_t>
-static ptr_t VisitNextBlob( ptr_t _pField, const oFUNCTION<void(int, ptr_t _pField, size_t)>& _Visitor)
+static ptr_t VisitNextBlob(ptr_t _pStructBase, ptr_t _pField, const typename Visitor<ptr_t>::Fn& _Visitor)
 {
-	auto p = oByteAlign(_pField, sizeof(int));
+	void* p = MoveToNextField(_pStructBase, _pField, sizeof(int));
 	int size = *(int*)p;
-	p = oByteAlign(oByteAdd(p, sizeof(int)), sizeof(ptr_t));
+	p = MoveToNextField(_pStructBase, oByteAdd(p, sizeof(int)), sizeof(ptr_t));
 	_Visitor('b', *(void**)p, size);
 	return oByteAdd(p, sizeof(ptr_t));
 }
 
 } // namespace STRUCT
+
+struct TEST
+{
+	static const char* GetTypeTags() { return ",Tc3Tih[fff]iTTs2f1sicbsi[iiii]dIfbP"; }
+
+	bool blA;
+	char c1;
+	char OOOiiString[64 * 3];
+	bool blB;
+	int int1;
+	long long long1;
+	float floatArray[3];
+	int int2;
+	bool blC;
+	bool blD;
+	const char* p1;
+	char TestString[64 * 2];
+	float float1;
+	char FinalTestString[64];
+	const char* p2;
+	int int3;
+	char c2;
+	// Expected padding
+	int b1size;
+	const void* b1;
+	const char* NullString;
+	int int4;
+	int intArray[4];
+	double double1;
+	float float2;
+	int b2size;
+	const void* b2;
+	time_t time;
+};
 template<typename ptr_t>
-bool oOSCVisitStructFieldsInternal(oFUNCTION<void(int, ptr_t _pField, size_t)> _Visitor, const char* _TypeTags, ptr_t _pStruct, size_t _SizeofStruct, char* _pOptionalPatchTags = nullptr)
+bool oOSCVisitStructFieldsInternal(const typename Visitor<ptr_t>::Fn& _Visitor, const char* _TypeTags, ptr_t _pStruct, size_t _SizeofStruct, char* _pOptionalPatchTags = nullptr)
 {
 	if (!_Visitor || !_TypeTags || !_pStruct || !_SizeofStruct)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER, "null value");
@@ -100,8 +157,9 @@ bool oOSCVisitStructFieldsInternal(oFUNCTION<void(int, ptr_t _pField, size_t)> _
 
 	auto tag = _TypeTags;
 	auto patchTag = _pOptionalPatchTags;
-	auto p = _pStruct;
+	ptr_t p = _pStruct;
 	auto end = oByteAdd(p, _SizeofStruct);
+
 	while (*(++tag))
 	{
 		if (p >= end)
@@ -114,15 +172,24 @@ bool oOSCVisitStructFieldsInternal(oFUNCTION<void(int, ptr_t _pField, size_t)> _
 
 		if(patchTag)
 			++patchTag;
-
+		oTRACE("Tag: %c p = %p, &blB=%p, &int1=%p, &long1=%p, &floatArray[0]=%p, int2=%p, &blC=%p, &blD=%p, &p1=%p", *tag, p
+			, &(((TEST*)_pStruct)->blB)
+			, &(((TEST*)_pStruct)->int1)
+			, &(((TEST*)_pStruct)->long1)
+			, &((((TEST*)_pStruct)->floatArray[0]))
+			, &(((TEST*)_pStruct)->int2)
+			, &(((TEST*)_pStruct)->blC)
+			, &(((TEST*)_pStruct)->blD)
+			, &(((TEST*)_pStruct)->p1)
+			);
 		switch (*tag)
 		{
-			case 'r': case 'i': case 'f': p = STRUCT::VisitNextIntrinsic(*tag, p, 4, _Visitor); break;
-			case 'h': case 't': case 'd': case 'P': p = STRUCT::VisitNextIntrinsic(*tag, p, 8, _Visitor); break;
-			case 'c': p = STRUCT::VisitNextChar(p, _Visitor); break;
-			case 's': p = STRUCT::VisitNextString(p, _Visitor); break;
-			case 'b': p = STRUCT::VisitNextBlob(p, _Visitor); break;
-			case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': p = STRUCT::VisitNextFixedString(*tag, p, _Visitor); break;
+			case 'r': case 'i': case 'f': p = STRUCT::VisitNextIntrinsic(*tag, _pStruct, p, 4, _Visitor); break;
+			case 'h': case 't': case 'd': case 'P': p = STRUCT::VisitNextIntrinsic(*tag, _pStruct, p, 8, _Visitor); break;
+			case 'c': p = STRUCT::VisitNextChar(_pStruct, p, _Visitor); break;
+			case 's': p = STRUCT::VisitNextString(_pStruct, p, _Visitor); break;
+			case 'b': p = STRUCT::VisitNextBlob(_pStruct, p, _Visitor); break;
+			case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': p = STRUCT::VisitNextFixedString(*tag, _pStruct, p, _Visitor); break;
 			case 'T': case 'F': 
 			{
 				// Special case for boolean types
@@ -141,10 +208,10 @@ bool oOSCVisitStructFieldsInternal(oFUNCTION<void(int, ptr_t _pField, size_t)> _
 					++bits;
 					++tag;
 					++pBTag;
-
+					p = oByteAdd( p, 1);
 				}
 				// Offset number of bytes plus padding
-				p = oByteAdd( p, ( bits / 8 ) + 1); 
+				//p = oByteAdd( p, ( bits / 8 ) + 1);
 
 				// Back the tags up so we increment correctly in the next pass
 				--tag; 
@@ -174,7 +241,7 @@ namespace TAG {
 template<typename T, typename ptr_t, typename fn_t> 
 static ptr_t VisitNextIntrinsic(int _Type, ptr_t _pArgument, const fn_t& _Visitor)
 {
-	oASSERT(oIsByteAligned(_pArgument, 4), "");
+	oASSERT_ALIGNED(_pArgument);
 	T swapped = oOSCPlatformEndianSwap(*(const T*)_pArgument);
 	_Visitor(_Type, &swapped, sizeof(T));
 	return oByteAdd(_pArgument, sizeof(T));
@@ -212,10 +279,7 @@ template<typename ptr_t, typename fn_t>
 bool oOSCVisitMessageTypeTagsInternal(const char* _TypeTags, ptr_t _pMessageArguments, fn_t _Visitor)
 {
 	if (!_Visitor || !_TypeTags || *_TypeTags != ',' || !_pMessageArguments)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	auto tag = _TypeTags;
 	auto p = _pMessageArguments;
@@ -239,6 +303,7 @@ bool oOSCVisitMessageTypeTags(const char* _TypeTags, const void* _pMessageArgume
 {
 	return oOSCVisitMessageTypeTagsInternal(_TypeTags, _pMessageArguments, _Visitor);
 }
+
 bool oOSCVisitMessageTypeTags(const char* _TypeTags, void* _pMessageArguments, oOSCVisitorFn _Visitor)
 {
 	return oOSCVisitMessageTypeTagsInternal(_TypeTags, _pMessageArguments, _Visitor);
@@ -310,30 +375,29 @@ size_t oOSCCalculateDeserializedStructSize(const char* _TypeTags)
 		return 0;
 	}
 
-
 	size_t size = 0;
 	const char* tag = _TypeTags;
 	while (*(++tag))
 	{
-			switch(*tag)
+		switch(*tag)
+		{
+			case 'r': case 'i': case 'f': AlignedIncrement<int>(&size); break;
+			case 'h': case 't': case 'd': case 'P': AlignedIncrement<long long>(&size); break;
+			case 'c': AlignedIncrement<char>(&size); break;
+			case 'b': AlignedIncrement<int>(&size); AlignedIncrement<void*>(&size); break;
+			case 's': AlignedIncrement<void*>(&size); break;
+			case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': size += atoi(tag) * 64; break;
+			case 'T': case 'F': 
 			{
-				case 'r': case 'i': case 'f':				AlignedIncrement<int>(&size); break;
-				case 'h': case 't': case 'd': case 'P':		AlignedIncrement<long long>(&size); break;
-				case 'c':									AlignedIncrement<char>(&size); break;
-				case 'b':									AlignedIncrement<int>(&size); AlignedIncrement<long long>(&size); break;
-				case 's':									AlignedIncrement<long long>(&size); break;
-				case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': size += atoi(tag) * 64; break;
-				case 'T': case 'F': 
-				{
 					int bits = 1;
 					while(tag[1] == 'T' || tag[1] == 'F')
-					{
-						++bits;
-						++tag;
-					}
-					size += (bits / 8) + 1;
+				{
+					++bits;
+					++tag;
 				}
+				size += (bits / 8) + 1;
 			}
+		}
 	}
 
 	return oByteAlign(size, sizeof(int));
@@ -357,17 +421,17 @@ const char* oOSCGetMessageTypeTags(const void* _pMessage)
 
 namespace SERIALIZE {
 
-template<typename T> static void* NextIntrinsic(void* _pDestination, const void* _pSource)
+template<typename T> static void* NextIntrinsic(const void* _pStructBase, void* _pDestination, const void* _pUnalignedEndOfLastField)
 {
-	oASSERT(oIsByteAligned(_pDestination, 4), "");
-	const void* s = oByteAlign(_pSource, sizeof(T));
+	oASSERT_ALIGNED(_pDestination);
+	const void* s = MoveToNextField(_pStructBase, _pUnalignedEndOfLastField, std::alignment_of<T>::value);
 	*(T*)_pDestination = oOSCPlatformEndianSwap(*(const T*)s);
 	return oByteAdd(_pDestination, sizeof(T));
 }
 
 static void* NextChar(void* _pDestination, const void* _pSource)
 {
-	oASSERT(oIsByteAligned(_pDestination, 4), "");
+	oASSERT_ALIGNED(_pDestination);
 	int cAsInt = *(const char*)_pSource;
 	*(int*)_pDestination = oOSCPlatformEndianSwap(cAsInt);
 	return oByteAdd(_pDestination, sizeof(int));
@@ -375,9 +439,9 @@ static void* NextChar(void* _pDestination, const void* _pSource)
 
 static void* CopyNextBuffer(void* _pDestination, size_t _SizeofDestination, const void* _pBuffer, size_t _SizeofBuffer)
 {
-	oASSERT(oIsByteAligned(_pDestination, 4), "");
+	oASSERT_ALIGNED(_pDestination);
 	oASSERT(_SizeofDestination >= oByteAlign(_SizeofBuffer, 4), "");
-	oASSERT(_pBuffer, "");
+	oASSERT(_pBuffer, "A valid buffer must be specified");
 	memcpy(_pDestination, _pBuffer, _SizeofBuffer);
 	// pad with zeros out to 4-byte alignment
 	char* p = (char*)oByteAdd(_pDestination, _SizeofBuffer);
@@ -389,7 +453,7 @@ static void* CopyNextBuffer(void* _pDestination, size_t _SizeofDestination, cons
 
 static void* NextString(void* _pDestination, size_t _SizeofDestination, const char* _String)
 {
-	oASSERT(oIsByteAligned(_pDestination, 4), "");
+	oASSERT_ALIGNED(_pDestination);
 	if (_String)
 		return CopyNextBuffer(_pDestination, _SizeofDestination, _String, strlen(_String) + 1);
 	return CopyNextBuffer(_pDestination, _SizeofDestination, &NULL_STRING, 1);
@@ -397,20 +461,20 @@ static void* NextString(void* _pDestination, size_t _SizeofDestination, const ch
 
 static void* NextBlob(void* _pDestination, size_t _SizeofDestination, const void* _pBuffer, size_t _SizeofBuffer)
 {
-	oASSERT(oIsByteAligned(_pDestination, 4), "");
+	oASSERT_ALIGNED(_pDestination);
 	*(int*)_pDestination = oOSCPlatformEndianSwap((int)_SizeofBuffer);
 	return CopyNextBuffer(oByteAdd(_pDestination, sizeof(int)), oUNKNOWN_SIZE, _pBuffer, _SizeofBuffer);
 }
 
 } // namespace SERIALIZE
 
-static void oOSCSerializer(int _Type, const void* _pField, size_t _SizeofField, void** _ppDestination, void* _pDestinationEnd)
+static void oOSCSerializer(int _Type, const void* _pField, size_t _SizeofField, const void* _pDestStructBase, void** _ppDestination, void* _pDestinationEnd)
 {
 	oASSERT(*_ppDestination < _pDestinationEnd, "Writing past end of buffer");
 	switch (_Type)
 	{
-		case 'r': case 'i': case 'f': *_ppDestination = SERIALIZE::NextIntrinsic<int>(*_ppDestination, _pField); break;
-		case 'h': case 't': case 'd': case 'P': *_ppDestination = SERIALIZE::NextIntrinsic<long long>(*_ppDestination, _pField); break;
+		case 'r': case 'i': case 'f': *_ppDestination = SERIALIZE::NextIntrinsic<int>(_pDestStructBase, *_ppDestination, _pField); break;
+		case 'h': case 't': case 'd': case 'P': *_ppDestination = SERIALIZE::NextIntrinsic<long long>(_pDestStructBase, *_ppDestination, _pField); break;
 		case 'c': *_ppDestination = SERIALIZE::NextChar(*_ppDestination, _pField); break;
 		case 's': *_ppDestination = SERIALIZE::NextString(*_ppDestination, oUNKNOWN_SIZE, *(const char**)_pField); break; // oUNKNOWN_SIZE is unsafe, ignoring buffer boundaries but this should already be allocated correctly
 		case 'b': *_ppDestination = SERIALIZE::NextBlob(*_ppDestination, oUNKNOWN_SIZE, _pField, _SizeofField); break;
@@ -421,45 +485,44 @@ static void oOSCSerializer(int _Type, const void* _pField, size_t _SizeofField, 
 
 namespace DESERIALIZE {
 
-template<typename T> static void* NextIntrinsic(void* _pDestination, const void* _pSource)
+template<typename T> static void* NextIntrinsic(void* _pStructBase, void* _pDestination, const void* _pSource)
 {
-	oASSERT(oIsByteAligned(_pSource, 4), "");
-	void* p = oByteAlign(_pDestination, sizeof(T));
+	void* p = MoveToNextField(_pStructBase, _pDestination, std::alignment_of<T>::value);
 	*(T*)p = *(const T*)_pSource;
 	return oByteAdd(p, sizeof(T));
 }
 
-static void* NextString(void* _pDestination, const char* _String)
+static void* NextString(void* _pStructBase, void* _pDestination, const char* _String)
 {
-	oASSERT(oIsByteAligned(_String, 4), "");
+	oASSERT_ALIGNED(_String);
 	// assign pointer into message buffer
-	const char** s = (const char**)oByteAlign(_pDestination, sizeof(const char**));
+	const char** s = (const char**)MoveToNextField(_pStructBase, _pDestination, std::alignment_of<const char**>::value);
 	*s = *(const char*)_String == NULL_STRING ? nullptr : (const char*)_String;
 	return oByteAdd(s, sizeof(const char*));
 }
 
-static void* NextFixedString(void* _pDestination, const char* _String, size_t _NumChars)
+static void* NextFixedString(void* _pStructBase, void* _pDestination, const char* _String, size_t _NumChars)
 {
-	oASSERT(oIsByteAligned(_String, 4), "");
+	oASSERT_ALIGNED(_String);
 	// assign pointer into message buffer
-	char* s = (char*)oByteAlign(_pDestination, sizeof(char));
+	char* s = (char*)MoveToNextField(_pStructBase, _pDestination, std::alignment_of<char>::value);
 	strcpy_s(s, _NumChars, _String);
 	return oByteAdd(s, _NumChars * sizeof(char));
 }
 
-static void* NextBlob(void* _pDestination, const void* _pSource, size_t _SizeofSource)
+static void* NextBlob(void* _pStructBase, void* _pDestination, const void* _pSource, size_t _SizeofSource)
 {
-	oASSERT(oIsByteAligned(_pSource, 4), "");
-	int* p = (int*)oByteAlign(_pDestination, sizeof(int));
+	oASSERT_ALIGNED(_pSource);
+	int* p = (int*)MoveToNextField(_pStructBase, _pDestination, std::alignment_of<int>::value);
 	*p = (int)_SizeofSource;
-	p = oByteAlign(oByteAdd(p, sizeof(int)), sizeof(const void*));
+	p = (int*)MoveToNextField(_pStructBase, oByteAdd(p, sizeof(int)), std::alignment_of<void*>::value);
 	*(const void**)p = _pSource;
 	return oByteAdd(p, sizeof(const void*));
 }
 
 } // namespace DESERIALIZE
 
-static void oOSCDeserializer(int _Type, const void* _pField, size_t _SizeofField, void** _ppDestination, void* _pDestinationEnd)
+static void oOSCDeserializer(int _Type, const void* _pField, size_t _SizeofField, void* _pDestStructBase, void** _ppDestination, void* _pDestinationEnd)
 {
 	oASSERT(*_ppDestination < _pDestinationEnd || _Type == '[' || _Type == ']', "Writing past end of buffer");
 	if('T' != _Type && 'F' != _Type)
@@ -467,14 +530,14 @@ static void oOSCDeserializer(int _Type, const void* _pField, size_t _SizeofField
 
 	switch (_Type)
 	{
-		case 'r': case 'i': case 'f': *_ppDestination = DESERIALIZE::NextIntrinsic<int>(*_ppDestination, _pField); break;
-		case 'h': case 't': case 'd': case 'P': *_ppDestination = DESERIALIZE::NextIntrinsic<long long>(*_ppDestination, _pField); break;
-		case 'c': *_ppDestination = DESERIALIZE::NextIntrinsic<char>(*_ppDestination, _pField); break;
-		case 's': *_ppDestination = DESERIALIZE::NextString(*_ppDestination, (const char*)_pField); break;
-		case 'b': *_ppDestination = DESERIALIZE::NextBlob(*_ppDestination, _pField, _SizeofField); break;
+		case 'r': case 'i': case 'f': *_ppDestination = DESERIALIZE::NextIntrinsic<int>(_pDestStructBase, *_ppDestination, _pField); break;
+		case 'h': case 't': case 'd': case 'P': *_ppDestination = DESERIALIZE::NextIntrinsic<long long>(_pDestStructBase, *_ppDestination, _pField); break;
+		case 'c': *_ppDestination = DESERIALIZE::NextIntrinsic<char>(_pDestStructBase, *_ppDestination, _pField); break;
+		case 's': *_ppDestination = DESERIALIZE::NextString(_pDestStructBase, *_ppDestination, (const char*)_pField); break;
+		case 'b': *_ppDestination = DESERIALIZE::NextBlob(_pDestStructBase, *_ppDestination, _pField, _SizeofField); break;
 		case 'T': *(bool*)(*_ppDestination) = true; (*_ppDestination) = (bool*)(*_ppDestination) + 1; break;
 		case 'F': *(bool*)(*_ppDestination) = false; (*_ppDestination) = (bool*)(*_ppDestination) + 1; break;
-		case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': *_ppDestination = DESERIALIZE::NextFixedString(*_ppDestination, (const char*)_pField, (_Type - '0') * 64); break;
+		case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': *_ppDestination = DESERIALIZE::NextFixedString(_pDestStructBase, *_ppDestination, (const char*)_pField, SizeofFixedString(_Type)); break;
 		default: break;
 	}
 }
@@ -482,10 +545,7 @@ static void oOSCDeserializer(int _Type, const void* _pField, size_t _SizeofField
 size_t oOSCSerializeStructToMessage(const char* _Address, const char* _TypeTags, const void* _pStruct, size_t _SizeofStruct, void* _pMessage, size_t _SizeofMessage)
 {
 	if (!_Address || *_Address != '/' || !_pMessage || !_pStruct || _SizeofStruct == 0)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return 0;
-	}
+		return (size_t)oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	void* p = _pMessage;
 	void* pend = oByteAdd(p, _SizeofMessage);
@@ -496,7 +556,7 @@ size_t oOSCSerializeStructToMessage(const char* _Address, const char* _TypeTags,
 
 	size_t szSerializedMessage = 0;
 	oASSERT((size_t)oByteDiff(pend, p) >= oOSCCalculateArgumentsDataSize(_TypeTags, _pStruct, _SizeofStruct), "");
-	if( !oOSCVisitStructFieldsInternal<const void*>(oBIND(oOSCSerializer, oBIND1, oBIND2, oBIND3, &p, pend), _TypeTags, _pStruct, _SizeofStruct, pPatchTag) )
+	if( !oOSCVisitStructFieldsInternal(oBIND(oOSCSerializer, oBIND1, oBIND2, oBIND3, _pStruct, &p, pend), _TypeTags, _pStruct, _SizeofStruct, pPatchTag) )
 		return 0;
 
 	return (char*)p - (char*)_pMessage;
@@ -504,11 +564,9 @@ size_t oOSCSerializeStructToMessage(const char* _Address, const char* _TypeTags,
 
 bool oOSCDeserializeMessageToStruct(const void* _pMessage, void* _pStruct, size_t _SizeofStruct)
 {
-	if (!_pMessage || !oIsByteAligned(_pStruct, 4)) // if struct ptr is not aligned, all the alignment logic will be off
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
+	// if struct ptr is not aligned, all the alignment logic will be off
+	if (!_pMessage || !oIsByteAligned(_pStruct, 4))
+		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
 	const char* tags = oOSCGetMessageTypeTags(_pMessage);
 
@@ -516,7 +574,7 @@ bool oOSCDeserializeMessageToStruct(const void* _pMessage, void* _pStruct, size_
 	void* p = _pStruct;
 	void* pend = oByteAdd(_pStruct, _SizeofStruct);
 
-	return oOSCVisitMessageTypeTags(tags, args, oBIND(oOSCDeserializer, oBIND1, oBIND2, oBIND3, &p, pend));
+	return oOSCVisitMessageTypeTags(tags, args, oBIND(oOSCDeserializer, oBIND1, oBIND2, oBIND3, _pStruct, &p, pend));
 }
 
 static bool IsBoolTag(char _TypeTag)

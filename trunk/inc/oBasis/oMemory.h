@@ -63,12 +63,28 @@ void oMemset4(void* _pDestination, long _Value, size_t _NumBytes);
 // different than the data to be moved. In the case where an entire image or 
 // surface is copied, _SourcePitch will likely be very similar or identical to
 // _SourceRowSize.
-void oMemcpy2d(void* oRESTRICT _pDestination, size_t _DestinationPitch, const void* oRESTRICT _pSource, size_t _SourcePitch, size_t _SourceRowSize, size_t _NumRows);
+inline void oMemcpy2d(void* oRESTRICT _pDestination, size_t _DestinationPitch, const void* oRESTRICT _pSource, size_t _SourcePitch, size_t _SourceRowSize, size_t _NumRows)
+{
+	if (_DestinationPitch == _SourcePitch && _SourcePitch == _SourceRowSize)
+		memcpy(_pDestination, _pSource, _SourcePitch * _NumRows);
+	else
+	{
+		const void* end = oByteAdd(_pDestination, _DestinationPitch, _NumRows);
+		for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _DestinationPitch), _pSource = oByteAdd(_pSource, _SourcePitch))
+			memcpy(_pDestination, _pSource, _SourceRowSize);
+	}
+}
 
 // Just like oMemcpy2d, but copies from the last source scanline to the first,
 // thus flipping the image vertically for systems whose coordinate system is 
 // flipped V from the destination coordinate system.
-void oMemcpy2dVFlip(void* oRESTRICT _pDestination, size_t _DestinationPitch, const void* oRESTRICT _pSource, size_t _SourcePitch, size_t _SourceRowSize, size_t _NumRows);
+inline void oMemcpy2dVFlip(void* oRESTRICT _pDestination, size_t _DestinationPitch, const void* oRESTRICT _pSource, size_t _SourcePitch, size_t _SourceRowSize, size_t _NumRows)
+{
+	const void* pFlippedSource = oByteAdd(_pSource, _SourcePitch, _NumRows - 1);
+	const void* end = oByteAdd(_pDestination, _DestinationPitch, _NumRows);
+	for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _DestinationPitch), pFlippedSource = oByteSub(pFlippedSource, _SourcePitch))
+		memcpy(_pDestination, pFlippedSource, _SourceRowSize);
+}
 
 void oMemset2d(void* _pDestination, size_t _Pitch, int _Value, size_t _SetPitch, size_t _NumRows);
 
@@ -80,7 +96,12 @@ void oMemset2d4(void* _pDestination, size_t _Pitch, long _Value, size_t _SetPitc
 // source to an SOA destination or vice versa. If copying SOA-style data to AOS-
 // style data, ensure _pDestination is pointing at the first field in the struct 
 // to write, not always the start of the struct itself.
-void oMemcpyAsym(void* oRESTRICT _pDestination, size_t _DestinationStride, const void* oRESTRICT _pSource, size_t _SourceStride, size_t _NumElements);
+inline void oMemcpyAsym(void* oRESTRICT _pDestination, size_t _DestinationStride, const void* oRESTRICT _pSource, size_t _SourceStride, size_t _NumElements)
+{
+	const void* end = oByteAdd(_pDestination, _DestinationStride, _NumElements);
+	for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _DestinationStride), _pSource = oByteAdd(_pSource, _SourceStride))
+		memcpy(_pDestination, _pSource, _SourceStride);
+}
 
 // Copies 32-bit values to 16-bit values (sometimes useful when working with 
 // graphics index buffers). Remember, _NumElements is count of unsigned ints 
@@ -92,5 +113,6 @@ void oMemcpyToUshort(unsigned short* _pDestination, const unsigned int* _pSource
 // in _pSource and _pDestination has been pre-allocated to take at least the
 // same number of unsigned ints.
 void oMemcpyToUint(unsigned int* _pDestination, const unsigned short* _pSource, size_t _NumElements);
+
 
 #endif

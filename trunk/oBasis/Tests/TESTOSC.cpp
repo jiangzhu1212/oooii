@@ -76,7 +76,7 @@ void AssignTestValues(TEST* _pTest, const void* _pBuffer1, int _SizeofBuffer1, c
 	_pTest->blB = true;
 	_pTest->blC = false;
 	_pTest->blD = true;
-	_pTest->p1 = "p1";
+	_pTest->p1 = "p1 a string larger than a pointer size (len=48)";
 	strcpy_s(_pTest->TestString, "TestString");
 	_pTest->float1 = 1.111f;
 	// Expected padding
@@ -160,7 +160,12 @@ bool oBasisTest_oOSC()
 	if(TestSize != oOSCCalculateDeserializedStructSize(TEST::GetTypeTags()) )
 		return oErrorSetLast(oERROR_GENERIC, "oOSCCalculateDeserializedStructSize failed to compute correct size");
 
+	static const size_t kExpectedArgsSize = 220;
+
 	size_t argsSize = oOSCCalculateArgumentsDataSize(TEST::GetTypeTags(), sent);
+	if (argsSize != kExpectedArgsSize)
+		return oErrorSetLast(oERROR_GENERIC, "oOSCCalculateArgumentsDataSize failed to compute correct size");
+
 	size_t msgSize = oOSCCalculateMessageSize(_MessageName, TEST::GetTypeTags(), argsSize);
 
 	{

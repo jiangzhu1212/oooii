@@ -39,6 +39,7 @@ template<typename T> bool oIsByteAligned(T _Value, size_t _Alignment) { return o
 
 // Offsets
 template<typename T> T* oByteAdd(T* _Pointer, size_t _NumBytes) { return reinterpret_cast<T*>(((char*)_Pointer) + _NumBytes); }
+template<typename T> T* oByteSub(T* _Pointer, size_t _NumBytes) { return reinterpret_cast<T*>(((char*)_Pointer) - _NumBytes); }
 template<typename T, typename U> T* oByteAdd(T* _RelativePointer, U* _BasePointer) { return reinterpret_cast<T*>(((char*)_RelativePointer) + reinterpret_cast<size_t>(_BasePointer)); }
 template<typename T> T* oByteAdd(T* _Pointer, size_t _Stride, size_t _Count) { return reinterpret_cast<T*>(((char*)_Pointer) + _Stride * _Count); }
 template<typename T, typename U> ptrdiff_t oByteDiff(T* t, U* u) { return (ptrdiff_t)((char*)t - (char*)u); }
