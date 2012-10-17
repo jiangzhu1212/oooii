@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="oDispatchQueueConcurrentSerial.cpp" />
+    <ClCompile Include="oSerialTask.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="oDispatchQueueConcurrentSerial.h" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{FBFF8029-8D16-476F-8EE4-198D635624A1}</ProjectGuid>
+    <RootNamespace>oPlatformSerial</RootNamespace>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
+    <ProjectName>oPlatformSerial</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="..\Build\msvc100\BuildRules\oFXC.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Release32.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Debug32.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Release64.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Debug64.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <AdditionalIncludeDirectories>$(oSuiteExtDir)\Kinect\v1.0\inc;$(oSuiteExtDir)bullet\vectormathlibrary\include;$(oSuiteExtDir)FreeImage\Source\OpenEXR\Half;$(oSuiteExtDir)tlsf;$(oSuiteExtDir)BC6HBC7EncoderDecoder11\;$(oSuiteExtDir)FreeImage\Source\;$(oSuiteExtDir)OpenSSL\openssl-1.0.0e\include\;$(oSuiteExtDir)tbb\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <AdditionalIncludeDirectories>$(oSuiteExtDir)\Kinect\v1.0\inc;$(OuroborosSuiteDir)Source\oPlatform\SoftLink;$(oSuiteExtDir)bullet\vectormathlibrary\include;$(oSuiteExtDir)FreeImage\Source\OpenEXR\Half;$(oSuiteExtDir)tlsf;$(oSuiteExtDir)BC6HBC7EncoderDecoder11\;$(oSuiteExtDir)FreeImage\Source\;$(oSuiteExtDir)OpenSSL\openssl-1.0.0e\include\;$(oSuiteExtDir)tbb\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <AdditionalIncludeDirectories>$(oSuiteExtDir)\Kinect\v1.0\inc;$(oSuiteExtDir)bullet\vectormathlibrary\include;$(oSuiteExtDir)FreeImage\Source\OpenEXR\Half;$(oSuiteExtDir)tlsf;$(oSuiteExtDir)BC6HBC7EncoderDecoder11\;$(oSuiteExtDir)FreeImage\Source\;$(oSuiteExtDir)OpenSSL\openssl-1.0.0e\include\;$(oSuiteExtDir)tbb\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib>
+      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
+    </Lib>
+    <ClCompile />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <AdditionalIncludeDirectories>$(oSuiteExtDir)\Kinect\v1.0\inc;$(oSuiteExtDir)bullet\vectormathlibrary\include;$(oSuiteExtDir)FreeImage\Source\OpenEXR\Half;$(oSuiteExtDir)tlsf;$(oSuiteExtDir)BC6HBC7EncoderDecoder11\;$(oSuiteExtDir)FreeImage\Source\;$(oSuiteExtDir)OpenSSL\openssl-1.0.0e\include\;$(oSuiteExtDir)tbb\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\Build\msvc100\BuildRules\oFXC.targets" />
+  </ImportGroup>
+</Project>

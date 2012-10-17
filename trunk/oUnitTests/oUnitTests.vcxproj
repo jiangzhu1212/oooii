@@ -1,0 +1,342 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{42F867E9-C145-466B-8515-C9633E1E7C6F}</ProjectGuid>
+    <RootNamespace>oUnitTests</RootNamespace>
+    <SccProjectName>Perforce Project</SccProjectName>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccLocalPath>..</SccLocalPath>
+    <SccProvider>MSSCCI:Perforce SCM</SccProvider>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v100</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="..\Ouroboros\Source\Build\msvc100\BuildRules\oFXC.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\BuildRules\oRCVer.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Release32.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\pch.props" />
+    <Import Project="oUnitTestsSuite.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\OuroborosPublicExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Debug32.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\pch.props" />
+    <Import Project="oUnitTestsSuite.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\OuroborosPublicExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Release64.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\pch.props" />
+    <Import Project="oUnitTestsSuite.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\OuroborosPublicExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Debug64.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\pch.props" />
+    <Import Project="oUnitTestsSuite.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\OuroborosPublicExternalDependencies.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <SccProjectName />
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <SccLocalPath />
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <SccProvider />
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <SccProjectName />
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <SccLocalPath />
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <SccProvider />
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <SccProjectName />
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <SccLocalPath />
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <SccProvider />
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <SccProjectName />
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <SccLocalPath />
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <SccProvider />
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <SccProjectName />
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <SccLocalPath />
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <SccProvider />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <CustomBuildStep>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+      <Inputs>%(Inputs)</Inputs>
+      <Outputs>%(Outputs)</Outputs>
+    </CustomBuildStep>
+    <ClCompile>
+      <PreprocessorDefinitions>oSTATICLIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <CustomBuildStep>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+      <Inputs>%(Inputs)</Inputs>
+      <Outputs>%(Outputs)</Outputs>
+    </CustomBuildStep>
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <PreprocessorDefinitions>oSTATICLIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <CustomBuildStep>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+      <Inputs>%(Inputs)</Inputs>
+      <Outputs>%(Outputs)</Outputs>
+    </CustomBuildStep>
+    <ClCompile>
+      <PreprocessorDefinitions>oSTATICLIB;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <CustomBuildStep>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+      <Inputs>%(Inputs)</Inputs>
+      <Outputs>%(Outputs)</Outputs>
+    </CustomBuildStep>
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <PreprocessorDefinitions>oSTATICLIB;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUBCEncodeDecode.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUClear.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUDevice.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUInstancedTriangle.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPULineList.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPURenderTarget.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUSpinningTriangle.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTraits.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTriangle.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUWindowInWindow.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\oDQConcurrent.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTBasis.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCamera.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCPU.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCRTLeakTracker.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDebugger.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentGeneric.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentPPL.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentSerial.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentTBB.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentWTP.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDisplayAdapter.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTFileAsync.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTFileMap.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTFileSync.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTImage.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTIntersection.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTMirroredArena.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTParallelFor.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTPath.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTPCIEBandwidth.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTProcessHeapTrivial.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSocketAsync.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSocketBlocking.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTStreamMonitor.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTString.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurfaceFill.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTVTable.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTWindowSendKeys.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTWinRegistry.cpp" />
+    <ClCompile Include="oUnitTests.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Ouroboros\Source\oPlatform\Tests\oDQConcurrent.h" />
+    <ClInclude Include="pch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ouroboros\Source\oBasis\oBasis.vcxproj">
+      <Project>{0110f712-0d38-4a54-9849-52786b26481b}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oBasis\oBasisTests.vcxproj">
+      <Project>{ae94e4cc-860f-4f14-afb3-bbaabf515551}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oGPU\oGPU.vcxproj">
+      <Project>{0be2fc58-3f40-41a7-b734-cb99d978e7c3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oGPU\oGPUTests.vcxproj">
+      <Project>{4a47dd9b-03e2-4f97-ab66-1222148f9af1}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oPlatform\oPlatform.vcxproj">
+      <Project>{8eb33511-eed5-48ac-99f9-efa2a34bb2dd}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oPlatform\oPlatformTBB.vcxproj">
+      <Project>{98649fd9-cf7c-46ea-9e3d-297c53accbbb}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <FXC Include="..\Ouroboros\Source\oPlatform\Tests\oHLSLPCIEBandwidth.sh">
+      <FileType>Document</FileType>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OuroborosSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OuroborosSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OuroborosSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OuroborosSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OuroborosSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OuroborosSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OuroborosSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OuroborosSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
+    </FXC>
+  </ItemGroup>
+  <ItemGroup>
+    <oRCVer Include="..\Ouroboros\Source\Build\msvc100\ResourceScripts\oRCCommon.orc">
+      <FileType>Document</FileType>
+      <AppIcon Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\Data\oooii.ico</AppIcon>
+      <AppIcon Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\Data\oooii.ico</AppIcon>
+      <AppIcon Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)..\Data\oooii.ico</AppIcon>
+      <AppIcon Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)..\Data\oooii.ico</AppIcon>
+    </oRCVer>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="$(oTmpDir)oUnitTests.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\Ouroboros\Source\Build\msvc100\BuildRules\oFXC.targets" />
+    <Import Project="..\Ouroboros\Source\Build\msvc100\BuildRules\oRCVer.targets" />
+  </ImportGroup>
+</Project>

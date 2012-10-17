@@ -1,0 +1,527 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{dda806aa-13b7-4374-9528-25e1c324c232}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{e9fa3a3c-463d-4016-bdc6-781a07097559}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Windows">
+      <UniqueIdentifier>{4f23875d-6e9f-491f-b4bb-c2e3d3d000b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Concurrency">
+      <UniqueIdentifier>{31998618-549c-44a1-b5e8-5e00ce54d8ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Code Management">
+      <UniqueIdentifier>{a28a7d3f-9307-4cf6-a02b-30891ba61398}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\IO">
+      <UniqueIdentifier>{f2e9a500-bf70-4551-a87c-16ccf6b58983}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Memory">
+      <UniqueIdentifier>{407e7a63-710b-49c2-97b3-d6280cb12154}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\UI">
+      <UniqueIdentifier>{af021ec5-012f-4603-b440-708fe0820896}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Windows API Convenience Wrappers">
+      <UniqueIdentifier>{f82bf6e4-b459-4db5-ba1a-e7c2198b4cb3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Shaders">
+      <UniqueIdentifier>{8a666cb6-2f49-41c2-b615-21a390cb9482}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Windows API Convenience Wrappers\GUI">
+      <UniqueIdentifier>{7bf0d0bb-b4f3-4086-a752-8d5da3faa73c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Windows\GUI">
+      <UniqueIdentifier>{79fcfe36-cad0-4413-b448-1fa7bfd20b85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Windows\SoftLink">
+      <UniqueIdentifier>{eaaf7035-5cb6-4a99-92f0-e23a3137abc8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Shaders">
+      <UniqueIdentifier>{c911ee4e-7f0a-47c7-96cc-e46f3d52370b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Devices">
+      <UniqueIdentifier>{c277a74e-1f50-4f61-98ab-f9ddb57745d8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="oKeyState.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="oCRTLeakTracker.h">
+      <Filter>Source\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="oSpinlockEx.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="oCamera_QEdit.h">
+      <Filter>Source\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="oIOCP.h">
+      <Filter>Headers\Windows API Convenience Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oModule.h">
+      <Filter>Headers\Code Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oReporting.h">
+      <Filter>Headers\Code Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oSingleton.h">
+      <Filter>Headers\Code Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oVTable.h">
+      <Filter>Headers\Code Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oDebugger.h">
+      <Filter>Headers\Code Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oCamera.h">
+      <Filter>Headers\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oCPU.h">
+      <Filter>Headers\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oSystem.h">
+      <Filter>Headers\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oFile.h">
+      <Filter>Headers\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oConsole.h">
+      <Filter>Headers\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oMsgBox.h">
+      <Filter>Headers\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oProgressBar.h">
+      <Filter>Headers\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oPageAllocator.h">
+      <Filter>Headers\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oMirroredArena.h">
+      <Filter>Headers\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oProcessHeap.h">
+      <Filter>Headers\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oSerialCom.h">
+      <Filter>Headers\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oSocket.h">
+      <Filter>Headers\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oDisplay.h">
+      <Filter>Headers\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oProcess.h">
+      <Filter>Headers\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oPlatform.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oHLSL.h">
+      <Filter>Headers\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oP4.h">
+      <Filter>Headers\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oImage.h">
+      <Filter>Headers\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oThreadX.h">
+      <Filter>Headers\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oTest.h">
+      <Filter>Headers\Code Management</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oStandards.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="oStaticMutex.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="FreeImageHelpers.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oWinDbgHelp.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oWinDWMAPI.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oWinPSAPI.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oWinsock.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oWinCommCtrl.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oWinPowrProf.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oWinSoftLinkCommon.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oD3DX11.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oOpenSSL.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oWinMSIMG32.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oWinKernel32.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oWinDXGI.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oWinNetApi32.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oInterprocessEvent.h">
+      <Filter>Headers\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oWinPDH.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oWindow.h">
+      <Filter>Headers\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oWinShlwapi.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oCRTHeap.h">
+      <Filter>Headers\Windows API Convenience Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oD3D11.h">
+      <Filter>Headers\Windows API Convenience Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oDXGI.h">
+      <Filter>Headers\Windows API Convenience Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinAsString.h">
+      <Filter>Headers\Windows API Convenience Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWindows.h">
+      <Filter>Headers\Windows API Convenience Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oGDI.h">
+      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinCursor.h">
+      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinDialog.h">
+      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinMenu.h">
+      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinRect.h">
+      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinStatusBar.h">
+      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinTray.h">
+      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinWindowing.h">
+      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="oVKToX11Keyboard.h">
+      <Filter>Source\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oStream.h">
+      <Filter>Headers\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="oDispatchQueueGlobalIOCP.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="oDispatchQueueConcurrentWTP.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oWinVersion.h">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oStreamUtil.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinRegistry.h">
+      <Filter>Headers\Windows API Convenience Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oFileSchemeHandler.h">
+      <Filter>Headers\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oHTTP.h">
+      <Filter>Headers\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oHTTPClient.h">
+      <Filter>Headers\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oHTTPServer.h">
+      <Filter>Headers\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="oHTTPInternal.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="oConsole.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oCPU.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oDebugger.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oDisplay.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oImage.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oMirroredArena.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oMsgBox.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oooii_icon.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oP4.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oPageAllocator.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oProcess.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oSingleton.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oSocket.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oTest.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oVTable.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oModule.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oProcessHeap.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oFile.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oStandards.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oProgressBar.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oCRTLeakTracker.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oIOCP.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oWindows.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oSerialCom.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oDXGI.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oGDI.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinAsString.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinRect.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oCamera.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oReporting.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oSystem.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oFileGeneric.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oThreadX.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oCRTHeap.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="FreeImageHelpers.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oInvisible_ico.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinMenu.cpp">
+      <Filter>Source\Windows\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinTray.cpp">
+      <Filter>Source\Windows\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinWindowing.cpp">
+      <Filter>Source\Windows\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinStatusBar.cpp">
+      <Filter>Source\Windows\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oWinDbgHelp.cpp">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oWinDWMAPI.cpp">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oWinPSAPI.cpp">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oWinsock.cpp">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oWinCommCtrl.cpp">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oWinPowrProf.cpp">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oOpenSSL.cpp">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oD3DX11.cpp">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oWinMSIMG32.cpp">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oWinKernel32.cpp">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oWinDXGI.cpp">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinCursor.cpp">
+      <Filter>Source\Windows\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinDialog.cpp">
+      <Filter>Source\Windows\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oWinNetApi32.cpp">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="oHLSL.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oInterprocessEvent.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oWinPDH.cpp">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="oWindow.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oWinShlwapi.cpp">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="oVKToX11Keyboard.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oStream.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oFileSchemeHandler.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oDispatchQueueConcurrentWTP.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oDispatchQueueGlobalIOCP.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oWinVersion.cpp">
+      <Filter>Source\Windows\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="oStreamUtil.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinRegistry.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oHTTP.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oHTTPClient.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oHTTPProtocol.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oHTTPServer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FXC Include="oHLSL_VS4_0_QUAD_FULLSCREEN.sh">
+      <Filter>Source\Shaders</Filter>
+    </FXC>
+    <FXC Include="oHLSL_VS5_0_QUAD_FULLSCREEN.sh">
+      <Filter>Source\Shaders</Filter>
+    </FXC>
+    <FXC Include="oHLSL_VS4_0_QUAD_PASSTHROUGH.sh">
+      <Filter>Source\Shaders</Filter>
+    </FXC>
+    <FXC Include="oHLSL_PS4_0_SAMPLE_FULLSCREEN_I420.sh">
+      <Filter>Source\Shaders</Filter>
+    </FXC>
+    <FXC Include="oHLSL_PS4_0_SAMPLE_FULLSCREEN_NV12.sh">
+      <Filter>Source\Shaders</Filter>
+    </FXC>
+    <FXC Include="oHLSL_PS4_0_SAMPLE_FULLSCREEN_I420_ALPHA.sh">
+      <Filter>Source\Shaders</Filter>
+    </FXC>
+    <FXC Include="oHLSL_PS4_0_SAMPLE_FULLSCREEN_NV12_ALPHA.sh">
+      <Filter>Source\Shaders</Filter>
+    </FXC>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,163 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ProjectSchemaDefinitions xmlns="clr-namespace:Microsoft.Build.Framework.XamlTypes;assembly=Microsoft.Build.Framework" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:sys="clr-namespace:System;assembly=mscorlib" xmlns:transformCallback="Microsoft.Cpp.Dev10.ConvertPropertyCallback">
+  <Rule
+    Name="oRCVer"
+    PageTemplate="tool"
+    DisplayName="oRCVer"
+    Order="200">
+    <Rule.DataSource>
+      <DataSource
+        Persistence="ProjectFile"
+        ItemType="oRCVer" />
+    </Rule.DataSource>
+    <Rule.Categories>
+      <Category
+        Name="General">
+        <Category.DisplayName>
+          <sys:String>General</sys:String>
+        </Category.DisplayName>
+      </Category>
+      <Category
+        Name="Command Line"
+        Subtype="CommandLine">
+        <Category.DisplayName>
+          <sys:String>Command Line</sys:String>
+        </Category.DisplayName>
+      </Category>
+    </Rule.Categories>
+    <StringListProperty
+      Name="Inputs"
+      Category="Command Line"
+      IsRequired="true"
+      Switch=" ">
+      <StringListProperty.DataSource>
+        <DataSource
+          Persistence="ProjectFile"
+          ItemType="oRCVer"
+          SourceType="Item" />
+      </StringListProperty.DataSource>
+    </StringListProperty>
+    <StringListProperty
+      Name="Version"
+      HelpContext="0"
+      DisplayName="Version"
+      Description="Specifies the major.minor version (i.e. 1.2). (-v [major.minor])"
+      Switch="-v [value]" />
+    <StringListProperty
+      Name="ProductName"
+      HelpContext="0"
+      DisplayName="Product Name"
+      Description="Define the value to appear as the&quot;Product&quot;. (-p [name])"
+      Switch="-p [value]" />
+    <StringProperty
+      Name="P4Root"
+      HelpContext="0"
+      DisplayName="P4 Root"
+      Description="This script determines a changelist by asking P4 about open/out-of-date files, so limit its search to this root (-r [P4root])"
+      Switch="-r &quot;[value]&quot;" />
+    <StringListProperty
+      Name="Includes"
+      HelpContext="0"
+      DisplayName="Additional Include Directories"
+      Description="Specifies one or more paths to insert into the template RC; use semi-colon delimited list if more than one. (-I [path])"
+      Switch="-I [value]" />
+    <StringProperty
+      Name="AppIcon"
+      HelpContext="0"
+      DisplayName="App Icon"
+      Description="Path to the .ico to be used as the file's icon. (-a [path])"
+      Switch="-a &quot;[value]&quot;" />
+    <StringProperty
+      Name="oRCVerOutput"
+      HelpContext="0"
+      DisplayName="Output"
+      Description="Specifies the output filename to which the inputs will be compiled. (-o [value])"
+      Switch="-o &quot;[value]&quot;" />
+    <StringProperty
+      Name="CommandLineTemplate"
+      DisplayName="Command Line"
+      Visible="False"
+      IncludeInCommandLine="False" />
+    <DynamicEnumProperty
+      Name="oRCVerBeforeTargets"
+      Category="General"
+      EnumProvider="Targets"
+      IncludeInCommandLine="False">
+      <DynamicEnumProperty.DisplayName>
+        <sys:String>Execute Before</sys:String>
+      </DynamicEnumProperty.DisplayName>
+      <DynamicEnumProperty.Description>
+        <sys:String>Specifies the targets for the build customization to run before.</sys:String>
+      </DynamicEnumProperty.Description>
+      <DynamicEnumProperty.ProviderSettings>
+        <NameValuePair
+          Name="Exclude"
+          Value="^oRCVerBeforeTargets|^Compute" />
+      </DynamicEnumProperty.ProviderSettings>
+      <DynamicEnumProperty.DataSource>
+        <DataSource
+          Persistence="ProjectFile"
+          HasConfigurationCondition="true" />
+      </DynamicEnumProperty.DataSource>
+    </DynamicEnumProperty>
+    <DynamicEnumProperty
+      Name="oRCVerAfterTargets"
+      Category="General"
+      EnumProvider="Targets"
+      IncludeInCommandLine="False">
+      <DynamicEnumProperty.DisplayName>
+        <sys:String>Execute After</sys:String>
+      </DynamicEnumProperty.DisplayName>
+      <DynamicEnumProperty.Description>
+        <sys:String>Specifies the targets for the build customization to run after.</sys:String>
+      </DynamicEnumProperty.Description>
+      <DynamicEnumProperty.ProviderSettings>
+        <NameValuePair
+          Name="Exclude"
+          Value="^oRCVerAfterTargets|^Compute" />
+      </DynamicEnumProperty.ProviderSettings>
+      <DynamicEnumProperty.DataSource>
+        <DataSource
+          Persistence="ProjectFile"
+          ItemType=""
+          HasConfigurationCondition="true" />
+      </DynamicEnumProperty.DataSource>
+    </DynamicEnumProperty>
+    <StringListProperty
+      Name="Outputs"
+      DisplayName="Outputs"
+      Visible="False"
+      IncludeInCommandLine="False" />
+    <StringProperty
+      Name="ExecutionDescription"
+      DisplayName="Execution Description"
+      Visible="False"
+      IncludeInCommandLine="False" />
+    <StringListProperty
+      Name="AdditionalDependencies"
+      DisplayName="Additional Dependencies"
+      IncludeInCommandLine="False"
+      Visible="true" />
+    <StringProperty
+      Subtype="AdditionalOptions"
+      Name="AdditionalOptions"
+      Category="Command Line">
+      <StringProperty.DisplayName>
+        <sys:String>Additional Options</sys:String>
+      </StringProperty.DisplayName>
+      <StringProperty.Description>
+        <sys:String>Additional Options</sys:String>
+      </StringProperty.Description>
+    </StringProperty>
+  </Rule>
+  <ItemType
+    Name="oRCVer"
+    DisplayName="oRCVer" />
+  <FileExtension
+    Name="*.*"
+    ContentType="oRCVer" />
+  <ContentType
+    Name="oRCVer"
+    DisplayName="oRCVer"
+    ItemType="oRCVer" />
+</ProjectSchemaDefinitions>

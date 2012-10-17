@@ -1,0 +1,292 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4A47DD9B-03E2-4F97-AB66-1222148F9AF1}</ProjectGuid>
+    <RootNamespace>oGPUTests</RootNamespace>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
+    <ProjectName>oGPUTests</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="..\Build\msvc100\BuildRules\oFXC.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Release32.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Debug32.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Release64.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Debug64.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib>
+      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
+    </Lib>
+    <ClCompile />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Tests\oGPUTestCommon.h" />
+    <ClInclude Include="Tests\oGPUTestHLSL.h" />
+    <ClInclude Include="Tests\oGPUTestPipelines.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Tests\oGPUTestCommon.cpp" />
+    <ClCompile Include="Tests\oGPUTestPipelines.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <FXC Include="Tests\oGPUTestColorPS.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="Tests\oGPUTestPassThroughColorVS.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include</Includes>
+    </FXC>
+    <FXC Include="Tests\oGPUTestPassThroughVS.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include</Includes>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include</Includes>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include</Includes>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include</Includes>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="Tests\oGPUTestTexturePS.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Tests\oGPUTestTextureVS.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Tests\oGPUTestWhiteInstancedVS.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Tests\oGPUTestWhiteVS.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="Tests\oGPUTestWhitePS.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include</Includes>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include</Includes>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include</Includes>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include</Includes>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Tests/oGPUTestHLSL.h;$(oSuiteDir)/Include/oPlatform/oHLSL.h;$(oSuiteDir)/Include/oGPU/oGPUMaterialConstants.h;$(oSuiteDir)/Include/oGPU/oGPUViewConstants.h</AdditionalDependencies>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+    </FXC>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\Build\msvc100\BuildRules\oFXC.targets" />
+  </ImportGroup>
+</Project>

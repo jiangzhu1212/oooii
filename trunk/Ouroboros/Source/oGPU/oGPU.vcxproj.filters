@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="oGPUCommon.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11CommandList.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Device.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11InstanceList.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11LineList.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Mesh.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Pipeline.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11RenderTarget.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Texture.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oGPUUtil.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oGPUEx.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oGPUWindow.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oGPUMaterialConstants.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Compiler.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11ComputeShader.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oGPUPickBuffer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Buffer.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="oGPUCommon.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Texture.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11CommandList.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Device.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11InstanceList.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11LineList.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Mesh.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Pipeline.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11RenderTarget.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPU.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUDrawConstants.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUConstants.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUEx.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUStructs.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUViewConstants.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUMaterialConstants.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUWindow.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUCompiler.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11ComputeShader.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUPickBuffer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Buffer.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{2e43fcc8-7a2c-4c31-b3fa-0afa92967c1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{8296491c-a15c-4f32-bf7b-dc833625e4d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\D3D11">
+      <UniqueIdentifier>{1adba936-89bf-4e16-830f-fb5c7b91e8a1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

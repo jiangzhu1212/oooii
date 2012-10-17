@@ -1,0 +1,1 @@
+This folder contains prebuilt versions of software maintained by this very build system. We could just build all tools before subsequent steps and have it point to its own build, but because debug builds are so much slower than release builds - this special-case is made.

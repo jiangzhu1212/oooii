@@ -1,0 +1,308 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\External\bullet\vectormathlibrary\include\vectormath\scalar\cpp\mat_aos.h" />
+    <ClInclude Include="..\..\External\bullet\vectormathlibrary\include\vectormath\scalar\cpp\mat_aos_d.h" />
+    <ClInclude Include="..\..\External\bullet\vectormathlibrary\include\vectormath\scalar\cpp\quat_aos.h" />
+    <ClInclude Include="..\..\External\bullet\vectormathlibrary\include\vectormath\scalar\cpp\quat_aos_d.h" />
+    <ClInclude Include="..\..\External\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vectormath_aos.h" />
+    <ClInclude Include="..\..\External\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vectormath_aos_d.h" />
+    <ClInclude Include="..\..\External\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vec_aos.h" />
+    <ClInclude Include="..\..\External\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vec_aos_d.h" />
+    <ClInclude Include="..\..\Include\oBasis\oAlgorithm.h" />
+    <ClInclude Include="..\..\Include\oBasis\oAllocator.h" />
+    <ClInclude Include="..\..\Include\oBasis\oAllocatorTLSF.h" />
+    <ClInclude Include="..\..\Include\oBasis\oArcball.h" />
+    <ClInclude Include="..\..\Include\oBasis\oArray.h" />
+    <ClInclude Include="..\..\Include\oBasis\oAssert.h" />
+    <ClInclude Include="..\..\Include\oBasis\oAtof.h" />
+    <ClInclude Include="..\..\Include\oBasis\oBackoff.h" />
+    <ClInclude Include="..\..\Include\oBasis\oBasis.h" />
+    <ClInclude Include="..\..\Include\oBasis\oBit.h" />
+    <ClInclude Include="..\..\Include\oBasis\oBlockAllocatorFixed.h" />
+    <ClInclude Include="..\..\Include\oBasis\oBlockAllocatorGrowable.h" />
+    <ClInclude Include="..\..\Include\oBasis\oBuffer.h" />
+    <ClInclude Include="..\..\Include\oBasis\oBufferPool.h" />
+    <ClInclude Include="..\..\Include\oBasis\oByte.h" />
+    <ClInclude Include="..\..\Include\oBasis\oByteSwizzle.h" />
+    <ClInclude Include="..\..\Include\oBasis\oCallable.h" />
+    <ClInclude Include="..\..\Include\oBasis\oColor.h" />
+    <ClInclude Include="..\..\Include\oBasis\oCompression.h" />
+    <ClInclude Include="..\..\Include\oBasis\oConcurrentIndexAllocator.h" />
+    <ClInclude Include="..\..\Include\oBasis\oConcurrentQueue.h" />
+    <ClInclude Include="..\..\Include\oBasis\oConditionVariable.h" />
+    <ClInclude Include="..\..\Include\oBasis\oCountdownLatch.h" />
+    <ClInclude Include="..\..\Include\oBasis\oCSV.h" />
+    <ClInclude Include="..\..\Include\oBasis\oDate.h" />
+    <ClInclude Include="..\..\Include\oBasis\oDispatchQueue.h" />
+    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueConcurrent.h" />
+    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueGlobal.h" />
+    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueGlobalT.h" />
+    <ClInclude Include="..\..\Include\oBasis\oDispatchQueuePrivate.h" />
+    <ClInclude Include="..\..\Include\oBasis\oEightCC.h" />
+    <ClInclude Include="..\..\Include\oBasis\oEqual.h" />
+    <ClInclude Include="..\..\Include\oBasis\oError.h" />
+    <ClInclude Include="..\..\Include\oBasis\oEvent.h" />
+    <ClInclude Include="..\..\Include\oBasis\oEye.h" />
+    <ClInclude Include="..\..\Include\oBasis\oFiber.h" />
+    <ClInclude Include="..\..\Include\oBasis\oFilterChain.h" />
+    <ClInclude Include="..\..\Include\oBasis\oFixedString.h" />
+    <ClInclude Include="..\..\Include\oBasis\oFor.h" />
+    <ClInclude Include="..\..\Include\oBasis\oFourCC.h" />
+    <ClInclude Include="..\..\Include\oBasis\oFunction.h" />
+    <ClInclude Include="..\..\Include\oBasis\oGeometry.h" />
+    <ClInclude Include="..\..\Include\oBasis\oGPUEnums.h" />
+    <ClInclude Include="..\..\Include\oBasis\oGUI.h" />
+    <ClInclude Include="..\..\Include\oBasis\oGUID.h" />
+    <ClInclude Include="..\..\Include\oBasis\oHash.h" />
+    <ClInclude Include="..\..\Include\oBasis\oIndexAllocator.h" />
+    <ClInclude Include="..\..\Include\oBasis\oINI.h" />
+    <ClInclude Include="..\..\Include\oBasis\oInitOnce.h" />
+    <ClInclude Include="..\..\Include\oBasis\oInt.h" />
+    <ClInclude Include="..\..\Include\oBasis\oInterface.h" />
+    <ClInclude Include="..\..\Include\oBasis\oIntrinsic.h" />
+    <ClInclude Include="..\..\Include\oBasis\oInvalid.h" />
+    <ClInclude Include="..\..\Include\oBasis\oJoinable.h" />
+    <ClInclude Include="..\..\Include\oBasis\oLeakTracker.h" />
+    <ClInclude Include="..\..\Include\oBasis\oLibc.h" />
+    <ClInclude Include="..\..\Include\oBasis\oLimits.h" />
+    <ClInclude Include="..\..\Include\oBasis\oLinearAllocator.h" />
+    <ClInclude Include="..\..\Include\oBasis\oLockedPointer.h" />
+    <ClInclude Include="..\..\Include\oBasis\oLockedVector.h" />
+    <ClInclude Include="..\..\Include\oBasis\oLockFreeQueue.h" />
+    <ClInclude Include="..\..\Include\oBasis\oLockThis.h" />
+    <ClInclude Include="..\..\Include\oBasis\oMacros.h" />
+    <ClInclude Include="..\..\Include\oBasis\oMath.h" />
+    <ClInclude Include="..\..\Include\oBasis\oMathInternalHLSL.h" />
+    <ClInclude Include="..\..\Include\oBasis\oMathInternalTypes.h" />
+    <ClInclude Include="..\..\Include\oBasis\oMathTypes.h" />
+    <ClInclude Include="..\..\Include\oBasis\oMemory.h" />
+    <ClInclude Include="..\..\Include\oBasis\oMeshUtil.h" />
+    <ClInclude Include="..\..\Include\oBasis\oMIME.h" />
+    <ClInclude Include="..\..\Include\oBasis\oMutex.h" />
+    <ClInclude Include="..\..\Include\oBasis\oNonCopyable.h" />
+    <ClInclude Include="..\..\Include\oBasis\oOBJ.h" />
+    <ClInclude Include="..\..\Include\oBasis\oOnScopeExit.h" />
+    <ClInclude Include="..\..\Include\oBasis\oOperators.h" />
+    <ClInclude Include="..\..\Include\oBasis\oOSC.h" />
+    <ClInclude Include="..\..\Include\oBasis\oPath.h" />
+    <ClInclude Include="..\..\Include\oBasis\oPlatformFeatures.h" />
+    <ClInclude Include="..\..\Include\oBasis\oRef.h" />
+    <ClInclude Include="..\..\Include\oBasis\oRefCount.h" />
+    <ClInclude Include="..\..\Include\oBasis\oStdAllocator.h" />
+    <ClInclude Include="..\..\Include\oBasis\oStdAtomic.h" />
+    <ClInclude Include="..\..\Include\oBasis\oStdChrono.h" />
+    <ClInclude Include="..\..\Include\oBasis\oStdConditionVariable.h" />
+    <ClInclude Include="..\..\Include\oBasis\oStddef.h" />
+    <ClInclude Include="..\..\Include\oBasis\oStdFuture.h" />
+    <ClInclude Include="..\..\Include\oBasis\oStdMutex.h" />
+    <ClInclude Include="..\..\Include\oBasis\oStdRatio.h" />
+    <ClInclude Include="..\..\Include\oBasis\oStdThread.h" />
+    <ClInclude Include="..\..\Include\oBasis\oStdTypeTraits.h" />
+    <ClInclude Include="..\..\Include\oBasis\oString.h" />
+    <ClInclude Include="..\..\Include\oBasis\oStringize.h" />
+    <ClInclude Include="..\..\Include\oBasis\oSurface.h" />
+    <ClInclude Include="..\..\Include\oBasis\oSurfaceFill.h" />
+    <ClInclude Include="..\..\Include\oBasis\oTaggedPointer.h" />
+    <ClInclude Include="..\..\Include\oBasis\oTask.h" />
+    <ClInclude Include="..\..\Include\oBasis\oThread.h" />
+    <ClInclude Include="..\..\Include\oBasis\oThreadsafe.h" />
+    <ClInclude Include="..\..\Include\oBasis\oTimer.h" />
+    <ClInclude Include="..\..\Include\oBasis\oTypes.h" />
+    <ClInclude Include="..\..\Include\oBasis\oUint128.h" />
+    <ClInclude Include="..\..\Include\oBasis\oUnorderedMap.h" />
+    <ClInclude Include="..\..\Include\oBasis\oURI.h" />
+    <ClInclude Include="..\..\Include\oBasis\oVersion.h" />
+    <ClInclude Include="..\..\Include\oBasis\oX11KeyboardSymbols.h" />
+    <ClInclude Include="..\..\Include\oBasis\oXML.h" />
+    <ClInclude Include="..\..\Include\oBasis\SafeInt3.h" />
+    <ClInclude Include="calfaq.h" />
+    <ClInclude Include="oAllocatorTLSF.h" />
+    <ClInclude Include="oIndexAllocatorInternal.h" />
+    <ClInclude Include="oWinHeaders.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="perlin.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="calfaq.cpp" />
+    <ClCompile Include="oAlgorithm.cpp" />
+    <ClCompile Include="oAllocator.cpp" />
+    <ClCompile Include="oAllocatorTLSF.cpp" />
+    <ClCompile Include="oBlockAllocatorFixed.cpp" />
+    <ClCompile Include="oBlockAllocatorGrowable.cpp" />
+    <ClCompile Include="oBuffer.cpp" />
+    <ClCompile Include="oBufferPool.cpp" />
+    <ClCompile Include="oColor.cpp" />
+    <ClCompile Include="oCompression.cpp" />
+    <ClCompile Include="oConcurrentIndexAllocator.cpp" />
+    <ClCompile Include="oCppParsing.cpp" />
+    <ClCompile Include="oCSV.cpp" />
+    <ClCompile Include="oDate.cpp" />
+    <ClCompile Include="oDispatchQueue.cpp" />
+    <ClCompile Include="oDispatchQueueConcurrent.cpp" />
+    <ClCompile Include="oDispatchQueueGlobal.cpp" />
+    <ClCompile Include="oDispatchQueuePrivate.cpp" />
+    <ClCompile Include="oEightCC.cpp" />
+    <ClCompile Include="oEqual.cpp" />
+    <ClCompile Include="oError.cpp" />
+    <ClCompile Include="oFourCC.cpp" />
+    <ClCompile Include="oGeometry.cpp" />
+    <ClCompile Include="oGPUEnums.cpp" />
+    <ClCompile Include="oGUI.cpp" />
+    <ClCompile Include="oGUID.cpp" />
+    <ClCompile Include="oHash.cpp" />
+    <ClCompile Include="oIndexAllocator.cpp" />
+    <ClCompile Include="oINI.cpp" />
+    <ClCompile Include="oInterface.cpp" />
+    <ClCompile Include="oLeakTracker.cpp" />
+    <ClCompile Include="oMath.cpp" />
+    <ClCompile Include="oMemory.cpp" />
+    <ClCompile Include="oMeshUtil.cpp" />
+    <ClCompile Include="oMIME.cpp" />
+    <ClCompile Include="oOBJ.cpp" />
+    <ClCompile Include="oOSC.cpp" />
+    <ClCompile Include="oPath.cpp" />
+    <ClCompile Include="oStdChrono.cpp" />
+    <ClCompile Include="oStdConditionVariable.cpp" />
+    <ClCompile Include="oStdFuture.cpp" />
+    <ClCompile Include="oStdMutex.cpp" />
+    <ClCompile Include="oStdThread.cpp" />
+    <ClCompile Include="oString.cpp" />
+    <ClCompile Include="oStringize.cpp" />
+    <ClCompile Include="oSurface.cpp" />
+    <ClCompile Include="oSurfaceFill.cpp" />
+    <ClCompile Include="oTimer.cpp" />
+    <ClCompile Include="oURI.cpp" />
+    <ClCompile Include="oVersion.cpp" />
+    <ClCompile Include="oXML.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="perlin.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{0110F712-0D38-4A54-9849-52786B26481B}</ProjectGuid>
+    <RootNamespace>oBasis</RootNamespace>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Release32.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Debug32.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Release64.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Debug64.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib>
+      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
+    </Lib>
+    <ClCompile />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

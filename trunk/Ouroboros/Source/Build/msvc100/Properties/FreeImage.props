@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <OutDir>..\..\..\..\Lib\$(PlatformName)\$(oCompilerName)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IntDir>..\..\..\..\tmp\$(PlatformName)\$(oCompilerName)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile />
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)../../../libjpegTurbo/;$(ProjectDir)../../../zlib/;$(oSDK)inc;$(oSDK)ext;$(oTmpDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>

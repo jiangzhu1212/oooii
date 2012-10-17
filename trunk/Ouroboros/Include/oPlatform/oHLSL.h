@@ -1,0 +1,974 @@
+/**************************************************************************
+ * The MIT License                                                        *
+ * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ *                                                                        *
+ * Permission is hereby granted, free of charge, to any person obtaining  *
+ * a copy of this software and associated documentation files (the        *
+ * "Software"), to deal in the Software without restriction, including    *
+ * without limitation the rights to use, copy, modify, merge, publish,    *
+ * distribute, sublicense, and/or sell copies of the Software, and to     *
+ * permit persons to whom the Software is furnished to do so, subject to  *
+ * the following conditions:                                              *
+ *                                                                        *
+ * The above copyright notice and this permission notice shall be         *
+ * included in all copies or substantial portions of the Software.        *
+ *                                                                        *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
+ **************************************************************************/
+// NOTE: This header is compiled both by HLSL and C++
+#ifndef oHLSL
+	#pragma once
+#endif
+#ifndef oHLSL_h
+#define oHLSL_h
+
+#ifndef oCONCAT
+	#define oCONCAT(x, y) x##y
+#endif
+
+#ifndef oMATRIX_COLUMN_MAJOR
+	#define oMATRIX_COLUMN_MAJOR 
+#endif
+
+#ifndef oRIGHTHANDED
+	#define oRIGHTHANDED
+#endif
+
+// This is used below in oConvertShininessToSpecularExponent
+#ifndef oMAX_SPECULAR_EXPONENT
+	#define oMAX_SPECULAR_EXPONENT 2000.0
+#endif
+
+#ifndef oHLSL
+
+	#include <oBasis/oMath.h>
+
+	#define oHLSL_REQUIRED_STRUCT_ALIGNMENT 16
+	#define oHLSLCheckSize(_Struct) oSTATICASSERT(sizeof(_Struct) % oHLSL_REQUIRED_STRUCT_ALIGNMENT) == 0);
+
+	// Precompiled utility shaders.  Corresponding HLSL
+	// is located in the file with the same name.
+	enum oHLSL_SHADER
+	{
+		oHLSL_PS4_0_SAMPLE_FULLSCREEN_I420,
+		oHLSL_PS4_0_SAMPLE_FULLSCREEN_I420_ALPHA,
+		oHLSL_PS4_0_SAMPLE_FULLSCREEN_NV12,
+		oHLSL_PS4_0_SAMPLE_FULLSCREEN_NV12_ALPHA,
+		oHLSL_VS4_0_QUAD_FULLSCREEN,
+		oHLSL_VS5_0_QUAD_FULLSCREEN,
+		oHLSL_VS4_0_QUAD_PASSTHROUGH,
+		oHLSL_NUM_SHADERS,
+	};
+
+	// Use this to obtain a const pointer to the byte code for the specified shader.
+	// Use oHLSLGetSize() to determine the size of the buffer.
+	oAPI const void* oHLSLGetByteCode(oHLSL_SHADER _Shader);
+	
+	// Returns the size of the buffer in bytes. HLSL embeds this information, 
+	// there is not extra data added.
+	oAPI size_t oHLSLGetByteCodeSize(const void* _pByteCode);
+
+#else
+
+// _____________________________________________________________________________
+// Types and constants
+
+// Because code can be cross-compiled between C++ and shader languages, there
+// can be a bit of necessary patch-up. Also create some defines for common
+// values.
+
+#define quatf float4
+#define oRGBf float3
+
+#ifdef oRIGHTHANDED
+	static const float3 oVECTOR_TOWARDS_SCREEN = float3(0,0,1);
+	static const float3 oVECTOR_INTO_SCREEN = float3(0,0,-1);
+#else
+	static const float3 oVECTOR_TOWARDS_SCREEN = float3(0,0,-1);
+	static const float3 oVECTOR_INTO_SCREEN = float3(0,0,1);
+#endif
+static const float3 oVECTOR_UP = float3(0,1,0);
+
+static const float3 oZERO3 = float3(0,0,0);
+static const float3 oBLACK3 = float3(0,0,0);
+static const float3 oWHITE3 = float3(1,1,1);
+static const float3 oRED3 = float3(1,0,0);
+static const float3 oGREEN3 = float3(0,1,0);
+static const float3 oBLUE3 = float3(0,0,1);
+static const float3 oYELLOW3 = float3(1,1,0);
+static const float3 oMAGENTA3 = float3(1,0,1);
+static const float3 oCYAN3 = float3(0,1,1);
+
+static const float4 oZERO4 = float4(0,0,0,0);
+static const float4 oBLACK4 = float4(0,0,0,1);
+static const float4 oWHITE4 = float4(1,1,1,1);
+static const float4 oRED4 = float4(1,0,0,1);
+static const float4 oGREEN4 = float4(0,1,0,1);
+static const float4 oBLUE4 = float4(0,0,1,1);
+static const float4 oYELLOW4 = float4(1,1,0,1);
+static const float4 oMAGENTA4 = float4(1,0,1,1);
+static const float4 oCYAN4 = float4(0,1,1,1);
+
+// _____________________________________________________________________________
+// Misc utility functions
+
+// Due to lack of templates
+#define oDEFINE_OSWAP(T) \
+	void oSwap(inout T A, inout T B) \
+{ \
+	T AOrig = A; \
+	A = B; \
+	B = AOrig; \
+}
+
+oDEFINE_OSWAP(float);
+oDEFINE_OSWAP(float2);
+oDEFINE_OSWAP(float3);
+oDEFINE_OSWAP(float4);
+
+oDEFINE_OSWAP(int);
+oDEFINE_OSWAP(int2);
+oDEFINE_OSWAP(int3);
+oDEFINE_OSWAP(int4);
+
+// A simple LCG rand() function, unshifted/masked
+uint oUnmaskedRand(uint Seed)
+{
+	return 1103515245 * Seed + 12345;
+}
+
+float oRand(float2 _Coord)
+{
+	static const float GelfondsConstant = 23.1406926327792690; // e ^ pi
+	static const float GelfondSchneiderConstant = 2.6651441426902251; // 2 ^ sqrt(2)
+	return frac(cos(fmod(123456789, 1e-7 + 256 * dot(_Coord, float2(GelfondsConstant, GelfondSchneiderConstant)))));
+}
+
+// _____________________________________________________________________________
+// Noise
+
+// 
+/** <citation
+	usage="Implementation" 
+	reason="Because other noise functions have artifacts"
+	author="Stefan Gustavson"
+	description="http://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&ved=0CCIQFjAA&url=http%3A%2F%2Fwww.itn.liu.se%2F~stegu%2Fsimplexnoise%2Fsimplexnoise.pdf&ei=nzZRUMe-JKOtigLDpYBQ&usg=AFQjCNEVzOM03haFrTgLrjJp-jPkQyTOKA"
+	license="*** Assumed Public Domain ***"
+	licenseurl="http://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&ved=0CCIQFjAA&url=http%3A%2F%2Fwww.itn.liu.se%2F~stegu%2Fsimplexnoise%2Fsimplexnoise.pdf&ei=nzZRUMe-JKOtigLDpYBQ&usg=AFQjCNEVzOM03haFrTgLrjJp-jPkQyTOKA"
+	modification="leverage shader per-component vector ops"
+/>*/
+
+static const float3 oSimplexNoise_grad3[12] =
+{
+	float3(1,1,0),float3(-1,1,0),float3(1,-1,0),float3(-1,-1,0),
+	float3(1,0,1),float3(-1,0,1),float3(1,0,-1),float3(-1,0,-1),
+	float3(0,1,1),float3(0,-1,1),float3(0,1,-1),float3(0,-1,-1)
+};
+
+static const int oSimplexNoise_PermTable[512] = {151,160,137,91,90,15,
+	131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,
+	190, 6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,
+	88,237,149,56,87,174,20,125,136,171,168, 68,175,74,165,71,134,139,48,27,166,
+	77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,
+	102,143,54, 65,25,63,161, 1,216,80,73,209,76,132,187,208, 89,18,169,200,196,
+	135,130,116,188,159,86,164,100,109,198,173,186, 3,64,52,217,226,250,124,123,
+	5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,
+	223,183,170,213,119,248,152, 2,44,154,163, 70,221,153,101,155,167, 43,172,9,
+	129,22,39,253, 19,98,108,110,79,113,224,232,178,185, 112,104,218,246,97,228,
+	251,34,242,193,238,210,144,12,191,179,162,241, 81,51,145,235,249,14,239,107,
+	49,192,214, 31,181,199,106,157,184, 84,204,176,115,121,50,45,127, 4,150,254,
+	138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180,
+
+	151,160,137,91,90,15,
+	131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,
+	190, 6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,
+	88,237,149,56,87,174,20,125,136,171,168, 68,175,74,165,71,134,139,48,27,166,
+	77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,
+	102,143,54, 65,25,63,161, 1,216,80,73,209,76,132,187,208, 89,18,169,200,196,
+	135,130,116,188,159,86,164,100,109,198,173,186, 3,64,52,217,226,250,124,123,
+	5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,
+	223,183,170,213,119,248,152, 2,44,154,163, 70,221,153,101,155,167, 43,172,9,
+	129,22,39,253, 19,98,108,110,79,113,224,232,178,185, 112,104,218,246,97,228,
+	251,34,242,193,238,210,144,12,191,179,162,241, 81,51,145,235,249,14,239,107,
+	49,192,214, 31,181,199,106,157,184, 84,204,176,115,121,50,45,127, 4,150,254,
+	138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180
+};
+
+int oSimplexNoise_Perm(int i)
+{
+	return oSimplexNoise_PermTable[i & 255];
+}
+
+// Returns simplex noise (Ken Perlin's extended noise) for 3 dimensions on [-1,1]
+float oSimplexNoise(float3 v)
+{
+	float n0, n1, n2, n3; // Noise contributions from the four corners
+	// Skew the input space to determine which simplex cell we're in
+	const float F3 = 1.0/3.0;
+	float s = (v.x+v.y+v.z)*F3; // Very nice and simple skew factor for 3D
+	int3 ijk = floor(v+s);
+	const float G3 = 1.0/6.0; // Very nice and simple unskew factor, too
+	float t = (ijk.x+ijk.y+ijk.z)*G3;
+	float3 V0 = float3(ijk-t); // Unskew the cell origin back to (x,y,z) space
+	float3 v0 = float3(v-V0); // The x,y,z distances from the cell origin
+	// For the 3D case, the simplex shape is a slightly irregular tetrahedron.
+	// Determine which simplex we are in.
+	int3 ijk1; // Offsets for second corner of simplex in (i,j,k) coords
+	int3 ijk2; // Offsets for third corner of simplex in (i,j,k) coords
+	if (v0.x >= v0.y)
+	{
+		if (v0.y >= v0.z) { ijk1 = int3(1,0,0); ijk2 = int3(1,1,0); } // X Y Z order
+		else if (v0.x >= v0.z) { ijk1 = int3(1,0,0); ijk2 = int3(1,0,1); } // X Z Y order
+		else { ijk1 = int3(0,0,1); ijk2 = int3(1,0,1); } // Z X Y order
+	}
+
+	else // v0.x < v0.y
+	{ 
+		if (v0.y < v0.z) { ijk1 = int3(0,0,1); ijk2 = int3(0,1,1); } // Z Y X order
+		else if (v0.x < v0.z) { ijk1 = int3(0,1,0); ijk2 = int3(0,1,1); } // Y Z X order
+		else { ijk1 = int3(0,1,0); ijk2 = int3(1,1,0); } // Y X Z order
+	}
+
+	// A step of (1,0,0) in (i,j,k) means a step of (1-c,-c,-c) in (x,y,z),
+	// a step of (0,1,0) in (i,j,k) means a step of (-c,1-c,-c) in (x,y,z), and
+	// a step of (0,0,1) in (i,j,k) means a step of (-c,-c,1-c) in (x,y,z), where
+	// c = 1/6.
+	float3 v1 = v0 - ijk1 + G3; // Offsets for second corner in (x,y,z) coords
+	float3 v2 = v0 - ijk2 + 2.0*G3; // Offsets for third corner in (x,y,z) coords
+	float3 v3 = v0 - 1.0 + 3.0*G3; // Offsets for last corner in (x,y,z) coords
+
+	// Work out the hashed gradient indices of the four simplex corners
+	int3 ijk255 = ijk & 255;
+
+	int gi0 = oSimplexNoise_Perm(ijk255.x+oSimplexNoise_Perm(ijk255.y+oSimplexNoise_Perm(ijk255.z))) % 12;
+	int gi1 = oSimplexNoise_Perm(ijk255.x+ijk1.x+oSimplexNoise_Perm(ijk255.y+ijk1.y+oSimplexNoise_Perm(ijk255.z+ijk1.z))) % 12;
+	int gi2 = oSimplexNoise_Perm(ijk255.x+ijk2.x+oSimplexNoise_Perm(ijk255.y+ijk2.y+oSimplexNoise_Perm(ijk255.z+ijk2.z))) % 12;
+	int gi3 = oSimplexNoise_Perm(ijk255.x+1+oSimplexNoise_Perm(ijk255.y+1+oSimplexNoise_Perm(ijk255.z+1))) % 12;
+
+	// Calculate the contribution from the four corners
+
+	float t0 = 0.6 - dot(v0,v0);
+	if(t0<0) n0 = 0.0;
+	else {
+		t0 *= t0;
+		n0 = t0 * t0 * dot(oSimplexNoise_grad3[gi0], v0);
+	}
+	float t1 = 0.6 - dot(v1,v1);
+	if(t1<0) n1 = 0.0;
+	else {
+		t1 *= t1;
+		n1 = t1 * t1 * dot(oSimplexNoise_grad3[gi1], v1);
+	}
+	float t2 = 0.6 - dot(v2,v2);
+	if(t2<0) n2 = 0.0;
+	else {
+		t2 *= t2;
+		n2 = t2 * t2 * dot(oSimplexNoise_grad3[gi2], v2);
+	}
+	float t3 = 0.6 - dot(v3,v3);
+	if(t3<0) n3 = 0.0;
+	else {
+		t3 *= t3;
+		n3 = t3 * t3 * dot(oSimplexNoise_grad3[gi3], v3);
+	}
+	// Add contributions from each corner to get the final noise value.
+	// The result is scaled to stay just inside [-1,1]
+	return 32.0*(n0 + n1 + n2 + n3);
+}
+
+// Fractal Brownian motion (layered Perlin noise)
+float ofBm(float3 _Coord, uint _NumOctaves, float _Lacunarity, float _Gain)
+{
+	// based on:
+	// http://www.scribd.com/doc/39470687/27/fBm-Shader-Code
+
+	float Amp = 1;
+	float AmpSum = 1;
+	float3 C = _Coord;
+
+	float n = oSimplexNoise(_Coord);
+	for (uint i = 1; i < _NumOctaves; i += 1)
+	{
+		Amp *= _Gain;
+		AmpSum += Amp;
+		C *= _Lacunarity;
+		n += Amp * oSimplexNoise(C);
+	}
+
+	return n / AmpSum;
+}
+
+// fBM, using abs() of noise() function.
+float oTurbulence(float3 _Coord, uint _NumOctaves, float _Lacunarity, float _Gain)
+{
+	// based on:
+	// http://www.scribd.com/doc/39470687/27/fBm-Shader-Code
+
+	float Sum = 0;
+	float Amp = 1;
+	float AmpSum = 0;
+
+	float3 C = _Coord;
+
+	for (uint i = 0; i < _NumOctaves; i++)
+	{
+		Sum += Amp * (0.5+0.5*oSimplexNoise(C));
+		AmpSum += Amp;
+		Amp *= _Gain;
+		C *= _Lacunarity;
+	}
+
+	return Sum / AmpSum;
+}
+
+// Generates a clipspace-ish quad based off the SVVertexID semantic
+// VertexID Texcoord Position
+// 0        0,0      -1,1,0	
+// 1        1,0      1,1,0
+// 2        0,1      -1,-1,0
+// 3        1,1      1,-1,0
+void oExtractQuadInfoFromVertexID(in uint _SVVertexID, out float4 _Position, out float2 _Texcoord)
+{
+	_Texcoord = float2(_SVVertexID & 1, _SVVertexID >> 1);
+	_Position = float4(_Texcoord * float2(2.0f, -2.0f) + float2(-1.0f, 1.0f), 0.0f, 1.0f);
+}
+
+// _____________________________________________________________________________
+// Procedural textures to test out the noise functionality above and to give 
+// some options for fallback textures.
+
+// Calculate a marble-like pattern (from NVIDIA, ATI, RenderMan and anyone else
+// whose had a procedural marble texture). Use the returned value to interpolate
+// between two colors. (Also use it to interpolate between two specular values!)
+// Start tweaking from values: _Scale = 5, _Lacunarity = 2, _Gain = 0.5
+float oCalcMarbleIntensity(float3 _Coord, float _Scale, float _Lacunarity, float _Gain)
+{
+	return 0.2 + _Scale * abs(oTurbulence(_Coord, 4, _Lacunarity, _Gain) - 0.5);
+}
+
+// Calculate a granite-like pattern (from NVIDIA, ATI, RenderMan and anyone else
+// whose had a procedural granite texture). Use the returned value to 
+// interpolate between two colors. (Also use it to interpolate between two 
+// specular values!) 
+// Start tweaking from values: _Scale = 5, _Lacunarity = 2, _Gain = 0.5
+float oCalcGraniteIntensity(float3 _Coord, float _Scale, float _Lacunarity, float _Gain)
+{
+	return abs(0.8 - oTurbulence(_Coord, 4, _Lacunarity, _Gain));
+}
+
+// This might've been described as a marble formula, but it appears with 
+// oTurbulence to be more of a rust/stain pattern. Interpolate between diffuse
+// and rust colors/textures. (Also use it to interpolate between two specular 
+// values!)
+// Start tweaking from values: _Amplification = 1, _Lacunarity = 2, _Gain = 0.5
+float oCalcStainIntensity(float3 _Coord, float _Amplification, float _Lacunarity, float _Gain)
+{
+	// based on:
+	// http://www.sci.utah.edu/~leenak/IndStudy_reportfall/MarbleCode.txt
+	return saturate(cos(_Coord.z * 0.1 + _Amplification * oTurbulence(_Coord, 4, _Lacunarity, _Gain)));
+}
+
+// Generate a lerp value between two colors in a procedural wood pattern.
+// (note it is recommended to have two specular colors to go with each diffuse
+// color and lerp them by the intensity value
+// Good start values: _RingScale = 16 _IrregularityScale = 0.2
+float oCalcWoodIntensity(float3 _Coord, float _RingScale, float _IrregularityScale, float _Streakiness)
+{
+	// This is still sucky... has discontinuities... I'm not sure why...
+
+	// Based on NVIDIA Shader Library's wood shader
+
+	float noisy0 = oTurbulence(_Coord, 4, 2.2, 0.5);
+	float noisy1 = oTurbulence(_Coord + 1, 4, 2.1, 0.5);
+	float noisy2 = oTurbulence(_Coord + 2, 4, 2.345, 0.5) * (1-_Streakiness);
+
+	float3 noiseval = float3(noisy0, noisy1, noisy2);
+	float3 Pwood = _Coord + (_IrregularityScale * noiseval);
+	float r = _RingScale * length(Pwood.xy);
+	r = r + oTurbulence(r.xxx/32.0, 4, 2, 0.5);
+	r = frac(r);
+	return smoothstep(0.0, 0.8, r) - smoothstep(0.83, 1.0, r);
+}
+
+// _____________________________________________________________________________
+// Space Tranformation. To abstract row-major v. col-major and simplify 
+// quaternion math, present these utility functions.
+
+// Order will always be the same with this function, regardless of matrix
+// representation.
+float4 oMul(float4x4 m, float4 v)
+{
+	#ifdef oMATRIX_COLUMN_MAJOR
+		return mul(m, v);
+	#else
+		return mul(v, m);
+	#endif
+}
+
+float3 oMul(float3x3 m, float3 v)
+{
+	#ifdef oMATRIX_COLUMN_MAJOR
+		return mul(m, v);
+	#else
+		return mul(v, m);
+	#endif
+}
+
+// Multiply/combine two quaternions. Careful, remember that quats are not 
+// communicative, so order matters. This returns a * b.
+float4 oQMul(float4 a, float4 b)
+{
+	// http://code.google.com/p/kri/wiki/Quaternions
+	return float4(cross(a.xyz,b.xyz) + a.xyz*b.w + b.xyz*a.w, a.w*b.w - dot(a.xyz,b.xyz));
+}
+
+// Rotate a vector by a quaternion
+// q: quaternion to rotate vector by
+// v: vector to be rotated
+// returns: rotated vector
+float3 oQRotate(float4 q, float3 v)
+{
+	// http://code.google.com/p/kri/wiki/Quaternions
+	#if 1
+		return v + 2.0*cross(q.xyz, cross(q.xyz,v) + q.w*v);
+	#else
+		return v*(q.w*q.w - dot(q.xyz,q.xyz)) + 2.0*q.xyz*dot(q.xyz,v) + 2.0*q.w*cross(q.xyz,v);
+	#endif
+}
+
+// Returns texcoords of screen: [0,0] upper-left, [1,1] lower-right
+// _SVPosition is a local-space 3D position multiplied by a WVP matrix, so the
+// final projected position that would normally be passed from a vertex shader
+// to a pixel shader.
+// NOTE: There are 2 flavors because the _SVPosition behaves slightly 
+// differently between the result calculated in a vertex shader and what happens
+// to it by the time it gets to the pixel shader.
+float2 oCalculateScreenSpaceTexcoordVS(float4 _SVPosition)
+{
+	float2 Texcoord = _SVPosition.xy / _SVPosition.w;
+	return Texcoord * float2(0.5, -0.5) + 0.5;
+}
+
+float2 oCalculateScreenSpaceTexcoordPS(float4 _SVPosition, float2 _RenderTargetDimensions)
+{
+	return _SVPosition.xy / _RenderTargetDimensions;
+}
+
+// Returns the eye position in whatever space the view matrix is in.
+float3 oGetEyePosition(float4x4 _ViewMatrix)
+{
+	#ifdef oMATRIX_COLUMN_MAJOR
+		return -float3(_ViewMatrix[0].w, _ViewMatrix[1].w, _ViewMatrix[2].w);
+	#else
+		return -_ViewMatrix[3].xyz;
+	#endif
+}
+
+// When writing a normal to a screen buffer, it's not useful to have normals that
+// point away from the screen and thus won't be evaluated, so get that precision
+// back by mapping a normal that could point anywhere on a unit sphere into a 
+// half-sphere.
+float2 oFullToHalfSphere(float3 _Normal)
+{
+	// From Inferred Lighting, Kicher, Lawrance @ Volition
+	// But modified to be left-handed
+	return normalize(-_Normal + oVECTOR_TOWARDS_SCREEN).xy;
+}
+
+// Given the XY of a normal, recreate Z and remap from a half-sphere to a full-
+// sphere normal.
+float3 oHalfToFullSphere(float2 Nxy)
+{
+	// Restores Z value from a normal's XY on a half sphere
+	float z = sqrt(1 - dot(Nxy, Nxy));
+	return -float3(2 * z * Nxy.x, 2 * z * Nxy.y, (2 * z * z) - 1);
+}
+
+// Given the rotation of a normal from oVECTOR_UP, create a half-
+// sphere encoded version fit for use in deferred rendering
+float2 oEncodeQuaternionNormal(float4 _NormalRotationQuaternion, bool _IsFrontFace)
+{
+	float3 up = _IsFrontFace ? oVECTOR_UP : -oVECTOR_UP;
+	return oFullToHalfSphere(oQRotate(normalize(_NormalRotationQuaternion), up));
+}
+
+// Returns a normal as encoded by oEncodeQuaternionNormal()
+float3 oDecodeQuaternionNormal(float2 _EncodedQuaternionNormal)
+{
+	return oHalfToFullSphere(_EncodedQuaternionNormal);
+}
+
+// _____________________________________________________________________________
+// Color space tranformation
+
+// Converts a 3D normalized vector into an RGB color
+// (typically for encoding a normal)
+float3 oColorizeVector(float3 _NormalizedVector)
+{
+	return _NormalizedVector * float3(0.5, 0.5, -0.5) + 0.5;
+}
+
+// Converts a normalized vector stored as RGB color
+// back to a vector
+float3 oDecolorizeVector(float3 _RGBVector)
+{
+	return _RGBVector * float3(2.0, 2.0, -2.0) - 1;
+}
+
+// Convert from HSV (HSL) color space to RGB
+float3 oHSVtoRGB(float3 HSV)
+{
+	// http://chilliant.blogspot.com/2010/11/rgbhsv-in-hlsl.html
+	float R = abs(HSV.x * 6 - 3) - 1;
+	float G = 2 - abs(HSV.x * 6 - 2);
+	float B = 2 - abs(HSV.x * 6 - 4);
+	return ((saturate(float3(R,G,B)) - 1) * HSV.y + 1) * HSV.z;
+}
+
+float oRGBtoLuminance(float3 color)
+{
+	// from http://en.wikipedia.org/wiki/Luminance_(relative)
+	// "For RGB color spaces that use the ITU-R BT.709 primaries 
+	// (or sRGB, which defines the same primaries), relative 
+	// luminance can be calculated from linear RGB components:"
+	color *= float3(0.2126, 0.7152, 0.0722);
+	return color.r + color.g + color.b;
+}
+
+float3 oYUVToRGB(float3 _YUV)
+{
+	// Using the float version of ITU-R BT.601 that jpeg uses. This is similar to 
+	// the integer version, except this uses the full 0 - 255 range.
+	static const float3 oITU_R_BT_601_Offset = float3(0, -128, -128) / 255;
+	static const float3 oITU_R_BT_601_RFactor = float3(1, 0, 1.402);
+	static const float3 oITU_R_BT_601_GFactor = float3(1, -0.34414, -0.71414);
+	static const float3 oITU_R_BT_601_BFactor = float3(1, 1.772, 0);
+	_YUV += oITU_R_BT_601_Offset;
+	return saturate(float3(dot(_YUV, oITU_R_BT_601_RFactor), dot(_YUV, oITU_R_BT_601_GFactor), dot(_YUV, oITU_R_BT_601_BFactor)));
+}
+
+// Given an integer ID [0,255], return a color that ensures IDs near each other 
+// (i.e. 13,14,15) have significantly different colors.
+float3 oIDtoColor8Bit(uint ID8Bit)
+{
+	uint R = oUnmaskedRand(ID8Bit);
+	uint G = oUnmaskedRand(R);
+	uint B = oUnmaskedRand(G);
+	return (uint3(R,G,B) & 0xff) / 255.0;
+}
+
+// Given an integer ID [0,65535], return a color that ensures IDs near each other 
+// (i.e. 13,14,15) have significantly different colors.
+float3 oIDtoColor16Bit(uint ID16Bit)
+{
+	uint R = oUnmaskedRand(ID16Bit);
+	uint G = oUnmaskedRand(R);
+	uint B = oUnmaskedRand(G);
+	return (uint3(R,G,B) & 0xffff) / 65535.0;
+}
+
+// Shininess is a float value on [0,1] that describes
+// a value between minimum (0) specular and a maximum 
+// (system-defined) specular exponent value.
+uint oEncodeShininess(float _Shininess)
+{
+	return _Shininess * 255.0;
+}
+
+float oDecodeShininess(uint _EncodedShininess)
+{
+	return _EncodedShininess / 255.0f;
+}
+
+float oConvertShininessToSpecularExponent(float _Shininess)
+{
+	return _Shininess * oMAX_SPECULAR_EXPONENT;
+}
+
+// _____________________________________________________________________________
+// Texture Sampling
+
+// Returns 3 values; x contains the integer high mip, y the next-lower level 
+// mip, and z contains the trilinear filter value
+float3 oCalcMipSelection(float2 _Texcoord)
+{
+	float2 delta = float2(length(ddx(_Texcoord)), length(ddy(_Texcoord)));
+	float mip;
+	float trilinInterp = modf(-log2(max(delta.x, delta.y)), mip);
+	return float3(mip, mip+1, trilinInterp);
+}
+
+// Samples a displacement maps texel's 4 neighbors to generate a normalized 
+// normal across the surface
+float3 oCrossSampleNormal(Texture2D _Texture, SamplerState _Sampler, float2 _Texcoord, float _NormalScale)
+{
+	float w, h;
+	_Texture.GetDimensions(w, h);
+	float2 texelSize = 1.0 / float2(w, h);
+
+	float T = _Texture.Sample(_Sampler, _Texcoord + float2(0, 1) * texelSize).x;
+	float L = _Texture.Sample(_Sampler, _Texcoord + float2(-1, 0) * texelSize).x;
+	float R = _Texture.Sample(_Sampler, _Texcoord + float2(1, 0) * texelSize).x;
+	float B = _Texture.Sample(_Sampler, _Texcoord + float2(0, -1) * texelSize).x;
+	return normalize(float3(R-L, 2 * _NormalScale, B-T));
+}
+
+// Samples a displacement maps texel's 8 neighbors to generate a normalized 
+// normal across the surface
+float3 oSobelSampleNormal(Texture2D _Texture, SamplerState _Sampler, float2 _Texcoord, float _NormalScale)
+{
+	float w, h;
+	_Texture.GetDimensions(w, h);
+	float2 texelSize = 1.0 / float2(w, h);
+
+	float tl = _Texture.Sample(_Sampler, _Texcoord + float2(-1, 1) * texelSize).x;
+	float T = _Texture.Sample(_Sampler, _Texcoord + float2(0, 1) * texelSize).x;
+	float tr = _Texture.Sample(_Sampler, _Texcoord + float2(1, 1) * texelSize).x;
+	float L = _Texture.Sample(_Sampler, _Texcoord + float2(-1, 0) * texelSize).x;
+	float R = _Texture.Sample(_Sampler, _Texcoord + float2(1, 0) * texelSize).x;
+	float bl = _Texture.Sample(_Sampler, _Texcoord + float2(-1, -1) * texelSize).x;
+	float B = _Texture.Sample(_Sampler, _Texcoord + float2(0, -1) * texelSize).x;
+	float br = _Texture.Sample(_Sampler, _Texcoord + float2(1, -1) * texelSize).x;
+
+	return normalize(float3(
+		tr + 2*R + br - tl - 2*L - bl, 
+		1 / _NormalScale,
+		bl + 2*B + br - tl - 2*T - tr));
+}
+
+float3 oSobelSampleNormalATI(Texture2D _Texture, SamplerState _Sampler, float2 _Texcoord, float4 _Lightness, float2 _TextureDimensions)
+{
+	// From RenderMonkey code, which is the GPU version of ATI's
+
+// The Sobel filter extracts the first order derivates of the image,
+// that is, the slope. The slope in X and Y directon allows us to
+// given a heightmap evaluate the normal for each pixel. This is
+// the same this as ATI's NormalMapGenerator application does,
+// except this is in hardware.
+//
+// These are the filter kernels:
+//
+//  SobelX       SobelY
+//  1  0 -1      1  2  1
+//  2  0 -2      0  0  0
+//  1  0 -1     -1 -2 -1
+
+	float2 off = 1.0 / _TextureDimensions;
+
+	// Take all neighbor samples
+	float4 s00 = _Texture.Sample(_Sampler, _Texcoord + -off);
+	float4 s01 = _Texture.Sample(_Sampler, _Texcoord + float2(0, -off.y));
+	float4 s02 = _Texture.Sample(_Sampler, _Texcoord + float2(off.x, -off.y));
+
+	float4 s10 = _Texture.Sample(_Sampler, _Texcoord + float2(-off.x, 0));
+	float4 s12 = _Texture.Sample(_Sampler, _Texcoord + float2(off.x, 0));
+
+	float4 s20 = _Texture.Sample(_Sampler, _Texcoord + float2(-off.x, off.y));
+	float4 s21 = _Texture.Sample(_Sampler, _Texcoord + float2(0, off.y));
+	float4 s22 = _Texture.Sample(_Sampler, _Texcoord + off);
+
+	// Slope in X direction
+	float4 sobelX = s00 + 2 * s10 + s20 - s02 - 2 * s12 - s22;
+	// Slope in Y direction
+	float4 sobelY = s00 + 2 * s01 + s02 - s20 - 2 * s21 - s22;
+
+	// Weight the slope in all channels, we use grayscale as height
+	float sx = dot(sobelX, _Lightness);
+	float sy = dot(sobelY, _Lightness);
+
+	// Compose the normal
+	float3 normal = normalize(float3(sx, sy, 1));
+
+	// Pack [-1, 1] into [0, 1]
+	return normal * 0.5 + 0.5;
+}
+
+// Returns RGB as sampled from YUV sources in I420 format (3 separate 1-channel 
+// textures)
+float3 oYUVSampleI420(Texture2D _Y, Texture2D _U, Texture2D _V, SamplerState _Sampler, float2 _Texcoord)
+{
+	return oYUVToRGB(float3(_Y.Sample(_Sampler, _Texcoord).x, _U.Sample(_Sampler, _Texcoord).x, _V.Sample(_Sampler, _Texcoord).x));
+}
+
+float4 oYUVSampleI420(Texture2D _Y, Texture2D _U, Texture2D _V, Texture2D _A, SamplerState _Sampler, float2 _Texcoord)
+{
+	return float4(oYUVToRGB(float3(_Y.Sample(_Sampler, _Texcoord).x, _U.Sample(_Sampler, _Texcoord).x, _V.Sample(_Sampler, _Texcoord).x)), _A.Sample(_Sampler, _Texcoord).x);
+}
+
+// Returns RGB as sampled from YUV sources in NV12 format (1 1-channel and 1 2-
+// channel textures)
+float3 oYUVSampleNV12(Texture2D _Y, Texture2D _UV, SamplerState _Sampler, float2 _Texcoord)
+{
+	float y = _Y.Sample(_Sampler, _Texcoord).x;
+	float2 uv = _UV.Sample(_Sampler, _Texcoord).xy;
+	return oYUVToRGB(float3(y, uv.x, uv.y));
+}
+
+float4 oYUVSampleNV12A(Texture2D _YA, Texture2D _UV, SamplerState _Sampler, float2 _Texcoord)
+{
+	float2 ya = _YA.Sample(_Sampler, _Texcoord).xy;
+	float2 uv = _UV.Sample(_Sampler, _Texcoord).xy;
+	return float4(oYUVToRGB(float3(ya.x, uv.x, uv.y)), ya.y);
+}
+
+// _____________________________________________________________________________
+// Lighting
+
+// Classic OpenGL style attenuation
+float oCalculateAttenuation(float ConstantFalloff, float LinearFalloff, float QuadraticFalloff, float LightDistance)
+{
+	return saturate(1 / (ConstantFalloff + LinearFalloff*LightDistance + QuadraticFalloff*LightDistance*LightDistance));
+}
+
+// Attenuates quadratically to a specific bounds of a light. This is useful for
+// screen-space lighting where it is desirable to minimize the number of pixels
+// touched, so the light's effect is 0 at _LightRadius.
+float oCalculateBoundQuadraticAttenuation(float _LightDistanceFromSurface, float _LightRadius, float _Cutoff)
+{
+	// Based on: http://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
+	float denom = (_LightDistanceFromSurface / _LightRadius) + 1;
+	float attenuation = 1 / (denom * denom);
+	return max((attenuation - _Cutoff) / (1 - _Cutoff), 0);
+}
+
+// This is a companion function to oCalculateBoundQuadraticAttenuation and
+// can be used to determine the radius of a screen-space circle inscribed in
+// a quad that will optimally fit exactly the falloff of a point light.
+float oCalculateMaximumDistanceForPointLight(float _LightRadius, float _Cutoff)
+{
+	return _LightRadius * (sqrt(1 / _Cutoff) - 1);
+}
+
+float oCalcLinearFogRatio(float _EyeDistance, float _FogStart, float _FogDistance)
+{
+	return saturate((_EyeDistance - _FogStart) / _FogDistance);
+}
+
+// Returns NdotL in x and NdotH in y (not clamped in any way). All vectors are 
+// assumed to be normalized.
+float2 oLambert(float3 _SurfaceNormal, float3 _LightVector, float3 _EyeVector)
+{
+	return float2(dot(_SurfaceNormal, _LightVector), dot(_SurfaceNormal, normalize(_LightVector + _EyeVector)));
+}
+
+// This equation is from the NVIDIA shader library "lambskin". This is a super-
+// trivial poor approximation for sub-surface scatter to achieve a skin-like 
+// look. It's included here to be used as a placeholder during renderer bringup.
+float oLambertSSS(float _NdotL, float _Rolloff)
+{
+	return max(0, smoothstep(-_Rolloff, 1, _NdotL) - smoothstep(0, 1, _NdotL));
+}
+
+// Returns the results of HLSL's lit() with the specified parameters. All 
+// vectors are assumed to be normalized.
+float4 oLit(float3 _SurfaceNormal, float3 _LightVector, float3 _EyeVector, float _SpecularExponent)
+{
+	float2 L = oLambert(_SurfaceNormal, _LightVector, _EyeVector);
+	return lit(L.x, L.y, _SpecularExponent);
+}
+
+// A variation on oLit that uses a softening of the NdotL ratio to give what 
+// some might consider a more appealing falloff.
+float4 oLitHalfLambert(float3 _SurfaceNormal, float3 _LightVector, float3 _EyeVector, float _SpecularExponent)
+{
+	float2 L = oLambert(_SurfaceNormal, _LightVector, _EyeVector);
+	float Kd = max(L.x*0.5+0.5, 0);
+	float Ks = pow(saturate(L.y), _SpecularExponent);
+	return float4(1, Kd, Ks, 1);
+}
+
+float3 oPhongShade(float4 _Lit // results of lit (or oLit variants)
+	, float _Attenuation // result of oCalcAttenuation
+	, float3 _Ka // ambient color
+	, float3 _Ke // emissive color
+	, float3 _Kd // diffuse color
+	, float3 _Ks // specular color
+	, float3 _Kt // transmissive color
+	, float3 _Kr // reflective color
+	, float3 _Kl // light color
+	, float _Ksh // shadow term (1 = unshadowed, 0 = shadowed)
+	)
+{
+	float diffuseCoeff = _Lit.y;
+	float ambientCoeff = _Lit.x * (1-diffuseCoeff); // so that in-shadow bump mapping isn't completely lost
+	float specularCoeff = _Lit.z;
+	float attenuationCoeff = _Ksh * _Attenuation;
+
+	float3 rgb = ambientCoeff * _Ka * _Kd + _Ke + attenuationCoeff * _Kl * (diffuseCoeff * _Kd + specularCoeff * _Ks);
+
+	// @oooii-tony: TODO: add transmissive and reflective
+
+	return rgb;
+}
+
+// Returns a color resulting from the input parameters consistent with the Phong
+// shading model.
+float3 oPhongShade(float3 _SurfaceNormal // assumed to be normalized, pointing out from the surface
+	, float3 _LightVector // assumed to be normalized, pointing from surface to light
+	, float3 _EyeVector // assumed to be normalized, pointing from surface to eye
+	, float _Attenuation // result of oCalcAttenuation
+	, float3 _Ka // ambient color
+	, float3 _Ke // emissive color
+	, float3 _Kd // diffuse color
+	, float3 _Ks // specular color
+	, float _Kh // specular exponent
+	, float3 _Kt // transmissive color
+	, float3 _Kr // reflective color
+	, float3 _Kl // light color
+	, float _Ksh // shadow term (1 = unshadowed, 0 = shadowed)
+	)
+{
+	float4 Lit = oLit(_SurfaceNormal, _LightVector, _EyeVector, _Kh);
+	return oPhongShade(Lit, _Attenuation, _Ka, _Ke, _Kd, _Ks, _Kt, _Kr, _Kl, _Ksh);
+}
+
+// Returns a color resulting from the input parameters consistent with the Phong
+// shading model.
+float3 oPhongShadeHalfLambert(float3 _SurfaceNormal // assumed to be normalized, pointing out from the surface
+	, float3 _LightVector // assumed to be normalized, pointing from surface to light
+	, float3 _EyeVector // assumed to be normalized, pointing from surface to eye
+	, float _Attenuation // result of oCalcAttenuation
+	, float3 _Ka // ambient color
+	, float3 _Ke // emissive color
+	, float3 _Kd // diffuse color
+	, float3 _Ks // specular color
+	, float _Kh // specular exponent
+	, float3 _Kt // transmissive color
+	, float3 _Kr // reflective color
+	, float3 _Kl // light color
+	, float _Ksh // shadow term (1 = unshadowed, 0 = shadowed)
+	)
+{
+	float4 Lit = oLitHalfLambert(_SurfaceNormal, _LightVector, _EyeVector, _Kh);
+	return oPhongShade(Lit, _Attenuation, _Ka, _Ke, _Kd, _Ks, _Kt, _Kr, _Kl, _Ksh);
+}
+
+// A naive global illumination approximation
+float4 oHemisphericShade(float3 _SurfaceNormal // assumed to be normalized, pointing out from the surface
+	, float3 _SkyVector // assumed to be normalized, vector pointing at the sky color (and away from the ground color)
+	, float4 _HemisphericSkyColor // color of the hemisphere in the direction pointed to by _SkyVector
+	, float4 _HemisphericGroundColor // color of the hemisphere in the direction pointed away from by _SkyVector
+	)
+{
+	return lerp(_HemisphericGroundColor, _HemisphericSkyColor, dot(_SurfaceNormal, _SkyVector) * 0.5f + 0.5f);
+}
+
+// Returns a multiplier on where a uniform grid exists. Good starting values for 
+// parameters are: _GridRepeat = 3, _Thickness = 1.2
+float oCalcGridShadeIntensity2D(float2 _Coord, float _GridRepeat, float _Thickness)
+{
+	// thickness-derived values that can be constants
+	float mi = max(0.0, _Thickness - 1.0);
+	float miInv = max(0.0, 1.0 - _Thickness);
+	float ma = max(1.0, _Thickness);
+
+	float2 f  = abs(frac(_Coord * _GridRepeat) - 0.5);
+	float2 df = fwidth(_Coord * _GridRepeat);
+	float2 g = clamp((f - df * mi) / (0.0001 + df * (ma - mi)), miInv, 1.0);
+	return 1 - (g.x * g.y);
+}
+
+float oCalcGridShadeIntensity3D(float3 _Coord, float _GridRepeat, float _Thickness)
+{
+	// thickness-derived values that can be constants
+	float mi = max(0.0, _Thickness - 1.0);
+	float miInv = max(0.0, 1.0 - _Thickness);
+	float ma = max(1.0, _Thickness);
+
+	float3 f  = abs(frac(_Coord * _GridRepeat) - 0.5);
+	float3 df = fwidth(_Coord * _GridRepeat);
+	float3 g = clamp((f - df * mi) / (0.0001 + df * (ma - mi)), miInv, 1.0);
+	return g.x * g.y * g.z;
+}
+
+// Returns a multiplier on where a uniform grid exists. This tries to maintain
+// a uniform density of grid sizes by calculating mip levels for a surface and
+// using that to create another level of gridding (quad-tree style). A trilinear
+// calculation is used to fade LODs of the grid in and out. Good starting values
+// for parameters are: _GridRepeat = 0.2, _Intensity = 10, _Thickness = 0.05
+float oCalcFadingGridShadeIntensity2D(float2 _Texcoord, float _GridRepeat, float _Intensity, float _Thickness)
+{
+	// Based on article at:
+	// http://www.gamedev.net/topic/618788-efficient-drawing-of-2d-gridlines-with-shaders/
+
+	float3 mipSel = oCalcMipSelection(_Texcoord);
+	float2 TexcoordThisMip = _Texcoord * pow(2, mipSel.x);
+	float2 TexcoordNextMip = _Texcoord * pow(2, mipSel.y);
+
+	float2 HighlightThisMip = saturate(cos(TexcoordThisMip * _GridRepeat) - 1 + _Thickness) * _Intensity;
+	float2 HighlightNextMip = saturate(cos(TexcoordNextMip * _GridRepeat) - 1 + _Thickness) * _Intensity;
+
+	// lerp between the intensities
+	return saturate(lerp(max(HighlightThisMip.x, HighlightThisMip.y), max(HighlightNextMip.x, HighlightNextMip.y), mipSel.z));
+}
+
+float oCalcFadingGridShadeIntensity3D(float3 _Coord, float _GridRepeat, float _Intensity, float _Thickness)
+{
+	// Based on article at:
+	// http://www.gamedev.net/topic/618788-efficient-drawing-of-2d-gridlines-with-shaders/
+
+	float3 mipSel = oCalcMipSelection(_Coord.xy); // @oooii-tony: This might need to be transformed into view-space
+
+	float3 TexcoordThisMip = _Coord * pow(2, mipSel.x);
+	float3 TexcoordNextMip = _Coord * pow(2, mipSel.y);
+
+	float3 HighlightThisMip = saturate(cos(TexcoordThisMip * _GridRepeat) - 1 + _Thickness) * _Intensity;
+	float3 HighlightNextMip = saturate(cos(TexcoordNextMip * _GridRepeat) - 1 + _Thickness) * _Intensity;
+
+	// lerp between the intensities
+	return saturate(lerp(max(max(HighlightThisMip.x, HighlightThisMip.y), HighlightThisMip.z), max(max(HighlightNextMip.x, HighlightNextMip.y), HighlightNextMip.z), mipSel.z));
+}
+
+// Returns a multiplier between 0 and 1 in a checkerboard pattern. Good starting 
+// values: _Scale = 0.5, _Balance = 0.5, _AAFilterWidth = 1
+float oCalcCheckerIntensity1D(float _Coord, float _Scale, float _Balance, float _AAFilterWidth)
+{
+	// Based on NVIDIA's checker3d_math.fx shader
+	// http://developer.download.nvidia.com/shaderlibrary/webpages/hlsl_shaders.html
+
+	float edge = _Scale * _Balance;
+	float op = _AAFilterWidth / _Scale;
+
+	float width = fwidth(_Coord);
+	float w = width*op;
+	float x0 = _Coord / _Scale - (w/2.0);
+	float x1 = x0 + w;
+	float nedge = edge/_Scale;
+	float i0 = (1.0-nedge)*floor(x0) + max(0.0, frac(x0)-nedge);
+	float i1 = (1.0-nedge)*floor(x1) + max(0.0, frac(x1)-nedge);
+	return saturate((i1 - i0)/ (0.00001 + w));
+}
+
+float oCalcCheckerIntensity2D(float2 _Space, float _Scale, float _Balance, float _AAFilterWidth)
+{
+	float edge = _Scale*_Balance;
+	float op = _AAFilterWidth/_Scale;
+
+	float2 check = float2(
+		oCalcCheckerIntensity1D(_Space.x, _Scale, _Balance, _AAFilterWidth),
+		oCalcCheckerIntensity1D(_Space.y, _Scale, _Balance, _AAFilterWidth));
+
+	return abs(check.y - check.x);
+}
+
+float oCalcCheckerIntensity3D(float3 _Space, float _Scale, float _Balance, float _AAFilterWidth)
+{
+	float edge = _Scale*_Balance;
+	float op = _AAFilterWidth/_Scale;
+
+	float3 check = float3(
+		oCalcCheckerIntensity1D(_Space.x, _Scale, _Balance, _AAFilterWidth),
+		oCalcCheckerIntensity1D(_Space.y, _Scale, _Balance, _AAFilterWidth),
+		oCalcCheckerIntensity1D(_Space.z, _Scale, _Balance, _AAFilterWidth));
+
+	return abs(check.z - abs(check.y - check.x));
+}
+
+#endif
+#endif

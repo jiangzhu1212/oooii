@@ -1,0 +1,103 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ============================================================================
+  A Custom Build Rule for using ooRCVer to compile binary/text data into C++
+  ============================================================================
+  NOTE: For dependencies to behave correctly in VS2010 SP1, ALL dependencies 
+  must be both in the project and listed as an Additional Dependency in the 
+  build rule. http://www.virtualdub.org/blog/pivot/entry.php?id=334 The jist
+  is there are two dependency checkers: IDE & MSBuild and they don't behave 
+  the same. The author's fix involves hard-coding a specific path/file in 
+  the target, which doesn't seem generic enough, so the described changes
+  where not included.
+ -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <PropertyPageSchema
+      Include="$(MSBuildThisFileDirectory)$(MSBuildThisFileName).xml" />
+    <AvailableItemName
+      Include="oRCVer">
+      <Targets>_oRCVer</Targets>
+    </AvailableItemName>
+  </ItemGroup>
+  <UsingTask
+    TaskName="oRCVer"
+    TaskFactory="XamlTaskFactory"
+    AssemblyName="Microsoft.Build.Tasks.v4.0">
+    <Task>$(MSBuildThisFileDirectory)$(MSBuildThisFileName).xml</Task>
+  </UsingTask>
+  <Target
+    Name="_oRCVer"
+    BeforeTargets="$(oRCVerBeforeTargets)"
+    AfterTargets="$(oRCVerAfterTargets)"
+    Condition="'@(oRCVer)' != ''"
+    DependsOnTargets="$(oRCVerDependsOn);ComputeoRCVerOutput"
+    Outputs="%(oRCVer.Outputs)"
+    Inputs="%(oRCVer.Identity);%(oRCVer.AdditionalDependencies);$(MSBuildProjectFile)">
+    <ItemGroup
+      Condition="'@(SelectedFiles)' != ''">
+      <oRCVer
+        Remove="@(oRCVer)"
+        Condition="'%(Identity)' != '@(SelectedFiles)'" />
+    </ItemGroup>
+    <ItemGroup>
+      <oRCVer_tlog
+        Include="%(oRCVer.Outputs)"
+        Condition="'%(oRCVer.Outputs)' != '' and '%(oRCVer.ExcludedFromBuild)' != 'true'">
+        <Source>@(oRCVer, '|')</Source>
+      </oRCVer_tlog>
+    </ItemGroup>
+    <Message
+      Importance="High"
+      Text="%(oRCVer.ExecutionDescription)" />
+    <WriteLinesToFile
+      Condition="'@(oRCVer_tlog)' != '' and '%(oRCVer_tlog.ExcludedFromBuild)' != 'true'"
+      File="$(IntDir)$(ProjectName).write.1.tlog"
+      Lines="^%(oRCVer_tlog.Source);@(oRCVer_tlog-&gt;'%(Fullpath)')" />
+    <WriteLinesToFile
+      Condition="'@(oRCVer_tlog)' != '' and '%(oRCVer_tlog.ExcludedFromBuild)' != 'true'"
+      File="$(IntDir)$(ProjectName).read.1.tlog"
+      Lines="^%(oRCVer_tlog.FullPath);%(oRCVer_tlog.Inputs)" />
+    <oRCVer
+      Condition="'@(oRCVer)' != '' and '%(oRCVer.ExcludedFromBuild)' != 'true'"
+      CommandLineTemplate="%(oRCVer.CommandLineTemplate)"
+      Version="%(oRCVer.Version)"
+      Includes="%(oRCVer.Includes)"
+      ProductName="%(oRCVer.ProductName)"
+      AppIcon="%(oRCVer.AppIcon)"
+      oRCVerOutput="%(oRCVer.oRCVerOutput)"
+      AdditionalOptions="%(oRCVer.AdditionalOptions)"
+      EchoOff="true"      
+      Inputs="%(oRCVer.Identity)" />
+  </Target>
+  <PropertyGroup>
+    <ComputeLinkInputsTargets>
+            $(ComputeLinkInputsTargets);
+            ComputeoRCVerOutput;
+          </ComputeLinkInputsTargets>
+    <ComputeLibInputsTargets>
+            $(ComputeLibInputsTargets);
+            ComputeoRCVerOutput;
+          </ComputeLibInputsTargets>
+  </PropertyGroup>
+  <Target
+    Name="ComputeoRCVerOutput"
+    Condition="'@(oRCVer)' != ''">
+    <ItemGroup>
+      <oRCVerDirsToMake
+        Condition="'@(oRCVer)' != '' and '%(oRCVer.ExcludedFromBuild)' != 'true'"
+        Include="%(oRCVer.Outputs)" />
+      <Link
+        Include="%(oRCVerDirsToMake.Identity)"
+        Condition="'%(Extension)'=='.obj' or '%(Extension)'=='.res' or '%(Extension)'=='.rsc' or '%(Extension)'=='.lib'" />
+      <Lib
+        Include="%(oRCVerDirsToMake.Identity)"
+        Condition="'%(Extension)'=='.obj' or '%(Extension)'=='.res' or '%(Extension)'=='.rsc' or '%(Extension)'=='.lib'" />
+      <ImpLib
+        Include="%(oRCVerDirsToMake.Identity)"
+        Condition="'%(Extension)'=='.obj' or '%(Extension)'=='.res' or '%(Extension)'=='.rsc' or '%(Extension)'=='.lib'" />
+    </ItemGroup>
+    <MakeDir
+      Directories="@(oRCVerDirsToMake-&gt;'%(RootDir)%(Directory)')" />
+  </Target>
+</Project>

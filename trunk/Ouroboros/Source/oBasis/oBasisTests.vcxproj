@@ -1,0 +1,154 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Include\oBasisTests\oBasisTests.h" />
+    <ClInclude Include="Tests\oBasisTestCommon.h" />
+    <ClInclude Include="Tests\RatcliffJobSwarmTest.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Tests\RatcliffJobSwarmTest.cpp" />
+    <ClCompile Include="Tests\TESTAllocatorTLSF.cpp" />
+    <ClCompile Include="Tests\TESTatof.cpp" />
+    <ClCompile Include="Tests\TESTBlockAllocatorFixed.cpp" />
+    <ClCompile Include="Tests\TESTBlockAllocatorGrowable.cpp" />
+    <ClCompile Include="Tests\TESTBuffer.cpp" />
+    <ClCompile Include="Tests\TESTCompression.cpp" />
+    <ClCompile Include="Tests\TESTConcurrentStack.cpp" />
+    <ClCompile Include="Tests\TESTCountdownLatch.cpp" />
+    <ClCompile Include="Tests\TESTCSV.cpp" />
+    <ClCompile Include="Tests\TESTDate.cpp" />
+    <ClCompile Include="Tests\TESTDispatchQueueConcurrent.cpp" />
+    <ClCompile Include="Tests\TESTDispatchQueueGlobal.cpp" />
+    <ClCompile Include="Tests\TESTDispatchQueueParallelFor.cpp" />
+    <ClCompile Include="Tests\TESTDispatchQueuePrivate.cpp" />
+    <ClCompile Include="Tests\TESTEightCC.cpp" />
+    <ClCompile Include="Tests\TESTFilterChain.cpp" />
+    <ClCompile Include="Tests\TESTFourCC.cpp" />
+    <ClCompile Include="Tests\TESTFuture.cpp" />
+    <ClCompile Include="Tests\TESTHash.cpp" />
+    <ClCompile Include="Tests\TESTIndexAllocator.cpp" />
+    <ClCompile Include="Tests\TESTINI.cpp" />
+    <ClCompile Include="Tests\TESTLinearAllocator.cpp" />
+    <ClCompile Include="Tests\TESTMath.cpp" />
+    <ClCompile Include="Tests\TESTOBJ.cpp" />
+    <ClCompile Include="Tests\TESTOSC.cpp" />
+    <ClCompile Include="Tests\TESTPath.cpp" />
+    <ClCompile Include="Tests\TESTQueues.cpp" />
+    <ClCompile Include="Tests\TESTSize.cpp" />
+    <ClCompile Include="Tests\TESTString.cpp" />
+    <ClCompile Include="Tests\TESTURI.cpp" />
+    <ClCompile Include="Tests\TESTXML.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{AE94E4CC-860F-4F14-AFB3-BBAABF515551}</ProjectGuid>
+    <RootNamespace>oBasisTests</RootNamespace>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Release32.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Debug32.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Release64.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Debug64.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib>
+      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
+    </Lib>
+    <ClCompile />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

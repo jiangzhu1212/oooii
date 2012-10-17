@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="UserMacros">
+    <oCompilerName>msvc$(PlatformToolsetVersion)</oCompilerName>
+    <oSuiteDir>$(ProjectDir)..\..\</oSuiteDir>
+    <oSuiteExtDir>$(oSuiteDir)External\</oSuiteExtDir>
+    <oSuiteIncDir>$(oSuiteDir)Include\</oSuiteIncDir>
+    <oSuiteLibDir>$(oSuiteDir)Lib\$(Platform)\$(oCompilerName)\</oSuiteLibDir>
+    <oTmpDir>$(SolutionDir)Temp\$(Platform)\$(oCompilerName)\$(Configuration)\$(ProjectName)\</oTmpDir>
+    <oBinDir>$(SolutionDir)bin\$(Platform)\</oBinDir>
+    <oLibDir>$(oSuiteDir)Lib\$(Platform)\$(oCompilerName)\</oLibDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir>$(oBinDir)</OutDir>
+    <IntDir>$(oTmpDir)</IntDir>
+    <TargetName>$(oBuildPrefix)$(ProjectName)</TargetName>
+    <IncludePath>$(DXSDK_DIR)include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(oSuiteLibDir);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(oSuiteIncDir);$(oSuiteExtDir);$(oTmpDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
+      <DisableSpecificWarnings>4189;4100;4127;4503;4512;4201;4408;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <StringPooling>true</StringPooling>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
+      <PreprocessorDefinitions>oENABLE_RELEASE_ASSERTS;NOMINMAX;_USE_MATH_DEFINES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+    </Lib>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="oCompilerName">
+      <Value>$(oCompilerName)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="oSuiteDir">
+      <Value>$(oSuiteDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="oSuiteExtDir">
+      <Value>$(oSuiteExtDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="oSuiteIncDir">
+      <Value>$(oSuiteIncDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="oSuiteLibDir">
+      <Value>$(oSuiteLibDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="oTmpDir">
+      <Value>$(oTmpDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="oBinDir">
+      <Value>$(oBinDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
