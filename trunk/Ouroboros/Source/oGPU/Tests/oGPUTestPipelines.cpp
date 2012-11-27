@@ -25,8 +25,16 @@
 #include <oGPUTestColorPSByteCode.h>
 #include <oGPUTestPassThroughColorVSByteCode.h>
 #include <oGPUTestPassThroughVSByteCode.h>
-#include <oGPUTestTexturePSByteCode.h>
-#include <oGPUTestTextureVSByteCode.h>
+#include <oGPUTestBufferVSByteCode.h>
+#include <oGPUTestBufferPSByteCode.h>
+#include <oGPUTestTexture1DPSByteCode.h>
+#include <oGPUTestTexture1DVSByteCode.h>
+#include <oGPUTestTexture2DPSByteCode.h>
+#include <oGPUTestTexture2DVSByteCode.h>
+#include <oGPUTestTexture3DPSByteCode.h>
+#include <oGPUTestTexture3DVSByteCode.h>
+#include <oGPUTestTextureCubePSByteCode.h>
+#include <oGPUTestTextureCubeVSByteCode.h>
 #include <oGPUTestWhiteInstancedVSByteCode.h>
 #include <oGPUTestWhitePSByteCode.h>
 #include <oGPUTestWhiteVSByteCode.h>
@@ -49,10 +57,22 @@ static const oGPU_VERTEX_ELEMENT oGPU_TEST_POSITION_ONLY_INSTANCED_VERTEX[] =
 	{ 'ROT ', oSURFACE_R32G32B32A32_FLOAT, 1, true },
 };
 
-static const oGPU_VERTEX_ELEMENT oGPU_TEST_POSITION_TEXCOORD_VERTEX[] = 
+static const oGPU_VERTEX_ELEMENT oGPU_TEST_POSITION_TEXCOORD1D_VERTEX[] = 
+{
+	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false },
+	{ 'TEX0', oSURFACE_R32_FLOAT, 0, false },
+};
+
+static const oGPU_VERTEX_ELEMENT oGPU_TEST_POSITION_TEXCOORD2D_VERTEX[] = 
 {
 	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false },
 	{ 'TEX0', oSURFACE_R32G32_FLOAT, 0, false },
+};
+
+static const oGPU_VERTEX_ELEMENT oGPU_TEST_POSITION_TEXCOORD3D_VERTEX[] = 
+{
+	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false },
+	{ 'TEX0', oSURFACE_R32G32B32_FLOAT, 0, false },
 };
 
 bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDesc)
@@ -91,12 +111,44 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->pPixelShader = oGPUTestWhitePSByteCode;
 			return true;
 
-		case oGPU_TEST_TEXTURE:
-			_pDesc->DebugName = "Texture";
-			_pDesc->pElements = oGPU_TEST_POSITION_TEXCOORD_VERTEX;
-			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_TEXCOORD_VERTEX);
-			_pDesc->pVertexShader = oGPUTestTextureVSByteCode;
-			_pDesc->pPixelShader = oGPUTestTexturePSByteCode;
+		case oGPU_TEST_BUFFER:
+			_pDesc->DebugName = "Buffer";
+			_pDesc->pElements = nullptr;
+			_pDesc->NumElements = 0;
+			_pDesc->pVertexShader = oGPUTestBufferVSByteCode;
+			_pDesc->pPixelShader = oGPUTestBufferPSByteCode;
+			return true;
+
+		case oGPU_TEST_TEXTURE_1D:
+			_pDesc->DebugName = "Texture1D";
+			_pDesc->pElements = oGPU_TEST_POSITION_TEXCOORD1D_VERTEX;
+			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_TEXCOORD1D_VERTEX);
+			_pDesc->pVertexShader = oGPUTestTexture1DVSByteCode;
+			_pDesc->pPixelShader = oGPUTestTexture1DPSByteCode;
+			return true;
+
+		case oGPU_TEST_TEXTURE_2D:
+			_pDesc->DebugName = "Texture2D";
+			_pDesc->pElements = oGPU_TEST_POSITION_TEXCOORD2D_VERTEX;
+			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_TEXCOORD2D_VERTEX);
+			_pDesc->pVertexShader = oGPUTestTexture2DVSByteCode;
+			_pDesc->pPixelShader = oGPUTestTexture2DPSByteCode;
+			return true;
+
+		case oGPU_TEST_TEXTURE_3D:
+			_pDesc->DebugName = "Texture3D";
+			_pDesc->pElements = oGPU_TEST_POSITION_TEXCOORD3D_VERTEX;
+			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_TEXCOORD3D_VERTEX);
+			_pDesc->pVertexShader = oGPUTestTexture3DVSByteCode;
+			_pDesc->pPixelShader = oGPUTestTexture3DPSByteCode;
+			return true;
+
+		case oGPU_TEST_TEXTURE_CUBE:
+			_pDesc->DebugName = "TextureCube";
+			_pDesc->pElements = oGPU_TEST_POSITION_TEXCOORD3D_VERTEX;
+			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_TEXCOORD3D_VERTEX);
+			_pDesc->pVertexShader = oGPUTestTextureCubeVSByteCode;
+			_pDesc->pPixelShader = oGPUTestTextureCubePSByteCode;
 			return true;
 
 		//case oGPU_TEST_COLOR:

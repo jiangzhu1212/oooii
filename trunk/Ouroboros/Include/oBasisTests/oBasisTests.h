@@ -89,6 +89,7 @@ oAPI bool oBasisTest_tbbConcurrentQueue();
 oAPI bool oBasisTest_concrtConcurrentQueue();
 oAPI bool oBasisTest_oConcurrentQueue();
 oAPI bool oBasisTest_oString();
+oAPI bool oBasisTest_oSurface();
 oAPI bool oBasisTest_oURI();
 oAPI bool oBasisTest_oXML();
 oAPI bool oBasisTest_oCountdownLatch();

@@ -34,6 +34,35 @@
 #include <oBasis/oGPUEnums.h>
 #include <oGPU/oGPUConstants.h>
 
+struct oGPU_BOX
+{
+	// Empty box
+	oGPU_BOX()
+		: Left(0)
+		, Right(0)
+		, Top(0)
+		, Bottom(1)
+		, Front(0)
+		, Back(1)
+	{}
+
+	oGPU_BOX(uint Width)
+		: Left(0)
+		, Right(Width)
+		, Top(0)
+		, Bottom(1)
+		, Front(0)
+		, Back(1)
+	{}
+
+	uint Left;
+	uint Right;
+	uint Top;
+	uint Bottom;
+	uint Front;
+	uint Back;
+};
+
 struct oGPU_INSTANCE_LIST_DESC
 {
 	// Elements points to a full pipeline's expected inputs. InputSlots 
@@ -131,13 +160,13 @@ struct oGPU_BUFFER_DESC
 struct oGPU_TEXTURE_DESC
 {
 	oGPU_TEXTURE_DESC()
-		: Dimensions(oInvalid, oInvalid)
+		: Dimensions(oInvalid, oInvalid, oInvalid)
 		, NumSlices(1)
 		, Format(oSURFACE_B8G8R8A8_UNORM)
 		, Type(oGPU_TEXTURE_2D_MAP)
 	{}
 
-	int2 Dimensions;
+	int3 Dimensions;
 	int NumSlices;
 	oSURFACE_FORMAT Format;
 	oGPU_TEXTURE_TYPE Type;
@@ -207,20 +236,20 @@ struct oGPU_CLEAR_DESC
 struct oGPU_RENDER_TARGET_DESC
 {
 	oGPU_RENDER_TARGET_DESC()
-		: Dimensions(oInvalid, oInvalid)
+		: Dimensions(oInvalid, oInvalid, oInvalid)
 		, NumSlices(1)
 		, MRTCount(1)
 		, DepthStencilFormat(oSURFACE_UNKNOWN)
-		, GenerateMips(false)
+		, Type(oGPU_TEXTURE_2D_RENDER_TARGET)
 	{ oINIT_ARRAY(Format, oSURFACE_UNKNOWN); }
 
-	int2 Dimensions;
+	int3 Dimensions;
 	int NumSlices;
 	int MRTCount;
 	oSURFACE_FORMAT Format[oGPU_MAX_NUM_MRTS];
 	oSURFACE_FORMAT DepthStencilFormat; // Use UNKNOWN for no depth
 	oGPU_CLEAR_DESC ClearDesc;
-	bool GenerateMips;
+	oGPU_TEXTURE_TYPE Type;
 };
 
 struct oGPU_COMMAND_LIST_DESC
@@ -233,10 +262,10 @@ struct oGPU_DEVICE_INIT
 	oGPU_DEVICE_INIT(const char* _DebugName = "oGPUDevice")
 		: DebugName(_DebugName)
 		, Version(11,0)
+		, DriverDebugLevel(oGPU_DEBUG_NONE)
 		, AdapterIndex(0)
 		, VirtualDesktopPosition(oDEFAULT, oDEFAULT)
 		, UseSoftwareEmulation(false)
-		, EnableDebugReporting(false)
 		, DriverVersionMustBeExact(false)
 	{}
 
@@ -253,6 +282,10 @@ struct oGPU_DEVICE_INIT
 	// The version of the underlying API to use.
 	oVersion Version;
 
+	// Specify to what degree driver warnings/errors are reported. oGPU-level 
+	// errors and warnings are always reported.
+	oGPU_DEBUG_LEVEL DriverDebugLevel;
+
 	// If VirtualDesktopPosition is oDEFAULT, oDEFAULT, then use the nth found
 	// device as specified by this Index. If VirtualDesktopPosition is anything
 	// valid, then the device used to handle that desktop position will be used
@@ -266,9 +299,6 @@ struct oGPU_DEVICE_INIT
 	// Allow SW emulation for the specified version. If false, a create will fail
 	// if HW acceleration is not available.
 	bool UseSoftwareEmulation;
-
-	// Reports errors in usage to the debugger if true.
-	bool EnableDebugReporting;
 
 	// If true, == is used to match MinDriverVersion to the specified GPU's 
 	// driver. If false, CurVer >= MinDriverVersion is used.

@@ -26,8 +26,6 @@
 #include <oBasis/oRefCount.h>
 #include <oPlatform/Windows/oWindows.h>
 
-static inline DWORD GetAccess(bool _ReadWrite) { return _ReadWrite ? PAGE_EXECUTE_READWRITE : PAGE_EXECUTE_READ; }
-
 static inline oPAGE_STATUS GetStatus(DWORD _State)
 {
 	switch (_State)
@@ -67,21 +65,91 @@ void oPageGetRangeDesc(void* _BaseAddress, oPAGE_RANGE_DESC* _pRangeDesc)
 	_pRangeDesc->IsPrivate = mbi.Type == MEM_PRIVATE;
 }
 
-void* oPageReserve(void* _DesiredPointer, size_t _Size, bool _ReadWrite)
-{
-	DWORD flAllocationType = MEM_RESERVE;
-	if (_ReadWrite)
-		flAllocationType |= MEM_WRITE_WATCH;
+// @oooii-tony: Consider exposing this as the API...
 
-	void* p = VirtualAllocEx(GetCurrentProcess(), _DesiredPointer, _Size, flAllocationType, GetAccess(_ReadWrite));
-	if (_DesiredPointer && p != _DesiredPointer)
+enum oPAGE_ALLOCATION_TYPE
+{
+	oPAGE_RESERVE,
+	oPAGE_RESERVE_READ_WRITE,
+	oPAGE_COMMIT,
+	oPAGE_COMMIT_READ_WRITE,
+	oPAGE_RESERVE_AND_COMMIT,
+	oPAGE_RESERVE_AND_COMMIT_READ_WRITE,
+};
+
+bool IsReadWrite(oPAGE_ALLOCATION_TYPE _Type)
+{
+	return !!(_Type & 0x1);
+}
+
+static inline DWORD GetAccess(bool _ReadWrite) { return _ReadWrite ? PAGE_EXECUTE_READWRITE : PAGE_EXECUTE_READ; }
+static inline DWORD GetAccess(oPAGE_ALLOCATION_TYPE _Type) { return GetAccess(IsReadWrite(_Type)); }
+
+// This will populate the flags correctly, and adjust size to be aligned if 
+// large page sizes are to be used.
+static bool GetAllocationType(oPAGE_ALLOCATION_TYPE _AllocationType, void* _BaseAddress, bool _UseLargePageSize, size_t* _pSize, DWORD* _pflAllocationType, DWORD* _pdwFreeType)
+{
+	*_pflAllocationType = 0;
+	*_pdwFreeType = 0;
+
+	if (_UseLargePageSize)
 	{
-		oErrorSetLast(oERROR_AT_CAPACITY, "VirtualAllocEx return a pointer (0x%p) that is not the same as the requested pointer (0x%p).", p, _DesiredPointer);
-		if (p) oPageUnreserve(p);
-		p = 0;
+		if (_BaseAddress && (_AllocationType == oPAGE_RESERVE || _AllocationType == oPAGE_RESERVE_READ_WRITE))
+			return oErrorSetLast(oERROR_INVALID_PARAMETER, "Large page memory cannot be reserved.");
+
+		*_pflAllocationType |= MEM_LARGE_PAGES;
+		*_pSize = oByteAlign(*_pSize, oPageGetLargePageSize());
+	}
+
+	switch (_AllocationType)
+	{
+		case oPAGE_RESERVE_READ_WRITE: *_pflAllocationType |= MEM_WRITE_WATCH; // pass thru to oPAGE_RESERVE
+		case oPAGE_RESERVE: *_pflAllocationType |= MEM_RESERVE; *_pdwFreeType = MEM_RELEASE; break;
+		case oPAGE_COMMIT_READ_WRITE: // MEM_WRITE_WATCH is not a valid option for committing
+		case oPAGE_COMMIT: *_pflAllocationType |= MEM_COMMIT; *_pdwFreeType = MEM_DECOMMIT; break;
+		case oPAGE_RESERVE_AND_COMMIT_READ_WRITE: *_pflAllocationType |= MEM_WRITE_WATCH; // pass thru to oPAGE_RESERVE_AND_COMMIT
+		case oPAGE_RESERVE_AND_COMMIT: *_pflAllocationType |= MEM_RESERVE | MEM_COMMIT; *_pdwFreeType = MEM_RELEASE | MEM_DECOMMIT; break;
+		oNODEFAULT;
+	}
+
+	return true;
+}
+
+void oPageDeallocate(void* _BaseAddress, bool _UncommitAndUnreserve)
+{
+	DWORD flAllocationType, dwFreeType;
+	size_t size = 0;
+	oVERIFY(GetAllocationType(_UncommitAndUnreserve ? oPAGE_RESERVE_AND_COMMIT : oPAGE_COMMIT, _BaseAddress, false, &size, &flAllocationType, &dwFreeType));
+	oVB(VirtualFreeEx(GetCurrentProcess(), _BaseAddress, 0, dwFreeType));
+}
+
+void* oPageAllocate(oPAGE_ALLOCATION_TYPE _AllocationType, void* _BaseAddress, size_t _Size, bool _UseLargePageSize)
+{
+	DWORD flAllocationType, dwFreeType;
+	if (!GetAllocationType(_AllocationType, _BaseAddress, _UseLargePageSize, &_Size, &flAllocationType, &dwFreeType))
+		return false; // pass through error
+
+	DWORD flProtect = GetAccess(IsReadWrite(_AllocationType));
+
+	void* p = VirtualAllocEx(GetCurrentProcess(), _BaseAddress, _Size, flAllocationType, flProtect);
+
+	if (_BaseAddress && p != _BaseAddress)
+	{
+		// save error past cleanup, which might fail too..
+		oWinSetLastError();
+		oERROR err = oErrorGetLast();
+		oStringL errString = oErrorGetLastString();
+		oPageDeallocate(_BaseAddress, _AllocationType >= oPAGE_RESERVE_AND_COMMIT);
+		oErrorSetLast(err, errString);
+		return nullptr;
 	}
 
 	return p;
+}
+
+void* oPageReserve(void* _DesiredPointer, size_t _Size, bool _ReadWrite)
+{
+	return oPageAllocate(_ReadWrite ? oPAGE_RESERVE_READ_WRITE : oPAGE_RESERVE, _DesiredPointer, _Size, false);
 }
 
 void oPageUnreserve(void* _Pointer)
@@ -91,31 +159,12 @@ void oPageUnreserve(void* _Pointer)
 
 void* oPageCommit(void* _BaseAddress, size_t _Size, bool _ReadWrite, bool _UseLargePageSize)
 {
-	if (_BaseAddress && _UseLargePageSize)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "Large page memory cannot be reserved.");
-		return nullptr;
-	}
+	return oPageAllocate(_ReadWrite ? oPAGE_COMMIT_READ_WRITE : oPAGE_COMMIT, _BaseAddress, _Size, _UseLargePageSize);
+}
 
-	DWORD flAllocationType = MEM_COMMIT;
-	if (!_BaseAddress)
-		flAllocationType |= MEM_RESERVE;
-	if (_UseLargePageSize)
-	{
-		_Size = oByteAlign(_Size, oPageGetLargePageSize());
-		flAllocationType |= MEM_LARGE_PAGES;
-	}
-
-	void* p = VirtualAllocEx(GetCurrentProcess(), _BaseAddress, _Size, flAllocationType, GetAccess(_ReadWrite));
-	
-	if (_BaseAddress && p != _BaseAddress)
-	{
-		oErrorSetLast(oERROR_GENERIC, "Asked for _BaseAddress=0x%p, but received allocation 0x%p", _BaseAddress, p);
-		oPageDecommit(p);
-		return nullptr;
-	}
-
-	return p;
+void* oPageReserveAndCommit(void* _BaseAddress, size_t _Size, bool _ReadWrite, bool _UseLargePageSize)
+{
+	return oPageAllocate(_ReadWrite ? oPAGE_RESERVE_AND_COMMIT_READ_WRITE : oPAGE_RESERVE_AND_COMMIT, _BaseAddress, _Size, _UseLargePageSize);
 }
 
 bool oPageDecommit(void* _Pointer)

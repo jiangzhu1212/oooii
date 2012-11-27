@@ -91,7 +91,7 @@ template<typename T> bool oCalculateVertexNormals(TVEC3<T>* _pVertexNormals, con
 //              index array
 // _NumberOfVertices: The number of vertices in the _pPositions, _pNormals, and 
 //                    _pTexCoords arrays
-void oCalculateTangents(float4* _pTangents, const unsigned int* _pIndices, size_t _NumberOfIndices, const float3* _pPositions, const float3* _pNormals, const float2* _pTexcoords, size_t _NumberOfVertices);
+void oCalculateTangents(float4* _pTangents, const unsigned int* _pIndices, size_t _NumberOfIndices, const float3* _pPositions, const float3* _pNormals, const float3* _pTexcoords, size_t _NumberOfVertices);
 
 // Allocates and fills an edge list for the mesh described by the specified 
 // indices:
@@ -116,7 +116,7 @@ void oFreeEdgeList(unsigned int* _pEdges);
 //
 // All attribute streams will be modified and _pIndices values will be updated
 // to reflect new vertices.
-template<typename T> void oPruneUnindexedVertices(unsigned int* _pIndices, size_t _NumberOfIndices, TVEC3<T>* _pPositions, TVEC3<T>* _pNormals, TVEC4<T>* _pTangents, TVEC2<T>* _pTexcoords0, TVEC2<T>* _pTexcoords1, unsigned int* _pColors, size_t _NumberOfVertices, size_t *_pNewNumVertices);
+template<typename T> void oPruneUnindexedVertices(unsigned int* _pIndices, size_t _NumberOfIndices, TVEC3<T>* _pPositions, TVEC3<T>* _pNormals, TVEC4<T>* _pTangents, TVEC3<T>* _pTexcoords0, TVEC3<T>* _pTexcoords1, unsigned int* _pColors, size_t _NumberOfVertices, size_t *_pNewNumVertices);
 
 // Given an array of points, compute the minimize and maximum axis-aligned 
 // corners of the set. (Useful for calculating corners of an axis-aligned 

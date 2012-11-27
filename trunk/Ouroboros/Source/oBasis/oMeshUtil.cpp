@@ -192,7 +192,7 @@ template<typename T> void oCalculateTangentsT(TVEC4<T>* _pTangents
  , size_t _NumberOfIndices
  , const TVEC3<T>* _pPositions
  , const TVEC3<T>* _pNormals
- , const TVEC2<T>* _pTexcoords
+ , const TVEC3<T>* _pTexcoords
  , size_t _NumberOfVertices)
 {
 	/** <citation
@@ -228,9 +228,9 @@ template<typename T> void oCalculateTangentsT(TVEC4<T>* _pTangents
 		const T z1 = Pb.z - Pa.z;
 		const T z2 = Pc.z - Pa.z;
         
-		const TVEC2<T>& TCa = _pTexcoords[a];
-		const TVEC2<T>& TCb = _pTexcoords[b];
-		const TVEC2<T>& TCc = _pTexcoords[c];
+		const TVEC3<T>& TCa = _pTexcoords[a];
+		const TVEC3<T>& TCb = _pTexcoords[b];
+		const TVEC3<T>& TCc = _pTexcoords[c];
 
 		const T s1 = TCb.x - TCa.x;
 		const T s2 = TCc.x - TCa.x;
@@ -266,7 +266,7 @@ void oCalculateTangents(float4* _pTangents
 											 , size_t _NumberOfIndices
 											 , const float3* _pPositions
 											 , const float3* _pNormals
-											 , const float2* _pTexcoords
+											 , const float3* _pTexcoords
 											 , size_t _NumberOfVertices)
 {
 	oCalculateTangentsT(_pTangents, _pIndices, _NumberOfIndices, _pPositions, _pNormals, _pTexcoords, _NumberOfVertices);
@@ -486,8 +486,8 @@ template<typename T> void oPruneUnindexedVerticesT(unsigned int* _pIndices
 																									, TVEC3<T>* _pPositions
 																									, TVEC3<T>* _pNormals
 																									, TVEC4<T>* _pTangents
-																									, TVEC2<T>* _pTexcoords0
-																									, TVEC2<T>* _pTexcoords1
+																									, TVEC3<T>* _pTexcoords0
+																									, TVEC3<T>* _pTexcoords1
 																									, unsigned int* _pColors
 																									, size_t _NumberOfVertices
 																									, size_t *_pNewNumVertices)
@@ -511,8 +511,8 @@ void oPruneUnindexedVertices(unsigned int* _pIndices
 														 , float3* _pPositions
 														 , float3* _pNormals
 														 , float4* _pTangents
-														 , float2* _pTexcoords0
-														 , float2* _pTexcoords1
+														 , float3* _pTexcoords0
+														 , float3* _pTexcoords1
 														 , unsigned int* _pColors
 														 , size_t _NumberOfVertices
 														 , size_t *_pNewNumVertices)
@@ -527,8 +527,8 @@ template<typename T> inline void oCalculateMinMaxPointsT(const TVEC3<T>* oRESTRI
 
 	for (size_t i = 0; i < _NumberOfPoints; i++)
 	{
-		*_pMinPoint = oMin(*_pMinPoint, _pPoints[i]);
-		*_pMaxPoint = oMax(*_pMaxPoint, _pPoints[i]);
+		*_pMinPoint = min(*_pMinPoint, _pPoints[i]);
+		*_pMaxPoint = max(*_pMaxPoint, _pPoints[i]);
 	}
 }
 

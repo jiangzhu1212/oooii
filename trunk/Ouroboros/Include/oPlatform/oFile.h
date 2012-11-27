@@ -87,4 +87,7 @@ oAPI bool oFileSave(const char* _Path, const void* _pSource, size_t _SizeofSourc
 oAPI bool oFileMap(const char* _Path, bool _ReadOnly, const oSTREAM_RANGE& _MapRange, void** _ppMappedMemory);
 oAPI bool oFileUnmap(void* _MappedPointer);
 
+//useful to quickly deter ming if a file exists or not without opening it. sometimes you may only need to know if the file exists or not without ever opening it.
+oAPI bool oFileExists(const char* _Path);
+
 #endif

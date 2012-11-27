@@ -42,6 +42,8 @@ static bool oP4IsExecutionError(const char* _P4ResponseString)
 		"is not under client's root",
 		"Perforce client error:",
 		"not recognized as an internal",
+		"has not been enabled by",
+		"- file(s) not in client view.",
 	};
 
 	for (size_t i = 0; i < oCOUNTOF(sErrStrings); i++)
@@ -54,6 +56,8 @@ static bool oP4Execute(const char* _CommandLine, const char* _CheckValidString, 
 {
 	if (!oSystemExecute(_CommandLine, _P4ResponseString, _SizeofP4ResponseString, nullptr, kP4Timeout))
 		return false; // pass through error
+	if (!_P4ResponseString)
+		return true;
 	if (oP4IsExecutionError(_P4ResponseString) || (oSTRVALID(_CheckValidString) && !strstr(_P4ResponseString, _CheckValidString)))
 		return oErrorSetLast(oERROR_NOT_FOUND, _P4ResponseString);
 	return true;
@@ -147,9 +151,9 @@ bool oP4IsAvailable()
 	return oP4Execute("p4", "Perforce --", response);
 }
 
-bool oP4GetClientSpecString(char* _P4ClientSpecString, size_t _SizeofP4ClientSpecString)
+bool oP4GetWorkspaceString(char* _P4WorkspaceString, size_t _SizeofP4WorkspaceString)
 {
-	return oP4Execute("p4 client -o", "# A Perforce Client", _P4ClientSpecString, _SizeofP4ClientSpecString);
+	return oP4Execute("p4 client -o", "# A Perforce Client", _P4WorkspaceString, _SizeofP4WorkspaceString);
 }
 
 bool oP4Open(oP4_STATUS _Type, const char* _Path)
@@ -169,6 +173,18 @@ bool oP4Revert(const char* _Path)
 	oPrintf(cmdline, "p4 revert \"%s\"", _Path);
 	return oP4Execute(cmdline, ", reverted", response);
 }
+
+
+oAPI bool oP4Sync(int _ChangeList, const char* _Path/*= nullptr*/)
+{
+	oStringXL cmdline, response;
+	oPrintf(cmdline, "p4 sync \"%s\"@%d", _Path, _ChangeList);
+
+	// Try twice.  Once to sync, and once to verify
+	oP4Execute(cmdline, "", nullptr, 0);
+	return oP4Execute(cmdline, "up-to-date", response);
+}
+
 
 static void oP4CreateLabelSpec(const oP4_LABEL_SPEC& _Label, std::string& _OutLabelSpec)
 {
@@ -237,6 +253,73 @@ bool oP4Label(const oP4_LABEL_SPEC& _Label)
 		
 	return true;
 }
+
+bool oP4GetUserOfChangelist(char* _StrDestination, size_t _SizeofStrDestination, int _ChangeList)
+{
+	oStringXL cmdline, response;
+	oPrintf(cmdline, "p4 change -o %d",_ChangeList);
+	if (!oP4Execute(cmdline, "A Perforce Change Specification", response))
+		return false;
+
+	const char UserStart[] = "User:";
+	char* pUserLine = response.c_str();
+	
+	// UserStart shows up twice.  Once in the info and once for real
+	for(int i = 0; i < 2; ++i)
+	{
+		pUserLine = strstr(pUserLine, UserStart);
+		if (!pUserLine)
+			return oErrorSetLast(oERROR_GENERIC, "No user found");
+
+		pUserLine += oCOUNTOF(UserStart);
+	}
+	
+	// Skip whitespace
+	while (pUserLine[0] == ' ')
+	{
+		++pUserLine;
+	}
+
+	const char* pUserName = pUserLine;
+	// Null terminate
+	{
+		while (pUserLine[0] != '\xD')
+		{
+			++pUserLine;
+		}
+		pUserLine[0] = 0;
+	}
+
+
+	oPrintf(_StrDestination, _SizeofStrDestination, pUserName);
+	return true;
+}
+
+
+bool oP4GetClientPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _pDepotPath)
+{
+	oStringXL cmdline, response;
+	oPrintf(cmdline, "p4 fstat %s", _pDepotPath);
+
+	const char ClientFile[] = "clientFile";
+	if (!oP4Execute(cmdline, ClientFile, response))
+		return false;
+	
+	char* pFileLine = strstr(response, ClientFile);
+	pFileLine += oCOUNTOF(ClientFile);
+	const char* pFileName = pFileLine;
+	// Null terminate
+	{
+		while (pFileLine[0] != '\xD')
+		{
+			++pFileLine;
+		}
+		pFileLine[0] = 0;
+	}
+	oCleanPath(_StrDestination, _SizeofStrDestination, pFileName);
+	return true;
+}
+
 
 bool oP4GetLabelSpecString(char* _P4LabelSpecString, size_t _SizeofP4LabelSpecString, const char* _Label)
 {
@@ -447,10 +530,10 @@ time_t oP4ParseTime(const char* _P4TimeString)
 // Determine if a given string is the next non-whitespace text in a string.
 #define NEXT_STR_EXISTS(str1, str2, bExists) str1 += strspn(str1, oWHITESPACE); bExists = ((str1 - strstr(str1, str2)) == 0) ? true : false
 
-bool oP4ParseClientSpec(oP4_CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpecString)
+bool oP4ParseWorkspace(oP4_WORKSPACE* _pWorkspace, const char* _P4WorkspaceString)
 {
 	// move past commented text
-	const char* c = _P4ClientSpecString;
+	const char* c = _P4WorkspaceString;
 	c = strstr(c, "views and options.");
 	if (!c) return false;
 	c += strlen("views and options.");
@@ -458,7 +541,7 @@ bool oP4ParseClientSpec(oP4_CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpec
 
 	//Client
 	NEXT_STR_EXISTS(c, "Client:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pClientSpec->Client, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pWorkspace->Client, ':', oNEWLINE, c, &c))
 		return false;
 
 	oStringM tmp;
@@ -467,22 +550,22 @@ bool oP4ParseClientSpec(oP4_CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpec
 	NEXT_STR_EXISTS(c, "Update:", bNextStrExists);
 	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
-	_pClientSpec->LastUpdated = oP4ParseTime(tmp);
+	_pWorkspace->LastUpdated = oP4ParseTime(tmp);
 
 	//Access
 	NEXT_STR_EXISTS(c, "Access:", bNextStrExists);
 	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
-	_pClientSpec->LastAccessed = oP4ParseTime(tmp);
+	_pWorkspace->LastAccessed = oP4ParseTime(tmp);
 
 	//Owner
 	NEXT_STR_EXISTS(c,"Owner:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pClientSpec->Owner, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pWorkspace->Owner, ':', oNEWLINE, c, &c))
 		return false;
 
 	//Host
 	NEXT_STR_EXISTS(c, "Host:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pClientSpec->Host, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pWorkspace->Host, ':', oNEWLINE, c, &c))
 		return false;
 
 	// Description is multi-line...
@@ -492,12 +575,12 @@ bool oP4ParseClientSpec(oP4_CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpec
 	const char* end = strstr(c, oNEWLINE oNEWLINE "Root:");
 
 	size_t descLen = end - c;
-	memcpy_s(_pClientSpec->Description, _pClientSpec->Description.capacity()-1, c, descLen);
-	_pClientSpec->Description[__min(_pClientSpec->Description.capacity()-1, descLen)] = 0;
+	memcpy_s(_pWorkspace->Description, _pWorkspace->Description.capacity()-1, c, descLen);
+	_pWorkspace->Description[__min(_pWorkspace->Description.capacity()-1, descLen)] = 0;
 
 	//Root
 	NEXT_STR_EXISTS(end, "Root:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pClientSpec->Root, ':', oNEWLINE, end, &c))
+	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pWorkspace->Root, ':', oNEWLINE, end, &c))
 		return false;
 
 	//Options
@@ -505,31 +588,31 @@ bool oP4ParseClientSpec(oP4_CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpec
 	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
 
-	_pClientSpec->Allwrite = !strstr(tmp, "noallwrite");
-	_pClientSpec->Clobber = !strstr(tmp, "noclobber");
-	_pClientSpec->Compress = !strstr(tmp, "nocompress");
-	_pClientSpec->Locked = !strstr(tmp, "unlocked");
-	_pClientSpec->Modtime = !strstr(tmp, "nomodtime");
-	_pClientSpec->Rmdir = !strstr(tmp, "normdir");
+	_pWorkspace->Allwrite = !strstr(tmp, "noallwrite");
+	_pWorkspace->Clobber = !strstr(tmp, "noclobber");
+	_pWorkspace->Compress = !strstr(tmp, "nocompress");
+	_pWorkspace->Locked = !strstr(tmp, "unlocked");
+	_pWorkspace->Modtime = !strstr(tmp, "nomodtime");
+	_pWorkspace->Rmdir = !strstr(tmp, "normdir");
 
 	//SubmitOptions
 	NEXT_STR_EXISTS(c, "SubmitOptions:", bNextStrExists);
 	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
-	if (!oFromString(&_pClientSpec->SubmitOptions, tmp))
+	if (!oFromString(&_pWorkspace->SubmitOptions, tmp))
 		return false;
 
 	//LineEnd
 	NEXT_STR_EXISTS(c, "LineEnd:", bNextStrExists);
 	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
-	if (!oFromString(&_pClientSpec->LineEnd, tmp))
+	if (!oFromString(&_pWorkspace->LineEnd, tmp))
 		return false;
 
 	// View is multi-line...
 	c += strspn(c, oWHITESPACE);
 	c += strlen("View:");
-	oStrcpy(_pClientSpec->View, c);
+	oStrcpy(_pWorkspace->View, c);
 
 	return true;
 }
@@ -615,7 +698,7 @@ bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecStri
 	return true;
 }
 
-static int oP4EstimateHaveChangelist(const char* _P4Base)
+static int oP4RunChangesCommand(const char* _P4Base, const char* _pCommand)
 {
 	oStringXL cmdline;
 	std::vector<char> response;
@@ -625,13 +708,25 @@ static int oP4EstimateHaveChangelist(const char* _P4Base)
 	if (!oSTRVALID(_P4Base))
 		_P4Base = "//...";
 
-	oPrintf(cmdline, "p4 changes -m1 %s#have", _P4Base);
+	oPrintf(cmdline, "p4 changes -m1 %s%s", _P4Base, _pCommand);
 
 	if (!oP4Execute(cmdline, nullptr, result, response.size()))
 		return oInvalid; // pass through error
 
 	return oP4ParseChangesLine(result);
 }
+
+static int oP4GetTopOfTree(const char* _P4Base)
+{
+	return oP4RunChangesCommand(_P4Base, "");
+}
+
+static int oP4EstimateHaveChangelist(const char* _P4Base)
+{
+	return oP4RunChangesCommand(_P4Base, "#have");
+}
+
+#define oSAFEBASE(_P4Base) ((_P4Base) ? (_P4Base) : "//...")
 
 int oP4GetCurrentChangelist(const char* _P4Base)
 {
@@ -655,17 +750,38 @@ int oP4GetCurrentChangelist(const char* _P4Base)
 	
 	else if (nOutOfDate)
 	{
-		for (size_t i = 0; i < nOpened; i++)
+		for (size_t i = 0; i < nOutOfDate; i++)
 			oTRACEA("P4 Changelist is non-pure due to out-of-date: %s", files[i].Path.c_str());
 
-		oErrorSetLast(oERROR_GENERIC, "out-of-date files under %s prevent changelist determination", _P4Base ? _P4Base : "//...");
-		return oInvalid;
+		if (nOpened)
+			oErrorSetLast(oERROR_CORRUPT, "opened and out-of-date files under %s mean changelist is only an estimate", oSAFEBASE(_P4Base));
+		else
+			oErrorSetLast(oERROR_CORRUPT, "out-of-date files under %s mean changelist is only an estimate", oSAFEBASE(_P4Base));
 	}
 
 	if (nOpened)
-		oErrorSetLast(oERROR_CORRUPT, "open files under %s mean changelist is only an estimate.", _P4Base ? _P4Base : "//...");
+		oErrorSetLast(oERROR_CORRUPT, "open files under %s mean changelist is only an estimate", oSAFEBASE(_P4Base));
 	else
 		oErrorSetLast(oERROR_NONE);
 
 	return CL;
+}
+
+int oP4GetNextChangelist(int _CurrentCL, const char* _P4Base /*= nullptr*/)
+{
+	int TOT = oP4GetTopOfTree(_P4Base);
+	if (_CurrentCL == TOT)
+		return TOT;
+
+	for(int CL = _CurrentCL + 1; CL < TOT; ++CL)
+	{
+		// Check CL in between to see if they have changes
+		oStringS cmd;
+		oPrintf(cmd, "@%d", CL);
+		int ChangesUpTo = oP4RunChangesCommand(_P4Base, cmd);
+		if (ChangesUpTo == CL)
+			return CL;
+	}
+
+	return TOT;
 }

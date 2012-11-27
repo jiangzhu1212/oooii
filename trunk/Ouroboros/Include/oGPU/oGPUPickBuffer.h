@@ -36,13 +36,13 @@ public:
 
 	oGPUPickBuffer(oGPUDevice* _pDevice, const void* _pComputeShader, bool* bSuccess);
 
-	void PIMap(oGPUCommandList* _pDeviceContext, int2** _Picks);
-	void PIUnmap(oGPUCommandList* _pDeviceContext);
-	void PDraw(oGPUCommandList* _pDeviceContext, oGPUTexture* _pPickRenderTargetTexture);
+	void PIMap(oGPUCommandList* _pCommandList, int2** _Picks);
+	void PIUnmap(oGPUCommandList* _pCommandList);
+	void PDraw(oGPUCommandList* _pCommandList, oGPUTexture* _pPickRenderTargetTexture);
 	//Map outputs from the pick shader. This must be an immediate context. And if a deferred context was
 	//	used for any other functions in this class, those must be submitted before mapping the outputs.
-	void POMap(oGPUCommandList* _pImmediateContext, uint** _Picks);
-	void POUnmap(oGPUCommandList* _pImmediateContext);
+	void POMap(uint** _Picks);
+	void POUnmap();
 
 private:
 	oRefCount RefCount;

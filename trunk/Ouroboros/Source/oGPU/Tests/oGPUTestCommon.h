@@ -67,7 +67,7 @@ private:
 	{
 		DeviceInit.DebugName = "oGPUTest.Device";
 		DeviceInit.Version = oVersion(10,0); // a more compatible/widely testable feature level
-		DeviceInit.EnableDebugReporting = true;
+		DeviceInit.DriverDebugLevel = oGPU_DEBUG_NORMAL;
 		
 		GPUWindowInit.WindowTitle = oSAFESTR(_Title);
 		GPUWindowInit.WinDesc.AllowAltEnter = false;

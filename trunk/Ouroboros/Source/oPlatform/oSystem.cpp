@@ -182,6 +182,7 @@ bool oSystemExecute(const char* _CommandLine, char* _StrStdout, size_t _SizeofSt
 	desc.CommandLine = _CommandLine;
 	desc.EnvironmentString = 0;
 	desc.StdHandleBufferSize = 4096;
+	desc.HideWindow = true;
 	oRef<threadsafe oProcess> process;
 	if (!oProcessCreate(desc, &process))
 		return false;
@@ -289,6 +290,32 @@ char* oSystemGetEnvironmentVariable(char* _Value, size_t _SizeofValue, const cha
 	oASSERT((size_t)(int)_SizeofValue == _SizeofValue, "Invalid size");
 	size_t len = GetEnvironmentVariableA(_Name, _Value, (int)_SizeofValue);
 	return (len && len < _SizeofValue) ? _Value : nullptr;
+}
+
+static std::regex EncodedSearch("(%(.+?)%)");
+
+char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _SizeofStrDestination, const char* _RawString)
+{
+	oStringPath Current = _RawString;
+
+	const std::cregex_token_iterator end;
+	int arr[] = {1,2}; 
+	bool NoTranslations = true;
+	for ( std::cregex_token_iterator VecTok(_RawString, _RawString + strlen(_RawString), EncodedSearch, arr); VecTok != end; ++VecTok )
+	{
+		auto Replace = VecTok->str();
+		++VecTok;
+		auto EnvVariable = VecTok->str();
+		oStringPath TranslatedVariable;
+		oSystemGetEnvironmentVariable(TranslatedVariable, EnvVariable.c_str());
+		oReplace(_StrDestination, _SizeofStrDestination, Current, Replace.c_str(), TranslatedVariable.c_str());
+		Current = _StrDestination;
+		NoTranslations = false;
+	}
+	if( NoTranslations )
+		oStrcpy(_StrDestination, _SizeofStrDestination, Current);
+
+	return _StrDestination;
 }
 
 char* oSystemGetEnvironmentString(char* _StrEnvironment, size_t _SizeofStrEnvironment)
@@ -420,10 +447,10 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 		case oSYSPATH_OS: GetWindowsDirectoryA(_StrSysPath, nElements); break;
 		case oSYSPATH_P4ROOT:
 		{
-			oP4_CLIENT_SPEC cspec;
-			success = oP4GetClientSpec(&cspec);
+			oP4_WORKSPACE ws;
+			success = oP4GetWorkspace(&ws);
 			if (success)
-				oStrcpy(_StrSysPath, _SizeofStrSysPath, cspec.Root);
+				oStrcpy(_StrSysPath, _SizeofStrSysPath, ws.Root);
 			break;
 		}
 

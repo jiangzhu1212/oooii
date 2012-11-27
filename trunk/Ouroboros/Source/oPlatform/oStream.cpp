@@ -541,7 +541,7 @@ oUTF_TYPE oStreamGetUTFType(const char* _URIReference)
 	char buf[BLOCK_SIZE];
 	oSTREAM_READ r;
 	r.pData = buf;
-	r.Range.Size = oMin(BLOCK_SIZE, sizeof(buf));
+	r.Range.Size = __min(BLOCK_SIZE, sizeof(buf));
 	if (!Reader->Read(r))
 		return oUNKNOWN_UTF_TYPE; // pass through error
 	return oMemGetUTFType(buf, sizeof(buf));

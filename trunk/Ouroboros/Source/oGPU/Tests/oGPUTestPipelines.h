@@ -49,10 +49,30 @@ enum oGPU_TEST_PIPELINE
 	// PS: Color = white
 	oGPU_TEST_TRANSFORMED_WHITE_INSTANCED,
 
+	// Vertex: NONE
+	// VS: ScreenSpacePos = full WVP transformation
+	// PS: AppendBuffer
+	oGPU_TEST_BUFFER,
+
+	// Vertex: float3 Positions, float Texcoords
+	// VS: ScreenSpacePos = full WVP transformation
+	// PS: Color = texture0
+	oGPU_TEST_TEXTURE_1D,
+
 	// Vertex: float3 Positions, float2 Texcoords
 	// VS: ScreenSpacePos = full WVP transformation
 	// PS: Color = texture0
-	oGPU_TEST_TEXTURE,
+	oGPU_TEST_TEXTURE_2D,
+
+	// Vertex: float3 Positions, float3 Texcoords
+	// VS: ScreenSpacePos = full WVP transformation
+	// PS: Color = texture0
+	oGPU_TEST_TEXTURE_3D,
+
+	// Vertex: float3 Positions, float3 Texcoords
+	// VS: ScreenSpacePos = full WVP transformation
+	// PS: Color = texture0
+	oGPU_TEST_TEXTURE_CUBE,
 
 	// Vertex: float3 Positions, uint BGRA Color
 	// VS: ScreenSpacePos = full WVP transformation

@@ -23,9 +23,6 @@
  **************************************************************************/
 #include <oBasis/oSurface.h>
 #include <oBasis/oAssert.h>
-#include <oBasis/oByte.h>
-#include <oBasis/oInt.h>
-#include <oBasis/oInvalid.h>
 #include <oBasis/oMacros.h>
 #include <oBasis/oMemory.h>
 #include <oBasis/oMath.h>
@@ -33,8 +30,8 @@
 #include <cstring>
 
 #define oCHECK_SURFACE_DESC(_Desc) \
-	oASSERT(greater_than_equal(_Desc.Dimensions, int2(0,0)), "invalid dimensions: [%d,%d]", _Desc.Dimensions.x, _Desc.Dimensions.y); \
-	oASSERT(_Desc.NumSlices, "invalid num slices: %d", _Desc.NumSlices); \
+	oASSERT(greater_than_equal(_Desc.Dimensions, int3(1,1,1)), "invalid dimensions: [%d,%d,%d]", _Desc.Dimensions.x, _Desc.Dimensions.y, _Desc.Dimensions.z); \
+	oASSERT(_Desc.NumSlices == 1 || _Desc.Dimensions.z == 1, "NumSlices or Depth has to be 1 [%d,%d]", _Desc.NumSlices, _Desc.Dimensions.z);
 
 #define oCHECK_DIM(_Dim) oASSERT(_Dim >= 0, "invalid dimension: %d", _Dim);
 #define oCHECK_DIM2(_Dim) oASSERT(_Dim.x >= 0 && _Dim.y >= 0, "invalid dimensions: [%d,%d]", _Dim.x, _Dim.y);
@@ -276,7 +273,7 @@ int oSurfaceCalcNumMips(oSURFACE_LAYOUT _Layout, const int3& _Mip0Dimensions)
 	while (_Layout != oSURFACE_LAYOUT_IMAGE && mip != int3(1,1,1))
 	{
 		nMips++;
-		mip = oMax(int3(1,1,1), mip / int3(2,2,2));
+		mip = max(int3(1,1,1), mip / int3(2,2,2));
 	}
 
 	return nMips;
@@ -292,7 +289,7 @@ int oSurfaceMipCalcDimension(oSURFACE_FORMAT _Format, int _Mip0Dimension, int _M
 	oCHECK_DIM(_Mip0Dimension);
 	oASSERT(_Format != oSURFACE_UNKNOWN, "Unknown surface format passed to CalcMipDimension");
 	oASSERT(_MipLevel == 0 || oIsPow2(_Mip0Dimension), "Mipchain dimensions must be a power of 2");
-	int d = __max(1, _Mip0Dimension >> _MipLevel);
+	int d = max(1, _Mip0Dimension >> _MipLevel);
 	return oSurfaceFormatIsBlockCompressed(_Format) ? static_cast<int>(oByteAlign(d, 4)) : d;
 }
 
@@ -308,13 +305,13 @@ int3 oSurfaceMipCalcDimensions(oSURFACE_FORMAT _Format, const int3& _Mip0Dimensi
 	return int3(
 		oSurfaceMipCalcDimension(_Format, _Mip0Dimensions.x, _MipLevel)
 		, oSurfaceMipCalcDimension(_Format, _Mip0Dimensions.y, _MipLevel)
-		, oSurfaceMipCalcDimension(_Format, _Mip0Dimensions.z, _MipLevel));
+		, oSurfaceMipCalcDimension(oSURFACE_R32_UINT, _Mip0Dimensions.z, _MipLevel)); // No block-compression alignment for depth
 }
 
 int oSurfaceMipCalcDimensionNPOT(oSURFACE_FORMAT _Format, int _Mip0Dimension, int _MipLevel)
 {
 	oCHECK_DIM(_Mip0Dimension);
-	int d = __max(1, _Mip0Dimension / (1 << _MipLevel));
+	int d = max(1, _Mip0Dimension >> _MipLevel);
 	return oSurfaceFormatIsBlockCompressed(_Format) ? static_cast<int>(oByteAlign(d, 4)) : d;
 }
 
@@ -330,7 +327,7 @@ int3 oSurfaceMipCalcDimensionsNPOT(oSURFACE_FORMAT _Format, const int3& _Mip0Dim
 	return int3(
 		oSurfaceMipCalcDimensionNPOT(_Format, _Mip0Dimensions.x, _MipLevel)
 		, oSurfaceMipCalcDimensionNPOT(_Format, _Mip0Dimensions.y, _MipLevel)
-		, oSurfaceMipCalcDimensionNPOT(_Format, _Mip0Dimensions.z, _MipLevel));
+		, oSurfaceMipCalcDimensionNPOT(oSURFACE_R32_UINT, _Mip0Dimensions.z, _MipLevel)); // No block-compression alignment for depth
 }
 
 int oSurfaceMipCalcRowSize(oSURFACE_FORMAT _Format, int _MipWidth)
@@ -347,15 +344,96 @@ int oSurfaceMipCalcRowSize(oSURFACE_FORMAT _Format, int _MipWidth)
 int oSurfaceMipCalcRowPitch(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel)
 {
 	oCHECK_SURFACE_DESC(_SurfaceDesc);
+	const int numMips = oSurfaceCalcNumMips(_SurfaceDesc.Layout, _SurfaceDesc.Dimensions);
+	if (_MipLevel >= numMips)
+		return oInvalid;
+
 	switch (_SurfaceDesc.Layout)
 	{
-		case oSURFACE_LAYOUT_IMAGE: return oSurfaceMipCalcRowSize(_SurfaceDesc.Format, _SurfaceDesc.Dimensions);
-		case oSURFACE_LAYOUT_TIGHT: return oSurfaceMipCalcRowSize(_SurfaceDesc.Format, oSurfaceMipCalcDimension(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x, _MipLevel));
-		case oSURFACE_LAYOUT_HORIZONTAL: return oSurfaceMipCalcRowSize(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x) + oSurfaceMipCalcRowSize(_SurfaceDesc.Format, oSurfaceMipCalcDimension(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x, 1));
-		case oSURFACE_LAYOUT_VERTICAL: return oSurfaceMipCalcRowSize(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x);
+		case oSURFACE_LAYOUT_IMAGE: 
+			return oSurfaceMipCalcRowSize(_SurfaceDesc.Format, _SurfaceDesc.Dimensions);
+		case oSURFACE_LAYOUT_TIGHT: 
+			return oSurfaceMipCalcRowSize(_SurfaceDesc.Format, oSurfaceMipCalcDimensionNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x, _MipLevel));
+		case oSURFACE_LAYOUT_BELOW: 
+			{
+				const int mip0RowSize = oSurfaceMipCalcRowSize(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x);
+				if (numMips > 2)
+				{
+					return max(mip0RowSize, 
+						oSurfaceMipCalcRowSize(_SurfaceDesc.Format, oSurfaceMipCalcDimensionNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x, 1)) + 
+						oSurfaceMipCalcRowSize(_SurfaceDesc.Format, oSurfaceMipCalcDimensionNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x, 2)) );
+				}
+				else
+					return mip0RowSize;
+			}
+		case oSURFACE_LAYOUT_RIGHT: 
+			{
+				const int mip0RowSize = oSurfaceMipCalcRowSize(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x);
+				if (numMips > 1)
+					return mip0RowSize + oSurfaceMipCalcRowSize(_SurfaceDesc.Format, oSurfaceMipCalcDimensionNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x, 1));
+				else
+					return mip0RowSize;
+			}
 		oNODEFAULT;
 	}
 }
+
+int2 oSurfaceCalcDimensions(const oSURFACE_DESC& _SurfaceDesc)
+{
+	int2 sliceDimensions = oSurfaceSliceCalcDimensions(_SurfaceDesc);
+	return int2(sliceDimensions.x, sliceDimensions.y * _SurfaceDesc.NumSlices);
+}
+
+int2 oSurfaceSliceCalcDimensions(const oSURFACE_DESC& _SurfaceDesc)
+{
+	oCHECK_SURFACE_DESC(_SurfaceDesc);
+	int3 mip0dimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, 0);
+	switch (_SurfaceDesc.Layout)
+	{
+	case oSURFACE_LAYOUT_IMAGE: 
+		{
+			return int2(mip0dimensions.x, (mip0dimensions.y * mip0dimensions.z));
+		}
+	case oSURFACE_LAYOUT_TIGHT: 
+		{
+			const int surfaceSlicePitch = oSurfaceSliceCalcPitch(_SurfaceDesc);
+			const int mip0RowPitch = oSurfaceMipCalcRowPitch(_SurfaceDesc, 0);
+			return int2(mip0dimensions.x, (surfaceSlicePitch / mip0RowPitch));
+		}
+	case oSURFACE_LAYOUT_BELOW: 
+		{
+			int numMips = oSurfaceCalcNumMips(_SurfaceDesc.Layout, mip0dimensions);
+			int3 mip1dimensions = numMips > 1 ? oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, 1) : int3(0);
+			int3 mip2dimensions = numMips > 2 ? oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, 2) : int3(0);
+
+			int mip0height = mip0dimensions.y * mip0dimensions.z;
+			int mip1height = mip1dimensions.y * mip1dimensions.z;
+			int mip2andUpHeight = mip2dimensions.y * mip2dimensions.z;
+			for (int mip=3; mip<numMips; ++mip)
+			{
+				int3 mipNdimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, mip);
+				mip2andUpHeight += mipNdimensions.y * mipNdimensions.z;
+			}
+			return int2(max(mip0dimensions.x, mip1dimensions.x + mip2dimensions.x), (mip0height + max(mip1height, mip2andUpHeight)));
+		}
+	case oSURFACE_LAYOUT_RIGHT: 
+		{
+			int numMips = oSurfaceCalcNumMips(_SurfaceDesc.Layout, mip0dimensions);
+			int3 mip1dimensions = numMips > 1 ? oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, 1) : int3(0);
+
+			int mip0height = mip0dimensions.y * mip0dimensions.z;
+			int mip1andUpHeight = mip1dimensions.y * mip1dimensions.z;
+			for (int mip=2; mip<numMips; ++mip)
+			{
+				int3 mipNdimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, mip);
+				mip1andUpHeight += mipNdimensions.y * mipNdimensions.z;
+			}
+			return int2(mip0dimensions.x + mip1dimensions.x, max(mip0height, mip1andUpHeight));
+		}
+	oNODEFAULT;
+	}
+}
+
 
 int oSurfaceMipCalcNumColumns(oSURFACE_FORMAT _Format, int _MipWidth)
 {
@@ -380,58 +458,69 @@ int oSurfaceMipCalcSize(oSURFACE_FORMAT _Format, const int2& _MipDimensions)
 static int oSurfaceMipCalcOffset_Tight(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel)
 {
 	oCHECK_SURFACE_DESC(_SurfaceDesc);
-	oInt offset = 0;
-	int mip = _MipLevel;
-	int2 dimensions = _SurfaceDesc.Dimensions;
 
+	int3 mip0dimensions = _SurfaceDesc.Dimensions;
+
+	oInt offset = 0;
+	int mip = 0;
 	while (mip != _MipLevel)
 	{
-		offset += oSurfaceMipCalcSize(_SurfaceDesc.Format, dimensions);
-		dimensions = oSurfaceMipCalcDimensions(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, mip);
+		int3 previousMipDimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, mip);
+		offset += oSurfaceMipCalcSize(_SurfaceDesc.Format, previousMipDimensions);
 		mip++;
 	}
 
 	return offset;
 }
 
-static int oSurfaceMipCalcOffset_Vertical(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel)
+static int oSurfaceMipCalcOffset_Below(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel)
 {
 	oCHECK_SURFACE_DESC(_SurfaceDesc);
 	if (0 == _MipLevel)
 		return 0;
 
-	// start at mip1
-	oInt offset = oSurfaceMipCalcSize(_SurfaceDesc.Format, _SurfaceDesc.Dimensions);
+	int3 mip0dimensions = _SurfaceDesc.Dimensions;
+	int3 mip1dimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, 1);
+	int surfaceRowPitch = oSurfaceMipCalcRowPitch(_SurfaceDesc, 0);
 
-	int mip = 1;
-	int2 dimensions = _SurfaceDesc.Dimensions;
+	// Step down when moving from Mip0 to Mip1
+	oInt offset = surfaceRowPitch * oSurfaceMipCalcNumRows(_SurfaceDesc.Format, mip0dimensions);
+	if (1 == _MipLevel)
+		return offset;
 
+	// Step right when moving from Mip1 to Mip2
+	offset += oSurfaceMipCalcRowSize(_SurfaceDesc.Format, mip1dimensions);
+
+	// Step down for all of the other MIPs
+	int mip = 2;
 	while (mip != _MipLevel)
 	{
-		offset += oSurfaceMipCalcRowSize(_SurfaceDesc.Format, dimensions);
-		dimensions = oSurfaceMipCalcDimensions(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, mip);
+		int3 previousMipDimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, mip);
+		offset += surfaceRowPitch * oSurfaceMipCalcNumRows(_SurfaceDesc.Format, previousMipDimensions);
 		mip++;
 	}		
 
 	return offset;
 }
 
-static int oSurfaceMipCalcOffset_Horizontal(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel)
+static int oSurfaceMipCalcOffset_Right(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel)
 {
 	oCHECK_SURFACE_DESC(_SurfaceDesc);
 	if (0 == _MipLevel)
 		return 0;
 
-	int mip0RowSize = oSurfaceMipCalcRowSize(_SurfaceDesc.Format, _SurfaceDesc.Dimensions);
-	oInt offset = mip0RowSize;
+	int3 mip0dimensions = _SurfaceDesc.Dimensions;
+	int surfaceRowPitch = oSurfaceMipCalcRowPitch(_SurfaceDesc, 0);
 
+	// Step right when moving from Mip0 to Mip1
+	oInt offset = oSurfaceMipCalcRowSize(_SurfaceDesc.Format, mip0dimensions);
+
+	// Step down for all of the other MIPs
 	int mip = 1;
-	int2 dimensions = _SurfaceDesc.Dimensions;
-
 	while (mip != _MipLevel)
 	{
-		offset += mip0RowSize * oSurfaceMipCalcNumRows(_SurfaceDesc.Format, dimensions);
-		dimensions = oSurfaceMipCalcDimensions(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, mip);
+		int3 previousMipDimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, mip);
+		offset += surfaceRowPitch * oSurfaceMipCalcNumRows(_SurfaceDesc.Format, previousMipDimensions);
 		mip++;
 	}		
 
@@ -441,12 +530,16 @@ static int oSurfaceMipCalcOffset_Horizontal(const oSURFACE_DESC& _SurfaceDesc, i
 int oSurfaceMipCalcOffset(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel)
 {
 	oCHECK_SURFACE_DESC(_SurfaceDesc);
+	const int numMips = oSurfaceCalcNumMips(_SurfaceDesc.Layout, _SurfaceDesc.Dimensions);
+	if (_MipLevel >= numMips) 
+		return oInvalid;
+
 	switch (_SurfaceDesc.Layout)
 	{
 		case oSURFACE_LAYOUT_IMAGE: return 0;
 		case oSURFACE_LAYOUT_TIGHT: return oSurfaceMipCalcOffset_Tight(_SurfaceDesc, _MipLevel);
-		case oSURFACE_LAYOUT_HORIZONTAL: return oSurfaceMipCalcOffset_Horizontal(_SurfaceDesc, _MipLevel);
-		case oSURFACE_LAYOUT_VERTICAL: return oSurfaceMipCalcOffset_Vertical(_SurfaceDesc, _MipLevel);
+		case oSURFACE_LAYOUT_BELOW: return oSurfaceMipCalcOffset_Below(_SurfaceDesc, _MipLevel);
+		case oSURFACE_LAYOUT_RIGHT: return oSurfaceMipCalcOffset_Right(_SurfaceDesc, _MipLevel);
 		oNODEFAULT;
 	}
 }
@@ -454,45 +547,44 @@ int oSurfaceMipCalcOffset(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel)
 int oSurfaceSliceCalcPitch(const oSURFACE_DESC& _SurfaceDesc)
 {
 	oCHECK_SURFACE_DESC(_SurfaceDesc);
-	oInt slicePitch = 0;
+	oInt pitch = 0;
 
 	switch (_SurfaceDesc.Layout)
 	{
 		case oSURFACE_LAYOUT_IMAGE:
-			return oSurfaceMipCalcSize(_SurfaceDesc.Format, _SurfaceDesc.Dimensions);
+		case oSURFACE_LAYOUT_RIGHT:
+		case oSURFACE_LAYOUT_BELOW:
+			return oSurfaceMipCalcSize(_SurfaceDesc.Format, oSurfaceSliceCalcDimensions(_SurfaceDesc));
 
 		case oSURFACE_LAYOUT_TIGHT:
 		{
 			// Sum the size of all mip levels
-			int nMips = oSurfaceCalcNumMips(_SurfaceDesc.Layout, _SurfaceDesc.Dimensions);
-			int2 dimensions = _SurfaceDesc.Dimensions;
+			int3 dimensions = _SurfaceDesc.Dimensions;
+			int nMips = oSurfaceCalcNumMips(_SurfaceDesc.Layout, dimensions);
 			while (nMips > 0)
 			{
-				slicePitch += oSurfaceMipCalcSize(_SurfaceDesc.Format, dimensions);
+				pitch += oSurfaceMipCalcSize(_SurfaceDesc.Format, dimensions.xy()) * dimensions.z;
+				dimensions = max(int3(1,1,1), dimensions / int3(2,2,2));
 				nMips--;
 			}
+
+			// Align slicePitch to mip0RowPitch
+			const int mip0RowPitch = oSurfaceMipCalcRowPitch(_SurfaceDesc, 0);
+			pitch = (((pitch + (mip0RowPitch - 1)) / mip0RowPitch) * mip0RowPitch);
 			break;
 		}
-
-		case oSURFACE_LAYOUT_HORIZONTAL:
-		{
-			slicePitch = oSurfaceMipCalcRowPitch(_SurfaceDesc) * oSurfaceMipCalcNumRows(_SurfaceDesc.Format, _SurfaceDesc.Dimensions);
-			break;
-		}
-
-		case oSURFACE_LAYOUT_VERTICAL:
-		{
-			slicePitch = oSurfaceMipCalcRowPitch(_SurfaceDesc);
-			int mip0NumRows = oSurfaceMipCalcNumRows(_SurfaceDesc.Format, _SurfaceDesc.Dimensions);
-			int mip1NumRows = oSurfaceMipCalcNumRows(_SurfaceDesc.Format, oSurfaceMipCalcDimensions(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, 1));
-			slicePitch *= (mip0NumRows + mip1NumRows);
-			break;
-		}
-
 		oNODEFAULT;
 	}
 
-	return slicePitch;
+	return pitch;
+}
+
+int oSurfaceMipCalcDepthPitch(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel)
+{
+	oCHECK_SURFACE_DESC(_SurfaceDesc);
+
+	int3 mipDimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, _MipLevel);
+	return oSurfaceMipCalcRowPitch(_SurfaceDesc, _MipLevel) * oSurfaceMipCalcNumRows(_SurfaceDesc.Format, mipDimensions.xy());
 }
 
 int oSurfaceCalcSize(const oSURFACE_DESC& _SurfaceDesc)
@@ -506,7 +598,7 @@ void oSurfaceSubresourceGetDesc(const oSURFACE_DESC& _SurfaceDesc, int _Subresou
 	int numMips = oSurfaceCalcNumMips(_SurfaceDesc.Layout, _SurfaceDesc.Dimensions);
 	oSurfaceSubresourceUnpack(_Subresource, numMips, &_pSubresourceDesc->MipLevel, &_pSubresourceDesc->Slice);
 	oASSERT(_pSubresourceDesc->Slice < _SurfaceDesc.NumSlices, "Slice index is out of range for the specified surface");
-	_pSubresourceDesc->Dimensions = oSurfaceMipCalcDimensions(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, _pSubresourceDesc->MipLevel);
+	_pSubresourceDesc->Dimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, _pSubresourceDesc->MipLevel);
 }
 
 int oSurfaceSubresourceCalcSize(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_SUBRESOURCE_DESC& _SubresourceDesc)
@@ -514,24 +606,26 @@ int oSurfaceSubresourceCalcSize(const oSURFACE_DESC& _SurfaceDesc, const oSURFAC
 	return oSurfaceMipCalcSize(_SurfaceDesc.Format, _SubresourceDesc.Dimensions);
 }
 
-int oSurfaceSubresourceCalcOffset(const oSURFACE_DESC& _SurfaceDesc, int _Subresource)
+int oSurfaceSubresourceCalcOffset(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, int _DepthIndex)
 {
-	oCHECK_SURFACE_DESC(_SurfaceDesc);
-
-	if (oSURFACE_LAYOUT_IMAGE == _SurfaceDesc.Layout)
-		return _Subresource * oSurfaceMipCalcSize(_SurfaceDesc.Format, _SurfaceDesc.Dimensions);
-
+	oASSERT(_DepthIndex < _SurfaceDesc.Dimensions.z, "Depth index is out of range");
 	oSURFACE_SUBRESOURCE_DESC ssrd;
 	oSurfaceSubresourceGetDesc(_SurfaceDesc, _Subresource, &ssrd);
-	oULLong slicePitch = oSurfaceSliceCalcPitch(_SurfaceDesc);
-	return oInt((slicePitch * ssrd.Slice) + oSurfaceMipCalcOffset(_SurfaceDesc, ssrd.MipLevel));
+
+	int offset = oSurfaceMipCalcOffset(_SurfaceDesc, ssrd.MipLevel);
+	if (_DepthIndex)
+		offset += oSurfaceMipCalcDepthPitch(_SurfaceDesc, ssrd.MipLevel) * _DepthIndex;
+	else if (ssrd.Slice)
+		offset += oSurfaceSliceCalcPitch(_SurfaceDesc) * ssrd.Slice;
+
+	return offset;
 }
 
 int2 oSurfaceSubresourceCalcByteDimensions(const oSURFACE_DESC& _SurfaceDesc, int _Subresource)
 {
 	oSURFACE_SUBRESOURCE_DESC ssrd;
 	oSurfaceSubresourceGetDesc(_SurfaceDesc, _Subresource, &ssrd);
-	return int2(oSurfaceMipCalcRowSize(_SurfaceDesc.Format, ssrd.Dimensions), oSurfaceMipCalcNumRows(_SurfaceDesc.Format, ssrd.Dimensions));
+	return int2(oSurfaceMipCalcRowSize(_SurfaceDesc.Format, ssrd.Dimensions.xy()), oSurfaceMipCalcNumRows(_SurfaceDesc.Format, ssrd.Dimensions.xy()));
 }
 
 int oSurfaceTileCalcBestFitMipLevel(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDimensions)
@@ -541,14 +635,14 @@ int oSurfaceTileCalcBestFitMipLevel(const oSURFACE_DESC& _SurfaceDesc, const int
 		return 0;
 
 	int nthMip = 0;
-	int2 mip = _SurfaceDesc.Dimensions;
-	while (mip != int2(1,1))
+	int3 mip = _SurfaceDesc.Dimensions;
+	while (mip != int3(1,1,1))
 	{
-		if (less_than_equal(_SurfaceDesc.Dimensions, _TileDimensions))
+		if (less_than_equal(_SurfaceDesc.Dimensions.xy(), _TileDimensions))
 			break;
 
 		nthMip++;
-		mip = oMax(int2(1,1), mip / int2(2,2));
+		mip = max(int3(1,1,1), mip / int3(2,2,2));
 	}
 
 	return nthMip;
@@ -583,6 +677,12 @@ int oSurfaceMipCalcNumTiles(const int2& _MipDimensions, const int2& _TileDimensi
 	return mipDimInTiles.x * mipDimInTiles.y;
 }
 
+int oSurfaceMipCalcNumTiles(const int3& _MipDimensions, const int2& _TileDimensions)
+{
+	int3 mipDimInTiles = oSurfaceMipCalcDimensionsInTiles(_MipDimensions, _TileDimensions);
+	return mipDimInTiles.x * mipDimInTiles.y;
+}
+
 int oSurfaceSliceCalcNumTiles(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDimensions)
 {
 	if (oSURFACE_LAYOUT_IMAGE == _SurfaceDesc.Layout)
@@ -592,7 +692,7 @@ int oSurfaceSliceCalcNumTiles(const oSURFACE_DESC& _SurfaceDesc, const int2& _Ti
 	int lastMip = 1 + oSurfaceTileCalcBestFitMipLevel(_SurfaceDesc, _TileDimensions);
 	for (int i = 0; i <= lastMip; i++)
 	{
-		int2 mipDim = oSurfaceMipCalcDimensions(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, i);
+		int3 mipDim = oSurfaceMipCalcDimensions(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, i);
 		numTiles += oSurfaceMipCalcNumTiles(mipDim, _TileDimensions);
 	}
 
@@ -615,7 +715,7 @@ static int oSurfaceSliceCalcMipTileIDOffset(const oSURFACE_DESC& _SurfaceDesc, c
 	int numMips = __min(_MipLevel, 1 + oSurfaceTileCalcBestFitMipLevel(_SurfaceDesc, _TileDimensions));
 	for (int i = 0; i < numMips; i++)
 	{
-		int2 mipDim = oSurfaceMipCalcDimensions(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, i);
+		int3 mipDim = oSurfaceMipCalcDimensions(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, i);
 		numTiles += oSurfaceMipCalcNumTiles(mipDim, _TileDimensions);
 	}
 
@@ -647,7 +747,7 @@ void oSurfaceTileGetDesc(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDim
 	oASSERT(_pTileDesc->Slice < _SurfaceDesc.NumSlices, "TileID is out of range for the specified mip dimensions");
 
 	int firstTileInMip = 0;
-	int2 mipDim = _SurfaceDesc.Dimensions;
+	int3 mipDim = _SurfaceDesc.Dimensions;
 	_pTileDesc->MipLevel = 0;
 	int nthTileIntoSlice = _TileID % numTilesPerSlice; 
 
@@ -662,26 +762,26 @@ void oSurfaceTileGetDesc(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDim
 	}
 	
 	int tileOffsetFromMipStart = nthTileIntoSlice - firstTileInMip;
-	int2 mipDimInTiles = oSurfaceMipCalcDimensionsInTiles(mipDim, _TileDimensions);
+	int3 mipDimInTiles = oSurfaceMipCalcDimensionsInTiles(mipDim, _TileDimensions);
 	int2 positionInTiles = int2(tileOffsetFromMipStart % mipDimInTiles.x, tileOffsetFromMipStart / mipDimInTiles.y);
 	_pTileDesc->Position = positionInTiles * _TileDimensions;
 }
 
 //currently fairly aggressive at suggesting large pages
-bool oShouldUseLargePages(int2 Dimensions, oSURFACE_FORMAT _Format, int _TileWdith, int _SmallPageSize, int _LargePageSize)
+bool oShouldUseLargePages(const int3& _SurfaceDimensions, oSURFACE_FORMAT _Format, int _TileWidth, int _SmallPageSize, int _LargePageSize)
 {
-	int surfaceSize = oSurfaceMipCalcSize(_Format, Dimensions);
+	int surfaceSize = oSurfaceMipCalcSize(_Format, _SurfaceDimensions);
 	if(surfaceSize < (_LargePageSize/4))
 		return false;
 
 	oSURFACE_DESC desc;
 	desc.Format = _Format;
-	desc.Dimensions = Dimensions;
+	desc.Dimensions = _SurfaceDimensions;
 	int surfacePitch = oSurfaceMipCalcRowPitch(desc);
 
 	float numRowsPerPage = _SmallPageSize/static_cast<float>(surfacePitch); //number of rows before we get a page miss
 
-	int tileByteWidth = oSurfaceMipCalcRowSize(_Format, _TileWdith);
+	int tileByteWidth = oSurfaceMipCalcRowSize(_Format, _TileWidth);
 	//estimate how many bytes we would work on in a tile before encountering a tlb cache miss
 	float numBytesPerTLBMiss = tileByteWidth * numRowsPerPage - std::numeric_limits<float>::epsilon(); //not precise, but should be close enough for our purpose here. 
 	//If we are not going to get at least half a small page size of work done per tlb miss, better to use large pages instead.
@@ -691,41 +791,50 @@ bool oShouldUseLargePages(int2 Dimensions, oSURFACE_FORMAT _Format, int _TileWdi
 		return false;
 }
 
-void oSurfaceCalcMappedSubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, const void* _pSurface, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMappedSubresource, int2* _pByteDimensions)
+void oSurfaceCalcMappedSubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, int _DepthIndex, const void* _pSurface, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMappedSubresource, int2* _pByteDimensions)
 {
 	oSURFACE_SUBRESOURCE_DESC ssrd;
 	oSurfaceSubresourceGetDesc(_SurfaceDesc, _Subresource, &ssrd);
-	_pMappedSubresource->SlicePitch = oSurfaceSliceCalcPitch(_SurfaceDesc);
-	size_t offset = _pMappedSubresource->SlicePitch * ssrd.Slice + oSurfaceMipCalcOffset(_SurfaceDesc, ssrd.MipLevel);
-	_pMappedSubresource->pData = oByteAdd(_pSurface, offset);
+
 	_pMappedSubresource->RowPitch = oSurfaceMipCalcRowPitch(_SurfaceDesc, ssrd.MipLevel);
+	_pMappedSubresource->DepthPitch = oSurfaceMipCalcDepthPitch(_SurfaceDesc, ssrd.MipLevel);
+	_pMappedSubresource->pData = oByteAdd(_pSurface, oSurfaceSubresourceCalcOffset(_SurfaceDesc, _Subresource, _DepthIndex));
+
 	if (_pByteDimensions)
-		*_pByteDimensions = int2(oSurfaceMipCalcRowSize(_SurfaceDesc.Format, ssrd.Dimensions), oSurfaceMipCalcNumRows(_SurfaceDesc.Format, ssrd.Dimensions));
+		*_pByteDimensions = oSurfaceMipCalcByteDimensions(_SurfaceDesc.Format, ssrd.Dimensions.xy());
 }
 
-void oSurfaceCalcMappedSubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, void* _pSurface, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource, int2* _pByteDimensions)
+void oSurfaceCalcMappedSubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, int _DepthIndex, void* _pSurface, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource, int2* _pByteDimensions)
 {
-	oSurfaceCalcMappedSubresource(_SurfaceDesc, _Subresource, _pSurface, (oSURFACE_CONST_MAPPED_SUBRESOURCE*)_pMappedSubresource, _pByteDimensions);
+	oSurfaceCalcMappedSubresource(_SurfaceDesc, _Subresource, _DepthIndex, _pSurface, (oSURFACE_CONST_MAPPED_SUBRESOURCE*)_pMappedSubresource, _pByteDimensions);
 }
 
-void oSurfaceUpdateSubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, void* _pDestinationSurface, const void* _pSource, size_t _SourceRowPitch, bool _FlipVertical)
+void oSurfaceUpdateSubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, int _DepthIndex, void* _pDestinationSurface, const void* _pSource, size_t _SourceRowPitch, bool _FlipVertical)
 {
 	oSURFACE_MAPPED_SUBRESOURCE mapped;
 	int2 ByteDimensions;
-	oSurfaceCalcMappedSubresource(_SurfaceDesc, _Subresource, _pDestinationSurface, &mapped, &ByteDimensions);
+	oSurfaceCalcMappedSubresource(_SurfaceDesc, _Subresource, _DepthIndex, _pDestinationSurface, &mapped, &ByteDimensions);
 	if (_FlipVertical)
 		oMemcpy2dVFlip(mapped.pData, mapped.RowPitch, _pSource, _SourceRowPitch, ByteDimensions.x, ByteDimensions.y);
 	else
 		oMemcpy2d(mapped.pData, mapped.RowPitch, _pSource, _SourceRowPitch, ByteDimensions.x, ByteDimensions.y);
 }
 
-void oSurfaceCopySubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, const void* _pSourceSurface, void* _pDestination, size_t _DestinationRowPitch, bool _FlipVertical)
+void oSurfaceCopySubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, int _DepthIndex, const void* _pSourceSurface, void* _pDestination, size_t _DestinationRowPitch, bool _FlipVertical)
 {
 	oSURFACE_CONST_MAPPED_SUBRESOURCE mapped;
 	int2 ByteDimensions;
-	oSurfaceCalcMappedSubresource(_SurfaceDesc, _Subresource, _pSourceSurface, &mapped, &ByteDimensions);
+	oSurfaceCalcMappedSubresource(_SurfaceDesc, _Subresource, _DepthIndex, _pSourceSurface, &mapped, &ByteDimensions);
 	if (_FlipVertical)
 		oMemcpy2dVFlip(_pDestination, _DestinationRowPitch, mapped.pData, mapped.RowPitch, ByteDimensions.x, ByteDimensions.y);
 	else
 		oMemcpy2d(_pDestination, _DestinationRowPitch, mapped.pData, mapped.RowPitch, ByteDimensions.x, ByteDimensions.y);
+}
+
+void oSurfaceCopySubresource(const oSURFACE_DESC& _SurfaceDesc, oSURFACE_CONST_MAPPED_SUBRESOURCE& _SrcMap, oSURFACE_MAPPED_SUBRESOURCE* _DstMap, bool _FlipVertical)
+{
+	if (_FlipVertical)
+		oMemcpy2dVFlip(_DstMap->pData, _DstMap->RowPitch, _SrcMap.pData, _SrcMap.RowPitch, _SurfaceDesc.Dimensions.x*oSurfaceFormatGetSize(_SurfaceDesc.Format), _SurfaceDesc.Dimensions.y);
+	else
+		oMemcpy2d(_DstMap->pData, _DstMap->RowPitch, _SrcMap.pData, _SrcMap.RowPitch, _SurfaceDesc.Dimensions.x*oSurfaceFormatGetSize(_SurfaceDesc.Format), _SurfaceDesc.Dimensions.y);
 }

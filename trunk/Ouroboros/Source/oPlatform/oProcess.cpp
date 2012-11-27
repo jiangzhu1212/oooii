@@ -122,11 +122,13 @@ Process_Impl::Process_Impl(const DESC& _Desc, bool* _pSuccess)
 	memset(&StartInfo, 0, sizeof(STARTUPINFO));
 	StartInfo.cb = sizeof(STARTUPINFO);
 
-	if (!Desc.SetFocus || Desc.StartMinimized)
+	if (!Desc.SetFocus || Desc.StartMinimized || Desc.HideWindow)
 	{
 		StartInfo.dwFlags |= STARTF_USESHOWWINDOW;
 		
-		if (!Desc.SetFocus)
+		if(Desc.HideWindow)
+			StartInfo.wShowWindow |= SW_HIDE;
+		else if (!Desc.SetFocus)
 			StartInfo.wShowWindow |= (Desc.StartMinimized ? SW_SHOWMINNOACTIVE : SW_SHOWNOACTIVATE);
 		else
 			StartInfo.wShowWindow |= (Desc.StartMinimized ? SW_SHOWMINIMIZED : SW_SHOWDEFAULT);
@@ -140,7 +142,6 @@ Process_Impl::Process_Impl(const DESC& _Desc, bool* _pSuccess)
 		HANDLE hInputWriteTmp = 0;
 		if (!CreatePipe(&hOutputReadTmp, &hOutputWrite, &sa, 0))
 		{
-			*_pSuccess = false;
 			oErrorSetLast(oERROR_REFUSED);
 			return;
 		}
@@ -151,7 +152,6 @@ Process_Impl::Process_Impl(const DESC& _Desc, bool* _pSuccess)
 		{
 			oVB(CloseHandle(hOutputReadTmp));
 			oVB(CloseHandle(hOutputWrite));
-			*_pSuccess = false;
 			oErrorSetLast(oERROR_REFUSED);
 			return;
 		}
@@ -178,11 +178,7 @@ Process_Impl::Process_Impl(const DESC& _Desc, bool* _pSuccess)
 	{
 		env = new char[EnvironmentString.length()+1];
 		if (!oConvertEnvStringToEnvBlock(env, EnvironmentString.length()+1, EnvironmentString.c_str(), '\n'))
-		{
-			if (_pSuccess)
-				*_pSuccess = false;
 			return;
-		}
 	}
 
 	// @oooii-tony: Make a copy because CreateProcess does not take a const char*
@@ -193,13 +189,15 @@ Process_Impl::Process_Impl(const DESC& _Desc, bool* _pSuccess)
 		oStrcpy(cmdline, CommandLine.length()+1, CommandLine.c_str());
 	}
 
-	bool success = !!CreateProcessA(0, cmdline, 0, &sa, TRUE, dwCreationFlags, env, InitialWorkingDirectory.empty() ? nullptr : InitialWorkingDirectory.c_str(), &StartInfo, &ProcessInfo);
-	oVB(success);
-	if (_pSuccess)
-		*_pSuccess = success;
+	if( !CreateProcessA(0, cmdline, 0, &sa, TRUE, dwCreationFlags, env, InitialWorkingDirectory.empty() ? nullptr : InitialWorkingDirectory.c_str(), &StartInfo, &ProcessInfo) )
+	{
+		oWinSetLastError();
+		return;
+	}
 
 	if (env) delete env;
 	if (cmdline) delete cmdline;
+	*_pSuccess = true;
 }
 
 Process_Impl::~Process_Impl()
@@ -279,6 +277,11 @@ size_t Process_Impl::ReadFromStdout(void* _pDestination, size_t _SizeofRead) thr
 		oErrorSetLast(oERROR_REFUSED);
 		return 0;
 	}
+	
+	DWORD Available = 0;
+	oVB(PeekNamedPipe(hOutputRead, nullptr, 0, nullptr, &Available, nullptr));
+	if( 0 == Available)
+		return 0;
 
 	oASSERT(_SizeofRead <= UINT_MAX, "Windows supports only 32-bit sized reads.");
 	DWORD sizeofRead = 0;

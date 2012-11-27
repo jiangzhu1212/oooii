@@ -78,7 +78,7 @@ struct oP4_FILE_DESC
 	bool IsText;
 };
 
-struct oP4_CLIENT_SPEC
+struct oP4_WORKSPACE
 {
 	oStringM Client;
 	oStringM Owner;
@@ -131,9 +131,9 @@ inline void oP4SetRevision(unsigned int _Revision, oVersion* _pVersion) { _pVers
 // Direct communication API with P4... mostly these wrap a spawn-command as if 
 // typing the P4 command line at a prompt. The output is captured and returned.
 
-oAPI bool oP4GetClientSpecString(char* _StrDestination, size_t _SizeofStrDestination);
-template<size_t size> inline bool oP4GetClientSpecString(char (&_StrDestination)[size]) { return oP4GetClientSpecString(_StrDestination, size); }
-template<size_t capacity> inline bool oP4GetClientSpecString(oFixedString<char, capacity>& _StrDestination) { return oP4GetClientSpecString(_StrDestination, _StrDestination.capacity()); }
+oAPI bool oP4GetWorkspaceString(char* _StrDestination, size_t _SizeofStrDestination);
+template<size_t size> inline bool oP4GetWorkspaceString(char (&_StrDestination)[size]) { return oP4GetWorkspaceString(_StrDestination, size); }
+template<size_t capacity> inline bool oP4GetWorkspaceString(oFixedString<char, capacity>& _StrDestination) { return oP4GetWorkspaceString(_StrDestination, _StrDestination.capacity()); }
 
 oAPI bool oP4GetLabelSpecString(char* _P4LabelSpecString, size_t _SizeofP4LabelSpecString, const char* _Label);
 template<size_t size> inline bool oP4GetLabelSpecString(char (&_StrDestination)[size], const char* _Label) { return oP4GetLabelSpecString(_StrDestination, size, _Label); }
@@ -143,9 +143,18 @@ template<size_t capacity> inline bool oP4GetLabelSpecString(oFixedString<char, c
 // false.
 oAPI bool oP4Open(oP4_STATUS _OpenType, const char* _Path);
 oAPI bool oP4Revert(const char* _Path);
+oAPI bool oP4Sync(int _ChangeList, const char* _Path = nullptr);
 
 // Sets a label based on the specification.
 oAPI bool oP4Label(const oP4_LABEL_SPEC& _Label);
+
+// Returns the username associated with a specific Changelist
+oAPI bool oP4GetUserOfChangelist(char* _StrDestination, size_t _SizeofStrDestination, int _ChangeList);
+template<size_t size> bool oP4GetUserOfChangelist(char (&_StrDestination)[size], int _ChangeList) { return oP4GetUserOfChangelist(_StrDestination, size, _ChangeList); }
+
+// Takes a p4 depot path and converts it into a client file path
+oAPI bool oP4GetClientPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _pDepotPath);
+template<size_t size> bool oP4GetClientPath(char (&_StrDestination)[size], const char* _pDepotPath) { return oP4GetClientPath(_StrDestination, size, _pDepotPath); }
 
 // Fill the specified array with file descs for all files that are opened in a 
 // pending changelist (oInvalid is the default changelist) under the specified 
@@ -169,7 +178,7 @@ template<size_t size> size_t oP4ListOutOfDate(oP4_FILE_DESC (&_pOutOfDateFiles)[
 // calls and turn it into a more manageable struct.
 
 oAPI time_t oP4ParseTime(const char* _P4TimeString);
-oAPI bool oP4ParseClientSpec(oP4_CLIENT_SPEC* _pClientSpec, const char* _P4ClientSpecString);
+oAPI bool oP4ParseWorkspace(oP4_WORKSPACE* _pWorkspace, const char* _P4WorkspaceString);
 oAPI bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecString);
 
 // Returns the changelist from a line from the resulting from p4 changes
@@ -186,19 +195,26 @@ inline bool oP4GetLabelSpec(const char* _Label, oP4_LABEL_SPEC* _pLabelSpec)
 // _____________________________________________________________________________
 // Higher-level/convenience API
 
-inline bool oP4GetClientSpec(oP4_CLIENT_SPEC* _pClientSpec)
+inline bool oP4GetWorkspace(oP4_WORKSPACE* _pWorkspace)
 {
 	oStringXXL tmp;
-	if (!oP4GetClientSpecString(tmp))
+	if (!oP4GetWorkspaceString(tmp))
 		return false; // pass through error
-	return oP4ParseClientSpec(_pClientSpec, tmp);
+	return oP4ParseWorkspace(_pWorkspace, tmp);
 }
 
 // This function estimates what revision the current code being built. If there 
-// are any out-of-date files under the specified base then this will return 
-// oInvalid. If there are any open files under the specified base, then this 
-// will return the latest changelist, but will set last error to oERROR_CORRUPT.
-// If there are no open files, then oERROR_NONE is explicitly set.
-int oP4GetCurrentChangelist(const char* _P4Base = nullptr);
+// are any out-of-date or open-for-edit files under the specified base then this 
+// will set oERROR_CORRUPT as the last error, indicating that the returned 
+// changelist is only an estimate. If there are no open files and everything is
+// up-to-date, then oERROR_NONE is explicitly set.
+// NOTE: This uses oTRACEA for the first several files that cause the changelist
+// to be corrupt. When using tools that call this, dbgview.exe can be run to see
+// why a changelist is labeled as corrupt.
+oAPI int oP4GetCurrentChangelist(const char* _P4Base = nullptr);
+
+// Gets the next change based on a specified _CurrentCL (which can be estimated
+// from oP4GetCurrentChangelist)
+oAPI int oP4GetNextChangelist(int _CurrentChangelist, const char* _P4Base = nullptr);
 
 #endif

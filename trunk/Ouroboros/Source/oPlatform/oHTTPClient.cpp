@@ -248,7 +248,7 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 				State = oSTATE_FINISHED;
 				break;
 			}
-			if (!oExtractContent(oByteAdd(ReceiveBuffer, SzDataTaken), (SzReceived - SzDataTaken), TheBody, &TheBodyPos, oMin(_MaxResponseBufferSize, TheResponse.Content.Length), &SzDataTaken))
+			if (!oExtractContent(oByteAdd(ReceiveBuffer, SzDataTaken), (SzReceived - SzDataTaken), TheBody, &TheBodyPos, __min(_MaxResponseBufferSize, TheResponse.Content.Length), &SzDataTaken))
 			{
 				// Request more data
 				oASSERT(SzDataTaken==SzReceived, "Assuming that we took all data, before requesting more");

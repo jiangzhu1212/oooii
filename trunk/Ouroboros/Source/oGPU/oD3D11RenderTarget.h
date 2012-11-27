@@ -37,7 +37,7 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget)
 
 	void GetDesc(DESC* _pDesc) const threadsafe override;
 	void SetClearDesc(const oGPU_CLEAR_DESC& _ClearDesc) threadsafe override;
-	void Resize(const int2& _NewDimensions) override;
+	void Resize(const int3& _NewDimensions) override;
 	void GetTexture(int _MRTIndex, oGPUTexture** _ppTexture) override;
 	void GetDepthTexture(oGPUTexture** _ppTexture) override;
 

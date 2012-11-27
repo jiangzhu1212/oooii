@@ -61,7 +61,15 @@ interface oHTTPClient : oInterface
 	template<int _MaxBufferSize>
 	bool Get(const char* _pRelativePath, oHTTP_RESPONSE* _pResponse, char (&_StrDestination)[_MaxBufferSize])
 	{
-		return Get(_pRelativePath, _pResponse, _StrDestination, _MaxBufferSize);
+		bool result = Get(_pRelativePath, _pResponse, _StrDestination, _MaxBufferSize);
+		if(!result)
+			return false;
+
+		if((_pResponse->Content.Length + 4) >= _MaxBufferSize)
+			return false;
+
+		memset(oByteAdd(_StrDestination, _pResponse->Content.Length), 0, 4);
+		return true;
 	}
 };
 

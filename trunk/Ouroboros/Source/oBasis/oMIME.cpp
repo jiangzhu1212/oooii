@@ -131,6 +131,7 @@ namespace
 			LookupTable[std::string(".css")] = oMIME_TEXT_CSS;
 			LookupTable[std::string(".jss")] = oMIME_TEXT_JAVASCRIPT;
 			LookupTable[std::string(".js")] = oMIME_TEXT_JAVASCRIPT;
+			LookupTable[std::string(".txt")] = oMIME_TEXT_PLAIN;
 
 			//images
 			LookupTable[std::string(".jpg")] = oMIME_IMAGE_JPEG;

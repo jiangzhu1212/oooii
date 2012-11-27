@@ -70,9 +70,9 @@
 #include <oBasis/oAssert.h>
 #include <oBasis/oBit.h>
 #include <oBasis/oEqual.h>
+#include <oBasis/oHLSLMath.h>
 #include <oBasis/oLimits.h>
 #include <oBasis/oMathTypes.h>
-#include <oBasis/oMathInternalHLSL.h>
 
 // _____________________________________________________________________________
 // Common math constants
@@ -113,7 +113,7 @@ template<typename T> inline T zerodenorm(const T& a)
 // _____________________________________________________________________________
 // Geometry
 
-template<typename T> inline T fresnel(const TVEC3<T>& i, const TVEC3<T>& n) { return 0.02f+0.97f*pow((1-oMax(dot(i, n))),5); } // http://habibs.wordpress.com/alternative-solutions/
+template<typename T> inline T fresnel(const TVEC3<T>& i, const TVEC3<T>& n) { return 0.02f+0.97f*pow((1-max(dot(i, n))),5); } // http://habibs.wordpress.com/alternative-solutions/
 template<typename T> inline T angle(const TVEC3<T>& a, const TVEC3<T>& b) { return acos(dot(a, b) / (length(a) * length(b))); }
 template<typename T> inline TVEC4<T> oNormalizePlane(const TVEC4<T>& _Plane) { T invLength = rsqrt(dot(_Plane.xyz(), _Plane.xyz())); return _Plane * invLength; }
 
@@ -177,9 +177,20 @@ template<typename T> void oExtractAABoxCorners(TVEC3<T> _Corners[8], const TAABO
 	_Corners[7] = Max;
 }
 
-template<typename T, typename TVec> void oExtendBy(TAABOX<T, TVec>& _AABox, const TVec& _Point) { _AABox.SetMin(oMin(_AABox.GetMin(), _Point)); _AABox.SetMax(oMax(_AABox.GetMax(), _Point)); }
+template<typename T, typename TVec> void oExtendBy(TAABOX<T, TVec>& _AABox, const TVec& _Point) { _AABox.SetMin(min(_AABox.GetMin(), _Point)); _AABox.SetMax(max(_AABox.GetMax(), _Point)); }
 template<typename T, typename TVec> void oExtendBy(TAABOX<T, TVec>& _AABox1, const TAABOX<T, TVec>& _AABox2) { oExtendBy(_AABox1, _AABox2.GetMin()); oExtendBy(_AABox1, _AABox2.GetMax()); }
 template<typename T, typename TVec> void oTranslate(TAABOX<T, TVec>& _AABox, const TVec& _Translation) { _AABox.SetMin(_AABox.GetMin() + _Translation); _AABox.SetMax(_AABox.GetMax() + _Translation); }
+
+template<typename T, typename TVec> 
+TAABOX<T, TVec> oCalcTransformedAABox(const float4x4& _Matrix, const TAABOX<T, TVec>& _LocalBounds)
+{
+	float3 verts[8], transformed[8];
+	_LocalBounds.GetVertices(verts);
+	oTransformPoints(_Matrix, transformed, sizeof(float3), verts, sizeof(float3), 8);
+	float3 Min, Max;
+	oCalculateMinMaxPoints(transformed, 8, &Min, &Max);
+	return TAABOX<T, TVec>(Min, Max);
+}
 
 // _____________________________________________________________________________
 // NON-HLSL Matrix creation
@@ -362,6 +373,9 @@ template<typename T, typename TVec> TAABOX<T, TVec> oClip(const TAABOX<T, TVec>&
 // _____________________________________________________________________________
 // NON-HLSL Miscellaneous
 
+inline int pow(int a, int e) { int v = 1; for (int i = 0; i < e; i++) v *= a; return v; }
+inline unsigned int pow(unsigned int a, unsigned int e) { unsigned int v = 1; for (unsigned int i = 0; i < e; i++) v *= a; return v; }
+
 // asfloat() does a reinterpret_cast (analyzes bits separate from value). 
 // oCastAsFloat does a static_cast.
 template<typename T> float oCastAsFloat(const T& value) { return static_cast<float>(value); }
@@ -420,5 +434,35 @@ void oCDF97Fwd(float* _pValues, size_t _NumValues);
 
 // Inverse biorthogonal CDF 9/7 wavelet transform, transforms in place
 void oCDF97Inv(float* _pValues, size_t _NumValues);
+
+// _____________________________________________________________________________
+// Basic Octree-related calculations. The depth index of the root is 0, there 
+// are 8 octants at depth index 1.
+
+template<typename T> T oOctreeCalcNumNodesAtLevel(T _DepthIndex) { return pow(T(8), _DepthIndex); }
+
+// Returns the number of octants that tessellate the root volume at the 
+// specified level.
+template<typename T> T oOctreeCalcSubdivisionAtLevel(T _DepthIndex) { return pow(T(2), _DepthIndex); }
+
+// This takes the depth of the tree, not a particular depth index. The depth of 
+// an octree that has only the root node is 1.
+template<typename T> T oOctreeCalcTotalNumNodes(T _Depth)
+{
+	T n = 0;
+	for (T i = 0; i < _Depth; i++)
+		n += oOctreeCalcNumNodesAtLevel(i);
+	return n;
+}
+
+inline float oSinc(float _Value)
+{
+	if(abs(_Value) > oNumericLimits<float>::GetEpsilon())
+	{
+		_Value *= oPIf;
+		return sin(_Value) / _Value;
+	} 
+	return 1.0f;
+}
 
 #endif

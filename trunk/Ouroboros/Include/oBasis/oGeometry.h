@@ -87,7 +87,7 @@ interface oGeometry : oInterface
 		float3* pPositions;
 		float3* pNormals;
 		float4* pTangents; // handedness in w component
-		float2* pTexcoords;
+		float3* pTexcoords;
 		oColor* pColors;
 	};
 
@@ -98,7 +98,7 @@ interface oGeometry : oInterface
 		const float3* pPositions;
 		const float3* pNormals;
 		const float4* pTangents; // handedness in w component
-		const float2* pTexcoords;
+		const float3* pTexcoords;
 		const oColor* pColors;
 	};
 
@@ -109,8 +109,8 @@ interface oGeometry : oInterface
 	virtual bool Map(MAPPED* _pMapped) = 0;
 	virtual void Unmap() = 0;
 
-	virtual bool Map(CONST_MAPPED* _pMapped) const = 0;
-	virtual void Unmap() const = 0;
+	virtual bool MapConst(CONST_MAPPED* _pMapped) const = 0;
+	virtual void UnmapConst() const = 0;
 };
 
 interface oGeometryFactory : oInterface

@@ -31,17 +31,17 @@ struct TESTGPUTriangle : public oTest
 	oRef<oGPUCommandList> CL;
 	oRef<oGPUPipeline> Pipeline;
 	oRef<oGPUMesh> Mesh;
+	bool Once;
 
 	void Render(oGPURenderTarget* _pPrimaryRenderTarget)
 	{
-		static bool once = false;
-		if (!once)
+		if (!Once)
 		{
 			oGPU_CLEAR_DESC CD;
 			CD.ClearColor[0] = std::AlmostBlack;
 			_pPrimaryRenderTarget->SetClearDesc(CD);
 
-			once = true;
+			Once = true;
 		}
 
 		if (!Device->BeginFrame())
@@ -62,6 +62,8 @@ struct TESTGPUTriangle : public oTest
 
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
+		Once = false;
+
 		static const int sSnapshotFrames[] = { 0 };
 		static const bool kIsDevMode = false;
 
@@ -75,8 +77,7 @@ struct TESTGPUTriangle : public oTest
 			oGPUCommandList::DESC cld;
 			cld.DrawOrder = 0;
 
-			if (!Device->CreateCommandList("CommandList", cld, &CL))
-				return false;
+			Device->GetImmediateCommandList(&CL);
 
 			oGPUPipeline::DESC pld;
 			if (!oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH, &pld))

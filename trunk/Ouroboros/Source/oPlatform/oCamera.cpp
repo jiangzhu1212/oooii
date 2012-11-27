@@ -657,7 +657,7 @@ bool oDSCamera::Map(MAPPED* _pMapped) threadsafe
 		unsigned int index = RingBufferReadIndex;
 		
 		oSURFACE_DESC d;
-		d.Dimensions = thread_cast<DESC&>(Desc).Mode.Dimensions;
+		d.Dimensions = int3(thread_cast<DESC&>(Desc).Mode.Dimensions, 1);
 		d.Format = Desc.Mode.Format;
 		d.Layout = oSURFACE_LAYOUT_IMAGE;
 		_pMapped->pData = oGetData(pThis->RingBuffer[index].Data);
@@ -700,7 +700,7 @@ bool oDSCamera::BufferCB(double _SampleTime, void* _pBuffer, size_t _SizeofBuffe
 		f.Frame = MonotonicCounter++;
 		f.SampleTime = _SampleTime;
 		oSURFACE_DESC d;
-		d.Dimensions = thread_cast<DESC&>(Desc).Mode.Dimensions;
+		d.Dimensions = int3(thread_cast<DESC&>(Desc).Mode.Dimensions, 1);
 		d.Format = Desc.Mode.Format;
 		d.Layout = oSURFACE_LAYOUT_IMAGE;
 

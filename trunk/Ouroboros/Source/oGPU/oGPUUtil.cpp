@@ -23,7 +23,7 @@
  **************************************************************************/
 #include <oGPU/oGPUUtil.h>
 #include <oGPU/oGPUCompiler.h>
-#include <oPlatform/oHLSL.h> // for access to static shaders... can that be made more cross-platform?
+#include <oPlatform/oHLSLShaders.h> // for access to static shaders... can that be made more cross-platform?
 
 int oGPUCalculateVertexSize(const oGPU_VERTEX_ELEMENT* _pElements, size_t _NumElements, int _InputSlot)
 {
@@ -72,15 +72,18 @@ int oGPUCalculateNumInputSlots(const oGPU_VERTEX_ELEMENT* _pElements, size_t _Nu
 	return nSlots;
 }
 
-static const void* oGPUGetVertexSource(size_t _NumSemantics, const oFourCC* _pSupportedSemantics, const void** _ppData, const oGPU_VERTEX_ELEMENT& _Element)
+static void oGPUGetVertexSource(size_t _NumSemantics, const oFourCC* _pSupportedSemantics, const void** _ppData, const size_t* _pElementStrides, const oGPU_VERTEX_ELEMENT& _Element, oGPU_VERTEX_ELEMENT_DATA* _pElementData)
 {
 	for (size_t i = 0; i < _NumSemantics; i++)
 		if (!_Element.Instanced && _Element.Semantic == _pSupportedSemantics[i])
-			return _ppData[i];
-	return nullptr;
+		{
+			_pElementData->pData = _ppData[i];
+			_pElementData->Stride = _pElementStrides[i];
+			break;
+		}
 }
 
-static const void* oGPUGetVertexSource(const oGeometry::DESC& _Desc, oGeometry::CONST_MAPPED& GeoMapped, const oGPU_VERTEX_ELEMENT& _Element)
+static void oGPUGetVertexSource(const oGeometry::DESC& _Desc, oGeometry::CONST_MAPPED& GeoMapped, const oGPU_VERTEX_ELEMENT& _Element, oGPU_VERTEX_ELEMENT_DATA* _pElementData)
 {
 	static const oFourCC sSemantics[] =  { 'POS0', 'NML0', 'TAN0', 'TEX0', 'CLR0', 'CON0', };
 
@@ -93,25 +96,31 @@ static const void* oGPUGetVertexSource(const oGeometry::DESC& _Desc, oGeometry::
 		GeoMapped.pColors,
 		nullptr,
 	};
+	const size_t sStrides[] = 
+	{
+		sizeof(*GeoMapped.pPositions),
+		sizeof(*GeoMapped.pNormals),
+		sizeof(*GeoMapped.pTangents),
+		sizeof(*GeoMapped.pTexcoords),
+		sizeof(*GeoMapped.pColors),
+		0,
+	};
 	
-	return oGPUGetVertexSource(oCOUNTOF(sSemantics), sSemantics, sData, _Element);
+	oGPUGetVertexSource(oCOUNTOF(sSemantics), sSemantics, sData, sStrides, _Element, _pElementData);
 };
 
-static const void* oGPUGetVertexSource(const threadsafe oOBJ* _pOBJ, const oGPU_VERTEX_ELEMENT& _Element)
+static void oGPUGetVertexSource(const threadsafe oOBJ* _pOBJ, const oGPU_VERTEX_ELEMENT& _Element, oGPU_VERTEX_ELEMENT_DATA* _pElementData)
 {
 	oOBJ_DESC d;
 	_pOBJ->GetDesc(&d);
 	static const oFourCC sSemantics[] = { 'POS0', 'NML0', 'TEX0', };
 	const void* sData[] = { d.pPositions, d.pNormals, d.pTexcoords, };
-	return oGPUGetVertexSource(oCOUNTOF(sSemantics), sSemantics, sData, _Element);
+	const size_t sStrides[] = { sizeof(*d.pPositions), sizeof(*d.pNormals), sizeof(*d.pTexcoords), };
+	oGPUGetVertexSource(oCOUNTOF(sSemantics), sSemantics, sData, sStrides, _Element, _pElementData);
 }
 
-static bool oGPUReadVertexSource(oGPUDevice* _pDevice, oGPUMesh* _pMesh, uint _NumElements, const oGPU_VERTEX_ELEMENT* _pElements, const void** _ppElementData, const oFUNCTION<const void*(const oGPU_VERTEX_ELEMENT& _Element)>& _GetVertexSource)
+static bool oGPUReadVertexSource(oGPUDevice* _pDevice, oGPUMesh* _pMesh, uint _NumElements, const oGPU_VERTEX_ELEMENT* _pElements, const oGPU_VERTEX_ELEMENT_DATA* _ppElementData, const oFUNCTION<void(const oGPU_VERTEX_ELEMENT& _Element, oGPU_VERTEX_ELEMENT_DATA* _pElementData)>& _GetVertexSource)
 {
-	// a buffer large enough to contain zeros for any element stride
-	float zeros[8];
-	memset(zeros, 0, sizeof(zeros));
-
 	size_t offset[3];
 	memset(offset, 0, sizeof(offset));
 
@@ -149,29 +158,29 @@ static bool oGPUReadVertexSource(oGPUDevice* _pDevice, oGPUMesh* _pMesh, uint _N
 		if (msrI >= oCOUNTOF(msr))
 			return oErrorSetLast(oERROR_INVALID_PARAMETER, "The %d%s element uses InputSlot %d, which is out of range for an oGPUMesh (must be 0 <= InputSlot <= 2)", oOrdinal(i), _pElements[i].InputSlot);
 
-		const void* pSource = nullptr;
+		oGPU_VERTEX_ELEMENT_DATA Source;
 		size_t ElStride = oSurfaceFormatGetSize(_pElements[i].Format);
 			
 		// _ppElementData always overrides oGeometry, and then only look at 
 		// oGeometry if index == 0 since oGeometry only has 1 channel for each
 		// semantic it supports.
-		if (_ppElementData && _ppElementData[i])
-			pSource = _ppElementData[i];
+		if (_ppElementData && _ppElementData[i].pData)
+			Source = _ppElementData[i];
 		else
-			pSource = _GetVertexSource(_pElements[i]);
+			_GetVertexSource(_pElements[i], &Source);
 
 		void* pDestination = oByteAdd(msr[msrI].pData, offset[msrI]);
 		offset[msrI] += ElStride;
 
-		if (pSource)
-			oMemcpyAsym(pDestination, vertexStride[msrI], pSource, ElStride, d.NumVertices);
+		if (Source.pData)
+			oMemcpy2d(pDestination, vertexStride[msrI], Source.pData, Source.Stride, ElStride, d.NumVertices);
 		else
 		{
 			#ifdef _DEBUG
 				char buf[5];
 				oTRACE("No data for %s (%d%s IAElement) for mesh %s", oToString(buf, _pElements[i].Semantic), i, oOrdinal(i), _pMesh->GetName());
 			#endif
-			oMemsetAsym(pDestination, vertexStride[msrI], zeros, ElStride, d.NumVertices);
+			oMemset2d(pDestination, vertexStride[msrI], 0, ElStride, d.NumVertices);
 		}
 	}
 
@@ -213,7 +222,7 @@ static bool oGPUCreateNormalsList(oGPUDevice* _pDevice, const char* _Name, uint 
 		pLines[i].StartColor = pLines[i].EndColor = _Color;
 	}
 
-	ICL->Commit(LineList, 0, msr, oGPUNewCount(_NumVertices));
+	ICL->Commit(LineList, 0, msr, oGPU_BOX(_NumVertices));
 
 	LineList->Reference();
 	*_ppLineList = LineList;
@@ -240,7 +249,7 @@ static bool oGPUCreateVertexNormals(oGPUDevice* _pDevice, const oGPUMesh* _pMesh
 	return true;
 }
 
-bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, const void** _ppElementData, const oGeometry* _pGeometry, oGPUMesh** _ppMesh, oGPULineList** _ppNormalLines, float _NormalScale, oColor _NormalColor)
+bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, const oGPU_VERTEX_ELEMENT_DATA* _ppElementData, const oGeometry* _pGeometry, oGPUMesh** _ppMesh, oGPULineList** _ppNormalLines, float _NormalScale, oColor _NormalColor)
 {
 	oCONSTRUCT_CLEAR(_ppMesh);
 
@@ -256,10 +265,10 @@ bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERT
 	d.NumVertices = GeoDesc.NumVertices;
 
 	oGeometry::CONST_MAPPED GeoMapped;
-	if (!_pGeometry->Map(&GeoMapped))
+	if (!_pGeometry->MapConst(&GeoMapped))
 		return false; // pass through error
 
-	oOnScopeExit GeoUnmap([&]{ _pGeometry->Unmap(); });
+	oOnScopeExit GeoUnmap([&]{ _pGeometry->UnmapConst(); });
 
 	oRef<oGPUMesh> Mesh;
 	if (!_pDevice->CreateMesh(_MeshName, d, &Mesh))
@@ -284,13 +293,13 @@ bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERT
 		oSURFACE_CONST_MAPPED_SUBRESOURCE smsr;
 		smsr.pData = GeoMapped.pIndices;
 		smsr.RowPitch = sizeof(uint);
-		smsr.SlicePitch = smsr.RowPitch * d.NumIndices;
+		smsr.DepthPitch = smsr.RowPitch * d.NumIndices;
 		oGPUCopyIndices(msr, smsr, d.NumIndices);
 
 		ICL->Commit(Mesh, oGPU_MESH_INDICES, msr);
 	}
 
-	if (!oGPUReadVertexSource(_pDevice, Mesh, _NumElements, _pElements, _ppElementData, oBIND(oGPUGetVertexSource, GeoDesc, GeoMapped, oBIND1)))
+	if (!oGPUReadVertexSource(_pDevice, Mesh, _NumElements, _pElements, _ppElementData, oBIND(oGPUGetVertexSource, GeoDesc, GeoMapped, oBIND1, oBIND2)))
 		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Failed reading vertices");
 
 	if (_ppNormalLines && !oGPUCreateVertexNormals(_pDevice, Mesh, GeoMapped.pPositions, GeoMapped.pNormals, _NormalScale, _NormalColor, _ppNormalLines))
@@ -301,7 +310,7 @@ bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERT
 	return true;
 }
 
-bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, const void** _ppElementData, const threadsafe oOBJ* _pOBJ, oGPUMesh** _ppMesh, oGPULineList** _ppNormalLines, float _NormalScale, oColor _NormalColor)
+bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, const oGPU_VERTEX_ELEMENT_DATA* _ppElementData, const threadsafe oOBJ* _pOBJ, oGPUMesh** _ppMesh, oGPULineList** _ppNormalLines, float _NormalScale, oColor _NormalColor)
 {
 	oOBJ_DESC OBJDesc;
 	_pOBJ->GetDesc(&OBJDesc);
@@ -342,13 +351,13 @@ bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERT
 		oSURFACE_CONST_MAPPED_SUBRESOURCE smsr;
 		smsr.pData = OBJDesc.pIndices;
 		smsr.RowPitch = sizeof(uint);
-		smsr.SlicePitch = smsr.RowPitch * d.NumIndices;
+		smsr.DepthPitch = smsr.RowPitch * d.NumIndices;
 		oGPUCopyIndices(msr, smsr, d.NumIndices);
 
 		ICL->Commit(Mesh, oGPU_MESH_INDICES, msr);
 	}
 
-	if (!oGPUReadVertexSource(_pDevice, Mesh, _NumElements, _pElements, _ppElementData, oBIND(oGPUGetVertexSource, _pOBJ, oBIND1)))
+	if (!oGPUReadVertexSource(_pDevice, Mesh, _NumElements, _pElements, _ppElementData, oBIND(oGPUGetVertexSource, _pOBJ, oBIND1, oBIND2)))
 		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Failed reading vertices");
 
 	if (_ppNormalLines && !oGPUCreateVertexNormals(_pDevice, Mesh, OBJDesc.pPositions, OBJDesc.pNormals, _NormalScale, _NormalColor, _ppNormalLines))
@@ -370,13 +379,38 @@ void oGPUInitMaterialConstants(const oOBJ_MATERIAL& _OBJMaterial, oGPUMaterialCo
 	_pMaterialConstants->IndexOfRefraction = _OBJMaterial.RefractionIndex;
 }
 
-bool oGPUCreateTexture(oGPUDevice* _pDevice, const oImage* _pSourceImage, oGPUTexture** _ppTexture)
+bool oGPUCreateTexture1D(oGPUDevice* _pDevice, const oImage* _pSourceImage, oGPUTexture** _ppTexture)
 {
 	oImage::DESC id;
 	_pSourceImage->GetDesc(&id);
 
 	oGPUTexture::DESC td;
-	td.Dimensions = id.Dimensions;
+	td.Dimensions = int3(id.Dimensions, 1);
+	td.Format = oImageFormatToSurfaceFormat(id.Format);
+	td.NumSlices = 1;
+	td.Type = oGPU_TEXTURE_1D_MAP;
+	if (!_pDevice->CreateTexture(_pSourceImage->GetName(), td, _ppTexture))
+		return false; // pass through error
+
+	oRef<oGPUCommandList> ICL;
+	_pDevice->GetImmediateCommandList(&ICL);
+
+	oSURFACE_MAPPED_SUBRESOURCE msrImage;
+	msrImage.pData = const_cast<void*>(_pSourceImage->GetData());
+	msrImage.RowPitch = id.RowPitch;
+	msrImage.DepthPitch = oImageCalcSize(id.Format, id.Dimensions);
+	ICL->Commit(*_ppTexture, 0, msrImage);
+
+	return true;
+}
+
+bool oGPUCreateTexture2D(oGPUDevice* _pDevice, const oImage* _pSourceImage, oGPUTexture** _ppTexture)
+{
+	oImage::DESC id;
+	_pSourceImage->GetDesc(&id);
+
+	oGPUTexture::DESC td;
+	td.Dimensions = int3(id.Dimensions, 1);
 	td.Format = oImageFormatToSurfaceFormat(id.Format);
 	td.NumSlices = 1;
 	td.Type = oGPU_TEXTURE_2D_MAP;
@@ -389,11 +423,445 @@ bool oGPUCreateTexture(oGPUDevice* _pDevice, const oImage* _pSourceImage, oGPUTe
 	oSURFACE_MAPPED_SUBRESOURCE msrImage;
 	msrImage.pData = const_cast<void*>(_pSourceImage->GetData());
 	msrImage.RowPitch = id.RowPitch;
-	msrImage.SlicePitch = oImageCalcSize(id.Format, id.Dimensions);
+	msrImage.DepthPitch = oImageCalcSize(id.Format, id.Dimensions);
 	ICL->Commit(*_ppTexture, 0, msrImage);
 
 	return true;
 }
+
+bool oGPUCreateTexture3D(oGPUDevice* _pDevice, const oImage** _pSourceImages, uint _NumImages, oGPUTexture** _ppTexture)
+{
+	if (!_NumImages)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Need at least one source image");
+
+	oImage::DESC id;
+	_pSourceImages[0]->GetDesc(&id);
+
+	for (uint imageIndex=0; imageIndex<_NumImages; ++imageIndex)
+	{
+		oImage::DESC idslice;
+		_pSourceImages[imageIndex]->GetDesc(&idslice);
+
+		if (idslice.Dimensions != id.Dimensions || idslice.Format != id.Format)
+			return oErrorSetLast(oERROR_INVALID_PARAMETER, "Source images don't have the same dimensions and/or format");
+	}
+
+	oGPUTexture::DESC td;
+	td.Dimensions = int3(id.Dimensions, _NumImages);
+	td.Format = oImageFormatToSurfaceFormat(id.Format);
+	td.NumSlices = 1;
+	td.Type = oGPU_TEXTURE_3D_MAP;
+	if (!_pDevice->CreateTexture(_pSourceImages[0]->GetName(), td, _ppTexture))
+		return false; // pass through error
+
+	oRef<oGPUCommandList> ICL;
+	_pDevice->GetImmediateCommandList(&ICL);
+
+	for (uint imageIndex=0; imageIndex<_NumImages; ++imageIndex)
+	{
+		oImage::DESC idslice;
+		_pSourceImages[imageIndex]->GetDesc(&idslice);
+
+		oSURFACE_MAPPED_SUBRESOURCE msrImage;
+		msrImage.pData = const_cast<void*>(_pSourceImages[imageIndex]->GetData());
+		msrImage.RowPitch = idslice.RowPitch;
+		msrImage.DepthPitch = oImageCalcSize(idslice.Format, idslice.Dimensions);
+
+		oGPU_BOX region;
+		region.Right = idslice.Dimensions.x;
+		region.Bottom = idslice.Dimensions.y;
+		region.Front = imageIndex;
+		region.Back = imageIndex + 1;
+
+		ICL->Commit(*_ppTexture, 0, msrImage, region);
+	}
+
+	return true;
+}
+
+bool oGPUCreateTextureCube(oGPUDevice* _pDevice, const oImage** _pSourceImages, uint _NumImages, oGPUTexture** _ppTexture)
+{
+	if (!_NumImages)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Need at least one source image");
+
+	oImage::DESC id;
+	_pSourceImages[0]->GetDesc(&id);
+
+	for (uint imageIndex=0; imageIndex<_NumImages; ++imageIndex)
+	{
+		oImage::DESC idslice;
+		_pSourceImages[imageIndex]->GetDesc(&idslice);
+
+		if (idslice.Dimensions != id.Dimensions || idslice.Format != id.Format)
+			return oErrorSetLast(oERROR_INVALID_PARAMETER, "Source images don't have the same dimensions and/or format");
+	}
+
+	oGPUTexture::DESC td;
+	td.Dimensions = int3(id.Dimensions, 1);
+	td.Format = oImageFormatToSurfaceFormat(id.Format);
+	td.NumSlices = _NumImages;
+	td.Type = oGPU_TEXTURE_CUBE_MAP;
+	if (!_pDevice->CreateTexture(_pSourceImages[0]->GetName(), td, _ppTexture))
+		return false; // pass through error
+
+	oRef<oGPUCommandList> ICL;
+	_pDevice->GetImmediateCommandList(&ICL);
+
+	for (uint imageIndex=0; imageIndex<_NumImages; ++imageIndex)
+	{
+		oImage::DESC idslice;
+		_pSourceImages[imageIndex]->GetDesc(&idslice);
+
+		int sliceIndex = imageIndex;
+		int subresource = oSurfaceCalcSubresource(0, sliceIndex, 1);
+
+		oSURFACE_MAPPED_SUBRESOURCE msrImage;
+		msrImage.pData = const_cast<void*>(_pSourceImages[imageIndex]->GetData());
+		msrImage.RowPitch = idslice.RowPitch;
+		msrImage.DepthPitch = oImageCalcSize(idslice.Format, idslice.Dimensions);
+
+		ICL->Commit(*_ppTexture, subresource, msrImage);
+	}
+
+	return true;
+}
+
+bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _NumImages, oSURFACE_DESC& _SurfaceDesc, oGPU_TEXTURE_TYPE _Type, oBuffer* _pMipBuffer)
+{
+	oGPUTexture::DESC rbd;
+	rbd.Dimensions = _SurfaceDesc.Dimensions;
+	rbd.Format = _SurfaceDesc.Format;
+	rbd.NumSlices = _SurfaceDesc.NumSlices;
+	rbd.Type = oGPUTextureTypeGetReadbackType(oGPUTextureTypeGetMipMapType(_Type));
+	oRef<oGPUTexture> ReadbackTexture;
+	_pDevice->CreateTexture("oGPUGenerateMips temporary readback texture", rbd, &ReadbackTexture);
+
+	oGPUGenerateMips(_pDevice, _pMip0Images, _NumImages, ReadbackTexture);
+
+	// Copy from readback texture to the output buffer
+
+	int numMipLevels = oSurfaceCalcNumMips(_SurfaceDesc.Layout, _SurfaceDesc.Dimensions);
+	for (int mipLevel=0; mipLevel<numMipLevels; ++mipLevel)
+	{
+		uint numIterations = oGPUTextureTypeIs3DMap(_Type) ? oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, mipLevel).z : _NumImages;
+		for (uint i=0; i<numIterations; ++i)
+		{
+			uint sliceIndex = oGPUTextureTypeIs3DMap(_Type) ? 0 : i;
+			uint depthIndex = oGPUTextureTypeIs3DMap(_Type) ? i : 0;
+
+			int subresource = oSurfaceCalcSubresource(mipLevel, sliceIndex, numMipLevels);
+
+			int2 byteDimensions;
+			oSURFACE_MAPPED_SUBRESOURCE msrMipDest;
+			oSurfaceCalcMappedSubresource(_SurfaceDesc, subresource, depthIndex, _pMipBuffer->GetData(), &msrMipDest, &byteDimensions);
+
+			oSURFACE_MAPPED_SUBRESOURCE msrMipSrc;
+			_pDevice->MapRead(ReadbackTexture, subresource, &msrMipSrc, true);
+			oSurfaceMappedSubresourceOffsetDepthIndex(msrMipSrc, depthIndex, &msrMipSrc.pData);
+
+			oMemcpy2d(msrMipDest.pData, msrMipDest.RowPitch, msrMipSrc.pData, msrMipSrc.RowPitch, byteDimensions.x, byteDimensions.y, false);
+
+			_pDevice->UnmapRead(ReadbackTexture, subresource);
+		}
+	}
+
+	return true;
+}
+
+bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _NumImages, oGPUTexture* _pOutputTexture)
+{
+	oGPUTexture::DESC td;
+	_pOutputTexture->GetDesc(&td);
+
+	if ((oGPUTextureTypeIs3DMap(td.Type) && td.Dimensions.z != oInt(_NumImages)) ||
+		(oGPUTextureTypeIsCubeMap(td.Type) && td.NumSlices != oInt(_NumImages)))
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Number of mip0 images doesn't match the amount needed in the output texture");
+
+#ifdef _DEBUG
+	oImage::DESC id;
+	_pMip0Images[0]->GetDesc(&id);
+
+	for (uint imageIndex=0; imageIndex<_NumImages; ++imageIndex)
+	{
+		oImage::DESC idslice;
+		_pMip0Images[imageIndex]->GetDesc(&idslice);
+
+		if (idslice.Dimensions != id.Dimensions || idslice.Format != id.Format)
+			return oErrorSetLast(oERROR_INVALID_PARAMETER, "Source images don't have the same dimensions and/or format");
+	}
+#endif
+
+	oRef<oGPURenderTarget> SurfaceRenderTarget;
+	oGPURenderTarget::DESC rtDesc;
+	rtDesc.Dimensions = td.Dimensions;
+	rtDesc.NumSlices = td.NumSlices;
+	rtDesc.MRTCount = 1;
+	rtDesc.Format[0] = td.Format;
+	rtDesc.Type = oGPUTextureTypeStripReadbackType(oGPUTextureTypeGetMipMapType(td.Type));
+	_pDevice->CreateRenderTarget("oGPUGenerateMips temporary render target", rtDesc, &SurfaceRenderTarget);
+
+	oRef<oGPUTexture> Mip0Texture;
+	SurfaceRenderTarget->GetTexture(0, &Mip0Texture);
+
+	oRef<oGPUCommandList> ICL;
+	_pDevice->GetImmediateCommandList(&ICL);
+
+	int numMipLevels = oSurfaceCalcNumMips(oSURFACE_LAYOUT_TIGHT, td.Dimensions);
+	for (uint imageIndex=0; imageIndex<_NumImages; ++imageIndex)
+	{
+		uint sliceIndex = oGPUTextureTypeIs3DMap(td.Type) ? 0 : imageIndex;
+		uint depthIndex = oGPUTextureTypeIs3DMap(td.Type) ? imageIndex : 0;
+
+		oImage::DESC idSlice;
+		_pMip0Images[imageIndex]->GetDesc(&idSlice);
+
+		int subresource = oSurfaceCalcSubresource(0, sliceIndex, numMipLevels);
+
+		oSURFACE_MAPPED_SUBRESOURCE msrImage;
+		msrImage.pData = const_cast<void*>(_pMip0Images[imageIndex]->GetData());
+		msrImage.RowPitch = idSlice.RowPitch;
+		msrImage.DepthPitch = oImageCalcSize(idSlice.Format, idSlice.Dimensions); // Shouldn't this simply be rowPitch*Dimensions.y ?
+
+		oGPU_BOX region;
+		region.Right = td.Dimensions.x;
+		region.Bottom = td.Dimensions.y;
+		region.Front = depthIndex;
+		region.Back = depthIndex + 1;
+
+		ICL->Commit(Mip0Texture, subresource, msrImage, region);
+	}
+
+	ICL->GenerateMips(SurfaceRenderTarget);
+
+	ICL->Copy(_pOutputTexture, Mip0Texture);
+
+	return true;
+}
+
+bool oGPUCreateTexture1DMip(oGPUDevice* _pDevice, const oImage* _pMip0Image, oGPUTexture** _ppTexture)
+{
+	oImage::DESC id;
+	_pMip0Image->GetDesc(&id);
+
+	if (id.Dimensions.y != 1)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "1d textures can't have height");
+
+	oGPUTexture::DESC td;
+	td.Dimensions = int3(id.Dimensions, 1);
+	td.Format = oImageFormatToSurfaceFormat(id.Format);
+	td.NumSlices = 1;
+	td.Type = oGPU_TEXTURE_1D_MAP_MIPS;
+	if (!_pDevice->CreateTexture(_pMip0Image->GetName(), td, _ppTexture))
+		return false; // pass through error
+
+ 	if (!oGPUGenerateMips(_pDevice, &_pMip0Image, 1, *_ppTexture))
+ 		return false; // pass through error
+
+	return true;
+}
+
+bool oGPUCreateTexture2DMip(oGPUDevice* _pDevice, const oImage* _pMip0Image, oGPUTexture** _ppTexture)
+{
+	oImage::DESC id;
+	_pMip0Image->GetDesc(&id);
+
+	oGPUTexture::DESC td;
+	td.Dimensions = int3(id.Dimensions, 1);
+	td.Format = oImageFormatToSurfaceFormat(id.Format);
+	td.NumSlices = 1;
+	td.Type = oGPU_TEXTURE_2D_MAP_MIPS;
+	if (!_pDevice->CreateTexture(_pMip0Image->GetName(), td, _ppTexture))
+		return false; // pass through error
+
+	if (!oGPUGenerateMips(_pDevice, &_pMip0Image, 1, *_ppTexture))
+		return false; // pass through error
+
+	return true;
+}
+
+bool oGPUCreateTexture3DMip(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _NumImages, oGPUTexture** _ppTexture)
+{
+	if (!_NumImages)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Need at least one source image");
+
+	oImage::DESC id;
+	_pMip0Images[0]->GetDesc(&id);
+
+	oGPUTexture::DESC td;
+	td.Dimensions = int3(id.Dimensions, _NumImages);
+	td.Format = oImageFormatToSurfaceFormat(id.Format);
+	td.NumSlices = 1;
+	td.Type = oGPU_TEXTURE_3D_MAP_MIPS;
+	if (!_pDevice->CreateTexture(_pMip0Images[0]->GetName(), td, _ppTexture))
+		return false; // pass through error
+
+	if (!oGPUGenerateMips(_pDevice, _pMip0Images, _NumImages, *_ppTexture))
+		return false; // pass through error
+
+	return true;
+}
+
+bool oGPUCreateTextureCubeMip(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _NumImages, oGPUTexture** _ppTexture)
+{
+	if (_NumImages != 6)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Need 6 Mip0 images");
+
+	oImage::DESC id;
+	_pMip0Images[0]->GetDesc(&id);
+
+	oGPUTexture::DESC td;
+	td.Dimensions = int3(id.Dimensions, 1);
+	td.Format = oImageFormatToSurfaceFormat(id.Format);
+	td.NumSlices = _NumImages;
+	td.Type = oGPU_TEXTURE_CUBE_MAP_MIPS;
+	if (!_pDevice->CreateTexture(_pMip0Images[0]->GetName(), td, _ppTexture))
+		return false; // pass through error
+
+	if (!oGPUGenerateMips(_pDevice, _pMip0Images, _NumImages, *_ppTexture))
+		return false; // pass through error
+
+	return true;
+}
+
+bool oGPUCreateTexture1DMip(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture)
+{
+	if (_SurfaceDesc.NumSlices != 1)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Slices not yet supported in this function");
+
+	if (_SurfaceDesc.Dimensions.y != 1)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "1d textures can't have height");
+
+	oGPUTexture::DESC td;
+	td.Dimensions = _SurfaceDesc.Dimensions;
+	td.Format = _SurfaceDesc.Format;
+	td.NumSlices = _SurfaceDesc.NumSlices;
+	td.Type = oGPU_TEXTURE_1D_MAP_MIPS;
+	if (!_pDevice->CreateTexture(_pBuffer->GetName(), td, _ppTexture))
+		return false; // pass through error
+
+	oRef<oGPUCommandList> ICL;
+	_pDevice->GetImmediateCommandList(&ICL);
+
+	int numMipLevels = oSurfaceCalcNumMips(_SurfaceDesc.Layout, _SurfaceDesc.Dimensions);
+	for (int mipLevel=0; mipLevel<numMipLevels; ++mipLevel)
+	{
+		int subresource = oSurfaceCalcSubresource(mipLevel, 0, numMipLevels);
+
+		oSURFACE_MAPPED_SUBRESOURCE msrMip;
+		oSurfaceCalcMappedSubresource(_SurfaceDesc, subresource, 0, const_cast<void*>(_pBuffer->GetData()), &msrMip);
+
+		ICL->Commit(*_ppTexture, subresource, msrMip);
+	}
+
+	return true;
+}
+
+bool oGPUCreateTexture2DMip(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture)
+{
+	if (_SurfaceDesc.NumSlices != 1)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Slices not yet supported in this function");
+
+	oGPUTexture::DESC td;
+	td.Dimensions = _SurfaceDesc.Dimensions;
+	td.Format = _SurfaceDesc.Format;
+	td.NumSlices = _SurfaceDesc.NumSlices;
+	td.Type = oGPU_TEXTURE_2D_MAP_MIPS;
+	if (!_pDevice->CreateTexture(_pBuffer->GetName(), td, _ppTexture))
+		return false; // pass through error
+
+	oRef<oGPUCommandList> ICL;
+	_pDevice->GetImmediateCommandList(&ICL);
+
+	int numMipLevels = oSurfaceCalcNumMips(_SurfaceDesc.Layout, _SurfaceDesc.Dimensions);
+	for (int mipLevel=0; mipLevel<numMipLevels; ++mipLevel)
+	{
+		int subresource = oSurfaceCalcSubresource(mipLevel, 0, numMipLevels);
+
+		oSURFACE_MAPPED_SUBRESOURCE msrMip;
+		oSurfaceCalcMappedSubresource(_SurfaceDesc, subresource, 0, const_cast<void*>(_pBuffer->GetData()), &msrMip);
+
+		ICL->Commit(*_ppTexture, subresource, msrMip);
+	}
+
+	return true;
+}
+
+bool oGPUCreateTexture3DMip(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture)
+{
+	if (_SurfaceDesc.NumSlices != 1)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "3d textures can't have slices, use oSURFACE_DESC.Depth to specify the depth");
+
+	oGPUTexture::DESC td;
+	td.Dimensions = _SurfaceDesc.Dimensions;
+	td.Format = _SurfaceDesc.Format;
+	td.NumSlices = 1;
+	td.Type = oGPU_TEXTURE_3D_MAP_MIPS;
+	if (!_pDevice->CreateTexture(_pBuffer->GetName(), td, _ppTexture))
+		return false; // pass through error
+
+	oRef<oGPUCommandList> ICL;
+	_pDevice->GetImmediateCommandList(&ICL);
+
+	int numMipLevels = oSurfaceCalcNumMips(_SurfaceDesc.Layout, _SurfaceDesc.Dimensions);
+
+	for (int mipLevel=0; mipLevel<numMipLevels; ++mipLevel)
+	{
+		int3 mipDimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, mipLevel);
+
+		for (int depthIndex=0; depthIndex<mipDimensions.z; ++depthIndex)
+		{
+			int subresource = oSurfaceCalcSubresource(mipLevel, 0, numMipLevels);
+
+			oSURFACE_MAPPED_SUBRESOURCE msrMip;
+			oSurfaceCalcMappedSubresource(_SurfaceDesc, subresource, depthIndex, const_cast<void*>(_pBuffer->GetData()), &msrMip);
+
+			oGPU_BOX region;
+			region.Right = mipDimensions.x;
+			region.Bottom = mipDimensions.y;
+			region.Front = depthIndex;
+			region.Back = depthIndex + 1;
+
+			ICL->Commit(*_ppTexture, subresource, msrMip, region);
+		}
+	}
+
+	return true;
+}
+
+bool oGPUCreateTextureCubeMip(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture)
+{
+	if (_SurfaceDesc.NumSlices != 6)
+		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Cube textures need 6 slices");
+
+	oGPUTexture::DESC td;
+	td.Dimensions = _SurfaceDesc.Dimensions;
+	td.Format = _SurfaceDesc.Format;
+	td.NumSlices = _SurfaceDesc.NumSlices;
+	td.Type = oGPU_TEXTURE_CUBE_MAP_MIPS;
+	if (!_pDevice->CreateTexture(_pBuffer->GetName(), td, _ppTexture))
+		return false; // pass through error
+
+	oRef<oGPUCommandList> ICL;
+	_pDevice->GetImmediateCommandList(&ICL);
+
+	int numMipLevels = oSurfaceCalcNumMips(_SurfaceDesc.Layout, _SurfaceDesc.Dimensions);
+
+	for (int mipLevel=0; mipLevel<numMipLevels; ++mipLevel)
+	{
+		for (int sliceIndex=0; sliceIndex < _SurfaceDesc.NumSlices; ++sliceIndex)
+		{
+			int subresource = oSurfaceCalcSubresource(mipLevel, sliceIndex, numMipLevels);
+
+			oSURFACE_MAPPED_SUBRESOURCE msrMip;
+			oSurfaceCalcMappedSubresource(_SurfaceDesc, subresource, 0, const_cast<void*>(_pBuffer->GetData()), &msrMip);
+
+			ICL->Commit(*_ppTexture, subresource, msrMip);
+		}
+	}
+
+	return true;
+}
+
 
 void oGPUCommitBuffer(oGPUCommandList* _pCommandList, oGPUBuffer* _pBuffer, const void* _pStruct, uint _SizeofStruct, uint _NumStructs)
 {
@@ -401,7 +869,7 @@ void oGPUCommitBuffer(oGPUCommandList* _pCommandList, oGPUBuffer* _pBuffer, cons
 	oSURFACE_MAPPED_SUBRESOURCE msr;
 	msr.pData = const_cast<void*>(_pStruct);
 	msr.RowPitch = _SizeofStruct;
-	msr.SlicePitch = _NumStructs * _SizeofStruct;
+	msr.DepthPitch = _NumStructs * _SizeofStruct;
 	_pCommandList->Commit(_pBuffer, 0, msr);
 }
 
@@ -415,8 +883,59 @@ void oGPUCommitBuffer(oGPUDevice* _pDevice, oGPUBuffer* _pBuffer, const void* _p
 	oSURFACE_MAPPED_SUBRESOURCE msr;
 	msr.pData = const_cast<void*>(_pStruct);
 	msr.RowPitch = _SizeofStruct;
-	msr.SlicePitch = _NumStructs * _SizeofStruct;
+	msr.DepthPitch = _NumStructs * _SizeofStruct;
 	ICL->Commit(_pBuffer, 0, msr);
+}
+
+bool oGPUCreateReadbackCopy(oGPUBuffer* _pSource, oGPUBuffer** _ppReadbackCopy)
+{
+	oRef<oGPUDevice> Device;
+	_pSource->GetDevice(&Device);
+	oGPUBuffer::DESC d;
+	_pSource->GetDesc(&d);
+	d.Type = oGPU_BUFFER_READBACK;
+	oStringS Name;
+	oPrintf(Name, "%s.Readback", _pSource->GetName());
+	return Device->CreateBuffer(Name, d, _ppReadbackCopy);
+}
+
+uint oGPUReadbackCounter(oGPUBuffer* _pUnorderedBuffer, oGPUBuffer* _pPreallocatedReadbackBuffer)
+{
+	oGPUBuffer::DESC d;
+	_pUnorderedBuffer->GetDesc(&d);
+	if (d.Type != oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND && d.Type != oGPU_BUFFER_UNORDERED_STRUCTURED_COUNTER)
+	{
+		oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified buffer must be of type oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND or oGPU_BUFFER_UNORDERED_STRUCTURED_COUNTER");
+		return oInvalid;
+	}
+
+	oRef<oGPUDevice> Device;
+	_pUnorderedBuffer->GetDevice(&Device);
+
+	oRef<oGPUBuffer> Counter = _pPreallocatedReadbackBuffer;
+	if (!Counter)
+	{
+		oStringS Name;
+		oPrintf(Name, "%s.Readback", _pUnorderedBuffer->GetName());
+
+		oGPUBuffer::DESC rb;
+		rb.Type = oGPU_BUFFER_READBACK;
+		rb.StructByteSize = sizeof(uint);
+
+		if (!Device->CreateBuffer(Name, rb, &Counter))
+			return oInvalid; // pass through error
+	}
+
+	oRef<oGPUCommandList> ICL;
+	Device->GetImmediateCommandList(&ICL);
+	ICL->CopyCounter(Counter, 0, _pUnorderedBuffer);
+
+	oSURFACE_MAPPED_SUBRESOURCE msr;
+	if (!Device->MapRead(Counter, 0, &msr, true))
+		return oInvalid; // pass through error
+	uint c = *(uint*)msr.pData;
+	Device->UnmapRead(Counter, 0);
+	return c;
 }
 
 bool oGPURead(oGPUResource* _pSourceResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Destination, bool _FlipVertically)
@@ -496,8 +1015,8 @@ bool oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource, interface oImage** 
 
 	oRef<oImage> Image;
 	oImage::DESC idesc;
-	idesc.RowPitch = oImageCalcRowSize(oImageFormatFromSurfaceFormat(sd.Format), ssrd.Dimensions.x);
-	idesc.Dimensions = ssrd.Dimensions;
+	idesc.RowPitch = oImageCalcRowPitch(oImageFormatFromSurfaceFormat(sd.Format), ssrd.Dimensions.x);
+	idesc.Dimensions = ssrd.Dimensions.xy;
 	idesc.Format = oImageFormatFromSurfaceFormat(sd.Format);
 	if (!oImageCreate("Temp Image", idesc, &Image))
 		return false; // pass through error
@@ -505,7 +1024,7 @@ bool oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource, interface oImage** 
 	oSURFACE_MAPPED_SUBRESOURCE msr;
 	msr.pData = Image->GetData();
 	msr.RowPitch = idesc.RowPitch;
-	msr.SlicePitch = oUInt(Image->GetSize());
+	msr.DepthPitch = oUInt(Image->GetSize());
 	if (!oGPURead(TextureToSave, _Subresource, msr, false))
 		return false;
 
@@ -814,10 +1333,10 @@ bool oGPUMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc)
 	Geo->GetDesc(&GeoDesc);
 
 	oGeometry::CONST_MAPPED GeoMapped;
-	if (!Geo->Map(&GeoMapped))
+	if (!Geo->MapConst(&GeoMapped))
 		return false; // pass through error
 
-	oOnScopeExit OSEGeoUnmap([&] { Geo->Unmap(); });
+	oOnScopeExit OSEGeoUnmap([&] { Geo->UnmapConst(); });
 
 	if (!oGPUCreateMesh(Device, "Mosaic.Mesh", sMosaicElements, oCOUNTOF(sMosaicElements), nullptr, Geo, &Mesh))
 		return false; // pass through error
@@ -835,7 +1354,7 @@ void oGPUMosaicImpl::Draw(oGPUCommandList* _pCommandList, oGPURenderTarget* _pRe
 	_pCommandList->SetSurfaceState(oGPU_TWO_SIDED);
 	_pCommandList->SetDepthStencilState(oGPU_DEPTH_STENCIL_NONE);
 	_pCommandList->SetSamplers(0, oGPU_MAX_NUM_SAMPLERS, samplers);
-	_pCommandList->SetTextures(_TextureStartSlot, _NumTextures, _ppTextures);
+	_pCommandList->SetShaderResources(_TextureStartSlot, _NumTextures, _ppTextures);
 	_pCommandList->SetPipeline(Pipeline);
 	_pCommandList->Draw(Mesh, 0);
 }

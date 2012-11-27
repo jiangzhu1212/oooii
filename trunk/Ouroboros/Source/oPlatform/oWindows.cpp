@@ -774,6 +774,16 @@ private:
 	oRecursiveMutex Mutex;
 };
 
+void oLoadLibrarySingletonCreate()
+{
+	oLoadLibrarySingleton::Singleton()->Reference();
+}
+
+void oLoadLibrarySingletonDestroy()
+{
+	oLoadLibrarySingleton::Singleton()->Release();
+}
+
 //struct LoadLibrarySingletonInstaller
 //{
 //	LoadLibrarySingletonInstaller()

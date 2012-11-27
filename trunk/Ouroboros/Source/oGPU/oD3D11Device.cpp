@@ -35,6 +35,8 @@
 #include "oD3D11Pipeline.h"
 #include "oD3D11Texture.h"
 
+#include "NoopCSByteCode.h"
+
 const oGUID& oGetGUID(threadsafe const oD3D11Device* threadsafe const *)
 {
 	// {882CABF3-9344-40BE-B3F9-A17A2F920751}
@@ -68,10 +70,8 @@ bool ByDrawOrder(const oGPUCommandList* _pCommandList1, const oGPUCommandList* _
 
 bool oGPUDeviceCreate(const oGPUDevice::INIT& _Init, oGPUDevice** _ppDevice)
 {
-	// Create a single-threaded device because all thread safety will be enforced
-	// through other mechanisms.
 	oRef<ID3D11Device> Device;
-	if (!oD3D11CreateDevice(_Init, true, &Device))
+	if (!oD3D11CreateDevice(_Init, false, &Device))
 		return false; // pass through error
 
 	bool success = false;
@@ -124,7 +124,10 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 		{
 			desc.AlphaToCoverageEnable = FALSE;
 			desc.IndependentBlendEnable = FALSE;
-			desc.RenderTarget[0] = sBlends[i];
+
+			for (uint j = 0; j < oCOUNTOF(desc.RenderTarget); j++)
+				desc.RenderTarget[j] = sBlends[i];
+
 			oV(_pDevice->CreateBlendState(&desc, &BlendStates[i]));
 
 			if (!StateExists(i, BlendStates))
@@ -135,6 +138,24 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 		}
 	}
 
+	// Depth States
+	{
+		static const D3D11_DEPTH_STENCIL_DESC sDepthStencils[] = 
+		{
+			{ FALSE, D3D11_DEPTH_WRITE_MASK_ALL, D3D11_COMPARISON_ALWAYS, FALSE, 0xFF, 0XFF, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS },
+			{ TRUE, D3D11_DEPTH_WRITE_MASK_ALL, D3D11_COMPARISON_LESS, FALSE, 0xFF, 0XFF, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS },
+			{ TRUE, D3D11_DEPTH_WRITE_MASK_ZERO, D3D11_COMPARISON_LESS, FALSE, 0xFF, 0XFF, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS },
+		};
+		oFORI(i, DepthStencilStates)
+		{
+			oV(_pDevice->CreateDepthStencilState(&sDepthStencils[i], &DepthStencilStates[i]));
+			if (!StateExists(i, DepthStencilStates))
+			{
+				oPrintf(StateName, "%s.%s", _Init.DebugName.c_str(), oAsString((oGPU_DEPTH_STENCIL_STATE)i));
+				oV(oD3D11SetDebugName(DepthStencilStates[i], StateName));
+			}
+		}
+	}
 	// Surface States
 	{
 		static const D3D11_FILL_MODE sFills[] = 
@@ -244,6 +265,28 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 		}
 	}
 	
+	// Set up some null buffers that will be used to reset parts of the API that
+	// do no easily transition between compute and rasterization pipelines.
+	{
+		// ends up being all set to oInvalid/-1/D3D11_KEEP_UNORDERED_ACCESS_VIEWS 
+		// which means leave value alone
+		memset(NoopUAVInitialCounts, 0xff, sizeof(NoopUAVInitialCounts));
+
+		// set to an array of nulls
+		memset(NullUAVs, 0, sizeof(NullUAVs));
+		memset(NullRTVs, 0, sizeof(NullRTVs));
+	}
+
+	// Set up a noop compute shader to flush for SetCounter()
+	{
+		oV(D3DDevice->CreateComputeShader(NoopCSByteCode, oHLSLGetByteCodeSize(NoopCSByteCode), nullptr, &NoopCS));
+
+		oStringS CSName;
+		oD3D11GetDebugName(CSName, _pDevice);
+		oStrAppendf(CSName, "NoopCS");
+		oVERIFY(oD3D11SetDebugName(NoopCS, CSName));
+	}
+
 	*_pSuccess = true;
 }
 
@@ -326,10 +369,10 @@ void oD3D11Device::MEMReserve(ID3D11DeviceContext* _pDeviceContext, oGPUResource
 	HeapUnlock(hHeap);
 	_pMappedSubresource->pData = p;
 	_pMappedSubresource->RowPitch = ByteDimensions.x;
-	_pMappedSubresource->SlicePitch = oUInt(size);
+	_pMappedSubresource->DepthPitch = oUInt(size);
 }
 
-void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Source, const oRECT& _Subregion) threadsafe
+void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Source, const oGPU_BOX& _Subregion) threadsafe
 {
 	int D3DSubresource = oInvalid;
 	oGPU_RESOURCE_TYPE type = _pResource->GetType();
@@ -346,7 +389,7 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 		// If user memory, subregions are allowed. In either case, line and instance 
 		// lists are special since their _Subregion is used to describe the count of 
 		// valid items AFTER update, not what to actually update.
-		oASSERT(!IsReserveMemory || _Subregion.IsEmpty() || type == oGPU_LINE_LIST || type == oGPU_INSTANCE_LIST, "Attempting to commit memory that had been reserved. Reserve() occurs on whole subresources, no subregions of a subresource so proceeding will commit not only the subregion, but the potentially uninitialized area of the entire subresource.");
+		oASSERT(!IsReserveMemory || _Subregion.Left == _Subregion.Right || type == oGPU_LINE_LIST || type == oGPU_INSTANCE_LIST, "Attempting to commit memory that had been reserved. Reserve() occurs on whole subresources, no subregions of a subresource so proceeding will commit not only the subregion, but the potentially uninitialized area of the entire subresource.");
 	#endif
 
 	switch (type)
@@ -361,7 +404,7 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 				{
 					// @oooii-tony: This is a hack assert. Someone should implement code 
 					// properly such that this assert can be removed.
-					oASSERT(_Subregion.IsEmpty(), "Non-empty subregion not yet supported");
+					oASSERT(_Subregion.Left == _Subregion.Right, "Non-empty subregion not yet supported");
 
 					oD3D11Mesh* m = static_cast<oD3D11Mesh*>(_pResource);
 					memcpy(oGetData(m->Ranges), _Source.pData, oGetDataSize(m->Ranges));
@@ -391,20 +434,29 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 		default:
 		{
 			ID3D11Resource* pD3DResource = oD3D11GetSubresource(_pResource, _Subresource, &D3DSubresource);
-			if (_Subregion.IsEmpty() || type == oGPU_LINE_LIST || type == oGPU_INSTANCE_LIST)
+			if (_Subregion.Left == _Subregion.Right || type == oGPU_LINE_LIST || type == oGPU_INSTANCE_LIST)
 			{
-				oD3D11UpdateSubresource(_pDeviceContext, pD3DResource, D3DSubresource, nullptr, _Source.pData, _Source.RowPitch, _Source.SlicePitch);
+				oD3D11UpdateSubresource(_pDeviceContext, pD3DResource, D3DSubresource, nullptr, _Source.pData, _Source.RowPitch, _Source.DepthPitch);
 			}
-			else if (!_Subregion.IsZero())
+			else if (_Subregion.Left != _Subregion.Right && _Subregion.Top != _Subregion.Bottom && _Subregion.Front != _Subregion.Back)
 			{
+				uint StructureByteStride = 1;
+				if (type == oGPU_BUFFER)
+				{
+					D3D11_BUFFER_DESC d;
+					static_cast<ID3D11Buffer*>(pD3DResource)->GetDesc(&d);
+					StructureByteStride = __max(1, d.StructureByteStride);
+					oASSERT(_Subregion.Top == 0 && _Subregion.Bottom == 1, "");
+				}
+
 				D3D11_BOX box;
-				box.left = oUInt(_Subregion.GetMin().x);
-				box.top = oUInt(_Subregion.GetMin().y);
-				box.right = oUInt(_Subregion.GetMax().x);
-				box.bottom = oUInt(_Subregion.GetMax().y); 
-				box.front = 0;
-				box.back = 1;
-				oD3D11UpdateSubresource(_pDeviceContext, pD3DResource, D3DSubresource, &box, _Source.pData, _Source.RowPitch, _Source.SlicePitch);
+				box.left = _Subregion.Left * StructureByteStride;
+				box.top = _Subregion.Top;
+				box.right = _Subregion.Right * StructureByteStride;
+				box.bottom = _Subregion.Bottom; 
+				box.front = _Subregion.Front;
+				box.back = _Subregion.Back;
+				oD3D11UpdateSubresource(_pDeviceContext, pD3DResource, D3DSubresource, &box, _Source.pData, _Source.RowPitch, _Source.DepthPitch);
 			}
 			break;
 		}
@@ -415,11 +467,11 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 		case oGPU_INSTANCE_LIST:
 		{
 			uint NewCount = 0;
-			if (!_Subregion.IsEmpty())
+			if (_Subregion.Right)
 			{
-				oASSERT(_Subregion.GetMin().x == 0 && _Subregion.GetMin().y == 0, "_Subregion minimum x,y values must be 0 for oGPUInstanceLists.");
-				oASSERT(_Subregion.GetMax().y == 1, "_Subregion maximum y value must be 1 for oGPUInstanceLists.");
-				NewCount = _Subregion.GetMax().x - _Subregion.GetMin().x;
+				oASSERT(_Subregion.Left == 0 && _Subregion.Top == 0 && _Subregion.Front == 0, "_Subregion Left,Top,Front must be 0 for oGPUInstanceLists.");
+				oASSERT(_Subregion.Bottom == 1 && _Subregion.Back == 1, "_Subregion Bottom,Back must be 1 for oGPUInstanceLists.");
+				NewCount = _Subregion.Right;
 			}
 
 			static_cast<oD3D11InstanceList*>(_pResource)->SetNumInstances(NewCount);
@@ -429,11 +481,11 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 		case oGPU_LINE_LIST:
 		{
 			uint NewCount = 0;
-			if (!_Subregion.IsEmpty())
+			if (_Subregion.Right)
 			{
-				oASSERT(_Subregion.GetMin().x == 0 && _Subregion.GetMin().y == 0, "_Subregion minimum x,y values must be 0 for oGPULineLists.");
-				oASSERT(_Subregion.GetMax().y == 1, "_Subregion maximum y value must be 1 for oGPUInstanceLists.");
-				NewCount = _Subregion.GetMax().x - _Subregion.GetMin().x;
+				oASSERT(_Subregion.Left == 0 && _Subregion.Top == 0 && _Subregion.Front == 0, "_Subregion Left,Top,Front must be 0 for oGPULineLists.");
+				oASSERT(_Subregion.Bottom == 1 && _Subregion.Back == 1, "_Subregion Bottom,Back must be 1 for oGPULineLists.");
+				NewCount = _Subregion.Right;
 			}
 			static_cast<oD3D11LineList*>(_pResource)->SetNumLines(NewCount);
 			break;
@@ -493,7 +545,7 @@ bool oD3D11Device::MapRead(oGPUResource* _pReadbackResource, int _Subresource, o
 		return oWinSetLastError();
 	_pMappedSubresource->pData = msr.pData;
 	_pMappedSubresource->RowPitch = msr.RowPitch;
-	_pMappedSubresource->SlicePitch = msr.DepthPitch;
+	_pMappedSubresource->DepthPitch = msr.DepthPitch;
 	return true;
 }
 

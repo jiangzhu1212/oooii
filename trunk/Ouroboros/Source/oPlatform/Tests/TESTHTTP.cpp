@@ -159,9 +159,9 @@ struct TESTHTTP : public oTest
 
 			// Test Head: Head should only return the header for the request.
 			Client->Head("/TESTHTTP.png", &response);
-			oTESTB(response.StatusLine.StatusCode == oHTTP_OK, "Head query for /TESTMediaMovRle10.png did not return success");
-			oTESTB(response.Content.Type == oMIME_IMAGE_PNG, "Head returned incorrect Type for file TESTMediaMovRle10.png");
-			oTESTB(response.Content.Length == 173325, "Head returned incorrect size for image file TESTMediaMovRle10.png");
+			oTESTB(response.StatusLine.StatusCode == oHTTP_OK, "Head query for <GoldenImages>/TESTHTTP.png did not return success");
+			oTESTB(response.Content.Type == oMIME_IMAGE_PNG, "Head returned incorrect Type for file <GoldenImages>/TESTHTTP.png");
+			oTESTB(response.Content.Length == 173325, "Head returned incorrect size for image file <GoldenImages>/TESTHTTP.png");
 
 			// Create a new buffer based on the header from the head command
 			int bufferSize = (int)response.Content.Length;

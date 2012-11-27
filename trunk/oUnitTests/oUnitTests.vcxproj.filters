@@ -115,9 +115,6 @@
     <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUSpinningTriangle.cpp">
       <Filter>Source Files\oGPUTests</Filter>
     </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
     <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTraits.cpp">
       <Filter>Source Files\oGPUTests</Filter>
     </ClCompile>
@@ -129,6 +126,42 @@
     </ClCompile>
     <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUBCEncodeDecode.cpp">
       <Filter>Source Files\oGPUTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUBuffer.cpp">
+      <Filter>Source Files\oGPUTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUGenerateMips.cpp">
+      <Filter>Source Files\oGPUTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture1DMip.cpp">
+      <Filter>Source Files\oGPUTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture2D.cpp">
+      <Filter>Source Files\oGPUTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture2DMip.cpp">
+      <Filter>Source Files\oGPUTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture3D.cpp">
+      <Filter>Source Files\oGPUTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture3DMip.cpp">
+      <Filter>Source Files\oGPUTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTextureCube.cpp">
+      <Filter>Source Files\oGPUTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTextureCubeMip.cpp">
+      <Filter>Source Files\oGPUTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture1D.cpp">
+      <Filter>Source Files\oGPUTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTHLSLMath.cpp">
+      <Filter>Source Files\oPlatformTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTHTTP.cpp">
+      <Filter>Source Files\oPlatformTests</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

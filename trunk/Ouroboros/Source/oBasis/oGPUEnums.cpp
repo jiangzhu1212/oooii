@@ -55,6 +55,17 @@ const char* oAsString(oGPU_VENDOR _Vendor)
 	}
 };
 
+const char* oAsString(oGPU_DEBUG_LEVEL _DebugLevel)
+{
+	switch (_DebugLevel)
+	{
+		case oGPU_DEBUG_NONE: return "None";
+		case oGPU_DEBUG_NORMAL: return "Normal";
+		case oGPU_DEBUG_UNFILTERED: return "Unfiltered";
+		oNODEFAULT;
+	}
+};
+
 const char* oAsString(oGPU_PIPELINE_STAGE _Stage)
 {
 	switch (_Stage)
@@ -122,6 +133,7 @@ const char* oAsString(oGPU_BUFFER_TYPE _Type)
 	{
 		case oGPU_BUFFER_DEFAULT: return "oGPU_BUFFER_DEFAULT";
 		case oGPU_BUFFER_READBACK: return "oGPU_BUFFER_READBACK";
+		case oGPU_BUFFER_UNORDERED_RAW: return "oGPU_BUFFER_UNORDERED_RAW";
 		case oGPU_BUFFER_UNORDERED_UNSTRUCTURED: return "oGPU_BUFFER_UNORDERED_UNSTRUCTURED";
 		case oGPU_BUFFER_UNORDERED_STRUCTURED: return "oGPU_BUFFER_UNORDERED_STRUCTURED";
 		case oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND: return "oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND";

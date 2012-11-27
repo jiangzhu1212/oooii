@@ -132,8 +132,10 @@
     <ClInclude Include="..\..\Include\oPlatform\oConsole.h" />
     <ClInclude Include="..\..\Include\oPlatform\oCPU.h" />
     <ClInclude Include="..\..\Include\oPlatform\oDisplay.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oEMail.h" />
     <ClInclude Include="..\..\Include\oPlatform\oFile.h" />
     <ClInclude Include="..\..\Include\oPlatform\oFileSchemeHandler.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oHLSLShaders.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHTTP.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHTTPClient.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHTTPServer.h" />
@@ -218,11 +220,12 @@
     <ClCompile Include="oDispatchQueueGlobalIOCP.cpp" />
     <ClCompile Include="oDisplay.cpp" />
     <ClCompile Include="oDXGI.cpp" />
+    <ClCompile Include="oEMail.cpp" />
     <ClCompile Include="oFile.cpp" />
     <ClCompile Include="oFileGeneric.cpp" />
     <ClCompile Include="oFileSchemeHandler.cpp" />
     <ClCompile Include="oGDI.cpp" />
-    <ClCompile Include="oHLSL.cpp" />
+    <ClCompile Include="oHLSLShaders.cpp" />
     <ClCompile Include="oHTTP.cpp" />
     <ClCompile Include="oHTTPClient.cpp" />
     <ClCompile Include="oHTTPProtocol.cpp" />
@@ -286,42 +289,6 @@
     <ClCompile Include="SoftLink\oWinVersion.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FXC Include="oHLSL_PS4_0_SAMPLE_FULLSCREEN_I420.sh">
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include</Includes>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
-    </FXC>
-    <FXC Include="oHLSL_PS4_0_SAMPLE_FULLSCREEN_I420_ALPHA.sh">
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include</Includes>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include</Includes>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include</Includes>
-    </FXC>
     <FXC Include="oHLSL_PS4_0_SAMPLE_FULLSCREEN_NV12.sh">
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
       <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>

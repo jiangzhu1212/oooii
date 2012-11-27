@@ -67,7 +67,7 @@ static const float3 Z_FACING_EYE(0.0f, 0.0f, -1.0f);
 // <other vertex attributes>: If the vectors specified are empty, no work is done
 // For any non-empty vectors, new vertices get their values from lerping the 
 // edge endpoints.
-template<typename T> static unsigned int oFindOrCreateMidpointT(unsigned int _Index0, unsigned int _Index1, unsigned int& _IndexCurrent, unsigned int* _pStart, unsigned int* _pEnd, unsigned int* _pMid, std::vector<TVEC3<T>>& _Positions, std::vector<TVEC3<T>>& _Normals, std::vector<TVEC4<T>>& _Tangents, std::vector<TVEC2<T>>& _Texcoords0, std::vector<TVEC2<T>>& _Texcoords1, std::vector<oColor>& _Colors, std::vector<unsigned int>& _ContinuityIDs)
+template<typename T> static unsigned int oFindOrCreateMidpointT(unsigned int _Index0, unsigned int _Index1, unsigned int& _IndexCurrent, unsigned int* _pStart, unsigned int* _pEnd, unsigned int* _pMid, std::vector<TVEC3<T>>& _Positions, std::vector<TVEC3<T>>& _Normals, std::vector<TVEC4<T>>& _Tangents, std::vector<TVEC3<T>>& _Texcoords0, std::vector<TVEC3<T>>& _Texcoords1, std::vector<oColor>& _Colors, std::vector<unsigned int>& _ContinuityIDs)
 {
 	/** <citation
 		usage="Adaptation" 
@@ -137,7 +137,7 @@ template<typename T> static unsigned int oFindOrCreateMidpointT(unsigned int _In
 //            recursively up to the desired subdivision level.
 // _Indices:  List of indices. This will be modified during subdivision
 // _Positions, _Normals, _Tangents, _Texcoords0, _Texcoords1, _Colors
-template<typename T> static void oSubdivideMeshT(unsigned int& _NumEdges, std::vector<unsigned int>& _Indices, std::vector<TVEC3<T>>& _Positions, std::vector<TVEC3<T>>& _Normals, std::vector<TVEC4<T>>& _Tangents, std::vector<TVEC2<T>>& _Texcoords0, std::vector<TVEC2<T>>& _Texcoords1, std::vector<oColor>& _Colors, std::vector<unsigned int>& _ContinuityIDs)
+template<typename T> static void oSubdivideMeshT(unsigned int& _NumEdges, std::vector<unsigned int>& _Indices, std::vector<TVEC3<T>>& _Positions, std::vector<TVEC3<T>>& _Normals, std::vector<TVEC4<T>>& _Tangents, std::vector<TVEC3<T>>& _Texcoords0, std::vector<TVEC3<T>>& _Texcoords1, std::vector<oColor>& _Colors, std::vector<unsigned int>& _ContinuityIDs)
 {
 	// reserve space for more faces
 	_Positions.reserve(_Positions.size() + 2 * _NumEdges);
@@ -183,7 +183,7 @@ template<typename T> static void oSubdivideMeshT(unsigned int& _NumEdges, std::v
 	} 
 }
 
-static void oSubdivideMesh(unsigned int& _NumEdges, std::vector<unsigned int>& _Indices, std::vector<float3>& _Positions, std::vector<float3>& _Normals, std::vector<float4>& _Tangents, std::vector<float2>& _Texcoords0, std::vector<float2>& _Texcoords1, std::vector<oColor>& _Colors, std::vector<unsigned int>& _ContinuityIDs)
+static void oSubdivideMesh(unsigned int& _NumEdges, std::vector<unsigned int>& _Indices, std::vector<float3>& _Positions, std::vector<float3>& _Normals, std::vector<float4>& _Tangents, std::vector<float3>& _Texcoords0, std::vector<float3>& _Texcoords1, std::vector<oColor>& _Colors, std::vector<unsigned int>& _ContinuityIDs)
 {
 	oSubdivideMeshT(_NumEdges, _Indices, _Positions, _Normals, _Tangents, _Texcoords0, _Texcoords1, _Colors, _ContinuityIDs);
 }
@@ -302,8 +302,8 @@ struct oGeometry_Impl : public oGeometry
 	void Transform(const float4x4& _Matrix) override;
 	bool Map(MAPPED* _pMapped) override;
 	void Unmap() override;
-	bool Map(CONST_MAPPED* _pMapped) const override;
-	void Unmap() const override;
+	bool MapConst(CONST_MAPPED* _pMapped) const override;
+	void UnmapConst() const override;
 
 	inline void Clear()
 	{
@@ -367,7 +367,7 @@ struct oGeometry_Impl : public oGeometry
 	inline void PruneUnindexedVertices()
 	{
 		size_t newNumVerts = 0;
-		oPruneUnindexedVertices(oGetData(Indices), Indices.size(), oGetData(Positions), oGetData(Normals), oGetData(Tangents), oGetData(Texcoords), (float2*)0, (unsigned int*)oGetData(Colors), Positions.size(), &newNumVerts);
+		oPruneUnindexedVertices(oGetData(Indices), Indices.size(), oGetData(Positions), oGetData(Normals), oGetData(Tangents), oGetData(Texcoords), (float3*)0, (unsigned int*)oGetData(Colors), Positions.size(), &newNumVerts);
 		if (newNumVerts != Positions.size())
 		{
 			Positions.resize(newNumVerts);
@@ -380,7 +380,7 @@ struct oGeometry_Impl : public oGeometry
 
 	inline void Subdivide(unsigned int _Divide, unsigned int _NumEdges)
 	{
-		std::vector<float2> dummy;
+		std::vector<float3> dummy;
 		for (size_t i = 1; i < _Divide; i++)
 			oSubdivideMesh(_NumEdges, Indices, Positions, Normals, Tangents, Texcoords, dummy, Colors, ContinuityIDs);
 	}
@@ -423,7 +423,7 @@ struct oGeometry_Impl : public oGeometry
 	std::vector<float3> Positions;
 	std::vector<float3> Normals;
 	std::vector<float4> Tangents;
-	std::vector<float2> Texcoords;
+	std::vector<float3> Texcoords;
 	std::vector<oColor> Colors;
 	std::vector<unsigned int> ContinuityIDs;
 	FACE_TYPE FaceType;
@@ -487,6 +487,14 @@ void oGeometry_Impl::Transform(const float4x4& _Matrix, unsigned int _BaseVertex
 		Normals[i] = normalize(r * Normals[i]);
 	for (size_t i = _BaseVertexIndex; i < Tangents.size(); i++)
 		Tangents[i] = float4(normalize(r * Tangents[i].xyz()), Tangents[i].w);
+
+// @oooii-jeffrey: attempt to generate the z of TexCoords
+// 	for (size_t i = _BaseVertexIndex; i < Texcoords.size(); i++)
+// 	{
+// 		float3 uv = float3(Texcoords[i].xy(), 0);
+// 		float3 uvrot = r * uv;
+// 		Texcoords[i].z = uvrot.z;
+// 	}
 };
 
 bool oGeometry_Impl::Map(MAPPED* _pMapped)
@@ -502,7 +510,7 @@ void oGeometry_Impl::Unmap()
 	//Mutex.Unlock();
 }
 
-bool oGeometry_Impl::Map(CONST_MAPPED* _pMapped) const
+bool oGeometry_Impl::MapConst(CONST_MAPPED* _pMapped) const
 {
 	//Mutex.LockRead();
 	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @oooii-tony: safe because we locked above
@@ -510,7 +518,7 @@ bool oGeometry_Impl::Map(CONST_MAPPED* _pMapped) const
 	return true;
 }
 
-void oGeometry_Impl::Unmap() const
+void oGeometry_Impl::UnmapConst() const
 {
 	//Mutex.UnlockRead();
 }
@@ -589,7 +597,7 @@ namespace RectDetails
 		{
 			for (size_t i = 0; i < oCOUNTOF(kCorners); i++)
 			{
-				float2 tc = kCorners[i].xy();
+				float3 tc = kCorners[i];
 				if (!_Desc.FlipTexcoordV) //We are following Directx standards by default
 					tc.y = 1.0f - tc.y;
 				_pGeometry->Texcoords.push_back(tc);
@@ -1172,10 +1180,10 @@ void Clip(const oPlanef& _Plane, bool _Clip, oGeometry_Impl* _pGeometry)
 
 namespace SphereDetails
 {
-static void tcs(std::vector<float2>& tc, const std::vector<float3>& positions, bool hemisphere)
+static void tcs(std::vector<float3>& tc, const std::vector<float3>& positions, bool hemisphere)
 {
-	tc.resize(positions.size());
 	tc.clear();
+	tc.reserve(positions.size());
 
 	for (std::vector<float3>::const_iterator it = positions.begin(); it != positions.end(); ++it)
 	{
@@ -1198,11 +1206,11 @@ static void tcs(std::vector<float2>& tc, const std::vector<float3>& positions, b
 				u = 1.0f - u;
 		}
 
-		tc.push_back(float2(u, v));
+		tc.push_back(float3(u, v, 0.0f));
 	}
 }
 
-static void fix_apex_tcs_octahedron(std::vector<float2>& tc)
+static void fix_apex_tcs_octahedron(std::vector<float3>& tc)
 {
 	// Because the apex is a single vert and represents all
 	// U texture coords from 0 to 1, make that singularity
@@ -1222,14 +1230,14 @@ static void fix_apex_tcs_octahedron(std::vector<float2>& tc)
 	oASSERT(/*"core.geometry", */tc.size() >= 12, "");
 	for (int i = 0; i < oCOUNTOF(Us); i++)
 	{
-		tc[i] = float2(Us[i], tc[i].y);
-		tc[i+9] = float2(Us[i], tc[i+9].y);
+		tc[i] = float3(Us[i], tc[i].y, 0.0f);
+		tc[i+9] = float3(Us[i], tc[i+9].y, 0.0f);
 	}
 
 	tc[8].x = (1.0f);
 }
 
-static void fix_apex_tcs_Icosahedron(std::vector<float2>& tc)
+static void fix_apex_tcs_Icosahedron(std::vector<float3>& tc)
 {
 //	Fatal(/*"core.geometry", */"Icosahedron not yet implemented");
 #if 0
@@ -1244,7 +1252,7 @@ static void fix_apex_tcs_Icosahedron(std::vector<float2>& tc)
 #endif
 }
 
-static void fix_seam(std::vector<float2>& tc, unsigned int a, unsigned int b, float threshold)
+static void fix_seam(std::vector<float3>& tc, unsigned int a, unsigned int b, float threshold)
 {
 	float A = tc[a].x, B = tc[b].x;
 	if ((A - B) > threshold)
@@ -1254,7 +1262,7 @@ static void fix_seam(std::vector<float2>& tc, unsigned int a, unsigned int b, fl
 	}
 }
 
-static void fix_seam_tcs(std::vector<float2>& tc, const std::vector<unsigned int>& indices, float threshold)
+static void fix_seam_tcs(std::vector<float3>& tc, const std::vector<unsigned int>& indices, float threshold)
 {
 	const unsigned int n = static_cast<unsigned int>(indices.size() / 3);
 	for (unsigned int i = 0; i < n; i++)
@@ -1614,16 +1622,16 @@ bool oGeometryFactory_Impl::CreateCylinder(const CYLINDER_DESC& _Desc, const oGe
 			pGeometry->Texcoords.resize(pGeometry->Positions.size());
 			for (size_t i = 0; i < pGeometry->Texcoords.size(); i++)
 			{
-				float2& c = pGeometry->Texcoords[i];
+				float3& c = pGeometry->Texcoords[i];
 				const float3& p = pGeometry->Positions[i];
 
 				float x = ((p.x + _Desc.Radius0) / (2.0f*_Desc.Radius0));
 				float v = p.z / _Desc.Height;
 
 				if (p.y <= 0.0f)
-					c = float2(x * 0.5f, v);
+					c = float3(x * 0.5f, v, 0.0f);
 				else
-					c = float2(1.0f - (x * 0.5f), v);
+					c = float3(1.0f - (x * 0.5f), v, 0.0f);
 			}
 		}
 
@@ -1758,7 +1766,7 @@ bool oGeometryFactory_Impl::CreateTorus(const TORUS_DESC& _Desc, const oGeometry
 						pGeometry->Positions.push_back(p);
 
 					if (_Layout.Texcoords)
-						pGeometry->Texcoords.push_back(float2(1.0f - (i + k) * kInvDivide, j * kInvFacet));
+						pGeometry->Texcoords.push_back(float3(1.0f - (i + k) * kInvDivide, j * kInvFacet, 0.0f));
 
 					if (_Layout.Normals)
 						pGeometry->Normals.push_back(normalize(p - center));
@@ -2015,10 +2023,10 @@ bool oGeometryFactory_Impl::CreateMosaic(const MOSAIC_DESC& _Desc, const oGeomet
 		if (LocalDesc.FlipTexcoordV) //We are following Directx standards by default
 			std::swap(SMin.y, SMax.y);
 		
-		pGeometry->Texcoords.push_back(float2(SMin.x, SMax.y));
-		pGeometry->Texcoords.push_back(SMax);
-		pGeometry->Texcoords.push_back(SMin);
-		pGeometry->Texcoords.push_back(float2(SMax.x, SMin.y));
+		pGeometry->Texcoords.push_back(float3(SMin.x, SMax.y, 0.0f));
+		pGeometry->Texcoords.push_back(float3(SMax, 0.0f));
+		pGeometry->Texcoords.push_back(float3(SMin, 0.0f));
+		pGeometry->Texcoords.push_back(float3(SMax.x, SMin.y, 0.0f));
 
 		// Finally add indices
 

@@ -94,7 +94,7 @@ struct oD3D11Device : oGPUDevice, oNoncopyable
 	void MEMReserve(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource) threadsafe;
 
 	// Implements Commit() in the specified context (immediate or deferred).
-	void MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Source, const oRECT& _Subregion) threadsafe;
+	void MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Source, const oGPU_BOX& _Subregion) threadsafe;
 
 	// Registers a command list in the submission vector sorted by its DrawOrder.
 	// If there is already a command list at the specified order, then this 
@@ -119,6 +119,15 @@ struct oD3D11Device : oGPUDevice, oNoncopyable
 	oRef<ID3D11RasterizerState> SurfaceStates[oGPU_SURFACE_NUM_STATES];
 	oRef<ID3D11DepthStencilState> DepthStencilStates[oGPU_DEPTH_STENCIL_NUM_STATES];
 	oRef<ID3D11SamplerState> SamplerStates[oGPU_SAMPLER_NUM_STATES];
+
+	// used to flush an explicit setting of a UAV counter.
+	oRef<ID3D11ComputeShader> NoopCS;
+
+	// These will hold null/noop values and are initialized only at construction
+	// time, so it's safe to access from command lists in multiple threads.
+	uint NoopUAVInitialCounts[oGPU_MAX_NUM_UNORDERED_BUFFERS];
+	ID3D11UnorderedAccessView* NullUAVs[oGPU_MAX_NUM_UNORDERED_BUFFERS];
+	ID3D11RenderTargetView* NullRTVs[oGPU_MAX_NUM_MRTS];
 
 	// For this heap there shouldn't be too many simultaneous allocations - 
 	// remember this is to support Map/Unmap style API, so maybe on a thread 

@@ -249,6 +249,7 @@ void EnableLogFile(const char* _SpecialModeName, const char* _LogFileName)
 		oStrAppendf(DumpBase, "-%s", _SpecialModeName);
 
 	desc.MiniDumpBase = DumpBase;
+	desc.PromptAfterDump = false;
 	oReportingSetDesc(desc);
 }
 
@@ -405,6 +406,9 @@ int main(int argc, const char* argv[])
 		oTRACE("Unit test (special mode %s) exiting with result: %s", parameters.SpecialMode, oAsString((oTest::RESULT)result));
 	else
 		oTRACE("Unit test exiting with result: %s", oAsString((oTest::RESULT)result));
+
+	// Final flush to ensure oBuildTool gets all our stdout
+	::_flushall();
 
 	return result;
 }

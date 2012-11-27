@@ -75,6 +75,11 @@ void oMemset4(void* _pDestination, long _Value, size_t _NumBytes);
 // different than the data to be moved. In the case where an entire image or 
 // surface is copied, _SourcePitch will likely be very similar or identical to
 // _SourceRowSize.
+// Besides copying AOS to AOS you can also use this function to copy asymmetrical.
+// Set _SourceRowSize to the same value as _SourcePitch (SOA to AOS)
+// or set _SourceRowSize to the same value as _DestinationPitch (AOS to SOA).
+// If copying SOA-style data to AOS-style data, ensure _pDestination is pointing
+// at the first field in the struct to write, not always the start of the struct itself.
 inline void oMemcpy2d(void* oRESTRICT _pDestination, size_t _DestinationPitch, const void* oRESTRICT _pSource, size_t _SourcePitch, size_t _SourceRowSize, size_t _NumRows)
 {
 	if (_DestinationPitch == _SourcePitch && _SourcePitch == _SourceRowSize)
@@ -114,28 +119,6 @@ void oMemset2d(void* _pDestination, size_t _Pitch, int _Value, size_t _SetPitch,
 // sets words at a time.
 void oMemset2d2(void* _pDestination, size_t _Pitch, short _Value, size_t _SetPitch, size_t _NumRows);
 void oMemset2d4(void* _pDestination, size_t _Pitch, long _Value, size_t _SetPitch, size_t _NumRows);
-
-// Copies asymmetrical memory. This is most applicable when converting from AOS
-// source to an SOA destination or vice versa. If copying SOA-style data to AOS-
-// style data, ensure _pDestination is pointing at the first field in the struct 
-// to write, not always the start of the struct itself.
-inline void oMemcpyAsym(void* oRESTRICT _pDestination, size_t _DestinationStride, const void* oRESTRICT _pSource, size_t _SourceStride, size_t _NumElements)
-{
-	const void* end = oByteAdd(_pDestination, _DestinationStride, _NumElements);
-	for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _DestinationStride), _pSource = oByteAdd(_pSource, _SourceStride))
-		memcpy(_pDestination, _pSource, _SourceStride);
-}
-
-// Sets the run of source memory asymmetrically to the destination. This is most 
-// applicable when there's no source for an oMemcpyAsym. Basically the only 
-// difference between this and oMemcpyAsym is that this does not increment 
-// through _pSource, so it will always copy in the same value.
-inline void oMemsetAsym(void* oRESTRICT _pDestination, size_t _DestinationStride, const void* oRESTRICT _pSource, size_t _SourceStride, size_t _NumElements)
-{
-	const void* end = oByteAdd(_pDestination, _DestinationStride, _NumElements);
-	for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _DestinationStride))
-		memcpy(_pDestination, _pSource, _SourceStride);
-}
 
 // Copies 32-bit values to 16-bit values (sometimes useful when working with 
 // graphics index buffers). Remember, _NumElements is count of unsigned ints 

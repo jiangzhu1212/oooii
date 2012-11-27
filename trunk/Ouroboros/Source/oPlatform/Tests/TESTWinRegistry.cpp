@@ -32,16 +32,16 @@ struct TESTWinRegistry : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oTESTB(oWinRegistrySetValue(KeyPath, ValueName, KeyTestValue), "Failed to set key %s", oErrorGetLastString());
+		oTESTB(oWinRegistrySetValue(oHKEY_CURRENT_USER, KeyPath, ValueName, KeyTestValue), "Failed to set key %s", oErrorGetLastString());
 		oStringL data;
-		oTESTB(!oWinRegistryGetValue(data.c_str(), data.capacity(), KeyPath, "Non-existant-ValueName"), "Succeeded reading a non-existant key %s", oErrorGetLastString());
-		oTESTB(oWinRegistryGetValue(data.c_str(), data.capacity(), KeyPath, ValueName), "Failed to read key %s", oErrorGetLastString());
+		oTESTB(!oWinRegistryGetValue(data, oHKEY_CURRENT_USER, KeyPath, "Non-existant-ValueName"), "Succeeded reading a non-existant key %s", oErrorGetLastString());
+		oTESTB(oWinRegistryGetValue(data, oHKEY_CURRENT_USER, KeyPath, ValueName), "Failed to read key %s", oErrorGetLastString());
 
 		oTESTB(oStrcmp(data, KeyTestValue) == 0, "Set/Read values do not match");
-		oTESTB(oWinRegistryDeleteValue(KeyPath, ValueName), "Failed to delete key %s", oErrorGetLastString());
+		oTESTB(oWinRegistryDeleteValue(oHKEY_CURRENT_USER, KeyPath, ValueName), "Failed to delete key %s", oErrorGetLastString());
 
 		// Delete oUnitTest (if empty) and delete OOOii (if empty)
-		oTESTB0(oWinRegistryDeleteKey("Software/OOOii-oUnitTests"));
+		oTESTB0(oWinRegistryDeleteKey(oHKEY_CURRENT_USER, "Software/OOOii-oUnitTests"));
 
 		return SUCCESS;
 	}

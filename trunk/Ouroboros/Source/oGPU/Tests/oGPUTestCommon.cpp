@@ -135,19 +135,19 @@ bool oGPUTestInitFirstTriangle(oGPUDevice* _pDevice, const char* _Name, const oG
 	oSURFACE_MAPPED_SUBRESOURCE msr;
 	msr.pData = &r;
 	msr.RowPitch = sizeof(r);
-	msr.SlicePitch = sizeof(r);
+	msr.DepthPitch = sizeof(r);
 	ICL->Commit(Mesh, oGPU_MESH_RANGES, msr);
 
 	static const ushort Indices[] = { 0, 1, 2 };
 	msr.pData = (void*)Indices;
 	msr.RowPitch = sizeof(ushort);
-	msr.SlicePitch = sizeof(Indices);
+	msr.DepthPitch = sizeof(Indices);
 	ICL->Commit(Mesh, oGPU_MESH_INDICES, msr);
 
 	static const float3 Positions[] = { float3(-0.75f, -0.667f, 0.0f), float3(0.0f, 0.667f, 0.0f), float3(0.75f, -0.667f, 0.0f) };
 	msr.pData = (void*)Positions;
 	msr.RowPitch = sizeof(float3);
-	msr.SlicePitch = sizeof(Positions);
+	msr.DepthPitch = sizeof(Positions);
 	ICL->Commit(Mesh, oGPU_MESH_VERTICES0, msr);
 
 	Mesh->Reference();

@@ -99,6 +99,12 @@ interface oImage : oBuffer
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 
+	// Non-performant API used for test cases. Do not use this unless in the most
+	// trivial of debug code. Operation on the contents of GetData without 
+	// conversion, preferably using parallelism.
+	virtual void Put(const int2& _Coord, oColor _Color) = 0;
+	virtual oColor Get(const int2& _Coord) const = 0;
+
 	// Assumes the source buffer is the same format as this oImage and copies its
 	// bitmap data into this oImage's store without changing topology information.
 	virtual void CopyData(const void* _pSourceBuffer, size_t _SourceRowPitch, bool _FlipVertically = false) threadsafe = 0;
@@ -128,23 +134,13 @@ inline void oImageGetSurfaceDesc(const oImage* _pImage, oSURFACE_DESC* _pSurface
 	oImage::DESC IDesc;
 	_pImage->GetDesc(&IDesc);
 
-	oSURFACE_DESC SDesc;
-	_pSurfaceDesc->Dimensions = IDesc.Dimensions;
+	_pSurfaceDesc->Dimensions = int3(IDesc.Dimensions, 1);
+	_pSurfaceDesc->NumSlices = 1;
 	_pSurfaceDesc->Format = oImageFormatToSurfaceFormat(IDesc.Format);
 	_pSurfaceDesc->Layout = oSURFACE_LAYOUT_IMAGE;
 };
 
-inline int oImageCalcRowSize(oImage::FORMAT _Format, int _Width) { return oSurfaceMipCalcRowSize(oImageFormatToSurfaceFormat(_Format), _Width); }
-
-inline int oImageCalcRowPitch(oImage::FORMAT _Format, int _Width)
-{
-	oSURFACE_DESC d;
-	d.Dimensions = int2(_Width,1);
-	d.Format = oImageFormatToSurfaceFormat(_Format);
-	d.Layout = oSURFACE_LAYOUT_IMAGE;
-	return oSurfaceMipCalcRowPitch(d);
-}
-
+inline int oImageCalcRowPitch(oImage::FORMAT _Format, int _Width) { return oSurfaceMipCalcRowSize(oImageFormatToSurfaceFormat(_Format), _Width); }
 inline int oImageGetBitSize(oImage::FORMAT _Format) { return oSurfaceFormatGetBitSize(oImageFormatToSurfaceFormat(_Format)); }
 inline int oImageGetSize(oImage::FORMAT _Format) { return oSurfaceFormatGetSize(oImageFormatToSurfaceFormat(_Format)); }
 inline int oImageCalcSize(oImage::FORMAT _Format, const int2& _Dimensions) { return oSurfaceMipCalcSize(oImageFormatToSurfaceFormat(_Format), _Dimensions); }
@@ -178,6 +174,9 @@ inline bool oImageCreate(const char* _Name, const void* _pBuffer, size_t _SizeOf
 // return false in error.
 oAPI bool oImageCreate(const char* _Name, const oImage::DESC& _Desc, oImage** _ppImage);
 
+// Creates an uninitialized oImage from the specified oSURFACE_DESC.
+oAPI bool oImageCreate(const char* _Name, const oSURFACE_DESC& _Desc, oImage** _ppImage);
+
 // Creates a copy of the specified _pSourceImage in the form of a Windows 
 // platform HBITMAP. Use DeleteObject() when finished with the HBITMAP.
 oAPI bool oImageCreateBitmap(const threadsafe oImage* _pSourceImage, struct HBITMAP__** _ppBitmap);
@@ -204,7 +203,7 @@ inline bool oImageLoad(const char* _Path, oImage** _ppImage) { return oImageLoad
 // images. This returns false if there are topological differences in the images
 // that prevents a per-pixel compare (differing format/dimensions) and true if
 // the pixel compare was able to complete. So images are the same if this 
-// function returns true AND RootMeanSquare is below a threashold the client 
+// function returns true AND RootMeanSquare is below a threshold the client 
 // code finds acceptable.
 oAPI bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _pImage2, unsigned int _BitTolerance, float* _pRootMeanSquare = nullptr, oImage** _ppDiffImage = nullptr, unsigned int _DiffMultiplier = 1);
 

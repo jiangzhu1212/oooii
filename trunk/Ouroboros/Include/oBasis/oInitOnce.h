@@ -81,9 +81,9 @@ public:
 		#endif
 		return Value;
 	}
-
-	const T* operator->() const threadsafe { return thread_cast<const T*>(&Value); } // oInitOnce guarantees values never change, so read-only access will be threadsafe
 	const T& operator*() const threadsafe { return thread_cast<const T&>(Value); } // oInitOnce guarantees values never change, so read-only access will be threadsafe
+	const T* c_ptr() const threadsafe { return thread_cast<const T*>(&Value); } // oInitOnce guarantees values never change, so read-only access will be threadsafe
+	const T* operator->() const threadsafe { return c_ptr(); } 
 
 private:
 	T Value;

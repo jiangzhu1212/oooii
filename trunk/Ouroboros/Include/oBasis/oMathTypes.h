@@ -29,7 +29,7 @@
 #define oMathTypes_h
 
 #include <oBasis/oColor.h>
-#include <oBasis/oMathInternalTypes.h>
+#include <oBasis/oHLSLTypes.h>
 #include <oBasis/oTypes.h>
 
 typedef TVEC2<char> char2; typedef TVEC2<uchar> uchar2;
@@ -37,26 +37,15 @@ typedef TVEC3<char> char3; typedef TVEC3<uchar> uchar3;
 typedef TVEC4<char> char4; typedef TVEC4<uchar> uchar4;
 
 // _____________________________________________________________________________
-// HLSL types
+// HLSL-like types not in the HLSL specification
 
 typedef TVEC2<short> short2; typedef TVEC2<ushort> ushort2;
 typedef TVEC3<short> short3; typedef TVEC3<ushort> ushort3;
 typedef TVEC4<short> short4; typedef TVEC4<ushort> ushort4;
 
-typedef TVEC2<int> int2; typedef TVEC2<uint> uint2;
-typedef TVEC3<int> int3; typedef TVEC3<uint> uint3;
-typedef TVEC4<int> int4; typedef TVEC4<uint> uint4;
-
 typedef TVEC2<llong> llong2; typedef TVEC2<ullong> ullong2;
 typedef TVEC3<llong> llong3; typedef TVEC3<ullong> ullong3;
 typedef TVEC4<llong> llong4; typedef TVEC4<ullong> ullong4;
-
-typedef TVEC2<float> float2; typedef TVEC2<double> double2;
-typedef TVEC3<float> float3; typedef TVEC3<double> double3;
-typedef TVEC4<float> float4; typedef TVEC4<double> double4;
-
-typedef TMAT3<float> float3x3; typedef TMAT3<double> double3x3;
-typedef TMAT4<float> float4x4; typedef TMAT4<double> double4x4;
 
 // _____________________________________________________________________________
 // Additional types
@@ -91,12 +80,5 @@ typedef TPLANE<float> oPlanef; typedef TPLANE<double> oPlaned;
 typedef TAABOX<float, TVEC3<float>> oAABoxf; typedef TAABOX<double, TVEC3<double>> oAABoxd;
 typedef TAABOX<int, TVEC2<int>> oRECT;
 typedef TAABOX<float, TVEC2<float>> oRECTF;
-
-// _____________________________________________________________________________
-// Commonly used values
-
-static const float2 oZERO2(0.0f, 0.0f);
-static const float3 oZERO3(0.0f, 0.0f, 0.0f);
-static const float4 oZERO4(0.0f, 0.0f, 0.0f, 0.0f);
 
 #endif

@@ -35,6 +35,12 @@
 #define oTESTERROR(format, ...) do { oPrintf(_StrStatus, _SizeofStrStatus, format, ## __VA_ARGS__); oTRACE("FAILING: %s (oErrorGetLast() == %s (%s))", _StrStatus, oAsString(oErrorGetLast()), oErrorGetLastString()); return oErrorGetLast() == oERROR_LEAKS ? oTest::LEAKS : oTest::FAILURE; } while(false)
 #define oTESTB(expr, errMsg, ...) do { if (!(expr)) { oTESTERROR(errMsg, ## __VA_ARGS__); } } while(false)
 #define oTESTB0(expr) do { if (!(expr)) { oPrintf(_StrStatus, _SizeofStrStatus, "%s: %s", oAsString(oErrorGetLast()), oErrorGetLastString()); return oTest::FAILURE; } } while(false)
+#define oTESTB_FWD( _FWDFn) \
+	{ \
+		RESULT Result = _FWDFn; \
+		if( SUCCESS != Result ) \
+			return Result; \
+	}
 #define oTESTI(oImagePointer) oTESTB0(TestImage(oImagePointer));
 
 #define oTESTI2(oImagePointer, NthFrame) oTESTB0(TestImage(oImagePointer, NthFrame));

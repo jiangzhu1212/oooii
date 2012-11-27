@@ -178,6 +178,18 @@ struct oImageImpl : public oImage
 		FreeImage_Unload(FIBitmap);
 	}
 
+	void Put(const int2& _Coord, oColor _Color) override
+	{
+		FreeImage_SetPixelColor(FIBitmap, _Coord.x, _Coord.y, (RGBQUAD*)&_Color);
+	}
+
+	oColor Get(const int2& _Coord) const override
+	{
+		oColor c;
+		FreeImage_GetPixelColor(FIBitmap, _Coord.x, _Coord.y, (RGBQUAD*)&c);
+		return c;
+	}
+
 	void CopyData(const void* _pSourceBuffer, size_t _SourceRowPitch, bool _FlipVertically) threadsafe override
 	{
 		oLockGuard<oSharedMutex> Lock(Mutex);
@@ -243,6 +255,15 @@ bool oImageCreate(const char* _Name, const oImage::DESC& _Desc, oImage** _ppImag
 	bool success = false;
 	oCONSTRUCT(_ppImage, oImageImpl(_Name, _Desc, &success));
 	return success;
+}
+
+bool oImageCreate(const char* _Name, const oSURFACE_DESC& _Desc, oImage** _ppImage)
+{
+	oImage::DESC id;
+	id.Format = oImageFormatFromSurfaceFormat(_Desc.Format);
+	id.Dimensions = oSurfaceCalcDimensions(_Desc);
+	id.RowPitch = oSurfaceMipCalcRowPitch(_Desc, 0);
+	return oImageCreate(_Name, id, _ppImage);
 }
 
 #if defined(_WIN32) || defined(_WIN64)

@@ -41,15 +41,18 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 
 	void Begin() override;
 	void End() override;
+	void Flush() override;
 	void Reserve(oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource) override;
-	void Commit(oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Source, const oRECT& _Subregion = oRECT()) override;
+	void Commit(oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Source, const oGPU_BOX& _Subregion = oGPU_BOX()) override;
 	void Copy(oGPUResource* _pDestination, oGPUResource* _pSource) override;
+	void Copy(oGPUBuffer* _pDestination, int _DestinationOffsetBytes, oGPUBuffer* _pSource, int _SourceOffsetBytes, int _SizeBytes) override;
+	void CopyCounter(oGPUBuffer* _pDestination, uint _DestinationAlignedOffset, oGPUBuffer* _pUnorderedSource) override;
+	void SetCounters(int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pValues) override;
 	void SetSamplers(int _StartSlot, int _NumStates, const oGPU_SAMPLER_STATE* _pSamplerState) override;
-	void SetTextures(int _StartSlot, int _NumTextures, const oGPUTexture* const* _ppTextures) override;
-	void SetConstants(int _StartSlot, int _NumConstants, const oGPUBuffer* const* _ppConstants) override;
+	void SetShaderResources(int _StartSlot, int _NumResources, const oGPUResource* const* _ppResources) override;
+	void SetBuffers(int _StartSlot, int _NumBuffers, const oGPUBuffer* const* _ppConstants) override;
 
-	void SetRenderTarget(oGPURenderTarget* _pRenderTarget, int _NumViewports = 0, const oAABoxf* _pViewports = nullptr) override;
-	void SetRenderTargetAndUnorderedTextures(oGPURenderTarget* _pRenderTarget, int _NumViewports, const oAABoxf* _pViewports, int _NumUnorderedTextures, oGPUTexture** _ppUnorderedTextures) override;
+	void SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const oAABoxf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) override;
 	void SetPipeline(const oGPUPipeline* _pPipeline) override;
 	void SetSurfaceState(oGPU_SURFACE_STATE _State) override;
 	void SetBlendState(oGPU_BLEND_STATE _State) override;
@@ -57,13 +60,15 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	void Clear(oGPURenderTarget* _pRenderTarget, oGPU_CLEAR _Clear) override;
 	void Draw(const oGPUMesh* _pMesh, int _RangeIndex, const oGPUInstanceList* _pInstanceList = nullptr) override;
 	void Draw(const oGPULineList* _pLineList) override;
+	void Draw(uint _VertexCount) override;
+	void Draw(oGPUBuffer* _pDrawArgs, int _AlignedByteOffsetForArgs) override;
 	void DrawSVQuad(uint _NumInstances = 1) override;
+	bool GenerateMips(oGPURenderTarget* _pRenderTarget) override;
+	void ClearI(oGPUResource* _pUnorderedResource, const uint4 _Values) override;
+	void ClearF(oGPUResource* _pUnorderedResource, const float4 _Values) override;
 
-
-	void ClearI(oGPUResource* _pUnorderedResource, const uint _Values[4]) override;
-	void ClearF(oGPUResource* _pUnorderedResource, const float _Values[4]) override;
-	void Dispatch(oGPUComputeShader* _pComputeShader, const int3& _ThreadGroupCount, int _NumUnorderedResources, const oGPUResource* const* _ppUnorderedResources) override;
-	void Dispatch(oGPUComputeShader* _pComputeShader, oGPUBuffer* _pThreadGroupCountBuffer, int _AlignedByteOffsetToThreadGroupCount, int _NumUnorderedResources, const oGPUResource* const* _ppUnorderedResources) override;
+	void Dispatch(oGPUComputeShader* _pComputeShader, const int3& _ThreadGroupCount) override;
+	void Dispatch(oGPUComputeShader* _pComputeShader, oGPUBuffer* _pThreadGroupCountBuffer, int _AlignedByteOffsetToThreadGroupCount) override;
 
 	oRef<ID3D11DeviceContext> Context;
 	oRef<ID3D11CommandList> CommandList;
@@ -73,6 +78,9 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	// This thread_cast is safe because oD3D11CommandList is single-threaded
 	// and most access is to get at common/safe resources
 	inline oD3D11Device* D3DDevice() { return thread_cast<oD3D11Device*>(static_cast<threadsafe oD3D11Device*>(Device.c_ptr())); }
+
+private:
+	void CSSetState(oGPUComputeShader* _pComputeShader, int _NumUnorderedResources, const oGPUResource* const* _ppUnorderedResources, uint* _pInitialCounts);
 };
 
 #endif

@@ -133,7 +133,7 @@ template<size_t capacity> char* oReplaceFileExtension(oFixedString<char, capacit
 template<size_t capacity> char* oReplaceFilename(oFixedString<char, capacity>& _Path, const char* _Filename) { return oReplaceFilename(_Path, _Path.capacity(), _Filename); }
 template<size_t capacity> char* oEnsureSeparator(oFixedString<char, capacity>& _Path, char _FileSeparator = '/') { return oEnsureSeparator(_Path, _Path.capacity(), _FileSeparator); }
 template<size_t capacity> char* oCleanPath(oFixedString<char, capacity>& _Path, const char* _SourcePath, char _FileSeparator = '/', bool _ZeroBuffer = false) { return oCleanPath(_Path, _Path.capacity(), _SourcePath, _FileSeparator, _ZeroBuffer); }
-template<size_t capacity> char* oMakeRelativePath(oFixedString<char, capacity>& _Path, const char* _FullPath, const char* _BasePath, char _FileSeparator = '/') { return oMakeRelativePath(_StrDestination, _StrDestination.capacity(), _FullPath, _BasePath, _FileSeparator); }
+template<size_t capacity> char* oMakeRelativePath(oFixedString<char, capacity>& _Path, const char* _FullPath, const char* _BasePath, char _FileSeparator = '/') { return oMakeRelativePath(_Path, _Path.capacity(), _FullPath, _BasePath, _FileSeparator); }
 template<size_t capacity> char* oFindInPath(oFixedString<char, capacity>& _Path, const char* _SearchPath, const char* _RelativePath, const char* _DotPath, oFUNCTION_PATH_EXISTS _PathExists) { return oFindInPath(_Path, _Path.capacity(), _SearchPath, _RelativePath, _DotPath, _PathExists); }
 template<size_t capacity> char* oStrTokToSwitches(oFixedString<char, capacity>& _StrDestination, const char* _Switch, const char* _Tokens, const char* _Separator) { return oStrTokToSwitches(_StrDestination, _StrDestination.capacity(), _Switch, _Tokens, _Separator); }
 

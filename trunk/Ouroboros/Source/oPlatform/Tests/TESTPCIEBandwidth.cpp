@@ -60,7 +60,7 @@ public:
 		{
 			TextureData.resize(FrameSize * _numTextures);
 			oSURFACE_DESC surfaceDesc;
-			surfaceDesc.Dimensions = int2(Width, Height);
+			surfaceDesc.Dimensions = int3(Width, Height, 1);
 			surfaceDesc.Format = Format;
 
 			for (int i = 0;i < NumTextures; ++i)
@@ -68,7 +68,7 @@ public:
 				oSURFACE_MAPPED_SUBRESOURCE data;
 				data.pData = oByteAdd(oGetData(TextureData), FrameSize*i);
 				data.RowPitch = oSurfaceMipCalcRowPitch(surfaceDesc);
-				data.SlicePitch = 0;
+				data.DepthPitch = oSurfaceMipCalcDepthPitch(surfaceDesc);
 				SubResourceData.push_back(data);
 			}
 		}
@@ -230,9 +230,9 @@ struct TESTWindow
 			{
 				for (int i = 0; i < oInt(Textures.size()); ++i)
 				{
-					oRECT dstRect;
-					dstRect.SetMin(int2(0,0));
-					dstRect.SetMax(int2(Settings.Tests[LocalCurrentTest].Width, Settings.Tests[LocalCurrentTest].Height));
+					oGPU_BOX dstRect;
+					dstRect.Right = Settings.Tests[LocalCurrentTest].Width;
+					dstRect.Bottom = Settings.Tests[LocalCurrentTest].Height;
 
 					auto subResourceData = Settings.Tests[LocalCurrentTest].GetTextureSourceData(i);
 					CurrentCommandList->Commit(Textures[i], 0, *subResourceData, dstRect);
@@ -250,7 +250,7 @@ struct TESTWindow
 			}
 
 			for (int i = 0; i < oInt(Textures.size()); ++i)
-				CurrentCommandList->SetTextures(i, 1, &Textures[i]);
+				CurrentCommandList->SetShaderResources(i, 1, &Textures[i]);
 
 			Mosaic->Draw(CurrentCommandList, _pPrimaryRenderTarget, 0, oUInt(Textures.size()), &Textures[0]);
 
@@ -275,7 +275,7 @@ struct TESTWindow
 		for (int i = 0;i < _test.NumTextures; ++i)
 		{
 			oGPUTexture::DESC texDesc;
-			texDesc.Dimensions = int2(_test.Width, _test.Height);
+			texDesc.Dimensions = int3(_test.Width, _test.Height, 1);
 			texDesc.NumSlices = 1;
 			texDesc.Format = _test.Format;
 			texDesc.Type = oGPU_TEXTURE_2D_MAP;

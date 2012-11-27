@@ -44,6 +44,7 @@ interface oProcess : oInterface
 			, StdHandleBufferSize(0)
 			, SetFocus(true)
 			, StartMinimized(false)
+			, HideWindow(false)
 			// ALWAYS start suspended unless you have an excellent, approved reason 
 			// to not use this. Then use Start() so there's always a place to put a 
 			// breakpoint when spawning a new process so a debugger can be attached.
@@ -64,6 +65,7 @@ interface oProcess : oInterface
 		bool SetFocus:1;
 		bool StartMinimized:1;
 		bool StartSuspended:1;
+		bool HideWindow:1;
 	};
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;

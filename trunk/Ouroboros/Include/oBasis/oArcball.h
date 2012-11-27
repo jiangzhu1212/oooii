@@ -177,9 +177,12 @@ public:
 	// (LastPos - PointerPos) * SpeedScalar
 	inline void Rotate(const float2& _ScreenPointDelta)
 	{
-		float3 OldT = mul(invert(R), T - LookAt);
-		R = mul(R, oCreateRotationQ(float3(_ScreenPointDelta.yx(), 0.0f)));
-		T = mul(R, OldT) + LookAt;
+		if (!oEqual(_ScreenPointDelta, float2(0.0f, 0.0f)))
+		{
+			float3 OldT = mul(invert(R), T - LookAt);
+			R = mul(R, oCreateRotationQ(float3(_ScreenPointDelta.yx(), 0.0f)));
+			T = mul(R, OldT) + LookAt;
+		}
 	}
 };
 

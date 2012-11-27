@@ -45,17 +45,43 @@
     <FXC Include="Tests\oGPUTestColorPS.sh">
       <Filter>Shaders</Filter>
     </FXC>
-    <FXC Include="Tests\oGPUTestTexturePS.sh">
+    <FXC Include="Tests\oGPUTestTexture1DVS.sh">
       <Filter>Shaders</Filter>
     </FXC>
-    <FXC Include="Tests\oGPUTestWhiteVS.sh" />
-    <FXC Include="Tests\oGPUTestTextureVS.sh">
+    <FXC Include="Tests\oGPUTestTexture1DPS.sh">
+      <Filter>Shaders</Filter>
+    </FXC>
+    <FXC Include="Tests\oGPUTestTexture2DPS.sh">
+      <Filter>Shaders</Filter>
+    </FXC>
+    <FXC Include="Tests\oGPUTestTexture2DVS.sh">
+      <Filter>Shaders</Filter>
+    </FXC>
+    <FXC Include="Tests\oGPUTestTexture3DVS.sh">
+      <Filter>Shaders</Filter>
+    </FXC>
+    <FXC Include="Tests\oGPUTestTexture3DPS.sh">
+      <Filter>Shaders</Filter>
+    </FXC>
+    <FXC Include="Tests\oGPUTestTextureCubeVS.sh">
+      <Filter>Shaders</Filter>
+    </FXC>
+    <FXC Include="Tests\oGPUTestTextureCubePS.sh">
       <Filter>Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestWhiteInstancedVS.sh">
       <Filter>Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestPassThroughColorVS.sh">
+      <Filter>Shaders</Filter>
+    </FXC>
+    <FXC Include="Tests\oGPUTestBufferVS.sh">
+      <Filter>Shaders</Filter>
+    </FXC>
+    <FXC Include="Tests\oGPUTestBufferPS.sh">
+      <Filter>Shaders</Filter>
+    </FXC>
+    <FXC Include="Tests\oGPUTestWhiteVS.sh">
       <Filter>Shaders</Filter>
     </FXC>
   </ItemGroup>

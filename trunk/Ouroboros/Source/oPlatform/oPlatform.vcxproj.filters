@@ -276,6 +276,10 @@
     <ClInclude Include="oHTTPInternal.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oHLSLShaders.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oEMail.h">
+      <Filter>Headers\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oConsole.cpp">
@@ -449,9 +453,6 @@
     <ClCompile Include="SoftLink\oWinNetApi32.cpp">
       <Filter>Source\Windows\SoftLink</Filter>
     </ClCompile>
-    <ClCompile Include="oHLSL.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oInterprocessEvent.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -500,6 +501,10 @@
     <ClCompile Include="oHTTPServer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="oHLSLShaders.cpp" />
+    <ClCompile Include="oEMail.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FXC Include="oHLSL_VS4_0_QUAD_FULLSCREEN.sh">
@@ -511,13 +516,7 @@
     <FXC Include="oHLSL_VS4_0_QUAD_PASSTHROUGH.sh">
       <Filter>Source\Shaders</Filter>
     </FXC>
-    <FXC Include="oHLSL_PS4_0_SAMPLE_FULLSCREEN_I420.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
     <FXC Include="oHLSL_PS4_0_SAMPLE_FULLSCREEN_NV12.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="oHLSL_PS4_0_SAMPLE_FULLSCREEN_I420_ALPHA.sh">
       <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="oHLSL_PS4_0_SAMPLE_FULLSCREEN_NV12_ALPHA.sh">

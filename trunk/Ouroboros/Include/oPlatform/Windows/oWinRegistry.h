@@ -30,24 +30,32 @@
 
 #include <oBasis/oFixedString.h>
 
+enum oWIN_REGISTRY_ROOT
+{
+	oHKEY_CLASSES_ROOT,
+	oHKEY_CURRENT_USER,
+	oHKEY_LOCAL_MACHINE,
+	oHKEY_USERS,
+};
+
 // Sets the specified key's value to _pValue as a string. If the key path does 
 // not exist, it is created. If _pValueName is null or "", then the (default) 
 // value key.
-bool oWinRegistrySetValue(const char* _KeyPath, const char* _ValueName, const char* _Value);
+bool oWinRegistrySetValue(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName, const char* _Value);
 
 // Fills destination with the specified Key's path and returns _StrDestination. If the specified key does not exist, returns nullptr
-char* oWinRegistryGetValue(char* _StrDestination, size_t _SizeofStrDestination, const char* _KeyPath, const char* _ValueName);
+char* oWinRegistryGetValue(char* _StrDestination, size_t _SizeofStrDestination, oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName);
 
-bool oWinRegistryDeleteValue(const char* _KeyPath, const char* _ValueName);
-bool oWinRegistryDeleteKey(const char*_KeyPath, bool _Recursive = true);
+bool oWinRegistryDeleteValue(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName);
+bool oWinRegistryDeleteKey(oWIN_REGISTRY_ROOT _Root, const char*_KeyPath, bool _Recursive = true);
 
-template<size_t size> char* oWinRegistryGetValue(char (&_StrDestination)[size], const char* _KeyPath, const char* _ValueName) { return oWinRegistryGetValue(_StrDestination, size, _KeyPath, _ValueName); }
-template<size_t capacity> char* oWinRegistryGetValue(oFixedString<char, capacity>& _StrDestination, const char* _KeyPath, const char* _ValueName) { return oWinRegistryGetValue(_StrDestination, _StrDestination.capacity(), _KeyPath, _ValueName); }
+template<size_t size> char* oWinRegistryGetValue(char (&_StrDestination)[size], oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName) { return oWinRegistryGetValue(_StrDestination, size, _Root, _KeyPath, _ValueName); }
+template<size_t capacity> char* oWinRegistryGetValue(oFixedString<char, capacity>& _StrDestination, oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName) { return oWinRegistryGetValue(_StrDestination, _StrDestination.capacity(), _Root, _KeyPath, _ValueName); }
 
-template<typename T> bool oWinRegistryGetValue(T* _pTypedValue, const char* _KeyPath, const char* _ValueName)
+template<typename T> bool oWinRegistryGetValue(T* _pTypedValue, oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName)
 {
 	oStringS buf;
-	if (!oWinRegistryGetValue(buf, _KeyPath, _ValueName))
+	if (!oWinRegistryGetValue(buf, _Root, _KeyPath, _ValueName))
 		return false;
 	return oFromString(_pTypedValue, buf);
 }

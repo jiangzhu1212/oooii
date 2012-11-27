@@ -32,7 +32,7 @@
 #include <oBasis/oGeometry.h> // @oooii-tony: For oD3D11MosaicDraw... this should get better encapsulated.
 #include <oBasis/oGPUEnums.h>
 #include <oPlatform/oModule.h>
-#include <oPlatform/oHLSL.h> // oHLSLGetByteCodeSize() ... @oooii-tony: perhaps those functions should be separate so that HLSL iteration doesn't require this to recompile?
+#include <oPlatform/oHLSLShaders.h> 
 #include <oPlatform/oImage.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/Windows/oWindows.h>
@@ -58,6 +58,53 @@ struct oD3D11 : oProcessSingleton<oD3D11>
 protected:
 	oHMODULE hModule;
 };
+
+// _____________________________________________________________________________
+// Debugging API
+
+// Utilities for checking that structs are aligned to 16 bytes, which is a 
+// required alignment for most GPU languages.
+#define oD3D11_CHECK_STRUCT_SIZE(_Struct) static_assert((sizeof(_Struct) % 16) == 0, "Alignment of the specified struct is incompatible")
+template<typename T> inline bool oD3D11IsValidConstantBufferSize(const T& _ConstantBufferStruct) { return (sizeof(_ConstantBufferStruct) % 16) == 0; }
+
+// Set a name that appears in D3D11's debug layer
+bool oD3D11SetDebugName(ID3D11Device* _pDevice, const char* _Name);
+bool oD3D11SetDebugName(ID3D11DeviceChild* _pDeviceChild, const char* _Name);
+
+char* oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11Device* _pDevice);
+template<size_t size> char* oD3D11GetDebugName(char (&_StrDestination)[size], const ID3D11Device* _pDevice) { return oD3D11GetDebugName(_StrDestination, size, _pDevice); }
+template<size_t capacity> char* oD3D11GetDebugName(oFixedString<char, capacity>& _StrDestination, const ID3D11Device* _pDevice) { return oD3D11GetDebugName(_StrDestination, _StrDestination.capacity(), _pDevice); }
+
+// Fills the specified buffer with the string set with oD3D11SetDebugName().
+char* oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11DeviceChild* _pDeviceChild);
+template<size_t size> char* oD3D11GetDebugName(char (&_StrDestination)[size], const ID3D11DeviceChild* _pDeviceChild) { return oD3D11GetDebugName(_StrDestination, size, _pDeviceChild); }
+template<size_t capacity> char* oD3D11GetDebugName(oFixedString<char, capacity>& _StrDestination, const ID3D11DeviceChild* _pDeviceChild) { return oD3D11GetDebugName(_StrDestination, _StrDestination.capacity(), _pDeviceChild); }
+
+// The error message returned from D3DX11CompileFromMemory is not fit for
+// passing to printf directly, so pass it to this to create a cleaner string.
+// _pErrorMessages can be NULL, but if there is a message and there is an 
+// error filling the specified string buffer.
+bool oD3D11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _SizeofOutErrorMessageString, ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths);
+template<size_t size> bool oD3D11ConvertCompileErrorBuffer(char (&_OutErrorMessageString)[size], ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths) { return oD3D11ConvertCompileErrorBuffer(_OutErrorMessageString, size, _pErrorMessages, _pIncludePaths, _NumIncludePaths); }
+template<size_t capacity> bool oD3D11ConvertCompileErrorBuffer(oFixedString<char, capacity>& _OutErrorMessageString, ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths) { return oD3D11ConvertCompileErrorBuffer(_OutErrorMessageString, _OutErrorMessageString.capacity(), _pErrorMessages, _pIncludePaths, _NumIncludePaths); }
+
+// Use ID3D11InfoQueue::AddApplicationMessage to trace user errors.
+int oD3D11VTrace(ID3D11InfoQueue* _pInfoQueue, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args);
+inline int oD3D11VTrace(ID3D11Device* _pDevice, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args) { oRef<ID3D11InfoQueue> InfoQueue; oVERIFY(_pDevice->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&InfoQueue)); return oD3D11VTrace(InfoQueue, _Severity, _Format, _Args); }
+inline int oD3D11VTrace(ID3D11DeviceContext* _pDeviceContext, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args) { oRef<ID3D11Device> Device; _pDeviceContext->GetDevice(&Device); return oD3D11VTrace(Device, _Severity, _Format, _Args); }
+inline int oD3D11Trace(ID3D11InfoQueue* _pInfoQueue, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, ...) { va_list args; va_start(args, _Format); int len = oD3D11VTrace(_pInfoQueue, _Severity, _Format, args); va_end(args); return len; }
+inline int oD3D11Trace(ID3D11Device* _pDevice, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, ...) { va_list args; va_start(args, _Format); int len = oD3D11VTrace(_pDevice, _Severity, _Format, args); va_end(args); return len; }
+inline int oD3D11Trace(ID3D11DeviceContext* _pDeviceContext, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, ...) { va_list args; va_start(args, _Format); int len = oD3D11VTrace(_pDeviceContext, _Severity, _Format, args); va_end(args); return len; }
+
+// Implementations of scanning the specified buffers to see if they're bound to
+// certain quiet/noop-y behaviors when using compute. IMHO certain DX warnings
+// should be errors and certain silences should make noise. These API are 
+// exposed here as much a documentation/callout to the user as they are part of
+// implementing a robust checking system in the cross-platform API. Basically
+// D3D11 will promote a read-only binding to read-write, but will not all a 
+// read-write binding to be replaced/concurrent with a read-only binding.
+void oD3D11CheckBoundRTAndUAV(ID3D11DeviceContext* _pDeviceContext, int _NumBuffers, ID3D11Buffer** _ppBuffers);
+void oD3D11CheckBoundCSSetUAV(ID3D11DeviceContext* _pDeviceContext, int _NumBuffers, ID3D11Buffer** _ppBuffers);
 
 // _____________________________________________________________________________
 // Utility API
@@ -86,11 +133,6 @@ bool oD3D11GetAdapter(ID3D11Device* _pDevice, IDXGIAdapter** _ppAdapter);
 // name.
 const char* oD3D11AsSemantic(const oFourCC& _FourCC);
 
-// Utilities for checking that structs are aligned to 16 bytes, which is a 
-// required alignment for most GPU languages.
-#define oD3D11_CHECK_STRUCT_SIZE(_Struct) static_assert((sizeof(_Struct) % 16) == 0, "Alignment of the specified struct is incompatible")
-template<typename T> inline bool oD3D11IsValidConstantBufferSize(const T& _ConstantBufferStruct) { return (sizeof(_ConstantBufferStruct) % 16) == 0; }
-
 const char* oAsString(D3D11_BIND_FLAG _Flag);
 const char* oAsString(D3D11_CPU_ACCESS_FLAG _Flag);
 const char* oAsString(D3D11_RESOURCE_DIMENSION _Type);
@@ -100,25 +142,22 @@ const char* oAsString(D3D11_USAGE _Usage);
 // Converts the specified D3D_FEATURE_LEVEL into an oVersion.
 oVersion oD3D11GetFeatureVersion(D3D_FEATURE_LEVEL _Level);
 
-// Set a name that appears in D3D11's debug layer
-bool oD3D11SetDebugName(ID3D11Device* _pDevice, const char* _Name);
-bool oD3D11SetDebugName(ID3D11DeviceChild* _pDeviceChild, const char* _Name);
-
-char* oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11Device* _pDevice);
-template<size_t size> char* oD3D11GetDebugName(char (&_StrDestination)[size], const ID3D11Device* _pDevice) { return oD3D11GetDebugName(_StrDestination, size, _pDevice); }
-template<size_t capacity> char* oD3D11GetDebugName(oFixedString<char, capacity>& _StrDestination, const ID3D11Device* _pDevice) { return oD3D11GetDebugName(_StrDestination, _StrDestination.capacity(), _pDevice); }
-
-// Fills the specified buffer with the string set with oD3D11SetDebugName().
-char* oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11DeviceChild* _pDeviceChild);
-template<size_t size> char* oD3D11GetDebugName(char (&_StrDestination)[size], const ID3D11DeviceChild* _pDeviceChild) { return oD3D11GetDebugName(_StrDestination, size, _pDeviceChild); }
-template<size_t capacity> char* oD3D11GetDebugName(oFixedString<char, capacity>& _StrDestination, const ID3D11DeviceChild* _pDeviceChild) { return oD3D11GetDebugName(_StrDestination, _StrDestination.capacity(), _pDeviceChild); }
-
 // Returns an IFF based on the extension specified in the file path
 D3DX11_IMAGE_FILE_FORMAT oD3D11GetFormatFromPath(const char* _Path);
 
 // Allow ID3D11Buffers to be a bit more self-describing.
 bool oD3D11SetBufferTopology(ID3D11Resource* _pBuffer, const oD3D11_BUFFER_TOPOLOGY& _Topology);
 bool oD3D11GetBufferTopology(const ID3D11Resource* _pBuffer, oD3D11_BUFFER_TOPOLOGY* _pTopology);
+
+// Sets a back-pointer to the original container. The container's ref count is 
+// NOT incremented to avoid circular references. oInterface is used so that 
+// QueryInterface can be supported.
+bool oD3D11SetContainerBackPointer(ID3D11DeviceChild* _pChild, oInterface* _pContainer);
+
+// Returns an oInterface to the container of the specified resource. The ref 
+// count is INDEED modified because once the pointer is retrieved by client code
+// it should not be allowed to be destroyed elsewhere.
+bool oD3D11GetContainerBackPointer(const ID3D11DeviceChild* _pChild, oInterface** _ppContainer);
 
 // Returns the number of elements as described the specified topology given
 // the number of primitives. An element can refer to indices or vertices, but
@@ -134,14 +173,6 @@ bool oD3D11GetFeatureLevel(const oVersion& _ShaderModel, D3D_FEATURE_LEVEL* _pLe
 // this will return nullptr.
 const char* oD3D11GetShaderProfile(D3D_FEATURE_LEVEL _Level, oGPU_PIPELINE_STAGE _Stage);
 
-// The error message returned from D3DX11CompileFromMemory is not fit for
-// passing to printf directly, so pass it to this to create a cleaner string.
-// _pErrorMessages can be NULL, but if there is a message and there is an 
-// error filling the specified string buffer.
-bool oD3D11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _SizeofOutErrorMessageString, ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths);
-template<size_t size> bool oD3D11ConvertCompileErrorBuffer(char (&_OutErrorMessageString)[size], ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths) { return oD3D11ConvertCompileErrorBuffer(_OutErrorMessageString, size, _pErrorMessages, _pIncludePaths, _NumIncludePaths); }
-template<size_t capacity> bool oD3D11ConvertCompileErrorBuffer(oFixedString<char, capacity>& _OutErrorMessageString, ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths) { return oD3D11ConvertCompileErrorBuffer(_OutErrorMessageString, _OutErrorMessageString.capacity(), _pErrorMessages, _pIncludePaths, _NumIncludePaths); }
-
 // _____________________________________________________________________________
 // Buffer API
 
@@ -152,9 +183,12 @@ template<size_t capacity> bool oD3D11ConvertCompileErrorBuffer(oFixedString<char
 // Pointers to initial data can be null, but number/size values are used to 
 // allocate the buffer and thus must always be specified.
 
-bool oD3D11CreateBuffer(ID3D11Device* _pDevice, const char* _DebugName, const oGPU_BUFFER_DESC& _Desc, const void* _pInitBuffer, ID3D11Buffer** _ppConstantBuffer, ID3D11UnorderedAccessView** _ppUAV = nullptr);
+bool oD3D11CreateBuffer(ID3D11Device* _pDevice, const char* _DebugName, const oGPU_BUFFER_DESC& _Desc, const void* _pInitBuffer, ID3D11Buffer** _ppConstantBuffer, ID3D11UnorderedAccessView** _ppUAV = nullptr, ID3D11ShaderResourceView** _ppSRV = nullptr);
 bool oD3D11CreateIndexBuffer(ID3D11Device* _pDevice, const char* _DebugName, D3D11_USAGE _Usage, const void* _pIndices, uint _NumIndices, bool _Use16BitIndices, ID3D11Buffer** _ppIndexBuffer);
 bool oD3D11CreateVertexBuffer(ID3D11Device* _pDevice, const char* _DebugName, D3D11_USAGE _Usage, const void* _pVertices, uint _NumVertices, uint _VertexStride, ID3D11Buffer** _ppVertexBuffer);
+
+// Creates a copy of the specified UAV that clears any raw/append/counter flags
+bool oD3D11CreateUnflaggedUAV(ID3D11UnorderedAccessView* _pSourceUAV, ID3D11UnorderedAccessView** _ppUnflaggedUAV);
 
 // Copies the contents of the specified texture to _pBuffer, which is assumed to
 // be properly allocated to receive the contents. If _FlipVertical is true, then
@@ -307,11 +341,14 @@ inline void oD3D11SetSamplers(ID3D11DeviceContext* _pDeviceContext, uint _StartS
 void oD3D11SetShaderResourceViews(ID3D11DeviceContext* _pDeviceContext, uint _StartSlot, uint _NumShaderResourceViews, const ID3D11ShaderResourceView* const* _ppViews);
 inline void oD3D11SetShaderResourceViews(ID3D11DeviceContext* _pDeviceContext, uint _StartSlot, uint _NumShaderResourceViews, oRef<ID3D11ShaderResourceView>* _ppViews) { oD3D11SetShaderResourceViews(_pDeviceContext, _StartSlot, _NumShaderResourceViews, (const ID3D11ShaderResourceView* const*)_ppViews); }
 
+// Converts a viewport to an oAABoxf.
+void oD3D11FromViewport(const D3D11_VIEWPORT& _Viewport, oAABoxf* _pBox);
+
 // Convert an oAABoxf (very similar in structure) to a D3D11_VIEWPORT
-void oD3D11InitViewport(const oAABoxf& _Source, D3D11_VIEWPORT* _pViewport);
+void oD3D11ToViewport(const oAABoxf& _Source, D3D11_VIEWPORT* _pViewport);
 
 // Creats a viewport that uses the full render target (depth, [0,1])
-void oD3D11InitViewport(const int2& _RenderTargetDimensions, D3D11_VIEWPORT* _pViewport);
+void oD3D11ToViewport(const int2& _RenderTargetDimensions, D3D11_VIEWPORT* _pViewport);
 
 // Create and set a single viewport that uses the entire render target.
 void oD3D11SetFullTargetViewport(ID3D11DeviceContext* _pDeviceContext, ID3D11Texture2D* _pRenderTarget, float _MinDepth = 0.0f, float _MaxDepth = 1.0f);

@@ -406,7 +406,7 @@ bool oProcessHeapContextImpl::FindOrAllocate(const oGUID& _GUID, bool _IsThreadL
 		*e.DebugName = 0;
 		if (_DebugName)
 		{
-			memcpy_s(e.DebugName, sizeof(e.DebugName), _DebugName, oMin(strlen(_DebugName)+1, sizeof(e.DebugName)));
+			memcpy_s(e.DebugName, sizeof(e.DebugName), _DebugName, __min(strlen(_DebugName)+1, sizeof(e.DebugName)));
 			oAddTruncationElipse(e.DebugName);
 		}
 
@@ -529,10 +529,16 @@ void oProcessHeapContextImpl::CreatePrimodialSingletons()
 	// support API such as oAtThreadExit and oThreadlocalMalloc are ready.
 	void oThreadlocalRegistryCreate();
 	oThreadlocalRegistryCreate();
+
+	void oLoadLibrarySingletonCreate();
+	oLoadLibrarySingletonCreate();
 }
 
 void oProcessHeapContextImpl::DestroyPrimodialSingletons()
 {
+	void oLoadLibrarySingletonDestroy();
+	oLoadLibrarySingletonDestroy();
+
 	void oThreadlocalRegistryDestroy();
 	oThreadlocalRegistryDestroy();
 }

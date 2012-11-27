@@ -73,12 +73,12 @@ struct oGPUViewConstants
 	#ifndef oHLSL
 		enum CONSTRUCTION { Identity, };
 		oGPUViewConstants() {}
-		oGPUViewConstants(CONSTRUCTION _Type, float2 _RenderTargetDimensions, uint _TextureArrayIndex) { Set(float4x4(float4x4::Identity), float4x4(float4x4::Identity), _RenderTargetDimensions, _TextureArrayIndex); }
-		oGPUViewConstants(const float4x4& _View, const float4x4& _Projection, const float2& _RenderTargetDimensions, uint _TextureArrayIndex) { Set(_View, _Projection, _RenderTargetDimensions, _TextureArrayIndex); }
-		inline void Set(const float4x4& _View, const float4x4& _Projection, const float2& _RenderTargetDimensions, uint _TextureArrayIndex)
+		oGPUViewConstants(CONSTRUCTION _Type, const int3& _RenderTargetDimensions, uint _TextureArrayIndex) { Set(float4x4(float4x4::Identity), float4x4(float4x4::Identity), _RenderTargetDimensions, _TextureArrayIndex); }
+		oGPUViewConstants(const float4x4& _View, const float4x4& _Projection, const int3& _RenderTargetDimensions, uint _TextureArrayIndex) { Set(_View, _Projection, _RenderTargetDimensions, _TextureArrayIndex); }
+		inline void Set(const float4x4& _View, const float4x4& _Projection, const int3& _RenderTargetDimensions, uint _TextureArrayIndex)
 		{
 			View = _View;
-			InverseView = invert(View);
+			ViewInverse = invert(View);
 			Projection = _Projection;
 			ViewProjection = View * Projection;
 
@@ -90,7 +90,8 @@ struct oGPUViewConstants
 			ViewSpaceFarplaneCorners[oGPU_VIEW_FAR_PLANE_BOTTOM_LEFT] = float4(corners[oFrustumf::LEFT_BOTTOM_FAR], 0.0f);
 			ViewSpaceFarplaneCorners[oGPU_VIEW_FAR_PLANE_BOTTOM_RIGHT] = float4(corners[oFrustumf::RIGHT_BOTTOM_FAR], 0.0f);
 
-			RenderTargetDimensions = _RenderTargetDimensions;
+			oASSERT(_RenderTargetDimensions.z==1, "Expecting render target dimensions without depth (z=1), but z=%d", _RenderTargetDimensions.z);
+			RenderTargetDimensions = oCastAsFloat(_RenderTargetDimensions.xy);
 
 			// Store the 1/far plane distance so we can calculate view-space depth
 			oCalculateNearInverseFarPlanesDistance(_Projection, &NearPlaneDistancePlusEpsilon, &InverseFarPlaneDistance);
@@ -104,7 +105,7 @@ protected:
 	#endif
 
 	float4x4 View;
-	float4x4 InverseView;
+	float4x4 ViewInverse;
 	float4x4 Projection;
 	float4x4 ViewProjection;
 
@@ -196,7 +197,7 @@ float oGPUEncodeNormalizedViewSpaceDepth(float _ViewSpaceDepth)
 }
 
 // Use the encoded depth and the far plane's position to recreate a 3D position
-float3 oGPU_ReconstructViewSpacePosition(float3 _ViewSpaceFarPlanePosition, float _EncodedViewSpaceDepth)
+float3 oGPUReconstructViewSpacePosition(float3 _ViewSpaceFarPlanePosition, float _EncodedViewSpaceDepth)
 {
 	return _EncodedViewSpaceDepth * _ViewSpaceFarPlanePosition;
 }

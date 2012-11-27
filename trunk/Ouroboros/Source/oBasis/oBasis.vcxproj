@@ -73,6 +73,11 @@
     <ClInclude Include="..\..\Include\oBasis\oGUI.h" />
     <ClInclude Include="..\..\Include\oBasis\oGUID.h" />
     <ClInclude Include="..\..\Include\oBasis\oHash.h" />
+    <ClInclude Include="..\..\Include\oBasis\oHLSLAtomics.h" />
+    <ClInclude Include="..\..\Include\oBasis\oHLSLBit.h" />
+    <ClInclude Include="..\..\Include\oBasis\oHLSLMath.h" />
+    <ClInclude Include="..\..\Include\oBasis\oHLSLStructs.h" />
+    <ClInclude Include="..\..\Include\oBasis\oHLSLTypes.h" />
     <ClInclude Include="..\..\Include\oBasis\oIndexAllocator.h" />
     <ClInclude Include="..\..\Include\oBasis\oINI.h" />
     <ClInclude Include="..\..\Include\oBasis\oInitOnce.h" />
@@ -91,8 +96,8 @@
     <ClInclude Include="..\..\Include\oBasis\oLockThis.h" />
     <ClInclude Include="..\..\Include\oBasis\oMacros.h" />
     <ClInclude Include="..\..\Include\oBasis\oMath.h" />
-    <ClInclude Include="..\..\Include\oBasis\oMathInternalHLSL.h" />
     <ClInclude Include="..\..\Include\oBasis\oMathInternalTypes.h" />
+    <ClInclude Include="..\..\Include\oBasis\oMathShared.h" />
     <ClInclude Include="..\..\Include\oBasis\oMathTypes.h" />
     <ClInclude Include="..\..\Include\oBasis\oMemory.h" />
     <ClInclude Include="..\..\Include\oBasis\oMeshUtil.h" />

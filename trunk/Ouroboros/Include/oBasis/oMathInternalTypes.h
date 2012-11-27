@@ -40,7 +40,7 @@
 #define oMATH_CONCAT(a,b) a##b
 
 #define oMATH_MEMBER_OP(return_t, param_t, op) inline const return_t& operator op##=(const param_t& a) { *this = *this op a; return *this; }
-#define oMATH_MEMPER_EQOP(param_t, op) bool operator op(const param_t& a) const { return ::operator op(*this, a); }
+#define oMATH_MEMBER_EQOP(param_t, op) bool operator op(const param_t& a) const { return ::operator op(*this, a); }
 #define oMATH_ELOP2(op) template<typename T> oMathNS::TVEC2<T> operator op(const oMathNS::TVEC2<T>& a, const oMathNS::TVEC2<T>& b) { return oMathNS::TVEC2<T>(a.x op b.x, a.y op b.y); } template<typename T> oMathNS::TVEC2<T> operator op(const oMathNS::TVEC2<T>& a, const T& b) { return oMathNS::TVEC2<T>(a.x op b, a.y op b); } template<typename T> oMathNS::TVEC2<T> operator op(const T& a, const oMathNS::TVEC2<T>& b) { return oMathNS::TVEC2<T>(a op b.x, a op b.y); }
 #define oMATH_ELOP3(op) template<typename T> oMathNS::TVEC3<T> operator op(const oMathNS::TVEC3<T>& a, const oMathNS::TVEC3<T>& b) { return oMathNS::TVEC3<T>(a.x op b.x, a.y op b.y, a.z op b.z); } template<typename T> oMathNS::TVEC3<T> operator op(const oMathNS::TVEC3<T>& a, const T& b) { return oMathNS::TVEC3<T>(a.x op b, a.y op b, a.z op b); } template<typename T> oMathNS::TVEC3<T> operator op(const T& a, const oMathNS::TVEC3<T>& b) { return oMathNS::TVEC3<T>(a op b.x, a op b.y, a op b.z); }
 #define oMATH_ELOP4(op) template<typename T> oMathNS::TVEC4<T> operator op(const oMathNS::TVEC4<T>& a, const oMathNS::TVEC4<T>& b) { return oMathNS::TVEC4<T>(a.x op b.x, a.y op b.y, a.z op b.z, a.w op b.w); } template<typename T> oMathNS::TVEC4<T> operator op(const oMathNS::TVEC4<T>& a, const T& b) { return oMathNS::TVEC4<T>(a.x op b, a.y op b, a.z op b, a.w op b); } template<typename T> oMathNS::TVEC4<T> operator op(const T& a, const oMathNS::TVEC4<T>& b) { return oMathNS::TVEC4<T>(a op b.x, a op b.y, a op b.z, a op b.w); }
@@ -64,7 +64,7 @@
 #define oMATH_ANYCMP3(fn,cmp) template<typename T> bool fn(const oMathNS::TVEC3<T>& a, const oMathNS::TVEC3<T>& b) { return a.x cmp b.x || a.y cmp b.y || a.z cmp b.z; }
 #define oMATH_ANYCMP4(fn,cmp) template<typename T> bool fn(const oMathNS::TVEC4<T>& a, const oMathNS::TVEC4<T>& b) { return a.x cmp b.x || a.y cmp b.y || a.z cmp b.z || a.w cmp b.w; }
 // Macros to get through the boilerplate for operators, compares, etc.
-#define oMATH_MEMBER_OPS(type, scalar_t) oMATH_MEMPER_EQOP(type, ==) oMATH_MEMPER_EQOP(type, !=) oMATH_MEMBER_OP(type, scalar_t, *) oMATH_MEMBER_OP(type, scalar_t, /) oMATH_MEMBER_OP(type, scalar_t, +) oMATH_MEMBER_OP(type, scalar_t, -) oMATH_MEMBER_OP(type, scalar_t, &) oMATH_MEMBER_OP(type, scalar_t, |) oMATH_MEMBER_OP(type, scalar_t, ^) oMATH_MEMBER_OP(type, type, *) oMATH_MEMBER_OP(type, type, /) oMATH_MEMBER_OP(type, type, +) oMATH_MEMBER_OP(type, type, -) oMATH_VBRACKET_OP(scalar_t)
+#define oMATH_MEMBER_OPS(type, scalar_t) oMATH_MEMBER_EQOP(type, ==) oMATH_MEMBER_EQOP(type, !=) oMATH_MEMBER_OP(type, scalar_t, *) oMATH_MEMBER_OP(type, scalar_t, /) oMATH_MEMBER_OP(type, scalar_t, +) oMATH_MEMBER_OP(type, scalar_t, -) oMATH_MEMBER_OP(type, scalar_t, &) oMATH_MEMBER_OP(type, scalar_t, |) oMATH_MEMBER_OP(type, scalar_t, ^) oMATH_MEMBER_OP(type, scalar_t, <<) oMATH_MEMBER_OP(type, scalar_t, >>) oMATH_MEMBER_OP(type, type, *) oMATH_MEMBER_OP(type, type, /) oMATH_MEMBER_OP(type, type, +) oMATH_MEMBER_OP(type, type, -) oMATH_MEMBER_OP(type, type, &) oMATH_MEMBER_OP(type, type, |) oMATH_MEMBER_OP(type, type, ^) oMATH_MEMBER_OP(type, type, <<) oMATH_MEMBER_OP(type, type, >>) oMATH_VBRACKET_OP(scalar_t)
 #define oMATH_ELOPS(N) oMATH_ELOP##N(*) oMATH_ELOP##N(/) oMATH_ELOP##N(+) oMATH_ELOP##N(-) oMATH_ELOP##N(%) oMATH_ELOPT##N(<<, int) oMATH_ELOPT##N(>>, int) oMATH_ELOPT##N(&, int) oMATH_ELOPT##N(|, int) oMATH_ELOPT##N(^, int)
 #define oMATH_ELUFNS(fn) oMATH_ELUFN2(fn) oMATH_ELUFN3(fn) oMATH_ELUFN4(fn)
 #define oMATH_ELBFNS(pubfn, implfn) oMATH_ELBFN2(pubfn, implfn) oMATH_ELBFN3(pubfn, implfn) oMATH_ELBFN4(pubfn, implfn)
@@ -99,9 +99,12 @@ namespace oMathNS {
 
 template<typename T> struct TVEC2
 {
-	T x,y;
+	union { T x; T r; };
+	union { T y; T g; };
 	inline TVEC2() {}
-	inline TVEC2(const TVEC2& _TVecor) : x(_TVecor.x), y(_TVecor.y) {}
+	inline TVEC2(const TVEC2& _TVector) : x(_TVector.x), y(_TVector.y) {}
+	template<typename U> TVEC2(const TVEC2<U>& _UVector) : x(static_cast<T>(_UVector.x)), y(static_cast<T>(_UVector.y)) {}
+	template<typename U> explicit TVEC2(U _XY) { x = y = static_cast<T>(_XY); }
 	inline TVEC2(T _XY) : x(_XY), y(_XY) {}
 	inline TVEC2(T _X, T _Y) : x(_X), y(_Y) {}
 	oMATH_SWIZZLE2(T);
@@ -110,9 +113,13 @@ template<typename T> struct TVEC2
 
 template<typename T> struct TVEC3
 {
-	T x,y,z;
+	union { T x; T r; };
+	union { T y; T g; };
+	union { T z; T b; };
 	inline TVEC3() {};
-	inline TVEC3(const TVEC3& _TVecor) : x(_TVecor.x), y(_TVecor.y), z(_TVecor.z) {}
+	inline TVEC3(const TVEC3& _TVector) : x(_TVector.x), y(_TVector.y), z(_TVector.z) {}
+	template<typename U> TVEC3(const TVEC3<U>& _UVector) : x(static_cast<T>(_UVector.x)), y(static_cast<T>(_UVector.y)), z(static_cast<T>(_UVector.z)) {}
+	template<typename U> explicit TVEC3(U _XYZ) { x = y = z = static_cast<T>(_XYZ); }
 	inline TVEC3(T _XYZ) : x(_XYZ), y(_XYZ), z(_XYZ) {}
 	inline TVEC3(T _X, T _Y, T _Z) : x(_X), y(_Y), z(_Z) {}
 	inline TVEC3(const TVEC2<T>& _XY, T _Z) : x(_XY.x), y(_XY.y), z(_Z) {}
@@ -122,9 +129,14 @@ template<typename T> struct TVEC3
 
 template<typename T> struct TVEC4
 {
-	T x,y,z,w;
+	union { T x; T r; };
+	union { T y; T g; };
+	union { T z; T b; };
+	union { T w; T a; };
 	inline TVEC4() {};
-	inline TVEC4(const TVEC4& _TVecor) : x(_TVecor.x), y(_TVecor.y), z(_TVecor.z), w(_TVecor.w) {}
+	inline TVEC4(const TVEC4& _TVector) : x(_TVector.x), y(_TVector.y), z(_TVector.z), w(_TVector.w) {}
+	template<typename U> TVEC4(const TVEC4<U>& _UVector) : x(static_cast<T>(_UVector.x)), y(static_cast<T>(_UVector.y)), z(static_cast<T>(_UVector.z)), w(static_cast<T>(_UVector.w)) {}
+	template<typename U> explicit TVEC4(U _XYZW) { x = y = z = w = static_cast<T>(_XYZW); }
 	inline TVEC4(T _XYZW) : x(_XYZW), y(_XYZW), z(_XYZW), w(_XYZW) {}
 	inline TVEC4(const TVEC2<T>& _XY, T _Z, T _W) : x(_XY.x), y(_XY.y), z(_Z), w(_Z) {}
 	inline TVEC4(const TVEC3<T>& _XYZ, T _W) : x(_XYZ.x), y(_XYZ.y), z(_XYZ.z), w(_W) {}
@@ -181,7 +193,7 @@ template<typename T> struct TMAT4
 template<typename T, typename TVec> struct TAABOX
 {
 	TAABOX() { Clear(); }
-	TAABOX(const TAABOX<T,TVec>& box) : Min(box.Min), Max(box.Max) {}
+	TAABOX(const TAABOX<T,TVec>& _Box) : Min(_Box.Min), Max(_Box.Max) {}
 	TAABOX(const TVec& _Min, const TVec& _Max) : Min(_Min), Max(_Max) {}
 	inline const TAABOX<T,TVec>& operator=(const TVec& _Box) { Min = box.Min; Max = box.Max; return *this; }
 	inline const TVec& GetMin() const { return Min; }
@@ -260,6 +272,7 @@ template<typename T> struct TFRUSTUM
 template<typename T> struct TSPHERE : public TVEC4<T>
 {
 	TSPHERE<T>() {}
+	TSPHERE<T>(const TSPHERE<T>& _Sphere) { *this = _Sphere; }
 	TSPHERE<T>(const TVEC3<T>& _Position, T _Radius) : TVEC4<T>(_Position, _Radius) {}
 	T GetRadius() const { return w; }
 	const TVEC3<T>& GetPosition() const { return *(TVEC3<T>*)this; }

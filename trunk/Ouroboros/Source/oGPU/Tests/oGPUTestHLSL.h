@@ -62,7 +62,7 @@ struct VSOUT
 	float3 WSPosition : POSITION0;
 	float3 LSPosition : POSITION1;
 	float3 WSNormal : NORMAL;
-	float2 Texcoord : TEXCOORD;
+	float3 Texcoord : TEXCOORD;
 	float4 Color : Color;
 };
 
@@ -78,7 +78,7 @@ VSOUT CommonVS(VSIN In)
 	Out.WSPosition = oGPULStoWS(In.LSPosition);
 	Out.LSPosition = In.LSPosition;
 	Out.WSNormal = oGPUNormalLStoWS(In.LSNormal);
-	Out.Texcoord = In.Texcoord;
+	Out.Texcoord = float3(In.Texcoord, 0);
 	Out.Color = oWHITE4;
 	return Out;
 }

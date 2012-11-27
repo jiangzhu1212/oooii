@@ -54,6 +54,7 @@
     <ClCompile Include="Tests\TESTQueues.cpp" />
     <ClCompile Include="Tests\TESTSize.cpp" />
     <ClCompile Include="Tests\TESTString.cpp" />
+    <ClCompile Include="Tests\TESTSurface.cpp" />
     <ClCompile Include="Tests\TESTURI.cpp" />
     <ClCompile Include="Tests\TESTXML.cpp" />
   </ItemGroup>

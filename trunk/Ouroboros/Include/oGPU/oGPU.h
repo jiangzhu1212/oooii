@@ -119,7 +119,7 @@ interface oGPURenderTarget : oGPUDeviceChild
 	virtual void SetClearDesc(const oGPU_CLEAR_DESC& _ClearDesc) threadsafe = 0;
 
 	// Resizes all buffers without changing formats or other topology
-	virtual void Resize(const int2& _NewDimensions) = 0;
+	virtual void Resize(const int3& _NewDimensions) = 0;
 
 	// Accesses a readable texture for the specified render target in an MRT.
 	virtual void GetTexture(int _MRTIndex, oGPUTexture** _ppTexture) = 0;
@@ -165,6 +165,11 @@ interface oGPUCommandList : oGPUDeviceChild
 	// Ends recording of GPU submissions and caches a command list
 	virtual void End() = 0;
 
+	// This should never be required to be called, and has bad performance 
+	// implications if called, but is sometimes required, especially with the 
+	// immediate context, during debugging.
+	virtual void Flush() = 0;
+
 	// Allocates internal device memory that can be written to (not read) and 
 	// committed to the device to update the specified resource.
 	virtual void Reserve(oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource) = 0;
@@ -173,7 +178,8 @@ interface oGPUCommandList : oGPUDeviceChild
 	// was reserved, then this will free the memory. If _Source.pData is user 
 	// memory, it will not be freed. NOTE: If _Source.pData was reserved, then 
 	// _Subregion MUST be empty, since Reserve does not allocate subregions, only 
-	// whole subresources. When using A subregion can be updated using _Subregion. 
+	// whole subresources. When using Commit on user memory, a smaller _Subregion 
+	// can be updated. 
 	// If the specified rectangle is empty on any dimension, then the entire 
 	// surface will be copied (default behavior). If the item is a 1D structure 
 	// then Min.x is the offset and Max.x is offset + count. and Min.y should be 0 
@@ -185,7 +191,7 @@ interface oGPUCommandList : oGPUDeviceChild
 	// drawing and Max.x is one after the last valid element to draw. So for an 
 	// oGPUInstanceList allocated with MaxNumInstances = 100, updating for 10 to 
 	// be drawn would use oRECT(int2(0,0), int2(10,1)).
-	virtual void Commit(oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Source, const oRECT& _Subregion = oRECT()) = 0;
+	virtual void Commit(oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Source, const oGPU_BOX& _Subregion = oGPU_BOX()) = 0;
 
 	// Copies the contents from one resource to another. Both must have compatible 
 	// (often identical) topologies. A common use of this API is to copy from a 
@@ -193,30 +199,84 @@ interface oGPUCommandList : oGPUDeviceChild
 	// accessed from the CPU.
 	virtual void Copy(oGPUResource* _pDestination, oGPUResource* _pSource) = 0;
 
+	// Copies from one buffer to another with offsets in bytes.
+	virtual void Copy(oGPUBuffer* _pDestination, int _DestinationOffsetBytes, oGPUBuffer* _pSource, int _SourceOffsetBytes, int _SizeBytes) = 0;
+
+	// Copy the counter value stored in a source buffer of type 
+	// oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND or 
+	// oGPU_BUFFER_UNORDERED_STRUCTURED_COUNTER to a destination buffer. An offset
+	// into that buffer can be specified - it must be aligned to sizeof(uint).
+	// To read back this value to the CPU, _pDestination should be a READBACK 
+	// buffer of at least sizeof(uint) size. Then use MapRead() on the device to
+	// access the uint counter value.
+	virtual void CopyCounter(oGPUBuffer* _pDestination, uint _DestinationAlignedOffset, oGPUBuffer* _pUnorderedSource) = 0;
+
+	// Sets the counter in the specified buffer to the specified value. This 
+	// incurs a dispatch and should not be used in the main loop of production 
+	// code. This is exposed primarily for test cases and initialization. For main 
+	// loop code use the _pInitialCounts parameter of SetUnorderedResources or 
+	// SetRenderTargetAndUnorderedResources. REMEMBER: This will occur when the 
+	// command list is submitted to the device during EndFrame(). If the desire is
+	// immediate, ensure this command list is the one retrieved from 
+	// oGPUDevice::GetImmediateCommandList().
+	virtual void SetCounters(int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pValues) = 0;
+	inline void SetCounters(int _NumUnorderedBuffers, oGPUBuffer** _ppUnorderedBuffers, uint* _pValues) { SetCounters(_NumUnorderedBuffers, (oGPUResource**)_ppUnorderedBuffers, _pValues); }
+	inline void SetCounter(oGPUResource* _pResource, uint _Value) { SetCounters(1, &_pResource, &_Value); }
+
 	// Set the texture sampler states in this context
 	virtual void SetSamplers(int _StartSlot, int _NumStates, const oGPU_SAMPLER_STATE* _pSamplerState) = 0;
 
-	// Set the textures in this context
-	virtual void SetTextures(int _StartSlot, int _NumTextures, const oGPUTexture* const* _ppTextures) = 0;
+	// Set any shader resources (textures or buffers not accessed as constants)
+	virtual void SetShaderResources(int _StartSlot, int _NumResources, const oGPUResource* const* _ppResources) = 0;
+	inline void SetShaderResources(int _StartSlot, int _NumResources, const oGPUTexture* const* _ppResources) { SetShaderResources(_StartSlot, _NumResources, (const oGPUResource* const*)_ppResources); }
+	inline void SetShaderResources(int _StartSlot, int _NumResources, const oGPUBuffer* const* _ppResources) { SetShaderResources(_StartSlot, _NumResources, (const oGPUResource* const*)_ppResources); }
+	template<size_t size, typename T> void SetShaderResources(int _StartSlot, const T* const (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const T* const*)_ppResources); }
+	inline void SetShaderResources(int _StartSlot, const oGPUResource* _pResource) { SetShaderResources(_StartSlot, 1, &_pResource); }
+	inline void SetShaderResources(int _StartSlot, const oGPUTexture* _pResource) { SetShaderResources(_StartSlot, 1, &_pResource); }
 
 	// Set the constants in this context
-	virtual void SetConstants(int _StartSlot, int _NumConstants, const oGPUBuffer* const* _ppBuffers) = 0;
+	virtual void SetBuffers(int _StartSlot, int _NumBuffers, const oGPUBuffer* const* _ppBuffers) = 0;
 
-	// _____________________________________________________________________________
-	// Rasterization-specific
+	template<size_t size> inline void SetBuffers(int _StartSlot, const oGPUBuffer* const (&_ppBuffers)[size]) { SetBuffers(_StartSlot, size, _ppBuffers); }
+	inline void SetBuffers(int _StartSlot, const oGPUBuffer* _pBuffer) { SetBuffers(_StartSlot, 1, (const oGPUBuffer* const *)&_pBuffer); }
 
 	// Sets the render target to which rendering will occur. By default, a single
 	// full-target viewport is created, else it can be overridden. A viewport is 
 	// a 3D box whose minimum is at the top, left, near corner of the viewable 
 	// frustum, and whose maximum is at the bottom, right, far corner of the 
 	// viewable frustum. A full-target viewport would most often be: 
-	// oAABoxf(float3(0.0f), float3(RTWidth, RTHeight, 1.0f))
-	virtual void SetRenderTarget(oGPURenderTarget* _pRenderTarget, int _NumViewports = 0, const oAABoxf* _pViewports = nullptr) = 0;
+	// oAABoxf(float3(0.0f), float3(RTWidth, RTHeight, 1.0f)). In addition this
+	// also sets up unordered resources resetting any counters according to values 
+	// in the _pInitialCounts array, which should be the same count as the number 
+	// of unordered resources being bound. This API can also bound unordered 
+	// resources for access during Dispatch() calls if _SetForDispatch is true. 
+	// If _SetForDispatch is true, then _pRenderTarget must be null, though 
+	// viewport settings will be respected. If _UnorderedResourceStartSlot is 
+	// oInvalid, the value _pRenderTarget::DESC.MRTCount will be used. If 
+	// _pRenderTarget is nullptr then a valid _UnorderedResourceStartSlot value 
+	// must be specified. If _NumUnorderedResources is oInvalid, all slots after 
+	// the render target's MRTs are cleared. See SetRnederTarget() as an example 
+	// of setting the RT while clearing unordered targets).
+	virtual void SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const oAABoxf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) = 0;
+	inline void SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const oAABoxf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUBuffer** _ppUnorderedResources, uint* _pInitialCounts = nullptr) { SetRenderTargetAndUnorderedResources(_pRenderTarget, _NumViewports, _pViewports, _SetForDispatch, _UnorderedResourcesStartSlot, _NumUnorderedResources, (oGPUResource**)_ppUnorderedResources, _pInitialCounts); }
+	template<uint size> inline void SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const oAABoxf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, oGPUResource* (&_ppUnorderedResources)[size], uint (&_pInitialCounts)[size]) { SetRenderTargetAndUnorderedResources(_pRenderTarget, _NumViewports, _pViewports, _SetForDispatch, _UnorderedResourcesStartSlot, size, _ppUnorderedResources, _pInitialCounts); }
+	inline void SetUnorderedResources(int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) { SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, true, _UnorderedResourcesStartSlot, _NumUnorderedResources, _ppUnorderedResources, _pInitialCounts); }
+	template<uint size> inline void SetUnorderedResources(int _UnorderedResourcesStartSlot, oGPUResource* (&_ppUnorderedResources)[size]) { SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, true, _UnorderedResourcesStartSlot, size, _ppUnorderedResources); }
+	template<uint size> inline void SetUnorderedResources(int _UnorderedResourcesStartSlot, oGPUResource* (&_ppUnorderedResources)[size], uint (&_pInitialCounts)[size]) { SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, true, _UnorderedResourcesStartSlot, size, _ppUnorderedResources, _pInitialCounts); }
+	inline void SetUnorderedResources(int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUBuffer** _ppUnorderedResources, uint* _pInitialCounts = nullptr) { SetUnorderedResources(_UnorderedResourcesStartSlot, _NumUnorderedResources, (oGPUResource**)_ppUnorderedResources, _pInitialCounts); }
 
-	// Same as SetRenderTarget, but also sets up unordered textures: side-effect
-	// random access rendertargets/sample-from textures whose atomicity of access
-	// must explicitly be handled by the shader, not by the scheduling of the GPU.
-	virtual void SetRenderTargetAndUnorderedTextures(oGPURenderTarget* _pRenderTarget, int _NumViewports, const oAABoxf* _pViewports, int _NumUnorderedTextures, oGPUTexture** _ppUnorderedTextures) = 0;
+	// Simpler version that clears UAVs since likely during rasterization UAVs 
+	// will be used as shader resources, which conflicts with being a target. If
+	// this is not the desired behavior, use the above more explicit/complicated 
+	// version.
+	inline void SetRenderTarget(oGPURenderTarget* _pRenderTarget, int _NumViewports = 0, const oAABoxf* _pViewports = nullptr) { SetRenderTargetAndUnorderedResources(_pRenderTarget, _NumViewports, _pViewports, false, oInvalid, oInvalid, (oGPUResource**)nullptr); }
+
+	inline void ClearRenderTargetAndUnorderedResources() { SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, false, 0, oGPU_MAX_NUM_UNORDERED_BUFFERS, (oGPUResource**)nullptr); }
+
+	inline void ClearUnorderedResources() { SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, true, 0, oGPU_MAX_NUM_UNORDERED_BUFFERS, (oGPUResource**)nullptr); } 
+
+	// _____________________________________________________________________________
+	// Rasterization-specific
 
 	virtual void SetPipeline(const oGPUPipeline* _pPipeline) = 0;
 
@@ -241,26 +301,41 @@ interface oGPUCommandList : oGPUDeviceChild
 	// Draws a set of worldspace lines. Use Map/Unmap to set up line lists
 	// writing an array of type oGPULineList::LINEs.
 	virtual void Draw(const oGPULineList* _pLineList) = 0;
+
+	// Draws points without any bound geometry.  Useful when all data is GPU synthesized
+	// or provided via other means than the input assembler
+	virtual void Draw(uint _VertexCount) = 0;
 	
+	// Draws points without any bound geometry but with the count provided by a GPU
+	// synthesized buffer.
+	virtual void Draw(oGPUBuffer* _pDrawArgs, int _AlignedByteOffsetForArgs) = 0;
+
 	virtual void DrawSVQuad(uint _NumInstances = 1) = 0;
+	
+	virtual bool GenerateMips(oGPURenderTarget* _pRenderTarget) = 0;
 
 	// _____________________________________________________________________________
 	// Compute-specific
 
 	// Clears the specified resource created for unordered access.
-	virtual void ClearI(oGPUResource* _pUnorderedResource, const uint _Values[4]) = 0;
+	virtual void ClearI(oGPUResource* _pUnorderedResource, const uint4 _Values) = 0;
 
 	// Clears the specified resource created for unordered access.
-	virtual void ClearF(oGPUResource* _pUnorderedResource, const float _Values[4]) = 0;
+	virtual void ClearF(oGPUResource* _pUnorderedResource, const float4 _Values) = 0;
 
 	// If all 3 values in _ThreadGroupCount are oInvalid, then the counts are 
 	// automatically determined by the GPU. Unordered resources can be 
 	// oGPUBuffer or oGPUTexture, but each must have been created readied
-	// for unordered access.
-	virtual void Dispatch(oGPUComputeShader* _pComputeShader, const int3& _ThreadGroupCount, int _NumUnorderedResources, const oGPUResource* const* _ppUnorderedResources) = 0;
+	// for unordered access. If not null, _pInitialCounts should be 
+	// _NumUnorderedResources in length and is used to set the initial value of a 
+	// counter or append/consume count for buffers of type 
+	// oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND or 
+	// oGPU_BUFFER_UNORDERED_STRUCTURED_COUNTER. Specify oInvalid to skip 
+	// initialization of an entry, thus retaining any prior value of the counter.
+	virtual void Dispatch(oGPUComputeShader* _pComputeShader, const int3& _ThreadGroupCount) = 0;
 
 	// Same as Dispatch above, but it gets its thread group count from oGPUBuffer.
-	virtual void Dispatch(oGPUComputeShader* _pComputeShader, oGPUBuffer* _pThreadGroupCountBuffer, int _AlignedByteOffsetToThreadGroupCount, int _NumUnorderedResources, const oGPUResource* const* _ppUnorderedResources) = 0;
+	virtual void Dispatch(oGPUComputeShader* _pComputeShader, oGPUBuffer* _pThreadGroupCountBuffer, int _AlignedByteOffsetToThreadGroupCount) = 0;
 };
 
 interface oGPUDevice : oInterface

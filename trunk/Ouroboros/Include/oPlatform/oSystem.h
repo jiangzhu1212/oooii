@@ -119,6 +119,9 @@ oAPI bool oSystemGUIEnableGPUCompositing(bool _Enable, bool _Force = false);
 bool oSystemSetEnvironmentVariable(const char* _Name, const char* _Value);
 char* oSystemGetEnvironmentVariable(char* _Value, size_t _SizeofValue, const char* _Name);
 
+// Translates % encoded environment variables
+char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _SizeofStrDestination, const char* _RawString);
+
 // Fills _StrEnvironment with all environment variables delimited by '\n'
 char* oSystemGetEnvironmentString(char* _StrEnvironment, size_t _SizeofStrEnvironment);
 
@@ -177,6 +180,7 @@ const char *oSystemAppendDebugSuffixToDLL(const char *_pModuleName, char *_pAppe
 
 template<size_t size> bool oSystemExecute(const char* _CommandLine, char (&_StrStdout)[size], int* _pExitCode = 0, unsigned int _ExecutionTimeout = oInfiniteWait) { return oSystemExecute(_CommandLine, _StrStdout, size, _pExitCode, _ExecutionTimeout); }
 template<size_t size> char* oSystemGetEnvironmentVariable(char (&_Value)[size], const char* _Name) { return oSystemGetEnvironmentVariable(_Value, size, _Name); }
+template<size_t size> char* oSystemTranslateEnvironmentVariables(char (&_Value)[size], const char* _Name) { return oSystemTranslateEnvironmentVariables(_Value, size, _Name); }
 template<size_t size> char* oGetEnvironmentString(char (&_StrEnvironment)[size]) { return oSystemGetEnvironmentString(_StrEnvironment, size); }
 template<size_t size> char* oSystemGetURI(char (&_StrSysURI)[size], oSYSPATH _SysPath) { return oSystemGetURI(_StrSysURI, _SizeofStrSysURI, _SysPath); }
 template<size_t size> char* oSystemGetPath(char (&_StrSysPath)[size], oSYSPATH _SysPath) { return oSystemGetPath(_StrSysPath, size, _SysPath); }
@@ -188,6 +192,7 @@ template<size_t size> char* oSystemFindPath(char (&_ResultingFullPath)[size], co
 #include <oBasis/oFixedString.h>
 template<size_t capacity> bool oSystemExecute(const char* _CommandLine, oFixedString<char, capacity>& _StrStdout, int* _pExitCode = 0, unsigned int _ExecutionTimeout = oInfiniteWait) { return oSystemExecute(_CommandLine, _StrStdout, _StrStdout.capacity(), _pExitCode, _ExecutionTimeout); }
 template<size_t capacity> char* oSystemGetEnvironmentVariable(oFixedString<char, capacity>& _Value, const char* _Name) { return oSystemGetEnvironmentVariable(_Value, _Value.capacity(), _Name); }
+template<size_t capacity> char* oSystemTranslateEnvironmentVariables(oFixedString<char, capacity>& _Value, const char* _Name) { return oSystemTranslateEnvironmentVariables(_Value, _Value.capacity(), _Name); }
 template<size_t capacity> char* oGetEnvironmentString(oFixedString<char, capacity>& _StrEnvironment) { return oSystemGetEnvironmentString(_StrEnvironment, _StrEnvironment.capacity()); }
 template<size_t capacity> char* oSystemGetURI(oFixedString<char, capacity>& _StrSysURI, oSYSPATH _SysPath) { return oSystemGetURI(_StrSysURI, _StrSysURI.capacity(), _SysPath); }
 template<size_t capacity> char* oSystemGetPath(oFixedString<char, capacity>& _StrSysPath, oSYSPATH _SysPath) { return oSystemGetPath(_StrSysPath, _StrSysPath.capacity(), _SysPath); }

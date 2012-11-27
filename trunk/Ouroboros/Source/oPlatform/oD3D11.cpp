@@ -72,6 +72,9 @@ const char* oD3D11AsSemantic(const oFourCC& _FourCC)
 // {13BA565C-4766-49C4-8C1C-C1F459F00A65}
 static const GUID oWKPDID_oD3DBufferTopology = { 0x13ba565c, 0x4766, 0x49c4, { 0x8c, 0x1c, 0xc1, 0xf4, 0x59, 0xf0, 0xa, 0x65 } };
 
+// {6489B24E-C12E-40C2-A9EF-249353888612}
+static const GUID oWKPDID_oBackPointer = { 0x6489b24e, 0xc12e, 0x40c2, { 0xa9, 0xef, 0x24, 0x93, 0x53, 0x88, 0x86, 0x12 } };
+
 // Value obtained from D3Dcommon.h and reproduced here because of soft-linking
 static const GUID oWKPDID_D3DDebugObjectName = { 0x429b8c22, 0x9188, 0x4b0c, { 0x87, 0x42, 0xac, 0xb0, 0xbf, 0x85, 0xc2, 0x00} };
 
@@ -180,7 +183,7 @@ bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3
 	}
 
 	UINT Flags = 0;
-	if (_Init.EnableDebugReporting)
+	if (_Init.DriverDebugLevel != oGPU_DEBUG_NONE)
 		Flags |= D3D11_CREATE_DEVICE_DEBUG;
 	if (_SingleThreaded)
 		Flags |= D3D11_CREATE_DEVICE_SINGLETHREADED;
@@ -190,7 +193,7 @@ bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3
 		Adapter
 		, _Init.UseSoftwareEmulation ? D3D_DRIVER_TYPE_REFERENCE : D3D_DRIVER_TYPE_UNKNOWN
 		, 0
-		, _Init.EnableDebugReporting ? D3D11_CREATE_DEVICE_DEBUG : 0
+		, Flags
 		, nullptr
 		, 0
 		, D3D11_SDK_VERSION
@@ -210,6 +213,114 @@ bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3
 	}
 
 	oVERIFY(oD3D11SetDebugName(*_ppDevice, oSAFESTRN(_Init.DebugName)));
+
+	// Setup filter of superfluous warnings
+
+	// ??SetShaderResources and ??SetConstantBuffers will trigger a warning if 
+	// that buffer has a view bound as a target, such as SetUnorderedAccessViews.
+	// The driver also then sets the targets to null. It is unsafe to assume too
+	// much about the state of the device context, especially when considering 
+	// submission of several device contexts that were constructed in parallel, so
+	// allow for API to leave state dirty and assume the last-barrage of state
+	// setting is the authoritative one, thus allow the driver to auto-clear this
+	// specific stale state.
+	static const D3D11_MESSAGE_CATEGORY sDisabledD3D11Categories[] = 
+	{
+		D3D11_MESSAGE_CATEGORY_STATE_CREATION,
+	};
+	
+	static const D3D11_MESSAGE_ID sDisabledD3D11Messages[] = 
+	{
+		D3D11_MESSAGE_ID_DEVICE_VSSETSHADERRESOURCES_HAZARD,
+		D3D11_MESSAGE_ID_DEVICE_VSSETCONSTANTBUFFERS_HAZARD,
+		D3D11_MESSAGE_ID_DEVICE_HSSETSHADERRESOURCES_HAZARD,
+		D3D11_MESSAGE_ID_DEVICE_HSSETCONSTANTBUFFERS_HAZARD,
+		D3D11_MESSAGE_ID_DEVICE_DSSETSHADERRESOURCES_HAZARD,
+		D3D11_MESSAGE_ID_DEVICE_DSSETCONSTANTBUFFERS_HAZARD,
+		D3D11_MESSAGE_ID_DEVICE_GSSETSHADERRESOURCES_HAZARD,
+		D3D11_MESSAGE_ID_DEVICE_GSSETCONSTANTBUFFERS_HAZARD,
+		D3D11_MESSAGE_ID_DEVICE_PSSETSHADERRESOURCES_HAZARD,
+		D3D11_MESSAGE_ID_DEVICE_PSSETCONSTANTBUFFERS_HAZARD,
+		D3D11_MESSAGE_ID_DEVICE_CSSETSHADERRESOURCES_HAZARD,
+		D3D11_MESSAGE_ID_DEVICE_CSSETCONSTANTBUFFERS_HAZARD,
+		D3D11_MESSAGE_ID_DEVICE_CSSETUNORDEREDACCESSVIEWS_HAZARD,
+		D3D11_MESSAGE_ID_DEVICE_OMSETRENDERTARGETSANDUNORDEREDACCESSVIEWS_HAZARD,
+
+		// Create/Destroy flow control objects
+		D3D11_MESSAGE_ID_CREATE_CONTEXT,
+		D3D11_MESSAGE_ID_DESTROY_CONTEXT,
+		D3D11_MESSAGE_ID_CREATE_QUERY,
+		D3D11_MESSAGE_ID_DESTROY_QUERY,
+		D3D11_MESSAGE_ID_CREATE_PREDICATE,
+		D3D11_MESSAGE_ID_DESTROY_PREDICATE,
+		D3D11_MESSAGE_ID_CREATE_COUNTER,
+		D3D11_MESSAGE_ID_DESTROY_COUNTER,
+		D3D11_MESSAGE_ID_CREATE_COMMANDLIST,
+		D3D11_MESSAGE_ID_DESTROY_COMMANDLIST,
+		D3D11_MESSAGE_ID_CREATE_CLASSINSTANCE,
+		D3D11_MESSAGE_ID_DESTROY_CLASSINSTANCE,
+		D3D11_MESSAGE_ID_CREATE_CLASSLINKAGE,
+		D3D11_MESSAGE_ID_DESTROY_CLASSLINKAGE,
+
+		// Create/Destroy buffers
+		D3D11_MESSAGE_ID_CREATE_BUFFER,
+		D3D11_MESSAGE_ID_DESTROY_BUFFER,
+		D3D11_MESSAGE_ID_CREATE_TEXTURE1D,
+		D3D11_MESSAGE_ID_DESTROY_TEXTURE1D,
+		D3D11_MESSAGE_ID_CREATE_TEXTURE2D,
+		D3D11_MESSAGE_ID_DESTROY_TEXTURE2D,
+		D3D11_MESSAGE_ID_CREATE_TEXTURE3D,
+		D3D11_MESSAGE_ID_DESTROY_TEXTURE3D,
+
+		// Create/Destroy views
+		D3D11_MESSAGE_ID_CREATE_SHADERRESOURCEVIEW,
+		D3D11_MESSAGE_ID_DESTROY_SHADERRESOURCEVIEW,
+		D3D11_MESSAGE_ID_CREATE_RENDERTARGETVIEW,
+		D3D11_MESSAGE_ID_DESTROY_RENDERTARGETVIEW,
+		D3D11_MESSAGE_ID_CREATE_DEPTHSTENCILVIEW,
+		D3D11_MESSAGE_ID_DESTROY_DEPTHSTENCILVIEW,
+		D3D11_MESSAGE_ID_CREATE_UNORDEREDACCESSVIEW,
+		D3D11_MESSAGE_ID_DESTROY_UNORDEREDACCESSVIEW,
+
+		// Create/Destroy shaders
+		D3D11_MESSAGE_ID_CREATE_INPUTLAYOUT,
+		D3D11_MESSAGE_ID_DESTROY_INPUTLAYOUT,
+		D3D11_MESSAGE_ID_CREATE_VERTEXSHADER,
+		D3D11_MESSAGE_ID_DESTROY_VERTEXSHADER,
+		D3D11_MESSAGE_ID_CREATE_HULLSHADER,
+		D3D11_MESSAGE_ID_DESTROY_HULLSHADER,
+		D3D11_MESSAGE_ID_CREATE_DOMAINSHADER,
+		D3D11_MESSAGE_ID_DESTROY_DOMAINSHADER,
+		D3D11_MESSAGE_ID_CREATE_GEOMETRYSHADER,
+		D3D11_MESSAGE_ID_DESTROY_GEOMETRYSHADER,
+		D3D11_MESSAGE_ID_CREATE_PIXELSHADER,
+		D3D11_MESSAGE_ID_DESTROY_PIXELSHADER,
+		D3D11_MESSAGE_ID_CREATE_COMPUTESHADER,
+		D3D11_MESSAGE_ID_DESTROY_COMPUTESHADER,
+
+		// Create/Destroy states
+		D3D11_MESSAGE_ID_CREATE_SAMPLER,
+		D3D11_MESSAGE_ID_DESTROY_SAMPLER,
+		D3D11_MESSAGE_ID_CREATE_BLENDSTATE,
+		D3D11_MESSAGE_ID_DESTROY_BLENDSTATE,
+		D3D11_MESSAGE_ID_CREATE_DEPTHSTENCILSTATE,
+		D3D11_MESSAGE_ID_DESTROY_DEPTHSTENCILSTATE,
+		D3D11_MESSAGE_ID_CREATE_RASTERIZERSTATE,
+		D3D11_MESSAGE_ID_DESTROY_RASTERIZERSTATE,
+	};
+
+	if (_Init.DriverDebugLevel == oGPU_DEBUG_NORMAL)
+	{
+		oRef<ID3D11InfoQueue> IQ;
+		oV((*_ppDevice)->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&IQ));
+		D3D11_INFO_QUEUE_FILTER filter = {0};
+		filter.DenyList.NumCategories = oCOUNTOF(sDisabledD3D11Categories);
+		filter.DenyList.pCategoryList = const_cast<D3D11_MESSAGE_CATEGORY*>(sDisabledD3D11Categories);
+		filter.DenyList.NumIDs = oCOUNTOF(sDisabledD3D11Messages);
+		filter.DenyList.pIDList = const_cast<D3D11_MESSAGE_ID*>(sDisabledD3D11Messages);
+		IQ->PushStorageFilter(&filter);
+	}
+
 	return true;
 }
 
@@ -399,7 +510,8 @@ bool oD3D11SetDebugName(ID3D11DeviceChild* _pDeviceChild, const char* _Name)
 	UINT CreationFlags = D3DDevice->GetCreationFlags();
 	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
 	{
-		HRESULT hr = _pDeviceChild->SetPrivateData(oWKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(_Name) + 1), _Name);
+		oStringS tmp(_Name);
+		HRESULT hr = _pDeviceChild->SetPrivateData(oWKPDID_D3DDebugObjectName, oUInt(tmp.capacity()), tmp.c_str());
 		if (FAILED(hr))
 			return oWinSetLastError(hr);
 	}
@@ -457,6 +569,21 @@ bool oD3D11GetBufferTopology(const ID3D11Resource* _pBuffer, oD3D11_BUFFER_TOPOL
 {
 	UINT size = sizeof(oD3D11_BUFFER_TOPOLOGY);
 	return S_OK == const_cast<ID3D11Resource*>(_pBuffer)->GetPrivateData(oWKPDID_oD3DBufferTopology, &size, _pTopology);
+}
+
+bool oD3D11SetContainerBackPointer(ID3D11DeviceChild* _pChild, oInterface* _pContainer)
+{
+	return S_OK == _pChild->SetPrivateData(oWKPDID_oBackPointer, sizeof(oInterface*), &_pContainer);
+}
+
+bool oD3D11GetContainerBackPointer(const ID3D11DeviceChild* _pChild, oInterface** _ppContainer)
+{
+	UINT size = sizeof(oInterface*);
+	HRESULT hr = const_cast<ID3D11DeviceChild*>(_pChild)->GetPrivateData(oWKPDID_oBackPointer, &size, _ppContainer);
+	if (FAILED(hr))
+		return oWinSetLastError(hr);
+	(*_ppContainer)->Reference();
+	return true;
 }
 
 uint oD3D11GetNumElements(D3D11_PRIMITIVE_TOPOLOGY _PrimitiveTopology, uint _NumPrimitives)
@@ -623,6 +750,58 @@ bool oD3D11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _Sizeo
 	return true;
 }
 
+int oD3D11VTrace(ID3D11InfoQueue* _pInfoQueue, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args)
+{
+	oStringXL buf;
+	int len = oVPrintf(buf, _Format, _Args);
+	if (len == oInvalid)
+	{
+		oErrorSetLast(oERROR_AT_CAPACITY, "message too long");
+		return len;
+	}
+
+	_pInfoQueue->AddApplicationMessage(_Severity, buf);
+	return len;
+}
+
+void oD3D11CheckBoundRTAndUAV(ID3D11DeviceContext* _pDeviceContext, int _NumBuffers, ID3D11Buffer** _ppBuffers)
+{
+	oRef<ID3D11UnorderedAccessView> UAVs[D3D11_PS_CS_UAV_REGISTER_COUNT];
+	_pDeviceContext->OMGetRenderTargetsAndUnorderedAccessViews(0, nullptr, nullptr, 0, D3D11_PS_CS_UAV_REGISTER_COUNT, (ID3D11UnorderedAccessView**)UAVs);
+	for (int r = 0; r < D3D11_PS_CS_UAV_REGISTER_COUNT; r++)
+	{
+		if (UAVs[r])
+		{
+			for (int b = 0; b < _NumBuffers; b++)
+			{
+				oRef<ID3D11Resource> Resource;
+				UAVs[r]->GetResource(&Resource);
+				if (Resource && Resource == _ppBuffers[b])
+					oD3D11Trace(_pDeviceContext, D3D11_MESSAGE_SEVERITY_ERROR, "The specified buffer in slot %d is bound using OMSetRenderTargetsAndUnorderedAccessViews slot %d. Behavior will be unexpected since the buffer may not be flushed for reading.", b, r);
+			}
+		}
+	}
+}
+
+void oD3D11CheckBoundCSSetUAV(ID3D11DeviceContext* _pDeviceContext, int _NumBuffers, ID3D11Buffer** _ppBuffers)
+{
+	oRef<ID3D11UnorderedAccessView> UAVs[D3D11_PS_CS_UAV_REGISTER_COUNT];
+	_pDeviceContext->CSGetUnorderedAccessViews(0, D3D11_PS_CS_UAV_REGISTER_COUNT, (ID3D11UnorderedAccessView**)UAVs);
+	for (int r = 0; r < D3D11_PS_CS_UAV_REGISTER_COUNT; r++)
+	{
+		if (UAVs[r])
+		{
+			for (int b = 0; b < _NumBuffers; b++)
+			{
+				oRef<ID3D11Resource> Resource;
+				UAVs[r]->GetResource(&Resource);
+				if (Resource && Resource == _ppBuffers[b])
+					oD3D11Trace(_pDeviceContext, D3D11_MESSAGE_SEVERITY_ERROR, "The specified buffer in slot %d is bound to CSSetUnorderedAccessViews slot %d. Behavior will be unexpected because the buffer may be bound for reading and writing at the same time.", b, r);
+			}
+		}
+	}
+}
+
 template<typename DescT> static void FillNonDimensions(const DescT& _Desc, oGPU_TEXTURE_TYPE _BasicType, oGPU_TEXTURE_DESC* _pDesc)
 {
 	if (_Desc.MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE)
@@ -657,14 +836,18 @@ static UINT oD3D11GetCPUWriteFlags(D3D11_USAGE _Usage)
 	}
 }
 
-static void oD3D11InitBufferDesc(UINT _BindFlags, D3D11_USAGE _Usage, uint _Size, uint _Count, bool _IsStructured, D3D11_BUFFER_DESC* _pDesc)
+static void oD3D11InitBufferDesc(UINT _BindFlags, D3D11_USAGE _Usage, uint _Size, uint _Count, bool _IsStructured, bool _IsDispatchable, D3D11_BUFFER_DESC* _pDesc)
 {
 	_pDesc->ByteWidth = _Size * _Count;
 	_pDesc->Usage = _Usage;
 	_pDesc->BindFlags = _BindFlags;
 	_pDesc->StructureByteStride = _Size;
-	_pDesc->MiscFlags = _IsStructured ? D3D11_RESOURCE_MISC_BUFFER_STRUCTURED : 0;
 	_pDesc->CPUAccessFlags = oD3D11GetCPUWriteFlags(_pDesc->Usage);
+	_pDesc->MiscFlags = 0;
+	if (_IsStructured)
+		_pDesc->MiscFlags |= D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	if (_IsDispatchable)
+		_pDesc->MiscFlags |= D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS|D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
 }
 
 static void oD3D11InitValues(const oGPU_TEXTURE_DESC& _Desc, DXGI_FORMAT* _pFormat, D3D11_USAGE* _pUsage, UINT* _pCPUAccessFlags, UINT* _pBindFlags, UINT* _pMipLevels, UINT* _pMiscFlags = nullptr)
@@ -713,12 +896,33 @@ static void oD3D11InitValues(const oGPU_TEXTURE_DESC& _Desc, DXGI_FORMAT* _pForm
 		*_pBindFlags |= D3D11_BIND_UNORDERED_ACCESS;
 }
 
+static bool oD3D11DeviceIsMutingInfosOrStateCreation(ID3D11Device* _pDevice)
+{
+	oRef<ID3D11InfoQueue> InfoQueue;
+	oV(_pDevice->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&InfoQueue));
+	SIZE_T size = 0;
+	oV(InfoQueue->GetStorageFilter(nullptr, &size));
+	D3D11_INFO_QUEUE_FILTER* f = (D3D11_INFO_QUEUE_FILTER*)oStackAlloc(size);
+	oV(InfoQueue->GetStorageFilter(f, &size));
+	for (uint i = 0 ; i < f->DenyList.NumSeverities; i++)
+		if (f->DenyList.pSeverityList[i] == D3D11_MESSAGE_SEVERITY_INFO)
+			return true;
+	for (uint i = 0 ; i < f->DenyList.NumCategories; i++)
+		if (f->DenyList.pCategoryList[i] == D3D11_MESSAGE_CATEGORY_STATE_CREATION)
+			return true;
+	return false;
+}
+
 #define oDEBUG_CHECK_BUFFER(fnName, ppOut) \
 	if (FAILED(hr)) \
 	{	return oWinSetLastError(oDEFAULT, #fnName " failed: "); \
 	} \
 	else if (_DebugName && *_DebugName) \
 	{	oD3D11SetDebugName(*ppOut, _DebugName); \
+		oRef<ID3D11Device> Dev; \
+		(*ppOut)->GetDevice(&Dev); \
+		if ((Dev->GetCreationFlags() & D3D11_CREATE_DEVICE_DEBUG) && !oD3D11DeviceIsMutingInfosOrStateCreation(Dev)) \
+			oTRACEA("oD3D11: INFO: Name Buffer: Name=\"%s\", Addr=0x%p, ExtRef=1, IntRef=0 [ STATE_CREATION INFO #OOOii: NAME_BUFFER ]", _DebugName, *ppOut); \
 	}
 
 #define oCHECK_IS_TEXTURE(_pResource) do \
@@ -740,14 +944,11 @@ static void oD3D11InitValues(const oGPU_TEXTURE_DESC& _Desc, DXGI_FORMAT* _pForm
 	 #define oDEBUG_CHECK_SAME_DEVICE(_pContext, _pSrc, _pDst)
 #endif
 
-bool oD3D11CreateBuffer(ID3D11Device* _pDevice, const char* _DebugName, const oGPU_BUFFER_DESC& _Desc, const void* _pInitBuffer, ID3D11Buffer** _ppConstantBuffer, ID3D11UnorderedAccessView** _ppUAV)
+bool oD3D11CreateBuffer(ID3D11Device* _pDevice, const char* _DebugName, const oGPU_BUFFER_DESC& _Desc, const void* _pInitBuffer, ID3D11Buffer** _ppBuffer, ID3D11UnorderedAccessView** _ppUAV, ID3D11ShaderResourceView** _ppSRV)
 {
 	D3D11_USAGE Usage = D3D11_USAGE_DEFAULT;
 	UINT BindFlags = 0;
-	uint ElementStride = oByteAlign(_Desc.StructByteSize, 16); // alignment required by shader-bindable constant buffers
-	
-	if (_Desc.StructByteSize == oInvalid && _Desc.Format != oSURFACE_UNKNOWN)
-		ElementStride = oSurfaceFormatGetSize(_Desc.Format);
+	oSURFACE_FORMAT Format = _Desc.Format;
 
 	switch (_Desc.Type)
 	{
@@ -757,18 +958,30 @@ bool oD3D11CreateBuffer(ID3D11Device* _pDevice, const char* _DebugName, const oG
 		case oGPU_BUFFER_READBACK:
 			Usage = D3D11_USAGE_STAGING;
 			break;
-		case oGPU_BUFFER_UNORDERED_UNSTRUCTURED:
+		case oGPU_BUFFER_UNORDERED_RAW:
 			BindFlags = D3D11_BIND_UNORDERED_ACCESS;
-			if (_Desc.Format == oSURFACE_UNKNOWN)
+			Format = oSURFACE_R32_TYPELESS;
+			if (_Desc.StructByteSize != sizeof(uint))
+				return oErrorSetLast(oERROR_INVALID_PARAMETER, "A raw buffer must specify a StructByteSize of 4.");
+			if (_Desc.ArraySize < 3)
+				return oErrorSetLast(oERROR_INVALID_PARAMETER, "A raw buffer must have at least 3 elements.");
+			break;
+		case oGPU_BUFFER_UNORDERED_UNSTRUCTURED:
+			BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+			if (Format == oSURFACE_UNKNOWN)
 				return oErrorSetLast(oERROR_INVALID_PARAMETER, "An unordered, unstructured buffer requires a valid surface format to be specified.");
 			break;
 		case oGPU_BUFFER_UNORDERED_STRUCTURED:
 		case oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND:
 		case oGPU_BUFFER_UNORDERED_STRUCTURED_COUNTER:
-			BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+			BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
 			break;
 		oNODEFAULT;
 	}
+
+	uint ElementStride = _Desc.StructByteSize;
+	if (_Desc.StructByteSize == oInvalid && Format != oSURFACE_UNKNOWN)
+		ElementStride = oSurfaceFormatGetSize(Format);
 
 	// @oooii-tony: why oh why do I need to do things this way?
 	if (Usage == D3D11_USAGE_DEFAULT && D3D_FEATURE_LEVEL_11_0 > _pDevice->GetFeatureLevel())
@@ -778,22 +991,24 @@ bool oD3D11CreateBuffer(ID3D11Device* _pDevice, const char* _DebugName, const oG
 		return oErrorSetLast(oERROR_INVALID_PARAMETER, "A structured buffer requires a valid non-zero buffer size to be specified.");
 
 	D3D11_BUFFER_DESC desc;
-	oD3D11InitBufferDesc(BindFlags, Usage, ElementStride, _Desc.ArraySize, _Desc.Type >= oGPU_BUFFER_UNORDERED_STRUCTURED, &desc);
+	oD3D11InitBufferDesc(BindFlags, Usage, ElementStride, _Desc.ArraySize, _Desc.Type >= oGPU_BUFFER_UNORDERED_STRUCTURED, _Desc.Type == oGPU_BUFFER_UNORDERED_RAW, &desc);
 
 	D3D11_SUBRESOURCE_DATA SRD;
 	SRD.pSysMem = _pInitBuffer;
-	HRESULT hr = _pDevice->CreateBuffer(&desc, _pInitBuffer ? &SRD : nullptr, _ppConstantBuffer);
-	oDEBUG_CHECK_BUFFER(oD3D11CreateConstantBuffer, _ppConstantBuffer);
-
+	HRESULT hr = _pDevice->CreateBuffer(&desc, _pInitBuffer ? &SRD : nullptr, _ppBuffer);
+	oDEBUG_CHECK_BUFFER(oD3D11CreateBuffer, _ppBuffer);
+	
+	// Add this mainly for index buffers so they can describe their own 
+	// StructureByteStride.
 	oD3D11_BUFFER_TOPOLOGY t;
 	t.ElementCount = _Desc.ArraySize;
 	t.ElementStride = ElementStride;
-	oVERIFY(oD3D11SetBufferTopology(*_ppConstantBuffer, t));
+	oVERIFY(oD3D11SetBufferTopology(*_ppBuffer, t));
 
-	if (_Desc.Type >= oGPU_BUFFER_UNORDERED_UNSTRUCTURED)
+	if (_Desc.Type >= oGPU_BUFFER_UNORDERED_RAW)
 	{
 		D3D11_UNORDERED_ACCESS_VIEW_DESC UAVD;
-		UAVD.Format = oDXGIFromSurfaceFormat(_Desc.Format);
+		UAVD.Format = oDXGIFromSurfaceFormat(Format);
 		UAVD.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 		UAVD.Buffer.FirstElement = 0;
 		UAVD.Buffer.NumElements = _Desc.ArraySize;
@@ -801,6 +1016,9 @@ bool oD3D11CreateBuffer(ID3D11Device* _pDevice, const char* _DebugName, const oG
 
 		switch (_Desc.Type)
 		{
+			case oGPU_BUFFER_UNORDERED_RAW:
+				UAVD.Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
+				break;
 			case oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND:
 				UAVD.Buffer.Flags = D3D11_BUFFER_UAV_FLAG_APPEND;
 				break;
@@ -811,8 +1029,14 @@ bool oD3D11CreateBuffer(ID3D11Device* _pDevice, const char* _DebugName, const oG
 				break;
 		}
 
-		hr = _pDevice->CreateUnorderedAccessView(*_ppConstantBuffer, &UAVD, _ppUAV);
-		oDEBUG_CHECK_BUFFER(oD3D11CreateConstantBuffer, _ppUAV)
+		hr = _pDevice->CreateUnorderedAccessView(*_ppBuffer, &UAVD, _ppUAV);
+		oDEBUG_CHECK_BUFFER(oD3D11CreateConstantBuffer, _ppUAV);
+
+		if( _Desc.Type >= oGPU_BUFFER_UNORDERED_STRUCTURED)
+		{
+			hr = _pDevice->CreateShaderResourceView(*_ppBuffer, nullptr, _ppSRV);
+			oDEBUG_CHECK_BUFFER(oD3D11CreateConstantBuffer, _ppUAV);
+		}
 	}
 	
 	else if (_ppUAV)
@@ -821,11 +1045,31 @@ bool oD3D11CreateBuffer(ID3D11Device* _pDevice, const char* _DebugName, const oG
 	return true;
 }
 
+bool oD3D11CreateUnflaggedUAV(ID3D11UnorderedAccessView* _pSourceUAV, ID3D11UnorderedAccessView** _ppUnflaggedUAV)
+{
+	D3D11_UNORDERED_ACCESS_VIEW_DESC UAVD;
+	_pSourceUAV->GetDesc(&UAVD);
+	if (UAVD.ViewDimension == D3D11_UAV_DIMENSION_BUFFER)
+	{
+		oRef<ID3D11Resource> Resource;
+		_pSourceUAV->GetResource(&Resource);
+		oRef<ID3D11Device> Device;
+		Resource->GetDevice(&Device);
+
+		UAVD.Buffer.Flags = 0;
+		oVB_RETURN2(Device->CreateUnorderedAccessView(Resource, &UAVD, _ppUnflaggedUAV));
+
+		return true;
+	}
+	
+	return oErrorSetLast(oERROR_INVALID_PARAMETER, "Only D3D11_UAV_DIMENSION_BUFFER views supported");
+}
+
 bool oD3D11CreateIndexBuffer(ID3D11Device* _pDevice, const char* _DebugName, D3D11_USAGE _Usage, const void* _pIndices, uint _NumIndices, bool _Use16BitIndices, ID3D11Buffer** _ppIndexBuffer)
 {
 	const uint kIndexStride = _Use16BitIndices ? sizeof(unsigned short) : sizeof(unsigned int);
 	D3D11_BUFFER_DESC desc;
-	oD3D11InitBufferDesc(D3D11_BIND_INDEX_BUFFER, _Usage, kIndexStride, _NumIndices, false, &desc);
+	oD3D11InitBufferDesc(D3D11_BIND_INDEX_BUFFER, _Usage, kIndexStride, _NumIndices, false, false, &desc);
 	D3D11_SUBRESOURCE_DATA SRD;
 	SRD.pSysMem = _pIndices;
 	HRESULT hr = _pDevice->CreateBuffer(&desc, _pIndices ? &SRD : 0, _ppIndexBuffer);
@@ -842,7 +1086,7 @@ bool oD3D11CreateIndexBuffer(ID3D11Device* _pDevice, const char* _DebugName, D3D
 bool oD3D11CreateVertexBuffer(ID3D11Device* _pDevice, const char* _DebugName, D3D11_USAGE _Usage, const void* _pVertices, uint _NumVertices, uint _VertexStride, ID3D11Buffer** _ppVertexBuffer)
 {
 	D3D11_BUFFER_DESC desc;
-	oD3D11InitBufferDesc(D3D11_BIND_VERTEX_BUFFER, _Usage, _VertexStride, _NumVertices, false, &desc);
+	oD3D11InitBufferDesc(D3D11_BIND_VERTEX_BUFFER, _Usage, _VertexStride, _NumVertices, false, false, &desc);
 	D3D11_SUBRESOURCE_DATA SRD;
 	SRD.pSysMem = _pVertices;
 	HRESULT hr = _pDevice->CreateBuffer(&desc, _pVertices ? &SRD : 0, _ppVertexBuffer);
@@ -907,7 +1151,7 @@ void oD3D11UpdateSubresource(ID3D11DeviceContext* _pDeviceContext, ID3D11Resourc
 
 			int2 ByteDimensions;
 			if (type == D3D11_RESOURCE_DIMENSION_BUFFER)
-				ByteDimensions = d.Dimensions;
+				ByteDimensions = d.Dimensions.xy;
 			else
 				ByteDimensions = oSurfaceMipCalcByteDimensions(d.Format, d.Dimensions);
 
@@ -932,9 +1176,9 @@ void oD3D11MapWriteDiscard(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource*
 		case D3D11_USAGE_DEFAULT:
 		{
 			int2 ByteDimensions = oSurfaceMipCalcByteDimensions(d.Format, d.Dimensions);
-			_pMappedResource->SlicePitch = ByteDimensions.x * ByteDimensions.y;
+			_pMappedResource->DepthPitch = ByteDimensions.x * ByteDimensions.y;
 			_pMappedResource->RowPitch = ByteDimensions.x;
-			_pMappedResource->pData = new char[_pMappedResource->SlicePitch];
+			_pMappedResource->pData = new char[_pMappedResource->DepthPitch];
 			break;
 		}
 		
@@ -1040,7 +1284,7 @@ void oD3D11GetTextureDesc(ID3D11Resource* _pResource, oGPU_TEXTURE_DESC* _pDesc,
 		{
 			D3D11_TEXTURE1D_DESC desc;
 			static_cast<ID3D11Texture1D*>(_pResource)->GetDesc(&desc);
-			_pDesc->Dimensions = int2(oInt(desc.Width), 1);
+			_pDesc->Dimensions = int3(oInt(desc.Width), 1, 1);
 			_pDesc->NumSlices = oInt(desc.ArraySize);
 			FillNonDimensions(desc, oGPU_TEXTURE_2D_MAP, _pDesc);
 			if (_pUsage) *_pUsage = desc.Usage;
@@ -1051,7 +1295,7 @@ void oD3D11GetTextureDesc(ID3D11Resource* _pResource, oGPU_TEXTURE_DESC* _pDesc,
 		{
 			D3D11_TEXTURE2D_DESC desc;
 			static_cast<ID3D11Texture2D*>(_pResource)->GetDesc(&desc);
-			_pDesc->Dimensions = int2(oInt(desc.Width), oInt(desc.Height));
+			_pDesc->Dimensions = int3(oInt(desc.Width), oInt(desc.Height), 1);
 			_pDesc->NumSlices = oInt(desc.ArraySize);
 			FillNonDimensions(desc, oGPU_TEXTURE_2D_MAP, _pDesc);
 			if (_pUsage) *_pUsage = desc.Usage;
@@ -1062,8 +1306,8 @@ void oD3D11GetTextureDesc(ID3D11Resource* _pResource, oGPU_TEXTURE_DESC* _pDesc,
 		{
 			D3D11_TEXTURE3D_DESC desc;
 			static_cast<ID3D11Texture3D*>(_pResource)->GetDesc(&desc);
-			_pDesc->Dimensions = int2(oInt(desc.Width), oInt(desc.Height));
-			_pDesc->NumSlices = oInt(desc.Depth);
+			_pDesc->Dimensions = int3(oInt(desc.Width), oInt(desc.Height), oInt(desc.Depth));
+			_pDesc->NumSlices = 1;
 			FillNonDimensions(desc, oGPU_TEXTURE_3D_MAP, _pDesc);
 			if (_pUsage) *_pUsage = desc.Usage;
 			break;
@@ -1076,7 +1320,7 @@ void oD3D11GetTextureDesc(ID3D11Resource* _pResource, oGPU_TEXTURE_DESC* _pDesc,
 
 			D3D11_BUFFER_DESC desc;
 			static_cast<ID3D11Buffer*>(_pResource)->GetDesc(&desc);
-			_pDesc->Dimensions = int2(oInt(desc.ByteWidth), 1);
+			_pDesc->Dimensions = int3(oInt(desc.ByteWidth), 1, 1);
 			_pDesc->NumSlices = oInt(t.ElementCount);
 			_pDesc->Format = oSURFACE_UNKNOWN;
 			if (_pUsage) *_pUsage = desc.Usage;
@@ -1201,17 +1445,11 @@ bool oD3D11CreateUnorderedAccessView(const char* _DebugName, ID3D11Resource* _pT
 
 bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const oGPU_TEXTURE_DESC& _Desc, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pInitData, ID3D11Resource** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView, ID3D11View** _ppRenderTargetView)
 {
-	int dimensions = 1;
-	if (oGPUTextureTypeIs3DMap(_Desc.Type))
-		dimensions = 3;
-	else if (_Desc.Dimensions.y != oInvalid)
-		dimensions = 2;
-
 	bool IsShaderResource = false;
 	HRESULT hr = S_OK;
-	switch (dimensions)
+	switch (oGPUTextureTypeGetBasicType(_Desc.Type))
 	{
-		case 1:
+		case oGPU_TEXTURE_1D_MAP:
 		{
 			D3D11_TEXTURE1D_DESC desc;
 			desc.Width = _Desc.Dimensions.x;
@@ -1222,7 +1460,8 @@ bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const o
 			break;
 		}
 
-		case 2:
+		case oGPU_TEXTURE_2D_MAP:
+		case oGPU_TEXTURE_CUBE_MAP:
 		{
 			oASSERT(!oGPUTextureTypeIsCubeMap(_Desc.Type) || _Desc.NumSlices == 6, "Cube maps must have NumSlices == 6, NumSlices=%d specified", _Desc.NumSlices);
 
@@ -1238,17 +1477,20 @@ bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const o
 			break;
 		}
 
-		case 3:
+		case oGPU_TEXTURE_3D_MAP:
 		{
+			oASSERT(_Desc.NumSlices == 1, "3d textures don't support slices, NumSlices=%d specified", _Desc.NumSlices);
+
 			D3D11_TEXTURE3D_DESC desc;
 			desc.Width = _Desc.Dimensions.x;
 			desc.Height = _Desc.Dimensions.y;
-			desc.Depth = _Desc.NumSlices;
+			desc.Depth = _Desc.Dimensions.z;
 			oD3D11InitValues(_Desc, &desc.Format, &desc.Usage, &desc.CPUAccessFlags, &desc.BindFlags, &desc.MipLevels, &desc.MiscFlags);
 			IsShaderResource = !!(desc.BindFlags & D3D11_BIND_SHADER_RESOURCE);
 			hr = _pDevice->CreateTexture3D(&desc, (D3D11_SUBRESOURCE_DATA*)_pInitData, (ID3D11Texture3D**)_ppTexture);
 			break;
 		}
+		oNODEFAULT;
 	}
 
 	oDEBUG_CHECK_BUFFER(oD3D11CreateTexture, _ppTexture);
@@ -1352,7 +1594,7 @@ bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, interface oImage** _p
 		return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified texture's format %s is not supported by oImage", oAsString(d.Format));
 
 	oImage::DESC idesc;
-	idesc.RowPitch = oImageCalcRowSize(ImageFormat, d.Width);
+	idesc.RowPitch = oImageCalcRowPitch(ImageFormat, d.Width);
 	idesc.Dimensions.x = d.Width;
 	idesc.Dimensions.y = d.Height;
 	idesc.Format = oImage::BGRA32;
@@ -1414,7 +1656,7 @@ static bool oD3D11Save_PrepareCPUCopy(const oImage* _pImage, D3DX11_IMAGE_FILE_F
 	_pImage->GetDesc(&idesc);
 
 	oGPU_TEXTURE_DESC desc;
-	desc.Dimensions = idesc.Dimensions;
+	desc.Dimensions = int3(idesc.Dimensions, 1);
 	desc.Format = oImageFormatToSurfaceFormat(idesc.Format);
 	desc.NumSlices = 1;
 	desc.Type = oGPU_TEXTURE_2D_READBACK;
@@ -1425,7 +1667,7 @@ static bool oD3D11Save_PrepareCPUCopy(const oImage* _pImage, D3DX11_IMAGE_FILE_F
 	oSURFACE_CONST_MAPPED_SUBRESOURCE msr;
 	msr.pData = _pImage->GetData();
 	msr.RowPitch = idesc.RowPitch;
-	msr.SlicePitch = oImageCalcSize(idesc.Format, idesc.Dimensions);
+	msr.DepthPitch = oImageCalcSize(idesc.Format, idesc.Dimensions);
 
 	if (!oD3D11CreateTexture(D3DDevice, "oD3D11Save.Temp", desc, &msr, _ppCPUResource, nullptr))
 		return false; // pass through error
@@ -1600,7 +1842,7 @@ bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, oSURFACE_FORMAT _NewFormat,
 	_pSourceTexture->GetDevice(&D3DDevice);
 
 	oGPU_TEXTURE_DESC NewDesc;
-	NewDesc.Dimensions = int2(oInt(desc.Width), oInt(desc.Height));
+	NewDesc.Dimensions = int3(oInt(desc.Width), oInt(desc.Height), 1);
 	NewDesc.NumSlices = oInt(desc.ArraySize);
 	NewDesc.Format = _NewFormat;
 	NewDesc.Type = oGPUTextureTypeGetReadbackType(NewDesc.Type); // @oooii-tony: this should probably come from somewhere better.
@@ -1624,7 +1866,7 @@ bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, oSURFACE_FORMAT _NewFormat,
 bool oD3D11Convert(ID3D11Device* _pDevice, oSURFACE_MAPPED_SUBRESOURCE& _Destination, oSURFACE_FORMAT _DestinationFormat, oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source, oSURFACE_FORMAT _SourceFormat, const int2& _MipDimensions)
 {
 	oGPU_TEXTURE_DESC d;
-	d.Dimensions = _MipDimensions;
+	d.Dimensions = int3(_MipDimensions, 1);
 	d.NumSlices = 1;
 	d.Format = _SourceFormat;
 	d.Type = oGPU_TEXTURE_2D_MAP;
@@ -1705,7 +1947,13 @@ void oD3D11SetShaderResourceViews(ID3D11DeviceContext* _pDeviceContext, uint _St
 	_pDeviceContext->CSSetShaderResources(_StartSlot, _NumShaderResourceViews, ppViews);
 }
 
-void oD3D11InitViewport(const oAABoxf& _Source, D3D11_VIEWPORT* _pViewport)
+void oD3D11FromViewport(const D3D11_VIEWPORT& _Viewport, oAABoxf* _pBox)
+{
+	_pBox->SetMin(float3(_Viewport.TopLeftX, _Viewport.TopLeftY, _Viewport.MinDepth));
+	_pBox->SetMax(float3(_Viewport.Width, _Viewport.Height, _Viewport.MaxDepth));
+}
+
+void oD3D11ToViewport(const oAABoxf& _Source, D3D11_VIEWPORT* _pViewport)
 {
 	_pViewport->TopLeftX = _Source.GetMin().x;
 	_pViewport->TopLeftY = _Source.GetMin().y;
@@ -1715,7 +1963,7 @@ void oD3D11InitViewport(const oAABoxf& _Source, D3D11_VIEWPORT* _pViewport)
 	_pViewport->MaxDepth = _Source.GetMax().z;
 }
 
-void oD3D11InitViewport(const int2& _RenderTargetDimensions, D3D11_VIEWPORT* _pViewport)
+void oD3D11ToViewport(const int2& _RenderTargetDimensions, D3D11_VIEWPORT* _pViewport)
 {
 	_pViewport->TopLeftX = 0.0f;
 	_pViewport->TopLeftY = 0.0f;
@@ -1731,7 +1979,7 @@ void oD3D11SetFullTargetViewport(ID3D11DeviceContext* _pDeviceContext, ID3D11Tex
 	_pRenderTargetResource->GetDesc(&desc);
 
 	D3D11_VIEWPORT v;
-	oD3D11InitViewport(int2(desc.Width, desc.Height), &v);
+	oD3D11ToViewport(int2(desc.Width, desc.Height), &v);
 	_pDeviceContext->RSSetViewports(1, &v);
 }
 
@@ -1842,7 +2090,6 @@ void oD3D11CopyStructs(ID3D11DeviceContext* _pDeviceContext, ID3D11Buffer* _pBuf
 		oNODEFAULT;
 	}
 }
-
  
 oD3D11ScopedMessageDisabler::oD3D11ScopedMessageDisabler(ID3D11DeviceContext* _pDeviceContext, const D3D11_MESSAGE_ID* _pMessageIDs, size_t _NumMessageIDs)
 {

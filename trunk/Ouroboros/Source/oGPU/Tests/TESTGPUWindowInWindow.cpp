@@ -53,7 +53,7 @@ public:
 		oGPUDevice::INIT DevInit;
 		DevInit.DebugName = "TestDevice";
 		DevInit.Version = oVersion(10,0);
-		DevInit.EnableDebugReporting = true;
+		DevInit.DriverDebugLevel = oGPU_DEBUG_NORMAL;
 
 		oRef<oGPUDevice> Device;
 		if (!oGPUDeviceCreate(DevInit, &Device))

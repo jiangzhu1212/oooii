@@ -65,6 +65,13 @@ enum oGPU_VENDOR
 	oGPU_VENDOR_INTERNAL,
 };
 
+enum oGPU_DEBUG_LEVEL
+{
+	oGPU_DEBUG_NONE, // No driver debug reporting
+	oGPU_DEBUG_NORMAL, // Trivial/auto-handled warnings by driver squelched
+	oGPU_DEBUG_UNFILTERED, // No oGPU suppression of driver warnings
+};
+
 enum oGPU_PIPELINE_STAGE
 {
 	oGPU_VERTEX_SHADER,
@@ -128,6 +135,11 @@ enum oGPU_BUFFER_TYPE
 	// reading.
 	oGPU_BUFFER_READBACK,
 
+	// A raw buffer indexed by bytes (32-bit aligned access only though). This is
+	// the type to use for Dispatch()/Draw() parameters coming from the GPU.
+	// (Indirect drawing).
+	oGPU_BUFFER_UNORDERED_RAW,
+
 	// Buffer that does not guarantee order of access. Such ordering must be done
 	// by the explicit use of atomics in client shader code. Using this requires
 	// an oSURFACE_FORMAT to be specified.
@@ -151,6 +163,14 @@ enum oGPU_BUFFER_TYPE
 
 enum oGPU_TEXTURE_TYPE
 {
+	// 1D texture.
+	oGPU_TEXTURE_1D_MAP = oGPU_TRAIT_TEXTURE_1D,
+	oGPU_TEXTURE_1D_MAP_MIPS = oGPU_TRAIT_TEXTURE_1D | oGPU_TRAIT_TEXTURE_MIPS,
+	oGPU_TEXTURE_1D_RENDER_TARGET = oGPU_TRAIT_TEXTURE_1D | oGPU_TRAIT_TEXTURE_RENDER_TARGET,
+	oGPU_TEXTURE_1D_RENDER_TARGET_MIPS = oGPU_TRAIT_TEXTURE_1D | oGPU_TRAIT_TEXTURE_MIPS | oGPU_TRAIT_TEXTURE_RENDER_TARGET,
+	oGPU_TEXTURE_1D_READBACK = oGPU_TRAIT_TEXTURE_1D | oGPU_TRAIT_RESOURCE_READBACK,
+	oGPU_TEXTURE_1D_READBACK_MIPS = oGPU_TRAIT_TEXTURE_1D | oGPU_TRAIT_TEXTURE_MIPS | oGPU_TRAIT_RESOURCE_READBACK,
+
 	// "normal" 2D texture.
 	oGPU_TEXTURE_2D_MAP = oGPU_TRAIT_TEXTURE_2D,
 	oGPU_TEXTURE_2D_MAP_MIPS = oGPU_TRAIT_TEXTURE_2D | oGPU_TRAIT_TEXTURE_MIPS,
@@ -184,6 +204,7 @@ enum oGPU_TEXTURE_TYPE
 inline bool oGPUTextureTypeHasMips(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_TEXTURE_MIPS); }
 inline bool oGPUTextureTypeIsReadback(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_RESOURCE_READBACK); }
 inline bool oGPUTextureTypeIsRenderTarget(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_TEXTURE_RENDER_TARGET); }
+inline bool oGPUTextureTypeIs1DMap(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_TEXTURE_1D); }
 inline bool oGPUTextureTypeIs2DMap(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_TEXTURE_2D); }
 inline bool oGPUTextureTypeIsCubeMap(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_TEXTURE_CUBE); }
 inline bool oGPUTextureTypeIs3DMap(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_TEXTURE_3D); }
@@ -193,6 +214,11 @@ inline bool oGPUTextureTypeIsUnordered(oGPU_TEXTURE_TYPE _Type) { return 0 != ((
 inline oGPU_TEXTURE_TYPE oGPUTextureTypeGetReadbackType(oGPU_TEXTURE_TYPE _Type) { return (oGPU_TEXTURE_TYPE)((int)_Type | oGPU_TRAIT_RESOURCE_READBACK); }
 inline oGPU_TEXTURE_TYPE oGPUTextureTypeGetMipMapType(oGPU_TEXTURE_TYPE _Type) { return (oGPU_TEXTURE_TYPE)((int)_Type | oGPU_TRAIT_TEXTURE_MIPS); }
 inline oGPU_TEXTURE_TYPE oGPUTextureTypeGetRenderTargetType(oGPU_TEXTURE_TYPE _Type) { return (oGPU_TEXTURE_TYPE)((int)_Type | oGPU_TRAIT_TEXTURE_RENDER_TARGET); }
+inline oGPU_TEXTURE_TYPE oGPUTextureTypeGetBasicType(oGPU_TEXTURE_TYPE _Type) { return (oGPU_TEXTURE_TYPE)((int)_Type & (oGPU_TRAIT_TEXTURE_1D|oGPU_TRAIT_TEXTURE_2D|oGPU_TRAIT_TEXTURE_3D|oGPU_TRAIT_TEXTURE_CUBE)); }
+
+// Returns the matching non readback type for the specified type.
+inline oGPU_TEXTURE_TYPE oGPUTextureTypeStripReadbackType(oGPU_TEXTURE_TYPE _Type) { return (oGPU_TEXTURE_TYPE)((int)_Type & ~oGPU_TRAIT_RESOURCE_READBACK); }
+inline oGPU_TEXTURE_TYPE oGPUTextureTypeStripMipMapType(oGPU_TEXTURE_TYPE _Type) { return (oGPU_TEXTURE_TYPE)((int)_Type & ~oGPU_TRAIT_TEXTURE_MIPS); }
 
 enum oGPU_CUBE_FACE
 {

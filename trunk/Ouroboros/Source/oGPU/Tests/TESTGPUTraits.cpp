@@ -40,6 +40,31 @@ struct TESTGPUTraits : public oTest
 
 		switch(_Type)
 		{
+		case oGPU_TEXTURE_1D_MAP:
+			Is1D = true;
+			break;
+		case oGPU_TEXTURE_1D_MAP_MIPS:
+			Is1D = true;
+			HasMips = true;
+			break;
+		case oGPU_TEXTURE_1D_RENDER_TARGET:
+			Is1D = true;
+			IsRenderTarget = true;
+			break;
+		case oGPU_TEXTURE_1D_RENDER_TARGET_MIPS:
+			Is1D = true;
+			IsRenderTarget = true;
+			HasMips = true;
+			break;
+		case oGPU_TEXTURE_1D_READBACK:
+			Is1D = true;
+			IsReadBack = true;
+			break;
+		case oGPU_TEXTURE_1D_READBACK_MIPS:
+			Is1D = true;
+			HasMips = true;
+			IsReadBack = true;
+			break;
 		case oGPU_TEXTURE_2D_MAP:
 			Is2D = true;
 			break;
@@ -126,6 +151,7 @@ struct TESTGPUTraits : public oTest
 		oTESTB(oGPUTextureTypeHasMips(_Type) == HasMips, "oGPUTextureTypeHasMips incorrectly returning %s for %s", HasMips ? "false" : "true", oAsString(_Type));
 		oTESTB(oGPUTextureTypeIsReadback(_Type) == IsReadBack, "oGPUTextureTypeIsReadback incorrectly returning %s for %s", IsReadBack ? "false" : "true", oAsString(_Type));
 		oTESTB(oGPUTextureTypeIsRenderTarget(_Type) == IsRenderTarget, "oGPUTextureTypeIsRenderTarget incorrectly returning %s for %s", IsRenderTarget ? "false" : "true", oAsString(_Type));
+		oTESTB(oGPUTextureTypeIs1DMap(_Type) == Is1D, "oGPUTextureTypeIs1DMap incorrectly returning %s for %s", Is1D ? "false" : "true", oAsString(_Type));
 		oTESTB(oGPUTextureTypeIs2DMap(_Type) == Is2D, "oGPUTextureTypeIs2DMap incorrectly returning %s for %s", Is2D ? "false" : "true", oAsString(_Type));
 		oTESTB(oGPUTextureTypeIsCubeMap(_Type) == IsCube, "oGPUTextureTypeIsCubeMap incorrectly returning %s for %s", IsCube ? "false" : "true", oAsString(_Type));
 		oTESTB(oGPUTextureTypeIs3DMap(_Type) == Is3D, "oGPUTextureTypeIs3DMap incorrectly returning %s for %s", Is3D ? "false" : "true", oAsString(_Type));
@@ -149,6 +175,13 @@ struct TESTGPUTraits : public oTest
 #define TEST_TEXTURE(_TextureType) \
 	if(!TestTextureTypeFn(_TextureType)) \
 		return Result;
+
+		TEST_TEXTURE(oGPU_TEXTURE_1D_MAP);
+		TEST_TEXTURE(oGPU_TEXTURE_1D_MAP_MIPS);
+		TEST_TEXTURE(oGPU_TEXTURE_1D_RENDER_TARGET);
+		TEST_TEXTURE(oGPU_TEXTURE_1D_RENDER_TARGET_MIPS);
+		TEST_TEXTURE(oGPU_TEXTURE_1D_READBACK);
+		TEST_TEXTURE(oGPU_TEXTURE_1D_READBACK_MIPS);
 
 		TEST_TEXTURE(oGPU_TEXTURE_2D_MAP);
 		TEST_TEXTURE(oGPU_TEXTURE_2D_MAP_MIPS);

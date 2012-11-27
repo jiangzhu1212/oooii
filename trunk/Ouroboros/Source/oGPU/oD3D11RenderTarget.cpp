@@ -52,7 +52,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget)
 	, Desc(_Desc)
 {
 	// invalidate width/height to force allocation in this call to resize
-	Desc.Dimensions = int2(oInvalid,oInvalid);
+	Desc.Dimensions = int3(oInvalid,oInvalid,oInvalid);
 	Resize(_Desc.Dimensions);
 	*_pSuccess = true;
 }
@@ -78,7 +78,7 @@ void oD3D11RenderTarget::GetDesc(DESC* _pDesc) const threadsafe
 
 		DXGI_SWAP_CHAIN_DESC d;
 		oV(DXGISwapChain->GetDesc(&d));
-		_pDesc->Dimensions = int2(oInt(d.BufferDesc.Width), oInt(d.BufferDesc.Height));
+		_pDesc->Dimensions = int3(oInt(d.BufferDesc.Width), oInt(d.BufferDesc.Height), 1);
 		_pDesc->Format[0] = oDXGIToSurfaceFormat(d.BufferDesc.Format);
 
 		if (pThis->DepthStencilTexture)
@@ -125,7 +125,7 @@ bool oD3D11RenderTarget::ResizeUnlock()
 
 	Desc.NumSlices = 1;
 	Desc.MRTCount = 1;
-	Desc.GenerateMips = false;
+	Desc.Type = oGPU_TEXTURE_2D_RENDER_TARGET;
 	Desc.ClearDesc = oGPU_CLEAR_DESC(); // still settable by client code
 	// Desc.DepthStencilFormat; // set in ctor and recycled through recreates
 
@@ -134,7 +134,7 @@ bool oD3D11RenderTarget::ResizeUnlock()
 	int2 Size = int2(oInt(SCDesc.BufferDesc.Width), oInt(SCDesc.BufferDesc.Height));
 	RecreateDepthBuffer(Size);
 
-	Desc.Dimensions = Size;
+	Desc.Dimensions = int3(Size, 1);
 	oINIT_ARRAY(Desc.Format, oSURFACE_UNKNOWN);
 	Desc.Format[0] = oDXGIToSurfaceFormat(SCDesc.BufferDesc.Format);
 
@@ -152,7 +152,7 @@ void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
 		DSV = nullptr;
 
 		oGPU_TEXTURE_DESC d;
-		d.Dimensions = _Dimensions;
+		d.Dimensions = int3(_Dimensions, 1);
 		d.NumSlices = 1;
 		d.Format = Desc.DepthStencilFormat;
 		d.Type = oGPU_TEXTURE_2D_RENDER_TARGET;
@@ -165,7 +165,7 @@ void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
 	}
 }
 
-void oD3D11RenderTarget::Resize(const int2& _NewDimensions)
+void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 {
 	if (Window)
 	{
@@ -178,7 +178,7 @@ void oD3D11RenderTarget::Resize(const int2& _NewDimensions)
 		{
 			oLockGuard<oSharedMutex> lock(DescMutex);
 
-			oTRACE("%s %s Resize %dx%d -> %dx%d", typeid(*this), GetName(), Desc.Dimensions.x, Desc.Dimensions.y, _NewDimensions.x, _NewDimensions.y);
+			oTRACE("%s %s Resize %dx%dx%d -> %dx%dx%d", typeid(*this).name(), GetName(), Desc.Dimensions.x, Desc.Dimensions.y, Desc.Dimensions.z, _NewDimensions.x, _NewDimensions.y, _NewDimensions.z);
 			
 			oFORI(i, Textures)
 			{
@@ -189,7 +189,7 @@ void oD3D11RenderTarget::Resize(const int2& _NewDimensions)
 			DepthStencilTexture = nullptr;
 			DSV = nullptr;
 			
-			if (_NewDimensions.x && _NewDimensions.y)
+			if (_NewDimensions.x && _NewDimensions.y && _NewDimensions.z)
 			{
 				oD3D11DEVICE();
 				for (int i = 0; i < Desc.MRTCount; i++)
@@ -201,13 +201,13 @@ void oD3D11RenderTarget::Resize(const int2& _NewDimensions)
 					d.Dimensions = _NewDimensions;
 					d.Format = Desc.Format[i];
 					d.NumSlices = Desc.NumSlices;
-					d.Type = oGPU_TEXTURE_2D_RENDER_TARGET;
+					d.Type = oGPUTextureTypeGetRenderTargetType(Desc.Type);
 
 					oVERIFY(Device->CreateTexture(name, d, &Textures[i]));
 					oVERIFY(oD3D11CreateRenderTargetView(name, static_cast<oD3D11Texture*>(Textures[i].c_ptr())->Texture, &RTVs[i]));
 				}
 
-				RecreateDepthBuffer(_NewDimensions);
+				RecreateDepthBuffer(_NewDimensions.xy);
 			}
 
 			Desc.Dimensions = _NewDimensions;	

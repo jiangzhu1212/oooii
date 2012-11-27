@@ -34,10 +34,17 @@
 // I can't. NOTE: There are 4 real sampler states: point/linear clamp/wrap. The
 // rest are aniso settings or mip bias settings. So we can map from several 
 // settings to a 16-member subset... come back to this.
-static const int oGPU_MAX_NUM_SAMPLERS = 16;
-static const int oGPU_MAX_NUM_MATERIAL_TEXTURES = 16;
-static const int oGPU_MAX_NUM_ENVIRONMENT_TEXTURES = 16;
-static const int oGPU_MAX_NUM_MRTS = 8;
-static const int oGPU_MAX_NUM_PICKS_PER_FRAME = 16;
+static const uint oGPU_MAX_NUM_SAMPLERS = 16;
+static const uint oGPU_MAX_NUM_MRTS = 8;
+static const uint oGPU_MAX_NUM_UNORDERED_BUFFERS = 8;
+static const uint oGPU_MAX_NUM_VIEWPORTS = 16;
+static const uint oGPU_MAX_NUM_PICKS_PER_FRAME = 16;
+static const uint oGPU_MAX_NUM_THREAD_GROUPS_PER_DIMENSION = 65535;
+static const uint oGPU_MAX_NUM_THREAD_GROUPS_PER_DIMENSION_MASK = 0xffff;
+static const uint oGPU_MAX_NUM_THREAD_GROUPS_PER_DIMENSION_SHIFT = 16;
+
+// @oooii-tony: These should be phased out...
+static const uint oGPU_MAX_NUM_ENVIRONMENT_TEXTURES = 16;
+static const uint oGPU_MAX_NUM_MATERIAL_TEXTURES = 16;
 
 #endif

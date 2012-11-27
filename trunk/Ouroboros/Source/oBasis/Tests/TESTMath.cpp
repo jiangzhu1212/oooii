@@ -331,6 +331,7 @@ bool Test_ClipRect()
 	return true;
 }
 
+
 bool oBasisTest_oMath()
 {
 	oTESTB2(Test_ClipRect());

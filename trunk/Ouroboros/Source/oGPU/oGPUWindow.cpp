@@ -76,8 +76,11 @@ struct oD3D11Window : oGPUWindow
 
 	void Step(bool _UseStepping = true) threadsafe
 	{
+		oASSERT( !IsWindowThread(), "Can not step from the window thread");
 		UseStepping = _UseStepping;
 		ShouldStep = true;
+		StepEvent.Wait();
+		StepEvent.Reset();
 	}
 
 	int GetFrameCount() const threadsafe { return thread_cast<oInt&>(FrameCount); }
@@ -93,6 +96,7 @@ private:
 	oInt FrameCount;
 	bool UseStepping;
 	bool ShouldStep;
+	oEvent StepEvent;
 	bool CreateSwapChainGDICompatible;
 
 	struct oPROMISED_SNAPSHOT
@@ -182,7 +186,6 @@ oD3D11Window::oD3D11Window(const oGPU_WINDOW_INIT& _Init, oGPUDevice* _pDevice, 
 
 	// Now that everything is ready, flag that we can allow the client code render go through
 	UseStepping = _Init.StartStepping;
-	ShouldStep = UseStepping; // if UseStepping is true from StartStepping, then step once to get the first frame.
 
 	*_pSuccess = true;
 }
@@ -285,6 +288,9 @@ bool oD3D11Window::EventHook(const oGUI_EVENT_DESC& _Event)
 
 				oV(SwapChain->Present(SyncInterval, 0));
 				ShouldStep = false;
+
+				// Set stepped event 
+				StepEvent.Set();
 			}
 			break;
 		}

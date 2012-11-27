@@ -42,9 +42,9 @@ namespace oStd {
 	oFORCEINLINE void atomic_thread_fence_read() { _ReadBarrier(); }
 	oFORCEINLINE void atomic_thread_fence_read_write() { _ReadWriteBarrier(); }
 
-	template<typename T, typename U> inline T atomic_exchange(volatile T* _X, U _Y) { return atomic_exchange(_X, (T)_Y); }
-	template<typename T> inline T atomic_exchange(volatile T* _X, T _Y) { std::make_signed<T>::type t = atomic_exchange((std::make_signed<T>::type*)_X, *(std::make_signed<T>::type*)&_Y); return *(T*)&t; }
-	template<typename T> inline T* atomic_exchange(T* volatile* _X, T* _Y) { return (T*)_InterlockedExchangePointer((void* volatile*)_X, (void*)_Y); }
+	template<typename T, typename U> T atomic_exchange(volatile T* _X, U _Y) { return atomic_exchange(_X, (T)_Y); }
+	template<typename T> T atomic_exchange(volatile T* _X, T _Y) { std::make_signed<T>::type t = atomic_exchange((std::make_signed<T>::type*)_X, *(std::make_signed<T>::type*)&_Y); return *(T*)&t; }
+	template<typename T> T* atomic_exchange(T* volatile* _X, T* _Y) { return (T*)_InterlockedExchangePointer((void* volatile*)_X, (void*)_Y); }
 	template<> inline bool atomic_exchange<bool>(volatile bool* _X, bool _Y) { char c = _InterlockedExchange8((volatile char*)_X, *(char*)&_Y); return *(bool*)&c; }
 	template<> inline char atomic_exchange<char>(volatile char* _X, char _Y) { return _InterlockedExchange8(_X, _Y); }
 	template<> inline short atomic_exchange<short>(volatile short* _X, short _Y) { return _InterlockedExchange16(_X, _Y); }
@@ -52,9 +52,9 @@ namespace oStd {
 	template<> inline long atomic_exchange<long>(volatile long* _X, long _Y) { return _InterlockedExchange(_X, _Y); }
 	template<> inline float atomic_exchange<float>(volatile float* _X, float _Y) { long L = _InterlockedExchange((volatile long*)_X, *(long*)&_Y); return *(float*)&L; }
 
-	template<typename T, typename U> inline bool atomic_compare_exchange(volatile T* _X, U _New, U _Old) { return atomic_compare_exchange(_X, (T)_New, (T)_Old); }
-	template<typename T> inline bool atomic_compare_exchange(volatile T* _X, T _New, T _Old) { return atomic_compare_exchange((std::make_signed<T>::type*)_X, *(std::make_signed<T>::type*)&_New, *(std::make_signed<T>::type*)&_Old); }
-	template<typename T> inline bool atomic_compare_exchange(T* volatile* _X, T* _New, T* _Old) { return (T*)_InterlockedCompareExchangePointer((void* volatile*)_X, _New, _Old) == (T*)_Old; }
+	template<typename T, typename U> bool atomic_compare_exchange(volatile T* _X, U _New, U _Old) { return atomic_compare_exchange(_X, (T)_New, (T)_Old); }
+	template<typename T> bool atomic_compare_exchange(volatile T* _X, T _New, T _Old) { return atomic_compare_exchange((std::make_signed<T>::type*)_X, *(std::make_signed<T>::type*)&_New, *(std::make_signed<T>::type*)&_Old); }
+	template<typename T> bool atomic_compare_exchange(T* volatile* _X, T* _New, T* _Old) { return (T*)_InterlockedCompareExchangePointer((void* volatile*)_X, _New, _Old) == (T*)_Old; }
 	template<> inline bool atomic_compare_exchange<bool>(volatile bool* _X, bool _New, bool _Old) { return _InterlockedCompareExchange8((volatile char*)_X, *(char*)&_New, *(char*)&_Old) == *(char*)&_Old; }
 	template<> inline bool atomic_compare_exchange<char>(volatile char* _X, char _New, char _Old) { return _InterlockedCompareExchange8(_X, _New, _Old) == _Old; }
 	template<> inline bool atomic_compare_exchange<short>(volatile short* _X, short _New, short _Old) { return _InterlockedCompareExchange16(_X, _New, _Old) == _Old; }
@@ -62,12 +62,32 @@ namespace oStd {
 	template<> inline bool atomic_compare_exchange<float>(volatile float* _X, float _New, float _Old) { return _InterlockedCompareExchange((volatile long*)_X, *(long*)&_New, *(long*)&_Old) == *(long*)&_Old; }
 	template<> inline bool atomic_compare_exchange<long>(volatile long* _X, long _New, long _Old) { return _InterlockedCompareExchange(_X, _New, _Old) == _Old; }
 
-	template<typename T> inline T atomic_increment(volatile T* _X) { std::make_signed<std::tr1::remove_volatile<T>::type>::type t = atomic_increment((std::make_signed<std::tr1::remove_volatile<T>::type>::type*)_X); return *(T*)&t; }
+	template<typename T> T atomic_fetch_add(volatile T* _X, T _Y) { std::make_signed<std::tr1::remove_volatile<T>::type>::type t = atomic_fetch_add((std::make_signed<std::tr1::remove_volatile<T>::type>::type*)_X, (std::make_signed<std::tr1::remove_volatile<T>::type>::type)_Y); return *(T*)&t; }
+	//template<> inline short atomic_fetch_add(volatile short* _X, short _Y) { return _InterlockedAdd16(_X, _Y); }
+	template<> inline int atomic_fetch_add(volatile int* _X, int _Y) { return (int)_InterlockedAdd((long*)_X, (long)_Y); }
+	template<> inline long atomic_fetch_add(volatile long* _X, long _Y) { return _InterlockedAdd(_X, _Y); }
+
+	template<typename T> T atomic_fetch_and(volatile T* _X, T _Y) { std::make_signed<std::tr1::remove_volatile<T>::type>::type t = atomic_fetch_and((std::make_signed<std::tr1::remove_volatile<T>::type>::type*)_X, (std::make_signed<std::tr1::remove_volatile<T>::type>::type)_Y); return *(T*)&t; }
+	template<> inline short atomic_fetch_and(volatile short* _X, short _Y) { return _InterlockedAnd16(_X, _Y); }
+	template<> inline int atomic_fetch_and(volatile int* _X, int _Y) { return (int)_InterlockedAnd((long*)_X, (long)_Y); }
+	template<> inline long atomic_fetch_and(volatile long* _X, long _Y) { return _InterlockedAnd(_X, _Y); }
+
+	template<typename T> T atomic_fetch_or(volatile T* _X, T _Y) { std::make_signed<std::tr1::remove_volatile<T>::type>::type t = atomic_fetch_or((std::make_signed<std::tr1::remove_volatile<T>::type>::type*)_X, (std::make_signed<std::tr1::remove_volatile<T>::type>::type)_Y); return *(T*)&t; }
+	template<> inline short atomic_fetch_or(volatile short* _X, short _Y) { return _InterlockedOr16(_X, _Y); }
+	template<> inline int atomic_fetch_or(volatile int* _X, int _Y) { return (int)_InterlockedOr((long*)_X, (long)_Y); }
+	template<> inline long atomic_fetch_or(volatile long* _X, long _Y) { return _InterlockedOr(_X, _Y); }
+
+	template<typename T> T atomic_fetch_xor(volatile T* _X, T _Y) { std::make_signed<std::tr1::remove_volatile<T>::type>::type t = atomic_fetch_xor((std::make_signed<std::tr1::remove_volatile<T>::type>::type*)_X, (std::make_signed<std::tr1::remove_volatile<T>::type>::type)_Y); return *(T*)&t; }
+	template<> inline short atomic_fetch_xor(volatile short* _X, short _Y) { return _InterlockedXor16(_X, _Y); }
+	template<> inline int atomic_fetch_xor(volatile int* _X, int _Y) { return (int)_InterlockedXor((long*)_X, (long)_Y); }
+	template<> inline long atomic_fetch_xor(volatile long* _X, long _Y) { return _InterlockedXor(_X, _Y); }
+
+	template<typename T> T atomic_increment(volatile T* _X) { std::make_signed<std::tr1::remove_volatile<T>::type>::type t = atomic_increment((std::make_signed<std::tr1::remove_volatile<T>::type>::type*)_X); return *(T*)&t; }
 	template<> inline short atomic_increment(volatile short* _X) { return _InterlockedIncrement16(_X); }
 	template<> inline int atomic_increment(volatile int* _X) { return (int)_InterlockedIncrement((long*)_X); }
 	template<> inline long atomic_increment(volatile long* _X) { return _InterlockedIncrement(_X); }
 
-	template<typename T> inline T atomic_decrement(T* _X) { std::make_signed<std::tr1::remove_volatile<T>::type>::type t = atomic_decrement((std::make_signed<std::tr1::remove_volatile<T>::type>::type*)_X); return *(T*)&t; }
+	template<typename T> T atomic_decrement(T* _X) { std::make_signed<std::tr1::remove_volatile<T>::type>::type t = atomic_decrement((std::make_signed<std::tr1::remove_volatile<T>::type>::type*)_X); return *(T*)&t; }
 	template<> inline short atomic_decrement(short* _X) { return _InterlockedDecrement16(_X); }
 	template<> inline int atomic_decrement(int* _X) { return (int)_InterlockedDecrement((long*)_X); }
 	template<> inline long atomic_decrement(long* _X) { return _InterlockedDecrement(_X); }
@@ -77,8 +97,12 @@ namespace oStd {
 		template<> inline double atomic_exchange<double>(volatile double* _X, double _Y) { long long L = _InterlockedExchange64((volatile long long*)_X, *(long long*)&_Y); return *(double*)&L; }
 		template<> inline bool atomic_compare_exchange<long long>(volatile long long* _X, long long _New, long long _Old) { return _InterlockedCompareExchange64(_X, _New, _Old) == _Old; }
 		template<> inline bool atomic_compare_exchange<double>(volatile double* _X, double _New, double _Old) { return _InterlockedCompareExchange64((volatile long long*)_X, *(long long*)&_New, *(long long*)&_Old) == *(long long*)&_Old; }
+		template<> inline long long atomic_fetch_add(volatile long long* _X, long long _Y) { return _InterlockedAdd64(_X, _Y); }
+		template<> inline long long atomic_fetch_and(volatile long long* _X, long long _Y) { return _InterlockedAnd64(_X, _Y); }
 		template<> inline long long atomic_increment(volatile long long* _X) { return _InterlockedIncrement64(_X); }
 		template<> inline long long atomic_decrement(long long* _X) { return _InterlockedDecrement64(_X); }
+		template<> inline long long atomic_fetch_or(volatile long long* _X, long long _Y) { return _InterlockedOr64(_X, _Y); }
+		template<> inline long long atomic_fetch_xor(volatile long long* _X, long long _Y) { return _InterlockedXor64(_X, _Y); }
 	#endif
 
 template<typename T> class atomic_base
@@ -150,8 +174,8 @@ public:
 	
 	operator T*() const volatile { return Value; }
 
-	T* fetch_add(ptrdiff_t _Value) volatile { T OldV; do { OldV = Value; } while (!compare_exchange(OldV, OldV+_Value)); return OldV; }
-	T* fetch_sub(ptrdiff_t _Value) volatile { T OldV; do { OldV = Value; } while (!compare_exchange(OldV, OldV-_Value)); return OldV; }
+	T* fetch_add(ptrdiff_t _Value) volatile { return (T*)atomic_fetch_add(&Value, _Value); }
+	T* fetch_sub(ptrdiff_t _Value) volatile { return (T*)atomic_fetch_add(&Value, -_Value); }
 
 	T* operator+=(ptrdiff_t _Value) volatile { return fetch_add(_Value) + _Value; }
 	T* operator-=(ptrdiff_t _Value) volatile { return fetch_sub(_Value) - _Value; }

@@ -645,7 +645,7 @@ bool oSocketImpl::SendEncrypted(const void* _pData, oSocket::size_t _Size) threa
 	// before an TLS connecion can be established.  This may be different for other servers.
 	if (!Encryptor.c_ptr())
 	{
-		oSocketEncryptor::Create(&Encryptor);
+		oSocketEncryptor::Create(&lockedThis->Encryptor);
 		// Open SSLconnection
 		if (Encryptor.c_ptr())
 			Encryptor->OpenSSLConnection(hSocket, Desc.BlockingSettings.SendTimeout);

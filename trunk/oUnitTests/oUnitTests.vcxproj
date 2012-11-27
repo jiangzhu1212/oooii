@@ -223,13 +223,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUBCEncodeDecode.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUBuffer.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUClear.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUDevice.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUGenerateMips.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUInstancedTriangle.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPULineList.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPURenderTarget.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUSpinningTriangle.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture1D.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture1DMip.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture2D.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture2DMip.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture3D.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture3DMip.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTextureCube.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTextureCubeMip.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTraits.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTriangle.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUWindowInWindow.cpp" />
@@ -258,6 +267,8 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTFileAsync.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTFileMap.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTFileSync.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTHLSLMath.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTHTTP.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTImage.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTIntersection.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTMirroredArena.cpp" />

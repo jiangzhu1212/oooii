@@ -52,11 +52,7 @@ int oGDIPointToLogicalHeight(HDC _hDC, float _Point)
 
 void oGDIInitializeBMI(const oBMI_DESC& _Desc, BITMAPINFO* _pBMI)
 {
-	oSURFACE_DESC sd;
-	sd.Dimensions = int2(oByteAlign(_Desc.Dimensions.x, 4), 1);
-	sd.Format = _Desc.Format;
-	sd.Layout = oSURFACE_LAYOUT_IMAGE;
-	const int kPitch = _Desc.RowPitch > 0 ? _Desc.RowPitch : oSurfaceMipCalcRowPitch(sd);
+	const int kPitch = _Desc.RowPitch > 0 ? _Desc.RowPitch : oSurfaceMipCalcRowSize(_Desc.Format, oByteAlign(_Desc.Dimensions.x, 4));
 
 	_pBMI->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	_pBMI->bmiHeader.biBitCount = static_cast<WORD>(oSurfaceFormatGetBitSize(_Desc.Format));

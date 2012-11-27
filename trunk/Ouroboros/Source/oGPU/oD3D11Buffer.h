@@ -35,6 +35,8 @@ oDECLARE_GPURESOURCE_IMPLEMENTATION(oD3D11, Buffer, oGPU_BUFFER)
 	oDECLARE_GPURESOURCE_CTOR(oD3D11, Buffer);
 	oRef<ID3D11Buffer> Buffer;
 	oRef<ID3D11UnorderedAccessView> UAV;
+	oRef<ID3D11UnorderedAccessView> UAVAppend;
+	oRef<ID3D11ShaderResourceView> SRV;
 };
 
 #endif

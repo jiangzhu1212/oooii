@@ -26,6 +26,7 @@
 #ifndef oGPUUtil_h
 #define oGPUUtil_h
 
+#include <oPlatform/oImage.h>
 #include <oGPU/oGPU.h>
 #include <oGPU/oGPUMaterialConstants.h>
 
@@ -37,9 +38,13 @@ template<size_t size> int oGPUCalculateVertexSize(const oGPU_VERTEX_ELEMENT (&_p
 oAPI int oGPUCalculateNumInputSlots(const oGPU_VERTEX_ELEMENT* _pElements, size_t _NumElements);
 template<size_t size> int oGPUCalculateNumInputSlots(const oGPU_VERTEX_ELEMENT (&_pElements)[size]) { return oGPUCalculateNumInputSlots(_pElements, size); }
 
-inline oRECT oGPUNewCount(uint _NewCount) { return oRECT(int2(0, 0), int2(_NewCount, 1)); }
-
 oAPI void oGPUCopyIndices(oSURFACE_MAPPED_SUBRESOURCE& _Destination, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source, uint _NumIndices);
+
+struct oGPU_VERTEX_ELEMENT_DATA
+{
+	const void* pData;
+	size_t Stride;
+};
 
 // Creates a mesh from the specified oGeometry using the specified elements.
 // If semantics and input slots match, data is read from the file. An extra 
@@ -52,15 +57,42 @@ oAPI void oGPUCopyIndices(oSURFACE_MAPPED_SUBRESOURCE& _Destination, const oSURF
 // elements that don't need data overrides. If _NormalScale is negative, then 
 // the bounding sphere inscribed in the LocalBounds of oGPUMesh::DESC is 
 // calculated and then scaled by the absolute value of _NormalScale.
-oAPI bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, const void** _ppElementData, const oGeometry* _pGeometry, oGPUMesh** _ppMesh, oGPULineList** _ppNormalLines = nullptr, float _NormalScale = 1.0f, oColor _NormalColor = std::White);
-oAPI bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, const void** _ppElementData, const threadsafe oOBJ* _pOBJ, oGPUMesh** _ppMesh, oGPULineList** _ppNormalLines = nullptr, float _NormalScale = 1.0f, oColor _NormalColor = std::White);
+oAPI bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, const oGPU_VERTEX_ELEMENT_DATA* _ppElementData, const oGeometry* _pGeometry, oGPUMesh** _ppMesh, oGPULineList** _ppNormalLines = nullptr, float _NormalScale = 1.0f, oColor _NormalColor = std::White);
+oAPI bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, const oGPU_VERTEX_ELEMENT_DATA* _ppElementData, const threadsafe oOBJ* _pOBJ, oGPUMesh** _ppMesh, oGPULineList** _ppNormalLines = nullptr, float _NormalScale = 1.0f, oColor _NormalColor = std::White);
 
 // This overwrites select values that are supported by OBJ's MTL format. Any 
 // OBJ-unsupported field is left untouched.
 oAPI void oGPUInitMaterialConstants(const oOBJ_MATERIAL& _OBJMaterial, oGPUMaterialConstants* _pMaterialConstants);
 
-// Creates a texture form the specified oImage, preserving its format and size.
-oAPI bool oGPUCreateTexture(oGPUDevice* _pDevice, const oImage* _pSourceImage, oGPUTexture** _ppTexture);
+// Creates a texture from the specified oImage(s), preserving its format and size.
+oAPI bool oGPUCreateTexture1D(oGPUDevice* _pDevice, const oImage* _pSourceImage, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTexture2D(oGPUDevice* _pDevice, const oImage* _pSourceImage, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTexture3D(oGPUDevice* _pDevice, const oImage** _pSourceImages, uint _NumImages, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTextureCube(oGPUDevice* _pDevice, const oImage** _pSourceImages, uint _NumImages, oGPUTexture** _ppTexture);
+
+// Creates a texture from the specified oBuffer, described by an oSURFACE_DESC.
+oAPI bool oGPUCreateTexture1D(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTexture2D(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTexture3D(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTextureCube(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
+
+// Generate mips with the GPU from source oImage(s) to an already created oGPUTexture with oSURFACE_DESC and oGPU_TEXTURE_TYPE
+oAPI bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _NumImages, oGPUTexture* _pOutputTexture);
+
+// Generate mips with the GPU from source oImage(s) to a preallocated oBuffer with oSURFACE_DESC and oGPU_TEXTURE_TYPE
+oAPI bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _NumImages, oSURFACE_DESC& _SurfaceDesc, oGPU_TEXTURE_TYPE _Type, oBuffer* _pMipBuffer);
+
+// Creates a texture with mips from the specified oImage(s), preserving its format and size and auto generates all the lower mip levels.
+oAPI bool oGPUCreateTexture1DMip(oGPUDevice* _pDevice, const oImage* _pMip0Image, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTexture2DMip(oGPUDevice* _pDevice, const oImage* _pMip0Image, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTexture3DMip(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _NumImages, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTextureCubeMip(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _NumImages, oGPUTexture** _ppTexture);
+
+// Creates a texture with mips from the specified oBuffer, described by an oSURFACE_DESC.
+oAPI bool oGPUCreateTexture1DMip(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTexture2DMip(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTexture3DMip(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTextureCubeMip(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
 
 oAPI void oGPUCommitBuffer(oGPUCommandList* _pCommandList, oGPUBuffer* _pBuffer, const void* _pStruct, uint _SizeofStruct, uint _NumStructs = 1);
 oAPI void oGPUCommitBuffer(oGPUDevice* _pDevice, oGPUBuffer* _pBuffer, const void* _pStruct, uint _SizeofStruct, uint _NumStructs);
@@ -70,6 +102,24 @@ template<typename T> void oGPUCommitBuffer(oGPUCommandList* _pCommandList, oGPUB
 
 template<typename T> void oGPUCommitBuffer(oGPUDevice* _pDevice, oGPUBuffer* _pBuffer, const T& _Struct) { oGPUCommitBuffer(_pDevice, _pBuffer, &_Struct, sizeof(_Struct), 1); }
 template<typename T> void oGPUCommitBuffer(oGPUDevice* _pDevice, oGPUBuffer* _pBuffer, const T* _pStructArray, uint _NumStructs) { oGPUCommitBuffer(_pDevice, _pBuffer, _pStructArray, sizeof(T), _NumStructs); }
+
+// Creates a readback buffer sized to be able to completely contain the 
+// specified source.
+bool oGPUCreateReadbackCopy(oGPUBuffer* _pSource, oGPUBuffer** _ppReadbackCopy);
+
+// Optionally allocates a new buffer and reads the counter from the specified 
+// buffer into it. For performance a buffer can be specified to receive the 
+// counter value. The value is the read back to a uint using the immediate 
+// command list. The purpose of this utility code is primarily to wrap the 
+// lengthy code it takes to get the counter out for debugging/inspection 
+// purposes and should not be used in production code since it synchronizes/
+// stalls the device. This returns oInvalid on failure. REMEMBER THAT THIS MUST 
+// BE CALLED AFTER A FLUSH OF ALL COMMANDLISTS THAT WOULD UPDATE THE COUNTER. 
+// i.e. the entire app should use the immediate command list, otherwise this 
+// could be sampling stale data. If using the immediate command list everywhere 
+// is not an option, this must be called after Device::EndFrame() to have valid 
+// values.
+uint oGPUReadbackCounter(oGPUBuffer* _pUnorderedBuffer, oGPUBuffer* _pPreallocatedReadbackBuffer = nullptr);
 
 // Reads the source resource into the memory pointed at in the destination
 // struct. Since this is often used for textures, flip vertically can do an

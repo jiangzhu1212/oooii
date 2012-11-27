@@ -132,7 +132,13 @@ template<class T> struct oRef
 	operator T*() threadsafe { return Pointer; }
 	operator const T*() const threadsafe { return Pointer; }
 
-	T** operator &() threadsafe { return thread_cast<T**>(&Pointer); } 
+	//This version of the operator should only be used for "create" style functions, and functions that "retrieve" oRef's i.e. QueryInterface. 
+	//	It is inherently not thread safe during create until after the create returns. It is not threadsafe for retrieves either. Since the callee
+	//	is going to increment the refcount, and this operator does not decrement the refcount of any existing Pointers, if two threads tried to make a call to QueryInterface
+	//	with the same oRef, there would be a race condition and the possibility for a leak.
+	T** operator &() { return &Pointer; } 
+	//The const variant only makes sense for "retrieve" style calls, but otherwise see comments above.
+	const T** operator &() const { return const_cast<const T**>(&Pointer); } 
 	
 	T* c_ptr() threadsafe { return Pointer; }
 	const T* c_ptr() const threadsafe { return Pointer; }

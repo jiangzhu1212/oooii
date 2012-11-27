@@ -35,17 +35,17 @@ struct TESTGPUSpinningTriangle : public oTest
 	oRef<oGPUMesh> Mesh;
 	oRef<oGPUBuffer> ViewConstants;
 	oRef<oGPUBuffer> DrawConstants;
+	bool Once;
 	
 	void Render(oGPURenderTarget* _pPrimaryRenderTarget)
 	{
-		static bool once = false;
-		if (!once)
+		if (!Once)
 		{
 			oGPU_CLEAR_DESC CD;
 			CD.ClearColor[0] = std::AlmostBlack;
 			_pPrimaryRenderTarget->SetClearDesc(CD);
 
-			once = true;
+			Once = true;
 		}
 
 		float4x4 V = oCreateLookAtLH(float3(0.0f, 0.0f, -2.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
@@ -63,14 +63,14 @@ struct TESTGPUSpinningTriangle : public oTest
 			return;
 		CL->Begin();
 
-		oGPUCommitBuffer(CL, ViewConstants, oGPUViewConstants(V, P, oCastAsFloat(RTDesc.Dimensions), 0));
+		oGPUCommitBuffer(CL, ViewConstants, oGPUViewConstants(V, P, RTDesc.Dimensions, 0));
 		oGPUCommitBuffer(CL, DrawConstants, oGPUDrawConstants(W, V, P, 0, DrawID++));
 
 		CL->Clear(_pPrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
 		CL->SetBlendState(oGPU_OPAQUE);
 		CL->SetDepthStencilState(oGPU_DEPTH_TEST_AND_WRITE);
 		CL->SetSurfaceState(oGPU_TWO_SIDED);
-		CL->SetConstants(0, 2, &ViewConstants); // let the set run from ViewConstants to DrawConstants
+		CL->SetBuffers(0, 2, &ViewConstants); // let the set run from ViewConstants to DrawConstants
 		CL->SetPipeline(Pipeline);
 		CL->SetRenderTarget(_pPrimaryRenderTarget);
 		CL->Draw(Mesh, 0);
@@ -81,6 +81,8 @@ struct TESTGPUSpinningTriangle : public oTest
 
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
+		Once = false;
+
 		static const int sSnapshotFrames[] = { 0, 2, 4, 6 };
 		static const bool kIsDevMode = false;
 		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&TESTGPUSpinningTriangle::Render, this, oBIND1), "TESTGPUSpinningTriangle", sSnapshotFrames);

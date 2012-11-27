@@ -31,6 +31,7 @@
 #include <oBasis/oLinearAllocator.h>
 #include <oBasis/oLockThis.h>
 #include <oBasis/oMacros.h>
+#include <oBasis/oMathShared.h>
 #include <oBasis/oMeshUtil.h>
 #include <oBasis/oOnScopeExit.h>
 #include <oBasis/oRefCount.h>
@@ -131,7 +132,7 @@ static const char* oOBJParseVLine(const char* _V, bool _FlipHandedness, oOBJ_VER
 			MoveToWhitespace(&_V);
 			oAtof(_V, &temp.x); MovePastWhitespace(&_V); MoveToWhitespace(&_V);
 			oAtof(_V, &temp.y); if (_FlipHandedness) temp.y = 1.0f - temp.y;
-			_pElements->Texcoords.push_back(temp.xy());
+			_pElements->Texcoords.push_back(temp.xy);
 			break;
 		case 'n':
 			MoveToWhitespace(&_V);

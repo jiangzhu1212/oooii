@@ -403,7 +403,7 @@ static oASSERT_ACTION ShowMsgBox(const oASSERTION& _Assertion, oMSGBOX_TYPE _Typ
 		len += res; \
 	} while(false)
 
-static void PrintCallStackToString(char* _StrDestination, size_t _SizeofStrDestination, bool _FilterStdBind)
+void PrintCallStackToString(char* _StrDestination, size_t _SizeofStrDestination, bool _FilterStdBind)
 {
 	int res = 0;
 	size_t len = 0;
@@ -630,6 +630,12 @@ public:
 	}
 };
 
+void PureVirtualCallHandler(void)
+{
+	int* generate_access_violation = nullptr;
+	generate_access_violation[0] = 0;
+}
+
 // {9840E986-9ADE-4D11-AFCE-AB2D8AC530C0}
 const oGUID ReportContextExceptionHandler::GUID = { 0x9840e986, 0x9ade, 0x4d11, { 0xaf, 0xce, 0xab, 0x2d, 0x8a, 0xc5, 0x30, 0xc0 } };
 
@@ -639,6 +645,7 @@ struct ReportContextExceptionHandlerInstaller
 	{
 		oProcessHeapEnsureRunning(); // ensure the process heap is instantiated before the Singleton below so it is tracked
 		ReportContextExceptionHandler::Singleton();
+		_set_purecall_handler(PureVirtualCallHandler);
 	}
 };
 

@@ -39,6 +39,7 @@ struct TESTGPURenderTarget : public oTest
 	oRef<oGPUMesh> Triangle;
 	oRef<oGPUBuffer> ViewConstants;
 	oRef<oGPUBuffer> DrawConstants;
+	bool Once;
 
 	bool CreateResources(threadsafe oGPUWindow* _pWindow)
 	{
@@ -73,7 +74,7 @@ struct TESTGPURenderTarget : public oTest
 			return false;
 
 		oGPUPipeline::DESC TextureDesc;
-		if (!oGPUTestGetPipeline(oGPU_TEST_TEXTURE, &TextureDesc))
+		if (!oGPUTestGetPipeline(oGPU_TEST_TEXTURE_2D, &TextureDesc))
 			return false;
 
 		if (!Device->CreatePipeline(TextureDesc.DebugName, TextureDesc, &PLTexture))
@@ -86,13 +87,12 @@ struct TESTGPURenderTarget : public oTest
 		cd.ClearColor[0] = std::DeepSkyBlue;
 
 		oGPURenderTarget::DESC rtd;
-		rtd.Dimensions = int2(256, 256);
+		rtd.Dimensions = int3(256, 256, 1);
 		rtd.NumSlices = 1;
 		rtd.MRTCount = 1;
 		rtd.Format[0] = oSURFACE_B8G8R8A8_UNORM;
 		rtd.DepthStencilFormat = oSURFACE_D24_UNORM_S8_UINT;
 		rtd.ClearDesc = cd;
-		rtd.GenerateMips = false;
 		if (!Device->CreateRenderTarget("RenderTarget", rtd, &RenderTarget))
 			return false;
 
@@ -127,17 +127,17 @@ struct TESTGPURenderTarget : public oTest
 
 		_pCommandList->Begin();
 
-		oGPUCommitBuffer(_pCommandList, ViewConstants, oGPUViewConstants(V, P, oCastAsFloat(RTDesc.Dimensions), 0));
+		oGPUCommitBuffer(_pCommandList, ViewConstants, oGPUViewConstants(V, P, RTDesc.Dimensions, 0));
 		oGPUCommitBuffer(_pCommandList, DrawConstants, oGPUDrawConstants(W, V, P, 0, DrawID++));
 
 		_pCommandList->Clear(_pTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
 		_pCommandList->SetBlendState(oGPU_OPAQUE);
 		_pCommandList->SetDepthStencilState(oGPU_DEPTH_TEST_AND_WRITE);
 		_pCommandList->SetSurfaceState(oGPU_FRONT_FACE);
-		_pCommandList->SetConstants(0, 2, &ViewConstants); // let the set run from ViewConstants to DrawConstants
+		_pCommandList->SetBuffers(0, 2, &ViewConstants); // let the set run from ViewConstants to DrawConstants
 		oGPU_SAMPLER_STATE s = oGPU_LINEAR_WRAP;
 		_pCommandList->SetSamplers(0, 1, &s);
-		_pCommandList->SetTextures(0, 1, &_pTexture);
+		_pCommandList->SetShaderResources(0, 1, &_pTexture);
 		_pCommandList->SetPipeline(PLTexture);
 		_pCommandList->SetRenderTarget(_pTarget);
 		_pCommandList->Draw(Cube, 0);
@@ -147,14 +147,13 @@ struct TESTGPURenderTarget : public oTest
 	
 	void Render(oGPURenderTarget* _pPrimaryRenderTarget)
 	{
-		static bool once = false;
-		if (!once)
+		if (!Once)
 		{
 			oGPU_CLEAR_DESC CD;
 			CD.ClearColor[0] = std::AlmostBlack;
 			_pPrimaryRenderTarget->SetClearDesc(CD);
 
-			once = true;
+			Once = true;
 		}
 
 		float4x4 V = oCreateLookAtLH(float3(0.0f, 0.0f, -4.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
@@ -187,6 +186,8 @@ struct TESTGPURenderTarget : public oTest
 
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
+		Once = false;
+
 		static const int sSnapshotFrames[] = { 0, 50 };
 		static const bool kIsDevMode = false;
 		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&TESTGPURenderTarget::Render, this, oBIND1), "TESTGPURenderTarget", sSnapshotFrames);

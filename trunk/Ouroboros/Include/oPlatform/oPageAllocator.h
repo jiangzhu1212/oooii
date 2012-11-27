@@ -92,14 +92,7 @@ oAPI void oPageUnreserve(void* _Pointer);
 oAPI void* oPageCommit(void* _BaseAddress, size_t _Size, bool _ReadWrite = true, bool _UseLargePageSize = false);
 
 // Accomplishes Reserve and Commit in one operation
-inline void* oPageReserveAndCommit(void* _BaseAddress, size_t _Size, bool _ReadWrite = true, bool _UseLargePageSize = false)
-{
-	void* pReserved = oPageReserve(_BaseAddress, _Size, _ReadWrite);
-	if(_BaseAddress && !pReserved)
-		return nullptr;
-
-	return oPageCommit(pReserved, _Size, _ReadWrite, _UseLargePageSize);
-}
+oAPI void* oPageReserveAndCommit(void* _BaseAddress, size_t _Size, bool _ReadWrite = true, bool _UseLargePageSize = false);
 
 // Remove storage from the specified range (size was determined in 
 // oPageCommit()). This will succeed/noop on already-decommited memory.

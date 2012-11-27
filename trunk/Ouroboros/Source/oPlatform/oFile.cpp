@@ -172,6 +172,8 @@ bool oFileEnum(const char* _WildcardPath, oFUNCTION<bool(const char* _FullPath, 
 
 	WIN32_FIND_DATA fd;
 	HANDLE hFind = FindFirstFile(_WildcardPath, &fd);
+	oOnScopeExit closeSearch([&](){ if(hFind != INVALID_HANDLE_VALUE) FindClose(hFind); });
+
 	if (hFind == INVALID_HANDLE_VALUE)
 		return oErrorSetLast(oERROR_NOT_FOUND);
 
@@ -191,8 +193,6 @@ bool oFileEnum(const char* _WildcardPath, oFUNCTION<bool(const char* _FullPath, 
 
 		if (!FindNextFile(hFind, &fd))
 		{
-			if (!FindClose(hFind))
-				return oWinSetLastError();
 			return true;
 		}
 

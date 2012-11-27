@@ -1632,8 +1632,8 @@ unsigned int SplitRect( const oRECT& _SrcRect, const unsigned int _MaxNumSplits,
 		T_VEC RMax = rect.GetMax();
 		if( RMax.x > Dimensions.x || RMax.y > Dimensions.y )
 		{
-			T_VEC minDim = oMin( Dimensions, RMax );
-			rect.SetMax( oMin( Dimensions, RMax ) );
+			T_VEC minDim = min( Dimensions, RMax );
+			rect.SetMax( min( Dimensions, RMax ) );
 			return i + 1;
 		}
 	}

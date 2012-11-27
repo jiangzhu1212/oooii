@@ -422,18 +422,10 @@ oMirroredArena_Impl::oMirroredArena_Impl(const DESC& _Desc, bool* _pSuccess)
 		if( !oPageSetReadWrite(Desc.BaseAddress, Desc.Size, false) )
 			goto error;
 
-		void* pReserveRWDiff = oPageReserve(detail::GetBookkeepingBasePointer(Desc.BaseAddress), detail::PAGE_SIZE, true);
-		void* pBookkeeping = detail::GetBookkeepingBasePointer(Desc.BaseAddress);
-		oVB(oPageCommit(pBookkeeping, detail::PAGE_SIZE, true));
-		oASSERT(pBookkeeping == detail::GetBookkeepingBasePointer(Desc.BaseAddress), "Did not allocate bookkeeping memory correctly.");
-		if (!pBookkeeping || pBookkeeping != detail::GetBookkeepingBasePointer(Desc.BaseAddress) || pReserveRWDiff != pBookkeeping)
-		{
-			// back out allocations and fail out
-			oErrorSetLast(oERROR_AT_CAPACITY, "Failed to allocate bookkeeping pages");
-			if (pBookkeeping)
-				oPageDecommit(pBookkeeping);
+		void* pDesiredBookkeeping = detail::GetBookkeepingBasePointer(Desc.BaseAddress);
+		void* pBookkeeping = oPageReserveAndCommit(pDesiredBookkeeping, detail::PAGE_SIZE, true);
+		if (!pBookkeeping || pBookkeeping != pDesiredBookkeeping)
 			goto error;
-		}
 
 		detail::ResetBookkeeping(Desc.BaseAddress);
 

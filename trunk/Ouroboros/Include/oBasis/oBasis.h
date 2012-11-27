@@ -66,6 +66,10 @@
 #include <oBasis/oGUI.h>
 #include <oBasis/oGUID.h>
 #include <oBasis/oHash.h>
+#include <oBasis/oHLSLBit.h>
+#include <oBasis/oHLSLMath.h>
+#include <oBasis/oHLSLStructs.h>
+#include <oBasis/oHLSLTypes.h>
 #include <oBasis/oIndexAllocator.h>
 #include <oBasis/oINI.h>
 #include <oBasis/oInt.h>

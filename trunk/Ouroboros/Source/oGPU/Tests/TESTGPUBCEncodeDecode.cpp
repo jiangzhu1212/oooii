@@ -37,7 +37,7 @@ struct TESTGPUBCEncodeDecode : public oTest
 		oTESTB(oBufferLoad(_OriginalPath, &OriginalFile), "Failed to load %s", _OriginalPath);
 
 		oGPU_TEXTURE_DESC d;
-		d.Dimensions = int2(oDEFAULT, oDEFAULT);
+		d.Dimensions = int3(oDEFAULT, oDEFAULT, 1);
 		d.NumSlices = oDEFAULT;
 		d.Format = oSURFACE_UNKNOWN;
 
@@ -59,7 +59,7 @@ struct TESTGPUBCEncodeDecode : public oTest
 		oTESTB(oBufferLoad(_ConvertedPath, &ConvertedFile), "Failed to load %s", _ConvertedPath);
 
 		oGPUTexture::DESC td;
-		td.Dimensions = int2(oDEFAULT, oDEFAULT);
+		td.Dimensions = int3(oDEFAULT, oDEFAULT, 1);
 		td.NumSlices = oDEFAULT;
 		td.Format = oSURFACE_UNKNOWN;
 		td.Type = oGPU_TEXTURE_2D_READBACK;
@@ -73,7 +73,7 @@ struct TESTGPUBCEncodeDecode : public oTest
 		BGRATexture->GetDesc(&td);
 
 		oImage::DESC d;
-		d.Dimensions = td.Dimensions;
+		d.Dimensions = td.Dimensions.xy();
 		d.Format = oImageFormatFromSurfaceFormat(td.Format);
 		d.RowPitch = oImageCalcRowPitch(d.Format, d.Dimensions.x);
 
@@ -131,7 +131,7 @@ struct TESTGPUBCEncodeDecode : public oTest
 	{
 		oGPUDevice::INIT DeviceInit("TESTBCEncDec Temp Device");
 		#ifdef _DEBUG
-			DeviceInit.EnableDebugReporting = true;
+			DeviceInit.DriverDebugLevel = oGPU_DEBUG_NORMAL;
 		#endif
 
 		oRef<oGPUDevice> Device;

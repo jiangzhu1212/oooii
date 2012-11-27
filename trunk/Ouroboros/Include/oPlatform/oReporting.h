@@ -101,4 +101,6 @@ oReportingVPrint oReportingPopReporter();
 void oReportingAddFilter(size_t _AssertionID);
 void oReportingRemoveFilter(size_t _AssertionID);
 
+void PrintCallStackToString(char* _StrDestination, size_t _SizeofStrDestination, bool _FilterStdBind);
+
 #endif

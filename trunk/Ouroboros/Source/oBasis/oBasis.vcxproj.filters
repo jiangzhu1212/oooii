@@ -393,10 +393,25 @@
     <ClInclude Include="..\..\Include\oBasis\oMath.h">
       <Filter>oBasis\3D Math &amp; Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oMathInternalHLSL.h">
+    <ClInclude Include="..\..\Include\oBasis\oEye.h">
       <Filter>oBasis\3D Math &amp; Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oEye.h">
+    <ClInclude Include="..\..\Include\oBasis\oMathShared.h">
+      <Filter>oBasis\3D Math &amp; Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oHLSLTypes.h">
+      <Filter>oBasis\3D Math &amp; Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oHLSLMath.h">
+      <Filter>oBasis\3D Math &amp; Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oHLSLAtomics.h">
+      <Filter>oBasis\3D Math &amp; Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oHLSLStructs.h">
+      <Filter>oBasis\3D Math &amp; Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oHLSLBit.h">
       <Filter>oBasis\3D Math &amp; Graphics</Filter>
     </ClInclude>
   </ItemGroup>

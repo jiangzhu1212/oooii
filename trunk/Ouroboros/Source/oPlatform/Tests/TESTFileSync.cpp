@@ -84,7 +84,8 @@ struct TESTFileSync : public oTest
 
 		// Now test writing data out then reading it back
 		oStringPath TempFilePath;
-		oFileCreateTempFolder(TempFilePath.c_str());
+		oTESTB0(BuildPath(TempFilePath, "", oTest::TEMP));
+		oTESTB0(oFileEnsureParentFolderExists(TempFilePath));
 		oStrAppendf(TempFilePath, "/TESTAsyncFileIO.bin");
 
 		{
@@ -108,9 +109,7 @@ struct TESTFileSync : public oTest
 		oGUID LoadWrite;
 		oTESTB( oStreamLoadPartial(&LoadWrite, sizeof(oGUID), TempFilePath), oErrorGetLastString() );
 		oTESTB( TestGUID == LoadWrite, "Write failed to write correct GUID");		
-
-		oStreamDelete(TempFilePath);
-
+		
 		return SUCCESS;
 	};
 };

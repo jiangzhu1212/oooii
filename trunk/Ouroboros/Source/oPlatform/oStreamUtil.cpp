@@ -67,7 +67,7 @@ bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oALLOCATE& _Alloc
 	*_pOutSize = oSizeT(sd.Size);
 	if (_AsString)
 	{
-		oUTF_TYPE type = oMemGetUTFType(r.pData, oSizeT(oMin(sd.Size, 512ull)));
+		oUTF_TYPE type = oMemGetUTFType(r.pData, oSizeT(__min(sd.Size, 512ull)));
 		switch (type)
 		{
 			case oUTF32BE:

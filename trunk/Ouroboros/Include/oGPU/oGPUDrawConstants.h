@@ -73,6 +73,7 @@ struct oGPUDrawConstants
 		World = _World;
 		WorldInverseTranspose = transpose(invert(World));
 		WorldView = _World * _View;
+		WorldViewInverse = invert(WorldView);
 		WorldViewProjection = WorldView * _Projection;
 		WorldViewQuaternion = oCreateRotationQ(WorldView);
 		ObjectID = _ObjectID;
@@ -90,12 +91,13 @@ struct oGPUDrawConstants
 		DrawID = 0;
 	}
 
-protected:
+//protected:
 #endif
 
 	float4x4 World;
 	float4x4 WorldInverseTranspose;
 	float4x4 WorldView;
+	float4x4 WorldViewInverse;
 	float4x4 WorldViewProjection;
 	
 	// Represents the rotation in the WorldView matrix as a quaternion

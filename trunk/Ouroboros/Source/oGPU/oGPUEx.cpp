@@ -105,12 +105,12 @@ bool oGPUSurfaceConvert(
 	oSURFACE_MAPPED_SUBRESOURCE Destination;
 	Destination.pData = _pDestination;
 	Destination.RowPitch = oUInt(_DestinationRowPitch);
-	Destination.SlicePitch = 0;
+	Destination.DepthPitch = 0;
 
 	oSURFACE_CONST_MAPPED_SUBRESOURCE Source;
 	Source.pData = _pSource;
 	Source.RowPitch = oULLong(_SourceRowPitch);
-	Source.SlicePitch = 0;
+	Source.DepthPitch = 0;
 	return oD3D11Convert(D3DDevice, Destination, _DestinationFormat, Source, _SourceFormat, _MipDimensions);
 }
 

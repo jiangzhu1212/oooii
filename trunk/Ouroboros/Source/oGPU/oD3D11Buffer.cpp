@@ -29,7 +29,14 @@ oBEGIN_DEFINE_GPURESOURCE_CTOR(oD3D11, Buffer)
 {
 	oD3D11DEVICE();
 
-	*_pSuccess = oD3D11CreateBuffer(D3DDevice, _Name, _Desc, nullptr, &Buffer, &UAV);
+	ID3D11UnorderedAccessView** ppUAV = &UAV;
+	if (_Desc.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND)
+		ppUAV = &UAVAppend;
+
+	*_pSuccess = oD3D11CreateBuffer(D3DDevice, _Name, _Desc, nullptr, &Buffer, ppUAV, &SRV);
+
+	if (*_pSuccess && _Desc.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND)
+		*_pSuccess = oD3D11CreateUnflaggedUAV(*ppUAV, &UAV);
 }
 
 int2 oD3D11Buffer::GetByteDimensions(int _Subresource) const threadsafe

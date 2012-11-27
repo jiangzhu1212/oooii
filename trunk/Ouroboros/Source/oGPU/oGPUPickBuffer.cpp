@@ -40,7 +40,7 @@ const oGUID& oGetGUID(threadsafe const oGPUPickBuffer* threadsafe const *)
 oGPUPickBuffer::oGPUPickBuffer(oGPUDevice* _pDevice, const void* _pComputeShader, bool* bSuccess)
 {
 	oGPUTexture::DESC d;
-	d.Dimensions = int2(oGPU_MAX_NUM_PICKS_PER_FRAME, 1);
+	d.Dimensions = int3(oGPU_MAX_NUM_PICKS_PER_FRAME, 1, 1);
 	d.NumSlices = 1;
 	d.Format = oSURFACE_R32G32_SINT;
 	d.Type = oGPU_TEXTURE_2D_MAP;
@@ -62,46 +62,46 @@ oGPUPickBuffer::oGPUPickBuffer(oGPUDevice* _pDevice, const void* _pComputeShader
 	*bSuccess = true;
 }
 
-void oGPUPickBuffer::PIMap(oGPUCommandList* _pDeviceContext, int2** _Picks)
+void oGPUPickBuffer::PIMap(oGPUCommandList* _pCommandList, int2** _Picks)
 {
 	*_Picks = (int2*)PicksInputBuffer;
 }
 
-void oGPUPickBuffer::PIUnmap(oGPUCommandList* _pDeviceContext)
+void oGPUPickBuffer::PIUnmap(oGPUCommandList* _pCommandList)
 {
 	oSURFACE_MAPPED_SUBRESOURCE mappedInput;
 	mappedInput.pData = PicksInputBuffer;
 	mappedInput.RowPitch = 0x80;
-	mappedInput.SlicePitch = 0x80;
-	_pDeviceContext->Commit(PicksInput, 0, mappedInput);
+	mappedInput.DepthPitch = 0x80;
+	_pCommandList->Commit(PicksInput, 0, mappedInput);
 }
 
-void oGPUPickBuffer::PDraw(oGPUCommandList* _pDeviceContext, oGPUTexture* _pPickRenderTargetTexture)
+void oGPUPickBuffer::PDraw(oGPUCommandList* _pCommandList, oGPUTexture* _pPickRenderTargetTexture)
 {
-	_pDeviceContext->SetTextures(0, 1, &_pPickRenderTargetTexture);
-	_pDeviceContext->SetTextures(1, 1, &PicksInput);
+	_pCommandList->SetShaderResources(0, 1, &_pPickRenderTargetTexture);
+	_pCommandList->SetShaderResources(1, 1, &PicksInput);
 
 	// @oooii-jeffrey: Shouldn't this be for both textures?
 	oGPU_SAMPLER_STATE state = oGPU_POINT_CLAMP;
-	_pDeviceContext->SetSamplers(1, 1, &state);
-
-	_pDeviceContext->Dispatch(PickResourceShader, int3(1, 1, 1), 1, (oGPUResource**)&PicksOutput);
-	_pDeviceContext->Copy(PicksStaging, PicksOutput);
+	_pCommandList->SetSamplers(1, 1, &state);
+	_pCommandList->SetUnorderedResources(0, 1, &PicksOutput);
+	_pCommandList->Dispatch(PickResourceShader, int3(1, 1, 1));
+	_pCommandList->Copy(PicksStaging, PicksOutput);
 }
 
-void oGPUPickBuffer::POMap(oGPUCommandList* _pImmediateContext, uint** _Picks) 
+void oGPUPickBuffer::POMap(uint** _Picks) 
 {
 	oRef<oGPUDevice> Device;
-	_pImmediateContext->GetDevice(&Device);
+	PicksStaging->GetDevice(&Device);
 	oSURFACE_MAPPED_SUBRESOURCE mappedStaging;
 	// @oooii-jeffrey: This call is blocking/spin-locking because that was what the original D3D11 implementation did, this may still need some thought...
 	oVERIFY(Device->MapRead(PicksStaging, 0, &mappedStaging, true));
 	*_Picks = (uint*)mappedStaging.pData;
 }
 
-void oGPUPickBuffer::POUnmap(oGPUCommandList* _pImmediateContext) 
+void oGPUPickBuffer::POUnmap() 
 {
 	oRef<oGPUDevice> Device;
-	_pImmediateContext->GetDevice(&Device);
+	PicksStaging->GetDevice(&Device);
 	Device->UnmapRead(PicksStaging, 0);
 }

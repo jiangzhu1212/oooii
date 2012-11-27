@@ -63,7 +63,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 		desc.BaseAddress = oPageReserveAndCommit(BASE_ADDRESS, ARENA_SIZE);
 		desc.Usage = _Usage;
 		desc.Size = ARENA_SIZE;
-		oTESTB(oMirroredArenaCreate(desc, &MirroredArenaServer), "Failed to create mirrored arena for server");
+		oTESTB0(oMirroredArenaCreate(desc, &MirroredArenaServer));
 	}
 
 	// Mark all memory as dirty and make it so we can debug a bit better by writing 
@@ -140,7 +140,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 		oFromString( &desc.Addr, "127.0.0.1:1234" );
 		desc.ConnectionTimeoutMS = 1000;
 		desc.Style = oSocket::BLOCKING;
-		oTESTB(oSocketCreate("MirroredArena Server's Client", desc, &ClientSocket), "Failed to create client");
+		oTESTB0(oSocketCreate("MirroredArena Server's Client", desc, &ClientSocket));
 	}
 
 	oTRACE("test1: 0x%p", test1);

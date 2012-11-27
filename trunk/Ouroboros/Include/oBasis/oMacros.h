@@ -26,6 +26,8 @@
 #ifndef oMacros_h
 #define oMacros_h
 
+#include <oBasis/oPlatformFeatures.h>
+
 #define oINTERNAL_STRINGIZE__(x) #x
 
 // Creates a single symbol from the two specified symbols
@@ -36,6 +38,14 @@
 
 // Returns the number of elements in a fixed-size array
 #define oCOUNTOF(x) (sizeof(x)/sizeof((x)[0]))
+
+// Returns the number of bytes from the base of the specified struct for the 
+// member variable x.
+#ifdef o64BIT
+	#define oOFFSETOF(s, m) (size_t)((ptrdiff_t)&reinterpret_cast<const volatile char&>((((s *)0)->m)))
+#else
+	#define oOFFSETOF(s, m) (size_t)&reinterpret_cast<const volatile char&>((((s *)0)->m))
+#endif
 
 // Shorthand for a simple loop through a fixed array
 #define oFORI(_IndexVariable, _Array) for (size_t _IndexVariable = 0; _IndexVariable < oCOUNTOF(_Array); _IndexVariable++)
