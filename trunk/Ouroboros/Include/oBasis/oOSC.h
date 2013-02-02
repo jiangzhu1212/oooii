@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -33,7 +35,7 @@
 //        buffer will be treated as a string, so serialization to a buffer is no 
 //        different than with 's', but this allows some avoidance of char 
 //        pointers in relatively simple cases such as small names and paths. The
-//        _SizeofField param will still be strlen()+1.
+//        _SizeofField param will still be oStrlen()+1.
 
 #pragma once
 #ifndef oOSC_h

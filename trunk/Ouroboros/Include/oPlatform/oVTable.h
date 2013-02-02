@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -31,6 +33,10 @@
 
 // Returns the size of the VTable in bytes
 size_t oVTableSize(void *_pInterfaceImplementation);
+
+// Returns the VTable from a valid instance that has a vtable (unpredictable
+// behavior if the specified _pInterfaceImplementation does not have a vtable.
+void* oVTableGet(void* _pInterfaceImplementation);
 
 // oVTableRemap remaps the supplied implementation's VTable by copying it to a new location while
 // overwriting the compiler generated VTable with information to redirect to this new location

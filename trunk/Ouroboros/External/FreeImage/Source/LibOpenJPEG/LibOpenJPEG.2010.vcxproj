@@ -60,24 +60,28 @@
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Debug32.props" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\..\..\..\Source\Build\msvc100\Properties\FreeImage.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Release32.props" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\..\..\..\Source\Build\msvc100\Properties\FreeImage.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Debug64.props" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\..\..\..\Source\Build\msvc100\Properties\FreeImage.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Release64.props" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\..\..\..\Source\Build\msvc100\Properties\FreeImage.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -206,6 +210,7 @@
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="cidx_manager.c" />
     <ClCompile Include="cio.c">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -338,6 +343,7 @@
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="phix_manager.c" />
     <ClCompile Include="pi.c">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -350,6 +356,7 @@
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="ppix_manager.c" />
     <ClCompile Include="raw.c">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -410,14 +417,18 @@
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="thix_manager.c" />
+    <ClCompile Include="tpix_manager.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bio.h" />
+    <ClInclude Include="cidx_manager.h" />
     <ClInclude Include="cio.h" />
     <ClInclude Include="dwt.h" />
     <ClInclude Include="event.h" />
     <ClInclude Include="fix.h" />
     <ClInclude Include="image.h" />
+    <ClInclude Include="indexbox_manager.h" />
     <ClInclude Include="int.h" />
     <ClInclude Include="j2k.h" />
     <ClInclude Include="j2k_lib.h" />
@@ -432,6 +443,7 @@
     <ClInclude Include="pi.h" />
     <ClInclude Include="raw.h" />
     <ClInclude Include="t1.h" />
+    <ClInclude Include="t1_luts.h" />
     <ClInclude Include="t2.h" />
     <ClInclude Include="tcd.h" />
     <ClInclude Include="tgt.h" />

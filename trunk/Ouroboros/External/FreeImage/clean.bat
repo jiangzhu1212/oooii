@@ -12,6 +12,8 @@ rd Source\LibMNG\Debug /s /q
 rd Source\LibMNG\Release /s /q
 rd Source\LibTIFF\Debug /s /q
 rd Source\LibTIFF\Release /s /q
+rd Source\LibTIFF4\Debug /s /q
+rd Source\LibTIFF4\Release /s /q
 rd Source\Zlib\Debug /s /q
 rd Source\Zlib\Release /s /q
 rd Source\OpenEXR\Debug /s /q
@@ -30,6 +32,7 @@ rd Source\LibOpenJPEG\x64 /s /q
 rd Source\LibPNG\x64 /s /q
 rd Source\LibRawLite\x64 /s /q
 rd Source\LibTIFF\x64 /s /q
+rd Source\LibTIFF4\x64 /s /q
 rd Source\OpenEXR\x64 /s /q
 rd Source\ZLib\x64 /s /q
 rd TestAPI\x64 /s /q
@@ -44,6 +47,7 @@ del TestAPI\sample.gif
 del TestAPI\test.jpg
 del TestAPI\*.tif
 del TestAPI\raw_exif.jpg
+del TestAPI\exif_new_thumb.jpg
 del Dist\FreeImage.h
 del *.pch /s /q
 del *.ncb /s /q

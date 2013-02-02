@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -43,7 +45,7 @@ template<typename T> T* oByteSub(T* _Pointer, size_t _NumBytes) { return reinter
 template<typename T, typename U> T* oByteAdd(T* _RelativePointer, U* _BasePointer) { return reinterpret_cast<T*>(((char*)_RelativePointer) + reinterpret_cast<size_t>(_BasePointer)); }
 template<typename T> T* oByteAdd(T* _Pointer, size_t _Stride, size_t _Count) { return reinterpret_cast<T*>(((char*)_Pointer) + _Stride * _Count); }
 template<typename T, typename U> ptrdiff_t oByteDiff(T* t, U* u) { return (ptrdiff_t)((char*)t - (char*)u); }
-template<typename T> size_t oBytePadding(T value, size_t alignment) { return static_cast<T>(oByteAlign(value, alignment)) - value; }
+template<typename T> size_t oBytePadding(T value, size_t alignment) { return oSizeT(static_cast<T>(oByteAlign(value, alignment)) - value); }
 inline size_t oIndexOf(void* el, void* base, size_t elSize) { return oByteDiff(el, base) / elSize; }
 template<typename T> size_t oIndexOf(T* el, T* base) { return oIndexOf(el, base, sizeof(T)); }
 template<typename T> bool oIsPow2(T n) { return n ? (((n) & ((n)-1)) == 0) : false; }

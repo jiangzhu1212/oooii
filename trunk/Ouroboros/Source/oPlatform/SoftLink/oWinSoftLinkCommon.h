@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -52,6 +54,6 @@
 // The name of the array must be "static const char* dll_procs[] = {...};". 
 // _FirstProc is the first procedure declared in the class so it's function 
 // pointer's address can be taken to fill in all the pointers.
-#define oDEFINE_DLL_SINGLETON_CTOR(_ClassName, _StrModuleName, _FirstProc) _ClassName::_ClassName() { hModule = oModuleLinkSafe(_StrModuleName, dll_procs, (void**)&_FirstProc, oCOUNTOF(dll_procs)); }
+#define oDEFINE_DLL_SINGLETON_CTOR(_ClassName, _StrModuleName, _FirstProc) _ClassName::_ClassName() { hModule = oModuleLinkSafe(_StrModuleName, dll_procs, (void**)&_FirstProc, oCOUNTOF(dll_procs)); } oSINGLETON_REGISTER(_ClassName);
 
 #endif

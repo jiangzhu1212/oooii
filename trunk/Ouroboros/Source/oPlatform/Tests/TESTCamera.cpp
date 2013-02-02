@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -173,7 +175,7 @@ int ShowAllCameras()
 	return 0;
 }
 
-struct TESTCamera : oTest
+struct PLATFORM_oCamera : oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
@@ -181,4 +183,4 @@ struct TESTCamera : oTest
 	}
 };
 
-//oTEST_REGISTER(TESTCamera);
+//oTEST_REGISTER(PLATFORM_oCamera);

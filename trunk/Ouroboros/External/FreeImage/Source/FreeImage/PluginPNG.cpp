@@ -68,11 +68,13 @@ _WriteProc(png_structp png_ptr, unsigned char *data, png_size_t size) {
 
 static void
 _FlushProc(png_structp png_ptr) {
+	(png_structp)png_ptr;
 	// empty flush implementation
 }
 
 static void
 error_handler(png_structp png_ptr, const char *error) {
+	(png_structp)png_ptr;
 	throw error;
 }
 
@@ -80,6 +82,8 @@ error_handler(png_structp png_ptr, const char *error) {
 
 static void
 warning_handler(png_structp png_ptr, const char *warning) {
+	(png_structp)png_ptr;
+	(char*)warning;
 }
 
 // ==========================================================
@@ -89,7 +93,7 @@ warning_handler(png_structp png_ptr, const char *warning) {
 static BOOL 
 ReadMetadata(png_structp png_ptr, png_infop info_ptr, FIBITMAP *dib) {
 	// XMP keyword
-	char *g_png_xmp_keyword = "XML:com.adobe.xmp";
+	const char *g_png_xmp_keyword = "XML:com.adobe.xmp";
 
 	FITAG *tag = NULL;
 	png_textp text_ptr = NULL;
@@ -130,7 +134,7 @@ ReadMetadata(png_structp png_ptr, png_infop info_ptr, FIBITMAP *dib) {
 static BOOL 
 WriteMetadata(png_structp png_ptr, png_infop info_ptr, FIBITMAP *dib) {
 	// XMP keyword
-	char *g_png_xmp_keyword = "XML:com.adobe.xmp";
+	const char *g_png_xmp_keyword = "XML:com.adobe.xmp";
 
 	FITAG *tag = NULL;
 	FIMETADATA *mdhandle = NULL;
@@ -168,7 +172,7 @@ WriteMetadata(png_structp png_ptr, png_infop info_ptr, FIBITMAP *dib) {
 	if(tag && FreeImage_GetTagLength(tag)) {
 		memset(&text_metadata, 0, sizeof(png_text));
 		text_metadata.compression = 1;							// iTXt, none
-		text_metadata.key = g_png_xmp_keyword;					// keyword, 1-79 character description of "text"
+		text_metadata.key = (char*)g_png_xmp_keyword;					// keyword, 1-79 character description of "text"
 		text_metadata.text = (char*)FreeImage_GetTagValue(tag);	// comment, may be an empty string (ie "")
 		text_metadata.text_length = FreeImage_GetTagLength(tag);// length of the text string
 		text_metadata.itxt_length = FreeImage_GetTagLength(tag);// length of the itxt string
@@ -456,6 +460,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 					png_get_PLTE(png_ptr,info_ptr, &png_palette, &palette_entries);
 
+					palette_entries = MIN((unsigned)palette_entries, FreeImage_GetColorsUsed(dib));
 					palette = FreeImage_GetPalette(dib);
 
 					// store the palette
@@ -569,7 +574,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			if (header_only) {
 				// get possible metadata (it can be located both before and after the image data)
-				ReadMetadata(png_ptr, info_ptr, dib);
+				//ReadMetadata(png_ptr, info_ptr, dib); // @oooii-tony: Disable reading metadata because it causes leaks that I can't figure out how to squash from client code
 				if (png_ptr) {
 					// clean up after the read, and free any memory allocated - REQUIRED
 					png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
@@ -588,11 +593,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			}
 
 			// read in the bitmap bits via the pointer table
+			// allow loading of PNG with minor errors (such as images with several IDAT chunks)
 
 			for (png_uint_32 k = 0; k < height; k++) {
 				row_pointers[height - 1 - k] = FreeImage_GetScanLine(dib, k);			
 			}
 
+			png_set_benign_errors(png_ptr, 1);
 			png_read_image(png_ptr, row_pointers);
 
 			// check if the bitmap contains transparency, if so enable it in the header
@@ -751,17 +758,27 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				bit_depth = 16;
 			}
 
+			// check for transparent images
+			BOOL bIsTransparent = 
+				(image_type == FIT_BITMAP) && FreeImage_IsTransparent(dib) && (FreeImage_GetTransparencyCount(dib) > 0) ? TRUE : FALSE;
+
 			switch (FreeImage_GetColorType(dib)) {
 				case FIC_MINISWHITE:
-					// Invert monochrome files to have 0 as black and 1 as white (no break here)
-					png_set_invert_mono(png_ptr);
+					if(!bIsTransparent) {
+						// Invert monochrome files to have 0 as black and 1 as white (no break here)
+						png_set_invert_mono(png_ptr);
+					}
+					// (fall through)
 
 				case FIC_MINISBLACK:
-					png_set_IHDR(png_ptr, info_ptr, width, height, bit_depth, 
-						PNG_COLOR_TYPE_GRAY, interlace_type, 
-						PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-
-					break;
+					if(!bIsTransparent) {
+						png_set_IHDR(png_ptr, info_ptr, width, height, bit_depth, 
+							PNG_COLOR_TYPE_GRAY, interlace_type, 
+							PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+						break;
+					}
+					// If a monochrome image is transparent, save it with a palette
+					// (fall through)
 
 				case FIC_PALETTE:
 				{
@@ -839,7 +856,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 			// set the transparency table
 
-			if (FreeImage_IsTransparent(dib) && (FreeImage_GetTransparencyCount(dib) > 0)) {
+			if (bIsTransparent) {
 				png_set_tRNS(png_ptr, info_ptr, FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib), NULL);
 			}
 

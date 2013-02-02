@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -57,6 +59,28 @@ struct oFileReaderImpl : public oStreamReader
 		if (hFile == INVALID_HANDLE_VALUE)
 		{
 			oWinSetLastError();
+			switch (oErrorGetLast())
+			{
+				case oERROR_NOT_FOUND:
+				{
+					oStringURI URIRef;
+					oVERIFY(oURIRecompose(URIRef, _URIParts));
+					oErrorSetLast(oERROR_NOT_FOUND, "not found: %s", URIRef.c_str());
+					break;
+				}
+
+				case oERROR_INVALID_PARAMETER:
+				{
+					oStringURI URIRef;
+					oVERIFY(oURIRecompose(URIRef, _URIParts));
+					oErrorSetLast(oERROR_INVALID_PARAMETER, "invalid URI: %s", URIRef.c_str());
+					break;
+				}
+
+				default:
+					break;
+			}
+
 			return;
 		}
 		else
@@ -522,10 +546,11 @@ struct oFileMonitorImpl : public oStreamMonitor
 						++it;
 				}
 			}
-			for (auto it = Accessibles.cbegin(); it != Accessibles.cend(); ++it)
+
+			oFOR(const auto& a, Accessibles)
 			{
-				oTRACE_MONITOR("oSTREAM_ACCESSIBLE: %s", it->c_str());
-				OnEvent(oSTREAM_ACCESSIBLE, *it);
+				oTRACE_MONITOR("oSTREAM_ACCESSIBLE: %s", a.c_str());
+				OnEvent(oSTREAM_ACCESSIBLE, a);
 			}
 		}
 	}

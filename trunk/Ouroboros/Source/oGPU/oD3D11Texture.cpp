@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -25,6 +27,26 @@
 #include "oD3D11Device.h"
 #include <oBasis/oSurface.h>
 #include <oPlatform/Windows/oDXGI.h>
+
+static bool CreateSecondTexture(oGPUDevice* _pDevice, const char* _Texture1Name, const oGPU_TEXTURE_DESC& _Texture1Desc, oGPUTexture** _ppTexture2)
+{
+	oASSERT(oSurfaceFormatGetNumSubformats(_Texture1Desc.Format) <= 2, "Many-plane textures not supported");
+	if (oSurfaceFormatGetNumSubformats(_Texture1Desc.Format) == 2)
+	{
+		// To keep YUV textures singular to prepare for new YUV-based DXGI formats
+		// coming, create a private data companion texture.
+		oGPU_TEXTURE_DESC Texture2Desc(_Texture1Desc);
+		Texture2Desc.Format = oSurfaceGetSubformat(_Texture1Desc.Format, 1);
+		Texture2Desc.Dimensions = oSurfaceMipCalcDimensionsNPOT(_Texture1Desc.Format, _Texture1Desc.Dimensions, 0, 1);
+
+		oStringM Texture2Name(_Texture1Name);
+		oStrAppendf(Texture2Name, ".Texture2");
+		
+		return _pDevice->CreateTexture(Texture2Name, Texture2Desc, _ppTexture2);
+	}
+
+	return true;
+}
 
 oDEFINE_GPUDEVICE_CREATE(oD3D11, Texture);
 oD3D11Texture::oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess, ID3D11Texture2D* _pTexture)
@@ -63,16 +85,25 @@ oD3D11Texture::oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char
 				*_pSuccess = false;
 		}
 	}
+
+	if (*_pSuccess)
+		*_pSuccess = CreateSecondTexture(_pDevice, _Name, _Desc, (oGPUTexture**)&Texture2);
 }
 
 int2 oD3D11Texture::GetByteDimensions(int _Subresource) const threadsafe
 {
 	const oGPUTexture::DESC& d = thread_cast<oD3D11Texture*>(this)->Desc;
+	int numMips = oSurfaceCalcNumMips(oGPUTextureTypeHasMips(d.Type), d.Dimensions); 
+	int mipLevel, sliceIndex, surfaceIndex;
+	oSurfaceSubresourceUnpack(_Subresource, numMips, d.NumSlices, &mipLevel, &sliceIndex, &surfaceIndex);
+	if (surfaceIndex > 0)
+		return Texture2->GetByteDimensions(oSurfaceCalcSubresource(mipLevel, sliceIndex, surfaceIndex - 1, numMips, d.NumSlices));
+
 	oSURFACE_DESC sd;
 	sd.Dimensions = d.Dimensions;
 	sd.Format = d.Format;
 	sd.NumSlices = d.NumSlices;
-	sd.Layout = oSURFACE_LAYOUT_IMAGE;
+	sd.Layout = oGPUTextureTypeHasMips(d.Type) ? oSURFACE_LAYOUT_TIGHT : oSURFACE_LAYOUT_IMAGE;
 	oSURFACE_SUBRESOURCE_DESC srd;
 	return oSurfaceSubresourceCalcByteDimensions(sd, _Subresource);
 }

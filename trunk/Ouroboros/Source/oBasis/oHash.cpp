@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -244,6 +246,52 @@ unsigned int oHash_stlpi(const char* s)
 		h = 5 * h + tolower(*s++);
 	return (unsigned int)h;
 	// $(CitedCodeEnd)
+}
+
+unsigned int oHash_FNV1a(const char* buf, unsigned int len, unsigned int seed)
+{
+	unsigned int hash = seed ? seed : 2166136261u;
+	const char* c = static_cast<const char*>(buf);
+	while (len--)
+	{
+		hash ^= *buf++;
+		hash *= 16777619u;
+	}
+	return hash;
+}
+
+unsigned int oHash_FNV1a(const void* buf, unsigned int len, unsigned int seed)
+{
+	unsigned int hash = seed;
+	const char* s = static_cast<const char*>(buf);
+	while (len--)
+	{
+		hash ^= *s++;
+		hash *= 16777619u;
+	}
+	return hash;
+}
+
+unsigned int oHash_FNV1a(const char* s)
+{
+	unsigned int hash = 2166136261u;
+	while (*s)
+	{
+		hash ^= *s++;
+		hash *= 16777619u;
+	}
+	return hash;
+}
+
+unsigned int oHash_FNV1ai(const char* s)
+{
+	unsigned int hash = 2166136261u;
+	while (*s)
+	{
+		hash ^= tolower(*s++);
+		hash *= 16777619u;
+	}
+	return hash;
 }
 
 #define get16bits(d) (*((const unsigned short*) (d)))

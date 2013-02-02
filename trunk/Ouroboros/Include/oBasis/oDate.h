@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -135,7 +137,7 @@ oAPI const char* oAsString(const oMONTH& _Month);
 // where all dates, even those before the Gregorian calendar was invented, are 
 // calculated using the Gregorian method. This is consistent with how NTP 
 // reports time.
-struct oDATE : oCompareable<oDATE>
+struct oDATE : oComparable<oDATE>
 {
 	oDATE(int _Year = 0, oMONTH _Month = oJANUARY, int _Day = 0, int _Hour = 0, int _Minute = 0, int _Second = 0, int _Millisecond = 0)
 		: Year(_Year)

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -28,7 +30,7 @@
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/Windows/oWinRect.h>
 
-struct TESTGPUClear : public oTest
+struct GPU_Clear : public oTest
 {
 	void Render(oGPURenderTarget* _pPrimaryRenderTarget)
 	{
@@ -55,7 +57,7 @@ struct TESTGPUClear : public oTest
 	{
 		static const int sSnapshotFrames[] = { 0, 1 };
 		static const bool kIsDevMode = false;
-		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&TESTGPUClear::Render, this, oBIND1), "TESTGPUClear", sSnapshotFrames);
+		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&GPU_Clear::Render, this, oBIND1), "GPU_Clear", sSnapshotFrames);
 
 		oStd::future<oRef<oImage>> Snapshots[oCOUNTOF(sSnapshotFrames)];
 		oRef<threadsafe oGPUWindow> Window;
@@ -76,4 +78,4 @@ struct TESTGPUClear : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTGPUClear);
+oTEST_REGISTER(GPU_Clear);

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -54,16 +56,17 @@ interface oXML : oInterface
 		// Preallocate memory ahead of parsing for this many attributes
 		unsigned int EstimatedNumAttributes;
 
-		// If CopyXMLString is false, this function will be called on XMLString in the
-		// destructor of the oXML object. This can be a noop function if the memory is
-		// not to be owned by oXML, however note that oXML will modify the specified
-		// buffer, so it won't be useful by anyone outside this class.
+		// If CopyXMLString is false, this function will be called on XMLString in 
+		// the destructor of the oXML object. This can be a noop function if the 
+		// memory is not to be owned by oXML, however note that oXML will modify the 
+		// specified buffer, so it won't be useful by anyone outside this class.
 		oFUNCTION<void(const char* _XMLString)> FreeXMLString;
 
-		// If CopyXMLString is true, a copy of XML String will be made and the created
-		// oXML object has no further use of the buffer pointed to by XMLString. If 
-		// this is false, then oXML will parse the XML and modify contents in the 
-		// buffer and call FreeXMLString on the buffer in the oXML's destructor.
+		// If CopyXMLString is true, a copy of XML String will be made and the 
+		// created oXML object has no further use of the buffer pointed to by 
+		// XMLString. If this is false, then oXML will parse the XML and modify 
+		// contents in the buffer and call FreeXMLString on the buffer in the oXML's 
+		// destructor.
 		bool CopyXMLString;
 	};
 
@@ -73,9 +76,6 @@ interface oXML : oInterface
 	// If _hParentNode is 0, this returns the root node. If a name is specified,
 	// this returns the first child that matches the specified name.
 	virtual HNODE GetFirstChild(HNODE _hParentNode, const char* _Name = 0) const threadsafe = 0;
-
-	// If _hParentNode is 0, this returns the root node. If a name is specified,
-	// this returns the first child that matches the specified name.
 	virtual HNODE GetNextSibling(HNODE _hPriorSibling, const char* _Name = 0) const threadsafe = 0;
 
 	virtual HATTR GetFirstAttribute(HNODE _hNode) const threadsafe = 0;
@@ -85,6 +85,11 @@ interface oXML : oInterface
 	virtual const char* GetDocumentName() const threadsafe = 0;
 	virtual const char* GetNodeName(HNODE _hNode) const threadsafe = 0;
 	virtual const char* GetNodeValue(HNODE _hNode) const threadsafe = 0;
+	virtual HNODE FindNode(HNODE _hNode, const char* _NodeName) const threadsafe = 0;
+	virtual const char* FindNodeValue(HNODE _hNode, const char* _NodeName) const threadsafe = 0;
+	virtual bool GetNodeValue(HNODE _hNode, const char* _NodeName, char* _StrDestination, size_t _NumberOfElements) const threadsafe = 0;
+	template<size_t size> inline bool GetNodeValue(HNODE _hNode, const char* _NodeName, char (&_StrDestination)[size]) const threadsafe { return GetNodeValue(_hNode, _NodeName, _StrDestination, size); }
+
 	virtual const char* GetAttributeName(HATTR _hAttribute) const threadsafe = 0;
 	virtual const char* GetAttributeValue(HATTR _hAttribute) const threadsafe = 0;
 	virtual const char* FindAttributeValue(HNODE _hNode, const char* _AttributeName) const threadsafe = 0;

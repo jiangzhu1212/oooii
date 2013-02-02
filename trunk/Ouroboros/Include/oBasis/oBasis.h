@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -41,9 +43,15 @@
 #include <oBasis/oByte.h>
 #include <oBasis/oByteSwizzle.h>
 #include <oBasis/oCallable.h>
+#include <oBasis/oCameraController.h>
+#include <oBasis/oCameraControllerArcball.h>
+#include <oBasis/oCameraControllerMaya.h>
+#include <oBasis/oCameraControllerMMO.h>
 #include <oBasis/oColor.h>
+#include <oBasis/oCompression.h>
 #include <oBasis/oConcurrentIndexAllocator.h>
 #include <oBasis/oConditionVariable.h>
+#include <oBasis/oContainer.h>
 #include <oBasis/oCountdownLatch.h>
 #include <oBasis/oCppParsing.h>
 #include <oBasis/oCSV.h>
@@ -97,24 +105,28 @@
 #include <oBasis/oPlatformFeatures.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
+#include <oBasis/oResizedType.h>
 #include <oBasis/oStdAllocator.h>
 #include <oBasis/oStdAtomic.h>
 #include <oBasis/oStdChrono.h>
 #include <oBasis/oStdConditionVariable.h>
 #include <oBasis/oStddef.h>
 #include <oBasis/oStdFuture.h>
+#include <oBasis/oStdMakeUnique.h>
 #include <oBasis/oStdMutex.h>
 #include <oBasis/oStdRatio.h>
 #include <oBasis/oStdThread.h>
-#include <oBasis/oStdTypeTraits.h>
 #include <oBasis/oString.h>
 #include <oBasis/oStringize.h>
 #include <oBasis/oSurface.h>
 #include <oBasis/oSurfaceFill.h>
+#include <oBasis/oSurfaceResize.h>
 #include <oBasis/oTask.h>
 #include <oBasis/oThread.h>
 #include <oBasis/oThreadsafe.h>
 #include <oBasis/oTimer.h>
+#include <oBasis/oTypeID.h>
+#include <oBasis/oTypeInfo.h>
 #include <oBasis/oTypes.h>
 #include <oBasis/oUint128.h>
 #include <oBasis/oUnorderedMap.h>

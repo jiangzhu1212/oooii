@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -122,11 +124,11 @@ Process_Impl::Process_Impl(const DESC& _Desc, bool* _pSuccess)
 	memset(&StartInfo, 0, sizeof(STARTUPINFO));
 	StartInfo.cb = sizeof(STARTUPINFO);
 
-	if (!Desc.SetFocus || Desc.StartMinimized || Desc.HideWindow)
+	if (!Desc.SetFocus || Desc.StartMinimized || !Desc.ShowWindow)
 	{
 		StartInfo.dwFlags |= STARTF_USESHOWWINDOW;
 		
-		if(Desc.HideWindow)
+		if (!Desc.ShowWindow)
 			StartInfo.wShowWindow |= SW_HIDE;
 		else if (!Desc.SetFocus)
 			StartInfo.wShowWindow |= (Desc.StartMinimized ? SW_SHOWMINNOACTIVE : SW_SHOWNOACTIVATE);
@@ -358,7 +360,7 @@ static const char* oGetCommandLineParameters(bool _ParametersOnly)
 	oOnScopeExit OSCFreeArgv([&] { if (argv) oWinCommandLineToArgvAFree(argv); });
 
 	const char* exe = strstr(p, argv[0]);
-	const char* after = exe + strlen(argv[0]);
+	const char* after = exe + oStrlen(argv[0]);
 
 	p += strcspn(p, oWHITESPACE); // move to whitespace
 	p += strspn(p, oWHITESPACE); // move past whitespace

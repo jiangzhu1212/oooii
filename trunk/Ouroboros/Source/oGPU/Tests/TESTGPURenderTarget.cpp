@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,7 +29,7 @@
 #include <oGPU/oGPUViewConstants.h>
 #include <oGPU/oGPUDrawConstants.h>
 
-struct TESTGPURenderTarget : public oTest
+struct GPU_RenderTarget : public oTest
 {
 	oRef<oGPUDevice> Device;
 	oRef<oGPUCommandList> CLMainScene;
@@ -190,11 +192,11 @@ struct TESTGPURenderTarget : public oTest
 
 		static const int sSnapshotFrames[] = { 0, 50 };
 		static const bool kIsDevMode = false;
-		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&TESTGPURenderTarget::Render, this, oBIND1), "TESTGPURenderTarget", sSnapshotFrames);
+		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&GPU_RenderTarget::Render, this, oBIND1), "GPU_RenderTarget", sSnapshotFrames);
 
 		oStd::future<oRef<oImage>> Snapshots[oCOUNTOF(sSnapshotFrames)];
 		oRef<threadsafe oGPUWindow> Window;
-		oTESTB0(oGPUTestCreateWindow(Init, oBIND(&TESTGPURenderTarget::CreateResources, this, oBIND1), Snapshots, &Window));
+		oTESTB0(oGPUTestCreateWindow(Init, oBIND(&GPU_RenderTarget::CreateResources, this, oBIND1), Snapshots, &Window));
 
 		while (Window->IsOpen())
 		{
@@ -211,4 +213,4 @@ struct TESTGPURenderTarget : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTGPURenderTarget);
+oTEST_REGISTER(GPU_RenderTarget);

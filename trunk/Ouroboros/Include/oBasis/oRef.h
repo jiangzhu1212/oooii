@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -29,23 +31,22 @@
 // (p) // (as in if (p != 0) {...})
 //
 // oRef was coded instead of using boost::intrusive_ptr because I feel that ref-
-// counted pointers should be castable to raw pointers. ref counting is a sign 
+// counted pointers should be castable to raw pointers. Ref counting is a sign 
 // of ownership. To me (a console video game developer primarily) allowing 
 // objects to hang around if someone refers to them shouldn't be arbitrary, and 
 // thus I would like to see care with the usage of smart pointers. If a function 
 // or class does not own the pointer's contents, then there's no reason for it 
 // to have a smart pointer in its API. boost::intrusive_ptr requires an explicit 
-// call to .get(), which clutters up the code and is a nusance. Notice as well 
+// call to .get() which clutters up the code and is a nusance. Notice as well 
 // how much less code is required for the smart pointer because so many operators 
 // and operations do not have to be recoded to enforce overzealous type safety.
 //
 // NOTE: A novel behavior of oRef is that you can pass its address to a function
-// and it will release any prior refcount before proceeding. This is used in the
-// Microsoft-style factory pattern bool CreateMyObject(MyObject** ppObject). In
-// this style, we can pass the address of an oRef and it will free any prior 
-// value and allow the internal code to assign a new MyObject that has a refcount
-// of 1 on construction. To really get the address of the underlying pointer,
-// use oRef::address().
+// to receive a value. This is used in the Microsoft-style factory pattern 
+// bool CreateMyObject(MyObject** ppObject). In this style, we can pass the 
+// address of an oRef to receive the new object, but doing so will not release 
+// any prior value in the oRef since this circumvents reference counting since
+// most objects are constructed with a refcount of 1.
 //
 // NOTE: Threading falls out naturally as part of the intrusive model, implementations
 // of intrusive_ptr_add_ref/intrusive_ptr_release should take threadsafe pointers if
@@ -132,12 +133,18 @@ template<class T> struct oRef
 	operator T*() threadsafe { return Pointer; }
 	operator const T*() const threadsafe { return Pointer; }
 
-	//This version of the operator should only be used for "create" style functions, and functions that "retrieve" oRef's i.e. QueryInterface. 
-	//	It is inherently not thread safe during create until after the create returns. It is not threadsafe for retrieves either. Since the callee
-	//	is going to increment the refcount, and this operator does not decrement the refcount of any existing Pointers, if two threads tried to make a call to QueryInterface
-	//	with the same oRef, there would be a race condition and the possibility for a leak.
+	// This version of the operator should only be used for "create" style 
+	// functions, and functions that "retrieve" oRef's i.e. QueryInterface. It is 
+	// inherently not threadsafe during create until after the create returns. It 
+	// is not threadsafe for retrieves either. Since the callee is going to 
+	// increment the refcount and this operator does not decrement the refcount 
+	// of any existing pointers, if two threads tried to make a call to 
+	// QueryInterface with the same oRef, there would be a race condition and the 
+	// possibility for a leak.
 	T** operator &() { return &Pointer; } 
-	//The const variant only makes sense for "retrieve" style calls, but otherwise see comments above.
+
+	// The const variant only makes sense for "retrieve" style calls, but 
+	// otherwise see comments above.
 	const T** operator &() const { return const_cast<const T**>(&Pointer); } 
 	
 	T* c_ptr() threadsafe { return Pointer; }

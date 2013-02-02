@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -22,6 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oTask.h>
+#include <oBasis/oRefCount.h>
 #include <oBasis/oStdFuture.h>
 #include <oPlatform/oDebugger.h>
 #include "oDispatchQueueConcurrentSerial.h"
@@ -52,9 +55,9 @@ public:
 	{
 		_Task();
 	}
-	
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_NOOP_QUERYINTERFACE();
+
+	void Reference() override { RefCount.Reference(); }
+	void Release() override { if (RefCount.Release()) delete this; }
 	void wait() override {}
 private:
 	oRefCount RefCount;

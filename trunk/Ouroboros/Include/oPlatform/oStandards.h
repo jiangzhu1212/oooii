@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -103,12 +105,6 @@ template<size_t CAPACITY> char* oGetLogFilePath(oFixedString<char, CAPACITY>& _S
 bool oINIFindPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _pININame);
 template<size_t size> bool oINIFindPath(char (&_StrDestination)[size], const char* _pININame) { return oINIFindPath(_StrDestination, size, _pININame); }
 template<size_t CAPACITY> bool oINIFindPath(oFixedString<char, CAPACITY>& _StrDestination, const char* _pININame) { return oINIFindPath(_StrDestination, _StrDestination.capacity(), _pININame); }
-
-
-// Returns a string that includes the version and current
-// time in Strftime format reformatted as an acceptable path
-// i.e. "V1_0_0_21932D2012-09-13T13_49_15.890-7_00"
-oStringS oGetModuleFileStampString();
 
 
 #endif

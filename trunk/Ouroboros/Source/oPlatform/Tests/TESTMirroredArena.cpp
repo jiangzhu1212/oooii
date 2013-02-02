@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -48,7 +50,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 		int exitcode = 0;
 		char msg[512];
 		*msg = 0;
-		oTESTB(oSpecialTest::CreateProcess("TESTMirroredArenaClient", &Client), "");
+		oTESTB(oSpecialTest::CreateProcess("PLATFORM_oMirroredArenaClient", &Client), "");
 		oTESTB(oSpecialTest::Start(Client, msg, oCOUNTOF(msg), &exitcode), "%s", msg);
 	}
 
@@ -106,7 +108,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 
 	for (size_t i = 0; i < oCOUNTOF(TEST2); i++)
 	{
-		size_t bufferSize = 1 + strlen(TEST2[i]);
+		size_t bufferSize = 1 + oStrlen(TEST2[i]);
 		test2Strings[i] = static_cast<char*>(AllocatorServer->Allocate(sizeof(char) * bufferSize));
 		oTESTB(test2Strings[i], "test2Strings[%u] allocation failed", i);
 		oStrcpy(test2Strings[i], bufferSize, TEST2[i]);
@@ -176,7 +178,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 	return oTest::SUCCESS;
 }
 
-struct TESTMirroredArena : public oTest
+struct PLATFORM_oMirroredArena : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
@@ -207,7 +209,7 @@ struct TESTMirroredArena : public oTest
 	}
 };
 
-struct TESTMirroredArenaClient : public oSpecialTest
+struct PLATFORM_oMirroredArenaClient : public oSpecialTest
 {
 	static const unsigned int WAIT_FOR_CONNECTION_TIMEOUT = 5000;
 
@@ -311,6 +313,6 @@ struct TESTMirroredArenaClient : public oSpecialTest
 	}
 };
 
-oTEST_REGISTER(TESTMirroredArena);
-oTEST_REGISTER(TESTMirroredArenaClient);
+oTEST_REGISTER(PLATFORM_oMirroredArena);
+oTEST_REGISTER(PLATFORM_oMirroredArenaClient);
 

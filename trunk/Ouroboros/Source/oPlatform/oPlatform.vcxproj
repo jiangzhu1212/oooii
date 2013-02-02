@@ -88,7 +88,6 @@
     <ClCompile />
     <ClCompile>
       <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(oSuiteExtDir)\Kinect\v1.0\inc;$(oSuiteExtDir)bullet\vectormathlibrary\include;$(oSuiteExtDir)FreeImage\Source\OpenEXR\Half;$(oSuiteExtDir)tlsf;$(oSuiteExtDir)BC6HBC7EncoderDecoder11\;$(oSuiteExtDir)FreeImage\Source\;$(oSuiteExtDir)OpenSSL\openssl-1.0.0e\include\;$(oSuiteExtDir)tbb\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -100,7 +99,6 @@
     <ClCompile />
     <ClCompile>
       <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(oSuiteExtDir)\Kinect\v1.0\inc;$(OuroborosSuiteDir)Source\oPlatform\SoftLink;$(oSuiteExtDir)bullet\vectormathlibrary\include;$(oSuiteExtDir)FreeImage\Source\OpenEXR\Half;$(oSuiteExtDir)tlsf;$(oSuiteExtDir)BC6HBC7EncoderDecoder11\;$(oSuiteExtDir)FreeImage\Source\;$(oSuiteExtDir)OpenSSL\openssl-1.0.0e\include\;$(oSuiteExtDir)tbb\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -109,7 +107,6 @@
     <ClCompile />
     <ClCompile>
       <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(oSuiteExtDir)\Kinect\v1.0\inc;$(oSuiteExtDir)bullet\vectormathlibrary\include;$(oSuiteExtDir)FreeImage\Source\OpenEXR\Half;$(oSuiteExtDir)tlsf;$(oSuiteExtDir)BC6HBC7EncoderDecoder11\;$(oSuiteExtDir)FreeImage\Source\;$(oSuiteExtDir)OpenSSL\openssl-1.0.0e\include\;$(oSuiteExtDir)tbb\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -124,7 +121,6 @@
     <ClCompile />
     <ClCompile>
       <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(oSuiteExtDir)\Kinect\v1.0\inc;$(oSuiteExtDir)bullet\vectormathlibrary\include;$(oSuiteExtDir)FreeImage\Source\OpenEXR\Half;$(oSuiteExtDir)tlsf;$(oSuiteExtDir)BC6HBC7EncoderDecoder11\;$(oSuiteExtDir)FreeImage\Source\;$(oSuiteExtDir)OpenSSL\openssl-1.0.0e\include\;$(oSuiteExtDir)tbb\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -135,24 +131,29 @@
     <ClInclude Include="..\..\Include\oPlatform\oEMail.h" />
     <ClInclude Include="..\..\Include\oPlatform\oFile.h" />
     <ClInclude Include="..\..\Include\oPlatform\oFileSchemeHandler.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oGUIMenu.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHLSLShaders.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHTTP.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHTTPClient.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHTTPServer.h" />
     <ClInclude Include="..\..\Include\oPlatform\oInterprocessEvent.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oKinect.h" />
     <ClInclude Include="..\..\Include\oPlatform\oMirroredArena.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oMRUManager.h" />
     <ClInclude Include="..\..\Include\oPlatform\oMsgBox.h" />
     <ClInclude Include="..\..\Include\oPlatform\oPageAllocator.h" />
     <ClInclude Include="..\..\Include\oPlatform\oPlatform.h" />
     <ClInclude Include="..\..\Include\oPlatform\oProcess.h" />
     <ClInclude Include="..\..\Include\oPlatform\oProcessHeap.h" />
     <ClInclude Include="..\..\Include\oPlatform\oProgressBar.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oRegistry.h" />
     <ClInclude Include="..\..\Include\oPlatform\oSerialCom.h" />
     <ClInclude Include="..\..\Include\oPlatform\oSocket.h" />
     <ClInclude Include="..\..\Include\oPlatform\oStream.h" />
     <ClInclude Include="..\..\Include\oPlatform\oStreamUtil.h" />
     <ClInclude Include="..\..\Include\oPlatform\oSystem.h" />
     <ClInclude Include="..\..\Include\oPlatform\oThreadX.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oVersionUpdate.h" />
     <ClInclude Include="..\..\Include\oPlatform\oWindow.h" />
     <ClInclude Include="..\..\Include\oPlatform\oDebugger.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHLSL.h" />
@@ -172,7 +173,6 @@
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinCursor.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinDialog.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWindows.h" />
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinMenu.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinRect.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinRegistry.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinStatusBar.h" />
@@ -186,6 +186,7 @@
     <ClInclude Include="oHTTPInternal.h" />
     <ClInclude Include="oIOCP.h" />
     <ClInclude Include="oKeyState.h" />
+    <ClInclude Include="oKinectDisplay.h" />
     <ClInclude Include="oSpinlockEx.h" />
     <ClInclude Include="oStaticMutex.h" />
     <ClInclude Include="oVKToX11Keyboard.h" />
@@ -225,6 +226,8 @@
     <ClCompile Include="oFileGeneric.cpp" />
     <ClCompile Include="oFileSchemeHandler.cpp" />
     <ClCompile Include="oGDI.cpp" />
+    <ClCompile Include="oGSReport.cpp" />
+    <ClCompile Include="oGUIMenu.cpp" />
     <ClCompile Include="oHLSLShaders.cpp" />
     <ClCompile Include="oHTTP.cpp" />
     <ClCompile Include="oHTTPClient.cpp" />
@@ -234,8 +237,11 @@
     <ClCompile Include="oInterprocessEvent.cpp" />
     <ClCompile Include="oInvisible_ico.cpp" />
     <ClCompile Include="oIOCP.cpp" />
+    <ClCompile Include="oKinect.cpp" />
+    <ClCompile Include="oKinectDisplay.cpp" />
     <ClCompile Include="oMirroredArena.cpp" />
     <ClCompile Include="oModule.cpp" />
+    <ClCompile Include="oMRUManager.cpp" />
     <ClCompile Include="oMsgBox.cpp" />
     <ClCompile Include="oooii_icon.cpp" />
     <ClCompile Include="oP4.cpp" />
@@ -243,6 +249,7 @@
     <ClCompile Include="oProcess.cpp" />
     <ClCompile Include="oProcessHeap.cpp" />
     <ClCompile Include="oProgressBar.cpp" />
+    <ClCompile Include="oRegistry.cpp" />
     <ClCompile Include="oReporting.cpp" />
     <ClCompile Include="oSerialCom.cpp" />
     <ClCompile Include="oSingleton.cpp" />
@@ -253,6 +260,7 @@
     <ClCompile Include="oSystem.cpp" />
     <ClCompile Include="oTest.cpp" />
     <ClCompile Include="oThreadX.cpp" />
+    <ClCompile Include="oVersionUpdate.cpp" />
     <ClCompile Include="oVKToX11Keyboard.cpp" />
     <ClCompile Include="oVTable.cpp" />
     <ClCompile Include="oWinAsString.cpp" />
@@ -260,7 +268,6 @@
     <ClCompile Include="oWinDialog.cpp" />
     <ClCompile Include="oWindow.cpp" />
     <ClCompile Include="oWindows.cpp" />
-    <ClCompile Include="oWinMenu.cpp" />
     <ClCompile Include="oWinRect.cpp" />
     <ClCompile Include="oWinRegistry.cpp" />
     <ClCompile Include="oWinStatusBar.cpp" />

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -23,6 +25,7 @@
  **************************************************************************/
 #include <oBasis/oBuffer.h>
 #include <oBasis/oDispatchQueuePrivate.h>
+#include <oBasis/oEvent.h>
 #include <oBasis/oOnScopeExit.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/oSocket.h>
@@ -108,11 +111,11 @@ struct TCPServerCallback : public oSocketAsyncCallback
 
 	unsigned int CurrentOffset;
 	unsigned int ExpectedMessageLength;
-	oInterprocessEvent MessageArrived;
+	oEvent MessageArrived;
 	char Results[1024*1024];
 };
 
-struct TESTSocketAsync : public oTest
+struct PLATFORM_oSocketAsync : public oTest
 {
 	struct GenericCallback : public oSocketAsyncCallback
 	{
@@ -211,7 +214,7 @@ struct TESTSocketAsync : public oTest
 		Settings.Callback = Receiver;
 		Socket->GoAsynchronous(Settings);
 
-		Receiver->ExpectedMessageLength = oUInt(strlen(TESTSocketTCP0)) + 1;
+		Receiver->ExpectedMessageLength = oUInt(oStrlen(TESTSocketTCP0)) + 1;
 		
 		oSocket::DESC Desc;
 		Socket->GetDesc(&Desc);
@@ -268,8 +271,8 @@ struct TESTSocketAsync : public oTest
 			{
 				// Issue server command
 				ServerResult = FAILURE;
-				oFUNCTION<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> Func = oBIND(&TESTSocketAsync::TestUDPServerASYNC, this, oBIND1, oBIND2, TestPort);
-				ServerThread->Dispatch(&TESTSocketAsync::RunServer, this, Func);
+				oFUNCTION<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> Func = oBIND(&PLATFORM_oSocketAsync::TestUDPServerASYNC, this, oBIND1, oBIND2, TestPort);
+				ServerThread->Dispatch(&PLATFORM_oSocketAsync::RunServer, this, Func);
 
 				oSocket::DESC SocketDesc;
 				SocketDesc.Protocol = oSocket::UDP;
@@ -312,8 +315,8 @@ struct TESTSocketAsync : public oTest
 		{
 			// Issue server command	
 			ServerResult = FAILURE;
-			oFUNCTION<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> Func = oBIND(&TESTSocketAsync::TestTCPServerASYNC, this, oBIND1, oBIND2);
-			ServerThread->Dispatch(&TESTSocketAsync::RunServer, this, Func);
+			oFUNCTION<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> Func = oBIND(&PLATFORM_oSocketAsync::TestTCPServerASYNC, this, oBIND1, oBIND2);
+			ServerThread->Dispatch(&PLATFORM_oSocketAsync::RunServer, this, Func);
 
 			oSocket::DESC SocketDesc;
 			SocketDesc.Protocol = Protocols[i];
@@ -359,4 +362,4 @@ struct TESTSocketAsync : public oTest
 	oFixedString<char, 256> ServerResultString;
 };
 
-oTEST_REGISTER(TESTSocketAsync);
+oTEST_REGISTER(PLATFORM_oSocketAsync);

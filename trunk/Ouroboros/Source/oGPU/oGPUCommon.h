@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -21,13 +23,13 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Enables a degree of non-linear (multiple?) inheritance while
-// presenting a very simple linear inheritance in the public API.
-// This implements the details of oInterface, oGPUDeviceChild and
-// oGPUResource that is typical amongst all oGPUResource types.
+// Enables a degree of non-linear (multiple?) inheritance while presenting a 
+// very simple linear inheritance in the public API. This implements the details 
+// of oInterface, oGPUDeviceChild and oGPUResource that is typical amongst all 
+// oGPUResource types.
 #pragma once
-#ifndef oGPUDeviceChildBase_h
-#define oGPUDeviceChildBase_h
+#ifndef oGPUCommon_h
+#define oGPUCommon_h
 
 #include <oGPU/oGPU.h>
 
@@ -38,24 +40,24 @@
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 
-// Use this instead of "struct oMyDerivedClass" to enforce naming consistency and allow
-// for any shared code changes to happen in a central place. If the type is derived from
-// oGPUResource, use the other version below.
+// Use this instead of "struct oMyDerivedClass" to enforce naming consistency 
+// and allow for any shared code changes to happen in a central place. If the 
+// type is derived from oGPUResource, use the other version below.
 #define oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(_oAPI, _ShortTypeName) \
 	struct _oAPI##_ShortTypeName : oGPU##_ShortTypeName, oGPUDeviceChildMixin<oGPU##_ShortTypeName, _oAPI##_ShortTypeName>
 
-// Use this instead of "struct oMyDerivedClass" to enforce naming consistency and allow
-// for any shared code changes to happen in a central place.
+// Use this instead of "struct oMyDerivedClass" to enforce naming consistency 
+// and allow for any shared code changes to happen in a central place.
 #define oDECLARE_GPURESOURCE_IMPLEMENTATION(_oAPI, _ShortTypeName, _ResourceType) \
 	struct _oAPI##_ShortTypeName : oGPU##_ShortTypeName, oGPUResourceMixin<oGPU##_ShortTypeName, _oAPI##_ShortTypeName, _ResourceType>
 
-// Place this macro in the implementation class of an oGPUDeviceChild
-// If the derivation is also an oGPUResource, use the other macro below.
-// Basically this defines the virtual interface in terms of the inline
-// mixins, basically copy-pasting the code into place, but the MIXIN
-// implementations used different-typed but similar structs. In this 
-// way these macros link the templated base class to the generic virtual
-// interface in a way that does not complicate the vtable.
+// Place this macro in the implementation class of an oGPUDeviceChild If the 
+// derivation is also an oGPUResource, use the other macro below. Basically this 
+// defines the virtual interface in terms of the inline mixins, basically copy-
+// pasting the code into place, but the MIXIN implementations used different-
+// typed but similar structs. In this way these macros link the templated base 
+// class to the generic virtual interface in a way that does not complicate the 
+// vtable.
 #define oDEFINE_GPUDEVICECHILD_INTERFACE() \
 	int Reference() threadsafe override { return MIXINReference(); } \
 	void Release() threadsafe override { MIXINRelease(); } \
@@ -80,7 +82,7 @@
 // The one true hash. This is a persistent hash that can be used at tool time 
 // and at runtime and should be capable of uniquely identifying any resource 
 // in the system.
-inline int oGPUDeviceResourceHash(const char* _SourceName, oGPU_RESOURCE_TYPE _Type) { return oHash_superfasti(_SourceName, oInt(strlen(_SourceName)), _Type); }
+inline int oGPUDeviceResourceHash(const char* _SourceName, oGPU_RESOURCE_TYPE _Type) { return oHash_superfasti(_SourceName, oInt(oStrlen(_SourceName)), _Type); }
 
 template<typename InterfaceT, typename ImplementationT>
 struct oGPUDeviceChildMixinBase : oNoncopyable
@@ -230,8 +232,8 @@ protected:
 // Check all things typical in Create<resource>() functions
 #define oGPU_CREATE_CHECK_PARAMETERS(_ppOut) oGPU_CREATE_CHECK_NAME(); oGPU_CREATE_CHECK_OUTPUT(_ppOut)
 
-// Wrap the boilerplate Create implementations in case we decide to play around with where device
-// children's memory comes from.
+// Wrap the boilerplate Create implementations in case we decide to play around 
+// with where device children's memory comes from.
 #define oDEFINE_GPUDEVICE_CREATE(_oAPI, _TypeShortName) \
 	bool _oAPI##Device::Create##_TypeShortName(const char* _Name, const oGPU##_TypeShortName::DESC& _Desc, oGPU##_TypeShortName** _pp##_TypeShortName) \
 	{	oGPU_CREATE_CHECK_PARAMETERS(_pp##_TypeShortName); \
@@ -240,7 +242,8 @@ protected:
 		return success; \
 	}
 
-// Centralize the signature of the ctors for base types in case system-wide changes need to be made
+// Centralize the signature of the ctors for base types in case system-wide 
+// changes need to be made
 #define oDECLARE_GPUDEVICECHILD_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess);
 #define oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName::_oAPI##_TypeShortName(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess) : oGPUDeviceChildMixin(_pDevice, _Name)
 

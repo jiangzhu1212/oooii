@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -79,7 +81,7 @@ bool oPlatformTest_oCRTLeakTracker()
 	#endif
 }
 
-struct TESTCRTLeakTracker : public oTest
+struct PLATFORM_oCRTLeakTracker : public oTest
 {
 	// Test is wrapped in RunTest so we can properly unwind on failure
 	RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus)
@@ -119,4 +121,4 @@ struct TESTCRTLeakTracker : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTCRTLeakTracker);
+oTEST_REGISTER(PLATFORM_oCRTLeakTracker);

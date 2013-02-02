@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -47,8 +49,17 @@ oSURFACE_FORMAT oDXGIToSurfaceFormat(DXGI_FORMAT _Format)
 
 DXGI_FORMAT oDXGIFromSurfaceFormat(oSURFACE_FORMAT _Format)
 {
-	// @oooii-tony: For now, oSURFACE_FORMAT and DXGI_FORMAT are the same thing.
-	return static_cast<DXGI_FORMAT>(_Format <= DXGI_FORMAT_BC7_UNORM_SRGB ? _Format : DXGI_FORMAT_UNKNOWN);
+	if (_Format <= DXGI_FORMAT_BC7_UNORM_SRGB)
+		return static_cast<DXGI_FORMAT>(_Format);
+
+	if (oSurfaceFormatIsYUV(_Format) && oSurfaceFormatGetNumSubformats(_Format) > 1)
+	{
+		// Until DXGI_FORMAT gets its extended YUV formats, assume when using this 
+		// API return the dominant plane (usually plane0).
+		return oDXGIFromSurfaceFormat(oSurfaceGetSubformat(_Format, 0));
+	}
+
+	return DXGI_FORMAT_UNKNOWN;
 }
 
 bool oDXGICreateFactory(IDXGIFactory** _ppFactory)

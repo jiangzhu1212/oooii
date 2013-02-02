@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -25,11 +27,11 @@
 #include <oPlatform/oTest.h>
 #include <oGPU/oGPU.h>
 
-struct TESTGPUDevice : public oTest
+struct GPU_Device : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oGPUDevice::INIT init("TESTGPUDevice");
+		oGPUDevice::INIT init("GPU_Device");
 		init.Version = oVersion(10,0); // for more compatibility when running on varied machines
 		oRef<oGPUDevice> Device;
 		oTESTB0(oGPUDeviceCreate(init, &Device));
@@ -58,4 +60,4 @@ struct TESTGPUDevice : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTGPUDevice);
+oTEST_REGISTER(GPU_Device);

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -70,6 +72,10 @@ int oStrnicmp(const wchar_t* _Str1, const wchar_t* _Str2, size_t _NumChars);
 
 char* oStrcat(char* _StrDestination, size_t _NumDestinationChars, const char* _Source);
 wchar_t* oStrcat(wchar_t* _StrDestination, size_t _NumDestinationChars, const wchar_t* _Source);
+
+//Unlike oStrcat that fails if strDestination is not large enough, these functions will fill as much as possible of the destination and then return
+char* oStrncat(char* _StrDestination, size_t _NumDestinationChars, const char* _Source);
+wchar_t* oStrncat(wchar_t* _StrDestination, size_t _NumDestinationChars, const wchar_t* _Source);
 
 // this encapsulates snprintf-like functionality. Generally this is like printf
 // to the specified buffer (sprintf), but will truncate with an elipse (...) at 
@@ -236,6 +242,7 @@ int oStrFindFirstDiff(const char* _StrSource1, const char* _StrSource2);
 template<typename CHAR1_T, typename CHAR2_T, size_t size> CHAR1_T* oStrcpy(CHAR1_T (&_StrDestination)[size], const CHAR2_T* _StrSource, bool _ZeroBuffer = false) { return oStrcpy(_StrDestination, size, _StrSource, _ZeroBuffer); }
 template<typename CHAR1_T, typename CHAR2_T, size_t size> CHAR1_T* oStrncpy(CHAR1_T (&_StrDestination)[size], const CHAR2_T* _StrSource, size_t _NumChars) { return oStrncpy(_StrDestination, size, _StrSource, _NumChars); }
 template<typename CHAR_T, size_t numchars> CHAR_T* oStrcat(CHAR_T (&_StrDestination)[numchars], const CHAR_T* _StrSource) { return oStrcat(_StrDestination, numchars, _StrSource); }
+template<typename CHAR_T, size_t numchars> CHAR_T* oStrncat(CHAR_T (&_StrDestination)[numchars], const CHAR_T* _StrSource) { return oStrncat(_StrDestination, numchars, _StrSource); }
 template<typename CHAR_T, size_t numchars> int oVPrintf(CHAR_T (&_StrDestination)[numchars], const CHAR_T* _Format, va_list _Args) { return oVPrintf(_StrDestination, numchars, _Format, _Args); }
 template<typename CHAR_T, size_t numchars> int oPrintf(CHAR_T (&_StrDestination)[numchars], const CHAR_T* _Format, ...) { va_list args; va_start(args, _Format); int n = oVPrintf(_StrDestination, numchars, _Format, args); va_end(args); return n; }
 template<size_t size> char* oNewlinesToDos(char (&_StrDestination)[size], const char* _StrSource) { return oNewlinesToDos(_StrDestination, size, _StrSource); }

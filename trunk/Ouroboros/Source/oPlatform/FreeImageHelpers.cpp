@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -58,8 +60,12 @@ bool FIIsBGR(FIBITMAP* _bmp)
 {
 	FIEnsureInit();
 	// BGRA (or ARGB) = 0xAARRGGBB, RGBA (or ABGR) = 0xRRGGBBAA
-	unsigned int redMask = FreeImage_GetRedMask(_bmp);
-	return redMask == 0x00FF0000;
+	//unsigned int redMask = FreeImage_GetRedMask(_bmp);
+	//return redMask == 0x00FF0000;
+
+	//When upgrading from from free image 3.15.1 to 3.15.4, FreeImage_GetRedMask now always returns 0 for all images except 16 bit 555 565 types.
+	//so for now always return true here until we think of something better.
+	return true;
 }
 
 size_t FICalculateSize(FIBITMAP* _bmp)

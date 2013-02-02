@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -22,14 +24,14 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPU/oGPU.h>
-#include <oGPU/oGPUEx.h>
+#include <oGPU/oGPUIO.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oSystem.h>
 #include <oPlatform/oTest.h>
 
-struct TESTGPUBCEncodeDecode : public oTest
+struct GPU_BCEncodeDecode : public oTest
 {
 	RESULT LoadOriginalAndSaveConverted(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, oSURFACE_FORMAT _TargetFormat, const char* _OriginalPath, const char* _ConvertedPath)
 	{
@@ -162,4 +164,4 @@ struct TESTGPUBCEncodeDecode : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTGPUBCEncodeDecode);
+oTEST_REGISTER(GPU_BCEncodeDecode);

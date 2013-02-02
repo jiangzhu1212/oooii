@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -101,7 +103,7 @@ oStd::thread::~thread()
 {
 	if (joinable())
 	{
-		oASSERT(false, "Calling std::terminate because a joinable thread was destroyed");
+		oCRTASSERT(false, "Calling std::terminate because a joinable thread was destroyed");
 		std::terminate();
 	}
 }
@@ -134,7 +136,7 @@ void oStd::thread::join()
 	if (joinable())
 	{
 		oStd::thread::id ID = get_id(); // can't get ID after join, so cache it now
-		oTRACE("Thread 0x%x is being joined...", ID);
+		oCRTTRACE("Thread 0x%x is being joined...", ID);
 
 		// @oooii-tony: There was a case just before the "Saint Tropez" ship where
 		// The above trace would print, THEN the system message "...exited with code 
@@ -146,7 +148,7 @@ void oStd::thread::join()
 		// didn't run on that thread. It felt as if IOCP callbacks would somehow
 		// ref the thread to keep it alive AFTER it reports death in the debugger,
 		// but before it unblocks itself. Anyway this complexity below made it easy
-		// to see by putting a breakpoint on the oTRACE and seeing who was still
+		// to see by putting a breakpoint on the oCRTTRACE and seeing who was still
 		// awake, so I'll leave it in for easier debugging.
 
 		bool Joinable = oThreadIsJoinable(hThread);
@@ -156,10 +158,10 @@ void oStd::thread::join()
 			DWORD dwResult = ::WaitForSingleObject(hThread, dwTimeoutMS);
 			Joinable = oThreadIsJoinable(hThread);
 			if (Joinable)
-				oTRACE("Thread 0x%x still believes it is joinable after %u milliseconds, so go back to waiting...", ID, dwTimeoutMS);
+				oCRTTRACE("Thread 0x%x still believes it is joinable after %u milliseconds, so go back to waiting...", ID, dwTimeoutMS);
 		}
 
-		oTRACE("Thread 0x%x has been joined.", ID);
+		oCRTTRACE("Thread 0x%x has been joined.", ID);
 		hThread = 0;
 	}
 }

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -40,6 +42,10 @@ unsigned int oHash_sdbmi(const char* s);
 unsigned int oHash_stlp(const void* buf, unsigned int len, unsigned int seed = 0);
 unsigned int oHash_stlp(const char* s);
 unsigned int oHash_stlpi(const char* s);
+
+unsigned int oHash_FNV1a(const void* buf, unsigned int len, unsigned int seed = 2166136261u);
+unsigned int oHash_FNV1a(const char* s);
+unsigned int oHash_FNV1ai(const char* s);
 
 unsigned int oHash_superfast(const void* buf, unsigned int len, unsigned int seed = 0);
 unsigned int oHash_superfasti(const void* buf, unsigned int len, unsigned int seed = 0);

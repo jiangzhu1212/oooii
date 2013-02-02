@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -24,17 +26,6 @@
 #include <oBasis/oStdMutex.h>
 #include <oBasis/oBackoff.h>
 #include "oWinHeaders.h"
-#include <crtdbg.h>
-
-// Use low-level assertions in here because
-// A. it protects against any complexities in user implementations of oASSERT
-// B. When this is replaced with code from the compiler vendor we won't have control anyway
-
-#ifdef _DEBUG
-	#define oCRTASSERT(expr, msg, ...) if (!(expr)) { if (1 == _CrtDbgReport(_CRT_ASSERT, __FILE__, __LINE__, "OOOii Debug Library", #expr "\n\n" msg, ## __VA_ARGS__)) oDEBUGBREAK(); }
-#else
-	#define oCRTASSERT(expr, msg, ...) __noop
-#endif
 
 static_assert(sizeof(oStd::recursive_mutex) == sizeof(CRITICAL_SECTION), "");
 #ifdef _DEBUG
@@ -56,7 +47,7 @@ oStd::mutex::mutex()
 
 oStd::mutex::~mutex()
 {
-	#ifdef oHAS_SHMUTEX_TRYLOCK
+	#if NTDDI_VERSION >= NTDDI_WIN7
 		if (!try_lock())
 			oCRTASSERT(false, "mutex is locked on destruction: this could result in a deadlock or race condition.");
 	#endif
@@ -80,7 +71,7 @@ void oStd::mutex::lock()
 
 bool oStd::mutex::try_lock()
 {
-	#ifdef oHAS_SHMUTEX_TRYLOCK
+	#if NTDDI_VERSION >= NTDDI_WIN7
 		return !!TryAcquireSRWLockExclusive((PSRWLOCK)&Footprint);
 	#else
 		return false;
@@ -141,7 +132,7 @@ oStd::shared_mutex::shared_mutex()
 
 oStd::shared_mutex::~shared_mutex()
 {
-	#ifdef oHAS_SHMUTEX_TRYLOCK
+	#if NTDDI_VERSION >= NTDDI_WIN7
 		if (!try_lock())
 			oCRTASSERT(false, "shared_mutex is locked on destruction: this could result in a deadlock or race condition.");
 	#endif
@@ -165,7 +156,7 @@ void oStd::shared_mutex::lock()
 
 bool oStd::shared_mutex::try_lock()
 {
-	#ifdef oHAS_SHMUTEX_TRYLOCK
+	#if NTDDI_VERSION >= NTDDI_WIN7
 		return !!TryAcquireSRWLockExclusive((PSRWLOCK)&Footprint);
 	#else
 		return false;
@@ -193,7 +184,7 @@ void oStd::shared_mutex::lock_shared()
 
 bool oStd::shared_mutex::try_lock_shared()
 {
-	#ifdef oHAS_SHMUTEX_TRYLOCK
+	#if NTDDI_VERSION >= NTDDI_WIN7
 		return !!TryAcquireSRWLockShared((PSRWLOCK)&Footprint);
 	#else
 		return false;
@@ -240,12 +231,12 @@ oStd::once_flag::once_flag()
 
 BOOL CALLBACK InitOnceCallback(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
 {
-	std::tr1::function<void()>* pFN = (std::tr1::function<void()>*)Parameter;
+	std::function<void()>* pFN = (std::function<void()>*)Parameter;
 	(*pFN)();
 	return TRUE;
 }
 
-void oStd::call_once(oStd::once_flag& _Flag, std::tr1::function<void()> _Function)
+void oStd::call_once(oStd::once_flag& _Flag, std::function<void()> _Function)
 {
 	InitOnceExecuteOnce(*(PINIT_ONCE*)&_Flag, InitOnceCallback, &_Function, nullptr);
 }

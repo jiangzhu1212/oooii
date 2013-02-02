@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -22,6 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
+#include <oPlatform/oSystem.h>
 #include <oPlatform/oWindow.h>
 #include <oPlatform/Windows/oWinWindowing.h>
 #include <oGPU/oGPUWindow.h> // @oooii-tony: Because this is here, we should move this test to at least oGPU (out of oPlatform)
@@ -182,10 +185,16 @@ private:
 	int Counter;
 };
 
-struct TESTGPUWindowInWindow : public oTest
+struct GPU_WindowInWindow : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus)
 	{
+		if (oSystemIsRemote())
+		{
+			oPrintf(_StrStatus, _SizeofStrStatus, "Detected remote session: differing text anti-aliasing will cause bad image compares");
+			return SKIPPED;
+		}
+
 		bool success = false;
 		WindowInWindow test(&success);
 		oTESTB0(success);
@@ -215,4 +224,4 @@ struct TESTGPUWindowInWindow : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTGPUWindowInWindow);
+oTEST_REGISTER(GPU_WindowInWindow);

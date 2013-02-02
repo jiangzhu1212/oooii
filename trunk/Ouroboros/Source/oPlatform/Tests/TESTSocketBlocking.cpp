@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -41,7 +43,7 @@ const unsigned int TIMEOUT = 3000;
 
 const unsigned int INITIAL_CONNECTION_TIMEOUT = 10000;
 
-struct TESTSocketBlockingServer : public oSpecialTest
+struct PLATFORM_oSocketBlockingServer : public oSpecialTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{		
@@ -77,7 +79,7 @@ struct TESTSocketBlockingServer : public oSpecialTest
 
 		const char* s = "Server acknowledges your connection, waiting to receive data.";
 
-		oTESTB( Client->Send(s, (oSocket::size_t)strlen(s)+1), "SERVER: Client %s send failed", Client->GetDebugName() );
+		oTESTB( Client->Send(s, (oSocket::size_t)oStrlen(s)+1), "SERVER: Client %s send failed", Client->GetDebugName() );
 
 		while( 1 )
 		{
@@ -98,15 +100,15 @@ struct TESTSocketBlockingServer : public oSpecialTest
 					else
 						oTRACE("SVRCXN: wanted OnConnectMsg data, got %s", msg);
 
-					if (bytesReceived > (strlen(msg) + 1))
+					if (bytesReceived > (oStrlen(msg) + 1))
 					{
-						char* curr = msg + strlen(msg) + 1;
+						char* curr = msg + oStrlen(msg) + 1;
 						char* end = msg + sizeof(msg);
 
 						while (*curr && curr < end)
 						{
 							oTRACE("SVRCXN: Nagel-concatenated messages: %s", curr);
-							curr += strlen(curr) + 1;
+							curr += oStrlen(curr) + 1;
 						}
 					}
 				}
@@ -116,7 +118,7 @@ struct TESTSocketBlockingServer : public oSpecialTest
 			{
 				oPrintf(msg, "ok to start upload %u", Counter);
 				Counter++;
-				oTESTB( Client->Send(msg, (oSocket::size_t)strlen(msg)+1), "SERVER: %s send failed", Server->GetDebugName() );
+				oTESTB( Client->Send(msg, (oSocket::size_t)oStrlen(msg)+1), "SERVER: %s send failed", Server->GetDebugName() );
 				oTRACE("SVRCXN: %s waiting to receive...", Client->GetDebugName());
 				size_t bytesReceived = Client->Recv(msg, oCOUNTOF(msg));
 
@@ -148,7 +150,7 @@ struct TESTSocketBlockingServer : public oSpecialTest
 	}
 };
 
-struct TESTSocketBlocking : public oTest
+struct PLATFORM_oSocketBlocking : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
@@ -156,7 +158,7 @@ struct TESTSocketBlocking : public oTest
 			int exitcode = 0;
 			char msg[512];
 			oRef<threadsafe oProcess> Server;
-			oTESTB(oSpecialTest::CreateProcess("TESTSocketBlockingServer", &Server), "");
+			oTESTB(oSpecialTest::CreateProcess("PLATFORM_oSocketBlockingServer", &Server), "");
 			oTESTB(oSpecialTest::Start(Server, msg, oCOUNTOF(msg), &exitcode), "%s", msg);
 		}
 
@@ -185,7 +187,7 @@ struct TESTSocketBlocking : public oTest
 
 		oTRACE("CLIENT: Sending...");
 		const char* onConnect = "OnConnectMsg";
-		oTESTB(Client->Send(onConnect, (oSocket::size_t)strlen(onConnect)+1), "Client Send failed: %s", oAsString(oErrorGetLast()));
+		oTESTB(Client->Send(onConnect, (oSocket::size_t)oStrlen(onConnect)+1), "Client Send failed: %s", oAsString(oErrorGetLast()));
 
 		oTRACE("CLIENT: waiting to receive...");
 
@@ -221,7 +223,7 @@ struct TESTSocketBlocking : public oTest
 					break;
 				}
 
-				if (!Client->Send(sMessages[i], (oSocket::size_t)strlen(sMessages[i])+1))
+				if (!Client->Send(sMessages[i], (oSocket::size_t)oStrlen(sMessages[i])+1))
 				{
 					errno_t err = oErrorGetLast();
 					if (err)
@@ -244,5 +246,5 @@ struct TESTSocketBlocking : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTSocketBlockingServer);
-oTEST_REGISTER(TESTSocketBlocking);
+oTEST_REGISTER(PLATFORM_oSocketBlockingServer);
+oTEST_REGISTER(PLATFORM_oSocketBlocking);

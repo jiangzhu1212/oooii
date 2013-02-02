@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -144,23 +146,26 @@ public:
 	{
 		InitializeCriticalSection(&SharedPointerCS);
 
+		// From oGSReport.cpp: This touches the CPP file ensuring our __report_gsfailure is installed
+		extern void oGSReportInstaller();
+		oGSReportInstaller();
+
 		pSharedPointers = new(HeapAlloc(hHeap, 0, sizeof(container_t))) container_t();
 		sAtExistInstance = this;
 		atexit(AtExit);
 		IsValid = true;
-		
+
 		// DbgHelp is needed by the most base functionality that goes through static
 		// init such as heap and process heap leak reporting as well as traces. The
 		// lib also has the nasty habit of simply terminating the process if not 
 		// initialized and a call is made, so force this to stay around as long as 
 		// the idea of the process is around.
 		oWinDbgHelp::Singleton()->Reference();
-
-		char moduleName[_MAX_PATH];
+		oStringPath moduleName;
 		oVERIFY(oModuleGetName(moduleName, oModuleGetCurrent()));
 		char buf[oKB(1)];
-		char syspath[_MAX_PATH];
-		oPrintf(buf, "%s(%d): {%s} %s ProcessHeap initialized at 0x%p\n", __FILE__, __LINE__, oGetFilebase(moduleName), oSystemGetPath(syspath, oSYSPATH_EXECUTION), this);
+		oStringM exec;
+		oPrintf(buf, "%s(%d): {%s} %s ProcessHeap initialized at 0x%p\n", __FILE__, __LINE__, oGetFilebase(moduleName), oSystemGetExecutionPath(exec), this);
 		oThreadsafeOutputDebugStringA(buf);
 	}
 
@@ -218,10 +223,10 @@ public:
 static void oProcessHeapOutputLeakReportFooter(size_t _NumLeaks)
 {
 	char buf[256];
-	char syspath[_MAX_PATH];
+	oStringM exec;
 	char moduleName[_MAX_PATH];
 	oVERIFY(oModuleGetName(moduleName, oModuleGetCurrent()));
-	oPrintf(buf, "========== Process Heap Leak Report: %u Leaks %s ==========\n", _NumLeaks, oSystemGetPath(syspath, oSYSPATH_EXECUTION));
+	oPrintf(buf, "========== Process Heap Leak Report: %u Leaks %s ==========\n", _NumLeaks, oSystemGetExecutionPath(exec));
 	OutputDebugStringA(buf);
 }
 
@@ -328,8 +333,8 @@ void oProcessHeapContextImpl::ReportLeaks()
 	
 	if (nLeaks)
 	{
-		char syspath[_MAX_PATH];
-		oPrintf(buf, "========== Process Heap Leak Report %s (Module %s) ==========\n", oSystemGetPath(syspath, oSYSPATH_EXECUTION), oGetFilebase(moduleName));
+		oStringM exec;
+		oPrintf(buf, "========== Process Heap Leak Report %s (Module %s) ==========\n", oSystemGetExecutionPath(exec), oGetFilebase(moduleName));
 		OutputDebugStringA(buf);
 		for (container_t::const_iterator it = pSharedPointers->begin(); it != pSharedPointers->end(); ++it)
 		{
@@ -406,7 +411,7 @@ bool oProcessHeapContextImpl::FindOrAllocate(const oGUID& _GUID, bool _IsThreadL
 		*e.DebugName = 0;
 		if (_DebugName)
 		{
-			memcpy_s(e.DebugName, sizeof(e.DebugName), _DebugName, __min(strlen(_DebugName)+1, sizeof(e.DebugName)));
+			memcpy_s(e.DebugName, sizeof(e.DebugName), _DebugName, __min(oStrlen(_DebugName)+1, sizeof(e.DebugName)));
 			oAddTruncationElipse(e.DebugName);
 		}
 
@@ -476,7 +481,7 @@ oProcessHeapContext* oProcessHeapContext::Singleton()
 		// Filename is "<GUID><CurrentProcessID>"
 		static char mmapFileName[128] = {0};
 		oToString(mmapFileName, heapMMapGuid);
-		oPrintf(mmapFileName + strlen(mmapFileName), 128 - strlen(mmapFileName), "%u", GetCurrentProcessId());
+		oPrintf(mmapFileName + oStrlen(mmapFileName), 128 - oStrlen(mmapFileName), "%u", GetCurrentProcessId());
 
 		// Create a memory-mapped File to store the location of the oProcessHeapContext
 		SetLastError(ERROR_SUCCESS);

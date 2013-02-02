@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -32,5 +34,6 @@ static const char* dll_procs[] =
 
 oDEFINE_DLL_SINGLETON_CTOR(oWinNetApi32, "NetApi32.dll", NetWkstaGetInfo)
 
+// {4005327D-2991-403E-B543-60CA2B440462}
 const oGUID oWinNetApi32::GUID = { 0x4005327d, 0x2991, 0x403e, { 0xb5, 0x43, 0x60, 0xca, 0x2b, 0x44, 0x4, 0x62 } };
 

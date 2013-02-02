@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -21,12 +23,9 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// One of the key values of Intel's TBB is its ability to avoid expensive 
-// threading situations like false sharing, oversubscription and context 
-// switches. One of the key detriments to TBB is that they don't expose enough
-// of their awesomeness for public consumption or support enough platforms to
-// truly be considered cross-platform (where's my Sony PS3 version?)
-
+// Intel's TBB does not expose enough of its useful internal components. The 
+// backoff concept is one of them. oBackoff reproduces TBB functionality to 
+// intelligently spin and yield to avoid an OS sleep.
 #pragma once
 #ifndef oBackoff_h
 #define oBackoff_h

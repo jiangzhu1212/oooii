@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -91,7 +93,6 @@ void oVTablePatch(void* _pInterfaceImplementation)
 	((tableLocation*)_pInterfaceImplementation)->table = ((VTableRemap*)((tableLocation*)_pInterfaceImplementation)->table)->pEntries[0];
 }
 
-
 size_t oVTableSize( void *_pInterfaceImplementation )
 {
 	// Based on experimentation with MSVC we have determined that the VTable is NULL terminated in _DEBUG
@@ -115,3 +116,7 @@ size_t oVTableSize( void *_pInterfaceImplementation )
 #endif
 }
 
+void* oVTableGet(void* _pInterfaceImplementation)
+{
+	return *(void**)((tableLocation*)_pInterfaceImplementation)->table;
+}

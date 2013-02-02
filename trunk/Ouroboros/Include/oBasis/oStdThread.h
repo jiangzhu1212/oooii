@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -28,6 +30,7 @@
 #define oStdThread_h
 
 #include <oBasis/oCallable.h>
+#include <oBasis/oPlatformFeatures.h>
 #include <oBasis/oStdChrono.h>
 #include <functional>
 
@@ -35,16 +38,6 @@ namespace oStd {
 
 	class thread
 	{
-		void* hThread;
-		void initialize(oCALLABLE _ThreadProc);
-
-		#ifdef oHAS_MOVE_CTOR
-			thread(const thread&)/* = delete*/;
-			const thread& operator=(const thread&)/* = delete*/;
-		#endif
-
-		void move(thread& _That);
-
 	public:
 		class id;
 		typedef void* native_handle_type;
@@ -85,6 +78,16 @@ namespace oStd {
 		id get_id() const;
 		native_handle_type native_handle();
 		static unsigned int hardware_concurrency();
+
+		void* hThread;
+		void initialize(oCALLABLE _ThreadProc);
+
+		#ifdef oHAS_MOVE_CTOR
+			thread(const thread&)/* = delete*/;
+			const thread& operator=(const thread&)/* = delete*/;
+		#endif
+
+		void move(thread& _That);
 	};
 
 	class thread::id

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -138,6 +140,8 @@ bool oXMLLoad(const char* _URIReference, threadsafe oXML** _ppXML)
 	if (!oStreamLoad(&pBuffer, &Size, malloc, free, _URIReference, true))
 		return false; // pass through error
 
+	oOnScopeExit FreeBuffer([&] { if (pBuffer) free(pBuffer); });
+
 	oXML::DESC d;
 	d.DocumentName = _URIReference;
 	d.CopyXMLString = true;
@@ -152,7 +156,7 @@ bool oXMLLoad(const char* _URIReference, threadsafe oXML** _ppXML)
 	return true;
 }
 
-static bool oOBJLoad1(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ)
+bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ)
 {
 	void* pBuffer = nullptr;
 	size_t Size = 0;
@@ -186,7 +190,7 @@ bool oMTLLoad(const char* _URIReference, threadsafe oMTL** _ppMTL)
 
 bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ, threadsafe oMTL** _ppMTL)
 {
-	if (!oOBJLoad1(_URIReference, _Init, _ppOBJ))
+	if (!oOBJLoad(_URIReference, _Init, _ppOBJ))
 		return false; // pass through error
 
 	oOBJ_DESC d;

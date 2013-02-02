@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -101,7 +103,7 @@ char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oNetA
 	{
 		const oNetAddr_Internal* pAddress = reinterpret_cast<const oNetAddr_Internal*>(&_Address);
 		oWinsock* ws = oWinsock::Singleton();
-		size_t len = strlen(_StrDestination);
+		size_t len = oStrlen(_StrDestination);
 		return -1 == oPrintf(_StrDestination + len, _SizeofStrDestination - len, ":%u", ws->ntohs(pAddress->Port)) ? _StrDestination : nullptr;
 	}
 
@@ -111,7 +113,7 @@ char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oNetA
 bool oFromString(oNetAddr* _pAddress, const char* _StrSource)
 {
 	char tempStr[512];
-	oASSERT(strlen(_StrSource) < oCOUNTOF(tempStr)+1, "");
+	oASSERT(oStrlen(_StrSource) < oCOUNTOF(tempStr)+1, "");
 	oStrcpy(tempStr, _StrSource);
 
 	char* seperator = strstr(tempStr, ":");

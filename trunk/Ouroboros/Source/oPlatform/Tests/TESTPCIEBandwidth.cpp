@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -22,6 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 // Does not always detect multiple gpu's at the moment. win32 function EnumDisplaySettings does not succeed sometimes, even for successfully enumed displays(called in oDisplay.cpp)
+#include <oBasis/oStdMakeUnique.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/Windows/oDXGI.h>
 #include <oPlatform/oProgressBar.h>
@@ -307,12 +310,12 @@ struct TESTWindow
 	void ResetFrameCount() { FrameCount = 0; }
 };
 
-struct TESTPCIEBandwidth : public oTest
+struct PLATFORM_PCIEBandwidth : public oTest
 {	
 	GlobalSettings Settings;
 	std::vector<std::unique_ptr<TESTWindow>> TestWindows;
 
-	TESTPCIEBandwidth()
+	PLATFORM_PCIEBandwidth()
 	{
 		oConsole::Clear();
 		oConsoleReporting::Report(oConsoleReporting::INFO, "\n");
@@ -384,7 +387,7 @@ struct TESTPCIEBandwidth : public oTest
 
 		oFOR(auto& _entry, adapters)
 		{
-			TestWindows.push_back(std::unique_ptr<TESTWindow>(new TESTWindow(Settings, _entry.first, _entry.second)));
+			TestWindows.push_back(oStd::make_unique<TESTWindow>(Settings, _entry.first, _entry.second));
 		}
 	}
 
@@ -492,4 +495,4 @@ char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const TEXTU
 	return _StrDestination;
 }
 
-oTEST_REGISTER_PERFTEST(TESTPCIEBandwidth);
+oTEST_REGISTER_PERFTEST(PLATFORM_PCIEBandwidth);

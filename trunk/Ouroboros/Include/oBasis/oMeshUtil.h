@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -132,7 +134,9 @@ template<typename T> void oCalculateMinMaxVertices(const T* _pIndices, uint _Sta
 	{
 		*_pMinVertex = oInvalid;
 		*_pMaxVertex = 0;
-		for (uint i = _StartIndex; i < _NumIndices; i++)
+
+		const uint kRun = _StartIndex + _NumIndices;
+		for (uint i = _StartIndex; i < kRun; i++)
 		{
 			*_pMinVertex = __min(*_pMinVertex, _pIndices[i]);
 			*_pMaxVertex = __max(*_pMaxVertex, _pIndices[i]);
@@ -145,5 +149,11 @@ template<typename T> void oCalculateMinMaxVertices(const T* _pIndices, uint _Sta
 		*_pMaxVertex = _NumVertices - 1;
 	}
 }
+
+// Fills _pOutTexcoords with texture coordinates calculated using LCSM. The 
+// pointer should be allocated to have at least _NumVertices elements. If 
+// _pSolveTime is specified, the number of seconds to calculate texcoords will 
+// be returned.
+bool oCalculateTexcoords(const oAABoxf& _Bound, const unsigned int* _pIndices, unsigned int _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, unsigned int _NumVertices, double* _pSolveTime);
 
 #endif

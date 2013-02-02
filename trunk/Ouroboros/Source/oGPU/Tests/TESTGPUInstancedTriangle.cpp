@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,7 +29,7 @@
 #include <oGPU/oGPUViewConstants.h>
 #include <oGPU/oGPUDrawConstants.h>
 
-struct TESTGPUInstancedTriangle : public oTest
+struct GPU_InstancedTriangle : public oTest
 {
 	oRef<oGPUDevice> Device;
 	oRef<oGPUCommandList> CL;
@@ -98,7 +100,7 @@ struct TESTGPUInstancedTriangle : public oTest
 
 		static const int sSnapshotFrames[] = { 1, 23, 46 };
 		static const bool kIsDevMode = false;
-		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&TESTGPUInstancedTriangle::Render, this, oBIND1), "TESTGPUInstancedTriangle", sSnapshotFrames);
+		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&GPU_InstancedTriangle::Render, this, oBIND1), "GPU_InstancedTriangle", sSnapshotFrames);
 
 		oStd::future<oRef<oImage>> Snapshots[oCOUNTOF(sSnapshotFrames)];
 		oRef<threadsafe oGPUWindow> Window;
@@ -124,12 +126,12 @@ struct TESTGPUInstancedTriangle : public oTest
 			if (!oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE_INSTANCED, &pld))
 				return false;
 
-			oGPUInstanceList::DESC ild;
-			ild.pElements = pld.pElements;
-			ild.NumElements = pld.NumElements;
+			oGPU_INSTANCE_LIST_DESC ild;
 			ild.InputSlot = 1;
 			ild.MaxNumInstances = 2;
 			ild.NumInstances = 0;
+			ild.NumVertexElements = pld.NumElements;
+			memcpy(ild.VertexElements, pld.pElements, sizeof(oGPU_VERTEX_ELEMENT) * pld.NumElements);
 			if (!Device->CreateInstanceList("InstanceList", ild, &InstanceList))
 				return false;
 
@@ -166,4 +168,4 @@ struct TESTGPUInstancedTriangle : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTGPUInstancedTriangle);
+oTEST_REGISTER(GPU_InstancedTriangle);

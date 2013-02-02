@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,7 +29,7 @@
 #include <oPlatform/oFile.h>
 #include <oPlatform/oStreamUtil.h>
 
-struct TESTFileAsync : public oTest
+struct PLATFORM_FileAsync : public oTest
 {
 	char TempFileBlob[1024 * 32];
 
@@ -262,4 +264,4 @@ struct TESTFileAsync : public oTest
 	};
 };
 
-oTEST_REGISTER(TESTFileAsync);
+oTEST_REGISTER(PLATFORM_FileAsync);

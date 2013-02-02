@@ -21,11 +21,14 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{42F867E9-C145-466B-8515-C9633E1E7C6F}</ProjectGuid>
     <RootNamespace>oUnitTests</RootNamespace>
-    <SccProjectName>Perforce Project</SccProjectName>
+    <SccProjectName>
+    </SccProjectName>
     <SccAuxPath>
     </SccAuxPath>
-    <SccLocalPath>..</SccLocalPath>
-    <SccProvider>MSSCCI:Perforce SCM</SccProvider>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -44,7 +47,6 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
     <Import Project="..\Ouroboros\Source\Build\msvc100\BuildRules\oFXC.props" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\BuildRules\oRCVer.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -82,51 +84,6 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
   </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <SccProjectName />
-  </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <SccLocalPath />
-  </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <SccProvider />
-  </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <SccProjectName />
-  </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <SccLocalPath />
-  </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <SccProvider />
-  </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <SccProjectName />
-  </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <SccLocalPath />
-  </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <SccProvider />
-  </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <SccProjectName />
-  </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <SccLocalPath />
-  </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <SccProvider />
-  </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <SccProjectName />
-  </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <SccLocalPath />
-  </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <SccProvider />
-  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <PreBuildEvent>
       <Command>
@@ -144,6 +101,7 @@
       <PreprocessorDefinitions>oSTATICLIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
+    <Link />
     <PostBuildEvent>
       <Command>
       </Command>
@@ -169,6 +127,7 @@
       <PreprocessorDefinitions>oSTATICLIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
+    <Link />
     <PostBuildEvent>
       <Command>
       </Command>
@@ -191,6 +150,7 @@
       <PreprocessorDefinitions>oSTATICLIB;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
+    <Link />
     <PostBuildEvent>
       <Command>
       </Command>
@@ -216,10 +176,12 @@
       <PreprocessorDefinitions>oSTATICLIB;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
+    <Link />
     <PostBuildEvent>
       <Command>
       </Command>
     </PostBuildEvent>
+    <Link />
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUBCEncodeDecode.cpp" />
@@ -252,8 +214,8 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentPPL.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentSerial.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -295,6 +257,7 @@
   <ItemGroup>
     <ClInclude Include="..\Ouroboros\Source\oPlatform\Tests\oDQConcurrent.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ouroboros\Source\oBasis\oBasis.vcxproj">
@@ -317,37 +280,29 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="oUnitTests.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Data\oooii.ico" />
+  </ItemGroup>
+  <ItemGroup>
     <FXC Include="..\Ouroboros\Source\oPlatform\Tests\oHLSLPCIEBandwidth.sh">
-      <FileType>Document</FileType>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OuroborosSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OuroborosSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
       <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OuroborosSuiteDir)Include</Includes>
       <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OuroborosSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
       <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OuroborosSuiteDir)Include</Includes>
       <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OuroborosSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OuroborosSuiteDir)Include</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OuroborosSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
       <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OuroborosSuiteDir)Include</Includes>
       <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OuroborosSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
     </FXC>
   </ItemGroup>
-  <ItemGroup>
-    <oRCVer Include="..\Ouroboros\Source\Build\msvc100\ResourceScripts\oRCCommon.orc">
-      <FileType>Document</FileType>
-      <AppIcon Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\Data\oooii.ico</AppIcon>
-      <AppIcon Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\Data\oooii.ico</AppIcon>
-      <AppIcon Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)..\Data\oooii.ico</AppIcon>
-      <AppIcon Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)..\Data\oooii.ico</AppIcon>
-    </oRCVer>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="$(oTmpDir)oUnitTests.rc" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\Ouroboros\Source\Build\msvc100\BuildRules\oFXC.targets" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\BuildRules\oRCVer.targets" />
   </ImportGroup>
 </Project>

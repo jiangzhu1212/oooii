@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -31,7 +33,13 @@
 #ifndef oMathShared_h
 #define oMathShared_h
 
+#define HALF_EPSILON	0.00097656f	// Smallest positive e for which
+#define HALF_MAX		65504.0f	// Largest positive half
+
 #ifdef oHLSL
+
+	#define FLT_EPSILON     1.192092896e-07F        /* smallest such that 1.0+FLT_EPSILON != 1.0 */
+	#define FLT_MAX         3.402823466e+38F        /* max value */
 
 	#define oIN(Type, Param) in Type Param
 	#define oOUT(Type, Param) out Type Param
@@ -103,10 +111,22 @@
 #define oHALF_SQRT2 (0.70710678118654752440)
 #define oHALF_SQRT2f (float(oHALF_SQRT2))
 
+// sqrt(0.75f) this is the length from the center of a unit cube to one of the corners
+#define oSQRT3Quarter (0.86602540378443860)
+#define oSQRT3Quarterf (float(oSQRT3Quarter))
+
 #define oDEFAULT_NEAR (10.0f)
 #define oDEFAULT_FAR (10000.0f)
 
 // NOTE: Epsilon for small float values is not defined. See "ulps" for more.
+
+// _____________________________________________________________________________
+// Identities
+
+static const float3x3 float3x3_identity = float3x3 (
+	float3(1.0, 0.0, 0.0),
+	float3(0.0, 1.0, 0.0),
+	float3(0.0, 0.0, 1.0));
 
 // _____________________________________________________________________________
 // Other constants
@@ -137,6 +157,23 @@ static const float4 oCYAN4 = float4(0.0f,1.0f,1.0f,1.0f);
 
 static const float3 oCOLORS3[] = { oBLACK3, oBLUE3, oGREEN3, oCYAN3, oRED3, oMAGENTA3, oYELLOW3, oWHITE3, };
 static const float4 oCOLORS4[] = { oBLACK4, oBLUE4, oGREEN4, oCYAN4, oRED4, oMAGENTA4, oYELLOW4, oWHITE4, };
+
+// Three unit length vectors that approximate a hemisphere
+// with a normal of float3( 0.0f, 0.0f, 1.0f )
+static const float3 oHEMISPHERE3[3] = 
+{
+	float3( 0.0f,   oSQRT3Quarterf       , 0.5f ),
+	float3(-0.75f, -oSQRT3Quarterf * 0.5f, 0.5f ),
+	float3( 0.75f, -oSQRT3Quarterf * 0.5f, 0.5f ),
+};
+
+static const float3 oHEMISPHERE4[4] = 
+{
+	float3( 0.0f,				oSQRT3Quarterf, 0.5f ),
+	float3( -oSQRT3Quarterf,	0.0f       ,	0.5f ),
+	float3( 0.0f,				-oSQRT3Quarterf,0.5f ),
+	float3( oSQRT3Quarterf,		0.0f       ,	0.5f ),
+};
 
 // _____________________________________________________________________________
 // Utility code
@@ -182,19 +219,172 @@ inline uint max(uint2 a) { return max(a.x, a.y); }
 inline uint max(uint3 a) { return max(max(a.x, a.y), a.z); }
 inline uint max(uint4 a) { return max(max(max(a.x, a.y), a.z), a.w); }
 
+// _____________________________________________________________________________
+// Geometry
+inline float angle(const float3 a, const float3 b) { return acos(dot(a, b) / (length(a) * length(b))); }
+
+// _____________________________________________________________________________
+// Matrix code
+
+// @oooii-kevin: FIXME, this is borrowed from bullet, promote this throughout the rest
+// or our code
+inline float3x3 oCreateRotationHLSL( float radians, const float3 unitVec)
+{
+	float x, y, z, s, c, oneMinusC, x_y, y_z, z_x;
+	s = sin( radians );
+	c = cos( radians );
+	x = unitVec.x;
+	y = unitVec.y;
+	z = unitVec.z;
+	x_y = ( x * y );
+	y_z = ( y * z );
+	z_x = ( z * x );
+	oneMinusC = ( 1.0f - c );
+	return float3x3(
+		float3( ( ( ( x * x ) * oneMinusC ) + c ), ( ( x_y * oneMinusC ) + ( z * s ) ), ( ( z_x * oneMinusC ) - ( y * s ) )),
+		float3( ( ( x_y * oneMinusC ) - ( z * s ) ), ( ( ( y * y ) * oneMinusC ) + c ), ( ( y_z * oneMinusC ) + ( x * s ) )),
+		float3( ( ( z_x * oneMinusC ) + ( y * s ) ), ( ( y_z * oneMinusC ) - ( x * s ) ), ( ( ( z * z ) * oneMinusC ) + c ))
+		);
+}
+
+
+inline float3x3 oCreateRotationHLSL(const float3 _NormalizedSrcVec, const float3 _NormalizedDstVec)
+{
+	float a = angle(_NormalizedSrcVec, _NormalizedDstVec);
+
+	// Check for identity
+	if (0.0f == a)
+		return float3x3_identity;
+
+	// Check for flip
+	if(oPI == a)
+		return float3x3 (
+		float3(-1.0f, 0.0f, 0.0f),
+		float3(0.0f, -1.0f, 0.0f),
+		float3(0.0f, 0.0f, -1.0f));
+
+
+	float3 NormalizedAxis = normalize(cross(_NormalizedSrcVec, _NormalizedDstVec));
+	return oCreateRotationHLSL(a, NormalizedAxis);
+}
+
+// _____________________________________________________________________________
+// Voxel Grid style raycasting support
+
+// 3DDA (3D Digital Differential Analyzer) as explained here
+// http://www.cse.yorku.ca/~amana/research/grid.pdf
+// This ensures all voxels are 6-connected which is required when raycasting
+// thin voxel shells. 3DDA Rays can only be cast recursively hence the 
+// 3DDARayContext. To jump large volumes, Bresenham rays can be used.
+
+struct o3DDARay
+{
+	float3 Delta;
+	int3 Step;
+};
+
+inline o3DDARay oDeltaRayCreate(float3 _Ray)
+{
+	o3DDARay DDARay;
+
+	float3 AbsRay = _Ray;
+	DDARay.Step = 1;
+
+	if(_Ray.x < 0.0f)
+	{
+		DDARay.Step.x *= -1;
+		AbsRay.x *= -1.0f;
+	}
+	if(_Ray.y < 0.0f)
+	{
+		DDARay.Step.y *= -1;
+		AbsRay.y *= -1.0f;
+	}
+	if(_Ray.z < 0.0f)
+	{
+		DDARay.Step.z *= -1;
+		AbsRay.z *= -1.0f;
+	}
+
+	// 1.0f / abs( _Ray ) which is how far you have to step along the ray to step 1 unit in each axis
+	DDARay.Delta.x = AbsRay.x > FLT_EPSILON ? rcp(AbsRay.x) : FLT_MAX; 
+	DDARay.Delta.y = AbsRay.y > FLT_EPSILON ? rcp(AbsRay.y) : FLT_MAX;
+	DDARay.Delta.z = AbsRay.z > FLT_EPSILON ? rcp(AbsRay.z) : FLT_MAX;
+
+	return DDARay;
+}
+
+struct o3DDARayContext
+{
+#ifndef oHLSL
+	bool operator == (const o3DDARayContext& _rhs) const { return _rhs.CurrentPosition == CurrentPosition; }
+#endif
+	float3 DeltaSum;
+	int3 CurrentPosition;
+};
+
+inline o3DDARayContext o3DDARayContextCreate(const o3DDARay _Ray, const int3 _StartPosition = 0)
+{
+	o3DDARayContext Context;
+
+	// This is an extension to the above sourced algorithm that ensures we start with the major axis
+	// and don't walk down degenerate axis.
+	Context.DeltaSum = _Ray.Delta;
+	Context.CurrentPosition = _StartPosition;
+	return Context;
+}
+
+inline o3DDARayContext o3DDARayCast(const o3DDARay _DeltaRay, o3DDARayContext _Context)
+{
+	if(_Context.DeltaSum.x < _Context.DeltaSum.y)
+	{
+		if(_Context.DeltaSum.x < _Context.DeltaSum.z)
+		{
+			_Context.CurrentPosition.x += _DeltaRay.Step.x;
+			_Context.DeltaSum.x += _DeltaRay.Delta.x;
+		}
+		else
+		{
+			_Context.CurrentPosition.z += _DeltaRay.Step.z;
+			_Context.DeltaSum.z += _DeltaRay.Delta.z;
+		}
+	}
+	else
+	{
+		if(_Context.DeltaSum.y < _Context.DeltaSum.z)
+		{
+			_Context.CurrentPosition.y += _DeltaRay.Step.y;
+			_Context.DeltaSum.y += _DeltaRay.Delta.y;
+		}
+		else
+		{
+			_Context.CurrentPosition.z += _DeltaRay.Step.z;
+			_Context.DeltaSum.z += _DeltaRay.Delta.z;
+		}
+	}
+	return _Context;
+}
+
 // Creates a "Bresenham Ray" which is a ray normalized by the length
 // of the dominant axis.  This can then be used in place of a normalized
-// ray for grid based raycasting which steps along the major axis to
-// avoid any holes.
+// ray for grid based raycasting which steps along the major axis
 inline float3 oBresenhamRay(float3 _Ray)
 {
 	float3 FAbsRay = abs(_Ray);
 	return _Ray / max(FAbsRay);
 }
 
-inline float oDetermineRayStep(float3 _Ray)
+// Because this uses and returns an int it guarantees the value generated
+// is a voxel that would be generated by o3DDARayCast.  A BresenHam ray
+// can then be used to jump through a volume and continue stepping with 
+// 3DDA raycasts
+inline o3DDARayContext o3DDARayCastBresenham(const o3DDARay _DeltaRay, const float3 _BresenhamRay, int _Delta)
 {
-	return rcp(max(frac(_Ray)));
+	float3 FRay = floor(_BresenhamRay * (float)_Delta);
+	o3DDARayContext DeltaContext;
+	DeltaContext.CurrentPosition = FRay;
+	DeltaContext.DeltaSum = (abs(FRay) + 1.0f) * _DeltaRay.Delta;
+	return DeltaContext;
 }
 
 // Used to identify an axis throughout shader code
@@ -214,61 +404,8 @@ inline oAxis oFindDominantAxis(float3 _Ray)
 	return oAXIS_Z;
 }
 
-// Grid style raycasting based on
-// http://www.cse.yorku.ca/~amana/research/grid.pdf
-
-struct oDeltaRay
-{
-	float3 Delta;
-	float3 Step;
-	float3 Max;
-};
-
-inline oDeltaRay oDeltaRayFromNrmlRay(float3 _Ray)
-{
-	oDeltaRay DeltaRay;
-	DeltaRay.Step = sign(_Ray);
-	DeltaRay.Delta = rcp(_Ray * DeltaRay.Step);
-	DeltaRay.Max = 0.0f;
-	return DeltaRay;
-}
-
-#ifdef oHLSL
-inline void oDeltaRayStep(inout oDeltaRay _DeltaRay, inout float3 _CurPos)
-#else
-inline void oDeltaRayStep(oDeltaRay& _DeltaRay, float3& _CurPos)
-#endif
-{
-	if(_DeltaRay.Max.x < _DeltaRay.Max.y)
-	{
-		if(_DeltaRay.Max.x < _DeltaRay.Max.z)
-		{
-			_CurPos.x += _DeltaRay.Step.x;
-			_DeltaRay.Max.x += _DeltaRay.Delta.x;
-		}
-		else
-		{
-			_CurPos.z += _DeltaRay.Step.z;
-			_DeltaRay.Max.z += _DeltaRay.Delta.z;
-		}
-	}
-	else
-	{
-		if(_DeltaRay.Max.y < _DeltaRay.Max.z)
-		{
-			_CurPos.y += _DeltaRay.Step.y;
-			_DeltaRay.Max.y += _DeltaRay.Delta.y;
-		}
-		else
-		{
-			_CurPos.z += _DeltaRay.Step.z;
-			_DeltaRay.Max.z += _DeltaRay.Delta.z;
-		}
-	}
-}
-
-// Swaps X or Y axis with Z via Fwd and reverses the operation via Rev.  
-// This is useful when doing dominant axis projections
+// Swaps X or Y axis with Z via Fwd and reverses the operation via Rev. This is 
+// useful when doing dominant axis projections.
 inline float3 oAxisRotFwdX(float3 _Value)
 {
 	return _Value.yzx;
@@ -298,7 +435,9 @@ inline float3 oAxisRotRevY(float3 _Value)
 // up for consideration in whatever algorithm being implemented). Thus we can 
 // store one more level than 2^10. Another way to look at this is that 2^11 is
 // 1024 and there can be 1024 values in 10 bits.
-static const uint oMORTON_OCTREE_MAX_TARGET_DEPTH = 11;
+static const uint  oMORTON_OCTREE_MAX_TARGET_DEPTH = 11;
+static const int   oMORTON_OCTREE_SCALAR = (1 << (oMORTON_OCTREE_MAX_TARGET_DEPTH - 1)) - 1;
+static const float oMORTON_OCTREE_SCALAR_FLOAT = (float)oMORTON_OCTREE_SCALAR;
 
 // 32-bit Morton numbers can only use 30-bits for XYZ, 10 each channel, so 
 // define a mask used to get rid of any non-Morton usage of the upper two bits.
@@ -373,7 +512,7 @@ inline uint oMorton3DEncodeNormalizedPosition(float3 _NormalizedPosition)
 	// oMorton3D encodes the 3 integers at 10bit precision so we take the span of 
 	// [0,1] to integer span [0,1023] (10-bit). This Morton encoded number can 
 	// then be used for octree traversal at several levels.
-	float3 FDiscretizedPos = 1023.0f * _NormalizedPosition;
+	float3 FDiscretizedPos = oMORTON_OCTREE_SCALAR_FLOAT * _NormalizedPosition;
 	uint3 DiscretizedPos = uint3((uint)FDiscretizedPos.x, (uint)FDiscretizedPos.y, (uint)FDiscretizedPos.z);
 	return oMorton3D(DiscretizedPos);
 }
@@ -478,20 +617,20 @@ inline float oSimplexNoise(float3 v)
 	float3 v0 = float3(v-V0); // The x,y,z distances from the cell origin
 	// For the 3D case, the simplex shape is a slightly irregular tetrahedron.
 	// Determine which simplex we are in.
-	int3 ijk1; // Offsets for second corner of simplex in (i,j,k) coords
-	int3 ijk2; // Offsets for third corner of simplex in (i,j,k) coords
+	uint3 ijk1; // Offsets for second corner of simplex in (i,j,k) coords
+	uint3 ijk2; // Offsets for third corner of simplex in (i,j,k) coords
 	if (v0.x >= v0.y)
 	{
-		if (v0.y >= v0.z) { ijk1 = int3(1,0,0); ijk2 = int3(1,1,0); } // X Y Z order
-		else if (v0.x >= v0.z) { ijk1 = int3(1,0,0); ijk2 = int3(1,0,1); } // X Z Y order
-		else { ijk1 = int3(0,0,1); ijk2 = int3(1,0,1); } // Z X Y order
+		if (v0.y >= v0.z) { ijk1 = uint3(1,0,0); ijk2 = uint3(1,1,0); } // X Y Z order
+		else if (v0.x >= v0.z) { ijk1 = uint3(1,0,0); ijk2 = uint3(1,0,1); } // X Z Y order
+		else { ijk1 = uint3(0,0,1); ijk2 = uint3(1,0,1); } // Z X Y order
 	}
 
 	else // v0.x < v0.y
 	{ 
-		if (v0.y < v0.z) { ijk1 = int3(0,0,1); ijk2 = int3(0,1,1); } // Z Y X order
-		else if (v0.x < v0.z) { ijk1 = int3(0,1,0); ijk2 = int3(0,1,1); } // Y Z X order
-		else { ijk1 = int3(0,1,0); ijk2 = int3(1,1,0); } // Y X Z order
+		if (v0.y < v0.z) { ijk1 = uint3(0,0,1); ijk2 = uint3(0,1,1); } // Z Y X order
+		else if (v0.x < v0.z) { ijk1 = uint3(0,1,0); ijk2 = uint3(0,1,1); } // Y Z X order
+		else { ijk1 = uint3(0,1,0); ijk2 = uint3(1,1,0); } // Y X Z order
 	}
 
 	// A step of (1,0,0) in (i,j,k) means a step of (1-c,-c,-c) in (x,y,z),
@@ -503,12 +642,13 @@ inline float oSimplexNoise(float3 v)
 	float3 v3 = v0 - 1.0f + 3.0f*G3; // Offsets for last corner in (x,y,z) coords
 
 	// Work out the hashed gradient indices of the four simplex corners
-	int3 ijk255 = ijk & 255;
+	uint3 ijk255 = ijk & 255;
 
-	int gi0 = oSimplexNoise_Perm(ijk255.x+oSimplexNoise_Perm(ijk255.y+oSimplexNoise_Perm(ijk255.z))) % 12;
-	int gi1 = oSimplexNoise_Perm(ijk255.x+ijk1.x+oSimplexNoise_Perm(ijk255.y+ijk1.y+oSimplexNoise_Perm(ijk255.z+ijk1.z))) % 12;
-	int gi2 = oSimplexNoise_Perm(ijk255.x+ijk2.x+oSimplexNoise_Perm(ijk255.y+ijk2.y+oSimplexNoise_Perm(ijk255.z+ijk2.z))) % 12;
-	int gi3 = oSimplexNoise_Perm(ijk255.x+1+oSimplexNoise_Perm(ijk255.y+1+oSimplexNoise_Perm(ijk255.z+1))) % 12;
+	const uint TWELVE = 12; // for uint to squelch as warning about signed modulus
+	uint gi0 = oSimplexNoise_Perm(ijk255.x+oSimplexNoise_Perm(ijk255.y+oSimplexNoise_Perm(ijk255.z))) % TWELVE;
+	uint gi1 = oSimplexNoise_Perm(ijk255.x+ijk1.x+oSimplexNoise_Perm(ijk255.y+ijk1.y+oSimplexNoise_Perm(ijk255.z+ijk1.z))) % TWELVE;
+	uint gi2 = oSimplexNoise_Perm(ijk255.x+ijk2.x+oSimplexNoise_Perm(ijk255.y+ijk2.y+oSimplexNoise_Perm(ijk255.z+ijk2.z))) % TWELVE;
+	uint gi3 = oSimplexNoise_Perm(ijk255.x+1+oSimplexNoise_Perm(ijk255.y+1+oSimplexNoise_Perm(ijk255.z+1))) % TWELVE;
 
 	// Calculate the contribution from the four corners
 
@@ -688,6 +828,70 @@ inline bool oVoxelInBounds(float3 _Point)
 		&& _Point.z >= 0.0f && _Point.z <= 1.0f;
 }
 
+inline bool oIVoxelInBounds(int3 _Point)
+{
+	return _Point.x >= 0 && _Point.x <= oMORTON_OCTREE_SCALAR
+		&& _Point.y >= 0 && _Point.y <= oMORTON_OCTREE_SCALAR
+		&& _Point.z >= 0 && _Point.z <= oMORTON_OCTREE_SCALAR;
+}
+
+// Intersects the ray with the Voxel space which is normalized 0x0x0->1x1x1
+inline float3 oVoxelSpaceFindFirstIntersection( float3 vRayO, float3 vRayDir )
+{
+	// Intersect the ray with the bounding box
+	// ( y - vRayO.y ) / vRayDir.y = t
+
+	float fMaxT = -1;
+	float t;
+	float3 vRayIntersection;
+
+	// -X plane
+	if( vRayDir.x > 0 )
+	{
+		t = ( 0 - vRayO.x ) / vRayDir.x;
+		fMaxT = max( t, fMaxT );
+	}
+
+	// +X plane
+	if( vRayDir.x < 0 )
+	{
+		t = ( 1 - vRayO.x ) / vRayDir.x;
+		fMaxT = max( t, fMaxT );
+	}
+
+	// -Y plane
+	if( vRayDir.y > 0 )
+	{
+		t = ( 0 - vRayO.y ) / vRayDir.y;
+		fMaxT = max( t, fMaxT );
+	}
+
+	// +Y plane
+	if( vRayDir.y < 0 )
+	{
+		t = ( 1 - vRayO.y ) / vRayDir.y;
+		fMaxT = max( t, fMaxT );
+	}
+
+	// -Z plane
+	if( vRayDir.z > 0 )
+	{
+		t = ( 0 - vRayO.z ) / vRayDir.z;
+		fMaxT = max( t, fMaxT );
+	}
+
+	// +Z plane
+	if( vRayDir.z < 0 )
+	{
+		t = ( 1 - vRayO.z ) / vRayDir.z;
+		fMaxT = max( t, fMaxT );
+	}
+
+	vRayIntersection = vRayO + vRayDir * fMaxT;
+
+	return vRayIntersection;
+}
+
 // Returns the size in each major axis of a voxels at the specified depth. See
 // from the math that at the root (DepthIndex=0) the size will be 1, which is 
 // consistent with a normalized space such as is assumed in oVoxelInBounds().
@@ -696,5 +900,10 @@ inline float oVoxelCalcSize(uint _DepthIndex)
 	return rcp(float(1 << _DepthIndex));
 }
 
+// Returns the resolution each dimension will have at a given Octree Depth
+inline uint oVoxelCalcResolution(uint _OctreeDepth)
+{
+	return 1 << (_OctreeDepth - 1);
+}
+
 #endif
-// If this comment is removed, oVisage's .opl cannot find entry points. Strange, but get things working... (no the string is not corrupt on load)

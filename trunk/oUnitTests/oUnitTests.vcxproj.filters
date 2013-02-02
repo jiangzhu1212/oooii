@@ -171,6 +171,9 @@
     <ClInclude Include="..\Ouroboros\Source\oPlatform\Tests\oDQConcurrent.h">
       <Filter>Source Files\oPlatformTests</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
@@ -185,20 +188,23 @@
     <Filter Include="Source Files\oGPUTests">
       <UniqueIdentifier>{44edf65b-6424-4db6-8d3a-0ae6073e94be}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{68a750ec-c7ac-41c7-9c3e-8c361d78cfe0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Data\oooii.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="oUnitTests.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
     <FXC Include="..\Ouroboros\Source\oPlatform\Tests\oHLSLPCIEBandwidth.sh">
       <Filter>Source Files\oPlatformTests</Filter>
     </FXC>
-  </ItemGroup>
-  <ItemGroup>
-    <oRCVer Include="..\Ouroboros\Source\Build\msvc100\ResourceScripts\oRCCommon.orc">
-      <Filter>Source Files</Filter>
-    </oRCVer>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="$(oTmpDir)oUnitTests.rc">
-      <Filter>Source Files</Filter>
-    </ResourceCompile>
   </ItemGroup>
 </Project>

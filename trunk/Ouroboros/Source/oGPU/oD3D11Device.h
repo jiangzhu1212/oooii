@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -115,10 +117,10 @@ struct oD3D11Device : oGPUDevice, oNoncopyable
 	// @oooii-tony:
 	// This repeats what's in oD3D11, but this is designed to replace the oD3D11 components,
 	// so this will be favored eventually...
-	oRef<ID3D11BlendState> BlendStates[oGPU_BLEND_NUM_STATES];
-	oRef<ID3D11RasterizerState> SurfaceStates[oGPU_SURFACE_NUM_STATES];
-	oRef<ID3D11DepthStencilState> DepthStencilStates[oGPU_DEPTH_STENCIL_NUM_STATES];
-	oRef<ID3D11SamplerState> SamplerStates[oGPU_SAMPLER_NUM_STATES];
+	oRef<ID3D11BlendState> BlendStates[oGPU_BLEND_STATE_COUNT];
+	oRef<ID3D11RasterizerState> SurfaceStates[oGPU_SURFACE_STATE_COUNT];
+	oRef<ID3D11DepthStencilState> DepthStencilStates[oGPU_DEPTH_STENCIL_STATE_COUNT];
+	oRef<ID3D11SamplerState> SamplerStates[oGPU_SAMPLER_STATE_COUNT];
 
 	// used to flush an explicit setting of a UAV counter.
 	oRef<ID3D11ComputeShader> NoopCS;

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -34,29 +36,11 @@
 
 class oThread
 {
-	oStd::thread Thread;
-	oStd::thread& T() threadsafe { return thread_cast<oStd::thread&>(Thread); }
-	const oStd::thread& T() const threadsafe { return thread_cast<oStd::thread&>(Thread); }
-	#ifdef oHAS_MOVE_CTOR
-		oThread(const oThread&); /* = delete */
-		const oThread& operator=(const oThread&); /* = delete */
-	#endif
 public:
-	oThread() {}
+	typedef oStd::thread::id id;
 
-	#ifndef oHAS_VARIADIC_TEMPLATES
-		oCALLABLE_TEMPLATE0 explicit oThread(oCALLABLE_PARAMS0) : Thread(oCALLABLE_BIND0) {}
-		oCALLABLE_TEMPLATE1 explicit oThread(oCALLABLE_PARAMS1) : Thread(oCALLABLE_BIND1) {}
-		oCALLABLE_TEMPLATE2 explicit oThread(oCALLABLE_PARAMS2) : Thread(oCALLABLE_BIND2) {}
-		oCALLABLE_TEMPLATE3 explicit oThread(oCALLABLE_PARAMS3) : Thread(oCALLABLE_BIND3) {}
-		oCALLABLE_TEMPLATE4 explicit oThread(oCALLABLE_PARAMS4) : Thread(oCALLABLE_BIND4) {}
-		oCALLABLE_TEMPLATE5 explicit oThread(oCALLABLE_PARAMS5) : Thread(oCALLABLE_BIND5) {}
-		oCALLABLE_TEMPLATE6 explicit oThread(oCALLABLE_PARAMS6) : Thread(oCALLABLE_BIND6) {}
-		oCALLABLE_TEMPLATE7 explicit oThread(oCALLABLE_PARAMS7) : Thread(oCALLABLE_BIND7) {}
-		oCALLABLE_TEMPLATE8 explicit oThread(oCALLABLE_PARAMS8) : Thread(oCALLABLE_BIND8) {}
-		oCALLABLE_TEMPLATE9 explicit oThread(oCALLABLE_PARAMS9) : Thread(oCALLABLE_BIND9) {}
-		oCALLABLE_TEMPLATE10 explicit oThread(oCALLABLE_PARAMS10) : Thread(oCALLABLE_BIND10) {}
-	#endif
+	oThread() {}
+	oDEFINE_CALLABLE_CTOR_WRAPPERS(explicit, oThread, initialize);
 
 	~oThread() {}
 
@@ -77,7 +61,15 @@ public:
 	native_handle_type native_handle() threadsafe { return T().native_handle(); }
 	static unsigned int hardware_concurrency() { return oStd::thread::hardware_concurrency(); }
 
-	typedef oStd::thread::id id;
+private:
+	oStd::thread Thread;
+	oStd::thread& T() threadsafe { return thread_cast<oStd::thread&>(Thread); }
+	const oStd::thread& T() const threadsafe { return thread_cast<oStd::thread&>(Thread); }
+	#ifdef oHAS_MOVE_CTOR
+		oThread(const oThread&); /* = delete */
+		const oThread& operator=(const oThread&); /* = delete */
+	#endif
+	inline void initialize(oCALLABLE _ThreadProc) { oStd::thread t(_ThreadProc); Thread = std::move(t); }
 };
 
 inline unsigned int oAsUint(const oStd::thread::id& _ID) { return *(unsigned int*)&_ID; }
@@ -108,7 +100,7 @@ template<typename T> bool oThreadlocalMalloc(const oGUID& _GUID, T** _ppAllocati
 void oThreadAtExit(std::function<void()> _AtExit);
 oDEFINE_CALLABLE_WRAPPERS(oThreadAtExit,, oThreadAtExit);
 
-// This should be called as the last line of a thread proct that will flush 
+// This should be called as the last line of a thread proc that will flush 
 // oThreadlocalMalloc allocations and oThreadAtExit functions. This is not 
 // defined by this library, but should be implemented by platform code to ensure
 // user threads exit cleanly.

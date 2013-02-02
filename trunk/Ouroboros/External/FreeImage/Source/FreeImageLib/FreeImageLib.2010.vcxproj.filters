@@ -116,6 +116,9 @@
     <ClCompile Include="..\FreeImage\J2KHelper.cpp">
       <Filter>Source Files\Plugins</Filter>
     </ClCompile>
+    <ClCompile Include="..\FreeImage\MNGHelper.cpp">
+      <Filter>Source Files\Plugins</Filter>
+    </ClCompile>
     <ClCompile Include="..\FreeImage\Plugin.cpp">
       <Filter>Source Files\Plugins</Filter>
     </ClCompile>
@@ -147,6 +150,9 @@
       <Filter>Source Files\Plugins</Filter>
     </ClCompile>
     <ClCompile Include="..\FreeImage\PluginJ2K.cpp">
+      <Filter>Source Files\Plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FreeImage\PluginJNG.cpp">
       <Filter>Source Files\Plugins</Filter>
     </ClCompile>
     <ClCompile Include="..\FreeImage\PluginJP2.cpp">

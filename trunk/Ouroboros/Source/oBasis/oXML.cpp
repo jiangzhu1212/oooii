@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -124,6 +126,10 @@ struct oXML_Impl : public oXML
 	const char* GetDocumentName() const threadsafe override;
 	const char* GetNodeName(HNODE _hNode) const threadsafe override;
 	const char* GetNodeValue(HNODE _hNode) const threadsafe override;
+	HNODE FindNode(HNODE _hNode, const char* _NodeName) const threadsafe override;
+	const char* FindNodeValue(HNODE _hNode, const char* _NodeName) const threadsafe override;
+	bool GetNodeValue(HNODE _hNode, const char* _NodeName, char* _StrDestination, size_t _NumberOfElements) const threadsafe override;
+
 	const char* GetAttributeName(HATTR _hAttribute) const threadsafe override;
 	const char* GetAttributeValue(HATTR _hAttribute) const threadsafe override;
 	const char* FindAttributeValue(HNODE _hNode, const char* _AttributeName) const threadsafe override;
@@ -221,7 +227,7 @@ oXML_Impl::oXML_Impl(const DESC& _Desc, bool* _pSuccess)
 
 	if (_Desc.CopyXMLString)
 	{
-		size_t size = strlen(oSAFESTR(_Desc.XMLString))+1;
+		size_t size = oStrlen(oSAFESTR(_Desc.XMLString))+1;
 		XMLData = new char[size];
 		oStrcpy(XMLData, size, oSAFESTR(_Desc.XMLString));
 		XMLDeleter = DeleteCopy;
@@ -300,7 +306,7 @@ oXML::HATTR oXML_Impl::GetNextAttribute(HATTR _hAttribute) const threadsafe
 
 size_t oXML_Impl::GetDocumentSize() const threadsafe
 {
-	return sizeof(*this) + strlen(Data()) + 1 + Nodes->capacity() * sizeof(NODES::value_type) + Attributes->capacity() * sizeof(ATTRIBUTES::value_type);
+	return sizeof(*this) + oStrlen(Data()) + 1 + Nodes->capacity() * sizeof(NODES::value_type) + Attributes->capacity() * sizeof(ATTRIBUTES::value_type);
 }
 
 const char* oXML_Impl::GetDocumentName() const threadsafe
@@ -316,6 +322,29 @@ const char* oXML_Impl::GetNodeName(HNODE _hNode) const threadsafe
 const char* oXML_Impl::GetNodeValue(HNODE _hNode) const threadsafe
 {
 	return Data()+Node(_hNode).Value;
+}
+
+oXML::HNODE oXML_Impl::FindNode(HNODE _hNode, const char* _NodeName) const threadsafe
+{
+	for (HNODE a = GetFirstChild(_hNode); a; a = GetNextSibling(a))
+		if (!oStricmp(_NodeName, GetNodeName(a)))
+			return a;
+	return 0;
+}
+
+const char* oXML_Impl::FindNodeValue(HNODE _hNode, const char* _NodeName) const threadsafe
+{
+	for (HNODE a = GetFirstChild(_hNode); a; a = GetNextSibling(a))
+		if (!oStricmp(_NodeName, GetNodeName(a)))
+			return GetNodeValue(a);
+	return 0;
+}
+
+bool oXML_Impl::GetNodeValue(HNODE _hNode, const char* _NodeName, char* _StrDestination, size_t _NumberOfElements) const threadsafe
+{
+	const char* v = FindNodeValue(_hNode, _NodeName);
+	if (v) oStrcpy(_StrDestination, _NumberOfElements, v);
+	return !!v;
 }
 
 const char* oXML_Impl::GetAttributeName(HATTR _hAttribute) const threadsafe

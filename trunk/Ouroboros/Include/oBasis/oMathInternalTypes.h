@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -32,7 +34,6 @@
 
 #include <oBasis/oEqual.h>
 #include <oBasis/oLimits.h>
-#include <unordered_map>
 
 // _____________________________________________________________________________
 // Internal macros used in the definition of tuples below
@@ -99,6 +100,7 @@ namespace oMathNS {
 
 template<typename T> struct TVEC2
 {
+	typedef T element_type;
 	union { T x; T r; };
 	union { T y; T g; };
 	inline TVEC2() {}
@@ -113,6 +115,7 @@ template<typename T> struct TVEC2
 
 template<typename T> struct TVEC3
 {
+	typedef T element_type;
 	union { T x; T r; };
 	union { T y; T g; };
 	union { T z; T b; };
@@ -129,6 +132,7 @@ template<typename T> struct TVEC3
 
 template<typename T> struct TVEC4
 {
+	typedef T element_type;
 	union { T x; T r; };
 	union { T y; T g; };
 	union { T z; T b; };
@@ -150,6 +154,7 @@ template<typename T> struct TVEC4
 
 template<typename T> struct TQUAT
 {
+	typedef T element_type;
 	T x,y,z,w;
 	inline TQUAT() {};
 	inline TQUAT(const TQUAT& _Quaternion) : x(_Quaternion.x), y(_Quaternion.y), z(_Quaternion.z), w(_Quaternion.w) {}
@@ -162,6 +167,8 @@ template<typename T> struct TQUAT
 
 template<typename T> struct TMAT3
 {
+	typedef T element_type;
+	typedef TVEC3<T> vector_type;
 	// Column-major 3x3 matrix
 	TVEC3<T> Column0;
 	TVEC3<T> Column1;
@@ -175,6 +182,8 @@ template<typename T> struct TMAT3
 
 template<typename T> struct TMAT4
 {
+	typedef T element_type;
+	typedef TVEC4<T> vector_type;
 	// Column-major 4x4 matrix
 	TVEC4<T> Column0;
 	TVEC4<T> Column1;
@@ -192,6 +201,8 @@ template<typename T> struct TMAT4
 
 template<typename T, typename TVec> struct TAABOX
 {
+	typedef T element_type;
+	typedef TVec vector_type;
 	TAABOX() { Clear(); }
 	TAABOX(const TAABOX<T,TVec>& _Box) : Min(_Box.Min), Max(_Box.Max) {}
 	TAABOX(const TVec& _Min, const TVec& _Max) : Min(_Min), Max(_Max) {}
@@ -227,6 +238,7 @@ protected:
 
 template<typename T> struct TPLANE : public TVEC4<T>
 {
+	typedef T element_type;
 	TPLANE<T>() {}
 	TPLANE<T>(const TVEC3<T>& _Normal, const T& _Offset) : TVEC4<T>(normalize(_Normal), _Offset) {}
 	TPLANE<T>(const T& _NormalX, const T& _NormalY, const T& _NormalZ, const T& _Offset) : TVEC4<T>(normalize(TVEC3<T>(_NormalX, _NormalY, _NormalZ)), _Offset) {}
@@ -237,6 +249,9 @@ template<typename T> struct TPLANE : public TVEC4<T>
 
 template<typename T> struct TFRUSTUM
 {
+	typedef T element_type;
+	typedef TVEC4<T> vector_type;
+
 	enum CORNER
 	{
 		LEFT_TOP_NEAR,
@@ -271,6 +286,7 @@ template<typename T> struct TFRUSTUM
 
 template<typename T> struct TSPHERE : public TVEC4<T>
 {
+	typedef T element_type;
 	TSPHERE<T>() {}
 	TSPHERE<T>(const TSPHERE<T>& _Sphere) { *this = _Sphere; }
 	TSPHERE<T>(const TVEC3<T>& _Position, T _Radius) : TVEC4<T>(_Position, _Radius) {}
@@ -283,7 +299,6 @@ template<typename T> struct TSPHERE : public TVEC4<T>
 // Useful for min/max concepts where a must always be greater than b, so the
 // rest of a calling function can execute normally, and if the values need to 
 // be swapped, use this.
-// template<typename T> void swap(T& a, T& b) { T c = a; a = b; b = c; }
 template<typename T> void swap_if_greater(oMathNS::TVEC2<T>& a, oMathNS::TVEC2<T>& b) { if (a.x > b.x) std::swap(a.x, b.x); if (a.y > b.y) std::swap(a.y, b.y); }
 template<typename T> void swap_if_greater(oMathNS::TVEC3<T>& a, oMathNS::TVEC3<T>& b) { if (a.x > b.x) std::swap(a.x, b.x); if (a.y > b.y) std::swap(a.y, b.y); if (a.z > b.z) std::swap(a.z, b.z); }
 template<typename T> void swap_if_greater(oMathNS::TVEC4<T>& a, oMathNS::TVEC4<T>& b) { if (a.x > b.x) std::swap(a.x, b.x); if (a.y > b.y) std::swap(a.y, b.y); if (a.z > b.z) std::swap(a.z, b.z); if (a.w > b.w) std::swap(a.w, b.w); }
@@ -320,39 +335,5 @@ inline bool oEqual(const oMathNS::TVEC4<double>& a, const oMathNS::TVEC4<double>
 inline bool oEqual(const oMathNS::TQUAT<double>& a, const oMathNS::TQUAT<double>& b, int maxUlps = oDEFAULT_ULPS) { return oEqual(a.x, b.x, maxUlps) && oEqual(a.y, b.y, maxUlps) && oEqual(a.z, b.z, maxUlps) && oEqual(a.w, b.w, maxUlps); }
 inline bool oEqual(const oMathNS::TMAT3<double>& a, const oMathNS::TMAT3<double>& b, int maxUlps = oDEFAULT_ULPS) { return oEqual(a.Column0, b.Column0, maxUlps) && oEqual(a.Column1, b.Column1, maxUlps) && oEqual(a.Column2, b.Column2, maxUlps); }
 inline bool oEqual(const oMathNS::TMAT4<double>& a, const oMathNS::TMAT4<double>& b, int maxUlps = oDEFAULT_ULPS) { return oEqual(a.Column0, b.Column0, maxUlps) && oEqual(a.Column1, b.Column1, maxUlps) && oEqual(a.Column2, b.Column2, maxUlps) && oEqual(a.Column3, b.Column3, maxUlps); }
-
-//support for use as keys in unordered_map, could probably use a better hash
-namespace std {
-	template <typename T>
-	struct hash<TVEC2<T>>
-	{
-		size_t operator()(const TVEC2<T>& _Vec ) const
-		{
-			return hash<T>()(_Vec.x) ^ hash<T>()(_Vec.y);
-		}
-	};
-}
-
-namespace std {
-	template <typename T>
-	struct hash<TVEC3<T>>
-	{
-		size_t operator()(const TVEC3<T>& _Vec ) const
-		{
-			return hash<T>()(_Vec.x) ^ hash<T>()(_Vec.y) ^ hash<T>()(_Vec.z);
-		}
-	};
-}
-
-namespace std {
-	template <typename T>
-	struct hash<TVEC4<T>>
-	{
-		size_t operator()(const TVEC4<T>& _Vec ) const
-		{
-			return hash<T>()(_Vec.x) ^ hash<T>()(_Vec.y) ^ hash<T>()(_Vec.z) ^ hash<T>()(_Vec.w);
-		}
-	};
-}
 
 #endif

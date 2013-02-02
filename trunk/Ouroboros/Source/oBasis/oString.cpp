@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -145,6 +147,16 @@ wchar_t* oStrcat(wchar_t* _StrDestination, size_t _NumDestinationChars, const wc
 	return wcscat_s(_StrDestination, _NumDestinationChars, _Source) ? nullptr : _StrDestination;
 }
 
+char* oStrncat(char* _StrDestination, size_t _NumDestinationChars, const char* _Source)
+{
+	return strncat_s(_StrDestination, _NumDestinationChars, _Source, _TRUNCATE) ? nullptr : _StrDestination;
+}
+
+wchar_t* oStrncat(wchar_t* _StrDestination, size_t _NumDestinationChars, const wchar_t* _Source)
+{
+	return wcsncat_s(_StrDestination, _NumDestinationChars, _Source, _TRUNCATE) ? nullptr : _StrDestination;
+}
+
 int oVPrintf(char* _StrDestination, size_t _NumDestinationChars, const char* _Format, va_list _Args)
 {
 	int status = vsnprintf_s(_StrDestination, _NumDestinationChars, _TRUNCATE, _Format, _Args);
@@ -202,7 +214,7 @@ char* oTrimLeft(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource, c
 
 char* oTrimRight(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource, const char* _ToTrim)
 {
-	const char* end = &_StrSource[strlen(_StrSource)-1];
+	const char* end = &_StrSource[oStrlen(_StrSource)-1];
 	while (strchr(_ToTrim, *end) && end > _StrSource)
 		end--;
 	oStrncpy(_Trimmed, _SizeofTrimmed, _StrSource, end+1-_StrSource);
@@ -261,8 +273,8 @@ errno_t oReplace(char* oRESTRICT _StrResult, size_t _SizeofStrResult, const char
 	if (!_StrReplace)
 		_StrReplace = "";
 
-	size_t findLen = strlen(_StrFind);
-	size_t replaceLen = strlen(_StrReplace);
+	size_t findLen = oStrlen(_StrFind);
+	size_t replaceLen = oStrlen(_StrReplace);
 
 	errno_t err = 0;
 
@@ -288,8 +300,8 @@ errno_t oReplace(char* oRESTRICT _StrResult, size_t _SizeofStrResult, const char
 
 const char* oStrStrReverse(const char* _Str, const char* _SubStr)
 {
-	const char* c = _Str + strlen(_Str) - 1;
-	const size_t SubStrLen = strlen(_SubStr);
+	const char* c = _Str + oStrlen(_Str) - 1;
+	const size_t SubStrLen = oStrlen(_SubStr);
 	while (c > _Str)
 	{
 		if (!memcmp(c, _SubStr, SubStrLen))
@@ -307,8 +319,8 @@ char* oStrStrReverse(char* _Str, const char* _SubStr)
 
 char* oInsert(char* _StrSource, size_t _SizeofStrResult, char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion)
 {
-	size_t insertionLength = strlen(_Insertion);
-	size_t afterInsertionLength = strlen(_InsertionPoint) - _ReplacementLength;
+	size_t insertionLength = oStrlen(_Insertion);
+	size_t afterInsertionLength = oStrlen(_InsertionPoint) - _ReplacementLength;
 	size_t newLen = static_cast<size_t>(_InsertionPoint - _StrSource) + afterInsertionLength;
 	if (newLen+1 > _SizeofStrResult) // +1 for null terminator
 		return nullptr;
@@ -326,7 +338,7 @@ char* oInsert(char* _StrSource, size_t _SizeofStrResult, char* _InsertionPoint, 
 
 errno_t oStrVAppendf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args)
 {
-	size_t len = strlen(_StrDestination);
+	size_t len = oStrlen(_StrDestination);
 	if( -1 == vsnprintf_s(_StrDestination + len, _TRUNCATE, _SizeofStrDestination - len, _Format, _Args) )
 		return ENOMEM;
 	return 0;
@@ -336,7 +348,7 @@ const char* oOrdinal(int _Number)
 {
 	char buf[16];
 	_itoa_s(_Number, buf, sizeof(buf), 10);
-	size_t len = strlen(buf);
+	size_t len = oStrlen(buf);
 	char tens = len >= 2 ? buf[len-2] : '0';
 	if (tens != '1')
 		switch (buf[len-1])
@@ -414,7 +426,7 @@ char* oFormatTimeSize(char* _StrDestination, size_t _SizeofStrDestination, doubl
 char* oFormatCommas(char* _StrDestination, size_t _SizeofStrDestination, unsigned int _Number)
 {
 	_itoa_s(_Number, _StrDestination, _SizeofStrDestination, 10);
-	size_t len = strlen(_StrDestination);
+	size_t len = oStrlen(_StrDestination);
 
 	size_t w = len % 3;
 	if (!w)
@@ -504,7 +516,7 @@ void oStrTokClose(char** _ppContext)
 	if (start)
 	{
 		*_ppContext = nullptr;
-		start += strlen(start);
+		start += oStrlen(start);
 		char* origAlloc = *reinterpret_cast<char**>(start+1);
 		free(origAlloc);
 	}
@@ -519,7 +531,7 @@ char* oStrTok(const char* _Token, const char* _Delimiter, char** _ppContext, con
 	if (_Token)
 	{
 		// copy string and also store pointer so it can be freed
-		size_t n = strlen(_Token);
+		size_t n = oStrlen(_Token);
 		if (!n)
 			return nullptr;
 		*_ppContext = static_cast<char*>(malloc(n + 1 + sizeof(char*)));

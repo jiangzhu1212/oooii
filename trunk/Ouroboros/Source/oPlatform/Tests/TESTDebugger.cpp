@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -25,7 +27,7 @@
 #include <oPlatform/oTest.h>
 #include <oBasis/oString.h>
 
-struct TESTDebugger : public oTest
+struct PLATFORM_oDebugger : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
@@ -47,7 +49,7 @@ struct TESTDebugger : public oTest
 				static const size_t OFFSET = 2;
 				static const char* sExpectedStack[] = 
 				{
-					"TESTDebugger::Run",
+					"PLATFORM_oDebugger::Run",
 					"oTestManager_Impl::RunTest",
 					"oTestManager_Impl::RunTests",
 					"main",
@@ -60,7 +62,7 @@ struct TESTDebugger : public oTest
 				static const size_t OFFSET = 1;
 				static const char* sExpectedStack[] = 
 				{
-					"TESTDebugger::Run",
+					"PLATFORM_oDebugger::Run",
 					"oTestManager_Impl::RunTest",
 					"oTestManager_Impl::RunTests",
 					"main",
@@ -76,7 +78,7 @@ struct TESTDebugger : public oTest
 			#ifdef _WIN64
 				static const char* sExpectedStack[] = 
 				{
-					"TESTDebugger::Run",
+					"PLATFORM_oDebugger::Run",
 					"oTestManager_Impl::RunTest",
 					"oTestManager_Impl::RunTests",
 					"main",
@@ -112,4 +114,4 @@ struct TESTDebugger : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTDebugger);
+oTEST_REGISTER(PLATFORM_oDebugger);

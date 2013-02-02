@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -176,39 +178,66 @@ bool oSystemScheduleWakeup(time_t _UnixAbsoluteTime, oTASK _OnWake)
 	return oScheduleTask("OOOii.Wakeup", _UnixAbsoluteTime, true, _OnWake);
 }
 
-bool oSystemExecute(const char* _CommandLine, char* _StrStdout, size_t _SizeofStrStdOut, int* _pExitCode, unsigned int _ExecutionTimeout)
+bool oSystemExecute(const char* _CommandLine, char* _StrStdout, size_t _SizeofStrStdOut, int* _pExitCode, unsigned int _ExecutionTimeout, bool _ShowWindow)
 {
 	oProcess::DESC desc;
 	desc.CommandLine = _CommandLine;
 	desc.EnvironmentString = 0;
-	desc.StdHandleBufferSize = 4096;
-	desc.HideWindow = true;
+	desc.StdHandleBufferSize = _SizeofStrStdOut > 0 ? _SizeofStrStdOut - 1 : 0;
+	desc.ShowWindow = _ShowWindow;
 	oRef<threadsafe oProcess> process;
 	if (!oProcessCreate(desc, &process))
 		return false;
 
 	oTRACE("oExecute: \"%s\"...", oSAFESTRN(_CommandLine));
 	process->Start();
-	if (!process->Wait(_ExecutionTimeout))
+	bool Finished = true;
+	float startTime = oTimerMSF();
+	uint timeSoFarMS = 0;
+	static const uint timePerFlushMS = 50;
+	oStringXXL tempStdOut;
+	if(_SizeofStrStdOut) //older version of this code always cleared the passed in string indirectly, so doing so now as well.
+		_StrStdout[0] = 0;
+
+	while(timeSoFarMS < _ExecutionTimeout && !process->Wait(timePerFlushMS)) //need to flush stdout once in a while or it can hang the process if we are redirecting output
 	{
+		timeSoFarMS = static_cast<int>(oTimerMSF() - startTime);
+
+		if (_StrStdout && _SizeofStrStdOut)
+		{
+			oTRACEA("oExecute: Reading from stdout... \"%s\"", oSAFESTRN(_CommandLine));
+			tempStdOut.clear();
+			size_t sizeRead = process->ReadFromStdout(tempStdOut, tempStdOut.capacity() - 1);
+			tempStdOut[sizeRead] = 0;
+			oStrncat(_StrStdout, _SizeofStrStdOut, tempStdOut);
+		}
+	}
+
+	if (_StrStdout && _SizeofStrStdOut) // get any remaining text from stdout
+	{
+		tempStdOut.clear();
+		size_t sizeRead = process->ReadFromStdout(tempStdOut, tempStdOut.capacity() - 1);
+		while(sizeRead > 0)
+		{
+			tempStdOut[sizeRead] = 0;
+			oStrncat(_StrStdout, _SizeofStrStdOut, tempStdOut);
+			tempStdOut.clear();
+			sizeRead = process->ReadFromStdout(tempStdOut, tempStdOut.capacity() - 1);
+		}
+	}
+
+	if (timeSoFarMS >= _ExecutionTimeout) //timed out
+	{
+		Finished = false;
 		oErrorSetLast(oERROR_TIMEOUT, "Executing \"%s\" timed out after %.01f seconds.", _CommandLine, static_cast<float>(_ExecutionTimeout) / 1000.0f);
 		if (_pExitCode)
 			*_pExitCode = oERROR_REDUNDANT;
-		return false;
 	}
 
 	if (_pExitCode && !process->GetExitCode(_pExitCode))
 		*_pExitCode = oERROR_REDUNDANT;
-
-	if (_StrStdout && _SizeofStrStdOut)
-	{
-		oTRACE("oExecute: Reading from stdout... \"%s\"", oSAFESTRN(_CommandLine));
-		size_t sizeRead = process->ReadFromStdout(_StrStdout, _SizeofStrStdOut);
-		oASSERT(sizeRead < _SizeofStrStdOut, "");
-		_StrStdout[sizeRead] = 0;
-	}
-
-	return true;
+	
+	return Finished;
 }
 
 bool oSystemWaitIdle(unsigned int _TimeoutMS, oFUNCTION<bool()> _ContinueIdling)
@@ -280,6 +309,11 @@ bool oSystemGUIEnableGPUCompositing(bool _Enable, bool _Force)
 	return oEnableAero(_Enable, _Force);
 }
 
+bool oSystemIsRemote()
+{
+	return !!GetSystemMetrics(SM_REMOTESESSION);
+}
+
 bool oSetEnvironmentVariable(const char* _Name, const char* _Value)
 {
 	return !!SetEnvironmentVariableA(_Name, _Value);
@@ -301,7 +335,7 @@ char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _Sizeof
 	const std::cregex_token_iterator end;
 	int arr[] = {1,2}; 
 	bool NoTranslations = true;
-	for ( std::cregex_token_iterator VecTok(_RawString, _RawString + strlen(_RawString), EncodedSearch, arr); VecTok != end; ++VecTok )
+	for ( std::cregex_token_iterator VecTok(_RawString, _RawString + oStrlen(_RawString), EncodedSearch, arr); VecTok != end; ++VecTok )
 	{
 		auto Replace = VecTok->str();
 		++VecTok;
@@ -327,12 +361,12 @@ char* oSystemGetEnvironmentString(char* _StrEnvironment, size_t _SizeofStrEnviro
 	// a bit less obtuse
 
 	char* c = pEnv;
-	size_t len = strlen(pEnv);
+	size_t len = oStrlen(pEnv);
 	while (len)
 	{
 		c[len] = '\n';
 		c += len+1;
-		len = strlen(c);
+		len = oStrlen(c);
 	}
 
 	if (!oStrcpy(_StrEnvironment, _SizeofStrEnvironment, pEnv))
@@ -351,7 +385,6 @@ const char* oAsString(oSYSPATH _SysPath)
 		case oSYSPATH_CWD: return "oSYSPATH_CWD";
 		case oSYSPATH_APP: return "oSYSPATH_APP";
 		case oSYSPATH_APP_FULL: return "oSYSPATH_APP_FULL";
-		case oSYSPATH_HOST: return "oSYSPATH_HOST";
 		case oSYSPATH_SYSTMP: return "oSYSPATH_SYSTMP";
 		case oSYSPATH_SYS: return "oSYSPATH_SYS";
 		case oSYSPATH_OS: return "oSYSPATH_OS";
@@ -360,9 +393,7 @@ const char* oAsString(oSYSPATH _SysPath)
 		case oSYSPATH_COMPILER_INCLUDES: return "oSYSPATH_COMPILER_INCLUDES";
 		case oSYSPATH_DESKTOP: return "oSYSPATH_DESKTOP";
 		case oSYSPATH_DESKTOP_ALLUSERS: return "oSYSPATH_DESKTOP_ALLUSERS";
-		case oSYSPATH_P4ROOT: return "oSYSPATH_P4ROOT";
 		case oSYSPATH_DATA: return "oSYSPATH_DATA";
-		case oSYSPATH_EXECUTION: return "oSYSPATH_EXECUTION";
 		oNODEFAULT;
 	}
 }
@@ -374,7 +405,6 @@ bool oFromString(oSYSPATH* _pValue, const char* _StrSource)
 		"oSYSPATH_CWD",
 		"oSYSPATH_APP",
 		"oSYSPATH_APP_FULL",
-		"oSYSPATH_HOST",
 		"oSYSPATH_SYSTMP",
 		"oSYSPATH_SYS",
 		"oSYSPATH_OS",
@@ -385,12 +415,13 @@ bool oFromString(oSYSPATH* _pValue, const char* _StrSource)
 		"oSYSPATH_DESKTOP_ALLUSERS",
 		"oSYSPATH_P4ROOT",
 		"oSYSPATH_DATA",
-		"oSYSPATH_EXECUTION",
 	};
 
+	oStringS SourceUppercase = _StrSource;
+	oToUpper(SourceUppercase);
 	for (size_t i = 0; i < oCOUNTOF(sStrings); i++)
 	{
-		if (!oStrcmp(_StrSource, sStrings[i]) || !oStrcmp(_StrSource, sStrings[i]+9)) // +9 match against just "OS" or "HOST" after oSYSPATH_
+		if (!oStrcmp(_StrSource, sStrings[i]) || !oStrcmp(SourceUppercase, sStrings[i]+9)) // +9 match against just "OS" or "HOST" after oSYSPATH_
 		{
 			*_pValue = (oSYSPATH)i;
 			return true;
@@ -433,15 +464,6 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 			*oGetFilebase(_StrSysPath) = 0; 
 			break;
 
-		case oSYSPATH_HOST:
-			ensureSeparator = false;
-			if (!GetComputerNameEx(ComputerNameDnsHostname, _StrSysPath, &nElements))
-			{
-				oWinSetLastError();
-				success = false;
-			}
-			break;
-
 		case oSYSPATH_CWD: GetCurrentDirectoryA(nElements, _StrSysPath); break;
 		case oSYSPATH_SYS: GetSystemDirectoryA(_StrSysPath, nElements); break;
 		case oSYSPATH_OS: GetWindowsDirectoryA(_StrSysPath, nElements); break;
@@ -461,7 +483,7 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 			char* cur = oGetFilebase(_StrSysPath);
 			*cur = 0;
 
-			while (_StrSysPath <= (cur-4)) // 4 is strlen("bin/")
+			while (_StrSysPath <= (cur-4)) // 4 is oStrlen("bin/")
 			{
 				if (!_memicmp("bin", cur-4, 3))
 				{
@@ -569,22 +591,6 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 			break;
 		}
 
-		case oSYSPATH_EXECUTION:
-		{
-			ensureSeparator = false;
-			char hostname[512];
-			*hostname = 0;
-			if (!oSystemGetPath(hostname, oSYSPATH_HOST))
-				success = false;
-			else if (-1 == oPrintf(_StrSysPath, _SizeofStrSysPath, "[%s.%u.%u]", hostname, oProcessGetCurrentID(), oStd::this_thread::get_id()))
-			{
-				oErrorSetLast(oERROR_AT_CAPACITY);
-				success = false;
-			}
-
-			break;
-		}
-
 		oNODEFAULT;
 	}
 
@@ -596,6 +602,30 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 	}
 
 	return success ? _StrSysPath : nullptr;
+}
+
+char* oSystemGetHostname(char* _StrDestination, size_t _SizeofStrDestination)
+{
+	DWORD nElements = oUInt(_SizeofStrDestination);
+	if (!GetComputerNameExA(ComputerNameDnsHostname, _StrDestination, &nElements))
+	{
+		oWinSetLastError();
+		return nullptr;
+	}
+	return _StrDestination;
+}
+
+char* oSystemGetExecutionPath(char* _StrDestination, size_t _SizeofStrDestination)
+{
+	oStringS hostname;
+	if (!oSystemGetHostname(hostname))
+		return false; // pass through error
+	else if (oInvalid == oPrintf(_StrDestination, _SizeofStrDestination, "[%s.%u.%u]", hostname.c_str(), oProcessGetCurrentID(), oStd::this_thread::get_id()))
+	{
+		oErrorSetLast(oERROR_AT_CAPACITY);
+		return nullptr;
+	}
+	return _StrDestination;
 }
 
 char* oSystemURIToPath(char* _Path, size_t _SizeofPath, const char* _URI)
@@ -649,7 +679,7 @@ char* oSystemFindInPath(char* _ResultingFullPath, size_t _SizeofResultingFullPat
 {
 	if (oSystemGetPath(_ResultingFullPath, _SizeofResultingFullPath, _SysPath))
 	{
-		size_t len = strlen(_ResultingFullPath);
+		size_t len = oStrlen(_ResultingFullPath);
 		if (!oStrcpy(_ResultingFullPath + len, _SizeofResultingFullPath - len, _RelativePath))
 		{
 			oErrorSetLast(oERROR_TRUNCATED);

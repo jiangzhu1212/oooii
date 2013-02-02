@@ -31,9 +31,6 @@
     <ClCompile Include="oGPUUtil.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oGPUEx.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -43,9 +40,6 @@
     <ClCompile Include="oGPUMaterialConstants.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oD3D11Compiler.cpp">
-      <Filter>Source\D3D11</Filter>
-    </ClCompile>
     <ClCompile Include="oD3D11ComputeShader.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
@@ -53,6 +47,12 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oD3D11Buffer.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="oGPUUtil_Pipelines.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11IO.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
   </ItemGroup>
@@ -87,44 +87,44 @@
     <ClInclude Include="..\..\Include\oGPU\oGPU.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\oGPUDrawConstants.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\oGPUConstants.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\oGPUEx.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\oGPUStructs.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\oGPUViewConstants.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\oGPUMaterialConstants.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\oGPUWindow.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\oGPUCompiler.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="oD3D11ComputeShader.h">
       <Filter>Source\D3D11</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\oGPUPickBuffer.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="oD3D11Buffer.h">
       <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\oGPUHLSLCommon.h">
+      <Filter>Source\D3D11\Shaders\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUShared.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUIO.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUMaterialConstants.h">
+      <Filter>Headers\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUDrawConstants.h">
+      <Filter>Headers\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h">
+      <Filter>Headers\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUViewConstants.h">
+      <Filter>Headers\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUPickBuffer.h">
+      <Filter>Headers\Utility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -140,9 +140,72 @@
     <Filter Include="Source\D3D11\Shaders">
       <UniqueIdentifier>{b160c573-ab2f-4a0d-b342-b6b0a89820f0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\D3D11\Shaders\Headers">
+      <UniqueIdentifier>{6324ff38-cf1c-40cd-864c-27abc4fa7683}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Utility">
+      <UniqueIdentifier>{037bd865-c2ab-4b55-9107-51c04276a6b7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <FXC Include="Shaders\NoopCS.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_GRID.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_LINE.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_LINE.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_OBJ_COMMON.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_OBJ_COMMON_INSTANCED.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_OBJ_UNLIT.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_OBJ_VERTEX_LIT.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_POSITION.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_TEXCOORD.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_POSITION.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_POSITION_INSTANCED.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_SHADOW.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_SHADOW.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_WSNORMAL.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_OBJ_PIXEL_LIT.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_OBJECT_ID.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_DEPTH.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_DEPTH.sh">
+      <Filter>Source\D3D11\Shaders</Filter>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_DEPTH_INSTANCED.sh">
       <Filter>Source\D3D11\Shaders</Filter>
     </FXC>
   </ItemGroup>

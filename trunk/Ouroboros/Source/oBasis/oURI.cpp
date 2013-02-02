@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -227,7 +229,7 @@ char* oURIRecompose(char* _URIReference, size_t _SizeofURIReference, const char*
 	if (/*libxml && */_Path && !oIsSeparator(_Path[0]))
 		SAFECAT("/");
 
-	size_t URIReferenceLength = strlen(_URIReference);
+	size_t URIReferenceLength = oStrlen(_URIReference);
 
 	oStringPath path;
 	if (!oCleanPath(path, _Path))
@@ -505,3 +507,27 @@ bool oURI::operator<(const oURI& _That) const
 {
 	return memcmp(this, &_That, sizeof(*this)) < 0;
 }
+
+bool oFromString(oURI* _pURI, const char* _StrSource)
+{
+	*_pURI = _StrSource;
+	return true;
+}
+char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oURI& _URI)
+{
+	return oURIRecompose(_StrDestination, _SizeofStrDestination, _URI.GetParts());
+}
+
+typedef bool (*s_oURI_FromString)(oURI*, const char*);
+typedef char* (*s_oURI_ToString)(char*, size_t, const oURI&);
+
+oRTTI_ATOM_DESCRIPTION(oURI,oURI,false,oURI, \
+	(oRTTIFromString)(s_oURI_FromString)oFromString, \
+	(oRTTIToString)(s_oURI_ToString)oToString, \
+	nullptr, \
+	nullptr, \
+	nullptr, \
+	nullptr, \
+	nullptr, \
+	nullptr, \
+	oRTTI_CAPS_ARRAY)

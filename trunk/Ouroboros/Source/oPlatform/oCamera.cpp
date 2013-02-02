@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -36,6 +38,29 @@
 #include <assert.h>
 #include <vector>
 #include "oCamera_QEdit.h"
+
+const oGUID& oGetGUID(threadsafe const oCameraFrameStream* threadsafe const*)
+{
+	// {B7DFAE55-8AA4-41DB-82E2-FC498DCC78E4}
+	static const oGUID oIIDFrameStream = { 0xb7dfae55, 0x8aa4, 0x41db, { 0x82, 0xe2, 0xfc, 0x49, 0x8d, 0xcc, 0x78, 0xe4 } };
+	return oIIDFrameStream;
+}
+
+const oGUID& oGetGUID(threadsafe const oCameraArticulator* threadsafe const*)
+{
+	// {343AD92B-1BE1-4EDD-A810-34FAE2877CBD}
+	static const oGUID oIIDArticulator = { 0x343ad92b, 0x1be1, 0x4edd, { 0xa8, 0x10, 0x34, 0xfa, 0xe2, 0x87, 0x7c, 0xbd } };
+
+	return oIIDArticulator;
+}
+
+const oGUID& oGetGUID(threadsafe const oCameraPosition* threadsafe const*)
+{
+	// {CFCDA794-3E4D-4841-9C5A-03CDAD691FD3}
+	static const oGUID oIIDPosition = { 0xcfcda794, 0x3e4d, 0x4841, { 0x9c, 0x5a, 0x3, 0xcd, 0xad, 0x69, 0x1f, 0xd3 } };
+	
+	return oIIDPosition;
+}
 
 // 73646976-0000-0010-8000-00AA00389B71
 static const oGUID oGUID_MEDIATYPE_Video = { 0x73646976, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71 } };

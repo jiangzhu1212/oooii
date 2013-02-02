@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -29,20 +31,13 @@
 #define oD3D11_h
 
 #include <oBasis/oRef.h>
-#include <oBasis/oGeometry.h> // @oooii-tony: For oD3D11MosaicDraw... this should get better encapsulated.
-#include <oBasis/oGPUEnums.h>
+#include <oBasis/oGPUConcepts.h>
 #include <oPlatform/oModule.h>
 #include <oPlatform/oHLSLShaders.h> 
 #include <oPlatform/oImage.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/Windows/oWindows.h>
 #include <vector>
-
-// @oooii-tony: TIME TO REFACTOR! oGPU_ should depend on oPlatform and NOT vice
-// versa. For now... start replacing symbols defined here with the more cross-
-// platform oGPU_ stuff... then once other refactors are more baked, move oD3D11
-// to oGPU_.
-#include <oGPU/oGPUUtil.h>
 
 // _____________________________________________________________________________
 // Soft-link
@@ -109,16 +104,6 @@ void oD3D11CheckBoundCSSetUAV(ID3D11DeviceContext* _pDeviceContext, int _NumBuff
 // _____________________________________________________________________________
 // Utility API
 
-// D3D11 doesn't keep track of D3D11_BUFFER_DESC::StructureByteStride for at 
-// least index buffers, so to keep it self-contained, tack on this struct so 
-// that an ID3D11Buffer can be queried for whether it's a 16-bit or 32-bit index
-// buffer.
-struct oD3D11_BUFFER_TOPOLOGY
-{
-	uint ElementStride;
-	uint ElementCount;
-};
-
 // Creates a device with the specified description.
 bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3D11Device** _ppDevice);
 
@@ -145,10 +130,6 @@ oVersion oD3D11GetFeatureVersion(D3D_FEATURE_LEVEL _Level);
 // Returns an IFF based on the extension specified in the file path
 D3DX11_IMAGE_FILE_FORMAT oD3D11GetFormatFromPath(const char* _Path);
 
-// Allow ID3D11Buffers to be a bit more self-describing.
-bool oD3D11SetBufferTopology(ID3D11Resource* _pBuffer, const oD3D11_BUFFER_TOPOLOGY& _Topology);
-bool oD3D11GetBufferTopology(const ID3D11Resource* _pBuffer, oD3D11_BUFFER_TOPOLOGY* _pTopology);
-
 // Sets a back-pointer to the original container. The container's ref count is 
 // NOT incremented to avoid circular references. oInterface is used so that 
 // QueryInterface can be supported.
@@ -163,7 +144,7 @@ bool oD3D11GetContainerBackPointer(const ID3D11DeviceChild* _pChild, oInterface*
 // the number of primitives. An element can refer to indices or vertices, but
 // basically if there are 3 lines, then there are 6 elements. If there are 3
 // lines in a line strip, then there are 4 elements.
-uint oD3D11GetNumElements(D3D11_PRIMITIVE_TOPOLOGY _PrimitiveTopology, uint _NumPrimitives);
+uint oD3D11GetNumElements(D3D_PRIMITIVE_TOPOLOGY _PrimitiveTopology, uint _NumPrimitives);
 
 // Given a shader model (i.e. 4.0) return a feature level (i.e. D3D_FEATURE_LEVEL_10_1)
 bool oD3D11GetFeatureLevel(const oVersion& _ShaderModel, D3D_FEATURE_LEVEL* _pLevel);
@@ -183,9 +164,11 @@ const char* oD3D11GetShaderProfile(D3D_FEATURE_LEVEL _Level, oGPU_PIPELINE_STAGE
 // Pointers to initial data can be null, but number/size values are used to 
 // allocate the buffer and thus must always be specified.
 
-bool oD3D11CreateBuffer(ID3D11Device* _pDevice, const char* _DebugName, const oGPU_BUFFER_DESC& _Desc, const void* _pInitBuffer, ID3D11Buffer** _ppConstantBuffer, ID3D11UnorderedAccessView** _ppUAV = nullptr, ID3D11ShaderResourceView** _ppSRV = nullptr);
-bool oD3D11CreateIndexBuffer(ID3D11Device* _pDevice, const char* _DebugName, D3D11_USAGE _Usage, const void* _pIndices, uint _NumIndices, bool _Use16BitIndices, ID3D11Buffer** _ppIndexBuffer);
-bool oD3D11CreateVertexBuffer(ID3D11Device* _pDevice, const char* _DebugName, D3D11_USAGE _Usage, const void* _pVertices, uint _NumVertices, uint _VertexStride, ID3D11Buffer** _ppVertexBuffer);
+bool oD3D11BufferCreate(ID3D11Device* _pDevice, const char* _DebugName, const oGPU_BUFFER_DESC& _Desc, const void* _pInitBuffer, ID3D11Buffer** _ppConstantBuffer, ID3D11UnorderedAccessView** _ppUAV = nullptr, ID3D11ShaderResourceView** _ppSRV = nullptr);
+
+// Allow ID3D11Buffers to be a bit more self-describing.
+bool oD3D11BufferSetDesc(ID3D11Resource* _pBuffer, const oGPU_BUFFER_DESC& _Desc);
+bool oD3D11BufferGetDesc(const ID3D11Resource* _pBuffer, oGPU_BUFFER_DESC* _pDesc);
 
 // Creates a copy of the specified UAV that clears any raw/append/counter flags
 bool oD3D11CreateUnflaggedUAV(ID3D11UnorderedAccessView* _pSourceUAV, ID3D11UnorderedAccessView** _ppUnflaggedUAV);
@@ -375,7 +358,7 @@ void oD3D11Draw(ID3D11DeviceContext* _pDeviceContext
 // This returns the number of primitives drawn (more than the specified number
 // of primitives if instancing is used). This does not set input layout.
 inline void oD3D11Draw(ID3D11DeviceContext* _pDeviceContext
-	, D3D11_PRIMITIVE_TOPOLOGY _PrimitiveTopology
+	, D3D_PRIMITIVE_TOPOLOGY _PrimitiveTopology
 	, uint _NumPrimitives
 	, uint _NumVertexBuffers
 	, const ID3D11Buffer* const* _ppVertexBuffers
@@ -400,13 +383,6 @@ inline void oD3D11Draw(ID3D11DeviceContext* _pDeviceContext
 void oD3D11DrawSVQuad(ID3D11DeviceContext* _pDeviceContext, uint _NumInstances = 1);
 
 // _____________________________________________________________________________
-// Misc API (not yet categorized)
-
-// This assumes the specified buffer is properly sized and then copies the
-// specified array of structs into the buffer.
-void oD3D11CopyStructs(ID3D11DeviceContext* _pDeviceContext, ID3D11Buffer* _pBuffer, const void* _pStructs);
-
-// _____________________________________________________________________________
 // Pipeline stage state API
 
 // GPUs are programmable, but graphics applications tend to decide their own 
@@ -414,7 +390,6 @@ void oD3D11CopyStructs(ID3D11DeviceContext* _pDeviceContext, ID3D11Buffer* _pBuf
 // as efficient as possible. Towards this end, here's a useful pattern of 
 // enumerating DX11 state in very typical usage patterns that seem to be 
 // somewhat portable.
-
 
 struct oD3D11ScopedMessageDisabler
 {

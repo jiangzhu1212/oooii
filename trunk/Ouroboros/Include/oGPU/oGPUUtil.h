@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -30,14 +32,6 @@
 #include <oGPU/oGPU.h>
 #include <oGPU/oGPUMaterialConstants.h>
 
-// Returns the size in bytes of the sum of all vertex elements for the specified 
-// input slot.
-oAPI int oGPUCalculateVertexSize(const oGPU_VERTEX_ELEMENT* _pElements, size_t _NumElements, int _InputSlot);
-template<size_t size> int oGPUCalculateVertexSize(const oGPU_VERTEX_ELEMENT (&_pElements)[size], int _InputSlot) { return oGPUCalculateVertexSize(_pElements, size, _InputSlot); }
-
-oAPI int oGPUCalculateNumInputSlots(const oGPU_VERTEX_ELEMENT* _pElements, size_t _NumElements);
-template<size_t size> int oGPUCalculateNumInputSlots(const oGPU_VERTEX_ELEMENT (&_pElements)[size]) { return oGPUCalculateNumInputSlots(_pElements, size); }
-
 oAPI void oGPUCopyIndices(oSURFACE_MAPPED_SUBRESOURCE& _Destination, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source, uint _NumIndices);
 
 struct oGPU_VERTEX_ELEMENT_DATA
@@ -57,8 +51,8 @@ struct oGPU_VERTEX_ELEMENT_DATA
 // elements that don't need data overrides. If _NormalScale is negative, then 
 // the bounding sphere inscribed in the LocalBounds of oGPUMesh::DESC is 
 // calculated and then scaled by the absolute value of _NormalScale.
-oAPI bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, const oGPU_VERTEX_ELEMENT_DATA* _ppElementData, const oGeometry* _pGeometry, oGPUMesh** _ppMesh, oGPULineList** _ppNormalLines = nullptr, float _NormalScale = 1.0f, oColor _NormalColor = std::White);
-oAPI bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, const oGPU_VERTEX_ELEMENT_DATA* _ppElementData, const threadsafe oOBJ* _pOBJ, oGPUMesh** _ppMesh, oGPULineList** _ppNormalLines = nullptr, float _NormalScale = 1.0f, oColor _NormalColor = std::White);
+oAPI bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, const oGPU_VERTEX_ELEMENT_DATA* _ppElementData, const oGeometry* _pGeometry, oGPUMesh** _ppMesh, oGPULineList** _ppNormalLines = nullptr, float _NormalScale = 1.0f, oColor _NormalColor = std::White, oGPULineList** _ppTangentLines = nullptr, float _TangentScale = 1.0f, oColor _TangentColor = std::Gray);
+oAPI bool oGPUCreateMesh(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, const oGPU_VERTEX_ELEMENT_DATA* _ppElementData, const threadsafe oOBJ* _pOBJ, oGPUMesh** _ppMesh, oGPULineList** _ppNormalLines = nullptr, float _NormalScale = 1.0f, oColor _NormalColor = std::White, oGPULineList** _ppTangentLines = nullptr, float _TangentScale = 1.0f, oColor _TangentColor = std::Gray);
 
 // This overwrites select values that are supported by OBJ's MTL format. Any 
 // OBJ-unsupported field is left untouched.
@@ -132,8 +126,108 @@ bool oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource, interface oImage** 
 
 // Given a list of bytecode buffers create a pipeline. This is most useful when
 // compiling shaders dynamically rather than using the static-compilation path.
-bool oGPUPipelineCreate(oGPUDevice* _pDevice, const char* _Name, oRef<oBuffer> _ByteCode[oGPU_PIPELINE_NUM_STAGES], const oGPU_VERTEX_ELEMENT* _pElements, size_t _NumElements, oGPUPipeline** _ppPipeline);
+bool oGPUPipelineCreate(oGPUDevice* _pDevice, const char* _Name, oRef<oBuffer> _ByteCode[oGPU_PIPELINE_STAGE_COUNT], const oGPU_VERTEX_ELEMENT* _pElements, size_t _NumElements, oGPU_PRIMITIVE_TYPE _InputType, oGPUPipeline** _ppPipeline);
 
+// Creates a line list representing the specified bounds.
+bool oGPUCreateBound(oGPUDevice* _pDevice, const char* _Name, const oAABoxf& _Bounds, oColor _Color, oGPULineList** _ppBoxLines);
+
+// the structure of vertices used in oGPU_UTIL_DEFAULT_PIPELINES below
+
+struct oGPU_UTIL_VERTEX_POSITION
+{
+	float3 Position;
+};
+
+struct oGPU_UTIL_INSTANCE
+{
+	float3 Translation;
+	quatf Rotation;
+};
+
+struct oGPU_UTIL_VERTEX_OBJ
+{
+	// OBJs (the alias wavefront file format) supports only positions, normals 
+	// and texcoords.
+
+	float3 Position;
+	float3 Normal;
+	float2 Texcoord;
+	float4 Tangent;
+};
+
+enum oGPU_UTIL_DEFAULT_PIPELINE
+{
+	// All assume: oGPUDrawConstants, oGPUViewConstants are properly set.
+	// OBJ ones assume textures are bound:
+	// 0: Diffuse map
+
+	// POSITION-ONLY:
+	// Input: oGPU_UTIL_VERTEX_POSITION + oGPU_UTIL_INSTANCE
+
+	// Renders a shadow map by projecting position and writing z.  No color
+	// is written and this doesn't handle alpha test.
+	oGPU_UTIL_SHADOW_MAP,
+
+	// Renders geometry in an unlit grid-paper style. The resolution of the grid 
+	// fades with distance, trying to maintain a screen-space density.
+	oGPU_UTIL_DEFAULT_PIPELINE_GRID,
+	oGPU_UTIL_DEFAULT_PIPELINE_GRID_INSTANCED,
+
+	// Uses local-space position xyz to be rgb color
+	oGPU_UTIL_DEFAULT_PIPELINE_POSITION,
+	oGPU_UTIL_DEFAULT_PIPELINE_POSITION_INSTANCED,
+
+	// Renders using depth as color
+	oGPU_UTIL_DEFAULT_PIPELINE_DEPTH,
+	oGPU_UTIL_DEFAULT_PIPELINE_DEPTH_INSTANCED,
+
+	// Writes out the object ID of the oGPUDrawConstants
+	oGPU_UTIL_DEFAULT_PIPELINE_OBJECT_ID,
+	oGPU_UTIL_DEFAULT_PIPELINE_OBJECT_ID_INSTANCED,
+
+	// LINES:
+
+	// Renders oGPULineList contents respecting the lines' world-space position
+	// and color.
+	// Input: oGPU_LINE_VERTEX
+	oGPU_UTIL_DEFAULT_PIPELINE_LINE_LIST,
+
+	// OBJ-BASED:
+
+	// Uses 2D texcoords as color
+	oGPU_UTIL_DEFAULT_PIPELINE_TEXCOORD,
+	oGPU_UTIL_DEFAULT_PIPELINE_TEXCOORD_INSTANCED,
+
+	// Uses worldspace normal as color
+	oGPU_UTIL_DEFAULT_PIPELINE_WSNORMAL,
+	oGPU_UTIL_DEFAULT_PIPELINE_WSNORMAL_INSTANCED,
+
+	// For the next few basic shaders, the "OBJ" file format is used to assume a 
+	// base level of vertex elements: oGPU_UTIL_VERTEX_OBJ + oGPU_UTIL_INSTANCE
+	oGPU_UTIL_DEFAULT_PIPELINE_OBJ_UNLIT,
+	oGPU_UTIL_DEFAULT_PIPELINE_OBJ_UNLIT_INSTANCED,
+
+	// Renders geometry with trivial lighting, using vertex normals to phong shade
+	// specularity and the light position are fixed. The light is a constant 
+	// offset from the eye position. No material constants are used.
+	oGPU_UTIL_DEFAULT_PIPELINE_OBJ_VERTEX_LIT,
+	oGPU_UTIL_DEFAULT_PIPELINE_OBJ_VERTEX_LIT_INSTANCED,
+
+	// Renders geometry with trivial lighting, using tangent-space normals to 
+	// phong shade specularity and the light position are fixed. The light is a 
+	// constant offset from the eye position. No material constants are used.
+	oGPU_UTIL_DEFAULT_PIPELINE_OBJ_PIXEL_LIT,
+	oGPU_UTIL_DEFAULT_PIPELINE_OBJ_PIXEL_LIT_INSTANCED,
+
+	oGPU_UTIL_DEFAULT_PIPELINE_COUNT,
+};
+
+// There are a few super-simple catch-all style shaders that should not need to
+// be written from project to project, so include some of them here for easier
+// reference rather than asserting or hitting a null pipeline, prefer falling 
+// back to one of these. Super-general debugging shaders might also be good to 
+// add to this list.
+bool oGPUGetPipeline(oGPU_UTIL_DEFAULT_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDesc);
 
 // Compiles an .opl file (like an .FX file)
 // In otherwise-hlsl source, insert an XML file that self-describes how the

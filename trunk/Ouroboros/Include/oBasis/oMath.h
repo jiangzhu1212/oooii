@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -155,6 +157,7 @@ template<typename T> TVEC3<T> oExtractScale(const TMAT4<T>& _Matrix) { T xy, xz,
 template<typename T> TVEC3<T> oExtractRotation(const TMAT4<T>& _Matrix) { T xy, xz, zy; TVEC3<T> s, r, t; TVEC4<T> p; oDecompose(_Matrix, &s, &xy, &xz, &zy, &r, &t, &p); return r; }
 template<typename T> TVEC3<T> oExtractTranslation(const TMAT4<T>& _Matrix) { return _Matrix.Column3.xyz(); }
 
+// Output values are not normalized.
 template<typename T> void oExtractAxes(const TMAT4<T>& _Matrix, TVEC3<T>* _pXAxis, TVEC3<T>* _pYAxis, TVEC3<T>* _pZAxis);
 
 // returns true of there is a projection/perspective or false if orthographic
@@ -204,7 +207,7 @@ TAABOX<T, TVec> oCalcTransformedAABox(const float4x4& _Matrix, const TAABOX<T, T
 // 90 degrees.
 template<typename T> TMAT4<T> oCreateRotation(const TVEC3<T>& _Radians);
 template<typename T> TMAT4<T> oCreateRotation(const T& _Radians, const TVEC3<T>& _NormalizedRotationAxis);
-template<typename T> TMAT4<T> oCreateRotation(const TVEC3<T>& _CurrentVector, const TVEC3<T>& _DesiredVector, const TVEC3<T>& _DefaultRotationAxis);
+template<typename T> TMAT4<T> oCreateRotation(const TVEC3<T>& _NormalizedSrcVec, const TVEC3<T>& _NormalizedDstVec);
 template<typename T> TMAT4<T> oCreateRotation(const TQUAT<T>& _Quaternion);
 template<typename T> TQUAT<T> oCreateRotationQ(const TVEC3<T>& _Radians);
 template<typename T> TQUAT<T> oCreateRotationQ(T _Radians, const TVEC3<T>& _NormalizedRotationAxis);

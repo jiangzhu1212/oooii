@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -28,7 +30,7 @@
 
 namespace RatcliffJobSwarm { bool RunDispatchQueueTest(const char* _Name, threadsafe oDispatchQueue* _pDispatchQueue); }
 
-struct TESTDQConcurrentTBB : TESTDispatchQueueBase
+struct PLATFORM_DQC_TBB : TESTDispatchQueueBase
 {
 	bool CreateQueue(size_t _InitialTaskCapacity, threadsafe oDispatchQueue** _ppQueue) override
 	{
@@ -36,12 +38,12 @@ struct TESTDQConcurrentTBB : TESTDispatchQueueBase
 	}
 };
 
-struct TESTDQConcurrentTBBTrivial : TESTDispatchQueueTrivialBase
+struct PLATFORM_DQC_TBBTrivial : TESTDispatchQueueTrivialBase
 {
 	bool CreateQueue(size_t _InitialTaskCapacity, threadsafe oDispatchQueue** _ppQueue) override
 	{
 		return oDispatchQueueCreateConcurrentTBB("TBB", _InitialTaskCapacity, (threadsafe oDispatchQueueConcurrent**)_ppQueue);
 	}
 };
-oTEST_REGISTER(TESTDQConcurrentTBBTrivial);
-oTEST_REGISTER(TESTDQConcurrentTBB);
+oTEST_REGISTER(PLATFORM_DQC_TBBTrivial);
+oTEST_REGISTER(PLATFORM_DQC_TBB);

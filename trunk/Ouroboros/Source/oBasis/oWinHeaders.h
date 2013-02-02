@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -70,5 +72,19 @@
 #undef _M_CEE_PURE
 
 #include <windows.h>
+
+// Define a low-level assertion here separate from oAssert.h because:
+// A. it protects against any complexities in user implementations of oASSERT
+// B. When oStd code is replaced compiler-standard libs we won't have control 
+//    anyway.
+
+#ifdef _DEBUG
+	#include <crtdbg.h>
+	#define oCRTASSERT(expr, msg, ...) if (!(expr)) { if (1 == _CrtDbgReport(_CRT_ASSERT, __FILE__, __LINE__, "Ouroboros Debug Library", #expr "\n\n" msg, ## __VA_ARGS__)) __debugbreak(); }
+	#define oCRTTRACE(msg, ...) do { _CrtDbgReport(_CRT_WARN, __FILE__, __LINE__, "Ouroboros Debug Library", msg, ## __VA_ARGS__); } while(false)
+#else
+	#define oCRTASSERT(expr, msg, ...) __noop
+	#define oCRTTRACE(msg, ...) __noop
+#endif
 
 #endif

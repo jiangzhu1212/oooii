@@ -115,9 +115,9 @@ Read32(FreeImageIO *io, fi_handle handle) {
 
 struct OpDef
 {
-	char * name;
+	const char * name;
 	int    len;
-	char * description;
+	const char * description;
 };
 
 // for reserved opcodes
@@ -388,7 +388,7 @@ ReadColorTable( FreeImageIO *io, fi_handle handle, WORD* pNumColors, RGBQUAD* pP
 			// The indicies in a device colour table are bogus and
 			// usually == 0, so I assume we allocate up the list of
 			// colours in order.
-			val = i;
+			val = (WORD)i;
 		}
 		if (val >= numColors) {
 			throw "pixel value greater than color table size.";
@@ -416,7 +416,7 @@ SkipBits( FreeImageIO *io, fi_handle handle, MacRect* bounds, WORD rowBytes, int
 	if (pixelSize <= 8) {
 		rowBytes &= 0x7fff;
 	}
-	pixwidth = width;
+	pixwidth = (WORD)width;
 	
 	if (pixelSize == 16) {
 		pixwidth *= 2;
@@ -656,7 +656,7 @@ Unpack8Bits( FreeImageIO *io, fi_handle handle, FIBITMAP* dib, MacRect* bounds, 
 	rowBytes &= 0x7fff;
 	
 	if (rowBytes == 0) {
-		rowBytes = width;
+		rowBytes = (WORD)width;
 	}
 	
 	for ( int i = 0; i < height; i++ ) {
@@ -694,7 +694,7 @@ UnpackBits( FreeImageIO *io, fi_handle handle, FIBITMAP* dib, MacRect* bounds, W
 		rowBytes &= 0x7fff;
 	}
 	
-	pixwidth = width;
+	pixwidth = (WORD)width;
 	pkpixsize = 1;          // RLE unit: one byte for everything...
 	if (pixelSize == 16) {    // ...except 16 bpp.
 		pkpixsize = 2;

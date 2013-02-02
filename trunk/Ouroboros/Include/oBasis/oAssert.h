@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -109,8 +111,8 @@ inline oASSERT_ACTION oAssertPrintf(const oASSERTION& _Assertion, const char* _F
 	#define oASSERT_PRINT(_Type, _DefaultResponse, _StrCondition, _Format, ...) do \
 	{	static bool oAssert_IgnoreFuture = false; \
 		if (!oAssert_IgnoreFuture) \
-		{	oASSERTION a; a.Expression = _StrCondition; a.Function = __FUNCTION__; a.Filename = __FILE__; a.Line = __LINE__; a.Type = _Type; a.DefaultResponse = _DefaultResponse; a.ID = oHash_stlp(_Format); \
-			oASSERT_ACTION action__ = oAssertPrintf(a, _Format "\n", ## __VA_ARGS__); \
+		{	oASSERTION assertion__; assertion__.Expression = _StrCondition; assertion__.Function = __FUNCTION__; assertion__.Filename = __FILE__; assertion__.Line = __LINE__; assertion__.Type = _Type; assertion__.DefaultResponse = _DefaultResponse; assertion__.ID = oHash_stlp(_Format); \
+			oASSERT_ACTION action__ = oAssertPrintf(assertion__, _Format "\n", ## __VA_ARGS__); \
 			switch (action__) { case oASSERT_ABORT: abort(); break; case oASSERT_BREAK: oDEBUGBREAK(); break; case oASSERT_IGNORE_ALWAYS: oAssert_IgnoreFuture = true; break; default: break; } \
 		} \
 	} while(false)

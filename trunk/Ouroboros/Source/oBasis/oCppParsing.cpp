@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,6 +29,7 @@
 #include <oBasis/oString.h>
 #include <oBasis/oPath.h>
 #include <oBasis/oError.h>
+#include <oBasis/oFor.h>
 #include <map>
 #include <regex>
 #include <unordered_map>
@@ -88,8 +91,8 @@ const char* oGetNextMatchingBrace(const char* _pPointingAtOpenBrace, char _Close
 const char* oGetNextMatchingBrace(const char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace)
 {
 	int open = 1;
-	size_t lOpen = strlen(_OpenBrace);
-	size_t lClose = strlen(_CloseBrace);
+	size_t lOpen = oStrlen(_OpenBrace);
+	size_t lClose = oStrlen(_CloseBrace);
 
 	const char* cur = _pPointingAtOpenBrace + lOpen;
 	while (*cur && open > 0)
@@ -226,7 +229,7 @@ bool oGetNextMatchingIfdefBlocks(oIFDEF_BLOCK* _pBlocks, size_t _MaxNumBlocks, s
 char* oZeroSection(char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace, char _Replacement)
 {
 	char* close = const_cast<char*>(oGetNextMatchingBrace(_pPointingAtOpenBrace, _OpenBrace, _CloseBrace));
-	close += strlen(_CloseBrace);
+	close += oStrlen(_CloseBrace);
 
 	char* cur = _pPointingAtOpenBrace;
 
@@ -245,7 +248,7 @@ char* oZeroLineComments(char* _String, const char* _CommentPrefix, char _Replace
 {
 	if (_String)
 	{
-		size_t l = strlen(_CommentPrefix);
+		size_t l = oStrlen(_CommentPrefix);
 		while (*_String)
 		{
 			if (!memcmp(_CommentPrefix, _String, l))
@@ -549,7 +552,7 @@ bool CollectHeaders(headers_t& _Headers, const char* _StrSourceCode, const char*
 	// way?
 
 	// Make an internal copy so we can clean up the defines
-	std::vector<char> sourceCodeCopy(strlen(_StrSourceCode) + 1);
+	std::vector<char> sourceCodeCopy(oStrlen(_StrSourceCode) + 1);
 	oStrcpy(oGetData(sourceCodeCopy), sourceCodeCopy.capacity(), _StrSourceCode);
 
 	if (!oZeroIfdefs(_Macros, oGetData(sourceCodeCopy), 0))
@@ -595,7 +598,7 @@ bool oHeadersAreUpToDate(const char* _StrSourceCode, const char* _SourceFullPath
 	HashMacros(macros, _pMacros);
 
 	// Make an internal copy so we can clean up the defines
-	std::vector<char> sourceCodeCopy(strlen(_StrSourceCode) + 1);
+	std::vector<char> sourceCodeCopy(oStrlen(_StrSourceCode) + 1);
 	oStrcpy(oGetData(sourceCodeCopy), oGetDataSize(sourceCodeCopy), _StrSourceCode);
 
 	if (!oZeroIfdefs(macros, oGetData(sourceCodeCopy), 0))
@@ -616,9 +619,9 @@ bool oHeadersAreUpToDate(const char* _StrSourceCode, const char* _SourceFullPath
 		return false;
 
 	// Go through unique headers and check dates
-	for (headers_t::const_iterator it = headers.begin(); it != headers.end(); ++it)
+	oFOR(auto pair, headers)
 	{
-		const std::string& headerFullPath = it->second;
+		const std::string& headerFullPath = pair.second;
 		const time_t headerTimestamp = _GetModifiedDate(headerFullPath.c_str());
 		if (!headerTimestamp)
 			return oErrorSetLast(oERROR_NOT_FOUND, "Could not find %s", _SourceFullPath);

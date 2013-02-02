@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -25,7 +27,7 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
-struct TESTGPULineList : public oTest
+struct GPU_LineList : public oTest
 {
 	oRef<oGPUDevice> Device;
 	oRef<oGPUCommandList> CL;
@@ -89,7 +91,7 @@ struct TESTGPULineList : public oTest
 
 		static const int sSnapshotFrames[] = { 0 };
 		static const bool kIsDevMode = false;
-		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&TESTGPULineList::Render, this, oBIND1), "TESTGPULineList", sSnapshotFrames);
+		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&GPU_LineList::Render, this, oBIND1), "GPU_LineList", sSnapshotFrames);
 
 		oStd::future<oRef<oImage>> Snapshots[oCOUNTOF(sSnapshotFrames)];
 		oRef<threadsafe oGPUWindow> Window;
@@ -135,4 +137,4 @@ struct TESTGPULineList : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTGPULineList);
+oTEST_REGISTER(GPU_LineList);

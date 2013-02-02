@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -39,12 +41,21 @@
 // Returns the number of elements in a fixed-size array
 #define oCOUNTOF(x) (sizeof(x)/sizeof((x)[0]))
 
+// Returns the decltype of a member
+#define oDECLTYPE(s, m) decltype(((s*)0)->m)
+
+// Returns the type_info of a member
+#define oTYPEID(s, m) typeid(((s*)0)->m)
+
+// Returns the size of a member
+#define oSIZEOF(s, m) sizeof(((s*)0)->m)
+
 // Returns the number of bytes from the base of the specified struct for the 
 // member variable x.
 #ifdef o64BIT
-	#define oOFFSETOF(s, m) (size_t)((ptrdiff_t)&reinterpret_cast<const volatile char&>((((s *)0)->m)))
+	#define oOFFSETOF(s, m) (uint)((ptrdiff_t)&reinterpret_cast<const volatile char&>((((s *)0)->m)))
 #else
-	#define oOFFSETOF(s, m) (size_t)&reinterpret_cast<const volatile char&>((((s *)0)->m))
+	#define oOFFSETOF(s, m) (uint)&reinterpret_cast<const volatile char&>((((s *)0)->m))
 #endif
 
 // Shorthand for a simple loop through a fixed array
@@ -76,6 +87,9 @@
 
 #define oNEWLINE "\r\n"
 #define oWHITESPACE " \t\v\f" oNEWLINE
+
+#define oWNEWLINE L"\r\n"
+#define oWWHITESPACE L" \t\v\f" oWNEWLINE
 
 // Convenience macro for classes overriding new and delete
 #define oDECLARE_NEW_DELETE() \

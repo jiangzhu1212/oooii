@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -25,7 +27,7 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
-struct TESTGPUTriangle : public oTest
+struct GPU_Triangle : public oTest
 {
 	oRef<oGPUDevice> Device;
 	oRef<oGPUCommandList> CL;
@@ -67,7 +69,7 @@ struct TESTGPUTriangle : public oTest
 		static const int sSnapshotFrames[] = { 0 };
 		static const bool kIsDevMode = false;
 
-		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&TESTGPUTriangle::Render, this, oBIND1), "TESTGPUTriangle", sSnapshotFrames);
+		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&GPU_Triangle::Render, this, oBIND1), "GPU_Triangle", sSnapshotFrames);
 
 		oStd::future<oRef<oImage>> Snapshots[oCOUNTOF(sSnapshotFrames)];
 		oRef<threadsafe oGPUWindow> Window;
@@ -108,4 +110,4 @@ struct TESTGPUTriangle : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTGPUTriangle);
+oTEST_REGISTER(GPU_Triangle);

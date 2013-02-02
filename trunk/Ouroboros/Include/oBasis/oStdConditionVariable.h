@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -38,6 +40,7 @@
 
 #include <oBasis/oStdChrono.h>
 #include <oBasis/oStdMutex.h>
+#include <cassert>
 
 // To keep the main classes neat, collect all the platform-specific forward
 // declaration here. This is done in this vague manner to avoid including 
@@ -90,7 +93,7 @@ public:
 	template <typename Clock, typename Duration, typename Predicate>
 	bool wait_until(unique_lock<mutex>& _Lock, const chrono::time_point<Clock, Duration>& _AbsoluteTime, Predicate _Predicate)
 	{
-		oASSERT(_Lock.owns_lock(), "Lock must own the mutex lock");
+		assert(_Lock.owns_lock() && "Lock must own the mutex lock");
 		while (!_Predicate())
 		{
 			if (wait_until(_Lock, _AbsoluteTime) == timeout)

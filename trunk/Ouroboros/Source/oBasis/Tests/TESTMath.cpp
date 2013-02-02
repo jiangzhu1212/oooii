@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -331,9 +333,33 @@ bool Test_ClipRect()
 	return true;
 }
 
+bool Test_MatrixMath()
+{
+	const int MAX_ULPS = 1800;
+	float3 TestVec = normalize(float3(-54, 884, 32145));
+	float3 TargetVecs [] =
+	{
+		TestVec, // Identity
+		-TestVec, // Flip
+		normalize(float3(TestVec.y, TestVec.z, TestVec.x)), // Axis swap
+		normalize(float3(-242, 1234, 3)) // Other
+	};
+
+	for(size_t i = 0; i < oCOUNTOF(TargetVecs); ++i)
+	{
+		auto Target = TargetVecs[i];
+		float4x4 Rotation = oCreateRotation(TestVec, Target);
+		float3 RotatedVec = mul(Rotation, TestVec);
+		oTESTB(oEqual(RotatedVec, Target, MAX_ULPS), "oCreateRotation failed with #%d (%f %f %f)", i, Target.x, Target.y, Target.z);
+	}
+	
+	return true;
+}
+
 
 bool oBasisTest_oMath()
 {
+	oTESTB2(Test_MatrixMath());
 	oTESTB2(Test_ClipRect());
 	oTESTB2(Test_oEqual());
 	oTESTB2(Test_oAABoxf());

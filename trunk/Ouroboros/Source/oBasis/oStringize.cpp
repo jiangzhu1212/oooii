@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -26,7 +28,7 @@
 #include <oBasis/oMacros.h>
 #include <oBasis/oPlatformFeatures.h>
 #include <oBasis/oString.h>
-#include <half.h>
+#include <oBasis/oTypes.h>
 #include <string>
 
 const char* oAsString(bool _Bool)
@@ -63,9 +65,9 @@ char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const unsig
 char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const long& _Value) { return 0 == _itoa_s(_Value, _StrDestination, _SizeofStrDestination, 10) ? _StrDestination : nullptr; }
 char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const unsigned long& _Value) { return -1 != oPrintf(_StrDestination, _SizeofStrDestination, "%u", _Value) ? _StrDestination : nullptr; }
 char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const long long& _Value) { return 0 == _i64toa_s(_Value, _StrDestination, _SizeofStrDestination, 10) ? _StrDestination : nullptr; }
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const unsigned long long& _Value) { return 0 == _ui64toa_s(*(int*)&_Value, _StrDestination, _SizeofStrDestination, 10) ? _StrDestination : nullptr; }
+char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const unsigned long long& _Value) { return 0 == _ui64toa_s(unsigned long long(_Value), _StrDestination, _SizeofStrDestination, 10) ? _StrDestination : nullptr; }
 char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const float& _Value) { if (-1 != oPrintf(_StrDestination, _SizeofStrDestination, "%f", _Value)) { oTrimRight(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return _StrDestination; } return nullptr; }
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const double& _Value) { if (-1 == oPrintf(_StrDestination, _SizeofStrDestination, "%lf", _Value)) { oTrimRight(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return _StrDestination; } return nullptr; }
+char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const double& _Value) { if (-1 != oPrintf(_StrDestination, _SizeofStrDestination, "%lf", _Value)) { oTrimRight(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return _StrDestination; } return nullptr; }
 char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const half& _Value) { if (oToString(_StrDestination, _SizeofStrDestination, static_cast<float>(_Value))) { oTrimRight(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return _StrDestination; } return nullptr; }
 char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const std::string& _Value) { return oStrcpy(_StrDestination, _SizeofStrDestination, _Value.c_str()); }
 

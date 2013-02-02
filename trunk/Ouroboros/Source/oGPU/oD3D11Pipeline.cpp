@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -61,6 +63,7 @@ const oGUID& oGetGUID(threadsafe const oD3D11Pipeline* threadsafe const *)
 
 oDEFINE_GPUDEVICE_CREATE(oD3D11, Pipeline);
 oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Pipeline)
+	, InputTopology(static_cast<D3D_PRIMITIVE_TOPOLOGY>(_Desc.InputType))
 	, DebugName(_Desc.DebugName)
 {
 	*_pSuccess = false;
@@ -80,6 +83,36 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Pipeline)
 	{
 		NumElements = 0;
 		pElements = nullptr;
+	}
+
+	// Verify input against shaders
+	if ((InputTopology == D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED || InputTopology < D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST) && (_Desc.pHullShader || _Desc.pDomainShader))
+	{
+		oErrorSetLast(oERROR_INVALID_PARAMETER, "%s inputs cannot have a hull or domain shader bound", oAsString(_Desc.InputType));
+		return;
+	}
+
+	switch (InputTopology)
+	{
+		case D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED:
+		case D3D_PRIMITIVE_TOPOLOGY_LINELIST:
+		case D3D_PRIMITIVE_TOPOLOGY_LINESTRIP:
+		case D3D_PRIMITIVE_TOPOLOGY_LINELIST_ADJ:
+		case D3D_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ:
+		{
+			// HS/DS handled above in if statement
+
+			if (_Desc.pGeometryShader)
+			{
+				oErrorSetLast(oERROR_INVALID_PARAMETER, "%s inputs cannot have a geometry shader bound", oAsString(_Desc.InputType));
+				return;
+			}
+
+			break;
+		}
+		
+		default:
+			break;
 	}
 
 	oD3D11DEVICE();
@@ -133,4 +166,5 @@ void oD3D11Pipeline::GetDesc(DESC* _pDesc) const threadsafe
 	_pDesc->DebugName = DebugName;
 	_pDesc->pElements = pElements;
 	_pDesc->NumElements = NumElements;
+	_pDesc->InputType = static_cast<oGPU_PRIMITIVE_TYPE>(InputTopology);
 }

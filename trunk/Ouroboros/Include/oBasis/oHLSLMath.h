@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -264,7 +266,7 @@ template<typename T> T radians(T degrees) { return degrees * T(3.141592653589793
 template<typename T> T degrees(T radians) { return radians * T(180.0) / T(3.14159265358979323846); }
 template<typename T> T distance(const TVEC2<T>& a, const TVEC2<T>& b) { return length(a-b); }
 template<typename T> T distance(const TVEC3<T>& a, const TVEC3<T>& b) { return length(a-b); }
-template<typename T> T reflect(const T& i, const T& n) { return i - 2 * n * dot(i,n); }
+template<typename T> T reflect(const T& i, const T& n) { return i - 2.0f * n * dot(i,n); }
 template<typename T> T refract(const TVEC3<T>& i, const TVEC3<T>& n, const T& r) { T c1 = dot(i,n); T c2 = T(1) - r*r * (T(1) - c1*c1); return (c2 < T(0)) ? TVEC3<T>(0) : r*i + (sqrt(c2) - r*c1) * n; } // http://www.physicsforums.com/archive/index.php/t-187091.html
 
 // _____________________________________________________________________________

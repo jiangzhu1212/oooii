@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -197,9 +199,22 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 	void Flush()
 	{
 		oBackoff bo;
+
+		#ifdef _DEBUG
+			oLocalTimeout to(5.0);
+		#endif
+
 		while(OutstandingContextCount > 0)
 		{ 
-			bo.Pause(); 
+			bo.Pause();
+
+			#ifdef _DEBUG
+				if (to.TimedOut())
+				{
+					oTRACE("Waiting for %d outstanding IOCP contexts to unregister themselves...", OutstandingContextCount);
+					to.Reset(5.0);
+				}
+			#endif
 		}
 
 		oLockGuard<oMutex> lock(Mutex);
@@ -249,18 +264,6 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 		}while(OrphanedContexts.size() == OrphanedContexts.capacity());
 	
 		--OutstandingContextCount;
-	}
-
-	void ActiveWait(oInterprocessEvent* _pEvent, unsigned int _TimeoutMS)
-	{
-		oScopedPartialTimeout Timeout(&_TimeoutMS);
-		while(_TimeoutMS && !_pEvent->Wait(0))
-		{
-			if(!IOCPCompletionRoutine(hIOCP, 0) ) // Re-post the shutdown key if we pulled one out of the IOCP system as ActiveWait is done outside of the normal worker thread routine
-				PostQueuedCompletionStatus(hIOCP, 0, IOCPKEY_SHUTDOWN, nullptr);
-
-			Timeout.UpdateTimeout();
-		}
 	}
 
 	void PostUserTask(oIOCPOp* _IOCP)
@@ -319,6 +322,7 @@ private:
 
 // {3DF7A5F8-BD85-4BC0-B295-DF86144C34A5}
 const oGUID oIOCP_Singleton::GUID = { 0x3df7a5f8, 0xbd85, 0x4bc0, { 0xb2, 0x95, 0xdf, 0x86, 0x14, 0x4c, 0x34, 0xa5 } };
+oSINGLETON_REGISTER(oIOCP_Singleton);
 
 void oIOCP_Impl::Release() threadsafe
 {
@@ -537,9 +541,3 @@ const oGUID& oGetGUID( threadsafe const oIOCP* threadsafe const * )
 	static const oGUID guid = { 0x5574c1b0, 0x7f26, 0x4a32, { 0x9a, 0x9a, 0x93, 0xc1, 0x72, 0x1, 0x6, 0xd } };
 	return guid;
 }
-
-oAPI void oIOCPActiveWait(oInterprocessEvent* _pEvent, unsigned int _TimeoutMS)
-{
-	oIOCP_Singleton::Singleton()->ActiveWait(_pEvent, _TimeoutMS);
-}
-

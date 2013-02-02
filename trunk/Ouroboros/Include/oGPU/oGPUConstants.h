@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -30,14 +32,6 @@
 #ifndef oGPUConstants_h
 #define oGPUConstants_h
 
-// @oooii-tony: I wanted these at 20, but because of sampler slot requirements
-// I can't. NOTE: There are 4 real sampler states: point/linear clamp/wrap. The
-// rest are aniso settings or mip bias settings. So we can map from several 
-// settings to a 16-member subset... come back to this.
-static const uint oGPU_MAX_NUM_SAMPLERS = 16;
-static const uint oGPU_MAX_NUM_MRTS = 8;
-static const uint oGPU_MAX_NUM_UNORDERED_BUFFERS = 8;
-static const uint oGPU_MAX_NUM_VIEWPORTS = 16;
 static const uint oGPU_MAX_NUM_PICKS_PER_FRAME = 16;
 static const uint oGPU_MAX_NUM_THREAD_GROUPS_PER_DIMENSION = 65535;
 static const uint oGPU_MAX_NUM_THREAD_GROUPS_PER_DIMENSION_MASK = 0xffff;

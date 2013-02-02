@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -32,6 +34,7 @@
 #define oProcess_h
 
 #include <oBasis/oInterface.h>
+#include <oBasis/oThread.h>
 
 interface oProcess : oInterface
 {
@@ -44,7 +47,7 @@ interface oProcess : oInterface
 			, StdHandleBufferSize(0)
 			, SetFocus(true)
 			, StartMinimized(false)
-			, HideWindow(false)
+			, ShowWindow(true)
 			// ALWAYS start suspended unless you have an excellent, approved reason 
 			// to not use this. Then use Start() so there's always a place to put a 
 			// breakpoint when spawning a new process so a debugger can be attached.
@@ -65,7 +68,7 @@ interface oProcess : oInterface
 		bool SetFocus:1;
 		bool StartMinimized:1;
 		bool StartSuspended:1;
-		bool HideWindow:1;
+		bool ShowWindow:1;
 	};
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -48,7 +50,7 @@ template<typename T> bool oStreamLoadPartial(T* _pBuffer, const char* _URIRefere
 bool oBufferLoad(const char* _URIReference, interface oBuffer** _ppBuffer, bool _AsString = false);
 bool oINILoad(const char* _URIReference, threadsafe interface oINI** _ppINI);
 bool oXMLLoad(const char* _URIReference, threadsafe interface oXML** _ppXML);
-bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ, threadsafe oMTL** _ppMTL);
+bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ);
 bool oMTLLoad(const char* _URIReference, threadsafe oMTL** _ppMTL);
 bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ, threadsafe oMTL** _ppMTL);
 

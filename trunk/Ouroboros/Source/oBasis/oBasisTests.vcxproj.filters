@@ -105,6 +105,18 @@
     <ClCompile Include="Tests\TESTSurface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\oBasisTestStruct.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTRTTI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\oBasisTestOBJ.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTSurfaceResize.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Tests\oBasisTestCommon.h">
@@ -114,5 +126,11 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasisTests\oBasisTests.h" />
+    <ClInclude Include="Tests\oBasisTestStruct.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\oBasisTestOBJ.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

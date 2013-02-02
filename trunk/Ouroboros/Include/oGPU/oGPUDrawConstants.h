@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -67,6 +69,7 @@ struct oGPUDrawConstants
 	oGPUDrawConstants() {}
 	oGPUDrawConstants(CONSTRUCTION _Type) { SetIdentity(); }
 	oGPUDrawConstants(const float4x4& _World, const float4x4& _View, const float4x4& _Projection, uint _ObjectID = 0, uint _DrawID = 0) { Set(_World, _View, _Projection, _ObjectID, _DrawID); }
+	oGPUDrawConstants(const float4x4& _World, const oGPUViewConstants& _ViewConstants, uint _ObjectID = 0, uint _DrawID = 0) { Set(_World, _ViewConstants.GetView(), _ViewConstants.GetProjection(), _ObjectID, _DrawID); }
 
 	inline void Set(const float4x4& _World, const float4x4& _View, const float4x4& _Projection, uint _ObjectID, uint _DrawID)
 	{
@@ -128,9 +131,9 @@ struct oGPUDrawConstants
 		return oMul(oGPU_DRAW_CONSTANT_BUFFER.WorldViewProjection, float4(_LSPosition, 1));
 	}
 
-	float3 oGPULStoVS(float3 _LSPosition)
+	float4 oGPULStoVS(float3 _LSPosition)
 	{
-		return oMul(oGPU_DRAW_CONSTANT_BUFFER.WorldView, float4(_LSPosition, 1)).xyz;
+		return oMul(oGPU_DRAW_CONSTANT_BUFFER.WorldView, float4(_LSPosition, 1));
 	}
 
 	float3 oGPULStoWS(float3 _LSPosition)
@@ -148,6 +151,11 @@ struct oGPUDrawConstants
 		return oMul(oGPU_DRAW_CONSTANT_BUFFER.WorldInverseTranspose, float4(_LSNormal, 1)).xyz;
 	}
 	
+	void oGPUNormalLStoWS(float3 _LSNormal, float4 _LSTangent, out float3 _OutWSNormal, out float3 _OutWSTangent, out float3 _OutWSBitangent)
+	{
+		oCalcWSTangentBasisVectors(oGPU_DRAW_CONSTANT_BUFFER.WorldInverseTranspose, _LSNormal, _LSTangent, _OutWSNormal, _OutWSTangent, _OutWSBitangent);
+	}
+
 	uint oGPUGetObjectID()
 	{
 		return oGPU_DRAW_CONSTANT_BUFFER.ObjectID;

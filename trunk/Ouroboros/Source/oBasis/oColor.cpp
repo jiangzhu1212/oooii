@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -66,10 +68,10 @@ void oColorRGBToYUV(int _R, int _G, int _B, int* _pY, int* _pU, int* _pV)
 {
 	// Using the float version of ITU-R BT.601 that jpeg uses. This is similar to 
 	// the integer version, except this uses the full 0 - 255 range.
-	static const float3 oITU_R_BT_601_OffsetToYUV(0.0f, 128.0f, 128.0f);
-	static const float3 oITU_R_BT_601_YFactor(0.299f, 0.587f, 0.114f);
-	static const float3 oITU_R_BT_601_UFactor(-0.1687f, -0.3313f, 0.5f);
-	static const float3 oITU_R_BT_601_VFactor(0.5f, -0.4187f, -0.0813f);
+	const float3 oITU_R_BT_601_OffsetToYUV(0.0f, 128.0f, 128.0f);
+	const float3 oITU_R_BT_601_YFactor(0.299f, 0.587f, 0.114f);
+	const float3 oITU_R_BT_601_UFactor(-0.1687f, -0.3313f, 0.5f);
+	const float3 oITU_R_BT_601_VFactor(0.5f, -0.4187f, -0.0813f);
 	float3 RGB = oCastAsFloat(int3(_R, _G, _B));
 	float3 YUV = float3(dot(RGB, oITU_R_BT_601_YFactor), dot(RGB, oITU_R_BT_601_UFactor), dot(RGB, oITU_R_BT_601_VFactor)) + oITU_R_BT_601_OffsetToYUV;
 	int3 iYUV = clamp(oCastAsInt(YUV), 0, 255);
@@ -82,10 +84,10 @@ void oColorYUVToRGB(int _Y, int _U, int _V, int* _pR, int* _pG, int* _pB)
 {
 	// Using the float version of ITU-R BT.601 that jpeg uses. This is similar to 
 	// the integer version, except this uses the full 0 - 255 range.
-	static const float3 oITU_R_BT_601_OffsetToRGB = float3(0.0f, -128.0f, -128.0f);
-	static const float3 oITU_R_BT_601_RFactor = float3(1.0f, 0.0f, 1.402f);
-	static const float3 oITU_R_BT_601_GFactor = float3(1.0f, -0.34414f, -0.71414f);
-	static const float3 oITU_R_BT_601_BFactor = float3(1.0f, 1.772f, 0.0f);
+	const float3 oITU_R_BT_601_OffsetToRGB = float3(0.0f, -128.0f, -128.0f);
+	const float3 oITU_R_BT_601_RFactor = float3(1.0f, 0.0f, 1.402f);
+	const float3 oITU_R_BT_601_GFactor = float3(1.0f, -0.34414f, -0.71414f);
+	const float3 oITU_R_BT_601_BFactor = float3(1.0f, 1.772f, 0.0f);
 	float3 YUV = oCastAsFloat(int3(_Y, _U, _V)) + oITU_R_BT_601_OffsetToRGB;
 	float3 RGB = float3(dot(YUV, oITU_R_BT_601_RFactor), dot(YUV, oITU_R_BT_601_GFactor), dot(YUV, oITU_R_BT_601_BFactor));
 	int3 iRGB = clamp(oCastAsInt(RGB), 0, 255);
@@ -330,7 +332,7 @@ char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const int4&
 char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oColor& _Value)
 {
 	const char* c = oAsString(_Value);
-	if (!oStrcmp("Unrec", c))
+	if (0 != oStrcmp("Unrec", c))
 		return oStrcpy(_StrDestination, _SizeofStrDestination, c);
 
 	int4 color;

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -72,8 +74,10 @@ inline void intrusive_ptr_add_ref(threadsafe oInterface* p)
 	p->Reference();
 	oASSERT(count > 0, "ref on invalid object");
 }
+inline void intrusive_ptr_add_ref(const threadsafe oInterface* p) { intrusive_ptr_add_ref(const_cast<threadsafe oInterface*>(p)); }
 
 inline void intrusive_ptr_release(threadsafe oInterface* p) { p->Release(); }
+inline void intrusive_ptr_release(const threadsafe oInterface* p) { const_cast<threadsafe oInterface*>(p)->Release(); }
 
 // Lockable interfaces manage thread safety at an object level.  These interfaces
 // tend to have mostly non-threadsafe methods so threadsafe access is granted

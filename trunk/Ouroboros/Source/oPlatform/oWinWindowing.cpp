@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -391,7 +393,7 @@ bool oWinSendKeys(HWND _Hwnd, unsigned int _ThreadID, short int* _pVKeys, int _N
 bool oWinSendASCIIMessage(HWND _Hwnd, unsigned int _ThreadID, const char* _pMessage)
 {
 	short int VirtualKeys[64];
-	int MessageLength = oInt(strlen(_pMessage));
+	int MessageLength = oInt(oStrlen(_pMessage));
 	if(MessageLength > oCOUNTOF(VirtualKeys))
 		return oErrorSetLast(oERROR_AT_CAPACITY, "Only support %d length messages", oCOUNTOF(VirtualKeys));
 
@@ -824,7 +826,7 @@ char* oWinTruncateLeft(char* _StrDestination, size_t _SizeofStrDestination, HWND
 	if (TruncatedLength)
 	{
 		oStringURI Truncated;
-		const char* pCopy = _StrSource + strlen(_StrSource) - TruncatedLength + 3;
+		const char* pCopy = _StrSource + oStrlen(_StrSource) - TruncatedLength + 3;
 		oASSERT(pCopy >= _StrSource, "");
 		if (-1 == oPrintf(_StrDestination, _SizeofStrDestination, "...%s", pCopy))
 		{

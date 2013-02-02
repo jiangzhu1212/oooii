@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -30,10 +32,10 @@
 #include <oBasis/oByteSwizzle.h>
 #include <oBasis/oPlatformFeatures.h>
 
-struct oEightCC : oCompareable<oEightCC>
+struct oEightCC : oComparable<oEightCC, unsigned long long, long long>
 {
-	oEightCC() {}
-	oEightCC(unsigned int _FourCCA, unsigned int _FourCCB)
+	inline oEightCC() {}
+	inline oEightCC(unsigned int _FourCCA, unsigned int _FourCCB)
 	{
 		#ifdef oLITTLEENDIAN
 			EightCC.AsUnsignedInt[0] = _FourCCB;
@@ -44,18 +46,17 @@ struct oEightCC : oCompareable<oEightCC>
 		#endif
 	}
 
-	oEightCC(unsigned long long _EightCC)
-	{
-		EightCC.AsUnsignedLongLong = _EightCC;
-	}
+	inline oEightCC(unsigned long long _EightCC) { EightCC.AsUnsignedLongLong = _EightCC; }
 
-	operator long long() const { return EightCC.AsLongLong; }
-	operator unsigned long long() const { return EightCC.AsUnsignedLongLong; }
+	inline operator long long() const { return EightCC.AsLongLong; }
+	inline operator unsigned long long() const { return EightCC.AsUnsignedLongLong; }
 
-	bool operator==(const oEightCC& _That) const { return EightCC.AsUnsignedLongLong == _That.EightCC.AsUnsignedLongLong; }
-	bool operator<(const oEightCC& _That) const { return EightCC.AsUnsignedLongLong < _That.EightCC.AsUnsignedLongLong; }
-	bool operator==(unsigned long long _That) const { return EightCC.AsUnsignedLongLong == _That; }
-	bool operator<(unsigned long long _That) const { return EightCC.AsUnsignedLongLong < _That; }
+	inline bool operator==(const oEightCC& _That) const { return EightCC.AsUnsignedLongLong == _That.EightCC.AsUnsignedLongLong; }
+	inline bool operator<(const oEightCC& _That) const { return EightCC.AsUnsignedLongLong < _That.EightCC.AsUnsignedLongLong; }
+	inline bool operator==(unsigned long long _That) const { return EightCC.AsUnsignedLongLong == _That; }
+	inline bool operator<(unsigned long long _That) const { return EightCC.AsUnsignedLongLong < _That; }
+	inline bool operator==(long long _That) const { return EightCC.AsLongLong == _That; }
+	inline bool operator<(long long _That) const { return EightCC.AsLongLong < _That; }
 
 protected:
 	oByteSwizzle64 EightCC;

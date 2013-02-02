@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -22,9 +24,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 
-// Pre-variadic macros we need to just type out templates with different counts
-// of parameters, so here it is. This facilitates the std::thread pattern of 
-// wrapping the need for std::bind inside the calls to functions that take 
+// Pre-variadic templates we need to just type out templates with different 
+// counts of parameters, so here it is. This facilitates the std::thread pattern 
+// of wrapping the need for std::bind inside the calls to functions that take 
 // functors.
 #pragma once
 #ifndef oCallable_h
@@ -40,39 +42,51 @@
 
 	#define oARG_TYPENAMES0
 	#define oARG_TYPENAMES1 typename Arg0
-	#define oARG_TYPENAMES2 typename Arg0, typename Arg1
-	#define oARG_TYPENAMES3 typename Arg0, typename Arg1, typename Arg2
-	#define oARG_TYPENAMES4 typename Arg0, typename Arg1, typename Arg2, typename Arg3
-	#define oARG_TYPENAMES5 typename Arg0, typename Arg1, typename Arg2, typename Arg3, typename Arg4
-	#define oARG_TYPENAMES6 typename Arg0, typename Arg1, typename Arg2, typename Arg3, typename Arg4, typename Arg5
-	#define oARG_TYPENAMES7 typename Arg0, typename Arg1, typename Arg2, typename Arg3, typename Arg4, typename Arg5, typename Arg6
-	#define oARG_TYPENAMES8 typename Arg0, typename Arg1, typename Arg2, typename Arg3, typename Arg4, typename Arg5, typename Arg6, typename Arg7
-	#define oARG_TYPENAMES9 typename Arg0, typename Arg1, typename Arg2, typename Arg3, typename Arg4, typename Arg5, typename Arg6, typename Arg7, typename Arg8
-	#define oARG_TYPENAMES10 typename Arg0, typename Arg1, typename Arg2, typename Arg3, typename Arg4, typename Arg5, typename Arg6, typename Arg7, typename Arg8, typename Arg9
+	#define oARG_TYPENAMES2 oARG_TYPENAMES1, typename Arg1
+	#define oARG_TYPENAMES3 oARG_TYPENAMES2, typename Arg2
+	#define oARG_TYPENAMES4 oARG_TYPENAMES3, typename Arg3
+	#define oARG_TYPENAMES5 oARG_TYPENAMES4, typename Arg4
+	#define oARG_TYPENAMES6 oARG_TYPENAMES5, typename Arg5
+	#define oARG_TYPENAMES7 oARG_TYPENAMES6, typename Arg6
+	#define oARG_TYPENAMES8 oARG_TYPENAMES7, typename Arg7
+	#define oARG_TYPENAMES9 oARG_TYPENAMES8, typename Arg8
+	#define oARG_TYPENAMES10 oARG_TYPENAMES9, typename Arg9
 
 	#define oARG_DECL0
 	#define oARG_DECL1 Arg0 Arg0__
-	#define oARG_DECL2 Arg0 Arg0__, Arg1 Arg1__
-	#define oARG_DECL3 Arg0 Arg0__, Arg1 Arg1__, Arg2 Arg2__
-	#define oARG_DECL4 Arg0 Arg0__, Arg1 Arg1__, Arg2 Arg2__, Arg3 Arg3__
-	#define oARG_DECL5 Arg0 Arg0__, Arg1 Arg1__, Arg2 Arg2__, Arg3 Arg3__, Arg4 Arg4__
-	#define oARG_DECL6 Arg0 Arg0__, Arg1 Arg1__, Arg2 Arg2__, Arg3 Arg3__, Arg4 Arg4__, Arg5 Arg5__
-	#define oARG_DECL7 Arg0 Arg0__, Arg1 Arg1__, Arg2 Arg2__, Arg3 Arg3__, Arg4 Arg4__, Arg5 Arg5__, Arg6 Arg6__
-	#define oARG_DECL8 Arg0 Arg0__, Arg1 Arg1__, Arg2 Arg2__, Arg3 Arg3__, Arg4 Arg4__, Arg5 Arg5__, Arg6 Arg6__, Arg7 Arg7__
-	#define oARG_DECL9 Arg0 Arg0__, Arg1 Arg1__, Arg2 Arg2__, Arg3 Arg3__, Arg4 Arg4__, Arg5 Arg5__, Arg6 Arg6__, Arg7 Arg7__, Arg8 Arg8__
-	#define oARG_DECL10 Arg0 Arg0__, Arg1 Arg1__, Arg2 Arg2__, Arg3 Arg3__, Arg4 Arg4__, Arg5 Arg5__, Arg6 Arg6__, Arg7 Arg7__, Arg8 Arg8__, Arg9 Arg9__
+	#define oARG_DECL2 oARG_DECL1, Arg1 Arg1__
+	#define oARG_DECL3 oARG_DECL2, Arg2 Arg2__
+	#define oARG_DECL4 oARG_DECL3, Arg3 Arg3__
+	#define oARG_DECL5 oARG_DECL4, Arg4 Arg4__
+	#define oARG_DECL6 oARG_DECL5, Arg5 Arg5__
+	#define oARG_DECL7 oARG_DECL6, Arg6 Arg6__
+	#define oARG_DECL8 oARG_DECL7, Arg7 Arg7__
+	#define oARG_DECL9 oARG_DECL8, Arg8 Arg8__
+	#define oARG_DECL10 oARG_DECL9, Arg9 Arg9__
 
 	#define oARG_PASS0
 	#define oARG_PASS1 Arg0__
-	#define oARG_PASS2 Arg0__, Arg1__
-	#define oARG_PASS3 Arg0__, Arg1__, Arg2__
-	#define oARG_PASS4 Arg0__, Arg1__, Arg2__, Arg3__
-	#define oARG_PASS5 Arg0__, Arg1__, Arg2__, Arg3__, Arg4__
-	#define oARG_PASS6 Arg0__, Arg1__, Arg2__, Arg3__, Arg4__, Arg5__
-	#define oARG_PASS7 Arg0__, Arg1__, Arg2__, Arg3__, Arg4__, Arg5__, Arg6__
-	#define oARG_PASS8 Arg0__, Arg1__, Arg2__, Arg3__, Arg4__, Arg5__, Arg6__, Arg7__
-	#define oARG_PASS9 Arg0__, Arg1__, Arg2__, Arg3__, Arg4__, Arg5__, Arg6__, Arg7__, Arg8__
-	#define oARG_PASS10 Arg0__, Arg1__, Arg2__, Arg3__, Arg4__, Arg5__, Arg6__, Arg7__, Arg8__, Arg9__
+	#define oARG_PASS2 oARG_PASS1, Arg1__
+	#define oARG_PASS3 oARG_PASS2, Arg2__
+	#define oARG_PASS4 oARG_PASS3, Arg3__
+	#define oARG_PASS5 oARG_PASS4, Arg4__
+	#define oARG_PASS6 oARG_PASS5, Arg5__
+	#define oARG_PASS7 oARG_PASS6, Arg6__
+	#define oARG_PASS8 oARG_PASS7, Arg7__
+	#define oARG_PASS9 oARG_PASS8, Arg8__
+	#define oARG_PASS10 oARG_PASS9, Arg9__
+
+	#define oARG_PARTIAL_TYPENAMES0 
+	#define oARG_PARTIAL_TYPENAMES1 Arg0
+	#define oARG_PARTIAL_TYPENAMES2 oARG_PARTIAL_TYPENAMES1, Arg1
+	#define oARG_PARTIAL_TYPENAMES3 oARG_PARTIAL_TYPENAMES2, Arg2
+	#define oARG_PARTIAL_TYPENAMES4 oARG_PARTIAL_TYPENAMES3, Arg3
+	#define oARG_PARTIAL_TYPENAMES5 oARG_PARTIAL_TYPENAMES4, Arg4
+	#define oARG_PARTIAL_TYPENAMES6 oARG_PARTIAL_TYPENAMES5, Arg5
+	#define oARG_PARTIAL_TYPENAMES7 oARG_PARTIAL_TYPENAMES6, Arg6
+	#define oARG_PARTIAL_TYPENAMES8 oARG_PARTIAL_TYPENAMES7, Arg7
+	#define oARG_PARTIAL_TYPENAMES9 oARG_PARTIAL_TYPENAMES8, Arg8
+	#define oARG_PARTIAL_TYPENAMES10 oARG_PARTIAL_TYPENAMES9, Arg9
 
 	#define oCALLABLE_TEMPLATE0 template<oCALLABLE_ARG_TYPENAMES0>
 	#define oCALLABLE_TEMPLATE1 template<oCALLABLE_ARG_TYPENAMES1>
@@ -100,15 +114,15 @@
 
 	#define oCALLABLE_ARG_TYPENAMES_PASS0 Callable
 	#define oCALLABLE_ARG_TYPENAMES_PASS1 Callable, Arg0
-	#define oCALLABLE_ARG_TYPENAMES_PASS2 Callable, Arg0, Arg1
-	#define oCALLABLE_ARG_TYPENAMES_PASS3 Callable, Arg0, Arg1, Arg2
-	#define oCALLABLE_ARG_TYPENAMES_PASS4 Callable, Arg0, Arg1, Arg2, Arg3
-	#define oCALLABLE_ARG_TYPENAMES_PASS5 Callable, Arg0, Arg1, Arg2, Arg3, Arg4
-	#define oCALLABLE_ARG_TYPENAMES_PASS6 Callable, Arg0, Arg1, Arg2, Arg3, Arg4, Arg5
-	#define oCALLABLE_ARG_TYPENAMES_PASS7 Callable, Arg0, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6
-	#define oCALLABLE_ARG_TYPENAMES_PASS8 Callable, Arg0, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7
-	#define oCALLABLE_ARG_TYPENAMES_PASS9 Callable, Arg0, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8
-	#define oCALLABLE_ARG_TYPENAMES_PASS10 Callable, Arg0, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9
+	#define oCALLABLE_ARG_TYPENAMES_PASS2 oCALLABLE_ARG_TYPENAMES_PASS1, Arg1
+	#define oCALLABLE_ARG_TYPENAMES_PASS3 oCALLABLE_ARG_TYPENAMES_PASS2, Arg2
+	#define oCALLABLE_ARG_TYPENAMES_PASS4 oCALLABLE_ARG_TYPENAMES_PASS3, Arg3
+	#define oCALLABLE_ARG_TYPENAMES_PASS5 oCALLABLE_ARG_TYPENAMES_PASS4, Arg4
+	#define oCALLABLE_ARG_TYPENAMES_PASS6 oCALLABLE_ARG_TYPENAMES_PASS5, Arg5
+	#define oCALLABLE_ARG_TYPENAMES_PASS7 oCALLABLE_ARG_TYPENAMES_PASS6, Arg6
+	#define oCALLABLE_ARG_TYPENAMES_PASS8 oCALLABLE_ARG_TYPENAMES_PASS7, Arg7
+	#define oCALLABLE_ARG_TYPENAMES_PASS9 oCALLABLE_ARG_TYPENAMES_PASS8, Arg8
+	#define oCALLABLE_ARG_TYPENAMES_PASS10 oCALLABLE_ARG_TYPENAMES_PASS9, Arg9
 
 	// @oooii-tony: Change these to Callable&& Function__ to leverage move ctors
 	#define oCALLABLE_PARAMS0 Callable Function__

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -206,14 +208,11 @@ float2 oCalculateScreenSpaceTexcoordPS(float4 _SVPosition, float2 _RenderTargetD
 	return _SVPosition.xy / _RenderTargetDimensions;
 }
 
-// Returns the eye position in whatever space the view matrix is in.
-float3 oGetEyePosition(float4x4 _ViewMatrix)
+// Returns the eye position in whatever space the view matrix is in. REMEMBER
+// to pass the INVERSE view matrix.
+float3 oGetEyePosition(float4x4 _InverseViewMatrix)
 {
-	#ifdef oMATRIX_COLUMN_MAJOR
-		return -float3(_ViewMatrix[0].w, _ViewMatrix[1].w, _ViewMatrix[2].w);
-	#else
-		return -_ViewMatrix[3].xyz;
-	#endif
+	return oMul(_InverseViewMatrix, float4(0.0, 0.0, 0.0, 1.0)).xyz;
 }
 
 // When writing a normal to a screen buffer, it's not useful to have normals that
@@ -388,10 +387,45 @@ float4 oYUVSampleNV12A(Texture2D _YA, Texture2D _UV, SamplerState _Sampler, floa
 // _____________________________________________________________________________
 // Lighting
 
-// Classic OpenGL style attenuation
-float oCalculateAttenuation(float ConstantFalloff, float LinearFalloff, float QuadraticFalloff, float LightDistance)
+// Handedness is stored in w component of _LSTangent. This should be called out 
+// of the vertex shader and the out values passed through to the pixel shader.
+// Read more:
+// http://www.terathon.com/code/tangent.html.
+void oCalcWSTangentBasisVectors(in float4x4 _WorldInverseTranspose, in float3 _LSNormal, in float4 _LSTangent, out float3 _OutWSNormal, out float3 _OutWSTangent, out float3 _OutWSBitangent)
 {
-	return saturate(1 / (ConstantFalloff + LinearFalloff*LightDistance + QuadraticFalloff*LightDistance*LightDistance));
+	_OutWSNormal = oMul(_WorldInverseTranspose, float4(_LSNormal, 1)).xyz;
+	_OutWSTangent = oMul(_WorldInverseTranspose, float4(_LSTangent.xyz, 1)).xyz;
+	_OutWSBitangent = cross(_OutWSNormal, _OutWSTangent) * _LSTangent.w;
+}
+
+// Returns an unnormalized normal in world space. If the return value is to be
+// passed onto a Toksvig-scaled lighting model, then the input vertex vectors do 
+// not need to be normalized.
+float3 oDecodeTSNormal(
+	float3 _WSVertexTangent
+	, float3 _WSVertexBitangent
+	, float3 _WSVertexNormal
+	, float3 _TSNormalMapColor
+	, float _BumpScale)
+{
+	const float3 TSNormal = _TSNormalMapColor*2-1;
+	return TSNormal.x*_BumpScale*_WSVertexTangent + TSNormal.y*_BumpScale*_WSVertexBitangent + TSNormal.z*_WSVertexNormal;
+}
+
+// Classic OpenGL style attenuation
+float oCalcAttenuation(float _ConstantFalloff, float _LinearFalloff, float _QuadraticFalloff, float _LightDistance)
+{
+	return saturate(1 / (_ConstantFalloff + _LinearFalloff*_LightDistance + _QuadraticFalloff*_LightDistance*_LightDistance));
+}
+
+// Input vectors are assumed to be normalized. Once NdotL is valid for lighting
+// (i.e. this can be skipped if not) then this further culls against the cone
+// of a spot light. The scalar returned should be multiplied against all 
+// lighting values affected by the spotlight, (i.e. diffuse and specular, etc.)
+float oCalcSpotlightAttenuation(float3 _SpotlightVector, float3 _LightVector, float _CosCutoffAngle, float _SpotExponent)
+{
+	float s = dot(_SpotlightVector, _LightVector);
+	return (s > _CosCutoffAngle) ? pow(s, _SpotExponent) : 0;
 }
 
 // Attenuates quadratically to a specific bounds of a light. This is useful for
@@ -433,12 +467,46 @@ float oLambertSSS(float _NdotL, float _Rolloff)
 	return max(0, smoothstep(-_Rolloff, 1, _NdotL) - smoothstep(0, 1, _NdotL));
 }
 
+// Toksvig specular scales brightness based on the mipmapping of normal maps. As 
+// normal maps mip, they approach a planar mirror, so specular can get 
+// disproportionately brighter at distances. The _UnnormalizedNdotNormalizedH is 
+// a decoded normal, unnormalized. This means normalization of vertex normal/
+// tangent/bitangent can be skipped and used unnormalized to sample a tangent-
+// space normal map, which too can remain unnormalized. Use that dotted against 
+// a normalized half vector (Hn = dot(normalize(ViewDir), normalize(LightDir))). 
+// The second parameter is the length of the unnormalized sampled and 
+// transformed normal. Read more:
+// http://www.nvidia.com/object/mipmapping_normal_maps.html
+// ftp://download.nvidia.com/developer/presentations/GDC_2004/RenderingTechniquesNVIDIA.pdf
+// http://developer.download.nvidia.com/shaderlibrary/packages/Toksvig_NormalMaps.zip
+float oCalcToksvigSpecular(float _UnnormalizedNdotNormalizedH, float _UnnormalizedNormalLength, float _SpecularExponent)
+{
+	float toksvig = _UnnormalizedNormalLength/(_UnnormalizedNormalLength+_SpecularExponent*(1-_UnnormalizedNormalLength));
+	float AdjustedSpecularExponent = toksvig * _SpecularExponent;
+	return (1.0+AdjustedSpecularExponent)/(1.0+_SpecularExponent)* pow(max(0,_UnnormalizedNdotNormalizedH/_UnnormalizedNormalLength), AdjustedSpecularExponent);
+}
+
 // Returns the results of HLSL's lit() with the specified parameters. All 
 // vectors are assumed to be normalized.
 float4 oLit(float3 _SurfaceNormal, float3 _LightVector, float3 _EyeVector, float _SpecularExponent)
 {
 	float2 L = oLambert(_SurfaceNormal, _LightVector, _EyeVector);
 	return lit(L.x, L.y, _SpecularExponent);
+}
+
+// Returns results similar to HLSL's lit(), but uses Toksvig's math to calculate
+// a more appealing specular value based on mip'ing normal maps that approach
+// perfect mirrors for higher mip levels. Use this instead of oLit when using
+// normal maps with a mip chain.
+float4 oLitToksvig(float3 _UnnormalizedSurfaceNormal, float3 _NormalizedLightVector, float3 _NormalizedEyeVector, float _SpecularExponent)
+{
+	float NLen = length(_UnnormalizedSurfaceNormal);
+	float NDotL = dot(_UnnormalizedSurfaceNormal / NLen, _NormalizedLightVector);
+	float Kd = max(0, NDotL);
+	float3 HalfVector = normalize(_NormalizedLightVector + _NormalizedEyeVector);
+	float NdotH = dot(_UnnormalizedSurfaceNormal, HalfVector);
+	float Ks = (NDotL < 0) || (NdotH < 0) ? 0 : oCalcToksvigSpecular(NdotH, NLen, _SpecularExponent);
+	return float4(1, Kd, Ks, 1);
 }
 
 // A variation on oLit that uses a softening of the NdotL ratio to give what 
@@ -493,6 +561,27 @@ float3 oPhongShade(float3 _SurfaceNormal // assumed to be normalized, pointing o
 	)
 {
 	float4 Lit = oLit(_SurfaceNormal, _LightVector, _EyeVector, _Kh);
+	return oPhongShade(Lit, _Attenuation, _Ka, _Ke, _Kd, _Ks, _Kt, _Kr, _Kl, _Ksh);
+}
+
+// Returns a color resulting from the input parameters consistent with the Phong
+// shading model.
+float3 oPhongShadeToksvig(float3 _UnnormalizedSurfaceNormal // assumed to be sampled from a normal map with mips
+	, float3 _LightVector // assumed to be normalized, pointing from surface to light
+	, float3 _EyeVector // assumed to be normalized, pointing from surface to eye
+	, float _Attenuation // result of oCalcAttenuation
+	, float3 _Ka // ambient color
+	, float3 _Ke // emissive color
+	, float3 _Kd // diffuse color
+	, float3 _Ks // specular color
+	, float _Kh // specular exponent
+	, float3 _Kt // transmissive color
+	, float3 _Kr // reflective color
+	, float3 _Kl // light color
+	, float _Ksh // shadow term (1 = unshadowed, 0 = shadowed)
+	)
+{
+	float4 Lit = oLitToksvig(_UnnormalizedSurfaceNormal, _LightVector, _EyeVector, _Kh);
 	return oPhongShade(Lit, _Attenuation, _Ka, _Ke, _Kd, _Ks, _Kt, _Kr, _Kl, _Ksh);
 }
 

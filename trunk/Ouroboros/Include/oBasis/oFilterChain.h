@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -34,6 +36,7 @@
 
 #include <oBasis/oAlgorithm.h>
 #include <oBasis/oError.h>
+#include <oBasis/oFor.h>
 #include <oBasis/oInitOnce.h>
 #include <oBasis/oThreadsafe.h>
 #include <vector>
@@ -71,12 +74,13 @@ public:
 		// the first filter as defining the most general set from which subsequent
 		// filters will reduce.
 		bool passes = (*Filters)[0].first == EXCLUDE1 || (*Filters)[0].first == EXCLUDE2;
-		for (filters_t::const_iterator it = Filters->begin(); it != Filters->end(); ++it)
+		
+		oFOR(const auto& pair, *Filters)
 		{
 			const char* s = _Symbol1;
-			if (it->first == INCLUDE2 || it->first == EXCLUDE2) s = _Symbol2;
+			if (pair.first == INCLUDE2 || pair.first == EXCLUDE2) s = _Symbol2;
 			if (!s) passes = true;
-			else if (regex_match(s, it->second)) passes = it->first & 0x1; // incl enums are odd, excl are even.
+			else if (regex_match(s, pair.second)) passes = pair.first & 0x1; // incl enums are odd, excl are even.
 		}
 		return passes;
 	}

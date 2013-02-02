@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -28,6 +30,35 @@
 #include <oBasis/oInterface.h>
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oSurface.h>
+
+typedef oFUNCTION<void(const oSURFACE_DESC& _Desc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Mapped)> oCameraOnFrameFn;
+
+interface oCameraFrameStream : oInterface
+{
+	// A mechanism by which client code can latch into a camera's video feed.
+
+	virtual bool AddObserver(const oCameraOnFrameFn& _OnFrame) = 0;
+	virtual bool RemoveObservers() = 0;
+};
+
+interface oCameraArticulator : oInterface
+{
+	// Some cameras provide a motor to control their orientation. This exposed 
+	// control for those types that support it.
+
+	virtual bool SetPitch(float _AngleInDegrees) = 0;
+	virtual bool GetPitch(float* _pAngleInDegrees) = 0;
+};
+
+interface oCameraPosition : oInterface
+{
+	// Some cameras can provide an estimation of their position based off of calibration or
+	// what they see in the frame.  Cameras also have a defined position which is relative to a known
+	// location, such as the primary screen.
+
+	virtual bool GetPosition(float3* _pCameraPositionOffset) = 0;
+	virtual bool GetEstimatedPosition(float3* _pEstimatedPosition) = 0;
+};
 
 interface oCamera : oInterface
 {

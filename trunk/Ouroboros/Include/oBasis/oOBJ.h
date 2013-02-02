@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,7 +29,7 @@
 #ifndef oOBJ_h
 #define oOBJ_h
 
-#include <oBasis/oGPUEnums.h>
+#include <oBasis/oGPUConcepts.h>
 
 // http://local.wasp.uwa.edu.au/~pbourke/dataformats/mtl/
 enum oOBJ_ILLUMINATION
@@ -45,6 +47,19 @@ enum oOBJ_ILLUMINATION
 	oOBJ_CASTS_SHADOWS_ONTO_INVISIBLE_SURFACES,
 };
 
+enum oOBJ_TEXTURE_TYPE
+{
+	oOBJ_DEFAULT,
+	oOBJ_CUBE_RIGHT,
+	oOBJ_CUBE_LEFT,
+	oOBJ_CUBE_TOP,
+	oOBJ_CUBE_BOTTOM,
+	oOBJ_CUBE_BACK,
+	oOBJ_CUBE_FRONT,
+	oOBJ_SPHERE,
+	oOBJ_TEXTURE_TYPE_COUNT,
+};
+
 struct oOBJ_GROUP
 {
 	oStringM GroupName;
@@ -52,10 +67,43 @@ struct oOBJ_GROUP
 	oGPU_RANGE Range;
 };
 
+struct oOBJ_TEXTURE
+{
+	oOBJ_TEXTURE()
+		: Boost(0.0f)
+		, BrightnessGain(0.0f, 1.0f)
+		, OriginOffset(0.0f, 0.0f, 0.0f)
+		, Scale(1.0f, 1.0f, 1.0f)
+		, Turbulance(0.0f, 0.0f, 0.0f)
+		, Resolution(oInvalid, oInvalid)
+		, BumpMultiplier(1.0f)
+		, Type(oOBJ_DEFAULT)
+		, IMFChan('l')
+		, Blendu(true)
+		, Blendv(true)
+		, Clamp(false)
+	{}
+
+	oStringPath Path;
+	float Boost;
+	float2 BrightnessGain;
+	float3 OriginOffset;
+	float3 Scale;
+	float3 Turbulance;
+	uint2 Resolution;
+	float BumpMultiplier;
+	oOBJ_TEXTURE_TYPE Type;
+	char IMFChan;
+	bool Blendu;
+	bool Blendv;
+	bool Clamp;
+};
+
 struct oOBJ_MATERIAL
 {
 	oOBJ_MATERIAL()
 		: AmbientColor(std::Black)
+		, EmissiveColor(std::Black)
 		, DiffuseColor(std::WhiteSmoke)
 		, SpecularColor(std::White)
 		, Specularity(0.25f)
@@ -65,6 +113,7 @@ struct oOBJ_MATERIAL
 	{}
 
 	oRGBf AmbientColor;
+	oRGBf EmissiveColor;
 	oRGBf DiffuseColor;
 	oRGBf SpecularColor;
 	oRGBf TransmissionColor;
@@ -74,15 +123,20 @@ struct oOBJ_MATERIAL
 	oOBJ_ILLUMINATION Illum;
 
 	oStringPath Name;
-	oStringPath AmbientTexturePath;
-	oStringPath DiffuseTexturePath;
-	oStringPath AlphaTexturePath;
-	oStringPath SpecularTexturePath;
-	oStringPath BumpTexturePath;
+	oOBJ_TEXTURE Ambient;
+	oOBJ_TEXTURE Diffuse;
+	oOBJ_TEXTURE Alpha;
+	oOBJ_TEXTURE Specular;
+	oOBJ_TEXTURE Bump;
 };
 
 struct oOBJ_DESC
 {
+	// positions/texcoords/normals will all have the same count (i.e. 
+	// reduction/duplication is done internally). If there is no data for one of 
+	// the channels, then the pointer will be null and pVertexElements will be 
+	// collapsed (no null element between others).
+
 	oOBJ_DESC()
 		: OBJPath(nullptr)
 		, MTLPath(nullptr)
@@ -91,6 +145,8 @@ struct oOBJ_DESC
 		, pTexcoords(nullptr)
 		, pIndices(nullptr)
 		, pGroups(nullptr)
+		, pVertexElements(nullptr)
+		, NumVertexElements(0)
 		, NumVertices(0)
 		, NumIndices(0)
 		, NumGroups(0)
@@ -100,15 +156,17 @@ struct oOBJ_DESC
 	const char* MTLPath;
 	const float3* pPositions;
 	const float3* pNormals;
-	const float2* pTexcoords;
-	const unsigned int* pIndices;
+	const float3* pTexcoords;
+	const uint* pIndices;
 	const oOBJ_GROUP* pGroups;
+	const oGPU_VERTEX_ELEMENT* pVertexElements;
 
-	// positions/normals/texcoords will all have the same count. If there is no
-	// data for one of the channels, then the pointer will be null
-	unsigned int NumVertices;
-	unsigned int NumIndices;
-	unsigned int NumGroups;
+	uint NumVertexElements;
+	uint NumVertices;
+	uint NumIndices;
+	uint NumGroups;
+
+	oAABoxf Bound;
 };
 
 interface oOBJ : oInterface
@@ -119,7 +177,7 @@ interface oOBJ : oInterface
 struct oMTL_DESC
 {
 	const oOBJ_MATERIAL* pMaterials;
-	unsigned int NumMaterials;
+	uint NumMaterials;
 };
 
 interface oMTL : oInterface
@@ -131,25 +189,32 @@ struct oOBJ_INIT
 {
 	oOBJ_INIT()
 		: EstimatedNumVertices(100000)
-		,	EstimatedNumIndices(100000)
+		, EstimatedNumIndices(100000)
 		, FlipHandedness(false)
 		, CounterClockwiseFaces(true)
 		, CalcNormalsOnError(true)
+		, CalcTexcoordsOnError(true)
 	{}
 
 	// Estimates are used to pre-allocate memory in order to minimize reallocs
-	unsigned int EstimatedNumVertices;
-	unsigned int EstimatedNumIndices;
+	uint EstimatedNumVertices;
+	uint EstimatedNumIndices;
 	bool FlipHandedness;
 	bool CounterClockwiseFaces;
-	bool CalcNormalsOnError; // either no normals loaded or there are degenerate normals
+	bool CalcNormalsOnError; // either for no loaded normals or degenerates
+	bool CalcTexcoordsOnError; // uses LCSM if no texcoords in source
 };
 
 // oOBJ processing hashes faces for sharing of vertices, but this can result in 
 // many small allocations internally that then need to be freed, which can take 
 // a long time. As an optimization, client code can pass a hint in 
 // _InternalReserve to make internal memory management a lot faster.
-bool oOBJCreate(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ);
-bool oMTLCreate(const char* _MTLPath, const char* _MTLString, threadsafe oMTL** _ppMTL);
+oAPI bool oOBJCreate(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ);
+oAPI bool oMTLCreate(const char* _MTLPath, const char* _MTLString, threadsafe oMTL** _ppMTL);
+
+// Convenience function to collapse groups into an array of ranges. If this 
+// succeeds, the number of valid ranges will be Desc.NumRanges.
+oAPI bool oOBJCopyRanges(oGPU_RANGE* _pDestination, size_t _NumRanges, const oOBJ_DESC& _Desc);
+template<size_t size> bool oOBJCopyRanges(oGPU_RANGE (&_pDestination)[size], const oOBJ_DESC& _Desc) { return oOBJCopyRanges(_pDestination, size, _Desc); }
 
 #endif

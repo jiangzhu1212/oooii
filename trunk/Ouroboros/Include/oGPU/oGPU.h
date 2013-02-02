@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -21,14 +23,13 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Cross-platform API for the major vocabulary of 3D 
-// rendering while trying to remain policy-agnostic
+// Cross-platform API for the major vocabulary of 3D rendering while trying to 
+// remain policy-agnostic.
 #pragma once
 #ifndef oGPU_h
 #define oGPU_h
 
-#include <oBasis/oGPUEnums.h>
-#include <oGPU/oGPUStructs.h>
+#include <oBasis/oGPUConcepts.h>
 
 // Main SW abstraction for a graphics processor
 interface oGPUDevice;
@@ -73,19 +74,19 @@ interface oGPUInstanceList : oGPUResource
 	// each instance's data is user-defined using IAELEMENTs. This is more or less 
 	// a different semantic of vertex attributes.
 
-	struct DESC : oGPU_INSTANCE_LIST_DESC {};
+	typedef oGPU_INSTANCE_LIST_DESC DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
 interface oGPULineList : oGPUResource
 {
-	struct DESC : oGPU_LINE_LIST_DESC {};
+	typedef oGPU_LINE_LIST_DESC DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
 interface oGPUBuffer : oGPUResource
 {
-	struct DESC : oGPU_BUFFER_DESC {};
+	typedef oGPU_BUFFER_DESC DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
@@ -95,7 +96,7 @@ interface oGPUMesh : oGPUResource
 	// a continuous shape can be constructed by multiple draw calls, each with a 
 	// different render state.
 
-	struct DESC : oGPU_MESH_DESC {};
+	typedef oGPU_MESH_DESC DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
@@ -104,7 +105,7 @@ interface oGPUTexture : oGPUResource
 	// A large buffer filled with surface data. Most often this is one or more 
 	// 2D planes wrapped onto the surface of a screen or mesh.
 
-	struct DESC : oGPU_TEXTURE_DESC {};
+	typedef oGPU_TEXTURE_DESC DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
@@ -112,7 +113,7 @@ interface oGPURenderTarget : oGPUDeviceChild
 {
 	// A 2D plane onto which rendering occurs
 
-	struct DESC : oGPU_RENDER_TARGET_DESC {};
+	typedef oGPU_RENDER_TARGET_DESC DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 
 	// Modifies the values for clearing without modifying other topology
@@ -135,7 +136,7 @@ interface oGPUPipeline : oGPUDeviceChild
 	// A pipeline is the result of setting all stages of the programmable pipeline 
 	// (all shaders) and the vertex input format to that pipeline.
 
-	struct DESC : oGPU_PIPELINE_BYTECODE {};
+	typedef oGPU_PIPELINE_DESC DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
@@ -145,7 +146,7 @@ interface oGPUComputeShader : oGPUDeviceChild
 	// path that ignores fixed-function rasterization stages and exposes more 
 	// general-purpose components.
 
-	struct DESC : oGPU_COMPUTE_SHADER_BYTECODE {};
+	typedef oGPU_COMPUTE_SHADER_DESC DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
@@ -155,7 +156,7 @@ interface oGPUCommandList : oGPUDeviceChild
 	// device. All operations herein are single-threaded. For parallelism separate 
 	// command lists can be built in different threads.
 
-	struct DESC : oGPU_COMMAND_LIST_DESC {};
+	typedef oGPU_COMMAND_LIST_DESC DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 
 	// Begins recording of GPU command submissions. All rendering for this context 
@@ -169,6 +170,12 @@ interface oGPUCommandList : oGPUDeviceChild
 	// implications if called, but is sometimes required, especially with the 
 	// immediate context, during debugging.
 	virtual void Flush() = 0;
+
+	// Clears the command list's idea of state back to its default. In general 
+	// client code should set state absolute state, but if a command list is 
+	// reassigned to a different responsibility, it may make sense to start with
+	// a clean slate.
+	virtual void Reset() = 0;
 
 	// Allocates internal device memory that can be written to (not read) and 
 	// committed to the device to update the specified resource.
@@ -192,6 +199,7 @@ interface oGPUCommandList : oGPUDeviceChild
 	// oGPUInstanceList allocated with MaxNumInstances = 100, updating for 10 to 
 	// be drawn would use oRECT(int2(0,0), int2(10,1)).
 	virtual void Commit(oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Source, const oGPU_BOX& _Subregion = oGPU_BOX()) = 0;
+	inline void Commit(oGPUResource* _pResource, int _Subresource, oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source, const oGPU_BOX& _Subregion = oGPU_BOX()) { Commit(_pResource, _Subresource, (oSURFACE_MAPPED_SUBRESOURCE&)_Source, _Subregion); }
 
 	// Copies the contents from one resource to another. Both must have compatible 
 	// (often identical) topologies. A common use of this API is to copy from a 
@@ -230,7 +238,15 @@ interface oGPUCommandList : oGPUDeviceChild
 	virtual void SetShaderResources(int _StartSlot, int _NumResources, const oGPUResource* const* _ppResources) = 0;
 	inline void SetShaderResources(int _StartSlot, int _NumResources, const oGPUTexture* const* _ppResources) { SetShaderResources(_StartSlot, _NumResources, (const oGPUResource* const*)_ppResources); }
 	inline void SetShaderResources(int _StartSlot, int _NumResources, const oGPUBuffer* const* _ppResources) { SetShaderResources(_StartSlot, _NumResources, (const oGPUResource* const*)_ppResources); }
-	template<size_t size, typename T> void SetShaderResources(int _StartSlot, const T* const (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const T* const*)_ppResources); }
+	
+	template<size_t size> void SetShaderResources(int _StartSlot, const oGPUResource* const (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
+	template<size_t size> void SetShaderResources(int _StartSlot, const oGPUBuffer* const (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
+	template<size_t size> void SetShaderResources(int _StartSlot, const oGPUTexture* const (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
+
+	template<size_t size> void SetShaderResources(int _StartSlot, const oRef<oGPUResource> (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
+	template<size_t size> void SetShaderResources(int _StartSlot, const oRef<oGPUBuffer> (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
+	template<size_t size> void SetShaderResources(int _StartSlot, const oRef<oGPUTexture> (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
+	
 	inline void SetShaderResources(int _StartSlot, const oGPUResource* _pResource) { SetShaderResources(_StartSlot, 1, &_pResource); }
 	inline void SetShaderResources(int _StartSlot, const oGPUTexture* _pResource) { SetShaderResources(_StartSlot, 1, &_pResource); }
 
@@ -239,6 +255,13 @@ interface oGPUCommandList : oGPUDeviceChild
 
 	template<size_t size> inline void SetBuffers(int _StartSlot, const oGPUBuffer* const (&_ppBuffers)[size]) { SetBuffers(_StartSlot, size, _ppBuffers); }
 	inline void SetBuffers(int _StartSlot, const oGPUBuffer* _pBuffer) { SetBuffers(_StartSlot, 1, (const oGPUBuffer* const *)&_pBuffer); }
+
+	// Start index is in indices, not bytes.
+	virtual void SetIndexBuffer(const oGPUBuffer* _pIndexBuffer) = 0;
+
+	// Start vertex is in vertices, not bytes, and is thus uniform for all bound
+	// vertex buffers.
+	virtual void SetVertexBuffers(int _StartSlot, int _NumVertexBuffers, const oGPUBuffer* const* _ppVertexBuffers, uint _StartVertex = 0) = 0;
 
 	// Sets the render target to which rendering will occur. By default, a single
 	// full-target viewport is created, else it can be overridden. A viewport is 
@@ -294,6 +317,11 @@ interface oGPUCommandList : oGPUDeviceChild
 	// the the currently set render target is cleared.
 	virtual void Clear(oGPURenderTarget* _pRenderTarget, oGPU_CLEAR _Clear) = 0;
 
+	// A pipeline must be set before calling draw. If valid instance values are 
+	// specified, a vertex buffer containing instanced vertex elements is expected 
+	// to be bound.
+	virtual void Draw(uint _StartPrimitive, uint _NumPrimitives, uint _StartInstance = oInvalid, uint _NumInstances = oInvalid) = 0;
+
 	// Submits an oGPUMesh for drawing using the current state of the 
 	// command list.
 	virtual void Draw(const oGPUMesh* _pMesh, int _RangeIndex, const oGPUInstanceList* _pInstanceList = nullptr) = 0;
@@ -342,10 +370,11 @@ interface oGPUDevice : oInterface
 {
 	// Main SW abstraction for a graphics processor
 
-	struct INIT : oGPU_DEVICE_INIT { INIT(const char* _DebugName = "oGPUDevice") : oGPU_DEVICE_INIT(_DebugName) {} };
-	struct DESC : oGPU_DEVICE_DESC {};
-
+	typedef oGPU_DEVICE_INIT INIT;
+	
+	typedef oGPU_DEVICE_DESC DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+	
 	virtual const char* GetName() const threadsafe = 0;
 	virtual uint GetFrameID() threadsafe const = 0;
 

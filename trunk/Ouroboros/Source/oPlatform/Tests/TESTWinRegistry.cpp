@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -25,10 +27,10 @@
 #include <oPlatform/Windows/oWinRegistry.h>
 
 const char* KeyTestValue = "Value";
-const char* KeyPath = "Software/OOOii-oUnitTests/TESTWinRegistry";
+const char* KeyPath = "Software/OOOii-oUnitTests/PLATFORM_oWinRegistry";
 const char* ValueName = "TestValue";
 
-struct TESTWinRegistry : public oTest
+struct PLATFORM_oWinRegistry : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
@@ -47,4 +49,4 @@ struct TESTWinRegistry : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTWinRegistry);
+oTEST_REGISTER(PLATFORM_oWinRegistry);

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -33,7 +35,11 @@ oBEGIN_DEFINE_GPURESOURCE_CTOR(oD3D11, Buffer)
 	if (_Desc.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND)
 		ppUAV = &UAVAppend;
 
-	*_pSuccess = oD3D11CreateBuffer(D3DDevice, _Name, _Desc, nullptr, &Buffer, ppUAV, &SRV);
+	*_pSuccess = oD3D11BufferCreate(D3DDevice, _Name, _Desc, nullptr, &Buffer, ppUAV, &SRV);
+	
+	// get updated data (will ensure StructByteSize is sync'ed with format)
+	if (*_pSuccess)
+		*_pSuccess = oD3D11BufferGetDesc(Buffer, &Desc);
 
 	if (*_pSuccess && _Desc.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND)
 		*_pSuccess = oD3D11CreateUnflaggedUAV(*ppUAV, &UAV);
@@ -41,6 +47,5 @@ oBEGIN_DEFINE_GPURESOURCE_CTOR(oD3D11, Buffer)
 
 int2 oD3D11Buffer::GetByteDimensions(int _Subresource) const threadsafe
 {
-	uint Size = Desc.StructByteSize ? Desc.StructByteSize : oSurfaceFormatGetSize(Desc.Format);
-	return int2(Size, Desc.ArraySize);
+	return int2(Desc.StructByteSize, Desc.ArraySize);
 }

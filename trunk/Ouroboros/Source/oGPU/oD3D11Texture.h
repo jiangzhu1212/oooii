@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -29,7 +31,7 @@
 #include "oGPUCommon.h"
 #include <oPlatform/Windows/oD3D11.h>
 
-oDECLARE_GPURESOURCE_IMPLEMENTATION(oD3D11, Texture, oGPU_TEXTURE_RGB)
+oDECLARE_GPURESOURCE_IMPLEMENTATION(oD3D11, Texture, oGPU_TEXTURE)
 {
 	oDEFINE_GPURESOURCE_INTERFACE();
 	//oDECLARE_GPURESOURCE_CTOR(oD3D11, Texture);
@@ -38,6 +40,12 @@ oDECLARE_GPURESOURCE_IMPLEMENTATION(oD3D11, Texture, oGPU_TEXTURE_RGB)
 	oRef<ID3D11Texture2D> Texture;
 	oRef<ID3D11ShaderResourceView> SRV;
 	oRef<ID3D11UnorderedAccessView> UAV;
+
+	// Texture2 is used to emulate YUV aniso-sized formats. As DXGI specs more YUV
+	// formats and HW supports them, this might get used less, but there are still
+	// formats OOOii requires not on the posted DXGI roadmap, so this will be 
+	// needed for the foreseeable future.
+	oRef<oD3D11Texture> Texture2;
 };
 
 #endif

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -26,10 +28,18 @@
 #ifndef oTypes_h
 #define oTypes_h
 
+#include <half.h>
+#include <type_traits>
+
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef long long llong;
 typedef unsigned long long ullong;
+
+namespace std {
+	template<> struct is_floating_point<half> : true_type {};
+	// @oooii-tony: Should we spoof is_class to false here?
+}
 
 #endif

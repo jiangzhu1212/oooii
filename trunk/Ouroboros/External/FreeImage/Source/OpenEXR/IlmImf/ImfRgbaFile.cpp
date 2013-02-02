@@ -175,11 +175,11 @@ cachePadding (ptrdiff_t size)
     while ((size >> i) > 1)
 	++i;
 
-    if (size > ((size_t)1 << (i + 1)) - 64)
-	return 64 + (((size_t)1 << (i + 1)) - size);
+    if (size > (1 << (i + 1)) - 64)
+	return 64 + (((ptrdiff_t)1 << (i + 1)) - size);
 
-    if (size < ((size_t)1 << i) + 64)
-	return 64 + (((size_t)1 << i) - size);
+    if (size < (1 << i) + 64)
+	return 64 + (((ptrdiff_t)1 << i) - size);
 
     return 0;
 }

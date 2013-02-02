@@ -75,6 +75,12 @@ SOFTWARE.
 
 enum oKEYBOARD_KEY
 {
+	oKB_None = 0x0000,
+	oKB_Pos_Head = 0xFF40,
+	oKB_Pos_RightHand = 0xFF41,
+	oKB_Pos_LeftHand = 0xFF42,
+	oKB_Pos_Hip = 0xFF43,
+
 	oKB_Touch0 = 0xFFF0,
 	oKB_Touch1 = 0xFFF1,
 	oKB_Touch2 = 0xFFF2,

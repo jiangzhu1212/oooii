@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -104,7 +106,7 @@ int main(int argc, const char* argv[])
 			char* w = pCppBuffer + oPrintf(pCppBuffer, cppBufferSize, "// $(header)\n%s", pchHeader.c_str());
 			w += oCodifyData(w, (size_t)std::distance(w, pCppBufferEnd), opts.InputPath, b->GetData(), b->GetSize(), sizeof(unsigned int));
 
-			if (oFileSave(opts.OutputPath, pCppBuffer, strlen(pCppBuffer), true))
+			if (oFileSave(opts.OutputPath, pCppBuffer, oStrlen(pCppBuffer), true))
 				rv = 0;
 
 			free(pCppBuffer);

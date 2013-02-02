@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -148,7 +150,7 @@ bool oINICreate(const char* _DocumentName, const char* _INIString, threadsafe oI
 
 size_t oINI_Impl::GetDocumentSize() const threadsafe
 {
-	return sizeof(*this) + strlen(Data) + 1 + Entries->capacity() * sizeof(ENTRIES::value_type);
+	return sizeof(*this) + oStrlen(Data) + 1 + Entries->capacity() * sizeof(ENTRIES::value_type);
 }
 
 const char* oINI_Impl::GetDocumentName() const threadsafe
@@ -159,7 +161,7 @@ const char* oINI_Impl::GetDocumentName() const threadsafe
 oINI_Impl::oINI_Impl(const char* _DocumentName, const char* _INIString)
 	: DocumentName(_DocumentName)
 {
-	size_t numberOfElements = strlen(oSAFESTR(_INIString))+1;
+	size_t numberOfElements = oStrlen(oSAFESTR(_INIString))+1;
 	Data = new char[numberOfElements];
 	oStrcpy(Data, numberOfElements, oSAFESTR(_INIString));
 	INIParse(Entries.Initialize(), Data);

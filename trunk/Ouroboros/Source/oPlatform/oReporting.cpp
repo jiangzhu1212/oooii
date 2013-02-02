@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -32,9 +34,13 @@
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oSystem.h>
 #include <oPlatform/oStandards.h>
+#include <oPlatform/Windows/oWinAsString.h>
 #include "SoftLink/oWinDbgHelp.h"
 #include "oCRTLeakTracker.h"
 #include "oFileInternal.h"
+
+#define oEXCEPTION_PURE_VIRTUAL_CALL 0x8badc0de
+#define oEXCEPTION_BAD_EXCEPTION 0x8badec10
 
 const char* oAsString(const oASSERT_TYPE& _Type)
 {
@@ -136,22 +142,35 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 
 	void DumpAndTerminate(EXCEPTION_POINTERS* _pExceptionPtrs, const char* _pUserErrorMessage)
 	{
-		oStringS DumpStamp = oGetModuleFileStampString();
+		oStringS DumpStamp = VersionString;
+
+		oNTPDate now;
+		oSystemGetDate(&now);
+		oStringS StrNow;
+		oDateStrftime(DumpStamp.c_str() + DumpStamp.length(), DumpStamp.capacity() - DumpStamp.length(), oDATE_SYSLOG_FORMAT_LOCAL, now, oDATE_TO_LOCAL);
+		oReplace(StrNow, DumpStamp, ":", "_");
+		oReplace(DumpStamp, StrNow, ".", "_");
 
 		bool Mini = false;
 		bool Full = false;
 
 		oStringPath DumpPath;
-		if (MiniDumpBase)
+		if (!Desc.MiniDumpBase.empty())
 		{
-			oPrintf(DumpPath, "%s%s.dmp", MiniDumpBase, DumpStamp.c_str());
+			oPrintf(DumpPath, "%s%s.dmp", Desc.MiniDumpBase, DumpStamp.c_str());
 			Mini = oWinWriteDumpFile(MiniDumpNormal, DumpPath, _pExceptionPtrs);
 		}
 
-		if (FullDumpBase)
+		if (!Desc.FullDumpBase.empty())
 		{
-			oPrintf(DumpPath, "%s%s.dmp", FullDumpBase, DumpStamp.c_str());
+			oPrintf(DumpPath, "%s%s.dmp", Desc.FullDumpBase, DumpStamp.c_str());
 			Full = oWinWriteDumpFile(MiniDumpWithFullMemory, DumpPath, _pExceptionPtrs);
+		}
+
+		if(!Desc.PostDumpExecution.empty())
+		{
+			// Use raw system command to avoid code complexity during dump
+			system(Desc.PostDumpExecution.c_str());
 		}
 
 		if(Desc.PromptAfterDump)
@@ -169,9 +188,7 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 protected:
 	oRef<oWinDbgHelp> DbgHelp;
 	oRef<threadsafe oStreamWriter> LogFile;
-	oStringPath LogPath;
-	oStringPath MiniDumpBase;
-	oStringPath FullDumpBase;
+	oStringS VersionString;
 	oREPORTING_DESC Desc;
 	typedef oArray<size_t, 256> array_t;
 	array_t FilteredMessages;
@@ -180,8 +197,15 @@ protected:
 	bool bDialogBoxesEnabled;
 };
 
+// From oWindows.h
+void oWinDumpAndTerminate(EXCEPTION_POINTERS* _pExceptionPtrs, const char* _pUserErrorMessage)
+{
+	return oReportingContext::Singleton()->DumpAndTerminate(_pExceptionPtrs, _pUserErrorMessage);
+}
+
 // {338D483B-7793-4BE1-90B1-4BB986B3EC2D}
 const oGUID oReportingContext::GUID = { 0x338d483b, 0x7793, 0x4be1, { 0x90, 0xb1, 0x4b, 0xb9, 0x86, 0xb3, 0xec, 0x2d } };
+oSINGLETON_REGISTER(oReportingContext);
 
 oReportingContext::oReportingContext()
 	: DbgHelp(oWinDbgHelp::Singleton())
@@ -189,6 +213,16 @@ oReportingContext::oReportingContext()
 {
 	PushReporter(DefaultVPrint);
 	std::set_terminate(ReportErrorAndExit);
+
+	// Cache the version string now in case we have to dump later (so we don't call complicated module code)
+	{
+		oMODULE_DESC ModuleDesc;
+		oModuleGetDesc(&ModuleDesc);
+
+		VersionString[0] = 'V';
+		oToString(&VersionString[1], VersionString.capacity() - 1, ModuleDesc.ProductVersion);
+		oStrAppendf(VersionString, "D");
+	}
 }
 
 oReportingContext::~oReportingContext()
@@ -218,43 +252,24 @@ void oReportingContext::SetDesc(const oREPORTING_DESC& _Desc)
 {
 	oLockGuard<oRecursiveMutex> Lock(Mutex);
 
+	oStringPath OldLogPath = Desc.LogFilePath;
 	Desc = _Desc;
 	if (Desc.LogFilePath)
 	{
-		oStringPath tmp;
-		oCleanPath(tmp.c_str(), tmp.capacity(), Desc.LogFilePath);
-		if (oStricmp(LogPath, tmp))
+		oCleanPath(Desc.LogFilePath, _Desc.LogFilePath);
+		if (oStricmp(OldLogPath, Desc.LogFilePath))
 		{
 			LogFile = nullptr;
-			if (!oStreamLogWriterCreate(tmp, &LogFile))
+			if (!oStreamLogWriterCreate(Desc.LogFilePath, &LogFile))
 			{
-				LogPath.clear();
-				oWARN("Failed to open log file \"%s\"\n%s: %s", tmp.c_str(), oAsString(oErrorGetLast()), oErrorGetLastString());
+				oWARN("Failed to open log file \"%s\"\n%s: %s", Desc.LogFilePath.c_str(), oAsString(oErrorGetLast()), oErrorGetLastString());
+				Desc.LogFilePath.clear();
 			}
-
 			oCRTLeakTracker::Singleton()->UntrackAllocation(thread_cast<oStreamWriter*>(LogFile.c_ptr())); // thread cast ok, we're still in initialization
 		}
-
-		// make a copy of the path and attach it to the desc for future
-		// GetDesc() calls and reassign pointer.
-		LogPath = tmp;
-		Desc.LogFilePath = LogPath.c_str();
 	}
-
-	else 
+	else
 		LogFile = nullptr;
-
-	if (Desc.MiniDumpBase)
-	{
-		MiniDumpBase = Desc.MiniDumpBase;
-		Desc.MiniDumpBase = MiniDumpBase.c_str();
-	}
-
-	if (Desc.FullDumpBase)
-	{
-		FullDumpBase = Desc.FullDumpBase;
-		Desc.FullDumpBase = FullDumpBase.c_str();
-	}
 }
 
 bool oReportingContext::PushReporter(oReportingVPrint _Reporter)
@@ -378,6 +393,10 @@ static oASSERT_ACTION ShowMsgBox(const oASSERTION& _Assertion, oMSGBOX_TYPE _Typ
 	char* end = format + sizeof(format);
 	char* cur = format;
 	cur += oPrintf(format, MESSAGE_PREFIX, _Type == oMSGBOX_WARN ? "Warning" : "Error");
+	
+	if (oSTRVALID(_Assertion.Expression))
+		cur += oPrintf(cur, std::distance(cur, end), "%s\n", _Assertion.Expression);
+
 	oStrcpy(cur, std::distance(cur, end), _String);
 
 	char path[_MAX_PATH];
@@ -435,7 +454,7 @@ void PrintCallStackToString(char* _StrDestination, size_t _SizeofStrDestination,
 
 	TRUNCATION:
 		static const char* kStackTooLargeMessage = "\n... truncated ...";
-		size_t TLMLength = strlen(kStackTooLargeMessage);
+		size_t TLMLength = oStrlen(kStackTooLargeMessage);
 		oPrintf(_StrDestination + _SizeofStrDestination - 1 - TLMLength, TLMLength + 1, kStackTooLargeMessage);
 }
 
@@ -467,8 +486,8 @@ char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, c
 
 	if (_Desc.PrefixThreadId)
 	{
-		char syspath[_MAX_PATH];
-		oACCUM_PRINTF("%s ", oSystemGetPath(syspath, oSYSPATH_EXECUTION));
+		oStringM exec;
+		oACCUM_PRINTF("%s ", oSystemGetExecutionPath(exec));
 	}
 
 	if (_Desc.PrefixMsgId)
@@ -479,7 +498,7 @@ char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, c
 
 TRUNCATION:
 	static const char* kStackTooLargeMessage = "\n... truncated ...";
-	size_t TLMLength = strlen(kStackTooLargeMessage);
+	size_t TLMLength = oStrlen(kStackTooLargeMessage);
 	oPrintf(_StrDestination + _SizeofStrDestination - 1 - TLMLength, TLMLength + 1, kStackTooLargeMessage);
 	return _StrDestination + _SizeofStrDestination;
 }
@@ -509,7 +528,7 @@ oASSERT_ACTION oReportingContext::DefaultVPrint(const oASSERTION& _Assertion, th
 	{
 		oSTREAM_WRITE w;
 		w.pData = msg;
-		w.Range = oSTREAM_RANGE(oSTREAM_APPEND, strlen(msg));
+		w.Range = oSTREAM_RANGE(oSTREAM_APPEND, oStrlen(msg));
 		_pLogFile->Write(w);
 	}
 
@@ -566,6 +585,8 @@ public:
 	ReportContextExceptionHandler()
 	{
 		AddVectoredExceptionHandler(0, &ReportContextExceptionHandler::HandleAccessViolation);
+		_set_purecall_handler(ReportContextExceptionHandler::PureVirtualCallHandler);
+		set_unexpected(ReportContextExceptionHandler::UnexpectedHandler);
 	}
 
 	~ReportContextExceptionHandler()
@@ -573,32 +594,55 @@ public:
 		RemoveVectoredExceptionHandler(&ReportContextExceptionHandler::HandleAccessViolation);
 	}
 
+	void DumpAndTerminate(EXCEPTION_POINTERS* _pExceptionPointers, const char* _ErrorMessage = "Unhandled Exception")
+	{
+		if (Mutex.try_lock())
+		{
+			#ifdef _DEBUG
+				oASSERT_PRINT(oASSERT_ASSERTION, oASSERT_ABORT, "", "%s", _ErrorMessage);
+				oASSERT(false, "%s", _ErrorMessage);
+				Mutex.unlock(); // No need to unlock when DumpAndTerminate is called as the app will exit
+			#else
+				oReportingContext::Singleton()->DumpAndTerminate(_pExceptionPointers, _ErrorMessage);
+			#endif
+		}
+	};
+
+	static void PureVirtualCallHandler()
+	{
+		RaiseException(oEXCEPTION_PURE_VIRTUAL_CALL, EXCEPTION_NONCONTINUABLE, 0, nullptr);
+	}
+	static void UnexpectedHandler()
+	{
+		RaiseException(oEXCEPTION_BAD_EXCEPTION, EXCEPTION_NONCONTINUABLE, 0, nullptr);
+	}
+
 	// Allows us to break execution when an access violation occurs
 	static LONG CALLBACK HandleAccessViolation(PEXCEPTION_POINTERS _pExceptionPointers)
 	{
-		ReportContextExceptionHandler* p = ReportContextExceptionHandler::Singleton();
+    const unsigned int VISUAL_STUDIO_CPP_EXCEPTION = 0xe06d7363;
 
-		auto DumpAndPrint = [&](const char* _ErrorMessage)
-		{
-			if (p->Mutex.try_lock())
-			{
-#ifdef _DEBUG
-				oASSERT(false, "%s", _ErrorMessage);
-				p->Mutex.unlock(); // No need to unlock when DumpAndTerminate is called as the app will exit
-#else
-				oReportingContext::Singleton()->DumpAndTerminate(_pExceptionPointers, _ErrorMessage);
-#endif
-			}
-		};
+		ReportContextExceptionHandler* p = ReportContextExceptionHandler::Singleton();
 
 		EXCEPTION_RECORD* pRecord = _pExceptionPointers->ExceptionRecord;
 		switch (pRecord->ExceptionCode)
 		{
-		case EXCEPTION_STACK_OVERFLOW:
-			DumpAndPrint("Stack overflow");
-			break;
+			case VISUAL_STUDIO_CPP_EXCEPTION:
+				break;
 
-		case EXCEPTION_ACCESS_VIOLATION:
+			case oEXCEPTION_PURE_VIRTUAL_CALL:
+			{
+				p->DumpAndTerminate(_pExceptionPointers, "pure virtual function call");
+				break;
+			}
+			
+			case oEXCEPTION_BAD_EXCEPTION:
+			{
+				p->DumpAndTerminate(_pExceptionPointers, "bad exception");
+				break;
+			}
+
+			case EXCEPTION_ACCESS_VIOLATION:
 			{
 				void* pAddress = (void*)pRecord->ExceptionInformation[1];
 				const char* err = (0 == pRecord->ExceptionInformation[0]) ? "Read" : "Write";
@@ -606,38 +650,58 @@ public:
 				sprintf_s(ErrorMessage.c_str(), "%s access violation at 0x%p", err, pAddress);
 
 				oDebuggerAllocationInfo AllocationInfo;
-				if(	oDebuggerGuardedInfo(pAddress, &AllocationInfo) )
+				if (oDebuggerGuardedInfo(pAddress, &AllocationInfo))
 				{
-					if(oInvalid == AllocationInfo.ThreadFreedOn)
-					{
+					if (oInvalid == AllocationInfo.ThreadFreedOn)
 						oStrAppendf(ErrorMessage, "Guarded allocation attempting to access outside of allocation");
-					}
 					else
 					{
 						double TimePassed = oTimer() - AllocationInfo.FreedTimer;
 						oStrAppendf(ErrorMessage, "Freed on thread %d %f seconds ago", AllocationInfo.ThreadFreedOn, TimePassed);
 					}
-					
 				}
-				DumpAndPrint(ErrorMessage);
-			}
 
-		default:
-			break;
+				p->DumpAndTerminate(_pExceptionPointers, ErrorMessage);
+				break;
+			}
+			// Ensure any exception that is to be handled is listed explicitly. There
+			// are some working-as-intended uses of exceptions by Windows that should 
+			// not terminate execution, but instead should be passed through.
+			case EXCEPTION_DATATYPE_MISALIGNMENT:
+			case EXCEPTION_BREAKPOINT:
+			case EXCEPTION_SINGLE_STEP:
+			case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+			case EXCEPTION_FLT_DENORMAL_OPERAND:
+			case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+			case EXCEPTION_FLT_INEXACT_RESULT:
+			case EXCEPTION_FLT_INVALID_OPERATION:
+			case EXCEPTION_FLT_OVERFLOW:
+			case EXCEPTION_FLT_STACK_CHECK:
+			case EXCEPTION_FLT_UNDERFLOW:
+			case EXCEPTION_INT_DIVIDE_BY_ZERO:
+			case EXCEPTION_INT_OVERFLOW:
+			case EXCEPTION_PRIV_INSTRUCTION:
+			case EXCEPTION_IN_PAGE_ERROR:
+			case EXCEPTION_ILLEGAL_INSTRUCTION:
+			case EXCEPTION_NONCONTINUABLE_EXCEPTION:
+			case EXCEPTION_STACK_OVERFLOW:
+			case EXCEPTION_INVALID_DISPOSITION:
+			case EXCEPTION_GUARD_PAGE:
+			case EXCEPTION_INVALID_HANDLE:
+					p->DumpAndTerminate(_pExceptionPointers, oWinAsStringExceptionCode(pRecord->ExceptionCode));
+				break;
+
+			default:
+				break;
 		}
 
 		return EXCEPTION_CONTINUE_SEARCH;
 	}
 };
 
-void PureVirtualCallHandler(void)
-{
-	int* generate_access_violation = nullptr;
-	generate_access_violation[0] = 0;
-}
-
 // {9840E986-9ADE-4D11-AFCE-AB2D8AC530C0}
 const oGUID ReportContextExceptionHandler::GUID = { 0x9840e986, 0x9ade, 0x4d11, { 0xaf, 0xce, 0xab, 0x2d, 0x8a, 0xc5, 0x30, 0xc0 } };
+oSINGLETON_REGISTER(ReportContextExceptionHandler);
 
 struct ReportContextExceptionHandlerInstaller
 {
@@ -645,7 +709,6 @@ struct ReportContextExceptionHandlerInstaller
 	{
 		oProcessHeapEnsureRunning(); // ensure the process heap is instantiated before the Singleton below so it is tracked
 		ReportContextExceptionHandler::Singleton();
-		_set_purecall_handler(PureVirtualCallHandler);
 	}
 };
 

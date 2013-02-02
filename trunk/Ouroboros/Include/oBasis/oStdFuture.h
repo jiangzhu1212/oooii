@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -48,11 +50,8 @@
 #include <oBasis/oAssert.h>
 #include <oBasis/oCallable.h>
 #include <oBasis/oError.h>
-#include <oBasis/oFixedString.h>
-#include <oBasis/oInterface.h>
 #include <oBasis/oRef.h>
-#include <oBasis/oRefCount.h>
-#include <oBasis/oThread.h> // for oThreadAtExit
+#include <oBasis/oStdAtomic.h>
 #include <oBasis/oStdConditionVariable.h>
 #include <oBasis/oStdMutex.h>
 #include <system_error>
@@ -62,6 +61,11 @@
 #ifdef oSTD_FUTURE_USE_EXCEPTIONS
 	#include <exception>
 #endif
+
+// Also declared in oBasis/oThread.h, but needs to be defined using platform-
+// specifics in oPlatform. See oThread.h for more details, here redeclare to 
+// avoid the include.
+void oThreadAtExit(std::function<void()> _AtExit);
 
 namespace oStd {
 
@@ -78,7 +82,7 @@ template<typename T> class promise;
 
 namespace detail {
 
-	interface oWaitableTask : oInterface
+	interface oWaitableTask
 	{
 		// This is not public API, use promise, packaged_task, or async.
 
@@ -95,6 +99,10 @@ namespace detail {
 		// blocks the calling thread until this task is finished. This gives the 
 		// opportunity to the scheduler to take over this thread for work-stealing.
 		virtual void wait() = 0;
+
+		// intrusive refcounting api
+		virtual void Reference() = 0;
+		virtual void Release() = 0;
 	};
 
 	// This is not public API, use promise, packaged_task, or async.
@@ -160,10 +168,16 @@ namespace detail {
 		oCommitmentState& operator=(oCommitmentState&&)/* = delete*/;
 
 	public:
-		oCommitmentState() : Error(oERROR_NONE) {}
+		oCommitmentState() 
+			: RefCount(1)
+			, Error(oERROR_NONE)
+		{
+			*ErrorString = 0;
+		}
+
 		~oCommitmentState() {}
 
-		void reference() { RefCount.Reference(); }
+		void reference() { oStd::atomic_increment(&RefCount); }
 		// release() must exist only in templated derivations because it must also
 		// be responsible for calling the dtor of the typed value stored in the 
 		// commitment.
@@ -294,9 +308,9 @@ namespace detail {
 		mutable condition_variable CV;
 		mutable mutex Mutex;
 		STATE State;
-		oRefCount RefCount;
+		int RefCount;
 		oERROR Error;
-		oStringL ErrorString;
+		char ErrorString[512];
 		std::exception_ptr pException;
 
 		void set_future_attached()
@@ -455,7 +469,8 @@ namespace detail {
 
 		void release()
 		{
-			if (RefCount.Release())
+			int NewRef = oStd::atomic_decrement(&RefCount);
+			if (NewRef == 0)
 			{
 				oFUTURE_ASSERT(is_ready(), broken_promise);
 				if (has_value() || State.HasValueAtThreadExit)
@@ -531,7 +546,8 @@ namespace detail {
 
 		void release()
 		{
-			if (RefCount.Release())
+			int NewRef = oStd::atomic_decrement(&RefCount);
+			if (NewRef == 0)
 			{
 				oFUTURE_ASSERT(is_ready(), broken_promise);
 				delete this;
@@ -589,7 +605,8 @@ namespace detail {
 
 		void release()
 		{
-			if (RefCount.Release())
+			int NewRef = oStd::atomic_decrement(&RefCount);
+			if (NewRef == 0)
 			{
 				oFUTURE_ASSERT(is_ready(), broken_promise);
 				delete this;
@@ -896,6 +913,9 @@ private:
 #endif
 
 } // namespace oStd
+
+inline void intrusive_ptr_add_ref(oStd::detail::oWaitableTask* _pWaitableTask) { _pWaitableTask->Reference(); }
+inline void intrusive_ptr_release(oStd::detail::oWaitableTask* _pWaitableTask) { _pWaitableTask->Release(); }
 
 template<typename T> void intrusive_ptr_add_ref(oStd::detail::oCommitment<T>* _pCommitment) { _pCommitment->reference(); }
 template<typename T> void intrusive_ptr_release(oStd::detail::oCommitment<T>* _pCommitment) { _pCommitment->release(); }

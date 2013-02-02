@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -66,8 +68,5 @@ bool oFileTouch(oHFILE _hFile, time_t _PosixTimestamp);
 bool oFileCopy(const char* _PathFrom, const char* _PathTo, bool _Recursive = true);
 bool oFileMove(const char* _PathFrom, const char* _PathTo, bool _Force = false);
 bool oFileDelete(const char* _Path);
-
-// Creates the entire specified path even if intermediary paths do not exist
-bool oFileCreateFolder(const char* _Path);
 
 #endif

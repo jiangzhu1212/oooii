@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -117,7 +119,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 			{ TRUE, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_MIN, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_MIN, D3D11_COLOR_WRITE_ENABLE_ALL },
 			{ TRUE, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_MAX, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_MAX, D3D11_COLOR_WRITE_ENABLE_ALL },
 		};
-		static_assert(oCOUNTOF(sBlends) == oGPU_BLEND_NUM_STATES, "# blend states mismatch");
+		static_assert(oCOUNTOF(sBlends) == oGPU_BLEND_STATE_COUNT, "# blend states mismatch");
 
 		D3D11_BLEND_DESC desc = {0};
 		oFORI(i, BlendStates)
@@ -166,11 +168,8 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 			D3D11_FILL_WIREFRAME,
 			D3D11_FILL_WIREFRAME,
 			D3D11_FILL_WIREFRAME,
-			D3D11_FILL_SOLID,
-			D3D11_FILL_SOLID,
-			D3D11_FILL_SOLID,
 		};
-		static_assert(oCOUNTOF(sFills) == oGPU_SURFACE_NUM_STATES, "# surface states mismatch");
+		static_assert(oCOUNTOF(sFills) == oGPU_SURFACE_STATE_COUNT, "# surface states mismatch");
 
 		static const D3D11_CULL_MODE sCulls[] = 
 		{
@@ -180,11 +179,8 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 			D3D11_CULL_BACK,
 			D3D11_CULL_FRONT,
 			D3D11_CULL_NONE,
-			D3D11_CULL_BACK,
-			D3D11_CULL_FRONT,
-			D3D11_CULL_NONE,
 		};
-		static_assert(oCOUNTOF(sCulls) == oGPU_SURFACE_NUM_STATES, "# surface states mismatch");
+		static_assert(oCOUNTOF(sCulls) == oGPU_SURFACE_STATE_COUNT, "# surface states mismatch");
 
 		D3D11_RASTERIZER_DESC desc;
 		memset(&desc, 0, sizeof(desc));
@@ -208,7 +204,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 	// Sampler States
 	{
 		static const int NUM_ADDRESS_STATES = 6;
-		static const int NUM_MIP_BIAS_LEVELS = oGPU_SAMPLER_NUM_STATES / NUM_ADDRESS_STATES;
+		static const int NUM_MIP_BIAS_LEVELS = oGPU_SAMPLER_STATE_COUNT / NUM_ADDRESS_STATES;
 
 		static const D3D11_FILTER sFilters[] = 
 		{
@@ -417,9 +413,9 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 					oD3D11Mesh* m = static_cast<oD3D11Mesh*>(_pResource);
 					ID3D11Resource* pD3DResource = oD3D11GetSubresource(_pResource, _Subresource, &D3DSubresource);
 
-					oD3D11_BUFFER_TOPOLOGY BT;
-					oD3D11GetBufferTopology(pD3DResource, &BT);
-					oASSERT(BT.ElementStride == _Source.RowPitch, "The specified RowPitch %u does not match the oGPU_MESH_INDICES expected ElementStride of %u. If there are less than 65535 vertices, the stride/pitch should be 2 and the source data an array of ushorts, else the stride/pitch should be 4 and the source data an array of uints.", _Source.RowPitch, BT.ElementStride);
+					oGPU_BUFFER_DESC d;
+					oD3D11BufferGetDesc(pD3DResource, &d);
+					oASSERT(d.StructByteSize == _Source.RowPitch, "The specified RowPitch %u does not match the oGPU_MESH_INDICES expected ElementStride of %u. If there are less than 65535 vertices, the stride/pitch should be 2 and the source data an array of ushorts, else the stride/pitch should be 4 and the source data an array of uints.", _Source.RowPitch, d.StructByteSize);
 					break;
 				}
 

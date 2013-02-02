@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -64,13 +66,6 @@ public:
 	inline void SetLookAt(const float3& _LookAt) { LookAt = _LookAt; }
 	inline float3 GetLookAt() const { return LookAt; }
 
-	inline void SetView(const float4x4& _View)
-	{
-		float4x4 invView = invert(_View);
-		R = oCreateRotationQ(invView);
-		T = oExtractTranslation(invView);
-	}
-
 	inline float4x4 GetView() const { return invert(float4x4(R, T)); }
 
 	// Pans LookAt as well. _ScreenPointDelta is the amount to pan by in 
@@ -112,6 +107,13 @@ public:
 
 	inline void SetViewportDimensions(const int2& _ViewportDimensions) { ViewportDimensions = oCastAsFloat(_ViewportDimensions); }
 
+	inline void SetView(const float4x4& _View)
+	{
+		float4x4 invView = invert(_View);
+		R = oCreateRotationQ(invView);
+		T = oExtractTranslation(invView);
+	}
+
 	// Call this on the first frame of interaction with the arcball. For any given
 	// "drag" session, all rotation is relative to the initial point passed to 
 	// this method.
@@ -133,7 +135,7 @@ public:
 		oASSERT(!oEqual(ViewportDimensions, float2(0.0f)), "ViewportDimensions must be set.");
 		float3 ArcVector = mul(R0, ScreenToVector(_ScreenPoint, ViewportDimensions));
 		quatf RotationDelta = oCreateRotationQ(ArcVector0, ArcVector);
-		R = mul(RotationDelta, R0);
+		R = normalize(mul(RotationDelta, R0));
 		T = mul(RotationDelta, T0 - LookAt) + LookAt;
 	}
 
@@ -164,12 +166,26 @@ private:
 	}
 };
 
-class oArcballInfinite : public oArcballBase
+class oArcballMaya : public oArcballBase
 {
-	// Converts the euler angles in the X and Y of screen space to a quaternion
-	// and rotates by that then the collective rotation of any prior rotation.
+	// Emulates the Arcball rotation from Maya where the Y axis always points up 
+	// thus keeping the model level. Converts the euler angles in the X and Y of 
+	// screen space to a quaternion and rotates by that then the collective 
+	// rotation of any prior rotation.
 
 public:
+	oArcballMaya()
+	  : oArcballBase()
+	  , EulerRotation(float3(0,0,0))
+	{}
+
+	inline void SetView(const float4x4& _View)
+	{
+		float4x4 invView = invert(_View);
+		EulerRotation = oExtractRotation(invView);
+		R = oCreateRotationQ(invView);
+		T = oExtractTranslation(invView);
+	}
 
 	// Call this any time while rotating. Any scaling of the screenpoint 
 	// difference between this and last frame should be done before passing the 
@@ -180,10 +196,14 @@ public:
 		if (!oEqual(_ScreenPointDelta, float2(0.0f, 0.0f)))
 		{
 			float3 OldT = mul(invert(R), T - LookAt);
-			R = mul(R, oCreateRotationQ(float3(_ScreenPointDelta.yx(), 0.0f)));
+			EulerRotation += float3(_ScreenPointDelta.y, -_ScreenPointDelta.x, 0.0f);
+			R = oCreateRotationQ(EulerRotation);
 			T = mul(R, OldT) + LookAt;
 		}
 	}
+
+private:
+	float3 EulerRotation;
 };
 
 #endif

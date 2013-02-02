@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -49,11 +51,21 @@
 // short-circuit and end early.
 oAPI bool oFileEnum(const char* _WildcardPath, oFUNCTION<bool(const char* _FullPath, const oSTREAM_DESC& _Desc)> _EnumFunction);
 
+// The EnumFunction should return true to continue enummeration, false to 
+// short-circuit and end early.  This returns all files recursively under
+// the supplied path which must be a directory
+oAPI bool oFileEnumFilesRecursively(const char* _Path, oFUNCTION<bool(const char* _FullPath, const oSTREAM_DESC& _Desc)> _EnumFunction);
+
 // Modifies the specified file's read-only attribute
 oAPI bool oFileMarkReadOnly(const char* _Path, bool _ReadOnly = true);
 
 // Modifies the specified file's hidden attribute
 oAPI bool oFileMarkHidden(const char* _Path, bool _Hidden = true);
+
+// Creates the entire specified path even if intermediary paths do not exist.
+// One should generally use oFileEnsureParentFolderExists unless they no for 
+// certain the path is a folder
+bool oFileCreateFolder(const char* _Path);
 
 // A layer built on top of oFileCreateFolder that ensures the path to the 
 // specified file exists before passing the path to a platform save function 

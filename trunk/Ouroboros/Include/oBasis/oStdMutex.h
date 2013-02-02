@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -21,16 +23,13 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Approximation of the upcoming C++11 oStd::mutex interface. Prefer using 
-// oMutex.h wrappers over this directly in client code because oMutex.h wrappers
-// have threadsafe-keyword protection and thus require less thread_cast'ing.
-// This header is meant to just contain the code that will go away when a C++11
-// compliant libc is provided by all our supported compilers.
+// Approximation of the upcoming C++11 oStd::mutex interface.
 
 #pragma once
 #ifndef oStdMutex_h
 #define oStdMutex_h
 
+#include <cassert>
 #include <oBasis/oStdThread.h>
 
 // To keep the main classes neat, collect all the platform-specific forward
@@ -189,6 +188,10 @@ namespace oStd {
 		~shared_lock() { m.unlock_shared(); }
 	};
 
+#define assert_not_owner() \
+	assert(pMutex && "Must have valid mutex"); \
+	assert((!pMutex || (pMutex && !OwnsLock)) && "Deadlock would occur")
+
 	template <class Mutex> class unique_lock
 	{
 		unique_lock(unique_lock const&); /* = delete */
@@ -265,39 +268,35 @@ namespace oStd {
 
 		void lock()
 		{
-			oASSERT(pMutex, "Must have valid mutex");
-			oASSERT(!pMutex || (pMutex && !OwnsLock), "Deadlock would occur");
+			assert_not_owner();
 			pMutex->lock();
 			OwnsLock = true;
 		}
 
 		bool try_lock()
 		{
-			oASSERT(pMutex, "Must have valid mutex");
-			oASSERT(!pMutex || (pMutex && !OwnsLock), "Deadlock would occur");
+			assert_not_owner();
 			OwnsLock = pMutex->try_lock();
 			return OwnsLock;
 		}
 
 		template<typename Rep, typename Period> bool try_lock_for(oStd::chrono::duration<Rep,Period> const& _RelativeTime)
 		{
-			oASSERT(pMutex, "Must have valid mutex");
-			oASSERT(!pMutex || (pMutex && !OwnsLock), "Deadlock would occur");
+			assert_not_owner();
 			OwnsLock = pMutex->try_lock_for(_RelativeTime);
 			return OwnsLock;
 		}
 
 		template<typename Clock, typename Duration> bool try_lock_until(oStd::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
 		{
-			oASSERT(pMutex, "Must have valid mutex");
-			oASSERT(!pMutex || (pMutex && !OwnsLock), "Deadlock would occur");
+			assert_not_owner();
 			OwnsLock = pMutex->try_lock_until(_AbsoluteTime);
 			return OwnsLock;
 		}
 
 		void unlock()
 		{
-			oASSERT(OwnsLock, "Cannot unlock a non-locked mutex (or a mutex whose lock is owned by another object)");
+			assert(OwnsLock && "Cannot unlock a non-locked mutex (or a mutex whose lock is owned by another object)");
 			if (pMutex)
 			{
 				pMutex->unlock();
@@ -326,17 +325,8 @@ namespace oStd {
 
 	void call_once(once_flag& _Flag, oCALLABLE _Function);
 	#ifndef oHAS_VARIADIC_TEMPLATES
-		oCALLABLE_TEMPLATE0 void call_once(once_flag& _Flag, oCALLABLE_PARAMS0) { call_once(_Flag, oCALLABLE_BIND0); }
-		oCALLABLE_TEMPLATE1 void call_once(once_flag& _Flag, oCALLABLE_PARAMS1) { call_once(_Flag, oCALLABLE_BIND1); }
-		oCALLABLE_TEMPLATE2 void call_once(once_flag& _Flag, oCALLABLE_PARAMS2) { call_once(_Flag, oCALLABLE_BIND2); }
-		oCALLABLE_TEMPLATE3 void call_once(once_flag& _Flag, oCALLABLE_PARAMS3) { call_once(_Flag, oCALLABLE_BIND3); }
-		oCALLABLE_TEMPLATE4 void call_once(once_flag& _Flag, oCALLABLE_PARAMS4) { call_once(_Flag, oCALLABLE_BIND4); }
-		oCALLABLE_TEMPLATE5 void call_once(once_flag& _Flag, oCALLABLE_PARAMS5) { call_once(_Flag, oCALLABLE_BIND5); }
-		oCALLABLE_TEMPLATE6 void call_once(once_flag& _Flag, oCALLABLE_PARAMS6) { call_once(_Flag, oCALLABLE_BIND6); }
-		oCALLABLE_TEMPLATE7 void call_once(once_flag& _Flag, oCALLABLE_PARAMS7) { call_once(_Flag, oCALLABLE_BIND7); }
-		oCALLABLE_TEMPLATE8 void call_once(once_flag& _Flag, oCALLABLE_PARAMS8) { call_once(_Flag, oCALLABLE_BIND8); }
-		oCALLABLE_TEMPLATE9 void call_once(once_flag& _Flag, oCALLABLE_PARAMS9) { call_once(_Flag, oCALLABLE_BIND9); }
-		oCALLABLE_TEMPLATE10 void call_once(once_flag& _Flag, oCALLABLE_PARAMS10) { call_once(_Flag, oCALLABLE_BIND10); }
+		#define oDEFINE_CALLABLE_call_once(_nArgs) oCONCAT(oCALLABLE_TEMPLATE,_nArgs) void call_once(once_flag& _Flag, oCONCAT(oCALLABLE_PARAMS,_nArgs)) { call_once(_Flag, oCONCAT(oCALLABLE_BIND,_nArgs)); }
+		oCALLABLE_PROPAGATE(oDEFINE_CALLABLE_call_once);
 	#endif
 } // namespace oStd
 

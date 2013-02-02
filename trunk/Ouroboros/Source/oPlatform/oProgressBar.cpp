@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -21,6 +23,10 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+
+// @oooii-tony: NOTE: This code pre-dates some of the oWin*.* code, so progress
+// bar code there has not been brought back to this code...
+
 #include <oPlatform/oProgressBar.h>
 #include <oBasis/oDispatchQueuePrivate.h>
 #include <oBasis/oError.h>
@@ -30,7 +36,6 @@
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oString.h>
-#include <oPlatform/oInterprocessEvent.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/Windows/oWinWindowing.h>
 
@@ -42,6 +47,9 @@ static const UINT oWM_SETPOS = WM_USER+603; // _wParam is an INT [0,100] for per
 static const UINT oWM_ADDPOS = WM_USER+604;
 static const LONG InsetX = 7;
 static const LONG InsetY = 5;
+
+static const int EVENT_COMPLETE = 0x1;
+static const int EVENT_STOPPED = 0x2;
 
 static bool oSetDlgItemTextTruncated(HWND _hDlg, int _nIDDlgItem, LPCSTR _lpString)
 {
@@ -110,8 +118,7 @@ protected:
 	HWND hMarqueeBar;
 	oRefCount RefCount;
 	oSharedMutex DescMutex;
-	oInterprocessEvent Complete;
-	oInterprocessEvent Stopped;
+	oEvent Events;
 
 	oRef<threadsafe oDispatchQueuePrivate> MessageQueue;
 };
@@ -309,14 +316,12 @@ void oWinProgressBar::AddPercentage(int _Percentage) threadsafe
 bool oWinProgressBar::Wait(unsigned int _TimeoutMS) threadsafe
 {
 	size_t bStopped = 0;
-	threadsafe oInterprocessEvent* pEvents[] = { &Complete, &Stopped };
-	bool result = oInterprocessEvent::WaitMultiple(pEvents, oCOUNTOF(pEvents), &bStopped, _TimeoutMS);
-	if (bStopped)
-	{
-		oErrorSetLast(oERROR_CANCELED);
-		return false;
-	}
-	return result;
+	int Event = Events.WaitAny(_TimeoutMS, EVENT_COMPLETE|EVENT_STOPPED);
+	if (!Event)
+		return oErrorSetLast(oERROR_TIMEOUT);
+	else if (Event == EVENT_STOPPED)
+		return oErrorSetLast(oERROR_CANCELED);
+	return true;
 }
 
 void oWinProgressBar::SetDesc(DESC _Desc)
@@ -396,8 +401,8 @@ INT_PTR oWinProgressBar::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM 
 			oPrintf(buf, "%u%%", p);
 			oAddTruncationElipse(buf);
 			oVB(SetDlgItemText(hDialog, PERCENTAGE, buf));
-			if (p == 100) Complete.Set();
-			else Complete.Reset();
+			if (p == 100) Events.Set(EVENT_COMPLETE);
+			else Events.Reset(EVENT_COMPLETE);
 			return false;
 		}
 
@@ -410,8 +415,8 @@ INT_PTR oWinProgressBar::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM 
 
 		case oWM_SETSTOP:
 		{
-			if (_wParam) Stopped.Set();
-			else Stopped.Reset();
+			if (_wParam) Events.Set(EVENT_STOPPED);
+			else Events.Reset(EVENT_STOPPED);
 			SendMessage(hProgressBar, PBM_SETSTATE, _wParam ? PBST_ERROR : PBST_NORMAL, 0);
 			if (_wParam) oSetDlgItemTextTruncated(hDialog, SUBTEXT, "Stopped...");
 			oLockGuard<oSharedMutex> lock(DescMutex);

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -89,7 +91,7 @@ static ptr_t VisitNextString(ptr_t _pStructBase, ptr_t _pField, const typename V
 {
 	void* p = MoveToNextField(_pStructBase, _pField, sizeof(const char*));
 	const char* s = *(const char**)p;
-	_Visitor('s', p, s ? (strlen(s)+1) : sizeof(NULL_STRING));
+	_Visitor('s', p, s ? (oStrlen(s)+1) : sizeof(NULL_STRING));
 	return oByteAdd(p, sizeof(ptr_t));
 }
 
@@ -97,7 +99,7 @@ template<typename ptr_t>
 static ptr_t VisitNextFixedString(int _Type, ptr_t _pStructBase, ptr_t _pField, const typename Visitor<ptr_t>::Fn& _Visitor)
 {
 	void* p = MoveToNextField(_pStructBase, _pField, sizeof(char));
-	_Visitor(_Type, p, strlen((const char*)p)+1);
+	_Visitor(_Type, p, oStrlen((const char*)p)+1);
 	return oByteAdd(p, SizeofFixedString(_Type));
 }
 
@@ -216,7 +218,7 @@ static ptr_t VisitNextChar( ptr_t _pArgument, const fn_t& _Visitor)
 template<typename ptr_t, typename fn_t>
 static ptr_t VisitNextString(int _Type, ptr_t _pArgument, const fn_t& _Visitor)
 {
-	size_t size = strlen((const char*)_pArgument) + 1;
+	size_t size = oStrlen((const char*)_pArgument) + 1;
 	_Visitor(_Type, _pArgument, size);
 	return oByteAdd(_pArgument, oByteAlign(size, 4));
 }
@@ -307,9 +309,9 @@ size_t oOSCCalculateArgumentsDataSize(const char* _TypeTags, const void* _pStruc
 
 size_t oOSCCalculateMessageSize(const char* _Address, const char* _TypeTags, size_t _ArgumentsDataSize)
 {
-	size_t size = oByteAlign(strlen(_Address) + 1, 4);
+	size_t size = oByteAlign(oStrlen(_Address) + 1, 4);
 	if (_TypeTags)
-		size += oByteAlign(strlen(_TypeTags) + 1, 4);
+		size += oByteAlign(oStrlen(_TypeTags) + 1, 4);
 	return size + _ArgumentsDataSize;
 }
 
@@ -369,7 +371,7 @@ const char* oOSCGetMessageTypeTags(const void* _pMessage)
 	const char* Address = oOSCGetMessageAddress(_pMessage);
 	if (Address)
 	{
-		const char* TypeTags = oByteAdd(Address, oByteAlign(strlen(Address)+1, 4));
+		const char* TypeTags = oByteAdd(Address, oByteAlign(oStrlen(Address)+1, 4));
 		return *TypeTags == ',' ? TypeTags : nullptr;
 	}
 	
@@ -412,7 +414,7 @@ static void* NextString(void* _pDestination, size_t _SizeofDestination, const ch
 {
 	oASSERT_ALIGNED(_pDestination);
 	if (_String)
-		return CopyNextBuffer(_pDestination, _SizeofDestination, _String, strlen(_String) + 1);
+		return CopyNextBuffer(_pDestination, _SizeofDestination, _String, oStrlen(_String) + 1);
 	return CopyNextBuffer(_pDestination, _SizeofDestination, &NULL_STRING, 1);
 }
 
@@ -526,7 +528,7 @@ bool oOSCDeserializeMessageToStruct(const void* _pMessage, void* _pStruct, size_
 	if (!tags)
 		return oErrorSetLast(oERROR_CORRUPT, "failed to read message type tags");
 
-	const void* args = (const void*)oByteAdd(tags, oByteAlign(strlen(tags)+1, 4));
+	const void* args = (const void*)oByteAdd(tags, oByteAlign(oStrlen(tags)+1, 4));
 	void* p = _pStruct;
 	void* pend = oByteAdd(_pStruct, _SizeofStruct);
 
@@ -543,8 +545,8 @@ bool oOSCTypeTagsMatch(const char* _TypeTags0, const char* _TypeTags1)
 	if (!_TypeTags0 || *_TypeTags0 != ',' || !_TypeTags1 || *_TypeTags1 != ',')
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 
-	size_t len0 = strlen(_TypeTags0);
-	size_t len1 = strlen(_TypeTags1);
+	size_t len0 = oStrlen(_TypeTags0);
+	size_t len1 = oStrlen(_TypeTags1);
 	if (len0 != len1)
 		return oErrorSetLast(oERROR_INVALID_PARAMETER);
 

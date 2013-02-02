@@ -42,6 +42,9 @@
     <ClCompile Include="src\libraw_cxx.cpp">
       <Filter>Source Files\libraw</Filter>
     </ClCompile>
+    <ClCompile Include="src\libraw_datastream.cpp">
+      <Filter>Source Files\libraw</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="internal\defines.h">
@@ -73,6 +76,9 @@
     </ClInclude>
     <ClInclude Include="libraw\libraw_version.h">
       <Filter>Header Files\libraw</Filter>
+    </ClInclude>
+    <ClInclude Include="internal\libraw_bytebuffer.h">
+      <Filter>Header Files\internal</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -28,6 +30,7 @@
 
 #include <oBasis/oFunction.h>
 #include <oBasis/oPlatformFeatures.h>
+#include <oBasis/oSurface.h>
 
 struct oBasisTestServices
 {
@@ -36,6 +39,15 @@ struct oBasisTestServices
 	oFUNCTION<void(void* _pBuffer)> DeallocateLoadedBuffer;
 	oFUNCTION<int()> Rand;
 	oFUNCTION<size_t()> GetTotalPhysicalMemory;
+	
+	// Fill pointers with values loaded from the specified _URIReference. _pHandle
+	// receives an opaque state object that will hold the memory that is pointed
+	// at by *_pMapped and should have DeallocateSurface() called on it when 
+	// finished.
+	oFUNCTION<bool(void** _pHandle, oSURFACE_DESC* _pDesc, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMapped, const char* _URIReference)> AllocateAndLoadSurface;
+	oFUNCTION<void(void* _Handle)> DeallocateSurface;
+
+	oFUNCTION<bool(const char* _Name, const oSURFACE_DESC& _SourceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SourceMapped, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier)> TestSurface;
 };
 
 // oBasisTests follows a pattern: all functions return true if successful, false
@@ -85,11 +97,13 @@ oAPI bool oBasisTest_oMath();
 oAPI bool oBasisTest_oOBJ(const oBasisTestServices& _Services);
 oAPI bool oBasisTest_oOSC();
 oAPI bool oBasisTest_oPath();
+oAPI bool oBasisTest_oRTTI();
 oAPI bool oBasisTest_tbbConcurrentQueue();
 oAPI bool oBasisTest_concrtConcurrentQueue();
 oAPI bool oBasisTest_oConcurrentQueue();
 oAPI bool oBasisTest_oString();
 oAPI bool oBasisTest_oSurface();
+oAPI bool oBasisTest_oSurfaceResize(const oBasisTestServices& _Services);
 oAPI bool oBasisTest_oURI();
 oAPI bool oBasisTest_oXML();
 oAPI bool oBasisTest_oCountdownLatch();

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -26,11 +28,15 @@
 
 oDEFINE_GPUDEVICE_CREATE(oD3D11, InstanceList);
 oBEGIN_DEFINE_GPURESOURCE_CTOR(oD3D11, InstanceList)
-	, InstanceStride(oGPUCalculateVertexSize(_Desc.pElements, _Desc.NumElements, _Desc.InputSlot))
+	, InstanceStride(oGPUCalcVertexSize(_Desc.VertexElements, _Desc.NumVertexElements, _Desc.InputSlot))
 {
 	*_pSuccess = false;
 	oD3D11DEVICE();
-	oVERIFY(oD3D11CreateVertexBuffer(D3DDevice, _Name, D3D11_USAGE_DEFAULT, nullptr, _Desc.MaxNumInstances, InstanceStride, &Instances));
+	oGPU_BUFFER_DESC d;
+	d.Type = oGPU_BUFFER_VERTEX;
+	d.StructByteSize = InstanceStride;
+	d.ArraySize = _Desc.MaxNumInstances;
+	oVERIFY(_pDevice->CreateBuffer(_Name, d, &Instances));
 	*_pSuccess = true;
 }
 

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -22,7 +24,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oStdConditionVariable.h>
-#include <oBasis/oFunction.h>
 #include <oBasis/oThread.h>
 #include "oWinHeaders.h"
 
@@ -47,12 +48,12 @@ void oStd::condition_variable::notify_all()
 
 oStd::cv_status::value oStd::condition_variable::wait_for(oStd::unique_lock<mutex>& _Lock, unsigned int _TimeoutMS)
 {
-	oASSERT(_Lock.mutex(), "Invalid mutex");
-	oASSERT(_Lock.owns_lock(), "Lock must own the mutex lock");
+	oCRTASSERT(_Lock.mutex(), "Invalid mutex");
+	oCRTASSERT(_Lock.owns_lock(), "Lock must own the mutex lock");
 	if (!SleepConditionVariableSRW((PCONDITION_VARIABLE)&Footprint, (PSRWLOCK)_Lock.mutex()->native_handle(), _TimeoutMS, 0))
 	{
 		DWORD err = GetLastError();
-		oASSERT(err == ERROR_TIMEOUT || err == WAIT_TIMEOUT, "");
+		oCRTASSERT(err == ERROR_TIMEOUT || err == WAIT_TIMEOUT, "");
 		return oStd::cv_status::timeout;
 	}
 
@@ -83,6 +84,6 @@ static void InternalNotify(ctx* _pContext)
 
 void notify_all_at_thread_exit(oStd::condition_variable& _ConditionVariable, oStd::unique_lock<oStd::mutex> _Lock)
 {
-	oASSERT(_Lock.owns_lock(), "Lock must own the mutex lock");
+	oCRTASSERT(_Lock.owns_lock(), "Lock must own the mutex lock");
 	oThreadAtExit(InternalNotify, new ctx(_ConditionVariable, std::move(_Lock)));
 }

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -540,4 +542,18 @@ void oCalculateMinMaxPoints(const float3* oRESTRICT _pPoints, size_t _NumberOfPo
 void oCalculateMinMaxPoints(const double3* oRESTRICT _pPoints, size_t _NumberOfPoints, double3* oRESTRICT _pMinPoint, double3* oRESTRICT _pMaxPoint)
 {
 	oCalculateMinMaxPointsT(_pPoints, _NumberOfPoints, _pMinPoint, _pMaxPoint);
+}
+
+bool oCalculateTexcoords(const oAABoxf& _Bound, const unsigned int* _pIndices, unsigned int _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, unsigned int _NumVertices, double* _pSolveTime)
+{
+	// @oooii-tony: I tried integrating OpenNL, but integrating it as-is produced
+	// the same result as their sample, which is to say something that isn't 
+	// generally useful. As I left off it seems that "seaming" or an algo like 
+	// seamster needs to be used as a pre-pass. Other integrations are into tools
+	// that allow a human to specify those seams. So I ran out of eval time and 
+	// removed all the associated code and OpenNL build. It's in my sandbox, so
+	// those with access can go look at that stuff if it needs to be resurrected,
+	// but it's mostly just the sample OOOii-fied.
+
+	return oErrorSetLast(oERROR_NOT_FOUND, "oCalculateTexcoords is not yet implemented.");
 }

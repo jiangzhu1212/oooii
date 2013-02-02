@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -25,6 +27,8 @@
 #pragma once
 #ifndef oStdRatio_h
 #define oStdRatio_h
+
+#include <type_traits>
 
 namespace oStd {
 
@@ -56,6 +60,22 @@ typedef ratio<1000000000000, 1> tera;
 typedef ratio<1000000000000000, 1> peta;
 typedef ratio<1000000000000000000, 1> exa;
 
+	namespace detail {
+		template <unsigned long long A, unsigned long long B> struct oGCD { static const unsigned long long value = oGCD<A, B%A>::value; };
+		template <unsigned long long A> struct oGCD<A, 0>{ static const unsigned long long value = A; };
+	}
+
 } // namespace oStd
+
+namespace std {
+	template<unsigned long long N1, unsigned long long D1, unsigned long long N2, unsigned long long D2>
+	struct common_type<oStd::ratio<N1, D1>, oStd::ratio<N2, D2>>
+	{
+		typedef oStd::ratio<
+			oStd::detail::oGCD<oStd::ratio<N1, D1>::num, oStd::ratio<N2, D2>::num>::value, 
+			oStd::detail::oGCD<oStd::ratio<N1, D1>::den, oStd::ratio<N2, D2>::den>::value
+		> type;
+	};
+}
 
 #endif

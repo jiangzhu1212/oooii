@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -185,6 +187,7 @@ const static unsigned int kWinsockMinorVersion = 2;
 
 // {4B890E26-15E8-47C5-8A5A-FF9A0673EE7E}
 const oGUID oWinsock::GUID = { 0x4b890e26, 0x15e8, 0x47c5, { 0x8a, 0x5a, 0xff, 0x9a, 0x6, 0x73, 0xee, 0x7e } };
+oSINGLETON_REGISTER(oWinsock);
 
 oWinsock::oWinsock()
 {

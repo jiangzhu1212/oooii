@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -39,23 +41,15 @@ using namespace Vectormath::Aos;
 const quatf quatf::Identity(0.0f, 0.0f, 0.0f, 1.0f);
 const quatd quatd::Identity(0.0, 0.0, 0.0, 1.0);
 
-const float3x3 float3x3::Identity(float3(1.0f, 0.0f, 0.0f),
-                                  float3(0.0f, 1.0f, 0.0f),
-                                  float3(0.0f, 0.0f, 1.0f));
-
-const double3x3 double3x3::Identity(double3(1.0, 0.0, 0.0),
-                                    double3(0.0, 1.0, 0.0),
-                                    double3(0.0, 0.0, 1.0));
-
-const float4x4 float4x4::Identity(float4(1.0f, 0.0f, 0.0f, 0.0f),
-                                  float4(0.0f, 1.0f, 0.0f, 0.0f),
-                                  float4(0.0f, 0.0f, 1.0f, 0.0f),
-                                  float4(0.0f, 0.0f, 0.0f, 1.0f));
-
-const double4x4 double4x4::Identity(double4(1.0, 0.0, 0.0, 0.0),
-                                    double4(0.0, 1.0, 0.0, 0.0),
-                                    double4(0.0, 0.0, 1.0, 0.0),
-                                    double4(0.0, 0.0, 0.0, 1.0));
+template<typename T>
+const TMAT3<T> TMAT3<T>::Identity(TVEC3<T>(T(1), T(0), T(0)),
+                                  TVEC3<T>(T(0), T(1), T(0)),
+                                  TVEC3<T>(T(0), T(0), T(1)));
+template<typename T>
+const TMAT4<T> TMAT4<T>::Identity(TVEC4<T>(T(1), T(0), T(0), T(0)),
+                                  TVEC4<T>(T(0), T(1), T(0), T(0)),
+                                  TVEC4<T>(T(0), T(0), T(1), T(0)),
+                                  TVEC4<T>(T(0), T(0), T(0), T(1)));
 
 // @oooii-tony: Trade-off. Though we have a process-wide singleton, this entire
 // module is platform-independent but for using oProcessSingleton. To reduce
@@ -65,6 +59,9 @@ const double4x4 double4x4::Identity(double4(1.0, 0.0, 0.0, 0.0),
 // outputs given the same inputs. The penalty however is a few kilobytes of code
 // space, which irks me as a console programmer from the GBA/PS1 days, but I
 // guess I should embrace the 16 GB of memory on my PC for now.
+
+// @oooii-tony: NOTE: This should be converted to use the shared math simplex
+// algorithm so CPU and GPU results are more similar...
 struct oPerlinContext
 {
 	static oPerlinContext* Singleton() { static oPerlinContext PCtx; return &PCtx; } // @oooii-tony: Do not convert to oSingleton without a code review/approval
@@ -295,30 +292,35 @@ float4x4 oCreateRotation(const float& _Radians, const float3& _NormalizedRotatio
 	return (float4x4&)m;
 }
 
-float4x4 oCreateRotation(const float3& _CurrentVector, const float3& _DesiredVector, const float3& _DefaultRotationAxis)
+template<typename T>
+TMAT4<T> oCreateRotation(const TVEC3<T>& _NormalizedSrcVec, const TVEC3<T>& _NormalizedDstVec)
 {
-	float3 x;
+	T a = angle(_NormalizedSrcVec, _NormalizedDstVec);
 
-	float a = angle(_CurrentVector, _DesiredVector);
-	if (oEqual(a, 0.0f))
-		return float4x4(float4x4::Identity);
-	
-	if (_CurrentVector == _DesiredVector)
-		return float4x4(float4x4::Identity);
+	// Check for identity
+	if (oEqual(a, T(0.0)))
+		return TMAT4<T>(TMAT4<T>::Identity);
 
-	else if (-_CurrentVector == _DesiredVector)
-		x = _DefaultRotationAxis;
+	// Check for flip
+	if(oEqual(a, T(oPI)))
+		return TMAT4<T>(
+			TVEC4<T>(-1.0, 0.0, 0.0, 0.0),
+			TVEC4<T>(0.0, -1.0, 0.0, 0.0),
+			TVEC4<T>(0.0, 0.0, -1.0, 0.0),
+			TVEC4<T>(0.0, 0.0, 0.0, 1.0));
 
-	else
-	{
-		x = cross(_CurrentVector, _DesiredVector);
-		if (x == float3(0.0f, 0.0f, 0.0f))
-			x = _DefaultRotationAxis;
-		else
-			x = normalize(x);
-	}
+	TVEC3<T> NormalizedAxis = normalize(cross(_NormalizedSrcVec, _NormalizedDstVec));
+	return oCreateRotation(a, NormalizedAxis);
+}
 
-	return oCreateRotation(a, x);
+float4x4 oCreateRotation(const float3& _NormalizedSrcVec, const float3& _NormalizedDstVec)
+{
+	return oCreateRotation<float>(_NormalizedSrcVec, _NormalizedDstVec);
+}
+
+double4x4 oCreateRotation(const double3& _NormalizedSrcVec, const double3& _NormalizedDstVec)
+{
+	return oCreateRotation<double>(_NormalizedSrcVec, _NormalizedDstVec);
 }
 
 float4x4 oCreateRotation(const quatf& _Quaternion)
@@ -426,6 +428,11 @@ static const float Z_PRECISION = 0.0001f;
 	float _22 = (_ZFar < 0.0f) ? (1.0f - Z_PRECISION) : _ZFar / (_ZFar - _ZNear); \
 	float _32 = (_ZFar < 0.0f) ? _ZNear * (2.0f - Z_PRECISION) : (-_ZNear * _ZFar / (_ZFar - _ZNear))
 
+// For off-center projection _32 needs to be negated when compared to INFINITE_PLANE_LH
+#define INFINITE_PLANE_OFFCENTER_LH(_ZFar) \
+	float _22 = (_ZFar < 0.0f) ? (1.0f - Z_PRECISION) : _ZFar / (_ZFar - _ZNear); \
+	float _32 = (_ZFar < 0.0f) ? _ZNear * -(2.0f - Z_PRECISION) : (_ZNear * _ZFar / (_ZFar - _ZNear))
+
 #define INFINITE_PLANE_RH(_ZFar) \
 	float _22 = (_ZFar < 0.0f) ? -(1.0f - Z_PRECISION) : _ZFar / (_ZNear - _ZFar); \
 	float _32 = (_ZFar < 0.0f) ? _ZNear * -(2.0f - Z_PRECISION) : (_ZNear * _ZFar / (_ZNear - _ZFar))
@@ -460,7 +467,7 @@ float4x4 oCreatePerspectiveRH(float _FovYRadians, float _AspectRatio, float _ZNe
 
 float4x4 oCreateOffCenterPerspectiveLH(float _Left, float _Right, float _Bottom, float _Top, float _ZNear)
 {
-	INFINITE_PLANE_LH(-1.0f);
+	INFINITE_PLANE_OFFCENTER_LH(-1.0f);
 
 	return float4x4(
 		float4((2*_ZNear)/(_Right-_Left),     0.0f,                          0.0f, 0.0f),
@@ -477,7 +484,8 @@ float4x4 oCreateOffCenterPerspectiveLH(const float4x4& _OutputTransform, const f
 	// projection. UE3 looks down +X (yarly!), so this tries to look down -Z, so
 	// there still might be some negation or re-axis-izing that needs to be done.
 
-	oWARN_ONCE("Math not yet confirmed for oCreateOffCenterPerspective(), be careful!");
+	// @oooii-Andrew: Made some modifications to the perspective matrix, and this math now appears to be correct.
+	//oWARN_ONCE("Math not yet confirmed for oCreateOffCenterPerspective(), be careful!");
 
 	// Get the position and dimensions of the output
 	float ShXY, ShXZ, ShZY;
@@ -489,6 +497,9 @@ float4x4 oCreateOffCenterPerspectiveLH(const float4x4& _OutputTransform, const f
 	// Get the basis of the output
 	float3 outputBasisX, outputBasisY, outputBasisZ;
 	oExtractAxes(_OutputTransform, &outputBasisX, &outputBasisY, &outputBasisZ);
+	outputBasisX = normalize(outputBasisX);
+	outputBasisY = normalize(outputBasisY);
+	outputBasisZ = normalize(outputBasisZ);
 
 	// Get local offsets from the eye to the output
 	float w = dot(outputBasisX, offset);
@@ -496,7 +507,7 @@ float4x4 oCreateOffCenterPerspectiveLH(const float4x4& _OutputTransform, const f
 	float d = dot(outputBasisZ, offset);
 
 	// Incorporate user near plane adjustment
-	float zn = __max(d + _ZNear, 3.0f);
+	float zn = __max(d + _ZNear, 0.01f);
 	float depthScale = zn / d;
 
 	return oCreateOffCenterPerspectiveLH(w * depthScale, (w + outputSize.x) * depthScale, h * depthScale, (h + outputSize.y) * depthScale, zn);
@@ -568,32 +579,6 @@ double4x4 oCreateRotation(const double &_Radians, const double3& _NormalizedRota
 	return (double4x4&)m;
 }
 
-double4x4 oCreateRotation(const double3& _CurrentVector, const double3& _DesiredVector, const double3& _DefaultRotationAxis)
-{
-	double3 x;
-
-	double a = angle(_CurrentVector, _DesiredVector);
-	if (oEqual(a, 0.0))
-		return double4x4(double4x4::Identity);
-	
-	if (_CurrentVector == _DesiredVector)
-		return double4x4(double4x4::Identity);
-
-	else if (-_CurrentVector == _DesiredVector)
-		x = _DefaultRotationAxis;
-
-	else
-	{
-		x = cross(_CurrentVector, _DesiredVector);
-		if (x == double3(0.0, 0.0, 0.0))
-			x = _DefaultRotationAxis;
-		else
-			x = normalize(x);
-	}
-
-	return oCreateRotation(a, x);
-}
-
 double4x4 oCreateRotation(const quatd& _Quaternion)
 {
 	Matrix4d m = Matrix4d::rotation((const Quatd&)_Quaternion);
@@ -660,8 +645,16 @@ void oExtractLookAt(const float4x4& _View, float3* _pEye, float3* _pAt, float3* 
 
 void oCalcPlaneMatrix(const float4& _Plane, float4x4* _pMatrix)
 {
-	*_pMatrix = oCreateRotation(float3(0.0f, 0.0f, 1.0f), _Plane.xyz(), float3(0.0f, 1.0f, 0.0f));
-	float3 offset(0.0f, 0.0f, _Plane.w);  // @oooii@doug need to verify sign change
+	*_pMatrix = oCreateRotation(float3(0.0f, 0.0f, 1.0f), _Plane.xyz());
+
+	// Since oCreateRotation takes no default axis it will flip the world
+	// when the angle between the source and destination is 0.  Since we
+	// specifically want to force rotation around y we negate the y portion
+	// of the rotation when the plane's normal is float3(0.0f, 0.0f, -1.0f)
+	if(_Plane.z == -1.0f)
+		_pMatrix->Column1.y = -_pMatrix->Column1.y;
+
+	float3 offset(0.0f, 0.0f, _Plane.w);
 	offset = _pMatrix->GetUpper3x3() * offset;
 	_pMatrix->Column3.x = offset.x;
 	_pMatrix->Column3.y = offset.y;
@@ -843,8 +836,8 @@ template<typename T> static TMAT4<T> oFitToViewT(const TMAT4<T>& _View, const TM
 	TMAT4<T> invView = invert(_View);
 	T FovYRadians, AspectRatio, ZNear, ZFar;
 	oExtractPerspectiveParameters(_Projection, &FovYRadians, &AspectRatio, &ZNear, &ZFar);
-	T Offset = -_OffsetMultiplier * _Bounds.GetRadius() / tan(FovYRadians / T(2.0));
-	TVEC3<T> P = _Bounds.GetPosition() + mul(invView.GetUpper3x3(), TVEC3<T>(T(0.0), T(0.0), Offset));
+	T Offset = _OffsetMultiplier * _Bounds.GetRadius() / tan(FovYRadians / T(2.0));
+	TVEC3<T> P = _Bounds.GetPosition() - invView.Column2.xyz() * Offset;
 	invView.Column3 = TVEC4<T>(P, invView.Column3.w);
 	return invert(invView);
 }
@@ -1464,7 +1457,7 @@ T oTrilaterateBase( const TVEC3<T> observersIn[4], const T distancesIn[4], TVEC3
 				transformedObservers[i] = observers[i] + translation;
 
 			// Rotate everything such that the second point lies on the X-axis (collapsing the y and z components)
-			T_MAT4 rot =  oCreateRotation( normalize( transformedObservers[1] ), T_VEC3( 1.0f, 0.0f, 0.0f ), T_VEC3( 0.0f, 0.0f, 1.0f ) ); 
+			T_MAT4 rot =  oCreateRotation( normalize( transformedObservers[1] ), T_VEC3( 1.0f, 0.0f, 0.0f )); 
 			for( int i = 1; i < 4; ++ i )
 				transformedObservers[i] = mul( rot, T_VEC4( transformedObservers[i], 1.0f ) ).xyz();
 

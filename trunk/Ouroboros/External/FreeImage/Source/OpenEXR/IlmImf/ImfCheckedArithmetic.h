@@ -46,12 +46,12 @@
 #include <IexMathExc.h>
 
 namespace Imf {
-
+	/*
 template <bool b> struct StaticAssertionFailed;
 template <> struct StaticAssertionFailed <true> {};
 
 #define IMF_STATIC_ASSERT(x) \
-    do {StaticAssertionFailed <x> staticAssertionFailed;} while (false)
+    do {StaticAssertionFailed <x> staticAssertionFailed;} while (false)*/
 
 
 template <class T>
@@ -62,10 +62,9 @@ uiMult (T a, T b)
     // Unsigned integer multiplication
     //
 
-	static_assert(!std::numeric_limits<T>::is_signed &&
-		std::numeric_limits<T>::is_integer, "T must be un signed and an integer");
-   // IMF_STATIC_ASSERT (!std::numeric_limits<T>::is_signed &&
-   //                     std::numeric_limits<T>::is_integer);
+    static_assert (!std::numeric_limits<T>::is_signed &&
+                        std::numeric_limits<T>::is_integer, "unsupported type"
+						);
 
     if (a > 0 && b > std::numeric_limits<T>::max() / a)
         throw Iex::OverflowExc ("Integer multiplication overflow.");
@@ -82,10 +81,8 @@ uiDiv (T a, T b)
     // Unsigned integer division
     //
 
-	static_assert(!std::numeric_limits<T>::is_signed &&
-		std::numeric_limits<T>::is_integer, "T must be un signed and an integer");
-   // IMF_STATIC_ASSERT (!std::numeric_limits<T>::is_signed &&
-    //                    std::numeric_limits<T>::is_integer);
+    static_assert (!std::numeric_limits<T>::is_signed &&
+                        std::numeric_limits<T>::is_integer, "unsupported type");
 
     if (b == 0)
         throw Iex::DivzeroExc ("Integer division by zero.");
@@ -102,10 +99,8 @@ uiAdd (T a, T b)
     // Unsigned integer addition
     //
 
-	static_assert(!std::numeric_limits<T>::is_signed &&
-		std::numeric_limits<T>::is_integer, "T must be un signed and an integer");
-   // IMF_STATIC_ASSERT (!std::numeric_limits<T>::is_signed &&
-    //                    std::numeric_limits<T>::is_integer);
+    static_assert (!std::numeric_limits<T>::is_signed &&
+                        std::numeric_limits<T>::is_integer, "unsupported type");
 
     if (a > std::numeric_limits<T>::max() - b)
         throw Iex::OverflowExc ("Integer addition overflow.");
@@ -122,10 +117,8 @@ uiSub (T a, T b)
     // Unsigned integer subtraction
     //
 
-	static_assert(!std::numeric_limits<T>::is_signed &&
-		std::numeric_limits<T>::is_integer, "T must be un signed and an integer");
-    //IMF_STATIC_ASSERT (!std::numeric_limits<T>::is_signed &&
-    //                    std::numeric_limits<T>::is_integer);
+    static_assert (!std::numeric_limits<T>::is_signed &&
+                        std::numeric_limits<T>::is_integer, "unsupported type");
 
     if (a < b)
         throw Iex::UnderflowExc ("Integer subtraction underflow.");
@@ -152,13 +145,10 @@ checkArraySize (T n, size_t s)
     //      size_t (n).
     //
 
-	static_assert(!std::numeric_limits<T>::is_signed &&
-		std::numeric_limits<T>::is_integer, "T must be un signed and an integer");
-    //IMF_STATIC_ASSERT (!std::numeric_limits<T>::is_signed &&
-    //                    std::numeric_limits<T>::is_integer);
+    static_assert (!std::numeric_limits<T>::is_signed &&
+                        std::numeric_limits<T>::is_integer, "unsupported type");
 
-	static_assert(sizeof (T) <= sizeof (size_t), "size of T must be less than or equal to size of size_t");
-    //IMF_STATIC_ASSERT (sizeof (T) <= sizeof (size_t));
+    static_assert (sizeof (T) <= sizeof (size_t), "unsupported type");
 
     if (size_t (n) > std::numeric_limits<size_t>::max() / s)
         throw Iex::OverflowExc ("Integer multiplication overflow.");

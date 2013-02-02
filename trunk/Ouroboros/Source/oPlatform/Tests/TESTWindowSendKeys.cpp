@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,14 +29,14 @@
 #include <oPlatform/oWindow.h>
 
 static const char* TESTMessage = "Hello world";
-struct TESTWindowSendKeysClient : public oSpecialTest
+struct PLATFORM_WindowSendKeysClient : public oSpecialTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oEvent WaitEvent;
 		oWINDOW_INIT init;
-		init.WindowThreadDebugName = "TESTWindowSendKeysClient";
-		init.WindowTitle = "TESTWindowSendKeysClientWindow";
+		init.WindowThreadDebugName = "PLATFORM_WindowSendKeysClient";
+		init.WindowTitle = "PLATFORM_WindowSendKeysClientWindow";
 
 		init.WinDesc.Style = oGUI_WINDOW_SIZEABLE;
 		init.WinDesc.ClientSize = int2(16,16);
@@ -65,7 +67,7 @@ struct TESTWindowSendKeysClient : public oSpecialTest
 						ASCIIKey = (char)toupper(ASCIIKey);
 
 					oStrAppendf(Result.c_str(), "%c", ASCIIKey);
-					if(Result.length() == strlen(TESTMessage))
+					if(Result.length() == oStrlen(TESTMessage))
 						WaitEvent.Set();
 				}
 			}
@@ -85,7 +87,7 @@ struct TESTWindowSendKeysClient : public oSpecialTest
 	}
 };
 
-struct TESTWindowSendKeys : public oTest
+struct PLATFORM_WindowSendKeys : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
@@ -95,7 +97,7 @@ struct TESTWindowSendKeys : public oTest
 		{
 			int exitcode = 0;
 			oStringL msg;
-			oTESTB(oSpecialTest::CreateProcess("TESTWindowSendKeysClient", &Client), "");
+			oTESTB(oSpecialTest::CreateProcess("PLATFORM_WindowSendKeysClient", &Client), "");
 			oTESTB(oSpecialTest::Start(Client, msg, msg.capacity(), &exitcode), "%s", msg);
 		}
 
@@ -114,5 +116,5 @@ struct TESTWindowSendKeys : public oTest
 };
 
 
-oTEST_REGISTER(TESTWindowSendKeys);
-oTEST_REGISTER(TESTWindowSendKeysClient);
+oTEST_REGISTER(PLATFORM_WindowSendKeys);
+oTEST_REGISTER(PLATFORM_WindowSendKeysClient);

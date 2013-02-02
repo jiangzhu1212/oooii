@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -30,7 +32,9 @@
 #include <oPlatform/oMsgBox.h>
 #include <oBasis/oOnScopeExit.h>
 
-struct TESTHTTP : public oTest
+#define TEST_FILE "PLATFORM_oHTTP.png"
+
+struct PLATFORM_oHTTP : public oTest
 {
 	void StartResponse(const oHTTP_REQUEST& _Request, const oNetHost& _Client, oHTTP_RESPONSE* _pResponse)
 	{
@@ -42,24 +46,24 @@ struct TESTHTTP : public oTest
 			if (TestImage(image))
 			{
 				const char *indexHtmlPage = "<html><head><title>Received Post</title></head><body><p>Image compare successful</p></body></html>";
-				int size = (int)strlen(indexHtmlPage) + 1;
+				int size = (int)oStrlen(indexHtmlPage) + 1;
 				_pResponse->Content.pData = new char[size];
 
 				oStrcpy((char *)_pResponse->Content.pData, size, indexHtmlPage);
 				_pResponse->StatusLine.StatusCode = oHTTP_OK;
 				_pResponse->Content.Type = oMIME_TEXT_HTML;
-				_pResponse->Content.Length = oUInt(strlen(indexHtmlPage));
+				_pResponse->Content.Length = oUInt(oStrlen(indexHtmlPage));
 			}
 			else
 			{
 				const char *indexHtmlPage = "<html><head><title>500 Internal Server Error</title></head><body><p>Internal Server Error, image compare failed.</p></body></html>";
-				int size = (int)strlen(indexHtmlPage) + 1;
+				int size = (int)oStrlen(indexHtmlPage) + 1;
 				_pResponse->Content.pData = new char[size];
 
 				oStrcpy((char *)_pResponse->Content.pData, size, indexHtmlPage);
 				_pResponse->StatusLine.StatusCode = oHTTP_INTERNAL_SERVER_ERROR;
 				_pResponse->Content.Type = oMIME_TEXT_HTML;
-				_pResponse->Content.Length = oUInt(strlen(indexHtmlPage));
+				_pResponse->Content.Length = oUInt(oStrlen(indexHtmlPage));
 			}
 		}
 		else
@@ -81,18 +85,18 @@ struct TESTHTTP : public oTest
 			}
 			else if (oStrcmp(_Request.RequestLine.RequestURI, "/ ") == 0 || oStrcmp(_Request.RequestLine.RequestURI, "/") == 0 || oStrcmp(_Request.RequestLine.RequestURI, "/index.html") == 0)
 			{
-				const char *indexHtmlPage = "<html><head><title>Test Page</title></head><body><p>Welcome to OOOii test HTTP server<br/><img src=\"TESTHTTP.png\"/></p></body></html>";
-				int size = (int)strlen(indexHtmlPage) + 1;
+				const char *indexHtmlPage = "<html><head><title>Test Page</title></head><body><p>Welcome to OOOii test HTTP server<br/><img src=\"" TEST_FILE "\"/></p></body></html>";
+				int size = (int)oStrlen(indexHtmlPage) + 1;
 				_pResponse->Content.pData = new char[size];
 
 				oStrcpy((char *)_pResponse->Content.pData, size, indexHtmlPage);
 				_pResponse->Content.Type = oMIME_TEXT_HTML;
 				_pResponse->StatusLine.StatusCode = oHTTP_OK;
-				_pResponse->Content.Length = oUInt(strlen(indexHtmlPage));
+				_pResponse->Content.Length = oUInt(oStrlen(indexHtmlPage));
 			}
 			else
 				_pResponse->StatusLine.StatusCode = oHTTP_NOT_FOUND;
-			if (strstr(_Request.RequestLine.RequestURI, "TESTHTTP.png") != 0)
+			if (strstr(_Request.RequestLine.RequestURI, TEST_FILE) != 0)
 			{
 				oStringPath defaultDataPath;
 				oSystemGetPath(defaultDataPath.c_str(), oSYSPATH_DATA);
@@ -133,8 +137,8 @@ struct TESTHTTP : public oTest
 		oRef<oHTTPServer> Server;
 		oHTTPServer::DESC desc;
 		desc.Port = 80;
-		desc.StartResponse = oBIND(&TESTHTTP::StartResponse, this, oBIND1, oBIND2, oBIND3);
-		desc.FinishResponse = oBIND(&TESTHTTP::FinishResponse, this, oBIND1);
+		desc.StartResponse = oBIND(&PLATFORM_oHTTP::StartResponse, this, oBIND1, oBIND2, oBIND3);
+		desc.FinishResponse = oBIND(&PLATFORM_oHTTP::FinishResponse, this, oBIND1);
 
 		oRef<oHTTPClient> Client;
 		oHTTPClient::DESC clientDesc;
@@ -158,10 +162,10 @@ struct TESTHTTP : public oTest
 			oHTTP_RESPONSE response;
 
 			// Test Head: Head should only return the header for the request.
-			Client->Head("/TESTHTTP.png", &response);
-			oTESTB(response.StatusLine.StatusCode == oHTTP_OK, "Head query for <GoldenImages>/TESTHTTP.png did not return success");
-			oTESTB(response.Content.Type == oMIME_IMAGE_PNG, "Head returned incorrect Type for file <GoldenImages>/TESTHTTP.png");
-			oTESTB(response.Content.Length == 173325, "Head returned incorrect size for image file <GoldenImages>/TESTHTTP.png");
+			Client->Head("/" TEST_FILE, &response);
+			oTESTB(response.StatusLine.StatusCode == oHTTP_OK, "Head query for <GoldenImages>/" TEST_FILE " did not return success");
+			oTESTB(response.Content.Type == oMIME_IMAGE_PNG, "Head returned incorrect Type for file <GoldenImages>/" TEST_FILE);
+			oTESTB(response.Content.Length == 173325, "Head returned incorrect size for image file <GoldenImages>/" TEST_FILE);
 
 			// Create a new buffer based on the header from the head command
 			int bufferSize = (int)response.Content.Length;
@@ -171,7 +175,7 @@ struct TESTHTTP : public oTest
 			oBufferCreate("test get buffer", pBuffer, bufferSize, oBuffer::Delete, &imageBuffer);
 
 			// Test Get: Download and compare the image
-			Client->Get("/TESTHTTP.png", &response, imageBuffer->GetData(), (int)imageBuffer->GetSize());
+			Client->Get("/" TEST_FILE, &response, imageBuffer->GetData(), (int)imageBuffer->GetSize());
 
 			oRef<oImage> image;
 			oImageCreate("http test image", imageBuffer->GetData(), imageBuffer->GetSize(), &image);
@@ -181,7 +185,7 @@ struct TESTHTTP : public oTest
 			oStringPath defaultDataPath;
 			oSystemGetPath(defaultDataPath.c_str(), oSYSPATH_DATA);
 			oStringPath golden;
-			oPrintf(golden, "%sGoldenImages/TESTHTTP.png", defaultDataPath.c_str());
+			oPrintf(golden, "%sGoldenImages/" TEST_FILE, defaultDataPath.c_str());
 			if (oStreamReaderCreate(golden, &FileReader))
 			{
 				oSTREAM_DESC fileDesc;
@@ -213,7 +217,7 @@ struct TESTHTTP : public oTest
 	oRef<threadsafe oStreamReader> FileReader;
 };
 
-struct TESTHTTPLarge : public oTest
+struct PLATFORM_oHTTPLarge : public oTest
 {
 	uint TestBufferSize;
 	std::vector<char> TestBuffer;
@@ -271,8 +275,8 @@ struct TESTHTTPLarge : public oTest
 		oRef<oHTTPServer> Server;
 		oHTTPServer::DESC desc;
 		desc.Port = 80;
-		desc.StartResponse = oBIND(&TESTHTTPLarge::StartResponse, this, oBIND1, oBIND2, oBIND3);
-		desc.FinishResponse = oBIND(&TESTHTTPLarge::FinishResponse, this, oBIND1);
+		desc.StartResponse = oBIND(&PLATFORM_oHTTPLarge::StartResponse, this, oBIND1, oBIND2, oBIND3);
+		desc.FinishResponse = oBIND(&PLATFORM_oHTTPLarge::FinishResponse, this, oBIND1);
 
 		oRef<oHTTPClient> Client;
 		oHTTPClient::DESC clientDesc;
@@ -313,5 +317,5 @@ struct TESTHTTPLarge : public oTest
 	oRef<threadsafe oStreamReader> FileReader;
 };
 
-oTEST_REGISTER(TESTHTTP);
-oTEST_REGISTER(TESTHTTPLarge);
+oTEST_REGISTER(PLATFORM_oHTTP);
+oTEST_REGISTER(PLATFORM_oHTTPLarge);

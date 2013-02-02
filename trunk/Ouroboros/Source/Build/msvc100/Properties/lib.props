@@ -4,6 +4,7 @@
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
     <TargetName>$(ProjectName)$(oBuildSuffix)</TargetName>
     <OutDir>$(oSuiteLibDir)</OutDir>
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>

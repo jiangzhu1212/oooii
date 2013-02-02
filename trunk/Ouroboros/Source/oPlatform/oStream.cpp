@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -96,6 +98,7 @@ protected:
 
 // {463EF9A3-3CBE-40B9-9658-A6160CE058BA}
 const oGUID oStreamContext::GUID = { 0x463ef9a3, 0x3cbe, 0x40b9, { 0x96, 0x58, 0xa6, 0x16, 0xc, 0xe0, 0x58, 0xba } };
+oSINGLETON_REGISTER(oStreamContext);
 
 const oGUID& oGetGUID(threadsafe const oSchemeHandler* threadsafe const *)
 {
@@ -119,11 +122,7 @@ bool oStreamContext::QueryInterface(const oGUID& _InterfaceID, threadsafe void**
 		oFOR(auto& sh, pThis->SchemeHandlers)
 		{
 			if (sh->QueryInterface(_InterfaceID, _ppInterface))
-			{
-				sh->Reference();
-				*_ppInterface = sh;
 				break;
-			}
 		}
 	}
 
@@ -259,6 +258,9 @@ bool oStreamContext::VisitURIReference(const char* _URIReference, const oFUNCTIO
 	if (pThis->VisitURIReferenceInternal(_URIReference, _URIVisitor))
 		return true;
 
+	oERROR LastErr = oErrorGetLast();
+	oStringL LastErrString = oErrorGetLastString();
+
 	// If not, try the search paths/bases
 	if (oErrorGetLast() == oERROR_NOT_FOUND)
 	{
@@ -272,14 +274,20 @@ bool oStreamContext::VisitURIReference(const char* _URIReference, const oFUNCTIO
 			if (success)
 				return true;
 
-			if (oErrorGetLast() != oERROR_NOT_FOUND)
+			if (oErrorGetLast() != oERROR_NOT_FOUND && oErrorGetLast() != oERROR_INVALID_PARAMETER)
 				return false; // pass through error
 
 			// else keep looking
 		}
 	}
-
-	return false; // Lower level VisitURIReferenceInternal should have set the error
+	
+	// Lower level VisitURIReferenceInternal should have set the error, but since
+	// it does a blind prepend, there may be some invalid URI references formed,
+	// so reset it to the original error...
+	if (oErrorGetLast() == oERROR_INVALID_PARAMETER)
+		oErrorSetLast(LastErr, "%s", LastErrString.c_str());
+	
+	return false; 
 }
 
 bool oStreamContext::GetDesc(const char* _URIReference, oSTREAM_DESC* _pDesc, oURIParts* _pResolvedURIParts) threadsafe

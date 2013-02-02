@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -24,6 +26,7 @@
 #include <oBasis/oCSV.h>
 #include <oBasis/oAssert.h>
 #include <oBasis/oFixedString.h>
+#include <oBasis/oFor.h>
 #include <oBasis/oInitOnce.h>
 #include <oBasis/oMacros.h>
 #include <oBasis/oRefCount.h>
@@ -121,12 +124,14 @@ oCSVImpl::oCSVImpl(const char* _DocumentName, const char* _CSVString, bool* _pSu
 	: NumColumns(0)
 	, DocumentName(_DocumentName)
 {
-	size_t numberOfElements = strlen(oSAFESTR(_CSVString))+1;
+	size_t numberOfElements = oStrlen(oSAFESTR(_CSVString))+1;
 	Data = new char[numberOfElements];
 	*_pSuccess = CSVParse(Records.Initialize(), Data, oSAFESTR(_CSVString));
 	if (*_pSuccess)
-		for (RECORDS::const_iterator it = Records->begin(); it != Records->end(); ++it)
-			NumColumns = __max(NumColumns, it->size());
+	{
+		oFOR(const auto& r, *Records)
+			NumColumns = __max(NumColumns, r.size());
+	}
 }
 
 oCSVImpl::~oCSVImpl()
@@ -148,9 +153,9 @@ bool oCSVCreate(const char* _DocumentName, const char* _CSVString, threadsafe oC
 
 size_t oCSVImpl::GetDocumentSize() const threadsafe
 {
-	size_t size = sizeof(*this) + strlen(Data) + 1 + Records->capacity() * sizeof(RECORDS::value_type);
-	for (RECORDS::const_iterator it = Records->begin(); it != Records->end(); ++it)
-		size += it->capacity() * sizeof(RECORDS::value_type::value_type);
+	size_t size = sizeof(*this) + oStrlen(Data) + 1 + Records->capacity() * sizeof(RECORDS::value_type);
+	oFOR(const auto& r, *Records)
+		size += r.capacity() * sizeof(RECORDS::value_type::value_type);
 	return size;
 }
 

@@ -58,21 +58,25 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Release32.props" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\..\..\..\Source\Build\msvc100\Properties\FreeImage.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Debug32.props" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\..\..\..\Source\Build\msvc100\Properties\FreeImage.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Release64.props" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\..\..\..\Source\Build\msvc100\Properties\FreeImage.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Debug64.props" />
     <Import Project="..\..\..\..\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\..\..\..\Source\Build\msvc100\Properties\FreeImage.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -184,9 +188,11 @@
     <ClCompile Include="internal\demosaic_packs.cpp" />
     <ClCompile Include="src\libraw_c_api.cpp" />
     <ClCompile Include="src\libraw_cxx.cpp" />
+    <ClCompile Include="src\libraw_datastream.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="internal\defines.h" />
+    <ClInclude Include="internal\libraw_bytebuffer.h" />
     <ClInclude Include="internal\libraw_internal_funcs.h" />
     <ClInclude Include="internal\var_defines.h" />
     <ClInclude Include="libraw\libraw.h" />

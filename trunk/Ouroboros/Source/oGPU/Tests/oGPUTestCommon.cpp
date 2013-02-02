@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -116,8 +118,8 @@ bool oGPUTestInitFirstTriangle(oGPUDevice* _pDevice, const char* _Name, const oG
 	md.NumVertices = 3;
 	md.NumRanges = 1;
 	md.LocalSpaceBounds = oAABoxf(float3(-0.8f, -0.7f, -0.01f), float3(0.8f, 0.7f, 0.01f));
-	md.pElements = _pElements;
-	md.NumElements = _NumElements;
+	md.NumVertexElements = _NumElements;
+	memcpy(md.VertexElements, _pElements, sizeof(oGPU_VERTEX_ELEMENT) * _NumElements);
 
 	oRef<oGPUMesh> Mesh;
 	if (!_pDevice->CreateMesh(_Name, md, &Mesh))
@@ -127,8 +129,8 @@ bool oGPUTestInitFirstTriangle(oGPUDevice* _pDevice, const char* _Name, const oG
 	_pDevice->GetImmediateCommandList(&ICL);
 
 	oGPU_RANGE r;
-	r.StartTriangle = 0;
-	r.NumTriangles = 1;
+	r.StartPrimitive = 0;
+	r.NumPrimitives = 1;
 	r.MinVertex = 0;
 	r.MaxVertex = 3;
 

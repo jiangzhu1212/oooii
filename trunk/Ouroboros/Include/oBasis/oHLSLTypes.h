@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -45,6 +47,31 @@
 
 	typedef TMAT3<float> float3x3; typedef TMAT3<double> double3x3;
 	typedef TMAT4<float> float4x4; typedef TMAT4<double> double4x4;
+
+	template<typename T> struct is_hlsl
+	{
+		static const bool value = 
+			std::is_floating_point<T>::value ||
+			std::is_same<bool,std::remove_cv<T>::type>::value ||
+			std::is_same<int,std::remove_cv<T>::type>::value ||
+			std::is_same<uint,std::remove_cv<T>::type>::value ||
+			std::is_same<int2,std::remove_cv<T>::type>::value ||
+			std::is_same<int3,std::remove_cv<T>::type>::value ||
+			std::is_same<int4,std::remove_cv<T>::type>::value ||
+			std::is_same<uint2,std::remove_cv<T>::type>::value ||
+			std::is_same<uint3,std::remove_cv<T>::type>::value ||
+			std::is_same<uint4,std::remove_cv<T>::type>::value ||
+			std::is_same<float2,std::remove_cv<T>::type>::value ||
+			std::is_same<float3,std::remove_cv<T>::type>::value ||
+			std::is_same<float4,std::remove_cv<T>::type>::value ||
+			std::is_same<double2,std::remove_cv<T>::type>::value ||
+			std::is_same<double3,std::remove_cv<T>::type>::value ||
+			std::is_same<double4,std::remove_cv<T>::type>::value ||
+			std::is_same<float3x3,std::remove_cv<T>::type>::value ||
+			std::is_same<float4x4,std::remove_cv<T>::type>::value ||
+			std::is_same<double3x3,std::remove_cv<T>::type>::value ||
+			std::is_same<double4x4,std::remove_cv<T>::type>::value;
+	};
 
 #endif
 #endif

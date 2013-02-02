@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -95,6 +97,28 @@ bool oConstructOnceV(void* volatile* _pPointer, void* (*_New)())
 	return constructed;
 }
 	
+// {7F15EF8E-3AA2-43D8-B802-06A3E195E21C}
+static const oGUID IID_oSingletonCtors = { 0x7f15ef8e, 0x3aa2, 0x43d8, { 0xb8, 0x2, 0x6, 0xa3, 0xe1, 0x95, 0xe2, 0x1c } };
+typedef std::unordered_map<oGUID, type_info_default_constructor, std::hash<oGUID>, std::equal_to<oGUID>, oProcessHeapAllocator<std::pair<oGUID, type_info_default_constructor>>> oSingletonCtors;
+void oPlacementNewSingletonCtor(void* _Pointer) { new(_Pointer) oSingletonCtors(); }
+
+void* oSingletonCtorRegistryCreate()
+{
+	void* p = nullptr;
+	oProcessHeapFindOrAllocate(IID_oSingletonCtors, false, false, sizeof(oSingletonCtors), oPlacementNewSingletonCtor, "oSingletonCtors", &p);
+	return p;
+}
+
+oSingletonRegister::oSingletonRegister(const char* _SingletonName, const oGUID& _SingletonGUID, type_info_default_constructor _PlacementNew)
+{
+	oSingletonCtors& ctors = *(oSingletonCtors*)oSingletonCtorRegistryCreate();
+	if (ctors.find(_SingletonGUID) == ctors.end())
+	{
+		ctors[_SingletonGUID] = _PlacementNew;
+		oSINGLETON_TRACE(_SingletonName, "registered");
+	}
+}
+
 class oThreadlocalRegistry
 {
 public:
@@ -109,7 +133,7 @@ public:
 	static oThreadlocalRegistry* Singleton()
 	{
 		oThreadlocalRegistry* p = nullptr;
-		oProcessHeapFindOrAllocate(GUID, false, true, sizeof(oThreadlocalRegistry), ctor, "oThreadlocalRegistry", (void**)&p);
+		oProcessHeapFindOrAllocate(GUID, false, true, sizeof(oThreadlocalRegistry), oTypeInfo<oThreadlocalRegistry>::default_construct, "oThreadlocalRegistry", (void**)&p);
 		return p;
 	}
 
@@ -138,8 +162,6 @@ protected:
 	typedef oArray<oFUNCTION<void()>, 32> atexitlist_t;
 	typedef std::unordered_map<unsigned int, atexitlist_t, std::hash<unsigned int>, std::equal_to<unsigned int>, oStdUserCallbackAllocator<std::pair<const unsigned int, atexitlist_t>>> atexits_t;
 	atexits_t AtExits;
-
-	static void ctor(void* _Pointer) { new (_Pointer) oThreadlocalRegistry(); }
 };
 
 // {CBC5C6D4-7C46-4D05-9143-A043418C0B3A}
@@ -190,14 +212,24 @@ void oSingletonBase::Release() threadsafe
 		oProcessHeapDeallocate(thread_cast<oSingletonBase*>(this)); // safe because we're not using this anymore
 	}
 }
-
-void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, void (*_Ctor)(void*), const oGUID& _GUID, bool _IsThreadLocal)
+	
+void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, type_info_default_constructor _Ctor, const oGUID& _GUID, bool _IsThreadLocal)
 {
+	type_info_default_constructor PlacementNew = _Ctor;
+
+	oSingletonCtors* ctors = nullptr;
+	if (oProcessHeapFind(IID_oSingletonCtors, _IsThreadLocal, (void**)&ctors))
+	{
+		auto it = ctors->find(_GUID);
+		oASSERT(it != ctors->end(), "%s ctor not found", _TypeInfoName);
+		PlacementNew = it->second;
+	}
+
 	oSingletonBase* p = nullptr;
-	if (oProcessHeapFindOrAllocate(_GUID, _IsThreadLocal, true, _Size, _Ctor, oGetTypename(_TypeInfoName), (void**)&p))
+	if (oProcessHeapFindOrAllocate(_GUID, _IsThreadLocal, true, _Size, PlacementNew, oGetTypename(_TypeInfoName), (void**)&p))
 	{
 		p->Name = oGetTypename(_TypeInfoName);
-		oSINGLETON_TRACE(_TypeInfoName, "%ssingleton initialized", _IsThreadLocal ? "threadlocal " : "");
+		oSINGLETON_TRACE(_TypeInfoName, "%ssingleton initialized using %s ctor", _IsThreadLocal ? "threadlocal " : "", !ctors ? "module-local" : "prime-module");
 
 		if (_IsThreadLocal)
 		{

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,10 +29,11 @@
 #include <oBasis/oString.h>
 #include <cstring>
 #include <cctype>
+#include <algorithm>
 
 template<typename T> T* oGetFileExtensionT(T* _Path)
 {
-	size_t len = strlen(_Path);
+	size_t len = oStrlen(_Path);
 	T* cur = _Path + len-1;
 	while (cur >= _Path && !(oIsSeparator(*cur) || *cur == ':'))
 	{
@@ -54,7 +57,7 @@ const char* oGetFileExtension(const char* _Path)
 
 template<typename T> T* oGetFileBaseT(T* _Path)
 {
-	T* cur = _Path + strlen(_Path)-1;
+	T* cur = _Path + oStrlen(_Path)-1;
 	while (cur >= _Path && !(oIsSeparator(*cur) || *cur == ':'))
 		cur--;
 	cur++;
@@ -117,7 +120,7 @@ char* oReplaceFilename(char* _Path, size_t _SizeofPath, const char* _Filename)
 
 char* oTrimFilename(char* _Path, bool _IgnoreTrailingSeparator)
 {
-	char* cur = _Path + strlen(_Path);
+	char* cur = _Path + oStrlen(_Path);
 	// Handle the case where a path ends in a separator, indicating that it is
 	// a directory path, so trim back another step.
 	if (_IgnoreTrailingSeparator && oIsSeparator(*(cur-1)))
@@ -131,16 +134,35 @@ char* oTrimFilename(char* _Path, bool _IgnoreTrailingSeparator)
 
 char* oTrimFileExtension(char* _Path)
 {
-	char* cur = _Path + strlen(_Path);
+	char* cur = _Path + oStrlen(_Path);
 	while (cur >= _Path && *cur != '.')
 		--cur;
 	*cur = 0;
 	return _Path;
 }
 
+char* oTrimFileLeadingSeperators(char* _Path)
+{
+	if(oIsSeparator(*_Path))
+	{
+		char* read = _Path;
+		char* write = _Path;
+		
+		while(oIsSeparator(*read)) ++read;
+
+		while(*read)
+		{
+			*write = *read;
+			++read; ++write;
+		}
+		*write = 0;
+	}
+	return _Path;
+}
+
 char* oEnsureSeparator(char* _Path, size_t _SizeofPath, char _FileSeparator)
 {
-	size_t len = strlen(_Path);
+	size_t len = oStrlen(_Path);
 	char* cur = _Path + len-1;
 	if (!oIsSeparator(*cur) && _SizeofPath)
 	{
@@ -434,7 +456,7 @@ char* oFindInPath(char* _StrDestination, size_t _SizeofStrDestination, const cha
 			if (!oStrcpy(_StrDestination, _SizeofStrDestination, _DotPath))
 				return nullptr;
 			oEnsureSeparator(_StrDestination, _SizeofStrDestination);
-			dst = _StrDestination + strlen(_StrDestination);
+			dst = _StrDestination + oStrlen(_StrDestination);
 		}
 
 		while (dst < end && *cur && *cur != ';')
@@ -459,7 +481,7 @@ char* oFindInPath(char* _StrDestination, size_t _SizeofStrDestination, const cha
 
 char* oStrTokToSwitches(char* _StrDestination, size_t _SizeofStrDestination, const char* _Switch, const char* _Tokens, const char* _Separator)
 {
-	size_t len = strlen(_StrDestination);
+	size_t len = oStrlen(_StrDestination);
 	_StrDestination += len;
 	_SizeofStrDestination -= len;
 
@@ -468,13 +490,13 @@ char* oStrTokToSwitches(char* _StrDestination, size_t _SizeofStrDestination, con
 	while (tok)
 	{
 		oStrcpy(_StrDestination, _SizeofStrDestination, _Switch);
-		size_t len = strlen(_StrDestination);
+		size_t len = oStrlen(_StrDestination);
 		_StrDestination += len;
 		_SizeofStrDestination -= len;
 
 		oCleanPath(_StrDestination, _SizeofStrDestination, tok);
 
-		len = strlen(_StrDestination);
+		len = oStrlen(_StrDestination);
 		_StrDestination += len;
 		_SizeofStrDestination -= len;
 
@@ -482,4 +504,13 @@ char* oStrTokToSwitches(char* _StrDestination, size_t _SizeofStrDestination, con
 	}
 
 	return _StrDestination;
+}
+
+bool oHasMatchingExtension(const char* _Path, const char* _Extensions[], size_t _NumExtensions)
+{
+	return std::any_of(_Extensions, _Extensions + _NumExtensions, [&](const char* _Extension) -> bool {
+		if (oStricmp(oGetFileExtension(_Path), _Extension) == 0)
+			return true;
+		return false;
+	});
 }

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -65,7 +67,8 @@ void oProcessHeapDeallocate(void* _Pointer);
 // oProcessHeap is guaranteed to be running once this function returns
 void oProcessHeapEnsureRunning();
 
-//This should only be used for singleton's and their member variables, to avoid false leak detections in unit tests.
+// This should be used for singleton members to ensure allocations are not 
+// falsely detected as leaks.
 template<typename T> struct oProcessHeapAllocator
 {
 	// Below we'll use a hash, but we want all its allocations to come out of the

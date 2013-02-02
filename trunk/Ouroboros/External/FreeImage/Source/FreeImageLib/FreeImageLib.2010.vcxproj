@@ -22,12 +22,6 @@
     <ProjectName>FreeImageLib</ProjectName>
     <ProjectGuid>{9E219DF2-315D-478E-8A07-8960C377CE1E}</ProjectGuid>
     <RootNamespace>FreeImageLib</RootNamespace>
-    <SccProjectName>
-    </SccProjectName>
-    <SccLocalPath>
-    </SccLocalPath>
-    <SccProvider>
-    </SccProvider>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -93,13 +87,10 @@
     <ClCompile>
       <AdditionalIncludeDirectories>..\;..\DeprecationManager;..\OpenEXR\Half;..\OpenEXR\Iex;..\OpenEXR\IlmImf;..\OpenEXR\Imath;..\OpenEXR\IlmThread;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;OPJ_STATIC;FREEIMAGE_LIB;_CRT_SECURE_NO_DEPRECATE;LIBRAW_NODLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>false</MinimalRebuild>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <PrecompiledHeaderOutputFile>.\Debug/FreeImageLib.pch</PrecompiledHeaderOutputFile>
       <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>
-      </DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -109,11 +100,6 @@
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
     <Lib />
-    <PostBuildEvent>
-      <Command>copy Debug\FreeImaged.lib ..\..\Dist
-copy ..\FreeImage.h ..\..\Dist
-</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Midl>
@@ -122,14 +108,11 @@ copy ..\FreeImage.h ..\..\Dist
     <ClCompile>
       <AdditionalIncludeDirectories>..\;..\DeprecationManager;..\OpenEXR\Half;..\OpenEXR\Iex;..\OpenEXR\IlmImf;..\OpenEXR\Imath;..\OpenEXR\IlmThread;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;OPJ_STATIC;FREEIMAGE_LIB;_CRT_SECURE_NO_DEPRECATE;LIBRAW_NODLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>false</MinimalRebuild>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <PrecompiledHeaderOutputFile>.\Debug/FreeImageLib.pch</PrecompiledHeaderOutputFile>
       <WarningLevel>Level3</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
-      <DebugInformationFormat>
-      </DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -139,23 +122,15 @@ copy ..\FreeImage.h ..\..\Dist
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
     <Lib />
-    <PostBuildEvent>
-      <Command>copy Debug\FreeImaged.lib ..\..\Dist
-copy ..\FreeImage.h ..\..\Dist
-</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\;..\DeprecationManager;..\OpenEXR\Half;..\OpenEXR\Iex;..\OpenEXR\IlmImf;..\OpenEXR\Imath;..\OpenEXR\IlmThread;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;OPJ_STATIC;FREEIMAGE_LIB;_CRT_SECURE_NO_DEPRECATE;LIBRAW_NODLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>false</MinimalRebuild>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <PrecompiledHeaderOutputFile>.\Release/FreeImageLib.pch</PrecompiledHeaderOutputFile>
       <TreatWarningAsError>false</TreatWarningAsError>
-      <DebugInformationFormat>
-      </DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -165,11 +140,6 @@ copy ..\FreeImage.h ..\..\Dist
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
     <Lib />
-    <PostBuildEvent>
-      <Command>copy Release\FreeImage.lib ..\..\Dist
-copy ..\FreeImage.h ..\..\Dist
-</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Midl>
@@ -178,13 +148,10 @@ copy ..\FreeImage.h ..\..\Dist
     <ClCompile>
       <AdditionalIncludeDirectories>..\;..\DeprecationManager;..\OpenEXR\Half;..\OpenEXR\Iex;..\OpenEXR\IlmImf;..\OpenEXR\Imath;..\OpenEXR\IlmThread;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;OPJ_STATIC;FREEIMAGE_LIB;_CRT_SECURE_NO_DEPRECATE;LIBRAW_NODLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>false</MinimalRebuild>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <PrecompiledHeaderOutputFile>.\Release/FreeImageLib.pch</PrecompiledHeaderOutputFile>
       <TreatWarningAsError>false</TreatWarningAsError>
-      <DebugInformationFormat>
-      </DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -194,11 +161,6 @@ copy ..\FreeImage.h ..\..\Dist
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
     <Lib />
-    <PostBuildEvent>
-      <Command>copy Release\FreeImage.lib ..\..\Dist
-copy ..\FreeImage.h ..\..\Dist
-</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\FreeImage\BitmapAccess.cpp" />
@@ -229,6 +191,7 @@ copy ..\FreeImage.h ..\..\Dist
     <ClCompile Include="..\FreeImage\tmoReinhard05.cpp" />
     <ClCompile Include="..\FreeImage\ToneMapping.cpp" />
     <ClCompile Include="..\FreeImage\J2KHelper.cpp" />
+    <ClCompile Include="..\FreeImage\MNGHelper.cpp" />
     <ClCompile Include="..\FreeImage\Plugin.cpp" />
     <ClCompile Include="..\FreeImage\PluginBMP.cpp" />
     <ClCompile Include="..\FreeImage\PluginCUT.cpp" />
@@ -240,6 +203,7 @@ copy ..\FreeImage.h ..\..\Dist
     <ClCompile Include="..\FreeImage\PluginICO.cpp" />
     <ClCompile Include="..\FreeImage\PluginIFF.cpp" />
     <ClCompile Include="..\FreeImage\PluginJ2K.cpp" />
+    <ClCompile Include="..\FreeImage\PluginJNG.cpp" />
     <ClCompile Include="..\FreeImage\PluginJP2.cpp" />
     <ClCompile Include="..\FreeImage\PluginJPEG.cpp" />
     <ClCompile Include="..\FreeImage\PluginKOALA.cpp" />
@@ -304,10 +268,6 @@ copy ..\FreeImage.h ..\..\Dist
     <None Include="..\..\Whatsnew.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LibMNG\LibMNG.2010.vcxproj">
-      <Project>{912a2d43-35a3-4af2-b2eb-0d81effda6dc}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
     <ProjectReference Include="..\LibOpenJPEG\LibOpenJPEG.2010.vcxproj">
       <Project>{e3536c28-a7f1-4b53-8e52-7d2232f9e098}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
@@ -320,9 +280,8 @@ copy ..\FreeImage.h ..\..\Dist
       <Project>{07f662c1-1323-42ab-b6af-fbfd34a7437a}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <ProjectReference Include="..\LibTIFF\LibTIFF.2010.vcxproj">
-      <Project>{431e3f3f-7c4d-430a-b8f1-4f165db64edc}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    <ProjectReference Include="..\LibTIFF4\LibTIFF4.2010.vcxproj">
+      <Project>{ec085cbd-e9c3-477f-9a97-cb9d5da30e27}</Project>
     </ProjectReference>
     <ProjectReference Include="..\OpenEXR\OpenEXR.2010.vcxproj">
       <Project>{17a4874b-0606-4687-90b6-f91f8cb3b8af}</Project>

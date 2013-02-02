@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -58,7 +60,7 @@ bool oBasisTest_oCSV()
 {
 	oRef<threadsafe oCSV> csv;
 	{
-		size_t size = strlen(sTestCSV)+1;
+		size_t size = oStrlen(sTestCSV)+1;
 		char* pBuffer = new char[size];
 		oStrcpy(pBuffer, size, sTestCSV);
 		oTESTB(oCSVCreate("Test CSV", pBuffer, &csv), "Failed to create test CSV");

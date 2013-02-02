@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -35,9 +37,9 @@ struct oGUID
 	unsigned short Data3;
 	unsigned char Data4[8];
 
-	bool operator==(const oGUID& other) const;
-	inline bool operator!=(const oGUID& other) const { return !(*this == other); }
-	bool operator<(const oGUID& other) const;
+	bool operator==(const oGUID& _That) const;
+	inline bool operator!=(const oGUID& _That) const { return !(*this == _That); }
+	bool operator<(const oGUID& _That) const;
 };
 
 // Instead of polluting headers with oGUIDs we use oGetGUID to return

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -31,7 +33,7 @@
 
 oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget)
 {
-	oDEFINE_GPUDEVICECHILD_INTERFACE();
+	oDEFINE_GPUDEVICECHILD_INTERFACE_EXPLICIT_QI();
 	oDECLARE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget);
 	oD3D11RenderTarget(oGPUDevice* _pDevice, threadsafe oGPUWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, const char* _Name, bool* _pSuccess);
 

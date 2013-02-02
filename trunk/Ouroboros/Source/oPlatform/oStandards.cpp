@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -219,23 +221,4 @@ bool oINIFindPath( char* _StrDestination, size_t _SizeofStrDestination, const ch
 		return true;
 
 	return oErrorSetLast(oERROR_NOT_FOUND, "No ini file %s found.", _pININame);
-}
-
-oStringS oGetModuleFileStampString()
-{
-	oMODULE_DESC ModuleDesc;
-	oModuleGetDesc(&ModuleDesc);
-
-	oStringS Version;
-	Version[0] = 'V';
-	oToString(&Version[1], Version.capacity() - 1, ModuleDesc.ProductVersion);
-	oStrAppendf(Version, "D");
-
-	oNTPDate now;
-	oSystemGetDate(&now);
-	oStringS StrNow;
-	oDateStrftime(Version.c_str() + Version.length(), Version.capacity() - Version.length(), oDATE_SYSLOG_FORMAT_LOCAL, now, oDATE_TO_LOCAL);
-	oReplace(StrNow, Version, ":", "_");
-	oReplace(Version, StrNow, ".", "_");
-	return Version;
 }

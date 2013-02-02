@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -249,7 +251,7 @@ char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oHTTP
 		if (!oToString(NextLine, SzRemaining, _Fields.Vector[i]))
 			return nullptr;
 
-		size_t LineLength = strlen(NextLine);
+		size_t LineLength = oStrlen(NextLine);
 		NextLine += LineLength;
 		SzRemaining -= LineLength;
 	}
@@ -334,7 +336,7 @@ char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oHTTP
 	if (!oToString(_StrDestination, _SizeofStrDestination, _Request.RequestLine))
 		return nullptr;
 
-	char* StrDest = oByteAdd(_StrDestination, strlen(_StrDestination));
+	char* StrDest = oByteAdd(_StrDestination, oStrlen(_StrDestination));
 	size_t SzLeft = _SizeofStrDestination - (StrDest - _StrDestination);
 
 	if (!oToString(StrDest, SzLeft, _Request.HeaderFieldsInternal))
@@ -405,7 +407,7 @@ char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oHTTP
 	if (!oToString(_StrDestination, _SizeofStrDestination, _Response.StatusLine))
 		return nullptr;
 
-	char* StrDest = oByteAdd(_StrDestination, strlen(_StrDestination));
+	char* StrDest = oByteAdd(_StrDestination, oStrlen(_StrDestination));
 	size_t SzLeft = _SizeofStrDestination - (StrDest - _StrDestination);
 
 	if (!oToString(StrDest, SzLeft, _Response.HeaderFieldsInternal))

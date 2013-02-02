@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -24,6 +26,7 @@
 #include <oBasis/oGeometry.h>
 #include <oBasis/oAlgorithm.h>
 #include <oBasis/oError.h>
+#include <oBasis/oFor.h>
 #include <oBasis/oMath.h>
 #include <oBasis/oMeshUtil.h>
 #include <oBasis/oOBJ.h>
@@ -407,8 +410,8 @@ struct oGeometry_Impl : public oGeometry
 		if (Ranges.empty())
 		{
 			oGPU_RANGE r;
-			r.StartTriangle = 0;
-			r.NumTriangles = oUInt(Indices.size() / 3);
+			r.StartPrimitive = 0;
+			r.NumPrimitives = oUInt(Indices.size() / 3);
 			r.MaxVertex = oUInt(Positions.size());
 			Ranges.push_back(r);
 		}
@@ -1078,12 +1081,8 @@ namespace CircleDetails
 		//For outlines, the vertex layout is the full inner circle, followed by the full outer circle
 		if (_Desc.FaceType == oGeometry::OUTLINE)
 		{
-			for (std::vector<float3>::const_iterator it = innerCircle.begin(); it != innerCircle.end(); ++it)
-				_pGeometry->Positions.push_back(*it);
-
-			for (std::vector<float3>::const_iterator it = outerCircle.begin(); it != outerCircle.end(); ++it)
-				_pGeometry->Positions.push_back(*it);
-			
+			_pGeometry->Positions.insert(end(_pGeometry->Positions), begin(innerCircle), end(innerCircle));
+			_pGeometry->Positions.insert(end(_pGeometry->Positions), begin(outerCircle), end(outerCircle));
 			CircleDetails::FillIndicesWasher(_pGeometry->Indices, _BaseIndexIndex, _BaseVertexIndex, _Desc.Facet, _Desc.FaceType);
 		}
 		else //For a mesh, the vertex layout is the similar to a normal circle. interleaved even odd pairs of vertices. For each pair
@@ -1185,10 +1184,8 @@ static void tcs(std::vector<float3>& tc, const std::vector<float3>& positions, b
 	tc.clear();
 	tc.reserve(positions.size());
 
-	for (std::vector<float3>::const_iterator it = positions.begin(); it != positions.end(); ++it)
+	oFOR(const float3& p, positions)
 	{
-		const float3& p = *it;
-
 		float phi = acosf(p.z);
 		float v = 1.0f - (phi / oPIf);
 
@@ -1479,8 +1476,8 @@ bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeomet
 			pGeometry->Normals[i] = normalize(pGeometry->Positions[i]);
 	}
 
-	for (std::vector<float3>::iterator it = pGeometry->Positions.begin(); it != pGeometry->Positions.end(); ++it)
-		*it = (normalize(*it) * _Desc.Bounds.GetRadius()) + _Desc.Bounds.GetPosition();
+	oFOR(float3& v, pGeometry->Positions)
+		v = (normalize(v) * _Desc.Bounds.GetRadius()) + _Desc.Bounds.GetPosition();
 
 	pGeometry->Finalize(_Layout, _Desc.Color);
 	return true;
@@ -1917,8 +1914,8 @@ bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LA
 		for (unsigned int i = 0; i < d.NumGroups; i++)
 		{
 			const oOBJ_GROUP& g = d.pGroups[i];
-			const size_t indexStart = g.Range.StartTriangle * 3;
-			const size_t indexEnd = indexStart + g.Range.NumTriangles * 3;
+			const size_t indexStart = g.Range.StartPrimitive * 3;
+			const size_t indexEnd = indexStart + g.Range.NumPrimitives * 3;
 			for (size_t j = indexStart; j < indexEnd; j++)
 				pGeometry->ContinuityIDs[pGeometry->Indices[j]] = i;
 		}

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -23,8 +25,8 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include <oBasis/oEvent.h>
-#include <oPlatform/oFile.h>
 #include <oPlatform/oStandards.h>
+#include <oPlatform/oStream.h>
 
 //static const char* FolderToMonitor = "file://DATA/Apps/PlayerMediaEncoder";
 //static const char* FolderToMonitor = "file://abyss/Media/oUnitTests";
@@ -43,7 +45,7 @@ struct TESTStreamMonitorEvents
 	oEvent ZFileAccessible;
 };
 
-struct TESTStreamMonitor : public oTest
+struct PLATFORM_oStreamMonitor : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
@@ -142,19 +144,8 @@ struct TESTStreamMonitor : public oTest
 		oTESTB0(oStreamDelete(TestFile)); //should generate a removed event
 		oTESTB(Events->FileRemoved.Wait(kTimeout), "timed out waiting for the removed event");
 
-		//Monitor = nullptr;
-
-		// @oooii-tony: HACK wait to ensure the shared ref to Events and any internals are 
-		// idle before exiting.
-		//while ((Events->LastEventTimestamp + 1.5) < oTimer());
-
-		double dNow = oTimer();
-
-		//oSleep(5000);
-
-		oTRACE("dNow = %f", dNow);
 		return SUCCESS;
 	}
 };
 
-oTEST_REGISTER(TESTStreamMonitor);
+oTEST_REGISTER(PLATFORM_oStreamMonitor);

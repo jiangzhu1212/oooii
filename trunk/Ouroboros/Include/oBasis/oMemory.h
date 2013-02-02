@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -49,6 +51,14 @@ enum oUTF_TYPE
 // after the function returns. oStackAlloc is 16-byte aligned by default.
 #define oStackAlloc(_Size) _alloca(_Size)
 #define oStackAllocAligned(_Size, _Alignment) oByteAlign(oStackAlloc(oByteAlign(_Size, _Alignment)), _Alignment)
+
+// Define a macro for hexspeak shred patterns so that always appears readably in 
+// memory dumps.
+#ifdef oLITTLEENDIAN
+	#define oSHRED(_BigEndianShredPattern) oByteSwap(_BigEndianShredPattern);
+#else
+	#define oSHRED(_BigEndianShredPattern) _BigEndianShredPattern;
+#endif
 
 // Sets an int value at a time. This is probably slower than
 // c's memset, but this sets a full int value rather than
@@ -136,6 +146,15 @@ void oMemcpyToUint(unsigned int* _pDestination, const unsigned short* _pSource, 
 // to strstr.
 void* oMemmem(void* _pBuffer, size_t _SizeofBuffer, const void* _pFind, size_t _SizeofFind);
 inline const void* oMemmem(const void* _pBuffer, size_t _SizeofBuffer, const void* _pFind, size_t _SizeofFind) { return oMemmem(const_cast<void*>(_pBuffer), _SizeofBuffer, _pFind, _SizeofFind); }
+
+// Compares a run of memory to a fixed value. Memory unaligned to the size of 
+// value (sizeof(long)) will compare to the aligned byte portion of value. This
+// means that the memory is expected to have been set with oMemset4 which will
+// always have its 4-byte value start on 4-byte-aligned addresses. This function
+// is mostly useful when setting sentinel memory to a known shred value and then
+// using this to test for the integrity of the sentinel. Returns true if memory
+// is fully the same, or false if even one byte differs.
+bool oMemcmp4(const void* _pMemory, long _Value, size_t _NumBytes);
 
 // Returns true by the same rules as Perl's -T flag... i.e. if there's more than
 // 30% of the specified buffer that is either 0 or non-ascii, then this will

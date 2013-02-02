@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -38,9 +40,9 @@ oDECLARE_GPURESOURCE_IMPLEMENTATION(oD3D11, Mesh, oGPU_MESH)
 
 	oMutex RangesMutex;
 	std::vector<oGPU_RANGE> Ranges;
-	oRef<ID3D11Buffer> Indices;
-	oRef<ID3D11Buffer> Vertices[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
-	uint VertexStrides[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+	oRef<oGPUBuffer> Indices;
+	oRef<oGPUBuffer> Vertices[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+	uint NumVertexBuffers;
 	ID3D11Resource* GetSubresource(int _Subresource) threadsafe;
 };
 

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -23,16 +25,17 @@
  **************************************************************************/
 #ifndef oNO_TBB
 #include <oBasis/oStdFuture.h>
+#include <oBasis/oThread.h>
 #include <oPlatform/Windows/oCRTHeap.h>
 #include <oPlatform/oDebugger.h>
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/Windows/oWindows.h>
-#include <tbb/tbb.h>
-#include <tbb/task_scheduler_init.h>
 #include <oPlatform/oProcessHeap.h>
 #include "oCRTLeakTracker.h"
 #include "oDispatchQueueConcurrentTBB.h"
+#include <tbb/tbb.h>
+#include <tbb/task_scheduler_init.h>
 
 bool oDispatchQueueCreateConcurrent(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueueConcurrent** _ppDispatchQueue)
 {
@@ -94,6 +97,7 @@ public:
 
 // {CFEBF25E-97EA-4BAB-AC50-D53474D3C758}
 const oGUID TBBTaskSchedulerInit::GUID = { 0xcfebf25e, 0x97ea, 0x4bab, { 0xac, 0x50, 0xd5, 0x34, 0x74, 0xd3, 0xc7, 0x58 } };
+oSINGLETON_REGISTER(TBBTaskSchedulerInit);
 
 void oTaskInitScheduler()
 {
@@ -150,8 +154,8 @@ public:
 
 		task::destroy(*pParentTask);
 	}
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_NOOP_QUERYINTERFACE();
+	void Reference() override { RefCount.Reference(); }
+	void Release() override { if (RefCount.Release()) delete this; }
 	void wait() override { pParentTask->wait_for_all(); }
 private:
 	oRefCount RefCount;

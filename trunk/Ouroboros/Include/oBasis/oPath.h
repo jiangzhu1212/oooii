@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -33,6 +35,9 @@
 // extension, this returns the pointer to the nul terminator of the string.
 const char* oGetFileExtension(const char* _Path);
 char* oGetFileExtension(char* _Path);
+
+// Check if the file has one of the provided extensions
+bool oHasMatchingExtension(const char* _Path, const char* _Extensions[], size_t _NumExtensions);
 
 // Returns true if the specified character is a path separator on either Linux
 // or Windows.
@@ -73,6 +78,7 @@ char* oReplaceFilename(char* _Path, size_t _SizeofPath, const char* _Filename);
 // If _IgnoreTrailingSeparator is false, then C:\foo\ will return C:\foo\ (noop) 
 char* oTrimFilename(char* _Path, bool _IgnoreTrailingSeparator = false);
 char* oTrimFileExtension(char* _Path);
+char* oTrimFileLeadingSeperators(char* _Path);
 
 // Ensures a backslash or forward slash is the rightmost char. Returns _Path
 char* oEnsureSeparator(char* _Path, size_t _SizeofPath, char _FileSeparator = '/');
@@ -114,6 +120,7 @@ char* oStrTokToSwitches(char* _StrDestination, size_t _SizeofStrDestination, con
 // _____________________________________________________________________________
 // Templated-on-size versions of the above functions
 
+template<size_t size> bool oHasMatchingExtension(const char* _Path, const char* (&_Extensions)[size]) { return oHasMatchingExtension(_Path, _Extensions, size); }
 template<size_t size> char* oGetFilebase(char (&_StrDestination)[size], const char* _Path) { return oGetFilebase(_StrDestination, size, _Path); }
 template<size_t size> char* oReplaceFileExtension(char (&_Path)[size], const char* _Extension) { return oReplaceFileExtension(_Path, size, _Extension); }
 template<size_t size> char* oReplaceFilename(char (&_Path)[size], const char* _Filename) { return oReplaceFilename(_Path, size, _Filename); }

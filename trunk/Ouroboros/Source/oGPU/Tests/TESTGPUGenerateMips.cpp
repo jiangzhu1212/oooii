@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -26,7 +28,7 @@
 #include <oGPU/oGPU.h>
 #include <oGPU/oGPUUtil.h>
 
-struct TESTGPUGenerateMips : public oTest
+struct GPU_GenerateMips : public oTest
 {
 	RESULT TestImageMips1D(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, int _Width, oSURFACE_LAYOUT _Layout, int _StartIndex)
 	{
@@ -35,12 +37,12 @@ struct TESTGPUGenerateMips : public oTest
 		imageDesc.Format = oImage::BGRA32;
 		imageDesc.RowPitch = oImageCalcRowPitch(imageDesc.Format, imageDesc.Dimensions.x);
 		oRef<oImage> image;
-		oImageCreate("TESTGPUTexture1D", imageDesc, &image);
+		oImageCreate("GPU_Texture1D", imageDesc, &image);
 
 		oRef<oBuffer> buffer;
 		int surfaceBufferSize = oImageCalcSize(imageDesc.Format, imageDesc.Dimensions);
 		void *pSurfaceBuffer = oBuffer::New(surfaceBufferSize);
-		oBufferCreate("TESTGPUTexture1D buffer", pSurfaceBuffer, surfaceBufferSize, oBuffer::Delete, &buffer);
+		oBufferCreate("GPU_Texture1D buffer", pSurfaceBuffer, surfaceBufferSize, oBuffer::Delete, &buffer);
 
 		static const oColor sConsoleColors[] = { std::Black, std::Navy, std::Green, std::Teal, std::Maroon, std::Purple, std::Olive, std::Silver, std::Gray, std::Blue, std::Lime, std::Aqua, std::Red, std::Fuchsia, std::Yellow, std::White };
 
@@ -145,7 +147,7 @@ struct TESTGPUGenerateMips : public oTest
 
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oGPUDevice::INIT init("TESTGPUGenerateMips");
+		oGPUDevice::INIT init("GPU_GenerateMips");
 		init.Version = oVersion(10,0); // for more compatibility when running on varied machines
 		oRef<oGPUDevice> Device;
 		oTESTB0(oGPUDeviceCreate(init, &Device));
@@ -246,4 +248,4 @@ struct TESTGPUGenerateMips : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTGPUGenerateMips);
+oTEST_REGISTER(GPU_GenerateMips);

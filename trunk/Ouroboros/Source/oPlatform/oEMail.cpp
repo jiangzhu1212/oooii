@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -144,8 +146,8 @@ int GrabResponseCode(const char *_Response)
 
 bool oEMail_Impl::SendSocket(const char *_pMessage)
 {
-	return bUseEncryption ? Socket->SendEncrypted(_pMessage, (oSocket::size_t)strlen(_pMessage)) 
-		: Socket->Send(_pMessage, (oSocket::size_t)strlen(_pMessage));
+	return bUseEncryption ? Socket->SendEncrypted(_pMessage, (oSocket::size_t)oStrlen(_pMessage)) 
+		: Socket->Send(_pMessage, (oSocket::size_t)oStrlen(_pMessage));
 }
 
 bool oEMail_Impl::SendSocket(const void *_pData, size_t _SizeOfData)
@@ -207,7 +209,7 @@ bool oEMail_Impl::EstablishConnection(const char *_pToAddress, const char *_pFro
 
 		// Send base64 encrypted username
 		char encLogin[_MAX_PATH];
-		Base64Encode(_pFromAddress, encLogin, (int)strlen(_pFromAddress), _MAX_PATH);
+		Base64Encode(_pFromAddress, encLogin, (int)oStrlen(_pFromAddress), _MAX_PATH);
 		oPrintf(sendBuffer, "%s\r\n", encLogin);
 		oSMTPCOMMAND(SendSocket(sendBuffer) && SMTP_ENCRYPTION_OK == ReceiveSocket(recvBuffer, _MAX_PATH));
 
@@ -216,7 +218,7 @@ bool oEMail_Impl::EstablishConnection(const char *_pToAddress, const char *_pFro
 		if (_bPasswordEncoded)
 			oStrcpy(encPass, _pPassword);
 		else
-			Base64Encode(_pPassword, encPass, (int)strlen(_pPassword), _MAX_PATH);
+			Base64Encode(_pPassword, encPass, (int)oStrlen(_pPassword), _MAX_PATH);
 		oPrintf(sendBuffer, "%s\r\n", encPass);
 		oSMTPCOMMAND(SendSocket(sendBuffer) && SMTP_ACCEPTED == ReceiveSocket(recvBuffer, _MAX_PATH));
 	}

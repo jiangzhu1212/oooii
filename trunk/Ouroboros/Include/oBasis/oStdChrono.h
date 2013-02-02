@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -26,16 +28,13 @@
 #ifndef oStdChrono_h
 #define oStdChrono_h
 
-#include <oBasis/oAssert.h>
-#include <oBasis/oEqual.h>
+#include <oBasis/oPlatformFeatures.h>
 #include <oBasis/oStdRatio.h>
-#include <oBasis/oStdTypeTraits.h>
 
 namespace oStd {
 	namespace chrono {
 
-// @oooii-tony: yeesh, can't even rely on static_cast!! ... should we promote 
-// this to oStaticCast and put that everywhere in the codebase?
+// double -> ullong is broken in VS2010, so wrap it to a custom implementation
 template<typename T, typename U> T chrono_static_cast(const U& _Value) { return static_cast<T>(_Value); }
 
 #ifdef oHAS_BAD_DOUBLE_TO_ULLONG_CONVERSION
@@ -97,9 +96,9 @@ template<typename ToDuration, typename Rep, typename Period> ToDuration duration
 	return ToDuration(chrono_static_cast<ToDuration::rep>(newVal));
 }
 
-template<typename Rep1, typename Period1, typename Rep2, typename Period2> duration<typename oStd::common_type<Rep1, Rep2>::type, typename oStd::common_type<Period1, Period2>::type > operator+(const duration<Rep1, Period1>& x, const duration<Rep2, Period2>& y)
+template<typename Rep1, typename Period1, typename Rep2, typename Period2> duration<typename std::common_type<Rep1, Rep2>::type, typename std::common_type<Period1, Period2>::type > operator+(const duration<Rep1, Period1>& x, const duration<Rep2, Period2>& y)
  {
-	 typedef duration<typename oStd::common_type<Rep1, Rep2>::type, typename oStd::common_type<Period1, Period2>::type > ret;
+	 typedef duration<typename std::common_type<Rep1, Rep2>::type, typename std::common_type<Period1, Period2>::type > ret;
 	 ret d(x);
 	 d += y;
 	 return d;
@@ -153,9 +152,9 @@ public:
 };
 
 template<typename ToDuration, typename Clock, typename Duration> time_point<Clock, ToDuration> time_point_cast(const time_point<Clock, Duration>& _TimePoint) { return time_point<Clock, ToDuration>(duration_cast<ToDuration>(_TimePoint.time_since_epoch())); }
-template<typename Clock, typename Duration1, typename Duration2> typename oStd::common_type<Duration1, Duration2>::type operator+(const time_point<Clock, Duration1>& x, const time_point<Clock, Duration2>& y) { return x.time_since_epoch() + y.time_since_epoch(); }
-template<typename Clock, typename Duration1, typename Duration2> typename oStd::common_type<Duration1, Duration2>::type operator-(const time_point<Clock, Duration1>& x, const time_point<Clock, Duration2>& y) { return oStd::common_type<Duration1, Duration2>::type(x.time_since_epoch().count() - y.time_since_epoch().count()); }
-template<typename Clock, typename Rep1, typename Period1, typename Rep2, typename Period2> time_point<Clock, duration<typename oStd::common_type<Rep1, Rep2>::type, typename oStd::common_type<Period1, Period2>::type> > operator+(const time_point<Clock, duration<Rep1, Period1> >& x, const duration<Rep2, Period2>& y) { return time_point<Clock, duration<typename oStd::common_type<Rep1, Rep2>::type, typename oStd::common_type<Period1, Period2>::type> >(x.time_since_epoch() + duration_cast<duration<Rep1, Period1> >(y)); }
+template<typename Clock, typename Duration1, typename Duration2> typename std::common_type<Duration1, Duration2>::type operator+(const time_point<Clock, Duration1>& x, const time_point<Clock, Duration2>& y) { return x.time_since_epoch() + y.time_since_epoch(); }
+template<typename Clock, typename Duration1, typename Duration2> typename std::common_type<Duration1, Duration2>::type operator-(const time_point<Clock, Duration1>& x, const time_point<Clock, Duration2>& y) { return std::common_type<Duration1, Duration2>::type(x.time_since_epoch().count() - y.time_since_epoch().count()); }
+template<typename Clock, typename Rep1, typename Period1, typename Rep2, typename Period2> time_point<Clock, duration<typename std::common_type<Rep1, Rep2>::type, typename std::common_type<Period1, Period2>::type> > operator+(const time_point<Clock, duration<Rep1, Period1> >& x, const duration<Rep2, Period2>& y) { return time_point<Clock, duration<typename std::common_type<Rep1, Rep2>::type, typename std::common_type<Period1, Period2>::type> >(x.time_since_epoch() + duration_cast<duration<Rep1, Period1> >(y)); }
 template<typename Clock, typename Rep1, typename Period1, typename Rep2, typename Period2> bool operator==(const time_point<Clock, duration<Rep1, Period1> >& x, const time_point<Clock, duration<Rep2, Period2> >& y) { return x.time_since_epoch() == time_point_cast<duration<Rep1, Period1> >(y).time_since_epoch(); }
 template<typename Clock, typename Rep1, typename Period1, typename Rep2, typename Period2> bool operator!=(const time_point<Clock, duration<Rep1, Period1> >& x, const time_point<Clock, duration<Rep2, Period2> >& y) { return !(x == y); }
 template<typename Clock, typename Rep1, typename Period1, typename Rep2, typename Period2> bool operator<(const time_point<Clock, duration<Rep1, Period1> >& x, const time_point<Clock, duration<Rep2, Period2> >& y) { return x.time_since_epoch() < time_point_cast<duration<Rep1, Period1> >(y).time_since_epoch(); }
@@ -196,6 +195,17 @@ public:
 
 	} // namespace chrono
 } // namespace oStd
+
+namespace std {
+	template <class Rep1, class Period1, class Rep2, class Period2>
+	struct common_type<oStd::chrono::duration<Rep1, Period1>, oStd::chrono::duration<Rep2, Period2>>
+	{
+		typedef oStd::chrono::duration<
+			typename std::common_type<Rep1, Rep2>::type,
+			typename std::common_type<Period1, Period2>::type
+		> type;
+	};
+}
 
 // The C++11 standard ignores conversion with rounding but defines seconds as 
 // unsigned long long, so you can't really work with milli and microseconds in 

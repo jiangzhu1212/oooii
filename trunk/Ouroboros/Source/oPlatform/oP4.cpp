@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -372,7 +374,7 @@ static char* oP4ParseFilesLine(oP4_FILE_DESC* _pFile, char* _P4FilesLine)
 static size_t oP4ParseOpenedList(oP4_FILE_DESC* _pOpenedFiles, size_t _MaxNumOpenedFiles, char* _FileListString)
 {
 	char* c = _FileListString;
-	char* end = c + strlen(c);
+	char* end = c + oStrlen(c);
 	size_t i = 0;
 	while (c < end)
 	{
@@ -429,13 +431,18 @@ static char* oP4ParseSyncLine(oP4_FILE_DESC* _pFile, char* _P4SyncLine)
 	c = attribs + strcspn(attribs, oNEWLINE);
 	*c = 0;
 
-	char* ctx = nullptr;
-	char* tok = oStrTok(attribs, " ", &ctx);
-	oVERIFY(oFromString(&_pFile->Status, tok));
+	if (!strstr(attribs, "can't be replaced"))
+	{
+		char* ctx = nullptr;
+		char* tok = oStrTok(attribs, " ", &ctx);
+		oVERIFY(oFromString(&_pFile->Status, tok));
 
-	tok = oStrTok(nullptr, " ", &ctx);
-	if (!oStrcmp("as", tok))
 		tok = oStrTok(nullptr, " ", &ctx);
+		if (!oStrcmp("as", tok))
+			tok = oStrTok(nullptr, " ", &ctx);
+
+		oStrTokClose(&ctx);
+	}
 
 	// Changelist cannot be parsed from the source string, a new query must be 
 	// made.
@@ -444,8 +451,6 @@ static char* oP4ParseSyncLine(oP4_FILE_DESC* _pFile, char* _P4SyncLine)
 	// IsText cannot be parsed from the source string, a new query must be made.
 	_pFile->IsText = false;
 
-	oStrTokClose(&ctx);
-
 	return c + 1 + strspn(c + 1, oNEWLINE);
 }
 
@@ -453,7 +458,7 @@ static char* oP4ParseSyncLine(oP4_FILE_DESC* _pFile, char* _P4SyncLine)
 static size_t oP4ParseOutOfDateList(oP4_FILE_DESC* _pOutOfDateFiles, size_t _MaxNumOutOfDateFiles, char* _OutOfDateListString)
 {
 	char* c = _OutOfDateListString;
-	char* end = c + strlen(c);
+	char* end = c + oStrlen(c);
 
 	size_t i = 0;
 	while (c < end)
@@ -536,7 +541,7 @@ bool oP4ParseWorkspace(oP4_WORKSPACE* _pWorkspace, const char* _P4WorkspaceStrin
 	const char* c = _P4WorkspaceString;
 	c = strstr(c, "views and options.");
 	if (!c) return false;
-	c += strlen("views and options.");
+	c += oStrlen("views and options.");
 	bool bNextStrExists = false;
 
 	//Client
@@ -570,7 +575,7 @@ bool oP4ParseWorkspace(oP4_WORKSPACE* _pWorkspace, const char* _P4WorkspaceStrin
 
 	// Description is multi-line...
 	c += strspn(c, oWHITESPACE);
-	c += strlen("Description:");
+	c += oStrlen("Description:");
 	c += strspn(c, oWHITESPACE);
 	const char* end = strstr(c, oNEWLINE oNEWLINE "Root:");
 
@@ -611,7 +616,7 @@ bool oP4ParseWorkspace(oP4_WORKSPACE* _pWorkspace, const char* _P4WorkspaceStrin
 
 	// View is multi-line...
 	c += strspn(c, oWHITESPACE);
-	c += strlen("View:");
+	c += oStrlen("View:");
 	oStrcpy(_pWorkspace->View, c);
 
 	return true;
@@ -640,7 +645,7 @@ bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecStri
 	const char* c = _P4LabelSpecString;
 	c = strstr(c, "about label views.");
 	if (!c) return false;
-	c += strlen("about label views.");
+	c += oStrlen("about label views.");
 	bool bNextStrExists = false;
 
 	//Label
@@ -669,7 +674,7 @@ bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecStri
 
 	// Description is multi-line...
 	c += strspn(c, oWHITESPACE);
-	c += strlen("Description:");
+	c += oStrlen("Description:");
 	c += strspn(c, oWHITESPACE);
 	const char* end = strstr(c, oNEWLINE oNEWLINE "Options:");
 
@@ -692,7 +697,7 @@ bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecStri
 
 	//View is multi-line...
 	c += strspn(c, oWHITESPACE);
-	c += strlen("View:");
+	c += oStrlen("View:");
 	oStrcpy(_pLabelSpec->View, c);
 
 	return true;
@@ -770,7 +775,7 @@ int oP4GetCurrentChangelist(const char* _P4Base)
 int oP4GetNextChangelist(int _CurrentCL, const char* _P4Base /*= nullptr*/)
 {
 	int TOT = oP4GetTopOfTree(_P4Base);
-	if (_CurrentCL == TOT)
+	if(oInvalid == TOT || _CurrentCL == TOT)
 		return TOT;
 
 	for(int CL = _CurrentCL + 1; CL < TOT; ++CL)
@@ -779,7 +784,8 @@ int oP4GetNextChangelist(int _CurrentCL, const char* _P4Base /*= nullptr*/)
 		oStringS cmd;
 		oPrintf(cmd, "@%d", CL);
 		int ChangesUpTo = oP4RunChangesCommand(_P4Base, cmd);
-		if (ChangesUpTo == CL)
+
+		if(oInvalid == ChangesUpTo || ChangesUpTo == CL)
 			return CL;
 	}
 

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -98,8 +100,10 @@ oAPI bool oSystemScheduleWakeup(time_t _UnixAbsoluteTime, oTASK _OnWake);
 // finished its stdout is read into the buffer. If the address of an 
 // exitcode value is specified, the child process's exit code is filled 
 // in. If the specified timeout is reached, then the exitcode will be 
-// oERROR_REDUNDANT.
-oAPI bool oSystemExecute(const char* _CommandLine, char* _StrStdout, size_t _SizeofStrStdOut, int* _pExitCode = 0, unsigned int _ExecutionTimeout = oInfiniteWait);
+// oERROR_REDUNDANT. Prefer the default _ShowWindow=false for console 
+// executions, but for Window applications requiring user interaction, use 
+// _ShowWindow=true.
+oAPI bool oSystemExecute(const char* _CommandLine, char* _StrStdout, size_t _SizeofStrStdOut, int* _pExitCode = 0, unsigned int _ExecutionTimeout = oInfiniteWait, bool _ShowWindow = false);
 
 // Pool system for all processes to be relatively idle (i.e. <3% CPU usage). 
 // This is primarily intended to determine heuristically when a computer is 
@@ -115,22 +119,27 @@ oAPI bool oSystemWaitIdle(unsigned int _TimeoutMS = oInfiniteWait, oFUNCTION<boo
 oAPI bool oSystemGUIUsesGPUCompositing();
 oAPI bool oSystemGUIEnableGPUCompositing(bool _Enable, bool _Force = false);
 
+// Returns true if the system is running in a mode similar to Window's 
+// Remote Desktop. Use this when interacting with displays or feature set that
+// might not be accurate by the software emulation done to redirect output to a 
+// remote session.
+oAPI bool oSystemIsRemote();
+
 // Accessors for the environment variables passed into this process
-bool oSystemSetEnvironmentVariable(const char* _Name, const char* _Value);
-char* oSystemGetEnvironmentVariable(char* _Value, size_t _SizeofValue, const char* _Name);
+oAPI bool oSystemSetEnvironmentVariable(const char* _Name, const char* _Value);
+oAPI char* oSystemGetEnvironmentVariable(char* _Value, size_t _SizeofValue, const char* _Name);
 
 // Translates % encoded environment variables
-char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _SizeofStrDestination, const char* _RawString);
+oAPI char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _SizeofStrDestination, const char* _RawString);
 
 // Fills _StrEnvironment with all environment variables delimited by '\n'
-char* oSystemGetEnvironmentString(char* _StrEnvironment, size_t _SizeofStrEnvironment);
+oAPI char* oSystemGetEnvironmentString(char* _StrEnvironment, size_t _SizeofStrEnvironment);
 
 enum oSYSPATH
 {
 	oSYSPATH_CWD, // current working directory
 	oSYSPATH_APP, // application directory (path where exe is)
 	oSYSPATH_APP_FULL, // full path (with filename) to application executable
-	oSYSPATH_HOST, // returns the hostname of this computer
 	oSYSPATH_SYSTMP, // platform temporary directory
 	oSYSPATH_SYS, // platform system directory
 	oSYSPATH_OS, // platform installation directory
@@ -141,39 +150,44 @@ enum oSYSPATH
 	oSYSPATH_DESKTOP_ALLUSERS, // platform shared desktop
 	oSYSPATH_P4ROOT, // current user's Perforce workspace root (requires P4PORT and P4USER env vars to be set)
 	oSYSPATH_DATA, // the data path of the application
-	oSYSPATH_EXECUTION, // hostname.processID.threadID
 };
 
 // Return a URI to one of the system paths enumerated by oSYSPATH.
-char* oSystemGetURI(char* _StrSysURI, size_t _SizeofStrSysURI, oSYSPATH _SysPath);
+oAPI char* oSystemGetURI(char* _StrSysURI, size_t _SizeofStrSysURI, oSYSPATH _SysPath);
 
 // Return the full path to one of the system paths enumerated by oSYSPATH.
-char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysPath);
+oAPI char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysPath);
+
+// Returns the name of the current machine
+oAPI char* oSystemGetHostname(char* _StrDestination, size_t _SizeofStrDestination);
+
+// Returns [hostname.processID.threadID]
+oAPI char* oSystemGetExecutionPath(char* _StrDestination, size_t _SizeofStrDestination);
 
 // This is the same as oURIToPath but allows for the authority to first be 
 // tested using oFromString to a conversion to an oSYSPATH value. If it can, 
 // that path is prepended to the _URIParts path.
-char* oSystemURIToPath(char* _Path, size_t _SizeofPath, const char* _URI);
+oAPI char* oSystemURIToPath(char* _Path, size_t _SizeofPath, const char* _URI);
 
 // This is the same as oURIPartsToPath but allows for the authority to first be 
 // tested using oFromString to a conversion to an oSYSPATH value. If it can, 
 // that path is prepended to the _URIParts path.
-char* oSystemURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIParts);
+oAPI char* oSystemURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIParts);
 
 // Find a file in the specified system path. Returns _ResultingFullPath if successful,
 // nullptr otherwise
-char* oSystemFindInPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, oSYSPATH _SysPath, const char* _RelativePath, const char* _DotPath, oFUNCTION_PATH_EXISTS _PathExists);
+oAPI char* oSystemFindInPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, oSYSPATH _SysPath, const char* _RelativePath, const char* _DotPath, oFUNCTION_PATH_EXISTS _PathExists);
 
 // Searches all system and environment paths, as well as extraSearchPath which 
 // is a string of paths delimited by semi-colons. _RelativePath is the filename/
 // partial path to be matched against the various prefixes to get a full path.
 // Returns _ResultingFullPath if successful, nullptr if no _RelativePath was 
 // found.
-char* oSystemFindPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, const char* _RelativePath, const char* _DotPath, const char* _ExtraSearchPath, oFUNCTION_PATH_EXISTS _PathExists);
+oAPI char* oSystemFindPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, const char* _RelativePath, const char* _DotPath, const char* _ExtraSearchPath, oFUNCTION_PATH_EXISTS _PathExists);
 
 // Sets the current working directory. Use oSystemGetPath to get CWD
-bool oSetCWD(const char* _CWD);
-const char *oSystemAppendDebugSuffixToDLL(const char *_pModuleName, char *_pAppendedName, int _SizeOfAppendedName);
+oAPI bool oSetCWD(const char* _CWD);
+oAPI const char *oSystemAppendDebugSuffixToDLL(const char *_pModuleName, char *_pAppendedName, int _SizeOfAppendedName);
 
 // _____________________________________________________________________________
 // Templated-on-size versions of the above API
@@ -184,6 +198,8 @@ template<size_t size> char* oSystemTranslateEnvironmentVariables(char (&_Value)[
 template<size_t size> char* oGetEnvironmentString(char (&_StrEnvironment)[size]) { return oSystemGetEnvironmentString(_StrEnvironment, size); }
 template<size_t size> char* oSystemGetURI(char (&_StrSysURI)[size], oSYSPATH _SysPath) { return oSystemGetURI(_StrSysURI, _SizeofStrSysURI, _SysPath); }
 template<size_t size> char* oSystemGetPath(char (&_StrSysPath)[size], oSYSPATH _SysPath) { return oSystemGetPath(_StrSysPath, size, _SysPath); }
+template<size_t size> char* oSystemGetHostname(char (&_StrDestination)[size]) { return oSystemGetHostname(_StrDestination, size); }
+template<size_t size> char* oSystemGetExecutionPath(char (&_StrDestination)[size]) { return oSystemGetExecutionPath(_StrDestination, size); }
 template<size_t size> char* oSystemURIToPath(char (&_ResultingFullPath)[size], const char* _URI) { return oSystemURIToPath(_ResultingFullPath, size, _URI); }
 template<size_t size> char* oSystemURIPartsToPath(char (&_ResultingFullPath)[size], const oURIParts& _URIParts) { return oSystemURIPartsToPath(_ResultingFullPath, size, _URIParts); }
 template<size_t size> char* oSystemFindInPath(char(&_ResultingFullPath)[size], oSYSPATH _SysPath, const char* _RelativePath, const char* _DotPath, oFUNCTION_PATH_EXISTS _PathExists) { return oSystemFindInPath(_ResultingFullPath, size, _SysPath, _RelativePath, _DotPath, _PathExists); }
@@ -196,6 +212,8 @@ template<size_t capacity> char* oSystemTranslateEnvironmentVariables(oFixedStrin
 template<size_t capacity> char* oGetEnvironmentString(oFixedString<char, capacity>& _StrEnvironment) { return oSystemGetEnvironmentString(_StrEnvironment, _StrEnvironment.capacity()); }
 template<size_t capacity> char* oSystemGetURI(oFixedString<char, capacity>& _StrSysURI, oSYSPATH _SysPath) { return oSystemGetURI(_StrSysURI, _StrSysURI.capacity(), _SysPath); }
 template<size_t capacity> char* oSystemGetPath(oFixedString<char, capacity>& _StrSysPath, oSYSPATH _SysPath) { return oSystemGetPath(_StrSysPath, _StrSysPath.capacity(), _SysPath); }
+template<size_t capacity> char* oSystemGetHostname(oFixedString<char, capacity>& _StrDestination) { return oSystemGetHostname(_StrDestination, _StrDestination.capacity()); }
+template<size_t capacity> char* oSystemGetExecutionPath(oFixedString<char, capacity>& _StrDestination) { return oSystemGetExecutionPath(_StrDestination, _StrDestination.capacity()); }
 template<size_t capacity> char* oSystemURIToPath(oFixedString<char, capacity>& _ResultingFullPath, const char* _URI) { return oSystemURIToPath(_ResultingFullPath, _ResultingFullPath.capacity(), _URI); }
 template<size_t capacity> char* oSystemURIPartsToPath(oFixedString<char, capacity>& _ResultingFullPath, const oURIParts& _URIParts) { return oSystemURIPartsToPath(_ResultingFullPath, _ResultingFullPath.capacity(), _URIParts); }
 template<size_t capacity> char* oSystemFindInPath(oFixedString<char, capacity>& _ResultingFullPath, oSYSPATH _SysPath, const char* _RelativePath, const char* _DotPath, oFUNCTION_PATH_EXISTS _PathExists) { return oSystemFindInPath(_ResultingFullPath, _ResultingFullPath.capacity(), _SysPath, _RelativePath, _DotPath, _PathExists); }

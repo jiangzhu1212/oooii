@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -58,6 +60,7 @@ struct oConsoleContext : public oProcessSingleton<oConsoleContext>
 
 // {145728A4-3A9A-47FD-BF88-8B61A1EC14AB}
 const oGUID oConsoleContext::GUID = { 0x145728a4, 0x3a9a, 0x47fd, { 0xbf, 0x88, 0x8b, 0x61, 0xa1, 0xec, 0x14, 0xab } };
+oSINGLETON_REGISTER(oConsoleContext);
 
 static oConsoleContext::Run sInstantiateConsoleContext; // @oooii-tony: safe static, just meant to make sure singleton is instantiated
 

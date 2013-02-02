@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -21,18 +23,40 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// This provides several no-really-it's-a-singleton singleton types that can
+// transcend nasty platform details such as soft-link DLLs and threadlocal 
+// matters so that the useful singleton pattern can still be used in complex 
+// projects.
 #pragma once
 #ifndef oSingleton_h
 #define oSingleton_h
 
-#include <oBasis/oGUID.h>
+#include <oBasis/oInterface.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
+#include <oBasis/oTypeInfo.h>
 
 typedef void* (*NewVFn)();
 
 bool oConstructOnceV(void* volatile* _pPointer, NewVFn _New);
 template<typename T> bool oConstructOnce(T* volatile* _pPointer, T* (*_New)() ) { return oConstructOnceV((void* volatile*)_pPointer, (NewVFn)_New); }
+
+// This must be defined in the module where an oSingleton is defined and must be
+// given the class name of the singleton. What this guarantees that if a dynamic 
+// module triggers singleton instantiation that the code used is always from a 
+// static module so if the dynamic module is unloaded, there's still code to 
+// unload a singleton at the end of the program.
+#define oSINGLETON_REGISTER(_Type) oSingletonRegister oCONCAT(oSingletonRegister,_Type)(#_Type, _Type::GUID, oTypeInfo<_Type>::default_construct)
+
+struct oSingletonRegister
+{
+	// This registers the ctor pointer at static init time with the process heap
+	// so that when a singleton is instantiated we can allocate not only memory
+	// we know will be around until the end of the very last dynamically loaded
+	// library, but also the code used will be there too. The first-to-register
+	// will be the last-to-unregister as C++ static init specifies.
+	oSingletonRegister::oSingletonRegister(const char* _SingletonName, const oGUID& _SingletonGUID, type_info_default_constructor _PlacementNew);
+};
 
 class oSingletonBase : public oInterface
 {
@@ -47,7 +71,7 @@ protected:
 	void* hModule;
 	const char* Name;
 	oRefCount RefCount;
-	static void* NewV(const char* _TypeInfoName, size_t _Size, void (*_Ctor)(void*), const oGUID& _GUID, bool _IsThreadLocal);
+	static void* NewV(const char* _TypeInfoName, size_t _Size, type_info_default_constructor _Ctor, const oGUID& _GUID, bool _IsThreadLocal);
 };
 
 template<typename T, bool ThreadLocal = false>
@@ -56,8 +80,7 @@ class oSingletonBaseT : public oSingletonBase
 public:
 	oSingletonBaseT(int _InitialRefCount = 1) : oSingletonBase(_InitialRefCount) {}
 protected:
-	static void Ctor(void* _Pointer) { new (_Pointer) T(); }
-	static T* New() { return static_cast<T*>(NewV(typeid(T).name(), sizeof(T), Ctor, typename T::GUID, ThreadLocal)); } // GUID must be defined as a static member of the derived class
+	static T* New() { return static_cast<T*>(NewV(typeid(T).name(), sizeof(T), oTypeInfo<T>::default_construct, typename T::GUID, ThreadLocal)); } // GUID must be defined as a static member of the derived class
 };
 
 template<typename T>

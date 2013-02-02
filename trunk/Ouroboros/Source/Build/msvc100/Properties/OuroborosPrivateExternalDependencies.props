@@ -5,7 +5,7 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(oSuiteExtDir)bullet\vectormathlibrary\include;$(oSuiteExtDir)FreeImage\Source\OpenEXR\Half;$(oSuiteExtDir)tlsf;$(oSuiteExtDir)BC6HBC7EncoderDecoder11\;$(oSuiteExtDir)FreeImage\Source\;$(oSuiteExtDir)OpenSSL\openssl-1.0.0e\include\;$(oSuiteExtDir)tbb\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(oSuiteExtDir)Kinect\v1.0\inc\;$(oSuiteExtDir)bullet\vectormathlibrary\include;$(oSuiteExtDir)FreeImage\Source\OpenEXR\Half;$(oSuiteExtDir)tlsf;$(oSuiteExtDir)BC6HBC7EncoderDecoder11\;$(oSuiteExtDir)FreeImage\Source\;$(oSuiteExtDir)OpenSSL\openssl-1.0.0e\include\;$(oSuiteExtDir)tbb\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>FREEIMAGE_LIB;__TBB_NO_IMPLICIT_LINKAGE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -30,9 +32,10 @@
 #ifndef oWindow_h
 #define oWindow_h
 
-#include <oBasis/oInterface.h>
-#include <oBasis/oStdFuture.h>
 #include <oBasis/oGUI.h>
+#include <oBasis/oInterface.h>
+#include <oBasis/oRef.h>
+#include <oBasis/oStdFuture.h>
 
 interface oImage;
 
@@ -135,6 +138,27 @@ interface oWindow : oInterface
 	virtual void UnhookEvents(int _EventHookID) threadsafe = 0;
 };
 
+struct oGESTURECAMERA_INIT
+{
+	oGESTURECAMERA_INIT()
+		: AdditionalYawPitchRoll(float3(0,0,0))
+		, CameraWorldPosition(float3(0,0,0))
+		, CutoffDistance(2.5f)
+		, MaxSimultaneousUsers(2)
+		, UseNearMode(false)
+		, UseStartupTilt(true)
+		, StartupTilt(0)
+	{}
+		
+	float3 AdditionalYawPitchRoll;
+	float3 CameraWorldPosition;
+	float CutoffDistance;
+	int MaxSimultaneousUsers;
+	float StartupTilt;
+	bool UseNearMode;
+	bool UseStartupTilt;
+};
+
 struct oWINDOW_INIT
 {
 	oWINDOW_INIT()
@@ -153,6 +177,7 @@ struct oWINDOW_INIT
 	oGUI_EVENT_HOOK EventHook;
 	oGUI_ACTION_HOOK ActionHook;
 	oGUI_WINDOW_DESC WinDesc;
+	oGESTURECAMERA_INIT GestureInit;
 };
 
 bool oWindowCreate(const oWINDOW_INIT& _Init, threadsafe oWindow** _ppWindow);

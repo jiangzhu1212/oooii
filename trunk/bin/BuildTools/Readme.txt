@@ -1,1 +1,5 @@
-This folder contains prebuilt versions of software maintained by this very build system. We could just build all tools before subsequent steps and have it point to its own build, but because debug builds are so much slower than release builds - this special-case is made.
+This folder contains prebuilt versions of software that is also built by this 
+very system, but since it is used in the system it is provided as pre-built 
+binaries. Doing so shields against a bad build where because of the error the 
+build itself cannot complete and also allows the use of faster release-built
+binaries even in debug builds.

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,7 +29,7 @@
 #include <oGPU/oGPUViewConstants.h>
 #include <oGPU/oGPUDrawConstants.h>
 
-struct TESTGPUTexture1DMip : public oTest
+struct GPU_Texture1DMip : public oTest
 {
 	oRef<oGPUDevice> Device;
 	oRef<oGPUCommandList> CL;
@@ -71,12 +73,12 @@ struct TESTGPUTexture1DMip : public oTest
 		imageDesc.Format = oImage::BGRA32;
 		imageDesc.RowPitch = oImageCalcRowPitch(imageDesc.Format, imageDesc.Dimensions.x);
 		oRef<oImage> image;
-		oImageCreate("TESTGPUTexture1D", imageDesc, &image);
+		oImageCreate("GPU_Texture1D", imageDesc, &image);
 
 		oRef<oBuffer> buffer;
 		int surfaceBufferSize = oImageCalcSize(imageDesc.Format, imageDesc.Dimensions);
 		void *pSurfaceBuffer = oBuffer::New(surfaceBufferSize);
-		oBufferCreate("TESTGPUTexture1D buffer", pSurfaceBuffer, surfaceBufferSize, oBuffer::Delete, &buffer);
+		oBufferCreate("GPU_Texture1D buffer", pSurfaceBuffer, surfaceBufferSize, oBuffer::Delete, &buffer);
 
 		static const oColor sConsoleColors[] = { std::Black, std::Navy, std::Green, std::Teal, std::Maroon, std::Purple, std::Olive, std::Silver, std::Gray, std::Blue, std::Lime, std::Aqua, std::Red, std::Fuchsia, std::Yellow, std::White };
 
@@ -145,11 +147,11 @@ struct TESTGPUTexture1DMip : public oTest
 
 		static const int sSnapshotFrames[] = { 0, 2 };
 		static const bool kIsDevMode = false;
-		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&TESTGPUTexture1DMip::Render, this, oBIND1), "TESTGPUTexture", sSnapshotFrames);
+		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&GPU_Texture1DMip::Render, this, oBIND1), "GPU_Texture", sSnapshotFrames);
 
 		oStd::future<oRef<oImage>> Snapshots[oCOUNTOF(sSnapshotFrames)];
 		oRef<threadsafe oGPUWindow> Window;
-		oTESTB0(oGPUTestCreateWindow(Init, oBIND(&TESTGPUTexture1DMip::CreateResources, this, oBIND1), Snapshots, &Window));
+		oTESTB0(oGPUTestCreateWindow(Init, oBIND(&GPU_Texture1DMip::CreateResources, this, oBIND1), Snapshots, &Window));
 
 		while (Window->IsOpen()) 
 		{
@@ -166,4 +168,4 @@ struct TESTGPUTexture1DMip : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTGPUTexture1DMip);
+oTEST_REGISTER(GPU_Texture1DMip);

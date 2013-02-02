@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -55,6 +57,7 @@ public:
 
 // {AC624482-13BC-4942-89AC-0525BDF62B1F}
 const oGUID oDispatchQueueGenericContext::GUID = { 0xac624482, 0x13bc, 0x4942, { 0x89, 0xac, 0x5, 0x25, 0xbd, 0xf6, 0x2b, 0x1f } };
+oSINGLETON_REGISTER(oDispatchQueueGenericContext);
 
 void oTaskInitScheduler()
 {
@@ -95,9 +98,8 @@ public:
 		wait();
 	}
 
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_NOOP_QUERYINTERFACE();
-
+	void Reference() override { RefCount.Reference(); }
+	void Release() override { if (RefCount.Release()) delete this; }
 	void wait() override
 	{
 		e.Wait();

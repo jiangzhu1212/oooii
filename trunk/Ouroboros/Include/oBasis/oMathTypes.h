@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -29,7 +31,8 @@
 #define oMathTypes_h
 
 #include <oBasis/oColor.h>
-#include <oBasis/oHLSLTypes.h>
+#include <oBasis/oHLSLMath.h>
+#include <oBasis/oOperators.h>
 #include <oBasis/oTypes.h>
 
 typedef TVEC2<char> char2; typedef TVEC2<uchar> uchar2;
@@ -66,9 +69,18 @@ struct oRGBf
 	inline operator float3&() { return Color; }
 	inline operator const float3&() const { return Color; }
 	inline operator oColor() const { return oColorCompose(Color.x, Color.y, Color.z, 1.0f); }
+	inline const oRGBf& operator=(int _Color) { Color = (float)_Color; return *this; }
 	inline const oRGBf& operator=(const oRGBf& _Color) { Color = _Color.Color; return *this; }
 	inline const oRGBf& operator=(const float3& _Color) { Color = _Color; return *this; }
 	inline const oRGBf& operator=(const oColor& _Color) { Color = oColorDecomposeRGB<float3>(_Color); return *this; }
+
+	const oRGBf& operator+=(const oRGBf& _That) { Color = saturate(Color + (const float3&)_That); return *this; }
+	const oRGBf& operator-=(const oRGBf& _That) { Color = saturate(Color - (const float3&)_That); return *this; }
+	const oRGBf& operator*=(const oRGBf& _That) { Color = saturate(Color * (const float3&)_That); return *this; }
+	const oRGBf& operator/=(const oRGBf& _That) { Color = saturate(Color / (const float3&)_That); return *this; }
+
+	oOPERATORS_DERIVED(oRGBf, +) oOPERATORS_DERIVED(oRGBf, -) oOPERATORS_DERIVED(oRGBf, *) oOPERATORS_DERIVED(oRGBf, /)
+
 protected:
 	float3 Color;
 };
@@ -80,5 +92,44 @@ typedef TPLANE<float> oPlanef; typedef TPLANE<double> oPlaned;
 typedef TAABOX<float, TVEC3<float>> oAABoxf; typedef TAABOX<double, TVEC3<double>> oAABoxd;
 typedef TAABOX<int, TVEC2<int>> oRECT;
 typedef TAABOX<float, TVEC2<float>> oRECTF;
+
+// _____________________________________________________________________________
+// type traits
+
+// the static value is true if the specified type is a linear algebra type
+// this is modeled after std::is_arithmetic for the linear algrebra types found
+// in shader/compute languages as well as appearing commonly in Ouroboros C++.
+template<typename T> struct is_linear_algebra
+{
+	static const bool value = 
+		std::is_same<char2,std::remove_cv<T>::type>::value ||
+		std::is_same<char3,std::remove_cv<T>::type>::value ||
+		std::is_same<char4,std::remove_cv<T>::type>::value ||
+		std::is_same<uchar2,std::remove_cv<T>::type>::value ||
+		std::is_same<uchar3,std::remove_cv<T>::type>::value ||
+		std::is_same<uchar4,std::remove_cv<T>::type>::value ||
+		std::is_same<short2,std::remove_cv<T>::type>::value ||
+		std::is_same<short3,std::remove_cv<T>::type>::value ||
+		std::is_same<short4,std::remove_cv<T>::type>::value ||
+		std::is_same<ushort2,std::remove_cv<T>::type>::value ||
+		std::is_same<ushort3,std::remove_cv<T>::type>::value ||
+		std::is_same<ushort4,std::remove_cv<T>::type>::value ||
+		std::is_same<int2,std::remove_cv<T>::type>::value ||
+		std::is_same<int3,std::remove_cv<T>::type>::value ||
+		std::is_same<int4,std::remove_cv<T>::type>::value ||
+		std::is_same<uint2,std::remove_cv<T>::type>::value ||
+		std::is_same<uint3,std::remove_cv<T>::type>::value ||
+		std::is_same<uint4,std::remove_cv<T>::type>::value ||
+		std::is_same<llong2,std::remove_cv<T>::type>::value ||
+		std::is_same<llong3,std::remove_cv<T>::type>::value ||
+		std::is_same<llong4,std::remove_cv<T>::type>::value ||
+		std::is_same<ullong2,std::remove_cv<T>::type>::value ||
+		std::is_same<ullong3,std::remove_cv<T>::type>::value ||
+		std::is_same<ullong4,std::remove_cv<T>::type>::value ||
+		std::is_same<float2,std::remove_cv<T>::type>::value ||
+		std::is_same<float3,std::remove_cv<T>::type>::value ||
+		std::is_same<float4,std::remove_cv<T>::type>::value ||
+		std::is_same<float4x4,std::remove_cv<T>::type>::value;
+};
 
 #endif

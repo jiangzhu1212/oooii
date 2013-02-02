@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -61,5 +63,8 @@ interface oBuffer : oLockableInterface
 // If _FreeFn is nullptr, then the allocation is not freed automatically
 bool oBufferCreate(const char* _Name, void* _Allocation, size_t _Size, oBuffer::DeallocateFn _DeallocateFn, oBuffer** _ppBuffer);
 bool oBufferCreate(const char* _Name, const void* _Allocation, size_t _Size, oBuffer::DeallocateFn _DeallocateFn, const oBuffer** _ppBuffer);
+
+// For static buffers
+template<typename T, size_t size> bool oBufferCreate(const char* _Name, const T (&_Allocation)[size], const oBuffer** _ppBuffer) { return oBufferCreate(_Name, _Allocation, size * sizeof(T), oBuffer::Noop, _ppBuffer); }
 
 #endif

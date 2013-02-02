@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,7 +29,7 @@
 #include <oGPU/oGPUViewConstants.h>
 #include <oGPU/oGPUDrawConstants.h>
 
-struct TESTGPUTextureCube : public oTest
+struct GPU_TextureCube : public oTest
 {
 	oRef<oGPUDevice> Device;
 	oRef<oGPUCommandList> CL;
@@ -141,11 +143,11 @@ struct TESTGPUTextureCube : public oTest
 
 		static const int sSnapshotFrames[] = { 1, 2 };
 		static const bool kIsDevMode = false;
-		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&TESTGPUTextureCube::Render, this, oBIND1), "TESTGPUTexture", sSnapshotFrames);
+		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&GPU_TextureCube::Render, this, oBIND1), "GPU_Texture", sSnapshotFrames);
 
 		oStd::future<oRef<oImage>> Snapshots[oCOUNTOF(sSnapshotFrames)];
 		oRef<threadsafe oGPUWindow> Window;
-		oTESTB0(oGPUTestCreateWindow(Init, oBIND(&TESTGPUTextureCube::CreateResources, this, oBIND1), Snapshots, &Window));
+		oTESTB0(oGPUTestCreateWindow(Init, oBIND(&GPU_TextureCube::CreateResources, this, oBIND1), Snapshots, &Window));
 
 		while (Window->IsOpen())
 		{
@@ -162,4 +164,4 @@ struct TESTGPUTextureCube : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTGPUTextureCube);
+oTEST_REGISTER(GPU_TextureCube);

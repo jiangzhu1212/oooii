@@ -103,23 +103,37 @@ struct PARAMETERS
 	bool Exhaustive;
 };
 
-static bool oBasisHasChanges()
+// _pHasChanges should be large enough to receive a result for each of the 
+// specified path parts.
+static bool oP4CheckPathHasChanges(const char** _pPathParts, size_t _NumPathParts, bool* _pHasChanges, size_t _NumOpenedFilesToTest = 128)
 {
-	oP4_FILE_DESC test[128];
-	size_t nOpenFiles = oP4ListOpened(test);
+	std::vector<oP4_FILE_DESC> temp;
+	temp.resize(_NumOpenedFilesToTest);
+	size_t nOpenFiles = oP4ListOpened(oGetData(temp), temp.size());
 	
 	// If we can't connect to P4, then always run all tests.
 	if (nOpenFiles == oInvalid)
+		return oErrorSetLast(oERROR_IO, "oP4PathHasChanges could not find open files. This may indicate Perforce is not accessible.");
+
+	memset(_pHasChanges, 0, _NumPathParts);
+
+	oStringPath LibWithSeps;
+	for (size_t i = 0; i < _NumPathParts; i++)
 	{
-		oTRACE("NOTE: If P4 is installed and accessible through env vars, oUnitTests will detect if any oBasis files have been modified and if not, it will automatically skip all oBasis tests when no other filter is specified.");
-		return true;
+		oPrintf(LibWithSeps, "/%s/", _pPathParts[i]);
+		for (size_t j = 0; j < nOpenFiles; j++)
+		{
+			if (strstr(temp[j].Path, LibWithSeps))
+			{
+				_pHasChanges[i] = true;
+				break;
+			}
+		}
 	}
 
-	for (size_t i = 0; i < nOpenFiles; i++)
-		if (strstr(test[i].Path, "oBasis"))
-			return true;
-	return false;
+	return true;
 }
+template<size_t size> bool oP4CheckPathHasChanges(const char* (&_pPathParts)[size], bool (&_pHasChanges)[size], size_t _NumOpenedFilesToTest = 128) { return oP4CheckPathHasChanges(_pPathParts, size, _pHasChanges, _NumOpenedFilesToTest); }
 
 void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 {
@@ -183,11 +197,43 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 	static bool IsOpenSourceDistribution = true;
 
 	// oBasis is pretty stable these days, only test if there are changes.
-	if (_pParameters->Filters.empty() && !oBasisHasChanges() && !IsOpenSourceDistribution)
+	// Some libs have less and less changes these days, so in the common case if 
+	// there are no modifications to them, don't build them
+	if (_pParameters->Filters.empty() && !IsOpenSourceDistribution)
 	{
-		_pParameters->Filters.resize(_pParameters->Filters.size() + 1);
-		_pParameters->Filters.back().Type = oFilterChain::EXCLUDE1;
-		_pParameters->Filters.back().RegularExpression = "BASIS_.*";
+		const char* sLibNames[] =
+		{
+			"oBasis",
+			"oPlatform",
+			"oGPU",
+		};
+		const char* sFilter[] =
+		{
+			"BASIS_.*",
+			"PLATFORM_.*",
+			"GPU_.*",
+		};
+		bool HasChanges[oCOUNTOF(sLibNames)];
+		if (oP4CheckPathHasChanges(sLibNames, HasChanges))
+		{
+			for (int i = 0; i < oCOUNTOF(HasChanges); i++)
+			{
+				bool ThisHasChanges = HasChanges[i];
+				if (!ThisHasChanges)
+				{
+					for (int j = 0; j < i; j++)
+						if (HasChanges[j])
+							ThisHasChanges = true;
+				}
+
+				if (!ThisHasChanges)
+				{
+					auto pFilter = oAppend(_pParameters->Filters);
+					pFilter->Type = oFilterChain::EXCLUDE1;
+					pFilter->RegularExpression = sFilter[i];
+				}
+			}
+		}
 	}
 }
 
@@ -337,7 +383,7 @@ bool EnsureOneInstanceIsRunning()
 
 	char name[_MAX_PATH];
 	oGetFilebase(name, path);
-	if (_memicmp(oMODULE_DEBUG_PREFIX, name, strlen(oMODULE_DEBUG_PREFIX)))
+	if (_memicmp(oMODULE_DEBUG_PREFIX, name, oStrlen(oMODULE_DEBUG_PREFIX)))
 		oPrintf(name, oMODULE_DEBUG_PREFIX "%s", oGetFilebase(path));
 
 	oStrcat(name, oGetFileExtension(path));

@@ -125,13 +125,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oGPU\oGPU.h" />
-    <ClInclude Include="..\..\Include\oGPU\oGPUCompiler.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUConstants.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUDrawConstants.h" />
-    <ClInclude Include="..\..\Include\oGPU\oGPUEx.h" />
+    <ClInclude Include="..\..\Include\oGPU\oGPUIO.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUMaterialConstants.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUPickBuffer.h" />
-    <ClInclude Include="..\..\Include\oGPU\oGPUStructs.h" />
+    <ClInclude Include="..\..\Include\oGPU\oGPUShared.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUViewConstants.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUWindow.h" />
@@ -147,24 +146,25 @@
     <ClInclude Include="oD3D11Texture.h" />
     <ClInclude Include="oGPUCommon.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Shaders\oGPUHLSLCommon.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oD3D11Buffer.cpp" />
     <ClCompile Include="oD3D11CommandList.cpp" />
-    <ClCompile Include="oD3D11Compiler.cpp" />
     <ClCompile Include="oD3D11ComputeShader.cpp" />
     <ClCompile Include="oD3D11Device.cpp" />
     <ClCompile Include="oD3D11InstanceList.cpp" />
+    <ClCompile Include="oD3D11IO.cpp" />
     <ClCompile Include="oD3D11LineList.cpp" />
     <ClCompile Include="oD3D11Mesh.cpp" />
     <ClCompile Include="oD3D11Pipeline.cpp" />
     <ClCompile Include="oD3D11RenderTarget.cpp" />
     <ClCompile Include="oD3D11Texture.cpp" />
     <ClCompile Include="oGPUCommon.cpp" />
-    <ClCompile Include="oGPUEx.cpp" />
     <ClCompile Include="oGPUMaterialConstants.cpp" />
     <ClCompile Include="oGPUPickBuffer.cpp" />
     <ClCompile Include="oGPUUtil.cpp" />
+    <ClCompile Include="oGPUUtil_Pipelines.cpp" />
     <ClCompile Include="oGPUWindow.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -179,6 +179,348 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cs_4_0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cs_4_0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cs_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_DEPTH.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_GRID.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_LINE.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_OBJ_PIXEL_LIT.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_OBJ_UNLIT.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_OBJ_VERTEX_LIT.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_POSITION.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_SHADOW.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_TEXCOORD.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_WSNORMAL.sh">
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_DEPTH.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_DEPTH_INSTANCED.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_LINE.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGPU_PS4_0_OBJECT_ID.sh">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_OBJ_COMMON.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_OBJ_COMMON_INSTANCED.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_POSITION.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_POSITION_INSTANCED.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+    </FXC>
+    <FXC Include="Shaders\oGPU_VS4_0_SHADOW.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oBasis\oMathShared.h;$(oSuiteDir)Include\oPlatform\oHLSL.h;$(oSuiteDir)Source\oGPU\Shaders\oGPUHLSLCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
     </FXC>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

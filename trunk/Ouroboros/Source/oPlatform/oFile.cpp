@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -23,7 +25,6 @@
  **************************************************************************/
 #include <oPlatform/oFile.h>
 #include <oBasis/oError.h>
-#include <oPlatform/oInterprocessEvent.h>
 #include <oPlatform/Windows/oWindows.h>
 #include "oIOCP.h"
 #include "oFileInternal.h"
@@ -201,6 +202,34 @@ bool oFileEnum(const char* _WildcardPath, oFUNCTION<bool(const char* _FullPath, 
 	oASSERT_NOEXECUTION;
 }
 
+bool oFileEnumFilesRecursively(const char* _Path, oFUNCTION<bool(const char* _FullPath, const oSTREAM_DESC& _Desc)> _EnumFunction)
+{
+	oStringPath WildCard = _Path;
+	oEnsureSeparator(WildCard);
+	oStrAppendf(WildCard, "*.*");
+	oFileEnum(WildCard,
+		[&](const char* _pPath, const oSTREAM_DESC& _Desc)->bool
+		{
+			if( !_EnumFunction(_pPath, _Desc) )
+				return false;
+
+			oSTREAM_DESC FileDesc;
+			if( !oFileGetDesc(_pPath, &FileDesc) )
+				return false;
+
+			const char* pSrcBase = oGetFilebase(_pPath);
+			if(FileDesc.Directory && oStrcmp("..", pSrcBase) && oStrcmp(".", pSrcBase))
+			{
+				if(!oFileEnumFilesRecursively(_pPath, _EnumFunction))
+					return false;
+			}
+
+			return true;
+		});
+
+	return true;
+}
+
 bool oFileTouch(oHFILE _hFile, time_t _UnixTimestamp)
 {
 	HANDLE hFile = oGetFileHandle((FILE*)_hFile);
@@ -253,7 +282,7 @@ bool oFileCopy1(const char* _PathFrom, const oSTREAM_DESC& _DescFrom, const char
 		{
 			if (_Recursive)
 			{
-				if (!oFileEnsureParentFolderExists(dest))
+				if (!oFileCreateFolder(dest))
 					return false;
 				
 				oFileCopy(_PathFrom, dest, _Recursive);

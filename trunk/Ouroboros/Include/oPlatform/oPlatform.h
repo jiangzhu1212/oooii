@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -21,20 +23,18 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// This include-all-headers-in-oooii.lib header is intended
-// for use only in the precompiled headers of dependent libs.
-// Using this as a short-cut for includes can cause precompiled-
-// header-related build dependency problems, so still be 
-// disciplined in the use of specific and minimal include files.
+// Convenience "all headers" header for precompiled header files. Do NOT use 
+// this to be lazy when including headers in .cpp files. Be explicit.
 #pragma once
-#ifndef oooii_h
-#define oooii_h
+#ifndef oPlatform_h
+#define oPlatform_h
 #include <oPlatform/oConsole.h>
 #include <oPlatform/oCPU.h>
 #include <oPlatform/oDebugger.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oInterprocessEvent.h>
 #include <oPlatform/oFile.h>
+#include <oPlatform/oGUIMenu.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oMirroredArena.h>
 #include <oPlatform/oModule.h>
@@ -44,6 +44,7 @@
 #include <oPlatform/oProcess.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oProgressBar.h>
+#include <oPlatform/oRegistry.h>
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oSocket.h>
 #include <oPlatform/oStream.h>
@@ -51,5 +52,6 @@
 #include <oPlatform/oSystem.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/oThreadX.h>
+#include <oPlatform/oVersionUpdate.h>
 #include <oPlatform/oWindow.h>
 #endif

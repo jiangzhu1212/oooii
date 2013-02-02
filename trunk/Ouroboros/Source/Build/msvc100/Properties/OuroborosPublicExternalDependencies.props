@@ -7,7 +7,7 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(OuroborosExtDir)bullet\vectormathlibrary\include;$(OuroborosExtDir)FreeImage\Source\OpenEXR\Half;$(OuroborosExtDir)tlsf;$(OuroborosExtDir)BC6HBC7EncoderDecoder11\;$(OuroborosExtDir)FreeImage\Source\;$(OuroborosExtDir)OpenSSL\openssl-1.0.0e\include\;$(OuroborosExtDir)tbb\include\;$(OuroborosExtDir)libjpegTurbo\;$(OuroborosExtDir)OFED_SDK\Inc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OuroborosExtDir)\Kinect\v1.0\inc\;$(OuroborosExtDir)bullet\vectormathlibrary\include;$(OuroborosExtDir)FreeImage\Source\OpenEXR\Half;$(OuroborosExtDir)tlsf;$(OuroborosExtDir)BC6HBC7EncoderDecoder11\;$(OuroborosExtDir)FreeImage\Source\;$(OuroborosExtDir)OpenSSL\openssl-1.0.0e\include\;$(OuroborosExtDir)tbb\include\;$(OuroborosExtDir)libjpegTurbo\;$(OuroborosExtDir)OFED_SDK\Inc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>FREEIMAGE_LIB;__TBB_NO_IMPLICIT_LINKAGE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -33,7 +35,7 @@ oDECLARE_GPURESOURCE_IMPLEMENTATION(oD3D11, InstanceList, oGPU_INSTANCE_LIST)
 {
 	oDEFINE_GPURESOURCE_INTERFACE();
 	oDECLARE_GPURESOURCE_CTOR(oD3D11, InstanceList);
-	oRef<ID3D11Buffer> Instances;
+	oRef<oGPUBuffer> Instances;
 	int InstanceStride;
 
 	void SetNumInstances(uint _NumInstances);

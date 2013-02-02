@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -42,6 +44,7 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	void Begin() override;
 	void End() override;
 	void Flush() override;
+	void Reset() override;
 	void Reserve(oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource) override;
 	void Commit(oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Source, const oGPU_BOX& _Subregion = oGPU_BOX()) override;
 	void Copy(oGPUResource* _pDestination, oGPUResource* _pSource) override;
@@ -51,6 +54,8 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	void SetSamplers(int _StartSlot, int _NumStates, const oGPU_SAMPLER_STATE* _pSamplerState) override;
 	void SetShaderResources(int _StartSlot, int _NumResources, const oGPUResource* const* _ppResources) override;
 	void SetBuffers(int _StartSlot, int _NumBuffers, const oGPUBuffer* const* _ppConstants) override;
+	void SetIndexBuffer(const oGPUBuffer* _pIndexBuffer) override;
+	void SetVertexBuffers(int _StartSlot, int _NumVertexBuffers, const oGPUBuffer* const* _ppVertexBuffers, uint _StartVertEx) override;
 
 	void SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const oAABoxf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) override;
 	void SetPipeline(const oGPUPipeline* _pPipeline) override;
@@ -58,6 +63,7 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	void SetBlendState(oGPU_BLEND_STATE _State) override;
 	void SetDepthStencilState(oGPU_DEPTH_STENCIL_STATE _State) override;
 	void Clear(oGPURenderTarget* _pRenderTarget, oGPU_CLEAR _Clear) override;
+	void oD3D11CommandList::Draw(uint _StartPrimitive, uint _NumPrimitives, uint _StartInstance = oInvalid, uint _NumInstances = oInvalid) override;
 	void Draw(const oGPUMesh* _pMesh, int _RangeIndex, const oGPUInstanceList* _pInstanceList = nullptr) override;
 	void Draw(const oGPULineList* _pLineList) override;
 	void Draw(uint _VertexCount) override;
@@ -73,6 +79,8 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	oRef<ID3D11DeviceContext> Context;
 	oRef<ID3D11CommandList> CommandList;
 	DESC Desc;
+	D3D_PRIMITIVE_TOPOLOGY PrimitiveTopology;
+	bool IndicesSet;
 
 	// Shortcut to a bunch of typecasting
 	// This thread_cast is safe because oD3D11CommandList is single-threaded

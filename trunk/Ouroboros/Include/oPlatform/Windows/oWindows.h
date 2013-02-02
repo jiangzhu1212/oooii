@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -33,13 +35,13 @@
 	#pragma message("BAD WINDOWS INCLUDE! Applications should #include <oWindows.h> to prevent extra and sometimes conflicting cruft from being included.")
 #endif
 
-#include <oBasis/oGPUEnums.h>
 #include <oBasis/oGUID.h>
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oSurface.h>
 #include <oBasis/oVersion.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oImage.h>
+#include <oPlatform/oModule.h> // for module-to-platform code in the Misc section
 
 // _____________________________________________________________________________
 // Simplify the contents of Windows.h
@@ -125,6 +127,8 @@
 	oBUILD_TRACE("PLATFORM: Windows7")
 	#define oWINDOWS_HAS_TRAY_NOTIFYICONIDENTIFIER
 	#define oWINDOWS_HAS_TRAY_QUIETTIME
+	#define oWINDOWS_HAS_SHMUTEX_TRYLOCK
+	#define oWINDOWS_HAS_REGISTERTOUCHWINDOW
 #elif (defined(NTDDI_VISTA) && (NTDDI_VERSION >= NTDDI_VISTA))
 	oBUILD_TRACE("PLATFORM: Windows Vista")
 #elif (defined(NTDDI_LONGHORN) && (NTDDI_VERSION >= NTDDI_LONGHORN))
@@ -519,7 +523,8 @@ bool oEnumProcessThreads(DWORD _ProcessID, oFUNCTION<bool(DWORD _ThreadID, DWORD
 // child processes.
 bool oWinEnumProcesses(oFUNCTION<bool(DWORD _ProcessID, DWORD _ParentProcessID, const char* _ProcessExePath)> _Function);
 
-// Call the specified function for each of the top level windows on the system
+// Call the specified function for each of the top level windows on the system. 
+// The function should return true to keep searching or false to exit early.
 bool oWinEnumWindows(oFUNCTION<bool(HWND _Hwnd)> _Function);
 
 // _____________________________________________________________________________
@@ -550,6 +555,15 @@ bool oWinSetPrivilege(HANDLE _hProcessToken, LPCTSTR _PrivilegeName, bool _Enabl
 
 // Call this to allow this process to be debugged
 bool oWinEnableDebugPrivilege(bool _Enabled);
+
+// Call this to dump the stack and potentially throw up an error message if so enabled by oReporting.  See oReporting for more information on stack dumps.
+void oWinDumpAndTerminate(EXCEPTION_POINTERS* _pExceptionPtrs, const char* _pUserErrorMessage);
+
+// value to set for FILEFLAGS in a resource script (.rc)
+long oWinRCGetFileFlags(const oMODULE_DESC& _Desc);
+
+// Returns the values for FILETYPE and FILESUBTYPE in a resource script (.rc)
+void oWinRCGetFileType(const oMODULE_TYPE _Type, DWORD* _pType, DWORD* _pSubtype);
 
 #else
 	#error Unsupported platform

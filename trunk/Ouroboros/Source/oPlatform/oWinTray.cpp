@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -49,6 +51,53 @@ HWND oTrayGetHwnd()
 	return hWnd;
 }
 
+#ifndef oWINDOWS_HAS_TRAY_NOTIFYICONIDENTIFIER
+static bool Shell_NotifyIconGetRect_WAR(HWND _hWnd, UINT _ID, RECT* _pRect)
+{
+	// http://social.msdn.microsoft.com/forums/en-US/winforms/thread/4ac8d81e-f281-4b32-9407-e663e6c234ae/
+	
+	HWND hTray = oTrayGetHwnd();
+	DWORD TrayProcID;
+	GetWindowThreadProcessId(hTray, &TrayProcID);
+	HANDLE hTrayProc = OpenProcess(PROCESS_ALL_ACCESS, 0, TrayProcID);
+	bool success = false;
+	if (!hTrayProc)
+	{
+		TBBUTTON* lpBI = (TBBUTTON*)VirtualAllocEx(hTrayProc, nullptr, sizeof(TBBUTTON), MEM_COMMIT, PAGE_READWRITE);
+		int nButtons = (int)SendMessage(hTray, TB_BUTTONCOUNT, 0, 0);
+		for (int i = 0; i < nButtons; i++)
+		{
+			if (SendMessage(hTray, TB_GETBUTTON, i, (LPARAM)lpBI))
+			{
+				TBBUTTON bi;
+				DWORD extraData[2];
+				ReadProcessMemory(hTrayProc, lpBI, &bi, sizeof(TBBUTTON), nullptr);
+				ReadProcessMemory(hTrayProc, (LPCVOID)bi.dwData, extraData, sizeof(DWORD) * 2, nullptr);
+				HWND IconNotifiesThisHwnd = (HWND)extraData[0];
+				UINT IconID = extraData[1];
+
+				if (_hWnd == IconNotifiesThisHwnd && _ID == IconID)
+				{
+					RECT r;
+					RECT* lpRect = (RECT*)VirtualAllocEx(hTrayProc, nullptr, sizeof(RECT), MEM_COMMIT, PAGE_READWRITE);
+					SendMessage(hTray, TB_GETITEMRECT, i, (LPARAM)lpRect);
+					ReadProcessMemory(hTrayProc, lpRect, &r, sizeof(RECT), nullptr);
+					VirtualFreeEx(hTrayProc, lpRect, 0, MEM_RELEASE);
+					MapWindowPoints(hTray, nullptr, (LPPOINT)&r, 2);
+					success = true;
+					break;
+				}
+			}
+		}
+
+		VirtualFreeEx(hTrayProc, lpBI, 0, MEM_RELEASE);
+		CloseHandle(hTrayProc);
+	}
+
+	return success;
+}
+#endif
+
 // This API can be used to determine if the specified
 // icon exists at all.
 bool oTrayGetIconRect(HWND _hWnd, UINT _ID, RECT* _pRect)
@@ -62,47 +111,7 @@ bool oTrayGetIconRect(HWND _hWnd, UINT _ID, RECT* _pRect)
 		HRESULT hr = Shell_NotifyIconGetRect(&nii, _pRect);
 		return SUCCEEDED(hr);
 	#else
-		// http://social.msdn.microsoft.com/forums/en-US/winforms/thread/4ac8d81e-f281-4b32-9407-e663e6c234ae/
-	
-		HWND hTray = oTrayGetHwnd();
-		DWORD TrayProcID;
-		GetWindowThreadProcessId(hTray, &TrayProcID);
-		HANDLE hTrayProc = OpenProcess(PROCESS_ALL_ACCESS, 0, TrayProcID);
-		bool success = false;
-		if (!hTrayProc)
-		{
-			TBBUTTON* lpBI = (TBBUTTON*)VirtualAllocEx(hTrayProc, nullptr, sizeof(TBBUTTON), MEM_COMMIT, PAGE_READWRITE);
-			int nButtons = (int)SendMessage(hTray, TB_BUTTONCOUNT, 0, 0);
-			for (int i = 0; i < nButtons; i++)
-			{
-				if (SendMessage(hTray, TB_GETBUTTON, i, (LPARAM)lpBI))
-				{
-					TBBUTTON bi;
-					DWORD extraData[2];
-					ReadProcessMemory(hTrayProc, lpBI, &bi, sizeof(TBBUTTON), nullptr);
-					ReadProcessMemory(hTrayProc, (LPCVOID)bi.dwData, extraData, sizeof(DWORD) * 2, nullptr);
-					HWND IconNotifiesThisHwnd = (HWND)extraData[0];
-					UINT IconID = extraData[1];
-
-					if (_hWnd == IconNotifiesThisHwnd && _ID == IconID)
-					{
-						RECT r;
-						RECT* lpRect = (RECT*)VirtualAllocEx(hTrayProc, nullptr, sizeof(RECT), MEM_COMMIT, PAGE_READWRITE);
-						SendMessage(hTray, TB_GETITEMRECT, i, (LPARAM)lpRect);
-						ReadProcessMemory(hTrayProc, lpRect, &r, sizeof(RECT), nullptr);
-						VirtualFreeEx(hTrayProc, lpRect, 0, MEM_RELEASE);
-						MapWindowPoints(hTray, nullptr, (LPPOINT)&r, 2);
-						success = true;
-						break;
-					}
-				}
-			}
-
-			VirtualFreeEx(hTrayProc, lpBI, 0, MEM_RELEASE);
-			CloseHandle(hTrayProc);
-		}
-
-		return success;
+		return Shell_NotifyIconGetRect_WAR(_hWnd, _ID, _pRect);
 	#endif
 }
 
@@ -128,8 +137,8 @@ struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
 		if (!Removes.empty())
 		{
 			oStringXL buf;
-			oStringPath syspath;
-			oPrintf(buf, "oWindows Trace %s Cleaning up tray icons\n", oSystemGetPath(syspath, oSYSPATH_EXECUTION));
+			oStringM exec;
+			oPrintf(buf, "oWindows Trace %s Cleaning up tray icons\n", oSystemGetExecutionPath(exec));
 			oThreadsafeOutputDebugStringA(buf);
 		}
 
@@ -180,6 +189,7 @@ struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
 
 // {1D072014-4CA5-4BA9-AD2C-96AD1510F2A0}
 const oGUID oTrayCleanup::GUID = { 0x1d072014, 0x4ca5, 0x4ba9, { 0xad, 0x2c, 0x96, 0xad, 0x15, 0x10, 0xf2, 0xa0 } };
+oSINGLETON_REGISTER(oTrayCleanup);
 
 void oTrayShowIcon(HWND _hWnd, UINT _ID, UINT _CallbackMessage, HICON _hIcon, bool _Show)
 {

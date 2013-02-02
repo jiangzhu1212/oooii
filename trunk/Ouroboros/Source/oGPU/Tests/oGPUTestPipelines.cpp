@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -77,12 +79,15 @@ static const oGPU_VERTEX_ELEMENT oGPU_TEST_POSITION_TEXCOORD3D_VERTEX[] =
 
 bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDesc)
 {
+	// @oooii-tony: Can some of these be converted to oGPU_UTIL_DEFAULT_PIPELINE?
+
 	switch (_Pipeline)
 	{
 		case oGPU_TEST_PASS_THROUGH:
 			_pDesc->DebugName = "PassThrough";
 			_pDesc->pElements = oGPU_TEST_POSITION_ONLY_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_ONLY_VERTEX);
+			_pDesc->InputType = oGPU_TRIANGLES;
 			_pDesc->pVertexShader = oGPUTestPassThroughVSByteCode;
 			_pDesc->pPixelShader = oGPUTestWhitePSByteCode;
 			return true;
@@ -91,6 +96,7 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->DebugName = "PassThroughColor";
 			_pDesc->pElements = oGPU_TEST_POSITION_COLOR_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_COLOR_VERTEX);
+			_pDesc->InputType = oGPU_TRIANGLES;
 			_pDesc->pVertexShader = oGPUTestPassThroughColorVSByteCode;
 			_pDesc->pPixelShader = oGPUTestColorPSByteCode;
 			return true;
@@ -99,6 +105,7 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->DebugName = "TransformedWhite";
 			_pDesc->pElements = oGPU_TEST_POSITION_ONLY_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_ONLY_VERTEX);
+			_pDesc->InputType = oGPU_TRIANGLES;
 			_pDesc->pVertexShader = oGPUTestWhiteVSByteCode;
 			_pDesc->pPixelShader = oGPUTestWhitePSByteCode;
 			return true;
@@ -107,6 +114,7 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->DebugName = "TransformedWhiteInstanced";
 			_pDesc->pElements = oGPU_TEST_POSITION_ONLY_INSTANCED_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_ONLY_INSTANCED_VERTEX);
+			_pDesc->InputType = oGPU_TRIANGLES;
 			_pDesc->pVertexShader = oGPUTestWhiteInstancedVSByteCode;
 			_pDesc->pPixelShader = oGPUTestWhitePSByteCode;
 			return true;
@@ -115,6 +123,7 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->DebugName = "Buffer";
 			_pDesc->pElements = nullptr;
 			_pDesc->NumElements = 0;
+			_pDesc->InputType = oGPU_TRIANGLES;
 			_pDesc->pVertexShader = oGPUTestBufferVSByteCode;
 			_pDesc->pPixelShader = oGPUTestBufferPSByteCode;
 			return true;
@@ -123,6 +132,7 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->DebugName = "Texture1D";
 			_pDesc->pElements = oGPU_TEST_POSITION_TEXCOORD1D_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_TEXCOORD1D_VERTEX);
+			_pDesc->InputType = oGPU_TRIANGLES;
 			_pDesc->pVertexShader = oGPUTestTexture1DVSByteCode;
 			_pDesc->pPixelShader = oGPUTestTexture1DPSByteCode;
 			return true;
@@ -131,6 +141,7 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->DebugName = "Texture2D";
 			_pDesc->pElements = oGPU_TEST_POSITION_TEXCOORD2D_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_TEXCOORD2D_VERTEX);
+			_pDesc->InputType = oGPU_TRIANGLES;
 			_pDesc->pVertexShader = oGPUTestTexture2DVSByteCode;
 			_pDesc->pPixelShader = oGPUTestTexture2DPSByteCode;
 			return true;
@@ -139,6 +150,7 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->DebugName = "Texture3D";
 			_pDesc->pElements = oGPU_TEST_POSITION_TEXCOORD3D_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_TEXCOORD3D_VERTEX);
+			_pDesc->InputType = oGPU_TRIANGLES;
 			_pDesc->pVertexShader = oGPUTestTexture3DVSByteCode;
 			_pDesc->pPixelShader = oGPUTestTexture3DPSByteCode;
 			return true;
@@ -147,6 +159,7 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->DebugName = "TextureCube";
 			_pDesc->pElements = oGPU_TEST_POSITION_TEXCOORD3D_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_TEXCOORD3D_VERTEX);
+			_pDesc->InputType = oGPU_TRIANGLES;
 			_pDesc->pVertexShader = oGPUTestTextureCubeVSByteCode;
 			_pDesc->pPixelShader = oGPUTestTextureCubePSByteCode;
 			return true;
@@ -155,6 +168,7 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 		//	_pDesc->DebugName = "Color";
 		//	_pDesc->pElements = oGPU_TEST_POSITION_ONLY_VERTEX;
 		//	_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_ONLY_VERTEX);
+		//	_pDesc->InputType = oGPU_TRIANGLES;
 		//	_pDesc->pVertexShader = oGPUTestWhiteVSByteCode;
 		//	_pDesc->pPixelShader = oGPUTestColorPSByteCode;
 		//	return true;

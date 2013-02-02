@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -43,7 +45,7 @@
 		#define oGPU_MATERIAL_CONSTANT_BUFFER GPUMaterialConstants
 	#endif
 #else
-	#include <oBasis/oGPUEnums.h>
+	#include <oBasis/oGPUConcepts.h>
 	#include <oBasis/oINI.h>
 #endif
 
@@ -150,6 +152,9 @@ struct oGPUMaterialConstants
 	float AlphaTestReference;
 	float Pad0;
 };
+#ifndef oHLSL
+oRTTI_COMPOUND_DECLARATION(oRTTI_CAPS_ARRAY, oGPUMaterialConstants)
+#endif
 
 #ifdef oHLSL
 	cbuffer cbuffer_GPUMaterialConstants : register(oCONCAT(b, oGPU_MATERIAL_CONSTANT_BUFFER_REGISTER)) { oGPUMaterialConstants oGPU_MATERIAL_CONSTANT_BUFFER; }

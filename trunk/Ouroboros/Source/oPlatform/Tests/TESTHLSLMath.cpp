@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -62,10 +64,27 @@ template<typename T> bool oEqualAtDepth(const TVEC4<T>& a, const TVEC4<T>& b, ui
 	return oEqualEPS(a.x, b.x, EPS) && oEqualEPS(a.y, b.y, EPS) && oEqualEPS(a.z, b.z, EPS) && oEqualEPS(a.w, b.w, EPS);
 }
 
-struct TESTHLSLMath : public oTest
+struct PLATFORM_oHLSLMath : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
+		// Test hemisphere vectors
+		{
+			float4x4 Rot = oCreateRotation((2.0f*oPIf)/3.0f, float3(0.0f, 0.0f, 1.0f));
+			float3 TargetAxis = float3(0.0f, 0.0f, 1.0f);
+
+			float3 Hemisphere3Gen[3];
+			Hemisphere3Gen[0] = normalize(float3(0.0f, oSQRT3Quarterf, 0.5f));
+			Hemisphere3Gen[1] = normalize(mul(Rot, Hemisphere3Gen[0]));
+			Hemisphere3Gen[2] = normalize(mul(Rot, Hemisphere3Gen[1]));
+
+			for(int i = 0; i < oCOUNTOF(oHEMISPHERE3); ++i)
+			{
+				oTESTB(oEqual(Hemisphere3Gen[i], oHEMISPHERE3[i]), "Hemisphere vector %d wrong", i);
+			}
+		}
+
+		
 		// Test Morton numbers
 		{
 			auto Result = oMorton3D(uint3(325, 458, 999));
@@ -84,38 +103,45 @@ struct TESTHLSLMath : public oTest
 			oTESTB( oEqualAtDepth(ToEncode, Decoded), "oMorton3DEncodeNormalizedPos/oMorton3DDecodeNormalizedPos 2 failed");
 		}
 
-		// Test Delta Rays
+		// Test 3DDA and Bresenham rays
 		{
 			float3 TestVector = float3( -890.01f, 409.2f, 204.6f);
 			float3 NrmVec = normalize(TestVector);
-			oDeltaRay DRay = oDeltaRayFromNrmlRay(NrmVec);
-			float3 Pos = 0.0f;
-			for(int i = 0; i< 100; ++i)
+			//NrmVec = float3(0.0f, 1.0f, 0.0f);
+			o3DDARay DDARay = oDeltaRayCreate(NrmVec);
+			o3DDARayContext DRayContext = o3DDARayContextCreate(DDARay);
+
+			static const int Count = 500;
+			std::vector<o3DDARayContext> RasterPoints;
+			RasterPoints.reserve(Count);
+			for(int i = 0; i < Count; ++i)
 			{
-				oDeltaRayStep(DRay, Pos);
-				
+				DRayContext = o3DDARayCast(DDARay, DRayContext);
+				RasterPoints.push_back(DRayContext);
+
+				float3 FltPos = float3((float)DRayContext.CurrentPosition.x, (float)DRayContext.CurrentPosition.y, (float)DRayContext.CurrentPosition.z);
+				float3 Diff = normalize(FltPos) - NrmVec;
+
 				if(i > 5)
 				{
-					float3 Diff = normalize(Pos) - NrmVec;
 					oTESTB( max(abs(Diff)) < 0.15f, "oDeltaRayStep failed to find correct ray at step %d", i);
 				}
 			}
+
+			// Bresenham rays are a subset of DeltaRays.  Check to make certain this is the case
+			float3 BresenhamRay = oBresenhamRay(NrmVec); 
+			int MaxLen = abs(RasterPoints[Count - 1].CurrentPosition.x);
+			for(int i = 1; i < MaxLen; i++)
+			{
+				o3DDARayContext RayContext = o3DDARayCastBresenham(DDARay, BresenhamRay, i);
+				oTESTB( RasterPoints.end() != std::find(RasterPoints.begin(), RasterPoints.end(), RayContext), "Bresenham generated %d %d %d at %d", RayContext.CurrentPosition.x, RayContext.CurrentPosition.y, RayContext.CurrentPosition.z, i);
+			}  
 		}
 
 
-		// Test Bresenham raycasts
-		{
-			float3 TestVector = float3( 890.01f, 409.2f, 204.6f);
-			float3 BresenhamRay = oBresenhamRay(TestVector);
-			float StepCount = 25.0f;
-			float3 TestRay = BresenhamRay * StepCount;
-			float3 NrmVec = normalize(TestVector);
-			float3 TestRay2 = NrmVec * (StepCount / NrmVec.x);
-			oTESTB( oEqual(TestRay, TestRay2), "oRayCastDeltaRay failed to find correct ray");
-		}
 
 		return SUCCESS;
 	}
 };
 
-oTEST_REGISTER(TESTHLSLMath);
+oTEST_REGISTER(PLATFORM_oHLSLMath);

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -28,7 +30,6 @@
 #include <oBasis/oStdChrono.h>
 #include <oBasis/oInterface.h>
 #include <oPlatform/Windows/oWindows.h>
-#include <oPlatform/oInterprocessEvent.h>
 
 typedef HANDLE oHandle;
 
@@ -86,11 +87,6 @@ struct oIOCP : public oInterface
 	//	code path to respond to completed operations. If it completes synchronously just pass it here.
 	virtual void DispatchManualCompletion(oHandle _handle, oIOCPOp* _pIOCPOp) = 0;
 };
-
-// Waits for the event in an active state, meaning the thread will work on any 
-// IOCP tasks that may queue up.  This is useful when IOCP work spawns additional
-// IOCP work that is needed immediately.
-oAPI void oIOCPActiveWait(oInterprocessEvent* _pEvent, unsigned int _TimeoutMS = oInfiniteWait);
 
 // Due to how windows manages IOCP the IOCP object must outlive the parent object.  To handle this
 // the IOCP system has a lazy destruction system.  When using oIOCP the parent object should not

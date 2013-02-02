@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,7 +29,7 @@
 #include <oPlatform/oStreamUtil.h>
 #include <oPlatform/oTest.h>
 
-struct TESTFileMap : public oTest
+struct PLATFORM_oFileMap : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
@@ -60,4 +62,4 @@ struct TESTFileMap : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTFileMap);
+oTEST_REGISTER(PLATFORM_oFileMap);

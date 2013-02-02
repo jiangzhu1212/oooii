@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -108,6 +110,7 @@ typedef oWStringL oWStringURI;
 template<typename CHAR1_T, typename CHAR2_T, size_t capacity> CHAR1_T* oStrcpy(oFixedString<CHAR1_T, capacity>& _StrDestination, const CHAR2_T* _StrSource, bool _ZeroBuffer = false) { return oStrcpy(_StrDestination.c_str(), _StrDestination.capacity(), _StrSource, _ZeroBuffer); }
 template<typename CHAR1_T, typename CHAR2_T, size_t capacity> CHAR1_T* oStrncpy(oFixedString<CHAR1_T, capacity>& _StrDestination, const CHAR2_T* _StrSource, size_t _NumChars) { return oStrncpy(_StrDestination.c_str(), _StrDestination.capacity(), _StrSource, _NumChars); }
 template<typename CHAR_T, size_t capacity> CHAR_T* oStrcat(oFixedString<CHAR_T, capacity>& _StrDestination, const CHAR_T* _StrSource) { return oStrcat(_StrDestination.c_str(), _StrDestination.capacity(), _StrSource); }
+template<typename CHAR_T, size_t capacity> size_t oStrlen(const oFixedString<CHAR_T, capacity>& _String) { return oStrlen(_String.c_str()); }
 template<typename CHAR_T, size_t capacity> int oVPrintf(oFixedString<CHAR_T, capacity>& _StrDestination, const CHAR_T* _Format, va_list _Args) { return oVPrintf(_StrDestination.c_str(), _StrDestination.capacity(), _Format, _Args); }
 template<typename CHAR_T, size_t capacity> int oPrintf(oFixedString<CHAR_T, capacity>& _StrDestination, const CHAR_T* _Format, ...) { va_list args; va_start(args, _Format); return oVPrintf(_StrDestination, _Format, args); }
 template<typename T, size_t capacity> char* oToString(oFixedString<char, capacity>& _StrDestination, const T& _Value) { return oToString(_StrDestination.c_str(), _StrDestination.capacity(), _Value); }

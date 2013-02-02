@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -30,6 +32,7 @@
 #include <oBasis/oMacros.h> // oCOUNTOF
 #include <oBasis/oOperators.h>
 #include <oBasis/oPlatformFeatures.h> // nullptr
+#include <oBasis/oRTTI.h>
 
 #define oMAX_SCHEME 32
 #define oMAX_URI 512
@@ -143,7 +146,7 @@ template<size_t capacity> char* oURIEnsureFileExtension(oFixedString<char, capac
 // Class that enforces some well-formed URI ideas as described here:
 // http://www.textuality.com/tag/uri-comp-2.html. Favor oURI whenever possible
 // especially in associative containers like std::map or std::unordered_map
-class oURI : public oCompareable<oURI>
+class oURI : public oComparable<oURI>
 {
 	// NOTE: This class is designed to enforce normalized URI formatting and 
 	// comparison rules, thus printf'ing or modifying the buffers directly is not 
@@ -177,10 +180,12 @@ public:
 	bool operator==(const oURI& _That) const; // fit for std::unordered_set
 	bool operator<(const oURI& _That) const; // fit for std::map
 
+	inline const oURIParts& GetParts() const { return URIParts; }
 private:
 	oURIParts URIParts;
 	size_t HashID;
 };
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, oURI)
 
 // Use this for std::unordered_map
 struct oURIHasher { size_t operator()(const oURI& _URI) const { return _URI.Hash(); } };

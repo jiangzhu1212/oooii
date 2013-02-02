@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -101,6 +103,7 @@ BOOL CALLBACK LoadModule(PCSTR ModuleName, DWORD64 ModuleBase, ULONG ModuleSize,
 
 // {FF2D872A-D8C3-48EC-9096-36A7E2CE15D7}
 const oGUID oWinDbgHelp::GUID = { 0xff2d872a, 0xd8c3, 0x48ec, { 0x90, 0x96, 0x36, 0xa7, 0xe2, 0xce, 0x15, 0xd7 } };
+oSINGLETON_REGISTER(oWinDbgHelp);
 
 oWinDbgHelp::oWinDbgHelp(HANDLE _hProcess, const char* _SymbolPath, ModuleLoadedHandler _Handler)
 	: hProcess(_hProcess ? _hProcess : GetCurrentProcess())

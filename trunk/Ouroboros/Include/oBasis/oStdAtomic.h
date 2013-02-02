@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -26,8 +28,8 @@
 #define oStdAtomic_h
 
 #include <oBasis/oIntrinsic.h>
-#include <oBasis/oStdTypeTraits.h>
 #include <cstddef> // ptrdiff_t
+#include <type_traits>
 
 // @oooii-tony: I don't fully understand all the strong v. weak and memory_order 
 // semantics. I'm sure it has to do with Acq and Rel versions of _Interlocked,

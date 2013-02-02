@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -28,6 +30,39 @@
 #include <cstdio>
 #include <memory.h>
 
+// const void* version
+template<typename T> void InitDuffsDeviceConstPointers(
+	const void* _pMemory
+	, size_t _NumBytes
+	, const char** _ppPrefix
+	, size_t* _pNumPrefixBytes
+	, const T** _ppBody
+	, const char** _ppPostfix
+	, size_t* _pNumPostfixBytes)
+{
+	*_ppPrefix = (char*)_pMemory;
+	*_ppBody = (T*)oByteAlign(_pMemory, sizeof(T));
+	*_pNumPrefixBytes = oByteDiff(*_ppPrefix, _pMemory);
+	const T* pEnd = oByteAdd(*_ppBody, _NumBytes - *_pNumPrefixBytes);
+	*_ppPostfix = (char*)oByteAlignDown(pEnd, sizeof(T));
+	*_pNumPostfixBytes = oByteDiff(pEnd, *_ppPostfix);
+
+	oASSERT(oByteAdd(_pMemory, _NumBytes) == pEnd, "");
+	oASSERT(oByteAdd(_pMemory, _NumBytes) == oByteAdd(*_ppPostfix, *_pNumPostfixBytes), "");
+}
+// (non-const) void* version
+template<typename T> void InitDuffsDevicePointers(
+	void* _pMemory
+	, size_t _NumBytes
+	, char** _ppPrefix
+	, size_t* _pNumPrefixBytes
+	, T** _ppBody
+	, char** _ppPostfix
+	, size_t* _pNumPostfixBytes)
+{
+	InitDuffsDeviceConstPointers(_pMemory, _NumBytes, (const char**)_ppPrefix, _pNumPrefixBytes, (const T**)_ppBody, (const char**)_ppPostfix, _pNumPostfixBytes);
+}
+
 void oMemset4(void* _pDestination, long _Value, size_t _NumBytes)
 {
 	// Sets an int value at a time. This is probably slower than c's memset, but 
@@ -35,15 +70,10 @@ void oMemset4(void* _pDestination, long _Value, size_t _NumBytes)
 
 	// First move _pDestination up to long alignment
 
-	char* pPrefix = (char*)_pDestination;
-	long* p = (long*)oByteAlign(_pDestination, sizeof(long));
-	size_t nPrefixBytes = oByteDiff(pPrefix, _pDestination);
-	long* pEnd = oByteAdd(p, _NumBytes - nPrefixBytes);
-	char* pPostfix = (char*)oByteAlignDown(pEnd, sizeof(long));
-	size_t nPostfixBytes = oByteDiff(pEnd, pPostfix);
-
-	oASSERT(oByteAdd(_pDestination, _NumBytes) == pEnd, "");
-	oASSERT(oByteAdd(_pDestination, _NumBytes) == oByteAdd(pPostfix, nPostfixBytes), "");
+	long* pBody;
+	char* pPrefix, *pPostfix;
+	size_t nPrefixBytes, nPostfixBytes;
+	InitDuffsDevicePointers(_pDestination, _NumBytes, &pPrefix, &nPrefixBytes, &pBody, &pPostfix, &nPostfixBytes);
 
 	oByteSwizzle32 s;
 	s.AsInt = _Value;
@@ -60,16 +90,16 @@ void oMemset4(void* _pDestination, long _Value, size_t _NumBytes)
 	}
 
 	// Do aligned assignment
-	while (p < (long*)pPostfix)
-		*p++ = _Value;
+	while (pBody < (long*)pPostfix)
+		*pBody++ = _Value;
 
 	// Duff's device any remaining bytes
 	// http://en.wikipedia.org/wiki/Duff's_device
 	switch (nPostfixBytes)
 	{
-		case 3: *pPrefix++ = s.AsChar[3];
-		case 2: *pPrefix++ = s.AsChar[2];
-		case 1: *pPrefix++ = s.AsChar[1];
+		case 3: *pPostfix++ = s.AsChar[3];
+		case 2: *pPostfix++ = s.AsChar[2];
+		case 1: *pPostfix++ = s.AsChar[1];
 		case 0: break;
 		default: oASSERT_NOEXECUTION;
 	}
@@ -82,15 +112,10 @@ void oMemset2(void* _pDestination, short _Value, size_t _NumBytes)
 
 	// First move _pDestination up to long alignment
 
-	char* pPrefix = (char*)_pDestination;
-	short* p = (short*)oByteAlign(_pDestination, sizeof(_Value));
-	size_t nPrefixBytes = oByteDiff(pPrefix, _pDestination);
-	short* pEnd = oByteAdd(p, _NumBytes - nPrefixBytes);
-	char* pPostfix = (char*)oByteAlignDown(pEnd, sizeof(_Value));
-	size_t nPostfixBytes = oByteDiff(pEnd, pPostfix);
-
-	oASSERT(oByteAdd(_pDestination, _NumBytes) == pEnd, "");
-	oASSERT(oByteAdd(_pDestination, _NumBytes) == oByteAdd(pPostfix, nPostfixBytes), "");
+	short* pBody;
+	char* pPrefix, *pPostfix;
+	size_t nPrefixBytes, nPostfixBytes;
+	InitDuffsDevicePointers(_pDestination, _NumBytes, &pPrefix, &nPrefixBytes, &pBody, &pPostfix, &nPostfixBytes);
 
 	oByteSwizzle16 s;
 	s.AsShort = _Value;
@@ -99,22 +124,22 @@ void oMemset2(void* _pDestination, short _Value, size_t _NumBytes)
 	// http://en.wikipedia.org/wiki/Duff's_device
 	switch (nPrefixBytes)
 	{
-	case 1: *pPrefix++ = s.AsChar[1];
-	case 0: break;
-	default: oASSERT_NOEXECUTION;
+		case 1: *pPrefix++ = s.AsChar[1];
+		case 0: break;
+		default: oASSERT_NOEXECUTION;
 	}
 
 	// Do aligned assignment
-	while (p < (short*)pPostfix)
-		*p++ = _Value;
+	while (pBody < (short*)pPostfix)
+		*pBody++ = _Value;
 
 	// Duff's device any remaining bytes
 	// http://en.wikipedia.org/wiki/Duff's_device
 	switch (nPostfixBytes)
 	{
-	case 1: *pPrefix++ = s.AsChar[1];
-	case 0: break;
-	default: oASSERT_NOEXECUTION;
+		case 1: *pPostfix++ = s.AsChar[1];
+		case 0: break;
+		default: oASSERT_NOEXECUTION;
 	}
 }
 
@@ -181,6 +206,51 @@ void* oMemmem(void* _pBuffer, size_t _SizeofBuffer, const void* _pFind, size_t _
 	}
 
 	return pFound;
+}
+
+bool oMemcmp4(const void* _pMemory, long _Value, size_t _NumBytes)
+{
+	// Compares a run of memory against a constant value.
+	// this compares a full int value rather than a char value.
+
+	// First move _pMemory up to long alignment
+
+	const long* pBody;
+	const char* pPrefix, *pPostfix;
+	size_t nPrefixBytes, nPostfixBytes;
+	InitDuffsDeviceConstPointers(_pMemory, _NumBytes, &pPrefix, &nPrefixBytes, &pBody, &pPostfix, &nPostfixBytes);
+
+	oByteSwizzle32 s;
+	s.AsInt = _Value;
+
+	// Duff's device up to alignment
+	// http://en.wikipedia.org/wiki/Duff's_device
+	switch (nPrefixBytes)
+	{
+		case 3: if (*pPrefix++ != s.AsChar[3]) return false;
+		case 2: if (*pPrefix++ != s.AsChar[2]) return false;
+		case 1: if (*pPrefix++ != s.AsChar[1]) return false;
+		case 0: break;
+		default: oASSERT_NOEXECUTION;
+	}
+
+	// Do aligned assignment
+	while (pBody < (long*)pPostfix)
+		if (*pBody++ != _Value)
+			return false;
+
+	// Duff's device any remaining bytes
+	// http://en.wikipedia.org/wiki/Duff's_device
+	switch (nPostfixBytes)
+	{
+		case 3: if (*pPostfix++ != s.AsChar[3]) return false;
+		case 2: if (*pPostfix++ != s.AsChar[2]) return false;
+		case 1: if (*pPostfix++ != s.AsChar[1]) return false;
+		case 0: break;
+		default: oASSERT_NOEXECUTION;
+	}
+
+	return true;
 }
 
 bool oMemIsText(const void* _pBuffer, size_t _SizeofBuffer)

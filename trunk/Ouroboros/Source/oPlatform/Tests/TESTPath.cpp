@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -30,7 +32,7 @@ static const char* sCleanDoubleSlashPath = "c:/my/path";
 static const char* sUNCPath = "//c/my/path";
 static const char* sCleanUNCPath = "//c/my/path";
 
-struct TESTSystemPath : public oTest
+struct PLATFORM_oSystemPaths : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
@@ -59,4 +61,4 @@ struct TESTSystemPath : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTSystemPath);
+oTEST_REGISTER(PLATFORM_oSystemPaths);

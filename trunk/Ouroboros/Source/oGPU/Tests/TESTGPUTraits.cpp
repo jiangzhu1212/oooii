@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -22,10 +24,10 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oBasis/oGPUEnums.h>
+#include <oBasis/oGPUConcepts.h>
 
 
-struct TESTGPUTraits : public oTest
+struct GPU_Traits : public oTest
 {
 	RESULT TestTextureEnum(char* _StrStatus, size_t _SizeofStrStatus, oGPU_TEXTURE_TYPE _Type)
 	{
@@ -170,7 +172,7 @@ struct TESTGPUTraits : public oTest
 		RESULT Result = SUCCESS;
 
 		oFUNCTION<bool(oGPU_TEXTURE_TYPE _Type)> TestTextureTypeFn = 
-			oBIND(&TESTGPUTraits::TestTextureEnum, this, &Result, _StrStatus, _SizeofStrStatus, oBIND1);
+			oBIND(&GPU_Traits::TestTextureEnum, this, &Result, _StrStatus, _SizeofStrStatus, oBIND1);
 		
 #define TEST_TEXTURE(_TextureType) \
 	if(!TestTextureTypeFn(_TextureType)) \
@@ -209,4 +211,4 @@ struct TESTGPUTraits : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTGPUTraits);
+oTEST_REGISTER(GPU_Traits);

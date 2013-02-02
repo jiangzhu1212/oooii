@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -25,15 +27,19 @@
 #include <oBasis/oEvent.h>
 #include <oBasis/oLockThis.h>
 #include <oPlatform/oDisplay.h>
+#include <oPlatform/oGUIMenu.h>
+#include <oPlatform/oMsgBox.h>
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/Windows/oWinAsString.h>
 #include <oPlatform/Windows/oWinCursor.h>
-#include <oPlatform/Windows/oWinMenu.h>
 #include <oPlatform/Windows/oWinStatusBar.h>
 #include <oPlatform/Windows/oWinWindowing.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include "oVKToX11Keyboard.h"
 #include <windowsx.h>
+#include <oPlatform/oKinect.h>
+
+inline void oGUIMenuAttach(HWND _hWnd, oGUI_MENU _hMenu) { oGUIMenuAttach(oGUI_WINDOW(_hWnd), _hMenu); }
 
 class oWinWindow : public oWindow
 {
@@ -103,7 +109,7 @@ public:
 
 protected:
 	HWND hWnd;
-	HMENU hMenu;
+	oGUI_MENU hMenu;
 	HWND hStatusBar;
 	HACCEL hAccel;
 	HCURSOR hUserCursor;
@@ -150,6 +156,7 @@ protected:
 	// this needs to be called from more than one place, so that's why it's broken
 	// out as a function.
 	void WTSetCursor(bool _IsInClientArea);
+	void WTOnSize(const int2& _NewSize, oGUI_WINDOW_STATE _NewState);
 	void WTTriggerAction(const oGUI_ACTION_DESC& _Action);
 	void WTTriggerActionByCopy(oGUI_ACTION_DESC _Action); // by copy so dipatching one of these retains the event
 	void WTTriggerEvent(const oGUI_EVENT_DESC& _Event);
@@ -159,6 +166,10 @@ protected:
 
 	// Main call for modifying window state as executed on windows thread
 	void WTSetDesc(const oGUI_WINDOW_DESC& _NewDesc, bool _Force = false);
+	oRef<oKinect> Kinect;
+	oRef<oCameraFrameStream> DepthFrameStream;
+	oRef<oCameraArticulator> DepthCameraArticulator;
+	oRef<oCameraPosition> DepthCameraPosition;
 };
 
 #define oKEEP_FOCUS(_hWnd) SetTimer(_hWnd, 0x12300011, 1500, PeriodicallySetFocus)
@@ -210,6 +221,8 @@ oWinWindow::oWinWindow(const oWINDOW_INIT& _Init, bool* _pSuccess)
 	if (_Init.ActionHook)
 		oSparseSet(ActionHooks, _Init.ActionHook);
 
+	oWINDOWS_VERSION v = oGetWindowsVersion();
+
 	if (!DispatchAndWait([=]() -> bool
 	{
 		MessagePumpThreadID = oStd::this_thread::get_id();
@@ -217,7 +230,44 @@ oWinWindow::oWinWindow(const oWINDOW_INIT& _Init, bool* _pSuccess)
 			return false; // pass through error
 
 		if (Desc.AllowTouch)
-			oVB(RegisterTouchWindow(hWnd, 0));
+		{
+			#ifdef oWINDOWS_HAS_REGISTERTOUCHWINDOW
+				if (v >= oWINDOWS_7)
+					oVB(RegisterTouchWindow(hWnd, 0));
+				else
+			#endif
+			{
+				oMSGBOX_DESC d;
+				d.Type = oMSGBOX_ERR;
+				d.Title = "oWindow";
+				d.TimeoutMS = 30000;
+				oMsgBox(d, "Touch input not supported pre-Windows7. AllowTouch=true will be ignored.");
+			}
+		}
+
+		if (Desc.AllowGesture)
+		{
+			oKinect::DESC kinectDesc;
+			kinectDesc.AdditionalYawPitchRoll = _Init.GestureInit.AdditionalYawPitchRoll;
+			kinectDesc.CameraWorldPosition = _Init.GestureInit.CameraWorldPosition;
+			kinectDesc.CutoffDistance = _Init.GestureInit.CutoffDistance;
+			kinectDesc.MaxSimultaneousUsers = _Init.GestureInit.MaxSimultaneousUsers;
+			kinectDesc.StartupTilt = _Init.GestureInit.StartupTilt;
+			kinectDesc.UseNearMode = _Init.GestureInit.UseNearMode;
+			kinectDesc.UseStartupTilt = _Init.GestureInit.UseStartupTilt;
+
+			if (!oKinectCreate(kinectDesc, oBIND(&oWinWindow::Trigger, this, oBIND1), &Kinect))
+				return false; // pass thru error
+
+			if (!oKinectFrameStreamCreate(Kinect, &DepthFrameStream))
+				return false; // pass thru error
+
+			if (!oKinectArticulatorCreate(Kinect, &DepthCameraArticulator))
+				return false; // pass thru error
+
+			if (!oKinectPositionCreate(Kinect, &DepthCameraPosition))
+				return false; // pass thru error
+		}
 
 		void* oLoadInvisibleIcon();
 		void* oLoadStandardIcon();
@@ -275,6 +325,11 @@ oWinWindow::oWinWindow(const oWINDOW_INIT& _Init, bool* _pSuccess)
 
 oWinWindow::~oWinWindow()
 {
+	DepthFrameStream = nullptr;
+	DepthCameraArticulator = nullptr;
+	DepthCameraPosition = nullptr;
+
+	Kinect = nullptr; // We need to destroy the kinect before we kill the HWND
 	Destroy();
 }
 
@@ -315,6 +370,21 @@ bool oWinWindow::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _pp
 		*_ppInterface = hMenu;
 	else if (_InterfaceID == oGetGUID<oGUI_STATUSBAR>())
 		*_ppInterface = hStatusBar;
+	else if (_InterfaceID == oGetGUID<oCameraFrameStream>())
+	{
+		DepthFrameStream->Reference();
+		*_ppInterface = DepthFrameStream;
+	}
+	else if (_InterfaceID == oGetGUID<oCameraArticulator>())
+	{
+		DepthCameraArticulator->Reference();
+		*_ppInterface = DepthCameraArticulator;
+	}
+	else if (_InterfaceID == oGetGUID<oCameraPosition>())
+	{
+		DepthCameraPosition->Reference();
+		*_ppInterface = DepthCameraPosition;
+	}
 
 	return !!*_ppInterface ? true : oErrorSetLast(oERROR_NOT_FOUND);
 }
@@ -881,6 +951,23 @@ void oWinWindow::WTSetDesc(const oGUI_WINDOW_DESC& _NewDesc, bool _Force)
 		if (oGUIIsFullscreen(PreFullscreenDesc.State))
 			PreFullscreenDesc.State = oGUI_WINDOW_RESTORED;
 		
+		if (_NewDesc.AlwaysOnTop)
+		{
+			SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_TOPMOST);
+		}
+
+		// Because this function fails to update oWindow->Desc.State this need to be called before
+		// calling WTTriggerEventAndWait because this will update the pending state (_NewState) to be
+		// oGUI_WINDOW_HIDDEN.  See bug 2411
+		if (_NewDesc.State == oGUI_WINDOW_FULLSCREEN_COOPERATIVE && _NewDesc.AlwaysOnTop)
+		{
+			// AlwaysOnTop solves top-ness for all windows except the taskbar, so 
+			// keep focus, which covers the taskbar, but only do it for windows that
+			// are fullscreen on the taskbar.
+			if (oWinGetDisplayIndex(hWnd) == oDisplayGetPrimaryIndex())
+				oKEEP_FOCUS(hWnd);
+		}
+
 		WTSD_TRACE("== oGUI_TO_FULLSCREEN ==");
 		oGUI_EVENT_DESC ed;
 		ed.Event = oGUI_TO_FULLSCREEN;
@@ -896,15 +983,6 @@ void oWinWindow::WTSetDesc(const oGUI_WINDOW_DESC& _NewDesc, bool _Force)
 			WTSD_TRACE("== Recursive WTSetDesc() ==");
 			WTSetDesc(copy);
 			return;
-		}
-
-		if (_NewDesc.State == oGUI_WINDOW_FULLSCREEN_COOPERATIVE && _NewDesc.AlwaysOnTop)
-		{
-			// AlwaysOnTop solves top-ness for all windows except the taskbar, so 
-			// keep focus, which covers the taskbar, but only do it for windows that
-			// are fullscreen on the taskbar.
-			if (oWinGetDisplayIndex(hWnd) == oDisplayGetPrimaryIndex())
-				oKEEP_FOCUS(hWnd);
 		}
 
 		// Because oDXGISetFullscreenState flushes the message queue, we could end
@@ -943,7 +1021,7 @@ void oWinWindow::WTSetDesc(const oGUI_WINDOW_DESC& _NewDesc, bool _Force)
 			if (CHANGED(ShowMenu))
 			{
 				WTSD_TRACE("== SetMenu() ==", oAsString(_NewDesc.ShowMenu));
-				oVB(SetMenu(hWnd, _NewDesc.ShowMenu ? hMenu : nullptr));
+				oGUIMenuAttach(hWnd, _NewDesc.ShowMenu ? hMenu : nullptr);
 			}
 
 			if (CHANGED(ShowStatusBar))
@@ -1070,6 +1148,44 @@ void oWinWindow::WTSetCursor(bool _IsInClientArea)
 		oWinCursorSetVisible();
 }
 
+void oWinWindow::WTOnSize(const int2& _NewSize, oGUI_WINDOW_STATE _NewState)
+{
+	oASSERT(IsWindowThread(), "Desc access isn't protected because it only occurs on the window thread. If that's not true, then more protection is needed");
+
+	oGUI_EVENT_DESC ed;
+	ed.hSource = (oGUI_WINDOW)hWnd;
+	ed.Event = oGUI_SIZING;
+	ed.ClientPosition = Desc.ClientPosition;
+	ed.ClientSize = Desc.ClientSize;
+	ed.State = Desc.State;
+	WTTriggerEvent(ed);
+
+	int2 NewSize = _NewSize;
+	if (oGUI_WINDOW_HIDDEN != oWinGetState(hStatusBar))
+	{
+		SendMessage(hStatusBar, WM_SIZE, 0, 0);
+		RECT rStatusBar;
+		GetClientRect(hStatusBar, &rStatusBar);
+		NewSize.y -= oWinRectH(rStatusBar);
+	}
+
+	ed.Event = oGUI_SIZED;
+	ed.ClientSize = NewSize;
+	ed.State = _NewState;
+	WTTriggerEvent(ed);
+
+	// @oooii-tony: the desc is protected because we're on the desc thread. 
+	// The pending desc is another story. Look into this more and if this 
+	// changes, review all WndProc for other instances of the need for 
+	// protection.
+	// Should desc be updated before the event so if someone calls GetDesc() it's
+	// consistent? Depending on locking, that could deadlock... but that's what
+	// PendingDesc is for.
+	oLockGuard<oSharedMutex> lock(DescMutex);
+	PendingDesc.State = Desc.State = ed.State;
+	PendingDesc.ClientSize = Desc.ClientSize = NewSize;
+}
+
 // X11 doesn't seem to support the idea of multiple mouse buttons down at 
 // time of drag, so create a priority system, favoring the smallest index
 // of button over large buttons.
@@ -1152,32 +1268,40 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 			PendingDesc.ClientPosition = Desc.ClientPosition = NewPosition;
 			return 0;
 		}
+
 		case WM_SIZE:
 		{
-			oGUI_EVENT_DESC ed;
-			ed.hSource = (oGUI_WINDOW)hWnd;
-			ed.Event = oGUI_SIZING;
-			ed.ClientPosition = Desc.ClientPosition;
-			ed.ClientSize = Desc.ClientSize;
-			ed.State = Desc.State;
-			WTTriggerEvent(ed);
+			oGUI_WINDOW_STATE NewState = (_wParam == SIZE_MINIMIZED) ? oGUI_WINDOW_MINIMIZED : Desc.State;
+			WTOnSize(int2(GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)), NewState);
+			return 0;
+		}
 
-			int2 NewSize(GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam));
-			if (oGUI_WINDOW_HIDDEN != oWinGetState(hStatusBar))
+		case WM_SYSCOMMAND:
+		{
+			oGUI_WINDOW_STATE NewState = Desc.State;
+			bool WindowStateChanged = false;
+			switch (_wParam)
 			{
-				SendMessage(hStatusBar, WM_SIZE, 0, 0);
-				RECT rStatusBar;
-				GetClientRect(hStatusBar, &rStatusBar);
-				NewSize.y -= oWinRectH(rStatusBar);
+				case SC_RESTORE: 
+					NewState = oGUI_WINDOW_RESTORED;
+					WindowStateChanged = true;
+					break;
+				case SC_MINIMIZE:
+					NewState = oGUI_WINDOW_MINIMIZED;
+					WindowStateChanged = true;
+					break;
+				case SC_MAXIMIZE:
+					NewState = oGUI_WINDOW_MAXIMIZED;
+					WindowStateChanged = true;
+					break;
+				default:
+					break;
 			}
 
-			ed.Event = oGUI_SIZED;
-			ed.ClientSize = NewSize;
-			ed.State = (_wParam == SIZE_MINIMIZED) ? oGUI_WINDOW_MINIMIZED : Desc.State;
-			WTTriggerEvent(ed);
-			oLockGuard<oSharedMutex> lock(DescMutex);
-			PendingDesc.ClientSize = Desc.ClientSize = NewSize;
-			return 0;
+			if (WindowStateChanged)
+				WTOnSize(Desc.ClientSize, NewState); // @oooii-tony: What should _NewSize be here?
+			
+			break; // fall through to default handler
 		}
 
 		// @oooii-tony: All these should be treated the same if there's any reason
@@ -1424,28 +1548,31 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 			WTTriggerAction(ad);
 			break;
 		}
-		case WM_TOUCH:
-		{
-			const UINT nTouches = __min(LOWORD(_wParam), MAX_TOUCHES);
-			TOUCHINPUT inputs[MAX_TOUCHES];
-			if (nTouches)
+
+		#ifdef oWINDOWS_HAS_REGISTERTOUCHWINDOW
+			case WM_TOUCH:
 			{
-				if (GetTouchInputInfo((HTOUCHINPUT)_lParam, nTouches, inputs, sizeof(TOUCHINPUT)))
+				const UINT nTouches = __min(LOWORD(_wParam), MAX_TOUCHES);
+				TOUCHINPUT inputs[MAX_TOUCHES];
+				if (nTouches)
 				{
-					oGUI_ACTION_DESC ad;
-					ad.hSource = (oGUI_WINDOW)hWnd;
-					ad.Action = oGUI_ACTION_KEY_DOWN;
-					for (UINT i = 0; i < nTouches; i++)
+					if (GetTouchInputInfo((HTOUCHINPUT)_lParam, nTouches, inputs, sizeof(TOUCHINPUT)))
 					{
-						ad.Key = TranslateTouchToX11(i);
-						ad.PointerPosition = float3(inputs[i].x / 100.0f, inputs[i].y / 100.0f, 0.0f);
-						WTTriggerAction(ad);
+						oGUI_ACTION_DESC ad;
+						ad.hSource = (oGUI_WINDOW)hWnd;
+						ad.Action = oGUI_ACTION_KEY_DOWN;
+						for (UINT i = 0; i < nTouches; i++)
+						{
+							ad.Key = TranslateTouchToX11(i);
+							ad.PointerPosition = float3(inputs[i].x / 100.0f, inputs[i].y / 100.0f, 0.0f);
+							WTTriggerAction(ad);
+						}
+						CloseTouchInputHandle((HTOUCHINPUT)_lParam);
 					}
-					CloseTouchInputHandle((HTOUCHINPUT)_lParam);
 				}
+				break;
 			}
-			break;
-		}
+		#endif
 		case WM_CREATE:
 		{
 			CREATESTRUCT CS = *(CREATESTRUCT*)_lParam;
@@ -1471,9 +1598,9 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 				oWinStatusBarSetNumItems(hStatusBar, itemWidths, i);
 			}
 
-			hMenu = oWinMenuCreate(true);
+			hMenu = oGUIMenuCreate(true);
 			if (Desc.ShowMenu)
-				SetMenu(_hWnd, hMenu);
+				oGUIMenuAttach(_hWnd, hMenu);
 
 			// this is a bit dangerous because it's not really true this hWnd is ready
 			// for use, but we need to expose it consistently as a valid return value
@@ -1483,7 +1610,7 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 
 			oGUI_EVENT_DESC ed;
 			ed.hSource = (oGUI_WINDOW)hWnd;
-			ed.hMenu = (oGUI_MENU)hMenu;
+			ed.hMenu = hMenu;
 			ed.hStatusBar = (oGUI_STATUSBAR)hStatusBar;
 			ed.Event = oGUI_CREATING;
 			ed.ClientPosition = Desc.ClientPosition;
@@ -1492,7 +1619,7 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 			if (!WTTriggerEventAndWait(ed))
 				return -1;
 			if (Desc.ShowMenu)
-				SetMenu(_hWnd, hMenu);
+				oGUIMenuAttach(_hWnd, hMenu);
 
 			ShowTimestamp = oGUIIsVisible(ed.State) ? oTimer() : -1.0;
 			break;
@@ -1540,8 +1667,9 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 			ed.ClientPosition = Desc.ClientPosition;
 			ed.ClientSize = Desc.ClientSize;
 			WTTriggerEvent(ed);
-			SetMenu(_hWnd, nullptr);
-			oWinMenuDestroy(hMenu);
+			if (!GetParent(_hWnd)) // squelches failure about child windows not being allowed to have menus, even null menus
+				oGUIMenuAttach(_hWnd, nullptr);
+			oGUIMenuDestroy(hMenu);
 			if (hAccel)
 				oVB(DestroyAcceleratorTable(hAccel));
 			return 0;

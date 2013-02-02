@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -139,7 +141,12 @@ void* oPageAllocate(oPAGE_ALLOCATION_TYPE _AllocationType, void* _BaseAddress, s
 		oWinSetLastError();
 		oERROR err = oErrorGetLast();
 		oStringL errString = oErrorGetLastString();
-		oPageDeallocate(_BaseAddress, _AllocationType >= oPAGE_RESERVE_AND_COMMIT);
+		if (strstr(errString, "too small"))
+			err = oERROR_AT_CAPACITY;
+
+		if (p)
+			oPageDeallocate(p, _AllocationType >= oPAGE_RESERVE_AND_COMMIT);
+
 		oErrorSetLast(err, errString);
 		return nullptr;
 	}

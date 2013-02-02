@@ -44,9 +44,7 @@
     <ConfigurationType>Application</ConfigurationType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-    <Import Project="..\Build\msvc100\BuildRules\oRCVer.props" />
-  </ImportGroup>
+  <ImportGroup Label="ExtensionSettings" />
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Build\msvc100\Properties\Release32.props" />
@@ -185,6 +183,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\oBasis\oBasis.vcxproj">
@@ -198,19 +197,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <oRCVer Include="..\Build\msvc100\ResourceScripts\oRCCommon.orc">
-      <FileType>Document</FileType>
-      <AppIcon Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)..\Data\oooii.ico</AppIcon>
-      <AppIcon Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)..\Data\oooii.ico</AppIcon>
-      <AppIcon Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)..\Data\oooii.ico</AppIcon>
-      <AppIcon Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)..\Data\oooii.ico</AppIcon>
-    </oRCVer>
+    <ResourceCompile Include="oVer.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="$(oTmpDir)oVer.rc" />
+    <None Include="..\..\..\Data\oooii.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\Build\msvc100\BuildRules\oRCVer.targets" />
-  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

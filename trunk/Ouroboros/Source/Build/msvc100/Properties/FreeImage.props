@@ -2,14 +2,20 @@
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <OutDir>..\..\..\..\Lib\$(PlatformName)\$(oCompilerName)\</OutDir>
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup>
     <IntDir>..\..\..\..\tmp\$(PlatformName)\$(oCompilerName)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
-    <ClCompile />
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)../../../libjpegTurbo/;$(ProjectDir)../../../zlib/;$(oSDK)inc;$(oSDK)ext;$(oTmpDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
 </Project>

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -34,8 +36,6 @@ struct oREPORTING_DESC
 {
 	oREPORTING_DESC()
 		: LogFilePath(nullptr)
-		, MiniDumpBase(nullptr)
-		, FullDumpBase(nullptr)
 		, PromptAfterDump(true)
 		, PromptAsserts(true)
 		, PromptWarnings(true)
@@ -51,15 +51,19 @@ struct oREPORTING_DESC
 	// error system will be written to the specified file. The specified string
 	// will be copied and retained internally, so it is safe to free the buffer
 	// that is being pointed to by this struct once the DESC has been set.
-	const char* LogFilePath;
+	oStringPath LogFilePath;
 
 	// Base path to where both the Mini and Full memory dumps should be placed
     // when a dump occurs these will be appended with oGetModuleFileStampString
     // and a .dmp extension.
-	const char* MiniDumpBase;
-	const char* FullDumpBase;
+	oStringPath MiniDumpBase;
+	oStringPath FullDumpBase;
 
-	// Throws up a dialog box when to report if the dump succeeded prior to aborting.
+	// Final system command executed before termination.
+	oStringXL PostDumpExecution;
+
+	// Throws up a dialog box after dumping and PostDumpExecution that indicates
+	// if the dump succeeded prior to aborting.
 	bool PromptAfterDump;
 
 	bool PromptAsserts;

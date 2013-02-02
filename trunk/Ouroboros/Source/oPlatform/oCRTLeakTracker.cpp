@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -30,6 +32,7 @@
 
 // {F253EA65-29FC-47D0-9E2E-400DAC41D861}
 const oGUID oCRTLeakTracker::GUID = { 0xf253ea65, 0x29fc, 0x47d0, { 0x9e, 0x2e, 0x40, 0xd, 0xac, 0x41, 0xd8, 0x61 } };
+oSINGLETON_REGISTER(oCRTLeakTracker);
 
 static void* untracked_malloc(size_t _Size) { return oProcessHeapAllocate(_Size); }
 static void untracked_free(void* _Pointer) { oProcessHeapDeallocate(_Pointer); }

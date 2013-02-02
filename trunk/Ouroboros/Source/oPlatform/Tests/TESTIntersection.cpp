@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -25,9 +27,14 @@
 #include <oBasis/oMemory.h>
 #include <oPlatform/oTest.h>
 
+// @oooii-tony: This should be moved to oBasis, or deleted. I dropped bring-up
+// of a robust frust cull solution for a project, and have not gotten back to
+// it, so this looks like I was setting up the test, but right now this doesn't
+// do anything, so just plain removing this is as valid as any other option.
+
 #define SIMPLE_TEST
 
-struct TESTIntersection : public oTest
+struct PLATFORM_Intersection : public oTest
 {
 	struct PERSPECTIVE
 	{
@@ -125,4 +132,4 @@ struct TESTIntersection : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTIntersection);
+oTEST_REGISTER(PLATFORM_Intersection);

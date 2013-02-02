@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -30,7 +32,7 @@
 // {0BC98B60-0F99-4688-A028-F49B0271A237}
 static const oGUID GUIDTestBuffer = { 0xbc98b60, 0xf99, 0x4688, { 0xa0, 0x28, 0xf4, 0x9b, 0x2, 0x71, 0xa2, 0x37 } };
 
-struct TESTProcessHeapTrivial : public oTest
+struct PLATFORM_oProcessHeapTrivial : public oTest
 {
 	struct TestStaticContext
 	{
@@ -58,4 +60,4 @@ struct TESTProcessHeapTrivial : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTProcessHeapTrivial);
+oTEST_REGISTER(PLATFORM_oProcessHeapTrivial);

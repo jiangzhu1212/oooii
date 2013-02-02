@@ -17,6 +17,12 @@
     <Lib>
       <TargetMachine>MachineX64</TargetMachine>
     </Lib>
+    <Link>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <BuildMacro Include="oBuildSuffix">

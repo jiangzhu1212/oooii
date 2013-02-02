@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -82,6 +84,24 @@ template<typename T, typename ContainerT> size_t oPushBackUnique(ContainerT& _Co
 	return index;
 };
 
+template<typename T, typename ContainerT, typename Predicate> size_t oPushBackUniqueIf(ContainerT& _Container, const T& _Item, Predicate&& _Predicate)
+{
+	size_t index = _Container.size();
+	auto pred = [&](const T& _testItem) -> bool{
+		if(_Predicate(_Item, _testItem))
+			return true;
+		else
+			return false;
+	};
+
+	typename ContainerT::iterator it = oStdFindIf(_Container, pred);
+	if (it == _Container.end())
+		_Container.push_back(_Item);
+	else
+		index = std::distance(_Container.begin(), it);
+	return index;
+};
+
 template<typename T, typename ContainerT> void oSafeSet(ContainerT& _Container, size_t _Index, const T& _Item)
 {
 	if (_Container.size() <= _Index)
@@ -139,7 +159,7 @@ template<typename ContainerT> char* oToStringT(char* _StrDestination, size_t _Si
 			return nullptr;
 		if (it != itLast && !oStrcat(_StrDestination, _SizeofStrDestination, ","))
 			return nullptr;
-		size_t len = strlen(_StrDestination);
+		size_t len = oStrlen(_StrDestination);
 		_StrDestination += len;
 		_SizeofStrDestination -= len;
 	}
@@ -181,7 +201,6 @@ template <oALGO_VECTOR_TEMPLATE, size_t size> char* oToString(char (&_StrDestina
 template <oALGO_VECTOR_TEMPLATE> bool oFromString(oALGO_VECTOR* _pValue, const char* _StrSource) { return detail::oFromStringT<T>(_pValue, _StrSource); }
 inline bool oFromString(std::string* _pString, const char* _StrSource) { if (!oSTRVALID(_StrSource)) return false; *_pString = _StrSource; return true; }
 
-
 // Copy from wchar_t std::basic_string to char std::basic_string
 inline void oStrcpy(std::string& _StrDestination, const std::wstring& _StrSource)
 {
@@ -199,6 +218,9 @@ inline void oStrcpy(std::wstring& _StrDestination, const std::string& _StrSource
 // one was found.
 template<oALGO_ARRAY_TEMPLATE> size_t oPushBackUnique(oALGO_ARRAY& _Array, const T& _Item) { return detail::oPushBackUnique<T, oALGO_ARRAY >(_Array, _Item); }
 template<oALGO_VECTOR_TEMPLATE> size_t oPushBackUnique(oALGO_VECTOR& _Vector, const T& _Item) { return detail::oPushBackUnique<T, oALGO_VECTOR >(_Vector, _Item); }
+
+template<oALGO_ARRAY_TEMPLATE, typename Predicate> size_t oPushBackUniqueIf(oALGO_ARRAY& _Array, const T& _Item, Predicate&& _Predicate) { return detail::oPushBackUniqueIf<T, oALGO_ARRAY >(_Array, _Item, _Predicate); }
+template<oALGO_VECTOR_TEMPLATE, typename Predicate> size_t oPushBackUniqueIf(oALGO_VECTOR& _Vector, const T& _Item, Predicate&& _Predicate) { return detail::oPushBackUniqueIf<T, oALGO_VECTOR >(_Vector, _Item, _Predicate); }
 
 // Sets _Container[_Index] = _Item in a way that first ensures size() is capable
 template<oALGO_ARRAY_TEMPLATE> void oSafeSet(oALGO_ARRAY& _Array, size_t _Index, const T& _Item){ detail::oSafeSet<T, oALGO_ARRAY >(_Array, _Index, _Item); }
@@ -295,6 +317,19 @@ void oUnorderedRemove(Container &_container, Iterator &_iterator)
 	*_iterator = _container.back();
 #endif
 	_container.pop_back();
+}
+
+//less typing for erase remove idiom
+template <typename Container>
+void oEraseRemove(Container& _Container, typename Container::value_type _Value)
+{
+	_Container.erase(std::remove(begin(_Container), end(_Container), _Value), end(_Container));
+}
+
+template <typename Container, typename Predicate>
+void oEraseRemoveIf(Container& _Container, Predicate _Pred)
+{
+	_Container.erase(std::remove_if(begin(_Container), end(_Container), _Pred), end(_Container));
 }
 
 //Add missing c++11 non member functions, already proposed for c++17, was an oversight
@@ -465,8 +500,8 @@ template<oALGO_STRING_TEMPLATE> int oReplaceAll(oALGO_STRING& _String, const oAL
 template<oALGO_STRING_TEMPLATE> int oReplaceAll(oALGO_STRING& _String, const char* _Find, const char* _Replace)
 {
 	int nReplacements = 0;
-	oALGO_STRING::size_type FindLength = strlen(_Find);
-	oALGO_STRING::size_type ReplaceLength = strlen(_Replace);
+	oALGO_STRING::size_type FindLength = oStrlen(_Find);
+	oALGO_STRING::size_type ReplaceLength = oStrlen(_Replace);
 	oALGO_STRING::size_type pos = _String.find(_Find, 0);
 	for (; pos != std::string::npos; pos += ReplaceLength)
 	{
@@ -476,84 +511,5 @@ template<oALGO_STRING_TEMPLATE> int oReplaceAll(oALGO_STRING& _String, const cha
 	}
 	return nReplacements;
 }
-
-// _____________________________________________________________________________
-// std algorithms support: equality predicates using string compare for strings
-// structs with an 'I' on the end are case-insensitive
-
-template<class T> struct oStdEquals : public std::unary_function<T, bool>
-{	// provide the default operator==
-	oStdEquals(const T& t) : _t(t) {}
-	bool operator()(const T& t) const { return t == _t; }
-private:
-	oStdEquals() {}
-	T _t;
-};
-
-template<> struct oStdEquals<const char*>
-{	// compare strings rather than test pointer equality
-	oStdEquals(const char* str) : _t(str) {}
-	bool operator()(const char* str) { return !oStrcmp(str, _t); }
-private:
-	oStdEquals() {}
-	const char* _t;
-};
-
-template<> struct oStdEquals<const std::string>
-{
-	oStdEquals(const char* str) : _t(str) {}
-	oStdEquals(const std::string& str) : _t(str.c_str()) {}
-	bool operator()(const std::string& str) { return !str.compare(_t); }
-private:
-	oStdEquals() {}
-	const char* _t;
-};
-
-template<class T> struct oStdEqualsI : public std::unary_function<T, bool>
-{
-	oStdEqualsI(const T& t) : _t(t) {}
-	bool operator()(const T& t) const { return t == _t; }
-private:
-	oStdEqualsI() {}
-	T _t;
-};
-
-template<> struct oStdEqualsI<const char*>
-{
-	oStdEqualsI(const char* str) : _t(str) {}
-	bool operator()(const char* str) { return !oStricmp(str, _t); }
-private:
-	oStdEqualsI() {}
-	const char* _t;
-};
-
-template<> struct oStdEqualsI<const std::string>
-{
-	oStdEqualsI(const char* str) : _t(str) {}
-	oStdEqualsI(const std::string& str) : _t(str.c_str()) {}
-	bool operator()(const std::string& str) { return !oStricmp(str.c_str(), _t); }
-private:
-	oStdEqualsI() {}
-	const char* _t;
-};
-
-template<typename T> struct oStdLess : public std::binary_function<T, T, bool> { bool operator()(const T& x, const T& y) const { return x < y; } };
-template<> struct oStdLess<const char*> { int operator()(const char* x, const char* y) const { return oStrcmp(x, y) < 0; } };
-template<typename T> struct oStdLessI : public std::binary_function<T, T, bool> { bool operator()(const T& x, const T& y) const { return x < y; } };
-template<> struct oStdLessI<const char*> { bool operator()(const char* x, const char* y) const { return oStricmp(x, y) < 0; } };
-template<typename CHAR_T, size_t CAPACITY> struct oStdLess<oFixedString<CHAR_T, CAPACITY>> { bool operator()(const oFixedString<CHAR_T, CAPACITY>& x, const oFixedString<CHAR_T, CAPACITY>& y) const { return oStrcmp(x.c_str(), y.c_str()) < 0; } };
-template<typename CHAR_T, size_t CAPACITY> struct oStdLessI<oFixedString<CHAR_T, CAPACITY>> { bool operator()(const oFixedString<CHAR_T, CAPACITY>& x, const oFixedString<CHAR_T, CAPACITY>& y) const { return oStricmp(x.c_str(), y.c_str()) < 0; } };
-
-template<typename T> struct oStdEqualTo : public std::binary_function<T, T, bool> { bool operator()(const T& x, const T& y) const { return x == y; } };
-template<> struct oStdEqualTo<const char*> { int operator()(const char* x, const char* y) const { return !oStrcmp(x, y); } };
-template<typename T> struct oStdEqualToI : public std::binary_function<T, T, bool> { bool operator()(const T& x, const T& y) const { return x == y; } };
-template<> struct oStdEqualToI<const char*> { bool operator()(const char* x, const char* y) const { return !oStricmp(x, y); } };
-template<typename CHAR_T, size_t CAPACITY> struct oStdEqualTo<oFixedString<CHAR_T, CAPACITY>> { bool operator()(const oFixedString<CHAR_T, CAPACITY>& x, const oFixedString<CHAR_T, CAPACITY>& y) const { return !oStrcmp(x.c_str(), y.c_str()); } };
-template<typename CHAR_T, size_t CAPACITY> struct oStdEqualToI<oFixedString<CHAR_T, CAPACITY>> { bool operator()(const oFixedString<CHAR_T, CAPACITY>& x, const oFixedString<CHAR_T, CAPACITY>& y) const { return !oStricmp(x.c_str(), y.c_str()); } };
-
-// std::hash function that returns exactly the same value as passed in. This is 
-// useful where some other object caches hash values that then can be used 
-// directly in an unordered_set.
-template<typename T> struct oNoopHash : public std::unary_function<T, size_t> { size_t operator()(const T& v) const { return static_cast<size_t>(v); } };
 
 #endif

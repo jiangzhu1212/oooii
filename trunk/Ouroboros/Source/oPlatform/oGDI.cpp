@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -280,6 +282,17 @@ BOOL oGDIStretchBlendBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, H
 
 bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
 {
+	RECT destRect;
+	destRect.bottom = oInvalid;
+	destRect.left = oInvalid;
+	destRect.right = oInvalid;
+	destRect.top = oInvalid;
+
+	return oGDIStretchBits(_hWnd, destRect, _SourceSize, _SourceFormat, _pSourceBits, _SourceRowPitch, _FlipVertically);
+}
+
+bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
+{
 	oBMI_DESC bmid;
 	bmid.Dimensions = _SourceSize;
 	bmid.Format = _SourceFormat;
@@ -288,11 +301,19 @@ bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, oSURFACE_FORMAT _Sourc
 	BITMAPINFO* pBMI = (BITMAPINFO*)_alloca(oGDIGetBMISize(bmid.Format)); // size might be bigger than sizeof(BITMAPINFO) if a palette is required
 	oGDIInitializeBMI(bmid, pBMI);
 
-	RECT rClient;
-	GetClientRect(_hWnd, &rClient);
+	RECT destRect;
+	if (_DestRect.bottom == oInvalid || _DestRect.top == oInvalid ||
+		_DestRect.left == oInvalid || _DestRect.right == oInvalid)
+	{
+		RECT rClient;
+		GetClientRect(_hWnd, &rClient);
+		destRect = rClient;
+	}
+	else
+		destRect = _DestRect;
 
 	oGDIScopedGetDC hDC(_hWnd);
-	if (!StretchDIBits(hDC, 0, 0, oWinRectW(rClient), oWinRectH(rClient), 0, 0, _SourceSize.x, _SourceSize.y, _pSourceBits, pBMI, DIB_RGB_COLORS, SRCCOPY))
+	if (!StretchDIBits(hDC, destRect.left, destRect.top, oWinRectW(destRect), oWinRectH(destRect), 0, 0, _SourceSize.x, _SourceSize.y, _pSourceBits, pBMI, DIB_RGB_COLORS, SRCCOPY))
 		return oWinSetLastError();
 	return true;
 }

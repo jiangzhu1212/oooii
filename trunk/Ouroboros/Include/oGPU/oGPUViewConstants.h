@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -100,6 +102,10 @@ struct oGPUViewConstants
 			TextureArrayIndex = _TextureArrayIndex;
 			Pad0 = Pad1 = Pad2 = 0;
 		}
+
+		float4x4 GetView() const { return View; }
+		float4x4 GetViewInverse() const { return ViewInverse; }
+		float4x4 GetProjection() const { return Projection; }
 
 protected:
 	#endif
@@ -231,7 +237,7 @@ uint oGPUGetRenderTargetIndex()
 
 float3 oGPUGetEyePosition()
 {
-	return oGetEyePosition(oGPU_VIEW_CONSTANT_BUFFER.View);
+	return oGetEyePosition(oGPU_VIEW_CONSTANT_BUFFER.ViewInverse);
 }
 
 #endif

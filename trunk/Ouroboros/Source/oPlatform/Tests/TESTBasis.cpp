@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -42,6 +44,37 @@ static bool ResolvePath(char* _ResolvedFullPath, size_t _SizeofResolvedFullPath,
 	else return _pTest->BuildPath(_ResolvedFullPath, _SizeofResolvedFullPath, _RelativePath, oTest::DATA);
 }
 
+static bool TestSurface(const char* _Name, const oSURFACE_DESC& _SourceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SourceMapped, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier, oTest* _pTest)
+{
+	oRef<oImage> image;
+	if (!oImageCreate(_Name, _SourceDesc, &image))
+		return false; // pass through error
+	image->CopyData(_SourceMapped.pData, _SourceMapped.RowPitch);
+	return _pTest->TestImage(image, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier);
+}
+
+static bool AllocateAndLoadSurface(void** _pHandle, oSURFACE_DESC* _pDesc, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMapped, const char* _URIReference)
+{
+	oRef<oImage> image;
+	if (!oImageLoad(_URIReference, &image))
+		return false; // pass through error
+
+	oImageGetSurfaceDesc(image, _pDesc);
+	int imageMapSize = oSurfaceSubresourceCalcSize(*_pDesc, 0);
+	std::vector<char>* pBuf = new std::vector<char>();
+	pBuf->resize(imageMapSize);
+	oSurfaceCalcMappedSubresource(*_pDesc, 0, 0, pBuf->data(), _pMapped);
+	image->CopyDataTo((void*)_pMapped->pData, _pMapped->RowPitch);
+	*_pHandle = pBuf;
+	return true;
+}
+
+static void DeallocateSurface(void* _Handle)
+{
+	std::vector<char>* pBuf = static_cast<std::vector<char>*>(_Handle);
+	delete pBuf;
+}
+
 static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
 {
 	_pServices->ResolvePath = oBIND(ResolvePath, oBIND1, oBIND2, oBIND3, oBIND4, _pTest);
@@ -49,6 +82,9 @@ static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
 	_pServices->DeallocateLoadedBuffer = free;
 	_pServices->Rand = rand;
 	_pServices->GetTotalPhysicalMemory = GetTotalPhysicalMemory;
+	_pServices->AllocateAndLoadSurface = AllocateAndLoadSurface;
+	_pServices->DeallocateSurface = DeallocateSurface;
+	_pServices->TestSurface = oBIND(TestSurface, oBIND1, oBIND2, oBIND3, oBIND4, oBIND5, oBIND6, oBIND7, _pTest);
 }
 
 // Tests from oBasis follow a common form, so as a convenience and 
@@ -130,7 +166,9 @@ oTEST_REGISTER_BASIS_TEST(oMath);
 oTEST_REGISTER_BASIS_TEST_WITH_SERVICES(oOBJ);
 oTEST_REGISTER_BASIS_TEST(oOSC);
 oTEST_REGISTER_BASIS_TEST(oPath);
+oTEST_REGISTER_BASIS_TEST(oRTTI);
 oTEST_REGISTER_BASIS_TEST(oStdFuture);
+oTEST_REGISTER_BASIS_TEST(oSurface);
+oTEST_REGISTER_BASIS_TEST_WITH_SERVICES(oSurfaceResize);
 oTEST_REGISTER_BASIS_TEST(oURI);
 oTEST_REGISTER_BASIS_TEST(oXML);
-oTEST_REGISTER_BASIS_TEST(oSurface);

@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -22,8 +24,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPU/oGPUWindow.h>
+#include <oBasis/oEvent.h>
 #include <oPlatform/oDisplay.h>
-#include <oPlatform/oInterprocessEvent.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/Windows/oD3D11.h>
 #include <oPlatform/Windows/oDXGI.h>

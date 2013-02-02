@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -24,30 +26,40 @@
 
 #include "oD3D11Mesh.h"
 #include "oD3D11Device.h"
+#include "oD3D11Buffer.h"
 #include <oBasis/oLimits.h>
 oDEFINE_GPUDEVICE_CREATE(oD3D11, Mesh);
 oBEGIN_DEFINE_GPURESOURCE_CTOR(oD3D11, Mesh)
+	, NumVertexBuffers(0)
 {
 	*_pSuccess = false;
-
-	oINIT_ARRAY(VertexStrides, 0);
 	Ranges.resize(_Desc.NumRanges);
 
 	oD3D11DEVICE();
 
 	if (_Desc.NumIndices)
-		oVERIFY(oD3D11CreateIndexBuffer(D3DDevice, _Name, D3D11_USAGE_DEFAULT, 0, _Desc.NumIndices, _Desc.NumVertices <= oNumericLimits<unsigned short>::GetMax(), &Indices));
+	{
+		oGPU_BUFFER_DESC d;
+		d.Type = oGPU_BUFFER_INDEX;
+		d.Format = oGPUHas16BitIndices(_Desc.NumVertices) ? oSURFACE_R16_UINT : oSURFACE_R32_UINT;
+		d.ArraySize = _Desc.NumIndices;
+		oVERIFY(_pDevice->CreateBuffer(_Name, d, &Indices));
+	}
 
 	if (_Desc.NumVertices)
 	{
 		oStringL name;
+		oGPU_BUFFER_DESC d;
+		d.Type = oGPU_BUFFER_VERTEX;
+		d.ArraySize = _Desc.NumVertices;
 		for (uint i = 0; i < oCOUNTOF(Vertices); i++)
 		{
-			VertexStrides[i] = oGPUCalculateVertexSize(_Desc.pElements, _Desc.NumElements, i);
-			if (VertexStrides[i])
+			d.StructByteSize = oGPUCalcVertexSize(_Desc.VertexElements, _Desc.NumVertexElements, i);
+			if (d.StructByteSize)
 			{
 				oPrintf(name, "%sVertices[%02u]", _Name, i);
-				oVERIFY(oD3D11CreateVertexBuffer(D3DDevice, name, D3D11_USAGE_DEFAULT, 0, _Desc.NumVertices, VertexStrides[i], &Vertices[i]));
+				oVERIFY(_pDevice->CreateBuffer(_Name, d, &Vertices[i]));
+				NumVertexBuffers = i + 1; // always include the latest non-null value
 			}
 		}
 	}
@@ -59,14 +71,23 @@ int2 oD3D11Mesh::GetByteDimensions(int _Subresource) const threadsafe
 {
 	switch (_Subresource)
 	{
-		case oGPU_MESH_VERTICES0: case oGPU_MESH_VERTICES1: case oGPU_MESH_VERTICES2: return int2(VertexStrides[_Subresource-oGPU_MESH_VERTICES0], Desc.NumVertices);
+		case oGPU_MESH_VERTICES0: case oGPU_MESH_VERTICES1: case oGPU_MESH_VERTICES2: 
+		{
+			oGPU_BUFFER_DESC d;
+			Vertices[_Subresource-oGPU_MESH_VERTICES0]->GetDesc(&d);
+			return int2(d.StructByteSize, d.ArraySize);
+		}
+		
 		case oGPU_MESH_INDICES:
 		{
-			oD3D11_BUFFER_TOPOLOGY t;
-			oD3D11GetBufferTopology(Indices, &t);
-			return int2(t.ElementStride, t.ElementCount);
+			oGPU_BUFFER_DESC d;
+			Indices->GetDesc(&d);
+			return int2(d.StructByteSize, d.ArraySize);
 		}
-		case oGPU_MESH_RANGES: return int2(sizeof(oGPU_RANGE), Desc.NumRanges);
+
+		case oGPU_MESH_RANGES: 
+			return int2(sizeof(oGPU_RANGE), Desc.NumRanges);
+
 		oNODEFAULT;
 	}
 }
@@ -75,8 +96,8 @@ ID3D11Resource* oD3D11Mesh::GetSubresource(int _Subresource) threadsafe
 {
 	switch (_Subresource)
 	{
-		case oGPU_MESH_VERTICES0: case oGPU_MESH_VERTICES1: case oGPU_MESH_VERTICES2: return Vertices[_Subresource-oGPU_MESH_VERTICES0];
-		case oGPU_MESH_INDICES: return Indices;
+		case oGPU_MESH_VERTICES0: case oGPU_MESH_VERTICES1: case oGPU_MESH_VERTICES2: return const_cast<ID3D11Buffer*>(static_cast<const oD3D11Buffer*>(Vertices[_Subresource-oGPU_MESH_VERTICES0].c_ptr())->Buffer.c_ptr());
+		case oGPU_MESH_INDICES: return const_cast<ID3D11Buffer*>(static_cast<const oD3D11Buffer*>(Indices.c_ptr())->Buffer.c_ptr());
 		case oGPU_MESH_RANGES: 
 		oNODEFAULT;
 	}

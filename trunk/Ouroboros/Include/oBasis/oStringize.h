@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -42,7 +44,13 @@ template<size_t size, typename T> char* oToString(char (&_StrDestination)[size],
 template<typename T> bool oFromString(T* _pValue, const char* _StrSource);
 
 bool oFromString(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource);
-template<size_t size> bool oFromString(char (&_pValue)[size], const char* _StrSource) { return oFromString(_pValue, SIZE, _StrSource); }
+template<size_t size> bool oFromString(char (&_pValue)[size], const char* _StrSource) { return oFromString(_pValue, size, _StrSource); }
+
+// Wrapper that define a generic, runtime-uniform interface (all types are void)
+// and redirect to the templated type. This is useful when passing oToString/
+// oFromString functions to function pointers.
+template<typename T> bool oFromStringT(void* _pDestination, const char* _StrSource) { return oFromString((T*)_pDestination, _StrSource); }
+template<typename T> char* oToStringT(char* _StrDestination, size_t _SizeofStrDestination, const void* _pValue) { return oToString(_StrDestination, _SizeofStrDestination, *(const T*)_pValue); }
 
 // pass thru for const char* types
 inline bool oFromString(const char** _pPointerToString, const char* _StrSource) { *_pPointerToString = _StrSource; return true; }

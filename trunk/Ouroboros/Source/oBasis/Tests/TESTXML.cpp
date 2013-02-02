@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -68,7 +70,7 @@ bool oBasisTest_oXML()
 	oRef<threadsafe oXML> xml;
 	{
 		// Exercise the buffer as if it were loaded from a file...
-		size_t size = strlen(sTestXML)+1;
+		size_t size = oStrlen(sTestXML)+1;
 		char* pBuffer = (char*)malloc(size);
 		oStrcpy(pBuffer, size, sTestXML);
 

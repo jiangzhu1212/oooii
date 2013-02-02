@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -252,6 +254,7 @@ struct oTestManagerImplSingleton : oProcessSingleton<oTestManagerImplSingleton>
 
 // {97E7D7DD-B3B6-4691-A383-6D9F88C034C6}
 const oGUID oTestManagerImplSingleton::GUID = { 0x97e7d7dd, 0xb3b6, 0x4691, { 0xa3, 0x83, 0x6d, 0x9f, 0x88, 0xc0, 0x34, 0xc6 } };
+oSINGLETON_REGISTER(oTestManagerImplSingleton);
 
 oTestManagerImplSingleton::oTestManagerImplSingleton()
 	: CRTLeakTracker(oCRTLeakTracker::Singleton())
@@ -742,25 +745,21 @@ void oTestManager_Impl::PrintDesc()
 
 void oTestManager_Impl::RegisterSpecialModeTests()
 {
-	for (tests_t::iterator it = Tests.begin(); it != Tests.end(); ++it)
+	oFOR(auto pRTB, Tests)
 	{
-		RegisterTestBase* pRTB = *it;
-
 		if (!pRTB->IsSpecialTest())
 			continue;
 
 		const char* Name = oGetTypename(pRTB->GetTypename());
 		oASSERT(SpecialModes[Name] == 0, "%s already registered", Name);
-		SpecialModes[Name] = *it;
+		SpecialModes[Name] = pRTB;
 	}
 }
 
 void oTestManager_Impl::RegisterZombies()
 {
-	for (tests_t::iterator it = Tests.begin(); it != Tests.end(); ++it)
+	oFOR(auto pRTB, Tests)
 	{
-		RegisterTestBase* pRTB = *it;
-
 		const char* TestPotentialZombies = pRTB->GetPotentialZombieProcesses();
 		if (TestPotentialZombies && *TestPotentialZombies)
 		{
@@ -831,8 +830,8 @@ bool oTestManager_Impl::KillZombies(const char* _Name)
 
 bool oTestManager_Impl::KillZombies()
 {
-	for (zombies_t::const_iterator it = PotentialZombies.begin(); it != PotentialZombies.end(); ++it)
-		if (!KillZombies(it->c_str()))
+	oFOR(const auto& z, PotentialZombies)
+		if (!KillZombies(z.c_str()))
 			return false;
 	return true;
 }
@@ -879,9 +878,8 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 size_t oTestManager_Impl::CalculateNumTests(const oTestManager::DESC& _Desc, threadsafe oFilterChain* _pFilterChain)
 {
 	size_t nTests = 0;
-	for (tests_t::iterator it = Tests.begin(); it != Tests.end(); ++it)
+	oFOR(auto pRTB, Tests)
 	{
-		RegisterTestBase* pRTB = *it;
 		if (pRTB && !pRTB->IsSpecialTest())
 		{
 			oStringM TestName;
@@ -1066,10 +1064,8 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 		}
 
 		double totalTestStartTime = oTimer();
-		for (tests_t::iterator it = Tests.begin(); it != Tests.end(); ++it)
+		oFOR(auto pRTB, Tests)
 		{
-			RegisterTestBase* pRTB = *it;
-
 			if (pRTB && !pRTB->IsSpecialTest())
 			{
 				oStringM TestName;

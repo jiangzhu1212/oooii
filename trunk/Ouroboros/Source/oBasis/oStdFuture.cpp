@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -22,11 +24,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oStdFuture.h>
-#include <oBasis/oBlockAllocatorGrowable.h>
-
-// @oooii-tony: I only tried this quickly, and it didn't prove to make much 
-// difference in perf.
-//#define oTRY_BLOCK_ALLOCATING_VOID_ALLOCS
 
 namespace oStd
 {
@@ -71,34 +68,14 @@ namespace oStd
 			}
 		#endif
 
-		#define SIZE (sizeof(oCommitment<void>) + sizeof(unsigned long long))
-
-		#ifdef oTRY_BLOCK_ALLOCATING_VOID_ALLOCS
-			oBlockAllocatorGrowableS<SIZE> Test;
-		#endif
-
 		void* oCommitmentAllocate(size_t _SizeofCommitment)
 		{
-			#ifdef oTRY_BLOCK_ALLOCATING_VOID_ALLOCS
-				if (_SizeofCommitment == sizeof(oCommitment<void>))
-				{
-					void* p = Test.Allocate();
-					((unsigned long long*)p)[0] = 12345;
-					return &((unsigned long long*)p)[1];
-				}
-				else
-			#endif
-				return ::new char[_SizeofCommitment];
+			return ::new char[_SizeofCommitment];
 		}
 
 		void oCommitmentDeallocate(void* _pPointer)
 		{
-			#ifdef oTRY_BLOCK_ALLOCATING_VOID_ALLOCS
-				if (((unsigned long long*)_pPointer)[-1] == 12345)
-					Test.Deallocate((void*)((unsigned long long*)_pPointer)[-1]);
-				else
-			#endif
-				::delete [] _pPointer;
+			::delete [] _pPointer;
 		}
 
 	} // namespace detail

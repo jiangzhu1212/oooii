@@ -21,9 +21,13 @@
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBasisTests\oBasisTests.h" />
     <ClInclude Include="Tests\oBasisTestCommon.h" />
+    <ClInclude Include="Tests\oBasisTestOBJ.h" />
+    <ClInclude Include="Tests\oBasisTestStruct.h" />
     <ClInclude Include="Tests\RatcliffJobSwarmTest.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Tests\oBasisTestOBJ.cpp" />
+    <ClCompile Include="Tests\oBasisTestStruct.cpp" />
     <ClCompile Include="Tests\RatcliffJobSwarmTest.cpp" />
     <ClCompile Include="Tests\TESTAllocatorTLSF.cpp" />
     <ClCompile Include="Tests\TESTatof.cpp" />
@@ -52,9 +56,13 @@
     <ClCompile Include="Tests\TESTOSC.cpp" />
     <ClCompile Include="Tests\TESTPath.cpp" />
     <ClCompile Include="Tests\TESTQueues.cpp" />
+    <ClCompile Include="Tests\TESTRTTI.cpp">
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreprocessToFile>
+    </ClCompile>
     <ClCompile Include="Tests\TESTSize.cpp" />
     <ClCompile Include="Tests\TESTString.cpp" />
     <ClCompile Include="Tests\TESTSurface.cpp" />
+    <ClCompile Include="Tests\TESTSurfaceResize.cpp" />
     <ClCompile Include="Tests\TESTURI.cpp" />
     <ClCompile Include="Tests\TESTXML.cpp" />
   </ItemGroup>
@@ -87,24 +95,28 @@
     <Import Project="..\Build\msvc100\Properties\Release32.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Build\msvc100\Properties\Debug32.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Build\msvc100\Properties\Release64.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Build\msvc100\Properties\Debug64.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>

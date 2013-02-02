@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -26,8 +28,7 @@
 #ifndef oDisplay_h
 #define oDisplay_h
 
-#include <oBasis/oMathTypes.h>
-#include <oBasis/oStddef.h>
+#include <oBasis/oGPUConcepts.h>
 
 struct oDISPLAY_ADAPTER_DRIVER_DESC
 {

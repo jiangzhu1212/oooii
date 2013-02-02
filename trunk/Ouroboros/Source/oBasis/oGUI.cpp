@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -96,6 +98,7 @@ const char* oAsString(oGUI_ACTION _Action)
 		case oGUI_ACTION_UNKNOWN: return "oGUI_ACTION_UNKNOWN";
 		case oGUI_ACTION_MENU: return "oGUI_ACTION_MENU";
 		case oGUI_ACTION_CONTROL_ACTIVATED: return "oGUI_ACTION_CONTROL_ACTIVATED";
+		case oGUI_ACTION_CONTROL_DEACTIVATED: return "oGUI_ACTION_CONTROL_DEACTIVATED";
 		case oGUI_ACTION_CONTROL_SELECTION_CHANGING: return "oGUI_ACTION_CONTROL_SELECTION_CHANGING";
 		case oGUI_ACTION_CONTROL_SELECTION_CHANGED: return "oGUI_ACTION_CONTROL_SELECTION_CHANGED";
 		case oGUI_ACTION_HOTKEY: return "oGUI_ACTION_HOTKEY";

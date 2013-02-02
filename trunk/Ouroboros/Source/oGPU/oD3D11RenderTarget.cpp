@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -51,6 +53,17 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget)
 	, Window(nullptr)
 	, Desc(_Desc)
 {
+	*_pSuccess = false;
+	
+	for (uint i = 0; i < oCOUNTOF(Desc.Format); i++)
+	{
+		if (oSurfaceFormatIsYUV(Desc.Format[i]))
+		{
+			oErrorSetLast(oERROR_INVALID_PARAMETER, "YUV render targets are not supported (format %s specified)", oAsString(Desc.Format[i]));
+			return;
+		}
+	}
+
 	// invalidate width/height to force allocation in this call to resize
 	Desc.Dimensions = int3(oInvalid,oInvalid,oInvalid);
 	Resize(_Desc.Dimensions);
@@ -64,6 +77,20 @@ oD3D11RenderTarget::oD3D11RenderTarget(oGPUDevice* _pDevice, threadsafe oGPUWind
 	Desc.DepthStencilFormat = _DepthStencilFormat;
 	ResizeLock();
 	*_pSuccess = ResizeUnlock();
+}
+
+bool oD3D11RenderTarget::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe
+{
+	if (MIXINQueryInterface(_InterfaceID, _ppInterface))
+		return true;
+
+	else if (_InterfaceID == (const oGUID&)__uuidof(IDXGISwapChain))
+	{
+		if (Window && Window->IsWindowThread() && Window->QueryInterface((IDXGISwapChain**)_ppInterface))
+			return true;
+	}
+
+	return !!*_ppInterface;
 }
 
 void oD3D11RenderTarget::GetDesc(DESC* _pDesc) const threadsafe

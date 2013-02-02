@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -183,6 +185,7 @@ struct oGUI_WINDOW_DESC
 		, AllowAltF4(true)
 		, AllowAltEnter(true)
 		, AllowTouch(true)
+		, AllowGesture(false)
 		, EnableIdleEvent(true)
 		, ShowMenu(false)
 		, ShowStatusBar(false)
@@ -217,6 +220,7 @@ struct oGUI_WINDOW_DESC
 	bool AllowAltF4; // closes window
 	bool AllowAltEnter; // toggles fullscreen
 	bool AllowTouch;
+	bool AllowGesture;
 	bool EnableIdleEvent; // if false the message thread will sleep if no more messages are available. If true, oGUI_IDLE will fire each time there are not messages
 	bool ShowMenu;
 	bool ShowStatusBar;
@@ -263,15 +267,13 @@ struct oGUI_ACTION_DESC
 		, SourceID(oInvalid)
 		, ActionCode(0)
 		, PointerPosition(0.0f)
+		, Key(oKB_None)
 	{}
 
 	oGUI_WINDOW hSource;
 	oGUI_ACTION Action;
-	union
-	{
-		int SourceID;
-		oKEYBOARD_KEY Key;
-	};
+	int SourceID;
+	oKEYBOARD_KEY Key;
 
 	int ActionCode; // subtype of action
 	float3 PointerPosition;

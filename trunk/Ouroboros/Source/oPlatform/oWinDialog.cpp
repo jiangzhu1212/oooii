@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -36,7 +38,7 @@ static bool oWinDialogGetOpenOrSavePath(char* _StrDestination, size_t _SizeofStr
 	char defext[4] = {0};
 	if (_FilterPairs)
 	{
-		filters.assign(_FilterPairs, _FilterPairs+strlen(_FilterPairs)+1);
+		filters.assign(_FilterPairs, _FilterPairs+oStrlen(_FilterPairs)+1);
 		filters.append("x"); // set up double nul ptr
 		filters[filters.size()-1] = 0;
 		for (size_t i = 0; i < filters.size(); i++)
@@ -44,7 +46,7 @@ static bool oWinDialogGetOpenOrSavePath(char* _StrDestination, size_t _SizeofStr
 				filters[i] = '\0';
 
 		// use first ext as default ext...
-		const char* first = filters.c_str() + strlen(filters.c_str())+1;
+		const char* first = filters.c_str() + oStrlen(filters.c_str())+1;
 		first = strchr(first, '.');
 		if (first)
 		{

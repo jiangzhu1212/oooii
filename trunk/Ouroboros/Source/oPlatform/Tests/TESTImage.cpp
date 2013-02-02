@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -34,7 +36,7 @@
 static const char* testImage = "Test/Textures/lena_1.png";
 static const char* testImageJpg = "Test/Textures/lena_1.jpg";
 
-struct TESTImage : public oTest
+struct PLATFORM_oImage : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
@@ -101,4 +103,4 @@ struct TESTImage : public oTest
 	}
 };
 
-oTEST_REGISTER(TESTImage);
+oTEST_REGISTER(PLATFORM_oImage);

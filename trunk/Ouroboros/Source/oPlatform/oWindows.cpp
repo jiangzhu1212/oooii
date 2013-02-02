@@ -1,6 +1,8 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2011 Antony Arciuolo & Kevin Myers                       *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -96,6 +98,8 @@ bool oWinSetLastError(HRESULT _hResult, const char* _ErrorDescPrefix)
 		case ERROR_FILE_NOT_FOUND:
 		case ERROR_PATH_NOT_FOUND:
 			return oErrorSetLast(oERROR_NOT_FOUND, err);
+		case ERROR_INVALID_NAME:
+			return oErrorSetLast(oERROR_INVALID_PARAMETER, err);
 		case ERROR_ACCESS_DENIED:
 		case ERROR_SHARING_VIOLATION:
 			return oErrorSetLast(oERROR_REFUSED, err);
@@ -361,6 +365,7 @@ struct oWindowsHookContext : public oProcessSingleton<oWindowsHookContext>
 
 // {64550D95-07B5-441D-A239-4DFA1200F198}
 const oGUID oWindowsHookContext::GUID = { 0x64550d95, 0x7b5, 0x441d, { 0xa2, 0x39, 0x4d, 0xfa, 0x12, 0x0, 0xf1, 0x98 } };
+oSINGLETON_REGISTER(oWindowsHookContext);
 
 bool IsProcessThread(DWORD _ThreadID, DWORD _ParentProcessID, DWORD _FindThreadID, bool* _pFound)
 {
@@ -506,7 +511,7 @@ const char* oAsString(oWINDOWS_VERSION _Version)
 
 bool oConvertEnvStringToEnvBlock(char* _EnvBlock, size_t _SizeofEnvBlock, const char* _EnvString, char _Delimiter)
 {
-	if (!_EnvString || ((strlen(_EnvString)+1) > _SizeofEnvBlock))
+	if (!_EnvString || ((oStrlen(_EnvString)+1) > _SizeofEnvBlock))
 	{
 		oErrorSetLast(oERROR_INVALID_PARAMETER, "EnvBlock buffer not large enough to contain converted EnvString");
 		return false;
@@ -642,7 +647,7 @@ const char** oWinCommandLineToArgvA(bool _ExePathAsArg0, const char* CmdLine, in
 	BOOLEAN  in_TEXT;
 	BOOLEAN  in_SPACE;
 
-	len = (ULONG)strlen(CmdLine);
+	len = (ULONG)oStrlen(CmdLine);
 	if (_ExePathAsArg0) // @oooii
 		len += MAX_PATH * sizeof(CHAR);
 
@@ -651,8 +656,7 @@ const char** oWinCommandLineToArgvA(bool _ExePathAsArg0, const char* CmdLine, in
 		i += sizeof(PVOID);
 	
 	// @oooii-tony: change allocator from original code
-	argv = (PCHAR*)LocalAlloc(LMEM_FIXED,
-		i + (len+2)*sizeof(CHAR));
+	argv = (PCHAR*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, i + (len+2)*sizeof(CHAR));
 
 	_argv = (PCHAR)(((PUCHAR)argv)+i);
 
@@ -669,9 +673,9 @@ const char** oWinCommandLineToArgvA(bool _ExePathAsArg0, const char* CmdLine, in
 	{
 		oSystemGetPath(argv[argc], MAX_PATH, oSYSPATH_APP_FULL);
 		oCleanPath(argv[argc], MAX_PATH, argv[argc], '\\');
-		j = (ULONG)strlen(argv[argc])+1;
+		j = (ULONG)oStrlen(argv[argc])+1;
 		argc++;
-		argv[argc] = _argv+strlen(argv[0])+1;
+		argv[argc] = _argv+oStrlen(argv[0])+1;
 	}
 
 	while( (a = CmdLine[i]) != 0 ) {
@@ -727,7 +731,7 @@ const char** oWinCommandLineToArgvA(bool _ExePathAsArg0, const char* CmdLine, in
 
 void oWinCommandLineToArgvAFree(const char** _pArgv)
 {
-	LocalFree(_pArgv);
+	HeapFree(GetProcessHeap(), 0, _pArgv);
 }
 
 void oWinGetVersion(const oVersion& _Version, DWORD* _pVersionMS, DWORD* _pVersionLS)
@@ -798,6 +802,7 @@ void oLoadLibrarySingletonDestroy()
 
 // {5E05E413-8A70-41D4-B058-3FE203D65841}
 const oGUID oLoadLibrarySingleton::GUID = { 0x5e05e413, 0x8a70, 0x41d4, { 0xb0, 0x58, 0x3f, 0xe2, 0x3, 0xd6, 0x58, 0x41 } };
+oSINGLETON_REGISTER(oLoadLibrarySingleton);
 
 HMODULE oThreadsafeLoadLibrary(LPCTSTR _lpFileName)
 {
@@ -1141,7 +1146,7 @@ static WORD oDlgGetClass(oWINDOWS_DIALOG_ITEM_TYPE _Type)
 
 static size_t oDlgCalcTextSize(const char* _Text)
 {
-	return sizeof(WCHAR) * (strlen(oSAFESTR(_Text)) + 1);
+	return sizeof(WCHAR) * (oStrlen(oSAFESTR(_Text)) + 1);
 }
 
 static size_t oDlgCalcTemplateSize(const char* _MenuName, const char* _ClassName, const char* _Caption, const char* _FontName)
@@ -1166,7 +1171,7 @@ static size_t oDlgCalcTemplateItemSize(const char* _Text)
 static WORD* oDlgCopyString(WORD* _pDestination, const char* _String)
 {
 	if (!_String) _String = "";
-	size_t len = strlen(_String);
+	size_t len = oStrlen(_String);
 	oStrcpy((WCHAR*)_pDestination, len+1, _String);
 	return oByteAdd(_pDestination, (len+1) * sizeof(WCHAR));
 }
@@ -1456,11 +1461,11 @@ bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestinatio
 		oStrcpy(_StrDestination, _SizeofStrDestination, pQSC->lpBinaryPathName);
 		char* lpFirstOccurance = nullptr;
 		lpFirstOccurance = strstr(_StrDestination, "\\SystemRoot");
-		if (strlen(_StrDestination) > 0 && lpFirstOccurance)
+		if (oStrlen(_StrDestination) > 0 && lpFirstOccurance)
 		{
 			// replace \SysteRoot with system root value obtained by
 			// calling GetEnvironmentVariable() to get SYSTEMROOT
-			lpFirstOccurance += strlen("\\SystemRoot");
+			lpFirstOccurance += oStrlen("\\SystemRoot");
 			oPrintf(_StrDestination, _SizeofStrDestination, "%s%s", SystemRootPath.c_str(), lpFirstOccurance);
 		}
 
@@ -1468,10 +1473,10 @@ bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestinatio
 		{
 			lpFirstOccurance = nullptr;
 			lpFirstOccurance = strstr(_StrDestination, "\\??\\");
-			if (strlen(_StrDestination) > 0 && lpFirstOccurance != nullptr)
+			if (oStrlen(_StrDestination) > 0 && lpFirstOccurance != nullptr)
 			{
 				// Remove \??\ at the starting of binary path
-				lpFirstOccurance += strlen("\\??\\");
+				lpFirstOccurance += oStrlen("\\??\\");
 				oPrintf(_StrDestination, _SizeofStrDestination, "%s", lpFirstOccurance);
 			}
 
@@ -1479,7 +1484,7 @@ bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestinatio
 			{
 				lpFirstOccurance = nullptr;
 				lpFirstOccurance = strstr(_StrDestination, "system32");
-				if (strlen(_StrDestination) > 0 && lpFirstOccurance && _StrDestination == lpFirstOccurance)
+				if (oStrlen(_StrDestination) > 0 && lpFirstOccurance && _StrDestination == lpFirstOccurance)
 				{
 					// Add SYSTEMROOT value if there is only system32 mentioned in binary path
 					oStringPath temp;
@@ -1491,7 +1496,7 @@ bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestinatio
 				{
 					lpFirstOccurance = nullptr;
 					lpFirstOccurance = strstr(_StrDestination, "System32");
-					if (strlen(_StrDestination) > 0 && lpFirstOccurance && _StrDestination == lpFirstOccurance)
+					if (oStrlen(_StrDestination) > 0 && lpFirstOccurance && _StrDestination == lpFirstOccurance)
 					{
 						// Add SYSTEMROOT value if there is only System32 mentioned in binary path
 						oStringPath temp;
@@ -1583,7 +1588,10 @@ bool oWinGetProcessTopWindowAndThread(unsigned int _ProcessID, HWND* _pHWND, uns
 		// Look for windows that might get injected into our process that we would never want to target
 		const char* WindowsToSkip[] = {"Default IME", "MSCTFIME UI"};
 		oStringM WindowText;
-		GetWindowText(_Hwnd, WindowText.c_str(), oInt( WindowText.capacity()));
+		if(SendMessageTimeout(_Hwnd, WM_GETTEXT, oStringM::Capacity - 1, (LPARAM)WindowText.c_str(), 0, 100, nullptr) == 0)
+		{
+			WindowText = "";
+		}
 		if(!WindowText.empty())
 		{
 			for(int i = 0; i < oCOUNTOF(WindowsToSkip); ++i)
@@ -1660,3 +1668,49 @@ bool oWinEnableDebugPrivilege(bool _Enabled)
 	return true;
 }
 
+long oWinRCGetFileFlags(const oMODULE_DESC& _Desc)
+{
+	long flags = 0;
+	if (_Desc.IsDebugBuild)
+		flags |= VS_FF_DEBUG;
+	if (_Desc.IsPrereleaseBuild)
+		flags |= VS_FF_PRERELEASE;
+	if (_Desc.IsPatchedBuild)
+		flags |= VS_FF_PATCHED;
+	if (_Desc.IsPrivateBuild)
+		flags |= VS_FF_PRIVATEBUILD;
+	if (_Desc.IsSpecialBuild)
+		flags |= VS_FF_SPECIALBUILD;
+
+	return flags;
+}
+
+void oWinRCGetFileType(const oMODULE_TYPE _Type, DWORD* _pType, DWORD* _pSubtype)
+{
+	*_pType = VFT_UNKNOWN;
+	*_pSubtype = VFT2_UNKNOWN;
+
+	switch (_Type)
+	{
+		case oMODULE_APP: *_pType = VFT_APP; break;
+		case oMODULE_DLL: *_pType = VFT_DLL; break;
+		case oMODULE_LIB: *_pType = VFT_STATIC_LIB; break;
+		case oMODULE_FONT_UNKNOWN: *_pType = VFT_FONT; break;
+		case oMODULE_FONT_RASTER: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_RASTER; break;
+		case oMODULE_FONT_TRUETYPE: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_TRUETYPE; break;
+		case oMODULE_FONT_VECTOR: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_VECTOR; break;
+		case oMODULE_VIRTUAL_DEVICE: *_pType = VFT_VXD; break;
+		case oMODULE_DRV_UNKNOWN: *_pType = VFT_DRV; break;
+		case oMODULE_DRV_COMM: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_COMM; break;
+		case oMODULE_DRV_DISPLAY: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_DISPLAY; break;
+		case oMODULE_DRV_INSTALLABLE: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_INSTALLABLE; break;
+		case oMODULE_DRV_KEYBOARD: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_KEYBOARD; break;
+		case oMODULE_DRV_LANGUAGE: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_LANGUAGE; break;
+		case oMODULE_DRV_MOUSE: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_MOUSE; break;
+		case oMODULE_DRV_NETWORK: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_NETWORK; break;
+		case oMODULE_DRV_PRINTER: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_PRINTER; break;
+		case oMODULE_DRV_SOUND: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_SOUND; break;
+		case oMODULE_DRV_SYSTEM: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_SYSTEM; break;
+	default: break;
+	}
+}
