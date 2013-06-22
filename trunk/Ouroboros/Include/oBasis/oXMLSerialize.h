@@ -27,10 +27,10 @@
 #ifndef oXMLSerialize_h
 #define oXMLSerialize_h
 
-#include <oBasis/oXML.h>
 #include <oBasis/oRTTI.h>
+#include <oStd/xml.h>
 
-bool oXMLReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& _RTTI, const threadsafe oXML* _pXML, oXML::HNODE _hNode, bool _FailOnMissingValues);
-bool oXMLReadCompound(void* _pDestination, const oRTTI& _RTTI, const threadsafe oXML* _pXML, oXML::HNODE _hNode, bool _FailOnMissingValues);
+bool oXMLReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::xml& _XML, oStd::xml::node _Node, bool _FailOnMissingValues);
+bool oXMLReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& _RTTI, const char* _pElementName, bool _IsRaw, const oStd::xml& _XML, oStd::xml::node _Node, bool _FailOnMissingValues);
 
 #endif

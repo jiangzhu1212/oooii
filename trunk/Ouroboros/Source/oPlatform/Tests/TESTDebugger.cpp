@@ -103,7 +103,7 @@ struct PLATFORM_oDebugger : public oTest
 				for (size_t i = 0; i < nAddresses; i++)
 				{
 					oDEBUGGER_SYMBOL sym;
-					oTESTB(oDebuggerTranslateSymbol(&sym, addresses[i]), "TranslateSymbol failed on %u%s symbol", i, oOrdinal((int)i));
+					oTESTB(oDebuggerTranslateSymbol(&sym, addresses[i]), "TranslateSymbol failed on %u%s symbol", i, oStd::ordinal(i));
 					//printf("%u: %s\n", i, sym.Name);
 					oTESTB(!oStrcmp(sym.Name, sExpectedStack[i]), "Mismatch on stack trace at level %u", i);
 				}

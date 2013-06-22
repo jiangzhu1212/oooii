@@ -36,7 +36,7 @@ enum oGPU_TEST_PIPELINE
 	// PS: Color = white
 	oGPU_TEST_PASS_THROUGH, 
 
-	// Vertex: float3 Positions
+	// Vertex: float3 Positions, must be lines, not triangles
 	// VS: ScreenSpacePos = float4(LocalSpacePos, 1)
 	// PS: Color = Vertex Color
 	oGPU_TEST_PASS_THROUGH_COLOR,

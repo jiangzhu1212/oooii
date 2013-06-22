@@ -70,7 +70,7 @@
 #define oRef_h
 
 #include <oBasis/oPlatformFeatures.h>
-#include <oBasis/oThreadsafe.h>
+#include <oConcurrency/thread_safe.h>
 
 template<class T> struct oRef
 {

@@ -136,11 +136,11 @@ void oCRTHeapBreakOnAllocation(uintptr_t _AllocationID)
 
 // {50063038-C83F-4C13-9DC3-9D2F299AD4CB}
 static const oGUID guid = { 0x50063038, 0xc83f, 0x4c13, { 0x9d, 0xc3, 0x9d, 0x2f, 0x29, 0x9a, 0xd4, 0xcb } };
-oDEFINE_STATIC_MUTEX(oMutex, sCRTReportLeakMutex, GUID);
+oDEFINE_STATIC_MUTEX(oConcurrency::mutex, sCRTReportLeakMutex, GUID);
 
 void oCRTHeapEnableAtExitLeakReport(bool _Enable)
 {
-	oLockGuard<oStaticMutex<oMutex, sCRTReportLeakMutex_t>> Lock(sCRTReportLeakMutex);
+	oConcurrency::lock_guard<oStaticMutex<oConcurrency::mutex, sCRTReportLeakMutex_t>> Lock(sCRTReportLeakMutex);
 
 	int flags = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
 	_CrtSetDbgFlag(_Enable ? (flags | _CRTDBG_LEAK_CHECK_DF) : (flags &~ _CRTDBG_LEAK_CHECK_DF));
@@ -148,7 +148,7 @@ void oCRTHeapEnableAtExitLeakReport(bool _Enable)
 
 bool oCRTHeapEnableMemoryTracking(bool _Enable)
 {
-	oLockGuard<oStaticMutex<oMutex, sCRTReportLeakMutex_t>> Lock(sCRTReportLeakMutex);
+	oConcurrency::lock_guard<oStaticMutex<oConcurrency::mutex, sCRTReportLeakMutex_t>> Lock(sCRTReportLeakMutex);
 	int flags = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
 	_CrtSetDbgFlag(_Enable ? (flags | _CRTDBG_ALLOC_MEM_DF) : (flags &~ _CRTDBG_ALLOC_MEM_DF));
 	return (flags & _CRTDBG_ALLOC_MEM_DF) == _CRTDBG_ALLOC_MEM_DF;

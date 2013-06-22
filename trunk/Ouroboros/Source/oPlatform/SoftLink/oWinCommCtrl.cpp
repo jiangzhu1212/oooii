@@ -25,7 +25,7 @@
  **************************************************************************/
 #include "oWinCommCtrl.h"
 
-static const char* dll_procs[] = 
+static const char* sExportedAPIs[] = 
 {
 	"SetWindowSubclass",
 	"GetWindowSubclass",

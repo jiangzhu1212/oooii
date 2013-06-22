@@ -25,12 +25,12 @@
  **************************************************************************/
 #include <oBasis/oOBJ.h>
 #include <oBasis/oError.h>
-#include <oBasis/oOnScopeExit.h>
+#include <oStd/finally.h>
 #include <oBasis/oPath.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oString.h>
 #include <oBasis/oTimer.h>
-#include <oBasisTests/oBasisTests.h>
+#include <oBasis/tests/oBasisTests.h>
 #include "oBasisTestCommon.h"
 #include "oBasisTestOBJ.h"
 
@@ -47,14 +47,14 @@ static bool TestCorrectness(const threadsafe oBasisTestOBJ* _pExpected, const th
 	oTESTB(Expected.NumVertices == d.NumVertices, "Position counts do not match in obj file \"%s\"", d.OBJPath);
 	for (uint i = 0; i < d.NumVertices; i++)
 	{
-		oTESTB(oEqual(Expected.pPositions[i], d.pPositions[i]), "Position %u does not match in obj file \"%s\"", i, d.OBJPath);
-		oTESTB(oEqual(Expected.pTexcoords[i], d.pTexcoords[i]), "Texcoord %u does not match in obj file \"%s\"", i, d.OBJPath);
-		oTESTB(oEqual(Expected.pNormals[i], d.pNormals[i]), "Normal %u does not match in obj file \"%s\"", i, d.OBJPath);
+		oTESTB(oStd::equal(Expected.pPositions[i], d.pPositions[i]), "Position %u does not match in obj file \"%s\"", i, d.OBJPath);
+		oTESTB(oStd::equal(Expected.pTexcoords[i], d.pTexcoords[i]), "Texcoord %u does not match in obj file \"%s\"", i, d.OBJPath);
+		oTESTB(oStd::equal(Expected.pNormals[i], d.pNormals[i]), "Normal %u does not match in obj file \"%s\"", i, d.OBJPath);
 	}
 	
 	oTESTB(Expected.NumIndices == d.NumIndices, "Index counts do not match in obj file \"%s\"", d.OBJPath);
 	for (uint i = 0; i < d.NumIndices; i++)
-		oTESTB(oEqual(Expected.pIndices[i], d.pIndices[i]), "Index %u does not match in obj file \"%s\"", i, d.OBJPath);
+		oTESTB(oStd::equal(Expected.pIndices[i], d.pIndices[i]), "Index %u does not match in obj file \"%s\"", i, d.OBJPath);
 
 	oTESTB(Expected.NumGroups == d.NumGroups, "Group counts do not match in obj file \"%s\"", d.OBJPath);
 	for (uint i = 0; i < d.NumGroups; i++)
@@ -65,13 +65,13 @@ static bool TestCorrectness(const threadsafe oBasisTestOBJ* _pExpected, const th
 		oTESTB(Expected.pGroups[i].Range.NumPrimitives == d.pGroups[i].Range.NumPrimitives, "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
 	}
 
-	oErrorSetLast(oERROR_NONE);
+	oErrorSetLast(0);
 	return true;
 }
 
 static bool oBasisTest_oOBJLoad(const oBasisTestServices& _Services, const char* _Path, double* _pLoadTime = nullptr)
 {
-	oStringPath path;
+	oStd::path_string path;
 	oTESTB(_Services.ResolvePath(path, path.capacity(), _Path, true), "not found: %s", _Path);
 	oTESTB(oCleanPath(path, path), "Failed to clean path on \"%s\"", path);
 
@@ -82,7 +82,7 @@ static bool oBasisTest_oOBJLoad(const oBasisTestServices& _Services, const char*
 	if (!_Services.AllocateAndLoadBuffer((void**)&pOBJBuffer, &Size, path, true))
 		return false;
 
-	oOnScopeExit FreeBuffer([&] { _Services.DeallocateLoadedBuffer(pOBJBuffer); });
+	oStd::finally FreeBuffer([&] { _Services.DeallocateLoadedBuffer(pOBJBuffer); });
 		
 	oOBJ_INIT init;
 	init.CalcNormalsOnError = false; // buddha doesn't have normals and is 300k faces... let's not sit in the test suite calculating such a large test case
@@ -97,7 +97,7 @@ static bool oBasisTest_oOBJLoad(const oBasisTestServices& _Services, const char*
 
 bool oBasisTest_oOBJ(const oBasisTestServices& _Services)
 {
-	oStringPath path;
+	oStd::path_string path;
 
 	// Correctness
 	{
@@ -121,9 +121,9 @@ bool oBasisTest_oOBJ(const oBasisTestServices& _Services)
 		double LoadTime = 0.0;
 		oTESTB0(oBasisTest_oOBJLoad(_Services, BenchmarkFilename, &LoadTime));
 
-		char time[64];
-		oFormatTimeSize(time, LoadTime, true);
-		oErrorSetLast(oERROR_NONE, "%s to load benchmark file %s", time, BenchmarkFilename);
+		oStd::sstring time;
+		oStd::format_duration(time, LoadTime, true);
+		oErrorSetLast(0, "%s to load benchmark file %s", time.c_str(), BenchmarkFilename);
 	}
 	
 	return true;

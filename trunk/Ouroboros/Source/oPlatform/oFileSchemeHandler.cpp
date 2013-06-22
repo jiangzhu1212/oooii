@@ -26,9 +26,12 @@
 #include <oPlatform/oFileSchemeHandler.h>
 #include <oPlatform/oFile.h>
 #include <oPlatform/oSystem.h>
+#include <oConcurrency/mutex.h>
 #include "oDispatchQueueGlobalIOCP.h"
 #include "oFileInternal.h"
 #include "oIOCP.h"
+
+using namespace oConcurrency;
 
 #define oTRACE_MONITOR oTRACE
 
@@ -50,10 +53,11 @@ struct oFileReaderImpl : public oStreamReader
 		: URIParts(_URIParts)
 		, Unbuffered(_Unbuffered)
 		, hFile(nullptr)
+		, EoF(false)
 	{
 		*_pSuccess = false;
 
-		oStringPath Path;
+		oStd::path_string Path;
 		oSystemURIPartsToPath(Path, _URIParts);
 		hFile = CreateFile(Path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, Unbuffered ? FILE_FLAG_NO_BUFFERING : 0, NULL);
 		if (hFile == INVALID_HANDLE_VALUE)
@@ -61,19 +65,19 @@ struct oFileReaderImpl : public oStreamReader
 			oWinSetLastError();
 			switch (oErrorGetLast())
 			{
-				case oERROR_NOT_FOUND:
+				case std::errc::no_such_file_or_directory:
 				{
-					oStringURI URIRef;
+					oStd::uri_string URIRef;
 					oVERIFY(oURIRecompose(URIRef, _URIParts));
-					oErrorSetLast(oERROR_NOT_FOUND, "not found: %s", URIRef.c_str());
+					oErrorSetLast(std::errc::no_such_file_or_directory, "not found: %s", URIRef.c_str());
 					break;
 				}
 
-				case oERROR_INVALID_PARAMETER:
+				case std::errc::invalid_argument:
 				{
-					oStringURI URIRef;
+					oStd::uri_string URIRef;
 					oVERIFY(oURIRecompose(URIRef, _URIParts));
-					oErrorSetLast(oERROR_INVALID_PARAMETER, "invalid URI: %s", URIRef.c_str());
+					oErrorSetLast(std::errc::invalid_argument, "invalid URI: %s", URIRef.c_str());
 					break;
 				}
 
@@ -91,7 +95,7 @@ struct oFileReaderImpl : public oStreamReader
 
 			if (!oDispatchQueueCreateGlobalIOCP("File reader dispatch queue", 10, &ReadQueue))
 			{
-				oErrorSetLast(oERROR_INVALID_PARAMETER, "Could not create IOCP dispatch queue.");
+				oErrorSetLast(std::errc::invalid_argument, "Could not create IOCP dispatch queue.");
 				CloseHandle(hFile);
 				return;
 			}
@@ -115,7 +119,7 @@ struct oFileReaderImpl : public oStreamReader
 	{
 		unsigned long long fileSize = Desc->Size;
 		if(Unbuffered)
-			fileSize = oByteAlign(fileSize, UNBUFFERED_ALIGN_REQUIREMENT); // unbuffered io is always a multiple of the alignment
+			fileSize = oStd::byte_align(fileSize, UNBUFFERED_ALIGN_REQUIREMENT); // unbuffered io is always a multiple of the alignment
 		
 		if ((_StreamRead.Range.Offset + _StreamRead.Range.Size) <= fileSize)
 		{
@@ -130,7 +134,7 @@ struct oFileReaderImpl : public oStreamReader
 		}
 		else
 		{
-			oErrorSetLast(oERROR_IO, "Specified range will read past file size");
+			oErrorSetLast(std::errc::io_error, "Specified range will read past file size");
 			_Continuation(false, this, _StreamRead);
 			return;
 		}
@@ -138,8 +142,8 @@ struct oFileReaderImpl : public oStreamReader
 
 	bool Read(const oSTREAM_READ& _StreamRead) threadsafe
 	{
-		oASSERT(!Unbuffered || (oIsByteAligned(_StreamRead.pData, UNBUFFERED_ALIGN_REQUIREMENT) && 
-			oIsByteAligned(_StreamRead.Range.Offset, UNBUFFERED_ALIGN_REQUIREMENT) && oIsByteAligned(_StreamRead.Range.Size, UNBUFFERED_ALIGN_REQUIREMENT)), 
+		oASSERT(!Unbuffered || (oStd::byte_aligned(_StreamRead.pData, UNBUFFERED_ALIGN_REQUIREMENT) && 
+			oStd::byte_aligned(_StreamRead.Range.Offset, UNBUFFERED_ALIGN_REQUIREMENT) && oStd::byte_aligned(_StreamRead.Range.Size, UNBUFFERED_ALIGN_REQUIREMENT)), 
 			"Unbuffered io has very restrict requirements. file offset, read size, and pointer address must be 4k aligned");
 
 		DWORD numBytesRead;
@@ -147,16 +151,18 @@ struct oFileReaderImpl : public oStreamReader
 		oSetHighLowOffset(offsetLow, offsetHigh, _StreamRead.Range.Offset);
 
 		// Need to lock since SetFilePointer/ReadFile are separate calls. And to play nice with close
-		oLockGuard<oMutex> lock(Mutex);
+		lock_guard<mutex> lock(Mutex);
 
 		if(hFile == INVALID_HANDLE_VALUE)
 		{
-			return oErrorSetLast(oERROR_CANCELED);
+			return oErrorSetLast(std::errc::operation_canceled);
 		}
 
 		SetFilePointer(hFile, offsetLow, &offsetHigh, FILE_BEGIN);
+		EoF = false; // because of file pointer move
 		if (!ReadFile(hFile, _StreamRead.pData, oUInt(_StreamRead.Range.Size), &numBytesRead, nullptr))
 			return oWinSetLastError();
+		EoF = (numBytesRead == 0);
 
 		// Unbuffered io is inconsistent on what it returns for these numbers and 
 		// it doesn't really apply for anyway because unbuffered always physically 
@@ -165,11 +171,13 @@ struct oFileReaderImpl : public oStreamReader
 		{
 			// failed, but not a bug if reading past end of file. 
 			oASSERT(_StreamRead.Range.Offset + _StreamRead.Range.Size >= Desc->Size, "ReadFile didn't read enough bytes, but didn't read past end of file");
-			return oErrorSetLast(oERROR_END_OF_FILE);
+			return false;
 		}
 
 		return true;
 	}
+
+	bool EndOfFile() threadsafe const override { return EoF; }
 
 	void GetDesc(oSTREAM_DESC* _pDesc) threadsafe override
 	{
@@ -180,7 +188,7 @@ struct oFileReaderImpl : public oStreamReader
 
 	void Close() threadsafe override
 	{
-		oLockGuard<oMutex> lock(Mutex);
+		lock_guard<mutex> lock(Mutex);
 
 		if (hFile != INVALID_HANDLE_VALUE)
 			CloseHandle(hFile);
@@ -190,11 +198,12 @@ struct oFileReaderImpl : public oStreamReader
 
 	oInitOnce<oSTREAM_DESC> Desc;
 	oRef<threadsafe oDispatchQueueGlobal> ReadQueue;
-	oMutex Mutex;
+	mutex Mutex;
 	oInitOnce<oURIParts> URIParts;
 	HANDLE hFile;
 	oRefCount RefCount;
 	bool Unbuffered;
+	bool EoF;
 };
 
 struct oFileWriterImpl : public oStreamWriter
@@ -234,7 +243,7 @@ struct oFileWriterImpl : public oStreamWriter
 			if (!oDispatchQueueCreateGlobalIOCP("File writer dispatch queue", 16, &WriteQueue))
 			{
 				CloseHandle(hFile);
-				oErrorSetLast(oERROR_INVALID_PARAMETER, "Could not create IOCP dispatch queue.");
+				oErrorSetLast(std::errc::invalid_argument, "Could not create IOCP dispatch queue.");
 				return;
 			}
 		}
@@ -270,11 +279,11 @@ struct oFileWriterImpl : public oStreamWriter
 	bool Write(const oSTREAM_WRITE& _Write) threadsafe
 	{
 		// Need to lock since SetFilePointer/ReadFile are separate calls.
-		oLockGuard<oMutex> lock(Mutex);
+		lock_guard<mutex> lock(Mutex);
 
 		if(hFile == INVALID_HANDLE_VALUE)
 		{
-			return oErrorSetLast(oERROR_CANCELED);
+			return oErrorSetLast(std::errc::operation_canceled);
 		}
 
 		DWORD numBytesWritten;
@@ -294,7 +303,7 @@ struct oFileWriterImpl : public oStreamWriter
 			return oWinSetLastError();
 
 		if (numBytesWritten != _Write.Range.Size) // happens when trying to read past end of file, but ReadFile itself still succeeds
-			return oErrorSetLast(oERROR_IO, "Failed to write data to disk.");
+			return oErrorSetLast(std::errc::io_error, "Failed to write data to disk.");
 
 		return true;
 	}
@@ -303,7 +312,7 @@ struct oFileWriterImpl : public oStreamWriter
 
 	void Close() threadsafe override
 	{
-		oLockGuard<oMutex> lock(Mutex);
+		lock_guard<mutex> lock(Mutex);
 
 		if (hFile != INVALID_HANDLE_VALUE)
 			CloseHandle(hFile);
@@ -312,10 +321,10 @@ struct oFileWriterImpl : public oStreamWriter
 	}
 
 	oInitOnce<oURIParts> URIParts;
-	oInitOnce<oStringPath> ResolvedPath;
+	oInitOnce<oStd::path_string> ResolvedPath;
 	oHandle hFile;
 	oRef<threadsafe oDispatchQueueGlobal> WriteQueue;
-	oMutex Mutex;
+	mutex Mutex;
 	oRefCount RefCount;
 };
 
@@ -332,6 +341,21 @@ static oSTREAM_EVENT oAsStreamEvent(DWORD _NotifyAction)
 	}
 }
 
+// Returns true if the file exists and can be opened for shared reading, false 
+// otherwise.
+static bool oWinIsAccessible(const char* _Path)
+{
+	bool IsAccessible = false;
+	HANDLE hFile = CreateFile(_Path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	if (hFile != INVALID_HANDLE_VALUE)
+	{
+		IsAccessible = true;
+		oVB(CloseHandle(hFile));
+	}
+
+	return IsAccessible;
+}
+
 struct oFileMonitorImpl : public oStreamMonitor
 {
 	oDEFINE_NOOP_QUERYINTERFACE();
@@ -341,8 +365,8 @@ struct oFileMonitorImpl : public oStreamMonitor
 		static_cast<oFileMonitorImpl*>(lpParameter)->CheckAccessible();
 	}
 
-	oFileMonitorImpl(const oURIParts& _URIParts, const oSTREAM_ON_EVENT& _OnEvent, bool* _pSuccess)
-		: URIParts(_URIParts)
+	oFileMonitorImpl(const oURIParts& _URIParts, const oSTREAM_MONITOR_DESC& _Desc, const oSTREAM_ON_EVENT& _OnEvent, bool* _pSuccess)
+		: MDesc(_Desc)
 		, OnEvent(_OnEvent)
 		, hMonitor(nullptr)
 		, pIOCP(nullptr)
@@ -360,34 +384,37 @@ struct oFileMonitorImpl : public oStreamMonitor
 			return;
 		}
 
-		oStringPath Path;
+		oStd::path_string Path;
 		if (!oSystemURIPartsToPath(Path, _URIParts))
 		{
-			oStringURI URI;
+			oStd::uri_string URI;
 			oURIRecompose(URI, _URIParts);
-			oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid uri: %s", URI.c_str());
+			oErrorSetLast(std::errc::invalid_argument, "Invalid uri: %s", URI.c_str());
 			return;
 		}
+
+		char* filebase = oGetFilebase(Path.c_str());
+		MonitorFilename.Initialize(filebase);
+		*filebase = 0;
+
+		oURIParts FolderURIParts = _URIParts;
+		*oGetFilebase(FolderURIParts.Path.c_str()) = 0;
+		URIParts.Initialize(FolderURIParts);
 
 		oSTREAM_DESC fd;
 		if (!oFileGetDesc(Path, &fd))
 		{
-			oStringURI URI;
+			oStd::uri_string URI;
 			oURIRecompose(URI, _URIParts);
-			oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid uri: %s", URI.c_str());
+			oErrorSetLast(std::errc::invalid_argument, "Invalid uri: %s", URI.c_str());
 			return;
 		}
-
-		// @oooii-tony; We SHOULD support this soon, but first bring over things 
-		// AS-IS
-		//oStringPath Parent(Path);
-		//*oGetFilebase(Path) = 0;
 		
 		if (!fd.Directory)
 		{
-			oStringURI URI;
+			oStd::uri_string URI;
 			oURIRecompose(URI, _URIParts);
-			oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid uri (files not yet supported): %s", URI.c_str());
+			oErrorSetLast(std::errc::invalid_argument, "Invalid uri (filename should have been stripped): %s", URI.c_str());
 			return;
 		}
 
@@ -399,8 +426,8 @@ struct oFileMonitorImpl : public oStreamMonitor
 			, hTimerQueue
 			, oFileMonitorImpl::WaitOrTimerCallback
 			, this
-			, 1000 // @oooii-tony: Might want to expose this timeout value to client code
-			, 1000
+			, MDesc.AccessibilityCheckMS
+			, MDesc.AccessibilityCheckMS
 			, WT_EXECUTEDEFAULT
 			))
 		{
@@ -426,14 +453,14 @@ struct oFileMonitorImpl : public oStreamMonitor
 
 		if (!oIOCPCreate(IOCPDesc, [&](){ delete this; }, &pIOCP))
 		{
-			oErrorSetLast(oERROR_INVALID_PARAMETER, "Could not create IOCP.");
+			oErrorSetLast(std::errc::invalid_argument, "Could not create IOCP.");
 			return;
 		}
 
 		oIOCPOp* pOp = pIOCP->AcquireSocketOp();
-		if (!ReadDirectoryChangesW(hMonitor, FileNotifyInfoBuffers[FileNotifyInfoBufferIndex], kBufferSize, true, kWatchChanges, nullptr, pOp, nullptr))
+		if (!ReadDirectoryChangesW(hMonitor, FileNotifyInfoBuffers[FileNotifyInfoBufferIndex], kBufferSize, MDesc.WatchSubtree, kWatchChanges, nullptr, pOp, nullptr))
 		{
-			oErrorSetLast(oERROR_GENERIC, "Could not initiate a windows request to monitor a folder.");
+			oErrorSetLast(std::errc::protocol_error, "Could not initiate a windows request to monitor a folder.");
 			return;
 		}
 
@@ -442,7 +469,7 @@ struct oFileMonitorImpl : public oStreamMonitor
 
 	~oFileMonitorImpl()
 	{
-		oLockGuard<oMutex> lock(CheckAccessibleMutex);
+		lock_guard<mutex> lock(CheckAccessibleMutex);
 
 		Closing = true;
 		if (hMonitor != INVALID_HANDLE_VALUE)
@@ -454,6 +481,8 @@ struct oFileMonitorImpl : public oStreamMonitor
 		oVB(DeleteTimerQueue(hTimerQueue));
 	}
 
+	void GetMonitorDesc(oSTREAM_MONITOR_DESC* _pMonitorDesc) const threadsafe override { *_pMonitorDesc = oThreadsafe(this)->MDesc; }
+
 	void OnDirectoryChanges(FILE_NOTIFY_INFORMATION* _pNotify)
 	{
 		FILE_NOTIFY_INFORMATION* n = _pNotify;
@@ -463,55 +492,57 @@ struct oFileMonitorImpl : public oStreamMonitor
 			oSTREAM_EVENT e = oAsStreamEvent(n->Action);
 			if (e != oSTREAM_UNSUPPORTED)
 			{
-				oASSERT(n->FileNameLength < (oStringPath::Capacity*2), "not expecting paths that are longer than they should be"); // *2 for that fact that FileNameLength is # bytes for a wide-char non-null-term string
+				oASSERT(n->FileNameLength < (oStd::path_string::Capacity*2), "not expecting paths that are longer than they should be"); // *2 for that fact that FileNameLength is # bytes for a wide-char non-null-term string
 
 				// note the path given to us by windows is only the portion after the 
 				// path of the folder we are monitoring, so have to reform the full uri.
 
 				// These strings aren't null-terminated, AND in wide-character. Make it
 				// not this way...
-				wchar_t ForNullTermination[oStringPath::Capacity];
+				wchar_t ForNullTermination[oStd::path_string::Capacity];
 				memcpy(ForNullTermination, n->FileName, n->FileNameLength);
 				ForNullTermination[n->FileNameLength / 2] = 0;
-				oStringPath path(ForNullTermination);
+				oStd::path_string path(ForNullTermination);
 
 				oURIParts parts;
 				parts = *URIParts;
 				oStrAppendf(parts.Path, "/%s", path.c_str());
 
-				oStringURI URI;
+				oStd::uri_string URI;
 				oVERIFY(oURIRecompose(URI, parts));
-
-				if (e == oSTREAM_ADDED)
+				
+				if (MonitorFilename->empty() || oMatchesWildcard(MonitorFilename->c_str(), path.c_str()))
 				{
-					oLockGuard<oMutex> lock(DeferredEventMutex);
-					auto it = EventRecords.find(URI);
-					if (it == EventRecords.end())
+					if (e == oSTREAM_ADDED || e == oSTREAM_MODIFIED)
 					{
+						lock_guard<mutex> lock(DeferredEventMutex);
 						oEVENT_RECORD r;
 						r.LastEventTimestamp = Now;
 						r.LastEvent = e;
+						r.Handled = false;
 						EventRecords[URI] = r;
 					}
-					else
-					{
-						it->second.LastEventTimestamp = Now;
-						it->second.LastEvent = e;
-					}
-				}
 
-				oTRACE_MONITOR("%s: %s", oAsString(e), URI.c_str());
-				OnEvent(e, URI);
+					if (MDesc.TraceEvents)
+						oTRACE_MONITOR("%s: %s", oStd::as_string(e), URI.c_str());
+
+					OnEvent(e, URI);
+				}
+				else
+				{
+					if (MDesc.TraceEvents)
+						oTRACE_MONITOR("%s: %s not matched by %s", oStd::as_string(e), URI.c_str(), MonitorFilename->c_str());
+				}
 			}
 
-			n = oByteAdd(n, n->NextEntryOffset);
+			n = oStd::byte_add(n, n->NextEntryOffset);
 
 		} while (n->NextEntryOffset);
 	}
 
 	void CheckAccessible()
 	{
-		oLockGuard<oMutex> lock(CheckAccessibleMutex);
+		lock_guard<mutex> lock(CheckAccessibleMutex);
 
 		if (Closing)
 			return;
@@ -520,36 +551,47 @@ struct oFileMonitorImpl : public oStreamMonitor
 		{
 			Accessibles.clear();
 			{
-				oLockGuard<oMutex> lock(DeferredEventMutex);
-				for (auto it = EventRecords.cbegin(); it != EventRecords.cend(); /* no increment */)
+				lock_guard<mutex> lock(DeferredEventMutex);
+				for (auto it = std::begin(EventRecords); it != std::end(EventRecords); /* no increment */)
 				{
-					oStringPath path;
-					oURIParts p;
-					oURIDecompose(it->first, &p);
-					oSystemURIPartsToPath(path, p);
-				
-					bool CanAccessFile = false;
-					HANDLE hFile = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-					if (hFile != INVALID_HANDLE_VALUE)
+					bool IncrementIterator = true;
+
+					const oStd::uri_string& URI = it->first;
+					oEVENT_RECORD& r = it->second;
+					if (r.Handled)
 					{
-						CanAccessFile = true;
-						oVB(CloseHandle(hFile));
+						if (r.LastEventTimestamp > MDesc.EventTimeoutMS)
+						{
+							it = EventRecords.erase(it);
+							IncrementIterator = false;
+						}
 					}
 
-					const double kEventTimeout = 1.0;
-					if (CanAccessFile)
-					{
-						Accessibles.push_back(it->first);
-						EventRecords.erase(it++);
-					}
 					else
+					{
+						oStd::path_string path;
+						oURIParts p;
+						oURIDecompose(URI, &p);
+						oSystemURIPartsToPath(path, p);
+				
+						if (oWinIsAccessible(path))
+						{
+							Accessibles.push_back(URI);
+							r.Handled = true;
+						}
+					}
+
+					if (IncrementIterator)
 						++it;
 				}
 			}
 
 			oFOR(const auto& a, Accessibles)
 			{
-				oTRACE_MONITOR("oSTREAM_ACCESSIBLE: %s", a.c_str());
+				if (MDesc.TraceEvents)
+				{
+					oTRACE_MONITOR("oSTREAM_ACCESSIBLE: %s", a.c_str());
+				}
 				OnEvent(oSTREAM_ACCESSIBLE, a);
 			}
 		}
@@ -568,12 +610,12 @@ struct oFileMonitorImpl : public oStreamMonitor
 		// Kick off user callback on a normal (non-IOCP) thread
 
 		int FileNotifyInfoBufferIndexCopy = FileNotifyInfoBufferIndex; // otherwise lambda will bind this->FileNotifyInfoBufferIndex, which can be racy.
-		MonitorFinished = oStd::async([this, FileNotifyInfoBufferIndexCopy] { OnDirectoryChanges(reinterpret_cast<FILE_NOTIFY_INFORMATION*>(FileNotifyInfoBuffers[FileNotifyInfoBufferIndexCopy])); });
+		MonitorFinished = oStd::async((oFUNCTION<void()>)[this, FileNotifyInfoBufferIndexCopy] { OnDirectoryChanges(reinterpret_cast<FILE_NOTIFY_INFORMATION*>(FileNotifyInfoBuffers[FileNotifyInfoBufferIndexCopy])); });
 
 		FileNotifyInfoBufferIndex = (FileNotifyInfoBufferIndex + 1) % 2;
 	
 		oIOCPOp* pOp = pIOCP->AcquireSocketOp();
-		if (!ReadDirectoryChangesW(hMonitor, FileNotifyInfoBuffers[FileNotifyInfoBufferIndex], sizeof(FileNotifyInfoBuffers[FileNotifyInfoBufferIndex]), true, kWatchChanges, nullptr, pOp, nullptr) && !Closing)
+		if (!ReadDirectoryChangesW(hMonitor, FileNotifyInfoBuffers[FileNotifyInfoBufferIndex], sizeof(FileNotifyInfoBuffers[FileNotifyInfoBufferIndex]), MDesc.WatchSubtree, kWatchChanges, nullptr, pOp, nullptr) && !Closing)
 		{
 			DWORD error = GetLastError();
 			oTRACE("oFileMonitorImpl platform error %d", error);
@@ -593,8 +635,10 @@ private:
 
 	oHandle hMonitor;
 	oIOCP* pIOCP; // Because of IOCP requirements, lifetime management of the IOCP is special
+	oSTREAM_MONITOR_DESC MDesc;
 	oSTREAM_ON_EVENT OnEvent;
-	oInitOnce<oStringPath> MonitorPath;
+	oInitOnce<oStd::path_string> MonitorPath;
+	oInitOnce<oStd::path_string> MonitorFilename;
 	oInitOnce<oURIParts> URIParts;
 	oInitOnce<oSTREAM_DESC> Desc;
 
@@ -602,17 +646,18 @@ private:
 	int FileNotifyInfoBufferIndex;
 	oStd::future<void> MonitorFinished;
 
-	oMutex DeferredEventMutex;
+	mutex DeferredEventMutex;
 
 	struct oEVENT_RECORD
 	{
 		double LastEventTimestamp;
 		oSTREAM_EVENT LastEvent;
+		bool Handled;
 	};
 
-	oMutex CheckAccessibleMutex;
-	std::map<oStringURI, oEVENT_RECORD, oStdLessI<oStringURI>> EventRecords;
-	std::vector<oStringURI> Accessibles;
+	mutex CheckAccessibleMutex;
+	std::map<oStd::uri_string, oEVENT_RECORD, oStd::less_case_insensitive<oStd::uri_string>> EventRecords;
+	std::vector<oStd::uri_string> Accessibles;
 	HANDLE hTimerQueue;
 
 	bool Closing;
@@ -632,18 +677,11 @@ struct oFileSchemeHandlerImpl : oFileSchemeHandler
 	bool CreateStreamReader(const oURIParts& _URIParts, threadsafe oStreamReader** _ppReader) threadsafe override;
 	bool CreateStreamReaderNonBuffered4K(const oURIParts& _URIParts, threadsafe oStreamReader** _ppReader) threadsafe override;
 	bool CreateStreamWriter(const oURIParts& _URIParts, bool _SupportAsyncWrites, threadsafe oStreamWriter** _ppWriter) threadsafe override;
-	bool CreateStreamMonitor(const oURIParts& _URIParts, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor) threadsafe override;
+	bool CreateStreamMonitor(const oURIParts& _URIParts, const oSTREAM_MONITOR_DESC& _Desc, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor) threadsafe override;
 
 protected:
 	oRefCount RefCount;
 };
-
-const oGUID& oGetGUID(threadsafe const oFileSchemeHandler* threadsafe const *)
-{
-	// {684A582C-240E-4C7D-839C-CF4897F2F5D7}
-	static const oGUID guid = { 0x684a582c, 0x240e, 0x4c7d, { 0x83, 0x9c, 0xcf, 0x48, 0x97, 0xf2, 0xf5, 0xd7 } };
-	return guid;
-}
 
 bool oFileSchemeHandlerCreate(threadsafe oFileSchemeHandler** _ppFileSchemeHandler)
 {
@@ -654,14 +692,14 @@ bool oFileSchemeHandlerCreate(threadsafe oFileSchemeHandler** _ppFileSchemeHandl
 
 bool oFileSchemeHandlerImpl::GetDesc(const oURIParts& _URIParts, oSTREAM_DESC* _pDesc) threadsafe
 {
-	oStringPath Path;
+	oStd::path_string Path;
 	oSystemURIPartsToPath(Path, _URIParts);
 	return oFileGetDesc(Path, _pDesc);
 }
 
 bool oFileSchemeHandlerImpl::Copy(const oURIParts& _Source, const oURIParts& _Destination, bool _Recursive) threadsafe
 {
-	oStringPath S, D;
+	oStd::path_string S, D;
 	oSystemURIPartsToPath(S, _Source);
 	oSystemURIPartsToPath(D, _Destination);
 	return oFileCopy(S, D, _Recursive);
@@ -669,7 +707,7 @@ bool oFileSchemeHandlerImpl::Copy(const oURIParts& _Source, const oURIParts& _De
 
 bool oFileSchemeHandlerImpl::Move(const oURIParts& _Source, const oURIParts& _Destination, bool _OverwriteDestination) threadsafe
 {
-	oStringPath S, D;
+	oStd::path_string S, D;
 	oSystemURIPartsToPath(S, _Source);
 	oSystemURIPartsToPath(D, _Destination);
 	return oFileMove(S, D, _OverwriteDestination);
@@ -677,7 +715,7 @@ bool oFileSchemeHandlerImpl::Move(const oURIParts& _Source, const oURIParts& _De
 
 bool oFileSchemeHandlerImpl::Delete(const oURIParts& _URIParts) threadsafe
 {
-	oStringPath Path;
+	oStd::path_string Path;
 	oSystemURIPartsToPath(Path, _URIParts);
 	return oFileDelete(Path);
 }
@@ -703,9 +741,9 @@ bool oFileSchemeHandlerImpl::CreateStreamWriter(const oURIParts& _URIParts, bool
 	return success;
 }
 
-bool oFileSchemeHandlerImpl::CreateStreamMonitor(const oURIParts& _URIParts, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor) threadsafe
+bool oFileSchemeHandlerImpl::CreateStreamMonitor(const oURIParts& _URIParts, const oSTREAM_MONITOR_DESC& _Desc, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor) threadsafe
 {
 	bool success = false;
-	oCONSTRUCT(_ppMonitor, oFileMonitorImpl(_URIParts, _OnEvent, &success));
+	oCONSTRUCT(_ppMonitor, oFileMonitorImpl(_URIParts, _Desc, _OnEvent, &success));
 	return success;
 }

@@ -24,8 +24,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oSurface.h>
-#include <oBasis/oAssert.h>
-#include <oBasis/oMacros.h>
+#include <oStd/assert.h>
+#include <oStd/macros.h>
 #include <oBasis/oMemory.h>
 #include <oBasis/oMath.h>
 #include <oBasis/oString.h>
@@ -33,7 +33,7 @@
 
 #define oCHECK_SURFACE_DESC(_Desc) \
 	oASSERT(greater_than_equal(_Desc.Dimensions, int3(1,1,1)), "invalid dimensions: [%d,%d,%d]", _Desc.Dimensions.x, _Desc.Dimensions.y, _Desc.Dimensions.z); \
-	oASSERT(_Desc.NumSlices == 1 || _Desc.Dimensions.z == 1, "NumSlices or Depth has to be 1 [%d,%d]", _Desc.NumSlices, _Desc.Dimensions.z);
+	oASSERT(_Desc.ArraySize == 1 || _Desc.Dimensions.z == 1, "ArraySize or Depth has to be 1 [%d,%d]", _Desc.ArraySize, _Desc.Dimensions.z);
 #define oCHECK_DIM(_Format, _Dim) oASSERT(_Dim >= oSurfaceFormatGetMinDimensions(_Format).x, "invalid dimension: %d", _Dim);
 #define oCHECK_DIM2(_Format, _Dim) oASSERT(greater_than_equal(_Dim, oSurfaceFormatGetMinDimensions(_Format)), "invalid dimensions: [%d,%d]", _Dim.x, _Dim.y);
 #define oCHECK_DIM3(_Format, _Dim) oASSERT(greater_than_equal(_Dim.xy, oSurfaceFormatGetMinDimensions(_Format)), "invalid dimensions: [%d,%d,%d]", _Dim.x, _Dim.y, _Dim.z);
@@ -63,7 +63,8 @@ enum oSURFACE_FORMAT_TRAIT
 	oSURFACE_IS_YUV = oSURFACE_IS_PLANAR<<1,
 	oSURFACE_PALETTED = oSURFACE_IS_YUV<<1,
 	oSURFACE_SUBSURFACE1_BIAS1 = oSURFACE_PALETTED<<1,
-	oSURFACE_SUBSURFACE1_BIAS2 = oSURFACE_SUBSURFACE1_BIAS1<<1,
+	oSURFACE_SUBSURFACE2_BIAS1 = oSURFACE_SUBSURFACE1_BIAS1<<1,
+	oSURFACE_SUBSURFACE3_BIAS1 = oSURFACE_SUBSURFACE2_BIAS1<<1,
 };
 
 struct FORMAT_DESC
@@ -131,7 +132,7 @@ static const BIT_SIZE kBS_3_4 = {4,4,4,0};
 static const BIT_SIZE kBS_2_4 = {4,4,0,0};
 static const BIT_SIZE kBS_1_4 = {4,0,0,0};
 
-static const oFourCC kFCC_UNK = oFCC('????');
+static const oStd::fourcc kFCC_UNK = oFCC('????');
 
 static const oSURFACE_SUBFORMATS_DESC kSFD_UNK = {oSURFACE_UNKNOWN, oSURFACE_UNKNOWN, oSURFACE_UNKNOWN, oSURFACE_UNKNOWN};
 static const oSURFACE_SUBFORMATS_DESC kSFD_R8_R8 = {oSURFACE_R8_UNORM, oSURFACE_R8_UNORM, oSURFACE_UNKNOWN, oSURFACE_UNKNOWN};
@@ -266,31 +267,33 @@ static const FORMAT_DESC sFormatDescs[] =
 	{ "B4G4R4A4_UNORM", oFCC('n4u '), k1_16, kSmallestMip, kBS_4_4, 4, 1, kSFD_UNK, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA },
 	{ "R8G8B8_UNORM", oFCC('c3u '), k3_8, kSmallestMip, kBS_3_8, 3, 1, kSFD_UNK, oSURFACE_IS_UNORM },
 	{ "B8G8R8_UNORM", oFCC('c3u '), k3_8, kSmallestMip, kBS_3_8, 3, 1, kSFD_UNK, oSURFACE_IS_UNORM },
-	{ "Y8_U8_V8_UNORM", oFCC('yuv8'), k1_8, kSmallestMipYUV, kBS_3_8, 3, 3, kSFD_R8_3, oSURFACE_IS_UNORM|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1 },
-	{ "Y8_A8_U8_V8_UNORM", oFCC('auv8'), k1_8, kSmallestMipYUV, kBS_3_8, 3, 4, kSFD_R8_4, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1 },
-	{ "YBC4_UBC4_VBC4_UNORM", oFCC('yuvb'), kBC_8, kSmallestMipYUV, kBS_4_8, 3, 3, kSFD_BC4_3, oSURFACE_IS_UNORM|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1 },
-	{ "YBC4_ABC4_UBC4_VBC4_UNORM", oFCC('auvb'), kBC_8, kSmallestMipYUV, kBS_4_8, 3, 4, kSFD_BC4_4, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1 },
+	{ "Y8_U8_V8_UNORM", oFCC('yuv8'), k1_8, kSmallestMipYUV, kBS_3_8, 3, 3, kSFD_R8_3, oSURFACE_IS_UNORM|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1|oSURFACE_SUBSURFACE2_BIAS1 },
+	{ "Y8_A8_U8_V8_UNORM", oFCC('auv8'), k1_8, kSmallestMipYUV, kBS_3_8, 3, 4, kSFD_R8_4, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE2_BIAS1|oSURFACE_SUBSURFACE3_BIAS1 },
+	{ "YBC4_UBC4_VBC4_UNORM", oFCC('yuvb'), kBC_8, kSmallestMipYUV, kBS_4_8, 3, 3, kSFD_BC4_3, oSURFACE_IS_BC|oSURFACE_IS_UNORM|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1|oSURFACE_SUBSURFACE2_BIAS1 },
+	{ "YBC4_ABC4_UBC4_VBC4_UNORM", oFCC('auvb'), kBC_8, kSmallestMipYUV, kBS_4_8, 3, 4, kSFD_BC4_4, oSURFACE_IS_BC|oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE2_BIAS1|oSURFACE_SUBSURFACE3_BIAS1 },
 	{ "Y8_U8V8_UNORM", oFCC('yv8u'), kYUV , kSmallestMipYUV, kBS_3_8, 3, 2, kSFD_R8_RG8, oSURFACE_IS_UNORM|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1 },
 	{ "Y8A8_U8V8_UNORM", oFCC('av8u'), kYAUV, kSmallestMipYUV, kBS_4_8, 4, 2, kSFD_RG8_RG8, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1 },
-	{ "YBC4_UVBC5_UNORM", oFCC('yvbu'), kYUV_BC, kSmallestMipYUV, kBS_3_8, 3, 2, kSFD_BC4_BC5, oSURFACE_IS_UNORM|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1 },
-	{ "YABC5_UVBC5_UNORM", oFCC('avbu'), kYAUV_BC, kSmallestMipYUV, kBS_4_8, 4, 2, kSFD_BC5_BC5, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1 },
+	{ "YBC4_UVBC5_UNORM", oFCC('yvbu'), kYUV_BC, kSmallestMipYUV, kBS_3_8, 3, 2, kSFD_BC4_BC5, oSURFACE_IS_BC|oSURFACE_IS_UNORM|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1 },
+	{ "YABC5_UVBC5_UNORM", oFCC('avbu'), kYAUV_BC, kSmallestMipYUV, kBS_4_8, 4, 2, kSFD_BC5_BC5, oSURFACE_IS_BC|oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1 },
 };
 static_assert(oCOUNTOF(sFormatDescs) == oSURFACE_NUM_FORMATS, "");
 
-const char* oAsString(oSURFACE_FORMAT _Format)
+namespace oStd {
+
+const char* as_string(const oSURFACE_FORMAT& _Format)
 {
 	return (_Format < oSURFACE_NUM_FORMATS) ? sFormatDescs[_Format].String : "UNKNOWN";
 }
 
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oSURFACE_FORMAT& _Format)
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oSURFACE_FORMAT& _Format)
 {
-	return oStrcpy(_StrDestination, _SizeofStrDestination, oAsString(_Format));
+	return oStrcpy(_StrDestination, _SizeofStrDestination, oStd::as_string(_Format));
 }
 
-bool oFromString(oSURFACE_FORMAT* _pFormat, const char* _StrSource)
+bool from_string(oSURFACE_FORMAT* _pFormat, const char* _StrSource)
 {
 	*_pFormat = oSURFACE_UNKNOWN;
-	for (size_t i = 0; i < oCOUNTOF(sFormatDescs); i++)
+	oFORI(i, sFormatDescs)
 	{
 		if (!oStricmp(_StrSource, sFormatDescs[i].String))
 		{
@@ -299,6 +302,22 @@ bool oFromString(oSURFACE_FORMAT* _pFormat, const char* _StrSource)
 		}
 	}
 	return false;
+}
+
+} // namespace oStd
+
+bool operator==(const oSURFACE_DESC& _A, const oSURFACE_DESC& _B)
+{
+	if(_A.Dimensions != _B.Dimensions)
+		return false;
+	if(_A.ArraySize != _B.ArraySize)
+		return false;
+	if(_A.Format != _B.Format)
+		return false;
+	if(_A.Layout != _B.Layout)
+		return false;
+
+	return true;
 }
 
 inline bool oSurfaceFormatHasTrait(oSURFACE_FORMAT _Format, oSURFACE_FORMAT_TRAIT _Trait)
@@ -348,10 +367,11 @@ int oSurfaceFormatGetNumSubformats(oSURFACE_FORMAT _Format)
 
 int oSurfaceFormatGetSubsampleBias(oSURFACE_FORMAT _Format, int _SubsurfaceIndex)
 {
-	if (_SubsurfaceIndex == 1 && _Format < oSURFACE_NUM_FORMATS)
+	if (_Format < oSURFACE_NUM_FORMATS)
 	{
-		if (sFormatDescs[_Format].Traits & oSURFACE_SUBSURFACE1_BIAS1) return 1;
-		if (sFormatDescs[_Format].Traits & oSURFACE_SUBSURFACE1_BIAS2) return 2;
+		if (_SubsurfaceIndex == 1 && sFormatDescs[_Format].Traits & oSURFACE_SUBSURFACE1_BIAS1) return 1;
+		if (_SubsurfaceIndex == 2 && sFormatDescs[_Format].Traits & oSURFACE_SUBSURFACE2_BIAS1) return 1;
+		if (_SubsurfaceIndex == 3 && sFormatDescs[_Format].Traits & oSURFACE_SUBSURFACE3_BIAS1) return 1;
 	}
 
 	return 0;
@@ -392,9 +412,24 @@ oSURFACE_FORMAT oSurfaceGetSubformat(oSURFACE_FORMAT _Format, int _SubsurfaceInd
 		return oSURFACE_UNKNOWN;
 
 	if (!!(sFormatDescs[_Format].Traits & oSURFACE_IS_YUV))
-		return sFormatDescs[_Format].Subformats.Format[max(_SubsurfaceIndex, 1)];
+		return sFormatDescs[_Format].Subformats.Format[_SubsurfaceIndex];
 
 	return _Format;
+}
+
+oStd::fourcc oSurfaceFormatToFourcc(oSURFACE_FORMAT _Format)
+{
+	return (_Format < oSURFACE_NUM_FORMATS) ? sFormatDescs[_Format].FourCC : oStd::fourcc(0);
+}
+
+oSURFACE_FORMAT oSurfaceFormatFromFourcc(oStd::fourcc _FourCC)
+{
+	oFORI(i, sFormatDescs)
+	{
+		if (_FourCC == sFormatDescs[i].FourCC)
+			return (oSURFACE_FORMAT)i;
+	}
+	return oSURFACE_UNKNOWN;
 }
 
 int oSurfaceCalcNumMips(bool _HasMips, const int3& _Mip0Dimensions)
@@ -422,7 +457,7 @@ int oSurfaceMipCalcDimension(oSURFACE_FORMAT _Format, int _Mip0Dimension, int _M
 	oASSERT(_Format != oSURFACE_UNKNOWN, "Unknown surface format passed to CalcMipDimension");
 	const int subsampleBias = oSurfaceFormatGetSubsampleBias(_Format, _SubsurfaceIndex);
 	int d = max(1, _Mip0Dimension >> (_MipLevel + subsampleBias));
-	return oSurfaceFormatIsBlockCompressed(_Format) ? static_cast<int>(oByteAlign(d, 4)) : d;
+	return oSurfaceFormatIsBlockCompressed(_Format) ? static_cast<int>(oStd::byte_align(d, 4)) : d;
 }
 
 int2 oSurfaceMipCalcDimensions(oSURFACE_FORMAT _Format, const int2& _Mip0Dimensions, int _MipLevel, int _SubsurfaceIndex)
@@ -454,7 +489,7 @@ int oSurfaceMipCalcDimensionNPOT(oSURFACE_FORMAT _Format, int _Mip0Dimension, in
 	const int2 MinDimension = oSurfaceFormatGetMinDimensions(_Format);
 
 	int d = max(1, _Mip0Dimension >> (_MipLevel + MipLevelBias));
-	int NPOTDim = oSurfaceFormatIsBlockCompressed(NthSurfaceFormat) ? static_cast<int>(oByteAlign(d, 4)) : d;
+	int NPOTDim = oSurfaceFormatIsBlockCompressed(NthSurfaceFormat) ? static_cast<int>(oStd::byte_align(d, 4)) : d;
 
 	if (_SubsurfaceIndex == 0 && oSurfaceFormatGetSubsampleBias(_Format, 1) != 0)
 		NPOTDim = max(MinDimension.x, NPOTDim & ~(MinDimension.x-1)); // always even down to 2x2
@@ -491,11 +526,11 @@ int oSurfaceMipCalcRowSize(oSURFACE_FORMAT _Format, int _MipWidth, int _Subsurfa
 {
 	oCHECK_DIM(_Format, _MipWidth);
 	oASSERT(_Format != oSURFACE_UNKNOWN, "Unknown surface format passed to GetRowPitch");
-	int w = oSurfaceMipCalcDimension(_Format, _MipWidth);
+	int w = oSurfaceMipCalcDimension(_Format, _MipWidth, 0, _SubsurfaceIndex);
 	if (oSurfaceFormatIsBlockCompressed(_Format)) // because the atom is a 4x4 block
 		w /= 4;
 	const int s = oSurfaceFormatGetSize(_Format, _SubsurfaceIndex);
-	return oInt(oByteAlign(w * s, s));
+	return oInt(oStd::byte_align(w * s, s));
 }
 
 int oSurfaceMipCalcRowPitch(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel, int _SubsurfaceIndex)
@@ -540,7 +575,7 @@ int oSurfaceMipCalcRowPitch(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel, in
 int2 oSurfaceCalcDimensions(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceIndex)
 {
 	int2 sliceDimensions = oSurfaceSliceCalcDimensions(_SurfaceDesc, _SubsurfaceIndex);
-	return int2(sliceDimensions.x, sliceDimensions.y * _SurfaceDesc.NumSlices);
+	return int2(sliceDimensions.x, sliceDimensions.y * _SurfaceDesc.ArraySize);
 }
 
 int2 oSurfaceSliceCalcDimensions(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceIndex)
@@ -603,7 +638,7 @@ int oSurfaceMipCalcNumColumns(oSURFACE_FORMAT _Format, int _MipWidth, int _Subsu
 int oSurfaceMipCalcNumRows(oSURFACE_FORMAT _Format, int _MipHeight, int _SubsurfaceIndex)
 {
 	oCHECK_DIM(_Format, _MipHeight);
-	int heightInPixels = oSurfaceMipCalcDimensionNPOT(_Format, _MipHeight, _SubsurfaceIndex);
+	int heightInPixels = oSurfaceMipCalcDimensionNPOT(_Format, _MipHeight, 0, _SubsurfaceIndex);
 	return oSurfaceFormatIsBlockCompressed(_Format) ? __max(1, heightInPixels/4) : heightInPixels;
 }
 
@@ -611,6 +646,18 @@ int oSurfaceMipCalcSize(oSURFACE_FORMAT _Format, const int2& _MipDimensions, int
 {
 	oCHECK_DIM2(_Format, _MipDimensions);
 	return oInt(oSurfaceMipCalcRowSize(_Format, _MipDimensions, _SubsurfaceIndex) * oSurfaceMipCalcNumRows(_Format, _MipDimensions, _SubsurfaceIndex));
+}
+
+static int oSurfaceMipCalcOffset_Image(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel, int _SubsurfaceIndex)
+{
+	oASSERT(_MipLevel == 0, "oSURFACE_LAYOUT_IMAGE doesn't have mip levels");
+
+	oInt offset = 0;
+	for (int i = 0; i < _SubsurfaceIndex; i++)
+	{
+		offset += oStd::byte_align(oSurfaceCalcSize(_SurfaceDesc, i), oDEFAULT_MEMORY_ALIGNMENT);
+	}
+	return offset;
 }
 
 static int oSurfaceMipCalcOffset_Tight(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel, int _SubsurfaceIndex)
@@ -694,7 +741,7 @@ int oSurfaceMipCalcOffset(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel, int 
 
 	switch (_SurfaceDesc.Layout)
 	{
-		case oSURFACE_LAYOUT_IMAGE: return 0;
+		case oSURFACE_LAYOUT_IMAGE: return oSurfaceMipCalcOffset_Image(_SurfaceDesc, _MipLevel, _SubsurfaceIndex);
 		case oSURFACE_LAYOUT_TIGHT: return oSurfaceMipCalcOffset_Tight(_SurfaceDesc, _MipLevel, _SubsurfaceIndex);
 		case oSURFACE_LAYOUT_BELOW: return oSurfaceMipCalcOffset_Below(_SurfaceDesc, _MipLevel, _SubsurfaceIndex);
 		case oSURFACE_LAYOUT_RIGHT: return oSurfaceMipCalcOffset_Right(_SurfaceDesc, _MipLevel, _SubsurfaceIndex);
@@ -712,7 +759,7 @@ int oSurfaceSliceCalcPitch(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceInd
 		case oSURFACE_LAYOUT_IMAGE:
 		case oSURFACE_LAYOUT_RIGHT:
 		case oSURFACE_LAYOUT_BELOW:
-			return oSurfaceMipCalcSize(_SurfaceDesc.Format, oSurfaceSliceCalcDimensions(_SurfaceDesc, _SubsurfaceIndex), _SubsurfaceIndex);
+			return oSurfaceMipCalcSize(_SurfaceDesc.Format, oSurfaceSliceCalcDimensions(_SurfaceDesc, 0), _SubsurfaceIndex);
 
 		case oSURFACE_LAYOUT_TIGHT:
 		{
@@ -741,23 +788,52 @@ int oSurfaceMipCalcDepthPitch(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel, 
 {
 	oCHECK_SURFACE_DESC(_SurfaceDesc);
 
-	int3 mipDimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, _MipLevel, _SubsurfaceIndex);
+	int3 mipDimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, _MipLevel, 0);
 	return oSurfaceMipCalcRowPitch(_SurfaceDesc, _MipLevel, _SubsurfaceIndex) * oSurfaceMipCalcNumRows(_SurfaceDesc.Format, mipDimensions.xy(), _SubsurfaceIndex);
 }
 
 int oSurfaceCalcSize(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceIndex)
 {
-	return oInt(oSurfaceSliceCalcPitch(_SurfaceDesc, _SubsurfaceIndex) * _SurfaceDesc.NumSlices);
+	if (_SubsurfaceIndex == oInvalid)
+	{
+		int size = 0;
+		const int nSurfaces = oSurfaceFormatGetNumSubformats(_SurfaceDesc.Format);
+		for (int i = 0; i < nSurfaces; i++)
+		{
+			// oStd::byte_align is needed here to avoid a memory corruption crash. I'm not sure why it is needed, but I think that size is a memory
+			// structure containing all surface sizes, so they are all expected to be aligned.
+			size += oStd::byte_align(oSurfaceCalcSize(_SurfaceDesc, i), oDEFAULT_MEMORY_ALIGNMENT);
+		}
+		return size;
+	}
+	else
+	{
+		return oSurfaceSliceCalcPitch(_SurfaceDesc, _SubsurfaceIndex) * _SurfaceDesc.ArraySize;
+	}
 }
 
 void oSurfaceSubresourceGetDesc(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, oSURFACE_SUBRESOURCE_DESC* _pSubresourceDesc)
 {
 	oCHECK_SURFACE_DESC(_SurfaceDesc);
 	int numMips = oSurfaceCalcNumMips(_SurfaceDesc.Layout, _SurfaceDesc.Dimensions);
-	oSurfaceSubresourceUnpack(_Subresource, numMips, _SurfaceDesc.NumSlices, &_pSubresourceDesc->MipLevel, &_pSubresourceDesc->Slice, &_pSubresourceDesc->Subsurface);
-	oASSERT(_pSubresourceDesc->Slice < _SurfaceDesc.NumSlices, "Slice index is out of range for the specified surface");
+	oSurfaceSubresourceUnpack(_Subresource, numMips, _SurfaceDesc.ArraySize, &_pSubresourceDesc->MipLevel, &_pSubresourceDesc->ArraySlice, &_pSubresourceDesc->Subsurface);
+	oASSERT(_pSubresourceDesc->ArraySlice < _SurfaceDesc.ArraySize, "Slice index is out of range for the specified surface");
 	oASSERT(_pSubresourceDesc->Subsurface < oSurfaceFormatGetNumSubformats(_SurfaceDesc.Format), "Subsurface index is out of range for the specified surface");
 	_pSubresourceDesc->Dimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, _pSubresourceDesc->MipLevel, _pSubresourceDesc->Subsurface);
+}
+
+void oSurfaceSubresourceGetDesc(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceIndex, int _MipLevel, oSURFACE_DESC* _pSurfaceDesc, int2* _pByteDimensions)
+{
+	_pSurfaceDesc->Dimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, _MipLevel, _SubsurfaceIndex);
+	_pSurfaceDesc->ArraySize = _SurfaceDesc.ArraySize;
+	_pSurfaceDesc->Format = oSurfaceGetSubformat(_SurfaceDesc.Format, _SubsurfaceIndex);
+	_pSurfaceDesc->Layout = _SurfaceDesc.Layout;
+
+	if (_pByteDimensions)
+	{
+		_pByteDimensions->x = oSurfaceMipCalcRowSize(_pSurfaceDesc->Format, _pSurfaceDesc->Dimensions);
+		_pByteDimensions->y = oSurfaceMipCalcNumRows(_pSurfaceDesc->Format, _pSurfaceDesc->Dimensions);
+	}
 }
 
 int oSurfaceSubresourceCalcSize(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_SUBRESOURCE_DESC& _SubresourceDesc)
@@ -774,8 +850,8 @@ int oSurfaceSubresourceCalcOffset(const oSURFACE_DESC& _SurfaceDesc, int _Subres
 	int offset = oSurfaceMipCalcOffset(_SurfaceDesc, ssrd.MipLevel, ssrd.Subsurface);
 	if (_DepthIndex)
 		offset += oSurfaceMipCalcDepthPitch(_SurfaceDesc, ssrd.MipLevel, ssrd.Subsurface) * _DepthIndex;
-	else if (ssrd.Slice)
-		offset += oSurfaceSliceCalcPitch(_SurfaceDesc, ssrd.Subsurface) * ssrd.Slice;
+	else if (ssrd.ArraySlice)
+		offset += oSurfaceSliceCalcPitch(_SurfaceDesc, ssrd.Subsurface) * ssrd.ArraySlice;
 
 	return offset;
 }
@@ -893,7 +969,7 @@ int oSurfaceCalcTile(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDimensi
 {
 	oASSERT_PLANAR_SUPPORT(_SurfaceDesc.Format);
 
-	int mipStartTileID = oSurfaceMipCalcStartTileID(_SurfaceDesc, _TileDimensions, _InOutTileDesc.MipLevel, _InOutTileDesc.Slice);
+	int mipStartTileID = oSurfaceMipCalcStartTileID(_SurfaceDesc, _TileDimensions, _InOutTileDesc.MipLevel, _InOutTileDesc.ArraySlice);
 	int2 PositionInTiles = _InOutTileDesc.Position / _TileDimensions;
 	int2 mipDim = oSurfaceMipCalcDimensions(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.xy(), _InOutTileDesc.MipLevel);
 	int2 mipDimInTiles = oSurfaceMipCalcDimensionsInTiles(mipDim, _TileDimensions);
@@ -907,8 +983,8 @@ void oSurfaceTileGetDesc(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDim
 	oASSERT_PLANAR_SUPPORT(_SurfaceDesc.Format);
 
 	int numTilesPerSlice = oSurfaceSliceCalcNumTiles(_SurfaceDesc, _TileDimensions);
-	_pTileDesc->Slice = _TileID / numTilesPerSlice;
-	oASSERT(_pTileDesc->Slice < _SurfaceDesc.NumSlices, "TileID is out of range for the specified mip dimensions");
+	_pTileDesc->ArraySlice = _TileID / numTilesPerSlice;
+	oASSERT(_pTileDesc->ArraySlice < _SurfaceDesc.ArraySize, "TileID is out of range for the specified mip dimensions");
 
 	int firstTileInMip = 0;
 	int3 mipDim = _SurfaceDesc.Dimensions;
@@ -957,14 +1033,35 @@ bool oShouldUseLargePages(const int3& _SurfaceDimensions, oSURFACE_FORMAT _Forma
 		return false;
 }
 
+oSURFACE_FORMAT oSurfaceGetClosestNV12Format(oSURFACE_FORMAT _Format)
+{
+	if (oSurfaceFormatGetNumSubformats(_Format) == 2) //already nv12
+		return _Format;
+
+	if (oSurfaceFormatGetNumSubformats(_Format) == 3) //no alpha
+	{
+		if (oSurfaceFormatIsBlockCompressed(_Format))
+			return oSURFACE_YBC4_UVBC5_UNORM;
+		else
+			return oSURFACE_Y8_U8V8_UNORM;
+	}
+	else //alpha
+	{
+		if (oSurfaceFormatIsBlockCompressed(_Format))
+			return oSURFACE_YABC5_UVBC5_UNORM;
+		else
+			return oSURFACE_Y8A8_U8V8_UNORM;
+	}
+}
+
 void oSurfaceCalcMappedSubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, int _DepthIndex, const void* _pSurface, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMappedSubresource, int2* _pByteDimensions)
 {
 	oSURFACE_SUBRESOURCE_DESC ssrd;
 	oSurfaceSubresourceGetDesc(_SurfaceDesc, _Subresource, &ssrd);
 
-	_pMappedSubresource->RowPitch = oSurfaceMipCalcRowPitch(_SurfaceDesc, ssrd.MipLevel);
-	_pMappedSubresource->DepthPitch = oSurfaceMipCalcDepthPitch(_SurfaceDesc, ssrd.MipLevel);
-	_pMappedSubresource->pData = oByteAdd(_pSurface, oSurfaceSubresourceCalcOffset(_SurfaceDesc, _Subresource, _DepthIndex));
+	_pMappedSubresource->RowPitch = oSurfaceMipCalcRowPitch(_SurfaceDesc, ssrd.MipLevel, ssrd.Subsurface);
+	_pMappedSubresource->DepthPitch = oSurfaceMipCalcDepthPitch(_SurfaceDesc, ssrd.MipLevel, ssrd.Subsurface);
+	_pMappedSubresource->pData = oStd::byte_add(_pSurface, oSurfaceSubresourceCalcOffset(_SurfaceDesc, _Subresource, _DepthIndex));
 
 	if (_pByteDimensions)
 		*_pByteDimensions = oSurfaceMipCalcByteDimensions(_SurfaceDesc.Format, ssrd.Dimensions.xy(), ssrd.Subsurface);
@@ -1003,4 +1100,311 @@ void oSurfaceCopySubresource(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_C
 		oMemcpy2dVFlip(_DstMap->pData, _DstMap->RowPitch, _SrcMap.pData, _SrcMap.RowPitch, _SurfaceDesc.Dimensions.x*oSurfaceFormatGetSize(_SurfaceDesc.Format), _SurfaceDesc.Dimensions.y);
 	else
 		oMemcpy2d(_DstMap->pData, _DstMap->RowPitch, _SrcMap.pData, _SrcMap.RowPitch, _SurfaceDesc.Dimensions.x*oSurfaceFormatGetSize(_SurfaceDesc.Format), _SurfaceDesc.Dimensions.y);
+}
+
+
+// @oooii-tony: This stuff might get refactored pretty soon...
+#include <oBasis/oError.h>
+
+void oSurfaceVisitPixel(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresource, const oFUNCTION<void(const void* _pPixel)>& _Visitor)
+{
+	const void* pRow = _MappedSubresource.pData;
+	const void* pEnd = oStd::byte_add(pRow, _SurfaceDesc.Dimensions.y * _MappedSubresource.RowPitch); // should this be depth/slice pitch?
+	const int FormatSize = oSurfaceFormatGetSize(_SurfaceDesc.Format);
+	for (; pRow < pEnd; pRow = oStd::byte_add(pRow, _MappedSubresource.RowPitch))
+	{
+		const void* pPixel = pRow;
+		const void* pRowEnd = oStd::byte_add(pPixel, _SurfaceDesc.Dimensions.x * FormatSize);
+		for (; pPixel < pRowEnd; pPixel = oStd::byte_add(pPixel, FormatSize))
+			_Visitor(pPixel);
+	}
+}
+
+void oSurfaceVisitPixel(const oSURFACE_DESC& _SurfaceDescInput
+	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresourceInput1
+	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresourceInput2
+	, const oSURFACE_DESC& _SurfaceDescOutput
+	, oSURFACE_MAPPED_SUBRESOURCE& _MappedSubresourceOutput
+	, const oFUNCTION<void(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut)>& _Visitor)
+{
+	oASSERT(_SurfaceDescInput.Dimensions == _SurfaceDescOutput.Dimensions, "Dimensions mismatch In(%dx%d) != Out(%dx%d)", _SurfaceDescInput.Dimensions.x, _SurfaceDescInput.Dimensions.y, _SurfaceDescOutput.Dimensions.x, _SurfaceDescOutput.Dimensions.y);
+
+	const void* pRow1 = _MappedSubresourceInput1.pData;
+	const void* pRow2 = _MappedSubresourceInput2.pData;
+	const void* pEnd1 = oStd::byte_add(pRow1, _SurfaceDescInput.Dimensions.y * _MappedSubresourceInput1.RowPitch);
+	void* pRowOut = _MappedSubresourceOutput.pData;
+	const int InputFormatSize = oSurfaceFormatGetSize(_SurfaceDescInput.Format);
+	const int OutputFormatSize = oSurfaceFormatGetSize(_SurfaceDescOutput.Format);
+	while (pRow1 < pEnd1)
+	{
+		const void* pPixel1 = pRow1;
+		const void* pPixel2 = pRow2;
+		const void* pRowEnd1 = oStd::byte_add(pPixel1, _SurfaceDescInput.Dimensions.x * InputFormatSize);
+		void* pOutPixel = pRowOut;
+		while (pPixel1 < pRowEnd1)
+		{
+			_Visitor(pPixel1, pPixel2, pOutPixel);
+			pPixel1 = oStd::byte_add(pPixel1, InputFormatSize);
+			pPixel2 = oStd::byte_add(pPixel2, InputFormatSize);
+			pOutPixel = oStd::byte_add(pOutPixel, OutputFormatSize);
+		}
+
+		pRow1 = oStd::byte_add(pRow1, _MappedSubresourceInput1.RowPitch);
+		pRow2 = oStd::byte_add(pRow2, _MappedSubresourceInput2.RowPitch);
+		pRowOut = oStd::byte_add(pRowOut, _MappedSubresourceOutput.RowPitch);
+	}
+}
+
+static void AbsDiffR8toR8(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut, uint* _pSum, uint* _pSquaredSum)
+{
+	const uchar* p1 = (const uchar*)_pPixel1;
+	const uchar* p2 = (const uchar*)_pPixel2;
+	uchar absDiff = oUChar(abs(*p1 - *p2));
+	oStd::atomic_fetch_add(_pSum, (uint)absDiff);
+	oStd::atomic_fetch_add(_pSquaredSum, (uint)absDiff*absDiff);
+	*(uchar*)_pPixelOut = absDiff;
+}
+
+static void AbsDiffB8G8R8toR8(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut, uint* _pSum, uint* _pSquaredSum)
+{
+	const uchar* p = (const uchar*)_pPixel1;
+	uchar b = *p++; uchar g = *p++; uchar r = *p++;
+	float L1 = oStd::color(r, g, b, 255).luminance();
+	p = (const uchar*)_pPixel2;
+	b = *p++; g = *p++; r = *p++;
+	float L2 = oStd::color(r, g, b, 255).luminance();
+	uchar absDiff = oUNORMAsUBYTE(abs(L1 - L2));
+	oStd::atomic_fetch_add(_pSum, (uint)absDiff);
+	oStd::atomic_fetch_add(_pSquaredSum, (uint)absDiff*absDiff);
+	*(uchar*)_pPixelOut = absDiff;
+}
+
+static void AbsDiffB8G8R8A8toR8(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut, uint* _pSum, uint* _pSquaredSum)
+{
+	const uchar* p = (const uchar*)_pPixel1;
+	uchar a = *p++; uchar b = *p++; uchar g = *p++; uchar r = *p++;
+	float L1 = oStd::color(r, g, b, a).luminance();
+	p = (const uchar*)_pPixel2;
+	a = *p++; b = *p++; g = *p++; r = *p++;
+	float L2 = oStd::color(r, g, b, a).luminance();
+	uchar absDiff = oUNORMAsUBYTE(abs(L1 - L2));
+	oStd::atomic_fetch_add(_pSum, (uint)absDiff);
+	oStd::atomic_fetch_add(_pSquaredSum, (uint)absDiff*absDiff);
+	*(uchar*)_pPixelOut = absDiff;
+}
+
+bool oSurfaceCalcAbsDiff(const oSURFACE_DESC& _SurfaceDescInput
+	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresourceInput1
+	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresourceInput2
+	, const oSURFACE_DESC& _SurfaceDescOutput
+	, oSURFACE_MAPPED_SUBRESOURCE& _MappedSubresourceOutput, float* _pRootMeanSquare, float* _pAverageDiff)
+{
+	oFUNCTION<void(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut)> Fn;
+
+	#define oIO(In, Out) (((In)<<16) | (Out))
+	
+	const int ID = oIO(_SurfaceDescInput.Format, _SurfaceDescOutput.Format);
+
+	uint Sum = 0, SquaredSum = 0;
+
+	switch (ID)
+	{
+		case oIO(oSURFACE_R8_UNORM, oSURFACE_R8_UNORM): Fn = oBIND(AbsDiffR8toR8, oBIND1, oBIND2, oBIND3, &Sum, &SquaredSum); break;
+		case oIO(oSURFACE_B8G8R8_UNORM, oSURFACE_R8_UNORM): Fn = oBIND(AbsDiffB8G8R8toR8, oBIND1, oBIND2, oBIND3, &Sum, &SquaredSum); break;
+		case oIO(oSURFACE_B8G8R8A8_UNORM, oSURFACE_R8_UNORM): Fn = oBIND(AbsDiffB8G8R8A8toR8, oBIND1, oBIND2, oBIND3, &Sum, &SquaredSum); break;
+		default: return oErrorSetLast(std::errc::invalid_argument, "%s -> %s not supported", oStd::as_string(_SurfaceDescInput.Format), oStd::as_string(_SurfaceDescOutput.Format));
+	}
+
+	oSurfaceVisitPixel(_SurfaceDescInput, _MappedSubresourceInput1, _MappedSubresourceInput2, _SurfaceDescOutput, _MappedSubresourceOutput, Fn);
+
+	if (_pRootMeanSquare)
+		*_pRootMeanSquare = sqrt(Sum / float(_SurfaceDescInput.Dimensions.x * _SurfaceDescInput.Dimensions.y));
+
+	if (_pAverageDiff)
+		*_pAverageDiff = Sum / float(_SurfaceDescInput.Dimensions.x * _SurfaceDescInput.Dimensions.y);
+
+	return true;
+}
+
+static void RMSR8(const void* _pPixel, uint* _pAccum)
+{
+	const uchar& p = *(const uchar*)_pPixel;
+	uint p2 = p * p;
+	oStd::atomic_fetch_add(_pAccum, p2);
+}
+
+bool oSurfaceCalcRootMeanSquare(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresource, float* _pRootMeanSquare)
+{
+	oFUNCTION<void(const void* _pPixel)> Fn;
+
+	uint Accum = 0;
+
+	switch (_SurfaceDesc.Format)
+	{
+		case oSURFACE_R8_UNORM: Fn = oBIND(RMSR8, oBIND1, &Accum); break;
+		default: return oErrorSetLast(std::errc::invalid_argument, "%s not supported", oStd::as_string(_SurfaceDesc.Format));
+	}
+
+	oSurfaceVisitPixel(_SurfaceDesc, _MappedSubresource, Fn);
+	*_pRootMeanSquare = sqrt(Accum / float(_SurfaceDesc.Dimensions.x * _SurfaceDesc.Dimensions.y));
+
+	return true;
+}
+
+static void HistogramR8(const void* _pPixel, uint _Histogram[256])
+{
+	uchar c = *(const uchar*)_pPixel;
+	oStd::atomic_increment(&_Histogram[c]);
+}
+
+static void HistogramB8G8R8A8(const void* _pPixel, uint _Histogram[256])
+{
+	const uchar* p = (const uchar*)_pPixel;
+	uchar b = *p++; uchar g = *p++; uchar r = *p++;
+	uchar Index = oUNORMAsUBYTE(oStd::color(r, g, b, 255).luminance());
+	oStd::atomic_increment(&_Histogram[Index]);
+}
+
+bool oSurfaceCalcHistogram(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresource, uint _Histogram[256])
+{
+	memset(_Histogram, 0, sizeof(_Histogram));
+
+	oFUNCTION<void(const void* _pPixel)> Fn;
+	switch (_SurfaceDesc.Format)
+	{
+		case oSURFACE_R8_UNORM: Fn = oBIND(HistogramR8, oBIND1, _Histogram); break;
+
+		case oSURFACE_B8G8R8_UNORM:
+		case oSURFACE_B8G8R8A8_UNORM: Fn = oBIND(HistogramB8G8R8A8, oBIND1, _Histogram); break;
+
+		default: return oErrorSetLast(std::errc::invalid_argument, "%s not supported", oStd::as_string(_SurfaceDesc.Format));
+	}
+
+	oSurfaceVisitPixel(_SurfaceDesc, _MappedSubresource, Fn);
+	return true;
+}
+
+// @oooii-tony: This should probably be separate from the generic functional 
+// API because ideas like interface and oRefCount are separate.
+
+#include <oBasis/oRefCount.h>
+#include <oConcurrency/mutex.h>
+
+using namespace oConcurrency;
+
+struct oSurfaceImpl : oSurface
+{
+	oDEFINE_REFCOUNT_INTERFACE(RefCount);
+	oDEFINE_NOOP_QUERYINTERFACE();
+
+	oSurfaceImpl(const oSURFACE_DESC& _Desc, bool* _pSuccess);
+	~oSurfaceImpl();
+
+	void GetDesc(oSURFACE_DESC* _pDesc) const threadsafe override { *_pDesc = oThreadsafe(Desc); }
+
+	void UpdateSubresource(int _Subresource, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source) threadsafe override;
+	void UpdateSubresource(int _Subresource, const oSURFACE_BOX& _Box, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source) threadsafe override;
+
+	void Map(int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMapped, int2* _pByteDimensions) threadsafe override;
+	void Unmap(int _Subresource) threadsafe override;
+
+	void MapConst(int _Subresource, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMapped, int2* _pByteDimensions) const threadsafe override;
+	void UnmapConst(int _Subresource) const threadsafe override;
+
+private:
+	void* pData;
+	oSURFACE_DESC Desc;
+	oRefCount RefCount;
+	shared_mutex Mutex; // todo: separate locking mechanism to be per-subresource
+};
+
+oSurfaceImpl::oSurfaceImpl(const oSURFACE_DESC& _Desc, bool* _pSuccess)
+	: Desc(_Desc)
+	, pData(nullptr)
+{
+	*_pSuccess = false;
+
+	const int kBufferSize = oSurfaceCalcSize(_Desc);
+	pData = new char[kBufferSize];
+
+	if (!pData)
+	{
+		oErrorSetLast(std::errc::no_buffer_space);
+		return;
+	}
+
+	*_pSuccess = true;
+}
+
+bool oSurfaceCreate(const oSURFACE_DESC& _Desc, threadsafe oSurface** _ppSurface)
+{
+	// todo: make this alloc sizeof(oSurfaceImpl) + aligned(new char[buffersize]) to avoid the extra malloc.
+	bool success = false;
+	oCONSTRUCT(_ppSurface, oSurfaceImpl(_Desc, &success));
+	return success;
+}
+
+oSurfaceImpl::~oSurfaceImpl()
+{
+	if (pData)
+		delete [] pData;
+}
+
+void oSurfaceImpl::UpdateSubresource(int _Subresource, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source) threadsafe
+{
+	oSURFACE_MAPPED_SUBRESOURCE Dest;
+	int2 ByteDimensions;
+	oSurfaceCalcMappedSubresource(oThreadsafe(Desc), _Subresource, 0, pData, &Dest, &ByteDimensions);
+
+	lock_guard<shared_mutex> lock(Mutex);
+	oMemcpy2d(Dest.pData, Dest.RowPitch, _Source.pData, _Source.RowPitch, ByteDimensions.x, ByteDimensions.y);
+}
+
+void oSurfaceImpl::UpdateSubresource(int _Subresource, const oSURFACE_BOX& _Box, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source) threadsafe
+{
+	if (oSurfaceFormatIsBlockCompressed(Desc.Format) || Desc.Format == oSURFACE_R1_UNORM)
+		oTHROW(protocol_error, "block compressed formats not supported");
+
+	oSURFACE_MAPPED_SUBRESOURCE Dest;
+	int2 ByteDimensions;
+	oSurfaceCalcMappedSubresource(oThreadsafe(Desc), _Subresource, 0, pData, &Dest, &ByteDimensions);
+
+	const int NumRows = _Box.Bottom - _Box.Top;
+	int PixelSize = oSurfaceFormatGetSize(Desc.Format);
+	int RowSize = PixelSize * (_Box.Right - _Box.Left);
+
+	// Dest points at start of subresource, so offset to subrect of first slice
+	Dest.pData = oStd::byte_add(Dest.pData, (_Box.Top * Dest.RowPitch) + _Box.Left * PixelSize);
+
+	const void* pSource = _Source.pData;
+
+	lock_guard<shared_mutex> lock(Mutex);
+	for (uint slice = _Box.Front; slice < _Box.Back; slice++)
+	{
+		oMemcpy2d(Dest.pData, Dest.RowPitch, pSource, _Source.RowPitch, RowSize, NumRows);
+		Dest.pData = oStd::byte_add(Dest.pData, Dest.DepthPitch);
+		pSource = oStd::byte_add(pSource, _Source.DepthPitch);
+	}
+}
+
+void oSurfaceImpl::Map(int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMapped, int2* _pByteDimensions) threadsafe
+{
+	Mutex.lock();
+	oSurfaceCalcMappedSubresource(oThreadsafe(Desc), _Subresource, 0, pData, _pMapped, _pByteDimensions);
+}
+
+void oSurfaceImpl::Unmap(int _Subresource) threadsafe
+{
+	Mutex.unlock();
+}
+
+void oSurfaceImpl::MapConst(int _Subresource, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMapped, int2* _pByteDimensions) const threadsafe
+{
+	Mutex.lock_shared();
+	oSurfaceCalcMappedSubresource(oThreadsafe(Desc), _Subresource, 0, pData, _pMapped, _pByteDimensions);
+}
+
+void oSurfaceImpl::UnmapConst(int _Subresource) const threadsafe
+{
+	Mutex.unlock_shared();
 }

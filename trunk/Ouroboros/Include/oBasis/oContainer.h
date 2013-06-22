@@ -46,7 +46,7 @@ private:
 template<> struct oStdEquals<const char*>
 {	// compare strings rather than test pointer equality
 	oStdEquals(const char* _String) : String(_String) {}
-	bool operator()(const char* _String) { return !oStrcmp(_String, String); }
+	bool operator()(const char* _String) { return !strcmp(_String, String); }
 private:
 	oStdEquals() {}
 	const char* String;
@@ -74,7 +74,7 @@ private:
 template<> struct oStdEqualsI<const char*>
 {
 	oStdEqualsI(const char* _String) : String(_String) {}
-	bool operator()(const char* _String) { return !oStricmp(String, _String); }
+	bool operator()(const char* _String) { return !_stricmp(String, _String); }
 private:
 	oStdEqualsI() {}
 	const char* String;
@@ -84,25 +84,21 @@ template<> struct oStdEqualsI<const std::string>
 {
 	oStdEqualsI(const char* _String) : String(_String) {}
 	oStdEqualsI(const std::string& _String) : String(_String.c_str()) {}
-	bool operator()(const std::string& _String) { return !oStricmp(_String.c_str(), String); }
+	bool operator()(const std::string& _String) { return !_stricmp(_String.c_str(), String); }
 private:
 	oStdEqualsI() {}
 	const char* String;
 };
 
 template<typename T> struct oStdLess : public std::binary_function<T, T, bool> { bool operator()(const T& x, const T& y) const { return x < y; } };
-template<> struct oStdLess<const char*> { int operator()(const char* x, const char* y) const { return oStrcmp(x, y) < 0; } };
+template<> struct oStdLess<const char*> { int operator()(const char* x, const char* y) const { return strcmp(x, y) < 0; } };
 template<typename T> struct oStdLessI : public std::binary_function<T, T, bool> { bool operator()(const T& x, const T& y) const { return x < y; } };
-template<> struct oStdLessI<const char*> { bool operator()(const char* x, const char* y) const { return oStricmp(x, y) < 0; } };
-template<typename CHAR_T, size_t CAPACITY> struct oStdLess<oFixedString<CHAR_T, CAPACITY>> { bool operator()(const oFixedString<CHAR_T, CAPACITY>& x, const oFixedString<CHAR_T, CAPACITY>& y) const { return oStrcmp(x.c_str(), y.c_str()) < 0; } };
-template<typename CHAR_T, size_t CAPACITY> struct oStdLessI<oFixedString<CHAR_T, CAPACITY>> { bool operator()(const oFixedString<CHAR_T, CAPACITY>& x, const oFixedString<CHAR_T, CAPACITY>& y) const { return oStricmp(x.c_str(), y.c_str()) < 0; } };
+template<> struct oStdLessI<const char*> { bool operator()(const char* x, const char* y) const { return _stricmp(x, y) < 0; } };
 
 template<typename T> struct oStdEqualTo : public std::binary_function<T, T, bool> { bool operator()(const T& x, const T& y) const { return x == y; } };
-template<> struct oStdEqualTo<const char*> { int operator()(const char* x, const char* y) const { return !oStrcmp(x, y); } };
+template<> struct oStdEqualTo<const char*> { int operator()(const char* x, const char* y) const { return !strcmp(x, y); } };
 template<typename T> struct oStdEqualToI : public std::binary_function<T, T, bool> { bool operator()(const T& x, const T& y) const { return x == y; } };
-template<> struct oStdEqualToI<const char*> { bool operator()(const char* x, const char* y) const { return !oStricmp(x, y); } };
-template<typename CHAR_T, size_t CAPACITY> struct oStdEqualTo<oFixedString<CHAR_T, CAPACITY>> { bool operator()(const oFixedString<CHAR_T, CAPACITY>& x, const oFixedString<CHAR_T, CAPACITY>& y) const { return !oStrcmp(x.c_str(), y.c_str()); } };
-template<typename CHAR_T, size_t CAPACITY> struct oStdEqualToI<oFixedString<CHAR_T, CAPACITY>> { bool operator()(const oFixedString<CHAR_T, CAPACITY>& x, const oFixedString<CHAR_T, CAPACITY>& y) const { return !oStricmp(x.c_str(), y.c_str()); } };
+template<> struct oStdEqualToI<const char*> { bool operator()(const char* x, const char* y) const { return !_stricmp(x, y); } };
 
 // std::hash function that returns exactly the same value as passed in. This is 
 // useful where some other object caches hash values that then can be used 
@@ -112,9 +108,9 @@ template<typename T> struct oStdHash : std::hash<T> {}; // by default oStdHash i
 template<typename T> struct oStdHashI {}; // by default oStdHashI doesn't work with unordered containers, must specialize
 
 template<typename CHAR_T, size_t CAPACITY>
-struct oStdHash<oFixedString<CHAR_T, CAPACITY>> : public std::unary_function<oFixedString<CHAR_T, CAPACITY>, size_t>
+struct oStdHash<oStd::fixed_string<CHAR_T, CAPACITY>> : public std::unary_function<oStd::fixed_string<CHAR_T, CAPACITY>, size_t>
 {
-	size_t operator()( const oFixedString<CHAR_T, CAPACITY>& _Key) const
+	size_t operator()( const oStd::fixed_string<CHAR_T, CAPACITY>& _Key) const
 	{
 		uint128 Hash = oHash_murmur3_x64_128(_Key.c_str(), oUInt(_Key.length()));
 		return *(size_t*)&Hash;
@@ -122,11 +118,11 @@ struct oStdHash<oFixedString<CHAR_T, CAPACITY>> : public std::unary_function<oFi
 };
 
 template<typename CHAR_T, size_t CAPACITY>
-struct oStdHashI<oFixedString<CHAR_T, CAPACITY>> : public std::unary_function<oFixedString<CHAR_T, CAPACITY>, size_t>
+struct oStdHashI<oStd::fixed_string<CHAR_T, CAPACITY>> : public std::unary_function<oStd::fixed_string<CHAR_T, CAPACITY>, size_t>
 {
-	size_t operator()( const oFixedString<CHAR_T, CAPACITY>& _Key) const
+	size_t operator()( const oStd::fixed_string<CHAR_T, CAPACITY>& _Key) const
 	{
-		oFixedString<CHAR_T, CAPACITY> lower = _Key;
+		oStd::fixed_string<CHAR_T, CAPACITY> lower = _Key;
 		oToLower(lower);
 		uint128 Hash = oHash_murmur3_x64_128(lower.c_str(), oUInt(lower.length()));
 		return *(size_t*)&Hash;

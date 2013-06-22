@@ -32,7 +32,7 @@
 #include <oPlatform/Windows/oWindows.h>
 #define _NO_CVCONST_H
 #include <DbgHelp.h>
-#include <oBasis/oGUID.h>
+#include <oStd/guid.h>
 
 struct oWinDbgHelp : public oProcessSingleton<oWinDbgHelp>
 {
@@ -40,7 +40,7 @@ struct oWinDbgHelp : public oProcessSingleton<oWinDbgHelp>
 	// needed to report callstack information. Wow this is a lot of redundant typing,
 	// is there no better way? Well, it's all typed-out now.
 
-	// oAsString() implemented for SymTagEnum.
+	// oStd::as_string() implemented for SymTagEnum.
 
 	// NOTE: ModBase/BaseOfDll and GetModuleHandle() are all the same thing.
 

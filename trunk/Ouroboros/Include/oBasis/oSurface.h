@@ -61,8 +61,13 @@
 // so be careful to use these concepts separately because there can be 
 // significant padding between scanlines.
 
-// SLICE: A mip chain arranged in an accessible way (see oSURFACE_LAYOUT). A 
-// slice can represent one mip chain in a texture array or a face of a cube map.
+// SLICE: A mip level arranged in an accessible way. Basically inside the buffer
+// of a mip level is an array of regions organized only by memory offset. This
+// is different than an array because an array contains mip chains, so is on the
+// "outside". Slices are on the "inside" of containment because there can be a 
+// slice component at each mip level.
+
+// ARRAY: A series of mip chains (See SLICE for contrast).
 
 // SUBRESOURCE: an index into the repeating pattern of slices that contain mip
 // chains. This encapsulates two indices into which is often more convenient
@@ -83,11 +88,14 @@
 #ifndef oSurface_h
 #define oSurface_h
 
-#include <oBasis/oFourCC.h>
-#include <oBasis/oByte.h>
+#include <oStd/byte.h>
+#include <oStd/fourcc.h>
+#include <oStd/function.h>
 #include <oBasis/oInt.h>
 #include <oBasis/oInvalid.h>
 #include <oBasis/oMathTypes.h>
+
+static const int oSURFACE_MAX_NUM_SUBSURFACES = 4;
 
 enum oSURFACE_FORMAT
 {
@@ -266,23 +274,25 @@ enum oSURFACE_LAYOUT
 struct oSURFACE_DESC
 {
 	oSURFACE_DESC()
-		: Dimensions(oInvalid, oInvalid, oInvalid)
-		, NumSlices(1)
+		: Layout(oSURFACE_LAYOUT_IMAGE)
 		, Format(oSURFACE_UNKNOWN)
-		, Layout(oSURFACE_LAYOUT_IMAGE)
+		, ArraySize(1)
+		, Dimensions(oInvalid, oInvalid, oInvalid)
 	{}
 
-	int3 Dimensions;
-	int NumSlices;
-	oSURFACE_FORMAT Format;
 	oSURFACE_LAYOUT Layout;
+	oSURFACE_FORMAT Format;
+	int ArraySize;
+	int3 Dimensions;
 };
+
+bool operator==(const oSURFACE_DESC& _A, const oSURFACE_DESC& _B);
 
 struct oSURFACE_SUBRESOURCE_DESC
 {
 	int3 Dimensions;
 	int MipLevel;
-	int Slice;
+	int ArraySlice;
 	int Subsurface;
 };
 
@@ -290,7 +300,7 @@ struct oSURFACE_TILE_DESC
 {
 	int2 Position;
 	int MipLevel;
-	int Slice;
+	int ArraySlice;
 };
 
 struct oSURFACE_MAPPED_SUBRESOURCE
@@ -299,6 +309,47 @@ struct oSURFACE_MAPPED_SUBRESOURCE
 	unsigned int RowPitch;
 	unsigned int DepthPitch;
 };
+
+struct oSURFACE_BOX
+{
+	oSURFACE_BOX()
+		: Left(0)
+		, Right(0)
+		, Top(0)
+		, Bottom(1)
+		, Front(0)
+		, Back(1)
+	{}
+
+	oSURFACE_BOX(uint _Left, uint _Right, uint _Top, uint _Bottom, uint _Front = 0, uint _Back = 1)
+		: Left(_Left)
+		, Right(_Right)
+		, Top(_Top)
+		, Bottom(_Bottom)
+		, Front(_Front)
+		, Back(_Back)
+	{}
+
+	// Convenience when an oSURFACE_BOX is required, but the data is 
+	// 1-dimensional.
+	oSURFACE_BOX(uint _Width)
+		: Left(0)
+		, Right(_Width)
+		, Top(0)
+		, Bottom(1)
+		, Front(0)
+		, Back(1)
+	{}
+
+	uint Left;
+	uint Right;
+	uint Top;
+	uint Bottom;
+	uint Front;
+	uint Back;
+};
+
+inline bool oSurfaceBoxIsEmpty(const oSURFACE_BOX& _Box) { return _Box.Left == _Box.Right || _Box.Top == _Box.Bottom || _Box.Front == _Box.Back; }
 
 struct oSURFACE_CONST_MAPPED_SUBRESOURCE
 {
@@ -321,11 +372,26 @@ struct oSURFACE_CONST_MAPPED_SUBRESOURCE
 	unsigned int DepthPitch;
 };
 
+#include <oBasis/oInterface.h>
+
+interface oSurface : oInterface
+{
+	virtual void GetDesc(oSURFACE_DESC* _pDesc) const threadsafe = 0;
+
+	virtual void UpdateSubresource(int _Subresource, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source) threadsafe = 0;
+	virtual void UpdateSubresource(int _Subresource, const oSURFACE_BOX& _Box, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source) threadsafe = 0;
+
+	virtual void Map(int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMapped, int2* _pByteDimensions) threadsafe = 0;
+	virtual void Unmap(int _Subresource) threadsafe = 0;
+	
+	virtual void MapConst(int _Subresource, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMapped, int2* _pByteDimensions) const threadsafe = 0;
+	virtual void UnmapConst(int _Subresource) const threadsafe = 0;
+};
+
+bool oSurfaceCreate(const oSURFACE_DESC& _Desc, threadsafe oSurface** _ppSurface);
+
 // _____________________________________________________________________________
 // oSURFACE_FORMAT introspection
-
-// oAsString returns string form of enum. oToString does the same to a buffer,
-// and oFromString matches an enum string to its value.
 
 // Returns true if the specified format is a block-compressed format.
 bool oSurfaceFormatIsBlockCompressed(oSURFACE_FORMAT _Format);
@@ -390,11 +456,11 @@ oSURFACE_FORMAT oSurfaceGetSubformat(oSURFACE_FORMAT _Format, int _SubsurfaceInd
 // Most formats for data types have a fourcc that is unique at least amongst 
 // other oSURFACE_FORMATs. This is useful for serialization where you want 
 // something a bit more version-stable than an enum value.
-oFourCC oSurfaceFormatToFourCC(oSURFACE_FORMAT _Format);
+oStd::fourcc oSurfaceFormatToFourcc(oSURFACE_FORMAT _Format);
 
-// Convert an oFourCC as returned from oSurfaceFormatToFourCC to its associated 
+// Convert an oStd::fourcc as returned from oSurfaceFormatToFourCC to its associated 
 // oSURFACE_FORMAT.
-oSURFACE_FORMAT oSurfaceFormatFromFourCC(oFourCC _FourCC);
+oSURFACE_FORMAT oSurfaceFormatFromFourcc(oStd::fourcc _FourCC);
 
 // _____________________________________________________________________________
 // Mip Level (1 2D plane/slice, a simple image) introspection
@@ -496,7 +562,7 @@ int oSurfaceMipCalcNumTiles(const int3& _MipDimensions, const int2& _TileDimensi
 // pitch is the number of bytes for the total mip chain of one of those textures.
 // This is the same as calculating the size of a mip page as described by 
 // oSURFACE_LAYOUT.
-// For 3d textures, make sure that NumSlices is set to 1 and use Depth to 
+// For 3d textures, make sure that ArraySize is set to 1 and use Depth to 
 // supply the size in the 3rd dimension.
 int oSurfaceSliceCalcPitch(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceIndex = 0);
 
@@ -504,16 +570,17 @@ int oSurfaceSliceCalcPitch(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceInd
 // slice.
 int oSurfaceSliceCalcNumTiles(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDimensions);
 
-// Calculates the size for a total buffer of 1d/2d/3d/cube textures by summing the 
-// various mip chains, then multiplying it by the number of slices. 
-// 3d textures need to have NumSlices set to 1.
-// All other texture types need to have Dimensions.z set to 1.
-// For more clarity on the difference between NumSlices and Depth see:
-// http://www.cs.umbc.edu/~olano/s2006c03/ch02.pdf
-// where it's clear that when a first mip level for a 3d texture is (4,3,5) that 
-// the next mip level is (2,1,2) and the next (1,1,1)
-// Whereas NumSlices set to 5 would mean: 5*(4,3), 5*(2,1), 5*(1,1)
-int oSurfaceCalcSize(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceIndex = 0);
+// Calculates the size for a total buffer of 1d/2d/3d/cube textures by summing 
+// the  various mip chains, then multiplying it by the number of slices. 
+// Optionally you can supply a subsurface index to limit the size calculation to 
+// that subsurface only. 3D textures need to have ArraySize set to 1. All other 
+// texture types need to have Dimensions.z set to 1. For more clarity on the 
+// difference between ArraySize and Depth see:
+// http://www.cs.umbc.edu/~olano/s2006c03/ch02.pdf where it is clear that when a 
+// first mip level for a 3d texture is (4,3,5) that  the next mip level is 
+// (2,1,2) and the next (1,1,1) whereas ArraySize set to 5 would mean: 5*(4,3), 
+// 5*(2,1), 5*(1,1).
+int oSurfaceCalcSize(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceIndex = oInvalid);
 
 // Calculates the dimensions you would need for an oImage to fit this surface
 // natively and in its entirety.
@@ -529,15 +596,21 @@ int2 oSurfaceSliceCalcDimensions(const oSURFACE_DESC& _SurfaceDesc, int _Subsurf
 // To simplify the need for much of the above API, interfaces should be 
 // developed that take a subresource id and internally use these API to
 // translate that into the proper byte locations and sizes. 
-inline int oSurfaceCalcSubresource(int _MipLevel, int _SliceIndex, int _SubsurfaceIndex, int _NumMips, int _NumSlices) { return _MipLevel + (_SliceIndex * _NumMips) + (_SubsurfaceIndex * _NumMips * _NumSlices); }
+inline int oSurfaceCalcSubresource(int _MipLevel, int _ArraySliceIndex, int _SubsurfaceIndex, int _NumMips, int _NumArraySlices) { return _MipLevel + (_ArraySliceIndex * _NumMips) + (_SubsurfaceIndex * _NumMips * _NumArraySlices); }
 
 // Converts _Subresource back to its mip level and slice as long as the num mips
 // in the mip chain is specified.
-inline void oSurfaceSubresourceUnpack(int _Subresource, int _NumMips, int _NumSlices, int* _pMipLevel, int* _pSliceIndex, int* _pSubsurfaceIndex) { *_pMipLevel = _Subresource % _NumMips; *_pSliceIndex = (_Subresource / _NumMips) % _NumSlices; *_pSubsurfaceIndex = _Subresource / (_NumMips * _NumSlices); }
+inline void oSurfaceSubresourceUnpack(int _Subresource, int _NumMips, int _NumArraySlices, int* _pMipLevel, int* _pArraySliceIndex, int* _pSubsurfaceIndex) { *_pMipLevel = _Subresource % _NumMips; *_pArraySliceIndex = (_Subresource / _NumMips) % _NumArraySlices; *_pSubsurfaceIndex = _Subresource / (_NumMips * _NumArraySlices); }
 
 // Fills the subresource desc with the dimensions and mip information for a 
 // given subresource.
 void oSurfaceSubresourceGetDesc(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, oSURFACE_SUBRESOURCE_DESC* _pSubresourceDesc);
+
+// Returns an oSURFACE_DESC for the nth subsurfaces miplevel
+// Optionally also calculate the byte dimensions for the specified subresource
+// i.e. the width in bytes to copy (different than pitch) and number of rows of 
+// that width to copy.
+void oSurfaceSubresourceGetDesc(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceIndex, int _MipLevel, oSURFACE_DESC* _pSurfaceDesc, int2* _pByteDimensions);
 
 // Returns the number of bytes required to contain the subresource (mip level
 // from a particular slice) when what you got is a subresource as returned from
@@ -590,6 +663,9 @@ bool oShouldUseLargePages(const int3& _SurfaceDimensions, oSURFACE_FORMAT _Forma
 // _____________________________________________________________________________
 // Misc.
 
+// Given a surface format, determine the NV12 format that comes closest to it
+oSURFACE_FORMAT oSurfaceGetClosestNV12Format(oSURFACE_FORMAT _Format);
+
 // given the surface desc, a subresource into the surface, and the base pointer
 // to the surface, this will return a populated oSURFACE_MAPPED_SUBRESOURCE or 
 // an oSURFACE_CONST_MAPPED_SUBRESOURCE. _pByteDimensions is optional and if 
@@ -607,6 +683,46 @@ void oSurfaceCopySubresource(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_C
 
 // For 3d textures a mapped subresource contains all depth slices at that mip level,
 // this function will output the data pointer adjusted for the requested depth index.
-inline void oSurfaceMappedSubresourceOffsetDepthIndex(const oSURFACE_MAPPED_SUBRESOURCE& _MappedSubresource, int _DepthIndex, void** _pMappedSubResourceData) { *_pMappedSubResourceData = oByteAdd(_MappedSubresource.pData, _MappedSubresource.DepthPitch, _DepthIndex); }
+inline void oSurfaceMappedSubresourceOffsetDepthIndex(const oSURFACE_MAPPED_SUBRESOURCE& _MappedSubresource, int _DepthIndex, void** _pMappedSubResourceData) { *_pMappedSubResourceData = oStd::byte_add(_MappedSubresource.pData, _MappedSubresource.DepthPitch, _DepthIndex); }
+
+// _____________________________________________________________________________
+// Heavier-weight util functions that might need to be broken out into their own
+// headers, but there's not enough to do that yet...
+
+// Calls the visitor on each pixel. The specified visitor should remain in sync
+// with the type and size of surface passed.
+void oSurfaceVisitPixel(const oSURFACE_DESC& _SurfaceDesc
+	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresource
+	, const oFUNCTION<void(const void* _pPixel)>& _Visitor);
+
+void oSurfaceVisitPixel(const oSURFACE_DESC& _SurfaceDescInput
+	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresourceInput1
+	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresourceInput2
+	, const oSURFACE_DESC& _SurfaceDescOutput
+	, oSURFACE_MAPPED_SUBRESOURCE& _MappedSubresourceOutput
+	, const oFUNCTION<void(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut)>& _Visitor);
+
+// Fills the specified array with the number of pixels at the specified 
+// luminance. If the format is single-channel, the value is binned into 256 and 
+// used as luminance.
+
+// Calculates Out = abs(Input1 - Input2) for each pixel. This also returns the 
+// root mean square ( sqrt(sum(absdiff*absdiff) / numPixels ) and average 
+// difference ( sum(absdiff) / numPixels ).
+bool oSurfaceCalcAbsDiff(const oSURFACE_DESC& _SurfaceDescInput
+	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresourceInput1
+	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresourceInput2
+	, const oSURFACE_DESC& _SurfaceDescOutput
+	, oSURFACE_MAPPED_SUBRESOURCE& _MappedSubresourceOutput
+	, float* _pRootMeanSquare = nullptr
+	, float* _pAverageDiff = nullptr);
+
+// Goes through an image that should be the result of an absolute difference 
+// between two other images and calculates the root mean square of the values.
+bool oSurfaceCalcRootMeanSquare(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresource, float* _pRootMeanSquare);
+
+// Fills the specified oSurfaceHistogram with counts for 8-bit values for each
+// channel
+bool oSurfaceCalcHistogram(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresource, uint _Histogram[256]);
 
 #endif

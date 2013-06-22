@@ -31,7 +31,7 @@
 #define oModule_h
 
 #include <oBasis/oStddef.h>
-#include <oBasis/oFixedString.h>
+#include <oStd/fixed_string.h>
 #include <oBasis/oVersion.h>
 
 oDECLARE_HANDLE(oHMODULE);
@@ -59,6 +59,7 @@ enum oMODULE_TYPE
 	oMODULE_DRV_SOUND,
 	oMODULE_DRV_SYSTEM,
 };
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oMODULE_TYPE)
 
 struct oMODULE_DESC
 {
@@ -71,14 +72,14 @@ struct oMODULE_DESC
 		, IsSpecialBuild(false)
 	{}
 
-	oStringM CompanyName;
-	oStringM Description;
-	oStringM ProductName;
-	oStringM Copyright;
-	oStringM OriginalFilename;
-	oStringM Comments;
-	oStringM PrivateBuild;
-	oStringM SpecialBuild;
+	oStd::mstring CompanyName;
+	oStd::mstring Description;
+	oStd::mstring ProductName;
+	oStd::mstring Copyright;
+	oStd::mstring OriginalFilename;
+	oStd::mstring Comments;
+	oStd::mstring PrivateBuild;
+	oStd::mstring SpecialBuild;
 	oVersion FileVersion;
 	oVersion ProductVersion;
 	oMODULE_TYPE Type;
@@ -88,8 +89,6 @@ struct oMODULE_DESC
 	bool IsPrivateBuild;
 	bool IsSpecialBuild;
 };
-
-const char* oAsString(const oMODULE_TYPE& _Type);
 
 // Give this a lib to load, and a list of strings of functions to find, and this
 // function will return a handle to the lib and a list of resolved interfaces.
@@ -121,7 +120,7 @@ oHMODULE oModuleGetCurrent();
 // _hModule is zero, then the current module will be used.
 char* oModuleGetName(char* _StrDestination, size_t _SizeofStrDestination, oHMODULE _hModule = 0);
 template<size_t size> char* oModuleGetName(char (&_StrDestination)[size], oHMODULE _hModule = 0) { return oModuleGetName(_StrDestination, size, _hModule); }
-template<size_t capacity> char* oModuleGetName(oFixedString<char, capacity>& _StrDestination, oHMODULE _hModule = 0) { return oModuleGetName(_StrDestination, _StrDestination.capacity(), _hModule); }
+template<size_t capacity> char* oModuleGetName(oStd::fixed_string<char, capacity>& _StrDestination, oHMODULE _hModule = 0) { return oModuleGetName(_StrDestination, _StrDestination.capacity(), _hModule); }
 
 // Returns information about the module, if available.
 bool oModuleGetDesc(oHMODULE _hModule, oMODULE_DESC* _pDesc);

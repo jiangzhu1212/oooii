@@ -41,17 +41,17 @@ struct GPU_Device : public oTest
 
 		oTESTB(desc.AdapterIndex == 0, "Index is incorrect");
 		oTESTB(desc.FeatureVersion >= oVersion(9,0), "Invalid version retrieved");
-		oStringS VRAMSize, SharedSize;
+		oStd::sstring VRAMSize, SharedSize;
 		oPrintf(_StrStatus, _SizeofStrStatus, "%s %s %d.%d feature level %d.%d %s (%s shared) running on %s v%d.%d drivers (%s)"
 			, desc.DeviceDescription.c_str()
-			, oAsString(desc.API)
+			, oStd::as_string(desc.API)
 			, desc.InterfaceVersion.Major
 			, desc.InterfaceVersion.Minor
 			, desc.FeatureVersion.Major
 			, desc.FeatureVersion.Minor
 			, oFormatMemorySize(VRAMSize, desc.NativeMemory, 1)
 			, oFormatMemorySize(SharedSize, desc.SharedSystemMemory, 1)
-			, oAsString(desc.Vendor)
+			, oStd::as_string(desc.Vendor)
 			, desc.DriverVersion.Major
 			, desc.DriverVersion.Minor
 			, desc.DriverDescription.c_str());

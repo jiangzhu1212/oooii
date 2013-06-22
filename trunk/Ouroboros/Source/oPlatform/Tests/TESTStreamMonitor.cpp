@@ -24,25 +24,25 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oBasis/oEvent.h>
+#include <oConcurrency/event.h>
 #include <oPlatform/oStandards.h>
 #include <oPlatform/oStream.h>
 
-//static const char* FolderToMonitor = "file://DATA/Apps/PlayerMediaEncoder";
-//static const char* FolderToMonitor = "file://abyss/Media/oUnitTests";
-static const char* FolderToMonitor = "file://DATA/Test";
+//static const char* FolderToMonitor = "file://DATA/Apps/PlayerMediaEncoder/";
+//static const char* FolderToMonitor = "file://abyss/Media/oUnitTests/";
+static const char* FolderToMonitor = "file://DATA/Test/";
 static const char* TestFile = "file://DATA/Test/monitor_test.txt";
 
 struct TESTStreamMonitorEvents
 {
 	double LastEventTimestamp;
 
-	oEvent FileModified;
-	oEvent FileAdded;
-	oEvent FileRemoved;
+	oConcurrency::event FileModified;
+	oConcurrency::event FileAdded;
+	oConcurrency::event FileRemoved;
 
-	oEvent NZFileAccessible;
-	oEvent ZFileAccessible;
+	oConcurrency::event NZFileAccessible;
+	oConcurrency::event ZFileAccessible;
 };
 
 struct PLATFORM_oStreamMonitor : public oTest
@@ -51,11 +51,11 @@ struct PLATFORM_oStreamMonitor : public oTest
 	{
 		auto Events = std::make_shared<TESTStreamMonitorEvents>();
 
-		oStringPath NonZeroFile = TestFile;
+		oStd::path_string NonZeroFile = TestFile;
 		*oGetFileExtension(NonZeroFile) = 0;
 		oStrAppendf(NonZeroFile, "-NZ.txt");
 
-		oStringPath ZeroFile = TestFile;
+		oStd::path_string ZeroFile = TestFile;
 		*oGetFileExtension(ZeroFile) = 0;
 		oStrAppendf(ZeroFile, "-Z.txt");
 
@@ -65,37 +65,42 @@ struct PLATFORM_oStreamMonitor : public oTest
 
 		double startTime = oTimer();
 
+		oSTREAM_MONITOR_DESC md;
+		md.Monitor = FolderToMonitor;
+		md.TraceEvents = true;
+		md.WatchSubtree = true;
+
 		oRef<threadsafe oStreamMonitor> Monitor;
-		oTESTB0(oStreamMonitorCreate(FolderToMonitor,
+		oTESTB0(oStreamMonitorCreate(md,
 			// It is not normally a good practice to capture the events by reference, 
 			// but for simplicity doing it here. counting on not getting further 
 			// callbacks once the test is finished.
-			[startTime, Events](oSTREAM_EVENT _Event, const oStringURI& _ChangedURI)
+			[startTime, Events](oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI)
 			{
 				int timeMS = static_cast<int>((oTimer() - startTime) * 1000);
 				switch (_Event)
 				{
 					case oSTREAM_ADDED:
 						oTRACE("file %s was added at time %dms from start", _ChangedURI.c_str(), timeMS);
-						Events->FileAdded.Set();
+						Events->FileAdded.set();
 						break;
 					case oSTREAM_REMOVED:
 						oTRACE("file %s was removed at time %dms from start", _ChangedURI.c_str(), timeMS);
-						Events->FileRemoved.Set();
+						Events->FileRemoved.set();
 						break;
 					case oSTREAM_MODIFIED:
 					{
 						oTRACE("file %s was modified at time %dms from start", _ChangedURI.c_str(), timeMS);
-						Events->FileModified.Set();
+						Events->FileModified.set();
 						break;
 					}
 					case oSTREAM_ACCESSIBLE:
 					{
 						oTRACE("file %s is accessible at time %dms from start", _ChangedURI.c_str(), timeMS);
 						if (strstr(_ChangedURI, "-NZ.txt"))
-							Events->NZFileAccessible.Set();
+							Events->NZFileAccessible.set();
 						else if (strstr(_ChangedURI, "-Z.txt"))
-							Events->ZFileAccessible.Set();
+							Events->ZFileAccessible.set();
 						break;
 					}
 				}
@@ -130,19 +135,19 @@ struct PLATFORM_oStreamMonitor : public oTest
 
 		oTESTB0(oStreamCopy(TestFile, ZeroFile));
 
-		static const unsigned int kTimeout = 1500;
+		static const oStd::chrono::milliseconds kTimeout(1500);
 
-		oTESTB(Events->FileAdded.Wait(kTimeout), "timed out waiting for the added event");
-		oTESTB(Events->FileModified.Wait(kTimeout), "timed out waiting for the modified event");
+		oTESTB(Events->FileAdded.wait_for(kTimeout), "timed out waiting for the added event");
+		oTESTB(Events->FileModified.wait_for(kTimeout), "timed out waiting for the modified event");
 
-		oTESTB(Events->NZFileAccessible.Wait(kTimeout), "timed out waiting for the non-zero-sized file accessible event");
-		oTESTB(Events->ZFileAccessible.Wait(kTimeout), "timed out waiting for the zero-sized file accessible event");
+		oTESTB(Events->NZFileAccessible.wait_for(kTimeout), "timed out waiting for the non-zero-sized file accessible event");
+		oTESTB(Events->ZFileAccessible.wait_for(kTimeout), "timed out waiting for the zero-sized file accessible event");
 
 		oTESTB0(oStreamDelete(NonZeroFile));
 		oTESTB0(oStreamDelete(ZeroFile));
 
 		oTESTB0(oStreamDelete(TestFile)); //should generate a removed event
-		oTESTB(Events->FileRemoved.Wait(kTimeout), "timed out waiting for the removed event");
+		oTESTB(Events->FileRemoved.wait_for(kTimeout), "timed out waiting for the removed event");
 
 		return SUCCESS;
 	}

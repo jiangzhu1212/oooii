@@ -34,11 +34,11 @@
 #ifndef oFilterChain_h
 #define oFilterChain_h
 
-#include <oBasis/oAlgorithm.h>
+#include <oStd/algorithm.h>
 #include <oBasis/oError.h>
-#include <oBasis/oFor.h>
+#include <oStd/oFor.h>
 #include <oBasis/oInitOnce.h>
-#include <oBasis/oThreadsafe.h>
+#include <oConcurrency/thread_safe.h>
 #include <vector>
 
 class oFilterChain
@@ -96,11 +96,12 @@ private:
 		_CompiledFilters.reserve(_NumFilters);
 		for (size_t i = 0; _pFilters && _pFilters->RegularExpression && i < _NumFilters; i++, _pFilters++)
 		{
-			std::tr1::regex re;
-			if (!oTryCompileRegex(re, _StrError, _SizeofStrError, _pFilters->RegularExpression, std::tr1::regex_constants::icase))
+			std::regex re;
+			try { re = std::regex(_pFilters->RegularExpression, std::regex_constants::icase); }
+			catch (std::regex_error& e)
 			{
 				_CompiledFilters.clear();
-				return oErrorSetLast(oERROR_INVALID_PARAMETER, "A regular expression could not be compiled: \"%s\"", _pFilters->RegularExpression);
+				return oErrorSetLast(std::errc::invalid_argument, "A regular expression could not be compiled: \"%s\"", e.what());
 			}
 
 			_CompiledFilters.push_back(filters_t::value_type(_pFilters->Type, re));

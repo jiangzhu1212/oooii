@@ -119,7 +119,7 @@ private:
 	{
 		if (!InitGroupsDone)
 		{
-			for (uint i = 0; i < oCOUNTOF(sGroups); i++)
+			oFORI(i, sGroups)
 			{
 				sGroups[i].GroupName = sGroupNames[i];
 				sGroups[i].MaterialName = "Body";
@@ -255,7 +255,7 @@ bool oBasisTestOBJGet(oBASIS_TEST_OBJ _OBJ, const oBasisTestOBJ** _ppTestOBJ)
 			*_ppTestOBJ = &c;
 			break;
 		default:
-			return oErrorSetLast(oERROR_NOT_FOUND, "the specified test obj was not found");
+			return oErrorSetLast(std::errc::no_such_file_or_directory, "the specified test obj was not found");
 	}
 
 	return true;

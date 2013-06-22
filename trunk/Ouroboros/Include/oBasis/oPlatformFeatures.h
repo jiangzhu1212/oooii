@@ -30,75 +30,13 @@
 #ifndef oPlatformFeatures_h
 #define oPlatformFeatures_h
 
+#include <oStd/config.h>
+
 #ifdef _MSC_VER
-	#pragma warning(disable:4481) // nonstandard extension used: override specifier 'override'
 	#define oHAS_ASSUME
 
-	#if _MSC_VER >= 1600
-		#define oHAS_AUTO
-		#define oHAS_NULLPTR
-		#define oHAS_STATIC_ASSERT
-		#define oHAS_MOVE_CTOR
-		#define oHAS_8BIT_ATOMICS
-		#define	oHAS_16BIT_ATOMICS
-		#define oHAS_TYPE_TRAITS
-	#else
+	#if _MSC_VER < 1600
 		#define oCLICKABLE_OUTPUT_REQUIRES_SPACE_COLON
-	#endif
-
-	#define oLITTLEENDIAN
-
-	#ifdef _WIN64
-		#define oPOINTERSIZE 8
-		#define oDEFAULT_MEMORY_ALIGNMENT 16
-		#define o64BIT 1
-	#else
-		#define oPOINTERSIZE 4
-		#define oDEFAULT_MEMORY_ALIGNMENT 8
-		#define o32BIT 1
-	#endif
-
-	#ifdef _WIN32
-		// http://www.gamedev.net/topic/591975-c-unsigned-__int64-tofrom-double-conversions/
-		#define oHAS_BAD_DOUBLE_TO_ULLONG_CONVERSION
-	#endif
-
-	#define oRESTRICT __restrict
-	#define oFORCEINLINE __forceinline
-	#define oALIGN(amount) __declspec(align(amount))
-
-	// @oooii-tony: there needs to be more #ifdef'ing of when this is true, but I 
-	// don't have test platforms at the moment to ensure this is pre-vista 
-	// compatible (and I don't have an answer of what to do when I don't have 
-	// 64-bit atomics yet)
-	#define oHAS_64BIT_ATOMICS
-
-#else
-	#define override
-#endif
-
-#ifdef interface
-	#define INTERFACE_DEFINED
-#endif
-
-#ifndef INTERFACE_DEFINED
-	#ifdef _MSC_VER
-		#define interface struct __declspec(novtable)
-	#else
-		#define interface struct
-	#endif
-	#define INTERFACE_DEFINED
-#endif
-
-#ifndef oHAS_NULLPTR
-	#define nullptr NULL
-#endif
-
-#ifndef oHAS_THREAD_LOCAL
-	#ifdef _MSC_VER
-		#define thread_local __declspec(thread)
-	#else
-		#error Unsupported platform
 	#endif
 #endif
 
@@ -136,67 +74,12 @@
 
 typedef unsigned char uchar;
 
-#define oMODULE_DEBUG_PREFIX_A "DEBUG-"
 #define oMODULE_DEBUG_SUFFIX_A "D"
 
 #ifdef _DEBUG
-	#define oMODULE_DEBUG_PREFIX oMODULE_DEBUG_PREFIX_A
 	#define oMODULE_DEBUG_SUFFIX oMODULE_DEBUG_SUFFIX_A
 #else
-	#define oMODULE_DEBUG_PREFIX ""
 	#define oMODULE_DEBUG_SUFFIX ""
-#endif
-
-#ifdef oHAS_BAD_DOUBLE_TO_ULLONG_CONVERSION
-	#include <memory.h>
-/** <citation
-	usage="Implementation" 
-	reason="win32 compiler double -> unsigned long long is not correct, this is"
-	author="Erik Rufelt"
-	description="http://www.gamedev.net/topic/591975-c-unsigned-__int64-tofrom-double-conversions/page__st__20"
-	license="*** Assumed Public Domain ***"
-	licenseurl="http://www.gamedev.net/topic/591975-c-unsigned-__int64-tofrom-double-conversions/page__st__20"
-	modification="assert -> static assert. uint64 -> unsigned long long"
-/>*/
-// $(CitedCodeBegin)
-inline unsigned long long oDtoULL(double input)
-{
-	static_assert(sizeof(double) == 8, "sizeof(double) == 8");
-	static_assert(sizeof(unsigned long long) == 8, "sizeof(unsigned long long) == 8");
-	static_assert(sizeof(1ULL) == 8, "sizeof(1ull) == 8");
-
-	// Get the bits representing the double
-	double d = input;
-	unsigned long long doubleBits;
-	memcpy(reinterpret_cast<char*>(&doubleBits), reinterpret_cast<char*>(&d), 8);
-
-	// Check for a negative number
-	unsigned long long signBit = (doubleBits >> 63ULL) & 0x1ULL;
-	if(signBit != 0ULL)
-		return 0ULL;
-
-	// Get the exponent
-	unsigned long long exponent = (doubleBits >> 52ULL) & 0x7ffULL;
-
-	// The number is larger than the largest uint64
-	if(exponent > 1086ULL)
-		return 0ULL;
-
-	// The number is less than 1
-	if(exponent < 1023ULL)
-		return 0ULL;
-
-	// Get the fraction
-	unsigned long long fraction = (doubleBits & 0xfffffffffffffULL) | 0x10000000000000ULL;
-
-	// Calculate and return integer part
-	if(exponent >= 1075ULL)
-		return fraction << (exponent - 1075ULL);
-	else
-		return fraction >> (1075ULL - exponent);
-}
-// $(CitedCodeEnd)
-
 #endif
 
 #endif

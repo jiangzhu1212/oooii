@@ -24,11 +24,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oDispatchQueueConcurrentWTP.h"
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
 #include <oBasis/oError.h>
 #include <oBasis/oInitOnce.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
+#include <oConcurrency/block_allocator.h>
 #include <oPlatform/Windows/oWindows.h>
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -36,14 +37,14 @@
 struct oTASKPooled
 {
 public:
-	static oTASKPooled* Create(oTASK _Task, threadsafe oBlockAllocatorGrowableT<oTASKPooled>* _pPool)
+	static oTASKPooled* Create(oTASK _Task, threadsafe oConcurrency::block_allocator_t<oTASKPooled>* _pPool)
 	{
-		return new(_pPool->Allocate()) oTASKPooled(_Task, _pPool);
+		return new(_pPool->allocate()) oTASKPooled(_Task, _pPool);
 	}
-	inline void operator()() { Task(); this->~oTASKPooled(); pPool->Deallocate(this); }
+	inline void operator()() { Task(); this->~oTASKPooled(); pPool->deallocate(this); }
 	
 private:
-	oTASKPooled(oTASK _Task, threadsafe oBlockAllocatorGrowableT<oTASKPooled>* _pPool)
+	oTASKPooled(oTASK _Task, threadsafe oConcurrency::block_allocator_t<oTASKPooled>* _pPool)
 		: Task(_Task)
 		, pPool(_pPool)
 	{}
@@ -51,9 +52,11 @@ private:
 	{}
 
 	oTASK Task;
-	threadsafe oBlockAllocatorGrowableT<oTASKPooled>* pPool;
+	threadsafe oConcurrency::block_allocator_t<oTASKPooled>* pPool;
 };
 
+// {C4728B88-5CFE-4B84-A8CF-922F83282A88}
+oDEFINE_GUID_S(oDispatchQueueConcurrentWTP, 0xc4728b88, 0x5cfe, 0x4b84, 0xa8, 0xcf, 0x92, 0x2f, 0x83, 0x28, 0x2a, 0x88);
 struct oDispatchQueueConcurrentWTP : oDispatchQueueConcurrent
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
@@ -62,7 +65,7 @@ struct oDispatchQueueConcurrentWTP : oDispatchQueueConcurrent
 	oDispatchQueueConcurrentWTP(const char* _DebugName, size_t _InitialTaskCapacity, bool* _pSuccess);
 	~oDispatchQueueConcurrentWTP();
 
-	bool Dispatch(oTASK _Task) threadsafe override;
+	bool Dispatch(const oTASK& _Task) threadsafe override;
 	void Flush() threadsafe override;
 	bool Joinable() const threadsafe override { return IsJoinable; }
 	void Join() threadsafe override;
@@ -76,17 +79,10 @@ struct oDispatchQueueConcurrentWTP : oDispatchQueueConcurrent
 	oStd::atomic_bool AllowEnqueue;
 	oStd::atomic_bool IsJoinable;
 	oRefCount RefCount;
-	oBlockAllocatorGrowableT<oTASKPooled> Pool;
+	oConcurrency::block_allocator_t<oTASKPooled> Pool;
 
 	static VOID CALLBACK WorkCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_WORK Work) { (*(oTASKPooled*)Context)(); }
 };
-
-const oGUID& oGetGUID(threadsafe const oDispatchQueueConcurrentWTP* threadsafe const*)
-{
-	// {C4728B88-5CFE-4B84-A8CF-922F83282A88}
-	static const oGUID oIIDDispatchQueueConcurrentWTP = { 0xc4728b88, 0x5cfe, 0x4b84, { 0xa8, 0xcf, 0x92, 0x2f, 0x83, 0x28, 0x2a, 0x88 } };
-	return oIIDDispatchQueueConcurrentWTP;
-}
 
 oDispatchQueueConcurrentWTP::oDispatchQueueConcurrentWTP(const char* _DebugName, size_t _InitialTaskCapacity, bool* _pSuccess)
 	:	TPCleanupGroup(CreateThreadpoolCleanupGroup())
@@ -128,18 +124,18 @@ bool oDispatchQueueCreateConcurrentWTP(const char* _DebugName, size_t _InitialTa
 #if defined(_WIN32) || defined(_WIN64)
 
 	if (!_DebugName || !_ppDispatchQueue)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	bool success = false;
 	oCONSTRUCT(_ppDispatchQueue, oDispatchQueueConcurrentWTP(_DebugName, _InitialTaskCapacity, &success));
 	return !!*_ppDispatchQueue;
 
 #else
-	return oErrorSetLast(oERROR_NOT_FOUND, "Window's Threadpool algorithm not found on this system");
+	return oErrorSetLast(std::errc::not_supported, "Window's Threadpool algorithm not found on this system");
 #endif
 }
 
-bool oDispatchQueueConcurrentWTP::Dispatch(oTASK _Task) threadsafe
+bool oDispatchQueueConcurrentWTP::Dispatch(const oTASK& _Task) threadsafe
 {
 	if (AllowEnqueue)
 	{

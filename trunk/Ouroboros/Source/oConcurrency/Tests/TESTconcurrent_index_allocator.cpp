@@ -1,0 +1,74 @@
+/**************************************************************************
+ * The MIT License                                                        *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
+ *                                                                        *
+ * Permission is hereby granted, free of charge, to any person obtaining  *
+ * a copy of this software and associated documentation files (the        *
+ * "Software"), to deal in the Software without restriction, including    *
+ * without limitation the rights to use, copy, modify, merge, publish,    *
+ * distribute, sublicense, and/or sell copies of the Software, and to     *
+ * permit persons to whom the Software is furnished to do so, subject to  *
+ * the following conditions:                                              *
+ *                                                                        *
+ * The above copyright notice and this permission notice shall be         *
+ * included in all copies or substantial portions of the Software.        *
+ *                                                                        *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
+ **************************************************************************/
+#include <oConcurrency/concurrent_index_allocator.h>
+#include <oStd/macros.h>
+#include <oStd/algorithm.h>
+#include <vector>
+
+namespace oConcurrency {
+	namespace tests {
+
+template<typename IndexAllocatorT>
+static void test_index_allocator()
+{
+	const size_t CAPACITY = 4;
+	const size_t ARENA_BYTES = CAPACITY * IndexAllocatorT::index_size;
+	std::vector<char> buffer(1024, 0xcc);
+
+	IndexAllocatorT a(&buffer[0], ARENA_BYTES);
+
+	oCHECK(a.empty(), "index_allocator did not initialize correctly.");
+	oCHECK(a.capacity() == CAPACITY, "Capacity mismatch.");
+
+	unsigned int index[4];
+	oFORI(i, index)
+		index[i] = a.allocate();
+
+	oCHECK(index_allocator::invalid_index == a.allocate(), "allocate succeed past allocator capacity");
+
+	oFORI(i, index)
+		oCHECK(index[i] == static_cast<unsigned int>(i), "Allocation mismatch %u.", i);
+
+	a.deallocate(index[1]);
+	a.deallocate(index[0]);
+	a.deallocate(index[2]);
+	a.deallocate(index[3]);
+
+	oCHECK(a.empty(), "A deallocate failed.");
+}
+
+void TESTindex_allocator()
+{
+	test_index_allocator<oConcurrency::index_allocator>();
+}
+
+void TESTconcurrent_index_allocator()
+{
+	test_index_allocator<oConcurrency::concurrent_index_allocator>();
+}
+
+	} // namespace tests
+} // namespace oConcurrency

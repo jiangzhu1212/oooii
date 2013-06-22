@@ -29,7 +29,7 @@
 #ifndef oHash_h
 #define oHash_h
 
-#include <oBasis/oUint128.h>
+#include <oStd/uint128.h>
 
 unsigned int oHash_djb2(const void* buf, unsigned int len, unsigned int seed = 5381);
 unsigned int oHash_djb2(const char* s);

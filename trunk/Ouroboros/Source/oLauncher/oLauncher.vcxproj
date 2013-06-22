@@ -137,11 +137,20 @@
     <ProjectReference Include="..\oBasis\oBasis.vcxproj">
       <Project>{0110f712-0d38-4a54-9849-52786b26481b}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\oCompute\oCompute.vcxproj">
+      <Project>{64e65a9e-fd6c-4b17-8fa7-a7d686ccea42}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\oConcurrency\oConcurrency.vcxproj">
+      <Project>{08ec5ea1-284b-4688-b14b-4bd9945061fb}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\oHLSL\oHLSL.vcxproj">
+      <Project>{aae3c7d9-8124-4b5a-856c-4c5bf23cdb09}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\oPlatform\oPlatform.vcxproj">
       <Project>{8eb33511-eed5-48ac-99f9-efa2a34bb2dd}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\oPlatform\oPlatformSerial.vcxproj">
-      <Project>{fbff8029-8d16-476f-8ee4-198d635624a1}</Project>
+    <ProjectReference Include="..\oStd\oStd.vcxproj">
+      <Project>{6c467bdd-eea7-4ff6-b594-26a760df179f}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

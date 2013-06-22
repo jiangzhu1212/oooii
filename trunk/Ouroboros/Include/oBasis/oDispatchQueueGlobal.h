@@ -35,6 +35,6 @@ interface oDispatchQueueGlobal : oDispatchQueue
 {
 };
 
-oAPI bool oDispatchQueueCreateGlobal(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueueGlobal** _ppDispatchQueue);
+bool oDispatchQueueCreateGlobal(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueueGlobal** _ppDispatchQueue);
 
 #endif

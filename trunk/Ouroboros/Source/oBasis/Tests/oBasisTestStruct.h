@@ -30,7 +30,8 @@
 #ifndef oBasisTestStruct_h
 #define oBasisTestStruct_h
 
-#include <oBasis/oDate.h>
+#include <oStd/date.h>
+#include <oBasis/oPlatformFeatures.h>
 
 struct oBASIS_TEST_STRUCT
 {
@@ -61,7 +62,7 @@ struct oBASIS_TEST_STRUCT
 	float float2;
 	int b2size;
 	const void* b2;
-	oNTPTimestamp time;
+	oStd::ntp_timestamp time;
 };
 
 #define oBASIS_TEST_STRUCT_MEMBERS(_Macro) \

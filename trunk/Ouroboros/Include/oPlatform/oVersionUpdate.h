@@ -34,7 +34,7 @@
 #ifndef oVersionUpdate_h
 #define oVersionUpdate_h
 
-#include <oBasis/oFixedString.h>
+#include <oStd/fixed_string.h>
 #include <oBasis/oVersion.h>
 
 // _____________________________________________________________________________
@@ -43,26 +43,27 @@
 struct oVU_URI_PARTS
 {
 	oURIParts URIParts; // Path is truncated to have the filename removed
-	oStringM Filebase;
-	oStringS Extension;
+	oStd::mstring Filebase;
+	oStd::sstring Extension;
 	oVersion Version;
 	bool IsDebugBuild;
 };
 
-oAPI bool oVUDecompose(const oStringURI& _URI, bool _VersionFromFilename, oVU_URI_PARTS* _pParts);
+oAPI bool oVUDecompose(const oStd::uri_string& _URI, bool _VersionFromFilename, oVU_URI_PARTS* _pParts);
 
-oAPI char* oVURecompose(oStringURI& _URI, const oVU_URI_PARTS& _Parts);
+oAPI char* oVURecompose(oStd::uri_string& _URI, const oVU_URI_PARTS& _Parts);
 
-// Returns true in the installer advertises a more recent version than the 
-// currently running executable. If _MatchInstallerAndExecutableNames is false, 
+// Returns true if the installer advertises a different version than the 
+// currently running executable. If _IsNewer is true, the version will have to
+// be newer than the current one. If _MatchInstallerAndExecutableNames is false, 
 // then no verification that this installer is meant for this executable is done.
-oAPI bool oVUIsNewerVersion(const oStringURI& _SfxURI, bool _MatchInstallerAndExecutableNames = true);
+oAPI bool oVUIsUpdateInstallerValid(const oStd::uri_string& _SfxURI, bool _IsNewer = true, bool _MatchInstallerAndExecutableNames = true);
 
 // This expects a file:// URI to a 7-zip console sfx executable specified as 
 // _SfxURI matching the regex format:
-// "(DEBUG-)?(.+)-([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)\\.exe" (note: DEBUG- is really oMODULE_DEBUG_PREFIX_A)
+// "(.*?)("oMODULE_DEBUG_SUFFIX_A")?-([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)\\.exe"
 // This will unzip to the oSYSPATH_APP folder of the specified _SfxURI. The zip 
-// should be set up to unzip to a subfolder that is its version number.
+// should be set up to unzip to a sub folder that is its version number.
 oAPI bool oVUUnzip(const char* _SfxURI);
 
 // Usually the launcher app that is installed to the same dir as the install 
@@ -74,9 +75,9 @@ oAPI bool oVURenameLauncher(const char* _SfxURI);
 // Returns the filename of the installer that might've installed this executable
 // by using its name and version. This is a convenient function built on top of
 // oVUDecompose/oVURecompose.
-oAPI bool oVUGetThisAppsInstallerFilename(oStringM& _StrDestination);
+oAPI bool oVUGetThisAppsInstallerFilename(oStd::mstring& _StrDestination);
 
-oAPI bool oVUGetLatestInstallerFilename(oStringM& _StrDestination);
+oAPI bool oVUGetLatestInstallerFilename(oStd::mstring& _StrDestination);
 
 // This should be called from a file in <some-path>\<version>\Exe.exe, so this
 // will look for the launcher in ../
@@ -113,11 +114,14 @@ struct oVERSIONED_LAUNCH_DESC
 // 2. If a specific module name is specified, search for that in the version 
 //    folder and ./ If that doesn't exist, fail
 // 3. If no module name, use launcher's current name
-// 4. Check the version path plus prefix DEBUG- module name
-// 5. Check the version path plus DEBUG- module name.
-// 6. Check prefix ./DEBUG- module name.
-// 7. Check ./DEBUG- module name.
-// 8. repeat 4-7 without DEBUG- part.
+// 4. Check: version path + prefix + module name
+// 5. Check: version path + module name.
+// 6. Check: prefix + ./ + module name.
+// 7. Check: ./ + module name.
+// Steps 4-7 are first checked with the debug module name and then again with
+// the release module name.
+// The debug module name is generated as module name minus extension + 
+// oMODULE_DEBUG_SUFFIX_A + module name extension.
 oAPI bool oVURelaunch(const oVERSIONED_LAUNCH_DESC& _Desc);
 
 #endif

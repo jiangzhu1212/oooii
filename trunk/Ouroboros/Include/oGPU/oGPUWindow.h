@@ -37,6 +37,8 @@
 #include <oPlatform/oWindow.h>
 #include <oGPU/oGPU.h>
 
+// {A79296BF-A665-4DC6-9F33-1EF080732371}
+oDEFINE_GUID_I(oGPUWindow, 0xa79296bf, 0xa665, 0x4dc6, 0x9f, 0x33, 0x1e, 0xf0, 0x80, 0x73, 0x23, 0x71);
 interface oGPUWindow : oWindow
 {
 	virtual void GetDevice(oGPUDevice** _ppDevice) const threadsafe = 0;
@@ -59,27 +61,26 @@ struct oGPU_WINDOW_INIT : oWINDOW_INIT
 
 	oGPU_WINDOW_INIT()
 		: VSynced(true)
-		, UIRenderingCompatible(true)
 		, StartStepping(false)
 		, DepthStencilFormat(oSURFACE_UNKNOWN)
-	{
-		WindowThreadDebugName = "oGPUWindow Message Thread";
-	}
+	{}
 
 	// Primary render target should not be retained by the system because it can
 	// be created and destroyed depending on oWindow resize/fullscreen/etc. It is 
 	// safe to use for the duration of the RenderFunction call, but is not valid
 	// outside it.
 	oFUNCTION<void(oGPURenderTarget* _pPrimaryRenderTarget)> RenderFunction;
+	
+	// Once rendering to the primary render target is finished, there is an 
+	// opportunity to modify it using legacy operating system APIs. Do that in 
+	// this function since it must occur after the render scene has been resolved.
+	// NOTE: This can crash tools such as NVIDIA's Parallel Insight and is often
+	// not as well a supported path as others but allows for some quick-and-dirty 
+	// HUD/stats during bring-up.
+	oFUNCTION<void(oGPURenderTarget* _pPrimaryRenderTarget)> OSRenderFunction;
+	
 	oSURFACE_FORMAT DepthStencilFormat; // specify UNKNOWN for no DS buffer
 	bool VSynced;
-
-	// If true, the main swap chain is flagged to interoperate with the native
-	// operating system's drawing system (i.e. GDI on Windows). This can crash 
-	// tools such as NVIDIA's Parallel Insight and is often not as well a 
-	// supported path as others, but allows for some quick-and-dirty HUD/stats
-	// during bring-up.
-	bool UIRenderingCompatible;
 
 	// Start in stepping mode paused on frame 0. Use Step() to increment one frame
 	// at a time, or Step(false) to render at full rate.

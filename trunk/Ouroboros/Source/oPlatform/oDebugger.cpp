@@ -281,12 +281,12 @@ struct GuardedAllocInfo : public oDebuggerAllocationInfo
 	size_t AllocSize;
 };
 
-void* oDebuggerGuardedAlloc(size_t _szData, int _TrailingGuardPages)
+void* oDebuggerGuardedAlloc(size_t _SizeofData, int _TrailingGuardPages)
 {
 	// Allocate requested space plus _TrailingGuardPages + 1 (for the leading page) padding
 	const size_t PageSize = oPageGetPageSize();
 
-	size_t NonGuardedSizePlusStartPage = oByteAlign(_szData, PageSize) + PageSize;
+	size_t NonGuardedSizePlusStartPage = oStd::byte_align(_SizeofData, PageSize) + PageSize;
 	size_t AllocSize = NonGuardedSizePlusStartPage + _TrailingGuardPages * PageSize;
 	void* pData = oPageReserveAndCommit(nullptr, AllocSize);
 	oASSERT(pData, "oPageReserveAndCommit failed");
@@ -297,17 +297,17 @@ void* oDebuggerGuardedAlloc(size_t _szData, int _TrailingGuardPages)
 
 	// Turn off writing on all pages past the NonGuardedSize
 	oPageSetNoAccess(pData, PageSize);
-	oPageSetNoAccess(oByteAdd(pData, NonGuardedSizePlusStartPage), AllocSize - NonGuardedSizePlusStartPage);
+	oPageSetNoAccess(oStd::byte_add(pData, NonGuardedSizePlusStartPage), AllocSize - NonGuardedSizePlusStartPage);
 
 	// Align the allocation such that the range ends on the first guarded page
-	return oByteAdd(pData, NonGuardedSizePlusStartPage - _szData );
+	return oStd::byte_add(pData, NonGuardedSizePlusStartPage - _SizeofData );
 }
 
 void* GetAllocStart(void* _pData)
 {
 	const size_t PageSize = oPageGetPageSize();
-	void* pPageBoundary = oByteAlign(_pData, PageSize);
-	return oByteSub(pPageBoundary, pPageBoundary == _pData ? PageSize : 2 * PageSize);
+	void* pPageBoundary = oStd::byte_align(_pData, PageSize);
+	return oStd::byte_sub(pPageBoundary, pPageBoundary == _pData ? PageSize : 2 * PageSize);
 }
 
 void oDebuggerGuardedFree( void* _pData )
@@ -335,13 +335,13 @@ bool oDebuggerGuardedInfo(void* _pData, oDebuggerAllocationInfo* _pInfo)
 
 	DWORD OldAccess;
 	if( !VirtualProtect(pAllocStart, PageSize, PAGE_EXECUTE_READ, &OldAccess) )
-		return oErrorSetLast(oERROR_PLATFORM, "Couldn't set read access");
+		return oErrorSetLast(std::errc::permission_denied, "Couldn't set read access");
 
 	GuardedAllocInfo AllocInfo = *(GuardedAllocInfo*)pAllocStart;
 	VirtualProtect(pAllocStart, PageSize, OldAccess, &OldAccess);
 
 	if(oDebuggerGuardedGUID != AllocInfo.GuardedGUID)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Not a guarded allocation");
+		return oErrorSetLast(std::errc::invalid_argument, "Not a guarded allocation");
 
 	*_pInfo = AllocInfo;
 	return true;

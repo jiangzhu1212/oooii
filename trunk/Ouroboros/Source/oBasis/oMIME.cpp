@@ -24,101 +24,88 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oMIME.h>
-#include <oBasis/oStringize.h>
 #include <unordered_map>
-#include <oBasis/oAlgorithm.h>
+#include <oStd/algorithm.h>
 
-const char* oAsString(oMIME_TYPE _Type)
-{
-	switch (_Type)
-	{
-		case oMIME_APPLICATION_ATOMXML: return "application/atom+xml";
-		case oMIME_APPLICATION_ECMASCRIPT: return "application/ecmascript";
-		case oMIME_APPLICATION_EDIX12: return "application/EDI-X12";
-		case oMIME_APPLICATION_EDIFACT: return "application/EDITFACT";
-		case oMIME_APPLICATION_EXE : return "application/exe";
-		case oMIME_APPLICATION_JSON: return "application/json";
-		case oMIME_APPLICATION_JAVASCRIPT: return "application/javascript";
-		case oMIME_APPLICATION_OCTETSTREAM: return "application/octet-stream";
-		case oMIME_APPLICATION_OGG: return "application/ogg";
-		case oMIME_APPLICATION_PDF: return "application/pdf";
-		case oMIME_APPLICATION_POSTSCRIPT: return "application/postscript";
-		case oMIME_APPLICATION_RDFXML: return "application/rdf+xml";
-		case oMIME_APPLICATION_RSSXML: return "application/rss+xml";
-		case oMIME_APPLICATION_SOAPXML: return "application/soap+xml";
-		case oMIME_APPLICATION_FONTWOFF: return "application/font-woff";
-		case oMIME_APPLICATION_XDMP: return "application/x-dmp";
-		case oMIME_APPLICATION_XHTMLXML: return "application/xhtml+xml";
-		case oMIME_APPLICATION_XMLDTD: return "application/xml-dtd";
-		case oMIME_APPLICATION_XOPXML: return "application/xop+xml";
-		case oMIME_APPLICATION_ZIP: return "application/zip";
-		case oMIME_APPLICATION_GZIP: return "application/x-gzip";
-		case oMIME_APPLICATION_7Z: return "application/x-7z-compressed";
-		case oMIME_AUDIO_BASIC: return "audio/basic";
-		case oMIME_AUDIO_L24: return "audio/l24";
-		case oMIME_AUDIO_MP4: return "audio/mp4";
-		case oMIME_AUDIO_MPEG: return "audio/mpeg";
-		case oMIME_AUDIO_OGG: return "audio/ogg";
-		case oMIME_AUDIO_VORBIS: return "audio/vorbis";
-		case oMIME_AUDIO_WMA: return "audio/x-ms-wma";
-		case oMIME_AUDIO_WAX: return "audio/x-ms-wax";
-		case oMIME_AUDIO_REALAUDIO: return "audio/vnd.rn-realaudio";
-		case oMIME_AUDIO_WAV: return "audio/vnd.wave";
-		case oMIME_AUDIO_WEBM: return "audio/webm";
-		case oMIME_IMAGE_GIF: return "image/gif";
-		case oMIME_IMAGE_JPEG: return "image/jpeg";
-		case oMIME_IMAGE_PJPEG: return "image/pjpeg";
-		case oMIME_IMAGE_PNG: return "image/png";
-		case oMIME_IMAGE_SVGXML: return "imagesvg+xml";
-		case oMIME_IMAGE_TIFF: return "image/tiff";
-		case oMIME_IMAGE_ICO: return "image/vnd.microsoft.icon";
-		case oMIME_MESSAGE_HTTP: return "message/http";
-		case oMIME_MESSAGE_IMDNXML: return "message/imdn+xml";
-		case oMIME_MESSAGE_PARTIAL: return "message/partial";
-		case oMIME_MESSAGE_RFC822: return "message/rfc822";
-		case oMIME_MODEL_EXAMPLE: return "model/example";
-		case oMIME_MODEL_IGES: return "model/iges";
-		case oMIME_MODEL_MESH: return "model/mesh";
-		case oMIME_MODEL_VRML: return "model/vrml";
-		case oMIME_MODEL_X3DBINARY: return "model/x3d+binary";
-		case oMIME_MODEL_X3DVRML: return "model/x3d+vrml";
-		case oMIME_MODEL_X3DXML: return "model/x3d+xml";
-		case oMIME_MULTIPART_MIXED: return "multipart/mixed";
-		case oMIME_MULTIPART_ALTERNATIVE: return "multipart/alternative";
-		case oMIME_MULTIPART_RELATED: return "multipart/related";
-		case oMIME_MULTIPART_FORMDATA: return "multipart/form-data";
-		case oMIME_MULTIPART_SIGNED: return "multipart/signed";
-		case oMIME_MULTIPART_ENCRYPTED: return "multipart/encrypted";
-		case oMIME_TEXT_CMD: return "text/cmd";
-		case oMIME_TEXT_CSS: return "text/css";
-		case oMIME_TEXT_CSV: return "text/csv";
-		case oMIME_TEXT_HTML: return "text/html";
-		case oMIME_TEXT_JAVASCRIPT: return "text/javascript";
-		case oMIME_TEXT_PLAIN: return "text/plain";
-		case oMIME_TEXT_VCARD: return "text/vcard";
-		case oMIME_TEXT_XML: return "text/xml";
-		case oMIME_VIDEO_MPEG: return "video/mpeg";
-		case oMIME_VIDEO_MP4: return "video/mp4";
-		case oMIME_VIDEO_OGG: return "video/ogg";
-		case oMIME_VIDEO_QUICKTIME: return "video/quicktime";
-		case oMIME_VIDEO_WEBM: return "video/webm";
-		case oMIME_VIDEO_MATROSKA: return "video/x-matroska";
-		case oMIME_VIDEO_WMV: return "video/x-ms-wmv";
-		case oMIME_VIDEO_FLASH_VIDEO: return "video/x-flv";
-		default: return "Unrecognized MIME type";
-	}
-}
-
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oMIME_TYPE& _Type)
-{
-	oStrcpy(_StrDestination, _SizeofStrDestination, oAsString(_Type));
-	return _StrDestination;
-}
-
-bool oFromString(oMIME_TYPE* _pValue, const char* _StrSource)
-{
-	return oEnumFromString<oMIME_NUM_TYPES>(_pValue, _StrSource);
-}
+oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oMIME_TYPE)
+	oRTTI_ENUM_BEGIN_VALUES(oMIME_TYPE)
+		oRTTI_VALUE_CUSTOM(oMIME_UNKNOWN, "unknown")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_ATOMXML, "application/atom+xml")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_ECMASCRIPT, "application/ecmascript")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_EDIX12, "application/EDI-X12")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_EDIFACT, "application/EDITFACT")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_EXE , "application/exe")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_JSON, "application/json")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_JAVASCRIPT, "application/javascript")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_OCTETSTREAM, "application/octet-stream")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_OGG, "application/ogg")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_PDF, "application/pdf")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_POSTSCRIPT, "application/postscript")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_RDFXML, "application/rdf+xml")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_RSSXML, "application/rss+xml")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_SOAPXML, "application/soap+xml")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_FONTWOFF, "application/font-woff")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_XDMP, "application/x-dmp")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_XHTMLXML, "application/xhtml+xml")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_XMLDTD, "application/xml-dtd")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_XOPXML, "application/xop+xml")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_ZIP, "application/zip")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_GZIP, "application/x-gzip")
+		oRTTI_VALUE_CUSTOM(oMIME_APPLICATION_7Z, "application/x-7z-compressed")
+		oRTTI_VALUE_CUSTOM(oMIME_AUDIO_BASIC, "audio/basic")
+		oRTTI_VALUE_CUSTOM(oMIME_AUDIO_L24, "audio/l24")
+		oRTTI_VALUE_CUSTOM(oMIME_AUDIO_MP4, "audio/mp4")
+		oRTTI_VALUE_CUSTOM(oMIME_AUDIO_MPEG, "audio/mpeg")
+		oRTTI_VALUE_CUSTOM(oMIME_AUDIO_OGG, "audio/ogg")
+		oRTTI_VALUE_CUSTOM(oMIME_AUDIO_VORBIS, "audio/vorbis")
+		oRTTI_VALUE_CUSTOM(oMIME_AUDIO_WMA, "audio/x-ms-wma")
+		oRTTI_VALUE_CUSTOM(oMIME_AUDIO_WAX, "audio/x-ms-wax")
+		oRTTI_VALUE_CUSTOM(oMIME_AUDIO_REALAUDIO, "audio/vnd.rn-realaudio")
+		oRTTI_VALUE_CUSTOM(oMIME_AUDIO_WAV, "audio/vnd.wave")
+		oRTTI_VALUE_CUSTOM(oMIME_AUDIO_WEBM, "audio/webm")
+		oRTTI_VALUE_CUSTOM(oMIME_IMAGE_GIF, "image/gif")
+		oRTTI_VALUE_CUSTOM(oMIME_IMAGE_JPEG, "image/jpeg")
+		oRTTI_VALUE_CUSTOM(oMIME_IMAGE_PJPEG, "image/pjpeg")
+		oRTTI_VALUE_CUSTOM(oMIME_IMAGE_PNG, "image/png")
+		oRTTI_VALUE_CUSTOM(oMIME_IMAGE_SVGXML, "imagesvg+xml")
+		oRTTI_VALUE_CUSTOM(oMIME_IMAGE_TIFF, "image/tiff")
+		oRTTI_VALUE_CUSTOM(oMIME_IMAGE_ICO, "image/vnd.microsoft.icon")
+		oRTTI_VALUE_CUSTOM(oMIME_MESSAGE_HTTP, "message/http")
+		oRTTI_VALUE_CUSTOM(oMIME_MESSAGE_IMDNXML, "message/imdn+xml")
+		oRTTI_VALUE_CUSTOM(oMIME_MESSAGE_PARTIAL, "message/partial")
+		oRTTI_VALUE_CUSTOM(oMIME_MESSAGE_RFC822, "message/rfc822")
+		oRTTI_VALUE_CUSTOM(oMIME_MODEL_EXAMPLE, "model/example")
+		oRTTI_VALUE_CUSTOM(oMIME_MODEL_IGES, "model/iges")
+		oRTTI_VALUE_CUSTOM(oMIME_MODEL_MESH, "model/mesh")
+		oRTTI_VALUE_CUSTOM(oMIME_MODEL_VRML, "model/vrml")
+		oRTTI_VALUE_CUSTOM(oMIME_MODEL_X3DBINARY, "model/x3d+binary")
+		oRTTI_VALUE_CUSTOM(oMIME_MODEL_X3DVRML, "model/x3d+vrml")
+		oRTTI_VALUE_CUSTOM(oMIME_MODEL_X3DXML, "model/x3d+xml")
+		oRTTI_VALUE_CUSTOM(oMIME_MULTIPART_MIXED, "multipart/mixed")
+		oRTTI_VALUE_CUSTOM(oMIME_MULTIPART_ALTERNATIVE, "multipart/alternative")
+		oRTTI_VALUE_CUSTOM(oMIME_MULTIPART_RELATED, "multipart/related")
+		oRTTI_VALUE_CUSTOM(oMIME_MULTIPART_FORMDATA, "multipart/form-data")
+		oRTTI_VALUE_CUSTOM(oMIME_MULTIPART_SIGNED, "multipart/signed")
+		oRTTI_VALUE_CUSTOM(oMIME_MULTIPART_ENCRYPTED, "multipart/encrypted")
+		oRTTI_VALUE_CUSTOM(oMIME_TEXT_CMD, "text/cmd")
+		oRTTI_VALUE_CUSTOM(oMIME_TEXT_CSS, "text/css")
+		oRTTI_VALUE_CUSTOM(oMIME_TEXT_CSV, "text/csv")
+		oRTTI_VALUE_CUSTOM(oMIME_TEXT_HTML, "text/html")
+		oRTTI_VALUE_CUSTOM(oMIME_TEXT_JAVASCRIPT, "text/javascript")
+		oRTTI_VALUE_CUSTOM(oMIME_TEXT_PLAIN, "text/plain")
+		oRTTI_VALUE_CUSTOM(oMIME_TEXT_VCARD, "text/vcard")
+		oRTTI_VALUE_CUSTOM(oMIME_TEXT_XML, "text/xml")
+		oRTTI_VALUE_CUSTOM(oMIME_VIDEO_MPEG, "video/mpeg")
+		oRTTI_VALUE_CUSTOM(oMIME_VIDEO_MP4, "video/mp4")
+		oRTTI_VALUE_CUSTOM(oMIME_VIDEO_OGG, "video/ogg")
+		oRTTI_VALUE_CUSTOM(oMIME_VIDEO_QUICKTIME, "video/quicktime")
+		oRTTI_VALUE_CUSTOM(oMIME_VIDEO_WEBM, "video/webm")
+		oRTTI_VALUE_CUSTOM(oMIME_VIDEO_MATROSKA, "video/x-matroska")
+		oRTTI_VALUE_CUSTOM(oMIME_VIDEO_WMV, "video/x-ms-wmv")
+		oRTTI_VALUE_CUSTOM(oMIME_VIDEO_FLASH_VIDEO, "video/x-flv")
+	oRTTI_ENUM_END_VALUES(oMIME_TYPE)
+	oRTTI_ENUM_VALIDATE_COUNT(oMIME_TYPE, oMIME_TYPE_COUNT)
+oRTTI_ENUM_END_DESCRIPTION(oMIME_TYPE)
 
 namespace 
 {

@@ -26,24 +26,29 @@
 #include <oPlatform/oTest.h>
 #include <oBasis/oRef.h>
 #include "../oDispatchQueueConcurrentWTP.h"
-#include "oDQConcurrent.h"
+#include "TESTConcurrencyRequirements.h"
+#include "oTestIntegration.h"
+#include <oConcurrency/tests/oConcurrencyTests.h>
 
-namespace RatcliffJobSwarm { bool RunDispatchQueueTest(const char* _Name, threadsafe oDispatchQueue* _pDispatchQueue); }
-
-struct PLATFORM_DQC_WTP : TESTDispatchQueueBase
+struct oDQCWTP_impl : oConcurrency::tests::test_threadpool
 {
-	bool CreateQueue(size_t _InitialTaskCapacity, threadsafe oDispatchQueue** _ppQueue) override
+	oDQCWTP_impl()
 	{
-		return oDispatchQueueCreateConcurrentWTP("WTP", _InitialTaskCapacity, (threadsafe oDispatchQueueConcurrent**)_ppQueue);
+		oVERIFY(oDispatchQueueCreateConcurrentWTP("WTP DQ", 100000, &t));
 	}
+	oRef<threadsafe oDispatchQueueConcurrent> t;
+	~oDQCWTP_impl() { if (t) t->Join(); }
+	const char* name() const threadsafe override { return "WTP"; }
+	void dispatch(const oTASK& _Task) threadsafe override { t->Dispatch(_Task); }
+	bool parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task) threadsafe override { return false; }
+	void flush() threadsafe override { t->Flush(); }
+	void release() threadsafe override { t->Join(); t = nullptr; }
 };
 
-struct PLATFORM_DQC_WTPTrivial : TESTDispatchQueueTrivialBase
+void TESToDispatchQueueConcurrentWTP(oConcurrency::tests::requirements& _Requirements)
 {
-	bool CreateQueue(size_t _InitialTaskCapacity, threadsafe oDispatchQueue** _ppQueue) override
-	{
-		return oDispatchQueueCreateConcurrentWTP("WTP", _InitialTaskCapacity, (threadsafe oDispatchQueueConcurrent**)_ppQueue);
-	}
-};
-oTEST_REGISTER(PLATFORM_DQC_WTPTrivial);
-oTEST_REGISTER(PLATFORM_DQC_WTP);
+	oConcurrency::tests::TESTthreadpool_performance_impl<oDQCWTP_impl>(_Requirements);
+}
+
+using namespace oConcurrency::tests; // @oooii-tony: macros should be more explicit but other refactor is going on right now
+oTEST_THROWS_REGISTER(oCONCAT(PLATFORM_, oDispatchQueueConcurrentWTP), oCONCAT(TEST, oDispatchQueueConcurrentWTP));

@@ -35,7 +35,7 @@
 	#pragma message("BAD WINDOWS INCLUDE! Applications should #include <oWindows.h> to prevent extra and sometimes conflicting cruft from being included.")
 #endif
 
-#include <oBasis/oGUID.h>
+#include <oStd/guid.h>
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oSurface.h>
 #include <oBasis/oVersion.h>
@@ -168,6 +168,7 @@
 #endif
 
 #include <shlobj.h>
+#include <shellapi.h>
 
 #if oDXVER >= oDXVER_10
 	#include <dxerr.h>
@@ -211,12 +212,14 @@
 // pattern, and oV is for direct HRESULT return values.
 
 #ifdef _DEBUG
-	#define oVB(fn) do { if (!(fn)) { oWinSetLastError(::GetLastError()); oASSERT_PRINT(oASSERT_ASSERTION, oASSERT_IGNORE_ONCE, #fn, "%s", oErrorGetLastString()); } } while(false)
-	#define oV(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) { oWinSetLastError(HR__); oASSERT_PRINT(oASSERT_ASSERTION, oASSERT_IGNORE_ONCE, #fn, "%s", oErrorGetLastString()); } } while(false)
+	#define oVB(fn) do { if (!(fn)) { oWinSetLastError(::GetLastError()); oASSERT_TRACE(oStd::assert_type::assertion, oStd::assert_action::ignore, #fn, "%s", oErrorGetLastString()); } } while(false)
+	#define oV(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) { oWinSetLastError(HR__); oASSERT_TRACE(oStd::assert_type::assertion, oStd::assert_action::ignore, #fn, "%s", oErrorGetLastString()); } } while(false)
 #else
 	#define oVB(fn) fn
 	#define oV(fn) fn
 #endif
+
+#define oWIN_CHECK_HR(_Fn, _Message, ...) do { HRESULT HR__ = _Fn; if (FAILED(HR__)) { throw std::system_error(std::make_error_code(oWinGetErrc(HR__)), oStd::formatf(_Message, ## __VA_ARGS__)); } } while(false)
 
 // _____________________________________________________________________________
 // Wrappers for the Windows-specific crtdbg API. Prefer oASSERT macros found
@@ -226,7 +229,7 @@
 #ifdef _DEBUG
 	#include <crtdbg.h>
 
-	#define oCRTASSERT(expr, msg, ...) if (!(expr)) { if (1 == _CrtDbgReport(_CRT_ASSERT, __FILE__, __LINE__, "OOOii Debug Library", #expr "\n\n" msg, ## __VA_ARGS__)) oDEBUGBREAK(); }
+	#define oCRTASSERT(expr, msg, ...) if (!(expr)) { if (1 == _CrtDbgReport(_CRT_ASSERT, __FILE__, __LINE__, "OOOii Debug Library", #expr "\n\n" msg, ## __VA_ARGS__)) __debugbreak(); }
 	#define oCRTWARNING(msg, ...) do { _CrtDbgReport(_CRT_WARN, __FILE__, __LINE__, "OOOii Debug Library", "WARNING: " msg, ## __VA_ARGS__); } while(false)
 	#define oCRTTRACE(msg, ...) do { _CrtDbgReport(_CRT_WARN, __FILE__, __LINE__, "OOOii Debug Library", msg, ## __VA_ARGS__); } while(false)
 
@@ -270,6 +273,9 @@ int MessageBoxTimeoutW(IN HWND hWnd, IN LPCWSTR lpText, IN LPCWSTR lpCaption, IN
 
 #define MB_TIMEDOUT 32000
 
+// Return the closest std::errc for the specified HRESULT.
+std::errc::errc oWinGetErrc(HRESULT _hResult);
+
 // Given the specified HRESULT, set both the closest errno value and the 
 // platform-specific description associated with the error code.
 // if oWINDOWS_DEFAULT is specified, ::GetLastError() is used
@@ -279,14 +285,17 @@ bool oWinSetLastError(HRESULT _hResult = oDEFAULT, const char* _ErrorDescPrefix 
 // if the HRESULT is not S_OK it returns the HRESULT
 #define oV_RETURN(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) return HR__; } while(false)
 
-// oVB_RETURN executes a block of Windows API code that returns bool and populates
-// oErrorGetLast() with ::GetLastError() and returns false.
+// Executes a Windows API that returns bool and populates oErrorGetLast() with 
+// ::GetLastError() and returns false.
 #define oVB_RETURN(fn) do { if (!(fn)) { return oWinSetLastError(oDEFAULT, #fn " failed: "); } } while(false)
 
-// oVERIFY_RETURN execues a block of code that returns an HRESULT. If the 
-// HRESULT is not S_OK, then this sets last error with the platform error and
-// returns false.
+// Executes a Windows API that returns HRESULT and on failure sets the Windows
+// error code as the last error and returns false.
 #define oVB_RETURN2(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) { return oWinSetLastError(HR__, #fn " failed: "); } } while(false)
+
+// Executes a Windows API that returns HRESULT and on failure sets the Windows
+// error code as the last error and returns no value (use this in ctors).
+#define oVB_RETURN3(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) { oWinSetLastError(HR__, #fn " failed: "); return; } } while(false)
 
 // _____________________________________________________________________________
 // Smart pointer support
@@ -483,8 +492,10 @@ double oWinSystemCalculateCPUUsage(unsigned long long* _pPreviousIdleTime, unsig
 bool oWinSystemOpenDocument(const char* _DocumentName, bool _ForEdit = false);
 
 // Retrieves the HWND of the top level window owned by the specified process and
-// the ID of the thread that services this window.
-bool oWinGetProcessTopWindowAndThread(unsigned int _ProcessID, HWND* _pHWND, unsigned int* _pThreadID);
+// the ID of the thread that services this window.  Since a process can have more
+// than one top level window an optional name can also be specified to make certain
+// the correct window is returned
+bool oWinGetProcessTopWindowAndThread(unsigned int _ProcessID, HWND* _pHWND, unsigned int* _pThreadID, const char* _pOptionalWindowName = nullptr);
 
 // _____________________________________________________________________________
 // Identification/ID Conversion API

@@ -30,6 +30,8 @@
 #define oGPU_h
 
 #include <oBasis/oGPUConcepts.h>
+#include <oBasis/oBuffer.h>
+#include <oBasis/oRef.h> // for convenience type-casting
 
 // Main SW abstraction for a graphics processor
 interface oGPUDevice;
@@ -37,6 +39,8 @@ interface oGPUDevice;
 // Main SW abstraction for a single thread of graphics command preparation
 interface oGPUDeviceContext;
 
+// {E4BEBD80-C7D1-4470-995E-041116E09BBE}
+oDEFINE_GUID_I(oGPUDeviceChild, 0xe4bebd80, 0xc7d1, 0x4470, 0x99, 0x5e, 0x4, 0x11, 0x16, 0xe0, 0x9b, 0xbe);
 interface oGPUDeviceChild : oInterface
 {
 	// Anything allocated from oGPUDevice is an oGPUDeviceChild
@@ -49,6 +53,8 @@ interface oGPUDeviceChild : oInterface
 	virtual const char* GetName() const threadsafe = 0;
 };
 
+// {D5A0E41C-AB91-496E-8D5D-A335A92778A2}
+oDEFINE_GUID_I(oGPUResource, 0xd5a0e41c, 0xab91, 0x496e, 0x8d, 0x5d, 0xa3, 0x35, 0xa9, 0x27, 0x78, 0xa2);
 interface oGPUResource : oGPUDeviceChild
 {
 	// Anything that contains data intended primarily for read-only access by the 
@@ -68,38 +74,16 @@ interface oGPUResource : oGPUDeviceChild
 	virtual int2 GetByteDimensions(int _Subresource) const threadsafe = 0;
 };
 
-interface oGPUInstanceList : oGPUResource
-{
-	// Contains instance data for drawing instances of a mesh. The contents of 
-	// each instance's data is user-defined using IAELEMENTs. This is more or less 
-	// a different semantic of vertex attributes.
-
-	typedef oGPU_INSTANCE_LIST_DESC DESC;
-	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
-};
-
-interface oGPULineList : oGPUResource
-{
-	typedef oGPU_LINE_LIST_DESC DESC;
-	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
-};
-
+// {E4B3CB37-2FD7-4BF5-8CBB-6923F0185A51}
+oDEFINE_GUID_I(oGPUBuffer, 0xe4b3cb37, 0x2fd7, 0x4bf5, 0x8c, 0xbb, 0x69, 0x23, 0xf0, 0x18, 0x5a, 0x51);
 interface oGPUBuffer : oGPUResource
 {
 	typedef oGPU_BUFFER_DESC DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
-interface oGPUMesh : oGPUResource
-{
-	// Ranges of triangles are grouped, but kept separate from one another so that 
-	// a continuous shape can be constructed by multiple draw calls, each with a 
-	// different render state.
-
-	typedef oGPU_MESH_DESC DESC;
-	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
-};
-
+// {19374525-0CC8-445B-80ED-A6D2FF13362C}
+oDEFINE_GUID_I(oGPUTexture, 0x19374525, 0xcc8, 0x445b, 0x80, 0xed, 0xa6, 0xd2, 0xff, 0x13, 0x36, 0x2c);
 interface oGPUTexture : oGPUResource
 {
 	// A large buffer filled with surface data. Most often this is one or more 
@@ -109,6 +93,8 @@ interface oGPUTexture : oGPUResource
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
+// {E7F8FD41-737A-4AC5-A3C0-EB04876C6071}
+oDEFINE_GUID_I(oGPURenderTarget, 0xe7f8fd41, 0x737a, 0x4ac5, 0xa3, 0xc0, 0xeb, 0x4, 0x87, 0x6c, 0x60, 0x71);
 interface oGPURenderTarget : oGPUDeviceChild
 {
 	// A 2D plane onto which rendering occurs
@@ -131,6 +117,8 @@ interface oGPURenderTarget : oGPUDeviceChild
 	virtual void GetDepthTexture(oGPUTexture** _ppTexture) = 0;
 };
 
+// {2401B122-EB19-4CEF-B3BE-9543C003B896}
+oDEFINE_GUID_I(oGPUPipeline, 0x2401b122, 0xeb19, 0x4cef, 0xb3, 0xbe, 0x95, 0x43, 0xc0, 0x3, 0xb8, 0x96);
 interface oGPUPipeline : oGPUDeviceChild
 {
 	// A pipeline is the result of setting all stages of the programmable pipeline 
@@ -140,6 +128,8 @@ interface oGPUPipeline : oGPUDeviceChild
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
+// {F095BC1F-872D-4F5E-B962-D91206DD154A}
+oDEFINE_GUID_I(oGPUComputeShader, 0xf095bc1f, 0x872d, 0x4f5e, 0xb9, 0x62, 0xd9, 0x12, 0x6, 0xdd, 0x15, 0x4a);
 interface oGPUComputeShader : oGPUDeviceChild
 {
 	// That other pipeline moder GPUs support. This is the CUDA/Compute/OpenCL 
@@ -150,6 +140,16 @@ interface oGPUComputeShader : oGPUDeviceChild
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
+// {5408DEEA-6A3B-4FFD-B55A-65C340D55A99}
+oDEFINE_GUID_I(oGPUQuery, 0x5408deea, 0x6a3b, 0x4ffd, 0xb5, 0x5a, 0x65, 0xc3, 0x40, 0xd5, 0x5a, 0x99);
+interface oGPUQuery : oGPUDeviceChild
+{
+	typedef oGPU_QUERY_DESC DESC;
+	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+};
+
+// {272A9B3E-64BC-4D20-845E-D4EE3F0ED890}
+oDEFINE_GUID_I(oGPUCommandList, 0x272a9b3e, 0x64bc, 0x4d20, 0x84, 0x5e, 0xd4, 0xee, 0x3f, 0xe, 0xd8, 0x90);
 interface oGPUCommandList : oGPUDeviceChild
 {
 	// A container for a list of commands issued by the user to the graphics 
@@ -165,6 +165,10 @@ interface oGPUCommandList : oGPUDeviceChild
 
 	// Ends recording of GPU submissions and caches a command list
 	virtual void End() = 0;
+
+	virtual void BeginQuery(oGPUQuery* _pQuery) = 0;
+
+	virtual void EndQuery(oGPUQuery* _pQuery) = 0;
 
 	// This should never be required to be called, and has bad performance 
 	// implications if called, but is sometimes required, especially with the 
@@ -183,23 +187,13 @@ interface oGPUCommandList : oGPUDeviceChild
 
 	// Commits memory to the specified resource. If the memory in _Source.pData 
 	// was reserved, then this will free the memory. If _Source.pData is user 
-	// memory, it will not be freed. NOTE: If _Source.pData was reserved, then 
-	// _Subregion MUST be empty, since Reserve does not allocate subregions, only 
-	// whole subresources. When using Commit on user memory, a smaller _Subregion 
-	// can be updated. 
-	// If the specified rectangle is empty on any dimension, then the entire 
-	// surface will be copied (default behavior). If the item is a 1D structure 
-	// then Min.x is the offset and Max.x is offset + count. and Min.y should be 0 
-	// and Max.y should be 1. If a 2D resource, then dimensions make sense. 3D 
-	// resources are treated as slices of a 2D resources, so 3D resources behave 
-	// the same as 2D resources for any given subresource identifier. For 
-	// oGPUInstanceLists and oGPULineLists _Subregion represents the valid portion 
-	// AFTER update in its Min.x and Max.x values, i.e. Min.x is where to begin 
-	// drawing and Max.x is one after the last valid element to draw. So for an 
-	// oGPUInstanceList allocated with MaxNumInstances = 100, updating for 10 to 
-	// be drawn would use oRECT(int2(0,0), int2(10,1)).
-	virtual void Commit(oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Source, const oGPU_BOX& _Subregion = oGPU_BOX()) = 0;
-	inline void Commit(oGPUResource* _pResource, int _Subresource, oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source, const oGPU_BOX& _Subregion = oGPU_BOX()) { Commit(_pResource, _Subresource, (oSURFACE_MAPPED_SUBRESOURCE&)_Source, _Subregion); }
+	// memory, it will not be freed. If the specified rectangle is empty on any 
+	// dimension, then the entire surface will be copied (default behavior). If 
+	// the item is an oGPUBuffer then units are in structs, i.e. Left=0, 
+	// Right=ArraySize would be a full copy. Ensure that the other dimension are
+	// not empty/equal even in the buffer case.
+	virtual void Commit(oGPUResource* _pResource, int _Subresource, const oSURFACE_MAPPED_SUBRESOURCE& _Source, const oSURFACE_BOX& _Subregion = oSURFACE_BOX()) = 0;
+	inline void Commit(oGPUResource* _pResource, int _Subresource, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source, const oSURFACE_BOX& _Subregion = oSURFACE_BOX()) { Commit(_pResource, _Subresource, (const oSURFACE_MAPPED_SUBRESOURCE&)_Source, _Subregion); }
 
 	// Copies the contents from one resource to another. Both must have compatible 
 	// (often identical) topologies. A common use of this API is to copy from a 
@@ -256,13 +250,6 @@ interface oGPUCommandList : oGPUDeviceChild
 	template<size_t size> inline void SetBuffers(int _StartSlot, const oGPUBuffer* const (&_ppBuffers)[size]) { SetBuffers(_StartSlot, size, _ppBuffers); }
 	inline void SetBuffers(int _StartSlot, const oGPUBuffer* _pBuffer) { SetBuffers(_StartSlot, 1, (const oGPUBuffer* const *)&_pBuffer); }
 
-	// Start index is in indices, not bytes.
-	virtual void SetIndexBuffer(const oGPUBuffer* _pIndexBuffer) = 0;
-
-	// Start vertex is in vertices, not bytes, and is thus uniform for all bound
-	// vertex buffers.
-	virtual void SetVertexBuffers(int _StartSlot, int _NumVertexBuffers, const oGPUBuffer* const* _ppVertexBuffers, uint _StartVertex = 0) = 0;
-
 	// Sets the render target to which rendering will occur. By default, a single
 	// full-target viewport is created, else it can be overridden. A viewport is 
 	// a 3D box whose minimum is at the top, left, near corner of the viewable 
@@ -317,23 +304,24 @@ interface oGPUCommandList : oGPUDeviceChild
 	// the the currently set render target is cleared.
 	virtual void Clear(oGPURenderTarget* _pRenderTarget, oGPU_CLEAR _Clear) = 0;
 
-	// A pipeline must be set before calling draw. If valid instance values are 
-	// specified, a vertex buffer containing instanced vertex elements is expected 
-	// to be bound.
-	virtual void Draw(uint _StartPrimitive, uint _NumPrimitives, uint _StartInstance = oInvalid, uint _NumInstances = oInvalid) = 0;
+	// Submits the specified geometry inputs for rendering under the current state
+	// of the command list. If _pIndices is nullptr, then non-indexed drawing is
+	// done, else the indices are used to indirect into the vertex buffers.
+	// _StartPrimitive/_NumPrimitives are in the primitive set by the current 
+	// pipeline. If an instanced vertex buffer is set, then _StartInstance/
+	// _NumInstances can be used for instanced drawing in either indexed or non-
+	// indexed drawing.
+	virtual void Draw(
+		const oGPUBuffer* _pIndices
+		, int _StartSlot
+		, int _NumVertexBuffers
+		, const oGPUBuffer* const* _ppVertexBuffers
+		, uint _StartPrimitive
+		, uint _NumPrimitives
+		, uint _StartInstance = oInvalid
+		, uint _NumInstances = oInvalid
+	) = 0;
 
-	// Submits an oGPUMesh for drawing using the current state of the 
-	// command list.
-	virtual void Draw(const oGPUMesh* _pMesh, int _RangeIndex, const oGPUInstanceList* _pInstanceList = nullptr) = 0;
-
-	// Draws a set of worldspace lines. Use Map/Unmap to set up line lists
-	// writing an array of type oGPULineList::LINEs.
-	virtual void Draw(const oGPULineList* _pLineList) = 0;
-
-	// Draws points without any bound geometry.  Useful when all data is GPU synthesized
-	// or provided via other means than the input assembler
-	virtual void Draw(uint _VertexCount) = 0;
-	
 	// Draws points without any bound geometry but with the count provided by a GPU
 	// synthesized buffer.
 	virtual void Draw(oGPUBuffer* _pDrawArgs, int _AlignedByteOffsetForArgs) = 0;
@@ -366,6 +354,8 @@ interface oGPUCommandList : oGPUDeviceChild
 	virtual void Dispatch(oGPUComputeShader* _pComputeShader, oGPUBuffer* _pThreadGroupCountBuffer, int _AlignedByteOffsetToThreadGroupCount) = 0;
 };
 
+// {B3B5D7BC-F0C5-48D4-A976-7D41308F7450}
+oDEFINE_GUID_I(oGPUDevice, 0xb3b5d7bc, 0xf0c5, 0x48d4, 0xa9, 0x76, 0x7d, 0x41, 0x30, 0x8f, 0x74, 0x50);
 interface oGPUDevice : oInterface
 {
 	// Main SW abstraction for a graphics processor
@@ -390,13 +380,11 @@ interface oGPUDevice : oInterface
 	virtual void GetImmediateCommandList(oGPUCommandList** _ppCommandList) = 0;
 
 	virtual bool CreateCommandList(const char* _Name, const oGPUCommandList::DESC& _Desc, oGPUCommandList** _ppCommandList) = 0;
-	virtual bool CreateLineList(const char* _Name, const oGPULineList::DESC& _Desc, oGPULineList** _ppLineList) = 0;
 	virtual bool CreatePipeline(const char* _Name, const oGPUPipeline::DESC& _Desc, oGPUPipeline** _ppPipeline) = 0;
 	virtual bool CreateComputeShader(const char* _Name, const oGPUComputeShader::DESC& _Desc, oGPUComputeShader** _ppComputeShader) = 0;
+	virtual bool CreateQuery(const char* _Name, const oGPUQuery::DESC&, oGPUQuery** _ppQuery) = 0;
 	virtual bool CreateRenderTarget(const char* _Name, const oGPURenderTarget::DESC& _Desc, oGPURenderTarget** _ppRenderTarget) = 0;
 	virtual bool CreateBuffer(const char* _Name, const oGPUBuffer::DESC& _Desc, oGPUBuffer** _ppBuffer) = 0;
-	virtual bool CreateMesh(const char* _Name, const oGPUMesh::DESC& _Desc, oGPUMesh** _ppMesh) = 0;
-	virtual bool CreateInstanceList(const char* _Name, const oGPUInstanceList::DESC& _Desc, oGPUInstanceList** _ppInstanceList) = 0;
 	virtual bool CreateTexture(const char* _Name, const oGPUTexture::DESC& _Desc, oGPUTexture** _ppTexture) = 0;
 
 	// MapRead is a non-blocking call to read from the specified resource by the
@@ -406,10 +394,85 @@ interface oGPUDevice : oInterface
 	virtual bool MapRead(oGPUResource* _pReadbackResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource, bool _bBlocking=false) = 0;
 	virtual void UnmapRead(oGPUResource* _pReadbackResource, int _Subresource) = 0;
 
+	virtual bool ReadQuery(oGPUQuery* _pQuery, void* _pData, uint _SizeofData) = 0;
+	template<typename T> bool ReadQuery(oGPUQuery* _pQuery, T* _pData) { return ReadQuery(_pQuery, _pData, sizeof(T)); }
+
 	virtual bool BeginFrame() = 0;
 	virtual void EndFrame() = 0;
 };
 
-oAPI bool oGPUDeviceCreate(const oGPUDevice::INIT& _Init, oGPUDevice** _ppDevice);
+oAPI bool oGPUDeviceCreate(const oGPU_DEVICE_INIT& _Init, oGPUDevice** _ppDevice);
+
+// Compiles a shader to its driver-specific bytecode. To make parsing easy, 
+// there are two lists of defines that can be specified. These are concatenated
+// internally.
+oAPI bool oGPUCompileShader(
+	const char* _IncludePaths // semi-colon delimited list of paths to look in. 
+	                          // Use %DEV% for oSYSPATH_DEV
+	, const char* _CommonDefines // semi-colon delimited list of symbols (= value) 
+	, const char* _SpecificDefines // semi-colon delimited list of symbols (= value)
+	, const oVersion& _TargetShaderModel // shader model version to compile against
+	, oGPU_PIPELINE_STAGE _Stage // type of shader to compile
+	, const char* _ShaderPath // full path to shader - mostly for error reporting
+	, const char* _EntryPoint // name of the top-level shader function to use
+	, const char* _ShaderBody // a string of the loaded shader file (NOTE: This 
+	                          // still goes out to includes, so this will still 
+	                          // touch the file system.
+	, oBuffer** _ppByteCode // if successful, this is a buffer of byte code
+	, oBuffer** _ppErrors); // if failure this is filled with an error string
+
+// @oooii-tony: I'm not sure if these APIs belong here at all, in oGPU, or 
+// oGPUUtil. I do know they don't belong where they were before, which was 
+// nowhere.
+// Basically rendering at oooii grew up on D3D and D3DX, which have very robust
+// libraries for image format conversion and handling. We didn't spend time 
+// reproducing this on our own, so we're relying on this stuff as placeholder.
+// I suspect if we add support for a different library, such robust support for
+// image formats won't be there and we'll have to implement a lot of this stuff,
+// so defer that dev time until then and then bring it back to something that
+// can be promoted out of oGPU. For now, at least hide the D3D part...
+
+// Convert the format of a surface into another format in another surface. This
+// uses GPU acceleration for BC6H/7 and is currently a pass-through to D3DX11's
+// conversion functions at the moment. Check debug logs if this function seems
+// to hang because if for whatever reason the CPU/SW version of the BC6H/7
+// codec is used, it can take a VERY long time.
+oAPI bool oGPUSurfaceConvert(
+	void* oRESTRICT _pDestination
+	, uint _DestinationRowPitch
+	, oSURFACE_FORMAT _DestinationFormat
+	, const void* oRESTRICT _pSource
+	, uint _SourceRowPitch
+	, oSURFACE_FORMAT _SourceFormat
+	, const int2& _MipDimensions);
+
+// Extract the parameters for the above call directly from textures
+oAPI bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, oSURFACE_FORMAT _NewFormat, oGPUTexture** _ppDestinationTexture);
+
+// Loads a texture from disk. The _Desc specifies certain conversions/resizes
+// that can occur on load. Use oDEFAULT or oSURFACE_UNKNOWN to use values as 
+// they are found in the specified image resource/buffer.
+// @oooii-tony: At this time the implementation does NOT use oImage loading 
+// code plus a simple call to call oGPUCreateTexture(). Because this API 
+// supports conversion for any oSURFACE_FORMAT, at this time we defer to 
+// DirectX's .dds support for advanced formats like BC6 and BC7 as well as their
+// internal conversion library. When it's time to go cross-platform, we'll 
+// revisit this and hopefully call more generic code.
+oAPI bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const char* _URIReference, const char* _DebugName, oGPUTexture** _ppTexture);
+oAPI bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, oGPUTexture** _ppTexture);
+
+enum oGPU_FILE_FORMAT
+{
+	oGPU_FILE_FORMAT_DDS,
+	oGPU_FILE_FORMAT_JPG,
+	oGPU_FILE_FORMAT_PNG,
+};
+
+// Saves a texture to disk. The format will be determined from the contents of 
+// the texture. If the specified format does not support the contents of the 
+// texture the function will return false - check oErrorGetLast() for extended
+// information.
+oAPI bool oGPUTextureSave(oGPUTexture* _pTexture, oGPU_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer);
+oAPI bool oGPUTextureSave(oGPUTexture* _pTexture, oGPU_FILE_FORMAT _Format, const char* _Path);
 
 #endif

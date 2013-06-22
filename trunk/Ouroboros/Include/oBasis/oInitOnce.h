@@ -36,7 +36,7 @@
 #ifndef oInitOnce_h
 #define oInitOnce_h
 
-#include <oBasis/oThreadsafe.h>
+#include <oConcurrency/thread_safe.h>
 
 template<typename T>
 class oInitOnce

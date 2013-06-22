@@ -24,44 +24,46 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oRTTI.h>
+#include <oCompute/oComputeConstants.h>
+#include <oCompute/oComputeColor.h>
 #include <oBasis/oError.h>
-#include <oBasis/oFixedString.h>
-#include <oBasis/oArray.h>
+#include <oStd/fixed_string.h>
+#include <oStd/fixed_vector.h>
 #include <vector>
 
 // TODO: Fix and move Array descriptions
-bool oArraySetItemCount(const oRTTI& _RTTI, void* _pContainer, int _ContainerSizeInBytes, int _NewSize, bool _ConstructNewItems)
+bool ostd_fixed_vectorSetItemCount(const oRTTI& _RTTI, void* _pContainer, int _ContainerSizeInBytes, int _NewSize, bool _ConstructNewItems)
 {
 	int sizeOffset = _ContainerSizeInBytes - sizeof(size_t);
 	if (_RTTI.GetSize() * _NewSize > sizeOffset) return false;
-	*(size_t*)oByteAdd(_pContainer, sizeOffset) = _NewSize;
+	*(size_t*)oStd::byte_add(_pContainer, sizeOffset) = _NewSize;
 	return true;
 }
-int oArrayGetItemCount(const oRTTI& _RTTI, const void* _pContainer, int _ContainerSizeInBytes)
+int ostd_fixed_vectorGetItemCount(const oRTTI& _RTTI, const void* _pContainer, int _ContainerSizeInBytes)
 {
 	int sizeOffset = _ContainerSizeInBytes - sizeof(size_t);
-	return (int)*(size_t*)oByteAdd(_pContainer, sizeOffset);
+	return (int)*(size_t*)oStd::byte_add(_pContainer, sizeOffset);
 }
-void* oArrayGetItemPtr(const oRTTI& _RTTI, const void* _pContainer, int _ContainerSizeInBytes, int _Index)
+void* ostd_fixed_vectorGetItemPtr(const oRTTI& _RTTI, const void* _pContainer, int _ContainerSizeInBytes, int _Index)
 {
 	int offset = _RTTI.GetSize() * _Index;
-	void* result = oByteAdd(const_cast<void*>(_pContainer), offset);
+	void* result = oStd::byte_add(const_cast<void*>(_pContainer), offset);
 	return offset < (_ContainerSizeInBytes - (int)sizeof(size_t)) ? result : nullptr;
 }
-oRTTI_CONTAINER_BEGIN_DESCRIPTION(oArray)
-	sizeof(oArray<void*,0>),
+oRTTI_CONTAINER_BEGIN_DESCRIPTION(ostd_fixed_vector)
+	sizeof(oStd::fixed_vector<void*,0>),
 	true,
 	nullptr,
 	nullptr,
-	oArraySetItemCount,
-	oArrayGetItemCount,
-	oArrayGetItemPtr
-oRTTI_CONTAINER_END_DESCRIPTION(oArray)
+	ostd_fixed_vectorSetItemCount,
+	ostd_fixed_vectorGetItemCount,
+	ostd_fixed_vectorGetItemPtr
+oRTTI_CONTAINER_END_DESCRIPTION(ostd_fixed_vector)
 
 // Container declaration for regular c-style arrays like int[20]
 bool cArraySetItemCount(const oRTTI& _RTTI, void* _pContainer, int _ContainerSizeInBytes, int _NewSize, bool _ConstructNewItems)
 {
-	return (_RTTI.GetSize() * _NewSize < _ContainerSizeInBytes);
+	return (_RTTI.GetSize() * _NewSize <= _ContainerSizeInBytes);
 }
 int cArrayGetItemCount(const oRTTI& _RTTI, const void* _pContainer, int _ContainerSizeInBytes)
 {
@@ -70,7 +72,7 @@ int cArrayGetItemCount(const oRTTI& _RTTI, const void* _pContainer, int _Contain
 void* cArrayGetItemPtr(const oRTTI& _RTTI, const void* _pContainer, int _ContainerSizeInBytes, int _Index)
 {
 	int offset = _RTTI.GetSize() * _Index;
-	void* result = oByteAdd(const_cast<void*>(_pContainer), offset);
+	void* result = oStd::byte_add(const_cast<void*>(_pContainer), offset);
 	return offset < _ContainerSizeInBytes ? result : nullptr;
 }
 oRTTI_CONTAINER_BEGIN_DESCRIPTION(c_array)
@@ -83,51 +85,65 @@ oRTTI_CONTAINER_BEGIN_DESCRIPTION(c_array)
 	cArrayGetItemPtr
 oRTTI_CONTAINER_END_DESCRIPTION(c_array)
 
-// Container declaration for regular c-style arrays like int[20]
-bool StdVectorSetItemCount(const oRTTI& _RTTI, void* _pContainer, int _ContainerSizeInBytes, int _NewSize, bool _ConstructNewItems)
-{
-	const std::vector<void*>& Container = *(const std::vector<void*>*)_pContainer;
-	size_t Capacity = Container.capacity() * sizeof(void*);
-	return ((size_t)_RTTI.GetSize() * _NewSize < Capacity);
-}
-int StdVectorGetItemCount(const oRTTI& _RTTI, const void* _pContainer, int _ContainerSizeInBytes)
-{
-	const std::vector<void*>& Container = *(const std::vector<void*>*)_pContainer;
-	size_t Capacity = Container.capacity() * sizeof(void*);
-	return (int)Capacity / _RTTI.GetSize();
-}
-void* StdVectorGetItemPtr(const oRTTI& _RTTI, const void* _pContainer, int _ContainerSizeInBytes, int _Index)
-{
-	const std::vector<void*>& Container = *(const std::vector<void*>*)_pContainer;
-	size_t Capacity = Container.capacity() * sizeof(void*);
-	size_t offset = (size_t)_RTTI.GetSize() * _Index;
-	void* result = oByteAdd((void*)(&Container[0]), offset);
-	return offset < Capacity ? result : nullptr;
-}
-oRTTI_CONTAINER_BEGIN_DESCRIPTION(std_vector)
-	sizeof(std::vector<void*>),
-	true,
-	nullptr,
-	nullptr,
-	StdVectorSetItemCount,
-	StdVectorGetItemCount,
-	StdVectorGetItemPtr
-oRTTI_CONTAINER_END_DESCRIPTION(std_vector)
-
-
 // TODO: Expand atom type support and move to appropriate place
-oRTTI_ATOM_DEFAULT_DESCRIPTION(bool, bool)
-oRTTI_ATOM_DEFAULT_DESCRIPTION(char, char)
-oRTTI_ATOM_DEFAULT_DESCRIPTION(uchar, unsigned char)
-oRTTI_ATOM_DEFAULT_DESCRIPTION(short, short)
-oRTTI_ATOM_DEFAULT_DESCRIPTION(ushort, unsigned short)
-oRTTI_ATOM_DEFAULT_DESCRIPTION(int, int)
-oRTTI_ATOM_DEFAULT_DESCRIPTION(uint, unsigned int)
-oRTTI_ATOM_DEFAULT_DESCRIPTION(llong, long long)
-oRTTI_ATOM_DEFAULT_DESCRIPTION(ullong, unsigned long long)
-oRTTI_ATOM_DEFAULT_DESCRIPTION(float, float)
-oRTTI_ATOM_DEFAULT_DESCRIPTION(double, double)
-oRTTI_ATOM_DEFAULT_DESCRIPTION(oRGBf, oRGBf)
+oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, oVersion, oVersion, 1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY_NO_STD, bool, bool, 1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, char, char, 1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, uchar, unsigned char, 1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, short, short, 1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ushort, unsigned short, 1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, int, int, 1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, int2, int2, 2)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, int3, int3, 3)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, int4, int4, 4)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, uint, unsigned int, 1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, uint2, uint2, 2)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, uint3, uint3, 3)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, uint4, uint4, 4)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, llong, long long, 1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ullong, unsigned long long, 1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, float, float, 1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, float2, float2, 2)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, float3, float3, 3)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, float4, float4, 4)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, double, double, 1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ostd_color, ostd_color, -1) // Can be either 1 or 4 string tokens.. so it's ambiguous
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, oRGBf, oRGBf, -1) // Can be either 1 or 3 string tokens.. so it's ambiguous
+oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, float4x4, float4x4, 16, oIDENTITY4x4)
+oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, quatf, quatf, 4, oIDENTITYQ)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, oPlanef, oPlanef, 4)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, oSpheref, oSpheref, 4)
+oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, oAABoxf, oAABoxf, 6, oAABoxf())
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ostd_fourcc, ostd_fourcc, 1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ostd_sstring, ostd_sstring, -1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ostd_mstring, ostd_mstring, -1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ostd_lstring, ostd_lstring, -1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ostd_xlstring, ostd_xlstring, -1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ostd_xxlstring, ostd_xxlstring, -1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ostd_path_string, ostd_path_string, -1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ostd_uri_string, ostd_uri_string, -1)
+
+namespace oStd {
+
+// @oooii-tony: Can/should these be moved to a header? (string's alloc may eval 
+// differently than what's passed in v. code used in this CPP to execute). 
+// Perhaps oStdStringSupport.h?
+bool from_string(std::string* _pValue, const char* _StrSource)
+{
+	*_pValue = _StrSource;
+	return true;
+}
+
+char* to_string(char* _StrDestination, size_t _SizeofDestination, const std::string* _pValue)
+{
+	strlcpy(_StrDestination, _pValue->c_str(), _SizeofDestination);
+	return _StrDestination;
+}
+
+} // namespace oStd
+
+oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, std_string, std_string, -1)
+
 
 // _____________________________________________________________________________
 
@@ -140,37 +156,37 @@ char* oRTTI::GetName(char* _StrDestination, size_t _SizeofDestination) const
 {
 	switch (Type)
 	{
-	case oRTTI_TYPE_ATOM:
-		oStrcpy(_StrDestination, _SizeofDestination, ((oRTTI_DATA_ATOM*)this)->TypeName);
-		break;
+		case oRTTI_TYPE_ATOM:
+			strlcpy(_StrDestination, ((oRTTI_DATA_ATOM*)this)->TypeName, _SizeofDestination);
+			break;
 
-	case oRTTI_TYPE_ENUM:
-		oStrcpy(_StrDestination, _SizeofDestination, ((oRTTI_DATA_ENUM*)this)->TypeName);
-		break;
+		case oRTTI_TYPE_ENUM:
+			strlcpy(_StrDestination, ((oRTTI_DATA_ENUM*)this)->TypeName, _SizeofDestination);
+			break;
 
-	case oRTTI_TYPE_POINTER: 
+		case oRTTI_TYPE_POINTER: 
 		{
 			oRTTI_DATA_POINTER* ptr = (oRTTI_DATA_POINTER*)this;
-			oStringS itemName;
-			oStrAppendf(_StrDestination, _SizeofDestination, "%s_%s", ptr->PointerType->Name, ptr->ItemType->GetName(itemName));
+			oStd::sstring itemName;
+			oStd::sncatf(_StrDestination, _SizeofDestination, "%s_%s", ptr->PointerType->Name, ptr->ItemType->GetName(itemName));
 			break;
 		}
 
-	case oRTTI_TYPE_CONTAINER: 
+		case oRTTI_TYPE_CONTAINER: 
 		{
 			oRTTI_DATA_CONTAINER* container = (oRTTI_DATA_CONTAINER*)this;
-			oStringS itemName;
-			oStrAppendf(_StrDestination, _SizeofDestination, "%s_%s", container->ContainerType->TypeName, container->ItemType->GetName(itemName));
+			oStd::sstring itemName;
+			oStd::sncatf(_StrDestination, _SizeofDestination, "%s_%s", container->ContainerType->TypeName, container->ItemType->GetName(itemName));
 			break;
 		}
 
-	case oRTTI_TYPE_COMPOUND:
-		oStrcpy(_StrDestination, _SizeofDestination, ((oRTTI_DATA_COMPOUND_BASE*)this)->TypeName);
-		break;
+		case oRTTI_TYPE_COMPOUND:
+			strlcpy(_StrDestination, ((oRTTI_DATA_COMPOUND_BASE*)this)->TypeName, _SizeofDestination);
+			break;
 
-	default:
-		oStrcpy(_StrDestination, _SizeofDestination, "<unknown>");
-		break;
+		default:
+			strlcpy(_StrDestination, "<unknown>", _SizeofDestination);
+			break;
 	}
 	return _StrDestination;
 }
@@ -179,45 +195,62 @@ int oRTTI::GetSize() const
 {
 	switch (Type)
 	{
-	case oRTTI_TYPE_ATOM:
-		return ((oRTTI_DATA_ATOM*)this)->Size;
+		case oRTTI_TYPE_ATOM:
+			return ((oRTTI_DATA_ATOM*)this)->Size;
 
-	case oRTTI_TYPE_ENUM:
-		return ((oRTTI_DATA_ENUM*)this)->Size;
+		case oRTTI_TYPE_ENUM:
+			return ((oRTTI_DATA_ENUM*)this)->Size;
 
-	case oRTTI_TYPE_POINTER: 
-		return sizeof(void*);
+		case oRTTI_TYPE_POINTER: 
+			return sizeof(void*);
 
-	case oRTTI_TYPE_CONTAINER: 
-		return ((oRTTI_DATA_CONTAINER*)this)->ContainerType->Size;
+		case oRTTI_TYPE_CONTAINER: 
+			return ((oRTTI_DATA_CONTAINER*)this)->ContainerType->Size;
 
-	case oRTTI_TYPE_COMPOUND:
-		return ((oRTTI_DATA_COMPOUND_BASE*)this)->Size;
+		case oRTTI_TYPE_COMPOUND:
+			return ((oRTTI_DATA_COMPOUND_BASE*)this)->Size;
 
-	default:
-		return oInvalid;
+		default:
+			return oInvalid;
 	}
 }
 
 char* oRTTI::TypeToString(char* _StrDestination, size_t _SizeofDestination) const
 {
-	oStringM name;
-	oStrAppendf(_StrDestination, _SizeofDestination, "oRTTI_OF(%s)", GetName(name));
+	oStd::mstring name;
+	oStd::sncatf(_StrDestination, _SizeofDestination, "oRTTI_OF(%s)", GetName(name));
 	return _StrDestination;
 }
 
 // _____________________________________________________________________________
 // General
 
-bool oRTTI::FromString(const char* _String, void* _pValue) const
+bool oRTTI::FromString(const char* _String, void* _pValue, int _SizeOfValue) const
 {
 	switch (Type)
 	{
-	case oRTTI_TYPE_ATOM:
-		// Atom types are required to have a FromString function
-		return ((oRTTI_DATA_ATOM*)this)->FromString(_pValue, _String);
+		case oRTTI_TYPE_ATOM:
+		{
+			oRTTI_DATA_ATOM* atom = (oRTTI_DATA_ATOM*)this;
 
-	case oRTTI_TYPE_COMPOUND: 
+			int backup = _SizeOfValue;
+			if (atom->HasTemplatedSize)
+			{
+				oASSERT(_SizeOfValue >= 4, "RTTI Atom with templated size expected to be at least 4 bytes");
+				std::swap(backup, *(int*)_pValue);
+			}
+
+			// Atom types are required to have a FromString function
+			bool result = atom->FromString(_pValue, _String);
+
+			// Restore original memory if FromString failed
+			if (atom->HasTemplatedSize && !result)
+				std::swap(backup, *(int*)_pValue);
+
+			return result;
+		}
+
+		case oRTTI_TYPE_COMPOUND: 
 		{
 			oRTTI_DATA_COMPOUND_BASE* compound = (oRTTI_DATA_COMPOUND_BASE*)this;
 			if (compound->FromString)
@@ -226,24 +259,40 @@ bool oRTTI::FromString(const char* _String, void* _pValue) const
 				return (object->*(compound->FromString))(_String);
 			}
 			else
-				return oErrorSetLast(oERROR_NOT_FOUND, "Compound type '%s' doesn't have a FromString function", compound->TypeName);
+				return oErrorSetLast(std::errc::function_not_supported, "Compound type '%s' doesn't have a FromString function", compound->TypeName);
 		}
 
-	case oRTTI_TYPE_ENUM: 
+		case oRTTI_TYPE_ENUM: 
 		{
 			oRTTI_DATA_ENUM* enumData = (oRTTI_DATA_ENUM*)this;
 			oASSERT(enumData->Size == sizeof(int), "oRTTI_DATA_ENUM::VALUE is hardcoded as an int, however oRTTI_DATA_ENUM.Size != sizeof(int)");
 
-			for(int i=0; i<enumData->NumValues; ++i)
+			if (enumData->CaseSensitive)
 			{
-				const oRTTI_DATA_ENUM::VALUE& enumValue = enumData->Values[i];
-				if (oStricmp(_String, enumValue.Name) == 0)
+				for(int i=0; i<enumData->NumValues; ++i)
 				{
-					*(int*)_pValue = enumValue.Value;
-					return true;
+					const oRTTI_DATA_ENUM::VALUE& enumValue = enumData->Values[i];
+					if (strcmp(_String, enumValue.Name) == 0)
+					{
+						*(int*)_pValue = enumValue.Value;
+						return true;
+					}
 				}
 			}
-			return oErrorSetLast(oERROR_NOT_FOUND, "Couldn't resolve enum '%s' %s to a value", enumData->TypeName, _String);
+
+			else
+			{
+				for(int i=0; i<enumData->NumValues; ++i)
+				{
+					const oRTTI_DATA_ENUM::VALUE& enumValue = enumData->Values[i];
+					if (_stricmp(_String, enumValue.Name) == 0)
+					{
+						*(int*)_pValue = enumValue.Value;
+						return true;
+					}
+				}
+			}
+			return oErrorSetLast(std::errc::invalid_argument, "Couldn't resolve enum '%s' %s to a value", enumData->TypeName, _String);
 		}
 
 		oNODEFAULT;
@@ -254,11 +303,11 @@ char* oRTTI::ToString(char* _StrDestination, size_t _SizeofDestination, const vo
 {
 	switch (Type)
 	{
-	case oRTTI_TYPE_ATOM:
-		// Atom types are required to have a ToString function
-		return ((oRTTI_DATA_ATOM*)this)->ToString(_StrDestination, _SizeofDestination, _pValue);
+		case oRTTI_TYPE_ATOM:
+			// Atom types are required to have a ToString function
+			return ((oRTTI_DATA_ATOM*)this)->ToString(_StrDestination, _SizeofDestination, _pValue);
 
-	case oRTTI_TYPE_COMPOUND: 
+		case oRTTI_TYPE_COMPOUND: 
 		{
 			oRTTI_DATA_COMPOUND_BASE* compound = (oRTTI_DATA_COMPOUND_BASE*)this;
 			if (compound->ToString)
@@ -269,7 +318,7 @@ char* oRTTI::ToString(char* _StrDestination, size_t _SizeofDestination, const vo
 		}
 		break;
 
-	case oRTTI_TYPE_ENUM: 
+		case oRTTI_TYPE_ENUM: 
 		{
 			oRTTI_DATA_ENUM* enumData = (oRTTI_DATA_ENUM*)this;
 			oASSERT(enumData->Size == sizeof(int), "oRTTI_DATA_ENUM::VALUE is hardcoded as an int, however oRTTI_DATA_ENUM.Size != sizeof(int)");
@@ -279,7 +328,7 @@ char* oRTTI::ToString(char* _StrDestination, size_t _SizeofDestination, const vo
 				const oRTTI_DATA_ENUM::VALUE& enumValue = enumData->Values[i];
 				if (*(int*)_pValue == enumValue.Value)
 				{
-					oStrcpy(_StrDestination, _SizeofDestination, (char*)enumValue.Name);
+					strlcpy(_StrDestination, (char*)enumValue.Name, _SizeofDestination);
 					return _StrDestination;
 				}
 			}
@@ -289,6 +338,41 @@ char* oRTTI::ToString(char* _StrDestination, size_t _SizeofDestination, const vo
 	
 	// Not found
 	return _StrDestination;
+}
+
+int oRTTI::GetNumStringTokens() const
+{
+	switch (Type)
+	{
+		case oRTTI_TYPE_ENUM: 
+			return 1;
+
+		case oRTTI_TYPE_ATOM:
+			return ((oRTTI_DATA_ATOM*)this)->NumStringTokens;
+
+		default:
+			return -1;
+	}
+}
+
+// _____________________________________________________________________________
+// Atoms
+
+uint oRTTI::GetTraits() const
+{
+	switch (Type)
+	{
+		case oRTTI_TYPE_ATOM:
+			return ((oRTTI_DATA_ATOM*)this)->TypeTraits;
+
+		case oRTTI_TYPE_ENUM:
+			// Assuming that all enum traits are the same..
+			return oTypeInfo<oRUNTIME_TYPE_TRAITS>::traits;
+
+		default:
+			// TODO: Do we need traits for COMPOUNDS, CONTAINERS, POINTERS too?
+			return 0;
+	}
 }
 
 // _____________________________________________________________________________
@@ -334,10 +418,28 @@ const char* oRTTI::AsString(const void* _pValue) const
 // _____________________________________________________________________________
 // Compounds
 
-int oRTTI::GetVersion() const
+oVersion oRTTI::GetVersion() const
+{
+	if (Type != oRTTI_TYPE_COMPOUND) return oVersion();
+	return ((oRTTI_DATA_COMPOUND_BASE*)this)->Version;
+}
+
+int oRTTI::GetNumBases() const
 {
 	if (Type != oRTTI_TYPE_COMPOUND) return 0;
-	return ((oRTTI_DATA_COMPOUND_BASE*)this)->Version;
+	return ((oRTTI_DATA_COMPOUND_BASE*)this)->NumBases;
+}
+
+const oRTTI* oRTTI::GetBaseRTTI(int _Index) const
+{
+	if (Type != oRTTI_TYPE_COMPOUND) return 0;
+	return ((oRTTI_DATA_COMPOUND_BASE*)this)->Bases[_Index].RTTI;
+}
+
+int oRTTI::GetBaseOffset(int _Index) const
+{
+	if (Type != oRTTI_TYPE_COMPOUND) return 0;
+	return ((oRTTI_DATA_COMPOUND_BASE*)this)->Bases[_Index].Offset;
 }
 
 int oRTTI::GetNumAttrs() const
@@ -351,6 +453,19 @@ const oRTTI_ATTR* oRTTI::GetAttr(int _Index) const
 	if (Type != oRTTI_TYPE_COMPOUND) return nullptr;
 	return (const oRTTI_ATTR*)&((oRTTI_DATA_COMPOUND_BASE*)this)->Attrs[_Index];
 }
+
+void oRTTI::EnumAttrs(bool _IncludeBases, oFUNCTION<bool(const oRTTI_ATTR& _Attr)> _Callback) const
+{
+	if (Type != oRTTI_TYPE_COMPOUND) return;
+	if (_IncludeBases)
+	{
+		for (int base = 0; base < GetNumBases(); base++)
+			GetBaseRTTI(base)->EnumAttrs(_IncludeBases, _Callback);
+	}
+	for (int attr = 0; attr < GetNumAttrs(); attr++)
+		_Callback(*GetAttr(attr));
+}
+
 
 // _____________________________________________________________________________
 // Containers

@@ -42,9 +42,9 @@ bool oFileTouch(const char* _Path, time_t _UnixTimestamp)
 
 bool oFileEnsureParentFolderExists(const char* _Path)
 {
-	oStringPath parent(_Path);
+	oStd::path_string parent(_Path);
 	oTrimFilename(parent);
-	if (!parent.empty() && !oFileCreateFolder(parent) && oErrorGetLast() != oERROR_REDUNDANT)
+	if (!parent.empty() && !oFileCreateFolder(parent) && oErrorGetLast() != std::errc::operation_in_progress)
 		return false; // pass through error
 	return true;
 }
@@ -58,7 +58,7 @@ char* oFileCreateTempFolder(char* _TempPath, size_t _SizeofTempPath)
 	{
 		oPrintf(_TempPath + pathLength, _SizeofTempPath - pathLength, "%i", rand());
 		bool result = oFileCreateFolder(_TempPath);
-		if (result || oErrorGetLast() != oERROR_REDUNDANT)
+		if (result || oErrorGetLast() != std::errc::operation_in_progress)
 			break;
 	}
 
@@ -70,7 +70,7 @@ bool oFileLoadHeader(void* _pHeader, size_t _SizeofHeader, const char* _Path)
 	const bool _AsText = false;
 
 	if (!_pHeader || !_SizeofHeader || !oSTRVALID(_Path))
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 	
 	oHFILE hFile = nullptr;
 	if (!oFileOpen(_Path, _AsText ? oFILE_OPEN_TEXT_READ : oFILE_OPEN_BIN_READ, &hFile))
@@ -84,8 +84,8 @@ bool oFileLoadHeader(void* _pHeader, size_t _SizeofHeader, const char* _Path)
 
 	if (actualSize != static_cast<unsigned long long>(_SizeofHeader))
 	{
-		oStringS header, actual;
-		return oErrorSetLast(oERROR_IO, "Expected %s, but read %s as header from file %s", oFormatMemorySize(header, _SizeofHeader, 2), oFormatMemorySize(actual, actualSize, 2), _Path);
+		oStd::sstring header, actual;
+		return oErrorSetLast(std::errc::io_error, "Expected %s, but read %s as header from file %s", oFormatMemorySize(header, _SizeofHeader, 2), oFormatMemorySize(actual, actualSize, 2), _Path);
 	}
 
 	return true;
@@ -94,7 +94,7 @@ bool oFileLoadHeader(void* _pHeader, size_t _SizeofHeader, const char* _Path)
 bool oFileSave(const char* _Path, const void* _pSource, size_t _SizeofSource, bool _AsText, bool _AppendToExistingFile)
 {
 	if (!oSTRVALID(_Path) || !_pSource)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	oHFILE hFile = nullptr;
 
@@ -110,8 +110,8 @@ bool oFileSave(const char* _Path, const void* _pSource, size_t _SizeofSource, bo
 
 	if (actualWritten != _SizeofSource)
 	{
-		oStringS source, actual;
-		return oErrorSetLast(oERROR_IO, "Expected to write %s, but wrote %s to file %s", oFormatMemorySize(source, _SizeofSource, 2), oFormatMemorySize(actual, actualWritten, 2), _Path);
+		oStd::sstring source, actual;
+		return oErrorSetLast(std::errc::io_error, "Expected to write %s, but wrote %s to file %s", oFormatMemorySize(source, _SizeofSource, 2), oFormatMemorySize(actual, actualWritten, 2), _Path);
 	}
 
 	return true;

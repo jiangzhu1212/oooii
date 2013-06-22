@@ -30,6 +30,7 @@
 #define oMIME_h
 
 #include <oBasis/oPlatformFeatures.h>
+#include <oBasis/oRTTI.h>
 
 enum oMIME_TYPE
 {
@@ -119,12 +120,9 @@ enum oMIME_TYPE
 	oMIME_VIDEO_WMV,
 	oMIME_VIDEO_FLASH_VIDEO,
 
-	oMIME_NUM_TYPES,
+	oMIME_TYPE_COUNT,
 };
-
-oAPI const char* oAsString(oMIME_TYPE _Type);
-oAPI char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oMIME_TYPE& _Type);
-oAPI bool oFromString(oMIME_TYPE* _pType, const char* _StrSource);
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oMIME_TYPE)
 
 //only common extensions supported currently. if returns false, _pType will also be set to oMIME_UNKNOWN
 oAPI bool oMIMEFromExtension(oMIME_TYPE* _pType, const char* _Extension);

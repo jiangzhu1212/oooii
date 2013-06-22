@@ -27,10 +27,11 @@
 #ifndef oDispatchQueue_h
 #define oDispatchQueue_h
 
-#include <oBasis/oCallable.h>
-#include <oBasis/oFunction.h>
+#include <oConcurrency/oConcurrency.h>
 #include <oBasis/oInterface.h>
 
+// {85260463-6AA5-4BAB-951F-E1B044E9F692}
+oDEFINE_GUID_I(oDispatchQueue, 0x85260463, 0x6aa5, 0x4bab, 0x95, 0x1f, 0xe1, 0xb0, 0x44, 0xe9, 0xf6, 0x92);
 interface oDispatchQueue : oInterface
 {
 	// Schedule a task to be executed in the order they were enqueued. Ensure 
@@ -41,7 +42,7 @@ interface oDispatchQueue : oInterface
 	// task has not nor will ever execute because either the underlying 
 	// scheduler's queue is at capacity or the object is in a shutdown mode where
 	// it is ignoring new requests.
-	virtual bool Dispatch(oTASK _Task) threadsafe = 0;
+	virtual bool Dispatch(const oTASK& _Task) threadsafe = 0;
 	oDEFINE_CALLABLE_RETURN_WRAPPERS(bool, Dispatch, threadsafe, Dispatch);
 
 	// Block the calling thread until all currently queued tasks are executed

@@ -32,10 +32,10 @@ struct PLATFORM_oCPU : public oTest
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oCPU_DESC cpu;
-		oCPUEnum(0, &cpu);
-		bool HasHT = oCPUCheckFeatureSupport(0, "Hyperthreading") >= oCPU_FULL_SUPPORT;
-		bool HasAVX = oCPUCheckFeatureSupport(0, "AVX1") >= oCPU_FULL_SUPPORT;
-		oPrintf(_StrStatus, _SizeofStrStatus, "%s %s %s%s%s %d HWThreads", oAsString(cpu.Type), cpu.String, cpu.BrandString, HasHT ? " HT" : "", HasAVX ? " AVX" : "", cpu.NumHardwareThreads);
+		oCPUGetDesc(&cpu);
+		bool HasHT = oCPUCheckFeatureSupport("Hyperthreading") >= oCPU_FULL_SUPPORT;
+		bool HasAVX = oCPUCheckFeatureSupport("AVX1") >= oCPU_FULL_SUPPORT;
+		oPrintf(_StrStatus, _SizeofStrStatus, "%s %s %s%s%s %d HWThreads", oStd::as_string(cpu.Type), cpu.String, cpu.BrandString, HasHT ? " HT" : "", HasAVX ? " AVX" : "", cpu.NumHardwareThreads);
 		return SUCCESS;
 	}
 };

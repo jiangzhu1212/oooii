@@ -30,13 +30,14 @@
 #include "oGPUCommon.h"
 #include <oPlatform/Windows/oD3D11.h>
 
-oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, ComputeShader)
+// {17749C8B-0641-4A8B-A4A5-8456C6B7D586}
+oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, ComputeShader, 0x17749c8b, 0x641, 0x4a8b, 0xa4, 0xa5, 0x84, 0x56, 0xc6, 0xb7, 0xd5, 0x86)
 {
 	oDEFINE_GPUDEVICECHILD_INTERFACE();
 	oDECLARE_GPUDEVICECHILD_CTOR(oD3D11, ComputeShader);
 	void GetDesc(DESC* _pDesc) const threadsafe override;
 	oRef<ID3D11ComputeShader> ComputeShader;
-	oStringS DebugName;
+	oStd::sstring DebugName;
 };
 
 #endif

@@ -128,29 +128,11 @@ oRTTI_ENUM_END_DESCRIPTION(oGPU_PRIMITIVE_TYPE)
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGPU_RESOURCE_TYPE)
 	oRTTI_ENUM_BEGIN_VALUES(oGPU_RESOURCE_TYPE)
 		oRTTI_VALUE(oGPU_BUFFER)
-		oRTTI_VALUE(oGPU_INSTANCE_LIST)
-		oRTTI_VALUE(oGPU_LINE_LIST)
-		oRTTI_VALUE(oGPU_MATERIAL)
-		oRTTI_VALUE(oGPU_MATERIAL_SET)
 		oRTTI_VALUE(oGPU_MESH)
-		oRTTI_VALUE(oGPU_OUTPUT)
-		oRTTI_VALUE(oGPU_SCENE)
-		oRTTI_VALUE(oGPU_SKELETON)
-		oRTTI_VALUE(oGPU_SKELETON_POSE)
 		oRTTI_VALUE(oGPU_TEXTURE)
 		oRTTI_VALUE(oGPU_TEXTURE_YUV)
 	oRTTI_ENUM_END_VALUES(oGPU_RESOURCE_TYPE)
 oRTTI_ENUM_END_DESCRIPTION(oGPU_RESOURCE_TYPE)
-
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGPU_MESH_SUBRESOURCE)
-	oRTTI_ENUM_BEGIN_VALUES(oGPU_MESH_SUBRESOURCE)
-		oRTTI_VALUE(oGPU_MESH_RANGES)
-		oRTTI_VALUE(oGPU_MESH_INDICES)
-		oRTTI_VALUE(oGPU_MESH_VERTICES0)
-		oRTTI_VALUE(oGPU_MESH_VERTICES1)
-		oRTTI_VALUE(oGPU_MESH_VERTICES2)
-	oRTTI_ENUM_END_VALUES(oGPU_MESH_SUBRESOURCE)
-oRTTI_ENUM_END_DESCRIPTION(oGPU_MESH_SUBRESOURCE)
 
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGPU_BUFFER_TYPE)
 	oRTTI_ENUM_BEGIN_VALUES(oGPU_BUFFER_TYPE)
@@ -282,40 +264,42 @@ oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGPU_CLEAR)
 	oRTTI_ENUM_END_VALUES(oGPU_CLEAR)
 oRTTI_ENUM_END_DESCRIPTION(oGPU_CLEAR)
 
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGPU_NORMAL_SPACE)
-	oRTTI_ENUM_BEGIN_VALUES(oGPU_NORMAL_SPACE)
-		oRTTI_VALUE(oGPU_NORMAL_LOCAL_SPACE)
-		oRTTI_VALUE(oGPU_NORMAL_TANGENT_SPACE)
-		oRTTI_VALUE(oGPU_NORMAL_BUMP_LOCAL_SPACE)
-		oRTTI_VALUE(oGPU_NORMAL_BUMP_TANGENT_SPACE)
-	oRTTI_ENUM_END_VALUES(oGPU_NORMAL_SPACE)
-oRTTI_ENUM_END_DESCRIPTION(oGPU_NORMAL_SPACE)
-
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGPU_BRDF_MODEL)
-	oRTTI_ENUM_BEGIN_VALUES(oGPU_BRDF_MODEL)
-		oRTTI_VALUE(oGPU_BRDF_PHONG)
-		oRTTI_VALUE(oGPU_BRDF_GOOCH)
-		oRTTI_VALUE(oGPU_BRDF_MINNAERT)
-		oRTTI_VALUE(oGPU_BRDF_GAUSSIAN)
-		oRTTI_VALUE(oGPU_BRDF_BECKMANN)
-		oRTTI_VALUE(oGPU_BRDF_HEIDRICH_SEIDEL_ANISO) 
-		oRTTI_VALUE(oGPU_BRDF_WARD_ANISO)
-		oRTTI_VALUE(oGPU_BRDF_COOK_TORRANCE)
-	oRTTI_ENUM_END_VALUES(oGPU_BRDF_MODEL)
-oRTTI_ENUM_END_DESCRIPTION(oGPU_BRDF_MODEL)
-
 static_assert(sizeof(oGPU_RANGE) == 16, "unexpected struct packing for oGPU_RANGE");
-static_assert(sizeof(oFourCC) == 4, "unexpected struct packing for oFourCC");
+static_assert(sizeof(oStd::fourcc) == 4, "unexpected struct packing for oStd::fourcc");
 static_assert(sizeof(oResizedType<oSURFACE_FORMAT, short>) == 2, "unexpected struct packing for oResizedType<oSURFACE_FORMAT, short>");
 static_assert(sizeof(oGPU_VERTEX_ELEMENT) == 8, "unexpected struct packing for oGPU_VERTEX_ELEMENT");
 
-uint oGPUGetSemanticIndex(const oFourCC& _FourCC)
+bool oGPUParseSemantic(const oStd::fourcc& _FourCC, char _Name[5], uint* _pIndex)
 {
-	int a,b,c,d;
-	oFourCCDecompose(_FourCC, &a, &b, &c, &d);
-	if (d >= '0' && d <= '9')
-		return oUInt(d - '0');
-	return 0;
+	*_pIndex = 0;
+	*_Name = 0;
+
+	char fcc[5];
+	oStd::to_string(fcc, _FourCC);
+	char* i = &fcc[3];
+	while (isspace(*i)) i--;
+	if (i == fcc)
+		return false;
+
+	while (isdigit(*i)) i--;
+	if (i == fcc)
+		return false;
+
+	i++;
+	*_pIndex = atoi(i);
+
+	// there can be no numbers or space before the semantic index
+	char* n = _Name;
+	char* f = fcc;
+	while (f < i)
+	{
+		if (isspace(*f) || isdigit(*f))
+			return false;
+		*n++ = *f++;
+	}
+
+	*n = 0;
+	return true;
 }
 
 uint oGPUCalcVertexSize(const threadsafe oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, uint _InputSlot)

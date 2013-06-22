@@ -42,12 +42,10 @@
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oSurface.h>
 
+// {83CECF1C-316F-4ed4-9B20-4180B2ED4B4E}
+oDEFINE_GUID_I(oImage, 0x83cecf1c, 0x316f, 0x4ed4, 0x9b, 0x20, 0x41, 0x80, 0xb2, 0xed, 0x4b, 0x4e);
 interface oImage : oBuffer
 {
-	// !!! DO NOT ADD API WITHOUT REVIEW TO THIS CLASS !!!
-	// Add a separate c-style function until it can be reviewed as being an 
-	// appropriate addition.
-
 	enum FORMAT
 	{
 		UNKNOWN,
@@ -104,8 +102,8 @@ interface oImage : oBuffer
 	// Non-performant API used for test cases. Do not use this unless in the most
 	// trivial of debug code. Operation on the contents of GetData without 
 	// conversion, preferably using parallelism.
-	virtual void Put(const int2& _Coord, oColor _Color) = 0;
-	virtual oColor Get(const int2& _Coord) const = 0;
+	virtual void Put(const int2& _Coord, oStd::color _Color) = 0;
+	virtual oStd::color Get(const int2& _Coord) const = 0;
 
 	// Assumes the source buffer is the same format as this oImage and copies its
 	// bitmap data into this oImage's store without changing topology information.
@@ -130,23 +128,40 @@ oAPI oSURFACE_FORMAT oImageFormatToSurfaceFormat(oImage::FORMAT _Format);
 oAPI oImage::FILE_FORMAT oImageFormatFromExtension(const char* _URIReference);
 
 // Wrappers for oSurface API that constrain things to the policies of oImage.
-
-inline void oImageGetSurfaceDesc(const oImage* _pImage, oSURFACE_DESC* _pSurfaceDesc)
-{
-	oImage::DESC IDesc;
-	_pImage->GetDesc(&IDesc);
-
-	_pSurfaceDesc->Dimensions = int3(IDesc.Dimensions, 1);
-	_pSurfaceDesc->NumSlices = 1;
-	_pSurfaceDesc->Format = oImageFormatToSurfaceFormat(IDesc.Format);
-	_pSurfaceDesc->Layout = oSURFACE_LAYOUT_IMAGE;
-};
-
 inline int oImageCalcRowPitch(oImage::FORMAT _Format, int _Width) { return oSurfaceMipCalcRowSize(oImageFormatToSurfaceFormat(_Format), _Width); }
 inline int oImageGetBitSize(oImage::FORMAT _Format) { return oSurfaceFormatGetBitSize(oImageFormatToSurfaceFormat(_Format)); }
 inline int oImageGetSize(oImage::FORMAT _Format) { return oSurfaceFormatGetSize(oImageFormatToSurfaceFormat(_Format)); }
 inline int oImageCalcSize(oImage::FORMAT _Format, const int2& _Dimensions) { return oSurfaceMipCalcSize(oImageFormatToSurfaceFormat(_Format), _Dimensions); }
 inline bool oImageIsAlphaFormat(oImage::FORMAT _Format) { return oSurfaceFormatIsAlpha(oImageFormatToSurfaceFormat(_Format)); }
+
+inline void oImageGetSurfaceDesc(const threadsafe oImage* _pImage, oSURFACE_DESC* _pSurfaceDesc)
+{
+	oImage::DESC IDesc;
+	_pImage->GetDesc(&IDesc);
+
+	_pSurfaceDesc->Dimensions = int3(IDesc.Dimensions, 1);
+	_pSurfaceDesc->ArraySize = 1;
+	_pSurfaceDesc->Format = oImageFormatToSurfaceFormat(IDesc.Format);
+	_pSurfaceDesc->Layout = oSURFACE_LAYOUT_IMAGE;
+}
+
+inline void oImageGetMappedSubresource(oImage* _pImage, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource)
+{
+	oImage::DESC d;
+	_pImage->GetDesc(&d);
+	_pMappedSubresource->pData = _pImage->GetData();
+	_pMappedSubresource->RowPitch = d.RowPitch;
+	_pMappedSubresource->DepthPitch = oImageCalcSize(d.Format, d.Dimensions);
+}
+
+inline void oImageGetMappedSubresource(const oImage* _pImage, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMappedSubresource)
+{
+	oImage::DESC d;
+	_pImage->GetDesc(&d);
+	_pMappedSubresource->pData = _pImage->GetData();
+	_pMappedSubresource->RowPitch = d.RowPitch;
+	_pMappedSubresource->DepthPitch = oImageCalcSize(d.Format, d.Dimensions);
+}
 
 // _____________________________________________________________________________
 // Creation code (image format parsing)

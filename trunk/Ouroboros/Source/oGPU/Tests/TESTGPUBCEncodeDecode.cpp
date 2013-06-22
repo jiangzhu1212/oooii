@@ -24,7 +24,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPU/oGPU.h>
-#include <oGPU/oGPUIO.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oPlatform/oImage.h>
@@ -40,18 +39,18 @@ struct GPU_BCEncodeDecode : public oTest
 
 		oGPU_TEXTURE_DESC d;
 		d.Dimensions = int3(oDEFAULT, oDEFAULT, 1);
-		d.NumSlices = oDEFAULT;
+		d.ArraySize = oDEFAULT;
 		d.Format = oSURFACE_UNKNOWN;
 
 		oRef<oGPUTexture> OriginalAsTexture;
 		oTESTB(oGPUTextureLoad(_pDevice, d, "Source Texture", OriginalFile->GetData(), OriginalFile->GetSize(), &OriginalAsTexture), "Failed to parse %s", OriginalFile->GetName());
 
 		oRef<oGPUTexture> ConvertedTexture;
-		oTESTB(oGPUSurfaceConvert(OriginalAsTexture, _TargetFormat, &ConvertedTexture), "Failed to convert %s to %s", OriginalFile->GetName(), oAsString(_TargetFormat));
+		oTESTB(oGPUSurfaceConvert(OriginalAsTexture, _TargetFormat, &ConvertedTexture), "Failed to convert %s to %s", OriginalFile->GetName(), oStd::as_string(_TargetFormat));
 
 		oStreamDelete(_ConvertedPath);
 
-		oTESTB(oGPUTextureSave(ConvertedTexture, oGPUEX_FILE_FORMAT_DDS, _ConvertedPath), "Failed to save %s", _ConvertedPath);
+		oTESTB(oGPUTextureSave(ConvertedTexture, oGPU_FILE_FORMAT_DDS, _ConvertedPath), "Failed to save %s", _ConvertedPath);
 		return oTest::SUCCESS;
 	}
 
@@ -62,7 +61,7 @@ struct GPU_BCEncodeDecode : public oTest
 
 		oGPUTexture::DESC td;
 		td.Dimensions = int3(oDEFAULT, oDEFAULT, 1);
-		td.NumSlices = oDEFAULT;
+		td.ArraySize = oDEFAULT;
 		td.Format = oSURFACE_UNKNOWN;
 		td.Type = oGPU_TEXTURE_2D_READBACK;
 
@@ -97,7 +96,7 @@ struct GPU_BCEncodeDecode : public oTest
 	{
 		static const char* TestImageFilename = "Test/Textures/lena_1.png";
 
-		oStringPath ImagePath;
+		oStd::path_string ImagePath;
 		oTESTB0(FindInputFile(ImagePath, TestImageFilename));
 
 		char base[64];
@@ -105,15 +104,15 @@ struct GPU_BCEncodeDecode : public oTest
 		char fn[64];
 		oPrintf(fn, "%s%s.dds", base, _FilenameSuffix);
 
-		oStringPath ConvertedPath;
+		oStd::path_string ConvertedPath;
 		oTESTB0(BuildPath(ConvertedPath, fn, oTest::TEMP));
 
-		oTRACE("Converting image to %s (may take a while)...", oAsString(_TargetFormat));
+		oTRACE("Converting image to %s (may take a while)...", oStd::as_string(_TargetFormat));
 		RESULT res = LoadOriginalAndSaveConverted(_StrStatus, _SizeofStrStatus, _pDevice, _TargetFormat, ImagePath, ConvertedPath);
 		if (SUCCESS != res)
 			return res;
 
-		oTRACE("Converting image back from %s (may take a while)...", oAsString(_TargetFormat));
+		oTRACE("Converting image back from %s (may take a while)...", oStd::as_string(_TargetFormat));
 		oRef<oImage> ConvertedImage;
 		res = LoadConvertedAndConvertToImage(_StrStatus, _SizeofStrStatus, _pDevice, ConvertedPath, &ConvertedImage);
 		if (SUCCESS != res)
@@ -121,7 +120,7 @@ struct GPU_BCEncodeDecode : public oTest
 
 		// Even on different series AMD cards there is a bit of variation, so use a 
 		// more forgiving tolerance
-		if (_TargetFormat == DXGI_FORMAT_BC7_UNORM)
+		if (_TargetFormat == oSURFACE_BC7_UNORM)
 			oTESTI_CUSTOM_TOLERANCE(ConvertedImage, _NthTest, oDEFAULT, 7.2f, oDEFAULT);
 		else
 			oTESTI2(ConvertedImage, _NthTest);

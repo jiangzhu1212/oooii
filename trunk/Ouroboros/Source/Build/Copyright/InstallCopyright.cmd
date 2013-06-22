@@ -2,9 +2,10 @@
 setlocal enabledelayedexpansion
 title Installing Copyright...
 
-rem DIRS must be all in quotes, and then each dir must be wrapped in its own 
-rem quotes and not end with a slash. Each path should be delimited by one space.
-set DIRS=../../oBasis ../../oFile2cpp ../../oGPU ../../oPlatform ../../oRCVer ../../oVer ../../../Include/oBasis ../../../Include/oBasisTests ../../../Include/oGPU ../../../Include/oPlatform
+rem RUN THIS FROM THE DIRECTORY IT IS IN (so you can click on it from File Explorer).
+
+set SDK_DIR=../../../..
+set DIRS=%SDK_DIR%/Ouroboros/Include %SDK_DIR%/Ouroboros/Source
 
 choice /c YNC /m "Do you need the files checked out of Perforce: Yes, No, Cancel?"
 if ERRORLEVEL 3 goto Cancel

@@ -44,9 +44,290 @@
 #ifndef oWinWindowing_h
 #define oWinWindowing_h
 
-#include <oBasis/oStdThread.h>
+#include <oStd/oStdThread.h>
 #include <oBasis/oGUI.h>
 #include <oPlatform/Windows/oWindows.h>
+
+// _____________________________________________________________________________
+// Custom messages
+
+enum oWM
+{
+	// Custom Windows messages defined for Ouroboros' oWindow and controls.
+
+	oWM_FIRST_MESSAGE = WM_APP,
+
+	/**
+		Called when all other messages have been handled and then only to windows
+		that register themselves as "active" windows. If there are no active windows
+		and the message pump is empty, the pump thread will block waiting for new
+		messages.
+		wParam
+			This parameter is not used.
+		lParam
+			This parameter is not used.
+		lResult
+			Returns 0.
+	*/
+	oWM_MAINLOOP = oWM_FIRST_MESSAGE,
+
+	/**
+		Execute an arbitrary std::function on a window message pump thread.
+		wParam
+			This parameter is not used.
+		lParam
+			oTASK* pointer to a task that will have delete called on it once 
+			execution is done.
+		lResult
+			Returns 0.
+	*/
+	oWM_DISPATCH,
+
+	/**
+		Calls SetTimer on the window thread with a null callback (the message pump
+		should handle WM_TIMER and return status).
+		wParam
+			This is passed to the nIDEvent parameter of SetTimer.
+		lParam
+			This is passed to the uElapse parameter of SetTimer.
+		lResult
+			Returns 0.
+	*/
+	oWM_START_TIMER,
+
+	/**
+		Adds an action observer/hook function to an oWindow.
+		wParam
+			This parameter is not used.
+		lParam
+			An oGUI_ACTION_HOOK* that the oWindow will add to its observer list.
+		lResult
+			A hook ID (int) that can later be passed to oWM_ACTION_UNHOOK to remove 
+			the observer.
+	*/
+	oWM_ACTION_HOOK,
+
+	/**
+		Removes an action observer/hook function from an oWindow.
+		wParam
+			This parameter is not used.
+		lParam
+			A hook ID (int) to be removed. The ID would have been returned from a
+			oWM_ACTION_HOOK send.
+		lResult
+			Returns true if successful, or false if the ID was not found.
+	*/
+	oWM_ACTION_UNHOOK,
+
+	/**
+		Sent when oWindow::Trigger is called to trigger an action from code.
+		wParam
+			This parameter is not used.
+		lParam
+			An oGUI_ACTION_DESC* describing the action.
+		lResult
+			Returns 0.
+	*/
+	oWM_ACTION_TRIGGER,
+
+	/**
+		Adds an event observer/hook function to an oWindow.
+		wParam
+			This parameter is not used.
+		lParam
+			An oGUI_EVENT_HOOK* that the oWindow will add to its observer list.
+		lResult
+			A hook ID (int) that can later be passed to oWM_EVENT_UNHOOK to remove the 
+			observer.
+	*/
+	oWM_EVENT_HOOK,
+
+	/**
+		Removes an event observer/hook function from an oWindow.
+		wParam
+			This parameter is not used.
+		lParam
+			A hook ID (int) to be removed. The ID would have been returned from a
+			oWM_EVENT_HOOK send.
+		lResult
+			Returns true if successful, or false if the ID was not found.
+	*/
+	oWM_EVENT_UNHOOK,
+
+	/**
+		Defines an HACCEL for an oWindow through the use of oGUI_HOTKEY_DESC_NO_CTOR
+		interfaces.
+		wParam
+			The number of hotkeys specified in the lParam array.
+		lParam
+			oGUI_HOTKEY_DESC_NO_CTOR* array of hotkeys to set.
+		lResult
+			Returns true if successful or false if there was a failure.
+	*/
+	oWM_SETHOTKEYS,
+
+	/**
+		Copy an oWindow's current HACCEL into oGUI_HOTKEY_DESC_NO_CTOR values.
+		wParam
+			The maximum number of oGUI_HOTKEY_DESC_NO_CTORs to be copied.
+		lParam
+			A pointer to the buffer that is to receive the oGUI_HOTKEY_DESC_NO_CTORs.
+		lResult
+			If lParam is nullptr, the return value is the number of hotkeys currently
+			set as an HACCEL in the specified oWindow. If lParam is a valid pointer, 
+			then the return value is the actual number of hotkeys copied.
+	*/
+	oWM_GETHOTKEYS,
+
+	/**
+		Set the text on an oWindow's status bar section.
+		wParam
+			The number of (int) widths for each section of an oWindow's status bar.
+		lParam
+			int* array of widths to set
+		lResult
+			Returns true if successful or false if there was a failure.
+	*/
+	oWM_STATUS_SETPARTS,
+
+	/**
+		Set the text on an oWindow's status bar section.
+		wParam
+			The index of the status bar's section on which the text will be set.
+		lParam
+			A pointer to a null-terminated string that is the status bar section text.
+		lResult
+			The return value is true if the text was set or false if the index is not
+			valid.
+	*/
+	oWM_STATUS_SETTEXT,
+
+	/**
+		Get the text from an oWindow's status bar section.
+		wParam
+			The result of MAKEWPARAM(x,y) where x is the status bar's section from 
+			which text will be retrieved and y is the maximum number of characters to
+			be copied, including the terminating null character.
+		lParam
+			A pointer to the buffer that is to receive the text.
+		lResult
+			The return value is the number of characters copied, not including the 
+			terminating null character.
+	*/
+	oWM_STATUS_GETTEXT,
+
+	/**
+		Determines the length, in characters, of the text associated with an 
+		oWindow's status bar section.
+		wParam
+			The index of the status bar's section on which the text length will be
+			determined.
+		lParam
+			This parameter is not used.
+		lResult
+			The return value is the length of the text in characters, not including 
+			the terminating null character.
+	*/
+	oWM_STATUS_GETTEXTLENGTH,
+
+	/**
+		Received when an input device has updated skeleton data. Use of this message 
+		is an attempt to model Kinect/Skeleton data (i.e. low-level gesture) on
+		WM_TOUCH, with a GetHandle/ReleaseHandle to iterate through the number of 
+		bones in the skeleton data.
+		wParam
+			The low-order word of wParam specifies the ID of the skeleton.
+			The high-order word of wParam is zero.
+		lParam
+			Contains a skeleton input handle that can be used in a call to 
+			GetSkeletonInputInfo to retrieve detailed information about the bones 
+			associated with this message.
+		lResult
+			Returns 0.
+	*/
+	oWM_SKELETON,
+
+	/**
+		Received when a user of a tracking input device is tracked and recognized.
+		wParam
+			The user ID.
+		lParam
+			This parameter is not used.
+		lResult
+			Returns 0.
+	*/
+	oWM_USER_CAPTURED,
+
+	/**
+		Received when a user of a tracking input device is no longer tracked.
+		wParam
+			The user ID.
+		lParam
+			This parameter is not used.
+		lResult
+			Returns 0.
+	*/
+	oWM_USER_LOST,
+
+	/**
+		Received when an input device is plugged in or otherwise reinitialized.
+		wParam
+			The low-order word of wParam specifies an oGUI_INPUT_DEVICE_TYPE.
+			The high-order word of wParam specifies an oGUI_INPUT_DEVICE_STATUS.
+			oGUI_INPUT_DEVICE_TYPE. The type of the device.
+		lParam
+			A pointer to a null-terminated string that is the device's instance name.
+		lResult
+			Returns 0.
+	*/
+	oWM_INPUT_DEVICE_STATUS,
+
+	// The number of oWM messages, this is not a message
+	oWM_COUNT,
+};
+
+// _____________________________________________________________________________
+// Raw Input (WM_INPUT support)
+
+enum oUS_USAGE_PAGE_VALUES
+{
+	oUS_USAGE_PAGE_GENERIC_DESKTOP = 1,
+	oUS_USAGE_PAGE_SIMULATION = 2,
+	oUS_USAGE_PAGE_VIRTUAL_REALITY = 3,
+	oUS_USAGE_PAGE_SPORT = 4,
+	oUS_USAGE_PAGE_GAME = 5,
+	oUS_USAGE_PAGE_GENERIC_DEVICE = 6,
+	oUS_USAGE_PAGE_KEYBOARD = 7,
+	oUS_USAGE_PAGE_LEDS = 8,
+	oUS_USAGE_PAGE_BUTTON = 9,
+};
+
+enum oUS_USAGE
+{
+	oUS_USAGE_UNDEFINED = 0,
+	oUS_USAGE_POINTER = 1,
+	oUS_USAGE_MOUSE = 2,
+	oUS_USAGE_RESERVED = 3,
+	oUS_USAGE_JOYSTICK = 4,
+	oUS_USAGE_GAMEPAD = 5,
+	oUS_USAGE_KEYBOARD = 6,
+	oUS_USAGE_KEYPAD = 7,
+	oUS_USAGE_MULTIAXIS_CONTROLLER = 8,
+	oUS_USAGE_TABLET_CONTROLS = 9,
+};
+
+// _____________________________________________________________________________
+// Skeleton/Kinect integration
+
+oDECLARE_HANDLE(HSKELETON);
+
+// Use these to register a skeleton source, i.e. Kinect.
+void RegisterSkeletonSource(HSKELETON _hSkeleton, const oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>& _GetSkeleton);
+void UnregisterSkeletonSource(HSKELETON _hSkeleton);
+
+// Call this from a oWM_SKELETON message. Returns false if _pSkeleton is not 
+// valid.
+oAPI bool GetSkeletonDesc(HSKELETON _hSkeleton, oGUI_BONE_DESC* _pSkeleton);
 
 // _____________________________________________________________________________
 // Top-Level Window Creation, Lifetime and Message Processing
@@ -61,7 +342,7 @@
 // message processing because Windows automatically sets up the message pump to 
 // be this-thread unique, and communicating with this window from other threads 
 // can cause race conditions.
-oAPI bool oWinCreate(HWND* _pHwnd, const int2& _ClientPosition, const int2& _ClientSize, WNDPROC _Wndproc, void* _pThis = nullptr);
+oAPI bool oWinCreate(HWND* _pHwnd, const int2& _ClientPosition, const int2& _ClientSize, WNDPROC _Wndproc, void* _pThis = nullptr, bool _AsMessagingWindow = false);
 
 // This function simplifies the association of a 'this' pointer with an HWND. 
 // In the WndProc passed to oWinCreate, call this early to get the pointer 
@@ -69,9 +350,8 @@ oAPI bool oWinCreate(HWND* _pHwnd, const int2& _ClientPosition, const int2& _Cli
 // function requirement of Windows to a more encapsulated C++ class style
 // handling of the WNDPROC. This transfers the CREATESTRUCT values to USERDATA 
 // during WM_CREATE or for WM_INITDIALOG directly sets the pointer to USERDATA.
-// If _pThis is nullptr, then DefWindowProc is called. See oDECLARE_WNDPROC and 
-// oDEFINE_WNDPROC for a boilerplate implementation of the static wrapper and
-// class method.
+// If _pThis is nullptr, then DefWindowProc is called. See oDECLARE_WNDPROC for
+// a boilerplate implementation of the static wrapper and class method.
 // Threading: WT
 oAPI void* oWinGetThis(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam);
 template<typename T> inline T* oWinGetThis(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam) { return (T*)oWinGetThis(_hWnd, _uMsg, _wParam, _lParam); }
@@ -99,26 +379,27 @@ oAPI oStd::thread::id oWinGetWindowThread(HWND _hWnd);
 // Threading: FT
 inline bool oWinIsWindowThread(HWND _hWnd) { return oStd::this_thread::get_id() == oWinGetWindowThread(_hWnd); }
 
+// Converts the specified oGUI_HOTKEY_DESCs into an ACCEL array. _pAccels must
+// be least the same number of items as _HotKeys.
+oAPI void oWinAccelFromHotKeys(ACCEL* _pAccels, const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys);
+
+// Converts the specified ACCELs into an oGUI_HOTKEY_DESC array. _pHotKeys must
+// be least the same number of items as _pAccels.
+oAPI void oWinAccelToHotKeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, const ACCEL* _pAccels, size_t _NumHotKeys);
+
 // Dispatches a single message from the Windows message queue. If _WaitForNext 
 // is true, the calling thread will sleep (GetMessage). If _WaitForNext is 
 // false, then PeekMessage is used. If this returns false, it means a new 
 // message was not dispatched. If the message queue is valid and empty, 
-// oErrorGetLast() will return oERROR_END_OF_FILE, which might mean to client 
-// code "do something else", like render a 3D scene or play a video. 
+// oErrorGetLast() will return std::errc::no_message_available, which might mean to 
+// client code "do something else", like render a 3D scene or play a video. If a 
+// WM_QUIT message is received, this will return std::errc::operation_canceled, implying the
+// thread pump loop should exit.
 // Threading: WT
-oAPI bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext = true);
+oAPI bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, double _Timestamp, bool _WaitForNext = true);
 
-// Pump the specified window's message pump for the specified time, by default
-// infinitely/until it runs out of messages.
-// Threading: WT
-oAPI bool oWinFlushMessages(HWND _hWnd, uint _TimeoutMS = oInfiniteWait);
-
-// Key presses can only be simulated globally by sending input keys to a window with focus.  
-// These encapsulate the routine of translating keys, setting focus and sending the keys.
-// oWinSendKeys sends an array of virtual keys (VK_TAB...) while oWinSendASCIIString sends
-// an ASCII Message.  To retrieve the matching HWND and thread ID use oWinGetProcessTopWindowAndThread
-oAPI bool oWinSendKeys(HWND _Hwnd, unsigned int _ThreadID, short int* _pVKeys, int _NumberKeys);
-oAPI bool oWinSendASCIIMessage(HWND _Hwnd, unsigned int _ThreadID, const char* _pMessage);
+// Returns the timestamp that was specified in the last oWinDispatchMessage.
+oAPI double oWinGetDispatchMessageTime();
 
 // Send this to wake the specified window's message pump thread up from a 
 // blocking GetMessage() call. This is useful if the thread does work of which 
@@ -240,10 +521,12 @@ oAPI RECT oWinGetParentRect(HWND _hWnd, HWND _hExplicitParent = nullptr);
 // is returned.
 oAPI RECT oWinGetRelativeRect(HWND _hWnd, HWND _hExplicitParent = nullptr);
 
-// Fills specified rect with the specified window's client rect. If 
-// _HasStatusBar is true, its height is added to the client size to make the 
-// status bar seem as if it's not part of the client area.
-oAPI bool oWinGetClientRect(HWND _hWnd, bool _HasStatusBar, RECT* _pRect);
+// Fills specified rect with the specified window's client rect. This differs 
+// from Window's GetClientRect to support status bar as a native window concept.
+// So basically if the specified HWND has a status bar, the returned client size
+// is shrunk by the size of the status bar (not shrunk if the status bar is 
+// hidden).
+oAPI bool oWinGetClientRect(HWND _hWnd, RECT* _pRect);
 
 // Fills specified rect with the specified window's client rect, but in screen 
 // coordinates. If _HasStatusBar is true, its height is added to the client size 
@@ -296,20 +579,20 @@ oAPI size_t oWinGetTruncatedLength(HWND _hWnd, const char* _StrSource);
 // the string as possible.
 oAPI char* oWinTruncateLeft(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, const char* _StrSource);
 template<size_t size> char* oWinTruncateLeft(char (&_StrDestination)[size], HWND _hWnd, const char* _StrSource) { return oWinTruncateLeft(_StrDestination, size, _hWnd, _StrSource); }
-template<size_t capacity> char* oWinTruncateLeft(oFixedString<char, capacity>& _StrDestination, HWND _hWnd, const char* _StrSource) { return oWinTruncateLeft(_StrDestination, _StrDestination.capacity(), _hWnd, _StrSource); }
+template<size_t capacity> char* oWinTruncateLeft(oStd::fixed_string<char, capacity>& _StrDestination, HWND _hWnd, const char* _StrSource) { return oWinTruncateLeft(_StrDestination, _StrDestination.capacity(), _hWnd, _StrSource); }
 
 // Fills _StrDestination with a copy of the path that has ellipse placed in the 
 // middle of the path according to windows rules sized to the rectangle and 
 // context used by the specified HWND for drawing.
 oAPI char* oWinTruncatePath(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, const char* _Path);
 template<size_t size> char* oWinTruncatePath(char (&_StrDestination)[size], HWND _hWnd, const char* _Path) { return oWinTruncatePath(_StrDestination, size, _hWnd, _Path); }
-template<size_t capacity> char* oWinTruncatePath(oFixedString<char, capacity>& _StrDestination, HWND _hWnd, const char* _Path) { return oWinTruncatePath(_StrDestination, _StrDestination.capacity(), _hWnd, _Path); }
+template<size_t capacity> char* oWinTruncatePath(oStd::fixed_string<char, capacity>& _StrDestination, HWND _hWnd, const char* _Path) { return oWinTruncatePath(_StrDestination, _StrDestination.capacity(), _hWnd, _Path); }
 
 // Returns _StrDestination on success, otherwise nullptr.
 // Threading: IA
 oAPI char* oWinGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, int _SubItemIndex = oInvalid);
 template<size_t size> char* oWinGetText(char (&_StrDestination)[size], HWND _hWnd, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, size, _hWnd, _SubItemIndex); }
-template<size_t capacity> char* oWinGetText(oFixedString<char, capacity>& _StrDestination, HWND _hWnd, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _StrDestination.capacity(), _hWnd, _SubItemIndex); }
+template<size_t capacity> char* oWinGetText(oStd::fixed_string<char, capacity>& _StrDestination, HWND _hWnd, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _StrDestination.capacity(), _hWnd, _SubItemIndex); }
 
 // Gets the icon (large or small) associated with the specified _hWnd. No 
 // lifetime needs to be performed on the returned value.
@@ -320,7 +603,7 @@ oAPI HICON oWinGetIcon(HWND _hWnd, bool _BigIcon = false);
 // but may not be atomic with other calls either from client code or from 
 // Windows internal code. If this is called from a thread different than the
 // _hWnd's, this will return false and oErrorGetLast will return 
-// oERROR_WRONG_THREAD.
+// std::errc::operation_not_permitted.
 oAPI bool oWinSetIconAsync(HWND _hWnd, HICON _hIcon, bool _BigIcon = false);
 
 // @oooii-tony: I am still unclear about lifetime management... I don't see leak
@@ -353,6 +636,12 @@ oAPI HWND oWinControlCreate(const oGUI_CONTROL_DESC& _Desc);
 // Hyperlabel: handles chasing web links
 // Threading: WT
 oAPI bool oWinControlDefaultOnNotify(HWND _hWnd, const NMHDR& _NotifyMessageHeader, LRESULT* _plResult = nullptr, oGUI_CONTROL_TYPE _Type = oGUI_CONTROL_UNKNOWN);
+
+// Converts a Windows control message to an action. This calls 
+// oWinControlDefaultOnNotify if there is no other appropriate handling. This
+// returns true if the output action and lresults are valid and should be 
+// respected or false if this was not a control message.
+oAPI bool oWinControlToAction(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, oGUI_ACTION_DESC* _pAction, LRESULT* _pLResult);
 
 // _____________________________________________________________________________
 // UI Control State
@@ -501,7 +790,7 @@ inline bool oWinControlSetText(HWND _hControl, const char* _Text, int _SubItemIn
 // Threading: IA
 inline char* oWinControlGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hControl, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _SizeofStrDestination, _hControl, _SubItemIndex); }
 template<size_t size> char* oWinControlGetText(char (&_StrDestination)[size], HWND _hControl, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _hControl, _SubItemIndex); }
-template<size_t capacity> char* oWinControlGetText(oFixedString<char, capacity>& _StrDestination, HWND _hControl, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _hControl, _SubItemIndex); }
+template<size_t capacity> char* oWinControlGetText(oStd::fixed_string<char, capacity>& _StrDestination, HWND _hControl, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _hControl, _SubItemIndex); }
 
 // Returns _StrDestination on success, otherwise nullptr. _StrDestination is 
 // filled with the portion of the specified _hControl that is considered 
@@ -509,7 +798,7 @@ template<size_t capacity> char* oWinControlGetText(oFixedString<char, capacity>&
 // Valid for: ComboTextbox, TextBox, FloatBox, FloatBoxSpinner
 oAPI char* oWinControlGetSelectedText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hControl);
 template<size_t size> char* oWinControlGetSelectedText(char (&_StrDestination)[size], HWND _hControl) { return oWinControlGetSelectedText(_StrDestination, size, _hWnd); }
-template<size_t capacity> char* oWinControlGetSelectedText(oFixedString<char, capacity>& _StrDestination, HWND _hControl) { return oWinControlGetSelectedText(_StrDestination, _StrDestination.capacity(), _hWnd); }
+template<size_t capacity> char* oWinControlGetSelectedText(oStd::fixed_string<char, capacity>& _StrDestination, HWND _hControl) { return oWinControlGetSelectedText(_StrDestination, _StrDestination.capacity(), _hWnd); }
 
 // Applies a selection highlight to the specified _hWnd according to the 
 // specified range.
@@ -547,7 +836,7 @@ oAPI HICON oWinControlGetIcon(HWND _hControl, int _SubItemIndex = oInvalid);
 // Returns true if the specified _hControl's checked state is true. This returns 
 // false for any other tri-state state or if the specified _hControl is not a 
 // type that can be checked. If legitimately not checked, oErrorGetLast will 
-// return oERROR_NONE.
+// return 0.
 // Valid for: CheckBox, RadioButton
 // Threading: IA
 oAPI bool oWinControlIsChecked(HWND _hControl);
@@ -602,8 +891,8 @@ oAPI bool oWinControlSetErrorState(HWND _hControl, bool _InErrorState = true);
 
 // Returns true if the control is currently indicating an error state to the 
 // user. If the control is one valid for this function, the last error is set
-// to oERROR_NONE to differentiate between a valid false and a false because an 
-// improper type was specified.
+// to 0 to differentiate between a valid false and a false because an improper 
+// type was specified.
 // Valid for: ProgressBar
 // Threading: WT
 oAPI bool oWinControlGetErrorState(HWND _hControl);

@@ -23,24 +23,24 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oFourCC.h>
-#include <oBasis/oStringize.h>
+#include <oStd/fourcc.h>
+#include <oStd/stringize.h>
 #include "oBasisTestCommon.h"
 #include <cstring>
 
 bool oBasisTest_oFourCC()
 {
-	oFourCC fcc('TEST');
+	oStd::fourcc fcc('TEST');
 
 	char str[16];
 
-	oTESTB(oToString(str, fcc), "oToString on oFourCC failed 1");
-	oTESTB(!oStrcmp("TEST", str), "oToString on oFourCC failed 2");
+	oTESTB(oStd::to_string(str, fcc), "oStd::to_string on oStd::fourcc failed 1");
+	oTESTB(!strcmp("TEST", str), "oStd::to_string on oStd::fourcc failed 2");
 
 	const char* fccStr = "RGBA";
-	oTESTB(oFromString(&fcc, fccStr), "oFromSTring on oFourCC failed 1");
-	oTESTB(oFourCC('RGBA') == fcc, "oFromSTring on oFourCC failed 2");
+	oTESTB(oStd::from_string(&fcc, fccStr), "oFromSTring on oStd::fourcc failed 1");
+	oTESTB(oStd::fourcc('RGBA') == fcc, "oFromSTring on oStd::fourcc failed 2");
 
-	oErrorSetLast(oERROR_NONE, "");
+	oErrorSetLast(0, "");
 	return true;
 }

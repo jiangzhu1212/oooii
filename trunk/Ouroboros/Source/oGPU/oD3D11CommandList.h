@@ -34,7 +34,8 @@
 
 ID3D11Resource* oD3D11GetSubresource(oGPUResource* _pResource, int _Subresource, int* _pD3DSubresourceIndex);
 
-oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
+// {2D6106C4-7741-41CD-93DE-2C2A9BCD9163}
+oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList, 0x2d6106c4, 0x7741, 0x41cd, 0x93, 0xde, 0x2c, 0x2a, 0x9b, 0xcd, 0x91, 0x63)
 {
 	oDEFINE_CONST_GETDESC_INTERFACE(Desc, threadsafe);
 	oDEFINE_GPUDEVICECHILD_INTERFACE_EXPLICIT_QI();
@@ -43,10 +44,12 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 
 	void Begin() override;
 	void End() override;
+	void BeginQuery(oGPUQuery* _pQuery) override;
+	void EndQuery(oGPUQuery* _pQuery) override;
 	void Flush() override;
 	void Reset() override;
 	void Reserve(oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource) override;
-	void Commit(oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Source, const oGPU_BOX& _Subregion = oGPU_BOX()) override;
+	void Commit(oGPUResource* _pResource, int _Subresource, const oSURFACE_MAPPED_SUBRESOURCE& _Source, const oSURFACE_BOX& _Subregion = oSURFACE_BOX()) override;
 	void Copy(oGPUResource* _pDestination, oGPUResource* _pSource) override;
 	void Copy(oGPUBuffer* _pDestination, int _DestinationOffsetBytes, oGPUBuffer* _pSource, int _SourceOffsetBytes, int _SizeBytes) override;
 	void CopyCounter(oGPUBuffer* _pDestination, uint _DestinationAlignedOffset, oGPUBuffer* _pUnorderedSource) override;
@@ -54,8 +57,6 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	void SetSamplers(int _StartSlot, int _NumStates, const oGPU_SAMPLER_STATE* _pSamplerState) override;
 	void SetShaderResources(int _StartSlot, int _NumResources, const oGPUResource* const* _ppResources) override;
 	void SetBuffers(int _StartSlot, int _NumBuffers, const oGPUBuffer* const* _ppConstants) override;
-	void SetIndexBuffer(const oGPUBuffer* _pIndexBuffer) override;
-	void SetVertexBuffers(int _StartSlot, int _NumVertexBuffers, const oGPUBuffer* const* _ppVertexBuffers, uint _StartVertEx) override;
 
 	void SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const oAABoxf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) override;
 	void SetPipeline(const oGPUPipeline* _pPipeline) override;
@@ -63,10 +64,7 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	void SetBlendState(oGPU_BLEND_STATE _State) override;
 	void SetDepthStencilState(oGPU_DEPTH_STENCIL_STATE _State) override;
 	void Clear(oGPURenderTarget* _pRenderTarget, oGPU_CLEAR _Clear) override;
-	void oD3D11CommandList::Draw(uint _StartPrimitive, uint _NumPrimitives, uint _StartInstance = oInvalid, uint _NumInstances = oInvalid) override;
-	void Draw(const oGPUMesh* _pMesh, int _RangeIndex, const oGPUInstanceList* _pInstanceList = nullptr) override;
-	void Draw(const oGPULineList* _pLineList) override;
-	void Draw(uint _VertexCount) override;
+	void Draw(const oGPUBuffer* _pIndices, int _StartSlot, int _NumVertexBuffers, const oGPUBuffer* const* _ppVertexBuffers, uint _StartPrimitive, uint _NumPrimitives, uint _StartInstance = oInvalid, uint _NumInstances = oInvalid) override;
 	void Draw(oGPUBuffer* _pDrawArgs, int _AlignedByteOffsetForArgs) override;
 	void DrawSVQuad(uint _NumInstances = 1) override;
 	bool GenerateMips(oGPURenderTarget* _pRenderTarget) override;
@@ -80,7 +78,6 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 	oRef<ID3D11CommandList> CommandList;
 	DESC Desc;
 	D3D_PRIMITIVE_TOPOLOGY PrimitiveTopology;
-	bool IndicesSet;
 
 	// Shortcut to a bunch of typecasting
 	// This thread_cast is safe because oD3D11CommandList is single-threaded
@@ -89,6 +86,7 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList)
 
 private:
 	void CSSetState(oGPUComputeShader* _pComputeShader, int _NumUnorderedResources, const oGPUResource* const* _ppUnorderedResources, uint* _pInitialCounts);
+	void SetVertexBuffers(const oGPUBuffer* _pIndexBuffer, int _StartSlot, int _NumVertexBuffers, const oGPUBuffer* const* _ppVertexBuffers, uint _StartVertex = 0);
 };
 
 #endif

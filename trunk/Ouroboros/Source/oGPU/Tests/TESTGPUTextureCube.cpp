@@ -26,48 +26,16 @@
 #include <oPlatform/oTest.h>
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
-#include <oGPU/oGPUViewConstants.h>
-#include <oGPU/oGPUDrawConstants.h>
 
-struct GPU_TextureCube : public oTest
+struct GPU_TextureCube : public oGPUTextureTest
 {
-	oRef<oGPUDevice> Device;
-	oRef<oGPUCommandList> CL;
-	oRef<oGPUPipeline> Pipeline;
-	oRef<oGPUTexture> Texture;
-	oRef<oGPUMesh> Mesh;
-	oRef<oGPUBuffer> ViewConstants;
-	oRef<oGPUBuffer> DrawConstants;
-	bool Once;
-
-	bool CreateResources(threadsafe oGPUWindow* _pWindow)
+	virtual enum oGPU_TEST_PIPELINE GetPipeline() override
 	{
-		_pWindow->GetDevice(&Device);
-		oGPUCommandList::DESC cld;
-		cld.DrawOrder = 0;
+		return oGPU_TEST_TEXTURE_CUBE;
+	}
 
-		if (!Device->CreateCommandList("CommandList", cld, &CL))
-			return false;
-
-		oGPUBuffer::DESC DCDesc;
-		DCDesc.StructByteSize = sizeof(oGPUViewConstants);
-		if (!Device->CreateBuffer("ViewConstants", DCDesc, &ViewConstants))
-			return false;
-
-		DCDesc.StructByteSize = sizeof(oGPUDrawConstants);
-		if (!Device->CreateBuffer("DrawConstants", DCDesc, &DrawConstants))
-			return false;
-
-		oGPUPipeline::DESC pld;
-		if (!oGPUTestGetPipeline(oGPU_TEST_TEXTURE_CUBE, &pld))
-			return false;
-
-		if (!Device->CreatePipeline(pld.DebugName, pld, &Pipeline))
-			return false;
-
-		if (!oGPUTestInitCube(Device, "Cube", pld.pElements, pld.NumElements, &Mesh))
-			return false;
-
+	virtual bool CreateTexture() override
+	{
 		oRef<oImage> images[6];
 		if (!oImageLoad("file://DATA/Test/Textures/CubePosX.png", oImage::FORCE_ALPHA, &images[0]))
 			return false;
@@ -82,85 +50,20 @@ struct GPU_TextureCube : public oTest
 		if (!oImageLoad("file://DATA/Test/Textures/CubeNegZ.png", oImage::FORCE_ALPHA, &images[5]))
 			return false;
 
-		if (!oGPUCreateTextureCube(Device, (const oImage**)&images[0], oCOUNTOF(images), &Texture))
+		if (!oGPUCreateTexture(Device, (const oImage**)&images[0], oCOUNTOF(images), oGPU_TEXTURE_CUBE_MAP, &Texture))
 			return false;
 
 		return true;
 	}
-	
-	void Render(oGPURenderTarget* _pPrimaryRenderTarget)
+
+	virtual float GetRotationStep() override
 	{
-		if (!Once)
-		{
-			oGPU_CLEAR_DESC CD;
-			CD.ClearColor[0] = std::AlmostBlack;
-			_pPrimaryRenderTarget->SetClearDesc(CD);
-
-			Once = true;
-		}
-
-		float4x4 V = oCreateLookAtLH(float3(0.0f, 0.0f, -4.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
-
-		oGPURenderTarget::DESC RTDesc;
-		_pPrimaryRenderTarget->GetDesc(&RTDesc);
-		float4x4 P = oCreatePerspectiveLH(oPIf/4.0f, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
-
-		float rotationStep = Device->GetFrameID() * 1.0f;
+		float rotationStep = (Device->GetFrameID()-1) * 1.0f;
 		if (Device->GetFrameID()==0)
 			rotationStep = 774.0f;
-		else if (Device->GetFrameID()==1)
+		else if (Device->GetFrameID()==2)
 			rotationStep = 1036.0f;
-		float4x4 W = oCreateRotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
-
-		uint DrawID = 0;
-
-		if (!Device->BeginFrame())
-			return;
-		CL->Begin();
-
-		oGPUCommitBuffer(CL, ViewConstants, oGPUViewConstants(V, P, RTDesc.Dimensions, 0));
-		oGPUCommitBuffer(CL, DrawConstants, oGPUDrawConstants(W, V, P, 0, DrawID++));
-
-		CL->Clear(_pPrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
-		CL->SetBlendState(oGPU_OPAQUE);
-		CL->SetDepthStencilState(oGPU_DEPTH_TEST_AND_WRITE);
-		CL->SetSurfaceState(oGPU_FRONT_FACE);
-		CL->SetBuffers(0, 2, &ViewConstants); // let the set run from ViewConstants to DrawConstants
-		oGPU_SAMPLER_STATE s = oGPU_LINEAR_WRAP;
-		CL->SetSamplers(0, 1, &s);
-		CL->SetShaderResources(0, 1, &Texture);
-		CL->SetPipeline(Pipeline);
-		CL->SetRenderTarget(_pPrimaryRenderTarget);
-		CL->Draw(Mesh, 0);
-
-		CL->End();
-		Device->EndFrame();
-	}
-
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
-	{
-		Once = false;
-
-		static const int sSnapshotFrames[] = { 1, 2 };
-		static const bool kIsDevMode = false;
-		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&GPU_TextureCube::Render, this, oBIND1), "GPU_Texture", sSnapshotFrames);
-
-		oStd::future<oRef<oImage>> Snapshots[oCOUNTOF(sSnapshotFrames)];
-		oRef<threadsafe oGPUWindow> Window;
-		oTESTB0(oGPUTestCreateWindow(Init, oBIND(&GPU_TextureCube::CreateResources, this, oBIND1), Snapshots, &Window));
-
-		while (Window->IsOpen())
-		{
-			if (!kIsDevMode && oGPUTestSnapshotsAreReady(Snapshots))
-			{
-				Window->Close();
-				oTESTB0(oGPUTestSnapshots(this, Snapshots));
-			}
-
-			oSleep(16);
-		}
-
-		return SUCCESS;
+		return rotationStep;
 	}
 };
 

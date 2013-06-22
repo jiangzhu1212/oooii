@@ -24,12 +24,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oCppParsing.h>
-#include <oBasis/oAlgorithm.h>
-#include <oBasis/oAssert.h>
+#include <oStd/algorithm.h>
+#include <oStd/assert.h>
 #include <oBasis/oString.h>
 #include <oBasis/oPath.h>
 #include <oBasis/oError.h>
-#include <oBasis/oFor.h>
+#include <oStd/oFor.h>
 #include <map>
 #include <regex>
 #include <unordered_map>
@@ -63,50 +63,10 @@ const char* oGetTypename(const char* _TypeinfoName)
 	};
 
 	const char* n = _TypeinfoName;
-	for (size_t i = 0; i < oCOUNTOF(sPrefixesToSkip); i++)
+	oFORI(i, sPrefixesToSkip)
 		if (!memcmp(n, sPrefixesToSkip[i].s, sPrefixesToSkip[i].len))
 			return n + sPrefixesToSkip[i].len;
 	return n;
-}
-
-const char* oGetNextMatchingBrace(const char* _pPointingAtOpenBrace, char _CloseBrace)
-{
-	int open = 1;
-	char open_brace = *_pPointingAtOpenBrace;
-	const char* cur = _pPointingAtOpenBrace + 1;
-	while (*cur && open > 0)
-	{
-		if (*cur == _CloseBrace)
-			open--;
-		else if (*cur == open_brace)
-			open++;
-		cur++;
-	}
-
-	if (open > 0)
-		return 0;
-	return cur - 1;
-}
-
-const char* oGetNextMatchingBrace(const char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace)
-{
-	int open = 1;
-	size_t lOpen = oStrlen(_OpenBrace);
-	size_t lClose = oStrlen(_CloseBrace);
-
-	const char* cur = _pPointingAtOpenBrace + lOpen;
-	while (*cur && open > 0)
-	{
-		if (!memcmp(cur, _CloseBrace, lClose))
-			open--;
-		else if (!memcmp(cur, _OpenBrace, lOpen))
-			open++;
-		cur++;
-	}
-
-	if (open > 0)
-		return 0;
-	return cur - 1;
 }
 
 static oIFDEF_BLOCK::TYPE GetType(const cmatch& _Matches)
@@ -150,7 +110,7 @@ bool oGetNextMatchingIfdefBlocks(oIFDEF_BLOCK* _pBlocks, size_t _MaxNumBlocks, s
 
 		if (blockIndex >= _MaxNumBlocks-1)
 		{
-			oErrorSetLast(oERROR_INVALID_PARAMETER, "Block buffer too small");
+			oErrorSetLast(std::errc::invalid_argument, "Block buffer too small");
 			return false;
 		}
 
@@ -228,7 +188,7 @@ bool oGetNextMatchingIfdefBlocks(oIFDEF_BLOCK* _pBlocks, size_t _MaxNumBlocks, s
 
 char* oZeroSection(char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace, char _Replacement)
 {
-	char* close = const_cast<char*>(oGetNextMatchingBrace(_pPointingAtOpenBrace, _OpenBrace, _CloseBrace));
+	char* close = oStd::next_matching(_pPointingAtOpenBrace, _OpenBrace, _CloseBrace);
 	close += oStrlen(_CloseBrace);
 
 	char* cur = _pPointingAtOpenBrace;
@@ -293,7 +253,7 @@ static char* oZeroIfdefs(const macros_t& _Macros, char* _StrSourceCodeBegin, cha
 
 				default:
 					oASSERT(false, "Unhandled case (Did #if/#elif get implemented?)");
-					oErrorSetLast(oERROR_INVALID_PARAMETER, "Unhandled case (Did #if/#elif get implemented?)");
+					oErrorSetLast(std::errc::invalid_argument, "Unhandled case (Did #if/#elif get implemented?)");
 					return 0;
 			}
 
@@ -374,7 +334,7 @@ bool oIsStdBindImplementationDetail(const char* _Symbol)
 	static const char* stdbindstrs[] = { "std::tr1::_Pmf", "std::tr1::_Callable_", "std::tr1::_Bind", "std::tr1::_Impl", "std::tr1::_Function", };
 	static size_t stdbindlens[] = { 14, 20, 15, 15, 19, };
 	static_assert(oCOUNTOF(stdbindstrs) == oCOUNTOF(stdbindlens), "");
-	for (size_t i = 0; i < oCOUNTOF(stdbindstrs); i++)
+	oFORI(i, stdbindstrs)
 		if (!memcmp(_Symbol, stdbindstrs[i], stdbindlens[i]))
 			return true;
 	return false;
@@ -390,7 +350,7 @@ bool oGetNextInclude(char* _StrDestination, size_t _SizeofStrDestination, const 
 	{
 		if (regex_search(*_ppContext, matches, reInclude))
 		{
-			oRegexCopy(_StrDestination, _SizeofStrDestination, matches, 2);
+			oStd::copy_match_result(_StrDestination, _SizeofStrDestination, matches, 2);
 			*_ppContext = 1 + matches[matches.size()-1].second;
 			result = true;
 		}
@@ -402,7 +362,7 @@ bool oGetNextInclude(char* _StrDestination, size_t _SizeofStrDestination, const 
 	return result;
 }
 
-bool oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const char* _SourceFullPath, oFUNCTION_LOAD_BUFFER _Load)
+bool oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const char* _SourceFullPath, const oFUNCTION<bool(void* _pDestination, size_t _SizeofDestination, const char* _Path)>& _Load)
 {
 	map<string, string> includes;
 	char includePath[_MAX_PATH];
@@ -411,7 +371,7 @@ bool oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const cha
 	cmatch matches;
 	while (regex_search(_StrSourceCode, matches, reInclude))
 	{
-		oRegexCopy(includePath, matches, 2);
+		oStd::copy_match_result(includePath, matches, 2);
 		bool isSystemPath = *matches[1].first == '<';
 		oTRACE("#include %s%s%s.", isSystemPath?"<":"\"", includePath, isSystemPath?">":"\"");
 		size_t matchLength = static_cast<size_t>(matches[0].length()) + 1; // +1 for newline
@@ -421,7 +381,7 @@ bool oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const cha
 		{
 			char inc[200*1024];
 			if (!_Load(&inc, oCOUNTOF(inc), _SourceFullPath))
-				return oErrorSetLast(oERROR_IO, "Load failed: %s%s%s", isSystemPath?"<":"\"", includePath, isSystemPath?">":"\"");
+				return oErrorSetLast(std::errc::io_error, "Load failed: %s%s%s", isSystemPath?"<":"\"", includePath, isSystemPath?">":"\"");
 
 			include = inc;
 
@@ -430,7 +390,7 @@ bool oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const cha
 
 			oTRACE("-- %s loaded: %u chars", includePath, (unsigned int)include.size());
 			if (!oInsert(_StrSourceCode, _SizeofStrSourceCode, const_cast<char*>(matches[0].first), matchLength, include.c_str()))
-				return oErrorSetLast(oERROR_INVALID_PARAMETER, "Merge failed: %s%s%s (source buffer too small)", isSystemPath?"<":"\"", includePath, isSystemPath?">":"\"");
+				return oErrorSetLast(std::errc::invalid_argument, "Merge failed: %s%s%s (source buffer too small)", isSystemPath?"<":"\"", includePath, isSystemPath?">":"\"");
 		}
 
 		else
@@ -441,7 +401,7 @@ bool oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const cha
 		}
 	}
 
-	oErrorSetLast(oERROR_NONE);
+	oErrorSetLast(0);
 	return true;
 }
 
@@ -542,7 +502,7 @@ size_t oCodifyData(char* _StrDestination, size_t _SizeofStrDestination, const ch
 }
 
 typedef std::tr1::unordered_map<std::string, std::string> headers_t;
-bool CollectHeaders(headers_t& _Headers, const char* _StrSourceCode, const char* _SourceCodeDirectory, const macros_t& _Macros, const char* _HeaderSearchPath, oFUNCTION_PATH_EXISTS _PathExists, oFUNCTION_LOAD_BUFFER _LoadHeaderFile)
+bool CollectHeaders(headers_t& _Headers, const char* _StrSourceCode, const char* _SourceCodeDirectory, const macros_t& _Macros, const char* _HeaderSearchPath, const oFUNCTION<bool(const char* _Path)>& _PathExists, const oFUNCTION<bool(void* _pDestination, size_t _SizeofDestination, const char* _Path)>& _LoadHeaderFile)
 {
 	// @oooii-tony: I run into this pattern a lot... I have a C-interface that 
 	// works with char*'s and is careful to assign all allocation of such buffers
@@ -553,12 +513,12 @@ bool CollectHeaders(headers_t& _Headers, const char* _StrSourceCode, const char*
 
 	// Make an internal copy so we can clean up the defines
 	std::vector<char> sourceCodeCopy(oStrlen(_StrSourceCode) + 1);
-	oStrcpy(oGetData(sourceCodeCopy), sourceCodeCopy.capacity(), _StrSourceCode);
+	oStrcpy(oStd::data(sourceCodeCopy), sourceCodeCopy.capacity(), _StrSourceCode);
 
-	if (!oZeroIfdefs(_Macros, oGetData(sourceCodeCopy), 0))
+	if (!oZeroIfdefs(_Macros, oStd::data(sourceCodeCopy), 0))
 		return false;
 
-	const char* pContext = oGetData(sourceCodeCopy);
+	const char* pContext = oStd::data(sourceCodeCopy);
 	char headerRelativePath[_MAX_PATH];
 	std::string strHeaderRelativePath;
 	strHeaderRelativePath.reserve(_MAX_PATH);
@@ -576,38 +536,44 @@ bool CollectHeaders(headers_t& _Headers, const char* _StrSourceCode, const char*
 			continue;
 
 		if (!oFindInPath(headerFullPath, _HeaderSearchPath, headerRelativePath, _SourceCodeDirectory, _PathExists))
-			return oErrorSetLast(oERROR_NOT_FOUND, "Could not find %s in search path %s;%s", headerRelativePath, _SourceCodeDirectory, _HeaderSearchPath);
+			return oErrorSetLast(std::errc::no_such_file_or_directory, "Could not find %s in search path %s;%s", headerRelativePath, _SourceCodeDirectory, _HeaderSearchPath);
 
 		// This risks redundantly checking the same file, but allows a quick check
 		// to prevent finding the same include multiple times just above
 		_Headers[strHeaderRelativePath] = headerFullPath;
 
-		if (!_LoadHeaderFile(oGetData(headerCode), headerCode.capacity(), headerFullPath))
-			return oErrorSetLast(oERROR_IO, "Load failed: %s", headerFullPath);
+		if (!_LoadHeaderFile(oStd::data(headerCode), headerCode.capacity(), headerFullPath))
+			return oErrorSetLast(std::errc::io_error, "Load failed: %s", headerFullPath);
 
-		if (!CollectHeaders(_Headers, (const char*)oGetData(headerCode), _SourceCodeDirectory, _Macros, _HeaderSearchPath, _PathExists, _LoadHeaderFile))
+		if (!CollectHeaders(_Headers, (const char*)oStd::data(headerCode), _SourceCodeDirectory, _Macros, _HeaderSearchPath, _PathExists, _LoadHeaderFile))
 			return false; // pass through error from CollectHeaders
 	}
 
 	return true;
 }
 
-bool oHeadersAreUpToDate(const char* _StrSourceCode, const char* _SourceFullPath, const oMACRO* _pMacros, oFUNCTION_PATH_EXISTS _PathExists, oFUNCTION<time_t(const char* _Path)> _GetModifiedDate, oFUNCTION_LOAD_BUFFER _LoadHeaderFile, const char* _HeaderSearchPath)
+bool oHeadersAreUpToDate(const char* _StrSourceCode
+	, const char* _SourceFullPath
+	, const oMACRO* _pMacros
+	, const oFUNCTION<bool(const char* _Path)>& _PathExists
+	, const oFUNCTION<time_t(const char* _Path)>& _GetModifiedDate
+	, const oFUNCTION<bool(void* _pDestination, size_t _SizeofDestination, const char* _Path)>& _LoadHeaderFile
+	, const char* _HeaderSearchPath)
 {
 	macros_t macros;
 	HashMacros(macros, _pMacros);
 
 	// Make an internal copy so we can clean up the defines
 	std::vector<char> sourceCodeCopy(oStrlen(_StrSourceCode) + 1);
-	oStrcpy(oGetData(sourceCodeCopy), oGetDataSize(sourceCodeCopy), _StrSourceCode);
+	oStrcpy(oStd::data(sourceCodeCopy), oStd::size(sourceCodeCopy), _StrSourceCode);
 
-	if (!oZeroIfdefs(macros, oGetData(sourceCodeCopy), 0))
+	if (!oZeroIfdefs(macros, oStd::data(sourceCodeCopy), 0))
 		return false;
 
 	// Get the base point, the specified source file
 	const time_t sourceTimestamp = _GetModifiedDate(_SourceFullPath);
 	if (!sourceTimestamp)
-		return oErrorSetLast(oERROR_NOT_FOUND, "Could not find %s", _SourceFullPath);
+		return oErrorSetLast(std::errc::no_such_file_or_directory, "Could not find %s", _SourceFullPath);
 
 	char sourcePath[_MAX_PATH];
 	oStrcpy(sourcePath, _SourceFullPath);
@@ -615,7 +581,7 @@ bool oHeadersAreUpToDate(const char* _StrSourceCode, const char* _SourceFullPath
 
 	// Hash headers so we don't recurse down deep include trees more than once
 	headers_t headers;
-	if (!CollectHeaders(headers, oGetData(sourceCodeCopy), sourcePath, macros, _HeaderSearchPath, _PathExists, _LoadHeaderFile))
+	if (!CollectHeaders(headers, oStd::data(sourceCodeCopy), sourcePath, macros, _HeaderSearchPath, _PathExists, _LoadHeaderFile))
 		return false;
 
 	// Go through unique headers and check dates
@@ -624,10 +590,13 @@ bool oHeadersAreUpToDate(const char* _StrSourceCode, const char* _SourceFullPath
 		const std::string& headerFullPath = pair.second;
 		const time_t headerTimestamp = _GetModifiedDate(headerFullPath.c_str());
 		if (!headerTimestamp)
-			return oErrorSetLast(oERROR_NOT_FOUND, "Could not find %s", _SourceFullPath);
+			return oErrorSetLast(std::errc::no_such_file_or_directory, "Could not find %s", _SourceFullPath);
 
 		if (headerTimestamp > sourceTimestamp)
-			return oErrorSetLast(oERROR_NONE, "%s is out of date because %s is newer", _SourceFullPath, headerFullPath.c_str());
+		{
+			oErrorSetLast(0, "%s is out of date because %s is newer", _SourceFullPath, headerFullPath.c_str());
+			return false;
+		}
 	}
 
 	return true;

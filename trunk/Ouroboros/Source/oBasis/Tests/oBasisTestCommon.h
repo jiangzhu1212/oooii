@@ -30,6 +30,6 @@
 #include <oBasis/oError.h>
 
 #define oTESTB0(test) do { if (!(test)) return false; } while(false) // pass through error
-#define oTESTB(test, msg, ...) do { if (!(test)) return oErrorSetLast(oERROR_GENERIC, msg, ## __VA_ARGS__); } while(false)
+#define oTESTB(test, msg, ...) do { if (!(test)) return oErrorSetLast(std::errc::protocol_error, msg, ## __VA_ARGS__); } while(false)
 
 #endif

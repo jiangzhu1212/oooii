@@ -23,7 +23,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oHLSL.h>
+#include <oGfx/oGfxHLSL.h>
 
 SamplerState BiLinearSample : register(s0);
 Texture2D Texture1 : register(t0);
@@ -31,7 +31,7 @@ Texture2D Texture2 : register(t1);
 Texture2D Texture3 : register(t2);
 Texture2D Texture4 : register(t3);
 
-float4 main( float4 Pos : SV_Position, float2 TexCoord : TEXCOORD ) : SV_Target0
+float4 main( float4 Pos : SV_Position, float2 TexCoord : TEX0 ) : SV_Target0
 {			
 	float x = Texture1.Sample( BiLinearSample, TexCoord ).x;
 	float y = Texture2.Sample( BiLinearSample, TexCoord ).x;

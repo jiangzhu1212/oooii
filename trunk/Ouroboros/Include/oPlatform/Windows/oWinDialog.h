@@ -36,21 +36,21 @@
 // If _StrDestination contains a valid path, that path will be used
 // as the initial starting folder.
 // If there is an error this will return false. If the error was due to a user
-// canceling the dialog box, last error will be oERROR_CANCELED. Most likely
-// any other error will be oERROR_PLATFORM with a Windows common dialog error
+// canceling the dialog box, last error will be std::errc::operation_canceled. Most likely
+// any other error will be std::errc::protocol_error with a Windows common dialog error
 // to follow.
 bool oWinDialogGetOpenPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr);
 template<size_t size> bool oWinDialogGetOpenPath(char (&_StrDestination)[size], const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr) { return oWinDialogGetOpenPath(_StrDestination, size, _DialogTitle, _FilterPairs, _hParent); }
-template<size_t capacity> bool oWinDialogGetOpenPath(oFixedString<char, capacity>& _StrDestination, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr) { return oWinDialogGetOpenPath(_StrDestination, _StrDestination.capacity(), _DialogTitle, _FilterPairs, _hParent); }
+template<size_t capacity> bool oWinDialogGetOpenPath(oStd::fixed_string<char, capacity>& _StrDestination, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr) { return oWinDialogGetOpenPath(_StrDestination, _StrDestination.capacity(), _DialogTitle, _FilterPairs, _hParent); }
 
 bool oWinDialogGetSavePath(char* _StrDestination, size_t _SizeofStrDestination, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr);
 template<size_t size> bool oWinDialogGetSavePath(char (&_StrDestination)[size], const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr) { return oWinDialogGetSavePath(_StrDestination, size, _DialogTitle, _FilterPairs, _hParent); }
-template<size_t capacity> bool oWinDialogGetSavePath(oFixedString<char, capacity>& _StrDestination, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr) { return oWinDialogGetSavePath(_StrDestination, _StrDestination.capacity(), _DialogTitle, _FilterPairs, _hParent); }
+template<size_t capacity> bool oWinDialogGetSavePath(oStd::fixed_string<char, capacity>& _StrDestination, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr) { return oWinDialogGetSavePath(_StrDestination, _StrDestination.capacity(), _DialogTitle, _FilterPairs, _hParent); }
 
 // *_pColor is used as the initial value of the dialog
-bool oWinDialogGetColor(oColor* _pColor, HWND _hParent = nullptr);
+bool oWinDialogGetColor(oStd::color* _pColor, HWND _hParent = nullptr);
 
 // *_pLogicalFont is used to initialize the dialog
-bool oWinDialogGetFont(LOGFONT* _pLogicalFont, oColor* _pColor, HWND _hParent);
+bool oWinDialogGetFont(LOGFONT* _pLogicalFont, oStd::color* _pColor, HWND _hParent);
 
 #endif

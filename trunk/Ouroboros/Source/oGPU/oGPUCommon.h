@@ -34,21 +34,22 @@
 #include <oGPU/oGPU.h>
 
 #include <oBasis/oError.h>
-#include <oBasis/oFixedString.h>
+#include <oStd/fixed_string.h>
 #include <oBasis/oInitOnce.h>
-#include <oBasis/oNoncopyable.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 
 // Use this instead of "struct oMyDerivedClass" to enforce naming consistency 
 // and allow for any shared code changes to happen in a central place. If the 
 // type is derived from oGPUResource, use the other version below.
-#define oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(_oAPI, _ShortTypeName) \
+#define oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(_oAPI, _ShortTypeName, _32BitA, _16BitB, _16BitC, _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK) \
+	oDEFINE_GUID_S(oCONCAT(_oAPI, _ShortTypeName), _32BitA, _16BitB, _16BitC, _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK); \
 	struct _oAPI##_ShortTypeName : oGPU##_ShortTypeName, oGPUDeviceChildMixin<oGPU##_ShortTypeName, _oAPI##_ShortTypeName>
 
 // Use this instead of "struct oMyDerivedClass" to enforce naming consistency 
 // and allow for any shared code changes to happen in a central place.
-#define oDECLARE_GPURESOURCE_IMPLEMENTATION(_oAPI, _ShortTypeName, _ResourceType) \
+#define oDECLARE_GPURESOURCE_IMPLEMENTATION(_oAPI, _ShortTypeName, _ResourceType, _32BitA, _16BitB, _16BitC, _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK) \
+	oDEFINE_GUID_S(oCONCAT(_oAPI, _ShortTypeName), _32BitA, _16BitB, _16BitC, _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK); \
 	struct _oAPI##_ShortTypeName : oGPU##_ShortTypeName, oGPUResourceMixin<oGPU##_ShortTypeName, _oAPI##_ShortTypeName, _ResourceType>
 
 // Place this macro in the implementation class of an oGPUDeviceChild If the 
@@ -85,14 +86,17 @@
 inline int oGPUDeviceResourceHash(const char* _SourceName, oGPU_RESOURCE_TYPE _Type) { return oHash_superfasti(_SourceName, oInt(oStrlen(_SourceName)), _Type); }
 
 template<typename InterfaceT, typename ImplementationT>
-struct oGPUDeviceChildMixinBase : oNoncopyable
+struct oGPUDeviceChildMixinBase
 {
 	typedef InterfaceT interface_type;
 	typedef ImplementationT implementation_type;
 
+	oGPUDeviceChildMixinBase(const oGPUDeviceChildMixinBase&)/* = delete*/;
+	const oGPUDeviceChildMixinBase& operator=(const oGPUDeviceChildMixinBase&)/* = delete*/;
+
 protected:
 	oRef<oGPUDevice> Device;
-	oInitOnce<oStringURI> Name;
+	oInitOnce<oStd::uri_string> Name;
 	oRefCount RefCount;
 
 	// Because of the vtable and the desire to work on the actual class and not
@@ -144,13 +148,13 @@ protected:
 	{
 		*_ppInterface = nullptr;
 
-		if (_InterfaceID == oGetGUID<oGPUDeviceChild>() || _InterfaceID == oGetGUID<InterfaceT>() || _InterfaceID == oGetGUID<ImplementationT>())
+		if (_InterfaceID == oGUID_oGPUDeviceChild || _InterfaceID == oGetGUID<InterfaceT>(0) || _InterfaceID == oGetGUID<ImplementationT>(0))
 		{
 			This()->Reference();
 			*_ppInterface = This();
 		}
 
-		else if (_InterfaceID == oGetGUID<oGPUDevice>())
+		else if (_InterfaceID == oGUID_oGPUDevice)
 		{
 			Device->Reference();
 			*_ppInterface = Device;
@@ -182,13 +186,13 @@ protected:
 	{
 		*_ppInterface = 0;
 
-		if (_InterfaceID == oGetGUID<oGPUDeviceChild>() || _InterfaceID == oGetGUID<oGPUResource>() || _InterfaceID == oGetGUID<InterfaceT>())
+		if (_InterfaceID == oGUID_oGPUDeviceChild || _InterfaceID == oGUID_oGPUResource || _InterfaceID == oGetGUID<InterfaceT>(0))
 		{
 			This()->Reference();
 			*_ppInterface = This();
 		}
 
-		else if (_InterfaceID == oGetGUID<oGPUDevice>())
+		else if (_InterfaceID == oGUID_oGPUDevice)
 		{
 			Device->Reference();
 			*_ppInterface = Device;
@@ -220,13 +224,13 @@ protected:
 // Confirm that _Name is a valid string
 #define oGPU_CREATE_CHECK_NAME() do { \
 	if (!oSTRVALID(_Name)) \
-	{ return oErrorSetLast(oERROR_INVALID_PARAMETER, "A proper name must be specified"); \
+	{ return oErrorSetLast(std::errc::invalid_argument, "A proper name must be specified"); \
 	}} while(0)
 
 // Confirm the output has been specified
 #define oGPU_CREATE_CHECK_OUTPUT(_ppOut) do { \
 	if (!_ppOut) \
-	{ return oErrorSetLast(oERROR_INVALID_PARAMETER, "A valid address for an output pointer must be specified"); \
+	{ return oErrorSetLast(std::errc::invalid_argument, "A valid address for an output pointer must be specified"); \
 	}} while(0)
 
 // Check all things typical in Create<resource>() functions

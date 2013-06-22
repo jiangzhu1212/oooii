@@ -29,8 +29,8 @@
 #define oDebugger_h
 
 #include <stdarg.h>
-#include <oBasis/oFixedString.h>
-#include <oBasis/oStdThread.h>
+#include <oStd/fixed_string.h>
+#include <oStd/oStdThread.h>
 
 // Sets the name of the specified thread in the debugger's UI. If the default ID
 // value is specified then the id of this_thread is used.
@@ -61,9 +61,9 @@ template<size_t size> inline size_t oDebuggerGetCallstack(unsigned long long (&_
 struct oDEBUGGER_SYMBOL
 {
 	unsigned long long Address;
-	oStringL Module;
-	oStringL Name;
-	oStringL Filename;
+	oStd::lstring Module;
+	oStd::lstring Name;
+	oStd::lstring Filename;
 	unsigned int SymbolOffset;
 	unsigned int Line;
 	unsigned int CharOffset;
@@ -87,7 +87,7 @@ struct oDebuggerAllocationInfo
 	int ThreadFreedOn;
 	double FreedTimer;
 };
-void* oDebuggerGuardedAlloc(size_t _szData, int _TrailingGuardPages = 1);
+void* oDebuggerGuardedAlloc(size_t _SizeofData, int _TrailingGuardPages = 1);
 void oDebuggerGuardedFree(void* _pData);
 bool oDebuggerGuardedInfo(void* _pData, oDebuggerAllocationInfo* _pInfo);
 

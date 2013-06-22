@@ -32,7 +32,7 @@ struct GPU_Triangle : public oTest
 	oRef<oGPUDevice> Device;
 	oRef<oGPUCommandList> CL;
 	oRef<oGPUPipeline> Pipeline;
-	oRef<oGPUMesh> Mesh;
+	oRef<oGPUUtilMesh> Mesh;
 	bool Once;
 
 	void Render(oGPURenderTarget* _pPrimaryRenderTarget)
@@ -40,7 +40,7 @@ struct GPU_Triangle : public oTest
 		if (!Once)
 		{
 			oGPU_CLEAR_DESC CD;
-			CD.ClearColor[0] = std::AlmostBlack;
+			CD.ClearColor[0] = oStd::AlmostBlack;
 			_pPrimaryRenderTarget->SetClearDesc(CD);
 
 			Once = true;
@@ -56,7 +56,7 @@ struct GPU_Triangle : public oTest
 		CL->SetSurfaceState(oGPU_FRONT_FACE);
 		CL->SetPipeline(Pipeline);
 		CL->SetRenderTarget(_pPrimaryRenderTarget);
-		CL->Draw(Mesh, 0);
+		oGPUUtilMeshDraw(CL, Mesh);
 
 		CL->End();
 		Device->EndFrame();

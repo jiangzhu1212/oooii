@@ -27,7 +27,7 @@
 #ifndef oWinShlwapi_h
 #define oWinShlwapi_h
 
-#include "oWinSoftLinkCommon.h"
+#include <oPlatform/oModuleUtil.h>
 #include <Shlwapi.h>
 oDECLARE_DLL_SINGLETON_BEGIN(oWinShlwapi)
 	BOOL (__stdcall *PathCompactPathA)(HDC hDC, LPSTR lpszPath, UINT dx);

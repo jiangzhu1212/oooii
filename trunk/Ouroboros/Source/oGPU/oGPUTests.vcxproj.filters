@@ -1,18 +1,82 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="pch.cpp" />
     <ClCompile Include="Tests\oGPUTestCommon.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Tests\oGPUTestPipelines.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUBCEncodeDecode.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUWindowInWindow.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUBuffer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUClear.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUDevice.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUGenerateMips.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUInstancedTriangle.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPULineList.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUQuery.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPURenderTarget.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUSpinningTriangle.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUTexture1D.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUTexture1DMip.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUTexture2D.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUTexture2DMip.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUTexture3D.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUTexture3DMip.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUTextureCube.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUTextureCubeMip.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUTraits.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTGPUTriangle.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h" />
     <ClInclude Include="Tests\oGPUTestHLSL.h">
-      <Filter>Shaders\Headers</Filter>
+      <Filter>Source\Shaders\Headers</Filter>
     </ClInclude>
     <ClInclude Include="Tests\oGPUTestCommon.h">
       <Filter>Source</Filter>
@@ -20,69 +84,150 @@
     <ClInclude Include="Tests\oGPUTestPipelines.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\oComputeProcedural.h">
+      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\oComputeRaycast.h">
+      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\oComputeSimplex.h">
+      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\oComputeUtil.h">
+      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\oQuaternion.h">
+      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\oComputeColor.h">
+      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\oComputeConstants.h">
+      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\oComputeFilter.h">
+      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\oComputeGBuffer.h">
+      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\oComputeMorton.h">
+      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\oComputePhong.h">
+      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLSwizzlesOff.h">
+      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLSwizzlesOn.h">
+      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLTypes.h">
+      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLTypesInternal.h">
+      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLAtomics.h">
+      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLBit.h">
+      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLMacros.h">
+      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLMath.h">
+      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLStructs.h">
+      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\tests\oGPUTestWindow.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\all.h">
+      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\all.h">
+      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Shaders">
-      <UniqueIdentifier>{60b30400-f23b-41e1-b712-1364156a04ee}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Shaders\Headers">
-      <UniqueIdentifier>{bfcf4734-352d-4f45-83df-05dba02aa18b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source">
       <UniqueIdentifier>{fd19efdb-4f32-458a-98fd-f81c013d89eb}</UniqueIdentifier>
     </Filter>
     <Filter Include="Headers">
       <UniqueIdentifier>{89b26949-1f1f-4f9c-be9a-81edb206f030}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Shaders">
+      <UniqueIdentifier>{60b30400-f23b-41e1-b712-1364156a04ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Shaders\Headers">
+      <UniqueIdentifier>{bfcf4734-352d-4f45-83df-05dba02aa18b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Shaders\Additional Dependencies">
+      <UniqueIdentifier>{33935d16-77db-48b6-acaf-8abee0d57e23}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Shaders\Additional Dependencies\oHLSL">
+      <UniqueIdentifier>{e0c87c77-a5d9-4d18-8030-103a7714e488}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Shaders\Additional Dependencies\oCompute">
+      <UniqueIdentifier>{27c224f7-64b0-41df-990b-cd685f427c23}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <FXC Include="Tests\oGPUTestPassThroughVS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestWhitePS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestColorPS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestTexture1DVS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestTexture1DPS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestTexture2DPS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestTexture2DVS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestTexture3DVS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestTexture3DPS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestTextureCubeVS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestTextureCubePS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestWhiteInstancedVS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestPassThroughColorVS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestBufferVS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestBufferPS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
     <FXC Include="Tests\oGPUTestWhiteVS.sh">
-      <Filter>Shaders</Filter>
+      <Filter>Source\Shaders</Filter>
     </FXC>
   </ItemGroup>
 </Project>

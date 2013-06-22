@@ -26,10 +26,8 @@
 #include <oPlatform/oStreamUtil.h>
 #include <oPlatform/oStream.h>
 #include <oBasis/oBuffer.h>
-#include <oBasis/oINI.h>
-#include <oBasis/oXML.h>
 
-bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oALLOCATE& _Allocate, const oDEALLOCATE& _Deallocate, const char* _URIReference, bool _AsString)
+bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oFUNCTION<void*(size_t _NumBytes)>& _Allocate, const oFUNCTION<void(void* _Pointer)>& _Deallocate, const char* _URIReference, bool _AsString)
 {
 	oRef<threadsafe oStreamReader> Reader;
 	if (!oStreamReaderCreate(_URIReference, &Reader))
@@ -44,8 +42,8 @@ bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oALLOCATE& _Alloc
 
 	if (!r.pData)
 	{
-		oStringS fileSize;
-		return oErrorSetLast(oERROR_AT_CAPACITY, "Out of memory allocating %s", oFormatMemorySize(fileSize, actualSize, 2));
+		oStd::sstring fileSize;
+		return oErrorSetLast(std::errc::no_buffer_space, "Out of memory allocating %s", oFormatMemorySize(fileSize, actualSize, 2));
 	}
 
 	// Add nul terminator (readied for UTF supprot
@@ -120,40 +118,9 @@ bool oBufferLoad(const char* _URIReference, oBuffer** _ppBuffer, bool _AsString)
 	return success ? oBufferCreate(_URIReference, b, size, free, _ppBuffer) : success;
 }
 
-bool oINILoad(const char* _URIReference, threadsafe oINI** _ppINI)
-{
-	void* pBuffer = nullptr;
-	size_t Size = 0;
-	if (!oStreamLoad(&pBuffer, &Size, malloc, free, _URIReference, true))
-		return false; // pass through error
-
-	bool success = oINICreate(_URIReference, (const char*)pBuffer, _ppINI);
-	free(pBuffer);
-	return success;
-}
-
-static void oXMLFreeString(const char* string) { free((void*)string); }
-bool oXMLLoad(const char* _URIReference, threadsafe oXML** _ppXML)
-{
-	void* pBuffer = nullptr;
-	size_t Size = 0;
-	if (!oStreamLoad(&pBuffer, &Size, malloc, free, _URIReference, true))
-		return false; // pass through error
-
-	oOnScopeExit FreeBuffer([&] { if (pBuffer) free(pBuffer); });
-
-	oXML::DESC d;
-	d.DocumentName = _URIReference;
-	d.CopyXMLString = true;
-	d.EstimatedNumAttributes = 200;
-	d.EstimatedNumNodes = 100;
-	d.FreeXMLString = oXMLFreeString;
-	d.XMLString = (char*)pBuffer;
-
-	if (!oXMLCreate(d, _ppXML))
-		return false; // pass through error
-
-	return true;
+static void FreeString(const char* string) 
+{ 
+	free((void*)string);
 }
 
 bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ)
@@ -164,7 +131,7 @@ bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ
 	if (!oStreamLoad(&pBuffer, &Size, malloc, free, _URIReference, true))
 		return false; // pass through error
 
-	oOnScopeExit FreeBuffer([&] { if (pBuffer) free(pBuffer); });
+	oStd::finally FreeBuffer([&] { if (pBuffer) free(pBuffer); });
 
 	if (!oOBJCreate(_URIReference, (const char*)pBuffer, _Init, _ppOBJ))
 		return false; // pass through error
@@ -180,7 +147,7 @@ bool oMTLLoad(const char* _URIReference, threadsafe oMTL** _ppMTL)
 	if (!oStreamLoad(&pBuffer, &Size, malloc, free, _URIReference, true))
 		return false; // pass through error
 
-	oOnScopeExit FreeBuffer([&] { if (pBuffer) free(pBuffer); });
+	oStd::finally FreeBuffer([&] { if (pBuffer) free(pBuffer); });
 
 	if (!oMTLCreate(_URIReference, (const char*)pBuffer, _ppMTL))
 		return false; // pass through error
@@ -200,7 +167,7 @@ bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ
 	{
 		if (oSTRVALID(d.MTLPath))
 		{
-			oStringPath mtlPath;
+			oStd::path_string mtlPath;
 			if (oIsFullPath(d.MTLPath))
 				mtlPath = d.MTLPath;
 			else
@@ -218,4 +185,43 @@ bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ
 	}
 
 	return true;
+}
+
+#define LOAD_BUFFER \
+	void* pBuffer = nullptr; \
+	size_t Size = 0; \
+	if (!oStreamLoad(&pBuffer, &Size, malloc, free, _URIReference, true)) \
+		return false; // pass through error
+
+std::shared_ptr<oStd::csv> oCSVLoad(const char* _URIReference)
+{
+	LOAD_BUFFER
+	try { return std::move(std::make_shared<oStd::csv>(_URIReference, (char*)pBuffer, FreeString)); }
+	catch (std::exception& e)
+	{
+		oErrorSetLast(e);
+		return nullptr;
+	}
+}
+
+std::shared_ptr<oStd::ini> oINILoad(const char* _URIReference)
+{
+	LOAD_BUFFER
+	try { return std::move(std::make_shared<oStd::ini>(_URIReference, (char*)pBuffer, FreeString)); }
+	catch (std::exception& e)
+	{
+		oErrorSetLast(e);
+		return nullptr;
+	}
+}
+
+std::shared_ptr<oStd::xml> oXMLLoad(const char* _URIReference)
+{
+	LOAD_BUFFER
+	try { return std::move(std::make_shared<oStd::xml>(_URIReference, (char*)pBuffer, FreeString)); }
+	catch (std::exception& e)
+	{
+		oErrorSetLast(e);
+		return nullptr;
+	}
 }

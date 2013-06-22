@@ -66,7 +66,7 @@
 // - Asynchronous and threadsafe client
 // - Form fields
 
-
+#include <oBasis/oRTTI.h>
 #include <oBasis/oMIME.h>
 
 enum oHTTP_VERSION
@@ -79,6 +79,7 @@ enum oHTTP_VERSION
 
 	oHTTP_NUM_VERSIONS = 4,
 };
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oHTTP_VERSION)
 
 enum oHTTP_STATUS_CODE
 {
@@ -126,6 +127,7 @@ enum oHTTP_STATUS_CODE
 
 	oHTTP_NUM_RESPONSE_CODES = 40,
 };
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oHTTP_STATUS_CODE)
 
 enum oHTTP_METHOD
 {
@@ -141,6 +143,7 @@ enum oHTTP_METHOD
 
 	oHTTP_NUM_METHODS = 9,
 };
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oHTTP_METHOD)
 
 enum oHTTP_HEADER_FIELD
 {
@@ -197,14 +200,7 @@ enum oHTTP_HEADER_FIELD
 
 	oHTTP_NUM_HEADER_FIELDS,
 };
-
-oAPI const char* oAsString(oHTTP_STATUS_CODE _Code);
-oAPI bool oFromString(oHTTP_STATUS_CODE* _pValue, const char* _StrSource);
-oAPI const char* oAsString(oHTTP_METHOD _Request);
-oAPI bool oFromString(oHTTP_METHOD* _pRequest, const char* _StrSource);
-oAPI const char* oAsString(oHTTP_HEADER_FIELD _Request);
-oAPI bool oFromString(oHTTP_HEADER_FIELD* _pRequest, const char* _StrSource);
-
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oHTTP_HEADER_FIELD)
 typedef struct oHTTPHeaderFields* oHTTP_HEADER_FIELDS;
 
 struct oHTTP_CONTENT_BODY
@@ -219,7 +215,7 @@ struct oHTTP_REQUEST
 	struct oHTTP_REQUEST_LINE
 	{
 		oHTTP_METHOD Method;
-		oStringXXL RequestURI;
+		oStd::xxlstring RequestURI;
 		oHTTP_VERSION Version;
 	};
 	oHTTP_REQUEST_LINE RequestLine;
@@ -233,7 +229,7 @@ struct oHTTP_RESPONSE
 	{
 		oHTTP_VERSION Version;
 		oHTTP_STATUS_CODE StatusCode;
-		oStringS ReasonPhrase;
+		oStd::sstring ReasonPhrase;
 	};
 	oHTTP_STATUS_LINE StatusLine;
 	oHTTP_HEADER_FIELDS HeaderFields;

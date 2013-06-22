@@ -24,11 +24,15 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oSingleton.h>
-#include <oBasis/oThread.h>
+#include <oBasis/oBasisRequirements.h>
+#include <oConcurrency/backoff.h>
+#include <oConcurrency/mutex.h>
 #include <oPlatform/oDebugger.h>
 #include <oPlatform/oModule.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSystem.h>
+
+using namespace oConcurrency;
 
 // @oooii-tony: Singletons are useful concepts and really cross-platform. It is
 // unfortunate that on at least Windows it requires important platform API calls
@@ -53,7 +57,7 @@ namespace oSingletonPlatform
 		oVERIFY(oModuleGetName(modname, oModuleGetCurrent()));
 		char syspath[_MAX_PATH];
 		char msg[oKB(4)];
-		int offset = oPrintf(msg, "%s(%d): {%s} %s %s ", _File, _Line, oGetFilebase(modname), oSystemGetPath(syspath, oSYSPATH_EXECUTION), oGetTypename(_TypeinfoName));
+		int offset = oPrintf(msg, "%s(%d): {%s} %s %s ", _File, _Line, oGetFilebase(modname), oSystemGetExecutionPath(syspath), oGetTypename(_TypeinfoName));
 		va_list args;
 		va_start(args, _Format);
 		oVPrintf(msg + offset, oCOUNTOF(msg) - offset, _Format, args);
@@ -88,9 +92,9 @@ bool oConstructOnceV(void* volatile* _pPointer, void* (*_New)())
 
 		else
 		{
-			oBackoff bo;
+			oConcurrency::backoff bo;
 			while (*_pPointer <= CONSTRUCTING)
-				bo.Pause();
+				bo.pause();
 		}
 	}
 
@@ -148,19 +152,19 @@ public:
 	}
 
 	void RegisterThreadlocalSingleton(oSingletonBase* _pSingleton) threadsafe;
-	void RegisterAtExit(oFUNCTION<void()> _AtExit);
+	void RegisterAtExit(const oTASK& _AtExit);
 	void EndThread();
 
 protected:
 	static const oGUID GUID;
-	oRecursiveMutex Mutex;
+	oConcurrency::recursive_mutex Mutex;
 
-	typedef oArray<oSingletonBase*, 32> thread_singletons_t;
-	typedef std::unordered_map<unsigned int, thread_singletons_t, std::hash<unsigned int>, std::equal_to<unsigned int>, oStdUserCallbackAllocator<std::pair<const unsigned int, thread_singletons_t>>> singletons_t;
+	typedef oStd::fixed_vector<oSingletonBase*, 32> thread_singletons_t;
+	typedef std::unordered_map<oStd::thread::id, thread_singletons_t, std::hash<oStd::thread::id>, std::equal_to<oStd::thread::id>, oStdUserAllocator<std::pair<const oStd::thread::id, thread_singletons_t>>> singletons_t;
 	singletons_t Singletons;
 
-	typedef oArray<oFUNCTION<void()>, 32> atexitlist_t;
-	typedef std::unordered_map<unsigned int, atexitlist_t, std::hash<unsigned int>, std::equal_to<unsigned int>, oStdUserCallbackAllocator<std::pair<const unsigned int, atexitlist_t>>> atexits_t;
+	typedef oStd::fixed_vector<oFUNCTION<void()>, 32> atexitlist_t;
+	typedef std::unordered_map<oStd::thread::id, atexitlist_t, std::hash<oStd::thread::id>, std::equal_to<oStd::thread::id>, oStdUserAllocator<std::pair<const oStd::thread::id, atexitlist_t>>> atexits_t;
 	atexits_t AtExits;
 };
 
@@ -168,8 +172,8 @@ protected:
 const oGUID oThreadlocalRegistry::GUID = { 0xcbc5c6d4, 0x7c46, 0x4d05, { 0x91, 0x43, 0xa0, 0x43, 0x41, 0x8c, 0xb, 0x3a } };
 
 oThreadlocalRegistry::oThreadlocalRegistry()
-	: Singletons(0, singletons_t::hasher(), singletons_t::key_equal(), oStdUserCallbackAllocator<singletons_t::value_type>(untracked_malloc, untracked_free))
-	, AtExits(0, atexits_t::hasher(), atexits_t::key_equal(), oStdUserCallbackAllocator<atexits_t::value_type>(untracked_malloc, untracked_free))
+	: Singletons(0, singletons_t::hasher(), singletons_t::key_equal(), oStdUserAllocator<singletons_t::value_type>(untracked_malloc, untracked_free))
+	, AtExits(0, atexits_t::hasher(), atexits_t::key_equal(), oStdUserAllocator<atexits_t::value_type>(untracked_malloc, untracked_free))
 {}
 
 // @oooii-tony: External declared elsewhere for some lifetime timing hackin'
@@ -244,36 +248,29 @@ void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, type_info_de
 	return p;
 }
 
-unsigned int GetTID()
-{
-	oStd::thread::id id = oStd::this_thread::get_id();
-	return *(unsigned int*)&id;
-}
-
 void oThreadlocalRegistry::RegisterThreadlocalSingleton(oSingletonBase* _pSingleton) threadsafe
 {
-	oLockGuard<oRecursiveMutex> Lock(Mutex);
-	thread_singletons_t& ts = thread_cast<singletons_t&>(Singletons)[GetTID()]; // protected by mutex above
+	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
+	thread_singletons_t& ts = thread_cast<singletons_t&>(Singletons)[oStd::this_thread::get_id()]; // protected by mutex above
 	ts.push_back(_pSingleton);
 	_pSingleton->Reference();
 }
 
-void oThreadlocalRegistry::RegisterAtExit(oFUNCTION<void()> _AtExit)
+void oThreadlocalRegistry::RegisterAtExit(const oTASK& _AtExit)
 {
-	oLockGuard<oRecursiveMutex> Lock(Mutex);
-	oStd::thread::id id = oStd::this_thread::get_id();
-	atexitlist_t& list = AtExits[*(unsigned int*)&id];
+	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
+	atexitlist_t& list = AtExits[oStd::this_thread::get_id()];
 	list.push_back(_AtExit);
 }
 
 void oThreadlocalRegistry::EndThread()
 {
-	oLockGuard<oRecursiveMutex> Lock(Mutex);
+	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
 	oThreadlocalRegistry* pThis = thread_cast<oThreadlocalRegistry*>(this); // protected by mutex above
 
 	// Call all atexit functions while threadlocal singletons are still up
 	{
-		atexits_t::iterator it = pThis->AtExits.find(oAsUint(oStd::this_thread::get_id()));
+		atexits_t::iterator it = pThis->AtExits.find(oStd::this_thread::get_id());
 		if (it != pThis->AtExits.end())
 		{
 			oFOR(oFUNCTION<void()>& AtExit, it->second)
@@ -285,7 +282,7 @@ void oThreadlocalRegistry::EndThread()
 
 	// Now tear down the singletons
 	{
-		singletons_t::iterator it = pThis->Singletons.find(GetTID());
+		singletons_t::iterator it = pThis->Singletons.find(oStd::this_thread::get_id());
 		if (it != pThis->Singletons.end())
 		{
 			oFOR(oSingletonBase* s, it->second)
@@ -296,25 +293,29 @@ void oThreadlocalRegistry::EndThread()
 	}
 }
 
-bool oThreadlocalMalloc(const oGUID& _GUID, size_t _Size, void** _ppAllocation)
+void oThreadlocalMalloc(const oGUID& _GUID, const oLIFETIME_TASK& _Create, const oLIFETIME_TASK& _Destroy, size_t _Size, void** _ppAllocation)
 {
 	// @oooii-tony: Because this can be called from system threads, driver threads,
 	// and 3rd-party libs that don't care about your application's reporting (TBB)
 	// just punt on reporting these at leaks.
 	if (oProcessHeapFindOrAllocate(_GUID, true, false, _Size, nullptr, "oThreadlocalMalloc", _ppAllocation))
 	{
-		oThreadAtExit(oProcessHeapDeallocate, *_ppAllocation);
-		return true;
+		if (_Create)
+			_Create(*_ppAllocation);
+		
+		if (_Destroy)
+			oConcurrency::thread_at_exit(oBIND(_Destroy, *_ppAllocation));
+		
+		oConcurrency::thread_at_exit(oProcessHeapDeallocate, *_ppAllocation);
 	}
-	return false;
 }
 
-void oThreadAtExit(oTASK _AtExit)
+void oConcurrency::thread_at_exit(const std::function<void()>& _AtExit)
 {
 	oThreadlocalRegistry::Singleton()->RegisterAtExit(_AtExit);
 }
 
-void oEndThread()
+void oConcurrency::end_thread()
 {
 	oThreadlocalRegistry::Singleton()->EndThread();
 }

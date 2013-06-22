@@ -30,7 +30,7 @@
 #ifndef oCppParsing_h
 #define oCppParsing_h
 
-#include <oBasis/oFunction.h>
+#include <oStd/function.h>
 #include <ctype.h> // isalnum
 
 // returns true for [A-Za-z0-9_]
@@ -128,10 +128,10 @@ bool oGetNextInclude(char* _StrDestination, size_t _SizeofStrDestination, const 
 // Given a buffer of source that uses #include statements, replace those 
 // statements with the contents of the specified include files by using
 // a user callback. The buffer must be large enough to accommodate all 
-// merged includes. If this returns false, oErrorGetLst() will be oERROR_IO to
-// indicate a problem in the specified Load function or oERROR_INVALID_PARAMETER 
+// merged includes. If this returns false, oErrorGetLst() will be std::errc::io_error to
+// indicate a problem in the specified Load function or std::errc::invalid_argument 
 // if the specified buffer is too small to hold the results of the merge.
-bool oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const char* _SourceFullPath, oFUNCTION_LOAD_BUFFER _Load);
+bool oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const char* _SourceFullPath, const oFUNCTION<bool(void* _pDestination, size_t _SizeofDestination, const char* _Path)>& _Load);
 
 // Convert a buffer into a C++ array. This is useful when you want to embed data 
 // in code itself. This fills the destination string with a declaration of the 
@@ -142,7 +142,12 @@ bool oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const cha
 // that can be externed and used to access the buffer. Any extension '.' in the
 // specified bufferName will be replaced with '_', so GetDescMyFile_txt(...)
 
-size_t oCodifyData(char* _StrDestination, size_t _SizeofStrDestination, const char* _BufferName, const void* _pBuffer, size_t _SizeofBuffer, size_t _WordSize);
+size_t oCodifyData(char* _StrDestination
+	, size_t _SizeofStrDestination
+	, const char* _BufferName
+	, const void* _pBuffer
+	, size_t _SizeofBuffer
+	, size_t _WordSize);
 
 // Walk through a C++ style source file and check all #include statements for 
 // their date compared to the source file itself. _SourceFullPath is a semi-colon
@@ -160,7 +165,13 @@ size_t oCodifyData(char* _StrDestination, size_t _SizeofStrDestination, const ch
 // that the algorithm doesn't have to recurse. NOTE: The array of macros must
 // be NUL-terminated, meaning a value of {0,0} must be the last entry in the 
 // oMACRO array.
-bool oHeadersAreUpToDate(const char* _StrSourceCode, const char* _SourceFullPath, const oMACRO* _pMacros, oFUNCTION_PATH_EXISTS _PathExists, oFUNCTION<time_t(const char* _Path)> _GetModifiedDate, oFUNCTION_LOAD_BUFFER _LoadHeaderFile, const char* _HeaderSearchPath);
+bool oHeadersAreUpToDate(const char* _StrSourceCode
+	, const char* _SourceFullPath
+	, const oMACRO* _pMacros
+	, const oFUNCTION<bool(const char* _Path)>& _PathExists
+	, const oFUNCTION<time_t(const char* _Path)>& _GetModifiedDate
+	, const oFUNCTION<bool(void* _pDestination, size_t _SizeofDestination, const char* _Path)>& _LoadHeaderFile
+	, const char* _HeaderSearchPath);
 
 // _____________________________________________________________________________
 // Templated-on-size versions of the above API
@@ -168,9 +179,9 @@ bool oHeadersAreUpToDate(const char* _StrSourceCode, const char* _SourceFullPath
 template<size_t size> inline char* oGetStdVectorType(char (&_StrDestination)[size], const char* _TypeinfoName) { return oGetStdVectorType(_StrDestination, size, _TypeinfoName); }
 template<size_t size> inline bool oGetNextInclude(char (&_StrDestination)[size], const char** _ppContext) { return oGetNextInclude(_StrDestination, size, _ppContext); }
 template<size_t size> inline bool oGetNextMatchingIfdefBlocks(oIFDEF_BLOCK (&_pBlocks)[size], size_t* _pNumValidBlocks, const char* _StrSourceCodeBegin, const char* _StrSourceCodeEnd) { return oGetNextMatchingIfdefBlocks(_pBlocks, size, _pNumValidBlocks, _StrSourceCodeBegin, _StrSourceCodeEnd); }
-template<size_t size> inline errno_t oMergeIncludes(char (&_StrSourceCode)[size], const char* _SourceFullPath, oFUNCTION_LOAD_BUFFER _Load, char* _StrErrorMessage, size_t _SizeofStrErrorMessage) { return oMergeIncludes(_StrSourceCode, size, _SourceFullPath, Load, _StrErrorMessage, _SizeofStrErrorMessage); }
-template<size_t size> inline errno_t oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const char* _SourceFullPath, oFUNCTION_LOAD_BUFFER Load, char (&_StrErrorMessage)[size]) { return oMergeIncludes(_StrSourceCode, size, _SourceFullPath, Load, _StrErrorMessage, size); }
-template<size_t size, size_t errSize> inline errno_t oMergeIncludes(char (&_StrSourceCode)[size], const char* _SourceFullPath, oFUNCTION_LOAD_BUFFER Load, char (&_StrErrorMessage)[errSize]) { return oMergeIncludes(_StrSourceCode, size, _SourceFullPath, Load, _StrErrorMessage, errSize); }
+template<size_t size> inline errno_t oMergeIncludes(char (&_StrSourceCode)[size], const char* _SourceFullPath, const oFUNCTION<bool(void* _pDestination, size_t _SizeofDestination, const char* _Path)>& _Load, char* _StrErrorMessage, size_t _SizeofStrErrorMessage) { return oMergeIncludes(_StrSourceCode, size, _SourceFullPath, Load, _StrErrorMessage, _SizeofStrErrorMessage); }
+template<size_t size> inline errno_t oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const char* _SourceFullPath, const oFUNCTION<bool(void* _pDestination, size_t _SizeofDestination, const char* _Path)>& Load, char (&_StrErrorMessage)[size]) { return oMergeIncludes(_StrSourceCode, size, _SourceFullPath, Load, _StrErrorMessage, size); }
+template<size_t size, size_t errSize> inline errno_t oMergeIncludes(char (&_StrSourceCode)[size], const char* _SourceFullPath, const oFUNCTION<bool(void* _pDestination, size_t _SizeofDestination, const char* _Path)>& Load, char (&_StrErrorMessage)[errSize]) { return oMergeIncludes(_StrSourceCode, size, _SourceFullPath, Load, _StrErrorMessage, errSize); }
 template<size_t size> inline size_t oCodifyData(char (&_StrDestination)[size], const char* _BufferName, const void* _pBuffer, size_t _SizeofBuffer, size_t _WordSize) { return oCodifyData(_StrDestination, size, _BufferName, pBuffer, _SizeofBuffer, _WordSize); }
 
 #endif

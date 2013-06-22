@@ -36,6 +36,7 @@
 #include <oBasis/oHash.h>
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oTypeID.h>
+#include <oStd/stringize.h>
 #include <type_traits>
 
 template<typename T> struct remove_traits
@@ -207,7 +208,7 @@ template<typename T> struct oTypeInfo
 		((std::has_virtual_destructor<T>::value&0x1)<<28)|
 		((std::is_signed<T>::value&0x1)<<29)|
 		((std::is_unsigned<T>::value&0x1)<<30)|
-		((is_linear_algebra<T>::value&0x1)<<31);
+		((is_linear_algebra<T>::value&0x1u)<<31u);
 };
 
 // same thing as above, but based off parsing the type for situations where 
@@ -215,7 +216,7 @@ template<typename T> struct oTypeInfo
 inline unsigned int oTypeInfoMakeID(const char* _TypeInfoName) 
 {
 	unsigned int TypeID = oTYPE_UNKNOWN;
-	if (!oFromString((oTYPE_ID*)&TypeID, _TypeInfoName))
+	if (!oStd::from_string((oTYPE_ID*)&TypeID, _TypeInfoName))
 		TypeID = oHash_FNV1a(move_past_whitespace(_TypeInfoName));
 	return TypeID;
 }

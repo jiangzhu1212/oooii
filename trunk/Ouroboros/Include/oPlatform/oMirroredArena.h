@@ -29,6 +29,8 @@
 
 #include <oBasis/oInterface.h>
 
+// {89A0BD51-3ADF-42b6-A6DE-F0B9839168CF}
+oDEFINE_GUID_I(oMirroredArena, 0x89a0bd51, 0x3adf, 0x42b6, 0xa6, 0xde, 0xf0, 0xb9, 0x83, 0x91, 0x68, 0xcf);
 interface oMirroredArena : oInterface
 {
 	// Allocates a large block of memory fit to be used with a custom allocator.

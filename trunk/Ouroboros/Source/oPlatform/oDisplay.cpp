@@ -24,7 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oDisplay.h>
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
 #include <oPlatform/Windows/oDXGI.h>
 #include <oPlatform/Windows/oWindows.h>
 #include <oPlatform/Windows/oWinRect.h>
@@ -82,7 +82,7 @@ bool oDisplayEnum(int _Index, oDISPLAY_DESC* _pDesc)
 	dev.cb = sizeof(dev);
 
 	if (!EnumDisplayDevices(0, _Index, &dev, 0))
-		return oErrorSetLast(oERROR_NOT_FOUND);
+		return oErrorSetLast(std::errc::no_such_device);
 
 	_pDesc->Index = _Index;
 	_pDesc->IsPrimary = !!(dev.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE);
@@ -117,7 +117,7 @@ static bool oDisplaySetMode(const char* _DeviceName, const oDISPLAY_MODE& _Mode)
 {
 	DEVMODE dm;
 	if (!EnumDisplaySettings(_DeviceName, ENUM_CURRENT_SETTINGS, &dm))
-		return oErrorSetLast(oERROR_NOT_FOUND);
+		return oErrorSetLast(std::errc::no_such_device);
 
 	// ensure only what we want to set is set
 	dm.dmFields = DM_PELSWIDTH|DM_PELSHEIGHT|DM_BITSPERPEL|DM_DISPLAYFREQUENCY;
@@ -139,7 +139,7 @@ static bool oDisplaySetMode(const char* _DeviceName, const oDISPLAY_MODE& _Mode)
 		case DISP_CHANGE_FAILED: 
 		case DISP_CHANGE_NOTUPDATED: 
 		case DISP_CHANGE_RESTART:
-			return oErrorSetLast(oERROR_INVALID_PARAMETER, "%s", oWinAsStringDISP(result));
+			return oErrorSetLast(std::errc::invalid_argument, "%s", oWinAsStringDISP(result));
 		default: 
 		case DISP_CHANGE_SUCCESSFUL:
 			ChangeDisplaySettingsEx(_DeviceName, &dm, 0, CDS_FULLSCREEN, 0);
@@ -160,7 +160,7 @@ bool oDisplaySetMode(int _Index, const oDISPLAY_MODE& _Mode)
 	DISPLAY_DEVICE dev;
 	dev.cb = sizeof(dev);
 	if (!EnumDisplayDevices(0, _Index, &dev, 0))
-		return oErrorSetLast(oERROR_NOT_FOUND);
+		return oErrorSetLast(std::errc::no_such_device);
 	return oDisplaySetMode(dev.DeviceName, _Mode);
 }
 
@@ -169,7 +169,7 @@ bool oDisplayResetMode(int _Index)
 	DISPLAY_DEVICE dev;
 	dev.cb = sizeof(dev);
 	if (!EnumDisplayDevices(0, _Index, &dev, 0))
-		return oErrorSetLast(oERROR_NOT_FOUND);
+		return oErrorSetLast(std::errc::no_such_device);
 	return oDisplayResetMode(dev.DeviceName);
 }
 
@@ -178,7 +178,7 @@ bool oDisplaySetPowerOn(bool _On)
 	static const LPARAM OFF = 2;
 	static const LPARAM LOWPOWER = 1;
 	static const LPARAM ON = -1;
-	SendMessage(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, _On ? ON : LOWPOWER);
+	PostMessage(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, _On ? ON : LOWPOWER);
 	return true;
 }
 
@@ -208,7 +208,7 @@ int oDisplayFindIndex(const int2& _ScreenPosition)
 	HMONITOR hMonitor = MonitorFromPoint(p, MONITOR_DEFAULTTONULL);
 	if (!hMonitor)
 	{
-		oErrorSetLast(oERROR_NOT_FOUND);
+		oErrorSetLast(std::errc::no_such_device);
 		return oInvalid;
 	}
 

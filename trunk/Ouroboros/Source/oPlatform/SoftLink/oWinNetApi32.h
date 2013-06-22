@@ -27,7 +27,7 @@
 #ifndef oWinNetApi32_h
 #define oWinNetApi32_h
 
-#include "oWinSoftLinkCommon.h"
+#include <oPlatform/oModuleUtil.h>
 #include <lm.h>
 
 oDECLARE_DLL_SINGLETON_BEGIN(oWinNetApi32)

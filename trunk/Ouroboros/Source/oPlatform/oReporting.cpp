@@ -24,10 +24,10 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oReporting.h>
-#include <oBasis/oAlgorithm.h>
-#include <oBasis/oArray.h>
+#include <oStd/algorithm.h>
+#include <oStd/fixed_vector.h>
 #include <oBasis/oError.h>
-#include <oBasis/oFixedString.h>
+#include <oStd/fixed_string.h>
 #include <oPlatform/oDebugger.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oProcessHeap.h>
@@ -42,16 +42,19 @@
 #define oEXCEPTION_PURE_VIRTUAL_CALL 0x8badc0de
 #define oEXCEPTION_BAD_EXCEPTION 0x8badec10
 
-const char* oAsString(const oASSERT_TYPE& _Type)
+namespace oStd {
+
+const char* as_string(const oStd::assert_type::value& _Type)
 {
 	switch (_Type)
 	{
-		case oASSERT_TRACE: return "Trace";
-		case oASSERT_WARNING: return "Warning";
-		case oASSERT_ASSERTION: return "Error";
-		default: oASSERT_NOEXECUTION;
+		case oStd::assert_type::trace: return "Trace";
+		case oStd::assert_type::assertion: return "Error";
+		oNODEFAULT;
 	}
 }
+
+} // namespace oStd
 
 static int oWinWriteDumpFile_Helper(MINIDUMP_TYPE _Type, HANDLE _hFile, bool* _pSuccess, EXCEPTION_POINTERS* _pExceptionPointers)
 {
@@ -70,7 +73,7 @@ static bool oWinWriteDumpFile(MINIDUMP_TYPE _Type, const char* _Path, EXCEPTION_
 	oFileEnsureParentFolderExists(_Path);
 	HANDLE hFile = CreateFileA(_Path, GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hFile == INVALID_HANDLE_VALUE)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Failed to open %s for write.", oSAFESTRN(_Path));
+		return oErrorSetLast(std::errc::invalid_argument, "Failed to open %s for write.", oSAFESTRN(_Path));
 
 	bool success = false; 
 	if (_pExceptionPointers)
@@ -91,13 +94,13 @@ static bool oWinWriteDumpFile(MINIDUMP_TYPE _Type, const char* _Path, EXCEPTION_
 
 	CloseHandle(hFile);
 	if (!success)
-		return oErrorSetLast(oERROR_GENERIC, "Failed to write dump file %s", oSAFESTRN(_Path));
+		return oErrorSetLast(std::errc::io_error, "Failed to write dump file %s", oSAFESTRN(_Path));
 	return success;
 }
 
 //static bool oWinWriteDumpFile(EXCEPTION_POINTERS* _pExceptionPointers)
 //{
-//	oStringPath DumpPath;
+//	oStd::path_string DumpPath;
 //	oSystemGetPath(DumpPath, oSYSPATH_APP_FULL);
 //	oTrimFileExtension(DumpPath);
 //	oStrAppendf(DumpPath, ".dmp");
@@ -106,7 +109,8 @@ static bool oWinWriteDumpFile(MINIDUMP_TYPE _Type, const char* _Path, EXCEPTION_
 
 void ReportErrorAndExit()
 {
-	oASSERT(false, "std::terminate Called");
+	oTRACEA("std::terminate called");
+	oASSERT(false, "std::terminate called");
 }
 
 struct oReportingContext : oProcessSingleton<oReportingContext>
@@ -118,10 +122,10 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 	inline void GetDesc(oREPORTING_DESC* _pDesc) { *_pDesc = Desc; }
 	bool PushReporter(oReportingVPrint _Reporter);
 	oReportingVPrint PopReporter();
-	inline void AddFilter(size_t _AssertionID) { oPushBackUnique(FilteredMessages, _AssertionID); }
-	inline void RemoveFilter(size_t _AssertionID) { oFindAndErase(FilteredMessages, _AssertionID); }
-	oASSERT_ACTION VPrint(const oASSERTION& _Assertion, const char* _Format, va_list _Args);
-	static oASSERT_ACTION DefaultVPrint(const oASSERTION& _Assertion, threadsafe oStreamWriter* _pLogFile, const char* _Format, va_list _Args);
+	inline void AddFilter(size_t _AssertionID) { oStd::push_back_unique(FilteredMessages, _AssertionID); }
+	inline void RemoveFilter(size_t _AssertionID) { oStd::find_and_erase(FilteredMessages, _AssertionID); }
+	oStd::assert_action::value VPrint(const oStd::assert_context& _Assertion, const char* _Format, va_list _Args);
+	static oStd::assert_action::value DefaultVPrint(const oStd::assert_context& _Assertion, threadsafe oStreamWriter* _pLogFile, const char* _Format, va_list _Args);
 	static const oGUID GUID;
 	void EnableErrorDialogBoxes(bool _bValue);
 	bool AreDialogBoxesEnabled() const { return bDialogBoxesEnabled; }
@@ -142,19 +146,19 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 
 	void DumpAndTerminate(EXCEPTION_POINTERS* _pExceptionPtrs, const char* _pUserErrorMessage)
 	{
-		oStringS DumpStamp = VersionString;
+		oStd::sstring DumpStamp = VersionString;
 
-		oNTPDate now;
+		oStd::ntp_date now;
 		oSystemGetDate(&now);
-		oStringS StrNow;
-		oDateStrftime(DumpStamp.c_str() + DumpStamp.length(), DumpStamp.capacity() - DumpStamp.length(), oDATE_SYSLOG_FORMAT_LOCAL, now, oDATE_TO_LOCAL);
+		oStd::sstring StrNow;
+		oStd::strftime(DumpStamp.c_str() + DumpStamp.length(), DumpStamp.capacity() - DumpStamp.length(), oStd::syslog_local_date_format, now, oStd::date_conversion::to_local);
 		oReplace(StrNow, DumpStamp, ":", "_");
 		oReplace(DumpStamp, StrNow, ".", "_");
 
 		bool Mini = false;
 		bool Full = false;
 
-		oStringPath DumpPath;
+		oStd::path_string DumpPath;
 		if (!Desc.MiniDumpBase.empty())
 		{
 			oPrintf(DumpPath, "%s%s.dmp", Desc.MiniDumpBase, DumpStamp.c_str());
@@ -176,7 +180,7 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 		if(Desc.PromptAfterDump)
 		{
 			oMSGBOX_DESC d;
-			oStringPath Name;
+			oStd::path_string Name;
 			oModuleGetName(Name);
 			d.Title = Name;
 			d.Type = oMSGBOX_ERR;
@@ -188,12 +192,12 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 protected:
 	oRef<oWinDbgHelp> DbgHelp;
 	oRef<threadsafe oStreamWriter> LogFile;
-	oStringS VersionString;
+	oStd::sstring VersionString;
 	oREPORTING_DESC Desc;
-	typedef oArray<size_t, 256> array_t;
+	typedef oStd::fixed_vector<size_t, 256> array_t;
 	array_t FilteredMessages;
-	oArray<oReportingVPrint, 8> VPrintStack;
-	oRecursiveMutex Mutex;
+	oStd::fixed_vector<oReportingVPrint, 8> VPrintStack;
+	oConcurrency::recursive_mutex Mutex;
 	bool bDialogBoxesEnabled;
 };
 
@@ -220,7 +224,7 @@ oReportingContext::oReportingContext()
 		oModuleGetDesc(&ModuleDesc);
 
 		VersionString[0] = 'V';
-		oToString(&VersionString[1], VersionString.capacity() - 1, ModuleDesc.ProductVersion);
+		oStd::to_string(&VersionString[1], VersionString.capacity() - 1, ModuleDesc.ProductVersion);
 		oStrAppendf(VersionString, "D");
 	}
 }
@@ -250,9 +254,9 @@ void oReportingContext::EnableErrorDialogBoxes(bool _bValue)
 
 void oReportingContext::SetDesc(const oREPORTING_DESC& _Desc)
 {
-	oLockGuard<oRecursiveMutex> Lock(Mutex);
+	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
 
-	oStringPath OldLogPath = Desc.LogFilePath;
+	oStd::path_string OldLogPath = Desc.LogFilePath;
 	Desc = _Desc;
 	if (Desc.LogFilePath)
 	{
@@ -262,7 +266,7 @@ void oReportingContext::SetDesc(const oREPORTING_DESC& _Desc)
 			LogFile = nullptr;
 			if (!oStreamLogWriterCreate(Desc.LogFilePath, &LogFile))
 			{
-				oWARN("Failed to open log file \"%s\"\n%s: %s", Desc.LogFilePath.c_str(), oAsString(oErrorGetLast()), oErrorGetLastString());
+				oTRACE("WARNING: Failed to open log file \"%s\"\n%s: %s", Desc.LogFilePath.c_str(), oErrorAsString(oErrorGetLast()), oErrorGetLastString());
 				Desc.LogFilePath.clear();
 			}
 			oCRTLeakTracker::Singleton()->UntrackAllocation(thread_cast<oStreamWriter*>(LogFile.c_ptr())); // thread cast ok, we're still in initialization
@@ -274,7 +278,7 @@ void oReportingContext::SetDesc(const oREPORTING_DESC& _Desc)
 
 bool oReportingContext::PushReporter(oReportingVPrint _Reporter)
 {
-	oLockGuard<oRecursiveMutex> Lock(Mutex);
+	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
 
 	if (VPrintStack.size() >= VPrintStack.capacity())
 		return false;
@@ -284,7 +288,7 @@ bool oReportingContext::PushReporter(oReportingVPrint _Reporter)
 
 oReportingVPrint oReportingContext::PopReporter()
 {
-	oLockGuard<oRecursiveMutex> Lock(Mutex);
+	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
 
 	oReportingVPrint fn = nullptr;
 	if (!VPrintStack.empty())
@@ -295,17 +299,18 @@ oReportingVPrint oReportingContext::PopReporter()
 	return fn;
 }
 
-oASSERT_ACTION oReportingContext::VPrint(const oASSERTION& _Assertion, const char* _Format, va_list _Args)
+oStd::assert_action::value oReportingContext::VPrint(const oStd::assert_context& _Assertion, const char* _Format, va_list _Args)
 {
-	oLockGuard<oRecursiveMutex> Lock(Mutex);
+	size_t ID = oHash_stlp(_Format);
+	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
 
-	if (!oContains(FilteredMessages, _Assertion.ID) && !VPrintStack.empty())
+	if (!oStd::contains(FilteredMessages, ID) && !VPrintStack.empty())
 	{
 		oReportingVPrint VPrintMessage = VPrintStack.back();
 		return VPrintMessage(_Assertion, LogFile, _Format, _Args);
 	}
 
-	return oASSERT_IGNORE_ONCE;
+	return oStd::assert_action::ignore;
 }
 
 void oReportingReference()
@@ -360,25 +365,25 @@ void oReportingRemoveFilter(size_t _AssertionID)
 	oReportingContext::Singleton()->RemoveFilter(_AssertionID);
 }
 
-oASSERT_ACTION oAssertVPrintf(const oASSERTION& _Assertion, const char* _Format, va_list _Args)
+oStd::assert_action::value oStd::vtracef(const oStd::assert_context& _Assertion, const char* _Format, va_list _Args)
 {
 	return oReportingContext::Singleton()->VPrint(_Assertion, _Format, _Args);
 }
 
-static oASSERT_ACTION GetAction(oMSGBOX_RESULT _Result)
+static oStd::assert_action::value GetAction(oMSGBOX_RESULT _Result)
 {
 	switch (_Result)
 	{
-		case oMSGBOX_ABORT: return oASSERT_ABORT;
-		case oMSGBOX_BREAK: return oASSERT_BREAK;
-		case oMSGBOX_IGNORE: return oASSERT_IGNORE_ALWAYS;
+		case oMSGBOX_ABORT: return oStd::assert_action::abort;
+		case oMSGBOX_BREAK: return oStd::assert_action::debug;
+		case oMSGBOX_IGNORE: return oStd::assert_action::ignore_always;
 		default: break;
 	}
 
-	return oASSERT_IGNORE_ONCE;
+	return oStd::assert_action::ignore;
 }
 
-static oASSERT_ACTION ShowMsgBox(const oASSERTION& _Assertion, oMSGBOX_TYPE _Type, const char* _String)
+static oStd::assert_action::value ShowMsgBox(const oStd::assert_context& _Assertion, oMSGBOX_TYPE _Type, const char* _String)
 {
 #ifdef _DEBUG
 	static const char* MESSAGE_PREFIX = "Debug %s!\n\n";
@@ -458,7 +463,7 @@ void PrintCallStackToString(char* _StrDestination, size_t _SizeofStrDestination,
 		oPrintf(_StrDestination + _SizeofStrDestination - 1 - TLMLength, TLMLength + 1, kStackTooLargeMessage);
 }
 
-char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, const oREPORTING_DESC& _Desc, const oASSERTION& _Assertion, const char* _Format, va_list _Args)
+char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, const oREPORTING_DESC& _Desc, const oStd::assert_context& _Assertion, const char* _Format, va_list _Args)
 {
 	int res = 0;
 	size_t len = 0;
@@ -474,24 +479,25 @@ char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, c
 
 	if (_Desc.PrefixTimestamp)
 	{
-		oNTPTimestamp now = 0;
+		oStd::ntp_timestamp now = 0;
 		oSystemGetDate(&now);
-		res = (int)oDateStrftime(_StrDestination + len, _SizeofStrDestination - len - 1, oDATE_TEXT_SORTABLE_FORMAT_MS " ", now, oDATE_TO_LOCAL);
+		res = (int)oStd::strftime(_StrDestination + len, _SizeofStrDestination - len - 1, oStd::sortable_date_ms_format, now, oStd::date_conversion::to_local);
+		oACCUM_PRINTF(" ");
 		if (res == 0) goto TRUNCATION;
 		len += res;
 	}
 
 	if (_Desc.PrefixMsgType)
-		oACCUM_PRINTF("%s ", oAsString(_Assertion.Type));
+		oACCUM_PRINTF("%s ", oStd::as_string(_Assertion.Type));
 
 	if (_Desc.PrefixThreadId)
 	{
-		oStringM exec;
+		oStd::mstring exec;
 		oACCUM_PRINTF("%s ", oSystemGetExecutionPath(exec));
 	}
 
 	if (_Desc.PrefixMsgId)
-		oACCUM_PRINTF("{0x%08x} ", _Assertion.ID);
+		oACCUM_PRINTF("{0x%08x} ", oHash_stlp(_Format));
 
 	oACCUM_VPRINTF(_Format, _Args);
 	return _StrDestination + len;
@@ -503,14 +509,14 @@ TRUNCATION:
 	return _StrDestination + _SizeofStrDestination;
 }
 
-template<size_t size> inline char* FormatAssertMessage(char (&_StrDestination)[size], const oREPORTING_DESC& _Desc, const oASSERTION& _Assertion, const char* _Format, va_list _Args) { return FormatAssertMessage(_StrDestination, size, _Desc, _Assertion, _Format, _Args); }
+template<size_t size> inline char* FormatAssertMessage(char (&_StrDestination)[size], const oREPORTING_DESC& _Desc, const oStd::assert_context& _Assertion, const char* _Format, va_list _Args) { return FormatAssertMessage(_StrDestination, size, _Desc, _Assertion, _Format, _Args); }
 
-oASSERT_ACTION oReportingContext::DefaultVPrint(const oASSERTION& _Assertion, threadsafe oStreamWriter* _pLogFile, const char* _Format, va_list _Args)
+oStd::assert_action::value oReportingContext::DefaultVPrint(const oStd::assert_context& _Assertion, threadsafe oStreamWriter* _pLogFile, const char* _Format, va_list _Args)
 {
 	oREPORTING_DESC desc;
 	oReportingGetDesc(&desc);
 
-	bool addCallStack = desc.PrintCallstack && (_Assertion.Type == oASSERT_ASSERTION);
+	bool addCallStack = desc.PrintCallstack && (_Assertion.Type == oStd::assert_type::assertion);
 
 	// add prefixes to original message
 	char msg[oKB(8)];
@@ -533,18 +539,13 @@ oASSERT_ACTION oReportingContext::DefaultVPrint(const oASSERTION& _Assertion, th
 	}
 
 	// Output message
-	oASSERT_ACTION action = _Assertion.DefaultResponse;
+	oStd::assert_action::value action = _Assertion.DefaultResponse;
 	switch (_Assertion.Type)
 	{
-		case oASSERT_TRACE:
+		case oStd::assert_type::trace:
 			break;
 
-		case oASSERT_WARNING:
-			if (desc.PromptWarnings)
-				action = ShowMsgBox(_Assertion, oMSGBOX_WARN, msg);
-			break;
-
-		case oASSERT_ASSERTION:
+		case oStd::assert_type::assertion:
 			if (oReportingAreDialogBoxesEnabled())
 			{
 				if (desc.PromptAsserts)
@@ -562,7 +563,7 @@ oASSERT_ACTION oReportingContext::DefaultVPrint(const oASSERTION& _Assertion, th
 
 			break;
 
-		default: oASSERT_NOEXECUTION;
+		oNODEFAULT;
 	}
 
 	return action;
@@ -599,7 +600,7 @@ public:
 		if (Mutex.try_lock())
 		{
 			#ifdef _DEBUG
-				oASSERT_PRINT(oASSERT_ASSERTION, oASSERT_ABORT, "", "%s", _ErrorMessage);
+				oASSERT_TRACE(oStd::assert_type::assertion, oStd::assert_action::abort, "", "%s", _ErrorMessage);
 				oASSERT(false, "%s", _ErrorMessage);
 				Mutex.unlock(); // No need to unlock when DumpAndTerminate is called as the app will exit
 			#else
@@ -646,7 +647,7 @@ public:
 			{
 				void* pAddress = (void*)pRecord->ExceptionInformation[1];
 				const char* err = (0 == pRecord->ExceptionInformation[0]) ? "Read" : "Write";
-				oStringL ErrorMessage;
+				oStd::lstring ErrorMessage;
 				sprintf_s(ErrorMessage.c_str(), "%s access violation at 0x%p", err, pAddress);
 
 				oDebuggerAllocationInfo AllocationInfo;

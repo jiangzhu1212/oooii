@@ -34,7 +34,7 @@
 #ifndef oLockThis_h
 #define oLockThis_h
 
-#include <oBasis/oMutex.h>
+#include <oConcurrency/mutex.h>
 
 template<typename MUTEX_TYPE, typename THIS_TYPE, template <typename> class LOCK_GUARD_TYPE> class oLockThisImpl
 {
@@ -47,34 +47,29 @@ public:
 		LockedThis = thread_cast<this_t*>(_pThis);
 	}
 
-  this_t* operator->() { return LockedThis; }
+	this_t* operator->() { return LockedThis; }
 	const this_t* operator->() const { return LockedThis; }
+	this_t& operator*() { return *LockedThis; }
+	const this_t& operator*() const { return *LockedThis; }
+	this_t* c_ptr() { return LockedThis; }
+	const this_t* c_ptr() const { return LockedThis; }
 
 private:
 	this_t* LockedThis;
 	LOCK_GUARD_TYPE<mutex_t> Lock;
 };
 
-template<typename MUTEX_TYPE, typename THIS_TYPE> oLockThisImpl<MUTEX_TYPE, THIS_TYPE, oLockGuard> oLockThisAuto(MUTEX_TYPE& _Mutex, THIS_TYPE* _pThis)
+template<typename MUTEX_TYPE, typename THIS_TYPE> oLockThisImpl<MUTEX_TYPE, THIS_TYPE, oConcurrency::lock_guard> oLockThisAuto(MUTEX_TYPE& _Mutex, THIS_TYPE* _pThis)
 {
-	return oLockThisImpl<MUTEX_TYPE,THIS_TYPE, oLockGuard>(_Mutex, _pThis);
+	return oLockThisImpl<MUTEX_TYPE,THIS_TYPE, oConcurrency::lock_guard>(_Mutex, _pThis);
 }
 
-template<typename MUTEX_TYPE, typename THIS_TYPE> oLockThisImpl<MUTEX_TYPE, THIS_TYPE, oSharedLock> oLockSharedThisAuto(MUTEX_TYPE& _Mutex, THIS_TYPE* _pThis)
+template<typename MUTEX_TYPE, typename THIS_TYPE> oLockThisImpl<MUTEX_TYPE, THIS_TYPE, oConcurrency::shared_lock> oLockSharedThisAuto(MUTEX_TYPE& _Mutex, THIS_TYPE* _pThis)
 {
-	return oLockThisImpl<MUTEX_TYPE,THIS_TYPE, oSharedLock>(_Mutex, _pThis);
+	return oLockThisImpl<MUTEX_TYPE,THIS_TYPE, oConcurrency::shared_lock>(_Mutex, _pThis);
 }
-
-template<typename T> const T* oThreadCastAuto(const threadsafe T* _pThis) { return thread_cast<const T*>(_pThis); }
-template<typename T> T* oThreadCastAuto(threadsafe T* _pThis) { return thread_cast<T*>(_pThis); }
 
 #define oLockThis(_Mutex) oLockThisAuto(_Mutex, this)
 #define oLockSharedThis(_Mutex) oLockSharedThisAuto(_Mutex, this)
-
-// Use this for underlying API that is known-threadsafe but does not label 
-// methods volatile (oooii threadsafe keyword). USE THIS CAREFULLY, use a raw
-// thread_cast to cast away threadsafety... only use this to cull out 
-// thread_casts where it is KNOWN the API is absolutely threadsafe.
-#define oInherentlyThreadsafe() oThreadCastAuto(this)
 
 #endif

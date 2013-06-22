@@ -24,7 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oWinPDH.h"
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
 #include <oPlatform/oSystem.h>
 #include <PdhMsg.h>
 
@@ -134,7 +134,7 @@ const char* oAsStringPDH(PDH_STATUS _Status)
 
 #define oPDH_V(_fn) do { PDH_STATUS STATUS__ = _fn; oASSERT(STATUS__ == ERROR_SUCCESS,  #_fn "(PDH API) failed: %s", oAsStringPDH(STATUS__)); } while(false)
 
-static const char* dll_procs[] = 
+static const char* sExportedAPIs[] = 
 {
 	"PdhGetFormattedCounterValue",
 	"PdhAddCounterA",
@@ -147,17 +147,17 @@ oWinPDH::oWinPDH()
 {
 	// available counters: http://technet.microsoft.com/en-us/library/cc780836(v=ws.10).aspx
 
-	hModule = oModuleLinkSafe("pdh.dll", dll_procs, (void**)&PdhGetFormattedCounterValue, oCOUNTOF(dll_procs));
+	hModule = oModuleLinkSafe("pdh.dll", sExportedAPIs, (void**)&PdhGetFormattedCounterValue, oCOUNTOF(sExportedAPIs));
 	oPDH_V(PdhOpenQuery(nullptr, 0, &hQuery));
 	oPDH_V(PdhAddCounter(hQuery, "\\Processor(_Total)\\% Processor Time", 0, &hSystemCPUUsage));
 	
-	oStringPath ProcessPath;
+	oStd::path_string ProcessPath;
 	oVERIFY(oSystemGetPath(ProcessPath, oSYSPATH_APP_FULL));
 
-	oStringPath ProcessName = oGetFilebase(ProcessPath);
+	oStd::path_string ProcessName = oGetFilebase(ProcessPath);
 	*oGetFileExtension(ProcessName) = 0;
 
-	oStringPath CounterPath;
+	oStd::path_string CounterPath;
 	oPrintf(CounterPath, "\\Process(%s)\\%% Processor Time", ProcessName.c_str());
 	oPDH_V(PdhAddCounter(hQuery, CounterPath, 0, &hProcessCPUUsage));
 	

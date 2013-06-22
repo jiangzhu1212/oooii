@@ -27,7 +27,9 @@
 #include <oPlatform/oFile.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oPlatform/oSystem.h>
-#include <oBasisTests/oBasisTests.h>
+#include <oBasis/tests/oBasisTests.h>
+#include "oTestIntegration.h"
+#include "TESTConcurrencyRequirements.h"
 
 static size_t GetTotalPhysicalMemory()
 {
@@ -95,20 +97,19 @@ static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
 	{	RESULT r = oTest::SUCCESS; \
 		if (!(expr)) \
 		{	switch (oErrorGetLast()) \
-			{	case oERROR_REFUSED: r = oTest::SKIPPED; break; \
-				case oERROR_LEAKS: r = oTest::LEAKS; break; \
-				case oERROR_NONE: r = oTest::SUCCESS; break; \
+			{	case std::errc::permission_denied: r = oTest::SKIPPED; break; \
+				case 0: r = oTest::SUCCESS; break; \
 				default: r = oTest::FAILURE; break; \
 			} \
 		} \
 		oPrintf(_StrStatus, _SizeofStrStatus, "%s", oErrorGetLastString()); \
-		oTRACE("%s: %s (oErrorGetLast() == %s)", oAsString(r), _StrStatus, oAsString(oErrorGetLast())); \
+		oTRACE("%s: %s (oErrorGetLast() == %s)", oStd::as_string(r), _StrStatus, oErrorAsString(oErrorGetLast())); \
 		return r; \
 	} while (false)
 
 #define oTEST_WRAP_BASIS_TEST(_BasisTestName) \
 	bool oCONCAT(oBasisTest_, _BasisTestName)(); \
-	struct oCONCAT(BASIS_, _BasisTestName) : oTest \
+	struct oCONCAT(oBasis_, _BasisTestName) : oTest \
 	{	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override \
 		{	oTESTB0_BASIS(oCONCAT(oBasisTest_, _BasisTestName)()); \
 		} \
@@ -116,59 +117,48 @@ static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
 
 #define oTEST_REGISTER_BASIS_TEST(_BasisTestName) \
 	oTEST_WRAP_BASIS_TEST(_BasisTestName) \
-	oTEST_REGISTER(oCONCAT(BASIS_, _BasisTestName))
+	oTEST_REGISTER(oCONCAT(oBasis_, _BasisTestName))
 
 #define oTEST_REGISTER_BASIS_TEST_BUGGED(_BasisTestName, _Bug) \
 	oTEST_WRAP_BASIS_TEST(_BasisTestName) \
-	oTEST_REGISTER_BUGGED(oCONCAT(BASIS_, _BasisTestName), _Bug)
+	oTEST_REGISTER_BUGGED(oCONCAT(oBasis_, _BasisTestName), _Bug)
 
 #define oTEST_REGISTER_BASIS_TEST_BUGGED32(_BasisTestName, _Bug) \
 	oTEST_WRAP_BASIS_TEST(_BasisTestName) \
-	oTEST_REGISTER_BUGGED32(oCONCAT(BASIS_, _BasisTestName), _Bug)
+	oTEST_REGISTER_BUGGED32(oCONCAT(oBasis_, _BasisTestName), _Bug)
 
 #define oTEST_REGISTER_BASIS_TEST_WITH_SERVICES(_BasisTestName) \
 	bool oCONCAT(oBasisTest_, _BasisTestName)(); \
-	struct oCONCAT(BASIS_, _BasisTestName) : oTest \
+	struct oCONCAT(oBasis_, _BasisTestName) : oTest \
 	{	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override \
 		{	oBasisTestServices Services; \
 			oInitBasisServices(this, &Services); \
 			oTESTB0_BASIS(oCONCAT(oBasisTest_, _BasisTestName)(Services)); \
 		} \
 	}; \
-	oTEST_REGISTER(oCONCAT(BASIS_, _BasisTestName))
+	oTEST_REGISTER(oCONCAT(oBasis_, _BasisTestName))
 
 oTEST_REGISTER_BASIS_TEST_WITH_SERVICES(oAllocatorTLSF);
-oTEST_REGISTER_BASIS_TEST_WITH_SERVICES(oAtof);
-oTEST_REGISTER_BASIS_TEST(oBlockAllocatorFixed);
-oTEST_REGISTER_BASIS_TEST(oBlockAllocatorGrowable);
 oTEST_REGISTER_BASIS_TEST_WITH_SERVICES(oCompression);
-oTEST_REGISTER_BASIS_TEST(oConcurrentIndexAllocator);
-oTEST_REGISTER_BASIS_TEST(oConcurrentQueue);
-//oTEST_REGISTER_BASIS_TEST(tbbConcurrentQueue);
-//oTEST_REGISTER_BASIS_TEST(concrtConcurrentQueue);
-oTEST_REGISTER_BASIS_TEST(oConcurrentStack);
-oTEST_REGISTER_BASIS_TEST(oCountdownLatch);
-oTEST_REGISTER_BASIS_TEST(oCSV);
-oTEST_REGISTER_BASIS_TEST_WITH_SERVICES(oDate);
-oTEST_REGISTER_BASIS_TEST(oDispatchQueueConcurrent);
 oTEST_REGISTER_BASIS_TEST(oDispatchQueueGlobal);
-oTEST_REGISTER_BASIS_TEST(oDispatchQueueParallelFor);
 oTEST_REGISTER_BASIS_TEST(oDispatchQueuePrivate);
+oTEST_REGISTER_BASIS_TEST(oEasing);
 oTEST_REGISTER_BASIS_TEST(oEightCC);
 oTEST_REGISTER_BASIS_TEST(oFilterChain);
 oTEST_REGISTER_BASIS_TEST(oFourCC);
 oTEST_REGISTER_BASIS_TEST_WITH_SERVICES(oHash);
-oTEST_REGISTER_BASIS_TEST(oIndexAllocator);
-oTEST_REGISTER_BASIS_TEST(oINI);
+oTEST_REGISTER_BASIS_TEST(oINISerialize);
+oTEST_REGISTER_BASIS_TEST(oJSON);
+oTEST_REGISTER_BASIS_TEST(oJSONSerialize);
 oTEST_REGISTER_BASIS_TEST(oInt);
-oTEST_REGISTER_BASIS_TEST(oLinearAllocator);
 oTEST_REGISTER_BASIS_TEST(oMath);
 oTEST_REGISTER_BASIS_TEST_WITH_SERVICES(oOBJ);
 oTEST_REGISTER_BASIS_TEST(oOSC);
 oTEST_REGISTER_BASIS_TEST(oPath);
 oTEST_REGISTER_BASIS_TEST(oRTTI);
-oTEST_REGISTER_BASIS_TEST(oStdFuture);
+oTEST_REGISTER_BASIS_TEST(oString);
 oTEST_REGISTER_BASIS_TEST(oSurface);
 oTEST_REGISTER_BASIS_TEST_WITH_SERVICES(oSurfaceResize);
 oTEST_REGISTER_BASIS_TEST(oURI);
-oTEST_REGISTER_BASIS_TEST(oXML);
+oTEST_REGISTER_BASIS_TEST(oURIQuerySerialize);
+oTEST_REGISTER_BASIS_TEST(oXMLSerialize);

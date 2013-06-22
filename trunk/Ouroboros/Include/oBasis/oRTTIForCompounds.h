@@ -27,14 +27,20 @@
 #ifndef oRTTIForCompounds_h
 #define oRTTIForCompounds_h
 
+#include <oBasis/oVersion.h>
+
 enum oRTTI_COMPOUND_ATTR_FLAGS
 {
-	oRTTI_COMPOUND_ATTR_REGULAR			= 0x0000,
-	oRTTI_COMPOUND_ATTR_HIDDEN			= 0x0001,
-	oRTTI_COMPOUND_ATTR_READ_ONLY		= 0x0002,
-	oRTTI_COMPOUND_ATTR_DONT_SERIALIZE	= 0x0010,
-	oRTTI_COMPOUND_ATTR_XML_STYLE_NODE	= 0x0100,
-	oRTTI_COMPOUND_ATTR_PRIVATE			= oRTTI_COMPOUND_ATTR_HIDDEN | oRTTI_COMPOUND_ATTR_DONT_SERIALIZE,
+	oRTTI_COMPOUND_ATTR_REGULAR					= 0x0000,
+	oRTTI_COMPOUND_ATTR_HIDDEN					= 0x0001,
+	oRTTI_COMPOUND_ATTR_READ_ONLY				= 0x0002,
+	oRTTI_COMPOUND_ATTR_DONT_SERIALIZE			= 0x0010,
+	oRTTI_COMPOUND_ATTR_FAIL_IF_MISSING			= 0x0020,
+	oRTTI_COMPOUND_ATTR_OPTIONAL				= 0x0040,
+	oRTTI_COMPOUND_ATTR_XML_STYLE_RAW_ARRAY		= 0x0080,
+	oRTTI_COMPOUND_ATTR_XML_STYLE_NODE			= 0x0100,
+	oRTTI_COMPOUND_ATTR_XML_STYLE_NODE_EMBEDDED = 0x0200 | oRTTI_COMPOUND_ATTR_XML_STYLE_NODE,
+	oRTTI_COMPOUND_ATTR_PRIVATE					= oRTTI_COMPOUND_ATTR_HIDDEN | oRTTI_COMPOUND_ATTR_DONT_SERIALIZE,
 };
 
 class oRTTI_OBJECT;
@@ -86,7 +92,7 @@ struct oRTTI_DATA_COMPOUND // : oRTTI
 	uchar NumBases;
 	uchar NumAttrs;
 //	uchar NumFunctions;
-	ushort Version;
+	oVersion Version;
 	uint Size;
 	const char* TypeName;
 	uint TypeNameHash;
@@ -106,21 +112,41 @@ struct oRTTI_DATA_COMPOUND // : oRTTI
 	extern oRTTI_DATA_COMPOUND<compound_type> oRTTI_##compound_type; \
 	rtti_add_caps(DECLARATION, compound_type)
 
+// Compound type has to be canonical, which in our case means that it can't
+// have spaces or colons in it, e.g. "Type::SubClass" or "unsigned int"
+// So you can use this macro to declare a compound that's non canonical
+// for all the other RTTI macros then use the canonical compound type.
+// Example: oRTTI_COMPOUND_DECLARATION_NON_CANONICAL(RTTI_CAPS_NONE, Class::SubClass, Class_SubClass)
+#define oRTTI_COMPOUND_DECLARATION_NON_CANONICAL(rtti_add_caps, non_canonical_compound_type, compound_type) \
+	typedef non_canonical_compound_type compound_type; \
+	oRTTI_COMPOUND_DECLARATION(rtti_add_caps, compound_type)
+
 
 // Internal helpers to support not having to describe when something is not there (base classes, attributes, override functions, callback functions)
+#define oRTTI_COMPOUND_VERSION_DEFAULT(major, minor, build, revision) \
+	template<typename T> struct oRTTI_COMPOUND_VERSION_HELPER_IS_VALID { enum { VALID = 0 }; }; \
+	template<typename T, bool U> struct oRTTI_COMPOUND_VERSION_HELPER { }; \
+	template<typename T> struct oRTTI_COMPOUND_VERSION_HELPER<T, false> { static const ushort Major = major; static const ushort Minor = minor; static const ushort Build = build; static const ushort Revision = revision; };
 
-#define oRTTI_COMPOUND_VERSION_DEFAULT(compound__default_version) \
-	template <typename T> struct oRTTI_COMPOUND_VERSION_HELPER { enum { VERSION = compound__default_version }; };
+#define oRTTI_COMPOUND_SET_VERSION(compound_type, major, minor, build, revision) \
+	template<> struct oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type> { enum { VALID = 1 }; }; \
+	template<> struct oRTTI_COMPOUND_VERSION_HELPER<compound_type, true> { static const ushort Major = major; static const ushort Minor = minor; static const ushort Build = build; static const ushort Revision = revision; };
+
+#define oRTTI_COMPOUND_GET_VERSION(compound_type) \
+	oVersion(	oRTTI_COMPOUND_VERSION_HELPER<compound_type, oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type>::VALID != 0>::Major, \
+				oRTTI_COMPOUND_VERSION_HELPER<compound_type, oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type>::VALID != 0>::Minor, \
+				oRTTI_COMPOUND_VERSION_HELPER<compound_type, oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type>::VALID != 0>::Build, \
+				oRTTI_COMPOUND_VERSION_HELPER<compound_type, oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type>::VALID != 0>::Revision)
 
 
 #define oRTTI_COMPOUND_FUNCTION_TEMPLATE_SET_NULLPTR_DEFAULT(function_label) \
-	template <typename T> struct oRTTICompoundFunction##function_label##IsValid { enum { VALID = 0 }; }; \
-	template <typename T, bool U> struct oRTTICompoundFunction##function_label { }; \
-	template <typename T> struct oRTTICompoundFunction##function_label<T, false> { static const int POINTER = 0; };
+	template<typename T> struct oRTTICompoundFunction##function_label##IsValid { enum { VALID = 0 }; }; \
+	template<typename T, bool U> struct oRTTICompoundFunction##function_label { }; \
+	template<typename T> struct oRTTICompoundFunction##function_label<T, false> { static const int POINTER = 0; };
 
 #define oRTTI_COMPOUND_FUNCTION_TEMPLATE_SET_POINTER(compound_type, function_label, function_pointer) \
-	template <>	struct oRTTICompoundFunction##function_label##IsValid<compound_type> { enum { VALID = 1 }; }; \
-	template <> struct oRTTICompoundFunction##function_label<compound_type, true> { static const oRTTI_DATA_COMPOUND<compound_type>::oRTTICompound##function_label POINTER; }; \
+	template<> struct oRTTICompoundFunction##function_label##IsValid<compound_type> { enum { VALID = 1 }; }; \
+	template<> struct oRTTICompoundFunction##function_label<compound_type, true> { static const oRTTI_DATA_COMPOUND<compound_type>::oRTTICompound##function_label POINTER; }; \
 	const oRTTI_DATA_COMPOUND<compound_type>::oRTTICompound##function_label oRTTICompoundFunction##function_label<compound_type, true>::POINTER = function_pointer;
 
 #define oRTTI_COMPOUND_FUNCTION_TEMPLATE_GET_POINTER(compound_type, function_label) \
@@ -128,14 +154,14 @@ struct oRTTI_DATA_COMPOUND // : oRTTI
 
 
 #define oRTTI_COMPOUND_ARRAY_TEMPLATE_SET_EMPTY_DEFAULT(array_element_type, array_label) \
-	template <typename T> struct oRTTICompoundArray##array_label##Count { enum { COUNT = 0 }; }; \
-	template <typename T, bool U> struct oRTTICompoundArray##array_label##Pointer { }; \
-	template <typename T> struct oRTTICompoundArray##array_label##Pointer<T, false> { enum { s##array_label = 0 }; };
+	template<typename T> struct oRTTICompoundArray##array_label##Count { enum { COUNT = 0 }; }; \
+	template<typename T, bool U> struct oRTTICompoundArray##array_label##Pointer { }; \
+	template<typename T> struct oRTTICompoundArray##array_label##Pointer<T, false> { enum { s##array_label = 0 }; };
 
 #define oRTTI_COMPOUND_ARRAY_TEMPLATE_SET_POINTER_AND_COUNT(compound_type, array_element_type, array_label) \
 	template<> \
 	struct oRTTICompoundArray##array_label##Count<compound_type> { enum { COUNT = sizeof(oRTTI##array_label##compound_type) / sizeof(oRTTI_DATA_COMPOUND<compound_type>::array_element_type) }; }; \
-	template <> struct oRTTICompoundArray##array_label##Pointer<compound_type, true>	{ static const oRTTI_DATA_COMPOUND<compound_type>::array_element_type * const s##array_label; }; \
+	template<> struct oRTTICompoundArray##array_label##Pointer<compound_type, true>	{ static const oRTTI_DATA_COMPOUND<compound_type>::array_element_type * const s##array_label; }; \
 	const oRTTI_DATA_COMPOUND<compound_type>::array_element_type * const oRTTICompoundArray##array_label##Pointer<compound_type, true>::s##array_label = oRTTI##array_label##compound_type;
 
 #define oRTTI_COMPOUND_ARRAY_TEMPLATE_GET_COUNT(compound_type, array_label) \
@@ -155,7 +181,7 @@ struct oRTTI_DATA_COMPOUND // : oRTTI
 		oRTTI_TYPE_COMPOUND, \
 		oRTTI_COMPOUND_ARRAY_TEMPLATE_GET_COUNT(compound_type, Bases), \
 		oRTTI_COMPOUND_ARRAY_TEMPLATE_GET_COUNT(compound_type, Attrs), \
-		oRTTI_COMPOUND_VERSION_HELPER<compound_type>::VERSION, \
+		oRTTI_COMPOUND_GET_VERSION(compound_type), \
 		sizeof(compound_type), \
 		#compound_type, \
 		oInvalid, \
@@ -208,9 +234,8 @@ struct oRTTI_DATA_COMPOUND // : oRTTI
 
 // Describe compound version
 
-#define oRTTI_COMPOUND_VERSION(compound_type, compound_version) \
-	template <>	\
-	struct oRTTI_COMPOUND_VERSION_HELPER<compound_type> { enum { VERSION = compound_version }; };
+#define oRTTI_COMPOUND_VERSION(compound_type, major, minor, build, revision) \
+	oRTTI_COMPOUND_SET_VERSION(compound_type, major, minor, build, revision)
 
 // Describe compound custom functions
 
@@ -234,12 +259,15 @@ struct oRTTI_DATA_COMPOUND // : oRTTI
 	}; \
 	oRTTI_COMPOUND_ARRAY_TEMPLATE_SET_POINTER_AND_COUNT(compound_type, ATTR, Attrs)
 
+// Returns the size of a member
+#define oRTTI_SIZEOF(s, m) sizeof(((s*)0)->m)
+
 #define oRTTI_COMPOUND_ATTR(compound_type, attr_label, attr_rtti, attr_name, attr_flags) \
 	{ \
 		&attr_rtti, \
 		attr_name, \
-		oOFFSETOF(compound_type, attr_label), \
-		oSIZEOF(compound_type, attr_label), \
+		offsetof(compound_type, attr_label), \
+		oRTTI_SIZEOF(compound_type, attr_label), \
 		attr_flags, \
 		nullptr, \
 		nullptr, \
@@ -270,7 +298,7 @@ struct oRTTI_DATA_COMPOUND // : oRTTI
 
 // Default values for anything that is not described for compound types
 
-oRTTI_COMPOUND_VERSION_DEFAULT(0)
+oRTTI_COMPOUND_VERSION_DEFAULT(0,1,0,0)
 
 oRTTI_COMPOUND_FUNCTION_TEMPLATE_SET_NULLPTR_DEFAULT(AttrChanged)
 oRTTI_COMPOUND_FUNCTION_TEMPLATE_SET_NULLPTR_DEFAULT(FromString)

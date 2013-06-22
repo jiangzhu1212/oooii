@@ -23,7 +23,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oGPU/oGPUIO.h>
+#include <oGPU/oGPU.h>
 #include <oPlatform/Windows/oD3D11.h>
 #include "oD3D11Texture.h"
 #include "oD3D11Device.h"
@@ -45,7 +45,7 @@ bool oGPUCompileShader(
 	, oBuffer** _ppByteCode
 	, oBuffer** _ppErrors)
 {
-	oStringXXL IncludeSwitches, DefineSwitches;
+	oStd::xxlstring IncludeSwitches, DefineSwitches;
 
 	if (_IncludePaths && !oStrTokToSwitches(IncludeSwitches, " /I", _IncludePaths, ";"))
 		return false; // pass through error
@@ -58,11 +58,11 @@ bool oGPUCompileShader(
 
 	D3D_FEATURE_LEVEL TargetFeatureLevel = D3D_FEATURE_LEVEL_10_0;
 	if (!oD3D11GetFeatureLevel(_TargetShaderModel, &TargetFeatureLevel))
-		return oErrorSetLast(oERROR_GENERIC, "Could not determine feature level from shader model %d.%d", _TargetShaderModel.Major, _TargetShaderModel.Minor);
+		return oErrorSetLast(std::errc::protocol_error, "Could not determine feature level from shader model %d.%d", _TargetShaderModel.Major, _TargetShaderModel.Minor);
 
 	const char* Profile = oD3D11GetShaderProfile(TargetFeatureLevel, _Stage);
 	if (!Profile)
-		return oErrorSetLast(oERROR_GENERIC, "%s not supported by shader model %d.%d", oAsString(_Stage), _TargetShaderModel.Major, _TargetShaderModel.Minor);
+		return oErrorSetLast(std::errc::not_supported, "%s not supported by shader model %d.%d", oStd::as_string(_Stage), _TargetShaderModel.Major, _TargetShaderModel.Minor);
 
 	if (!_EntryPoint)
 		_EntryPoint = "main";
@@ -82,7 +82,7 @@ bool oGPUCompileShader(
 	{
 		*_ppByteCode = nullptr;
 		*_ppErrors = b;
-		return oErrorSetLast(oERROR_CORRUPT, "Shader compilation failed: %s#%s", _ShaderPath, _EntryPoint);
+		return oErrorSetLast(std::errc::protocol_error, "Shader compilation failed: %s#%s", _ShaderPath, _EntryPoint);
 	}
 
 	*_ppByteCode = b;
@@ -144,13 +144,13 @@ bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const
 	oSTREAM_DESC sd;
 
 	if (!oStreamGetDesc(_URIReference, &sd, &URIParts))
-		return oErrorSetLast(oERROR_NOT_FOUND, "%s not found", oSAFESTRN(_URIReference));
+		return oErrorSetLast(std::errc::no_such_file_or_directory, "%s not found", oSAFESTRN(_URIReference));
 
 	if (oStricmp(URIParts.Scheme, "file"))
-		return oErrorSetLast(oERROR_NOT_FOUND, "Currently only file schemed URIs are supported.");
+		return oErrorSetLast(std::errc::not_supported, "Currently only file schemed URIs are supported.");
 
 	oRef<ID3D11Device> D3DDevice;
-	oVERIFY(_pDevice->QueryInterface(oGetGUID<ID3D11Device>(), &D3DDevice));
+	oVERIFY(_pDevice->QueryInterface(&D3DDevice));
 
 	oRef<ID3D11Texture2D> D3DTexture;
 	if (!oD3D11Load(D3DDevice, _Desc, URIParts.Path, _DebugName, (ID3D11Resource**)&D3DTexture))
@@ -164,7 +164,7 @@ bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const
 bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, oGPUTexture** _ppTexture)
 {
 	oRef<ID3D11Device> D3DDevice;
-	oVERIFY(_pDevice->QueryInterface(oGetGUID<ID3D11Device>(), &D3DDevice));
+	oVERIFY(_pDevice->QueryInterface(&D3DDevice));
 
 	oRef<ID3D11Texture2D> D3DTexture;
 	if (!oD3D11Load(D3DDevice, _Desc, _DebugName, _pBuffer, _SizeofBuffer, (ID3D11Resource**)&D3DTexture))
@@ -175,23 +175,23 @@ bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const
 	return success;
 }
 
-D3DX11_IMAGE_FILE_FORMAT oD3D11IFFFromFileFormat(oGPUEX_FILE_FORMAT _Format)
+D3DX11_IMAGE_FILE_FORMAT oD3D11IFFFromFileFormat(oGPU_FILE_FORMAT _Format)
 {
 	switch (_Format)
 	{
-		case oGPUEX_FILE_FORMAT_DDS: return D3DX11_IFF_DDS;
-		case oGPUEX_FILE_FORMAT_JPG: return D3DX11_IFF_JPG;
-		case oGPUEX_FILE_FORMAT_PNG: return D3DX11_IFF_PNG;
+		case oGPU_FILE_FORMAT_DDS: return D3DX11_IFF_DDS;
+		case oGPU_FILE_FORMAT_JPG: return D3DX11_IFF_JPG;
+		case oGPU_FILE_FORMAT_PNG: return D3DX11_IFF_PNG;
 		oNODEFAULT;
 	}
 }
 
-bool oGPUTextureSave(oGPUTexture* _pTexture, oGPUEX_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer)
+bool oGPUTextureSave(oGPUTexture* _pTexture, oGPU_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer)
 {
 	return oD3D11Save(static_cast<oD3D11Texture*>(_pTexture)->Texture, oD3D11IFFFromFileFormat(_Format), _pBuffer, _SizeofBuffer);
 }
 
-bool oGPUTextureSave(oGPUTexture* _pTexture, oGPUEX_FILE_FORMAT _Format, const char* _Path)
+bool oGPUTextureSave(oGPUTexture* _pTexture, oGPU_FILE_FORMAT _Format, const char* _Path)
 {
 	return oD3D11Save(static_cast<oD3D11Texture*>(_pTexture)->Texture, oD3D11IFFFromFileFormat(_Format), _Path);
 }

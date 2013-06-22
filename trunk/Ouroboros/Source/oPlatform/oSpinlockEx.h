@@ -27,7 +27,7 @@
 #ifndef oSpinlockEx_h
 #define oSpinlockEx_h
 
-#include <oBasis/oStdAtomic.h>
+#include <oStd/oStdAtomic.h>
 
 class oSpinlockEx
 {

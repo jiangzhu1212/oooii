@@ -39,9 +39,9 @@ struct FIND_CONTEXT
 
 template<typename WIN32_TYPE> static void oFileConvert(oSTREAM_DESC* _pDesc, const WIN32_TYPE* _pData)
 {
-	oVERIFY(oDateConvert(_pData->ftCreationTime, &_pDesc->Created));
-	oVERIFY(oDateConvert(_pData->ftLastAccessTime, &_pDesc->Accessed));
-	oVERIFY(oDateConvert(_pData->ftLastWriteTime, &_pDesc->Written));
+	_pDesc->Created = oStd::date_cast<time_t>(_pData->ftCreationTime);
+	_pDesc->Accessed = oStd::date_cast<time_t>(_pData->ftLastAccessTime);
+	_pDesc->Written = oStd::date_cast<time_t>(_pData->ftLastWriteTime);
 	_pDesc->Size = (_pData->nFileSizeHigh * (static_cast<unsigned long long>(MAXDWORD) + 1)) + _pData->nFileSizeLow;
 	_pDesc->Directory = !!(_pData->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
 	//_pDesc->Archive = !!(_pData->dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE);
@@ -59,7 +59,7 @@ static bool oFileSetLastError()
 	_get_errno(&err);
 	char strerr[256];
 	strerror_s(strerr, err);
-	return oErrorSetLast(oERROR_IO, "%s", strerr);
+	return oErrorSetLast(std::errc::io_error, "%s", strerr);
 }
 
 bool oFileExists(const char* _Path)
@@ -81,7 +81,7 @@ bool oFileOpen(const char* _Path, oFILE_OPEN _Open, oHFILE* _phFile)
 	{
 		char strerr[256];
 		strerror_s(strerr, err);
-		oErrorSetLast(oERROR_IO, "Failed to open %s (%s)", oSAFESTRN(_Path), strerr);
+		oErrorSetLast(std::errc::io_error, "Failed to open %s (%s)", oSAFESTRN(_Path), strerr);
 		return false;
 	}
 
@@ -91,9 +91,9 @@ bool oFileOpen(const char* _Path, oFILE_OPEN _Open, oHFILE* _phFile)
 bool oFileClose(oHFILE _hFile)
 {
 	if (!_hFile)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 	if (0 != fclose((FILE*)_hFile))
-		return oErrorSetLast(oERROR_IO);
+		return oErrorSetLast(std::errc::io_error);
 	return true;
 }
 
@@ -117,14 +117,8 @@ unsigned long long oFileRead(oHFILE _hFile, void* _pDestination, unsigned long l
 	oSizeT CheckedReadSize(_ReadSize);
 	oSizeT CheckedSizeofDestination(_SizeofDestination);
 	size_t bytesRead = fread_s(_pDestination, CheckedSizeofDestination, 1, CheckedReadSize, (FILE*)_hFile);
-	if (CheckedReadSize != bytesRead)
-	{
-		if (oFileAtEnd(_hFile))
-			oErrorSetLast(oERROR_END_OF_FILE);
-		else
-			oFileSetLastError();
-	}
-
+	if (CheckedReadSize != bytesRead && !oFileAtEnd(_hFile))
+		oFileSetLastError();
 	return bytesRead;
 }
 
@@ -169,14 +163,14 @@ bool oFileGetDesc(const char* _Path, oSTREAM_DESC* _pDesc)
 bool oFileEnum(const char* _WildcardPath, oFUNCTION<bool(const char* _FullPath, const oSTREAM_DESC& _Desc)> _EnumFunction)
 {
 	if (!_WildcardPath || !*_WildcardPath || !_EnumFunction)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	WIN32_FIND_DATA fd;
 	HANDLE hFind = FindFirstFile(_WildcardPath, &fd);
-	oOnScopeExit closeSearch([&](){ if(hFind != INVALID_HANDLE_VALUE) FindClose(hFind); });
+	oStd::finally closeSearch([&](){ if(hFind != INVALID_HANDLE_VALUE) FindClose(hFind); });
 
 	if (hFind == INVALID_HANDLE_VALUE)
-		return oErrorSetLast(oERROR_NOT_FOUND);
+		return oErrorSetLast(std::errc::no_such_file_or_directory);
 
 	oSTREAM_DESC desc;
 	char ResolvedPath[_MAX_PATH];
@@ -193,18 +187,16 @@ bool oFileEnum(const char* _WildcardPath, oFUNCTION<bool(const char* _FullPath, 
 			return true;
 
 		if (!FindNextFile(hFind, &fd))
-		{
 			return true;
-		}
 
 	} while (1);
 
-	oASSERT_NOEXECUTION;
+	return false;
 }
 
 bool oFileEnumFilesRecursively(const char* _Path, oFUNCTION<bool(const char* _FullPath, const oSTREAM_DESC& _Desc)> _EnumFunction)
 {
-	oStringPath WildCard = _Path;
+	oStd::path_string WildCard = _Path;
 	oEnsureSeparator(WildCard);
 	oStrAppendf(WildCard, "*.*");
 	oFileEnum(WildCard,
@@ -234,9 +226,8 @@ bool oFileTouch(oHFILE _hFile, time_t _UnixTimestamp)
 {
 	HANDLE hFile = oGetFileHandle((FILE*)_hFile);
 	if (hFile == INVALID_HANDLE_VALUE)
-		return oErrorSetLast(oERROR_NOT_FOUND, "File handle incorrect");
-	FILETIME time;
-	oDateConvert(_UnixTimestamp, &time);
+		return oErrorSetLast(std::errc::no_such_file_or_directory, "File handle incorrect");
+	FILETIME time = oStd::date_cast<FILETIME>(_UnixTimestamp);
 	if (!SetFileTime(hFile, 0, 0, &time))
 		return oWinSetLastError();
 	return true;
@@ -271,7 +262,7 @@ bool oFileCopy1(const char* _PathFrom, const oSTREAM_DESC& _DescFrom, const char
 	const char* filebase = oGetFilebase(_PathFrom);
 	if (oStrcmp("..", filebase) && oStrcmp(".", filebase))
 	{
-		oStringPath dest(_PathTo);
+		oStd::path_string dest(_PathTo);
 		if (_DescTo.Directory)
 		{
 			oEnsureSeparator(dest);
@@ -302,14 +293,14 @@ bool oFileCopy(const char* _PathFrom, const char* _PathTo, bool _Recursive)
 {
 	oSTREAM_DESC src;
 	if (!oFileGetDesc(_PathFrom, &src))
-		return oErrorSetLast(oERROR_NOT_FOUND, "Source not found: %s", oSAFESTRN(_PathFrom));
+		return oErrorSetLast(std::errc::no_such_file_or_directory, "Source not found: %s", oSAFESTRN(_PathFrom));
 
 	oSTREAM_DESC dst;
 	if (!oFileGetDesc(_PathTo, &dst)) // assume dst is same type as src if dst doesn't exist
 		dst = src;
 	
 	if (src.Directory && !dst.Directory)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Trying to copy a directory (%s) to a file (%s)", _PathFrom, _PathTo);
+		return oErrorSetLast(std::errc::invalid_argument, "Trying to copy a directory (%s) to a file (%s)", _PathFrom, _PathTo);
 
 	if (src.Directory)
 	{
@@ -331,18 +322,18 @@ bool oFileMove(const char* _PathFrom, const char* _PathTo, bool _Force)
 {
 	oSTREAM_DESC src;
 	if (!oFileGetDesc(_PathFrom, &src))
-		return oErrorSetLast(oERROR_NOT_FOUND, "Source not found: %s", oSAFESTRN(_PathFrom));
+		return oErrorSetLast(std::errc::no_such_file_or_directory, "Source not found: %s", oSAFESTRN(_PathFrom));
 
 	// @oooii-tony: might want to do more checking if this is a dir or file...
 	// let's see how the platform call behaves...
 
 	if (_Force && oFileExists(_PathTo) && !oFileDelete(_PathTo))
-		return oErrorSetLast(oERROR_IO, "Cannot delete pre-existing destination %s before moving.", oSAFESTRN(_PathTo));
+		return oErrorSetLast(std::errc::io_error, "Cannot delete pre-existing destination %s before moving.", oSAFESTRN(_PathTo));
 
 	if (!MoveFileA(_PathFrom, _PathTo))
 	{
 		oWinSetLastError();
-		oStringXL tmp(oErrorGetLastString());
+		oStd::xlstring tmp(oErrorGetLastString());
 		return oErrorSetLast(oErrorGetLast(), "rename failed: %s -> %s\n%s", oSAFESTRN(_PathFrom), oSAFESTRN(_PathTo), tmp.c_str());
 	}
 	return true;
@@ -386,7 +377,7 @@ bool oFileDelete(const char* _Path)
 bool oFileCreateFolder(const char* _Path)
 {
 	if (oFileExists(_Path))
-		return oErrorSetLast(oERROR_REDUNDANT, "Path %s already exists", _Path);
+		return oErrorSetLast(std::errc::operation_in_progress, "Path %s already exists", _Path);
 
 	// CreateDirectory will only create a new immediate dir in the specified dir,
 	// so manually recurse if it fails...
@@ -395,7 +386,7 @@ bool oFileCreateFolder(const char* _Path)
 	{
 		if (GetLastError() == ERROR_PATH_NOT_FOUND)
 		{
-			oStringPath parent(_Path);
+			oStd::path_string parent(_Path);
 			oTrimFilename(parent, true);
 
 			if (!oFileCreateFolder(parent))
@@ -420,9 +411,9 @@ bool oFileMap(const char* _Path, bool _ReadOnly, const oSTREAM_RANGE& _MapRange,
 
 	SYSTEM_INFO si;
 	GetSystemInfo(&si);
-	oByteSwizzle64 alignedOffset;
-	alignedOffset.AsUnsignedLongLong = oByteAlignDown(_MapRange.Offset, si.dwAllocationGranularity);
-	unsigned long long offsetPadding = _MapRange.Offset - alignedOffset.AsUnsignedLongLong;
+	oStd::byte_swizzle64 alignedOffset;
+	alignedOffset.as_unsigned_long_long = oStd::byte_align_down(_MapRange.Offset, si.dwAllocationGranularity);
+	unsigned long long offsetPadding = _MapRange.Offset - alignedOffset.as_unsigned_long_long;
 	unsigned long long alignedSize = _MapRange.Size + offsetPadding;
 
 	HANDLE FileHandle = oGetFileHandle((FILE*)hFile);
@@ -432,7 +423,7 @@ bool oFileMap(const char* _Path, bool _ReadOnly, const oSTREAM_RANGE& _MapRange,
 	if (!hMapped)
 		return oWinSetLastError();
 
-	void* p = MapViewOfFile(hMapped, fProtect == PAGE_READONLY ? FILE_MAP_READ : FILE_MAP_WRITE, alignedOffset.AsUnsignedInt[1], alignedOffset.AsUnsignedInt[0], oULLong(alignedSize));
+	void* p = MapViewOfFile(hMapped, fProtect == PAGE_READONLY ? FILE_MAP_READ : FILE_MAP_WRITE, alignedOffset.as_unsigned_int[1], alignedOffset.as_unsigned_int[0], oULLong(alignedSize));
 	if (!p)
 		return oWinSetLastError();
 
@@ -442,7 +433,7 @@ bool oFileMap(const char* _Path, bool _ReadOnly, const oSTREAM_RANGE& _MapRange,
 
 	// Close the ref held by CreateFileMapping
 	CloseHandle(hMapped);
-	*_ppMappedMemory = oByteAdd(p, oULLong(offsetPadding));
+	*_ppMappedMemory = oStd::byte_add(p, oULLong(offsetPadding));
 
 	// So now we exit with a ref count of 1 on the underlying HANDLE, that held by
 	// MapViewOfFile, that way the file is fully closed when oFileUnmap is called.
@@ -453,7 +444,7 @@ bool oFileUnmap(void* _MappedPointer)
 {
 	SYSTEM_INFO si;
 	GetSystemInfo(&si);
-	void* p = oByteAlignDown(_MappedPointer, si.dwAllocationGranularity);
+	void* p = oStd::byte_align_down(_MappedPointer, si.dwAllocationGranularity);
 	if (!UnmapViewOfFile(p))
 		return oWinSetLastError();
 	return true;

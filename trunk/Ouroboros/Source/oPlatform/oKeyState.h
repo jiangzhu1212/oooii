@@ -30,7 +30,7 @@
 // Useful threadsafe storage for an array of keys/buttons like for keyboards
 // and mice.
 
-#include <oBasis/oStdAtomic.h>
+#include <oStd/oStdAtomic.h>
 
 template<size_t size> class oKeyState
 {
@@ -52,7 +52,7 @@ public:
 
 	void PromoteReleasedPressedToUpDown() threadsafe
 	{
-		for (int i = 0; i < oCOUNTOF(State); i++)
+		oFORI(i, State)
 		{
 			int oldState, newState;
 			do

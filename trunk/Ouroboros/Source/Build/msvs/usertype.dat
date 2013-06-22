@@ -493,6 +493,7 @@ size_t
 thread_cast
 threadsafe
 thread_local
+noexcept
 nullptr
 uint128
 uchar

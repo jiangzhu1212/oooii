@@ -30,8 +30,10 @@
 #include "oGPUCommon.h"
 #include <oGPU/oGPUWindow.h>
 #include <oPlatform/Windows/oD3D11.h>
+#include <oConcurrency/mutex.h>
 
-oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget)
+// {772E2A04-4C2D-447A-8DA8-91F258EFA68C}
+oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget, 0x772e2a04, 0x4c2d, 0x447a, 0x8d, 0xa8, 0x91, 0xf2, 0x58, 0xef, 0xa6, 0x8c)
 {
 	oDEFINE_GPUDEVICECHILD_INTERFACE_EXPLICIT_QI();
 	oDECLARE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget);
@@ -43,11 +45,11 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget)
 	void GetTexture(int _MRTIndex, oGPUTexture** _ppTexture) override;
 	void GetDepthTexture(oGPUTexture** _ppTexture) override;
 
-	inline void Set(ID3D11DeviceContext* _pContext) { _pContext->OMSetRenderTargets(Desc.MRTCount, (ID3D11RenderTargetView* const*)RTVs, DSV); }
+	inline void Set(ID3D11DeviceContext* _pContext) { _pContext->OMSetRenderTargets(Desc.MRTCount, (ID3D11RenderTargetView* const*)RTVs.data(), DSV); }
 
-	oRef<oGPUTexture> Textures[oGPU_MAX_NUM_MRTS];
+	std::array<oRef<oGPUTexture>, oGPU_MAX_NUM_MRTS> Textures;
+	std::array<oRef<ID3D11RenderTargetView>, oGPU_MAX_NUM_MRTS> RTVs;
 	oRef<oGPUTexture> DepthStencilTexture;
-	oRef<ID3D11RenderTargetView> RTVs[oGPU_MAX_NUM_MRTS];
 	oRef<ID3D11DepthStencilView> DSV;
 
 	// Retain a reference to the window associated with the swap chain when this 
@@ -61,7 +63,7 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget)
 	// Creates the depth buffer according to the Desc.DepthStencilFormat value
 	void RecreateDepthBuffer(const int2& _Dimensions);
 
-	oSharedMutex DescMutex;
+	oConcurrency::shared_mutex DescMutex;
 	DESC Desc;
 };
 

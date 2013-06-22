@@ -24,33 +24,28 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oWindows.h>
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
+#include <oHLSL/oHLSLBit.h>
 #include <oPlatform/oCPU.h>
 
-const char* oAsString(const oCPU_TYPE& _Type)
-{
-	switch (_Type)
-	{
-		case oCPU_UNKNOWN: return "unknown";
-		case oCPU_X86: return "x86";
-		case oCPU_X64: return "x64";
-		case oCPU_IA64: return "ia64";
-		case oCPU_ARM: return "ARM";
-		oNODEFAULT;
-	}
-}
+oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oCPU_TYPE)
+	oRTTI_ENUM_BEGIN_VALUES(oCPU_TYPE)
+		oRTTI_VALUE_CUSTOM(oCPU_UNKNOWN, "unknown")
+		oRTTI_VALUE_CUSTOM(oCPU_X86, "x86")
+		oRTTI_VALUE_CUSTOM(oCPU_X64, "x64")
+		oRTTI_VALUE_CUSTOM(oCPU_IA64, "ia64")
+		oRTTI_VALUE_CUSTOM(oCPU_ARM, "ARM")
+	oRTTI_ENUM_END_VALUES(oCPU_TYPE)
+oRTTI_ENUM_END_DESCRIPTION(oCPU_TYPE)
 
-const char* oAsString(const oCPU_SUPPORT_TYPE& _Type)
-{
-	switch (_Type)
-	{
-		case oCPU_NOT_FOUND: return "not found";
-		case oCPU_NO_SUPPORT: return "no support";
-		case oCPU_HW_SUPPORT_ONLY: return "HW support only";
-		case oCPU_FULL_SUPPORT: return "full support";
-		oNODEFAULT;
-	}
-}
+oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oCPU_SUPPORT_TYPE)
+	oRTTI_ENUM_BEGIN_VALUES(oCPU_SUPPORT_TYPE)
+		oRTTI_VALUE_CUSTOM(oCPU_NOT_FOUND, "not found")
+		oRTTI_VALUE_CUSTOM(oCPU_NO_SUPPORT, "no support")
+		oRTTI_VALUE_CUSTOM(oCPU_HW_SUPPORT_ONLY, "HW support only")
+		oRTTI_VALUE_CUSTOM(oCPU_FULL_SUPPORT, "full support")
+	oRTTI_ENUM_END_VALUES(oCPU_SUPPORT_TYPE)
+oRTTI_ENUM_END_DESCRIPTION(oCPU_SUPPORT_TYPE)
 
 struct CPU_FEATURE
 {
@@ -74,10 +69,6 @@ static const CPU_FEATURE sFeatureStrings[] =
 	{ "OSXSAVE", 2, 27, oWINDOWS_7_SP1 },
 	{ "AVX1", oInvalid, 0, oWINDOWS_7_SP1 }, // AVX detection is a special-case
 };
-
-//{ "XSAVE_XRSTORE", 2, 1<<27, 3<<27, oWINDOWS_7_SP1 },
-//{ "AVX1", -1, 1<<28, 1<<28, oWINDOWS_7_SP1 },
-
 
 static char* CPUGetString(char* _StrDestination, size_t _NumberOfElements)
 {
@@ -112,10 +103,32 @@ static char* CPUGetBrandString(char* _StrDestination, size_t _SizeofStrDestinati
 
 template<size_t size> static inline char* CPUGetBrandString(char (&_StrDestination)[size]) { return CPUGetBrandString(_StrDestination, size); }
 
-bool oCPUEnum(int _CPUIndex, oCPU_DESC* _pDesc)
+bool oCPUGetDesc(oCPU_DESC* _pDesc)
 {
-	if (_CPUIndex > 0) // @oooii-tony: More than 1 CPU not yet supported (buy me a dual core machine for testing!)
+	DWORD size_ex = 0;
+	GetLogicalProcessorInformationEx(RelationNumaNode, 0, &size_ex);
+	oASSERT(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "");
+	SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX* lpi_ex = static_cast<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*>(_alloca(size_ex));
+	memset(lpi_ex, 0xff, size_ex);
+	if (TRUE != GetLogicalProcessorInformationEx(RelationNumaNode, lpi_ex, &size_ex))
 		return false;
+
+	// Skip to the requested CPU index
+
+	// @oooii-tony: Hiding the idea of multiple CPUs for now because I cannot 
+	// think of when they are ever non-uniform and when a threadpool would ever
+	// not treat it all as a giant sea of threads or when one CPU would have a 
+	// feature that another does not (such as SSE versions).
+
+	static const int _CPUIndex = 0;
+	size_t offset_ex = 0;
+	for (int cpu = 0; cpu < _CPUIndex; cpu++)
+	{
+		offset_ex += lpi_ex->Size;
+		if (offset_ex >= size_ex)
+			return false;
+		lpi_ex = oStd::byte_add(lpi_ex, lpi_ex->Size);
+	}
 
 	memset(_pDesc, 0, sizeof(oCPU_DESC));
 
@@ -129,6 +142,7 @@ bool oCPUEnum(int _CPUIndex, oCPU_DESC* _pDesc)
 		default: _pDesc->Type = oCPU_UNKNOWN; break;
 	}
 
+
 	DWORD size = 0;
 	GetLogicalProcessorInformation(0, &size);
 	oASSERT(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "");
@@ -139,32 +153,32 @@ bool oCPUEnum(int _CPUIndex, oCPU_DESC* _pDesc)
 
 	for (size_t i = 0; i < numInfos; i++)
 	{
-		switch (lpi[i].Relationship)
+		if ((lpi[i].ProcessorMask & lpi_ex->NumaNode.GroupMask.Mask) != 0)
 		{
-		case RelationNumaNode:
-			_pDesc->NumNumaNodes++;
-			break;
+			switch (lpi[i].Relationship)
+			{
+				case RelationProcessorCore:
+				_pDesc->NumProcessors++;
+				_pDesc->NumHardwareThreads += static_cast<unsigned int>(countbits(lpi[i].ProcessorMask));
+				break;
 
-		case RelationProcessorCore:
-			_pDesc->NumProcessors++;
-			_pDesc->NumHardwareThreads += static_cast<unsigned int>(countbits(lpi[i].ProcessorMask));
-			break;
+				case RelationCache:
+				{
+					size_t cacheLevel = lpi[i].Cache.Level-1;
+					oCPU_CACHE_DESC& c = lpi[i].Cache.Type == CacheData ? _pDesc->DataCacheDescs[cacheLevel] : _pDesc->InstructionCacheDescs[cacheLevel];
+					c.Size = lpi[i].Cache.Size;
+					c.LineSize = lpi[i].Cache.LineSize;
+					c.Associativity = lpi[i].Cache.Associativity;
+				}
+				break;
 
-		case RelationCache:
-		{
-			size_t cacheLevel = lpi[i].Cache.Level-1;
-			oCPU_CACHE_DESC& c = lpi[i].Cache.Type == CacheData ? _pDesc->DataCacheDescs[cacheLevel] : _pDesc->InstructionCacheDescs[cacheLevel];
-			c.Size = lpi[i].Cache.Size;
-			c.LineSize = lpi[i].Cache.LineSize;
-			c.Associativity = lpi[i].Cache.Associativity;
-		}
+				case RelationProcessorPackage:
+				_pDesc->NumProcessorPackages++;
+				break;
 
-		case RelationProcessorPackage:
-			_pDesc->NumProcessorPackages++;
-			break;
-
-		default:
-			break;
+				default:
+				break;
+			}
 		}
 	}
 
@@ -184,14 +198,8 @@ const char* oCPUEnumFeatures(int _FeatureIndex)
 	return (_FeatureIndex < 0 || _FeatureIndex >= oCOUNTOF(sFeatureStrings)) ? nullptr : sFeatureStrings[_FeatureIndex].Name;
 }
 
-oCPU_SUPPORT_TYPE oCPUCheckFeatureSupport(int _CPUIndex, const char* _Feature)
+oCPU_SUPPORT_TYPE oCPUCheckFeatureSupport(const char* _Feature)
 {
-	if (_CPUIndex > 0)
-	{
-		oErrorSetLast(oERROR_NOT_FOUND, "More than 1 CPU not yet supported (buy me a dual core machine for testing!)");
-		return oCPU_NOT_FOUND;
-	}
-
 	int CPUInfo[4];
 	__cpuid(CPUInfo, 1);
 
@@ -223,21 +231,21 @@ oCPU_SUPPORT_TYPE oCPUCheckFeatureSupport(int _CPUIndex, const char* _Feature)
 								return oCPU_FULL_SUPPORT;
 							else
 							{
-								oErrorSetLast(oERROR_GENERIC, "Feature \"%s\" not supported by the current platform", oSAFESTRN(_Feature));
+								oErrorSetLast(std::errc::not_supported, "Feature \"%s\" not supported by the current platform", oSAFESTRN(_Feature));
 								return oCPU_HW_SUPPORT_ONLY;
 							}
 						}
 
 						else
 						{
-							oErrorSetLast(oERROR_GENERIC, "Feature \"%s\" not supported by the current platform", oSAFESTRN(_Feature));
+							oErrorSetLast(std::errc::not_supported, "Feature \"%s\" not supported by the current platform", oSAFESTRN(_Feature));
 							return oCPU_HW_SUPPORT_ONLY;
 						}
 					}
 
 					else
 					{
-						oErrorSetLast(oERROR_GENERIC, "Feature \"%s\" not supported by the current platform", oSAFESTRN(_Feature));
+						oErrorSetLast(std::errc::not_supported, "Feature \"%s\" not supported by the current platform", oSAFESTRN(_Feature));
 						return oCPU_HW_SUPPORT_ONLY;
 					}
 				}
@@ -250,13 +258,13 @@ oCPU_SUPPORT_TYPE oCPUCheckFeatureSupport(int _CPUIndex, const char* _Feature)
 				if ((CPUInfo[f.CPUInfoIndex] & (1<<f.CheckBit)) == 0)
 				{
 					char buf[32];
-					oErrorSetLast(oERROR_GENERIC, "Feature \"%s\" not supported for the current HW: %s", oSAFESTRN(_Feature), CPUGetString(buf));
+					oErrorSetLast(std::errc::not_supported, "Feature \"%s\" not supported for the current HW: %s", oSAFESTRN(_Feature), CPUGetString(buf));
 					return oCPU_NO_SUPPORT;
 				}
 
 				if (WinVer < f.MinVersion)
 				{
-					oErrorSetLast(oERROR_GENERIC, "Feature \"%s\" not supported by the current platform", oSAFESTRN(_Feature));
+					oErrorSetLast(std::errc::not_supported, "Feature \"%s\" not supported by the current platform", oSAFESTRN(_Feature));
 					return oCPU_HW_SUPPORT_ONLY;
 				}
 
@@ -267,6 +275,6 @@ oCPU_SUPPORT_TYPE oCPUCheckFeatureSupport(int _CPUIndex, const char* _Feature)
 		s = oCPUEnumFeatures(++i);
 	}
 
-	oErrorSetLast(oERROR_NOT_FOUND, "Feature \"%s\" not supported for checking", oSAFESTRN(_Feature));
+	oErrorSetLast(std::errc::not_supported, "Feature \"%s\" not supported for checking", oSAFESTRN(_Feature));
 	return oCPU_NOT_FOUND;
 }

@@ -28,10 +28,12 @@
 #ifndef oGDI_h
 #define oGDI_h
 
-#include <oBasis/oStdAtomic.h>
-#include <oBasis/oColor.h>
+#include <oStd/oStdAtomic.h>
+#include <oStd/color.h>
 #include <oBasis/oGUI.h>
 #include <oPlatform/Windows/oWindows.h>
+#include <oPlatform/Windows/oWinWindowing.h>
+#include <oPlatform/Windows/oWinRect.h>
 
 // For functions that take logical height. Point size is like what appears in 
 // most Windows API.
@@ -42,16 +44,6 @@ int oGDIPointToLogicalHeight(HDC _hDC, float _Point);
 int oGDILogicalHeightToPoint(HDC _hDC, int _Height);
 float oGDILogicalHeightToPointF(HDC _hDC, int _Height);
 
-class oGDIScopedSelect
-{
-	HDC hDC;
-	HGDIOBJ hObj;
-	HGDIOBJ hOldObj;
-public:
-	oGDIScopedSelect(HDC _hDC, HGDIOBJ _hObj) : hDC(_hDC), hObj(_hObj) { hOldObj = SelectObject(hDC, hObj); }
-	~oGDIScopedSelect() { SelectObject(hDC, hOldObj); }
-};
-
 #define oDEFINE_GDI_BOOL_CAST_OPERATORS(_Type, _Member) \
 	operator bool() { return !!_Member; } \
 	operator bool() const { return !!_Member; } \
@@ -61,6 +53,30 @@ public:
 	operator _Type() const { return _Member; } \
 	operator _Type() volatile { return _Member; } \
 	operator _Type() const volatile { return _Member; }
+
+#define oDEFINE_GDI_MOVE_PTR(_Name) do { _Name = _That._Name; _That._Name = nullptr; } while (false)
+
+class oGDIScopedSelect
+{
+	HDC hDC;
+	HGDIOBJ hOldObj;
+public:
+	oGDIScopedSelect() : hDC(nullptr), hOldObj(nullptr) {}
+	oGDIScopedSelect(HDC _hDC, HGDIOBJ _hObj) : hDC(_hDC) { hOldObj = SelectObject(hDC, _hObj); }
+	oGDIScopedSelect(oGDIScopedSelect&& _That) { operator=(std::move(_That)); }
+	~oGDIScopedSelect() { SelectObject(hDC, hOldObj); }
+	
+	oGDIScopedSelect& operator=(oGDIScopedSelect&& _That)
+	{
+		if (this != &_That)
+		{
+			if (hDC && hOldObj) SelectObject(hDC, hOldObj);
+			oDEFINE_GDI_MOVE_PTR(hDC);
+			oDEFINE_GDI_MOVE_PTR(hOldObj);
+		}
+		return *this;
+	}
+};
 
 class oGDIScopedIcon
 {
@@ -84,8 +100,12 @@ public:
 	
 	const oGDIScopedIcon& operator=(oGDIScopedIcon&& _That)
 	{
-		if (hIcon) DestroyIcon(hIcon);
-		oMOVE1(*this, _That, hIcon);
+		if (this != &_That)
+		{
+			if (hIcon) DestroyIcon(hIcon);
+			oDEFINE_GDI_MOVE_PTR(hIcon);
+		}
+
 		return *this;
 	}
 
@@ -115,8 +135,7 @@ public:
 	const oGDIScopedCursor& operator=(oGDIScopedCursor&& _That)
 	{
 		if (hCursor) DestroyCursor(hCursor);
-		hCursor = _That.hCursor;
-		_That.hCursor = nullptr;
+		oDEFINE_GDI_MOVE_PTR(hCursor);
 		return *this;
 	}
 
@@ -132,18 +151,19 @@ class oGDIScopedGetDC
 	const oGDIScopedGetDC& operator=(const oGDIScopedGetDC&);
 
 public:
+	oGDIScopedGetDC() : hWnd(nullptr), hDC(nullptr) {}
 	oGDIScopedGetDC(HWND _hWnd) : hWnd(_hWnd), hDC(GetDC(_hWnd)) {}
 	oGDIScopedGetDC(oGDIScopedGetDC&& _That) { operator=(_That); }
 	~oGDIScopedGetDC() { if (hWnd && hDC) ReleaseDC(hWnd, hDC); }
 
-	const oGDIScopedGetDC& operator=(oGDIScopedGetDC&& _That)
+	oGDIScopedGetDC& operator=(oGDIScopedGetDC&& _That)
 	{
 		if (this != &_That)
 		{
 			if (hWnd && hDC)
 				ReleaseDC(hWnd, hDC);
-			oMOVE1(*this, _That, hWnd);
-			oMOVE1(*this, _That, hDC);
+			oDEFINE_GDI_MOVE_PTR(hWnd);
+			oDEFINE_GDI_MOVE_PTR(hDC);
 		}
 		return *this;
 	}
@@ -171,10 +191,67 @@ public:
 		return *this;
 	}
 
-	const oGDIScopedDC& operator=(oGDIScopedDC&& _That)
+	oGDIScopedDC& operator=(oGDIScopedDC&& _That)
 	{
-		if (hDC) DeleteDC(hDC);
-		oMOVE1(*this, _That, hDC);
+		if (this != &_That)
+		{
+			if (hDC) DeleteDC(hDC);
+			oDEFINE_GDI_MOVE_PTR(hDC);
+		}
+		return *this;
+	}
+
+	oDEFINE_GDI_BOOL_CAST_OPERATORS(HDC, hDC);
+};
+
+class oGDIScopedBltMode
+{
+	HDC hDC;
+	int PrevMode;
+
+	oGDIScopedBltMode(const oGDIScopedBltMode& _That);
+	const oGDIScopedBltMode& operator=(const oGDIScopedBltMode& _That);
+
+public:
+	oGDIScopedBltMode() : hDC(nullptr) {}
+	~oGDIScopedBltMode() { if (hDC) SetStretchBltMode(hDC, PrevMode); }
+	oGDIScopedBltMode(HDC _hDC, int _Mode) : hDC(_hDC), PrevMode(SetStretchBltMode(hDC, _Mode)) {}
+	oGDIScopedBltMode(oGDIScopedBltMode&& _That) { operator=(_That); }
+
+	oGDIScopedBltMode& operator=(oGDIScopedBltMode&& _That)
+	{
+		if (this != &_That)
+		{
+			oDEFINE_GDI_MOVE_PTR(hDC);
+			PrevMode = _That.PrevMode;
+		}
+		return *this;
+	}
+
+	oDEFINE_GDI_BOOL_CAST_OPERATORS(HDC, hDC);
+};
+
+class oGDIScopedBkMode
+{
+	HDC hDC;
+	int PrevMode;
+
+	oGDIScopedBkMode(const oGDIScopedBkMode& _That);
+	const oGDIScopedBkMode& operator=(const oGDIScopedBkMode& _That);
+
+public:
+	oGDIScopedBkMode() : hDC(nullptr) {}
+	~oGDIScopedBkMode() { if (hDC) SetStretchBltMode(hDC, PrevMode); }
+	oGDIScopedBkMode(HDC _hDC, int _Mode) : hDC(_hDC), PrevMode(SetBkMode(hDC, _Mode)) {}
+	oGDIScopedBkMode(oGDIScopedBkMode&& _That) { operator=(_That); }
+
+	oGDIScopedBkMode& operator=(oGDIScopedBkMode&& _That)
+	{
+		if (this != &_That)
+		{
+			oDEFINE_GDI_MOVE_PTR(hDC);
+			PrevMode = _That.PrevMode;
+		}
 		return *this;
 	}
 
@@ -190,7 +267,7 @@ template<typename HGDIOBJType> class oGDIScopedObject
 
 public:
 	oGDIScopedObject() : hObject(nullptr) {}
-	oGDIScopedObject(oGDIScopedObject&& _That) { operator=(_That); }
+	oGDIScopedObject(oGDIScopedObject&& _That) { operator=(std::move(_That)); }
 	oGDIScopedObject(HGDIOBJType _hObject) : hObject(_hObject) {}
 	~oGDIScopedObject() { if (hObject) DeleteObject(hObject); }
 	
@@ -230,6 +307,48 @@ public:
 	oDEFINE_GDI_BOOL_CAST_OPERATORS(HGDIOBJType, hObject);
 };
 
+class oGDIScopedOffscreen
+{
+	oGDIScopedGetDC hDCWin;
+	oGDIScopedDC hDCOffscreen;
+	oGDIScopedObject<HBITMAP> hOffscreen;
+	oGDIScopedSelect SelectOffscreen;
+	RECT rClient;
+
+public:
+	oGDIScopedOffscreen() {}
+	oGDIScopedOffscreen(HWND _hWnd)
+		: hDCWin(_hWnd)
+		, hDCOffscreen(CreateCompatibleDC(hDCWin))
+	{
+		oWinGetClientRect(_hWnd, &rClient);
+		hOffscreen = CreateCompatibleBitmap(hDCWin, oWinRectW(rClient), oWinRectH(rClient));
+		SelectOffscreen = std::move(oGDIScopedSelect(hDCOffscreen, hOffscreen));
+	}
+	oGDIScopedOffscreen(oGDIScopedOffscreen&& _That) { operator=(std::move(_That)); }
+	~oGDIScopedOffscreen() { BitBlt(hDCWin, rClient.left, rClient.top, oWinRectW(rClient), oWinRectH(rClient), hDCOffscreen, rClient.left, rClient.top, SRCCOPY); }
+
+	const oGDIScopedOffscreen& operator=(HWND _hWnd)
+	{
+		oGDIScopedOffscreen off(_hWnd);
+		*this = std::move(off);
+	}
+
+	oGDIScopedOffscreen& operator=(oGDIScopedOffscreen&& _That)
+	{
+		if (this != &_That)
+		{
+			hDCWin = std::move(_That.hDCWin);
+			hDCOffscreen = std::move(_That.hDCOffscreen);
+			hOffscreen = std::move(_That.hOffscreen);
+			rClient = std::move(_That.rClient);
+		}
+		return *this;
+	}
+
+	oDEFINE_GDI_BOOL_CAST_OPERATORS(HDC, hDCOffscreen);
+};
+
 // _____________________________________________________________________________
 // Bitmap APIs
 
@@ -240,16 +359,16 @@ struct oBMI_DESC
 		, Format(oSURFACE_UNKNOWN)
 		, RowPitch(oInvalid)
 		, FlipVertically(true)
-		, ARGBMonochrome8Zero(std::Black)
-		, ARGBMonochrome8One(std::White)
+		, ARGBMonochrome8Zero(oStd::Black)
+		, ARGBMonochrome8One(oStd::White)
 	{}
 
 	int2 Dimensions;
 	oSURFACE_FORMAT Format;
 	int RowPitch;
 	bool FlipVertically;
-	oColor ARGBMonochrome8Zero;
-	oColor ARGBMonochrome8One;
+	oStd::color ARGBMonochrome8Zero;
+	oStd::color ARGBMonochrome8One;
 };
 
 // Initialize a BITMAPINFO with information from the specified oBMI_DESC. The 
@@ -285,6 +404,10 @@ BOOL oGDIDrawBitmap(HDC _hDC, INT _X, INT _Y, HBITMAP _hBitmap, DWORD _dwROP);
 BOOL oGDIStretchBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, HBITMAP _hBitmap, DWORD _dwROP);
 BOOL oGDIStretchBlendBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, HBITMAP _hBitmap);
 
+// This stretches the source bits directly to fill the specified rectangle in
+// the specified device context.
+bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically = true);
+
 // This stretches the source bits directly to fill the specified HWND's client
 // area. This is a nice shortcut when working with cameras that will fill some
 // UI element, or a top-level window.
@@ -293,10 +416,17 @@ bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize,
 // _____________________________________________________________________________
 // Other APIs
 
+int2 oGDIGetDimensions(HDC _hDC);
+
+bool oGDIDrawLine(HDC _hDC, const int2& _P0, const int2& _P1);
+
 // Uses the currently bound pen and brush to draw a box (also can be used to 
 // draw a circle if a high roundness is used). If Alpha is [0,1), then a uniform 
 // alpha blend is done for the box.
 bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness = 0, float _Alpha = 1.0f);
+
+// Uses the currently bound pen and brush to draw an ellipse
+bool oGDIDrawEllipse(HDC _hDC, const RECT& _rBox);
 
 // Returns the rect required for a single line of text using the specified HDC's 
 // font and other settings.
@@ -308,13 +438,15 @@ bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Text);
 // If color alpha is true 0, then a null/empty objects is returned. Use 
 // DeleteObject on the value returned from these functions when finish with the
 // object. (width == 0 means "default")
-HPEN oGDICreatePen(oColor _Color, int _Width = 0);
-HBRUSH oGDICreateBrush(oColor _Color);
+HPEN oGDICreatePen(oStd::color _Color, int _Width = 0);
+HBRUSH oGDICreateBrush(oStd::color _Color);
 
 inline HBITMAP oGDIGetBitmap(HDC _hDC) { return (HBITMAP)GetCurrentObject(_hDC, OBJ_BITMAP); }
 inline HBRUSH oGDIGetBrush(HDC _hDC) { return (HBRUSH)GetCurrentObject(_hDC, OBJ_BRUSH); }
 inline HFONT oGDIGetFont(HDC _hDC) { return (HFONT)GetCurrentObject(_hDC, OBJ_FONT); }
 inline HPEN oGDIGetPen(HDC _hDC) { return (HPEN)GetCurrentObject(_hDC, OBJ_PEN); }
+
+COLORREF oGDIGetPenColor(HPEN _hPen, int* _pWidth = nullptr);
 
 // Returns the COLORREF of the specified brush
 COLORREF oGDIGetBrushColor(HBRUSH _hBrush);
@@ -344,15 +476,15 @@ public:
 	{
 		DESC()
 			: hParent(nullptr)
-			, Fill(oColorCompose(std::DodgerBlue, 0.33f))
-			, Border(std::DodgerBlue)
+			, Fill(oStd::color(oStd::DodgerBlue, 0.33f))
+			, Border(oStd::DodgerBlue)
 			, EdgeRoundness(0)
 			, UseOffscreenRender(false)
 		{}
 
 		HWND hParent;
-		oColor Fill; // can have alpha value
-		oColor Border;
+		oStd::color Fill; // can have alpha value
+		oStd::color Border;
 		int EdgeRoundness;
 
 		// DXGI back-buffers don't like rounded edge rendering, so copy contents

@@ -56,6 +56,10 @@ HWND oWinStatusBarCreate(HWND _hParent, HMENU _ID, int _MinHeight = oDEFAULT);
 // changes, so call this in the parent's WM_SIZE handler.
 void oWinStatusBarSyncOnSize(HWND _hStatusBar);
 
+// Returns the height of the status bar if the specified window has one, or 
+// oInvalid if it does not. (0 indicates there is a status bar and it is hidden)
+int oWinStatusBarGetHeight(HWND _hParent);
+
 // Other oWin* API treats the status bar of a window as not part of the 
 // client area. Windows disagrees, so be able to truncate the true client 
 // area to not overlap the area handled by the status bar. This assumes

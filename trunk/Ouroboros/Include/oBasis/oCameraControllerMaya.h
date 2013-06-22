@@ -23,17 +23,19 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// A controller intended to be identical to Maya. This defines an explicit 
-// activation key, basic arcball rotation around a specifiable target, screen-
-// space panning, and along-the-view dollying.
+// A controller intended to be able to control either 3DSMax-style or Maya-style
+// tools. For Maya, use the activation key. For Max, set activation and any 
+// control type not active to oGUI_KEY_NONE. Maya constraints to XY, Max to XZ
 #pragma once
-#ifndef oCameraControllerMaya_h
-#define oCameraControllerMaya_h
+#ifndef oCameraControllerModeler_h
+#define oCameraControllerModeler_h
 
-#include <oBasis/oX11KeyboardSymbols.h>
-#include "oCameraController.h"
+#include <oBasis/oArcball.h>
+#include <oBasis/oCameraController.h>
+#include <oBasis/oGUI.h>
+#include <array>
 
-struct oCAMERA_CONTROLLER_MAYA_DESC
+struct oCAMERA_CONTROLLER_MODELER_DESC
 {
 	enum CONTROL
 	{
@@ -45,29 +47,35 @@ struct oCAMERA_CONTROLLER_MAYA_DESC
 		NUM_CONTROLS,
 	};
 
-	oCAMERA_CONTROLLER_MAYA_DESC()
+	// Maya-like defaults
+	oCAMERA_CONTROLLER_MODELER_DESC()
 		: RotationSpeed(0.01f, 0.01f)
 		, PanSpeed(0.05f)
 		, DollySpeed(0.04f)
+		, Constraint(oARCBALL_CONSTRAINT_Y_UP)
 	{
-		Controls[ACTIVATION] = oKB_Alt_L;
-		Controls[TUMBLER] = oKB_Pointer_Button_Left;
-		Controls[TRACK] = oKB_Pointer_Button_Middle;
-		Controls[DOLLY] = oKB_Pointer_Button_Right;
+		// if activation is oGUI_KEY_NONE, then control is always-on.
+		Controls[ACTIVATION] = oGUI_KEY_LALT;
+		Controls[TUMBLER] = oGUI_KEY_MOUSE_LEFT;
+		Controls[TRACK] = oGUI_KEY_MOUSE_MIDDLE;
+		Controls[DOLLY] = oGUI_KEY_MOUSE_RIGHT;
 	}
 
-	oKEYBOARD_KEY Controls[NUM_CONTROLS];
+	std::array<oGUI_KEY, NUM_CONTROLS> Controls;
 	float2 RotationSpeed;
 	float2 PanSpeed;
 	float DollySpeed;
+	oARCBALL_CONSTRAINT Constraint;
 };
 
-interface oCameraControllerMaya : oCameraController
+// {85C0BAD4-D140-48D9-BA97-9E0EE6E2B75C}
+oDEFINE_GUID_I(oCameraControllerModeler, 0x85c0bad4, 0xd140, 0x48d9, 0xba, 0x97, 0x9e, 0xe, 0xe6, 0xe2, 0xb7, 0x5c);
+interface oCameraControllerModeler : oCameraController
 {
-	virtual void SetDesc(const oCAMERA_CONTROLLER_MAYA_DESC& _Desc) = 0;
-	virtual void GetDesc(oCAMERA_CONTROLLER_MAYA_DESC* _pDesc) const = 0;
+	virtual void SetDesc(const oCAMERA_CONTROLLER_MODELER_DESC& _Desc) = 0;
+	virtual void GetDesc(oCAMERA_CONTROLLER_MODELER_DESC* _pDesc) const = 0;
 };
 
-bool oCameraControllerMayaCreate(const oCAMERA_CONTROLLER_MAYA_DESC& _Desc, oCameraControllerMaya** _ppCameraController);
+bool oCameraControllerModelerCreate(const oCAMERA_CONTROLLER_MODELER_DESC& _Desc, oCameraControllerModeler** _ppCameraController);
 
 #endif

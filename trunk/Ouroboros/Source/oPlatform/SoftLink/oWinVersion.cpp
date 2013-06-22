@@ -24,13 +24,14 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oWinVersion.h"
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
 
-static const char* dll_procs[] = 
+static const char* sExportedAPIs[] = 
 {
 	"GetFileVersionInfoSizeA",
 	"GetFileVersionInfoA",
 	"VerQueryValueA",
+	"VerQueryValueW",
 };
 
 oDEFINE_DLL_SINGLETON_CTOR(oWinVersion, "version.dll", GetFileVersionInfoSizeA)

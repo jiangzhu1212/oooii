@@ -37,9 +37,9 @@
 #ifndef oFile_h
 #define oFile_h
 
-#include <oBasis/oByte.h>
+#include <oStd/byte.h>
 #include <oBasis/oInterface.h>
-#include <oBasis/oFunction.h>
+#include <oStd/function.h>
 #include <oBasis/oOBJ.h>
 #include <oPlatform/oStream.h>
 #include <cstdio>
@@ -88,7 +88,7 @@ template<typename T> bool oFileLoadHeader(T* _pHeader, const char* _Path) { retu
 
 // Writes the entire buffer to the specified file. Open is specified to allow 
 // text and write v. append specification. Any read Open will result in this
-// function returning false with oERROR_INVALID_PARAMETER.
+// function returning false with std::errc::invalid_argument.
 oAPI bool oFileSave(const char* _Path, const void* _pSource, size_t _SizeofSource, bool _AsText, bool _AppendToExistingFile = false);
 
 // Memory-maps the specified file, similar to mmap or MapViewOfFile, but with a 

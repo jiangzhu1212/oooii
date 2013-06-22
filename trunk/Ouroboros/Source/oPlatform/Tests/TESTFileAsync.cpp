@@ -24,10 +24,10 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oBasis/oGUID.h>
 #include <oBasis/oRef.h>
 #include <oPlatform/oFile.h>
 #include <oPlatform/oStreamUtil.h>
+#include <oConcurrency/countdown_latch.h>
 
 struct PLATFORM_FileAsync : public oTest
 {
@@ -35,10 +35,10 @@ struct PLATFORM_FileAsync : public oTest
 
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oStringPath testFilePath;
+		oStd::path_string testFilePath;
 		oTESTB0(FindInputFile(testFilePath, "oooii.ico"));
 
-		oCountdownLatch Latch("TEST Read latch", 1);
+		oConcurrency::countdown_latch Latch(1);
 
 		// Test file reading
 		{
@@ -47,14 +47,16 @@ struct PLATFORM_FileAsync : public oTest
 			oRef<threadsafe oStreamReader> ReadFile;
 			oTESTB( oStreamReaderCreate(testFilePath, &ReadFile), oErrorGetLastString() );
 
-			oTESTB( 0 == oStricmp(testFilePath, ReadFile->GetPath() ), "Paths do not match");
+			oStd::uri_string ActualFilePath;
+			oURIPartsToPath(ActualFilePath, ReadFile->GetURIParts());
+			oTESTB( 0 == oStricmp(testFilePath, ActualFilePath), "Paths do not match");
 
 			oSTREAM_DESC FileDesc;
 			ReadFile->GetDesc(&FileDesc), oErrorGetLastString();
 
 			size_t BytesPerRead = static_cast<size_t>( FileDesc.Size ) / NUM_READS;
 			int ActualReadCount = NUM_READS + ( ( ( FileDesc.Size % NUM_READS ) > 0 ) ? 1 : 0 );
-			Latch.Reset(ActualReadCount);
+			Latch.reset(ActualReadCount);
 
 			oSTREAM_READ StreamRead;
 			StreamRead.Range.Offset = 0;
@@ -69,7 +71,7 @@ struct PLATFORM_FileAsync : public oTest
 				oTRACE("Success: %s && %u + %u > %u", _Success ? "true" : "false", _Read.Range.Offset, _Read.Range.Size, FileDesc.Size);
 				if (_Success && _Read.Range.Offset + _Read.Range.Size > FileDesc.Size)
 					bReadPastFileSize = true;
-				Latch.Release();
+				Latch.release();
 			};
 
 			size_t r = 0;
@@ -79,7 +81,7 @@ struct PLATFORM_FileAsync : public oTest
 				StreamRead.pData = pHead;
 				ReadFile->DispatchRead(StreamRead, Continuation);
 				
-				pHead = oByteAdd(pHead, BytesPerRead);
+				pHead = oStd::byte_add(pHead, BytesPerRead);
 				StreamRead.Range.Offset += BytesPerRead;
 			}
 			auto RemainingBytes = FileDesc.Size - r;
@@ -91,18 +93,18 @@ struct PLATFORM_FileAsync : public oTest
 				ReadFile->DispatchRead(StreamRead, Continuation);
 			}
 			oTRACE("TESTFileAsync: Waiting on read latch");
-			Latch.Wait();
+			Latch.wait();
 			oTRACE("Read test finished");
-			static const uint128 ExpextedFileHash = {3650274822346168237,9475904461222329612};
-			oTESTB( oHash_murmur3_x64_128( TempFileBlob, oUInt( FileDesc.Size ) ) == ExpextedFileHash, "Test failed to compute correct hash" );
+			static const uint128 ExpectedFileHash(3650274822346168237, 9475904461222329612);
+			oTESTB( oHash_murmur3_x64_128( TempFileBlob, oUInt( FileDesc.Size ) ) == ExpectedFileHash, "Test failed to compute correct hash" );
 
 			// Attempt to read too many bytes in to the file
 			StreamRead.Range.Offset = FileDesc.Size;
 			StreamRead.Range.Size = BytesPerRead;
-			Latch.Reset(1);
+			Latch.reset(1);
 			StreamRead.pData = pHead;
 			ReadFile->DispatchRead(StreamRead, Continuation);
-			Latch.Wait();
+			Latch.wait();
 			oTESTB(bReadPastFileSize == false, "Test failed, read past file size and did not catch it");	
 
 
@@ -127,23 +129,23 @@ struct PLATFORM_FileAsync : public oTest
 
 			// Read a few bytes
 			char WindowedRead[32];
-			Latch.Reset(1);
+			Latch.reset(1);
 			StreamRead.pData = WindowedRead;
 			StreamRead.Range.Offset = 0;
 			StreamRead.Range.Size = oCOUNTOF(WindowedRead);
 			WindowedReader->DispatchRead(StreamRead, 
 				[&](bool _Success, threadsafe oStreamReader* _pStream, const oSTREAM_READ& _Read)
 			{
-				Latch.Release();
+				Latch.release();
 			} );
 
 			oTRACE("TESTFileAsync: Waiting on oStreamReaderCreateWindowed");
-			Latch.Wait();
-			oTESTB( 0 == memcmp(WindowedRead, oByteAdd(TempFileBlob, WindowedOffset), oCOUNTOF(WindowedRead)), "Windowed read failed to read correct section" );
+			Latch.wait();
+			oTESTB( 0 == memcmp(WindowedRead, oStd::byte_add(TempFileBlob, WindowedOffset), oCOUNTOF(WindowedRead)), "Windowed read failed to read correct section" );
 		}
 
 		// Now test writing data out then reading it back
-		oStringPath TempFilePath;
+		oStd::path_string TempFilePath;
 		oTESTB0(BuildPath(TempFilePath, "TESTAsyncFileIO.bin", oTest::TEMP));
 
 		oRef<threadsafe oStreamReader> ReadFile;
@@ -158,7 +160,7 @@ struct PLATFORM_FileAsync : public oTest
 			oRef<threadsafe oStreamWriter> WriteFile;
 			oTESTB( oStreamWriterCreate(TempFilePath, &WriteFile), oErrorGetLastString() );
 			
-			Latch.Reset(1);
+			Latch.reset(1);
 			
 			oSTREAM_WRITE StreamWrite;
 			StreamWrite.pData = &TestGUID;
@@ -168,12 +170,12 @@ struct PLATFORM_FileAsync : public oTest
 			oStreamWriter::continuation_t Continuation =
 				[&](bool _Success, threadsafe oStreamWriter* _pStream, const oSTREAM_WRITE& _Write)
 			{
-				Latch.Release();
+				Latch.release();
 			};
 
 			WriteFile->DispatchWrite(StreamWrite, Continuation);
 			oTRACE("TESTFileAsync: Wait on Write latch");
-			Latch.Wait();	
+			Latch.wait();	
 
 		}
 		oGUID LoadWrite;
@@ -221,7 +223,7 @@ struct PLATFORM_FileAsync : public oTest
 			static const unsigned int NUM_WRITES = 5;
 			size_t BytesPerRead = static_cast<size_t>( TestSize ) / NUM_WRITES;
 			int ActualReadCount = NUM_WRITES + ( ( TestSize % NUM_WRITES ) ? 1 : 0 );
-			Latch.Reset(ActualReadCount);
+			Latch.reset(ActualReadCount);
 			
 			oSTREAM_WRITE w;
 			w.Range.Offset = 0;
@@ -231,7 +233,7 @@ struct PLATFORM_FileAsync : public oTest
 			oStreamWriter::continuation_t Continuation =
 			[&](bool _Success, threadsafe oStreamWriter* _pStream, const oSTREAM_WRITE& _Write)
 			{
-				Latch.Release();
+				Latch.release();
 			};
 
 			size_t r = 0;
@@ -240,7 +242,7 @@ struct PLATFORM_FileAsync : public oTest
 				w.pData = pHead;
 				WriteFile->DispatchWrite(w, Continuation);
 				
-				pHead = oByteAdd(pHead, BytesPerRead);
+				pHead = oStd::byte_add(pHead, BytesPerRead);
 				w.Range.Offset += BytesPerRead;
 			}
 			auto RemainingBytes = TestSize - r;
@@ -251,7 +253,7 @@ struct PLATFORM_FileAsync : public oTest
 				WriteFile->DispatchWrite(w, Continuation);
 			}
 			oTRACE("TESTFileAsync: Wait on latch for Test large write");
-			Latch.Wait();
+			Latch.wait();
 		}
 
 		{

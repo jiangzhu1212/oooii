@@ -27,7 +27,7 @@
 #ifndef oWinPowrProf_h
 #define oWinPowrProf_h
 
-#include "oWinSoftLinkCommon.h"
+#include <oPlatform/oModuleUtil.h>
 #include <PowrProf.h>
 
 oDECLARE_DLL_SINGLETON_BEGIN(oWinPowrProf)

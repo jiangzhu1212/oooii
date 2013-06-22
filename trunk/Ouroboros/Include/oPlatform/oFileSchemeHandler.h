@@ -29,6 +29,8 @@
 
 #include <oPlatform/oStream.h>
 
+// {684A582C-240E-4C7D-839C-CF4897F2F5D7}
+oDEFINE_GUID_I(oFileSchemeHandler, 0x684a582c, 0x240e, 0x4c7d, 0x83, 0x9c, 0xcf, 0x48, 0x97, 0xf2, 0xf5, 0xd7);
 interface oFileSchemeHandler : oSchemeHandler
 {
 	virtual bool CreateStreamReaderNonBuffered4K(const oURIParts& _URIParts, threadsafe oStreamReader** _ppReader) threadsafe = 0;

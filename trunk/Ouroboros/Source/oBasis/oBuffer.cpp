@@ -24,21 +24,14 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oBuffer.h>
-#include <oBasis/oAssert.h>
-#include <oBasis/oFixedString.h>
+#include <oStd/assert.h>
+#include <oStd/fixed_string.h>
 #include <oBasis/oInitOnce.h>
 #include <oBasis/oLockedPointer.h>
-#include <oBasis/oMutex.h>
+#include <oConcurrency/mutex.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oURI.h>
-
-const oGUID& oGetGUID( threadsafe const oBuffer* threadsafe const * )
-{
-	// {714C9432-EBF6-4232-9E2E-90692C294B8B}
-	static const oGUID oIIDBuffer = { 0x714c9432, 0xebf6, 0x4232, { 0x9e, 0x2e, 0x90, 0x69, 0x2c, 0x29, 0x4b, 0x8b } };
-	return oIIDBuffer;
-}
 
 struct oBuffer_Impl : public oBuffer
 {
@@ -56,10 +49,10 @@ struct oBuffer_Impl : public oBuffer
 	const char* GetName() const threadsafe override;
 
 	void* Allocation;
-	oInitOnce<oStringURI> Name;
+	oInitOnce<oStd::uri_string> Name;
 	size_t Size;
 	DeallocateFn Deallocate;
-	mutable oSharedMutex RWMutex;
+	mutable oConcurrency::shared_mutex RWMutex;
 	oRefCount RefCount;
 };
 
@@ -98,7 +91,7 @@ oBuffer_Impl::oBuffer_Impl(const char* _Name, void* _Allocation, size_t _Size, D
 {
 	if (!Allocation || !Size)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
+		oErrorSetLast(std::errc::invalid_argument);
 		return;
 	}
 

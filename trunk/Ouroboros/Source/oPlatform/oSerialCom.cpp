@@ -80,7 +80,9 @@ private:
 	HANDLE File;
 };
 
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oSerialCom::COM& _Value)
+namespace oStd {
+
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oSerialCom::COM& _Value)
 {
 	switch(_Value)
 	{
@@ -101,11 +103,11 @@ char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oSeri
 		return _StrDestination;
 	}
 
-	oErrorSetLast(oERROR_INVALID_PARAMETER, "Unrecognized COM");
+	oErrorSetLast(std::errc::invalid_argument, "Unrecognized COM");
 	return nullptr;
 }
 
-bool oFromString(oSerialCom::COM* _pAddress, const char* _StrSource)
+bool from_string(oSerialCom::COM* _pAddress, const char* _StrSource)
 {
 	if (0 == oStricmp(_StrSource, "COM1"))
 	{
@@ -134,12 +136,14 @@ bool oFromString(oSerialCom::COM* _pAddress, const char* _StrSource)
 	return false;
 }
 
+} // namespace oStd
+
 oSerialComImpl::oSerialComImpl( const DESC& _Desc, bool* _pSuccess )
 	: Desc(_Desc)
 	, File(nullptr)
 {
 	char com[64];
-	if (!oToString(com, Desc.Com))
+	if (!oStd::to_string(com, Desc.Com))
 		return;
 
 	File = CreateFile( com,
@@ -152,7 +156,7 @@ oSerialComImpl::oSerialComImpl( const DESC& _Desc, bool* _pSuccess )
 
 	if(File == INVALID_HANDLE_VALUE)
 	{
-		oErrorSetLast(oERROR_NOT_FOUND, "Com %s does not exist", com);
+		oErrorSetLast(std::errc::no_such_device, "Com %s does not exist", com);
 		return; // CreateFile calls set last error
 	}
 

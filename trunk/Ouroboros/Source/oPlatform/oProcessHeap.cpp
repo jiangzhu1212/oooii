@@ -31,7 +31,6 @@
 #include <oPlatform/oDebugger.h>
 #include <oPlatform/oModule.h>
 #include <oPlatform/oSystem.h>
-#include <oPlatform/oThreadX.h>
 #include <oPlatform/Windows/oWindows.h>
 #include <algorithm>
 #include <map>
@@ -161,10 +160,10 @@ public:
 		// initialized and a call is made, so force this to stay around as long as 
 		// the idea of the process is around.
 		oWinDbgHelp::Singleton()->Reference();
-		oStringPath moduleName;
+		oStd::path_string moduleName;
 		oVERIFY(oModuleGetName(moduleName, oModuleGetCurrent()));
 		char buf[oKB(1)];
-		oStringM exec;
+		oStd::mstring exec;
 		oPrintf(buf, "%s(%d): {%s} %s ProcessHeap initialized at 0x%p\n", __FILE__, __LINE__, oGetFilebase(moduleName), oSystemGetExecutionPath(exec), this);
 		oThreadsafeOutputDebugStringA(buf);
 	}
@@ -223,7 +222,7 @@ public:
 static void oProcessHeapOutputLeakReportFooter(size_t _NumLeaks)
 {
 	char buf[256];
-	oStringM exec;
+	oStd::mstring exec;
 	char moduleName[_MAX_PATH];
 	oVERIFY(oModuleGetName(moduleName, oModuleGetCurrent()));
 	oPrintf(buf, "========== Process Heap Leak Report: %u Leaks %s ==========\n", _NumLeaks, oSystemGetExecutionPath(exec));
@@ -333,7 +332,7 @@ void oProcessHeapContextImpl::ReportLeaks()
 	
 	if (nLeaks)
 	{
-		oStringM exec;
+		oStd::mstring exec;
 		oPrintf(buf, "========== Process Heap Leak Report %s (Module %s) ==========\n", oSystemGetExecutionPath(exec), oGetFilebase(moduleName));
 		OutputDebugStringA(buf);
 		for (container_t::const_iterator it = pSharedPointers->begin(); it != pSharedPointers->end(); ++it)
@@ -343,9 +342,9 @@ void oProcessHeapContextImpl::ReportLeaks()
 				const ENTRY& e = it->second;
 
 				char TLBuf[128];
-				oPrintf(TLBuf, " (thread_local in thread 0x%x%s)", *(unsigned int*)&e.InitThreadID, oThreadGetMainID() == e.InitThreadID ? " (main)" : "");
+				oPrintf(TLBuf, " (thread_local in thread 0x%x%s)", *(unsigned int*)&e.InitThreadID, oConcurrency::main_thread::get_id() == e.InitThreadID ? " (main)" : "");
 				char GUIDStr[128];
-				oPrintf(buf, "%s %s%s\n", oToString(GUIDStr, e.GUID), oSAFESTRN(e.DebugName), e.IsThreadLocal ? TLBuf : "");
+				oPrintf(buf, "%s %s%s\n", oStd::to_string(GUIDStr, e.GUID), oSAFESTRN(e.DebugName), e.IsThreadLocal ? TLBuf : "");
 				OutputDebugStringA(buf); // use non-threadsafe version because that could alloc the mutex
 
 				bool IsStdBind = false;
@@ -480,7 +479,7 @@ oProcessHeapContext* oProcessHeapContext::Singleton()
 
 		// Filename is "<GUID><CurrentProcessID>"
 		static char mmapFileName[128] = {0};
-		oToString(mmapFileName, heapMMapGuid);
+		oStd::to_string(mmapFileName, heapMMapGuid);
 		oPrintf(mmapFileName + oStrlen(mmapFileName), 128 - oStrlen(mmapFileName), "%u", GetCurrentProcessId());
 
 		// Create a memory-mapped File to store the location of the oProcessHeapContext

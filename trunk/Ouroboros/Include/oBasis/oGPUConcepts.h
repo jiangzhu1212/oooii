@@ -39,12 +39,13 @@
 #ifndef oGPUConcepts_h
 #define oGPUConcepts_h
 
-#include <oBasis/oOperators.h>
 #include <oBasis/oResizedType.h>
 #include <oBasis/oRTTI.h>
 #include <oBasis/oStddef.h>
 #include <oBasis/oSurface.h>
 #include <oBasis/oVersion.h>
+#include <oStd/operators.h>
+#include <array>
 
 // _____________________________________________________________________________
 // Constants describing some rational upper limits on GPU resource usage
@@ -194,16 +195,7 @@ enum oGPU_RESOURCE_TYPE
 	// of oSURFACE_FORMAT, as appears DirectX 11.1 will do.
 
 	oGPU_BUFFER, // generic RO, WO or RW non-texture buffer, or index/vertex buffer
-	oGPU_INSTANCE_LIST, // batched set of per-draw parameters
-	oGPU_LINE_LIST, // list of lines for drawing as lines (not triangles)
-	oGPU_MATERIAL, // a collection of the textures and constants used to color a triangle
-	oGPU_MATERIAL_SET, // a collection of named materials that maps to a mesh
 	oGPU_MESH, // description of a geometry using index and vertex buffers to form triangles
-	oGPU_OUTPUT, // receives final rendering output and channels it to the final presentation medium (often a swap chain -> window mapping)
-	oGPU_SCENE, // container that stores all items on which a frustum cull is applied.
-	oGPU_SKELETON, // for vertex blending (skinning), the mapping from animation to vertex
-	oGPU_SKELETON_POSE, // the result of an animation as it is applied to an associated skeleton
-	
 	oGPU_TEXTURE, // buffer able to be bound as a rasterization target or HW sampled
 
 	// @oooii-tony: Start using oGPU_TEXTURE and new YUV-related formats in 
@@ -213,21 +205,6 @@ enum oGPU_RESOURCE_TYPE
 	oGPU_RESOURCE_TYPE_COUNT,
 };
 oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGPU_RESOURCE_TYPE)
-
-// A mesh is a first-class citizen in oGPU, and index/vertex buffers are 
-// components of the mesh atom. To access the components, use one of these 
-// values as a subresource index.
-enum oGPU_MESH_SUBRESOURCE
-{
-	oGPU_MESH_RANGES,
-	oGPU_MESH_INDICES,
-	oGPU_MESH_VERTICES0,
-	oGPU_MESH_VERTICES1,
-	oGPU_MESH_VERTICES2,
-
-	oGPU_MESH_SUBRESOURCE_COUNT,
-};
-oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGPU_MESH_SUBRESOURCE)
 
 enum oGPU_BUFFER_TYPE
 {
@@ -327,6 +304,13 @@ enum oGPU_TEXTURE_TYPE
 };
 oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGPU_TEXTURE_TYPE)
 
+enum oGPU_QUERY_TYPE
+{
+	oGPU_QUERY_TIMER,
+	oGPU_QUERY_TYPE_COUNT
+};
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGPU_QUERY_TYPE);
+
 inline bool oGPUTextureTypeHasMips(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_TEXTURE_MIPS); }
 inline bool oGPUTextureTypeIsReadback(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_RESOURCE_READBACK); }
 inline bool oGPUTextureTypeIsRenderTarget(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_TEXTURE_RENDER_TARGET); }
@@ -362,9 +346,16 @@ oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGPU_SURFACE_STATE)
 
 enum oGPU_DEPTH_STENCIL_STATE
 {
-	oGPU_DEPTH_STENCIL_NONE, // No depth or stencil operation
-	oGPU_DEPTH_TEST_AND_WRITE, // normal z-buffering mode where if occluded, exit else render and write new Z value. No stencil operation
-	oGPU_DEPTH_TEST, // test depth only, do not write. No stencil operation
+	// No depth or stencil operation.
+	oGPU_DEPTH_STENCIL_NONE,
+
+	// normal z-buffering mode where if occluded or same value (<= less_equal 
+	// comparison), exit else render and write new Z value. No stencil operation.
+	oGPU_DEPTH_TEST_AND_WRITE,
+	
+	// test depth only using same method as test-and-write but do not write. No 
+	// stencil operation.
+	oGPU_DEPTH_TEST,
 	
 	oGPU_DEPTH_STENCIL_STATE_COUNT,
 };
@@ -468,73 +459,8 @@ enum oGPU_CLEAR
 };
 oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGPU_CLEAR)
 
-enum oGPU_NORMAL_SPACE
-{
-	// AKA "object-space" normals. Normals can point in any direction.
-	oGPU_NORMAL_LOCAL_SPACE,
-
-	// Normals are relative to the surface at which they are sampled.
-	oGPU_NORMAL_TANGENT_SPACE,
-
-	// Single-channel intensity map that would probably be sobel-filtered to 
-	// derive a vector in local (object) space.
-	oGPU_NORMAL_BUMP_LOCAL_SPACE,
-	
-	// Single-channel intensity map that would probably be sobel-filtered to 
-	// derive a vector in tangent (surface) space.
-	oGPU_NORMAL_BUMP_TANGENT_SPACE,
-
-	oGPU_NORMAL_SPACE_COUNT,
-};
-oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGPU_NORMAL_SPACE)
-
-enum oGPU_BRDF_MODEL
-{
-	oGPU_BRDF_PHONG,
-	oGPU_BRDF_GOOCH,
-	oGPU_BRDF_MINNAERT,
-	oGPU_BRDF_GAUSSIAN,
-	oGPU_BRDF_BECKMANN,
-	oGPU_BRDF_HEIDRICH_SEIDEL_ANISO, 
-	oGPU_BRDF_WARD_ANISO,
-	oGPU_BRDF_COOK_TORRANCE,
-
-	oGPU_BRDF_MODEL_COUNT,
-};
-oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGPU_BRDF_MODEL)
-
 // _____________________________________________________________________________
 // Structures that encapsulate parameters for common GPU-related operations
-
-struct oGPU_BOX
-{
-	// Empty box
-	oGPU_BOX()
-		: Left(0)
-		, Right(0)
-		, Top(0)
-		, Bottom(1)
-		, Front(0)
-		, Back(1)
-	{}
-
-	// Convenience when an oGPU_BOX is required, but the data is 1-dimensional.
-	oGPU_BOX(uint Width)
-		: Left(0)
-		, Right(Width)
-		, Top(0)
-		, Bottom(1)
-		, Front(0)
-		, Back(1)
-	{}
-
-	uint Left;
-	uint Right;
-	uint Top;
-	uint Bottom;
-	uint Front;
-	uint Back;
-};
 
 struct oGPU_RANGE
 {
@@ -555,7 +481,7 @@ struct oGPU_RANGE
 	uint MaxVertex; // max index into vertex buffer that will be accessed
 };
 
-#define oGPU_VERTEX_ELEMENT_NULL { 0, oSURFACE_UNKNOWN, 0, false }
+#define oGPU_VERTEX_ELEMENT_NULL { oStd::fourcc(0), oSURFACE_UNKNOWN, 0, false }
 struct oGPU_VERTEX_ELEMENT
 {
 	// Generic description of an element in a heterogeneous (AOS) vertex. This 
@@ -571,9 +497,9 @@ struct oGPU_VERTEX_ELEMENT
 	// Name, such as 'POS0' for position. This code should be fit for writing to 
 	// disk and uniquely identifying a semantic channel and its index. The 
 	// following rules should be applied for index: if the right-most char in the 
-	// oFourCC is numeric, use that value, else the value is zero. ('TANG' for 
+	// oStd::fourcc is numeric, use that value, else the value is zero. ('TANG' for 
 	// example would be index 0).
-	oFourCC Semantic;
+	oStd::fourcc Semantic;
 
 	// The format of the data, i.e. a float4 would be oSURFACE_R32G32B32A32_FLOAT
 	oResizedType<oSURFACE_FORMAT, short> Format;
@@ -605,10 +531,9 @@ struct oGPU_VERTEX_ELEMENT
 	oOPERATORS_COMPARABLE(oGPU_VERTEX_ELEMENT)
 };
 
-// Extracts the right-most part of a fourcc and interprets it as a number used
-// for the semantic index of the vertex element. If the value is non-numeric 
-// then the return value will be 0.
-oAPI uint oGPUGetSemanticIndex(const oFourCC& _FourCC);
+// Break out all right-most digits to fill *_pIndex and all left-most remaining
+// characters are turned into a string in _Name.
+oAPI bool oGPUParseSemantic(const oStd::fourcc& _FourCC, char _Name[5], uint* _pIndex);
 
 // Returns the size in bytes of the sum of all vertex elements for the specified 
 // input slot.
@@ -619,78 +544,11 @@ template<size_t size> uint oGPUCalcVertexSize(const threadsafe oGPU_VERTEX_ELEME
 oAPI uint oGPUCalcNumInputSlots(const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements);
 template<size_t size> uint oGPUCalcNumInputSlots(const oGPU_VERTEX_ELEMENT (&_pElements)[size]) { return oGPUCalcNumInputSlots(_pElements, size); }
 
-inline bool oGPUHas16BitIndices(uint _NumVertices) { return _NumVertices <= oNumericLimits<ushort>::GetMax(); }
+inline bool oGPUHas16BitIndices(uint _NumVertices) { return _NumVertices <= std::numeric_limits<ushort>::max(); }
 inline uint oGPUGetIndexSize(uint _NumVertices) { return oGPUHas16BitIndices(_NumVertices) ? sizeof(ushort) : sizeof(uint); }
-
-struct oGPU_LINE_VERTEX
-{
-	// A line list's reserved memory or a user source for a commit must be in this
-	// format.
-
-	oGPU_LINE_VERTEX()
-		: Position(0.0f, 0.0f, 0.0f)
-		, Color(std::Black)
-	{}
-
-	float3 Position;
-	oColor Color;
-};
-
-struct oGPU_LINE
-{
-	// Lines are common for debugging, so define what they are in one place: two 
-	// end points with a color for each.
-	// Line shaders should expect a position and a color for each vertex of a line
-
-	oGPU_LINE()
-		: Start(0.0f)
-		, StartColor(std::Black)
-		, End(0.0f)
-		, EndColor(std::Black)
-	{}
-
-	float3 Start;
-	oColor StartColor;
-	float3 End;
-	oColor EndColor;
-};
 
 // _____________________________________________________________________________
 // DESC-class structures: structs that describe large GPU-related buffers
-
-struct oGPU_INSTANCE_LIST_DESC
-{
-	// Elements points to a full pipeline's expected inputs, including non-
-	// instanced vertex elements. InputSlot specifies which of these elements will 
-	// be populated in the instance list described by this struct.
-
-	oGPU_INSTANCE_LIST_DESC()
-		: InputSlot(oInvalid)
-		, MaxNumInstances(0)
-		, NumInstances(0)
-		, NumVertexElements(0)
-	{
-		oGPU_VERTEX_ELEMENT Init = oGPU_VERTEX_ELEMENT_NULL;
-		oINIT_ARRAY(VertexElements, Init);
-	}
-
-	uint InputSlot;
-	uint MaxNumInstances;
-	uint NumInstances;
-	uint NumVertexElements;
-	oGPU_VERTEX_ELEMENT VertexElements[oGPU_MAX_NUM_VERTEX_ELEMENTS];
-};
-
-struct oGPU_LINE_LIST_DESC
-{
-	oGPU_LINE_LIST_DESC()
-		: MaxNumLines(0)
-		, NumLines(0)
-	{}
-
-	uint MaxNumLines;
-	uint NumLines;
-};
 
 struct oGPU_MESH_DESC
 {
@@ -700,8 +558,8 @@ struct oGPU_MESH_DESC
 		, NumVertices(0)
 		, NumVertexElements(0)
 	{
-		static const oGPU_VERTEX_ELEMENT Init = oGPU_VERTEX_ELEMENT_NULL;
-		oINIT_ARRAY(VertexElements, Init);
+		oGPU_VERTEX_ELEMENT e = oGPU_VERTEX_ELEMENT_NULL;
+		VertexElements.fill(e);
 	}
 
 	oAABoxf LocalSpaceBounds;
@@ -709,7 +567,7 @@ struct oGPU_MESH_DESC
 	uint NumIndices;
 	uint NumVertices;
 	uint NumVertexElements;
-	oGPU_VERTEX_ELEMENT VertexElements[oGPU_MAX_NUM_VERTEX_ELEMENTS];
+	std::array<oGPU_VERTEX_ELEMENT, oGPU_MAX_NUM_VERTEX_ELEMENTS> VertexElements;
 };
 
 struct oGPU_BUFFER_DESC
@@ -747,16 +605,16 @@ struct oGPU_BUFFER_DESC
 struct oGPU_TEXTURE_DESC
 {
 	oGPU_TEXTURE_DESC()
-		: Dimensions(oInvalid, oInvalid, oInvalid)
-		, NumSlices(1)
+		: Type(oGPU_TEXTURE_2D_MAP)
 		, Format(oSURFACE_B8G8R8A8_UNORM)
-		, Type(oGPU_TEXTURE_2D_MAP)
+		, ArraySize(oInvalid)
+		, Dimensions(oInvalid, oInvalid, oInvalid)
 	{}
 
-	int3 Dimensions;
-	int NumSlices;
-	oSURFACE_FORMAT Format;
 	oGPU_TEXTURE_TYPE Type;
+	oSURFACE_FORMAT Format;
+	int ArraySize;
+	int3 Dimensions;
 };
 
 struct oGPU_STATIC_PIPELINE_DESC
@@ -814,14 +672,19 @@ struct oGPU_COMPUTE_SHADER_DESC : oGPU_STATIC_COMPUTE_SHADER_DESC
 	const oGPU_COMPUTE_SHADER_DESC& operator=(const oGPU_STATIC_COMPUTE_SHADER_DESC& _That) { *(oGPU_STATIC_COMPUTE_SHADER_DESC*)this = _That; return *this; }
 };
 
+struct oGPU_QUERY_DESC
+{
+	oGPU_QUERY_TYPE Type;
+};
+
 struct oGPU_CLEAR_DESC
 {
 	oGPU_CLEAR_DESC()
 		: DepthClearValue(1.0f)
 		, StencilClearValue(0)
-	{ oINIT_ARRAY(ClearColor, 0); }
+	{ ClearColor.fill(0); }
 
-	oColor ClearColor[oGPU_MAX_NUM_MRTS];
+	std::array<oStd::color, oGPU_MAX_NUM_MRTS> ClearColor;
 	float DepthClearValue;
 	uchar StencilClearValue;
 };
@@ -829,20 +692,20 @@ struct oGPU_CLEAR_DESC
 struct oGPU_RENDER_TARGET_DESC
 {
 	oGPU_RENDER_TARGET_DESC()
-		: Dimensions(oInvalid, oInvalid, oInvalid)
-		, NumSlices(1)
-		, MRTCount(1)
+		: Type(oGPU_TEXTURE_2D_RENDER_TARGET)
 		, DepthStencilFormat(oSURFACE_UNKNOWN)
-		, Type(oGPU_TEXTURE_2D_RENDER_TARGET)
-	{ oINIT_ARRAY(Format, oSURFACE_UNKNOWN); }
+		, ArraySize(1)
+		, MRTCount(1)
+		, Dimensions(oInvalid, oInvalid, oInvalid)
+	{ Format.fill(oSURFACE_UNKNOWN); }
 
-	int3 Dimensions;
-	int NumSlices;
-	int MRTCount;
-	oSURFACE_FORMAT Format[oGPU_MAX_NUM_MRTS];
-	oSURFACE_FORMAT DepthStencilFormat; // Use UNKNOWN for no depth
-	oGPU_CLEAR_DESC ClearDesc;
 	oGPU_TEXTURE_TYPE Type;
+	std::array<oSURFACE_FORMAT, oGPU_MAX_NUM_MRTS> Format;
+	oSURFACE_FORMAT DepthStencilFormat; // Use UNKNOWN for no depth
+	int ArraySize;
+	int MRTCount;
+	int3 Dimensions;
+	oGPU_CLEAR_DESC ClearDesc;
 };
 
 struct oGPU_COMMAND_LIST_DESC
@@ -863,7 +726,7 @@ struct oGPU_DEVICE_INIT
 	{}
 
 	// Name associated with this device in debug output
-	oStringS DebugName;
+	oStd::sstring DebugName;
 
 	// The minimum version of the driver required to successfully create the 
 	// device. If the driver version is 0.0.0.0 (the default) then a hard-coded
@@ -912,13 +775,13 @@ struct oGPU_DEVICE_DESC
 	{}
 
 	// Name associated with this device in debug output
-	oStringS DebugName;
+	oStd::sstring DebugName;
 
 	// Description as provided by the device vendor
-	oStringM DeviceDescription;
+	oStd::mstring DeviceDescription;
 
 	// Description as provided by the driver vendor
-	oStringM DriverDescription;
+	oStd::mstring DriverDescription;
 
 	// Number of bytes present on the device (AKA VRAM)
 	ullong NativeMemory;

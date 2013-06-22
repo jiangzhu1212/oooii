@@ -87,6 +87,6 @@ bool oBasisTest_oInt()
 	if (!TestInt<oUChar>())
 		return false;
 
-	oErrorSetLast(oERROR_NONE);
+	oErrorSetLast(0);
 	return true;
 }

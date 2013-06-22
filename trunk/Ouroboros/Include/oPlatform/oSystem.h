@@ -28,8 +28,8 @@
 #ifndef oSystem_h
 #define oSystem_h
 
-#include <oBasis/oDate.h>
-#include <oBasis/oFunction.h>
+#include <oStd/date.h>
+#include <oStd/function.h>
 #include <oBasis/oPlatformFeatures.h>
 #include <oBasis/oTimer.h> // for oInfiniteWait
 #include <oBasis/oURI.h>
@@ -53,26 +53,26 @@ oAPI bool oSystemGetHeapStats(oSYSTEM_HEAP_STATS* _pStats);
 template<typename DATE_T> void oSystemGetDate(DATE_T* _pNTPDate);
 
 // Convert from a local timezone-specific time to UTC (GMT) time.
-oAPI bool oSystemDateFromLocal(const oDATE& _LocalDate, oDATE* _pUTCDate);
+oAPI bool oSystemDateFromLocal(const oStd::date& _LocalDate, oStd::date* _pUTCDate);
 
 // Convert from UTC (GMT) time to a local timezone-specific time.
-oAPI bool oSystemDateToLocal(const oDATE& _UTCDate, oDATE* _pLocalDate);
+oAPI bool oSystemDateToLocal(const oStd::date& _UTCDate, oStd::date* _pLocalDate);
 
 template<typename DATE1_T, typename DATE2_T> bool oSystemDateFromLocal(const DATE1_T& _LocalDate, DATE2_T* _pUTCDate)
 {
-	oDATE local, utc;
-	if (!oDateConvert(_LocalDate, &local)) return false;
+	oStd::date local, utc;
+	local = oStd::date_cast<oStd::date>(_LocalDate);
 	if (!oSystemDateFromLocal(local, &utc)) return false;
-	if (!oDateConvert(utc, _pUTCDate)) return false;
+	*_pUTCDate = oStd::date_cast<DATE2_T>(utc);
 	return true;
 }
 
 template<typename DATE1_T, typename DATE2_T> bool oSystemDateToLocal(const DATE1_T& _UTCDate, DATE2_T* _pLocalDate)
 {
-	oDATE local, utc;
-	if (!oDateConvert(_UTCDate, &utc)) return false;
+	oStd::date local, utc;
+	utc = oStd::date_cast<oStd::date>(_UTCDate);
 	if (!oSystemDateToLocal(utc, &local)) return false;
-	if (!oDateConvert(local, _pLocalDate)) return false;
+	*_pLocalDate = oStd::date_cast<DATE2_T>(local);
 	return true;
 }
 
@@ -100,7 +100,7 @@ oAPI bool oSystemScheduleWakeup(time_t _UnixAbsoluteTime, oTASK _OnWake);
 // finished its stdout is read into the buffer. If the address of an 
 // exitcode value is specified, the child process's exit code is filled 
 // in. If the specified timeout is reached, then the exitcode will be 
-// oERROR_REDUNDANT. Prefer the default _ShowWindow=false for console 
+// std::errc::operation_in_progress. Prefer the default _ShowWindow=false for console 
 // executions, but for Window applications requiring user interaction, use 
 // _ShowWindow=true.
 oAPI bool oSystemExecute(const char* _CommandLine, char* _StrStdout, size_t _SizeofStrStdOut, int* _pExitCode = 0, unsigned int _ExecutionTimeout = oInfiniteWait, bool _ShowWindow = false);
@@ -124,6 +124,11 @@ oAPI bool oSystemGUIEnableGPUCompositing(bool _Enable, bool _Force = false);
 // might not be accurate by the software emulation done to redirect output to a 
 // remote session.
 oAPI bool oSystemIsRemote();
+
+// Returns true if code in this process can render/write to the virtual desktop
+// in the system's GUI. This returns false if front-buffer access or drawing
+// GUI elements will fail, such as when the system is logged out.
+oAPI bool oSystemGUIIsWritable();
 
 // Accessors for the environment variables passed into this process
 oAPI bool oSystemSetEnvironmentVariable(const char* _Name, const char* _Value);
@@ -165,25 +170,25 @@ oAPI char* oSystemGetHostname(char* _StrDestination, size_t _SizeofStrDestinatio
 oAPI char* oSystemGetExecutionPath(char* _StrDestination, size_t _SizeofStrDestination);
 
 // This is the same as oURIToPath but allows for the authority to first be 
-// tested using oFromString to a conversion to an oSYSPATH value. If it can, 
+// tested using oStd::from_string to a conversion to an oSYSPATH value. If it can, 
 // that path is prepended to the _URIParts path.
 oAPI char* oSystemURIToPath(char* _Path, size_t _SizeofPath, const char* _URI);
 
 // This is the same as oURIPartsToPath but allows for the authority to first be 
-// tested using oFromString to a conversion to an oSYSPATH value. If it can, 
+// tested using oStd::from_string to a conversion to an oSYSPATH value. If it can, 
 // that path is prepended to the _URIParts path.
 oAPI char* oSystemURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIParts);
 
 // Find a file in the specified system path. Returns _ResultingFullPath if successful,
 // nullptr otherwise
-oAPI char* oSystemFindInPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, oSYSPATH _SysPath, const char* _RelativePath, const char* _DotPath, oFUNCTION_PATH_EXISTS _PathExists);
+oAPI char* oSystemFindInPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, oSYSPATH _SysPath, const char* _RelativePath, const char* _DotPath, const oFUNCTION<bool(const char* _Path)>& _PathExists);
 
 // Searches all system and environment paths, as well as extraSearchPath which 
 // is a string of paths delimited by semi-colons. _RelativePath is the filename/
 // partial path to be matched against the various prefixes to get a full path.
 // Returns _ResultingFullPath if successful, nullptr if no _RelativePath was 
 // found.
-oAPI char* oSystemFindPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, const char* _RelativePath, const char* _DotPath, const char* _ExtraSearchPath, oFUNCTION_PATH_EXISTS _PathExists);
+oAPI char* oSystemFindPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, const char* _RelativePath, const char* _DotPath, const char* _ExtraSearchPath, const oFUNCTION<bool(const char* _Path)>& _PathExists);
 
 // Sets the current working directory. Use oSystemGetPath to get CWD
 oAPI bool oSetCWD(const char* _CWD);
@@ -202,21 +207,21 @@ template<size_t size> char* oSystemGetHostname(char (&_StrDestination)[size]) { 
 template<size_t size> char* oSystemGetExecutionPath(char (&_StrDestination)[size]) { return oSystemGetExecutionPath(_StrDestination, size); }
 template<size_t size> char* oSystemURIToPath(char (&_ResultingFullPath)[size], const char* _URI) { return oSystemURIToPath(_ResultingFullPath, size, _URI); }
 template<size_t size> char* oSystemURIPartsToPath(char (&_ResultingFullPath)[size], const oURIParts& _URIParts) { return oSystemURIPartsToPath(_ResultingFullPath, size, _URIParts); }
-template<size_t size> char* oSystemFindInPath(char(&_ResultingFullPath)[size], oSYSPATH _SysPath, const char* _RelativePath, const char* _DotPath, oFUNCTION_PATH_EXISTS _PathExists) { return oSystemFindInPath(_ResultingFullPath, size, _SysPath, _RelativePath, _DotPath, _PathExists); }
-template<size_t size> char* oSystemFindPath(char (&_ResultingFullPath)[size], const char* _RelativePath, const char* _DotPath, const char* _ExtraSearchPath, oFUNCTION_PATH_EXISTS _PathExists) { return oSystemFindPath(_ResultingFullPath, size, _RelativePath, _DotPath, _ExtraSearchPath, _PathExists); }
+template<size_t size> char* oSystemFindInPath(char(&_ResultingFullPath)[size], oSYSPATH _SysPath, const char* _RelativePath, const char* _DotPath, const oFUNCTION<bool(const char* _Path)>& _PathExists) { return oSystemFindInPath(_ResultingFullPath, size, _SysPath, _RelativePath, _DotPath, _PathExists); }
+template<size_t size> char* oSystemFindPath(char (&_ResultingFullPath)[size], const char* _RelativePath, const char* _DotPath, const char* _ExtraSearchPath, const oFUNCTION<bool(const char* _Path)>& _PathExists) { return oSystemFindPath(_ResultingFullPath, size, _RelativePath, _DotPath, _ExtraSearchPath, _PathExists); }
 
-#include <oBasis/oFixedString.h>
-template<size_t capacity> bool oSystemExecute(const char* _CommandLine, oFixedString<char, capacity>& _StrStdout, int* _pExitCode = 0, unsigned int _ExecutionTimeout = oInfiniteWait) { return oSystemExecute(_CommandLine, _StrStdout, _StrStdout.capacity(), _pExitCode, _ExecutionTimeout); }
-template<size_t capacity> char* oSystemGetEnvironmentVariable(oFixedString<char, capacity>& _Value, const char* _Name) { return oSystemGetEnvironmentVariable(_Value, _Value.capacity(), _Name); }
-template<size_t capacity> char* oSystemTranslateEnvironmentVariables(oFixedString<char, capacity>& _Value, const char* _Name) { return oSystemTranslateEnvironmentVariables(_Value, _Value.capacity(), _Name); }
-template<size_t capacity> char* oGetEnvironmentString(oFixedString<char, capacity>& _StrEnvironment) { return oSystemGetEnvironmentString(_StrEnvironment, _StrEnvironment.capacity()); }
-template<size_t capacity> char* oSystemGetURI(oFixedString<char, capacity>& _StrSysURI, oSYSPATH _SysPath) { return oSystemGetURI(_StrSysURI, _StrSysURI.capacity(), _SysPath); }
-template<size_t capacity> char* oSystemGetPath(oFixedString<char, capacity>& _StrSysPath, oSYSPATH _SysPath) { return oSystemGetPath(_StrSysPath, _StrSysPath.capacity(), _SysPath); }
-template<size_t capacity> char* oSystemGetHostname(oFixedString<char, capacity>& _StrDestination) { return oSystemGetHostname(_StrDestination, _StrDestination.capacity()); }
-template<size_t capacity> char* oSystemGetExecutionPath(oFixedString<char, capacity>& _StrDestination) { return oSystemGetExecutionPath(_StrDestination, _StrDestination.capacity()); }
-template<size_t capacity> char* oSystemURIToPath(oFixedString<char, capacity>& _ResultingFullPath, const char* _URI) { return oSystemURIToPath(_ResultingFullPath, _ResultingFullPath.capacity(), _URI); }
-template<size_t capacity> char* oSystemURIPartsToPath(oFixedString<char, capacity>& _ResultingFullPath, const oURIParts& _URIParts) { return oSystemURIPartsToPath(_ResultingFullPath, _ResultingFullPath.capacity(), _URIParts); }
-template<size_t capacity> char* oSystemFindInPath(oFixedString<char, capacity>& _ResultingFullPath, oSYSPATH _SysPath, const char* _RelativePath, const char* _DotPath, oFUNCTION_PATH_EXISTS _PathExists) { return oSystemFindInPath(_ResultingFullPath, _ResultingFullPath.capacity(), _SysPath, _RelativePath, _DotPath, _PathExists); }
-template<size_t capacity> char* oSystemFindPath(oFixedString<char, capacity>& _ResultingFullPath, const char* _RelativePath, const char* _DotPath, const char* _ExtraSearchPath, oFUNCTION_PATH_EXISTS _PathExists) { return oSystemFindPath(_ResultingFullPath, _ResultingFullPath.capacity(), _RelativePath, _DotPath, _ExtraSearchPath, _PathExists); }
+#include <oStd/fixed_string.h>
+template<size_t capacity> bool oSystemExecute(const char* _CommandLine, oStd::fixed_string<char, capacity>& _StrStdout, int* _pExitCode = 0, unsigned int _ExecutionTimeout = oInfiniteWait) { return oSystemExecute(_CommandLine, _StrStdout, _StrStdout.capacity(), _pExitCode, _ExecutionTimeout); }
+template<size_t capacity> char* oSystemGetEnvironmentVariable(oStd::fixed_string<char, capacity>& _Value, const char* _Name) { return oSystemGetEnvironmentVariable(_Value, _Value.capacity(), _Name); }
+template<size_t capacity> char* oSystemTranslateEnvironmentVariables(oStd::fixed_string<char, capacity>& _Value, const char* _Name) { return oSystemTranslateEnvironmentVariables(_Value, _Value.capacity(), _Name); }
+template<size_t capacity> char* oGetEnvironmentString(oStd::fixed_string<char, capacity>& _StrEnvironment) { return oSystemGetEnvironmentString(_StrEnvironment, _StrEnvironment.capacity()); }
+template<size_t capacity> char* oSystemGetURI(oStd::fixed_string<char, capacity>& _StrSysURI, oSYSPATH _SysPath) { return oSystemGetURI(_StrSysURI, _StrSysURI.capacity(), _SysPath); }
+template<size_t capacity> char* oSystemGetPath(oStd::fixed_string<char, capacity>& _StrSysPath, oSYSPATH _SysPath) { return oSystemGetPath(_StrSysPath, _StrSysPath.capacity(), _SysPath); }
+template<size_t capacity> char* oSystemGetHostname(oStd::fixed_string<char, capacity>& _StrDestination) { return oSystemGetHostname(_StrDestination, _StrDestination.capacity()); }
+template<size_t capacity> char* oSystemGetExecutionPath(oStd::fixed_string<char, capacity>& _StrDestination) { return oSystemGetExecutionPath(_StrDestination, _StrDestination.capacity()); }
+template<size_t capacity> char* oSystemURIToPath(oStd::fixed_string<char, capacity>& _ResultingFullPath, const char* _URI) { return oSystemURIToPath(_ResultingFullPath, _ResultingFullPath.capacity(), _URI); }
+template<size_t capacity> char* oSystemURIPartsToPath(oStd::fixed_string<char, capacity>& _ResultingFullPath, const oURIParts& _URIParts) { return oSystemURIPartsToPath(_ResultingFullPath, _ResultingFullPath.capacity(), _URIParts); }
+template<size_t capacity> char* oSystemFindInPath(oStd::fixed_string<char, capacity>& _ResultingFullPath, oSYSPATH _SysPath, const char* _RelativePath, const char* _DotPath, const oFUNCTION<bool(const char* _Path)>& _PathExists) { return oSystemFindInPath(_ResultingFullPath, _ResultingFullPath.capacity(), _SysPath, _RelativePath, _DotPath, _PathExists); }
+template<size_t capacity> char* oSystemFindPath(oStd::fixed_string<char, capacity>& _ResultingFullPath, const char* _RelativePath, const char* _DotPath, const char* _ExtraSearchPath, const oFUNCTION<bool(const char* _Path)>& _PathExists) { return oSystemFindPath(_ResultingFullPath, _ResultingFullPath.capacity(), _RelativePath, _DotPath, _ExtraSearchPath, _PathExists); }
 
 #endif

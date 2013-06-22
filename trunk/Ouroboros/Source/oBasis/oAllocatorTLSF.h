@@ -28,12 +28,13 @@
 #define AllocatorTLSF_Impl_h
 
 #include <oBasis/oAllocatorTLSF.h>
-#include <oBasis/oFixedString.h>
+#include <oStd/fixed_string.h>
 #include <oBasis/oInitOnce.h>
 #include <oBasis/oRefCount.h>
 
-interface oAllocatorTLSF;
-struct AllocatorTLSF_Impl : public oAllocator
+// {5CFA8784-E09D-40e3-8C7A-C4809577F02F}
+oDEFINE_GUID_S(oAllocatorTLSF, 0x5cfa8784, 0xe09d, 0x40e3, 0x8c, 0x7a, 0xc4, 0x80, 0x95, 0x77, 0xf0, 0x2f);
+struct oAllocatorTLSF : public oAllocator
 {
 	// Always allocate memory for this struct in the arena specified by the user
 	void* operator new(size_t _Size) { return 0; }
@@ -47,8 +48,8 @@ public:
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oAllocatorTLSF);
 
-	AllocatorTLSF_Impl(const char* _DebugName, const DESC& _Desc, bool* _pSuccess);
-	~AllocatorTLSF_Impl();
+	oAllocatorTLSF(const char* _DebugName, const DESC& _Desc, bool* _pSuccess);
+	~oAllocatorTLSF();
 
 	void GetDesc(DESC* _pDesc) override;
 	void GetStats(STATS* _pStats) override;
@@ -66,7 +67,7 @@ public:
 	STATS Stats;
 	oRefCount RefCount;
 	void* hPool;
-	oInitOnce<oStringS> DebugName;
+	oInitOnce<oStd::sstring> DebugName;
 };
 
 #endif

@@ -29,7 +29,7 @@
 #ifndef oRegistry_h
 #define oRegistry_h
 
-#include <oBasis/oDate.h>
+#include <oStd/date.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oURI.h>
 
@@ -44,7 +44,7 @@ struct oREGISTRY_DESC
 	int Status;
 	int AccessEpoch;
 	int AccessCount;
-	oNTPTimestamp Accessed;
+	oStd::ntp_timestamp Accessed;
 };
 
 interface oRegistry : oInterface

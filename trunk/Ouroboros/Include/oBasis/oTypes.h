@@ -28,18 +28,10 @@
 #ifndef oTypes_h
 #define oTypes_h
 
-#include <half.h>
-#include <type_traits>
-
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef long long llong;
 typedef unsigned long long ullong;
-
-namespace std {
-	template<> struct is_floating_point<half> : true_type {};
-	// @oooii-tony: Should we spoof is_class to false here?
-}
 
 #endif

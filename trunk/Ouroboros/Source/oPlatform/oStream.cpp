@@ -26,28 +26,25 @@
 #include <oPlatform/oStream.h> // @oooii-tony: honestly only in oPlatform for oSingleton usage
 #include <oPlatform/oSingleton.h>
 
-#include <oBasis/oAlgorithm.h>
-#include <oBasis/oFor.h>
+#include <oStd/algorithm.h>
+#include <oStd/oFor.h>
 #include <oBasis/oLockThis.h>
-#include <oBasis/oMutex.h>
+#include <oConcurrency/mutex.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <vector>
 
 #include <oPlatform/oFileSchemeHandler.h> // @oooii-tony: hacky, see ctor comment below
 
-const char* oAsString(const oSTREAM_EVENT& _Event)
-{
-	switch (_Event)
-	{
-		case oSTREAM_UNSUPPORTED: return "oSTREAM_UNSUPPORTED";
-		case oSTREAM_ADDED: return "oSTREAM_ADDED";
-		case oSTREAM_REMOVED: return "oSTREAM_REMOVED";
-		case oSTREAM_MODIFIED: return "oSTREAM_MODIFIED";
-		case oSTREAM_ACCESSIBLE: return "oSTREAM_ACCESSIBLE";
-		oNODEFAULT;
-	}
-};
+oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oSTREAM_EVENT)
+	oRTTI_ENUM_BEGIN_VALUES(oSTREAM_EVENT)
+		oRTTI_VALUE(oSTREAM_UNSUPPORTED)
+		oRTTI_VALUE(oSTREAM_ADDED)
+		oRTTI_VALUE(oSTREAM_REMOVED)
+		oRTTI_VALUE(oSTREAM_MODIFIED)
+		oRTTI_VALUE(oSTREAM_ACCESSIBLE)
+	oRTTI_ENUM_END_VALUES(oSTREAM_EVENT)
+oRTTI_ENUM_END_DESCRIPTION(oSTREAM_EVENT)
 
 struct oStreamContext : public oProcessSingleton<oStreamContext>
 {
@@ -76,7 +73,7 @@ struct oStreamContext : public oProcessSingleton<oStreamContext>
 	bool GetDesc(const char* _URIReference, oSTREAM_DESC* _pDesc, oURIParts* _pResolvedURIParts = nullptr) threadsafe;
 	bool CreateStreamReader(const char* _URIReference, threadsafe oStreamReader** _ppReader) threadsafe;
 	bool CreateStreamWriter(const char* _URI, bool _SupportAsyncWrites, threadsafe oStreamWriter** _ppWriter) threadsafe;
-	bool CreateStreamMonitor(const char* _URIReference, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor) threadsafe;
+	bool CreateStreamMonitor(const oSTREAM_MONITOR_DESC& _Desc, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor) threadsafe;
 	bool Copy(const char* _SourceURIReference, const char* _DestinationURI, bool _Recursive) threadsafe;
 	bool Move(const char* _SourceURIReference, const char* _DestinationURI, bool _OverwriteDestination) threadsafe;
 	bool Delete(const char* _URI) threadsafe;
@@ -89,28 +86,21 @@ protected:
 	bool VisitURIReferenceInternal(const char* _URIReference, const oFUNCTION<bool(threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts)>& _URIVisitor);
 	bool VisitURIReference(const char* _URIReference, const oFUNCTION<bool(threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts)>& _URIVisitor) threadsafe;
 
-	oSharedMutex URIBasesMutex;
-	oSharedMutex SchemeHandlersMutex;
+	oConcurrency::shared_mutex URIBasesMutex;
+	oConcurrency::shared_mutex SchemeHandlersMutex;
 
 	std::vector<oRef<threadsafe oSchemeHandler>> SchemeHandlers;
-	std::vector<oStringURI> URIBases;
+	std::vector<oStd::uri_string> URIBases;
 };
 
 // {463EF9A3-3CBE-40B9-9658-A6160CE058BA}
 const oGUID oStreamContext::GUID = { 0x463ef9a3, 0x3cbe, 0x40b9, { 0x96, 0x58, 0xa6, 0x16, 0xc, 0xe0, 0x58, 0xba } };
 oSINGLETON_REGISTER(oStreamContext);
 
-const oGUID& oGetGUID(threadsafe const oSchemeHandler* threadsafe const *)
-{
-	// {DCA57E7E-A75F-4E77-85FC-E41C959FEFC7}
-	static const oGUID guid = { 0xdca57e7e, 0xa75f, 0x4e77, { 0x85, 0xfc, 0xe4, 0x1c, 0x95, 0x9f, 0xef, 0xc7 } };
-	return guid;
-}
-
 bool oStreamContext::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe
 {
 	*_ppInterface = nullptr;
-	if (_InterfaceID == oGetGUID<oInterface>() || _InterfaceID == GUID)
+	if (_InterfaceID == oGUID_oInterface || _InterfaceID == GUID)
 	{
 		Reference();
 		*_ppInterface = this;
@@ -143,7 +133,7 @@ bool oStreamContext::SetURIBaseSearchPath(const char* _URIBaseSearchPath) thread
 	{
 		bases.resize(bases.size() + 1);
 		if (!oURINormalize(bases.back(), tok))
-			return oErrorSetLast(oERROR_CORRUPT, "Poorly formed search path. It should be ';' delimited valid URI bases. String:\n%s", _URIBaseSearchPath);
+			return oErrorSetLast(std::errc::protocol_error, "Poorly formed search path. It should be ';' delimited valid URI bases. String:\n%s", _URIBaseSearchPath);
 		tok = oStrTok(nullptr, ";", &ctx);
 	}
 
@@ -173,10 +163,10 @@ bool oStreamContext::RegisterSchemeHandler(threadsafe oSchemeHandler* _pSchemeHa
 	oFOR(auto& sh, pThis->SchemeHandlers)
 	{
 		if (!oStricmp(sh->GetScheme(), _pSchemeHandler->GetScheme()))
-			return oErrorSetLast(oERROR_REDUNDANT, "There is already a scheme handler for scheme %s", sh->GetScheme());
+			return oErrorSetLast(std::errc::operation_in_progress, "There is already a scheme handler for scheme %s", sh->GetScheme());
 
 		if (sh->GetOrder() == _pSchemeHandler->GetOrder())
-			return oErrorSetLast(oERROR_REDUNDANT, "The %s scheme handler is currently at order %d, so inserting the %s scheme handler failed", sh->GetScheme(), sh->GetOrder(), _pSchemeHandler->GetScheme());
+			return oErrorSetLast(std::errc::operation_in_progress, "The %s scheme handler is currently at order %d, so inserting the %s scheme handler failed", sh->GetScheme(), sh->GetOrder(), _pSchemeHandler->GetScheme());
 	}
 
 	for (auto it = pThis->SchemeHandlers.begin(); it != pThis->SchemeHandlers.end(); ++it)
@@ -198,21 +188,21 @@ bool oStreamContext::RegisterSchemeHandler(threadsafe oSchemeHandler* _pSchemeHa
 void oStreamContext::UnregisterSchemeHandler(threadsafe oSchemeHandler* _pSchemeHandler) threadsafe
 {
 	auto pThis = oLockThis(SchemeHandlersMutex);
-	oFindAndErase(pThis->SchemeHandlers, oRef<threadsafe oSchemeHandler>(_pSchemeHandler));
+	oStd::find_and_erase(pThis->SchemeHandlers, oRef<threadsafe oSchemeHandler>(_pSchemeHandler));
 }
 
 bool oStreamContext::FindSchemeHandler(const char* _Scheme, threadsafe oSchemeHandler** _ppSchemeHandler) threadsafe
 {
 	*_ppSchemeHandler = nullptr;
 	auto pThis = oLockThis(SchemeHandlersMutex);
-	auto it = oStdFindIf(pThis->SchemeHandlers, [&](oRef<threadsafe oSchemeHandler>& _SchemeHandler)->bool { return (!oStricmp(_SchemeHandler->GetScheme(), _Scheme)); });
+	auto it = oStd::find_if(pThis->SchemeHandlers, [&](oRef<threadsafe oSchemeHandler>& _SchemeHandler)->bool { return (!oStricmp(_SchemeHandler->GetScheme(), _Scheme)); });
 	if (it != pThis->SchemeHandlers.end())
 	{
 		*_ppSchemeHandler = *it;
 		(*_ppSchemeHandler)->Reference();
 		return true;
 	}
-	return oErrorSetLast(oERROR_NOT_FOUND, "No handler for scheme \"%s\" is registered", oSAFESTRN(_Scheme));
+	return oErrorSetLast(std::errc::not_supported, "No handler for scheme \"%s\" is registered", oSAFESTRN(_Scheme));
 }
 
 threadsafe oSchemeHandler* oStreamContext::GetSchemeHandler(const char* _Scheme)
@@ -230,39 +220,38 @@ bool oStreamContext::VisitURIReferenceInternal(const char* _URIReference, const 
 
 	bool DoDecompose = false;
 
-	if (oURIIsAbsolute(_URIReference))
-		oVERIFY(oURIDecompose(_URIReference, &URIParts));
-
-	else if (oIsUNCPath(_URIReference) || oIsFullPath(_URIReference))
+	if (oIsUNCPath(_URIReference) || oIsFullPath(_URIReference))
 	{
-		oStringURI URI;
+		oStd::uri_string URI;
 		if (!oURIFromAbsolutePath(URI, _URIReference))
 			return false;
 
 		oVERIFY(oURIDecompose(URI, &URIParts));
 	}
+	else if (oURIIsURI(_URIReference))
+		oVERIFY(oURIDecompose(_URIReference, &URIParts));
 
 	sh = GetSchemeHandler(URIParts.Scheme);
 	if (!sh)
-		return oErrorSetLast(oERROR_NOT_FOUND, "no '%s' scheme handler could be found", URIParts.Scheme.empty() ? "(null)" : URIParts.Scheme.c_str());
+		return oErrorSetLast(std::errc::not_supported, "no '%s' scheme handler could be found", URIParts.Scheme.empty() ? "(null)" : URIParts.Scheme.c_str());
 
 	return _URIVisitor(sh, URIParts);
 }
 
 bool oStreamContext::VisitURIReference(const char* _URIReference, const oFUNCTION<bool(threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts)>& _URIVisitor) threadsafe
 {
-	oStringURI URI;
+	oStd::uri_string URI;
 	auto pThis = oLockThis(SchemeHandlersMutex);
 
 	// try the URI reference as a full URI
 	if (pThis->VisitURIReferenceInternal(_URIReference, _URIVisitor))
 		return true;
 
-	oERROR LastErr = oErrorGetLast();
-	oStringL LastErrString = oErrorGetLastString();
+	errno_t LastErr = oErrorGetLast();
+	oStd::lstring LastErrString = oErrorGetLastString();
 
 	// If not, try the search paths/bases
-	if (oErrorGetLast() == oERROR_NOT_FOUND)
+	if (oErrorGetLast() == std::errc::not_supported)
 	{
 		auto pThis2 = oLockThis(URIBasesMutex);
 		oFOR(auto& base, pThis->URIBases)
@@ -274,7 +263,7 @@ bool oStreamContext::VisitURIReference(const char* _URIReference, const oFUNCTIO
 			if (success)
 				return true;
 
-			if (oErrorGetLast() != oERROR_NOT_FOUND && oErrorGetLast() != oERROR_INVALID_PARAMETER)
+			if (oErrorGetLast() != std::errc::not_supported && oErrorGetLast() != std::errc::invalid_argument)
 				return false; // pass through error
 
 			// else keep looking
@@ -284,7 +273,7 @@ bool oStreamContext::VisitURIReference(const char* _URIReference, const oFUNCTIO
 	// Lower level VisitURIReferenceInternal should have set the error, but since
 	// it does a blind prepend, there may be some invalid URI references formed,
 	// so reset it to the original error...
-	if (oErrorGetLast() == oERROR_INVALID_PARAMETER)
+	if (oErrorGetLast() == std::errc::invalid_argument)
 		oErrorSetLast(LastErr, "%s", LastErrString.c_str());
 	
 	return false; 
@@ -318,11 +307,11 @@ bool oStreamContext::CreateStreamWriter(const char* _URI, bool _SupportAsyncWrit
 	});
 }
 
-bool oStreamContext::CreateStreamMonitor(const char* _URIReference, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor) threadsafe
+bool oStreamContext::CreateStreamMonitor(const oSTREAM_MONITOR_DESC& _Desc, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor) threadsafe
 {
-	return VisitURIReference(_URIReference, [&](threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts) -> bool
+	return VisitURIReference(_Desc.Monitor, [&](threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts) -> bool
 	{
-		return _pSchemeHandler->CreateStreamMonitor(_URIParts, _OnEvent, _ppMonitor);
+		return _pSchemeHandler->CreateStreamMonitor(_URIParts, _Desc, _OnEvent, _ppMonitor);
 	});
 }
 
@@ -335,7 +324,7 @@ bool oStreamContext::Copy(const char* _SourceURIReference, const char* _Destinat
 	return VisitURIReference(_SourceURIReference, [&](threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts) -> bool
 	{
 		if (oStrcmp(_URIParts.Scheme, DestURIParts.Scheme))
-			return oErrorSetLast(oERROR_REFUSED, "Copying from scheme %s to scheme %s is not supported. Only same-scheme copies are currently supported.", _URIParts.Scheme.c_str(), DestURIParts.Scheme.c_str());
+			return oErrorSetLast(std::errc::permission_denied, "Copying from scheme %s to scheme %s is not supported. Only same-scheme copies are currently supported.", _URIParts.Scheme.c_str(), DestURIParts.Scheme.c_str());
 		return _pSchemeHandler->Copy(_URIParts, DestURIParts, _Recursive);
 	});
 }
@@ -349,7 +338,7 @@ bool oStreamContext::Move(const char* _SourceURIReference, const char* _Destinat
 	return VisitURIReference(_SourceURIReference, [&](threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts) -> bool
 	{
 		if (oStrcmp(_URIParts.Scheme, DestURIParts.Scheme))
-			return oErrorSetLast(oERROR_REFUSED, "Moving from scheme %s to scheme %s is not supported. Only same-scheme moves are currently supported.", _URIParts.Scheme.c_str(), DestURIParts.Scheme.c_str());
+			return oErrorSetLast(std::errc::permission_denied, "Moving from scheme %s to scheme %s is not supported. Only same-scheme moves are currently supported.", _URIParts.Scheme.c_str(), DestURIParts.Scheme.c_str());
 		return _pSchemeHandler->Move(_URIParts, DestURIParts, _OverwriteDestination);
 	});
 }
@@ -398,9 +387,9 @@ bool oStreamLogWriterCreate(const char* _URI, threadsafe oStreamWriter** _ppLogW
 	return oStreamContext::Singleton()->CreateStreamWriter(_URI, false, _ppLogWriter);
 }
 
-bool oStreamMonitorCreate(const char* _URIReference, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor)
+bool oStreamMonitorCreate(const oSTREAM_MONITOR_DESC& _Desc, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor)
 {
-	return oStreamContext::Singleton()->CreateStreamMonitor(_URIReference, _OnEvent, _ppMonitor);
+	return oStreamContext::Singleton()->CreateStreamMonitor(_Desc, _OnEvent, _ppMonitor);
 }
 
 bool oStreamCopy(const char* _SourceURIReference, const char* _DestinationURI, bool _Recursive)
@@ -440,7 +429,7 @@ struct oStreamReaderWindowedImpl : oStreamReader
 	{
 		if(!Reader)
 		{
-			oErrorSetLast(oERROR_INVALID_PARAMETER, "Failed to specify reader");
+			oErrorSetLast(std::errc::invalid_argument, "Failed to specify reader");
 			return;
 		}
 
@@ -449,7 +438,7 @@ struct oStreamReaderWindowedImpl : oStreamReader
 
 		if (*WindowStart > FDesc.Size || *WindowEnd > FDesc.Size)
 		{
-			oErrorSetLast(oERROR_INVALID_PARAMETER, "Window is outside of the file's range");
+			oErrorSetLast(std::errc::invalid_argument, "Window is outside of the file's range");
 			return;
 		}
 
@@ -484,7 +473,7 @@ struct oStreamReaderWindowedImpl : oStreamReader
 		oSTREAM_READ AdjustedRead(_Read);
 		if (!WindowRange(_Read.Range, &AdjustedRead.Range))
 		{
-			oErrorSetLast(oERROR_IO, "Specified range will read past file size");
+			oErrorSetLast(std::errc::io_error, "Specified range will read past file size");
 			_Continuation(false, this, _Read);
 			return;
 		}
@@ -496,9 +485,11 @@ struct oStreamReaderWindowedImpl : oStreamReader
 	{
 		oSTREAM_READ AdjustedRead(_Read);
 		if (!WindowRange(_Read.Range, &AdjustedRead.Range))
-			return oErrorSetLast(oERROR_IO, "Specified range will read past file size");
+			return oErrorSetLast(std::errc::io_error, "Specified range will read past file size");
 		return Reader->Read(AdjustedRead);
 	}
+
+	bool EndOfFile() const threadsafe override { return false; }
 
 	void Close() threadsafe override
 	{
@@ -525,7 +516,7 @@ bool oStreamIsNewer(const char* _URIReference, time_t _ReferenceUnixTimestamp)
 	if (!oStreamGetDesc(_URIReference, &sd))
 		return false; // pass through error
 	if (_ReferenceUnixTimestamp >= sd.Written)
-		return oErrorSetLast(oERROR_REDUNDANT, "%s is not newer", _URIReference);
+		return oErrorSetLast(std::errc::operation_in_progress, "%s is not newer", _URIReference);
 	return true;
 }
 

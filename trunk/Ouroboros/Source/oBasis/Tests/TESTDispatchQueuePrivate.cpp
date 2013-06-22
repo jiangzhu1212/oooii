@@ -25,12 +25,10 @@
  **************************************************************************/
 #include <oBasis/oDispatchQueuePrivate.h>
 #include <oBasis/oError.h>
-#include <oBasis/oOnScopeExit.h>
+#include <oStd/finally.h>
 #include <oBasis/oRef.h>
-#include <oBasis/oStdConditionVariable.h>
-#include <oBasis/oStdMutex.h>
-#include <oBasis/oTask.h>
-#include <oBasis/oThread.h>
+#include <oStd/oStdConditionVariable.h>
+#include <oStd/oStdMutex.h>
 #include "oBasisTestCommon.h"
 
 static void SetLocation(size_t _Index, size_t _Start, int* _Array)
@@ -47,7 +45,7 @@ static void FillArray(int* _Array, size_t _Start, size_t _End, oStd::thread::id*
 	if (*_pExecutionThreadID != oStd::this_thread::get_id())
 		*_pWrongThreadError = true;
 
-	oTaskParallelFor(_Start, _End, oBIND(&SetLocation, oBIND1, _Start, _Array));
+	oConcurrency::parallel_for(_Start, _End, oBIND(&SetLocation, oBIND1, _Start, _Array));
 }
 
 static void CheckTest(int* _Array, size_t _Size, bool* _pResult, oStd::thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
@@ -79,7 +77,7 @@ bool oBasisTest_oDispatchQueuePrivate()
 {
 	oRef<threadsafe oDispatchQueuePrivate> q;
 	oTESTB(oDispatchQueueCreatePrivate("TESTDispatchQueuePrivate", 100, &q), "Failed to create private dispatch queue");
-	oOnScopeExit JoinQueue([&] { q->Join(); });
+	oStd::finally JoinQueue([&] { q->Join(); });
 
 	static const size_t TestSize = 4096;
 	int TestArray[TestSize];
@@ -115,6 +113,6 @@ bool oBasisTest_oDispatchQueuePrivate()
 		oTESTB(!WrongThread, "oDispatchQueuePrivate command was not executing on the correct thread.");
 	}
 
-	oErrorSetLast(oERROR_NONE);
+	oErrorSetLast(0);
 	return true;
 }

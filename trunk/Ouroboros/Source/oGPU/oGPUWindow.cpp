@@ -24,7 +24,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPU/oGPUWindow.h>
-#include <oBasis/oEvent.h>
+#include <oConcurrency/event.h>
+#include <oConcurrency/backoff.h>
+#include <oStd/oStdFuture.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/Windows/oD3D11.h>
@@ -34,6 +36,8 @@
 
 #include "oD3D11RenderTarget.h"
 
+// {43217250-62DC-4F08-ADE3-8D45637E451A}
+oDEFINE_GUID_S(oD3D11Window, 0x43217250, 0x62dc, 0x4f08, 0xad, 0xe3, 0x8d, 0x45, 0x63, 0x7e, 0x45, 0x1a);
 struct oD3D11Window : oGPUWindow
 {
 	// @oooii-tony: Note to others: do not extend this class to support other D3D
@@ -46,16 +50,19 @@ struct oD3D11Window : oGPUWindow
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	bool QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe override;
 
+	oGUI_WINDOW GetNativeHandle() const threadsafe { return Window->GetNativeHandle(); }
 	bool IsOpen() const threadsafe override { return Window->IsOpen(); }
 	bool WaitUntilClosed(unsigned int _TimeoutMS = oInfiniteWait) const threadsafe override { return Window->WaitUntilClosed(_TimeoutMS); }
 	bool WaitUntilOpaque(unsigned int _TimeoutMS = oInfiniteWait) const threadsafe override { return Window->WaitUntilOpaque(_TimeoutMS); }
-	bool Close(bool _AskFirst = true) threadsafe override { return Window->Close(_AskFirst); }
+	bool Close() threadsafe override { return Window->Close(); }
 	bool IsWindowThread() const threadsafe override { return Window->IsWindowThread(); }
 	bool HasFocus() const threadsafe override { return Window->HasFocus(); }
 	void SetFocus() threadsafe override { return Window->SetFocus(); }
 	void GetDesc(oGUI_WINDOW_DESC* _pDesc) const threadsafe override { Window->GetDesc(_pDesc); }
 	bool Map(oGUI_WINDOW_DESC** _ppDesc) threadsafe override { return Window->Map(_ppDesc); }
 	void Unmap() threadsafe override { Window->Unmap(); }
+	void SetDesc(const oGUI_WINDOW_CURSOR_DESC& _pDesc) threadsafe override { Window->SetDesc(_pDesc); }
+	void GetDesc(oGUI_WINDOW_CURSOR_DESC* _pDesc) const threadsafe override { Window->GetDesc(_pDesc); }
 	char* GetTitle(char* _StrDestination, size_t _SizeofStrDestination) const threadsafe override { return Window->GetTitle(_StrDestination, _SizeofStrDestination); }
 	void SetTitleV(const char* _Format, va_list _Args) threadsafe override { Window->SetTitleV(_Format, _Args); }
 	char* GetStatusText(char* _StrDestination, size_t _SizeofStrDestination, int _StatusSectionIndex) const threadsafe override { return Window->GetStatusText(_StrDestination, _SizeofStrDestination, _StatusSectionIndex); }
@@ -64,6 +71,7 @@ struct oD3D11Window : oGPUWindow
 	int GetHotKeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const threadsafe override { return Window->GetHotKeys(_pHotKeys, _MaxNumHotKeys); }
 	void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe override { Window->Trigger(_Action); }
 	void Dispatch(const oTASK& _Task) threadsafe override { Window->Dispatch(_Task); }
+	void SetTimer(uintptr_t _Context, unsigned int _RelativeTimeMS) threadsafe override { Window->SetTimer(_Context, _RelativeTimeMS); }
 	int HookActions(const oGUI_ACTION_HOOK& _Hook) threadsafe override { return Window->HookActions(_Hook); }
 	void UnhookActions(int _ActionHookID) threadsafe override { Window->UnhookActions(_ActionHookID); }
 	int HookEvents(const oGUI_EVENT_HOOK& _Hook) threadsafe override { return Window->HookEvents(_Hook); }
@@ -78,11 +86,11 @@ struct oD3D11Window : oGPUWindow
 
 	void Step(bool _UseStepping = true) threadsafe
 	{
-		oASSERT( !IsWindowThread(), "Can not step from the window thread");
 		UseStepping = _UseStepping;
 		ShouldStep = true;
-		StepEvent.Wait();
-		StepEvent.Reset();
+		if (!IsWindowThread()) // StepEvent is on the window thread, so don't wait on it
+			StepEvent.wait();
+		StepEvent.reset();
 	}
 
 	int GetFrameCount() const threadsafe { return thread_cast<oInt&>(FrameCount); }
@@ -94,12 +102,12 @@ private:
 	oRef<IDXGISwapChain> SwapChain;
 	oRefCount RefCount;
 	oFUNCTION<void(oGPURenderTarget* _pPrimaryRenderTarget)> RenderFunction;
+	oFUNCTION<void(oGPURenderTarget* _pPrimaryRenderTarget)> OSRenderFunction;
 	int SyncInterval;
 	oInt FrameCount;
 	bool UseStepping;
 	bool ShouldStep;
-	oEvent StepEvent;
-	bool CreateSwapChainGDICompatible;
+	oConcurrency::event StepEvent;
 
 	struct oPROMISED_SNAPSHOT
 	{
@@ -127,7 +135,8 @@ private:
 		{
 			if (pPromisedImage)
 			{
-				pPromisedImage->set_error(oERROR_NOT_FOUND, "Frame %d never reached", Frame);
+				oErrorSetLast(std::errc::protocol_error, "Frame %d never reached", Frame);
+				pPromisedImage->set_exception(std::make_exception_ptr(std::system_error(std::make_error_code((std::errc::errc)oErrorGetLast()), oErrorGetLastString())));
 				delete pPromisedImage;
 			}
 		}
@@ -141,8 +150,14 @@ private:
 		const oPROMISED_SNAPSHOT& operator=(const oPROMISED_SNAPSHOT&);
 	};
 
-	oMutex ScheduleSnapshotsMutex;
+	oConcurrency::mutex ScheduleSnapshotsMutex;
 	std::vector<oPROMISED_SNAPSHOT> ScheduledSnapshots;
+	// This needs to be a private queue because rendering does not occur at a
+	// one to one rate with the windows message pump (there may be several frames
+	// of where rendering isn't finished and the message loop is actively idling).  
+	// If it was one to one, we could use a waitable task and block when rendering falls behind.
+	oRef<threadsafe oDispatchQueuePrivate> RenderQueue;
+	bool Rendering;
 
 	// It is important that the GPU handler be the first registered, but client 
 	// code could still register something in the ctor to handle the oGUI_CREATING
@@ -152,36 +167,41 @@ private:
 	bool EventHook(const oGUI_EVENT_DESC& _Event);
 	bool OnSetFullscreen(const oGUI_EVENT_DESC& _Event);
 	void WTHandleSnapshots();
+	void EnqueueRender();
 };
 
 oD3D11Window::oD3D11Window(const oGPU_WINDOW_INIT& _Init, oGPUDevice* _pDevice, bool* _pSuccess)
 	: Device(_pDevice)
 	, RenderFunction(_Init.RenderFunction)
+	, OSRenderFunction(_Init.OSRenderFunction)
 	, CtorUserHook(_Init.EventHook)
 	, SyncInterval(_Init.VSynced ? 1 : 0)
 	, UseStepping(true) // initialize in step mode... this way the client code Render callback isn't called during bootstrapping of this window
 	, ShouldStep(false)
 	, FrameCount(oInvalid)
-	, CreateSwapChainGDICompatible(_Init.UIRenderingCompatible)
+	, Rendering(false)
 {
 	*_pSuccess = false;
 
+	if( !oDispatchQueueCreatePrivate("RenderQueue", 1, &RenderQueue) )
+		return;
+
 	if (_Init.WinDesc.ShowStatusBar)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "ShowStatusBar=true is incompatible with oGPUWindow because DXGI overrides all client-area drawing and technically a status bar lives in the client area. To have a window with a status bar, create a borderless GPUWindow and parent it to the client area of a separate oWindow instance.");
+		oErrorSetLast(std::errc::invalid_argument, "ShowStatusBar=true is incompatible with oGPUWindow because DXGI overrides all client-area drawing and technically a status bar lives in the client area. To have a window with a status bar, create a borderless GPUWindow and parent it to the client area of a separate oWindow instance.");
 		return; // pass through error
 	}
 
 	oWINDOW_INIT init = (oWINDOW_INIT)_Init;
 	init.EventHook = oBIND(&oD3D11Window::EventHook, this, oBIND1); // CtorUserHook is called by this, so replacing this is ok.
 
-	if (!init.WinDesc.EnableIdleEvent && init.WinDesc.Debug)
-		oTRACE("oGPUWindow created with EnableIdleEvent=false. Rendering will not occur until this is enabled.");
+	if (!init.WinDesc.EnableMainLoopEvent && init.WinDesc.Debug)
+		oTRACE("oGPUWindow created with EnableMainLoopEvent=false. Rendering will not occur until this is enabled.");
 
 	if (!oWindowCreate(init, &Window))
 		return; // pass through error
 
-	oStringS RTName;
+	oStd::sstring RTName;
 	oPrintf(RTName, "%s.WindowRT", _pDevice->GetName());
 	if (!oD3D11CreateRenderTarget(Device, RTName, this, _Init.DepthStencilFormat, &RenderTarget))
 		return; // pass through error
@@ -197,6 +217,7 @@ oD3D11Window::~oD3D11Window()
 	UseStepping = true;
 	// Ensure this is destroyed before CtorUserHook
 	Window = nullptr;
+	RenderQueue->Join();
 }
 
 bool oGPUWindowCreate(const oGPU_WINDOW_INIT& _Init, oGPUDevice* _pDevice, threadsafe oGPUWindow** _ppGPUWindow)
@@ -206,30 +227,16 @@ bool oGPUWindowCreate(const oGPU_WINDOW_INIT& _Init, oGPUDevice* _pDevice, threa
 	return success;
 }
 
-const oGUID& oGetGUID(threadsafe const oGPUWindow* threadsafe const*)
-{
-	// {A79296BF-A665-4DC6-9F33-1EF080732371}
-	static const oGUID GUID_oGPUWindow = { 0xa79296bf, 0xa665, 0x4dc6, { 0x9f, 0x33, 0x1e, 0xf0, 0x80, 0x73, 0x23, 0x71 } };
-	return GUID_oGPUWindow;
-}
-
-const oGUID& oGetGUID(threadsafe const oD3D11Window* threadsafe const*)
-{
-	// {43217250-62DC-4F08-ADE3-8D45637E451A}
-	static const oGUID GUID_oD3D11Window = { 0x43217250, 0x62dc, 0x4f08, { 0xad, 0xe3, 0x8d, 0x45, 0x63, 0x7e, 0x45, 0x1a } };
-	return GUID_oD3D11Window;
-}
-
 bool oD3D11Window::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe
 {
 	*_ppInterface = nullptr;
-	if (_InterfaceID == oGetGUID<oInterface>() || _InterfaceID == oGetGUID<oGPUWindow>() || _InterfaceID == oGetGUID<oD3D11Window>())
+	if (_InterfaceID == oGUID_oInterface || _InterfaceID == oGUID_oGPUWindow || _InterfaceID == oGUID_oD3D11Window)
 	{
 		Reference();
 		*_ppInterface = this;
 	}
 
-	else if (_InterfaceID == oGetGUID<oGPUDevice>())
+	else if (_InterfaceID == oGUID_oGPUDevice)
 	{
 		Device->Reference();
 		*_ppInterface = Device;
@@ -244,7 +251,7 @@ bool oD3D11Window::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _
 	else if (_InterfaceID == (const oGUID&)__uuidof(ID3D11Texture2D))
 	{
 		if (!IsWindowThread())
-			return oErrorSetLast(oERROR_WRONG_THREAD, "Retrieving a swapchain-dependent resource from anywhere but the windows thread is not threadsafe");
+			return oErrorSetLast(std::errc::operation_not_permitted, "Retrieving a swapchain-dependent resource from anywhere but the windows thread is not threadsafe");
 		if (FAILED(SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)_ppInterface)))
 			return oWinSetLastError();
 	}
@@ -252,7 +259,7 @@ bool oD3D11Window::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _
 	else if (_InterfaceID == (const oGUID&)__uuidof(ID3D11RenderTargetView))
 	{
 		if (!IsWindowThread())
-			return oErrorSetLast(oERROR_WRONG_THREAD, "Retrieving a swapchain-dependent resource from anywhere but the windows thread is not threadsafe");
+			return oErrorSetLast(std::errc::operation_not_permitted, "Retrieving a swapchain-dependent resource from anywhere but the windows thread is not threadsafe");
 
 		oRef<ID3D11Texture2D> BackBuffer;
 		if (FAILED(SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&BackBuffer)))
@@ -265,34 +272,46 @@ bool oD3D11Window::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _
 	else
 		return Window->QueryInterface(_InterfaceID, _ppInterface);
 
-	return !!*_ppInterface ? true : oErrorSetLast(oERROR_NOT_FOUND);
+	return !!*_ppInterface ? true : oErrorSetLast(std::errc::function_not_supported);
 }
 
 bool oD3D11Window::EventHook(const oGUI_EVENT_DESC& _Event)
 {
 	switch (_Event.Event)
 	{
-		case oGUI_IDLE:
+		case oGUI_MAINLOOP:
 		{
 			if (!UseStepping || ShouldStep)
 			{
-				if (RenderFunction)
+				if (UseStepping)
 				{
-					RenderFunction(RenderTarget);
+					if (!Rendering)
+						EnqueueRender();
 
-					if (FrameCount == oInvalid)
-						FrameCount = 0;
-					else
-						FrameCount++;
+					oConcurrency::backoff bo;
+					while (Rendering)
+					{
+						bo.pause();
+					}
+
+					WTHandleSnapshots();
+					oV(SwapChain->Present(SyncInterval, 0));
 				}
 
-				WTHandleSnapshots();
+				else
+				{
+					if (!Rendering)
+					{
+						WTHandleSnapshots();
+						oV(SwapChain->Present(SyncInterval, 0));
+						EnqueueRender();
+					}
+				}
 
-				oV(SwapChain->Present(SyncInterval, 0));
 				ShouldStep = false;
 
 				// Set stepped event 
-				StepEvent.Set();
+				StepEvent.set();
 			}
 			break;
 		}
@@ -308,23 +327,38 @@ bool oD3D11Window::EventHook(const oGUI_EVENT_DESC& _Event)
 				, DXGI_FORMAT_B8G8R8A8_UNORM
 				, 0
 				, 0
-				, (HWND)_Event.hSource
-				, CreateSwapChainGDICompatible
+				, (HWND)_Event.hWindow
+				, !!OSRenderFunction
 				, &SwapChain));
 			break;
 		}
 
 		case oGUI_CLOSED:
-			RenderFunction = nullptr;
-			break;
+		{
+			oGUI_WINDOW_DESC d;
+			Window->GetDesc(&d);
+			if (d.State == oGUI_WINDOW_FULLSCREEN_EXCLUSIVE)
+			{
+				oDXGI_FULLSCREEN_STATE FSState;
+				FSState.Fullscreen = false;
+				oVERIFY(oDXGISetFullscreenState(SwapChain, FSState));
+			}
 
-			// Because the EventHook will be registered before any client event hook,
-			// this event will execute before any client oGUI_SIZED, which is where we 
-			// want it, after all oGUI_SIZING so client code can free swapchain-
-			// dependent resources and before client code allocates any new dependents.
+			RenderFunction = nullptr;
+			OSRenderFunction = nullptr;
+			break;
+		}
+
+		// Because the EventHook will be registered before any client event hook,
+		// this event will execute before any client oGUI_SIZED, which is where we 
+		// want it, after all oGUI_SIZING so client code can free swapchain-
+		// dependent resources and before client code allocates any new dependents.
 		case oGUI_SIZED:
 			if (RenderTarget)
 			{
+				// Need to wait for the RenderQueue to finish before resizing
+				RenderQueue->Flush();
+
 				static_cast<oD3D11RenderTarget*>(RenderTarget.c_ptr())->ResizeLock();
 
 				if (_Event.State != oGUI_WINDOW_MINIMIZED)
@@ -334,7 +368,7 @@ bool oD3D11Window::EventHook(const oGUI_EVENT_DESC& _Event)
 			}
 			break;
 
-		case oGUI_TO_FULLSCREEN:
+		case oGUI_TO_FULLSCREEN: case oGUI_FROM_FULLSCREEN:
 			oVERIFY(OnSetFullscreen(_Event));
 			break;
 
@@ -349,52 +383,40 @@ bool oD3D11Window::EventHook(const oGUI_EVENT_DESC& _Event)
 
 bool oD3D11Window::OnSetFullscreen(const oGUI_EVENT_DESC& _Event)
 {
-	if (_Event.State == oGUI_WINDOW_FULLSCREEN_EXCLUSIVE)
+	oGUI_WINDOW_DESC wd;
+	Window->GetDesc(&wd);
+	const bool GoingToExclusiveFullscreen = (_Event.State == oGUI_WINDOW_FULLSCREEN_EXCLUSIVE);
+
+	if (GoingToExclusiveFullscreen || wd.State == oGUI_WINDOW_FULLSCREEN_EXCLUSIVE)
 	{
-		oDXGI_FULLSCREEN_STATE FSState;
-		FSState.Fullscreen = _Event.Event == oGUI_TO_FULLSCREEN;
-
-		// Should we cache an explicit value here? If we do, how would an app change
-		// it? Probably one day this should check for a registry setting and if not 
-		// found just default to the current display.
-
-		// For now just default to current display settings
-
+		// use resolution of current display for fullscreen
 		oGUI_WINDOW hWnd = nullptr;
 		Window->QueryInterface(oGetGUID<oGUI_WINDOW>(), &hWnd);
-
 		oDISPLAY_DESC DDesc;
 		oDisplayEnum(oWinGetDisplayIndex((HWND)hWnd), &DDesc);
+
+		oDXGI_FULLSCREEN_STATE FSState;
+		FSState.Fullscreen = GoingToExclusiveFullscreen;
 		FSState.Size = DDesc.Mode.Size;
 		FSState.RefreshRate = DDesc.Mode.RefreshRate;
 
-		if (oGUIIsFullscreen(_Event.State))
+		if (!oDXGISetFullscreenState(SwapChain, FSState))
 		{
-			if (!oDXGISetFullscreenState(SwapChain, FSState))
+			if (std::errc::permission_denied == oErrorGetLast())
 			{
-				if (oERROR_REFUSED == oErrorGetLast())
-				{
-					oStringL title;
-					oWinGetText(title, (HWND)_Event.hSource);
-
-					oMSGBOX_DESC mb;
-					mb.Type = oMSGBOX_ERR;
-					mb.Title = title;
-					mb.ParentNativeHandle = (HWND)_Event.hSource;
-					oMsgBox(mb, oErrorGetLastString());
-				}
-
-				else
-					oVERIFY(false);
-				return false;
+				oStd::lstring title;
+				oWinGetText(title, (HWND)_Event.hWindow);
+				oMsgBox(oMSGBOX_DESC(oMSGBOX_ERR, title, _Event.hWindow), oErrorGetLastString());
 			}
+
+			else
+				oVERIFY(false);
+			return false;
 		}
 	}
 
-	else
-	{
-		oWinSetState((HWND)_Event.hSource, _Event.State);
-	}
+	if (!GoingToExclusiveFullscreen)
+		oWinSetState((HWND)_Event.hWindow, _Event.State);
 
 	return true;
 }
@@ -407,8 +429,13 @@ oStd::future<oRef<oImage>> oD3D11Window::CreateSnapshot(int _Frame, bool _Includ
 	promisedSnapshot.IncludeBorder = _IncludeBorder;
 	oStd::future<oRef<oImage>> Image = promisedSnapshot.pPromisedImage->get_future();
 
-	oLockGuard<oMutex> lock(thread_cast<oD3D11Window*>(this)->ScheduleSnapshotsMutex); // cast here to remove const (using "const" in the theoretical/interface way, but practically this does modify this class)
-	thread_cast<oD3D11Window*>(this)->ScheduledSnapshots.push_back(std::move(promisedSnapshot)); // safe because vector is protected with a mutex above
+	{
+		oConcurrency::lock_guard<oConcurrency::mutex> lock(thread_cast<oD3D11Window*>(this)->ScheduleSnapshotsMutex); // cast here to remove const (using "const" in the theoretical/interface way, but practically this does modify this class)
+		thread_cast<oD3D11Window*>(this)->ScheduledSnapshots.push_back(std::move(promisedSnapshot)); // safe because vector is protected with a mutex above
+	}
+
+	if (IsWindowThread())
+		thread_cast<oD3D11Window*>(this)->WTHandleSnapshots();
 
 	return Image;
 }
@@ -417,7 +444,7 @@ void oD3D11Window::WTHandleSnapshots()
 {
 	if (!ScheduledSnapshots.empty())
 	{
-		oLockGuard<oMutex> lock(ScheduleSnapshotsMutex);
+		oConcurrency::lock_guard<oConcurrency::mutex> lock(ScheduleSnapshotsMutex);
 		for (auto it = ScheduledSnapshots.begin(); it != ScheduledSnapshots.end(); )
 		{
 			bool IncrementIt = true;
@@ -430,7 +457,7 @@ void oD3D11Window::WTHandleSnapshots()
 				if (oD3D11CreateSnapshot(RT, &Image))
 					it->pPromisedImage->set_value(Image);
 				else
-					it->pPromisedImage->take_last_error();
+					it->pPromisedImage->set_exception(std::make_exception_ptr(std::system_error(std::make_error_code((std::errc::errc)oErrorGetLast()), oErrorGetLastString())));
 
 				delete it->pPromisedImage;
 				it->pPromisedImage = nullptr;
@@ -439,11 +466,40 @@ void oD3D11Window::WTHandleSnapshots()
 			}
 
 			else if (it->Frame < FrameCount)
-				it->pPromisedImage->set_error(oERROR_INVALID_PARAMETER, "Frame %d could not be captured because the request was processed on frame %d, which is past the capture frame.", it->Frame, FrameCount);
+			{
+				oErrorSetLast(std::errc::invalid_argument, "Frame %d could not be captured because the request was processed on frame %d, which is past the capture frame.", it->Frame, FrameCount);
+				it->pPromisedImage->set_exception(std::make_exception_ptr(std::system_error(std::make_error_code((std::errc::errc)oErrorGetLast()), oErrorGetLastString())));
+			}
 
 			if (IncrementIt)
 				++it;
 		}
 	}
+}
 
+void oD3D11Window::EnqueueRender()
+{
+	if (RenderFunction)	
+	{
+		Rendering = true;
+		RenderQueue->Dispatch([&]
+		{
+			if (Device->BeginFrame())
+			{
+				RenderFunction(RenderTarget);
+				Device->EndFrame();
+
+				if (OSRenderFunction)
+					OSRenderFunction(RenderTarget);
+
+				FrameCount++;
+				if (FrameCount == oInvalid)
+					FrameCount = 0;
+			}
+
+			Rendering = false;
+		});
+	}
+	else
+		Rendering = false;
 }

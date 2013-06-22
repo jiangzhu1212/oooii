@@ -26,17 +26,14 @@
 #include <oPlatform/oTest.h>
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
-#include <oGPU/oGPUViewConstants.h>
-#include <oGPU/oGPUDrawConstants.h>
 
 struct GPU_SpinningTriangle : public oTest
 {
 	oRef<oGPUDevice> Device;
 	oRef<oGPUCommandList> CL;
 	oRef<oGPUPipeline> Pipeline;
-	oRef<oGPUMesh> Mesh;
-	oRef<oGPUBuffer> ViewConstants;
-	oRef<oGPUBuffer> DrawConstants;
+	oRef<oGPUUtilMesh> Mesh;
+	oRef<oGPUBuffer> TestConstants;
 	bool Once;
 	
 	void Render(oGPURenderTarget* _pPrimaryRenderTarget)
@@ -44,7 +41,7 @@ struct GPU_SpinningTriangle : public oTest
 		if (!Once)
 		{
 			oGPU_CLEAR_DESC CD;
-			CD.ClearColor[0] = std::AlmostBlack;
+			CD.ClearColor[0] = oStd::AlmostBlack;
 			_pPrimaryRenderTarget->SetClearDesc(CD);
 
 			Once = true;
@@ -54,28 +51,29 @@ struct GPU_SpinningTriangle : public oTest
 
 		oGPURenderTarget::DESC RTDesc;
 		_pPrimaryRenderTarget->GetDesc(&RTDesc);
-		float4x4 P = oCreatePerspectiveLH(oPIf/4.0f, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
+		float4x4 P = oCreatePerspectiveLH(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
 
-		float rotationRate = Device->GetFrameID() * 2.0f;
+		// this is -1 because there was a code change that resulted in BeginFrame()
+		// being moved out of the Render function below so it updated the FrameID
+		// earlier than this code was ready for. If golden images are updated, this
+		// could go away.
+		float rotationRate = (Device->GetFrameID()-1) * 2.0f;
 		float4x4 W = oCreateRotation(float3(0.0f, radians(rotationRate), 0.0f));
 
 		uint DrawID = 0;
 
-		if (!Device->BeginFrame())
-			return;
 		CL->Begin();
 
-		oGPUCommitBuffer(CL, ViewConstants, oGPUViewConstants(V, P, RTDesc.Dimensions, 0));
-		oGPUCommitBuffer(CL, DrawConstants, oGPUDrawConstants(W, V, P, 0, DrawID++));
+		oGPUCommitBuffer(CL, TestConstants, oGPUTestConstants(W, V, P, oStd::White));
 
 		CL->Clear(_pPrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
 		CL->SetBlendState(oGPU_OPAQUE);
 		CL->SetDepthStencilState(oGPU_DEPTH_TEST_AND_WRITE);
 		CL->SetSurfaceState(oGPU_TWO_SIDED);
-		CL->SetBuffers(0, 2, &ViewConstants); // let the set run from ViewConstants to DrawConstants
+		CL->SetBuffers(0, 1, &TestConstants);
 		CL->SetPipeline(Pipeline);
 		CL->SetRenderTarget(_pPrimaryRenderTarget);
-		CL->Draw(Mesh, 0);
+		oGPUUtilMeshDraw(CL, Mesh);
 
 		CL->End();
 		Device->EndFrame();
@@ -101,12 +99,8 @@ struct GPU_SpinningTriangle : public oTest
 				return false;
 
 			oGPUBuffer::DESC DCDesc;
-			DCDesc.StructByteSize = sizeof(oGPUViewConstants);
-			if (!Device->CreateBuffer("ViewConstants", DCDesc, &ViewConstants))
-				return false;
-
-			DCDesc.StructByteSize = sizeof(oGPUDrawConstants);
-			if (!Device->CreateBuffer("DrawConstants", DCDesc, &DrawConstants))
+			DCDesc.StructByteSize = sizeof(oGPUTestConstants);
+			if (!Device->CreateBuffer("TestConstants", DCDesc, &TestConstants))
 				return false;
 
 			oGPUPipeline::DESC pld;

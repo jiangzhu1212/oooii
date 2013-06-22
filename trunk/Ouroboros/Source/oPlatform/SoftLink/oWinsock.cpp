@@ -24,7 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oWinsock.h"
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
 #include <oBasis/oError.h>
 #include <oPlatform/oReporting.h>
 #include <cerrno>
@@ -287,7 +287,7 @@ static const WSA_ERR sErrors[] =
 
 const char* oWinsock::AsString(int _WSAWinSockError)
 {
-	for (size_t i = 0; i < oCOUNTOF(sErrors); i++)
+	oFORI(i, sErrors)
 		if (_WSAWinSockError == sErrors[i].WSAError)
 			return sErrors[i].WSAErrorStr;
 	return "Unknown WSA error";
@@ -295,7 +295,7 @@ const char* oWinsock::AsString(int _WSAWinSockError)
 
 const char* oWinsock::GetErrorDesc(int _WSAWinSockError)
 {
-	for (size_t i = 0; i < oCOUNTOF(sErrors); i++)
+	oFORI(i, sErrors)
 		if (_WSAWinSockError == sErrors[i].WSAError && sErrors[i].WSADesc)
 			return sErrors[i].WSADesc;
 	
@@ -304,7 +304,7 @@ const char* oWinsock::GetErrorDesc(int _WSAWinSockError)
 
 errno_t oWinsock::GetErrno(int _WSAWinSockError)
 {
-	for (size_t i = 0; i < oCOUNTOF(sErrors); i++)
+	oFORI(i, sErrors)
 		if (_WSAWinSockError == sErrors[i].WSAError)
 			return sErrors[i].Errno;
 	
@@ -404,7 +404,7 @@ bool oWinsockTraceEvents(const char* _TracePrefix, const char* _TraceName, const
 		// http://www.mombu.com/microsoft/alt-winsock-programming/t-wsaenumnetworkevents-returns-no-event-how-is-this-possible-1965867.html
 		// Also Google "spurious wakeup" 
 		oASSERT(false, "%s%s%s: WSAEVENT, but no lNetworkEvent: \"spurious wakeup\". You should ignore the event as if it never happened by testing for _pNetworkEvents->lNetworkEvents == 0 in calling code.", oSAFESTR(_TracePrefix), _TracePrefix ? " " : "", oSAFESTR(_TraceName));
-		return oErrorSetLast(oERROR_GENERIC, "%s%s%s: WSAEVENT, but no lNetworkEvent: \"spurious wakeup\". You should ignore the event as if it never happened by testing for _pNetworkEvents->lNetworkEvents == 0 in calling code.", oSAFESTR(_TracePrefix), _TracePrefix ? " " : "", oSAFESTR(_TraceName));
+		return oErrorSetLast(std::errc::protocol_error, "%s%s%s: WSAEVENT, but no lNetworkEvent: \"spurious wakeup\". You should ignore the event as if it never happened by testing for _pNetworkEvents->lNetworkEvents == 0 in calling code.", oSAFESTR(_TracePrefix), _TracePrefix ? " " : "", oSAFESTR(_TraceName));
 	}
 	
 	FD_CHECK(FD_READ); FD_CHECK(FD_WRITE); FD_CHECK(FD_OOB); FD_CHECK(FD_CONNECT); 
@@ -517,7 +517,7 @@ bool oWinsockGetPort(SOCKET _hSocket, unsigned short* _pPort)
 	if (SOCKET_ERROR == _GetSockAddr(_hSocket, (sockaddr*)&saddr, &size))
 	{
 		errno_t err = oWinsock::GetErrno(ws->WSAGetLastError());
-		oErrorSetLast(oERROR_IO, "%s: %s", oWinsock::AsString(ws->WSAGetLastError()), oWinsock::GetErrorDesc(ws->WSAGetLastError()));
+		oErrorSetLast(std::errc::io_error, "%s: %s", oWinsock::AsString(ws->WSAGetLastError()), oWinsock::GetErrorDesc(ws->WSAGetLastError()));
 		return false;
 	}
 
@@ -702,7 +702,7 @@ bool oWinsockWait(SOCKET _hSocket, WSAEVENT _hEvent, WSANETWORKEVENTS* _pNetEven
 			{
 				if (SOCKET_ERROR == ws->WSAEnumNetworkEvents(_hSocket, _hEvent, _pNetEvents))
 				{
-					oErrorSetLast(oERROR_IO, "%s", oWinsock::AsString(oWinsock::Singleton()->WSAGetLastError()));
+					oErrorSetLast(std::errc::io_error, "%s", oWinsock::AsString(oWinsock::Singleton()->WSAGetLastError()));
 					eventFired = false;
 					break;
 				}
@@ -727,9 +727,9 @@ bool oWinsockSend(SOCKET _hSocket, const void* _pSource, size_t _SizeofSource, c
 	else
 		bytesSent = ws->send(_hSocket, (const char*)_pSource, static_cast<int>(_SizeofSource), 0);
 	if (bytesSent == SOCKET_ERROR)
-		oErrorSetLast(oERROR_IO, "%s", oWinsock::AsString(ws->WSAGetLastError()));
+		oErrorSetLast(std::errc::io_error, "%s", oWinsock::AsString(ws->WSAGetLastError()));
 	else if ((size_t)bytesSent == _SizeofSource)
-		oErrorSetLast(oERROR_NONE);
+		oErrorSetLast(0);
 	return (size_t)bytesSent == _SizeofSource;
 }
 
@@ -740,7 +740,7 @@ size_t oWinsockReceive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, s
 
 	if (!_pDestination)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "Must specify a destination buffer");
+		oErrorSetLast(std::errc::invalid_argument, "Must specify a destination buffer");
 		return 0;
 	}
 
@@ -787,13 +787,13 @@ size_t oWinsockReceive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, s
 
 	else if ((ne.lNetworkEvents & FD_CLOSE) || ((ne.lNetworkEvents & FD_CONNECT) && err))
 	{
-		oErrorSetLast(oERROR_IO, "%s", oWinsock::AsString(ne.iErrorCode[FD_CLOSE_BIT]));
+		oErrorSetLast(std::errc::io_error, "%s", oWinsock::AsString(ne.iErrorCode[FD_CLOSE_BIT]));
 		oStd::atomic_exchange(_pInOutCanReceive, false);
 	}
 
 	char strerr[256];
 	strerror_s(strerr, err);
-	oErrorSetLast(oERROR_INVALID_PARAMETER, "%s", strerr);
+	oErrorSetLast(std::errc::invalid_argument, "%s", strerr);
 	return bytesReceived;
 }
 
@@ -803,7 +803,7 @@ bool oWinsockReceiveNonBlocking(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDesti
 
 	if (!_pDestination)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "Must specify a destination buffer");
+		oErrorSetLast(std::errc::invalid_argument, "Must specify a destination buffer");
 		return false;
 	}
 
@@ -855,7 +855,7 @@ bool oWinsockReceiveNonBlocking(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDesti
 
 	char strerr[256];
 	strerror_s(strerr, err);
-	oErrorSetLast(oERROR_INVALID_PARAMETER, "%s", strerr);
+	oErrorSetLast(std::errc::invalid_argument, "%s", strerr);
 	return(0 == err);
 }
 
@@ -868,7 +868,7 @@ bool oWinsockGetNameBase(char* _OutHostname, size_t _SizeofOutHostname, char* _O
 	if (SOCKET_ERROR == _GetSockAddr(_hSocket, (sockaddr*)&saddr, &size))
 	{
 		errno_t err = oWinsock::GetErrno(ws->WSAGetLastError());
-		oErrorSetLast(oERROR_IO, "%s: %s", oWinsock::AsString(ws->WSAGetLastError()), oWinsock::GetErrorDesc(ws->WSAGetLastError()));
+		oErrorSetLast(std::errc::io_error, "%s: %s", oWinsock::AsString(ws->WSAGetLastError()), oWinsock::GetErrorDesc(ws->WSAGetLastError()));
 		return false;
 	}
 
@@ -888,7 +888,7 @@ bool oWinsockGetNameBase(char* _OutHostname, size_t _SizeofOutHostname, char* _O
 	{
 		const char* ip = ws->inet_ntoa(saddr.sin_addr);
 		if (!oStrcpy(_OutIPAddress, _SizeofOutIPAddress, ip))
-			return oErrorSetLast(oERROR_GENERIC);
+			return oErrorSetLast(std::errc::protocol_error);
 	}
 
 	return true;
@@ -920,7 +920,7 @@ bool oWinsockIsConnected(SOCKET _hSocket)
 	if (SOCKET_ERROR == ws->WSAPoll(&p, 1, 0))
 	{
 		if (ws->WSAGetLastError() != WSAENETDOWN)
-			return oErrorSetLast(oERROR_IO, "%s", oWinsock::AsString(ws->WSAGetLastError()));
+			return oErrorSetLast(std::errc::io_error, "%s", oWinsock::AsString(ws->WSAGetLastError()));
 		
 		return false;
 	}
@@ -944,7 +944,7 @@ bool oWinsockIsConnected2(SOCKET _hSocket)
 	if (SOCKET_ERROR == ws->WSAPoll(&p, 1, 0))
 	{
 		if (ws->WSAGetLastError() != WSAENETDOWN)
-			return oErrorSetLast(oERROR_IO, "%s", oWinsock::AsString(ws->WSAGetLastError()));
+			return oErrorSetLast(std::errc::io_error, "%s", oWinsock::AsString(ws->WSAGetLastError()));
 
 		return false;
 	}
@@ -963,7 +963,7 @@ bool oWinsockIsConnected3(SOCKET _hSocket)
 	{
 		if (ws->WSAGetLastError() != WSAEWOULDBLOCK) // for non-blocking sockets it may error if the read would block, but we are still good
 		{
-			return oErrorSetLast(oERROR_IO, "%s", oWinsock::AsString(ws->WSAGetLastError()));
+			return oErrorSetLast(std::errc::io_error, "%s", oWinsock::AsString(ws->WSAGetLastError()));
 		}
 	}
 
@@ -976,7 +976,7 @@ void oWinsockEnumerateAllAddress(oFUNCTION<void(sockaddr_in _Addr)> _Enumerator)
 	// From http://support.microsoft.com/kb/129315
 	oWinsock* ws = oWinsock::Singleton();
 
-	oStringS HostName;
+	oStd::sstring HostName;
 	ws->gethostname( HostName.c_str(), oInt(HostName.capacity()));
 	HOSTENT* pHostEntry = ws->gethostbyname( HostName );
 

@@ -26,7 +26,6 @@
 #include <oBasis/oBuffer.h>
 #include <oBasis/oBufferPool.h>
 #include <oBasis/oRef.h>
-#include <oBasis/oXML.h>
 #include "oBasisTestCommon.h"
 
 bool oBasisTest_oBuffer()
@@ -42,6 +41,6 @@ bool oBasisTest_oBuffer()
 	oRef<threadsafe oBuffer> other;
 	Pool->GetFreeBuffer(&other);
 
-	oErrorSetLast(oERROR_NONE);
+	oErrorSetLast(0);
 	return true;
 }

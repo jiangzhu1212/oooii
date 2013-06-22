@@ -24,7 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oBuffer.h>
-#include <oBasis/oColor.h>
+#include <oStd/color.h>
 #include <oBasis/oLockedPointer.h>
 #include <oBasis/oRef.h>
 #include <oPlatform/oFile.h>
@@ -41,10 +41,10 @@ struct PLATFORM_oImage : public oTest
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		{
-			oStringPath path;
+			oStd::path_string path;
 			oTESTB0(FindInputFile(path, testImage));
 
-			oStringPath tmp;
+			oStd::path_string tmp;
 			oTESTB0(BuildPath(tmp, oGetFilebase(testImage), oTest::TEMP));
 
 			oRef<oBuffer> buffer1;
@@ -68,12 +68,12 @@ struct PLATFORM_oImage : public oTest
 
 			// Compare that the bits written are the same as the bits read
 
-			const oColor* c1 = (const oColor*)image1->GetData();
-			const oColor* c2 = (const oColor*)image2->GetData();
+			const oStd::color* c1 = (const oStd::color*)image1->GetData();
+			const oStd::color* c2 = (const oStd::color*)image2->GetData();
 
 			oImage::DESC i1Desc;
 			image1->GetDesc(&i1Desc);	
-			const size_t nPixels = image1->GetSize() / sizeof(oColor);
+			const size_t nPixels = image1->GetSize() / sizeof(oStd::color);
 			for (size_t i = 0; i < nPixels; i++)
 				oTESTB(c1[i] == c2[i], "Pixel mismatch: %u [%u,%u]", i, i % i1Desc.Dimensions.x, i / i1Desc.Dimensions.x);
 
@@ -84,7 +84,7 @@ struct PLATFORM_oImage : public oTest
 
 		//TEST jpeg loading
 		{
-			oStringPath path;
+			oStd::path_string path;
 			oTESTB0(FindInputFile(path, testImageJpg));
 
 			oRef<oBuffer> buffer1;
@@ -92,7 +92,7 @@ struct PLATFORM_oImage : public oTest
 
 			oRef<oImage> image1;
 			{
-				oScopedTraceTimer timer("***************** free image jpeg load time");
+				oStd::scoped_timer timer("***************** free image jpeg load time");
 				oTESTB(oImageCreate(path.c_str(), buffer1->GetData(), buffer1->GetSize(), &image1), "Image create failed: %s", path.c_str());
 			}
 

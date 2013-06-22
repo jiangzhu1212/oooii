@@ -23,28 +23,29 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasisTests/oBasisTests.h>
-#include <oBasis/oFixedString.h>
-#include <oBasis/oOnScopeExit.h>
+#include <oBasis/tests/oBasisTests.h>
+#include <oStd/fixed_string.h>
+#include <oBasis/oHash.h>
+#include <oStd/finally.h>
 #include "oBasisTestCommon.h"
 
 bool oBasisTest_oHash(const oBasisTestServices& _Services)
 {
 	static const char* TestFile = "Test/Textures/lena_1.png";
 
-	oStringPath path;
+	oStd::path_string path;
 	if (!_Services.ResolvePath(path, path.capacity(), TestFile, true))
-		return oErrorSetLast(oERROR_NOT_FOUND, "not found: %s", TestFile);
+		return oErrorSetLast(std::errc::no_such_file_or_directory, "not found: %s", TestFile);
 
 	void* pBuffer = nullptr;
 	size_t Size = 0;
 	oTESTB(_Services.AllocateAndLoadBuffer(&pBuffer, &Size, path, false), "%s not loaded", path.c_str());
-	oOnScopeExit FreeBuffer([&] { _Services.DeallocateLoadedBuffer(pBuffer); });
+	oStd::finally FreeBuffer([&] { _Services.DeallocateLoadedBuffer(pBuffer); });
 
-	const uint128 ExpectedHash = {5036109567207105818, 7580512480722386524};
+	const uint128 ExpectedHash(5036109567207105818, 7580512480722386524);
 	uint128 ComputedHash = oHash_murmur3_x64_128(pBuffer, static_cast<unsigned int>(Size));
 	oTESTB(ExpectedHash == ComputedHash, "Hash doesn't match");
 
-	oErrorSetLast(oERROR_NONE);
+	oErrorSetLast(0);
 	return true;
 }

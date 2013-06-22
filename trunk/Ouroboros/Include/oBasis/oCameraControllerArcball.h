@@ -31,7 +31,8 @@
 #define oCameraControllerArcball_h
 
 #include <oBasis/oCameraController.h>
-#include <oBasis/oX11KeyboardSymbols.h>
+#include <oBasis/oGUI.h>
+#include <array>
 
 struct oCAMERA_CONTROLLER_ARCBALL_DESC
 {
@@ -49,17 +50,19 @@ struct oCAMERA_CONTROLLER_ARCBALL_DESC
 		, PanSpeed(0.05f)
 		, DollySpeed(0.04f)
 	{
-		Controls[ORBIT] = oKB_Pointer_Button_Left;
-		Controls[PAN] = oKB_Pointer_Button_Middle;
-		Controls[DOLLY] = oKB_Pointer_Button_Right;
+		Controls[ORBIT] = oGUI_KEY_MOUSE_LEFT;
+		Controls[PAN] = oGUI_KEY_MOUSE_MIDDLE;
+		Controls[DOLLY] = oGUI_KEY_MOUSE_RIGHT;
 	}
 
-	oKEYBOARD_KEY Controls[NUM_CONTROLS];
+	std::array<oGUI_KEY, NUM_CONTROLS> Controls;
 	float2 RotationSpeed;
 	float2 PanSpeed;
 	float DollySpeed;
 };
 
+// {A363E3FE-D85D-4C82-BC31-0DD6495A4470}
+oDEFINE_GUID_I(oCameraControllerArcball, 0xa363e3fe, 0xd85d, 0x4c82, 0xbc, 0x31, 0xd, 0xd6, 0x49, 0x5a, 0x44, 0x70);
 interface oCameraControllerArcball : oCameraController
 {
 	virtual void SetDesc(const oCAMERA_CONTROLLER_ARCBALL_DESC& _Desc) = 0;

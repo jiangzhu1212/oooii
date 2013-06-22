@@ -1,0 +1,119 @@
+=== The Ouroboros Libraries Roadmap ===
+
+This is a brief discussion on the direction of Ouroboros in the foreseeable 
+future.
+
+
+== oStd ==
+
+This is where super-generic heavily header-only code goes. Probably the C++11
+implementation pieces will be left in oStd, but everything else will be moved to 
+a new library that may even be separate from Ouroboros.
+
+
+== Computation (oHLSL, oCompute) ==
+
+"Compute" is the modern encompassing term for throughput or stream computing. 
+Sony Playstation 2 and 3 programmers will be familiar with the concept as it is 
+fully separate from the GPU on those platforms. Basically stream computing is 
+about a small algorithm and a whole lot of data being fed through that 
+algorithm. It could be rasterization, raytracing, fourier transforms, protein 
+folding, whatever - there's a lot of data to get through, though the algorithm 
+once refined is relatively small.
+
+The intent in Ouroboros is to make the stream programming model available 
+everywhere as technologies emerge. HLSL, GLSL and OpenCL are all very similar 
+and work on primitives that have grown out of their graphics hardware roots.
+
+Eventually Ouroboros will create a cross-compute language layer that will allow 
+with minor tweaks the compute APIs to be callable on CPU (and future Sony-style 
+coprocessors) as well as specialized co-processors like GPUs. The oCompute 
+layer is a collection of common algorithms written in that cross-compile 
+language. It is unclear at this time whether oHLSL will evolve to be the cross-
+platform thing with lots of #ifdefs or if there will be an oGLSL and oOpenGL 
+layer with lots of duplicate declarations, but the idea is to assume compute 
+primitives because in the author's opinion the union of the big three compute 
+languages should be available (including 2-3-4 tuples, basic up-to 4x4 matrices 
+and swizzle operations) as part of the C++ standard library. All 4 languages 
+should also have native quaternion and simple volume types.
+
+
+== oConcurrency ==
+
+This will be maintained and involves a basis for experimentation, learning and 
+twiddling. The intent is to use TBB whereever possible, but have a simple bring-
+up system for new hardware such as mobile devices, new consoles or other 
+experimental hardware. This library is also where an abstraction layer is defined
+to simplify platform porting so that code using oConcurrency remains as portable 
+as possible.
+
+At this time older constructs may seem trivial and bloaty wrappers such as 
+oDispatchQueue.*. This is true from the Ouroboros perspective, however much 
+internal code relies on those interfaces so it must remain until its usage is 
+refactored out. If something seems redundant, prefer the lower-level version of 
+the implementation.
+
+
+== oFramework ==
+
+Currently any refactor time is spent on simplifying oBasis, which had become 
+quite large and responsible for a wide array of solutions. Once it is paired 
+down to size, oPlatform will be the focus of any refactor. The intent is 
+basically to separate out any computer peripherals such as screens, cameras 
+and input devices to their own libraries or a library of devices (oDevices?)
+while moving any code that makes oPlatform calls, but no system calls 
+directly will be moved into a library called oFramework. There are internal
+pieces of code with ideas like quick UI setup and plugin-ability that are
+being developed and will probably find their way to be a more cohesive 
+anchor in what will become oFramework. Protocols as separate from socket-
+layer interfaces will either be promoted to oFramework or their own library.
+
+
+== Features ==
+
+SDL and other "creative programming" starting libraries are missing 2 important 
+things in my opinion and providiing something I don't want:
+1. SDL provides a media window, but not a regular OS window for tools creation.
+2. SDL does not have an asset paging/caching system.
+
+If you called #1 HTML5 and #2 the file cache implemented in webkit/ browsers it 
+becomes clear why browser-based technology is gaining popularity - someone 
+solved the hard problems of cross-platform windowing, file I/O from any source 
+and smart use of disk space for remote data. The intent of Ouroboros is to be 
+similar to this, but to outpace HTML5/WebGL's slow pace due to massive cross-
+platform compatibility requirements as well as large design-by-commitee 
+standards boards.
+
+The part of SDL and the like I don't want is that often these systems come with 
+some trivial material system that often has a specular color and one texture. A 
+lot of code is written around a material system that seems to me people will 
+outgrow in the first month of bring-up.
+
+For this reason, the main focus of the next year will be to enhance the oGfx 
+layer with robust support for basic 3D graphics assets management. We expect to 
+define an optimized binary format for:
+1. simple/typical meshes
+2. textures
+3. user-definable materials
+
+We will still be treating shaders as code for the foreseeable future, but the 
+discussion about treating it more dynamically to enable fast-reload and 
+iteration continues.
+
+We also expect to define an XML-based scene file format for the development of 
+simple scenes. Because of our video product UI scenes will be the first to get 
+attention. So basically we're building a big sprite engine with attention 
+towards moving to true 3D immediately afterwards.
+
+That's as far into Ouroboros's future as I can see right now. OOOii has many 
+divergent projects and there is also an internal technology roadmap driving this 
+one which I am not at liberty to share at present. OOOii projects may steer us 
+away from this roadmap, or may accelerate the execution of the roadmap greatly.
+Only future deliverables can tell!
+
+If you have a project you'd like to build using Ouroboros and there are 
+significant missing elements you'd like to see authored or wish to contribute 
+yourself, please contact me at  antony.arciuolo@oooii.com or arciuolo@gmail.com.
+
+Sincerely,
+Tony

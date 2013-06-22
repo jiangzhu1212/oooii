@@ -27,6 +27,8 @@
 #ifndef oRTTIForContainers_h
 #define oRTTIForContainers_h
 
+#include <oBasis/oInt.h>
+
 struct oRTTI_DATA_CONTAINER // : oRTTI
 {
 	struct INFO
@@ -52,6 +54,10 @@ struct oRTTI_DATA_CONTAINER // : oRTTI
 #define oRTTI_CONTAINED_TYPE_DECLARATION(container_name, contained_type_name) \
 	extern oRTTI_DATA_CONTAINER oRTTI_##container_name##_##contained_type_name;
 
+#define oRTTI_STD_CONTAINED_TYPE_DECLARATION(container_name, contained_type_name, container_type) \
+	extern oRTTI_DATA_CONTAINER oRTTI_##container_name##_##contained_type_name; \
+	extern oRTTI_DATA_CONTAINER::INFO oRTTIContainer_##container_name##_##contained_type_name;
+
 #define oRTTI_CONTAINER_DECLARATION(container_name) \
 	extern oRTTI_DATA_CONTAINER::INFO oRTTIContainer_##container_name;
 
@@ -72,6 +78,41 @@ struct oRTTI_DATA_CONTAINER // : oRTTI
 
 #define oRTTI_CONTAINER_END_DESCRIPTION(container_name) \
 	};
+
+template<typename ContainerT> bool oStdContainerSetItemCount(const oRTTI& _RTTI, ContainerT* _pStdContainer, int _ContainerSizeInBytes, int _NewSize, bool _ConstructNewItems)
+{
+	_pStdContainer->resize(_NewSize);
+	return true;
+}
+
+template<typename ContainerT> int oStdContainerGetItemCount(const oRTTI& _RTTI, const ContainerT* _pStdContainer, int _ContainerSizeInBytes)
+{
+	return oInt(_pStdContainer->size());
+}
+
+template<typename ContainerT> void* oStdContainerGetItemPtr(const oRTTI& _RTTI, const ContainerT* _pStdContainer, int _ContainerSizeInBytes, int _Index)
+{
+	ContainerT& Container = *const_cast<ContainerT*>(_pStdContainer);
+	return &Container[_Index];
+}
+
+#define oRTTI_STD_CONTAINED_TYPE_DESCRIPTION(container_name, contained_type_name, container_type) \
+	oRTTI_DATA_CONTAINER::INFO oRTTIContainer_##container_name##_##contained_type_name = { \
+		#container_name, \
+		sizeof(container_type), \
+		false, \
+		nullptr, \
+		nullptr, \
+		(oRTTIContainerSetItemCount)oStdContainerSetItemCount<container_type>, \
+		(oRTTIContainerGetItemCount)oStdContainerGetItemCount<container_type>, \
+		(oRTTIContainerGetItemPtr)oStdContainerGetItemPtr<container_type>, \
+	}; \
+	oRTTI_DATA_CONTAINER oRTTI_##container_name##_##contained_type_name = { \
+	oRTTI_TYPE_CONTAINER, \
+	sizeof(contained_type_name), \
+	(const oRTTI*)&oRTTI_##contained_type_name, \
+	&oRTTIContainer_##container_name##_##contained_type_name \
+};
 
 
 #endif

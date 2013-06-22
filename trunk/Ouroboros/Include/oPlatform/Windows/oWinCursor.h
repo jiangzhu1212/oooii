@@ -52,7 +52,14 @@ bool oWinCursorSetClipped(HWND _hWnd, bool _Clipped = true);
 bool oWinCursorIsVisible();
 void oWinCursorSetVisible(bool _Visible = true);
 
-bool oWinCursorGetPosition(HWND _hWnd, int2* _ClientPosition);
-bool oWinCursorSetPosition(HWND _hWnd, const int2& _ClientPosition);
+// Returns the coordinates of the cursor's hotspot. If _hWnd is nullptr then the 
+// position will be in virtual desktop space. If _hWnd is valid, then the 
+// coordinates will be in client space.
+int2 oWinCursorGetPosition(HWND _hWnd);
+
+// Set the coordinates of the cursor's hotspot. If _hWnd is nullptr then the 
+// position will be in virtual desktop space. If _hWnd is valid then the 
+// position will be in client space.
+void oWinCursorSetPosition(HWND _hWnd, const int2& _Position);
 
 #endif

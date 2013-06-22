@@ -23,15 +23,21 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// URI parsing
+// URI parsing. To be pedantic: this is a string-parsing library and thus does
+// not always produce a result that might be sensible to any given scheme 
+// handler. For example, oURIPartsToPath will interpret an authority as a UNC
+// path. An HTTP-esque server implementation shouldn't use that call because by 
+// the time the HTTP server is looking at the parts, the authority probably has
+// been resolved and the path needs to be re-based.
 #pragma once
 #ifndef oURI_h
 #define oURI_h
 
-#include <oBasis/oFixedString.h>
-#include <oBasis/oMacros.h> // oCOUNTOF
-#include <oBasis/oOperators.h>
+#include <oStd/fixed_string.h>
+#include <oStd/macros.h> // oCOUNTOF
+#include <oStd/operators.h>
 #include <oBasis/oPlatformFeatures.h> // nullptr
+#include <oBasis/oString.h>
 #include <oBasis/oRTTI.h>
 
 #define oMAX_SCHEME 32
@@ -40,8 +46,6 @@
 #define oMAX_URIREF _MAX_PATH
 #define oMAX_QUERY (2048 - oMAX_URI) // http://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url
 #define oMAX_FRAGMENT 128
-#define oRESERVED_URI_CHARS "!*'();:@&=+$,?#[]/"
-#define oRESERVED_URI_CHARS_WITH_SPACE oRESERVED_URI_CHARS " "
 
 struct oURIParts
 {
@@ -54,17 +58,30 @@ struct oURIParts
 	inline void ToLower() { oToLower(Scheme); oToLower(Authority); oToLower(Path);  oToLower(Query); oToLower(Fragment); }
 	inline bool Empty() const { return Scheme.empty() && Authority.empty() && Path.empty() && Query.empty() && Fragment.empty(); }
 
-	oFixedString<char, oMAX_SCHEME> Scheme;
-	oFixedString<char, oMAX_AUTHORITY> Authority;
-	oStringPath Path;
-	oFixedString<char, oMAX_QUERY> Query;
-	oFixedString<char, oMAX_FRAGMENT> Fragment;
+	oStd::fixed_string<char, oMAX_SCHEME> Scheme;
+	oStd::fixed_string<char, oMAX_AUTHORITY> Authority;
+	oStd::path_string Path;
+	oStd::fixed_string<char, oMAX_QUERY> Query;
+	oStd::fixed_string<char, oMAX_FRAGMENT> Fragment;
 };
 
-// A URI reference is like a relative path and may not include an authority or 
-// scheme, or even a full path. A URI is only a URI when it is fully specified,
-// so this does a check to see if the scheme is in place.
+// A URI reference could be a relative path and may not include an authority or 
+// scheme, or even a full path. This function checks whether the URI reference
+// is a URI (has a scheme).
+// Also see http://tools.ietf.org/html/rfc3986#section-4.1
+bool oURIIsURI(const char* _URIReference);
+
+// A URI reference could be a relative path and may not include an authority or 
+// scheme, or even a full path. This function checks whether the URI reference
+// is an absolute URI (has a scheme, but not a fragment).
+// Also see http://tools.ietf.org/html/rfc3986#section-4.3
 bool oURIIsAbsolute(const char* _URIReference);
+bool oURIIsAbsolute(const oURIParts& _Parts);
+
+// Checks whether the URI reference points to the same document as the given
+// document URI. If the URI reference contains a fragment it will be ignored.
+// Also see http://tools.ietf.org/html/rfc3986#section-4.4
+bool oURIIsSameDocument(const char* _URIReference, const char* _DocumentURI);
 
 // Given a URI or URI reference, separate out the various components
 bool oURIDecompose(const char* _URIReference, char* _Scheme, size_t _SizeofScheme, char* _Authority = nullptr, size_t _SizeofAuthority = 0, char* _Path = nullptr, size_t _SizeOfPath = 0, char* _Query = nullptr, size_t _SizeofQuery = 0, char* _Fragment = nullptr, size_t _SizeofFragment = 0);
@@ -76,17 +93,6 @@ inline char* oURIRecompose(char* _URIReference, size_t _SizeofURIReference, cons
 
 // Create a cleaned-up copy of _SourceURI in _NormalizedURI.
 inline char* oURINormalize(char* _NormalizedURI, size_t _SizeofNormalizedURI, const char* _SourceURI) { oURIParts parts; return oURIDecompose(_SourceURI, &parts) && oURIRecompose(_NormalizedURI, _SizeofNormalizedURI, parts) ? _NormalizedURI : nullptr; }
-
-// Conceptually this strcpys source into destination, but replaces any char 
-// found in the reserved char string with its %octet form. Because this 
-// operation expands the length of the string, _StrDestination and _StrSource 
-// must be separate buffers.
-char* oURIPercentEncode(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource, const char* _StrReservedChars = oRESERVED_URI_CHARS);
-
-// Conceptually strcpy's source into destination, but replaces any percent-
-// encoding into its true ASCII (not quite UTF-8 here) value. _StrDestination 
-// and _StrSource can be the same buffer.
-char* oURIPercentDecode(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource);
 
 // Generate a hash fit for a hashmap/unordered set. This expects a normalized
 // URI reference as suggested here: http://www.textuality.com/tag/uri-comp-2.html
@@ -100,13 +106,23 @@ char* oURIFromRelativePath(char* _URIReference, size_t _SizeofURIReference, cons
 // because it supports specifying oSYSPATHs as authorities.
 char* oURIToPath(char* _Path, size_t _SizeofPath, const char* _URI);
 
-// Convert an oURIParts strcut to a path, properly handling UNC paths. NOTE: 
+// Convert an oURIParts struct to a path, properly handling UNC paths. NOTE: 
 // Prefer oSystemURIPartsToPath in oPlatform/oSystem.h because it supports 
 // specifying oSYSPATHs as authorities.
 char* oURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIParts);
 
-char* oURIMakeRelativeToBase(char* _URIReference, size_t _SizeofURIReference, const char* _URIBase, const char* _URI);
-char* oURIMakeAbsoluteFromBase(char* _URIReference, size_t _SizeofURIReference, const char* _URIBase, const char* _URI);
+// Note that this function doesn't conform 100% to expectation, it assumes that base and reference have
+// the same scheme and authority, where other algorithms would allow this.
+// Also if the only difference is the query or fragment, it include the filename part of the path as well,
+// which is not strictly necessary, but still valid when you'd reverse the operation with a resolve.
+// See also http://msdn.microsoft.com/en-us/library/system.uri.makerelativeuri(v=vs.95).aspx
+// and http://docs.oracle.com/javase/1.4.2/docs/api/java/net/URI.html#relativize(java.net.URI)
+char* oURIRelativize(char* _URIReference, size_t _SizeofURIReference, const char* _URIBase, const char* _URI);
+
+// Resolves a URI reference to a URI using a URI base (which cannot be a relative URI)
+// This is the reverse operation of oURIRelativize
+// See also: http://tools.ietf.org/html/rfc3986#section-5.2
+char* oURIResolve(char* _URIReference, size_t _SizeofURIReference, const char* _URIBase, const char* _URI);
 
 char* oURIEnsureFileExtension(char* _URIReferenceWithExtension, size_t _SizeofURIReferenceWithExtension, const char* _SourceURIReference, const char* _Extension);
 
@@ -118,29 +134,25 @@ template<size_t schemeSize, size_t authoritySize, size_t pathSize, size_t queryS
 template<size_t size> char* oURIRecompose(char(&_URIReference)[size], const char* _Scheme, const char* _Authority, const char* _Path, const char* _Query, const char* _Fragment) { return oURIRecompose(_URIReference, size, _Scheme, _Authority, _Path, _Query, _Fragment); }
 template<size_t size> char* oURIRecompose(char (&_URIReference)[size], const oURIParts& _Parts) { return oURIRecompose(_URIReference, size, _Parts); }
 template<size_t size> char* oURINormalize(char (&_NormalizedURI)[size], const char* _SourceURI) { return oURINormalize(_NormalizedURI, size, _SourceURI); }
-template<size_t size> char* oURIPercentEncode(char (&_StrDestination)[size], const char* _StrSource, const char* _StrReservedChars = oRESERVED_URI_CHARS) { return oURIPercentEncode(_StrDestination, size, _StrSource, _StrReservedChars); }
-template<size_t size> char* oURIPercentDecode(char (&_StrDestination)[size], const char* _StrSource) { return oURIPercentDecode(_StrDestination, size, _StrSource); }
 template<size_t size> char* oURIFromAbsolutePath(char (&_URI)[size], const char* _AbsolutePath) { return oURIFromAbsolutePath(_URI, size, _AbsolutePath); }
 template<size_t size> char* oURIFromRelativePath(char (&_URIReference)[size], const char* _RelativePath) { return oURIFromRelativePath(_URIReference, size, _RelativePath); }
 template<size_t size> char* oURIToPath(char (&_Path)[size], const char* _URI) { return oURIToPath(_Path, size, _URI); }
 template<size_t size> char* oURIPartsToPath(char (&_Path)[size], const oURIParts& _URIParts) { return oURIPartsToPath(_Path, size, _URIParts); }
-template<size_t size> char* oURIMakeRelativeToBase(char (&_URIReference)[size], const char* _URIBase, const char* _URI) { return oURIMakeRelativeToBase(_URIReference, size, _URIBase, _URI); }
-template<size_t size> char* oURIMakeAbsoluteFromBase(char (&_URIReference)[size], const char* _URIBase, const char* _URI) { return oURIMakeAbsoluteFromBase(_URIReference, size, _URIBase, _URI); }
+template<size_t size> char* oURIRelativize(char (&_URIReference)[size], const char* _URIBase, const char* _URI) { return oURIRelativize(_URIReference, size, _URIBase, _URI); }
+template<size_t size> char* oURIResolve(char (&_URIReference)[size], const char* _URIBase, const char* _URI) { return oURIResolve(_URIReference, size, _URIBase, _URI); }
 template<size_t size> char* oURIEnsureFileExtension(char (&_URIReferenceWithExtension)[size], const char* _SourceURIReference, const char* _Extension) { return oURIEnsureFileExtension(_URIReferenceWithExtension, size, _SourceURIReference, _Extension); }
 
-// oFixedString support
-template<size_t capacity> char* oURIRecompose(oFixedString<char, capacity>& _URIReference, const char* _Scheme, const char* _Authority, const char* _Path, const char* _Query, const char* _Fragment) { return oURIRecompose(_URIReference, _URIReference.capacity(), _Scheme, _Authority, _Path, _Query, _Fragment); }
-template<size_t capacity> char* oURIRecompose(oFixedString<char, capacity>& _URIReference, const oURIParts& _Parts) { return oURIRecompose(_URIReference, _URIReference.capacity(), _Parts); }
-template<size_t capacity> char* oURINormalize(oFixedString<char, capacity>& _NormalizedURI, const char* _SourceURI) { return oURINormalize(_NormalizedURI, _NormalizedURI.capacity(), _SourceURI); }
-template<size_t capacity> char* oURIPercentEncode(oFixedString<char, capacity>& _StrDestination, const char* _StrSource, const char* _StrReservedChars = oRESERVED_URI_CHARS) { return oURIPercentEncode(_StrDestination, _StrDestination.capacity(), _StrSource, _StrReservedChars); }
-template<size_t capacity> char* oURIPercentDecode(oFixedString<char, capacity>& _StrDestination, const char* _StrSource) { return oURIPercentDecode(_StrDestination, _StrDestination.capacity(), _StrSource); }
-template<size_t capacity> char* oURIFromAbsolutePath(oFixedString<char, capacity>& _URI, const char* _AbsolutePath) { return oURIFromAbsolutePath(_URI, _URI.capacity(), _AbsolutePath); }
-template<size_t capacity> char* oURIFromRelativePath(oFixedString<char, capacity>& _URIReference, const char* _RelativePath) { return oURIFromRelativePath(_URIReference, _URIReference.capacity(), _RelativePath); }
-template<size_t capacity> char* oURIToPath(oFixedString<char, capacity>& _Path, const char* _URI) { return oURIToPath(_Path, _Path.capacity(), _URI); }
-template<size_t capacity> char* oURIPartsToPath(oFixedString<char, capacity>& _Path, const oURIParts& _URIParts) { return oURIPartsToPath(_Path, _Path.capacity(), _URIParts); }
-template<size_t capacity> char* oURIMakeRelativeToBase(oFixedString<char, capacity>& _URIReference, const char* _URIBase, const char* _URI) { return oURIMakeRelativeToBase(_URIReference, _URIReference.capacity(), _URIBase, _URI); }
-template<size_t capacity> char* oURIMakeAbsoluteFromBase(oFixedString<char, capacity>& _URIReference, const char* _URIBase, const char* _URI) { return oURIMakeAbsoluteFromBase(_URIReference, _URIReference.capacity(), _URIBase, _URI); }
-template<size_t capacity> char* oURIEnsureFileExtension(oFixedString<char, capacity>& _URIReferenceWithExtension, const char* _SourceURIReference, const char* _Extension) { return oURIEnsureFileExtension(_URIReferenceWithExtension, _URIReferenceWithExtension.capacity(), _SourceURIReference, _Extension); }
+// oStd::fixed_string support
+template<size_t capacity> char* oURIRecompose(oStd::fixed_string<char, capacity>& _URIReference, const char* _Scheme, const char* _Authority, const char* _Path, const char* _Query, const char* _Fragment) { return oURIRecompose(_URIReference, _URIReference.capacity(), _Scheme, _Authority, _Path, _Query, _Fragment); }
+template<size_t capacity> char* oURIRecompose(oStd::fixed_string<char, capacity>& _URIReference, const oURIParts& _Parts) { return oURIRecompose(_URIReference, _URIReference.capacity(), _Parts); }
+template<size_t capacity> char* oURINormalize(oStd::fixed_string<char, capacity>& _NormalizedURI, const char* _SourceURI) { return oURINormalize(_NormalizedURI, _NormalizedURI.capacity(), _SourceURI); }
+template<size_t capacity> char* oURIFromAbsolutePath(oStd::fixed_string<char, capacity>& _URI, const char* _AbsolutePath) { return oURIFromAbsolutePath(_URI, _URI.capacity(), _AbsolutePath); }
+template<size_t capacity> char* oURIFromRelativePath(oStd::fixed_string<char, capacity>& _URIReference, const char* _RelativePath) { return oURIFromRelativePath(_URIReference, _URIReference.capacity(), _RelativePath); }
+template<size_t capacity> char* oURIToPath(oStd::fixed_string<char, capacity>& _Path, const char* _URI) { return oURIToPath(_Path, _Path.capacity(), _URI); }
+template<size_t capacity> char* oURIPartsToPath(oStd::fixed_string<char, capacity>& _Path, const oURIParts& _URIParts) { return oURIPartsToPath(_Path, _Path.capacity(), _URIParts); }
+template<size_t capacity> char* oURIRelativize(oStd::fixed_string<char, capacity>& _URIReference, const char* _URIBase, const char* _URI) { return oURIRelativize(_URIReference, _URIReference.capacity(), _URIBase, _URI); }
+template<size_t capacity> char* oURIResolve(oStd::fixed_string<char, capacity>& _URIReference, const char* _URIBase, const char* _URI) { return oURIResolve(_URIReference, _URIReference.capacity(), _URIBase, _URI); }
+template<size_t capacity> char* oURIEnsureFileExtension(oStd::fixed_string<char, capacity>& _URIReferenceWithExtension, const char* _SourceURIReference, const char* _Extension) { return oURIEnsureFileExtension(_URIReferenceWithExtension, _URIReferenceWithExtension.capacity(), _SourceURIReference, _Extension); }
 
 
 // Class that enforces some well-formed URI ideas as described here:
@@ -167,12 +179,12 @@ public:
 
 	inline bool Empty() const { return URIParts.Empty(); }
 	inline bool Valid() const { return !Empty(); }
-	inline bool IsRelativeReference() const { return !Empty() && URIParts.Scheme.empty(); }
+	inline bool IsRelativeReference() const { return !IsAbsolute(); }
 
 	// @oooii-tony: This fragment test is iffy, read section 4.3 in 
 	// http://tools.ietf.org/html/rfc3986#section-4.3. The absolute-URI = ...
 	// part is different than the verbiage, so go with the pseudo-code.
-	inline bool IsAbsolute() const { return !IsRelativeReference() && URIParts.Fragment.empty(); }
+	inline bool IsAbsolute() const { return oURIIsAbsolute(URIParts); }
 
 	inline void Clear() { URIParts.Clear(); HashID = 0; }
 

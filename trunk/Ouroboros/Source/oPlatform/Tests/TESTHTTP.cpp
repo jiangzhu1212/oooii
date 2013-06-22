@@ -30,7 +30,7 @@
 #include <oPlatform/oFile.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oMsgBox.h>
-#include <oBasis/oOnScopeExit.h>
+#include <oStd/finally.h>
 
 #define TEST_FILE "PLATFORM_oHTTP.png"
 
@@ -98,9 +98,9 @@ struct PLATFORM_oHTTP : public oTest
 				_pResponse->StatusLine.StatusCode = oHTTP_NOT_FOUND;
 			if (strstr(_Request.RequestLine.RequestURI, TEST_FILE) != 0)
 			{
-				oStringPath defaultDataPath;
+				oStd::path_string defaultDataPath;
 				oSystemGetPath(defaultDataPath.c_str(), oSYSPATH_DATA);
-				oStringPath golden;
+				oStd::path_string golden;
 				oPrintf(golden, "%sGoldenImages%s", defaultDataPath.c_str(), _Request.RequestLine.RequestURI.c_str());
 
 				if (oStreamReaderCreate(golden, &FileReader))
@@ -142,10 +142,10 @@ struct PLATFORM_oHTTP : public oTest
 
 		oRef<oHTTPClient> Client;
 		oHTTPClient::DESC clientDesc;
-		oFromString(&clientDesc.ServerAddr, "localhost:80");
+		oStd::from_string(&clientDesc.ServerAddr, "localhost:80");
 		if (!oHTTPServerCreate(desc, &Server))
 		{
-			if (oErrorGetLast() == oERROR_IO)
+			if (oErrorGetLast() == std::errc::io_error)
 			{
 				if (strstr(oErrorGetLastString(), "WSAEACCES"))
 				{
@@ -182,9 +182,9 @@ struct PLATFORM_oHTTP : public oTest
 			oTESTB(TestImage(image), "Image compare failed.");
 
 			// Test POST: Sending an image file with POST.  Server will compare the image to the original and returned OK for success and 500 Internal Error for failure
-			oStringPath defaultDataPath;
+			oStd::path_string defaultDataPath;
 			oSystemGetPath(defaultDataPath.c_str(), oSYSPATH_DATA);
-			oStringPath golden;
+			oStd::path_string golden;
 			oPrintf(golden, "%sGoldenImages/" TEST_FILE, defaultDataPath.c_str());
 			if (oStreamReaderCreate(golden, &FileReader))
 			{
@@ -280,10 +280,10 @@ struct PLATFORM_oHTTPLarge : public oTest
 
 		oRef<oHTTPClient> Client;
 		oHTTPClient::DESC clientDesc;
-		oFromString(&clientDesc.ServerAddr, "localhost:80");
+		oStd::from_string(&clientDesc.ServerAddr, "localhost:80");
 		if (!oHTTPServerCreate(desc, &Server))
 		{
-			if (oErrorGetLast() == oERROR_IO)
+			if (oErrorGetLast() == std::errc::io_error)
 			{
 				if (strstr(oErrorGetLastString(), "WSAEACCES"))
 				{

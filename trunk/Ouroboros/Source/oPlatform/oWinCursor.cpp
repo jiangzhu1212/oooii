@@ -28,13 +28,13 @@
 
 #define oWINV(_hWnd) \
 	if (!oWinExists(_hWnd)) \
-	{	oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid HWND %p specified", _hWnd); \
+	{	oErrorSetLast(std::errc::invalid_argument, "Invalid HWND %p specified", _hWnd); \
 	return false; \
 	}
 
 #define oWINVP(_hWnd) \
 	if (!oWinExists(_hWnd)) \
-	{	oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid HWND %p specified", _hWnd); \
+	{	oErrorSetLast(std::errc::invalid_argument, "Invalid HWND %p specified", _hWnd); \
 	return nullptr; \
 	}
 
@@ -80,30 +80,21 @@ void oWinCursorSetVisible(bool _Visible)
 		while (ShowCursor(false) > -1) {}
 }
 
-bool oWinCursorGetPosition(HWND _hWnd, int2* _pClientPosition)
+int2 oWinCursorGetPosition(HWND _hWnd)
 {
-	oWINV(_hWnd);
-	if (!_pClientPosition)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return false;
-	}
-
 	POINT p;
-	oVB_RETURN(GetCursorPos(&p));
-	oVB_RETURN(ScreenToClient(_hWnd, &p));
-	_pClientPosition->x = p.x;
-	_pClientPosition->y = p.y;
-	return true;
+	oVB(GetCursorPos(&p));
+	if (::IsWindow(_hWnd))
+		oVB(ScreenToClient(_hWnd, &p));
+	return int2(p.x, p.y);
 }
 
-bool oWinCursorSetPosition(HWND _hWnd, const int2& _ClientPosition)
+void oWinCursorSetPosition(HWND _hWnd, const int2& _Position)
 {
-	oWINV(_hWnd);
-	POINT p = { _ClientPosition.x, _ClientPosition.y };
-	oVB_RETURN(ClientToScreen(_hWnd, &p));
-	oVB_RETURN(SetCursorPos(p.x, p.y));
-	return true;
+	POINT p = { _Position.x, _Position.y };
+	if (::IsWindow(_hWnd))
+		oVB(ClientToScreen(_hWnd, &p));
+	oVB(SetCursorPos(p.x, p.y));
 }
 
 HCURSOR oWinGetCursor(HWND _hWnd)

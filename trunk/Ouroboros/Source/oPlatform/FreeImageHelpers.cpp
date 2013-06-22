@@ -127,7 +127,7 @@ FIBITMAP* FILoad(const void* _pBuffer, size_t _SizeofBuffer, bool _LoadBitmap)
 				for (int i = FIMD_COMMENTS; i <= FIMD_CUSTOM; i++)
 					if(FreeImage_GetMetadataCount((FREE_IMAGE_MDMODEL)i, bmp))
 					{
-						oWARN_ONCE("An oImage contains metadata. FreeImage will leak when unloading this image.");
+						oTRACE_ONCE("WARNING: An oImage contains metadata. FreeImage will leak when unloading this image.");
 						break;
 					}
 			#endif
@@ -182,6 +182,9 @@ oImage::FORMAT FIGetImageFormat(FIBITMAP* _pBitmap)
 		FIEnsureInit();
 		FREE_IMAGE_COLOR_TYPE colorType = FreeImage_GetColorType(_pBitmap);
 		unsigned int bpp = FreeImage_GetBPP(_pBitmap);
+
+		if (bpp == 8)
+			return oImage::R8;
 
 		// only rgb(a) formats supported
 		if (!(colorType == FIC_RGB || colorType == FIC_RGBALPHA))

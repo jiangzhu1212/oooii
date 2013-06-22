@@ -24,7 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform//oGUIMenu.h>
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
 
 #if 0
 // not in use (yet?)
@@ -148,7 +148,7 @@ void oGUIMenuRemoveAllItems(oGUI_MENU _hMenu)
 
 void oGUIMenuItemToSubmenu(oGUI_MENU _hParentMenu, int _ItemID, oGUI_MENU _hSubmenu)
 {
-	oStringM text;
+	oStd::mstring text;
 	oVERIFY(oGUIMenuGetText(text, _hParentMenu, _ItemID));
 	oVB(RemoveMenu((HMENU)_hParentMenu, _ItemID, MF_BYCOMMAND));
 	oVB(InsertMenu((HMENU)_hParentMenu, _ItemID, MF_STRING|MF_POPUP, (UINT_PTR)_hSubmenu, text));
@@ -159,7 +159,7 @@ void oGUIMenuSubmenuToItem(oGUI_MENU _hParentMenu, oGUI_MENU _hSubmenu, int _Ite
 	int p = oGUIMenuFindPosition(_hParentMenu, _hSubmenu);
 	oASSERT(p != oInvalid, "the specified submenu is not under the specified parent menu");
 	
-	oStringM text;	
+	oStd::mstring text;	
 	oVERIFY(oGUIMenuGetTextByPosition(text, text.capacity(), _hParentMenu, p));
 	oVB(DeleteMenu((HMENU)_hParentMenu, p, MF_BYPOSITION));
 
@@ -193,7 +193,7 @@ bool oGUIMenuIsChecked(oGUI_MENU _hMenu, int _ItemID)
 	if (mii.fState & MFS_CHECKED)
 		return true;
 
-	oErrorSetLast(oERROR_NONE);
+	oErrorSetLast(0);
 	return false;
 }
 

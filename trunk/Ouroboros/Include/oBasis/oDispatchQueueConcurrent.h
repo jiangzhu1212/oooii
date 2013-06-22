@@ -24,10 +24,10 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 // A dispatch queue that runs tasks on any thread at any time (no order 
-// guarantees). Most likely client code should prefer oParallelFor over using 
+// guarantees). Most likely client code should prefer oConcurrency::parallel_for over using 
 // this type of dispatch queue directly. This is a custom implementation using
-// one oConcurrentQueue to feed worker threads and exists to:
-// A. hammer oConcurrentQueue hard in test cases so that if new queue 
+// one oConcurrency::concurrent_queue to feed worker threads and exists to:
+// A. hammer oConcurrency::concurrent_queue hard in test cases so that if new queue 
 //    implementations are used we have a small test usage case where contention 
 //    is high.
 // B. This serves as a benchmark. How much faster is TBB or Windows Threadpool? 
@@ -43,11 +43,14 @@
 
 #include <oBasis/oDispatchQueue.h>
 
+// {1F88B437-599E-4613-9B5C-021ACE7D572D}
+oDEFINE_GUID_I(oDispatchQueueConcurrent, 0x1f88b437, 0x599e, 0x4613, 0x9b, 0x5c, 0x2, 0x1a, 0xce, 0x7d, 0x57, 0x2d);
 interface oDispatchQueueConcurrent : oDispatchQueue
 {
 };
 
 bool oDispatchQueueCreateConcurrentGeneric(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueueConcurrent** _ppDispatchQueue);
+bool oDispatchQueueCreateConcurrentSerial(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueueConcurrent** _ppQueue);
 
 // Like oTask, this API is generally an abstraction for an underlying task-based
 // scheduler. Such implementations are still platform-specific. (though since TBB 

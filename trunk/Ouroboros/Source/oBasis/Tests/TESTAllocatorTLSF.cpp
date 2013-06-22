@@ -23,15 +23,14 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oAlgorithm.h>
+#include <oStd/algorithm.h>
 #include <oBasis/oAllocatorTLSF.h>
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
+#include <oStd/timer.h>
 #include <oBasis/oInvalid.h>
-#include <oBasis/oMath.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oString.h>
-#include <oBasis/oTimer.h>
-#include <oBasisTests/oBasisTests.h>
+#include <oBasis/tests/oBasisTests.h>
 #include <vector>
 #include "oBasisTestCommon.h"
 
@@ -52,25 +51,25 @@ bool oBasisTest_oAllocatorTLSF(const oBasisTestServices& _Services)
 		const size_t ArenaSize = oMB(500);
 	#endif
 
-	oStringS strArenaSize;
+	oStd::sstring strArenaSize;
 	oTRACE("Allocating %s arena using CRT... (SLOW! OS has to defrag virtual memory to get a linear run of this size)", oFormatMemorySize(strArenaSize, ArenaSize, 2));
 
-	#ifdef _DEBUG
-		oLocalTimer timer;
+	#if oENABLE_TRACES
+		oStd::timer t;
 	#endif
 	std::vector<char> arena(ArenaSize); // _ArenaSize should be bigger than 32-bit's 4 GB limitation
-	oTRACE("Allocation took %.02f seconds", timer.Seconds());
+	oTRACE("Allocation took %.02f seconds", t.seconds());
 
 	oAllocator::DESC desc;
 	desc.ArenaSize = arena.size();
-	desc.pArena = oGetData(arena);
+	desc.pArena = oStd::data(arena);
 
 	oRef<oAllocator> Allocator;
 	oTESTB(oAllocatorCreateTLSF("TestAllocator", desc, &Allocator), "Failed to create a TLSF allocator");
 
 	const size_t NUM_POINTER_TESTS = 1000;
 	std::vector<char*> pointers(NUM_POINTER_TESTS);
-	memset(oGetData(pointers), 0, sizeof(char*) * pointers.size());
+	memset(oStd::data(pointers), 0, sizeof(char*) * pointers.size());
 	size_t totalUsed = 0;
 	size_t smallestAlloc = oInvalid;
 	size_t largestAlloc = 0;
@@ -142,7 +141,7 @@ bool oBasisTest_oAllocatorTLSF(const oBasisTestServices& _Services)
 	oTESTB(Allocator->IsValid(), "Heap corrupt on Deallocate");
 
 	// Fill out statistics and report
-	oStringS RAMused, MINsize, MAXsize;
-	oErrorSetLast(oERROR_NONE, "%sRAMused: %s, minsize:%s, maxsize:%s", EnoughPhysRamForFullTest ? "" : "WARNING: system memory not enough to run full test quickly. ", oFormatMemorySize(RAMused, ArenaSize, 1), oFormatMemorySize(MINsize, smallestAlloc, 1), oFormatMemorySize(MAXsize, largestAlloc, 1));
+	oStd::sstring RAMused, MINsize, MAXsize;
+	oErrorSetLast(0, "%sRAMused: %s, minsize:%s, maxsize:%s", EnoughPhysRamForFullTest ? "" : "WARNING: system memory not enough to run full test quickly. ", oFormatMemorySize(RAMused, ArenaSize, 1), oFormatMemorySize(MINsize, smallestAlloc, 1), oFormatMemorySize(MAXsize, largestAlloc, 1));
 	return true;
 }

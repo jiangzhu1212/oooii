@@ -60,17 +60,19 @@
 // debugging purposes.
 oAPI char* oCameraControllerParseResponse(char* _StrDestination, size_t _SizeofStrDestination, int _ResponseFlags);
 template<size_t size> char* oCameraControllerParseResponse(char (&_StrDestination)[size], int _ResponseFlags) { return oCameraControllerParseResponse(_StrDestination, size, _ResponseFlags); }
-template<size_t capacity> char* oCameraControllerParseResponse(oFixedString<char, capacity>& _StrDestination, int _ResponseFlags) { return oCameraControllerParseResponse(_StrDestination, _StrDestination.capacity(), _ResponseFlags); }
+template<size_t capacity> char* oCameraControllerParseResponse(oStd::fixed_string<char, capacity>& _StrDestination, int _ResponseFlags) { return oCameraControllerParseResponse(_StrDestination, _StrDestination.capacity(), _ResponseFlags); }
 
+// {D7874299-6F52-4E5F-A76E-9ACB37A35316}
+oDEFINE_GUID_I(oCameraController, 0xd7874299, 0x6f52, 0x4e5f, 0xa7, 0x6e, 0x9a, 0xcb, 0x37, 0xa3, 0x53, 0x16);
 interface oCameraController : oInterface
 {
-	// Pass the window dimensions of the parent window to this any time it changes
-	virtual void SetWindowDimensions(const int2& _WindowDimensions) = 0;
-
 	// Respond to user input. Attach this to the message pump of an oWindow's
 	// action handler. This returns several of the above bit masks to indicate how 
 	// the controller has responded to the input.
 	virtual int OnAction(const oGUI_ACTION_DESC& _Action) = 0;
+
+	// Call this every update
+	virtual void Tick() = 0;
 
 	// Call this when something happens that causes any state retained by an 
 	// instance to become invalid, such as the system stealing focus or going 

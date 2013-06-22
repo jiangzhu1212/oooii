@@ -25,7 +25,7 @@
  **************************************************************************/
 #include "oD3DX11.h"
 
-static const char* dll_procs[] = 
+static const char* sExportedAPIs[] = 
 {
 	"D3DX11CreateTextureFromFileA",
 	"D3DX11CreateTextureFromMemory",

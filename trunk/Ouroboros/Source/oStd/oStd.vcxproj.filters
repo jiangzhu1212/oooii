@@ -1,0 +1,249 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oStdChrono.cpp">
+      <Filter>Source\C++11</Filter>
+    </ClCompile>
+    <ClCompile Include="oStdConditionVariable.cpp">
+      <Filter>Source\C++11</Filter>
+    </ClCompile>
+    <ClCompile Include="oStdFuture.cpp">
+      <Filter>Source\C++11</Filter>
+    </ClCompile>
+    <ClCompile Include="oStdMutex.cpp">
+      <Filter>Source\C++11</Filter>
+    </ClCompile>
+    <ClCompile Include="oStdThread.cpp">
+      <Filter>Source\C++11</Filter>
+    </ClCompile>
+    <ClCompile Include="date.cpp">
+      <Filter>Source\Types</Filter>
+    </ClCompile>
+    <ClCompile Include="calfaq.cpp">
+      <Filter>Source\Types</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcat.c">
+      <Filter>Source\string\strlcpy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcpy.c">
+      <Filter>Source\string\strlcpy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcpy.c">
+      <Filter>Source\string\strlcpy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcat.c">
+      <Filter>Source\string\strlcpy</Filter>
+    </ClCompile>
+    <ClCompile Include="config.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="format_bytes.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="format_duration.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="strmatch.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="ordinal.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="text_document.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="stringize.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="trim.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="color.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="strtok.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="strbitmask.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="ampersand_decode.cpp">
+      <Filter>Source\string\encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="ampersand_encode.cpp">
+      <Filter>Source\string\encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="json_escape_decode.cpp">
+      <Filter>Source\string\encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="json_escape_encode.cpp">
+      <Filter>Source\string\encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="percent_decode.cpp">
+      <Filter>Source\string\encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="percent_encode.cpp">
+      <Filter>Source\string\encoding</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\oStdAtomic.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\oStdChrono.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\oStdRatio.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\oStdThread.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\oStdMutex.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\oStdConditionVariable.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\oFor.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\oStdFuture.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\byte.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\endian.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\finally.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\algorithm.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\timer.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\fixed_vector.h">
+      <Filter>oStd\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\unordered_map.h">
+      <Filter>oStd\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\uint128.h">
+      <Filter>oStd\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\color.h">
+      <Filter>oStd\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\guid.h">
+      <Filter>oStd\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\fixed_string.h">
+      <Filter>oStd\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\date.h">
+      <Filter>oStd\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="calfaq.h">
+      <Filter>Source\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\equal.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\string.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\intrinsics.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\macros.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\operators.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\config.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\function.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\callable.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\all.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\assert.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\atof.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\xml.h">
+      <Filter>oStd\Text</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\ini.h">
+      <Filter>oStd\Text</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\csv.h">
+      <Filter>oStd\Text</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\text_document.h">
+      <Filter>oStd\Text</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\stringize.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\json.h">
+      <Filter>oStd\Text</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{9eb95642-ff91-42cd-8c84-4ca4de26ae7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oStd">
+      <UniqueIdentifier>{d637e98e-1add-49e9-95e0-bd1b71955a2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oStd\C++11">
+      <UniqueIdentifier>{be8414da-da69-4341-aaad-61349ee41d17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\C++11">
+      <UniqueIdentifier>{d12e652a-e340-4043-82c2-a29c0205f0ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oStd\Types">
+      <UniqueIdentifier>{50ae8ce8-bcf2-4d43-b130-18d954a2237d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oStd\Containers">
+      <UniqueIdentifier>{f6f94d2f-b3e2-4c61-b2e5-8a7fbbe8f2db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Types">
+      <UniqueIdentifier>{c27deb6f-a0b6-4c75-a1d1-93fb595d0465}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\string">
+      <UniqueIdentifier>{74ccdd39-7420-4a6f-b4ed-3ddbaf0c707e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\string\strlcpy">
+      <UniqueIdentifier>{5b273b6d-f324-41e0-b8c8-cdf5a2ccd533}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oStd\Text">
+      <UniqueIdentifier>{3f1040d7-d083-4d58-a596-6bc86bce2028}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Text">
+      <UniqueIdentifier>{c25da8f7-f63f-46b7-bd00-3fc2e5ec27c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\string\encoding">
+      <UniqueIdentifier>{64ebc3e4-476b-40f8-be6c-c986a61913cd}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

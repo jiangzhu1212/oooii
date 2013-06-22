@@ -7,189 +7,42 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTBasis.cpp">
-      <Filter>Source Files\oBasisTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTString.cpp">
-      <Filter>Source Files\oBasisTests</Filter>
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTStd.cpp">
+      <Filter>Source Files\Sub-Platform Tests</Filter>
     </ClCompile>
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurfaceFill.cpp">
-      <Filter>Source Files\oBasisTests</Filter>
+      <Filter>Source Files\Sub-Platform Tests</Filter>
     </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCamera.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrency.cpp">
+      <Filter>Source Files\Sub-Platform Tests</Filter>
     </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCPU.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCRTLeakTracker.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDebugger.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentTBB.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentWTP.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTFileMap.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTImage.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTIntersection.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTMirroredArena.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTParallelFor.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTPath.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTPCIEBandwidth.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTProcessHeapTrivial.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSocketAsync.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSocketBlocking.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTVTable.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\oDQConcurrent.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentGeneric.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentPPL.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentSerial.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTWindowSendKeys.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTWinRegistry.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTStreamMonitor.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTFileAsync.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTFileSync.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDisplayAdapter.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUClear.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUDevice.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUInstancedTriangle.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPULineList.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPURenderTarget.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUSpinningTriangle.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTraits.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTriangle.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUWindowInWindow.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUBCEncodeDecode.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUBuffer.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUGenerateMips.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture1DMip.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture2D.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture2DMip.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture3D.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture3DMip.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTextureCube.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTextureCubeMip.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture1D.cpp">
-      <Filter>Source Files\oGPUTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTHLSLMath.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTHTTP.cpp">
-      <Filter>Source Files\oPlatformTests</Filter>
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTBasis.cpp">
+      <Filter>Source Files\Sub-Platform Tests</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Ouroboros\Source\oPlatform\Tests\oDQConcurrent.h">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrencyRequirements.h">
+      <Filter>Source Files\Sub-Platform Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Ouroboros\Source\oPlatform\Tests\oTestIntegration.h">
+      <Filter>Source Files\Sub-Platform Tests</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
       <UniqueIdentifier>{c7770449-f642-404e-bb9d-1cd8d85fbab2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\oBasisTests">
-      <UniqueIdentifier>{fb620a58-f4d5-4857-8ea3-89eb329712a7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\oPlatformTests">
-      <UniqueIdentifier>{e9341da6-2090-4c5f-8356-c8dc8979dd06}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\oGPUTests">
-      <UniqueIdentifier>{44edf65b-6424-4db6-8d3a-0ae6073e94be}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{68a750ec-c7ac-41c7-9c3e-8c361d78cfe0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Sub-Platform Tests">
+      <UniqueIdentifier>{fb620a58-f4d5-4857-8ea3-89eb329712a7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -201,10 +54,5 @@
     <ResourceCompile Include="oUnitTests.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <FXC Include="..\Ouroboros\Source\oPlatform\Tests\oHLSLPCIEBandwidth.sh">
-      <Filter>Source Files\oPlatformTests</Filter>
-    </FXC>
   </ItemGroup>
 </Project>

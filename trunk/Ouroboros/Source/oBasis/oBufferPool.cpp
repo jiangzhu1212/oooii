@@ -24,18 +24,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oBufferPool.h>
-#include <oBasis/oFixedString.h>
+#include <oStd/fixed_string.h>
 #include <oBasis/oInitOnce.h>
-#include <oBasis/oLockFreeQueue.h>
+#include <oConcurrency/lock_free_queue.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
-
-const oGUID& oGetGUID( threadsafe const oBufferPool* threadsafe const * )
-{
-	// {B33BD1BF-EA1C-43d6-9762-38B81BC53717}
-	static const oGUID oIIDBufferPool = { 0xb33bd1bf, 0xea1c, 0x43d6, { 0x97, 0x62, 0x38, 0xb8, 0x1b, 0xc5, 0x37, 0x17 } };
-	return oIIDBufferPool;
-}
 
 struct oBufferPoolImpl : public oBufferPool
 {
@@ -47,11 +40,11 @@ struct oBufferPoolImpl : public oBufferPool
 	bool GetFreeBuffer(threadsafe oBuffer** _ppBuffer) threadsafe override;
 	void DestroyBuffer(void* _pBuffer) threadsafe;
 
-	oInitOnce<oStringPath> BufferName;
-	oInitOnce<oStringPath> Name;
+	oInitOnce<oStd::path_string> BufferName;
+	oInitOnce<oStd::path_string> Name;
 	oRefCount RefCount;
 	oBuffer::DeallocateFn Dealloc;
-	oLockFreeQueue<oRef<oBuffer>> FreeBuffers;
+	oConcurrency::lock_free_queue<oRef<oBuffer>> FreeBuffers;
 	unsigned int BufferCount;
 	threadsafe size_t IndividualBufferSize;
 	void* pPoolBase;
@@ -66,10 +59,10 @@ oBufferPoolImpl::oBufferPoolImpl(const char* _Name, void* _pAllocation, size_t _
 	, Dealloc(_DeallocateFn)
 {
 	*bSuccess = false;
-	Name.Initialize(oSAFESTR(_Name));
+	Name.Initialize(_Name);
 	unsigned char* pNextAlloc = (unsigned char*)pPoolBase;
 
-	oPrintf( BufferName.Initialize(), "%s_Buffer", Name );
+	snprintf( BufferName.Initialize(), "%s_Buffer", Name );
 	const unsigned char* pPoolEnd = (unsigned char*)pPoolBase + _AllocationSize;
 	while( pNextAlloc + IndividualBufferSize < pPoolEnd )
 	{
@@ -98,7 +91,7 @@ oBufferPoolImpl::~oBufferPoolImpl()
 {
 	// Close the pool so destruction can occur (we won't try to recycle the buffer)
 	Open = false;
-	oASSERT( FreeBuffers.unsafe_size() == BufferCount, "Buffers have not been returned to the pool!" );
+	oASSERT( FreeBuffers.size() == BufferCount, "Buffers have not been returned to the pool!" );
 	
 	// Pop all the references off so they go out of scope
 	oRef<oBuffer> FreeBuffer;
@@ -147,7 +140,7 @@ bool oBufferPoolImpl::GetFreeBuffer(threadsafe oBuffer** _ppBuffer) threadsafe
 	}
 	oRef<oBuffer> FreeBuffer;
 	if( !FreeBuffers.try_pop(FreeBuffer) )
-		return oErrorSetLast(oERROR_NOT_FOUND, "There are no free buffers left in the oBufferPool");
+		return oErrorSetLast(std::errc::no_buffer_space, "There are no free buffers left in the oBufferPool");
 
 	*_ppBuffer = FreeBuffer;
 	FreeBuffer->Reference();

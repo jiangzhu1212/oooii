@@ -24,7 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oOSC.h>
-#include <oBasis/oAlgorithm.h>
+#include <oStd/algorithm.h>
 #include <oBasis/oError.h>
 #include <oBasis/oMemory.h>
 #include "oBasisTestStruct.h"
@@ -48,37 +48,37 @@ bool oBasisTest_oOSC()
 
 	const char* _MessageName = "/TESTOSC/Run/TEST/sent";
 	if( !((void*)(&sent.c2 + 1) != (void*)(&sent.b1size)) )
-		return oErrorSetLast(oERROR_GENERIC, "Expected padding");
+		return oErrorSetLast(std::errc::protocol_error, "Expected padding");
 
 	size_t TestSize = sizeof(oBASIS_TEST_STRUCT);
 	if(TestSize != oOSCCalculateDeserializedStructSize(GetTypeTags()) )
-		return oErrorSetLast(oERROR_GENERIC, "oOSCCalculateDeserializedStructSize failed to compute correct size");
+		return oErrorSetLast(std::errc::protocol_error, "oOSCCalculateDeserializedStructSize failed to compute correct size");
 
 	static const size_t kExpectedArgsSize = 220;
 
 	size_t argsSize = oOSCCalculateArgumentsDataSize(GetTypeTags(), sent);
 	if (argsSize != kExpectedArgsSize)
-		return oErrorSetLast(oERROR_GENERIC, "oOSCCalculateArgumentsDataSize failed to compute correct size");
+		return oErrorSetLast(std::errc::protocol_error, "oOSCCalculateArgumentsDataSize failed to compute correct size");
 
 	size_t msgSize = oOSCCalculateMessageSize(_MessageName, GetTypeTags(), argsSize);
 
 	{
 		std::vector<char> ScopedBuffer(msgSize);
-		size_t SerializedSize = oOSCSerializeStructToMessage(_MessageName, GetTypeTags(), sent, oGetData(ScopedBuffer), oGetDataSize(ScopedBuffer));
+		size_t SerializedSize = oOSCSerializeStructToMessage(_MessageName, GetTypeTags(), sent, oStd::data(ScopedBuffer), oStd::size(ScopedBuffer));
 		if (SerializedSize <= 0)
-			return oErrorSetLast(oERROR_GENERIC, "Failed to serialize buffer");
-		if (!oOSCDeserializeMessageToStruct(oGetData(ScopedBuffer), &received))
-			return oErrorSetLast(oERROR_GENERIC, "Deserialization failed");
+			return oErrorSetLast(std::errc::protocol_error, "Failed to serialize buffer");
+		if (!oOSCDeserializeMessageToStruct(oStd::data(ScopedBuffer), &received))
+			return oErrorSetLast(std::errc::protocol_error, "Deserialization failed");
 
 		// NOTE: Remember that received has string and blob pointers that point
 		// DIRECTLY into the ScopedBuffer, so either the client code here needs to
 		// copy those values to their own buffers, or received can only remain in
 		// the scope of the ScopedBuffer.
 		if (sent != received)
-			return oErrorSetLast(oERROR_GENERIC, "Sent and received buffers do not match");
+			return oErrorSetLast(std::errc::protocol_error, "Sent and received buffers do not match");
 	}
 
-	oErrorSetLast(oERROR_NONE, "");
+	oErrorSetLast(0, "");
 	return true;
 }
 

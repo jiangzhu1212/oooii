@@ -30,6 +30,8 @@
 #include <oPlatform/oDebugger.h>
 #include <oPlatform/oFile.h>
 
+#if 0
+
 static oOption sOptions[] = 
 {
 	{ "pch", 'p', "precompiled-header", "Specify a precompiled header" },
@@ -82,26 +84,28 @@ char* GetBufferName(char* _StrDestination, size_t _SizeofStrDestination, const c
 }
 
 template<size_t size> inline char* GetBufferName(char (&_StrDestination)[size], const char* _Path) { return GetBufferName(_StrDestination, size, _Path); }
-
+#endif
 int main(int argc, const char* argv[])
 {
+#if 0
 	FILE2CPP_DESC opts;
 	ParseCommandLine(argc, argv, &opts);
-
+#endif
 	int rv = EINVAL;
+#if 0
 	if (opts.InputPath && opts.OutputPath)
 	{
 		oRef<oBuffer> b;
 		if (oBufferLoad(opts.InputPath, &b, oASCII == oStreamGetUTFType(opts.InputPath)))
 		{
-			oStringL pchHeader;
+			oStd::lstring pchHeader;
 			if (opts.PCHName)
 				oPrintf(pchHeader, "#include \"%s\"\n", opts.PCHName);
 
 			// guestimate output size.
 			size_t cppBufferSize = b->GetSize() * 5;
 			char* pCppBuffer = static_cast<char*>(malloc(cppBufferSize));
-			char* pCppBufferEnd = oByteAdd(pCppBuffer, cppBufferSize);
+			char* pCppBufferEnd = oStd::byte_add(pCppBuffer, cppBufferSize);
 
 			char* w = pCppBuffer + oPrintf(pCppBuffer, cppBufferSize, "// $(header)\n%s", pchHeader.c_str());
 			w += oCodifyData(w, (size_t)std::distance(w, pCppBufferEnd), opts.InputPath, b->GetData(), b->GetSize(), sizeof(unsigned int));
@@ -118,9 +122,9 @@ int main(int argc, const char* argv[])
 
 	else
 	{
-		oStringXL buf;
+		oStd::xlstring buf;
 		printf("%s", oOptDoc(buf, oGetFilebase(argv[0]), sOptions));
 	}
-
+#endif
 	return rv;
 };

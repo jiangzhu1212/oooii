@@ -27,10 +27,8 @@
 #ifndef oVersion_h
 #define oVersion_h
 
-#include <oBasis/oInvalid.h>
-#include <oBasis/oOperators.h>
 #include <oBasis/oPlatformFeatures.h>
-#include <oBasis/oInt.h>
+#include <oStd/operators.h>
 
 struct oVersion : oComparable<oVersion>
 {
@@ -58,8 +56,5 @@ struct oVersion : oComparable<oVersion>
 	bool operator<(const oVersion& _That) const { return IsValid() && _That.IsValid() && ((Major < _That.Major) || (Major == _That.Major && Minor < _That.Minor) || (Major == _That.Major && Minor == _That.Minor && Build < _That.Build) || (Major == _That.Major && Minor == _That.Minor && Build == _That.Build) && Revision < _That.Revision); }
 	bool operator==(const oVersion& _That) const { return IsValid() && _That.IsValid() && Major == _That.Major && Minor == _That.Minor && Build == _That.Build && Revision == _That.Revision; }
 };
-
-oAPI char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oVersion& _Version);
-oAPI bool oFromString(oVersion* _pType, const char* _StrSource);
 
 #endif

@@ -23,7 +23,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oFixedString.h>
+#include <oStd/fixed_string.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oModule.h>
@@ -73,7 +73,7 @@ bool oDXGICreateFactory(IDXGIFactory** _ppFactory)
 bool oDXGICreateSwapChain(IUnknown* _pDevice, bool _Fullscreen, UINT _Width, UINT _Height, DXGI_FORMAT _Format, UINT RefreshRateN, UINT RefreshRateD, HWND _hWnd, bool _EnableGDICompatibility, IDXGISwapChain** _ppSwapChain)
 {
 	if (!_pDevice)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	DXGI_SWAP_CHAIN_DESC d;
 	d.BufferDesc.Width = _Width;
@@ -122,7 +122,10 @@ bool oDXGICreateSwapChain(IUnknown* _pDevice, bool _Fullscreen, UINT _Width, UIN
 	
 	// Auto Alt-Enter is nice, but there are threading issues to be concerned 
 	// about, so we need to control this explicitly in applications.
-	oVB_RETURN2(Factory->MakeWindowAssociation(_hWnd, DXGI_MWA_NO_ALT_ENTER));
+
+	// DXGI_MWA_NO_ALT_ENTER seems bugged from comments at bottom of this link:
+	// http://stackoverflow.com/questions/2353178/disable-alt-enter-in-a-direct3d-directx-application
+	oVB_RETURN2(Factory->MakeWindowAssociation(_hWnd, DXGI_MWA_NO_WINDOW_CHANGES|DXGI_MWA_NO_ALT_ENTER));
 
 	return true;
 }
@@ -147,11 +150,8 @@ bool oDXGISwapChainResizeBuffers(IDXGISwapChain* _pSwapChain, const int2& _NewSi
 	HRESULT HR = _pSwapChain->ResizeBuffers(d.BufferCount, _NewSize.x, _NewSize.y, d.BufferDesc.Format, d.Flags);
 	if (HR == DXGI_ERROR_INVALID_CALL)
 	{
-		oMSGBOX_DESC mb;
-		mb.ParentNativeHandle = _hErrorMsgParent;
-		mb.Type = oMSGBOX_ERR;
-		oErrorSetLast(oERROR_REFUSED, "Cannot resize DXGISwapChain buffers because there still are dependent resources in client code. Ensure all dependent resources are freed before resize occurs. The application will be terminated now.");
-		oMsgBox(mb, oErrorGetLastString());
+		oErrorSetLast(std::errc::permission_denied, "Cannot resize DXGISwapChain buffers because there still are dependent resources in client code. Ensure all dependent resources are freed before resize occurs. The application will be terminated now.");
+		oMsgBox(oMSGBOX_DESC(oMSGBOX_ERR, nullptr, (oGUI_WINDOW)_hErrorMsgParent), oErrorGetLastString());
 		// There's no moving past this error, so terminate...
 		std::terminate();
 		//return false;
@@ -164,13 +164,13 @@ bool oDXGISwapChainResizeBuffers(IDXGISwapChain* _pSwapChain, const int2& _NewSi
 bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, const oDXGI_FULLSCREEN_STATE& _State)
 {
 	// This function is overly complex for a few reasons:
-	// DXGI can error out and/or deadlock if not careful, so this function puts on the traing wheels
+	// DXGI can error out and/or deadlock if not careful, so this function puts on the training wheels
 	// DXGI API is insufficient to get max HW performance. This double-sets render targets to ensure
 	// HW fullscreen perf is optimal
 	// Restoring windowed mode uses registry settings, not last settings, so support that as well.
 
 	if (!_pSwapChain)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	// Confirm we're on the same thread as the message pump
 	// http://msdn.microsoft.com/en-us/library/ee417025(v=vs.85).aspx
@@ -179,7 +179,7 @@ bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, const oDXGI_FULLSCREEN
 	_pSwapChain->GetDesc(&SCDesc);
 
 	if (GetCurrentThreadId() != GetWindowThreadProcessId(SCDesc.OutputWindow, nullptr))
-		return oErrorSetLast(oERROR_WRONG_THREAD, "oDXGISetFullscreenState called from thread %d for hwnd %x pumping messages on thread %d", GetCurrentThreadId(), SCDesc.OutputWindow, GetWindowThreadProcessId(SCDesc.OutputWindow, nullptr));
+		return oErrorSetLast(std::errc::operation_not_permitted, "oDXGISetFullscreenState called from thread %d for hwnd %x pumping messages on thread %d", GetCurrentThreadId(), SCDesc.OutputWindow, GetWindowThreadProcessId(SCDesc.OutputWindow, nullptr));
 
 	// Go fullscreen on whatever output is the current one (client code should position window on 
 	// output for fullscreen first).
@@ -200,12 +200,12 @@ bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, const oDXGI_FULLSCREEN
 
 		if (FAILED(_pSwapChain->GetContainingOutput(&Output)))
 		{
-			oStringL WinTitle;
+			oStd::lstring WinTitle;
 			oWinGetText(WinTitle.c_str(), WinTitle.capacity(), SCDesc.OutputWindow);
-			oErrorSetLast(oERROR_REFUSED, "SetFullscreenState failed on adapter \"%s\" because the IDXGISwapChain created with the associated window entitled \"%s\" was created with another adapter. Cross-adapter exclusive mode is not currently (DXGI 1.1) supported.", oStringS(adesc.Description), WinTitle);
+			oErrorSetLast(std::errc::permission_denied, "SetFullscreenState failed on adapter \"%s\" because the IDXGISwapChain created with the associated window entitled \"%s\" was created with another adapter. Cross-adapter exclusive mode is not currently (DXGI 1.1) supported.", oStd::sstring(adesc.Description), WinTitle);
 		}
 		else 
-			oErrorSetLast(oERROR_INVALID_PARAMETER, "SetFullscreenState failed though the attempt was on the same adapters with which the swapchain was created");
+			oErrorSetLast(std::errc::invalid_argument, "SetFullscreenState failed though the attempt was on the same adapters with which the swapchain was created");
 
 		return false;
 	}
@@ -234,7 +234,7 @@ bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, const oDXGI_FULLSCREEN
 	DXGI_MODE_DESC closestMatch;
 	oV(Output->FindClosestMatchingMode(&SCDesc.BufferDesc, &closestMatch, nullptr));
 
-	if (closestMatch.Width != SCDesc.BufferDesc.Width || closestMatch.Height != SCDesc.BufferDesc.Height || oEqual(oDXGIGetRefreshRate(SCDesc.BufferDesc), oDXGIGetRefreshRate(closestMatch)))
+	if (closestMatch.Width != SCDesc.BufferDesc.Width || closestMatch.Height != SCDesc.BufferDesc.Height || oStd::equal(oDXGIGetRefreshRate(SCDesc.BufferDesc), oDXGIGetRefreshRate(closestMatch)))
 		oTRACE("SetFullscreenState initiated by HWND 0x%x asked for %dx%d@%dHz and will instead set the closest match %dx%d@%.02fHz", SCDesc.OutputWindow, SCDesc.BufferDesc.Width, SCDesc.BufferDesc.Height, SCDesc.BufferDesc.RefreshRate.Numerator, closestMatch.Width, closestMatch.Height, oDXGIGetRefreshRate(closestMatch));
 
 	// Move to 0,0 on the screen because resize targets will resize the window,
@@ -242,10 +242,7 @@ bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, const oDXGI_FULLSCREEN
 	oWinSetPosition(SCDesc.OutputWindow, int2(ODesc.DesktopCoordinates.left, ODesc.DesktopCoordinates.top));
 
 	if (_State.Fullscreen)
-	{
-		_pSwapChain->ResizeBuffers(SCDesc.BufferCount, closestMatch.Width, closestMatch.Height, SCDesc.BufferDesc.Format, SCDesc.Flags);
 		oVB_RETURN2(_pSwapChain->ResizeTarget(&closestMatch));
-	}
 
 	oVB_RETURN2(_pSwapChain->SetFullscreenState(_State.Fullscreen, nullptr));
 	// Ensure the refresh rate is matched against the fullscreen mode
@@ -270,10 +267,10 @@ bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, const oDXGI_FULLSCREEN
 			UINT size;
 			oVB_RETURN2(_pSwapChain->GetPrivateData(oWKPDID_PreFullscreenMode, &size, &mode));
 			if (size != sizeof(oDISPLAY_MODE))
-				return oErrorSetLast(oERROR_INVALID_PARAMETER, "Failed to restore prior display state: size retrieved (%u) does not match size requested (%u)", size, sizeof(oDISPLAY_MODE));
+				return oErrorSetLast(std::errc::invalid_argument, "Failed to restore prior display state: size retrieved (%u) does not match size requested (%u)", size, sizeof(oDISPLAY_MODE));
 
 			#ifdef _DEBUG
-				oStringS rate;
+				oStd::sstring rate;
 				if (mode.RefreshRate == oDEFAULT)
 					oPrintf(rate, "defaultHz");
 				else
@@ -288,11 +285,6 @@ bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, const oDXGI_FULLSCREEN
 			oVERIFY(oDisplayResetMode(DispIndex));
 	}
 
-	// If we're calling a function called "SetFullscreenState", it'd be nice if 
-	// the swapchain/window was actually IN that state when we came out of this 
-	// call, so sit here and don't allow anyone else to be tricksy until we've
-	// flushed the SetFullScreenState messages.
-	oWinFlushMessages(SCDesc.OutputWindow, 30000);
 	return true;
 }
 
@@ -328,8 +320,8 @@ bool oDXGIGetDC(IDXGISwapChain* _pSwapChain, HDC* _phDC)
 	oVB_RETURN2(_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
 	oRef<IDXGISurface1> DXGISurface;
 	oVB_RETURN2(RT->QueryInterface(&DXGISurface));
+	//oTRACE("GetDC() exception below (if it happens) cannot be try-catch caught, so ignore it or don't use GDI drawing.");
 	oVB_RETURN2(DXGISurface->GetDC(false, _phDC));
-
 	return true;
 }
 
@@ -339,6 +331,7 @@ bool oDXGIReleaseDC(IDXGISwapChain* _pSwapChain, RECT* _pDirtyRect)
 	oVB_RETURN2(_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
 	oRef<IDXGISurface1> DXGISurface;
 	oVB_RETURN2(RT->QueryInterface(&DXGISurface));
+	//oTRACE("ReleaseDC() exception below (if it happens) cannot be try-catch caught, so ignore it or don't use GDI drawing.");
 	oVB_RETURN2(DXGISurface->ReleaseDC(_pDirtyRect));
 	return true;
 }
@@ -355,13 +348,17 @@ bool oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter, D3D_FEATURE_LEVEL* _pFeatureL
 	//LARGE_INTEGER li;
 	//if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D11Device), &li))
 	//	return true;
+	// @oooii-jeffrey: Apparently D3D11_CREATE_DEVICE_DEBUG can trigger the 
+	// _com_error if the debug libraries of DirectX are not (or not properly)
+	// installed. Documentation however does not mention the need for this
+	// flag to get the feature level, so passing 0 seems to fix that problem.
 	
 	// Note that the out-device is null, thus this isn't that expensive a call
 	if (FAILED(oD3D11::Singleton()->D3D11CreateDevice(
 		_pAdapter
 		, D3D_DRIVER_TYPE_UNKNOWN
 		, nullptr
-		, D3D11_CREATE_DEVICE_DEBUG // squelches a warning
+		, 0 // D3D11_CREATE_DEVICE_DEBUG // squelches a warning
 		, nullptr
 		, 0
 		, D3D11_SDK_VERSION
@@ -403,7 +400,7 @@ void oDXGIGetAdapterDriverDesc(IDXGIAdapter* _pAdapter, oDISPLAY_ADAPTER_DRIVER_
 
 	oWinEnumVideoDriverDesc([&](const oDISPLAY_ADAPTER_DRIVER_DESC& _Desc)
 	{
-		oStringM vendor, device;
+		oStd::mstring vendor, device;
 		oPrintf(vendor, "VEN_%X", ad.VendorId);
 		oPrintf(device, "DEV_%04X", ad.DeviceId);
 		if (strstr(_Desc.PlugNPlayID, vendor) && strstr(_Desc.PlugNPlayID, device))
@@ -595,7 +592,7 @@ int oDXGIFindDisplayIndex(IDXGIOutput* _pOutput)
 		index++;
 	}
 
-	oErrorSetLast(oERROR_NOT_FOUND);
+	oErrorSetLast(std::errc::no_such_device);
 	return oInvalid;
 }
 
@@ -657,7 +654,9 @@ void oDXGIGetCompatibleFormats(DXGI_FORMAT _DesiredFormat, DXGI_FORMAT* _pTextur
 	}
 }
 
-const char* oAsString(DXGI_FORMAT _Format)
+namespace oStd {
+
+const char* as_string(const DXGI_FORMAT& _Format)
 {
 	switch (_Format)
 	{
@@ -780,5 +779,7 @@ const char* oAsString(DXGI_FORMAT _Format)
 		oNODEFAULT;
 	}
 }
+
+} // namespace oStd
 
 #endif // oDXVER >= oDXVER_10

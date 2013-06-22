@@ -27,9 +27,11 @@
 #ifndef oString_h
 #define oString_h
 
-#include <oBasis/oMacros.h>
+#include <oStd/fixed_string.h>
+#include <oStd/function.h>
+#include <oStd/macros.h>
 #include <oBasis/oPlatformFeatures.h>
-#include <oBasis/oFunction.h>
+#include <oBasis/oInvalid.h>
 #include <stdarg.h> // va_start
 #include <stddef.h> // errno_t
 
@@ -77,6 +79,9 @@ wchar_t* oStrcat(wchar_t* _StrDestination, size_t _NumDestinationChars, const wc
 char* oStrncat(char* _StrDestination, size_t _NumDestinationChars, const char* _Source);
 wchar_t* oStrncat(wchar_t* _StrDestination, size_t _NumDestinationChars, const wchar_t* _Source);
 
+// Like strstr however a maximum number of characters to search can be specified
+const char* oStrStr(const char* _pStr, const char* _pSubStr, size_t _MaxCharCount = oInvalid);
+
 // this encapsulates snprintf-like functionality. Generally this is like printf
 // to the specified buffer (sprintf), but will truncate with an elipse (...) at 
 // the end. This will protect against buffer overflows. Favor this than any of 
@@ -97,16 +102,6 @@ void oToUpper(char* _String);
 
 // Convert \n -> \r\n
 char* oNewlinesToDos(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource);
-
-// Remove all chars found in _ToTrim from the beginning of the string. _Trimmed 
-// can be the same as _StrSource. Returns _Trimmed.
-char* oTrimLeft(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE);
-
-// Remove all chars found in _ToTrim form the end of the string. strDestination can be the same as strSource. Returns dst.
-char* oTrimRight(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE);
-
-// Trims both the left and right side of a string
-inline char* oTrim(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return oTrimRight(_Trimmed, _SizeofTrimmed, oTrimLeft(_Trimmed, _SizeofTrimmed, _StrSource, _ToTrim), _ToTrim); }
 
 // Replaces any run of whitespace with a single ' ' character. Returns _StrDestination
 char* oPruneWhitespace(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource, char _Replacement = ' ', const char* _ToPrune = oWHITESPACE);
@@ -134,22 +129,13 @@ char* oInsert(char* _StrSource, size_t _SizeofStrSource, char* _InsertionPoint, 
 errno_t oStrVAppendf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args);
 inline errno_t oStrAppendf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); errno_t err = oStrVAppendf(_StrDestination, _SizeofStrDestination, _Format, args); va_end(args); return err; }
 
-// Returns the appropriate suffix [st nd rd th] for a number
-const char* oOrdinal(int _Number);
-
 // Fills the specified buffer with a size in either bytes, KB, MB, GB, or TB 
 // depending on the number of bytes specified.
 char* oFormatMemorySize(char* _StrDestination, size_t _SizeofStrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits);
 
-// Fills the specified buffer with a size in days hours minutes seconds
-char* oFormatTimeSize(char* _StrDestination, size_t _SizeofStrDestination, double _TimeInSeconds, bool _Abbreviated = false, bool _IncludeMS = true);
-
 // For numbers, this inserts commas where they ought to be (every 3 numbers)
 char* oFormatCommas(char* _StrDestination, size_t _SizeofStrDestination, int _Number);
 char* oFormatCommas(char* _StrDestination, size_t _SizeofStrDestination, unsigned int _Number);
-
-// Returns the nul-terminated string version of a fourcc code
-char* oConvertFourcc(char* _StrDestination, size_t _SizeofStrDestination, int _Fourcc);
 
 // Copies out the next key/value pair as delimited by _KeyValuePairSeparators and 
 // updates where the parsing left off so that this can be called to go through a
@@ -184,6 +170,10 @@ void oStrTokClose(char** _ppContext);
 // state that can be queried with this function. The context is not really valid 
 // (i.e. all memory has been freed).
 bool oStrTokFinishedSuccessfully(char** _ppContext);
+
+// This is a helper function to skip _Count number of tokens delimited by 
+// _pDelimiters in _pString
+const char* oStrTokSkip(const char* _pString, const char* _pDelimiters, int _Count, bool _SkipDelimiters=true);
 
 // _____________________________________________________________________________
 // Command-line parsing
@@ -246,9 +236,6 @@ template<typename CHAR_T, size_t numchars> CHAR_T* oStrncat(CHAR_T (&_StrDestina
 template<typename CHAR_T, size_t numchars> int oVPrintf(CHAR_T (&_StrDestination)[numchars], const CHAR_T* _Format, va_list _Args) { return oVPrintf(_StrDestination, numchars, _Format, _Args); }
 template<typename CHAR_T, size_t numchars> int oPrintf(CHAR_T (&_StrDestination)[numchars], const CHAR_T* _Format, ...) { va_list args; va_start(args, _Format); int n = oVPrintf(_StrDestination, numchars, _Format, args); va_end(args); return n; }
 template<size_t size> char* oNewlinesToDos(char (&_StrDestination)[size], const char* _StrSource) { return oNewlinesToDos(_StrDestination, size, _StrSource); }
-template<size_t size> char* oTrimLeft(char (&_Trimmed)[size], const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return oTrimLeft(_Trimmed, size, _StrSource, _ToTrim); }
-template<size_t size> char* oTrimRight(char (&_Trimmed)[size], const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return oTrimRight(_Trimmed, size, _StrSource, _ToTrim); }
-template<size_t size> char* oTrim(char (&_Trimmed)[size], const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return oTrim(_Trimmed, size, _StrSource, _ToTrim); }
 template<size_t size> char* oPruneWhitespace(char (&_StrDestination)[size], const char* _StrSource, char _Replacement = ' ', const char* _ToPrune = oWHITESPACE) { return oPruneWhitespace(_StrDestination, size, _StrSource, _Replacement, _ToPrune); }
 template<typename CHAR_T, size_t numchars> CHAR_T* oAddTruncationElipse(CHAR_T (&_StrDestination)[numchars]) { return oAddTruncationElipse(_StrDestination, numchars); }
 template<size_t size> errno_t oReplace(char (&_StrResult)[size], const char* _StrSource, const char* _StrFind, const char* _StrReplace) { return oReplace(_StrResult, size, _StrSource, _StrFind, _StrReplace); }
@@ -256,13 +243,29 @@ template<size_t size> char* oInsert(char (&_StrSource)[size], char* _InsertionPo
 template<size_t size> errno_t oStrVAppendf(char (&_StrDestination)[size], const char* _Format, va_list _Args) { return oStrVAppendf(_StrDestination, size, _Format, _Args); }
 template<size_t size> errno_t oStrAppendf(char (&_StrDestination)[size], const char* _Format, ...) { va_list args; va_start(args, _Format); errno_t err = oStrVAppendf(_StrDestination, size, _Format, args); va_end(args); return err; }
 template<size_t size> char* oFormatMemorySize(char (&_StrDestination)[size], unsigned long long _NumBytes, size_t _NumPrecisionDigits) { return oFormatMemorySize(_StrDestination, size, _NumBytes, _NumPrecisionDigits); }
-template<size_t size> char* oFormatTimeSize(char (&_StrDestination)[size], double _TimeInSeconds, bool _Abbreviated = false, bool _IncludeMS = true) { return oFormatTimeSize(_StrDestination, size, _TimeInSeconds, _Abbreviated, _IncludeMS ); }
 template<size_t size> char* oFormatCommas(char (&_StrDestination)[size], int _Number) { return oFormatCommas(_StrDestination, size, _Number); }
 template<size_t size> char* oFormatCommas(char (&_StrDestination)[size], unsigned int _Number) { return oFormatCommas(_StrDestination, size, _Number); }
-template<size_t size> char* oConvertFourcc(char (&_StrDestination)[size], int _Fourcc) { return oConvertFourcc(_StrDestination, size, _Fourcc); }
 template<size_t size> char* oOptDoc(char (&_StrDestination)[size], const char* _AppName, const oOption* _pOptions) { return oOptDoc(_StrDestination, size, _AppName, _pOptions); }
 template<size_t size> bool oGetKeyValuePair(char (&_KeyDestination)[size], char* _ValueDestination, size_t _SizeofValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return oGetKeyValuePair(_KeyDestination, size, _ValueDestination, _SizeofValueDestination, _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
 template<size_t size> bool oGetKeyValuePair(char* _KeyDestination, size_t _SizeofKeyDestination, char (&_ValueDestination)[size], char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return oGetKeyValuePair(_KeyDestination, _SizeofKeyDestination, _ValueDestination, size, _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
 template<size_t key_size, size_t value_size> bool oGetKeyValuePair(char (&_KeyDestination)[key_size], char (&_ValueDestination)[value_size], const char* _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return oGetKeyValuePair(_KeyDestination, key_size, _ValueDestination, value_size, _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
+
+// oStd::fixed_string support
+template<typename CHAR1_T, typename CHAR2_T, size_t capacity> CHAR1_T* oStrcpy(oStd::fixed_string<CHAR1_T, capacity>& _StrDestination, const CHAR2_T* _StrSource, bool _ZeroBuffer = false) { return oStrcpy(_StrDestination.c_str(), _StrDestination.capacity(), _StrSource, _ZeroBuffer); }
+template<typename CHAR1_T, typename CHAR2_T, size_t capacity> CHAR1_T* oStrncpy(oStd::fixed_string<CHAR1_T, capacity>& _StrDestination, const CHAR2_T* _StrSource, size_t _NumChars) { return oStrncpy(_StrDestination.c_str(), _StrDestination.capacity(), _StrSource, _NumChars); }
+template<typename CHAR_T, size_t capacity> CHAR_T* oStrcat(oStd::fixed_string<CHAR_T, capacity>& _StrDestination, const CHAR_T* _StrSource) { return oStrcat(_StrDestination.c_str(), _StrDestination.capacity(), _StrSource); }
+template<typename CHAR_T, size_t capacity> size_t oStrlen(const oStd::fixed_string<CHAR_T, capacity>& _String) { return oStrlen(_String.c_str()); }
+template<typename CHAR_T, size_t capacity> int oVPrintf(oStd::fixed_string<CHAR_T, capacity>& _StrDestination, const CHAR_T* _Format, va_list _Args) { return oVPrintf(_StrDestination.c_str(), _StrDestination.capacity(), _Format, _Args); }
+template<typename CHAR_T, size_t capacity> int oPrintf(oStd::fixed_string<CHAR_T, capacity>& _StrDestination, const CHAR_T* _Format, ...) { va_list args; va_start(args, _Format); return oVPrintf(_StrDestination, _Format, args); }
+template<size_t capacity> bool oGetKeyValuePair(oStd::fixed_string<char, capacity>& _KeyDestination, char* _ValueDestination, size_t _SizeofValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return oGetKeyValuePair(_KeyDestination, _KeyDestination.capacity(), _ValueDestination, _SizeofValueDestination, _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
+template<size_t capacity> bool oGetKeyValuePair(char* _KeyDestination, size_t _SizeofKeyDestination, oStd::fixed_string<char, capacity>& _ValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return oGetKeyValuePair(_KeyDestination, _SizeofKeyDestination, _ValueDestination, _ValueDestination.capacity(), _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
+template<size_t KEY_capacity, size_t VALUE_capacity> bool oGetKeyValuePair(oStd::fixed_string<char, KEY_capacity>& _KeyDestination, oStd::fixed_string<char, VALUE_capacity>& _ValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return oGetKeyValuePair(_KeyDestination, _KeyDestination.capacity(), _ValueDestination, _ValueDestination.capacity(), _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
+template<size_t capacity> errno_t oStrAppendf(oStd::fixed_string<char, capacity>& _StrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); errno_t err = oStrVAppendf(_StrDestination.c_str(), _StrDestination.capacity(), _Format, args); va_end(args); return err; }
+template<size_t capacity> char* oFormatMemorySize(oStd::fixed_string<char, capacity>& _StrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits) { return oFormatMemorySize(_StrDestination, _StrDestination.capacity(), _NumBytes, _NumPrecisionDigits); }
+template<size_t capacity> char* oFormatCommas(oStd::fixed_string<char, capacity>& _StrDestination, int _Number) { return oFormatCommas(_StrDestination, _StrDestination.capacity(), _Number); }
+template<size_t capacity> errno_t oReplace(oStd::fixed_string<char, capacity>& _StrDestination, const char* _StrSource, const char* _StrFind, const char* _StrReplace) { return oReplace(_StrDestination, _StrDestination.capacity(), _StrSource, _StrFind, _StrReplace); }
+template<size_t capacity> char* oInsert(oStd::fixed_string<char, capacity>& _StrDestination, char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion) { return oInsert(_StrDestination, _StrDestination.capacity(), _InsertionPoint, _ReplacementLength, _Insertion); }
+template<typename CHAR_T, size_t capacity> CHAR_T* oAddTruncationElipse(oStd::fixed_string<CHAR_T, capacity>& _StrDestination) { return oAddTruncationElipse(_StrDestination.c_str(), _StrDestination.capacity()); }
+template<size_t capacity> char* oOptDoc(oStd::fixed_string<char, capacity>& _StrDestination, const char* _AppName, const oOption* _pOptions) { return oOptDoc(_StrDestination, _StrDestination.capacity(), _AppName, _pOptions); }
 
 #endif

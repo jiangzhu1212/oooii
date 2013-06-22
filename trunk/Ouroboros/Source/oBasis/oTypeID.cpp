@@ -26,7 +26,9 @@
 #include <oBasis/oString.h>
 #include <oBasis/oTypeID.h>
 
-const char* oAsString(oTYPE_ID _TypeID)
+namespace oStd {
+
+const char* as_string(const oTYPE_ID& _TypeID)
 {
 	switch (_TypeID)
 	{
@@ -60,12 +62,12 @@ const char* oAsString(oTYPE_ID _TypeID)
 	}
 }
 
-bool oFromString(oTYPE_ID* _pTypeID, const char* _StrSource)
+bool from_string(oTYPE_ID* _pTypeID, const char* _StrSource)
 {
 	*_pTypeID = oTYPE_UNKNOWN;
 	for (int i = 0; i < oNUM_TYPES; i++)
 	{
-		if (!oStrcmp(_StrSource, oAsString(oTYPE_ID(i))))
+		if (!oStrcmp(_StrSource, as_string(oTYPE_ID(i))))
 		{
 			*_pTypeID = oTYPE_ID(i);
 			return true;
@@ -75,7 +77,9 @@ bool oFromString(oTYPE_ID* _pTypeID, const char* _StrSource)
 	return false;
 }
 
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oTYPE_ID& _Value)
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oTYPE_ID& _Value)
 {
-	return oStrcpy(_StrDestination, _SizeofStrDestination, oAsString(_Value));
+	return oStrcpy(_StrDestination, _SizeofStrDestination, as_string(_Value));
 }
+
+} // namespace oStd

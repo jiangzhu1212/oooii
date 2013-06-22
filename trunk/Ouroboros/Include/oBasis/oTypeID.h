@@ -29,7 +29,7 @@
 #ifndef oTypeID_h
 #define oTypeID_h
 
-#include <oBasis/oHLSLTypes.h>
+#include <oHLSL/oHLSLTypes.h>
 #include <oBasis/oPlatformFeatures.h>
 #include <type_traits>
 
@@ -71,11 +71,6 @@ enum oTYPE_ID
 
 	oNUM_TYPES,
 };
-
-oAPI const char* oAsString(oTYPE_ID _TypeID);
-
-oAPI bool oFromString(oTYPE_ID* _pTypeID, const char* _StrSource);
-oAPI char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oTYPE_ID& _Value);
 
 template<typename T> struct oTypeID
 {

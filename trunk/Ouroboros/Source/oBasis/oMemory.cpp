@@ -24,9 +24,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oMemory.h>
-#include <oBasis/oAssert.h>
-#include <oBasis/oByte.h>
-#include <oBasis/oByteSwizzle.h>
+#include <oStd/assert.h>
+#include <oStd/macros.h>
+#include <oStd/byte.h>
 #include <cstdio>
 #include <memory.h>
 
@@ -41,14 +41,14 @@ template<typename T> void InitDuffsDeviceConstPointers(
 	, size_t* _pNumPostfixBytes)
 {
 	*_ppPrefix = (char*)_pMemory;
-	*_ppBody = (T*)oByteAlign(_pMemory, sizeof(T));
-	*_pNumPrefixBytes = oByteDiff(*_ppPrefix, _pMemory);
-	const T* pEnd = oByteAdd(*_ppBody, _NumBytes - *_pNumPrefixBytes);
-	*_ppPostfix = (char*)oByteAlignDown(pEnd, sizeof(T));
-	*_pNumPostfixBytes = oByteDiff(pEnd, *_ppPostfix);
+	*_ppBody = (T*)oStd::byte_align(_pMemory, sizeof(T));
+	*_pNumPrefixBytes = oStd::byte_diff(*_ppPrefix, _pMemory);
+	const T* pEnd = oStd::byte_add(*_ppBody, _NumBytes - *_pNumPrefixBytes);
+	*_ppPostfix = (char*)oStd::byte_align_down(pEnd, sizeof(T));
+	*_pNumPostfixBytes = oStd::byte_diff(pEnd, *_ppPostfix);
 
-	oASSERT(oByteAdd(_pMemory, _NumBytes) == pEnd, "");
-	oASSERT(oByteAdd(_pMemory, _NumBytes) == oByteAdd(*_ppPostfix, *_pNumPostfixBytes), "");
+	oASSERT(oStd::byte_add(_pMemory, _NumBytes) == pEnd, "");
+	oASSERT(oStd::byte_add(_pMemory, _NumBytes) == oStd::byte_add(*_ppPostfix, *_pNumPostfixBytes), "");
 }
 // (non-const) void* version
 template<typename T> void InitDuffsDevicePointers(
@@ -75,18 +75,18 @@ void oMemset4(void* _pDestination, long _Value, size_t _NumBytes)
 	size_t nPrefixBytes, nPostfixBytes;
 	InitDuffsDevicePointers(_pDestination, _NumBytes, &pPrefix, &nPrefixBytes, &pBody, &pPostfix, &nPostfixBytes);
 
-	oByteSwizzle32 s;
-	s.AsInt = _Value;
+	oStd::byte_swizzle32 s;
+	s.as_int = _Value;
 
 	// Duff's device up to alignment
 	// http://en.wikipedia.org/wiki/Duff's_device
 	switch (nPrefixBytes)
 	{
-		case 3: *pPrefix++ = s.AsChar[3];
-		case 2: *pPrefix++ = s.AsChar[2];
-		case 1: *pPrefix++ = s.AsChar[1];
+		case 3: *pPrefix++ = s.as_char[3];
+		case 2: *pPrefix++ = s.as_char[2];
+		case 1: *pPrefix++ = s.as_char[1];
 		case 0: break;
-		default: oASSERT_NOEXECUTION;
+		oNODEFAULT;
 	}
 
 	// Do aligned assignment
@@ -97,11 +97,11 @@ void oMemset4(void* _pDestination, long _Value, size_t _NumBytes)
 	// http://en.wikipedia.org/wiki/Duff's_device
 	switch (nPostfixBytes)
 	{
-		case 3: *pPostfix++ = s.AsChar[3];
-		case 2: *pPostfix++ = s.AsChar[2];
-		case 1: *pPostfix++ = s.AsChar[1];
+		case 3: *pPostfix++ = s.as_char[3];
+		case 2: *pPostfix++ = s.as_char[2];
+		case 1: *pPostfix++ = s.as_char[1];
 		case 0: break;
-		default: oASSERT_NOEXECUTION;
+		oNODEFAULT;
 	}
 }
 
@@ -117,16 +117,16 @@ void oMemset2(void* _pDestination, short _Value, size_t _NumBytes)
 	size_t nPrefixBytes, nPostfixBytes;
 	InitDuffsDevicePointers(_pDestination, _NumBytes, &pPrefix, &nPrefixBytes, &pBody, &pPostfix, &nPostfixBytes);
 
-	oByteSwizzle16 s;
-	s.AsShort = _Value;
+	oStd::byte_swizzle16 s;
+	s.as_short = _Value;
 
 	// Duff's device up to alignment
 	// http://en.wikipedia.org/wiki/Duff's_device
 	switch (nPrefixBytes)
 	{
-		case 1: *pPrefix++ = s.AsChar[1];
+		case 1: *pPrefix++ = s.as_char[1];
 		case 0: break;
-		default: oASSERT_NOEXECUTION;
+		oNODEFAULT;
 	}
 
 	// Do aligned assignment
@@ -137,32 +137,32 @@ void oMemset2(void* _pDestination, short _Value, size_t _NumBytes)
 	// http://en.wikipedia.org/wiki/Duff's_device
 	switch (nPostfixBytes)
 	{
-		case 1: *pPostfix++ = s.AsChar[1];
+		case 1: *pPostfix++ = s.as_char[1];
 		case 0: break;
-		default: oASSERT_NOEXECUTION;
+		oNODEFAULT;
 	}
 }
 
 void oMemset2d(void* _pDestination, size_t _Pitch, int _Value, size_t _SetPitch, size_t _NumRows)
 {
-	const void* end = oByteAdd(_pDestination, _Pitch, _NumRows);
-	for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _Pitch))
+	const void* end = oStd::byte_add(_pDestination, _Pitch, _NumRows);
+	for (; _pDestination < end; _pDestination = oStd::byte_add(_pDestination, _Pitch))
 		memset(_pDestination, _Value, _SetPitch);
 }
 
 void oMemset2d2(void* _pDestination, size_t _Pitch, short _Value, size_t _SetPitch, size_t _NumRows)
 {
 	oASSERT((_SetPitch % sizeof(_Value)) == 0, "");
-	const void* end = oByteAdd(_pDestination, _Pitch, _NumRows);
-	for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _Pitch))
+	const void* end = oStd::byte_add(_pDestination, _Pitch, _NumRows);
+	for (; _pDestination < end; _pDestination = oStd::byte_add(_pDestination, _Pitch))
 		oMemset2(_pDestination, _Value, _SetPitch);
 }
 
 void oMemset2d4(void* _pDestination, size_t _Pitch, long _Value, size_t _SetPitch, size_t _NumRows)
 {
 	oASSERT((_SetPitch % sizeof(long)) == 0, "");
-	const void* end = oByteAdd(_pDestination, _Pitch, _NumRows);
-	for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _Pitch))
+	const void* end = oStd::byte_add(_pDestination, _Pitch, _NumRows);
+	for (; _pDestination < end; _pDestination = oStd::byte_add(_pDestination, _Pitch))
 		oMemset4(_pDestination, _Value, _SetPitch);
 }
 
@@ -191,18 +191,18 @@ void* oMemmem(void* _pBuffer, size_t _SizeofBuffer, const void* _pFind, size_t _
 	// sizeof find (where it straddles 3 or more splits).
 
 	oASSERT(_SizeofFind >= 4, "a find buffer under 4 bytes is not yet implemented");
-	void* pEnd = oByteAdd(_pBuffer, _SizeofBuffer);
+	void* pEnd = oStd::byte_add(_pBuffer, _SizeofBuffer);
 	void* pFound = memchr(_pBuffer, *(const int*)_pFind, _SizeofBuffer);
 	while (pFound)
 	{
-		if (size_t(oByteDiff(pEnd, pFound)) < _SizeofFind)
+		if (size_t(oStd::byte_diff(pEnd, pFound)) < _SizeofFind)
 			return nullptr;
 
 		if (!memcmp(pFound, _pFind, _SizeofFind))
 			return pFound;
 
 		else
-			pFound = memchr(oByteAdd(pFound, 4), *(const int*)_pFind, _SizeofBuffer);
+			pFound = memchr(oStd::byte_add(pFound, 4), *(const int*)_pFind, _SizeofBuffer);
 	}
 
 	return pFound;
@@ -220,18 +220,18 @@ bool oMemcmp4(const void* _pMemory, long _Value, size_t _NumBytes)
 	size_t nPrefixBytes, nPostfixBytes;
 	InitDuffsDeviceConstPointers(_pMemory, _NumBytes, &pPrefix, &nPrefixBytes, &pBody, &pPostfix, &nPostfixBytes);
 
-	oByteSwizzle32 s;
-	s.AsInt = _Value;
+	oStd::byte_swizzle32 s;
+	s.as_int = _Value;
 
 	// Duff's device up to alignment
 	// http://en.wikipedia.org/wiki/Duff's_device
 	switch (nPrefixBytes)
 	{
-		case 3: if (*pPrefix++ != s.AsChar[3]) return false;
-		case 2: if (*pPrefix++ != s.AsChar[2]) return false;
-		case 1: if (*pPrefix++ != s.AsChar[1]) return false;
+		case 3: if (*pPrefix++ != s.as_char[3]) return false;
+		case 2: if (*pPrefix++ != s.as_char[2]) return false;
+		case 1: if (*pPrefix++ != s.as_char[1]) return false;
 		case 0: break;
-		default: oASSERT_NOEXECUTION;
+		oNODEFAULT;
 	}
 
 	// Do aligned assignment
@@ -243,11 +243,11 @@ bool oMemcmp4(const void* _pMemory, long _Value, size_t _NumBytes)
 	// http://en.wikipedia.org/wiki/Duff's_device
 	switch (nPostfixBytes)
 	{
-		case 3: if (*pPostfix++ != s.AsChar[3]) return false;
-		case 2: if (*pPostfix++ != s.AsChar[2]) return false;
-		case 1: if (*pPostfix++ != s.AsChar[1]) return false;
+		case 3: if (*pPostfix++ != s.as_char[3]) return false;
+		case 2: if (*pPostfix++ != s.as_char[2]) return false;
+		case 1: if (*pPostfix++ != s.as_char[1]) return false;
 		case 0: break;
-		default: oASSERT_NOEXECUTION;
+		oNODEFAULT;
 	}
 
 	return true;

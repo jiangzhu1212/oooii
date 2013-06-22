@@ -73,18 +73,18 @@ int ShowAllCameras()
 				oMSGBOX_DESC d;
 				d.Type = oMSGBOX_ERR;
 				d.Title = "oCamera Test";
-				oMsgBox(d, "Camera %s does not support mode %s %dx%d", Camera->GetName(), oAsString(mode.Format), mode.Dimensions.x, mode.Dimensions.y);
+				oMsgBox(d, "Camera %s does not support mode %s %dx%d", Camera->GetName(), oStd::as_string(mode.Format), mode.Dimensions.x, mode.Dimensions.y);
 				continue;
 			}
 
 			Contexts.push_back(Camera);
 		}
 
-		else if (oErrorGetLast() == oERROR_NOT_FOUND)
+		else if (oErrorGetLast() == std::errc::no_such_device)
 			break;
 	}
 
-//	if (oErrorGetLast() == oERROR_NOT_FOUND && !Contexts.empty())
+//	if (oErrorGetLast() == std::errc::no_such_device && !Contexts.empty())
 //	{
 //		oMSGBOX_DESC d;
 //		d.Type = oMSGBOX_ERR;
@@ -110,8 +110,8 @@ int ShowAllCameras()
 		oCamera::DESC cd;
 		Contexts[i].Camera->GetDesc(&cd);
 
-		oStringL Title;
-		oPrintf(Title, "%s (%dx%d %s)", Contexts[i].Camera->GetName(), cd.Mode.Dimensions.x, cd.Mode.Dimensions.y, oAsString(cd.Mode.Format));
+		oStd::lstring Title;
+		oPrintf(Title, "%s (%dx%d %s)", Contexts[i].Camera->GetName(), cd.Mode.Dimensions.x, cd.Mode.Dimensions.y, oStd::as_string(cd.Mode.Format));
 
 		oWINDOW_INIT init;
 		init.WinDesc.ClientSize = cd.Mode.Dimensions;
@@ -144,17 +144,17 @@ int ShowAllCameras()
 					Contexts[i].LastFrame = mapped.Frame;
 
 					float fps = Contexts[i].Camera->GetFPS();
-					oStringS sFPS;
+					oStd::sstring sFPS;
 					oPrintf(sFPS, "FPS: %.01f", fps + (rand() %100) / 100.0f);
 					
 					RECT rClient;
 					GetClientRect(hWnd, &rClient);
 
 					oGUI_TEXT_DESC td;
-					td.Foreground = std::OOOiiGreen;
+					td.Foreground = oStd::OOOiiGreen;
 					td.Position = int2(0, 0);
 					td.Size = oWinRectSize(rClient);
-					td.Shadow = std::Black;
+					td.Shadow = oStd::Black;
 					td.ShadowOffset = int2(1,1);
 					td.Alignment = oGUI_ALIGNMENT_MIDDLE_LEFT;
 

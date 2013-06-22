@@ -25,14 +25,7 @@
  **************************************************************************/
 #include <oBasis/oCameraController.h>
 
-const oGUID& oGetGUID(threadsafe const oCameraController* threadsafe const*)
-{
-	// {D7874299-6F52-4E5F-A76E-9ACB37A35316}
-	static const oGUID IIDCameraController = { 0xd7874299, 0x6f52, 0x4e5f, { 0xa7, 0x6e, 0x9a, 0xcb, 0x37, 0xa3, 0x53, 0x16 } };
-	return IIDCameraController;
-}
-
-static const char* oAsStringCCFlags(unsigned int _CCFlags)
+static const char* oAsStringCCFlags(int _CCFlags)
 {
 	switch (_CCFlags)
 	{
@@ -55,5 +48,5 @@ static const char* oAsStringCCFlags(unsigned int _CCFlags)
 
 char* oCameraControllerParseResponse(char* _StrDestination, size_t _SizeofStrDestination, int _ResponseFlags)
 {
-	return oAsStringFlags(_StrDestination, _SizeofStrDestination, (unsigned int)_ResponseFlags, "0", [&](unsigned int _Flag) { return oAsStringCCFlags(_Flag); });
+	return oStd::strbitmask(_StrDestination, _SizeofStrDestination, _ResponseFlags, "0", oAsStringCCFlags);
 }

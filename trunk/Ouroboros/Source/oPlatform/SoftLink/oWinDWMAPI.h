@@ -27,7 +27,7 @@
 #ifndef oWinDWMAPI_h
 #define oWinDWMAPI_h
 
-#include "oWinSoftLinkCommon.h"
+#include <oPlatform/oModuleUtil.h>
 #include <dwmapi.h>
 
 oDECLARE_DLL_SINGLETON_BEGIN(oWinDWMAPI)

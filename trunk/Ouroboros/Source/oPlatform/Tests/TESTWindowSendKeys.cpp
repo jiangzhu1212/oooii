@@ -25,17 +25,20 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include <oPlatform/oProcess.h>
-#include <oPlatform/Windows/oWinWindowing.h>
 #include <oPlatform/oWindow.h>
+#include <oPlatform/Windows/oWinKey.h>
+#include <oConcurrency/event.h>
 
+#ifdef CreateProcess
+	#undef CreateProcess
+#endif
 static const char* TESTMessage = "Hello world";
 struct PLATFORM_WindowSendKeysClient : public oSpecialTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oEvent WaitEvent;
+		oConcurrency::event WaitEvent;
 		oWINDOW_INIT init;
-		init.WindowThreadDebugName = "PLATFORM_WindowSendKeysClient";
 		init.WindowTitle = "PLATFORM_WindowSendKeysClientWindow";
 
 		init.WinDesc.Style = oGUI_WINDOW_SIZEABLE;
@@ -44,18 +47,18 @@ struct PLATFORM_WindowSendKeysClient : public oSpecialTest
 
 		bool CapsLock = GetKeyState(VK_CAPITAL) == 0 ? false : true;
 		bool Shift = false;
-		oStringS Result;
+		oStd::sstring Result;
 
 		init.ActionHook = [&](const oGUI_ACTION_DESC& _Action)
 		{
 			if(_Action.Action == oGUI_ACTION_KEY_DOWN )
 			{
-				oKEYBOARD_KEY Key = _Action.Key;
-				if(oKB_Caps_Lock == _Action.Key)
+				oGUI_KEY Key = _Action.Key;
+				if(oGUI_KEY_CAPSLOCK == _Action.Key)
 				{
 					CapsLock = !CapsLock;
 				}
-				else if(oKB_Shift_L == _Action.Key || oKB_Shift_L == _Action.Key)
+				else if(oGUI_KEY_LSHIFT == _Action.Key || oGUI_KEY_LSHIFT == _Action.Key)
 				{
 					Shift = true;
 				}
@@ -68,10 +71,10 @@ struct PLATFORM_WindowSendKeysClient : public oSpecialTest
 
 					oStrAppendf(Result.c_str(), "%c", ASCIIKey);
 					if(Result.length() == oStrlen(TESTMessage))
-						WaitEvent.Set();
+						WaitEvent.set();
 				}
 			}
-			if(_Action.Action == oGUI_ACTION_KEY_UP && (oKB_Shift_L == _Action.Key || oKB_Shift_L == _Action.Key))
+			if(_Action.Action == oGUI_ACTION_KEY_UP && (oGUI_KEY_LSHIFT == _Action.Key || oGUI_KEY_LSHIFT == _Action.Key))
 			{
 				Shift = false;
 			}
@@ -81,7 +84,7 @@ struct PLATFORM_WindowSendKeysClient : public oSpecialTest
 		oTESTB0( oWindowCreate(init, &TestWindow) );
 
 		NotifyReady();
-		WaitEvent.Wait(5000);
+		WaitEvent.wait_for(oStd::chrono::milliseconds(5000));
 		oTESTB(0 == oStrcmp(Result.c_str(), TESTMessage), "Didn't correct receive test message");
 		return SUCCESS;
 	}
@@ -96,7 +99,7 @@ struct PLATFORM_WindowSendKeys : public oTest
 		oRef<threadsafe oProcess> Client;
 		{
 			int exitcode = 0;
-			oStringL msg;
+			oStd::lstring msg;
 			oTESTB(oSpecialTest::CreateProcess("PLATFORM_WindowSendKeysClient", &Client), "");
 			oTESTB(oSpecialTest::Start(Client, msg, msg.capacity(), &exitcode), "%s", msg);
 		}

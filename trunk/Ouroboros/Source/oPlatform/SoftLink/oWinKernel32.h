@@ -27,7 +27,7 @@
 #ifndef oWinKernel32_h
 #define oWinKernel32_h
 
-#include "oWinSoftLinkCommon.h"
+#include <oPlatform/oModuleUtil.h>
 
 oDECLARE_DLL_SINGLETON_BEGIN(oWinKernel32)
 	DWORD (__stdcall *GetThreadId)(HANDLE Thread);

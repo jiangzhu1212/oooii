@@ -24,7 +24,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oDispatchQueueGlobalIOCP.h"
-#include <oBasis/oTask.h>
 #include <oBasis/oDispatchQueueGlobalT.h>
 #include "oIOCP.h"
 
@@ -43,7 +42,7 @@ struct oDispatchQueueGlobalIOCP_Impl
 
 		if(!oIOCPCreate(IOCPDesc, [&, _pSelf](){ Valid = false; _pSelf->Release(); }, &IOCP))
 		{
-			oErrorSetLast(oERROR_INVALID_PARAMETER, "Could not create IOCP.");
+			oErrorSetLast(std::errc::invalid_argument, "Could not create IOCP.");
 			return false;
 		}
 		return true;
@@ -63,9 +62,9 @@ struct oDispatchQueueGlobalIOCP_Impl
 		return false;
 	} 
 
-	void Issue(oTASK&& _task) threadsafe
+	void Issue(oTASK&& _Task) threadsafe
 	{
-		IOCP->DispatchIOTask(std::move(_task));
+		IOCP->DispatchIOTask(std::move(_Task));
 	}
 
 private:

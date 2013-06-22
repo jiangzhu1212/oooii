@@ -30,7 +30,7 @@
 
 // Creates an image filled with a gradiant of 4 colors then draws a grid on it
 // with numbers in each grid in order left to right, top to bottom.
-bool oImageCreateNumberedGrid(const int2& _Dimensions, const int2& _GridDimensions, oColor _GridColor, oColor _NumberColor, oColor _CornerColors[4], oImage** _ppImage)
+bool oImageCreateNumberedGrid(const int2& _Dimensions, const int2& _GridDimensions, oStd::color _GridColor, oStd::color _NumberColor, oStd::color _CornerColors[4], oImage** _ppImage)
 {
 	oImage::DESC d;
 	d.Dimensions = _Dimensions;
@@ -40,7 +40,7 @@ bool oImageCreateNumberedGrid(const int2& _Dimensions, const int2& _GridDimensio
 		return false; // pass through error
 	(*_ppImage)->GetDesc(&d);
 
-	oColor* c = (oColor*)(*_ppImage)->GetData();
+	oStd::color* c = (oStd::color*)(*_ppImage)->GetData();
 	oSurfaceFillGradient(c, d.RowPitch, d.Dimensions, _CornerColors);
 	oSurfaceFillGridLines(c, d.RowPitch, d.Dimensions, _GridDimensions, _GridColor);
 
@@ -84,7 +84,7 @@ bool oImageCreateNumberedGrid(const int2& _Dimensions, const int2& _GridDimensio
 	return true;
 }
 
-bool oImageCreateCheckerboard(const int2& _Dimensions, const int2& _GridDimensions, oColor _Color0, oColor _Color1, oImage** _ppImage)
+bool oImageCreateCheckerboard(const int2& _Dimensions, const int2& _GridDimensions, oStd::color _Color0, oStd::color _Color1, oImage** _ppImage)
 {
 	oImage::DESC d;
 	d.Dimensions = _Dimensions;
@@ -93,11 +93,11 @@ bool oImageCreateCheckerboard(const int2& _Dimensions, const int2& _GridDimensio
 	if (!oImageCreate("CheckerImage", d, _ppImage))
 		return false; // pass through error
 	(*_ppImage)->GetDesc(&d);
-	oSurfaceFillCheckerboard((oColor*)(*_ppImage)->GetData(), d.RowPitch, d.Dimensions, int2(64,64), _Color0, _Color1);
+	oSurfaceFillCheckerboard((oStd::color*)(*_ppImage)->GetData(), d.RowPitch, d.Dimensions, int2(64,64), _Color0, _Color1);
 	return true;
 }
 
-bool oImageCreateSolid(const int2& _Dimensions, oColor _Color, oImage** _ppImage)
+bool oImageCreateSolid(const int2& _Dimensions, oStd::color _Color, oImage** _ppImage)
 {
 	oImage::DESC d;
 	d.Dimensions = _Dimensions;
@@ -106,7 +106,7 @@ bool oImageCreateSolid(const int2& _Dimensions, oColor _Color, oImage** _ppImage
 	if (!oImageCreate("CheckerImage", d, _ppImage))
 		return false; // pass through error
 	(*_ppImage)->GetDesc(&d);
-	oSurfaceFillSolid((oColor*)(*_ppImage)->GetData(), d.RowPitch, d.Dimensions, _Color);
+	oSurfaceFillSolid((oStd::color*)(*_ppImage)->GetData(), d.RowPitch, d.Dimensions, _Color);
 	return true;
 }
 
@@ -115,15 +115,15 @@ struct TESTSurfaceFill : public oTest
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oRef<oImage> Image[4];
-		oColor gradiantColors0[4] = { std::Blue, std::Purple, std::Lime, std::Orange};
-		oTESTB0(oImageCreateNumberedGrid(int2(256,256), int2(64,64), std::Black, std::Black, gradiantColors0, &Image[0]));
+		oStd::color gradiantColors0[4] = { oStd::Blue, oStd::Purple, oStd::Lime, oStd::Orange};
+		oTESTB0(oImageCreateNumberedGrid(int2(256,256), int2(64,64), oStd::Black, oStd::Black, gradiantColors0, &Image[0]));
 		oTESTI2(Image[0], 0);
-		oColor gradiantColors1[4] = { std::MidnightBlue, std::DarkSlateBlue, std::Green, std::Chocolate };
-		oTESTB0(oImageCreateNumberedGrid(int2(512,512), int2(32,32), std::Gray, std::White, gradiantColors1, &Image[1]));
+		oStd::color gradiantColors1[4] = { oStd::MidnightBlue, oStd::DarkSlateBlue, oStd::Green, oStd::Chocolate };
+		oTESTB0(oImageCreateNumberedGrid(int2(512,512), int2(32,32), oStd::Gray, oStd::White, gradiantColors1, &Image[1]));
 		oTESTI2(Image[1], 1);
-		oTESTB0(oImageCreateCheckerboard(int2(256,256), int2(32,32), std::Cyan, std::Pink, &Image[2]));
+		oTESTB0(oImageCreateCheckerboard(int2(256,256), int2(32,32), oStd::Cyan, oStd::Pink, &Image[2]));
 		oTESTI2(Image[2], 2);
-		oTESTB0(oImageCreateSolid(int2(256,256), std::TangentSpaceNormalBlue, &Image[3]));
+		oTESTB0(oImageCreateSolid(int2(256,256), oStd::TangentSpaceNormalBlue, &Image[3]));
 		oTESTI2(Image[3], 3);
 
 		return SUCCESS;

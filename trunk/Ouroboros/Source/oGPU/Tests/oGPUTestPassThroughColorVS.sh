@@ -25,7 +25,7 @@
  **************************************************************************/
 #include <oGPUTestHLSL.h>
 
-VSOUT main(float3 LSPosition : POSITION, float4 Color : COLOR)
+VSOUT main(float3 LSPosition : POS0, float4 Color : CLR0)
 {
 	VSOUT Out = (VSOUT)0;
 	Out.SSPosition = float4(LSPosition,1);

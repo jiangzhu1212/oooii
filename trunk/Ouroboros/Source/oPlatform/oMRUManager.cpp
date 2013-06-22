@@ -42,12 +42,12 @@ struct oMRUManagerRegistry : oMRUManager
 
 private:
 	oMRU_DESC Desc;
-	oStringS MRUKeyFormat;
+	oStd::sstring MRUKeyFormat;
 	oRefCount RefCount;
 	int NumMRUs;
 
-	void GetEntryName(oStringS& _EntryName, int _Index);
-	void GetEntries(std::vector<oStringURI>& _Entries);
+	void GetEntryName(oStd::sstring& _EntryName, int _Index);
+	void GetEntries(std::vector<oStd::uri_string>& _Entries);
 };
 
 oMRUManagerRegistry::oMRUManagerRegistry(const oMRU_DESC& _Desc, bool* _pSuccess)
@@ -58,13 +58,13 @@ oMRUManagerRegistry::oMRUManagerRegistry(const oMRU_DESC& _Desc, bool* _pSuccess
 
 	if (_Desc.MRUEntryPrefix.empty())
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "An MRUEntryPrefix must be specified");
+		oErrorSetLast(std::errc::invalid_argument, "An MRUEntryPrefix must be specified");
 		return;
 	}
 
 	if (0 > oPrintf(MRUKeyFormat, "%s%%02d", _Desc.MRUEntryPrefix))
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "MRUEntryPrefix is too long.");
+		oErrorSetLast(std::errc::invalid_argument, "MRUEntryPrefix is too long.");
 		return;
 	}
 
@@ -78,19 +78,19 @@ bool oMRUManagerCreate(const oMRU_DESC& _Desc, oMRUManager** _ppMRUManager)
 	return success;
 }
 
-void oMRUManagerRegistry::GetEntryName(oStringS& _EntryName, int _Index)
+void oMRUManagerRegistry::GetEntryName(oStd::sstring& _EntryName, int _Index)
 {
 	oPrintf(_EntryName, "MRU%02d", _Index);
 }
 
-void oMRUManagerRegistry::GetEntries(std::vector<oStringURI>& _Entries)
+void oMRUManagerRegistry::GetEntries(std::vector<oStd::uri_string>& _Entries)
 {
-	oStringURI Entry;
+	oStd::uri_string Entry;
 	_Entries.clear();
 	_Entries.reserve(NumMRUs);
 	for (int i = 0; i < NumMRUs; i++)
 	{
-		oStringS EntryName;
+		oStd::sstring EntryName;
 		GetEntryName(EntryName, i);
 		if (oWinRegistryGetValue(Entry, oHKEY_CURRENT_USER, Desc.MRURegistryKey, EntryName))
 			_Entries.push_back(Entry);
@@ -104,16 +104,16 @@ void oMRUManagerRegistry::GetDesc(oMRU_DESC* _pDesc)
 
 void oMRUManagerRegistry::Add(const char* _Entry)
 {
-	oStringS EntryName;
-	std::vector<oStringURI> Entries;
+	oStd::sstring EntryName;
+	std::vector<oStd::uri_string> Entries;
 	GetEntries(Entries);
 
 	// Remove any duplicates of the incoming URI
-	auto it = oStdFindIf(Entries, [&](const oStringURI& x)->bool { return !oStricmp(x, _Entry); });
+	auto it = oStd::find_if(Entries, [&](const oStd::uri_string& x)->bool { return !oStricmp(x, _Entry); });
 	while (it != Entries.end())
 	{
 		Entries.erase(it);
-		it = oStdFindIf(Entries, [&](const oStringURI& x)->bool { return !oStricmp(x, _Entry); });
+		it = oStd::find_if(Entries, [&](const oStd::uri_string& x)->bool { return !oStricmp(x, _Entry); });
 	}
 
 	// Insert this as the front of the list
@@ -143,7 +143,7 @@ char* oMRUManagerRegistry::Get(char* _StrDestination, size_t _SizeofStrDestinati
 {
 	if (_ID >= Desc.FirstID && _ID <= Desc.LastID)
 	{
-		oStringS EntryName;
+		oStd::sstring EntryName;
 		GetEntryName(EntryName, _ID - Desc.FirstID);
 		if (oWinRegistryGetValue(_StrDestination, _SizeofStrDestination, oHKEY_CURRENT_USER, Desc.MRURegistryKey, EntryName))
 			return _StrDestination;
@@ -154,18 +154,14 @@ char* oMRUManagerRegistry::Get(char* _StrDestination, size_t _SizeofStrDestinati
 
 void oMRUManagerRegistry::RefreshMenu()
 {
-	for (int i = Desc.FirstID; i <= Desc.LastID; i++)
-		oGUIMenuRemoveItem(Desc.hMenu, i);
+	oGUIMenuRemoveAllItems(Desc.hMenu);
 
-	oStringS EntryName;
-	oStringURI Entry;
+	oStd::sstring EntryName;
+	oStd::uri_string Entry;
 	for (int i = 0; i < NumMRUs; i++)
 	{
 		GetEntryName(EntryName, i);
 		if (oWinRegistryGetValue(Entry, oHKEY_CURRENT_USER, Desc.MRURegistryKey, EntryName))
-		{
 			oGUIMenuAppendItem(Desc.hMenu, Desc.FirstID + i, Entry);
-			NumMRUs++;
-		}
 	}
 }

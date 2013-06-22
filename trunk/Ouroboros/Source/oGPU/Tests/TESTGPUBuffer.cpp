@@ -76,7 +76,7 @@ struct GPU_Buffer : public oTest
 
 		CommandList->SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, false, 0, 1, &AppendBuffer);
 		CommandList->SetPipeline(Pipeline);
-		CommandList->Draw(oCOUNTOF(GPU_BufferAppendIndices));
+		CommandList->Draw(nullptr, 0, 0, nullptr, 0, oCOUNTOF(GPU_BufferAppendIndices));
 		CommandList->CopyCounter(AppendBufferCount, 0, AppendBuffer);
 		CommandList->Copy(AppendReadbackBuffer, AppendBuffer);
 
@@ -93,7 +93,7 @@ struct GPU_Buffer : public oTest
 			Values.push_back(GPU_BufferAppendIndices[i]);
 
 		for(int i = 0; i < oCOUNTOF(GPU_BufferAppendIndices); ++i)
-			oTESTB( oFindAndErase(Values, GPU_BufferAppendIndices[i]), "GPU Appended bad value");
+			oTESTB( oStd::find_and_erase(Values, GPU_BufferAppendIndices[i]), "GPU Appended bad value");
 
 		Device->UnmapRead(AppendReadbackBuffer, 0);
 

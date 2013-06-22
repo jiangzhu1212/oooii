@@ -27,7 +27,7 @@
 #ifndef oWINPSAPI_h
 #define oWINPSAPI_h
 
-#include "oWinSoftLinkCommon.h"
+#include <oPlatform/oModuleUtil.h>
 #include <psapi.h>
 
 oDECLARE_DLL_SINGLETON_BEGIN(oWinPSAPI)

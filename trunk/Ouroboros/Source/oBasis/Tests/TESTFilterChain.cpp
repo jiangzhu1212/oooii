@@ -58,12 +58,12 @@ bool oBasisTest_oFilterChain()
 	bool success = false;
 	oFilterChain FilterChain(filters, err, &success);
 	if (!success)
-		return oErrorSetLast(oERROR_GENERIC, "Regex compile error in oFilterChain");
+		return oErrorSetLast(std::errc::protocol_error, "Regex compile error in oFilterChain");
 
-	for (int i = 0; i < oCOUNTOF(symbols); i++)
+	oFORI(i, symbols)
 		if (FilterChain.Passes(symbols[i]) != expected[i])
-			return oErrorSetLast(oERROR_GENERIC, "Failed filter on %d%s symbol", i, oOrdinal(i));
+			return oErrorSetLast(std::errc::protocol_error, "Failed filter on %d%s symbol", i, oStd::ordinal(i));
 
-	oErrorSetLast(oERROR_NONE, "");
+	oErrorSetLast(0, "");
 	return true;
 }

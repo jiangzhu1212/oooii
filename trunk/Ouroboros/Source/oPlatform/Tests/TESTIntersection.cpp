@@ -64,8 +64,8 @@ struct PLATFORM_Intersection : public oTest
 				for (size_t w = 0; w < _W; w++)
 				{
 					oAABoxf& b = (*_pBoxes)[(d * _W * _H) + (h * _W) + w];
-					b.SetMin(float3(w * stride, h * stride, d * stride) + CENTERING);
-					b.SetMax(b.GetMin() + float3(_Size));
+					b.Min = float3(w * stride, h * stride, d * stride) + CENTERING;
+					b.Max = b.Min + float3(_Size);
 				}
 
 		return true;
@@ -84,7 +84,7 @@ struct PLATFORM_Intersection : public oTest
 		InitializeAGridOfBoxes(&Boxes, W, H, D, SIZE, SPACING);
 
 		std::vector<int> Results(W * H * D);
-		oMemset4(oGetData(Results), 0xdeaddead, oGetDataSize(Results));
+		oStd::fill(Results, 0xdeaddead);
 
 		static const EYE sEyes[] =
 		{

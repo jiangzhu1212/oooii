@@ -170,3 +170,8 @@ void oCRTLeakTracker::UntrackAllocation(void* _Pointer)
 {
 	pLeakTracker->OnDeallocation(oCRTHeapGetAllocationID(_Pointer));
 }
+
+void oConcurrency::enable_leak_tracking_threadlocal(bool _Enabled)
+{
+	oCRTLeakTracker::Singleton()->EnableThreadlocalTracking(_Enabled);
+}

@@ -24,6 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oWindows.h>
+#include <oPlatform/oModule.h>
 
 static oOption sOptions[] = 
 {
@@ -66,7 +67,7 @@ bool ParseCommandLine(int argc, const char* argv[], oVER_DESC* _pDesc)
 			case 'v': _pDesc->PrintProductVersion = true; break;
 			case 'c': _pDesc->PrintCopyright = true; break;
 			case ' ': _pDesc->InputPath = value; break;
-			case ':': return oErrorSetLast(oERROR_INVALID_PARAMETER, "The %d%s option is missing a parameter (does it begin with '-' or '/'?)", count, oOrdinal(count));
+			case ':': return oErrorSetLast(std::errc::invalid_argument, "The %d%s option is missing a parameter (does it begin with '-' or '/'?)", count, oStd::ordinal(count));
 		}
 
 		ch = oOptTok(&value, 0, 0, 0);
@@ -82,31 +83,31 @@ bool Main(int argc, const char* argv[])
 	{
 		char buf[1024];
 		printf("%s", oOptDoc(buf, oGetFilebase(argv[0]), sOptions));
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, ""); // don't print any other complaint
+		return oErrorSetLast(std::errc::invalid_argument, ""); // don't print any other complaint
 	}
 
 	oVER_DESC opts;
 	if (!ParseCommandLine(argc, argv, &opts))
 	{
-		oStringXL temp = oErrorGetLastString();
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "bad command line: %s", temp.c_str());
+		oStd::xlstring temp = oErrorGetLastString();
+		return oErrorSetLast(std::errc::invalid_argument, "bad command line: %s", temp.c_str());
 	}
 
 	if (!opts.InputPath)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "no input file specified.");
+		return oErrorSetLast(std::errc::invalid_argument, "no input file specified.");
 
 	oMODULE_DESC md;
 	if (!oModuleGetDesc(opts.InputPath, &md))
-		return oErrorSetLast(oERROR_GENERIC, "failed to get information for file \"%s\"", opts.InputPath);
+		return oErrorSetLast(std::errc::no_such_file_or_directory, "failed to get information for file \"%s\"", opts.InputPath);
 
-	oStringS FBuf, PBuf;
-	oVERIFY(oToString(FBuf, md.FileVersion));
-	oVERIFY(oToString(PBuf, md.ProductVersion));
+	oStd::sstring FBuf, PBuf;
+	oVERIFY(oStd::to_string(FBuf, md.FileVersion));
+	oVERIFY(oStd::to_string(PBuf, md.ProductVersion));
 
 	if (opts.PrintFileDescription)
 		printf("%s\n", md.Description.c_str());
 	if (opts.PrintType)
-		printf("%s\n", oAsString(md.Type));
+		printf("%s\n", oStd::as_string(md.Type));
 	if (opts.PrintFileVersion)
 		printf("%s\n", FBuf.c_str());
 	if (opts.PrintProductName)

@@ -24,7 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oSystem.h>
-#include <oBasis/oStdChrono.h>
+#include <oStd/oStdChrono.h>
 #include <oPlatform/oP4.h>
 #include <oPlatform/oProcess.h>
 #include <oPlatform/oProgressBar.h>
@@ -47,19 +47,6 @@ bool oSystemGetHeapStats(oSYSTEM_HEAP_STATS* _pStats)
 	return true;
 }
 
-bool oDateConvert(const FILETIME& _Source, oNTPTimestamp* _pDestination) { return oDateConvert((const oFILETIME&)_Source, _pDestination); }
-bool oDateConvert(const FILETIME& _Source, oNTPDate* _pDestination) { return oDateConvert((const oFILETIME&)_Source, _pDestination); }
-bool oDateConvert(const FILETIME& _Source, time_t* _pDestination) { return oDateConvert((const oFILETIME&)_Source, _pDestination); }
-bool oDateConvert(const FILETIME& _Source, oFILETIME* _pDestination) { return oDateConvert((const oFILETIME&)_Source, _pDestination); }
-bool oDateConvert(const FILETIME& _Source, oDATE* _pDestination) { return oDateConvert((const oFILETIME&)_Source, _pDestination); }
-
-bool oDateConvert(const oDATE& _Source, FILETIME* _pDestination) { return oDateConvert(_Source, (oFILETIME*)_pDestination); }
-bool oDateConvert(const oNTPDate& _Source, FILETIME* _pDestination) { return oDateConvert(_Source, (oFILETIME*)_pDestination); }
-bool oDateConvert(const oNTPTimestamp& _Source, FILETIME* _pDestination) { return oDateConvert(_Source, (oFILETIME*)_pDestination); }
-bool oDateConvert(const oNTPShortTime& _Source, FILETIME* _pDestination) { return oDateConvert(_Source, (oFILETIME*)_pDestination); }
-bool oDateConvert(const time_t& _Source, FILETIME* _pDestination) { return oDateConvert(_Source, (oFILETIME*)_pDestination); }
-bool oDateConvert(const oFILETIME& _Source, FILETIME* _pDestination) { return oDateConvert(_Source, (oFILETIME*)_pDestination); }
-
 static void oSystemGetDate(FILETIME* _pFileTime, bool _IsUTC)
 {
 	if (_IsUTC)
@@ -72,51 +59,51 @@ static void oSystemGetDate(FILETIME* _pFileTime, bool _IsUTC)
 	}
 }
 
-void oSystemGetDate(oNTPTimestamp* _pNTPTimestamp)
+void oSystemGetDate(oStd::ntp_timestamp* _pNTPTimestamp)
 {
 	FILETIME ft;
 	oSystemGetDate(&ft, true);
-	oDateConvert((const oFILETIME&)ft, _pNTPTimestamp);
+	*_pNTPTimestamp = oStd::date_cast<oStd::ntp_timestamp>(ft);
 }
 
-void oSystemGetDate(oNTPDate* _pNTPDate)
+void oSystemGetDate(oStd::ntp_date* _pNTPDate)
 {
 	FILETIME ft;
 	oSystemGetDate(&ft, true);
-	oDateConvert(ft, _pNTPDate);
+	*_pNTPDate = oStd::date_cast<oStd::ntp_date>(ft);
 }
 
-void oSystemGetDate(oDATE* _pDate)
+void oSystemGetDate(oStd::date* _pDate)
 {
 	FILETIME ft;
 	oSystemGetDate(&ft, true);
-	oDateConvert(ft, _pDate);
+	*_pDate = oStd::date_cast<oStd::date>(ft);
 }
 
-static void oToDate(const SYSTEMTIME& _SystemTime, oDATE* _pDate)
+static void oToDate(const SYSTEMTIME& _SystemTime, oStd::date* _pDate)
 {
-	_pDate->Year = _SystemTime.wYear;
-	_pDate->Month = (oMONTH)_SystemTime.wMonth;
-	_pDate->Day = _SystemTime.wDay;
-	_pDate->DayOfWeek = (oWEEKDAY)_SystemTime.wDayOfWeek;
-	_pDate->Hour = _SystemTime.wHour;
-	_pDate->Minute = _SystemTime.wMinute;
-	_pDate->Second = _SystemTime.wSecond;
-	_pDate->Millisecond = _SystemTime.wMilliseconds;
+	_pDate->year = _SystemTime.wYear;
+	_pDate->month = (oStd::month::value)_SystemTime.wMonth;
+	_pDate->day = _SystemTime.wDay;
+	_pDate->day_of_week = (oStd::weekday::value)_SystemTime.wDayOfWeek;
+	_pDate->hour = _SystemTime.wHour;
+	_pDate->minute = _SystemTime.wMinute;
+	_pDate->second = _SystemTime.wSecond;
+	_pDate->millisecond = _SystemTime.wMilliseconds;
 }
 
-static void oFromDate(const oDATE& _Date, SYSTEMTIME* _pSystemTime)
+static void oFromDate(const oStd::date& _Date, SYSTEMTIME* _pSystemTime)
 {
-	_pSystemTime->wYear = (WORD)_Date.Year;
-	_pSystemTime->wMonth = (WORD)_Date.Month;
-	_pSystemTime->wDay = (WORD)_Date.Day;
-	_pSystemTime->wHour = (WORD)_Date.Hour;
-	_pSystemTime->wMinute = (WORD)_Date.Minute;
-	_pSystemTime->wSecond = (WORD)_Date.Second;
-	_pSystemTime->wMilliseconds = (WORD)_Date.Millisecond;
+	_pSystemTime->wYear = (WORD)_Date.year;
+	_pSystemTime->wMonth = (WORD)_Date.month;
+	_pSystemTime->wDay = (WORD)_Date.day;
+	_pSystemTime->wHour = (WORD)_Date.hour;
+	_pSystemTime->wMinute = (WORD)_Date.minute;
+	_pSystemTime->wSecond = (WORD)_Date.second;
+	_pSystemTime->wMilliseconds = (WORD)_Date.millisecond;
 }
 
-bool oSystemDateFromLocal(const oDATE& _LocalDate, oDATE* _pUTCDate)
+bool oSystemDateFromLocal(const oStd::date& _LocalDate, oStd::date* _pUTCDate)
 {
 	SYSTEMTIME In, Out;
 	oFromDate(_LocalDate, &In);
@@ -126,7 +113,7 @@ bool oSystemDateFromLocal(const oDATE& _LocalDate, oDATE* _pUTCDate)
 	return true;
 }
 
-bool oSystemDateToLocal(const oDATE& _UTCDate, oDATE* _pLocalTime)
+bool oSystemDateToLocal(const oStd::date& _UTCDate, oStd::date* _pLocalTime)
 {
 	SYSTEMTIME In, Out;
 	oFromDate(_UTCDate, &In);
@@ -162,7 +149,7 @@ bool oSystemAllowSleep(bool _Allow)
 		case oWINDOWS_XP_PRO_64BIT:
 		case oWINDOWS_SERVER_2003:
 		case oWINDOWS_SERVER_2003R2:
-			oASSERT(false, "oSystemAllowSleep won't work on %s.", oAsString(oGetWindowsVersion()));
+			oASSERT(false, "oSystemAllowSleep won't work on %s.", oStd::as_string(oGetWindowsVersion()));
 		default:
 			break;
 	}
@@ -195,7 +182,7 @@ bool oSystemExecute(const char* _CommandLine, char* _StrStdout, size_t _SizeofSt
 	float startTime = oTimerMSF();
 	uint timeSoFarMS = 0;
 	static const uint timePerFlushMS = 50;
-	oStringXXL tempStdOut;
+	oStd::xxlstring tempStdOut;
 	if(_SizeofStrStdOut) //older version of this code always cleared the passed in string indirectly, so doing so now as well.
 		_StrStdout[0] = 0;
 
@@ -229,13 +216,13 @@ bool oSystemExecute(const char* _CommandLine, char* _StrStdout, size_t _SizeofSt
 	if (timeSoFarMS >= _ExecutionTimeout) //timed out
 	{
 		Finished = false;
-		oErrorSetLast(oERROR_TIMEOUT, "Executing \"%s\" timed out after %.01f seconds.", _CommandLine, static_cast<float>(_ExecutionTimeout) / 1000.0f);
+		oErrorSetLast(std::errc::timed_out, "Executing \"%s\" timed out after %.01f seconds.", _CommandLine, static_cast<float>(_ExecutionTimeout) / 1000.0f);
 		if (_pExitCode)
-			*_pExitCode = oERROR_REDUNDANT;
+			*_pExitCode = std::errc::operation_in_progress;
 	}
 
 	if (_pExitCode && !process->GetExitCode(_pExitCode))
-		*_pExitCode = oERROR_REDUNDANT;
+		*_pExitCode = std::errc::operation_in_progress;
 	
 	return Finished;
 }
@@ -274,7 +261,7 @@ bool oSystemWaitIdle(unsigned int _TimeoutMS, oFUNCTION<bool()> _ContinueIdling)
 	while (1)
 	{
 		if (_TimeoutMS != oInfiniteWait && (oSeconds(TimeCurrent - TimeStart) >= oStd::chrono::milliseconds(_TimeoutMS)))
-			return oErrorSetLast(oERROR_TIMEOUT);
+			return oErrorSetLast(std::errc::timed_out);
 		
 		if (oWinSystemAllServicesInSteadyState())
 		{
@@ -288,7 +275,7 @@ bool oSystemWaitIdle(unsigned int _TimeoutMS, oFUNCTION<bool()> _ContinueIdling)
 				return true;
 
 			if(!_ContinueIdling() )
-				return oErrorSetLast(oERROR_CANCELED, "User canceled the wait"); 
+				return oErrorSetLast(std::errc::operation_canceled, "User canceled the wait"); 
 
 			Sleep(200);
 		}
@@ -296,7 +283,7 @@ bool oSystemWaitIdle(unsigned int _TimeoutMS, oFUNCTION<bool()> _ContinueIdling)
 		TimeCurrent = oStd::chrono::high_resolution_clock::now();
 	}
 
-	oASSERT_NOEXECUTION;
+	return false;
 }
 
 bool oSystemGUIUsesGPUCompositing()
@@ -312,6 +299,11 @@ bool oSystemGUIEnableGPUCompositing(bool _Enable, bool _Force)
 bool oSystemIsRemote()
 {
 	return !!GetSystemMetrics(SM_REMOTESESSION);
+}
+
+bool oSystemGUIIsWritable()
+{
+	return !!GetForegroundWindow();
 }
 
 bool oSetEnvironmentVariable(const char* _Name, const char* _Value)
@@ -330,7 +322,7 @@ static std::regex EncodedSearch("(%(.+?)%)");
 
 char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _SizeofStrDestination, const char* _RawString)
 {
-	oStringPath Current = _RawString;
+	oStd::path_string Current = _RawString;
 
 	const std::cregex_token_iterator end;
 	int arr[] = {1,2}; 
@@ -340,7 +332,7 @@ char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _Sizeof
 		auto Replace = VecTok->str();
 		++VecTok;
 		auto EnvVariable = VecTok->str();
-		oStringPath TranslatedVariable;
+		oStd::path_string TranslatedVariable;
 		oSystemGetEnvironmentVariable(TranslatedVariable, EnvVariable.c_str());
 		oReplace(_StrDestination, _SizeofStrDestination, Current, Replace.c_str(), TranslatedVariable.c_str());
 		Current = _StrDestination;
@@ -355,7 +347,7 @@ char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _Sizeof
 char* oSystemGetEnvironmentString(char* _StrEnvironment, size_t _SizeofStrEnvironment)
 {
 	char* pEnv = GetEnvironmentStringsA();
-	oOnScopeExit OSCFreeEnv([&] { if (pEnv) { FreeEnvironmentStringsA(pEnv); } });
+	oStd::finally OSCFreeEnv([&] { if (pEnv) { FreeEnvironmentStringsA(pEnv); } });
 
 	// @oooii-tony: replace nuls with newlines to make parsing this mega-string
 	// a bit less obtuse
@@ -371,34 +363,36 @@ char* oSystemGetEnvironmentString(char* _StrEnvironment, size_t _SizeofStrEnviro
 
 	if (!oStrcpy(_StrEnvironment, _SizeofStrEnvironment, pEnv))
 	{
-		oErrorSetLast(oERROR_AT_CAPACITY, "strcpy to user-specified buffer failed");
+		oErrorSetLast(std::errc::no_buffer_space, "strcpy to user-specified buffer failed");
 		return nullptr;
 	}
 
 	return _StrEnvironment;
 }
 
-const char* oAsString(oSYSPATH _SysPath)
-{
-	switch (_SysPath)
-	{
-		case oSYSPATH_CWD: return "oSYSPATH_CWD";
-		case oSYSPATH_APP: return "oSYSPATH_APP";
-		case oSYSPATH_APP_FULL: return "oSYSPATH_APP_FULL";
-		case oSYSPATH_SYSTMP: return "oSYSPATH_SYSTMP";
-		case oSYSPATH_SYS: return "oSYSPATH_SYS";
-		case oSYSPATH_OS: return "oSYSPATH_OS";
-		case oSYSPATH_DEV: return "oSYSPATH_DEV";
-		case oSYSPATH_TESTTMP: return "oSYSPATH_TESTTMP";
-		case oSYSPATH_COMPILER_INCLUDES: return "oSYSPATH_COMPILER_INCLUDES";
-		case oSYSPATH_DESKTOP: return "oSYSPATH_DESKTOP";
-		case oSYSPATH_DESKTOP_ALLUSERS: return "oSYSPATH_DESKTOP_ALLUSERS";
-		case oSYSPATH_DATA: return "oSYSPATH_DATA";
-		oNODEFAULT;
-	}
-}
+namespace oStd {
 
-bool oFromString(oSYSPATH* _pValue, const char* _StrSource)
+	const char* as_string(oSYSPATH _SysPath)
+	{
+		switch (_SysPath)
+		{
+			case oSYSPATH_CWD: return "oSYSPATH_CWD";
+			case oSYSPATH_APP: return "oSYSPATH_APP";
+			case oSYSPATH_APP_FULL: return "oSYSPATH_APP_FULL";
+			case oSYSPATH_SYSTMP: return "oSYSPATH_SYSTMP";
+			case oSYSPATH_SYS: return "oSYSPATH_SYS";
+			case oSYSPATH_OS: return "oSYSPATH_OS";
+			case oSYSPATH_DEV: return "oSYSPATH_DEV";
+			case oSYSPATH_TESTTMP: return "oSYSPATH_TESTTMP";
+			case oSYSPATH_COMPILER_INCLUDES: return "oSYSPATH_COMPILER_INCLUDES";
+			case oSYSPATH_DESKTOP: return "oSYSPATH_DESKTOP";
+			case oSYSPATH_DESKTOP_ALLUSERS: return "oSYSPATH_DESKTOP_ALLUSERS";
+			case oSYSPATH_DATA: return "oSYSPATH_DATA";
+			oNODEFAULT;
+		}
+	}
+
+bool from_string(oSYSPATH* _pValue, const char* _StrSource)
 {
 	static const char* sStrings[] =
 	{
@@ -417,9 +411,9 @@ bool oFromString(oSYSPATH* _pValue, const char* _StrSource)
 		"oSYSPATH_DATA",
 	};
 
-	oStringS SourceUppercase = _StrSource;
+	oStd::sstring SourceUppercase = _StrSource;
 	oToUpper(SourceUppercase);
-	for (size_t i = 0; i < oCOUNTOF(sStrings); i++)
+	oFORI(i, sStrings)
 	{
 		if (!oStrcmp(_StrSource, sStrings[i]) || !oStrcmp(SourceUppercase, sStrings[i]+9)) // +9 match against just "OS" or "HOST" after oSYSPATH_
 		{
@@ -430,9 +424,11 @@ bool oFromString(oSYSPATH* _pValue, const char* _StrSource)
 	return false;
 }
 
+} // namespace oStd
+
 char* oSystemGetURI(char* _StrSysURI, size_t _SizeofStrSysURI, oSYSPATH _SysPath)
 {
-	oStringPath Path;
+	oStd::path_string Path;
 	if (!oSystemGetPath(Path, _SysPath))
 		return false; // pass through error
 	return oURIFromAbsolutePath(_StrSysURI, _SizeofStrSysURI, Path); // pass through error
@@ -452,7 +448,7 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 			DWORD len = GetModuleFileNameA(GetModuleHandle(nullptr), _StrSysPath, nElements);
 			if (len == nElements && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
 			{
-				oErrorSetLast(oERROR_AT_CAPACITY);
+				oErrorSetLast(std::errc::no_buffer_space);
 				success = false;
 			}
 			break;
@@ -517,7 +513,7 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 			}
 
 			else
-				oErrorSetLast(oERROR_NOT_FOUND, "Failed to find compiler include path becayse env var %s does not exist", kCmnToolsEnvVar);
+				oErrorSetLast(std::errc::no_such_file_or_directory, "Failed to find compiler include path because env var %s does not exist", kCmnToolsEnvVar);
 
 			break;
 		}
@@ -564,7 +560,7 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 
 				else
 				{
-					oErrorSetLast(oERROR_AT_CAPACITY);
+					oErrorSetLast(std::errc::no_buffer_space);
 					success = false;
 				}
 			}
@@ -577,14 +573,14 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 
 		case oSYSPATH_TESTTMP:
 		{
-			oStringPath dataPath;
+			oStd::path_string dataPath;
 			success = true;
 			if (!oSystemGetPath(dataPath, oSYSPATH_DATA))
 				success = false;
 
 			if (-1 == oPrintf(_StrSysPath, _SizeofStrSysPath, "%sTemp/", dataPath.c_str()))
 			{
-				oErrorSetLast(oERROR_AT_CAPACITY);
+				oErrorSetLast(std::errc::no_buffer_space);
 				success = false;
 			}
 
@@ -617,12 +613,12 @@ char* oSystemGetHostname(char* _StrDestination, size_t _SizeofStrDestination)
 
 char* oSystemGetExecutionPath(char* _StrDestination, size_t _SizeofStrDestination)
 {
-	oStringS hostname;
+	oStd::sstring hostname;
 	if (!oSystemGetHostname(hostname))
 		return false; // pass through error
 	else if (oInvalid == oPrintf(_StrDestination, _SizeofStrDestination, "[%s.%u.%u]", hostname.c_str(), oProcessGetCurrentID(), oStd::this_thread::get_id()))
 	{
-		oErrorSetLast(oERROR_AT_CAPACITY);
+		oErrorSetLast(std::errc::no_buffer_space);
 		return nullptr;
 	}
 	return _StrDestination;
@@ -640,34 +636,39 @@ char* oSystemURIToPath(char* _Path, size_t _SizeofPath, const char* _URI)
 char* oSystemURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIParts)
 {
 	if (_URIParts.Authority.empty())
-		oStrcpy(_Path, _SizeofPath, _URIParts.Path);
+	{
+		if (_URIParts.Path[0]=='/' && _URIParts.Path[2]==':')
+			oStrcpy(_Path, _SizeofPath, _URIParts.Path+1);
+		else
+			oStrcpy(_Path, _SizeofPath, _URIParts.Path);
+	}
 	else
 	{
 		oSYSPATH SysPath;
-		if (oFromString(&SysPath, _URIParts.Authority))
+		if (oStd::from_string(&SysPath, _URIParts.Authority))
 		{
 			if (!oSystemGetPath(_Path, _SizeofPath, SysPath))
 			{
-				oErrorSetLast(oERROR_CORRUPT, "Failed to find %s", oAsString(SysPath));
+				oErrorSetLast(std::errc::protocol_error, "Failed to find %s", oStd::as_string(SysPath));
 				return nullptr;
 			}
 
-			if (!oEnsureSeparator(_Path, _SizeofPath) && oErrorGetLast() != oERROR_REDUNDANT)
+			if (!oEnsureSeparator(_Path, _SizeofPath) && oErrorGetLast() != std::errc::operation_in_progress)
 			{
-				oErrorSetLast(oERROR_AT_CAPACITY);
+				oErrorSetLast(std::errc::no_buffer_space);
 				return nullptr;
 			}
 
 			if (-1 == oStrAppendf(_Path, _SizeofPath, _URIParts.Path))
 			{
-				oErrorSetLast(oERROR_AT_CAPACITY);
+				oErrorSetLast(std::errc::no_buffer_space);
 				return nullptr;
 			}
 		}
 
 		else if (!oURIPartsToPath(_Path, _SizeofPath, _URIParts))
 		{
-			oErrorSetLast(oERROR_GENERIC);
+			oErrorSetLast(std::errc::invalid_argument);
 			return nullptr;
 		}
 	}
@@ -675,14 +676,14 @@ char* oSystemURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _U
 	return _Path;
 }
 
-char* oSystemFindInPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, oSYSPATH _SysPath, const char* _RelativePath, const char* _DotPath, oFUNCTION_PATH_EXISTS _PathExists)
+char* oSystemFindInPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, oSYSPATH _SysPath, const char* _RelativePath, const char* _DotPath, const oFUNCTION<bool(const char* _Path)>& _PathExists)
 {
 	if (oSystemGetPath(_ResultingFullPath, _SizeofResultingFullPath, _SysPath))
 	{
 		size_t len = oStrlen(_ResultingFullPath);
 		if (!oStrcpy(_ResultingFullPath + len, _SizeofResultingFullPath - len, _RelativePath))
 		{
-			oErrorSetLast(oERROR_TRUNCATED);
+			oErrorSetLast(std::errc::no_buffer_space);
 			return nullptr;
 		}
 
@@ -693,7 +694,7 @@ char* oSystemFindInPath(char* _ResultingFullPath, size_t _SizeofResultingFullPat
 	return nullptr;
 }
 
-char* oSystemFindPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, const char* _RelativePath, const char* _DotPath, const char* _ExtraSearchPath, oFUNCTION_PATH_EXISTS _PathExists)
+char* oSystemFindPath(char* _ResultingFullPath, size_t _SizeofResultingFullPath, const char* _RelativePath, const char* _DotPath, const char* _ExtraSearchPath, const oFUNCTION<bool(const char* _Path)>& _PathExists)
 {
 	if (oIsFullPath(_RelativePath) && _PathExists(_RelativePath) && !!oStrcpy(_ResultingFullPath, _SizeofResultingFullPath, _RelativePath))
 		return _ResultingFullPath;

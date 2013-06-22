@@ -23,24 +23,24 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+#include <oStd/stringize.h>
 #include <oBasis/oEightCC.h>
-#include <oBasis/oStringize.h>
 #include "oBasisTestCommon.h"
 #include <cstring>
 
 bool oBasisTest_oEightCC()
 {
-	oEightCC fcc('TEXT', 'URE ');
+	oEightCC fcc("TEXTURE ");
 
 	char str[16];
 
-	oTESTB(oToString(str, fcc), "oToString on oEightCC failed 1");
-	oTESTB(!oStrcmp("TEXTURE ", str), "oToString on oEightCC failed 2");
+	oTESTB(oStd::to_string(str, fcc), "to_string on oEightCC failed 1");
+	oTESTB(!strcmp("TEXTURE ", str), "to_string on oEightCC failed 2");
 
 	const char* fccStr = "GEOMETRY";
-	oTESTB(oFromString(&fcc, fccStr), "oFromSTring on oEightCC failed 1");
-	oTESTB(oEightCC('GEOM', 'ETRY') == fcc, "oFromSTring on oEightCC failed 2");
+	oTESTB(oStd::from_string(&fcc, fccStr), "from_string on oEightCC failed 1");
+	oTESTB(oEightCC("GEOMETRY") == fcc, "from_string on oEightCC failed 2");
 
-	oErrorSetLast(oERROR_NONE, "");
+	oErrorSetLast(0, "");
 	return true;
 }

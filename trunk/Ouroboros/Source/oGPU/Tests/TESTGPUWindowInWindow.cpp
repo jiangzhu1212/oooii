@@ -42,7 +42,6 @@ public:
 		// Create the parent:
 
 		oWINDOW_INIT init;
-		init.WindowThreadDebugName = "Parent WinThread";
 		init.WindowTitle = "Window-In-Window Test";
 		init.EventHook = oBIND(&WindowInWindow::ParentEventHook, this, oBIND1);
 		init.WinDesc.Style = oGUI_WINDOW_SIZEABLE;
@@ -111,7 +110,7 @@ public:
 			GPUWindow->GetDevice(&Device);
 
 			oGPU_CLEAR_DESC CD;
-			CD.ClearColor[0] = (Counter & 0x1) ? std::White : std::Blue;
+			CD.ClearColor[0] = (Counter & 0x1) ? oStd::White : oStd::Blue;
 			_pPrimaryRenderTarget->SetClearDesc(CD);
 
 			if (Device->BeginFrame())
@@ -132,7 +131,7 @@ public:
 			case oGUI_CREATING:
 			{
 				oGUI_CONTROL_DESC ButtonDesc;
-				ButtonDesc.hParent = _Event.hSource;
+				ButtonDesc.hParent = _Event.hWindow;
 				ButtonDesc.Type = oGUI_CONTROL_BUTTON;
 				ButtonDesc.Text = "Push Me";
 				ButtonDesc.Size = int2(100,25);
@@ -194,6 +193,9 @@ struct GPU_WindowInWindow : public oTest
 			oPrintf(_StrStatus, _SizeofStrStatus, "Detected remote session: differing text anti-aliasing will cause bad image compares");
 			return SKIPPED;
 		}
+
+		// Turn display power on, otherwise the test will fail
+		oDisplaySetPowerOn(true);
 
 		bool success = false;
 		WindowInWindow test(&success);

@@ -24,13 +24,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oSocket.h>
-#include <oBasis/oBlockAllocatorGrowable.h>
 #include <oBasis/oLockThis.h>
-#include <oBasis/oMutex.h>
+#include <oConcurrency/mutex.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oString.h>
-#include <oBasis/oConcurrentQueue.h>
+#include <oConcurrency/concurrent_queue.h>
 #include <oPlatform/oSocket.h>
 #include "oIOCP.h"
 #include "SoftLink/oWinsock.h"
@@ -70,7 +69,9 @@ inline void oSockAddrToNetAddr(const SOCKADDR_IN& _SockAddr, oNetAddr* _pNetAddr
 	pAddr->Port = _SockAddr.sin_port;
 }
 
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oNetHost& _Host)
+namespace oStd {
+
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oNetHost& _Host)
 {
 	const oNetHost_Internal* pHost = reinterpret_cast<const oNetHost_Internal*>(&_Host);
 	oWinsock* ws = oWinsock::Singleton();
@@ -78,7 +79,7 @@ char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oNetH
 	return -1 != oPrintf(_StrDestination, _SizeofStrDestination, "%u.%u.%u.%u", (addr&0xFF000000)>>24, (addr&0xFF0000)>>16, (addr&0xFF00)>>8, addr&0xFF) ? _StrDestination : nullptr;
 }
 
-bool oFromString(oNetHost* _pHost, const char* _StrSource)
+bool from_string(oNetHost* _pHost, const char* _StrSource)
 {
 	oNetHost_Internal* pHost = reinterpret_cast<oNetHost_Internal*>(_pHost);
 	oWinsock* ws = oWinsock::Singleton();
@@ -97,9 +98,9 @@ bool oFromString(oNetHost* _pHost, const char* _StrSource)
 	return true;
 }
 
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oNetAddr& _Address)
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oNetAddr& _Address)
 {
-	if (oToString(_StrDestination, _SizeofStrDestination, _Address.Host))
+	if (to_string(_StrDestination, _SizeofStrDestination, _Address.Host))
 	{
 		const oNetAddr_Internal* pAddress = reinterpret_cast<const oNetAddr_Internal*>(&_Address);
 		oWinsock* ws = oWinsock::Singleton();
@@ -110,7 +111,7 @@ char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oNetA
 	return nullptr;
 }
 
-bool oFromString(oNetAddr* _pAddress, const char* _StrSource)
+bool from_string(oNetAddr* _pAddress, const char* _StrSource)
 {
 	char tempStr[512];
 	oASSERT(oStrlen(_StrSource) < oCOUNTOF(tempStr)+1, "");
@@ -138,7 +139,7 @@ bool oFromString(oNetAddr* _pAddress, const char* _StrSource)
 	return true;
 }
 
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oSocket::PROTOCOL& _Protocol)
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oSocket::PROTOCOL& _Protocol)
 {
 	switch (_Protocol)
 	{
@@ -156,7 +157,7 @@ char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oSock
 	return _StrDestination;
 }
 
-bool oFromString(oSocket::PROTOCOL* _Protocol, const char* _StrSource)
+bool from_string(oSocket::PROTOCOL* _Protocol, const char* _StrSource)
 {
 	if(oStrncmp(_StrSource, "tcp", 3) == 0)
 	{
@@ -173,6 +174,8 @@ bool oFromString(oSocket::PROTOCOL* _Protocol, const char* _StrSource)
 
 	return true;
 }
+
+} // namespace oStd
 
 oAPI void oSocketPortGet(const oNetAddr& _Addr, unsigned short* _pPort)
 {
@@ -228,15 +231,8 @@ oSocket::size_t oWinsockRecvFromBlocking(SOCKET hSocket, void* _pData, oSocket::
 
 error:
 
-	oErrorSetLast(oERROR_IO, "%s", oWinsock::AsString(oWinsock::Singleton()->WSAGetLastError()));
+	oErrorSetLast(std::errc::io_error, "%s", oWinsock::AsString(oWinsock::Singleton()->WSAGetLastError()));
 	return 0;
-}
-
-const oGUID& oGetGUID(threadsafe const oSocket* threadsafe const *)
-{
-	// {68F693CE-B01B-4235-A401-787691707365}
-	static const oGUID oIIDSocketAsyncUDP = { 0x68f693ce, 0xb01b, 0x4235, { 0xa4, 0x1, 0x78, 0x76, 0x91, 0x70, 0x73, 0x65 } };
-	return oIIDSocketAsyncUDP;
 }
 
 struct oSocketImpl
@@ -252,7 +248,7 @@ struct oSocketImpl
 	//	and the proxy (proxy could be a socket pool) will delete us. but we will handle the refcounting for the proxy.
 	int Reference() threadsafe
 	{ 
-		oSharedLock<oSharedMutex> Lock(DescMutex);
+		oConcurrency::shared_lock<oConcurrency::shared_mutex> Lock(DescMutex);
 		if( pIOCP ) 
 			return pIOCP->Reference(); 
 		else
@@ -323,12 +319,12 @@ private:
 	void IOCPCallback(oIOCPOp* _pSocketOp);
 	void RunProxyDeleter() threadsafe;
 
-	oSharedMutex DescMutex;
+	oConcurrency::shared_mutex DescMutex;
 	oRefCount Refcount;
 	oSocket::DESC Desc;
 	oSocket* Proxy;
 
-	oInitOnce<oStringS>	DebugName;
+	oInitOnce<oStd::sstring>	DebugName;
 	SOCKADDR_IN DefaultAndRecvAddr;
 
 	oIOCP*		pIOCP;
@@ -439,7 +435,7 @@ bool oSocketImpl::GoAsynchronous(const oSocket::ASYNC_SETTINGS& _Settings) threa
 	// causes type problems with calling the member oFUNCTION RunProxyDeleter().
 	// Someone with more meta-magic fingers should take another look at this.
 	#if 1
-		oLockGuard<oSharedMutex> Lock(DescMutex);
+		oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(DescMutex);
 		auto lockedThis = thread_cast<oSocketImpl*>(this); // Safe because of Mutex
 	#else
 		auto lockedThis = oLockThis(DescMutex);
@@ -450,13 +446,13 @@ bool oSocketImpl::GoAsynchronous(const oSocket::ASYNC_SETTINGS& _Settings) threa
 		return false;
 
 	if(oSocket::ASYNC == lockedThis->Desc.Style)
-		return oErrorSetLast(oERROR_REDUNDANT, "Socket is already asynchronous");
+		return oErrorSetLast(std::errc::operation_in_progress, "Socket is already asynchronous");
 
 	if(Encryptor)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Socket is encrypted, cannot go asynchronous");
+		return oErrorSetLast(std::errc::invalid_argument, "Socket is encrypted, cannot go asynchronous");
 
 	if(!_Settings.Callback)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "No valid callback specified");
+		return oErrorSetLast(std::errc::invalid_argument, "No valid callback specified");
 
 	if(!lockedThis->pIOCP) //if this socket is being reused, it may already be registered with windows iocp, but this should still be null, as it need to be re-registered with our iocp
 	{
@@ -471,7 +467,7 @@ bool oSocketImpl::GoAsynchronous(const oSocket::ASYNC_SETTINGS& _Settings) threa
 			oASSERT(lockedThis->Proxy, "What happened to the proxy?");
 			lockedThis->RunProxyDeleter(); 
 		}, &lockedThis->pIOCP))
-			return oErrorSetLast(oERROR_INVALID_PARAMETER, "Could not create IOCP.");
+			return oErrorSetLast(std::errc::invalid_argument, "Could not create IOCP.");
 	}
 	oASSERT(lockedThis->pIOCP, "IOCP Should exist by now");
 
@@ -501,7 +497,7 @@ bool oSocketImpl::Send(const void* _pData, oSocket::size_t _Size, const void* _p
 		return false;
 
 	if(oSocket::UDP == Desc.Protocol)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Socket is connectionless.  Send is invalid");
+		return oErrorSetLast(std::errc::invalid_argument, "Socket is connectionless.  Send is invalid");
 
 	auto locklessThis = thread_cast<oSocketImpl*>(this);
 
@@ -515,7 +511,7 @@ bool oSocketImpl::SendTo(const void* _pData, oSocket::size_t _Size, const oNetAd
 		return false;
 
 	if(oSocket::UDP != Desc.Protocol)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Socket is connected.  SendTo is invalid");
+		return oErrorSetLast(std::errc::invalid_argument, "Socket is connected.  SendTo is invalid");
 
 	SOCKADDR_IN Saddr;
 	oNetAddrToSockAddr(_Destination, &Saddr);
@@ -560,7 +556,7 @@ bool oSocketImpl::SendToInternal(const void* _pHeader, oSocket::size_t _SizeHead
 		oWinsock* ws = oWinsock::Singleton();
 		oIOCPOp* pIOCPOp = pIOCP->AcquireSocketOp();
 		if(!pIOCPOp)
-			return oErrorSetLast(oERROR_AT_CAPACITY, "IOCPOpPool is empty, you're sending too fast.");
+			return oErrorSetLast(std::errc::no_buffer_space, "IOCPOpPool is empty, you're sending too fast.");
 
 		Operation* pOp;
 		pIOCPOp->GetPrivateData(&pOp);
@@ -608,7 +604,7 @@ oSocket::size_t oSocketImpl::Recv(void* _pBuffer, oSocket::size_t _Size) threads
 		oIOCPOp* pIOCPOp = pIOCP->AcquireSocketOp();
 		if(!pIOCPOp)
 		{
-			oErrorSetLast(oERROR_AT_CAPACITY, "IOCPOpPool is empty, you're sending too fast.");
+			oErrorSetLast(std::errc::no_buffer_space, "IOCPOpPool is empty, you're sending too fast.");
 			return 0;
 		}
 
@@ -640,7 +636,7 @@ bool oSocketImpl::SendEncrypted(const void* _pData, oSocket::size_t _Size) threa
 
 	const auto &CurDesc = lockedThis->Desc;
 	if(oSocket::ASYNC == CurDesc.Style)
-		return oErrorSetLast(oERROR_BLOCKING, "Socket is asynchronous");
+		return oErrorSetLast(std::errc::operation_would_block, "Socket is asynchronous");
 
 	int ret = 0;
 	// Lazy init and Open SSL Connection because google's TLS requires that STARTTLS be sent and response received
@@ -963,19 +959,13 @@ oAPI bool oSocketEncryptedCreate(const char* _DebugName, const oSocket::DESC& _D
 		return success;
 	}
 	else
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Encryped Sockets must have style blocking and protocol TCP");
+		return oErrorSetLast(std::errc::invalid_argument, "Encryped Sockets must have style blocking and protocol TCP");
 }
 
 
 // _____________________________________________________________________________
 // SocketServer
 
-const oGUID& oGetGUID(threadsafe const oSocketServer* threadsafe const *)
-{
-	// {EE38455C-A057-4b72-83D2-4E809FF1C059}
-	static const oGUID oIIDSocketServer = { 0xee38455c, 0xa057, 0x4b72, { 0x83, 0xd2, 0x4e, 0x80, 0x9f, 0xf1, 0xc0, 0x59 } };
-	return oIIDSocketServer;
-}
 struct SocketServer_Impl : public oSocketServer
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
@@ -990,20 +980,20 @@ struct SocketServer_Impl : public oSocketServer
 	bool GetHostname(char* _pString, size_t _strLen)  const threadsafe override;
 
 private:
-	oSharedMutex Mutex;
+	oConcurrency::shared_mutex Mutex;
 	oRefCount RefCount;
 	SOCKET hSocket;
 	WSAEVENT hConnectEvent;
 	char DebugName[64];
 	DESC Desc;
-	oMutex AcceptedSocketsMutex;
+	oConcurrency::mutex AcceptedSocketsMutex;
 	std::vector<oRef<oSocket>> AcceptedSockets;
 };
 
 bool oSocketServerCreate(const char* _DebugName, const oSocketServer::DESC& _Desc, threadsafe oSocketServer** _ppSocketServer)
 {
 	if (!_DebugName || !_ppSocketServer)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 	bool success = false;
 	oCONSTRUCT(_ppSocketServer, SocketServer_Impl(_DebugName, _Desc, &success));
 	return success;
@@ -1065,16 +1055,16 @@ bool SocketServer_Impl::GetHostname(char* _pString, size_t _strLen) const thread
 
 static bool UNIFIED_WaitForConnection(
 	const char* _ServerDebugName
-	, threadsafe oSharedMutex& _Mutex
+	, threadsafe oConcurrency::shared_mutex& _Mutex
 	, threadsafe WSAEVENT _hConnectEvent
 	, unsigned int _TimeoutMS
 	, SOCKET _hServerSocket
 	, oSocket::DESC _Desc
 	, oFUNCTION<oSocket*(const char* _DebugName, SOCKET _hTarget, oSocket::DESC SocketDesc, bool* _pSuccess)> _CreateClientSocket
-	, threadsafe oMutex& _AcceptedSocketsMutex
+	, threadsafe oConcurrency::mutex& _AcceptedSocketsMutex
 	, threadsafe std::vector<oRef<oSocket>>& _AcceptedSockets)
 {
-	oLockGuard<oSharedMutex> lock(_Mutex);
+	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(_Mutex);
 	oWinsock* ws = oWinsock::Singleton();
 	bool success = false;
 
@@ -1088,11 +1078,11 @@ static bool UNIFIED_WaitForConnection(
 
 		hTarget = ws->accept(_hServerSocket, (sockaddr*)&saddr, &size);
 		if (INVALID_SOCKET == hTarget)
-			return oErrorSetLast(oERROR_CORRUPT, "Invalid socket");
+			return oErrorSetLast(std::errc::protocol_error, "Invalid socket");
 
 		u_long enabled = 1;
 		if (SOCKET_ERROR == ws->setsockopt(hTarget, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (const char*)&enabled, sizeof(enabled)))
-			return oErrorSetLast(oERROR_REFUSED, "Already have a socket on this port");
+			return oErrorSetLast(std::errc::permission_denied, "Already have a socket on this port");
 
 		// Fill in the remaining portions of the desc
 		_Desc.Protocol = oSocket::TCP;
@@ -1101,7 +1091,7 @@ static bool UNIFIED_WaitForConnection(
 
 		oRef<oSocket> newSocket(_CreateClientSocket("", hTarget, _Desc, &success), false);
 		{
-			oLockGuard<oMutex> lock(_AcceptedSocketsMutex);
+			oConcurrency::lock_guard<oConcurrency::mutex> lock(_AcceptedSocketsMutex);
 			thread_cast<std::vector<oRef<oSocket>>&>(_AcceptedSockets).push_back(newSocket); // safe because of lock above
 		}
 
@@ -1109,15 +1099,15 @@ static bool UNIFIED_WaitForConnection(
 	}
 	else
 	{
-		oErrorSetLast(oERROR_NONE); // It's ok if we don't find a connection
+		oErrorSetLast(0); // It's ok if we don't find a connection
 	}
 
 	return success;
 }
 
-template<typename T> static inline bool FindTypedSocket(threadsafe oMutex& _AcceptedSocketsMutex, threadsafe std::vector<oRef<oSocket>>& _AcceptedSockets, T** _ppNewlyConnectedClient)
+template<typename T> static inline bool FindTypedSocket(threadsafe oConcurrency::mutex& _AcceptedSocketsMutex, threadsafe std::vector<oRef<oSocket>>& _AcceptedSockets, T** _ppNewlyConnectedClient)
 {
-	oLockGuard<oMutex> lock(_AcceptedSocketsMutex);
+	oConcurrency::lock_guard<oConcurrency::mutex> lock(_AcceptedSocketsMutex);
 	std::vector<oRef<oSocket>>& SafeSockets = thread_cast<std::vector<oRef<oSocket>>&>(_AcceptedSockets);
 
 	if (!SafeSockets.empty())
@@ -1125,7 +1115,7 @@ template<typename T> static inline bool FindTypedSocket(threadsafe oMutex& _Acce
 		for (std::vector<oRef<oSocket>>::iterator it = SafeSockets.begin(); it != SafeSockets.end(); ++it)
 		{
 			oSocket* s = *it;
-			if (s->QueryInterface(oGetGUID<T>(), (void**)_ppNewlyConnectedClient))
+			if (s->QueryInterface(oGetGUID(_ppNewlyConnectedClient), (void**)_ppNewlyConnectedClient))
 			{
 				SafeSockets.erase(it);
 				return true;
@@ -1178,13 +1168,6 @@ bool SocketServer_Impl::WaitForConnection(const oSocket::ASYNC_SETTINGS& _AsyncS
 // server socket 2
 ////////////
 
-const oGUID& oGetGUID( threadsafe const oSocketServer2* threadsafe const * )
-{
-	// {8809678d-a52e-4d0d-890b-bbaa315acbdd}
-	static const oGUID oIIDoSocketServer2 = { 0x8809678d, 0xa52e, 0x4d0d, { 0x89, 0x0b, 0xbb, 0xaa, 0x31, 0x5a, 0xcb, 0xdd } };
-	return oIIDoSocketServer2; 
-}
-
 oSocket* oSocketCreateFromServer2(std::shared_ptr<oSocketImpl> _Target, oSocket::DESC _Desc, bool* _pSuccess)
 {
 	if(oSocket::BLOCKING == _Desc.Style)
@@ -1232,18 +1215,16 @@ private:
 	//This pool holds all sockets, they won't get removed until this class is destroyed.
 	//	Sockets can get left in the iocp system, and therefore not get returned to the pool
 	//	So need a way to keep track of those.
-	oConcurrentQueue<oSocketImpl*> AllSocketsPool;
+	oConcurrency::concurrent_queue<oSocketImpl*> AllSocketsPool;
 
 	//This is the list of sockets available for use
-	oConcurrentQueue<oSocketImpl*> AcceptSocketsPool;
+	oConcurrency::concurrent_queue<oSocketImpl*> AcceptSocketsPool;
 
 	ServerDisconnect ServerDisconnectFn;
 };
 
 SocketServerPool::SocketServerPool( ServerDisconnect _ServerDisconnectFn, bool* _pSuccess )
-	: AcceptSocketsPool("accept sockets pool")
-	, AllSocketsPool("accept sockets pool")
-	, ServerDisconnectFn(_ServerDisconnectFn)
+	: ServerDisconnectFn(_ServerDisconnectFn)
 {
 	*_pSuccess = false;
 
@@ -1353,7 +1334,7 @@ private:
 	//Once we run out of socket ops, start saving disconnects for later.
 	//	Note that before this happens, accepts will have been starved out by IssuedAcceptCount.
 	//	Disconnects themselves will start the normal accept "loop" back up.
-	oConcurrentQueue<oSocketImpl*> PendingDisconnects;
+	oConcurrency::concurrent_queue<oSocketImpl*> PendingDisconnects;
 };
 
 //Disconnect can take a bit of time to execute. so have a bit more accepts in flight than we have iocp threads. with this number
@@ -1364,7 +1345,7 @@ const float SocketServer2_Impl::AcceptCountMultiplier = 1.5f;
 bool oSocketServer2Create(const char* _DebugName, const oSocketServer2::DESC& _Desc, threadsafe oSocketServer2** _ppSocketServer)
 {
 	if (!_DebugName || !_ppSocketServer)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 	bool success = false;
 	oCONSTRUCT(_ppSocketServer, SocketServer2_Impl(_DebugName, _Desc, &success));
 	return success;
@@ -1374,7 +1355,6 @@ SocketServer2_Impl::SocketServer2_Impl(const char* _DebugName, const DESC& _Desc
 	: Desc(_Desc)
 	, pIOCP(nullptr)
 	, IssuedAcceptCount(0)
-	, PendingDisconnects("pending disconnect queue")
 {
 	*DebugName = 0;
 	if (_DebugName)
@@ -1394,7 +1374,7 @@ SocketServer2_Impl::SocketServer2_Impl(const char* _DebugName, const DESC& _Desc
 	SocketPool = oRef<SocketServerPool>(new SocketServerPool(oBIND(&SocketServer2_Impl::Disconnect, this, oBIND1) , _pSuccess), false);
 	if(!(*_pSuccess))
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "Failed to create the socket pool.");
+		oErrorSetLast(std::errc::invalid_argument, "Failed to create the socket pool.");
 		return;
 	}
 	*_pSuccess = false;
@@ -1412,7 +1392,7 @@ SocketServer2_Impl::SocketServer2_Impl(const char* _DebugName, const DESC& _Desc
 		delete this;
 	}, &pIOCP))
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "Could not create IOCP.");
+		oErrorSetLast(std::errc::invalid_argument, "Could not create IOCP.");
 		return;
 	}
 
@@ -1480,7 +1460,7 @@ void SocketServer2_Impl::Accept()
 	{
 		oASSERT(false, "Not really expecting the asyncex call to fail");
 
-		oErrorSetLast(oERROR_GENERIC, "Failed to initiate an AsyncAccept");
+		oErrorSetLast(std::errc::protocol_error, "Failed to initiate an AsyncAccept");
 
 		pIOCP->ReturnOp(iocpOp);
 
@@ -1621,4 +1601,19 @@ void SocketServer2_Impl::IOCPCallback(oIOCPOp* _pSocketOp)
 		oASSERT(false, "Not expecting any other types of callbacks");
 		pIOCP->ReturnOp(_pSocketOp); //just return the op
 	}	
+}
+
+
+bool oSocketRecvWithTimeout(threadsafe oSocket* _pSocket, void* _pData, unsigned int _SizeofData, unsigned int& _TimeoutMS)
+{
+	oSocket::size_t Received = 0;
+	oScopedPartialTimeout ScopedTimeout(&_TimeoutMS);
+	while(Received < _SizeofData && _TimeoutMS)
+	{
+		Received += _pSocket->Recv(oStd::byte_add(_pData, Received), _SizeofData - Received);
+		ScopedTimeout.UpdateTimeout();
+	}
+	if (Received != _SizeofData)
+		return oErrorSetLast(std::errc::timed_out, "oSocketRecv timed out");
+	return true;
 }

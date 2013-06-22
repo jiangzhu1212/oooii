@@ -24,8 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oBasis/oTask.h>
-#include <oBasis/oStdFuture.h>
+#include <oStd/oStdFuture.h>
 #include "../oCRTLeakTracker.h"
 
 // @oooii-tony: This test has removed so many platform dependencies, it proves 
@@ -34,7 +33,7 @@
 // @oooii-tony: If this test can be moved to oBasis, unify this with 
 // oBasisTestCommon.h (maybe make that more public?) (_P for Platform)
 #define oTESTB0_P(test) do { if (!(test)) return false; } while(false) // pass through error
-#define oTESTB_P(test, msg, ...) do { if (!(test)) return oErrorSetLast(oERROR_GENERIC, msg, ## __VA_ARGS__); } while(false)
+#define oTESTB_P(test, msg, ...) do { if (!(test)) return oErrorSetLast(std::errc::protocol_error, msg, ## __VA_ARGS__); } while(false)
 
 bool oPlatformTest_oCRTLeakTracker()
 {
@@ -43,11 +42,11 @@ bool oPlatformTest_oCRTLeakTracker()
 	
 		oCRTLeakTracker* pTracker = oCRTLeakTracker::Singleton();
 
-		oOnScopeExit OSEDisableTracking;
+		oStd::finally OSEDisableTracking;
 
 		if (!pTracker->IsEnabled())
 		{
-			OSEDisableTracking = oOnScopeExit([&] { pTracker->Enable(false); });
+			OSEDisableTracking = oStd::finally([&] { pTracker->Enable(false); });
 			pTracker->Enable(true);
 		}
 
@@ -73,10 +72,10 @@ bool oPlatformTest_oCRTLeakTracker()
 		oTESTB_P(pTracker->ReportLeaks(), "Tracker failed to detect char leak from different thread");
 		delete pCharAllocThreaded;
 
-		oErrorSetLast(oERROR_NONE);
+		oErrorSetLast(0);
 		return true;
 	#else
-		oErrorSetLast(oERROR_REFUSED, "Leak tracker not available in release builds");
+		oErrorSetLast(std::errc::permission_denied, "Leak tracker not available in release builds");
 		return true;
 	#endif
 }
@@ -116,7 +115,7 @@ struct PLATFORM_oCRTLeakTracker : public oTest
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oTESTB(oPlatformTest_oCRTLeakTracker(), "%s", oErrorGetLastString());
-		oPrintf(_StrStatus, _SizeofStrStatus, "%s: %s", oAsString(oErrorGetLast()), oErrorGetLastString());
+		oPrintf(_StrStatus, _SizeofStrStatus, "%s: %s", oErrorAsString(oErrorGetLast()), oErrorGetLastString());
 		return SUCCESS;
 	}
 };

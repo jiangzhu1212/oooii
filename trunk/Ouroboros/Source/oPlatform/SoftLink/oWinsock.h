@@ -46,7 +46,7 @@
 #define oWINSOCK_ASSERT(x, msg, ...) oASSERT(x, msg "\n%s(%d): %s", ## __VA_ARGS__ oWinsock::AsString(oWinsock::Singleton()->WSAGetLastError()), oWinsock::Singleton()->WSAGetLastError(), oWinsock::GetErrorDesc(oWinsock::Singleton()->WSAGetLastError()))
 
 // Call oErrorSetLast() with errno_t equivalent, but also include WSA error and extended desc in description
-#define oWINSOCK_SETLASTERROR(strFnName) oErrorSetLast(oERROR_IO, "oWinsock::" strFnName " failed %s(%d): %s", oWinsock::AsString(oWinsock::Singleton()->WSAGetLastError()), oWinsock::Singleton()->WSAGetLastError(), oWinsock::GetErrorDesc(oWinsock::Singleton()->WSAGetLastError()))
+#define oWINSOCK_SETLASTERROR(strFnName) oErrorSetLast(std::errc::io_error, "oWinsock::" strFnName " failed %s(%d): %s", oWinsock::AsString(oWinsock::Singleton()->WSAGetLastError()), oWinsock::Singleton()->WSAGetLastError(), oWinsock::GetErrorDesc(oWinsock::Singleton()->WSAGetLastError()))
 
 class oWinsock : public oProcessSingleton<oWinsock>
 {
@@ -61,7 +61,7 @@ public:
 	oWinsock();
 	~oWinsock();
 
-	// Enum as string (similar to oAsString())
+	// Enum as string (similar to oStd::as_string())
 	static const char* AsString(int _WSAWinSockError);
 
 	// Returns the extended MSDN error description of the error

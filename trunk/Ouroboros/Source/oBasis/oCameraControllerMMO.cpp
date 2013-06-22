@@ -28,21 +28,14 @@
 #include <oBasis/oGUI.h>
 #include <oBasis/oRefCount.h>
 
-const oGUID& oGetGUID(threadsafe const oCameraControllerMMO* threadsafe const*)
-{
-	// {B6D0E69B-D305-47FF-AC05-F64303106D1E}
-	static const oGUID IIDCameraControllerMMO = { 0xb6d0e69b, 0xd305, 0x47ff, { 0xac, 0x5, 0xf6, 0x43, 0x3, 0x10, 0x6d, 0x1e } };
-	return IIDCameraControllerMMO;
-}
-
 struct oCameraControllerMMOImpl : oCameraControllerMMO
 {
 	oCameraControllerMMOImpl(const oCAMERA_CONTROLLER_MMO_DESC& _Desc, bool* _pSuccess);
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE2(oCameraController, oCameraControllerMMO);
 
-	void SetWindowDimensions(const int2& _WindowDimensions) override {} // not dependent on window dimensions
 	int OnAction(const oGUI_ACTION_DESC& _Action) override;
+	void Tick() override { }
 	void OnLostCapture() override;
 	void SetView(const float4x4& _View) override { Eye.SetView(_View); }
 	float4x4 GetView(float _DeltaTime = 0.0f) override;
@@ -55,14 +48,14 @@ private:
 	oCAMERA_CONTROLLER_MMO_DESC Desc;
 	oRefCount RefCount;
 
-	bool KeyStates[oCAMERA_CONTROLLER_MMO_DESC::NUM_CONTROLS];
+	std::array<bool, oCAMERA_CONTROLLER_MMO_DESC::NUM_CONTROLS> KeyStates;
 	float3 PointerPosition;
 	float3 LastPointerPosition;
 	oEye Eye;
 	bool WasRotating;
 
 private:
-	bool GetControl(oKEYBOARD_KEY _Key, oCAMERA_CONTROLLER_MMO_DESC::CONTROL* _pControl);
+	bool GetControl(oGUI_KEY _Key, oCAMERA_CONTROLLER_MMO_DESC::CONTROL* _pControl);
 	void UpdateRotation(float _DeltaTime);
 	void UpdateTranslation(float _DeltaTime);
 };
@@ -74,7 +67,7 @@ oCameraControllerMMOImpl::oCameraControllerMMOImpl(const oCAMERA_CONTROLLER_MMO_
 	, WasRotating(false)
 {
 	*_pSuccess = false;
-	oINIT_ARRAY(KeyStates, false);
+	KeyStates.fill(false);
 	*_pSuccess = true;
 }
 
@@ -87,10 +80,10 @@ bool oCameraControllerMMOCreate(const oCAMERA_CONTROLLER_MMO_DESC& _Desc, oCamer
 
 int oCameraControllerMMOImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 {
-	oGUIRecordInputState(_Action, Desc.Controls, KeyStates, &PointerPosition);
+	oGUIRecordInputState(_Action, Desc.Controls.data(), Desc.Controls.size(), KeyStates.data(), KeyStates.size(), &PointerPosition);
 	int Response = 0;
 
-	if (Desc.AllowMouseWheelAcceleration && !oEqual(PointerPosition.z, 0.0f))
+	if (Desc.AllowMouseWheelAcceleration && !oStd::equal(PointerPosition.z, 0.0f))
 	{
 		if (PointerPosition.z < 0.0f)
 		{
@@ -106,7 +99,7 @@ int oCameraControllerMMOImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 	}
 
 	// Determine rotation response
-	if ((KeyStates[oCAMERA_CONTROLLER_MMO_DESC::ROTATE_VIEW] && (!oEqual(PointerPosition, LastPointerPosition) || WasRotating))
+	if ((KeyStates[oCAMERA_CONTROLLER_MMO_DESC::ROTATE_VIEW] && (!oStd::equal(PointerPosition, LastPointerPosition) || WasRotating))
 		|| (KeyStates[oCAMERA_CONTROLLER_MMO_DESC::ROTATE_VIEW] && KeyStates[oCAMERA_CONTROLLER_MMO_DESC::ROTATE_VIEW_AND_FORWARD]))
 		Response |= oCAMERA_CONTROLLER_ROTATING_YAW|oCAMERA_CONTROLLER_ROTATING_PITCH;
 	if (KeyStates[oCAMERA_CONTROLLER_MMO_DESC::ROLL_LEFT] || KeyStates[oCAMERA_CONTROLLER_MMO_DESC::ROLL_LEFT])
@@ -134,7 +127,7 @@ int oCameraControllerMMOImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 
 void oCameraControllerMMOImpl::OnLostCapture()
 {
-	oINIT_ARRAY(KeyStates, false);
+	KeyStates.fill(false);
 }
 
 void oCameraControllerMMOImpl::UpdateRotation(float _DeltaTime)
@@ -146,7 +139,7 @@ void oCameraControllerMMOImpl::UpdateRotation(float _DeltaTime)
 	if (KeyStates[oCAMERA_CONTROLLER_MMO_DESC::ROTATE_VIEW])
 	{
 		float2 delta = PointerPosition.xy() - LastPointerPosition.xy();
-		RotationDelta = float3(delta.y, -delta.x, 0.0f) * ScaledRotationSpeed;
+		RotationDelta = float3(delta.y, delta.x, 0.0f) * ScaledRotationSpeed;
 	}
 	LastPointerPosition = PointerPosition;
 
@@ -172,7 +165,7 @@ void oCameraControllerMMOImpl::UpdateTranslation(float _DeltaTime)
 	if (KeyStates[oCAMERA_CONTROLLER_MMO_DESC::ROTATE_VIEW] && KeyStates[oCAMERA_CONTROLLER_MMO_DESC::ROTATE_VIEW_AND_FORWARD] && Translation.z <= 0.0f)
 		Translation.z += 1.0f;
 
-	if (!oEqual(Translation, float3(0.0f)))
+	if (!oStd::equal(Translation, float3(0.0f)))
 	{
 		Translation = normalize(Translation) * ScaledTranslationSpeed;
 		Eye.Translate(Translation);
@@ -181,7 +174,7 @@ void oCameraControllerMMOImpl::UpdateTranslation(float _DeltaTime)
 
 float4x4 oCameraControllerMMOImpl::GetView(float _DeltaTime)
 {
-	if (!oEqual(0.0f, _DeltaTime))
+	if (!oStd::equal(0.0f, _DeltaTime))
 	{
 		UpdateRotation(_DeltaTime);
 		UpdateTranslation(_DeltaTime);

@@ -34,8 +34,11 @@
 #define oProcess_h
 
 #include <oBasis/oInterface.h>
-#include <oBasis/oThread.h>
+#include <oBasis/oStddef.h> // for oSleep
+#include <oConcurrency/oConcurrency.h>
 
+// {EAA75587-9771-4d9e-A2EA-E406AA2E8B8F}
+oDEFINE_GUID_I(oProcess, 0xeaa75587, 0x9771, 0x4d9e, 0xa2, 0xea, 0xe4, 0x6, 0xaa, 0x2e, 0x8b, 0x8f);
 interface oProcess : oInterface
 {
 	struct DESC
@@ -63,7 +66,7 @@ interface oProcess : oInterface
 		
 		// If 0, then a unique instance is created, no shared pipes, 
 		// and thus WriteToStdin and ReadFromStdout will return 0 with
-		// oErrorGetLast() set to oERROR_REFUSED.
+		// oErrorGetLast() set to std::errc::permission_denied.
 		size_t StdHandleBufferSize;
 		bool SetFocus:1;
 		bool StartMinimized:1;
@@ -108,8 +111,8 @@ oAPI unsigned int oProcessGetCurrentID();
 // Call the specified function for each of the child processes of the current
 // process. The function should return true to keep enumerating, or false to
 // exit early. This function returns false if there is a failure, check 
-// oErrorGetLast() for more information. The error can be oERROR_NOT_FOUND 
-// if there are no child processes.
+// oErrorGetLast() for more information. The error can be 
+// std::errc::no_child_process if there are no child processes.
 oAPI bool oProcessEnum(oFUNCTION<bool(unsigned int _ProcessID, unsigned int _ParentProcessID, const char* _ProcessExePath)> _Function);
 
 // Wait for a process to exit/finish
@@ -122,7 +125,7 @@ oAPI unsigned int oProcessGetID(const char* _Name);
 oAPI char* oProcessGetName(char* _StrDestination, size_t _SizeofStrDestination, unsigned int _ProcessID);
 
 template<size_t size> char* oProcessGetName(char (&_StrDestination)[size], unsigned int _ProcessID) { return oProcessGetName(_StrDestination, size, _ProcessID); }
-template<size_t capacity> char* oProcessGetName(oFixedString<char, capacity>& _StrDestination, unsigned int _ProcessID) { return oProcessGetName(_StrDestination, _StrDestination.capacity(), _ProcessID); }
+template<size_t capacity> char* oProcessGetName(oStd::fixed_string<char, capacity>& _StrDestination, unsigned int _ProcessID) { return oProcessGetName(_StrDestination, _StrDestination.capacity(), _ProcessID); }
 
 // Returns the command line used to start this process. If _ParametersOnly is 
 // true, then the path of the exe will not be returned. The buffer must still
@@ -130,7 +133,7 @@ template<size_t capacity> char* oProcessGetName(oFixedString<char, capacity>& _S
 oAPI char* oProcessGetCommandLine(char* _StrDestination, size_t _SizeofStrDestination, bool _ParametersOnly = false);
 
 template<size_t size> char* oProcessGetCommandLine(char (&_StrDestination)[size], bool _ParametersOnly = false) { return oProcessGetCommandLine(_StrDestination, size, _ParametersOnly); }
-template<size_t capacity> char* oProcessGetCommandLine(oFixedString<char, capacity>& _StrDestination, bool _ParametersOnly = false) { return oProcessGetCommandLine(_StrDestination, _StrDestination.capacity(), _ParametersOnly); }
+template<size_t capacity> char* oProcessGetCommandLine(oStd::fixed_string<char, capacity>& _StrDestination, bool _ParametersOnly = false) { return oProcessGetCommandLine(_StrDestination, _StrDestination.capacity(), _ParametersOnly); }
 
 // Returns true if the specified process exists, or false if it does not
 inline bool oProcessExists(const char* _Name) { return 0 != oProcessGetID(_Name); }

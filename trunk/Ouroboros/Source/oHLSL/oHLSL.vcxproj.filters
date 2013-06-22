@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="oHLSL">
+      <UniqueIdentifier>{3d630964-46d0-4ddc-8351-069967fda0c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{ec0246ef-c4e0-4435-af97-56e1c36b0d06}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLTypesInternal.h">
+      <Filter>oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLAtomics.h">
+      <Filter>oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLBit.h">
+      <Filter>oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLMacros.h">
+      <Filter>oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLMath.h">
+      <Filter>oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLStructs.h">
+      <Filter>oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLSwizzlesOff.h">
+      <Filter>oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLSwizzlesOn.h">
+      <Filter>oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLTypes.h">
+      <Filter>oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oHLSL\all.h">
+      <Filter>oHLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stringize.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

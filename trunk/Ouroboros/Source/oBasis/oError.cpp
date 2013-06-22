@@ -24,59 +24,61 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oError.h>
-#include <oBasis/oFunction.h>
-#include <oBasis/oMacros.h>
-#include <oBasis/oStdThread.h>
+#include <oBasis/oBasisRequirements.h>
 #include <oBasis/oString.h>
-#include <oBasis/oThread.h>
-#include <oBasis/oFixedString.h>
+#include <oStd/fixed_string.h>
+#include <oStd/macros.h>
 
-const char* oAsString(oERROR _Error)
+const char* oErrorAsString(errno_t _Error)
 {
 	switch (_Error)
 	{
-		case oERROR_NONE: return "oERROR_NONE";
-		case oERROR_GENERIC: return "oERROR_GENERIC";
-		case oERROR_NOT_FOUND: return "oERROR_NOT_FOUND";
-		case oERROR_REDUNDANT: return "oERROR_REDUNDANT";
-		case oERROR_CANCELED: return "oERROR_CANCELED";
-		case oERROR_AT_CAPACITY: return "oERROR_AT_CAPACITY";
-		case oERROR_END_OF_FILE: return "oERROR_END_OF_FILE";
-		case oERROR_WRONG_THREAD: return "oERROR_WRONG_THREAD";
-		case oERROR_BLOCKING: return "oERROR_BLOCKING";
-		case oERROR_TIMEOUT: return "oERROR_TIMEOUT";
-		case oERROR_INVALID_PARAMETER: return "oERROR_INVALID_PARAMETER";
-		case oERROR_TRUNCATED: return "oERROR_TRUNCATED";
-		case oERROR_IO: return "oERROR_IO";
-		case oERROR_REFUSED: return "oERROR_REFUSED";
-		case oERROR_PLATFORM: return "oERROR_PLATFORM";
-		case oERROR_CORRUPT: return "oERROR_CORRUPT";
-		case oERROR_LEAKS: return "oERROR_LEAKS";
+		case 0: return "none";
+		case std::errc::no_such_file_or_directory: return "no_such_file_or_directory";
+		case std::errc::no_such_device: return "no_such_device";
+		case std::errc::no_such_process: return "no_such_process";
+		case std::errc::operation_in_progress: return "operation_in_progress";
+		case std::errc::operation_canceled: return "operation_canceled";
+		case std::errc::no_buffer_space: return "no_buffer_space";
+		case std::errc::operation_not_permitted: return "operation_not_permitted";
+		case std::errc::operation_would_block: return "operation_would_block";
+		case std::errc::timed_out: return "timed_out";
+		case std::errc::invalid_argument: return "invalid_argument";
+		case std::errc::io_error: return "io_error";
+		case std::errc::permission_denied: return "permission_denied";
+		case std::errc::protocol_error: return "protocol_error";
+		case std::errc::not_supported: return "not_supported";
+		case std::errc::function_not_supported: return "not_supported";
+		case std::errc::no_child_process: return "not_supported";
+		case std::errc::no_message_available: return "not_supported";
+		case std::errc::connection_aborted: return "connection_aborted";
 		oNODEFAULT;
 	}
 }
 
-const char* oErrorGetDefaultString(oERROR _Error)
+const char* oErrorGetDefaultString(errno_t _Error)
 {
 	switch (_Error)
 	{
-		case oERROR_NONE: return "operation was successful";
-		case oERROR_GENERIC: return "operation failed";
-		case oERROR_NOT_FOUND: return "object not found";
-		case oERROR_REDUNDANT: return "redundant operation";
-		case oERROR_CANCELED: return "operation canceled";
-		case oERROR_AT_CAPACITY: return "storage is at capacity";
-		case oERROR_END_OF_FILE: return "end of file";
-		case oERROR_WRONG_THREAD: return "operation performed on wrong thread";
-		case oERROR_BLOCKING: return "operation would block";
-		case oERROR_TIMEOUT: return "operation timed out";
-		case oERROR_INVALID_PARAMETER: return "invalid parameter specified";
-		case oERROR_TRUNCATED: return "string truncated";
-		case oERROR_IO: return "IO error occurred";
-		case oERROR_REFUSED: return "access refused";
-		case oERROR_PLATFORM: return "platform error occurred";
-		case oERROR_CORRUPT: return "data is corrupt";
-		case oERROR_LEAKS: return "resource(s) are not cleaned up";
+		case 0: return "operation was successful";
+		case std::errc::no_such_file_or_directory: return "no such file or directory";
+		case std::errc::no_such_device: return "no such device";
+		case std::errc::no_such_process: return "no such process";
+		case std::errc::operation_in_progress: return "redundant operation";
+		case std::errc::operation_canceled: return "operation canceled";
+		case std::errc::no_buffer_space: return "storage is at capacity";
+		case std::errc::operation_not_permitted: return "operation performed on wrong thread";
+		case std::errc::operation_would_block: return "operation would block";
+		case std::errc::timed_out: return "operation timed out";
+		case std::errc::invalid_argument: return "invalid parameter specified";
+		case std::errc::io_error: return "IO error occurred";
+		case std::errc::permission_denied: return "access refused";
+		case std::errc::protocol_error: return "data is corrupt";
+		case std::errc::not_supported: return "not supported";
+		case std::errc::function_not_supported: return "function not supported";
+		case std::errc::no_child_process: return "no child processes";
+		case std::errc::no_message_available: return "no message available";
+		case std::errc::connection_aborted: return "connection aborted";
 		oNODEFAULT;
 	}
 }
@@ -86,7 +88,7 @@ struct ERROR_CONTEXT
 	static const size_t ERROR_STRING_BUFFER_SIZE = 2048;
 
 	size_t ErrorCount;
-	oERROR Error;
+	errno_t Error;
 	char ErrorString[ERROR_STRING_BUFFER_SIZE];
 	bool UseDefaultString;
 };
@@ -97,21 +99,23 @@ ERROR_CONTEXT* GetErrorContext()
 	if(!pErrorContext)
 	{
 		// {99091828-104D-4320-92C9-FD41810C352D}
-		static const oGUID GUIDErrorContext = { 0x99091828, 0x104d, 0x4320, { 0x92, 0xc9, 0xfd, 0x41, 0x81, 0xc, 0x35, 0x2d } };
+		static const oStd::guid GUIDErrorContext = { 0x99091828, 0x104d, 0x4320, { 0x92, 0xc9, 0xfd, 0x41, 0x81, 0xc, 0x35, 0x2d } };
 
-		if (oThreadlocalMalloc(GUIDErrorContext, &pErrorContext))
+		oThreadlocalMalloc(GUIDErrorContext, [=](void* _pMemory)
 		{
-			pErrorContext->ErrorCount = 0;
-			pErrorContext->Error = oERROR_NONE;
-			pErrorContext->ErrorString[0] = 0;
-			pErrorContext->UseDefaultString = false;
+			ERROR_CONTEXT* ctx = (ERROR_CONTEXT*)_pMemory;
+			ctx->ErrorCount = 0;
+			ctx->Error = 0;
+			ctx->ErrorString[0] = 0;
+			ctx->UseDefaultString = false;
 		}
+		, oLIFETIME_TASK(), &pErrorContext);
 	}
 
 	return pErrorContext;
 }
 
-bool oErrorSetLast(oERROR _Error)
+bool oErrorSetLast(errno_t _Error)
 {
 	ERROR_CONTEXT* pErrorContext = GetErrorContext();
 	pErrorContext->ErrorCount++;
@@ -120,7 +124,7 @@ bool oErrorSetLast(oERROR _Error)
 	return false;
 }
 
-bool oErrorSetLastV(oERROR _Error, const char* _Format, va_list _Args)
+bool oErrorSetLastV(errno_t _Error, const char* _Format, va_list _Args)
 {
 	ERROR_CONTEXT* pErrorContext = GetErrorContext();
 	pErrorContext->ErrorCount++;
@@ -135,7 +139,7 @@ bool oErrorSetLastV(oERROR _Error, const char* _Format, va_list _Args)
 bool oErrorPrefixLastV(const char* _Format, va_list _Args)
 {
 	ERROR_CONTEXT* pErrorContext = GetErrorContext();
-	oStringXL CurrentCopy;
+	oStd::xlstring CurrentCopy;
 	oPrintf(CurrentCopy, pErrorContext->ErrorString);
 
 	oVPrintf(pErrorContext->ErrorString, _Format, _Args);
@@ -153,7 +157,7 @@ size_t oErrorGetSizeofMessageBuffer()
 	return ERROR_CONTEXT::ERROR_STRING_BUFFER_SIZE;
 }
 
-oERROR oErrorGetLast()
+errno_t oErrorGetLast()
 {
 	return GetErrorContext()->Error;
 }

@@ -32,8 +32,8 @@
 
 struct oDISPLAY_ADAPTER_DRIVER_DESC
 {
-	oStringM Description;
-	oStringM PlugNPlayID;
+	oStd::mstring Description;
+	oStd::mstring PlugNPlayID;
 	oVersion Version;
 	oGPU_VENDOR Vendor;
 };
@@ -94,8 +94,8 @@ oVersion oDisplayAdapterGetMinimumVersion(oGPU_VENDOR _Vendor);
 bool oDisplayAdapterIsUpToDate();
 
 // If _Index doesn't exist, this function will return false with an 
-// oErrorGetLast() of oERROR_NOT_FOUND. If successful, _pDesc is filled with a 
-// description of the specified display.
+// oErrorGetLast() of std::errc::no_such_device. If successful, _pDesc is filled 
+// with a description of the specified display.
 bool oDisplayEnum(int _Index, oDISPLAY_DESC* _pDesc);
 bool oDisplaySetMode(int _Index, const oDISPLAY_MODE& _Mode);
 

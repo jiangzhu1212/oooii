@@ -31,16 +31,20 @@
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oSurface.h>
 
-typedef oFUNCTION<void(const oSURFACE_DESC& _Desc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Mapped)> oCameraOnFrameFn;
+typedef oFUNCTION<void(int _ID, const oSURFACE_DESC& _Desc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Mapped)> oCAMERA_FRAME_HOOK;
 
+// {B7DFAE55-8AA4-41DB-82E2-FC498DCC78E4}
+oDEFINE_GUID_I(oCameraFrameStream, 0xb7dfae55, 0x8aa4, 0x41db, 0x82, 0xe2, 0xfc, 0x49, 0x8d, 0xcc, 0x78, 0xe4);
 interface oCameraFrameStream : oInterface
 {
 	// A mechanism by which client code can latch into a camera's video feed.
 
-	virtual bool AddObserver(const oCameraOnFrameFn& _OnFrame) = 0;
+	virtual bool AddObserver(const oCAMERA_FRAME_HOOK& _OnFrame) = 0;
 	virtual bool RemoveObservers() = 0;
 };
 
+// {343AD92B-1BE1-4EDD-A810-34FAE2877CBD}
+oDEFINE_GUID_I(oCameraArticulator, 0x343ad92b, 0x1be1, 0x4edd, 0xa8, 0x10, 0x34, 0xfa, 0xe2, 0x87, 0x7c, 0xbd);
 interface oCameraArticulator : oInterface
 {
 	// Some cameras provide a motor to control their orientation. This exposed 
@@ -50,6 +54,8 @@ interface oCameraArticulator : oInterface
 	virtual bool GetPitch(float* _pAngleInDegrees) = 0;
 };
 
+// {CFCDA794-3E4D-4841-9C5A-03CDAD691FD3}
+oDEFINE_GUID_I(oCameraPosition, 0xcfcda794, 0x3e4d, 0x4841, 0x9c, 0x5a, 0x3, 0xcd, 0xad, 0x69, 0x1f, 0xd3);
 interface oCameraPosition : oInterface
 {
 	// Some cameras can provide an estimation of their position based off of calibration or
@@ -101,11 +107,8 @@ interface oCamera : oInterface
 };
 
 // Enumerate all cameras currently attached to the system. If this fails, 
-// oErrorGetLast() could be oERROR_NOT_FOUND for 64-bit systems that most likely don't
-// have compatible camera drivers, or ENODEV a devices was found on the system,
-// but isn't valid. ENOENT means no device was found at all and indicates that
-// iteration is finished. When iterating through cameras, it is often useful to 
-// skip meaningful work on ENODEV, but not exit out of the iteration loop.
+// check oErrorGetLast() for more details. If there is a failure it is often
+// because the installed drivers are not up-to-date.
 bool oCameraEnum(unsigned int _Index, threadsafe oCamera** _ppCamera);
 
 #endif

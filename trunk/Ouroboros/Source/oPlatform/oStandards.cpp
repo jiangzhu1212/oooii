@@ -24,9 +24,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oStandards.h>
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
 #include <oBasis/oRef.h>
-#include <oBasis/oStdChrono.h>
+#include <oStd/oStdChrono.h>
 #include <oBasis/oString.h>
 #include <oPlatform/oConsole.h>
 #include <oPlatform/oDisplay.h>
@@ -50,19 +50,19 @@ int oWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int 
 
 void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list _Args )
 {
-	static const oColor fg[] = 
+	static const oStd::color fg[] = 
 	{
 		0,
-		std::Lime,
-		std::White,
+		oStd::Lime,
+		oStd::White,
 		0,
-		std::Yellow,
-		std::Red,
-		std::Yellow,
+		oStd::Yellow,
+		oStd::Red,
+		oStd::Yellow,
 	};
 	static_assert(oCOUNTOF(fg) == NUM_REPORT_TYPES, "");
 
-	static const oColor bg[] = 
+	static const oStd::color bg[] = 
 	{
 		0,
 		0,
@@ -70,7 +70,7 @@ void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list
 		0,
 		0,
 		0,
-		std::Red,
+		oStd::Red,
 	};
 	static_assert(oCOUNTOF(fg) == NUM_REPORT_TYPES, "");
 
@@ -114,7 +114,7 @@ bool oWaitForSystemSteadyState(oFUNCTION<bool()> _ContinueIdling )
 			return false;
 		}
 
-		else if (oErrorGetLast() != oERROR_CANCELED)
+		else if (oErrorGetLast() != std::errc::operation_canceled)
 		{
 			oMSGBOX_DESC d;
 			d.Type = oMSGBOX_ERR;
@@ -205,7 +205,7 @@ bool oINIFindPath( char* _StrDestination, size_t _SizeofStrDestination, const ch
 	if(oStreamExists(_StrDestination))
 		return true;
 
-	oStringPath AppDir;
+	oStd::path_string AppDir;
 	oSystemGetPath(AppDir, oSYSPATH_APP);
 
 	oPrintf(_StrDestination, _SizeofStrDestination, "%s/../%s", AppDir, _pININame);
@@ -220,5 +220,5 @@ bool oINIFindPath( char* _StrDestination, size_t _SizeofStrDestination, const ch
 	if(oStreamExists(_StrDestination))
 		return true;
 
-	return oErrorSetLast(oERROR_NOT_FOUND, "No ini file %s found.", _pININame);
+	return oErrorSetLast(std::errc::no_such_file_or_directory, "No ini file %s found.", _pININame);
 }

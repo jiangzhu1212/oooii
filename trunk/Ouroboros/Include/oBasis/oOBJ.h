@@ -30,6 +30,7 @@
 #define oOBJ_h
 
 #include <oBasis/oGPUConcepts.h>
+#include <oCompute/oComputeColor.h>
 
 // http://local.wasp.uwa.edu.au/~pbourke/dataformats/mtl/
 enum oOBJ_ILLUMINATION
@@ -62,8 +63,8 @@ enum oOBJ_TEXTURE_TYPE
 
 struct oOBJ_GROUP
 {
-	oStringM GroupName;
-	oStringM MaterialName;
+	oStd::mstring GroupName;
+	oStd::mstring MaterialName;
 	oGPU_RANGE Range;
 };
 
@@ -84,7 +85,7 @@ struct oOBJ_TEXTURE
 		, Clamp(false)
 	{}
 
-	oStringPath Path;
+	oStd::path_string Path;
 	float Boost;
 	float2 BrightnessGain;
 	float3 OriginOffset;
@@ -102,10 +103,10 @@ struct oOBJ_TEXTURE
 struct oOBJ_MATERIAL
 {
 	oOBJ_MATERIAL()
-		: AmbientColor(std::Black)
-		, EmissiveColor(std::Black)
-		, DiffuseColor(std::WhiteSmoke)
-		, SpecularColor(std::White)
+		: AmbientColor(oStd::Black)
+		, EmissiveColor(oStd::Black)
+		, DiffuseColor(oStd::WhiteSmoke)
+		, SpecularColor(oStd::White)
 		, Specularity(0.25f)
 		, Transparency(1.0f) // (1 means opaque 0 means transparent)
 		, RefractionIndex(1.0f)
@@ -122,7 +123,7 @@ struct oOBJ_MATERIAL
 	float RefractionIndex;
 	oOBJ_ILLUMINATION Illum;
 
-	oStringPath Name;
+	oStd::path_string Name;
 	oOBJ_TEXTURE Ambient;
 	oOBJ_TEXTURE Diffuse;
 	oOBJ_TEXTURE Alpha;
@@ -176,6 +177,13 @@ interface oOBJ : oInterface
 
 struct oMTL_DESC
 {
+	oMTL_DESC()
+		: MTLPath(nullptr)
+		, pMaterials(nullptr)
+		, NumMaterials(0)
+	{}
+
+	const char* MTLPath;
 	const oOBJ_MATERIAL* pMaterials;
 	uint NumMaterials;
 };

@@ -19,43 +19,30 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oBasisTests\oBasisTests.h" />
+    <ClInclude Include="..\..\Include\oBasis\tests\oBasisTests.h" />
     <ClInclude Include="Tests\oBasisTestCommon.h" />
     <ClInclude Include="Tests\oBasisTestOBJ.h" />
     <ClInclude Include="Tests\oBasisTestStruct.h" />
-    <ClInclude Include="Tests\RatcliffJobSwarmTest.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\oBasisTestOBJ.cpp" />
     <ClCompile Include="Tests\oBasisTestStruct.cpp" />
-    <ClCompile Include="Tests\RatcliffJobSwarmTest.cpp" />
     <ClCompile Include="Tests\TESTAllocatorTLSF.cpp" />
-    <ClCompile Include="Tests\TESTatof.cpp" />
-    <ClCompile Include="Tests\TESTBlockAllocatorFixed.cpp" />
-    <ClCompile Include="Tests\TESTBlockAllocatorGrowable.cpp" />
     <ClCompile Include="Tests\TESTBuffer.cpp" />
     <ClCompile Include="Tests\TESTCompression.cpp" />
-    <ClCompile Include="Tests\TESTConcurrentStack.cpp" />
-    <ClCompile Include="Tests\TESTCountdownLatch.cpp" />
-    <ClCompile Include="Tests\TESTCSV.cpp" />
-    <ClCompile Include="Tests\TESTDate.cpp" />
-    <ClCompile Include="Tests\TESTDispatchQueueConcurrent.cpp" />
     <ClCompile Include="Tests\TESTDispatchQueueGlobal.cpp" />
-    <ClCompile Include="Tests\TESTDispatchQueueParallelFor.cpp" />
     <ClCompile Include="Tests\TESTDispatchQueuePrivate.cpp" />
+    <ClCompile Include="Tests\TESTEasing.cpp" />
     <ClCompile Include="Tests\TESTEightCC.cpp" />
     <ClCompile Include="Tests\TESTFilterChain.cpp" />
     <ClCompile Include="Tests\TESTFourCC.cpp" />
-    <ClCompile Include="Tests\TESTFuture.cpp" />
     <ClCompile Include="Tests\TESTHash.cpp" />
-    <ClCompile Include="Tests\TESTIndexAllocator.cpp" />
-    <ClCompile Include="Tests\TESTINI.cpp" />
-    <ClCompile Include="Tests\TESTLinearAllocator.cpp" />
+    <ClCompile Include="Tests\TESTINISerialize.cpp" />
+    <ClCompile Include="Tests\TESTJSONSerialize.cpp" />
     <ClCompile Include="Tests\TESTMath.cpp" />
     <ClCompile Include="Tests\TESTOBJ.cpp" />
     <ClCompile Include="Tests\TESTOSC.cpp" />
     <ClCompile Include="Tests\TESTPath.cpp" />
-    <ClCompile Include="Tests\TESTQueues.cpp" />
     <ClCompile Include="Tests\TESTRTTI.cpp">
       <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreprocessToFile>
     </ClCompile>
@@ -64,7 +51,8 @@
     <ClCompile Include="Tests\TESTSurface.cpp" />
     <ClCompile Include="Tests\TESTSurfaceResize.cpp" />
     <ClCompile Include="Tests\TESTURI.cpp" />
-    <ClCompile Include="Tests\TESTXML.cpp" />
+    <ClCompile Include="Tests\TESTURIQuerySerialize.cpp" />
+    <ClCompile Include="Tests\TESTXMLSerialize.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{AE94E4CC-860F-4F14-AFB3-BBAABF515551}</ProjectGuid>

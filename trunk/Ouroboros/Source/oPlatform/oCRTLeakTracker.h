@@ -29,7 +29,7 @@
 
 #include <oBasis/oHash.h>
 #include <oBasis/oLeakTracker.h>
-#include <oBasis/oMutex.h>
+#include <oConcurrency/mutex.h>
 #include <oPlatform/oSingleton.h>
 #include <unordered_map>
 
@@ -75,7 +75,7 @@ protected:
 
 	static int MallocHook(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line);
 
-	oMutex Mutex;
+	oConcurrency::mutex Mutex;
 	oLeakTracker* pLeakTracker;
 	size_t NonLinearBytes;
 	_CRT_ALLOC_HOOK OriginalAllocHook;

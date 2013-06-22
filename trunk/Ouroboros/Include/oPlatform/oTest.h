@@ -30,13 +30,14 @@
 #define oTest_h
 
 #include <oBasis/oFilterChain.h>
-#include <oBasis/oString.h>
-#include <oPlatform/oSingleton.h> // @oooii-tony: Is it necessary to guarantee a test to be singular? If not this can take a step towards being cross-platform.
 #include <oBasis/oStddef.h>
+#include <oBasis/oString.h>
+#include <oPlatform/oProcess.h>
+#include <oPlatform/oSingleton.h> // @oooii-tony: Is it necessary to guarantee a test to be singular? If not this can take a step towards being cross-platform.
 
-#define oTESTERROR(format, ...) do { oPrintf(_StrStatus, _SizeofStrStatus, format, ## __VA_ARGS__); oTRACE("FAILING: %s (oErrorGetLast() == %s (%s))", _StrStatus, oAsString(oErrorGetLast()), oErrorGetLastString()); return oErrorGetLast() == oERROR_LEAKS ? oTest::LEAKS : oTest::FAILURE; } while(false)
+#define oTESTERROR(format, ...) do { oPrintf(_StrStatus, _SizeofStrStatus, format, ## __VA_ARGS__); oTRACE("FAILING: %s (oErrorGetLast() == %s (%s))", _StrStatus, oErrorAsString(oErrorGetLast()), oErrorGetLastString()); return oTest::FAILURE; } while(false)
 #define oTESTB(expr, errMsg, ...) do { if (!(expr)) { oTESTERROR(errMsg, ## __VA_ARGS__); } } while(false)
-#define oTESTB0(expr) do { if (!(expr)) { oPrintf(_StrStatus, _SizeofStrStatus, "%s: %s", oAsString(oErrorGetLast()), oErrorGetLastString()); return oTest::FAILURE; } } while(false)
+#define oTESTB0(expr) do { if (!(expr)) { oPrintf(_StrStatus, _SizeofStrStatus, "%s: %s", oErrorAsString(oErrorGetLast()), oErrorGetLastString()); return oTest::FAILURE; } } while(false)
 #define oTESTB_FWD( _FWDFn) \
 	{ \
 		RESULT Result = _FWDFn; \
@@ -49,10 +50,10 @@
 #define oTESTI_CUSTOM_TOLERANCE(oImagePointer, NthFrame, ColorChannelTolerance, MaxRMSError, DiffImageMultiplier) oTESTB0(TestImage(oImagePointer, NthFrame, ColorChannelTolerance, MaxRMSError, DiffImageMultiplier))
 
 #define oTEST_FUTURE(_Future) do \
-{	_Future.wait(); \
-	if (_Future.has_error()) \
-	{	_Future.set_last_error(); \
-		oPrintf(_StrStatus, _SizeofStrStatus, "%s: %s", oAsString(_Future.get_error()), _Future.get_error_string()); \
+{	try { _Future.wait(); } \
+	catch (std::exception& e) \
+	{	oErrorSetLast(e); \
+		oPrintf(_StrStatus, _SizeofStrStatus, "%s: %s", oErrorAsString(oErrorGetLast()), oErrorGetLastString()); \
 		return oTest::FAILURE; \
 	} \
 } while (false)
@@ -79,8 +80,8 @@
 #define oTEST_REGISTER(_TestClassName) oTestManager::RegisterTest<_TestClassName> oCONCAT(_TestClassName, _Instance)
 
 // Use this to register test that spawn processes other than special-mode tests
-// For any given process name (executable name) oMODULE_DEBUG_PREFIX_A will be
-// prepended as a second entry, so both debug and release versions are handled
+// For any given process name (executable name) oMODULE_DEBUG_SUFFIX_A will be
+// appended as a second entry, so both debug and release versions are handled
 // with a single specification.
 #define oTEST_REGISTER_MULTIPROCESS(_TestClassName, _StrSemiColorDelimitedStringOfSpawnedProcesses) oTestManager::RegisterTest<_TestClassName> oCONCAT(_TestClassName, _Instance)(0, oTest::SUCCESS, _StrSemiColorDelimitedStringOfSpawnedProcesses)
 
@@ -131,7 +132,8 @@ struct oTest : oProcessSingleton<oTest>
 		OUTPUT,
 	};
 
-	oDECLARE_FLAG(FileMustExist);
+	struct FileMustExistFlag {};
+	static const FileMustExistFlag FileMustExist;
 
 	struct TEST_IMAGE_DESC
 	{
@@ -174,14 +176,14 @@ struct oTest : oProcessSingleton<oTest>
 	template<size_t size> bool BuildPath(char (&_StrFullPath)[size], const char* _StrRelativePath, PATH_TYPE _PathType) { return BuildPath(_StrFullPath, size, _StrRelativePath, _PathType, false); }
 	template<size_t size> bool BuildPath(char (&_StrFullPath)[size], const char* _StrRelativePath, PATH_TYPE _PathType, const FileMustExistFlag&) { return BuildPath(_StrFullPath, size, _StrRelativePath, _PathType, true); }
 
-	template<size_t size> bool BuildPath(oFixedString<char, size>& _StrDestination, const char* _StrRelativePath, PATH_TYPE _PathType) { return BuildPath(_StrDestination, _StrDestination.capacity(), _StrRelativePath, _PathType, false); }
-	template<size_t size> bool BuildPath(oFixedString<char, size>& _StrDestination, const char* _StrRelativePath, PATH_TYPE _PathType, const FileMustExistFlag&) { return BuildPath(_StrDestination, _StrDestination.capacity(), _StrRelativePath, _PathType, true); }
+	template<size_t size> bool BuildPath(oStd::fixed_string<char, size>& _StrDestination, const char* _StrRelativePath, PATH_TYPE _PathType) { return BuildPath(_StrDestination, _StrDestination.capacity(), _StrRelativePath, _PathType, false); }
+	template<size_t size> bool BuildPath(oStd::fixed_string<char, size>& _StrDestination, const char* _StrRelativePath, PATH_TYPE _PathType, const FileMustExistFlag&) { return BuildPath(_StrDestination, _StrDestination.capacity(), _StrRelativePath, _PathType, true); }
 
-	bool FindInputFile(oStringPath& _FullPath, const char* _StrRelativePath) { return BuildPath(_FullPath, _FullPath.capacity(), _StrRelativePath, INPUT, FileMustExist); }
+	bool FindInputFile(oStd::path_string& _FullPath, const char* _StrRelativePath) { return BuildPath(_FullPath, _FullPath.capacity(), _StrRelativePath, INPUT, FileMustExist); }
 
 private:
 	virtual bool BuildPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath, PATH_TYPE _PathType, bool _PathMustExist) const;
-	virtual bool TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const char* _FailedImagePath, unsigned int _NthImage, int _ColorChannelTolerance = oDEFAULT, float _MaxRMSError = -1.0f, unsigned int _DiffImageMultiplier = oDEFAULT);
+	virtual bool TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const char* _FailedImagePath, unsigned int _NthImage, int _ColorChannelTolerance = oDEFAULT, float _MaxRMSError = -1.0f, unsigned int _DiffImageMultiplier = oDEFAULT, bool _OutputGoldenImage = false);
 };
 
 // Special tests are ones that are new processes spawned from a regular test 
@@ -195,7 +197,7 @@ struct oSpecialTest : public oTest
 	// a client-server or multi-process test. The process is created and then run
 	// with a separate call to Run() so there is an opportunity for the developer
 	// to place a breakpoint and attach to this new process during development.
-	static bool CreateProcess(const char* _SpecialTestName, threadsafe interface oProcess** _ppProcess);
+	static bool CreateProcess(const char* _SpecialTestName, threadsafe oProcess** _ppProcess);
 
 	// Run the specified process as was created from oSpecialTest::CreateProcess 
 	// in a special mode that runs the unit test with a specific test. This way 
@@ -214,9 +216,9 @@ struct oSpecialTest : public oTest
 	void NotifyReady();
 };
 
-interface oTestManager : oNoncopyable
+interface oTestManager
 {
-	struct RegisterTestBase : oNoncopyable
+	struct RegisterTestBase
 	{
 		RegisterTestBase(unsigned int _BugNumber = 0, oTest::RESULT _BugResult = oTest::SUCCESS, const char* _PotentialZombieProcesses = "");
 		~RegisterTestBase();
@@ -230,6 +232,9 @@ interface oTestManager : oNoncopyable
 		unsigned int BugNumber; // if non-zero, this test is disabled because of the specified bug
 		oTest::RESULT BugResult; // if BugNumber is non-zero, this result is returned instead of running the test
 		char PotentialZombieProcesses[256];
+	private:
+		RegisterTestBase(const RegisterTestBase&)/* = delete*/;
+		const RegisterTestBase& operator=(const RegisterTestBase&)/* = delete*/;
 	};
 
 	template<typename TestT> struct RegisterTest : RegisterTestBase
@@ -266,6 +271,7 @@ interface oTestManager : oNoncopyable
 			, EnableLeakTracking(true)
 			, Exhaustive(false)
 			, AutomatedMode(false)
+			, EnableOutputGoldenImages(false)
 		{}
 
 		const char* TestSuiteName;
@@ -291,6 +297,7 @@ interface oTestManager : oNoncopyable
 		bool EnableLeakTracking;
 		bool Exhaustive; // allow time consuming tests to run. Tests should have a fast mode, and check this flag to see if its ok to run in slow mode.
 		bool AutomatedMode; // Don't prompt the user for action, do something sensible for running this on an automated test server
+		bool EnableOutputGoldenImages;
 		// @oooii-tony: todo: Add redirect status, redirect printf
 	};
 

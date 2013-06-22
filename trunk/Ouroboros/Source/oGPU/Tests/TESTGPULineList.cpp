@@ -27,12 +27,26 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
+struct oGPU_LINE_VERTEX
+{
+	float3 Position;
+	oStd::color Color;
+};
+
+struct oGPU_LINE
+{
+	float3 Start;
+	oStd::color StartColor;
+	float3 End;
+	oStd::color EndColor;
+};
+
 struct GPU_LineList : public oTest
 {
 	oRef<oGPUDevice> Device;
 	oRef<oGPUCommandList> CL;
 	oRef<oGPUPipeline> Pipeline;
-	oRef<oGPULineList> LineList;
+	oRef<oGPUBuffer> LineList;
 	bool Once;
 
 	void Render(oGPURenderTarget* _pPrimaryRenderTarget)
@@ -40,7 +54,7 @@ struct GPU_LineList : public oTest
 		if (!Once)
 		{
 			oGPU_CLEAR_DESC CD;
-			CD.ClearColor[0] = std::AlmostBlack;
+			CD.ClearColor[0] = oStd::AlmostBlack;
 			_pPrimaryRenderTarget->SetClearDesc(CD);
 
 			Once = true;
@@ -53,17 +67,15 @@ struct GPU_LineList : public oTest
 		oSURFACE_MAPPED_SUBRESOURCE msr;
 		CL->Reserve(LineList, 0, &msr);
 		oGPU_LINE* pLines = (oGPU_LINE*)msr.pData;
-		oGPULineList::DESC lld;
-		LineList->GetDesc(&lld);
 
 		static const float3 TrianglePoints[] = { float3(-0.75f, -0.667f, 0.0f), float3(0.0f, 0.667f, 0.0f), float3(0.75f, -0.667f, 0.0f) };
 
-		pLines[0].StartColor = std::Red;
-		pLines[0].EndColor = std::Green;
-		pLines[1].StartColor = std::Green;
-		pLines[1].EndColor = std::Blue;
-		pLines[2].StartColor = std::Blue;
-		pLines[2].EndColor = std::Red;
+		pLines[0].StartColor = oStd::Red;
+		pLines[0].EndColor = oStd::Green;
+		pLines[1].StartColor = oStd::Green;
+		pLines[1].EndColor = oStd::Blue;
+		pLines[2].StartColor = oStd::Blue;
+		pLines[2].EndColor = oStd::Red;
 
 		pLines[0].Start = TrianglePoints[0];
 		pLines[0].End = TrianglePoints[1];
@@ -72,15 +84,14 @@ struct GPU_LineList : public oTest
 		pLines[2].Start = TrianglePoints[2];
 		pLines[2].End = TrianglePoints[0];
 
-		CL->Commit(LineList, 0, msr, oGPU_BOX(3));
+		CL->Commit(LineList, 0, msr, oSURFACE_BOX(6));
 
 		CL->Clear(_pPrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
 		CL->SetBlendState(oGPU_OPAQUE);
 		CL->SetDepthStencilState(oGPU_DEPTH_STENCIL_NONE);
 		CL->SetPipeline(Pipeline);
 		CL->SetRenderTarget(_pPrimaryRenderTarget);
-		CL->Draw(LineList);
-
+		CL->Draw(nullptr, 0, 1, &LineList, 0, 3);
 		CL->End();
 		Device->EndFrame();
 	}
@@ -111,11 +122,12 @@ struct GPU_LineList : public oTest
 			if (!Device->CreatePipeline(pld.DebugName, pld, &Pipeline))
 				return false;
 
-			oGPULineList::DESC lld;
-			lld.MaxNumLines = 16;
-			lld.NumLines = 0;
+			oGPU_BUFFER_DESC bd;
+			bd.Type = oGPU_BUFFER_VERTEX;
+			bd.StructByteSize = sizeof(oGPU_LINE_VERTEX);
+			bd.ArraySize = 6;
 
-			if (!Device->CreateLineList("LineList", lld, &LineList))
+			if (!Device->CreateBuffer("LineList", bd, &LineList))
 				return false;
 
 			return true;

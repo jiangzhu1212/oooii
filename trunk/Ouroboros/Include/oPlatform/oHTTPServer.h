@@ -55,6 +55,6 @@ interface oHTTPServer : oInterface
 	virtual void GetDesc(DESC* _pDesc) = 0;
 };
 
-oAPI bool oHTTPServerCreate(const oHTTPServer::DESC& _Desc, oHTTPServer** _ppServer, threadsafe oDispatchQueue* _pDispatchQueue = nullptr);
+oAPI bool oHTTPServerCreate(const oHTTPServer::DESC& _Desc, oHTTPServer** _ppServer);
 
 #endif // oHTTPServer_h

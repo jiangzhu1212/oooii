@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<oAirKeySetList>
+  <oAirKeySet id="MediaKeys" version="1.0">
+
+    <oAirKey Key="oGUI_KEY_P" Origin="lshoulder" Trigger="lhand" Bounds="-0.3 -0.2 -1.0 0.0 0.3 -0.2" />
+    <oAirKey Key="oGUI_KEY_P" Origin="rshoulder" Trigger="rhand" Bounds="0.0 -0.2 -1.0 0.3 0.3 -0.2" />
+
+    <oAirKey Key="oGUI_KEY_1" Origin="lshoulder" Trigger="lhand" Bounds="-0.4 -0.5 -1.0 0.02 0.1 -0.2" />
+    <oAirKey Key="oGUI_KEY_2" Origin="lshoulder" Trigger="lhand" Bounds="0.04 -0.5 -1.0 0.4 0.1 -0.2" />
+
+    <oAirKey Key="oGUI_KEY_3" Origin="rshoulder" Trigger="rhand" Bounds="-0.02 -0.5 -1.0 0.4 0.1 -0.2" />
+    <oAirKey Key="oGUI_KEY_4" Origin="rshoulder" Trigger="rhand" Bounds="-0.4 -0.5 -1.0 -0.04 0.1 -0.2" />
+  </oAirKeySet>
+
+  <oAirKeySet id="WaveBoxes" version="1.0">
+    <oAirKey Key="oGUI_KEY_A" Origin="hip" Trigger="rhand" Bounds="0.0 0.1 -1.0 0.2 0.7 -0.2" />
+    <oAirKey Key="oGUI_KEY_B" Origin="hip" Trigger="rhand" Bounds="0.27 0.1 -1.0 0.5 0.7 -0.2" />
+    <oAirKey Key="oGUI_KEY_C" Origin="hip" Trigger="lhand" Bounds="-0.2 0.1 -1.0 0.0 0.7 -0.2" />
+    <oAirKey Key="oGUI_KEY_D" Origin="hip" Trigger="lhand" Bounds="-0.5 0.1 -1.0 -0.27 0.7 -0.2" />
+  </oAirKeySet>
+
+  <oAirKeySet id="BoxingBoxes" version="1.0">
+    <oAirKey Key="oGUI_KEY_1" Origin="hip" Trigger="rhand" Bounds="-0.11 0.38 -1.0 0.11 0.65f -0.2" />
+    <oAirKey Key="oGUI_KEY_2" Origin="hip" Trigger="lhand" Bounds="-0.11 0.38 -1.0 0.11 0.65f -0.2" />
+    <oAirKey Key="oGUI_KEY_3" Origin="hip" Trigger="relbow" Bounds="-0.16 0.1 -1.0 0.16 0.3f -0.2" />
+    <oAirKey Key="oGUI_KEY_4" Origin="hip" Trigger="relbow" Bounds="-0.16 0.1 -1.0 0.16 0.3f -0.2" />
+  </oAirKeySet>
+
+  <oAirKeySet id="Zones" version="1.0">
+    <oAirKey Key="oGUI_KEY_1" Origin="invalid" Trigger="rankle" Bounds="1.5 -1.0 1.5 2.0 -0.3 3.5" />
+    <oAirKey Key="oGUI_KEY_2" Origin="invalid" Trigger="rankle" Bounds="1.0 -1.0 1.5 1.5 -0.3 3.5" />
+    <oAirKey Key="oGUI_KEY_3" Origin="invalid" Trigger="rankle" Bounds="0.5 -1.0 1.5 1.0 -0.3 3.5" />
+    <oAirKey Key="oGUI_KEY_4" Origin="invalid" Trigger="rankle" Bounds="0.0 -1.0 1.5 0.5 -0.3 3.5" />
+    <oAirKey Key="oGUI_KEY_5" Origin="invalid" Trigger="rankle" Bounds="-0.5 -1.0 1.5 0.0 -0.3 3.5" />
+    <oAirKey Key="oGUI_KEY_6" Origin="invalid" Trigger="rankle" Bounds="-1.0 -1.0 1.5 -0.5 -0.3 3.5" />
+    <oAirKey Key="oGUI_KEY_7" Origin="invalid" Trigger="rankle" Bounds="-1.5 -1.0 1.5 -1.0 -0.3 3.5" />
+    <oAirKey Key="oGUI_KEY_8" Origin="invalid" Trigger="rankle" Bounds="-2.0 -1.0 1.5 -1.5 -0.3 3.5" />
+  </oAirKeySet>
+</oAirKeySetList>

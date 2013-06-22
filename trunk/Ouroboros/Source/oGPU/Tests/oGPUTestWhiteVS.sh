@@ -24,14 +24,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPUTestHLSL.h>
-#include <oGPU/oGPUMaterialConstants.h>
 
-VSOUT main(float3 LSPosition : POSITION)
+VSOUT main(float3 LSPosition : POS0)
 {
-	VSOUT Out = (VSOUT)0;
-	Out.SSPosition = oGPULStoSS(LSPosition);
-	Out.WSPosition = oGPULStoWS(LSPosition);
-	Out.LSPosition = LSPosition;
-	Out.Color = float4(GPUMaterialConstants.DiffuseColor, GPUMaterialConstants.Opacity);
-	return Out;
+	return CommonVS(LSPosition, oZERO3);
 }

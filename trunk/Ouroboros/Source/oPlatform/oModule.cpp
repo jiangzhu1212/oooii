@@ -24,13 +24,38 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oModule.h>
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
 #include <oBasis/oError.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oSystem.h>
 #include <oPlatform/Windows/oWindows.h>
 #include <oPlatform/oProcessHeap.h>
 #include "SoftLink/oWinVersion.h"
+
+oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oMODULE_TYPE)
+	oRTTI_ENUM_BEGIN_VALUES(oMODULE_TYPE)
+		oRTTI_VALUE_CUSTOM(oMODULE_UNKNOWN, "Unknown")
+		oRTTI_VALUE_CUSTOM(oMODULE_APP, "Application")
+		oRTTI_VALUE_CUSTOM(oMODULE_DLL, "Application Extension")
+		oRTTI_VALUE_CUSTOM(oMODULE_LIB, "Object File Library")
+		oRTTI_VALUE_CUSTOM(oMODULE_FONT_UNKNOWN, "Unknown font file")
+		oRTTI_VALUE_CUSTOM(oMODULE_FONT_RASTER, "Raster font file")
+		oRTTI_VALUE_CUSTOM(oMODULE_FONT_TRUETYPE, "TrueType font file")
+		oRTTI_VALUE_CUSTOM(oMODULE_FONT_VECTOR, "Vector font file")
+		oRTTI_VALUE_CUSTOM(oMODULE_VIRTUAL_DEVICE, "Virtual Device")
+		oRTTI_VALUE_CUSTOM(oMODULE_DRV_UNKNOWN, "Unknown driver")
+		oRTTI_VALUE_CUSTOM(oMODULE_DRV_COMM, "COMM driver")
+		oRTTI_VALUE_CUSTOM(oMODULE_DRV_DISPLAY, "Display driver")
+		oRTTI_VALUE_CUSTOM(oMODULE_DRV_INSTALLABLE, "Installable driver")
+		oRTTI_VALUE_CUSTOM(oMODULE_DRV_KEYBOARD, "Keyboard driver")
+		oRTTI_VALUE_CUSTOM(oMODULE_DRV_LANGUAGE, "Language driver")
+		oRTTI_VALUE_CUSTOM(oMODULE_DRV_MOUSE, "Mouse driver")
+		oRTTI_VALUE_CUSTOM(oMODULE_DRV_NETWORK, "Network driver")
+		oRTTI_VALUE_CUSTOM(oMODULE_DRV_PRINTER, "Printer driver")
+		oRTTI_VALUE_CUSTOM(oMODULE_DRV_SOUND, "Sound driver")
+		oRTTI_VALUE_CUSTOM(oMODULE_DRV_SYSTEM, "System driver")
+	oRTTI_ENUM_END_VALUES(oMODULE_TYPE)
+oRTTI_ENUM_END_DESCRIPTION(oMODULE_TYPE)
 
 bool oModuleLink(oHMODULE _hModule, const char** _pInterfaceFunctionNames, void** _ppInterfaces, size_t _CountofInterfaces)
 {
@@ -55,13 +80,13 @@ oHMODULE oModuleLink(const char* _ModuleName, const char** _pInterfaceFunctionNa
 	hModule = (oHMODULE)oThreadsafeLoadLibrary(_ModuleName);
 	if (!hModule)
 	{
-		oErrorSetLast(oERROR_IO, "The application has failed to start because %s was not found. Re-installing the application may fix the problem.", oSAFESTRN(_ModuleName));
+		oErrorSetLast(std::errc::io_error, "The application has failed to start because %s was not found. Re-installing the application may fix the problem.", oSAFESTRN(_ModuleName));
 		return hModule;
 	}
 
 	if( !oModuleLink(hModule, _pInterfaceFunctionNames, _ppInterfaces, _CountofInterfaces) )
 	{
-		oErrorSetLast(oERROR_NOT_FOUND, "Could not create all interfaces from %s. This might be because the DLLs are out of date, try copying a newer version of the DLL into the bin dir for this application.", _ModuleName);
+		oErrorSetLast(std::errc::function_not_supported, "Could not create all interfaces from %s. This might be because the DLLs are out of date, try copying a newer version of the DLL into the bin dir for this application.", _ModuleName);
 		oThreadsafeFreeLibrary((HMODULE)hModule);
 		return 0;
 	}
@@ -74,16 +99,11 @@ oHMODULE oModuleLinkSafe(const char* _ModuleName, const char** _pInterfaceFuncti
 	oHMODULE hModule = oModuleLink(_ModuleName, _pInterfaceFunctionNames, _ppInterfaces, _CountofInterfaces);
 	if (!hModule)
 	{
-		oMSGBOX_DESC d;
-		d.Type = oMSGBOX_ERR;
-		d.TimeoutMS = oInfiniteWait;
-		d.ParentNativeHandle = nullptr;
-		char path[_MAX_PATH];
+		oStd::path_string path;
 		oSystemGetPath(path, oSYSPATH_APP_FULL);
-		char buf[_MAX_PATH];
-		oPrintf(buf, "%s - Unable To Locate Component", oGetFilebase(path));
-		d.Title = buf;
-		oMsgBox(d, "%s", oErrorGetLastString());
+		oStd::path_string buf;
+		snprintf(buf, "%s - Unable To Locate Component", oGetFilebase(path));
+		oMsgBox(oMSGBOX_DESC(oMSGBOX_ERR, buf), "%s", oErrorGetLastString());
 		std::terminate();
 	}
 
@@ -114,39 +134,11 @@ char* oModuleGetName(char* _StrDestination, size_t _SizeofStrDestination, oHMODU
 	size_t length = static_cast<size_t>(GetModuleFileNameA((HMODULE)_hModule, _StrDestination, oUInt(_SizeofStrDestination)));
 	if (length+1 == _SizeofStrDestination && GetLastError())
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
+		oErrorSetLast(std::errc::invalid_argument);
 		return nullptr;
 	}
 	
 	return _StrDestination;
-}
-
-const char* oAsString(const oMODULE_TYPE& _Type)
-{
-	switch (_Type)
-	{
-		case oMODULE_UNKNOWN: return "Unknown";
-		case oMODULE_APP: return "Application";
-		case oMODULE_DLL: return "Application Extension";
-		case oMODULE_LIB: return "Object File Library";
-		case oMODULE_FONT_UNKNOWN: return "Unknown font file";
-		case oMODULE_FONT_RASTER: return "Raster font file";
-		case oMODULE_FONT_TRUETYPE: return "TrueType font file";
-		case oMODULE_FONT_VECTOR: return "Vector font file";
-		case oMODULE_VIRTUAL_DEVICE: return "Virtual Device";
-		case oMODULE_DRV_UNKNOWN: return "Unknown driver";
-		case oMODULE_DRV_COMM: return "COMM driver";
-		case oMODULE_DRV_DISPLAY: return "Display driver";
-		case oMODULE_DRV_INSTALLABLE: return "Installable driver";
-		case oMODULE_DRV_KEYBOARD: return "Keyboard driver";
-		case oMODULE_DRV_LANGUAGE: return "Language driver";
-		case oMODULE_DRV_MOUSE: return "Mouse driver";
-		case oMODULE_DRV_NETWORK: return "Network driver";
-		case oMODULE_DRV_PRINTER: return "Printer driver";
-		case oMODULE_DRV_SOUND: return "Sound driver";
-		case oMODULE_DRV_SYSTEM: return "System driver";
-		oNODEFAULT;
-	}
 }
 
 static oMODULE_TYPE oGetType(const VS_FIXEDFILEINFO& _FFI)
@@ -196,7 +188,7 @@ static oMODULE_TYPE oGetType(const VS_FIXEDFILEINFO& _FFI)
 
 bool oModuleGetDesc(oHMODULE _hModule, oMODULE_DESC* _pDesc)
 {
-	oStringPath ModulePath;
+	oStd::path_string ModulePath;
 	if (!oModuleGetName(ModulePath, _hModule))
 		return false; // pass through error
 
@@ -212,7 +204,7 @@ bool oModuleGetDesc(const char* _ModulePath, oMODULE_DESC* _pDesc)
 
 	std::vector<char> buf;
 	buf.resize(FVISize);
-	void* pData = oGetData(buf);
+	void* pData = oStd::data(buf);
 
 	if (!oWinVersion::Singleton()->GetFileVersionInfoA(_ModulePath, hFVI, FVISize, pData))
 		return oWinSetLastError();
@@ -259,7 +251,7 @@ bool oModuleGetDesc(const char* _ModulePath, oMODULE_DESC* _pDesc)
 	struct MAPPING
 	{
 		const char* Key;
-		oStringM* Dest;
+		oStd::mstring* Dest;
 		bool Required;
 	};
 
@@ -275,15 +267,17 @@ bool oModuleGetDesc(const char* _ModulePath, oMODULE_DESC* _pDesc)
 		{ "SpecialBuild", &_pDesc->SpecialBuild, false },
 	};
 
-	for (size_t i = 0; i < oCOUNTOF(m); i++)
+	oFORI(i, m)
 	{
-		oStringM Key;
+		oStd::mstring Key;
 		oPrintf(Key, "\\StringFileInfo\\%04x%04x\\%s", pLCP[0].wLanguage, pLCP[0].wCodePage, m[i].Key);
-
-		char* pVal = nullptr;
+		oStd::mwstring WKey(Key);
+		wchar_t* pVal = nullptr;
 		UINT ValLen = 0;
 		*m[i].Dest = "";
-		if (!oWinVersion::Singleton()->VerQueryValueA(pData, Key, (LPVOID*)&pVal, &ValLen) && m[i].Required)
+		// VerQueryValueA version seems bugged... it returns one char short of the
+		// proper size.
+		if (!oWinVersion::Singleton()->VerQueryValueW(pData, WKey, (LPVOID*)&pVal, &ValLen) && m[i].Required)
 			return oWinSetLastError();
 		*m[i].Dest = pVal;
 	}

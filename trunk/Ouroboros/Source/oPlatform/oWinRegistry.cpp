@@ -36,18 +36,18 @@ static HKEY sRoots[] = { HKEY_CLASSES_ROOT, HKEY_CURRENT_USER, HKEY_LOCAL_MACHIN
 
 bool oWinRegistrySetValue(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName, const char* _Value)
 {
-	oStringPath KP;
+	oStd::path_string KP;
 	oReplace(KP, _KeyPath, "/", "\\");
 	HKEY hKey = nullptr;
 	oREG_CHECK(RegCreateKeyEx(sRoots[_Root], KP, 0, 0, 0, KEY_SET_VALUE, 0, &hKey, 0));
-	oOnScopeExit close([&](){ RegCloseKey(hKey); });
+	oStd::finally close([&](){ RegCloseKey(hKey); });
 	oREG_CHECK(RegSetValueEx(hKey, _ValueName, 0, REG_SZ, (BYTE*)_Value, (DWORD) (oStrlen(_Value) + 1))); // +1 for null terminating, the null character must also be counted
 	return true;
 }
 
 char* oWinRegistryGetValue(char* _StrDestination, size_t _SizeofStrDestination, oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName)
 {
-	oStringPath KP;
+	oStd::path_string KP;
 	oReplace(KP, _KeyPath, "/", "\\");
 
 	DWORD type = 0;
@@ -59,15 +59,15 @@ char* oWinRegistryGetValue(char* _StrDestination, size_t _SizeofStrDestination, 
 			break;
 
 		case REG_DWORD_LITTLE_ENDIAN: // REG_DWORD
-			oToString(_StrDestination, _SizeofStrDestination, *(unsigned int*)_StrDestination);
+			oStd::to_string(_StrDestination, _SizeofStrDestination, *(unsigned int*)_StrDestination);
 			break;
 
 		case REG_DWORD_BIG_ENDIAN:
-			oToString(_StrDestination, _SizeofStrDestination, oByteSwap(*(unsigned int*)_StrDestination));
+			oStd::to_string(_StrDestination, _SizeofStrDestination, oStd::endian_swap(*(unsigned int*)_StrDestination));
 			break;
 
 		case REG_QWORD:
-			oToString(_StrDestination, _SizeofStrDestination, *(unsigned long long*)_StrDestination);
+			oStd::to_string(_StrDestination, _SizeofStrDestination, *(unsigned long long*)_StrDestination);
 			break;
 
 		default:
@@ -79,18 +79,18 @@ char* oWinRegistryGetValue(char* _StrDestination, size_t _SizeofStrDestination, 
 
 bool oWinRegistryDeleteValue(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName)
 {
-	oStringPath KP;
+	oStd::path_string KP;
 	oReplace(KP, _KeyPath, "/", "\\");
 	HKEY hKey = nullptr;
 	oREG_CHECK(RegOpenKeyEx(sRoots[_Root], KP, 0, KEY_ALL_ACCESS, &hKey));
-	oOnScopeExit close([&](){ RegCloseKey(hKey); });
+	oStd::finally close([&](){ RegCloseKey(hKey); });
 	oREG_CHECK(RegDeleteValue(hKey, _ValueName));
 	return true;
 }
 
 bool oWinRegistryDeleteKey(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, bool _Recursive)
 {
-	oStringPath KP;
+	oStd::path_string KP;
 	oReplace(KP, _KeyPath, "/", "\\");
 	long err = RegDeleteKey(sRoots[_Root], KP);
 	if (err)
@@ -100,7 +100,7 @@ bool oWinRegistryDeleteKey(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, bool 
 
 		HKEY hKey = nullptr;
 		oREG_CHECK(RegOpenKeyEx(sRoots[_Root], KP, 0, KEY_READ, &hKey));
-		oOnScopeExit close([&](){ RegCloseKey(hKey); });
+		oStd::finally close([&](){ RegCloseKey(hKey); });
 		oEnsureSeparator(KP, '\\');
 		size_t KPLen = KP.length();
 		DWORD dwSize = oUInt(KP.capacity() - KPLen);

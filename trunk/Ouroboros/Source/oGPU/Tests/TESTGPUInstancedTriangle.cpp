@@ -26,18 +26,15 @@
 #include <oPlatform/oTest.h>
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
-#include <oGPU/oGPUViewConstants.h>
-#include <oGPU/oGPUDrawConstants.h>
 
 struct GPU_InstancedTriangle : public oTest
 {
 	oRef<oGPUDevice> Device;
 	oRef<oGPUCommandList> CL;
 	oRef<oGPUPipeline> Pipeline;
-	oRef<oGPUInstanceList> InstanceList;
-	oRef<oGPUMesh> Mesh;
-	oRef<oGPUBuffer> ViewConstants;
-	oRef<oGPUBuffer> DrawConstants;
+	oRef<oGPUBuffer> InstanceList;
+	oRef<oGPUUtilMesh> Mesh;
+	oRef<oGPUBuffer> TestConstants;
 	bool Once;
 	
 	void Render(oGPURenderTarget* _pPrimaryRenderTarget)
@@ -45,7 +42,7 @@ struct GPU_InstancedTriangle : public oTest
 		if (!Once)
 		{
 			oGPU_CLEAR_DESC CD;
-			CD.ClearColor[0] = std::AlmostBlack;
+			CD.ClearColor[0] = oStd::AlmostBlack;
 			_pPrimaryRenderTarget->SetClearDesc(CD);
 
 			Once = true;
@@ -55,7 +52,7 @@ struct GPU_InstancedTriangle : public oTest
 
 		oGPURenderTarget::DESC RTDesc;
 		_pPrimaryRenderTarget->GetDesc(&RTDesc);
-		float4x4 P = oCreatePerspectiveLH(oPIf/4.0f, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
+		float4x4 P = oCreatePerspectiveLH(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
 
 		{
 			oSURFACE_MAPPED_SUBRESOURCE msr;
@@ -69,29 +66,27 @@ struct GPU_InstancedTriangle : public oTest
 				pInstances[0].Rotation = oCreateRotationQ(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
 				pInstances[1].Rotation = oCreateRotationQ(float3(radians(rotationStep) * 0.5f, radians(rotationStep), radians(rotationStep) * 0.75f));
 			}
-			CL->Commit(InstanceList, 0, msr, oGPU_BOX(2));
+			CL->Commit(InstanceList, 0, msr);
 		}
 
 		uint DrawID = 0;
 
-		if (!Device->BeginFrame())
-			return;
 		CL->Begin();
 
-		oGPUCommitBuffer(CL, ViewConstants, oGPUViewConstants(V, P, RTDesc.Dimensions, 0));
-		oGPUCommitBuffer(CL, DrawConstants, oGPUDrawConstants(float4x4::Identity, V, P, 0, DrawID++));
+		oGPUCommitBuffer(CL, TestConstants, oGPUTestConstants(oIDENTITY4x4, V, P, oStd::White));
 
 		CL->Clear(_pPrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
 		CL->SetBlendState(oGPU_OPAQUE);
 		CL->SetDepthStencilState(oGPU_DEPTH_TEST_AND_WRITE);
 		CL->SetSurfaceState(oGPU_TWO_SIDED);
-		CL->SetBuffers(0, 2, &ViewConstants); // let the set run from ViewConstants to DrawConstants
+		CL->SetBuffers(0, 1, &TestConstants);
 		CL->SetPipeline(Pipeline);
 		CL->SetRenderTarget(_pPrimaryRenderTarget);
-		CL->Draw(Mesh, 0, InstanceList);
+		
+		const oGPUBuffer* pBuffers[2] = { Mesh->GetVertexBuffer(), InstanceList };
+		CL->Draw(Mesh->GetIndexBuffer(), 0, 2, pBuffers, 0, 1, 0, 2);
 
 		CL->End();
-		Device->EndFrame();
 	}
 
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
@@ -114,25 +109,20 @@ struct GPU_InstancedTriangle : public oTest
 				return false;
 
 			oGPUBuffer::DESC DCDesc;
-			DCDesc.StructByteSize = sizeof(oGPUViewConstants);
-			if (!Device->CreateBuffer("ViewConstants", DCDesc, &ViewConstants))
-				return false;
-
-			DCDesc.StructByteSize = sizeof(oGPUDrawConstants);
-			if (!Device->CreateBuffer("DrawConstants", DCDesc, &DrawConstants))
+			DCDesc.StructByteSize = sizeof(oGPUTestConstants);
+			if (!Device->CreateBuffer("TestConstants", DCDesc, &TestConstants))
 				return false;
 
 			oGPUPipeline::DESC pld;
 			if (!oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE_INSTANCED, &pld))
 				return false;
 
-			oGPU_INSTANCE_LIST_DESC ild;
-			ild.InputSlot = 1;
-			ild.MaxNumInstances = 2;
-			ild.NumInstances = 0;
-			ild.NumVertexElements = pld.NumElements;
-			memcpy(ild.VertexElements, pld.pElements, sizeof(oGPU_VERTEX_ELEMENT) * pld.NumElements);
-			if (!Device->CreateInstanceList("InstanceList", ild, &InstanceList))
+			oGPU_BUFFER_DESC bd;
+			bd.Type = oGPU_BUFFER_VERTEX;
+			bd.ArraySize = 2;
+			bd.StructByteSize = oGPUCalcVertexSize(pld.pElements, pld.NumElements, 1);
+
+			if (!Device->CreateBuffer("InstanceList", bd, &InstanceList))
 				return false;
 
 			if (!Device->CreatePipeline(pld.DebugName, pld, &Pipeline))

@@ -39,11 +39,11 @@ oAPI oHEVENT oInterprocessEventCreate(bool _AutoReset = false, const char* _Inte
 oAPI void oInterprocessEventDestroy(oHEVENT _hEvent);
 oAPI void oInterprocessEventSet(oHEVENT _hEvent);
 oAPI void oInterprocessEventReset(oHEVENT _hEvent);
-// Returns false if timed out (oErrorGetLast() will return oERROR_TIMEOUT)
+// Returns false if timed out (oErrorGetLast() will return std::errc::timed_out)
 oAPI bool oInterprocessEventWait(oHEVENT _hEvent, unsigned int _TimeoutMS = oInfiniteWait);
 oAPI bool oInterprocessEventWaitMultiple(oHEVENT* _hEvents, size_t _NumEvents, size_t* _pWaitBreakingEventIndex = nullptr, unsigned int _TimeoutMS = oInfiniteWait);
 
-class oInterprocessEvent : oNoncopyable
+class oInterprocessEvent
 {
 public:
 	typedef oHEVENT native_handle_type;
@@ -70,6 +70,9 @@ public:
 	template<size_t size> static inline bool WaitMultiple(threadsafe oInterprocessEvent* (&_ppEvents)[size], size_t* _pWaitBreakingEventIndex = nullptr, unsigned int _TimeoutMS = oInfiniteWait) { return WaitMultiple(_ppEvents, size, _pWaitBreakingEventIndex, _TimeoutMS); }
 private:
 	native_handle_type hEvent;
+
+	oInterprocessEvent(const oInterprocessEvent&)/* = delete*/;
+	const oInterprocessEvent& operator=(const oInterprocessEvent&)/* = delete*/;
 };
 
 #endif

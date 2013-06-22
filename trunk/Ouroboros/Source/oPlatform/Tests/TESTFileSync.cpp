@@ -24,7 +24,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oBasis/oGUID.h>
 #include <oBasis/oRef.h>
 #include <oPlatform/oFile.h>
 #include <oPlatform/oStreamUtil.h>
@@ -35,7 +34,7 @@ struct PLATFORM_FileSync : public oTest
 
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oStringPath testFilePath;
+		oStd::path_string testFilePath;
 		oTESTB0(FindInputFile(testFilePath, "oooii.ico"));
 
 		oRef<threadsafe oSchemeHandler> FileSchemeHandler;
@@ -68,7 +67,7 @@ struct PLATFORM_FileSync : public oTest
 				StreamRead.pData = pHead;
 				TestSuccess = ReadFile->Read(StreamRead);
 				
-				pHead = oByteAdd(pHead, BytesPerRead);
+				pHead = oStd::byte_add(pHead, BytesPerRead);
 				StreamRead.Range.Offset += BytesPerRead;
 			}
 			auto RemainingBytes = FileDesc.Size - r;
@@ -79,13 +78,13 @@ struct PLATFORM_FileSync : public oTest
 				TestSuccess = ReadFile->Read(StreamRead);
 			}
 
-			static const uint128 ExpectedFileHash = {3650274822346168237,9475904461222329612};
+			static const uint128 ExpectedFileHash(3650274822346168237, 9475904461222329612);
 			oTESTB(TestSuccess, "Test failed, ReadFile->Read returned false");
 			oTESTB( oHash_murmur3_x64_128( TempFileBlob, oUInt( FileDesc.Size ) ) == ExpectedFileHash, "Test failed to compute correct hash" );
 		}
 
 		// Now test writing data out then reading it back
-		oStringPath TempFilePath;
+		oStd::path_string TempFilePath;
 		oTESTB0(BuildPath(TempFilePath, "", oTest::TEMP));
 		oTESTB0(oFileEnsureParentFolderExists(TempFilePath));
 		oStrAppendf(TempFilePath, "/TESTAsyncFileIO.bin");

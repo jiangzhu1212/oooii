@@ -30,29 +30,32 @@
 #define oWinAsString_h
 
 #include <oPlatform/Windows/oWindows.h>
+#include <oPlatform/Windows/oWinKey.h>
 
-const char* oWinAsStringHT(unsigned int _HTCode);
-const char* oWinAsStringSC(unsigned int _SCCode);
-const char* oWinAsStringSW(unsigned int _SWCode);
-const char* oWinAsStringWM(unsigned int _uMsg);
-const char* oWinAsStringWS(unsigned int _WSFlag);
-const char* oWinAsStringWA(unsigned int _WACode);
-const char* oWinAsStringBST(unsigned int _BSTCode);
-const char* oWinAsStringNM(unsigned int _NMCode);
-const char* oWinAsStringSWP(unsigned int _SWPCode);
-const char* oWinAsStringGWL(unsigned int _GWLCode);
-const char* oWinAsStringGWLP(unsigned int _GWLPCode);
-const char* oWinAsStringTCN(unsigned int _TCNCode);
-const char* oWinAsStringCDERR(unsigned int _CDERRCode); // common dialog errors
-const char* oWinAsStringExceptionCode(unsigned int _ExceptionCode);
+const char* oWinAsStringHT(int _HTCode);
+const char* oWinAsStringSC(int _SCCode);
+const char* oWinAsStringSW(int _SWCode);
+const char* oWinAsStringWM(int _uMsg);
+const char* oWinAsStringWS(int _WSFlag);
+const char* oWinAsStringWSEX(int _WSEXFlag);
+const char* oWinAsStringWA(int _WACode);
+const char* oWinAsStringBST(int _BSTCode);
+const char* oWinAsStringNM(int _NMCode);
+const char* oWinAsStringSWP(int _SWPCode);
+const char* oWinAsStringGWL(int _GWLCode);
+const char* oWinAsStringGWLP(int _GWLPCode);
+const char* oWinAsStringTCN(int _TCNCode);
+const char* oWinAsStringCDERR(int _CDERRCode); // common dialog errors
+const char* oWinAsStringExceptionCode(int _ExceptionCode);
 
 char* oWinParseStyleFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSFlags);
+char* oWinParseStyleExFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSEXFlags);
 char* oWinParseSWPFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _SWPFlags);
 
 // Fills _StrDestination with a string of the WM_* message and details 
 // about its parameters. This can be useful for printing out debug details.
-char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam);
-inline char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, const CWPSTRUCT* _pCWPStruct) { return oWinParseWMMessage(_StrDestination, _SizeofStrDestination, _pCWPStruct->hwnd, _pCWPStruct->message, _pCWPStruct->wParam, _pCWPStruct->lParam); }
+char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oWINKEY_CONTROL_STATE* _pState, HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam);
+inline char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oWINKEY_CONTROL_STATE* _pState, const CWPSTRUCT* _pCWPStruct) { return oWinParseWMMessage(_StrDestination, _SizeofStrDestination, _pState, _pCWPStruct->hwnd, _pCWPStruct->message, _pCWPStruct->wParam, _pCWPStruct->lParam); }
 
 const char* oWinAsStringHR(HRESULT _hResult);
 const char* oWinAsStringHR_DXGI(HRESULT _hResult);
@@ -63,6 +66,7 @@ const char* oWinAsStringDISP(UINT _DISPCode);
 bool oWinParseHRESULT(char* _StrDestination, size_t _SizeofStrDestination, HRESULT _hResult);
 
 template<size_t size> inline char* oWinParseStyleFlags(char (&_StrDestination)[size], UINT _WSFlags) { return oWinParseStyleFlags(_StrDestination, size, _WSFlags); }
+template<size_t size> inline char* oWinParseStyleExFlags(char (&_StrDestination)[size], UINT _WSEXFlags) { return oWinParseStyleExFlags(_StrDestination, SIZE, _WSEXFlags); }
 template<size_t size> inline char* oWinParseSWPFlags(char (&_StrDestination)[size], UINT _SWPFlags) { return oWinParseSWPFlags(_StrDestination, size, _SWPFlags); }
 template<size_t size> inline char* oWinParseWMMessage(char (&_StrDestination)[size], HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam) { return oWinParseWMMessage(_StrDestination, size, _hWnd, _uMsg, _wParam, _lParam); }
 template<size_t size> inline char* oWinParseWMMessage(char (&_StrDestination)[size], const CWPSTRUCT* _pCWPStruct) { return oWinParseWMMessage(_StrDestination, size, _pCWPStruct); }

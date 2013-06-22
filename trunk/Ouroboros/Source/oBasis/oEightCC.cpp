@@ -24,22 +24,22 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oEightCC.h>
-#include <oBasis/oByte.h>
-#include <oBasis/oByteSwizzle.h>
 #include <oBasis/oError.h>
-#include <oBasis/oMacros.h>
+#include <oStd/macros.h>
 
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oEightCC& _Value)
+namespace oStd {
+
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oEightCC& _Value)
 {
 	if (_SizeofStrDestination < 9)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "String buffer not large enough");
+		oErrorSetLast(std::errc::invalid_argument, "String buffer not large enough");
 		return nullptr;
 	}
 
 	#ifdef oLITTLEENDIAN
-		oByteSwizzle64 sw; sw.AsUnsignedLongLong = (unsigned long long)_Value;
-		unsigned long long fcc = ((unsigned long long)oByteSwap(sw.AsUnsignedInt[0]) << 32) | oByteSwap(sw.AsUnsignedInt[1]);
+		oStd::byte_swizzle64 sw; sw.as_unsigned_long_long = (unsigned long long)_Value;
+		unsigned long long fcc = ((unsigned long long)oStd::endian_swap(sw.as_unsigned_int[0]) << 32) | oStd::endian_swap(sw.as_unsigned_int[1]);
 	#else
 		unsigned long long fcc = _Value;
 	#endif
@@ -49,14 +49,12 @@ char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oEigh
 	return _StrDestination;
 }
 
-bool oFromString(oEightCC* _pValue, const char* _StrSource)
+bool from_string(oEightCC* _pValue, const char* _StrSource)
 {
 	if (!oSTRVALID(_StrSource))
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
-	#ifdef oLITTLEENDIAN
-		*_pValue = oByteSwap(*(unsigned long long*)_StrSource);
-	#else
-		*_pValue = *(unsigned long long *)_StrSource;
-	#endif
+		return oErrorSetLast(std::errc::invalid_argument);
+	*_pValue = oStd::to_big_endian(*(unsigned long long*)_StrSource);
 	return true;
 }
+
+} // namespace oStd

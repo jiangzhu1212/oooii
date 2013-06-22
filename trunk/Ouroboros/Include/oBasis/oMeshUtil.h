@@ -57,7 +57,7 @@ template<typename T> bool oRemoveDegenerates(const TVEC3<T>* _pPositions, size_t
 //       which way a normal points.
 //
 // This can return EINVAL if a parameters isn't something that can be used.
-template<typename T> bool oCalculateFaceNormals(TVEC3<T>* _pFaceNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const TVEC3<T>* _pPositions, size_t _NumberOfPositions, bool _CCW = false);
+template<typename T> bool oCalcFaceNormals(TVEC3<T>* _pFaceNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const TVEC3<T>* _pPositions, size_t _NumberOfPositions, bool _CCW = false);
 
 // Calculates the vertex normals by averaging face normals from the following 
 // inputs:
@@ -76,7 +76,7 @@ template<typename T> bool oCalculateFaceNormals(TVEC3<T>* _pFaceNormals, const u
 // false, any zero-length vector will be overwritten. Any length-having vector
 // will not be touched.
 // This can return EINVAL if a parameters isn't something that can be used.
-template<typename T> bool oCalculateVertexNormals(TVEC3<T>* _pVertexNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const TVEC3<T>* _pPositions, size_t _NumberOfPositions, bool _CCW = false, bool _OverwriteAll = true);
+template<typename T> bool oCalcVertexNormals(TVEC3<T>* _pVertexNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const TVEC3<T>* _pPositions, size_t _NumberOfPositions, bool _CCW = false, bool _OverwriteAll = true);
 
 // Calculates the tangent space vector and its handedness from the following
 // inputs:
@@ -93,7 +93,7 @@ template<typename T> bool oCalculateVertexNormals(TVEC3<T>* _pVertexNormals, con
 //              index array
 // _NumberOfVertices: The number of vertices in the _pPositions, _pNormals, and 
 //                    _pTexCoords arrays
-void oCalculateTangents(float4* _pTangents, const unsigned int* _pIndices, size_t _NumberOfIndices, const float3* _pPositions, const float3* _pNormals, const float3* _pTexcoords, size_t _NumberOfVertices);
+void oCalcTangents(float4* _pTangents, const unsigned int* _pIndices, size_t _NumberOfIndices, const float3* _pPositions, const float3* _pNormals, const float3* _pTexcoords, size_t _NumberOfVertices);
 
 // Allocates and fills an edge list for the mesh described by the specified 
 // indices:
@@ -104,7 +104,7 @@ void oCalculateTangents(float4* _pTangents, const unsigned int* _pIndices, size_
 //           describing an edge. Use oFreeEdgeList() to free memory the edge 
 //           list allocation. So every two uints in *_ppEdges represents an edge.
 // _pNumberOfEdges: a pointer to receive the number of edge pairs returned
-void oCalculateEdges(size_t _NumberOfVertices, const unsigned int* _pIndices, size_t _NumberOfIndices, unsigned int** _ppEdges, size_t* _pNumberOfEdges);
+void oCalcEdges(size_t _NumberOfVertices, const unsigned int* _pIndices, size_t _NumberOfIndices, unsigned int** _ppEdges, size_t* _pNumberOfEdges);
 void oFreeEdgeList(unsigned int* _pEdges);
 
 // If some process modified indices, go through and compact the specified vertex
@@ -124,11 +124,11 @@ template<typename T> void oPruneUnindexedVertices(unsigned int* _pIndices, size_
 // corners of the set. (Useful for calculating corners of an axis-aligned 
 // bounding box. This initializes the output points to the opposite extreme
 // values.
-template<typename T> void oCalculateMinMaxPoints(const TVEC3<T>* oRESTRICT _pPoints, size_t _NumberOfPoints, TVEC3<T>* oRESTRICT _pMinPoint, TVEC3<T>* oRESTRICT _pMaxPoint);
+template<typename T> void oCalcMinMaxPoints(const TVEC3<T>* oRESTRICT _pPoints, size_t _NumberOfPoints, TVEC3<T>* oRESTRICT _pMinPoint, TVEC3<T>* oRESTRICT _pMaxPoint);
 
 // Fills _pMinVertex and _pMaxVertex with the indexes into the vertex buffer for
 // the range of that buffer where _pIndices indexes.
-template<typename T> void oCalculateMinMaxVertices(const T* _pIndices, uint _StartIndex, uint _NumIndices, uint _NumVertices, uint* _pMinVertex, uint* _pMaxVertex)
+template<typename T> void oCalcMinMaxVertices(const T* _pIndices, uint _StartIndex, uint _NumIndices, uint _NumVertices, uint* _pMinVertex, uint* _pMaxVertex)
 {
 	if (_pIndices)
 	{
@@ -154,6 +154,6 @@ template<typename T> void oCalculateMinMaxVertices(const T* _pIndices, uint _Sta
 // pointer should be allocated to have at least _NumVertices elements. If 
 // _pSolveTime is specified, the number of seconds to calculate texcoords will 
 // be returned.
-bool oCalculateTexcoords(const oAABoxf& _Bound, const unsigned int* _pIndices, unsigned int _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, unsigned int _NumVertices, double* _pSolveTime);
+bool oCalcTexcoords(const oAABoxf& _Bound, const unsigned int* _pIndices, unsigned int _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, unsigned int _NumVertices, double* _pSolveTime);
 
 #endif

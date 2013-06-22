@@ -30,13 +30,12 @@
 #ifndef oReporting_h
 #define oReporting_h
 
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
 
 struct oREPORTING_DESC
 {
 	oREPORTING_DESC()
-		: LogFilePath(nullptr)
-		, PromptAfterDump(true)
+		: PromptAfterDump(true)
 		, PromptAsserts(true)
 		, PromptWarnings(true)
 		, PrintCallstack(true)
@@ -48,19 +47,17 @@ struct oREPORTING_DESC
 	{}
 
 	// If specified and a valid, accessible file path, all output through this 
-	// error system will be written to the specified file. The specified string
-	// will be copied and retained internally, so it is safe to free the buffer
-	// that is being pointed to by this struct once the DESC has been set.
-	oStringPath LogFilePath;
+	// error system will be written to the specified file. 
+	oStd::path_string LogFilePath;
 
 	// Base path to where both the Mini and Full memory dumps should be placed
     // when a dump occurs these will be appended with oGetModuleFileStampString
     // and a .dmp extension.
-	oStringPath MiniDumpBase;
-	oStringPath FullDumpBase;
+	oStd::path_string MiniDumpBase;
+	oStd::path_string FullDumpBase;
 
 	// Final system command executed before termination.
-	oStringXL PostDumpExecution;
+	oStd::xlstring PostDumpExecution;
 
 	// Throws up a dialog box after dumping and PostDumpExecution that indicates
 	// if the dump succeeded prior to aborting.
@@ -76,7 +73,7 @@ struct oREPORTING_DESC
 	bool PrefixMsgId;
 };
 
-typedef oASSERT_ACTION (*oReportingVPrint)(const oASSERTION& _Assertion, threadsafe interface oStreamWriter* _pLogFile, const char* _Format, va_list _Args);
+typedef oStd::assert_action::value (*oReportingVPrint)(const oStd::assert_context& _Assertion, threadsafe interface oStreamWriter* _pLogFile, const char* _Format, va_list _Args);
 
 // Some objects use reporting in init/deinit, and those objects might be part of
 // static init/deinit. To ensure oReporting resources are available during that
@@ -85,7 +82,8 @@ typedef oASSERT_ACTION (*oReportingVPrint)(const oASSERTION& _Assertion, threads
 void oReportingReference();
 void oReportingRelease();
 
-// Enable/Disables oAssert as well as crt asser and error dialog boxes (asserts fail silently and the program aborts)
+// Enable/Disables oAssert as well as crt assert and error dialog boxes (asserts 
+// fail silently and the program aborts)
 bool oReportingAreDialogBoxesEnabled();
 void oReportingEnableErrorDialogBoxes(bool _bValue);
 
@@ -104,7 +102,5 @@ oReportingVPrint oReportingPopReporter();
 // A reporting filter prevents assertions matching the ID from being reported.
 void oReportingAddFilter(size_t _AssertionID);
 void oReportingRemoveFilter(size_t _AssertionID);
-
-void PrintCallStackToString(char* _StrDestination, size_t _SizeofStrDestination, bool _FilterStdBind);
 
 #endif

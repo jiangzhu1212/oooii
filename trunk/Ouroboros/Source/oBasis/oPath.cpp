@@ -24,8 +24,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oPath.h>
-#include <oBasis/oAssert.h>
-#include <oBasis/oMacros.h>
+#include <oStd/assert.h>
+#include <oStd/macros.h>
 #include <oBasis/oString.h>
 #include <cstring>
 #include <cctype>
@@ -176,14 +176,14 @@ char* oEnsureSeparator(char* _Path, size_t _SizeofPath, char _FileSeparator)
 
 char* oCleanPath(char* _CleanedPath, size_t _SizeofCleanedPath, const char* _SourcePath, char _FileSeparator, bool _ZeroBuffer)
 {
-	if (!_CleanedPath)
+	if (!_CleanedPath || !_SourcePath)
 		return nullptr;
 
 	char* w = _CleanedPath;
 	const char* r = _SourcePath;
 	// Completely relative paths should not cleanup the initial relativity,
 	// for instance ../../../foo should still be ../../../foo and
-	// ../foo/../bar should be ../foo/bar
+	// ../foo/../bar should be ../bar
 	bool SeenNonRelative = false; 
 
 	if (!r)
@@ -193,6 +193,14 @@ char* oCleanPath(char* _CleanedPath, size_t _SizeofCleanedPath, const char* _Sou
 	}
 
 	char* wend = _CleanedPath + _SizeofCleanedPath;
+
+	// Handle lead separators that won't have relative paths that require backup
+	while (oIsSeparator(*r) && w < (wend-1))
+	{
+		*w++ = _FileSeparator;
+		r++;
+		SeenNonRelative = true;
+	}
 
 	while (*r && w < (wend-1)) // leave one byte off wend so we can write the nul terminator
 	{
@@ -204,17 +212,16 @@ char* oCleanPath(char* _CleanedPath, size_t _SizeofCleanedPath, const char* _Sou
 				*w++ = _FileSeparator; // write the separator we found above
 		}
 
-		else if (*r == '.' && oIsSeparator(*(r+1)) && (*(r-1) != '.' || *(r-2) != '.')) // is dot, skip reading, it's a noop (ignore ... ellipse)
+		else if (*r == '.' && (oIsSeparator(*(r+1)) || *(r+1)==0) && (*(r-1) != '.' || *(r-2) != '.')) // is dot, skip reading, it's a noop (ignore ... ellipse)
 			r++;
 
-		else if (*r == '.' && *(r+1) == '.' && oIsSeparator(*(r+2)) && *(r-1) != '.') // is dot dot, so rewind the writing to overwrite last dir (ignore ... ellipse)
+		else if (*r == '.' && *(r+1) == '.' && (oIsSeparator(*(r+2)) || *(r+2)==0) && *(r-1) != '.') // is dot dot, so rewind the writing to overwrite last dir (ignore ... ellipse)
 		{
 			if (r > _SourcePath && SeenNonRelative)
 			{
 				r += 2; // move past reading
-				while (!oIsSeparator(*w) && w != _CleanedPath) w--; // find the end of the last dir
-				if( w != _CleanedPath ) w--;// move past it
-				while (!oIsSeparator(*w) && w != _CleanedPath) w--; // move to start of last dir
+				while (w != _CleanedPath && oIsSeparator(*(w-1))) w--; // find the end of the last dir
+				while (w != _CleanedPath && !oIsSeparator(*(w-1))) w--; // move to start of last dir
 			}
 
 			else // leave as a relative path, so copy it over
@@ -435,7 +442,7 @@ bool oMatchesWildcard(const char* _Wildcard, const char* _Path)
 	return JONATHAN_MILES_WildcardMatch(_Wildcard, _Path);
 }
 
-char* oFindInPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _SearchPaths, const char* _RelativePath, const char* _DotPath, oFUNCTION_PATH_EXISTS _PathExists)
+char* oFindInPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _SearchPaths, const char* _RelativePath, const char* _DotPath, const oFUNCTION<bool(const char* _Path)>& _PathExists)
 {
 	if (!_StrDestination || !_SearchPaths) return nullptr;
 	const char* cur = _SearchPaths;

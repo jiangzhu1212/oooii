@@ -24,7 +24,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oDispatchQueueGlobal.h>
-#include <oBasis/oTask.h>
 #include <oBasis/oDispatchQueueGlobalT.h>
 
 struct oDispatchQueueGlobal_Impl
@@ -44,9 +43,9 @@ struct oDispatchQueueGlobal_Impl
 		else return false;
 	}
 
-	void Issue(oTASK&& _task) threadsafe
+	void Issue(const oTASK& _Task) threadsafe
 	{
-		DEPRECATED_oTaskIssueAsync(std::move(_task));
+		oConcurrency::dispatch(_Task);
 	}
 private:
 	oRefCount RefCount;

@@ -27,7 +27,7 @@
 #ifndef oOPENSSL_h
 #define oOPENSSL_h
 
-#include "oWinSoftLinkCommon.h"
+#include <oPlatform/oModuleUtil.h>
 #include <openssl/ssl.h>
 
 oDECLARE_DLL_SINGLETON_BEGIN(oOpenSSL)

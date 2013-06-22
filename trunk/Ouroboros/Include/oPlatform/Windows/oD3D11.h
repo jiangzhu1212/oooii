@@ -33,7 +33,6 @@
 #include <oBasis/oRef.h>
 #include <oBasis/oGPUConcepts.h>
 #include <oPlatform/oModule.h>
-#include <oPlatform/oHLSLShaders.h> 
 #include <oPlatform/oImage.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/Windows/oWindows.h>
@@ -68,12 +67,12 @@ bool oD3D11SetDebugName(ID3D11DeviceChild* _pDeviceChild, const char* _Name);
 
 char* oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11Device* _pDevice);
 template<size_t size> char* oD3D11GetDebugName(char (&_StrDestination)[size], const ID3D11Device* _pDevice) { return oD3D11GetDebugName(_StrDestination, size, _pDevice); }
-template<size_t capacity> char* oD3D11GetDebugName(oFixedString<char, capacity>& _StrDestination, const ID3D11Device* _pDevice) { return oD3D11GetDebugName(_StrDestination, _StrDestination.capacity(), _pDevice); }
+template<size_t capacity> char* oD3D11GetDebugName(oStd::fixed_string<char, capacity>& _StrDestination, const ID3D11Device* _pDevice) { return oD3D11GetDebugName(_StrDestination, _StrDestination.capacity(), _pDevice); }
 
 // Fills the specified buffer with the string set with oD3D11SetDebugName().
 char* oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11DeviceChild* _pDeviceChild);
 template<size_t size> char* oD3D11GetDebugName(char (&_StrDestination)[size], const ID3D11DeviceChild* _pDeviceChild) { return oD3D11GetDebugName(_StrDestination, size, _pDeviceChild); }
-template<size_t capacity> char* oD3D11GetDebugName(oFixedString<char, capacity>& _StrDestination, const ID3D11DeviceChild* _pDeviceChild) { return oD3D11GetDebugName(_StrDestination, _StrDestination.capacity(), _pDeviceChild); }
+template<size_t capacity> char* oD3D11GetDebugName(oStd::fixed_string<char, capacity>& _StrDestination, const ID3D11DeviceChild* _pDeviceChild) { return oD3D11GetDebugName(_StrDestination, _StrDestination.capacity(), _pDeviceChild); }
 
 // The error message returned from D3DX11CompileFromMemory is not fit for
 // passing to printf directly, so pass it to this to create a cleaner string.
@@ -81,7 +80,7 @@ template<size_t capacity> char* oD3D11GetDebugName(oFixedString<char, capacity>&
 // error filling the specified string buffer.
 bool oD3D11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _SizeofOutErrorMessageString, ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths);
 template<size_t size> bool oD3D11ConvertCompileErrorBuffer(char (&_OutErrorMessageString)[size], ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths) { return oD3D11ConvertCompileErrorBuffer(_OutErrorMessageString, size, _pErrorMessages, _pIncludePaths, _NumIncludePaths); }
-template<size_t capacity> bool oD3D11ConvertCompileErrorBuffer(oFixedString<char, capacity>& _OutErrorMessageString, ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths) { return oD3D11ConvertCompileErrorBuffer(_OutErrorMessageString, _OutErrorMessageString.capacity(), _pErrorMessages, _pIncludePaths, _NumIncludePaths); }
+template<size_t capacity> bool oD3D11ConvertCompileErrorBuffer(oStd::fixed_string<char, capacity>& _OutErrorMessageString, ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths) { return oD3D11ConvertCompileErrorBuffer(_OutErrorMessageString, _OutErrorMessageString.capacity(), _pErrorMessages, _pIncludePaths, _NumIncludePaths); }
 
 // Use ID3D11InfoQueue::AddApplicationMessage to trace user errors.
 int oD3D11VTrace(ID3D11InfoQueue* _pInfoQueue, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args);
@@ -114,16 +113,6 @@ bool oD3D11DeviceGetDesc(ID3D11Device* _pDevice, bool _IsSoftwareEmulation, oGPU
 // Get the adapter with which the specified device was created
 bool oD3D11GetAdapter(ID3D11Device* _pDevice, IDXGIAdapter** _ppAdapter);
 
-// Convert oGPU_VERTEX_ELEMENT's Semantic fourcc code to an HLSL semantic 
-// name.
-const char* oD3D11AsSemantic(const oFourCC& _FourCC);
-
-const char* oAsString(D3D11_BIND_FLAG _Flag);
-const char* oAsString(D3D11_CPU_ACCESS_FLAG _Flag);
-const char* oAsString(D3D11_RESOURCE_DIMENSION _Type);
-const char* oAsString(D3D11_RESOURCE_MISC_FLAG _Flag);
-const char* oAsString(D3D11_USAGE _Usage);
-
 // Converts the specified D3D_FEATURE_LEVEL into an oVersion.
 oVersion oD3D11GetFeatureVersion(D3D_FEATURE_LEVEL _Level);
 
@@ -139,6 +128,9 @@ bool oD3D11SetContainerBackPointer(ID3D11DeviceChild* _pChild, oInterface* _pCon
 // count is INDEED modified because once the pointer is retrieved by client code
 // it should not be allowed to be destroyed elsewhere.
 bool oD3D11GetContainerBackPointer(const ID3D11DeviceChild* _pChild, oInterface** _ppContainer);
+
+// Returns the D3D11 equivalent.
+D3D11_PRIMITIVE_TOPOLOGY oD3D11ToPrimitiveTopology(oGPU_PRIMITIVE_TYPE _Type);
 
 // Returns the number of elements as described the specified topology given
 // the number of primitives. An element can refer to indices or vertices, but
@@ -228,10 +220,9 @@ void oD3D11DebugTraceTexture2DDesc(D3D11_TEXTURE2D_DESC _Desc, const char* _Pref
 
 // Fills the specified oGPU_TEXTURE_DESC with the description from the 
 // specified resource. The resource can be: ID3D11Texture1D, ID3D11Texture2D
-// ID3D11Texture3D, or ID3D11Buffer. If an ID3D11Buffer, the entire byte width 
-// of the buffer is in Dimensions.x, Dimensions.y is 1, and NumSlices is the 
-// number of elements stored in the buffer, so the stride of a single item is 
-// uint Stride = Dimensions.x / NumSlices;
+// ID3D11Texture3D, or ID3D11Buffer. If an ID3D11Buffer, the size of a single
+// struct is in Dimensions.x, and the number of structures is in Dimensions.y.
+// The y value will be replicated in ArraySize as well.
 void oD3D11GetTextureDesc(ID3D11Resource* _pResource, oGPU_TEXTURE_DESC* _pDesc, D3D11_USAGE* _pUsage = nullptr);
 
 // From the specified texture, create the correct shader resource view
@@ -277,7 +268,7 @@ bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, con
 bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path);
 
 // Creates a new texture by parsing _pBuffer as a D3DX11-supported file format
-// Specify oSURFACE_UNKNOWN and oDEFAULT for x, y or NumSlices in the _Desc to 
+// Specify oSURFACE_UNKNOWN and oDEFAULT for x, y or ArraySize in the _Desc to 
 // use values from the specified file. If mips is specified as HAS_MIPs, then 
 // mips will be allocated, but not filled in. If AUTO_MIPS is specified, then 
 // mips will be generated.
@@ -404,6 +395,9 @@ struct oD3D11ScopedMessageDisabler
 protected:
 	ID3D11InfoQueue* pInfoQueue;
 };
+
+// Given a buffer of compiled byte code, return its size.
+size_t oD3D11GetHLSLByteCodeSize(const void* _pByteCode);
 
 // Create a set of command line options that you would pass to FXC and the 
 // loaded source to compile to create a buffer filled with bytecode. If false,

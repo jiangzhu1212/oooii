@@ -30,7 +30,7 @@
 void oBasisTestStructInit(oBASIS_TEST_STRUCT* _pTest, const void* _pBuffer1, int _SizeofBuffer1, const void* _pBuffer2, int _SizeofBuffer2)
 {
 	_pTest->c1 = 'c';
-	oStrcpy(_pTest->OOOiiString, "OOOiiString");
+	strlcpy(_pTest->OOOiiString, "OOOiiString");
 	_pTest->int1 = 1;
 	_pTest->long1 = 11111111;
 	_pTest->floatArray[0] = 1.00f;
@@ -42,7 +42,7 @@ void oBasisTestStructInit(oBASIS_TEST_STRUCT* _pTest, const void* _pBuffer1, int
 	_pTest->blC = false;
 	_pTest->blD = true;
 	_pTest->p1 = "p1 a string larger than a pointer size (len=48)";
-	oStrcpy(_pTest->TestString, "TestString");
+	strlcpy(_pTest->TestString, "TestString");
 	_pTest->float1 = 1.111f;
 	// Expected padding
 	_pTest->p2 = "p2";
@@ -59,16 +59,16 @@ void oBasisTestStructInit(oBASIS_TEST_STRUCT* _pTest, const void* _pBuffer1, int
 	_pTest->double1 = 7.77777;
 	_pTest->float2 = 2.222f;
 	_pTest->b2size = _SizeofBuffer2;
-	oStrcpy(_pTest->FinalTestString, "FinalTestString");
+	strlcpy(_pTest->FinalTestString, "FinalTestString");
 	_pTest->b2 = _pBuffer2;
 	time_t t = time(nullptr);
-	oVERIFY(oDateConvert(t, &_pTest->time));
+	_pTest->time = oStd::date_cast<oStd::ntp_timestamp>(t);
 }
 
 bool operator==(const oBASIS_TEST_STRUCT& x, const oBASIS_TEST_STRUCT& y)
 {
 	return x.c1 == y.c1
-		&& !oStrcmp(x.OOOiiString, y.OOOiiString)
+		&& !strcmp(x.OOOiiString, y.OOOiiString)
 		&& x.int1 == y.int1
 		&& x.long1 == y.long1
 		&& x.floatArray[0] == y.floatArray[0]
@@ -79,10 +79,10 @@ bool operator==(const oBASIS_TEST_STRUCT& x, const oBASIS_TEST_STRUCT& y)
 		&& x.blB == y.blB
 		&& x.blC == y.blC
 		&& x.blD == y.blD
-		&& !oStrcmp(x.p1, y.p1)
-		&& !oStrcmp(x.TestString, y.TestString)
+		&& !strcmp(x.p1, y.p1)
+		&& !strcmp(x.TestString, y.TestString)
 		&& x.float1 == y.float1
-		&& !oStrcmp(x.p2, y.p2)
+		&& !strcmp(x.p2, y.p2)
 		&& x.int3 == y.int3
 		&& x.c2 == y.c2
 		&& x.b1size == y.b1size
@@ -96,7 +96,7 @@ bool operator==(const oBASIS_TEST_STRUCT& x, const oBASIS_TEST_STRUCT& y)
 		&& x.double1 == y.double1
 		&& x.float2 == y.float2
 		&& x.b2size == y.b2size
-		&& !oStrcmp(x.FinalTestString, y.FinalTestString)
+		&& !strcmp(x.FinalTestString, y.FinalTestString)
 		&& !memcmp(x.b2, y.b2, x.b2size)
 		&& x.time == y.time
 		;

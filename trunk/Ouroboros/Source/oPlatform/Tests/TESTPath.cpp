@@ -23,7 +23,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
 #include <oPlatform/oSystem.h>
 #include <oPlatform/oTest.h>
 
@@ -55,7 +55,7 @@ struct PLATFORM_oSystemPaths : public oTest
 		oTRACE("DESKTOP: %s", path);
 		oTESTB(oSystemGetPath(path, oSYSPATH_DESKTOP_ALLUSERS), "Failed to get DESKTOP_ALLUSERS");
 		oTRACE("DESKTOP_ALLUSERS: %s", path);
-		oTESTB(oSystemGetPath(path, oSYSPATH_P4ROOT), "%s: %s", oAsString(oErrorGetLast()), oErrorGetLastString());
+		oTESTB(oSystemGetPath(path, oSYSPATH_P4ROOT), "%s: %s", oErrorAsString(oErrorGetLast()), oErrorGetLastString());
 		oTRACE("P4ROOT: %s", path);
 		return SUCCESS;
 	}

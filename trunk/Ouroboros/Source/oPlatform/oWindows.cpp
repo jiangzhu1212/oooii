@@ -24,12 +24,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oWindows.h>
-#include <oBasis/oAssert.h>
-#include <oBasis/oByte.h>
-#include <oBasis/oColor.h>
+#include <oStd/assert.h>
+#include <oStd/byte.h>
+#include <oStd/color.h>
 #include <oBasis/oError.h>
-#include <oBasis/oFixedString.h>
-#include <oBasis/oMutex.h>
+#include <oStd/fixed_string.h>
+#include <oConcurrency/mutex.h>
 #include <oBasis/oPath.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oString.h>
@@ -51,7 +51,6 @@
 #include <io.h>
 #include <time.h>
 #include <tlhelp32.h>
-#include <shellapi.h>
 #include <Windowsx.h>
 #include <comdef.h>
 #include <Wbemidl.h>
@@ -60,6 +59,20 @@
 #pragma comment(linker, "\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 // _____________________________________________________________________________
+
+std::errc::errc oWinGetErrc(HRESULT _hResult)
+{
+	switch (_hResult)
+	{
+		case ERROR_FILE_EXISTS: return std::errc::operation_in_progress;
+		case ERROR_FILE_NOT_FOUND: case ERROR_PATH_NOT_FOUND: return std::errc::no_such_file_or_directory;
+		case ERROR_INVALID_NAME: return std::errc::invalid_argument;
+		case ERROR_ACCESS_DENIED: case ERROR_SHARING_VIOLATION: return std::errc::permission_denied;
+		case E_OUTOFMEMORY: return std::errc::no_buffer_space;
+		default: break;
+	}
+	return std::errc::protocol_error;
+}
 
 bool oWinSetLastError(HRESULT _hResult, const char* _ErrorDescPrefix)
 {
@@ -91,22 +104,8 @@ bool oWinSetLastError(HRESULT _hResult, const char* _ErrorDescPrefix)
 
 	oStrcat(p, count, ")");
 
-	switch (_hResult)
-	{
-		case ERROR_FILE_EXISTS:
-			return oErrorSetLast(oERROR_REDUNDANT, err);
-		case ERROR_FILE_NOT_FOUND:
-		case ERROR_PATH_NOT_FOUND:
-			return oErrorSetLast(oERROR_NOT_FOUND, err);
-		case ERROR_INVALID_NAME:
-			return oErrorSetLast(oERROR_INVALID_PARAMETER, err);
-		case ERROR_ACCESS_DENIED:
-		case ERROR_SHARING_VIOLATION:
-			return oErrorSetLast(oERROR_REFUSED, err);
-		case E_OUTOFMEMORY:
-			return oErrorSetLast(oERROR_AT_CAPACITY, err);
-	}
-	return oErrorSetLast(oERROR_PLATFORM, err);
+	std::errc::errc std_err = oWinGetErrc(_hResult);
+	return oErrorSetLast(std_err, err);
 }
 
 // Link to MessageBoxTimeout based on code from:
@@ -188,7 +187,7 @@ struct SCHEDULED_FUNCTION_CONTEXT
 	HANDLE hTimer;
 	oTASK OnTimer;
 	time_t ScheduledTime;
-	oStringS DebugName;
+	oStd::sstring DebugName;
 };
 
 static void CALLBACK ExecuteScheduledFunctionAndCleanup(LPVOID lpArgToCompletionRoutine, DWORD dwTimerLowValue, DWORD dwTimerHighValue)
@@ -197,8 +196,9 @@ static void CALLBACK ExecuteScheduledFunctionAndCleanup(LPVOID lpArgToCompletion
 	if (Context.OnTimer)
 	{
 		#ifdef _DEBUG
-			oStringS diff;
-			oTRACE("Running scheduled function \"%s\" %s after it was scheduled", oSAFESTRN(Context.DebugName), oFormatTimeSize(diff, (double)(time(nullptr) - Context.ScheduledTime)));
+			oStd::sstring diff;
+			oStd::format_duration(diff, (double)(time(nullptr) - Context.ScheduledTime));
+			oTRACE("Running scheduled function \"%s\" %s after it was scheduled", oSAFESTRN(Context.DebugName), diff.c_str());
 		#endif
 
 		Context.OnTimer();
@@ -217,21 +217,19 @@ bool oScheduleTask(const char* _DebugName, time_t _AbsoluteTime, bool _Alertable
 	Context.ScheduledTime = _AbsoluteTime;
 
 	if (_DebugName && *_DebugName)
-		oStrcpy(Context.DebugName, oSAFESTR(_DebugName));
+		oStrcpy(Context.DebugName, _DebugName);
 	
 	#ifdef _DEBUG
-		oDATE then;
-		oStringS StrTime, StrDiff;
-		bool converted = oDateConvert(_AbsoluteTime, &then);
-		if (converted)
-			oDateStrftime(StrTime, oDATE_TEXT_SORTABLE_FORMAT, then);
-		else
-			StrTime = "(out-of-time_t-range)";
-		oTRACE("Setting timer to run function \"%s\" at %s (%s from now)", oSAFESTRN(Context.DebugName), StrTime.c_str(), oFormatTimeSize(StrDiff, (double)(time(nullptr) - Context.ScheduledTime)));
+		oStd::date then;
+		oStd::sstring StrTime, StrDiff;
+		try { then = oStd::date_cast<oStd::date>(_AbsoluteTime); }
+		catch (std::exception&) { StrTime = "(out-of-time_t-range)"; }
+		oStd::strftime(StrTime, oStd::sortable_date_format, then);
+		oStd::format_duration(StrDiff, (double)(time(nullptr) - Context.ScheduledTime));
+		oTRACE("Setting timer to run function \"%s\" at %s (%s from now)", oSAFESTRN(Context.DebugName), StrTime.c_str(), StrDiff.c_str());
 	#endif
 
-	FILETIME ft;
-	oVERIFY(oDateConvert(_AbsoluteTime, &ft));
+	FILETIME ft = oStd::date_cast<FILETIME>(_AbsoluteTime);
 	LARGE_INTEGER liDueTime;
 	liDueTime.LowPart = ft.dwLowDateTime;
 	liDueTime.HighPart = ft.dwHighDateTime;
@@ -247,8 +245,8 @@ bool oScheduleTask(const char* _DebugName, time_t _AbsoluteTime, bool _Alertable
 oRECT oToRect(const RECT& _Rect)
 {
 	oRECT rect;
-	rect.SetMin( int2( _Rect.left, _Rect.top ) );
-	rect.SetMax( int2( _Rect.right, _Rect.bottom ) );
+	rect.Min = int2(_Rect.left, _Rect.top);
+	rect.Max = int2(_Rect.right, _Rect.bottom);
 	return rect;
 }
 
@@ -334,7 +332,7 @@ struct oWindowsHookContext : public oProcessSingleton<oWindowsHookContext>
 
 	HOOK_CONTEXT* Allocate()
 	{
-		for (size_t i = 0; i < oCOUNTOF(HookContexts); i++)
+		oFORI(i, HookContexts)
 		{
 			HHOOK hh = HookContexts[i].hHook;
 			// Do a quick mark of the slot so no other thread grabs it
@@ -347,7 +345,7 @@ struct oWindowsHookContext : public oProcessSingleton<oWindowsHookContext>
 
 	void Deallocate(HHOOK _hHook)
 	{
-		for (size_t i = 0; i < oCOUNTOF(HookContexts); i++)
+		oFORI(i, HookContexts)
 		{
 			HHOOK hh = HookContexts[i].hHook;
 			if (_hHook == hh && oStd::atomic_compare_exchange<HHOOK>(&HookContexts[i].hHook, 0, hh))
@@ -475,18 +473,14 @@ void oVerifyMinimumWindowsVersion( oWINDOWS_VERSION _Version )
 {
 	if( oGetWindowsVersion() < _Version )
 	{
-		oMSGBOX_DESC d;
-		d.Type = oMSGBOX_ERR;
-		d.TimeoutMS = oInfiniteWait;
-		d.ParentNativeHandle = nullptr;
-		d.Title = "Invalid Windows Version";
-		oMsgBox(d, "%s or greater required.  Application will now terminate.", oAsString(_Version));
+		oMsgBox(oMSGBOX_DESC(oMSGBOX_ERR, "Invalid Windows Version"), "%s or greater required.  Application will now terminate.", oStd::as_string(_Version));
 		std::terminate();
 	}
 }
 
+namespace oStd {
 
-const char* oAsString(oWINDOWS_VERSION _Version)
+const char* as_string(const oWINDOWS_VERSION& _Version)
 {
 	switch (_Version)
 	{
@@ -502,18 +496,19 @@ const char* oAsString(oWINDOWS_VERSION _Version)
 		case oWINDOWS_7: return "Windows 7";
 		case oWINDOWS_7_SP1: return "Windows 7 SP1";
 		case oWINDOWS_UNKNOWN:
-		default:
-			break;
+		default: break;
 	}
 
 	return "unknown Windows version";
 }
 
+} // namespace oStd
+
 bool oConvertEnvStringToEnvBlock(char* _EnvBlock, size_t _SizeofEnvBlock, const char* _EnvString, char _Delimiter)
 {
 	if (!_EnvString || ((oStrlen(_EnvString)+1) > _SizeofEnvBlock))
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "EnvBlock buffer not large enough to contain converted EnvString");
+		oErrorSetLast(std::errc::invalid_argument, "EnvBlock buffer not large enough to contain converted EnvString");
 		return false;
 	}
 
@@ -590,7 +585,7 @@ static bool oSetWindowsPrivileges(const char* _privilege)
 	//	last error to ERROR_NOT_ALL_ASSIGNED.
 	if(::GetLastError() != ERROR_SUCCESS) 
 	{
-		oErrorSetLast(oERROR_GENERIC, "Probably did not have permissions to set the requested privilege on this machine: %s", _privilege);
+		oErrorSetLast(std::errc::permission_denied, "Probably did not have permissions to set the requested privilege on this machine: %s", _privilege);
 		result = false;
 	}
 	
@@ -764,18 +759,18 @@ struct oLoadLibrarySingleton : oProcessSingleton<oLoadLibrarySingleton>
 public:
 	HMODULE ThreadsafeLoadLibrary(LPCTSTR _lpFileName)
 	{
-		oLockGuard<oRecursiveMutex> Lock(Mutex);
+		oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
 		return LoadLibrary(_lpFileName);
 	}
 	BOOL ThreadsafeFreeLibrary(HMODULE _hModule)
 	{
-		oLockGuard<oRecursiveMutex> Lock(Mutex);
+		oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
 		return FreeLibrary(_hModule);
 	}
 	static const oGUID GUID;
 
 private:
-	oRecursiveMutex Mutex;
+	oConcurrency::recursive_mutex Mutex;
 };
 
 void oLoadLibrarySingletonCreate()
@@ -816,17 +811,17 @@ BOOL oThreadsafeFreeLibrary(HMODULE _hModule)
 
 // {EE17C49C-A27A-45F0-B2C8-D049E0ECD3C6}
 const oGUID guid = { 0xee17c49c, 0xa27a, 0x45f0, { 0xb2, 0xc8, 0xd0, 0x49, 0xe0, 0xec, 0xd3, 0xc6 } };
-oDEFINE_STATIC_MUTEX(oRecursiveMutex, sOutputDebugStringMutex, guid);
+oDEFINE_STATIC_MUTEX(oConcurrency::recursive_mutex, sOutputDebugStringMutex, guid);
 
 void oThreadsafeOutputDebugStringA(const char* _OutputString)
 {
-	oLockGuard<oStaticMutex<oRecursiveMutex, sOutputDebugStringMutex_t> > Lock(sOutputDebugStringMutex);
+	oConcurrency::lock_guard<oStaticMutex<oConcurrency::recursive_mutex, sOutputDebugStringMutex_t> > Lock(sOutputDebugStringMutex);
 	OutputDebugStringA(_OutputString);
 }
 
 bool oWaitSingle(HANDLE _Handle, unsigned int _TimeoutMS)
 {
-	return WAIT_OBJECT_0 == ::WaitForSingleObject(_Handle, _TimeoutMS == oInvalid ? INFINITE : _TimeoutMS);
+	return WAIT_OBJECT_0 == ::WaitForSingleObject(_Handle, _TimeoutMS == oInfiniteWait ? INFINITE : _TimeoutMS);
 }
 
 bool oWaitMultiple(HANDLE* _pHandles, size_t _NumberOfHandles, size_t* _pWaitBreakingIndex, unsigned int _TimeoutMS)
@@ -842,7 +837,7 @@ bool oWaitMultiple(HANDLE* _pHandles, size_t _NumberOfHandles, size_t* _pWaitBre
 
 	else if (result == WAIT_TIMEOUT)
 	{
-		oErrorSetLast(oERROR_TIMEOUT);
+		oErrorSetLast(std::errc::timed_out);
 		return false;
 	}
 
@@ -869,7 +864,7 @@ bool oWaitMultiple(DWORD* _pThreadIDs, size_t _NumberOfThreadIDs, size_t* _pWait
 {
 	if (!_pThreadIDs || !_NumberOfThreadIDs || _NumberOfThreadIDs >= 64)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
+		oErrorSetLast(std::errc::invalid_argument);
 		return false;
 	}
 
@@ -916,7 +911,7 @@ bool oWinGetWorkgroupName(char* _StrDestination, size_t _SizeofStrDestination)
 	LPTSTR pszServerName = nullptr;
 
 	nStatus = oWinNetApi32::Singleton()->NetWkstaGetInfo(nullptr, 102, (LPBYTE *)&pInfo);
-	oOnScopeExit OSCFreeBuffer([&] { if (pInfo) oWinNetApi32::Singleton()->NetApiBufferFree(pInfo); });
+	oStd::finally OSCFreeBuffer([&] { if (pInfo) oWinNetApi32::Singleton()->NetApiBufferFree(pInfo); });
 	if (nStatus == NERR_Success)
 	{
 		WideCharToMultiByte(CP_ACP, 0, pInfo->wki102_langroup, -1, _StrDestination, oInt(_SizeofStrDestination), 0, 0);
@@ -986,12 +981,12 @@ bool oWinGetProcessID(const char* _Name, DWORD* _pOutProcessID)
 
 	if (sizeof(ProcessIDs) == cbNeeded)
 	{
-		oErrorSetLast(oERROR_AT_CAPACITY, "There are more than %u processes on the system currently, oWinGetProcessID needs to be more general-purpose.", oCOUNTOF(ProcessIDs));
+		oErrorSetLast(std::errc::no_buffer_space, "There are more than %u processes on the system currently, oWinGetProcessID needs to be more general-purpose.", oCOUNTOF(ProcessIDs));
 		truncationResult = false;
 	}
 
 	else
-		oErrorSetLast(oERROR_NOT_FOUND, "no such process");
+		oErrorSetLast(std::errc::no_such_process);
 
 	return false;
 }
@@ -1001,7 +996,7 @@ bool oEnumProcessThreads(DWORD _ProcessID, oFUNCTION<bool(DWORD _ThreadID, DWORD
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GetCurrentProcessId());
 	if (hSnapshot == INVALID_HANDLE_VALUE)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "Failed to get a snapshot of current process");
+		oErrorSetLast(std::errc::invalid_argument, "Failed to get a snapshot of current process");
 		return false;
 	}
 
@@ -1012,7 +1007,7 @@ bool oEnumProcessThreads(DWORD _ProcessID, oFUNCTION<bool(DWORD _ThreadID, DWORD
 
 	if (!keepLooking)
 	{
-		oErrorSetLast(oERROR_NOT_FOUND, "No process threads found");
+		oErrorSetLast(std::errc::no_such_process, "no process threads found");
 		return false;
 	}
 
@@ -1032,16 +1027,13 @@ bool oWinEnumProcesses(oFUNCTION<bool(DWORD _ProcessID, DWORD _ParentProcessID, 
 {
 	if (!_Function)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
+		oErrorSetLast(std::errc::invalid_argument);
 		return false;
 	}
 
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	if (hSnapshot == INVALID_HANDLE_VALUE)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "Failed to get a snapshot of current process");
-		return false;
-	}
+		return oErrorSetLast(std::errc::invalid_argument, "Failed to get a snapshot of current process");
 
 	DWORD ppid = 0;
 
@@ -1050,10 +1042,7 @@ bool oWinEnumProcesses(oFUNCTION<bool(DWORD _ProcessID, DWORD _ParentProcessID, 
 	BOOL keepLooking = Process32First(hSnapshot, &entry);
 
 	if (!keepLooking)
-	{
-		oErrorSetLast(oERROR_NOT_FOUND, "no child processes");
-		return false;
-	}
+		return oErrorSetLast(std::errc::no_child_process);
 
 	while (keepLooking)
 	{
@@ -1067,9 +1056,9 @@ bool oWinEnumProcesses(oFUNCTION<bool(DWORD _ProcessID, DWORD _ParentProcessID, 
 	return true;
 }
 
-bool CALLBACK oWinEnumWindowsProc(HWND _hWnd, LPARAM _lParam)
+BOOL CALLBACK oWinEnumWindowsProc(HWND _hWnd, LPARAM _lParam)
 {
-	return true == (*(oFUNCTION<bool(HWND _Hwnd)>*)_lParam)(_hWnd);
+	return (*(oFUNCTION<bool(HWND _Hwnd)>*)_lParam)(_hWnd) ? TRUE : FALSE;
 }
 
 bool oWinEnumWindows( oFUNCTION<bool(HWND _Hwnd)> _Function )
@@ -1146,7 +1135,7 @@ static WORD oDlgGetClass(oWINDOWS_DIALOG_ITEM_TYPE _Type)
 
 static size_t oDlgCalcTextSize(const char* _Text)
 {
-	return sizeof(WCHAR) * (oStrlen(oSAFESTR(_Text)) + 1);
+	return sizeof(WCHAR) * (oStrlen(_Text) + 1);
 }
 
 static size_t oDlgCalcTemplateSize(const char* _MenuName, const char* _ClassName, const char* _Caption, const char* _FontName)
@@ -1156,12 +1145,12 @@ static size_t oDlgCalcTemplateSize(const char* _MenuName, const char* _ClassName
 	size += oDlgCalcTextSize(_ClassName);
 	size += oDlgCalcTextSize(_Caption);
 	size += oDlgCalcTextSize(_FontName);
-	return oByteAlign(size, sizeof(DWORD)); // align to DWORD because dialog items need DWORD alignment, so make up for any padding here
+	return oStd::byte_align(size, sizeof(DWORD)); // align to DWORD because dialog items need DWORD alignment, so make up for any padding here
 }
 
 static size_t oDlgCalcTemplateItemSize(const char* _Text)
 {
-	return oByteAlign(sizeof(DLGITEMTEMPLATE) +
+	return oStd::byte_align(sizeof(DLGITEMTEMPLATE) +
 		2 * sizeof(WORD) + // will keep it simple 0xFFFF and the ControlClass
 		oDlgCalcTextSize(_Text) + // text
 		sizeof(WORD), // 0x0000. This is used for data to be passed to WM_CREATE, bypass this for now
@@ -1173,7 +1162,7 @@ static WORD* oDlgCopyString(WORD* _pDestination, const char* _String)
 	if (!_String) _String = "";
 	size_t len = oStrlen(_String);
 	oStrcpy((WCHAR*)_pDestination, len+1, _String);
-	return oByteAdd(_pDestination, (len+1) * sizeof(WCHAR));
+	return oStd::byte_add(_pDestination, (len+1) * sizeof(WCHAR));
 }
 
 // Returns a DWORD-aligned pointer to where to write the first item
@@ -1208,7 +1197,7 @@ static LPDLGITEMTEMPLATE oDlgInitialize(const oWINDOWS_DIALOG_DESC& _Desc, LPDLG
 		p = oDlgCopyString(p, _Desc.Font);
 	}
 
-	return (LPDLGITEMTEMPLATE)oByteAlign(p, sizeof(DWORD));
+	return (LPDLGITEMTEMPLATE)oStd::byte_align(p, sizeof(DWORD));
 }
 #pragma warning(disable:4505)
 // Returns a DWORD-aligned pointer to the next place to write a DLGITEMTEMPLATE
@@ -1236,12 +1225,12 @@ static LPDLGITEMTEMPLATE oDlgItemInitialize(const oWINDOWS_DIALOG_ITEM& _Desc, L
 	_lpDlgItemTemplate->cx = short(oWinRectW(_Desc.Rect));
 	_lpDlgItemTemplate->cy = short(oWinRectH(_Desc.Rect));
 	_lpDlgItemTemplate->id = _Desc.ItemID;
-	WORD* p = oByteAdd((WORD*)_lpDlgItemTemplate, sizeof(DLGITEMTEMPLATE));
+	WORD* p = oStd::byte_add((WORD*)_lpDlgItemTemplate, sizeof(DLGITEMTEMPLATE));
 	*p++ = 0xFFFF; // flag that a simple ControlClass is to follow
 	*p++ = oDlgGetClass(_Desc.Type);
 	p = oDlgCopyString(p, _Desc.Text);
 	*p++ = 0x0000; // no WM_CREATE data
-	return (LPDLGITEMTEMPLATE)oByteAlign(p, sizeof(DWORD));
+	return (LPDLGITEMTEMPLATE)oStd::byte_align(p, sizeof(DWORD));
 }
 
 void oDlgDeleteTemplate(LPDLGTEMPLATE _lpDlgTemplate)
@@ -1272,11 +1261,11 @@ static std::regex reNVVersionString("[0-9]+\\.[0-9]+\\.[0-9]+([0-9])\\.([0-9][0-
 static bool ParseVersionStringNV(const char* _VersionString, oVersion* _pVersion)
 {
 	if (!_VersionString || !_pVersion)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	std::cmatch matches;
 	if (!regex_match(_VersionString, matches, reNVVersionString))
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified string \"%s\" is not a well-formed NVIDIA version string", oSAFESTRN(_VersionString));
+		return oErrorSetLast(std::errc::invalid_argument, "The specified string \"%s\" is not a well-formed NVIDIA version string", oSAFESTRN(_VersionString));
 
 	char major[4];
 	major[0] = *matches[1].first;
@@ -1295,11 +1284,11 @@ static std::regex reAMDVersionString("([0-9]+)\\.([0-9]+)\\.[0-9]+\\.[0-9]+");
 static bool ParseVersionStringAMD(const char* _VersionString, oVersion* _pVersion)
 {
 	if (!_VersionString || !_pVersion)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	std::cmatch matches;
 	if (!regex_match(_VersionString, matches, reAMDVersionString))
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified string \"%s\" is not a well-formed AMD version string", oSAFESTRN(_VersionString));
+		return oErrorSetLast(std::errc::invalid_argument, "The specified string \"%s\" is not a well-formed AMD version string", oSAFESTRN(_VersionString));
 
 	*_pVersion = oVersion(oUShort(atoi(matches[1].first)), oUShort(atoi(matches[2].first)));
 	return true;
@@ -1323,7 +1312,7 @@ bool oWinEnumVideoDriverDesc(oFUNCTION<void(const oDISPLAY_ADAPTER_DRIVER_DESC& 
 	static const oGUID oGUID_IID_WbemLocator = { 0xdc12a687, 0x737f, 0x11cf, { 0x88, 0x4D, 0x00, 0xAA, 0x00, 0x4B, 0x2E, 0x24 } };
 
 	CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-	oOnScopeExit OnScopeExit([&] { CoUninitialize(); });
+	oStd::finally OnScopeExit([&] { CoUninitialize(); });
 
 	oRef<IWbemLocator> WbemLocator;
 	oV(CoCreateInstance((const GUID&)oGUID_CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, (const IID&)oGUID_IID_WbemLocator, (LPVOID *) &WbemLocator));
@@ -1356,7 +1345,7 @@ bool oWinEnumVideoDriverDesc(oFUNCTION<void(const oDISPLAY_ADAPTER_DRIVER_DESC& 
 		VariantClear(&vtProp);
 		oV(WbemClassObject->Get(L"DriverVersion", 0, &vtProp, 0, 0));
 
-		oStringS version = vtProp.bstrVal;
+		oStd::sstring version = vtProp.bstrVal;
 		if (strstr(desc.Description, "NVIDIA"))
 		{
 			desc.Vendor = oGPU_VENDOR_NVIDIA;
@@ -1430,7 +1419,7 @@ bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestinatio
 {
 	if (!_StrDestination || !_SizeofStrDestination || !_hSCManager || !_ServiceName || !*_ServiceName)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
+		oErrorSetLast(std::errc::invalid_argument);
 		return false;
 	}
 
@@ -1455,7 +1444,7 @@ bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestinatio
 		// http://www.codeproject.com/KB/system/SigmaDriverList.aspx
 
 		// There's some env vars to resolve, so prepare for that
-		oStringPath SystemRootPath;
+		oStd::path_string SystemRootPath;
 		GetEnvironmentVariable("SYSTEMROOT", SystemRootPath.c_str(), oUInt(SystemRootPath.capacity()));
 
 		oStrcpy(_StrDestination, _SizeofStrDestination, pQSC->lpBinaryPathName);
@@ -1487,7 +1476,7 @@ bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestinatio
 				if (oStrlen(_StrDestination) > 0 && lpFirstOccurance && _StrDestination == lpFirstOccurance)
 				{
 					// Add SYSTEMROOT value if there is only system32 mentioned in binary path
-					oStringPath temp;
+					oStd::path_string temp;
 					oPrintf(temp.c_str(), temp.capacity(), "%s\\%s", SystemRootPath.c_str(), _StrDestination); 
 					oStrcpy(_StrDestination, _SizeofStrDestination, temp);
 				}
@@ -1499,7 +1488,7 @@ bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestinatio
 					if (oStrlen(_StrDestination) > 0 && lpFirstOccurance && _StrDestination == lpFirstOccurance)
 					{
 						// Add SYSTEMROOT value if there is only System32 mentioned in binary path
-						oStringPath temp;
+						oStd::path_string temp;
 						oPrintf(temp.c_str(), temp.capacity(), "%s\\%s", SystemRootPath.c_str(), _StrDestination); 
 						oStrcpy(_StrDestination, _SizeofStrDestination, temp); 
 					}
@@ -1564,14 +1553,14 @@ bool oWinSystemOpenDocument(const char* _DocumentName, bool _ForEdit)
 	if (32 > hr)
 	{
 		if (hr == 0)
-			return oErrorSetLast(oERROR_AT_CAPACITY, "The operating system is out of memory or resources.");
+			return oErrorSetLast(std::errc::no_buffer_space, "The operating system is out of memory or resources.");
 		return oWinSetLastError();
 	}
 
 	return true;
 }
 
-bool oWinGetProcessTopWindowAndThread(unsigned int _ProcessID, HWND* _pHWND, unsigned int* _pThreadID)
+bool oWinGetProcessTopWindowAndThread(unsigned int _ProcessID, HWND* _pHWND, unsigned int* _pThreadID, const char* _pOptionalWindowName /*= nullptr*/)
 {
 	HWND Hwnd = 0;
 	unsigned int ThreadID = 0;
@@ -1580,21 +1569,23 @@ bool oWinGetProcessTopWindowAndThread(unsigned int _ProcessID, HWND* _pHWND, uns
 		[&](HWND _Hwnd)->bool
 	{
 		unsigned int HWNDProcessID;
-		ThreadID = GetWindowThreadProcessId(_Hwnd, (DWORD*)&HWNDProcessID);
+		auto NewThreadID = GetWindowThreadProcessId(_Hwnd, (DWORD*)&HWNDProcessID);
 
 		if(HWNDProcessID != _ProcessID)
 			return true;
 
 		// Look for windows that might get injected into our process that we would never want to target
 		const char* WindowsToSkip[] = {"Default IME", "MSCTFIME UI"};
-		oStringM WindowText;
-		if(SendMessageTimeout(_Hwnd, WM_GETTEXT, oStringM::Capacity - 1, (LPARAM)WindowText.c_str(), 0, 100, nullptr) == 0)
+		oStd::mstring WindowText;
+		// For some reason in release builds Default IME can take a while to respond to this. so wait longer unless the app appears to be hung.
+		if (SendMessageTimeout(_Hwnd, WM_GETTEXT, oStd::mstring::Capacity - 1, (LPARAM)WindowText.c_str(), SMTO_ABORTIFHUNG, 2000, nullptr) == 0)
 		{
 			WindowText = "";
 		}
-		if(!WindowText.empty())
+
+		if (!WindowText.empty())
 		{
-			for(int i = 0; i < oCOUNTOF(WindowsToSkip); ++i)
+			oFORI(i, WindowsToSkip)
 			{
 				if( 0 == oStrcmp(WindowText.c_str(), WindowsToSkip[i]) )
 				{
@@ -1603,12 +1594,17 @@ bool oWinGetProcessTopWindowAndThread(unsigned int _ProcessID, HWND* _pHWND, uns
 			}
 		}
 
+		// If the caller specified a window name make certain this is the right window or else keep searching
+		if(_pOptionalWindowName && 0 != oStrcmp(_pOptionalWindowName, WindowText))
+			return true;
+
 		Hwnd = _Hwnd;
+		ThreadID = NewThreadID;
 		return false;
 	});
 
 	if(!Hwnd)
-		return oErrorSetLast(oERROR_NOT_FOUND);
+		return oErrorSetLast(std::errc::no_such_process);
 
 	*_pHWND = Hwnd;
 	*_pThreadID = ThreadID;

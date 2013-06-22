@@ -30,10 +30,16 @@
 #ifndef oMathTypes_h
 #define oMathTypes_h
 
-#include <oBasis/oColor.h>
-#include <oBasis/oHLSLMath.h>
-#include <oBasis/oOperators.h>
+#include <oStd/color.h>
+#include <oStd/operators.h>
+#include <oHLSL/oHLSLMath.h>
+#include <oCompute/oAABox.h>
+#include <oCompute/oFrustum.h>
+#include <oCompute/oPlane.h>
+#include <oCompute/oQuaternion.h>
+#include <oCompute/oSphere.h>
 #include <oBasis/oTypes.h>
+#include <oBasis/oLinearAlgebra.h>
 
 typedef TVEC2<char> char2; typedef TVEC2<uchar> uchar2;
 typedef TVEC3<char> char3; typedef TVEC3<uchar> uchar3;
@@ -49,49 +55,6 @@ typedef TVEC4<short> short4; typedef TVEC4<ushort> ushort4;
 typedef TVEC2<llong> llong2; typedef TVEC2<ullong> ullong2;
 typedef TVEC3<llong> llong3; typedef TVEC3<ullong> ullong3;
 typedef TVEC4<llong> llong4; typedef TVEC4<ullong> ullong4;
-
-// _____________________________________________________________________________
-// Additional types
-
-struct oRGBf
-{
-	// Handle automatic expansion of oColor to float3s. Using this type allows for 
-	// a single header to be defined for usage in both C++ and HLSL. NOTE: Alpha
-	// is quietly dropped/ignored when using this - see oColorDecomposeRGB for 
-	// more information.
-
-	oRGBf() : Color(0.0f, 0.0f, 0.0f) {}
-	oRGBf(float _R, float _G, float _B) : Color(_R, _G, _B) {}
-	oRGBf(const float3& _Color) : Color(_Color) {}
-	oRGBf(const oColor& _Color) : Color(oColorDecomposeRGB<float3>(_Color)) {}
-	oRGBf(const oRGBf& _RGB) : Color(_RGB.Color) {}
-
-	inline operator float3&() { return Color; }
-	inline operator const float3&() const { return Color; }
-	inline operator oColor() const { return oColorCompose(Color.x, Color.y, Color.z, 1.0f); }
-	inline const oRGBf& operator=(int _Color) { Color = (float)_Color; return *this; }
-	inline const oRGBf& operator=(const oRGBf& _Color) { Color = _Color.Color; return *this; }
-	inline const oRGBf& operator=(const float3& _Color) { Color = _Color; return *this; }
-	inline const oRGBf& operator=(const oColor& _Color) { Color = oColorDecomposeRGB<float3>(_Color); return *this; }
-
-	const oRGBf& operator+=(const oRGBf& _That) { Color = saturate(Color + (const float3&)_That); return *this; }
-	const oRGBf& operator-=(const oRGBf& _That) { Color = saturate(Color - (const float3&)_That); return *this; }
-	const oRGBf& operator*=(const oRGBf& _That) { Color = saturate(Color * (const float3&)_That); return *this; }
-	const oRGBf& operator/=(const oRGBf& _That) { Color = saturate(Color / (const float3&)_That); return *this; }
-
-	oOPERATORS_DERIVED(oRGBf, +) oOPERATORS_DERIVED(oRGBf, -) oOPERATORS_DERIVED(oRGBf, *) oOPERATORS_DERIVED(oRGBf, /)
-
-protected:
-	float3 Color;
-};
-
-typedef TQUAT<float> quatf; typedef TQUAT<double> quatd;
-typedef TFRUSTUM<float> oFrustumf; //typedef TFRUSTUM<double> oFrustumd; // @oooii-tony: Need an oIntersects for double
-typedef TSPHERE<float> oSpheref; typedef TSPHERE<double> oSphered;
-typedef TPLANE<float> oPlanef; typedef TPLANE<double> oPlaned;
-typedef TAABOX<float, TVEC3<float>> oAABoxf; typedef TAABOX<double, TVEC3<double>> oAABoxd;
-typedef TAABOX<int, TVEC2<int>> oRECT;
-typedef TAABOX<float, TVEC2<float>> oRECTF;
 
 // _____________________________________________________________________________
 // type traits

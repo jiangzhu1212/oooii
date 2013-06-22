@@ -25,7 +25,10 @@
  **************************************************************************/
 #include <oPlatform/oRegistry.h>
 #include <oPlatform/oSystem.h> // for oSystemGetDate()
+#include <oConcurrency/mutex.h>
 #include <tbb/concurrent_hash_map.h>
+
+using namespace oConcurrency;
 
 struct oRegistryTBB : oRegistry
 {
@@ -41,7 +44,7 @@ struct oRegistryTBB : oRegistry
 	void SetEpoch(int _Epoch) threadsafe override { Epoch = _Epoch; }
 	int GetEpoch() const threadsafe override { return Epoch; }
 	int GetNumEntries() threadsafe const override { return oInt(hash().size()); }
-	void Clear() threadsafe override { oLockGuard<oSharedMutex> lock(TopologyMutex); hash().clear(); }
+	void Clear() threadsafe override { lock_guard<shared_mutex> lock(TopologyMutex); hash().clear(); }
 	bool Exists(const oURI& _URIReference) const threadsafe override { return hash().count(_URIReference) == 1; }
 	bool Add(const oURI& _URIReference, oInterface* _pInterface, int _Status = oInvalid) threadsafe override;
 	bool Remove(const oURI& _URIReference) threadsafe override;
@@ -61,7 +64,7 @@ private:
 		static bool equal(const oURI& a, const oURI& b) { return a == b; }
 	};
 
-	oSharedMutex TopologyMutex;
+	shared_mutex TopologyMutex;
 	oRefCount RefCount;
 	int Epoch;
 
@@ -81,7 +84,7 @@ bool oRegistryCreate(threadsafe oRegistry** _ppRegistry)
 
 bool oRegistryTBB::Add(const oURI& _URIReference, oInterface* _pInterface, int _Status) threadsafe
 {
-	oSharedLock<oSharedMutex> lock(TopologyMutex); // shared because hash is threadsafe in this case
+	shared_lock<shared_mutex> lock(TopologyMutex); // shared because hash is threadsafe in this case
 	hashmap_t::accessor a;
 	bool inserted = hash().insert(a, _URIReference);
 	if (inserted)
@@ -98,13 +101,13 @@ bool oRegistryTBB::Add(const oURI& _URIReference, oInterface* _pInterface, int _
 
 bool oRegistryTBB::Remove(const oURI& _URIReference) threadsafe
 {
-	oSharedLock<oSharedMutex> lock(TopologyMutex); // shared because hash is threadsafe in this case
+	shared_lock<shared_mutex> lock(TopologyMutex); // shared because hash is threadsafe in this case
 	return hash().erase(_URIReference);
 }
 
 bool oRegistryTBB::Get(const oURI& _URIReference, oInterface** _ppInterface, oREGISTRY_DESC* _pDesc) const threadsafe
 {
-	oSharedLock<oSharedMutex> lock(TopologyMutex); // shared because hash is threadsafe in this case
+	shared_lock<shared_mutex> lock(TopologyMutex); // shared because hash is threadsafe in this case
 	hashmap_t::accessor a;
 	bool found = hash().find(a, _URIReference);
 	if (found)
@@ -128,7 +131,7 @@ bool oRegistryTBB::Get(const oURI& _URIReference, oInterface** _ppInterface, oRE
 
 bool oRegistryTBB::Set(const oURI& _URIReference, oInterface* _pInterface, int _Status) threadsafe
 {
-	oSharedLock<oSharedMutex> lock(TopologyMutex); // shared because hash is threadsafe in this case
+	shared_lock<shared_mutex> lock(TopologyMutex); // shared because hash is threadsafe in this case
 	hashmap_t::accessor a;
 	bool found = hash().find(a, _URIReference);
 	if (found)
@@ -145,7 +148,7 @@ bool oRegistryTBB::Set(const oURI& _URIReference, oInterface* _pInterface, int _
 
 void oRegistryTBB::Enum(oFUNCTION<bool(const oURI& _URIReference, oInterface* _pInterface, const oREGISTRY_DESC& _Desc)> _Visitor) threadsafe
 {
-	oLockGuard<oSharedMutex> lock(TopologyMutex); // exclusive because iterators are not threadsafe
+	lock_guard<shared_mutex> lock(TopologyMutex); // exclusive because iterators are not threadsafe
 	oFOR(auto& pair, hash())
 		if (!_Visitor(pair.first, pair.second.Entry, pair.second.Desc))
 			break;

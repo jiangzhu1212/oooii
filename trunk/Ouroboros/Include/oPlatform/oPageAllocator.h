@@ -31,7 +31,7 @@
 #define oPageAllocator_h
 
 #include <oBasis/oStddef.h>
-#include <oBasis/oStdAllocator.h>
+#include <oStd/macros.h>
 
 enum oPAGE_STATUS
 {

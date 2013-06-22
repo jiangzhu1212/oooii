@@ -33,6 +33,10 @@
 #define oStreamUtil_h
 
 #include <vector>
+#include <oBasis/oOBJ.h>
+#include <oStd/csv.h>
+#include <oStd/ini.h>
+#include <oStd/xml.h>
 
 // Prefer using oBufferLoad to oStreamLoad - it's more RAII and encapsulates the
 // allocation. But for some platform APIs, oStreamLoad needs to be exposed.
@@ -41,17 +45,19 @@
 // _AsString is true, a null-terminator will be added. Both an allocation and
 // deallocation function must be specified. Deallocation is only done if there 
 // is a read error.
-bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oALLOCATE& _Allocate, const oDEALLOCATE& _Deallocate, const char* _URIReference, bool _AsString);
-template<typename T> bool oStreamLoad(T** _ppOutBuffer, size_t* _pOutSize, const oALLOCATE& _Allocate, const oDEALLOCATE& _Deallocate, const char* _URIReference, bool _AsString = false) { return oStreamLoad((void**)_ppOutBuffer, _pOutSize, _Allocate, _Deallocate, _URIReference, _AsString); }
+bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oFUNCTION<void*(size_t _NumBytes)>& _Allocate, const oFUNCTION<void(void* _Pointer)>& _Deallocate, const char* _URIReference, bool _AsString);
+template<typename T> bool oStreamLoad(T** _ppOutBuffer, size_t* _pOutSize, const oFUNCTION<void*(size_t _NumBytes)>& _Allocate, const oFUNCTION<void(void* _Pointer)>& _Deallocate, const char* _URIReference, bool _AsString = false) { return oStreamLoad((void**)_ppOutBuffer, _pOutSize, _Allocate, _Deallocate, _URIReference, _AsString); }
 
 bool oStreamLoadPartial(void* _pBuffer, size_t _SizeofBuffer, const char* _URIReference);
 template<typename T> bool oStreamLoadPartial(T* _pBuffer, const char* _URIReference) { return oStreamLoadPartial()}
 
 bool oBufferLoad(const char* _URIReference, interface oBuffer** _ppBuffer, bool _AsString = false);
-bool oINILoad(const char* _URIReference, threadsafe interface oINI** _ppINI);
-bool oXMLLoad(const char* _URIReference, threadsafe interface oXML** _ppXML);
 bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ);
 bool oMTLLoad(const char* _URIReference, threadsafe oMTL** _ppMTL);
 bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ, threadsafe oMTL** _ppMTL);
+
+std::shared_ptr<oStd::csv> oCSVLoad(const char* _URIReference);
+std::shared_ptr<oStd::ini> oINILoad(const char* _URIReference);
+std::shared_ptr<oStd::xml> oXMLLoad(const char* _URIReference);
 
 #endif

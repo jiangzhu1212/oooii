@@ -39,7 +39,7 @@ static bool CreateSecondTexture(oGPUDevice* _pDevice, const char* _Texture1Name,
 		Texture2Desc.Format = oSurfaceGetSubformat(_Texture1Desc.Format, 1);
 		Texture2Desc.Dimensions = oSurfaceMipCalcDimensionsNPOT(_Texture1Desc.Format, _Texture1Desc.Dimensions, 0, 1);
 
-		oStringM Texture2Name(_Texture1Name);
+		oStd::mstring Texture2Name(_Texture1Name);
 		oStrAppendf(Texture2Name, ".Texture2");
 		
 		return _pDevice->CreateTexture(Texture2Name, Texture2Desc, _ppTexture2);
@@ -73,7 +73,7 @@ oD3D11Texture::oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char
 	{
 		if (!SRV && *_pSuccess)
 		{
-			oStringM name;
+			oStd::mstring name;
 			oPrintf(name, "%s.SRV", _Name);
 			if (!oD3D11CreateShaderResourceView(name, Texture, &SRV))
 				*_pSuccess = false; // pass through error
@@ -95,14 +95,14 @@ int2 oD3D11Texture::GetByteDimensions(int _Subresource) const threadsafe
 	const oGPUTexture::DESC& d = thread_cast<oD3D11Texture*>(this)->Desc;
 	int numMips = oSurfaceCalcNumMips(oGPUTextureTypeHasMips(d.Type), d.Dimensions); 
 	int mipLevel, sliceIndex, surfaceIndex;
-	oSurfaceSubresourceUnpack(_Subresource, numMips, d.NumSlices, &mipLevel, &sliceIndex, &surfaceIndex);
+	oSurfaceSubresourceUnpack(_Subresource, numMips, d.ArraySize, &mipLevel, &sliceIndex, &surfaceIndex);
 	if (surfaceIndex > 0)
-		return Texture2->GetByteDimensions(oSurfaceCalcSubresource(mipLevel, sliceIndex, surfaceIndex - 1, numMips, d.NumSlices));
+		return Texture2->GetByteDimensions(oSurfaceCalcSubresource(mipLevel, sliceIndex, surfaceIndex - 1, numMips, d.ArraySize));
 
 	oSURFACE_DESC sd;
 	sd.Dimensions = d.Dimensions;
 	sd.Format = d.Format;
-	sd.NumSlices = d.NumSlices;
+	sd.ArraySize = d.ArraySize;
 	sd.Layout = oGPUTextureTypeHasMips(d.Type) ? oSURFACE_LAYOUT_TIGHT : oSURFACE_LAYOUT_IMAGE;
 	oSURFACE_SUBRESOURCE_DESC srd;
 	return oSurfaceSubresourceCalcByteDimensions(sd, _Subresource);

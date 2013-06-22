@@ -30,8 +30,9 @@
 // @oooii-tony: Refactor note... for DLL export ease, this should be turned into
 // an oP4Device interface.
 
-#include <oBasis/oFixedString.h>
+#include <oStd/fixed_string.h>
 #include <oBasis/oVersion.h>
+#include <oBasis/oRTTI.h>
 
 enum oP4_STATUS
 {
@@ -41,9 +42,11 @@ enum oP4_STATUS
 	oP4_NEEDS_UPDATE,
 	oP4_NEEDS_ADD,
 	oP4_NEEDS_DELETE,
+	oP4_NEEDS_RESOLVE,
 
-	oP4_NUM_STATUS_VALUES,
+	oP4_STATUS_COUNT,
 };
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oP4_STATUS)
 
 enum oP4_SUBMIT_OPTIONS
 {
@@ -53,7 +56,10 @@ enum oP4_SUBMIT_OPTIONS
 	oP4_REVERT_UNCHANGED_REOPEN,
 	oP4_LEAVE_UNCHANGED,
 	oP4_LEAVE_UNCHANGED_REOPEN,
+
+	oP4_SUBMIT_OPTIONS_COUNT,
 };
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oP4_SUBMIT_OPTIONS)
 
 enum oP4_LINE_END
 {
@@ -62,7 +68,10 @@ enum oP4_LINE_END
 	oP4_LINE_END_MAC,
 	oP4_LINE_END_WIN,
 	oP4_LINE_END_SHARE,
+
+	oP4_LINE_END_COUNT,
 };
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oP4_LINE_END)
 
 struct oP4_FILE_DESC
 {
@@ -73,7 +82,7 @@ struct oP4_FILE_DESC
 		, IsText(true)
 	{}
 
-	oStringURI Path;
+	oStd::uri_string Path;
 	oP4_STATUS Status;
 	int Revision;
 	int Changelist; // oInvalid is the default changelist
@@ -82,12 +91,12 @@ struct oP4_FILE_DESC
 
 struct oP4_WORKSPACE
 {
-	oStringM Client;
-	oStringM Owner;
-	oStringM Host;
-	oStringXL Description;
-	oStringPath Root;
-	oStringXXL View;
+	oStd::mstring Client;
+	oStd::mstring Owner;
+	oStd::mstring Host;
+	oStd::xlstring Description;
+	oStd::path_string Root;
+	oStd::xxlstring View;
 	time_t LastUpdated;
 	time_t LastAccessed;
 	oP4_SUBMIT_OPTIONS SubmitOptions;
@@ -109,12 +118,12 @@ struct oP4_LABEL_SPEC
 		, Locked(false)
 	{}
 
-	oStringM Label;
+	oStd::mstring Label;
 	time_t LastUpdated;
 	time_t LastAccessed;
-	oStringM Owner;
-	oStringXL Description;
-	oStringXXL View;
+	oStd::mstring Owner;
+	oStd::xlstring Description;
+	oStd::xxlstring View;
 	unsigned int Revision;
 	bool Locked;
 };
@@ -135,28 +144,43 @@ inline void oP4SetRevision(unsigned int _Revision, oVersion* _pVersion) { _pVers
 
 oAPI bool oP4GetWorkspaceString(char* _StrDestination, size_t _SizeofStrDestination);
 template<size_t size> inline bool oP4GetWorkspaceString(char (&_StrDestination)[size]) { return oP4GetWorkspaceString(_StrDestination, size); }
-template<size_t capacity> inline bool oP4GetWorkspaceString(oFixedString<char, capacity>& _StrDestination) { return oP4GetWorkspaceString(_StrDestination, _StrDestination.capacity()); }
+template<size_t capacity> inline bool oP4GetWorkspaceString(oStd::fixed_string<char, capacity>& _StrDestination) { return oP4GetWorkspaceString(_StrDestination, _StrDestination.capacity()); }
 
 oAPI bool oP4GetLabelSpecString(char* _P4LabelSpecString, size_t _SizeofP4LabelSpecString, const char* _Label);
 template<size_t size> inline bool oP4GetLabelSpecString(char (&_StrDestination)[size], const char* _Label) { return oP4GetLabelSpecString(_StrDestination, size, _Label); }
-template<size_t capacity> inline bool oP4GetLabelSpecString(oFixedString<char, capacity>& _StrDestination, const char* _Label) { return oP4GetLabelSpecString(_StrDestination, _StrDestination.capacity(), _Label); }
+template<size_t capacity> inline bool oP4GetLabelSpecString(oStd::fixed_string<char, capacity>& _StrDestination, const char* _Label) { return oP4GetLabelSpecString(_StrDestination, _StrDestination.capacity(), _Label); }
 
 // OpenType can only be one of the first 3 status values or this will return 
 // false.
 oAPI bool oP4Open(oP4_STATUS _OpenType, const char* _Path);
 oAPI bool oP4Revert(const char* _Path);
-oAPI bool oP4Sync(int _ChangeList, const char* _Path = nullptr);
+
+// Syncs the tree or specified path if the entire tree is not needed.
+// If _Force is true this will run p4 sync with -f
+oAPI bool oP4Sync(int _ChangeList, const char* _Path = nullptr, bool _Force = false);
 
 // Sets a label based on the specification.
 oAPI bool oP4Label(const oP4_LABEL_SPEC& _Label);
 
-// Returns the username associated with a specific Changelist
-oAPI bool oP4GetUserOfChangelist(char* _StrDestination, size_t _SizeofStrDestination, int _ChangeList);
-template<size_t size> bool oP4GetUserOfChangelist(char (&_StrDestination)[size], int _ChangeList) { return oP4GetUserOfChangelist(_StrDestination, size, _ChangeList); }
+// Returns the user supplied description associated with a given changelist
+oAPI bool oP4GetChangelistDescription(char* _StrDestination, size_t _SizeofStrDestination, int _ChangeList);
+template<size_t size> bool oP4GetChangelistDescription(char (&_StrDestination)[size], int _ChangeList) { return oP4GetChangelistDescription(_StrDestination, size, _ChangeList); }
+template<size_t capacity> bool oP4GetChangelistDescription(oStd::fixed_string<char, capacity>& _StrDestination, int _ChangeList){ return oP4GetChangelistDescription(_StrDestination, _StrDestination.capacity(), _ChangeList); }
+
+// Returns the username associated with a specific changelist
+oAPI bool oP4GetChangelistUser(char* _StrDestination, size_t _SizeofStrDestination, int _ChangeList);
+template<size_t size> bool oP4GetChangelistUser(char (&_StrDestination)[size], int _ChangeList) { return oP4GetChangelistUser(_StrDestination, size, _ChangeList); }
+template<size_t capacity> bool oP4GetChangelistUser(oStd::fixed_string<char, capacity>& _StrDestination, int _ChangeList){ return oP4GetChangelistUser(_StrDestination, _StrDestination.capacity(), _ChangeList); }
+
+// Returns the date associated with a specific changelist
+oAPI bool oP4GetChangelistDate(char* _StrDestination, size_t _SizeofStrDestination, int _ChangeList);
+template<size_t size> bool oP4GetChangelistDate(char (&_StrDestination)[size], int _ChangeList) { return oP4GetChangelistDate(_StrDestination, size, _ChangeList); }
+template<size_t capacity> bool oP4GetChangelistDate(oStd::fixed_string<char, capacity>& _StrDestination, int _ChangeList){ return oP4GetChangelistDate(_StrDestination, _StrDestination.capacity(), _ChangeList); }
 
 // Takes a p4 depot path and converts it into a client file path
 oAPI bool oP4GetClientPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _pDepotPath);
 template<size_t size> bool oP4GetClientPath(char (&_StrDestination)[size], const char* _pDepotPath) { return oP4GetClientPath(_StrDestination, size, _pDepotPath); }
+template<size_t capacity> bool oP4GetClientPath(oStd::fixed_string<char, capacity>& _StrDestination, const char* _pDepotPath) { return oP4GetClientPath(_StrDestination, _StrDestination.capacity(), _pDepotPath); }
 
 // Fill the specified array with file descs for all files that are opened in a 
 // pending changelist (oInvalid is the default changelist) under the specified 
@@ -188,7 +212,7 @@ oAPI int oP4ParseChangesLine(const char* _ChangesLine);
 
 inline bool oP4GetLabelSpec(const char* _Label, oP4_LABEL_SPEC* _pLabelSpec)
 {
-	oStringXXL lstr;
+	oStd::xxlstring lstr;
 	if (!oP4GetLabelSpecString(lstr, _Label))
 		return false;
 	return oP4ParseLabelSpec(_pLabelSpec, lstr);
@@ -199,7 +223,7 @@ inline bool oP4GetLabelSpec(const char* _Label, oP4_LABEL_SPEC* _pLabelSpec)
 
 inline bool oP4GetWorkspace(oP4_WORKSPACE* _pWorkspace)
 {
-	oStringXXL tmp;
+	oStd::xxlstring tmp;
 	if (!oP4GetWorkspaceString(tmp))
 		return false; // pass through error
 	return oP4ParseWorkspace(_pWorkspace, tmp);
@@ -207,9 +231,9 @@ inline bool oP4GetWorkspace(oP4_WORKSPACE* _pWorkspace)
 
 // This function estimates what revision the current code being built. If there 
 // are any out-of-date or open-for-edit files under the specified base then this 
-// will set oERROR_CORRUPT as the last error, indicating that the returned 
+// will set std::errc::protocol_error as the last error, indicating that the returned 
 // changelist is only an estimate. If there are no open files and everything is
-// up-to-date, then oERROR_NONE is explicitly set.
+// up-to-date, then 0 is explicitly set.
 // NOTE: This uses oTRACEA for the first several files that cause the changelist
 // to be corrupt. When using tools that call this, dbgview.exe can be run to see
 // why a changelist is labeled as corrupt.

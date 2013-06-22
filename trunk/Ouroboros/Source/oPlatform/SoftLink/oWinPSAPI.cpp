@@ -24,9 +24,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oWinPSAPI.h"
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
 
-static const char* dll_procs[] = 
+static const char* sExportedAPIs[] = 
 {
 	"EnumProcesses",
 	"EnumProcessModules",

@@ -27,13 +27,18 @@
 #ifndef oStaticMutex_h
 #define oStaticMutex_h
 
-#include <oBasis/oMutex.h>
+#include <oConcurrency/mutex.h>
 #include <oPlatform/oProcessHeap.h>
 
 template<typename MutexT, typename UniqueType>
-class oStaticMutex : oNoncopyable
+class oStaticMutex
 {
+	oStaticMutex(const oStaticMutex&)/* = delete*/;
+	const oStaticMutex& operator=(const oStaticMutex&)/* = delete*/;
+
 public:
+	oStaticMutex() {}
+
 	inline void lock() threadsafe { mutex()->lock(); }
 	inline bool try_lock() threadsafe { return mutex()->try_lock(); }
 	inline void unlock() threadsafe { mutex()->unlock(); }

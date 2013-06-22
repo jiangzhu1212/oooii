@@ -24,7 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oGDI.h>
-#include <oBasis/oByte.h>
+#include <oStd/byte.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oModule.h>
@@ -54,7 +54,7 @@ int oGDIPointToLogicalHeight(HDC _hDC, float _Point)
 
 void oGDIInitializeBMI(const oBMI_DESC& _Desc, BITMAPINFO* _pBMI)
 {
-	const int kPitch = _Desc.RowPitch > 0 ? _Desc.RowPitch : oSurfaceMipCalcRowSize(_Desc.Format, oByteAlign(_Desc.Dimensions.x, 4));
+	const int kPitch = _Desc.RowPitch > 0 ? _Desc.RowPitch : oSurfaceMipCalcRowSize(_Desc.Format, oStd::byte_align(_Desc.Dimensions.x, 4));
 
 	_pBMI->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	_pBMI->bmiHeader.biBitCount = static_cast<WORD>(oSurfaceFormatGetBitSize(_Desc.Format));
@@ -71,12 +71,11 @@ void oGDIInitializeBMI(const oBMI_DESC& _Desc, BITMAPINFO* _pBMI)
 	if (_pBMI->bmiHeader.biBitCount == 8)
 	{
 		// BMI doesn't understand 8-bit monochrome, so create a monochrome palette
-		int r,g,b,a;
-		oColorDecompose(_Desc.ARGBMonochrome8Zero, &r, &g, &b, &a);
-		float4 c0(oUBYTEAsUNORM(r), oUBYTEAsUNORM(g), oUBYTEAsUNORM(b), oUBYTEAsUNORM(a));
+		float4 c0;
+		_Desc.ARGBMonochrome8Zero.decompose(&c0.x, &c0.x, &c0.z, &c0.w);
 
-		oColorDecompose(_Desc.ARGBMonochrome8One, &r, &g, &b, &a);
-		float4 c1(oUBYTEAsUNORM(r), oUBYTEAsUNORM(g), oUBYTEAsUNORM(b), oUBYTEAsUNORM(a));
+		float4 c1;
+		_Desc.ARGBMonochrome8One.decompose(&c1.x, &c1.y, &c1.z, &c1.w);
 
 		for (size_t i = 0; i < 256; i++)
 		{
@@ -152,7 +151,7 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 	}
 
 	if (!_pBitmapInfo)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	memset(_pBitmapInfo, 0, sizeof(BITMAPINFO));
 	_pBitmapInfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -161,12 +160,12 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 	_pBitmapInfo->bmiHeader.biPlanes = 1;
 	_pBitmapInfo->bmiHeader.biBitCount = bitdepth;
 	_pBitmapInfo->bmiHeader.biCompression = BI_RGB;
-	_pBitmapInfo->bmiHeader.biSizeImage = oByteAlign(size.x, 4) * size.y * bitdepth / 8;
+	_pBitmapInfo->bmiHeader.biSizeImage = oStd::byte_align(size.x, 4) * size.y * bitdepth / 8;
 
 	if (_pImageBuffer)
 	{
 		if (_SizeofImageBuffer < _pBitmapInfo->bmiHeader.biSizeImage)
-			return oErrorSetLast(oERROR_INVALID_PARAMETER, "Destination buffer too small");
+			return oErrorSetLast(std::errc::invalid_argument, "Destination buffer too small");
 
 		HDC hDC = GetWindowDC(_hWnd);
 		HDC hMemDC = CreateCompatibleDC(hDC);
@@ -190,7 +189,7 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, oFUNCTION<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize, bool _RedrawWindow)
 {
 	if (!_Allocate || !_ppBuffer || !_pBufferSize)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 	
 	*_ppBuffer = nullptr;
 	*_pBufferSize = 0;
@@ -215,8 +214,8 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, oFUNCTION<void*(si
 		*_pBufferSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO) + bmi.bmiHeader.biSizeImage;
 		*_ppBuffer = _Allocate(*_pBufferSize);
 		memcpy(*_ppBuffer, &bmfh, sizeof(bmfh));
-		memcpy(oByteAdd(*_ppBuffer, sizeof(bmfh)), &bmi, sizeof(bmi));
-		return oGDIScreenCaptureWindow(_hWnd, pRect, oByteAdd(*_ppBuffer, sizeof(bmfh) + sizeof(bmi)), bmi.bmiHeader.biSizeImage, &bmi, _RedrawWindow);
+		memcpy(oStd::byte_add(*_ppBuffer, sizeof(bmfh)), &bmi, sizeof(bmi));
+		return oGDIScreenCaptureWindow(_hWnd, pRect, oStd::byte_add(*_ppBuffer, sizeof(bmfh) + sizeof(bmi)), bmi.bmiHeader.biSizeImage, &bmi, _RedrawWindow);
 	}
 
 	return false;
@@ -280,18 +279,7 @@ BOOL oGDIStretchBlendBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, H
 	return bResult;
 }
 
-bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
-{
-	RECT destRect;
-	destRect.bottom = oInvalid;
-	destRect.left = oInvalid;
-	destRect.right = oInvalid;
-	destRect.top = oInvalid;
-
-	return oGDIStretchBits(_hWnd, destRect, _SourceSize, _SourceFormat, _pSourceBits, _SourceRowPitch, _FlipVertically);
-}
-
-bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
+bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
 {
 	oBMI_DESC bmid;
 	bmid.Dimensions = _SourceSize;
@@ -301,6 +289,14 @@ bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize,
 	BITMAPINFO* pBMI = (BITMAPINFO*)_alloca(oGDIGetBMISize(bmid.Format)); // size might be bigger than sizeof(BITMAPINFO) if a palette is required
 	oGDIInitializeBMI(bmid, pBMI);
 
+	oGDIScopedBltMode Mode(_hDC, HALFTONE);
+	if (!StretchDIBits(_hDC, _DestRect.left, _DestRect.top, oWinRectW(_DestRect), oWinRectH(_DestRect), 0, 0, _SourceSize.x, _SourceSize.y, _pSourceBits, pBMI, DIB_RGB_COLORS, SRCCOPY))
+		return oWinSetLastError();
+	return true;
+}
+
+bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
+{
 	RECT destRect;
 	if (_DestRect.bottom == oInvalid || _DestRect.top == oInvalid ||
 		_DestRect.left == oInvalid || _DestRect.right == oInvalid)
@@ -313,14 +309,39 @@ bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize,
 		destRect = _DestRect;
 
 	oGDIScopedGetDC hDC(_hWnd);
-	if (!StretchDIBits(hDC, destRect.left, destRect.top, oWinRectW(destRect), oWinRectH(destRect), 0, 0, _SourceSize.x, _SourceSize.y, _pSourceBits, pBMI, DIB_RGB_COLORS, SRCCOPY))
-		return oWinSetLastError();
+	return oGDIStretchBits(hDC, destRect, _SourceSize, _SourceFormat, _pSourceBits, _SourceRowPitch, _FlipVertically);
+}
+
+bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
+{
+	RECT destRect;
+	destRect.bottom = oInvalid;
+	destRect.left = oInvalid;
+	destRect.right = oInvalid;
+	destRect.top = oInvalid;
+
+	return oGDIStretchBits(_hWnd, destRect, _SourceSize, _SourceFormat, _pSourceBits, _SourceRowPitch, _FlipVertically);
+}
+
+int2 oGDIGetDimensions(HDC _hDC)
+{
+	BITMAP BI;
+	memset(&BI, 0, sizeof(BI));
+	HGDIOBJ hBitmap = oGDIGetBitmap(_hDC);
+	GetObject(hBitmap, sizeof(BITMAP), &BI);
+	return int2(BI.bmWidth, BI.bmHeight);
+}
+
+bool oGDIDrawLine(HDC _hDC, const int2& _P0, const int2& _P1)
+{
+	oVB_RETURN(MoveToEx(_hDC, _P0.x, _P0.y, nullptr));
+	oVB_RETURN(LineTo(_hDC, _P1.x, _P1.y));
 	return true;
 }
 
 bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness, float _Alpha)
 {
-	if (oEqual(_Alpha, 1.0f))
+	if (oStd::equal(_Alpha, 1.0f))
 	{
 		if (_EdgeRoundness)
 		{
@@ -381,6 +402,12 @@ bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness, float _Alpha)
 	return true;
 }
 
+bool oGDIDrawEllipse(HDC _hDC, const RECT& _rBox)
+{
+	oVB_RETURN(Ellipse(_hDC, _rBox.left, _rBox.top, _rBox.right, _rBox.bottom));
+	return true;
+}
+
 class oGDIScopedTextColor
 {
 	HDC hDC;
@@ -405,21 +432,21 @@ public:
 
 RECT oGDICalcTextRect(HDC _hDC, const char* _Text)
 {
-	RECT r;
-	DrawText(_hDC, _Text, -1, &r, DT_CALCRECT|DT_LEFT);
+	RECT r = {0,0,0,0};
+	oVB(DrawText(_hDC, _Text, -1, &r, DT_CALCRECT|DT_LEFT));
 	return r;
 }
 
 static bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Text, RECT* _pActual)
 {
 	int r,g,b,a;
-	oColorDecompose(_Desc.Foreground, &r, &g, &b, &a);
+	_Desc.Foreground.decompose(&r, &g, &b, &a);
 
 	int br,bg,bb,ba;
-	oColorDecompose(_Desc.Background, &br, &bg, &bb, &ba);
+	_Desc.Background.decompose(&br, &bg, &bb, &ba);
 
 	int sr,sg,sb,sa;
-	oColorDecompose(_Desc.Shadow, &sr, &sg, &sb, &sa);
+	_Desc.Shadow.decompose(&sr, &sg, &sb, &sa);
 
 	if (!a)
 	{
@@ -435,7 +462,7 @@ static bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Tex
 		case 0: uFormat |= DT_LEFT; break;
 		case 1: uFormat |= DT_CENTER; break;
 		case 2: uFormat |= DT_RIGHT; break;
-		default: oASSERT_NOEXECUTION;
+		oNODEFAULT;
 	}
 
 	switch (_Desc.Alignment / 3)
@@ -443,7 +470,7 @@ static bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Tex
 		case 0: uFormat |= DT_TOP; break;
 		case 1: uFormat |= DT_VCENTER; break;
 		case 2: uFormat |= DT_BOTTOM; break;
-		default: oASSERT_NOEXECUTION;
+		oNODEFAULT;
 	}
 
 	bool forcedSingleLine = !_Desc.SingleLine && ((uFormat & DT_BOTTOM) || (uFormat & DT_VCENTER));
@@ -493,18 +520,35 @@ bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Text)
 	return oGDIDrawText(_hDC, _Desc, _Text, nullptr);
 }
 
-HPEN oGDICreatePen(oColor _Color, int _Width)
+HPEN oGDICreatePen(oStd::color _Color, int _Width)
 {
 	int r,g,b,a;
-	oColorDecompose(_Color, &r, &g, &b, &a);
+	_Color.decompose(&r, &g, &b, &a);
 	return CreatePen(a ? PS_SOLID : PS_NULL, _Width, RGB(r,g,b));
 }
 
-HBRUSH oGDICreateBrush(oColor _Color)
+HBRUSH oGDICreateBrush(oStd::color _Color)
 {
 	int r,g,b,a;
-	oColorDecompose(_Color, &r, &g, &b, &a);
+	_Color.decompose(&r, &g, &b, &a);
 	return a ? CreateSolidBrush(RGB(r,g,b)) : (HBRUSH)GetStockObject(HOLLOW_BRUSH);
+}
+
+COLORREF oGDIGetPenColor(HPEN _hPen, int* _pWidth)
+{
+	LOGPEN lp;
+	if (!GetObject(_hPen, sizeof(LOGPEN), &lp))
+	{
+		EXTLOGPEN elp;
+		GetObject(_hPen, sizeof(EXTLOGPEN), &elp);
+		if (_pWidth)
+			*_pWidth = static_cast<int>(elp.elpWidth);
+		return elp.elpColor;
+	}
+
+	if (_pWidth)
+		*_pWidth = static_cast<int>(lp.lopnWidth.x);
+	return lp.lopnColor;
 }
 
 COLORREF oGDIGetBrushColor(HBRUSH _hBrush)
@@ -693,7 +737,7 @@ void oGDISelectionBox::SetDesc(const DESC& _Desc)
 	hPen = oGDICreatePen(_Desc.Border);
 	hBrush = oGDICreateBrush(_Desc.Fill);
 	float r,g,b;
-	oColorDecompose(_Desc.Fill, &r, &g, &b, &Opacity);
+	_Desc.Fill.decompose(&r, &g, &b, &Opacity);
 
 	Desc = _Desc;
 }

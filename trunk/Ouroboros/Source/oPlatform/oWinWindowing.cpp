@@ -24,11 +24,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oWinWindowing.h>
-#include <oBasis/oAssert.h>
-#include <oBasis/oFixedString.h>
-#include <oBasis/oLimits.h>
-#include <oBasis/oStdChrono.h>
+#include <oStd/assert.h>
+#include <oStd/fixed_string.h>
+#include <oStd/oStdChrono.h>
+#include <oConcurrency/mutex.h>
 #include <oPlatform/oDisplay.h>
+#include <oPlatform/oProcessHeap.h>
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/Windows/oWinAsString.h>
 #include <oPlatform/Windows/oWinRect.h>
@@ -36,9 +37,78 @@
 #include "SoftLink/oWinCommCtrl.h"
 #include "SoftLink/oWinShlwapi.h"
 #include <WindowsX.h>
-#include <Commdlg.h>
 #include <CdErr.h>
 #include <Shellapi.h>
+
+struct oSkeletonInputContext : oProcessSingleton<oSkeletonInputContext>
+{
+	static const oGUID GUID;
+
+	oSkeletonInputContext() {}
+	~oSkeletonInputContext()
+	{
+		oASSERT(Sources.empty(), "");
+	}
+
+	void Register(HSKELETON _hSkeleton, const oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>& _Get)
+	{
+		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
+		if (Sources.find(_hSkeleton) != Sources.end())
+			throw std::exception("redundant registration");
+		Sources[_hSkeleton] = _Get;
+	}
+
+	void Unregister(HSKELETON _hSkeleton)
+	{
+		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
+		auto it = Sources.find(_hSkeleton);
+		if (it != Sources.end())
+			Sources.erase(it);
+	}
+
+	bool Get(HSKELETON _hSkeleton, oGUI_BONE_DESC* _pSkeleton)
+	{
+		// prevent Unregister() from being called during a read
+		oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(Mutex);
+		auto it = Sources.find(_hSkeleton);
+		if (it == Sources.end())
+			return oErrorSetLast(std::errc::invalid_argument);
+		it->second(_pSkeleton);
+		return true;
+	}
+
+	bool Close(HSKELETON _hSkeleton)
+	{
+		return true;
+	}
+
+	oConcurrency::shared_mutex Mutex;
+	std::map<HSKELETON
+		, oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>
+		, std::less<HSKELETON>
+		, oProcessHeapAllocator<std::pair<HSKELETON, oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>>>> 
+	Sources;
+};
+
+// {7E5F5608-2C7A-43E7-B7A0-46293FEC653C}
+const oGUID oSkeletonInputContext::GUID = { 0x7e5f5608, 0x2c7a, 0x43e7, { 0xb7, 0xa0, 0x46, 0x29, 0x3f, 0xec, 0x65, 0x3c } };
+
+oSINGLETON_REGISTER(oSkeletonInputContext);
+
+void RegisterSkeletonSource(HSKELETON _hSkeleton, const oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>& _Get)
+{
+	oSkeletonInputContext::Singleton()->Register(_hSkeleton, _Get);
+}
+
+void UnregisterSkeletonSource(HSKELETON _hSkeleton)
+{
+	oSkeletonInputContext::Singleton()->Unregister(_hSkeleton);
+}
+
+bool GetSkeletonDesc(HSKELETON _hSkeleton, oGUI_BONE_DESC* _pSkeleton)
+{
+	return oSkeletonInputContext::Singleton()->Get(_hSkeleton, _pSkeleton);
+}
 
 // @oooii-tony: Confirmation of hWnd being on the specified thread is disabled
 // for now... I think it might be trying to access the HWND before it's fully
@@ -46,27 +116,27 @@
 
 #define oWINV(_hWnd) \
 	if (!oWinExists(_hWnd)) \
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid HWND %p specified", _hWnd); \
+		return oErrorSetLast(std::errc::invalid_argument, "Invalid HWND %p specified", _hWnd); \
 	if (!oWinIsWindowThread(_hWnd)) \
-		oASSERT(oWinIsWindowThread(_hWnd), "This function must be called on the window thread %d for %p", oAsUint(oStd::this_thread::get_id()), _hWnd)
+		oASSERT(oWinIsWindowThread(_hWnd), "This function must be called on the window thread %d for %p", oConcurrency::asuint(oStd::this_thread::get_id()), _hWnd)
 
 #define oWINVP(_hWnd) \
 	if (!oWinExists(_hWnd)) \
-		{ oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid HWND %p specified", _hWnd); return nullptr; } \
-	oASSERT(oWinIsWindowThread(_hWnd), "This function must be called on the window thread %d for %p", oAsUint(oStd::this_thread::get_id()), _hWnd)
+		{ oErrorSetLast(std::errc::invalid_argument, "Invalid HWND %p specified", _hWnd); return nullptr; } \
+	oASSERT(oWinIsWindowThread(_hWnd), "This function must be called on the window thread %d for %p", oConcurrency::asuint(oStd::this_thread::get_id()), _hWnd)
 
-inline bool oErrorSetLastBadType(HWND _hControl, oGUI_CONTROL_TYPE _Type) { return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified %s %p (%d) is not valid for this operation", oAsString(_Type), _hControl, GetDlgCtrlID(_hControl)); }
+inline bool oErrorSetLastBadType(HWND _hControl, oGUI_CONTROL_TYPE _Type) { return oErrorSetLast(std::errc::invalid_argument, "The specified %s %p (%d) is not valid for this operation", oStd::as_string(_Type), _hControl, GetDlgCtrlID(_hControl)); }
 
-inline bool oErrorSetLastBadIndex(HWND _hControl, oGUI_CONTROL_TYPE _Type, int _SubItemIndex) { return oErrorSetLast(oERROR_NOT_FOUND, "_SubItemIndex %d was not found in %s %p (%d)", _SubItemIndex, oAsString(_Type), _hControl, GetDlgCtrlID(_hControl)); }
+inline bool oErrorSetLastBadIndex(HWND _hControl, oGUI_CONTROL_TYPE _Type, int _SubItemIndex) { return oErrorSetLast(std::errc::invalid_argument, "_SubItemIndex %d was not found in %s %p (%d)", _SubItemIndex, oStd::as_string(_Type), _hControl, GetDlgCtrlID(_hControl)); }
 
 inline HWND oWinControlGetBuddy(HWND _hControl) { return (HWND)SendMessage(_hControl, UDM_GETBUDDY, 0, 0); }
 
-bool oWinCreate(HWND* _phWnd, const int2& _ClientPosition, const int2& _ClientSize, WNDPROC _Wndproc, void* _pThis)
+bool oWinCreate(HWND* _phWnd, const int2& _ClientPosition, const int2& _ClientSize, WNDPROC _Wndproc, void* _pThis, bool _AsMessagingWindow)
 {
 	if (!_phWnd)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
-	oStringS ClassName;
+	oStd::sstring ClassName;
 	oPrintf(ClassName, "Ouroboros.Window.WndProc.%x", _Wndproc);
 
 	WNDCLASSEXA wc;
@@ -81,51 +151,60 @@ bool oWinCreate(HWND* _phWnd, const int2& _ClientPosition, const int2& _ClientSi
 	if (0 == RegisterClassEx(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
 		return oWinSetLastError();
 
-	*_phWnd = CreateWindowEx(WS_EX_ACCEPTFILES|WS_EX_APPWINDOW, ClassName, "", WS_OVERLAPPEDWINDOW, _ClientPosition.x, _ClientPosition.y, _ClientSize.x, _ClientSize.y, nullptr, nullptr, nullptr, _pThis);
+	*_phWnd = CreateWindowEx(WS_EX_ACCEPTFILES|WS_EX_APPWINDOW, ClassName, ""
+		, WS_OVERLAPPEDWINDOW
+		, _ClientPosition.x, _ClientPosition.y
+		, _ClientSize.x, _ClientSize.y
+		, _AsMessagingWindow ? HWND_MESSAGE : nullptr, nullptr, nullptr, _pThis);
+
 	if (!*_phWnd)
 	{
 		if (GetLastError() == S_OK)
-			return oErrorSetLast(oERROR_GENERIC, "CreateWindowEx returned a null HWND (failure condition) but GetLastError is S_OK. This implies that user handling of a WM_CREATE message failed, so start looking there.");
+			return oErrorSetLast(std::errc::protocol_error, "CreateWindowEx returned a null HWND (failure condition) but GetLastError is S_OK. This implies that user handling of a WM_CREATE message failed, so start looking there.");
 		return oWinSetLastError();
 	}
 
-	oTRACE("HWND %p running on thread %d (0x%x)", *_phWnd, oAsUint(oStd::this_thread::get_id()), oAsUint(oStd::this_thread::get_id()));
+	oTRACE("HWND %x running on thread %d (0x%x)", *_phWnd, oConcurrency::asuint(oStd::this_thread::get_id()), oConcurrency::asuint(oStd::this_thread::get_id()));
 
 	return true;
 }
 
 void* oWinGetThis(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
 {
-	if (!_hWnd)
-		return nullptr;
-
-	void* context = nullptr;
-
-	switch (_uMsg)
+	void* pThis = nullptr;
+	if (_hWnd)
 	{
-		case WM_CREATE:
-	{
-		// a context (probably some 'this' pointer) was passed during the call 
-		// to CreateWindow, so put that in userdata.
-		CREATESTRUCTA* cs = (CREATESTRUCTA*)_lParam;
-		SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)cs->lpCreateParams);
-		context = (void*)cs->lpCreateParams;
-			break;
+		switch (_uMsg)
+		{
+			case WM_CREATE:
+			{
+				// 'this' pointer was passed during the call to CreateWindow, so put 
+				// that in userdata.
+				CREATESTRUCTA* cs = (CREATESTRUCTA*)_lParam;
+				SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)cs->lpCreateParams);
+				pThis = (void*)cs->lpCreateParams;
+				break;
+			}
+
+			case WM_INITDIALOG:
+				// dialogs don't use CREATESTRUCT, so assume it's directly the context
+				SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)_lParam);
+				pThis = (void*)_lParam;
+				break;
+
+			case WM_DESTROY:
+				// once WM_DESTROY is called, don't allow custom handling anymore
+				pThis = (void*)SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)nullptr);
+				break;
+
+			default:
+				// For any other message, grab the context and return it
+				pThis = (void*)GetWindowLongPtr(_hWnd, GWLP_USERDATA);
+				break;
+		}
+
 	}
-
-		case WM_INITDIALOG:
-		// dialogs don't use CREATESTRUCT, so assume it's directly the context
-		SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)_lParam);
-		context = (void*)_lParam;
-			break;
-
-		default:
-		// For any other message, grab the context and return it
-		context = _hWnd ? (void*)GetWindowLongPtr(_hWnd, GWLP_USERDATA) : 0;
-			break;
-	}
-
-	return context;
+	return pThis;
 }
 
 oStd::thread::id oWinGetWindowThread(HWND _hWnd)
@@ -133,6 +212,37 @@ oStd::thread::id oWinGetWindowThread(HWND _hWnd)
 	oStd::thread::id ID;
 	(uint&)ID = GetWindowThreadProcessId(_hWnd, nullptr);
 	return ID;
+}
+
+void oWinAccelFromHotKeys(ACCEL* _pAccels, const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys)
+{
+	for (size_t i = 0; i < _NumHotKeys; i++)
+	{
+		ACCEL& a = _pAccels[i];
+		const oGUI_HOTKEY_DESC_NO_CTOR& h = _pHotKeys[i];
+		a.fVirt = FVIRTKEY;
+		if (h.AltDown) a.fVirt |= FALT;
+		if (h.CtrlDown) a.fVirt |= FCONTROL;
+		if (h.ShiftDown) a.fVirt |= FSHIFT;
+		a.key = oWinKeyFromKey(h.HotKey) & 0xffff;
+		a.cmd = h.ID;
+	}
+}
+
+void oWinAccelToHotKeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, const ACCEL* _pAccels, size_t _NumHotKeys)
+{
+	for (size_t i = 0; i < _NumHotKeys; i++)
+	{
+		const ACCEL& a = _pAccels[i];
+		oGUI_HOTKEY_DESC_NO_CTOR& h = _pHotKeys[i];
+		oASSERT(a.fVirt & FVIRTKEY, "");
+		oWINKEY_CONTROL_STATE dummy;
+		h.HotKey = oWinKeyToKey(a.key);
+		h.AltDown = !!(a.fVirt & FALT);
+		h.CtrlDown = !!(a.fVirt & FCONTROL);
+		h.ShiftDown = !!(a.fVirt & FSHIFT);
+		h.ID = a.cmd;
+	}
 }
 
 // A wrapper for MS's GetWindow() that changes the rules of traversal. The rules 
@@ -235,14 +345,18 @@ static HWND oWinGetPrevTabStop()
 	return hPrev;
 }
 
-// No Wisdom from Google has yielded a rational Microsoft-way of hadnling 
+// No Wisdom from Google has yielded a rational Microsoft-way of handling 
 // Ctrl-Tab and Shift-Ctrl-Tab in a way consistent with Microsoft-system 
 // dialogs. This function wraps IsDialogMessage in a way that seems to conform
 // more to MS standards than their own function by intercepting WM_KEYDOWN for
 // VK_TAB.
 static bool oIsDialogMessageEx(HWND _hWnd, MSG* _pMsg)
 {
-	oWINVP(_hWnd);
+	if (!_hWnd)
+		return false;
+
+	oASSERT(oWinIsWindowThread(_hWnd) || !oWinExists(_hWnd), "Must be called from windows thread (HWND=%p)", _hWnd);
+
 	if (_pMsg->message == WM_KEYDOWN && _pMsg->wParam == VK_TAB)
 	{
 		bool CtrlDown = (GetKeyState(VK_LCONTROL) & 0x1000) || (GetKeyState(VK_RCONTROL) & 0x1000);
@@ -287,9 +401,16 @@ static bool oIsDialogMessageEx(HWND _hWnd, MSG* _pMsg)
 	return !!IsDialogMessage(_hWnd, _pMsg);
 }
 
-bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext)
+thread_local static double sGetDispatchMessageTime = 0.0;
+double oWinGetDispatchMessageTime()
 {
-	oWINV(_hWnd);
+	return sGetDispatchMessageTime;
+}
+
+bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, double _Timestamp, bool _WaitForNext)
+{
+	sGetDispatchMessageTime = _Timestamp;
+
 	MSG msg;
 	bool HasMessage = false;
 	if (_WaitForNext)
@@ -299,7 +420,13 @@ bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext)
 
 	if (HasMessage)
 	{
-		bool HasMessage = !!TranslateAccelerator(_hWnd, _hAccel, &msg);
+		if (msg.message == WM_QUIT)
+			return oErrorSetLast(std::errc::operation_canceled);
+
+		if (!_hWnd)
+			_hWnd = msg.hwnd;
+
+		HasMessage = !!TranslateAccelerator(_hWnd, _hAccel, &msg);
 		if (!HasMessage)
 			HasMessage = oIsDialogMessageEx(_hWnd, &msg);
 
@@ -314,95 +441,7 @@ bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext)
 			return true;
 	}
 
-	return oErrorSetLast(oERROR_END_OF_FILE);
-}
-
-using namespace oStd::chrono;
-bool oWinFlushMessages(HWND _hWnd, uint _TimeoutMS)
-{
-	oWINV(_hWnd);
-	high_resolution_clock::time_point start = high_resolution_clock::now();
-
-	while (oWinDispatchMessage(_hWnd, nullptr, false))
-	{
-		if (_TimeoutMS == oInfiniteWait || oSeconds(high_resolution_clock::now() - start) < milliseconds(_TimeoutMS))
-			continue;
-
-		return oErrorSetLast(oERROR_TIMEOUT);
-	}
-
-	return oErrorGetLast() == oERROR_END_OF_FILE;
-}
-
-void AppendKey(short int _Key, bool _KeyUp, tagINPUT** _ppInput)
-{
-	auto& pInput = *_ppInput;
-
-	pInput->type = INPUT_KEYBOARD;
-
-	pInput->ki.wVk = _Key;
-	pInput->ki.time = 0;
-	pInput->ki.dwFlags = _KeyUp ? KEYEVENTF_KEYUP : 0;
-	pInput->ki.dwExtraInfo = 0;
-	++pInput;
-}
-
-bool oWinSendKeys(HWND _Hwnd, unsigned int _ThreadID, short int* _pVKeys, int _NumberKeys)
-{
-	static const int MAX_KEYS = 64;
-	tagINPUT Input[(MAX_KEYS + 2 ) * 4]; // We need to ensure we have twice as many keys so we can send both an up and down command as well as adjust caps
-	
-	if(_NumberKeys > MAX_KEYS)
-		return oErrorSetLast(oERROR_AT_CAPACITY, "Only support %d keys", MAX_KEYS);
-
-	AttachThreadInput(GetCurrentThreadId(), _ThreadID, true);
-
-	short int CapState = GetKeyState(VK_CAPITAL) == 0 ? 0 : 1;
-	
-	tagINPUT* pKeyHead = Input;
-	for(int i = 0; i < _NumberKeys + 2 * CapState; ++i)
-	{
-		short int Key;
-
-		if(CapState > 0 && (i == 0 || i == _NumberKeys + 1)) // Toggle Caps before and after the message
-			Key = VK_CAPITAL;
-		else
-			Key = _pVKeys[i - CapState];
-
-		bool ShouldShift = (0x0100 & Key) > 0;
-	
-		if(ShouldShift)
-			AppendKey(VK_SHIFT, false, &pKeyHead);
-
-		AppendKey(Key, false, &pKeyHead);
-		AppendKey(Key, true, &pKeyHead);
-
-		if(ShouldShift)
-			AppendKey(VK_SHIFT, true, &pKeyHead);
-	}
-
-	oWinSetFocus(_Hwnd);
-
-	int NumberOfKeys = oInt(pKeyHead - Input);
-	SendInput(NumberOfKeys, Input, sizeof(tagINPUT));
-
-	AttachThreadInput(GetCurrentThreadId(), _ThreadID, false);
-	return true;
-}
-
-bool oWinSendASCIIMessage(HWND _Hwnd, unsigned int _ThreadID, const char* _pMessage)
-{
-	short int VirtualKeys[64];
-	int MessageLength = oInt(oStrlen(_pMessage));
-	if(MessageLength > oCOUNTOF(VirtualKeys))
-		return oErrorSetLast(oERROR_AT_CAPACITY, "Only support %d length messages", oCOUNTOF(VirtualKeys));
-
-	for(int i = 0; i < oCOUNTOF(VirtualKeys); ++i)
-	{
-		VirtualKeys[i] = VkKeyScanEx(_pMessage[i], GetKeyboardLayout(0));
-	}
-
-	return oWinSendKeys(_Hwnd, _ThreadID, VirtualKeys, MessageLength);
+	return oErrorSetLast(std::errc::no_message_available);
 }
 
 bool oWinWake(HWND _hWnd)
@@ -629,16 +668,16 @@ bool oWinSetStyle(HWND _hWnd, oGUI_WINDOW_STYLE _Style, bool _HasStatusBar, cons
 	return true;
 }
 
-bool oWinGetClientRect(HWND _hWnd, bool _HasStatusBar, RECT* _pRect)
+bool oWinGetClientRect(HWND _hWnd, RECT* _pRect)
 {
 	oWINV(_hWnd);
 	if (!_pRect)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 	oVB_RETURN(GetClientRect(_hWnd, _pRect));
 
-	if (_HasStatusBar)
-		oWinStatusBarAdjustClientRect(_hWnd, _pRect);
-
+	int StatusBarHeight = oWinStatusBarGetHeight(_hWnd);
+	if (StatusBarHeight != oInvalid)
+		_pRect->bottom = __max(_pRect->top, _pRect->bottom - StatusBarHeight);
 	return true;
 }
 
@@ -646,7 +685,7 @@ bool oWinGetClientScreenRect(HWND _hWnd, bool _HasStatusBar, RECT* _pRect)
 {
 	oWINV(_hWnd);
 	if (!_pRect)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 	oVB_RETURN(GetClientRect(_hWnd, _pRect));
 
 	if (_HasStatusBar)
@@ -701,7 +740,7 @@ RECT oWinGetParentRect(HWND _hWnd, HWND _hExplicitParent)
 	HWND hParent = _hExplicitParent ? _hExplicitParent : GetParent(_hWnd);
 	RECT rParent;
 	if (hParent)
-		GetClientRect(hParent, &rParent);
+		oWinGetClientRect(hParent, &rParent);
 	else
 	{
 		oDISPLAY_DESC DDesc;
@@ -787,7 +826,7 @@ bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex)
 
 		case oGUI_CONTROL_FLOATBOX:
 		case oGUI_CONTROL_FLOATBOX_SPINNER:
-			return oErrorSetLast(oERROR_INVALID_PARAMETER, "For FloatBoxes and FloatBoxSpinners, use oWinControlSetValue instead.");
+			return oErrorSetLast(std::errc::invalid_argument, "For FloatBoxes and FloatBoxSpinners, use oWinControlSetValue instead.");
 
 		default: 
 			if (!SetWindowText(_hWnd, _Text))
@@ -799,7 +838,7 @@ bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex)
 
 size_t oWinGetTruncatedLength(HWND _hWnd, const char* _StrSource)
 {
-	oStringXXL temp(_StrSource);
+	oStd::xxlstring temp(_StrSource);
 
 	RECT rClient;
 	GetClientRect(_hWnd, &rClient);
@@ -807,13 +846,13 @@ size_t oWinGetTruncatedLength(HWND _hWnd, const char* _StrSource)
 
 	if (!oWinShlwapi::Singleton()->PathCompactPathA(hDC, temp, oWinRectW(rClient) + 70)) // @oooii-tony: This constant was measured empirically. I think this should work without the +70, but truncation happens too aggressively.
 	{
-		oErrorSetLast(oERROR_AT_CAPACITY, "Buffer must be at least MAX_PATH (%u) chars big", MAX_PATH);
+		oErrorSetLast(std::errc::no_buffer_space, "Buffer must be at least MAX_PATH (%u) chars big", MAX_PATH);
 		return 0;
 	}
 
 	if (!oStrcmp(temp, _StrSource))
 	{
-		oErrorSetLast(oERROR_REDUNDANT, "Truncation not required");
+		oErrorSetLast(std::errc::operation_in_progress, "Truncation not required");
 		return 0;
 	}
 
@@ -825,17 +864,17 @@ char* oWinTruncateLeft(char* _StrDestination, size_t _SizeofStrDestination, HWND
 	size_t TruncatedLength = oWinGetTruncatedLength(_hWnd, _StrSource);
 	if (TruncatedLength)
 	{
-		oStringURI Truncated;
+		oStd::uri_string Truncated;
 		const char* pCopy = _StrSource + oStrlen(_StrSource) - TruncatedLength + 3;
 		oASSERT(pCopy >= _StrSource, "");
 		if (-1 == oPrintf(_StrDestination, _SizeofStrDestination, "...%s", pCopy))
 		{
-			oErrorSetLast(oERROR_AT_CAPACITY, "");
+			oErrorSetLast(std::errc::no_buffer_space, "");
 			return nullptr;
 		}
 	}
 
-	return oErrorGetLast() == oERROR_REDUNDANT ? nullptr : _StrDestination;
+	return oErrorGetLast() == std::errc::operation_in_progress ? nullptr : _StrDestination;
 }
 
 char* oWinTruncatePath(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, const char* _Path)
@@ -850,7 +889,7 @@ char* oWinTruncatePath(char* _StrDestination, size_t _SizeofStrDestination, HWND
 
 	if (!oWinShlwapi::Singleton()->PathCompactPathA(hDC, _StrDestination, oWinRectW(rClient) + 70)) // @oooii-tony: This constant was measured empirically. I think this should work without the +70, but truncation happens too aggressively.
 	{
-		oErrorSetLast(oERROR_AT_CAPACITY, "Buffer must be at least MAX_PATH (%u) chars big", MAX_PATH);
+		oErrorSetLast(std::errc::no_buffer_space, "Buffer must be at least MAX_PATH (%u) chars big", MAX_PATH);
 		return nullptr;
 	}
 
@@ -871,7 +910,7 @@ char* oWinGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWn
 			size_t len = (size_t)ComboBox_GetLBTextLen(_hWnd, _SubItemIndex);
 			if (len > _SizeofStrDestination)
 			{
-				oErrorSetLast(oERROR_AT_CAPACITY);
+				oErrorSetLast(std::errc::no_buffer_space);
 				return nullptr;
 			}
 			else
@@ -940,7 +979,7 @@ bool oWinSetIconAsync(HWND _hWnd, HICON _hIcon, bool _BigIcon)
 			default: PostMessage(_hWnd, WM_SETICON, (WPARAM)(_BigIcon ? ICON_BIG : ICON_SMALL), (LPARAM)_hIcon); break;
 		}
 
-		return oErrorSetLast(oERROR_WRONG_THREAD);
+		return oErrorSetLast(std::errc::operation_not_permitted);
 	}
 }
 
@@ -960,10 +999,10 @@ static LRESULT CALLBACK oSubclassProcFloatBox(HWND _hControl, UINT _uMsg, WPARAM
 		{
 			case WM_KILLFOCUS:
 			{
-				oStringM text;
+				oStd::mstring text;
 				GetWindowText(_hControl, text, (int)text.capacity());
 				float f = 0.0f;
-				oAtof(text, &f);
+				oStd::atof(text, &f);
 				oPrintf(text, oSubclassFloatBoxFormat, f);
 				SetWindowText(_hControl, text);
 				break;
@@ -972,13 +1011,13 @@ static LRESULT CALLBACK oSubclassProcFloatBox(HWND _hControl, UINT _uMsg, WPARAM
 			case WM_SETTEXT:
 			{
 				float f = 0.0f;
-				oStringM text = (const wchar_t*)_lParam; // handle wchar
-				if (!oAtof(text, &f))
+				oStd::mstring text = (const wchar_t*)_lParam; // handle wchar
+				if (!oStd::atof(text, &f))
 					return FALSE;
 				
 				// Ensure consistent formatting
 				oPrintf(text, oSubclassFloatBoxFormat, f);
-				oWStringM wtext = text;
+				oStd::mwstring wtext = text;
 				oWinCommCtrl::Singleton()->DefSubclassProc(_hControl, _uMsg, _wParam, (LPARAM)wtext.c_str());
 				return FALSE;
 			}
@@ -989,7 +1028,7 @@ static LRESULT CALLBACK oSubclassProcFloatBox(HWND _hControl, UINT _uMsg, WPARAM
 				if ((GetKeyState(VK_LCONTROL) & 0x1000) || (GetKeyState(VK_RCONTROL) & 0x1000))
 					return DLGC_WANTALLKEYS;
 
-				oStringM text;
+				oStd::mstring text;
 				GetWindowText(_hControl, text, (int)text.capacity());
 
 				// refresh/commit if the user presses enter
@@ -1135,7 +1174,7 @@ static bool OnCreateFloatBoxSpinner(HWND _hControl, const oGUI_CONTROL_DESC& _De
 	if (hActualFloatBox)
 	{
 		SendMessage(_hControl, UDM_SETBUDDY, (WPARAM)hActualFloatBox, 0);
-		SendMessage(_hControl, UDM_SETRANGE32, (WPARAM)oNumericLimits<int>::GetSignedMin(), (LPARAM)oNumericLimits<int>::GetMax());
+		SendMessage(_hControl, UDM_SETRANGE32, (WPARAM)std::numeric_limits<int>::lowest(), (LPARAM)std::numeric_limits<int>::max());
 	}
 
 	else
@@ -1204,14 +1243,14 @@ static const CONTROL_CREATION_DESC& oWinControlGetCreationDesc(oGUI_CONTROL_TYPE
 		{ TRACKBAR_CLASS, WS_VISIBLE|WS_CHILD|WS_TABSTOP|TBS_NOTICKS|TBS_ENABLESELRANGE, 0, true, nullptr, GetSizeExplicit, },
 		{ TRACKBAR_CLASS, WS_VISIBLE|WS_CHILD|WS_TABSTOP, 0, true, nullptr, GetSizeExplicit, }, 
 	};
-	static_assert(oGUI_NUM_CONTROLS == oCOUNTOF(sDescs), "oGUI_NUM_CONTROLS count mismatch");
+	static_assert(oGUI_CONTROL_TYPE_COUNT == oCOUNTOF(sDescs), "oGUI_CONTROL_TYPE_COUNT count mismatch");
 	return sDescs[_Type];
 }
 
 HWND oWinControlCreate(const oGUI_CONTROL_DESC& _Desc)
 {
 	if (!_Desc.hParent || _Desc.Type == oGUI_CONTROL_UNKNOWN)
-		return (HWND)oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return (HWND)oErrorSetLast(std::errc::invalid_argument);
 	oWINVP((HWND)_Desc.hParent);
 
 	const CONTROL_CREATION_DESC& CCDesc = oWinControlGetCreationDesc(_Desc.Type);
@@ -1220,7 +1259,7 @@ HWND oWinControlCreate(const oGUI_CONTROL_DESC& _Desc)
 	HWND hWnd = CreateWindowEx(
 		CCDesc.dwExStyle
 		, CCDesc.ClassName
-		, CCDesc.SetText ? oSAFESTR(_Desc.Text) : ""
+		, (CCDesc.SetText && _Desc.Text) ? _Desc.Text : ""
 		, CCDesc.dwStyle | (_Desc.StartsNewGroup ? WS_GROUP : 0)
 		, _Desc.Position.x
 		, _Desc.Position.y
@@ -1277,7 +1316,7 @@ bool oWinControlDefaultOnNotify(HWND _hControl, const NMHDR& _NotifyMessageHeade
 			if (_NotifyMessageHeader.code == NM_CLICK || _NotifyMessageHeader.code == NM_RETURN)
 			{
 				const NMLINK& NMLink = (const NMLINK&)_NotifyMessageHeader;
-				oStringXL asMultiByte(NMLink.item.szUrl);
+				oStd::xlstring asMultiByte(NMLink.item.szUrl);
 				oVERIFY(oWinSystemOpenDocument(asMultiByte));
 			}
 
@@ -1292,6 +1331,108 @@ bool oWinControlDefaultOnNotify(HWND _hControl, const NMHDR& _NotifyMessageHeade
 		*_plResult = FALSE;
 
 	return ShortCircuit;
+}
+
+bool oWinControlToAction(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, oGUI_ACTION_DESC* _pAction, LRESULT* _pLResult)
+{
+	*_pLResult = 0;
+	bool Handled = true;
+
+	switch (_uMsg)
+	{
+		case WM_COMMAND:
+		{
+			_pAction->DeviceType = oGUI_INPUT_DEVICE_CONTROL;
+			_pAction->DeviceID = LOWORD(_wParam);
+			_pAction->hWindow = (oGUI_WINDOW)_hWnd;
+			_pAction->Key = oGUI_KEY_NONE;
+			_pAction->Position = 0.0f;
+
+			if (!_lParam)
+			{
+				_pAction->Action = (HIWORD(_wParam) == 1) ? oGUI_ACTION_HOTKEY : oGUI_ACTION_MENU;
+				_pAction->ActionCode = oInvalid;
+			}
+			else
+			{
+				_pAction->hWindow = (oGUI_WINDOW)_lParam;
+				_pAction->Action = oGUI_ACTION_CONTROL_ACTIVATED;
+				_pAction->ActionCode = HIWORD(_wParam);
+			}
+
+			break;
+		}
+
+		case WM_HSCROLL:
+		{
+			if (_lParam != 0)
+			{
+				_pAction->hWindow = (oGUI_WINDOW)(_lParam);
+				_pAction->DeviceType = oGUI_INPUT_DEVICE_CONTROL;
+				_pAction->DeviceID = oInvalid;
+				_pAction->Key = oGUI_KEY_NONE;
+				_pAction->Position = 0.0f;
+				_pAction->ActionCode = oInt(_wParam);
+				switch (LOWORD(_wParam))
+				{
+					case TB_ENDTRACK: _pAction->Action = oGUI_ACTION_CONTROL_DEACTIVATED; break;
+					default: _pAction->Action = oGUI_ACTION_CONTROL_ACTIVATED; break;
+				}
+				break;
+			}
+
+			Handled = false;
+			break;
+		}
+
+		case WM_NOTIFY:
+		{
+			LRESULT lResult = FALSE;
+			const NMHDR& nmhdr = *(const NMHDR*)_lParam;
+			*_pAction = oGUI_ACTION_DESC();
+			_pAction->DeviceType = oGUI_INPUT_DEVICE_CONTROL;
+			_pAction->DeviceID = oInt(nmhdr.idFrom);
+			_pAction->hWindow = (oGUI_WINDOW)nmhdr.hwndFrom;
+			_pAction->Position = 0.0f;
+			_pAction->ActionCode = nmhdr.code;
+
+			oGUI_CONTROL_TYPE type = oWinControlGetType(nmhdr.hwndFrom);
+			switch (type)
+			{
+				case oGUI_CONTROL_TAB:
+				{
+					switch (_pAction->ActionCode)
+					{
+					case TCN_SELCHANGING: _pAction->Action = oGUI_ACTION_CONTROL_SELECTION_CHANGING; break;
+					case TCN_SELCHANGE: _pAction->Action = oGUI_ACTION_CONTROL_SELECTION_CHANGED; break;
+					default: break;
+					}
+
+					break;
+				}
+
+				case oGUI_CONTROL_BUTTON:
+				{
+					switch (_pAction->ActionCode)
+					{
+					case BN_CLICKED: _pAction->Action = oGUI_ACTION_CONTROL_ACTIVATED; break;
+					default: break;
+					}
+
+					break;
+				}
+
+				default: break;
+			}
+
+			Handled = !oWinControlDefaultOnNotify(_hWnd, nmhdr, _pLResult, type);
+			break;
+		}
+
+		default: Handled = false; break;
+	}
+
+	return Handled;
 }
 
 int oWinControlGetNumSubItems(HWND _hControl)
@@ -1344,7 +1485,7 @@ int oWinControlInsertSubItem(HWND _hControl, const char* _SubItemText, int _SubI
 
 			if (index == CB_ERRSPACE)
 			{
-				oErrorSetLast(oERROR_AT_CAPACITY, "String is too large");
+				oErrorSetLast(std::errc::no_buffer_space, "String is too large");
 				index = CB_ERR;
 			}
 
@@ -1409,7 +1550,7 @@ bool oWinControlAddSubItems(HWND _hControl, const char* _DelimitedString, char _
 	}
 
 	if (!oStrTokFinishedSuccessfully(&ctx))
-		return oErrorSetLast(oERROR_CORRUPT, "Failed to parse tokenized string for combobox values");
+		return oErrorSetLast(std::errc::protocol_error, "Failed to parse tokenized string for combobox values");
 	return true;
 }
 
@@ -1424,13 +1565,13 @@ int oWinControlFindSubItem(HWND _hControl, const char* _SubItemText)
 		{
 			int index = ComboBox_FindStringExact(_hControl, 0, _SubItemText);
 			if (index == CB_ERR)
-				oErrorSetLast(oERROR_NOT_FOUND, "Text %s was not found in %s %p (%d)", oSAFESTRN(_SubItemText), oAsString(type), _hControl, GetDlgCtrlID(_hControl));
+				oErrorSetLast(std::errc::invalid_argument, "Text %s was not found in %s %p (%d)", oSAFESTRN(_SubItemText), oStd::as_string(type), _hControl, GetDlgCtrlID(_hControl));
 			break;
 		}
 
 		case oGUI_CONTROL_TAB:
 		{
-			oStringM text;
+			oStd::mstring text;
 			TCITEM item;
 			item.mask = TCIF_TEXT;
 			item.pszText = (LPSTR)text.c_str();
@@ -1546,7 +1687,7 @@ int oWinControlGetSelectedSubItem(HWND _hControl)
 
 oGUI_CONTROL_TYPE oWinControlGetType(HWND _hControl)
 {
-	oStringM ClassName;
+	oStd::mstring ClassName;
 	if (!GetClassName(_hControl, ClassName, static_cast<int>(ClassName.capacity())))
 		return oGUI_CONTROL_UNKNOWN;
 	
@@ -1692,7 +1833,7 @@ char* oWinControlGetSelectedText(char* _StrDestination, size_t _SizeofStrDestina
 			size_t len = end - start;
 	if (len >= _SizeofStrDestination)
 	{
-		oErrorSetLast(oERROR_AT_CAPACITY, "Buffer too small to receive string");
+		oErrorSetLast(std::errc::no_buffer_space, "Buffer too small to receive string");
 		return nullptr;
 	}
 
@@ -1750,7 +1891,7 @@ bool oWinControlSelect(HWND _hControl, int _Start, int _Length)
 bool oWinControlSetValue(HWND _hControl, float _Value)
 {
 	oWINV(_hControl);
-	oStringM text;
+	oStd::mstring text;
 	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch (type)
 	{
@@ -1766,7 +1907,7 @@ bool oWinControlSetValue(HWND _hControl, float _Value)
 
 float oWinControlGetFloat(HWND _hControl)
 {
-	oStringM text;
+	oStd::mstring text;
 	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch (type)
 	{
@@ -1779,8 +1920,8 @@ float oWinControlGetFloat(HWND _hControl)
 	}
 
 	float f = 0.0f;
-	if (!oAtof(text, &f))
-		return oNumericLimits<float>::quiet_NaN();
+	if (!oStd::atof(text, &f))
+		return std::numeric_limits<float>::quiet_NaN();
 	return f;
 }
 
@@ -1791,7 +1932,7 @@ bool oWinControlSetIcon(HWND _hControl, HICON _hIcon, int _SubItemIndex)
 	{
 		case oGUI_CONTROL_ICON:
 			if (_SubItemIndex != oInvalid)
-				return oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid _SubItemIndex");
+				return oErrorSetLast(std::errc::invalid_argument, "Invalid _SubItemIndex");
 			SendMessage(_hControl, STM_SETICON, (WPARAM)_hIcon, 0);
 			return true;
 		default:
@@ -1807,7 +1948,7 @@ HICON oWinControlGetIcon(HWND _hControl, int _SubItemIndex)
 		case oGUI_CONTROL_ICON:
 			if (_SubItemIndex != oInvalid)
 		{
-				oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid _SubItemIndex");
+				oErrorSetLast(std::errc::invalid_argument, "Invalid _SubItemIndex");
 	return nullptr;
 	}
 			return oWinGetIcon(_hControl);
@@ -1825,7 +1966,7 @@ bool oWinControlIsChecked(HWND _hControl)
 		case oGUI_CONTROL_CHECKBOX:
 		case oGUI_CONTROL_RADIOBUTTON:
 	{
-			oErrorSetLast(oERROR_NONE);
+			oErrorSetLast(0);
 			LRESULT State = Button_GetState(_hControl);
 			return (State & BST_CHECKED) == BST_CHECKED;
 			}
@@ -1967,7 +2108,7 @@ bool oWinControlGetErrorState(HWND _hControl)
 	switch (type)
 	{
 		case oGUI_CONTROL_PROGRESSBAR:
-			oErrorSetLast(oERROR_NONE);
+			oErrorSetLast(0);
 			return PBST_ERROR == SendMessage(_hControl, PBM_GETSTATE, 0, 0);
 		default:
 			return oErrorSetLastBadType(_hControl, type);

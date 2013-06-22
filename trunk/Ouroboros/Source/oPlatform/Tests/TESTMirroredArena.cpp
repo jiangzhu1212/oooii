@@ -24,11 +24,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oAllocatorTLSF.h>
-#include <oBasis/oByte.h>
+#include <oStd/byte.h>
 #include <oBasis/oMemory.h>
 #include <oBasis/oPath.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oError.h>
+#include <oConcurrency/event.h>
 #include <oPlatform/oMirroredArena.h>
 #include <oPlatform/oPageAllocator.h>
 #include <oPlatform/oProcess.h>
@@ -45,6 +46,8 @@ static const char* TEST2[] = { "This is a test", "This is only a test", "We now 
 
 static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirroredArena::USAGE _Usage)
 {
+	*_StrStatus = 0;
+
 	oRef<threadsafe oProcess> Client;
 	{
 		int exitcode = 0;
@@ -52,20 +55,35 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 		*msg = 0;
 		oTESTB(oSpecialTest::CreateProcess("PLATFORM_oMirroredArenaClient", &Client), "");
 		oTESTB(oSpecialTest::Start(Client, msg, oCOUNTOF(msg), &exitcode), "%s", msg);
+		oTRACE("SERVER: starting mirrored arena construction...");
 	}
 
 	oRef<oMirroredArena> MirroredArenaServer;
 
-	oOnScopeExit OnScopeExit([&] { 
+	oStd::finally OnScopeExit([&] { 
 		oPageUnreserve(BASE_ADDRESS); 
 		MirroredArenaServer = nullptr;
 	});
 	{
 		oMirroredArena::DESC desc;
+		oTRACE("SERVER: oPageReserveAndCommit...");
 		desc.BaseAddress = oPageReserveAndCommit(BASE_ADDRESS, ARENA_SIZE);
+
+		if (!desc.BaseAddress)
+		{
+			oTRACE("SERVER: no base address (this should return skipped).");
+			oErrorSetLast(std::errc::permission_denied, "Could not allocate arena at 0x%p from server (another process may be using that space).", BASE_ADDRESS);
+			oPrintf(_StrStatus, _SizeofStrStatus, oErrorGetLastString());
+			return oTest::SKIPPED;
+		}
+		else
+			oTRACE("SERVER: got base address (no skip).");
+
 		desc.Usage = _Usage;
 		desc.Size = ARENA_SIZE;
+		oTRACE("SERVER: creating mirrored arena...");
 		oTESTB0(oMirroredArenaCreate(desc, &MirroredArenaServer));
+		oTRACE("SERVER: mirrored arena created.");
 	}
 
 	// Mark all memory as dirty and make it so we can debug a bit better by writing 
@@ -83,7 +101,9 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 		oAllocator::DESC desc;
 		desc.pArena = BASE_ADDRESS;
 		desc.ArenaSize = ARENA_SIZE;
+		oTRACE("SERVER: creating TLSF allocator...");
 		oTESTB(oAllocatorCreateTLSF("MirroredArenaServer", desc, &AllocatorServer), "Failed to create allocator for server");
+		oTRACE("SERVER: TLSF allocator created.");
 	}
 
 	// Copy some test data into the server heap
@@ -93,7 +113,9 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 	// Ignore asserts about leaving dangling memory because if that's so, it's 
 	// probably because the test failed somewhere else, so have THAT error come
 	// through, not the fact that we aborted before fully tidying up.
-	oOnScopeExit OSEReset([&] { AllocatorServer->Reset(); } );
+	oStd::finally OSEReset([&] { AllocatorServer->Reset(); } );
+
+	oTRACE("SERVER: writing to shared memory...");
 
 	oTESTB(test1, "test1 allocation failed");
 	memcpy(test1, TEST1, sizeof(TEST1));
@@ -120,9 +142,11 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 
 	std::vector<char> transitBuffer(sizeRequired);
 
+	oTRACE("SERVER: packing diffs...");
+
 	size_t changeSize = 0;
-	oTESTB(MirroredArenaServer->RetrieveChanges(oGetData(transitBuffer), oGetDataSize(transitBuffer), &changeSize) && changeSize == sizeRequired, "RetreiveChanges failed");
-	oTESTB(MirroredArenaServer->IsInChanges(test1, sizeof(TEST1), oGetData(transitBuffer)), "test1 cannot be confirmed in the changes");
+	oTESTB(MirroredArenaServer->RetrieveChanges(oStd::data(transitBuffer), oStd::size(transitBuffer), &changeSize) && changeSize == sizeRequired, "RetreiveChanges failed");
+	oTESTB(MirroredArenaServer->IsInChanges(test1, sizeof(TEST1), oStd::data(transitBuffer)), "test1 cannot be confirmed in the changes");
 	
 	// @oooii-tony: It'd be nice to test what happens if the pages are non-
 	// contiguous but I think Allocate either writes a 0xdeadbeef type pattern to
@@ -130,36 +154,47 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 	// allocation conditions. Really more of this test should be expanded to ensure
 	// this works, but I gotta get back to other things at the moment. oBug_1383
 	//size_t extraSize = _Usage == oMirroredArena::READ_WRITE ? ARENA_SIZE : kPad-16;
-	//oTESTB(!MirroredArenaServer->IsInChanges(test1, sizeof(TEST1) + extraSize, oGetData(transitBuffer)), "false positive on a too-large test1 buffer test");
+	//oTESTB(!MirroredArenaServer->IsInChanges(test1, sizeof(TEST1) + extraSize, oStd::data(transitBuffer)), "false positive on a too-large test1 buffer test");
 	
-	oTESTB(!MirroredArenaServer->IsInChanges(oByteAdd(BASE_ADDRESS, ~0u), 16, oGetData(transitBuffer)), "false positive on an address outside of arena before");
-	oTESTB(!MirroredArenaServer->IsInChanges(oByteAdd(BASE_ADDRESS, ARENA_SIZE), 16, oGetData(transitBuffer)), "false positive on an address outside of arena after");
+	oTESTB(!MirroredArenaServer->IsInChanges(oStd::byte_add(BASE_ADDRESS, ~0u), 16, oStd::data(transitBuffer)), "false positive on an address outside of arena before");
+	oTESTB(!MirroredArenaServer->IsInChanges(oStd::byte_add(BASE_ADDRESS, ARENA_SIZE), 16, oStd::data(transitBuffer)), "false positive on an address outside of arena after");
+
+	oTRACE("SERVER: creating a socket to send diffs...");
 
 	// Set up a socket to communicate with other process
 	oRef<threadsafe oSocket> ClientSocket;
 	{
 		oSocket::DESC desc;
-		oFromString( &desc.Addr, "127.0.0.1:1234" );
+		oStd::from_string( &desc.Addr, "127.0.0.1:1234" );
 		desc.ConnectionTimeoutMS = 1000;
 		desc.Style = oSocket::BLOCKING;
 		oTESTB0(oSocketCreate("MirroredArena Server's Client", desc, &ClientSocket));
 	}
 
+	oTRACE("SERVER: socket created.");
+
 	oTRACE("test1: 0x%p", test1);
 	oTRACE("test2Strings: 0x%p", test2Strings);
 
+	oTRACE("SERVER: send1...");
 	int SizeToSend = sizeof(test1);
 	oTESTB(ClientSocket->Send(&SizeToSend, sizeof(SizeToSend), &test1, SizeToSend), "Failed to send test1");
 
+	oTRACE("SERVER: send2...");
 	SizeToSend = sizeof(test2Strings);
 	oTESTB(ClientSocket->Send(&SizeToSend, sizeof(SizeToSend), &test2Strings, SizeToSend), "Failed to send test2Strings");
 
+	oTRACE("SERVER: send3...");
 	SizeToSend = (oSocket::size_t)changeSize;
-	oTESTB(ClientSocket->Send(&SizeToSend, sizeof(SizeToSend), oGetData(transitBuffer), SizeToSend), "Failed to send memory diffs");
+	oTESTB(ClientSocket->Send(&SizeToSend, sizeof(SizeToSend), oStd::data(transitBuffer), SizeToSend), "Failed to send memory diffs");
+
+	oTRACE("SERVER: all sends complete.");
 
 	AllocatorServer->Reset(); // blow away the memory, buffer is in flight
 
+	oTRACE("SERVER: waiting for client process to exit.");
 	oTESTB(Client->Wait(10000), "Client did not close cleanly");
+	oTRACE("SERVER: client process exited.");
 
 	int exitcode = 0;
 	oTESTB(Client->GetExitCode(&exitcode), "Failed to get final exit code");
@@ -178,33 +213,24 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 	return oTest::SUCCESS;
 }
 
+#define RUNTEST(_DiffType) do \
+	{	oTest::RESULT r = RunTest(subStatus, oCOUNTOF(subStatus), oMirroredArena::_DiffType); \
+		if (r != SUCCESS) \
+		{	oPrintf(_StrStatus, _SizeofStrStatus, #_DiffType ": %s", subStatus); \
+			return r; \
+		} \
+	} while (false)
+
 struct PLATFORM_oMirroredArena : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		char subStatus[1024];
-
-		if (SUCCESS != RunTest(subStatus, oCOUNTOF(subStatus), oMirroredArena::READ_WRITE))
-		{
-			oPrintf(_StrStatus, _SizeofStrStatus, "READ_WRITE: %s", subStatus);
-			return FAILURE;
-		}
-
+		RUNTEST(READ_WRITE);
 		oTRACE("--- Running oMirroredArena test with exception-based diffing - expect a lot of write access violations ---");
-		if (SUCCESS != RunTest(subStatus, oCOUNTOF(subStatus), oMirroredArena::READ_WRITE_DIFF))
-		{
-			oPrintf(_StrStatus, _SizeofStrStatus, "READ_WRITE_DIFF: %s", subStatus);
-			return FAILURE;
-		}
-
+		RUNTEST(READ_WRITE_DIFF);
 		oTRACE("--- no more write access violations should occur ---");
-
-		if (SUCCESS != RunTest(subStatus, oCOUNTOF(subStatus), oMirroredArena::READ_WRITE_DIFF_NO_EXCEPTIONS))
-		{
-			oPrintf(_StrStatus, _SizeofStrStatus, "READ_WRITE_DIFF_NO_EXCEPTIONS: %s", subStatus);
-			return FAILURE;
-		}
-
+		RUNTEST(READ_WRITE_DIFF_NO_EXCEPTIONS);
 		return SUCCESS;
 	}
 };
@@ -219,13 +245,21 @@ struct PLATFORM_oMirroredArenaClient : public oSpecialTest
 
 		oRef<oMirroredArena> MirroredArenaClient;
 
-		oOnScopeExit OnScopeExit([&] { 
+		oStd::finally OnScopeExit([&] { 
 			oPageUnreserve(BASE_ADDRESS); 
 			MirroredArenaClient = nullptr;
 		});
 		{
 			oMirroredArena::DESC desc;
 			desc.BaseAddress = oPageReserveAndCommit(BASE_ADDRESS, ARENA_SIZE, false);
+
+			if (!desc.BaseAddress)
+			{
+				oErrorSetLast(std::errc::permission_denied, "Could not allocate arena at 0x%p from client (another process may be using that space).", BASE_ADDRESS);
+				oStrcpy(_StrStatus, _SizeofStrStatus, oErrorGetLastString());
+				return oTest::SKIPPED;
+			}
+
 			desc.Usage = oMirroredArena::READ;
 			desc.Size = ARENA_SIZE;
 			oTESTB(oMirroredArenaCreate(desc, &MirroredArenaClient), "Failed to create mirrored arena for client");
@@ -233,8 +267,8 @@ struct PLATFORM_oMirroredArenaClient : public oSpecialTest
 
 		oTRACE("%s: MirroredArenaClient created", GetName());
 
-		oEvent connectEvent;
-		connectEvent.Reset();
+		oConcurrency::event connectEvent;
+		connectEvent.reset();
 		// Listen for a connection
 		oRef<threadsafe oSocketServer2> server;
 		oRef<threadsafe oSocket> client;
@@ -247,8 +281,8 @@ struct PLATFORM_oMirroredArenaClient : public oSpecialTest
 				if(!client)
 				{
 					client = _Socket;
-					oTRACE("SERVER: %s received connection from %s (%s)", server->GetDebugName(), client->GetDebugName(), oErrorGetLast() ? oAsString(oErrorGetLast()) : "OK");
-					connectEvent.Set();
+					oTRACE("SERVER: %s received connection from %s (%s)", server->GetDebugName(), client->GetDebugName(), oErrorGetLast() ? oErrorAsString(oErrorGetLast()) : "OK");
+					connectEvent.set();
 				}
 			};
 			oTRACE("%s: MirroredArenaClient server about to be created", GetName());
@@ -258,7 +292,7 @@ struct PLATFORM_oMirroredArenaClient : public oSpecialTest
 		oTRACE("%s: MirroredArenaClient server created", GetName());
 		NotifyReady();
 
-		oTESTB(connectEvent.Wait(2000), "Timed out waiting for connection");
+		oTESTB(connectEvent.wait_for(oStd::chrono::milliseconds(2000)), "Timed out waiting for connection");
 
 		std::vector<char> transitBuffer(ARENA_SIZE + 1024);
 
@@ -273,26 +307,26 @@ struct PLATFORM_oMirroredArenaClient : public oSpecialTest
 			int received = 0;
 			while(received != SzToReceive)
 			{
-				received += client->Recv(oByteAdd( oGetData(transitBuffer), received), SzToReceive - received);
+				received += client->Recv(oStd::byte_add( oStd::data(transitBuffer), received), SzToReceive - received);
 			}
 			oTESTB(received, "CLIENT: Failed to receive data from server %s", oErrorGetLastString());
 
 			// Strange look to accommodate Nagel's algorithm
-			void* p = oGetData(transitBuffer);
+			void* p = oStd::data(transitBuffer);
 			while (received)
 			{
 				if (!test1)
 				{
 					test1 = *(unsigned int**)p;
 					received -= sizeof(unsigned int*);
-					p = oByteAdd(p, sizeof(unsigned int*));
+					p = oStd::byte_add(p, sizeof(unsigned int*));
 				}
 
 				if (received && !test2Strings)
 				{
 					test2Strings = *(const char***)p;
 					received -= sizeof(const char**);
-					p = oByteAdd(p, sizeof(const char**));
+					p = oStd::byte_add(p, sizeof(const char**));
 				}
 
 				if (received && !diffs)

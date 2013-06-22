@@ -24,24 +24,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPUTestHLSL.h>
-#include <oGPU/oGPUMaterialConstants.h>
 
-struct VS_INSTANCED
+VSOUT main(VSININSTANCED In)
 {
-	// Per-vertex
-	float3 LSPosition : POSITION;
-
-	// Per-instance
-	float3 Translation : TRANSLATION;
-	float4 Rotation : ROTATION;
-};
-
-VSOUT main(VS_INSTANCED In)
-{
-	VSOUT Out = (VSOUT)0;
-	Out.WSPosition = oQRotate(In.Rotation, In.LSPosition) + In.Translation;
-	Out.SSPosition = oGPUWStoSS(Out.WSPosition);
-	Out.LSPosition = In.LSPosition;
-	Out.Color = float4(GPUMaterialConstants.DiffuseColor, GPUMaterialConstants.Opacity);
-	return Out;
+	return CommonVS(In);
 }

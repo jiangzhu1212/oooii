@@ -28,7 +28,7 @@
 #ifndef oD3DX11_h
 #define oD3DX11_h
 
-#include "oWinSoftLinkCommon.h"
+#include <oPlatform/oModuleUtil.h>
 
 oDECLARE_DLL_SINGLETON_BEGIN(oD3DX11)
 	HRESULT (__stdcall *D3DX11CreateTextureFromFileA)(ID3D11Device *pDevice, LPCTSTR pSrcFile, D3DX11_IMAGE_LOAD_INFO *pLoadInfo, ID3DX11ThreadPump *pPump, ID3D11Resource **ppTexture, HRESULT *pHResult);

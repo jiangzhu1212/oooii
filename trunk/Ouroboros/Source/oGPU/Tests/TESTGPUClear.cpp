@@ -37,20 +37,16 @@ struct GPU_Clear : public oTest
 		oRef<oGPUDevice> Device;
 		_pPrimaryRenderTarget->GetDevice(&Device);
 
-		static oColor sClearColors[] = { std::OOOiiGreen, std::White };
+		static oStd::color sClearColors[] = { oStd::OOOiiGreen, oStd::White };
 
 		oRef<oGPUCommandList> ICL;
 		Device->GetImmediateCommandList(&ICL);
-
-		if (!Device->BeginFrame())
-			return;
 
 		oGPU_CLEAR_DESC CD;
 		CD.ClearColor[0] = sClearColors[Device->GetFrameID() % oCOUNTOF(sClearColors)];
 		_pPrimaryRenderTarget->SetClearDesc(CD);
 
 		ICL->Clear(_pPrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
-		Device->EndFrame();
 	}
 
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override

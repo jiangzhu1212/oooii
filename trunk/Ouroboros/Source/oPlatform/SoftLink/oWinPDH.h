@@ -27,7 +27,7 @@
 #ifndef oWinPDH_h
 #define oWinPDH_h
 
-#include "oWinSoftLinkCommon.h"
+#include <oPlatform/oModuleUtil.h>
 #include <pdh.h>
 
 struct oWinPDH : oProcessSingleton<oWinPDH>

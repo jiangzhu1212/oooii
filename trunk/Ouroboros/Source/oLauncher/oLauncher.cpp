@@ -1,4 +1,28 @@
-// $(header)
+/**************************************************************************
+ * The MIT License                                                        *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
+ *                                                                        *
+ * Permission is hereby granted, free of charge, to any person obtaining  *
+ * a copy of this software and associated documentation files (the        *
+ * "Software"), to deal in the Software without restriction, including    *
+ * without limitation the rights to use, copy, modify, merge, publish,    *
+ * distribute, sublicense, and/or sell copies of the Software, and to     *
+ * permit persons to whom the Software is furnished to do so, subject to  *
+ * the following conditions:                                              *
+ *                                                                        *
+ * The above copyright notice and this permission notice shall be         *
+ * included in all copies or substantial portions of the Software.        *
+ *                                                                        *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
+ **************************************************************************/
 
 #include <oPlatform/oModule.h>
 #include <oPlatform/oMsgBox.h>
@@ -19,11 +43,18 @@ static oOption sCmdOptions[] =
 };
 
 // @oooii-tony: potentially promote this to a util lib to be used more broadly...
-#define oOPT_CASE(_ShortNameConstant, _Value, _Dest) case _ShortNameConstant: { if (!oFromString(&(_Dest), value)) { return oErrorSetLast(oERROR_INVALID_PARAMETER, "-%c %s cannot be interpreted as a(n) %s", (_ShortNameConstant), (_Value), typeid(_Dest).name()); } break; }
+
+namespace oStd {
+
+	bool from_string(const char** _ppConstStr, const char* _Value) { *_ppConstStr = _Value; return true; }
+
+} // namespace oStd
+
+#define oOPT_CASE(_ShortNameConstant, _Value, _Dest) case _ShortNameConstant: { if (!oStd::from_string(&(_Dest), value)) { return oErrorSetLast(std::errc::invalid_argument, "-%c %s cannot be interpreted as a(n) %s", (_ShortNameConstant), (_Value), typeid(_Dest).name()); } break; }
 #define oOPT_CASE_DEFAULT(_ShortNameVariable, _Value, _NthOption) \
-	case ' ': { return oErrorSetLast(oERROR_INVALID_PARAMETER, "There should be no parameters that aren't switches passed"); break; } \
-	case '?': { return oErrorSetLast(oERROR_INVALID_PARAMETER, "Parameter %d is not recognized", (_NthOption)); break; } \
-	case ':': { return oErrorSetLast(oERROR_INVALID_PARAMETER, "Parameter %d is missing a value", (_NthOption)); break; } \
+	case ' ': { return oErrorSetLast(std::errc::invalid_argument, "There should be no parameters that aren't switches passed"); break; } \
+	case '?': { return oErrorSetLast(std::errc::invalid_argument, "Parameter %d is not recognized", (_NthOption)); break; } \
+	case ':': { return oErrorSetLast(std::errc::invalid_argument, "Parameter %d is missing a value", (_NthOption)); break; } \
 	default: { oTRACE("Unhandled option -%c %s", (_ShortNameVariable), oSAFESTR(_Value)); break; }
 
 bool oParseCmdLine(int argc, const char* argv[], oVERSIONED_LAUNCH_DESC* _pDesc)
@@ -65,7 +96,7 @@ int oLauncherMain(int argc, const char* argv[])
 {
 	if (!oLauncherMain1(argc, argv))
 	{
-		oStringM ModuleName;
+		oStd::mstring ModuleName;
 		oMSGBOX_DESC d;
 		d.Title = oGetFilebase(oModuleGetName(ModuleName));
 		d.Type = oMSGBOX_ERR;

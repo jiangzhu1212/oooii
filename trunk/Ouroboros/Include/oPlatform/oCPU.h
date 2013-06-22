@@ -24,10 +24,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 // Utility for querying the Central Processing Unit hardware of the current 
-// computer.
+// computer. If there is more than one CPU, then the entire collection is 
+// treated as a single CPU.
 #pragma once
 #ifndef oCPU_h
 #define oCPU_h
+
+#include <oBasis/oRTTI.h>
 
 enum oCPU_TYPE
 {
@@ -37,9 +40,7 @@ enum oCPU_TYPE
 	oCPU_IA64,
 	oCPU_ARM,
 };
-
-oAPI const char* oAsString(const oCPU_TYPE& _Type);
-
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oCPU_TYPE)
 enum oCPU_SUPPORT_TYPE
 {
 	oCPU_NOT_FOUND, // the feature is not exposed
@@ -47,9 +48,7 @@ enum oCPU_SUPPORT_TYPE
 	oCPU_HW_SUPPORT_ONLY,
 	oCPU_FULL_SUPPORT, // both the current platform and HW support the feature
 };
-
-oAPI const char* oAsString(const oCPU_SUPPORT_TYPE& _Type);
-
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oCPU_SUPPORT_TYPE)
 struct oCPU_CACHE_DESC
 {
 	unsigned int Size;
@@ -62,7 +61,6 @@ struct oCPU_DESC
 	oCPU_TYPE Type;
 	int NumProcessors;
 	int NumProcessorPackages;
-	int NumNumaNodes;
 	int NumHardwareThreads;
 	oCPU_CACHE_DESC DataCacheDescs[3];
 	oCPU_CACHE_DESC InstructionCacheDescs[3];
@@ -71,7 +69,7 @@ struct oCPU_DESC
 };
 
 // Returns false if the specified CPU doesn't exist.
-oAPI bool oCPUEnum(int _CPUIndex, oCPU_DESC* _pDesc);
+oAPI bool oCPUGetDesc(oCPU_DESC* _pDesc);
 
 // Returns the human-readable feature string for the nth feature supported by 
 // this CPU. This will return nullptr at the end of the list. This string can be 
@@ -83,6 +81,6 @@ oAPI const char* oCPUEnumFeatures(int _FeatureIndex);
 // Given a string that is the same as returned by oCPUEnumFeatures, return at 
 // what level that feature is supported. If an unrecognized string is passed, 
 // this will return oCPU_NO_SUPPORT.
-oAPI oCPU_SUPPORT_TYPE oCPUCheckFeatureSupport(int _CPUIndex, const char* _Feature);
+oAPI oCPU_SUPPORT_TYPE oCPUCheckFeatureSupport(const char* _Feature);
 
 #endif

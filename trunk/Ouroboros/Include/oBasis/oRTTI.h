@@ -27,12 +27,13 @@
 #ifndef oRTTI_h
 #define oRTTI_h
 
-#include <oBasis/oAssert.h>
-#include <oBasis/oByte.h>
-#include <oBasis/oMacros.h>
-#include <oBasis/oTypeID.h>
+#include <oStd/assert.h>
+#include <oStd/byte.h>
+#include <oStd/fourcc.h>
+#include <oStd/macros.h>
 #include <oBasis/oTypeInfo.h>
 #include <typeinfo>
+#include <vector>
 
 // _____________________________________________________________________________
 // oRTTI_TYPE - RTTI atomic building block types
@@ -63,10 +64,13 @@ enum oRTTI_TYPE
 
 #define oRTTI_CAPS_NONE(operation, type_name)
 
-#define oRTTI_CAPS_ARRAY(operation, type_name) \
+#define oRTTI_CAPS_ARRAY_NO_STD(operation, type_name) \
 	oRTTI_CONTAINED_TYPE_##operation(c_array, type_name) \
-	oRTTI_CONTAINED_TYPE_##operation(oArray, type_name) \
-	oRTTI_CONTAINED_TYPE_##operation(std_vector, type_name)
+	oRTTI_CONTAINED_TYPE_##operation(ostd_fixed_vector, type_name)
+
+#define oRTTI_CAPS_ARRAY(operation, type_name) \
+	oRTTI_CAPS_ARRAY_NO_STD(operation, type_name) \
+	oRTTI_STD_CONTAINED_TYPE_##operation(std_vector, type_name, std::vector<type_name>)
 
 #define oRTTI_CAPS_POINTER(operation, type_name) \
 	oRTTI_POINTER_TYPE_##operation(c_ptr, type_name)
@@ -97,20 +101,44 @@ class oRTTI_OBJECT
 // TODO: These should probably move to their appropriate headers
 
 oRTTI_CONTAINER_DECLARATION(c_array)
-oRTTI_CONTAINER_DECLARATION(oArray)
-oRTTI_CONTAINER_DECLARATION(std_vector)
+oRTTI_CONTAINER_DECLARATION(ostd_fixed_vector)
 
-oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, bool)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_NONE, oVersion)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY_NO_STD, bool)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, char)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, uchar)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, short)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, ushort)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, int)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, int2)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, int3)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, int4)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, uint)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, uint2)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, uint3)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, uint4)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, llong)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, ullong)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, float)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, float2)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, float3)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, float4)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, double)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, oStd::color, ostd_color)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, oRGBf)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, float4x4)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, quatf)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, oPlanef)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, oSpheref)
+oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, oAABoxf)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, oStd::fourcc, ostd_fourcc)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, std::string, std_string)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, oStd::sstring, ostd_sstring)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, oStd::mstring, ostd_mstring)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, oStd::lstring, ostd_lstring)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, oStd::xlstring, ostd_xlstring)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, oStd::xxlstring, ostd_xxlstring)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, oStd::path_string, ostd_path_string)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, oStd::uri_string, ostd_uri_string)
 
 #endif oRTTI_h

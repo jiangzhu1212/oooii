@@ -24,9 +24,10 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oWinTray.h>
-#include <oBasis/oMutex.h>
-#include <oBasis/oStdThread.h>
+#include <oConcurrency/mutex.h>
+#include <oStd/oStdThread.h>
 #include <oBasis/oString.h>
+#include <oPlatform/oReporting.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oSystem.h>
 #include <oPlatform/Windows/oWinWindowing.h>
@@ -128,29 +129,42 @@ struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
 {
 	oTrayCleanup()
 		: AllowInteraction(true)
-	{}
+	{
+		oReportingReference();
+	}
 
 	~oTrayCleanup()
 	{
-		oLockGuard<oSharedMutex> lock(Mutex);
+		{
+			oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
+			AllowInteraction = false;
+		}
+
+		if (!DeferredHideIconThreads.empty())
+		{
+			for (auto it = std::begin(DeferredHideIconThreads); it != std::end(DeferredHideIconThreads); ++it)
+				it->join();
+		}
 
 		if (!Removes.empty())
 		{
-			oStringXL buf;
-			oStringM exec;
+			oStd::xlstring buf;
+			oStd::mstring exec;
 			oPrintf(buf, "oWindows Trace %s Cleaning up tray icons\n", oSystemGetExecutionPath(exec));
 			oThreadsafeOutputDebugStringA(buf);
 		}
 
-		AllowInteraction = false;
 		for (size_t i = 0; i < Removes.size(); i++)
 			oTrayShowIcon(Removes[i].hWnd, Removes[i].ID, 0, 0, false);
 
 		Removes.clear();
+
+		oReportingRelease();
 	}
 
 	void Register(HWND _hWnd, UINT _ID)
 	{
+		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
 		if (!AllowInteraction)
 			return;
 
@@ -160,7 +174,6 @@ struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
 			rti.hWnd = _hWnd;
 			rti.ID = _ID;
 			rti.TimeoutMS = 0;
-			oLockGuard<oSharedMutex> lock(Mutex);
 			Removes.push_back(rti);
 		}
 		else
@@ -169,6 +182,7 @@ struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
 
 	void Unregister(HWND _hWnd, UINT _ID)
 	{
+		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
 		if (!AllowInteraction)
 			return;
 
@@ -177,13 +191,32 @@ struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
 		rti.ID = _ID;
 		rti.TimeoutMS = 0;
 
-		oLockGuard<oSharedMutex> lock(Mutex);
-		oFindAndErase(Removes, rti);
+		oStd::find_and_erase(Removes, rti);
+	}
+
+	void Register(oStd::thread&& _DeferredHideIconThread)
+	{
+		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
+		DeferredHideIconThreads.push_back(std::move(_DeferredHideIconThread));
+	}
+
+	void Unregister(oStd::thread::id _DeferredHideIconThreadID)
+	{
+		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
+		for (auto it = std::begin(DeferredHideIconThreads); it != std::end(DeferredHideIconThreads); ++it)
+		{
+			if (it->get_id() == _DeferredHideIconThreadID)
+			{
+				*it = oStd::thread();
+				break;
+			}
+		}
 	}
 
 	static const oGUID GUID;
-	oArray<REMOVE_TRAY_ICON, 20> Removes;
-	oSharedMutex Mutex;
+	oStd::fixed_vector<REMOVE_TRAY_ICON, 20> Removes;
+	oStd::fixed_vector<oStd::thread, 20> DeferredHideIconThreads;
+	oConcurrency::shared_mutex Mutex;
 	volatile bool AllowInteraction;
 };
 
@@ -237,13 +270,16 @@ static void DeferredHideIcon(HWND _hWnd, UINT _ID, unsigned int _TimeoutMS)
 	Sleep(_TimeoutMS);
 	oTRACE("Auto-closing tray icon HWND=0x%p ID=%u", _hWnd, _ID);
 	oTrayShowIcon(_hWnd, _ID, 0, 0, false);
+
+	oTrayCleanup::Singleton()->Unregister(oStd::this_thread::get_id());
 	oCRTLeakTracker::Singleton()->ReleaseDelay();
 }
 
 static void oTrayScheduleIconHide(HWND _hWnd, UINT _ID, unsigned int _TimeoutMS)
 {
+	oCRTLeakTracker::Singleton()->ReferenceDelay();
 	oStd::thread t(DeferredHideIcon, _hWnd, _ID, _TimeoutMS);
-	t.detach();
+	oTrayCleanup::Singleton()->Register(std::move(t));
 }
 
 bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const char* _Title, const char* _Message)
@@ -261,12 +297,12 @@ bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const
 
 	// MS recommends truncating at 200 for English: http://msdn.microsoft.com/en-us/library/bb773352(v=vs.85).aspx
 	static const int MaxInfo = 201;
-	oStrncpy(nid.szInfo, MaxInfo, oSAFESTR(_Message), MaxInfo - 1);
+	oStrncpy(nid.szInfo, MaxInfo, _Message, MaxInfo - 1);
 	oAddTruncationElipse(nid.szInfo, MaxInfo);
 
 	// MS recommends truncating at 48 for English: http://msdn.microsoft.com/en-us/library/bb773352(v=vs.85).aspx
 	static const int MaxTitle = 49;
-	oStrncpy(nid.szInfoTitle, MaxTitle, oSAFESTR(_Title), MaxTitle - 1);
+	oStrncpy(nid.szInfoTitle, MaxTitle, _Title, MaxTitle - 1);
 
 	nid.dwInfoFlags = NIIF_NOSOUND;
 
@@ -296,17 +332,11 @@ bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const
 
 		oTrayShowIcon(_hWnd, _ID, 0, _hIcon, true);
 		if (timeout != oInfiniteWait)
-		{
-			oCRTLeakTracker::Singleton()->ReferenceDelay();
 			oTrayScheduleIconHide(_hWnd, _ID, timeout);
-		}
 	}
 
 	if (!Shell_NotifyIcon(NIM_MODIFY, &nid))
-	{
-		oWinSetLastError();
-		return false;
-	}
+		return oWinSetLastError();
 
 	return true;
 }

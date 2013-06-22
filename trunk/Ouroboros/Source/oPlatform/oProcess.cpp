@@ -28,14 +28,8 @@
 #include <oBasis/oRefCount.h>
 #include <oPlatform/Windows/oWindows.h>
 #include <string>
+#include <set>
 #include "SoftLink/oWinPSAPI.h"
-
-const oGUID& oGetGUID(threadsafe const oProcess* threadsafe const *)
-{
-	// {EAA75587-9771-4d9e-A2EA-E406AA2E8B8F}
-	static const oGUID oIIDProcess = { 0xeaa75587, 0x9771, 0x4d9e, { 0xa2, 0xea, 0xe4, 0x6, 0xaa, 0x2e, 0x8b, 0x8f } };
-	return oIIDProcess;
-}
 
 struct Process_Impl : public oProcess
 {
@@ -75,7 +69,7 @@ struct Process_Impl : public oProcess
 bool oProcessCreate(const oProcess::DESC& _Desc, threadsafe oProcess** _ppProcess)
 {
 	if (!_ppProcess)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 	bool success = false;
 	oCONSTRUCT(_ppProcess, Process_Impl(_Desc, &success));
 	if (success)
@@ -144,7 +138,7 @@ Process_Impl::Process_Impl(const DESC& _Desc, bool* _pSuccess)
 		HANDLE hInputWriteTmp = 0;
 		if (!CreatePipe(&hOutputReadTmp, &hOutputWrite, &sa, 0))
 		{
-			oErrorSetLast(oERROR_REFUSED);
+			oErrorSetLast(std::errc::permission_denied);
 			return;
 		}
 
@@ -154,7 +148,7 @@ Process_Impl::Process_Impl(const DESC& _Desc, bool* _pSuccess)
 		{
 			oVB(CloseHandle(hOutputReadTmp));
 			oVB(CloseHandle(hOutputWrite));
-			oErrorSetLast(oERROR_REFUSED);
+			oErrorSetLast(std::errc::permission_denied);
 			return;
 		}
 
@@ -205,7 +199,7 @@ Process_Impl::Process_Impl(const DESC& _Desc, bool* _pSuccess)
 Process_Impl::~Process_Impl()
 {
 	if (Suspended)
-		Kill(oERROR_TIMEOUT);
+		Kill(std::errc::timed_out);
 	if (ProcessInfo.hProcess) CloseHandle(ProcessInfo.hProcess);
 	if (ProcessInfo.hThread) CloseHandle(ProcessInfo.hThread);
 	if (hOutputRead) CloseHandle(hOutputRead);
@@ -262,7 +256,7 @@ size_t Process_Impl::WriteToStdin(const void* _pSource, size_t _SizeofWrite) thr
 {
 	if (!hInputWrite)
 	{
-		oErrorSetLast(oERROR_REFUSED);
+		oErrorSetLast(std::errc::permission_denied);
 		return 0;
 	}
 
@@ -276,7 +270,7 @@ size_t Process_Impl::ReadFromStdout(void* _pDestination, size_t _SizeofRead) thr
 {
 	if (!hOutputRead)
 	{
-		oErrorSetLast(oERROR_REFUSED);
+		oErrorSetLast(std::errc::permission_denied);
 		return 0;
 	}
 	
@@ -313,7 +307,7 @@ bool oProcessWaitExit(unsigned int _ProcessID, unsigned int _TimeoutMS)
 	bool result = oWaitSingle(hProcess, _TimeoutMS);
 	CloseHandle(hProcess);
 	if (!result)
-		oErrorSetLast(oERROR_TIMEOUT);
+		oErrorSetLast(std::errc::timed_out);
 	return result;
 }
 
@@ -341,9 +335,9 @@ char* oProcessGetName(char* _StrDestination, size_t _SizeofStrDestination, unsig
 	if (!hProcess)
 		return nullptr;
 
-	oStringPath Temp;
+	oStd::path_string Temp;
 	if (0 == oWinPSAPI::Singleton()->GetModuleFileNameExA(hProcess, nullptr, Temp.c_str(), oUInt(Temp.capacity())))
-		return (char*)oErrorSetLast(oERROR_NOT_FOUND, "failed to get name for process %u", _ProcessID);
+		return (char*)oErrorSetLast(std::errc::no_such_file_or_directory, "failed to get name for process %u", _ProcessID);
 	
 	oStrcpy(_StrDestination, _SizeofStrDestination, oGetFilebase(Temp));
 	return _StrDestination;
@@ -357,7 +351,7 @@ static const char* oGetCommandLineParameters(bool _ParametersOnly)
 
 	int argc = 0;
 	const char** argv = oWinCommandLineToArgvA(true, p, &argc);
-	oOnScopeExit OSCFreeArgv([&] { if (argv) oWinCommandLineToArgvAFree(argv); });
+	oStd::finally OSCFreeArgv([&] { if (argv) oWinCommandLineToArgvAFree(argv); });
 
 	const char* exe = strstr(p, argv[0]);
 	const char* after = exe + oStrlen(argv[0]);
@@ -390,7 +384,7 @@ bool oProcessHasDebuggerAttached(unsigned int _ProcessID)
 		}
 
 		else
-			oErrorSetLast(oERROR_NOT_FOUND, "no such process");
+			oErrorSetLast(std::errc::no_such_process);
 
 		return false;
 	}
@@ -402,14 +396,14 @@ bool oProcessGetMemoryStats(unsigned int _ProcessID, oPROCESS_MEMORY_STATS* _pSt
 {
 	if (!_pStats)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
+		oErrorSetLast(std::errc::invalid_argument);
 		return false;
 	}
 
 	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, _ProcessID);
 	if (!hProcess)
 	{
-		oErrorSetLast(oERROR_NOT_FOUND, "no such process");
+		oErrorSetLast(std::errc::no_such_process);
 		return false;
 	}
 
@@ -438,11 +432,11 @@ bool oProcessGetMemoryStats(unsigned int _ProcessID, oPROCESS_MEMORY_STATS* _pSt
 bool oProcessGetTimeStats(unsigned int _ProcessID, oPROCESS_TIME_STATS* _pStats)
 {
 	if (!_pStats)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, _ProcessID);
 	if (!hProcess)
-		return oErrorSetLast(oERROR_NOT_FOUND, "no such process");
+		return oErrorSetLast(std::errc::no_such_process);
 
 	BOOL result = false;
 	FILETIME c, e, k, u;
@@ -451,25 +445,25 @@ bool oProcessGetTimeStats(unsigned int _ProcessID, oPROCESS_TIME_STATS* _pStats)
 
 	if (result)
 	{
-		oVERIFY(oDateConvert(c, &_pStats->StartTime));
+		_pStats->StartTime = oStd::date_cast<time_t>(c);
 
 		// running processes don't have an exit time yet, so use 0
 		if (e.dwLowDateTime || e.dwHighDateTime)
-			oVERIFY(oDateConvert(e, &_pStats->ExitTime));
+			_pStats->ExitTime = oStd::date_cast<time_t>(e);
 		else
 			_pStats->ExitTime = 0;
 
 		LARGE_INTEGER li;
 		li.LowPart = k.dwLowDateTime;
 		li.HighPart = k.dwHighDateTime;
-		_pStats->KernelTime = oStd::chrono::duration_cast<oStd::chrono::seconds>(oFileTime100NanosecondUnits(li.QuadPart)).count();
+		_pStats->KernelTime = oStd::chrono::duration_cast<oStd::chrono::seconds>(oStd::file_time(li.QuadPart)).count();
 		li.LowPart = u.dwLowDateTime;
 		li.HighPart = u.dwHighDateTime;
-		_pStats->UserTime = oStd::chrono::duration_cast<oStd::chrono::seconds>(oFileTime100NanosecondUnits(li.QuadPart)).count();
+		_pStats->UserTime = oStd::chrono::duration_cast<oStd::chrono::seconds>(oStd::file_time(li.QuadPart)).count();
 	}
 
 	else
-		oErrorSetLast(oERROR_NOT_FOUND, "no such process");
+		oErrorSetLast(std::errc::no_such_process);
 
 	return !!result;
 }
@@ -489,15 +483,15 @@ double oProcessCalculateCPUUsage(unsigned int _ProcessID, unsigned long long* _p
 	LARGE_INTEGER li;
 	li.LowPart = ftIdle.dwLowDateTime;
 	li.HighPart = ftIdle.dwHighDateTime;
-	idle = oStd::chrono::duration_cast<oStd::chrono::seconds>(oFileTime100NanosecondUnits(li.QuadPart)).count();
+	idle = oStd::chrono::duration_cast<oStd::chrono::seconds>(oStd::file_time(li.QuadPart)).count();
 
 	li.LowPart = ftKernel.dwLowDateTime;
 	li.HighPart = ftKernel.dwHighDateTime;
-	kernel = oStd::chrono::duration_cast<oStd::chrono::seconds>(oFileTime100NanosecondUnits(li.QuadPart)).count();
+	kernel = oStd::chrono::duration_cast<oStd::chrono::seconds>(oStd::file_time(li.QuadPart)).count();
 
 	li.LowPart = ftUser.dwLowDateTime;
 	li.HighPart = ftUser.dwHighDateTime;
-	user = oStd::chrono::duration_cast<oStd::chrono::seconds>(oFileTime100NanosecondUnits(li.QuadPart)).count();
+	user = oStd::chrono::duration_cast<oStd::chrono::seconds>(oStd::file_time(li.QuadPart)).count();
 
 	unsigned long long totalSystemTime = kernel + user;
 	unsigned long long totalProcessTime = s.KernelTime + s.UserTime;
@@ -559,32 +553,39 @@ void oProcessEnumHeapAllocations(oFUNCTION<void(oPROCESS_ALLOC_DESC& _Desc)> _Wa
 	}
 }
 
-#include <set>
-static std::set<int> killProcess;
+static bool ProcessTerminateWorker(unsigned int _ProcessID, unsigned int _ExitCode, bool _Recursive, std::set<int>& _HandledProcessIDs);
 
-bool oProcessTerminateWorker(unsigned int _ProcessID, unsigned int _ExitCode, bool _Recursive)
+static bool TerminateChildProcess(unsigned int _ProcessID, unsigned int _ParentProcessID, const char* _ProcessExePath, unsigned int _TargetParentProcessID, unsigned int _ExitCode, bool _Recursive, std::set<int>& _HandledProcessIDs)
+{
+	if (_ParentProcessID == _TargetParentProcessID)
+		ProcessTerminateWorker(_ProcessID, _ExitCode, _Recursive, _HandledProcessIDs);
+	return true;
+}
+
+static bool ProcessTerminateWorker(unsigned int _ProcessID, unsigned int _ExitCode, bool _Recursive, std::set<int>& _HandledProcessIDs)
 {
 	bool result = true;
 
-  if (killProcess.find(_ProcessID) != killProcess.end())
-  {
-    // return success in that it is not an error, but we have an infinite recusion here
-    return true;
-  }
+	if (_HandledProcessIDs.find(_ProcessID) != _HandledProcessIDs.end())
+	{
+		// return success in that it is not an error, but we have an infinite 
+		// recursion here
+		return true;
+	}
 
-  killProcess.insert(_ProcessID);
+	_HandledProcessIDs.insert(_ProcessID);
 
 	if (_Recursive)
-		oProcessTerminateChildren(_ProcessID, _ExitCode, _Recursive);
+		oProcessEnum(oBIND(TerminateChildProcess, oBIND1, oBIND2, oBIND3, _ProcessID, _ExitCode, _Recursive, _HandledProcessIDs));
 
 	HANDLE hProcess = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, _ProcessID);
 	if (!hProcess)
 	{
-		oErrorSetLast(oERROR_NOT_FOUND, "no such process");
+		oErrorSetLast(std::errc::no_such_process);
 		return false;
 	}
 
-	oStringL ProcessName;
+	oStd::lstring ProcessName;
 	oProcessGetName(ProcessName, _ProcessID);
 
 	oTRACE("Terminating process %u (%s) with ExitCode %u", _ProcessID, ProcessName.c_str(), _ExitCode);
@@ -600,21 +601,14 @@ bool oProcessTerminateWorker(unsigned int _ProcessID, unsigned int _ExitCode, bo
 
 bool oProcessTerminate(unsigned int _ProcessID, unsigned int _ExitCode, bool _Recursive)
 {
-  killProcess.clear();
-  bool returnValue = oProcessTerminateWorker(_ProcessID, _ExitCode, _Recursive);
-  killProcess.clear(); // clear it afterward, otherwise a memory leak is reported
-  return returnValue;
-}
-
-static bool TerminateChildProcess(unsigned int _ProcessID, unsigned int _ParentProcessID, const char* _ProcessExePath, unsigned int _TargetParentProcessID, unsigned int _ExitCode, bool _Recursive)
-{
-	if (_ParentProcessID == _TargetParentProcessID)
-		oProcessTerminateWorker(_ProcessID, _ExitCode, _Recursive);
-	return true;
+	std::set<int> handledProcessIDs;
+	bool returnValue = ProcessTerminateWorker(_ProcessID, _ExitCode, _Recursive, handledProcessIDs);
+	return returnValue;
 }
 
 void oProcessTerminateChildren(unsigned int _ProcessID, unsigned int _ExitCode, bool _Recursive)
 {
-  // process each task and call TerminateChildProcess on it
-	oProcessEnum(oBIND(TerminateChildProcess, oBIND1, oBIND2, oBIND3, _ProcessID, _ExitCode, _Recursive));
+	std::set<int> handledProcessIDs;
+	// process each task and call TerminateChildProcess on it
+	oProcessEnum(oBIND(TerminateChildProcess, oBIND1, oBIND2, oBIND3, _ProcessID, _ExitCode, _Recursive, handledProcessIDs));
 }

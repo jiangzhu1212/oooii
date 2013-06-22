@@ -35,7 +35,7 @@ struct PLATFORM_oFileMap : public oTest
 	{
 		static const char* testPath = "Test/Textures/lena_1.png";
 		
-		oStringPath path;
+		oStd::path_string path;
 		oTESTB0(FindInputFile(path, testPath));
 
 		oSTREAM_RANGE r;
@@ -48,7 +48,7 @@ struct PLATFORM_oFileMap : public oTest
 
 		void* mapped = nullptr;
 		oTESTB0(oFileMap(path, true, r, &mapped));
-		oOnScopeExit OSEUnmap([&] { if (mapped) oFileUnmap(mapped); }); // safety unmap if we fail for some non-mapping reason
+		oStd::finally OSEUnmap([&] { if (mapped) oFileUnmap(mapped); }); // safety unmap if we fail for some non-mapping reason
 
 		oRef<oBuffer> loaded;
 		oTESTB0(oBufferLoad(path, &loaded));

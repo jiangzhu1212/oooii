@@ -123,7 +123,7 @@ public:
 	}
 };
 
-template<typename T> class oModuleSingleton : public oNoncopyable
+template<typename T> class oModuleSingleton
 {
 public:
 	static T* Singleton()

@@ -7,13 +7,16 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(OuroborosExtDir)\Kinect\v1.0\inc\;$(OuroborosExtDir)bullet\vectormathlibrary\include;$(OuroborosExtDir)FreeImage\Source\OpenEXR\Half;$(OuroborosExtDir)tlsf;$(OuroborosExtDir)BC6HBC7EncoderDecoder11\;$(OuroborosExtDir)FreeImage\Source\;$(OuroborosExtDir)OpenSSL\openssl-1.0.0e\include\;$(OuroborosExtDir)tbb\include\;$(OuroborosExtDir)libjpegTurbo\;$(OuroborosExtDir)OFED_SDK\Inc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OuroborosExtDir)bullet\vectormathlibrary\include;$(OuroborosExtDir)FreeImage\Source\OpenEXR\Half;$(OuroborosExtDir)tlsf;$(OuroborosExtDir)BC6HBC7EncoderDecoder11\;$(OuroborosExtDir)FreeImage\Source\;$(OuroborosExtDir)OpenSSL\openssl-1.0.0e\include\;$(OuroborosExtDir)tbb\include\;$(OuroborosExtDir)libjpegTurbo\;$(OuroborosExtDir)OFED_SDK\Inc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>FREEIMAGE_LIB;__TBB_NO_IMPLICIT_LINKAGE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>libjpegTurbo$(oBuildSuffix).lib;D3DX11.lib;D3DCompiler.lib;D3DX10.lib;wininet.lib;freeimage$(oBuildSuffix).lib;tbb$(oBuildSuffix).lib;tlsf$(oBuildSuffix).lib;BC6HBC7EncoderDecoder11$(oBuildSuffix).lib;snappymt$(oBuildSuffix).lib;lzmamt$(oBuildSuffix).lib;zlibmt$(oBuildSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OuroborosSuiteDir)Lib\$(Platform)\$(oCompilerName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <FXC>
+      <AdditionalDependencies>$(OuroborosSuiteDir)Include\oHLSL\oHLSLAtomics.h;$(OuroborosSuiteDir)Include\oHLSL\oHLSLBit.h;$(OuroborosSuiteDir)Include\oHLSL\oHLSLMacros.h;$(OuroborosSuiteDir)Include\oHLSL\oHLSLMath.h;$(OuroborosSuiteDir)Include\oHLSL\oHLSLStructs.h;$(OuroborosSuiteDir)Include\oHLSL\oHLSLSwizzlesOff.h;$(OuroborosSuiteDir)Include\oHLSL\oHLSLSwizzlesOn.h;$(OuroborosSuiteDir)Include\oHLSL\oHLSLTypes.h;$(OuroborosSuiteDir)Include\oHLSL\oHLSLTypesInternal.h;$(OuroborosSuiteDir)Include\oCompute\oComputeColor.h;$(OuroborosSuiteDir)Include\oCompute\oComputeConstants.h;$(OuroborosSuiteDir)Include\oCompute\oComputeFilter.h;$(OuroborosSuiteDir)Include\oCompute\oComputeGBuffer.h;$(OuroborosSuiteDir)Include\oCompute\oComputeMorton.h;$(OuroborosSuiteDir)Include\oCompute\oComputePhong.h;$(OuroborosSuiteDir)Include\oCompute\oComputeProcedural.h;$(OuroborosSuiteDir)Include\oCompute\oComputeRaycast.h;$(OuroborosSuiteDir)Include\oCompute\oComputeSimplex.h;$(OuroborosSuiteDir)Include\oCompute\oComputeUtil.h;$(OuroborosSuiteDir)Include\oCompute\oQuaternion.h;$(OuroborosSuiteDir)Include\oGfx\oGfxHLSL.h;$(OuroborosSuiteDir)Include\oGfx\oGfxDrawConstants.h;$(OuroborosSuiteDir)Include\oGfx\oGfxLightConstants.h;$(OuroborosSuiteDir)Include\oGfx\oGfxMaterialConstants.h;$(OuroborosSuiteDir)Include\oGfx\oGfxVertexElements.h;$(OuroborosSuiteDir)Include\oGfx\oGfxViewConstants.h</AdditionalDependencies>
+    </FXC>
   </ItemDefinitionGroup>
   <ItemGroup>
     <BuildMacro Include="OuroborosExtDir">

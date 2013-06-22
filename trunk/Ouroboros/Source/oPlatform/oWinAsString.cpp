@@ -24,14 +24,15 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oWinAsString.h>
+#include <oPlatform/Windows/oWinWindowing.h>
 #include <oBasis/oString.h>
 #include <oBasis/oError.h>
 #include <Windowsx.h>
 #include <DShow.h>
+#include <Shellapi.h>
 #include <CDErr.h>
-#include "oVKToX11Keyboard.h"
 
-const char* oWinAsStringHT(unsigned int _HTCode)
+const char* oWinAsStringHT(int _HTCode)
 {
 	switch (_HTCode)
 	{
@@ -71,8 +72,10 @@ const char* oWinAsStringHT(unsigned int _HTCode)
 	return "unrecognized HTCODE";
 }
 
-const char* oWinAsStringSC(unsigned int _SCCode)
+const char* oWinAsStringSC(int _SCCode)
 {
+#define oSC_DRAGMOVE 0xf012
+
 	switch (_SCCode)
 	{
 		case SC_SIZE: return "SC_SIZE";
@@ -97,13 +100,14 @@ const char* oWinAsStringSC(unsigned int _SCCode)
 			case SC_CONTEXTHELP: return "SC_CONTEXTHELP";
 			case SC_SEPARATOR: return "SC_SEPARATOR";
 		#endif
+		case oSC_DRAGMOVE: return "SC_DRAGMOVE";
 		default: break;
 	}
 
 	return "unrecognized SCCODE";
 }
 
-const char* oWinAsStringSW(unsigned int _SWCode)
+const char* oWinAsStringSW(int _SWCode)
 {
 	switch (_SWCode)
 	{
@@ -116,7 +120,7 @@ const char* oWinAsStringSW(unsigned int _SWCode)
 	return "unrecognized SWCODE";
 }
 
-const char* oWinAsStringWM(unsigned int _uMsg)
+const char* oWinAsStringWM(int _uMsg)
 {
 	switch (_uMsg)
 	{
@@ -136,6 +140,7 @@ const char* oWinAsStringWM(unsigned int _uMsg)
 		case WM_DESTROY: return "WM_DESTROY";
 		case WM_DISPLAYCHANGE: return "WM_DISPLAYCHANGE";
 		case WM_DRAWITEM: return "WM_DRAWITEM";
+		case WM_DROPFILES: return "WM_DROPFILES";
 		case WM_DWMCOLORIZATIONCOLORCHANGED: return "WM_DWMCOLORIZATIONCOLORCHANGED";
 		case WM_DWMCOMPOSITIONCHANGED: return "WM_DWMCOMPOSITIONCHANGED";
 		case WM_DWMNCRENDERINGCHANGED: return "WM_DWMNCRENDERINGCHANGED";
@@ -234,12 +239,30 @@ const char* oWinAsStringWM(unsigned int _uMsg)
 		case 0x91: return "Theme Service internal message 0x91";
 		case 0x92: return "Theme Service internal message 0x92";
 		case 0x93: return "Theme Service internal message 0x93";
+
+		// Ouroboros-custom messages
+		case oWM_MAINLOOP: return "oWM_MAINLOOP";
+		case oWM_DISPATCH: return "oWM_DISPATCH";
+		case oWM_ACTION_HOOK: return "oWM_ACTION_HOOK";
+		case oWM_ACTION_UNHOOK: return "oWM_ACTION_UNHOOK";
+		case oWM_ACTION_TRIGGER: return "oWM_ACTION_TRIGGER";
+		case oWM_EVENT_HOOK: return "oWM_EVENT_HOOK";
+		case oWM_EVENT_UNHOOK: return "oWM_EVENT_UNHOOK";
+		case oWM_SETHOTKEYS: return "oWM_SETHOTKEYS";
+		case oWM_GETHOTKEYS: return "oWM_GETHOTKEYS";
+		case oWM_STATUS_SETPARTS: return "oWM_STATUS_SETPARTS";
+		case oWM_STATUS_SETTEXT: return "oWM_STATUS_SETTEXT";
+		case oWM_STATUS_GETTEXT: return "oWM_STATUS_GETTEXT";
+		case oWM_STATUS_GETTEXTLENGTH: return "oWM_STATUS_GETTEXTLENGTH";
+		case oWM_SKELETON: return "oWM_SKELETON";
+		case oWM_INPUT_DEVICE_STATUS: return "oWM_INPUT_DEVICE_STATUS";
+
 		default: break;
 	}
 	return "unrecognized WMCODE";
 }
 
-const char* oWinAsStringWS(unsigned int _WSFlag)
+const char* oWinAsStringWS(int _WSFlag)
 {
 	switch (_WSFlag)
 	{
@@ -269,7 +292,43 @@ const char* oWinAsStringWS(unsigned int _WSFlag)
 	return "unrecognized WS flag";
 }
 
-const char* oWinAsStringWA(unsigned int _WACode)
+const char* oWinAsStringWSEX(int _WSEXFlag)
+{
+	switch (_WSEXFlag)
+	{
+		case WS_EX_DLGMODALFRAME: return "WS_EX_DLGMODALFRAME";
+		case WS_EX_NOPARENTNOTIFY: return "WS_EX_NOPARENTNOTIFY";
+		case WS_EX_TOPMOST: return "WS_EX_TOPMOST";
+		case WS_EX_ACCEPTFILES: return "WS_EX_ACCEPTFILES";
+		case WS_EX_TRANSPARENT: return "WS_EX_TRANSPARENT";
+		case WS_EX_MDICHILD: return "WS_EX_MDICHILD";
+		case WS_EX_TOOLWINDOW: return "WS_EX_TOOLWINDOW";
+		case WS_EX_WINDOWEDGE: return "WS_EX_WINDOWEDGE";
+		case WS_EX_CLIENTEDGE: return "WS_EX_CLIENTEDGE";
+		case WS_EX_CONTEXTHELP: return "WS_EX_CONTEXTHELP";
+		case WS_EX_RIGHT: return "WS_EX_RIGHT";
+		case WS_EX_LEFT: return "WS_EX_LEFT";
+		case WS_EX_RTLREADING: return "WS_EX_RTLREADING";
+		//case WS_EX_LTRREADING: return "WS_EX_LTRREADING"; // dup b/c val is 0
+		case WS_EX_LEFTSCROLLBAR: return "WS_EX_LEFTSCROLLBAR";
+		//case WS_EX_RIGHTSCROLLBAR: return "WS_EX_RIGHTSCROLLBAR"; // dup b/c val is 0
+		case WS_EX_CONTROLPARENT: return "WS_EX_CONTROLPARENT";
+		case WS_EX_STATICEDGE: return "WS_EX_STATICEDGE";
+		case WS_EX_APPWINDOW: return "WS_EX_APPWINDOW";
+		case WS_EX_OVERLAPPEDWINDOW: return "WS_EX_OVERLAPPEDWINDOW";
+		case WS_EX_PALETTEWINDOW: return "WS_EX_PALETTEWINDOW";
+		case WS_EX_LAYERED: return "WS_EX_LAYERED";
+		case WS_EX_NOINHERITLAYOUT: return "WS_EX_NOINHERITLAYOUT";
+		case WS_EX_LAYOUTRTL: return "WS_EX_LAYOUTRTL";
+		case WS_EX_COMPOSITED: return "WS_EX_COMPOSITED";
+		case WS_EX_NOACTIVATE: return "WS_EX_NOACTIVATE";
+		default: break;
+	}
+	
+	return "unrecognized WS_EX flag";
+}
+
+const char* oWinAsStringWA(int _WACode)
 {
 	switch (_WACode)
 	{
@@ -282,7 +341,7 @@ const char* oWinAsStringWA(unsigned int _WACode)
 	return "unrecognized WACode";
 }
 
-const char* oWinAsStringBST(unsigned int _BSTCode)
+const char* oWinAsStringBST(int _BSTCode)
 {
 	switch (_BSTCode)
 	{
@@ -299,7 +358,7 @@ const char* oWinAsStringBST(unsigned int _BSTCode)
 	return "unrecognized BSTCode";
 }
 
-const char* oWinAsStringNM(unsigned int _NMCode)
+const char* oWinAsStringNM(int _NMCode)
 {
 	switch (_NMCode)
 	{
@@ -332,7 +391,7 @@ const char* oWinAsStringNM(unsigned int _NMCode)
 	return "unrecognized NMCode";
 }
 
-const char* oWinAsStringSWP(unsigned int _SWPCode)
+const char* oWinAsStringSWP(int _SWPCode)
 {
 	switch (_SWPCode)
 	{
@@ -359,7 +418,7 @@ const char* oWinAsStringSWP(unsigned int _SWPCode)
 	return "unrecognized SWPCode";
 }
 
-const char* oWinAsStringGWL(unsigned int _GWLCode)
+const char* oWinAsStringGWL(int _GWLCode)
 {
 	switch (_GWLCode)
 	{
@@ -378,7 +437,7 @@ const char* oWinAsStringGWL(unsigned int _GWLCode)
 	return "unrecognized GWLCode";
 }
 
-const char* oWinAsStringGWLP(unsigned int _GWLPCode)
+const char* oWinAsStringGWLP(int _GWLPCode)
 {
 	switch (_GWLPCode)
 	{
@@ -393,7 +452,7 @@ const char* oWinAsStringGWLP(unsigned int _GWLPCode)
 	return "unrecognized GWLPCode";
 }
 
-const char* oWinAsStringTCN(unsigned int _TCNCode)
+const char* oWinAsStringTCN(int _TCNCode)
 {
 	switch (_TCNCode)
 	{
@@ -408,7 +467,7 @@ const char* oWinAsStringTCN(unsigned int _TCNCode)
 	return "unrecognized TCNCode";
 }
 
-const char* oWinAsStringCDERR(unsigned int _CDERRCode)
+const char* oWinAsStringCDERR(int _CDERRCode)
 {
 	switch (_CDERRCode)
 	{
@@ -455,7 +514,7 @@ const char* oWinAsStringCDERR(unsigned int _CDERRCode)
 	return "unrecognized CDERR";
 }
 
-const char* oWinAsStringExceptionCode(unsigned int _ExceptionCode)
+const char* oWinAsStringExceptionCode(int _ExceptionCode)
 {
 	switch (_ExceptionCode)
 	{
@@ -490,23 +549,31 @@ const char* oWinAsStringExceptionCode(unsigned int _ExceptionCode)
 
 char* oWinParseStyleFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSFlags)
 {
-	return oAsStringFlags(_StrDestination, _SizeofStrDestination, _WSFlags, oWinAsStringWS(WS_OVERLAPPED), [&](unsigned int _Flag) { return oWinAsStringWS(_Flag); });
+	return oStd::strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_WSFlags, oWinAsStringWS(WS_OVERLAPPED), oWinAsStringWS);
+}
+
+char* oWinParseStyleExFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSEXFlags)
+{
+	return oStd::strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_WSEXFlags, oWinAsStringWSEX(0), oWinAsStringWSEX);
 }
 
 char* oWinParseSWPFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _SWPFlags)
 {
-	return oAsStringFlags(_StrDestination, _SizeofStrDestination, _SWPFlags & 0x07ff, "0", [&](unsigned int _Flag) { return oWinAsStringSWP(_Flag); });
+	return oStd::strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_SWPFlags & 0x07ff, "0", oWinAsStringSWP);
 }
 
-char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
+char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oWINKEY_CONTROL_STATE* _pState, HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
 {
 	// http://www.autoitscript.com/autoit3/docs/appendix/WinMsgCodes.htm
+
+	#define KEYSTR oStd::as_string(oWinKeyToKey((DWORD)oWinKeyTranslate(_wParam, _pState)))
 
 	switch (_uMsg)
 	{ 
 		case WM_ACTIVATE: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_ACTIVATE %s, other HWND 0x%x %sactivated", _hWnd, oWinAsStringWA((UINT)_wParam), _lParam, _wParam == WA_INACTIVE ? "" : "de"); break;
 		case WM_ACTIVATEAPP: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_ACTIVATEAPP %sactivated, other thread %d %sactivated", _hWnd, _wParam ? "" : "de", _lParam, _wParam ? "de" : ""); break;
 		case WM_NCACTIVATE: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_NCACTIVATE titlebar/icon needs to be changed: %s lParam=%x", _hWnd, _wParam ? "true" : "false", _lParam); break;
+		case WM_SETTEXT: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SETTEXT: lParam=%s", _hWnd, _lParam); break;
 		case WM_WINDOWPOSCHANGING: { char tmp[1024]; WINDOWPOS& wp = *(WINDOWPOS*)_lParam; oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_WINDOWPOSCHANGING hwndInsertAfter=%x xy=%d,%d wh=%dx%d flags=%s", _hWnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, oWinParseSWPFlags(tmp, wp.flags)); break; }
 		case WM_WINDOWPOSCHANGED: { char tmp[1024]; WINDOWPOS& wp = *(WINDOWPOS*)_lParam; oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_WINDOWPOSCHANGED hwndInsertAfter=%x xy=%d,%d wh=%dx%d flags=%s", _hWnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, oWinParseSWPFlags(tmp, wp.flags)); break; }
 		case WM_STYLECHANGING: { char tmp[1024]; char tmp2[1024]; oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_STYLECHANGING %s %s -> %s", _hWnd, _wParam == GWL_EXSTYLE ? "GWL_EXSTYLE" : "GWL_STYLE", oWinParseSWPFlags(tmp, ((STYLESTRUCT*)_lParam)->styleOld), oWinParseSWPFlags(tmp2, ((STYLESTRUCT*)_lParam)->styleNew)); break; }
@@ -520,11 +587,11 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, HW
 		case WM_SETCURSOR: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SETCURSOR %s hit=%s, id=%s", _hWnd, (HWND)_wParam == _hWnd ? "In Window" : "Out of Window", oWinAsStringHT(GET_X_LPARAM(_lParam)), oWinAsStringWM(GET_Y_LPARAM(_lParam))); break;
 		case WM_SHOWWINDOW: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SHOWWINDOW: wParam=%s lParam=%s", _hWnd, _wParam ? "shown" : "hidden", oWinAsStringSW((UINT)_lParam));  break;
 		case WM_SIZE: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SIZE %dx%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_SYSCOMMAND: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSCOMMAND: wParam=%s screenpos=%d,%d", _hWnd, oWinAsStringSC((UINT)_wParam), GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_SYSKEYDOWN: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSKEYDOWN: wParam=%s lParam=%0x", _hWnd, oAsString(TranslateKeyToX11(_wParam)), _lParam); break;
-		case WM_SYSKEYUP: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSKEYUP: wParam=%s lParam=%0x", _hWnd, oAsString(TranslateKeyToX11(_wParam)), _lParam); break;
-		case WM_KEYDOWN: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_KEYDOWN: wParam=%s lParam=%0x", _hWnd, oAsString(TranslateKeyToX11(_wParam)), _lParam); break;
-		case WM_KEYUP: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_KEYUP: wParam=%s lParam=%0x", _hWnd, oAsString(TranslateKeyToX11(_wParam)), _lParam); break;
+		case WM_SYSCOMMAND: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSCOMMAND: wParam=%s screenpos=%d,%d", _hWnd, oWinAsStringSC((UINT)(_wParam&0xfff0)), GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
+		case WM_SYSKEYDOWN: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSKEYDOWN: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
+		case WM_SYSKEYUP: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSKEYUP: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
+		case WM_KEYDOWN: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_KEYDOWN: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
+		case WM_KEYUP: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_KEYUP: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
 		case WM_MOUSEMOVE: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MOUSEMOVE %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
 		case WM_LBUTTONDOWN: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_LBUTTONDOWN %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
 		case WM_LBUTTONUP: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_LBUTTONUP %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
@@ -546,6 +613,14 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, HW
 		case WM_CTLCOLORSCROLLBAR: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORSCROLLBAR HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
 		case WM_CTLCOLORSTATIC: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORSTATIC HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
 		case WM_NOTIFY: { const NMHDR& h = *(NMHDR*)_lParam; oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_NOTIFY WPARAM=%u from hwndFrom=0x%x idFrom=%d notification code=%s", _hWnd, _wParam, h.hwndFrom, h.idFrom, oWinAsStringNM(h.code)); break; }
+		case WM_DROPFILES:
+		{
+			oStd::path_string p;
+			UINT nFiles = DragQueryFile((HDROP)_wParam, ~0u, p, oUInt(p.capacity()));
+			DragQueryFile((HDROP)_wParam, 0, p, oUInt(p.capacity()));
+			oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DROPFILES hDrop=0x%x %u files starting with \"%s\"", _hWnd, _wParam, nFiles, p.c_str());
+			break;
+		}
 		default:
 		{
 			const char* WMStr = oWinAsStringWM(_uMsg);
@@ -686,7 +761,7 @@ bool oWinParseHRESULT(char* _StrDestination, size_t _SizeofStrDestination, HRESU
 	}
 
 	if (len == -1)
-		return oErrorSetLast(oERROR_AT_CAPACITY);
+		return oErrorSetLast(std::errc::no_buffer_space);
 
 	return true;
 }

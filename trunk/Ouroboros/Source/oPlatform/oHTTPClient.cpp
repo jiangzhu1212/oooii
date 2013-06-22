@@ -44,12 +44,12 @@ public:
 
 	bool Head(const char* _pRelativePath, oHTTP_RESPONSE* _pResponse) override;
 	bool Get(const char* _pRelativePath, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize) override;
-	bool Post(const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _szData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize) override;
-	bool Put(const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _szData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize) override;
+	bool Post(const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _SizeofData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize) override;
+	bool Put(const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _SizeofData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize) override;
 	bool Delete(const char* _pRelativePath, oHTTP_RESPONSE* _pResponse) override;
 
 private:
-	bool PostPutImpl(oHTTP_METHOD _Method, const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _szData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize);
+	bool PostPutImpl(oHTTP_METHOD _Method, const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _SizeofData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize);
 
 	oRefCount RefCount;
 	DESC Desc;
@@ -60,7 +60,7 @@ private:
 	// Internal parsed data
 	oHTTPRequestInternal TheRequest;
 	oHTTPResponseInternal TheResponse;
-	oStringXXL TheHeader;
+	oStd::xxlstring TheHeader;
 };
 
 oHTTPClient_Impl::oHTTPClient_Impl(DESC _Desc, bool *pSuccess)
@@ -78,10 +78,10 @@ oHTTPClient_Impl::oHTTPClient_Impl(DESC _Desc, bool *pSuccess)
 bool oHTTPClient_Impl::StartRequest(oHTTP_METHOD _Method, const char* _pRelativePath, oHTTP_REQUEST** _ppRequest)
 {
 	if (!Socket || !Socket->IsConnected())
-		return oErrorSetLast(oERROR_TIMEOUT);
+		return oErrorSetLast(std::errc::timed_out);
 
-	oStringXXL requestPath;
-	oURIPercentEncode(requestPath, _pRelativePath, " ");
+	oStd::xxlstring requestPath;
+	oStd::percent_encode(requestPath, _pRelativePath, " ");
 	TheRequest.Reset(_Method, requestPath, oHTTP_1_1);
 	if (_ppRequest)
 		*_ppRequest = &TheRequest;
@@ -89,8 +89,8 @@ bool oHTTPClient_Impl::StartRequest(oHTTP_METHOD _Method, const char* _pRelative
 	// TODO: Make adding a Host: header field optional, and making it the actual hostname instead of just an IP address
 	if (true)
 	{
-		oStringS hostname;
-		oToString(hostname, Desc.ServerAddr);
+		oStd::sstring hostname;
+		oStd::to_string(hostname, Desc.ServerAddr);
 		oHTTPAddHeader(TheRequest.HeaderFields, oHTTP_HEADER_HOST, hostname.c_str());
 	}
 	return true;
@@ -100,13 +100,13 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 {
 	// Add content headers
 	if (TheRequest.Content.Type != oMIME_UNKNOWN)
-		oHTTPAddHeader(TheRequest.HeaderFields, oHTTP_HEADER_CONTENT_TYPE, oAsString(TheRequest.Content.Type));
+		oHTTPAddHeader(TheRequest.HeaderFields, oHTTP_HEADER_CONTENT_TYPE, oStd::as_string(TheRequest.Content.Type));
 
 	if (TheRequest.Content.Length)
 		oHTTPAddHeader(TheRequest.HeaderFields, oHTTP_HEADER_CONTENT_LENGTH, oUInt(TheRequest.Content.Length));
 
 	// Create request header
-	oToString(TheHeader, TheRequest);
+	oStd::to_string(TheHeader, TheRequest);
 
 	// Send header and body
 	if (TheRequest.Content.pData && TheRequest.Content.Length)
@@ -127,14 +127,14 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 	// Receive response (header and optional content body)
 	char ReceiveBuffer[HTTPRequestSize];
 
-	unsigned int SzReceived = Socket->Recv(ReceiveBuffer, HTTPRequestSize);
+	unsigned int SizeReceived = Socket->Recv(ReceiveBuffer, HTTPRequestSize);
 
 	size_t TheHeaderPos;
 	void* TheBody = nullptr;
 	size_t TheBodyPos;
 
 	// Process all bytes until done
-	size_t SzDataTaken = 0;
+	size_t SizeofDataTaken = 0;
 	while (true)
 	{
 		switch (State)
@@ -149,7 +149,7 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 			break;
 
 		case oSTATE_RECEIVE_HEADER:
-			if (!oExtractHTTPHeader(oByteAdd((const char*)ReceiveBuffer, SzDataTaken), (SzReceived - SzDataTaken), TheHeader.c_str(), &TheHeaderPos, TheHeader.capacity(), &SzDataTaken))
+			if (!oExtractHTTPHeader(oStd::byte_add((const char*)ReceiveBuffer, SizeofDataTaken), (SizeReceived - SizeofDataTaken), TheHeader.c_str(), &TheHeaderPos, TheHeader.capacity(), &SizeofDataTaken))
 			{
 				// If the HTTP header is bigger than our capacity, then send an error back
 				if (TheHeaderPos >= TheHeader.capacity())
@@ -160,7 +160,7 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 					break;
 				}
 				// oExtractHTTPHeader doesn't take any bytes if it can't extract a HTTP header (0 terminator before header end marker for example)
-				if (SzReceived && !SzDataTaken)
+				if (SizeReceived && !SizeofDataTaken)
 				{
 					TheResponse.StatusLine.StatusCode = oHTTP_BAD_REQUEST;
 					Socket = nullptr; // Close the socket
@@ -169,19 +169,19 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 				}
 
 				// Request more data
-				oASSERT(SzDataTaken==SzReceived, "Assuming that we took all data, before requesting more");
+				oASSERT(SizeofDataTaken==SizeReceived, "Assuming that we took all data, before requesting more");
 
-				SzReceived = Socket->Recv(ReceiveBuffer, HTTPRequestSize);
+				SizeReceived = Socket->Recv(ReceiveBuffer, HTTPRequestSize);
 
 				// If we got called with 0 bytes, we either timed out or the connection is broken/closed/tearing down, check for that
-				if (0 == SzReceived)
+				if (0 == SizeReceived)
 				{
 					TheResponse.StatusLine.StatusCode = Socket->IsConnected() ? oHTTP_REQUEST_TIMEOUT : oHTTP_CLIENT_CLOSED_REQUEST;
 					Socket = nullptr; // Close the socket
 					State = oSTATE_FINISHED;
 					break;
 				}
-				SzDataTaken = 0;
+				SizeofDataTaken = 0;
 				break;
 			}
 			State = oSTATE_PARSE_HEADER;
@@ -189,7 +189,7 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 
 		case oSTATE_PARSE_HEADER:
 			// We received the header in full, now parse it
-			if (!oFromString(&TheResponse, TheHeader.c_str()))
+			if (!oStd::from_string(&TheResponse, TheHeader.c_str()))
 				return false;
 			State = oSTATE_PROCESS_HEADER;
 			break;
@@ -221,7 +221,7 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 
 				// Content-Type
 				if (oHTTPFindHeader(TheResponse.HeaderFields, oHTTP_HEADER_CONTENT_TYPE, &pValue))
-					oFromString(&TheResponse.Content.Type, pValue);
+					oStd::from_string(&TheResponse.Content.Type, pValue);
 
 				// Content-Length
 				if (oHTTPFindHeader(TheResponse.HeaderFields, oHTTP_HEADER_CONTENT_LENGTH, &ValueUInt))
@@ -243,20 +243,20 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 
 		case oSTATE_RECEIVE_CONTENT_BODY:
 			// If we got called with 0 bytes, we either timed out or the connection is broken/closed/tearing down, check for that
-			if (0 == SzReceived)
+			if (0 == SizeReceived)
 			{
 				TheResponse.StatusLine.StatusCode = Socket->IsConnected() ? oHTTP_REQUEST_TIMEOUT : oHTTP_CLIENT_CLOSED_REQUEST;
 				Socket = nullptr; // Close the socket
 				State = oSTATE_FINISHED;
 				break;
 			}
-			if (!oExtractContent(oByteAdd(ReceiveBuffer, SzDataTaken), (SzReceived - SzDataTaken), TheBody, &TheBodyPos, __min(_MaxResponseBufferSize, TheResponse.Content.Length), &SzDataTaken))
+			if (!oExtractContent(oStd::byte_add(ReceiveBuffer, SizeofDataTaken), (SizeReceived - SizeofDataTaken), TheBody, &TheBodyPos, __min(_MaxResponseBufferSize, TheResponse.Content.Length), &SizeofDataTaken))
 			{
 				// Request more data
-				oASSERT(SzDataTaken==SzReceived, "Assuming that we took all data, before requesting more");
+				oASSERT(SizeofDataTaken==SizeReceived, "Assuming that we took all data, before requesting more");
 
-				SzReceived = Socket->Recv(ReceiveBuffer, HTTPRequestSize);
-				SzDataTaken = 0;
+				SizeReceived = Socket->Recv(ReceiveBuffer, HTTPRequestSize);
+				SizeofDataTaken = 0;
 				break;
 			}
 			TheResponse.Content.pData = TheBody;
@@ -293,9 +293,9 @@ bool oHTTPClient_Impl::Get(const char* _pRelativePath, oHTTP_RESPONSE* _pRespons
 	return bResult;
 }
 
-bool oHTTPClient_Impl::Post(const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _szData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize)
+bool oHTTPClient_Impl::Post(const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _SizeofData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize)
 {
-	return PostPutImpl(oHTTP_POST, _pRelativePath, _DataType, _pData, _szData, _pResponse, _pBuffer, _MaxBufferSize);
+	return PostPutImpl(oHTTP_POST, _pRelativePath, _DataType, _pData, _SizeofData, _pResponse, _pBuffer, _MaxBufferSize);
 }
 
 bool oHTTPClient_Impl::Delete(const char* _pRelativePath, oHTTP_RESPONSE* _pResponse)
@@ -306,12 +306,12 @@ bool oHTTPClient_Impl::Delete(const char* _pRelativePath, oHTTP_RESPONSE* _pResp
 	return bResult;
 }
 
-bool oHTTPClient_Impl::Put(const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _szData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize)
+bool oHTTPClient_Impl::Put(const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _SizeofData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize)
 {
-	return PostPutImpl(oHTTP_PUT, _pRelativePath, _DataType, _pData, _szData, _pResponse, _pBuffer, _MaxBufferSize);
+	return PostPutImpl(oHTTP_PUT, _pRelativePath, _DataType, _pData, _SizeofData, _pResponse, _pBuffer, _MaxBufferSize);
 }
 
-bool oHTTPClient_Impl::PostPutImpl(oHTTP_METHOD _Method, const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _szData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize)
+bool oHTTPClient_Impl::PostPutImpl(oHTTP_METHOD _Method, const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _SizeofData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize)
 {
 	oHTTP_REQUEST* Request = nullptr;
 	bool bResult = StartRequest(_Method, _pRelativePath, &Request);
@@ -319,7 +319,7 @@ bool oHTTPClient_Impl::PostPutImpl(oHTTP_METHOD _Method, const char* _pRelativeP
 
 	Request->Content.Type = _DataType;
 	Request->Content.pData = (void*)_pData;
-	Request->Content.Length = _szData;
+	Request->Content.Length = _SizeofData;
 
 	oHTTP_RESPONSE* Response = nullptr;
 	bResult &= FinishRequest(&Response, _pBuffer, _MaxBufferSize);

@@ -31,10 +31,12 @@
 
 #include <oBasis/oDispatchQueue.h>
 
+// {FF7615D2-C7C4-486A-927A-343EBCEA7363}
+oDEFINE_GUID_I(oDispatchQueuePrivate, 0xff7615d2, 0xc7c4, 0x486a, 0x92, 0x7a, 0x34, 0x3e, 0xbc, 0xea, 0x73, 0x63);
 interface oDispatchQueuePrivate : oDispatchQueue
 {
 };
 
-oAPI bool oDispatchQueueCreatePrivate(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueuePrivate** _ppDispatchQueue);
+bool oDispatchQueueCreatePrivate(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueuePrivate** _ppDispatchQueue);
 
 #endif

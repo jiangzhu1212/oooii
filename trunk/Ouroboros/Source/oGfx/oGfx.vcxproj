@@ -1,0 +1,580 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="oGfxManipulator.cpp" />
+    <ClCompile Include="oGfxMosaic.cpp" />
+    <ClCompile Include="oGfxPickBuffer.cpp" />
+    <ClCompile Include="oGfxPipelines.cpp" />
+    <ClCompile Include="oGfxVertexElements.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Include\oCompute\all.h" />
+    <ClInclude Include="..\..\Include\oCompute\oComputeColor.h" />
+    <ClInclude Include="..\..\Include\oCompute\oComputeConstants.h" />
+    <ClInclude Include="..\..\Include\oCompute\oComputeFilter.h" />
+    <ClInclude Include="..\..\Include\oCompute\oComputeGBuffer.h" />
+    <ClInclude Include="..\..\Include\oCompute\oComputeMorton.h" />
+    <ClInclude Include="..\..\Include\oCompute\oComputePhong.h" />
+    <ClInclude Include="..\..\Include\oCompute\oComputeProcedural.h" />
+    <ClInclude Include="..\..\Include\oCompute\oComputeRaycast.h" />
+    <ClInclude Include="..\..\Include\oCompute\oComputeSimplex.h" />
+    <ClInclude Include="..\..\Include\oCompute\oComputeUtil.h" />
+    <ClInclude Include="..\..\Include\oCompute\oQuaternion.h" />
+    <ClInclude Include="..\..\Include\oGfx\oGfxDrawConstants.h" />
+    <ClInclude Include="..\..\Include\oGfx\oGfxHLSL.h" />
+    <ClInclude Include="..\..\Include\oGfx\oGfxLightConstants.h" />
+    <ClInclude Include="..\..\Include\oGfx\oGfxManipulator.h" />
+    <ClInclude Include="..\..\Include\oGfx\oGfxMaterialConstants.h" />
+    <ClInclude Include="..\..\Include\oGfx\oGfxMosaic.h" />
+    <ClInclude Include="..\..\Include\oGfx\oGfxPickBuffer.h" />
+    <ClInclude Include="..\..\Include\oGfx\oGfxPipelines.h" />
+    <ClInclude Include="..\..\Include\oGfx\oGfxVertexElements.h" />
+    <ClInclude Include="..\..\Include\oGfx\oGfxViewConstants.h" />
+    <ClInclude Include="..\..\Include\oHLSL\all.h" />
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLAtomics.h" />
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLBit.h" />
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLMacros.h" />
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLMath.h" />
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLStructs.h" />
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLSwizzlesOff.h" />
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLSwizzlesOn.h" />
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLTypes.h" />
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLTypesInternal.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Shaders\oGfxCommon.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <FXC Include="Shaders\oGfxColorPS4.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxGridPS4.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxHeroPS4.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxLinesVS4.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxMaterialPS4.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxObjectIDPS4.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxPassThroughVS4.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxPositionVS4.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxQuadPassThroughVS4.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxRigidInstancedVS4.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxRigidVS4.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxShadowPS4.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxShadowVS4.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxTexcoordPS4.sh">
+      <FileType>Document</FileType>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxTextureColorPS4.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxVertexPhongPS4.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxVertexNormalsGS4.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">gs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">gs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">gs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">gs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxVertexTangentsGS4.sh">
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">gs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">gs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">gs_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">gs_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxVSDepthPS4.sh">
+      <FileType>Document</FileType>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxWhitePS4.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxWSPNormalPS4.sh">
+      <FileType>Document</FileType>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+    <FXC Include="Shaders\oGfxWSVNormalPS4.sh">
+      <FileType>Document</FileType>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Shaders\oGfxCommon.h;%(AdditionalDependencies)</AdditionalDependencies>
+    </FXC>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{72EE4284-DF31-4D9F-B796-5DE7E2521D5D}</ProjectGuid>
+    <RootNamespace>oGfx</RootNamespace>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="..\Build\msvc100\BuildRules\oFXC.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Release32.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Debug32.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Release64.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Debug64.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib>
+      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
+    </Lib>
+    <ClCompile />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\Build\msvc100\BuildRules\oFXC.targets" />
+  </ImportGroup>
+</Project>

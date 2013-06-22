@@ -34,7 +34,7 @@
 #include <oBasis/oInterface.h>
 
 // A Host is a simple identifier for a net device. This is an IP address
-// for Internet connections. Use oFromString to create a new oNetHost.
+// for Internet connections. Use oStd::from_string to create a new oNetHost.
 struct oNetHost
 {
 	oNetHost()
@@ -53,7 +53,7 @@ private:
 
 // An Address is the combination of a Host and any data used to distinguish
 // it from other connections from the same Host. In Internet terms this is an
-// IP address and a port together. Use oFromString to create a new oNetAddress
+// IP address and a port together. Use oStd::from_string to create a new oNetAddress
 // in the form "<host>:<port>" ex: "google.com:http" or "127.0.0.1:11000".
 struct oNetAddr
 {
@@ -69,12 +69,13 @@ private:
 	unsigned short Port;
 };
 
-// In addition to oFromString/oToString these helper functions aid in working with oNetAddr
+// In addition to oStd::from_string/oStd::to_string these helper functions aid in working with oNetAddr
 oAPI void oSocketPortGet(const oNetAddr& _Addr, unsigned short* _pPort);
 oAPI void oSocketPortSet(const unsigned short _Port, oNetAddr* _pAddr);
 oAPI bool oSocketHostIsLocal(oNetHost _Host);
 
 interface oSocketAsyncCallback;
+
 interface oSocket : oInterface
 {
 	enum PROTOCOL
@@ -147,20 +148,20 @@ interface oSocket : oInterface
 	};
 
 	// Failure cases: 
-	// oERROR_REDUNDANT: Socket is already asynchronous
-	// oERROR_INVALID_PARAMETER: Socket is encrypted (only blocking sockets can be encrypted), no valid callback specified
+	// std::errc::operation_in_progress: Socket is already asynchronous
+	// std::errc::invalid_argument: Socket is encrypted (only blocking sockets can be encrypted), no valid callback specified
 	virtual bool GoAsynchronous(const oSocket::ASYNC_SETTINGS& _Settings) threadsafe = 0;
 
 	// Failure cases: 
-	// oERROR_INVALID_PARAMETER: This can occur when a call to Send is made on a connectionless based protocol (i.e. UDP)
-	// oERROR_AT_CAPACITY: This can occur when the MaxSimultaneousMessages has been exhausted
+	// std::errc::invalid_argument: This can occur when a call to Send is made on a connectionless based protocol (i.e. UDP)
+	// std::errc::no_buffer_space: This can occur when the MaxSimultaneousMessages has been exhausted
 	// Send will send the provided header using the socket's protocol.  The user can optionally send a body as well that will
 	// be linearized with the header on receive
 	virtual bool Send(const void* _pHeader, oSocket::size_t _SizeHeader, const void* _pBody = nullptr, oSocket::size_t _SizeBody = oInvalid) threadsafe = 0;
 
 	// Failure cases: 
-	// oERROR_INVALID_PARAMETER: This can occur when a call to SendTo is made on a connection based protocol (i.e. TCP)
-	// oERROR_AT_CAPACITY: This can occur when the MaxSimultaneousMessages has been exhausted
+	// std::errc::invalid_argument: This can occur when a call to SendTo is made on a connection based protocol (i.e. TCP)
+	// std::errc::no_buffer_space: This can occur when the MaxSimultaneousMessages has been exhausted
 	// SendTo will send the provided header using the socket's protocol.  The user can optionally send a body as well that will
 	// be linearized with the header on receive
 	virtual bool SendTo(const void* _pHeader, oSocket::size_t _SizeHeader, const oNetAddr& _Destination, const void* _pBody = nullptr, oSocket::size_t _SizeBody = 0) threadsafe = 0;
@@ -195,6 +196,8 @@ interface oSocket : oInterface
 	template<size_t hostnameSize, size_t ipSize, size_t portSize> inline bool GetHostname(char (&_OutHostname)[hostnameSize], char (&_OutIPAddress)[ipSize], char (&_OutPort)[portSize]) const threadsafe { return GetHostname(_OutHostname, hostnameSize, _OutIPAddress, ipSize, _OutPort, portSize); }
 	template<size_t peernameSize, size_t ipSize, size_t portSize> inline bool GetPeername(char (&_OutPeername)[peernameSize], char (&_OutIPAddress)[ipSize], char (&_OutPort)[portSize]) const threadsafe { return GetPeername(_OutPeername, peernameSize, _OutIPAddress, ipSize, _OutPort, portSize); }
 };
+// {68F693CE-B01B-4235-A401-787691707365}
+oDEFINE_GUID_I(oSocket, 0x68f693ce, 0xb01b, 0x4235, 0xa4, 0x1, 0x78, 0x76, 0x91, 0x70, 0x73, 0x65);
 
 oAPI bool oSocketCreate(const char* _DebugName, const oSocket::DESC& _Desc, threadsafe oSocket** _pSocket);
 
@@ -208,7 +211,6 @@ interface oSocketEncrypted : public oSocket
 
 oAPI bool oSocketEncryptedCreate(const char* _DebugName, const oSocket::DESC& _Desc, threadsafe oSocketEncrypted** _ppSocket);
 
-
 interface oSocketAsyncCallback : oInterface
 {
 	// Called when new data arrives over the network.
@@ -219,6 +221,8 @@ interface oSocketAsyncCallback : oInterface
 	virtual void ProcessSocketSend(void* _pHeader, void* _pBody, oSocket::size_t _SizeData, const oNetAddr& _Addr, interface oSocket* _pSocket) threadsafe = 0;
 };
 
+// {EE38455C-A057-4b72-83D2-4E809FF1C059}
+oDEFINE_GUID_I(oSocketServer, 0xee38455c, 0xa057, 0x4b72, 0x83, 0xd2, 0x4e, 0x80, 0x9f, 0xf1, 0xc0, 0x59);
 interface oSocketServer : oInterface
 {
 	// Server-side of a reliable two-way communication pipe (TCP). The server 
@@ -249,6 +253,8 @@ interface oSocketServer : oInterface
 
 oAPI bool oSocketServerCreate(const char* _DebugName, const oSocketServer::DESC& _Desc, threadsafe oSocketServer** _ppSocketServer);
 
+// {8809678d-a52e-4d0d-890b-bbaa315acbdd}
+oDEFINE_GUID_I(oSocketServer2, 0x8809678d, 0xa52e, 0x4d0d, 0x89, 0x0b, 0xbb, 0xaa, 0x31, 0x5a, 0xcb, 0xdd);
 interface oSocketServer2 : oInterface
 {
 	struct DESC
@@ -275,5 +281,9 @@ oAPI bool oSocketServer2Create(const char* _DebugName, const oSocketServer2::DES
 
 // Enumerate the addresses of all cmd
 oAPI void oSocketEnumerateAllAddress(oFUNCTION<void(oNetAddr _Addr)> _Enumerator);
+
+// Helper function to call _pSocket->Recv in a loop until _SizeofData has been
+// received (returns true) or until the timeout has been reached (false).
+oAPI bool oSocketRecvWithTimeout(threadsafe oSocket* _pSocket, void* _pData, unsigned int _SizeofData, unsigned int& _TimeoutMS);
 
 #endif

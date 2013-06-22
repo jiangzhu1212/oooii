@@ -34,8 +34,6 @@
 #ifndef oLockedPointer_h
 #define oLockedPointer_h
 
-#include <oBasis/oPlatformFeatures.h>
-
 template<class T> struct oConstLockedPointer
 {
 	oConstLockedPointer() : _p(nullptr) {}

@@ -24,7 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oInterprocessEvent.h>
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
 #include <oPlatform/Windows/oWindows.h>
 
 const oInterprocessEvent::AutoReset_t oInterprocessEvent::AutoReset;
@@ -61,6 +61,6 @@ bool oInterprocessEventWait(oHEVENT _hEvent, unsigned int _TimeoutMS)
 bool oInterprocessEventWaitMultiple(oHEVENT* _hEvents, size_t _NumEvents, size_t* _pWaitBreakingEventIndex, unsigned int _TimeoutMS)
 {
 	if (_NumEvents >= 64)
-		return oErrorSetLast(oERROR_AT_CAPACITY, "A maximum of 64 events can be waited on at once");
+		return oErrorSetLast(std::errc::no_buffer_space, "A maximum of 64 events can be waited on at once");
 	return oWaitMultiple((HANDLE*)_hEvents, _NumEvents, _pWaitBreakingEventIndex, _TimeoutMS);
 }

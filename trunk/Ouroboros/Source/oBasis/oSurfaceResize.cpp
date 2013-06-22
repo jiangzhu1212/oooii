@@ -24,11 +24,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oSurfaceResize.h>
-#include <oBasis/oArray.h>
+#include <oStd/fixed_vector.h>
+#include <oConcurrency/oConcurrency.h>
 #include <oBasis/oError.h>
 #include <oBasis/oMath.h>
 #include <oBasis/oMemory.h>
-#include <oBasis/oTask.h>
+#include <oBasis/oRTTI.h>
 #include <vector>
 
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oSURFACE_FILTER)
@@ -48,7 +49,7 @@ protected:
 
 	float GetValue(float _Offset) const
 	{
-		if (abs(_Offset) < oNumericLimits<float>::GetEpsilon())
+		if (abs(_Offset) < std::numeric_limits<float>::epsilon())
 			return 1.0f;
 		else
 			return 0.0f;
@@ -122,7 +123,7 @@ struct Filter : public T
 	static const int Support = 2*Width + 1;
 	struct Entry
 	{
-		oArray<float, Support> Cache;
+		oStd::fixed_vector<float, Support> Cache;
 		int Left, Right;
 	};
 	std::vector<Entry> FilterCache;
@@ -155,7 +156,7 @@ struct Filter : public T
 				float loc = (j / (float)srcDim) + srcHalfPixel;
 				float filterLoc = (loc - dstCenter)*dstDim*scale;
 				float weight = GetValue(filterLoc);
-				if (abs(weight) < oNumericLimits<float>::GetEpsilon() && entry.Cache.empty()) //strip any if we don't have a real weight yet.
+				if (abs(weight) < std::numeric_limits<float>::epsilon() && entry.Cache.empty()) //strip any if we don't have a real weight yet.
 				{
 					entry.Left++;
 				}
@@ -167,7 +168,7 @@ struct Filter : public T
 			}
 			for (int j = entry.Right; j >= entry.Left; --j)
 			{
-				if (abs(entry.Cache[j - entry.Left]) < oNumericLimits<float>::GetEpsilon())
+				if (abs(entry.Cache[j - entry.Left]) < std::numeric_limits<float>::epsilon())
 				{
 					--entry.Right;
 					entry.Cache.pop_back();
@@ -197,10 +198,10 @@ bool oSurfaceResizeHorizontal(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONS
 	const char* srcData = (char*)_SrcMap.pData;
 	char* dstData = (char*)_DstMap->pData;
 
-	oTaskSerialFor(0, _DstDesc.Dimensions.y, [&](size_t _y){
+	oConcurrency::serial_for(0, _DstDesc.Dimensions.y, [&](size_t _y){
 		int y = oInt(_y);
-		const uchar* oRESTRICT srcRow = (uchar*)oByteAdd(srcData, y*_SrcMap.RowPitch);
-		uchar* oRESTRICT dstRow = (uchar*)oByteAdd(dstData, y*_DstMap->RowPitch);
+		const uchar* oRESTRICT srcRow = (uchar*)oStd::byte_add(srcData, y*_SrcMap.RowPitch);
+		uchar* oRESTRICT dstRow = (uchar*)oStd::byte_add(dstData, y*_DstMap->RowPitch);
 
 		for(int x = 0; x < _DstDesc.Dimensions.x; ++x)
 		{
@@ -241,9 +242,9 @@ bool oSurfaceResizeVertical(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_
 	const uchar* oRESTRICT srcData = (uchar*)_SrcMap.pData;
 	uchar* oRESTRICT dstData = (uchar*)_DstMap->pData;
 
-	oTaskSerialFor(0, _DstDesc.Dimensions.y, [&](size_t _y){
+	oConcurrency::serial_for(0, _DstDesc.Dimensions.y, [&](size_t _y){
 		int y = oInt(_y);
-		uchar* oRESTRICT dstRow = oByteAdd(dstData, y*_DstMap->RowPitch);
+		uchar* oRESTRICT dstRow = oStd::byte_add(dstData, y*_DstMap->RowPitch);
 
 		for(int x = 0; x < _DstDesc.Dimensions.x; ++x)
 		{
@@ -256,7 +257,7 @@ bool oSurfaceResizeVertical(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_
 
 			for (int srcY = filterEntry.Left;srcY <= filterEntry.Right; ++srcY)
 			{
-				const uchar* oRESTRICT srcElement = oByteAdd(srcData, srcY*_SrcMap.RowPitch + x*ELEMENT_SIZE);
+				const uchar* oRESTRICT srcElement = oStd::byte_add(srcData, srcY*_SrcMap.RowPitch + x*ELEMENT_SIZE);
 
 				for (int i = 0;i < ELEMENT_SIZE; ++i)
 				{
@@ -294,11 +295,11 @@ bool oSurfaceResize(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_S
 		int remainder = (_SrcDesc.Dimensions.x % _DstDesc.Dimensions.x);
 
 		//Parallel for doesn't help
-		oTaskSerialFor(0, _DstDesc.Dimensions.y, [&](size_t _y){
+		oConcurrency::serial_for(0, _DstDesc.Dimensions.y, [&](size_t _y){
 			int y = oInt(_y);
 			int row = (y*_SrcDesc.Dimensions.y)/_DstDesc.Dimensions.y;
-			const char* oRESTRICT srcRow = oByteAdd(srcData, row*_SrcMap.RowPitch);
-			char* oRESTRICT dstRow = oByteAdd(dstData, y*_DstMap->RowPitch);
+			const char* oRESTRICT srcRow = oStd::byte_add(srcData, row*_SrcMap.RowPitch);
+			char* oRESTRICT dstRow = oStd::byte_add(dstData, y*_DstMap->RowPitch);
 
 			int step = 0;
 			for(int x = 0; x < _DstDesc.Dimensions.x; ++x)
@@ -373,10 +374,10 @@ bool oSurfaceResize(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_S
 bool oSurfaceResize(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SrcMap, const oSURFACE_DESC& _DstDesc, oSURFACE_MAPPED_SUBRESOURCE* _DstMap, oSURFACE_FILTER _Filter)
 {
 	if (_SrcDesc.Layout != _DstDesc.Layout || _SrcDesc.Format != _DstDesc.Format)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Incompatible surfaces provided.");
+		return oErrorSetLast(std::errc::invalid_argument, "Incompatible surfaces provided.");
 
 	if (oSurfaceFormatIsBlockCompressed(_SrcDesc.Format))
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Block compressed formats can't be resized");
+		return oErrorSetLast(std::errc::invalid_argument, "Block compressed formats can't be resized");
 
 	switch (_Filter)
 	{
@@ -447,26 +448,26 @@ bool oSurfaceResize(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_S
 		}
 	}
 
-	return oErrorSetLast(oERROR_INVALID_PARAMETER, "Unsupported filter type");
+	return oErrorSetLast(std::errc::invalid_argument, "Unsupported filter type");
 }
 
 bool oSurfaceClip(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SrcMap, const oSURFACE_DESC& _DstDesc, oSURFACE_MAPPED_SUBRESOURCE* _DstMap, int2 _SrcOffset)
 {
 	if (_SrcDesc.Layout != _DstDesc.Layout || _SrcDesc.Format != _DstDesc.Format)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Incompatible surfaces provided.");
+		return oErrorSetLast(std::errc::invalid_argument, "Incompatible surfaces provided.");
 
 	if (oSurfaceFormatIsBlockCompressed(_SrcDesc.Format))
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Block compressed formats can't be clipped");
+		return oErrorSetLast(std::errc::invalid_argument, "Block compressed formats can't be clipped");
 
 	if (_SrcOffset.x < 0 || _SrcOffset.y < 0)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "src offset must be >= 0");
+		return oErrorSetLast(std::errc::invalid_argument, "src offset must be >= 0");
 
 	int2 bottomRight = _SrcOffset + _DstDesc.Dimensions.xy();
 	if (bottomRight.x > _SrcDesc.Dimensions.x || bottomRight.y > _SrcDesc.Dimensions.y)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "_srcOffset + the dimensions of the destination, must be within the dimensions of the source");
+		return oErrorSetLast(std::errc::invalid_argument, "_srcOffset + the dimensions of the destination, must be within the dimensions of the source");
 
 	int elementSize = oSurfaceFormatGetSize(_SrcDesc.Format);
-	oMemcpy2d(_DstMap->pData, _DstMap->RowPitch, oByteAdd(_SrcMap.pData, _SrcMap.RowPitch*_SrcOffset.y + elementSize*_SrcOffset.x), _SrcMap.RowPitch, _DstDesc.Dimensions.x*elementSize, _DstDesc.Dimensions.y);
+	oMemcpy2d(_DstMap->pData, _DstMap->RowPitch, oStd::byte_add(_SrcMap.pData, _SrcMap.RowPitch*_SrcOffset.y + elementSize*_SrcOffset.x), _SrcMap.RowPitch, _DstDesc.Dimensions.x*elementSize, _DstDesc.Dimensions.y);
 
 	return true;
 }
@@ -474,20 +475,20 @@ bool oSurfaceClip(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUB
 bool oSurfacePad(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SrcMap, const oSURFACE_DESC& _DstDesc, oSURFACE_MAPPED_SUBRESOURCE* _DstMap, int2 _DstOffset)
 {
 	if (_SrcDesc.Layout != _DstDesc.Layout || _SrcDesc.Format != _DstDesc.Format)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Incompatible surfaces provided.");
+		return oErrorSetLast(std::errc::invalid_argument, "Incompatible surfaces provided.");
 
 	if (oSurfaceFormatIsBlockCompressed(_SrcDesc.Format))
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Block compressed formats can't be padded");
+		return oErrorSetLast(std::errc::invalid_argument, "Block compressed formats can't be padded");
 
 	if (_DstOffset.x < 0 || _DstOffset.y < 0)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "src offset must be >= 0");
+		return oErrorSetLast(std::errc::invalid_argument, "src offset must be >= 0");
 
 	int2 bottomRight = _DstOffset + _SrcDesc.Dimensions.xy();
 	if (bottomRight.x > _DstDesc.Dimensions.x || bottomRight.y > _DstDesc.Dimensions.y)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "_srcOffset + the dimensions of the destination, must be within the dimensions of the source");
+		return oErrorSetLast(std::errc::invalid_argument, "_srcOffset + the dimensions of the destination, must be within the dimensions of the source");
 
 	int elementSize = oSurfaceFormatGetSize(_SrcDesc.Format);
-	oMemcpy2d(oByteAdd(_DstMap->pData, _DstMap->RowPitch*_DstOffset.y + elementSize*_DstOffset.x), _DstMap->RowPitch, _SrcMap.pData, _SrcMap.RowPitch, _SrcDesc.Dimensions.x*elementSize, _SrcDesc.Dimensions.y);
+	oMemcpy2d(oStd::byte_add(_DstMap->pData, _DstMap->RowPitch*_DstOffset.y + elementSize*_DstOffset.x), _DstMap->RowPitch, _SrcMap.pData, _SrcMap.RowPitch, _SrcDesc.Dimensions.x*elementSize, _SrcDesc.Dimensions.y);
 	
 	return true;
 }

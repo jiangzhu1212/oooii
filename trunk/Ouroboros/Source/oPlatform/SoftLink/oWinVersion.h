@@ -27,12 +27,13 @@
 #ifndef oWinVersion_h
 #define oWinVersion_h
 
-#include "oWinSoftLinkCommon.h"
+#include <oPlatform/oModuleUtil.h>
 
 oDECLARE_DLL_SINGLETON_BEGIN(oWinVersion)
 	DWORD (__stdcall *GetFileVersionInfoSizeA)(LPCTSTR lptstrFilename, LPDWORD lpdwHandle);
 	BOOL (__stdcall *GetFileVersionInfoA)(LPCTSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData);
 	BOOL (__stdcall *VerQueryValueA)(LPCVOID pBlock, LPCTSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen);
+	BOOL (__stdcall *VerQueryValueW)(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen);
 oDECLARE_DLL_SINGLETON_END()
 
 #endif

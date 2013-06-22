@@ -29,19 +29,25 @@
 
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
-#include <oBasis/oMutex.h>
-#include <oBasis/oAssert.h>
-#include <oBasis/oFixedString.h>
+#include <oConcurrency/mutex.h>
+#include <oStd/assert.h>
+#include <oStd/fixed_string.h>
 #include <oBasis/oInitOnce.h>
-#include <oBasis/oThread.h>
 #include <list>
 
-//Template for creating dispatch queues that run in order, but each task may run on any thread including the caller of flush/join.
-//	Type T must be non polymorphic or you will get a compile error
-//	Type T must have a function " bool Init(oInterface* _pSelf)" an oInterface* to the actual instance will be passed, return a bool for success
-//  Type T must have a function with this signature "void IssueImpl(oTASK&& _task) threadsafe". This should dispatch the task to an "async" operation
-//	Type T mus implement ReferenceImpl and ReleaseImpl. similar to oInterface Reference adn Release, but release return a bool, true if this should be deleted, false otherwise
-//	This class provides all the thread safety, you provide the actual async call, you do not need to add any additional thread safety to Issue though.
+// Template for creating dispatch queues that run in order, but each task may run 
+// on any thread including the caller of flush/join.
+// * Type T must be non polymorphic or you will get a compile error
+// * Type T must have a function " bool Init(oInterface* _pSelf)" an oInterface* 
+//   to the actual instance will be passed, return a bool for success
+// * Type T must have a function with this signature:
+//   "void IssueImpl(const oTASK& _Task) threadsafe". This should dispatch the 
+//    task to an "async" operation.
+// * Type T mus implement ReferenceImpl and ReleaseImpl. similar to oInterface 
+//   Reference adn Release, but release return a bool, true if this should be 
+//   deleted, false otherwise
+// This class provides all the thread safety, you provide the actual async call, 
+// you do not need to add any additional thread safety to Issue though.
 template<typename T>
 struct oDispatchQueueGlobalT : public oDispatchQueueGlobal, T
 {
@@ -61,25 +67,23 @@ struct oDispatchQueueGlobalT : public oDispatchQueueGlobal, T
 	oDispatchQueueGlobalT(const char* _DebugName, size_t _InitialTaskCapacity, bool* _pSuccess);
 	~oDispatchQueueGlobalT();
 
-	virtual bool Dispatch(oTASK _Task) threadsafe override;
-	virtual void Flush() threadsafe override;
-	virtual void Join() threadsafe override;
-	virtual bool Joinable() const threadsafe override{ return IsJoinable; }
+	bool Dispatch(const oTASK& _Task) threadsafe override;
+	void Flush() threadsafe override;
+	void Join() threadsafe override;
+	bool Joinable() const threadsafe override{ return IsJoinable; }
 	virtual const char* GetDebugName() const threadsafe { return DebugName->c_str(); }
 
 	void ExecuteNext(oRef<threadsafe oDispatchQueueGlobalT> _SelfRef, unsigned int _ExecuteKey) threadsafe;
 
-	oInitOnce<oStringS> DebugName;
+	oInitOnce<oStd::sstring> DebugName;
 	typedef std::list<oTASK> tasks_t;
 	tasks_t Tasks;
-	oSharedMutex TaskLock;
-	oSharedMutex FlushLock;
+	oConcurrency::shared_mutex TaskLock;
+	oConcurrency::shared_mutex FlushLock;
 	bool IsJoinable;
 	unsigned int ExecuteKey;
 
-	unsigned int ExecuteThreadID;
-
-	tasks_t& ProtectedTasks() threadsafe { return thread_cast<tasks_t&>(Tasks); }
+	oStd::thread::id ExecuteThreadID;
 };
 
 template<typename T>
@@ -104,7 +108,7 @@ oDispatchQueueGlobalT<T>::~oDispatchQueueGlobalT()
 }
 
 template<typename T>
-bool oDispatchQueueGlobalT<T>::Dispatch(oTASK _Task) threadsafe
+bool oDispatchQueueGlobalT<T>::Dispatch(const oTASK& _Task) threadsafe
 {
 	bool Scheduled = false;
 
@@ -114,10 +118,10 @@ bool oDispatchQueueGlobalT<T>::Dispatch(oTASK _Task) threadsafe
 
 		// Queue up command
 		{
-			oLockGuard<oSharedMutex> Lock(TaskLock);
+			oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(TaskLock);
 			// Add this command to the queue
-			ProtectedTasks().push_back(_Task);
-			TaskCount = ProtectedTasks().size();
+			oThreadsafe(Tasks).push_back(_Task);
+			TaskCount = oThreadsafe(Tasks).size();
 			Scheduled = true;
 		}
 
@@ -144,27 +148,29 @@ void oDispatchQueueGlobalT<T>::Join() threadsafe
 	IsJoinable = false;
 
 	auto flushTasks = [&](){
-		while (!ProtectedTasks().empty())
+		while (!oThreadsafe(Tasks).empty())
 		{
-			ProtectedTasks().front()();
-			ProtectedTasks().pop_front();
+			oThreadsafe(Tasks).front()();
+			oThreadsafe(Tasks).pop_front();
 		}
 	};
 
-	//Only way for this thread to be an ExecuteThread is if we got here by destroying a task in ExecuteNext
-	//	and that task was the only thing directly or indirectly holding a reference to this queue.
-	//	If that happens we will deadlock if we flush lock, and the lock isn't needed anyway. other threads
-	//	will still lock on the flush lock, and we can just clear the remaining tasks ourselves.
-	//	This condition happens when a task is holding an oref to an object that holds this queue, and is the
-	//	last reference. then when the task is destroyed, the parent object is destroyed, and that can call join.
-	if(ExecuteThreadID != oAsUint(oStd::this_thread::get_id()))
+	// Only way for this thread to be an ExecuteThread is if we got here by 
+	// destroying a task in ExecuteNext and that task was the only thing directly 
+	// or indirectly holding a reference to this queue. If that happens we will 
+	// deadlock if we flush lock, and the lock isn't needed anyway. other threads
+	// will still lock on the flush lock, and we can just clear the remaining 
+	// tasks ourselves. This condition happens when a task is holding a reference 
+	// to an object that holds this queue, and is the last reference. Then when 
+	// the task is destroyed the parent object is destroyed and that can call join.
+	if (oThreadsafe(ExecuteThreadID) != oStd::this_thread::get_id())
 	{
-		oLockGuard<oSharedMutex> Lock(FlushLock);
+		oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(FlushLock);
 		flushTasks();
 	}
 	else
 	{
-		ProtectedTasks().pop_front(); //in this case there will be a garbage task at the front that needs to be removed. that task will be how we got here.
+		oThreadsafe(Tasks).pop_front(); //in this case there will be a garbage task at the front that needs to be removed. that task will be how we got here.
 		flushTasks();
 	}
 
@@ -176,7 +182,7 @@ void oDispatchQueueGlobalT<T>::ExecuteNext(oRef<threadsafe oDispatchQueueGlobalT
 {
 	if (IsJoinable && _ExecuteKey == ExecuteKey && FlushLock.try_lock_shared())
 	{
-		ExecuteThreadID = oAsUint(oStd::this_thread::get_id());
+		oThreadsafe(this)->ExecuteThreadID = oStd::this_thread::get_id();
 
 		size_t TaskCount = 0;
 		{
@@ -185,16 +191,16 @@ void oDispatchQueueGlobalT<T>::ExecuteNext(oRef<threadsafe oDispatchQueueGlobalT
 			//	capture by value oref
 			//	can't execute directly from the queue, as join could be called which modifies the queue, which would be bad.
 			oTASK task;
-			task = std::move(ProtectedTasks().front());
+			task = std::move(oThreadsafe(Tasks).front());
 			task();
 		}
-		oLockGuard<oSharedMutex> Lock(TaskLock);
+		oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(TaskLock);
 		// Remove command
 		//if deleting the task triggered a join, its possible there isn't a task to remove. if that happens, its guaranteed the task list will be empty, not just missing a single task.
-		if(!ProtectedTasks().empty()) 
-			ProtectedTasks().pop_front();
-		TaskCount = ProtectedTasks().size();
-		ExecuteThreadID = 0;
+		if(!oThreadsafe(Tasks).empty()) 
+			oThreadsafe(Tasks).pop_front();
+		TaskCount = oThreadsafe(Tasks).size();
+		oThreadsafe(this)->ExecuteThreadID = oStd::thread::id();
 			
 		// If there are remaining Tasks execute the next
 		if (TaskCount > 0)

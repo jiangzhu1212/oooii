@@ -24,9 +24,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oD3D11.h>
-#include <oBasis/oAssert.h>
-#include <oBasis/oByte.h>
-#include <oBasis/oMathShared.h>
+#include <oStd/assert.h>
+#include <oStd/byte.h>
 #include <oBasis/oMemory.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oFile.h>
@@ -37,40 +36,6 @@
 #include <oPlatform/Windows/oDXGI.h>
 #include "SoftLink/oD3DX11.h"
 #include <cerrno>
-
-// @oooii-tony: This one is a little weird. We want to be generic and user-
-// extensible by providing a fourcc, but we need to match that against user-
-// specified shader semantics AND at least POSITION as a system-required 
-// semantic. So this platform-specific conversion might need to be in user code,
-// thus might need to be oFUNCTION'ed through oGPU API. We need to revisit this
-// mapping... I'd be fine saying "define all semantics as the fourcc string",
-// BUT for the system-required POSITION. Maybe just support that as a special-
-// case? Try that AFTER some other refactor lands.
-const char* oD3D11AsSemantic(const oFourCC& _FourCC)
-{
-	switch ((unsigned int)_FourCC)
-	{
-		case 'POS0': return "POSITION";
-		case 'TEX0':
-		case 'TEX1': return "TEXCOORD";
-		case 'NML0': return "NORMAL";
-		case 'TAN0': return "TANGENT";
-		case 'CON0':
-		case 'CON1': return "CONTINUITY";
-		case 'CLR0':
-		case 'CLR1': return "COLOR";
-		case 'WGT0':
-		case 'WGT1': return "BLENDWEIGHT";
-		case 'IDX0':
-		case 'IDX1': return "BLENDINDICES";
-		case 'ORT0':
-		case 'ORT1': return "ORIENTATION";
-		case 'TX  ': return "TRANSLATION";
-		case 'ROT ': return "ROTATION";
-		case 'LIT0': return "LIGHTARRAYINDEX";
-		default: return "Unrecognized vertex semantic fourcc";
-	}
-}
 
 // {13BA565C-4766-49C4-8C1C-C1F459F00A65}
 static const GUID oWKPDID_oGPU_BUFFER_DESC = { 0x13ba565c, 0x4766, 0x49c4, { 0x8c, 0x1c, 0xc1, 0xf4, 0x59, 0xf0, 0xa, 0x65 } };
@@ -110,7 +75,7 @@ static bool oD3D11FindAdapter(int _Index, const int2& _VirtualDesktopPosition, c
 {
 	bool ForceOneGPU = false;
 	char buf[32];
-	if (oSystemGetEnvironmentVariable(buf, "OOOii.D3D11.ForceOneGPU") && oFromString(&ForceOneGPU, buf) && ForceOneGPU)
+	if (oSystemGetEnvironmentVariable(buf, "OOOii.D3D11.ForceOneGPU") && oStd::from_string(&ForceOneGPU, buf) && ForceOneGPU)
 	{
 		oTRACE("Forcing D3D11Device index %d to 0 because OOOii.D3D11.ForceOneGPU is set.", _Index);
 		_Index = 0;
@@ -118,28 +83,28 @@ static bool oD3D11FindAdapter(int _Index, const int2& _VirtualDesktopPosition, c
 
 	oRef<IDXGIFactory> Factory;
 	if (!oDXGICreateFactory(&Factory))
-		return oErrorSetLast(oERROR_NOT_FOUND, "Failed to create DXGI factory");
+		return oErrorSetLast(std::errc::no_such_device, "Failed to create DXGI factory");
 
 	if (any_equal(_VirtualDesktopPosition, int2(oDEFAULT, oDEFAULT)))
 	{
 		if (_Index < 0)
-			return oErrorSetLast(oERROR_INVALID_PARAMETER, "An invalid index and an invalid virtual desktop point where specified. One must be valid.");
+			return oErrorSetLast(std::errc::invalid_argument, "An invalid index and an invalid virtual desktop point where specified. One must be valid.");
 
 		if (DXGI_ERROR_NOT_FOUND == Factory->EnumAdapters(_Index, _ppAdapter))
-			return oErrorSetLast(oERROR_NOT_FOUND, "An IDXGIAdapter could not be found at index %d", _Index);
+			return oErrorSetLast(std::errc::no_such_device, "An IDXGIAdapter could not be found at index %d", _Index);
 	}
 
 	else
 	{
 		oRef<IDXGIOutput> Output;
 			if (!oDXGIFindOutput(Factory, _VirtualDesktopPosition, &Output))
-				return oErrorSetLast(oERROR_NOT_FOUND, "No output found displaying virtual desktop position %d, %d", _VirtualDesktopPosition.x, _VirtualDesktopPosition.y);
+				return oErrorSetLast(std::errc::no_such_device, "No output found displaying virtual desktop position %d, %d", _VirtualDesktopPosition.x, _VirtualDesktopPosition.y);
 		oVERIFY(oDXGIGetAdapter(Output, _ppAdapter));
 	}
 
 	int AdapterIndex = oDXGIGetAdapterIndex(*_ppAdapter);
 	if (AdapterIndex == oInvalid)
-		return oErrorSetLast(oERROR_NOT_FOUND, "No GPUIndex could be found from the DXGI adapter found");
+		return oErrorSetLast(std::errc::no_such_device, "No GPUIndex could be found from the DXGI adapter found");
 
 	oDISPLAY_ADAPTER_DRIVER_DESC add;
 	oDXGIGetAdapterDriverDesc(*_ppAdapter, &add);
@@ -164,11 +129,11 @@ static bool oD3D11FindAdapter(int _Index, const int2& _VirtualDesktopPosition, c
 	if (_ExactVersion)
 	{
 		if (add.Version != RequiredVersion)
-			return oErrorSetLast(oERROR_INVALID_PARAMETER, "Exact video driver version %d.%d required, but current driver is %d.%d", RequiredVersion.Major, RequiredVersion.Minor, add.Version.Major, add.Version.Minor);
+			return oErrorSetLast(std::errc::invalid_argument, "Exact video driver version %d.%d required, but current driver is %d.%d", RequiredVersion.Major, RequiredVersion.Minor, add.Version.Major, add.Version.Minor);
 	}
 
 	else if (add.Version < RequiredVersion)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Video driver version %d.%d or newer required, but current driver is %d.%d", RequiredVersion.Major, RequiredVersion.Minor, add.Version.Major, add.Version.Minor);
+		return oErrorSetLast(std::errc::invalid_argument, "Video driver version %d.%d or newer required, but current driver is %d.%d", RequiredVersion.Major, RequiredVersion.Minor, add.Version.Major, add.Version.Minor);
 
 	return true;
 }
@@ -176,7 +141,7 @@ static bool oD3D11FindAdapter(int _Index, const int2& _VirtualDesktopPosition, c
 bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3D11Device** _ppDevice)
 {
 	if (!_ppDevice || _Init.Version < oVersion(9,0))
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	oRef<IDXGIAdapter> Adapter;
 
@@ -187,13 +152,18 @@ bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3
 	}
 
 	UINT Flags = 0;
+	bool UsingDebug = false;
 	if (_Init.DriverDebugLevel != oGPU_DEBUG_NONE)
+	{
 		Flags |= D3D11_CREATE_DEVICE_DEBUG;
+		UsingDebug = true;
+	}
+
 	if (_SingleThreaded)
 		Flags |= D3D11_CREATE_DEVICE_SINGLETHREADED;
 
 	D3D_FEATURE_LEVEL FeatureLevel;
-	oVB_RETURN2(oD3D11::Singleton()->D3D11CreateDevice(
+	HRESULT hr = oD3D11::Singleton()->D3D11CreateDevice(
 		Adapter
 		, _Init.UseSoftwareEmulation ? D3D_DRIVER_TYPE_REFERENCE : D3D_DRIVER_TYPE_UNKNOWN
 		, 0
@@ -203,7 +173,30 @@ bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3
 		, D3D11_SDK_VERSION
 		, _ppDevice
 		, &FeatureLevel
-		, nullptr));
+		, nullptr);
+
+	// http://stackoverflow.com/questions/10586956/what-can-cause-d3d11createdevice-to-fail-with-e-fail
+	// It's possible that the debug lib isn't installed, so try again without 
+	// debug.
+	if (hr == E_FAIL)
+	{
+		Flags &=~ D3D11_CREATE_DEVICE_DEBUG;
+		UsingDebug = false;
+
+		oVB_RETURN2(oD3D11::Singleton()->D3D11CreateDevice(
+			Adapter
+			, _Init.UseSoftwareEmulation ? D3D_DRIVER_TYPE_REFERENCE : D3D_DRIVER_TYPE_UNKNOWN
+			, 0
+			, Flags
+			, nullptr
+			, 0
+			, D3D11_SDK_VERSION
+			, _ppDevice
+			, &FeatureLevel
+			, nullptr));
+
+		oTRACE("Debug D3D11 not found: device created in non-debug mode so driver error reporting will not be available.");
+	}
 
 	oVersion D3DVersion = oD3D11GetFeatureVersion(FeatureLevel);
 	if (D3DVersion < _Init.Version)
@@ -213,7 +206,7 @@ bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3
 			(*_ppDevice)->Release();
 			*_ppDevice = nullptr;
 		}
-		return oErrorSetLast(oERROR_NOT_FOUND, "Failed to create an ID3D11Device with a minimum feature set of DX %d.%d!", _Init.Version.Major, _Init.Version.Minor);
+		return oErrorSetLast(std::errc::not_supported, "Failed to create an ID3D11Device with a minimum feature set of DX %d.%d!", _Init.Version.Major, _Init.Version.Minor);
 	}
 
 	oVERIFY(oD3D11SetDebugName(*_ppDevice, oSAFESTRN(_Init.DebugName)));
@@ -313,7 +306,7 @@ bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3
 		D3D11_MESSAGE_ID_DESTROY_RASTERIZERSTATE,
 	};
 
-	if (_Init.DriverDebugLevel == oGPU_DEBUG_NORMAL)
+	if (UsingDebug && _Init.DriverDebugLevel == oGPU_DEBUG_NORMAL)
 	{
 		oRef<ID3D11InfoQueue> IQ;
 		oV((*_ppDevice)->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&IQ));
@@ -360,7 +353,7 @@ bool oD3D11DeviceGetDesc(ID3D11Device* _pDevice, bool _IsSoftwareEmulation, oGPU
 bool oD3D11GetAdapter(ID3D11Device* _pDevice, IDXGIAdapter** _ppAdapter)
 {
 	if (!_pDevice)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	oRef<IDXGIDevice> DXGIDevice;
 	oVB_RETURN2(_pDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)&DXGIDevice));
@@ -369,7 +362,9 @@ bool oD3D11GetAdapter(ID3D11Device* _pDevice, IDXGIAdapter** _ppAdapter)
 	return true;
 }
 
-const char* oAsString(D3D11_BIND_FLAG _Flag)
+namespace oStd {
+
+const char* as_string(const D3D11_BIND_FLAG& _Flag)
 {
 	switch (_Flag)
 	{
@@ -387,7 +382,7 @@ const char* oAsString(D3D11_BIND_FLAG _Flag)
 	}
 }
 
-const char* oAsString(D3D11_CPU_ACCESS_FLAG _Flag)
+const char* as_string(const D3D11_CPU_ACCESS_FLAG& _Flag)
 {
 	switch (_Flag)
 	{
@@ -397,7 +392,7 @@ const char* oAsString(D3D11_CPU_ACCESS_FLAG _Flag)
 	}
 }
 
-const char* oAsString(D3D11_RESOURCE_MISC_FLAG _Flag)
+const char* as_string(const D3D11_RESOURCE_MISC_FLAG& _Flag)
 {
 	switch (_Flag)
 	{
@@ -418,7 +413,7 @@ const char* oAsString(D3D11_RESOURCE_MISC_FLAG _Flag)
 	}
 }
 
-const char* oAsString(D3D11_RESOURCE_DIMENSION _Type)
+const char* as_string(const D3D11_RESOURCE_DIMENSION& _Type)
 {
 	switch (_Type)
 	{
@@ -431,7 +426,7 @@ const char* oAsString(D3D11_RESOURCE_DIMENSION _Type)
 	}
 }
 
-const char* oAsString(D3D11_UAV_DIMENSION _Type)
+const char* as_string(const D3D11_UAV_DIMENSION& _Type)
 {
 	switch (_Type)
 	{
@@ -446,7 +441,7 @@ const char* oAsString(D3D11_UAV_DIMENSION _Type)
 	}
 }
 
-const char* oAsString(D3D11_USAGE _Usage)
+const char* as_string(const D3D11_USAGE& _Usage)
 {
 	switch (_Usage)
 	{
@@ -457,6 +452,8 @@ const char* oAsString(D3D11_USAGE _Usage)
 		oNODEFAULT;
 	}
 }
+
+} // namespace oStd
 
 oVersion oD3D11GetFeatureVersion(D3D_FEATURE_LEVEL _Level)
 {
@@ -475,7 +472,7 @@ oVersion oD3D11GetFeatureVersion(D3D_FEATURE_LEVEL _Level)
 bool oD3D11SetDebugName(ID3D11Device* _pDevice, const char* _Name)
 {
 	if (!_pDevice || !_Name)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	UINT CreationFlags = _pDevice->GetCreationFlags();
 	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
@@ -492,7 +489,7 @@ char* oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, co
 {
 	if (!_pDevice || !_StrDestination || _SizeofStrDestination == 0)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
+		oErrorSetLast(std::errc::invalid_argument);
 		return nullptr;
 	}
 
@@ -507,14 +504,14 @@ char* oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, co
 bool oD3D11SetDebugName(ID3D11DeviceChild* _pDeviceChild, const char* _Name)
 {
 	if (!_pDeviceChild || !_Name)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	oRef<ID3D11Device> D3DDevice;
 	_pDeviceChild->GetDevice(&D3DDevice);
 	UINT CreationFlags = D3DDevice->GetCreationFlags();
 	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
 	{
-		oStringS tmp(_Name);
+		oStd::uri_string tmp(_Name);
 		HRESULT hr = _pDeviceChild->SetPrivateData(oWKPDID_D3DDebugObjectName, oUInt(tmp.capacity()), tmp.c_str());
 		if (FAILED(hr))
 			return oWinSetLastError(hr);
@@ -557,7 +554,7 @@ D3DX11_IMAGE_FILE_FORMAT oD3D11GetFormatFromPath(const char* _Path)
 		{ ".wmp", D3DX11_IFF_WMP },
 	};
 
-	for (size_t i = 0; i < oCOUNTOF(sExtensions); i++)
+	oFORI(i, sExtensions)
 		if (!oStricmp(sExtensions[i].Extension, ext))
 			return sExtensions[i].Format;
 
@@ -588,6 +585,11 @@ bool oD3D11GetContainerBackPointer(const ID3D11DeviceChild* _pChild, oInterface*
 		return oWinSetLastError(hr);
 	(*_ppContainer)->Reference();
 	return true;
+}
+
+D3D11_PRIMITIVE_TOPOLOGY oD3D11ToPrimitiveTopology(oGPU_PRIMITIVE_TYPE _Type)
+{
+	return D3D11_PRIMITIVE_TOPOLOGY(_Type);
 }
 
 uint oD3D11GetNumElements(D3D_PRIMITIVE_TOPOLOGY _PrimitiveTopology, uint _NumPrimitives)
@@ -690,7 +692,7 @@ const char* oD3D11GetShaderProfile(D3D_FEATURE_LEVEL _Level, oGPU_PIPELINE_STAGE
 	if (!profile)
 	{
 		oVersion ver = oD3D11GetFeatureVersion(_Level);
-		oErrorSetLast(oERROR_NOT_FOUND, "Shader profile does not exist for D3D%d.%d's stage %s", ver.Major, ver.Minor, oAsString(_Stage));
+		oErrorSetLast(std::errc::not_supported, "Shader profile does not exist for D3D%d.%d's stage %s", ver.Major, ver.Minor, oStd::as_string(_Stage));
 	}
 
 	return profile;
@@ -702,14 +704,14 @@ bool oD3D11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _Sizeo
 	const char* msg = (const char*)_pErrorMessages->GetBufferPointer();
 
 	if (!_OutErrorMessageString)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	if (_pErrorMessages)
 	{
 		std::string tmp;
 		tmp.reserve(oKB(10));
 		tmp.assign(msg);
-		oReplaceAll(tmp, "%", "%%");
+		oStd::replace_all(tmp, "%", "%%");
 
 		// Now make sure header errors include their full paths
 		if (_pIncludePaths && _NumIncludePaths)
@@ -761,11 +763,11 @@ bool oD3D11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _Sizeo
 
 int oD3D11VTrace(ID3D11InfoQueue* _pInfoQueue, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args)
 {
-	oStringXL buf;
+	oStd::xlstring buf;
 	int len = oVPrintf(buf, _Format, _Args);
 	if (len == oInvalid)
 	{
-		oErrorSetLast(oERROR_AT_CAPACITY, "message too long");
+		oErrorSetLast(std::errc::no_buffer_space, "message too long");
 		return len;
 	}
 
@@ -938,8 +940,8 @@ static bool oD3D11DeviceIsMutingInfosOrStateCreation(ID3D11Device* _pDevice)
 {	D3D11_RESOURCE_DIMENSION type; \
 	_pResource->GetType(&type); \
 	if (type != D3D11_RESOURCE_DIMENSION_TEXTURE1D && type != D3D11_RESOURCE_DIMENSION_TEXTURE2D && type != D3D11_RESOURCE_DIMENSION_TEXTURE3D) \
-	{	oStringM buf; \
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Only textures types are currently supported. (resource %s)", oD3D11GetDebugName(buf, _pResource)); \
+	{	oStd::mstring buf; \
+		return oErrorSetLast(std::errc::invalid_argument, "Only textures types are currently supported. (resource %s)", oD3D11GetDebugName(buf, _pResource)); \
 	} \
 } while (false)
 
@@ -963,18 +965,18 @@ bool oD3D11BufferCreate(ID3D11Device* _pDevice, const char* _DebugName, const oG
 	{
 		case oGPU_BUFFER_DEFAULT:
 			BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-			if (!oIsByteAligned(_Desc.StructByteSize, 16) || _Desc.StructByteSize > 65535)
-				return oErrorSetLast(oERROR_INVALID_PARAMETER, "A constant buffer must specify a StructByteSize that is 16-byte-aligned and <= 65536 bytes. (size %u bytes specified)", _Desc.StructByteSize);
+			if (!oStd::byte_aligned(_Desc.StructByteSize, 16) || _Desc.StructByteSize > 65535)
+				return oErrorSetLast(std::errc::invalid_argument, "A constant buffer must specify a StructByteSize that is 16-byte-aligned and <= 65536 bytes. (size %u bytes specified)", _Desc.StructByteSize);
 			break;
 		case oGPU_BUFFER_READBACK:
 			Usage = D3D11_USAGE_STAGING;
 			break;
 		case oGPU_BUFFER_INDEX:
 			if (_Desc.Format != oSURFACE_R16_UINT && _Desc.Format != oSURFACE_R32_UINT)
-				return oErrorSetLast(oERROR_INVALID_PARAMETER, "An index buffer must specify a format of oSURFACE_R16_UINT or oSURFACE_R32_UINT only (%s specified).", oAsString(_Desc.Format));
+				return oErrorSetLast(std::errc::invalid_argument, "An index buffer must specify a format of oSURFACE_R16_UINT or oSURFACE_R32_UINT only (%s specified).", oStd::as_string(_Desc.Format));
 
 			if (_Desc.StructByteSize != oInvalid && _Desc.StructByteSize != oUInt(oSurfaceFormatGetSize(_Desc.Format)))
-				return oErrorSetLast(oERROR_INVALID_PARAMETER, "An index buffer must specify StructByteSize properly, or set it to oInvalid.");
+				return oErrorSetLast(std::errc::invalid_argument, "An index buffer must specify StructByteSize properly, or set it to oInvalid.");
 
 			BindFlags = D3D11_BIND_INDEX_BUFFER;
 			break;
@@ -991,14 +993,14 @@ bool oD3D11BufferCreate(ID3D11Device* _pDevice, const char* _DebugName, const oG
 			BindFlags = D3D11_BIND_UNORDERED_ACCESS;
 			Format = oSURFACE_R32_TYPELESS;
 			if (_Desc.StructByteSize != sizeof(uint))
-				return oErrorSetLast(oERROR_INVALID_PARAMETER, "A raw buffer must specify a StructByteSize of 4.");
+				return oErrorSetLast(std::errc::invalid_argument, "A raw buffer must specify a StructByteSize of 4.");
 			if (_Desc.ArraySize < 3)
-				return oErrorSetLast(oERROR_INVALID_PARAMETER, "A raw buffer must have at least 3 elements.");
+				return oErrorSetLast(std::errc::invalid_argument, "A raw buffer must have at least 3 elements.");
 			break;
 		case oGPU_BUFFER_UNORDERED_UNSTRUCTURED:
 			BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
 			if (Format == oSURFACE_UNKNOWN)
-				return oErrorSetLast(oERROR_INVALID_PARAMETER, "An unordered, unstructured buffer requires a valid surface format to be specified.");
+				return oErrorSetLast(std::errc::invalid_argument, "An unordered, unstructured buffer requires a valid surface format to be specified.");
 			break;
 		case oGPU_BUFFER_UNORDERED_STRUCTURED:
 		case oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND:
@@ -1021,7 +1023,7 @@ bool oD3D11BufferCreate(ID3D11Device* _pDevice, const char* _DebugName, const oG
 		ElementStride = oSurfaceFormatGetSize(Format);
 
 	if (ElementStride == 0 || ElementStride == oInvalid)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "A structured buffer requires a valid non-zero buffer size to be specified.");
+		return oErrorSetLast(std::errc::invalid_argument, "A structured buffer requires a valid non-zero buffer size to be specified.");
 
 	D3D11_BUFFER_DESC desc;
 	oD3D11InitBufferDesc(BindFlags, Usage, ElementStride, _Desc.ArraySize, _Desc.Type >= oGPU_BUFFER_UNORDERED_STRUCTURED, _Desc.Type == oGPU_BUFFER_UNORDERED_RAW, &desc);
@@ -1099,13 +1101,13 @@ bool oD3D11CreateUnflaggedUAV(ID3D11UnorderedAccessView* _pSourceUAV, ID3D11Unor
 		return true;
 	}
 	
-	return oErrorSetLast(oERROR_INVALID_PARAMETER, "Only D3D11_UAV_DIMENSION_BUFFER views supported");
+	return oErrorSetLast(std::errc::invalid_argument, "Only D3D11_UAV_DIMENSION_BUFFER views supported");
 }
 
 bool oD3D11CopyTo(ID3D11Resource* _pTexture, uint _Subresource, void* _pDestination, uint _DestinationRowPitch, bool _FlipVertically)
 {
 	if (!_pTexture)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	oCHECK_IS_TEXTURE(_pTexture);
 
@@ -1119,8 +1121,8 @@ bool oD3D11CopyTo(ID3D11Resource* _pTexture, uint _Subresource, void* _pDestinat
 
 	if (!oGPUTextureTypeIsReadback(desc.Type))
 	{
-		oStringM buf;
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified texture %s does not have CPU read access", oD3D11GetDebugName(buf, _pTexture));
+		oStd::mstring buf;
+		return oErrorSetLast(std::errc::invalid_argument, "The specified texture %s does not have CPU read access", oD3D11GetDebugName(buf, _pTexture));
 	}
 
 	D3D11_MAPPED_SUBRESOURCE source;
@@ -1153,7 +1155,7 @@ void oD3D11UpdateSubresource(ID3D11DeviceContext* _pDeviceContext, ID3D11Resourc
 
 			int2 ByteDimensions;
 			if (type == D3D11_RESOURCE_DIMENSION_BUFFER)
-				ByteDimensions = d.Dimensions.xy;
+				ByteDimensions = d.Dimensions.xy();
 			else
 				ByteDimensions = oSurfaceMipCalcByteDimensions(d.Format, d.Dimensions);
 
@@ -1289,7 +1291,7 @@ void oD3D11GetTextureDesc(ID3D11Resource* _pResource, oGPU_TEXTURE_DESC* _pDesc,
 			D3D11_TEXTURE1D_DESC desc;
 			static_cast<ID3D11Texture1D*>(_pResource)->GetDesc(&desc);
 			_pDesc->Dimensions = int3(oInt(desc.Width), 1, 1);
-			_pDesc->NumSlices = oInt(desc.ArraySize);
+			_pDesc->ArraySize = oInt(desc.ArraySize);
 			FillNonDimensions(desc, oGPU_TEXTURE_2D_MAP, _pDesc);
 			if (_pUsage) *_pUsage = desc.Usage;
 			break;
@@ -1300,7 +1302,7 @@ void oD3D11GetTextureDesc(ID3D11Resource* _pResource, oGPU_TEXTURE_DESC* _pDesc,
 			D3D11_TEXTURE2D_DESC desc;
 			static_cast<ID3D11Texture2D*>(_pResource)->GetDesc(&desc);
 			_pDesc->Dimensions = int3(oInt(desc.Width), oInt(desc.Height), 1);
-			_pDesc->NumSlices = oInt(desc.ArraySize);
+			_pDesc->ArraySize = oInt(desc.ArraySize);
 			FillNonDimensions(desc, oGPU_TEXTURE_2D_MAP, _pDesc);
 			if (_pUsage) *_pUsage = desc.Usage;
 			break;
@@ -1311,7 +1313,7 @@ void oD3D11GetTextureDesc(ID3D11Resource* _pResource, oGPU_TEXTURE_DESC* _pDesc,
 			D3D11_TEXTURE3D_DESC desc;
 			static_cast<ID3D11Texture3D*>(_pResource)->GetDesc(&desc);
 			_pDesc->Dimensions = int3(oInt(desc.Width), oInt(desc.Height), oInt(desc.Depth));
-			_pDesc->NumSlices = 1;
+			_pDesc->ArraySize = 1;
 			FillNonDimensions(desc, oGPU_TEXTURE_3D_MAP, _pDesc);
 			if (_pUsage) *_pUsage = desc.Usage;
 			break;
@@ -1324,8 +1326,8 @@ void oD3D11GetTextureDesc(ID3D11Resource* _pResource, oGPU_TEXTURE_DESC* _pDesc,
 
 			D3D11_BUFFER_DESC desc;
 			static_cast<ID3D11Buffer*>(_pResource)->GetDesc(&desc);
-			_pDesc->Dimensions = int3(oInt(d.StructByteSize), 1, 1);
-			_pDesc->NumSlices = oInt(d.ArraySize);
+			_pDesc->Dimensions = int3(oInt(d.StructByteSize), oInt(d.ArraySize), 1);
+			_pDesc->ArraySize = oInt(d.ArraySize);
 			_pDesc->Format = d.Format;
 			if (_pUsage) *_pUsage = desc.Usage;
 			break;
@@ -1344,18 +1346,18 @@ static void oD3D11InitSRVDesc(const oGPU_TEXTURE_DESC& _Desc, D3D11_RESOURCE_DIM
 	_pSRVDesc->Texture2DArray.MostDetailedMip = 0;
 	_pSRVDesc->Texture2DArray.MipLevels = oSurfaceCalcNumMips(oGPUTextureTypeHasMips(_Desc.Type), _Desc.Dimensions);
 	_pSRVDesc->Texture2DArray.FirstArraySlice = 0;
-	_pSRVDesc->Texture2DArray.ArraySize = _Desc.NumSlices;
+	_pSRVDesc->Texture2DArray.ArraySize = _Desc.ArraySize;
 
 	switch (_Type)
 	{
 		case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
-			_pSRVDesc->ViewDimension = (_Desc.NumSlices > 1) ? D3D11_SRV_DIMENSION_TEXTURE1DARRAY : D3D11_SRV_DIMENSION_TEXTURE1D;
+			_pSRVDesc->ViewDimension = (_Desc.ArraySize > 1) ? D3D11_SRV_DIMENSION_TEXTURE1DARRAY : D3D11_SRV_DIMENSION_TEXTURE1D;
 			break;
 		case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
 			if (oGPUTextureTypeIsCubeMap(_Desc.Type))
-				_pSRVDesc->ViewDimension = (_Desc.NumSlices > 6) ? D3D11_SRV_DIMENSION_TEXTURECUBEARRAY : D3D11_SRV_DIMENSION_TEXTURECUBE;
+				_pSRVDesc->ViewDimension = (_Desc.ArraySize > 6) ? D3D11_SRV_DIMENSION_TEXTURECUBEARRAY : D3D11_SRV_DIMENSION_TEXTURECUBE;
 			else
-				_pSRVDesc->ViewDimension = (_Desc.NumSlices > 1) ? D3D11_SRV_DIMENSION_TEXTURE2DARRAY : D3D11_SRV_DIMENSION_TEXTURE2D;
+				_pSRVDesc->ViewDimension = (_Desc.ArraySize > 1) ? D3D11_SRV_DIMENSION_TEXTURE2DARRAY : D3D11_SRV_DIMENSION_TEXTURE2D;
 			break;
 		case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
 			_pSRVDesc->ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
@@ -1389,7 +1391,7 @@ bool oD3D11CreateShaderResourceView(const char* _DebugName, ID3D11Resource* _pTe
 
 static void oD3D11InitDSVDesc(const oGPU_TEXTURE_DESC& _Desc, D3D11_RESOURCE_DIMENSION _Type, D3D11_DEPTH_STENCIL_VIEW_DESC* _pDSVDesc)
 {
-	oASSERT(_Type == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unsupported resource dimension (%s)", oAsString(_Type));
+	oASSERT(_Type == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unsupported resource dimension (%s)", oStd::as_string(_Type));
 	DXGI_FORMAT TF, SRVF;
 	oDXGIGetCompatibleFormats(oDXGIFromSurfaceFormat(_Desc.Format), &TF, &_pDSVDesc->Format, &SRVF);
 	_pDSVDesc->ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
@@ -1439,7 +1441,7 @@ bool oD3D11CreateUnorderedAccessView(const char* _DebugName, ID3D11Resource* _pT
 			UAVD.Texture2D.MipSlice = 0;
 			break;
 		default:
-			return oErrorSetLast(oERROR_INVALID_PARAMETER, "Invalid texture type %s specified for UAV creation", oAsString(desc.Type));
+			return oErrorSetLast(std::errc::invalid_argument, "Invalid texture type %s specified for UAV creation", oStd::as_string(desc.Type));
 	}
 
 	HRESULT hr = D3DDevice->CreateUnorderedAccessView(_pTexture, &UAVD, _ppUnorderedAccessView);
@@ -1457,7 +1459,7 @@ bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const o
 		{
 			D3D11_TEXTURE1D_DESC desc;
 			desc.Width = _Desc.Dimensions.x;
-			desc.ArraySize = __max(1, _Desc.NumSlices);
+			desc.ArraySize = __max(1, _Desc.ArraySize);
 			oD3D11InitValues(_Desc, &desc.Format, &desc.Usage, &desc.CPUAccessFlags, &desc.BindFlags, &desc.MipLevels, &desc.MiscFlags);
 			IsShaderResource = !!(desc.BindFlags & D3D11_BIND_SHADER_RESOURCE);
 			hr = _pDevice->CreateTexture1D(&desc, (D3D11_SUBRESOURCE_DATA*)_pInitData, (ID3D11Texture1D**)_ppTexture);
@@ -1467,12 +1469,12 @@ bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const o
 		case oGPU_TEXTURE_2D_MAP:
 		case oGPU_TEXTURE_CUBE_MAP:
 		{
-			oASSERT(!oGPUTextureTypeIsCubeMap(_Desc.Type) || _Desc.NumSlices == 6, "Cube maps must have NumSlices == 6, NumSlices=%d specified", _Desc.NumSlices);
+			oASSERT(!oGPUTextureTypeIsCubeMap(_Desc.Type) || _Desc.ArraySize == 6, "Cube maps must have ArraySize == 6, ArraySize=%d specified", _Desc.ArraySize);
 
 			D3D11_TEXTURE2D_DESC desc;
 			desc.Width = _Desc.Dimensions.x;
 			desc.Height = _Desc.Dimensions.y;
-			desc.ArraySize = __max(1, _Desc.NumSlices);
+			desc.ArraySize = __max(1, _Desc.ArraySize);
 			desc.SampleDesc.Count = 1;
 			desc.SampleDesc.Quality = 0;
 			oD3D11InitValues(_Desc, &desc.Format, &desc.Usage, &desc.CPUAccessFlags, &desc.BindFlags, &desc.MipLevels, &desc.MiscFlags);
@@ -1483,7 +1485,7 @@ bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const o
 
 		case oGPU_TEXTURE_3D_MAP:
 		{
-			oASSERT(_Desc.NumSlices == 1, "3d textures don't support slices, NumSlices=%d specified", _Desc.NumSlices);
+			oASSERT(_Desc.ArraySize == 1, "3d textures don't support slices, ArraySize=%d specified", _Desc.ArraySize);
 
 			D3D11_TEXTURE3D_DESC desc;
 			desc.Width = _Desc.Dimensions.x;
@@ -1517,7 +1519,7 @@ bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const o
 			*_ppShaderResourceView = nullptr;
 		}
 
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "oD3D11CreateRenderTargetView failed, check DX debug output");
+		return oErrorSetLast(std::errc::invalid_argument, "oD3D11CreateRenderTargetView failed, check DX debug output");
 	}
 
 	return true;
@@ -1526,17 +1528,17 @@ bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const o
 bool oD3D11CreateCPUCopy(ID3D11Resource* _pResource, ID3D11Resource** _ppCPUCopy)
 {
 	if (!_pResource || !_ppCPUCopy)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	oRef<ID3D11Device> D3D11Device;
 	_pResource->GetDevice(&D3D11Device);
 	oRef<ID3D11DeviceContext> D3D11DeviceContext;
 	D3D11Device->GetImmediateContext(&D3D11DeviceContext);
 
-	oStringL RTName;
+	oStd::lstring RTName;
 	oD3D11GetDebugName(RTName, _pResource);
 
-	oStringL copyName;
+	oStd::lstring copyName;
 	oPrintf(copyName, "%s.CPUCopy", RTName.c_str());
 
 	D3D11_RESOURCE_DIMENSION type;
@@ -1569,7 +1571,7 @@ bool oD3D11CreateCPUCopy(ID3D11Resource* _pResource, ID3D11Resource** _ppCPUCopy
 		}
 
 		default:
-			return oErrorSetLast(oERROR_INVALID_PARAMETER, "Unknown resource type");
+			return oErrorSetLast(std::errc::invalid_argument, "Unknown resource type");
 	}
 
 	oGPU_BUFFER_DESC d;
@@ -1584,7 +1586,7 @@ bool oD3D11CreateCPUCopy(ID3D11Resource* _pResource, ID3D11Resource** _ppCPUCopy
 bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, interface oImage** _ppImage)
 {
 	if (!_pRenderTarget || !_ppImage)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	oRef<ID3D11Texture2D> CPUTexture;
 	if (!oD3D11CreateCPUCopy(_pRenderTarget, &CPUTexture))
@@ -1595,7 +1597,7 @@ bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, interface oImage** _p
 
 	oImage::FORMAT ImageFormat = oImageFormatFromSurfaceFormat(oDXGIToSurfaceFormat(d.Format));
 	if (ImageFormat == oImage::UNKNOWN)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified texture's format %s is not supported by oImage", oAsString(d.Format));
+		return oErrorSetLast(std::errc::invalid_argument, "The specified texture's format %s is not supported by oImage", oStd::as_string(d.Format));
 
 	oImage::DESC idesc;
 	idesc.RowPitch = oImageCalcRowPitch(ImageFormat, d.Width);
@@ -1609,7 +1611,7 @@ bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, interface oImage** _p
 bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path)
 {
 	if (!_pRenderTarget || !oSTRVALID(_Path))
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	oRef<ID3D11Texture2D> D3DTexture;
 	if (!oD3D11CreateCPUCopy(_pRenderTarget, &D3DTexture))
@@ -1633,7 +1635,7 @@ static bool oD3D11Save_PrepareCPUCopy(ID3D11Resource* _pTexture, D3DX11_IMAGE_FI
 	oGPU_TEXTURE_DESC desc;
 	oD3D11GetTextureDesc(_pTexture, &desc);
 	if (oSurfaceFormatIsBlockCompressed(desc.Format) && _Format != D3DX11_IFF_DDS)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "D3DX11 can save block compressed formats only to .dds files.");
+		return oErrorSetLast(std::errc::invalid_argument, "D3DX11 can save block compressed formats only to .dds files.");
 
 	if (oGPUTextureTypeIsReadback(desc.Type))
 	{
@@ -1643,8 +1645,8 @@ static bool oD3D11Save_PrepareCPUCopy(ID3D11Resource* _pTexture, D3DX11_IMAGE_FI
 	
 	else if (!oD3D11CreateCPUCopy(_pTexture, _ppCPUResource))
 	{
-		oStringM buf;
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified texture \"%s\" is not CPU-accessible and a copy could not be made", oD3D11GetDebugName(buf, _pTexture));
+		oStd::mstring buf;
+		return oErrorSetLast(std::errc::invalid_argument, "The specified texture \"%s\" is not CPU-accessible and a copy could not be made", oD3D11GetDebugName(buf, _pTexture));
 	}
 
 	return true;
@@ -1662,11 +1664,11 @@ static bool oD3D11Save_PrepareCPUCopy(const oImage* _pImage, D3DX11_IMAGE_FILE_F
 	oGPU_TEXTURE_DESC desc;
 	desc.Dimensions = int3(idesc.Dimensions, 1);
 	desc.Format = oImageFormatToSurfaceFormat(idesc.Format);
-	desc.NumSlices = 1;
+	desc.ArraySize = 1;
 	desc.Type = oGPU_TEXTURE_2D_READBACK;
 
 	if (desc.Format == oSURFACE_UNKNOWN)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Image format %s cannot be saved", oAsString(idesc.Format));
+		return oErrorSetLast(std::errc::invalid_argument, "Image format %s cannot be saved", oStd::as_string(idesc.Format));
 
 	oSURFACE_CONST_MAPPED_SUBRESOURCE msr;
 	msr.pData = _pImage->GetData();
@@ -1683,7 +1685,7 @@ static void oD3D11GetImageLoadInfo(const oGPU_TEXTURE_DESC& _Desc, D3DX11_IMAGE_
 {
 	_pImageLoadInfo->Width = _Desc.Dimensions.x <= 0 ? D3DX11_DEFAULT : _Desc.Dimensions.x;
 	_pImageLoadInfo->Height = _Desc.Dimensions.y <= 0 ? D3DX11_DEFAULT : _Desc.Dimensions.y;
-	_pImageLoadInfo->Depth = _Desc.NumSlices <= 0 ? D3DX11_DEFAULT : _Desc.NumSlices;
+	_pImageLoadInfo->Depth = _Desc.ArraySize <= 0 ? D3DX11_DEFAULT : _Desc.ArraySize;
 	_pImageLoadInfo->FirstMipLevel = D3DX11_DEFAULT;
 	_pImageLoadInfo->Filter = D3DX11_DEFAULT;
 	_pImageLoadInfo->MipFilter = D3DX11_DEFAULT;
@@ -1694,7 +1696,7 @@ static void oD3D11GetImageLoadInfo(const oGPU_TEXTURE_DESC& _Desc, D3DX11_IMAGE_
 bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer)
 {
 	if (!_pTexture || !_pBuffer || !_SizeofBuffer)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	oRef<ID3D11Resource> CPUCopy;
 	oRef<ID3D11DeviceContext> D3DImmediateContext;
@@ -1705,7 +1707,7 @@ bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, voi
 	oV(oD3DX11::Singleton()->D3DX11SaveTextureToMemory(D3DImmediateContext, CPUCopy, _Format, &Blob, 0));
 
 	if (Blob->GetBufferSize() > _SizeofBuffer)
-		return oErrorSetLast(oERROR_AT_CAPACITY, "Buffer is too small for image");
+		return oErrorSetLast(std::errc::no_buffer_space, "Buffer is too small for image");
 
 	memcpy(_pBuffer, Blob->GetBufferPointer(), Blob->GetBufferSize());
 	return true;
@@ -1727,7 +1729,7 @@ bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, void* _
 bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path)
 {
 	if (!_pTexture || !oSTRVALID(_Path))
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	oRef<ID3D11Resource> CPUCopy;
 	oRef<ID3D11DeviceContext> D3DImmediateContext;
@@ -1786,7 +1788,7 @@ bool oD3D11Load(ID3D11Device* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const ch
 bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, oSURFACE_FORMAT _NewFormat, ID3D11Texture2D** _ppDestinationTexture)
 {
 	if (!_pSourceTexture || !_ppDestinationTexture)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	D3D11_TEXTURE2D_DESC desc;
 	_pSourceTexture->GetDesc(&desc);
@@ -1822,8 +1824,8 @@ bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, oSURFACE_FORMAT _NewFormat,
 			CPUAccessible = _pSourceTexture;
 		else if (!oD3D11CreateCPUCopy(_pSourceTexture, &CPUAccessible))
 		{
-			oStringM buf;
-			return oErrorSetLast(oERROR_INVALID_PARAMETER, "The specified texture \"%s\" is not CPU-accessible and a copy could not be made", oD3D11GetDebugName(buf, _pSourceTexture));
+			oStd::mstring buf;
+			return oErrorSetLast(std::errc::invalid_argument, "The specified texture \"%s\" is not CPU-accessible and a copy could not be made", oD3D11GetDebugName(buf, _pSourceTexture));
 		}
 
 		oRef<ID3D11Texture2D> NewTexture;
@@ -1847,7 +1849,7 @@ bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, oSURFACE_FORMAT _NewFormat,
 
 	oGPU_TEXTURE_DESC NewDesc;
 	NewDesc.Dimensions = int3(oInt(desc.Width), oInt(desc.Height), 1);
-	NewDesc.NumSlices = oInt(desc.ArraySize);
+	NewDesc.ArraySize = oInt(desc.ArraySize);
 	NewDesc.Format = _NewFormat;
 	NewDesc.Type = oGPUTextureTypeGetReadbackType(NewDesc.Type); // @oooii-tony: this should probably come from somewhere better.
 
@@ -1871,7 +1873,7 @@ bool oD3D11Convert(ID3D11Device* _pDevice, oSURFACE_MAPPED_SUBRESOURCE& _Destina
 {
 	oGPU_TEXTURE_DESC d;
 	d.Dimensions = int3(_MipDimensions, 1);
-	d.NumSlices = 1;
+	d.ArraySize = 1;
 	d.Format = _SourceFormat;
 	d.Type = oGPU_TEXTURE_2D_MAP;
 
@@ -1953,18 +1955,18 @@ void oD3D11SetShaderResourceViews(ID3D11DeviceContext* _pDeviceContext, uint _St
 
 void oD3D11FromViewport(const D3D11_VIEWPORT& _Viewport, oAABoxf* _pBox)
 {
-	_pBox->SetMin(float3(_Viewport.TopLeftX, _Viewport.TopLeftY, _Viewport.MinDepth));
-	_pBox->SetMax(float3(_Viewport.Width, _Viewport.Height, _Viewport.MaxDepth));
+	_pBox->Min = float3(_Viewport.TopLeftX, _Viewport.TopLeftY, _Viewport.MinDepth);
+	_pBox->Max = float3(_Viewport.Width, _Viewport.Height, _Viewport.MaxDepth);
 }
 
 void oD3D11ToViewport(const oAABoxf& _Source, D3D11_VIEWPORT* _pViewport)
 {
-	_pViewport->TopLeftX = _Source.GetMin().x;
-	_pViewport->TopLeftY = _Source.GetMin().y;
-	_pViewport->MinDepth = _Source.GetMin().z;
-	_pViewport->Width = _Source.GetMax().x;
-	_pViewport->Height = _Source.GetMax().y;
-	_pViewport->MaxDepth = _Source.GetMax().z;
+	_pViewport->TopLeftX = _Source.Min.x;
+	_pViewport->TopLeftY = _Source.Min.y;
+	_pViewport->MinDepth = _Source.Min.z;
+	_pViewport->Width = _Source.size().x;
+	_pViewport->Height = _Source.size().y;
+	_pViewport->MaxDepth = _Source.Max.z;
 }
 
 void oD3D11ToViewport(const int2& _RenderTargetDimensions, D3D11_VIEWPORT* _pViewport)
@@ -2055,8 +2057,8 @@ void oD3D11DrawSVQuad(ID3D11DeviceContext* _pDeviceContext, uint _NumInstances)
 void oD3D11DebugTraceTexture2DDesc(D3D11_TEXTURE2D_DESC _Desc, const char* _Prefix)
 {
 	#define oD3D11_TRACE_UINT(x) oTRACE("%s" #x "=%u", oSAFESTR(_Prefix), _Desc.x)
-	#define oD3D11_TRACE_ENUM(x) oTRACE("%s" #x "=%s", oSAFESTR(_Prefix), oAsString(_Desc.x))
-	#define oD3D11_TRACE_FLAGS(_FlagEnumType, _FlagsVar, _AllZeroString) do { char buf[512]; oAsStringFlags(buf, _Desc._FlagsVar, _AllZeroString, [&](unsigned int _SingleFlag) { return oAsString(static_cast<_FlagEnumType>(_SingleFlag)); }); oTRACE("%s" #_FlagsVar "=%s", oSAFESTR(_Prefix), buf); } while(false)
+	#define oD3D11_TRACE_ENUM(x) oTRACE("%s" #x "=%s", oSAFESTR(_Prefix), oStd::as_string(_Desc.x))
+	#define oD3D11_TRACE_FLAGS(_FlagEnumType, _FlagsVar, _AllZeroString) do { char buf[512]; oStd::strbitmask(buf, _Desc._FlagsVar, _AllZeroString, oStd::as_string<_FlagEnumType>); oTRACE("%s" #_FlagsVar "=%s", oSAFESTR(_Prefix), buf); } while(false)
 
 	oD3D11_TRACE_UINT(Width);
 	oD3D11_TRACE_UINT(Height);
@@ -2131,7 +2133,7 @@ protected:
 		UINT Size;
 	};
 
-	oUnorderedMap<oURI, BUFFER> Cache;
+	oStd::unordered_map<oURI, BUFFER> Cache;
 };
 
 oD3DInclude::~oD3DInclude()
@@ -2158,7 +2160,7 @@ HRESULT oD3DInclude::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOI
 	}
 
 	bool exists = oStreamExists(pFileName);
-	oStringPath Path;
+	oStd::path_string Path;
 
 	if (exists)
 		Path = pFileName;
@@ -2176,7 +2178,7 @@ HRESULT oD3DInclude::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOI
 hack_break:
 	if (!exists)
 	{
-		oErrorSetLast(oERROR_NOT_FOUND, "Header %s not found in search path", pFileName);
+		oErrorSetLast(std::errc::no_such_file_or_directory, "Header %s not found in search path", pFileName);
 		oTRACE("%s", oErrorGetLastString());
 		return E_FAIL;
 	}
@@ -2194,6 +2196,12 @@ hack_break:
 	return S_OK;
 }
 
+size_t oD3D11GetHLSLByteCodeSize(const void* _pByteCode)
+{
+	// Discovered empirically
+	return _pByteCode ? ((const unsigned int*)_pByteCode)[6] : 0;
+}
+
 bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, const char* _ShaderSource, oBuffer** _ppBuffer)
 {
 	// An ASCII version of CommandLineToArgvW. Use oWinCommandLineToArgvAFree() to
@@ -2201,7 +2209,7 @@ bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, co
 
 	int argc = 0;
 	const char** argv = oWinCommandLineToArgvA(false, _CommandLineOptions, &argc);
-	oOnScopeExit OSCFreeArgv([&] { oWinCommandLineToArgvAFree(argv); });
+	oStd::finally OSCFreeArgv([&] { oWinCommandLineToArgvAFree(argv); });
 
 	std::string UnsupportedOptions("Unsupported options: ");
 	size_t UnsupportedOptionsEmptyLen = UnsupportedOptions.size();
@@ -2325,7 +2333,7 @@ bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, co
 		size_t size = UnsupportedOptions.length() + 1;
 		oVERIFY(oBufferCreate("Parameter Errors", oBuffer::New(size), size, oBuffer::Delete, _ppBuffer));
 		oStrcpy((char*)(*_ppBuffer)->GetData(), (*_ppBuffer)->GetSize(), UnsupportedOptions.c_str());
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 	}
 
 	std::vector<D3D_SHADER_MACRO> Macros;
@@ -2339,7 +2347,7 @@ bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, co
 	Macros.back().Name = nullptr;
 	Macros.back().Definition = nullptr;
 
-	oStringURI SourceName;
+	oStd::uri_string SourceName;
 	oPrintf(SourceName, "%s", _ShaderSourceFilePath);
 
 	oD3DInclude D3DInclude(_ShaderSourceFilePath, IncludePaths);
@@ -2347,7 +2355,7 @@ bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, co
 	HRESULT hr = D3DCompile(_ShaderSource
 		, oStrlen(_ShaderSource)
 		, SourceName
-		, oGetData(Macros)
+		, oStd::data(Macros)
 		, &D3DInclude
 		, EntryPoint
 		, TargetProfile
@@ -2360,8 +2368,8 @@ bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, co
 	{
 		size_t size = Errors->GetBufferSize() + 1 + oKB(10); // conversion can expand buffer, but not by very much, so pad a lot and hope expansion stays small
 		oVERIFY(oBufferCreate("Compile Errors", oBuffer::New(size), size, oBuffer::Delete, _ppBuffer));
-		oVERIFY(oD3D11ConvertCompileErrorBuffer((char*)(*_ppBuffer)->GetData(), (*_ppBuffer)->GetSize(), Errors, oGetData(IncludePaths), IncludePaths.size()));
-		return oErrorSetLast(oERROR_IO, "shader compilation error: %s", oSAFESTRN(_ShaderSourceFilePath));
+		oVERIFY(oD3D11ConvertCompileErrorBuffer((char*)(*_ppBuffer)->GetData(), (*_ppBuffer)->GetSize(), Errors, oStd::data(IncludePaths), IncludePaths.size()));
+		return oErrorSetLast(std::errc::io_error, "shader compilation error: %s", oSAFESTRN(_ShaderSourceFilePath));
 	}
 
 	oVERIFY(oBufferCreate("Compile Errors", oBuffer::New(Code->GetBufferSize()), Code->GetBufferSize(), oBuffer::Delete, _ppBuffer));

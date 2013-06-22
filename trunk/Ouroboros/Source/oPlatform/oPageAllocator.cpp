@@ -97,10 +97,10 @@ static bool GetAllocationType(oPAGE_ALLOCATION_TYPE _AllocationType, void* _Base
 	if (_UseLargePageSize)
 	{
 		if (_BaseAddress && (_AllocationType == oPAGE_RESERVE || _AllocationType == oPAGE_RESERVE_READ_WRITE))
-			return oErrorSetLast(oERROR_INVALID_PARAMETER, "Large page memory cannot be reserved.");
+			return oErrorSetLast(std::errc::invalid_argument, "Large page memory cannot be reserved.");
 
 		*_pflAllocationType |= MEM_LARGE_PAGES;
-		*_pSize = oByteAlign(*_pSize, oPageGetLargePageSize());
+		*_pSize = oStd::byte_align(*_pSize, oPageGetLargePageSize());
 	}
 
 	switch (_AllocationType)
@@ -139,10 +139,10 @@ void* oPageAllocate(oPAGE_ALLOCATION_TYPE _AllocationType, void* _BaseAddress, s
 	{
 		// save error past cleanup, which might fail too..
 		oWinSetLastError();
-		oERROR err = oErrorGetLast();
-		oStringL errString = oErrorGetLastString();
+		errno_t err = oErrorGetLast();
+		oStd::lstring errString = oErrorGetLastString();
 		if (strstr(errString, "too small"))
-			err = oERROR_AT_CAPACITY;
+			err = std::errc::no_buffer_space;
 
 		if (p)
 			oPageDeallocate(p, _AllocationType >= oPAGE_RESERVE_AND_COMMIT);

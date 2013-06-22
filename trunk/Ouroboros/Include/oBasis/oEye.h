@@ -33,7 +33,8 @@
 #ifndef oEye_h
 #define oEye_h
 
-#include <oBasis/oMath.h>
+#include <oCompute/oComputeConstants.h>
+#include <oBasis/oLinearAlgebra.h>
 
 class oEye
 {
@@ -41,7 +42,7 @@ class oEye
 	// but have the transform actually occur in a rotated space, so here's a 
 	// little wrapper for such logic.
 public:
-	oEye(const float4x4& _View = float4x4::Identity) { SetView(_View); }
+	oEye(const float4x4& _View = oIDENTITY4x4) { SetView(_View); }
 
 	// Set/Get the value used for rotation of the local space
 	inline void SetRotation(const quatf& _Rotation) { R = _Rotation; }
@@ -66,7 +67,7 @@ public:
 	// Returns the view matrix represented by this object
 	inline float4x4 GetView() const
 	{
-		return invert(float4x4(R, P));
+		return invert(oCreateMatrix(R, P));
 	}
 
 	// Rotates around the position of the current transform
@@ -78,7 +79,7 @@ public:
 		// the fundamental basis and thus the up vector.
 		EulerRotation += _LocalSpaceEulerXYZRotation;
 		R = oCreateRotationQ(EulerRotation);
-		L = mul(oCreateRotationQ(_LocalSpaceEulerXYZRotation), L);
+		L = qmul(oCreateRotationQ(_LocalSpaceEulerXYZRotation), L);
 	}
 
 	// Movement along canonical X Y Z axes that will be transformed into the 
@@ -87,17 +88,15 @@ public:
 	// orientation of the current transform.
 	inline void Translate(const float3& _LocalSpaceTranslation)
 	{
-		float3 tx = mul(R, _LocalSpaceTranslation);
+		float3 tx = qmul(R, _LocalSpaceTranslation);
 		P += tx;
 		L += tx;
 	}
 
 	inline void LookAt(const float3& _LookAt)
 	{
-		float3 X, Y, Z;
-		oExtractAxes(float4x4(R, P), &X, &Y, &Z);
 		L = _LookAt;
-		SetView(oCreateLookAtLH(P, L, Y));
+		SetView(oCreateLookAtLH(P, L, oExtractAxisY(oCreateMatrix(R, P))));
 	}
 
 private:

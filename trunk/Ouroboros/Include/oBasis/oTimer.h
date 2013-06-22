@@ -30,9 +30,10 @@
 #ifndef oTimer_h
 #define oTimer_h
 
-#include <oBasis/oAssert.h>
-#include <oBasis/oStdChrono.h>
+#include <oStd/assert.h>
+#include <oStd/oStdChrono.h>
 #include <oBasis/oInvalid.h>
+
 
 // returns system ticks as seconds since the std (Unix) epoch.
 inline double oTimer() { return oStd::chrono::high_resolution_clock::now().time_since_epoch().count(); }
@@ -58,29 +59,6 @@ public:
 	inline void Reset(double _Timeout) { End = oTimer() + _Timeout; }
 	inline void Reset(unsigned int _TimeoutMS) { Reset(_TimeoutMS / 1000.0); }
 	inline bool TimedOut() const { return oTimer() >= End; }
-};
-
-class oLocalTimer
-{
-	// Encapsulates marking a starting point and using time since that starting point
-	double Start;
-public:
-	oLocalTimer() { Reset(); }
-	inline void Reset() { Start = oTimer(); }
-	inline double Seconds() const { return oTimer() - Start; }
-	inline double Milliseconds() const { return (oTimer() - Start) * 1000.0; }
-};
-
-class oScopedTraceTimer : public oLocalTimer
-{
-	// A super-simple benchmarking tool to report to stdout the time since this 
-	// timer was last reset. This traces in the dtor, so scoping can be used to 
-	// group the benchmarking.
-	const char* Name;
-public:
-	oScopedTraceTimer(const char* _StringLiteralName) : Name(_StringLiteralName) {}
-	~oScopedTraceTimer() { Trace(); }
-	inline void Trace() { oTRACEA("%s took %.03f sec", Name ? Name : "(null)", Seconds()); }
 };
 
 class oScopedPartialTimeout

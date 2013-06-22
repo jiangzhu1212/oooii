@@ -96,7 +96,7 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->DebugName = "PassThroughColor";
 			_pDesc->pElements = oGPU_TEST_POSITION_COLOR_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_COLOR_VERTEX);
-			_pDesc->InputType = oGPU_TRIANGLES;
+			_pDesc->InputType = oGPU_LINES;
 			_pDesc->pVertexShader = oGPUTestPassThroughColorVSByteCode;
 			_pDesc->pPixelShader = oGPUTestColorPSByteCode;
 			return true;
@@ -123,7 +123,7 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->DebugName = "Buffer";
 			_pDesc->pElements = nullptr;
 			_pDesc->NumElements = 0;
-			_pDesc->InputType = oGPU_TRIANGLES;
+			_pDesc->InputType = oGPU_POINTS;
 			_pDesc->pVertexShader = oGPUTestBufferVSByteCode;
 			_pDesc->pPixelShader = oGPUTestBufferPSByteCode;
 			return true;

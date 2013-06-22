@@ -29,10 +29,11 @@
 #ifndef oStream_h
 #define oStream_h
 
-#include <oBasis/oFunction.h>
+#include <oStd/function.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oURI.h>
 #include <oBasis/oMemory.h>
+#include <oBasis/oRTTI.h>
 
 enum oSTREAM_EVENT
 {
@@ -42,10 +43,8 @@ enum oSTREAM_EVENT
 	oSTREAM_MODIFIED,
 	oSTREAM_ACCESSIBLE, // after an add the stream is polled until it can be accessed for reading. Once it can, this event occurs.
 };
-
-const char* oAsString(const oSTREAM_EVENT& _Event);
-
-typedef oFUNCTION<void (oSTREAM_EVENT _Event, const oStringURI& _ChangedURI)> oSTREAM_ON_EVENT;
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oSTREAM_EVENT)
+typedef oFUNCTION<void (oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI)> oSTREAM_ON_EVENT;
 
 struct oSTREAM_DESC
 {
@@ -56,6 +55,22 @@ struct oSTREAM_DESC
 	bool Directory; // True if a directory (container of other streams)
 	bool Hidden; // True if not meant to be visible to the general user
 	bool ReadOnly; // True if not meant to be modified by the general user
+};
+
+struct oSTREAM_MONITOR_DESC
+{
+	oSTREAM_MONITOR_DESC()
+		: AccessibilityCheckMS(1000)
+		, EventTimeoutMS(1000)
+		, TraceEvents(true)
+		, WatchSubtree(true)
+	{}
+
+	oStd::uri_string Monitor;
+	unsigned int AccessibilityCheckMS;
+	unsigned int EventTimeoutMS;
+	bool TraceEvents;
+	bool WatchSubtree;
 };
 
 struct oSTREAM_RANGE
@@ -115,12 +130,6 @@ interface oStream : oInterface
 	// reference is into a buffer that has the same lifetime as this oStream, so
 	// threadsafety doesn't mean the lifetime persistence is guaranteed.
 	virtual const oURIParts& GetURIParts() const threadsafe = 0;
-
-	inline const char* GetScheme() const threadsafe { return GetURIParts().Scheme; }
-	inline const char* GetAuthority() const threadsafe { return GetURIParts().Authority; }
-	inline const char* GetPath() const threadsafe { return GetURIParts().Path; }
-	inline const char* GetFragment() const threadsafe { return GetURIParts().Fragment; }
-	inline const char* GetQuery() const threadsafe { return GetURIParts().Query; }
 };
 
 interface oStreamReader : oStream
@@ -128,9 +137,13 @@ interface oStreamReader : oStream
 	// Fills _pData with the range of data in this stream. If the last 
 	// modification time for this stream is eariler than the specified timestamp
 	// then this function will return false with an oErrorGetLast() of 
-	// oERROR_REDUNDANT indicating that any local buffer with such a local 
+	// std::errc::operation_in_progress indicating that any local buffer with such a local 
 	// timestamp is up to date and no new data is necessary.
 	virtual bool Read(const oSTREAM_READ& _Read) threadsafe = 0;
+
+	// If Read reads past the end of the file, it will truncate its read and 
+	// set a flag that can be accessed here. This does not apply to DispatchRead.
+	virtual bool EndOfFile() threadsafe const = 0;
 	
 	// Bind a function to be called immediately after the read finishes in the 
 	// same thread which processes the read. _Success is the same as a return 
@@ -162,8 +175,13 @@ interface oStreamWriter : oStream
 	virtual void Close() threadsafe = 0;
 };
 
-interface oStreamMonitor : oStream {};
+interface oStreamMonitor : oStream
+{
+	virtual void GetMonitorDesc(oSTREAM_MONITOR_DESC* _pMonitorDesc) const threadsafe = 0;
+};
 
+// {DCA57E7E-A75F-4E77-85FC-E41C959FEFC7}
+oDEFINE_GUID_I(oSchemeHandler, 0xdca57e7e, 0xa75f, 0x4e77, 0x85, 0xfc, 0xe4, 0x1c, 0x95, 0x9f, 0xef, 0xc7);
 interface oSchemeHandler : oInterface
 {
 	// Returns the priority of this scheme handler. When scheme handlers are 
@@ -206,10 +224,8 @@ interface oSchemeHandler : oInterface
 
 	// Create a stream that monitors a URI (folder, file or other; local or 
 	// remote) and fires the specified event handler when something happens.
-	virtual bool CreateStreamMonitor(const oURIParts& _URIParts, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor) threadsafe = 0;
+	virtual bool CreateStreamMonitor(const oURIParts& _URIParts, const oSTREAM_MONITOR_DESC& _Desc, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor) threadsafe = 0;
 };
-
-oAPI const oGUID& oGetGUID(threadsafe const oSchemeHandler* threadsafe const *);
 
 // Register the specified scheme handler with this device. The device retains
 // a reference to the handler while registered.
@@ -254,7 +270,7 @@ oAPI bool oStreamLogWriterCreate(const char* _URI, threadsafe oStreamWriter** _p
 
 // Creates a monitor that will call the specified _OnEvent whenever something in 
 // the specified URI reference changes.
-oAPI bool oStreamMonitorCreate(const char* _URIReference, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor);
+oAPI bool oStreamMonitorCreate(const oSTREAM_MONITOR_DESC& _Desc, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor);
 
 // Copies the source URI to the destination URI. Currently the source URI must 
 // resolve to the same scheme as the destination URI.
@@ -282,7 +298,7 @@ oAPI bool oStreamSetURIBaseSearchPath(const char* _URIBaseSearchPath);
 // currently set in this object. If none are set, the empty string is copied.
 oAPI char* oStreamGetURIBaseSearchPath(char* _StrDestination, size_t _SizeofStrDestination);
 template<size_t size> inline char* oStreamGetURIBaseSearchPath(char (&_StrDestination)[size]) { return oStreamGetURIBaseSearchPath(_StrDestination, size); }
-template<size_t capacity> inline char* oStreamGetURIBaseSearchPath(oFixedString<char, capacity>& _StrDestination) { return oStreamGetURIBaseSearchPath(_StrDestination, _StrDestination.capacity()); }
+template<size_t capacity> inline char* oStreamGetURIBaseSearchPath(oStd::fixed_string<char, capacity>& _StrDestination) { return oStreamGetURIBaseSearchPath(_StrDestination, _StrDestination.capacity()); }
 
 // Creates a new oStreamReader interface for a subset of the specified 
 // oStreamReader.

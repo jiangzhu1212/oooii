@@ -27,7 +27,7 @@
 #ifndef oWinDXGI_h
 #define oWinDXGI_h
 
-#include "oWinSoftLinkCommon.h"
+#include <oPlatform/oModuleUtil.h>
 
 oDECLARE_DLL_SINGLETON_BEGIN(oWinDXGI)
 	HRESULT (__stdcall *CreateDXGIFactory)(REFIID riid, void **ppFactory);

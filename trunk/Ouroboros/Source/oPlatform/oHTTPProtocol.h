@@ -94,14 +94,14 @@ private:
 	oHTTPResponseInternal TheResponse;
 
 	// HTTP layer 
-	oStringXXL TheHeader;
+	oStd::xxlstring TheHeader;
 #ifdef SUSPECTED_BUGS_IN_HTTP
 	oGuardBand<64> HeaderGuard;
 #endif
 	size_t TheHeaderPos;
 	void* TheBody;
 	size_t TheBodyPos;
-	oStringL DefaultResponseBody;
+	oStd::lstring DefaultResponseBody;
 #ifdef SUSPECTED_BUGS_IN_HTTP
 	oGuardBand<64> BodyGuard;
 #endif

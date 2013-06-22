@@ -44,9 +44,9 @@ struct GPU_GenerateMips : public oTest
 		void *pSurfaceBuffer = oBuffer::New(surfaceBufferSize);
 		oBufferCreate("GPU_Texture1D buffer", pSurfaceBuffer, surfaceBufferSize, oBuffer::Delete, &buffer);
 
-		static const oColor sConsoleColors[] = { std::Black, std::Navy, std::Green, std::Teal, std::Maroon, std::Purple, std::Olive, std::Silver, std::Gray, std::Blue, std::Lime, std::Aqua, std::Red, std::Fuchsia, std::Yellow, std::White };
+		static const oStd::color sConsoleColors[] = { oStd::Black, oStd::Navy, oStd::Green, oStd::Teal, oStd::Maroon, oStd::Purple, oStd::Olive, oStd::Silver, oStd::Gray, oStd::Blue, oStd::Lime, oStd::Aqua, oStd::Red, oStd::Fuchsia, oStd::Yellow, oStd::White };
 
-		oColor* texture1Ddata = (oColor*)buffer->GetData();
+		oStd::color* texture1Ddata = (oStd::color*)buffer->GetData();
 		for (int i=0; i<imageDesc.Dimensions.x; ++i)
 		{
 			texture1Ddata[i] = sConsoleColors[i % oCOUNTOF(sConsoleColors)];
@@ -132,7 +132,7 @@ struct GPU_GenerateMips : public oTest
 		oSURFACE_DESC sd;
 		sd.Dimensions = int3(id.Dimensions, 1);
 		sd.Format = oImageFormatToSurfaceFormat(id.Format);
-		sd.NumSlices = oCOUNTOF(images);
+		sd.ArraySize = oCOUNTOF(images);
 		sd.Layout = _Layout;
 
 		oRef<oImage> mipImage;

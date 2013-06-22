@@ -24,12 +24,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oIOCP.h"
-#include <oBasis/oConcurrentIndexAllocator.h>
-#include <oBasis/oCountdownLatch.h>
-#include <oBasis/oFixedString.h>
-#include <oBasis/oMutex.h>
+#include <oConcurrency/concurrent_index_allocator.h>
+#include <oStd/fixed_string.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
+#include <oConcurrency/backoff.h>
+#include <oConcurrency/countdown_latch.h>
+#include <oConcurrency/mutex.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oProcessHeap.h>
@@ -62,14 +63,14 @@ private:
 	// the lifetime of the Context as it
 	// outlives the actual IOCP object 
 	// due to how windows handles IOCP completion status
-	oIOCPContext( struct oIOCP_Impl* _pParent );
+	oIOCPContext(struct oIOCP_Impl* _pParent);
 	~oIOCPContext();
 
-	oIOCPOp*					pSocketOps;
-	unsigned int*				pSocketIndices;
-	oConcurrentIndexAllocator*	pSocketAllocator;
-	struct oIOCP_Impl*			pParent;
-	oRefCount					ParentRefCount;
+	oIOCPOp* pSocketOps;
+	unsigned int* pSocketIndices;
+	oConcurrency::concurrent_index_allocator* pSocketAllocator;
+	struct oIOCP_Impl* pParent;
+	oRefCount ParentRefCount;
 };
 
 bool IOCPCompletionRoutine(HANDLE _hIOCP, unsigned int _TimeoutMS = INFINITE)
@@ -81,9 +82,9 @@ bool IOCPCompletionRoutine(HANDLE _hIOCP, unsigned int _TimeoutMS = INFINITE)
 	if(GetQueuedCompletionStatus(_hIOCP, &numberOfBytes, &key, (WSAOVERLAPPED**)&pSocketOp, _TimeoutMS))
 	{
 		// Ignore all input if the Socket is trying to shut down. The callbacks may no longer exist.
-		if( key == IOCPKEY_SHUTDOWN)
+		if(key == IOCPKEY_SHUTDOWN)
 			return false;
-		else if( key == IOCPKEY_USER_TASK)
+		else if(key == IOCPKEY_USER_TASK)
 			oIOCPContext::CallBackUserTask(pSocketOp);
 		else
 			oIOCPContext::CallBackUser(pSocketOp);
@@ -92,21 +93,23 @@ bool IOCPCompletionRoutine(HANDLE _hIOCP, unsigned int _TimeoutMS = INFINITE)
 	return true;
 }
 
-void IOCPThread(HANDLE	_hIOCP, unsigned int _Index, oCountdownLatch* _pLatch)
+void IOCPThread(HANDLE	_hIOCP, unsigned int _Index, oConcurrency::countdown_latch* _pLatch)
 {
-	oFixedString<char, 64> Name;
-	oPrintf(Name, "IOCP Thread: %d", _Index);
-	_pLatch->Release();
-	_pLatch = NULL; // Drop the latch as it's not valid after releasing
-	oTaskRegisterThisThread(Name); //Threre is a deadlock if this is before the latch is released. see bug 1999
+	_pLatch->release();
+	_pLatch = nullptr; // Drop the latch as it's not valid after releasing
+	oConcurrency::begin_thread("oIOCP Worker"); //This deadlocks if called before the latch is released. See bug 1999.
 
 	while(1)
 	{
-		if(!IOCPCompletionRoutine(_hIOCP))
+		if (!IOCPCompletionRoutine(_hIOCP))
 			break;
 	} 
 
-	oEndThread();
+	// NOTE: This doesn't seem to be getting called. Somewhere in internal Windows
+	// code the thread is being aborted before the dtor below properly shuts down
+	// this thread. Is this some setup oversight in oIOCP? Is this expected 
+	// behavior?
+	oConcurrency::end_thread();
 }
 
 struct oIOCP_Impl : public oIOCP
@@ -125,7 +128,7 @@ public:
 
 	oIOCPOp* AcquireSocketOp() override;
 	void ReturnOp(oIOCPOp* _pIOCPOp) override;
-	void DispatchIOTask(oTASK&& _task) override;
+	void DispatchIOTask(oTASK&& _Task) override;
 	void DispatchManualCompletion(oHandle _handle, oIOCPOp* _pIOCPOp) override;
 
 	void CallBackUser(oIOCPOp* _pOP);
@@ -161,17 +164,17 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 
 		if(!hIOCP)
 		{
-			oErrorSetLast(oERROR_INVALID_PARAMETER, "Could not create I/O Completion Port with NumThreads=%i", NumThreads);
+			oErrorSetLast(std::errc::invalid_argument, "Could not create I/O Completion Port with NumThreads=%i", NumThreads);
 			return;
 		}
 
-		oCountdownLatch InitLatch("IOCP Init Latch", NumThreads);  // Create a latch to ensure by the time we return from the constructor all threads have initialized properly.
+		oConcurrency::countdown_latch InitLatch(NumThreads);  // Create a latch to ensure by the time we return from the constructor all threads have initialized properly.
 		WorkerThreads.resize(NumThreads);
 		for(unsigned int i = 0; i < NumThreads; i++)
 		{
 			WorkerThreads[i] = oStd::thread(&IOCPThread, hIOCP, i, &InitLatch);
 		}
-		InitLatch.Wait();
+		InitLatch.wait();
 	}
 
 	~oIOCP_Singleton()
@@ -198,7 +201,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 
 	void Flush()
 	{
-		oBackoff bo;
+		oConcurrency::backoff bo;
 
 		#ifdef _DEBUG
 			oLocalTimeout to(5.0);
@@ -206,7 +209,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 
 		while(OutstandingContextCount > 0)
 		{ 
-			bo.Pause();
+			bo.pause();
 
 			#ifdef _DEBUG
 				if (to.TimedOut())
@@ -217,7 +220,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 			#endif
 		}
 
-		oLockGuard<oMutex> lock(Mutex);
+		oConcurrency::lock_guard<oConcurrency::mutex> lock(Mutex);
 		CheckForOrphans(true);
 	}
 
@@ -232,7 +235,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 
 	oIOCPContext* RegisterIOCP(oHandle& _Handle, oIOCP_Impl* _pIOCP)
 	{
-		oLockGuard<oMutex> lock(Mutex);
+		oConcurrency::lock_guard<oConcurrency::mutex> lock(Mutex);
 		++OutstandingContextCount;
 		CheckForOrphans();
 
@@ -243,7 +246,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 		//HACK: if a socket is a recycled socket, then this can fail with ERROR_INVALID_PARAMETER. HAve not currently found a way
 		//	to check with windows if a handle is already associated with iocp. So for now just assume that if we get this error back
 		//	it is because we are recycling a socket, and therefore everything is ok.
-		if(hIOCP != CreateIoCompletionPort(_Handle, hIOCP, key, oUInt(WorkerThreads.size()) ) && GetLastError() != ERROR_INVALID_PARAMETER)
+		if(hIOCP != CreateIoCompletionPort(_Handle, hIOCP, key, oUInt(WorkerThreads.size())) && GetLastError() != ERROR_INVALID_PARAMETER)
 		{
 			oWinSetLastError();
 			return nullptr;
@@ -253,7 +256,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 
 	void UnregisterIOCP(oIOCPContext* _pContext)
 	{
-		oLockGuard<oMutex> lock(Mutex);
+		oConcurrency::lock_guard<oConcurrency::mutex> lock(Mutex);
 		oIOCPOrphan Context;
 		Context.pContext = _pContext;
 		Context.TimeReleased = oTimer();
@@ -283,10 +286,10 @@ private:
 	void CheckForOrphans(bool _Force = false)
 	{
 		double Time = oTimer();
-		for( tOrphanList::iterator o = OrphanedContexts.begin(); o != OrphanedContexts.end();)
+		for(tOrphanList::iterator o = OrphanedContexts.begin(); o != OrphanedContexts.end();)
 		{
 			double ReleaseTime = o->TimeReleased;
-			if( _Force || Time - o->TimeReleased > DEAD_SOCKET_OP_TIMEOUT_SECONDS )
+			if(_Force || Time - o->TimeReleased > DEAD_SOCKET_OP_TIMEOUT_SECONDS)
 			{
 #ifdef DEBUG_IOCP_ALLOCATIONS
 				o->pContext->~oIOCPContext();
@@ -310,13 +313,13 @@ private:
 		oIOCPContext* pContext;
 	};
 
-	typedef oArray<oIOCPOrphan,oKB(16)> tOrphanList;
+	typedef oStd::fixed_vector<oIOCPOrphan,oKB(16)> tOrphanList;
 	typedef std::vector<oStd::thread> tThreadList;			
 
 	HANDLE			hIOCP;
 	tOrphanList		OrphanedContexts;
 	tThreadList		WorkerThreads;
-	oMutex			Mutex;
+	oConcurrency::mutex			Mutex;
 	volatile int	OutstandingContextCount;
 };
 
@@ -344,28 +347,28 @@ bool oIOCPCreate(const oIOCP::DESC& _Desc, oTASK _ParentDestructionTask, oIOCP**
 
 oIOCPOp* oIOCPContext::GetOp()
 {
-	unsigned int AllocIndex = pSocketAllocator->Allocate();
-	if( AllocIndex == oIndexAllocatorBase::InvalidIndex )
+	unsigned int AllocIndex = pSocketAllocator->allocate();
+	if (AllocIndex == oConcurrency::index_allocator_base::invalid_index)
 		return nullptr;
 
 	return &pSocketOps[AllocIndex];
 }
 
-void oIOCPContext::ReturnOp( oIOCPOp* _pOP )
+void oIOCPContext::ReturnOp(oIOCPOp* _pOP)
 {
-	unsigned int Index = static_cast<unsigned int>( _pOP - pSocketOps );
+	unsigned int Index = static_cast<unsigned int>(_pOP - pSocketOps);
 	_pOP->Reset();
-	pSocketAllocator->Deallocate( Index );
+	pSocketAllocator->deallocate(Index);
 }
 
-oIOCPContext::oIOCPContext( struct oIOCP_Impl* _pParent)
+oIOCPContext::oIOCPContext(struct oIOCP_Impl* _pParent)
 	: pParent(_pParent)
 {
 	oIOCP::DESC Desc;
 	pParent->GetDesc(&Desc);
 
 #ifdef DEBUG_IOCP_ALLOCATIONS
-	pSocketOps = (oIOCPOp*)oDebuggerGuardedAlloc(sizeof(oIOCPOp) * Desc.MaxOperations );
+	pSocketOps = (oIOCPOp*)oDebuggerGuardedAlloc(sizeof(oIOCPOp) * Desc.MaxOperations);
 	for(unsigned int i = 0; i < Desc.MaxOperations; ++i)
 		new(pSocketOps + i) oIOCPOp();
 
@@ -374,7 +377,7 @@ oIOCPContext::oIOCPContext( struct oIOCP_Impl* _pParent)
 #else
 	pSocketOps = new oIOCPOp[Desc.MaxOperations];
 	pSocketIndices = new unsigned int[Desc.MaxOperations];
-	pSocketAllocator = new oConcurrentIndexAllocator(pSocketIndices, Desc.MaxOperations * sizeof(unsigned int) );
+	pSocketAllocator = new oConcurrency::concurrent_index_allocator(pSocketIndices, Desc.MaxOperations * sizeof(unsigned int));
 #endif
 
 
@@ -395,9 +398,9 @@ oIOCPContext::oIOCPContext( struct oIOCP_Impl* _pParent)
 
 oIOCPContext::~oIOCPContext()
 {
-	pSocketAllocator->Reset();
-	size_t OpCount = pSocketAllocator->GetCapacity();
-	for(size_t i = 0; i < OpCount; ++i )
+	pSocketAllocator->reset();
+	size_t OpCount = pSocketAllocator->capacity();
+	for(size_t i = 0; i < OpCount; ++i)
 	{
 #ifdef DEBUG_IOCP_ALLOCATIONS
 		oDebuggerGuardedFree(pSocketOps[i].pPrivateData);
@@ -434,9 +437,9 @@ void oIOCPContext::Callback(oIOCPOp* _pOP, FUNC _func)
 	// refcount and then releasing implicitly via the interface to ensure that
 	// if we are releasing the final ref we allow the object to destruct properly.
 	int NewCount = ParentRefCount.Reference();
-	if ( ParentRefCount.Valid() )
+	if (ParentRefCount.Valid())
 	{
-		if ( NewCount > 1 )
+		if (NewCount > 1)
 			(pParent->*_func)(_pOP);
 		else
 			ReturnOp(_pOP);
@@ -445,12 +448,12 @@ void oIOCPContext::Callback(oIOCPOp* _pOP, FUNC _func)
 	}
 }
 
-void oIOCPContext::CallBackUser( oIOCPOp* _pOP )
+void oIOCPContext::CallBackUser(oIOCPOp* _pOP)
 {
 	_pOP->pContext->Callback(_pOP, &oIOCP_Impl::CallBackUser);
 }
 
-void oIOCPContext::CallBackUserTask( oIOCPOp* _pOP )
+void oIOCPContext::CallBackUserTask(oIOCPOp* _pOP)
 {
 	_pOP->pContext->Callback(_pOP, &oIOCP_Impl::CallBackUserTask);
 }
@@ -459,16 +462,16 @@ oIOCP_Impl::oIOCP_Impl(const DESC& _Desc, oTASK _ParentDestructionTask, bool* _p
 	: Desc(_Desc)
 	, ParentDestructionTask(_ParentDestructionTask)
 {
-	if( !Desc.IOCompletionRoutine && Desc.Handle != INVALID_HANDLE_VALUE )
+	if(!Desc.IOCompletionRoutine && Desc.Handle != INVALID_HANDLE_VALUE)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "No IOCompletionRoutine specified, only supported if only issuing oTask's to iocp");
+		oErrorSetLast(std::errc::invalid_argument, "No IOCompletionRoutine specified, only supported if only issuing oTask's to iocp");
 		return;
 	}
 
-	pContext = oIOCP_Singleton::Singleton()->RegisterIOCP(Desc.Handle, this );
-	if( nullptr == pContext)
+	pContext = oIOCP_Singleton::Singleton()->RegisterIOCP(Desc.Handle, this);
+	if(nullptr == pContext)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "Failed to create IOCP context");
+		oErrorSetLast(std::errc::invalid_argument, "Failed to create IOCP context");
 		return;
 	}
 	*_pSuccess = true;
@@ -479,17 +482,17 @@ oIOCPOp* oIOCP_Impl::AcquireSocketOp()
 	return pContext->GetOp();
 }
 
-void oIOCP_Impl::ReturnOp( oIOCPOp* _pIOCPOp )
+void oIOCP_Impl::ReturnOp(oIOCPOp* _pIOCPOp)
 {
 	pContext->ReturnOp(_pIOCPOp);
 }
 
-void oIOCP_Impl::DispatchIOTask(oTASK&& _task)
+void oIOCP_Impl::DispatchIOTask(oTASK&& _Task)
 {
 	oIOCPOp* pIOCPOp = AcquireSocketOp();
-	if( !pIOCPOp )
+	if(!pIOCPOp)
 	{
-		oErrorSetLast(oERROR_AT_CAPACITY, "IOCPOpPool is empty, you're sending too fast.");
+		oErrorSetLast(std::errc::no_buffer_space, "IOCPOpPool is empty, you're sending too fast.");
 		// need someway to let user know. 
 		oASSERT(false, "IOCP will never call user task, probably very bad");
 		return;
@@ -497,7 +500,7 @@ void oIOCP_Impl::DispatchIOTask(oTASK&& _task)
 
 	oTASK* task;
 	pIOCPOp->ConstructPrivateData(&task);
-	(*task) = std::move(_task);
+	(*task) = std::move(_Task);
 	oIOCP_Singleton::Singleton()->PostUserTask(pIOCPOp);
 }
 
@@ -506,12 +509,12 @@ void oIOCP_Impl::DispatchManualCompletion(oHandle _handle, oIOCPOp* _pIOCPOp)
 	oIOCP_Singleton::Singleton()->PostManualCompletion(_handle, _pIOCPOp);
 }
 
-void oIOCP_Impl::CallBackUser( oIOCPOp* _pOP )
+void oIOCP_Impl::CallBackUser(oIOCPOp* _pOP)
 {
 	Desc.IOCompletionRoutine(_pOP);
 }
 
-void oIOCP_Impl::CallBackUserTask( oIOCPOp* _pOP )
+void oIOCP_Impl::CallBackUserTask(oIOCPOp* _pOP)
 {
 	oTASK* task;
 	_pOP->GetPrivateData(&task);
@@ -533,11 +536,4 @@ void InitializeIOCP()
 void FlushIOCP()
 {
 	oIOCP_Singleton::Singleton()->Flush();
-}
-
-const oGUID& oGetGUID( threadsafe const oIOCP* threadsafe const * )
-{
-	// {5574C1B0-7F26-4A32-9A9A-93C17201060D}
-	static const oGUID guid = { 0x5574c1b0, 0x7f26, 0x4a32, { 0x9a, 0x9a, 0x93, 0xc1, 0x72, 0x1, 0x6, 0xd } };
-	return guid;
 }

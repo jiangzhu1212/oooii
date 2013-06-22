@@ -27,7 +27,7 @@
 #ifndef oWinMSIMG32_h
 #define oWinMSIMG32_h
 
-#include "oWinSoftLinkCommon.h"
+#include <oPlatform/oModuleUtil.h>
 
 oDECLARE_DLL_SINGLETON_BEGIN(oWinMSIMG32)
 	BOOL (__stdcall *AlphaBlend)(HDC hdcDest, int xoriginDest, int yoriginDest, int wDest, int hDest, HDC hdcSrc, int xoriginSrc, int yoriginSrc, int wSrc, int hSrc, BLENDFUNCTION ftn);

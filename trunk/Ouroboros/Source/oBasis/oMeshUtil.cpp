@@ -24,13 +24,14 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oMeshUtil.h>
-#include <oBasis/oAlgorithm.h>
-#include <oBasis/oAssert.h>
-#include <oBasis/oByte.h>
+#include <oStd/algorithm.h>
+#include <oStd/assert.h>
+#include <oStd/byte.h>
+#include <oConcurrency/oConcurrency.h>
 #include <oBasis/oError.h>
+#include <oBasis/oInt.h>
 #include <oBasis/oInvalid.h>
 #include <oBasis/oMath.h>
-#include <oBasis/oTask.h>
 #include <vector>
 
 void oTransformPoints(const float4x4& _Matrix, float3* oRESTRICT _pDestination, unsigned int _DestinationStride, const float3* oRESTRICT _pSource, unsigned int _SourceStride, unsigned int _NumPoints)
@@ -38,8 +39,8 @@ void oTransformPoints(const float4x4& _Matrix, float3* oRESTRICT _pDestination, 
 	for (unsigned int i = 0; i < _NumPoints; i++)
 	{
 		*_pDestination = mul(_Matrix, float4(*_pSource, 1.0f)).xyz();
-		_pDestination = oByteAdd(_pDestination, _DestinationStride);
-		_pSource = oByteAdd(_pSource, _SourceStride);
+		_pDestination = oStd::byte_add(_pDestination, _DestinationStride);
+		_pSource = oStd::byte_add(_pSource, _SourceStride);
 	}
 }
 
@@ -50,15 +51,15 @@ void oTransformVectors(const float4x4& _Matrix, float3* oRESTRICT _pDestination,
 	for (unsigned int i = 0; i < _NumVectors; i++)
 	{
 		*_pDestination = m_ * (*_pSource);
-		_pDestination = oByteAdd(_pDestination, _DestinationStride);
-		_pSource = oByteAdd(_pSource, _SourceStride);
+		_pDestination = oStd::byte_add(_pDestination, _DestinationStride);
+		_pSource = oStd::byte_add(_pSource, _SourceStride);
 	}
 }
 
 template<typename T> bool oRemoveDegeneratesT(const TVEC3<T>* _pPositions, size_t _NumberOfPositions, unsigned int* _pIndices, size_t _NumberOfIndices, size_t* _pNewNumIndices)
 {
 	if ((_NumberOfIndices % 3) != 0)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "_NumberOfIndices must be a multiple of 3");
+		return oErrorSetLast(std::errc::invalid_argument, "_NumberOfIndices must be a multiple of 3");
 
 	for (size_t i = 0; i < _NumberOfIndices / 3; i++)
 	{
@@ -67,13 +68,13 @@ template<typename T> bool oRemoveDegeneratesT(const TVEC3<T>* _pPositions, size_
 		size_t K = i * 3 + 2;
 
 		if (_pIndices[I] >= _NumberOfPositions || _pIndices[J] >= _NumberOfPositions || _pIndices[K] >= _NumberOfPositions)
-			return oErrorSetLast(oERROR_INVALID_PARAMETER, "an index value indexes outside the range of vertices specified");
+			return oErrorSetLast(std::errc::invalid_argument, "an index value indexes outside the range of vertices specified");
 
 		const TVEC3<T>& a = _pPositions[_pIndices[I]];
 		const TVEC3<T>& b = _pPositions[_pIndices[J]];
 		const TVEC3<T>& c = _pPositions[_pIndices[K]];
 
-		if (oEqual(cross(a - b, a - c), 0.0f))
+		if (oStd::equal(cross(a - b, a - c), TVEC3<T>(T(0.0), T(0.0), T(0.0))))
 		{
 			_pIndices[I] = oInvalid;
 			_pIndices[J] = oInvalid;
@@ -118,78 +119,125 @@ template<typename T> static void CalculateFace(size_t index, TVEC3<T>* _pFaceNor
 
 	// gracefully put in a zero vector for degenerate faces
 	float3 cr = cross(a - b, a - c);
-	_pFaceNormals[index] = oEqual(cr, 0.0f) ? float3(0.0f, 0.0f, 0.0f) : CCWMultiplier * normalize(cr);
+	_pFaceNormals[index] = oStd::equal(cr, float3(0.0f, 0.0f, 0.0f)) ? float3(0.0f, 0.0f, 0.0f) : CCWMultiplier * normalize(cr);
 }
 
-template<typename T> bool oCalculateFaceNormalsT(TVEC3<T>* _pFaceNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const TVEC3<T>* _pPositions, size_t _NumberOfPositions, bool _CCW)
+template<typename T> bool oCalcFaceNormalsT(TVEC3<T>* _pFaceNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const TVEC3<T>* _pPositions, size_t _NumberOfPositions, bool _CCW)
 {
 	if ((_NumberOfIndices % 3) != 0)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "_NumberOfIndices must be a multiple of 3");
+		oErrorSetLast(std::errc::invalid_argument, "_NumberOfIndices must be a multiple of 3");
 		return false;
 	}
 
 	bool success = true;
 	const T s = _CCW ? T(-1.0) : T(1.0);
-	oTaskParallelFor( 0, _NumberOfIndices / 3, oBIND( &CalculateFace<T>, oBIND1, _pFaceNormals, _pIndices, _NumberOfIndices, _pPositions, _NumberOfPositions, s, &success ));
+	oConcurrency::parallel_for( 0, _NumberOfIndices / 3, oBIND( &CalculateFace<T>, oBIND1, _pFaceNormals, _pIndices, _NumberOfIndices, _pPositions, _NumberOfPositions, s, &success ));
 	if( !success )
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "an index value indexes outside the range of vertices specified");
+		oErrorSetLast(std::errc::invalid_argument, "an index value indexes outside the range of vertices specified");
 
 	return success;
 }
 
-bool oCalculateFaceNormals(float3* _pFaceNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const float3* _pPositions, size_t _NumberOfPositions, bool _CCW)
+bool oCalcFaceNormals(float3* _pFaceNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const float3* _pPositions, size_t _NumberOfPositions, bool _CCW)
 {
-	return oCalculateFaceNormalsT(_pFaceNormals, _pIndices, _NumberOfIndices, _pPositions, _NumberOfPositions, _CCW);
+	return oCalcFaceNormalsT(_pFaceNormals, _pIndices, _NumberOfIndices, _pPositions, _NumberOfPositions, _CCW);
 }
 
-template<typename T> bool oCalculateVertexNormalsT(TVEC3<T>* _pVertexNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const TVEC3<T>* _pPositions, size_t _NumberOfVertices, bool _CCW, bool _OverwriteAll)
-{											
-	std::vector<TVEC3<T>> faceNormals(_NumberOfIndices / 3, TVEC3<T>(T(0.0), T(0.0), T(0.0)));
-
-	if (!oCalculateFaceNormals(oGetData(faceNormals), _pIndices, _NumberOfIndices, _pPositions, _NumberOfVertices, _CCW))
-		return false;
-
-	const size_t nFaces = _NumberOfIndices / 3;
-
-	// for each vertex, store a list of the faces to which it contributes
-	std::vector<std::vector<size_t> > trianglesUsedByVertex(_NumberOfVertices);
-
-	for (size_t i = 0; i < nFaces; i++)
-	{
-		oPushBackUnique(trianglesUsedByVertex[_pIndices[i*3]], i);
-		oPushBackUnique(trianglesUsedByVertex[_pIndices[i*3+1]], i);
-		oPushBackUnique(trianglesUsedByVertex[_pIndices[i*3+2]], i);
-	}
-
+template<typename InnerContainerT, typename VecT> void oCalcVertexNormalsT_AverageFaceNormals(
+	const std::vector<InnerContainerT>& _Container, const std::vector<TVEC3<VecT>>& _FaceNormals, TVEC3<VecT>* _pNormals, size_t _NumberOfVertices, bool _OverwriteAll)
+{
 	// Now go through the list and average the normals
 	for (size_t i = 0; i < _NumberOfVertices; i++)
 	{
 		// If there is length on the data already, leave it alone
-		if (!_OverwriteAll && oEqual(_pVertexNormals[i], 0.0f))
+		if (!_OverwriteAll && oStd::equal(_pNormals[i], TVEC3<VecT>(VecT(0.0), VecT(0.0), VecT(0.0))))
 			continue;
 
-		TVEC3<T> N(T(0.0), T(0.0), T(0.0));
-		std::vector<size_t>& TrianglesUsed = trianglesUsedByVertex[i];
+		TVEC3<VecT> N(VecT(0.0), VecT(0.0), VecT(0.0));
+		const InnerContainerT& TrianglesUsed = _Container[i];
 		for (size_t t = 0; t < TrianglesUsed.size(); t++)
 		{
-			size_t faceIndex = TrianglesUsed[t];
-			if (!oEqual(dot(faceNormals[faceIndex], faceNormals[faceIndex]), 0.0f))
-				N += faceNormals[faceIndex];
+			uint faceIndex = TrianglesUsed[t];
+			if (!oStd::equal(dot(_FaceNormals[faceIndex], _FaceNormals[faceIndex]), 0.0f))
+				N += _FaceNormals[faceIndex];
 		}
-		
-		_pVertexNormals[i] = normalize(N);
+
+		_pNormals[i] = normalize(N);
 	}
+}
+
+template<typename T> bool oCalcVertexNormalsT(TVEC3<T>* _pVertexNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const TVEC3<T>* _pPositions, size_t _NumberOfVertices, bool _CCW, bool _OverwriteAll)
+{											
+	std::vector<TVEC3<T>> faceNormals(_NumberOfIndices / 3, TVEC3<T>(T(0.0), T(0.0), T(0.0)));
+
+	if (!oCalcFaceNormals(oStd::data(faceNormals), _pIndices, _NumberOfIndices, _pPositions, _NumberOfVertices, _CCW))
+		return false;
+
+	const uint nFaces = oUInt(_NumberOfIndices) / 3;
+
+	const size_t REASONABLE_MAX_FACES_PER_VERTEX = 32;
+	std::vector<oStd::fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>> trianglesUsedByVertexA(_NumberOfVertices);
+	std::vector<std::vector<uint>> trianglesUsedByVertex;
+	bool UseVecVec = false;
+
+	// Try with a less-memory-intensive method first. If that overflows, fall back
+	// to the alloc-y one. This is to avoid a 5x slowdown when std::vector gets
+	// released due to secure CRT over-zealousness in this case.
+	// for each vertex, store a list of the faces to which it contributes
+	for (uint i = 0; i < nFaces; i++)
+	{
+		oStd::fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>& a = trianglesUsedByVertexA[_pIndices[i*3]];
+		oStd::fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>& b = trianglesUsedByVertexA[_pIndices[i*3+1]];
+		oStd::fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>& c = trianglesUsedByVertexA[_pIndices[i*3+2]];
+
+		// maybe oArray should throw? and catch it here instead of this?
+		if (a.size() == a.capacity() || b.size() == b.capacity() || c.size() == c.capacity())
+		{
+			UseVecVec = true;
+			break;
+		}
+
+		oStd::push_back_unique(a, i);
+		oStd::push_back_unique(b, i);
+		oStd::push_back_unique(c, i);
+	}
+
+	if (UseVecVec)
+	{
+		oStd::free_memory(trianglesUsedByVertexA);
+		trianglesUsedByVertex.resize(_NumberOfVertices);
+
+		// Without MSVC's std::vector/secure CRT slowness, this would be all that's
+		// needed to bin all the faces for each vertex.
+		for (uint i = 0; i < nFaces; i++)
+		{
+			oStd::push_back_unique(trianglesUsedByVertex[_pIndices[i*3]], i);
+			oStd::push_back_unique(trianglesUsedByVertex[_pIndices[i*3+1]], i);
+			oStd::push_back_unique(trianglesUsedByVertex[_pIndices[i*3+2]], i);
+		}
+
+		oCalcVertexNormalsT_AverageFaceNormals(trianglesUsedByVertex, faceNormals, _pVertexNormals, _NumberOfVertices, _OverwriteAll);
+
+		uint MaxValence = 0;
+		// print out why we ended up in this path...
+		for (uint i = 0; i < _NumberOfVertices; i++)
+			MaxValence = __max(MaxValence, oUInt(trianglesUsedByVertex[i].size()));
+		oTRACE("debug-slow path in normals caused by reasonable max valence (%u) being exceeded. Actual valence: %u", REASONABLE_MAX_FACES_PER_VERTEX, MaxValence);
+	}
+
+	else
+		oCalcVertexNormalsT_AverageFaceNormals(trianglesUsedByVertexA, faceNormals, _pVertexNormals, _NumberOfVertices, _OverwriteAll);
 
 	return true;
 }
 
-bool oCalculateVertexNormals(float3* _pVertexNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const float3* _pPositions, size_t _NumberOfVertices, bool _CCW, bool _OverwriteAll)
+bool oCalcVertexNormals(float3* _pVertexNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const float3* _pPositions, size_t _NumberOfVertices, bool _CCW, bool _OverwriteAll)
 {
-	return oCalculateVertexNormalsT(_pVertexNormals, _pIndices, _NumberOfIndices, _pPositions, _NumberOfVertices, _CCW, _OverwriteAll);
+	return oCalcVertexNormalsT(_pVertexNormals, _pIndices, _NumberOfIndices, _pPositions, _NumberOfVertices, _CCW, _OverwriteAll);
 }
 
-template<typename T> void oCalculateTangentsT(TVEC4<T>* _pTangents
+template<typename T> void oCalcTangentsT(TVEC4<T>* _pTangents
  , const unsigned int* _pIndices
  , size_t _NumberOfIndices
  , const TVEC3<T>* _pPositions
@@ -263,7 +311,7 @@ template<typename T> void oCalculateTangentsT(TVEC4<T>* _pTangents
 	// $(CitedCodeEnd)
 }
 
-void oCalculateTangents(float4* _pTangents
+void oCalcTangents(float4* _pTangents
 											 , const unsigned int* _pIndices
 											 , size_t _NumberOfIndices
 											 , const float3* _pPositions
@@ -271,7 +319,7 @@ void oCalculateTangents(float4* _pTangents
 											 , const float3* _pTexcoords
 											 , size_t _NumberOfVertices)
 {
-	oCalculateTangentsT(_pTangents, _pIndices, _NumberOfIndices, _pPositions, _pNormals, _pTexcoords, _NumberOfVertices);
+	oCalcTangentsT(_pTangents, _pIndices, _NumberOfIndices, _pPositions, _pNormals, _pTexcoords, _NumberOfVertices);
 }
 
 namespace TerathonEdges {
@@ -423,7 +471,7 @@ long BuildEdges(long vertexCount, long triangleCount,
 
 } // namespace TerathonEdges
 
-void oCalculateEdges(size_t _NumberOfVertices, const unsigned int* _pIndices, size_t _NumberOfIndices, unsigned int** _ppEdges, size_t* _pNumberOfEdges)
+void oCalcEdges(size_t _NumberOfVertices, const unsigned int* _pIndices, size_t _NumberOfIndices, unsigned int** _ppEdges, size_t* _pNumberOfEdges)
 {
 	const size_t numTriangles = _NumberOfIndices / 3;
 	oASSERT((size_t)((long)_NumberOfVertices) == _NumberOfVertices, "");
@@ -522,10 +570,10 @@ void oPruneUnindexedVertices(unsigned int* _pIndices
 	oPruneUnindexedVerticesT(_pIndices, _NumberOfIndices, _pPositions, _pNormals, _pTangents, _pTexcoords0, _pTexcoords1, _pColors, _NumberOfVertices, _pNewNumVertices);
 }
 
-template<typename T> inline void oCalculateMinMaxPointsT(const TVEC3<T>* oRESTRICT _pPoints, size_t _NumberOfPoints, TVEC3<T>* oRESTRICT _pMinPoint, TVEC3<T>* oRESTRICT _pMaxPoint)
+template<typename T> inline void oCalcMinMaxPointsT(const TVEC3<T>* oRESTRICT _pPoints, size_t _NumberOfPoints, TVEC3<T>* oRESTRICT _pMinPoint, TVEC3<T>* oRESTRICT _pMaxPoint)
 {
-	*_pMinPoint = TVEC3<T>(oNumericLimits<T>::GetMax());
-	*_pMaxPoint = TVEC3<T>(oNumericLimits<T>::GetSignedMin());
+	*_pMinPoint = TVEC3<T>(std::numeric_limits<T>::max());
+	*_pMaxPoint = TVEC3<T>(std::numeric_limits<T>::lowest());
 
 	for (size_t i = 0; i < _NumberOfPoints; i++)
 	{
@@ -534,17 +582,17 @@ template<typename T> inline void oCalculateMinMaxPointsT(const TVEC3<T>* oRESTRI
 	}
 }
 
-void oCalculateMinMaxPoints(const float3* oRESTRICT _pPoints, size_t _NumberOfPoints, float3* oRESTRICT _pMinPoint, float3* oRESTRICT _pMaxPoint)
+void oCalcMinMaxPoints(const float3* oRESTRICT _pPoints, size_t _NumberOfPoints, float3* oRESTRICT _pMinPoint, float3* oRESTRICT _pMaxPoint)
 {
-	oCalculateMinMaxPointsT(_pPoints, _NumberOfPoints, _pMinPoint, _pMaxPoint);
+	oCalcMinMaxPointsT(_pPoints, _NumberOfPoints, _pMinPoint, _pMaxPoint);
 }
 
-void oCalculateMinMaxPoints(const double3* oRESTRICT _pPoints, size_t _NumberOfPoints, double3* oRESTRICT _pMinPoint, double3* oRESTRICT _pMaxPoint)
+void oCalcMinMaxPoints(const double3* oRESTRICT _pPoints, size_t _NumberOfPoints, double3* oRESTRICT _pMinPoint, double3* oRESTRICT _pMaxPoint)
 {
-	oCalculateMinMaxPointsT(_pPoints, _NumberOfPoints, _pMinPoint, _pMaxPoint);
+	oCalcMinMaxPointsT(_pPoints, _NumberOfPoints, _pMinPoint, _pMaxPoint);
 }
 
-bool oCalculateTexcoords(const oAABoxf& _Bound, const unsigned int* _pIndices, unsigned int _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, unsigned int _NumVertices, double* _pSolveTime)
+bool oCalcTexcoords(const oAABoxf& _Bound, const unsigned int* _pIndices, unsigned int _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, unsigned int _NumVertices, double* _pSolveTime)
 {
 	// @oooii-tony: I tried integrating OpenNL, but integrating it as-is produced
 	// the same result as their sample, which is to say something that isn't 
@@ -555,5 +603,5 @@ bool oCalculateTexcoords(const oAABoxf& _Bound, const unsigned int* _pIndices, u
 	// those with access can go look at that stuff if it needs to be resurrected,
 	// but it's mostly just the sample OOOii-fied.
 
-	return oErrorSetLast(oERROR_NOT_FOUND, "oCalculateTexcoords is not yet implemented.");
+	return oErrorSetLast(std::errc::function_not_supported, "oCalcTexcoords is not yet implemented.");
 }

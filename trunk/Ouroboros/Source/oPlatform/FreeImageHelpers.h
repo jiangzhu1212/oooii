@@ -30,7 +30,7 @@
 #ifndef oFreeImageHelpers_h
 #define oFreeImageHelpers_h
 
-#include <oBasis/oMacros.h>
+#include <oStd/macros.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oSingleton.h>
 #include <freeimage.h>

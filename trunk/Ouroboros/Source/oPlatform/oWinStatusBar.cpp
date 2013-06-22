@@ -48,6 +48,24 @@ HWND oWinStatusBarCreate(HWND _hParent, HMENU _ID, int _MinHeight)
 	return hWnd;
 }
 
+int oWinStatusBarGetHeight(HWND _hParent)
+{
+	int h = oInvalid;
+	HWND hStatusBar = FindWindowEx(_hParent, nullptr, STATUSCLASSNAME, nullptr);
+	if (hStatusBar)
+	{
+		if (::IsWindowVisible(hStatusBar))
+		{
+			RECT rStatusBar;
+			GetClientRect(hStatusBar, &rStatusBar);
+			h = oWinRectH(rStatusBar);
+		}
+		else
+			h = 0;
+	}
+	return h;
+}
+
 void oWinStatusBarAdjustClientRect(HWND _hParent, RECT* _pRect)
 {
 	HWND hStatusBar = FindWindowEx(_hParent, nullptr, STATUSCLASSNAME, nullptr);
@@ -71,7 +89,22 @@ void oWinStatusBarSetMinHeight(HWND _hStatusBar, int _MinHeight)
 
 void oWinStatusBarSetNumItems(HWND _hStatusBar, const int* _pItemWidths, size_t _NumItems)
 {
-	oVB(SendMessage(_hStatusBar, SB_SETPARTS, (WPARAM)_NumItems, (LPARAM)_pItemWidths));
+	std::array<int, 256> CoordOfRight;
+
+	int LastLeft = 0;
+	for (int i = 0; i < oInt(_NumItems); i++)
+	{
+		LastLeft += _pItemWidths[i];
+		
+		if (_pItemWidths[i] == -1)
+		{
+			CoordOfRight[i] = -1;
+			break;
+		}
+		CoordOfRight[i] = LastLeft;
+	}
+
+	oVB(SendMessage(_hStatusBar, SB_SETPARTS, (WPARAM)_NumItems, (LPARAM)CoordOfRight.data()));
 }
 
 RECT oWinStatusBarGetItemRect(HWND _hStatusBar, int _ItemIndex)
@@ -94,11 +127,22 @@ static int oWinStatusBarGetStyle(oGUI_BORDER_STYLE _Style)
 
 void oWinStatusBarSetText(HWND _hStatusBar, int _ItemIndex, oGUI_BORDER_STYLE _BorderStyle, const char* _Format, va_list _Args)
 {
-	oStringL s;
+	oStd::lstring s;
 	oVPrintf(s, _Format, _Args);
 	oAddTruncationElipse(s);
 	WPARAM w = (_ItemIndex & 0xff) | oWinStatusBarGetStyle(_BorderStyle);
-	oVB(SendMessage(_hStatusBar, SB_SETTEXT, w, (LPARAM)s.c_str()));
+	if (!SendMessage(_hStatusBar, SB_SETTEXT, w, (LPARAM)s.c_str()))
+	{
+		int nParts = (int)SendMessage(_hStatusBar, SB_GETPARTS, INT_MAX, 0);
+		if (_ItemIndex >= nParts)
+		{
+			oErrorSetLast(std::errc::no_buffer_space, "The specified status bar item index %d is out of range (number of items %d)", _ItemIndex, nParts);
+			oVERIFY(false);
+		}
+
+		else
+			oVB(false);
+	}
 }
 
 char* oWinStatusBarGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hStatusBar, int _ItemIndex)
@@ -106,7 +150,7 @@ char* oWinStatusBarGetText(char* _StrDestination, size_t _SizeofStrDestination, 
 	LRESULT lResult = SendMessage(_hStatusBar, SB_GETTEXTLENGTH, (WPARAM)_ItemIndex, 0);
 	size_t len = LOWORD(lResult);
 	if (len >= _SizeofStrDestination)
-		return (char*)oErrorSetLast(oERROR_AT_CAPACITY);
+		return (char*)oErrorSetLast(std::errc::no_buffer_space);
 	SendMessage(_hStatusBar, SB_GETTEXT, (WPARAM)_ItemIndex, (LPARAM)_StrDestination);
 	return _StrDestination;
 }

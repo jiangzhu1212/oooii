@@ -23,32 +23,37 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasisTests/oBasisTests.h>
-#include <oBasis/oCompression.h>
-#include <oBasis/oError.h>
-#include <oBasis/oFixedString.h>
-#include <oBasis/oOnScopeExit.h>
+#include <oBasis/tests/oBasisTests.h>
+#include <oBasis/oGZip.h>
+#include <oBasis/oLZMA.h>
 #include <oBasis/oPath.h>
+#include <oBasis/oSnappy.h>
 #include <oBasis/oString.h>
 #include <oBasis/oTimer.h>
+#include <oStd/finally.h>
+#include <oStd/timer.h>
 #include "oBasisTestCommon.h"
 
-static bool TestCompress(const void* _pSourceBuffer, size_t _SizeofSourceBuffer, oCOMPRESSION_TRADEOFF _Tradeoff, size_t* _pCompressedSize)
+//#include <oBasis/oError.h>
+//#include <oStd/fixed_string.h>
+
+static bool TestCompress(const void* _pSourceBuffer, size_t _SizeofSourceBuffer, oCompressFn _Compress, oDecompressFn _Decompress, size_t* _pCompressedSize)
 {
-	size_t maxCompressedSize = oCalcMaxCompressedSize(_SizeofSourceBuffer, _Tradeoff);
+	size_t maxCompressedSize = _Compress(nullptr, 0, _pSourceBuffer, _SizeofSourceBuffer);
 	void* compressed = new char[maxCompressedSize];
-	oOnScopeExit OSEFreeCompressed([&] { if (compressed) delete [] compressed; });
+	oStd::finally OSEFreeCompressed([&] { if (compressed) delete [] compressed; });
 
-	oTESTB0(oCompress(compressed, maxCompressedSize, _pSourceBuffer, _SizeofSourceBuffer, _Tradeoff, _pCompressedSize));
+	*_pCompressedSize = _Compress(compressed, maxCompressedSize, _pSourceBuffer, _SizeofSourceBuffer);
+	oTESTB0(*_pCompressedSize != 0);
 
-	size_t uncompressedSize = oGetUncompressedSize(compressed);
+	size_t uncompressedSize = _Decompress(nullptr, 0, compressed, *_pCompressedSize);
 	if (_SizeofSourceBuffer != uncompressedSize)
-		return oErrorSetLast(oERROR_GENERIC, "loaded and uncompressed sizes don't match");
+		return oErrorSetLast(std::errc::protocol_error, "loaded and uncompressed sizes don't match");
 
 	void* uncompressed = malloc(uncompressedSize);
-	oOnScopeExit OSEFreeUncompressed([&] { if (uncompressed) free(uncompressed); });
+	oStd::finally OSEFreeUncompressed([&] { if (uncompressed) free(uncompressed); });
 
-	oTESTB0(oUncompress(uncompressed, uncompressedSize, compressed, *_pCompressedSize));
+	oTESTB0(0 != _Decompress(uncompressed, uncompressedSize, compressed, *_pCompressedSize));
 	oTESTB(!memcmp(_pSourceBuffer, uncompressed, uncompressedSize), "memcmp failed between uncompressed and loaded buffers");
 	return true;
 }
@@ -57,32 +62,42 @@ bool oBasisTest_oCompression(const oBasisTestServices& _Services)
 {
 	static const char* BenchmarkFilename = "Test/Geometry/buddha.obj";
 
-	oStringPath path;
+	oStd::path_string path;
 	oTESTB(_Services.ResolvePath(path.c_str(), path.capacity(), BenchmarkFilename, true), "not found: %s", BenchmarkFilename);
 	oTESTB(oCleanPath(path.c_str(), path.capacity(), path), "Failed to clean path on \"%s\"", path);
 
 	char* pOBJBuffer = nullptr;
 	size_t Size = 0;
 	oTESTB(_Services.AllocateAndLoadBuffer((void**)&pOBJBuffer, &Size, path, true), "Failed to load file \"%s\"", path);
-	oOnScopeExit FreeBuffer([&] { _Services.DeallocateLoadedBuffer(pOBJBuffer); });
+	oStd::finally FreeBuffer([&] { _Services.DeallocateLoadedBuffer(pOBJBuffer); });
 
-	double start, timeSpeedy, timeMinimal;
-	size_t CompressedSize0, CompressedSize1;
+	double timeSnappy, timeLZMA, timeGZip;
+	size_t CompressedSize0, CompressedSize1, CompressedSize2;
 
-	start = oTimer();
-	oTESTB0(TestCompress(pOBJBuffer, Size, oFAVOR_DECOMPRESSION_SPEED, &CompressedSize0));
-	timeSpeedy = oTimer() - start;
-	start = oTimer();
-	oTESTB0(TestCompress(pOBJBuffer, Size, oFAVOR_MINIMAL_SIZE, &CompressedSize1));
-	timeMinimal = oTimer() - start;
+	oStd::timer t;
+	oTESTB0(TestCompress(pOBJBuffer, Size, oSnappyCompress, oSnappyDecompress, &CompressedSize0));
+	timeSnappy = t.seconds();
+	t.reset();
+	oTESTB0(TestCompress(pOBJBuffer, Size, oLZMACompress, oLZMADecompress, &CompressedSize1));
+	timeLZMA = t.seconds();
+	t.reset();
+	oTESTB0(TestCompress(pOBJBuffer, Size, oGZipCompress, oGZipDecompress, &CompressedSize2));
+	timeGZip = t.seconds();
+	t.reset();
 
-	oStringS strUncompressed, strSpeedy, strMinimal, strSpeedyTime, strMinimalTime;
-	oErrorSetLast(oERROR_NONE, "Compressed %s from %s to Speedy: %s in %s, Minimally: %s in %s"
+	oStd::sstring strUncompressed, strSnappy, strLZMA, strGZip, strSnappyTime, strLZMATime, strGZipTime;
+	oStd::format_duration(strSnappyTime, timeSnappy, true);
+	oStd::format_duration(strLZMATime, timeLZMA, true);
+	oStd::format_duration(strGZipTime, timeGZip, true);
+
+	oErrorSetLast(0, "Compressed %s from %s to Snappy: %s in %s, LZMA: %s in %s, GZip: %s in %s"
 		, path.c_str()
 		, oFormatMemorySize(strUncompressed, Size, 2)
-		, oFormatMemorySize(strSpeedy, CompressedSize0, 2)
-		, oFormatTimeSize(strSpeedyTime, timeSpeedy, true)
-		, oFormatMemorySize(strMinimal, CompressedSize1, 2)
-		, oFormatTimeSize(strMinimalTime, timeMinimal, true));
+		, oFormatMemorySize(strSnappyTime, CompressedSize0, 2)
+		, strSnappyTime.c_str()
+		, oFormatMemorySize(strLZMATime, CompressedSize1, 2)
+		, strLZMATime.c_str()
+		, oFormatMemorySize(strGZipTime, CompressedSize2, 2)
+		, strGZipTime.c_str());
 	return true;
 }

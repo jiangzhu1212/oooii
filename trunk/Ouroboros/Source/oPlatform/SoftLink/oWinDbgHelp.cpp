@@ -142,7 +142,17 @@ oWinDbgHelp::oWinDbgHelp(HANDLE _hProcess, const char* _SymbolPath, ModuleLoaded
 		*SymbolPath = 0;
 		*SymbolSearchPath = 0;
 
-		if (SymInitialize(hProcess, _SymbolPath, FALSE))
+		// Our PDBs no longer have absolute paths, so we set the search path to
+		// the executable path, unless the user specified _SymbolPath
+		if (!oSTRVALID(_SymbolPath))
+		{
+			GetModuleFileNameA(0, path, oCOUNTOF(path));
+			oTrimFilename(path);
+		}
+		else
+			oStrcpy(path, _SymbolPath);
+
+		if (SymInitialize(hProcess, path, FALSE))
 		{
 			SymSetOptions(SymGetOptions() | SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_FAIL_CRITICAL_ERRORS);
 			SymGetSearchPath(hProcess, SymbolSearchPath, oCOUNTOF(SymbolSearchPath));
@@ -201,7 +211,9 @@ void oWinDbgHelp::SetModuleLoadedHandler(ModuleLoadedHandler _Handler) { Handler
 
 #pragma warning(default:4748) // an not protect parameters and local variables from local buffer overrun because optimizations are disabled in function
 
-const char* oAsString(enum SymTagEnum _SymTagEnum)
+namespace oStd {
+
+const char* as_string(const enum SymTagEnum& _SymTagEnum)
 {
 	switch (_SymTagEnum) 
 	{
@@ -241,3 +253,5 @@ const char* oAsString(enum SymTagEnum _SymTagEnum)
 	
 	return "Unknown";
 }
+
+} // namespace oStd

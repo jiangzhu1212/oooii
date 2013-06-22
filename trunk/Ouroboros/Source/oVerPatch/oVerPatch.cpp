@@ -1,4 +1,28 @@
-// $(header)
+/**************************************************************************
+ * The MIT License                                                        *
+ * Copyright (c) 2013 OOOii.                                              *
+ * antony.arciuolo@oooii.com                                              *
+ * kevin.myers@oooii.com                                                  *
+ *                                                                        *
+ * Permission is hereby granted, free of charge, to any person obtaining  *
+ * a copy of this software and associated documentation files (the        *
+ * "Software"), to deal in the Software without restriction, including    *
+ * without limitation the rights to use, copy, modify, merge, publish,    *
+ * distribute, sublicense, and/or sell copies of the Software, and to     *
+ * permit persons to whom the Software is furnished to do so, subject to  *
+ * the following conditions:                                              *
+ *                                                                        *
+ * The above copyright notice and this permission notice shall be         *
+ * included in all copies or substantial portions of the Software.        *
+ *                                                                        *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
+ **************************************************************************/
 
 static oOption sOptions[] = 
 {
@@ -52,7 +76,7 @@ static bool ParseCommandLine(int argc, const char* argv[], oVERPATCH_DESC* _pDes
 			case 'r': _pDesc->P4Root = value; break;
 			case 'f': _pDesc->File = value; break;
 			case '@': _pDesc->VerPatch = value; break;
-			case ':': return oErrorSetLast(oERROR_INVALID_PARAMETER, "The %d%s option is missing a parameter (does it begin with '-' or '/'?)", count, oOrdinal(count));
+			case ':': return oErrorSetLast(std::errc::invalid_argument, "The %d%s option is missing a parameter (does it begin with '-' or '/'?)", count, oStd::ordinal(count));
 		}
 
 		ch = oOptTok(&value, 0, 0, 0);
@@ -62,7 +86,7 @@ static bool ParseCommandLine(int argc, const char* argv[], oVERPATCH_DESC* _pDes
 	return true;
 }
 
-static bool CreateVersionString(oStringM& _StrDestination, const oVERPATCH_DESC& _Desc)
+static bool CreateVersionString(oStd::mstring& _StrDestination, const oVERPATCH_DESC& _Desc)
 {
 	oMODULE_DESC d;
 	if (!oModuleGetDesc(_Desc.File, &d))
@@ -71,17 +95,17 @@ static bool CreateVersionString(oStringM& _StrDestination, const oVERPATCH_DESC&
 	// First get the revision from P4.
 	oVersion v;
 	v.Major = 1;
-	if (oFromString(&v, _Desc.Version) && !v.IsValid())
+	if (oStd::from_string(&v, _Desc.Version) && !v.IsValid())
 		v = d.FileVersion;
 
 	uint Revision = oP4GetCurrentChangelist(_Desc.P4Root);
-	bool Special = oErrorGetLast() == oERROR_CORRUPT;
+	bool Special = oErrorGetLast() == std::errc::protocol_error;
 	if (Revision == oInvalid)
 		Revision = 0;
 	oP4SetRevision(Revision, &v);
 
 	// Now convert it to string
-	oToString(_StrDestination, v);
+	oStd::to_string(_StrDestination, v);
 	
 	if (d.IsDebugBuild)
 		oStrcat(_StrDestination, " (Debug)");
@@ -97,18 +121,18 @@ bool Main(int argc, const char* argv[])
 	{
 		char buf[1024];
 		printf("%s", oOptDoc(buf, oGetFilebase(argv[0]), sOptions));
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, ""); // don't print any other complaint
+		return oErrorSetLast(std::errc::invalid_argument, ""); // don't print any other complaint
 	}
 
 	oVERPATCH_DESC opts;
 	if (!ParseCommandLine(argc, argv, &opts))
 	{
-		oStringXL temp = oErrorGetLastString();
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "bad command line: %s", temp.c_str());
+		oStd::xlstring temp = oErrorGetLastString();
+		return oErrorSetLast(std::errc::invalid_argument, "bad command line: %s", temp.c_str());
 	}
 
 	if (!opts.File)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "A file to modify (-f) must be specified.");
+		return oErrorSetLast(std::errc::invalid_argument, "A file to modify (-f) must be specified.");
 
 	// Prepare a command line to spawn for verpatch.exe
 
@@ -122,7 +146,7 @@ bool Main(int argc, const char* argv[])
 
 	if (opts.Version)
 	{
-		oStringM StrVersion;
+		oStd::mstring StrVersion;
 		if (!CreateVersionString(StrVersion, opts))
 			return false; // pass through error
 
@@ -149,7 +173,7 @@ bool Main(int argc, const char* argv[])
 	oVERVAL(PrivateBuild);
 	oVERVAL(SpecialBuild);
 
-	oStringXL Response;
+	oStd::xlstring Response;
 	int ExitCode = 0;
 	if (!oSystemExecute(verpatch.c_str(), Response, &ExitCode, 5000))
 		return false; // pass through error
@@ -157,7 +181,7 @@ bool Main(int argc, const char* argv[])
 	if (ExitCode)
 	{
 		printf("verpatch exited with code %d\n%s", ExitCode, Response.c_str());
-		return oErrorSetLast(oERROR_IO, Response);
+		return oErrorSetLast(std::errc::io_error, Response);
 	}
 
 	return true;

@@ -28,21 +28,14 @@
 #include <oBasis/oGUI.h>
 #include <oBasis/oRefCount.h>
 
-const oGUID& oGetGUID(threadsafe const oCameraControllerArcball* threadsafe const*)
-{
-	// {A363E3FE-D85D-4C82-BC31-0DD6495A4470}
-	static const oGUID IIDCameraControllerArcball = { 0xa363e3fe, 0xd85d, 0x4c82, { 0xbc, 0x31, 0xd, 0xd6, 0x49, 0x5a, 0x44, 0x70 } };
-	return IIDCameraControllerArcball;
-}
-
 struct oCameraControllerArcballImpl : oCameraControllerArcball
 {
 	oCameraControllerArcballImpl(const oCAMERA_CONTROLLER_ARCBALL_DESC& _Desc, bool* _pSuccess);
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE2(oCameraController, oCameraControllerArcball);
 
-	void SetWindowDimensions(const int2& _WindowDimensions) override { Arcball.SetViewportDimensions(_WindowDimensions); }
 	int OnAction(const oGUI_ACTION_DESC& _Action) override;
+	void Tick() override {} 
 	void OnLostCapture() override;
 	void SetView(const float4x4& _View) override { Arcball.SetView(_View); }
 	float4x4 GetView(float _DeltaTime = 0.0f) override { return Arcball.GetView(); }
@@ -54,7 +47,7 @@ struct oCameraControllerArcballImpl : oCameraControllerArcball
 private:
 	oCAMERA_CONTROLLER_ARCBALL_DESC Desc;
 	oRefCount RefCount;
-	bool KeyStates[oCAMERA_CONTROLLER_ARCBALL_DESC::NUM_CONTROLS];
+	std::array<bool, oCAMERA_CONTROLLER_ARCBALL_DESC::NUM_CONTROLS> KeyStates;
 	float3 PointerPosition;
 	// keep this as a float2... it ensures we ignore the mouse wheel in 
 	// transformation calculations because that's already relative. For mouse 
@@ -67,9 +60,10 @@ oCameraControllerArcballImpl::oCameraControllerArcballImpl(const oCAMERA_CONTROL
 	: Desc(_Desc)
 	, PointerPosition(0.0f)
 	, LastPointerPosition(0.0f)
+	, Arcball(oARCBALL_CONSTRAINT_NONE)
 {
 	*_pSuccess = false;
-	oINIT_ARRAY(KeyStates, false);
+	KeyStates.fill(false);
 	*_pSuccess = true;
 }
 
@@ -89,15 +83,15 @@ int oCameraControllerArcballImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 	int Response = oCAMERA_CONTROLLER_SHOW_POINTER;
 
 	LastPointerPosition = PointerPosition.xy();
-	oGUIRecordInputState(_Action, Desc.Controls, KeyStates, &PointerPosition);
+	oGUIRecordInputState(_Action, Desc.Controls.data(), Desc.Controls.size(), KeyStates.data(), KeyStates.size(), &PointerPosition);
 	float2 PointerPositionDelta = PointerPosition.xy() - LastPointerPosition;
 
 	if (KeyStates[oCAMERA_CONTROLLER_ARCBALL_DESC::ORBIT])
 	{
 		if (!WasOrbiting)
-			Arcball.BeginRotation(PointerPosition.xy());
-		else
-			Arcball.DragRotation(PointerPosition.xy());
+			Arcball.BeginRotation();
+
+		Arcball.Rotate(PointerPositionDelta * Desc.RotationSpeed);
 		Response |= oCAMERA_CONTROLLER_ROTATING_YAW|oCAMERA_CONTROLLER_ROTATING_PITCH|oCAMERA_CONTROLLER_ROTATING_AROUND_COI|oCAMERA_CONTROLLER_LOCK_POINTER;
 	}
 
@@ -118,7 +112,7 @@ int oCameraControllerArcballImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 		if (WasOrbiting || WasPanning || WasDolly)
 			Response |= oCAMERA_CONTROLLER_UNLOCK_POINTER|oCAMERA_CONTROLLER_SHOW_POINTER;
 
-		if (!oEqual(PointerPosition.z, 0.0f))
+		if (!oStd::equal(PointerPosition.z, 0.0f))
 		{
 			float2 delta(PointerPosition.z, 0.0f);
 			Arcball.Dolly(delta * 0.05f * Desc.DollySpeed);
@@ -131,6 +125,6 @@ int oCameraControllerArcballImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 
 void oCameraControllerArcballImpl::OnLostCapture()
 {
-	oINIT_ARRAY(KeyStates, false);
+	KeyStates.fill(false);
 }
 

@@ -27,7 +27,7 @@
 #ifndef oWinCommCtrl_h
 #define oWinCommCtrl_h
 
-#include "oWinSoftLinkCommon.h"
+#include <oPlatform/oModuleUtil.h>
 #include <commctrl.h>
 
 oDECLARE_DLL_SINGLETON_BEGIN(oWinCommCtrl)

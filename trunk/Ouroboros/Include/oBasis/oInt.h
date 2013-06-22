@@ -32,6 +32,7 @@
 #define oInt_h
 
 #include "SafeInt3.h"
+#include <oStd/byte.h>
 #include <type_traits>
 
 typedef SafeInt<char> oChar;
@@ -50,26 +51,26 @@ typedef SafeInt<size_t> oSizeT;
 namespace std {
 
 template<class _Ty>
-struct _Arithmetic_traits<SafeInt<_Ty> >
+struct _Arithmetic_traits<SafeInt<_Ty>>
 	: _Arithmetic_traits<_Ty>
 {
 };
 
 template<class _Ty>
-struct is_integral<SafeInt<_Ty> >
+struct is_integral<SafeInt<_Ty>>
 	: _Is_integral<typename remove_cv<_Ty>::type>
 {	// determine whether _Ty is integral
 };
 
 template<class _Ty>
-struct tr1::_Has_signed_vals<SafeInt<_Ty> >
+struct tr1::_Has_signed_vals<SafeInt<_Ty>>
 	: _Cat_base<(typename remove_cv<_Ty>::type)(-1)
 	< (typename remove_cv<_Ty>::type)(0)>
 {	// integral type can represent negative values
 };
 
 template<class _Ty0, class _Ty1>
-struct common_type<SafeInt<_Ty0>, SafeInt<_Ty1> >
+struct common_type<SafeInt<_Ty0>, SafeInt<_Ty1>>
 {	// determine common type of arithmetic types _Ty0 and _Ty1
 	typedef typename _Ipromo<_Ty0>::_Type _PromoTy0;
 	typedef typename _Ipromo<_Ty1>::_Type _PromoTy1;
@@ -79,5 +80,13 @@ struct common_type<SafeInt<_Ty0>, SafeInt<_Ty1> >
 };
 
 } // namespace std
+
+namespace oStd {
+	template<typename T> SafeInt<T> endian_swap(SafeInt<T> x) { return endian_swap((T)x); }
+	template<typename T> SafeInt<T> to_big_endian(SafeInt<T> x) { return to_big_endian((T)x); }
+	template<typename T> SafeInt<T> from_big_endian(SafeInt<T> x) { return from_big_endian((T)x); }
+	template<typename T> SafeInt<T> to_little_endian(SafeInt<T> x) { return to_little_endian((T)x); }
+	template<typename T> SafeInt<T> from_little_endian(SafeInt<T> x) { return from_little_endian((T)x); }
+} // namespace oStd
 
 #endif

@@ -24,10 +24,10 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oConsole.h>
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
 #include <oBasis/oError.h>
-#include <oBasis/oFixedString.h>
-#include <oBasis/oMutex.h>
+#include <oStd/fixed_string.h>
+#include <oConcurrency/mutex.h>
 #include <oPlatform/oProcess.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSingleton.h>
@@ -35,6 +35,7 @@
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinWindowing.h>
+#include <oPlatform/oStream.h>
 
 // TODO: Add GetConsoleMode support
 
@@ -53,9 +54,11 @@ struct oConsoleContext : public oProcessSingleton<oConsoleContext>
 	BOOL CtrlHandler(DWORD fdwCtrlType);
 
 	static const oGUID GUID;
-	oRecursiveMutex ConsoleLock;
+	oConcurrency::recursive_mutex ConsoleLock;
 	bool CtrlHandlerSet;
 	oConsole::EventFn Functions[5];
+	oStd::path_string LogFilePath;
+	oRef<threadsafe oStreamWriter> LogFile;
 };
 
 // {145728A4-3A9A-47FD-BF88-8B61A1EC14AB}
@@ -85,7 +88,7 @@ BOOL oConsoleContext::CtrlHandler(DWORD fdwCtrlType)
 	return FALSE;
 }
 
-static void GetColor(WORD _wAttributes, oColor* _pForeground, oColor* _pBackground)
+static void GetColor(WORD _wAttributes, oStd::color* _pForeground, oStd::color* _pBackground)
 {
 	{
 		float r = 0.0f, g = 0.0f, b = 0.0f;
@@ -93,7 +96,7 @@ static void GetColor(WORD _wAttributes, oColor* _pForeground, oColor* _pBackgrou
 		if (_wAttributes & FOREGROUND_RED) r = intense ? 1.0f : 0.5f;
 		if (_wAttributes & FOREGROUND_GREEN) g = intense ? 1.0f : 0.5f;
 		if (_wAttributes & FOREGROUND_BLUE) b = intense ? 1.0f : 0.5f;
-		*_pForeground = oColorCompose(r, g, b, 1.0f);
+		*_pForeground = oStd::color(r, g, b, 1.0f);
 	}
 		
 	{
@@ -102,7 +105,7 @@ static void GetColor(WORD _wAttributes, oColor* _pForeground, oColor* _pBackgrou
 		if (_wAttributes & BACKGROUND_RED) r = intense ? 1.0f : 0.5f;
 		if (_wAttributes & BACKGROUND_GREEN) g = intense ? 1.0f : 0.5f;
 		if (_wAttributes & BACKGROUND_BLUE) b = intense ? 1.0f : 0.5f;
-		*_pBackground = oColorCompose(r, g, b, 1.0f);
+		*_pBackground = oStd::color(r, g, b, 1.0f);
 	}
 }
 
@@ -112,14 +115,14 @@ static void GetColor(WORD _wAttributes, oColor* _pForeground, oColor* _pBackgrou
 #define BACKGROUND_MASK (BACKGROUND_INTENSITY|BACKGROUND_GRAY)
 
 // returns prior wAttributes
-static WORD SetConsoleColor(HANDLE _hStream, oColor _Foreground, oColor _Background)
+static WORD SetConsoleColor(HANDLE _hStream, oStd::color _Foreground, oStd::color _Background)
 {
 	#define RED__ FOREGROUND_RED|BACKGROUND_RED
 	#define GREEN__ FOREGROUND_GREEN|BACKGROUND_GREEN
 	#define BLUE__ FOREGROUND_BLUE|BACKGROUND_BLUE
 	#define BRIGHT__ FOREGROUND_INTENSITY|BACKGROUND_INTENSITY
 
-	static const oColor sConsoleColors[] = { std::Black, std::Navy, std::Green, std::Teal, std::Maroon, std::Purple, std::Olive, std::Silver, std::Gray, std::Blue, std::Lime, std::Aqua, std::Red, std::Fuchsia, std::Yellow, std::White };
+	static const oStd::color sConsoleColors[] = { oStd::Black, oStd::Navy, oStd::Green, oStd::Teal, oStd::Maroon, oStd::Purple, oStd::Olive, oStd::Silver, oStd::Gray, oStd::Blue, oStd::Lime, oStd::Aqua, oStd::Red, oStd::Fuchsia, oStd::Yellow, oStd::White };
 	static const WORD sConsoleColorWords[] = { 0, BLUE__, GREEN__, BLUE__|GREEN__, RED__, RED__|BLUE__, RED__|GREEN__, RED__|GREEN__|BLUE__, BRIGHT__, BRIGHT__|BLUE__, BRIGHT__|GREEN__, BRIGHT__|BLUE__|GREEN__, BRIGHT__|RED__, BRIGHT__|RED__|BLUE__, BRIGHT__|RED__|GREEN__, BRIGHT__|RED__|GREEN__|BLUE__ };
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -130,12 +133,12 @@ static WORD SetConsoleColor(HANDLE _hStream, oColor _Foreground, oColor _Backgro
 	if (!_Foreground)
 		wAttributes |= wOriginalAttributes & FOREGROUND_MASK;
 	else
-		wAttributes |= sConsoleColorWords[oColorFindClosest(_Foreground, sConsoleColors)] & FOREGROUND_MASK;
+		wAttributes |= sConsoleColorWords[palettize(_Foreground, sConsoleColors)] & FOREGROUND_MASK;
 
 	if (!_Background)
 		wAttributes |= wOriginalAttributes & BACKGROUND_MASK;
 	else
-		wAttributes |= sConsoleColorWords[oColorFindClosest(_Background, sConsoleColors)] & BACKGROUND_MASK;
+		wAttributes |= sConsoleColorWords[palettize(_Background, sConsoleColors)] & BACKGROUND_MASK;
 	
 	SetConsoleTextAttribute(_hStream, wAttributes);
 	return wOriginalAttributes;
@@ -182,7 +185,11 @@ void oConsole::GetDesc(DESC* _pDesc)
 {
 	oConsoleContext* c = oConsoleContext::Singleton();
 
-	oLockGuard<oRecursiveMutex> lock(c->ConsoleLock);
+	// Set LogFilePath first, in case the standard pipes are captured
+	// GetConsoleScreenBufferInfo may error out because there is no window.
+	_pDesc->LogFilePath = c->LogFilePath;
+
+	oConcurrency::lock_guard<oConcurrency::recursive_mutex> lock(c->ConsoleLock);
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	oASSERT(GetStdHandle(STD_OUTPUT_HANDLE) != INVALID_HANDLE_VALUE, "");
 
@@ -190,7 +197,7 @@ void oConsole::GetDesc(DESC* _pDesc)
 	{
 		if (GetLastError() == ERROR_INVALID_HANDLE && oProcessGetParentID(oProcessGetCurrentID()))
 		{
-			oErrorSetLast(oERROR_REFUSED, "Failed to access console because this is a child process.");
+			oErrorSetLast(std::errc::permission_denied, "Failed to access console because this is a child process.");
 			return;
 		}
 	}
@@ -208,7 +215,26 @@ void oConsole::GetDesc(DESC* _pDesc)
 void oConsole::SetDesc(const DESC* _pDesc)
 {
 	oConsoleContext* c = oConsoleContext::Singleton();
-	oLockGuard<oRecursiveMutex> lock(c->ConsoleLock);
+	oConcurrency::lock_guard<oConcurrency::recursive_mutex> lock(c->ConsoleLock);
+
+	// Set LogFilePath first, in case the standard pipes are captured
+	// GetConsoleScreenBufferInfo may error out because there is no window.
+	oStd::path_string OldLogPath = c->LogFilePath;
+	if (_pDesc->LogFilePath.length())
+	{
+		oCleanPath(c->LogFilePath, _pDesc->LogFilePath);
+		if (0 != oStricmp(OldLogPath.c_str(), c->LogFilePath.c_str()))
+		{
+			c->LogFile = nullptr;
+			if (!oStreamLogWriterCreate(c->LogFilePath, &c->LogFile))
+			{
+				oTRACE("WARNING: Failed to open log file \"%s\"\n%s: %s", c->LogFilePath.c_str(), oErrorAsString(oErrorGetLast()), oErrorGetLastString());
+				c->LogFilePath.clear();
+			}
+		}
+	}
+	else
+		c->LogFile = nullptr;
 
 	DESC desc;
 	GetDesc(&desc);
@@ -231,7 +257,7 @@ void oConsole::SetDesc(const DESC* _pDesc)
 	{
 		if (GetLastError() == ERROR_INVALID_HANDLE && oProcessGetParentID(oProcessGetCurrentID()))
 		{
-			oErrorSetLast(oERROR_REFUSED, "Failed to access console because this is a child process.");
+			oErrorSetLast(std::errc::permission_denied, "Failed to access console because this is a child process.");
 			return;
 		}
 	}
@@ -309,12 +335,13 @@ bool oConsole::HasFocus()
 	return oWinHasFocus(GetConsoleWindow());
 }
 
-int oConsole::vfprintf(FILE* _pStream, oColor _Foreground, oColor _Background, const char* _Format, va_list _Args)
+int oConsole::vfprintf(FILE* _pStream, oStd::color _Foreground, oStd::color _Background, const char* _Format, va_list _Args)
 {
 	HANDLE hConsole = 0;
 	WORD wOriginalAttributes = 0;
 
-	oLockGuard<oRecursiveMutex> lock(oConsoleContext::Singleton()->ConsoleLock);
+	oConsoleContext* c = oConsoleContext::Singleton();
+	oConcurrency::lock_guard<oConcurrency::recursive_mutex> lock(c->ConsoleLock);
 
 	if (_pStream == stdout || _pStream == stderr)
 	{
@@ -322,7 +349,20 @@ int oConsole::vfprintf(FILE* _pStream, oColor _Foreground, oColor _Background, c
 		wOriginalAttributes = SetConsoleColor(hConsole, _Foreground, _Background);
 	}
 
-	int n = ::vfprintf(_pStream, _Format, _Args);
+	char msg[oKB(8)];
+	oVPrintf(msg, _Format, _Args);
+
+	// Always print any message to _pStream
+	int n = ::fprintf(_pStream, msg);
+
+	// And to log file
+	if (c->LogFile)
+	{
+		oSTREAM_WRITE w;
+		w.pData = msg;
+		w.Range = oSTREAM_RANGE(oSTREAM_APPEND, oStrlen(msg));
+		c->LogFile->Write(w);
+	}
 
 	if (hConsole)
 		SetConsoleTextAttribute(hConsole, wOriginalAttributes);
@@ -333,7 +373,7 @@ int oConsole::vfprintf(FILE* _pStream, oColor _Foreground, oColor _Background, c
 void oConsole::HookEvent(EVENT _Event, EventFn _Function)
 {
 	oConsoleContext* c = oConsoleContext::Singleton();
-	oLockGuard<oRecursiveMutex> lock(c->ConsoleLock);
+	oConcurrency::lock_guard<oConcurrency::recursive_mutex> lock(c->ConsoleLock);
 
 	c->Functions[_Event] = _Function;
 

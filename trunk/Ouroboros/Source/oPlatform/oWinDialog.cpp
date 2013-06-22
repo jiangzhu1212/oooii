@@ -91,8 +91,8 @@ static bool oWinDialogGetOpenOrSavePath(char* _StrDestination, size_t _SizeofStr
 	{
 		DWORD err = CommDlgExtendedError();
 		if (err == CDERR_GENERALCODES)
-			return oErrorSetLast(oERROR_CANCELED, "dialog was canceled");
-		return oErrorSetLast(oERROR_PLATFORM, "%s", oWinAsStringCDERR(err));
+			return oErrorSetLast(std::errc::operation_canceled, "dialog was canceled");
+		return oErrorSetLast(std::errc::protocol_error, "%s", oWinAsStringCDERR(err));
 	}
 
 	return true;
@@ -108,34 +108,34 @@ bool oWinDialogGetSavePath(char* _StrDestination, size_t _SizeofStrDestination, 
 	return oWinDialogGetOpenOrSavePath(_StrDestination, _SizeofStrDestination, _DialogTitle, _FilterPairs, _hParent, false);
 }
 
-bool oWinDialogGetColor(oColor* _pColor, HWND _hParent)
+bool oWinDialogGetColor(oStd::color* _pColor, HWND _hParent)
 {
 	int r,g,b,a;
-	oColorDecompose(*_pColor, &r, &g, &b, &a);
+	_pColor->decompose(&r, &g, &b, &a);
 
-	COLORREF custom[16];
-	oINIT_ARRAY(custom, RGB(255,255,255));
+	std::array<COLORREF, 16> custom;
+	custom.fill(RGB(255,255,255));
 
 	CHOOSECOLOR cc = {0};
 	cc.lStructSize = sizeof(CHOOSECOLOR);
 	cc.hwndOwner = _hParent;
 	cc.rgbResult = RGB(r,g,b);
-	cc.lpCustColors = custom;
+	cc.lpCustColors = custom.data();
 	cc.Flags = CC_ANYCOLOR|CC_FULLOPEN|CC_RGBINIT|CC_SOLIDCOLOR;
 
 	if (!ChooseColor(&cc))
 	{
 		DWORD err = CommDlgExtendedError();
 		if (err == CDERR_GENERALCODES)
-			return oErrorSetLast(oERROR_CANCELED, "dialog was canceled");
-		return oErrorSetLast(oERROR_PLATFORM, "%s", oWinAsStringCDERR(err));
+			return oErrorSetLast(std::errc::operation_canceled, "dialog was canceled");
+		return oErrorSetLast(std::errc::protocol_error, "%s", oWinAsStringCDERR(err));
 	}
 
-	*_pColor = oColorCompose(GetRValue(cc.rgbResult), GetGValue(cc.rgbResult), GetBValue(cc.rgbResult), a);
+	*_pColor = oStd::color(GetRValue(cc.rgbResult), GetGValue(cc.rgbResult), GetBValue(cc.rgbResult), a);
 	return true;
 }
 
-bool oWinDialogGetFont(LOGFONT* _pLogicalFont, oColor* _pColor, HWND _hParent)
+bool oWinDialogGetFont(LOGFONT* _pLogicalFont, oStd::color* _pColor, HWND _hParent)
 {
 	oGDIScopedGetDC hDC(_hParent);
 	CHOOSEFONT cf = {0};
@@ -149,7 +149,7 @@ bool oWinDialogGetFont(LOGFONT* _pLogicalFont, oColor* _pColor, HWND _hParent)
 	if (_pColor)
 	{
 		int r,g,b,a;
-		oColorDecompose(*_pColor, &r, &g, &b, &a);
+		_pColor->decompose(&r, &g, &b, &a);
 		cf.rgbColors = RGB(r,g,b);
 	}
 	else
@@ -161,12 +161,12 @@ bool oWinDialogGetFont(LOGFONT* _pLogicalFont, oColor* _pColor, HWND _hParent)
 	{
 		DWORD err = CommDlgExtendedError();
 		if (err == CDERR_GENERALCODES)
-			return oErrorSetLast(oERROR_CANCELED, "dialog was canceled");
-		return oErrorSetLast(oERROR_PLATFORM, "%s", oWinAsStringCDERR(err));
+			return oErrorSetLast(std::errc::operation_canceled, "dialog was canceled");
+		return oErrorSetLast(std::errc::protocol_error, "%s", oWinAsStringCDERR(err));
 	}
 
 	if (_pColor)
-		*_pColor = oColorCompose(GetRValue(cf.rgbColors), GetGValue(cf.rgbColors), GetBValue(cf.rgbColors), 255);
+		*_pColor = oStd::color(GetRValue(cf.rgbColors), GetGValue(cf.rgbColors), GetBValue(cf.rgbColors), 255);
 
 	return true;
 }

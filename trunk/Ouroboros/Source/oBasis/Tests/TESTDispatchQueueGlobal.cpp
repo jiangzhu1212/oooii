@@ -25,11 +25,10 @@
  **************************************************************************/
 #include <oBasis/oDispatchQueueGlobal.h>
 #include <oBasis/oError.h>
-#include <oBasis/oOnScopeExit.h>
+#include <oStd/finally.h>
 #include <oBasis/oRef.h>
-#include <oBasis/oStdConditionVariable.h>
-#include <oBasis/oStdMutex.h>
-#include <oBasis/oTask.h>
+#include <oStd/oStdConditionVariable.h>
+#include <oStd/oStdMutex.h>
 #include "oBasisTestCommon.h"
 
 static void SetLocation(size_t _Index, size_t _Start, int* _Array)
@@ -40,11 +39,13 @@ static void SetLocation(size_t _Index, size_t _Start, int* _Array)
 
 static void FillArray(int* _Array, size_t _Start, size_t _End, oStd::thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
 {
-	oTaskParallelFor(_Start, _End, oBIND(&SetLocation, oBIND1, _Start, _Array));
+	oTRACE("FillArray %u -> %u", _Start, _End);
+	oConcurrency::parallel_for(_Start, _End, oBIND(&SetLocation, oBIND1, _Start, _Array));
 }
 
 static void CheckTest(int* _Array, size_t _Size, bool* _pResult, oStd::thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
 {
+	oTRACE("CheckTest %u", _Size);
 	*_pResult = false;
 	for (size_t i = 0; i < _Size; i++)
 		if (_Array[i] != static_cast<int>(i))
@@ -54,6 +55,7 @@ static void CheckTest(int* _Array, size_t _Size, bool* _pResult, oStd::thread::i
 
 static void NotifyAll(oStd::condition_variable& _ConditionVariable, oStd::mutex& _Mutex, oStd::thread::id* _pExecutionThreadID, bool* _pNotify, bool* _pWrongThreadError)
 {
+	oTRACE("NotifyAll");
 	{
 		oStd::unique_lock<oStd::mutex> FinishedLock(_Mutex);
 		*_pNotify = true;
@@ -65,7 +67,7 @@ bool oBasisTest_oDispatchQueueGlobal()
 {
 	oRef<threadsafe oDispatchQueueGlobal> q;
 	oTESTB(oDispatchQueueCreateGlobal("TESTDispatchQueueGlobal", 100, &q), "Failed to create global dispatch queue");
-	oOnScopeExit JoinQueue([&] { q->Join(); });
+	oStd::finally JoinQueue([&] { q->Join(); });
 
 	static const size_t TestSize = 4096;
 	int TestArray[TestSize];
@@ -94,11 +96,11 @@ bool oBasisTest_oDispatchQueueGlobal()
 		while (!Notify)
 			Finished.wait(FinishedLock);
 
-		oTESTB(bResult, "oDispatchQueuePrivate failed to preserve order!");
-		oTESTB(!WrongThread, "oDispatchQueuePrivate command was not executing on the correct thread.");
+		oTESTB(bResult, "oDispatchQueueGlobal failed to preserve order!");
+		oTESTB(!WrongThread, "oDispatchQueueGlobal command was not executing on the correct thread.");
 	}
 
-	oErrorSetLast(oERROR_NONE);
+	oErrorSetLast(0);
 	return true;
 }
 

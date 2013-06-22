@@ -28,15 +28,14 @@
 #define oD3D11Device_h
 
 #include <oGPU/oGPU.h>
-#include <oGPU/oGPUDrawConstants.h>
-#include <oBasis/oNoncopyable.h>
 #include <oPlatform/Windows/oWindows.h>
 #include <oPlatform/Windows/oD3D11.h>
+#include <oConcurrency/mutex.h>
 #include <vector>
 
 #define oD3D11DEVICE() \
 	oRef<ID3D11Device> D3DDevice; \
-	oVERIFY(Device->QueryInterface(oGetGUID<ID3D11Device>(), &D3DDevice));
+	oVERIFY(Device->QueryInterface(&D3DDevice));
 
 // Call reg/unreg from device children implementations
 #define oDEVICE_REGISTER_THIS() oVERIFY(static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->CLInsert(this))
@@ -45,7 +44,9 @@
 #define oDEVICE_LOCK_SUBMIT() static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->CLLockSubmit()
 #define oDEVICE_UNLOCK_SUBMIT() static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->CLUnlockSubmit()
 
-struct oD3D11Device : oGPUDevice, oNoncopyable
+// {882CABF3-9344-40BE-B3F9-A17A2F920751}
+oDEFINE_GUID_S(oD3D11Device, 0x882cabf3, 0x9344, 0x40be, 0xb3, 0xf9, 0xa1, 0x7a, 0x2f, 0x92, 0x7, 0x51);
+struct oD3D11Device : oGPUDevice
 {
 	// _____________________________________________________________________________
 	// Interface API
@@ -62,18 +63,16 @@ struct oD3D11Device : oGPUDevice, oNoncopyable
 	void GetImmediateCommandList(oGPUCommandList** _ppCommandList) override;
 
 	bool CreateCommandList(const char* _Name, const oGPUCommandList::DESC& _Desc, oGPUCommandList** _ppCommandList) override;
-	bool CreateLineList(const char* _Name, const oGPULineList::DESC& _Desc, oGPULineList** _ppLineList) override;
 	bool CreatePipeline(const char* _Name, const oGPUPipeline::DESC& _Desc, oGPUPipeline** _ppPipeline) override;
 	bool CreateComputeShader(const char* _Name, const oGPUComputeShader::DESC& _Desc, oGPUComputeShader** _ppComputeShader) override;
+	bool CreateQuery(const char* _Name, const oGPUQuery::DESC&, oGPUQuery** _ppQuery) override;
 	bool CreateRenderTarget(const char* _Name, const oGPURenderTarget::DESC& _Desc, oGPURenderTarget** _ppRenderTarget) override;
 	bool CreateBuffer(const char* _Name, const oGPUBuffer::DESC& _Desc, oGPUBuffer** _ppBuffer) override;
-	bool CreateMesh(const char* _Name, const oGPUMesh::DESC& _Desc, oGPUMesh** _ppMesh) override;
-	bool CreateInstanceList(const char* _Name, const oGPUInstanceList::DESC& _Desc, oGPUInstanceList** _ppInstanceList) override;
 	bool CreateTexture(const char* _Name, const oGPUTexture::DESC& _Desc, oGPUTexture** _ppTexture) override;
 
 	bool MapRead(oGPUResource* _pReadbackResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource, bool _bBlocking=false) override;
 	void UnmapRead(oGPUResource* _pReadbackResource, int _Subresource) override;
-
+	bool ReadQuery(oGPUQuery* _pQuery, void* _pData, uint _SizeofData) override;
 	bool BeginFrame() override;
 	void EndFrame() override;
 
@@ -96,7 +95,7 @@ struct oD3D11Device : oGPUDevice, oNoncopyable
 	void MEMReserve(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource) threadsafe;
 
 	// Implements Commit() in the specified context (immediate or deferred).
-	void MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Source, const oGPU_BOX& _Subregion) threadsafe;
+	void MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, const oSURFACE_MAPPED_SUBRESOURCE& _Source, const oSURFACE_BOX& _Subregion) threadsafe;
 
 	// Registers a command list in the submission vector sorted by its DrawOrder.
 	// If there is already a command list at the specified order, then this 
@@ -144,11 +143,15 @@ struct oD3D11Device : oGPUDevice, oNoncopyable
 	oRefCount RefCount;
 	uint FrameID;
 
-	oMutex CommandListsInsertRemoveMutex;
-	oSharedMutex CommandListsBeginEndMutex;
+	oConcurrency::mutex CommandListsInsertRemoveMutex;
+	oConcurrency::shared_mutex CommandListsBeginEndMutex;
 	std::vector<oGPUCommandList*> CommandLists; // non-oRefs to avoid circular refs
 
 	bool IsSoftwareEmulation;
+
+private:
+	oD3D11Device(const oD3D11Device&)/* = delete */;
+	const oD3D11Device& operator=(const oD3D11Device&)/* = delete */;
 };
 
 #endif

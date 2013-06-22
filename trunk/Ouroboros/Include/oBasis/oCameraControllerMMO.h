@@ -33,8 +33,9 @@
 #ifndef oCameraControllerMMO_h
 #define oCameraControllerMMO_h
 
-#include <oBasis/oX11KeyboardSymbols.h>
-#include "oCameraController.h"
+#include <oBasis/oCameraController.h>
+#include <oBasis/oGUI.h>
+#include <array>
 
 struct oCAMERA_CONTROLLER_MMO_DESC
 {
@@ -68,34 +69,34 @@ struct oCAMERA_CONTROLLER_MMO_DESC
 		, RunSpeedMax(2e5f)
 		, AllowMouseWheelAcceleration(false)
 	{
-		Controls[STRAFE_RIGHT] = oKB_d;
-		Controls[STRAFE_LEFT] = oKB_a;
-		Controls[SWIM_UP] = oKB_space;
-		Controls[SWIM_DOWN] = oKB_z;
-		Controls[FORWARD] = oKB_w;
-		Controls[BACKWARD] = oKB_s;
-		Controls[ROLL_LEFT] = oKB_q;
-		Controls[ROLL_RIGHT] = oKB_e;
-		Controls[RUN] = oKB_Shift_L;
-		Controls[ROTATE_VIEW] = oKB_Pointer_Button_Right;
-		Controls[ROTATE_VIEW_AND_FORWARD] = oKB_Pointer_Button_Left;
+		Controls[STRAFE_RIGHT] = oGUI_KEY_D;
+		Controls[STRAFE_LEFT] = oGUI_KEY_A;
+		Controls[SWIM_UP] = oGUI_KEY_SPACE;
+		Controls[SWIM_DOWN] = oGUI_KEY_Z;
+		Controls[FORWARD] = oGUI_KEY_W;
+		Controls[BACKWARD] = oGUI_KEY_S;
+		Controls[ROLL_LEFT] = oGUI_KEY_Q;
+		Controls[ROLL_RIGHT] = oGUI_KEY_E;
+		Controls[RUN] = oGUI_KEY_LSHIFT;
+		Controls[ROTATE_VIEW] = oGUI_KEY_MOUSE_RIGHT;
+		Controls[ROTATE_VIEW_AND_FORWARD] = oGUI_KEY_MOUSE_LEFT;
 
-		oKEYBOARD_KEY* Secondary = &Controls[NUM_CONTROLS];
-		Secondary[STRAFE_RIGHT] = oKB_Right;
-		Secondary[STRAFE_LEFT] = oKB_Left;
-		Secondary[SWIM_UP] = oKB_Page_Up;
-		Secondary[SWIM_DOWN] = oKB_Page_Down;
-		Secondary[FORWARD] = oKB_Up;
-		Secondary[BACKWARD] = oKB_Down;
-		Secondary[ROLL_LEFT] = oKB_Home;
-		Secondary[ROLL_RIGHT] = oKB_End;
-		Secondary[RUN] = oKB_Shift_R;
-		Secondary[ROTATE_VIEW] = oKB_VoidSymbol;
-		Secondary[ROTATE_VIEW_AND_FORWARD] = oKB_VoidSymbol;
+		oGUI_KEY* Secondary = &Controls[NUM_CONTROLS];
+		Secondary[STRAFE_RIGHT] = oGUI_KEY_RIGHT;
+		Secondary[STRAFE_LEFT] = oGUI_KEY_LEFT;
+		Secondary[SWIM_UP] = oGUI_KEY_PGUP;
+		Secondary[SWIM_DOWN] = oGUI_KEY_PGDN;
+		Secondary[FORWARD] = oGUI_KEY_UP;
+		Secondary[BACKWARD] = oGUI_KEY_DOWN;
+		Secondary[ROLL_LEFT] = oGUI_KEY_HOME;
+		Secondary[ROLL_RIGHT] = oGUI_KEY_END;
+		Secondary[RUN] = oGUI_KEY_RSHIFT;
+		Secondary[ROTATE_VIEW] = oGUI_KEY_NONE;
+		Secondary[ROTATE_VIEW_AND_FORWARD] = oGUI_KEY_NONE;
 	}
 
 	// Define controls for each key, plus another set for 2nd-ary assignment.
-	oKEYBOARD_KEY Controls[NUM_CONTROLS * 2];
+	std::array<oGUI_KEY, NUM_CONTROLS * 2> Controls;
 	float WalkSpeed;
 	float RunSpeed;
 	float3 RotationSpeed;
@@ -110,6 +111,8 @@ struct oCAMERA_CONTROLLER_MMO_DESC
 	bool AllowMouseWheelAcceleration;
 };
 
+// {B6D0E69B-D305-47FF-AC05-F64303106D1E}
+oDEFINE_GUID_I(oCameraControllerMMO, 0xb6d0e69b, 0xd305, 0x47ff, 0xac, 0x5, 0xf6, 0x43, 0x3, 0x10, 0x6d, 0x1e);
 interface oCameraControllerMMO : oCameraController
 {
 	virtual void SetDesc(const oCAMERA_CONTROLLER_MMO_DESC& _Desc) = 0;

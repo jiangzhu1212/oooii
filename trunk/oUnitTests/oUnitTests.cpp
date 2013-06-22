@@ -12,7 +12,6 @@
 #include <oPlatform/oProcess.h>
 #include <oPlatform/oStandards.h>
 #include <oPlatform/oSystem.h>
-#include <oBasis/oTask.h>
 #include <oBasis/oRef.h>
 
 static const char* sTITLE = "OOOii Unit Test Suite";
@@ -24,8 +23,9 @@ static const oOption sCmdLineOptions[] =
 	{ "path", 'p', "path", "Path where all test data is loaded from. The current working directory is used by default." },
 	{ "special-mode", 's', "mode", "Run the test harness in a special mode (used mostly by multi-process/client-server unit tests)" },
 	{ "random-seed", 'r', "seed", "Set the random seed to be used for this run. This is reset at the start of each test." },
-	{ "golden-binaries", 'b', "path", "Path where all known-good \"golden\" images are stored. The current working directory is used by default." },
+	{ "golden-binaries", 'b', "path", "Path where all known-good \"golden\" binaries are stored. The current working directory is used by default." },
 	{ "golden-images", 'g', "path", "Path where all known-good \"golden\" images are stored. The current working directory is used by default." },
+	{ "output-golden-images", 'z', nullptr, "Copy golden images of error images to the output as well, renamed to <image>_golden.png." },
 	{ "output", 'o', "path", "Path where all logging and error images are created." },
 	{ "repeat-number", 'n', "nRuntimes", "Repeat the test a certain number of times." },
 	{ "disable-timeouts", 'd', nullptr, "Disable timeouts, mainly while debugging." },
@@ -46,17 +46,17 @@ void InitEnv()
 	//
 	// In this case we're seeing that it is possible for DllMain 
 	// to be called on a thread that is NOT the main thread. Strange, no?
-	// This would cause TBB, the underlying implementation of oParallelFor
+	// This would cause TBB, the underlying implementation of oConcurrency::parallel_for
 	// and friends, to be initialized in a non-main thread. This upsets TBB,
 	// so disable static init of TBB and force initialization here in a 
 	// function known to execute on the main thread.
 	//
 	// @oooii-tony: TODO: FIND OUT - why can DllMain execute in a not-main thread?
 
-	oTaskInitScheduler();
+	oConcurrency::init_task_scheduler();
 
 	oTRACEA("Aero is %sactive", oSystemGUIUsesGPUCompositing() ? "" : "in");
-	oTRACE("Remote desktop is %sactive", oIsRemoteDesktopConnected() ? "" : "in");
+	oTRACE("Remote desktop is %sactive", oSystemIsRemote() ? "" : "in");
 
 	// IOCP needs to be initialized or it will show up as a leak in the first test
 	// to use it.
@@ -65,9 +65,9 @@ void InitEnv()
 
 	oMODULE_DESC md;
 	oModuleGetDesc(&md);
-	oStringS Ver;
-	oStringM title2(sTITLE);
-	oStrAppendf(title2, " v%s%s", oToString(Ver, md.ProductVersion), md.IsSpecialBuild ? "*" : "");
+	oStd::sstring Ver;
+	oStd::mstring title2(sTITLE);
+	oStrAppendf(title2, " v%s%s", oStd::to_string(Ver, md.ProductVersion), md.IsSpecialBuild ? "*" : "");
 	oConsole::SetTitle(title2);
 
 	// Resize console
@@ -79,8 +79,8 @@ void InitEnv()
 		desc.Left = 10;
 		desc.Width = 120;
 		desc.Height = 50;
-		desc.Foreground = std::LimeGreen;
-		desc.Background = std::Black;
+		desc.Foreground = oStd::LimeGreen;
+		desc.Background = oStd::Black;
 		oConsole::SetDesc(&desc);
 	}
 }
@@ -101,23 +101,28 @@ struct PARAMETERS
 	bool EnableAutomatedMode;
 	const char* LogFilePath;
 	bool Exhaustive;
+	bool EnableOutputGoldenImages;
 };
 
 // _pHasChanges should be large enough to receive a result for each of the 
 // specified path parts.
 static bool oP4CheckPathHasChanges(const char** _pPathParts, size_t _NumPathParts, bool* _pHasChanges, size_t _NumOpenedFilesToTest = 128)
 {
+	oStd::path_string BranchPath;
+	oVERIFY(oSystemGetPath(BranchPath, oSYSPATH_DEV));
+	oStrAppendf(BranchPath, "...");
+
 	std::vector<oP4_FILE_DESC> temp;
 	temp.resize(_NumOpenedFilesToTest);
-	size_t nOpenFiles = oP4ListOpened(oGetData(temp), temp.size());
+	size_t nOpenFiles = oP4ListOpened(oStd::data(temp), temp.size(), BranchPath);
 	
 	// If we can't connect to P4, then always run all tests.
 	if (nOpenFiles == oInvalid)
-		return oErrorSetLast(oERROR_IO, "oP4PathHasChanges could not find open files. This may indicate Perforce is not accessible.");
+		return oErrorSetLast(std::errc::io_error, "oP4PathHasChanges could not find open files. This may indicate Perforce is not accessible.");
 
 	memset(_pHasChanges, 0, _NumPathParts);
 
-	oStringPath LibWithSeps;
+	oStd::path_string LibWithSeps;
 	for (size_t i = 0; i < _NumPathParts; i++)
 	{
 		oPrintf(LibWithSeps, "/%s/", _pPathParts[i]);
@@ -151,6 +156,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 	_pParameters->EnableAutomatedMode = false;
 	_pParameters->LogFilePath = nullptr;
 	_pParameters->Exhaustive = false;
+	_pParameters->EnableOutputGoldenImages = false;
 
 	const char* value = 0;
 	char ch = oOptTok(&value, _Argc, _Argv, sCmdLineOptions);
@@ -187,6 +193,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 			case 'a': _pParameters->EnableAutomatedMode = true; break;
 			case 'l': _pParameters->LogFilePath = value; break;
 			case 'x': _pParameters->Exhaustive = true; break;
+			case 'z': _pParameters->EnableOutputGoldenImages = true; break;
 			default: break;
 		}
 
@@ -203,13 +210,21 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 	{
 		const char* sLibNames[] =
 		{
+			"oStd",
+			"oHLSL",
+			"oCompute",
+			"oConcurrency",
 			"oBasis",
 			"oPlatform",
 			"oGPU",
 		};
 		const char* sFilter[] =
 		{
-			"BASIS_.*",
+			"oStd_.*",
+			"oHLSL.*",
+			"oCompute_.*",
+			"oConcurrency_.*",
+			"oBasis_.*",
 			"PLATFORM_.*",
 			"GPU_.*",
 		};
@@ -226,9 +241,9 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 							ThisHasChanges = true;
 				}
 
-				if (!ThisHasChanges)
+				if (!ThisHasChanges && oSTRVALID(sFilter))
 				{
-					auto pFilter = oAppend(_pParameters->Filters);
+					auto pFilter = oStd::append(_pParameters->Filters);
 					pFilter->Type = oFilterChain::EXCLUDE1;
 					pFilter->RegularExpression = sFilter[i];
 				}
@@ -287,8 +302,17 @@ void EnableLogFile(const char* _SpecialModeName, const char* _LogFileName)
 	oREPORTING_DESC desc;
 	oReportingGetDesc(&desc);
 	desc.LogFilePath = logFilePath;
+	oReplaceFileExtension(desc.LogFilePath, ".stderr");
+	oStrcat(desc.LogFilePath, oGetFileExtension(logFilePath));
 
-	oStringPath DumpBase;
+	oConsole::DESC cdesc;
+	oConsole::GetDesc(&cdesc);
+	cdesc.LogFilePath = logFilePath;
+	oReplaceFileExtension(cdesc.LogFilePath, ".stdout");
+	oStrcat(cdesc.LogFilePath, oGetFileExtension(logFilePath));
+	oConsole::SetDesc(&cdesc);
+
+	oStd::path_string DumpBase;
 	oSystemGetPath(DumpBase, oSYSPATH_APP_FULL);
 	oTrimFileExtension(DumpBase);
 	if (_SpecialModeName)
@@ -323,7 +347,7 @@ void SetTestManagerDesc(const PARAMETERS* _pParameters)
 	desc.GoldenBinariesPath = _pParameters->GoldenBinariesPath;
 	desc.GoldenImagesPath = _pParameters->GoldenImagesPath;
 	desc.OutputPath = _pParameters->OutputPath;
-	desc.NameColumnWidth = 32;
+	desc.NameColumnWidth = 40;
 	desc.TimeColumnWidth = 5;
 	desc.StatusColumnWidth = 9;
 	desc.RandomSeed = _pParameters->RandomSeed ? _pParameters->RandomSeed : (unsigned int)oStd::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -333,6 +357,7 @@ void SetTestManagerDesc(const PARAMETERS* _pParameters)
 	desc.EnableLeakTracking = _pParameters->EnableLeakTracking;
 	desc.Exhaustive = _pParameters->Exhaustive;
 	desc.AutomatedMode = _pParameters->EnableAutomatedMode;
+	desc.EnableOutputGoldenImages = _pParameters->EnableOutputGoldenImages;
 
 	oTestManager::Singleton()->SetDesc(&desc);
 }
@@ -381,16 +406,19 @@ bool EnsureOneInstanceIsRunning()
 	char path[_MAX_PATH];
 	oVERIFY(oSystemGetPath(path, oSYSPATH_APP_FULL));
 
-	char name[_MAX_PATH];
+	oStd::path_string name;
 	oGetFilebase(name, path);
-	if (_memicmp(oMODULE_DEBUG_PREFIX, name, oStrlen(oMODULE_DEBUG_PREFIX)))
-		oPrintf(name, oMODULE_DEBUG_PREFIX "%s", oGetFilebase(path));
+	size_t suffixsize = oStrlen(oMODULE_DEBUG_SUFFIX_A);
+	if (0==_memicmp(name.c_str() + name.size() - suffixsize, oMODULE_DEBUG_SUFFIX_A, suffixsize))
+		*(name.c_str() + name.size() - suffixsize) = 0;
 
+	oStd::path_string debugname;
+	oPrintf(debugname, "%s" oMODULE_DEBUG_SUFFIX_A "%s", name.c_str(), oGetFileExtension(path));
 	oStrcat(name, oGetFileExtension(path));
 
-	if (!TerminateDuplicateInstances(name))
+	if (!TerminateDuplicateInstances(debugname.c_str()))
 		return false;
-	if (!TerminateDuplicateInstances(name+6))
+	if (!TerminateDuplicateInstances(name.c_str()))
 		return false;
 
 	return true;
@@ -449,9 +477,9 @@ int main(int argc, const char* argv[])
 	}
 
 	if (parameters.SpecialMode)
-		oTRACE("Unit test (special mode %s) exiting with result: %s", parameters.SpecialMode, oAsString((oTest::RESULT)result));
+		oTRACE("Unit test (special mode %s) exiting with result: %s", parameters.SpecialMode, oStd::as_string((oTest::RESULT)result));
 	else
-		oTRACE("Unit test exiting with result: %s", oAsString((oTest::RESULT)result));
+		oTRACE("Unit test exiting with result: %s", oStd::as_string((oTest::RESULT)result));
 
 	// Final flush to ensure oBuildTool gets all our stdout
 	::_flushall();

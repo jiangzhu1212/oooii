@@ -1,0 +1,222 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcat.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
+    </ClCompile>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcpy.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
+    </ClCompile>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcat.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
+    </ClCompile>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcpy.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
+    </ClCompile>
+    <ClCompile Include="ampersand_decode.cpp" />
+    <ClCompile Include="ampersand_encode.cpp" />
+    <ClCompile Include="calfaq.cpp" />
+    <ClCompile Include="color.cpp" />
+    <ClCompile Include="config.cpp" />
+    <ClCompile Include="date.cpp" />
+    <ClCompile Include="format_bytes.cpp" />
+    <ClCompile Include="format_duration.cpp" />
+    <ClCompile Include="json_escape_decode.cpp" />
+    <ClCompile Include="json_escape_encode.cpp" />
+    <ClCompile Include="ordinal.cpp" />
+    <ClCompile Include="oStdChrono.cpp" />
+    <ClCompile Include="oStdConditionVariable.cpp" />
+    <ClCompile Include="oStdFuture.cpp" />
+    <ClCompile Include="oStdMutex.cpp" />
+    <ClCompile Include="oStdThread.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="percent_decode.cpp" />
+    <ClCompile Include="percent_encode.cpp" />
+    <ClCompile Include="strbitmask.cpp" />
+    <ClCompile Include="stringize.cpp" />
+    <ClCompile Include="strmatch.cpp" />
+    <ClCompile Include="strtok.cpp" />
+    <ClCompile Include="text_document.cpp" />
+    <ClCompile Include="trim.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Include\oStd\algorithm.h" />
+    <ClInclude Include="..\..\Include\oStd\all.h" />
+    <ClInclude Include="..\..\Include\oStd\assert.h" />
+    <ClInclude Include="..\..\Include\oStd\atof.h" />
+    <ClInclude Include="..\..\Include\oStd\byte.h" />
+    <ClInclude Include="..\..\Include\oStd\callable.h" />
+    <ClInclude Include="..\..\Include\oStd\color.h" />
+    <ClInclude Include="..\..\Include\oStd\config.h" />
+    <ClInclude Include="..\..\Include\oStd\csv.h" />
+    <ClInclude Include="..\..\Include\oStd\date.h" />
+    <ClInclude Include="..\..\Include\oStd\endian.h" />
+    <ClInclude Include="..\..\Include\oStd\equal.h" />
+    <ClInclude Include="..\..\Include\oStd\finally.h" />
+    <ClInclude Include="..\..\Include\oStd\fixed_string.h" />
+    <ClInclude Include="..\..\Include\oStd\fixed_vector.h" />
+    <ClInclude Include="..\..\Include\oStd\function.h" />
+    <ClInclude Include="..\..\Include\oStd\guid.h" />
+    <ClInclude Include="..\..\Include\oStd\ini.h" />
+    <ClInclude Include="..\..\Include\oStd\intrinsics.h" />
+    <ClInclude Include="..\..\Include\oStd\json.h" />
+    <ClInclude Include="..\..\Include\oStd\macros.h" />
+    <ClInclude Include="..\..\Include\oStd\oFor.h" />
+    <ClInclude Include="..\..\Include\oStd\operators.h" />
+    <ClInclude Include="..\..\Include\oStd\oStdAtomic.h" />
+    <ClInclude Include="..\..\Include\oStd\oStdChrono.h" />
+    <ClInclude Include="..\..\Include\oStd\oStdConditionVariable.h" />
+    <ClInclude Include="..\..\Include\oStd\oStdFuture.h" />
+    <ClInclude Include="..\..\Include\oStd\oStdMutex.h" />
+    <ClInclude Include="..\..\Include\oStd\oStdRatio.h" />
+    <ClInclude Include="..\..\Include\oStd\oStdThread.h" />
+    <ClInclude Include="..\..\Include\oStd\string.h" />
+    <ClInclude Include="..\..\Include\oStd\stringize.h" />
+    <ClInclude Include="..\..\Include\oStd\text_document.h" />
+    <ClInclude Include="..\..\Include\oStd\timer.h" />
+    <ClInclude Include="..\..\Include\oStd\uint128.h" />
+    <ClInclude Include="..\..\Include\oStd\unordered_map.h" />
+    <ClInclude Include="..\..\Include\oStd\xml.h" />
+    <ClInclude Include="calfaq.h" />
+    <ClInclude Include="pch.h" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{6C467BDD-EEA7-4FF6-B594-26A760DF179F}</ProjectGuid>
+    <RootNamespace>oStd</RootNamespace>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Release32.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Debug32.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Release64.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Build\msvc100\Properties\Debug64.props" />
+    <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile />
+    <Lib />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile />
+    <Lib>
+      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
+    </Lib>
+    <ClCompile />
+    <ClCompile />
+    <ClCompile>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

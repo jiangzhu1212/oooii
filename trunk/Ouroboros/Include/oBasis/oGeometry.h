@@ -31,6 +31,8 @@
 
 #include <oBasis/oGPUConcepts.h>
 
+// {7BA30462-0899-489a-87A8-D897D1CE929E}
+oDEFINE_GUID_I(oGeometry, 0x7ba30462, 0x899, 0x489a, 0x87, 0xa8, 0xd8, 0x97, 0xd1, 0xce, 0x92, 0x9e);
 interface oGeometry : oInterface
 {
 	// Intended for the internals of a tool-time or load-time process. Because 
@@ -89,7 +91,7 @@ interface oGeometry : oInterface
 		float3* pNormals;
 		float4* pTangents; // handedness in w component
 		float3* pTexcoords;
-		oColor* pColors;
+		oStd::color* pColors;
 	};
 
 	struct CONST_MAPPED
@@ -100,7 +102,7 @@ interface oGeometry : oInterface
 		const float3* pNormals;
 		const float4* pTangents; // handedness in w component
 		const float3* pTexcoords;
-		const oColor* pColors;
+		const oStd::color* pColors;
 	};
 
 	virtual void GetDesc(DESC* _pDesc) const = 0;
@@ -114,6 +116,8 @@ interface oGeometry : oInterface
 	virtual void UnmapConst() const = 0;
 };
 
+// {57FBE80E-60DC-4a7c-8ADC-6CA9B95D6366}
+oDEFINE_GUID_I(oGeometryFactory, 0x57fbe80e, 0x60dc, 0x4a7c, 0x8a, 0xdc, 0x6c, 0xa9, 0xb9, 0x5d, 0x63, 0x66);
 interface oGeometryFactory : oInterface
 {
 	struct RECT_DESC
@@ -122,7 +126,7 @@ interface oGeometryFactory : oInterface
 		float Width;
 		float Height;
 		unsigned int Divide;
-		oColor Color;
+		oStd::color Color;
 		bool Centered;
 		bool FlipTexcoordV;
 	};
@@ -132,7 +136,7 @@ interface oGeometryFactory : oInterface
 		oGeometry::FACE_TYPE FaceType;
 		oAABoxf Bounds;
 		unsigned int Divide;
-		oColor Color;
+		oStd::color Color;
 		bool FlipTexcoordV;
 	};
 
@@ -141,7 +145,7 @@ interface oGeometryFactory : oInterface
 		oGeometry::FACE_TYPE FaceType;
 		oFrustumf Bounds;
 		unsigned int Divide;
-		oColor Color;
+		oStd::color Color;
 	};
 
 	struct CIRCLE_DESC
@@ -149,7 +153,7 @@ interface oGeometryFactory : oInterface
 		oGeometry::FACE_TYPE FaceType;
 		float Radius;
 		unsigned int Facet;
-		oColor Color;
+		oStd::color Color;
 	};
 
 	struct WASHER_DESC
@@ -158,7 +162,7 @@ interface oGeometryFactory : oInterface
 		float InnerRadius;
 		float OuterRadius;
 		unsigned int Facet;
-		oColor Color;
+		oStd::color Color;
 	};
 
 	struct SPHERE_DESC
@@ -174,7 +178,7 @@ interface oGeometryFactory : oInterface
 		// 7 Takes ~11 sec. 8, I didn't wait for it to finish.
 		unsigned int Divide;
 
-		oColor Color;
+		oStd::color Color;
 		bool Hemisphere;
 		bool Icosahedron;
 
@@ -189,7 +193,7 @@ interface oGeometryFactory : oInterface
 		float Radius0;
 		float Radius1;
 		float Height;
-		oColor Color;
+		oStd::color Color;
 		bool IncludeBase;
 		//Number of vertical lines to skip when generating an outline. 1 means skip every other line, ect.
 		unsigned int OutlineVerticalSkip;
@@ -206,7 +210,7 @@ interface oGeometryFactory : oInterface
 		unsigned int Facet;
 		float Radius;
 		float Height;
-		oColor Color;
+		oStd::color Color;
 		bool IncludeBase;
 		//Number of vertical lines to skip when generating an outline. 1 means skip every other line, ect.
 		unsigned int OutlineVerticalSkip;
@@ -219,7 +223,7 @@ interface oGeometryFactory : oInterface
 		unsigned int Facet;
 		float InnerRadius;
 		float OuterRadius;
-		oColor Color;
+		oStd::color Color;
 	};
 
 	struct TEARDROP_DESC
@@ -227,7 +231,7 @@ interface oGeometryFactory : oInterface
 		oGeometry::FACE_TYPE FaceType;
 		unsigned int Divide;
 		unsigned int Facet;
-		oColor Color;
+		oStd::color Color;
 	};
 
 	struct OBJ_DESC

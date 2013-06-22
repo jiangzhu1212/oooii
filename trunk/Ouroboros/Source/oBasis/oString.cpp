@@ -24,9 +24,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oString.h>
-#include <oBasis/oAssert.h>
-#include <oBasis/oByteSwizzle.h>
-#include <oBasis/oByte.h>
+#include <oStd/assert.h>
+#include <oStd/byte.h>
 #include <oBasis/oInt.h>
 #include <cctype>
 #include <cerrno>
@@ -157,6 +156,30 @@ wchar_t* oStrncat(wchar_t* _StrDestination, size_t _NumDestinationChars, const w
 	return wcsncat_s(_StrDestination, _NumDestinationChars, _Source, _TRUNCATE) ? nullptr : _StrDestination;
 }
 
+const char* oStrStr( const char* _pStr, const char* _pSubStr, size_t _MaxCharCount /*= oInvalid*/ )
+{
+	if(oInvalid == _MaxCharCount)
+		return strstr(_pStr, _pSubStr);
+
+	size_t SearchLen = oStrlen(_pSubStr);
+	size_t SearchHead = 0;
+	for(size_t i = 0; i < _MaxCharCount; ++i)
+	{
+		if(_pStr[i] == _pSubStr[SearchHead])
+		{
+			if( ++SearchHead == SearchLen)
+			{
+				// Found a match
+				return _pStr + ( i - SearchLen );
+			}
+		}
+		else
+			SearchHead = 0;
+	}
+	return nullptr;
+}
+
+
 int oVPrintf(char* _StrDestination, size_t _NumDestinationChars, const char* _Format, va_list _Args)
 {
 	int status = vsnprintf_s(_StrDestination, _NumDestinationChars, _TRUNCATE, _Format, _Args);
@@ -203,22 +226,6 @@ char* oNewlinesToDos(char* _StrDestination, size_t _SizeofStrDestination, const 
 
 	*d = 0;
 	return _StrDestination;
-}
-
-char* oTrimLeft(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource, const char* _ToTrim)
-{
-	_StrSource += strspn(_StrSource, _ToTrim);
-	oStrcpy(_Trimmed, _SizeofTrimmed, _StrSource);
-	return _Trimmed;
-}
-
-char* oTrimRight(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource, const char* _ToTrim)
-{
-	const char* end = &_StrSource[oStrlen(_StrSource)-1];
-	while (strchr(_ToTrim, *end) && end > _StrSource)
-		end--;
-	oStrncpy(_Trimmed, _SizeofTrimmed, _StrSource, end+1-_StrSource);
-	return _Trimmed;
 }
 
 char* oPruneWhitespace(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource, char _Replacement, const char* _ToPrune)
@@ -338,89 +345,14 @@ char* oInsert(char* _StrSource, size_t _SizeofStrResult, char* _InsertionPoint, 
 
 errno_t oStrVAppendf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args)
 {
-	size_t len = oStrlen(_StrDestination);
-	if( -1 == vsnprintf_s(_StrDestination + len, _TRUNCATE, _SizeofStrDestination - len, _Format, _Args) )
+	if (-1 == oStd::vsncatf(_StrDestination, _SizeofStrDestination, _Format, _Args))
 		return ENOMEM;
 	return 0;
 }
 
-const char* oOrdinal(int _Number)
-{
-	char buf[16];
-	_itoa_s(_Number, buf, sizeof(buf), 10);
-	size_t len = oStrlen(buf);
-	char tens = len >= 2 ? buf[len-2] : '0';
-	if (tens != '1')
-		switch (buf[len-1])
-	{
-		case '1': return "st";
-		case '2': return "nd";
-		case '3': return "rd";
-		default: break;
-	}
-	return "th";
-}
-
 char* oFormatMemorySize(char* _StrDestination, size_t _SizeofStrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits)
 {
-	int result = 0;
-
-	char fmt[32];
-	oPrintf(fmt, "%%.0%uf %%s", _NumPrecisionDigits);
-
-	#ifdef _WIN64
-		if (_NumBytes > 0x10000000000)
-			result = oPrintf(_StrDestination, _SizeofStrDestination, fmt, static_cast<float>(_NumBytes) / (1024.0f * 1024.0f * 1024.0f * 1024.0f), "TB");
-		else
-	#endif
-	{
-		if (_NumBytes > 1024*1024*1024)
-			result = oPrintf(_StrDestination, _SizeofStrDestination, fmt, static_cast<float>(_NumBytes) / (1024.0f * 1024.0f * 1024.0f), "GB");
-		else if (_NumBytes > 1024*1024)
-			result = oPrintf(_StrDestination, _SizeofStrDestination, fmt, static_cast<float>(_NumBytes) / (1024.0f * 1024.0f), "MB");
-		else if (_NumBytes > 1024)
-			result = oPrintf(_StrDestination, _SizeofStrDestination, fmt, static_cast<float>(_NumBytes) / 1024.0f, "KB");
-		else
-			result = oPrintf(_StrDestination, _SizeofStrDestination, "%u byte(s)", _NumBytes);
-	}
-
-	return -1 == result ? nullptr : _StrDestination;
-}
-
-static inline const char* plural(unsigned int n) { return n == 1 ? "" : "s"; }
-
-char* oFormatTimeSize(char* _StrDestination, size_t _SizeofStrDestination, double _TimeInSeconds, bool _Abbreviated, bool _IncludeMS)
-{
-	oASSERT(_TimeInSeconds >= 0.0, "Negative time (did you do start - end instead of end - start?)");
-	if (_TimeInSeconds < 0.0)
-		return nullptr;
-
-	int result = 0;
-
-	const static double ONE_MINUTE = 60.0;
-	const static double ONE_HOUR = 60.0 * ONE_MINUTE;
-	const static double ONE_DAY = 24.0 * ONE_HOUR;
-
-	unsigned int day = static_cast<unsigned int>(_TimeInSeconds / ONE_DAY);
-	unsigned int hour = static_cast<unsigned int>(fmod(_TimeInSeconds, ONE_DAY) / ONE_HOUR);
-	unsigned int minute = static_cast<unsigned int>(fmod(_TimeInSeconds, ONE_HOUR) / ONE_MINUTE);
-	unsigned int second = static_cast<unsigned int>(fmod(_TimeInSeconds, ONE_MINUTE));
-	unsigned int millisecond = static_cast<unsigned int>((_TimeInSeconds - floor(_TimeInSeconds)) * 1000.0);
-
-	*_StrDestination = 0;
-	bool oneWritten = false;
-	#define APPEND_TIME(_Var, _StrAbbrev) do { if (_Var) { oStrAppendf(_StrDestination, _SizeofStrDestination, "%s%u%s%s%s", (*_StrDestination == 0) ? "" : " ", _Var, _Abbreviated ? "" : " ", _Abbreviated ? _StrAbbrev : #_Var, !_Abbreviated ? plural(_Var) : ""); oneWritten = true; } } while(false)
-	APPEND_TIME(day, "d");
-	APPEND_TIME(hour, "h");
-	APPEND_TIME(minute, "m");
-	APPEND_TIME(second, "s");
-	if(_IncludeMS)
-		APPEND_TIME(millisecond, "ms");
-
-	if (!oneWritten)
-		oStrAppendf(_StrDestination, _SizeofStrDestination, "0%s", _Abbreviated ? "s" : " seconds");
-
-	return -1 == result ? nullptr : _StrDestination;
+	return -1 == oStd::format_bytes(_StrDestination, _SizeofStrDestination, _NumBytes, _NumPrecisionDigits) ? nullptr : _StrDestination;
 }
 
 char* oFormatCommas(char* _StrDestination, size_t _SizeofStrDestination, unsigned int _Number)
@@ -455,23 +387,6 @@ char* oFormatCommas(char* _StrDestination, size_t _SizeofStrDestination, int _Nu
 	}
 
 	return oFormatCommas(_StrDestination, _SizeofStrDestination, static_cast<unsigned int>(_Number));
-}
-
-char* oConvertFourcc(char* _StrDestination, size_t _SizeofStrDestination, int _Fourcc)
-{
-	if (_SizeofStrDestination < 5)
-		return 0;
-
-	oByteSwizzle32 s;
-	s.AsInt = _Fourcc;
-
-	_StrDestination[0] = s.AsChar[3];
-	_StrDestination[1] = s.AsChar[2];
-	_StrDestination[2] = s.AsChar[1];
-	_StrDestination[3] = s.AsChar[0];
-	_StrDestination[4] = 0;
-
-	return _StrDestination;
 }
 
 bool oGetKeyValuePair(char* _KeyDestination, size_t _SizeofKeyDestination, char* _ValueDestination, size_t _SizeofValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff)
@@ -594,6 +509,31 @@ char* oStrTok(const char* _Token, const char* _Delimiter, char** _ppContext, con
 
 	*_ppContext = end;
 	return start;
+}
+
+const char* oStrTokSkip(const char* _pToken, const char* _pDelimiters, int _Count, bool _SkipDelimiters)
+{
+	if (_Count < 0)
+		return nullptr;
+	if (_Count == 0)
+		return _pToken;
+
+	const char* pos = _pToken;
+	for (int i=0; i<_Count; ++i)
+	{
+		// Skip initial delimiters
+		if (_SkipDelimiters)
+			pos += strspn(pos, _pDelimiters);
+
+		// Skip until next delimiter
+		pos += strcspn(pos, _pDelimiters);
+	}
+
+	// Skip trailing delimiters
+	if (_SkipDelimiters)
+		pos += strspn(pos, _pDelimiters);
+
+	return pos;
 }
 
 static inline bool IsOpt(const char* arg) { return *arg == '-'; }
@@ -822,5 +762,5 @@ int oStrFindFirstDiff(const char* _StrSource1, const char* _StrSource2)
 	}
 	if(!*_StrSource1 && !*_StrSource2)
 		return -1;
-	return oInt(oByteDiff(_StrSource1, origSrc1));
+	return oInt(oStd::byte_diff(_StrSource1, origSrc1));
 }

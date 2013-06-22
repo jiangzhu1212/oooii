@@ -31,15 +31,41 @@
 #ifndef oInterface_h
 #define oInterface_h
 
-#include <oBasis/oAssert.h>
-#include <oBasis/oGUID.h>
+#include <oStd/assert.h>
+#include <oStd/guid.h>
 #include <oBasis/oError.h>
-#include <oBasis/oThreadsafe.h>
+#include <oConcurrency/thread_safe.h>
 
+typedef oStd::guid oGUID;
+
+template<typename T> const oGUID& oGetGUID(volatile const T* volatile const* = 0);
+
+// Define an interface's guid and its template accessor. Because a decltype will
+// change the linking of objects, be careful to use the flavor of macro that 
+// fits the type. ie. use _I for interfacs, _C for classes or _S for structs or
+// there will be strange memory corruptions in things like vtables or stack 
+// corruption.
+#define oDEFINE_GUID_I(TYPE, _32BitA, _16BitB, _16BitC, _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK) \
+	static const oStd::guid oCONCAT(oGUID_, TYPE) = { _32BitA, _16BitB, _16BitC, { _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK } }; \
+	template<> inline const oStd::guid& oGetGUID<interface TYPE>(volatile const interface TYPE* volatile const*) { return oCONCAT(oGUID_, TYPE); }
+
+#define oDEFINE_GUID_C(TYPE, _32BitA, _16BitB, _16BitC, _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK) \
+	static const oStd::guid oCONCAT(oGUID_, TYPE) = { _32BitA, _16BitB, _16BitC, { _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK } }; \
+	template<> inline const oStd::guid& oGetGUID<class TYPE>(volatile const class TYPE* volatile const*) { return oCONCAT(oGUID_, TYPE); }
+
+#define oDEFINE_GUID_S(TYPE, _32BitA, _16BitB, _16BitC, _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK) \
+	static const oStd::guid oCONCAT(oGUID_, TYPE) = { _32BitA, _16BitB, _16BitC, { _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK } }; \
+	template<> inline const oStd::guid& oGetGUID<struct TYPE>(volatile const struct TYPE* volatile const*) { return oCONCAT(oGUID_, TYPE); }
+
+// {9370A4C3-B863-40c7-87F7-614474F40C20}
+oDEFINE_GUID_I(oInterface, 0x9370a4c3, 0xb863, 0x40c7, 0x87, 0xf7, 0x61, 0x44, 0x74, 0xf4, 0xc, 0x20);
 interface oInterface
 {
-	//Note that this class does not have a virtual destructor. so you should never use delete on a pointer to any type in this hierarchy. delete must always occur from the 
-	//	exact type of the actual implementation, i.e. it in general should always happen in the specific implementation of Release which is dynamic unlike the destructor. 
+	// NOTE: This class does not have a virtual destructor so like Microsoft's COM 
+	// objects never delete on an oInterface pointer. The actual delete must 
+	// always occur from the exact type of the actual implementation, i.e. in 
+	// general should always happen in the specific implementation of Release 
+	// which is dynamic unlike the destructor.
 	
 	// Returns the new refcount. NOTE: This can be negative, meaning the refcount
 	// is invalid. It probably will be a very negative number, not -1 or -2, so
@@ -129,7 +155,7 @@ inline void intrusive_ptr_unlock_shared(const threadsafe oLockableInterface* p) 
 #define oCONSTRUCT_CLEAR(_PointerToInstancePointer) if(*_PointerToInstancePointer){ (*_PointerToInstancePointer)->Release(); *_PointerToInstancePointer = 0; }
 #define oCONSTRUCT_NEW(_PointerToInstancePointer, object) *_PointerToInstancePointer = new object
 #define oCONSTRUCT_PLACEMENT_NEW(_PointerToInstancePointer, memory, object) *_PointerToInstancePointer = new (memory) object
-#define oCONSTRUCT_BASE_CHECK(_PointerToInstancePointer) if (!*_PointerToInstancePointer) oErrorSetLast(oERROR_AT_CAPACITY, "out of memory"); else if (!success) { (*_PointerToInstancePointer)->Release(); *_PointerToInstancePointer = 0; }
+#define oCONSTRUCT_BASE_CHECK(_PointerToInstancePointer) if (!*_PointerToInstancePointer) oErrorSetLast(std::errc::no_buffer_space, "out of memory"); else if (!success) { (*_PointerToInstancePointer)->Release(); *_PointerToInstancePointer = 0; }
 #define oCONSTRUCT_BASE(_PointerToInstancePointer, object) oCONSTRUCT_CLEAR(_PointerToInstancePointer); oCONSTRUCT_NEW(_PointerToInstancePointer, object); oCONSTRUCT_BASE_CHECK(_PointerToInstancePointer)
 #define oCONSTRUCT_PLACEMENT_BASE(_PointerToInstancePointer, memory, object) oCONSTRUCT_CLEAR(_PointerToInstancePointer); oCONSTRUCT_PLACEMENT_NEW(_PointerToInstancePointer, memory, object); oCONSTRUCT_BASE_CHECK(_PointerToInstancePointer)
 #ifndef _DEBUG
@@ -150,7 +176,7 @@ inline void intrusive_ptr_unlock_shared(const threadsafe oLockableInterface* p) 
 
 // _QI* helper macros are internal, use oDEFINE_TRIVIAL_QUERYINTERFACE*() below
 #define _QIPRE() bool QueryInterface(const oGUID& iid, threadsafe void ** _ppInterface) threadsafe override {
-#define _QIIF(TYPE) if (iid == (oGetGUID<TYPE>())) \
+#define _QIIF(TYPE) if (iid == (oGetGUID<TYPE>(0))) \
 	{ \
 		if (Reference()) *_ppInterface = this; else *_ppInterface = 0; return !!*_ppInterface; \
 	}

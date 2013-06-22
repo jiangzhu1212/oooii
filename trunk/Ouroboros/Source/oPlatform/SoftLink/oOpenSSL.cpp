@@ -24,10 +24,10 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oOpenSSL.h"
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
 #include "oWinsock.h"
 
-static const char* dll_procs[] = 
+static const char* sExportedAPIs[] = 
 {
 	"SSL_library_init",
 	"SSL_load_error_strings",

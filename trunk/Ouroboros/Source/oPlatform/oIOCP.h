@@ -27,7 +27,7 @@
 #ifndef oIOCP_h
 #define oIOCP_h
 
-#include <oBasis/oStdChrono.h>
+#include <oStd/oStdChrono.h>
 #include <oBasis/oInterface.h>
 #include <oPlatform/Windows/oWindows.h>
 
@@ -59,7 +59,9 @@ private:
 	void* pPrivateData;
 };
 
-struct oIOCP : public oInterface
+// {5574C1B0-7F26-4A32-9A9A-93C17201060D}
+oDEFINE_GUID_I(oIOCP, 0x5574c1b0, 0x7f26, 0x4a32, 0x9a, 0x9a, 0x93, 0xc1, 0x72, 0x1, 0x6, 0xd);
+interface oIOCP : oInterface
 {
 	typedef oFUNCTION<void(oIOCPOp* _pSocketOp)> io_completion_routine_t;
 	typedef oTASK io_shutdown_t;
@@ -81,7 +83,7 @@ struct oIOCP : public oInterface
 	// so these should be acquired and returned as soon as possible
 	virtual oIOCPOp* AcquireSocketOp() = 0;
 	virtual void ReturnOp(oIOCPOp* _pIOCPOp) = 0;
-	virtual void DispatchIOTask(oTASK&& _task) = 0;
+	virtual void DispatchIOTask(oTASK&& _Task) = 0;
 	//Will send off the op to the iocp threads for processing. Useful for some windows functions
 	//	that can operate either synchronously or asynchronously. Use this so you can only have one
 	//	code path to respond to completed operations. If it completes synchronously just pass it here.

@@ -7,9 +7,6 @@
     <Filter Include="Source">
       <UniqueIdentifier>{df617b51-647a-4727-b495-484e5b457685}</UniqueIdentifier>
     </Filter>
-    <Filter Include="oBasis\C++11">
-      <UniqueIdentifier>{6b94dbb8-d0cd-4e71-a8b5-9b1c2ad9a2be}</UniqueIdentifier>
-    </Filter>
     <Filter Include="oBasis\Concurrency">
       <UniqueIdentifier>{320b6a2d-fc14-4a41-897c-bf272e90a82e}</UniqueIdentifier>
     </Filter>
@@ -24,9 +21,6 @@
     </Filter>
     <Filter Include="oBasis\Types">
       <UniqueIdentifier>{7cb7b979-c6c7-4ef7-89fb-67abfa0c31e3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="oBasis\Concurrency\C++11 Threadsafe Wrappers">
-      <UniqueIdentifier>{1255fe03-68ef-43b1-8daa-3c6797cfa595}</UniqueIdentifier>
     </Filter>
     <Filter Include="oBasis\3D Math &amp; Graphics">
       <UniqueIdentifier>{49d22f96-bbb4-4e2a-9330-6e391954e170}</UniqueIdentifier>
@@ -43,9 +37,6 @@
     <Filter Include="Source\3D Math &amp; Graphics">
       <UniqueIdentifier>{d5eca90d-245c-405a-8604-e63d2c3f6d43}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\3D Math &amp; Graphics\Bullet-Vectormathlib">
-      <UniqueIdentifier>{81bf6063-2edd-4914-95db-4552841bdc2f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\3D Math &amp; Graphics\Camera Controllers">
       <UniqueIdentifier>{3fc04ed6-1e73-4eaa-8e19-d2a7a16b8e2f}</UniqueIdentifier>
     </Filter>
@@ -54,9 +45,6 @@
     </Filter>
     <Filter Include="Source\String Parsing">
       <UniqueIdentifier>{c0316e5c-66eb-484b-beb4-6509cf08af4b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\C++11">
-      <UniqueIdentifier>{f5f0925c-1681-410b-9057-6afa4a337646}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Concurrency">
       <UniqueIdentifier>{ae304858-be37-4332-948a-f8f83ee11fa8}</UniqueIdentifier>
@@ -70,6 +58,18 @@
     <Filter Include="Source\Serialization">
       <UniqueIdentifier>{fc7f0451-3b9b-487e-bb44-83a0efd7f6da}</UniqueIdentifier>
     </Filter>
+    <Filter Include="oBasis\3D Math &amp; Graphics\Manipulators">
+      <UniqueIdentifier>{6c304be4-ba74-415f-b04a-2352d3037430}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\3D Math &amp; Graphics\Bullet-Vectormathlib">
+      <UniqueIdentifier>{81bf6063-2edd-4914-95db-4552841bdc2f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBasis\Compression">
+      <UniqueIdentifier>{22d3db64-f2ad-43cd-b447-33c87b81719c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Compression">
+      <UniqueIdentifier>{20271ea3-a632-48ee-b38a-550d97c85239}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -81,62 +81,8 @@
     <ClInclude Include="..\..\Include\oBasis\oHash.h">
       <Filter>oBasis</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oBasis.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oBit.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oByte.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oByteSwizzle.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oAlgorithm.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oFilterChain.h">
       <Filter>oBasis</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oStringize.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oStdAtomic.h">
-      <Filter>oBasis\C++11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oStdChrono.h">
-      <Filter>oBasis\C++11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oStdMutex.h">
-      <Filter>oBasis\C++11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oStdRatio.h">
-      <Filter>oBasis\C++11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oStdThread.h">
-      <Filter>oBasis\C++11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oConcurrentIndexAllocator.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oConcurrentQueue.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oLockFreeQueue.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oLockedPointer.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oIndexAllocator.h">
-      <Filter>oBasis\Allocators</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oStdAllocator.h">
-      <Filter>oBasis\Allocators</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oTaggedPointer.h">
-      <Filter>oBasis\Concurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oString.h">
       <Filter>oBasis\String Parsing</Filter>
@@ -147,65 +93,14 @@
     <ClInclude Include="..\..\Include\oBasis\oPath.h">
       <Filter>oBasis\String Parsing</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oAtof.h">
-      <Filter>oBasis\String Parsing</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oThreadsafe.h">
-      <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oLimits.h">
-      <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oEqual.h">
-      <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oAssert.h">
-      <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oCallable.h">
-      <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oError.h">
       <Filter>oBasis\Language Enhancements</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oMemory.h">
       <Filter>oBasis\Language Enhancements</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oLockedVector.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oCSV.h">
-      <Filter>oBasis\String Parsing</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oINI.h">
-      <Filter>oBasis\String Parsing</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oXML.h">
-      <Filter>oBasis\String Parsing</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oNonCopyable.h">
-      <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oMacros.h">
-      <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oOperators.h">
-      <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oIntrinsic.h">
-      <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oLibc.h">
       <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oColor.h">
-      <Filter>oBasis\Types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oGUID.h">
-      <Filter>oBasis\Types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oUint128.h">
-      <Filter>oBasis\Types</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oRefCount.h">
       <Filter>oBasis\Types</Filter>
@@ -216,16 +111,7 @@
     <ClInclude Include="..\..\Include\oBasis\oMathTypes.h">
       <Filter>oBasis\Types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oMathInternalTypes.h">
-      <Filter>oBasis\Types</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oInterface.h">
-      <Filter>oBasis\Types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oFixedString.h">
-      <Filter>oBasis\Types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oArray.h">
       <Filter>oBasis\Types</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oInvalid.h">
@@ -240,9 +126,6 @@
     <ClInclude Include="..\..\Include\oBasis\oEightCC.h">
       <Filter>oBasis\Types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oFourCC.h">
-      <Filter>oBasis\Types</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oAllocator.h">
       <Filter>oBasis\Allocators</Filter>
     </ClInclude>
@@ -255,53 +138,8 @@
     <ClInclude Include="..\..\Include\oBasis\oBufferPool.h">
       <Filter>oBasis</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oFor.h">
-      <Filter>oBasis\C++11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oOnScopeExit.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oBackoff.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oStdConditionVariable.h">
-      <Filter>oBasis\C++11</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oPlatformFeatures.h">
       <Filter>oBasis</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oDispatchQueue.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oDispatchQueuePrivate.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oTask.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oCountdownLatch.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueGlobal.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oFunction.h">
-      <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oMutex.h">
-      <Filter>oBasis\Concurrency\C++11 Threadsafe Wrappers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oConditionVariable.h">
-      <Filter>oBasis\Concurrency\C++11 Threadsafe Wrappers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oThread.h">
-      <Filter>oBasis\Concurrency\C++11 Threadsafe Wrappers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueConcurrent.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oFiber.h">
-      <Filter>oBasis\Concurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oLeakTracker.h">
       <Filter>oBasis</Filter>
@@ -309,26 +147,11 @@
     <ClInclude Include="..\..\Include\oBasis\oSurface.h">
       <Filter>oBasis</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oLinearAllocator.h">
-      <Filter>oBasis\Allocators</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oUnorderedMap.h">
-      <Filter>oBasis\Types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oBlockAllocatorFixed.h">
-      <Filter>oBasis\Allocators</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oBlockAllocatorGrowable.h">
-      <Filter>oBasis\Allocators</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oVersion.h">
       <Filter>oBasis\Types</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oSurfaceFill.h">
       <Filter>oBasis</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oInitOnce.h">
-      <Filter>oBasis\Concurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oTypes.h">
       <Filter>oBasis\Types</Filter>
@@ -336,17 +159,11 @@
     <ClInclude Include="..\..\Include\oBasis\oCompression.h">
       <Filter>oBasis</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oStdFuture.h">
-      <Filter>oBasis\C++11</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oInt.h">
       <Filter>oBasis\Types</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\SafeInt3.h">
       <Filter>oBasis\Types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueGlobalT.h">
-      <Filter>oBasis\Concurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\External\bullet\vectormathlibrary\include\vectormath\scalar\cpp\mat_aos.h">
       <Filter>Source\3D Math &amp; Graphics\Bullet-Vectormathlib</Filter>
@@ -372,16 +189,10 @@
     <ClInclude Include="..\..\External\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vectormath_aos.h">
       <Filter>Source\3D Math &amp; Graphics\Bullet-Vectormathlib</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oEvent.h">
-      <Filter>oBasis\Concurrency\C++11 Threadsafe Wrappers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oMIME.h">
       <Filter>oBasis</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oStddef.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oX11KeyboardSymbols.h">
       <Filter>oBasis</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oGUI.h">
@@ -393,43 +204,7 @@
     <ClInclude Include="..\..\Include\oBasis\oMeshUtil.h">
       <Filter>oBasis\3D Math &amp; Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oLockThis.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oJoinable.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oDate.h">
-      <Filter>oBasis\Types</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oOBJ.h">
-      <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oArcball.h">
-      <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oMath.h">
-      <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oEye.h">
-      <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oMathShared.h">
-      <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oHLSLTypes.h">
-      <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oHLSLMath.h">
-      <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oHLSLAtomics.h">
-      <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oHLSLStructs.h">
-      <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oHLSLBit.h">
       <Filter>oBasis\3D Math &amp; Graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oTypeID.h">
@@ -492,20 +267,107 @@
     <ClInclude Include="oAllocatorTLSF.h">
       <Filter>Source\Allocators</Filter>
     </ClInclude>
-    <ClInclude Include="oIndexAllocatorInternal.h">
-      <Filter>Source\Allocators</Filter>
-    </ClInclude>
-    <ClInclude Include="perlin.h">
-      <Filter>Source\3D Math &amp; Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="calfaq.h">
-      <Filter>Source\Types</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oCameraControllerArcball.h">
       <Filter>oBasis\3D Math &amp; Graphics\Camera Controllers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oSurfaceResize.h">
       <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="oManipulatorBase.h">
+      <Filter>oBasis\3D Math &amp; Graphics\Manipulators</Filter>
+    </ClInclude>
+    <ClInclude Include="oManipulatorRotation.h">
+      <Filter>oBasis\3D Math &amp; Graphics\Manipulators</Filter>
+    </ClInclude>
+    <ClInclude Include="oManipulatorScale.h">
+      <Filter>oBasis\3D Math &amp; Graphics\Manipulators</Filter>
+    </ClInclude>
+    <ClInclude Include="oManipulatorTranslation.h">
+      <Filter>oBasis\3D Math &amp; Graphics\Manipulators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oManipulator.h">
+      <Filter>oBasis\3D Math &amp; Graphics\Manipulators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oINISerialize.h">
+      <Filter>oBasis\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oArcball.h">
+      <Filter>oBasis\3D Math &amp; Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oEye.h">
+      <Filter>oBasis\3D Math &amp; Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oBasisRequirements.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oDispatchQueue.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueConcurrent.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueConcurrentT.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueGlobal.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueGlobalT.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oDispatchQueuePrivate.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oInitOnce.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oLockedPointer.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oLockThis.h">
+      <Filter>oBasis\Concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oStdLinearAllocator.h">
+      <Filter>oBasis\Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oStdStringSupport.h">
+      <Filter>oBasis\String Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oColor.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oJSONSerialize.h">
+      <Filter>oBasis\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oURIQuerySerialize.h">
+      <Filter>oBasis\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\all.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oEasing.h">
+      <Filter>oBasis\3D Math &amp; Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oMath.h">
+      <Filter>oBasis\3D Math &amp; Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oLinearAlgebra.h">
+      <Filter>oBasis\3D Math &amp; Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oAirKeyboard.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oInputMapper.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oSnappy.h">
+      <Filter>oBasis\Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oLZMA.h">
+      <Filter>oBasis\Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oGZip.h">
+      <Filter>oBasis\Compression</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -513,15 +375,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oHash.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oAlgorithm.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oStringize.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oError.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oSurface.cpp">
@@ -536,25 +389,13 @@
     <ClCompile Include="oLeakTracker.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oBlockAllocatorFixed.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oBlockAllocatorGrowable.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oTimer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oSurfaceFill.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oCompression.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oMIME.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oGUI.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oTypeID.cpp">
@@ -564,9 +405,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oMeshUtil.cpp">
-      <Filter>Source\3D Math &amp; Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="oMath.cpp">
       <Filter>Source\3D Math &amp; Graphics</Filter>
     </ClCompile>
     <ClCompile Include="oOBJ.cpp">
@@ -584,12 +422,6 @@
     <ClCompile Include="oGeometry.cpp">
       <Filter>Source\3D Math &amp; Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="oDate.cpp">
-      <Filter>Source\Types</Filter>
-    </ClCompile>
-    <ClCompile Include="oFourCC.cpp">
-      <Filter>Source\Types</Filter>
-    </ClCompile>
     <ClCompile Include="oColor.cpp">
       <Filter>Source\Types</Filter>
     </ClCompile>
@@ -598,15 +430,6 @@
     </ClCompile>
     <ClCompile Include="oVersion.cpp">
       <Filter>Source\Types</Filter>
-    </ClCompile>
-    <ClCompile Include="oCSV.cpp">
-      <Filter>Source\String Parsing</Filter>
-    </ClCompile>
-    <ClCompile Include="oINI.cpp">
-      <Filter>Source\String Parsing</Filter>
-    </ClCompile>
-    <ClCompile Include="oXML.cpp">
-      <Filter>Source\String Parsing</Filter>
     </ClCompile>
     <ClCompile Include="oOSC.cpp">
       <Filter>Source\String Parsing</Filter>
@@ -617,25 +440,7 @@
     <ClCompile Include="oString.cpp">
       <Filter>Source\String Parsing</Filter>
     </ClCompile>
-    <ClCompile Include="oStdChrono.cpp">
-      <Filter>Source\C++11</Filter>
-    </ClCompile>
-    <ClCompile Include="oStdThread.cpp">
-      <Filter>Source\C++11</Filter>
-    </ClCompile>
-    <ClCompile Include="oStdConditionVariable.cpp">
-      <Filter>Source\C++11</Filter>
-    </ClCompile>
-    <ClCompile Include="oStdFuture.cpp">
-      <Filter>Source\C++11</Filter>
-    </ClCompile>
-    <ClCompile Include="oStdMutex.cpp">
-      <Filter>Source\C++11</Filter>
-    </ClCompile>
     <ClCompile Include="oDispatchQueuePrivate.cpp">
-      <Filter>Source\Concurrency</Filter>
-    </ClCompile>
-    <ClCompile Include="oDispatchQueue.cpp">
       <Filter>Source\Concurrency</Filter>
     </ClCompile>
     <ClCompile Include="oDispatchQueueConcurrent.cpp">
@@ -644,32 +449,14 @@
     <ClCompile Include="oDispatchQueueGlobal.cpp">
       <Filter>Source\Concurrency</Filter>
     </ClCompile>
-    <ClCompile Include="oConcurrentIndexAllocator.cpp">
-      <Filter>Source\Concurrency</Filter>
-    </ClCompile>
-    <ClCompile Include="oAllocator.cpp">
-      <Filter>Source\Allocators</Filter>
-    </ClCompile>
     <ClCompile Include="oAllocatorTLSF.cpp">
       <Filter>Source\Allocators</Filter>
     </ClCompile>
     <ClCompile Include="oCppParsing.cpp">
       <Filter>Source\String Parsing</Filter>
     </ClCompile>
-    <ClCompile Include="oIndexAllocator.cpp">
-      <Filter>Source\Allocators</Filter>
-    </ClCompile>
     <ClCompile Include="oGPUConcepts.cpp">
       <Filter>Source\3D Math &amp; Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="oInterface.cpp">
-      <Filter>Source\Types</Filter>
-    </ClCompile>
-    <ClCompile Include="oEqual.cpp">
-      <Filter>Source\3D Math &amp; Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="oGUID.cpp">
-      <Filter>Source\Types</Filter>
     </ClCompile>
     <ClCompile Include="oMemory.cpp">
       <Filter>Source\Language Enhancements</Filter>
@@ -680,17 +467,62 @@
     <ClCompile Include="oURI.cpp">
       <Filter>Source\Types</Filter>
     </ClCompile>
-    <ClCompile Include="perlin.cpp">
-      <Filter>Source\3D Math &amp; Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="calfaq.cpp">
-      <Filter>Source\Types</Filter>
-    </ClCompile>
     <ClCompile Include="oCameraControllerArcball.cpp">
       <Filter>Source\3D Math &amp; Graphics\Camera Controllers</Filter>
     </ClCompile>
     <ClCompile Include="oSurfaceResize.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oManipulator.cpp">
+      <Filter>oBasis\3D Math &amp; Graphics\Manipulators</Filter>
+    </ClCompile>
+    <ClCompile Include="oManipulatorBase.cpp">
+      <Filter>oBasis\3D Math &amp; Graphics\Manipulators</Filter>
+    </ClCompile>
+    <ClCompile Include="oManipulatorRotation.cpp">
+      <Filter>oBasis\3D Math &amp; Graphics\Manipulators</Filter>
+    </ClCompile>
+    <ClCompile Include="oManipulatorScale.cpp">
+      <Filter>oBasis\3D Math &amp; Graphics\Manipulators</Filter>
+    </ClCompile>
+    <ClCompile Include="oManipulatorTranslation.cpp">
+      <Filter>oBasis\3D Math &amp; Graphics\Manipulators</Filter>
+    </ClCompile>
+    <ClCompile Include="oINISerialize.cpp">
+      <Filter>Source\Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="oError.cpp">
+      <Filter>Source\Language Enhancements</Filter>
+    </ClCompile>
+    <ClCompile Include="oJSONSerialize.cpp">
+      <Filter>Source\Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="oURIQuerySerialize.cpp">
+      <Filter>Source\Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="oMath.cpp">
+      <Filter>Source\3D Math &amp; Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="oLinearAlgebra.cpp">
+      <Filter>Source\3D Math &amp; Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="oAirKeyboard.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oInputMapper.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oGUI.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oSnappy.cpp">
+      <Filter>Source\Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="oLZMA.cpp">
+      <Filter>Source\Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="oGZip.cpp">
+      <Filter>Source\Compression</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

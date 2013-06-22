@@ -43,9 +43,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-    <Import Project="..\Build\msvc100\BuildRules\oFXC.props" />
-  </ImportGroup>
+  <ImportGroup Label="ExtensionSettings" />
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Build\msvc100\Properties\Release32.props" />
@@ -124,27 +122,29 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Include\oPlatform\all.h" />
     <ClInclude Include="..\..\Include\oPlatform\oCamera.h" />
     <ClInclude Include="..\..\Include\oPlatform\oConsole.h" />
     <ClInclude Include="..\..\Include\oPlatform\oCPU.h" />
     <ClInclude Include="..\..\Include\oPlatform\oDisplay.h" />
     <ClInclude Include="..\..\Include\oPlatform\oEMail.h" />
     <ClInclude Include="..\..\Include\oPlatform\oFile.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oFileCache.h" />
     <ClInclude Include="..\..\Include\oPlatform\oFileSchemeHandler.h" />
     <ClInclude Include="..\..\Include\oPlatform\oGUIMenu.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oHLSLShaders.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHTTP.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHTTPClient.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oHTTPHandler.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHTTPServer.h" />
     <ClInclude Include="..\..\Include\oPlatform\oInterprocessEvent.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oKinect.h" />
     <ClInclude Include="..\..\Include\oPlatform\oMirroredArena.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oModuleUtil.h" />
     <ClInclude Include="..\..\Include\oPlatform\oMRUManager.h" />
     <ClInclude Include="..\..\Include\oPlatform\oMsgBox.h" />
     <ClInclude Include="..\..\Include\oPlatform\oPageAllocator.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oPlatform.h" />
     <ClInclude Include="..\..\Include\oPlatform\oProcess.h" />
     <ClInclude Include="..\..\Include\oPlatform\oProcessHeap.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oProcessStatsMonitor.h" />
     <ClInclude Include="..\..\Include\oPlatform\oProgressBar.h" />
     <ClInclude Include="..\..\Include\oPlatform\oRegistry.h" />
     <ClInclude Include="..\..\Include\oPlatform\oSerialCom.h" />
@@ -152,11 +152,12 @@
     <ClInclude Include="..\..\Include\oPlatform\oStream.h" />
     <ClInclude Include="..\..\Include\oPlatform\oStreamUtil.h" />
     <ClInclude Include="..\..\Include\oPlatform\oSystem.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oThreadX.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oTCPServer.h" />
     <ClInclude Include="..\..\Include\oPlatform\oVersionUpdate.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oWebAppWindow.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oWebServer.h" />
     <ClInclude Include="..\..\Include\oPlatform\oWindow.h" />
     <ClInclude Include="..\..\Include\oPlatform\oDebugger.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oHLSL.h" />
     <ClInclude Include="..\..\Include\oPlatform\oImage.h" />
     <ClInclude Include="..\..\Include\oPlatform\oModule.h" />
     <ClInclude Include="..\..\Include\oPlatform\oP4.h" />
@@ -165,6 +166,7 @@
     <ClInclude Include="..\..\Include\oPlatform\oStandards.h" />
     <ClInclude Include="..\..\Include\oPlatform\oTest.h" />
     <ClInclude Include="..\..\Include\oPlatform\oVTable.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oWindowAppController.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oCRTHeap.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oD3D11.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oDXGI.h" />
@@ -173,6 +175,7 @@
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinCursor.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinDialog.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWindows.h" />
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinKey.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinRect.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinRegistry.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinStatusBar.h" />
@@ -186,10 +189,9 @@
     <ClInclude Include="oHTTPInternal.h" />
     <ClInclude Include="oIOCP.h" />
     <ClInclude Include="oKeyState.h" />
-    <ClInclude Include="oKinectDisplay.h" />
     <ClInclude Include="oSpinlockEx.h" />
     <ClInclude Include="oStaticMutex.h" />
-    <ClInclude Include="oVKToX11Keyboard.h" />
+    <ClInclude Include="oWinMessagePump.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="SoftLink\oD3DX11.h" />
     <ClInclude Include="SoftLink\oOpenSSL.h" />
@@ -205,12 +207,12 @@
     <ClInclude Include="SoftLink\oWinPSAPI.h" />
     <ClInclude Include="SoftLink\oWinShlwapi.h" />
     <ClInclude Include="SoftLink\oWinsock.h" />
-    <ClInclude Include="SoftLink\oWinSoftLinkCommon.h" />
     <ClInclude Include="SoftLink\oWinVersion.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FreeImageHelpers.cpp" />
     <ClCompile Include="oCamera.cpp" />
+    <ClCompile Include="oConcurrency.cpp" />
     <ClCompile Include="oConsole.cpp" />
     <ClCompile Include="oCPU.cpp" />
     <ClCompile Include="oCRTHeap.cpp" />
@@ -223,22 +225,22 @@
     <ClCompile Include="oDXGI.cpp" />
     <ClCompile Include="oEMail.cpp" />
     <ClCompile Include="oFile.cpp" />
+    <ClCompile Include="oFileCache.cpp" />
+    <ClCompile Include="oFileCacheMonitoring.cpp" />
     <ClCompile Include="oFileGeneric.cpp" />
     <ClCompile Include="oFileSchemeHandler.cpp" />
     <ClCompile Include="oGDI.cpp" />
     <ClCompile Include="oGSReport.cpp" />
     <ClCompile Include="oGUIMenu.cpp" />
-    <ClCompile Include="oHLSLShaders.cpp" />
     <ClCompile Include="oHTTP.cpp" />
     <ClCompile Include="oHTTPClient.cpp" />
+    <ClCompile Include="oHTTPHandler.cpp" />
     <ClCompile Include="oHTTPProtocol.cpp" />
     <ClCompile Include="oHTTPServer.cpp" />
     <ClCompile Include="oImage.cpp" />
     <ClCompile Include="oInterprocessEvent.cpp" />
     <ClCompile Include="oInvisible_ico.cpp" />
     <ClCompile Include="oIOCP.cpp" />
-    <ClCompile Include="oKinect.cpp" />
-    <ClCompile Include="oKinectDisplay.cpp" />
     <ClCompile Include="oMirroredArena.cpp" />
     <ClCompile Include="oModule.cpp" />
     <ClCompile Include="oMRUManager.cpp" />
@@ -259,15 +261,18 @@
     <ClCompile Include="oStreamUtil.cpp" />
     <ClCompile Include="oSystem.cpp" />
     <ClCompile Include="oTest.cpp" />
-    <ClCompile Include="oThreadX.cpp" />
     <ClCompile Include="oVersionUpdate.cpp" />
-    <ClCompile Include="oVKToX11Keyboard.cpp" />
     <ClCompile Include="oVTable.cpp" />
+    <ClCompile Include="oWebAppWindow.cpp" />
+    <ClCompile Include="oWebServer.cpp" />
     <ClCompile Include="oWinAsString.cpp" />
     <ClCompile Include="oWinCursor.cpp" />
     <ClCompile Include="oWinDialog.cpp" />
     <ClCompile Include="oWindow.cpp" />
+    <ClCompile Include="oWindowAppController.cpp" />
     <ClCompile Include="oWindows.cpp" />
+    <ClCompile Include="oWinKey.cpp" />
+    <ClCompile Include="oWinMessagePump.cpp" />
     <ClCompile Include="oWinRect.cpp" />
     <ClCompile Include="oWinRegistry.cpp" />
     <ClCompile Include="oWinStatusBar.cpp" />
@@ -295,101 +300,6 @@
     <ClCompile Include="SoftLink\oWinsock.cpp" />
     <ClCompile Include="SoftLink\oWinVersion.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <FXC Include="oHLSL_PS4_0_SAMPLE_FULLSCREEN_NV12.sh">
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include</Includes>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
-    </FXC>
-    <FXC Include="oHLSL_PS4_0_SAMPLE_FULLSCREEN_NV12_ALPHA.sh">
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include</Includes>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include</Includes>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include</Includes>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include</Includes>
-    </FXC>
-    <FXC Include="oHLSL_VS4_0_QUAD_FULLSCREEN.sh">
-      <FileType>Document</FileType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-    </FXC>
-    <FXC Include="oHLSL_VS4_0_QUAD_PASSTHROUGH.sh">
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include</Includes>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-    </FXC>
-    <FXC Include="oHLSL_VS5_0_QUAD_FULLSCREEN.sh">
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_5_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_5_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_5_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_5_0</ShaderModel>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
-    </FXC>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\Build\msvc100\BuildRules\oFXC.targets" />
-  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

@@ -28,6 +28,7 @@
 #ifndef oMsgBox_h
 #define oMsgBox_h
 
+#include <oBasis/oGUI.h>
 #include <oBasis/oStddef.h>
 #include <stdarg.h>
 
@@ -56,16 +57,16 @@ enum oMSGBOX_RESULT
 
 struct oMSGBOX_DESC
 {
-	oMSGBOX_DESC()
-		: Type(oMSGBOX_INFO)
-		, TimeoutMS(oInfiniteWait)
-		, ParentNativeHandle(nullptr)
+	oMSGBOX_DESC(oMSGBOX_TYPE _Type = oMSGBOX_INFO, const char* _Title = "", oGUI_WINDOW _hParent = nullptr, unsigned int _TimeoutMS = oInfiniteWait)
+		: Type(_Type)
 		, Title(nullptr)
+		, hParent(nullptr)
+		, TimeoutMS(_TimeoutMS)
 	{}
 
 	oMSGBOX_TYPE Type;
 	unsigned int TimeoutMS;
-	void* ParentNativeHandle;
+	oGUI_WINDOW hParent;
 	const char* Title;
 };
 

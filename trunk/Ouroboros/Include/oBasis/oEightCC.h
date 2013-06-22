@@ -28,39 +28,38 @@
 #ifndef oEightCC_h
 #define oEightCC_h
 
-#include <oBasis/oOperators.h>
-#include <oBasis/oByteSwizzle.h>
+#include <oStd/operators.h>
 #include <oBasis/oPlatformFeatures.h>
+#include <oStd/endian.h>
 
 struct oEightCC : oComparable<oEightCC, unsigned long long, long long>
 {
 	inline oEightCC() {}
-	inline oEightCC(unsigned int _FourCCA, unsigned int _FourCCB)
-	{
-		#ifdef oLITTLEENDIAN
-			EightCC.AsUnsignedInt[0] = _FourCCB;
-			EightCC.AsUnsignedInt[1] = _FourCCA;
-		#else
-			EightCC.AsUnsignedInt[0] = _FourCCA;
-			EightCC.AsUnsignedInt[1] = _FourCCB;
-		#endif
-	}
+	inline oEightCC(int _EightCC) : EightCC((unsigned long long)_EightCC) {}
+	inline oEightCC(unsigned int _EightCC) : EightCC(_EightCC) {}
+	inline oEightCC(long long _EightCC) : EightCC(*(unsigned long long*)&_EightCC) {}
+	inline oEightCC(unsigned long long _EightCC) : EightCC(_EightCC) {}
+	inline oEightCC(const char* _EightCCString) : EightCC(oStd::to_big_endian(*(unsigned long long*)_EightCCString)) {}
 
-	inline oEightCC(unsigned long long _EightCC) { EightCC.AsUnsignedLongLong = _EightCC; }
+	inline operator long long() const { return *(long long*)&EightCC; }
+	inline operator unsigned long long() const { return EightCC; }
 
-	inline operator long long() const { return EightCC.AsLongLong; }
-	inline operator unsigned long long() const { return EightCC.AsUnsignedLongLong; }
-
-	inline bool operator==(const oEightCC& _That) const { return EightCC.AsUnsignedLongLong == _That.EightCC.AsUnsignedLongLong; }
-	inline bool operator<(const oEightCC& _That) const { return EightCC.AsUnsignedLongLong < _That.EightCC.AsUnsignedLongLong; }
-	inline bool operator==(unsigned long long _That) const { return EightCC.AsUnsignedLongLong == _That; }
-	inline bool operator<(unsigned long long _That) const { return EightCC.AsUnsignedLongLong < _That; }
-	inline bool operator==(long long _That) const { return EightCC.AsLongLong == _That; }
-	inline bool operator<(long long _That) const { return EightCC.AsLongLong < _That; }
+	inline bool operator==(const oEightCC& _That) const { return EightCC == _That.EightCC; }
+	inline bool operator<(const oEightCC& _That) const { return EightCC < _That.EightCC; }
+	inline bool operator==(unsigned long long _That) const { return EightCC == _That; }
+	inline bool operator<(unsigned long long _That) const { return EightCC < _That; }
+	inline bool operator==(long long _That) const { return *(long long*)&EightCC == _That; }
+	inline bool operator<(long long _That) const { return *(long long*)&EightCC < _That; }
 
 protected:
-	oByteSwizzle64 EightCC;
+	unsigned long long EightCC;
 };
+
+// oLITTLEENDIAN has been deprecated in favor of a more consistent static const 
+// bool, however that doesn't help in this case... so define in here until the 
+// dependent code can be refactored to a different usage pattern.
+
+#define oLITTLEENDIAN 1
 
 // If only constexpr were supported...
 template<long _FourCCA, long _FourCCB>

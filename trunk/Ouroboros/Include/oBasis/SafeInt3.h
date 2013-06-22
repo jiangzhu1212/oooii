@@ -5432,7 +5432,7 @@ template < typename T, typename E = SafeIntDefaultExceptionHandler > class SafeI
 {
 public:
 
-		// @oooii-tony: Add a ctor for convertion from oInvalid_t to an int.
+		// @oooii-tony: Add a ctor for conversion from oInvalid_t to an int.
     SafeInt( const oInvalid_t& i ) throw()
     {
 			C_ASSERT( NumericType< T >::isInt );

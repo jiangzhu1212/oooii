@@ -24,7 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oURI.h>
-#include <oBasis/oAssert.h>
+#include <oStd/assert.h>
 #include <oBasis/oString.h>
 #include <oBasis/oPath.h>
 #include <oBasis/oError.h>
@@ -35,18 +35,58 @@
 using namespace std;
 using namespace std::tr1;
 
+bool oURIIsURI(const char* _URIReference)
+{
+	oURIParts parts;
+	oURIDecompose(_URIReference, &parts);
+	return oSTRVALID(parts.Scheme);
+}
+
 bool oURIIsAbsolute(const char* _URIReference)
 {
-	return !!strstr(_URIReference, "://");
+	oURIParts parts;
+	oURIDecompose(_URIReference, &parts);
+	return oSTRVALID(parts.Scheme) && !oSTRVALID(parts.Fragment);
+}
+
+bool oURIIsAbsolute(const oURIParts& _Parts)
+{
+	return oSTRVALID(_Parts.Scheme) && !oSTRVALID(_Parts.Fragment);
+}
+
+bool oURIIsSameDocument(const char* _URIReference, const char* _DocumentURI)
+{
+	// Early out if _URIReference is empty or only has a fragment
+	if (!oSTRVALID(_URIReference) || _URIReference[0]=='#')
+		return true;
+
+	// See if we end up with the same URIs (minus fragment) if we'd resolve
+	// the _URIReference with the _DocumentAbsoluteURI
+	oStd::uri_string ResolvedURI;
+	oURIResolve(ResolvedURI, _DocumentURI, _URIReference); // TODO: Rename this function to resolve, as absolute URIs can't have fragments and this function doesn't intend that
+
+	// Note: an Absolute URI can not contain a fragment, so we could also
+	// require an absolute document URI as input, then remove the fragment 
+	// from ResolvedURI and then simply do a single string compare.
+	oURIParts DocumentParts;
+	oURIDecompose(_DocumentURI, &DocumentParts);
+
+	oURIParts ResolvedParts;
+	oURIDecompose(ResolvedURI, &ResolvedParts);
+
+	return oStricmp(DocumentParts.Scheme, ResolvedParts.Scheme)==0 && 
+		oStricmp(DocumentParts.Authority, ResolvedParts.Authority)==0 &&
+		oStricmp(DocumentParts.Path, ResolvedParts.Path)==0 &&
+		oStricmp(DocumentParts.Query, ResolvedParts.Query)==0;
 }
 
 oURIParts::oURIParts(const char* _Scheme, const char* _Authority, const char* _Path, const char* _Query, const char* _Fragment)
 {
-	oStrcpy(Scheme.c_str(), oSAFESTR(_Scheme));
-	oStrcpy(Authority.c_str(), oSAFESTR(_Authority));
-	oStrcpy(Path.c_str(), oSAFESTR(_Path));
-	oStrcpy(Query.c_str(), oSAFESTR(_Query));
-	oStrcpy(Fragment.c_str(), oSAFESTR(_Fragment));
+	oStrcpy(Scheme.c_str(), _Scheme);
+	oStrcpy(Authority.c_str(), _Authority);
+	oStrcpy(Path.c_str(), _Path);
+	oStrcpy(Query.c_str(), _Query);
+	oStrcpy(Fragment.c_str(), _Fragment);
 }
 
 // Copies a begin/end iterator range into the specified destination as a string
@@ -77,7 +117,7 @@ char* oURIPercentEncode(char* _StrDestination, size_t _SizeofStrDestination, con
 		{
 			if ((d+3) > end)
 			{
-				oErrorSetLast(oERROR_AT_CAPACITY);
+				oErrorSetLast(std::errc::no_buffer_space);
 				return nullptr;
 			}
 
@@ -89,44 +129,7 @@ char* oURIPercentEncode(char* _StrDestination, size_t _SizeofStrDestination, con
 
 		else if (d >= end)
 		{
-			oErrorSetLast(oERROR_AT_CAPACITY);
-			return nullptr;
-		}
-
-		else
-			*d++ = *s++;
-	}
-
-	*d = 0;
-	return _StrDestination;
-}
-
-char* oURIPercentDecode(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource)
-{
-	if (!_StrDestination || !_SizeofStrDestination)
-	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
-		return nullptr;
-	}
-
-	char* d = _StrDestination;
-	char* end = d + _SizeofStrDestination - 1;
-	*(end-1) = 0; // don't allow read outside the buffer even in failure cases
-
-	const char* s = _StrSource;
-	while (*s)
-	{
-		if (*s == '%')
-		{
-			char hex[3] = { *(s+1), *(s+2), 0 };
-			char c = strtoul(hex, nullptr, 16) & 0xff;
-			*d++ = c;
-			s += 3;
-		}
-
-		else if (d >= end)
-		{
-			oErrorSetLast(oERROR_AT_CAPACITY);
+			oErrorSetLast(std::errc::no_buffer_space);
 			return nullptr;
 		}
 
@@ -140,7 +143,7 @@ char* oURIPercentDecode(char* _StrDestination, size_t _SizeofStrDestination, con
 
 // http://tools.ietf.org/html/rfc3986#appendix-B
 static regex reURI("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?", std::tr1::regex_constants::optimize); // @oooii-tony: ok static (duplication in DLLs won't affect correctness)
-bool oURIDecompose(const char* _URIReference, char* _Scheme, size_t _SizeofScheme, char* _Authority, size_t _SizeofAuthority, char* _Path, size_t _SizeOfPath, char* _Query, size_t _SizeofQuery, char* _Fragment, size_t _SizeofFragment)
+bool oURIDecompose(const char* _URIReference, char* _Scheme, size_t _SizeofScheme, char* _Authority, size_t _SizeofAuthority, char* _Path, size_t _SizeofPath, char* _Query, size_t _SizeofQuery, char* _Fragment, size_t _SizeofFragment)
 {
 	if (_URIReference)
 	{
@@ -149,21 +152,18 @@ bool oURIDecompose(const char* _URIReference, char* _Scheme, size_t _SizeofSchem
 		if (matches.empty())
 			return false;
 
-		#define COPY(part, index) do { if (_##part && !oStrcpy(_##part, _Sizeof##part, matches[index].first, matches[index].second)) return false; if (_##part && !oURIPercentDecode(_##part, _Sizeof##part, _##part)) return false; } while(false)
+		#define COPY(part, index) do { if (_##part && !oStrcpy(_##part, _Sizeof##part, matches[index].first, matches[index].second)) return false; if (_##part && !oStd::percent_decode(_##part, _Sizeof##part, _##part)) return false; } while(false)
 			COPY(Scheme, 2);
 			if (_Scheme)
 				oToLower(_Scheme); // http://www.ietf.org/rfc/rfc2396.txt 3.1. Scheme Component
 			COPY(Authority, 4);
+			COPY(Path, 5);
 			COPY(Query, 7);
 			COPY(Fragment, 9);
 		#undef COPY
 
-		cmatch::reference ref =  matches[5];
-		int skipLeadingSlash = (ref.first && *ref.first == '/') ? 1 : 0;
-		if (_Path && !oStrcpy(_Path, _SizeOfPath, ref.first+skipLeadingSlash, ref.second)) return false;
-
 		// Decode any percent-encoded stuff now. http://tools.ietf.org/html/rfc3986#page-14 section 2.4
-		oURIPercentDecode(_Path, _SizeOfPath, _Path);
+		oStd::percent_decode(_Path, _SizeofPath, _Path);
 		return true;
 	}
 
@@ -190,51 +190,30 @@ char* oURIRecompose(char* _URIReference, size_t _SizeofURIReference, const char*
 	oASSERT(_Fragment < _URIReference || _Fragment >= (_URIReference + _SizeofURIReference), "Overlapping buffers not allowed");
 
 	*_URIReference = 0;
-	bool hasScheme = oSTRVALID(_Scheme);
-	if (hasScheme)
+	if (oSTRVALID(_Scheme))
 	{
 		SAFECAT(_Scheme);
 		oToLower(_URIReference); // http://www.ietf.org/rfc/rfc2396.txt 3.1. Scheme Component
 		SAFECAT(":");
 	}
 
-	const bool makeLibxmlCompatible = false;
-	bool libxml = makeLibxmlCompatible && !_memicmp("file", _Scheme, 4);
-	bool uncSlashesAdded = false;
-	//if (libxml || oSTRVALID(_Authority) || oIsUNCPath(_Path))
-	if (hasScheme)
-		SAFECAT("//");
-
 	if (oSTRVALID(_Authority))
 	{
-		if (libxml)
-		{
-			SAFECAT("///");
-			SAFECAT(_Authority);
-			uncSlashesAdded = true;
-		}
-
-		else
-			SAFECAT(_Authority);
+		SAFECAT("//");
+		SAFECAT(_Authority);
 	}
-
-	const bool isWindows = true;
-	if (!uncSlashesAdded && libxml && isWindows)
+	else if (0==_memicmp(_Scheme,"file",4))
 	{
-		// if an absolute Path with no drive letter, add an extra slash
-		if (_Path && oIsSeparator(_Path[0]) && !oIsSeparator(_Path[1]) && _Path[2] != ':')
+		SAFECAT("//");
+		if (oSTRVALID(_Path) && _Path[0] != '/')
 			SAFECAT("/");
 	}
 
-	if (/*libxml && */_Path && !oIsSeparator(_Path[0]))
-		SAFECAT("/");
-
-	size_t URIReferenceLength = oStrlen(_URIReference);
-
-	oStringPath path;
+	oStd::path_string path;
 	if (!oCleanPath(path, _Path))
 		return nullptr;
 
+	size_t URIReferenceLength = oStrlen(_URIReference);
 	if (!oURIPercentEncode(_URIReference + URIReferenceLength, _SizeofURIReference - URIReferenceLength, path, " "))
 		return nullptr;
 
@@ -263,7 +242,8 @@ char* oURIFromAbsolutePath(char* _URI, size_t _SizeofURI, const char* _AbsoluteP
 		return _URI;
 	}
 
-	oStringURI Authority;
+	oStd::uri_string Authority;
+	oStd::uri_string Path;
 
 	if (oIsUNCPath(_AbsolutePath))
 	{
@@ -273,15 +253,20 @@ char* oURIFromAbsolutePath(char* _URI, size_t _SizeofURI, const char* _AbsoluteP
 			end++;
 
 		oStrncpy(Authority, _AbsolutePath + 2, end - (_AbsolutePath + 2));
-		_AbsolutePath = end + 1;
+		_AbsolutePath = end;
+		Path = _AbsolutePath;
+	}
+	else
+	{
+		oPrintf(Path, "/%s", _AbsolutePath);
 	}
 
-	return oURIRecompose(_URI, _SizeofURI, "file", Authority, _AbsolutePath, "", "");
+	return oURIRecompose(_URI, _SizeofURI, "file", Authority, Path, "", "");
 }
 
 char* oURIFromRelativePath(char* _URIReference, size_t _SizeofURIReference, const char* _RelativePath)
 {
-	oStringPath path;
+	oStd::path_string path;
 	if (!oCleanPath(path, _RelativePath))
 		return nullptr;
 
@@ -306,10 +291,6 @@ char* oURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIPart
 
 	#define SAFECAT(str) do { if (!oStrcat(_Path, _SizeofPath, str)) return false; } while(false)
 
-	// If not a file scheme, then it can't be converted
-	if (oStricmp(_URIParts.Scheme, "file"))
-		return nullptr;
-
 	const bool isWindows = true;
 	const char* p = _URIParts.Path.c_str();
 
@@ -319,10 +300,9 @@ char* oURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIPart
 		{
 			SAFECAT("\\\\");
 			SAFECAT(_URIParts.Authority);
-			SAFECAT("\\");
 		}
 		
-		if (_Path[0] == '/' && _Path[2] == ':')
+		if (p[0] == '/' && p[2] == ':')
 			p++;
 	}
 
@@ -347,7 +327,7 @@ char* oURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIPart
 	#undef SAFECAT
 }
 
-char* oURIMakeRelativeToBase(char* _URIReference, size_t _SizeofURIReference, const char* _URIBase, const char* _URI)
+char* oURIRelativize(char* _URIReference, size_t _SizeofURIReference, const char* _URIBase, const char* _URI)
 {
 	/** <citation
 		usage="Adaptation" 
@@ -369,6 +349,12 @@ char* oURIMakeRelativeToBase(char* _URIReference, size_t _SizeofURIReference, co
 	// Can only do this function if both URIs have the same Scheme and Authority
 	if (oStricmp(base_d.Scheme, d.Scheme) || oStricmp(base_d.Authority, d.Authority))
 		return nullptr;
+
+	// Since we're outputting a URI reference with a relative path, 
+	// it shouldn't have a scheme. And because the authority is also assumed
+	// to be the same, we can also clear that.
+	d.Scheme.clear();
+	d.Authority.clear();
 
 	// advance till we find a segment that doesn't match
 	const char *this_Path = d.Path;
@@ -399,8 +385,9 @@ char* oURIMakeRelativeToBase(char* _URIReference, size_t _SizeofURIReference, co
 			segment_count++;
 		relativeTo_slash++;
 	}
+	this_slash++;
 
-	oStringPath new_Path;
+	oStd::path_string new_Path;
 	for (size_t i = 0; i < segment_count; i++)
 		if (!oStrcat(new_Path, "../"))
 			return nullptr;
@@ -411,14 +398,54 @@ char* oURIMakeRelativeToBase(char* _URIReference, size_t _SizeofURIReference, co
 	return oURIRecompose(_URIReference, _SizeofURIReference, d.Scheme, d.Authority, new_Path, d.Query, d.Fragment);
 }
 
-char* oURIMakeAbsoluteFromBase(char* _URIReference, size_t _SizeofURIReference, const char* _URIBase, const char* _URI)
+char* oURIResolve(char* _URIReference, size_t _SizeofURIReference, const char* _URIBase, const char* _URI)
 {
+	oURIParts ResultURIParts;
+	oURIDecompose(_URIBase, &ResultURIParts);
+
 	oURIParts URIParts;
 	oURIDecompose(_URI, &URIParts);
-	oStringPath RelativePath = URIParts.Path;
-	oURIToPath(URIParts.Path, _URIBase);
-	oStrAppendf(URIParts.Path, "/%s", RelativePath.c_str());
-	return oURIRecompose(_URIReference, _SizeofURIReference, URIParts);
+
+	if (oSTRVALID(URIParts.Scheme))
+	{
+		ResultURIParts.Scheme = URIParts.Scheme;
+		ResultURIParts.Authority = URIParts.Authority;
+		ResultURIParts.Path = URIParts.Path;
+		ResultURIParts.Query = URIParts.Query;
+		ResultURIParts.Fragment = URIParts.Fragment;
+	}
+	else if (oSTRVALID(URIParts.Authority))
+	{
+		ResultURIParts.Authority = URIParts.Authority;
+		ResultURIParts.Path = URIParts.Path;
+		ResultURIParts.Query = URIParts.Query;
+		ResultURIParts.Fragment = URIParts.Fragment;
+	}
+	else if (oSTRVALID(URIParts.Path))
+	{
+		if (URIParts.Path[0]=='/')
+			ResultURIParts.Path = URIParts.Path;
+		else
+		{
+			oTrimFilename(ResultURIParts.Path);
+			oEnsureSeparator(ResultURIParts.Path);
+			oStrAppendf(ResultURIParts.Path, "%s", URIParts.Path.c_str());
+		}
+
+		ResultURIParts.Query = URIParts.Query;
+		ResultURIParts.Fragment = URIParts.Fragment;
+	}
+	else if (oSTRVALID(URIParts.Query))
+	{
+		ResultURIParts.Query = URIParts.Query;
+		ResultURIParts.Fragment = URIParts.Fragment;
+	}
+	else if (oSTRVALID(URIParts.Fragment))
+	{
+		ResultURIParts.Fragment = URIParts.Fragment;
+	}
+
+	return oURIRecompose(_URIReference, _SizeofURIReference, ResultURIParts);
 }
 
 char* oURIEnsureFileExtension(char* _URIReferenceWithExtension, size_t _SizeofURIReferenceWithExtension, const char* _SourceURIReference, const char* _Extension)
@@ -442,15 +469,19 @@ char* oURIEnsureFileExtension(char* _URIReferenceWithExtension, size_t _SizeofUR
 	return _URIReferenceWithExtension;
 }
 
-bool oFromString(char (*_pStrDestination)[oMAX_URI], const char* _StrSource)
+namespace oStd {
+
+bool from_string(char (*_pStrDestination)[oMAX_URI], const char* _StrSource)
 {
 	return !!oStrcpy(*_pStrDestination, oMAX_URI, _StrSource);
 }
 
-bool oFromString(oURIParts* _pURIParts, const char* _StrSource)
+bool from_string(oURIParts* _pURIParts, const char* _StrSource)
 {
 	return oURIDecompose(_StrSource, _pURIParts);
 }
+
+} // namespace oStd
 
 static std::regex QueryRegex("(.+?)=(.+?)&", std::tr1::regex_constants::optimize); // @oooii-tony: ok static (duplication in DLLs won't affect correctness)
 void oURIQueryEnumKeyValuePairs(const char* _URIQuery, oFUNCTION<void(const char* _Key, const char* _Value)> _Enumerator)
@@ -459,7 +490,7 @@ void oURIQueryEnumKeyValuePairs(const char* _URIQuery, oFUNCTION<void(const char
 	int ArgsToCollect[] = {1,2};
 
 	// FIXME: Copying the URI so we can append it with & so the regex matches
-	oStringURI copy = _URIQuery;
+	oStd::uri_string copy = _URIQuery;
 	oStrAppendf(copy, "&");
 
 	for (std::cregex_token_iterator Groups(copy, copy + copy.length(), QueryRegex, ArgsToCollect); Groups != end; ++Groups)
@@ -494,7 +525,7 @@ bool oURI::operator==(const oURI& _That) const
 		#ifdef _DEBUG
 			if (memcmp(this, &_That, sizeof(*this)))
 			{
-				oStringURI A, B;
+				oStd::uri_string A, B;
 				oURIRecompose(A, URIParts);
 				oURIRecompose(B, _That.URIParts);
 				oASSERT(false, "oURI hash collision between \"%s\" and \"%s\"", A.c_str(), B.c_str());
@@ -508,22 +539,27 @@ bool oURI::operator<(const oURI& _That) const
 	return memcmp(this, &_That, sizeof(*this)) < 0;
 }
 
-bool oFromString(oURI* _pURI, const char* _StrSource)
+namespace oStd {
+
+bool from_string(oURI* _pURI, const char* _StrSource)
 {
 	*_pURI = _StrSource;
 	return true;
 }
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oURI& _URI)
+
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oURI& _URI)
 {
 	return oURIRecompose(_StrDestination, _SizeofStrDestination, _URI.GetParts());
 }
 
+} // namespace oStd
+
 typedef bool (*s_oURI_FromString)(oURI*, const char*);
 typedef char* (*s_oURI_ToString)(char*, size_t, const oURI&);
 
-oRTTI_ATOM_DESCRIPTION(oURI,oURI,false,oURI, \
-	(oRTTIFromString)(s_oURI_FromString)oFromString, \
-	(oRTTIToString)(s_oURI_ToString)oToString, \
+oRTTI_ATOM_DESCRIPTION(oURI,oURI,false,false,oURI, 1, \
+	(oRTTIFromString)(s_oURI_FromString)oStd::from_string, \
+	(oRTTIToString)(s_oURI_ToString)oStd::to_string, \
 	nullptr, \
 	nullptr, \
 	nullptr, \

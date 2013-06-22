@@ -30,9 +30,10 @@
 #include <oPlatform/oProgressBar.h>
 #include <oBasis/oDispatchQueuePrivate.h>
 #include <oBasis/oError.h>
-#include <oBasis/oFixedString.h>
+#include <oStd/fixed_string.h>
 #include <oBasis/oInterface.h>
-#include <oBasis/oMutex.h>
+#include <oConcurrency/event.h>
+#include <oConcurrency/mutex.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oString.h>
@@ -102,8 +103,8 @@ protected:
 	void Initialize(bool* _pSuccess);
 	void Run();
 	void Deinitialize();
-	void WTSetText(bool _TextValid, oStringL _Text, bool _SubtextValid, oStringL _Subtext); // by copy so oBIND retains string in Enqueue
-	void WTSetTitle(oStringL _Title); // by copy so oBIND retains string in Enqueue
+	void WTSetText(bool _TextValid, oStd::lstring _Text, bool _SubtextValid, oStd::lstring _Subtext); // by copy so oBIND retains string in Enqueue
+	void WTSetTitle(oStd::lstring _Title); // by copy so oBIND retains string in Enqueue
 	void SetDesc(DESC _Desc); // by copy so oBIND retains string in Enqueue
 
 	DESC Desc;
@@ -117,8 +118,8 @@ protected:
 	HWND hProgressBar;
 	HWND hMarqueeBar;
 	oRefCount RefCount;
-	oSharedMutex DescMutex;
-	oEvent Events;
+	oConcurrency::shared_mutex DescMutex;
+	oConcurrency::event Events;
 
 	oRef<threadsafe oDispatchQueuePrivate> MessageQueue;
 };
@@ -129,7 +130,7 @@ bool oProgressBarCreate(const oProgressBar::DESC& _Desc, void* _WindowNativeHand
 {
 	if (!_ppProgressBar)
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
+		oErrorSetLast(std::errc::invalid_argument);
 		return false;
 	}
 
@@ -258,7 +259,7 @@ HWND oWinProgressBar::PB_NewControl(HWND _hDialog, const RECT& _Rect, bool _Visi
 
 void oWinProgressBar::GetDesc(DESC* _pDesc) threadsafe
 {
-	oSharedLock<oSharedMutex> lock(DescMutex);
+	oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(DescMutex);
 	*_pDesc = thread_cast<DESC&>(Desc);
 }
 
@@ -275,18 +276,18 @@ void oWinProgressBar::Unmap() threadsafe
 	oWinWake(hDialog);
 }
 
-void oWinProgressBar::WTSetTitle(oStringL _Title)
+void oWinProgressBar::WTSetTitle(oStd::lstring _Title)
 {
 	oWinSetText(hDialog, _Title);
 }
 
 void oWinProgressBar::SetTitle(const char* _Title) threadsafe
 {
-	MessageQueue->Dispatch(&oWinProgressBar::SetTitle, thread_cast<oWinProgressBar*>(this), oStringL(oSAFESTR(_Title)));
+	MessageQueue->Dispatch(&oWinProgressBar::SetTitle, thread_cast<oWinProgressBar*>(this), oStd::lstring(_Title));
 	oWinWake(hDialog);
 }
 
-void oWinProgressBar::WTSetText(bool _TextValid, oStringL _Text, bool _SubtextValid, oStringL _Subtext)
+void oWinProgressBar::WTSetText(bool _TextValid, oStd::lstring _Text, bool _SubtextValid, oStd::lstring _Subtext)
 {
 	if (_TextValid)
 		oSetDlgItemTextTruncated(hDialog, TEXT, _Text);
@@ -298,7 +299,7 @@ void oWinProgressBar::SetText(const char* _Text, const char* _Subtext) threadsaf
 {
 	if (_Text || _Subtext)
 	{
-		MessageQueue->Dispatch(&oWinProgressBar::WTSetText, thread_cast<oWinProgressBar*>(this), !!_Text, oStringL(oSAFESTRN(_Text)), !!_Subtext, oStringL(oSAFESTRN(_Subtext)));
+		MessageQueue->Dispatch(&oWinProgressBar::WTSetText, thread_cast<oWinProgressBar*>(this), !!_Text, oStd::lstring(oSAFESTRN(_Text)), !!_Subtext, oStd::lstring(oSAFESTRN(_Subtext)));
 		oWinWake(hDialog);
 	}
 }
@@ -316,11 +317,11 @@ void oWinProgressBar::AddPercentage(int _Percentage) threadsafe
 bool oWinProgressBar::Wait(unsigned int _TimeoutMS) threadsafe
 {
 	size_t bStopped = 0;
-	int Event = Events.WaitAny(_TimeoutMS, EVENT_COMPLETE|EVENT_STOPPED);
+	int Event = Events.wait_for_any(oStd::chrono::milliseconds(_TimeoutMS), EVENT_COMPLETE|EVENT_STOPPED);
 	if (!Event)
-		return oErrorSetLast(oERROR_TIMEOUT);
+		return oErrorSetLast(std::errc::timed_out);
 	else if (Event == EVENT_STOPPED)
-		return oErrorSetLast(oERROR_CANCELED);
+		return oErrorSetLast(std::errc::operation_canceled);
 	return true;
 }
 
@@ -332,7 +333,7 @@ void oWinProgressBar::SetDesc(DESC _Desc)
 	SendMessage(hDialog, oWM_SETSTOP, _Desc.Stopped, 0);
 	ShowWindow(hDialog, _Desc.Show ? SW_SHOW : SW_HIDE);
 	if (_Desc.Show) oWinSetFocus(hDialog);
-	oLockGuard<oSharedMutex> lock(DescMutex);
+	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(DescMutex);
 	Desc = _Desc;
 }
 
@@ -401,8 +402,8 @@ INT_PTR oWinProgressBar::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM 
 			oPrintf(buf, "%u%%", p);
 			oAddTruncationElipse(buf);
 			oVB(SetDlgItemText(hDialog, PERCENTAGE, buf));
-			if (p == 100) Events.Set(EVENT_COMPLETE);
-			else Events.Reset(EVENT_COMPLETE);
+			if (p == 100) Events.set(EVENT_COMPLETE);
+			else Events.reset(EVENT_COMPLETE);
 			return false;
 		}
 
@@ -415,11 +416,11 @@ INT_PTR oWinProgressBar::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM 
 
 		case oWM_SETSTOP:
 		{
-			if (_wParam) Events.Set(EVENT_STOPPED);
-			else Events.Reset(EVENT_STOPPED);
+			if (_wParam) Events.set(EVENT_STOPPED);
+			else Events.reset(EVENT_STOPPED);
 			SendMessage(hProgressBar, PBM_SETSTATE, _wParam ? PBST_ERROR : PBST_NORMAL, 0);
 			if (_wParam) oSetDlgItemTextTruncated(hDialog, SUBTEXT, "Stopped...");
-			oLockGuard<oSharedMutex> lock(DescMutex);
+			oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(DescMutex);
 			Desc.Stopped = !!_wParam;
 			return false;
 		}

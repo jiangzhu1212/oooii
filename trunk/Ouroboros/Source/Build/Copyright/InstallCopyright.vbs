@@ -268,7 +268,7 @@ End Function
 Sub Main()
 
     Dim FileTypesToIgnore
-    FileTypesToIgnore = ".ico .png .bmp .jpg .xml .ini .vcproj .vcxproj .sln .bak .filters .user"
+    FileTypesToIgnore = ".ico .png .bmp .jpg .xml .ini .vcproj .vcxproj .sln .bak .filters .user .props .targets .vbs .cmd .txt .au3"
 
     Dim vbInformation
     vbInformation = 64

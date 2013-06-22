@@ -34,18 +34,11 @@ bool oD3D11CreateRenderTarget(oGPUDevice* _pDevice, const char* _Name, threadsaf
 {
 	oGPU_CREATE_CHECK_NAME();
 	if (!_pWindow)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "A window to associate with this new render target must be specified");
+		return oErrorSetLast(std::errc::invalid_argument, "A window to associate with this new render target must be specified");
 
 	bool success = false;
 	oCONSTRUCT(_ppRenderTarget, oD3D11RenderTarget(_pDevice, _pWindow, _DepthStencilFormat, _Name, &success)); \
 	return success;
-}
-
-const oGUID& oGetGUID(threadsafe const oD3D11RenderTarget* threadsafe const *)
-{
-	// {772E2A04-4C2D-447A-8DA8-91F258EFA68C}
-	static const oGUID oIID_D3D11RenderTarget = { 0x772e2a04, 0x4c2d, 0x447a, { 0x8d, 0xa8, 0x91, 0xf2, 0x58, 0xef, 0xa6, 0x8c } };
-	return oIID_D3D11RenderTarget;
 }
 
 oDEFINE_GPUDEVICE_CREATE(oD3D11, RenderTarget);
@@ -59,7 +52,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget)
 	{
 		if (oSurfaceFormatIsYUV(Desc.Format[i]))
 		{
-			oErrorSetLast(oERROR_INVALID_PARAMETER, "YUV render targets are not supported (format %s specified)", oAsString(Desc.Format[i]));
+			oErrorSetLast(std::errc::invalid_argument, "YUV render targets are not supported (format %s specified)", oStd::as_string(Desc.Format[i]));
 			return;
 		}
 	}
@@ -86,7 +79,7 @@ bool oD3D11RenderTarget::QueryInterface(const oGUID& _InterfaceID, threadsafe vo
 
 	else if (_InterfaceID == (const oGUID&)__uuidof(IDXGISwapChain))
 	{
-		if (Window && Window->IsWindowThread() && Window->QueryInterface((IDXGISwapChain**)_ppInterface))
+		if (Window && Window->QueryInterface((IDXGISwapChain**)_ppInterface))
 			return true;
 	}
 
@@ -128,17 +121,17 @@ void oD3D11RenderTarget::SetClearDesc(const oGPU_CLEAR_DESC& _ClearDesc) threads
 void oD3D11RenderTarget::ResizeLock()
 {
 	DescMutex.lock();
-	oINIT_ARRAY(RTVs, nullptr);
-	oINIT_ARRAY(Textures, nullptr);
+	RTVs.fill(nullptr);
+	Textures.fill(nullptr);
 }
 
 bool oD3D11RenderTarget::ResizeUnlock()
 {
-	oOnScopeExit OSEUnlock([&] { DescMutex.unlock(); });
+	oStd::finally OSEUnlock([&] { DescMutex.unlock(); });
 
 	oRef<IDXGISwapChain> SwapChain;
 	if (!Window->QueryInterface(&SwapChain))
-		return oErrorSetLast(oERROR_NOT_FOUND, "Could not find an IDXGISwapChain in the specified oGPUWindow");
+		return oErrorSetLast(std::errc::function_not_supported, "Could not find an IDXGISwapChain in the specified oGPUWindow");
 
 	oRef<ID3D11Texture2D> SwapChainTexture;
 	oV(SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&SwapChainTexture));
@@ -150,7 +143,7 @@ bool oD3D11RenderTarget::ResizeUnlock()
 	if (!oD3D11CreateRenderTargetView(GetName(), SwapChainTexture, (ID3D11View**)&RTVs[0]))
 		return false; // pass through error
 
-	Desc.NumSlices = 1;
+	Desc.ArraySize = 1;
 	Desc.MRTCount = 1;
 	Desc.Type = oGPU_TEXTURE_2D_RENDER_TARGET;
 	Desc.ClearDesc = oGPU_CLEAR_DESC(); // still settable by client code
@@ -162,7 +155,7 @@ bool oD3D11RenderTarget::ResizeUnlock()
 	RecreateDepthBuffer(Size);
 
 	Desc.Dimensions = int3(Size, 1);
-	oINIT_ARRAY(Desc.Format, oSURFACE_UNKNOWN);
+	Desc.Format.fill(oSURFACE_UNKNOWN);
 	Desc.Format[0] = oDXGIToSurfaceFormat(SCDesc.BufferDesc.Format);
 
 	return true;
@@ -172,7 +165,7 @@ void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
 {
 	if (Desc.DepthStencilFormat != DXGI_FORMAT_UNKNOWN)
 	{
-		oStringL name;
+		oStd::lstring name;
 		oPrintf(name, "%s.DS", GetName());
 		oD3D11DEVICE();
 		DepthStencilTexture = nullptr;
@@ -180,7 +173,7 @@ void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
 
 		oGPU_TEXTURE_DESC d;
 		d.Dimensions = int3(_Dimensions, 1);
-		d.NumSlices = 1;
+		d.ArraySize = 1;
 		d.Format = Desc.DepthStencilFormat;
 		d.Type = oGPU_TEXTURE_2D_RENDER_TARGET;
 
@@ -203,7 +196,7 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 	{
 		if (Desc.Dimensions != _NewDimensions)
 		{
-			oLockGuard<oSharedMutex> lock(DescMutex);
+			oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(DescMutex);
 
 			oTRACE("%s %s Resize %dx%dx%d -> %dx%dx%d", typeid(*this).name(), GetName(), Desc.Dimensions.x, Desc.Dimensions.y, Desc.Dimensions.z, _NewDimensions.x, _NewDimensions.y, _NewDimensions.z);
 			
@@ -221,20 +214,20 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 				oD3D11DEVICE();
 				for (int i = 0; i < Desc.MRTCount; i++)
 				{
-					oStringL name;
+					oStd::lstring name;
 					oPrintf(name, "%s%02d", GetName(), i);
 
 					oGPUTexture::DESC d;
 					d.Dimensions = _NewDimensions;
 					d.Format = Desc.Format[i];
-					d.NumSlices = Desc.NumSlices;
+					d.ArraySize = Desc.ArraySize;
 					d.Type = oGPUTextureTypeGetRenderTargetType(Desc.Type);
 
 					oVERIFY(Device->CreateTexture(name, d, &Textures[i]));
 					oVERIFY(oD3D11CreateRenderTargetView(name, static_cast<oD3D11Texture*>(Textures[i].c_ptr())->Texture, &RTVs[i]));
 				}
 
-				RecreateDepthBuffer(_NewDimensions.xy);
+				RecreateDepthBuffer(_NewDimensions.xy());
 			}
 
 			Desc.Dimensions = _NewDimensions;	

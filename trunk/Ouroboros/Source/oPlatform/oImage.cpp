@@ -24,10 +24,10 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oReporting.h>
-#include <oBasis/oColor.h>
+#include <oStd/color.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oError.h>
-#include <oBasis/oMutex.h>
+#include <oConcurrency/mutex.h>
 #include <oPlatform/oFile.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oSingleton.h>
@@ -35,7 +35,9 @@
 #include <oPlatform/Windows/oWindows.h>
 #include "FreeImageHelpers.h"
 
-const char* oAsString(oImage::FORMAT _Format)
+namespace oStd {
+
+const char* as_string(const oImage::FORMAT& _Format)
 {
 	switch (_Format)
 	{
@@ -48,6 +50,8 @@ const char* oAsString(oImage::FORMAT _Format)
 		oNODEFAULT;
 	}
 }
+
+} // namespace oStd
 
 oImage::FORMAT oImageFormatFromSurfaceFormat(oSURFACE_FORMAT _Format)
 {
@@ -82,14 +86,14 @@ oAPI oImage::FILE_FORMAT oImageFormatFromExtension(const char* _URIReference)
 	oURIParts URIParts;
 	if (!oURIDecompose(_URIReference, &URIParts))
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER);
+		oErrorSetLast(std::errc::invalid_argument);
 		return oImage::UNKNOWN_FILE;
 	}
 
 	const char* ext = oGetFileExtension(URIParts.Path);
 	if (!ext)
 	{
-		oErrorSetLast(oERROR_NONE);
+		oErrorSetLast(0);
 		return oImage::UNKNOWN_FILE;
 	}
 
@@ -102,11 +106,11 @@ oAPI oImage::FILE_FORMAT oImageFormatFromExtension(const char* _URIReference)
 		".dds",
 	};
 
-	for (size_t i = 0; i < oCOUNTOF(sSupportedExts); i++)
+	oFORI(i, sSupportedExts)
 		if (!oStricmp(ext, sSupportedExts[i]))
 			return static_cast<oImage::FILE_FORMAT>(i);
 
-	oErrorSetLast(oERROR_NOT_FOUND, "Unrecognized extension %s", oSAFESTR(ext));
+	oErrorSetLast(std::errc::not_supported, "Unrecognized extension %s", oSAFESTR(ext));
 	return oImage::UNKNOWN_FILE;
 }
 
@@ -133,7 +137,7 @@ struct oImageImpl : public oImage
 
 		if (!FIBitmap)
 		{
-			oErrorSetLast(oERROR_GENERIC, "Failed to create oImage %s", Name);
+			oErrorSetLast(std::errc::protocol_error, "Failed to create oImage %s", Name);
 			return;
 		}
 
@@ -160,7 +164,7 @@ struct oImageImpl : public oImage
 		, Name(_Name)
 	{
 		if (!FIBitmap)
-			oErrorSetLast(oERROR_GENERIC, "Failed to create oImage %s", Name);
+			oErrorSetLast(std::errc::protocol_error, "Failed to create oImage %s", Name);
 		*_pSuccess = !!FIBitmap;
 	}
 
@@ -170,7 +174,7 @@ struct oImageImpl : public oImage
 			, Name(_Name)
 		{
 			if (!FIBitmap)
-				oErrorSetLast(oERROR_GENERIC, "Failed to create oImage %s", Name);
+				oErrorSetLast(std::errc::protocol_error, "Failed to create oImage %s", Name);
 			*_pSuccess = !!FIBitmap;
 		}
 	#endif
@@ -180,21 +184,21 @@ struct oImageImpl : public oImage
 		FreeImage_Unload(FIBitmap);
 	}
 
-	void Put(const int2& _Coord, oColor _Color) override
+	void Put(const int2& _Coord, oStd::color _Color) override
 	{
 		FreeImage_SetPixelColor(FIBitmap, _Coord.x, _Coord.y, (RGBQUAD*)&_Color);
 	}
 
-	oColor Get(const int2& _Coord) const override
+	oStd::color Get(const int2& _Coord) const override
 	{
-		oColor c;
+		oStd::color c;
 		FreeImage_GetPixelColor(FIBitmap, _Coord.x, _Coord.y, (RGBQUAD*)&c);
 		return c;
 	}
 
 	void CopyData(const void* _pSourceBuffer, size_t _SourceRowPitch, bool _FlipVertically) threadsafe override
 	{
-		oLockGuard<oSharedMutex> Lock(Mutex);
+		oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(Mutex);
 		DESC d;
 		GetDesc(&d);
 		oMemcpy2d(FreeImage_GetBits(FIBitmap), d.RowPitch, _pSourceBuffer, _SourceRowPitch, d.Dimensions.x * oImageGetSize(d.Format), d.Dimensions.y, _FlipVertically);
@@ -210,7 +214,7 @@ struct oImageImpl : public oImage
 
 	void CopyDataTo(void* _pDestinationBuffer, size_t _DestinationRowPitch, bool _FlipVertically) const threadsafe
 	{
-		oSharedLock<oSharedMutex> Lock(Mutex);
+		oConcurrency::shared_lock<oConcurrency::shared_mutex> Lock(Mutex);
 		DESC d;
 		GetDesc(&d);
 		oMemcpy2d(_pDestinationBuffer, _DestinationRowPitch, FreeImage_GetBits(FIBitmap), d.RowPitch, d.Dimensions.x * oImageGetSize(d.Format), d.Dimensions.y, _FlipVertically);
@@ -219,22 +223,15 @@ struct oImageImpl : public oImage
 private:
 	FIBITMAP* FIBitmap;
 	oRefCount RefCount;
-	oSharedMutex Mutex;
-	oStringURI Name;
+	oConcurrency::shared_mutex Mutex;
+	oStd::uri_string Name;
 };
-
-const oGUID& oGetGUID( threadsafe const oImage* threadsafe const * )
-{
-	// {83CECF1C-316F-4ed4-9B20-4180B2ED4B4E}
-	static const oGUID oIIDImage = { 0x83cecf1c, 0x316f, 0x4ed4, { 0x9b, 0x20, 0x41, 0x80, 0xb2, 0xed, 0x4b, 0x4e } };
-	return oIIDImage;
-}
 
 bool oImageGetDesc(const void* _pBuffer, size_t _SizeofBuffer, oImage::DESC* _pDesc)
 {
 	FIBITMAP* FIBitmap = FILoad(_pBuffer, _SizeofBuffer, false);
 	if (!FIBitmap)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Failed to load the specified buffer as a file format supported by oImage");
+		return oErrorSetLast(std::errc::invalid_argument, "Failed to load the specified buffer as a file format supported by oImage");
 	FIGetDesc(FIBitmap, _pDesc);
 	FreeImage_Unload(FIBitmap);
 	return true;
@@ -243,7 +240,7 @@ bool oImageGetDesc(const void* _pBuffer, size_t _SizeofBuffer, oImage::DESC* _pD
 bool oImageCreate(const char* _Name, const void* _pBuffer, size_t _SizeofBuffer, oImage::LOAD_FLAGS _Flags, oImage** _ppImage)
 {
 	if (!_pBuffer || !_SizeofBuffer || !_ppImage) 
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 	bool success = false;
 	oCONSTRUCT(_ppImage, oImageImpl(_Name, _pBuffer, _SizeofBuffer, _Flags, &success));
 	return success;
@@ -252,7 +249,7 @@ bool oImageCreate(const char* _Name, const void* _pBuffer, size_t _SizeofBuffer,
 bool oImageCreate(const char* _Name, const oImage::DESC& _Desc, oImage** _ppImage)
 {
 	if (!_ppImage)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 	
 	bool success = false;
 	oCONSTRUCT(_ppImage, oImageImpl(_Name, _Desc, &success));
@@ -274,7 +271,7 @@ bool oImageCreate(const char* _Name, const oSURFACE_DESC& _Desc, oImage** _ppIma
 	bool oImageCreateBitmap(const threadsafe oImage* _pSourceImage, struct HBITMAP__** _ppBitmap)
 	{
 		if (!_pSourceImage || !_ppBitmap)
-			return oErrorSetLast(oERROR_INVALID_PARAMETER);
+			return oErrorSetLast(std::errc::invalid_argument);
 
 		oConstLockedPointer<oImage> LockedSourceImage(_pSourceImage);
 		*_ppBitmap = FIAllocateBMP(((oImageImpl*)LockedSourceImage.c_ptr())->Bitmap());
@@ -284,7 +281,7 @@ bool oImageCreate(const char* _Name, const oSURFACE_DESC& _Desc, oImage** _ppIma
 	bool oImageCreate(const char* _Name, struct HBITMAP__* _pBitmap, oImage** _ppImage)
 	{
 		if (!_pBitmap || !_ppImage)
-			return oErrorSetLast(oERROR_INVALID_PARAMETER);
+			return oErrorSetLast(std::errc::invalid_argument);
 
 		bool success = false;
 		oCONSTRUCT(_ppImage, oImageImpl(_Name, _pBitmap, &success));
@@ -297,24 +294,24 @@ static size_t oImageSave(FIBITMAP* _bmp, oImage::FILE_FORMAT _Format, oImage::CO
 {
 	oASSERT((size_t)((DWORD)_SizeofBuffer) == _SizeofBuffer, "Size of buffer too large for underlying implementation.");
 	FIMEMORY* pMemory = FreeImage_OpenMemory(nullptr, 0);
-	oOnScopeExit CloseMem([&] { FreeImage_CloseMemory(pMemory); });
+	oStd::finally CloseMem([&] { FreeImage_CloseMemory(pMemory); });
 
 	FREE_IMAGE_FORMAT fif = FIToFIF(_Format);
 
 	size_t written = 0;
 
 	FIBITMAP* flipClone = FreeImage_Clone(_bmp);
-	oOnScopeExit unloadClone([&](){ FreeImage_Unload(flipClone); });
+	oStd::finally unloadClone([&](){ FreeImage_Unload(flipClone); });
 	FreeImage_FlipVertical(flipClone);
 
 	if (FreeImage_SaveToMemory(fif, flipClone, pMemory, FIGetSaveFlags(fif, _CompressionLevel)))
 		written = FreeImage_TellMemory(pMemory);
 	else
-		oErrorSetLast(oERROR_IO, "Failed to save image to memory");
+		oErrorSetLast(std::errc::io_error, "Failed to save image to memory");
 
 	if (written > _SizeofBuffer)
 	{
-		oErrorSetLast(oERROR_AT_CAPACITY, "The specified buffer is too small to receive image");
+		oErrorSetLast(std::errc::no_buffer_space, "The specified buffer is too small to receive image");
 		return written;
 	}
 	
@@ -327,7 +324,7 @@ static size_t oImageSave(FIBITMAP* _bmp, oImage::FILE_FORMAT _Format, oImage::CO
 size_t oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format, oImage::COMPRESSION_LEVEL _CompressionLevel, void* _pBuffer, size_t _SizeofBuffer)
 {
 	if (!_pImage || _Format == oImage::UNKNOWN || _Format == oImage::DDS || !_pBuffer || !_SizeofBuffer)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	oConstLockedPointer<oImage> LockedImage(_pImage);
 	FIBITMAP* FIBitmap = ((oImageImpl*)LockedImage.c_ptr())->Bitmap();
@@ -337,7 +334,7 @@ size_t oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format,
 size_t oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format, oImage::COMPRESSION_LEVEL _CompressionLevel, oImage::LOAD_FLAGS _Flags, void* _pBuffer, size_t _SizeofBuffer)
 {
 	if (!_pImage || _Format == oImage::UNKNOWN || _Format == oImage::DDS || !_pBuffer || !_SizeofBuffer)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	oConstLockedPointer<oImage> LockedImage(_pImage);
 	FIBITMAP* FIBitmap = ((oImageImpl*)LockedImage.c_ptr())->Bitmap();
@@ -358,16 +355,16 @@ size_t oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format,
 bool oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format, oImage::COMPRESSION_LEVEL _CompressionLevel, oImage::LOAD_FLAGS _Flags, const char* _Path)
 {
 	if (!_pImage || !oSTRVALID(_Path))
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	if (_Format == oImage::UNKNOWN)
 		_Format = FIFromFIF(FreeImage_GetFIFFromFilename(_Path));
 
 	if (_Format == oImage::UNKNOWN)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "could not decode file format from path");
+		return oErrorSetLast(std::errc::invalid_argument, "could not decode file format from path");
 
 	if (_Format == oImage::DDS)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	FREE_IMAGE_FORMAT fif = FIToFIF(_Format);
 
@@ -383,7 +380,7 @@ bool oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format, o
 		return false; // pass through error
 
 	FIBITMAP* flipClone = FreeImage_Clone(FIBitmap);
-	oOnScopeExit unloadClone([&](){ FreeImage_Unload(flipClone); });
+	oStd::finally unloadClone([&](){ FreeImage_Unload(flipClone); });
 	FreeImage_FlipVertical(flipClone);
 
 	bool success = !!FreeImage_Save(fif, flipClone, _Path, FIGetSaveFlags(fif, _CompressionLevel));
@@ -392,7 +389,7 @@ bool oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format, o
 		FreeImage_Unload(FIBitmap);
 
 	if (!success)
-		return oErrorSetLast(oERROR_IO, "Failed to save oImage \"%s\" to path \"%s\"", _pImage->GetName(), _Path);
+		return oErrorSetLast(std::errc::io_error, "Failed to save oImage \"%s\" to path \"%s\"", _pImage->GetName(), _Path);
 
 	return true;
 }
@@ -400,7 +397,7 @@ bool oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format, o
 bool oImageLoad(const char* _Path, oImage::LOAD_FLAGS _Flags, oImage** _ppImage)
 {
 	if (!oSTRVALID(_Path) || !_ppImage)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER);
+		return oErrorSetLast(std::errc::invalid_argument);
 
 	oRef<oBuffer> FileData;
 	if (!oBufferLoad(_Path, &FileData))
@@ -412,7 +409,7 @@ bool oImageLoad(const char* _Path, oImage::LOAD_FLAGS _Flags, oImage** _ppImage)
 bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _pImage2, unsigned int _BitTolerance, float* _pRootMeanSquare, oImage** _ppDiffImage, unsigned int _DiffMultiplier)
 {
 	if (!_pImage1 || !_pImage2)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Two valid images must be specified");
+		return oErrorSetLast(std::errc::invalid_argument, "Two valid images must be specified");
 
 	oConstLockedPointer<oImage> LockedImage1(_pImage1);
 	oConstLockedPointer<oImage> LockedImage2(_pImage2);
@@ -422,51 +419,42 @@ bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _
 	_pImage2->GetDesc(&ImgDesc2);
 
 	if (ImgDesc1.Format != ImgDesc2.Format)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "oImages must be in in the same format to be compared. (%s v. %s)", oAsString(ImgDesc1.Format), oAsString(ImgDesc2.Format));
+		return oErrorSetLast(std::errc::invalid_argument, "oImages must be in in the same format to be compared. (%s v. %s)", oStd::as_string(ImgDesc1.Format), oStd::as_string(ImgDesc2.Format));
 
 	if (ImgDesc1.Dimensions != ImgDesc2.Dimensions)
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "oImages differ in dimensions. ([%dx%d] v. [%dx%d])", ImgDesc1.Dimensions.x, ImgDesc1.Dimensions.y, ImgDesc2.Dimensions.x, ImgDesc2.Dimensions.y);
+		return oErrorSetLast(std::errc::invalid_argument, "oImages differ in dimensions. ([%dx%d] v. [%dx%d])", ImgDesc1.Dimensions.x, ImgDesc1.Dimensions.y, ImgDesc2.Dimensions.x, ImgDesc2.Dimensions.y);
 
 	if (LockedImage1->GetSize() != LockedImage2->GetSize())
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Image sizes don't match");
+		return oErrorSetLast(std::errc::invalid_argument, "Image sizes don't match");
 
 	oImage::DESC descDiff;
+	descDiff.Dimensions = ImgDesc1.Dimensions;
+	descDiff.Format = oImage::R8;
+	descDiff.RowPitch = oImageCalcRowPitch(descDiff.Format, descDiff.Dimensions.x);
+
+	oRef<oImage> DiffImage;
+	if (!oImageCreate("Diff Image", descDiff, &DiffImage))
+		return false; // pass through error
+
+	oSURFACE_DESC In;
+	oImageGetSurfaceDesc(_pImage1, &In);
+	oSURFACE_CONST_MAPPED_SUBRESOURCE msr1, msr2;
+	oImageGetMappedSubresource(LockedImage1, &msr1);
+	oImageGetMappedSubresource(LockedImage2, &msr2);
+
+	oSURFACE_DESC Out;
+	oSURFACE_MAPPED_SUBRESOURCE msrDiff;
+	oImageGetSurfaceDesc(DiffImage, &Out);
+	oImageGetMappedSubresource(DiffImage, &msrDiff);
+
+	if (!oSurfaceCalcAbsDiff(In, msr1, msr2, Out, msrDiff, _pRootMeanSquare))
+		return false; // pass through error
+
 	if (_ppDiffImage)
 	{
-		descDiff.Dimensions = ImgDesc1.Dimensions;
-		descDiff.Format = ImgDesc1.Format;
-		descDiff.RowPitch = oImageCalcRowPitch(descDiff.Format, descDiff.Dimensions.x);
-		if (!oImageCreate("Temp image", descDiff, _ppDiffImage))
-			return false; // pass through error
+		DiffImage->Reference();
+		*_ppDiffImage = DiffImage;
 	}
-
-	unsigned char* diff = nullptr;
-	if (_ppDiffImage)
-		diff = static_cast<unsigned char*>((*_ppDiffImage)->GetData());
-
-	int elementSize = oSurfaceFormatGetSize(oImageFormatToSurfaceFormat(ImgDesc1.Format));
-	// @oooii-tony: This is ripe for parallelism. Optimize this using oParallelFor..
-	const unsigned char* c1 = static_cast<const unsigned char*>(LockedImage1->GetData());
-	const unsigned char* c2 = static_cast<const unsigned char*>(LockedImage2->GetData());
-
-	const size_t nPixels = (*_ppDiffImage)->GetSize() / elementSize;
-
-	float RMSAccum = 0.0f;
-
-	for (size_t i = 0; i < nPixels; i++)
-	{
-		for (int j = 0; j < elementSize; j++)
-		{
-			int sample1 = c1[i*elementSize+j];
-			int sample2 = c2[i*elementSize+j];
-			int d = abs(sample1 - sample2);
-			RMSAccum += d*d;
-			diff[i*elementSize+j] = static_cast<unsigned char>(clamp(d, 0, 255));
-		}
-	}
-
-	if (_pRootMeanSquare)
-		*_pRootMeanSquare = sqrt(RMSAccum / nPixels);
 
 	return true;
 }

@@ -29,8 +29,8 @@
 #ifndef oConsole_h
 #define oConsole_h
 
-#include <oBasis/oColor.h>
-#include <oBasis/oFunction.h>
+#include <oStd/color.h>
+#include <oStd/function.h>
 #include <oBasis/oMathTypes.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -75,9 +75,13 @@ namespace oConsole
 		unsigned short Left;  // in pixels
 		unsigned short Width;  // in characters
 		unsigned short Height;  // in characters
-		oColor Foreground; // 0 means don't set color
-		oColor Background; // 0 means don't set color
+		oStd::color Foreground; // 0 means don't set color
+		oStd::color Background; // 0 means don't set color
 		bool Show;
+	
+		// If specified and a valid, accessible file path, all output through this 
+		// console will be written to the specified file. 
+		oStd::path_string LogFilePath;
 	};
 
 	void* GetNativeHandle(); // returns HWND on Windows
@@ -101,9 +105,9 @@ namespace oConsole
 
 	bool HasFocus();
 
-	int vfprintf(FILE* _pStream, oColor _Foreground, oColor _Background, const char* _Format, va_list _Args);
-	inline int fprintf(FILE* _pStream, oColor _Foreground, oColor _Background, const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(_pStream, _Foreground, _Background, _Format, args); va_end(args); return n; }
-	inline int printf(oColor _Foreground, oColor _Background, const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(stdout, _Foreground, _Background, _Format, args); va_end(args); return n; }
+	int vfprintf(FILE* _pStream, oStd::color _Foreground, oStd::color _Background, const char* _Format, va_list _Args);
+	inline int fprintf(FILE* _pStream, oStd::color _Foreground, oStd::color _Background, const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(_pStream, _Foreground, _Background, _Format, args); va_end(args); return n; }
+	inline int printf(oStd::color _Foreground, oStd::color _Background, const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(stdout, _Foreground, _Background, _Format, args); va_end(args); return n; }
 
 	void HookEvent(EVENT _Event, EventFn _Function);
 };

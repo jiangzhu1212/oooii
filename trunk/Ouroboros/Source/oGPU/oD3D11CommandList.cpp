@@ -26,11 +26,9 @@
 #include "oD3D11Buffer.h"
 #include "oD3D11CommandList.h"
 #include "oD3D11ComputeShader.h"
-#include "oD3D11InstanceList.h"
-#include "oD3D11LineList.h"
-#include "oD3D11Mesh.h"
 #include "oD3D11Pipeline.h"
 #include "oD3D11Texture.h"
+#include "oD3D11Query.h"
 #include <oPlatform/Windows/oDXGI.h>
 
 // @oooii-tony: Now that prim topo is exposed through oGPUPipeline, should we
@@ -57,8 +55,6 @@ static ID3D11UnorderedAccessView* oD3D11GetUAV(const oGPUResource* _pResource, i
 {
 	switch (_pResource->GetType())
 	{
-		case oGPU_INSTANCE_LIST: return nullptr;
-		case oGPU_LINE_LIST: return nullptr;
 		case oGPU_BUFFER:
 		{
 			oGPUBuffer::DESC d;
@@ -100,8 +96,6 @@ static ID3D11ShaderResourceView* oD3D11GetSRV(const oGPUResource* _pResource, in
 {
 	switch (_pResource->GetType())
 	{
-		case oGPU_INSTANCE_LIST: return nullptr;
-		case oGPU_LINE_LIST: return nullptr;
 		case oGPU_BUFFER: return static_cast<oD3D11Buffer*>(const_cast<oGPUResource*>(_pResource))->SRV;
 		case oGPU_MESH: return nullptr;
 		
@@ -117,30 +111,20 @@ static ID3D11ShaderResourceView* oD3D11GetSRV(const oGPUResource* _pResource, in
 
 ID3D11Resource* oD3D11GetSubresource(oGPUResource* _pResource, int _Subresource, int* _pD3DSubresourceIndex)
 {
+	oASSERT(_pResource->GetType() != oGPU_MESH, "Do not use GPU mesh directly, use its buffers");
 	*_pD3DSubresourceIndex = 0;
 	switch (_pResource->GetType())
 	{
-		case oGPU_INSTANCE_LIST: return static_cast<oD3D11Buffer*>(static_cast<oD3D11InstanceList*>(_pResource)->Instances.c_ptr())->Buffer;
-		case oGPU_LINE_LIST: return static_cast<oD3D11LineList*>(_pResource)->Lines;
 		case oGPU_BUFFER: return static_cast<oD3D11Buffer*>(_pResource)->Buffer;
-		case oGPU_MESH: return static_cast<oD3D11Mesh*>(_pResource)->GetSubresource(_Subresource);
 		case oGPU_TEXTURE: *_pD3DSubresourceIndex = _Subresource; return static_cast<oD3D11Texture*>(_pResource)->Texture;
 		oNODEFAULT;
 	}
-}
-
-const oGUID& oGetGUID(threadsafe const oD3D11CommandList* threadsafe const *)
-{
-	// {2D6106C4-7741-41CD-93DE-2C2A9BCD9163}
-	static const oGUID oIID_D3D11CommandList = { 0x2d6106c4, 0x7741, 0x41cd, { 0x93, 0xde, 0x2c, 0x2a, 0x9b, 0xcd, 0x91, 0x63 } };
-	return oIID_D3D11CommandList;
 }
 
 oDEFINE_GPUDEVICE_CREATE(oD3D11, CommandList);
 oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, CommandList)
 	, Desc(_Desc)
 	, PrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_UNDEFINED)
-	, IndicesSet(false)
 {
 	*_pSuccess = false;
 	oD3D11DEVICE();
@@ -155,14 +139,14 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, CommandList)
 		if (!threadingCaps.DriverCommandLists)
 		{
 			// Is this just a thing of the past? Hopefully...
-			oErrorSetLast(oERROR_REFUSED, "Code requires driver workaround: http://msdn.microsoft.com/en-us/library/windows/desktop/ff476486(v=vs.85).aspx, but we haven't implemented it.");
+			oErrorSetLast(std::errc::permission_denied, "Code requires driver workaround: http://msdn.microsoft.com/en-us/library/windows/desktop/ff476486(v=vs.85).aspx, but we haven't implemented it.");
 			return;
 		}
 
 		HRESULT hr = D3DDevice->CreateDeferredContext(0, &Context);
 		if (FAILED(hr))
 		{
-			oStringM err;
+			oStd::mstring err;
 
 			UINT DeviceCreationFlags = D3DDevice->GetCreationFlags();
 
@@ -234,6 +218,16 @@ void oD3D11CommandList::End()
 	}
 }
 
+void oD3D11CommandList::BeginQuery(oGPUQuery* _pQuery)
+{
+	static_cast<oD3D11Query*>(_pQuery)->Begin(Context);
+}
+
+void oD3D11CommandList::EndQuery(oGPUQuery* _pQuery)
+{
+	static_cast<oD3D11Query*>(_pQuery)->End(Context);
+}
+
 void oD3D11CommandList::Flush()
 {
 	Context->Flush();
@@ -249,7 +243,7 @@ void oD3D11CommandList::Reserve(oGPUResource* _pResource, int _Subresource, oSUR
 	return static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->MEMReserve(Context, _pResource, _Subresource, _pMappedSubresource);
 }
 
-void oD3D11CommandList::Commit(oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Source, const oGPU_BOX& _Subregion)
+void oD3D11CommandList::Commit(oGPUResource* _pResource, int _Subresource, const oSURFACE_MAPPED_SUBRESOURCE& _Source, const oSURFACE_BOX& _Subregion)
 {
 	static_cast<threadsafe oD3D11Device*>(Device.c_ptr())->MEMCommit(Context, _pResource, _Subresource, _Source, _Subregion);
 }
@@ -273,29 +267,12 @@ void oD3D11CommandList::Copy(oGPUBuffer* _pDestination, int _DestinationOffsetBy
 
 void oD3D11CommandList::Copy(oGPUResource* _pDestination, oGPUResource* _pSource)
 {
-	oASSERT(_pDestination && _pSource && _pDestination->GetType() == _pSource->GetType(), "Copy(%s, %s) can only occur between two same-typed objects", _pDestination ? oAsString(_pDestination->GetType()) : "(null)", _pSource ? oAsString(_pSource->GetType()) : "(null)");
+	oASSERT(_pDestination && _pSource && _pDestination->GetType() == _pSource->GetType(), "Copy(%s, %s) can only occur between two same-typed objects", _pDestination ? oStd::as_string(_pDestination->GetType()) : "(null)", _pSource ? oStd::as_string(_pSource->GetType()) : "(null)");
 	int D3DSubresourceIndex = 0;
-	switch (_pDestination->GetType())
-	{
-		case oGPU_MESH:
-		{
-			for (int i = 0; i < oGPU_MESH_SUBRESOURCE_COUNT; i++)
-			{
-				ID3D11Resource* d = oD3D11GetSubresource(_pDestination, i, &D3DSubresourceIndex);
-				ID3D11Resource* s = oD3D11GetSubresource(_pSource, i, &D3DSubresourceIndex);
-				Context->CopyResource(d, s);
-			}
-			break;
-		}
-
-		default:
-		{
-			ID3D11Resource* d = oD3D11GetSubresource(_pDestination, 0, &D3DSubresourceIndex);
-			ID3D11Resource* s = oD3D11GetSubresource(_pSource, 0, &D3DSubresourceIndex);
-			Context->CopyResource(d, s);
-			break;
-		}
-	}
+	oASSERT(_pDestination->GetType() != oGPU_MESH, "Do not use GPU mesh directly, use its buffers");
+	ID3D11Resource* d = oD3D11GetSubresource(_pDestination, 0, &D3DSubresourceIndex);
+	ID3D11Resource* s = oD3D11GetSubresource(_pSource, 0, &D3DSubresourceIndex);
+	Context->CopyResource(d, s);
 }
 
 void oD3D11CommandList::CopyCounter(oGPUBuffer* _pDestination, uint _DestinationAlignedOffset, oGPUBuffer* _pUnorderedSource)
@@ -306,7 +283,7 @@ void oD3D11CommandList::CopyCounter(oGPUBuffer* _pDestination, uint _Destination
 		oASSERT(d.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND || d.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_COUNTER, "Source must be an unordered structured buffer with APPEND or COUNTER modifiers");
 	#endif
 
-	oASSERT(oIsByteAligned(_DestinationAlignedOffset, sizeof(uint)), "_DestinationAlignedOffset must be sizeof(uint)-aligned");
+	oASSERT(oStd::byte_aligned(_DestinationAlignedOffset, sizeof(uint)), "_DestinationAlignedOffset must be sizeof(uint)-aligned");
 	Context->CopyStructureCount(static_cast<oD3D11Buffer*>(_pDestination)->Buffer, _DestinationAlignedOffset, oD3D11GetUAV(_pUnorderedSource, 0, 0, true));
 }
 
@@ -359,10 +336,10 @@ void oD3D11CommandList::SetRenderTargetAndUnorderedResources(oGPURenderTarget* _
 
 		if (RT)
 		{
-			Context->OMSetRenderTargetsAndUnorderedAccessViews(RT->Desc.MRTCount, (ID3D11RenderTargetView* const*)RT->RTVs, RT->DSV, StartSlot, NumUAVs, UAVs, pInitialCounts);
+			Context->OMSetRenderTargetsAndUnorderedAccessViews(RT->Desc.MRTCount, (ID3D11RenderTargetView* const*)RT->RTVs.data(), RT->DSV, StartSlot, NumUAVs, UAVs, pInitialCounts);
 			oGPURenderTarget::DESC d;
 			_pRenderTarget->GetDesc(&d);
-			SetViewports(Context, d.Dimensions.xy, _NumViewports, _pViewports);
+			SetViewports(Context, d.Dimensions.xy(), _NumViewports, _pViewports);
 		}
 
 		else
@@ -470,7 +447,7 @@ void oD3D11CommandList::SetBuffers(int _StartSlot, int _NumBuffers, const oGPUBu
 	if (_ppBuffers)
 	{
 		for (int i = 0; i < _NumBuffers; i++)
-			CBs[i] = const_cast<ID3D11Buffer*>(static_cast<const oD3D11Buffer*>(_ppBuffers[i])->Buffer.c_ptr());
+			CBs[i] = _ppBuffers[i] ? const_cast<ID3D11Buffer*>(static_cast<const oD3D11Buffer*>(_ppBuffers[i])->Buffer.c_ptr()) : nullptr;
 	}
 
 	else
@@ -478,49 +455,6 @@ void oD3D11CommandList::SetBuffers(int _StartSlot, int _NumBuffers, const oGPUBu
 			CBs[i] = nullptr;
 
 	oD3D11SetConstantBuffers(Context, _StartSlot, _NumBuffers, CBs);
-}
-
-void oD3D11CommandList::SetIndexBuffer(const oGPUBuffer* _pIndexBuffer)
-{
-	DXGI_FORMAT Format = DXGI_FORMAT_R32_UINT;
-	ID3D11Buffer* b = static_cast<oD3D11Buffer*>(const_cast<oGPUBuffer*>(_pIndexBuffer))->Buffer;
-	oGPU_BUFFER_DESC d;
-	// this can be set to non-zero, but it seems redundant in DrawIndexed and 
-	// DrawIndexedInstanced, so keep it hidden for now.
-	const uint _StartIndex = 0;
-	uint StartByteOffset = 0;
-	if (_pIndexBuffer)
-	{
-		_pIndexBuffer->GetDesc(&d);
-		Format = oDXGIFromSurfaceFormat(d.Format);
-		StartByteOffset = d.StructByteSize * _StartIndex;
-	}
-	Context->IASetIndexBuffer(b, Format, StartByteOffset);
-	IndicesSet = !!b;
-}
-
-void oD3D11CommandList::SetVertexBuffers(int _StartSlot, int _NumVertexBuffers, const oGPUBuffer* const* _ppVertexBuffers, uint _StartVertex)
-{
-	UINT Strides[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
-	UINT ByteOffsets[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
-	const ID3D11Buffer* pVertices[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
-	for (int i = 0; i < _NumVertexBuffers; i++)
-	{
-		Strides[i] = 0;
-		ByteOffsets[i] = 0;
-
-		oGPU_BUFFER_DESC d;
-		if (_ppVertexBuffers[i])
-		{
-			_ppVertexBuffers[i]->GetDesc(&d);
-			Strides[i] = d.StructByteSize;
-			ByteOffsets[i] = _StartVertex * d.StructByteSize;
-		}
-
-		pVertices[i] = static_cast<const oD3D11Buffer*>(_ppVertexBuffers[i])->Buffer;
-	}
-
-	Context->IASetVertexBuffers(_StartSlot, _NumVertexBuffers, const_cast<ID3D11Buffer* const*>(pVertices), Strides, ByteOffsets);
 }
 
 void oD3D11CommandList::Clear(oGPURenderTarget* _pRenderTarget, oGPU_CLEAR _Clear)
@@ -532,7 +466,7 @@ void oD3D11CommandList::Clear(oGPURenderTarget* _pRenderTarget, oGPU_CLEAR _Clea
 		FLOAT c[4];
 		for (int i = 0; i < pRT->Desc.MRTCount; i++)
 		{
-			oColorDecompose(pRT->Desc.ClearDesc.ClearColor[i], c);
+			pRT->Desc.ClearDesc.ClearColor[i].decompose(&c[0], &c[1], &c[2], &c[3]);
 			Context->ClearRenderTargetView(pRT->RTVs[i], c);
 		}
 	}
@@ -553,21 +487,71 @@ void oD3D11CommandList::Clear(oGPURenderTarget* _pRenderTarget, oGPU_CLEAR _Clea
 		Context->ClearDepthStencilView(pRT->DSV, sClearFlags[_Clear], pRT->Desc.ClearDesc.DepthClearValue, pRT->Desc.ClearDesc.StencilClearValue);
 }
 
-void oD3D11CommandList::Draw(uint _StartPrimitive, uint _NumPrimitives, uint _StartInstance, uint _NumInstances)
+void oD3D11CommandList::SetVertexBuffers(const oGPUBuffer* _pIndexBuffer, int _StartSlot, int _NumVertexBuffers, const oGPUBuffer* const* _ppVertexBuffers, uint _StartVertex)
 {
+	ID3D11Buffer* b = nullptr;
+	DXGI_FORMAT Format = DXGI_FORMAT_R32_UINT;
+	const uint _StartIndex = 0; // expose this as a parameter?
+	// this can be set to non-zero, but it seems redundant in DrawIndexed and 
+	// DrawIndexedInstanced, so keep it hidden for now.
+	uint StartByteOffset = 0;
+	if (_pIndexBuffer)
+	{
+		b = static_cast<oD3D11Buffer*>(const_cast<oGPUBuffer*>(_pIndexBuffer))->Buffer;
+		oGPU_BUFFER_DESC d;
+		_pIndexBuffer->GetDesc(&d);
+		Format = oDXGIFromSurfaceFormat(d.Format);
+		StartByteOffset = d.StructByteSize * _StartIndex;
+	}
+	Context->IASetIndexBuffer(b, Format, StartByteOffset);
+
+	UINT Strides[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+	UINT ByteOffsets[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+	const ID3D11Buffer* pVertices[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+
+	if (_ppVertexBuffers)
+	{
+		for (int i = 0; i < _NumVertexBuffers; i++)
+		{
+			Strides[i] = 0;
+			ByteOffsets[i] = 0;
+
+			oGPU_BUFFER_DESC d;
+			if (_ppVertexBuffers[i])
+			{
+				_ppVertexBuffers[i]->GetDesc(&d);
+				Strides[i] = d.StructByteSize;
+				ByteOffsets[i] = _StartVertex * d.StructByteSize;
+				pVertices[i] = static_cast<const oD3D11Buffer*>(_ppVertexBuffers[i])->Buffer;
+			}
+			else
+				pVertices[i] = nullptr;
+		}
+	}
+
+	else
+		memset(pVertices, 0 , sizeof(ID3D11Buffer*) * _NumVertexBuffers);	
+
+	Context->IASetVertexBuffers(_StartSlot, _NumVertexBuffers, const_cast<ID3D11Buffer* const*>(pVertices), Strides, ByteOffsets);
+}
+
+void oD3D11CommandList::Draw(const oGPUBuffer* _pIndices, int _StartSlot, int _NumVertexBuffers, const oGPUBuffer* const* _ppVertexBuffers, uint _StartPrimitive, uint _NumPrimitives, uint _StartInstance, uint _NumInstances)
+{
+	const uint _StartVertex = 0;
+	SetVertexBuffers(_pIndices, _StartSlot, _NumVertexBuffers, _ppVertexBuffers, _StartVertex);
+
 	#ifdef _DEBUG
 	{
 		oRef<ID3D11InputLayout> InputLayout = 0;
 		Context->IAGetInputLayout(&InputLayout);
-		oASSERT(InputLayout, "No InputLayout specified");
+		oASSERT(!_ppVertexBuffers || InputLayout, "No InputLayout specified");
 	}
 	#endif
 
-	// @oooii-tony: Cache this to avoid the Get call here.
 	const uint NumElements = oD3D11GetNumElements(PrimitiveTopology, _NumPrimitives);
 	const uint StartElement = oD3D11GetNumElements(PrimitiveTopology, _StartPrimitive);
 
-	if (IndicesSet)
+	if (!!_pIndices)
 	{
 		if (_NumInstances != oInvalid)
 			Context->DrawIndexedInstanced(NumElements, _NumInstances, StartElement, 0, _StartInstance);
@@ -584,77 +568,8 @@ void oD3D11CommandList::Draw(uint _StartPrimitive, uint _NumPrimitives, uint _St
 	}
 }
 
-void oD3D11CommandList::Draw(const oGPUMesh* _pMesh, int _RangeIndex, const oGPUInstanceList* _pInstanceList)
-{
-	const uint _VertexBufferStartSlot = 0;
-
-	const oD3D11Mesh* M = static_cast<const oD3D11Mesh*>(_pMesh);
-	SetIndexBuffer(M->Indices);
-
-	// Ensure we cover all non-null vertex buffers
-	oASSERT(M->Vertices[0], "No geometry vertices specified");
-	SetVertexBuffers(_VertexBufferStartSlot, M->NumVertexBuffers, (const oGPUBuffer* const*)M->Vertices, 0);
-
-	uint StartInstance = oInvalid;
-	uint NumInstances = oInvalid;
-	if (_pInstanceList)
-	{
-		oGPUInstanceList::DESC ILDesc;
-		_pInstanceList->GetDesc(&ILDesc);
-		oASSERT(ILDesc.InputSlot >= (_VertexBufferStartSlot+M->NumVertexBuffers), "Mesh defines vertices in the instance input slot");
-		StartInstance = 0;
-		NumInstances = ILDesc.NumInstances;
-		SetVertexBuffers(ILDesc.InputSlot, 1, &static_cast<const oD3D11InstanceList*>(_pInstanceList)->Instances, 0);
-	}
-
-	uint StartPrimitive = 0;
-	uint NumPrimitives = 0;
-	if (_RangeIndex == oInvalid)
-	{
-		oGPU_MESH_DESC d;
-		M->GetDesc(&d);
-		NumPrimitives = d.NumIndices / 3;
-	}
-
-	else
-	{
-		oASSERT(_RangeIndex < oUInt(M->Ranges.size()), "");
-		const oGPU_RANGE& r = M->Ranges[_RangeIndex];
-		StartPrimitive = r.StartPrimitive;
-		NumPrimitives = r.NumPrimitives;
-	}
-
-	Draw(StartPrimitive, NumPrimitives, StartInstance, NumInstances);
-}
-
-void oD3D11CommandList::Draw(const oGPULineList* _pLineList)
-{
-	oGPULineList::DESC d;
-	_pLineList->GetDesc(&d);
-
-	const ID3D11Buffer* pLines = static_cast<const oD3D11LineList*>(_pLineList)->Lines;
-	UINT VertexStride = sizeof(oGPU_LINE) / 2; // div by 2 because each point on a line is what is actually stored/drawn
-	
-	oD3D11OverrideIAPrimitiveTopology IAPT(Context, D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-	oD3D11Draw(Context
-		, oD3D11GetNumElements(D3D_PRIMITIVE_TOPOLOGY_LINELIST, d.NumLines)
-		, 1
-		, &pLines
-		, &VertexStride
-		, 0
-		, 0
-		, nullptr);
-}
-
-void oD3D11CommandList::Draw(uint _VertexCount)
-{
-	oD3D11OverrideIAPrimitiveTopology IAPT(Context, D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
-	Context->Draw(_VertexCount, 0);
-}
-
 void oD3D11CommandList::Draw(oGPUBuffer* _pDrawArgs, int _AlignedByteOffsetForArgs)
 {
-	oD3D11OverrideIAPrimitiveTopology IAPT(Context, D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 	Context->DrawInstancedIndirect(static_cast<oD3D11Buffer*>(_pDrawArgs)->Buffer, _AlignedByteOffsetForArgs);
 }
 
@@ -673,7 +588,7 @@ bool oD3D11CommandList::GenerateMips(oGPURenderTarget* _pRenderTarget)
 	oGPURenderTarget::DESC desc;
 	_pRenderTarget->GetDesc(&desc);
 	if (!oGPUTextureTypeHasMips(desc.Type))
-		return oErrorSetLast(oERROR_INVALID_PARAMETER, "Cannot generate mips if the type doesn't contain oGPU_TRAIT_TEXTURE_MIPS");
+		return oErrorSetLast(std::errc::invalid_argument, "Cannot generate mips if the type doesn't contain oGPU_TRAIT_TEXTURE_MIPS");
 
 	oRef<oGPUTexture> texture;
 	_pRenderTarget->GetTexture(0, &texture);

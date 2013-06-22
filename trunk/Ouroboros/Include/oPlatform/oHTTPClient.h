@@ -56,8 +56,8 @@ interface oHTTPClient : oInterface
 
 	virtual bool Head(const char* _pRelativePath, oHTTP_RESPONSE* _pResponse) = 0;
 	virtual bool Get(const char* _pRelativePath, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize) = 0;
-	virtual bool Post(const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _szData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize) = 0;
-	virtual bool Put(const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _szData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize) = 0;
+	virtual bool Post(const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _SizeofData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize) = 0;
+	virtual bool Put(const char* _pRelativePath, oMIME_TYPE _DataType, const void* _pData, unsigned int _SizeofData, oHTTP_RESPONSE* _pResponse, void* _pBuffer, unsigned int _MaxBufferSize) = 0;
 	virtual bool Delete(const char* _pRelativePath, oHTTP_RESPONSE* _pResponse) = 0;
 
 	template<int _MaxBufferSize>
@@ -70,7 +70,7 @@ interface oHTTPClient : oInterface
 		if((_pResponse->Content.Length + 4) >= _MaxBufferSize)
 			return false;
 
-		memset(oByteAdd(_StrDestination, _pResponse->Content.Length), 0, 4);
+		memset(oStd::byte_add(_StrDestination, _pResponse->Content.Length), 0, 4);
 		return true;
 	}
 };

@@ -32,13 +32,8 @@
 #ifndef oGPUConstants_h
 #define oGPUConstants_h
 
-static const uint oGPU_MAX_NUM_PICKS_PER_FRAME = 16;
 static const uint oGPU_MAX_NUM_THREAD_GROUPS_PER_DIMENSION = 65535;
 static const uint oGPU_MAX_NUM_THREAD_GROUPS_PER_DIMENSION_MASK = 0xffff;
 static const uint oGPU_MAX_NUM_THREAD_GROUPS_PER_DIMENSION_SHIFT = 16;
-
-// @oooii-tony: These should be phased out...
-static const uint oGPU_MAX_NUM_ENVIRONMENT_TEXTURES = 16;
-static const uint oGPU_MAX_NUM_MATERIAL_TEXTURES = 16;
 
 #endif

@@ -27,23 +27,22 @@
 #include "oD3D11Device.h"
 #include <oPlatform/Windows/oDXGI.h>
 
-static bool oInitializeInputElementDesc(D3D11_INPUT_ELEMENT_DESC* _pInputElementDescs, size_t _MaxNumInputElementDescs, const oGPU_VERTEX_ELEMENT* _pVertexElements, size_t _NumVertexElements)
+static bool oInitializeInputElementDesc(D3D11_INPUT_ELEMENT_DESC* _pInputElementDescs, size_t _MaxNumInputElementDescs, char* _SemanticBuffer, const oGPU_VERTEX_ELEMENT* _pVertexElements, size_t _NumVertexElements)
 {
 	oASSERT(_MaxNumInputElementDescs >= _NumVertexElements, "");
+	char fcc[5];
+	char* s = _SemanticBuffer;
 	for (size_t i = 0; i < _NumVertexElements; i++)
 	{
 		D3D11_INPUT_ELEMENT_DESC& el = _pInputElementDescs[i];
 		const oGPU_VERTEX_ELEMENT& e = _pVertexElements[i];
 
-		el.SemanticName = oD3D11AsSemantic(e.Semantic);
+		if (!oGPUParseSemantic(e.Semantic, s, &el.SemanticIndex))
+			return oErrorSetLast(std::errc::invalid_argument, "Invalid semantic %s", oStd::to_string(fcc, e.Semantic));
 
-		if (!oStrncmp(el.SemanticName, "Unrecog", 7))
-		{
-			char fcc[5];
-			return oErrorSetLast(oERROR_INVALID_PARAMETER, "Bad semantic fourcc: %s on %d%s element", oToString(fcc, e.Semantic), i, oOrdinal(oInt(i)));
-		}
+		el.SemanticName = s;
+		s += strlen(s) + 1;
 
-		el.SemanticIndex = oGPUGetSemanticIndex(e.Semantic);
 		el.Format = oDXGIFromSurfaceFormat(e.Format);
 		el.InputSlot = e.InputSlot;
 		el.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
@@ -54,20 +53,14 @@ static bool oInitializeInputElementDesc(D3D11_INPUT_ELEMENT_DESC* _pInputElement
 	return true;
 }
 
-const oGUID& oGetGUID(threadsafe const oD3D11Pipeline* threadsafe const *)
-{
-	// {772E2A04-4C2D-447A-8DA8-91F258EFA68C}
-	static const oGUID oIID_D3D11Pipeline = { 0x772e2a04, 0x4c2d, 0x447a, { 0x8d, 0xa8, 0x91, 0xf2, 0x58, 0xef, 0xa6, 0x8c } };
-	return oIID_D3D11Pipeline;
-}
-
 oDEFINE_GPUDEVICE_CREATE(oD3D11, Pipeline);
 oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Pipeline)
 	, InputTopology(static_cast<D3D_PRIMITIVE_TOPOLOGY>(_Desc.InputType))
 	, DebugName(_Desc.DebugName)
 {
 	*_pSuccess = false;
-
+	char SemanticBuffer[D3D11_VS_INPUT_REGISTER_COUNT * 5];
+	*SemanticBuffer = 0;
 	D3D11_INPUT_ELEMENT_DESC Elements[D3D11_VS_INPUT_REGISTER_COUNT];
 	if (_Desc.NumElements)
 	{
@@ -76,7 +69,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Pipeline)
 		pElements = new oGPU_VERTEX_ELEMENT[NumElements];
 		memcpy(pElements, _Desc.pElements, sizeof(oGPU_VERTEX_ELEMENT) * NumElements);
 
-		if (!oInitializeInputElementDesc(Elements, oCOUNTOF(Elements), pElements, NumElements))
+		if (!oInitializeInputElementDesc(Elements, oCOUNTOF(Elements), SemanticBuffer, pElements, NumElements))
 			return; // pass through error
 	}
 	else
@@ -88,7 +81,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Pipeline)
 	// Verify input against shaders
 	if ((InputTopology == D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED || InputTopology < D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST) && (_Desc.pHullShader || _Desc.pDomainShader))
 	{
-		oErrorSetLast(oERROR_INVALID_PARAMETER, "%s inputs cannot have a hull or domain shader bound", oAsString(_Desc.InputType));
+		oErrorSetLast(std::errc::invalid_argument, "%s inputs cannot have a hull or domain shader bound", oStd::as_string(_Desc.InputType));
 		return;
 	}
 
@@ -104,7 +97,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Pipeline)
 
 			if (_Desc.pGeometryShader)
 			{
-				oErrorSetLast(oERROR_INVALID_PARAMETER, "%s inputs cannot have a geometry shader bound", oAsString(_Desc.InputType));
+				oErrorSetLast(std::errc::invalid_argument, "%s inputs cannot have a geometry shader bound", oStd::as_string(_Desc.InputType));
 				return;
 			}
 
@@ -118,36 +111,36 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Pipeline)
 	oD3D11DEVICE();
 	if (_Desc.NumElements)
 	{
-		oV(D3DDevice->CreateInputLayout(Elements, NumElements, _Desc.pVertexShader, oHLSLGetByteCodeSize(_Desc.pVertexShader), &InputLayout));
+		oV(D3DDevice->CreateInputLayout(Elements, NumElements, _Desc.pVertexShader, oD3D11GetHLSLByteCodeSize(_Desc.pVertexShader), &InputLayout));
 	}
 
 	if (_Desc.pVertexShader)
 	{
-		oV(D3DDevice->CreateVertexShader(_Desc.pVertexShader, oHLSLGetByteCodeSize(_Desc.pVertexShader), 0, &VertexShader));
+		oV(D3DDevice->CreateVertexShader(_Desc.pVertexShader, oD3D11GetHLSLByteCodeSize(_Desc.pVertexShader), 0, &VertexShader));
 		oVERIFY(oD3D11SetDebugName(VertexShader, _Desc.DebugName));
 	}
 
 	if (_Desc.pHullShader)
 	{
-		oV(D3DDevice->CreateHullShader(_Desc.pHullShader, oHLSLGetByteCodeSize(_Desc.pHullShader), 0, &HullShader));
+		oV(D3DDevice->CreateHullShader(_Desc.pHullShader, oD3D11GetHLSLByteCodeSize(_Desc.pHullShader), 0, &HullShader));
 		oVERIFY(oD3D11SetDebugName(HullShader, _Desc.DebugName));
 	}
 
 	if (_Desc.pDomainShader)
 	{
-		oV(D3DDevice->CreateDomainShader(_Desc.pDomainShader, oHLSLGetByteCodeSize(_Desc.pDomainShader), 0, &DomainShader));
+		oV(D3DDevice->CreateDomainShader(_Desc.pDomainShader, oD3D11GetHLSLByteCodeSize(_Desc.pDomainShader), 0, &DomainShader));
 		oVERIFY(oD3D11SetDebugName(DomainShader, _Desc.DebugName));
 	}
 
 	if (_Desc.pGeometryShader)
 	{
-		oV(D3DDevice->CreateGeometryShader(_Desc.pGeometryShader, oHLSLGetByteCodeSize(_Desc.pGeometryShader), 0, &GeometryShader));
+		oV(D3DDevice->CreateGeometryShader(_Desc.pGeometryShader, oD3D11GetHLSLByteCodeSize(_Desc.pGeometryShader), 0, &GeometryShader));
 		oVERIFY(oD3D11SetDebugName(GeometryShader, _Desc.DebugName));
 	}
 
 	if (_Desc.pPixelShader)
 	{
-		oV(D3DDevice->CreatePixelShader(_Desc.pPixelShader, oHLSLGetByteCodeSize(_Desc.pPixelShader), 0, &PixelShader));
+		oV(D3DDevice->CreatePixelShader(_Desc.pPixelShader, oD3D11GetHLSLByteCodeSize(_Desc.pPixelShader), 0, &PixelShader));
 		oVERIFY(oD3D11SetDebugName(PixelShader, _Desc.DebugName));
 	}
 

@@ -23,12 +23,40 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oError.h>
+#include "oBasisTestCommon.h"
+#include <oStd/algorithm.h>
+#include <oBasis/oStdStringSupport.h>
+#include <oBasis/oMath.h>
+#include <vector>
 
 bool oBasisTest_oString()
 {
-	if (1) return oErrorSetLast(oERROR_GENERIC, "not yet implemented");
-	oErrorSetLast(oERROR_NONE, "");
+	std::vector<oRECT> testRect;
+
+	const char* rectString = "-6 -7 8 4, 0 0 1 1, -4 5 3 34";
+	oStd::from_string(&testRect, rectString);
+	oTESTB(testRect.size() == 3, "Should have converted 3 rects but instead converted %i", testRect.size());
+
+	int2 mins[] = 
+	{
+		int2(-6, -7),
+		int2(0, 0),
+		int2(-4,  5)
+	};
+
+	int2 maxs[] = 
+	{
+		int2(8, 4),
+		int2(1, 1),
+		int2(3, 34)
+	};
+
+	for(int i = 0; i < 3; ++i)
+	{
+		oTESTB(testRect[i].Min == mins[i], "Incorrect min: %i %i should be %i %i", testRect[i].Min.x, testRect[i].Min.y, mins[i].x, mins[i].y);
+		oTESTB(testRect[i].Max == maxs[i], "Incorrect max: %i %i should be %i %i", testRect[i].Max.x, testRect[i].Max.y, maxs[i].x, maxs[i].y);
+	}
+
+	oErrorSetLast(0, "");
 	return true;
 }
-

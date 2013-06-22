@@ -184,68 +184,10 @@
     <Link />
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUBCEncodeDecode.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUBuffer.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUClear.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUDevice.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUGenerateMips.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUInstancedTriangle.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPULineList.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPURenderTarget.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUSpinningTriangle.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture1D.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture1DMip.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture2D.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture2DMip.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture3D.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTexture3DMip.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTextureCube.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTextureCubeMip.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTraits.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUTriangle.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oGPU\Tests\TESTGPUWindowInWindow.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\oDQConcurrent.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTBasis.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCamera.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCPU.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCRTLeakTracker.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDebugger.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentGeneric.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentPPL.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentSerial.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentTBB.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDispatchQueueConcurrentWTP.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTDisplayAdapter.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTFileAsync.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTFileMap.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTFileSync.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTHLSLMath.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTHTTP.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTImage.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTIntersection.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTMirroredArena.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTParallelFor.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTPath.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTPCIEBandwidth.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTProcessHeapTrivial.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSocketAsync.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSocketBlocking.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTStreamMonitor.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTString.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrency.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTStd.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurfaceFill.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTVTable.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTWindowSendKeys.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTWinRegistry.cpp" />
     <ClCompile Include="oUnitTests.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -255,7 +197,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Ouroboros\Source\oPlatform\Tests\oDQConcurrent.h" />
+    <ClInclude Include="..\Ouroboros\Source\oPlatform\Tests\oTestIntegration.h" />
+    <ClInclude Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrencyRequirements.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
@@ -266,17 +209,41 @@
     <ProjectReference Include="..\Ouroboros\Source\oBasis\oBasisTests.vcxproj">
       <Project>{ae94e4cc-860f-4f14-afb3-bbaabf515551}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oCompute\oCompute.vcxproj">
+      <Project>{64e65a9e-fd6c-4b17-8fa7-a7d686ccea42}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oCompute\oComputeTests.vcxproj">
+      <Project>{1638b61e-994a-4398-9126-08e0ad134fb9}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oConcurrency\oConcurrency.vcxproj">
+      <Project>{08ec5ea1-284b-4688-b14b-4bd9945061fb}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oConcurrency\oConcurrencyTests.vcxproj">
+      <Project>{20a09cf6-97ce-4258-9f01-cfa2b1433df3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oGfx\oGfx.vcxproj">
+      <Project>{72ee4284-df31-4d9f-b796-5de7e2521d5d}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oGPU\oGPU.vcxproj">
       <Project>{0be2fc58-3f40-41a7-b734-cb99d978e7c3}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oGPU\oGPUTests.vcxproj">
       <Project>{4a47dd9b-03e2-4f97-ab66-1222148f9af1}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oHLSL\oHLSL.vcxproj">
+      <Project>{aae3c7d9-8124-4b5a-856c-4c5bf23cdb09}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oPlatform\oPlatform.vcxproj">
       <Project>{8eb33511-eed5-48ac-99f9-efa2a34bb2dd}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\Ouroboros\Source\oPlatform\oPlatformTBB.vcxproj">
-      <Project>{98649fd9-cf7c-46ea-9e3d-297c53accbbb}</Project>
+    <ProjectReference Include="..\Ouroboros\Source\oPlatform\oPlatformTests.vcxproj">
+      <Project>{86158613-24c5-4b25-a043-88dd2ead644c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oStd\oStd.vcxproj">
+      <Project>{6c467bdd-eea7-4ff6-b594-26a760df179f}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oStd\oStdTests.vcxproj">
+      <Project>{7cbfb2e5-2ba4-43a0-9a61-b45e7d7e8978}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -284,22 +251,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Data\oooii.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <FXC Include="..\Ouroboros\Source\oPlatform\Tests\oHLSLPCIEBandwidth.sh">
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OuroborosSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OuroborosSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OuroborosSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OuroborosSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OuroborosSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OuroborosSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OuroborosSuiteDir)Include</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OuroborosSuiteDir)Include\oPlatform\oHLSL.h</AdditionalDependencies>
-    </FXC>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

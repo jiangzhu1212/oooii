@@ -30,12 +30,13 @@
 #ifndef oLeakTracker_h
 #define oLeakTracker_h
 
-#include <oBasis/oCountdownLatch.h>
-#include <oBasis/oFixedString.h>
-#include <oBasis/oFunction.h>
-#include <oBasis/oLinearAllocator.h>
-#include <oBasis/oMutex.h>
-#include <oBasis/oUnorderedMap.h>
+#include <oConcurrency/countdown_latch.h>
+#include <oConcurrency/mutex.h>
+#include <oStd/fixed_string.h>
+#include <oBasis/oHash.h>
+#include <oBasis/oStdLinearAllocator.h>
+#include <oStd/unordered_map.h>
+#include <oStd/function.h>
 
 class oLeakTracker
 {
@@ -85,7 +86,7 @@ public:
 		unsigned int NumStackEntries;
 		unsigned int Line;
 		unsigned int Context;
-		oStringPath	Path;
+		oStd::path_string	Path;
 		bool Tracked; // true if the allocation occurred when tracking wasn't enabled
 		inline bool operator==(const ALLOCATION_DESC& _Other) { return AllocationID == _Other.AllocationID; }
 	};
@@ -95,7 +96,7 @@ public:
 	
 	typedef std::pair<const uintptr_t, ALLOCATION_DESC> pair_type;
 	typedef oStdLinearAllocator<pair_type> allocator_type;
-	typedef oUnorderedMap<uintptr_t, ALLOCATION_DESC, HashAllocation, std::equal_to<uintptr_t>, std::less<uintptr_t>, allocator_type> allocations_t;
+	typedef oStd::unordered_map<uintptr_t, ALLOCATION_DESC, HashAllocation, std::equal_to<uintptr_t>, std::less<uintptr_t>, allocator_type> allocations_t;
 
 	oLeakTracker(const DESC& _Desc, allocations_t::allocator_type _Allocator /*= allocations_t::allocator_type()*/);
 	oLeakTracker(GetCallstackFn _GetCallstack, GetCallstackSymbolStringFn _GetCallstackSymbolString, PrintFn _Print, bool _ReportHexAllocationID, bool _CaptureCallstack, allocations_t::allocator_type _Allocator /*= allocations_t::allocator_type()*/);
@@ -156,16 +157,16 @@ public:
 	// unit tests or level loads.
 	void NewContext() threadsafe;
 
-	void ReferenceDelay() const threadsafe { This()->DelayLatch.Reference(); }
-	void ReleaseDelay() const threadsafe { This()->DelayLatch.Release(); }
+	void ReferenceDelay() const threadsafe { This()->DelayLatch.reference(); }
+	void ReleaseDelay() const threadsafe { This()->DelayLatch.release(); }
 
 private:
 	allocations_t Allocations;
 
 	bool InInternalProcesses; // don't track allocations this object itself makes just to do the tracking (trust that this won't leak too!)
 	DESC Desc;
-	oRecursiveMutex Mutex;
-	oCountdownLatch DelayLatch;
+	oConcurrency::recursive_mutex Mutex;
+	oConcurrency::countdown_latch DelayLatch;
 	unsigned int CurrentContext;
 
 	// Returns false for a blacklisted or out-of-context allocation 

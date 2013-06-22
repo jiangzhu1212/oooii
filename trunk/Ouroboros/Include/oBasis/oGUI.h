@@ -30,19 +30,270 @@
 #ifndef oGUI_h
 #define oGUI_h
 
+#include <oStd/fixed_string.h>
 #include <oBasis/oStddef.h>
-#include <oBasis/oX11KeyboardSymbols.h>
+#include <oBasis/oRTTI.h>
+#include <array>
+
+// Commonly used when creating enums of GUI functionality to have associated
+// runs in the enum - such as for a radio selection list.
+inline bool oGUIInRange(int _First, int _Last, int _Value) { return _Value >= _First && _Value <= _Last; }
+#define oGUI_IN_RANGE(_EnumPrefix, _Value) oGUIInRange(_EnumPrefix##_FIRST, _EnumPrefix##_LAST, _Value)
+
+enum oGUI_INPUT_DEVICE_TYPE
+{
+	oGUI_INPUT_DEVICE_UNKNOWN,
+	oGUI_INPUT_DEVICE_KEYBOARD,
+	oGUI_INPUT_DEVICE_MOUSE,
+	oGUI_INPUT_DEVICE_JOYSTICK,
+	oGUI_INPUT_DEVICE_CONTROL, // i.e. A button or scrollbar
+	oGUI_INPUT_DEVICE_SKELETON,
+	oGUI_INPUT_DEVICE_VOICE,
+	oGUI_INPUT_DEVICE_TOUCH,
+
+	oGUI_INPUT_DEVICE_TYPE_COUNT,
+};
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_INPUT_DEVICE_TYPE)
+
+enum oGUI_INPUT_DEVICE_STATUS
+{
+	oGUI_INPUT_DEVICE_READY,
+	oGUI_INPUT_DEVICE_INITIALIZING,
+	oGUI_INPUT_DEVICE_NOT_CONNECTED,
+	oGUI_INPUT_DEVICE_IS_CLONE,
+	oGUI_INPUT_DEVICE_NOT_SUPPORTED,
+	oGUI_INPUT_DEVICE_INSUFFICIENT_BANDWIDTH,
+	oGUI_INPUT_DEVICE_LOW_POWER,
+	oGUI_INPUT_DEVICE_NOT_POWERED,
+	oGUI_INPUT_DEVICE_NOT_READY,
+
+	oGUI_INPUT_DEVICE_STATUS_COUNT,
+};
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_INPUT_DEVICE_STATUS)
+
+enum oGUI_KEY
+{
+	oGUI_KEY_NONE,
+
+	// Mouse keys
+	oGUI_KEY_MOUSE_LEFT,
+	oGUI_KEY_MOUSE_FIRST = oGUI_KEY_MOUSE_LEFT,
+
+	oGUI_KEY_STANDARD_FIRST = oGUI_KEY_MOUSE_FIRST, 
+	oGUI_KEY_MOUSE_RIGHT,
+	oGUI_KEY_MOUSE_MIDDLE,
+	oGUI_KEY_MOUSE_SIDE1,
+	oGUI_KEY_MOUSE_SIDE2,
+	// Double-click seems to be ubiquitous. In X11 and thus RFB it's its own
+	// button and in Windows the button events get eaten and transformed into 
+	// different events for double-click. So here favor the X11 model.
+	oGUI_KEY_MOUSE_LEFT_DOUBLE,
+	oGUI_KEY_MOUSE_RIGHT_DOUBLE,
+	oGUI_KEY_MOUSE_MIDDLE_DOUBLE,
+	oGUI_KEY_MOUSE_SIDE1_DOUBLE,
+	oGUI_KEY_MOUSE_SIDE2_DOUBLE,
+	oGUI_KEY_MOUSE_LAST = oGUI_KEY_MOUSE_SIDE2_DOUBLE,
+
+	// Joystick keys
+	oGUI_KEY_JOY_LLEFT,
+	oGUI_KEY_JOYSTICK_FIRST = oGUI_KEY_JOY_LLEFT, oGUI_KEY_JOY_LUP, oGUI_KEY_JOY_LRIGHT, oGUI_KEY_JOY_LDOWN,
+	oGUI_KEY_JOY_RLEFT, oGUI_KEY_JOY_RUP, oGUI_KEY_JOY_RRIGHT, oGUI_KEY_JOY_RDOWN,
+	oGUI_KEY_JOY_LSHOULDER1, oGUI_KEY_JOY_LSHOULDER2, oGUI_KEY_JOY_RSHOULDER1, oGUI_KEY_JOY_RSHOULDER2,
+	oGUI_KEY_JOY_LTHUMB, oGUI_KEY_JOY_RTHUMB, oGUI_KEY_JOY_SYSTEM, oGUI_KEY_JOY_START, oGUI_KEY_JOY_SELECT,
+	oGUI_KEY_JOYSTICK_LAST = oGUI_KEY_JOY_SELECT,
+
+	// Control keys
+	oGUI_KEY_LCTRL,
+	oGUI_KEY_KEYBOARD_FIRST = oGUI_KEY_LCTRL, oGUI_KEY_RCTRL,
+	oGUI_KEY_LALT, oGUI_KEY_RALT,
+	oGUI_KEY_LSHIFT, oGUI_KEY_RSHIFT,
+	oGUI_KEY_LWIN, oGUI_KEY_RWIN,
+	oGUI_KEY_APP_CYCLE, oGUI_KEY_APP_CONTEXT,
+
+	// Toggle keys
+	oGUI_KEY_CAPSLOCK,
+	oGUI_KEY_SCROLLLOCK,
+	oGUI_KEY_NUMLOCK,
+
+	// Typing keys
+	oGUI_KEY_SPACE, oGUI_KEY_BACKTICK, oGUI_KEY_DASH, oGUI_KEY_EQUAL, oGUI_KEY_LBRACKET, oGUI_KEY_RBRACKET, oGUI_KEY_BACKSLASH, oGUI_KEY_SEMICOLON, oGUI_KEY_APOSTROPHE, oGUI_KEY_COMMA, oGUI_KEY_PERIOD, oGUI_KEY_SLASH,
+	oGUI_KEY_0, oGUI_KEY_1, oGUI_KEY_2, oGUI_KEY_3, oGUI_KEY_4, oGUI_KEY_5, oGUI_KEY_6, oGUI_KEY_7, oGUI_KEY_8, oGUI_KEY_9,
+	oGUI_KEY_A, oGUI_KEY_B, oGUI_KEY_C, oGUI_KEY_D, oGUI_KEY_E, oGUI_KEY_F, oGUI_KEY_G, oGUI_KEY_H, oGUI_KEY_I, oGUI_KEY_J, oGUI_KEY_K, oGUI_KEY_L, oGUI_KEY_M, oGUI_KEY_N, oGUI_KEY_O, oGUI_KEY_P, oGUI_KEY_Q, oGUI_KEY_R, oGUI_KEY_S, oGUI_KEY_T, oGUI_KEY_U, oGUI_KEY_V, oGUI_KEY_W, oGUI_KEY_X, oGUI_KEY_Y, oGUI_KEY_Z,
+
+	// Numpad keys
+	oGUI_KEY_NUM0, oGUI_KEY_NUM1, oGUI_KEY_NUM2, oGUI_KEY_NUM3, oGUI_KEY_NUM4, oGUI_KEY_NUM5, oGUI_KEY_NUM6, oGUI_KEY_NUM7, oGUI_KEY_NUM8, oGUI_KEY_NUM9, 
+	oGUI_KEY_NUMMUL, oGUI_KEY_NUMADD, oGUI_KEY_NUMSUB, oGUI_KEY_NUMDECIMAL, oGUI_KEY_NUMDIV, 
+
+	// Typing control keys
+	oGUI_KEY_ESC,
+	oGUI_KEY_BACKSPACE,
+	oGUI_KEY_TAB,
+	oGUI_KEY_ENTER,
+	oGUI_KEY_INS, oGUI_KEY_DEL,
+	oGUI_KEY_HOME, oGUI_KEY_END,
+	oGUI_KEY_PGUP, oGUI_KEY_PGDN,
+
+	// System control keys
+	oGUI_KEY_F1, oGUI_KEY_F2, oGUI_KEY_F3, oGUI_KEY_F4, oGUI_KEY_F5, oGUI_KEY_F6, oGUI_KEY_F7, oGUI_KEY_F8, oGUI_KEY_F9, oGUI_KEY_F10, oGUI_KEY_F11, oGUI_KEY_F12, oGUI_KEY_F13, oGUI_KEY_F14, oGUI_KEY_F15, oGUI_KEY_F16, oGUI_KEY_F17, oGUI_KEY_F18, oGUI_KEY_F19, oGUI_KEY_F20, oGUI_KEY_F21, oGUI_KEY_F22, oGUI_KEY_F23, oGUI_KEY_F24,
+	oGUI_KEY_PAUSE,
+	oGUI_KEY_SLEEP,
+	oGUI_KEY_PRINTSCREEN,
+
+	// Directional keys
+	oGUI_KEY_LEFT, oGUI_KEY_UP, oGUI_KEY_RIGHT, oGUI_KEY_DOWN,
+
+	oGUI_KEY_STANDARD_LAST = oGUI_KEY_DOWN,
+
+	// Browser keys
+	oGUI_KEY_MAIL, 
+	oGUI_KEY_BACK, 
+	oGUI_KEY_FORWARD, 
+	oGUI_KEY_REFRESH, 
+	oGUI_KEY_STOP, 
+	oGUI_KEY_SEARCH, 
+	oGUI_KEY_FAVS,
+
+	// Media keys
+	oGUI_KEY_MEDIA,
+	oGUI_KEY_MUTE,
+	oGUI_KEY_VOLUP,
+	oGUI_KEY_VOLDN,
+	oGUI_KEY_PREV_TRACK,
+	oGUI_KEY_NEXT_TRACK,
+	oGUI_KEY_STOP_TRACK,
+	oGUI_KEY_PLAY_PAUSE_TRACK,
+
+	// Misc keys
+	oGUI_KEY_APP1, oGUI_KEY_APP2,
+
+	oGUI_KEY_KEYBOARD_LAST = oGUI_KEY_APP2,
+
+	// Touch
+	oGUI_KEY_TOUCH1,
+	oGUI_KEY_TOUCH_FIRST = oGUI_KEY_TOUCH1, oGUI_KEY_TOUCH2, oGUI_KEY_TOUCH3, oGUI_KEY_TOUCH4, oGUI_KEY_TOUCH5, oGUI_KEY_TOUCH6, oGUI_KEY_TOUCH7, oGUI_KEY_TOUCH8, oGUI_KEY_TOUCH9, oGUI_KEY_TOUCH10,
+	oGUI_KEY_TOUCH_LAST = oGUI_KEY_TOUCH10,
+
+	oGUI_KEY_COUNT,
+};
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_KEY)
+
+inline oGUI_INPUT_DEVICE_TYPE oGUIDeviceFromKey(oGUI_KEY _Key)
+{
+	if (oGUI_IN_RANGE(oGUI_KEY_KEYBOARD, _Key)) return oGUI_INPUT_DEVICE_KEYBOARD;
+	if (oGUI_IN_RANGE(oGUI_KEY_MOUSE, _Key)) return oGUI_INPUT_DEVICE_MOUSE;
+	if (oGUI_IN_RANGE(oGUI_KEY_JOYSTICK, _Key)) return oGUI_INPUT_DEVICE_JOYSTICK;
+	if (oGUI_IN_RANGE(oGUI_KEY_TOUCH, _Key)) return oGUI_INPUT_DEVICE_TOUCH;
+	return oGUI_INPUT_DEVICE_UNKNOWN;
+}
+
+// A standard key issues both an oGUI_ACTION_KEYDOWN and oGUI_ACTION_KEYUP 
+// without special handling.
+// Non-standard keys can behave poorly. For example on Windows they are hooked
+// by the OS/driver to do something OS-specific and thus do not come through
+// as key events, but rather as an app event that is singular, not a down/up.
+inline bool oGUIIsStandardKey(oGUI_KEY _Key)
+{
+	return _Key >= oGUI_KEY_STANDARD_FIRST && _Key <= oGUI_KEY_STANDARD_LAST;
+}
+
+enum oGUI_BONE
+{
+	oGUI_BONE_HIP_CENTER,
+	oGUI_BONE_SPINE,
+	oGUI_BONE_SHOULDER_CENTER,
+	oGUI_BONE_HEAD,
+	oGUI_BONE_SHOULDER_LEFT,
+	oGUI_BONE_ELBOW_LEFT,
+	oGUI_BONE_WRIST_LEFT,
+	oGUI_BONE_HAND_LEFT,
+	oGUI_BONE_SHOULDER_RIGHT,
+	oGUI_BONE_ELBOW_RIGHT,
+	oGUI_BONE_WRIST_RIGHT,
+	oGUI_BONE_HAND_RIGHT,
+	oGUI_BONE_HIP_LEFT,
+	oGUI_BONE_KNEE_LEFT,
+	oGUI_BONE_ANKLE_LEFT,
+	oGUI_BONE_FOOT_LEFT,
+	oGUI_BONE_HIP_RIGHT,
+	oGUI_BONE_KNEE_RIGHT,
+	oGUI_BONE_ANKLE_RIGHT,
+	oGUI_BONE_FOOT_RIGHT,
+	
+	oGUI_BONE_COUNT,
+	oGUI_BONE_INVALID = oGUI_BONE_COUNT,
+};
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_BONE)
+
+struct oGUI_TRACKING_CLIPPING
+{
+	oGUI_TRACKING_CLIPPING()
+		: Left(false)
+		, Right(false)
+		, Top(false)
+		, Bottom(false)
+		, Front(false)
+		, Back(false)
+	{}
+
+	bool Left : 1;
+	bool Right : 1;
+	bool Top : 1;
+	bool Bottom : 1;
+	bool Front : 1;
+	bool Back : 1;
+};
+
+struct oGUI_BONE_DESC
+{
+	oGUI_BONE_DESC(unsigned int _SourceID = 0)
+		: SourceID(_SourceID)
+	{
+		Positions.fill(float4(0.0f, 0.0f, 0.0f, -1.0f));
+	}
+
+	unsigned int SourceID;
+	oGUI_TRACKING_CLIPPING Clipping;
+	std::array<float4, oGUI_BONE_COUNT> Positions;
+};
 
 enum oGUI_WINDOW_STATE
 {
-	oGUI_WINDOW_NONEXISTANT, // Window does not exist
-	oGUI_WINDOW_HIDDEN, // Window is invisible, but exists
-	oGUI_WINDOW_MINIMIZED, // Window is reduces to iconic or taskbar size
-	oGUI_WINDOW_RESTORED, // Window is in normal sub-screen-size mode
-	oGUI_WINDOW_MAXIMIZED, // Window takes up the entire screen
-	oGUI_WINDOW_FULLSCREEN_COOPERATIVE, // Window decoration is removed and the client fills the whole screen, but does not do special direct-access or HW-syncing - it still behaves like a window
-	oGUI_WINDOW_FULLSCREEN_EXCLUSIVE, // Window takes exclusive access to screen, and will not have a title bar, border, etc regardless of its style, position or other parameters
+	// A GUI window is a rectangular client area with an operating system-specific
+	// border. It can exist in one of the several states listed below.
+	
+	// Window does not exist.
+	oGUI_WINDOW_NONEXISTANT,
+	
+	// Window is invisible.
+	oGUI_WINDOW_HIDDEN,
+
+	// Window is reduces to iconic or taskbar size. When setting this size
+	// and position are ignored but style is preserved.
+	oGUI_WINDOW_MINIMIZED,
+	
+	// Window is in normal sub-screen-size mode. When setting this state size,  
+	// position and style are respected.
+	oGUI_WINDOW_RESTORED,
+
+	// Window takes up the entire screen but still has borders. When setting this 
+	// state size and position are ignored but style is preserved.
+	oGUI_WINDOW_MAXIMIZED, 
+
+	// Window borders are removed and the client area fills the whole screen but 
+	// does not do special direct-access or HW-syncing - it still behaves like a 
+	// window thus enabling fast application switching or multi-full-screen
+	// support.
+	oGUI_WINDOW_FULLSCREEN_COOPERATIVE,
+	
+	// Window borders are removed and the client area fills a whole screen with 
+	// specialized and exclusive access to hardware. This mode often is not 100% 
+	// any-full-screen compatible or multi-Window compatible even with Mosaic or 
+	// Eyefinite technologies. In such cases favor fullscreen cooperative mode.
+	oGUI_WINDOW_FULLSCREEN_EXCLUSIVE,
+
+	oGUI_WINDOW_STATE_COUNT,
 };
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_WINDOW_STATE)
 
 // Invalid, hidden and minimized windows are not visible
 inline bool oGUIIsVisible(oGUI_WINDOW_STATE _State) { return _State >= oGUI_WINDOW_RESTORED; }
@@ -51,38 +302,92 @@ inline bool oGUIIsFullscreen(oGUI_WINDOW_STATE _State) { return _State == oGUI_W
 
 enum oGUI_WINDOW_STYLE
 {
-	oGUI_WINDOW_EMBEDDED, // There is no OS decoration of the client area and the window is readied to be a child
-	oGUI_WINDOW_BORDERLESS, // There is no OS decoration of the client area
-	oGUI_WINDOW_FIXED, // There is OS decoration but no user resize is allowed
-	oGUI_WINDOW_DIALOG, // There is OS decoration, but closing the window from the decoration is not allowed
-	oGUI_WINDOW_SIZEABLE, // OS decoration and user can resize window
+	// There is no border around the client area and the window is readied to be a 
+	// child of another parent window.
+	oGUI_WINDOW_EMBEDDED,
+
+	// There is no border around the client area and the window remains a top-
+	// level window. This is the best for splash screens and fullscreen modes.
+	oGUI_WINDOW_BORDERLESS,
+
+	// There is a border but no user resize is allowed
+	oGUI_WINDOW_FIXED,
+
+	// There is a border but closing the window from the decoration is not allowed
+	oGUI_WINDOW_DIALOG,
+	
+	// There is a border and user can resize window
+	oGUI_WINDOW_SIZEABLE, 
+
+	oGUI_WINDOW_STYLE_COUNT,
 };
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_WINDOW_STYLE)
 
 enum oGUI_CURSOR_STATE
 {
-	oGUI_CURSOR_NONE, // No cursor appears (hidden)
-	oGUI_CURSOR_ARROW, // Default OS arrow
-	oGUI_CURSOR_HAND, // A hand for translating/scrolling
-	oGUI_CURSOR_HELP, // A question-mark-like icon
-	oGUI_CURSOR_NOTALLOWED, // Use this to indicate mouse interaction is not allowed
-	oGUI_CURSOR_WAIT_FOREGROUND, // User input is blocked while the operation is occurring
-	oGUI_CURSOR_WAIT_BACKGROUND, // A performance-degrading operation is under way, but it doesn't block user input
-	oGUI_CURSOR_USER, // A user-provided cursor is displayed
+	// No cursor appears (hidden)
+	oGUI_CURSOR_NONE,
+
+	// Default OS arrow
+	oGUI_CURSOR_ARROW,
+	
+	// A hand for translating/scrolling
+	oGUI_CURSOR_HAND,
+
+	// A question-mark-like icon
+	oGUI_CURSOR_HELP,
+
+	// Use this to indicate mouse interaction is not allowed
+	oGUI_CURSOR_NOTALLOWED,
+
+	// User input is blocked while the operation is occurring
+	oGUI_CURSOR_WAIT_FOREGROUND,
+
+	// A performance-degrading action is under way but user input is not blocked
+	oGUI_CURSOR_WAIT_BACKGROUND,
+	
+	// A user-provided cursor is displayed
+	oGUI_CURSOR_USER,
+
+	oGUI_CURSOR_STATE_COUNT,
 };
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_CURSOR_STATE)
 
 enum oGUI_ALIGNMENT
 {
-	oGUI_ALIGNMENT_TOP_LEFT, // Position is relative to parent's top-left corner
-	oGUI_ALIGNMENT_TOP_CENTER, // Position is centered horizontally and vertically relative to the parent's top
-	oGUI_ALIGNMENT_TOP_RIGHT,  // Position is relative to parent's top-right corner minus the child's width
-	oGUI_ALIGNMENT_MIDDLE_LEFT, // Position is centered vertically and horizontally relative to parent's left corner
-	oGUI_ALIGNMENT_MIDDLE_CENTER, // Position is relative to that which centers the child in the parent's bounds
-	oGUI_ALIGNMENT_MIDDLE_RIGHT, // Position is centered vertically and horizontally relative to parent's right corner minus the child's width
-	oGUI_ALIGNMENT_BOTTOM_LEFT, // Position is relative to parent's bottom-left corner
-	oGUI_ALIGNMENT_BOTTOM_CENTER, // Position is centered horizontally and vertically relative to the parent's bottom minus the child's height
-	oGUI_ALIGNMENT_BOTTOM_RIGHT, // Position is relative to parent's bottom-right corner minus the child's width
-	oGUI_ALIGNMENT_FIT_PARENT, // Child is sized and positioned to match parent
+	// Position is relative to parent's top-left corner
+	oGUI_ALIGNMENT_TOP_LEFT,
+
+	// Position is centered horizontally and vertically relative to the parent's top
+	oGUI_ALIGNMENT_TOP_CENTER,
+
+	// Position is relative to parent's top-right corner minus the child's width
+	oGUI_ALIGNMENT_TOP_RIGHT,
+
+	// Position is centered vertically and horizontally relative to parent's left corner
+	oGUI_ALIGNMENT_MIDDLE_LEFT,
+	
+	// Position is relative to that which centers the child in the parent's bounds
+	oGUI_ALIGNMENT_MIDDLE_CENTER,
+	
+	// Position is centered vertically and horizontally relative to parent's right corner minus the child's width
+	oGUI_ALIGNMENT_MIDDLE_RIGHT,
+	
+	// Position is relative to parent's bottom-left corner
+	oGUI_ALIGNMENT_BOTTOM_LEFT,
+
+	// Position is centered horizontally and vertically relative to the parent's bottom minus the child's height
+	oGUI_ALIGNMENT_BOTTOM_CENTER,
+	
+	// Position is relative to parent's bottom-right corner minus the child's width
+	oGUI_ALIGNMENT_BOTTOM_RIGHT,
+	
+	// Child is sized and positioned to match parent
+	oGUI_ALIGNMENT_FIT_PARENT,
+
+	oGUI_ALIGNMENT_COUNT,
 };
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_ALIGNMENT)
 
 enum oGUI_CONTROL_TYPE
 {
@@ -107,38 +412,102 @@ enum oGUI_CONTROL_TYPE
 	oGUI_CONTROL_SLIDER,
 	oGUI_CONTROL_SLIDER_SELECTABLE, // displays a portion of the slider as selected
 	oGUI_CONTROL_SLIDER_WITH_TICKS, // Same as Slider but tick marks can be added
-	oGUI_NUM_CONTROLS,
+	oGUI_CONTROL_TYPE_COUNT,
 };
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_CONTROL_TYPE)
 
 enum oGUI_BORDER_STYLE
 {
 	oGUI_BORDER_SUNKEN,
 	oGUI_BORDER_FLAT,
 	oGUI_BORDER_RAISED,
+	oGUI_BORDER_STYLE_COUNT,
+};
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_BORDER_STYLE)
+
+struct oGUI_MENU_ITEM_DESC_NO_CTOR
+{
+	const char* Text;
+	bool Enabled;
+	bool Checked;
+};
+
+struct oGUI_MENU_ITEM_DESC : oGUI_MENU_ITEM_DESC_NO_CTOR
+{
+	oGUI_MENU_ITEM_DESC()
+	{
+		Text = "";
+		Enabled = true;
+		Checked = false;
+	}
 };
 
 enum oGUI_EVENT
 {
-	oGUI_IDLE, // called in message pump loop when window-related messages aren't being processed.
+	// An event is something that the window issues to client code. Events can be
+	// triggered as a side-effect of other actions. Rarely does client code have
+	// direct control over events.
+
+	// called in message pump loop when window-related messages aren't being 
+	// processed.
+	oGUI_MAINLOOP,
+
+	// Called when a timer is triggered. Use timers only for infrequent one-shot
+	// actions. Do not use this mechanism for consistent updates such as ring
+	// buffer monitors or for main loop execution or swap buffer presentation.
+	oGUI_TIMER,
+
 	oGUI_ACTIVATED, // called just after a window comes to be in focus
 	oGUI_DEACTIVATED, // called just after a window is no longer in focus
-	oGUI_CREATING, // called before during window or control creation. This should return true if successful, or false if there's a failure
-	oGUI_PAINT, // called when the window wants to redraw itself. NOTE: On Windows the user must call BeginPaint/EndPaint on the event's hSource as documented in WM_PAINT.
+
+	// called before during window or control creation. This should return true if 
+	// successful, or false if there's a failure. Downcast to the oGUI_EVENT_DESC
+	// to oGUI_CREATING_EVENT_DESC.
+	oGUI_CREATING, 
+	
+	// called when the window wants to redraw itself. NOTE: On Windows the user 
+	// must call BeginPaint/EndPaint on the event's hSource as documented in 
+	// WM_PAINT.
+	oGUI_PAINT,
 	oGUI_DISPLAY_CHANGED, // called when the desktop/screens change
-	oGUI_SETCURSOR, // called when the cursor should be set differently
 	oGUI_MOVING, // called just before a window moves
 	oGUI_MOVED, // called just after a window moves
 	oGUI_SIZING, // called just before a window's client area changes size
 	oGUI_SIZED, // called just after a window's client area changes size
-	oGUI_CLOSING, // called if an abortable attempt was made to close the window. Hook can return false if close is not allowed
+	
+	// called if an abortable attempt was made to close the window. Hook can 
+	// return false if close is not allowed
+	oGUI_CLOSING,
 	oGUI_CLOSED, // called after a commitment to closing the window has been made.
-	oGUI_TO_FULLSCREEN, // called when a request to become fullscreen is made. Hook can return false on failure
-	oGUI_FROM_FULLSCREEN, // called when a request to go from fullscreen to windowed is made
-	oGUI_LOST_CAPTURE, // Sent if a window had input capture, but something else in the system caused it to lose capture
+	
+	// called when a request to become fullscreen is made. Hook can return false 
+	// on failure.
+	oGUI_TO_FULLSCREEN,
+	
+	// called when a request to go from fullscreen to windowed is made
+	oGUI_FROM_FULLSCREEN,
+
+	// Sent if a window had input capture, but something else in the system caused 
+	// it to lose capture
+	oGUI_LOST_CAPTURE, 
+	
+	// sent if a window gets files drag-dropped on it. Downcast to 
+	// oGUI_DROP_EVENT_DESC.
+	oGUI_DROP_FILES,
+
+	// Sent when an input device's status has changed. Downcast the 
+	// oGUI_EVENT_DESC to oGUI_INPUT_DEVICE_EVENT_DESC.
+	oGUI_INPUT_DEVICE_CHANGED,
+
+	oGUI_EVENT_COUNT,
 };
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_EVENT)
 
 enum oGUI_ACTION
 {
+	// Actions are similar to events, except client code or the user can trigger 
+	// them explicitly and not as the artifact of some other action.
+
 	oGUI_ACTION_UNKNOWN,
 	oGUI_ACTION_MENU,
 	oGUI_ACTION_CONTROL_ACTIVATED,
@@ -149,50 +518,48 @@ enum oGUI_ACTION
 	oGUI_ACTION_KEY_DOWN,
 	oGUI_ACTION_KEY_UP,
 	oGUI_ACTION_POINTER_MOVE,
+	oGUI_ACTION_SKELETON,
+	oGUI_ACTION_SKELETON_ACQUIRED,
+	oGUI_ACTION_SKELETON_LOST,
+
+	oGUI_ACTION_COUNT,
 };
+oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_ACTION)
 
-oAPI const char* oAsString(oGUI_WINDOW_STATE _State);
-oAPI const char* oAsString(oGUI_WINDOW_STYLE _Style);
-oAPI const char* oAsString(oGUI_CURSOR_STATE _State);
-oAPI const char* oAsString(oGUI_ALIGNMENT _Alignment);
-oAPI const char* oAsString(oGUI_CONTROL_TYPE _Type);
-oAPI const char* oAsString(oGUI_BORDER_STYLE _Style);
-oAPI const char* oAsString(oGUI_EVENT _Event);
-oAPI const char* oAsString(oGUI_ACTION _Action);
-
-// Abstractions for the native platform handles
+// Abstractions for native platform handles
 oDECLARE_HANDLE(oGUI_WINDOW);
+oDECLARE_HANDLE(oGUI_SKELETON);
 oDECLARE_HANDLE(oGUI_MENU);
 oDECLARE_DERIVED_HANDLE(oGUI_WINDOW, oGUI_STATUSBAR);
 oDECLARE_DERIVED_HANDLE(oGUI_WINDOW, oGUI_CONTROL);
 oDECLARE_HANDLE(oGUI_FONT);
+oDECLARE_HANDLE(oGUI_ICON);
 
 struct oGUI_WINDOW_DESC
 {
 	oGUI_WINDOW_DESC()
 		: hParent(nullptr)
 		, hOwner(nullptr)
+		, hIcon(nullptr)
 		, ClientPosition(oDEFAULT, oDEFAULT)
 		, ClientSize(oDEFAULT, oDEFAULT)
 		, State(oGUI_WINDOW_RESTORED)
 		, Style(oGUI_WINDOW_FIXED)
-		, CursorState(oGUI_CURSOR_ARROW)
 		, Debug(false)
 		, Enabled(true)
 		, HasFocus(true)
 		, AlwaysOnTop(false)
-		, DefaultEraseBackground(true)
-		, AllowAltF4(true)
-		, AllowAltEnter(true)
-		, AllowTouch(true)
-		, AllowGesture(false)
-		, EnableIdleEvent(true)
 		, ShowMenu(false)
 		, ShowStatusBar(false)
-		, HasCapture(false)
-		, ShowCursorOutsideClientArea(true)
+		, DefaultEraseBackground(true)
+		, AllowClientDragToMove(false)
+		, AllowAltF1(true)
+		, AllowAltF4(true)
+		, AllowAltEnter(true)
+		, EnableMainLoopEvent(true)
+		, AllowTouch(true)
 	{
-		oINIT_ARRAY(StatusWidths, oInvalid);
+		StatusWidths.fill(oInvalid);
 	}
 
 	// Specifying a parent makes this window a child window, meaning it becomes a 
@@ -205,86 +572,295 @@ struct oGUI_WINDOW_DESC
 	// preserved.
 	oGUI_WINDOW hOwner;
 
+	// The icon displayed when the window is minimized and appears in the upper
+	// left of the window's border on some systems. When set, the window owns the
+	// lifetime of the hIcon. If the icon is then changed, the prior icon is still
+	// the responsibility of client code, so if changing an icon, grab the old one
+	// first and free it after it has been disassociated from the window.
+	oGUI_ICON hIcon;
+
 	int2 ClientPosition;
 	int2 ClientSize;
 	oGUI_WINDOW_STATE State;
 	oGUI_WINDOW_STYLE Style;
-	oGUI_CURSOR_STATE CursorState;
-	short StatusWidths[8];
+	std::array<short, 8> StatusWidths;
+
+	// If true, platform-specific action and event information will be spewed to 
+	// the debug window and log file.
 	bool Debug;
+	
+	// If true the window accepts actions.
 	bool Enabled;
+
+	// Only one window on an operating system can have focus. If true, this window
+	// is the one.
 	bool HasFocus;
+
+	// If true this is in a class of windows that self-sort separately from normal
+	// windows. There may still be other operating system windows with even higher
+	// sort priority (such as the Windows task bar) so this may be inadequate in
+	// final fullscreen deployments.
 	bool AlwaysOnTop;
-	bool DefaultEraseBackground;
-	bool AllowAltF1; // toggles visibility of mouse cursor (nonstandard/Ouroboros-unique idea)
-	bool AllowAltF4; // closes window
-	bool AllowAltEnter; // toggles fullscreen
-	bool AllowTouch;
-	bool AllowGesture;
-	bool EnableIdleEvent; // if false the message thread will sleep if no more messages are available. If true, oGUI_IDLE will fire each time there are not messages
+
 	bool ShowMenu;
 	bool ShowStatusBar;
+
+	// By default this should be true to allow the operating system to do its 
+	// normal painting. For media windows that use complex paint algorithms (such
+	// as video update or 3D rendering) this should be set false to avoid conflict 
+	// with more robust clearing handled by the media algorithm.
+	bool DefaultEraseBackground;
+
+	// If true, the window can be moved by left-clicking anywhere in the client
+	// area and dragging.
+	bool AllowClientDragToMove;
+
+	// allow toggle of mouse cursor visibility
+	bool AllowAltF1;
+
+	// allow immediate close of window
+	bool AllowAltF4;
+
+	// allow toggle of fullscreen (exclusive or cooperative)
+	bool AllowAltEnter;
+	
+	// By default this should be false as most operating system GUIs are event-
+	// driven. For media windows or other "main loop" simulations that use complex 
+	// paint algorithms (such as video update or 3D rendering) this should be set 
+	// true and logic to refresh the client area should be handled in the main 
+	// loop event.
+	bool EnableMainLoopEvent;
+
+	bool AllowTouch;
+};
+
+// This only describes the cursor when over a particular window, not the global
+// cursor.
+struct oGUI_WINDOW_CURSOR_DESC
+{
+	oGUI_WINDOW_CURSOR_DESC()
+		: ClientState(oGUI_CURSOR_ARROW)
+		, NonClientState(oGUI_CURSOR_ARROW)
+		, HasCapture(false)
+	{}
+
+	oGUI_CURSOR_STATE ClientState; // state of cursor when in the client area
+	oGUI_CURSOR_STATE NonClientState; // state of cursor when in the OS decoration area
 	bool HasCapture; // forces messages to the window even if the focus/cursor is outside the window. Setting this to true will also bring the window to the foreground.
-	bool ShowCursorOutsideClientArea; // if true, a cursor state that is not visible will be made visible if it leaves the client area
 };
 
 struct oGUI_EVENT_DESC
 {
+	// For most events use this desc. There are a few derivatives for specific 
+	// events listed below.
+
 	oGUI_EVENT_DESC()
-		: hSource(nullptr)
-		, hStatusBar(nullptr)
-		, hMenu(nullptr)
-		, pWindow(nullptr)
+		: hWindow(nullptr)
 		, Event(oGUI_CREATING)
 		, ClientPosition(oDEFAULT, oDEFAULT)
 		, ClientSize(oDEFAULT, oDEFAULT)
 		, ScreenSize(oDEFAULT, oDEFAULT)
+		, State(oGUI_WINDOW_NONEXISTANT)
 	{}
 
-	oGUI_WINDOW hSource;
-	oGUI_STATUSBAR hStatusBar;
-	oGUI_MENU hMenu;
+	oGUI_EVENT_DESC(oGUI_WINDOW _hWindow, oGUI_EVENT _Event, const oGUI_WINDOW_DESC& _WinDesc, const int2& _ScreenSize = int2(oDEFAULT, oDEFAULT))
+		: hWindow(_hWindow)
+		, Event(_Event)
+		, ClientPosition(_WinDesc.ClientPosition)
+		, ClientSize(_WinDesc.ClientSize)
+		, ScreenSize(_ScreenSize)
+		, State(_WinDesc.State)
+	{}
 
-	// This is nullptr during oWM_CREATING because the creation isn't finished 
-	// yet, however at that time hSource, hStatusBar and hMenu are valid as far as 
-	// the native creating event allows (WM_CREATE on Windows).
-	threadsafe interface oWindow* pWindow;
-
+	oGUI_WINDOW hWindow;
 	oGUI_EVENT Event;
 	int2 ClientPosition; // Position of the hSource's client area
 	int2 ClientSize; // Size of the hSource's client area
-	int2 ScreenSize; // for oGUI_TO_FULLSCREEN or oGUI_DISPLAY_CHANGE
+	
+	// describes the size of the screen that would be the valid size if the window 
+	// were to go fullscreen. This can change if a window moves from one screen 
+	// to another.
+	int2 ScreenSize;
 	oGUI_WINDOW_STATE State;
+};
+
+struct oGUI_TIMER_EVENT_DESC : oGUI_EVENT_DESC
+{
+	oGUI_TIMER_EVENT_DESC()
+		: Context(0)
+	{}
+
+	oGUI_TIMER_EVENT_DESC(
+		oGUI_WINDOW _hWindow
+		, oGUI_EVENT _Event
+		, const oGUI_WINDOW_DESC& _WinDesc
+		, const int2& _ScreenSize = int2(oDEFAULT, oDEFAULT)
+		)
+		: oGUI_EVENT_DESC(_hWindow, _Event, _WinDesc, _ScreenSize)
+		, Context(0)
+	{}
+
+	uintptr_t Context;
+};
+
+struct oGUI_CREATING_EVENT_DESC : oGUI_EVENT_DESC
+{
+	// It is safe to downcast to this for a oGUI_CREATING event.
+
+	oGUI_CREATING_EVENT_DESC()
+		: hMenu(nullptr)
+		, hStatusBar(nullptr)
+	{}
+
+	oGUI_CREATING_EVENT_DESC(
+		oGUI_WINDOW _hWindow
+		, oGUI_EVENT _Event
+		, const oGUI_WINDOW_DESC& _WinDesc
+		, const int2& _ScreenSize = int2(oDEFAULT, oDEFAULT)
+		)
+			: oGUI_EVENT_DESC(_hWindow, _Event, _WinDesc, _ScreenSize)
+			, hMenu(nullptr)
+			, hStatusBar(nullptr)
+	{}
+
+	oGUI_MENU hMenu;
+	oGUI_STATUSBAR hStatusBar;
+};
+
+struct oGUI_DROP_EVENT_DESC : oGUI_EVENT_DESC
+{
+	// It is safe to downcast to this for a oGUI_DROP_FILES event.
+
+	oGUI_DROP_EVENT_DESC()
+		: pPaths(nullptr)
+		, NumPaths(0)
+		, ClientDropPosition(oInvalid, oInvalid)
+	{}
+
+	oGUI_DROP_EVENT_DESC(
+		oGUI_WINDOW _hWindow
+		, oGUI_EVENT _Event
+		, const oGUI_WINDOW_DESC& _WinDesc
+		, const int2& _ScreenSize = int2(oDEFAULT, oDEFAULT))
+			: oGUI_EVENT_DESC(_hWindow, _Event, _WinDesc, _ScreenSize)
+			, pPaths(nullptr)
+			, NumPaths(0)
+			, ClientDropPosition(oInvalid, oInvalid)
+	{}
+
+	const oStd::path_string* pPaths;
+	uint NumPaths;
+	int2 ClientDropPosition;
+};
+
+struct oGUI_INPUT_DEVICE_EVENT_DESC : oGUI_EVENT_DESC
+{
+	oGUI_INPUT_DEVICE_EVENT_DESC()
+		: Type(oGUI_INPUT_DEVICE_UNKNOWN)
+		, Status(oGUI_INPUT_DEVICE_NOT_READY)
+	{}
+
+	oGUI_INPUT_DEVICE_EVENT_DESC(
+		oGUI_WINDOW _hWindow
+		, oGUI_EVENT _Event
+		, const oGUI_WINDOW_DESC& _WinDesc
+		, const int2& _ScreenSize = int2(oDEFAULT, oDEFAULT))
+			: oGUI_EVENT_DESC(_hWindow, _Event, _WinDesc, _ScreenSize)
+			, Type(oGUI_INPUT_DEVICE_UNKNOWN)
+			, Status(oGUI_INPUT_DEVICE_NOT_READY)
+	{}
+
+	oGUI_INPUT_DEVICE_TYPE Type;
+	oGUI_INPUT_DEVICE_STATUS Status;
+	oStd::sstring InstanceName;
 };
 
 typedef oFUNCTION<bool(const oGUI_EVENT_DESC& _Event)> oGUI_EVENT_HOOK;
 
 struct oGUI_ACTION_DESC
 {
+	// All actions use this desc. This can be filled out manually and submitted
+	// to an action handler to spoof hardware events, for example from a network
+	// stream thus enabling remote access.
+
 	oGUI_ACTION_DESC()
-		: hSource(nullptr)
+		: hWindow(nullptr)
 		, Action(oGUI_ACTION_UNKNOWN)
-		, SourceID(oInvalid)
-		, ActionCode(0)
-		, PointerPosition(0.0f)
-		, Key(oKB_None)
-	{}
+		, DeviceType(oGUI_INPUT_DEVICE_UNKNOWN)
+		, DeviceID(oInvalid)
+		, Position(0.0f)
+		//, Key(oGUI_KEY_NONE)
+		//, ActionCode(0)
+	{ hSkeleton = nullptr; }
 
-	oGUI_WINDOW hSource;
+	oGUI_ACTION_DESC(
+		oGUI_WINDOW _hWindow
+		, double _Timestamp
+		, oGUI_ACTION _Action
+		, oGUI_INPUT_DEVICE_TYPE _DeviceType
+		, int _DeviceID)
+			: hWindow(_hWindow)
+			, Timestamp(_Timestamp)
+			, Action(_Action)
+			, DeviceType(_DeviceType)
+			, DeviceID(_DeviceID)
+			, Position(0.0f)
+			//, Key(oGUI_KEY_NONE)
+			//, ActionCode(0)
+	{ hSkeleton = nullptr; }
+
+	// _____________________________________________________________________________
+	// Common across all actions
+
+	// Control devices have their own handle and sometimes their own sub-action.
+	oGUI_WINDOW hWindow;
+
+	// Time at which the message was sent. This time is locked to a value, then 
+	// all message pumping is done, so all events that get processed in the same
+	// event loop get the same timestamp.
+	double Timestamp;
+
 	oGUI_ACTION Action;
-	int SourceID;
-	oKEYBOARD_KEY Key;
+	oGUI_INPUT_DEVICE_TYPE DeviceType;
 
-	int ActionCode; // subtype of action
-	float3 PointerPosition;
+	// When there are multiple devices of the same type, this differentiates. For
+	// example if this is a gesture, then this would be the tracking/skeleton ID.
+	// A mouse or keyboard usually only have one associated, so this is typically
+	// not used there. Joysticks would be the ID of each individual one, and for 
+	// controls it is the ID associated with the control.
+	int DeviceID;
+
+	// For touch and mouse XY are typical coords and Z is the mouse wheel.
+	// For gesture it is the 3D position whose W can typically be ignored, but 
+	// might be indicative of validity.
+	// For joysticks xy is the left-most axis and zw is the right-most axis.
+	float4 Position;
+	
+	union
+	{
+		struct 
+		{
+			// Any binary key is described by this, from a keyboard key to a touch event 
+			// to a mouse button to a gesture volume activation (air-key).
+			oGUI_KEY Key;
+
+			// For some specific types of controls, this is an additional action value.
+			int ActionCode;
+		};
+
+		// if Action is an oGUI_ACTION_SKELETON, the hSkeleton is  a handle fit for 
+		// use with a platform-specific accessor to the actual skeleton data.
+		oGUI_SKELETON hSkeleton;
+	};
 };
 
 typedef oFUNCTION<void(const oGUI_ACTION_DESC& _Action)> oGUI_ACTION_HOOK;
 
-// So that hotkeys can be statically defined without a non-aggregates cannot be initialized warning
+// So that hotkeys can be statically defined without a "non-aggregates cannot be 
+// initialized" warning
 struct oGUI_HOTKEY_DESC_NO_CTOR
 {
-	oKEYBOARD_KEY HotKey;
+	oGUI_KEY HotKey;
 	unsigned short ID;
 	bool AltDown;
 	bool CtrlDown;
@@ -295,7 +871,7 @@ struct oGUI_HOTKEY_DESC : oGUI_HOTKEY_DESC_NO_CTOR
 {
 	oGUI_HOTKEY_DESC()
 	{
-		HotKey = oKB_VoidSymbol;
+		HotKey = oGUI_KEY_NONE;
 		ID = 0;
 		AltDown = false;
 		CtrlDown = false;
@@ -341,9 +917,6 @@ struct oGUI_CONTROL_DESC
 	bool StartsNewGroup;
 };
 
-// @oooii-tony: Design choice: Should "shadow" be part of the font, or part of 
-// the per-draw text desc?
-
 struct oGUI_FONT_DESC
 {
 	oGUI_FONT_DESC()
@@ -356,7 +929,7 @@ struct oGUI_FONT_DESC
 		, AntiAliased(true)
 	{}
 
-	oStringS FontName;
+	oStd::sstring FontName;
 	float PointSize;
 	bool Bold;
 	bool Italic;
@@ -371,7 +944,7 @@ struct oGUI_TEXT_DESC
 		: Position(int2(oDEFAULT, oDEFAULT))
 		, Size(int2(oDEFAULT, oDEFAULT))
 		, Alignment(oGUI_ALIGNMENT_TOP_LEFT)
-		, Foreground(std::White)
+		, Foreground(oStd::White)
 		, Background(0)
 		, Shadow(0)
 		, ShadowOffset(int2(2,2))
@@ -386,13 +959,14 @@ struct oGUI_TEXT_DESC
 	int2 Size;
 	oGUI_ALIGNMENT Alignment;
 	// Any non-1.0 (non-0xff) alpha will be not-drawn
-	oColor Foreground;
-	oColor Background;
-	oColor Shadow;
+	oStd::color Foreground;
+	oStd::color Background;
+	oStd::color Shadow;
 	int2 ShadowOffset;
 	bool SingleLine;
 };
 
+// @oooii-tony: Can oInputMapper replace this?
 // A utility function to analyze the specified action and compare it for keydown
 // and keyup events from keys specified in the keys array. If there's a match,
 // the corresponding keystate is marked as true if down, and false if up. NOTE:
@@ -400,9 +974,9 @@ struct oGUI_TEXT_DESC
 // for the same KeyState. i.e. if you have two states LEFT and RIGHT and you 
 // want to bind A and D, but also left-arrow and right-arrow, that can be done
 // with an array of [A,D,left,right] and the Keystates will be written correctly
-// for LEFT and RIGHT. If _ForceLowerCase is true, oKB_A and oKB_a will be 
-// treated as oKB_a. This is true for A-Z,a-z. If the action is a pointer move,
-// then the position is recorded to _pPointerPosition.
-void oGUIRecordInputState(const oGUI_ACTION_DESC& _Action, const oKEYBOARD_KEY* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition, bool _ForceLowerCase = true);
-template<size_t NumKeys, size_t NumKeyStates> void oGUIRecordInputState(const oGUI_ACTION_DESC& _Action, const oKEYBOARD_KEY (&_pKeys)[NumKeys], bool (&_pKeyStates)[NumKeyStates], float3* _pPointerPosition, bool _ForceLowerCase = true) { oGUIRecordInputState(_Action, _pKeys, NumKeys, _pKeyStates, NumKeyStates, _pPointerPosition, _ForceLowerCase); }
+// for LEFT and RIGHT. If the action is a pointer move, then the position is 
+// recorded to _pPointerPosition.
+void oGUIRecordInputState(const oGUI_ACTION_DESC& _Action, const oGUI_KEY* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition);
+template<size_t NumKeys, size_t NumKeyStates> void oGUIRecordInputState(const oGUI_ACTION_DESC& _Action, const oGUI_KEY (&_pKeys)[NumKeys], bool (&_pKeyStates)[NumKeyStates], float3* _pPointerPosition) { oGUIRecordInputState(_Action, _pKeys, NumKeys, _pKeyStates, NumKeyStates, _pPointerPosition); }
+
 #endif

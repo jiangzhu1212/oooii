@@ -34,12 +34,9 @@ static const unsigned int HTTPRequestSize = 4096;
 
 struct oHTTPHeaderField
 {
-	oStringS Key;
-	oStringL Value;
+	oStd::sstring Key;
+	oStd::lstring Value;
 };
-
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oHTTPHeaderField& _Fields);
-bool oFromString(oHTTPHeaderField* _pValue, const char* _StrSource);
 
 struct oHTTPHeaderFields
 {
@@ -51,12 +48,6 @@ struct oHTTPHeaderFields
 	std::vector<oHTTPHeaderField> Vector;
 };
 
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oHTTPHeaderFields& _Fields);
-bool oFromString(oHTTPHeaderFields* _pValue, const char* _StrSource);
-
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oHTTP_REQUEST::oHTTP_REQUEST_LINE& _RequestLine);
-bool oFromString(oHTTP_REQUEST::oHTTP_REQUEST_LINE* _pValue, const char* _StrSource);
-
 struct oHTTPRequestInternal : public oHTTP_REQUEST
 {
 	void Reset();
@@ -64,27 +55,37 @@ struct oHTTPRequestInternal : public oHTTP_REQUEST
 	oHTTPHeaderFields HeaderFieldsInternal;
 };
 
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oHTTPRequestInternal& _Request);
-bool oFromString(oHTTPRequestInternal* _pValue, const char* _StrSource);
-
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oHTTP_RESPONSE::oHTTP_STATUS_LINE& _StatusLine);
-bool oFromString(oHTTP_RESPONSE::oHTTP_STATUS_LINE* _pValue, const char* _StrSource);
-
 struct oHTTPResponseInternal : public oHTTP_RESPONSE
 {
 	void Reset();
 	oHTTPHeaderFields HeaderFieldsInternal;
 };
 
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const oHTTPResponseInternal& _Response);
-bool oFromString(oHTTPResponseInternal* _pValue, const char* _StrSource);
+namespace oStd {
 
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTPHeaderField& _Fields);
+bool from_string(oHTTPHeaderField* _pValue, const char* _StrSource);
 
-bool oExtractHTTPHeader(const char* _pData, size_t _SzData, char* _pHeader, size_t* _pSzHeader, size_t _MaxHeaderSize, size_t* _pSzDataTaken);
-bool oExtractContent(const void* _pData, size_t _SzData, void* _pContent, size_t* _pSzContent, size_t _TotalContentSize, size_t* _pSzDataTaken);
-bool oInsertContent(const void* _pContent, size_t _SzContent, void* _pBuffer, size_t* _pSzBuffer, size_t _TotalBufferSize, size_t* _pSzContentTaken);
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTPHeaderFields& _Fields);
+bool from_string(oHTTPHeaderFields* _pValue, const char* _StrSource);
 
-// @oooii-kevin FIXME: Prior to Hong Kong we started seeing infrequent heap corruption.  I suspect HTTP, follow this define to see where.
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTP_REQUEST::oHTTP_REQUEST_LINE& _RequestLine);
+bool from_string(oHTTP_REQUEST::oHTTP_REQUEST_LINE* _pValue, const char* _StrSource);
+
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTPRequestInternal& _Request);
+bool from_string(oHTTPRequestInternal* _pValue, const char* _StrSource);
+
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTPResponseInternal& _Response);
+bool from_string(oHTTPResponseInternal* _pValue, const char* _StrSource);
+
+} // namespace oStd
+
+bool oExtractHTTPHeader(const char* _pData, size_t _SizeofData, char* _pHeader, size_t* _pSizeofHeader, size_t _MaxHeaderSize, size_t* _pSizeofDataTaken);
+bool oExtractContent(const void* _pData, size_t _SizeofData, void* _pContent, size_t* _pSizeofContent, size_t _TotalContentSize, size_t* _pSizeofDataTaken);
+bool oInsertContent(const void* _pContent, size_t _SizeofContent, void* _pBuffer, size_t* _pSizeofBuffer, size_t _TotalBufferSize, size_t* _pSizeofContentTaken);
+
+// @oooii-kevin FIXME: Prior to Hong Kong we started seeing infrequent heap 
+// corruption. I suspect HTTP, follow this define to see where.
 //#define SUSPECTED_BUGS_IN_HTTP
 
 #ifdef SUSPECTED_BUGS_IN_HTTP
@@ -99,7 +100,7 @@ public:
 
 	void Check() threadsafe
 	{
-		for(size_t i = 0; i < oCOUNTOF(guard); ++i)
+		oFORI(i, guard)
 		{
 			oASSERT(guard[i] == 0x0011f350, "Guardband corrupted!");
 		}

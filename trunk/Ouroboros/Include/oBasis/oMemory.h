@@ -30,7 +30,7 @@
 #ifndef oMemory_h
 #define oMemory_h
 
-#include <oBasis/oByte.h>
+#include <oStd/byte.h>
 #include <oBasis/oPlatformFeatures.h>
 #include <malloc.h>
 
@@ -50,12 +50,12 @@ enum oUTF_TYPE
 // because of course if they were functions the allocation would be invalid 
 // after the function returns. oStackAlloc is 16-byte aligned by default.
 #define oStackAlloc(_Size) _alloca(_Size)
-#define oStackAllocAligned(_Size, _Alignment) oByteAlign(oStackAlloc(oByteAlign(_Size, _Alignment)), _Alignment)
+#define oStackAllocAligned(_Size, _Alignment) oStd::byte_align(oStackAlloc(oStd::byte_align(_Size, _Alignment)), _Alignment)
 
 // Define a macro for hexspeak shred patterns so that always appears readably in 
 // memory dumps.
 #ifdef oLITTLEENDIAN
-	#define oSHRED(_BigEndianShredPattern) oByteSwap(_BigEndianShredPattern);
+	#define oSHRED(_BigEndianShredPattern) oStd::endian_swap(_BigEndianShredPattern);
 #else
 	#define oSHRED(_BigEndianShredPattern) _BigEndianShredPattern;
 #endif
@@ -96,8 +96,8 @@ inline void oMemcpy2d(void* oRESTRICT _pDestination, size_t _DestinationPitch, c
 		memcpy(_pDestination, _pSource, _SourcePitch * _NumRows);
 	else
 	{
-		const void* end = oByteAdd(_pDestination, _DestinationPitch, _NumRows);
-		for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _DestinationPitch), _pSource = oByteAdd(_pSource, _SourcePitch))
+		const void* end = oStd::byte_add(_pDestination, _DestinationPitch, _NumRows);
+		for (; _pDestination < end; _pDestination = oStd::byte_add(_pDestination, _DestinationPitch), _pSource = oStd::byte_add(_pSource, _SourcePitch))
 			memcpy(_pDestination, _pSource, _SourceRowSize);
 	}
 }
@@ -107,9 +107,9 @@ inline void oMemcpy2d(void* oRESTRICT _pDestination, size_t _DestinationPitch, c
 // flipped V from the destination coordinate system.
 inline void oMemcpy2dVFlip(void* oRESTRICT _pDestination, size_t _DestinationPitch, const void* oRESTRICT _pSource, size_t _SourcePitch, size_t _SourceRowSize, size_t _NumRows)
 {
-	const void* pFlippedSource = oByteAdd(_pSource, _SourcePitch, _NumRows - 1);
-	const void* end = oByteAdd(_pDestination, _DestinationPitch, _NumRows);
-	for (; _pDestination < end; _pDestination = oByteAdd(_pDestination, _DestinationPitch), pFlippedSource = oByteSub(pFlippedSource, _SourcePitch))
+	const void* pFlippedSource = oStd::byte_add(_pSource, _SourcePitch, _NumRows - 1);
+	const void* end = oStd::byte_add(_pDestination, _DestinationPitch, _NumRows);
+	for (; _pDestination < end; _pDestination = oStd::byte_add(_pDestination, _DestinationPitch), pFlippedSource = oStd::byte_sub(pFlippedSource, _SourcePitch))
 		memcpy(_pDestination, pFlippedSource, _SourceRowSize);
 }
 
@@ -122,6 +122,16 @@ inline void oMemcpy2d(void* oRESTRICT _pDestination, size_t _DestinationPitch, c
 		oMemcpy2dVFlip(_pDestination, _DestinationPitch, _pSource, _SourcePitch, _SourceRowSize, _NumRows);
 	else
 		oMemcpy2d(_pDestination, _DestinationPitch, _pSource, _SourcePitch, _SourceRowSize, _NumRows);
+}
+
+// Just like oMemcpy2d, but uses another pitch/size per element so you can
+// for example copy only the red channel of a texture if you want.
+inline void oMemcpy2dElements(void* oRESTRICT _pDestination, size_t _DestinationPitch, const void* oRESTRICT _pSource, size_t _SourcePitch, size_t _SourceNumElements, size_t _SourceElementPitch, size_t _SourceElementSize, size_t _NumRows)
+{
+	const void* end = oStd::byte_add(_pDestination, _DestinationPitch, _NumRows);
+	for (; _pDestination < end; _pDestination = oStd::byte_add(_pDestination, _DestinationPitch), _pSource = oStd::byte_add(_pSource, _SourcePitch))
+		for (size_t elem=0; elem<_SourceNumElements; elem++)
+			memcpy(oStd::byte_add(_pDestination, _SourceElementPitch, elem), oStd::byte_add(_pSource, _SourceElementPitch, elem), _SourceElementSize);
 }
 
 void oMemset2d(void* _pDestination, size_t _Pitch, int _Value, size_t _SetPitch, size_t _NumRows);

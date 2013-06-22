@@ -32,12 +32,14 @@
 #include <oBasis/oInt.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oInvalid.h>
-#include <oBasis/oMacros.h>
 #include <oBasis/oMathTypes.h>
-#include <oBasis/oNoncopyable.h>
 #include <oBasis/oPlatformFeatures.h>
-#include <oBasis/oStringize.h>
-#include <oBasis/oFixedString.h>
-#include <oBasis/oThreadsafe.h>
+#include <oConcurrency/thread_safe.h>
+#include <oStd/fixed_string.h>
+#include <oStd/macros.h>
+
+#include <oStd/oStdThread.h>
+// the standard is a bit too obtuse for sleeping a thread, so wrap it
+inline void oSleep(unsigned int _Milliseconds) { oStd::this_thread::sleep_for(oStd::chrono::milliseconds(_Milliseconds)); }
 
 #endif

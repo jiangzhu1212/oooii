@@ -24,7 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 // Does not always detect multiple gpu's at the moment. win32 function EnumDisplaySettings does not succeed sometimes, even for successfully enumed displays(called in oDisplay.cpp)
-#include <oBasis/oStdMakeUnique.h>
+#include <oStd/oStdMakeUnique.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/Windows/oDXGI.h>
 #include <oPlatform/oProgressBar.h>
@@ -32,7 +32,8 @@
 #include <oPlatform/oConsole.h>
 #include <oPlatform/oDisplay.h>
 #include <oGPU/oGPUWindow.h> // @oooii-tony: Because this is here, we should move this test to at least oGPU_ (out of oPlatform)
-#include <oGPU/oGPUUtil.h>
+#include <oGfx/oGfxMosaic.h>
+#include <oConcurrency/mutex.h>
 
 #include "oHLSLPCIEBandwidthByteCode.h"
 
@@ -69,7 +70,7 @@ public:
 			for (int i = 0;i < NumTextures; ++i)
 			{
 				oSURFACE_MAPPED_SUBRESOURCE data;
-				data.pData = oByteAdd(oGetData(TextureData), FrameSize*i);
+				data.pData = oStd::byte_add(oStd::data(TextureData), FrameSize*i);
 				data.RowPitch = oSurfaceMipCalcRowPitch(surfaceDesc);
 				data.DepthPitch = oSurfaceMipCalcDepthPitch(surfaceDesc);
 				SubResourceData.push_back(data);
@@ -96,19 +97,19 @@ public:
 	{
 		double dataRate = ((((double)FrameSize.Ref()) * NUM_FRAMES)/_testTime)*_numWindows.Ref();
 		double fps = NUM_FRAMES / _testTime;
-		oStringS dataRateString1, dataRateString2;
+		oStd::sstring dataRateString1, dataRateString2;
 		oPrintf(dataRateString2, "%s/s", oFormatMemorySize(dataRateString1, static_cast<long long>(dataRate), 2));
-		oStringS method, format;
-		oStringS size;
+		oStd::sstring method, format;
+		oStd::sstring size;
 		oPrintf(size, "%dx%dx%d", Width, Height, NumTextures);
-		oStringS fpsString;
+		oStd::sstring fpsString;
 		oPrintf(fpsString, "%0.2f", fps);
-		oStringS numWindowsString;
+		oStd::sstring numWindowsString;
 		oPrintf(numWindowsString, "%d", _numWindows.Ref());
-		oPrintf(ResultsString, ReportTableFormatString, oToString(method, Method), numWindowsString, oToString(format, Format), size, dataRateString2, fpsString);
+		oPrintf(ResultsString, ReportTableFormatString, oStd::to_string(method, Method), numWindowsString, oStd::to_string(format, Format), size, dataRateString2, fpsString);
 	}
 
-	oStringM ResultsString;
+	oStd::mstring ResultsString;
 	int Width;
 	int Height;
 	oSURFACE_FORMAT Format;
@@ -134,7 +135,7 @@ struct GlobalSettings //setting shared by every window
 	int CurrentTest;
 	int2 ClientSize;
 
-	oSharedMutex ChangeTestLock;
+	oConcurrency::shared_mutex ChangeTestLock;
 
 	std::vector<Test> Tests;
 };
@@ -144,7 +145,7 @@ struct TESTWindow
 	oRef<threadsafe oGPUWindow> Window;
 	oRef<oGPUCommandList> CommandList;
 	int HookID;
-	oRef<oGPUMosaic> Mosaic;
+	oRef<oGfxMosaic> Mosaic;
 	std::vector<oRef<oGPUTexture>> Textures;
 	GlobalSettings& Settings;
 	int FrameCount;
@@ -174,25 +175,16 @@ struct TESTWindow
 		WinInit.InitialAlignment = oGUI_ALIGNMENT_TOP_LEFT;
 
 		if(!oGPUWindowCreate(WinInit, Device, &Window))
-		{
-			oErrorSetLast(oERROR_GENERIC, "could not create TESTPCIEBandwith window");
 			return;
-		}
 
-		if (!oGPUMosaicCreate(Device, oHLSLPCIEBandwidthByteCode, &Mosaic))
-		{
-			oErrorSetLast(oERROR_GENERIC, "Could not create Mosaic");
+		if (!oGfxMosaicCreate(Device, oHLSLPCIEBandwidthByteCode, &Mosaic))
 			return;
-		}
 
 		oGPUCommandList::DESC clDesc;
 		clDesc.DrawOrder = 0;
 
 		if (!Device->CreateCommandList("TestCL", clDesc, &CommandList))
-		{
-			oErrorSetLast(oERROR_GENERIC, "Could not create CommandList");
 			return;
-		}
 
 #endif
 	}
@@ -210,13 +202,10 @@ struct TESTWindow
 
 		if (FrameCount < NUM_FRAMES)
 		{
-			oSharedLock<oSharedMutex> lock(Settings.ChangeTestLock);
+			oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(Settings.ChangeTestLock);
 
 			oRef<oGPUDevice> Device;
 			oVERIFY(Window->QueryInterface(&Device));
-
-			if (!Device->BeginFrame())
-				return; // pass through error
 
 			oRef<oGPUCommandList> CurrentCommandList;
 
@@ -233,7 +222,7 @@ struct TESTWindow
 			{
 				for (int i = 0; i < oInt(Textures.size()); ++i)
 				{
-					oGPU_BOX dstRect;
+					oSURFACE_BOX dstRect;
 					dstRect.Right = Settings.Tests[LocalCurrentTest].Width;
 					dstRect.Bottom = Settings.Tests[LocalCurrentTest].Height;
 
@@ -259,8 +248,6 @@ struct TESTWindow
 
 			CurrentCommandList->End();
 
-			Device->EndFrame();
-
 			FrameCount++;
 		}
 	}
@@ -271,7 +258,7 @@ struct TESTWindow
 
 		oRef<oGPUDevice> Device;
 		if (!Window->QueryInterface(&Device))
-			return oErrorSetLast(oERROR_INVALID_PARAMETER, "Could not get d3d10 device from window");
+			return oErrorSetLast(std::errc::invalid_argument, "Could not get d3d10 device from window");
 
 		Textures.resize(_test.NumTextures);
 
@@ -279,7 +266,7 @@ struct TESTWindow
 		{
 			oGPUTexture::DESC texDesc;
 			texDesc.Dimensions = int3(_test.Width, _test.Height, 1);
-			texDesc.NumSlices = 1;
+			texDesc.ArraySize = 1;
 			texDesc.Format = _test.Format;
 			texDesc.Type = oGPU_TEXTURE_2D_MAP;
 
@@ -364,10 +351,10 @@ struct PLATFORM_PCIEBandwidth : public oTest
 			if(desc.AttachedToDesktop)
 			{
 				oConsoleReporting::Report(oConsoleReporting::INFO, "Mon %p Adapter %d Output %d\n", (void*)desc.Monitor, _AdapterIndex, _OutputIndex);
-				if(adapters.find(_AdapterIndex) == end(adapters))
+				if(adapters.find(_AdapterIndex) == std::end(adapters))
 				{
 					auto display = displays.find(desc.Monitor);
-					if(display != end(displays))
+					if(display != std::end(displays))
 					{
 						oDISPLAY_DESC& displayDesc = display->second;
 
@@ -415,7 +402,7 @@ struct PLATFORM_PCIEBandwidth : public oTest
 		{
 			auto& _test = Settings.Tests[t];
 			{
-				oLockGuard<oSharedMutex> lock(Settings.ChangeTestLock);
+				oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Settings.ChangeTestLock);
 				Settings.CurrentTest = oInt(t);
 				for (size_t j = 0;j < TestWindows.size(); ++j)
 				{
@@ -456,7 +443,7 @@ struct PLATFORM_PCIEBandwidth : public oTest
 			double totalTime = oTimer() - startTime;
 
 			{
-				oLockGuard<oSharedMutex> lock(Settings.ChangeTestLock);
+				oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Settings.ChangeTestLock);
 				_test.Finish(totalTime, TestWindows.size());
 				oConsoleReporting::Report(oConsoleReporting::INFO,"%s", Settings.Tests[t].ResultsString);
 			}
@@ -474,7 +461,8 @@ struct PLATFORM_PCIEBandwidth : public oTest
 	}
 };
 
-char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const TEXTURE_COPY_METHOD& _Value)
+namespace oStd {
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const TEXTURE_COPY_METHOD& _Value)
 {
 	switch (_Value)
 	{
@@ -494,5 +482,7 @@ char* oToString(char* _StrDestination, size_t _SizeofStrDestination, const TEXTU
 	}
 	return _StrDestination;
 }
+
+} // namespace oStd
 
 oTEST_REGISTER_PERFTEST(PLATFORM_PCIEBandwidth);
