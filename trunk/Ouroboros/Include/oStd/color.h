@@ -50,7 +50,9 @@ public:
 	color(const color& _That, int _NewAlpha) { c.as_int = _That.c.as_int; c.as_unsigned_char[3] = _NewAlpha & 0xff;  }
 	color(const color& _That, float _NewAlpha) { c.as_int = _That.c.as_int; c.as_unsigned_char[3] = static_cast<unsigned char>(floor(_NewAlpha * 255.0f + 0.5f));  }
 	color(int _ARGB) { c.as_int = _ARGB; }
+	color(long _ARGB) { c.as_long = _ARGB; }
 	color(unsigned int _ARGB) { c.as_unsigned_int = _ARGB; }
+	color(unsigned long _ARGB) { c.as_unsigned_long = _ARGB; }
 	color(int _R, int _G, int _B, int _A) { c.as_unsigned_char[0] = _B & 0xff; c.as_unsigned_char[1] = _G & 0xff; c.as_unsigned_char[2] = _R & 0xff; c.as_unsigned_char[3] = _A & 0xff; }
 	color(float _R, float _G, float _B, float _A) { c.as_unsigned_char[0] = static_cast<unsigned char>(floor(_B * 255.0f + 0.5f)); c.as_unsigned_char[1] = static_cast<unsigned char>(floor(_G * 255.0f + 0.5f)); c.as_unsigned_char[2] = static_cast<unsigned char>(floor(_R * 255.0f + 0.5f)); c.as_unsigned_char[3] = static_cast<unsigned char>(floor(_A * 255.0f + 0.5f)); }
 
