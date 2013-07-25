@@ -47,6 +47,9 @@ const char* oWinAsStringGWLP(int _GWLPCode);
 const char* oWinAsStringTCN(int _TCNCode);
 const char* oWinAsStringCDERR(int _CDERRCode); // common dialog errors
 const char* oWinAsStringExceptionCode(int _ExceptionCode);
+const char* oWinAsStringDBT(int _DBTEvent);
+const char* oWinAsStringDBTDT(int _DBTDevType);
+const char* oWinAsStringSPDRP(int _SPDRPValue);
 
 char* oWinParseStyleFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSFlags);
 char* oWinParseStyleExFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSEXFlags);

@@ -25,6 +25,8 @@
     <ClCompile Include="Tests\TESTfuture.cpp" />
     <ClCompile Include="Tests\TESTini.cpp" />
     <ClCompile Include="Tests\TESTjson.cpp" />
+    <ClCompile Include="Tests\TESTpath.cpp" />
+    <ClCompile Include="Tests\TESTuri.cpp" />
     <ClCompile Include="Tests\TESTxml.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -256,11 +256,11 @@ void oReportingContext::SetDesc(const oREPORTING_DESC& _Desc)
 {
 	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
 
-	oStd::path_string OldLogPath = Desc.LogFilePath;
+	oStd::path OldLogPath(Desc.LogFilePath);
 	Desc = _Desc;
 	if (Desc.LogFilePath)
 	{
-		oCleanPath(Desc.LogFilePath, _Desc.LogFilePath);
+		Desc.LogFilePath = _Desc.LogFilePath;
 		if (oStricmp(OldLogPath, Desc.LogFilePath))
 		{
 			LogFile = nullptr;
@@ -301,7 +301,7 @@ oReportingVPrint oReportingContext::PopReporter()
 
 oStd::assert_action::value oReportingContext::VPrint(const oStd::assert_context& _Assertion, const char* _Format, va_list _Args)
 {
-	size_t ID = oHash_stlp(_Format);
+	size_t ID = oStd::fnv1a<size_t>(_Format);
 	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
 
 	if (!oStd::contains(FilteredMessages, ID) && !VPrintStack.empty())
@@ -497,7 +497,7 @@ char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, c
 	}
 
 	if (_Desc.PrefixMsgId)
-		oACCUM_PRINTF("{0x%08x} ", oHash_stlp(_Format));
+		oACCUM_PRINTF("{0x%08x} ", oStd::fnv1a<unsigned int>(_Format));
 
 	oACCUM_VPRINTF(_Format, _Args);
 	return _StrDestination + len;

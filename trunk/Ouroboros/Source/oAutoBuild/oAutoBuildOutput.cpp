@@ -157,7 +157,8 @@ static void FormatUnitTestResults(const oUnitTestResults& results, std::string& 
 		oFileEnumFilesRecursively(results.FailedImagePath.c_str(),
 			[&](const char* _pFullPath, const oSTREAM_DESC& _StreamDesc)->bool
 		{
-			if (0 == oStrcmp(".png", oGetFileExtension(_pFullPath)))
+			oStd::path P(_pFullPath);
+			if (P.has_extension(".png"))
 			{
 				oStd::path_string filebase;
 				oGetFilebase(filebase, _pFullPath);

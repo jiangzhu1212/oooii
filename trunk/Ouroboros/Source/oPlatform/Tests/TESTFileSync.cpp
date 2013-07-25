@@ -78,9 +78,9 @@ struct PLATFORM_FileSync : public oTest
 				TestSuccess = ReadFile->Read(StreamRead);
 			}
 
-			static const uint128 ExpectedFileHash(3650274822346168237, 9475904461222329612);
+			static const uint128 ExpectedFileHash(13254728276562583748ull, 8059648572410507760ull);
 			oTESTB(TestSuccess, "Test failed, ReadFile->Read returned false");
-			oTESTB( oHash_murmur3_x64_128( TempFileBlob, oUInt( FileDesc.Size ) ) == ExpectedFileHash, "Test failed to compute correct hash" );
+			oTESTB( oStd::murmur3( TempFileBlob, oUInt( FileDesc.Size ) ) == ExpectedFileHash, "Test failed to compute correct hash" );
 		}
 
 		// Now test writing data out then reading it back

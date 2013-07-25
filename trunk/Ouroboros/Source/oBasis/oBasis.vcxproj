@@ -58,7 +58,6 @@
     <ClInclude Include="..\..\Include\oBasis\oGPUConcepts.h" />
     <ClInclude Include="..\..\Include\oBasis\oGUI.h" />
     <ClInclude Include="..\..\Include\oBasis\oGZip.h" />
-    <ClInclude Include="..\..\Include\oBasis\oHash.h" />
     <ClInclude Include="..\..\Include\oBasis\oINISerialize.h" />
     <ClInclude Include="..\..\Include\oBasis\oInitOnce.h" />
     <ClInclude Include="..\..\Include\oBasis\oInputMapper.h" />
@@ -139,7 +138,6 @@
     <ClCompile Include="oGPUConcepts.cpp" />
     <ClCompile Include="oGUI.cpp" />
     <ClCompile Include="oGZip.cpp" />
-    <ClCompile Include="oHash.cpp" />
     <ClCompile Include="oINISerialize.cpp" />
     <ClCompile Include="oInputMapper.cpp" />
     <ClCompile Include="oJSONSerialize.cpp" />

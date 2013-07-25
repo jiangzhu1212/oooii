@@ -85,6 +85,7 @@ static void oGDIDrawKinectSkeleton(HDC _hDC, int _BoneRadius, int2 _ScreenSpaceB
 
 static void oGDIDrawClipping(HDC _hDC, const RECT& _rTarget, const oGUI_TRACKING_CLIPPING& _Clipping)
 {
+	const int2 Offset = oWinRectPosition(_rTarget);
 	const int2 Dimensions = oWinRectSize(_rTarget);
 	const int2 ClippingDimensions = int2(float2(Dimensions) * 0.04f);
 
@@ -96,25 +97,25 @@ static void oGDIDrawClipping(HDC _hDC, const RECT& _rTarget, const oGUI_TRACKING
 	if (_Clipping.Left)
 	{
 		const RECT r = { 0, 0, ClippingDimensions.x, Dimensions.y };
-		oGDIDrawBox(_hDC, r);
+		oGDIDrawBox(_hDC, oWinRectTranslate(r, Offset));
 	}
 
 	if (_Clipping.Top)
 	{
 		const RECT r = { 0, 0, Dimensions.x, ClippingDimensions.y };
-		oGDIDrawBox(_hDC, r);
+		oGDIDrawBox(_hDC, oWinRectTranslate(r, Offset));
 	}
 
 	if (_Clipping.Right)
 	{
 		const RECT r = { 0, 0, ClippingDimensions.x, Dimensions.y };
-		oGDIDrawBox(_hDC, oWinRectTranslate(r, int2(oWinRectW(_rTarget) - oWinRectW(r), 0)));
+		oGDIDrawBox(_hDC, oWinRectTranslate(r, Offset + int2(oWinRectW(_rTarget) - oWinRectW(r), 0)));
 	}
 
 	if (_Clipping.Bottom)
 	{
 		const RECT r = { 0, 0, Dimensions.x, ClippingDimensions.y };
-		oGDIDrawBox(_hDC, oWinRectTranslate(r, int2(0, oWinRectH(_rTarget) - oWinRectH(r))));
+		oGDIDrawBox(_hDC, oWinRectTranslate(r, Offset + int2(0, oWinRectH(_rTarget) - oWinRectH(r))));
 	}
 }
 

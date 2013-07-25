@@ -27,7 +27,6 @@
 #ifndef oCRTLeakTracker_h
 #define oCRTLeakTracker_h
 
-#include <oBasis/oHash.h>
 #include <oBasis/oLeakTracker.h>
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oSingleton.h>

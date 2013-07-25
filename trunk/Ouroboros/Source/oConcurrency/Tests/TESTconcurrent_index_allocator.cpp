@@ -25,7 +25,7 @@
  **************************************************************************/
 #include <oConcurrency/concurrent_index_allocator.h>
 #include <oStd/macros.h>
-#include <oStd/algorithm.h>
+#include <oStd/throw.h>
 #include <vector>
 
 namespace oConcurrency {

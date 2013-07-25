@@ -527,6 +527,7 @@ enum oGUI_ACTION
 oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_ACTION)
 
 // Abstractions for native platform handles
+oDECLARE_HANDLE(oGUI_DRAW_CONTEXT);
 oDECLARE_HANDLE(oGUI_WINDOW);
 oDECLARE_HANDLE(oGUI_SKELETON);
 oDECLARE_HANDLE(oGUI_MENU);
@@ -556,8 +557,9 @@ struct oGUI_WINDOW_DESC
 		, AllowAltF1(true)
 		, AllowAltF4(true)
 		, AllowAltEnter(true)
-		, EnableMainLoopEvent(true)
 		, AllowTouch(true)
+		, EnableMainLoopEvent(true)
+		, EnableDeviceChangeEvent(true)
 	{
 		StatusWidths.fill(oInvalid);
 	}
@@ -624,6 +626,10 @@ struct oGUI_WINDOW_DESC
 	// allow toggle of fullscreen (exclusive or cooperative)
 	bool AllowAltEnter;
 	
+	// Touch often causes mouse messages to behave atypically, so only enable 
+	// touch if the application is specifically ready for it.
+	bool AllowTouch;
+
 	// By default this should be false as most operating system GUIs are event-
 	// driven. For media windows or other "main loop" simulations that use complex 
 	// paint algorithms (such as video update or 3D rendering) this should be set 
@@ -631,7 +637,10 @@ struct oGUI_WINDOW_DESC
 	// loop event.
 	bool EnableMainLoopEvent;
 
-	bool AllowTouch;
+	// Enable extra bookkeeping and registration for the window to respond to the
+	// oGUI_EVENT_DEVICE_CHANGE message. If this is false, this message may not 
+	// occur.
+	bool EnableDeviceChangeEvent;
 };
 
 // This only describes the cursor when over a particular window, not the global
@@ -772,7 +781,7 @@ struct oGUI_INPUT_DEVICE_EVENT_DESC : oGUI_EVENT_DESC
 
 	oGUI_INPUT_DEVICE_TYPE Type;
 	oGUI_INPUT_DEVICE_STATUS Status;
-	oStd::sstring InstanceName;
+	oStd::mstring InstanceName;
 };
 
 typedef oFUNCTION<bool(const oGUI_EVENT_DESC& _Event)> oGUI_EVENT_HOOK;
@@ -795,12 +804,12 @@ struct oGUI_ACTION_DESC
 
 	oGUI_ACTION_DESC(
 		oGUI_WINDOW _hWindow
-		, double _Timestamp
+		, unsigned int _TimestampMS
 		, oGUI_ACTION _Action
 		, oGUI_INPUT_DEVICE_TYPE _DeviceType
 		, int _DeviceID)
 			: hWindow(_hWindow)
-			, Timestamp(_Timestamp)
+			, TimestampMS(_TimestampMS)
 			, Action(_Action)
 			, DeviceType(_DeviceType)
 			, DeviceID(_DeviceID)
@@ -815,10 +824,8 @@ struct oGUI_ACTION_DESC
 	// Control devices have their own handle and sometimes their own sub-action.
 	oGUI_WINDOW hWindow;
 
-	// Time at which the message was sent. This time is locked to a value, then 
-	// all message pumping is done, so all events that get processed in the same
-	// event loop get the same timestamp.
-	double Timestamp;
+	// Time at which the message was sent in milliseconds.
+	unsigned int TimestampMS;
 
 	oGUI_ACTION Action;
 	oGUI_INPUT_DEVICE_TYPE DeviceType;

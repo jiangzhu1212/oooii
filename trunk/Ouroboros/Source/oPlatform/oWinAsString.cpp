@@ -31,6 +31,8 @@
 #include <DShow.h>
 #include <Shellapi.h>
 #include <CDErr.h>
+#include <Dbt.h>
+#include <SetupAPI.h>
 
 const char* oWinAsStringHT(int _HTCode)
 {
@@ -139,6 +141,7 @@ const char* oWinAsStringWM(int _uMsg)
 		case WM_DEADCHAR: return "WM_DEADCHAR";
 		case WM_DESTROY: return "WM_DESTROY";
 		case WM_DISPLAYCHANGE: return "WM_DISPLAYCHANGE";
+		case WM_DEVICECHANGE: return "WM_DEVICECHANGE";
 		case WM_DRAWITEM: return "WM_DRAWITEM";
 		case WM_DROPFILES: return "WM_DROPFILES";
 		case WM_DWMCOLORIZATIONCOLORCHANGED: return "WM_DWMCOLORIZATIONCOLORCHANGED";
@@ -255,7 +258,7 @@ const char* oWinAsStringWM(int _uMsg)
 		case oWM_STATUS_GETTEXT: return "oWM_STATUS_GETTEXT";
 		case oWM_STATUS_GETTEXTLENGTH: return "oWM_STATUS_GETTEXTLENGTH";
 		case oWM_SKELETON: return "oWM_SKELETON";
-		case oWM_INPUT_DEVICE_STATUS: return "oWM_INPUT_DEVICE_STATUS";
+		case oWM_INPUT_DEVICE_CHANGE: return "oWM_INPUT_DEVICE_CHANGE";
 
 		default: break;
 	}
@@ -547,6 +550,89 @@ const char* oWinAsStringExceptionCode(int _ExceptionCode)
 	return "unrecognized Exception Code";
 }
 
+const char* oWinAsStringDBT(int _DBTEvent)
+{
+	switch (_DBTEvent)
+	{
+		case DBT_CONFIGCHANGECANCELED: return "DBT_CONFIGCHANGECANCELED";
+		case DBT_CONFIGCHANGED: return "DBT_CONFIGCHANGED";
+		case DBT_CUSTOMEVENT: return "DBT_CUSTOMEVENT";
+		case DBT_DEVICEARRIVAL: return "DBT_DEVICEARRIVAL";
+		case DBT_DEVICEQUERYREMOVE: return "DBT_DEVICEQUERYREMOVE";
+		case DBT_DEVICEQUERYREMOVEFAILED: return "DBT_DEVICEQUERYREMOVEFAILED";
+		case DBT_DEVICEREMOVECOMPLETE: return "DBT_DEVICEREMOVECOMPLETE";
+		case DBT_DEVICEREMOVEPENDING: return "DBT_DEVICEREMOVEPENDING";
+		case DBT_DEVICETYPESPECIFIC: return "DBT_DEVICETYPESPECIFIC";
+		case DBT_DEVNODES_CHANGED: return "DBT_DEVNODES_CHANGED";
+		case DBT_QUERYCHANGECONFIG: return "DBT_QUERYCHANGECONFIG";
+		case DBT_USERDEFINED: return "DBT_USERDEFINED";
+		default: break;
+	}
+
+	return "unrecognized DBT event";
+}
+
+const char* oWinAsStringDBTDT(int _DBTDevType)
+{
+	switch (_DBTDevType)
+	{
+		case DBT_DEVTYP_DEVICEINTERFACE: return "DBT_DEVTYP_DEVICEINTERFACE";
+		case DBT_DEVTYP_HANDLE: return "DBT_DEVTYP_HANDLE";
+		case DBT_DEVTYP_OEM: return "DBT_DEVTYP_OEM";
+		case DBT_DEVTYP_PORT: return "DBT_DEVTYP_PORT";
+		case DBT_DEVTYP_VOLUME: return "DBT_DEVTYP_VOLUME";
+		default: break;
+	}
+
+	return "unrecognized DBT devtype event";
+}
+
+const char* oWinAsStringSPDRP(int _SPDRPValue)
+{
+	switch (_SPDRPValue)
+	{
+		case SPDRP_DEVICEDESC: return "SPDRP_DEVICEDESC";
+		case SPDRP_HARDWAREID: return "SPDRP_HARDWAREID";
+		case SPDRP_COMPATIBLEIDS: return "SPDRP_COMPATIBLEIDS";
+		case SPDRP_UNUSED0: return "SPDRP_UNUSED0";
+		case SPDRP_SERVICE: return "SPDRP_SERVICE";
+		case SPDRP_UNUSED1: return "SPDRP_UNUSED1";
+		case SPDRP_UNUSED2: return "SPDRP_UNUSED2";
+		case SPDRP_CLASS: return "SPDRP_CLASS";
+		case SPDRP_CLASSGUID: return "SPDRP_CLASSGUID";
+		case SPDRP_DRIVER: return "SPDRP_DRIVER";
+		case SPDRP_CONFIGFLAGS: return "SPDRP_CONFIGFLAGS";
+		case SPDRP_MFG: return "SPDRP_MFG";
+		case SPDRP_FRIENDLYNAME: return "SPDRP_FRIENDLYNAME";
+		case SPDRP_LOCATION_INFORMATION: return "SPDRP_LOCATION_INFORMATION";
+		case SPDRP_PHYSICAL_DEVICE_OBJECT_NAME: return "SPDRP_PHYSICAL_DEVICE_OBJECT_NAME";
+		case SPDRP_CAPABILITIES: return "SPDRP_CAPABILITIES";
+		case SPDRP_UI_NUMBER: return "SPDRP_UI_NUMBER";
+		case SPDRP_UPPERFILTERS: return "SPDRP_UPPERFILTERS";
+		case SPDRP_LOWERFILTERS: return "SPDRP_LOWERFILTERS";
+		case SPDRP_BUSTYPEGUID: return "SPDRP_BUSTYPEGUID";
+		case SPDRP_LEGACYBUSTYPE: return "SPDRP_LEGACYBUSTYPE";
+		case SPDRP_BUSNUMBER: return "SPDRP_BUSNUMBER";
+		case SPDRP_ENUMERATOR_NAME: return "SPDRP_ENUMERATOR_NAME";
+		case SPDRP_SECURITY: return "SPDRP_SECURITY";
+		case SPDRP_SECURITY_SDS: return "SPDRP_SECURITY_SDS";
+		case SPDRP_DEVTYPE: return "SPDRP_DEVTYPE";
+		case SPDRP_EXCLUSIVE: return "SPDRP_EXCLUSIVE";
+		case SPDRP_CHARACTERISTICS: return "SPDRP_CHARACTERISTICS";
+		case SPDRP_ADDRESS: return "SPDRP_ADDRESS";
+		case SPDRP_UI_NUMBER_DESC_FORMAT: return "SPDRP_UI_NUMBER_DESC_FORMAT";
+		case SPDRP_DEVICE_POWER_DATA: return "SPDRP_DEVICE_POWER_DATA";
+		case SPDRP_REMOVAL_POLICY: return "SPDRP_REMOVAL_POLICY";
+		case SPDRP_REMOVAL_POLICY_HW_DEFAULT: return "SPDRP_REMOVAL_POLICY_HW_DEFAULT";
+		case SPDRP_REMOVAL_POLICY_OVERRIDE: return "SPDRP_REMOVAL_POLICY_OVERRIDE";
+		case SPDRP_INSTALL_STATE: return "SPDRP_INSTALL_STATE";
+		case SPDRP_LOCATION_PATHS: return "SPDRP_LOCATION_PATHS";
+		case SPDRP_BASE_CONTAINERID: return "SPDRP_BASE_CONTAINERID";
+		default: break;
+	}
+	return "unrecognized SPDRP value";
+}
+
 char* oWinParseStyleFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSFlags)
 {
 	return oStd::strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_WSFlags, oWinAsStringWS(WS_OVERLAPPED), oWinAsStringWS);
@@ -619,6 +705,94 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 			UINT nFiles = DragQueryFile((HDROP)_wParam, ~0u, p, oUInt(p.capacity()));
 			DragQueryFile((HDROP)_wParam, 0, p, oUInt(p.capacity()));
 			oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DROPFILES hDrop=0x%x %u files starting with \"%s\"", _hWnd, _wParam, nFiles, p.c_str());
+			break;
+		}
+		case WM_INPUT_DEVICE_CHANGE:
+		{
+			const char* type = _wParam == GIDC_ARRIVAL ? "arrival" : "removal";
+
+			oStd::mstring Name;
+			UINT Size = oUInt(Name.capacity() * sizeof(oStd::mstring::char_type));
+			GetRawInputDeviceInfo((HANDLE)_lParam, RIDI_DEVICENAME, Name.c_str(), &Size);
+
+			RID_DEVICE_INFO RIDDI;
+			Size = sizeof(RIDDI);
+			GetRawInputDeviceInfo((HANDLE)_lParam, RIDI_DEVICEINFO, &RIDDI, &Size);
+			oGUI_INPUT_DEVICE_TYPE InpType = oGUI_INPUT_DEVICE_UNKNOWN;
+			switch (RIDDI.dwType)
+			{
+				case RIM_TYPEKEYBOARD:
+					InpType = oGUI_INPUT_DEVICE_KEYBOARD;
+					break;
+				case RIM_TYPEMOUSE:
+					InpType = oGUI_INPUT_DEVICE_MOUSE;
+					break;
+				default:
+				case RIM_TYPEHID:
+					InpType = oGUI_INPUT_DEVICE_UNKNOWN;
+					break;
+			}
+
+			oStd::sstring StrType;
+			oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_INPUT_DEVICE_CHANGE %s type=%s devname=%s", _hWnd, type, oStd::to_string(StrType, InpType), Name.c_str());
+			break;
+		}
+
+		case WM_DEVICECHANGE: 
+		{ 
+			DEV_BROADCAST_HDR* pDBHdr = (DEV_BROADCAST_HDR*)_lParam;
+			const char* devtype = pDBHdr ? oWinAsStringDBTDT(pDBHdr->dbch_devicetype) : "(null)";
+
+			const oStd::guid* pGUID = &oStd::null_guid;
+			const char* name = "(null)";
+
+			if (pDBHdr)
+			{
+				switch (pDBHdr->dbch_devicetype)
+				{
+					case DBT_DEVTYP_DEVICEINTERFACE:
+					{
+						DEV_BROADCAST_DEVICEINTERFACE_A* pDBDI = (DEV_BROADCAST_DEVICEINTERFACE_A*)_lParam;
+						pGUID = (const oStd::guid*)&pDBDI->dbcc_classguid;
+						name = pDBDI->dbcc_name;
+						break;
+					}
+					case DBT_DEVTYP_HANDLE:
+					{
+						DEV_BROADCAST_HANDLE* pDBH = (DEV_BROADCAST_HANDLE*)_lParam;
+						pGUID = (const oStd::guid*)&pDBH->dbch_eventguid;
+						break;
+					}
+					case DBT_DEVTYP_OEM:
+					{
+						DEV_BROADCAST_OEM* pDBOEM = (DEV_BROADCAST_OEM*)_lParam;
+						name = "OEM";
+						break;
+					}
+					case DBT_DEVTYP_PORT:
+					{
+						DEV_BROADCAST_PORT* pDBPort = (DEV_BROADCAST_PORT*)_lParam;
+						name = pDBPort->dbcp_name;
+						break;
+					}
+					case DBT_DEVTYP_VOLUME:
+					{
+						DEV_BROADCAST_VOLUME* pDBVol = (DEV_BROADCAST_VOLUME*)_lParam;
+						switch (pDBVol->dbcv_flags)
+						{
+							case DBTF_MEDIA: name = "physical media device"; break;
+							case DBTF_NET: name = "network device"; break;
+							case DBTF_MEDIA|DBTF_NET: name = "network media device"; break;
+							default: name = "physical device";
+						}
+						break;
+					}
+					default: break;
+				}
+			}
+
+			oStd::sstring StrGUID;
+			oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DEVICECHANGE %s devtype=%s GUID=%s name=%s", _hWnd, oWinAsStringDBT(oInt(_wParam)), devtype, oStd::to_string(StrGUID, *pGUID), name);
 			break;
 		}
 		default:

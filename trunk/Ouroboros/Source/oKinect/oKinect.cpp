@@ -101,6 +101,7 @@ bool oKinectImpl::Reinitialize()
 			oVB_RETURN2(hr);
 		oASSERT(NUISensor->NuiInstanceIndex() == Desc.Index, "");
 		Desc.ID = NUISensor->NuiDeviceConnectionId();
+		oTRACE("oKinect 0x%p reinitialized with ConnectionId %s", this, Desc.ID.c_str());
 	}
 
 	else

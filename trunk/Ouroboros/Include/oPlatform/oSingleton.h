@@ -118,7 +118,13 @@ public:
 	static T* Singleton()
 	{
 		thread_local static T* sInstance;
-		oConstructOnce(&sInstance, New);
+		if (oConstructOnce(&sInstance, New))
+		{
+			// We need to add a module singleton reference to this instance
+			// since we can get here more than once per thread if it is called
+			// from a different module. 
+			static oRef<T> sAnotherInstance(sInstance, true);
+		}
 		return sInstance;
 	}
 };

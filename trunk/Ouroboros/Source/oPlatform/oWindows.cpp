@@ -47,6 +47,7 @@
 #include "SoftLink/oWinNetApi32.h"
 #include "SoftLink/oWinDWMAPI.h"
 #include "SoftLink/oWinPSAPI.h"
+#include "SoftLink/oWinSetupAPI.h"
 #include "oStaticMutex.h"
 #include <io.h>
 #include <time.h>
@@ -54,6 +55,9 @@
 #include <Windowsx.h>
 #include <comdef.h>
 #include <Wbemidl.h>
+#include <devguid.h>
+#include <devpkey.h>
+
 
 // Use the Windows Vista UI look. If this causes issues or the dialog not to appear, try other values from processorAchitecture { x86 ia64 amd64 * }
 #pragma comment(linker, "\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -206,6 +210,221 @@ static void CALLBACK ExecuteScheduledFunctionAndCleanup(LPVOID lpArgToCompletion
 	}
 	oVB(CloseHandle((HANDLE)Context.hTimer));
 	delete &Context;
+}
+
+// copy from DEVPKEY.H
+static const DEVPROPKEY oDEVPKEY_Device_DeviceDesc = { { 0xa45c254e, 0xdf1c, 0x4efd, { 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0 } }, 2 };
+static const DEVPROPKEY oDEVPKEY_Device_HardwareIds = { { 0xa45c254e, 0xdf1c, 0x4efd, { 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0 } }, 3 };
+static const DEVPROPKEY oDEVPKEY_Device_Class = { { 0xa45c254e, 0xdf1c, 0x4efd, { 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0 } }, 9 };
+static const DEVPROPKEY oDEVPKEY_Device_PDOName = { { 0xa45c254e, 0xdf1c, 0x4efd, { 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0 } }, 16 };
+static const DEVPROPKEY oDEVPKEY_Device_Parent = { { 0x4340a6c5, 0x93fa, 0x4706, { 0x97, 0x2c, 0x7b, 0x64, 0x80, 0x08, 0xa5, 0xa7 } }, 8 }; 
+static const DEVPROPKEY oDEVPKEY_Device_InstanceId = { { 0x78c34fc8, 0x104a, 0x4aca, { 0x9e, 0xa4, 0x52, 0x4d, 0x52, 0x99, 0x6e, 0x57 } }, 256 };
+static const DEVPROPKEY oDEVPKEY_Device_Siblings = { { 0x4340a6c5, 0x93fa, 0x4706, { 0x97, 0x2c, 0x7b, 0x64, 0x80, 0x08, 0xa5, 0xa7 } }, 10 };
+
+// if _EnumerateAll is false, then only existing/plugged in devices are searched.
+// A single PnP device can support multiple device types, so this sets the 
+// array of types the PnP device represents.
+
+static char* oWinPnPEnumeratorToSetupClass(char* _StrDestination, size_t _SizeofStrDestination, const char* _PnPEnumerator)
+{
+	if (strlen(_PnPEnumerator) <= 4) return nullptr;
+	size_t len = strlcpy(_StrDestination, _PnPEnumerator + 4, _SizeofStrDestination);
+	if (len >= _SizeofStrDestination) return nullptr;
+	char* hash = strrchr(_StrDestination, '#');
+	if (!hash) return nullptr;
+	*hash = '\0';
+	char* end = _StrDestination + len;
+	oStd::transform(_StrDestination, end, _StrDestination, [=](char c) { return (c == '#') ? '\\' : c; });
+	oStd::transform(_StrDestination, end, _StrDestination, oStd::toupper<char>);
+	char* first_slash = strchr(_StrDestination, '\\');
+	if (!first_slash) return nullptr;
+	*first_slash = '\0';
+	return _StrDestination;
+}
+
+template<size_t size> char* oWinPnPEnumeratorToSetupClass(char (&_StrDestination)[size], const char* _PnPEnumerator) { return oWinPnPEnumeratorToSetupClass(_StrDestination, size, _PnPEnumerator); }
+template<typename charT, size_t capacity> char* oWinPnPEnumeratorToSetupClass(oStd::fixed_string<charT, capacity>& _StrDestination, const char* _PnPEnumerator) { return oWinPnPEnumeratorToSetupClass(_StrDestination, _StrDestination.capacity(), _PnPEnumerator); }
+
+oGUI_INPUT_DEVICE_TYPE oWinGetDeviceTypeFromClass(const char* _Class)
+{
+	static const char* DeviceClass[oGUI_INPUT_DEVICE_TYPE_COUNT] = 
+	{
+		"Unknown",
+		"Keyboard",
+		"Mouse",
+		"Controller",
+		"Control", // won't ever get this from HW config
+		"Skeleton",
+		"Voice",
+		"Touch", // not sure what this is called generically
+	};
+	static_assert(oCOUNTOF(DeviceClass) == oGUI_INPUT_DEVICE_TYPE_COUNT, "array mismatch");
+	for (int i = 0; i < oCOUNTOF(DeviceClass); i++)
+		if (!strcmp(DeviceClass[i], _Class))
+			return (oGUI_INPUT_DEVICE_TYPE)i;
+	return oGUI_INPUT_DEVICE_UNKNOWN;
+}
+
+static bool oWinSetupGetString(oStd::mstring& _StrDestination, HDEVINFO _hDevInfo, SP_DEVINFO_DATA* _pSPDID, const DEVPROPKEY* _pPropKey)
+{
+	DEVPROPTYPE dpType;
+	DWORD size = 0;
+	oWinSetupAPI::Singleton()->SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, nullptr, 0, &size, 0);
+	if (size)
+	{
+		oStd::mwstring buffer;
+		oASSERT(buffer.capacity() > (size / sizeof(oStd::mwstring::char_type)), "");
+		if (!oWinSetupAPI::Singleton()->SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) || dpType != DEVPROP_TYPE_STRING)
+			return oWinSetLastError();
+		_StrDestination = buffer;
+	}
+	else
+		_StrDestination.clear();
+
+	return true;
+}
+
+// _NumStrings must be initialized to maximum capacity
+static bool oWinSetupGetStringList(oStd::mstring* _StrDestination, size_t& _NumStrings, HDEVINFO _hDevInfo, SP_DEVINFO_DATA* _pSPDID, const DEVPROPKEY* _pPropKey)
+{
+	DEVPROPTYPE dpType;
+	DWORD size = 0;
+	oWinSetupAPI::Singleton()->SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, nullptr, 0, &size, 0);
+	if (size)
+	{
+		oStd::xlwstring buffer;
+		oASSERT(buffer.capacity() > size, "");
+		if (!oWinSetupAPI::Singleton()->SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) || dpType != DEVPROP_TYPE_STRING_LIST)
+			return oWinSetLastError();
+
+		const wchar_t* c = buffer.c_str();
+		size_t i = 0;
+		for (; i < _NumStrings; i++)
+		{
+			_StrDestination[i] = c;
+			c += wcslen(c) + 1;
+
+			if (!*c)
+			{
+				_NumStrings = i + 1;
+				break;
+			}
+		}
+
+		if (i > _NumStrings)
+		{
+			while (*c)
+			{
+				c += wcslen(c) + 1;
+				i++;
+			}
+
+			_NumStrings = i + 1;
+			return oErrorSetLast(std::errc::no_buffer_space, "not enough strings");
+		}
+	}
+	else
+		_NumStrings = 0;
+
+	return true;
+}
+
+static bool oWinEnumInputDevices(bool _EnumerateAll, const char* _Enumerator, const oFUNCTION<void(const oWINDOWS_HID_DESC& _HIDDesc)>& _Visitor)
+{
+	if (!_Visitor)
+		return oErrorSetLast(std::errc::invalid_argument, "Must specify a visitor.");
+
+	HDEVINFO hDevInfo = INVALID_HANDLE_VALUE;
+	oStd::finally([=]
+	{ 
+		if (hDevInfo != INVALID_HANDLE_VALUE) 
+			oWinSetupAPI::Singleton()->SetupDiDestroyDeviceInfoList(hDevInfo);
+	});
+
+	DWORD dwFlag = DIGCF_ALLCLASSES;
+	if (!_EnumerateAll)
+		dwFlag |= DIGCF_PRESENT;
+
+	hDevInfo = oWinSetupAPI::Singleton()->SetupDiGetClassDevsA(nullptr, _Enumerator, nullptr, dwFlag);
+	if (INVALID_HANDLE_VALUE == hDevInfo)
+		return oWinSetLastError();
+
+	SP_DEVINFO_DATA SPDID;
+	memset(&SPDID, 0, sizeof(SPDID));
+	SPDID.cbSize = sizeof(SPDID);
+	int DeviceIndex = 0;
+	bool KnownTypeFound = false;
+
+	oWINDOWS_HID_DESC HIDDesc;
+
+	oStd::mstring KinectCameraSibling;
+	oStd::mstring KinectCameraParent;
+
+	while (oWinSetupAPI::Singleton()->SetupDiEnumDeviceInfo(hDevInfo, DeviceIndex, &SPDID))
+	{
+		DeviceIndex++;
+
+		oStd::mstring ClassValue;
+		if (!oWinSetupGetString(ClassValue, hDevInfo, &SPDID, &oDEVPKEY_Device_Class))
+			return false; // pass through error
+
+		if (!oWinSetupGetString(HIDDesc.ParentDeviceInstancePath, hDevInfo, &SPDID, &oDEVPKEY_Device_Parent))
+			return false; // pass through error
+
+		// Fall back on generic desc string for Kinect, which apparently is in a 
+		// class by itself at the moment.
+		if (!strcmp("Microsoft Kinect", ClassValue))
+		{
+			if (!oWinSetupGetString(ClassValue, hDevInfo, &SPDID, &oDEVPKEY_Device_DeviceDesc))
+				return false; // pass through error
+
+			if (strstr(ClassValue, "Camera"))
+			{
+				ClassValue = "Skeleton";
+				HIDDesc.DeviceInstancePath = HIDDesc.ParentDeviceInstancePath;
+
+				oStd::mstring Strings[2];
+				size_t Capacity = oCOUNTOF(Strings);
+				if (!oWinSetupGetStringList(Strings, Capacity, hDevInfo, &SPDID, &oDEVPKEY_Device_Siblings) || Capacity != 1)
+					return false; // pass through error
+
+				KinectCameraSibling = Strings[0];
+				KinectCameraParent = HIDDesc.ParentDeviceInstancePath;
+			}
+
+			else if (strstr(ClassValue, "Audio"))
+			{
+				ClassValue = "Voice";
+				if (HIDDesc.ParentDeviceInstancePath == KinectCameraSibling)
+					HIDDesc.DeviceInstancePath = KinectCameraParent;
+
+				else
+					HIDDesc.DeviceInstancePath = HIDDesc.ParentDeviceInstancePath;
+			}
+			else
+				ClassValue = "Unknown";
+		}
+
+		else
+		{
+			if (!oWinSetupGetString(HIDDesc.DeviceInstancePath, hDevInfo, &SPDID, &oDEVPKEY_Device_InstanceId))
+				return false; // pass through error
+		}
+
+		// There are often meta-classes to be ignored, so don't flag unknown unless
+		// every other type is not present.
+		HIDDesc.Type = oWinGetDeviceTypeFromClass(ClassValue);
+		HIDDesc.DevInst = SPDID.DevInst;
+
+		_Visitor(HIDDesc);
+	}
+
+	return true;
+}
+
+bool oWinEnumInputDevices(bool _EnumerateAll, const oFUNCTION<void(const oWINDOWS_HID_DESC& _HIDDesc)>& _Visitor)
+{
+	return oWinEnumInputDevices(_EnumerateAll, "HID", _Visitor) && oWinEnumInputDevices(_EnumerateAll, "USB", _Visitor);
 }
 
 bool oScheduleTask(const char* _DebugName, time_t _AbsoluteTime, bool _Alertable, oTASK _Task)
@@ -1066,7 +1285,6 @@ bool oWinEnumWindows( oFUNCTION<bool(HWND _Hwnd)> _Function )
 	void* pFunc = &_Function;
 	return TRUE == EnumWindows((WNDENUMPROC)oWinEnumWindowsProc, (LPARAM)pFunc);
 }
-
 
 #pragma pack(push,8)
 typedef struct tagTHREADNAME_INFO

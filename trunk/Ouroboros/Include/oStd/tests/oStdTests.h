@@ -38,6 +38,8 @@ namespace oStd {
 		void TESTdate(requirements& _Requirements);
 		void TESTini();
 		void TESTfuture(requirements& _Requirements);
+		void TESTpath();
+		void TESTuri();
 		void TESTxml();
 
 	} // namespace tests

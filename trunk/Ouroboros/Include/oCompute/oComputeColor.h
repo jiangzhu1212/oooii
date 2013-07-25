@@ -44,6 +44,8 @@
 #include <oStd/color.h>
 #include <oStd/operators.h>
 
+#include <oHLSL/oHLSLSwizzlesOn.h>
+
 class oRGBf
 {
 	// Handle automatic expansion of oStd::color to float3s. Using this type
@@ -51,24 +53,26 @@ class oRGBf
 	// NOTE: Alpha is quietly dropped/ignored when using this.
 
 public:
-	oRGBf() : Color(0.0f, 0.0f, 0.0f) {}
-	oRGBf(float _R, float _G, float _B) : Color(_R, _G, _B) {}
-	oRGBf(const float3& _Color) : Color(_Color) {}
-	oRGBf(const oStd::color& _Color) { _Color.decompose(&Color.x, &Color.y, &Color.z); }
-	oRGBf(const oRGBf& _RGB) : Color(_RGB.Color) {}
+	float r, g, b;
 
-	inline operator float3&() { return Color; }
-	inline operator const float3&() const { return Color; }
-	inline operator oStd::color() const { return oStd::color(Color.x, Color.y, Color.z, 1.0f); }
-	inline const oRGBf& operator=(int _Color) { Color = (float)_Color; return *this; }
-	inline const oRGBf& operator=(const oRGBf& _Color) { Color = _Color.Color; return *this; }
-	inline const oRGBf& operator=(const float3& _Color) { Color = _Color; return *this; }
-	inline const oRGBf& operator=(const oStd::color& _Color) { _Color.decompose(&Color.x, &Color.y, &Color.z); return *this; }
+	oRGBf() : r(0.0f), g(0.0f), b(0.0f) {}
+	oRGBf(float _R, float _G, float _B) : r(_R), g(_G), b(_B) {}
+	oRGBf(const float3& _Color) : r(_Color.x), g(_Color.y), b(_Color.z) {}
+	oRGBf(const oStd::color& _Color) { _Color.decompose(&r, &g, &b); }
+	oRGBf(const oRGBf& _RGB) : r(_RGB.r), g(_RGB.g), b(_RGB.b) {}
 
-	oRGBf& operator+=(const oRGBf& _That) { Color = saturate(Color + (const float3&)_That); return *this; }
-	oRGBf& operator-=(const oRGBf& _That) { Color = saturate(Color - (const float3&)_That); return *this; }
-	oRGBf& operator*=(const oRGBf& _That) { Color = saturate(Color * (const float3&)_That); return *this; }
-	oRGBf& operator/=(const oRGBf& _That) { Color = saturate(Color / (const float3&)_That); return *this; }
+	inline operator float3&() { return *(float3*)this; }
+	inline operator const float3&() const { return *(float3*)this; }
+	inline operator oStd::color() const { return oStd::color(r, g, b, 1.0f); }
+	inline const oRGBf& operator=(int _Color) { r = static_cast<float>(_Color); g = static_cast<float>(_Color); b = static_cast<float>(_Color); return *this; }
+	inline const oRGBf& operator=(const oRGBf& _Color) { r = _Color.r; g = _Color.g; b = _Color.b; return *this; }
+	inline const oRGBf& operator=(const float3& _Color) { r = _Color.x; g = _Color.y; b = _Color.z; return *this; }
+	inline const oRGBf& operator=(const oStd::color& _Color) { _Color.decompose(&r, &g, &b); return *this; }
+
+	oRGBf& operator+=(const oRGBf& _That) { *this = saturate((const float3&)*this + (const float3&)_That); return *this; }
+	oRGBf& operator-=(const oRGBf& _That) { *this = saturate((const float3&)*this - (const float3&)_That); return *this; }
+	oRGBf& operator*=(const oRGBf& _That) { *this = saturate((const float3&)*this * (const float3&)_That); return *this; }
+	oRGBf& operator/=(const oRGBf& _That) { *this = saturate((const float3&)*this / (const float3&)_That); return *this; }
 
 	oRGBf& operator+=(const float& _That) { operator+=(oRGBf(_That, _That, _That)); return *this; }
 	oRGBf& operator-=(const float& _That) { operator-=(oRGBf(_That, _That, _That)); return *this; }
@@ -77,15 +81,12 @@ public:
 
 	oOPERATORS_DERIVED_COMMUTATIVE2(oRGBf, float, +) oOPERATORS_DERIVED(oRGBf, -) oOPERATORS_DERIVED(oRGBf, *) oOPERATORS_DERIVED(oRGBf, /)
 
-	inline oRGBf operator-(float x) const { return Color - x; }
-	inline oRGBf operator*(float x) const { return Color * x; }
-	inline oRGBf operator/(float x) const { return Color / x; }
+	inline oRGBf operator-(float x) const { return (const float3&)*this - x; }
+	inline oRGBf operator*(float x) const { return (const float3&)*this * x; }
+	inline oRGBf operator/(float x) const { return (const float3&)*this / x; }
 
 	friend inline oRGBf operator-(float x, const oRGBf& _RGBf) { return oRGBf(x,x,x) - _RGBf; }
 	friend inline oRGBf operator*(float x, const oRGBf& _RGBf) { return oRGBf(x,x,x) / _RGBf; }
-
-protected:
-	float3 Color;
 };
 
 class oRGBAf
@@ -94,25 +95,27 @@ class oRGBAf
 	// allows for a single header to be defined for usage in both C++ and HLSL. 
 
 public:
-	oRGBAf() : Color(0.0f, 0.0f, 0.0f, 1.0f) {}
-	oRGBAf(float _R, float _G, float _B, float _A) : Color(_R, _G, _B, _A) {}
-	oRGBAf(const float4& _Color) : Color(_Color) {}
-	oRGBAf(const oStd::color& _Color) { _Color.decompose(&Color.x, &Color.y, &Color.z, &Color.w); }
-	oRGBAf(const oRGBAf& _RGBA) : Color(_RGBA.Color) {}
+	float r, g, b, a;
 
-	inline const float3& rgb() const { return *(const float3*)&Color; }
-	inline operator float4&() { return Color; }
-	inline operator const float4&() const { return Color; }
-	inline operator oStd::color() const { return oStd::color(Color.x, Color.y, Color.z, 1.0f); }
-	inline const oRGBAf& operator=(int _Color) { Color = (float)_Color; return *this; }
-	inline const oRGBAf& operator=(const oRGBAf& _Color) { Color = _Color.Color; return *this; }
-	inline const oRGBAf& operator=(const float4& _Color) { Color = _Color; return *this; }
-	inline const oRGBAf& operator=(const oStd::color& _Color) { _Color.decompose(&Color.x, &Color.y, &Color.z, &Color.w); return *this; }
+	oRGBAf() : r(0.0f), g(0.0f), b(0.0f), a(1.0f) {}
+	oRGBAf(float _R, float _G, float _B, float _A) : r(_R), g(_G), b(_B), a(_A) {}
+	oRGBAf(const float4& _Color) : r(_Color.x), g(_Color.y), b(_Color.z), a(_Color.w) {}
+	oRGBAf(const oStd::color& _Color) { _Color.decompose(&r, &g, &b, &a); }
+	oRGBAf(const oRGBAf& _RGBA) : r(_RGBA.r), g(_RGBA.g), b(_RGBA.b), a(_RGBA.a) {}
 
-	oRGBAf& operator+=(const oRGBAf& _That) { Color = saturate(Color + (const float4&)_That); return *this; }
-	oRGBAf& operator-=(const oRGBAf& _That) { Color = saturate(Color - (const float4&)_That); return *this; }
-	oRGBAf& operator*=(const oRGBAf& _That) { Color = saturate(Color * (const float4&)_That); return *this; }
-	oRGBAf& operator/=(const oRGBAf& _That) { Color = saturate(Color / (const float4&)_That); return *this; }
+	inline const float3& rgb() const { return *(const float3*)this; }
+	inline operator float4&() { return *(float4*)this; }
+	inline operator const float4&() const { return *(const float4*)this; }
+	inline operator oStd::color() const { return oStd::color(r, g, b, a); }
+	inline const oRGBAf& operator=(int _Color) { r = static_cast<float>(_Color); g = static_cast<float>(_Color); b = static_cast<float>(_Color); a = static_cast<float>(_Color); return *this; }
+	inline const oRGBAf& operator=(const oRGBAf& _Color) { r = _Color.r; g = _Color.g; b = _Color.b; a = _Color.a; return *this; }
+	inline const oRGBAf& operator=(const float4& _Color) { r = _Color.x; g = _Color.y; b = _Color.z; a = _Color.w; return *this; }
+	inline const oRGBAf& operator=(const oStd::color& _Color) { _Color.decompose(&r, &g, &b, &a); return *this; }
+
+	oRGBAf& operator+=(const oRGBAf& _That) { *this = saturate((const float4&)*this + (const float4&)_That); return *this; }
+	oRGBAf& operator-=(const oRGBAf& _That) { *this = saturate((const float4&)*this - (const float4&)_That); return *this; }
+	oRGBAf& operator*=(const oRGBAf& _That) { *this = saturate((const float4&)*this * (const float4&)_That); return *this; }
+	oRGBAf& operator/=(const oRGBAf& _That) { *this = saturate((const float4&)*this / (const float4&)_That); return *this; }
 
 	oRGBAf& operator+=(const float& _That) { operator+=(oRGBAf(_That, _That, _That, _That)); return *this; }
 	oRGBAf& operator-=(const float& _That) { operator-=(oRGBAf(_That, _That, _That, _That)); return *this; }
@@ -121,15 +124,12 @@ public:
 
 	oOPERATORS_DERIVED_COMMUTATIVE2(oRGBAf, float, +) oOPERATORS_DERIVED(oRGBAf, -) oOPERATORS_DERIVED(oRGBAf, *) oOPERATORS_DERIVED(oRGBAf, /)
 
-	inline oRGBAf operator-(float x) const { return Color - x; }
-	inline oRGBAf operator*(float x) const { return Color * x; }
-	inline oRGBAf operator/(float x) const { return Color / x; }
+	inline oRGBAf operator-(float x) const { return (const float4&)*this - x; }
+	inline oRGBAf operator*(float x) const { return (const float4&)*this * x; }
+	inline oRGBAf operator/(float x) const { return (const float4&)*this / x; }
 
 	friend inline oRGBAf operator-(float x, const oRGBAf& _RGBAf) { return oRGBAf(x,x,x,x) - _RGBAf; }
 	friend inline oRGBAf operator*(float x, const oRGBAf& _RGBAf) { return oRGBAf(x,x,x,x) / _RGBAf; }
-
-protected:
-	float4 Color;
 };
 
 #endif
@@ -148,14 +148,36 @@ inline float3 oDecolorizeVector(oIN(oRGBf, _RGBVector))
 	return _RGBVector * float3(2.0f, 2.0f, -2.0f) - 1.0f;
 }
 
-// Convert from HSV (HSL) color space to RGB
-inline oRGBf oHSVtoRGB(oIN(float3, HSV))
+// Convert from HSV color space to RGB
+inline oRGBf oHSVtoRGB(oIN(float3, _HSV))
 {
 	// http://chilliant.blogspot.com/2010/11/rgbhsv-in-hlsl.html
-	float R = abs(HSV.x * 6.0f - 3.0f) - 1.0f;
-	float G = 2 - abs(HSV.x * 6.0f - 2.0f);
-	float B = 2 - abs(HSV.x * 6.0f - 4.0f);
-	return ((saturate(float3(R,G,B)) - 1.0f) * HSV.y + 1.0f) * HSV.z;
+	float R = abs(_HSV.x * 6.0f - 3.0f) - 1.0f;
+	float G = 2.0f - abs(_HSV.x * 6.0f - 2.0f);
+	float B = 2.0f - abs(_HSV.x * 6.0f - 4.0f);
+	return ((saturate(float3(R,G,B)) - 1.0f) * _HSV.y + 1.0f) * _HSV.z;
+}
+
+// Convert from RGB color space to HSV
+inline float3 oRGBtoHSV(oIN(oRGBf, _RGB))
+{
+	// http://stackoverflow.com/questions/4728581/hsl-image-adjustements-on-gpu
+	float H = 0.0f;
+	float S = 0.0f;
+	float V = max(_RGB);
+	float m = min(_RGB);
+	float chroma = V - m;
+	S = chroma / V;
+	float3 delta = (V - _RGB) / chroma;
+	delta -= delta.zxy;
+	delta += float3(2.0f, 4.0f, 0.0f);
+	float3 choose = float3(
+		(_RGB.g == V && _RGB.b != V) ? 1.0f : 0.0f,
+		(_RGB.b == V && _RGB.r != V) ? 1.0f : 0.0f,
+		(_RGB.r == V && _RGB.g != V) ? 1.0f : 0.0f);
+	H = dot(delta, choose);
+	H = frac(H / 6.0f);
+	return float3(chroma == 0.0f ? 0.0f : H, chroma == 0.0f ? 0.0f : S, V);
 }
 
 inline float oRGBtoLuminance(oIN(float3, _Color))
@@ -231,4 +253,6 @@ inline oRGBf oIDtoColor16Bit(uint ID16Bit)
 	return oRGBf(float3(uint3(R,G,B) & 0xffff) / 65535.0f);
 }
 
+
+#include <oHLSL/oHLSLSwizzlesOff.h>
 #endif

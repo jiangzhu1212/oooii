@@ -42,7 +42,6 @@
     <ClCompile Include="Tests\TESTMath.cpp" />
     <ClCompile Include="Tests\TESTOBJ.cpp" />
     <ClCompile Include="Tests\TESTOSC.cpp" />
-    <ClCompile Include="Tests\TESTPath.cpp" />
     <ClCompile Include="Tests\TESTRTTI.cpp">
       <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreprocessToFile>
     </ClCompile>

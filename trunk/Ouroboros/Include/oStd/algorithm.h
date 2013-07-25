@@ -427,32 +427,17 @@ int replace_all(std::basic_string<T, TraitsT, AllocatorT>& _String, const char* 
 	return nReplacements;
 }
 
-inline std::string vformatf(const char* _Format, va_list _Args)
+// avoid securecrt warning when using standard API
+template <typename InputIterator, typename OutputIterator, typename UnaryOperation>
+OutputIterator transform(InputIterator _First, InputIterator _Last, OutputIterator _Result, UnaryOperation _Op)
 {
-	char buf[128];
-	#pragma warning(disable:4996) // secure CRT warning
-	const size_t len = vsnprintf(buf, sizeof(buf), _Format, _Args);
-	#pragma warning(default:4996)
-	if (len <= sizeof(buf))
-		return std::move(std::string(buf));
-	char* bigger_buf = static_cast<char*>(alloca(len));
-	snprintf(bigger_buf, len, _Format, _Args);
-	return std::move(std::string(bigger_buf));
+	for (; _First != _Last; ++_First, ++_Result)
+		*_Result = _Op(*_First);
+	return _Result;
 }
 
-inline std::string formatf(const char* _Format, ...)
-{
-	va_list a; va_start(a, _Format);
-	std::string s = vformatf(_Format, a);
-	va_end(a);
-	return std::move(s);
-}
+
 
 } // namespace oStd
-
-#define oTHROW(_SystemError, _Message, ...) do { throw std::system_error(std::make_error_code(std::errc::_SystemError), oStd::formatf(_Message, ## __VA_ARGS__)); } while(false)
-#define oTHROW0(_SystemError) do { throw std::system_error(std::make_error_code(std::errc::_SystemError)); } while(false)
-#define oCHECK(_Expression, _Message, ...) do { if (!(_Expression)) oTHROW(protocol_error, _Message, ## __VA_ARGS__); } while(false)
-#define oCHECK0(_Expression) do { if (!(_Expression)) oTHROW(protocol_error, "%s", #_Expression); } while(false)
 
 #endif

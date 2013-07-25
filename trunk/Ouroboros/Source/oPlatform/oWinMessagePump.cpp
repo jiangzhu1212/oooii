@@ -135,10 +135,9 @@ void oWinMessagePump::MessagePump()
 	oVERIFY(oWinCreate(&hWndMessage, int2(0,0), int2(0,0), StaticWndProc, this, true));
 
 	Running.set();
-	double Timestamp = oTimer();
 	while (Looping)
 	{
-		if (!oWinDispatchMessage(nullptr, hAccel, Timestamp, WaitForMessages))
+		if (!oWinDispatchMessage(nullptr, hAccel, WaitForMessages))
 		{
 			errno_t LastErr = oErrorGetLast();
 			if (std::errc::no_message_available == LastErr)
@@ -152,8 +151,6 @@ void oWinMessagePump::MessagePump()
 			
 			else if (std::errc::operation_canceled == LastErr)
 				break;
-
-			Timestamp = oTimer();
 		}
 
 		WaitForMessages = ActiveWindows.empty();

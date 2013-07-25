@@ -128,7 +128,7 @@ public:
 	// Analyze the specified skeleton for interaction with an oAirKeySet and 
 	// trigger oGUI_ACTION_DESCs appropriately. The specified timestamp will be
 	// passed through to any triggered actions.
-	virtual void Update(const oGUI_BONE_DESC& _Skeleton, double _Timestamp) threadsafe;
+	virtual void Update(const oGUI_BONE_DESC& _Skeleton, unsigned int _TimestampMS) threadsafe;
 
 	// Manually trigger an action
 	virtual void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe;

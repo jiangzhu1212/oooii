@@ -33,9 +33,9 @@
 #include <oConcurrency/countdown_latch.h>
 #include <oConcurrency/mutex.h>
 #include <oStd/fixed_string.h>
-#include <oBasis/oHash.h>
 #include <oBasis/oStdLinearAllocator.h>
 #include <oStd/unordered_map.h>
+#include <oStd/fnv1a.h>
 #include <oStd/function.h>
 
 class oLeakTracker
@@ -92,7 +92,7 @@ public:
 	};
 
 	// Type of container exposed so we can pass in an allocator.
-	static struct HashAllocation { size_t operator()(uintptr_t _AllocationID) const { return oHash_superfast(&_AllocationID, sizeof(_AllocationID)); } };
+	static struct HashAllocation { size_t operator()(uintptr_t _AllocationID) const { return oStd::fnv1a<size_t>(&_AllocationID, sizeof(_AllocationID)); } };
 	
 	typedef std::pair<const uintptr_t, ALLOCATION_DESC> pair_type;
 	typedef oStdLinearAllocator<pair_type> allocator_type;

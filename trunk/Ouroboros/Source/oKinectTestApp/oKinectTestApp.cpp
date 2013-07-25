@@ -529,7 +529,7 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 		{
 			oGUI_BONE_DESC Skeleton;
 			GetSkeletonDesc((HSKELETON)_Action.hSkeleton, &Skeleton);
-			AirKeyboard->Update(Skeleton, _Action.Timestamp);
+			AirKeyboard->Update(Skeleton, _Action.TimestampMS);
 
 			// this doesn't differentiate between multiple skeletons yet...
 			UpdateStatusBar(kw.Window, Skeleton, nullptr);
@@ -552,7 +552,7 @@ void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const oStd::uri_string& 
 				oRef<threadsafe oInputSet> InputSet;
 				std::shared_ptr<oStd::xml> XML = oXMLLoad(_ChangedURI);
 				if (oParseInputSetList(*XML
-					, XML->first_child(0, "oInputSetList")
+					, XML->first_child(XML->root(), "oInputSetList")
 					#ifdef oUSE_MEDIA_INPUT
 						, oRTTI_OF(oMEDIA_INPUT)
 					#else
@@ -584,7 +584,7 @@ void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const oStd::uri_string& 
 				oRef<threadsafe oAirKeySet> KeySet;
 				std::shared_ptr<oStd::xml> XML = oXMLLoad(_ChangedURI);
 				if (oParseAirKeySetsList(*XML
-					, XML->first_child(0, "oAirKeySetList")
+					, XML->first_child(XML->root(), "oAirKeySetList")
 					#ifdef oUSE_MEDIA_INPUT
 						, "MediaKeys"
 					#else

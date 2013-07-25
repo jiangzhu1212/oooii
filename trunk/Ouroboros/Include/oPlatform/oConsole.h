@@ -29,9 +29,10 @@
 #ifndef oConsole_h
 #define oConsole_h
 
+#include <oBasis/oMathTypes.h>
 #include <oStd/color.h>
 #include <oStd/function.h>
-#include <oBasis/oMathTypes.h>
+#include <oStd/path.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -81,7 +82,7 @@ namespace oConsole
 	
 		// If specified and a valid, accessible file path, all output through this 
 		// console will be written to the specified file. 
-		oStd::path_string LogFilePath;
+		oStd::path LogFilePath;
 	};
 
 	void* GetNativeHandle(); // returns HWND on Windows

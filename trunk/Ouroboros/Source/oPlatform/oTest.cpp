@@ -28,7 +28,6 @@
 #include <oBasis/oCppParsing.h>
 #include <oBasis/oError.h>
 #include <oStd/fixed_string.h>
-#include <oBasis/oHash.h>
 #include <oBasis/oLockedPointer.h>
 #include <oBasis/oRef.h>
 

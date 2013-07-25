@@ -122,6 +122,8 @@ oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ostd_xlstring, ostd_xlstring, -
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ostd_xxlstring, ostd_xxlstring, -1)
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ostd_path_string, ostd_path_string, -1)
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ostd_uri_string, ostd_uri_string, -1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ostd_path, ostd_path, -1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ostd_uri, ostd_uri, -1)
 
 namespace oStd {
 

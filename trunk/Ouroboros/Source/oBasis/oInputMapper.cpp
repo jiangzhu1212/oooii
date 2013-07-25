@@ -377,16 +377,16 @@ public:
 		: Latest(oInvalid)
 	{
 		History.resize(_HistorySize);
-		oStd::fill(History, oINPUT_LOG(0.0, oInvalid, false));
+		oStd::fill(History, oINPUT_LOG(0, oInvalid, false));
 	}
 
-	void Add(double _Timestamp, int _InputID, bool _IsDown)
+	void Add(unsigned int _TimestampMS, int _InputID, bool _IsDown)
 	{
 		Latest = (Latest + 1) % History.size();
-		History[Latest] = oINPUT_LOG(_Timestamp, _InputID, _IsDown);
+		History[Latest] = oINPUT_LOG(_TimestampMS, _InputID, _IsDown);
 	}
 
-	bool SequenceTriggered(const oInputSequence& _InputSequence, double _TriggerTime) const
+	bool SequenceTriggered(const oInputSequence& _InputSequence, unsigned int _TriggerTimeMS) const
 	{
 		// Is the latest value the last item in the sequence? If not, then the 
 		// sequence isn't triggered at this time. 
@@ -402,11 +402,11 @@ public:
 
 		// Keep checking backwards until there's a timeout or no more history.
 		size_t Current = (Latest - 1) % History.size();
-		const double LastTimestamp = _InputSequence.MaxTimeMS == oInvalid ? 1e100 : (_TriggerTime - (_InputSequence.MaxTimeMS / 1000.0));
+		const unsigned int LastTimestamp = _InputSequence.MaxTimeMS == oInvalid ? oInvalid : (_TriggerTimeMS - _InputSequence.MaxTimeMS);
 
 		while (Current != Latest)
 		{
-			if (History[Current].Timestamp < LastTimestamp)
+			if (History[Current].TimestampMS < LastTimestamp)
 				return false; // any history is older than the sequence max timeout
 
 			if (History[Current] == *itSeq)
@@ -423,13 +423,13 @@ public:
 	
 	struct oINPUT_LOG
 	{
-		oINPUT_LOG(double _Timestamp = 0.0, int _InputID = oInvalid, bool _IsDown = false)
-			: Timestamp(_Timestamp)
+		oINPUT_LOG(unsigned int _TimestampMS = 0, int _InputID = oInvalid, bool _IsDown = false)
+			: TimestampMS(_TimestampMS)
 			, InputID(_InputID)
 			, IsDown(_IsDown)
 		{}
 
-		double Timestamp;
+		unsigned int TimestampMS;
 		int InputID;
 		bool IsDown;
 		bool operator==(const oINPUT_STATE& _That) const { return InputID == _That.InputID && IsDown == _That.IsDown; }
@@ -504,7 +504,7 @@ void oInputMapperImpl::OnAction(const oGUI_ACTION_DESC& _Action) threadsafe
 						// threadsafe marker of this API refers more to the idea that 
 						// changing the input set is safe in one thread while updating it in 
 						// another.
-						thread_cast<oInputHistory&>(InputHistory).Add(_Action.Timestamp, i, InputDown);
+						thread_cast<oInputHistory&>(InputHistory).Add(_Action.TimestampMS, i, InputDown);
 
 						oGUI_ACTION_DESC a(_Action);
 						a.Action = oGUI_ACTION_CONTROL_ACTIVATED;
@@ -513,7 +513,7 @@ void oInputMapperImpl::OnAction(const oGUI_ACTION_DESC& _Action) threadsafe
 						// Check to see if it gets overridden by a sequence
 						for (int s = 0; s < oInt(pInputSet->InputSequences.size()); s++)
 						{
-							if (thread_cast<oInputHistory&>(InputHistory).SequenceTriggered(pInputSet->InputSequences[s], _Action.Timestamp))
+							if (thread_cast<oInputHistory&>(InputHistory).SequenceTriggered(pInputSet->InputSequences[s], _Action.TimestampMS))
 							{
 								a.ActionCode = pInputSet->InputSequences[s].InputID;
 								break;

@@ -31,16 +31,21 @@
 #include <oStd/config.h>
 #include <oStd/macros.h>
 
-// The most-standard (but not standard) secure strcpy/strcats.
-size_t strlcat(char* _StrDestination, const char* _StrSource, size_t _SizeofStrDestination);
-size_t strlcpy(char* _StrDestination, const char* _StrSource, size_t _SizeofStrDestination);
-size_t wcslcat(wchar_t* _StrDestination, const wchar_t* _StrSource, size_t _SizeofStrDestination);
-size_t wcslcpy(wchar_t* _StrDestination, const wchar_t* _StrSource, size_t _SizeofStrDestination);
+// The most-standard (but not standard) secure strcpy/strcats. The 3rd parameter
+// is in number of characters, not bytes.
+size_t strlcat(char* _StrDestination, const char* _StrSource, size_t _StrDestinationCount);
+size_t strlcpy(char* _StrDestination, const char* _StrSource, size_t _StrDestinationCount);
+size_t wcslcat(wchar_t* _StrDestination, const wchar_t* _StrSource, size_t _StrDestinationCount);
+size_t wcslcpy(wchar_t* _StrDestination, const wchar_t* _StrSource, size_t _StrDestinationCount);
+size_t mbsltowsc(wchar_t* _StrDestination, const char* _StrSource, size_t _StrDestinationCount);
+size_t wcsltombs(char* _StrDestination, const wchar_t* _StrSource, size_t _StrDestinationCount);
 
-template<size_t size> size_t strlcat(char (&_StrDestination)[size], const char* _StrSource) { return strlcat(_StrDestination, _StrSource, size); }
-template<size_t size> size_t strlcpy(char (&_StrDestination)[size], const char* _StrSource) { return strlcpy(_StrDestination, _StrSource, size); }
-template<size_t size> size_t wcslcat(wchar_t (&_StrDestination)[size], const wchar_t* _StrSource) { return wcslcat(_StrDestination, _StrSource, size); }
-template<size_t size> size_t wcslcpy(wchar_t (&_StrDestination)[size], const wchar_t* _StrSource) { return wcslcpy(_StrDestination, _StrSource, size); }
+template<size_t count> size_t strlcat(char (&_StrDestination)[count], const char* _StrSource) { return strlcat(_StrDestination, _StrSource, count); }
+template<size_t count> size_t strlcpy(char (&_StrDestination)[count], const char* _StrSource) { return strlcpy(_StrDestination, _StrSource, count); }
+template<size_t count> size_t wcslcat(wchar_t (&_StrDestination)[count], const wchar_t* _StrSource) { return wcslcat(_StrDestination, _StrSource, count); }
+template<size_t count> size_t wcslcpy(wchar_t (&_StrDestination)[count], const wchar_t* _StrSource) { return wcslcpy(_StrDestination, _StrSource, count); }
+template<size_t count> size_t mbsltowsc(wchar_t (&_StrDestination)[count], const char* _StrSource) { return mbsltowsc(_StrDestination, _StrSource, count); }
+template<size_t count> size_t wcsltombs(char* _StrDestination, const wchar_t* _StrSource, size_t _StrDestinationCount) { return wcsltombs(_StrDestination, _StrSource, count); }
 
 #ifdef _MSC_VER
 
@@ -76,6 +81,11 @@ inline char* strtok_r(char* _strToken, const char* _strDelim, char** _Context)
 #endif
 
 namespace oStd {
+
+// passing this to std::transform brings up warnings that are hard to disable,
+// so create a wrapper that is same type in and out.
+template<typename charT> charT tolower(const charT& c) { return (charT)::tolower(c); }
+template<typename charT> charT toupper(const charT& c) { return (charT)::toupper(c); }
 
 // copy _strToken first for multi-threaded or non-destructive strtok. If the 
 // parsing exits early end_strtok() must be called on _Context. If parsing
@@ -188,6 +198,14 @@ template<size_t size> char* percent_encode(char (&_StrDestination)[size], const 
 char* percent_decode(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource);
 template<size_t size> char* percent_decode(char (&_StrDestination)[size], const char* _StrSource) { return percent_decode(_StrDestination, size, _StrSource); }
 
+// ensures all percent encodings use lower-case letter values. For exmaple this
+// will convert %7A to %7a. // _StrDestination and _StrSource can be the same 
+// pointer. (NOTE: percent_encode always returns lower-case values, so this is
+// only necessary on percent-encoded strings that were not encoded with 
+// percent_encode.)
+char* percent_to_lower(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource);
+template<size_t size> char* percent_to_lower(char (&_StrDestination)[size], const char* _StrSource) { return percent_to_lower(_StrDestination, size, _StrSource); }
+
 // encode a string with XML-compliant ampersand encoding.
 char* ampersand_encode(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource);
 template<size_t size> char* ampersand_encode(char (&_StrDestination)[size], const char* _StrSource) { return ampersand_encode(_StrDestination, size, _StrSource); }
@@ -203,6 +221,20 @@ template<size_t size> char* json_escape_encode(char (&_StrDestination)[size], co
 // decode a string encoded with JSON-compliant escape encoding.
 char* json_escape_decode(char* _StrDestination, size_t _SizeofStrDestination, const char* _Source);
 template<size_t size> char* json_escape_decode(char (&_StrDestination)[size], const char* _StrSource) { return json_escape_decode(_StrDestination, size, _StrSource); }
+
+// _____________________________________________________________________________
+// File path utilities
+
+// If _ZeroBuffer is true, all extra chars in the destination will be set to 
+// zero such that a memcmp of two cleaned buffers would be reliable.
+char* clean_path(char* _StrDestination, size_t _SizeofStrDestination, const char* _SourcePath, char _FileSeparator = '/', bool _ZeroBuffer = false);
+template<size_t size> char* clean_path(char (&_StrDestination)[size], const char* _SourcePath, char _FileSeparator = '/', bool _ZeroBuffer = false) { return clean_path(_StrDestination, _SizeofStrDestination, _SourcePath, _FileSeparator, _ZeroBuffer); }
+
+// Fills _StrDestination with a version of FullPath that has all the common 
+// parts between _BasePath and _FullPath removed and additionally has ../ 
+// relative paths inserted until it is relative to the base path.
+char* relativize_path(char* _StrDestination, size_t _SizeofStrDestination, const char* _BasePath, const char* _FullPath);
+template<size_t size> char* relativize_path(char (&_StrDestination)[size], const char* _BasePath, const char* _FullPath) { return relativize_path(_StrDestination, size, _BasePath, _FullPath); }
 
 } // namespace oStd
 

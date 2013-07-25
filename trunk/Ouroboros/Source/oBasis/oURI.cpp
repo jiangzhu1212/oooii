@@ -356,43 +356,8 @@ char* oURIRelativize(char* _URIReference, size_t _SizeofURIReference, const char
 	d.Scheme.clear();
 	d.Authority.clear();
 
-	// advance till we find a segment that doesn't match
-	const char *this_Path = d.Path;
-	const char *relativeTo_Path = base_d.Path;
-	const char *this_slash = this_Path;
-	const char *relativeTo_slash = relativeTo_Path;
-
-	while((*this_Path == *relativeTo_Path) && *this_Path)
-	{
-		if(*this_Path == '/')
-		{
-			this_slash = this_Path;
-			relativeTo_slash = relativeTo_Path;
-		}
-		this_Path++;
-		relativeTo_Path++;
-	}
-
-	if(this_slash == this_Path) // @oooii-kevin: If nothing is relative you can't make the path relative
-		return nullptr;
-
-	// Decide how many ../ segments are needed (FilePath should always end in a /)
-	size_t segment_count = 0;
-	relativeTo_slash++;
-	while(*relativeTo_slash != 0)
-	{
-		if(*relativeTo_slash == '/')
-			segment_count++;
-		relativeTo_slash++;
-	}
-	this_slash++;
-
 	oStd::path_string new_Path;
-	for (size_t i = 0; i < segment_count; i++)
-		if (!oStrcat(new_Path, "../"))
-			return nullptr;
-
-	if (!oStrcat(new_Path, this_slash))
+	if (!oStd::relativize_path(new_Path, base_d.Path, d.Path))
 		return nullptr;
 
 	return oURIRecompose(_URIReference, _SizeofURIReference, d.Scheme, d.Authority, new_Path, d.Query, d.Fragment);
@@ -513,7 +478,7 @@ const oURI& oURI::operator=(const char* _That)
 		Clear();
 	URIParts.ToLower();
 
-	uint128 h = oHash_murmur3_x64_128(this, sizeof(*this));
+	uint128 h = oStd::murmur3(this, sizeof(*this));
 	HashID = (size_t)h; // we want the most random bits of the 128, but it seems from the avalanching of murmur, it doesn't matter (http://blog.aggregateknowledge.com/tag/murmur-hash/)
 	return *this;
 }

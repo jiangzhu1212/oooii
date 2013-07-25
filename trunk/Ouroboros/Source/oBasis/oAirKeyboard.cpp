@@ -130,7 +130,7 @@ struct oAirKeyboardImpl : oAirKeyboard
 	void RemoveSkeleton(int _ID) threadsafe override;
 	int HookActions(const oGUI_ACTION_HOOK& _Hook) threadsafe override;
 	void UnhookActions(int _HookID) threadsafe override;
-	void Update(const oGUI_BONE_DESC& _Skeleton, double _Timestamp) threadsafe override;
+	void Update(const oGUI_BONE_DESC& _Skeleton, unsigned int _TimestampMS) threadsafe override;
 	void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe override;
 
 private:
@@ -146,7 +146,7 @@ private:
 
 	oRefCount RefCount;
 
-	void UpdateInternal(const oGUI_BONE_DESC& _Skeleton, double _Timestamp);
+	void UpdateInternal(const oGUI_BONE_DESC& _Skeleton, unsigned int _TimestampMS);
 	void TriggerInternal(const oGUI_ACTION_DESC& _Action);
 };
 
@@ -212,14 +212,14 @@ void oAirKeyboardImpl::UnhookActions(int _HookID) threadsafe
 	oStd::ranged_set(oThreadsafe(Hooks), _HookID, nullptr);
 }
 
-void oAirKeyboardImpl::Update(const oGUI_BONE_DESC& _Skeleton, double _Timestamp) threadsafe
+void oAirKeyboardImpl::Update(const oGUI_BONE_DESC& _Skeleton, unsigned int _TimestampMS) threadsafe
 {
 	lock_guard<shared_mutex> lockB(KeySetMutex);
 	lock_guard<shared_mutex> lockS(SkeletonsMutex);
-	oThreadsafe(this)->UpdateInternal(_Skeleton, _Timestamp);
+	oThreadsafe(this)->UpdateInternal(_Skeleton, _TimestampMS);
 }
 
-void oAirKeyboardImpl::UpdateInternal(const oGUI_BONE_DESC& _Skeleton, double _Timestamp)
+void oAirKeyboardImpl::UpdateInternal(const oGUI_BONE_DESC& _Skeleton, unsigned int _TimestampMS)
 {
 	if (!KeySet)
 		return;
@@ -232,7 +232,7 @@ void oAirKeyboardImpl::UpdateInternal(const oGUI_BONE_DESC& _Skeleton, double _T
 	oGUI_ACTION_DESC a;
 	a.DeviceType = oGUI_INPUT_DEVICE_SKELETON;
 	a.DeviceID = _Skeleton.SourceID;
-	a.Timestamp = _Timestamp;
+	a.TimestampMS = _TimestampMS;
 	//a.hSource = ?;
 	
 	const auto& Keys = thread_cast<oAirKeySetImpl*>(static_cast<threadsafe oAirKeySetImpl*>(KeySet.c_ptr()))->Keys;

@@ -73,7 +73,7 @@ DWORD oWinKeyFromKey(oGUI_KEY _Key);
 // update it. If this returns true, then _pAction is well-formatted and should
 // be dispatched. If this is false, then it means that further processing is 
 // necessary and _pAction is not valid.
-bool oWinKeyDispatchMessage(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, double _Timestamp, oWINKEY_CONTROL_STATE* _pState, oGUI_ACTION_DESC* _pAction);
+bool oWinKeyDispatchMessage(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, unsigned int _TimestampMS, oWINKEY_CONTROL_STATE* _pState, oGUI_ACTION_DESC* _pAction);
 
 // Returns true if the specified key fits Microsoft's documented definition.
 // This may not be wholly accurate because the actual definition is Keyboard 

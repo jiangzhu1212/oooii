@@ -249,7 +249,7 @@ bool oP4GetChangelistDescription(char* _StrDestination, size_t _SizeofStrDestina
 		{
 			++_Result;
 		}
-		oPrintf(_StrDestination, _SizeofStrDestination, _Result);
+		oStrcpy(_StrDestination, _SizeofStrDestination, _Result);
 	});
 }
 
@@ -266,7 +266,7 @@ bool oP4GetChangelistUser(char* _StrDestination, size_t _SizeofStrDestination, i
 				}
 				_Result[0] = 0;
 			}
-			oPrintf(_StrDestination, _SizeofStrDestination, pUserName);
+			oStrcpy(_StrDestination, _SizeofStrDestination, pUserName);
 		});
 }
 
@@ -283,7 +283,7 @@ bool oP4GetChangelistDate(char* _StrDestination, size_t _SizeofStrDestination, i
 			}
 			_Result[0] = 0;
 		}
-		oPrintf(_StrDestination, _SizeofStrDestination, pDate);
+		oStrcpy(_StrDestination, _SizeofStrDestination, pDate);
 	});
 }
 

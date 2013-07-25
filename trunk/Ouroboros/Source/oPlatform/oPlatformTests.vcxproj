@@ -151,7 +151,10 @@
     <ClCompile Include="Tests\TESTStreamMonitor.cpp" />
     <ClCompile Include="Tests\TESTVersionUpdate.cpp" />
     <ClCompile Include="Tests\TESTVTable.cpp" />
+    <ClCompile Include="Tests\TESTWindowControls.cpp" />
     <ClCompile Include="Tests\TESTWindowSendKeys.cpp" />
+    <ClCompile Include="Tests\TESTWindowSysDialog.cpp" />
+    <ClCompile Include="Tests\TESTWindowSysDialog_UI.cpp" />
     <ClCompile Include="Tests\TESTWinRegistry.cpp" />
   </ItemGroup>
   <ItemGroup>

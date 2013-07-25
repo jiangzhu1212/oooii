@@ -63,10 +63,6 @@ char* oGetFilebase(char* _Path);
 // nullptr.
 char* oGetFilebase(char* _StrDestination, size_t _SizeofStrDestination, const char* _Path);
 
-// Return pointer to the volume name
-inline const char* oGetVolumeName(const char* _Path) { const char* p = _Path; if (oIsUNCPath(p)) p += 2; return p; }
-inline char* oGetVolumeName(char* _Path) { char* p = _Path; if (oIsUNCPath(p)) p += 2; return p; }
-
 // Replaces or appends the specified _Extension to the specified _Path. This
 // returns _Path.
 char* oReplaceFileExtension(char* _Path, size_t _SizeofPath, const char* _Extension);

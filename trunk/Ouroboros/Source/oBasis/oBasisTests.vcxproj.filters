@@ -46,9 +46,6 @@
     <ClCompile Include="Tests\TESTOSC.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTPath.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTRTTI.cpp">
       <Filter>Source</Filter>
     </ClCompile>

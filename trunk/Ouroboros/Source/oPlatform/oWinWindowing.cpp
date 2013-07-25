@@ -40,6 +40,43 @@
 #include <CdErr.h>
 #include <Shellapi.h>
 
+static const char* kRegisteredWindowMessages[] = 
+{
+	"oWM_INPUT_DEVICE_STATUS",
+};
+static_assert(oCOUNTOF(kRegisteredWindowMessages) == oWM_REGISTERED_COUNT, "array mismatch");
+
+const char* oWinGetMessageRegisterString(oWM _RegisteredMessage)
+{
+	if (_RegisteredMessage < oWM_REGISTERED_FIRST) return nullptr;
+	return kRegisteredWindowMessages[_RegisteredMessage - oWM_REGISTERED_FIRST];
+}
+
+struct oWinRegisteredMessageContext : oProcessSingleton<oWinRegisteredMessageContext>
+{
+	static const oGUID GUID;
+	oWinRegisteredMessageContext()
+	{
+		oFORI(i, kRegisteredWindowMessages)
+			RegisteredMessages[i] = RegisterWindowMessage(kRegisteredWindowMessages[i]);
+	}
+
+	UINT FindMessage(UINT _uMsg)
+	{
+		oFORI(i, RegisteredMessages)
+			if (RegisteredMessages[i] == _uMsg)
+				return (UINT)(oWM_REGISTERED_FIRST + i);
+		return 0;
+	}
+
+	UINT RegisteredMessages[oWM_REGISTERED_COUNT];
+};
+
+// {F2F6803E-B2F3-41F3-8C1A-9EA7ADB1EB90}
+const oGUID oWinRegisteredMessageContext::GUID = { 0xf2f6803e, 0xb2f3, 0x41f3, { 0x8c, 0x1a, 0x9e, 0xa7, 0xad, 0xb1, 0xeb, 0x90 } };
+
+oSINGLETON_REGISTER(oWinRegisteredMessageContext);
+
 struct oSkeletonInputContext : oProcessSingleton<oSkeletonInputContext>
 {
 	static const oGUID GUID;
@@ -164,6 +201,9 @@ bool oWinCreate(HWND* _phWnd, const int2& _ClientPosition, const int2& _ClientSi
 		return oWinSetLastError();
 	}
 
+	oFORI(i, kRegisteredWindowMessages)
+		oVB(RegisterWindowMessage(kRegisteredWindowMessages[i]));
+
 	oTRACE("HWND %x running on thread %d (0x%x)", *_phWnd, oConcurrency::asuint(oStd::this_thread::get_id()), oConcurrency::asuint(oStd::this_thread::get_id()));
 
 	return true;
@@ -205,6 +245,17 @@ void* oWinGetThis(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
 
 	}
 	return pThis;
+}
+
+// Returns true if the specified _uMsg is one that was assigned to this process
+// by a call to RegisterWindowMessage.
+static bool oWinIsRegisteredMessage(UINT _uMsg) { return _uMsg >= 0xC000 && _uMsg <= 0xFFFF; }
+
+UINT oWinTranslateMessage(UINT _uMsg)
+{
+	if (oWinIsRegisteredMessage(_uMsg))
+		return oWinRegisteredMessageContext::Singleton()->FindMessage(_uMsg);
+	return _uMsg;
 }
 
 oStd::thread::id oWinGetWindowThread(HWND _hWnd)
@@ -401,16 +452,8 @@ static bool oIsDialogMessageEx(HWND _hWnd, MSG* _pMsg)
 	return !!IsDialogMessage(_hWnd, _pMsg);
 }
 
-thread_local static double sGetDispatchMessageTime = 0.0;
-double oWinGetDispatchMessageTime()
+bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext)
 {
-	return sGetDispatchMessageTime;
-}
-
-bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, double _Timestamp, bool _WaitForNext)
-{
-	sGetDispatchMessageTime = _Timestamp;
-
 	MSG msg;
 	bool HasMessage = false;
 	if (_WaitForNext)

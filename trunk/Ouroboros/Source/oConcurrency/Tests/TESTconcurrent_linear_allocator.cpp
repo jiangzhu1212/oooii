@@ -24,9 +24,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oConcurrency/concurrent_linear_allocator.h>
-#include <oStd/algorithm.h>
 #include <oStd/macros.h>
 #include <oStd/oStdFuture.h>
+#include <oStd/throw.h>
 #include <vector>
 
 namespace oConcurrency {

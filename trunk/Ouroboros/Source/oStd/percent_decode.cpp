@@ -23,10 +23,32 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/algorithm.h>
 #include <oStd/macros.h>
+#include <oStd/throw.h>
 
 namespace oStd {
+
+char* percent_to_lower(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource)
+{
+	char* d = _StrDestination;
+	char* end = d + _SizeofStrDestination - 1;
+	*(end-1) = 0; // don't allow read outside the buffer even in failure cases
+
+	const char* s = _StrSource;
+	while (*s)
+	{
+		bool do_lower = *s == '%';
+		*d++ = *s++;
+		if (do_lower)
+		{
+			*d++ = (char)tolower(*s++);
+			*d++ = (char)tolower(*s++);
+		}
+	}
+
+	*d = 0;
+	return _StrDestination;
+}
 
 char* percent_decode(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource)
 {

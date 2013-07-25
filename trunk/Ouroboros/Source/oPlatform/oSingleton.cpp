@@ -225,7 +225,7 @@ void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, type_info_de
 	if (oProcessHeapFind(IID_oSingletonCtors, _IsThreadLocal, (void**)&ctors))
 	{
 		auto it = ctors->find(_GUID);
-		oASSERT(it != ctors->end(), "%s ctor not found", _TypeInfoName);
+		oASSERT(it != ctors->end(), "%s ctor not found (did you use forget oSINGLETON_REGISTER?)", _TypeInfoName);
 		PlacementNew = it->second;
 	}
 
@@ -242,7 +242,7 @@ void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, type_info_de
 		}
 	}
 
-	else
+	else if (!_IsThreadLocal)
 		p->Reference();
 
 	return p;

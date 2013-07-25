@@ -31,6 +31,7 @@
 #define oReporting_h
 
 #include <oStd/assert.h>
+#include <oStd/path.h>
 
 struct oREPORTING_DESC
 {
@@ -48,13 +49,13 @@ struct oREPORTING_DESC
 
 	// If specified and a valid, accessible file path, all output through this 
 	// error system will be written to the specified file. 
-	oStd::path_string LogFilePath;
+	oStd::path LogFilePath;
 
 	// Base path to where both the Mini and Full memory dumps should be placed
     // when a dump occurs these will be appended with oGetModuleFileStampString
     // and a .dmp extension.
-	oStd::path_string MiniDumpBase;
-	oStd::path_string FullDumpBase;
+	oStd::path MiniDumpBase;
+	oStd::path FullDumpBase;
 
 	// Final system command executed before termination.
 	oStd::xlstring PostDumpExecution;

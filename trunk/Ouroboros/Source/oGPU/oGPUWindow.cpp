@@ -102,7 +102,7 @@ private:
 	oRef<IDXGISwapChain> SwapChain;
 	oRefCount RefCount;
 	oFUNCTION<void(oGPURenderTarget* _pPrimaryRenderTarget)> RenderFunction;
-	oFUNCTION<void(oGPURenderTarget* _pPrimaryRenderTarget)> OSRenderFunction;
+	oFUNCTION<void(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize)> OSRenderFunction;
 	int SyncInterval;
 	oInt FrameCount;
 	bool UseStepping;
@@ -490,7 +490,25 @@ void oD3D11Window::EnqueueRender()
 				Device->EndFrame();
 
 				if (OSRenderFunction)
-					OSRenderFunction(RenderTarget);
+				{
+					oRef<IDXGISwapChain> SwapChain;
+					if (RenderTarget->QueryInterface(&SwapChain))
+					{
+						HDC hDeviceDC = nullptr;
+						if (oDXGIGetDC(SwapChain, &hDeviceDC))
+						{
+							oRef<ID3D11Texture2D> SCTexture;
+							oV(SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&SCTexture));
+							D3D11_TEXTURE2D_DESC TDesc;
+							SCTexture->GetDesc(&TDesc);
+
+							const int2 ClientSize(TDesc.Width, TDesc.Height);
+							OSRenderFunction((oGUI_DRAW_CONTEXT)hDeviceDC, ClientSize);
+
+							oVERIFY(oDXGIReleaseDC(SwapChain, nullptr));
+						}
+					}
+				}
 
 				FrameCount++;
 				if (FrameCount == oInvalid)

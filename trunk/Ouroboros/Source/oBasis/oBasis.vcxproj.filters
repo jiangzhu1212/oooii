@@ -78,9 +78,6 @@
     <ClInclude Include="oWinHeaders.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oHash.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oFilterChain.h">
       <Filter>oBasis</Filter>
     </ClInclude>
@@ -372,9 +369,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oHash.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oSurface.cpp">

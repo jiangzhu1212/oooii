@@ -25,8 +25,8 @@
  **************************************************************************/
 #include <oBasis/tests/oBasisTests.h>
 #include <oStd/fixed_string.h>
-#include <oBasis/oHash.h>
 #include <oStd/finally.h>
+#include <oStd/murmur3.h>
 #include "oBasisTestCommon.h"
 
 bool oBasisTest_oHash(const oBasisTestServices& _Services)
@@ -42,8 +42,8 @@ bool oBasisTest_oHash(const oBasisTestServices& _Services)
 	oTESTB(_Services.AllocateAndLoadBuffer(&pBuffer, &Size, path, false), "%s not loaded", path.c_str());
 	oStd::finally FreeBuffer([&] { _Services.DeallocateLoadedBuffer(pBuffer); });
 
-	const uint128 ExpectedHash(5036109567207105818, 7580512480722386524);
-	uint128 ComputedHash = oHash_murmur3_x64_128(pBuffer, static_cast<unsigned int>(Size));
+	const uint128 ExpectedHash(1358230486757162696ull, 12886233335009572520ull);
+	uint128 ComputedHash = oStd::murmur3(pBuffer, Size);
 	oTESTB(ExpectedHash == ComputedHash, "Hash doesn't match");
 
 	oErrorSetLast(0);

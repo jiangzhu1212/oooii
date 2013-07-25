@@ -88,6 +88,24 @@
     <ClCompile Include="percent_encode.cpp">
       <Filter>Source\string\encoding</Filter>
     </ClCompile>
+    <ClCompile Include="clean_path.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="mbsltowcs.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="wcsltombs.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp">
+      <Filter>Source\Hash</Filter>
+    </ClCompile>
+    <ClCompile Include="uri.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="relativize_path.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -207,6 +225,36 @@
     <ClInclude Include="..\..\Include\oStd\json.h">
       <Filter>oStd\Text</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\path.h">
+      <Filter>oStd\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\throw.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\string_traits.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\djb2.h">
+      <Filter>oStd\Hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\fnv1a.h">
+      <Filter>oStd\Hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\smhasher\MurmurHash3.h">
+      <Filter>Source\Hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\murmur3.h">
+      <Filter>oStd\Hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\uri.h">
+      <Filter>oStd\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\path_traits.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\uri_traits.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -244,6 +292,12 @@
     </Filter>
     <Filter Include="Source\string\encoding">
       <UniqueIdentifier>{64ebc3e4-476b-40f8-be6c-c986a61913cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oStd\Hash">
+      <UniqueIdentifier>{c7a9dc6d-1391-4cb7-b517-ff831fbcaa78}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Hash">
+      <UniqueIdentifier>{e3dc22ea-5155-4a45-831d-942d07c523aa}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

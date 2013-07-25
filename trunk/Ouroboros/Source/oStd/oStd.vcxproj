@@ -43,9 +43,11 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
     </ClCompile>
+    <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp" />
     <ClCompile Include="ampersand_decode.cpp" />
     <ClCompile Include="ampersand_encode.cpp" />
     <ClCompile Include="calfaq.cpp" />
+    <ClCompile Include="clean_path.cpp" />
     <ClCompile Include="color.cpp" />
     <ClCompile Include="config.cpp" />
     <ClCompile Include="date.cpp" />
@@ -53,6 +55,7 @@
     <ClCompile Include="format_duration.cpp" />
     <ClCompile Include="json_escape_decode.cpp" />
     <ClCompile Include="json_escape_encode.cpp" />
+    <ClCompile Include="mbsltowcs.cpp" />
     <ClCompile Include="ordinal.cpp" />
     <ClCompile Include="oStdChrono.cpp" />
     <ClCompile Include="oStdConditionVariable.cpp" />
@@ -67,14 +70,18 @@
     </ClCompile>
     <ClCompile Include="percent_decode.cpp" />
     <ClCompile Include="percent_encode.cpp" />
+    <ClCompile Include="relativize_path.cpp" />
     <ClCompile Include="strbitmask.cpp" />
     <ClCompile Include="stringize.cpp" />
     <ClCompile Include="strmatch.cpp" />
     <ClCompile Include="strtok.cpp" />
     <ClCompile Include="text_document.cpp" />
     <ClCompile Include="trim.cpp" />
+    <ClCompile Include="uri.cpp" />
+    <ClCompile Include="wcsltombs.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\External\smhasher\MurmurHash3.h" />
     <ClInclude Include="..\..\Include\oStd\algorithm.h" />
     <ClInclude Include="..\..\Include\oStd\all.h" />
     <ClInclude Include="..\..\Include\oStd\assert.h" />
@@ -85,17 +92,20 @@
     <ClInclude Include="..\..\Include\oStd\config.h" />
     <ClInclude Include="..\..\Include\oStd\csv.h" />
     <ClInclude Include="..\..\Include\oStd\date.h" />
+    <ClInclude Include="..\..\Include\oStd\djb2.h" />
     <ClInclude Include="..\..\Include\oStd\endian.h" />
     <ClInclude Include="..\..\Include\oStd\equal.h" />
     <ClInclude Include="..\..\Include\oStd\finally.h" />
     <ClInclude Include="..\..\Include\oStd\fixed_string.h" />
     <ClInclude Include="..\..\Include\oStd\fixed_vector.h" />
+    <ClInclude Include="..\..\Include\oStd\fnv1a.h" />
     <ClInclude Include="..\..\Include\oStd\function.h" />
     <ClInclude Include="..\..\Include\oStd\guid.h" />
     <ClInclude Include="..\..\Include\oStd\ini.h" />
     <ClInclude Include="..\..\Include\oStd\intrinsics.h" />
     <ClInclude Include="..\..\Include\oStd\json.h" />
     <ClInclude Include="..\..\Include\oStd\macros.h" />
+    <ClInclude Include="..\..\Include\oStd\murmur3.h" />
     <ClInclude Include="..\..\Include\oStd\oFor.h" />
     <ClInclude Include="..\..\Include\oStd\operators.h" />
     <ClInclude Include="..\..\Include\oStd\oStdAtomic.h" />
@@ -105,12 +115,18 @@
     <ClInclude Include="..\..\Include\oStd\oStdMutex.h" />
     <ClInclude Include="..\..\Include\oStd\oStdRatio.h" />
     <ClInclude Include="..\..\Include\oStd\oStdThread.h" />
+    <ClInclude Include="..\..\Include\oStd\path.h" />
+    <ClInclude Include="..\..\Include\oStd\path_traits.h" />
     <ClInclude Include="..\..\Include\oStd\string.h" />
     <ClInclude Include="..\..\Include\oStd\stringize.h" />
+    <ClInclude Include="..\..\Include\oStd\string_traits.h" />
     <ClInclude Include="..\..\Include\oStd\text_document.h" />
+    <ClInclude Include="..\..\Include\oStd\throw.h" />
     <ClInclude Include="..\..\Include\oStd\timer.h" />
     <ClInclude Include="..\..\Include\oStd\uint128.h" />
     <ClInclude Include="..\..\Include\oStd\unordered_map.h" />
+    <ClInclude Include="..\..\Include\oStd\uri.h" />
+    <ClInclude Include="..\..\Include\oStd\uri_traits.h" />
     <ClInclude Include="..\..\Include\oStd\xml.h" />
     <ClInclude Include="calfaq.h" />
     <ClInclude Include="pch.h" />

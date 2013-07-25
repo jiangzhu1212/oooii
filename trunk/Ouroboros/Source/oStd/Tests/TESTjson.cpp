@@ -24,7 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oStd/json.h>
-#include <oStd/algorithm.h>
+#include <oStd/throw.h>
 #include <oBasis/oError.h>
 
 using namespace oStd;

@@ -65,7 +65,7 @@ interface oGPUResource : oGPUDeviceChild
 	virtual oGPU_RESOURCE_TYPE GetType() const threadsafe = 0;
 
 	// Returns an ID for this resource fit for use as a hash.
-	virtual int GetID() const threadsafe = 0;
+	virtual unsigned int GetID() const threadsafe = 0;
 
 	// Returns the component sizes of a subresource. X is the RowSize, or the 
 	// number of valid bytes in one scanline of a texture, or the size of one 

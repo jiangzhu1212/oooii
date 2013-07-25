@@ -185,6 +185,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTBasis.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCompute.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrency.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTStd.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurfaceFill.cpp" />

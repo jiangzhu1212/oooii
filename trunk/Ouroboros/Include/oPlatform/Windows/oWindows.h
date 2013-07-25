@@ -36,6 +36,7 @@
 #endif
 
 #include <oStd/guid.h>
+#include <oStd/throw.h>
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oSurface.h>
 #include <oBasis/oVersion.h>
@@ -219,7 +220,7 @@
 	#define oV(fn) fn
 #endif
 
-#define oWIN_CHECK_HR(_Fn, _Message, ...) do { HRESULT HR__ = _Fn; if (FAILED(HR__)) { throw std::system_error(std::make_error_code(oWinGetErrc(HR__)), oStd::formatf(_Message, ## __VA_ARGS__)); } } while(false)
+#define oWIN_CHECK_HR(_Fn, _Message, ...) do { HRESULT HR__ = _Fn; if (FAILED(HR__)) { throw std::system_error(std::make_error_code(oWinGetErrc(HR__)), oStd::detail::formatf(_Message, ## __VA_ARGS__)); } } while(false)
 
 // _____________________________________________________________________________
 // Wrappers for the Windows-specific crtdbg API. Prefer oASSERT macros found
@@ -537,6 +538,27 @@ bool oWinEnumProcesses(oFUNCTION<bool(DWORD _ProcessID, DWORD _ParentProcessID, 
 // Call the specified function for each of the top level windows on the system. 
 // The function should return true to keep searching or false to exit early.
 bool oWinEnumWindows(oFUNCTION<bool(HWND _Hwnd)> _Function);
+
+// _____________________________________________________________________________
+// Hardware device APIs
+struct oWINDOWS_HID_DESC
+{
+	oWINDOWS_HID_DESC()
+		: Type(oGUI_INPUT_DEVICE_UNKNOWN)
+		, DevInst(0)
+	{}
+
+	oGUI_INPUT_DEVICE_TYPE Type;
+	DWORD DevInst;
+	oStd::mstring ParentDeviceInstancePath;
+	oStd::mstring DeviceInstancePath;
+};
+
+// Translate a PnP enumerator name (DEV_BROADCAST_DEVICEINTERFACE_A::dbcc_name)
+// to one or more unique names based on the oGUI_INPUT_DEVICE_TYPEs represented
+// by the device. Devices now are often hybrid, such as a KB/mouse combo USB or 
+// a voice/skeleton Kinect device. This uses SetupAPI to do the discovery.
+bool oWinEnumInputDevices(bool _EnumerateAll, const oFUNCTION<void(const oWINDOWS_HID_DESC& _HIDDesc)>& _Visitor);
 
 // _____________________________________________________________________________
 // Misc

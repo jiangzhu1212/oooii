@@ -30,122 +30,97 @@
 #define oStd_fixed_string_h
 
 #include <oStd/string.h>
+#include <oStd/string_traits.h>
 #include <cstring>
 #include <cwchar>
 #include <stdexcept>
 
 // shorthand for readability below
-#define TSTR_PARAMS typename charT, size_t capacity_
+#define TSTR_PARAMS typename charT, size_t Capacity
 #define TSTR template<TSTR_PARAMS>
-#define STRT fixed_string<charT, capacity_>
+#define STRT fixed_string<charT, Capacity>
+
+#define oFIXED_STRING_THROW_LEN_ERR() throw std::length_error("destination is not large enough")
 
 namespace oStd {
 
-	// note: there's no good way to return an error value from an assignment other
-	// than throwing, so favor throwing. Secure CRT gets in the way of this by 
-	// asserting with no override of the behavior, so avoid it where possible.
-
-	template<typename charT> struct fixed_string_traits
-	{
-		static_assert(sizeof(charT) == 1, "bad char traits");
-		typedef char char_type;
-		typedef size_t size_type;
-		static const char_type* safe(const char_type* _String) { return _String ? _String : ""; }
-		static void copy(char_type* _StrDestination, size_type _SizeofStrDestination, const char_type* _StrSource)
-		{
-			size_t s = strlcpy(_StrDestination, safe(_StrSource), _SizeofStrDestination);
-			if (s >= _SizeofStrDestination)
-				throw std::length_error("destination is not large enough");
-		}
-		
-		static void copy(char_type* _StrDestination, size_type _SizeofStrDestination, const wchar_t* _StrSource)
-		{
-			#pragma warning(disable:4996) // use wcsrtombs_s instead
-			std::mbstate_t state = std::mbstate_t();
-			const wchar_t* src = _StrSource ? _StrSource : L"";
-			size_type len = 1 + std::wcsrtombs(nullptr, &src, 0, &state);
-			const size_t CopyLen = __min(len, _SizeofStrDestination-1);
-			std::wcsrtombs(_StrDestination, &src, CopyLen, &state);
-			if (len >= _SizeofStrDestination)
-				throw std::length_error("destination is not large enough");
-			#pragma warning(default:4996)
-		}
-
-		static size_type len(const char_type* _String)
-		{
-			return strlen(safe(_String));
-		}
-	};
-
-	template<> struct fixed_string_traits<wchar_t>
-	{
-		typedef wchar_t char_type;
-		typedef size_t size_type;
-		static const char_type* safe(const char_type* _String) { static const wchar_t* p = L""; return _String ? _String : p; }
-		static void copy(char_type* _StrDestination, size_type _SizeofStrDestination, const char_type* _StrSource)
-		{
-			size_t s = wcslcpy(_StrDestination, safe(_StrSource), _SizeofStrDestination);
-			if (s >= _SizeofStrDestination)
-				throw std::length_error("destination is not large enough");
-		}
-		
-		static void copy(char_type* _StrDestination, size_type _SizeofStrDestination, const char* _StrSource) 
-		{
-			#pragma warning(disable:4996) // use mbsrtowcs_s instead
-			std::mbstate_t state = std::mbstate_t();
-			const char* src = _StrSource ? _StrSource : "";
-			size_type len = 1 + std::mbsrtowcs(nullptr, &src, 0, &state);
-			const size_t CopyLen = __min(len, _SizeofStrDestination-1);
-			std::mbsrtowcs(_StrDestination, &src, CopyLen, &state);
-			if (len >= _SizeofStrDestination)
-				throw std::length_error("destination is not large enough");
-			#pragma warning(default:4996)
-		}
-		
-		static size_type len(const char_type* _String)
-		{
-			return wcslen(safe(_String));
-		}
-	};
-
-	template<typename charT, size_t capacity_, typename _Traits = fixed_string_traits<charT>>
+	template<typename charT, size_t capacity_, typename traitsT = string_traits<charT>>
 	class fixed_string
 	{
 	public:
 		// until we can make capacity() a constexpr expose the template arg
 		static const size_t Capacity = capacity_;
-		typedef typename _Traits::char_type char_type;
-		typedef typename _Traits::size_type size_type;
-		typedef char_type(&array_ref)[capacity_];
-		typedef const char_type(&const_array_ref)[capacity_];
+		typedef traitsT traits;
+		typedef typename traits::char_type char_type;
+		typedef typename traits::size_type size_type;
+		typedef char_type* iterator;
+		typedef const char_type* const_iterator;
+		typedef std::pair<const char_type*, const char_type*> string_piece_type;
+		typedef char_type(&array_ref)[Capacity];
+		typedef const char_type(&const_array_ref)[Capacity];
 
 		fixed_string() { *s = 0; }
+		fixed_string(const string_piece_type& _StringPiece) { assign(_StringPiece.first, _StringPiece.second); }
 		fixed_string(const char_type* _Start, const char_type* _End) { assign(_Start, _End); }
-		fixed_string(const char_type* _String) { _Traits::copy(s, capacity_, _String); }
+		fixed_string(const char_type* _String) { traits::copy(s, _String, Capacity); }
 
 		template<typename _CharU> fixed_string(const _CharU* _String) { operator=(_String); }
 		template<typename _CharU, size_type _CapacityU> fixed_string(const fixed_string<_CharU, _CapacityU>& _That) { operator=(_That); }
-		template<typename _CharU> const fixed_string& operator=(const _CharU* _That) { _Traits::copy(s, capacity_, _That); return *this; }
-		template<typename _CharU, size_type _CapacityU> const fixed_string& operator=(const fixed_string<_CharU, _CapacityU>& _That) { _Traits::copy(s, capacity_, _That.c_str()); return *this; }
+		template<typename _CharU> const fixed_string& operator=(const _CharU* _That) { if (string_traits<_CharU>::copy(s, _That, Capacity) > Capacity) oFIXED_STRING_THROW_LEN_ERR(); return *this; }
+		template<typename _CharU, size_type _CapacityU> const fixed_string& operator=(const fixed_string<_CharU, _CapacityU>& _That) { if (string_traits<_CharU>::copy(s, _That.c_str(), Capacity) > Capacity) oFIXED_STRING_THROW_LEN_ERR(); return *this; }
+
+		iterator begin() { return s; }
+		const_iterator begin() const { return s; }
+
+		// NOTE: To keep class size to same-as-c-array, length is recalculated on
+		// each call, so the typical for (auto it = begin(); it !+ end(); ++it) 
+		// idiom may be costly. Factor out the end call if the compiler doesn't do 
+		// automatically it.
+		iterator end() { return s + length(); }
+		const_iterator end() const { return s + length(); }
 
 		void clear() { *s = 0; }
 		bool empty() const { return *s == 0; }
-		size_type size() const { return _Traits::len(s); }
+		size_type size() const { return traits::length(s); }
 		size_type length() const { return size(); }
-		/* constexpr */ size_type capacity() const { return capacity_; }
+		/* constexpr */ size_type capacity() const { return Capacity; }
 
-		void assign(const char_type* _Start, const char_type* _End)
+		fixed_string& assign(const char_type* _Start, const char_type* _End)
 		{
 			ptrdiff_t size = std::distance(_Start, _End);
-			if (std::distance(_Start, _End) > capacity_)
-				throw std::length_error("source string too long for destination");
-			std::copy(_Start, _End, s);
+			if (size >= Capacity)
+				oFIXED_STRING_THROW_LEN_ERR();
+			traits::copy(s, _Start, Capacity);
 			s[size] = 0;
+			return *this;
 		}
+
+		fixed_string& append(const char_type* _String) { if (traits::cat(s, _String, Capacity) > Capacity) oFIXED_STRING_THROW_LEN_ERR(); return *this; }
+
+		fixed_string& append(const char_type* _Start, const char_type* _End)
+		{
+			size_type size = length();
+			char_type* start = s + size;
+			size += std::distance(_Start, _End);
+			if (size >= Capacity)
+				oFIXED_STRING_THROW_LEN_ERR();
+			traits::copy(start, _Start, Capacity);
+			s[size] = 0;
+			return *this;
+		}
+
+		fixed_string& append(const string_piece_type& _StringPiece) { return append(_StringPiece.first, _StringPiece.second); }
+
+		fixed_string& append(char_type _Char) { char_type str[2] = { _Char, '\0'}; return append(str); }
+
+		fixed_string& operator+=(const char_type* _String) { return append(_String); }
+		fixed_string& operator+=(const string_piece_type& _StringPiece) { return append(_StringPiece); }
+		fixed_string& operator+=(char_type _Char) { return append(_Char); }
 
 		void copy_to(charT* _StrDestination, size_t _SizeofStrDestination) const
 		{
-			_Traits::copy(_StrDestination, _SizeofStrDestination, s);
+			if (traits::copy(_StrDestination, s, _SizeofStrDestination) > _SizeofStrDestination)
+				oFIXED_STRING_THROW_LEN_ERR();
 		}
 
 		array_ref c_str() { return s; }
@@ -160,12 +135,17 @@ namespace oStd {
 		// done.
 		operator const char_type* const() const volatile { return const_cast<const char_type* const>(s); }
 
-	private:
-		char_type s[capacity_];
+		int compare(const char_type* _That) const { return traits::compare(s, _That); }
+		int compare(const fixed_string& _That) const { return compare(_That.c_str()); }
 
-		// do not support direct comparisons
-		bool operator==(const fixed_string& _That) const { return false; }
-		bool operator==(const char_type* _That) const { return false; }
+		bool operator==(const char_type* _That) const { return !compare(_That); }
+		bool operator==(const fixed_string& _That) const { return !compare(_That); }
+
+		bool operator<(const fixed_string& _That) const { return compare(_That) < 0; }
+		bool operator<(const char_type* _That) const { return compare(_That) < 0; }
+
+	private:
+		char_type s[Capacity];
 	};
 
 	typedef fixed_string<char, 64> sstring;
@@ -189,7 +169,7 @@ namespace oStd {
 	template<typename T> struct less {};
 	template<typename T> struct less_case_insensitive {};
 
-	TSTR int format_duration(STRT& _StrDestination, double _TimeInSeconds, bool _Abbreviated = false, bool _IncludeMS = true) { return format_duration(_StrDestination, capacity_, _TimeInSeconds, _Abbreviated, _IncludeMS); }
+	TSTR int format_duration(STRT& _StrDestination, double _TimeInSeconds, bool _Abbreviated = false, bool _IncludeMS = true) { return format_duration(_StrDestination, Capacity, _TimeInSeconds, _Abbreviated, _IncludeMS); }
 
 	TSTR struct equal_to<STRT> { bool operator()(const oStd::STRT& x, const STRT& y) const { return !strcmp(x, y); } };
 	TSTR struct equal_to_case_insensitive<STRT> { bool operator()(const oStd::STRT& x, const STRT& y) const { return !_stricmp(x, y); } };
@@ -228,17 +208,21 @@ namespace oStd {
 
 	TSTR char* percent_encode(STRT& _StrDestination, const char* _StrSource, const char* _StrReservedChars = oRESERVED_URI_CHARS) { return percent_encode(_StrDestination, _StrDestination.capacity(), _StrSource, _StrReservedChars); }
 	TSTR char* percent_decode(STRT& _StrDestination, const char* _StrSource) { return percent_decode(_StrDestination, _StrDestination.capacity(), _StrSource); }
+	TSTR char* percent_to_lower(STRT& _StrDestination, const char* _StrSource) { return percent_to_lower(_StrDestination, _StrDestination.capacity(), _StrSource); }
 	TSTR char* ampersand_encode(STRT& _StrDestination, const char* _StrSource) { return ampersand_encode(_StrDestination, _StrDestination.capacity(), _StrSource); }
 	TSTR char* ampersand_decode(STRT& _StrDestination, const char* _StrSource) { return ampersand_decode(_StrDestination, _StrDestination.capacity(), _StrSource); }
 	TSTR char* json_escape_encode(STRT& _StrDestination, const char* _StrSource) { return json_escape_encode(_StrDestination, _StrDestination.capacity(), _StrSource); }
 	TSTR char* json_escape_decode(STRT& _StrDestination, const char* _StrSource) { return json_escape_decode(_StrDestination, _StrDestination.capacity(), _StrSource); }
+
+	TSTR char* clean_path(STRT& _StrDestination, const char* _SourcePath, char _FileSeparator = '/', bool _ZeroBuffer = false) { return clean_path(_StrDestination, _StrDestination.capacity(), _SourcePath, _FileSeparator, _ZeroBuffer); }
+	TSTR char* relativize_path(STRT& _StrDestination, const char* _BasePath, const char* _FullPath) { return relativize_path(_StrDestination, _StrDestination.capacity(), _BasePath, _FullPath); }
 
 } // namespace oStd
 
 TSTR int vsnprintf(oStd::STRT& _StrDestination, const char* _Format, va_list _Args)
 {
 	#pragma warning(disable:4996) // secure CRT warning
-	return vsnprintf(_StrDestination, capacity_, _Format, _Args);
+	return vsnprintf(_StrDestination, Capacity, _Format, _Args);
 	#pragma warning(default:4996)
 }
 
@@ -246,4 +230,5 @@ TSTR int snprintf(oStd::STRT& _StrDestination, const char* _Format, ...) { va_li
 
 #undef STRT
 #undef TSTR
+
 #endif

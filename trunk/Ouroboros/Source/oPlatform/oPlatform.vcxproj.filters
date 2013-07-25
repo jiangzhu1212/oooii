@@ -318,6 +318,12 @@
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinKey.h">
       <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
     </ClInclude>
+    <ClInclude Include="SoftLink\oWinSetupAPI.h">
+      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinControlSet.h">
+      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oooii_icon.cpp">
@@ -573,6 +579,12 @@
       <Filter>Source\Concurrency</Filter>
     </ClCompile>
     <ClCompile Include="oWinKey.cpp">
+      <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oWinSetupAPI.cpp">
+      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinControlSet.cpp">
       <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
     </ClCompile>
   </ItemGroup>

@@ -23,9 +23,9 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/algorithm.h>
 #include <oStd/macros.h>
 #include <oStd/string.h>
+#include <oStd/throw.h>
 
 #define oHEXDIGIT(d) ("0123456789abcdef"[(d)&0xf])
 

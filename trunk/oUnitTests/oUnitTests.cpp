@@ -302,14 +302,21 @@ void EnableLogFile(const char* _SpecialModeName, const char* _LogFileName)
 	oREPORTING_DESC desc;
 	oReportingGetDesc(&desc);
 	desc.LogFilePath = logFilePath;
-	oReplaceFileExtension(desc.LogFilePath, ".stderr");
-	oStrcat(desc.LogFilePath, oGetFileExtension(logFilePath));
+
+	// insert .stderr at end of filebasename
+	auto ext = desc.LogFilePath.extension();
+	desc.LogFilePath.replace_extension(".stderr");
+	desc.LogFilePath.append(ext, false);
 
 	oConsole::DESC cdesc;
 	oConsole::GetDesc(&cdesc);
 	cdesc.LogFilePath = logFilePath;
-	oReplaceFileExtension(cdesc.LogFilePath, ".stdout");
-	oStrcat(cdesc.LogFilePath, oGetFileExtension(logFilePath));
+
+	// insert .stdout at end of filebasename
+	ext = cdesc.LogFilePath.extension();
+	cdesc.LogFilePath.replace_extension(".stdout");
+	cdesc.LogFilePath.append(ext, false);
+
 	oConsole::SetDesc(&cdesc);
 
 	oStd::path_string DumpBase;
@@ -403,22 +410,18 @@ bool TerminateDuplicateInstances(const char* _Name)
 bool EnsureOneInstanceIsRunning()
 {
 	// Scan for both release and debug builds already running
-	char path[_MAX_PATH];
-	oVERIFY(oSystemGetPath(path, oSYSPATH_APP_FULL));
+	char tmp[_MAX_PATH];
+	oVERIFY(oSystemGetPath(tmp, oSYSPATH_APP_FULL));
+	oStd::path path(tmp);
+	oStd::path relname = path.basename();
+	relname.remove_basename_suffix(oMODULE_DEBUG_SUFFIX_A);
 
-	oStd::path_string name;
-	oGetFilebase(name, path);
-	size_t suffixsize = oStrlen(oMODULE_DEBUG_SUFFIX_A);
-	if (0==_memicmp(name.c_str() + name.size() - suffixsize, oMODULE_DEBUG_SUFFIX_A, suffixsize))
-		*(name.c_str() + name.size() - suffixsize) = 0;
+	oStd::path dbgname(relname);
+	dbgname.insert_basename_suffix(oMODULE_DEBUG_SUFFIX_A);
 
-	oStd::path_string debugname;
-	oPrintf(debugname, "%s" oMODULE_DEBUG_SUFFIX_A "%s", name.c_str(), oGetFileExtension(path));
-	oStrcat(name, oGetFileExtension(path));
-
-	if (!TerminateDuplicateInstances(debugname.c_str()))
+	if (!TerminateDuplicateInstances(dbgname))
 		return false;
-	if (!TerminateDuplicateInstances(name.c_str()))
+	if (!TerminateDuplicateInstances(relname))
 		return false;
 
 	return true;

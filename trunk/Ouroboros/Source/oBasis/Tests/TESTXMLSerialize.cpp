@@ -121,7 +121,7 @@ static bool TestArray()
 	oXMLArrayTest Test;
 	Test.IntValues.resize(4);
 
-	oXMLReadCompound(&Test, oRTTI_OF(oXMLArrayTest), *XML, 0, true);
+	oXMLReadCompound(&Test, oRTTI_OF(oXMLArrayTest), *XML, XML->root(), true);
 
 	for (int i=0; i<oInt(Test.IntValues.size()); ++i)
 	{
@@ -140,7 +140,7 @@ static bool TestEmbeddedArray()
 	oXMLEmbeddedArrayTest Test;
 	Test.IntValues.resize(4);
 
-	oXMLReadCompound(&Test, oRTTI_OF(oXMLEmbeddedArrayTest), *XML, XML->first_child(0, "Parent"), true);
+	oXMLReadCompound(&Test, oRTTI_OF(oXMLEmbeddedArrayTest), *XML, XML->first_child(XML->root(), "Parent"), true);
 
 	for (int i=0; i<oInt(Test.IntValues.size()); ++i)
 	{
@@ -159,7 +159,7 @@ static bool TestRawArray()
 	oXMLRawArrayTest Test;
 	Test.IntValues.resize(10);
 
-	oXMLReadCompound(&Test, oRTTI_OF(oXMLRawArrayTest), *XML, 0, true);
+	oXMLReadCompound(&Test, oRTTI_OF(oXMLRawArrayTest), *XML, XML->root(), true);
 
 	for (int i=0; i<oInt(Test.IntValues.size()); ++i)
 	{

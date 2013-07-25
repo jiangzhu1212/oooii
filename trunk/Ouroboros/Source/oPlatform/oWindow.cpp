@@ -40,12 +40,45 @@
 #include <oPlatform/Windows/oWinRect.h>
 #include "oWinMessagePump.h"
 #include <windowsx.h>
+#include <Dbt.h>
 
 using namespace oConcurrency;
 
-//#define oUSE_RAW_INPUT
+//#define oUSE_WM_INPUT
+#define oUSE_WM_INPUT_DEVICE_CHANGE
+// #d3efine oUSE_WM_DEVICECHANGE
 
 static const bool kForceDebug = false;
+
+#ifdef oUSE_WM_DEVICECHANGE
+// Copy from HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\DeviceClasses
+static const GUID kDeviceInterfaceGUIDs[] = 
+{
+	// GUID_DEVINTERFACE_USB_DEVICE
+	//{ 0xA5DCBF10, 0x6530, 0x11D2, { 0x90, 0x1F, 0x00, 0xC0, 0x4F, 0xB9, 0x51, 0xED } },
+
+	// GUID_DEVINTERFACE_DISK
+	//{ 0x53f56307, 0xb6bf, 0x11d0, { 0x94, 0xf2, 0x00, 0xa0, 0xc9, 0x1e, 0xfb, 0x8b } },
+
+	// GUID_DEVINTERFACE_HID, 
+	{ 0x4D1E55B2, 0xF16F, 0x11CF, { 0x88, 0xCB, 0x00, 0x11, 0x11, 0x00, 0x00, 0x30 } },
+
+	// GUID_NDIS_LAN_CLASS
+	//{ 0xad498944, 0x762f, 0x11d0, { 0x8d, 0xcb, 0x00, 0xc0, 0x4f, 0xc3, 0x35, 0x8c } },
+
+	// GUID_DEVINTERFACE_COMPORT
+	//{ 0x86e0d1e0, 0x8089, 0x11d0, { 0x9c, 0xe4, 0x08, 0x00, 0x3e, 0x30, 0x1f, 0x73 } },
+
+	// GUID_DEVINTERFACE_SERENUM_BUS_ENUMERATOR
+	//{ 0x4D36E978, 0xE325, 0x11CE, { 0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18 } },
+
+	// GUID_DEVINTERFACE_PARALLEL
+	//{ 0x97F76EF0, 0xF883, 0x11D0, { 0xAF, 0x1F, 0x00, 0x00, 0xF8, 0x00, 0x84, 0x5C } },
+
+	// GUID_DEVINTERFACE_PARCLASS
+	//{ 0x811FC6A5, 0xF728, 0x11D0, { 0xA5, 0x37, 0x00, 0x00, 0xF8, 0x75, 0x3E, 0xD1 } }
+};
+#endif
 
 class oWinWindow : public oWindow
 {
@@ -97,6 +130,14 @@ protected:
 	HWND hStatusBar;
 	HACCEL hAccel;
 	HCURSOR hUserCursor;
+	#ifdef oUSE_WM_DEVICECHANGE
+		std::array<HDEVNOTIFY, oCOUNTOF(kDeviceInterfaceGUIDs)> hDevNotifies;
+	#endif
+	std::vector<RAWINPUTDEVICELIST> RawInputs;
+	std::vector<oStd::mstring> RawInputInstanceNames;
+	
+	// prevent multiple messages from going through
+	std::array<unsigned int, oGUI_INPUT_DEVICE_TYPE_COUNT> LastChangeTimestamp;
 
 	event Closed;
 	double ShowTimestamp;
@@ -110,9 +151,9 @@ protected:
 	oRefCount RefCount;
 	std::vector<oGUI_ACTION_HOOK> ActionHooks;
 	std::vector<oGUI_EVENT_HOOK> EventHooks;
-	bool AltF1CursorVisible; // override set by Alt-F1
 	int2 CursorClientPosAtMouseDown;
 	oWINKEY_CONTROL_STATE ControlKeyState;
+	bool AltF1CursorVisible; // override set by Alt-F1
 
 	void SetNumStatusItems(int* _pItemWidths, size_t _NumItems) threadsafe;
 
@@ -169,6 +210,12 @@ void oWinStatusBarInitialize(HWND _hStatusBar, const oGUI_WINDOW_DESC& _Desc)
 	oWinStatusBarSetNumItems(_hStatusBar, itemWidths.data(), i);
 }
 
+static void oWinNonKBMouseDeviceNotify(HWND _hWnd, const oWINDOWS_HID_DESC& _HIDDesc)
+{
+	if (_HIDDesc.Type != oGUI_INPUT_DEVICE_KEYBOARD && _HIDDesc.Type != oGUI_INPUT_DEVICE_MOUSE && _HIDDesc.Type != oGUI_INPUT_DEVICE_UNKNOWN)
+		SendMessage(_hWnd, oWM_INPUT_DEVICE_CHANGE, MAKEWPARAM(_HIDDesc.Type, oGUI_INPUT_DEVICE_READY), (LPARAM)_HIDDesc.DeviceInstancePath.c_str());
+}
+
 bool oWinWindow::ConstructOnThread(const oWINDOW_INIT& _Init)
 {
 	if (!oWinCreate(&hWnd, _Init.WinDesc.ClientPosition, _Init.WinDesc.ClientSize, StaticWndProc, this))
@@ -176,6 +223,25 @@ bool oWinWindow::ConstructOnThread(const oWINDOW_INIT& _Init)
 
 	if (oSTRVALID(_Init.WindowTitle))
 		SendMessage(hWnd, WM_SETTEXT, 0, (LPARAM)_Init.WindowTitle);
+
+	#ifdef oUSE_WM_DEVICECHANGE
+	{
+		DEV_BROADCAST_DEVICEINTERFACE filter;
+		memset(&filter, 0, sizeof(filter));
+		filter.dbcc_size = sizeof(DEV_BROADCAST_DEVICEINTERFACE);
+		filter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+	
+		oFORI(i, kDeviceInterfaceGUIDs)
+		{
+			filter.dbcc_classguid = kDeviceInterfaceGUIDs[i];
+			hDevNotifies[i] = RegisterDeviceNotification(hWnd, &filter, DEVICE_NOTIFY_WINDOW_HANDLE);
+			#ifdef oENABLE_ASSERTS
+				oStd::sstring StrGuid;
+				oASSERT(hDevNotifies[i], "RegisterDeviceNotification failed for class %s", oStd::to_string(StrGuid, (const oStd::guid&)filter.dbcc_classguid));
+			#endif
+		}
+	}
+	#endif
 
 	if (Desc.AllowTouch)
 	{
@@ -205,13 +271,16 @@ bool oWinWindow::ConstructOnThread(const oWINDOW_INIT& _Init)
 	if (!oWinSetStyle(hWnd, _Init.WinDesc.Style, _Init.WinDesc.ShowStatusBar, &rClient))
 		return false; // pass through error
 
-	#ifdef oUSE_RAW_INPUT
-		RAWINPUTDEVICE RID[2] =
+	#if defined(oUSE_WM_INPUT_DEVICE_CHANGE) || defined(oUSE_WM_INPUT)
+		if (Desc.EnableDeviceChangeEvent)
 		{
-			{ oUS_USAGE_PAGE_GENERIC_DESKTOP, oUS_USAGE_KEYBOARD, 0, nullptr },
-			{ oUS_USAGE_PAGE_GENERIC_DESKTOP, oUS_USAGE_MOUSE, 0, nullptr },
-		};
-		oVB(RegisterRawInputDevices(RID, 2, sizeof(RAWINPUTDEVICE)));
+			RAWINPUTDEVICE RID[] =
+			{
+				{ oUS_USAGE_PAGE_GENERIC_DESKTOP, oUS_USAGE_KEYBOARD, RIDEV_DEVNOTIFY, hWnd },
+				{ oUS_USAGE_PAGE_GENERIC_DESKTOP, oUS_USAGE_MOUSE, RIDEV_DEVNOTIFY, hWnd },
+			};
+			oVB(RegisterRawInputDevices(RID, oCOUNTOF(RID), sizeof(RAWINPUTDEVICE)));
+		}
 	#endif
 
 	return true;
@@ -227,10 +296,14 @@ oWinWindow::oWinWindow(const oWINDOW_INIT& _Init, bool* _pSuccess)
 	, Desc(_Init.WinDesc)
 	, PendingDesc(_Init.WinDesc)
 	, PreFullscreenDesc(_Init.WinDesc)
-	, AltF1CursorVisible(true)
 	, CursorClientPosAtMouseDown(oDEFAULT, oDEFAULT)
+	, AltF1CursorVisible(true)
 {
 	*_pSuccess = false;
+	#ifdef oUSE_WM_DEVICECHANGE
+		hDevNotifies.fill(nullptr);
+	#endif
+	LastChangeTimestamp.fill(0);
 
 	ActionHooks.reserve(8);
 	EventHooks.reserve(8);
@@ -266,6 +339,13 @@ oWinWindow::oWinWindow(const oWINDOW_INIT& _Init, bool* _pSuccess)
 		task();
 
 	SetDesc(PendingDesc, true);
+
+	if (Desc.EnableDeviceChangeEvent)
+	{
+		// I don't know how to get Kinect to go through the RawInput mode, so
+		// emulate the behavior of on-window-create connect devices here.
+		oVERIFY(oWinEnumInputDevices(false, oBIND(oWinNonKBMouseDeviceNotify, hWnd, oBIND1)));
+	}
 
 	// If fullscreen was the request, do it now
 	if (_Init.WinDesc.State == oGUI_WINDOW_FULLSCREEN_EXCLUSIVE)
@@ -882,6 +962,19 @@ bool oWinStateChanged(WPARAM _wParam, oGUI_WINDOW_STATE* _pNewState)
 	return StateChanged;
 }
 
+static oGUI_INPUT_DEVICE_TYPE oWinGetTypeFromRIM(DWORD _dwRIMType)
+{
+	switch (_dwRIMType)
+	{
+		case RIM_TYPEKEYBOARD: return oGUI_INPUT_DEVICE_KEYBOARD;
+		case RIM_TYPEMOUSE: return oGUI_INPUT_DEVICE_MOUSE;
+		default: break;
+	}
+
+	return oGUI_INPUT_DEVICE_UNKNOWN;
+}
+
+
 LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
 {
 	if ((Desc.Debug || kForceDebug) && _uMsg != oWM_MAINLOOP)
@@ -890,7 +983,7 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 		oTRACE("%s", oWinParseWMMessage(s, s.capacity(), &ControlKeyState, _hWnd, _uMsg, _wParam, _lParam));
 	}
 
-	double Timestamp = oWinGetDispatchMessageTime();
+	unsigned int Timestamp = (unsigned int)GetMessageTime();
 
 	LRESULT ActionLResult = 0;
 	oGUI_ACTION_DESC Action;
@@ -938,34 +1031,75 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 
 			// @oooii-tony: This message isn't coming through when I plug/unplug the
 			// USB stick that controls both mouse and KB.
-			#ifdef oUSE_RAW_INPUT
+			#ifdef oUSE_WM_INPUT_DEVICE_CHANGE
 				case WM_INPUT_DEVICE_CHANGE:
 				{
-					oGUI_INPUT_DEVICE_EVENT_DESC e((oGUI_WINDOW)_hWnd, oGUI_INPUT_DEVICE_CHANGED, Desc);
-					e.Status = _wParam == GIDC_ARRIVAL ? oGUI_INPUT_DEVICE_READY : oGUI_INPUT_DEVICE_NOT_READY;
-
-					RID_DEVICE_INFO RIDDI;
-					UINT Size = sizeof(RIDDI);
-					GetRawInputDeviceInfo((HANDLE)_lParam, RIDI_DEVICEINFO, &RIDDI, &Size);
-					switch (RIDDI.dwType)
+					if (Desc.EnableDeviceChangeEvent)
 					{
-						case RIM_TYPEKEYBOARD:
-							e.Type = oGUI_INPUT_DEVICE_KEYBOARD;
-							break;
-						case RIM_TYPEMOUSE:
-							e.Type = oGUI_INPUT_DEVICE_MOUSE;
-							break;
-						default:
-						case RIM_TYPEHID:
-							e.Type = oGUI_INPUT_DEVICE_UNKNOWN;
-							break;
+						oGUI_INPUT_DEVICE_EVENT_DESC e((oGUI_WINDOW)_hWnd, oGUI_INPUT_DEVICE_CHANGED, Desc);
+						e.Status = _wParam == GIDC_ARRIVAL ? oGUI_INPUT_DEVICE_READY : oGUI_INPUT_DEVICE_NOT_READY;
+
+						switch (_wParam)
+						{
+							// We have full and direct information.
+							case GIDC_ARRIVAL:
+							{
+								RID_DEVICE_INFO RIDDI;
+								RIDDI.cbSize = sizeof(RIDDI);
+								UINT Size = sizeof(RIDDI);
+								UINT NameCapacity = oSizeT(e.InstanceName.capacity());
+								oVB(GetRawInputDeviceInfoA((HANDLE)_lParam, RIDI_DEVICEINFO, &RIDDI, &Size));
+								oVB(GetRawInputDeviceInfoA((HANDLE)_lParam, RIDI_DEVICENAME, e.InstanceName.c_str(), &NameCapacity));
+
+								// Refresh record keeping in case these are new devices
+								UINT RawCapacity = 0;
+								GetRawInputDeviceList(nullptr, &RawCapacity, sizeof(RAWINPUTDEVICELIST));
+								RawInputs.resize(RawCapacity);
+								RawInputInstanceNames.resize(RawCapacity);
+								UINT RawCount = GetRawInputDeviceList(RawInputs.data(), &RawCapacity, sizeof(RAWINPUTDEVICELIST));
+								for (UINT i = 0; i < RawCount; i++)
+								{
+									UINT Capacity = oSizeT(RawInputInstanceNames[i].capacity());
+									oVB(GetRawInputDeviceInfoA(RawInputs[i].hDevice, RIDI_DEVICENAME, RawInputInstanceNames[i].c_str(), &Capacity));
+								}
+
+								oASSERT(RawCount == RawCapacity, "size mismatch");
+								e.Type = oWinGetTypeFromRIM(RIDDI.dwType);
+								break;
+							}
+
+							// Handle is correct, but device info won't be, not even type, so
+							// look it up in app bookkeeping.
+							case GIDC_REMOVAL:
+							{
+								e.Type = oGUI_INPUT_DEVICE_UNKNOWN;
+								for (size_t i = 0; i < RawInputs.size(); i++)
+								{
+									if (RawInputs[i].hDevice == (HANDLE)_lParam)
+									{
+										e.Type = oWinGetTypeFromRIM(RawInputs[i].dwType);
+										e.InstanceName = RawInputInstanceNames[i];
+										break;
+									}
+								}
+
+								break;
+							}
+							oNODEFAULT;
+						}
+
+						if (LastChangeTimestamp[e.Type] != Timestamp)
+						{
+							LastChangeTimestamp[e.Type] = Timestamp;
+							//oTRACE("%s: %s (%s)", oStd::as_string(e.Type), oStd::as_string(e.Status), e.InstanceName.c_str());
+							WTTriggerEvent(e);
+						}
 					}
 
-					oTRACE("%s: %s", oStd::as_string(e.Type), oStd::as_string(e.Status));
-					WTTriggerEvent(e);
 					break;
 				}
 
+				#ifdef oUSE_WM_INPUT
 				// @oooii-tony: I thought this might give me WM_KEYUP messages for media
 				// keys, but it doesn't get any event at all!
 				case WM_INPUT:
@@ -996,6 +1130,121 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 
 					break;
 				}
+				#endif
+			#endif
+
+			#ifdef oUSE_WM_DEVICECHANGE
+			// Currently only looking at input devices... I couldn't get 
+			// WM_INPUT_DEVICE_CHANGE to work.
+			case WM_DEVICECHANGE:
+			{
+				DEV_BROADCAST_HDR* pDBHdr = (DEV_BROADCAST_HDR*)_lParam;
+				if (pDBHdr)
+				{
+					switch (pDBHdr->dbch_devicetype)
+					{
+						case DBT_DEVTYP_DEVICEINTERFACE:
+						{
+							DEV_BROADCAST_DEVICEINTERFACE_A* pDBDI = (DEV_BROADCAST_DEVICEINTERFACE_A*)_lParam;
+
+							bool ContinueEvent = true;
+							oGUI_INPUT_DEVICE_STATUS Status = oGUI_INPUT_DEVICE_NOT_READY;
+							switch (_wParam)
+							{
+								case DBT_DEVICEARRIVAL: Status = oGUI_INPUT_DEVICE_READY; break;
+								case DBT_DEVICEREMOVECOMPLETE: Status = oGUI_INPUT_DEVICE_NOT_CONNECTED; break;
+								default: ContinueEvent = false; break;
+							}
+
+							if (ContinueEvent)
+							{
+								oGUI_INPUT_DEVICE_EVENT_DESC e((oGUI_WINDOW)hWnd, oGUI_INPUT_DEVICE_CHANGED, Desc);
+								e.Status = Status;
+
+								// @oooii-tony: I don't understand this stuff at all. Basically 
+								// nothing I can find says "this is the device that was 
+								// detached. It just gives a class of detached items, and it's 
+								// often the "HID" class, which is all input devices. So when 
+								// something, anything changes, check the state of the system 
+								// using the exhaustive SetupAPI calls, or just do the simple 
+								// thing here for KB/mouse for now when perhaps I understand 
+								// it all more. Check out oWinEnumInputDevices for more details.
+								bool KB = oWinIsKeyboardPresent();
+								bool M = oWinIsMousePresent();
+								bool T = oWinIsTouchPresent();
+
+								// @oooii-tony: How can I tell what the InstanceName should be?
+								switch (e.Status)
+								{
+									case oGUI_INPUT_DEVICE_READY:
+									{
+										if (!KeyboardPresent && KB)
+										{
+											KeyboardPresent = true;
+											e.Type = oGUI_INPUT_DEVICE_KEYBOARD;
+											e.InstanceName = "Keyboard";
+											WTTriggerEvent(e);
+										}
+
+										if (!MousePresent && M)
+										{
+											MousePresent = true;
+											e.InstanceName = "Mouse";
+											e.Type = oGUI_INPUT_DEVICE_MOUSE;
+											WTTriggerEvent(e);
+										}
+
+										if (!TouchPresent && T)
+										{
+											TouchPresent = true;
+											e.InstanceName = "Touch";
+											e.Type = oGUI_INPUT_DEVICE_TOUCH;
+											WTTriggerEvent(e);
+										}
+
+										break;
+									}
+
+									case oGUI_INPUT_DEVICE_NOT_CONNECTED:
+									{
+										if (KeyboardPresent && !KB)
+										{
+											KeyboardPresent = false;
+											e.Type = oGUI_INPUT_DEVICE_KEYBOARD;
+											e.InstanceName = "Keyboard";
+											WTTriggerEvent(e);
+										}
+
+										if (MousePresent && !M)
+										{
+											MousePresent = false;
+											e.InstanceName = "Mouse";
+											e.Type = oGUI_INPUT_DEVICE_MOUSE;
+											WTTriggerEvent(e);
+										}
+
+										if (TouchPresent && !T)
+										{
+											TouchPresent = false;
+											e.InstanceName = "Touch";
+											e.Type = oGUI_INPUT_DEVICE_TOUCH;
+											WTTriggerEvent(e);
+										}
+
+										break;
+									}
+
+									default: break;
+								}
+							}
+						}
+
+						default: break;
+					}
+
+				}
+				break;
+			}
 			#endif
 
 			case WM_SETCURSOR:
@@ -1228,15 +1477,13 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 				WTTriggerAction(oGUI_ACTION_DESC((oGUI_WINDOW)_hWnd, Timestamp, oGUI_ACTION_SKELETON_LOST, oGUI_INPUT_DEVICE_SKELETON, oInt(_wParam)));
 				return 0;
 
-			case oWM_INPUT_DEVICE_STATUS:
+			case oWM_INPUT_DEVICE_CHANGE:
 			{
 				oGUI_INPUT_DEVICE_EVENT_DESC e((oGUI_WINDOW)_hWnd, oGUI_INPUT_DEVICE_CHANGED, Desc);
 				e.Type = oGUI_INPUT_DEVICE_TYPE(LOWORD(_wParam));
 				e.Status = oGUI_INPUT_DEVICE_STATUS(HIWORD(_wParam));
-				oStd::mstring* pStr = (oStd::mstring*)_lParam;
-				e.InstanceName = *pStr;
+				e.InstanceName = (const char*)_lParam;
 				WTTriggerEvent(e);
-				delete pStr;
 				return 0;
 			}
 
@@ -1355,6 +1602,11 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 			case WM_DESTROY:
 			{
 				oWinMessagePump::Singleton()->UnregisterWindow(_hWnd);
+
+				#ifdef oUSE_WM_DEVICECHANGE
+					oFORI(i, hDevNotifies)
+						oVB(UnregisterDeviceNotification(hDevNotifies[i]));
+				#endif
 
 				oWinSetOwner(_hWnd, nullptr); // minimizes "randomly set focus to some window other than parent"
 

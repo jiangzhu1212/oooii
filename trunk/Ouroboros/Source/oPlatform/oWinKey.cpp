@@ -440,7 +440,7 @@ static oGUI_KEY oWinKeyMouseMoveGetTopPriorityKey(WPARAM _wParam)
 	return oGUI_KEY_NONE;
 }
 
-bool oWinKeyDispatchMessage(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, double _Timestamp, oWINKEY_CONTROL_STATE* _pState, oGUI_ACTION_DESC* _pAction)
+bool oWinKeyDispatchMessage(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, unsigned int _TimestampMS, oWINKEY_CONTROL_STATE* _pState, oGUI_ACTION_DESC* _pAction)
 {
 	// NOTE: Only keep simple down/up functionality here. Anything more advanced
 	// should not be handled here and handled explicitly in a place where there's
@@ -456,7 +456,7 @@ bool oWinKeyDispatchMessage(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 	_pAction->Key = oGUI_KEY_NONE;
 	_pAction->Position = 0.0f;
 	_pAction->hWindow = (oGUI_WINDOW)_hWnd;
-	_pAction->Timestamp = _Timestamp;
+	_pAction->TimestampMS = _TimestampMS;
 	_pAction->ActionCode = oInvalid;
 
 	switch (_uMsg)

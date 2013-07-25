@@ -41,9 +41,12 @@ const oGUID oKinectManager::GUID = { 0x1ecb3b76, 0x4bb7, 0x4b7a, { 0xb4, 0x13, 0
 oSINGLETON_REGISTER(oKinectManager);
 
 oKinectManager::oKinectManager()
+	: WMInputDeviceChange(0)
+	, CurrentDeviceInstanceName(0)
 {
 	oWinKinect10::Singleton()->Reference();
 	oWinKinect10::Singleton()->SafeNuiSetDeviceStatusCallback(StatusProc, this);
+	WMInputDeviceChange = RegisterWindowMessage(oWinGetMessageRegisterString(oWM_INPUT_DEVICE_CHANGE));
 }
 
 oKinectManager::~oKinectManager()
@@ -78,18 +81,13 @@ void oKinectManager::StatusProc(HRESULT _hrStatus, const OLECHAR* _InstanceName,
 	static_cast<oKinectManager*>(_pThis)->OnStatus(hrStatus, InstanceName, UniqueDeviceName);
 }
 
-static void oKinectNotifyStatus(threadsafe oKinect* _pKinect, oGUI_INPUT_DEVICE_STATUS _Status)
+void oKinectManager::NotifyStatus(const char* _InstanceName, oGUI_INPUT_DEVICE_STATUS _Status)
 {
-	oGUI_WINDOW hWnd = nullptr;
-	if (_pKinect->QueryInterface(oGetGUID<oGUI_WINDOW>(), &hWnd))
-	{
-		oKINECT_DESC kd;
-		_pKinect->GetDesc(&kd);
-		oStd::mstring* pID1 = new oStd::mstring(kd.ID);
-		oStd::mstring* pID2 = new oStd::mstring(kd.ID);
-		::PostMessage((HWND)hWnd, oWM_INPUT_DEVICE_STATUS, MAKEWPARAM(oGUI_INPUT_DEVICE_SKELETON, _Status), (LPARAM)pID1);
-		::PostMessage((HWND)hWnd, oWM_INPUT_DEVICE_STATUS, MAKEWPARAM(oGUI_INPUT_DEVICE_VOICE, _Status), (LPARAM)pID2);
-	}
+	// Hope we don't overwrite ourselves. Hope.
+	DeviceInstanceNames[CurrentDeviceInstanceName] = _InstanceName;
+	::PostMessage(HWND_BROADCAST, WMInputDeviceChange, MAKEWPARAM(oGUI_INPUT_DEVICE_SKELETON, _Status), (LPARAM)DeviceInstanceNames[CurrentDeviceInstanceName].c_str());
+	::PostMessage(HWND_BROADCAST, WMInputDeviceChange, MAKEWPARAM(oGUI_INPUT_DEVICE_VOICE, _Status), (LPARAM)DeviceInstanceNames[CurrentDeviceInstanceName].c_str());
+	CurrentDeviceInstanceName = (CurrentDeviceInstanceName + 1) % DeviceInstanceNames.size();
 }
 
 void oKinectManager::OnStatus(oGUI_INPUT_DEVICE_STATUS _Status, const char* _InstanceName, const char* _UniqueDeviceName)
@@ -111,33 +109,36 @@ void oKinectManager::OnStatus(oGUI_INPUT_DEVICE_STATUS _Status, const char* _Ins
 
 	//oTRACE("%segistered oKinect Ptr=0x%p Inst=%s UID=%s: %s", StatusChanger ? "R" : "Unr", StatusChanger.c_ptr(), _InstanceName, _UniqueDeviceName, oStd::as_string(_Status));
 
-	if (StatusChanger)
-	{
-		threadsafe oKinectImpl* pImpl = static_cast<threadsafe oKinectImpl*>(StatusChanger.c_ptr());
+	threadsafe oKinectImpl* pImpl = static_cast<threadsafe oKinectImpl*>(StatusChanger.c_ptr());
 
-		// Make the APIs threadsafe...
-		oKinectImpl* pUnsafeImpl = thread_cast<oKinectImpl*>(pImpl);
+	// Make the APIs threadsafe...
+	oKinectImpl* pUnsafeImpl = thread_cast<oKinectImpl*>(pImpl);
 		
-		switch (_Status)
+	if (StatusChanger)
+	switch (_Status)
+	{
+		case oGUI_INPUT_DEVICE_READY:
 		{
-			case oGUI_INPUT_DEVICE_READY:
-			{
+			if (pUnsafeImpl)
 				oVB(pUnsafeImpl->Reinitialize());
-				oKinectNotifyStatus(StatusChanger, _Status);
-				break;
-			}
 
-			case oGUI_INPUT_DEVICE_NOT_CONNECTED:
-			{
-				oKinectNotifyStatus(StatusChanger, _Status);
-				pUnsafeImpl->Shutdown();
-				break;
-			}
-
-			default:
-				oKinectNotifyStatus(StatusChanger, _Status);
-				break;
+			NotifyStatus(_InstanceName, _Status);
+			break;
 		}
+
+		case oGUI_INPUT_DEVICE_NOT_CONNECTED:
+		{
+			NotifyStatus(_InstanceName, _Status);
+	
+			if (pUnsafeImpl)
+				pUnsafeImpl->Shutdown();
+
+			break;
+		}
+
+		default:
+			NotifyStatus(_InstanceName, _Status);
+			break;
 	}
 }
 

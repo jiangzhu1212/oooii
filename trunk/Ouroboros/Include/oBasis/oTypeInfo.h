@@ -33,9 +33,9 @@
 #ifndef oTypeInfo_h
 #define oTypeInfo_h
 
-#include <oBasis/oHash.h>
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oTypeID.h>
+#include <oStd/fnv1a.h>
 #include <oStd/stringize.h>
 #include <type_traits>
 
@@ -140,7 +140,7 @@ template<typename T> struct oTypeInfo
 
 	// creates a value that is either an oTYPE_ID or a hash of the RTTI name for
 	// enums, classes, and unions
-	static unsigned int make_id() { return is_type_id<T>::value ? oTypeID<T>::value : oHash_FNV1a(simple_name()); }
+	static unsigned int make_id() { return is_type_id<T>::value ? oTypeID<T>::value : oStd::fnv1a<unsigned int>(simple_name()); }
 
 	// returns the vtable pointer for the specified class (nullptr if the class is 
 	// not polymorphic)
@@ -217,7 +217,7 @@ inline unsigned int oTypeInfoMakeID(const char* _TypeInfoName)
 {
 	unsigned int TypeID = oTYPE_UNKNOWN;
 	if (!oStd::from_string((oTYPE_ID*)&TypeID, _TypeInfoName))
-		TypeID = oHash_FNV1a(move_past_whitespace(_TypeInfoName));
+		TypeID = oStd::fnv1a<unsigned int>(move_past_whitespace(_TypeInfoName));
 	return TypeID;
 }
 

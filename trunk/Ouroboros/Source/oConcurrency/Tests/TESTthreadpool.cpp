@@ -23,13 +23,13 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/algorithm.h>
+#include <oStd/assert.h>
 #include <oStd/byte.h>
 #include <oStd/finally.h>
 #include <oStd/fixed_string.h>
-#include <oStd/timer.h>
-#include <oStd/assert.h>
 #include <oStd/oStdAtomic.h>
+#include <oStd/throw.h>
+#include <oStd/timer.h>
 #include <oConcurrency/tests/oConcurrencyTestRequirements.h>
 #include <oConcurrency/basic_threadpool.h>
 #include <oConcurrency/threadpool.h>

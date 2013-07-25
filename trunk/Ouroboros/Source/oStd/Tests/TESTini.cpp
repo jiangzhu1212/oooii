@@ -24,7 +24,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oStd/ini.h>
-#include <oStd/algorithm.h>
+#include <oStd/throw.h>
 
 namespace oStd {
 	namespace tests {

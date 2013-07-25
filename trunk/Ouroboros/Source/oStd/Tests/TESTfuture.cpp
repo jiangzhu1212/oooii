@@ -24,11 +24,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oTimer.h>
-#include <oStd/algorithm.h>
 #include <oStd/finally.h>
 #include <oStd/oFor.h>
 #include <oStd/macros.h>
 #include <oStd/oStdFuture.h>
+#include <oStd/throw.h>
 #include <oConcurrency/oConcurrency.h>
 #include <oPlatform/oProcessStatsMonitor.h>
 #include <oStd/tests/oStdTestRequirements.h>

@@ -30,6 +30,12 @@
     <ClCompile Include="Tests\TESTjson.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\TESTpath.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTuri.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oStd\tests\oStdTestRequirements.h">

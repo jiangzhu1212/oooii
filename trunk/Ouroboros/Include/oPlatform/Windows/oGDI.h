@@ -258,6 +258,58 @@ public:
 	oDEFINE_GDI_BOOL_CAST_OPERATORS(HDC, hDC);
 };
 
+class oGDIScopedClipRegion
+{
+	HDC hDC;
+	HRGN PrevRegion;
+
+	oGDIScopedClipRegion(const oGDIScopedBkMode& _That);
+	const oGDIScopedClipRegion& operator=(const oGDIScopedClipRegion& _That);
+
+public:
+	oGDIScopedClipRegion() : hDC(nullptr), PrevRegion(nullptr) {}
+	~oGDIScopedClipRegion() 
+	{
+		// If there was no clip region set before our scoped one, resetting to 
+		// no clip region is done by calling the function with nullptr,
+		// which means we should always call this function (If hDC is valid).
+		if (hDC)
+			SelectClipRgn(hDC, PrevRegion); 
+		if (PrevRegion) 
+			DeleteObject(PrevRegion); 
+	}
+	oGDIScopedClipRegion(HDC _hDC, oRECT _Rgn) : hDC(_hDC), PrevRegion(nullptr) 
+	{
+		// Unfortunately it seems that in order to get the currently set clip
+		// region, we first have to create one for GetClipRgn to copy into.
+		// Also see:
+		// http://stackoverflow.com/questions/3478180/correct-usage-of-getcliprgn
+		PrevRegion = CreateRectRgn(0,0,0,0);
+		if (1 != GetClipRgn(hDC, PrevRegion))
+		{
+			// If there was no clip region set, then we have to set PrevRegion
+			// to nullptr so that the destructor will do the correct thing.
+			// So we have to clean up the one we just created.
+			DeleteObject(PrevRegion);
+			PrevRegion = nullptr;
+		}
+		IntersectClipRect(hDC, _Rgn.Min.x, _Rgn.Min.y, _Rgn.Max.x, _Rgn.Max.y);
+	}
+	oGDIScopedClipRegion(oGDIScopedClipRegion&& _That) { operator=(_That); }
+
+	oGDIScopedClipRegion& operator=(oGDIScopedClipRegion&& _That)
+	{
+		if (this != &_That)
+		{
+			oDEFINE_GDI_MOVE_PTR(hDC);
+			oDEFINE_GDI_MOVE_PTR(PrevRegion);
+		}
+		return *this;
+	}
+
+	oDEFINE_GDI_BOOL_CAST_OPERATORS(HDC, hDC);
+};
+
 template<typename HGDIOBJType> class oGDIScopedObject
 {
 	oStd::atomic<HGDIOBJType> hObject;

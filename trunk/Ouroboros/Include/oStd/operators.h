@@ -72,13 +72,15 @@
 #define oOPERATORS_COMPARABLE2(_ThisT, _ThatT) oOPERATORS_NEQ2(_ThisT, _ThatT) oOPERATORS_GEQ2(_ThisT, _ThatT) oOPERATORS_LEQ2(_ThisT, _ThatT) oOPERATORS_GTH2(_ThisT, _ThatT)
 #define oOPERATORS_ARITHMETIC2(_ThisT, _ThatT) oOPERATORS_DERIVED2(_ThisT, _ThatT, +) oOPERATORS_DERIVED2(_ThisT, _ThatT, -) oOPERATORS_DERIVED2(_ThisT, _ThatT, /) oOPERATORS_DERIVED2(_ThisT, _ThatT, *) oOPERATORS_DERIVED2(_ThisT, _ThatT, %)
 #define oOPERATORS_LOGICAL2(_ThisT, _ThatT) oOPERATORS_DERIVED2(_ThisT, _ThatT, |) oOPERATORS_DERIVED2(_ThisT, _ThatT, &) oOPERATORS_DERIVED2(_ThisT, _ThatT, ^)
-#define oOPERATORS_ALL2(_ThisT, _ThatT) oOPERATORS_COMPARABLE2(_ThisT, _ThatT) oOPERATORS_INCREMENTABLE(_ThisT) oOPERATORS_ARITHMETIC2(_ThisT, _ThatT) oOPERATORS_LOGICAL2(_ThisT, _ThatT)
+#define oOPERATORS_SHIFT2(_ThisT, _ThatT) oOPERATORS_DERIVED2(_ThisT, _ThatT, <<) oOPERATORS_DERIVED2(_ThisT, _ThatT, >>)
+#define oOPERATORS_ALL2(_ThisT, _ThatT) oOPERATORS_COMPARABLE2(_ThisT, _ThatT) oOPERATORS_INCREMENTABLE(_ThisT) oOPERATORS_ARITHMETIC2(_ThisT, _ThatT) oOPERATORS_LOGICAL2(_ThisT, _ThatT) oOPERATORS_SHIFT2(_ThisT, _ThatT)
 
 // Simplify heterogeneous classifications for the common case
 #define oOPERATORS_COMPARABLE(_Type) oOPERATORS_COMPARABLE2(_Type, _Type)
 #define oOPERATORS_INCREMENTABLE(_Type) oOPERATORS_POSTINC(_Type) oOPERATORS_POSTDEC(_Type)
 #define oOPERATORS_ARITHMETIC(_Type) oOPERATORS_ARITHMETIC2(_Type, _Type)
 #define oOPERATORS_LOGICAL(_Type) oOPERATORS_LOGICAL2(_Type, _Type)
+#define oOPERATORS_SHIFT(_Type) oOPERATORS_SHIFT2(_Type, _Type)
 #define oOPERATORS_ALL(_Type) oOPERATORS_ALL2(_Type, _Type)
 
 // Template form. Macros are actually an extension to support oOperators in 

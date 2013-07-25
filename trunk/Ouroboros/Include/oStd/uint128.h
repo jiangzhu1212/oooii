@@ -62,9 +62,20 @@ public:
 
 	uint128& operator+=(const uint128& _That) { DataMS += _That.DataMS; unsigned long long tmp = DataLS; DataLS += _That.DataLS; if (DataLS < tmp) DataMS++; }
 	uint128& operator-=(const uint128& _That) { operator+=(-_That); }
-	
-	//uint128& operator<<=(const uint128& _That);
-	//uint128& operator>>=(const uint128& _That);
+
+	uint128& operator<<=(const unsigned int& x)
+	{
+		if (x >= 64) { DataMS = DataLS; DataLS = 0; return operator<<=(x-64); }
+		DataMS = (DataMS << x) | (DataLS >> (64-x)); DataLS = (DataLS << x);
+		return *this;
+	}
+
+	uint128& operator>>=(const unsigned int& x)
+	{
+		if (x >= 64) { DataLS = DataMS; DataMS = 0; return operator>>=(x-64); }
+		DataLS = (DataMS << (64-x)) | (DataLS >> x); DataMS = (DataMS >> x);
+		return *this;
+	}
 
 	// These are required to define oArithmetic<uint128>
 	//uint128& operator*=(const uint128& _That);
@@ -74,6 +85,7 @@ public:
 	// These go away with oArithmetic<uint128> defined
 	oOPERATORS_INCREMENTABLE(uint128)
 	oOPERATORS_LOGICAL(uint128)
+	oOPERATORS_SHIFT(uint128)
 	oOPERATORS_DERIVED(uint128, +) oOPERATORS_DERIVED(uint128, -)
 
 	unsigned long long DataMS; // most significant 8 bytes

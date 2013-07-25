@@ -29,7 +29,7 @@
 #define oContainer_h
 
 #include <xstddef> // for unary_function, binary_function, etc.
-#include <oBasis/oHash.h>
+#include <oStd/murmur3.h>
 
 // _____________________________________________________________________________
 // Predicates. Structs with an 'I' on the end are case-insensitive
@@ -112,7 +112,7 @@ struct oStdHash<oStd::fixed_string<CHAR_T, CAPACITY>> : public std::unary_functi
 {
 	size_t operator()( const oStd::fixed_string<CHAR_T, CAPACITY>& _Key) const
 	{
-		uint128 Hash = oHash_murmur3_x64_128(_Key.c_str(), oUInt(_Key.length()));
+		uint128 Hash = oStd::murmur3(_Key.c_str(), oUInt(_Key.length()));
 		return *(size_t*)&Hash;
 	}
 };
@@ -124,7 +124,7 @@ struct oStdHashI<oStd::fixed_string<CHAR_T, CAPACITY>> : public std::unary_funct
 	{
 		oStd::fixed_string<CHAR_T, CAPACITY> lower = _Key;
 		oToLower(lower);
-		uint128 Hash = oHash_murmur3_x64_128(lower.c_str(), oUInt(lower.length()));
+		uint128 Hash = oStd::murmur3(lower.c_str(), oUInt(lower.length()));
 		return *(size_t*)&Hash;
 	}
 };
@@ -135,7 +135,7 @@ namespace std {
 	{
 		size_t operator()(const TVEC2<T>& _V) const
 		{
-			uint128 Hash = oHash_murmur3_x64_128(&_V, sizeof(_V));
+			uint128 Hash = oStd::murmur3(&_V, sizeof(_V));
 			return *(size_t*)&Hash;
 		}
 	};
@@ -145,7 +145,7 @@ namespace std {
 	{
 		size_t operator()(const TVEC3<T>& _V) const
 		{
-			uint128 Hash = oHash_murmur3_x64_128(&_V, sizeof(_V));
+			uint128 Hash = oStd::murmur3(&_V, sizeof(_V));
 			return *(size_t*)&Hash;
 		}
 	};
@@ -155,7 +155,7 @@ namespace std {
 	{
 		size_t operator()(const TVEC4<T>& _V) const
 		{
-			uint128 Hash = oHash_murmur3_x64_128(&_V, sizeof(_V));
+			uint128 Hash = oStd::murmur3(&_V, sizeof(_V));
 			return *(size_t*)&Hash;
 		}
 	};
@@ -165,7 +165,7 @@ namespace std {
 	{
 		size_t operator()(const oGUID& _GUID) const
 		{
-			uint128 Hash = oHash_murmur3_x64_128(&_GUID, sizeof(oGUID));
+			uint128 Hash = oStd::murmur3(&_GUID, sizeof(oGUID));
 			return *(size_t*)&Hash;
 		}
 	};

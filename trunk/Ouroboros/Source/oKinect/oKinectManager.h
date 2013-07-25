@@ -50,10 +50,18 @@ struct oKinectManager : oProcessSingleton<oKinectManager>
 private:
 
 	oConcurrency::mutex KinectsMutex;
-	oStd::fixed_vector<threadsafe oKinect*, 8> Kinects;
+	oStd::fixed_vector<threadsafe oKinect*, 3> Kinects;
+
+	UINT WMInputDeviceChange;
+
+	// To avoid memory allocation troubles when broadcasting (who frees?)
+	std::array<oStd::mstring, 3> DeviceInstanceNames;
+	unsigned int CurrentDeviceInstanceName;
 
 	void OnStatus(oGUI_INPUT_DEVICE_STATUS _Status, const char* _InstanceName, const char* _UniqueDeviceName);
+	void NotifyStatus(const char* _InstanceName, oGUI_INPUT_DEVICE_STATUS _Status);
 	static void CALLBACK StatusProc(HRESULT _hrStatus, const OLECHAR* _InstanceName, const OLECHAR* _UniqueDeviceName, void* _pThis);
+
 };
 
 #endif // oHAS_KINECT_SDK

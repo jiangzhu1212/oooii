@@ -23,12 +23,13 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/atof.h>
 #include <oStd/algorithm.h>
+#include <oStd/atof.h>
 #include <oStd/assert.h>
 #include <oStd/function.h>
 #include <oStd/equal.h>
 #include <oStd/macros.h>
+#include <oStd/throw.h>
 #include <oStd/timer.h>
 #include <vector>
 #include <oStd/tests/oStdTestRequirements.h>

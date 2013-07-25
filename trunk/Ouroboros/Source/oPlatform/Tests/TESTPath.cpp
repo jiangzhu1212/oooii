@@ -27,11 +27,6 @@
 #include <oPlatform/oSystem.h>
 #include <oPlatform/oTest.h>
 
-static const char* sDoubleSlashPath = "c:/my//path";
-static const char* sCleanDoubleSlashPath = "c:/my/path";
-static const char* sUNCPath = "//c/my/path";
-static const char* sCleanUNCPath = "//c/my/path";
-
 struct PLATFORM_oSystemPaths : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override

@@ -27,13 +27,13 @@
 #include <oConcurrency/concurrent_queue_opt.h>
 #include <oConcurrency/concurrent_worklist.h>
 #include <oConcurrency/event.h>
-#include <oStd/algorithm.h>
 #include <oStd/finally.h>
 #include <oStd/assert.h>
 #include <oStd/oFor.h>
 #include <oStd/function.h>
 #include <oStd/oStdAtomic.h>
 #include <oStd/oStdThread.h>
+#include <oStd/throw.h>
 #include <oStd/timer.h>
 #include <vector>
 

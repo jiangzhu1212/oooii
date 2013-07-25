@@ -57,7 +57,7 @@ struct oConsoleContext : public oProcessSingleton<oConsoleContext>
 	oConcurrency::recursive_mutex ConsoleLock;
 	bool CtrlHandlerSet;
 	oConsole::EventFn Functions[5];
-	oStd::path_string LogFilePath;
+	oStd::path LogFilePath;
 	oRef<threadsafe oStreamWriter> LogFile;
 };
 
@@ -220,10 +220,10 @@ void oConsole::SetDesc(const DESC* _pDesc)
 	// Set LogFilePath first, in case the standard pipes are captured
 	// GetConsoleScreenBufferInfo may error out because there is no window.
 	oStd::path_string OldLogPath = c->LogFilePath;
-	if (_pDesc->LogFilePath.length())
+	if (!_pDesc->LogFilePath.empty())
 	{
-		oCleanPath(c->LogFilePath, _pDesc->LogFilePath);
-		if (0 != oStricmp(OldLogPath.c_str(), c->LogFilePath.c_str()))
+		c->LogFilePath = _pDesc->LogFilePath;
+		if (0 != oStricmp(OldLogPath, c->LogFilePath))
 		{
 			c->LogFile = nullptr;
 			if (!oStreamLogWriterCreate(c->LogFilePath, &c->LogFile))

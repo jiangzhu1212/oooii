@@ -77,7 +77,7 @@ struct oGPU_WINDOW_INIT : oWINDOW_INIT
 	// NOTE: This can crash tools such as NVIDIA's Parallel Insight and is often
 	// not as well a supported path as others but allows for some quick-and-dirty 
 	// HUD/stats during bring-up.
-	oFUNCTION<void(oGPURenderTarget* _pPrimaryRenderTarget)> OSRenderFunction;
+	oFUNCTION<void(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize)> OSRenderFunction;
 	
 	oSURFACE_FORMAT DepthStencilFormat; // specify UNKNOWN for no DS buffer
 	bool VSynced;

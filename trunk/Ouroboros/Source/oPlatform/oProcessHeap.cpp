@@ -24,7 +24,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oProcessHeap.h>
-#include <oBasis/oHash.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
@@ -194,11 +193,11 @@ public:
 
 	inline size_t Hash(const oGUID& _GUID, bool _IsThreadLocal)
 	{
-		unsigned int h = oHash_superfast(&_GUID, sizeof(oGUID));
+		size_t h = oStd::fnv1a<size_t>(&_GUID, sizeof(oGUID));
 		if (_IsThreadLocal)
 		{
 			oStd::thread::id id = oStd::this_thread::get_id();
-			h = oHash_superfast(&id, sizeof(oStd::thread::id), h);
+			h = oStd::fnv1a<size_t>(&id, sizeof(oStd::thread::id), h);
 		}
 
 		return h;

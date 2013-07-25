@@ -31,6 +31,8 @@
 #include <oStd/byte.h>
 #include <oStd/fourcc.h>
 #include <oStd/macros.h>
+#include <oStd/path.h>
+#include <oStd/uri.h>
 #include <oBasis/oTypeInfo.h>
 #include <typeinfo>
 #include <vector>
@@ -140,5 +142,7 @@ oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, oStd::xlstring, ostd_xlst
 oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, oStd::xxlstring, ostd_xxlstring)
 oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, oStd::path_string, ostd_path_string)
 oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, oStd::uri_string, ostd_uri_string)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, oStd::path, ostd_path)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, oStd::uri, ostd_uri)
 
 #endif oRTTI_h

@@ -34,10 +34,11 @@
 #include <oGPU/oGPU.h>
 
 #include <oBasis/oError.h>
-#include <oStd/fixed_string.h>
 #include <oBasis/oInitOnce.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
+#include <oStd/fixed_string.h>
+#include <oStd/fnv1a.h>
 
 // Use this instead of "struct oMyDerivedClass" to enforce naming consistency 
 // and allow for any shared code changes to happen in a central place. If the 
@@ -76,14 +77,14 @@
 // Place this macro in the implementation class of an oGPUResource
 #define oDEFINE_GPURESOURCE_INTERFACE() oDEFINE_GPUDEVICECHILD_INTERFACE() \
 	oGPU_RESOURCE_TYPE GetType() const threadsafe override { return MIXINGetType(); } \
-	int GetID() const threadsafe override { return MIXINGetID(); } \
+	unsigned int GetID() const threadsafe override { return MIXINGetID(); } \
 	void GetDesc(interface_type::DESC* _pDesc) const threadsafe override { MIXINGetDesc(_pDesc); } \
 	int2 GetByteDimensions(int _Subresource) const threadsafe override;
 
 // The one true hash. This is a persistent hash that can be used at tool time 
 // and at runtime and should be capable of uniquely identifying any resource 
 // in the system.
-inline int oGPUDeviceResourceHash(const char* _SourceName, oGPU_RESOURCE_TYPE _Type) { return oHash_superfasti(_SourceName, oInt(oStrlen(_SourceName)), _Type); }
+inline unsigned int oGPUDeviceResourceHash(const char* _SourceName, oGPU_RESOURCE_TYPE _Type) { return oStd::fnv1a<unsigned int>(_SourceName, oInt(oStrlen(_SourceName)), _Type); }
 
 template<typename InterfaceT, typename ImplementationT>
 struct oGPUDeviceChildMixinBase
@@ -180,7 +181,7 @@ struct oGPUResourceMixin : oGPUDeviceChildMixinBase<InterfaceT, ImplementationT>
 protected:
 
 	desc_type Desc;
-	int ID;
+	unsigned int ID;
 
 	inline bool MIXINQueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe
 	{
@@ -206,7 +207,7 @@ protected:
 		return Type;
 	}
 
-	inline int MIXINGetID() const threadsafe
+	inline unsigned int MIXINGetID() const threadsafe
 	{
 		return ID;
 	}

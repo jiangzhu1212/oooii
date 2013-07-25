@@ -50,7 +50,7 @@
 #define oHLSL_ELOPT4(op, param_t) template<typename T> oHLSL::TVEC4<T> operator op(const oHLSL::TVEC4<T>& a, param_t b) { return oHLSL::TVEC4<T>(a.x op b, a.y op b, a.z op b, a.w op b); } 
 #define oHLSL_ELUFN2(fn) template<typename T> oHLSL::TVEC2<T> fn(const oHLSL::TVEC2<T>& a) { return oHLSL::TVEC2<T>(fn(a.x), fn(a.y)); }
 #define oHLSL_ELUFN3(fn) template<typename T> oHLSL::TVEC3<T> fn(const oHLSL::TVEC3<T>& a) { return oHLSL::TVEC3<T>(fn(a.x), fn(a.y), fn(a.z)); }
-#define oHLSL_ELUFN4(fn) template<typename T> oHLSL::TVEC4<T> fn(const oHLSL::TVEC4<T>& a) { return oHLSL::TVEC3<T>(fn(a.x), fn(a.y), fn(a.z), fn(a.w)); }
+#define oHLSL_ELUFN4(fn) template<typename T> oHLSL::TVEC4<T> fn(const oHLSL::TVEC4<T>& a) { return oHLSL::TVEC4<T>(fn(a.x), fn(a.y), fn(a.z), fn(a.w)); }
 #define oHLSL_ELBFN2(pubfn, implfn) template<typename T> oHLSL::TVEC2<T> pubfn(const oHLSL::TVEC2<T>& a, const oHLSL::TVEC2<T>& b) { return oHLSL::TVEC2<T>(implfn(a.x, b.x), implfn(a.y, b.y)); }
 #define oHLSL_ELBFN3(pubfn, implfn) template<typename T> oHLSL::TVEC3<T> pubfn(const oHLSL::TVEC3<T>& a, const oHLSL::TVEC3<T>& b) { return oHLSL::TVEC3<T>(implfn(a.x, b.x), implfn(a.y, b.y), implfn(a.z, b.z)); }
 #define oHLSL_ELBFN4(pubfn, implfn) template<typename T> oHLSL::TVEC4<T> pubfn(const oHLSL::TVEC4<T>& a, const oHLSL::TVEC4<T>& b) { return oHLSL::TVEC4<T>(implfn(a.x, b.x), implfn(a.y, b.y), implfn(a.z, b.z), implfn(a.w, b.w)); }

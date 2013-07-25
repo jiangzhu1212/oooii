@@ -24,7 +24,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oStd/xml.h>
-#include <oStd/algorithm.h>
+#include <oStd/throw.h>
+
+#include <oStd/assert.h>
 
 namespace oStd {
 	namespace tests {
@@ -59,16 +61,30 @@ static const char* sTestXML = {
 	"		<PRICE>9.90</PRICE>" \
 	"		<YEAR>1982</YEAR>" \
 	"	</CD>" \
-	"</CATALOG>"
+	"</CATALOG>" \
+	"<TEST booleanattr test='123' anotherboolattr test2='123' boolattr3 />" \
+	"<TEST booleanattr test='123' anotherboolattr test2='123' boolattr3>test</TEST>"
 };
 
 static const char* sCompactTestXML = "<html><head><title>foo bar</title></head><body/></html>";
+
+static const char* sCompactExpectedVisitOrder = "html, head, title, title; foo bar, title, head, body, body, html, ";
+
+class test_visitor : public xml::visitor
+{
+public:
+	bool node_begin(const char* _NodeName, const char* _XRef, const attr_type* _pAttributes, size_t _NumAttributes) override { s += _NodeName; s += ", "; return true; }
+ 	bool node_end(const char* _NodeName, const char* _XRef) override { s += _NodeName; s += ", "; return true; }
+	bool node_text(const char* _NodeName, const char* _XRef, const char* _NodeText) override { s += _NodeName; s += "; "; s += _NodeText; s += ", "; return true; }
+
+	std::string s;
+};
 
 void TESTxml()
 {
 	std::shared_ptr<oStd::xml> XML = std::make_shared<oStd::xml>("Test XML", (char*)sTestXML, nullptr, 200);
 
-	xml::node hCatalog = XML->first_child(0, "CATALOG");
+	xml::node hCatalog = XML->first_child(XML->root(), "CATALOG");
 	oCHECK(hCatalog, "Cannot find CATALOG node");
 	oCHECK(!strcmp(XML->find_attr_value(hCatalog, "title"), "My play list"), "CATALOG title is incorrect");
 
@@ -83,15 +99,65 @@ void TESTxml()
 		oCHECK(hArtist, "Invalid CD structure");
 		oCHECK(!strcmp(XML->node_value(hArtist), sExpectedArtists[i]), "Artist in %d%s section did not match", i, ordinal(i));
 	}
+	 
+	// Test xref
+	// @oooii-tony: WTF: if this is xml::node n = ... then all kinds of havok 
+	// happens. I traced it through the register moves on the function return, and
+	// it's all ok until it gets moved... to a wrong location! Somehow VC is 
+	// confused and thinks this is still the xml::node n from above in the for
+	// loop! This has to be a compiler bug.
+	xml::node m = XML->root();
+	const char* name = XML->node_name(m);
+	m = XML->first_child(m);
+	name = XML->node_name(m);
+	m = XML->first_child(m);
+	name = XML->node_name(m);
+	m = XML->next_sibling(m);
+	name = XML->node_name(m);
+	m = XML->first_child(m);
+	name = XML->node_name(m);
+	m = XML->next_sibling(m);
+	name = XML->node_name(m);
+	m = XML->next_sibling(m);
+	name = XML->node_name(m);
+	const char* val = XML->node_value(m);
+
+	mstring xref;
+	XML->make_xref(xref, m);
+
+	xml::node xref_m = XML->find_xref(xref);
+	const char* v = XML->node_value(xref_m);
+	oCHECK(!_stricmp("UK", v), "failed: Xref %s", xref.c_str());
+
+	// Test boolean attrs
+
+	xml::node nTest1 = XML->find_xref("/2");
+	oCHECK(nTest1, "Did not find first boolean attr test");
+
+	val = XML->find_attr_value(nTest1, "anotherboolattr");
+	oCHECK(!strcmp(val, "anotherboolattr"), "anotherboolattr failed");
+	val = XML->find_attr_value(nTest1, "not_there");
+	oCHECK(!val || !strcmp(val, ""), "not_there should really not be there, but something was: %s", val);
+	val = XML->find_attr_value(nTest1, "boolattr3");
+	oCHECK(!strcmp(val, "boolattr3"), "boolattr3 failed");
+
+	xml::node nTest2 = XML->find_xref("/3");
+	oCHECK(nTest2, "Did not find second boolean attr test");
+	val = XML->find_attr_value(nTest2, "boolattr3");
+	oCHECK(!strcmp(val, "boolattr3"), "boolattr3 2 failed");
 
 	// Test compacted XML
-	XML = std::make_shared<xml>("Test CompactXML", (char*)sCompactTestXML, nullptr, 200);
+ 	XML = std::make_shared<xml>("Test CompactXML", (char*)sCompactTestXML, nullptr, 200);
 
-	xml::node HeadNode = XML->first_child(XML->first_child(0), "head");
+	xml::node HeadNode = XML->first_child(XML->first_child(XML->root()), "head");
 	oCHECK(!_stricmp(XML->node_name(HeadNode), "head"), "Failed to get head node");
 	
 	xml::node Title = XML->first_child(HeadNode, "title");
 	oCHECK(!_stricmp(XML->node_value(Title), "foo bar"), "Title is wrong");
+
+	test_visitor t;
+	XML->visit(t);
+	oCHECK(!strcmp(t.s.c_str(), sCompactExpectedVisitOrder), "Visit out of order: %s", t.s.c_str());
 }
 
 	} // namespace tests

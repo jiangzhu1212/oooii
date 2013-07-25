@@ -269,22 +269,34 @@ enum oWM
 	*/
 	oWM_USER_LOST,
 
+	// Registered messages are for inter-process communication. The first added 
+	// ones are to keep Kinect completely abstracted from oWindow.
+	oWM_REGISTERED_FIRST,
+
 	/**
-		Received when an input device is plugged in or otherwise reinitialized.
+		Received when a skeleton device is plugged in or otherwise reinitialized.
 		wParam
 			The low-order word of wParam specifies an oGUI_INPUT_DEVICE_TYPE.
 			The high-order word of wParam specifies an oGUI_INPUT_DEVICE_STATUS.
 			oGUI_INPUT_DEVICE_TYPE. The type of the device.
 		lParam
 			A pointer to a null-terminated string that is the device's instance name.
+			No memory management is done to the string memory.
 		lResult
 			Returns 0.
 	*/
-	oWM_INPUT_DEVICE_STATUS,
+	oWM_INPUT_DEVICE_CHANGE = oWM_REGISTERED_FIRST,
+
+	oWM_REGISTERED_LAST = oWM_INPUT_DEVICE_CHANGE,
 
 	// The number of oWM messages, this is not a message
 	oWM_COUNT,
+
+	oWM_REGISTERED_COUNT = oWM_REGISTERED_LAST - oWM_REGISTERED_FIRST + 1,
 };
+
+// Returns nullptr if the specified messasge is not a registered message.
+const char* oWinGetMessageRegisterString(oWM _RegisteredMessage);
 
 // _____________________________________________________________________________
 // Raw Input (WM_INPUT support)
@@ -356,6 +368,10 @@ oAPI bool oWinCreate(HWND* _pHwnd, const int2& _ClientPosition, const int2& _Cli
 oAPI void* oWinGetThis(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam);
 template<typename T> inline T* oWinGetThis(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam) { return (T*)oWinGetThis(_hWnd, _uMsg, _wParam, _lParam); }
 
+// Translates the message if it is a registered into its associated oWM. If it
+// it not a registered message, this passes the message through.
+UINT oWinTranslateMessage(UINT _uMsg);
+
 // Declares the method WndProc and a static function WndProc within a class to
 // create a Windows-compliant C-Style function to pass to oWinCreate above that
 // with oWinCreate's _pThis pointer can be redirected to the member method. 
@@ -367,6 +383,7 @@ template<typename T> inline T* oWinGetThis(HWND _hWnd, UINT _uMsg, WPARAM _wPara
 	LRESULT CALLBACK WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam); \
 	static LRESULT CALLBACK StaticWndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam) \
 		{ _ClassName* pThis = oWinGetThis<_ClassName>(_hWnd, _uMsg, _wParam, _lParam); \
+			_uMsg = oWinTranslateMessage(_uMsg); \
 			return pThis ? pThis->WndProc(_hWnd, _uMsg, _wParam, _lParam) : DefWindowProc(_hWnd, _uMsg, _wParam, _lParam); }
 
 // Returns the thread id for the specified window, or oStd::thread::id() if the
@@ -391,15 +408,12 @@ oAPI void oWinAccelToHotKeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, const ACCEL* _
 // is true, the calling thread will sleep (GetMessage). If _WaitForNext is 
 // false, then PeekMessage is used. If this returns false, it means a new 
 // message was not dispatched. If the message queue is valid and empty, 
-// oErrorGetLast() will return std::errc::no_message_available, which might mean to 
-// client code "do something else", like render a 3D scene or play a video. If a 
-// WM_QUIT message is received, this will return std::errc::operation_canceled, implying the
-// thread pump loop should exit.
+// oErrorGetLast() will return std::errc::no_message_available, which might mean
+// to client code "do something else", like render a 3D scene or play a video. 
+// If a  WM_QUIT message is received, this will return 
+// std::errc::operation_canceled, implying the thread pump loop should exit.
 // Threading: WT
-oAPI bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, double _Timestamp, bool _WaitForNext = true);
-
-// Returns the timestamp that was specified in the last oWinDispatchMessage.
-oAPI double oWinGetDispatchMessageTime();
+oAPI bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext = true);
 
 // Send this to wake the specified window's message pump thread up from a 
 // blocking GetMessage() call. This is useful if the thread does work of which 

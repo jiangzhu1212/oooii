@@ -172,6 +172,7 @@
     <ClInclude Include="..\..\Include\oPlatform\Windows\oDXGI.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oGDI.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinAsString.h" />
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinControlSet.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinCursor.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinDialog.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWindows.h" />
@@ -205,6 +206,7 @@
     <ClInclude Include="SoftLink\oWinPDH.h" />
     <ClInclude Include="SoftLink\oWinPowrProf.h" />
     <ClInclude Include="SoftLink\oWinPSAPI.h" />
+    <ClInclude Include="SoftLink\oWinSetupAPI.h" />
     <ClInclude Include="SoftLink\oWinShlwapi.h" />
     <ClInclude Include="SoftLink\oWinsock.h" />
     <ClInclude Include="SoftLink\oWinVersion.h" />
@@ -266,6 +268,7 @@
     <ClCompile Include="oWebAppWindow.cpp" />
     <ClCompile Include="oWebServer.cpp" />
     <ClCompile Include="oWinAsString.cpp" />
+    <ClCompile Include="oWinControlSet.cpp" />
     <ClCompile Include="oWinCursor.cpp" />
     <ClCompile Include="oWinDialog.cpp" />
     <ClCompile Include="oWindow.cpp" />
@@ -296,6 +299,7 @@
     <ClCompile Include="SoftLink\oWinPDH.cpp" />
     <ClCompile Include="SoftLink\oWinPowrProf.cpp" />
     <ClCompile Include="SoftLink\oWinPSAPI.cpp" />
+    <ClCompile Include="SoftLink\oWinSetupAPI.cpp" />
     <ClCompile Include="SoftLink\oWinShlwapi.cpp" />
     <ClCompile Include="SoftLink\oWinsock.cpp" />
     <ClCompile Include="SoftLink\oWinVersion.cpp" />

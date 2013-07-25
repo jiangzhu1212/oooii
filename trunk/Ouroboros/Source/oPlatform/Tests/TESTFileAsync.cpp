@@ -95,8 +95,8 @@ struct PLATFORM_FileAsync : public oTest
 			oTRACE("TESTFileAsync: Waiting on read latch");
 			Latch.wait();
 			oTRACE("Read test finished");
-			static const uint128 ExpectedFileHash(3650274822346168237, 9475904461222329612);
-			oTESTB( oHash_murmur3_x64_128( TempFileBlob, oUInt( FileDesc.Size ) ) == ExpectedFileHash, "Test failed to compute correct hash" );
+			static const uint128 ExpectedFileHash(13254728276562583748ull, 8059648572410507760ull);
+			oTESTB( oStd::murmur3( TempFileBlob, oUInt( FileDesc.Size ) ) == ExpectedFileHash, "Test failed to compute correct hash" );
 
 			// Attempt to read too many bytes in to the file
 			StreamRead.Range.Offset = FileDesc.Size;

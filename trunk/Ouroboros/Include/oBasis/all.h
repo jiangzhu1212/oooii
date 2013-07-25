@@ -53,7 +53,6 @@
 #include <oBasis/oGeometry.h>
 #include <oBasis/oGUI.h>
 #include <oBasis/oGZip.h>
-#include <oBasis/oHash.h>
 #include <oBasis/oInputMapper.h>
 #include <oBasis/oInt.h>
 #include <oBasis/oInterface.h>

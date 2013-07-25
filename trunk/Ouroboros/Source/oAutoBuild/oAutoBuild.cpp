@@ -336,7 +336,9 @@ void oAutoBuildLogHandler::OnGet(CommonParams& _CommonParams) const
 	if (!oBufferLoad(filepathAbsolute, &cacheBuffer))
 		return;
 
-	oMIMEFromExtension(&_CommonParams.pResponse->Content.Type, oGetFileExtension(filepathAbsolute));
+	oStd::path P(filepathAbsolute);
+
+	oMIMEFromExtension(&_CommonParams.pResponse->Content.Type, P.extension());
 	_CommonParams.pResponse->Content.Length = oInt(cacheBuffer->GetSize());
 	_CommonParams.pResponse->StatusLine.StatusCode = oHTTP_OK;
  	_CommonParams.AllocateResponse(cacheBuffer->GetSize());
