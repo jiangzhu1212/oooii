@@ -35,7 +35,8 @@
 #include <oGfx/oGfxMosaic.h>
 #include <oConcurrency/mutex.h>
 
-#include "oHLSLPCIEBandwidthByteCode.h"
+#include "oHLSLPCIEBandwidthVS4ByteCode.h"
+#include "oHLSLPCIEBandwidthPS4ByteCode.h"
 
 static const char* ReportTableFormatString = "%-30s%-12s%-16s%-12s%-12s%-8s\n";
 
@@ -140,6 +141,12 @@ struct GlobalSettings //setting shared by every window
 	std::vector<Test> Tests;
 };
 
+static const oGPU_VERTEX_ELEMENT sVEMosaic[] = 
+{
+	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false, },
+	{ 'TEX0', oSURFACE_R32G32_FLOAT, 0, false, },
+};
+
 struct TESTWindow
 {
 	oRef<threadsafe oGPUWindow> Window;
@@ -177,7 +184,13 @@ struct TESTWindow
 		if(!oGPUWindowCreate(WinInit, Device, &Window))
 			return;
 
-		if (!oGfxMosaicCreate(Device, oHLSLPCIEBandwidthByteCode, &Mosaic))
+		oGPU_PIPELINE_DESC pd;
+		pd.InputType = oGPU_TRIANGLES;
+		pd.pElements = sVEMosaic;
+		pd.NumElements = oCOUNTOF(sVEMosaic);
+		pd.pVertexShader = oHLSLPCIEBandwidthVS4ByteCode;
+		pd.pPixelShader = oHLSLPCIEBandwidthPS4ByteCode;
+		if (!oGfxMosaicCreate(Device, pd, &Mosaic))
 			return;
 
 		oGPUCommandList::DESC clDesc;
@@ -278,7 +291,7 @@ struct TESTWindow
 		{
 			oGeometryFactory::MOSAIC_DESC MosaicDesc;
 			MosaicDesc.SourceSize = int2(_test.Width, _test.Height);
-			MosaicDesc.SourceTexelSpace = oRECT(int2(0,0), int2(_test.Width, _test.Height));
+			MosaicDesc.SourceTexelSpace = oRECT(oRECT::pos_size, int2(0,0), int2(_test.Width, _test.Height));
 			MosaicDesc.DestinationSize = Settings.ClientSize;
 			MosaicDesc.pSourceRects = nullptr;
 			MosaicDesc.pDestinationRects = nullptr;

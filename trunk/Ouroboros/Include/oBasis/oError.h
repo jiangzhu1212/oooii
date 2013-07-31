@@ -54,7 +54,7 @@ inline bool oErrorSetLast(std::exception& _Exception)
 // Retains the current error message adding the provided string to the front
 // of the error message. As oErrorSetLast this always returns false
 bool oErrorPrefixLastV(const char* _Format, va_list _Args);
-inline bool oErrorPrefixLast(const char* _Format, ...) { va_list args; va_start(args, _Format); return oErrorPrefixLastV(_Format, args); }
+inline bool oErrorPrefixLast(const char* _Format, ...) { va_list args; va_start(args, _Format); bool b = oErrorPrefixLastV(_Format, args); va_end(args); return b; }
 
 // Returns the value of the last call to oErrorSetLast. This function is only
 // valid immediately after a library function has returned false. Example:
@@ -79,6 +79,8 @@ const char* oErrorGetDefaultString(errno_t _Error);
 size_t oErrorGetLastCount();
 
 size_t oErrorGetSizeofMessageBuffer();
+
+inline void oThrowLastError() { throw std::system_error(std::make_error_code((std::errc::errc)oErrorGetLast()), oErrorGetLastString()); }
 
 // For functions that follow the pattern of returning true for success and false
 // for failure while using oErrorSetLast, use this as a wrapper when the 

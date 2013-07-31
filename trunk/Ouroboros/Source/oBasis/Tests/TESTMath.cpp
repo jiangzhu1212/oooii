@@ -43,7 +43,7 @@ bool Test_oEqual()
 
 bool Test_oAABoxf()
 {
-	oAABoxf box(float3(-1.0f), float3(1.0f));
+	oAABoxf box(oAABoxf::min_max, float3(-1.0f), float3(1.0f));
 
 	oTESTB(oStd::equal(box.Min, float3(-1.0f)), "oAABoxf::Min failed");
 	oTESTB(oStd::equal(box.Max, float3(1.0f)), "oAABoxf::Min failed");
@@ -57,7 +57,7 @@ bool Test_oAABoxf()
 	box.clear();
 	oTESTB(box.empty(), "oAABoxf::empty() failed (2)");
 
-	box = oAABoxf(float3(0.0f), float3(1.0f, 2.0f, 3.0f));
+	box = oAABoxf(oAABoxf::min_max, float3(0.0f), float3(1.0f, 2.0f, 3.0f));
 	oTESTB(oStd::equal(box.center(), float3(0.5f, 1.0f, 1.5f)), "oAABoxf::GetCenter() failed");
 
 	float3 dim = box.size();

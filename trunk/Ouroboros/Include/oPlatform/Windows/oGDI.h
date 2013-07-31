@@ -278,7 +278,7 @@ public:
 		if (PrevRegion) 
 			DeleteObject(PrevRegion); 
 	}
-	oGDIScopedClipRegion(HDC _hDC, oRECT _Rgn) : hDC(_hDC), PrevRegion(nullptr) 
+	oGDIScopedClipRegion(HDC _hDC, const RECT& _Region) : hDC(_hDC), PrevRegion(nullptr) 
 	{
 		// Unfortunately it seems that in order to get the currently set clip
 		// region, we first have to create one for GetClipRgn to copy into.
@@ -293,7 +293,7 @@ public:
 			DeleteObject(PrevRegion);
 			PrevRegion = nullptr;
 		}
-		IntersectClipRect(hDC, _Rgn.Min.x, _Rgn.Min.y, _Rgn.Max.x, _Rgn.Max.y);
+		IntersectClipRect(hDC, _Region.left, _Region.top, _Region.right, _Region.bottom);
 	}
 	oGDIScopedClipRegion(oGDIScopedClipRegion&& _That) { operator=(_That); }
 
@@ -451,6 +451,15 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 // leak.
 bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, oFUNCTION<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize, bool _RedrawWindow);
 
+// Use DeleteObject when finished with the returned handle
+HBITMAP oGDIIconToBitmap(HICON _hIcon);
+
+// Use DestroyIcon when finished with the return handle
+HICON oGDIBitmapToIcon(HBITMAP _hBmp);
+
+// Use DestroyIcon when finished with the return handle
+inline HICON oGDILoadIcon(int _ResourceID) { return (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(_ResourceID), IMAGE_ICON, 0, 0, 0); }
+
 // _dwROP is one of the raster operations from BitBlt()
 BOOL oGDIDrawBitmap(HDC _hDC, INT _X, INT _Y, HBITMAP _hBitmap, DWORD _dwROP);
 BOOL oGDIStretchBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, HBITMAP _hBitmap, DWORD _dwROP);
@@ -465,6 +474,7 @@ bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, o
 // UI element, or a top-level window.
 bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically = true);
 bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically = true);
+
 // _____________________________________________________________________________
 // Other APIs
 

@@ -92,7 +92,6 @@ oAPI bool oBasisTest_oConcurrentIndexAllocator();
 oAPI bool oBasisTest_oMath();
 oAPI bool oBasisTest_oOBJ(const oBasisTestServices& _Services);
 oAPI bool oBasisTest_oOSC();
-oAPI bool oBasisTest_oPath();
 oAPI bool oBasisTest_oRTTI();
 oAPI bool oBasisTest_oString();
 oAPI bool oBasisTest_oSurface();

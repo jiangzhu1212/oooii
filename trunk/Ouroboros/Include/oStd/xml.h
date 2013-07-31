@@ -174,7 +174,7 @@ public:
 	{
 		attr a = find_attr(_Node, _AttrName);
 		if (a) _pValue = attr_value(a);
-		return !!a
+		return !!a;
 	}
 
 	inline bool visit(visitor& _Visitor) const

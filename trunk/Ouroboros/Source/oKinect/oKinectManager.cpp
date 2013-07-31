@@ -114,7 +114,6 @@ void oKinectManager::OnStatus(oGUI_INPUT_DEVICE_STATUS _Status, const char* _Ins
 	// Make the APIs threadsafe...
 	oKinectImpl* pUnsafeImpl = thread_cast<oKinectImpl*>(pImpl);
 		
-	if (StatusChanger)
 	switch (_Status)
 	{
 		case oGUI_INPUT_DEVICE_READY:

@@ -64,7 +64,13 @@ bool oJSONReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::json
 
 	std::vector<oStd::sstring> FromStringFailed;
 
-	for (int i=0; i < _RTTI.GetNumAttrs(); ++i)
+	for (int b = 0; b < _RTTI.GetNumBases(); b++)
+	{
+		const oRTTI* baseRTTI = _RTTI.GetBaseRTTI(b);
+		oJSONReadCompound(oStd::byte_add(_pDestination, _RTTI.GetBaseOffset(b)), *baseRTTI, _JSON, _Node, _FailOnMissingValues);
+	}
+
+	for (int i = 0; i < _RTTI.GetNumAttrs(); i++)
 	{
 		const oRTTI_ATTR* f = _RTTI.GetAttr(i);
 		bool notFound = (f->Flags & oRTTI_COMPOUND_ATTR_OPTIONAL) != oRTTI_COMPOUND_ATTR_OPTIONAL;

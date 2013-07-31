@@ -118,7 +118,7 @@ bool oGPUTestInitFirstTriangle(oGPUDevice* _pDevice, const char* _Name, const oG
 	md.NumIndices = 3;
 	md.NumVertices = 3;
 	md.NumRanges = 1;
-	md.LocalSpaceBounds = oAABoxf(float3(-0.8f, -0.7f, -0.01f), float3(0.8f, 0.7f, 0.01f));
+	md.LocalSpaceBounds = oAABoxf(oAABoxf::min_max, float3(-0.8f, -0.7f, -0.01f), float3(0.8f, 0.7f, 0.01f));
 	md.NumVertexElements = _NumElements;
 
 	std::copy(_pElements, _pElements + _NumElements, md.VertexElements.begin());
@@ -155,7 +155,7 @@ bool oGPUTestInitCube(oGPUDevice* _pDevice, const char* _Name, const oGPU_VERTEX
 
 	oGeometryFactory::BOX_DESC bd;
 	bd.FaceType = oGeometry::FRONT_CCW;
-	bd.Bounds = oAABoxf(float3(-1.0f), float3(1.0f));
+	bd.Bounds = oAABoxf(oAABoxf::min_max, float3(-1.0f), float3(1.0f));
 	bd.Divide = 1;
 	bd.Color = oStd::White;
 	bd.FlipTexcoordV = false;

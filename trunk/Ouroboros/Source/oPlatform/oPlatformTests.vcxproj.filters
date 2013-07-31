@@ -202,7 +202,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FXC Include="Tests\oHLSLPCIEBandwidth.sh">
+    <FXC Include="Tests\oHLSLPCIEBandwidthPS4.sh">
+      <Filter>Source\Shaders</Filter>
+    </FXC>
+    <FXC Include="Tests\oHLSLPCIEBandwidthVS4.sh">
       <Filter>Source\Shaders</Filter>
     </FXC>
   </ItemGroup>

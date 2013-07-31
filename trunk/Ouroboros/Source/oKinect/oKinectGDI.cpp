@@ -43,7 +43,7 @@ static void oGDIDrawKinectJoint(HDC _hDC, const int2& _SSBonePos, int _Radius)
 {
 	if (_SSBonePos != kNoDraw)
 	{
-		RECT r = oWinRectDilate(_SSBonePos, _Radius);
+		RECT r = oWinRectDilate(oWinRectWH(_SSBonePos, int2(0, 0)), _Radius);
 		oVB(oGDIDrawEllipse(_hDC, r));
 	}
 }

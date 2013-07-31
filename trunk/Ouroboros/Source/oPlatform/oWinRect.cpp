@@ -25,42 +25,6 @@
  **************************************************************************/
 #include <oPlatform/Windows/oWinRect.h>
 
-RECT oWinRectResolve(const RECT& _rParent, const int2& _Position, const int2& _Size, oGUI_ALIGNMENT _Alignment, bool _Clip)
-{
-	int2 psz = oWinRectSize(_rParent);
-	int2 csz = oWinRectResolveSize(_Size, psz);
-
-	int2 cpos = _Position;
-	if (cpos.x == oDEFAULT) cpos.x = 0;
-	if (cpos.y == oDEFAULT) cpos.y = 0;
-
-	int2 code = int2(_Alignment % 3, _Alignment / 3);
-
-	// preserve user-specified offset if there was one separately from moving 
-	// around the child position according to _Alignment
-	int2 offset = _Position;
-	if (offset.x == oDEFAULT || code.x == 0) offset.x = 0;
-	if (offset.y == oDEFAULT || code.y == 0) offset.y = 0;
-
-	// All this stuff is top-left by default, so adjust for center/middle and 
-	// right/bottom
-
-	// center/middle
-	if (code.x == 1) cpos.x = (psz.x - csz.x) / 2;
-	if (code.y == 1) cpos.y = (psz.y - csz.y) / 2;
-
-	// right/bottom
-	if (code.x == 2) cpos.x = _rParent.right - csz.x;
-	if (code.y == 2) cpos.y = _rParent.bottom - csz.y;
-
-	RECT rResolved = oWinRectTranslate(oWinRectWH(cpos, csz), oWinRectPosition(_rParent) + offset);
-
-	if (_Clip)
-		rResolved = oWinClip(_rParent, rResolved);
-
-	return rResolved;
-}
-
 RECT oWinRectResolve(const int2& _Anchor, const int2& _Size, oGUI_ALIGNMENT _Alignment)
 {
 	int2 offset(0,0);

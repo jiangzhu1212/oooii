@@ -406,8 +406,6 @@ bool oIsRemoteDesktopConnected();
 bool oConvertEnvStringToEnvBlock(char* _EnvBlock, size_t _SizeofEnvBlock, const char* _EnvString, char _Delimiter);
 template<size_t size> inline bool oConvertEnvStringToEnvBlock(char (&_EnvBlock)[size], const char* _EnvString, char _Delimiter) { return oConvertEnvStringToEnvBlock(_EnvBlock, size, _EnvString, _Delimiter); }
 
-HICON oIconFromBitmap(HBITMAP _hBmp);
-
 // @oooii-tony: A wrapper for SetWindowsHookEx that includes a user-specified context.
 // (Is there a way to do this?! Please someone let me know!)
 typedef LRESULT (CALLBACK* oHOOKPROC)(int _nCode, WPARAM _wParam, LPARAM _lParam, void* _pUserData);

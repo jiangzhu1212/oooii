@@ -221,6 +221,37 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, oFUNCTION<void*(si
 	return false;
 }
 
+HBITMAP oGDIIconToBitmap(HICON _hIcon)
+{
+	HDC hDC = CreateCompatibleDC(nullptr);
+	int2 Size = oGDIGetIconSize(_hIcon);
+	HBITMAP hBitmap = CreateCompatibleBitmap(hDC, Size.x, Size.y);
+	HBITMAP hOldBitmap = (HBITMAP)SelectObject(hDC, hBitmap);
+	oVB(DrawIconEx(hDC, 0, 0, _hIcon, 0, 0, 0, nullptr, DI_NORMAL));
+	SelectObject(hDC, hOldBitmap);
+	DeleteDC(hDC);
+	return hBitmap;
+}
+
+HICON oGDIBitmapToIcon(HBITMAP _hBmp)
+{
+	HICON hIcon = 0;
+	BITMAPINFO bi = {0};
+	bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	if (GetDIBits(GetDC(0), _hBmp, 0, 0, 0, &bi, DIB_RGB_COLORS))
+	{
+		HBITMAP hMask = CreateCompatibleBitmap(GetDC(0), bi.bmiHeader.biWidth, bi.bmiHeader.biHeight);
+		ICONINFO ii = {0};
+		ii.fIcon = TRUE;
+		ii.hbmColor = _hBmp;
+		ii.hbmMask = hMask;
+		hIcon = CreateIconIndirect(&ii);
+		DeleteObject(hMask);
+	}
+
+	return hIcon;
+}
+
 BOOL oGDIDrawBitmap(HDC _hDC, INT _X, INT _Y, HBITMAP _hBitmap, DWORD _dwROP)
 {
 	HDC hDCBitmap = 0;

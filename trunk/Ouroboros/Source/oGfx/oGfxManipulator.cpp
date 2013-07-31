@@ -208,7 +208,7 @@ oGfxManipulatorImpl::oGfxManipulatorImpl(const char* _Name, const oGfxManipulato
 			oGeometryFactory::BOX_DESC boxd;
 			boxd.FaceType = oGeometry::FRONT_CW;
 			boxd.Divide = 4;
-			boxd.Bounds = oAABoxf(-BoxSize, BoxSize);
+			boxd.Bounds = oAABoxf(oAABoxf::min_max, -BoxSize, BoxSize);
 
 			if(!CreateAxisGeometry(_pDevice, _Name, pickd, boxd, 1, oManipulator::X))
 				return;
@@ -219,7 +219,7 @@ oGfxManipulatorImpl::oGfxManipulatorImpl(const char* _Name, const oGfxManipulato
 
 			// Special case for screen
 			{
-				boxd.Bounds = oAABoxf(-5.0f * BoxSize, 5.0f * BoxSize);
+				boxd.Bounds = oAABoxf(oAABoxf::min_max, -5.0f * BoxSize, 5.0f * BoxSize);
 				if(!CreateGeometryMesh(_pDevice, _Name, boxd, &Lines[oManipulator::SCREEN].CapMesh) )
 					return;
 

@@ -49,7 +49,7 @@ public:
 		_pDesc->NumIndices = oCOUNTOF(sIndices);
 		_pDesc->NumGroups = oCOUNTOF(sGroups);
 
-		_pDesc->Bound = oAABoxf(float3(-0.5), float3(0.5f));
+		_pDesc->Bound = oAABoxf(oAABoxf::min_max, float3(-0.5), float3(0.5f));
 	}
 
 	const char* GetFileContents() const threadsafe override

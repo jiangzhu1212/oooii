@@ -191,7 +191,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <FXC Include="Tests\oHLSLPCIEBandwidth.sh">
+    <FXC Include="Tests\oHLSLPCIEBandwidthPS4.sh">
       <FileType>Document</FileType>
       <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
       <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
@@ -206,6 +206,20 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
     </FXC>
+    <FXC Include="Tests\oHLSLPCIEBandwidthVS4.sh">
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
+      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OuroborosSuiteDir)Include</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OuroborosSuiteDir)Include</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OuroborosSuiteDir)Include</Includes>
+      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OuroborosSuiteDir)Include</Includes>
+	</FXC>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

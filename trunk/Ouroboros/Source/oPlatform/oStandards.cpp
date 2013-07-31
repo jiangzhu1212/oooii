@@ -153,7 +153,7 @@ void* oLoadIcon(oFUNCTION<void(const char** _ppBufferName, const void** _ppBuffe
 	#if defined(_WIN32) || defined (_WIN64)
 		oGDIScopedObject<HBITMAP> hBmp;
 		oVERIFY(oImageCreateBitmap(ico, (HBITMAP*)&hBmp));
-		return oIconFromBitmap(hBmp);
+		return oGDIBitmapToIcon(hBmp);
 	#else
 		return nullptr;
 	#endif

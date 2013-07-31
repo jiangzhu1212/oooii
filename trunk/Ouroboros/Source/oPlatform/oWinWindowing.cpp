@@ -1239,13 +1239,13 @@ static int2 GetSizeExplicit(const oGUI_CONTROL_DESC& _Desc)
 
 static int2 GetSizeButtonDefault(const oGUI_CONTROL_DESC& _Desc)
 {
-	return oWinRectResolveSize(_Desc.Size, int2(75,23));
+	return oGUIResolveRectSize(_Desc.Size, int2(75, 23));
 }
 
 static int2 GetSizeIcon(const oGUI_CONTROL_DESC& _Desc)
 {
 	int2 iconSize = oGDIGetIconSize((HICON)_Desc.Text);
-	return oWinRectResolveSize(_Desc.Size, iconSize);
+	return oGUIResolveRectSize(_Desc.Size, iconSize);
 }
 
 struct CONTROL_CREATION_DESC

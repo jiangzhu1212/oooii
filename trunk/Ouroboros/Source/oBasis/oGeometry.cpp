@@ -1947,8 +1947,8 @@ bool oGeometryFactory_Impl::CreateMosaic(const MOSAIC_DESC& _Desc, const oGeomet
 	static const oGeometry::LAYOUT sSupportedLayout = { true, false, false, true, false, false };
 	GEO_CONSTRUCT("CreateMosaic", sSupportedLayout, _Layout, _Desc.FaceType);
 	
-	const oRECT kNullDestRect(int2(0,0), _Desc.DestinationSize);
-	const oRECT kNullSourceRect(int2(0,0), _Desc.SourceSize);
+	const oRECT kNullDestRect(oRECT::pos_size, int2(0,0), _Desc.DestinationSize);
+	const oRECT kNullSourceRect(oRECT::pos_size, int2(0,0), _Desc.SourceSize);
 
 	MOSAIC_DESC LocalDesc = _Desc;
 	if (!LocalDesc.pDestinationRects)
@@ -1957,7 +1957,7 @@ bool oGeometryFactory_Impl::CreateMosaic(const MOSAIC_DESC& _Desc, const oGeomet
 		LocalDesc.NumRectangles = 1;
 	}
 	
-	if (!LocalDesc.pSourceRects)
+	if (_Layout.Texcoords && !LocalDesc.pSourceRects)
 	{
 		// if no orig dest, limit num rects to 1 and thus use the first source rect, 
 		// otherwise use source rects to do a 1:1 mapping.
@@ -1995,17 +1995,20 @@ bool oGeometryFactory_Impl::CreateMosaic(const MOSAIC_DESC& _Desc, const oGeomet
 		pGeometry->Positions.push_back(float3(DMinClip, LocalDesc.ZPosition));
 		pGeometry->Positions.push_back(float3(DMaxClip.x, DMinClip.y, LocalDesc.ZPosition));
 
-		// Now define texture coords in texel space [0,1]
-		float2 SMin = oCastAsFloat(LocalDesc.pSourceRects[i].Min-LocalDesc.SourceTexelSpace.Min) / SourcePaddedSize;
-		float2 SMax = oCastAsFloat(LocalDesc.pSourceRects[i].Max-LocalDesc.SourceTexelSpace.Min) / SourcePaddedSize;
+		if (_Layout.Texcoords)
+		{
+			// Now define texture coords in texel space [0,1]
+			float2 SMin = oCastAsFloat(LocalDesc.pSourceRects[i].Min-LocalDesc.SourceTexelSpace.Min) / SourcePaddedSize;
+			float2 SMax = oCastAsFloat(LocalDesc.pSourceRects[i].Max-LocalDesc.SourceTexelSpace.Min) / SourcePaddedSize;
 
-		if (LocalDesc.FlipTexcoordV) //We are following Directx standards by default
-			std::swap(SMin.y, SMax.y);
-		
-		pGeometry->Texcoords.push_back(float3(SMin.x, SMax.y, 0.0f));
-		pGeometry->Texcoords.push_back(float3(SMax, 0.0f));
-		pGeometry->Texcoords.push_back(float3(SMin, 0.0f));
-		pGeometry->Texcoords.push_back(float3(SMax.x, SMin.y, 0.0f));
+			if (LocalDesc.FlipTexcoordV) //We are following Directx standards by default
+				std::swap(SMin.y, SMax.y);
+
+			pGeometry->Texcoords.push_back(float3(SMin.x, SMax.y, 0.0f));
+			pGeometry->Texcoords.push_back(float3(SMax, 0.0f));
+			pGeometry->Texcoords.push_back(float3(SMin, 0.0f));
+			pGeometry->Texcoords.push_back(float3(SMax.x, SMin.y, 0.0f));
+		}
 
 		// Finally add indices
 

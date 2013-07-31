@@ -37,7 +37,13 @@ bool oINIReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::ini& 
 
 	std::vector<oStd::sstring> FromStringFailed;
 
-	for (int i=0; i < _RTTI.GetNumAttrs(); ++i)
+	for (int b = 0; b < _RTTI.GetNumBases(); b++)
+	{
+		const oRTTI* baseRTTI = _RTTI.GetBaseRTTI(b);
+		oINIReadCompound(oStd::byte_add(_pDestination, _RTTI.GetBaseOffset(b)), *baseRTTI, _INI, _Section, _FailOnMissingValues);
+	}
+
+	for (int i = 0; i < _RTTI.GetNumAttrs(); i++)
 	{
 		const oRTTI_ATTR* f = _RTTI.GetAttr(i);
 		bool notFound = true;

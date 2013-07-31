@@ -358,32 +358,47 @@ enum oGUI_ALIGNMENT
 	// Position is relative to parent's top-left corner
 	oGUI_ALIGNMENT_TOP_LEFT,
 
-	// Position is centered horizontally and vertically relative to the parent's top
+	// Position is centered horizontally and vertically relative to the parent's 
+	// top
 	oGUI_ALIGNMENT_TOP_CENTER,
 
 	// Position is relative to parent's top-right corner minus the child's width
 	oGUI_ALIGNMENT_TOP_RIGHT,
 
-	// Position is centered vertically and horizontally relative to parent's left corner
+	// Position is centered vertically and horizontally relative to parent's left 
+	// corner
 	oGUI_ALIGNMENT_MIDDLE_LEFT,
 	
 	// Position is relative to that which centers the child in the parent's bounds
 	oGUI_ALIGNMENT_MIDDLE_CENTER,
 	
-	// Position is centered vertically and horizontally relative to parent's right corner minus the child's width
+	// Position is centered vertically and horizontally relative to parent's right 
+	// corner minus the child's width
 	oGUI_ALIGNMENT_MIDDLE_RIGHT,
 	
 	// Position is relative to parent's bottom-left corner
 	oGUI_ALIGNMENT_BOTTOM_LEFT,
 
-	// Position is centered horizontally and vertically relative to the parent's bottom minus the child's height
+	// Position is centered horizontally and vertically relative to the parent's 
+	// bottom minus the child's height
 	oGUI_ALIGNMENT_BOTTOM_CENTER,
 	
 	// Position is relative to parent's bottom-right corner minus the child's width
 	oGUI_ALIGNMENT_BOTTOM_RIGHT,
 	
-	// Child is sized and positioned to match parent
+	// Child is sized and positioned to match parent: aspect ration is not 
+	// respected. Alignment will be center-middle and respect any offset value.
 	oGUI_ALIGNMENT_FIT_PARENT,
+
+	// Retain aspect ratio and choose the child's largest dimension (width or 
+	// height) and leave letterbox (vertical or horizontal) areas. Alignment will 
+	// be center-middle and respect any offset value.
+	oGUI_ALIGNMENT_FIT_LARGEST_AXIS,
+
+	// Retain aspect ration and choose the child's smallest dimension (width or 
+	// height) and crop any overflow. (cropping of the result rectangle is 
+	// dependent on a separate cropping flag.
+	oGUI_ALIGNMENT_FIT_SMALLEST_AXIS,
 
 	oGUI_ALIGNMENT_COUNT,
 };
@@ -985,5 +1000,27 @@ struct oGUI_TEXT_DESC
 // recorded to _pPointerPosition.
 void oGUIRecordInputState(const oGUI_ACTION_DESC& _Action, const oGUI_KEY* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition);
 template<size_t NumKeys, size_t NumKeyStates> void oGUIRecordInputState(const oGUI_ACTION_DESC& _Action, const oGUI_KEY (&_pKeys)[NumKeys], bool (&_pKeyStates)[NumKeyStates], float3* _pPointerPosition) { oGUIRecordInputState(_Action, _pKeys, NumKeys, _pKeyStates, NumKeyStates, _pPointerPosition); }
+
+// _____________________________________________________________________________
+// Rectangle utils
+
+// Clips the child (to-be-clipped) rectangle against the parent.
+inline oRECT oGUIClipRect(const oRECT& _Parent, const oRECT& _ToBeClipped) { oRECT r = _ToBeClipped; r.Min.x = __max(r.Min.x, _Parent.Min.x); r.Min.y = __max(r.Min.y, _Parent.Min.y); r.Max.x = __min(r.Max.x, _Parent.Max.x); r.Max.y = __min(r.Max.y, _Parent.Max.y); return r; }
+
+// Replaces any oDEFAULT values with the specified default value.
+inline int2 oGUIResolveRectSize(const int2& _Size, const int2& _DefaultSize) { int2 result(_Size); if (result.x == oDEFAULT) result.x = _DefaultSize.x; if (result.y == oDEFAULT) result.y = _DefaultSize.y; return result; }
+
+// Replaces any oDEFAULT values with 0.
+inline int2 oGUIResolveRectPosition(const int2& _Position) { int2 result(_Position); if (result.x == oDEFAULT) result.x = 0; if (result.y == oDEFAULT) result.y = 0; return result; }
+
+// Positions a child rectangle "inside" (parent can be smaller than the child)
+// the specified parent according to the specified alignment and clipping. In 
+// non-fit alignments, position will be respected as an offset from the anchor
+// calculated for the specified alignment. For example, if a rect is right-
+// aligned, and there is a position of x=-10, then the rectangle is inset an
+// additional 10 units. oDEFAULT for position most often evaluates to a zero 
+// offset.
+oRECT oGUIResolveRect(const oRECT& _Parent, const oRECT& _UnadjustedChild, oGUI_ALIGNMENT _Alignment, bool _Clip);
+inline oRECT oGUIResolveRect(const oRECT& _Parent, const int2& _UnadjustedChildPosition, const int2& _UnadjustedChildSize, oGUI_ALIGNMENT _Alignment, bool _Clip) { oRECT r; r.Min = oGUIResolveRectPosition(_UnadjustedChildPosition); r.Max = r.Min + _UnadjustedChildSize; return oGUIResolveRect(_Parent, r, _Alignment, _Clip); }
 
 #endif

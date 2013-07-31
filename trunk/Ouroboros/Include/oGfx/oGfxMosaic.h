@@ -43,13 +43,14 @@ interface oGfxMosaic : oInterface
 	// requirements of video wall presentation where the logical screen might be 
 	// made up of several physical screen.
 
-	virtual bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc) = 0;
+	virtual bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const oRECT* _AdditionalSourceTexelSpaces, const oRECT* const* _pAdditionalSourceRectArrays) = 0;
+	inline bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc) { return Rebuild(_Desc, 0, nullptr, nullptr); }
 	virtual void SetBlendState(oGPU_BLEND_STATE _BlendState) = 0; // will be oGPU_OPAQUE by default
 
 	virtual void Draw(oGPUCommandList* _pCommandList, oGPURenderTarget* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const oGPUTexture* const* _ppTextures) = 0;
 	inline void Draw(oGPUCommandList* _pCommandList, oGPURenderTarget* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const oRef<oGPUTexture>* _ppTextures) { Draw(_pCommandList, _pRenderTarget, _TextureStartSlot, _NumTextures, (const oGPUTexture* const*)_ppTextures); }
 };
 
-oAPI bool oGfxMosaicCreate(oGPUDevice* _pDevice, const void* _pPixelShaderByteCode, oGfxMosaic** _ppMosaic);
+oAPI bool oGfxMosaicCreate(oGPUDevice* _pDevice, const oGPU_PIPELINE_DESC& _PipelineDesc, oGfxMosaic** _ppMosaic);
 
 #endif

@@ -43,12 +43,18 @@
 namespace oCompute {
 	template<typename T, typename TVec> struct aabox
 	{
+		enum ctor_type
+		{
+			pos_size,
+			min_max,
+		};
+
 		typedef T element_type;
 		typedef TVec vector_type;
 		aabox() { clear(); }
 		aabox(const aabox<T,TVec>& _That) : Min(_That.Min), Max(_That.Max) {}
 		aabox(aabox<T,TVec>&& _That) { operator=(std::move(_That)); }
-		aabox(const TVec& _Min, const TVec& _Max) : Min(_Min), Max(_Max) {}
+		aabox(ctor_type _Type, const TVec& _Val1, const TVec& _Val2) : Min(_Val1), Max(_Type == pos_size ? (_Val1 + _Val2) : _Val2) {}
 		inline const aabox<T,TVec>& operator=(const TVec& _That) { Min = _That.Min; Max = _That.Max; return *this; }
 		inline aabox<T,TVec>& operator=(TVec&& _That) { if (this != &_That) { Min = _That.Min; Max = _That.Max; _That.clear(); } return *this; }
 		inline bool empty() const { return any_less_than(Max, Min); } 

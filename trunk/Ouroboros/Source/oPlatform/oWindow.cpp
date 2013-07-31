@@ -120,9 +120,9 @@ public:
 	void SetTimer(uintptr_t _Context, unsigned int _RelativeTimeMS) threadsafe override;
 	oDEFINE_CALLABLE_WRAPPERS(Dispatch, threadsafe, Dispatch);
 	int HookActions(const oGUI_ACTION_HOOK& _Hook) threadsafe override { return oInt(SendMessage(hWnd, oWM_ACTION_HOOK, 0, (LPARAM)&_Hook)); }
-	void UnhookActions(int _ActionHookID) threadsafe override { oVB(PostMessage(hWnd, oWM_ACTION_UNHOOK, 0, (LPARAM)_ActionHookID)); }
+	void UnhookActions(int _ActionHookID) threadsafe override { PostMessage(hWnd, oWM_ACTION_UNHOOK, 0, (LPARAM)_ActionHookID); }
 	int HookEvents(const oGUI_EVENT_HOOK& _Hook) threadsafe override { return oInt(SendMessage(hWnd, oWM_EVENT_HOOK, 0, (LPARAM)&_Hook)); }
-	void UnhookEvents(int _EventHookID) threadsafe override { oVB(PostMessage(hWnd, oWM_EVENT_UNHOOK, 0, (LPARAM)_EventHookID)); }
+	void UnhookEvents(int _EventHookID) threadsafe override { PostMessage(hWnd, oWM_EVENT_UNHOOK, 0, (LPARAM)_EventHookID); }
 
 protected:
 	HWND hWnd;
@@ -266,7 +266,7 @@ bool oWinWindow::ConstructOnThread(const oWINDOW_INIT& _Init)
 
 	RECT rParent = oWinGetParentRect(hWnd, hParent);
 	rParent = oWinRectTranslate(rParent, p);
-	RECT rClient = oWinRectResolve(rParent, _Init.WinDesc.ClientPosition, _Init.WinDesc.ClientSize, _Init.InitialAlignment, !!_Init.WinDesc.hParent);
+	RECT rClient = oWinRect(oGUIResolveRect(oRect(rParent), _Init.WinDesc.ClientPosition, _Init.WinDesc.ClientSize, _Init.InitialAlignment, !!_Init.WinDesc.hParent));
 
 	if (!oWinSetStyle(hWnd, _Init.WinDesc.Style, _Init.WinDesc.ShowStatusBar, &rClient))
 		return false; // pass through error
@@ -795,7 +795,7 @@ void oWinWindow::WTSetDesc(const oGUI_WINDOW_DESC& _NewDesc, bool _Force)
 			// to oDEFAULT, Use the monitor the window is on
 
 			RECT rParent = oWinGetParentRect(hWnd);
-			rClient = oWinRectResolve(rParent, _NewDesc.ClientPosition, _NewDesc.ClientSize, oGUI_ALIGNMENT_MIDDLE_CENTER, !!_NewDesc.hParent);
+			rClient = oWinRect(oGUIResolveRect(oRect(rParent), _NewDesc.ClientPosition, _NewDesc.ClientSize, oGUI_ALIGNMENT_MIDDLE_CENTER, !!_NewDesc.hParent));
 		}
 
 		else

@@ -469,25 +469,6 @@ oRECT oToRect(const RECT& _Rect)
 	return rect;
 }
 
-HICON oIconFromBitmap(HBITMAP _hBmp)
-{
-	HICON hIcon = 0;
-	BITMAPINFO bi = {0};
-	bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	if (GetDIBits(GetDC(0), _hBmp, 0, 0, 0, &bi, DIB_RGB_COLORS))
-	{
-		HBITMAP hMask = CreateCompatibleBitmap(GetDC(0), bi.bmiHeader.biWidth, bi.bmiHeader.biHeight);
-		ICONINFO ii = {0};
-		ii.fIcon = TRUE;
-		ii.hbmColor = _hBmp;
-		ii.hbmMask = hMask;
-		hIcon = CreateIconIndirect(&ii);
-		DeleteObject(hMask);
-	}
-
-	return hIcon;
-}
-
 // @oooii-tony: I can't believe there are callbacks with no way to specify
 // context and a whole web of people who just declare a global and forget
 // about it. Microsoft, inter-web you are weak. I can't even map something,

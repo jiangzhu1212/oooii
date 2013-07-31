@@ -205,7 +205,7 @@ bool oBasisTest_oRTTI()
 
 	f = oRTTI_OF(Test).GetAttr(11);
 	f->RTTI->FromString("	 1.0   2.0  3.0 4.0 5.0   6.0", f->GetDestPtr(&test), oInt(f->Size));
-	oTESTB(oStd::equal(test.BoxMember, oAABoxf(float3(1.0f, 2.0f, 3.0f), float3(4.0f, 5.0f, 6.0f))), "Failed FromString(test.BoxMember)");
+	oTESTB(oStd::equal(test.BoxMember, oAABoxf(oAABoxf::min_max, float3(1.0f, 2.0f, 3.0f), float3(4.0f, 5.0f, 6.0f))), "Failed FromString(test.BoxMember)");
 
 	str.clear();
 	oTESTB(f->RTTI->ToString(str, f->GetDestPtr(&test)), "Failed ToString(test.BoxMember)");

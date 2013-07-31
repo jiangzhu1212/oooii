@@ -259,6 +259,8 @@ oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_ALIGNMENT)
 		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_BOTTOM_CENTER, "BottomCenter")
 		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_BOTTOM_RIGHT, "BottomRight")
 		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_FIT_PARENT, "FitParent")
+		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_FIT_LARGEST_AXIS, "FitLargestAxis")
+		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_FIT_SMALLEST_AXIS, "FitSmallestAxis")
 	oRTTI_ENUM_END_VALUES(oGUI_ALIGNMENT)
 	oRTTI_ENUM_VALIDATE_COUNT(oGUI_ALIGNMENT, oGUI_ALIGNMENT_COUNT)
 oRTTI_ENUM_END_DESCRIPTION(oGUI_ALIGNMENT)
@@ -356,4 +358,78 @@ void oGUIRecordInputState(const oGUI_ACTION_DESC& _Action, const oGUI_KEY* _pKey
 			break;
 		}
 	}
+}
+
+oRECT oGUIResolveRect(const oRECT& _Parent, const oRECT& _UnadjustedChild, oGUI_ALIGNMENT _Alignment, bool _Clip)
+{
+	int2 cpos = oGUIResolveRectPosition(_UnadjustedChild.Min);
+
+	int2 psz = _Parent.size();
+	int2 csz = oGUIResolveRectSize(_UnadjustedChild.Max - cpos, psz);
+
+	float2 ResizeRatios = (float2)psz / max((float2)csz, float2(0.0001f, 0.0001f));
+
+	oGUI_ALIGNMENT internalAlignment = _Alignment;
+
+	int2 offset(0, 0);
+
+	switch (_Alignment)
+	{
+		case oGUI_ALIGNMENT_FIT_LARGEST_AXIS:
+		{
+			const float ResizeRatio = min(ResizeRatios);
+			csz = round((float2)csz * ResizeRatio);
+			cpos = 0;
+			internalAlignment = oGUI_ALIGNMENT_MIDDLE_CENTER;
+			break;
+		}
+
+		case oGUI_ALIGNMENT_FIT_SMALLEST_AXIS:
+		{
+			const float ResizeRatio = max(ResizeRatios);
+			csz = round((float2)csz * ResizeRatio);
+			cpos = 0;
+			internalAlignment = oGUI_ALIGNMENT_MIDDLE_CENTER;
+			break;
+		}
+
+		case oGUI_ALIGNMENT_FIT_PARENT:
+			return _Parent;
+
+		default:
+			// preserve user-specified offset if there was one separately from moving 
+			// around the child position according to internalAlignment
+			offset = _UnadjustedChild.Min;
+			break;
+	}
+
+	int2 code = int2(internalAlignment % 3, internalAlignment / 3);
+
+	if (offset.x == oDEFAULT || code.x == 0) offset.x = 0;
+	if (offset.y == oDEFAULT || code.y == 0) offset.y = 0;
+
+	// All this stuff is top-left by default, so adjust for center/middle and 
+	// right/bottom
+
+	// center/middle
+	if (code.x == 1) cpos.x = (psz.x - csz.x) / 2;
+	if (code.y == 1) cpos.y = (psz.y - csz.y) / 2;
+
+	// right/bottom
+	if (code.x == 2) cpos.x = _Parent.Max.x - csz.x;
+	if (code.y == 2) cpos.y = _Parent.Max.y - csz.y;
+
+	int2 FinalOffset = _Parent.Min + offset;
+
+	oRECT resolved;
+	resolved.Min = cpos;
+	resolved.Max = resolved.Min + csz;
+
+	resolved.Min += FinalOffset;
+	resolved.Max += FinalOffset;
+
+	if (_Clip)
+		resolved = oGUIClipRect(_Parent, resolved);
+
+	return resolved;
 }
