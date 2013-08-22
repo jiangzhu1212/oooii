@@ -22,38 +22,33 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oEightCC.h>
-#include <oBasis/oError.h>
-#include <oStd/macros.h>
+#include <oStd/assert.h>
+#include <oStd/byte.h>
 
 namespace oStd {
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oEightCC& _Value)
+void* memmem(void* _pBuffer, size_t _SizeofBuffer, const void* _pFind, size_t _SizeofFind)
 {
-	if (_SizeofStrDestination < 9)
+	// @oooii-tony: This could be parallel-for'ed, but you'd have to check any 
+	// buffer that might straddle splits, including if splits are smaller than the 
+	// sizeof find (where it straddles 3 or more splits).
+
+	oASSERT(_SizeofFind >= 4, "a find buffer under 4 bytes is not yet implemented");
+	void* pEnd = byte_add(_pBuffer, _SizeofBuffer);
+	void* pFound = memchr(_pBuffer, *(const int*)_pFind, _SizeofBuffer);
+	while (pFound)
 	{
-		oErrorSetLast(std::errc::invalid_argument, "String buffer not large enough");
-		return nullptr;
+		if (size_t(byte_diff(pEnd, pFound)) < _SizeofFind)
+			return nullptr;
+
+		if (!memcmp(pFound, _pFind, _SizeofFind))
+			return pFound;
+
+		else
+			pFound = memchr(byte_add(pFound, 4), *(const int*)_pFind, _SizeofBuffer);
 	}
 
-	#ifdef oLITTLEENDIAN
-		oStd::byte_swizzle64 sw; sw.as_unsigned_long_long = (unsigned long long)_Value;
-		unsigned long long fcc = ((unsigned long long)oStd::endian_swap(sw.as_unsigned_int[0]) << 32) | oStd::endian_swap(sw.as_unsigned_int[1]);
-	#else
-		unsigned long long fcc = _Value;
-	#endif
-
-	memcpy(_StrDestination, &fcc, sizeof(unsigned long long));
-	_StrDestination[8] = 0;
-	return _StrDestination;
-}
-
-bool from_string(oEightCC* _pValue, const char* _StrSource)
-{
-	if (!oSTRVALID(_StrSource))
-		return oErrorSetLast(std::errc::invalid_argument);
-	*_pValue = oStd::to_big_endian(*(unsigned long long*)_StrSource);
-	return true;
+	return pFound;
 }
 
 } // namespace oStd

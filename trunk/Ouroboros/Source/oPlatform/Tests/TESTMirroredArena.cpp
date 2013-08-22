@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBasis/oAllocatorTLSF.h>
 #include <oStd/byte.h>
-#include <oBasis/oMemory.h>
 #include <oBasis/oPath.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oError.h>
@@ -93,7 +92,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 	// uncheck the box beside Access Violation.
 	*(int*)BASE_ADDRESS = 1;
 
-	oMemset4(BASE_ADDRESS, 0xdeadbeef, ARENA_SIZE);
+	oStd::memset4(BASE_ADDRESS, 0xdeadbeef, ARENA_SIZE);
 
 	oRef<oAllocator> AllocatorServer;
 	{

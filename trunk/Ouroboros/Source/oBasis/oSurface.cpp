@@ -25,7 +25,6 @@
 #include <oBasis/oSurface.h>
 #include <oStd/assert.h>
 #include <oStd/macros.h>
-#include <oBasis/oMemory.h>
 #include <oBasis/oMath.h>
 #include <oBasis/oString.h>
 #include <cstring>
@@ -1076,10 +1075,7 @@ void oSurfaceUpdateSubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresour
 	oSURFACE_MAPPED_SUBRESOURCE mapped;
 	int2 ByteDimensions;
 	oSurfaceCalcMappedSubresource(_SurfaceDesc, _Subresource, _DepthIndex, _pDestinationSurface, &mapped, &ByteDimensions);
-	if (_FlipVertical)
-		oMemcpy2dVFlip(mapped.pData, mapped.RowPitch, _pSource, _SourceRowPitch, ByteDimensions.x, ByteDimensions.y);
-	else
-		oMemcpy2d(mapped.pData, mapped.RowPitch, _pSource, _SourceRowPitch, ByteDimensions.x, ByteDimensions.y);
+	oStd::memcpy2d(mapped.pData, mapped.RowPitch, _pSource, _SourceRowPitch, ByteDimensions.x, ByteDimensions.y, _FlipVertical);
 }
 
 void oSurfaceCopySubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, int _DepthIndex, const void* _pSourceSurface, void* _pDestination, size_t _DestinationRowPitch, bool _FlipVertical)
@@ -1087,20 +1083,13 @@ void oSurfaceCopySubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresource
 	oSURFACE_CONST_MAPPED_SUBRESOURCE mapped;
 	int2 ByteDimensions;
 	oSurfaceCalcMappedSubresource(_SurfaceDesc, _Subresource, _DepthIndex, _pSourceSurface, &mapped, &ByteDimensions);
-	if (_FlipVertical)
-		oMemcpy2dVFlip(_pDestination, _DestinationRowPitch, mapped.pData, mapped.RowPitch, ByteDimensions.x, ByteDimensions.y);
-	else
-		oMemcpy2d(_pDestination, _DestinationRowPitch, mapped.pData, mapped.RowPitch, ByteDimensions.x, ByteDimensions.y);
+	oStd::memcpy2d(_pDestination, _DestinationRowPitch, mapped.pData, mapped.RowPitch, ByteDimensions.x, ByteDimensions.y, _FlipVertical);
 }
 
 void oSurfaceCopySubresource(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SrcMap, oSURFACE_MAPPED_SUBRESOURCE* _DstMap, bool _FlipVertical)
 {
-	if (_FlipVertical)
-		oMemcpy2dVFlip(_DstMap->pData, _DstMap->RowPitch, _SrcMap.pData, _SrcMap.RowPitch, _SurfaceDesc.Dimensions.x*oSurfaceFormatGetSize(_SurfaceDesc.Format), _SurfaceDesc.Dimensions.y);
-	else
-		oMemcpy2d(_DstMap->pData, _DstMap->RowPitch, _SrcMap.pData, _SrcMap.RowPitch, _SurfaceDesc.Dimensions.x*oSurfaceFormatGetSize(_SurfaceDesc.Format), _SurfaceDesc.Dimensions.y);
+	oStd::memcpy2d(_DstMap->pData, _DstMap->RowPitch, _SrcMap.pData, _SrcMap.RowPitch, _SurfaceDesc.Dimensions.x*oSurfaceFormatGetSize(_SurfaceDesc.Format), _SurfaceDesc.Dimensions.y, _FlipVertical);
 }
-
 
 // @oooii-tony: This stuff might get refactored pretty soon...
 #include <oBasis/oError.h>
@@ -1356,7 +1345,7 @@ void oSurfaceImpl::UpdateSubresource(int _Subresource, const oSURFACE_CONST_MAPP
 	oSurfaceCalcMappedSubresource(oThreadsafe(Desc), _Subresource, 0, pData, &Dest, &ByteDimensions);
 
 	lock_guard<shared_mutex> lock(Mutex);
-	oMemcpy2d(Dest.pData, Dest.RowPitch, _Source.pData, _Source.RowPitch, ByteDimensions.x, ByteDimensions.y);
+	oStd::memcpy2d(Dest.pData, Dest.RowPitch, _Source.pData, _Source.RowPitch, ByteDimensions.x, ByteDimensions.y);
 }
 
 void oSurfaceImpl::UpdateSubresource(int _Subresource, const oSURFACE_BOX& _Box, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source) threadsafe
@@ -1380,7 +1369,7 @@ void oSurfaceImpl::UpdateSubresource(int _Subresource, const oSURFACE_BOX& _Box,
 	lock_guard<shared_mutex> lock(Mutex);
 	for (uint slice = _Box.Front; slice < _Box.Back; slice++)
 	{
-		oMemcpy2d(Dest.pData, Dest.RowPitch, pSource, _Source.RowPitch, RowSize, NumRows);
+		oStd::memcpy2d(Dest.pData, Dest.RowPitch, pSource, _Source.RowPitch, RowSize, NumRows);
 		Dest.pData = oStd::byte_add(Dest.pData, Dest.DepthPitch);
 		pSource = oStd::byte_add(pSource, _Source.DepthPitch);
 	}

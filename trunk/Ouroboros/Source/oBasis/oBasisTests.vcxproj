@@ -33,7 +33,6 @@
     <ClCompile Include="Tests\TESTDispatchQueueGlobal.cpp" />
     <ClCompile Include="Tests\TESTDispatchQueuePrivate.cpp" />
     <ClCompile Include="Tests\TESTEasing.cpp" />
-    <ClCompile Include="Tests\TESTEightCC.cpp" />
     <ClCompile Include="Tests\TESTFilterChain.cpp" />
     <ClCompile Include="Tests\TESTFourCC.cpp" />
     <ClCompile Include="Tests\TESTHash.cpp" />

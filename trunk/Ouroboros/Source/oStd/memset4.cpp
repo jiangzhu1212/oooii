@@ -22,53 +22,52 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
-#pragma once
-#ifndef oStd_all_h
-#define oStd_all_h
-#include <oStd/algorithm.h>
-#include <oStd/assert.h>
-#include <oStd/atof.h>
 #include <oStd/byte.h>
-#include <oStd/callable.h>
-#include <oStd/color.h>
-#include <oStd/date.h>
-#include <oStd/djb2.h>
-#include <oStd/endian.h>
-#include <oStd/equal.h>
-#include <oStd/finally.h>
-#include <oStd/fixed_string.h>
-#include <oStd/fixed_vector.h>
-#include <oStd/fnv1a.h>
-#include <oStd/fourcc.h>
-#include <oStd/function.h>
-#include <oStd/guid.h>
-#include <oStd/ini.h>
-#include <oStd/intrinsics.h>
 #include <oStd/macros.h>
-#include <oStd/memory.h>
-#include <oStd/murmur3.h>
-#include <oStd/operators.h>
-#include <oStd/oFor.h>
-#include <oStd/oStdAtomic.h>
-#include <oStd/oStdChrono.h>
-#include <oStd/oStdConditionVariable.h>
-#include <oStd/oStdFuture.h>
-#include <oStd/oStdMakeUnique.h>
-#include <oStd/oStdMutex.h>
-#include <oStd/oStdRatio.h>
-#include <oStd/oStdThread.h>
-#include <oStd/path.h>
-#include <oStd/path_traits.h>
-#include <oStd/string.h>
-#include <oStd/string_traits.h>
-#include <oStd/text_document.h>
-#include <oStd/throw.h>
-#include <oStd/timer.h>
-#include <oStd/type_info.h>
-#include <oStd/uint128.h>
-#include <oStd/unordered_map.h>
-#include <oStd/uri.h>
-#include <oStd/xml.h>
-#endif
+#include "memduff.h"
+
+namespace oStd {
+
+void memset4(void* _pDestination, long _Value, size_t _NumBytes)
+{
+	// Sets an int value at a time. This is probably slower than c's memset, but 
+	// this sets a full int value rather than a char value.
+
+	// First move _pDestination up to long alignment
+
+	long* pBody;
+	char* pPrefix, *pPostfix;
+	size_t nPrefixBytes, nPostfixBytes;
+	detail::init_duffs_device_pointers(_pDestination, _NumBytes, &pPrefix, &nPrefixBytes, &pBody, &pPostfix, &nPostfixBytes);
+
+	byte_swizzle32 s;
+	s.as_int = _Value;
+
+	// Duff's device up to alignment
+	// http://en.wikipedia.org/wiki/Duff's_device
+	switch (nPrefixBytes)
+	{
+		case 3: *pPrefix++ = s.as_char[3];
+		case 2: *pPrefix++ = s.as_char[2];
+		case 1: *pPrefix++ = s.as_char[1];
+		case 0: break;
+		oNODEFAULT;
+	}
+
+	// Do aligned assignment
+	while (pBody < (long*)pPostfix)
+		*pBody++ = _Value;
+
+	// Duff's device any remaining bytes
+	// http://en.wikipedia.org/wiki/Duff's_device
+	switch (nPostfixBytes)
+	{
+		case 3: *pPostfix++ = s.as_char[3];
+		case 2: *pPostfix++ = s.as_char[2];
+		case 1: *pPostfix++ = s.as_char[1];
+		case 0: break;
+		oNODEFAULT;
+	}
+}
+
+} // namespace oStd

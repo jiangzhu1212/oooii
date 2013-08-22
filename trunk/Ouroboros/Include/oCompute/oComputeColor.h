@@ -62,6 +62,7 @@ public:
 
 	inline operator float3&() { return *(float3*)this; }
 	inline operator const float3&() const { return *(float3*)this; }
+	inline operator float3() const { return *(float3*)this; }
 	inline operator oStd::color() const { return oStd::color(r, g, b, 1.0f); }
 	inline const oRGBf& operator=(int _Color) { r = static_cast<float>(_Color); g = static_cast<float>(_Color); b = static_cast<float>(_Color); return *this; }
 	inline const oRGBf& operator=(const oRGBf& _Color) { r = _Color.r; g = _Color.g; b = _Color.b; return *this; }
@@ -86,6 +87,8 @@ public:
 
 	friend inline oRGBf operator-(float x, const oRGBf& _RGBf) { return oRGBf(x,x,x) - _RGBf; }
 	friend inline oRGBf operator*(float x, const oRGBf& _RGBf) { return oRGBf(x,x,x) / _RGBf; }
+
+	inline const float3& as_float3() const { return *(const float3*)this; }
 };
 
 class oRGBAf
@@ -129,7 +132,17 @@ public:
 
 	friend inline oRGBAf operator-(float x, const oRGBAf& _RGBAf) { return oRGBAf(x,x,x,x) - _RGBAf; }
 	friend inline oRGBAf operator*(float x, const oRGBAf& _RGBAf) { return oRGBAf(x,x,x,x) / _RGBAf; }
+
+	inline const float4& as_float4() const { return *(const float4*)this; }
 };
+
+inline float min(oIN(oRGBf, _RGB)) { return min(min(_RGB.r, _RGB.g), _RGB.b); }
+inline float max(oIN(oRGBf, _RGB)) { return max(max(_RGB.r, _RGB.g), _RGB.b); }
+inline float min(oIN(oRGBAf, _RGBA)) { return min(min(min(_RGBA.r, _RGBA.g), _RGBA.b), _RGBA.a); }
+inline float max(oIN(oRGBAf, _RGBA)) { return max(max(max(_RGBA.r, _RGBA.g), _RGBA.b), _RGBA.a); }
+
+inline float dot(oIN(oRGBf, _RGB), oIN(float3, _X)) { return dot(_RGB.as_float3(), _X); }
+inline float dot(oIN(oRGBAf, _RGBA), oIN(float4, _X)) { return dot(_RGBA.as_float4(), _X); }
 
 #endif
 
@@ -208,6 +221,17 @@ inline oRGBf oYUVToRGB(oIN(float3, _YUV))
 	static const float3 oITU_R_BT_601_BFactor = float3(1.0f, 1.772f, 0.0f);
 	float3 yuv = _YUV + oITU_R_BT_601_Offset;
 	return saturate(float3(dot(yuv, oITU_R_BT_601_RFactor), dot(yuv, oITU_R_BT_601_GFactor), dot(yuv, oITU_R_BT_601_BFactor)));
+}
+
+inline float3 oRGBToYUV(oIN(oRGBf, _RGB))
+{
+	// Using the float version of ITU-R BT.601 that jpeg uses. This is similar to 
+	// the integer version, except this uses the full 0 - 255 range.
+	static const float3 oITU_R_BT_601_OffsetYUV = float3(0.0f, 128.0f, 128.0f) / 255.0f;
+	static const float3 oITU_R_BT_601_YFactor = float3(0.299f, 0.587f, 0.114f);
+	static const float3 oITU_R_BT_601_UFactor = float3(-0.1687f, -0.3313f, 0.5f);
+	static const float3 oITU_R_BT_601_VFactor = float3(0.5f, -0.4187f, -0.0813f);
+	return saturate(float3(dot(_RGB, oITU_R_BT_601_YFactor), dot(_RGB, oITU_R_BT_601_UFactor), dot(_RGB, oITU_R_BT_601_VFactor)) + oITU_R_BT_601_OffsetYUV);
 }
 
 // Converts a color value to a float4 WITHOUT NORMALIZING. This remains [0,255].

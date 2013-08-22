@@ -29,59 +29,53 @@
 // If the destructor is not properly implemented, then resource issues could 
 // arise too. Use with care.
 #pragma once
-#ifndef oTypeInfo_h
-#define oTypeInfo_h
+#ifndef oStd_type_info_h
+#define oStd_type_info_h
 
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oTypeID.h>
 #include <oStd/fnv1a.h>
-#include <oStd/stringize.h>
 #include <type_traits>
 
-template<typename T> struct remove_traits
-{
-	typedef 
-		typename std::remove_pointer<
-		typename std::remove_reference<
-		typename std::remove_all_extents<
-		typename std::remove_cv<T>::type>::type>::type>::type type;
-};
+namespace oStd {
 
-enum oRUNTIME_TYPE_TRAITS
-{
-	oTRAIT_IS_VOID = 1<<0,
-	oTRAIT_IS_INTEGRAL = 1<<1,
-	oTRAIT_IS_FLOATING_POINT = 1<<2,
-	oTRAIT_IS_ARRAY = 1<<3,
-	oTRAIT_IS_POINTER = 1<<4,
-	oTRAIT_IS_REFERENCE = 1<<5,
-	oTRAIT_IS_MEMBER_OBJECT_POINTER = 1<<6,
-	oTRAIT_IS_MEMBER_FUNCTION_POINTER = 1<<7,
-	oTRAIT_IS_ENUM = 1<<8,
-	oTRAIT_IS_UNION = 1<<9,
-	oTRAIT_IS_CLASS = 1<<10,
-	oTRAIT_IS_FUNCTION = 1<<11,
-	oTRAIT_IS_ARITHMETIC = 1<<12,
-	oTRAIT_IS_FUNDAMENTAL = 1<<13,
-	oTRAIT_IS_OBJECT = 1<<14,
-	oTRAIT_IS_SCALAR = 1<<15,
-	oTRAIT_IS_COMPOUND = 1<<16,
-	oTRAIT_IS_MEMBER_POINTER = 1<<17,
-	oTRAIT_IS_CONST = 1<<18,
-	oTRAIT_IS_VOLATILE = 1<<19,
-	oTRAIT_IS_POD = 1<<20,
-	oTRAIT_IS_EMPTY = 1<<21,
-	oTRAIT_IS_POLYMORPHIC = 1<<22,
-	oTRAIT_IS_ABSTRACT = 1<<23,
-	oTRAIT_HAS_TRIVIAL_CONSTRUCTOR = 1<<24,
-	oTRAIT_HAS_TRIVIAL_COPY = 1<<25,
-	oTRAIT_HAS_TRIVIAL_ASSIGN = 1<<26,
-	oTRAIT_HAS_TRIVIAL_DESTRUCTOR = 1<<27,
-	oTRAIT_HAS_VIRTUAL_DESTRUCTOR = 1<<28,
-	oTRAIT_IS_SIGNED = 1<<29,
-	oTRAIT_IS_UNSIGNED = 1<<30,
-	oTRAIT_IS_LINEAR_ALGEBRA = 1<<31,
-};
+namespace type_trait_flag
+{	enum value {
+
+	is_voidf = 1<<0,
+	is_integralf = 1<<1,
+	is_floating_pointf = 1<<2,
+	is_arrayf = 1<<3,
+	is_pointerf = 1<<4,
+	is_referencef = 1<<5,
+	is_member_object_pointerf = 1<<6,
+	is_member_function_pointerf = 1<<7,
+	is_enumf = 1<<8,
+	is_unionf = 1<<9,
+	is_classf = 1<<10,
+	is_functionf = 1<<11,
+	is_arithmeticf = 1<<12,
+	is_fundamentalf = 1<<13,
+	is_objectf = 1<<14,
+	is_scalarf = 1<<15,
+	is_compoundf = 1<<16,
+	is_member_pointerf = 1<<17,
+	is_constf = 1<<18,
+	is_volatilef = 1<<19,
+	is_podf = 1<<20,
+	is_emptyf = 1<<21,
+	is_polymorphicf = 1<<22,
+	is_abstractf = 1<<23,
+	has_trivial_constructorf = 1<<24,
+	has_trivial_copyf = 1<<25,
+	has_trivial_assignf = 1<<26,
+	has_trivial_destructorf = 1<<27,
+	has_virtual_destructorf = 1<<28,
+	is_signedf = 1<<29,
+	is_unsignedf = 1<<30,
+	is_linear_algebraf = 1<<31,
+
+};} // namespace type_trait_flag
 
 typedef void (*type_info_default_constructor)(void* instance);
 typedef void (*type_info_copy_constructor)(void* instance, const void* source);
@@ -108,12 +102,11 @@ static inline const char* move_past_whitespace(const char* s)
 	return *ss ? ss : s;
 }
 
-template<typename T> struct oTypeInfo
+template<typename T> struct type_info
 {
 	typedef T type;
 
-	// returns the regular RTTI for this type
-	static const type_info& typeinfo() { return typeid(T); }
+	operator const type_info&() const { return typeid(T); }
 
 	// returns the regular RTTI name for this type
 	static const char* name() { return typeid(T).name(); }
@@ -139,7 +132,7 @@ template<typename T> struct oTypeInfo
 
 	// creates a value that is either an oTYPE_ID or a hash of the RTTI name for
 	// enums, classes, and unions
-	static unsigned int make_id() { return is_type_id<T>::value ? oTypeID<T>::value : oStd::fnv1a<unsigned int>(simple_name()); }
+	static unsigned int id() { return is_type_id<T>::value ? oTypeID<T>::value : oStd::fnv1a<unsigned int>(simple_name()); }
 
 	// returns the vtable pointer for the specified class (nullptr if the class is 
 	// not polymorphic)
@@ -210,37 +203,6 @@ template<typename T> struct oTypeInfo
 		((is_linear_algebra<T>::value&0x1u)<<31u);
 };
 
-// same thing as above, but based off parsing the type for situations where 
-// the template is not available.
-inline unsigned int oTypeInfoMakeID(const char* _TypeInfoName) 
-{
-	unsigned int TypeID = oTYPE_UNKNOWN;
-	if (!oStd::from_string((oTYPE_ID*)&TypeID, _TypeInfoName))
-		TypeID = oStd::fnv1a<unsigned int>(move_past_whitespace(_TypeInfoName));
-	return TypeID;
-}
-
-struct oTYPE_DESC
-{
-	template<typename T> oTYPE_DESC(T* _pTypedDummyPointer)
-		: TypeName(oTypeInfo<T>::name())
-		, TypeID(oTypeInfo<T>::make_id())
-		, Traits(oTypeInfo<T>::traits)
-		, Size(static_cast<unsigned int>(oTypeInfo<T>::size))
-		, VTable(oTypeInfo<T>::vtable())
-		, DefaultConstructor(&oTypeInfo<T>::default_construct)
-		, CopyConstructor(&oTypeInfo<T>::copy_construct)
-		, Destructor(&oTypeInfo<T>::destroy)
-	{}
-
-	const char* TypeName;
-	unsigned int TypeID;
-	unsigned int Traits;
-	unsigned int Size;
-	const void* VTable;
-	type_info_default_constructor DefaultConstructor;
-	type_info_copy_constructor CopyConstructor;
-	type_info_destructor Destructor;
-};
+} // namespace oStd
 
 #endif

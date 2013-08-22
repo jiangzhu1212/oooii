@@ -29,9 +29,9 @@
 #define oStream_h
 
 #include <oStd/function.h>
+#include <oStd/memory.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oURI.h>
-#include <oBasis/oMemory.h>
 #include <oBasis/oRTTI.h>
 
 enum oSTREAM_EVENT
@@ -308,6 +308,6 @@ oAPI bool oStreamReaderCreateWindowed(threadsafe oStreamReader* _pReader, const 
 // to make its determination. The rules for determining if the stream is an 
 // ascii stream are the same as Perl -T.
 // http://code.activestate.com/recipes/173220-test-if-a-file-or-string-is-text-or-binary/
-oAPI oUTF_TYPE oStreamGetUTFType(const char* _URIReference);
+oAPI oStd::utf_type::value oStreamGetUTFType(const char* _URIReference);
 
 #endif

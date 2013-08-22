@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oMath.h>
-#include <oBasis/oMemory.h>
 #include <oPlatform/oTest.h>
 
 // @oooii-tony: This should be moved to oBasis, or deleted. I dropped bring-up

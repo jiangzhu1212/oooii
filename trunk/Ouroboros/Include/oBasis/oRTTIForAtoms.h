@@ -26,7 +26,7 @@
 #ifndef oRTTIForAtoms_h
 #define oRTTIForAtoms_h
 
-#include <oBasis/oTypeInfo.h>
+#include <oStd/type_info.h>
 
 struct oRTTI_DATA_ATOM // : oRTTI
 {
@@ -75,7 +75,7 @@ struct oRTTI_DATA_ATOM // : oRTTI
 		sizeof(atom_type), \
 		#atom_type_name, \
 		(const oRTTI*)&oRTTI_##atom_base_type, \
-		oTypeInfo<atom_type>::traits, \
+		oStd::type_info<atom_type>::traits, \
 		atom_fromstring, \
 		atom_tostring, \
 		atom_copy, \

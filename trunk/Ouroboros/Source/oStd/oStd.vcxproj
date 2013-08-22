@@ -53,9 +53,19 @@
     <ClCompile Include="date.cpp" />
     <ClCompile Include="format_bytes.cpp" />
     <ClCompile Include="format_duration.cpp" />
+    <ClCompile Include="is_ascii.cpp" />
     <ClCompile Include="json_escape_decode.cpp" />
     <ClCompile Include="json_escape_encode.cpp" />
     <ClCompile Include="mbsltowcs.cpp" />
+    <ClCompile Include="memcmp4.cpp" />
+    <ClCompile Include="memcpyuitous.cpp" />
+    <ClCompile Include="memcpyustoui.cpp" />
+    <ClCompile Include="memmem.cpp" />
+    <ClCompile Include="memset2.cpp" />
+    <ClCompile Include="memset2d.cpp" />
+    <ClCompile Include="memset2d2.cpp" />
+    <ClCompile Include="memset2d4.cpp" />
+    <ClCompile Include="memset4.cpp" />
     <ClCompile Include="ordinal.cpp" />
     <ClCompile Include="oStdChrono.cpp" />
     <ClCompile Include="oStdConditionVariable.cpp" />
@@ -78,6 +88,7 @@
     <ClCompile Include="text_document.cpp" />
     <ClCompile Include="trim.cpp" />
     <ClCompile Include="uri.cpp" />
+    <ClCompile Include="utfcmp.cpp" />
     <ClCompile Include="wcsltombs.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -105,6 +116,7 @@
     <ClInclude Include="..\..\Include\oStd\intrinsics.h" />
     <ClInclude Include="..\..\Include\oStd\json.h" />
     <ClInclude Include="..\..\Include\oStd\macros.h" />
+    <ClInclude Include="..\..\Include\oStd\memory.h" />
     <ClInclude Include="..\..\Include\oStd\murmur3.h" />
     <ClInclude Include="..\..\Include\oStd\oFor.h" />
     <ClInclude Include="..\..\Include\oStd\operators.h" />
@@ -123,12 +135,14 @@
     <ClInclude Include="..\..\Include\oStd\text_document.h" />
     <ClInclude Include="..\..\Include\oStd\throw.h" />
     <ClInclude Include="..\..\Include\oStd\timer.h" />
+    <ClInclude Include="..\..\Include\oStd\type_info.h" />
     <ClInclude Include="..\..\Include\oStd\uint128.h" />
     <ClInclude Include="..\..\Include\oStd\unordered_map.h" />
     <ClInclude Include="..\..\Include\oStd\uri.h" />
     <ClInclude Include="..\..\Include\oStd\uri_traits.h" />
     <ClInclude Include="..\..\Include\oStd\xml.h" />
     <ClInclude Include="calfaq.h" />
+    <ClInclude Include="memduff.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

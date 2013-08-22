@@ -27,7 +27,6 @@
 #include <oBasis/oLockThis.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
-#include <oBasis/oMemory.h>
 #include <oConcurrency/mutex.h>
 #include <oStd/fixed_string.h>
 #include <oPlatform/Windows/oGDI.h>
@@ -707,7 +706,7 @@ bool oDSCamera::BufferCB(double _SampleTime, void* _pBuffer, size_t _SizeofBuffe
 		int DestRowPitch = oSurfaceMipCalcRowPitch(d);
 		int DestRowSize = oSurfaceMipCalcRowSize(Desc.Mode.Format, Desc.Mode.Dimensions);
 		int NumRows = oSurfaceMipCalcNumRows(Desc.Mode.Format, Desc.Mode.Dimensions);
-		oMemcpy2dVFlip(oStd::data(f.Data), DestRowPitch, _pBuffer, CalculateSourceRowPitch(), DestRowSize, NumRows);
+		oStd::memcpy2dvflip(oStd::data(f.Data), DestRowPitch, _pBuffer, CalculateSourceRowPitch(), DestRowSize, NumRows);
 		RingBufferReadIndex.exchange(WriteIndex);
 	}
 

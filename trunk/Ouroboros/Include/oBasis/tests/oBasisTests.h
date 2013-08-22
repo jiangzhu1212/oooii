@@ -77,7 +77,6 @@ oAPI bool oBasisTest_oDispatchQueueParallelFor();
 oAPI bool oBasisTest_oDispatchQueueGlobal();
 oAPI bool oBasisTest_oDispatchQueuePrivate();
 oAPI bool oBasisTest_oEasing();
-oAPI bool oBasisTest_oEightCC();
 oAPI bool oBasisTest_oFilterChain();
 oAPI bool oBasisTest_oFourCC();
 oAPI bool oBasisTest_oHash(const oBasisTestServices& _Services);

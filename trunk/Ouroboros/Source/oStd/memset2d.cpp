@@ -22,24 +22,16 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/stringize.h>
-#include <oBasis/oEightCC.h>
-#include "oBasisTestCommon.h"
-#include <cstring>
+#include <oStd/byte.h>
+#include <memory.h>
 
-bool oBasisTest_oEightCC()
+namespace oStd {
+
+void memset2d(void* _pDestination, size_t _Pitch, int _Value, size_t _SetPitch, size_t _NumRows)
 {
-	oEightCC fcc("TEXTURE ");
-
-	char str[16];
-
-	oTESTB(oStd::to_string(str, fcc), "to_string on oEightCC failed 1");
-	oTESTB(!strcmp("TEXTURE ", str), "to_string on oEightCC failed 2");
-
-	const char* fccStr = "GEOMETRY";
-	oTESTB(oStd::from_string(&fcc, fccStr), "from_string on oEightCC failed 1");
-	oTESTB(oEightCC("GEOMETRY") == fcc, "from_string on oEightCC failed 2");
-
-	oErrorSetLast(0, "");
-	return true;
+	const void* end = byte_add(_pDestination, _Pitch, _NumRows);
+	for (; _pDestination < end; _pDestination = byte_add(_pDestination, _Pitch))
+		memset(_pDestination, _Value, _SetPitch);
 }
+
+} // namespace oStd

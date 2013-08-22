@@ -33,7 +33,7 @@
 #include <oBasis/oInterface.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
-#include <oBasis/oTypeInfo.h>
+#include <oStd/type_info.h>
 
 typedef void* (*NewVFn)();
 
@@ -45,7 +45,7 @@ template<typename T> bool oConstructOnce(T* volatile* _pPointer, T* (*_New)() ) 
 // module triggers singleton instantiation that the code used is always from a 
 // static module so if the dynamic module is unloaded, there's still code to 
 // unload a singleton at the end of the program.
-#define oSINGLETON_REGISTER(_Type) oSingletonRegister oCONCAT(oSingletonRegister,_Type)(#_Type, _Type::GUID, oTypeInfo<_Type>::default_construct)
+#define oSINGLETON_REGISTER(_Type) oSingletonRegister oCONCAT(oSingletonRegister,_Type)(#_Type, _Type::GUID, oStd::type_info<_Type>::default_construct)
 
 struct oSingletonRegister
 {
@@ -54,7 +54,7 @@ struct oSingletonRegister
 	// we know will be around until the end of the very last dynamically loaded
 	// library, but also the code used will be there too. The first-to-register
 	// will be the last-to-unregister as C++ static init specifies.
-	oSingletonRegister::oSingletonRegister(const char* _SingletonName, const oGUID& _SingletonGUID, type_info_default_constructor _PlacementNew);
+	oSingletonRegister::oSingletonRegister(const char* _SingletonName, const oGUID& _SingletonGUID, oStd::type_info_default_constructor _PlacementNew);
 };
 
 class oSingletonBase : public oInterface
@@ -70,7 +70,7 @@ protected:
 	void* hModule;
 	const char* Name;
 	oRefCount RefCount;
-	static void* NewV(const char* _TypeInfoName, size_t _Size, type_info_default_constructor _Ctor, const oGUID& _GUID, bool _IsThreadLocal);
+	static void* NewV(const char* _TypeInfoName, size_t _Size, oStd::type_info_default_constructor _Ctor, const oGUID& _GUID, bool _IsThreadLocal);
 };
 
 template<typename T, bool ThreadLocal = false>
@@ -79,7 +79,7 @@ class oSingletonBaseT : public oSingletonBase
 public:
 	oSingletonBaseT(int _InitialRefCount = 1) : oSingletonBase(_InitialRefCount) {}
 protected:
-	static T* New() { return static_cast<T*>(NewV(typeid(T).name(), sizeof(T), oTypeInfo<T>::default_construct, typename T::GUID, ThreadLocal)); } // GUID must be defined as a static member of the derived class
+	static T* New() { return static_cast<T*>(NewV(typeid(T).name(), sizeof(T), oStd::type_info<T>::default_construct, typename T::GUID, ThreadLocal)); } // GUID must be defined as a static member of the derived class
 };
 
 template<typename T>

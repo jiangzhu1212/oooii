@@ -24,8 +24,8 @@
  **************************************************************************/
 #include <oBasis/oOSC.h>
 #include <oStd/algorithm.h>
+#include <oStd/memory.h>
 #include <oBasis/oError.h>
-#include <oBasis/oMemory.h>
 #include "oBasisTestStruct.h"
 #include <vector>
 
@@ -41,8 +41,8 @@ bool oBasisTest_oOSC()
 	memset(b2, 22, sizeof(b2));
 
 	oBASIS_TEST_STRUCT sent, received;
-	oMemset4(&sent, 0xdeadc0de, sizeof(sent));
-	oMemset4(&received, 0xdeadc0de, sizeof(received));
+	oStd::memset4(&sent, 0xdeadc0de, sizeof(sent));
+	oStd::memset4(&received, 0xdeadc0de, sizeof(received));
 	oBasisTestStructInit(&sent, b1, sizeof(b1), b2, sizeof(b2));
 
 	const char* _MessageName = "/TESTOSC/Run/TEST/sent";

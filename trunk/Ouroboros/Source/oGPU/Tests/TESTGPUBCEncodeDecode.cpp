@@ -83,7 +83,7 @@ struct GPU_BCEncodeDecode : public oTest
 		oSURFACE_MAPPED_SUBRESOURCE msrSource;
 		_pDevice->MapRead(BGRATexture, 0, &msrSource, true);
 		int2 ByteDimensions = oSurfaceMipCalcByteDimensions(td.Format, td.Dimensions);
-		oMemcpy2d(ConvertedImage->GetData(), d.RowPitch, msrSource.pData, msrSource.RowPitch, ByteDimensions.x, ByteDimensions.y);
+		oStd::memcpy2d(ConvertedImage->GetData(), d.RowPitch, msrSource.pData, msrSource.RowPitch, ByteDimensions.x, ByteDimensions.y);
 		_pDevice->UnmapRead(BGRATexture, 0);
 
 		*_ppConvertedImage = ConvertedImage;

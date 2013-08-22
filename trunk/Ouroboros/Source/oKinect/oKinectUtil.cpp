@@ -204,7 +204,7 @@ void oKinectCopyBits(const NUI_IMAGE_FRAME& _NIF, oSURFACE_MAPPED_SUBRESOURCE& _
 	switch (_NIF.eImageType)
 	{
 		case NUI_IMAGE_TYPE_COLOR:
-			oMemcpy2d(_Destination.pData, _Destination.RowPitch, r.pBits, r.Pitch, Dimensions.x * sizeof(RGBQUAD), Dimensions.y);
+			oStd::memcpy2d(_Destination.pData, _Destination.RowPitch, r.pBits, r.Pitch, Dimensions.x * sizeof(RGBQUAD), Dimensions.y);
 			break;
 
 		case NUI_IMAGE_TYPE_DEPTH:

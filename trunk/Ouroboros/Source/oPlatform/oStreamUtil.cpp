@@ -66,18 +66,18 @@ bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oFUNCTION<void*(s
 	*_pOutSize = oSizeT(sd.Size);
 	if (_AsString)
 	{
-		oUTF_TYPE type = oMemGetUTFType(r.pData, oSizeT(__min(sd.Size, 512ull)));
+		oStd::utf_type::value type = oStd::utfcmp(r.pData, oSizeT(__min(sd.Size, 512ull)));
 		switch (type)
 		{
-			case oUTF32BE:
-			case oUTF32LE:
+			case oStd::utf_type::utf32be:
+			case oStd::utf_type::utf32le:
 				*_pOutSize += 4;
 				break;
-			case oUTF16BE:
-			case oUTF16LE:
+			case oStd::utf_type::utf16be:
+			case oStd::utf_type::utf16le:
 				*_pOutSize += 2;
 				break;
-			case oASCII: 
+			case oStd::utf_type::ascii: 
 				(*_pOutSize)++;
 				break;
 		}

@@ -519,7 +519,7 @@ bool oStreamIsNewer(const char* _URIReference, time_t _ReferenceUnixTimestamp)
 	return true;
 }
 
-oUTF_TYPE oStreamGetUTFType(const char* _URIReference)
+oStd::utf_type::value oStreamGetUTFType(const char* _URIReference)
 {
 	// http://code.activestate.com/recipes/173220-test-if-a-file-or-string-is-text-or-binary/
 	// "The difference between text and binary is ill-defined, so this duplicates 
@@ -534,13 +534,13 @@ oUTF_TYPE oStreamGetUTFType(const char* _URIReference)
 
 	oRef<threadsafe oStreamReader> Reader;
 	if (!oStreamReaderCreate(_URIReference, &Reader))
-		return oUNKNOWN_UTF_TYPE; // pass through error
+		return oStd::utf_type::unknown; // pass through error
 
 	char buf[BLOCK_SIZE];
 	oSTREAM_READ r;
 	r.pData = buf;
 	r.Range.Size = __min(BLOCK_SIZE, sizeof(buf));
 	if (!Reader->Read(r))
-		return oUNKNOWN_UTF_TYPE; // pass through error
-	return oMemGetUTFType(buf, sizeof(buf));
+		return oStd::utf_type::unknown; // pass through error
+	return oStd::utfcmp(buf, sizeof(buf));
 }

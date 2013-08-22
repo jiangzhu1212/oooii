@@ -22,53 +22,49 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
 #pragma once
-#ifndef oStd_all_h
-#define oStd_all_h
-#include <oStd/algorithm.h>
+#ifndef oStd_memduff_h
+#define oStd_memduff_h
+
 #include <oStd/assert.h>
-#include <oStd/atof.h>
-#include <oStd/byte.h>
-#include <oStd/callable.h>
-#include <oStd/color.h>
-#include <oStd/date.h>
-#include <oStd/djb2.h>
-#include <oStd/endian.h>
-#include <oStd/equal.h>
-#include <oStd/finally.h>
-#include <oStd/fixed_string.h>
-#include <oStd/fixed_vector.h>
-#include <oStd/fnv1a.h>
-#include <oStd/fourcc.h>
-#include <oStd/function.h>
-#include <oStd/guid.h>
-#include <oStd/ini.h>
-#include <oStd/intrinsics.h>
-#include <oStd/macros.h>
-#include <oStd/memory.h>
-#include <oStd/murmur3.h>
-#include <oStd/operators.h>
-#include <oStd/oFor.h>
-#include <oStd/oStdAtomic.h>
-#include <oStd/oStdChrono.h>
-#include <oStd/oStdConditionVariable.h>
-#include <oStd/oStdFuture.h>
-#include <oStd/oStdMakeUnique.h>
-#include <oStd/oStdMutex.h>
-#include <oStd/oStdRatio.h>
-#include <oStd/oStdThread.h>
-#include <oStd/path.h>
-#include <oStd/path_traits.h>
-#include <oStd/string.h>
-#include <oStd/string_traits.h>
-#include <oStd/text_document.h>
-#include <oStd/throw.h>
-#include <oStd/timer.h>
-#include <oStd/type_info.h>
-#include <oStd/uint128.h>
-#include <oStd/unordered_map.h>
-#include <oStd/uri.h>
-#include <oStd/xml.h>
+
+namespace oStd {
+	namespace detail {
+
+// const void* version
+template<typename T> void init_duffs_device_pointers_const(
+	const void* _pMemory
+	, size_t _NumBytes
+	, const char** _ppPrefix
+	, size_t* _pNumPrefixBytes
+	, const T** _ppBody
+	, const char** _ppPostfix
+	, size_t* _pNumPostfixBytes)
+{
+	*_ppPrefix = (char*)_pMemory;
+	*_ppBody = (T*)oStd::byte_align(_pMemory, sizeof(T));
+	*_pNumPrefixBytes = oStd::byte_diff(*_ppPrefix, _pMemory);
+	const T* pEnd = oStd::byte_add(*_ppBody, _NumBytes - *_pNumPrefixBytes);
+	*_ppPostfix = (char*)oStd::byte_align_down(pEnd, sizeof(T));
+	*_pNumPostfixBytes = oStd::byte_diff(pEnd, *_ppPostfix);
+
+	oASSERT(oStd::byte_add(_pMemory, _NumBytes) == pEnd, "");
+	oASSERT(oStd::byte_add(_pMemory, _NumBytes) == oStd::byte_add(*_ppPostfix, *_pNumPostfixBytes), "");
+}
+// (non-const) void* version
+template<typename T> void init_duffs_device_pointers(
+	void* _pMemory
+	, size_t _NumBytes
+	, char** _ppPrefix
+	, size_t* _pNumPrefixBytes
+	, T** _ppBody
+	, char** _ppPostfix
+	, size_t* _pNumPostfixBytes)
+{
+	init_duffs_device_pointers_const(_pMemory, _NumBytes, (const char**)_ppPrefix, _pNumPrefixBytes, (const T**)_ppBody, (const char**)_ppPostfix, _pNumPostfixBytes);
+}
+
+	} // namespace detail
+} // namespace oStd
+
 #endif

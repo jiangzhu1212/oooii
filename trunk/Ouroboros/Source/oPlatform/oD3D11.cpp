@@ -25,7 +25,6 @@
 #include <oPlatform/Windows/oD3D11.h>
 #include <oStd/assert.h>
 #include <oStd/byte.h>
-#include <oBasis/oMemory.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oFile.h>
 #include <oPlatform/oImage.h>
@@ -912,7 +911,7 @@ static bool oD3D11DeviceIsMutingInfosOrStateCreation(ID3D11Device* _pDevice)
 	oV(_pDevice->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&InfoQueue));
 	SIZE_T size = 0;
 	oV(InfoQueue->GetStorageFilter(nullptr, &size));
-	D3D11_INFO_QUEUE_FILTER* f = (D3D11_INFO_QUEUE_FILTER*)oStackAlloc(size);
+	D3D11_INFO_QUEUE_FILTER* f = (D3D11_INFO_QUEUE_FILTER*)alloca(size);
 	oV(InfoQueue->GetStorageFilter(f, &size));
 	for (uint i = 0 ; i < f->DenyList.NumSeverities; i++)
 		if (f->DenyList.pSeverityList[i] == D3D11_MESSAGE_SEVERITY_INFO)
@@ -1130,7 +1129,7 @@ bool oD3D11CopyTo(ID3D11Resource* _pTexture, uint _Subresource, void* _pDestinat
 		return oWinSetLastError(hr);
 
 	int2 ByteDimensions = oSurfaceMipCalcByteDimensions(desc.Format, desc.Dimensions);
-	oMemcpy2d(_pDestination, _DestinationRowPitch, source.pData, source.RowPitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
+	oStd::memcpy2d(_pDestination, _DestinationRowPitch, source.pData, source.RowPitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
 	D3DDeviceContext->Unmap(_pTexture, _Subresource);
 	return true;
 }
@@ -1160,7 +1159,7 @@ void oD3D11UpdateSubresource(ID3D11DeviceContext* _pDeviceContext, ID3D11Resourc
 
 			D3D11_MAPPED_SUBRESOURCE msr;
 			_pDeviceContext->Map(_pDstResource, _DstSubresource, D3D11_MAP_WRITE_DISCARD, 0, &msr);
-			oMemcpy2d(msr.pData, msr.RowPitch, _pSrcData, _SrcRowPitch, ByteDimensions.x, ByteDimensions.y);
+			oStd::memcpy2d(msr.pData, msr.RowPitch, _pSrcData, _SrcRowPitch, ByteDimensions.x, ByteDimensions.y);
 			_pDeviceContext->Unmap(_pDstResource, _DstSubresource);
 			break;
 		}
@@ -1238,13 +1237,13 @@ template<typename T> void oD3D11UpdateIndexBuffer(ID3D11DeviceContext* _pDeviceC
 	if (d.StructByteSize == 2)
 	{
 		oASSERT(sizeof(T) == 4, "");
-		oMemcpyToUshort((ushort*)msr.pData, (const uint*)_pSourceIndices, d.ArraySize);
+		oStd::memcpyuitous((ushort*)msr.pData, (const uint*)_pSourceIndices, d.ArraySize);
 	}
 
 	else
 	{
 		oASSERT(sizeof(T) == 2 && d.StructByteSize == 4, "");
-		oMemcpyToUint((uint*)msr.pData, (const ushort*)_pSourceIndices, d.ArraySize);
+		oStd::memcpyustoui((uint*)msr.pData, (const ushort*)_pSourceIndices, d.ArraySize);
 	}
 
 	oD3D11Unmap(_pDeviceContext, _pIndexBuffer, 0, msr);

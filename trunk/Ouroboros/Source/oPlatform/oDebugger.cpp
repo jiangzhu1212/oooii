@@ -290,7 +290,7 @@ void* oDebuggerGuardedAlloc(size_t _SizeofData, int _TrailingGuardPages)
 	void* pData = oPageReserveAndCommit(nullptr, AllocSize);
 	oASSERT(pData, "oPageReserveAndCommit failed");
 
-	oMemset4(pData, 0xDEB60011, AllocSize);
+	oStd::memset4(pData, 0xDEB60011, AllocSize);
 	// Fill in the alloc info
 	new(pData) GuardedAllocInfo(AllocSize);
 

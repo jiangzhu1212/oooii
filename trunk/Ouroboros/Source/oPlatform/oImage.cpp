@@ -200,7 +200,7 @@ struct oImageImpl : public oImage
 		oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(Mutex);
 		DESC d;
 		GetDesc(&d);
-		oMemcpy2d(FreeImage_GetBits(FIBitmap), d.RowPitch, _pSourceBuffer, _SourceRowPitch, d.Dimensions.x * oImageGetSize(d.Format), d.Dimensions.y, _FlipVertically);
+		oStd::memcpy2d(FreeImage_GetBits(FIBitmap), d.RowPitch, _pSourceBuffer, _SourceRowPitch, d.Dimensions.x * oImageGetSize(d.Format), d.Dimensions.y, _FlipVertically);
 	}
 		
 	void CopyData(struct HBITMAP__* _hBitmap) threadsafe override
@@ -216,7 +216,7 @@ struct oImageImpl : public oImage
 		oConcurrency::shared_lock<oConcurrency::shared_mutex> Lock(Mutex);
 		DESC d;
 		GetDesc(&d);
-		oMemcpy2d(_pDestinationBuffer, _DestinationRowPitch, FreeImage_GetBits(FIBitmap), d.RowPitch, d.Dimensions.x * oImageGetSize(d.Format), d.Dimensions.y, _FlipVertically);
+		oStd::memcpy2d(_pDestinationBuffer, _DestinationRowPitch, FreeImage_GetBits(FIBitmap), d.RowPitch, d.Dimensions.x * oImageGetSize(d.Format), d.Dimensions.y, _FlipVertically);
 	}
 
 private:

@@ -22,53 +22,30 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
-#pragma once
-#ifndef oStd_all_h
-#define oStd_all_h
-#include <oStd/algorithm.h>
-#include <oStd/assert.h>
-#include <oStd/atof.h>
-#include <oStd/byte.h>
-#include <oStd/callable.h>
-#include <oStd/color.h>
-#include <oStd/date.h>
-#include <oStd/djb2.h>
-#include <oStd/endian.h>
-#include <oStd/equal.h>
-#include <oStd/finally.h>
-#include <oStd/fixed_string.h>
-#include <oStd/fixed_vector.h>
-#include <oStd/fnv1a.h>
-#include <oStd/fourcc.h>
-#include <oStd/function.h>
-#include <oStd/guid.h>
-#include <oStd/ini.h>
-#include <oStd/intrinsics.h>
-#include <oStd/macros.h>
-#include <oStd/memory.h>
-#include <oStd/murmur3.h>
-#include <oStd/operators.h>
-#include <oStd/oFor.h>
-#include <oStd/oStdAtomic.h>
-#include <oStd/oStdChrono.h>
-#include <oStd/oStdConditionVariable.h>
-#include <oStd/oStdFuture.h>
-#include <oStd/oStdMakeUnique.h>
-#include <oStd/oStdMutex.h>
-#include <oStd/oStdRatio.h>
-#include <oStd/oStdThread.h>
-#include <oStd/path.h>
-#include <oStd/path_traits.h>
-#include <oStd/string.h>
-#include <oStd/string_traits.h>
-#include <oStd/text_document.h>
-#include <oStd/throw.h>
-#include <oStd/timer.h>
-#include <oStd/type_info.h>
-#include <oStd/uint128.h>
-#include <oStd/unordered_map.h>
-#include <oStd/uri.h>
-#include <oStd/xml.h>
-#endif
+
+namespace oStd {
+
+bool is_ascii(const void* _pBuffer, size_t _SizeofBuffer)
+{
+	// http://code.activestate.com/recipes/173220-test-if-a-file-or-string-is-text-or-binary/
+	// "The difference between text and binary is ill-defined, so this duplicates 
+	// "the definition used by Perl's -T flag, which is: <br/> The first block 
+	// "or so of the file is examined for odd characters such as strange control
+	// "codes or characters with the high bit set. If too many strange characters 
+	// (>30%) are found, it's a -B file, otherwise it's a -T file. Also, any file 
+	// containing null in the first block is considered a binary file."
+	static const float kThreshold = 0.10f; // 0.30f; // 30% seems too high to me.
+
+	// Count non-text characters
+	size_t nonTextCount = 0;
+	const char* b = static_cast<const char*>(_pBuffer);
+	for (size_t i = 0; i < _SizeofBuffer; i++)
+		if (b[i] == 0 || (b[i] & 0x80))
+			nonTextCount++;
+
+	// Determine results
+	float percentNonAscii = nonTextCount / static_cast<float>(_SizeofBuffer);
+	return percentNonAscii < kThreshold;
+}
+
+} // namespace oStd

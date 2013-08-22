@@ -94,7 +94,7 @@ struct oGuardBand
 public:
 	oGuardBand()
 	{
-		oMemset4(guard, 0x0011f350, 4 * size);
+		oStd::memset4(guard, 0x0011f350, 4 * size);
 	}
 
 	void Check() threadsafe

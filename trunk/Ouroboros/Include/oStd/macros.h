@@ -27,6 +27,7 @@
 #ifndef oStd_macros_h
 #define oStd_macros_h
 
+#include <oStd/config.h>
 #include <cstddef>
 
 // _____________________________________________________________________________

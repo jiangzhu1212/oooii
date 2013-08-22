@@ -178,7 +178,7 @@ public:
 			IsValid = false;
 			
 			pSharedPointers->~container_t();
-			oMemset4(pSharedPointers, 0xfeeefeee, sizeof(container_t));
+			oStd::memset4(pSharedPointers, 0xfeeefeee, sizeof(container_t));
 			HeapFree(hHeap, 0, pSharedPointers);
 			pSharedPointers = nullptr;
 			

@@ -96,7 +96,7 @@ bool oWindowAppControllerImpl::SendX11Keys( oGUI_KEY* _pKeys, int _NumberKeys )
 	if(_NumberKeys > SANE_NUMBER_OF_KEYS)
 		return oErrorSetLast(std::errc::no_buffer_space, "More than %d keys is not supported.", SANE_NUMBER_OF_KEYS);
 
-	short int* VirtualKeys = (short int*)oStackAlloc(sizeof(short int) * _NumberKeys);
+	short int* VirtualKeys = (short int*)alloca(sizeof(short int) * _NumberKeys);
 
 	for(int i = 0; i < _NumberKeys; ++i)
 	{

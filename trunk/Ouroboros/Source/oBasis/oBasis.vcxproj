@@ -39,7 +39,6 @@
     <ClInclude Include="..\..\Include\oBasis\oCameraControllerArcball.h" />
     <ClInclude Include="..\..\Include\oBasis\oCameraControllerMaya.h" />
     <ClInclude Include="..\..\Include\oBasis\oCameraControllerMMO.h" />
-    <ClInclude Include="..\..\Include\oBasis\oColor.h" />
     <ClInclude Include="..\..\Include\oBasis\oCompression.h" />
     <ClInclude Include="..\..\Include\oBasis\oContainer.h" />
     <ClInclude Include="..\..\Include\oBasis\oCppParsing.h" />
@@ -50,7 +49,6 @@
     <ClInclude Include="..\..\Include\oBasis\oDispatchQueueGlobalT.h" />
     <ClInclude Include="..\..\Include\oBasis\oDispatchQueuePrivate.h" />
     <ClInclude Include="..\..\Include\oBasis\oEasing.h" />
-    <ClInclude Include="..\..\Include\oBasis\oEightCC.h" />
     <ClInclude Include="..\..\Include\oBasis\oError.h" />
     <ClInclude Include="..\..\Include\oBasis\oEye.h" />
     <ClInclude Include="..\..\Include\oBasis\oFilterChain.h" />
@@ -74,7 +72,6 @@
     <ClInclude Include="..\..\Include\oBasis\oManipulator.h" />
     <ClInclude Include="..\..\Include\oBasis\oMath.h" />
     <ClInclude Include="..\..\Include\oBasis\oMathTypes.h" />
-    <ClInclude Include="..\..\Include\oBasis\oMemory.h" />
     <ClInclude Include="..\..\Include\oBasis\oMeshUtil.h" />
     <ClInclude Include="..\..\Include\oBasis\oMIME.h" />
     <ClInclude Include="..\..\Include\oBasis\oOBJ.h" />
@@ -103,7 +100,6 @@
     <ClInclude Include="..\..\Include\oBasis\oSurfaceResize.h" />
     <ClInclude Include="..\..\Include\oBasis\oTimer.h" />
     <ClInclude Include="..\..\Include\oBasis\oTypeID.h" />
-    <ClInclude Include="..\..\Include\oBasis\oTypeInfo.h" />
     <ClInclude Include="..\..\Include\oBasis\oTypes.h" />
     <ClInclude Include="..\..\Include\oBasis\oURI.h" />
     <ClInclude Include="..\..\Include\oBasis\oURIQuerySerialize.h" />
@@ -127,12 +123,10 @@
     <ClCompile Include="oCameraControllerArcball.cpp" />
     <ClCompile Include="oCameraControllerMaya.cpp" />
     <ClCompile Include="oCameraControllerMMO.cpp" />
-    <ClCompile Include="oColor.cpp" />
     <ClCompile Include="oCppParsing.cpp" />
     <ClCompile Include="oDispatchQueueConcurrent.cpp" />
     <ClCompile Include="oDispatchQueueGlobal.cpp" />
     <ClCompile Include="oDispatchQueuePrivate.cpp" />
-    <ClCompile Include="oEightCC.cpp" />
     <ClCompile Include="oError.cpp" />
     <ClCompile Include="oGeometry.cpp" />
     <ClCompile Include="oGPUConcepts.cpp" />
@@ -150,7 +144,6 @@
     <ClCompile Include="oManipulatorScale.cpp" />
     <ClCompile Include="oManipulatorTranslation.cpp" />
     <ClCompile Include="oMath.cpp" />
-    <ClCompile Include="oMemory.cpp" />
     <ClCompile Include="oMeshUtil.cpp" />
     <ClCompile Include="oMIME.cpp" />
     <ClCompile Include="oOBJ.cpp" />

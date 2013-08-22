@@ -45,7 +45,6 @@
 #include <oBasis/oDispatchQueueConcurrent.h>
 #include <oBasis/oDispatchQueueGlobal.h>
 #include <oBasis/oDispatchQueuePrivate.h>
-#include <oBasis/oEightCC.h>
 #include <oBasis/oError.h>
 #include <oBasis/oEye.h>
 #include <oBasis/oFilterChain.h>
@@ -59,7 +58,6 @@
 #include <oBasis/oLockedPointer.h>
 #include <oBasis/oLZMA.h>
 #include <oBasis/oMath.h>
-#include <oBasis/oMemory.h>
 #include <oBasis/oMeshUtil.h>
 #include <oBasis/oMIME.h>
 #include <oBasis/oOBJ.h>
@@ -78,7 +76,6 @@
 #include <oBasis/oSurfaceResize.h>
 #include <oBasis/oTimer.h>
 #include <oBasis/oTypeID.h>
-#include <oBasis/oTypeInfo.h>
 #include <oBasis/oTypes.h>
 #include <oBasis/oURI.h>
 #include <oBasis/oVersion.h>

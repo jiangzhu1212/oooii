@@ -102,7 +102,7 @@ bool oConstructOnceV(void* volatile* _pPointer, void* (*_New)())
 	
 // {7F15EF8E-3AA2-43D8-B802-06A3E195E21C}
 static const oGUID IID_oSingletonCtors = { 0x7f15ef8e, 0x3aa2, 0x43d8, { 0xb8, 0x2, 0x6, 0xa3, 0xe1, 0x95, 0xe2, 0x1c } };
-typedef std::unordered_map<oGUID, type_info_default_constructor, std::hash<oGUID>, std::equal_to<oGUID>, oProcessHeapAllocator<std::pair<oGUID, type_info_default_constructor>>> oSingletonCtors;
+typedef std::unordered_map<oGUID, oStd::type_info_default_constructor, std::hash<oGUID>, std::equal_to<oGUID>, oProcessHeapAllocator<std::pair<oGUID, oStd::type_info_default_constructor>>> oSingletonCtors;
 void oPlacementNewSingletonCtor(void* _Pointer) { new(_Pointer) oSingletonCtors(); }
 
 void* oSingletonCtorRegistryCreate()
@@ -112,7 +112,7 @@ void* oSingletonCtorRegistryCreate()
 	return p;
 }
 
-oSingletonRegister::oSingletonRegister(const char* _SingletonName, const oGUID& _SingletonGUID, type_info_default_constructor _PlacementNew)
+oSingletonRegister::oSingletonRegister(const char* _SingletonName, const oGUID& _SingletonGUID, oStd::type_info_default_constructor _PlacementNew)
 {
 	oSingletonCtors& ctors = *(oSingletonCtors*)oSingletonCtorRegistryCreate();
 	if (ctors.find(_SingletonGUID) == ctors.end())
@@ -136,7 +136,7 @@ public:
 	static oThreadlocalRegistry* Singleton()
 	{
 		oThreadlocalRegistry* p = nullptr;
-		oProcessHeapFindOrAllocate(GUID, false, true, sizeof(oThreadlocalRegistry), oTypeInfo<oThreadlocalRegistry>::default_construct, "oThreadlocalRegistry", (void**)&p);
+		oProcessHeapFindOrAllocate(GUID, false, true, sizeof(oThreadlocalRegistry), oStd::type_info<oThreadlocalRegistry>::default_construct, "oThreadlocalRegistry", (void**)&p);
 		return p;
 	}
 
@@ -216,9 +216,9 @@ void oSingletonBase::Release() threadsafe
 	}
 }
 	
-void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, type_info_default_constructor _Ctor, const oGUID& _GUID, bool _IsThreadLocal)
+void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, oStd::type_info_default_constructor _Ctor, const oGUID& _GUID, bool _IsThreadLocal)
 {
-	type_info_default_constructor PlacementNew = _Ctor;
+	oStd::type_info_default_constructor PlacementNew = _Ctor;
 
 	oSingletonCtors* ctors = nullptr;
 	if (oProcessHeapFind(IID_oSingletonCtors, _IsThreadLocal, (void**)&ctors))

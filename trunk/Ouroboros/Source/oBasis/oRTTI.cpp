@@ -368,7 +368,7 @@ uint oRTTI::GetTraits() const
 
 		case oRTTI_TYPE_ENUM:
 			// Assuming that all enum traits are the same..
-			return oTypeInfo<oRUNTIME_TYPE_TRAITS>::traits;
+			return oStd::type_info<oStd::type_trait_flag::value>::traits;
 
 		default:
 			// TODO: Do we need traits for COMPOUNDS, CONTAINERS, POINTERS too?

@@ -22,27 +22,17 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#pragma once
-#ifndef oColor_h
-#define oColor_h
+#include <oStd/assert.h>
+#include <oStd/memory.h>
 
-#include <oStd/byte.h>
-#include <oStd/color.h>
-#include <oStd/operators.h>
+namespace oStd {
 
-void oColorRGBToYUV(int _R, int _G, int _B, int* _pY, int* _pU, int* _pV);
-void oColorYUVToRGB(int _Y, int _U, int _V, int* _pR, int* _pG, int* _pB);
-// see http://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&ved=0CE8QFjAA&url=http%3A%2F%2Fwftp3.itu.int%2Fav-arch%2Fjvt-site%2F2003_09_SanDiego%2FJVT-I014r1.doc&ei=gegRUJCwB-eSiQLdjYHIBA&usg=AFQjCNG6399B3vKVP_cohT2Av7vmMcj6aQ
-//	for the paper on yCoCg color space. its better than yuv. going to be used in H.265. there are 2 variants. YCoCg and YCoCg-R. H.265 draft is using the YCoCg variant, so only including that one.
-void oColorRGBToYCoCg(int _R, int _G, int _B, int* _pY, int* _pCo, int* _pCg);
-void oColorYCoCgToRGB(int _Y, int _Co, int _Cg, int* _pR, int* _pG, int* _pB);
+void memset2d2(void* _pDestination, size_t _Pitch, short _Value, size_t _SetPitch, size_t _NumRows)
+{
+	oASSERT((_SetPitch % sizeof(_Value)) == 0, "");
+	const void* end = byte_add(_pDestination, _Pitch, _NumRows);
+	for (; _pDestination < end; _pDestination = byte_add(_pDestination, _Pitch))
+		memset2(_pDestination, _Value, _SetPitch);
+}
 
-inline void oColorDecomposeToYUV(oStd::color _Color, int* _pY, int* _pU, int* _pV, int* _pA = nullptr) { int r,g,b,a; _Color.decompose(&r, &g, &b, &a); oColorRGBToYUV(r, g, b, _pY, _pU, _pV); if(_pA) *_pA = a;}
-inline oStd::color oColorComposeFromYUV(int _Y, int _U, int _V, int _A = 255) { int r,g,b; oColorYUVToRGB(_Y, _U, _V, &r, &g, &b); return oStd::color(r, g, b, _A); }
-inline void oColorDecomposeToYCoCg(oStd::color _Color, int* _pY, int* _pCo, int* _pCg, int* _pA = nullptr) { int r,g,b,a; _Color.decompose(&r, &g, &b, &a); oColorRGBToYCoCg(r, g, b, _pY, _pCo, _pCg); if(_pA) *_pA = a; }
-inline oStd::color oColorComposeFromYCoCg(int _Y, int _Co, int _Cg, int _A = 255) { int r,g,b; oColorYCoCgToRGB(_Y, _Co, _Cg, &r, &g, &b); return oStd::color(r, g, b, _A); }
-
-// Hue is in degrees, saturation and value are [0,1]
-void oColorDecomposeToHSV(oStd::color _Color, float* _pH, float* _pS, float* _pV);
-
-#endif
+} // namespace oStd

@@ -29,7 +29,7 @@
 
 bool oURIQueryReadValue(void* _pDest, int _SizeOfDest, const char* _StrSource, const oRTTI& _RTTI)
 {
-	if ((_RTTI.GetTraits() & (oTRAIT_IS_INTEGRAL | oTRAIT_IS_FLOATING_POINT)) != 0 && (_RTTI.GetNumStringTokens() == 1) && (*_StrSource != '\"'))
+	if ((_RTTI.GetTraits() & (oStd::type_trait_flag::is_integralf | oStd::type_trait_flag::is_floating_pointf)) != 0 && (_RTTI.GetNumStringTokens() == 1) && (*_StrSource != '\"'))
 	{
 		oStd::sstring Typename;
 		if (strstr(_RTTI.GetName(Typename), "char"))
@@ -95,7 +95,7 @@ bool oURIQueryWriteValue(char* _StrDestination, size_t _SizeofStrDestination, co
 	oStd::sstring Typename;
 	if (_RTTI.ToString(buf, _pSource))
 	{
-		if ((_RTTI.GetTraits() & (oTRAIT_IS_INTEGRAL | oTRAIT_IS_FLOATING_POINT)) != 0  && (_RTTI.GetNumStringTokens() == 1))
+		if ((_RTTI.GetTraits() & (oStd::type_trait_flag::is_integralf | oStd::type_trait_flag::is_floating_pointf)) != 0  && (_RTTI.GetNumStringTokens() == 1))
 		{
 			if (strstr(_RTTI.GetName(Typename), "uchar"))
 				oStrAppendf(_StrDestination, _SizeofStrDestination, "%d", (int)*(uchar*)_pSource);

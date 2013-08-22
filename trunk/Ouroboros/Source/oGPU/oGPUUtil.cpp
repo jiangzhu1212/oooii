@@ -45,9 +45,9 @@ void oGPUCopyIndices(oSURFACE_MAPPED_SUBRESOURCE& _Destination, const oSURFACE_C
 	if (_Destination.RowPitch == _Source.RowPitch)
 		memcpy(_Destination.pData, _Source.pData, _NumIndices * _Destination.RowPitch);
 	else if (_Destination.RowPitch == sizeof(uint) && _Source.RowPitch == sizeof(ushort))
-		oMemcpyToUint((uint*)_Destination.pData, (const ushort*)_Source.pData, _NumIndices);
+		oStd::memcpyustoui((uint*)_Destination.pData, (const ushort*)_Source.pData, _NumIndices);
 	else if (_Destination.RowPitch == sizeof(ushort) && _Source.RowPitch == sizeof(uint))
-		oMemcpyToUshort((ushort*)_Destination.pData, (const uint*)_Source.pData, _NumIndices);
+		oStd::memcpyuitous((ushort*)_Destination.pData, (const uint*)_Source.pData, _NumIndices);
 	else
 		oASSERT(false, "Bad strides");
 }
@@ -105,14 +105,14 @@ bool oGPUCommitVertexBuffer(oGPUCommandList* _pCommandList
 			offset += ElStride;
 
 			if (Source.pData)
-				oMemcpy2d(pDestination, stride, Source.pData, Source.RowPitch, ElStride, d.ArraySize);
+				oStd::memcpy2d(pDestination, stride, Source.pData, Source.RowPitch, ElStride, d.ArraySize);
 			else
 			{
 				#ifdef _DEBUG
 					char buf[5];
 					oTRACE("No data for %s (%d%s IAElement) for VB %s", oStd::to_string(buf, _pElements[i].Semantic), i, oStd::ordinal(i), _pVertexBuffer->GetName());
 				#endif
-				oMemset2d(pDestination, stride, 0, ElStride, d.ArraySize);
+				oStd::memset2d(pDestination, stride, 0, ElStride, d.ArraySize);
 			}
 		}
 	}
@@ -353,7 +353,7 @@ bool oGPURead(oGPUResource* _pSourceResource, int _Subresource, oSURFACE_MAPPED_
 		return false; // pass through error
 
 	int2 ByteDimensions = _pSourceResource->GetByteDimensions(_Subresource);
-	oMemcpy2d(_Destination.pData, _Destination.RowPitch, source.pData, source.RowPitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
+	oStd::memcpy2d(_Destination.pData, _Destination.RowPitch, source.pData, source.RowPitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
 
 	pDevice->UnmapRead(_pSourceResource, _Subresource);
 	return true;
@@ -562,7 +562,7 @@ bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _N
 			_pDevice->MapRead(ReadbackTexture, subresource, &msrMipSrc, true);
 			oSurfaceMappedSubresourceOffsetDepthIndex(msrMipSrc, depthIndex, &msrMipSrc.pData);
 
-			oMemcpy2d(msrMipDest.pData, msrMipDest.RowPitch, msrMipSrc.pData, msrMipSrc.RowPitch, byteDimensions.x, byteDimensions.y, false);
+			oStd::memcpy2d(msrMipDest.pData, msrMipDest.RowPitch, msrMipSrc.pData, msrMipSrc.RowPitch, byteDimensions.x, byteDimensions.y, false);
 
 			_pDevice->UnmapRead(ReadbackTexture, subresource);
 		}
@@ -679,14 +679,14 @@ static bool oGPUReadVertexSource(int _Slot, int _NumVertices, oSURFACE_MAPPED_SU
 		offset += ElStride;
 
 		if (Source.pData)
-			oMemcpy2d(pDestination, vertexStride, Source.pData, Source.RowPitch, ElStride, _NumVertices);
+			oStd::memcpy2d(pDestination, vertexStride, Source.pData, Source.RowPitch, ElStride, _NumVertices);
 		else
 		{
-#ifdef _DEBUG
-			char buf[5];
-			oTRACE("No data for %s (%d%s IAElement) for mesh", oStd::to_string(buf, _pElements[i].Semantic), i, oStd::ordinal(i));
-#endif
-			oMemset2d(pDestination, vertexStride, 0, ElStride, _NumVertices);
+			#ifdef _DEBUG
+				char buf[5];
+				oTRACE("No data for %s (%d%s IAElement) for mesh", oStd::to_string(buf, _pElements[i].Semantic), i, oStd::ordinal(i));
+			#endif
+			oStd::memset2d(pDestination, vertexStride, 0, ElStride, _NumVertices);
 		}
 	}
 

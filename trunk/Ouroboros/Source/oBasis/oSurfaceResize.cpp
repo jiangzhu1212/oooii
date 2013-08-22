@@ -27,7 +27,6 @@
 #include <oConcurrency/oConcurrency.h>
 #include <oBasis/oError.h>
 #include <oBasis/oMath.h>
-#include <oBasis/oMemory.h>
 #include <oBasis/oRTTI.h>
 #include <vector>
 
@@ -466,7 +465,7 @@ bool oSurfaceClip(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUB
 		return oErrorSetLast(std::errc::invalid_argument, "_srcOffset + the dimensions of the destination, must be within the dimensions of the source");
 
 	int elementSize = oSurfaceFormatGetSize(_SrcDesc.Format);
-	oMemcpy2d(_DstMap->pData, _DstMap->RowPitch, oStd::byte_add(_SrcMap.pData, _SrcMap.RowPitch*_SrcOffset.y + elementSize*_SrcOffset.x), _SrcMap.RowPitch, _DstDesc.Dimensions.x*elementSize, _DstDesc.Dimensions.y);
+	oStd::memcpy2d(_DstMap->pData, _DstMap->RowPitch, oStd::byte_add(_SrcMap.pData, _SrcMap.RowPitch*_SrcOffset.y + elementSize*_SrcOffset.x), _SrcMap.RowPitch, _DstDesc.Dimensions.x*elementSize, _DstDesc.Dimensions.y);
 
 	return true;
 }
@@ -487,7 +486,7 @@ bool oSurfacePad(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUBR
 		return oErrorSetLast(std::errc::invalid_argument, "_srcOffset + the dimensions of the destination, must be within the dimensions of the source");
 
 	int elementSize = oSurfaceFormatGetSize(_SrcDesc.Format);
-	oMemcpy2d(oStd::byte_add(_DstMap->pData, _DstMap->RowPitch*_DstOffset.y + elementSize*_DstOffset.x), _DstMap->RowPitch, _SrcMap.pData, _SrcMap.RowPitch, _SrcDesc.Dimensions.x*elementSize, _SrcDesc.Dimensions.y);
+	oStd::memcpy2d(oStd::byte_add(_DstMap->pData, _DstMap->RowPitch*_DstOffset.y + elementSize*_DstOffset.x), _DstMap->RowPitch, _SrcMap.pData, _SrcMap.RowPitch, _SrcDesc.Dimensions.x*elementSize, _SrcDesc.Dimensions.y);
 	
 	return true;
 }

@@ -34,7 +34,7 @@ bool oJSONReadValue(void* _pDest, int _SizeOfDest, const oRTTI& _RTTI, const oSt
 	if (!value)
 		return false;
 
-	if ((_RTTI.GetTraits() & (oTRAIT_IS_INTEGRAL | oTRAIT_IS_FLOATING_POINT)) != 0 && (_RTTI.GetNumStringTokens() == 1) && (*value != '\"'))
+	if ((_RTTI.GetTraits() & (oStd::type_trait_flag::is_integralf | oStd::type_trait_flag::is_floating_pointf)) != 0 && (_RTTI.GetNumStringTokens() == 1) && (*value != '\"'))
 	{
 		oStd::sstring Typename;
 		if (strstr(_RTTI.GetName(Typename), "char"))
@@ -213,7 +213,7 @@ bool oJSONWriteValue(char* _StrDestination, size_t _SizeofStrDestination, const 
 	oStd::sstring Typename;
 	if (_RTTI.ToString(buf, _pSource))
 	{
-		if ((_RTTI.GetTraits() & (oTRAIT_IS_INTEGRAL | oTRAIT_IS_FLOATING_POINT)) != 0  && (_RTTI.GetNumStringTokens() == 1))
+		if ((_RTTI.GetTraits() & (oStd::type_trait_flag::is_integralf | oStd::type_trait_flag::is_floating_pointf)) != 0  && (_RTTI.GetNumStringTokens() == 1))
 		{
 			if (strstr(_RTTI.GetName(Typename), "uchar"))
 				oStd::sncatf(_StrDestination, _SizeofStrDestination, "%d", (int)*(uchar*)_pSource);

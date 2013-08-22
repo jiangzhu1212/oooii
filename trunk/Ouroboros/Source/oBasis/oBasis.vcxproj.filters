@@ -93,9 +93,6 @@
     <ClInclude Include="..\..\Include\oBasis\oError.h">
       <Filter>oBasis\Language Enhancements</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oMemory.h">
-      <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oLibc.h">
       <Filter>oBasis\Language Enhancements</Filter>
     </ClInclude>
@@ -119,9 +116,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oTimer.h">
       <Filter>oBasis</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oEightCC.h">
-      <Filter>oBasis\Types</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oAllocator.h">
       <Filter>oBasis\Allocators</Filter>
@@ -206,9 +200,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oTypeID.h">
       <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oTypeInfo.h">
-      <Filter>oBasis\Types</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oRTTI.h">
       <Filter>oBasis\RTTI</Filter>
@@ -330,9 +321,6 @@
     <ClInclude Include="..\..\Include\oBasis\oStdStringSupport.h">
       <Filter>oBasis\String Parsing</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oColor.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oJSONSerialize.h">
       <Filter>oBasis\Serialization</Filter>
     </ClInclude>
@@ -416,12 +404,6 @@
     <ClCompile Include="oGeometry.cpp">
       <Filter>Source\3D Math &amp; Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="oColor.cpp">
-      <Filter>Source\Types</Filter>
-    </ClCompile>
-    <ClCompile Include="oEightCC.cpp">
-      <Filter>Source\Types</Filter>
-    </ClCompile>
     <ClCompile Include="oVersion.cpp">
       <Filter>Source\Types</Filter>
     </ClCompile>
@@ -451,9 +433,6 @@
     </ClCompile>
     <ClCompile Include="oGPUConcepts.cpp">
       <Filter>Source\3D Math &amp; Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="oMemory.cpp">
-      <Filter>Source\Language Enhancements</Filter>
     </ClCompile>
     <ClCompile Include="oXMLSerialize.cpp">
       <Filter>Source\Serialization</Filter>

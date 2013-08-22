@@ -22,53 +22,19 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
-#pragma once
-#ifndef oStd_all_h
-#define oStd_all_h
-#include <oStd/algorithm.h>
-#include <oStd/assert.h>
-#include <oStd/atof.h>
-#include <oStd/byte.h>
-#include <oStd/callable.h>
-#include <oStd/color.h>
-#include <oStd/date.h>
-#include <oStd/djb2.h>
-#include <oStd/endian.h>
-#include <oStd/equal.h>
-#include <oStd/finally.h>
-#include <oStd/fixed_string.h>
-#include <oStd/fixed_vector.h>
-#include <oStd/fnv1a.h>
-#include <oStd/fourcc.h>
-#include <oStd/function.h>
-#include <oStd/guid.h>
-#include <oStd/ini.h>
-#include <oStd/intrinsics.h>
-#include <oStd/macros.h>
 #include <oStd/memory.h>
-#include <oStd/murmur3.h>
-#include <oStd/operators.h>
-#include <oStd/oFor.h>
-#include <oStd/oStdAtomic.h>
-#include <oStd/oStdChrono.h>
-#include <oStd/oStdConditionVariable.h>
-#include <oStd/oStdFuture.h>
-#include <oStd/oStdMakeUnique.h>
-#include <oStd/oStdMutex.h>
-#include <oStd/oStdRatio.h>
-#include <oStd/oStdThread.h>
-#include <oStd/path.h>
-#include <oStd/path_traits.h>
-#include <oStd/string.h>
-#include <oStd/string_traits.h>
-#include <oStd/text_document.h>
-#include <oStd/throw.h>
-#include <oStd/timer.h>
-#include <oStd/type_info.h>
-#include <oStd/uint128.h>
-#include <oStd/unordered_map.h>
-#include <oStd/uri.h>
-#include <oStd/xml.h>
-#endif
+
+namespace oStd {
+
+utf_type::value utfcmp(const void* _pBuffer, size_t _SizeofBuffer)
+{
+	const unsigned char* b = static_cast<const unsigned char*>(_pBuffer);
+	if (b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF) return utf_type::utf8;
+	if (b[0] == 0x00 && b[1] == 0x00 && b[2] == 0xFE && b[3] == 0xFF) return utf_type::utf32be;
+	if (b[0] == 0xFF && b[1] == 0xFE && b[2] == 0x00 && b[3] == 0x00) return utf_type::utf32le;
+	if (b[0] == 0xFE && b[1] == 0xFF) return utf_type::utf16be;
+	if (b[0] == 0xFF && b[1] == 0xFE) return utf_type::utf16le;
+	return is_ascii(_pBuffer, _SizeofBuffer) ? utf_type::ascii : utf_type::binary;
+}
+
+} // namespace oStd

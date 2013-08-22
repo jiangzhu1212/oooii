@@ -106,6 +106,39 @@
     <ClCompile Include="relativize_path.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
+    <ClCompile Include="memcmp4.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memset4.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memset2.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memset2d.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memset2d2.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memset2d4.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memmem.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memcpyuitous.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memcpyustoui.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="is_ascii.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="utfcmp.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -255,6 +288,15 @@
     <ClInclude Include="..\..\Include\oStd\uri_traits.h">
       <Filter>oStd</Filter>
     </ClInclude>
+    <ClInclude Include="memduff.h">
+      <Filter>Source\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\memory.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\type_info.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -298,6 +340,9 @@
     </Filter>
     <Filter Include="Source\Hash">
       <UniqueIdentifier>{e3dc22ea-5155-4a45-831d-942d07c523aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\memory">
+      <UniqueIdentifier>{ab817143-789e-4c97-ba30-23b809ef8200}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

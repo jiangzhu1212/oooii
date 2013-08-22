@@ -31,8 +31,8 @@
 #include <oStd/fourcc.h>
 #include <oStd/macros.h>
 #include <oStd/path.h>
+#include <oStd/type_info.h>
 #include <oStd/uri.h>
-#include <oBasis/oTypeInfo.h>
 #include <typeinfo>
 #include <vector>
 
