@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,30 +26,42 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
-struct GPU_SpinningTriangle : public oTest
+static const int sSnapshotFrames[] = { 0, 2, 4, 6 };
+static const bool kIsDevMode = false;
+
+class GPU_SpinningTriangle_App : public oGPUTestApp
 {
-	oRef<oGPUDevice> Device;
-	oRef<oGPUCommandList> CL;
-	oRef<oGPUPipeline> Pipeline;
-	oRef<oGPUUtilMesh> Mesh;
-	oRef<oGPUBuffer> TestConstants;
-	bool Once;
-	
-	void Render(oGPURenderTarget* _pPrimaryRenderTarget)
+public:
+	GPU_SpinningTriangle_App() : oGPUTestApp("GPU_SpinningTriangle", kIsDevMode, sSnapshotFrames) {}
+
+	bool Initialize() override
 	{
-		if (!Once)
-		{
-			oGPU_CLEAR_DESC CD;
-			CD.ClearColor[0] = oStd::AlmostBlack;
-			_pPrimaryRenderTarget->SetClearDesc(CD);
+		PrimaryRenderTarget->SetClearColor(oStd::AlmostBlack);
 
-			Once = true;
-		}
+		oGPUBuffer::DESC DCDesc;
+		DCDesc.StructByteSize = sizeof(oGPUTestConstants);
+		if (!Device->CreateBuffer("TestConstants", DCDesc, &TestConstants))
+			return false;
 
+		oGPUPipeline::DESC pld;
+		if (!oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE, &pld))
+			return false;
+
+		if (!Device->CreatePipeline(pld.DebugName, pld, &Pipeline))
+			return false;
+
+		if (!oGPUUtilCreateFirstTriangle(Device, pld.pElements, pld.NumElements, &Mesh))
+			return false;
+
+		return true;
+	}
+
+	bool Render() override
+	{
 		float4x4 V = oCreateLookAtLH(float3(0.0f, 0.0f, -2.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
 		oGPURenderTarget::DESC RTDesc;
-		_pPrimaryRenderTarget->GetDesc(&RTDesc);
+		PrimaryRenderTarget->GetDesc(&RTDesc);
 		float4x4 P = oCreatePerspectiveLH(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
 
 		// this is -1 because there was a code change that resulted in BeginFrame()
@@ -62,74 +73,28 @@ struct GPU_SpinningTriangle : public oTest
 
 		uint DrawID = 0;
 
-		CL->Begin();
+		CommandList->Begin();
 
-		oGPUCommitBuffer(CL, TestConstants, oGPUTestConstants(W, V, P, oStd::White));
+		oGPUCommitBuffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, oStd::White));
 
-		CL->Clear(_pPrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
-		CL->SetBlendState(oGPU_OPAQUE);
-		CL->SetDepthStencilState(oGPU_DEPTH_TEST_AND_WRITE);
-		CL->SetSurfaceState(oGPU_TWO_SIDED);
-		CL->SetBuffers(0, 1, &TestConstants);
-		CL->SetPipeline(Pipeline);
-		CL->SetRenderTarget(_pPrimaryRenderTarget);
-		oGPUUtilMeshDraw(CL, Mesh);
+		CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
+		CommandList->SetBlendState(oGPU_OPAQUE);
+		CommandList->SetDepthStencilState(oGPU_DEPTH_TEST_AND_WRITE);
+		CommandList->SetSurfaceState(oGPU_TWO_SIDED);
+		CommandList->SetBuffers(0, 1, &TestConstants);
+		CommandList->SetPipeline(Pipeline);
+		CommandList->SetRenderTarget(PrimaryRenderTarget);
+		oGPUUtilMeshDraw(CommandList, Mesh);
 
-		CL->End();
-		Device->EndFrame();
+		CommandList->End();
+
+		return true;
 	}
 
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
-	{
-		Once = false;
-
-		static const int sSnapshotFrames[] = { 0, 2, 4, 6 };
-		static const bool kIsDevMode = false;
-		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&GPU_SpinningTriangle::Render, this, oBIND1), "GPU_SpinningTriangle", sSnapshotFrames);
-
-		oStd::future<oRef<oImage>> Snapshots[oCOUNTOF(sSnapshotFrames)];
-		oRef<threadsafe oGPUWindow> Window;
-		oTESTB0(oGPUTestCreateWindow(Init, [&](threadsafe oGPUWindow* _pWindow)->bool
-		{
-			_pWindow->GetDevice(&Device);
-			oGPUCommandList::DESC cld;
-			cld.DrawOrder = 0;
-
-			if (!Device->CreateCommandList("CommandList", cld, &CL))
-				return false;
-
-			oGPUBuffer::DESC DCDesc;
-			DCDesc.StructByteSize = sizeof(oGPUTestConstants);
-			if (!Device->CreateBuffer("TestConstants", DCDesc, &TestConstants))
-				return false;
-
-			oGPUPipeline::DESC pld;
-			if (!oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE, &pld))
-				return false;
-
-			if (!Device->CreatePipeline(pld.DebugName, pld, &Pipeline))
-				return false;
-
-			if (!oGPUTestInitFirstTriangle(Device, "Triangle", pld.pElements, pld.NumElements, &Mesh))
-				return false;
-
-			return true;
-
-		}, Snapshots, &Window));
-
-		while (Window->IsOpen())
-		{
-			if (!kIsDevMode && oGPUTestSnapshotsAreReady(Snapshots))
-			{
-				Window->Close();
-				oTESTB0(oGPUTestSnapshots(this, Snapshots));
-			}
-
-			oSleep(16);
-		}
-
-		return SUCCESS;
-	}
+private:
+	oRef<oGPUPipeline> Pipeline;
+	oRef<oGPUUtilMesh> Mesh;
+	oRef<oGPUBuffer> TestConstants;
 };
 
-oTEST_REGISTER(GPU_SpinningTriangle);
+oDEFINE_GPU_TEST(GPU_SpinningTriangle)

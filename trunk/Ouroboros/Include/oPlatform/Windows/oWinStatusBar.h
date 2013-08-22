@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -23,26 +22,13 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Syntactic sugar on top of native win32 APIs. This is not
-// intended to abstract a cross-platform implementation, 
-// merely this just attempts to centralize, document, 
-// simplify and standardize the feature-creeped win32 API.
-// Specifically this header contains API for manipulating
-// StatusBar objects: cells of simple data that often appear
-// at the bottom of many applications.
-
-// NOTE1: StatusBars can contain only icons and text. Anything 
-// more complex is another control drawn over the status bar.
-
-// NOTE2: StatusBars are actually drawn in the client area, and
-// also require sync with the parent window's client area if it
-// is resized. Call oWinStatusBarSyncOnSize() from the parent's
-// WM_SIZE handler to keep the StatusBar positioned properly. 
-// Usually a StatusBar appears as a thicker bottom border, not a
-// control in the client area, so often usage of this will want
-// to shorten the dimensions of GetClientRect on the parent to
-// prevent typical client area draws from overdrawing the 
-// StatusBar.
+// Syntactic sugar on top of native win32 APIs. This is not intended to abstract 
+// a cross-platform implementation, merely this just attempts to centralize, 
+// document, simplify and standardize the feature-creeped win32 API. 
+// Specifically this header contains API for manipulating StatusBar objects: 
+// cells of simple data that often appear at the bottom of many applications.
+// NOTE: StatusBars can contain only icons and text. Anything more complex is 
+// another control drawn over the status bar.
 #pragma once
 #ifndef oWinStatusBar_h
 #define oWinStatusBar_h
@@ -51,25 +37,13 @@
 #include <oPlatform/Windows/oWindows.h>
 
 HWND oWinStatusBarCreate(HWND _hParent, HMENU _ID, int _MinHeight = oDEFAULT);
-
-// The StatusBar needs to be relocated as its parent window
-// changes, so call this in the parent's WM_SIZE handler.
-void oWinStatusBarSyncOnSize(HWND _hStatusBar);
-
-// Returns the height of the status bar if the specified window has one, or 
-// oInvalid if it does not. (0 indicates there is a status bar and it is hidden)
-int oWinStatusBarGetHeight(HWND _hParent);
-
-// Other oWin* API treats the status bar of a window as not part of the 
-// client area. Windows disagrees, so be able to truncate the true client 
-// area to not overlap the area handled by the status bar. This assumes
-// that there is only one StatusBar associated with the specified window.
-void oWinStatusBarAdjustClientRect(HWND _hParent, RECT* _pRect);
-
+bool oWinIsStatusBar(HWND _hStatusBar);
 RECT oWinStatusBarGetItemRect(HWND _hStatusBar, int _ItemIndex);
-
 void oWinStatusBarSetNumItems(HWND _hStatusBar, const int* _pItemWidths, size_t _NumItems);
 template<size_t size> void oWinStatusBarSetNumItems(HWND _hStatusBar, const int (&_pItemWidths)[size]) { oWinStatusBarSetNumItems(_hStatusBar, _pItemWidths, size); }
+
+// Returns the actual number of items
+int oWinStatusBarGetNumItems(HWND _hStatusBar, int* _pItemWidths = nullptr, size_t _MaxNumItemWidths = 0);
 
 void oWinStatusBarSetMinHeight(HWND _hStatusBar, int _MinHeight);
 

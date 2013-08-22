@@ -126,6 +126,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Include\oKinect\oGestureManager.h" />
     <ClInclude Include="..\..\Include\oKinect\oKinect.h" />
     <ClInclude Include="..\..\Include\oKinect\oKinectGDI.h" />
     <ClInclude Include="..\..\Include\oKinect\oKinectUtil.h" />
@@ -137,6 +138,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="oGestureManager.cpp" />
     <ClCompile Include="oKinect.cpp" />
     <ClCompile Include="oKinectGDI.cpp" />
     <ClCompile Include="oKinectManager.cpp" />

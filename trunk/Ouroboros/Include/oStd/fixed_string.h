@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -217,16 +216,11 @@ namespace oStd {
 	TSTR char* clean_path(STRT& _StrDestination, const char* _SourcePath, char _FileSeparator = '/', bool _ZeroBuffer = false) { return clean_path(_StrDestination, _StrDestination.capacity(), _SourcePath, _FileSeparator, _ZeroBuffer); }
 	TSTR char* relativize_path(STRT& _StrDestination, const char* _BasePath, const char* _FullPath) { return relativize_path(_StrDestination, _StrDestination.capacity(), _BasePath, _FullPath); }
 
+	TSTR int vsnprintf(oStd::STRT& _StrDestination, const char* _Format, va_list _Args) { return vsnprintf(_StrDestination, Capacity, _Format, _Args); }
+
 } // namespace oStd
 
-TSTR int vsnprintf(oStd::STRT& _StrDestination, const char* _Format, va_list _Args)
-{
-	#pragma warning(disable:4996) // secure CRT warning
-	return vsnprintf(_StrDestination, Capacity, _Format, _Args);
-	#pragma warning(default:4996)
-}
-
-TSTR int snprintf(oStd::STRT& _StrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); int l = vsnprintf(_StrDestination, _Format, args); va_end(args); return l; }
+TSTR int snprintf(oStd::STRT& _StrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); int l = oStd::vsnprintf(_StrDestination, _Format, args); va_end(args); return l; }
 
 #undef STRT
 #undef TSTR

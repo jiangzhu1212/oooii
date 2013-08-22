@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -55,7 +54,7 @@
 #define NOCOMM
 #define NOCRYPT
 #define NODEFERWINDOWPOS
-//#define NODRAWTEXT // used in oWindow.h
+//#define NODRAWTEXT // used in oGDI.h
 #define NOGDICAPMASKS
 #define NOHELP
 #define NOIMAGE
@@ -63,12 +62,12 @@
 #define NOKERNEL
 #define NOMCX
 #define NOMEMMGR
-//#define NOMENUS // we support creating menus in oWinWindowing.h
+//#define NOMENUS // we support creating menus in oWinWindowing.h/oGUIMenu.h
 #define NOMETAFILE
 #define NOOPENFILE
 #define NOPROFILER
 #define NOPROXYSTUB
-//#define NORASTEROPS // used in oWindow.h
+//#define NORASTEROPS // used in oGDI.h
 #define NORPC
 #define NOSCROLL
 //#define NOSERVICE // used below by services queries

@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -1351,13 +1350,13 @@ static void oD3D11InitSRVDesc(const oGPU_TEXTURE_DESC& _Desc, D3D11_RESOURCE_DIM
 	switch (_Type)
 	{
 		case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
-			_pSRVDesc->ViewDimension = (_Desc.ArraySize > 1) ? D3D11_SRV_DIMENSION_TEXTURE1DARRAY : D3D11_SRV_DIMENSION_TEXTURE1D;
+			_pSRVDesc->ViewDimension = oGPUTextureTypeIsArray(_Desc.Type) ? D3D11_SRV_DIMENSION_TEXTURE1DARRAY : D3D11_SRV_DIMENSION_TEXTURE1D;
 			break;
 		case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
 			if (oGPUTextureTypeIsCubeMap(_Desc.Type))
-				_pSRVDesc->ViewDimension = (_Desc.ArraySize > 6) ? D3D11_SRV_DIMENSION_TEXTURECUBEARRAY : D3D11_SRV_DIMENSION_TEXTURECUBE;
+				_pSRVDesc->ViewDimension = oGPUTextureTypeIsArray(_Desc.Type) ? D3D11_SRV_DIMENSION_TEXTURECUBEARRAY : D3D11_SRV_DIMENSION_TEXTURECUBE;
 			else
-				_pSRVDesc->ViewDimension = (_Desc.ArraySize > 1) ? D3D11_SRV_DIMENSION_TEXTURE2DARRAY : D3D11_SRV_DIMENSION_TEXTURE2D;
+				_pSRVDesc->ViewDimension = oGPUTextureTypeIsArray(_Desc.Type) ? D3D11_SRV_DIMENSION_TEXTURE2DARRAY : D3D11_SRV_DIMENSION_TEXTURE2D;
 			break;
 		case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
 			_pSRVDesc->ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;

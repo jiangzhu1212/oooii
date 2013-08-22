@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -122,7 +121,7 @@ public:
 			std::swap(Scheme, _That.Scheme);
 			std::swap(Authority, _That.Authority);
 			std::swap(Path, _That.Path);
-			std::swap(QueryQuery);
+			std::swap(Query, _That.Query);
 			std::swap(Fragment, _That.Fragment);
 			std::swap(Hash, _That.Hash);
 		}
@@ -153,22 +152,16 @@ public:
 			s += traits::scheme_str();
 		}
 
-		if (_Authority == remove_flag()) { reparse = true; }
-		else if (_Authority)
+		if (traits::is_file_scheme(s))
 		{
 			s += traits::double_sep_str();
-			s += _Authority;
-		}
 
-		else if (has_authority())
-		{
-			s += traits::double_sep_str();
-			s += convert(Authority);
-		}
-
-		else if (0 == traits::compare(s, "file:"))
-		{
-			s += traits::double_sep_str();
+			if (_Authority == remove_flag())
+				;
+			else if (_Authority)
+				s += _Authority;
+			else if (has_authority())
+				s += convert(Authority);
 
 			if (_Path)
 			{
@@ -177,6 +170,17 @@ public:
 			}
 			else if (has_path() && !path_traits_type::is_sep(*(URI.c_str() + Path.first)))
 				s += traits::sep_str();
+		}
+		else if (_Authority == remove_flag()) { reparse = true; }
+		else if (_Authority)
+		{
+			s += traits::double_sep_str();
+			s += _Authority;
+		}
+		else if (has_authority())
+		{
+			s += traits::double_sep_str();
+			s += convert(Authority);
 		}
 
 		if (_Path == remove_flag()) { reparse = true; }
@@ -223,7 +227,7 @@ public:
 		return *this;
 	}
 
-	basic_uri& replace_scheme(const char_type* _Schem = traits::empty_str()e) { return replace(_Scheme); }
+	basic_uri& replace_scheme(const char_type* _Scheme = traits::empty_str()) { return replace(_Scheme); }
 	basic_uri& replace_authority(const char_type* _Authority = traits::empty_str()) { return replace(nullptr, _Authority); }
 	basic_uri& replace_path(const char_type* _Path = traits::empty_str()) { return replace(nullptr, nullptr, _Path); }
 	basic_uri& replace_query(const char_type* _Query = traits::empty_str()) { return replace(nullptr, nullptr, nullptr, _Query); }
@@ -402,7 +406,7 @@ private:
 		if (matches.empty())
 			oTHROW(protocol_error, "invalid basic_uri");
 
-		// apply good practices from http://www.textuality.com/tag/basic_uri-comp-2.html
+		// apply good practices from http://www.textuality.com/tag/uri-comp-2.html
 		bool hadprefix = matches[2].matched || matches[4].matched;
 		bool hasprefix = hadprefix;
 		// Clean path of non-leading . and .. and scrub separators

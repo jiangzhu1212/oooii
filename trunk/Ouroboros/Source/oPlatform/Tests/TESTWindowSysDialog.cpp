@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -121,19 +120,19 @@ public:
 public:
 	oSystemProperties(bool* _pSuccess);
 
-	threadsafe oWindow* GetWindow() threadsafe { return Window; }
+	oWindow* GetWindow() { return Window; }
+	bool GetRunning() const { return Running; }
 
 	void ShowTab(int _TabIndex)
 	{
-		oStd::promise<bool> P;
-		oStd::future<bool> F = P.get_future();
-		Window->Dispatch(&oSystemProperties::WTShowTab, this, oBINDREF(P), ControlSet[ID_TAB], _TabIndex);
-		F.wait();
+		oASSERT(Window->IsWindowThread(), "wrong thread");
+		oWinControlSelectSubItem(ControlSet[ID_TAB], _TabIndex);
 	}
 
 private:
 	oWinControlSet ControlSet;
-	oRef<threadsafe oWindow> Window;
+	oRef<oWindow> Window;
+	bool Running;
 
 	bool Reload(HWND _hParent, const int2& _ClientSize);
 
@@ -151,13 +150,7 @@ private:
 		}
 	}
 
-	void WTShowTab(oStd::promise<bool>& _Success, HWND _hTab, int _TabIndex)
-	{
-		oWinControlSelectSubItem(_hTab, _TabIndex);
-		_Success.set_value(true);
-	}
-
-	bool EventHook(const oGUI_EVENT_DESC& _Event);
+	void EventHook(const oGUI_EVENT_DESC& _Event);
 	void ActionHook(const oGUI_ACTION_DESC& _Action);
 };
 
@@ -248,36 +241,40 @@ bool from_string(oSystemProperties::CONTROL* _pControl, const char* _StrSource)
 } // namespace oStd
 
 oSystemProperties::oSystemProperties(bool* _pSuccess)
+	: Running(true)
 {
 	*_pSuccess = false;
 
 	oWINDOW_INIT init;
-	init.WindowTitle = "TESTWindowSysDialog";
+	init.Title = "TESTWindowSysDialog";
 	init.EventHook = oBIND(&oSystemProperties::EventHook, this, oBIND1);
 	init.ActionHook = oBIND(&oSystemProperties::ActionHook, this, oBIND1);
-	init.WinDesc.Style = oGUI_WINDOW_DIALOG;
-	init.WinDesc.ClientSize = int2(410,436);
-	init.WinDesc.EnableMainLoopEvent = false;
+	init.Shape.Style = oGUI_WINDOW_DIALOG;
+	init.Shape.State = oGUI_WINDOW_RESTORED;
+	init.Shape.ClientSize = int2(410,436);
 
 	if (!oWindowCreate(init, &Window))
 		return;
 
 	{
-		oGUI_WINDOW hWnd = nullptr;
-		Window->QueryInterface(oGetGUID<oGUI_WINDOW>(), &hWnd);
-		RECT rClient;
-		GetClientRect((HWND)hWnd, &rClient);
-		oASSERT(oWinRectSize(rClient) == init.WinDesc.ClientSize, "Client size mismatch");
+		#if oENABLE_ASSERTS
+			HWND hWnd = (HWND)Window->GetNativeHandle();
+			RECT rClient;
+			GetClientRect(hWnd, &rClient);
+			oASSERT(oWinRectSize(rClient) == init.Shape.ClientSize, "Client size mismatch");
+		#endif
 
 		// Disable anti-aliasing since on Windows ClearType seems to be non-deterministic
 		Window->Dispatch([&]
 		{
+			HWND hWnd = (HWND)Window->GetNativeHandle();
+
 			oGUI_FONT_DESC fd;
-			HFONT hCurrent = oWinGetFont((HWND)hWnd);
+			HFONT hCurrent = oWinGetFont(hWnd);
 			oGDIGetFontDesc(hCurrent, &fd);
 			fd.AntiAliased = false;
 			HFONT hNew = oGDICreateFont(fd);
-			oWinSetFont((HWND)hWnd, hNew);
+			oWinSetFont(hWnd, hNew);
 		});
 	}
 
@@ -338,18 +335,16 @@ bool oSystemProperties::Reload(HWND _hParent, const int2& _ClientSize)
 	return true;
 }
 
-bool oSystemProperties::EventHook(const oGUI_EVENT_DESC& _Event)
+void oSystemProperties::EventHook(const oGUI_EVENT_DESC& _Event)
 {
-	switch (_Event.Event)
+	switch (_Event.Type)
 	{
 		case oGUI_CREATING:
 		{
-			oVERIFY(Reload((HWND)_Event.hWindow, _Event.ClientSize));
+			oVERIFY(Reload((HWND)_Event.hWindow, _Event.AsCreate().Shape.ClientSize));
 			break;
 		}
 	}
-
-	return true;
 }
 
 void oSystemProperties::ActionHook(const oGUI_ACTION_DESC& _Action)
@@ -360,8 +355,8 @@ void oSystemProperties::ActionHook(const oGUI_ACTION_DESC& _Action)
 		{
 			switch (_Action.DeviceID)
 			{
-				case ID_OK: Window->Close(); break;
-				case ID_CANCEL: Window->Close(); break;
+				case ID_OK: Running = false; break;
+				case ID_CANCEL: Running = false; break;
 				case ID_APPLY: oWinEnable((HWND)_Action.hWindow, false); break;
 				default: break;
 			}
@@ -388,15 +383,7 @@ void oSystemProperties::ActionHook(const oGUI_ACTION_DESC& _Action)
 		case oGUI_ACTION_HOTKEY:
 		{
 			if (_Action.DeviceID == ID_RELOAD_UI)
-			{
-				oGUI_WINDOW hWnd = nullptr;
-				Window->QueryInterface(oGetGUID<oGUI_WINDOW>(), &hWnd);
-				
-				oGUI_WINDOW_DESC WinDesc;
-				Window->GetDesc(&WinDesc);
-
-				oVERIFY(Reload((HWND)hWnd, WinDesc.ClientSize));
-			}
+				oVERIFY(Reload((HWND)Window->GetNativeHandle(), Window->GetClientSize()));
 			
 			break;
 		}
@@ -406,7 +393,7 @@ void oSystemProperties::ActionHook(const oGUI_ACTION_DESC& _Action)
 void oSystemProperties::Show(int _First, int _Last, bool _Show)
 {
 	for (int i = _First; i <= _Last; i++)
-		oWinSetState(ControlSet[i], _Show ? oGUI_WINDOW_RESTORED : oGUI_WINDOW_HIDDEN, false);
+		oWinControlSetVisible(ControlSet[i], _Show);
 }
 
 static void OverwriteVariableColors(oImage* _pImage)
@@ -430,18 +417,24 @@ struct PLATFORM_WindowSysDialog : public oTest
 		oSystemProperties test(&success);
 		oTESTB0(success);
 		
-		if (kInteractiveMode)
-			test.GetWindow()->WaitUntilClosed();
-		
+		do
+		{
+			test.GetWindow()->FlushMessages();
+
+		} while (kInteractiveMode && test.GetRunning());
+
 		if (!kInteractiveMode)
 		{
 			oStd::future<oRef<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
+			test.GetWindow()->FlushMessages();
+
 			oTESTFI(snapshot);
 
 			for (int i = 0; i < 5; i++)
 			{
 				test.ShowTab(i);
 				snapshot = test.GetWindow()->CreateSnapshot();
+				test.GetWindow()->FlushMessages();
 				
 				// special-case instance that returns 4 pixels off due to what seems to
 				// be indeterminate behavior in win32 rendering (clear type) that cannot

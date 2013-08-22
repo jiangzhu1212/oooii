@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -370,7 +369,7 @@ bool oAutoBuildCaptureRemaining::AttemptCapture(const char* _URI, const char** _
 	return true;
 }
 
-void OnNewVersion(oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI, oWebAppWindow* _pPlayerCloudWindow)
+void OnNewVersion(oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI, oWebAppWindow* _pAppWindow)
 {
 	static bool NewVersionFound = false;
 	switch (_Event)
@@ -387,7 +386,7 @@ void OnNewVersion(oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI, oWe
 						oTRACE("%s", oErrorGetLastString());
 
 					oTRACE("Exiting current version...");
-					_pPlayerCloudWindow->Close();
+					_pAppWindow->Close();
 				}
 				else
 					oTRACE("%s", oErrorGetLastString());
@@ -535,8 +534,11 @@ oMAINA()
 
 	int WorkCountUILast = -1;
 	uint LastP4CheckMS = 0;
-	while(Window->IsOpen())
+	Window->Show();
+	while(Window->IsRunning())
 	{
+		Window->FlushMessages();
+
 		// Update UI
 		int WorkCount = CLManager->GetCount();
 		if (WorkCountUILast != WorkCount)

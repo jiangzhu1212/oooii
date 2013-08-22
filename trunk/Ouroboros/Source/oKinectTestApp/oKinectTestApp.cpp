@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -106,14 +105,6 @@ oRTTI_ENUM_END_DESCRIPTION(oSIMPLE_INPUT)
 
 #endif
 
-void oWindowShow(threadsafe oWindow* _pWindow)
-{
-	oGUI_WINDOW_DESC* pDesc = nullptr;
-	_pWindow->Map(&pDesc);
-	pDesc->State = oGUI_WINDOW_RESTORED;
-	_pWindow->Unmap();
-}
-
 class oKinectTestApp
 {
 public:
@@ -121,10 +112,25 @@ public:
 
 	void Run()
 	{
-		oFOR(auto& w, KinectWindows)
+		// @oooii-tony: TODO: There was a big refactor of how oWindow worked, so 
+		// these shouldn't need to all be on the same thread anymore. Revisit moving
+		// each window to its own thread once all integration is done.
+		while (1)
 		{
-			if (w.Window)
-				w.Window->WaitUntilClosed();
+			int count = 0;
+			oFOR(auto& w, KinectWindows)
+			{
+				if (w.Window && w.Running)
+				{
+					w.Window->FlushMessages();
+					count++;
+
+					OnPaint((HWND)w.Window->GetNativeHandle(), w.Window->GetClientSize(), w.hFont, w.Kinect, w.ComboMessage);
+				}
+			}
+
+			if (!count)
+				break;
 		}
 	}
 
@@ -135,6 +141,7 @@ private:
 	{
 		oKinectWindow()
 			: Playing(true)
+			, Running(true)
 		{}
 
 		oKinectWindow(oKinectWindow&& _That) { operator=(std::move(_That)); }
@@ -154,7 +161,7 @@ private:
 			return *this;
 		}
 
-		oRef<threadsafe oWindow> Window;
+		oRef<oWindow> Window;
 		oRef<threadsafe oKinect> Kinect;
 		oRef<threadsafe oInputMapper> InputMapper;
 		
@@ -167,6 +174,7 @@ private:
 		head_messages_t ComboMessage; // for each tracked skeleton
 
 		bool Playing;
+		bool Running;
 
 		oGDIScopedObject<HFONT> hFont;
 	private:
@@ -187,7 +195,7 @@ private:
 	void UpdateStatusBar(threadsafe oWindow* _pWindow, const oGUI_BONE_DESC& _Skeleton, const char* _GestureName);
 	void UpdateStatusBar(threadsafe oWindow* _pWindow, const char* _GestureName);
 
-	bool MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index);
+	void MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index);
 	void MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index);
 
 	// @oooii-tony: Maybe each window should get its own air keyboard / input?
@@ -219,35 +227,25 @@ oKinectTestApp::oKinectTestApp()
 		oWINDOW_INIT init;
 
 		// hide while everything is initialized
-		init.WinDesc.hIcon = (oGUI_ICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APPICON), IMAGE_ICON, 0, 0, 0);
-		init.WinDesc.State = oGUI_WINDOW_HIDDEN;
-		init.WinDesc.Style = oGUI_WINDOW_SIZEABLE;
-		init.WinDesc.ClientSize = int2(640, 480);
-
-		init.WinDesc.StatusWidths[0] = kCoordSpace;
-		init.WinDesc.StatusWidths[1] = kCoordSpace;
-		init.WinDesc.StatusWidths[2] = kCoordSpace;
-
-		// Client area will mainly be a render target or some full-space occupying 
-		// control, so prevent a lot of flashing by nooping this window's erase.
-		init.WinDesc.DefaultEraseBackground = false;
-		init.WinDesc.AllowAltEnter = false;
-		init.WinDesc.EnableMainLoopEvent = true;
-		init.WinDesc.ShowMenu = false;
-		init.WinDesc.ShowStatusBar = true;
-		init.WinDesc.Debug = false;
-		init.WinDesc.AllowClientDragToMove = true;
+		init.hIcon = (oGUI_ICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APPICON), IMAGE_ICON, 0, 0, 0);
+		init.ClientDragToMove = true;
+		init.Shape.State = oGUI_WINDOW_HIDDEN;
+		init.Shape.Style = oGUI_WINDOW_SIZABLE_WITH_STATUSBAR;
+		init.Shape.ClientSize = int2(640, 480);
 
 		KinectWindows.resize(nKinects);
 		for (int i = 0; i < nKinects; i++)
 		{
 			auto& w = KinectWindows[i];
-			init.WindowTitle = "New Window";
+			init.Title = "New Window";
 
 			init.EventHook = oBIND(&oKinectTestApp::MainEventHook, this, oBIND1, i);
 			init.ActionHook = oBIND(&oKinectTestApp::MainActionHook, this, oBIND1, i);
 
 			oVERIFY(oWindowCreate(init, &w.Window));
+
+			int SectionWidths[4] = { kCoordSpace, kCoordSpace, kCoordSpace, oInvalid };
+			w.Window->SetNumStatusSections(SectionWidths);
 
 			oGUI_BONE_DESC s;
 			UpdateStatusBar(w.Window, s, "<Gesture>");
@@ -288,7 +286,7 @@ oKinectTestApp::oKinectTestApp()
 
 		oFOR(auto& w, KinectWindows)
 			if (w.Window)
-				oWindowShow(w.Window);
+				w.Window->Show();
 	}
 	
 	else if (nKinects == 0)
@@ -400,20 +398,23 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 	}
 }
 
-bool oKinectTestApp::MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index)
+void oKinectTestApp::MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index)
 {
 	if (!Ready)
-		return true;
+		return;
 
 	oKinectWindow& kw = KinectWindows[_Index];
 	if (!kw.Window)
-		return true;
+		return;
 
-	switch (_Event.Event)
+	switch (_Event.Type)
 	{
 		case oGUI_SIZED:
 		{
-			float2 Ratio = float2(_Event.ClientSize) / float2(_Event.ScreenSize);
+			int DIndex = kw.Window->GetDisplayIndex();
+			oDISPLAY_DESC dd;
+			oDisplayEnum(DIndex, &dd);
+			float2 Ratio = float2(_Event.AsShape().Shape.ClientSize) / float2(dd.Mode.Size);
 			float R = max(Ratio);
 			oGUI_FONT_DESC fd;
 			fd.PointSize = oInt(round(R * 35.0f));
@@ -421,31 +422,25 @@ bool oKinectTestApp::MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index)
 			break;
 		}
 
-		case oGUI_MAINLOOP:
-		{
-			OnPaint((HWND)_Event.hWindow, _Event.ClientSize, kw.hFont, kw.Kinect, kw.ComboMessage);
-			break;
-		}
-
 		case oGUI_INPUT_DEVICE_CHANGED:
 		{
-			const oGUI_INPUT_DEVICE_EVENT_DESC& e = static_cast<const oGUI_INPUT_DEVICE_EVENT_DESC&>(_Event);
-			oTRACE("%s %s status change, now: %s", oStd::as_string(e.Type), e.InstanceName.c_str(), oStd::as_string(e.Status));
+			oTRACE("%s %s status change, now: %s", oStd::as_string(_Event.Type), _Event.AsInputDevice().InstanceName, oStd::as_string(_Event.AsInputDevice().Status));
 			break;
 		}
 
 		case oGUI_TIMER:
 		{
-			const oGUI_TIMER_EVENT_DESC& e = static_cast<const oGUI_TIMER_EVENT_DESC&>(_Event);
-			kw.ComboMessage[e.Context].clear();
+			kw.ComboMessage[_Event.AsTimer().Context].clear();
 			break;
 		}
+
+		case oGUI_CLOSING:
+			kw.Running = false;
+			break;
 
 		default:
 			break;
 	}
-
-	return true;
 }
 
 void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
@@ -479,9 +474,6 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 
 		case oGUI_ACTION_CONTROL_ACTIVATED:
 		{
-			oGUI_WINDOW hWnd = nullptr;
-			kw.Window->QueryInterface(oGetGUID<oGUI_WINDOW>(), &hWnd);
-
 			#ifdef oUSE_MEDIA_INPUT
 				switch (_Action.ActionCode)
 				{

@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -378,7 +377,7 @@ public:
 		SelectOffscreen = std::move(oGDIScopedSelect(hDCOffscreen, hOffscreen));
 	}
 	oGDIScopedOffscreen(oGDIScopedOffscreen&& _That) { operator=(std::move(_That)); }
-	~oGDIScopedOffscreen() { BitBlt(hDCWin, rClient.left, rClient.top, oWinRectW(rClient), oWinRectH(rClient), hDCOffscreen, rClient.left, rClient.top, SRCCOPY); }
+	~oGDIScopedOffscreen() { BitBlt(hDCWin, 0, 0, oWinRectW(rClient), oWinRectH(rClient), hDCOffscreen, 0, 0, SRCCOPY); }
 
 	const oGDIScopedOffscreen& operator=(HWND _hWnd)
 	{

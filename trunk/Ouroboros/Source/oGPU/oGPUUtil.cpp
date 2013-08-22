@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -832,4 +831,77 @@ bool oGPUUtilMeshCreate(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_
 	Mesh->Reference();
 	*_ppMesh = Mesh;
 	return true;
+}
+
+bool oGPUUtilCreateFirstTriangle(oGPUDevice* _pDevice
+	, const oGPU_VERTEX_ELEMENT* _pElements
+	, uint _NumElements
+	, oGPUUtilMesh** _ppFirstTriangle)
+{
+	oGPUUtilMesh::DESC md;
+	md.NumIndices = 3;
+	md.NumVertices = 3;
+	md.NumRanges = 1;
+	md.LocalSpaceBounds = oAABoxf(oAABoxf::min_max
+		, float3(-0.8f, -0.7f, -0.01f)
+		, float3(0.8f, 0.7f, 0.01f));
+	md.NumVertexElements = _NumElements;
+
+	std::copy(_pElements, _pElements + _NumElements, md.VertexElements.begin());
+	oRef<oGPUUtilMesh> Mesh;
+	if (!oGPUUtilMeshCreate(_pDevice, "First Triangle", md, 1, &Mesh))
+		return false; // pass through error
+
+	oRef<oGPUCommandList> ICL;
+	_pDevice->GetImmediateCommandList(&ICL);
+
+	oSURFACE_CONST_MAPPED_SUBRESOURCE msr;
+	static const ushort Indices[] = { 0, 1, 2 };
+	msr.pData = (void*)Indices;
+	msr.RowPitch = sizeof(ushort);
+	msr.DepthPitch = sizeof(Indices);
+	ICL->Commit(Mesh->GetIndexBuffer(), 0, msr);
+
+	static const float3 Positions[] =
+	{
+		float3(-0.75f, -0.667f, 0.0f),
+		float3(0.0f, 0.667f, 0.0f),
+		float3(0.75f, -0.667f, 0.0f),
+	};
+
+	msr.pData = (void*)Positions;
+	msr.RowPitch = sizeof(float3);
+	msr.DepthPitch = sizeof(Positions);
+	ICL->Commit(Mesh->GetVertexBuffer(), 0, msr);
+
+	Mesh->Reference();
+	*_ppFirstTriangle = Mesh;
+	return true;
+}
+
+bool oGPUUtilCreateFirstCube(oGPUDevice* _pDevice
+	, const oGPU_VERTEX_ELEMENT* _pElements
+	, uint _NumElements
+	, oGPUUtilMesh** _ppFirstCube)
+{
+	oGeometry::LAYOUT layout;
+	layout.Positions = true;
+	layout.Texcoords = true;
+
+	oGeometryFactory::BOX_DESC bd;
+	bd.FaceType = oGeometry::FRONT_CCW;
+	bd.Bounds = oAABoxf(oAABoxf::min_max, float3(-1.0f), float3(1.0f));
+	bd.Divide = 1;
+	bd.Color = oStd::White;
+	bd.FlipTexcoordV = false;
+
+	oRef<oGeometryFactory> Factory;
+	if (!oGeometryFactoryCreate(&Factory))
+		return false;
+
+	oRef<oGeometry> geo;
+	if (!Factory->Create(bd, layout, &geo))
+		return false;
+
+	return oGPUUtilMeshCreate(_pDevice, "First Cube", _pElements, _NumElements, geo, _ppFirstCube);
 }

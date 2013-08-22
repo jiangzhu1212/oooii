@@ -23,20 +23,6 @@ at either antony.arciuolo@oooii.com or arciuolo@gmail.com.
 Enjoy!
 
 
-=== IMPORTANT NOTE ===
-
-The build process stamps the Perforce version into the executable. This is done 
-using a tool called verpatch.exe from here: 
-http://www.codeproject.com/Articles/37133/Simple-Version-Resource-Tool-for-Windows
-By design, it modifies the executable so anti-virus programs flag it as malicious.
-I do not believe it to be, but there's source from the above link to build your
-own to be sure. Put verpatch on your anti-virus's exceptions list to build 
-properly. Cross-system revision control hasn't been a priority, so if you are not 
-using Perforce, this will be a headache that can be ignored by either accepting
-the noop of the version stamping, or by removing the build step that does the
-stamping.
-
-
 === Directory Structure ===
 
 SDK is the development root of all OOOii development. Development is organized 

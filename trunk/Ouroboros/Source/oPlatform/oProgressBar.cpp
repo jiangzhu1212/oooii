@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -51,6 +50,11 @@ static const LONG InsetY = 5;
 
 static const int EVENT_COMPLETE = 0x1;
 static const int EVENT_STOPPED = 0x2;
+
+static bool oWinWake(HWND _hWnd)
+{
+	return !!PostMessage(_hWnd, WM_NULL, 0, 0);
+}
 
 static bool oSetDlgItemTextTruncated(HWND _hDlg, int _nIDDlgItem, LPCSTR _lpString)
 {

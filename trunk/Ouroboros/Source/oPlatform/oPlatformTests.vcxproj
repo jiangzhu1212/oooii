@@ -144,7 +144,6 @@
     <ClCompile Include="Tests\TESTIntersection.cpp" />
     <ClCompile Include="Tests\TESTMirroredArena.cpp" />
     <ClCompile Include="Tests\TESTPath.cpp" />
-    <ClCompile Include="Tests\TESTPCIEBandwidth.cpp" />
     <ClCompile Include="Tests\TESTProcessHeapTrivial.cpp" />
     <ClCompile Include="Tests\TESTSocketAsync.cpp" />
     <ClCompile Include="Tests\TESTSocketBlocking.cpp" />
@@ -158,68 +157,7 @@
     <ClCompile Include="Tests\TESTWinRegistry.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oCompute\all.h" />
-    <ClInclude Include="..\..\Include\oCompute\oComputeColor.h" />
-    <ClInclude Include="..\..\Include\oCompute\oComputeConstants.h" />
-    <ClInclude Include="..\..\Include\oCompute\oComputeFilter.h" />
-    <ClInclude Include="..\..\Include\oCompute\oComputeGBuffer.h" />
-    <ClInclude Include="..\..\Include\oCompute\oComputeMorton.h" />
-    <ClInclude Include="..\..\Include\oCompute\oComputePhong.h" />
-    <ClInclude Include="..\..\Include\oCompute\oComputeProcedural.h" />
-    <ClInclude Include="..\..\Include\oCompute\oComputeRaycast.h" />
-    <ClInclude Include="..\..\Include\oCompute\oComputeSimplex.h" />
-    <ClInclude Include="..\..\Include\oCompute\oComputeUtil.h" />
-    <ClInclude Include="..\..\Include\oCompute\oQuaternion.h" />
-    <ClInclude Include="..\..\Include\oGfx\oGfxDrawConstants.h" />
-    <ClInclude Include="..\..\Include\oGfx\oGfxHLSL.h" />
-    <ClInclude Include="..\..\Include\oGfx\oGfxLightConstants.h" />
-    <ClInclude Include="..\..\Include\oGfx\oGfxMaterialConstants.h" />
-    <ClInclude Include="..\..\Include\oGfx\oGfxMosaic.h" />
-    <ClInclude Include="..\..\Include\oGfx\oGfxPipelines.h" />
-    <ClInclude Include="..\..\Include\oGfx\oGfxVertexElements.h" />
-    <ClInclude Include="..\..\Include\oGfx\oGfxViewConstants.h" />
-    <ClInclude Include="..\..\Include\oHLSL\all.h" />
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLAtomics.h" />
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLBit.h" />
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLMacros.h" />
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLMath.h" />
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLStructs.h" />
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLSwizzlesOff.h" />
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLSwizzlesOn.h" />
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLTypes.h" />
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLTypesInternal.h" />
     <ClInclude Include="pch.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <FXC Include="Tests\oHLSLPCIEBandwidthPS4.sh">
-      <FileType>Document</FileType>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include;%(Includes)</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include;%(Includes)</Includes>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_4_0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_4_0</ShaderModel>
-    </FXC>
-    <FXC Include="Tests\oHLSLPCIEBandwidthVS4.sh">
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">oHLSL</Defines>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_4_0</ShaderModel>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">oHLSL</Defines>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_4_0</ShaderModel>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">oHLSL</Defines>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_4_0</ShaderModel>
-      <Defines Condition="'$(Configuration)|$(Platform)'=='Release|x64'">oHLSL</Defines>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_4_0</ShaderModel>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OuroborosSuiteDir)Include</Includes>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OuroborosSuiteDir)Include</Includes>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OuroborosSuiteDir)Include</Includes>
-      <Includes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OuroborosSuiteDir)Include</Includes>
-	</FXC>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

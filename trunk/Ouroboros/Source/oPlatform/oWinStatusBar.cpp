@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -25,6 +24,7 @@
  **************************************************************************/
 #include <oPlatform/Windows/oWinStatusBar.h>
 #include <oPlatform/Windows/oWinRect.h>
+#include <oPlatform/Windows/oWinWindowing.h>
 
 HWND oWinStatusBarCreate(HWND _hParent, HMENU _ID, int _MinHeight)
 {
@@ -48,38 +48,13 @@ HWND oWinStatusBarCreate(HWND _hParent, HMENU _ID, int _MinHeight)
 	return hWnd;
 }
 
-int oWinStatusBarGetHeight(HWND _hParent)
+bool oWinIsStatusBar(HWND _hStatusBar)
 {
-	int h = oInvalid;
-	HWND hStatusBar = FindWindowEx(_hParent, nullptr, STATUSCLASSNAME, nullptr);
-	if (hStatusBar)
-	{
-		if (::IsWindowVisible(hStatusBar))
-		{
-			RECT rStatusBar;
-			GetClientRect(hStatusBar, &rStatusBar);
-			h = oWinRectH(rStatusBar);
-		}
-		else
-			h = 0;
-	}
-	return h;
-}
+	oStd::sstring ClassName;
+	if (!GetClassName(_hStatusBar, ClassName.c_str(), oInt(ClassName.capacity())))
+		return false;
 
-void oWinStatusBarAdjustClientRect(HWND _hParent, RECT* _pRect)
-{
-	HWND hStatusBar = FindWindowEx(_hParent, nullptr, STATUSCLASSNAME, nullptr);
-	if (hStatusBar)
-	{
-		RECT rStatusBar;
-		GetClientRect(hStatusBar, &rStatusBar);
-		_pRect->bottom += oWinRectH(rStatusBar);
-	}
-}
-
-void oWinStatusBarSyncOnSize(HWND _hStatusBar)
-{
-	SendMessage(_hStatusBar, WM_SIZE, 0, 0);
+	return !strcmp(ClassName, STATUSCLASSNAME);
 }
 
 void oWinStatusBarSetMinHeight(HWND _hStatusBar, int _MinHeight)
@@ -105,6 +80,11 @@ void oWinStatusBarSetNumItems(HWND _hStatusBar, const int* _pItemWidths, size_t 
 	}
 
 	oVB(SendMessage(_hStatusBar, SB_SETPARTS, (WPARAM)_NumItems, (LPARAM)CoordOfRight.data()));
+}
+
+int oWinStatusBarGetNumItems(HWND _hStatusBar, int* _pItemWidths, size_t _MaxNumItemWidths)
+{
+	return (int)SendMessage(_hStatusBar, SB_GETPARTS, (WPARAM)(_MaxNumItemWidths == 0 ? INT_MAX : _MaxNumItemWidths), (LPARAM)_pItemWidths);
 }
 
 RECT oWinStatusBarGetItemRect(HWND _hStatusBar, int _ItemIndex)

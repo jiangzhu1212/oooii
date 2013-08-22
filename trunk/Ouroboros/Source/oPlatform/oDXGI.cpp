@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -36,9 +35,6 @@
 
 #if oDXVER >= oDXVER_10
 
-// {CF4B314B-E3BC-4DCF-BDE7-86040A0ED295}
-static const GUID oWKPDID_PreFullscreenMode = { 0xcf4b314b, 0xe3bc, 0x4dcf, { 0xbd, 0xe7, 0x86, 0x4, 0xa, 0xe, 0xd2, 0x95 } };
-
 const oGUID& oGetGUID(threadsafe const IDXGISwapChain* threadsafe const*) { return (const oGUID&)__uuidof(IDXGISwapChain); }
 
 oSURFACE_FORMAT oDXGIToSurfaceFormat(DXGI_FORMAT _Format)
@@ -70,7 +66,7 @@ bool oDXGICreateFactory(IDXGIFactory** _ppFactory)
 	return true;
 }
 
-bool oDXGICreateSwapChain(IUnknown* _pDevice, bool _Fullscreen, UINT _Width, UINT _Height, DXGI_FORMAT _Format, UINT RefreshRateN, UINT RefreshRateD, HWND _hWnd, bool _EnableGDICompatibility, IDXGISwapChain** _ppSwapChain)
+bool oDXGICreateSwapChain(IUnknown* _pDevice, bool _Fullscreen, UINT _Width, UINT _Height, bool _AutochangeMonitorResolution, DXGI_FORMAT _Format, UINT RefreshRateN, UINT RefreshRateD, HWND _hWnd, bool _EnableGDICompatibility, IDXGISwapChain** _ppSwapChain)
 {
 	if (!_pDevice)
 		return oErrorSetLast(std::errc::invalid_argument);
@@ -91,24 +87,13 @@ bool oDXGICreateSwapChain(IUnknown* _pDevice, bool _Fullscreen, UINT _Width, UIN
 	d.Windowed = !_Fullscreen;
 	d.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	
-	d.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	d.Flags = 0;
+	
+	if (_AutochangeMonitorResolution)
+		d.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 	if (_EnableGDICompatibility)
-	{
-		#if 1
-			// @oooii-tony: 8/31/2011, DX Jun2010 SDK: If DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE 
-			// is specified, DXGISwapChain can cause a DXGI_ERROR_DEVICE_REMOVED when 
-			// going from fullscreen to windowed, basically indicating a crash in the driver.
-
-			// @oooii-tony: 2/15/2012, DX Jun2010 SDK: This seems not to crash anymore -
-			// so it was probably a driver bug. Reenable this for now to play around again
-			// with GDI interop to prevent flicker.
-
-			d.Flags |= DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
-		#else
-			oTRACE("GDI compatibility requested, but the code has been disabled");
-		#endif
-	}
+		d.Flags |= DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
 	
 	oRef<IDXGIDevice> D3DDevice;
 	oVB_RETURN2(_pDevice->QueryInterface(&D3DDevice));
@@ -120,9 +105,6 @@ bool oDXGICreateSwapChain(IUnknown* _pDevice, bool _Fullscreen, UINT _Width, UIN
 	oVB_RETURN2(Adapter->GetParent(__uuidof(IDXGIFactory), (void**)&Factory));
 	oVB_RETURN2(Factory->CreateSwapChain(_pDevice, &d, _ppSwapChain));
 	
-	// Auto Alt-Enter is nice, but there are threading issues to be concerned 
-	// about, so we need to control this explicitly in applications.
-
 	// DXGI_MWA_NO_ALT_ENTER seems bugged from comments at bottom of this link:
 	// http://stackoverflow.com/questions/2353178/disable-alt-enter-in-a-direct3d-directx-application
 	oVB_RETURN2(Factory->MakeWindowAssociation(_hWnd, DXGI_MWA_NO_WINDOW_CHANGES|DXGI_MWA_NO_ALT_ENTER));
@@ -130,24 +112,12 @@ bool oDXGICreateSwapChain(IUnknown* _pDevice, bool _Fullscreen, UINT _Width, UIN
 	return true;
 }
 
-static float oDXGIGetRefreshRate(const DXGI_MODE_DESC& _Mode)
-{
-	return _Mode.RefreshRate.Numerator / static_cast<float>(_Mode.RefreshRate.Denominator);
-}
-
-static DXGI_RATIONAL oDXGIGetRefreshRate(int _RefreshRate)
-{
-	DXGI_RATIONAL r;
-	r.Numerator = _RefreshRate;
-	r.Denominator = 1;
-	return r;
-}
-
 bool oDXGISwapChainResizeBuffers(IDXGISwapChain* _pSwapChain, const int2& _NewSize, HWND _hErrorMsgParent)
 {
 	DXGI_SWAP_CHAIN_DESC d;
 	_pSwapChain->GetDesc(&d);
 	HRESULT HR = _pSwapChain->ResizeBuffers(d.BufferCount, _NewSize.x, _NewSize.y, d.BufferDesc.Format, d.Flags);
+	_pSwapChain->GetDesc(&d);
 	if (HR == DXGI_ERROR_INVALID_CALL)
 	{
 		oErrorSetLast(std::errc::permission_denied, "Cannot resize DXGISwapChain buffers because there still are dependent resources in client code. Ensure all dependent resources are freed before resize occurs. The application will be terminated now.");
@@ -158,133 +128,6 @@ bool oDXGISwapChainResizeBuffers(IDXGISwapChain* _pSwapChain, const int2& _NewSi
 	}
 	else if (FAILED(HR))
 		return oWinSetLastError(HR);
-	return true;
-}
-
-bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, const oDXGI_FULLSCREEN_STATE& _State)
-{
-	// This function is overly complex for a few reasons:
-	// DXGI can error out and/or deadlock if not careful, so this function puts on the training wheels
-	// DXGI API is insufficient to get max HW performance. This double-sets render targets to ensure
-	// HW fullscreen perf is optimal
-	// Restoring windowed mode uses registry settings, not last settings, so support that as well.
-
-	if (!_pSwapChain)
-		return oErrorSetLast(std::errc::invalid_argument);
-
-	// Confirm we're on the same thread as the message pump
-	// http://msdn.microsoft.com/en-us/library/ee417025(v=vs.85).aspx
-	// "Multithreading and DXGI"
-	DXGI_SWAP_CHAIN_DESC SCDesc;
-	_pSwapChain->GetDesc(&SCDesc);
-
-	if (GetCurrentThreadId() != GetWindowThreadProcessId(SCDesc.OutputWindow, nullptr))
-		return oErrorSetLast(std::errc::operation_not_permitted, "oDXGISetFullscreenState called from thread %d for hwnd %x pumping messages on thread %d", GetCurrentThreadId(), SCDesc.OutputWindow, GetWindowThreadProcessId(SCDesc.OutputWindow, nullptr));
-
-	// Go fullscreen on whatever output is the current one (client code should position window on 
-	// output for fullscreen first).
-	oRef<IDXGIOutput> Output;
-	HRESULT HR = _pSwapChain->GetContainingOutput(&Output);
-	if (HR == DXGI_ERROR_UNSUPPORTED)
-	{
-		RECT r;
-		oVB(GetWindowRect(SCDesc.OutputWindow, &r));
-		oRef<IDXGIFactory1> Factory;
-		oVERIFY(oDXGIGetFactory(_pSwapChain, &Factory));
-		oRef<IDXGIOutput> Output;
-		oVERIFY(oDXGIFindOutput(Factory, oWinRectPosition(r), &Output));
-		oRef<IDXGIAdapter1> Adapter;
-		oVERIFY(oDXGIGetAdapter(Output, &Adapter));
-		DXGI_ADAPTER_DESC1 adesc;
-		Adapter->GetDesc1(&adesc);
-
-		if (FAILED(_pSwapChain->GetContainingOutput(&Output)))
-		{
-			oStd::lstring WinTitle;
-			oWinGetText(WinTitle.c_str(), WinTitle.capacity(), SCDesc.OutputWindow);
-			oErrorSetLast(std::errc::permission_denied, "SetFullscreenState failed on adapter \"%s\" because the IDXGISwapChain created with the associated window entitled \"%s\" was created with another adapter. Cross-adapter exclusive mode is not currently (DXGI 1.1) supported.", oStd::sstring(adesc.Description), WinTitle);
-		}
-		else 
-			oErrorSetLast(std::errc::invalid_argument, "SetFullscreenState failed though the attempt was on the same adapters with which the swapchain was created");
-
-		return false;
-	}
-
-	else oVB_RETURN2(HR);
-
-	DXGI_OUTPUT_DESC ODesc;
-	Output->GetDesc(&ODesc);
-
-	if (_State.Fullscreen && _State.RememberCurrentSettings)
-	{
-		oDISPLAY_MODE mode;
-		mode.Size = oWinRectSize(ODesc.DesktopCoordinates);
-		mode.RefreshRate = static_cast<int>(oDXGIGetRefreshRate(SCDesc.BufferDesc));
-		oVB_RETURN2(_pSwapChain->SetPrivateData(oWKPDID_PreFullscreenMode, sizeof(mode), &mode));
-	}
-
-	SCDesc.BufferDesc.Width = _State.Size.x == oDEFAULT ? oWinRectW(ODesc.DesktopCoordinates) : _State.Size.x;
-	SCDesc.BufferDesc.Height = _State.Size.y == oDEFAULT ? oWinRectH(ODesc.DesktopCoordinates) : _State.Size.y;
-
-	if (_State.RefreshRate == oDEFAULT)
-		SCDesc.BufferDesc.RefreshRate = oDXGIGetRefreshRate(0);
-	else
-		SCDesc.BufferDesc.RefreshRate = oDXGIGetRefreshRate(_State.RefreshRate);
-
-	DXGI_MODE_DESC closestMatch;
-	oV(Output->FindClosestMatchingMode(&SCDesc.BufferDesc, &closestMatch, nullptr));
-
-	if (closestMatch.Width != SCDesc.BufferDesc.Width || closestMatch.Height != SCDesc.BufferDesc.Height || oStd::equal(oDXGIGetRefreshRate(SCDesc.BufferDesc), oDXGIGetRefreshRate(closestMatch)))
-		oTRACE("SetFullscreenState initiated by HWND 0x%x asked for %dx%d@%dHz and will instead set the closest match %dx%d@%.02fHz", SCDesc.OutputWindow, SCDesc.BufferDesc.Width, SCDesc.BufferDesc.Height, SCDesc.BufferDesc.RefreshRate.Numerator, closestMatch.Width, closestMatch.Height, oDXGIGetRefreshRate(closestMatch));
-
-	// Move to 0,0 on the screen because resize targets will resize the window,
-	// in which case the evaluation of which output the window is on will change.
-	oWinSetPosition(SCDesc.OutputWindow, int2(ODesc.DesktopCoordinates.left, ODesc.DesktopCoordinates.top));
-
-	if (_State.Fullscreen)
-		oVB_RETURN2(_pSwapChain->ResizeTarget(&closestMatch));
-
-	oVB_RETURN2(_pSwapChain->SetFullscreenState(_State.Fullscreen, nullptr));
-	// Ensure the refresh rate is matched against the fullscreen mode
-	// http://msdn.microsoft.com/en-us/library/ee417025(v=vs.85).aspx
-	// "Full-Screen Issues"
-	if (_State.Fullscreen)
-	{
-		_pSwapChain->GetDesc(&SCDesc);
-		SCDesc.BufferDesc.RefreshRate.Numerator = 0;
-		SCDesc.BufferDesc.RefreshRate.Denominator = 0;
-		oVB_RETURN2(_pSwapChain->ResizeTarget(&SCDesc.BufferDesc));
-	}
-
-	else
-	{
-		int DispIndex = oDXGIFindDisplayIndex(Output);
-
-		if (_State.RememberCurrentSettings)
-		{
-			// Restore prior resolution (not the one necessarily saved in the registry)
-			oDISPLAY_MODE mode;
-			UINT size;
-			oVB_RETURN2(_pSwapChain->GetPrivateData(oWKPDID_PreFullscreenMode, &size, &mode));
-			if (size != sizeof(oDISPLAY_MODE))
-				return oErrorSetLast(std::errc::invalid_argument, "Failed to restore prior display state: size retrieved (%u) does not match size requested (%u)", size, sizeof(oDISPLAY_MODE));
-
-			#ifdef _DEBUG
-				oStd::sstring rate;
-				if (mode.RefreshRate == oDEFAULT)
-					oPrintf(rate, "defaultHz");
-				else
-					oPrintf(rate, "%dHz", mode.RefreshRate);
-				oTRACE("Restoring prior display mode of %dx%d@%s", mode.Size.x, mode.Size.y, rate.c_str());
-			#endif
-
-			oVERIFY(oDisplaySetMode(DispIndex, mode));
-		}
-
-		else
-			oVERIFY(oDisplayResetMode(DispIndex));
-	}
-
 	return true;
 }
 

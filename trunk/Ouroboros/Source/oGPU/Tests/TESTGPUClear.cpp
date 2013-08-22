@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -30,48 +29,25 @@
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/Windows/oWinRect.h>
 
-struct GPU_Clear : public oTest
+#include <oPlatform/oWindow.h>
+
+static const int sSnapshotFrames[] = { 0, 1 };
+static const bool kIsDevMode = false;
+
+class GPU_Clear_App : public oGPUTestApp
 {
-	void Render(oGPURenderTarget* _pPrimaryRenderTarget)
-	{
-		oRef<oGPUDevice> Device;
-		_pPrimaryRenderTarget->GetDevice(&Device);
+public:
+	GPU_Clear_App() : oGPUTestApp("GPU_Clear", kIsDevMode, sSnapshotFrames) {}
 
+	bool Render() override
+	{
 		static oStd::color sClearColors[] = { oStd::OOOiiGreen, oStd::White };
-
-		oRef<oGPUCommandList> ICL;
-		Device->GetImmediateCommandList(&ICL);
-
-		oGPU_CLEAR_DESC CD;
-		CD.ClearColor[0] = sClearColors[Device->GetFrameID() % oCOUNTOF(sClearColors)];
-		_pPrimaryRenderTarget->SetClearDesc(CD);
-
-		ICL->Clear(_pPrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
-	}
-
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
-	{
-		static const int sSnapshotFrames[] = { 0, 1 };
-		static const bool kIsDevMode = false;
-		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&GPU_Clear::Render, this, oBIND1), "GPU_Clear", sSnapshotFrames);
-
-		oStd::future<oRef<oImage>> Snapshots[oCOUNTOF(sSnapshotFrames)];
-		oRef<threadsafe oGPUWindow> Window;
-		oTESTB0(oGPUTestCreateWindow(Init, oGPUTestPrerenderInitNoop, Snapshots, &Window));
-
-		while (Window->IsOpen())
-		{
-			if (!kIsDevMode && oGPUTestSnapshotsAreReady(Snapshots))
-			{
-				Window->Close();
-				oTESTB0(oGPUTestSnapshots(this, Snapshots));
-			}
-
-			oSleep(16);
-		}
-
-		return SUCCESS;
+		PrimaryRenderTarget->SetClearColor(sClearColors[Device->GetFrameID() % oCOUNTOF(sClearColors)]);
+		CommandList->Begin();
+		CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
+		CommandList->End();
+		return true;
 	}
 };
 
-oTEST_REGISTER(GPU_Clear);
+oDEFINE_GPU_TEST(GPU_Clear)

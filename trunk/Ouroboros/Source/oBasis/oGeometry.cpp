@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -1968,7 +1967,7 @@ bool oGeometryFactory_Impl::CreateMosaic(const MOSAIC_DESC& _Desc, const oGeomet
 	pGeometry->Reserve(6 * LocalDesc.NumRectangles, 4 * LocalDesc.NumRectangles);
 
 	float2 SourceSize = oCastAsFloat(LocalDesc.SourceSize);
-	float2 SourcePaddedSize = oCastAsFloat(LocalDesc.SourceTexelSpace.size());
+	float2 SourcePaddedSize = oCastAsFloat(LocalDesc.SourceImageSpace.size());
 	float2 DestinationSize = oCastAsFloat(LocalDesc.DestinationSize);
 
 	for (int i = 0; i < LocalDesc.NumRectangles; i++)
@@ -1998,8 +1997,8 @@ bool oGeometryFactory_Impl::CreateMosaic(const MOSAIC_DESC& _Desc, const oGeomet
 		if (_Layout.Texcoords)
 		{
 			// Now define texture coords in texel space [0,1]
-			float2 SMin = oCastAsFloat(LocalDesc.pSourceRects[i].Min-LocalDesc.SourceTexelSpace.Min) / SourcePaddedSize;
-			float2 SMax = oCastAsFloat(LocalDesc.pSourceRects[i].Max-LocalDesc.SourceTexelSpace.Min) / SourcePaddedSize;
+			float2 SMin = oCastAsFloat(LocalDesc.pSourceRects[i].Min-LocalDesc.SourceImageSpace.Min) / SourcePaddedSize;
+			float2 SMax = oCastAsFloat(LocalDesc.pSourceRects[i].Max-LocalDesc.SourceImageSpace.Min) / SourcePaddedSize;
 
 			if (LocalDesc.FlipTexcoordV) //We are following Directx standards by default
 				std::swap(SMin.y, SMax.y);

@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -29,21 +28,22 @@
 #include <oBasis/oLockThis.h>
 #include <oBasis/oSurface.h>
 #include <oPlatform/Windows/oDXGI.h>
+#include <oPlatform/Windows/oWinRect.h>
+#include <oPlatform/Windows/oWinWindowing.h>
 
-bool oD3D11CreateRenderTarget(oGPUDevice* _pDevice, const char* _Name, threadsafe oGPUWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, oGPURenderTarget** _ppRenderTarget)
+bool oD3D11CreateRenderTarget(oGPUDevice* _pDevice, const char* _Name, IDXGISwapChain* _pSwapChain, oSURFACE_FORMAT _DepthStencilFormat, oGPURenderTarget** _ppRenderTarget)
 {
 	oGPU_CREATE_CHECK_NAME();
-	if (!_pWindow)
-		return oErrorSetLast(std::errc::invalid_argument, "A window to associate with this new render target must be specified");
+	if (!_pSwapChain)
+		return oErrorSetLast(std::errc::invalid_argument, "A valid swap chain must be specified");
 
 	bool success = false;
-	oCONSTRUCT(_ppRenderTarget, oD3D11RenderTarget(_pDevice, _pWindow, _DepthStencilFormat, _Name, &success)); \
+	oCONSTRUCT(_ppRenderTarget, oD3D11RenderTarget(_pDevice, _pSwapChain, _DepthStencilFormat, _Name, &success)); \
 	return success;
 }
 
 oDEFINE_GPUDEVICE_CREATE(oD3D11, RenderTarget);
 oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget)
-	, Window(nullptr)
 	, Desc(_Desc)
 {
 	*_pSuccess = false;
@@ -63,13 +63,37 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget)
 	*_pSuccess = true;
 }
 
-oD3D11RenderTarget::oD3D11RenderTarget(oGPUDevice* _pDevice, threadsafe oGPUWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, const char* _Name, bool* _pSuccess)
+oD3D11RenderTarget::oD3D11RenderTarget(oGPUDevice* _pDevice, IDXGISwapChain* _pSwapChain, oSURFACE_FORMAT _DepthStencilFormat, const char* _Name, bool* _pSuccess)
 	: oGPUDeviceChildMixin(_pDevice, _Name)
-	, Window(_pWindow)
+	, SwapChain(_pSwapChain)
 {
+	*_pSuccess = false;
+
+	DXGI_SWAP_CHAIN_DESC SCD;
+	SwapChain->GetDesc(&SCD);
+
+	if (oWinIsRenderTarget(SCD.OutputWindow))
+	{
+		oErrorSetLast(std::errc::invalid_argument, "The specified window is already associated with a render target and cannot be reassociated.");
+		return;
+	}
+	
+	oWinSetIsRenderTarget(SCD.OutputWindow);
 	Desc.DepthStencilFormat = _DepthStencilFormat;
-	ResizeLock();
-	*_pSuccess = ResizeUnlock();
+	Desc.Format[0] = oDXGIToSurfaceFormat(SCD.BufferDesc.Format);
+	Resize(int3(SCD.BufferDesc.Width, SCD.BufferDesc.Height, 1));
+	*_pSuccess = true;
+}
+
+oD3D11RenderTarget::~oD3D11RenderTarget()
+{
+	if (SwapChain)
+	{
+		static_cast<oD3D11Device*>(Device.c_ptr())->RTReleaseSwapChain();
+		DXGI_SWAP_CHAIN_DESC SCD;
+		SwapChain->GetDesc(&SCD);
+		oWinSetIsRenderTarget(SCD.OutputWindow, false);
+	}
 }
 
 bool oD3D11RenderTarget::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe
@@ -77,10 +101,10 @@ bool oD3D11RenderTarget::QueryInterface(const oGUID& _InterfaceID, threadsafe vo
 	if (MIXINQueryInterface(_InterfaceID, _ppInterface))
 		return true;
 
-	else if (_InterfaceID == (const oGUID&)__uuidof(IDXGISwapChain))
+	else if (_InterfaceID == (const oGUID&)__uuidof(IDXGISwapChain) && SwapChain)
 	{
-		if (Window && Window->QueryInterface((IDXGISwapChain**)_ppInterface))
-			return true;
+		SwapChain->AddRef();
+		*_ppInterface = SwapChain;
 	}
 
 	return !!*_ppInterface;
@@ -91,13 +115,10 @@ void oD3D11RenderTarget::GetDesc(DESC* _pDesc) const threadsafe
 	auto pThis = oLockSharedThis(DescMutex);
 	*_pDesc = pThis->Desc;
 
-	if (Window)
+	if (SwapChain)
 	{
-		oRef<IDXGISwapChain> DXGISwapChain;
-		oVERIFY(pThis->Window->QueryInterface((const oGUID&)__uuidof(IDXGISwapChain), &DXGISwapChain));
-
 		DXGI_SWAP_CHAIN_DESC d;
-		oV(DXGISwapChain->GetDesc(&d));
+		oV(pThis->SwapChain->GetDesc(&d));
 		_pDesc->Dimensions = int3(oInt(d.BufferDesc.Width), oInt(d.BufferDesc.Height), 1);
 		_pDesc->Format[0] = oDXGIToSurfaceFormat(d.BufferDesc.Format);
 
@@ -118,47 +139,12 @@ void oD3D11RenderTarget::SetClearDesc(const oGPU_CLEAR_DESC& _ClearDesc) threads
 	oLockThis(DescMutex)->Desc.ClearDesc = _ClearDesc;
 }
 
-void oD3D11RenderTarget::ResizeLock()
+void oD3D11RenderTarget::ClearResources()
 {
-	DescMutex.lock();
 	RTVs.fill(nullptr);
 	Textures.fill(nullptr);
-}
-
-bool oD3D11RenderTarget::ResizeUnlock()
-{
-	oStd::finally OSEUnlock([&] { DescMutex.unlock(); });
-
-	oRef<IDXGISwapChain> SwapChain;
-	if (!Window->QueryInterface(&SwapChain))
-		return oErrorSetLast(std::errc::function_not_supported, "Could not find an IDXGISwapChain in the specified oGPUWindow");
-
-	oRef<ID3D11Texture2D> SwapChainTexture;
-	oV(SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&SwapChainTexture));
-	bool textureSuccess = false;
-	Textures[0] = oRef<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, SwapChainTexture), false);
-	if (!textureSuccess)
-		return false; // pass through error
-
-	if (!oD3D11CreateRenderTargetView(GetName(), SwapChainTexture, (ID3D11View**)&RTVs[0]))
-		return false; // pass through error
-
-	Desc.ArraySize = 1;
-	Desc.MRTCount = 1;
-	Desc.Type = oGPU_TEXTURE_2D_RENDER_TARGET;
-	Desc.ClearDesc = oGPU_CLEAR_DESC(); // still settable by client code
-	// Desc.DepthStencilFormat; // set in ctor and recycled through recreates
-
-	DXGI_SWAP_CHAIN_DESC SCDesc;
-	SwapChain->GetDesc(&SCDesc);
-	int2 Size = int2(oInt(SCDesc.BufferDesc.Width), oInt(SCDesc.BufferDesc.Height));
-	RecreateDepthBuffer(Size);
-
-	Desc.Dimensions = int3(Size, 1);
-	Desc.Format.fill(oSURFACE_UNKNOWN);
-	Desc.Format[0] = oDXGIToSurfaceFormat(SCDesc.BufferDesc.Format);
-
-	return true;
+	DepthStencilTexture = nullptr;
+	DSV = nullptr;
 }
 
 void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
@@ -187,63 +173,85 @@ void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
 
 void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 {
-	if (Window)
+	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(DescMutex);
+
+	int3 New = _NewDimensions;
+	if (SwapChain)
 	{
-		oASSERT(false, "What should happen here? If we use the window to resize this object will be destroyed. What if this is currently fullscreen");
+		BOOL IsFullScreen = FALSE;
+		oRef<IDXGIOutput> Output;
+		SwapChain->GetFullscreenState(&IsFullScreen, &Output);
+		if (IsFullScreen)
+		{
+			DXGI_OUTPUT_DESC OD;
+			Output->GetDesc(&OD);
+			New = int3(oWinRectSize(OD.DesktopCoordinates), 1);
+		}
 	}
 
-	else
+	if (Desc.Dimensions != New)
 	{
-		if (Desc.Dimensions != _NewDimensions)
-		{
-			oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(DescMutex);
+		oTRACE("%s %s Resize %dx%dx%d -> %dx%dx%d", typeid(*this).name(), GetName(), Desc.Dimensions.x, Desc.Dimensions.y, Desc.Dimensions.z, _NewDimensions.x, _NewDimensions.y, _NewDimensions.z);
+		ClearResources();
 
-			oTRACE("%s %s Resize %dx%dx%d -> %dx%dx%d", typeid(*this).name(), GetName(), Desc.Dimensions.x, Desc.Dimensions.y, Desc.Dimensions.z, _NewDimensions.x, _NewDimensions.y, _NewDimensions.z);
-			
-			oFORI(i, Textures)
+		if (New.x && New.y && New.z)
+		{
+			if (SwapChain)
 			{
-				Textures[i] = nullptr;
-				RTVs[i] = nullptr;
+				oASSERT(New.z == 1, "New.z must be set to 1 for primary render target");
+				oVERIFY(oDXGISwapChainResizeBuffers(SwapChain, New.xy()));
+				oRef<ID3D11Texture2D> SwapChainTexture;
+				oV(SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&SwapChainTexture));
+				bool textureSuccess = false;
+				Textures[0] = oRef<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, SwapChainTexture), false);
+				oVERIFY(textureSuccess);
+				oVERIFY(oD3D11CreateRenderTargetView(GetName(), SwapChainTexture, (ID3D11View**)&RTVs[0]));
+				Desc.ArraySize = 1;
+				Desc.MRTCount = 1;
+				Desc.Type = oGPU_TEXTURE_2D_RENDER_TARGET;
 			}
 
-			DepthStencilTexture = nullptr;
-			DSV = nullptr;
-			
-			if (_NewDimensions.x && _NewDimensions.y && _NewDimensions.z)
+			else
 			{
-				oD3D11DEVICE();
 				for (int i = 0; i < Desc.MRTCount; i++)
 				{
 					oStd::lstring name;
 					oPrintf(name, "%s%02d", GetName(), i);
-
 					oGPUTexture::DESC d;
-					d.Dimensions = _NewDimensions;
+					d.Dimensions = New;
 					d.Format = Desc.Format[i];
 					d.ArraySize = Desc.ArraySize;
 					d.Type = oGPUTextureTypeGetRenderTargetType(Desc.Type);
-
 					oVERIFY(Device->CreateTexture(name, d, &Textures[i]));
 					oVERIFY(oD3D11CreateRenderTargetView(name, static_cast<oD3D11Texture*>(Textures[i].c_ptr())->Texture, &RTVs[i]));
 				}
-
-				RecreateDepthBuffer(_NewDimensions.xy());
 			}
 
-			Desc.Dimensions = _NewDimensions;	
+			RecreateDepthBuffer(New.xy());
 		}
+		
+		Desc.Dimensions = New;
 	}
 }
 
 void oD3D11RenderTarget::GetTexture(int _MRTIndex, oGPUTexture** _ppTexture)
 {
 	oASSERT(_MRTIndex < Desc.MRTCount, "Invalid MRT index");
-	Textures[_MRTIndex]->Reference();
+	if (Textures[_MRTIndex])
+		Textures[_MRTIndex]->Reference();
 	*_ppTexture = Textures[_MRTIndex];
 }
 
 void oD3D11RenderTarget::GetDepthTexture(oGPUTexture** _ppTexture)
 {
-	DepthStencilTexture->Reference();
+	if (DepthStencilTexture)
+		DepthStencilTexture->Reference();
 	*_ppTexture = DepthStencilTexture;
+}
+
+bool oD3D11RenderTarget::CreateSnapshot(int _MRTIndex, oImage** _ppSnapshot)
+{
+	if (!Textures[_MRTIndex])		
+		return oErrorSetLast(std::errc::resource_unavailable_try_again, "The render target is minimized or not available for snapshot.");
+	return oD3D11CreateSnapshot(static_cast<oD3D11Texture*>(Textures[_MRTIndex].c_ptr())->Texture, _ppSnapshot);
 }

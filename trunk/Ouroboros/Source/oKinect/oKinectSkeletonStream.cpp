@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -132,14 +131,10 @@ void oKinectSkeletonStream::CacheNextFrame(INuiSensor* _pSensor) threadsafe
 	{
 		_pSensor->NuiTransformSmooth(&NSF, nullptr);
 
-		oGUI_WINDOW hWnd = nullptr;
 		if (Window)
-			Window->QueryInterface(oGetGUID<oGUI_WINDOW>(), &hWnd);
-
-		if (hWnd)
 		{
 			oFORI(i, NSF.SkeletonData)
-				pThis->Skeletons[i]->Cache((HWND)hWnd, NSF.SkeletonData[i]);
+				pThis->Skeletons[i]->Cache((HWND)Window->GetNativeHandle(), NSF.SkeletonData[i]);
 		}
 
 		TrackClosestSkeletons(_pSensor, NSF);
@@ -161,12 +156,9 @@ void oKinectSkeletonStream::CheckTrackingTimeouts() threadsafe
 {
 	oGUI_WINDOW hWnd = nullptr;
 	if (Window)
-		Window->QueryInterface(oGetGUID<oGUI_WINDOW>(), &hWnd);
-
-	if (hWnd)
 	{
 		oFOR(auto& S, oThreadsafe(this)->Skeletons)
-			S->CheckTrackingTimeout((HWND)hWnd, TrackingTimeoutSeconds);
+			S->CheckTrackingTimeout((HWND)Window->GetNativeHandle(), TrackingTimeoutSeconds);
 	}
 }
 

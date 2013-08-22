@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -52,6 +51,9 @@ enum oGFX_PIPELINE
 
 
 	// TRIANGLES
+
+	// Uses untransformed position only to render a white color.
+	oGFX_PIPELINE_PASS_THROUGH,
 
 	// Renders with a vertex shader that only transforms LS -> SS and uses a null
 	// pixels shader.

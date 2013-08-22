@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -68,7 +67,8 @@ static const uint oGPU_MAX_NUM_VIEWPORTS = 16;
 #define oGPU_TRAIT_TEXTURE_2D (oGPU_TRAIT_TEXTURE_1D << 1)
 #define oGPU_TRAIT_TEXTURE_3D (oGPU_TRAIT_TEXTURE_2D << 1)
 #define oGPU_TRAIT_TEXTURE_CUBE (oGPU_TRAIT_TEXTURE_3D << 1)
-#define oGPU_TRAIT_TEXTURE_MIPS (oGPU_TRAIT_TEXTURE_CUBE << 1)
+#define oGPU_TRAIT_TEXTURE_ARRAY (oGPU_TRAIT_TEXTURE_CUBE << 1)
+#define oGPU_TRAIT_TEXTURE_MIPS (oGPU_TRAIT_TEXTURE_ARRAY << 1)
 #define oGPU_TRAIT_TEXTURE_RENDER_TARGET (oGPU_TRAIT_TEXTURE_MIPS << 1)
 
 // _____________________________________________________________________________
@@ -268,25 +268,33 @@ enum oGPU_TEXTURE_TYPE
 	// 1D texture.
 	oGPU_TEXTURE_1D_MAP = oGPU_TRAIT_TEXTURE_1D,
 	oGPU_TEXTURE_1D_MAP_MIPS = oGPU_TRAIT_TEXTURE_1D | oGPU_TRAIT_TEXTURE_MIPS,
+	oGPU_TEXTURE_1D_MAP_ARRAY = oGPU_TRAIT_TEXTURE_1D | oGPU_TRAIT_TEXTURE_ARRAY,
+	oGPU_TEXTURE_1D_MAP_ARRAY_MIPS = oGPU_TRAIT_TEXTURE_1D | oGPU_TRAIT_TEXTURE_ARRAY | oGPU_TRAIT_TEXTURE_MIPS,
 	oGPU_TEXTURE_1D_RENDER_TARGET = oGPU_TRAIT_TEXTURE_1D | oGPU_TRAIT_TEXTURE_RENDER_TARGET,
 	oGPU_TEXTURE_1D_RENDER_TARGET_MIPS = oGPU_TRAIT_TEXTURE_1D | oGPU_TRAIT_TEXTURE_MIPS | oGPU_TRAIT_TEXTURE_RENDER_TARGET,
 	oGPU_TEXTURE_1D_READBACK = oGPU_TRAIT_TEXTURE_1D | oGPU_TRAIT_RESOURCE_READBACK,
 	oGPU_TEXTURE_1D_READBACK_MIPS = oGPU_TRAIT_TEXTURE_1D | oGPU_TRAIT_TEXTURE_MIPS | oGPU_TRAIT_RESOURCE_READBACK,
+	oGPU_TEXTURE_1D_READBACK_ARRAY = oGPU_TRAIT_TEXTURE_1D | oGPU_TRAIT_TEXTURE_ARRAY | oGPU_TRAIT_RESOURCE_READBACK,
+	oGPU_TEXTURE_1D_READBACK_ARRAY_MIPS = oGPU_TRAIT_TEXTURE_1D | oGPU_TRAIT_TEXTURE_ARRAY | oGPU_TRAIT_TEXTURE_MIPS | oGPU_TRAIT_RESOURCE_READBACK,
 
 	// "normal" 2D texture.
 	oGPU_TEXTURE_2D_MAP = oGPU_TRAIT_TEXTURE_2D,
 	oGPU_TEXTURE_2D_MAP_MIPS = oGPU_TRAIT_TEXTURE_2D | oGPU_TRAIT_TEXTURE_MIPS,
+	oGPU_TEXTURE_2D_MAP_ARRAY = oGPU_TRAIT_TEXTURE_2D | oGPU_TRAIT_TEXTURE_ARRAY,
+	oGPU_TEXTURE_2D_MAP_ARRAY_MIPS = oGPU_TRAIT_TEXTURE_2D | oGPU_TRAIT_TEXTURE_ARRAY | oGPU_TRAIT_TEXTURE_MIPS,
 	oGPU_TEXTURE_2D_RENDER_TARGET = oGPU_TRAIT_TEXTURE_2D | oGPU_TRAIT_TEXTURE_RENDER_TARGET,
 	oGPU_TEXTURE_2D_RENDER_TARGET_MIPS = oGPU_TRAIT_TEXTURE_2D | oGPU_TRAIT_TEXTURE_MIPS | oGPU_TRAIT_TEXTURE_RENDER_TARGET,
 	oGPU_TEXTURE_2D_READBACK = oGPU_TRAIT_TEXTURE_2D | oGPU_TRAIT_RESOURCE_READBACK,
 	oGPU_TEXTURE_2D_READBACK_MIPS = oGPU_TRAIT_TEXTURE_2D | oGPU_TRAIT_TEXTURE_MIPS | oGPU_TRAIT_RESOURCE_READBACK,
+	oGPU_TEXTURE_2D_READBACK_ARRAY = oGPU_TRAIT_TEXTURE_2D | oGPU_TRAIT_TEXTURE_ARRAY | oGPU_TRAIT_RESOURCE_READBACK,
+	oGPU_TEXTURE_2D_READBACK_ARRAY_MIPS = oGPU_TRAIT_TEXTURE_2D | oGPU_TRAIT_TEXTURE_ARRAY | oGPU_TRAIT_TEXTURE_MIPS | oGPU_TRAIT_RESOURCE_READBACK,
 
 	// a "normal" 2D texture, no mips, configured for unordered access. Currently
 	// all GPGPU access to such buffers are one subresource at a time, so there is 
 	// no spec that describes unordered access to arbitrary mipped memory.
 	oGPU_TEXTURE_2D_MAP_UNORDERED = oGPU_TRAIT_TEXTURE_2D | oGPU_TRAIT_RESOURCE_UNORDERED,
 	
-	// 6-sided texture array.
+	// 6- 2D slices that form the faces of a cube that is sampled from its center.
 	oGPU_TEXTURE_CUBE_MAP = oGPU_TRAIT_TEXTURE_CUBE,
 	oGPU_TEXTURE_CUBE_MAP_MIPS = oGPU_TRAIT_TEXTURE_CUBE | oGPU_TRAIT_TEXTURE_MIPS,
 	oGPU_TEXTURE_CUBE_RENDER_TARGET = oGPU_TRAIT_TEXTURE_CUBE | oGPU_TRAIT_TEXTURE_RENDER_TARGET,
@@ -314,6 +322,7 @@ oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGPU_QUERY_TYPE);
 inline bool oGPUTextureTypeHasMips(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_TEXTURE_MIPS); }
 inline bool oGPUTextureTypeIsReadback(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_RESOURCE_READBACK); }
 inline bool oGPUTextureTypeIsRenderTarget(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_TEXTURE_RENDER_TARGET); }
+inline bool oGPUTextureTypeIsArray(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_TEXTURE_ARRAY); }
 inline bool oGPUTextureTypeIs1DMap(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_TEXTURE_1D); }
 inline bool oGPUTextureTypeIs2DMap(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_TEXTURE_2D); }
 inline bool oGPUTextureTypeIsCubeMap(oGPU_TEXTURE_TYPE _Type) { return 0 != ((int)_Type & oGPU_TRAIT_TEXTURE_CUBE); }

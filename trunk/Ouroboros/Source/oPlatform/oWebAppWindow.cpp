@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -51,6 +50,17 @@ bool from_string(OWEB_APP_WINDOW_CONTROLS* _pValue, const char* _StrSource)
 
 } // namespace oStd
 
+struct oCPUUsageStats
+{
+	oCPUUsageStats()
+		: previousSystemTime(0)
+		, previousProcessTime(0)
+	{}
+
+	unsigned long long previousSystemTime;
+	unsigned long long previousProcessTime;
+};
+
 class oWebAppWindowImpl : public oWebAppWindow
 {
 public:
@@ -61,48 +71,89 @@ public:
 	~oWebAppWindowImpl();
 
 	void SetCurrentJobCount(uint _JobCount) threadsafe override;
+	bool IsRunning() const threadsafe override { return Running; }
+	void Close() threadsafe override { Running = false; }
+	bool WaitUntilClosed(unsigned int _TimeoutMS = oInfiniteWait) threadsafe
+	{
+		unsigned int TimedOut = oTimerMS() + _TimeoutMS;
+		bool IsTimedOut = false;
+		while (Running && !IsTimedOut)
+		{
+			Window->FlushMessages();
+			IsTimedOut = (_TimeoutMS != oInfiniteWait) && (oTimerMS() > TimedOut);
+		}
+
+		return !IsTimedOut;
+	}
 
 	// oWindow forwarding
-	oGUI_WINDOW GetNativeHandle() const threadsafe { return Window->GetNativeHandle(); }
-	bool IsOpen() const threadsafe override { return Window->IsOpen(); }
-	bool WaitUntilClosed(unsigned int _TimeoutMS = oInfiniteWait) const threadsafe override { return Window->WaitUntilClosed(_TimeoutMS); }
-	bool WaitUntilOpaque(unsigned int _TimeoutMS = oInfiniteWait) const threadsafe override { return Window->WaitUntilOpaque(_TimeoutMS); }
-	bool Close() threadsafe override { return Window->Close(); }
+	oGUI_WINDOW GetNativeHandle() const threadsafe override { return Window->GetNativeHandle(); }
+	int GetDisplayIndex() const override { return Window->GetDisplayIndex(); }
 	bool IsWindowThread() const threadsafe override { return Window->IsWindowThread(); }
-	bool HasFocus() const threadsafe override { return Window->HasFocus(); }
-	void SetFocus() threadsafe override { return Window->SetFocus(); }
-	void GetDesc(oGUI_WINDOW_DESC* _pDesc) const threadsafe override { Window->GetDesc(_pDesc); }
-	bool Map(oGUI_WINDOW_DESC** _ppDesc) threadsafe override { return Window->Map(_ppDesc); }
-	void Unmap() threadsafe override { Window->Unmap(); }
-	void SetDesc(const oGUI_WINDOW_CURSOR_DESC& _pDesc) threadsafe override { Window->SetDesc(_pDesc); }
-	void GetDesc(oGUI_WINDOW_CURSOR_DESC* _pDesc) const threadsafe override { Window->GetDesc(_pDesc); }
-	char* GetTitle(char* _StrDestination, size_t _SizeofStrDestination) const threadsafe override { return Window->GetTitle(_StrDestination, _SizeofStrDestination); }
-	void SetTitleV(const char* _Format, va_list _Args) threadsafe override { Window->SetTitleV(_Format, _Args); }
-	char* GetStatusText(char* _StrDestination, size_t _SizeofStrDestination, int _StatusSectionIndex) const threadsafe override { return Window->GetStatusText(_StrDestination, _SizeofStrDestination, _StatusSectionIndex); }
-	void SetStatusText(int _StatusSectionIndex, const char* _Format, va_list _Args) threadsafe override { Window->SetStatusText(_StatusSectionIndex, _Format, _Args); }
+	void SetShape(const oGUI_WINDOW_SHAPE_DESC& _Shape) threadsafe override { Window->SetShape(_Shape); }
+	oGUI_WINDOW_SHAPE_DESC GetShape() const override { return Window->GetShape(); }
+	void SetIcon(oGUI_ICON _hIcon) threadsafe override { Window->SetIcon(_hIcon); }
+	oGUI_ICON GetIcon() const override { return Window->GetIcon(); }
+	void SetUserCursor(oGUI_CURSOR _hCursor) threadsafe override { Window->SetUserCursor(_hCursor); }
+	oGUI_CURSOR GetUserCursor() const override { return Window->GetUserCursor(); }
+	void SetClientCursorState(oGUI_CURSOR_STATE _State) threadsafe override { Window->SetClientCursorState(_State); }
+	oGUI_CURSOR_STATE GetClientCursorState() const override { return Window->GetClientCursorState(); }
+	void SetTitleV(const char* _Format, va_list _Args) threadsafe override { return Window->SetTitleV(_Format, _Args); }
+	char* GetTitle(char* _StrDestination, size_t _SizeofStrDestination) const override { return Window->GetTitle(_StrDestination, _SizeofStrDestination); }
+	void SetNumStatusSections(const int* _pStatusSectionWidths, size_t _NumStatusSections) threadsafe override { return Window->SetNumStatusSections(_pStatusSectionWidths, _NumStatusSections); }
+	int GetNumStatusSections(int* _pStatusSectionWidths = nullptr, size_t _MaxNumStatusSectionWidths = 0) const override { return Window->GetNumStatusSections(_pStatusSectionWidths, _MaxNumStatusSectionWidths); }
+	void SetStatusTextV(int _StatusSectionIndex, const char* _Format, va_list _Args) threadsafe override { Window->SetStatusTextV(_StatusSectionIndex, _Format, _Args); }
+	char* GetStatusText(char* _StrDestination, size_t _SizeofStrDestination, int _StatusSectionIndex) const override { return Window->GetStatusText(_StrDestination, _SizeofStrDestination, _StatusSectionIndex); }
+	void SetStatusIcon(int _StatusSectionIndex, oGUI_ICON _hIcon) threadsafe override { Window->SetStatusIcon(_StatusSectionIndex, _hIcon); }
+	oGUI_ICON GetStatusIcon(int _StatusSectionIndex) const override { return Window->GetStatusIcon(_StatusSectionIndex); }
+	void SetParent(oWindow* _pParent) threadsafe override { Window->SetParent(_pParent); }
+	oWindow* GetParent() const override { return Window->GetParent(); }
+	void SetOwner(oWindow* _pOwner) threadsafe override { Window->SetOwner(_pOwner); }
+	oWindow* GetOwner() const override { return Window->GetOwner(); }
+	void SetSortOrder(oGUI_WINDOW_SORT_ORDER _SortOrder) threadsafe override { Window->SetSortOrder(_SortOrder); }
+	oGUI_WINDOW_SORT_ORDER GetSortOrder() const override { return Window->GetSortOrder(); }
+	void SetFocus(bool _Focus = true) threadsafe override { Window->SetFocus(_Focus); }
+	bool HasFocus() const override { return Window->HasFocus(); }
+	void SetDebug(bool _Debug = true) threadsafe override { Window->SetDebug(_Debug); }
+	bool GetDebug() const override { return Window->GetDebug(); }
+	void SetAllowTouchActions(bool _Allow = true) threadsafe override { Window->SetAllowTouchActions(_Allow); }
+	bool GetAllowTouchActions() const override { return Window->GetAllowTouchActions(); }
+	void SetClientDragToMove(bool _DragMoves = true) threadsafe override { Window->SetClientDragToMove(_DragMoves); }
+	bool GetClientDragToMove() const override { return Window->GetClientDragToMove(); }
+	void SetAltF4Closes(bool _AltF4Closes = true) threadsafe override { Window->SetAltF4Closes(_AltF4Closes); }
+	bool GetAltF4Closes() const override { return Window->GetAltF4Closes(); }
+	void SetEnabled(bool _Enabled) threadsafe override { Window->SetEnabled(_Enabled); }
+	bool GetEnabled() const override { return Window->GetEnabled(); }
+	void SetCapture(bool _Capture) threadsafe override { Window->SetCapture(_Capture); }
+	bool HasCapture() const override { return Window->HasCapture(); }
 	void SetHotKeys(const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys) threadsafe override { Window->SetHotKeys(_pHotKeys, _NumHotKeys); }
-	int GetHotKeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const threadsafe override { return Window->GetHotKeys(_pHotKeys, _MaxNumHotKeys); }
-	void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe override { Window->Trigger(_Action); }
-	void Dispatch(const oTASK& _Task) threadsafe override { Window->Dispatch(_Task); }
-	void SetTimer(uintptr_t _Context, unsigned int _RelativeTimeMS) threadsafe override { Window->SetTimer(_Context, _RelativeTimeMS); }
+	int GetHotKeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const override { return Window->GetHotKeys(_pHotKeys, _MaxNumHotKeys); }
 	int HookActions(const oGUI_ACTION_HOOK& _Hook) threadsafe override { return Window->HookActions(_Hook); }
-	void UnhookActions(int _ActionHookID) threadsafe override { Window->UnhookActions(_ActionHookID); }
+	void UnhookActions(int _ActionHookID) threadsafe override { return Window->UnhookActions(_ActionHookID); }
 	int HookEvents(const oGUI_EVENT_HOOK& _Hook) threadsafe override { return Window->HookEvents(_Hook); }
-	void UnhookEvents(int _EventHookID) threadsafe override { Window->UnhookEvents(_EventHookID); }
-	oStd::future<oRef<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) const threadsafe override{return Window->CreateSnapshot(_Frame, _IncludeBorder);}
+	void UnhookEvents(int _EventHookID) threadsafe override { return Window->UnhookEvents(_EventHookID); }
+	void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe override { return Window->Trigger(_Action); }
+	void Post(int _CustomEventCode, uintptr_t _Context) threadsafe override { return Window->Post(_CustomEventCode, _Context); }
+	void Dispatch(const oTASK& _Task) threadsafe override { return Window->Dispatch(_Task); }
+	oStd::future<oRef<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const override { return std::move(Window->CreateSnapshot(_Frame, _IncludeBorder)); }
+	void SetTimer(uintptr_t _Context, unsigned int _RelativeTimeMS) threadsafe override { Window->SetTimer(_Context, _RelativeTimeMS); }
+	void StopTimer(uintptr_t _Context) threadsafe override { return Window->StopTimer(_Context); }
+	void FlushMessages(bool _WaitForNext = false) override { return Window->FlushMessages(_WaitForNext); }
+	void Quit() threadsafe override { Window->Quit(); }
 
-	bool EventHook(const oGUI_EVENT_DESC& _Event);
+	void OnEvent(const oGUI_EVENT_DESC& _Event);
 private:
 	oRefCount RefCount;
-	oRef<threadsafe oWindow> Window;
+	oRef<oWindow> Window;
 	HWND LinkHandle;
 	HWND CPUUtilization;
 	HWND NumberOfJobs;
+	bool Running;
 
 	oInitOnce<unsigned short> ServerPort;
 	oInitOnce<oStd::sstring> Title;
-	unsigned long long previousSystemTime;
-	unsigned long long previousProcessTime;
+
+	oCPUUsageStats CPUUsageStats;
 };
 
 bool oWebAppWindowCreate( const char* _pTitle, unsigned short _ServerPort, oWebAppWindow** _ppWebAppWindow )
@@ -113,19 +164,18 @@ bool oWebAppWindowCreate( const char* _pTitle, unsigned short _ServerPort, oWebA
 }
 
 oWebAppWindowImpl::oWebAppWindowImpl( const char* _pTitle, unsigned short _ServerPort, bool* _pSuccess )
-	: previousSystemTime(0)
-	, previousProcessTime(0)
+	: Running(true)
 {
 	Title.Initialize(_pTitle);
 	ServerPort.Initialize(_ServerPort);
 
 	oWINDOW_INIT init;
-	init.WindowTitle = _pTitle;
-	init.EventHook = oBIND(&oWebAppWindowImpl::EventHook, this, oBIND1);
+	init.Title = _pTitle;
+	init.EventHook = oBIND(&oWebAppWindowImpl::OnEvent, this, oBIND1);
 	init.ActionHook = nullptr;
-	init.WinDesc.Style = oGUI_WINDOW_FIXED;
-	init.WinDesc.ClientSize = int2(250,90);
-	init.WinDesc.EnableMainLoopEvent = true;
+	init.Shape.Style = oGUI_WINDOW_FIXED;
+	init.Shape.ClientSize = int2(250,90);
+	//init.Shape.EnableMainLoopEvent = true;
 
 	// Create the base window
 	if (!oWindowCreate(init, &Window))
@@ -133,6 +183,8 @@ oWebAppWindowImpl::oWebAppWindowImpl( const char* _pTitle, unsigned short _Serve
 		oErrorPrefixLast("Failed to create base window with ");
 		return;
 	}
+
+	Window->SetTimer((uintptr_t)&CPUUsageStats, 500);
 
 	*_pSuccess = true;
 }
@@ -151,11 +203,11 @@ void oWebAppWindowImpl::SetCurrentJobCount(uint _JobCount) threadsafe
 	});
 };
 
-bool oWebAppWindowImpl::EventHook(const oGUI_EVENT_DESC& _Event)
+void oWebAppWindowImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 {
-	switch (_Event.Event)
+	switch (_Event.Type)
 	{
-	case oGUI_CREATING:
+		case oGUI_CREATING:
 		{
 			oGUI_CONTROL_DESC ControlDesc;
 			ControlDesc.hParent = (oGUI_WINDOW)_Event.hWindow;
@@ -194,18 +246,24 @@ bool oWebAppWindowImpl::EventHook(const oGUI_EVENT_DESC& _Event)
 				ControlDesc.Text = "Number of Jobs";
 				NumberOfJobs = oWinControlCreate(ControlDesc);
 			}
+			break;
 		}
 
-	case oGUI_MAINLOOP:
+		case oGUI_TIMER:
 		{
-			//Update cpu utilization
-			double usage = oProcessCalculateCPUUsage(oProcessGetCurrentID(), &previousSystemTime, &previousProcessTime);
-			oStd::sstring usageString;
-			oPrintf(usageString, "CPU Utilization: %.0f%%", usage);
-			oWinControlSetText(CPUUtilization, usageString);
-			oSleep(500);
-		}
-	}
+			if (_Event.AsTimer().Context == (uintptr_t)&CPUUsageStats)
+			{
+				double usage = oProcessCalculateCPUUsage(oProcessGetCurrentID(), &CPUUsageStats.previousSystemTime, &CPUUsageStats.previousProcessTime);
+				oStd::sstring usageString;
+				oPrintf(usageString, "CPU Utilization: %.0f%%", usage);
+				oWinControlSetText(CPUUtilization, usageString);
+			}
 
-	return true;
+			break;
+		}
+
+		case oGUI_CLOSING:
+			Running = false;
+			break;
+	}
 }

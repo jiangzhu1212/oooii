@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -23,23 +22,9 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+#include "oGfxCommon.h"
 
-struct VSIN
+float4 main(float3 LSPosition : POS0) : SV_Position
 {
-	float3 Position : POS0;
-	float2 Texcoord : TEX0;
-};
-
-struct VSOUT
-{
-	float4 Position : SV_Position;
-	float2 Texcoord : TEX0;
-};
-
-VSOUT main(VSIN In)
-{
-	VSOUT Out;
-	Out.Position = float4(In.Position, 1);
-	Out.Texcoord = In.Texcoord;
-	return Out;
+	return float4(LSPosition, 1);
 }

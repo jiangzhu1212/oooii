@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -44,11 +43,25 @@ int ShowAllCameras()
 		CONTEXT(oRef<threadsafe oCamera> _pCamera)
 			: Camera(_pCamera)
 			, LastFrame(oInvalid)
+			, Running(true)
 		{}
 
 		oRef<threadsafe oCamera> Camera;
-		oRef<threadsafe oWindow> Window;
+		oRef<oWindow> Window;
 		unsigned int LastFrame;
+		bool Running;
+
+		void OnEvent(const oGUI_EVENT_DESC& _Event)
+		{
+			switch (_Event.Type)
+			{
+				case oGUI_CLOSING:
+					Running = false;
+					break;
+				default:
+					break;
+			}
+		}
 	};
 
 	std::vector<CONTEXT> Contexts;
@@ -114,21 +127,24 @@ int ShowAllCameras()
 		oPrintf(Title, "%s (%dx%d %s)", Contexts[i].Camera->GetName(), cd.Mode.Dimensions.x, cd.Mode.Dimensions.y, oStd::as_string(cd.Mode.Format));
 
 		oWINDOW_INIT init;
-		init.WinDesc.ClientSize = cd.Mode.Dimensions;
-		init.WinDesc.ClientPosition = int2(30, 30) * int2(oUInt(i + 1), oUInt(i + 1));
-		init.WindowTitle = Title;
+		init.Shape.ClientSize = cd.Mode.Dimensions;
+		init.Shape.ClientPosition = int2(30, 30) * int2(oUInt(i + 1), oUInt(i + 1));
+		init.Title = Title;
+		init.EventHook = oBIND(&CONTEXT::OnEvent, &Contexts[i], oBIND1);
 		oVERIFY(oWindowCreate(init, &Contexts[i].Window));
 	}
 
-	bool aWindowIsOpen = false;
+	int OpenWindowCount = 0;
 	for (size_t i = 0; i < Contexts.size(); i++)
-		if (Contexts[i].Window->IsOpen())
-			aWindowIsOpen = true;
+		if (Contexts[i].Window)
+			OpenWindowCount++;
 
-	while (aWindowIsOpen)
+	while (OpenWindowCount)
 	{
 		for (size_t i = 0; i < Contexts.size(); i++)
 		{
+			Contexts[i].Window->FlushMessages();
+
 			oCamera::DESC cd;
 			Contexts[i].Camera->GetDesc(&cd);
 
@@ -137,8 +153,7 @@ int ShowAllCameras()
 			{
 				if (mapped.Frame != Contexts[i].LastFrame)
 				{
-					HWND hWnd = nullptr;
-					Contexts[i].Window->QueryInterface(oGetGUID<oGUI_WINDOW>(), &hWnd);
+					HWND hWnd = (HWND)Contexts[i].Window->GetNativeHandle();
 
 					oVERIFY(oGDIStretchBits(hWnd, cd.Mode.Dimensions, cd.Mode.Format, mapped.pData, mapped.RowPitch));
 					Contexts[i].LastFrame = mapped.Frame;
@@ -166,10 +181,10 @@ int ShowAllCameras()
 			}
 		}
 
-		aWindowIsOpen = false;
+		OpenWindowCount = 0;
 		for (size_t i = 0; i < Contexts.size(); i++)
-			if (Contexts[i].Window->IsOpen())
-				aWindowIsOpen = true;
+			if (Contexts[i].Running)
+				OpenWindowCount++;
 	}
 
 	return 0;

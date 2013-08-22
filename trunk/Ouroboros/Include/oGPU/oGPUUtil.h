@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -213,5 +212,20 @@ oAPI void oGPUUtilMeshDraw(oGPUCommandList* _pCommandList, const oGPUUtilMesh* _
 // the bounding sphere inscribed in the LocalBounds of oGPUUtilMesh::DESC is 
 // calculated and then scaled by the absolute value of _NormalScale.
 oAPI bool oGPUUtilMeshCreate(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, const oGeometry* _pGeometry, oGPUUtilMesh** _ppMesh);
+
+// Creates a very simple front-facing triangle that can be rendered with all-
+// identify world, view, projection matrices. This is useful for very simple 
+// tests and first bring-up.
+oAPI bool oGPUUtilCreateFirstTriangle(oGPUDevice* _pDevice
+	, const oGPU_VERTEX_ELEMENT* _pElements
+	, uint _NumElements
+	, oGPUUtilMesh** _ppFirstTriangle);
+
+// Creates a very simple unit cube. This is useful for bringing up world, view,
+// projection transforms quickly.
+oAPI bool oGPUUtilCreateFirstCube(oGPUDevice* _pDevice
+	, const oGPU_VERTEX_ELEMENT* _pElements
+	, uint _NumElements
+	, oGPUUtilMesh** _ppFirstCube);
 
 #endif

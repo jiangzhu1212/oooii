@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -196,7 +195,7 @@ static const URI_RESOLVE sTESTuri_make_absolute[] =
 	{ "../../../../g", "http://a/g" },
 	{ "/./g", "http://a/g" },
 	{ "/../g", "http://a/g" },
-	//	{ "g.", "http://a/b/c/g." }, // FIXME
+	{ "g.", "http://a/b/c/g." },
 	{ ".g", "http://a/b/c/.g" },
 	//	{ "g..", "http://a/b/c/g.." }, // FIXME
 	{ "..g", "http://a/b/c/..g" },
@@ -222,6 +221,21 @@ static const URI_RESOLVE sTESTuri_make_absolute2[] =
 	{ "file://DATA2/test.xml", "file://DATA2/test.xml" },
 	{ "http://DATA/test.xml", "http://DATA/test.xml" },
 	{ "http://DATA2/test.xml", "http://DATA2/test.xml" },
+};
+
+static const uri sTESTuri_make_absolute_base3("file:///c:/folder/file.ext");
+static const URI_RESOLVE sTESTuri_make_absolute3[] = 
+{
+	// http://tools.ietf.org/html/rfc3986#section-5.3
+	{ "file.ext", "file:///c:/folder/file.ext" },
+	{ "/file.ext", "file:///file.ext" },
+	{ "/folder/file.ext", "file:///folder/file.ext" },
+	{ "/c:/folder/file.ext", "file:///c:/folder/file.ext" },
+	{ "///c:/folder/file.ext", "file:///c:/folder/file.ext" },
+	{ "file:///c:/folder/file.ext", "file:///c:/folder/file.ext" },
+	// 	{ "file:///c:/file.ext?", "file:///c:/file.ext?" }, // FIXME
+	// 	{ "file:///c:/file.ext?#", "file:///c:/file.ext?#" }, // FIXME
+	// 	{ "file:///c:/file.ext#", "file:///c:/file.ext#" }, // FIXME
 };
 
 struct URI_REPLACE
@@ -257,6 +271,14 @@ static void TESTuri_make_absolute()
 		uri u(sTESTuri_make_absolute_base2, t.Ref); 
 		uri r(t.Resolved);
 		oCHECK(u == r, "fail(%d) (absolute2): %s + %s != %s", i, sTESTuri_make_absolute_base2.c_str(), t.Ref, t.Resolved);
+	}
+
+	oFORI(i, sTESTuri_make_absolute3)
+	{
+		const auto& t = sTESTuri_make_absolute3[i];
+		uri u(sTESTuri_make_absolute_base3, t.Ref); 
+		uri r(t.Resolved);
+		oCHECK(u == r, "fail(%d) (absolute3): %s + %s != %s", i, sTESTuri_make_absolute_base3.c_str(), t.Ref, t.Resolved);
 	}
 }
 

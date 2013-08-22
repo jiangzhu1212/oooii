@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -33,6 +32,7 @@
 #include <oGfxObjectIDPS4ByteCode.h>
 #include <oGfxMaterialPS4ByteCode.h>
 #include <oGfxPassThroughVS4ByteCode.h>
+#include <oGfxPositionPassThroughVS4ByteCode.h>
 #include <oGfxPositionVS4ByteCode.h>
 #include <oGfxRigidVS4ByteCode.h>
 #include <oGfxShadowPS4ByteCode.h>
@@ -97,6 +97,14 @@ bool oGfxGetPipeline(oGFX_PIPELINE _Pipeline, oGPU_PIPELINE_DESC* _pDesc)
 			oGfxGetVertexElements(oGFX_VE_LINE, &_pDesc->pElements, &_pDesc->NumElements);
 			_pDesc->pVertexShader = oGfxLinesVS4ByteCode;
 			_pDesc->pPixelShader = oGfxColorPS4ByteCode;
+			return true;
+
+		case oGFX_PIPELINE_PASS_THROUGH:
+			_pDesc->DebugName = "oGFX_PIPELINE_PASS_THROUGH";
+			_pDesc->InputType = oGPU_TRIANGLES;
+			oGfxGetVertexElements(oGFX_VE_POSITION, &_pDesc->pElements, &_pDesc->NumElements);
+			_pDesc->pVertexShader = oGfxPositionPassThroughVS4ByteCode;
+			_pDesc->pPixelShader = oGfxWhitePS4ByteCode;
 			return true;
 
 		case oGFX_PIPELINE_RIGID_ZPREPASS:

@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -168,31 +167,35 @@ oRTTI_ENUM_END_DESCRIPTION(oGUI_BONE)
 
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_WINDOW_STATE)
 	oRTTI_ENUM_BEGIN_VALUES(oGUI_WINDOW_STATE)
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_NONEXISTANT, "nonexistant")
+		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_INVALID, "invalid")
 		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_HIDDEN, "hidden")
 		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_MINIMIZED, "minimized")
 		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_RESTORED, "restored")
 		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_MAXIMIZED, "maximized")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_FULLSCREEN_COOPERATIVE, "fullscreen_cooperative")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_FULLSCREEN_EXCLUSIVE, "fullscreen_exclusive")
+		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_FULLSCREEN, "fullscreen")
 	oRTTI_ENUM_END_VALUES(oGUI_WINDOW_STATE)
 	oRTTI_ENUM_VALIDATE_COUNT(oGUI_WINDOW_STATE, oGUI_WINDOW_STATE_COUNT)
 oRTTI_ENUM_END_DESCRIPTION(oGUI_WINDOW_STATE)
 
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_WINDOW_STYLE)
 	oRTTI_ENUM_BEGIN_VALUES(oGUI_WINDOW_STYLE)
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_EMBEDDED, "embedded")
+	oRTTI_VALUE_CUSTOM(oGUI_WINDOW_DEFAULT, "default")
 		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_BORDERLESS, "borderless")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_FIXED, "fixed")
 		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_DIALOG, "dialog")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_SIZEABLE, "sizeable")
+		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_FIXED, "fixed")
+		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_FIXED_WITH_MENU, "fixed with menu")
+		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_FIXED_WITH_STATUSBAR, "fixed with statusbar")
+		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_FIXED_WITH_MENU_AND_STATUSBAR, "fixed with menu and statusbar")
+		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_SIZABLE, "sizeable")
+		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_SIZABLE_WITH_MENU, "sizeable with menu")
+		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_SIZABLE_WITH_STATUSBAR, "sizeable with statusbar")
+		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR, "sizeable with menu and statusbar")
 	oRTTI_ENUM_END_VALUES(oGUI_WINDOW_STYLE)
 	oRTTI_ENUM_VALIDATE_COUNT(oGUI_WINDOW_STYLE, oGUI_WINDOW_STYLE_COUNT)
 oRTTI_ENUM_END_DESCRIPTION(oGUI_WINDOW_STYLE)
 
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_EVENT)
 	oRTTI_ENUM_BEGIN_VALUES(oGUI_EVENT)
-		oRTTI_VALUE(oGUI_MAINLOOP)
 		oRTTI_VALUE(oGUI_TIMER)
 		oRTTI_VALUE(oGUI_ACTIVATED)
 		oRTTI_VALUE(oGUI_DEACTIVATED)
@@ -210,6 +213,7 @@ oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_EVENT)
 		oRTTI_VALUE(oGUI_LOST_CAPTURE)
 		oRTTI_VALUE(oGUI_DROP_FILES)
 		oRTTI_VALUE(oGUI_INPUT_DEVICE_CHANGED)
+		oRTTI_VALUE(oGUI_CUSTOM_EVENT)
 	oRTTI_ENUM_END_VALUES(oGUI_EVENT)
 	oRTTI_ENUM_VALIDATE_COUNT(oGUI_EVENT, oGUI_EVENT_COUNT)
 oRTTI_ENUM_END_DESCRIPTION(oGUI_EVENT)

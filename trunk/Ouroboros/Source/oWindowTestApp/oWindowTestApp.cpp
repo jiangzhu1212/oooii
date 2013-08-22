@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -25,147 +24,392 @@
  **************************************************************************/
 
 #include <oPlatform/Windows/oGDI.h>
+#include <oPlatform/oGUIMenu.h>
+#include <oPlatform/oMsgBox.h>
 #include <oPlatform/oSystem.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oWindow.h>
 #include "resource.h"
 
-void oWindowShow(threadsafe oWindow* _pWindow)
+enum oWMENU
 {
-	oGUI_WINDOW_DESC* pDesc = nullptr;
-	_pWindow->Map(&pDesc);
-	pDesc->State = oGUI_WINDOW_RESTORED;
-	_pWindow->Unmap();
-}
+	oWMENU_FILE,
+	oWMENU_EDIT,
+	oWMENU_VIEW,
+	oWMENU_VIEW_STYLE,
+	oWMENU_VIEW_STATE,
+	oWMENU_HELP,
+	oWMENU_COUNT,
+	oWMENU_TOPLEVEL,
+};
+
+struct oWMENU_HIER
+{
+	oWMENU Parent; // use oWMENU_TOPLEVEL for root parent menu
+	oWMENU Menu;
+	const char* Name;
+};
+
+static oWMENU_HIER sMenuHier[] = 
+{
+	{ oWMENU_TOPLEVEL, oWMENU_FILE, "&File" },
+	{ oWMENU_TOPLEVEL, oWMENU_EDIT, "&Edit" },
+	{ oWMENU_TOPLEVEL, oWMENU_VIEW, "&View" },
+	{ oWMENU_VIEW, oWMENU_VIEW_STYLE, "Border Style" },
+	{ oWMENU_VIEW, oWMENU_VIEW_STATE, "&Window State" },
+	{ oWMENU_TOPLEVEL, oWMENU_HELP, "&Help" },
+};
+static_assert(oCOUNTOF(sMenuHier) == oWMENU_COUNT, "array mismatch");
+
+enum oWMI // menuitems
+{
+	oWMI_FILE_EXIT,
+
+	oWMI_VIEW_STYLE_FIRST,
+	oWMI_VIEW_STYLE_LAST = oWMI_VIEW_STYLE_FIRST + oGUI_WINDOW_STYLE_COUNT - 1,
+
+	oWMI_VIEW_STATE_FIRST,
+	oWMI_VIEW_STATE_LAST = oWMI_VIEW_STATE_FIRST + oGUI_WINDOW_STATE_COUNT - 1,
+
+	oWMI_HELP_ABOUT,
+};
+
+enum oWHK // hotkeys
+{
+	oWHK_DEFAULT_STYLE,
+	oWHK_TOGGLE_FULLSCREEN,
+};
+
+oGUI_HOTKEY_DESC_NO_CTOR HotKeys[] =
+{
+	// reset style
+	{ oGUI_KEY_F3, oWHK_DEFAULT_STYLE, false, false, false },
+	{ oGUI_KEY_F11, oWHK_TOGGLE_FULLSCREEN, false, false, false },
+};
+
+struct oWindowTestAppPulseContext
+{
+	oWindowTestAppPulseContext() : Count(0) {}
+	unsigned int Count;
+};
+
+enum oWCTL // controls
+{
+	oWCTL_EASY_BUTTON,
+};
 
 class oWindowTestApp
 {
 public:
 	oWindowTestApp();
 
-	void Run()
-	{
-		// @oooii-tony: Why sleep the thread? Why not do what
-		// all the cool kids do and block, using this thread to
-		// process events. Consider changing the API:
-		// WaitUntilClosed() -> RunEventLoop().
-		if (TopLevelWindow)
-			TopLevelWindow->WaitUntilClosed();
-	}
+	void Run();
 
 private:
-	oGDIScopedObject<HFONT> hFont;
-	oRef<threadsafe oWindow> TopLevelWindow;
-	oRef<threadsafe oStreamMonitor> StreamMonitor;
+	oRef<oWindow> Window;
+	oGUI_MENU Menus[oWMENU_COUNT];
+	oWindowTestAppPulseContext PulseContext;
+	oGUIMenuEnumRadioListHandler MERL; 
+	oGUI_WINDOW_STATE PreFullscreenState;
+	bool Running;
 
-	bool EventHook(const oGUI_EVENT_DESC& _Event);
+	// This gets deleted by parent window automatically.
+	HWND hButton;
+
+private:
 	void ActionHook(const oGUI_ACTION_DESC& _Action);
-
-	void OnFileChange(oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI);
+	void EventHook(const oGUI_EVENT_DESC& _Event);
+	bool CreateMenu(const oGUI_EVENT_CREATE_DESC& _CreateEvent);
+	bool CreateControls(const oGUI_EVENT_CREATE_DESC& _CreateEvent);
+	void CheckState(oGUI_WINDOW_STATE _State);
+	void CheckStyle(oGUI_WINDOW_STYLE _Style);
 };
 
 oWindowTestApp::oWindowTestApp()
+	: Running(true)
+	, PreFullscreenState(oGUI_WINDOW_HIDDEN)
+	, hButton(nullptr)
 {
-	oWINDOW_INIT init;
+	oWINDOW_INIT Init;
+	Init.Title = "oWindowTestApp";
+	Init.hIcon = (oGUI_ICON)oGDILoadIcon(IDI_APPICON);
+	Init.ActionHook = oBIND(&oWindowTestApp::ActionHook, this, oBIND1);
+	Init.EventHook = oBIND(&oWindowTestApp::EventHook, this, oBIND1);
+	Init.Shape.ClientSize = int2(320, 240);
+	Init.Shape.State = oGUI_WINDOW_HIDDEN;
+	Init.Shape.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
+	Init.AltF4Closes = true;
+	Init.ClientCursorState = oGUI_CURSOR_HAND;
 
-	// hide while everything is initialized
-	init.WinDesc.hIcon = (oGUI_ICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APPICON), IMAGE_ICON, 0, 0, 0);
-	init.WinDesc.State = oGUI_WINDOW_HIDDEN;
-	init.WinDesc.Style = oGUI_WINDOW_FIXED;
-	init.WinDesc.ClientSize = int2(256, 256);
+	oVERIFY(oWindowCreate(Init, &Window));
 
-	// Client area will mainly be a render target or some full-space occupying 
-	// control, so prevent a lot of flashing by nooping this window's erase.
-	init.WinDesc.DefaultEraseBackground = true;
-	init.WinDesc.AllowAltEnter = false;
-	init.WinDesc.EnableMainLoopEvent = false;
-	init.WinDesc.ShowMenu = false;
-	init.WinDesc.ShowStatusBar = false;
-	init.WinDesc.Debug = false;
-	init.WinDesc.AllowClientDragToMove = false;
+	Window->SetHotKeys(HotKeys);
 
-	init.EventHook = oBIND(&oWindowTestApp::EventHook, this, oBIND1);
-	init.ActionHook = oBIND(&oWindowTestApp::ActionHook, this, oBIND1);
+	const int sSections[] = { 85, 120, 100 };
+	Window->SetNumStatusSections(sSections, oCOUNTOF(sSections));
+	Window->SetStatusText(0, "Timer: 0");
+	Window->SetStatusText(1, "F3 for default style");
+	Window->SetStatusText(2, "Easy: 0");
 
-	oVERIFY(oWindowCreate(init, &TopLevelWindow));
+	Window->SetTimer((uintptr_t)&PulseContext, 2000);
 
-	TopLevelWindow->SetTitle("oWindowTestApp");
-
-	oStd::uri_string dev_uri;
-	oVERIFY(oSystemGetURI(dev_uri, oSYSPATH_DEV));
-	
-	{
-		oSTREAM_MONITOR_DESC smd;
-		smd.Monitor = dev_uri;
-		oStd::sncatf(smd.Monitor, "Ouroboros/Source/oWindowTestApp/*.xml");
-		smd.TraceEvents = false;
-		smd.WatchSubtree = false;
-		oVERIFY(oStreamMonitorCreate(smd, oBIND(&oWindowTestApp::OnFileChange, this, oBIND1, oBIND2), &StreamMonitor));
-	}
-
-	oWindowShow(TopLevelWindow);
+	Window->Show();
 }
 
-bool oWindowTestApp::EventHook(const oGUI_EVENT_DESC& _Event)
+bool oWindowTestApp::CreateMenu(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 {
-	switch (_Event.Event)
+	oFOR(auto& m, Menus)
+		m = oGUIMenuCreate();
+
+	oFOR(const auto& h, sMenuHier)
 	{
-		case oGUI_SIZED:
-		{
-			float2 Ratio = float2(_Event.ClientSize) / float2(_Event.ScreenSize);
-			float R = max(Ratio);
-			oGUI_FONT_DESC fd;
-			fd.PointSize = oInt(round(R * 35.0f));
-			hFont = oGDICreateFont(fd);
-			break;
-		}
+		oGUIMenuAppendSubmenu(
+			h.Parent == oWMENU_TOPLEVEL ? _CreateEvent.hMenu : Menus[h.Parent]
+		, Menus[h.Menu], h.Name);
+	}
 
-		case oGUI_INPUT_DEVICE_CHANGED:
-		{
-			const oGUI_INPUT_DEVICE_EVENT_DESC& e = static_cast<const oGUI_INPUT_DEVICE_EVENT_DESC&>(_Event);
-			oTRACE("device change: %s %s %s", oStd::as_string(e.Type), e.InstanceName.c_str(), oStd::as_string(e.Status));
-			break;
-		}
+	oGUIMenuAppendItem(Menus[oWMENU_FILE], oWMI_FILE_EXIT, "E&xit\tAlt+F4");
 
-		case oGUI_TIMER:
-		{
-			const oGUI_TIMER_EVENT_DESC& e = static_cast<const oGUI_TIMER_EVENT_DESC&>(_Event);
-			//clear any status text
-			break;
-		}
+	oGUIMenuAppendEnumItems(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, oRTTI_OF(oGUI_WINDOW_STYLE), _CreateEvent.Shape.Style);
+	MERL.Register(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, [=](int _BorderStyle)
+	{
+		Window->SetStyle((oGUI_WINDOW_STYLE)_BorderStyle);
+	});
 
-		default:
-			break;
+	oGUIMenuAppendEnumItems(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, oRTTI_OF(oGUI_WINDOW_STATE), _CreateEvent.Shape.State);
+	MERL.Register(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, [=](int _State)
+	{
+		Window->Show((oGUI_WINDOW_STATE)_State);
+	});
+
+	oGUIMenuAppendItem(Menus[oWMENU_HELP], oWMI_HELP_ABOUT, "&About...");
+
+	return true;
+}
+
+bool oWindowTestApp::CreateControls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
+{
+	{
+		oGUI_CONTROL_DESC d;
+		d.hParent = _CreateEvent.hWindow;
+		d.Type = oGUI_CONTROL_BUTTON;
+		d.Text = "&Easy";
+		d.Position = int2(20, 20);
+		d.Size = int2(80, 20);
+		d.ID = oWCTL_EASY_BUTTON;
+		d.StartsNewGroup = true;
+		hButton = oWinControlCreate(d);
 	}
 
 	return true;
+}
+
+void oWindowTestApp::CheckState(oGUI_WINDOW_STATE _State)
+{
+	oGUIMenuCheckRadio(Menus[oWMENU_VIEW_STATE]
+	, oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, oWMI_VIEW_STATE_FIRST + _State);
+}
+
+void oWindowTestApp::CheckStyle(oGUI_WINDOW_STYLE _Style)
+{
+	oGUIMenuCheckRadio(Menus[oWMENU_VIEW_STYLE]
+	, oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, oWMI_VIEW_STYLE_FIRST + _Style);
+}
+
+void oWindowTestApp::EventHook(const oGUI_EVENT_DESC& _Event)
+{
+	switch (_Event.Type)
+	{
+		case oGUI_TIMER:
+			if (_Event.AsTimer().Context == (uintptr_t)&PulseContext)
+			{
+				PulseContext.Count++;
+				Window->SetStatusText(0, "Timer: %d", PulseContext.Count);
+			}
+			else
+				oTRACE("oGUI_TIMER");
+			break;
+		case oGUI_ACTIVATED:
+			oTRACE("oGUI_ACTIVATED");
+			break;
+		case oGUI_DEACTIVATED:
+			oTRACE("oGUI_DEACTIVATED");
+			break;
+		case oGUI_CREATING:
+		{
+			oTRACE("oGUI_CREATING");
+			if (!CreateMenu(_Event.AsCreate()))
+				oThrowLastError();
+			if (!CreateControls(_Event.AsCreate()))
+				oThrowLastError();
+			break;
+		}
+		case oGUI_PAINT:
+			//oTRACE("oGUI_PAINT");
+			break;
+		case oGUI_DISPLAY_CHANGED:
+			oTRACE("oGUI_DISPLAY_CHANGED");
+			break;
+		case oGUI_MOVING:
+			oTRACE("oGUI_MOVING");
+			break;
+		case oGUI_MOVED:
+			oTRACE("oGUI_MOVED %dx%d", _Event.AsShape().Shape.ClientPosition.x, _Event.AsShape().Shape.ClientPosition.y);
+			break;
+		case oGUI_SIZING:
+			oTRACE("oGUI_SIZING %s %dx%d", oStd::as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
+			break;
+		case oGUI_SIZED:
+		{
+			oTRACE("oGUI_SIZED %s %dx%d", oStd::as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
+			CheckState(_Event.AsShape().Shape.State);
+			CheckStyle(_Event.AsShape().Shape.Style);
+
+			// center the button
+			{
+				RECT rParent, rButton;
+				GetClientRect((HWND)_Event.hWindow, &rParent);
+				GetClientRect(hButton, &rButton);
+				RECT Centered = oWinRect(oGUIResolveRect(oRect(rParent), oRect(rButton), oGUI_ALIGNMENT_MIDDLE_CENTER, false));
+				SetWindowPos(hButton, nullptr, Centered.left, Centered.top, oWinRectW(Centered), oWinRectH(Centered), SWP_SHOWWINDOW);
+			}
+			break;
+		}
+		case oGUI_CLOSING:
+			oTRACE("oGUI_CLOSING");
+			Window->Quit();
+			break;
+		case oGUI_CLOSED:
+			oTRACE("oGUI_CLOSED");
+			break;
+		case oGUI_TO_FULLSCREEN:
+			oTRACE("oGUI_TO_FULLSCREEN");
+			break;
+		case oGUI_FROM_FULLSCREEN:
+			oTRACE("oGUI_FROM_FULLSCREEN");
+			break;
+		case oGUI_LOST_CAPTURE:
+			oTRACE("oGUI_LOST_CAPTURE");
+			break;
+		case oGUI_DROP_FILES:
+			oTRACE("oGUI_DROP_FILES (at %d,%d starting with %s)", _Event.AsDrop().ClientDropPosition.x, _Event.AsDrop().ClientDropPosition.y, _Event.AsDrop().pPaths[0]);
+			break;
+		case oGUI_INPUT_DEVICE_CHANGED:
+			oTRACE("oGUI_INPUT_DEVICE_CHANGED %s %s %s", oStd::as_string(_Event.AsInputDevice().Type), oStd::as_string(_Event.AsInputDevice().Status), _Event.AsInputDevice().InstanceName);
+			break;
+		oNODEFAULT;
+	}
 }
 
 void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 {
 	switch (_Action.Action)
 	{
+		case oGUI_ACTION_UNKNOWN:
+			oTRACE("oGUI_ACTION_UNKNOWN");
+			break;
+		case oGUI_ACTION_MENU:
+			switch (_Action.DeviceID)
+			{
+				case oWMI_FILE_EXIT:
+					Window->Quit();
+					break;
+				case oWMI_HELP_ABOUT:
+				{
+					oMSGBOX_DESC m;
+					m.hParent = _Action.hWindow;
+					m.Title = "About";
+					m.Type = oMSGBOX_INFO;
+					oMsgBox(m, "oWindowTestApp: a small program to show a basic window and its events and actions");
+					break;
+				}
+				default:
+					MERL.OnAction(_Action);
+			}
+			break;
+
 		case oGUI_ACTION_CONTROL_ACTIVATED:
-		{
+			switch (_Action.DeviceID)
+			{
+				case oWCTL_EASY_BUTTON:
+				{
+					oStd::sstring text;
+					Window->GetStatusText(text, 2);
+					int n = 0;
+					oStd::from_string(&n, text.c_str() + 6);
+					n++;
+					Window->SetStatusText(2, "Easy: %d", n);
+					break;
+				}
+				default:
+					oTRACE("oGUI_ACTION_CONTROL_ACTIVATED");
+					break;
+			}
 			break;
-		}
-
+		case oGUI_ACTION_CONTROL_DEACTIVATED:
+			oTRACE("oGUI_ACTION_CONTROL_DEACTIVATED");
+			break;
+		case oGUI_ACTION_CONTROL_SELECTION_CHANGING:
+			oTRACE("oGUI_ACTION_CONTROL_SELECTION_CHANGING");
+			break;
+		case oGUI_ACTION_CONTROL_SELECTION_CHANGED:
+			oTRACE("oGUI_ACTION_CONTROL_SELECTION_CHANGED");
+			break;
+		case oGUI_ACTION_HOTKEY:
+			switch (_Action.DeviceID)
+			{
+				case oWHK_DEFAULT_STYLE:
+				{
+					oGUI_WINDOW_SHAPE_DESC s;
+					s.State = Window->GetState();
+					if (s.State == oGUI_WINDOW_FULLSCREEN)
+						s.State = oGUI_WINDOW_RESTORED;
+					s.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
+					Window->SetShape(s);
+					break;
+				}
+				case oWHK_TOGGLE_FULLSCREEN:
+					if (Window->GetState() != oGUI_WINDOW_FULLSCREEN)
+					{
+						PreFullscreenState = Window->GetState();
+						Window->SetState(oGUI_WINDOW_FULLSCREEN);
+					}
+					else
+					{
+						Window->SetState(PreFullscreenState);
+					}
+					break;
+				default:
+					oTRACE("oGUI_ACTION_HOTKEY");
+					break;
+			}
+			
+			break;
 		case oGUI_ACTION_KEY_DOWN:
+			oTRACE("oGUI_ACTION_KEY_DOWN %s", oStd::as_string(_Action.Key));
+			break;
 		case oGUI_ACTION_KEY_UP:
-		{
-			//oTRACE("%s: %s", oStd::as_string(_Action.Action), oStd::as_string(_Action.Key));
+			oTRACE("oGUI_ACTION_KEY_UP %s", oStd::as_string(_Action.Key));
 			break;
-		}
-
-		default:
+		case oGUI_ACTION_POINTER_MOVE:
+			//oTRACE("oGUI_ACTION_POINTER_MOVE");
 			break;
+		case oGUI_ACTION_SKELETON:
+			oTRACE("oGUI_ACTION_SKELETON");
+			break;
+		case oGUI_ACTION_SKELETON_ACQUIRED:
+			oTRACE("oGUI_ACTION_SKELETON_ACQUIRED");
+			break;
+		case oGUI_ACTION_SKELETON_LOST:
+			oTRACE("oGUI_ACTION_SKELETON_LOST");
+			break;
+		oNODEFAULT;
 	}
 }
 
-void oWindowTestApp::OnFileChange(oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI)
+void oWindowTestApp::Run()
 {
-	if (_Event == oSTREAM_ACCESSIBLE)
-		oTRACE("accessible: %s", _ChangedURI.c_str());
+	Window->FlushMessages(true);
 }
 
 oMAINA()

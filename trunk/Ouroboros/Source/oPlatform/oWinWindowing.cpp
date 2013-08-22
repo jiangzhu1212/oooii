@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -39,6 +38,16 @@
 #include <WindowsX.h>
 #include <CdErr.h>
 #include <Shellapi.h>
+
+#define oWIN_CHECK(_hWnd) do \
+	{	if (!oWinExists(_hWnd)) return oErrorSetLast(std::errc::invalid_argument, "Invalid HWND 0x%x specified", _hWnd); \
+		if (!oWinIsWindowThread(_hWnd)) return oErrorSetLast(std::errc::operation_not_permitted, "This function must be called on the window thread %d for HWND 0x%x", oConcurrency::asuint(oStd::this_thread::get_id()), _hWnd); \
+	} while (false)
+
+#define oWIN_CHECK0(_hWnd) do \
+	{	if (!oWinExists(_hWnd)) { oErrorSetLast(std::errc::invalid_argument, "Invalid HWND 0x%x specified", _hWnd); return 0; } \
+		if (!oWinIsWindowThread(_hWnd)) { oErrorSetLast(std::errc::operation_not_permitted, "This function must be called on the window thread %d for HWND 0x%x", oConcurrency::asuint(oStd::this_thread::get_id()), _hWnd); return 0; } \
+	} while (false)
 
 static const char* kRegisteredWindowMessages[] = 
 {
@@ -147,15 +156,145 @@ bool GetSkeletonDesc(HSKELETON _hSkeleton, oGUI_BONE_DESC* _pSkeleton)
 	return oSkeletonInputContext::Singleton()->Get(_hSkeleton, _pSkeleton);
 }
 
+struct oWIN_DEVICE_CHANGE_CONTEXT
+{
+	oWIN_DEVICE_CHANGE_CONTEXT()
+	{
+		LastChangeTimestamp.fill(0);
+	}
+
+	std::vector<RAWINPUTDEVICELIST> RawInputs;
+	std::vector<oStd::mstring> RawInputInstanceNames;
+	std::array<unsigned int, oGUI_INPUT_DEVICE_TYPE_COUNT> LastChangeTimestamp;
+};
+
+// Register the specified window to receive WM_INPUT_DEVICE_CHANGE events. This
+// also uses oWM_INPUT_DEVICE_CHANGE to emulate the on-creation events fired for
+// non-KB/mouse devices like the Kinect.
+static bool oWinRegisterDeviceChangeEvents(HWND _hWnd)
+{
+	RAWINPUTDEVICE RID[] =
+	{
+		{ oUS_USAGE_PAGE_GENERIC_DESKTOP, oUS_USAGE_KEYBOARD, RIDEV_DEVNOTIFY, _hWnd },
+		{ oUS_USAGE_PAGE_GENERIC_DESKTOP, oUS_USAGE_MOUSE, RIDEV_DEVNOTIFY, _hWnd },
+	};
+	if (!RegisterRawInputDevices(RID, oCOUNTOF(RID), sizeof(RAWINPUTDEVICE)))
+		return oWinSetLastError();
+
+	// Windows sends KB and mouse device notifications automatically, so make up the
+	// difference here.
+	oVERIFY_R(oWinEnumInputDevices(false, [&](const oWINDOWS_HID_DESC& _HIDDesc)
+	{
+		switch(_HIDDesc.Type)
+		{
+			case oGUI_INPUT_DEVICE_KEYBOARD: case oGUI_INPUT_DEVICE_MOUSE: case oGUI_INPUT_DEVICE_UNKNOWN: break;
+			default: SendMessage(_hWnd, oWM_INPUT_DEVICE_CHANGE, MAKEWPARAM(_HIDDesc.Type, oGUI_INPUT_DEVICE_READY), (LPARAM)_HIDDesc.DeviceInstancePath.c_str());
+		}
+	}));
+
+	return true;
+}
+
+// There's a lot of code to parse a device change message, so encapsulate it 
+// here. Basically when devices are removed, there's no name passed to the 
+// event of what was removed, so basically a record of all devices needs to be 
+// kept and then scanned for differences. That's what the context is. Useage 
+// should be to create a context for a window that will support 
+// WM_INPUT_DEVICE_CHANGE and then call oWinTranslateDeviceChange in that event
+// to translate it into the simpler oWM_INPUT_DEVICE_CHANGE message. Remember to 
+// call oWinRegisterDeviceChangeEvents, else the WM_INPUT_DEVICE_CHANGE event 
+// will not be fired and this hook will not execute.
+oDECLARE_HANDLE(HDEVICECHANGE)
+static HDEVICECHANGE oWinDeviceChangeCreate()
+{
+	return (HDEVICECHANGE)new oWIN_DEVICE_CHANGE_CONTEXT();
+}
+
+static void oWinDeviceChangeDestroy(HDEVICECHANGE _hDeviceChance)
+{
+	oWIN_DEVICE_CHANGE_CONTEXT* ctx = (oWIN_DEVICE_CHANGE_CONTEXT*)_hDeviceChance;
+	delete ctx;
+}
+
+static oGUI_INPUT_DEVICE_TYPE oWinGetTypeFromRIM(DWORD _dwRIMType)
+{
+	switch (_dwRIMType)
+	{
+		case RIM_TYPEKEYBOARD: return oGUI_INPUT_DEVICE_KEYBOARD;
+		case RIM_TYPEMOUSE: return oGUI_INPUT_DEVICE_MOUSE;
+		default: break;
+	}
+	return oGUI_INPUT_DEVICE_UNKNOWN;
+}
+
+static bool oWinTranslateDeviceChange(HWND _hWnd, WPARAM _wParam, LPARAM _lParam, HDEVICECHANGE _hDeviceChance)
+{
+	oWIN_DEVICE_CHANGE_CONTEXT* ctx = (oWIN_DEVICE_CHANGE_CONTEXT*)_hDeviceChance;
+	oGUI_INPUT_DEVICE_TYPE Type = oGUI_INPUT_DEVICE_UNKNOWN;
+	oGUI_INPUT_DEVICE_STATUS Status = _wParam == GIDC_ARRIVAL ? oGUI_INPUT_DEVICE_READY : oGUI_INPUT_DEVICE_NOT_READY;
+	oStd::mstring InstanceName;
+
+	switch (_wParam)
+	{
+		// We have full and direct information.
+		case GIDC_ARRIVAL:
+		{
+			RID_DEVICE_INFO RIDDI;
+			RIDDI.cbSize = sizeof(RIDDI);
+			UINT Size = sizeof(RIDDI);
+			UINT NameCapacity = oSizeT(InstanceName.capacity());
+			oVB(GetRawInputDeviceInfoA((HANDLE)_lParam, RIDI_DEVICEINFO, &RIDDI, &Size));
+			oVB(GetRawInputDeviceInfoA((HANDLE)_lParam, RIDI_DEVICENAME, InstanceName.c_str(), &NameCapacity));
+
+			// Refresh record keeping in case these are new devices
+			UINT RawCapacity = 0;
+			GetRawInputDeviceList(nullptr, &RawCapacity, sizeof(RAWINPUTDEVICELIST));
+			ctx->RawInputs.resize(RawCapacity);
+			ctx->RawInputInstanceNames.resize(RawCapacity);
+			UINT RawCount = GetRawInputDeviceList(ctx->RawInputs.data(), &RawCapacity, sizeof(RAWINPUTDEVICELIST));
+			for (UINT i = 0; i < RawCount; i++)
+			{
+				UINT Capacity = oSizeT(ctx->RawInputInstanceNames[i].capacity());
+				oVB(GetRawInputDeviceInfoA(ctx->RawInputs[i].hDevice, RIDI_DEVICENAME, ctx->RawInputInstanceNames[i].c_str(), &Capacity));
+			}
+
+			oASSERT(RawCount == RawCapacity, "size mismatch");
+			Type = oWinGetTypeFromRIM(RIDDI.dwType);
+			break;
+		}
+
+		// Handle is correct, but device info won't be, not even type, so
+		// look it up in app bookkeeping.
+		case GIDC_REMOVAL:
+		{
+			for (size_t i = 0; i < ctx->RawInputs.size(); i++)
+			{
+				if (ctx->RawInputs[i].hDevice == (HANDLE)_lParam)
+				{
+					Type = oWinGetTypeFromRIM(ctx->RawInputs[i].dwType);
+					InstanceName = ctx->RawInputInstanceNames[i];
+					break;
+				}
+			}
+
+			break;
+		}
+		oNODEFAULT;
+	}
+
+	const unsigned int Timestamp = (unsigned int)GetMessageTime();;
+	if (ctx->LastChangeTimestamp[Type] != Timestamp)
+	{
+		ctx->LastChangeTimestamp[Type] = Timestamp;
+		SendMessage(_hWnd, oWM_INPUT_DEVICE_CHANGE, MAKEWPARAM(Type, Status), (LPARAM)InstanceName.c_str());
+	}
+
+	return true;
+}
+
 // @oooii-tony: Confirmation of hWnd being on the specified thread is disabled
 // for now... I think it might be trying to access the HWND before it's fully
 // constructed. First get the massive integration done, then come back to this.
-
-#define oWINV(_hWnd) \
-	if (!oWinExists(_hWnd)) \
-		return oErrorSetLast(std::errc::invalid_argument, "Invalid HWND %p specified", _hWnd); \
-	if (!oWinIsWindowThread(_hWnd)) \
-		oASSERT(oWinIsWindowThread(_hWnd), "This function must be called on the window thread %d for %p", oConcurrency::asuint(oStd::this_thread::get_id()), _hWnd)
 
 #define oWINVP(_hWnd) \
 	if (!oWinExists(_hWnd)) \
@@ -168,83 +307,367 @@ inline bool oErrorSetLastBadIndex(HWND _hControl, oGUI_CONTROL_TYPE _Type, int _
 
 inline HWND oWinControlGetBuddy(HWND _hControl) { return (HWND)SendMessage(_hControl, UDM_GETBUDDY, 0, 0); }
 
-bool oWinCreate(HWND* _phWnd, const int2& _ClientPosition, const int2& _ClientSize, WNDPROC _Wndproc, void* _pThis, bool _AsMessagingWindow)
+static DWORD oWinGetStyle(oGUI_WINDOW_STYLE _Style, bool _HasParent)
 {
-	if (!_phWnd)
-		return oErrorSetLast(std::errc::invalid_argument);
+	switch (_Style)
+	{
+		case oGUI_WINDOW_BORDERLESS: return _HasParent ? WS_CHILD : WS_POPUP;
+		case oGUI_WINDOW_DIALOG: return WS_CAPTION;
+		case oGUI_WINDOW_FIXED: 
+		case oGUI_WINDOW_FIXED_WITH_MENU:
+		case oGUI_WINDOW_FIXED_WITH_STATUSBAR:
+		case oGUI_WINDOW_FIXED_WITH_MENU_AND_STATUSBAR: return WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX;
+		default: break;
+	}
+	return WS_OVERLAPPEDWINDOW;
+}
 
+// Returns the height of the status bar if the specified window has one. If no
+// status bar is present or the status bar is hidden, this returns 0.
+static int oWinGetStatusBarHeight(HWND _hWnd)
+{
+	int h = 0;
+	if (oWinStatusBarShown(_hWnd))
+	{
+		RECT rStatusBar;
+		HWND hStatusBar = oWinGetStatusBar(_hWnd);
+		GetClientRect(hStatusBar, &rStatusBar);
+		h = oWinRectH(rStatusBar);
+	}
+	return h;
+}
+
+struct oWndExtra
+{
+	HMENU hMenu;
+	HWND hStatusBar;
+	HDEVICECHANGE hDeviceChange;
+	LONG_PTR RestoredPosition; // MAKELPARAM(x,y)
+	LONG_PTR RestoredSize; // MAKELPARAM(w,h)
+	LONG_PTR PreviousState; // oGUI_WINDOW_STATE
+	LONG_PTR PreviousStyle; // oGUI_WINDOW_STYLE
+	LONG_PTR ExtraFlags;
+	intptr_t TempCallCounter;
+	intptr_t LastShowTimestamp;
+};
+
+// This is set when the handler should ignore the event because its about to be 
+// followed up with the same event with more meaningful data.
+#define oWNDEXTRA_FLAGS_TEMP_CHANGE (0x1)
+
+#define oGWLP_MENU (offsetof(oWndExtra, hMenu))
+#define oGWLP_STATUSBAR (offsetof(oWndExtra, hStatusBar))
+#define oGWLP_DEVICE_CHANGE (offsetof(oWndExtra, hDeviceChange))
+#define oGWLP_RESTORED_POSITION (offsetof(oWndExtra, RestoredPosition)) // use GET_X_LPARAM and GET_Y_LPARAM to decode
+#define oGWLP_RESTORED_SIZE (offsetof(oWndExtra, RestoredSize)) // use GET_X_LPARAM and GET_Y_LPARAM to decode
+#define oGWLP_PREVIOUS_STATE (offsetof(oWndExtra, PreviousState)) // oGUI_WINDOW_STATE
+#define oGWLP_PREVIOUS_STYLE (offsetof(oWndExtra, PreviousStyle)) // oGUI_WINDOW_STYLE
+#define oGWLP_EXTRA_FLAGS (offsetof(oWndExtra, ExtraFlags))
+#define oGWLP_TEMP_CALL_COUNTER (offsetof(oWndExtra, TempCallCounter))
+#define oGWLP_LAST_SHOW_TIMESTAMP (offsetof(oWndExtra, LastShowTimestamp))
+
+#define oEF_RENDER_TARGET (1<<0)
+#define oEF_FULLSCREEN_EXCLUSIVE (1<<1)
+#define oEF_FULLSCREEN_COOPERATIVE (1<<2)
+#define oEF_NO_SAVE_RESTORED_POSITION_SIZE (1<<3)
+#define oEF_ALT_F4_ENABLED (1<<4)
+
+HWND oWinCreate(HWND _hParent
+	, const char* _Title
+	, oGUI_WINDOW_STYLE _Style
+	, const int2& _ClientPosition
+	, const int2& _ClientSize
+	, WNDPROC _Wndproc
+	, void* _pInit
+	, void* _pThis)
+{
 	oStd::sstring ClassName;
-	oPrintf(ClassName, "Ouroboros.Window.WndProc.%x", _Wndproc);
-
 	WNDCLASSEXA wc;
 	ZeroMemory(&wc, sizeof(WNDCLASSEX));
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.hInstance = GetModuleHandle(0);
-	wc.lpfnWndProc = _Wndproc ? _Wndproc : DefWindowProc;                    
-	wc.lpszClassName = ClassName;                        
+	wc.lpfnWndProc = _Wndproc ? _Wndproc : DefWindowProc;
+	// for "native" support for menus and status bars and somewhere to store 
+	// restored pos/size
+	wc.cbWndExtra = sizeof(oWndExtra);
+	wc.lpszClassName = (LPCSTR)oWinMakeClassName(ClassName, _Wndproc);
 	wc.style = CS_BYTEALIGNCLIENT|CS_HREDRAW|CS_VREDRAW|CS_OWNDC|CS_DBLCLKS;
 	wc.hCursor = LoadCursor(0, IDC_ARROW);
 	wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
 	if (0 == RegisterClassEx(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
-		return oWinSetLastError();
-
-	*_phWnd = CreateWindowEx(WS_EX_ACCEPTFILES|WS_EX_APPWINDOW, ClassName, ""
-		, WS_OVERLAPPEDWINDOW
-		, _ClientPosition.x, _ClientPosition.y
-		, _ClientSize.x, _ClientSize.y
-		, _AsMessagingWindow ? HWND_MESSAGE : nullptr, nullptr, nullptr, _pThis);
-
-	if (!*_phWnd)
 	{
-		if (GetLastError() == S_OK)
-			return oErrorSetLast(std::errc::protocol_error, "CreateWindowEx returned a null HWND (failure condition) but GetLastError is S_OK. This implies that user handling of a WM_CREATE message failed, so start looking there.");
-		return oWinSetLastError();
+		oWinSetLastError();
+		return nullptr;
 	}
 
+	// Resolve initial position and size
+	int2 NewPosition = _ClientPosition;
+	int2 NewSize = _ClientSize;
+	if (NewPosition.x == oDEFAULT || NewPosition.y == oDEFAULT || NewSize.x == oDEFAULT || NewSize.y == oDEFAULT)
+	{
+		oDISPLAY_DESC dd;
+		oDisplayEnum(oDisplayGetPrimaryIndex(), &dd);
+		const RECT rPrimaryWorkarea = oWinRectWH(dd.WorkareaPosition, dd.WorkareaSize);
+		const int2 DefaultSize = oWinRectSize(rPrimaryWorkarea) / 4; // 25% of parent window by default
+		NewSize = oGUIResolveRectSize(NewSize, DefaultSize);
+		const RECT rCenteredClient = oWinRect(oGUIResolveRect(oRect(rPrimaryWorkarea), int2(0, 0), NewSize, oGUI_ALIGNMENT_MIDDLE_CENTER, false));
+		const int2 DefaultPosition = oWinRectPosition(rCenteredClient);
+		NewPosition = oGUIResolveRectPosition(NewPosition, DefaultPosition);
+	}
+
+	const DWORD dwInitialStyleEx = WS_EX_ACCEPTFILES|WS_EX_APPWINDOW;
+	const DWORD dwInitialStyle = oWinGetStyle(_Style, false);
+
+	RECT rWindow = oWinRectWH(NewPosition, NewSize);
+	if (!AdjustWindowRectEx(&rWindow, dwInitialStyle, false, dwInitialStyleEx))
+	{
+		oWinSetLastError();
+		return nullptr;
+	}
+
+	oWIN_CREATESTRUCT wcs;
+	wcs.Shape.State = oGUI_WINDOW_HIDDEN;
+	wcs.Shape.Style = _Style;
+	wcs.Shape.ClientPosition = NewPosition;
+	wcs.Shape.ClientSize = NewSize;
+	wcs.pThis = _pThis;
+	wcs.pInit = _pInit;
+
+	// catch any exception thrown by a user's WM_CREATE since oGUI/oWindow passes
+	// const events around and thus doesn't know what gets returned.
+	HWND hWnd = nullptr;
+	try
+	{
+		hWnd = CreateWindowEx(dwInitialStyleEx, ClassName, oSAFESTRN(_Title), dwInitialStyle
+			, rWindow.left, rWindow.top, oWinRectW(rWindow), oWinRectH(rWindow)
+			, _hParent, nullptr, nullptr, &wcs);
+	}
+
+	catch (std::exception& e)
+	{
+		oErrorSetLast(e);
+		return nullptr;
+	}
+
+	if (!hWnd)
+	{
+		if (GetLastError() == S_OK)
+			oErrorSetLast(std::errc::protocol_error, "CreateWindowEx returned a null HWND (failure condition) for '%s' but GetLastError is S_OK. This implies that user handling of a WM_CREATE message failed, so start looking there.", oSAFESTRN(_Title));
+		else
+			oWinSetLastError();
+		return nullptr;
+	}
+
+	// does this belong in WM_CREATE?
 	oFORI(i, kRegisteredWindowMessages)
 		oVB(RegisterWindowMessage(kRegisteredWindowMessages[i]));
 
-	oTRACE("HWND %x running on thread %d (0x%x)", *_phWnd, oConcurrency::asuint(oStd::this_thread::get_id()), oConcurrency::asuint(oStd::this_thread::get_id()));
+	oTRACE("HWND 0x%x '%s' running on thread %d (0x%x)"
+		, hWnd
+		, oSAFESTRN(_Title)
+		, oConcurrency::asuint(oStd::this_thread::get_id())
+		, oConcurrency::asuint(oStd::this_thread::get_id()));
 
+	oVERIFY(oWinRegisterDeviceChangeEvents(hWnd));
+
+	return hWnd;
+}
+
+void oWinDestroy(HWND _hWnd)
+{
+	if (oWinIsWindowThread(_hWnd))
+		DestroyWindow(_hWnd);
+	else
+		PostMessage(_hWnd, oWM_DESTROY, 0, 0);
+}
+
+char* oWinMakeClassName(char* _StrDestination, size_t _SizeofStrDestination, WNDPROC _Wndproc)
+{
+	int written = snprintf(_StrDestination, _SizeofStrDestination, "Ouroboros.Window.WndProc.%x", _Wndproc);
+	return oSizeT(written) < _SizeofStrDestination ? _StrDestination : nullptr;
+}
+
+bool oWinIsClass(HWND _hWnd, WNDPROC _Wndproc)
+{
+	oStd::sstring ClassName, ExpectedClassName;
+	oVERIFY_R(oWinMakeClassName(ExpectedClassName, _Wndproc));
+	oVERIFY_R(GetClassName(_hWnd, ClassName.c_str(), oInt(ClassName.capacity())));
+	return !strcmp(ClassName, ExpectedClassName);
+}
+
+bool oWinSetTempChange(HWND _hWnd, bool _IsTemp)
+{
+	oWIN_CHECK(_hWnd);
+	intptr_t Counter = (intptr_t)GetWindowLongPtr(_hWnd, oGWLP_TEMP_CALL_COUNTER);
+	Counter = __max(0, Counter + (_IsTemp ? 1 : -1));
+	SetWindowLongPtr(_hWnd, oGWLP_TEMP_CALL_COUNTER, (LONG_PTR)Counter);
 	return true;
 }
 
-void* oWinGetThis(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
+bool oWinIsTempChange(HWND _hWnd)
 {
-	void* pThis = nullptr;
+	oWIN_CHECK(_hWnd);
+	intptr_t Counter = (intptr_t)GetWindowLongPtr(_hWnd, oGWLP_TEMP_CALL_COUNTER);
+	return Counter != 0;
+}
+
+static void oWinSaveRestoredPosSize(HWND _hWnd)
+{
+	if (!IsIconic(_hWnd) && !IsZoomed(_hWnd) && !oWinIsTempChange(_hWnd))
+	{
+		LONG_PTR extra = GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS);
+		if (0 == (extra & (oEF_FULLSCREEN_COOPERATIVE|oEF_FULLSCREEN_COOPERATIVE|oEF_NO_SAVE_RESTORED_POSITION_SIZE)))
+		{
+			oGUI_WINDOW_SHAPE_DESC s = oWinGetShape(_hWnd);
+			SetWindowLongPtr(_hWnd, oGWLP_RESTORED_POSITION, (LONG_PTR)MAKELPARAM(s.ClientPosition.x, s.ClientPosition.y));
+			SetWindowLongPtr(_hWnd, oGWLP_RESTORED_SIZE, (LONG_PTR)MAKELPARAM(s.ClientSize.x, s.ClientSize.y));
+			}
+	}
+}
+
+LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
+{
 	if (_hWnd)
 	{
 		switch (_uMsg)
 		{
+			case WM_ERASEBKGND:
+				// if a render target, don't erase with GDI and cause flickering
+				if (oWinIsRenderTarget(_hWnd))
+					return 1;
+				break;
+
 			case WM_CREATE:
 			{
 				// 'this' pointer was passed during the call to CreateWindow, so put 
 				// that in userdata.
 				CREATESTRUCTA* cs = (CREATESTRUCTA*)_lParam;
-				SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)cs->lpCreateParams);
-				pThis = (void*)cs->lpCreateParams;
+				oWIN_CREATESTRUCT* wcs = (oWIN_CREATESTRUCT*)cs->lpCreateParams;
+
+				// Set up internal/custom data.
+				SetWindowLongPtr(_hWnd, oGWLP_DEVICE_CHANGE, (LONG_PTR)oWinDeviceChangeCreate());
+				SetWindowLongPtr(_hWnd, oGWLP_MENU, (LONG_PTR)CreateMenu());
+				SetWindowLongPtr(_hWnd, oGWLP_STATUSBAR, (LONG_PTR)oWinStatusBarCreate(_hWnd, (HMENU)0x00005747));
+				oVERIFY(oWinShowStatusBar(_hWnd, oGUIStyleHasStatusBar(wcs->Shape.Style)));
+
+				if (oGUIStyleHasStatusBar(wcs->Shape.Style))
+					oVB(SetWindowPos(_hWnd, 0, cs->x, cs->y, cs->cx, cs->cy + oWinGetStatusBarHeight(_hWnd), SWP_NOZORDER|SWP_FRAMECHANGED|SWP_NOMOVE));
+
+				oWinSaveRestoredPosSize(_hWnd);
+				oWinSetTempChange(_hWnd, wcs->Shape.State != oGUI_WINDOW_MAXIMIZED);
+				oWinShowMenu(_hWnd, oGUIStyleHasMenu(wcs->Shape.Style));
+				oWinSetTempChange(_hWnd, false);
+
+				SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)wcs->pThis);
 				break;
 			}
 
 			case WM_INITDIALOG:
 				// dialogs don't use CREATESTRUCT, so assume it's directly the context
 				SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)_lParam);
-				pThis = (void*)_lParam;
 				break;
 
 			case WM_DESTROY:
-				// once WM_DESTROY is called, don't allow custom handling anymore
-				pThis = (void*)SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)nullptr);
+				
+				// If GetMenu returns the menu, then Windows will handle its destruction
+				if (!::GetMenu(_hWnd))
+					DestroyMenu((HMENU)SetWindowLongPtr(_hWnd, oGWLP_MENU, (LONG_PTR)nullptr));
+
+				// As a child window, the status bar is implicitly destroyed.
+
+				// minimizes "randomly set focus to some window other than parent"
+				// @oooii-tony: Revisit this: this causes a child window to be reset in 
+				// position and looks ugly. It may be true that position needs to be 
+				// set here as well.
+				//oWinSetOwner(_hWnd, nullptr);
+
+				oWinDeviceChangeDestroy((HDEVICECHANGE)GetWindowLongPtr(_hWnd, oGWLP_DEVICE_CHANGE));
+				SetWindowLongPtr(_hWnd, oGWLP_DEVICE_CHANGE, (LONG_PTR)nullptr);
+
+				PostQuitMessage(0);
+				break;
+
+			case WM_SYSKEYDOWN:
+			{
+				if (_wParam == VK_F4 && !oWinAltF4IsEnabled(_hWnd))
+					return true;
+				break;
+			}
+
+			case WM_SYSCOMMAND:
+			{
+				// Take over control of syscommands to resize since oWinSetShape does
+				// extra work DefWindowProc is not aware of.
+
+				oGUI_WINDOW_SHAPE_DESC s;
+				switch (_wParam)
+				{
+					case SC_MAXIMIZE:
+						s.State = oGUI_WINDOW_MAXIMIZED;
+						oWinSetShape(_hWnd, s);
+						return 0;
+					case SC_MINIMIZE:
+						s.State = oGUI_WINDOW_MINIMIZED;
+						oWinSetShape(_hWnd, s);
+						return 0;
+					case SC_RESTORE:
+					{
+						oGUI_WINDOW_SHAPE_DESC Old = oWinGetShape(_hWnd);
+						if (Old.State == oGUI_WINDOW_MINIMIZED)
+						{
+							s.State = (oGUI_WINDOW_STATE)GetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STATE);
+							if (s.State == oGUI_WINDOW_HIDDEN)
+								s.State = oGUI_WINDOW_RESTORED;
+						}
+						else 
+							s.State = oGUI_WINDOW_RESTORED;
+
+						oWinSetShape(_hWnd, s);
+						return 0;
+					}
+					default:
+						break;
+				}
+
+				break;
+			}
+
+			case WM_WINDOWPOSCHANGED:
+			{
+				if (IsWindowVisible(_hWnd))
+					SetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP, (ULONG_PTR)oTimerMS());
+				else
+					SetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP, (ULONG_PTR)-1);
+				break;
+			}
+
+			case WM_MOVE:
+				oWinSaveRestoredPosSize(_hWnd);
+				break;
+
+			case WM_SIZE:
+			{
+				HWND hStatusBar = (HWND)GetWindowLongPtr(_hWnd, oGWLP_STATUSBAR);
+				SendMessage(hStatusBar, WM_SIZE, 0, 0);
+				oWinSaveRestoredPosSize(_hWnd);
+				break;
+			}
+
+			case WM_INPUT_DEVICE_CHANGE:
+				oVB(oWinTranslateDeviceChange(_hWnd, _wParam, _lParam, (HDEVICECHANGE)GetWindowLongPtr(_hWnd, oGWLP_DEVICE_CHANGE)));
 				break;
 
 			default:
-				// For any other message, grab the context and return it
-				pThis = (void*)GetWindowLongPtr(_hWnd, GWLP_USERDATA);
 				break;
 		}
-
 	}
-	return pThis;
+	return -1;
+}
+
+void* oWinGetThis(HWND _hWnd)
+{
+	oWIN_CHECK0(_hWnd);
+	return (void*)GetWindowLongPtr(_hWnd, GWLP_USERDATA);
 }
 
 // Returns true if the specified _uMsg is one that was assigned to this process
@@ -263,6 +686,36 @@ oStd::thread::id oWinGetWindowThread(HWND _hWnd)
 	oStd::thread::id ID;
 	(uint&)ID = GetWindowThreadProcessId(_hWnd, nullptr);
 	return ID;
+}
+
+bool oWinIsOpaque(HWND _hWnd)
+{
+	// @oooii-tony: I can't find API to ask about the opacity of an HWND, so just
+	// wait for a while.
+	oWIN_CHECK(_hWnd);
+	static const intptr_t kFadeInTime = 200;
+	intptr_t LastShowTimestamp = (intptr_t)GetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP);
+	if (LastShowTimestamp < 0)
+		return false;
+	intptr_t Now = oTimerMS();
+	return (LastShowTimestamp + kFadeInTime) < Now;
+}
+
+bool oWinRegisterTouchEvents(HWND _hWnd, bool _Registered)
+{
+	#ifdef oWINDOWS_HAS_REGISTERTOUCHWINDOW
+		oWINDOWS_VERSION v = oGetWindowsVersion();
+		if (v >= oWINDOWS_7)
+		{
+			if (_Registered)
+				oVB(RegisterTouchWindow(_hWnd, 0));
+			else
+				oVB(UnregisterTouchWindow(_hWnd));
+			return true;
+		}
+		else
+	#endif
+		return oErrorSetLast(std::errc::not_supported, "Windows 7 is the minimum required version for touch support");
 }
 
 void oWinAccelFromHotKeys(ACCEL* _pAccels, const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys)
@@ -403,11 +856,7 @@ static HWND oWinGetPrevTabStop()
 // VK_TAB.
 static bool oIsDialogMessageEx(HWND _hWnd, MSG* _pMsg)
 {
-	if (!_hWnd)
-		return false;
-
-	oASSERT(oWinIsWindowThread(_hWnd) || !oWinExists(_hWnd), "Must be called from windows thread (HWND=%p)", _hWnd);
-
+	oWIN_CHECK(_hWnd);
 	if (_pMsg->message == WM_KEYDOWN && _pMsg->wParam == VK_TAB)
 	{
 		bool CtrlDown = (GetKeyState(VK_LCONTROL) & 0x1000) || (GetKeyState(VK_RCONTROL) & 0x1000);
@@ -457,39 +906,92 @@ bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext)
 	MSG msg;
 	bool HasMessage = false;
 	if (_WaitForNext)
-		HasMessage = GetMessage(&msg, nullptr, 0, 0) > 0;
+	{
+		int n = GetMessage(&msg, nullptr, 0, 0);
+		if (n == 0)
+			return oErrorSetLast(std::errc::operation_canceled);
+		HasMessage = n > 0;
+	}
 	else
 		HasMessage = !!PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE);
 
 	if (HasMessage)
 	{
-		if (msg.message == WM_QUIT)
-			return oErrorSetLast(std::errc::operation_canceled);
+			if (!_hWnd)
+				_hWnd = msg.hwnd;
 
-		if (!_hWnd)
-			_hWnd = msg.hwnd;
+			oWIN_CHECK(_hWnd);
 
-		HasMessage = !!TranslateAccelerator(_hWnd, _hAccel, &msg);
-		if (!HasMessage)
-			HasMessage = oIsDialogMessageEx(_hWnd, &msg);
+			HasMessage = !!TranslateAccelerator(_hWnd, _hAccel, &msg);
+			if (!HasMessage)
+				HasMessage = oIsDialogMessageEx(_hWnd, &msg);
 
-		if (!HasMessage)
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+			if (!HasMessage)
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+
+			// Treat WM_NULL like the noop it is by indicating that there are no new messages
+			if (msg.message != WM_NULL)
+				return true;
 		}
-
-		// Treat WM_NULL like the noop it is by indicating that there are no new messages
-		if (msg.message != WM_NULL)
-			return true;
-	}
 
 	return oErrorSetLast(std::errc::no_message_available);
 }
 
-bool oWinWake(HWND _hWnd)
+HMENU oWinGetMenu(HWND _hWnd)
 {
-	return !!PostMessage(_hWnd, WM_NULL, 0, 0);
+	oWIN_CHECK0(_hWnd);
+	return (HMENU)GetWindowLongPtr(_hWnd, oGWLP_MENU);
+}
+
+bool oWinShowMenu(HWND _hWnd, bool _Show)
+{
+	oWIN_CHECK(_hWnd);
+	HMENU hMenu = oWinGetMenu(_hWnd);
+	oASSERT(hMenu, "invalid menu");
+
+	// If the top-level menu is empty, then not even the bar gets drawn, and the
+	// client area is resized. So in this case, fail out and preserve the sizing.
+	if (0 == GetMenuItemCount(hMenu))
+		return oErrorSetLast(std::errc::operation_not_permitted, "empty top-level windows do not draw anything, and thus the client rectangle is inappropriately calculated so don't show empty menus");
+
+	if (!::SetMenu(_hWnd, _Show ? hMenu : nullptr))
+		return oWinSetLastError();
+	return true;
+}
+
+bool oWinMenuShown(HWND _hWnd)
+{
+	oWIN_CHECK(_hWnd);
+	return !!GetMenu(_hWnd);
+}
+
+HWND oWinGetStatusBar(HWND _hWnd)
+{
+	oWIN_CHECK0(_hWnd);
+	return (HWND)GetWindowLongPtr(_hWnd, oGWLP_STATUSBAR);
+}
+
+bool oWinShowStatusBar(HWND _hWnd, bool _Show)
+{
+	oWIN_CHECK(_hWnd);
+	HWND hStatusBar = oWinGetStatusBar(_hWnd);
+	oVERIFY_R(hStatusBar);
+	if (!ShowWindow(hStatusBar, _Show ? SW_SHOWNOACTIVATE : SW_HIDE))
+		if (!RedrawWindow(hStatusBar, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW))
+			return oWinSetLastError();
+	return true;
+}
+
+bool oWinStatusBarShown(HWND _hWnd)
+{
+	oWIN_CHECK(_hWnd);
+	HWND hStatusBar = oWinGetStatusBar(_hWnd);
+	if (hStatusBar)
+		return !!(GetWindowLongPtr(hStatusBar, GWL_STYLE) & WS_VISIBLE);
+	return false;
 }
 
 bool oWinSetOwner(HWND _hWnd, HWND _hOwner)
@@ -504,7 +1006,113 @@ bool oWinSetOwner(HWND _hWnd, HWND _hOwner)
 
 HWND oWinGetOwner(HWND _hWnd)
 {
-	return (HWND)GetWindowLongPtr(_hWnd, GWLP_HWNDPARENT);
+	return GetWindow(_hWnd, GW_OWNER);
+}
+
+bool oWinSetParent(HWND _hWnd, HWND _hParent)
+{
+	oWIN_CHECK(_hWnd);
+	if (_hParent)
+	{
+		DWORD dwStyle = (DWORD)GetWindowLongPtr(_hWnd, GWL_STYLE);
+		dwStyle = (dwStyle & ~WS_POPUP) | WS_CHILD;
+		SetWindowLongPtr(_hWnd, GWL_STYLE, dwStyle);
+	}
+
+	::SetParent(_hWnd, _hParent);
+
+	if (!_hParent)
+	{
+		DWORD dwStyle = (DWORD)GetWindowLongPtr(_hWnd, GWL_STYLE);
+		dwStyle = (dwStyle & ~WS_CHILD) | WS_POPUP;
+		SetWindowLongPtr(_hWnd, GWL_STYLE, dwStyle);
+	}
+
+	return true;
+}
+
+HWND oWinGetParent(HWND _hWnd)
+{
+	return ::GetParent(_hWnd);
+}
+
+bool oWinIsParent(HWND _hWnd)
+{
+	HWND hChild = GetWindow(_hWnd, GW_CHILD);
+	return !!hChild;
+}
+
+struct OWNER_CTX
+{
+	OWNER_CTX(HWND _hOwner) : hOwner(_hOwner), IsOwner(false) {}
+	HWND hOwner;
+	bool IsOwner;
+};
+
+static BOOL CALLBACK CheckIsOwner(HWND _hWnd, LPARAM _lParam)
+{
+	// if there's even one child, then this is a parent.
+	OWNER_CTX& ctx = *(OWNER_CTX*)_lParam;
+	HWND hOwner = GetWindow(_hWnd, GW_OWNER);
+	if (hOwner == ctx.hOwner)
+		ctx.IsOwner = true;
+	return !ctx.IsOwner;
+}
+
+bool oWinIsOwner(HWND _hWnd)
+{
+	oWIN_CHECK(_hWnd);
+	OWNER_CTX ctx(_hWnd);
+	EnumWindows(CheckIsOwner, (LPARAM)&ctx);
+	return ctx.IsOwner;
+}
+
+bool oWinIsRenderTarget(HWND _hWnd)
+{
+	oWIN_CHECK(_hWnd);
+	return !!(GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) & oEF_RENDER_TARGET);
+}
+
+bool oWinSetIsRenderTarget(HWND _hWnd, bool _IsRenderTarget)
+{
+	oWIN_CHECK(_hWnd);
+	LONG_PTR flags = GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS);
+	if (_IsRenderTarget) flags |= oEF_RENDER_TARGET;
+	else flags &=~ oEF_RENDER_TARGET;
+	SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, flags);
+	return true;
+}
+
+bool oWinIsFullscreenExclusive(HWND _hWnd)
+{
+	oWIN_CHECK(_hWnd);
+	return !!(GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) & oEF_FULLSCREEN_EXCLUSIVE);
+}
+
+oAPI bool oWinSetIsFullscreenExclusive(HWND _hWnd, bool _IsFullscreenExclusive)
+{
+	oWIN_CHECK(_hWnd);
+	LONG_PTR flags = GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS);
+	if (_IsFullscreenExclusive) flags |= oEF_FULLSCREEN_EXCLUSIVE;
+	else flags &=~ oEF_FULLSCREEN_EXCLUSIVE;
+	SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, flags);
+	return true;
+}
+
+bool oWinAltF4IsEnabled(HWND _hWnd)
+{
+	oWIN_CHECK(_hWnd);
+	return !!(GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) & oEF_ALT_F4_ENABLED);
+}
+
+bool oWinAltF4Enable(HWND _hWnd, bool _Enabled)
+{
+	oWIN_CHECK(_hWnd);
+	LONG_PTR flags = GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS);
+	if (_Enabled) flags |= oEF_ALT_F4_ENABLED;
+	else flags &=~ oEF_ALT_F4_ENABLED;
+	SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, flags);
+	return true;
 }
 
 bool oWinExists(HWND _hWnd)
@@ -514,13 +1122,16 @@ bool oWinExists(HWND _hWnd)
 
 bool oWinHasFocus(HWND _hWnd)
 {
+	oWIN_CHECK(_hWnd);
 	return oWinExists(_hWnd) && _hWnd == ::GetForegroundWindow();
 }
 
 bool oWinSetFocus(HWND _hWnd, bool _Focus)
 {
 	// @oooii-kevin: Technically this can be called from other threads as we can give focus to another window
-	//oWINV(_hWnd);
+	// @oooii-tony: This shouldn't be true, there's several calls below so thus
+	// this isn't atomic. See who complains by reenabling the check here.
+	oWIN_CHECK(_hWnd);
 	if (_Focus)
 	{
 		::SetForegroundWindow(_hWnd);
@@ -535,246 +1146,57 @@ bool oWinSetFocus(HWND _hWnd, bool _Focus)
 
 bool oWinIsEnabled(HWND _hWnd)
 {
-	oWINV(_hWnd);
+	oWIN_CHECK(_hWnd);
 	oVB_RETURN(IsWindowEnabled(_hWnd));
 	return true;
 }
 
 bool oWinEnable(HWND _hWnd, bool _Enabled)
 {
-	oWINV(_hWnd);
+	oWIN_CHECK(_hWnd);
 	EnableWindow(_hWnd, BOOL(_Enabled));
 	return true;
 }
 
 bool oWinIsAlwaysOnTop(HWND _hWnd)
 {
-	oWINV(_hWnd);
+	oWIN_CHECK(_hWnd);
 	return !!(GetWindowLong(_hWnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
 }
 
 bool oWinSetAlwaysOnTop(HWND _hWnd, bool _AlwaysOnTop)
 {
-	oWINV(_hWnd);
+	oWIN_CHECK(_hWnd);
 	RECT r;
 	oVB_RETURN(GetWindowRect(_hWnd, &r));
 	return !!::SetWindowPos(_hWnd, _AlwaysOnTop ? HWND_TOPMOST : HWND_TOP, r.left, r.top, oWinRectW(r), oWinRectH(r), IsWindowVisible(_hWnd) ? SWP_SHOWWINDOW : SWP_HIDEWINDOW);
 }
 
-bool oWinRestore(HWND _hWnd)
-{
-	oWINV(_hWnd);
-	HWND hProgMan = FindWindow(0, "Program Manager");
-	oASSERT(hProgMan, "Program Manager not found");
-	oWinSetFocus(hProgMan);
-	oWinSetFocus(_hWnd);
-	ShowWindow(_hWnd, SW_SHOWDEFAULT);
-	return true;
-}
-
-oGUI_WINDOW_STATE oWinGetState(HWND _hWnd)
-{
-	LONG_PTR style = GetWindowLongPtr(_hWnd, GWL_STYLE);
-	if (!oWinExists(_hWnd)) return oGUI_WINDOW_NONEXISTANT;
-	else if (!(style & WS_VISIBLE)) return oGUI_WINDOW_HIDDEN;
-	else if (IsIconic(_hWnd)) return oGUI_WINDOW_MINIMIZED;
-	else if (IsZoomed(_hWnd)) return oGUI_WINDOW_MAXIMIZED;
-	else
-	{
-		if (oGUI_WINDOW_BORDERLESS == oWinGetStyle(_hWnd))
-		{
-			oDISPLAY_DESC PseudoFullscreen;
-			oVERIFY(oDisplayEnum(oWinGetDisplayIndex(_hWnd), &PseudoFullscreen));
-			RECT rFullscreen = oWinRectWH(PseudoFullscreen.WorkareaPosition, PseudoFullscreen.Mode.Size);
-			RECT rClient;
-			GetClientRect(_hWnd, &rClient);
-			if (rFullscreen == rClient)
-				return oGUI_WINDOW_FULLSCREEN_COOPERATIVE;
-		}
-	}
-
-	return oGUI_WINDOW_RESTORED;
-}
-
-// Returns a value fit to be passed to ShowWindow()
-static int oWinGetShowCommand(oGUI_WINDOW_STATE _State, bool _TakeFocus)
-{
-	switch (_State)
-	{
-		case oGUI_WINDOW_NONEXISTANT: return SW_HIDE;
-		case oGUI_WINDOW_HIDDEN: return SW_HIDE;
-		case oGUI_WINDOW_MINIMIZED: return _TakeFocus ? SW_SHOWMINIMIZED : SW_SHOWMINNOACTIVE;
-		case oGUI_WINDOW_MAXIMIZED: return SW_SHOWMAXIMIZED;
-		case oGUI_WINDOW_RESTORED: return _TakeFocus ? SW_SHOWNORMAL : SW_SHOWNOACTIVATE;
-		case oGUI_WINDOW_FULLSCREEN_COOPERATIVE: return SW_SHOW;
-		case oGUI_WINDOW_FULLSCREEN_EXCLUSIVE: return SW_SHOW;
-		oNODEFAULT;
-	}
-}
-
-bool oWinSetState(HWND _hWnd, oGUI_WINDOW_STATE _State, bool _TakeFocus)
-{
-	oWINV(_hWnd);
-	if (oGUIIsFullscreen(_State))
-	{
-		oDISPLAY_DESC PseudoFullscreen;
-		oVERIFY(oDisplayEnum(oWinGetDisplayIndex(_hWnd), &PseudoFullscreen));
-		RECT r = oWinRectWH(PseudoFullscreen.WorkareaPosition, PseudoFullscreen.Mode.Size);
-		oVERIFY(oWinSetStyle(_hWnd, oGUI_WINDOW_BORDERLESS, false, &r));
-		oVERIFY(oWinSetState(_hWnd, oGUI_WINDOW_RESTORED, _TakeFocus));
-	}
-	
-	else
-	{
-		// There's a known issue that a simple ShowWindow doesn't always work on 
-		// some minimized apps. The WAR seems to be to set focus to anything else, 
-		// then try to restore the app.
-		if (_TakeFocus && oWinGetState(_hWnd) == oGUI_WINDOW_MINIMIZED && _State > oGUI_WINDOW_MINIMIZED)
-		{
-			HWND hProgMan = FindWindow(nullptr, "Program Manager");
-			oASSERT(hProgMan, "Program Manager not found");
-			oWinSetFocus(hProgMan);
-		}
-
-		if (!ShowWindow(_hWnd, oWinGetShowCommand(_State, _TakeFocus)))
-			oVB_RETURN(RedrawWindow(_hWnd, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW));
-	}
-
-	return true;
-}
-
-oGUI_WINDOW_STYLE oWinGetStyle(HWND _hWnd)
-{
-	#define oFIXED_STYLE (WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX)
-	LONG_PTR style = GetWindowLongPtr(_hWnd, GWL_STYLE);
-	if ((style & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) return oGUI_WINDOW_SIZEABLE;
-	else if ((style & oFIXED_STYLE) == oFIXED_STYLE) return oGUI_WINDOW_FIXED;
-	else if ((style & WS_POPUP) == WS_POPUP) return oGUI_WINDOW_BORDERLESS;
-	else if ((style & WS_CHILD) == WS_CHILD) return oGUI_WINDOW_EMBEDDED;
-	return oGUI_WINDOW_DIALOG;
-}
-
-static DWORD oWinGetStyle(oGUI_WINDOW_STYLE _Style)
-{
-	switch (_Style)
-	{
-		case oGUI_WINDOW_EMBEDDED: return WS_CHILD;
-		case oGUI_WINDOW_BORDERLESS: return WS_POPUP;
-		case oGUI_WINDOW_DIALOG: return WS_CAPTION;
-		case oGUI_WINDOW_FIXED: return WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX;
-		default: return WS_OVERLAPPEDWINDOW;
-	}
-}
-
-bool oWinSetStyle(HWND _hWnd, oGUI_WINDOW_STYLE _Style, bool _HasStatusBar, const RECT* _prClient)
-{
-	oWINV(_hWnd);
-
-	// Basically only change the bits we mean to change and preserve the others
-	DWORD dwCurrentStyleFlags = oWinGetStyle(oWinGetStyle(_hWnd));
-	DWORD dwAllFlags = (DWORD)GetWindowLongPtr(_hWnd, GWL_STYLE);
-	dwAllFlags &=~ dwCurrentStyleFlags;
-	dwAllFlags |= oWinGetStyle(_Style);
-
-	UINT uFlags = SWP_NOZORDER|SWP_FRAMECHANGED;
-	if (dwAllFlags & (WS_MAXIMIZE|WS_MINIMIZE)) // ignore user size/move settings if maximized or minimized
-		uFlags |= SWP_NOMOVE|SWP_NOSIZE;
-
-	RECT r;
-	if (_prClient)
-	{
-		r = *_prClient;
-
-		// Don't do a NOSIZE because we need to adjust for statusbar
-		if (r.right == oDEFAULT || r.bottom == oDEFAULT)
-		{
-			RECT rCurrent;
-			GetClientRect(_hWnd, &rCurrent);
-			if (r.right == oDEFAULT) r.right = rCurrent.right;
-			if (r.bottom == oDEFAULT) r.bottom = rCurrent.bottom;
-		}
-
-		if (_HasStatusBar)
-			oWinStatusBarAdjustClientRect(_hWnd, &r);
-	}
-
-	else
-		oVB_RETURN(oWinGetClientScreenRect(_hWnd, _HasStatusBar, &r));
-
-	bool HasMenu = !!GetMenu(_hWnd);
-
-	oVB_RETURN(AdjustWindowRect(&r, dwAllFlags, HasMenu));
-
-	SetLastError(0); // http://msdn.microsoft.com/en-us/library/ms644898(VS.85).aspx
-	oVB_RETURN(SetWindowLongPtr(_hWnd, GWL_STYLE, dwAllFlags));
-	oVB_RETURN(SetWindowPos(_hWnd, 0, r.left, r.top, oWinRectW(r), oWinRectH(r), uFlags));
-	return true;
-}
-
 bool oWinGetClientRect(HWND _hWnd, RECT* _pRect)
 {
-	oWINV(_hWnd);
+	oWIN_CHECK(_hWnd);
+
 	if (!_pRect)
 		return oErrorSetLast(std::errc::invalid_argument);
+
+	// Discount status bar from dimensions
 	oVB_RETURN(GetClientRect(_hWnd, _pRect));
+	_pRect->bottom = __max(_pRect->top, _pRect->bottom - oWinGetStatusBarHeight(_hWnd));
 
-	int StatusBarHeight = oWinStatusBarGetHeight(_hWnd);
-	if (StatusBarHeight != oInvalid)
-		_pRect->bottom = __max(_pRect->top, _pRect->bottom - StatusBarHeight);
-	return true;
-}
-
-bool oWinGetClientScreenRect(HWND _hWnd, bool _HasStatusBar, RECT* _pRect)
-{
-	oWINV(_hWnd);
-	if (!_pRect)
-		return oErrorSetLast(std::errc::invalid_argument);
-	oVB_RETURN(GetClientRect(_hWnd, _pRect));
-
-	if (_HasStatusBar)
-		oWinStatusBarAdjustClientRect(_hWnd, _pRect);
-
+	// Translate to proper offset
 	POINT p = { _pRect->left, _pRect->top };
-	oVB_RETURN(ClientToScreen(_hWnd, &p));
+	HWND hParent = GetParent(_hWnd);
+	if (!hParent)
+		oVB_RETURN(ClientToScreen(_hWnd, &p));
+	else
+	{
+		SetLastError(0); // differentiate between 0-means-failure, and 0,0 adjustment
+		if (!MapWindowPoints(_hWnd, hParent, &p, 1) && GetLastError() != S_OK)
+			return oWinSetLastError();
+	}
+	
 	*_pRect = oWinRectTranslate(*_pRect, p);
-	return true;
-}
 
-int2 oWinGetPosition(HWND _hWnd)
-{
-	if (!IsWindow(_hWnd))
-		return int2(oDEFAULT, oDEFAULT);
-	POINT p = {0,0};
-	ClientToScreen(_hWnd, &p);
-	return int2(p.x, p.y);
-}
-
-bool oWinSetPosition(HWND _hWnd, const int2& _ScreenPosition)
-{
-	oWINV(_hWnd);
-	RECT r = oWinRectWH(_ScreenPosition, int2(0,0));
-	oVB_RETURN(AdjustWindowRect(&r, oWinGetStyle(oWinGetStyle(_hWnd)), FALSE));
-	oVB_RETURN(SetWindowPos(_hWnd, 0, r.left, r.top, 0, 0, SWP_NOSIZE|SWP_NOZORDER));
-	return true;
-}
-
-bool oWinSetPositionAndSize(HWND _hWnd, const int2& _Position, const int2& _Size)
-{
-	oWINV(_hWnd);
-	RECT r = oWinRectWH(_Position, _Size);
-	oVB_RETURN(AdjustWindowRect(&r, oWinGetStyle(oWinGetStyle(_hWnd)), FALSE));
-	oVB_RETURN(SetWindowPos(_hWnd, 0, r.left, r.top, 0, 0, SWP_NOZORDER));
-	return true;
-}
-
-bool oWinAnimate(HWND _hWnd, const RECT& _From, const RECT& _To)
-{
-	oWINV(_hWnd);
-	ANIMATIONINFO ai;
-	ai.cbSize = sizeof(ai);
-	SystemParametersInfo(SPI_GETANIMATION, sizeof(ai), &ai, 0);
-	if (ai.iMinAnimate)
-		return !!DrawAnimatedRects(_hWnd, IDANI_CAPTION, &_From, &_To);
 	return true;
 }
 
@@ -783,12 +1205,12 @@ RECT oWinGetParentRect(HWND _hWnd, HWND _hExplicitParent)
 	HWND hParent = _hExplicitParent ? _hExplicitParent : GetParent(_hWnd);
 	RECT rParent;
 	if (hParent)
-		oWinGetClientRect(hParent, &rParent);
+		oVERIFY(oWinGetClientRect(hParent, &rParent));
 	else
 	{
-		oDISPLAY_DESC DDesc;
-		oDisplayEnum(oWinGetDisplayIndex(_hWnd), &DDesc);
-		rParent = oWinRectWH(DDesc.WorkareaPosition, DDesc.WorkareaSize);
+		oDISPLAY_DESC dd;
+		oDisplayEnum(oWinGetDisplayIndex(_hWnd), &dd);
+		rParent = oWinRectWH(dd.WorkareaPosition, dd.WorkareaSize);
 	}
 	return rParent;
 }
@@ -804,6 +1226,270 @@ RECT oWinGetRelativeRect(HWND _hWnd, HWND _hExplicitParent)
 	ScreenToClient(hParent, (POINT*)&r);
 	ScreenToClient(hParent, &((POINT*)&r)[1]);
 	return r;	
+}
+
+oGUI_WINDOW_STATE oWinGetState(HWND _hWnd)
+{
+	if (!oWinExists(_hWnd)) return oGUI_WINDOW_INVALID;
+	
+	LONG_PTR style = GetWindowLongPtr(_hWnd, GWL_STYLE);
+	if (!(style & WS_VISIBLE)) return oGUI_WINDOW_HIDDEN;
+
+	LONG_PTR extra = GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS);
+	if (extra & (oEF_FULLSCREEN_EXCLUSIVE|oEF_FULLSCREEN_COOPERATIVE)) return oGUI_WINDOW_FULLSCREEN;
+	
+	if (IsIconic(_hWnd)) return oGUI_WINDOW_MINIMIZED;
+	if (IsZoomed(_hWnd)) return oGUI_WINDOW_MAXIMIZED;
+
+	return oGUI_WINDOW_RESTORED;
+}
+
+static oGUI_WINDOW_STYLE oWinGetStyle(HWND _hWnd)
+{
+	#define oFIXED_STYLE (WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX)
+	#define oSET(_Flag) ((style & (_Flag)) == (_Flag))
+
+	oASSERT(oWinExists(_hWnd) && oWinIsWindowThread(_hWnd), "function must be called on window thread");
+	const bool HasMenu = !!GetMenu(_hWnd);
+	const bool HasStatusBar = oWinStatusBarShown(_hWnd);
+
+	if (HasStatusBar && oWinIsRenderTarget(_hWnd))
+	{
+		oTRACE("HWND 0x%x is showing a status bar and is a render target, which is not allowed. The application will now terminate.", _hWnd);
+		std::terminate();
+	}
+
+	LONG_PTR style = GetWindowLongPtr(_hWnd, GWL_STYLE);
+	if (oSET(WS_OVERLAPPEDWINDOW))
+	{
+		if (HasMenu && HasStatusBar) return oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
+		else if (HasMenu) return oGUI_WINDOW_SIZABLE_WITH_MENU;
+		else if (HasStatusBar) return oGUI_WINDOW_SIZABLE_WITH_STATUSBAR;
+		else return oGUI_WINDOW_SIZABLE;
+	}
+	else if (oSET(oFIXED_STYLE))
+	{
+		if (HasMenu && HasStatusBar) return oGUI_WINDOW_FIXED_WITH_MENU_AND_STATUSBAR;
+		else if (HasMenu) return oGUI_WINDOW_FIXED_WITH_MENU;
+		else if (HasStatusBar) return oGUI_WINDOW_FIXED_WITH_STATUSBAR;
+		else return oGUI_WINDOW_FIXED;
+	}
+
+	LONG_PTR exstyle = GetWindowLongPtr(_hWnd, GWL_EXSTYLE);
+	if (exstyle & WS_EX_WINDOWEDGE) return oGUI_WINDOW_DIALOG;
+	return oGUI_WINDOW_BORDERLESS;
+	
+	#undef oFIXED_STYLE
+	#undef oSET
+}
+
+oGUI_WINDOW_SHAPE_DESC oWinGetShape(HWND _hWnd)
+{
+	oGUI_WINDOW_SHAPE_DESC s;
+	RECT rClient;
+	oVERIFY(oWinGetClientRect(_hWnd, &rClient));
+	s.ClientSize = oWinRectSize(rClient);
+	s.ClientPosition = oWinRectPosition(rClient);
+	s.State = oWinGetState(_hWnd);
+	s.Style = oWinGetStyle(_hWnd);
+	return s;
+}
+
+bool oWinSetShape(HWND _hWnd, const oGUI_WINDOW_SHAPE_DESC& _Shape)
+{
+	oWIN_CHECK(_hWnd);
+
+	oGUI_WINDOW_SHAPE_DESC New = _Shape;
+	oGUI_WINDOW_SHAPE_DESC Old = oWinGetShape(_hWnd);
+	oASSERT(Old.State != oGUI_WINDOW_INVALID && Old.Style != oGUI_WINDOW_DEFAULT, "");
+
+	if (New.State == oGUI_WINDOW_INVALID)
+		New.State = Old.State;
+
+	if (New.Style == oGUI_WINDOW_DEFAULT)
+		New.Style = Old.Style;
+
+	if (oGUIStyleHasStatusBar(New.Style) && oWinIsRenderTarget(_hWnd))
+		return oErrorSetLast(std::errc::protocol_error, "HWND 0x%x is marked as a render target, disallowing status bar styles to be set", _hWnd);
+
+	if (Old.State == oGUI_WINDOW_RESTORED)
+		oWinSaveRestoredPosSize(_hWnd);
+
+	oStd::finally f([&] {SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) &~ oEF_NO_SAVE_RESTORED_POSITION_SIZE);});
+	if (New.State == oGUI_WINDOW_FULLSCREEN || New.State == oGUI_WINDOW_MINIMIZED || New.State == oGUI_WINDOW_MAXIMIZED)
+		SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) | oEF_NO_SAVE_RESTORED_POSITION_SIZE);
+
+	if (Old.State != New.State)
+		SetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STATE, (LONG_PTR)Old.State);
+
+	if (Old.State != oGUI_WINDOW_FULLSCREEN)
+		SetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STYLE, (LONG_PTR)Old.Style);
+
+	if (New.State == oGUI_WINDOW_FULLSCREEN)
+	{
+		New.Style = oGUI_WINDOW_BORDERLESS;
+		LONG_PTR extra = GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS);
+		if (New.State == oGUI_WINDOW_FULLSCREEN)
+			extra |= oEF_FULLSCREEN_COOPERATIVE;
+		else
+			extra &=~ oEF_FULLSCREEN_COOPERATIVE;
+		SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, extra);
+	}
+	else if (Old.State == oGUI_WINDOW_FULLSCREEN)
+	{
+		New.Style = (oGUI_WINDOW_STYLE)GetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STYLE);
+		SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) & ~(oEF_FULLSCREEN_COOPERATIVE|oEF_FULLSCREEN_EXCLUSIVE));
+	}
+
+	if (New.State == oGUI_WINDOW_RESTORED)
+	{
+		LONG_PTR lParam = GetWindowLongPtr(_hWnd, oGWLP_RESTORED_POSITION);
+		const int2 RestoredClientPosition(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		New.ClientPosition = oGUIResolveRectPosition(New.ClientPosition, RestoredClientPosition);
+		lParam = GetWindowLongPtr(_hWnd, oGWLP_RESTORED_SIZE);
+		const int2 RestoredClientSize(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		New.ClientSize = oGUIResolveRectPosition(New.ClientSize, RestoredClientSize);
+	}
+
+	else if (New.State == oGUI_WINDOW_FULLSCREEN)
+	{
+		oDISPLAY_DESC dd;
+		oVERIFY(oDisplayEnum(oWinGetDisplayIndex(_hWnd), &dd));
+		New.ClientPosition = dd.Position;
+		New.ClientSize = dd.Mode.Size;
+	}
+
+	else
+	{
+		New.ClientPosition = oGUIResolveRectPosition(New.ClientPosition, Old.ClientPosition);
+		New.ClientSize = oGUIResolveRectPosition(New.ClientSize, Old.ClientSize);
+	}
+
+	int StatusBarHeight = 0;
+	{
+		RECT rStatusBar;
+		GetClientRect(oWinGetStatusBar(_hWnd), &rStatusBar);
+		StatusBarHeight = oWinRectH(rStatusBar);
+	}
+
+	DWORD dwAllFlags = (DWORD)GetWindowLongPtr(_hWnd, GWL_STYLE);
+	if (Old.Style != New.Style)
+	{
+		// Change only the bits we mean to change and preserve the others
+		const bool HasParent = !!GetParent(_hWnd);
+		DWORD dwCurrentStyleFlags = oWinGetStyle(Old.Style, HasParent);
+		dwAllFlags &=~ dwCurrentStyleFlags;
+		dwAllFlags |= oWinGetStyle(New.Style, HasParent);
+
+		// When in maximized state and doing nothing more than toggling status bar
+		// visibility, the client area has changed, so spoof a WM_SIZE to notify
+		// the system of that change. If the menu changes, then allow the WM_SIZE to 
+		// be sent by oWinShowMenu.
+		oVERIFY(oWinShowStatusBar(_hWnd, oGUIStyleHasStatusBar(New.Style)));
+
+		if (Old.State == oGUI_WINDOW_MAXIMIZED && New.State == oGUI_WINDOW_MAXIMIZED 
+			&& oGUIStyleHasStatusBar(New.Style) != oGUIStyleHasStatusBar(Old.Style)
+			&& oGUIStyleHasMenu(New.Style) == oGUIStyleHasMenu(Old.Style))
+		{
+			int2 NewMaxSize = Old.ClientSize;
+			if (oGUIStyleHasStatusBar(New.Style))
+				NewMaxSize.y -= StatusBarHeight;
+			else
+				NewMaxSize.y += StatusBarHeight;
+			SendMessage(_hWnd, WM_SIZE, SIZE_MAXIMIZED, MAKELPARAM(NewMaxSize.x, NewMaxSize.y));
+		}
+
+		// This will send a temp WM_SIZE event. Another will be sent below, so 
+		// squelch this one from making it all the way through to an oGUI_EVENT.
+		// However, during a style change to a maximized window, that affects the 
+		// menu other calls won't be made, so let this be the authority in that case.
+		oWinSetTempChange(_hWnd, !(Old.State == oGUI_WINDOW_MAXIMIZED && New.State == oGUI_WINDOW_MAXIMIZED));
+		oWinShowMenu(_hWnd, oGUIStyleHasMenu(New.Style));
+		oWinSetTempChange(_hWnd, false);
+	}
+
+	// Resolve position and size to a rectangle. Add extra room for the status bar.
+	RECT r = oWinRectWH(New.ClientPosition, New.ClientSize);
+	if (oGUIStyleHasStatusBar(New.Style))
+		r.bottom += StatusBarHeight;
+
+	// @oooii-tony: are these bit-clears needed?
+	if (New.State != oGUI_WINDOW_MAXIMIZED)
+		dwAllFlags &=~ WS_MAXIMIZE;
+
+	if (New.State != oGUI_WINDOW_MINIMIZED)
+		dwAllFlags &=~ WS_MINIMIZE;
+
+	// Transform the rectangle to with-border values for the new style
+	oVB_RETURN(AdjustWindowRect(&r, dwAllFlags, !!GetMenu(_hWnd)));
+
+	// Update the flagging of the new style. This won't do anything without a call 
+	// to SetWindowPos.
+	SetLastError(0); // http://msdn.microsoft.com/en-us/library/ms644898(VS.85).aspx
+	oWinSetTempChange(_hWnd, true);
+	oVB_RETURN(SetWindowLongPtr(_hWnd, GWL_STYLE, dwAllFlags));
+	oWinSetTempChange(_hWnd, false);
+
+	// Allow the system to calculate minimized/maximized sizes for us, so don't
+	// modify them here, that will happen in SetWindowPlacement.
+	if (!(Old.State == oGUI_WINDOW_FULLSCREEN && New.State == oGUI_WINDOW_MAXIMIZED))
+	{
+		UINT uFlags = SWP_NOZORDER|SWP_FRAMECHANGED;
+		if (New.State == oGUI_WINDOW_MINIMIZED || New.State == oGUI_WINDOW_MAXIMIZED)
+			uFlags |= SWP_NOMOVE|SWP_NOSIZE;
+		oVB_RETURN(SetWindowPos(_hWnd, 0, r.left, r.top, oWinRectW(r), oWinRectH(r), uFlags));
+	}
+
+	// Now handle visibility, min/max/restore
+	if (Old.State != New.State)
+	{
+		WINDOWPLACEMENT WP;
+		WP.length = sizeof(WINDOWPLACEMENT);
+		GetWindowPlacement(_hWnd, &WP);
+
+		switch (New.State)
+		{
+			case oGUI_WINDOW_INVALID: case oGUI_WINDOW_HIDDEN:
+				WP.showCmd = SW_HIDE;
+				break;
+			case oGUI_WINDOW_MINIMIZED:
+				WP.showCmd = SW_SHOWMINNOACTIVE;
+				break;
+			case oGUI_WINDOW_MAXIMIZED:
+				WP.showCmd = SW_SHOWMAXIMIZED;
+				break;
+			case oGUI_WINDOW_FULLSCREEN:
+			case oGUI_WINDOW_RESTORED:
+				WP.showCmd = SW_RESTORE;
+				WP.rcNormalPosition = r;
+				break;
+		}
+		oVB_RETURN(SetWindowPlacement(_hWnd, &WP));
+	}
+
+	return true;
+}
+
+bool oWinRestore(HWND _hWnd)
+{
+	oWIN_CHECK(_hWnd);
+	HWND hProgMan = FindWindow(0, "Program Manager");
+	oASSERT(hProgMan, "Program Manager not found");
+	oWinSetFocus(hProgMan);
+	oWinSetFocus(_hWnd);
+	ShowWindow(_hWnd, SW_SHOWDEFAULT);
+	return true;
+}
+
+bool oWinAnimate(HWND _hWnd, const RECT& _From, const RECT& _To)
+{
+	oWIN_CHECK(_hWnd);
+	ANIMATIONINFO ai;
+	ai.cbSize = sizeof(ai);
+	SystemParametersInfo(SPI_GETANIMATION, sizeof(ai), &ai, 0);
+	if (ai.iMinAnimate)
+		return !!DrawAnimatedRects(_hWnd, IDANI_CAPTION, &_From, &_To);
+	return true;
 }
 
 int oWinGetDisplayIndex(HWND _hWnd)
@@ -829,7 +1515,7 @@ HFONT oWinGetDefaultFont()
 
 bool oWinSetFont(HWND _hWnd, HFONT _hFont)
 {
-	oWINV(_hWnd);
+	oWIN_CHECK(_hWnd);
 	if (!_hFont)
 		_hFont = oWinGetDefaultFont();
 	SendMessage(_hWnd, WM_SETFONT, (WPARAM)_hFont, TRUE);
@@ -838,7 +1524,7 @@ bool oWinSetFont(HWND _hWnd, HFONT _hFont)
 
 bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex)
 {
-	oWINV(_hWnd);
+	oWIN_CHECK(_hWnd);
 	oGUI_CONTROL_TYPE type = oWinControlGetType(_hWnd);
 	switch (type)
 	{
@@ -1173,10 +1859,8 @@ static bool OnCreateAddSubItems(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
 {
 	if (strchr(_Desc.Text, '|'))
 	{
-		if (!oWinControlAddSubItems(_hControl, _Desc.Text))
-			return false;
-		if (!oWinControlSelectSubItem(_hControl, 0))
-			return false;
+		oVERIFY_R(oWinControlAddSubItems(_hControl, _Desc.Text));
+		oVERIFY_R(oWinControlSelectSubItem(_hControl, 0));
 	}
 
 	return true;
@@ -1184,8 +1868,7 @@ static bool OnCreateAddSubItems(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
 
 static bool OnCreateTab(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
 {
-	if (!oWinCommCtrl::Singleton()->SetWindowSubclass(_hControl, oSubclassProcTab, oSubclassTabID, (DWORD_PTR)nullptr))
-		return false;
+	oVERIFY_R(oWinCommCtrl::Singleton()->SetWindowSubclass(_hControl, oSubclassProcTab, oSubclassTabID, (DWORD_PTR)nullptr));
 	return OnCreateAddSubItems(_hControl, _Desc);
 }
 
@@ -1196,9 +1879,7 @@ static bool OnCreateGroup(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
 
 static bool OnCreateFloatBox(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
 {
-	if (!oWinCommCtrl::Singleton()->SetWindowSubclass(_hControl, oSubclassProcFloatBox, oSubclassFloatBoxID, (DWORD_PTR)nullptr))
-		return false;
-
+	oVERIFY_R(oWinCommCtrl::Singleton()->SetWindowSubclass(_hControl, oSubclassProcFloatBox, oSubclassFloatBoxID, (DWORD_PTR)nullptr));
 	SetWindowText(_hControl, _Desc.Text);
 	return true;
 }
@@ -1334,7 +2015,7 @@ HWND oWinControlCreate(const oGUI_CONTROL_DESC& _Desc)
 
 bool oWinControlDefaultOnNotify(HWND _hControl, const NMHDR& _NotifyMessageHeader, LRESULT* _plResult, oGUI_CONTROL_TYPE _Type)
 {
-	oWINV(_hControl);
+	oWIN_CHECK(_hControl);
 	bool ShortCircuit = false;
 	if (_Type == oGUI_CONTROL_UNKNOWN)
 		_Type = oWinControlGetType(_NotifyMessageHeader.hwndFrom);
@@ -1446,9 +2127,9 @@ bool oWinControlToAction(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam,
 				{
 					switch (_pAction->ActionCode)
 					{
-					case TCN_SELCHANGING: _pAction->Action = oGUI_ACTION_CONTROL_SELECTION_CHANGING; break;
-					case TCN_SELCHANGE: _pAction->Action = oGUI_ACTION_CONTROL_SELECTION_CHANGED; break;
-					default: break;
+						case TCN_SELCHANGING: _pAction->Action = oGUI_ACTION_CONTROL_SELECTION_CHANGING; break;
+						case TCN_SELCHANGE: _pAction->Action = oGUI_ACTION_CONTROL_SELECTION_CHANGED; break;
+						default: break;
 					}
 
 					break;
@@ -1458,8 +2139,8 @@ bool oWinControlToAction(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam,
 				{
 					switch (_pAction->ActionCode)
 					{
-					case BN_CLICKED: _pAction->Action = oGUI_ACTION_CONTROL_ACTIVATED; break;
-					default: break;
+						case BN_CLICKED: _pAction->Action = oGUI_ACTION_CONTROL_ACTIVATED; break;
+						default: break;
 					}
 
 					break;
@@ -1478,6 +2159,18 @@ bool oWinControlToAction(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam,
 	return Handled;
 }
 
+bool oWinControlIsVisible(HWND _hControl)
+{
+	return !!(GetWindowLongPtr(_hControl, GWL_STYLE) & WS_VISIBLE);
+}
+
+bool oWinControlSetVisible(HWND _hControl, bool _Visible)
+{
+	if (!ShowWindow(_hControl, _Visible ? SW_SHOWNA : SW_HIDE))
+		oVB_RETURN(RedrawWindow(_hControl, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW));
+	return true;
+}
+
 int oWinControlGetNumSubItems(HWND _hControl)
 {
 	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
@@ -1492,7 +2185,7 @@ int oWinControlGetNumSubItems(HWND _hControl)
 
 bool oWinControlClearSubItems(HWND _hControl)
 {
-	oWINV(_hControl);
+	oWIN_CHECK(_hControl);
 	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch (type)
 	{
@@ -1513,7 +2206,7 @@ bool oWinControlClearSubItems(HWND _hControl)
 
 int oWinControlInsertSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex)
 {
-	oWINV(_hControl);
+	oWIN_CHECK(_hControl);
 	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch (type)
 	{
@@ -1557,7 +2250,7 @@ int oWinControlInsertSubItem(HWND _hControl, const char* _SubItemText, int _SubI
 
 bool oWinControlDeleteSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex)
 {
-	oWINV(_hControl);
+	oWIN_CHECK(_hControl);
 	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch (type)
 	{
@@ -1582,7 +2275,7 @@ bool oWinControlDeleteSubItem(HWND _hControl, const char* _SubItemText, int _Sub
 
 bool oWinControlAddSubItems(HWND _hControl, const char* _DelimitedString, char _Delimiter)
 {
-	oWINV(_hControl);
+	oWIN_CHECK(_hControl);
 	char delim[2] = { _Delimiter, 0 };
 	char* ctx = nullptr;
 	const char* tok = oStrTok(_DelimitedString, delim, &ctx);
@@ -1833,7 +2526,7 @@ int2 oWinControlGetInitialSize(oGUI_CONTROL_TYPE _Type, const int2& _Size)
 
 bool oWinControlIsTabStop(HWND _hControl)
 {
-	oWINV(_hControl);
+	oWIN_CHECK(_hControl);
 	return IsWindowEnabled(_hControl) && IsWindowVisible(_hControl) && ((GetWindowLong(_hControl, GWL_STYLE) & WS_TABSTOP) == WS_TABSTOP);
 }
 
@@ -1933,7 +2626,7 @@ bool oWinControlSelect(HWND _hControl, int _Start, int _Length)
 
 bool oWinControlSetValue(HWND _hControl, float _Value)
 {
-	oWINV(_hControl);
+	oWIN_CHECK(_hControl);
 	oStd::mstring text;
 	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch (type)
@@ -2020,7 +2713,7 @@ bool oWinControlIsChecked(HWND _hControl)
 
 bool oWinControlSetChecked(HWND _hControl, bool _Checked)
 {
-	oWINV(_hControl);
+	oWIN_CHECK(_hControl);
 	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch (type)
 	{

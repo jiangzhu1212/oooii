@@ -156,7 +156,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oVersionUpdate.h" />
     <ClInclude Include="..\..\Include\oPlatform\oWebAppWindow.h" />
     <ClInclude Include="..\..\Include\oPlatform\oWebServer.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oWindow.h" />
     <ClInclude Include="..\..\Include\oPlatform\oDebugger.h" />
     <ClInclude Include="..\..\Include\oPlatform\oImage.h" />
     <ClInclude Include="..\..\Include\oPlatform\oModule.h" />
@@ -166,6 +165,7 @@
     <ClInclude Include="..\..\Include\oPlatform\oStandards.h" />
     <ClInclude Include="..\..\Include\oPlatform\oTest.h" />
     <ClInclude Include="..\..\Include\oPlatform\oVTable.h" />
+    <ClInclude Include="..\..\Include\oPlatform\oWindow.h" />
     <ClInclude Include="..\..\Include\oPlatform\oWindowAppController.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oCRTHeap.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oD3D11.h" />
@@ -190,9 +190,7 @@
     <ClInclude Include="oHTTPInternal.h" />
     <ClInclude Include="oIOCP.h" />
     <ClInclude Include="oKeyState.h" />
-    <ClInclude Include="oSpinlockEx.h" />
     <ClInclude Include="oStaticMutex.h" />
-    <ClInclude Include="oWinMessagePump.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="SoftLink\oD3DX11.h" />
     <ClInclude Include="SoftLink\oOpenSSL.h" />
@@ -275,7 +273,6 @@
     <ClCompile Include="oWindowAppController.cpp" />
     <ClCompile Include="oWindows.cpp" />
     <ClCompile Include="oWinKey.cpp" />
-    <ClCompile Include="oWinMessagePump.cpp" />
     <ClCompile Include="oWinRect.cpp" />
     <ClCompile Include="oWinRegistry.cpp" />
     <ClCompile Include="oWinStatusBar.cpp" />

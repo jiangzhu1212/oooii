@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -252,7 +251,7 @@ bool oProcessHeapContextImpl::IsTBBEntry(container_t::const_iterator it)
 	{
 		bool WasStdBind = IsStdBind;
 		oDebuggerSymbolSPrintf(buf, it->second.StackTrace[i], "  ", &IsStdBind);
-		if (strstr(buf, "oStd::async") || strstr(buf, "tbbD!tbb::") || strstr(buf, "DEPRECATED_oTaskIssueAsync"))
+		if (strstr(buf, "oStd::async") || strstr(buf, "tbbD!tbb::"))
 			return true;
 		if (!WasStdBind && IsStdBind) // skip a number of the internal wrappers
 			i += 5;

@@ -217,5 +217,8 @@
     <FXC Include="Shaders\oGfxShadowVS4.sh">
       <Filter>Source\Shaders</Filter>
     </FXC>
+    <FXC Include="Shaders\oGfxPositionPassThroughVS4.sh">
+      <Filter>Source\Shaders</Filter>
+    </FXC>
   </ItemGroup>
 </Project>

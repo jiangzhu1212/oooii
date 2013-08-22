@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,7 +26,7 @@
 #include <oPlatform/oSystem.h>
 #include <oPlatform/oWindow.h>
 #include <oPlatform/Windows/oWinWindowing.h>
-#include <oGPU/oGPUWindow.h> // @oooii-tony: Because this is here, we should move this test to at least oGPU (out of oPlatform)
+#include <oGPU/oGPU.h>
 
 static const bool kInteractiveMode = false;
 
@@ -36,28 +35,29 @@ class WindowInWindow
 public:
 	WindowInWindow(bool* _pSuccess)
 		: Counter(0)
+		, Running(true)
 	{
 		*_pSuccess = false;
 
 		// Create the parent:
 
-		oWINDOW_INIT init;
-		init.WindowTitle = "Window-In-Window Test";
-		init.EventHook = oBIND(&WindowInWindow::ParentEventHook, this, oBIND1);
-		init.WinDesc.Style = oGUI_WINDOW_SIZEABLE;
-		init.WinDesc.ClientSize = int2(640,480);
-		init.WinDesc.Debug = true;
-		init.WinDesc.HasFocus = false;
+		{
+			oWINDOW_INIT init;
+			init.Title = "Window-In-Window Test";
+			init.EventHook = oBIND(&WindowInWindow::ParentEventHook, this, oBIND1);
+			init.Shape.State = oGUI_WINDOW_HIDDEN;
+			init.Shape.Style = oGUI_WINDOW_SIZABLE;
+			init.Shape.ClientSize = int2(640, 480);
 
-		if (!oWindowCreate(init, &ParentWindow))
-			return; // pass through error
+			if (!oWindowCreate(init, &ParentWindow))
+				return; // pass through error
+		}
 
 		oGPUDevice::INIT DevInit;
 		DevInit.DebugName = "TestDevice";
-		DevInit.Version = oVersion(10,0);
+		DevInit.Version = oVersion(10, 0);
 		DevInit.DriverDebugLevel = oGPU_DEBUG_NORMAL;
 
-		oRef<oGPUDevice> Device;
 		if (!oGPUDeviceCreate(DevInit, &Device))
 			return; // pass through error
 
@@ -66,67 +66,51 @@ public:
 		if (!Device->CreateCommandList("TestCL", CLDesc, &CommandList))
 			return; // pass through error
 
-		oGUI_WINDOW hWnd = nullptr;
-		ParentWindow->QueryInterface(oGetGUID<oGUI_WINDOW>(), &hWnd);
+		{
+			oWINDOW_INIT init;
+			init.Shape.State = oGUI_WINDOW_RESTORED;
+			init.Shape.Style = oGUI_WINDOW_BORDERLESS;
+			init.Shape.ClientPosition = int2(20,20);
+			init.Shape.ClientSize = int2(600,480-65);
+			init.EventHook = oBIND(&WindowInWindow::GPUWindowEventHook, this, oBIND1);
 
-		oGPU_WINDOW_INIT GPUInit;
-		GPUInit.WinDesc.hParent = hWnd;
-		GPUInit.WinDesc.Style = oGUI_WINDOW_BORDERLESS;
-		GPUInit.WinDesc.ClientPosition = int2(20,20);
-		GPUInit.WinDesc.ClientSize = int2(600,480-65);
-		GPUInit.WinDesc.AllowAltEnter = false;
-		GPUInit.WinDesc.DefaultEraseBackground = false;
-		GPUInit.WinDesc.Debug = true;
-		GPUInit.WinDesc.HasFocus = false;
-		GPUInit.InitialAlignment = oGUI_ALIGNMENT_TOP_LEFT;
-		GPUInit.EventHook = oBIND(&WindowInWindow::GPUWindowEventHook, this, oBIND1);
-		GPUInit.RenderFunction = oBIND(&WindowInWindow::Render, this, oBIND1);
+			if (!oWindowCreate(init, &GPUWindow))
+				return; // pass through error
 
-		if (!oGPUWindowCreate(GPUInit, Device, &GPUWindow))
-			return; // pass through error
+			Device->CreatePrimaryRenderTarget(GPUWindow, oSURFACE_UNKNOWN, true, &PrimaryRenderTarget);
+			GPUWindow->SetParent(ParentWindow);
+		}
 
+		ParentWindow->Show();
 		*_pSuccess = true;
 	}
 
-	~WindowInWindow()
-	{
-		// Right now the resources have to be explicitly destroyed in reverse order
-		// of their creation. This is because the ParentWindow isn't aware of any
-		// connection to the GPUWindow other than through the underlying platform
-		// HWND. Also, these have to be destroyed before WindowInWindow because the
-		// resources queried - namely the device and swap chains - if invalidated 
-		// cause the RenderFunction to break because there's no testing in that 
-		// function for valid resources.
-		// It would be nice to make this more automatic...
-		GPUWindow = nullptr;
-		ParentWindow = nullptr;
-	}
+	inline bool IsRunning() const { return Running; }
 
-	void Render(oGPURenderTarget* _pPrimaryRenderTarget)
+	void Render()
 	{
-		if (GPUWindow)
+		if (PrimaryRenderTarget)
 		{
-			oRef<oGPUDevice> Device;
-			GPUWindow->GetDevice(&Device);
-
-			oGPU_CLEAR_DESC CD;
-			CD.ClearColor[0] = (Counter & 0x1) ? oStd::White : oStd::Blue;
-			_pPrimaryRenderTarget->SetClearDesc(CD);
-
 			if (Device->BeginFrame())
 			{
+				oGPU_CLEAR_DESC CD;
+				CD.ClearColor[0] = (Counter & 0x1) ? oStd::White : oStd::Blue;
+				PrimaryRenderTarget->SetClearDesc(CD);
+
 				CommandList->Begin();
-				CommandList->SetRenderTarget(_pPrimaryRenderTarget);
-				CommandList->Clear(_pPrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
+				CommandList->SetRenderTarget(PrimaryRenderTarget);
+				CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
 				CommandList->End();
+
 				Device->EndFrame();
+				Device->Present(1);
 			}
 		}
 	}
 
-	bool ParentEventHook(const oGUI_EVENT_DESC& _Event)
+	void ParentEventHook(const oGUI_EVENT_DESC& _Event)
 	{
-		switch (_Event.Event)
+		switch (_Event.Type)
 		{
 			case oGUI_CREATING:
 			{
@@ -142,46 +126,51 @@ public:
 				break;
 			}
 
-			case oGUI_CLOSED:
-				GPUWindow = nullptr;
+			case oGUI_CLOSING:
+				Running = false;
 				break;
 
 			case oGUI_SIZED:
 			{
 				if (GPUWindow)
-				{
-					oGUI_WINDOW_DESC* d = nullptr;
-					GPUWindow->Map(&d);
-					d->ClientSize = _Event.ClientSize - int2(40,65);
-					GPUWindow->Unmap();
-				}
-				SetWindowPos(hButton, 0, 10, _Event.ClientSize.y-10-25, 0, 0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
+					GPUWindow->SetClientSize(_Event.AsShape().Shape.ClientSize - int2(40,65));
+
+				if (PrimaryRenderTarget)
+					PrimaryRenderTarget->Resize(int3(_Event.AsShape().Shape.ClientSize - int2(40,65), 1));
+
+				SetWindowPos(hButton, 0, 10, _Event.AsShape().Shape.ClientSize.y-10-25, 0, 0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
 				break;
 			}
 
 			default:
 				break;
 		}
-
-		return true;
 	}
 
-	bool GPUWindowEventHook(const oGUI_EVENT_DESC& _Event)
+	void GPUWindowEventHook(const oGUI_EVENT_DESC& _Event)
 	{
-		return true;
 	}
 
-	threadsafe oWindow* GetWindow() threadsafe { return ParentWindow; }
+	oWindow* GetWindow() threadsafe { return ParentWindow; }
+
+	void FlushMessages()
+	{
+		GPUWindow->FlushMessages();
+		ParentWindow->FlushMessages();
+	}
 
 	void IncrementClearCounter() { Counter++; }
 
 private:
-	oRef<threadsafe oWindow> ParentWindow;
-	oRef<threadsafe oGPUWindow> GPUWindow;
+	oRef<oGPUDevice> Device;
+	oRef<oWindow> ParentWindow;
+	oRef<oWindow> GPUWindow;
 	oRef<oGPUCommandList> CommandList;
+	oRef<oGPURenderTarget> PrimaryRenderTarget;
 
 	HWND hButton;
 	int Counter;
+	bool Running;
 };
 
 struct GPU_WindowInWindow : public oTest
@@ -203,22 +192,29 @@ struct GPU_WindowInWindow : public oTest
 
 		if (kInteractiveMode)
 		{
-			while (test.GetWindow()->IsOpen())
+			while (test.IsRunning())
 			{
+				test.FlushMessages();
+
 				oSleep(1000);
 				test.IncrementClearCounter();
+
+				test.Render();
 			}
 		}
 
 		else
 		{
-			oSleep(200);
+			test.FlushMessages();
+			test.Render();
 			oStd::future<oRef<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
+			while (!snapshot.is_ready()) { test.FlushMessages(); }
 			oTESTFI(snapshot);
 			test.IncrementClearCounter();
-
-			oSleep(200);
+			test.FlushMessages();
+			test.Render();
 			snapshot = test.GetWindow()->CreateSnapshot();
+			while (!snapshot.is_ready()) { test.FlushMessages(); }
 			oTESTFI2(snapshot, 1);
 		}
 

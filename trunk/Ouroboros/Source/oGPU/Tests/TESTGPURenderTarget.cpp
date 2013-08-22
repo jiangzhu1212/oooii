@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,22 +26,17 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
-struct GPU_RenderTarget : public oTest
-{
-	oRef<oGPUDevice> Device;
-	oRef<oGPUCommandList> CLMainScene;
-	oRef<oGPUCommandList> CLRenderTarget;
-	oRef<oGPUPipeline> PLPassThrough;
-	oRef<oGPUPipeline> PLTexture;
-	oRef<oGPURenderTarget> RenderTarget;
-	oRef<oGPUUtilMesh> Cube;
-	oRef<oGPUUtilMesh> Triangle;
-	oRef<oGPUBuffer> TestConstants;
-	bool Once;
+static const int sSnapshotFrames[] = { 0, 50 };
+static const bool kIsDevMode = false;
 
-	bool CreateResources(threadsafe oGPUWindow* _pWindow)
+struct GPU_RenderTarget_App : public oGPUTestApp
+{
+	GPU_RenderTarget_App() : oGPUTestApp("GPU_RenderTarget", kIsDevMode, sSnapshotFrames) {}
+
+	bool Initialize() override
 	{
-		_pWindow->GetDevice(&Device);
+		PrimaryRenderTarget->SetClearColor(oStd::AlmostBlack);
+
 		oGPUCommandList::DESC cld;
 		cld.DrawOrder = 1;
 
@@ -65,7 +59,7 @@ struct GPU_RenderTarget : public oTest
 		if (!Device->CreatePipeline(PassThroughDesc.DebugName, PassThroughDesc, &PLPassThrough))
 			return false;
 
-		if (!oGPUTestInitFirstTriangle(Device, "Triangle", PassThroughDesc.pElements, PassThroughDesc.NumElements, &Triangle))
+		if (!oGPUUtilCreateFirstTriangle(Device, PassThroughDesc.pElements, PassThroughDesc.NumElements, &Triangle))
 			return false;
 
 		oGPUPipeline::DESC TextureDesc;
@@ -75,7 +69,7 @@ struct GPU_RenderTarget : public oTest
 		if (!Device->CreatePipeline(TextureDesc.DebugName, TextureDesc, &PLTexture))
 			return false;
 
-		if (!oGPUTestInitCube(Device, "Cube", TextureDesc.pElements, TextureDesc.NumElements, &Cube))
+		if (!oGPUUtilCreateFirstCube(Device, TextureDesc.pElements, TextureDesc.NumElements, &Cube))
 			return false;
 
 		oGPU_CLEAR_DESC cd;
@@ -93,6 +87,40 @@ struct GPU_RenderTarget : public oTest
 
 		return true;
 	}
+
+	bool Render() override
+	{
+		float4x4 V = oCreateLookAtLH(float3(0.0f, 0.0f, -4.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
+
+		oGPURenderTarget::DESC RTDesc;
+		PrimaryRenderTarget->GetDesc(&RTDesc);
+		float4x4 P = oCreatePerspectiveLH(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
+
+		float rotationStep = Device->GetFrameID() * 1.0f;
+		float4x4 W = oCreateRotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
+
+		// DrawOrder should be respected in out-of-order submits, so show that here
+		// but executing on the main scene, THEN the render target, but because the
+		// draw order of the command lists defines the render target before the 
+		// main scene, this should come out as a cube with a triangle texture.
+
+		oRef<oGPUTexture> Texture;
+		RenderTarget->GetTexture(0, &Texture);
+
+		RenderMainScene(CLMainScene, Texture, PrimaryRenderTarget);
+		RenderToTarget(CLRenderTarget, RenderTarget);
+		return true;
+	}
+
+private:
+	oRef<oGPUCommandList> CLMainScene;
+	oRef<oGPUCommandList> CLRenderTarget;
+	oRef<oGPUPipeline> PLPassThrough;
+	oRef<oGPUPipeline> PLTexture;
+	oRef<oGPURenderTarget> RenderTarget;
+	oRef<oGPUUtilMesh> Cube;
+	oRef<oGPUUtilMesh> Triangle;
+	oRef<oGPUBuffer> TestConstants;
 
 	void RenderToTarget(oGPUCommandList* _pCommandList, oGPURenderTarget* _pTarget)
 	{
@@ -118,8 +146,6 @@ struct GPU_RenderTarget : public oTest
 		float rotationStep = Device->GetFrameID() * 1.0f;
 		float4x4 W = oCreateRotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
 
-		uint DrawID = 0;
-
 		_pCommandList->Begin();
 
 		oGPUCommitBuffer(_pCommandList, TestConstants, oGPUTestConstants(W, V, P, oStd::White));
@@ -138,66 +164,6 @@ struct GPU_RenderTarget : public oTest
 
 		_pCommandList->End();
 	}
-	
-	void Render(oGPURenderTarget* _pPrimaryRenderTarget)
-	{
-		if (!Once)
-		{
-			oGPU_CLEAR_DESC CD;
-			CD.ClearColor[0] = oStd::AlmostBlack;
-			_pPrimaryRenderTarget->SetClearDesc(CD);
-
-			Once = true;
-		}
-
-		float4x4 V = oCreateLookAtLH(float3(0.0f, 0.0f, -4.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
-
-		oGPURenderTarget::DESC RTDesc;
-		_pPrimaryRenderTarget->GetDesc(&RTDesc);
-		float4x4 P = oCreatePerspectiveLH(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
-
-		float rotationStep = Device->GetFrameID() * 1.0f;
-		float4x4 W = oCreateRotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
-
-		uint DrawID = 0;
-
-		// DrawOrder should be respected in out-of-order submits, so show that here
-		// but executing on the main scene, THEN the render target, but because the
-		// draw order of the command lists defines the render target before the 
-		// main scene, this should come out as a cube with a triangle texture.
-
-		oRef<oGPUTexture> Texture;
-		RenderTarget->GetTexture(0, &Texture);
-
-		RenderMainScene(CLMainScene, Texture, _pPrimaryRenderTarget);
-		RenderToTarget(CLRenderTarget, RenderTarget);
-	}
-
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
-	{
-		Once = false;
-
-		static const int sSnapshotFrames[] = { 0, 50 };
-		static const bool kIsDevMode = false;
-		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&GPU_RenderTarget::Render, this, oBIND1), "GPU_RenderTarget", sSnapshotFrames);
-
-		oStd::future<oRef<oImage>> Snapshots[oCOUNTOF(sSnapshotFrames)];
-		oRef<threadsafe oGPUWindow> Window;
-		oTESTB0(oGPUTestCreateWindow(Init, oBIND(&GPU_RenderTarget::CreateResources, this, oBIND1), Snapshots, &Window));
-
-		while (Window->IsOpen())
-		{
-			if (!kIsDevMode && oGPUTestSnapshotsAreReady(Snapshots))
-			{
-				Window->Close();
-				oTESTB0(oGPUTestSnapshots(this, Snapshots));
-			}
-
-			oSleep(16);
-		}
-
-		return SUCCESS;
-	}
 };
 
-oTEST_REGISTER(GPU_RenderTarget);
+oDEFINE_GPU_TEST(GPU_RenderTarget)

@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -29,16 +28,11 @@
 // carefully-ordered win32 API.
 
 // Windows GUI handling is single-threaded. All multi-threaded calls can be 
-// piped to the GUI thread for processing, however because of more complex usage
-// build on top of this API, such Windows-native API are not used and most calls
-// here are required to be on the window's messaging thread. Such functions will
-// be marked with:
-// WT: Window Thread: This should only be called from the same thread on which 
-//     the window was created.
-// IA: Instantaneous Accessor: This can be called from any thread, however it 
-//     may not reflect any state queued up for processing, thus the state could
-//     have changed by the time client code uses the result.
-// FT: Free-Threaded: The API can be called from any thread at any time.
+// piped to the GUI thread for processing, but that is not done at this level,
+// this module is solely intended to simplify and make consistent some of 
+// Window's disparate and evolutionary API. All functions are expected to be 
+// called from the same thread as oWinCreate was, or they will return failure 
+// unless another description exists in the function's comments.
 
 #pragma once
 #ifndef oWinWindowing_h
@@ -53,23 +47,9 @@
 
 enum oWM
 {
-	// Custom Windows messages defined for Ouroboros' oWindow and controls.
+	// Custom Windows messages defined for windows created with oWinCreate.
 
 	oWM_FIRST_MESSAGE = WM_APP,
-
-	/**
-		Called when all other messages have been handled and then only to windows
-		that register themselves as "active" windows. If there are no active windows
-		and the message pump is empty, the pump thread will block waiting for new
-		messages.
-		wParam
-			This parameter is not used.
-		lParam
-			This parameter is not used.
-		lResult
-			Returns 0.
-	*/
-	oWM_MAINLOOP = oWM_FIRST_MESSAGE,
 
 	/**
 		Execute an arbitrary std::function on a window message pump thread.
@@ -84,151 +64,15 @@ enum oWM
 	oWM_DISPATCH,
 
 	/**
-		Calls SetTimer on the window thread with a null callback (the message pump
-		should handle WM_TIMER and return status).
+		Use this to call DestroyWindow() with a PostMessage().
 		wParam
-			This is passed to the nIDEvent parameter of SetTimer.
+			This parameter is not used.
 		lParam
-			This is passed to the uElapse parameter of SetTimer.
+			This parameter is not used.
 		lResult
 			Returns 0.
 	*/
-	oWM_START_TIMER,
-
-	/**
-		Adds an action observer/hook function to an oWindow.
-		wParam
-			This parameter is not used.
-		lParam
-			An oGUI_ACTION_HOOK* that the oWindow will add to its observer list.
-		lResult
-			A hook ID (int) that can later be passed to oWM_ACTION_UNHOOK to remove 
-			the observer.
-	*/
-	oWM_ACTION_HOOK,
-
-	/**
-		Removes an action observer/hook function from an oWindow.
-		wParam
-			This parameter is not used.
-		lParam
-			A hook ID (int) to be removed. The ID would have been returned from a
-			oWM_ACTION_HOOK send.
-		lResult
-			Returns true if successful, or false if the ID was not found.
-	*/
-	oWM_ACTION_UNHOOK,
-
-	/**
-		Sent when oWindow::Trigger is called to trigger an action from code.
-		wParam
-			This parameter is not used.
-		lParam
-			An oGUI_ACTION_DESC* describing the action.
-		lResult
-			Returns 0.
-	*/
-	oWM_ACTION_TRIGGER,
-
-	/**
-		Adds an event observer/hook function to an oWindow.
-		wParam
-			This parameter is not used.
-		lParam
-			An oGUI_EVENT_HOOK* that the oWindow will add to its observer list.
-		lResult
-			A hook ID (int) that can later be passed to oWM_EVENT_UNHOOK to remove the 
-			observer.
-	*/
-	oWM_EVENT_HOOK,
-
-	/**
-		Removes an event observer/hook function from an oWindow.
-		wParam
-			This parameter is not used.
-		lParam
-			A hook ID (int) to be removed. The ID would have been returned from a
-			oWM_EVENT_HOOK send.
-		lResult
-			Returns true if successful, or false if the ID was not found.
-	*/
-	oWM_EVENT_UNHOOK,
-
-	/**
-		Defines an HACCEL for an oWindow through the use of oGUI_HOTKEY_DESC_NO_CTOR
-		interfaces.
-		wParam
-			The number of hotkeys specified in the lParam array.
-		lParam
-			oGUI_HOTKEY_DESC_NO_CTOR* array of hotkeys to set.
-		lResult
-			Returns true if successful or false if there was a failure.
-	*/
-	oWM_SETHOTKEYS,
-
-	/**
-		Copy an oWindow's current HACCEL into oGUI_HOTKEY_DESC_NO_CTOR values.
-		wParam
-			The maximum number of oGUI_HOTKEY_DESC_NO_CTORs to be copied.
-		lParam
-			A pointer to the buffer that is to receive the oGUI_HOTKEY_DESC_NO_CTORs.
-		lResult
-			If lParam is nullptr, the return value is the number of hotkeys currently
-			set as an HACCEL in the specified oWindow. If lParam is a valid pointer, 
-			then the return value is the actual number of hotkeys copied.
-	*/
-	oWM_GETHOTKEYS,
-
-	/**
-		Set the text on an oWindow's status bar section.
-		wParam
-			The number of (int) widths for each section of an oWindow's status bar.
-		lParam
-			int* array of widths to set
-		lResult
-			Returns true if successful or false if there was a failure.
-	*/
-	oWM_STATUS_SETPARTS,
-
-	/**
-		Set the text on an oWindow's status bar section.
-		wParam
-			The index of the status bar's section on which the text will be set.
-		lParam
-			A pointer to a null-terminated string that is the status bar section text.
-		lResult
-			The return value is true if the text was set or false if the index is not
-			valid.
-	*/
-	oWM_STATUS_SETTEXT,
-
-	/**
-		Get the text from an oWindow's status bar section.
-		wParam
-			The result of MAKEWPARAM(x,y) where x is the status bar's section from 
-			which text will be retrieved and y is the maximum number of characters to
-			be copied, including the terminating null character.
-		lParam
-			A pointer to the buffer that is to receive the text.
-		lResult
-			The return value is the number of characters copied, not including the 
-			terminating null character.
-	*/
-	oWM_STATUS_GETTEXT,
-
-	/**
-		Determines the length, in characters, of the text associated with an 
-		oWindow's status bar section.
-		wParam
-			The index of the status bar's section on which the text length will be
-			determined.
-		lParam
-			This parameter is not used.
-		lResult
-			The return value is the length of the text in characters, not including 
-			the terminating null character.
-	*/
-	oWM_STATUS_GETTEXTLENGTH,
+	oWM_DESTROY,
 
 	/**
 		Received when an input device has updated skeleton data. Use of this message 
@@ -295,11 +139,12 @@ enum oWM
 	oWM_REGISTERED_COUNT = oWM_REGISTERED_LAST - oWM_REGISTERED_FIRST + 1,
 };
 
-// Returns nullptr if the specified messasge is not a registered message.
+// Returns nullptr if the specified message is not a registered message.
 const char* oWinGetMessageRegisterString(oWM _RegisteredMessage);
 
 // _____________________________________________________________________________
-// Raw Input (WM_INPUT support)
+// Raw Input (WM_INPUT support) These are not defined anywhere I can find in
+// Windows headers.
 
 enum oUS_USAGE_PAGE_VALUES
 {
@@ -342,59 +187,132 @@ void UnregisterSkeletonSource(HSKELETON _hSkeleton);
 oAPI bool GetSkeletonDesc(HSKELETON _hSkeleton, oGUI_BONE_DESC* _pSkeleton);
 
 // _____________________________________________________________________________
-// Top-Level Window Creation, Lifetime and Message Processing
+// Basic Top-Level Window Creation, Lifetime and Message Processing
 
-// Creates a simple window class and window. This should be the start of most
-// windows to be used with other API from this system. Styles are controlled 
-// separately with other API. _pThis should be the class that will be managing/
-// wrapping the window. In this way a static WNDPROC can quickly become a method
-// of a class. See oWinGetWrapper for more details.
+// Fills _StrDestination with the class name of a window created with 
+// oWinCreate. This sythesizes the name, it does not use ::GetClassName to 
+// retrieve a name.
+oAPI char* oWinMakeClassName(char* _StrDestination, size_t _SizeofStrDestination, WNDPROC _Wndproc);
+template<size_t size> char* oWinMakeClassName(char (&_StrDestination)[size], WNDPROC _Wndproc) { return oWinMakeClassName(_StrDestination, size, _Wndproc); }
+template<typename charT, size_t capacity> char* oWinMakeClassName(oStd::fixed_string<charT, capacity>& _StrDestination, WNDPROC _Wndproc) { return oWinMakeClassName(_StrDestination, _StrDestination.capacity(), _Wndproc); }
+
+// Returns true if the specified window uses the specified _Wndproc and was
+// created with oWinCreate.
+oAPI bool oWinIsClass(HWND _hWnd, WNDPROC _Wndproc);
+
+// Passed as the platform-provided init parameter.
+struct oWIN_CREATESTRUCT
+{
+	oGUI_WINDOW_SHAPE_DESC Shape;
+	void* pThis;
+	void* pInit;
+};
+
+// Creates a top-level window class and window. This should be the start of most 
+// windows to be used with other API from this system. an instance of
+// oWIN_CREATESTRUCT will be passed to WM_CREATE's CREATESTRUCT's lpCreateParams 
+// and the _pInit specified to oWinCreate will be passed in the member of pInit
+// of oWIN_CREATESTRUCT. Be careful if using pThis or native platform calls 
+// since the window is not yet fully constructed. _pThis should be the class 
+// that will be managing/wrapping the window. The pointer will be stored and 
+// accessible through helper API below that easily converts a static WNDPROC 
+// into a class method. See oWinGetThis for more details.
 // Threading:
 // Care should be taken to call this function in the thread intended for window 
-// message processing because Windows automatically sets up the message pump to 
-// be this-thread unique, and communicating with this window from other threads 
-// can cause race conditions.
-oAPI bool oWinCreate(HWND* _pHwnd, const int2& _ClientPosition, const int2& _ClientSize, WNDPROC _Wndproc, void* _pThis = nullptr, bool _AsMessagingWindow = false);
+// message processing.
+oAPI HWND oWinCreate(HWND _hParent
+	, const char* _Title
+	, oGUI_WINDOW_STYLE _Style
+	, const int2& _ClientPosition
+	, const int2& _ClientSize
+	, WNDPROC _Wndproc
+	, void* _pInit
+	, void* _pThis);
 
-// This function simplifies the association of a 'this' pointer with an HWND. 
-// In the WndProc passed to oWinCreate, call this early to get the pointer 
-// passed as _pThis. Then user code can convert quickly from the static 
-// function requirement of Windows to a more encapsulated C++ class style
-// handling of the WNDPROC. This transfers the CREATESTRUCT values to USERDATA 
-// during WM_CREATE or for WM_INITDIALOG directly sets the pointer to USERDATA.
-// If _pThis is nullptr, then DefWindowProc is called. See oDECLARE_WNDPROC for
-// a boilerplate implementation of the static wrapper and class method.
-// Threading: WT
-oAPI void* oWinGetThis(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam);
-template<typename T> inline T* oWinGetThis(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam) { return (T*)oWinGetThis(_hWnd, _uMsg, _wParam, _lParam); }
+// Calls DestroyWindow if called from the window thread, or posts an 
+// oWM_DESTROY, which will call DestroyWindow from the window thread if this 
+// function is called from any other thread. Thus it is safe to call this from 
+// any thread. Typical use is to call this in a wrapper class's destructor, 
+// which can be called from any thread that releases its last refcount.
+oAPI void oWinDestroy(HWND _hWnd);
+
+// Returns the pointer passed as _pThis to oWinCreate. This gets set only at 
+// the very end of WM_CREATE since the this object would be in the middle of 
+// bootstrapping, so this may return nullptr, which when it does it is 
+// recommended that the system call DefWindowProc().
+void* oWinGetThis(HWND _hWnd);
+template<typename T> inline T* oWinGetThis(HWND _hWnd) { return (T*)::oWinGetThis(_hWnd); }
 
 // Translates the message if it is a registered into its associated oWM. If it
-// it not a registered message, this passes the message through.
+// it not a registered message, this passes the message through. Call this on
+// whatever the first change at getting the message is so that this-class-
+// specific messages are properly recognized (most translations will become an 
+// oWM between oWM_REGISTERED_FIRST and oWM_REGISTERED_LAST).
 UINT oWinTranslateMessage(UINT _uMsg);
 
-// Declares the method WndProc and a static function WndProc within a class to
-// create a Windows-compliant C-Style function to pass to oWinCreate above that
-// with oWinCreate's _pThis pointer can be redirected to the member method. 
-// Client code must copy-paste from the WndProc here (or MS docs) and implement
-// the method like a regular WndProc. Remember that oWinGetThis is employed, so 
-// client code should take care not to stomp on direct HWND USERDATA and instead 
-// define member variables in the 'this' class.
+// The "DefWindowProc" for Windows created with oWinCreate. This is generally
+// called before any user-specified callback (oDECLARE_WNDPROC) to handle the 
+// very basics. If this returns a value greater than 0, then this handling 
+// should override any additional handling and return 0. Mostly this supports
+// more elegant handling of fullscreen, status bar-like-menu integration into
+// the window and simplified device change events.
+LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam);
+
+// Declares the method WndProc and a static function StaticWndProc within a class 
+// to create a Windows-compliant C-Style function to pass to oWinCreate above 
+// that with oWinCreate's _pThis pointer can be redirected to the member method. 
 #define oDECLARE_WNDPROC(_ClassName) \
 	LRESULT CALLBACK WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam); \
 	static LRESULT CALLBACK StaticWndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam) \
-		{ _ClassName* pThis = oWinGetThis<_ClassName>(_hWnd, _uMsg, _wParam, _lParam); \
-			_uMsg = oWinTranslateMessage(_uMsg); \
-			return pThis ? pThis->WndProc(_hWnd, _uMsg, _wParam, _lParam) : DefWindowProc(_hWnd, _uMsg, _wParam, _lParam); }
+	{ _uMsg = oWinTranslateMessage(_uMsg); \
+		if (oWinWindowProc(_hWnd, _uMsg, _wParam, _lParam) >= 0) return 0; \
+		_ClassName* pThis = oWinGetThis<_ClassName>(_hWnd); \
+		if (!pThis) return DefWindowProc(_hWnd, _uMsg, _wParam, _lParam); \
+		return pThis->WndProc(_hWnd, _uMsg, _wParam, _lParam); \
+	}
 
 // Returns the thread id for the specified window, or oStd::thread::id() if the
 // _hWnd is invalid.
-// Threading: IA
 oAPI oStd::thread::id oWinGetWindowThread(HWND _hWnd);
 
 // Returns true of the current thread is the one dispatching messages for the 
-// window. Many of the API declared below assert this condition to be true.
-// Threading: FT
+// window. Many of the API declared below assert this condition to be true. This 
+// can be called from any thread.
 inline bool oWinIsWindowThread(HWND _hWnd) { return oStd::this_thread::get_id() == oWinGetWindowThread(_hWnd); }
+
+// Dispatches a single message from the Windows message queue. If _WaitForNext 
+// is true, the calling thread will sleep (GetMessage). If _WaitForNext is 
+// false, then PeekMessage is used. If this returns false, it means a new 
+// message was not dispatched. If the message queue is valid and empty, 
+// oErrorGetLast() will return std::errc::no_message_available, which might mean
+// to client code "do something else", like render a 3D scene or play a video. 
+// If a  WM_QUIT message is received, this will return false with a last error
+// of std::errc::operation_canceled, implying the thread pump loop should exit.
+oAPI bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext = true);
+
+// _____________________________________________________________________________
+// Extended Top-Level Window Message Processing
+
+// Sometimes a windows API will call SendMessage internally. When several APIs 
+// are called together, a lot of noise can be generated for that event, and 
+// sometimes can result in invalid states because of what oWinWindowing APIs
+// emulate. This function is used internally to wrap certain calls so events can 
+// be queried to see if a response is truly needed, or if there is more coming.
+// This is reference-counted. It starts in not-temp mode at 0, and each setting
+// to true increments the count so this can be called recursively. Values are 
+// clamped at zero.
+oAPI bool oWinSetTempChange(HWND _hWnd, bool _IsTemp);
+
+// This is used to query the state of "temp change" for a window.
+oAPI bool oWinIsTempChange(HWND _hWnd);
+
+// On Windows, getting a WM_TOUCH message is not the default. Also receiving 
+// this message can affect how mouse messages behave since a lot of drivers 
+// emulate the mouse through touch. This API provides a toggle for the specified
+// window as to whether such events are enabled. This will return failure on 
+// versions of Windows prior to Windows 7 since the underlying API is not 
+// supported prior to Windows 7.
+oAPI bool oWinRegisterTouchEvents(HWND _hWnd, bool _Registered);
 
 // Converts the specified oGUI_HOTKEY_DESCs into an ACCEL array. _pAccels must
 // be least the same number of items as _HotKeys.
@@ -404,118 +322,162 @@ oAPI void oWinAccelFromHotKeys(ACCEL* _pAccels, const oGUI_HOTKEY_DESC_NO_CTOR* 
 // be least the same number of items as _pAccels.
 oAPI void oWinAccelToHotKeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, const ACCEL* _pAccels, size_t _NumHotKeys);
 
-// Dispatches a single message from the Windows message queue. If _WaitForNext 
-// is true, the calling thread will sleep (GetMessage). If _WaitForNext is 
-// false, then PeekMessage is used. If this returns false, it means a new 
-// message was not dispatched. If the message queue is valid and empty, 
-// oErrorGetLast() will return std::errc::no_message_available, which might mean
-// to client code "do something else", like render a 3D scene or play a video. 
-// If a  WM_QUIT message is received, this will return 
-// std::errc::operation_canceled, implying the thread pump loop should exit.
-// Threading: WT
-oAPI bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext = true);
+// _____________________________________________________________________________
+// Basic Window Components.
 
-// Send this to wake the specified window's message pump thread up from a 
-// blocking GetMessage() call. This is useful if the thread does work of which 
-// the Windows message pump (GetMessage) isn't aware, such as a wrapper function
-// scheduled on a thread of one of the other Set/Get functions declared below.
-// Threading: FT
-oAPI bool oWinWake(HWND _hWnd);
+// Gets the icon (large or small) associated with the specified _hWnd. No 
+// lifetime needs to be performed on the returned value.
+oAPI HICON oWinGetIcon(HWND _hWnd, bool _BigIcon = false);
 
-// Similar to ::SetParent, but for ownership to mask that the API is very 
-// inconsistent and mislabeled.
-oAPI bool oWinSetOwner(HWND _hWnd, HWND _hOwner);
+// Asynchronously set the specified window's icon. This will enqueue the set,
+// but may not be atomic with other calls either from client code or from 
+// Windows internal code. If this is called from a thread different than the
+// _hWnd's, this will return false and oErrorGetLast will return 
+// std::errc::operation_not_permitted.
+oAPI bool oWinSetIconAsync(HWND _hWnd, HICON _hIcon, bool _BigIcon = false);
 
-// Retrieves the current owner.
-oAPI HWND oWinGetOwner(HWND _hWnd);
+// @oooii-tony: I am still unclear about lifetime management... I don't see leak
+// reports in current usage, so I've not have something to fully trace through...
+// Let me know if you see leaks relating to HICONs.
+oAPI bool oWinSetIcon(HWND _hWnd, HICON _hIcon, bool _BigIcon = false);
+
+// Sets the text of a window. If _SubItemIndex is oInvalid, this will set the
+// main text. If the window is a control that contains subitems, the specified
+// subitem's text will be set. The specified _SubItemIndex must exist or be
+// oInvalid for this to return success/true.
+// Also note that this is a pointer specified, so the buffer must remain valid
+// until this function returns.
+oAPI bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex = oInvalid);
+
+// Returns _StrDestination on success, otherwise nullptr.
+oAPI char* oWinGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, int _SubItemIndex = oInvalid);
+template<size_t size> char* oWinGetText(char (&_StrDestination)[size], HWND _hWnd, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, size, _hWnd, _SubItemIndex); }
+template<size_t capacity> char* oWinGetText(oStd::fixed_string<char, capacity>& _StrDestination, HWND _hWnd, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _StrDestination.capacity(), _hWnd, _SubItemIndex); }
+
+// Returns the window class's hbrBackground value. This is a non-counted 
+// reference, so no lifetime management should be performed on the HBRUSH.
+oAPI HBRUSH oWinGetBackgroundBrush(HWND _hWnd);
+
+// If nullptr the DEFAULT_GUI_FONT is set. See oGDICreateFont to create a custom 
+// font.
+oAPI bool oWinSetFont(HWND _hWnd, HFONT _hFont = nullptr);
+
+// Returns the currently set font.
+oAPI HFONT oWinGetFont(HWND _hWnd);
+
+// Returns the currently set (themed) default font
+oAPI HFONT oWinGetDefaultFont();
+
+// _____________________________________________________________________________
+// Extended Window Components. Window's handling of menus is "special". Status 
+// bars always seem like a part of the frame since they have a "grip" for resize 
+// so make the behavior of menu and status bar as uniformly not-a-child-object 
+// as possible.
+
+// Windows created with oWinCreate retain a top-level window so that it's always
+// around to consistently calculate size, since menus affect non-client area 
+// calculations. This returns the userdata-stored value regardless of what 
+// ::GetMenu() returns.
+oAPI HMENU oWinGetMenu(HWND _hWnd);
+
+// Calls SetMenu() to either the value of oWinGetMenu or null, depending on the 
+// _Show value.
+oAPI bool oWinShowMenu(HWND _hWnd, bool _Show = true);
+
+// Returns true if the specified window has a menu
+oAPI bool oWinMenuShown(HWND _hWnd);
+
+// All windows created with oWinCreate have a status bar. This retrieves it.
+oAPI HWND oWinGetStatusBar(HWND _hWnd);
+
+// Sets the status bar of the associated window to be visible or hidden.
+oAPI bool oWinShowStatusBar(HWND _hWnd, bool _Show = true);
+
+// Returns the state set by oWinShowStatusBar. This can return visible even if 
+// the parent window is hidden - it only describes the local state of the 
+// status bar.
+oAPI bool oWinStatusBarShown(HWND _hWnd);
 
 // _____________________________________________________________________________
 // Top-Level Window State
 
 // Returns true if the specified window is a valid ready-to-use window. False
 // applies to either nullptr or a window that has been destroyed.
-// Threading: IA
 oAPI bool oWinExists(HWND _hWnd);
 
-// Returns true if the specified _hWnd is valid and has focus
-// Threading: IA
-oAPI bool oWinHasFocus(HWND _hWnd);
+// Due to Aero-style compositing, there may be a period while a window is being
+// shown from hidden where the window is not opaque, thus generating incorrect 
+// snapshots. Use this to determine if a window is finished with any transition 
+// and is in a steady visual state.
+oAPI bool oWinIsOpaque(HWND _hWnd);
 
-// Threading: WT
+// Gets the index of the display that is most closely associated with the 
+// specified window. NOTE: This is an oDisplay-style index compatible with 
+// oDisplayEnum(), not a DirectX index.
+oAPI int oWinGetDisplayIndex(HWND _hWnd);
+
+// Returns true if the specified _hWnd is valid and has focus
+oAPI bool oWinHasFocus(HWND _hWnd);
 oAPI bool oWinSetFocus(HWND _hWnd, bool _Focus = true);
 
 // Returns true if the specified _hWnd is valid and isEnabled
-// Threading: IA
 oAPI bool oWinIsEnabled(HWND _hWnd);
-
-// Threading: WT
 oAPI bool oWinEnable(HWND _hWnd, bool _Enabled = true);
 
-// Threading: IA
 oAPI bool oWinIsAlwaysOnTop(HWND _hWnd);
-
-// Threading: WT
 oAPI bool oWinSetAlwaysOnTop(HWND _hWnd, bool _AlwaysOnTop = true);
 
-// There's a known issue that a simple ShowWindow doesn't always work on some 
-// minimized apps. The WAR seems to be to set focus to anything else, then try 
-// to restore the app. This is exposed to be used on any HWND because it is a 
-// real bug/poor behavior in the OS, and is used in oWinSetState to properly
-// handle focus.
-oAPI bool oWinRestore(HWND _hWnd);
+// Similar to ::SetParent, but for ownership to mask that the API is very 
+// inconsistent and mislabeled.
+oAPI bool oWinSetOwner(HWND _hWnd, HWND _hOwner);
+oAPI HWND oWinGetOwner(HWND _hWnd);
+oAPI bool oWinIsOwner(HWND _hWnd);
 
-// Returns one of the states enumerated in oGUI_WINDOW_STATE. This uses basic
-// Windows API to calculate the state (IsZoomed, IsIconic, etc.).
-// Threading: IA
-oAPI oGUI_WINDOW_STATE oWinGetState(HWND _hWnd);
+// This calls ::SetParent, but also sets WS_CHILD v. WS_POPUP correctly.
+oAPI bool oWinSetParent(HWND _hWnd, HWND _hParent);
+oAPI HWND oWinGetParent(HWND _hWnd);
+oAPI bool oWinIsParent(HWND _hWnd);
 
-// Sets the state of the window. Because it's convenient and atomic, focus can 
-// be set at the time of calling this function.
-// Threading: WT
-oAPI bool oWinSetState(HWND _hWnd, oGUI_WINDOW_STATE _State, bool _TakeFocus = true);
+// Returns true if this window has been flagged as a render target. Mainly a 
+// render target is not allowed to have a status bar.
+oAPI bool oWinIsRenderTarget(HWND _hWnd);
 
-// Returns one of the styles for a top-level window enumerated in 
-// oGUI_WINDOW_STYLE. This can return an inappropriate style if the style for
-// the specified window was not set using oWinSetStyle.
-// Threading: IA
-oAPI oGUI_WINDOW_STYLE oWinGetStyle(HWND _hWnd);
+// Sets a flag to mark the specified window as a render target. This does 
+// nothing more than to cause oWinIsRenderTarget to return true or false and 
+// does nothing to actually make the specified window a render target since that
+// is up to the rendering system.
+oAPI bool oWinSetIsRenderTarget(HWND _hWnd, bool _IsRenderTarget = true);
 
-// SetStyle can also move/resize the _hWnd if _prClient is specified. _prClient
-// is the position and size of the client area of the window. The actual window
-// position and size are adjusted to accommodate the specified client size.
-// NOTE: This takes into account any associated HMENU, and likewise this API 
-// treats a StatusBar control in the same manner. This assumes only one 
-// StatusBar is associated with the specified _hWnd.
-// Threading: WT
-oAPI bool oWinSetStyle(HWND _hWnd, oGUI_WINDOW_STYLE _Style, bool _HasStatusBar, const RECT* _prClient = nullptr);
+// Returns true if this window has been flagged as fullscreen exclusive. Mainly 
+// this is checked if there's a call to oWinSetShape while the window is being
+// managed by another API (DirectX).
+oAPI bool oWinIsFullscreenExclusive(HWND _hWnd);
+
+// Sets a flag to mark the specified window as exclusively controlled by a 
+// fullscreen device. This does nothing more than to cause 
+// oWinIsFullscreenExclusive to return true or false and does nothing to 
+// actually make the specified window exclusive since that is up to the 
+// rendering system.
+oAPI bool oWinSetIsFullscreenExclusive(HWND _hWnd, bool _IsFullscreenExclusive = true);
+
+// Returns true if alt-F4 is enabled to close the window.
+oAPI bool oWinAltF4IsEnabled(HWND _hWnd);
+
+// Sets whether or not Alt-F4 closes the window.
+oAPI bool oWinAltF4Enable(HWND _hWnd, bool _Enabled = true);
 
 // _____________________________________________________________________________
-// Top-Level Window Geometry
+// Top-Level Window Shape
 
-// Returns screen coordinates of the client;'s top left (0,0 in client space)
-// Threading: IA
-oAPI int2 oWinGetPosition(HWND _hWnd);
-
-// NOTE: It's more efficient if style is changing to roll changes to geometry
-// into the _prClient param of oWinSetStyle. If style is not changing, then it
-// is more efficient to call one of this oWinSetPosition* functions.
-
-// Sets window position such that the client coordinate 0,0 is at the specified 
-// screen position
-// Threading: WT
-oAPI bool oWinSetPosition(HWND _hWnd, const int2& _ScreenPosition);
-
-// Sets window position and size such that the client coordinate 0,0 is at the
-// specified screen position.
-// Threading: WT
-oAPI bool oWinSetPositionAndSize(HWND _hWnd, const int2& _Position, const int2& _Size);
-
-// Play a windows animation from and to the specified RECTs. This respects user 
-// settings as to whether window animated transitions are on. This does not 
-// actually move the window, just plays the tween frames from some other 
-// instantaneous move.
-// Threading: WT
-oAPI bool oWinAnimate(HWND _hWnd, const RECT& _From, const RECT& _To);
+// Fills the specified rect with the specified window's client rect. If the 
+// window is a child window, the coordinates will be in the parent's client 
+// space. If the specified window is a top-level window then the rect is in 
+// virtual desktop coordinate space. This differs from Window's GetClientRect to 
+// support status bar as a native window concept. So basically if the specified 
+// HWND has a status bar, the returned client size is shrunk by the size of the 
+// status bar (not shrunk if the status bar is hidden). Also this always has
+// a meaninful top-left coord rather than the 0,0 of GetClientRect.
+oAPI bool oWinGetClientRect(HWND _hWnd, RECT* _pRect);
 
 // Returns the rectangle in which the window is most closely contained. If the
 // specified _hWnd is a child window, then the client rect of the parent is 
@@ -535,54 +497,28 @@ oAPI RECT oWinGetParentRect(HWND _hWnd, HWND _hExplicitParent = nullptr);
 // is returned.
 oAPI RECT oWinGetRelativeRect(HWND _hWnd, HWND _hExplicitParent = nullptr);
 
-// Fills specified rect with the specified window's client rect. This differs 
-// from Window's GetClientRect to support status bar as a native window concept.
-// So basically if the specified HWND has a status bar, the returned client size
-// is shrunk by the size of the status bar (not shrunk if the status bar is 
-// hidden).
-oAPI bool oWinGetClientRect(HWND _hWnd, RECT* _pRect);
+// Returns the shape of the specified window, i.e. all information that affects
+// the size and position of the window.
+oAPI oGUI_WINDOW_SHAPE_DESC oWinGetShape(HWND _hWnd);
 
-// Fills specified rect with the specified window's client rect, but in screen 
-// coordinates. If _HasStatusBar is true, its height is added to the client size 
-// to make the status bar seem as if it's not part of the client area.
-oAPI bool oWinGetClientScreenRect(HWND _hWnd, bool _HasStatusBar, RECT* _pRect);
+// Sets the shape of the specified window.
+oAPI bool oWinSetShape(HWND _hWnd, const oGUI_WINDOW_SHAPE_DESC& _Shape);
+
+// There's a known issue that a simple ShowWindow doesn't always work on some 
+// minimized apps. The WAR seems to be to set focus to anything else, then try 
+// to restore the app. This is exposed to be used on any HWND because it is a 
+// real bug/poor behavior in the OS, and is used in oWinSetState to properly
+// handle focus.
+oAPI bool oWinRestore(HWND _hWnd);
+
+// Play a windows animation from and to the specified RECTs. This respects user 
+// settings as to whether window animated transitions are on. This does not 
+// actually move the window, just plays the tween frames from some other 
+// instantaneous move.
+oAPI bool oWinAnimate(HWND _hWnd, const RECT& _From, const RECT& _To);
 
 // _____________________________________________________________________________
-// Top-Level Window Accessors/Mutators
-
-// Gets the index of the display that is most closely associated with the 
-// specified window. NOTE: This is an oDisplay-style index compatible with 
-// oDisplayEnum(), not a DirectX index.
-// Threading: IA
-oAPI int oWinGetDisplayIndex(HWND _hWnd);
-
-// Returns the window class's hbrBackground value. This is a non-counted 
-// reference, so no lifetime management should be performed on the HBRUSH.
-// Threading: IA
-oAPI HBRUSH oWinGetBackgroundBrush(HWND _hWnd);
-
-// Returns the currently set font.
-// Valid for: All
-// Threading: IA
-oAPI HFONT oWinGetFont(HWND _hWnd);
-
-// Returns the currently set (themed) default font
-oAPI HFONT oWinGetDefaultFont();
-
-// If nullptr the DEFAULT_GUI_FONT is set. See oGDICreateFont to create a custom 
-// font.
-// Valid for: All
-// Threading: WT
-oAPI bool oWinSetFont(HWND _hWnd, HFONT _hFont = nullptr);
-
-// Sets the text of a window. If _SubItemIndex is oInvalid, this will set the
-// main text. If the window is a control that contains subitems, the specified
-// subitem's text will be set. The specified _SubItemIndex must exist or be
-// oInvalid for this to return success/true.
-// Threading: WT
-// Also note that this is a pointer specified, so the buffer must remain valid
-// until this function returns.
-oAPI bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex = oInvalid);
+// String Modifiers. Alter a string based on the shape of a window
 
 // Returns the number of characters used if the string were truncated. This 
 // includes the ellipse.
@@ -602,30 +538,6 @@ oAPI char* oWinTruncatePath(char* _StrDestination, size_t _SizeofStrDestination,
 template<size_t size> char* oWinTruncatePath(char (&_StrDestination)[size], HWND _hWnd, const char* _Path) { return oWinTruncatePath(_StrDestination, size, _hWnd, _Path); }
 template<size_t capacity> char* oWinTruncatePath(oStd::fixed_string<char, capacity>& _StrDestination, HWND _hWnd, const char* _Path) { return oWinTruncatePath(_StrDestination, _StrDestination.capacity(), _hWnd, _Path); }
 
-// Returns _StrDestination on success, otherwise nullptr.
-// Threading: IA
-oAPI char* oWinGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, int _SubItemIndex = oInvalid);
-template<size_t size> char* oWinGetText(char (&_StrDestination)[size], HWND _hWnd, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, size, _hWnd, _SubItemIndex); }
-template<size_t capacity> char* oWinGetText(oStd::fixed_string<char, capacity>& _StrDestination, HWND _hWnd, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _StrDestination.capacity(), _hWnd, _SubItemIndex); }
-
-// Gets the icon (large or small) associated with the specified _hWnd. No 
-// lifetime needs to be performed on the returned value.
-// Threading: IA
-oAPI HICON oWinGetIcon(HWND _hWnd, bool _BigIcon = false);
-
-// Asynchronously set the specified window's icon. This will enqueue the set,
-// but may not be atomic with other calls either from client code or from 
-// Windows internal code. If this is called from a thread different than the
-// _hWnd's, this will return false and oErrorGetLast will return 
-// std::errc::operation_not_permitted.
-oAPI bool oWinSetIconAsync(HWND _hWnd, HICON _hIcon, bool _BigIcon = false);
-
-// @oooii-tony: I am still unclear about lifetime management... I don't see leak
-// reports in current usage, so I've not have something to fully trace through...
-// Let me know if you see leaks relating to HICONs.
-// Threading: WT
-oAPI bool oWinSetIcon(HWND _hWnd, HICON _hIcon, bool _BigIcon = false);
-
 // _____________________________________________________________________________
 // UI Control Creation, Lifetime and Message Processing
 
@@ -636,7 +548,6 @@ oAPI bool oWinSetIcon(HWND _hWnd, HICON _hIcon, bool _BigIcon = false);
 // all controls must have a parent and on Windows the parent deletes all its
 // children, in many cases the lifetime of the HWND need not be managed, or even
 // retained.
-// Threading: WT
 oAPI HWND oWinControlCreate(const oGUI_CONTROL_DESC& _Desc);
 
 // Several controls have very typical behavior that occurs on a WM_NOTIFY 
@@ -648,7 +559,6 @@ oAPI HWND oWinControlCreate(const oGUI_CONTROL_DESC& _Desc);
 // function, passing that through can avoid the recalculation.
 // FloatboxSpinner: handles incrementing/decrementing values
 // Hyperlabel: handles chasing web links
-// Threading: WT
 oAPI bool oWinControlDefaultOnNotify(HWND _hWnd, const NMHDR& _NotifyMessageHeader, LRESULT* _plResult = nullptr, oGUI_CONTROL_TYPE _Type = oGUI_CONTROL_UNKNOWN);
 
 // Converts a Windows control message to an action. This calls 
@@ -663,23 +573,22 @@ oAPI bool oWinControlToAction(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lP
 // Returns true if the specified _hControl is a valid ready-to-use window. False
 // applies to either nullptr or a window that has been destroyed.
 // Valid for: All
-// Threading: IA
 inline bool oWinControlExists(HWND _hControl) { return oWinExists(_hControl); }
 
 // Returns true if the specified control can receive events
 // Valid for: All
-// Threading: IA
 inline bool oWinControlIsEnabled(HWND _hControl) { return oWinIsEnabled(_hControl); }
 
 // Set whether or not the specified control can receive events
 // Valid for: All
-// Threading: WT
 inline void oWinControlEnable(HWND _hControl, bool _Enabled = true) { oWinEnable(_hControl, _Enabled); }
+
+// Returns true if the specified control is marked as visible
+oAPI bool oWinControlIsVisible(HWND _hControl);
 
 // Sets whether the control can be seen or not. If not visible, the control 
 // becomes non-interactive (tabstops, etc.)
-// Threading: WT
-inline bool oWinControlSetVisible(HWND _hControl, bool _Visible = true) { return oWinSetState(_hControl, _Visible ? oGUI_WINDOW_RESTORED : oGUI_WINDOW_HIDDEN, false); }
+oAPI bool oWinControlSetVisible(HWND _hControl, bool _Visible = true);
 
 // _____________________________________________________________________________
 // UI Control SubItems
@@ -688,57 +597,47 @@ inline bool oWinControlSetVisible(HWND _hControl, bool _Visible = true) { return
 // type of HWND doesn't have subitems, then the return value is zero with no
 // error reported.
 // Valid for: All
-// Threading: IA
 oAPI int oWinControlGetNumSubItems(HWND _hControl);
 
 // Removes all subitems from the specified _hWnd. If the type doesn't support
 // subitems, no error is reported.
 // Valid for: All
-// Threading: WT
 oAPI bool oWinControlClearSubItems(HWND _hControl);
 
 // Inserts before the specified subitem index. If _SubItemIndex is oInvalid (-1) 
 // then the item is appended. This returns the index of the item set, or 
 // oInvalid on failure.
 // Valid for: ComboBox, ComboTextbox, Tab
-// Threading: WT
 oAPI int oWinControlInsertSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex);
 
 // Deletes the nth subitem
 // Valid for: ComboBox, ComboTextbox, Tab
-// Threading: WT
 oAPI bool oWinControlDeleteSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex);
 
 // Adds all items in the specified delimited list in order.
 // Valid for: ComboBox, ComboTextbox, Tab
-// Threading: WT
 oAPI bool oWinControlAddSubItems(HWND _hControl, const char* _DelimitedString, char _Delimiter = '|');
 
 // Returns the index of the first subitem to match the specified text, or 
 // oInvalid if not found (or other error).
 // Valid For: ComboBox, ComboTextbox, Tab
-// Threading: IA
 oAPI int oWinControlFindSubItem(HWND _hControl, const char* _SubItemText);
 
 // Sets the specified index as the selected item/text for the combobox
 // Valid for: ComboBox, ComboTextbox, Tab
-// Threading: WT
 oAPI bool oWinControlSelectSubItem(HWND _hControl, int _Index);
 
 // Sets the specified text as the selected item/text for the combobox (if it 
 // exists)
 // Valid for: ComboBox, ComboTextbox, Tab
-// Threading: WT
 inline bool oWinControlSelectSubItem(HWND _hControl, const char* _SubItemText) { return oWinControlSelectSubItem(_hControl, oWinControlFindSubItem(_hControl, _SubItemText)); }
 
 // Selects n from the currently selected, properly wrapping around either end
 // Valid for: ComboBox, ComboTextBox, Tab
-// Threading: WT
 oAPI bool oWinControlSelectSubItemRelative(HWND _hControl, int _Offset);
 
 // Returns the index of the currently selected item, or -1 if none selected
 // Valid for: ComboBox, ComboTextBox, Tab
-// Threading: IA
 oAPI int oWinControlGetSelectedSubItem(HWND _hControl);
 
 // _____________________________________________________________________________
@@ -747,13 +646,11 @@ oAPI int oWinControlGetSelectedSubItem(HWND _hControl);
 // This will probably return oWINDOW_CONTROL_UNKNOWN for any control not created
 // with oWinControlCreate().
 // Valid for: All
-// Threading: IA
 oAPI oGUI_CONTROL_TYPE oWinControlGetType(HWND _hControl);
 
 // Returns the size returned if int2(oDEFAULT, oDEFAULT) were passed as the size
 // value to oWinControlCreate().
 // Valid for: All
-// Threading: no threading issues. (call from anywhere)
 oAPI int2 oWinControlGetInitialSize(oGUI_CONTROL_TYPE _Type, const int2& _Size);
 
 // Returns true if the specified _hWnd has the WS_TABSTOP style and is also 
@@ -762,33 +659,27 @@ oAPI int2 oWinControlGetInitialSize(oGUI_CONTROL_TYPE _Type, const int2& _Size);
 // the control changes. This should only be called from the same thread on which 
 // the window was created.
 // Valid for: All
-// Threading: IA
 oAPI bool oWinControlIsTabStop(HWND _hControl);
 
 // Returns the ID for a control given its HWND
 // Valid for: All
-// Threading: IA
 oAPI int oWinControlGetID(HWND _hControl);
 
 // Returns the HWND for a control given its parent and ID
 // Valid for: All
-// Threading: IA
 oAPI HWND oWinControlGetFromID(HWND _hParent, unsigned short _ID);
 
 // Returns the bounding rectangle of the specified _hControl in terms of its
 // parent's client area.
 // Valid for: All
-// Threading: IA
 oAPI RECT oWinControlGetRect(HWND _hControl);
 
 // Returns the currently set font.
 // Valid for: All
-// Threading: IA
 inline HFONT oWinControlGetFont(HWND _hControl) { return oWinGetFont(_hControl); }
 
 // If nullptr the DEFAULT_GUI_FONT is set
 // Valid for: All
-// Threading: WT
 inline bool oWinControlSetFont(HWND _hControl, HFONT _hFont = nullptr) { return oWinSetFont(_hControl, _hFont); }
 
 // Either sets the text for simple controls, or the nth text item in list-like
@@ -797,11 +688,9 @@ inline bool oWinControlSetFont(HWND _hControl, HFONT _hFont = nullptr) { return 
 // control is set. If the control doesn't have the concept of main text, then 
 // this will fail.
 // Valid for: All
-// Threading:: WT
 inline bool oWinControlSetText(HWND _hControl, const char* _Text, int _SubItemIndex = oInvalid) { return oWinSetText(_hControl, _Text, _SubItemIndex); }
 
 // Returns _StrDestination on success, otherwise nullptr.
-// Threading: IA
 inline char* oWinControlGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hControl, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _SizeofStrDestination, _hControl, _SubItemIndex); }
 template<size_t size> char* oWinControlGetText(char (&_StrDestination)[size], HWND _hControl, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _hControl, _SubItemIndex); }
 template<size_t capacity> char* oWinControlGetText(oStd::fixed_string<char, capacity>& _StrDestination, HWND _hControl, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _hControl, _SubItemIndex); }
@@ -818,7 +707,6 @@ template<size_t capacity> char* oWinControlGetSelectedText(oStd::fixed_string<ch
 // specified range.
 // Valid for: ComboTextBox, TextBox, FloatBox, FloatBoxSpinner, LabelSelectable,
 //            SliderSelectable
-// Threading: WT
 oAPI bool oWinControlSelect(HWND _hControl, int _Start, int _Length);
 
 // Sets/Gets a textbox-like object by value. For verified input boxes like 
@@ -827,24 +715,20 @@ oAPI bool oWinControlSelect(HWND _hControl, int _Start, int _Length);
 // checking. Using oWinSetText on these without the first-pass error checking
 // would quietly noop.
 // Valid for: All the same as oWinSetText
-// Threading: WT
 oAPI bool oWinControlSetValue(HWND _hControl, float _Value);
 
 // This interprets whatever text is specified as a float (non-scientific form).
 // If the string could not be interpreted as a float then this returns a NaN.
 // Use isnan() from oMath.h to test.
 // Valid for: All
-// Threading: IA
 oAPI float oWinControlGetFloat(HWND _hControl);
 
 // Associates the specified _hIcon with the specified _hControl
 // Valid for: Icon
-// Threading: WT
 oAPI bool oWinControlSetIcon(HWND _hControl, HICON _hIcon, int _SubItemIndex = oInvalid);
 
 // Get's the icon associated with the specified _hControl
 // Valid for: Icon
-// Threading: IA
 oAPI HICON oWinControlGetIcon(HWND _hControl, int _SubItemIndex = oInvalid);
 
 // Returns true if the specified _hControl's checked state is true. This returns 
@@ -852,13 +736,11 @@ oAPI HICON oWinControlGetIcon(HWND _hControl, int _SubItemIndex = oInvalid);
 // type that can be checked. If legitimately not checked, oErrorGetLast will 
 // return 0.
 // Valid for: CheckBox, RadioButton
-// Threading: IA
 oAPI bool oWinControlIsChecked(HWND _hControl);
 
 // Sets the specified _hControl as checked or not. If not a valid type, this 
 // will return false.
 // Valid for: CheckBox, RadioButton
-// Threading: WT
 oAPI bool oWinControlSetChecked(HWND _hControl, bool _Checked = true);
 
 // Sets the specified _hControl's min and max range. If not a valid type, this 
@@ -867,27 +749,23 @@ oAPI bool oWinControlSetChecked(HWND _hControl, bool _Checked = true);
 // progress bar that indicates something is happening, but it is not known how 
 // much of that something is complete.
 // Valid for: Slider, SliderSelectable, ProgressBar
-// Threading: WT
 oAPI bool oWinControlSetRange(HWND _hControl, int _Min, int _Max);
 
 // Gets the specified _hControl's min and max range. If not a valid type, this 
 // will return false.
 // Valid for: Slider, SliderSelectable, ProgressBar
-// Threading: WT
 oAPI bool oWinControlGetRange(HWND _hControl, int* _pMin, int* _pMax);
 
 // Sets the specified _hControl's position within its min and max range. If 
 // is outside the range, then it is clamped. If the _hControl is not a valid 
 // type, this will return false.
 // Valid for: Slider, SliderSelectable, ProgressBar
-// Threading: WT
 oAPI bool oWinControlSetRangePosition(HWND _hControl, int _Position, bool _bNotify = true);
 
 // Gets the specified _hControl's position within its min and max range. If 
 // is outside the range, then it is clamped. If the _hControl is not a valid 
 // type, this will return false.
 // Valid for: Slider, SliderSelectable, ProgressBar
-// Threading: WT
 oAPI int oWinControlGetRangePosition(HWND _hControl);
 
 // Sets a tick at the specified point on a trackbar
@@ -900,7 +778,6 @@ oAPI bool oWinControlClearTicks(HWND _hControl);
 
 // Sets the control to be in a state indicative to the user as in error.
 // Valid for: ProgressBar
-// Threading: WT
 oAPI bool oWinControlSetErrorState(HWND _hControl, bool _InErrorState = true);
 
 // Returns true if the control is currently indicating an error state to the 
@@ -908,13 +785,11 @@ oAPI bool oWinControlSetErrorState(HWND _hControl, bool _InErrorState = true);
 // to 0 to differentiate between a valid false and a false because an improper 
 // type was specified.
 // Valid for: ProgressBar
-// Threading: WT
 oAPI bool oWinControlGetErrorState(HWND _hControl);
 
 // Utility code that will readjust a range position that is outside the 
 // control's selected region.
 // Valid for: SliderSelectable
-// Threading: WT
 oAPI bool oWinControlClampPositionToSelected(HWND _hControl);
 
 // _____________________________________________________________________________
@@ -930,16 +805,11 @@ oAPI bool oWinControlClampPositionToSelected(HWND _hControl);
 
 #define oDEFINE_DLGPROC(_ClassName, _Name) \
 	INT_PTR CALLBACK _ClassName::_Name(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam) \
-{	_ClassName* pThis = oWinGetThis<_ClassName>(_hWnd, _uMsg, _wParam, _lParam); \
-	return pThis ? pThis->WndProc(_hWnd, _uMsg, _wParam, _lParam) : DefWindowProc(_hWnd, _uMsg, _wParam, _lParam); \
-}
-
-#define oDEFINE_DLGPROC_DEBUG(_ClassName, _Name) \
-	INT_PTR CALLBACK _ClassName::_Name(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam) \
-{	char WM[1024]; \
-	oTRACE("%s", oWinParseWMMessage(WM, _hWnd, _uMsg, _wParam, _lParam)); \
-	_ClassName* pThis = oWinGetThis<_ClassName>(_hWnd, _uMsg, _wParam, _lParam); \
-	return pThis ? pThis->WndProc(_hWnd, _uMsg, _wParam, _lParam) : DefWindowProc(_hWnd, _uMsg, _wParam, _lParam); \
-}
+	{ _uMsg = oWinTranslateMessage(_uMsg); \
+		if (oWinWindowProc(_hWnd, _uMsg, _wParam, _lParam) >= 0) return 0; \
+		_ClassName* pThis = oWinGetThis<_ClassName>(_hWnd); \
+		if (!pThis) return DefWindowProc(_hWnd, _uMsg, _wParam, _lParam); \
+		return pThis->WndProc(_hWnd, _uMsg, _wParam, _lParam); \
+	}
 
 #endif

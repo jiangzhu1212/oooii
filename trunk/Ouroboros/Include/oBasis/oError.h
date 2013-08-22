@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -85,6 +84,9 @@ inline void oThrowLastError() { throw std::system_error(std::make_error_code((st
 // For functions that follow the pattern of returning true for success and false
 // for failure while using oErrorSetLast, use this as a wrapper when the 
 // function should never fail in a non-development situation.
+
+#define oVERIFY_R(_BoolResultFunction) do { if (!(_BoolResultFunction)) { return false; } } while (false)
+
 #if oENABLE_ASSERTS == 1
 	#define oVERIFY(_BoolResultFunction) oASSERT(_BoolResultFunction, "%s: %s", oErrorAsString(oErrorGetLast()), oErrorGetLastString())
 #else

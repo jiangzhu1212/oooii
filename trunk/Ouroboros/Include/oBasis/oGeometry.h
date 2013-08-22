@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -249,18 +248,18 @@ interface oGeometryFactory : oInterface
 		// dimensions of a texture/video)
 		int2 SourceSize;
 
-		// Texel space of the source (texture/video). The actual texture in memory
+		// Image space of the source (texture/video). The actual texture in memory
 		// may just be a fraction of the total space in which pSourceRects map.
 		// Because of complex decoding requirements and/or power-of-two textures
-		// the texel space of the source may extend past the SourceSize. Also if 
-		// the total texel space used by pSourceRects doesn't start at (0,0) or
+		// the image space of the source may extend past the SourceSize. Also if 
+		// the total image space used by pSourceRects doesn't start at (0,0) or
 		// doesn't reach the full SourceSize, the actual source could be allocated
 		// only for the used region, of course also taking all alignments and 
 		// complex decoding requirements into account.
-		// So we need to adjust pSourceRects by SourceTexelSpace.GetMin() and then
-		// map UVs appropriately by using SourceTexelSpace.GetDimensions(), which 
+		// So we need to adjust pSourceRects by SourceImageSpace.GetMin() and then
+		// map UVs appropriately by using SourceImageSpace.GetDimensions(), which 
 		// represents the actual range [0,1] in texture coordinates.
-		oRECT SourceTexelSpace;
+		oRECT SourceImageSpace;
 
 		// Dimensions of total space in which pDestinationRects map (usually the 
 		// size of the client area of a window or the total screen dimensions).

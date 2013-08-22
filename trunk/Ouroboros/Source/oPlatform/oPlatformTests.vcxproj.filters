@@ -7,21 +7,6 @@
     <Filter Include="Source">
       <UniqueIdentifier>{58b29a12-fca7-4cc5-a5df-29a5b5bd119a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Shaders">
-      <UniqueIdentifier>{ac985dae-6f84-4a3c-8575-ece8a6cab4e7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Shaders\Additional Dependencies">
-      <UniqueIdentifier>{60eee59b-b3f9-4a16-87d3-93af109d2887}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Shaders\Additional Dependencies\oHLSL">
-      <UniqueIdentifier>{a945327a-c987-4310-bb28-df6e75c943f0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Shaders\Additional Dependencies\oCompute">
-      <UniqueIdentifier>{4892c40b-22fe-4fc0-8eb9-9c79274b7b56}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Shaders\Additional Dependencies\oGfx">
-      <UniqueIdentifier>{856a12ff-ccb4-4b48-9ea3-4403cba84d7a}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -87,9 +72,6 @@
     <ClCompile Include="Tests\TESTDispatchQueueConcurrentWTP.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTPCIEBandwidth.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTDispatchQueueConcurrent.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -110,103 +92,5 @@
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxMosaic.h">
-      <Filter>Source\Shaders\Additional Dependencies\oGfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxPipelines.h">
-      <Filter>Source\Shaders\Additional Dependencies\oGfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxVertexElements.h">
-      <Filter>Source\Shaders\Additional Dependencies\oGfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxViewConstants.h">
-      <Filter>Source\Shaders\Additional Dependencies\oGfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxDrawConstants.h">
-      <Filter>Source\Shaders\Additional Dependencies\oGfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxHLSL.h">
-      <Filter>Source\Shaders\Additional Dependencies\oGfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxLightConstants.h">
-      <Filter>Source\Shaders\Additional Dependencies\oGfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxMaterialConstants.h">
-      <Filter>Source\Shaders\Additional Dependencies\oGfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeFilter.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeGBuffer.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeMorton.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputePhong.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeProcedural.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeRaycast.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeSimplex.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeUtil.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oQuaternion.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeColor.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeConstants.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLMacros.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLMath.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLStructs.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLSwizzlesOff.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLSwizzlesOn.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLTypes.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLTypesInternal.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLAtomics.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLBit.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\all.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\all.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <FXC Include="Tests\oHLSLPCIEBandwidthPS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Tests\oHLSLPCIEBandwidthVS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
   </ItemGroup>
 </Project>

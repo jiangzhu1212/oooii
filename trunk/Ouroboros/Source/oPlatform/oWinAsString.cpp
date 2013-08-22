@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -162,6 +161,7 @@ const char* oWinAsStringWM(int _uMsg)
 		case WM_HOTKEY: return "WM_HOTKEY";
 		case WM_ICONERASEBKGND: return "WM_ICONERASEBKGND";
 		case WM_INITMENUPOPUP: return "WM_INITMENUPOPUP";
+		case WM_INPUT: return "WM_INPUT";
 		case WM_INPUTLANGCHANGE: return "WM_INPUTLANGCHANGE";
 		case WM_INPUTLANGCHANGEREQUEST: return "WM_INPUTLANGCHANGEREQUEST";
 		case WM_KEYDOWN: return "WM_KEYDOWN";
@@ -244,20 +244,11 @@ const char* oWinAsStringWM(int _uMsg)
 		case 0x93: return "Theme Service internal message 0x93";
 
 		// Ouroboros-custom messages
-		case oWM_MAINLOOP: return "oWM_MAINLOOP";
 		case oWM_DISPATCH: return "oWM_DISPATCH";
-		case oWM_ACTION_HOOK: return "oWM_ACTION_HOOK";
-		case oWM_ACTION_UNHOOK: return "oWM_ACTION_UNHOOK";
-		case oWM_ACTION_TRIGGER: return "oWM_ACTION_TRIGGER";
-		case oWM_EVENT_HOOK: return "oWM_EVENT_HOOK";
-		case oWM_EVENT_UNHOOK: return "oWM_EVENT_UNHOOK";
-		case oWM_SETHOTKEYS: return "oWM_SETHOTKEYS";
-		case oWM_GETHOTKEYS: return "oWM_GETHOTKEYS";
-		case oWM_STATUS_SETPARTS: return "oWM_STATUS_SETPARTS";
-		case oWM_STATUS_SETTEXT: return "oWM_STATUS_SETTEXT";
-		case oWM_STATUS_GETTEXT: return "oWM_STATUS_GETTEXT";
-		case oWM_STATUS_GETTEXTLENGTH: return "oWM_STATUS_GETTEXTLENGTH";
+		case oWM_DESTROY: return "oWM_DESTROY";
 		case oWM_SKELETON: return "oWM_SKELETON";
+		case oWM_USER_CAPTURED: return "oWM_USER_CAPTURED";
+		case oWM_USER_LOST: return "oWM_USER_LOST";
 		case oWM_INPUT_DEVICE_CHANGE: return "oWM_INPUT_DEVICE_CHANGE";
 
 		default: break;
@@ -648,6 +639,41 @@ char* oWinParseSWPFlags(char* _StrDestination, size_t _SizeofStrDestination, UIN
 	return oStd::strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_SWPFlags & 0x07ff, "0", oWinAsStringSWP);
 }
 
+static char* oWinPrintStyleChange(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, const char* _MsgName, WPARAM _wParam, LPARAM _lParam)
+{
+	char tmp[1024];
+	char tmp2[1024];
+	const char* StyleName = "GWL_STYLE";
+	if (_wParam == GWL_EXSTYLE)
+	{
+		oWinParseStyleExFlags(tmp, ((STYLESTRUCT*)_lParam)->styleOld);
+		oWinParseStyleExFlags(tmp2, ((STYLESTRUCT*)_lParam)->styleNew);
+		StyleName = "GWL_EXSTYLE";
+	}
+	else 
+	{
+		oWinParseStyleFlags(tmp, ((STYLESTRUCT*)_lParam)->styleOld);
+		oWinParseStyleFlags(tmp2, ((STYLESTRUCT*)_lParam)->styleNew);
+	}
+	oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x %s %s %s -> %s", _hWnd, _MsgName, StyleName, tmp, tmp2);
+	return _StrDestination;
+}
+
+static const char* oWinAsStringWMSW(LPARAM _lParam)
+{
+	switch (_lParam)
+	{
+		case 0: return "(From ShowWindow call)";
+		case SW_OTHERUNZOOM: "SW_OTHERUNZOOM";
+		case SW_OTHERZOOM: "SW_OTHERZOOM";
+		case SW_PARENTCLOSING: "SW_PARENTCLOSING";
+		case SW_PARENTOPENING: "SW_PARENTOPENING";
+		default: break;
+	}
+	return "unrecognized WM_SHOWWINDOW LPARAM value";
+}
+
+
 char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oWINKEY_CONTROL_STATE* _pState, HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
 {
 	// http://www.autoitscript.com/autoit3/docs/appendix/WinMsgCodes.htm
@@ -662,8 +688,8 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 		case WM_SETTEXT: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SETTEXT: lParam=%s", _hWnd, _lParam); break;
 		case WM_WINDOWPOSCHANGING: { char tmp[1024]; WINDOWPOS& wp = *(WINDOWPOS*)_lParam; oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_WINDOWPOSCHANGING hwndInsertAfter=%x xy=%d,%d wh=%dx%d flags=%s", _hWnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, oWinParseSWPFlags(tmp, wp.flags)); break; }
 		case WM_WINDOWPOSCHANGED: { char tmp[1024]; WINDOWPOS& wp = *(WINDOWPOS*)_lParam; oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_WINDOWPOSCHANGED hwndInsertAfter=%x xy=%d,%d wh=%dx%d flags=%s", _hWnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, oWinParseSWPFlags(tmp, wp.flags)); break; }
-		case WM_STYLECHANGING: { char tmp[1024]; char tmp2[1024]; oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_STYLECHANGING %s %s -> %s", _hWnd, _wParam == GWL_EXSTYLE ? "GWL_EXSTYLE" : "GWL_STYLE", oWinParseSWPFlags(tmp, ((STYLESTRUCT*)_lParam)->styleOld), oWinParseSWPFlags(tmp2, ((STYLESTRUCT*)_lParam)->styleNew)); break; }
-		case WM_STYLECHANGED: { char tmp[1024]; char tmp2[1024]; oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_STYLECHANGED %s", _hWnd, _wParam == GWL_EXSTYLE ? "GWL_EXSTYLE" : "GWL_STYLE", oWinParseSWPFlags(tmp, ((STYLESTRUCT*)_lParam)->styleOld), oWinParseSWPFlags(tmp2, ((STYLESTRUCT*)_lParam)->styleNew)); break; }
+		case WM_STYLECHANGING: { oWinPrintStyleChange(_StrDestination, _SizeofStrDestination, _hWnd, "WM_STYLECHANGING", _wParam, _lParam); break; }
+		case WM_STYLECHANGED: { oWinPrintStyleChange(_StrDestination, _SizeofStrDestination, _hWnd, "WM_STYLECHANGED", _wParam, _lParam); break; }
 		case WM_DISPLAYCHANGE: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DISPLAYCHANGE %dx%dx%d", _hWnd, static_cast<int>(GET_X_LPARAM(_lParam)), static_cast<int>(GET_Y_LPARAM(_lParam)), _wParam); break;
 		case WM_DWMCOLORIZATIONCOLORCHANGED: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DWMCOLORIZATIONCOLORCHANGED", _hWnd); break;
 		case WM_DWMCOMPOSITIONCHANGED: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DWMCOMPOSITIONCHANGED", _hWnd); break;
@@ -671,7 +697,7 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 		case WM_DWMWINDOWMAXIMIZEDCHANGE: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DWMWINDOWMAXIMIZEDCHANGE", _hWnd); break;
 		case WM_MOVE: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MOVE %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
 		case WM_SETCURSOR: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SETCURSOR %s hit=%s, id=%s", _hWnd, (HWND)_wParam == _hWnd ? "In Window" : "Out of Window", oWinAsStringHT(GET_X_LPARAM(_lParam)), oWinAsStringWM(GET_Y_LPARAM(_lParam))); break;
-		case WM_SHOWWINDOW: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SHOWWINDOW: wParam=%s lParam=%s", _hWnd, _wParam ? "shown" : "hidden", oWinAsStringSW((UINT)_lParam));  break;
+		case WM_SHOWWINDOW: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SHOWWINDOW: wParam=%s lParam=%s", _hWnd, _wParam ? "shown" : "hidden", oWinAsStringWMSW(_lParam));  break;
 		case WM_SIZE: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SIZE %dx%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
 		case WM_SYSCOMMAND: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSCOMMAND: wParam=%s screenpos=%d,%d", _hWnd, oWinAsStringSC((UINT)(_wParam&0xfff0)), GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
 		case WM_SYSKEYDOWN: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSKEYDOWN: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
@@ -689,6 +715,7 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 		case WM_XBUTTONUP: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_XBUTTONUP(%d) %d,%d", _hWnd, GET_XBUTTON_WPARAM(_wParam), GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
 		case WM_MOUSEWHEEL: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MOUSEWHEEL %d", _hWnd, GET_WHEEL_DELTA_WPARAM(_wParam)); break;
 		case WM_MOUSEHWHEEL: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MOUSEHWHEEL %d", _hWnd, GET_WHEEL_DELTA_WPARAM(_wParam)); break;
+		case WM_INPUT: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_INPUT %s", _hWnd, _wParam == RIM_INPUT ? "RIM_INPUT" : "RIM_INPUTSINK"); break;
 		case WM_IME_SETCONTEXT: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_IME_SETCONTEXT window %sactive... display flags 0x%x", _hWnd, _wParam ? "" : "in", _lParam); break;
 		case WM_IME_NOTIFY: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_IME_NOTIFY wParam == 0x%x lParam = 0x%x", _hWnd, _wParam, _lParam); break;
 		case WM_CTLCOLORBTN: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORBTN HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;

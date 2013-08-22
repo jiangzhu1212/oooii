@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,26 +26,26 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
-struct GPU_Texture1DMip : public oGPUTextureTest
-{
-	virtual enum oGPU_TEST_PIPELINE GetPipeline() override
-	{
-		return oGPU_TEST_TEXTURE_1D;
-	}
+static const bool kIsDevMode = false;
 
-	virtual bool CreateTexture() override
+struct GPU_Texture1DMip_App : public oGPUTextureTestApp
+{
+	GPU_Texture1DMip_App() : oGPUTextureTestApp("GPU_Texture1DMip", kIsDevMode) {}
+
+	oGPU_TEST_PIPELINE GetPipeline() override { return oGPU_TEST_TEXTURE_1D; }
+	bool CreateTexture() override
 	{
 		oImage::DESC imageDesc;
 		imageDesc.Dimensions = int2(512, 1);
 		imageDesc.Format = oImage::BGRA32;
 		imageDesc.RowPitch = oImageCalcRowPitch(imageDesc.Format, imageDesc.Dimensions.x);
 		oRef<oImage> image;
-		oImageCreate("GPU_Texture1D", imageDesc, &image);
+		oImageCreate("GPU_Texture1DMip", imageDesc, &image);
 
 		oRef<oBuffer> buffer;
 		int surfaceBufferSize = oImageCalcSize(imageDesc.Format, imageDesc.Dimensions);
 		void *pSurfaceBuffer = oBuffer::New(surfaceBufferSize);
-		oBufferCreate("GPU_Texture1D buffer", pSurfaceBuffer, surfaceBufferSize, oBuffer::Delete, &buffer);
+		oBufferCreate("GPU_Texture1DMip buffer", pSurfaceBuffer, surfaceBufferSize, oBuffer::Delete, &buffer);
 
 		static const oStd::color sConsoleColors[] = { oStd::Black, oStd::Navy, oStd::Green, oStd::Teal, oStd::Maroon, oStd::Purple, oStd::Olive, oStd::Silver, oStd::Gray, oStd::Blue, oStd::Lime, oStd::Aqua, oStd::Red, oStd::Fuchsia, oStd::Yellow, oStd::White };
 
@@ -65,4 +64,4 @@ struct GPU_Texture1DMip : public oGPUTextureTest
 
 };
 
-oTEST_REGISTER(GPU_Texture1DMip);
+oDEFINE_GPU_TEST(GPU_Texture1DMip);

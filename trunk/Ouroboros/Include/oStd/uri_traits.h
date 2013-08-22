@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -74,7 +73,7 @@ template<> struct uri_traits<char, unsigned long long, default_posix_path_traits
 	static const char_type* fragment_str() { return "#"; }
 	static const char_type* file_scheme_prefix_str() { return "file://"; }
 
-	static bool is_file_scheme(const char_type* _URI) { return !!_memicmp("file", _URI, 4); }
+	static bool is_file_scheme(const char_type* _URI) { return 0 == _memicmp("file", _URI, 4); }
 	static int compare(const char_type* _URIStringA, const char_type* _URIStringB) { return strcmp(_URIStringA, _URIStringB); }
 };
 
@@ -95,7 +94,7 @@ template<> struct uri_traits<wchar_t, unsigned long long, default_posix_path_tra
 	static const char_type* fragment_str() { return L"#"; }
 	static const char_type* file_scheme_prefix_str() { return L"file://"; }
 
-	static bool is_file_scheme(const char_type* _URI) { return !!_memicmp(L"file", _URI, 8); }
+	static bool is_file_scheme(const char_type* _URI) { return 0 == _memicmp(L"file", _URI, 8); }
 	static int compare(const char_type* _URIStringA, const char_type* _URIStringB) { return wcscmp(_URIStringA, _URIStringB); }
 };
 

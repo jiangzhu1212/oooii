@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -39,10 +38,12 @@ class oWindowUITest
 public:
 	oWindowUITest(bool* _pSuccess);
 
-	threadsafe oWindow* GetWindow() threadsafe { return Window; }
+	oWindow* GetWindow() { return Window; }
+	bool GetRunning() const { return Running; }
 
 private:
-	oRef<threadsafe oWindow> Window;
+	oRef<oWindow> Window;
+	bool Running;
 
 	enum
 	{
@@ -57,6 +58,7 @@ private:
 		MENU_EDIT_FONT,
 		MENU_VIEW_SOLID,
 		MENU_VIEW_WIREFRAME,
+		MENU_VIEW_SHOW_STATUSBAR,
 		MENU_HELP_ABOUT,
 	};
 
@@ -100,36 +102,26 @@ private:
 	HWND Controls[NUM_CONTROLS];
 	oGUI_BORDER_STYLE BorderStyle;
 
-	bool EventHook(const oGUI_EVENT_DESC& _Event);
+	void EventHook(const oGUI_EVENT_DESC& _Event);
 	void ActionHook(const oGUI_ACTION_DESC& _Action);
 };
 
-bool oWindowUITest::EventHook(const oGUI_EVENT_DESC& _Event)
+void oWindowUITest::EventHook(const oGUI_EVENT_DESC& _Event)
 {
-	switch (_Event.Event)
+	switch (_Event.Type)
 	{
 		case oGUI_SIZED:
-			oTRACE("NewClientSize = %dx%d%s", _Event.ClientSize.x, _Event.ClientSize.y, _Event.State == oGUI_WINDOW_MINIMIZED ? " (minimized)" : "");
+			oTRACE("NewClientSize = %dx%d%s", _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y, _Event.AsShape().Shape.State == oGUI_WINDOW_MINIMIZED ? " (minimized)" : "");
 			break;
 		case oGUI_CREATING:
 		{
-			const oGUI_CREATING_EVENT_DESC& e = (const oGUI_CREATING_EVENT_DESC&)_Event;
-			OnCreate((HWND)e.hWindow, (oGUI_MENU)e.hMenu);
+			OnCreate((HWND)_Event.AsCreate().hWindow, _Event.AsCreate().hMenu);
 			break;
 		}
 
-		case oGUI_MAINLOOP:
-		case oGUI_DISPLAY_CHANGED:
-		case oGUI_MOVING:
-		case oGUI_MOVED:
-		case oGUI_SIZING:
-		case oGUI_CLOSING:
-		case oGUI_CLOSED:
 		default:
 			break;
 	}
-
-	return true;
 }
 
 void oWindowUITest::ActionHook(const oGUI_ACTION_DESC& _Action)
@@ -184,6 +176,9 @@ void oWindowUITest::InitMenu(oGUI_MENU _hWindowMenu)
 		oGUIMenuAppendItem(hViewMenu, MENU_VIEW_SOLID, "&Solid\tCtrl+S");
 		oGUIMenuCheck(hViewMenu, MENU_VIEW_SOLID, true);
 		oGUIMenuAppendItem(hViewMenu, MENU_VIEW_WIREFRAME, "&Wireframe\tCtrl+W");
+		oGUIMenuAppendSeparator(hViewMenu);
+		oGUIMenuAppendItem(hViewMenu, MENU_VIEW_SHOW_STATUSBAR, "&Show Statusbar");
+		oGUIMenuCheck(hViewMenu, MENU_VIEW_SHOW_STATUSBAR, true);
 	oGUIMenuAppendSubmenu(_hWindowMenu, hHelpMenu, "&Help");
 		oGUIMenuAppendItem(hHelpMenu, MENU_HELP_ABOUT, "&About...");
 }
@@ -237,35 +232,34 @@ void oWindowUITest::InitVCRControls(HWND _hParent, const int2& _Position)
 
 oWindowUITest::oWindowUITest(bool* _pSuccess)
 	: BorderStyle(oGUI_BORDER_SUNKEN)
+	, Running(true)
 {
 	*_pSuccess = false;
 
 	oWINDOW_INIT init;
-	init.WindowTitle = "TESTWindowControls";
+	init.Title = "TESTWindowControls";
 	init.EventHook = oBIND(&oWindowUITest::EventHook, this, oBIND1);
 	init.ActionHook = oBIND(&oWindowUITest::ActionHook, this, oBIND1);
-	init.WinDesc.Style = oGUI_WINDOW_SIZEABLE;
-	init.WinDesc.ClientSize = int2(640,480);
-	init.WinDesc.ShowMenu = true;
-	init.WinDesc.ShowStatusBar = true;
-	init.WinDesc.EnableMainLoopEvent = false;
-	init.WinDesc.StatusWidths[0] = 100;
+	init.Shape.State = oGUI_WINDOW_RESTORED;
+	init.Shape.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
+	init.Shape.ClientSize = int2(640,480);
 
 	if (!oWindowCreate(init , &Window))
 		return;
 
+	int Widths[2] = { 100, oInvalid };
+	Window->SetNumStatusSections(Widths);
+
 	// Disable anti-aliasing since on Windows ClearType seems to be non-deterministic
 	Window->Dispatch([&]
 	{
-		oGUI_WINDOW hWnd = nullptr;
-		Window->QueryInterface(oGetGUID<oGUI_WINDOW>(), &hWnd);
-
+		HWND hWnd = (HWND)Window->GetNativeHandle();
 		oGUI_FONT_DESC fd;
-		HFONT hCurrent = oWinGetFont((HWND)hWnd);
+		HFONT hCurrent = oWinGetFont(hWnd);
 		oGDIGetFontDesc(hCurrent, &fd);
 		fd.AntiAliased = false;
 		HFONT hNew = oGDICreateFont(fd);
-		oWinSetFont((HWND)hWnd, hNew);
+		oWinSetFont(hWnd, hNew);
 	});
 
 	Window->SetStatusText(0, "OK");
@@ -422,7 +416,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			break;
 		}
 		case MENU_FILE_EXIT:
-			Window->Close();
+			Running = false;
 			break;
 		case MENU_EDIT_CUT:
 			break;
@@ -485,6 +479,15 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			oGUIMenuEnable(hFileMenu, MENU_FILE_EXIT, false);
 			Window->SetStatusText(1, "Wireframe");
 			break;
+		case MENU_VIEW_SHOW_STATUSBAR:
+		{
+			bool NewState = !oGUIMenuIsChecked(hViewMenu, MENU_VIEW_SHOW_STATUSBAR);
+			oGUIMenuCheck(hViewMenu, MENU_VIEW_SHOW_STATUSBAR, NewState);
+			oGUI_WINDOW_SHAPE_DESC s;
+			s.Style = NewState ? oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR : oGUI_WINDOW_SIZABLE_WITH_MENU;
+			Window->SetShape(s);
+			break;
+		}
 		case MENU_HELP_ABOUT:
 			break;
 		default:
@@ -515,11 +518,20 @@ struct PLATFORM_WindowControls : public oTest
 		oWindowUITest test(&success);
 		oTESTB0(success);
 
-		oSleep(1000); // give progress bar time to settle
+		double WaitForSettle = oTimer() + 1.0;
+		do
+		{
+			test.GetWindow()->FlushMessages();
+
+		} while (oTimer() < WaitForSettle);
+
 		oStd::future<oRef<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
 		
-		if (kInteractiveMode)
-			test.GetWindow()->WaitUntilClosed();
+		do
+		{
+			test.GetWindow()->FlushMessages();
+		
+		} while ((kInteractiveMode && test.GetRunning()) || !snapshot.is_ready());
 
 		oTESTFI(snapshot);
 		return SUCCESS;

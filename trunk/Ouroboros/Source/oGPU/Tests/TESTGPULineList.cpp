@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,6 +26,9 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
+static const int sSnapshotFrames[] = { 0 };
+static const bool kIsDevMode = false;
+
 struct oGPU_LINE_VERTEX
 {
 	float3 Position;
@@ -41,31 +43,39 @@ struct oGPU_LINE
 	oStd::color EndColor;
 };
 
-struct GPU_LineList : public oTest
+class GPU_LineList_App : public oGPUTestApp
 {
-	oRef<oGPUDevice> Device;
-	oRef<oGPUCommandList> CL;
-	oRef<oGPUPipeline> Pipeline;
-	oRef<oGPUBuffer> LineList;
-	bool Once;
+public:
+	GPU_LineList_App() : oGPUTestApp("GPU_LineList", kIsDevMode, sSnapshotFrames) {}
 
-	void Render(oGPURenderTarget* _pPrimaryRenderTarget)
+	bool Initialize()
 	{
-		if (!Once)
-		{
-			oGPU_CLEAR_DESC CD;
-			CD.ClearColor[0] = oStd::AlmostBlack;
-			_pPrimaryRenderTarget->SetClearDesc(CD);
+		PrimaryRenderTarget->SetClearColor(oStd::AlmostBlack);
 
-			Once = true;
-		}
+		oGPUPipeline::DESC pld;
+		if (!oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH_COLOR, &pld))
+			return false;
 
-		if (!Device->BeginFrame())
-			return;
-		CL->Begin();
+		if (!Device->CreatePipeline(pld.DebugName, pld, &Pipeline))
+			return false;
+
+		oGPU_BUFFER_DESC bd;
+		bd.Type = oGPU_BUFFER_VERTEX;
+		bd.StructByteSize = sizeof(oGPU_LINE_VERTEX);
+		bd.ArraySize = 6;
+
+		if (!Device->CreateBuffer("LineList", bd, &LineList))
+			return false;
+
+		return true;
+	}
+
+	bool Render()
+	{
+		CommandList->Begin();
 
 		oSURFACE_MAPPED_SUBRESOURCE msr;
-		CL->Reserve(LineList, 0, &msr);
+		CommandList->Reserve(LineList, 0, &msr);
 		oGPU_LINE* pLines = (oGPU_LINE*)msr.pData;
 
 		static const float3 TrianglePoints[] = { float3(-0.75f, -0.667f, 0.0f), float3(0.0f, 0.667f, 0.0f), float3(0.75f, -0.667f, 0.0f) };
@@ -84,69 +94,21 @@ struct GPU_LineList : public oTest
 		pLines[2].Start = TrianglePoints[2];
 		pLines[2].End = TrianglePoints[0];
 
-		CL->Commit(LineList, 0, msr, oSURFACE_BOX(6));
+		CommandList->Commit(LineList, 0, msr, oSURFACE_BOX(6));
 
-		CL->Clear(_pPrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
-		CL->SetBlendState(oGPU_OPAQUE);
-		CL->SetDepthStencilState(oGPU_DEPTH_STENCIL_NONE);
-		CL->SetPipeline(Pipeline);
-		CL->SetRenderTarget(_pPrimaryRenderTarget);
-		CL->Draw(nullptr, 0, 1, &LineList, 0, 3);
-		CL->End();
-		Device->EndFrame();
+		CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
+		CommandList->SetBlendState(oGPU_OPAQUE);
+		CommandList->SetDepthStencilState(oGPU_DEPTH_STENCIL_NONE);
+		CommandList->SetPipeline(Pipeline);
+		CommandList->SetRenderTarget(PrimaryRenderTarget);
+		CommandList->Draw(nullptr, 0, 1, &LineList, 0, 3);
+		CommandList->End();
+		return true;
 	}
 
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
-	{
-		Once = false;
-
-		static const int sSnapshotFrames[] = { 0 };
-		static const bool kIsDevMode = false;
-		oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&GPU_LineList::Render, this, oBIND1), "GPU_LineList", sSnapshotFrames);
-
-		oStd::future<oRef<oImage>> Snapshots[oCOUNTOF(sSnapshotFrames)];
-		oRef<threadsafe oGPUWindow> Window;
-		oTESTB0(oGPUTestCreateWindow(Init, [&](threadsafe oGPUWindow* _pWindow)->bool
-		{
-			_pWindow->GetDevice(&Device);
-			oGPUCommandList::DESC cld;
-			cld.DrawOrder = 0;
-
-			if (!Device->CreateCommandList("CommandList", cld, &CL))
-				return false;
-
-			oGPUPipeline::DESC pld;
-			if (!oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH_COLOR, &pld))
-				return false;
-
-			if (!Device->CreatePipeline(pld.DebugName, pld, &Pipeline))
-				return false;
-
-			oGPU_BUFFER_DESC bd;
-			bd.Type = oGPU_BUFFER_VERTEX;
-			bd.StructByteSize = sizeof(oGPU_LINE_VERTEX);
-			bd.ArraySize = 6;
-
-			if (!Device->CreateBuffer("LineList", bd, &LineList))
-				return false;
-
-			return true;
-
-		}, Snapshots, &Window));
-
-		while (Window->IsOpen())
-		{
-			if (!kIsDevMode && oGPUTestSnapshotsAreReady(Snapshots))
-			{
-				Window->Close();
-				oTESTB0(oGPUTestSnapshots(this, Snapshots));
-			}
-
-			oSleep(16);
-		}
-
-		return SUCCESS;
-	}
+private:
+	oRef<oGPUPipeline> Pipeline;
+	oRef<oGPUBuffer> LineList;
 };
 
-oTEST_REGISTER(GPU_LineList);
+oDEFINE_GPU_TEST(GPU_LineList)

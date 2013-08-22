@@ -147,9 +147,6 @@
     <ClInclude Include="..\..\Include\oHLSL\oHLSLStructs.h">
       <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\tests\oGPUTestWindow.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oCompute\all.h">
       <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
     </ClInclude>

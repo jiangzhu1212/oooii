@@ -136,7 +136,6 @@
     <ClInclude Include="..\..\Include\oCompute\oComputeSimplex.h" />
     <ClInclude Include="..\..\Include\oCompute\oComputeUtil.h" />
     <ClInclude Include="..\..\Include\oCompute\oQuaternion.h" />
-    <ClInclude Include="..\..\Include\oGPU\tests\oGPUTestWindow.h" />
     <ClInclude Include="..\..\Include\oHLSL\all.h" />
     <ClInclude Include="..\..\Include\oHLSL\oHLSLAtomics.h" />
     <ClInclude Include="..\..\Include\oHLSL\oHLSLBit.h" />

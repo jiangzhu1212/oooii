@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -264,7 +263,7 @@ struct PLATFORM_oHTTPLarge : public oTest
 		if(testDesc.Exhaustive)
 		{
 			oTRACEA("This test does not play well with AVG. Be sure that is not running, or is temporarily disabled.");
-			TestBufferSize = oGB(2)-1; //can't go over 2GB.
+			TestBufferSize = oGB(2)-oKB(1); //can't go over 2GB.
 		}
 		else
 		{

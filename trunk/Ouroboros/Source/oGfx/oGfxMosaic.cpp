@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -33,7 +32,7 @@ struct oGfxMosaicImpl : oGfxMosaic
 
 	oGfxMosaicImpl(oGPUDevice* _pDevice, const oGPU_PIPELINE_DESC& _pPipelineDesc, bool* _pSuccess);
 
-	bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const oRECT* _AdditionalSourceTexelSpaces, const oRECT* const* _pAdditionalSourceRectArrays) override;
+	bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const oRECT* _AdditionalSourceImageSpaces, const oRECT* const* _pAdditionalSourceRectArrays) override;
 	void Draw(oGPUCommandList* _pCommandList, oGPURenderTarget* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const oGPUTexture* const* _ppTextures) override;
 
 	void SetBlendState(oGPU_BLEND_STATE _BlendState) override { BlendState = _BlendState; }
@@ -68,7 +67,7 @@ bool oGfxMosaicCreate(oGPUDevice* _pDevice, const oGPU_PIPELINE_DESC& _PipelineD
 	return success;
 }
 
-bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const oRECT* _AdditionalSourceTexelSpaces, const oRECT* const* _pAdditionalSourceRectArrays)
+bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const oRECT* _AdditionalSourceImageSpaces, const oRECT* const* _pAdditionalSourceRectArrays)
 {
 	oRef<oGeometryFactory> GeoFactory;
 	if (!oGeometryFactoryCreate(&GeoFactory))
@@ -132,7 +131,7 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 			// Rebuild extra UV sets
 			oGeometryFactory::MOSAIC_DESC mosaicDesc;
 			mosaicDesc = _Desc;
-			mosaicDesc.SourceTexelSpace = _AdditionalSourceTexelSpaces[i];
+			mosaicDesc.SourceImageSpace = _AdditionalSourceImageSpaces[i];
 			mosaicDesc.pSourceRects = _pAdditionalSourceRectArrays[i];
 
 			oGeometry::LAYOUT Layout;

@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -42,15 +41,19 @@ DWORD oWinKeyTranslate(DWORD _vkCode, oWINKEY_CONTROL_STATE* _pState)
 			} \
 		} while (false)
 
-	#define TEST(Key, KEY) TEST_DOWN_SIDE(L, Key, KEY); TEST_DOWN_SIDE(R, Key, KEY); TEST_UP_SIDE(L, Key, KEY); TEST_UP_SIDE(R, Key, KEY)
-	TEST(Control, CONTROL); TEST(Shift, SHIFT); TEST(Menu, MENU);
 
-	switch (_vkCode)
+	if (_pState)
 	{
-		case VK_CONTROL: return _pState->LastControl;
-		case VK_MENU: return _pState->LastMenu;
-		case VK_SHIFT: return _pState->LastShift;
-		default: break;
+		#define TEST(Key, KEY) TEST_DOWN_SIDE(L, Key, KEY); TEST_DOWN_SIDE(R, Key, KEY); TEST_UP_SIDE(L, Key, KEY); TEST_UP_SIDE(R, Key, KEY)
+		TEST(Control, CONTROL); TEST(Shift, SHIFT); TEST(Menu, MENU);
+
+		switch (_vkCode)
+		{
+			case VK_CONTROL: return _pState->LastControl;
+			case VK_MENU: return _pState->LastMenu;
+			case VK_SHIFT: return _pState->LastShift;
+			default: break;
+		}
 	}
 
 	return _vkCode;

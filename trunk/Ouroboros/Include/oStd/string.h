@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -52,12 +51,21 @@ template<size_t count> size_t wcsltombs(char* _StrDestination, const wchar_t* _S
 #include <cstdarg>
 #include <cstdio>
 
+namespace oStd {
+
+	inline int vsnprintf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args)
+	{
+		#pragma warning(disable:4996) // secure CRT warning
+		int l = ::vsnprintf(_StrDestination, _SizeofStrDestination, _Format, _Args);
+		#pragma warning(default:4996)
+		return l;
+	}
+}
+
 inline int snprintf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, ...)
 {
 	va_list args; va_start(args, _Format);
-	#pragma warning(disable:4996) // secure CRT warning
-	int l = vsnprintf(_StrDestination, _SizeofStrDestination, _Format, args);
-	#pragma warning(default:4996)
+	int l = oStd::vsnprintf(_StrDestination, _SizeofStrDestination, _Format, args);
 	va_end(args);
 	return l;
 }
@@ -65,9 +73,7 @@ inline int snprintf(char* _StrDestination, size_t _SizeofStrDestination, const c
 template<size_t size> int snprintf(char (&_StrDestination)[size], const char* _Format, ...)
 {
 	va_list args; va_start(args, _Format);
-	#pragma warning(disable:4996) // secure CRT warning
-	int l = vsnprintf(_StrDestination, size, _Format, args);
-	#pragma warning(default:4996)
+	int l = oStd::vsnprintf(_StrDestination, size, _Format, args);
 	va_end(args);
 	return l;
 }
@@ -111,11 +117,9 @@ template<typename T, size_t size> char* strbitmask(char (&_StrDestination)[size]
 inline int vsncatf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args)
 {
 	int len = static_cast<int>(strlen(_StrDestination ? _StrDestination : ""));
-	#pragma warning(disable:4996) // secure CRT warning
 	int result = vsnprintf(_StrDestination + len, _SizeofStrDestination - len, _Format, _Args);
 	if (result < -1 || static_cast<size_t>(result) > (_SizeofStrDestination - len))
 		result = vsnprintf(nullptr, 0, _Format, _Args);
-	#pragma warning(default:4996)
 	return len + result;
 }
 

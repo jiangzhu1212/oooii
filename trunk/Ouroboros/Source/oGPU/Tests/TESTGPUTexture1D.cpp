@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,14 +26,14 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
-struct GPU_Texture1D : public oGPUTextureTest
-{
-	virtual enum oGPU_TEST_PIPELINE GetPipeline() override
-	{
-		return oGPU_TEST_TEXTURE_1D;
-	}
+static const bool kIsDevMode = false;
 
-	virtual bool CreateTexture() override
+struct GPU_Texture1D_App : public oGPUTextureTestApp
+{
+	GPU_Texture1D_App() : oGPUTextureTestApp("GPU_Texture1D", kIsDevMode) {}
+
+	oGPU_TEST_PIPELINE GetPipeline() override { return oGPU_TEST_TEXTURE_1D; } 
+	bool CreateTexture() override
 	{
 		oImage::DESC imageDesc;
 		imageDesc.Dimensions = int2(512, 1);
@@ -52,18 +51,12 @@ struct GPU_Texture1D : public oGPUTextureTest
 
 		oStd::color* texture1Ddata = (oStd::color*)buffer->GetData();
 		for (int i=0; i<imageDesc.Dimensions.x; ++i)
-		{
 			texture1Ddata[i] = sConsoleColors[i % oCOUNTOF(sConsoleColors)];
-		}
 
 		image->CopyData(buffer->GetData(), imageDesc.RowPitch);
 
-		if (!oGPUCreateTexture(Device, &image, 1, oGPU_TEXTURE_1D_MAP, &Texture))
-			return false;
-
-		return true;
+		return oGPUCreateTexture(Device, &image, 1, oGPU_TEXTURE_1D_MAP, &Texture);
 	}
-
 };
 
-oTEST_REGISTER(GPU_Texture1D);
+oDEFINE_GPU_TEST(GPU_Texture1D)

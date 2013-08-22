@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -32,6 +31,7 @@
 #include <oBasis/oGPUConcepts.h>
 #include <oBasis/oBuffer.h>
 #include <oBasis/oRef.h> // for convenience type-casting
+#include <oPlatform/oWindow.h>
 
 // Main SW abstraction for a graphics processor
 interface oGPUDevice;
@@ -105,6 +105,16 @@ interface oGPURenderTarget : oGPUDeviceChild
 	// Modifies the values for clearing without modifying other topology
 	virtual void SetClearDesc(const oGPU_CLEAR_DESC& _ClearDesc) threadsafe = 0;
 
+	inline void SetClearColor(int _Index, oStd::color _Color) threadsafe
+	{
+		DESC d;
+		GetDesc(&d);
+		d.ClearDesc.ClearColor[_Index] = _Color;
+		SetClearDesc(d.ClearDesc);
+	}
+
+	inline void SetClearColor(oStd::color _Color) threadsafe { SetClearColor(0, _Color); }
+
 	// Resizes all buffers without changing formats or other topology
 	virtual void Resize(const int3& _NewDimensions) = 0;
 
@@ -115,6 +125,12 @@ interface oGPURenderTarget : oGPUDeviceChild
 	// there is no depth-stencil buffer or if the buffer is of a non-readable 
 	// format.
 	virtual void GetDepthTexture(oGPUTexture** _ppTexture) = 0;
+
+	// Creates an oImage of the contents of the render target. This should be 
+	// called at times when it is known the render target has been fully resolved,
+	// mostly outside of BeginFrame/EndFrame. If this is called on the primary
+	// render target, the back-buffer is captured.
+	virtual bool CreateSnapshot(int _MRTIndex, oImage** _ppSnapshot) = 0;
 };
 
 // {2401B122-EB19-4CEF-B3BE-9543C003B896}
@@ -379,6 +395,8 @@ interface oGPUDevice : oInterface
 	// (though timing and order differences are likely).
 	virtual void GetImmediateCommandList(oGPUCommandList** _ppCommandList) = 0;
 
+	virtual bool CreatePrimaryRenderTarget(oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, bool _EnableOSRendering, oGPURenderTarget** _ppPrimaryRenderTarget) = 0;
+
 	virtual bool CreateCommandList(const char* _Name, const oGPUCommandList::DESC& _Desc, oGPUCommandList** _ppCommandList) = 0;
 	virtual bool CreatePipeline(const char* _Name, const oGPUPipeline::DESC& _Desc, oGPUPipeline** _ppPipeline) = 0;
 	virtual bool CreateComputeShader(const char* _Name, const oGPUComputeShader::DESC& _Desc, oGPUComputeShader** _ppComputeShader) = 0;
@@ -399,6 +417,24 @@ interface oGPUDevice : oInterface
 
 	virtual bool BeginFrame() = 0;
 	virtual void EndFrame() = 0;
+
+	// After out of EndFrame, the device can provide a handle to OS CPU-based 
+	// rendering. All OS calls should occur in between BeginOSFrame and EndOSFrame
+	// and this should be called after EndFrame, but before Present to ensure no 
+	// tearing.
+	virtual oGUI_DRAW_CONTEXT BeginOSFrame() = 0;
+	virtual void EndOSFrame() = 0;
+
+	// This should only be called on same thread as the window passed to 
+	// CreatePrimaryRenderTarget. If a primary render target does not exist, this
+	// will noop, otherwise the entire client area of the associated window will
+	// receive the contents of the back buffer. Call this after EndFrame() to 
+	// ensure all commands have been flushed.
+
+	virtual bool IsFullscreenExclusive() const = 0;
+	virtual bool SetFullscreenExclusive(bool _Fullscreen) = 0;
+
+	virtual bool Present(int _SyncInterval) = 0;
 };
 
 oAPI bool oGPUDeviceCreate(const oGPU_DEVICE_INIT& _Init, oGPUDevice** _ppDevice);

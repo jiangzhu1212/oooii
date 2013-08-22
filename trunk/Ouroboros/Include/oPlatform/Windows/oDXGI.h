@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -47,40 +46,13 @@
 	// as it can not be released from DLLmain, so always create it.
 	bool oDXGICreateFactory(IDXGIFactory** _ppFactory);
 
-	bool oDXGICreateSwapChain(IUnknown* _pDevice, bool _Fullscreen, UINT _Width, UINT _Height, DXGI_FORMAT _Format, UINT RefreshRateN, UINT RefreshRateD, HWND _hWnd, bool _EnableGDICompatibility, IDXGISwapChain** _ppSwapChain);
+	bool oDXGICreateSwapChain(IUnknown* _pDevice, bool _Fullscreen, UINT _Width, UINT _Height, bool _AutochangeMonitorResolution, DXGI_FORMAT _Format, UINT RefreshRateN, UINT RefreshRateD, HWND _hWnd, bool _EnableGDICompatibility, IDXGISwapChain** _ppSwapChain);
 
 	// Calls ResizeBuffers with _NewSize, but all other parameters from GetDesc.
 	// Also this is designed to centralize error reporting, so prefer call this
 	// over the direct ResizeBuffers so that more error handling is included.
 	bool oDXGISwapChainResizeBuffers(IDXGISwapChain* _pSwapChain, const int2& _NewSize, HWND _hErrorMsgParent = nullptr);
 	
-	// This sets the fullscreen state and flushes the resulting messages. This
-	// must be called from the same thread that created the window and is 
-	// processing its messages. If not, it will return false and oErrorGetLast()
-	// will return EWRONGTHREAD. _RefreshRate will be expanded in a manner to
-	// take maximum advantage of HW acceleration (enable swap-not-blit). If 
-	// _RememberCurrentState is true, the current display settings will be 
-	// recorded if going to fullscreen, and restored if going to windowed mode.
-	// If false, nothing will be recorded on fullscreen, and the registry 
-	// settings will be used.
-
-	struct oDXGI_FULLSCREEN_STATE
-	{
-		oDXGI_FULLSCREEN_STATE()
-			: Size(oDEFAULT, oDEFAULT)
-			, RefreshRate(oDEFAULT)
-			, Fullscreen(false)
-			, RememberCurrentSettings(false)
-		{}
-
-		int2 Size;
-		int RefreshRate;
-		bool Fullscreen;
-		bool RememberCurrentSettings;
-	};
-
-	bool oDXGISetFullscreenState(IDXGISwapChain* _pSwapChain, const oDXGI_FULLSCREEN_STATE& _State);
-
 	// Locks and returns the HDC for the render target associated with the 
 	// specified swap chain. Don't render while this HDC is valid!
 	bool oDXGIGetDC(IDXGISwapChain* _pSwapChain, HDC* _phDC);

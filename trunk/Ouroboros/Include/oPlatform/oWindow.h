@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -24,149 +23,232 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 // An abstraction for an operating system's window concept. This is fit for 
-// containing child controls and doing other typical event-based Windowing. Do
-// not use this for GPU-accelerated operations, see the oGPUWindow derivative of 
-// this class for that type of functionality. Look to TESTWindowInWindow for an
-// example of how to embed a GPU-accelerated window in an oWindow.
+// containing child controls and doing other typical event-based Windowing. It 
+// can also be made a primary render target for a GPU device. See oGPU for more
+// details.
 #pragma once
 #ifndef oWindow_h
 #define oWindow_h
 
-#include <oConcurrency/oConcurrency.h>
 #include <oBasis/oGUI.h>
-#include <oBasis/oInterface.h>
-#include <oBasis/oRef.h>
+#include <oConcurrency/oConcurrency.h>
 #include <oStd/oStdFuture.h>
 
 interface oImage;
 
-// {0AA1837F-CAFD-427B-BF50-307D100974EE}
-oDEFINE_GUID_I(oWindow, 0xaa1837f, 0xcafd, 0x427b, 0xbf, 0x50, 0x30, 0x7d, 0x10, 0x9, 0x74, 0xee);
+// {C590552A-EDCC-434B-AF17-7871FC00B18D}
+oDEFINE_GUID_I(oWindow, 0xc590552a, 0xedcc, 0x434b, 0xaf, 0x17, 0x78, 0x71, 0xfc, 0x0, 0xb1, 0x8d);
 interface oWindow : oInterface
 {
-	// QueryInterface will return valid handles for the following types:
-	// oGUI_WINDOW, oGUI_MENU, oGUI_STATUSBAR
-	// Remember, these need not be freed in any way because they are 
-	// non-refcounted.
+	// Note: All mutators to oWindow queue their changes and must be flushed using 
+	// FlushMessages() before accessors are valid. This is true even if mutators 
+	// are called on the oWindow's thread. For this reason, all accessors are not 
+	// labeled threadsafe.
+
+	
+	// Basic API
 
 	virtual oGUI_WINDOW GetNativeHandle() const threadsafe = 0;
-
-	// Returns true while the windows thread is running, false
-	// when the windows thread is exiting.
-	virtual bool IsOpen() const threadsafe = 0;
-
-	// Sleeps the calling thread until IsOpen returns false.
-	virtual bool WaitUntilClosed(unsigned int _TimeoutMS = oInfiniteWait) const threadsafe = 0;
-
-	// Blocks (might spin, not always sleep) until the window is fully opaque and
-	// shown. This will wait forever if the window is hidden. The purpose of this
-	// API is to be more authoritative on platforms where showing a window causes
-	// a fade-in effect over a small amount of time. Doing a snapshot
-	virtual bool WaitUntilOpaque(unsigned int _TimeoutMS = oInfiniteWait) const threadsafe = 0;
-
-	// Close the window. The oGUI_CLOSING event will be triggered and if a hook 
-	// denies the closing request, this function will return false. If the close
-	// goes through, then IsOpen() will return false, but oGUI_CLOSED will not 
-	// occur until the last reference to this window is gone and destruction 
-	// begins.
-	virtual bool Close() threadsafe = 0;
-
-	// Returns true if called from the window message pump thread
+	
+	// Returns an index fit for use with oDisplay API based on the center of the
+	// window's client area.
+	virtual int GetDisplayIndex() const = 0;
 	virtual bool IsWindowThread() const threadsafe = 0;
 
-	// This could be done through the Map/Umap API, but often it is more 
-	// convenient to immediately get/set these values.
-	virtual bool HasFocus() const threadsafe = 0;
-	virtual void SetFocus() threadsafe = 0;
 
-	// For read-only querying of the window's desc, prefer this over Map/Unmap
-	virtual void GetDesc(oGUI_WINDOW_DESC* _pDesc) const threadsafe = 0;
+	// Window Shape API (style, state, size, position)
 
-	// Maps a description of the window and prevents other threads from altering
-	// the state while it is modified through external events such as user 
-	// interaction or internal updates. Unlike GetDesc, this points directly to
-	// internal memory used to update the window when Unmap is called so there is 
-	// no extra copying of data.
-	virtual bool Map(oGUI_WINDOW_DESC** _ppDesc) threadsafe = 0;
-	virtual void Unmap() threadsafe = 0;
+	virtual void SetShape(const oGUI_WINDOW_SHAPE_DESC& _Shape) threadsafe = 0;
+	virtual oGUI_WINDOW_SHAPE_DESC GetShape() const = 0;
+	inline void SetState(oGUI_WINDOW_STATE _State) threadsafe { oGUI_WINDOW_SHAPE_DESC s; s.State = _State; SetShape(s); }
+	inline oGUI_WINDOW_STATE GetState() const { oGUI_WINDOW_SHAPE_DESC s = GetShape(); return s.State; }
+	inline void SetStyle(oGUI_WINDOW_STYLE _Style) threadsafe { oGUI_WINDOW_SHAPE_DESC s; s.Style = _Style; SetShape(s); }
+	inline oGUI_WINDOW_STYLE GetStyle() const { oGUI_WINDOW_SHAPE_DESC s = GetShape(); return s.Style; }
+	inline void Show(oGUI_WINDOW_STATE _State = oGUI_WINDOW_RESTORED) threadsafe { oGUI_WINDOW_SHAPE_DESC s; s.State = _State; SetShape(s); }
+	inline void Hide() threadsafe { Show(oGUI_WINDOW_HIDDEN); }
+	inline void Minimize() threadsafe { Show(oGUI_WINDOW_MINIMIZED); }
+	inline void Maximize() threadsafe { Show(oGUI_WINDOW_MAXIMIZED); }
+	inline void Restore() threadsafe { Show(oGUI_WINDOW_RESTORED); }
+	inline void SetClientPosition(const int2& _ClientPosition) threadsafe { oGUI_WINDOW_SHAPE_DESC s; s.ClientPosition = _ClientPosition; SetShape(s); }
+	inline int2 GetClientPosition() const { oGUI_WINDOW_SHAPE_DESC s = GetShape(); return s.ClientPosition; }
+	inline void SetClientSize(const int2& _ClientSize) threadsafe { oGUI_WINDOW_SHAPE_DESC s; s.ClientSize = _ClientSize; SetShape(s); }
+	inline int2 GetClientSize() const { oGUI_WINDOW_SHAPE_DESC s = GetShape(); return s.ClientSize; }
 
-	// Gets/sets the cursor when it is over the current window.
-	virtual void SetDesc(const oGUI_WINDOW_CURSOR_DESC& _CursorDesc) threadsafe = 0;
-	virtual void GetDesc(oGUI_WINDOW_CURSOR_DESC* _pCursorDesc) const threadsafe = 0;
 
-	// Get and set the title at the top of the OS decoration
-	virtual char* GetTitle(char* _StrDestination, size_t _SizeofStrDestination) const threadsafe = 0;
+	// Border/Decoration API
+
+	virtual void SetIcon(oGUI_ICON _hIcon) threadsafe = 0;
+	virtual oGUI_ICON GetIcon() const = 0;
+
+	virtual void SetUserCursor(oGUI_CURSOR _hCursor) threadsafe = 0;
+	virtual oGUI_CURSOR GetUserCursor() const = 0;
+
+	// If user-cursor is specified, then the cursor specified with SetCursor is 
+	// used.
+	virtual void SetClientCursorState(oGUI_CURSOR_STATE _State) threadsafe = 0;
+	virtual oGUI_CURSOR_STATE GetClientCursorState() const = 0;
+
 	virtual void SetTitleV(const char* _Format, va_list _Args) threadsafe = 0;
+	virtual char* GetTitle(char* _StrDestination, size_t _SizeofStrDestination) const = 0;
 
-	virtual char* GetStatusText(char* _StrDestination, size_t _SizeofStrDestination, int _StatusSectionIndex) const threadsafe = 0;
-	virtual void SetStatusText(int _StatusSectionIndex, const char* _Format, va_list _Args) threadsafe = 0;
-
-	// Convenient typing for string-based API
 	inline void SetTitle(const char* _Format, ...) threadsafe { va_list args; va_start(args, _Format); SetTitleV(_Format, args); va_end(args); }
-	template<size_t size> char* GetTitle(char (&_StrDestination)[size]) const threadsafe { return GetTitle(_StrDestination, size); }
-	template<size_t capacity> char* GetTitle(oStd::fixed_string<char, capacity>& _StrDestination) const threadsafe { return GetTitle(_StrDestination, _StrDestination.capacity()); }
+	template<size_t size> char* GetTitle(char (&_StrDestination)[size]) const { return GetTitle(_StrDestination, size); }
+	template<size_t capacity> char* GetTitle(oStd::fixed_string<char, capacity>& _StrDestination) const { return GetTitle(_StrDestination, _StrDestination.capacity()); }
 
-	inline void SetStatusText(int _StatusSectionIndex, const char* _Format, ...) threadsafe { va_list args; va_start(args, _Format); SetStatusText(_StatusSectionIndex, _Format, args); va_end(args); }
+	// For widths, if the last width is -1, it will be interpreted as "take up 
+	// rest of width of window".
+	virtual void SetNumStatusSections(const int* _pStatusSectionWidths, size_t _NumStatusSections) threadsafe = 0;
+	virtual int GetNumStatusSections(int* _pStatusSectionWidths = nullptr, size_t _MaxNumStatusSectionWidths = 0) const = 0;
+	template<size_t size> void SetNumStatusSections(const int (&_pStatusSectionWidths)[size]) threadsafe { SetNumStatusSections(_pStatusSectionWidths, size); }
+
+	virtual void SetStatusTextV(int _StatusSectionIndex, const char* _Format, va_list _Args) threadsafe = 0;
+	virtual char* GetStatusText(char* _StrDestination, size_t _SizeofStrDestination, int _StatusSectionIndex) const = 0;
+
+	inline void SetStatusText(int _StatusSectionIndex, const char* _Format, ...) threadsafe { va_list args; va_start(args, _Format); SetStatusTextV(_StatusSectionIndex, _Format, args); va_end(args); }
 	template<size_t size> char* GetStatusText(char (&_StrDestination)[size], int _StatusSectionIndex) const threadsafe { return GetStatusText(_StrDestination, size, _StatusSectionIndex); }
-	template<size_t capacity> char* GetStatusText(oStd::fixed_string<char, capacity>& _StrDestination, int _StatusSectionIndex) const threadsafe { return GetStatusText(_StrDestination, _StrDestination.capacity(), _StatusSectionIndex); }
+	template<size_t capacity> char* GetStatusText(oStd::fixed_string<char, capacity>& _StrDestination, int _StatusSectionIndex) const { return GetStatusText(_StrDestination, _StrDestination.capacity(), _StatusSectionIndex); }
 
-	// Sets all hotkeys (accelerators) that will be recognized. Set nullptr,0 to
-	// remove all hotkeys.
+	virtual void SetStatusIcon(int _StatusSectionIndex, oGUI_ICON _hIcon) threadsafe = 0;
+	virtual oGUI_ICON GetStatusIcon(int _StatusSectionIndex) const = 0;
+
+
+	// Draw Order/Dependency API
+
+	// Overrides Shape and STYLE to be RESTORED and NONE. If this exclusive 
+	// fullscreen is true, then this throws an exception. A parent is 
+	// automatically an owner of this window. If there is already an owner, this 
+	// will throw an exception.
+	virtual void SetParent(oWindow* _pParent) threadsafe = 0;
+	virtual oWindow* GetParent() const = 0;
+
+	// An owner is more like a sibling who does all the work. Use this for the 
+	// association between dialog boxes and the windows on top of which they are
+	// applied. If there is a parent, this will throw an exception.
+	virtual void SetOwner(oWindow* _pOwner) threadsafe = 0;
+	virtual oWindow* GetOwner() const = 0;
+
+	virtual void SetSortOrder(oGUI_WINDOW_SORT_ORDER _SortOrder) threadsafe = 0;
+	virtual oGUI_WINDOW_SORT_ORDER GetSortOrder() const = 0;
+
+	virtual void SetFocus(bool _Focus = true) threadsafe = 0;
+	virtual bool HasFocus() const = 0;
+
+
+	// Extended Input API
+
+	// If true, platform oTRACEs of every event and action will be enabled. This
+	// is false by default.
+	virtual void SetDebug(bool _Debug = true) threadsafe = 0;
+	virtual bool GetDebug() const = 0;
+
+	// Many touch screen drivers emulated mouse events in a way that is not 
+	// consistent with regular mouse behavior, so if that affects application 
+	// logic, here's a switch. This is false by default.
+	virtual void SetAllowTouchActions(bool _Allow = true) threadsafe = 0;
+	virtual bool GetAllowTouchActions() const = 0;
+
+	// If set to true, any mouse action in the client area will move the window.
+	// This is useful for borderless windows like splash screens. This is false by 
+	// default.
+	virtual void SetClientDragToMove(bool _DragMoves = true) threadsafe = 0;
+	virtual bool GetClientDragToMove() const = 0;
+
+	// If set to true, Alt-F4 will trigger an oGUI_CLOSING event. This is true by 
+	// default.
+	virtual void SetAltF4Closes(bool _AltF4Closes = true) threadsafe = 0;
+	virtual bool GetAltF4Closes() const = 0;
+
+	virtual void SetEnabled(bool _Enabled) threadsafe = 0;
+	virtual bool GetEnabled() const = 0;
+
+	virtual void SetCapture(bool _Capture) threadsafe = 0;
+	virtual bool HasCapture() const = 0;
+
 	virtual void SetHotKeys(const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys) threadsafe = 0;
 	template<size_t size> void SetHotKeys(const oGUI_HOTKEY_DESC_NO_CTOR (&_pHotKeys)[size]) threadsafe { SetHotKeys(_pHotKeys, size); }
 	template<size_t size> void SetHotKeys(const oGUI_HOTKEY_DESC (&_pHotKeys)[size]) threadsafe { SetHotKeys(_pHotKeys, size); }
 
-	virtual int GetHotKeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const threadsafe = 0;
+	virtual int GetHotKeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const = 0;
 	template<size_t size> int GetHotKeys(oGUI_HOTKEY_DESC_NO_CTOR (&_pHotKeys)[size]) threadsafe { return GetHotKeys(_pHotKeys, size); }
 	template<size_t size> int GetHotKeys(oGUI_HOTKEY_DESC (&_pHotKeys)[size]) threadsafe { return GetHotKeys(_pHotKeys, size); }
 
-	// Create a new image with either the client or whole-window area captured
-	// Remember this queues into the windows thread queue, so ensure the app is
-	// in an expected state for the image to be captured. _Frame doesn't mean much
-	// for the base implementation of oWindow, but is important in most more 
-	// complex derivatives. It's intent is that the snapshot occurs on an explicit
-	// frame. If oInvalid is specified then the snapshot occurs as soon as 
-	// possible.
-	virtual oStd::future<oRef<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) const threadsafe = 0;
 
-	// Appends a broadcast of an event as if the event came from user input. This
-	// will block for events that return a value such as 
-	virtual void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe = 0;
-
-	// Append a task to the window's message queue. It will be executed on the 
-	// windows thread in order.
-	virtual void Dispatch(const oTASK& _Task) threadsafe = 0;
-	oDEFINE_CALLABLE_WRAPPERS(Dispatch, threadsafe, Dispatch);
-
-	// Trigger an oGUI_TIMER event with the context after the specified number of 
-	// milliseconds from when the function was called.
-	virtual void SetTimer(uintptr_t _Context, unsigned int _RelativeTimeMS) threadsafe = 0;
+	// Observer API
 
 	virtual int HookActions(const oGUI_ACTION_HOOK& _Hook) threadsafe = 0;
 	virtual void UnhookActions(int _ActionHookID) threadsafe = 0;
 
 	virtual int HookEvents(const oGUI_EVENT_HOOK& _Hook) threadsafe = 0;
 	virtual void UnhookEvents(int _EventHookID) threadsafe = 0;
+
+	
+	// Execution API
+
+	// Appends a broadcast of an action as if it came from user input.
+	virtual void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe = 0;
+
+	// Post an event that is specified by the user here.
+	virtual void Post(int _CustomEventCode, uintptr_t _Context) threadsafe = 0;
+
+	// Posts the specified task in the window's message queue and executes it in 
+	// order with other events. This is useful for wrapping platform-specific 
+	// window/control calls.
+	virtual void Dispatch(const oTASK& _Task) threadsafe = 0;
+	oDEFINE_CALLABLE_WRAPPERS(Dispatch, threadsafe, Dispatch);
+
+	// Schedules an oImage to be generated from the oWindow. In the simple case,
+	// _Frame is not used and the front buffer is captured. Due to platform rules
+	// this may involve bringing the specified window to focus.
+	virtual oStd::future<oRef<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const = 0;
+
+	// Causes an oGUI_TIMER event to occur with the specified context after the 
+	// specified time. This will be called every specified millisections until 
+	// StopTimer is called with the same context.
+	virtual void SetTimer(uintptr_t _Context, unsigned int _RelativeTimeMS) threadsafe = 0;
+	virtual void StopTimer(uintptr_t _Context) threadsafe = 0;
+
+	// Flushes the window's message queue. This should be called in a loop on the
+	// same thread where the window was created. If _WaitForNext is false, this 
+	// will loop until the messasge queue is empty and exit. If _WaitForNext is 
+	// true this will block and process messages until Quit() is called.
+	virtual void FlushMessages(bool _WaitForNext = false) = 0;
+
+	// Breaks out of a blocking FlushMessages routine.
+	virtual void Quit() threadsafe = 0;
 };
 
 struct oWINDOW_INIT
 {
 	oWINDOW_INIT()
-		: WindowTitle("")
-		, InitialAlignment(oGUI_ALIGNMENT_MIDDLE_CENTER)
+		: Title("")
+		, hIcon(nullptr)
+		, hCursor(nullptr)
+		, ClientCursorState(oGUI_CURSOR_ARROW)
+		, SortOrder(oGUI_WINDOW_SORTED)
+		, Debug(false)
+		, AllowTouch(false)
+		, ClientDragToMove(false)
+		, AltF4Closes(false)
 	{}
 
-	const char* WindowTitle;
-	oGUI_ALIGNMENT InitialAlignment;
+	const char* Title;
+	oGUI_ICON hIcon;
+	oGUI_CURSOR hCursor;
+	oGUI_CURSOR_STATE ClientCursorState;
+	oGUI_WINDOW_SORT_ORDER SortOrder;
+	bool Debug;
+	bool AllowTouch;
+	bool ClientDragToMove;
+	bool AltF4Closes;
 
 	// NOTE: The oGUI_CREATING event gets fired during construction, so if that 
 	// event is to be hooked it needs to be passed and hooked up during 
 	// construction.
 	oGUI_EVENT_HOOK EventHook;
 	oGUI_ACTION_HOOK ActionHook;
-	oGUI_WINDOW_DESC WinDesc;
+	oGUI_WINDOW_SHAPE_DESC Shape;
 };
 
-bool oWindowCreate(const oWINDOW_INIT& _Init, threadsafe oWindow** _ppWindow);
+bool oWindowCreate(const oWINDOW_INIT& _Init, oWindow** _ppWindow);
 
 #endif

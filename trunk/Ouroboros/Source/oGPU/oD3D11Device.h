@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -60,7 +59,10 @@ struct oD3D11Device : oGPUDevice
 	void GetDesc(DESC* _pDesc) const threadsafe override;
 	const char* GetName() const threadsafe override;
 	uint GetFrameID() const threadsafe override;
+
 	void GetImmediateCommandList(oGPUCommandList** _ppCommandList) override;
+	
+	bool CreatePrimaryRenderTarget(oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, bool _EnableOSRendering, oGPURenderTarget** _ppPrimaryRenderTarget) override;
 
 	bool CreateCommandList(const char* _Name, const oGPUCommandList::DESC& _Desc, oGPUCommandList** _ppCommandList) override;
 	bool CreatePipeline(const char* _Name, const oGPUPipeline::DESC& _Desc, oGPUPipeline** _ppPipeline) override;
@@ -75,6 +77,11 @@ struct oD3D11Device : oGPUDevice
 	bool ReadQuery(oGPUQuery* _pQuery, void* _pData, uint _SizeofData) override;
 	bool BeginFrame() override;
 	void EndFrame() override;
+	oGUI_DRAW_CONTEXT BeginOSFrame() override;
+	void EndOSFrame() override;
+	bool IsFullscreenExclusive() const override;
+	bool SetFullscreenExclusive(bool _Fullscreen) override;
+	bool Present(int _SyncInterval) override;
 
 	// _____________________________________________________________________________
 	// Implementation API
@@ -108,14 +115,14 @@ struct oD3D11Device : oGPUDevice
 	void CLUnlockSubmit() threadsafe;
 	void DrawCommandLists() threadsafe;
 
+	void RTReleaseSwapChain() threadsafe;
+
 	// _____________________________________________________________________________
 	// Members
 
 	oRef<ID3D11Device> D3DDevice;
 	oRef<ID3D11DeviceContext> ImmediateContext;
-	// @oooii-tony:
-	// This repeats what's in oD3D11, but this is designed to replace the oD3D11 components,
-	// so this will be favored eventually...
+	oRef<IDXGISwapChain> SwapChain;
 	oRef<ID3D11BlendState> BlendStates[oGPU_BLEND_STATE_COUNT];
 	oRef<ID3D11RasterizerState> SurfaceStates[oGPU_SURFACE_STATE_COUNT];
 	oRef<ID3D11DepthStencilState> DepthStencilStates[oGPU_DEPTH_STENCIL_STATE_COUNT];
@@ -145,6 +152,8 @@ struct oD3D11Device : oGPUDevice
 
 	oConcurrency::mutex CommandListsInsertRemoveMutex;
 	oConcurrency::shared_mutex CommandListsBeginEndMutex;
+	oConcurrency::shared_mutex FrameMutex;
+	oConcurrency::shared_mutex SwapChainMutex;
 	std::vector<oGPUCommandList*> CommandLists; // non-oRefs to avoid circular refs
 
 	bool IsSoftwareEmulation;

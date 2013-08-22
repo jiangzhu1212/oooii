@@ -22,9 +22,6 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oGPUWindow.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oD3D11ComputeShader.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
@@ -65,9 +62,6 @@
     </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\oGPUWindow.h">
-      <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="oD3D11ComputeShader.h">
       <Filter>Source\D3D11</Filter>

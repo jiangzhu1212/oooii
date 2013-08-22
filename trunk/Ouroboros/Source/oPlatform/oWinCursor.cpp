@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -24,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oWinCursor.h>
+#include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinWindowing.h>
 
 #define oWINV(_hWnd) \
@@ -38,14 +38,26 @@
 	return nullptr; \
 	}
 
+static bool oWinGetHonestClientScreenRect(HWND _hWnd, RECT* _pRect)
+{
+	if (!GetClientRect(_hWnd, _pRect))
+		return oWinSetLastError();
+	POINT p = { _pRect->left, _pRect->top };
+	if (!ClientToScreen(_hWnd, &p))
+		return oWinSetLastError();
+	*_pRect = oWinRectTranslate(*_pRect, p);
+	return true;
+}
+
 bool oWinCursorSetClipped(HWND _hWnd, bool _Clipped)
 {
 	oWINV(_hWnd);
 
 	if (_Clipped)
 	{
+		// allow cursor over status bar, so clip to honest client size, not spoofed
 		RECT r;
-		oWinGetClientScreenRect(_hWnd, false, &r); // allow cursor over status bar, so pretent it's not there
+		oVB_RETURN(oWinGetHonestClientScreenRect(_hWnd, &r));
 		oVB_RETURN(ClipCursor(&r));
 	}
 
@@ -60,7 +72,7 @@ bool oWinCursorGetClipped(HWND _hWnd)
 	oWINV(_hWnd);
 	RECT rClip, rClient;
 	oVB_RETURN(GetClipCursor(&rClip));
-	oVB_RETURN(GetClientRect(_hWnd, &rClient));
+	oVB_RETURN(oWinGetHonestClientScreenRect(_hWnd, &rClient));
 	return !memcmp(&rClip, &rClient, sizeof(RECT));
 }
 
@@ -107,11 +119,7 @@ bool oWinSetCursor(HWND _hWnd, HCURSOR _hCursor)
 {
 	oWINVP(_hWnd);
 	if (0 == SetClassLongPtr(_hWnd, GCLP_HCURSOR, (LONG_PTR)_hCursor))
-	{
-		oWinSetLastError();
-		return false;
-	}
-	
+		return oWinSetLastError();
 	return true;
 }
 
@@ -135,7 +143,7 @@ HCURSOR oWinGetCursor(oGUI_CURSOR_STATE _State, HCURSOR _hUserCursor)
 void oWinCursorSetState(HWND _hWnd, oGUI_CURSOR_STATE _CursorState, HCURSOR _hUserCursor)
 {
 	HCURSOR hCursor = oWinGetCursor(_CursorState, _hUserCursor);
-	oWinSetCursor(_hWnd, hCursor);
+	oVB(oWinSetCursor(_hWnd, hCursor));
 	oWinCursorSetVisible(_CursorState != oGUI_CURSOR_NONE);
 }
 

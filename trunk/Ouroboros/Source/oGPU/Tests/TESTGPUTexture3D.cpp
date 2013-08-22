@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,14 +26,14 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
-struct GPU_Texture3D : public oGPUTextureTest
-{
-	virtual enum oGPU_TEST_PIPELINE GetPipeline() override
-	{
-		return oGPU_TEST_TEXTURE_3D;
-	}
+static const bool kIsDevMode = false;
 
-	virtual bool CreateTexture() override
+struct GPU_Texture3D_App : public oGPUTextureTestApp
+{
+	GPU_Texture3D_App() : oGPUTextureTestApp("GPU_Texture3D", kIsDevMode) {}
+
+	oGPU_TEST_PIPELINE GetPipeline() override { return oGPU_TEST_TEXTURE_3D; }
+	bool CreateTexture() override
 	{
 		oRef<oImage> images[3];
 		if (!oImageLoad("file://DATA/Test/Textures/Red.png", oImage::FORCE_ALPHA, &images[0]))
@@ -51,4 +50,4 @@ struct GPU_Texture3D : public oGPUTextureTest
 	}
 };
 
-oTEST_REGISTER(GPU_Texture3D);
+oDEFINE_GPU_TEST(GPU_Texture3D)

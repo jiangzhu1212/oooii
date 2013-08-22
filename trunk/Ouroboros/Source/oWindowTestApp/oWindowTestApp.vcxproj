@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{312CC83F-A621-47CD-81FA-B6DF3F4BFB48}</ProjectGuid>
+    <ProjectGuid>{0BD0AE0C-4BA5-434D-B381-F7A836CF0CB6}</ProjectGuid>
     <RootNamespace>oStubStaticLib</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>

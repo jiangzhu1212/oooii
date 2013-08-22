@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -69,25 +68,27 @@ oD3D11Texture::oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char
 		*_pSuccess = oD3D11CreateTexture(D3DDevice, _Name, _Desc, nullptr, &Texture, &SRV);
 	}
 
-	if (!oGPUTextureTypeIsReadback(_Desc.Type))
-	{
-		if (!SRV && *_pSuccess)
-		{
-			oStd::mstring name;
-			oPrintf(name, "%s.SRV", _Name);
-			if (!oD3D11CreateShaderResourceView(name, Texture, &SRV))
-				*_pSuccess = false; // pass through error
-		}
-
-		if (*_pSuccess && oGPUTextureTypeIsUnordered(_Desc.Type))
-		{
-			if (!oD3D11CreateUnorderedAccessView(_Name, Texture, 0, 0, &UAV))
-				*_pSuccess = false;
-		}
-	}
-
 	if (*_pSuccess)
+	{
+		if (!oGPUTextureTypeIsReadback(_Desc.Type))
+		{
+			if (!SRV && *_pSuccess)
+			{
+				oStd::mstring name;
+				oPrintf(name, "%s.SRV", _Name);
+				if (!oD3D11CreateShaderResourceView(name, Texture, &SRV))
+					*_pSuccess = false; // pass through error
+			}
+
+			if (*_pSuccess && oGPUTextureTypeIsUnordered(_Desc.Type))
+			{
+				if (!oD3D11CreateUnorderedAccessView(_Name, Texture, 0, 0, &UAV))
+					*_pSuccess = false;
+			}
+		}
+
 		*_pSuccess = CreateSecondTexture(_pDevice, _Name, _Desc, (oGPUTexture**)&Texture2);
+	}
 }
 
 int2 oD3D11Texture::GetByteDimensions(int _Subresource) const threadsafe

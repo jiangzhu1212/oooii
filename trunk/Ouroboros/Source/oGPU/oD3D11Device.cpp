@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -29,6 +28,7 @@
 #include <oBasis/oLockThis.h>
 #include <oPlatform/Windows/oD3D11.h>
 #include <oPlatform/Windows/oDXGI.h>
+#include <oPlatform/Windows/oWinWindowing.h>
 
 #include "oD3D11Buffer.h"
 #include "oD3D11Pipeline.h"
@@ -304,6 +304,13 @@ bool oD3D11Device::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _
 		*_ppInterface = ImmediateContext;
 	}
 
+	else if (_InterfaceID == (const oGUID&)__uuidof(IDXGISwapChain))
+	{
+		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(SwapChainMutex);
+		SwapChain->AddRef();
+		*_ppInterface = SwapChain;
+	}
+
 	return !!*_ppInterface;
 }
 
@@ -327,6 +334,35 @@ void oD3D11Device::GetImmediateCommandList(oGPUCommandList** _ppCommandList)
 	oGPUCommandList::DESC CLDesc;
 	CLDesc.DrawOrder = oInvalid;
 	oVERIFY(oD3D11Device::CreateCommandList("Immediate", CLDesc, _ppCommandList));
+}
+
+bool oD3D11Device::CreatePrimaryRenderTarget(oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, bool _EnableOSRendering, oGPURenderTarget** _ppPrimaryRenderTarget)
+{
+	if (SwapChain)
+		return oErrorSetLast(std::errc::protocol_error, "There already exists a primary render target, only one can exist for a given device at a time.");
+
+	oGUI_WINDOW_SHAPE_DESC s = _pWindow->GetShape();
+	if (oGUIStyleHasStatusBar(s.Style))
+		return oErrorSetLast(std::errc::invalid_argument, "A window used for rendering must not have a status bar");
+
+	if (!oDXGICreateSwapChain(D3DDevice
+		, false
+		, __max(1, s.ClientSize.x)
+		, __max(1, s.ClientSize.y)
+		, false
+		, DXGI_FORMAT_B8G8R8A8_UNORM
+		, 0
+		, 0
+		, (HWND)_pWindow->GetNativeHandle()
+		, _EnableOSRendering
+		, &SwapChain))
+		return false; // pass through error
+
+	oStd::sstring RTName;
+	snprintf(RTName, "%s.PrimaryRT", GetName());
+	if (!oD3D11CreateRenderTarget(this, RTName, SwapChain, _DepthStencilFormat, _ppPrimaryRenderTarget))
+		return false;
+	return true;
 }
 
 bool oD3D11Device::CLInsert(oGPUCommandList* _pCommandList) threadsafe
@@ -429,6 +465,12 @@ void oD3D11Device::DrawCommandLists() threadsafe
 	}
 }
 
+void oD3D11Device::RTReleaseSwapChain() threadsafe
+{
+	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(SwapChainMutex);
+	SwapChain = nullptr;
+}
+
 bool oD3D11Device::MapRead(oGPUResource* _pReadbackResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource, bool _bBlocking)
 {
 	int D3DSubresourceIndex = 0;
@@ -460,6 +502,7 @@ bool oD3D11Device::ReadQuery(oGPUQuery* _pQuery, void* _pData, uint _SizeofData)
 
 bool oD3D11Device::BeginFrame()
 {
+	FrameMutex.lock_shared();
 	oStd::atomic_increment(&FrameID);
 	return true;
 }
@@ -467,4 +510,87 @@ bool oD3D11Device::BeginFrame()
 void oD3D11Device::EndFrame()
 {
 	DrawCommandLists();
+	FrameMutex.unlock_shared();
+}
+
+oGUI_DRAW_CONTEXT oD3D11Device::BeginOSFrame()
+{
+	SwapChainMutex.lock_shared();
+	if (!SwapChain)
+	{
+		SwapChainMutex.unlock_shared();
+		return nullptr;
+	}
+
+	HDC hDeviceDC = nullptr;
+	if (!oDXGIGetDC(SwapChain, &hDeviceDC))
+	{
+		SwapChainMutex.unlock_shared();
+		return nullptr;
+	}
+
+	return (oGUI_DRAW_CONTEXT)hDeviceDC;
+}
+
+void oD3D11Device::EndOSFrame()
+{
+	oVERIFY(oDXGIReleaseDC(SwapChain, nullptr));
+	SwapChainMutex.unlock_shared();
+}
+
+bool oD3D11Device::IsFullscreenExclusive() const
+{
+	oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(SwapChainMutex);
+	if (!SwapChain)
+		return false;
+
+	BOOL FS = FALSE;
+	const_cast<oD3D11Device*>(this)->SwapChain->GetFullscreenState(&FS, nullptr);
+	return !!FS;
+}
+
+bool oD3D11Device::SetFullscreenExclusive(bool _Fullscreen)
+{
+	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(SwapChainMutex);
+	if (!SwapChain)
+		return oErrorSetLast(std::errc::protocol_error, "no primary render target has been created");
+
+	DXGI_SWAP_CHAIN_DESC SCD;
+	SwapChain->GetDesc(&SCD);
+	if (oWinGetParent(SCD.OutputWindow))
+		return oErrorSetLast(std::errc::operation_not_permitted, "child windows cannot go full screen exclusive");
+
+	BOOL FS = FALSE;
+	SwapChain->GetFullscreenState(&FS, nullptr);
+	if (_Fullscreen != !!FS)
+	{
+		// This can throw an exception for some reason, but there's no DXGI error, and everything seems just fine.
+		// so ignore?
+		SwapChain->SetFullscreenState(_Fullscreen, nullptr);
+	}
+
+	return true;
+}
+
+bool oD3D11Device::Present(int _SyncInterval)
+{
+	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(SwapChainMutex);
+
+	if (!SwapChain)
+		return oErrorSetLast(std::errc::operation_not_permitted, "Present() must only be called on the primary render target");
+
+	DXGI_SWAP_CHAIN_DESC SCD;
+	SwapChain->GetDesc(&SCD);
+
+	if (!oWinIsWindowThread(SCD.OutputWindow))
+		return oErrorSetLast(std::errc::operation_not_permitted, "Present() must be called from the window thread");
+
+	if (!oWinIsWindowThread(SCD.OutputWindow))
+		return oErrorSetLast(std::errc::no_such_device, "Present() must be called from the window thread");
+
+	HRESULT hr = SwapChain->Present(_SyncInterval, 0);
+	if (FAILED(hr))
+		return oErrorSetLast(std::errc::no_such_device, "GPU device has been reset or removed");
+
+	return true;
 }

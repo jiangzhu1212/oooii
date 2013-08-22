@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -27,184 +26,114 @@
 #include <oGPU/oGPUUtil.h>
 #include <oGPUTestColorPSByteCode.h>
 
-static bool oGPUTestEnableRender(threadsafe oGPUWindow* _pWindow)
+bool oGPUTestApp::Create(const char* _Title, bool _DevMode, const int* _pSnapshotFrameIDs, size_t _NumSnapshotFrameIDs, const int2& _Size)
 {
-	oGUI_WINDOW_DESC* wd = nullptr;
-	if (!_pWindow->Map(&wd))
-		return false;
-	wd->EnableMainLoopEvent = true;
-	_pWindow->Unmap();
-	return true;
-}
+	NthSnapshot = 0;
+	Running = true;
+	DevMode = _DevMode;
+	AllSnapshotsSucceeded = true;
 
-static bool oGPUTestScheduleSnapshots(threadsafe oWindow* _pWindow, const int* _pFrameIDs, oStd::future<oRef<oImage>>* _pFutureSnapshots, size_t _NumSnapshots)
-{
-	for (size_t i = 0; i < _NumSnapshots; i++)
+	if (_pSnapshotFrameIDs && _NumSnapshotFrameIDs)
+		SnapshotFrames.assign(_pSnapshotFrameIDs, _pSnapshotFrameIDs + _NumSnapshotFrameIDs);
+
 	{
-		oStd::future<oRef<oImage>> Snapshot = _pWindow->CreateSnapshot(_pFrameIDs[i]);
-		_pFutureSnapshots[i] = std::move(Snapshot);
+		oGPU_DEVICE_INIT init;
+		init.DebugName = "oGPUTestApp.Device";
+		init.Version = oVersion(10,0); // for broader compatibility
+		init.DriverDebugLevel = oGPU_DEBUG_NORMAL;
+		if (!oGPUDeviceCreate(init, &Device))
+			return false; // pass through error
 	}
 
-	return true;
-}
+	{
+		oWINDOW_INIT init;
+		init.Title = _Title;
+		init.AltF4Closes = true;
+		init.EventHook = oBIND(&oGPUTestApp::OnEvent, this, oBIND1);
+		init.Shape.State = DevMode ? oGUI_WINDOW_RESTORED : oGUI_WINDOW_HIDDEN;
+		init.Shape.Style = oGUI_WINDOW_SIZABLE;
+		init.Shape.ClientSize = _Size;
+		if (!oWindowCreate(init, &Window))
+			oThrowLastError();
+	}
 
-bool oGPUTestSnapshotsAreReady(oStd::future<oRef<oImage>>* _pFutureSnapshots, size_t _NumSnapshots)
-{
-	for (size_t i = 0; i < _NumSnapshots; i++)
-		if (!_pFutureSnapshots[i].is_ready())
-			return false;
-	return true;
-}
-
-bool oGPUTestCreateWindow(const oGPU_TEST_WINDOW_INIT& _Init, const oFUNCTION<bool(threadsafe oGPUWindow* _pWindow)>& _PrerenderInit, oStd::future<oRef<oImage>>* _pFutureSnapshots, size_t _NumFutureSnapshots, threadsafe oGPUWindow** _ppWindow)
-{
-	if (_Init.NumSnapshots > 0 && static_cast<unsigned int>(_Init.NumSnapshots) != _NumFutureSnapshots)
-		return oErrorSetLast(std::errc::invalid_argument, "_Init.NumSnapshots != _NumFutureSnapshots (%u != %u)", _Init.NumSnapshots, _NumFutureSnapshots);
-
-	oRef<oGPUDevice> Device;
-	if (!oGPUDeviceCreate(_Init.DeviceInit, &Device))
+	if (!Device->CreatePrimaryRenderTarget(Window, oSURFACE_D24_UNORM_S8_UINT, true, &PrimaryRenderTarget))
 		return false; // pass through error
 
-	oGPU_WINDOW_INIT GPUInit = _Init.GPUWindowInit;
-
-	// Render happens on idle. To get a snapshot of the 0th frame and call init
-	// code, we need to schedule the shots and init before rendering passes the 
-	// 0th frame.
-	GPUInit.WinDesc.EnableMainLoopEvent = false;
-
-	oRef<threadsafe oGPUWindow> Window;
-	if (!oGPUWindowCreate(GPUInit, Device, &Window))
-		return false;
-
-	oVERIFY(oGPUTestScheduleSnapshots(Window, _Init.pSnapshotFrameIDs, _pFutureSnapshots, _Init.NumSnapshots));
-
-	if (_PrerenderInit && !_PrerenderInit(Window))
-		return false;
-
-	if (_Init.pSnapshotFrameIDs && _Init.NumSnapshots)
-		oVERIFY(oGPUTestEnableRender(Window));
-
-	Window->Reference();
-	*_ppWindow = Window;
+	Device->GetImmediateCommandList(&CommandList);
 	return true;
 }
 
-bool oGPUTestSnapshots(oTest* _pTest, oStd::future<oRef<oImage>>* _pFutureSnapshots, size_t _NumSnapshots)
+void oGPUTestApp::OnEvent(const oGUI_EVENT_DESC& _Event)
 {
-	bool AllSucceeded = true;
-	for (unsigned int i = 0; i < _NumSnapshots; i++)
+	switch (_Event.Type)
+	{
+		case oGUI_CLOSING:
+			Running = false;
+			break;
+		default:
+			break;
+	}
+}
+
+bool oGPUTestApp::CheckSnapshot(oTest* _pTest)
+{
+	const int FrameID = Device->GetFrameID();
+	if (SnapshotFrames.end() != oStd::find(SnapshotFrames, FrameID))
 	{
 		oRef<oImage> Image;
+		if (!PrimaryRenderTarget->CreateSnapshot(0, &Image))
+			return false; // pass through error
 
-		try { Image = _pFutureSnapshots[i].get(); }
-		catch (std::exception& e) { return oErrorSetLast(e); }
-
-		if (!_pTest->TestImage(Image, i))
+		if (!_pTest->TestImage(Image, NthSnapshot))
 		{
-			oTRACEA("%s: Image(%u) %s: %s", _pTest->GetName(), i, oErrorAsString(oErrorGetLast()), oErrorGetLastString());
-			AllSucceeded = false;
+			oTRACEA("%s: Image(%u) %s: %s", _pTest->GetName(), NthSnapshot, oErrorAsString(oErrorGetLast()), oErrorGetLastString());
+			AllSnapshotsSucceeded = false;
 		}
+
+		NthSnapshot++;
 	}
-
-	if (!AllSucceeded)
-		oErrorSetLast(std::errc::protocol_error, "Image compares failed, see debug output/log for specifics.");
-
-	return AllSucceeded;
+	return AllSnapshotsSucceeded;
 }
 
-bool oGPUTestInitFirstTriangle(oGPUDevice* _pDevice, const char* _Name, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, oGPUUtilMesh** _ppTri)
+bool oGPUTestApp::Run(oTest* _pTest)
 {
-	oGPUUtilMesh::DESC md;
-	md.NumIndices = 3;
-	md.NumVertices = 3;
-	md.NumRanges = 1;
-	md.LocalSpaceBounds = oAABoxf(oAABoxf::min_max, float3(-0.8f, -0.7f, -0.01f), float3(0.8f, 0.7f, 0.01f));
-	md.NumVertexElements = _NumElements;
+	oASSERT(Window->IsWindowThread(), "Run must be called from same thread that created the window");
+	bool AllFramesSucceeded = true;
 
-	std::copy(_pElements, _pElements + _NumElements, md.VertexElements.begin());
-	oRef<oGPUUtilMesh> Mesh;
-	if (!oGPUUtilMeshCreate(_pDevice, _Name, md, 1, &Mesh))
+	// Flush window init
+	Window->FlushMessages();
+
+	if (!Initialize())
 		return false; // pass through error
 
-	oRef<oGPUCommandList> ICL;
-	_pDevice->GetImmediateCommandList(&ICL);
+	while (Running && DevMode)
+	{
+		Window->FlushMessages();
+		if (!Device->BeginFrame())
+			return false; // pass through error
 
-	oSURFACE_CONST_MAPPED_SUBRESOURCE msr;
-	static const ushort Indices[] = { 0, 1, 2 };
-	msr.pData = (void*)Indices;
-	msr.RowPitch = sizeof(ushort);
-	msr.DepthPitch = sizeof(Indices);
-	ICL->Commit(Mesh->GetIndexBuffer(), 0, msr);
+		if (!Render())
+			return false; // pass through error
 
-	static const float3 Positions[] = { float3(-0.75f, -0.667f, 0.0f), float3(0.0f, 0.667f, 0.0f), float3(0.75f, -0.667f, 0.0f) };
-	msr.pData = (void*)Positions;
-	msr.RowPitch = sizeof(float3);
-	msr.DepthPitch = sizeof(Positions);
-	ICL->Commit(Mesh->GetVertexBuffer(), 0, msr);
+		Device->EndFrame();
 
-	Mesh->Reference();
-	*_ppTri = Mesh;
+		CheckSnapshot(_pTest);
+
+		Device->Present(1);
+	}
+
+	if (!AllFramesSucceeded)
+		return oErrorSetLast(std::errc::protocol_error, "Image compares failed, see debug output/log for specifics.");
+
 	return true;
 }
 
-bool oGPUTestInitCube(oGPUDevice* _pDevice, const char* _Name, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, oGPUUtilMesh** _ppMesh)
+const int oGPUTextureTestApp::sSnapshotFrames[2] = { 0, 2 };
+
+bool oGPUTextureTestApp::Initialize()
 {
-	oGeometry::LAYOUT layout;
-	layout.Positions = true;
-	layout.Texcoords = true;
-
-	oGeometryFactory::BOX_DESC bd;
-	bd.FaceType = oGeometry::FRONT_CCW;
-	bd.Bounds = oAABoxf(oAABoxf::min_max, float3(-1.0f), float3(1.0f));
-	bd.Divide = 1;
-	bd.Color = oStd::White;
-	bd.FlipTexcoordV = false;
-
-	oRef<oGeometryFactory> Factory;
-	if (!oGeometryFactoryCreate(&Factory))
-		return false;
-
-	oRef<oGeometry> geo;
-	if (!Factory->Create(bd, layout, &geo))
-		return false;
-	
-	return oGPUUtilMeshCreate(_pDevice, _Name, _pElements, _NumElements, geo, _ppMesh);
-}
-
-oTest::RESULT oGPUTextureTest::Run(char* _StrStatus, size_t _SizeofStrStatus)
-{
-	Once = false;
-
-	static const int sSnapshotFrames[] = { 0, 2 };
-	static const bool kIsDevMode = false;
-	oGPU_TEST_WINDOW_INIT Init(kIsDevMode, oBIND(&oGPUTextureTest::Render, this, oBIND1), "GPU_Texture", sSnapshotFrames);
-
-	oStd::future<oRef<oImage>> Snapshots[oCOUNTOF(sSnapshotFrames)];
-	oRef<threadsafe oGPUWindow> Window;
-	oTESTB0(oGPUTestCreateWindow(Init, oBIND(&oGPUTextureTest::CreateResources, this, oBIND1), Snapshots, &Window));
-
-	while (Window->IsOpen())
-	{
-		if (!kIsDevMode && oGPUTestSnapshotsAreReady(Snapshots))
-		{
-			Window->Close();
-			oTESTB0(oGPUTestSnapshots(this, Snapshots));
-		}
-
-		oSleep(16);
-	}
-
-	return SUCCESS;
-}
-
-bool oGPUTextureTest::CreateResources(threadsafe oGPUWindow* _pWindow)
-{
-	_pWindow->GetDevice(&Device);
-	oGPUCommandList::DESC cld;
-	cld.DrawOrder = 0;
-
-	if (!Device->CreateCommandList("CommandList", cld, &CL))
-		return false;
+	PrimaryRenderTarget->SetClearColor(oStd::AlmostBlack);
 
 	oGPUBuffer::DESC DCDesc;
 	DCDesc.StructByteSize = sizeof(oGPUTestConstants);
@@ -218,13 +147,13 @@ bool oGPUTextureTest::CreateResources(threadsafe oGPUWindow* _pWindow)
 	if (!Device->CreatePipeline(pld.DebugName, pld, &Pipeline))
 		return false;
 
-	if (!oGPUTestInitCube(Device, "Cube", pld.pElements, pld.NumElements, &Mesh))
+	if (!oGPUUtilCreateFirstCube(Device, pld.pElements, pld.NumElements, &Mesh))
 		return false;
 
 	return CreateTexture();
 }
 
-float oGPUTextureTest::GetRotationStep()
+float oGPUTextureTestApp::GetRotationStep()
 {
 	// this is -1 because there was a code change that resulted in BeginFrame()
 	// being moved out of the Render function below so it updated the FrameID
@@ -233,43 +162,33 @@ float oGPUTextureTest::GetRotationStep()
 	return (Device->GetFrameID()-1) * 1.0f;
 }
 
-void oGPUTextureTest::Render(oGPURenderTarget* _pPrimaryRenderTarget)
+bool oGPUTextureTestApp::Render()
 {
-	if (!Once)
-	{
-		oGPU_CLEAR_DESC CD;
-		CD.ClearColor[0] = oStd::AlmostBlack;
-		_pPrimaryRenderTarget->SetClearDesc(CD);
-
-		Once = true;
-	}
-
 	float4x4 V = oCreateLookAtLH(float3(0.0f, 0.0f, -4.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
 	oGPURenderTarget::DESC RTDesc;
-	_pPrimaryRenderTarget->GetDesc(&RTDesc);
+	PrimaryRenderTarget->GetDesc(&RTDesc);
 	float4x4 P = oCreatePerspectiveLH(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
 
 	float rotationStep = GetRotationStep();
 	float4x4 W = oCreateRotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
 
-	uint DrawID = 0;
+	CommandList->Begin();
 
-	CL->Begin();
+	oGPUCommitBuffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, oStd::White));
 
-	oGPUCommitBuffer(CL, TestConstants, oGPUTestConstants(W, V, P, oStd::White));
-
-	CL->Clear(_pPrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
-	CL->SetBlendState(oGPU_OPAQUE);
-	CL->SetDepthStencilState(oGPU_DEPTH_TEST_AND_WRITE);
-	CL->SetSurfaceState(oGPU_FRONT_FACE);
-	CL->SetBuffers(0, 1, &TestConstants);
+	CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
+	CommandList->SetBlendState(oGPU_OPAQUE);
+	CommandList->SetDepthStencilState(oGPU_DEPTH_TEST_AND_WRITE);
+	CommandList->SetSurfaceState(oGPU_FRONT_FACE);
+	CommandList->SetBuffers(0, 1, &TestConstants);
 	oGPU_SAMPLER_STATE s = oGPU_LINEAR_WRAP;
-	CL->SetSamplers(0, 1, &s);
-	CL->SetShaderResources(0, 1, &Texture);
-	CL->SetPipeline(Pipeline);
-	CL->SetRenderTarget(_pPrimaryRenderTarget);
-	oGPUUtilMeshDraw(CL, Mesh);
+	CommandList->SetSamplers(0, 1, &s);
+	CommandList->SetShaderResources(0, 1, &Texture);
+	CommandList->SetPipeline(Pipeline);
+	CommandList->SetRenderTarget(PrimaryRenderTarget);
+	oGPUUtilMeshDraw(CommandList, Mesh);
 
-	CL->End();
+	CommandList->End();
+	return true;
 }

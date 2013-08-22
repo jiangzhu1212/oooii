@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -34,6 +33,10 @@
 interface oWebAppWindow : oWindow
 {
 	virtual void SetCurrentJobCount(uint _JobCount) threadsafe = 0;
+
+	virtual bool IsRunning() const threadsafe = 0;
+	virtual void Close() threadsafe = 0;
+	virtual bool WaitUntilClosed(unsigned int _TimeoutMS = oInfiniteWait) threadsafe = 0;
 };	
 
 bool oWebAppWindowCreate(const char* _pTitle, unsigned short _ServerPort, oWebAppWindow** _ppWebAppWindow);

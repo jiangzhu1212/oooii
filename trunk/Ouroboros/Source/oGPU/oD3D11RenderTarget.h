@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -28,7 +27,6 @@
 #define oD3D11RenderTarget2_h
 
 #include "oGPUCommon.h"
-#include <oGPU/oGPUWindow.h>
 #include <oPlatform/Windows/oD3D11.h>
 #include <oConcurrency/mutex.h>
 
@@ -37,13 +35,15 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget, 0x772e2a04, 0x4c2d,
 {
 	oDEFINE_GPUDEVICECHILD_INTERFACE_EXPLICIT_QI();
 	oDECLARE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget);
-	oD3D11RenderTarget(oGPUDevice* _pDevice, threadsafe oGPUWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, const char* _Name, bool* _pSuccess);
+	oD3D11RenderTarget(oGPUDevice* _pDevice, IDXGISwapChain* _pSwapChain, oSURFACE_FORMAT _DepthStencilFormat, const char* _Name, bool* _pSuccess);
+	~oD3D11RenderTarget();
 
 	void GetDesc(DESC* _pDesc) const threadsafe override;
 	void SetClearDesc(const oGPU_CLEAR_DESC& _ClearDesc) threadsafe override;
 	void Resize(const int3& _NewDimensions) override;
 	void GetTexture(int _MRTIndex, oGPUTexture** _ppTexture) override;
 	void GetDepthTexture(oGPUTexture** _ppTexture) override;
+	bool CreateSnapshot(int _MRTIndex, oImage** _ppSnapshot) override;
 
 	inline void Set(ID3D11DeviceContext* _pContext) { _pContext->OMSetRenderTargets(Desc.MRTCount, (ID3D11RenderTargetView* const*)RTVs.data(), DSV); }
 
@@ -51,14 +51,9 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget, 0x772e2a04, 0x4c2d,
 	std::array<oRef<ID3D11RenderTargetView>, oGPU_MAX_NUM_MRTS> RTVs;
 	oRef<oGPUTexture> DepthStencilTexture;
 	oRef<ID3D11DepthStencilView> DSV;
+	oRef<IDXGISwapChain> SwapChain;
 
-	// Retain a reference to the window associated with the swap chain when this 
-	// render target is constructed with a window because we'll need to resync/
-	// query it constantly for up-to-date DESC information.
-	threadsafe oGPUWindow* Window;
-
-	void ResizeLock();
-	bool ResizeUnlock();
+	void ClearResources();
 
 	// Creates the depth buffer according to the Desc.DepthStencilFormat value
 	void RecreateDepthBuffer(const int2& _Dimensions);
@@ -67,9 +62,6 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget, 0x772e2a04, 0x4c2d,
 	DESC Desc;
 };
 
-// Private construction of a render target based on an oGPUWindow. Remember 
-// oGPUWindow is responsible for the swap chain, so it's all really based off
-// that.
-bool oD3D11CreateRenderTarget(oGPUDevice* _pDevice, const char* _Name, threadsafe oGPUWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, oGPURenderTarget** _ppRenderTarget);
+bool oD3D11CreateRenderTarget(oGPUDevice* _pDevice, const char* _Name, IDXGISwapChain* _pSwapChain, oSURFACE_FORMAT _DepthStencilFormat, oGPURenderTarget** _ppRenderTarget);
 
 #endif

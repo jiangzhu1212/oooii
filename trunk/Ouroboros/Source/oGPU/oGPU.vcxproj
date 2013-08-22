@@ -127,7 +127,6 @@
     <ClInclude Include="..\..\Include\oGPU\oGPU.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUConstants.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h" />
-    <ClInclude Include="..\..\Include\oGPU\oGPUWindow.h" />
     <ClInclude Include="oD3D11Buffer.h" />
     <ClInclude Include="oD3D11CommandList.h" />
     <ClInclude Include="oD3D11ComputeShader.h" />
@@ -150,7 +149,6 @@
     <ClCompile Include="oD3D11RenderTarget.cpp" />
     <ClCompile Include="oD3D11Texture.cpp" />
     <ClCompile Include="oGPUUtil.cpp" />
-    <ClCompile Include="oGPUWindow.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

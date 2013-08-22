@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -39,11 +38,10 @@ struct PLATFORM_WindowSendKeysClient : public oSpecialTest
 	{
 		oConcurrency::event WaitEvent;
 		oWINDOW_INIT init;
-		init.WindowTitle = "PLATFORM_WindowSendKeysClientWindow";
-
-		init.WinDesc.Style = oGUI_WINDOW_SIZEABLE;
-		init.WinDesc.ClientSize = int2(16,16);
-		init.WinDesc.Debug = true;
+		init.Title = "PLATFORM_WindowSendKeysClientWindow";
+		init.Shape.State = oGUI_WINDOW_RESTORED;
+		init.Shape.Style = oGUI_WINDOW_SIZABLE;
+		init.Shape.ClientSize = int2(16,16);
 
 		bool CapsLock = GetKeyState(VK_CAPITAL) == 0 ? false : true;
 		bool Shift = false;
@@ -80,7 +78,7 @@ struct PLATFORM_WindowSendKeysClient : public oSpecialTest
 			}
 		};
 
-		oRef<threadsafe oWindow> TestWindow;
+		oRef<oWindow> TestWindow;
 		oTESTB0( oWindowCreate(init, &TestWindow) );
 
 		NotifyReady();

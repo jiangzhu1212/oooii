@@ -1,8 +1,7 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 OOOii.                                              *
- * antony.arciuolo@oooii.com                                              *
- * kevin.myers@oooii.com                                                  *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
  * a copy of this software and associated documentation files (the        *
@@ -261,8 +260,9 @@ enum oGUI_WINDOW_STATE
 	// A GUI window is a rectangular client area with an operating system-specific
 	// border. It can exist in one of the several states listed below.
 	
-	// Window does not exist.
-	oGUI_WINDOW_NONEXISTANT,
+	// Window does not exist, or when specifying a new state, use this to indicate 
+	// no-change.
+	oGUI_WINDOW_INVALID,
 	
 	// Window is invisible.
 	oGUI_WINDOW_HIDDEN,
@@ -283,14 +283,8 @@ enum oGUI_WINDOW_STATE
 	// does not do special direct-access or HW-syncing - it still behaves like a 
 	// window thus enabling fast application switching or multi-full-screen
 	// support.
-	oGUI_WINDOW_FULLSCREEN_COOPERATIVE,
+	oGUI_WINDOW_FULLSCREEN,
 	
-	// Window borders are removed and the client area fills a whole screen with 
-	// specialized and exclusive access to hardware. This mode often is not 100% 
-	// any-full-screen compatible or multi-Window compatible even with Mosaic or 
-	// Eyefinite technologies. In such cases favor fullscreen cooperative mode.
-	oGUI_WINDOW_FULLSCREEN_EXCLUSIVE,
-
 	oGUI_WINDOW_STATE_COUNT,
 };
 oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_WINDOW_STATE)
@@ -298,30 +292,86 @@ oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_WINDOW_STATE)
 // Invalid, hidden and minimized windows are not visible
 inline bool oGUIIsVisible(oGUI_WINDOW_STATE _State) { return _State >= oGUI_WINDOW_RESTORED; }
 
-inline bool oGUIIsFullscreen(oGUI_WINDOW_STATE _State) { return _State == oGUI_WINDOW_FULLSCREEN_EXCLUSIVE || _State == oGUI_WINDOW_FULLSCREEN_COOPERATIVE; }
-
 enum oGUI_WINDOW_STYLE
 {
-	// There is no border around the client area and the window is readied to be a 
-	// child of another parent window.
-	oGUI_WINDOW_EMBEDDED,
+	// Use this value for "noop" or "previous" value.
+	oGUI_WINDOW_DEFAULT,
 
 	// There is no border around the client area and the window remains a top-
 	// level window. This is the best for splash screens and fullscreen modes.
 	oGUI_WINDOW_BORDERLESS,
 
+	// There is a border but closing the window from the decoration is not allowed
+	oGUI_WINDOW_DIALOG,
+
 	// There is a border but no user resize is allowed
 	oGUI_WINDOW_FIXED,
 
-	// There is a border but closing the window from the decoration is not allowed
-	oGUI_WINDOW_DIALOG,
-	
+	// Same as fixed with a menu
+	oGUI_WINDOW_FIXED_WITH_MENU,
+
+	// Same as fixed with a status bar
+	oGUI_WINDOW_FIXED_WITH_STATUSBAR,
+
+	// Same as fixed with a menu and status bar
+	oGUI_WINDOW_FIXED_WITH_MENU_AND_STATUSBAR,
+
 	// There is a border and user can resize window
-	oGUI_WINDOW_SIZEABLE, 
+	oGUI_WINDOW_SIZABLE,
+
+	// Same as sizable with a menu
+	oGUI_WINDOW_SIZABLE_WITH_MENU,
+
+	// Same as sizable with a status bar
+	oGUI_WINDOW_SIZABLE_WITH_STATUSBAR,
+
+	// Same as sizable with a menu and a status bar
+	oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR,
 
 	oGUI_WINDOW_STYLE_COUNT,
 };
 oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_WINDOW_STYLE)
+
+inline bool oGUIStyleHasStatusBar(oGUI_WINDOW_STYLE _Style)
+{
+	switch (_Style)
+	{
+		case oGUI_WINDOW_FIXED_WITH_STATUSBAR:
+		case oGUI_WINDOW_FIXED_WITH_MENU_AND_STATUSBAR:
+		case oGUI_WINDOW_SIZABLE_WITH_STATUSBAR:
+		case oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR: return true;
+		default: break;
+	}
+	return false;
+}
+
+inline bool oGUIStyleHasMenu(oGUI_WINDOW_STYLE _Style)
+{
+	switch (_Style)
+	{
+		case oGUI_WINDOW_FIXED_WITH_MENU:
+		case oGUI_WINDOW_FIXED_WITH_MENU_AND_STATUSBAR:
+		case oGUI_WINDOW_SIZABLE_WITH_MENU:
+		case oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR: return true;
+		default: break;
+	}
+	return false;
+}
+
+enum oGUI_WINDOW_SORT_ORDER
+{
+	// normal/default behavior
+	oGUI_WINDOW_SORTED,
+
+	// "normal" always-on-top
+	oGUI_WINDOW_ALWAYS_ON_TOP,
+
+	// Meant for final shipping, this fights hard to ensure any Windows popups or
+	// even the taskbar stays hidden.
+	oGUI_WINDOW_ALWAYS_ON_TOP_WITH_FOCUS,
+
+	oGUI_WINDOW_SORT_ORDER_COUNT,
+};
 
 enum oGUI_CURSOR_STATE
 {
@@ -461,23 +511,22 @@ enum oGUI_EVENT
 {
 	// An event is something that the window issues to client code. Events can be
 	// triggered as a side-effect of other actions. Rarely does client code have
-	// direct control over events.
-
-	// called in message pump loop when window-related messages aren't being 
-	// processed.
-	oGUI_MAINLOOP,
+	// direct control over events. All events should be downcast to AsShape() 
+	// unless described otherwise below.
 
 	// Called when a timer is triggered. Use timers only for infrequent one-shot
 	// actions. Do not use this mechanism for consistent updates such as ring
 	// buffer monitors or for main loop execution or swap buffer presentation.
+	// Use AsTimer() on the event.
 	oGUI_TIMER,
 
 	oGUI_ACTIVATED, // called just after a window comes to be in focus
 	oGUI_DEACTIVATED, // called just after a window is no longer in focus
 
-	// called before during window or control creation. This should return true if 
-	// successful, or false if there's a failure. Downcast to the oGUI_EVENT_DESC
-	// to oGUI_CREATING_EVENT_DESC.
+	// called before during window or control creation. This should throw an 
+	// exception if there is a failure. It will be caught in the window's factory
+	// function and made into an API-consistent error message or rethrown as 
+	// appropriate.
 	oGUI_CREATING, 
 	
 	// called when the window wants to redraw itself. NOTE: On Windows the user 
@@ -490,10 +539,15 @@ enum oGUI_EVENT
 	oGUI_SIZING, // called just before a window's client area changes size
 	oGUI_SIZED, // called just after a window's client area changes size
 	
-	// called if an abortable attempt was made to close the window. Hook can 
-	// return false if close is not allowed
-	oGUI_CLOSING,
-	oGUI_CLOSED, // called after a commitment to closing the window has been made.
+	// called before the window is closed. Really this is where client code should 
+	// decide whether or not to exit the window's message loop. oGUI_CLOSED is 
+	// too late. All control of the message loop is in client code, so if there
+	// is nothing done in oGUI_CLOSING, then the default behavior is to leave the 
+	// window as-is, no closing is actually done.
+	oGUI_CLOSING, 
+	
+	// called after a commitment to closing the window has been made.
+	oGUI_CLOSED,
 	
 	// called when a request to become fullscreen is made. Hook can return false 
 	// on failure.
@@ -506,17 +560,31 @@ enum oGUI_EVENT
 	// it to lose capture
 	oGUI_LOST_CAPTURE, 
 	
-	// sent if a window gets files drag-dropped on it. Downcast to 
-	// oGUI_DROP_EVENT_DESC.
+	// sent if a window gets files drag-dropped on it. Use AsDrop() on event.
 	oGUI_DROP_FILES,
 
-	// Sent when an input device's status has changed. Downcast the 
-	// oGUI_EVENT_DESC to oGUI_INPUT_DEVICE_EVENT_DESC.
+	// Sent when an input device's status has changed. Use AsInputDevice() on 
+	// event.
 	oGUI_INPUT_DEVICE_CHANGED,
+
+	// The user can trigger a custom event with a user-specified sub-type. 
+	// Use AsCustom() on event.
+	oGUI_CUSTOM_EVENT,
 
 	oGUI_EVENT_COUNT,
 };
 oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_EVENT)
+
+inline bool oGUIISShapeEvent(oGUI_EVENT _Event)
+{
+	switch (_Event)
+	{
+		case oGUI_CREATING: case oGUI_TIMER: case oGUI_DROP_FILES: 
+		case oGUI_INPUT_DEVICE_CHANGED: case oGUI_CUSTOM_EVENT: return false;
+		default: break;
+	}
+	return true;
+}
 
 enum oGUI_ACTION
 {
@@ -550,6 +618,7 @@ oDECLARE_DERIVED_HANDLE(oGUI_WINDOW, oGUI_STATUSBAR);
 oDECLARE_DERIVED_HANDLE(oGUI_WINDOW, oGUI_CONTROL);
 oDECLARE_HANDLE(oGUI_FONT);
 oDECLARE_HANDLE(oGUI_ICON);
+oDECLARE_HANDLE(oGUI_CURSOR);
 
 struct oGUI_WINDOW_DESC
 {
@@ -658,6 +727,36 @@ struct oGUI_WINDOW_DESC
 	bool EnableDeviceChangeEvent;
 };
 
+struct oGUI_WINDOW_SHAPE_DESC
+{
+	oGUI_WINDOW_SHAPE_DESC()
+		: State(oGUI_WINDOW_INVALID)
+		, Style(oGUI_WINDOW_DEFAULT)
+		, ClientPosition(oDEFAULT, oDEFAULT)
+		, ClientSize(oDEFAULT, oDEFAULT)
+	{}
+
+	// The desired Shape of the window. Minimize and maximize will override/ignore  
+	// ClientPosition and ClientSize values. Use oGUI_WINDOW_INVALID to indicate
+	// that the state should remain untouched (only respect ClientPosition and 
+	// ClientSize values).
+	oGUI_WINDOW_STATE State;
+
+	// The desired style of the non-client area of the window (the OS decoration)
+	// Use oGUI_WINDOW_DEFAULT to indicate that the state should remain 
+	// untouched. Changing style will not affect client size/position.
+	oGUI_WINDOW_STYLE Style;
+
+	// This always refers to non-minimized, non-maximized Shapes. oDEFAULT values
+	// imply "use whatever was there before". For example, if the state is set to 
+	// maximized, and some non-default value is applied to ClientSize, then the 
+	// next time the state is set to restored. Changing the style while maximized 
+	// can also change the dimensions, but since the state's goal is to maximize
+	// client area, these values will be ignored.
+	int2 ClientPosition;
+	int2 ClientSize;
+};
+
 // This only describes the cursor when over a particular window, not the global
 // cursor.
 struct oGUI_WINDOW_CURSOR_DESC
@@ -673,133 +772,137 @@ struct oGUI_WINDOW_CURSOR_DESC
 	bool HasCapture; // forces messages to the window even if the focus/cursor is outside the window. Setting this to true will also bring the window to the foreground.
 };
 
+// _____________________________________________________________________________
+// oGUI_WINDOW events
+
+struct oGUI_EVENT_CREATE_DESC;
+struct oGUI_EVENT_SHAPE_DESC;
+struct oGUI_EVENT_TIMER_DESC;
+struct oGUI_EVENT_DROP_DESC;
+struct oGUI_EVENT_INPUT_DEVICE_DESC;
+struct oGUI_EVENT_CUSTOM_DESC;
+
 struct oGUI_EVENT_DESC
 {
-	// For most events use this desc. There are a few derivatives for specific 
-	// events listed below.
-
-	oGUI_EVENT_DESC()
-		: hWindow(nullptr)
-		, Event(oGUI_CREATING)
-		, ClientPosition(oDEFAULT, oDEFAULT)
-		, ClientSize(oDEFAULT, oDEFAULT)
-		, ScreenSize(oDEFAULT, oDEFAULT)
-		, State(oGUI_WINDOW_NONEXISTANT)
-	{}
-
-	oGUI_EVENT_DESC(oGUI_WINDOW _hWindow, oGUI_EVENT _Event, const oGUI_WINDOW_DESC& _WinDesc, const int2& _ScreenSize = int2(oDEFAULT, oDEFAULT))
+	oGUI_EVENT_DESC(oGUI_WINDOW _hWindow, oGUI_EVENT _Type)
 		: hWindow(_hWindow)
-		, Event(_Event)
-		, ClientPosition(_WinDesc.ClientPosition)
-		, ClientSize(_WinDesc.ClientSize)
-		, ScreenSize(_ScreenSize)
-		, State(_WinDesc.State)
+		, Type(_Type)
 	{}
 
+	// Native window handle
 	oGUI_WINDOW hWindow;
-	oGUI_EVENT Event;
-	int2 ClientPosition; // Position of the hSource's client area
-	int2 ClientSize; // Size of the hSource's client area
-	
-	// describes the size of the screen that would be the valid size if the window 
-	// were to go fullscreen. This can change if a window moves from one screen 
-	// to another.
-	int2 ScreenSize;
-	oGUI_WINDOW_STATE State;
+
+	// Type of event. This is the base class; use the downcasting accessors below
+	// based on this type value.
+	oGUI_EVENT Type;
+
+	// union doesn't work because of int2's copy ctor, so use downcasting 
+	// accessors.
+	inline const oGUI_EVENT_CREATE_DESC& AsCreate() const;
+	inline const oGUI_EVENT_SHAPE_DESC& AsShape() const;
+	inline const oGUI_EVENT_TIMER_DESC& AsTimer() const;
+	inline const oGUI_EVENT_DROP_DESC& AsDrop() const;
+	inline const oGUI_EVENT_INPUT_DEVICE_DESC& AsInputDevice() const;
+	inline const oGUI_EVENT_CUSTOM_DESC& AsCustom() const;
 };
 
-struct oGUI_TIMER_EVENT_DESC : oGUI_EVENT_DESC
+struct oGUI_EVENT_CREATE_DESC : oGUI_EVENT_DESC
 {
-	oGUI_TIMER_EVENT_DESC()
-		: Context(0)
+	oGUI_EVENT_CREATE_DESC(oGUI_WINDOW _hWindow
+		, oGUI_STATUSBAR _hStatusBar
+		, oGUI_MENU _hMenu
+		, const oGUI_WINDOW_SHAPE_DESC& _Shape)
+		: oGUI_EVENT_DESC(_hWindow, oGUI_CREATING)
+		, hStatusBar(_hStatusBar)
+		, hMenu(_hMenu)
+		, Shape(_Shape)
 	{}
 
-	oGUI_TIMER_EVENT_DESC(
-		oGUI_WINDOW _hWindow
-		, oGUI_EVENT _Event
-		, const oGUI_WINDOW_DESC& _WinDesc
-		, const int2& _ScreenSize = int2(oDEFAULT, oDEFAULT)
-		)
-		: oGUI_EVENT_DESC(_hWindow, _Event, _WinDesc, _ScreenSize)
-		, Context(0)
+	// Native handle of the window's status bar.
+	oGUI_STATUSBAR hStatusBar;
+
+	// Native handle of the top-level window's menu.
+	oGUI_MENU hMenu;
+	oGUI_WINDOW_SHAPE_DESC Shape;
+};
+
+struct oGUI_EVENT_SHAPE_DESC : oGUI_EVENT_DESC
+{
+	oGUI_EVENT_SHAPE_DESC(oGUI_WINDOW _hWindow
+		, oGUI_EVENT _Type
+		, const oGUI_WINDOW_SHAPE_DESC& _Shape)
+		: oGUI_EVENT_DESC(_hWindow, _Type)
+		, Shape(_Shape)
 	{}
 
+	oGUI_WINDOW_SHAPE_DESC Shape;
+};
+
+struct oGUI_EVENT_TIMER_DESC : oGUI_EVENT_DESC
+{
+	oGUI_EVENT_TIMER_DESC(oGUI_WINDOW _hWindow, uintptr_t _Context)
+		: oGUI_EVENT_DESC(_hWindow, oGUI_TIMER)
+		, Context(_Context)
+	{}
+
+	// Any pointer-sized value. It is recommended this be the address of a field
+	// in the App's class that is the struct context for the timer event.
 	uintptr_t Context;
 };
 
-struct oGUI_CREATING_EVENT_DESC : oGUI_EVENT_DESC
+struct oGUI_EVENT_DROP_DESC : oGUI_EVENT_DESC
 {
-	// It is safe to downcast to this for a oGUI_CREATING event.
-
-	oGUI_CREATING_EVENT_DESC()
-		: hMenu(nullptr)
-		, hStatusBar(nullptr)
+	oGUI_EVENT_DROP_DESC(oGUI_WINDOW _hWindow
+		, const oStd::path_string* _pPaths
+		, int _NumPaths
+		, const int2& _ClientDropPosition)
+		: oGUI_EVENT_DESC(_hWindow, oGUI_DROP_FILES)
+		, pPaths(_pPaths)
+		, NumPaths(_NumPaths)
+		, ClientDropPosition(_ClientDropPosition)
 	{}
-
-	oGUI_CREATING_EVENT_DESC(
-		oGUI_WINDOW _hWindow
-		, oGUI_EVENT _Event
-		, const oGUI_WINDOW_DESC& _WinDesc
-		, const int2& _ScreenSize = int2(oDEFAULT, oDEFAULT)
-		)
-			: oGUI_EVENT_DESC(_hWindow, _Event, _WinDesc, _ScreenSize)
-			, hMenu(nullptr)
-			, hStatusBar(nullptr)
-	{}
-
-	oGUI_MENU hMenu;
-	oGUI_STATUSBAR hStatusBar;
-};
-
-struct oGUI_DROP_EVENT_DESC : oGUI_EVENT_DESC
-{
-	// It is safe to downcast to this for a oGUI_DROP_FILES event.
-
-	oGUI_DROP_EVENT_DESC()
-		: pPaths(nullptr)
-		, NumPaths(0)
-		, ClientDropPosition(oInvalid, oInvalid)
-	{}
-
-	oGUI_DROP_EVENT_DESC(
-		oGUI_WINDOW _hWindow
-		, oGUI_EVENT _Event
-		, const oGUI_WINDOW_DESC& _WinDesc
-		, const int2& _ScreenSize = int2(oDEFAULT, oDEFAULT))
-			: oGUI_EVENT_DESC(_hWindow, _Event, _WinDesc, _ScreenSize)
-			, pPaths(nullptr)
-			, NumPaths(0)
-			, ClientDropPosition(oInvalid, oInvalid)
-	{}
-
 	const oStd::path_string* pPaths;
-	uint NumPaths;
+	int NumPaths;
 	int2 ClientDropPosition;
 };
 
-struct oGUI_INPUT_DEVICE_EVENT_DESC : oGUI_EVENT_DESC
+struct oGUI_EVENT_INPUT_DEVICE_DESC : oGUI_EVENT_DESC
 {
-	oGUI_INPUT_DEVICE_EVENT_DESC()
-		: Type(oGUI_INPUT_DEVICE_UNKNOWN)
-		, Status(oGUI_INPUT_DEVICE_NOT_READY)
-	{}
-
-	oGUI_INPUT_DEVICE_EVENT_DESC(
-		oGUI_WINDOW _hWindow
-		, oGUI_EVENT _Event
-		, const oGUI_WINDOW_DESC& _WinDesc
-		, const int2& _ScreenSize = int2(oDEFAULT, oDEFAULT))
-			: oGUI_EVENT_DESC(_hWindow, _Event, _WinDesc, _ScreenSize)
-			, Type(oGUI_INPUT_DEVICE_UNKNOWN)
-			, Status(oGUI_INPUT_DEVICE_NOT_READY)
+	oGUI_EVENT_INPUT_DEVICE_DESC(oGUI_WINDOW _hWindow
+		, oGUI_INPUT_DEVICE_TYPE _Type
+		, oGUI_INPUT_DEVICE_STATUS _Status
+		, const char* _InstanceName)
+		: oGUI_EVENT_DESC(_hWindow, oGUI_INPUT_DEVICE_CHANGED)
+		, Type(_Type)
+		, Status(_Status)
+		, InstanceName(_InstanceName)
 	{}
 
 	oGUI_INPUT_DEVICE_TYPE Type;
 	oGUI_INPUT_DEVICE_STATUS Status;
-	oStd::mstring InstanceName;
+	const char* InstanceName;
 };
 
-typedef oFUNCTION<bool(const oGUI_EVENT_DESC& _Event)> oGUI_EVENT_HOOK;
+struct oGUI_EVENT_CUSTOM_DESC : oGUI_EVENT_DESC
+{
+	oGUI_EVENT_CUSTOM_DESC(oGUI_WINDOW _hWindow, int _EventCode, uintptr_t _Context)
+		: oGUI_EVENT_DESC(_hWindow, oGUI_CUSTOM_EVENT)
+		, EventCode(_EventCode)
+		, Context(_Context)
+	{}
+
+	int EventCode;
+	uintptr_t Context;
+};
+
+const oGUI_EVENT_CREATE_DESC& oGUI_EVENT_DESC::AsCreate() const { oASSERT(Type == oGUI_CREATING, "wrong type"); return *static_cast<const oGUI_EVENT_CREATE_DESC*>(this); }
+const oGUI_EVENT_SHAPE_DESC& oGUI_EVENT_DESC::AsShape() const { oASSERT(oGUIISShapeEvent(Type), "wrong type"); return *static_cast<const oGUI_EVENT_SHAPE_DESC*>(this); }
+const oGUI_EVENT_TIMER_DESC& oGUI_EVENT_DESC::AsTimer() const { oASSERT(Type == oGUI_TIMER, "wrong type"); return *static_cast<const oGUI_EVENT_TIMER_DESC*>(this); }
+const oGUI_EVENT_DROP_DESC& oGUI_EVENT_DESC::AsDrop() const { oASSERT(Type == oGUI_DROP_FILES, "wrong type"); return *static_cast<const oGUI_EVENT_DROP_DESC*>(this); }
+const oGUI_EVENT_INPUT_DEVICE_DESC& oGUI_EVENT_DESC::AsInputDevice() const { oASSERT(Type == oGUI_INPUT_DEVICE_CHANGED, "wrong type"); return *static_cast<const oGUI_EVENT_INPUT_DEVICE_DESC*>(this); }
+const oGUI_EVENT_CUSTOM_DESC& oGUI_EVENT_DESC::AsCustom() const { oASSERT(Type == oGUI_CUSTOM_EVENT, "wrong type"); return *static_cast<const oGUI_EVENT_CUSTOM_DESC*>(this); }
+
+typedef oFUNCTION<void(const oGUI_EVENT_DESC& _Event)> oGUI_EVENT_HOOK;
 
 struct oGUI_ACTION_DESC
 {
@@ -1011,7 +1114,7 @@ inline oRECT oGUIClipRect(const oRECT& _Parent, const oRECT& _ToBeClipped) { oRE
 inline int2 oGUIResolveRectSize(const int2& _Size, const int2& _DefaultSize) { int2 result(_Size); if (result.x == oDEFAULT) result.x = _DefaultSize.x; if (result.y == oDEFAULT) result.y = _DefaultSize.y; return result; }
 
 // Replaces any oDEFAULT values with 0.
-inline int2 oGUIResolveRectPosition(const int2& _Position) { int2 result(_Position); if (result.x == oDEFAULT) result.x = 0; if (result.y == oDEFAULT) result.y = 0; return result; }
+inline int2 oGUIResolveRectPosition(const int2& _Position, const int2& _DefaultPosition = int2(0, 0)) { int2 result(_Position); if (result.x == oDEFAULT) result.x = _DefaultPosition.x; if (result.y == oDEFAULT) result.y = _DefaultPosition.y; return result; }
 
 // Positions a child rectangle "inside" (parent can be smaller than the child)
 // the specified parent according to the specified alignment and clipping. In 
