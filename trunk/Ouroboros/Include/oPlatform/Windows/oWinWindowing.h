@@ -777,7 +777,7 @@ oAPI bool oWinControlSetTick(HWND _hControl, int _Position);
 oAPI bool oWinControlClearTicks(HWND _hControl);
 
 // Sets the control to be in a state indicative to the user as in error.
-// Valid for: ProgressBar
+// Valid for: ProgressBar, ProgressBarUnknown
 oAPI bool oWinControlSetErrorState(HWND _hControl, bool _InErrorState = true);
 
 // Returns true if the control is currently indicating an error state to the 
