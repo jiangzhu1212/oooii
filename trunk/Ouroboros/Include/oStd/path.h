@@ -210,7 +210,7 @@ public:
 	string_piece_type extension_piece() const { return has_extension() ? string_piece_type(p.c_str() + ExtensionOffset, p.c_str() + Length) : NULL_STR_PIECE; }
 	#undef NULL_STR_PIECE
 
-	#define oPATH_API_BY_COPY(fn) string_type fn() const { string_piece_type sp = fn##_piece(); return string_type(sp.first, sp.second); }
+	#define oPATH_API_BY_COPY(fn) basic_path fn() const { string_piece_type sp = fn##_piece(); return basic_path(sp.first, sp.second); }
 	oPATH_API_BY_COPY(string)
 	oPATH_API_BY_COPY(root_path)
 	oPATH_API_BY_COPY(root_name)
