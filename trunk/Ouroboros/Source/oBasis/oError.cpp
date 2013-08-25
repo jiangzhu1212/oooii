@@ -47,9 +47,9 @@ const char* oErrorAsString(errno_t _Error)
 		case std::errc::permission_denied: return "permission_denied";
 		case std::errc::protocol_error: return "protocol_error";
 		case std::errc::not_supported: return "not_supported";
-		case std::errc::function_not_supported: return "not_supported";
-		case std::errc::no_child_process: return "not_supported";
-		case std::errc::no_message_available: return "not_supported";
+		case std::errc::function_not_supported: return "function_not_supported";
+		case std::errc::no_child_process: return "no_child_process";
+		case std::errc::no_message_available: return "no_message_available";
 		case std::errc::connection_aborted: return "connection_aborted";
 		oNODEFAULT;
 	}
