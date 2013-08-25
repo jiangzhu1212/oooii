@@ -1951,6 +1951,7 @@ static const CONTROL_CREATION_DESC& oWinControlGetCreationDesc(oGUI_CONTROL_TYPE
 		{ "Button", WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_MULTILINE|BS_TOP|BS_AUTOCHECKBOX, 0, true, nullptr, GetSizeExplicit, },
 		{ "Button", WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_MULTILINE|BS_TOP|BS_AUTORADIOBUTTON, 0, true, nullptr, GetSizeExplicit, },
 		{ "Static", WS_VISIBLE|WS_CHILD|SS_EDITCONTROL, 0, true, nullptr, GetSizeExplicit, },
+		{ "Static", WS_VISIBLE|WS_CHILD|SS_EDITCONTROL|SS_CENTER, 0, true, nullptr, GetSizeExplicit, },
 		{ "SysLink", WS_VISIBLE|WS_CHILD|WS_TABSTOP|LWS_NOPREFIX, 0, true, nullptr, GetSizeExplicit, },
 		{ "Edit", WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_READONLY|ES_NOHIDESEL|ES_AUTOHSCROLL, 0, true, nullptr, GetSizeExplicit, },
 		{ "Static", WS_VISIBLE|WS_CHILD|SS_ICON|SS_REALSIZECONTROL, 0, false, OnCreateIcon, GetSizeIcon, },
@@ -2446,6 +2447,8 @@ oGUI_CONTROL_TYPE oWinControlGetType(HWND _hControl)
 		LONG dwStyle = 0xff & GetWindowLong(_hControl, GWL_STYLE);
 		if (dwStyle & SS_ICON)
 			return oGUI_CONTROL_ICON;
+		else if (dwStyle & SS_CENTER)
+			return oGUI_CONTROL_LABEL_CENTERED;
 		else if (dwStyle & SS_SIMPLE)
 			return oGUI_CONTROL_LABEL;
 		else

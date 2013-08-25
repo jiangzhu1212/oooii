@@ -462,6 +462,7 @@ enum oGUI_CONTROL_TYPE
 	oGUI_CONTROL_CHECKBOX,
 	oGUI_CONTROL_RADIOBUTTON,
 	oGUI_CONTROL_LABEL,
+	oGUI_CONTROL_LABEL_CENTERED,
 	oGUI_CONTROL_HYPERLABEL, // supports multiple markups of <a href="<somelink>">MyLink</a> or <a id="someID">MyID</a>. There can be multiple in one string.
 	oGUI_CONTROL_LABEL_SELECTABLE,
 	oGUI_CONTROL_ICON, // oGUI_CONTROL_DESC::Text should be the native handle to the icon resource (HICON on Windows)
