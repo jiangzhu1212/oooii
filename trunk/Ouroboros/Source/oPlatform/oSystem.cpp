@@ -228,25 +228,14 @@ bool oSystemExecute(const char* _CommandLine, char* _StrStdout, size_t _SizeofSt
 
 bool oSystemWaitIdle(unsigned int _TimeoutMS, oFUNCTION<bool()> _ContinueIdling)
 {
-	oRef<threadsafe oProgressBar> PB;
+	oRef<oProgressBar> PB;
 	if(!_ContinueIdling)
 	{
-		oProgressBar::DESC PBDesc;
-		PBDesc.UnknownProgress = true;
-
-		if (!oProgressBarCreate(PBDesc, nullptr, &PB))
+		if (!oProgressBarCreate([=] {}, "Waiting for System Idle...", &PB))
 			return false; // pass through error
-
-		PB->SetText("Waiting for system steady state...", "Press stop to stop waiting and continue.");
-
-		_ContinueIdling = [&]()->bool
-		{
-			PB->GetDesc(&PBDesc);
-			if (PBDesc.Stopped)
-				return false;
-				
-			return true;
-		};
+		PB->SetText("Waiting for system steady state...");
+		PB->SetSubtext("Press stop to stop waiting and continue.");
+		_ContinueIdling = [&]()->bool { return PB->GetStopped(); };
 	}
 	
 	bool IsSteady = false;

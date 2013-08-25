@@ -22,431 +22,236 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-
-// @oooii-tony: NOTE: This code pre-dates some of the oWin*.* code, so progress
-// bar code there has not been brought back to this code...
-
 #include <oPlatform/oProgressBar.h>
-#include <oBasis/oDispatchQueuePrivate.h>
-#include <oBasis/oError.h>
-#include <oStd/fixed_string.h>
-#include <oBasis/oInterface.h>
-#include <oConcurrency/event.h>
-#include <oConcurrency/mutex.h>
-#include <oBasis/oRef.h>
-#include <oBasis/oRefCount.h>
-#include <oBasis/oString.h>
-#include <oPlatform/oSingleton.h>
+#include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinWindowing.h>
-
-// Careful, DM_GETDEFID DM_SETDEFID DM_REPOSITION use WM_USER values
-static const UINT oWM_SETMARQUEE = WM_USER+600; // _wParam is TRUE for marquee, FALSE for regular progress bar
-static const UINT oWM_SHOWSTOP = WM_USER+601; // _wParam is TRUE for showing the stop button, FALSE for hiding it
-static const UINT oWM_SETSTOP = WM_USER+602;
-static const UINT oWM_SETPOS = WM_USER+603; // _wParam is an INT [0,100] for percentage complete
-static const UINT oWM_ADDPOS = WM_USER+604;
-static const LONG InsetX = 7;
-static const LONG InsetY = 5;
-
-static const int EVENT_COMPLETE = 0x1;
-static const int EVENT_STOPPED = 0x2;
-
-static bool oWinWake(HWND _hWnd)
-{
-	return !!PostMessage(_hWnd, WM_NULL, 0, 0);
-}
-
-static bool oSetDlgItemTextTruncated(HWND _hDlg, int _nIDDlgItem, LPCSTR _lpString)
-{
-	char buf[256];
-	oStrcpy(buf, _lpString);
-	oAddTruncationElipse(buf);
-
-	bool result = !!SetDlgItemText(_hDlg, _nIDDlgItem, buf);
-	if (!result)
-		oWinSetLastError();
-	return result;
-};
 
 struct oWinProgressBar : oProgressBar
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_NOOP_QUERYINTERFACE();
 
-	oWinProgressBar(const DESC& _Desc, void* _WindowNativeHandle, bool* _pSuccess);
-	~oWinProgressBar();
+	oWinProgressBar(const oTASK& _OnStopPressed, const char* _Title = "", oGUI_ICON _hIcon = nullptr);
+	void ShowStop(bool _Show = true) threadsafe override { Window->Dispatch([=] { oWinControlSetVisible(Get(PB_BUTTON), _Show); }); }
+	bool StopShown() const override { return oWinControlIsVisible(Get(PB_BUTTON)); }
+	void SetStopped(bool _Stopped = true) threadsafe override;
+	bool GetStopped() const override { return oWinControlGetErrorState(Get(PB_PROGRESS)); }
+	void SetTextV(const char* _Format, va_list _Args) threadsafe override;
+	char* GetText(char* _StrDestination, size_t _SizeofStrDestination) const override { return oWinControlGetText(_StrDestination, _SizeofStrDestination, Get(PB_TEXT)); }
+	void SetSubtextV(const char* _Format, va_list _Args) threadsafe override;
+	char* GetSubtext(char* _StrDestination, size_t _SizeofStrDestination) const override { return oWinControlGetText(_StrDestination, _SizeofStrDestination, Get(PB_SUBTEXT)); }
+	void SetPercentage(int _Percentage) threadsafe override { Window->Dispatch([=] { oThreadsafe(this)->SetPercentageInternal(_Percentage); }); }
+	void AddPercentage(int _Percentage) threadsafe override { Window->Dispatch([=] { oThreadsafe(this)->SetPercentageInternal(oThreadsafe(this)->GetPercentage() + _Percentage); }); }
+	int GetPercentage() const override { return oWinControlGetRangePosition(Get(PB_PROGRESS)); }
+	const threadsafe oWindow* GetWindow() const threadsafe override { return Window; }
+	threadsafe oWindow* GetWindow() threadsafe override { return Window; }
+	const oWindow* GetWindow() const override { return Window; }
+	oWindow* GetWindow() override { return Window; }
 
-	// _____________________________________________________________________________
-	// Public API
+private:
+	oRef<oWindow> Window;
+	oTASK OnStopPressed;
 
-	void GetDesc(DESC* _pDesc) threadsafe override;
-	DESC* Map() threadsafe override;
-	void Unmap() threadsafe override;
-	void SetTitle(const char* _Title) threadsafe override;
-	void SetText(const char* _Text, const char* _Subtext = nullptr) threadsafe override;
-	void SetPercentage(int _Percent) threadsafe override;
-	void AddPercentage(int _Percentage) threadsafe override;
-	bool Wait(unsigned int _TimeoutMS = oInfiniteWait) threadsafe override;
-
-protected:
-	enum ITEM
+	enum PB_CONTROL
 	{
-		STOP_BUTTON,
-		PERCENTAGE,
-		TEXT,
-		SUBTEXT,
-		PROGRESSBAR,
+		PB_TEXT,
+		PB_SUBTEXT,
+		PB_BUTTON,
+		PB_PERCENT,
+		PB_MARQUEE,
+		PB_PROGRESS,
+		PB_CONTROL_COUNT,
 	};
 
-	LPDLGTEMPLATE PB_NewTemplate(char* _Title, const char* _Text, const char* _Subtext, bool _AlwaysOnTop, RECT* _pOutProgressBarRect, RECT* _pOutMarqueeBarRect);
-	HWND PB_NewControl(HWND _hDialog, const RECT& _Rect, bool _Visible, bool _Marquee, short _ProgressMax = 100);
-
-	oDECLARE_DLGPROC(, WndProc);
-	oDECLARE_DLGPROC(static, StaticWndProc);
-
-	void Initialize(bool* _pSuccess);
-	void Run();
-	void Deinitialize();
-	void WTSetText(bool _TextValid, oStd::lstring _Text, bool _SubtextValid, oStd::lstring _Subtext); // by copy so oBIND retains string in Enqueue
-	void WTSetTitle(oStd::lstring _Title); // by copy so oBIND retains string in Enqueue
-	void SetDesc(DESC _Desc); // by copy so oBIND retains string in Enqueue
-
-	DESC Desc;
-	DESC PendingDesc;
-	
-	LPDLGTEMPLATE lpDlgTemplate; // needed while dialog is alive
-	RECT INIT_rProgressBar;
-	RECT INIT_rMarqueeBar;
-	HWND INIT_hParent;
-	HWND hDialog;
-	HWND hProgressBar;
-	HWND hMarqueeBar;
+	std::array<oGUI_WINDOW, PB_CONTROL_COUNT> Controls;
 	oRefCount RefCount;
-	oConcurrency::shared_mutex DescMutex;
-	oConcurrency::event Events;
+	int Percentage;
 
-	oRef<threadsafe oDispatchQueuePrivate> MessageQueue;
+private:
+	void OnEvent(const oGUI_EVENT_DESC& _Event);
+	void OnAction(const oGUI_ACTION_DESC& _Action);
+	bool CreateControls(const oGUI_EVENT_CREATE_DESC& _CreateEvent);
+	HWND Get(PB_CONTROL _Control) const threadsafe { return (HWND)oThreadsafe(this)->Controls[_Control]; }
+	void SetPercentageInternal(HWND _hProgress, HWND _hMarquee, HWND _hPercent, int _Percentage);
+	void SetPercentageInternal(int _Percentage) { SetPercentageInternal(Get(PB_PROGRESS), Get(PB_MARQUEE), Get(PB_PERCENT), _Percentage); }
 };
 
-oDEFINE_DLGPROC(oWinProgressBar, StaticWndProc);
-
-bool oProgressBarCreate(const oProgressBar::DESC& _Desc, void* _WindowNativeHandle, threadsafe oProgressBar** _ppProgressBar)
+oWinProgressBar::oWinProgressBar(const oTASK& _OnStopPressed, const char* _Title, oGUI_ICON _hIcon)
+	: OnStopPressed(_OnStopPressed)
+	, Percentage(-1)
 {
-	if (!_ppProgressBar)
-	{
-		oErrorSetLast(std::errc::invalid_argument);
-		return false;
-	}
+	Controls.fill(nullptr);
 
-	bool success = false;
-	oCONSTRUCT(_ppProgressBar, oWinProgressBar(_Desc, _WindowNativeHandle, &success));
-	return success;
+	oWINDOW_INIT Init;
+	Init.Title = _Title;
+	Init.hIcon = _hIcon;
+	Init.ActionHook = oBIND(&oWinProgressBar::OnAction, this, oBIND1);
+	Init.EventHook = oBIND(&oWinProgressBar::OnEvent, this, oBIND1);
+	Init.Shape.ClientSize = int2(320, 106);
+	Init.Shape.State = oGUI_WINDOW_HIDDEN;
+	Init.Shape.Style = oGUI_WINDOW_FIXED;
+	if (!oWindowCreate(Init, &Window))
+		oThrowLastError();
+
+	SetPercentageInternal(-1);
 }
 
-oWinProgressBar::oWinProgressBar(const DESC& _Desc, void* _WindowNativeHandle, bool* _pSuccess)
-	: Desc(_Desc)
-	, PendingDesc(_Desc)
-	, INIT_hParent((HWND)_WindowNativeHandle)
-	, lpDlgTemplate(nullptr)
-	, hDialog(nullptr)
-	, hProgressBar(nullptr)
-	, hMarqueeBar(nullptr)
+bool oProgressBarCreate(const oTASK& _OnStopPressed, const char* _Title, oGUI_ICON _hIcon, oProgressBar** _ppProgressBar)
 {
-	*_pSuccess = oDispatchQueueCreatePrivate("oWinProgressBar Message Thread", 2000, &MessageQueue);
-	if (*_pSuccess)
-	{
-		MessageQueue->Dispatch(&oWinProgressBar::Initialize, this, _pSuccess);
-		MessageQueue->Flush();
-		MessageQueue->Dispatch(&oWinProgressBar::Run, this);
-	}
-}
-
-oWinProgressBar::~oWinProgressBar()
-{
-	MessageQueue->Dispatch(&oWinProgressBar::Deinitialize, this);
-	oWinWake(hDialog);
-	MessageQueue->Join();
-}
-
-void oWinProgressBar::Initialize(bool* _pSuccess)
-{
-	*_pSuccess = false;
-	lpDlgTemplate = PB_NewTemplate("", "", "", Desc.AlwaysOnTop, &INIT_rProgressBar, &INIT_rMarqueeBar);
-	if (lpDlgTemplate)
-	{
-		hDialog = CreateDialogIndirectParam(GetModuleHandle(0), lpDlgTemplate, INIT_hParent, oWinProgressBar::StaticWndProc, (LPARAM)this);
-		SetDesc(Desc);
-		*_pSuccess = true;
-	}
-}
-
-void oWinProgressBar::Deinitialize()
-{
-	if (hDialog)
-	{
-		DestroyWindow(hDialog);
-		hDialog = nullptr;
-	}
-
-	if (lpDlgTemplate)
-	{
-		oDlgDeleteTemplate(lpDlgTemplate);
-		lpDlgTemplate = nullptr;
-	}
-}
-
-LPDLGTEMPLATE oWinProgressBar::PB_NewTemplate(char* _Title, const char* _Text, const char* _Subtext, bool _AlwaysOnTop, RECT* _pOutProgressBarRect, RECT* _pOutMarqueeBarRect)
-{
-	const RECT rDialog = { 0, 0, 197, 65 };
-	const RECT rStop = { 140, 45, rDialog.right - InsetX, rDialog.bottom - InsetY };
-	const RECT rPercentage = { 170, 30, 192, 40 };
-	const RECT rText = { InsetX, 3 + InsetY, rDialog.right - InsetX, 13 + InsetY };
-	const RECT rSubtext = { InsetX, 44, 140, 54 };
-	const RECT rProgressBarInit = { InsetX, 27, 167, 41 };
-	const RECT rMarqueeBarInit = { InsetX, 27, rDialog.right - InsetX, 41 };
-	*_pOutProgressBarRect = rProgressBarInit;
-	*_pOutMarqueeBarRect = rMarqueeBarInit;
-
-	const oWINDOWS_DIALOG_ITEM items[] = 
-	{
-		{ "&Stop", oDLG_BUTTON, STOP_BUTTON, rStop, true, true, true },
-		{ "", oDLG_LABEL_LEFT_ALIGNED, PERCENTAGE, rPercentage, true, true, false },
-		{ oSAFESTR(_Text), oDLG_LABEL_CENTERED, TEXT, rText, true, true, false },
-		{ oSAFESTR(_Subtext), oDLG_LABEL_LEFT_ALIGNED, SUBTEXT, rSubtext, true, true, false },
-	};
-
-	oWINDOWS_DIALOG_DESC dlg;
-	dlg.Font = "Tahoma";
-	dlg.Caption = oSAFESTR(_Title);
-	dlg.pItems = items;
-	dlg.NumItems = oCOUNTOF(items);
-	dlg.FontPointSize = 8;
-	dlg.Rect = rDialog;
-	dlg.Center = true;
-	dlg.SetForeground = true;
-	dlg.Enabled = true;
-	dlg.Visible = false; // always show later (once full init is finished)
-	dlg.AlwaysOnTop = false;
-
-	return oDlgNewTemplate(dlg);
-}
-
-HWND oWinProgressBar::PB_NewControl(HWND _hDialog, const RECT& _Rect, bool _Visible, bool _Marquee, short _ProgressMax)
-{
-	DWORD dwStyle = WS_CHILD;
-	if (_Visible) dwStyle |= WS_VISIBLE;
-	if (_Marquee) dwStyle |= PBS_MARQUEE;
-
-	RECT r = _Rect;
-	MapDialogRect(_hDialog, &r);
-	HWND hControl = CreateWindowEx(
-		0
-		, PROGRESS_CLASS
-		, "OOOii.ProgressBarControl"
-		, dwStyle
-		, r.left
-		, r.top
-		, r.right - r.left
-		, r.bottom - r.top
-		,	_hDialog
-		, 0
-		, 0
-		, nullptr);
-
-	SendMessage(hControl, PBM_SETRANGE, 0, MAKELPARAM(0, _ProgressMax));
-
-	if (_Marquee)
-		SendMessage(hControl, PBM_SETMARQUEE, 1, 0);
-
-	return hControl;
-}
-
-void oWinProgressBar::GetDesc(DESC* _pDesc) threadsafe
-{
-	oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(DescMutex);
-	*_pDesc = thread_cast<DESC&>(Desc);
-}
-
-oProgressBar::DESC* oWinProgressBar::Map() threadsafe
-{
-	DescMutex.lock();
-	return thread_cast<DESC*>(&PendingDesc);
-}
-
-void oWinProgressBar::Unmap() threadsafe
-{
-	DescMutex.unlock();
-	MessageQueue->Dispatch(&oWinProgressBar::SetDesc, thread_cast<oWinProgressBar*>(this), thread_cast<DESC&>(PendingDesc));
-	oWinWake(hDialog);
-}
-
-void oWinProgressBar::WTSetTitle(oStd::lstring _Title)
-{
-	oWinSetText(hDialog, _Title);
-}
-
-void oWinProgressBar::SetTitle(const char* _Title) threadsafe
-{
-	MessageQueue->Dispatch(&oWinProgressBar::SetTitle, thread_cast<oWinProgressBar*>(this), oStd::lstring(_Title));
-	oWinWake(hDialog);
-}
-
-void oWinProgressBar::WTSetText(bool _TextValid, oStd::lstring _Text, bool _SubtextValid, oStd::lstring _Subtext)
-{
-	if (_TextValid)
-		oSetDlgItemTextTruncated(hDialog, TEXT, _Text);
-	if (_SubtextValid)
-		oSetDlgItemTextTruncated(hDialog, SUBTEXT, _Subtext);
-}
-
-void oWinProgressBar::SetText(const char* _Text, const char* _Subtext) threadsafe
-{
-	if (_Text || _Subtext)
-	{
-		MessageQueue->Dispatch(&oWinProgressBar::WTSetText, thread_cast<oWinProgressBar*>(this), !!_Text, oStd::lstring(oSAFESTRN(_Text)), !!_Subtext, oStd::lstring(oSAFESTRN(_Subtext)));
-		oWinWake(hDialog);
-	}
-}
-
-void oWinProgressBar::SetPercentage(int _Percentage) threadsafe
-{
-	oVB(PostMessage(hDialog, oWM_SETPOS, _Percentage, 0));
-}
-
-void oWinProgressBar::AddPercentage(int _Percentage) threadsafe
-{
-	oVB(PostMessage(hDialog, oWM_ADDPOS, _Percentage, 0));
-}
-
-bool oWinProgressBar::Wait(unsigned int _TimeoutMS) threadsafe
-{
-	size_t bStopped = 0;
-	int Event = Events.wait_for_any(oStd::chrono::milliseconds(_TimeoutMS), EVENT_COMPLETE|EVENT_STOPPED);
-	if (!Event)
-		return oErrorSetLast(std::errc::timed_out);
-	else if (Event == EVENT_STOPPED)
-		return oErrorSetLast(std::errc::operation_canceled);
+	try { *_ppProgressBar = new oWinProgressBar(_OnStopPressed, _Title, _hIcon); }
+	catch (std::exception& e) { *_ppProgressBar = nullptr; return oErrorSetLast(e); }
 	return true;
 }
 
-void oWinProgressBar::SetDesc(DESC _Desc)
+bool oWinProgressBar::CreateControls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 {
-	SendMessage(hDialog, oWM_SHOWSTOP, _Desc.ShowStopButton, 0);
-	oWinSetAlwaysOnTop(hDialog, _Desc.AlwaysOnTop);
-	SendMessage(hDialog, oWM_SETMARQUEE, _Desc.UnknownProgress, 0);
-	SendMessage(hDialog, oWM_SETSTOP, _Desc.Stopped, 0);
-	ShowWindow(hDialog, _Desc.Show ? SW_SHOW : SW_HIDE);
-	if (_Desc.Show) oWinSetFocus(hDialog);
-	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(DescMutex);
-	Desc = _Desc;
-}
+	const int2 ProgressBarSize(270, 22);
+	const int2 ButtonSize(75, 23);
 
-void oWinProgressBar::Run()
-{
-	if (hDialog)
+	const int2 Inset(10, 10);
+	const oRECT rParent = oRect(oWinRectWH(int2(0,0), _CreateEvent.Shape.ClientSize));
+
+	oGUI_CONTROL_DESC Descs[PB_CONTROL_COUNT];
+
+	// progress/marquee bars
 	{
-		MSG msg;
-		if (GetMessage(&msg, hDialog, 0, 0) <= 0) // either an error or WM_QUIT
-		{
-			// close
-		}
-		else
-		{
-			if (!IsDialogMessage(hDialog, &msg))
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-		}
+		oRECT rChild = oRect(oWinRectWH(int2(Inset.x, 0), ProgressBarSize));
+		oRECT rText = oGUIResolveRect(rParent, rChild, oGUI_ALIGNMENT_MIDDLE_LEFT, true);
+		Descs[PB_MARQUEE].Type = oGUI_CONTROL_PROGRESSBAR_UNKNOWN;
+		Descs[PB_MARQUEE].Position = oWinRectPosition(oWinRect(rText));
+		Descs[PB_MARQUEE].Size = ProgressBarSize;
 
-		MessageQueue->Dispatch(&oWinProgressBar::Run, this);
+		Descs[PB_PROGRESS].Type = oGUI_CONTROL_PROGRESSBAR;
+		Descs[PB_PROGRESS].Position = oWinRectPosition(oWinRect(rText));
+		Descs[PB_PROGRESS].Size = ProgressBarSize;
 	}
+
+	// percentage text
+	{
+		const auto& cpb = Descs[PB_PROGRESS];
+		Descs[PB_PERCENT].Type = oGUI_CONTROL_LABEL;
+		Descs[PB_PERCENT].Text = "0%";
+		Descs[PB_PERCENT].Position = int2(cpb.Position.x + cpb.Size.x + 10, cpb.Position.y + 3);
+		Descs[PB_PERCENT].Size = int2(35, cpb.Size.y);
+	}
+
+	// Stop button
+	{
+		oRECT rChild = oRect(oWinRectWH(-Inset, ButtonSize));
+		oRECT rButton = oGUIResolveRect(rParent, rChild, oGUI_ALIGNMENT_BOTTOM_RIGHT, true);
+
+		Descs[PB_BUTTON].Type = oGUI_CONTROL_BUTTON;
+		Descs[PB_BUTTON].Text = "&Stop";
+		Descs[PB_BUTTON].Position = oWinRectPosition(oWinRect(rButton));
+		Descs[PB_BUTTON].Size = oWinRectSize(oWinRect(rButton));
+	}
+
+	// text/subtext
+	{
+		Descs[PB_TEXT].Type = oGUI_CONTROL_LABEL_CENTERED;
+		Descs[PB_TEXT].Position = Inset;
+		Descs[PB_TEXT].Size = int2(_CreateEvent.Shape.ClientSize.x - 2*Inset.x, 20);
+
+		Descs[PB_SUBTEXT].Type = oGUI_CONTROL_LABEL;
+		Descs[PB_SUBTEXT].Position = int2(Inset.x, Descs[PB_PROGRESS].Position.y + Descs[PB_PROGRESS].Size.y + 5);
+		Descs[PB_SUBTEXT].Size = int2((Descs[PB_PROGRESS].Size.x * 3) / 4, 20);
+	}
+
+	for (short i = 0; i < PB_CONTROL_COUNT; i++)
+	{
+		Descs[i].hParent = _CreateEvent.hWindow;
+		Descs[i].ID = i;
+		Controls[i] = (oGUI_WINDOW)oWinControlCreate(Descs[i]);
+	}
+
+	return true;
 }
 
-INT_PTR oWinProgressBar::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
+void oWinProgressBar::OnEvent(const oGUI_EVENT_DESC& _Event)
 {
-	switch (_uMsg)
+	switch (_Event.Type)
 	{
-		case WM_INITDIALOG:
+		case oGUI_CREATING:
 		{
-			hDialog = _hWnd;
-			// Mark the stop button with the default style
-			SendMessage(hDialog, DM_SETDEFID, STOP_BUTTON, 0);
-			hProgressBar = PB_NewControl(hDialog, INIT_rProgressBar, true, false);
-			hMarqueeBar = PB_NewControl(hDialog, INIT_rMarqueeBar, false, true);
-			return false;
-		}
-			
-		case oWM_SETMARQUEE:
-		{
-			HWND hHide = _wParam ? hProgressBar : hMarqueeBar;
-			HWND hShow = _wParam ? hMarqueeBar : hProgressBar;
-			HWND hPercentage = GetDlgItem(hDialog, PERCENTAGE);
-			ShowWindow(hPercentage, hHide == hProgressBar ? SW_HIDE : SW_SHOW);
-			UpdateWindow(hPercentage);
-			ShowWindow(hHide, SW_HIDE);
-			ShowWindow(hShow, SW_SHOW);
-			UpdateWindow(hShow);
-			return false;
-		}
-
-		case oWM_SHOWSTOP: 
-		{
-			HWND hStop = GetDlgItem(hDialog, STOP_BUTTON);
-			ShowWindow(hStop, _wParam ? SW_SHOW : SW_HIDE);
-			UpdateWindow(hStop);
-			return false;
-		}
-			
-		case oWM_SETPOS:
-		{
-			UINT p = (UINT)__max(0, __min(100, (UINT)_wParam));
-			SendMessage(hProgressBar, PBM_SETPOS, p, 0);
-			char buf[16];
-			oPrintf(buf, "%u%%", p);
-			oAddTruncationElipse(buf);
-			oVB(SetDlgItemText(hDialog, PERCENTAGE, buf));
-			if (p == 100) Events.set(EVENT_COMPLETE);
-			else Events.reset(EVENT_COMPLETE);
-			return false;
-		}
-
-		case oWM_ADDPOS:
-		{
-			UINT Pos = (UINT)SendMessage(hProgressBar, PBM_GETPOS, 0, 0);
-			oV((HRESULT)SendMessage(_hWnd, oWM_SETPOS, Pos + _wParam, 0));
-			return false;
-		}
-
-		case oWM_SETSTOP:
-		{
-			if (_wParam) Events.set(EVENT_STOPPED);
-			else Events.reset(EVENT_STOPPED);
-			SendMessage(hProgressBar, PBM_SETSTATE, _wParam ? PBST_ERROR : PBST_NORMAL, 0);
-			if (_wParam) oSetDlgItemTextTruncated(hDialog, SUBTEXT, "Stopped...");
-			oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(DescMutex);
-			Desc.Stopped = !!_wParam;
-			return false;
-		}
-
-		case WM_CLOSE:
-			DestroyWindow(_hWnd);
+			if (!CreateControls(_Event.AsCreate()))
+				oThrowLastError();
 			break;
-
-		case WM_COMMAND:
-			switch (_wParam)
-			{
-				case STOP_BUTTON:
-					SendMessage(_hWnd, oWM_SETSTOP, TRUE, 0);
-					return true;
-				
-				default:
-					break;
-			}
+		}
 
 		default:
 			break;
 	}
+}
 
-	return false;
+void oWinProgressBar::OnAction(const oGUI_ACTION_DESC& _Action)
+{
+	if (_Action.Action == oGUI_ACTION_CONTROL_ACTIVATED && _Action.DeviceID == PB_BUTTON && OnStopPressed)
+	{
+		SetStopped(true);
+		OnStopPressed();
+	}
+}
+
+void oWinProgressBar::SetStopped(bool _Stopped) threadsafe
+{
+	Window->Dispatch([=]
+	{
+		oWinControlSetErrorState(Get(PB_PROGRESS), _Stopped);
+		oWinControlSetErrorState(Get(PB_MARQUEE), _Stopped);
+	});
+}
+
+void oWinProgressBar::SetTextV(const char* _Format, va_list _Args) threadsafe
+{
+	oStd::lstring s;
+	if (vsnprintf(s, _Format, _Args) >= s.capacity())
+		oTHROW0(no_buffer_space);
+	Window->Dispatch([=] { oWinControlSetText(Get(PB_TEXT), s.c_str()); });
+}
+
+void oWinProgressBar::SetSubtextV(const char* _Format, va_list _Args) threadsafe
+{
+	oStd::lstring s;
+	if (vsnprintf(s, _Format, _Args) >= s.capacity())
+		oTHROW0(no_buffer_space);
+	Window->Dispatch([=] { oWinControlSetText(Get(PB_SUBTEXT), s.c_str()); });
+}
+
+static void EnsureVisible(HWND _hControl)
+{
+	if (!oWinControlIsVisible(_hControl))
+		oWinControlSetVisible(_hControl);
+}
+
+static void EnsureHidden(HWND _hControl)
+{
+	if (oWinControlIsVisible(_hControl))
+		oWinControlSetVisible(_hControl, false);
+}
+
+void oWinProgressBar::SetPercentageInternal(HWND _hProgress, HWND _hMarquee, HWND _hPercent, int _Percentage)
+{
+	if (_Percentage < 0)
+	{
+		EnsureHidden(_hProgress);
+		EnsureHidden(_hPercent);
+		EnsureVisible(_hMarquee);
+	}
+
+	else
+	{
+		UINT p = (UINT)__max(0, __min(100, (UINT)_Percentage));
+		oWinControlSetRangePosition(_hProgress, p);
+
+		char buf[16];
+		snprintf(buf, "%u%%", p);
+		oAddTruncationElipse(buf);
+		oVERIFY(oWinControlSetText(_hPercent, buf));
+
+		EnsureHidden(_hMarquee);
+		EnsureVisible(_hProgress);
+		EnsureVisible(_hPercent);
+	}
+
+	Percentage = _Percentage;
 }

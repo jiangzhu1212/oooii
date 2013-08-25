@@ -30,6 +30,8 @@
 #include <oBasis/oLockedPointer.h>
 #include <oBasis/oRef.h>
 
+#include <oConcurrency/event.h>
+
 // Wouldn't it be nice if oTesting logic were oBasis so it can be used with
 // that lib too (without shims)...
 #include <oPlatform/oReporting.h>
@@ -1004,43 +1006,53 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	// a feature of the unit test, we should expose it through the DESC.
 	//ShowProgressBar = true;
 
-	oRef<threadsafe oProgressBar> ProgressBar;
+	oStd::thread ProgressBarThread;
+	bool ShouldStop = false;
+	oConcurrency::event Ready;
+	threadsafe oProgressBar* pProgressBar = nullptr;
+	oStd::finally StopProgressBar([&]
+	{
+		if (ShowProgressBar)
+			Ready.wait();
+		
+		if (pProgressBar)
+			pProgressBar->Quit();
+		
+		ProgressBarThread.join();
+	});
+	
 	if (ShowProgressBar)
 	{
-		oProgressBar::DESC PBDesc;
-		PBDesc.Show = false;
-		PBDesc.ShowStopButton = true;
-		PBDesc.AlwaysOnTop = false;
-		PBDesc.UnknownProgress = true;
-		PBDesc.Stopped = false;
+		ProgressBarThread = std::move(oStd::thread([&]
+		{
+			oConcurrency::begin_thread("Progress Bar Thread");
+			oStd::xlstring title;
+			oConsole::GetTitle(title);
+			oRef<oProgressBar> ProgressBar;
+			oVERIFY(oProgressBarCreate([&] { ShouldStop = true; }, title, &ProgressBar));
+			pProgressBar = ProgressBar;
+			Ready.set();
+			ProgressBar->FlushMessages(true);
+			pProgressBar = nullptr;
+			oConcurrency::end_thread();
+		}));
 
-		oVERIFY(oProgressBarCreate(PBDesc, oConsole::GetNativeHandle(), &ProgressBar));
-
-		oStd::xlstring title;
-		oConsole::GetTitle(title.c_str());
-		ProgressBar->SetTitle(title);
+		Ready.wait();
 	}
 
 	size_t ProgressTotalNumTests = 0;
 	size_t ProgressNumTestsSoFar = 0;
 	if (ShowProgressBar)
 	{
-		ProgressBar->SetText("Calculating the number of tests...", "");
-		oProgressBar::DESC* pDesc = ProgressBar->Map();
-		pDesc->Show = true;
-		pDesc->UnknownProgress = true;
-		ProgressBar->Unmap();
+		pProgressBar->SetText("Calculating the number of tests...");
+		pProgressBar->Restore();
+
 		ProgressTotalNumTests = CalculateNumTests(Desc, &filterChain);
-		if (!ProgressBar->Wait(0) && oErrorGetLast() == std::errc::operation_canceled)
+		if (ShouldStop)
 		{
 			oTRACE("ProgressBar Stop Pressed, aborting.");
 			return oTest::FAILURE;
 		}
-		
-		ProgressBar->SetPercentage(1);
-		pDesc = ProgressBar->Map();
-		pDesc->UnknownProgress = false;
-		ProgressBar->Unmap();
 	}
 
 	oCRTLeakTracker::Singleton()->Enable(Desc.EnableLeakTracking);
@@ -1104,10 +1116,10 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 					{
 						if (ShowProgressBar)
 						{
-							if (!ProgressBar->Wait(0) && oErrorGetLast() == std::errc::operation_canceled)
+							if (ShouldStop)
 								break;
 
-							ProgressBar->SetText(TestName);
+							pProgressBar->SetText(TestName);
 						}
 
 						oTRACE("========== Begin %s Run %u ==========", TestName.c_str(), r+1);
@@ -1120,7 +1132,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 						if (ShowProgressBar)
 						{
 							ProgressNumTestsSoFar++;
-							ProgressBar->SetPercentage(static_cast<int>((100 * (ProgressNumTestsSoFar+1)) / ProgressTotalNumTests));
+							pProgressBar->SetPercentage(static_cast<int>((100 * (ProgressNumTestsSoFar+1)) / ProgressTotalNumTests));
 						}
 					}
 
@@ -1212,7 +1224,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 		TotalNumSkipped += NumSkipped;
 	}
 
-	if (ShowProgressBar && ProgressBar->Wait(0) && oErrorGetLast() == std::errc::operation_canceled)
+	if (ShowProgressBar && ShouldStop)
 	{
 		Report(oConsoleReporting::ERR, "\n\n========== Stopped by user ==========");
 		return oTest::FAILURE;
