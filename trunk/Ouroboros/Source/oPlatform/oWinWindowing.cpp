@@ -917,25 +917,25 @@ bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext)
 
 	if (HasMessage)
 	{
-			if (!_hWnd)
-				_hWnd = msg.hwnd;
+		if (!_hWnd)
+			_hWnd = msg.hwnd;
 
-			oWIN_CHECK(_hWnd);
+		oWIN_CHECK(_hWnd);
 
-			HasMessage = !!TranslateAccelerator(_hWnd, _hAccel, &msg);
-			if (!HasMessage)
-				HasMessage = oIsDialogMessageEx(_hWnd, &msg);
+		HasMessage = !!TranslateAccelerator(_hWnd, _hAccel, &msg);
+		if (!HasMessage)
+			HasMessage = oIsDialogMessageEx(_hWnd, &msg);
 
-			if (!HasMessage)
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-
-			// Treat WM_NULL like the noop it is by indicating that there are no new messages
-			if (msg.message != WM_NULL)
-				return true;
+		if (!HasMessage)
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
 		}
+
+		// Treat WM_NULL like the noop it is by indicating that there are no new messages
+		if (msg.message != WM_NULL)
+			return true;
+	}
 
 	return oErrorSetLast(std::errc::no_message_available);
 }
