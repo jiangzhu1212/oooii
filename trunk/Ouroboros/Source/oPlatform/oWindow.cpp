@@ -785,7 +785,7 @@ void oWinWindow::FlushMessages(bool _WaitForNext)
 
 void oWinWindow::Quit() threadsafe
 {
-	PostQuitMessage(0);
+	DispatchInternal([=] { PostQuitMessage(0); });
 };
 
 void oWinWindow::TriggerGenericEvent(oGUI_EVENT _Event, oGUI_WINDOW_SHAPE_DESC* _pShape)
@@ -824,7 +824,7 @@ bool oWinWindow::HandleLifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 			oGUI_EVENT_CREATE_DESC e((oGUI_WINDOW)_hWnd
 				, (oGUI_STATUSBAR)oWinGetStatusBar(_hWnd)
 				, (oGUI_MENU)oWinGetMenu(_hWnd)
-				, pInit->Shape);
+				, wcs->Shape);
 			EventHooks.Visit(e);
 			break;
 		}
