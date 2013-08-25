@@ -54,7 +54,6 @@ namespace oConsole
 	
 	struct DESC
 	{
-
 		DESC()
 			: BufferWidth(DEFAULT)
 			, BufferHeight(DEFAULT)
@@ -93,8 +92,9 @@ namespace oConsole
 	void SetDesc(const DESC* _pDesc);
 	void GetDesc(DESC* _pDesc);
 	void SetTitle(const char* _Title);
-	void GetTitle(char* _StrDestination, size_t _SizeofStrDestination);
-	template<size_t size> inline void GetTitle(char (&_StrDestination)[size]) { return GetTitle(_StrDestination, size); }
+	char* GetTitle(char* _StrDestination, size_t _SizeofStrDestination);
+	template<size_t size> char*GetTitle(char (&_StrDestination)[size]) { return GetTitle(_StrDestination, size); }
+	template<size_t capacity> char*GetTitle(oStd::fixed_string<char, capacity>& _StrDestination) { return GetTitle(_StrDestination, _StrDestination.capacity()); }
 
 	// If you specify DEFAULT for one of these, then it will be whatever it was
 	// before.

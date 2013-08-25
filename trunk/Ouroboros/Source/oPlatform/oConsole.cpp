@@ -299,9 +299,11 @@ void oConsole::SetTitle(const char* _Title)
 	oVB(SetConsoleTitle(_Title));
 }
 
-void oConsole::GetTitle(char* _strDestination, size_t _SizeofStrDestination)
+char* oConsole::GetTitle(char* _StrDestination, size_t _SizeofStrDestination)
 {
-	oVB(GetConsoleTitle(_strDestination, static_cast<DWORD>(_SizeofStrDestination)));
+	if (!GetConsoleTitle(_StrDestination, static_cast<DWORD>(_SizeofStrDestination)))
+		return nullptr;
+	return _StrDestination;
 }
 
 void oConsole::SetCursorPosition(const int2& _Position)
