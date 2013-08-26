@@ -102,13 +102,21 @@ double oStd::modified_julian_date(const date& _Date)
 	return JD - 2400000.5;
 }
 
+weekday::value day_of_week(const date& _Date)
+{
+	int style = JULIAN; // 0 = julian, 1 = gregorian
+	IF_SHOULD_USE_GREGORIAN(_Date)
+		style = GREGORIAN;
+	return static_cast<oStd::weekday::value>(::day_of_week(style, abs(_Date.year), _Date.month, _Date.day));
+}
+
 static void oDateCalcFromJulianDayNumber(long long _JDN, date* _pDate)
 {
 	int style = JULIAN;
 	IF_SHOULD_USE_GREGORIAN2(_JDN)
 		style = GREGORIAN;
 	jdn_to_date(style, static_cast<int>(_JDN), &_pDate->year, (int*)&_pDate->month, &_pDate->day);
-	_pDate->day_of_week = static_cast<weekday::value>(day_of_week(style, abs(_pDate->year), _pDate->month, _pDate->day));
+	_pDate->day_of_week = static_cast<weekday::value>(::day_of_week(style, abs(_pDate->year), _pDate->month, _pDate->day));
 	_pDate->hour = _pDate->minute = _pDate->second = _pDate->millisecond = 0;
 }
 
@@ -638,7 +646,5 @@ bool from_string(month::value* _pValue, const char* _StrSource)
 	}
 	return false;
 }
-
-
 
 } // namespace oStd

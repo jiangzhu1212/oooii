@@ -169,6 +169,9 @@ double julian_date(const date& _Date);
 // return NaN.
 double modified_julian_date(const date& _Date);
 
+// Returns the day of the week for the specified date
+weekday::value day_of_week(const date& _Date);
+
 // Returns the component of an ntp_date according to NTPv4.
 inline long long get_ntp_date(const ntp_date& _Date) { return *(long long*)&_Date.DataMS; }
 inline int get_ntp_era(const ntp_date& _Date) { unsigned int i = _Date.DataMS >> 32; return *(int*)&i; }
