@@ -204,7 +204,7 @@ void oWinProgressBar::SetStopped(bool _Stopped) threadsafe
 void oWinProgressBar::SetTextV(const char* _Format, va_list _Args) threadsafe
 {
 	oStd::lstring s;
-	if (vsnprintf(s, _Format, _Args) >= s.capacity())
+	if ((size_t)vsnprintf(s, _Format, _Args) >= s.capacity())
 		oTHROW0(no_buffer_space);
 	Window->Dispatch([=] { oWinControlSetText(Get(PB_TEXT), s.c_str()); });
 }
@@ -212,7 +212,7 @@ void oWinProgressBar::SetTextV(const char* _Format, va_list _Args) threadsafe
 void oWinProgressBar::SetSubtextV(const char* _Format, va_list _Args) threadsafe
 {
 	oStd::lstring s;
-	if (vsnprintf(s, _Format, _Args) >= s.capacity())
+	if ((size_t)vsnprintf(s, _Format, _Args) >= s.capacity())
 		oTHROW0(no_buffer_space);
 	Window->Dispatch([=] { oWinControlSetText(Get(PB_SUBTEXT), s.c_str()); });
 }
