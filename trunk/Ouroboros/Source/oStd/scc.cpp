@@ -22,54 +22,58 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
-#pragma once
-#ifndef oStd_all_h
-#define oStd_all_h
-#include <oStd/algorithm.h>
-#include <oStd/assert.h>
-#include <oStd/atof.h>
-#include <oStd/byte.h>
-#include <oStd/callable.h>
-#include <oStd/color.h>
-#include <oStd/date.h>
-#include <oStd/djb2.h>
-#include <oStd/endian.h>
-#include <oStd/equal.h>
-#include <oStd/finally.h>
-#include <oStd/fixed_string.h>
-#include <oStd/fixed_vector.h>
-#include <oStd/fnv1a.h>
-#include <oStd/fourcc.h>
-#include <oStd/function.h>
-#include <oStd/guid.h>
-#include <oStd/ini.h>
-#include <oStd/intrinsics.h>
-#include <oStd/macros.h>
-#include <oStd/memory.h>
-#include <oStd/murmur3.h>
-#include <oStd/operators.h>
-#include <oStd/oFor.h>
 #include <oStd/scc.h>
-#include <oStd/oStdAtomic.h>
-#include <oStd/oStdChrono.h>
-#include <oStd/oStdConditionVariable.h>
-#include <oStd/oStdFuture.h>
-#include <oStd/oStdMakeUnique.h>
-#include <oStd/oStdMutex.h>
-#include <oStd/oStdRatio.h>
-#include <oStd/oStdThread.h>
-#include <oStd/path.h>
-#include <oStd/path_traits.h>
-#include <oStd/string.h>
-#include <oStd/string_traits.h>
-#include <oStd/text_document.h>
 #include <oStd/throw.h>
-#include <oStd/timer.h>
-#include <oStd/type_info.h>
-#include <oStd/uint128.h>
-#include <oStd/unordered_map.h>
-#include <oStd/uri.h>
-#include <oStd/xml.h>
-#endif
+#include "scc_svn.h"
+
+namespace oStd {
+
+const char* as_string(const scc_protocol::value& _Protocol)
+{
+	switch (_Protocol)
+	{
+		case scc_protocol::perforce: return "perforce";
+		case scc_protocol::svn: return "svn";
+		case scc_protocol::git: return "git";
+		default: break;
+	}
+	return "unrecognized scc_protocol";
+}
+
+const char* as_string(const scc_status::value& _Status)
+{
+	switch (_Status)
+	{
+		case scc_status::unknown: return "unknown";
+		case scc_status::unchanged: return "unchanged";
+		case scc_status::unversioned: return "unversioned";
+		case scc_status::ignored: return "ignored";
+		case scc_status::modified: return "modified";
+		case scc_status::missing: return "missing";
+		case scc_status::added: return "added";
+		case scc_status::removed: return "removed";
+		case scc_status::replaced: return "replaced";
+		case scc_status::copied: return "copied";
+		case scc_status::conflict: return "conflict";
+		case scc_status::merged: return "merged";
+		case scc_status::obstructed: return "obstructed";
+		case scc_status::out_of_date: return "out_of_date";
+		default: break;
+	}
+	return "unrecognized scc_status";
+}
+
+
+std::shared_ptr<scc> make_scc(scc_protocol::value _Protocol, const scc_spawn& _Spawn)
+{
+	switch (_Protocol)
+	{
+		case scc_protocol::svn: return detail::make_scc_svn(_Spawn);
+		case scc_protocol::perforce: 
+		case scc_protocol::git: 
+		default: break;
+	}
+	oTHROW0(protocol_not_supported);
+}
+
+} // namespace oStd

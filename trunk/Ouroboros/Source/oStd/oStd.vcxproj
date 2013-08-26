@@ -69,6 +69,7 @@
     <ClCompile Include="ordinal.cpp" />
     <ClCompile Include="oStdChrono.cpp" />
     <ClCompile Include="oStdConditionVariable.cpp" />
+    <ClCompile Include="oStdFilesystem.cpp" />
     <ClCompile Include="oStdFuture.cpp" />
     <ClCompile Include="oStdMutex.cpp" />
     <ClCompile Include="oStdThread.cpp" />
@@ -81,6 +82,8 @@
     <ClCompile Include="percent_decode.cpp" />
     <ClCompile Include="percent_encode.cpp" />
     <ClCompile Include="relativize_path.cpp" />
+    <ClCompile Include="scc.cpp" />
+    <ClCompile Include="scc_svn.cpp" />
     <ClCompile Include="strbitmask.cpp" />
     <ClCompile Include="stringize.cpp" />
     <ClCompile Include="strmatch.cpp" />
@@ -123,12 +126,14 @@
     <ClInclude Include="..\..\Include\oStd\oStdAtomic.h" />
     <ClInclude Include="..\..\Include\oStd\oStdChrono.h" />
     <ClInclude Include="..\..\Include\oStd\oStdConditionVariable.h" />
+    <ClInclude Include="..\..\Include\oStd\oStdFilesystem.h" />
     <ClInclude Include="..\..\Include\oStd\oStdFuture.h" />
     <ClInclude Include="..\..\Include\oStd\oStdMutex.h" />
     <ClInclude Include="..\..\Include\oStd\oStdRatio.h" />
     <ClInclude Include="..\..\Include\oStd\oStdThread.h" />
     <ClInclude Include="..\..\Include\oStd\path.h" />
     <ClInclude Include="..\..\Include\oStd\path_traits.h" />
+    <ClInclude Include="..\..\Include\oStd\scc.h" />
     <ClInclude Include="..\..\Include\oStd\string.h" />
     <ClInclude Include="..\..\Include\oStd\stringize.h" />
     <ClInclude Include="..\..\Include\oStd\string_traits.h" />
@@ -144,6 +149,7 @@
     <ClInclude Include="calfaq.h" />
     <ClInclude Include="memduff.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="scc_svn.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6C467BDD-EEA7-4FF6-B594-26A760DF179F}</ProjectGuid>

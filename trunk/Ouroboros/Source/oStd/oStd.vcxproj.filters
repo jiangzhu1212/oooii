@@ -139,6 +139,15 @@
     <ClCompile Include="utfcmp.cpp">
       <Filter>Source\memory</Filter>
     </ClCompile>
+    <ClCompile Include="oStdFilesystem.cpp">
+      <Filter>Source\C++11</Filter>
+    </ClCompile>
+    <ClCompile Include="scc_svn.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="scc.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -296,6 +305,15 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oStd\type_info.h">
       <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\oStdFilesystem.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\scc.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="scc_svn.h">
+      <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
