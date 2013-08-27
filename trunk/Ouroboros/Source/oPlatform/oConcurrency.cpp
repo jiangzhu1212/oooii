@@ -85,6 +85,17 @@ typedef oProcessHeapAllocator<oTASK> allocator_t;
 	#include <ppl.h>
 	using namespace Concurrency;
 	typedef Concurrency::task_group task_group_t;
+#else
+	
+	class task_group_impl: public oConcurrency::task_group
+	{
+	public:
+		void run(const oTASK& _Task) threadsafe override { _Task(); }
+		void wait() threadsafe override {}
+	};
+
+	typedef task_group_impl task_group_t;
+
 #endif
 
 #define oHAS_SCHEDULER (oHAS_oCONCURRENCY || oHAS_TBB)
@@ -138,16 +149,9 @@ typedef oProcessHeapAllocator<oTASK> allocator_t;
 
 #else
 
-	class task_group_impl : public oConcurrency::task_group
-	{
-	public:
-		void run(const oTASK& _Task) threadsafe override { _Task(); }
-		void wait() threadsafe override {}
-	};
-
 	std::shared_ptr<oConcurrency::task_group> oConcurrency::make_task_group()
 	{
-		return std::move(std::make_shared<task_group_impl>());
+		return std::move(std::make_shared<task_group_t>());
 	}
 
 	bool oDispatchQueueCreateConcurrent(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueueConcurrent** _ppQueue)
@@ -336,7 +340,7 @@ namespace oStd {
 
 		class waitable_task_impl : public waitable_task
 		{
-			task_group g;
+			task_group_t g;
 		public:
 			waitable_task_impl(const oTASK& _Task) { g.run(_Task); }
 			~waitable_task_impl() { wait(); }
