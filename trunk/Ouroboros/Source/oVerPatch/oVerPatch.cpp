@@ -32,7 +32,7 @@ static oOption sOptions[] =
 	{ "comments", 'm', "string", "Comments" },
 	{ "privatebuild", 'b', "string", "File type" },
 	{ "specialbuild", 's', "string", "File type" },
-	{ "p4root", 'r', "path", "P4 root" },
+	{ "sccroot", 'r', "path", "source code control repository root" },
 	{ "file", 'f', "path", "executable file to modify" },
 	{ "verpatch", '@', "path", "path to verpatch.exe" },
 	{ 0, 0, 0, 0 },
@@ -47,15 +47,22 @@ struct oVERPATCH_DESC
 	const char* Comments;
 	const char* PrivateBuild;
 	const char* SpecialBuild;
-	const char* P4Root;
+	const char* SCCRoot;
 	const char* File;
 	const char* VerPatch;
 };
 
+static oStd::path_string sDefaultSCCRoot;
+
 static bool ParseCommandLine(int argc, const char* argv[], oVERPATCH_DESC* _pDesc)
 {
 	memset(_pDesc, 0, sizeof(oVERPATCH_DESC));
-	_pDesc->P4Root = "//...";
+	#if 0
+		_pDesc->SCCRoot = "//...";
+	#else
+	oSystemGetPath(sDefaultSCCRoot, oSYSPATH_APP);
+	_pDesc->SCCRoot = sDefaultSCCRoot;
+	#endif
 	_pDesc->VerPatch = "./";
 
 	const char* value = 0;
@@ -72,7 +79,7 @@ static bool ParseCommandLine(int argc, const char* argv[], oVERPATCH_DESC* _pDes
 			case 'm': _pDesc->Comments = value; break;
 			case 'b': _pDesc->PrivateBuild = value; break;
 			case 's': _pDesc->SpecialBuild = value; break;
-			case 'r': _pDesc->P4Root = value; break;
+			case 'r': _pDesc->SCCRoot = value; break;
 			case 'f': _pDesc->File = value; break;
 			case '@': _pDesc->VerPatch = value; break;
 			case ':': return oErrorSetLast(std::errc::invalid_argument, "The %d%s option is missing a parameter (does it begin with '-' or '/'?)", count, oStd::ordinal(count));
@@ -91,21 +98,24 @@ static bool CreateVersionString(oStd::mstring& _StrDestination, const oVERPATCH_
 	if (!oModuleGetDesc(_Desc.File, &d))
 		return false; // pass through error
 
-	// First get the revision from P4.
-	oVersion v;
-	v.Major = 1;
+	oVersion v(1,0);
 	if (oStd::from_string(&v, _Desc.Version) && !v.IsValid())
 		v = d.FileVersion;
 
-	uint Revision = oP4GetCurrentChangelist(_Desc.P4Root);
-	bool Special = oErrorGetLast() == std::errc::protocol_error;
-	if (Revision == oInvalid)
-		Revision = 0;
-	oP4SetRevision(Revision, &v);
+	auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, oBIND4, oBIND5, false));
+	uint Revision = scc->revision(_Desc.SCCRoot);
+
+	// make revision readable, but fit Microsoft's standards
+	v.Build = static_cast<unsigned short>(Revision / 10000);
+	v.Revision = Revision % 10000;
 
 	// Now convert it to string
 	oStd::to_string(_StrDestination, v);
-	
+
+	// Mark if this is a modified build
+	oStd::scc_file f;
+	bool Special = 0 != scc->modifications(_Desc.SCCRoot, 0, &f, 1);
+
 	if (d.IsDebugBuild)
 		oStrcat(_StrDestination, " (Debug)");
 	if (Special)
