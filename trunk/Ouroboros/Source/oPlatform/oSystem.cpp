@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oPlatform/oSystem.h>
 #include <oStd/oStdChrono.h>
-#include <oPlatform/oP4.h>
+#include <oStd/scc.h>
 #include <oPlatform/oProcess.h>
 #include <oPlatform/oProgressBar.h>
 #include <oPlatform/Windows/oWindows.h>
@@ -451,12 +451,14 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 		case oSYSPATH_CWD: GetCurrentDirectoryA(nElements, _StrSysPath); break;
 		case oSYSPATH_SYS: GetSystemDirectoryA(_StrSysPath, nElements); break;
 		case oSYSPATH_OS: GetWindowsDirectoryA(_StrSysPath, nElements); break;
-		case oSYSPATH_P4ROOT:
+		case oSYSPATH_SCCROOT:
 		{
-			oP4_WORKSPACE ws;
-			success = oP4GetWorkspace(&ws);
-			if (success)
-				oStrcpy(_StrSysPath, _SizeofStrSysPath, ws.Root);
+			oStd::path_string app;
+			oSystemGetPath(app, oSYSPATH_APP_FULL);
+
+			auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, oBIND4, oBIND5, false));
+			scc->root(app, _StrSysPath, _SizeofStrSysPath);
+
 			break;
 		}
 

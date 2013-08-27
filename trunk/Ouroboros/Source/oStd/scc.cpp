@@ -24,6 +24,8 @@
  **************************************************************************/
 #include <oStd/scc.h>
 #include <oStd/throw.h>
+//#include "scc_git.h"
+//#include "scc_p4.h"
 #include "scc_svn.h"
 
 namespace oStd {
@@ -68,9 +70,9 @@ std::shared_ptr<scc> make_scc(scc_protocol::value _Protocol, const scc_spawn& _S
 {
 	switch (_Protocol)
 	{
-		case scc_protocol::svn: return detail::make_scc_svn(_Spawn);
-		case scc_protocol::perforce: 
-		case scc_protocol::git: 
+		case scc_protocol::svn: return std::move(detail::make_scc_svn(_Spawn));
+		//case scc_protocol::perforce: return std::move(detail::make_scc_p4(_Spawn));
+		//case scc_protocol::git: return std::move(detail::make_scc_git(_Spawn));
 		default: break;
 	}
 	oTHROW0(protocol_not_supported);

@@ -70,6 +70,41 @@ oRTTI_ENUM_END_DESCRIPTION(oP4_LINE_END)
 static const unsigned int kP4TypicalTimeoutMS = 5000;
 static const unsigned int kP4FileTimeoutMS = 60 * 1000;
 
+bool get_kvpair(char* _KeyDestination, size_t _SizeofKeyDestination, char* _ValueDestination, size_t _SizeofValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = nullptr)
+{
+	const char* k = _SourceString + strspn(_SourceString, oWHITESPACE); // move past whitespace
+	const char strSep[2] = { _KeyValueSeparator, 0 };
+	const char* sep = k + strcspn(k, strSep); // mark sep
+	if (!sep) return false;
+	const char* end = sep + 1 + strcspn(sep+1, _KeyValuePairSeparators); // make end of value
+
+	if (_KeyDestination)
+	{
+		size_t keyLen = sep - k;
+		memcpy_s(_KeyDestination, _SizeofKeyDestination-1, k, keyLen);
+		_KeyDestination[__min(_SizeofKeyDestination-1, keyLen)] = 0;
+	}
+	
+	if (_ValueDestination)
+	{
+		const char* v = sep + 1 + strspn(sep+1, oWHITESPACE);
+		size_t valLen = end - v;
+		memcpy_s(_ValueDestination, _SizeofValueDestination-1, v, valLen);
+		_ValueDestination[__min(_SizeofValueDestination-1, valLen)] = 0;
+	}
+
+	if (_ppLeftOff)
+		*_ppLeftOff = end;
+
+	return true;
+}
+template<size_t size> bool get_kvpair(char (&_KeyDestination)[size], char* _ValueDestination, size_t _SizeofValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return get_kvpair(_KeyDestination, size, _ValueDestination, _SizeofValueDestination, _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
+template<size_t size> bool get_kvpair(char* _KeyDestination, size_t _SizeofKeyDestination, char (&_ValueDestination)[size], char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return get_kvpair(_KeyDestination, _SizeofKeyDestination, _ValueDestination, size, _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
+template<size_t key_size, size_t value_size> bool get_kvpair(char (&_KeyDestination)[key_size], char (&_ValueDestination)[value_size], const char* _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return get_kvpair(_KeyDestination, key_size, _ValueDestination, value_size, _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
+template<size_t capacity> bool get_kvpair(oStd::fixed_string<char, capacity>& _KeyDestination, char* _ValueDestination, size_t _SizeofValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return get_kvpair(_KeyDestination, _KeyDestination.capacity(), _ValueDestination, _SizeofValueDestination, _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
+template<size_t capacity> bool get_kvpair(char* _KeyDestination, size_t _SizeofKeyDestination, oStd::fixed_string<char, capacity>& _ValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return get_kvpair(_KeyDestination, _SizeofKeyDestination, _ValueDestination, _ValueDestination.capacity(), _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
+template<size_t KEY_capacity, size_t VALUE_capacity> bool get_kvpair(oStd::fixed_string<char, KEY_capacity>& _KeyDestination, oStd::fixed_string<char, VALUE_capacity>& _ValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return get_kvpair(_KeyDestination, _KeyDestination.capacity(), _ValueDestination, _ValueDestination.capacity(), _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
+
 static bool oP4IsExecutionError(const char* _P4ResponseString)
 {
 	static const char* sErrStrings[] =
@@ -536,31 +571,31 @@ bool oP4ParseWorkspace(oP4_WORKSPACE* _pWorkspace, const char* _P4WorkspaceStrin
 
 	//Client
 	NEXT_STR_EXISTS(c, "Client:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pWorkspace->Client, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !get_kvpair(0, 0, _pWorkspace->Client, ':', oNEWLINE, c, &c))
 		return false;
 
 	oStd::mstring tmp;
 
 	//Update
 	NEXT_STR_EXISTS(c, "Update:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !get_kvpair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
 	_pWorkspace->LastUpdated = oP4ParseTime(tmp);
 
 	//Access
 	NEXT_STR_EXISTS(c, "Access:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !get_kvpair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
 	_pWorkspace->LastAccessed = oP4ParseTime(tmp);
 
 	//Owner
 	NEXT_STR_EXISTS(c,"Owner:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pWorkspace->Owner, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !get_kvpair(0, 0, _pWorkspace->Owner, ':', oNEWLINE, c, &c))
 		return false;
 
 	//Host
 	NEXT_STR_EXISTS(c, "Host:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pWorkspace->Host, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !get_kvpair(0, 0, _pWorkspace->Host, ':', oNEWLINE, c, &c))
 		return false;
 
 	// Description is multi-line...
@@ -575,12 +610,12 @@ bool oP4ParseWorkspace(oP4_WORKSPACE* _pWorkspace, const char* _P4WorkspaceStrin
 
 	//Root
 	NEXT_STR_EXISTS(end, "Root:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pWorkspace->Root, ':', oNEWLINE, end, &c))
+	if (bNextStrExists && !get_kvpair(0, 0, _pWorkspace->Root, ':', oNEWLINE, end, &c))
 		return false;
 
 	//Options
 	NEXT_STR_EXISTS(c, "Options:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !get_kvpair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
 
 	_pWorkspace->Allwrite = !strstr(tmp, "noallwrite");
@@ -592,14 +627,14 @@ bool oP4ParseWorkspace(oP4_WORKSPACE* _pWorkspace, const char* _P4WorkspaceStrin
 
 	//SubmitOptions
 	NEXT_STR_EXISTS(c, "SubmitOptions:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !get_kvpair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
 	if (!oStd::from_string(&_pWorkspace->SubmitOptions, tmp))
 		return false;
 
 	//LineEnd
 	NEXT_STR_EXISTS(c, "LineEnd:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !get_kvpair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
 	if (!oStd::from_string(&_pWorkspace->LineEnd, tmp))
 		return false;
@@ -640,26 +675,26 @@ bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecStri
 
 	//Label
 	NEXT_STR_EXISTS(c, "Label:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pLabelSpec->Label, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !get_kvpair(0, 0, _pLabelSpec->Label, ':', oNEWLINE, c, &c))
 		return false;
 
 	oStd::mstring tmp;
 
 	//Update
 	NEXT_STR_EXISTS(c, "Update:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !get_kvpair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
 	_pLabelSpec->LastUpdated = oP4ParseTime(tmp);
 
 	//Access
 	NEXT_STR_EXISTS(c, "Access:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !get_kvpair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
 	_pLabelSpec->LastAccessed = oP4ParseTime(tmp);
 
 	//Owner
 	NEXT_STR_EXISTS(c,"Owner:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, _pLabelSpec->Owner, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !get_kvpair(0, 0, _pLabelSpec->Owner, ':', oNEWLINE, c, &c))
 		return false;
 
 	// Description is multi-line...
@@ -674,13 +709,13 @@ bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecStri
 
 	//Options
 	NEXT_STR_EXISTS(end, "Options:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !get_kvpair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
 	_pLabelSpec->Locked = !!strstr(tmp, "unlocked");
 
 	//Revision
 	NEXT_STR_EXISTS(c, "Revision:", bNextStrExists);
-	if (bNextStrExists && !oGetKeyValuePair(0, 0, tmp, ':', oNEWLINE, c, &c))
+	if (bNextStrExists && !get_kvpair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
 	if (!oStd::from_string(&_pLabelSpec->Revision, tmp))
 		return false;

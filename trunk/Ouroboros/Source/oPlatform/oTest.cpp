@@ -26,9 +26,9 @@
 #include <oBasis/oBuffer.h>
 #include <oBasis/oCppParsing.h>
 #include <oBasis/oError.h>
-#include <oStd/fixed_string.h>
 #include <oBasis/oLockedPointer.h>
 #include <oBasis/oRef.h>
+#include <oStd/scc.h>
 
 #include <oConcurrency/event.h>
 
@@ -44,7 +44,6 @@
 #include <oPlatform/oImage.h> // the crux of most tests... going to be hard to get rid of this dependency
 #include <oPlatform/oModule.h> // For oModuleGetDesc
 #include <oPlatform/oMsgBox.h> // only used to notify about zombies
-#include <oPlatform/oP4.h> // only used to print out p4 changelist
 #include <oPlatform/oProgressBar.h> // only really so it itself can be tested, but perhaps this can be moved to a unit test?
 #include <oPlatform/oProcess.h> // used to launch special tests
 #include <oPlatform/oStandards.h> // standard colors for a console app, maybe this can be callouts? log file path... can be an option?
@@ -750,17 +749,22 @@ void oTestManager_Impl::PrintDesc()
 	for (unsigned int i = 0; i < DriverDescs.size(); i++)
 		Report(oConsoleReporting::INFO, "Video Driver %u: %s v%d.%d\n", i, DriverDescs[i].Description.c_str(), DriverDescs[i].Version.Major, DriverDescs[i].Version.Minor);
 
+	auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, oBIND4, oBIND5, false));
+
 	oStd::path_string DevPath;
 	oVERIFY(oSystemGetPath(DevPath, oSYSPATH_DEV));
-	oStrAppendf(DevPath, "...");
 	oStd::lstring CLStr;
-	int CL = oP4GetCurrentChangelist(DevPath);
-	if (CL == oInvalid)
-		oPrintf(CLStr, "??? (%s)", oErrorGetLastString());
-	else if (oErrorGetLast() == std::errc::protocol_error)
-		oPrintf(CLStr, "%d + Open files", CL);
+	uint CL = scc->revision(DevPath);
+	if (CL)
+	{
+		oStd::scc_file f;
+		if (0 == scc->modifications(DevPath, CL, &f, 1))
+			oPrintf(CLStr, "%d", CL);
+		else
+			oPrintf(CLStr, "%d + modifications", CL);
+	}
 	else
-		oPrintf(CLStr, "%d", CL);
+		oPrintf(CLStr, "???");
 
 	Report(oConsoleReporting::INFO, "Perforce Changelist: %s\n", CLStr.c_str());
 }

@@ -388,35 +388,6 @@ char* oFormatCommas(char* _StrDestination, size_t _SizeofStrDestination, int _Nu
 	return oFormatCommas(_StrDestination, _SizeofStrDestination, static_cast<unsigned int>(_Number));
 }
 
-bool oGetKeyValuePair(char* _KeyDestination, size_t _SizeofKeyDestination, char* _ValueDestination, size_t _SizeofValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff)
-{
-	const char* k = _SourceString + strspn(_SourceString, oWHITESPACE); // move past whitespace
-	const char strSep[2] = { _KeyValueSeparator, 0 };
-	const char* sep = k + strcspn(k, strSep); // mark sep
-	if (!sep) return false;
-	const char* end = sep + 1 + strcspn(sep+1, _KeyValuePairSeparators); // make end of value
-
-	if (_KeyDestination)
-	{
-		size_t keyLen = sep - k;
-		memcpy_s(_KeyDestination, _SizeofKeyDestination-1, k, keyLen);
-		_KeyDestination[__min(_SizeofKeyDestination-1, keyLen)] = 0;
-	}
-	
-	if (_ValueDestination)
-	{
-		const char* v = sep + 1 + strspn(sep+1, oWHITESPACE);
-		size_t valLen = end - v;
-		memcpy_s(_ValueDestination, _SizeofValueDestination-1, v, valLen);
-		_ValueDestination[__min(_SizeofValueDestination-1, valLen)] = 0;
-	}
-
-	if (_ppLeftOff)
-		*_ppLeftOff = end;
-
-	return true;
-}
-
 bool oStrTokFinishedSuccessfully(char** _ppContext)
 {
 	// strtok2_s will zero out context if 

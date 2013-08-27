@@ -8,11 +8,11 @@
 #include <oPlatform/oModule.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oTest.h>
-#include <oPlatform/oP4.h>
 #include <oPlatform/oProcess.h>
 #include <oPlatform/oStandards.h>
 #include <oPlatform/oSystem.h>
 #include <oBasis/oRef.h>
+#include <oStd/scc.h>
 
 static const char* sTITLE = "OOOii Unit Test Suite";
 
@@ -106,19 +106,21 @@ struct PARAMETERS
 
 // _pHasChanges should be large enough to receive a result for each of the 
 // specified path parts.
-static bool oP4CheckPathHasChanges(const char** _pPathParts, size_t _NumPathParts, bool* _pHasChanges, size_t _NumOpenedFilesToTest = 128)
+static bool oSCCCheckPathHasChanges(const char** _pPathParts, size_t _NumPathParts, bool* _pHasChanges, size_t _NumOpenedFilesToTest = 128)
 {
+	auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, oBIND4, oBIND5, false));
+
 	oStd::path_string BranchPath;
 	oVERIFY(oSystemGetPath(BranchPath, oSYSPATH_DEV));
-	oStrAppendf(BranchPath, "...");
 
-	std::vector<oP4_FILE_DESC> temp;
+	std::vector<oStd::scc_file> temp;
 	temp.resize(_NumOpenedFilesToTest);
-	size_t nOpenFiles = oP4ListOpened(oStd::data(temp), temp.size(), BranchPath);
-	
-	// If we can't connect to P4, then always run all tests.
-	if (nOpenFiles == oInvalid)
-		return oErrorSetLast(std::errc::io_error, "oP4PathHasChanges could not find open files. This may indicate Perforce is not accessible.");
+
+	size_t nOpenFiles = 0;
+	// If we can't connect to SCC, then always run all tests.
+	try { nOpenFiles = scc->modifications(BranchPath, 0, oStd::data(temp), temp.size()); }
+	catch (std::exception&)
+	{ return oErrorSetLast(std::errc::io_error, "oSCCPathHasChanges could not find modified files. This may indicate %s is not accessible.", oStd::as_string(scc->protocol())); }
 
 	memset(_pHasChanges, 0, _NumPathParts);
 
@@ -128,7 +130,7 @@ static bool oP4CheckPathHasChanges(const char** _pPathParts, size_t _NumPathPart
 		oPrintf(LibWithSeps, "/%s/", _pPathParts[i]);
 		for (size_t j = 0; j < nOpenFiles; j++)
 		{
-			if (strstr(temp[j].Path, LibWithSeps))
+			if (strstr(temp[j].path, LibWithSeps))
 			{
 				_pHasChanges[i] = true;
 				break;
@@ -138,7 +140,7 @@ static bool oP4CheckPathHasChanges(const char** _pPathParts, size_t _NumPathPart
 
 	return true;
 }
-template<size_t size> bool oP4CheckPathHasChanges(const char* (&_pPathParts)[size], bool (&_pHasChanges)[size], size_t _NumOpenedFilesToTest = 128) { return oP4CheckPathHasChanges(_pPathParts, size, _pHasChanges, _NumOpenedFilesToTest); }
+template<size_t size> bool oSCCCheckPathHasChanges(const char* (&_pPathParts)[size], bool (&_pHasChanges)[size], size_t _NumOpenedFilesToTest = 128) { return oSCCCheckPathHasChanges(_pPathParts, size, _pHasChanges, _NumOpenedFilesToTest); }
 
 void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 {
@@ -200,8 +202,9 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 		ch = oOptTok(&value, 0, 0, 0);
 	}
 
-	// @ooii-tony: Disabled in the OpenSource distro because running the unit tests is the only proof of life in the Ouroboros branch
-	static bool IsOpenSourceDistribution = true;
+	// @ooii-tony: Disabled in the OpenSource distro because running the unit 
+	// tests is the only proof of life in the Ouroboros branch
+	static bool IsOpenSourceDistribution = /*true*/false;
 
 	// oBasis is pretty stable these days, only test if there are changes.
 	// Some libs have less and less changes these days, so in the common case if 
@@ -229,7 +232,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 			"GPU_.*",
 		};
 		bool HasChanges[oCOUNTOF(sLibNames)];
-		if (oP4CheckPathHasChanges(sLibNames, HasChanges))
+		if (oSCCCheckPathHasChanges(sLibNames, HasChanges))
 		{
 			for (int i = 0; i < oCOUNTOF(HasChanges); i++)
 			{

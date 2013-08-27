@@ -152,7 +152,7 @@ enum oSYSPATH
 	oSYSPATH_COMPILER_INCLUDES, // location of compiler includes
 	oSYSPATH_DESKTOP, // platform current user desktop
 	oSYSPATH_DESKTOP_ALLUSERS, // platform shared desktop
-	oSYSPATH_P4ROOT, // current user's Perforce workspace root (requires P4PORT and P4USER env vars to be set)
+	oSYSPATH_SCCROOT, // the root of the source control under which this code runs
 	oSYSPATH_DATA, // the data path of the application
 };
 

@@ -49,8 +49,8 @@ struct PLATFORM_oSystemPaths : public oTest
 		oTRACE("DESKTOP: %s", path);
 		oTESTB(oSystemGetPath(path, oSYSPATH_DESKTOP_ALLUSERS), "Failed to get DESKTOP_ALLUSERS");
 		oTRACE("DESKTOP_ALLUSERS: %s", path);
-		oTESTB(oSystemGetPath(path, oSYSPATH_P4ROOT), "%s: %s", oErrorAsString(oErrorGetLast()), oErrorGetLastString());
-		oTRACE("P4ROOT: %s", path);
+		oTESTB(oSystemGetPath(path, oSYSPATH_SCCROOT), "%s: %s", oErrorAsString(oErrorGetLast()), oErrorGetLastString());
+		oTRACE("SCC ROOT: %s", path);
 		return SUCCESS;
 	}
 };
