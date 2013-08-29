@@ -275,7 +275,7 @@ size_t Process_Impl::ReadFromStdout(void* _pDestination, size_t _SizeofRead) thr
 	
 	DWORD Available = 0;
 	oVB(PeekNamedPipe(hOutputRead, nullptr, 0, nullptr, &Available, nullptr));
-	if( 0 == Available)
+	if (0 == Available)
 		return 0;
 
 	oASSERT(_SizeofRead <= UINT_MAX, "Windows supports only 32-bit sized reads.");
