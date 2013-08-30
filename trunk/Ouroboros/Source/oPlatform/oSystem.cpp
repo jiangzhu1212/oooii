@@ -164,19 +164,25 @@ bool oSystemScheduleWakeup(time_t _UnixAbsoluteTime, oTASK _OnWake)
 	return oScheduleTask("OOOii.Wakeup", _UnixAbsoluteTime, true, _OnWake);
 }
 
+#define DEBUG_EXECUTED_PROCESS
 bool oSystemExecute(const char* _CommandLine, char* _StrStdout, size_t _SizeofStrStdOut, int* _pExitCode, unsigned int _ExecutionTimeout, bool _ShowWindow)
 {
 	oProcess::DESC desc;
 	desc.CommandLine = _CommandLine;
 	desc.EnvironmentString = 0;
 	desc.StdHandleBufferSize = _SizeofStrStdOut > 0 ? _SizeofStrStdOut - 1 : 0;
-	desc.ShowWindow = _ShowWindow;
+	desc.Show = _ShowWindow ? oPROCESS_SHOW : oPROCESS_HIDE;
+	#ifdef DEBUG_EXECUTED_PROCESS
+		desc.StartSuspended = true;
+	#endif
 	oRef<threadsafe oProcess> process;
 	if (!oProcessCreate(desc, &process))
 		return false;
 
 	oTRACE("oExecute: \"%s\"...", oSAFESTRN(_CommandLine));
-	process->Start();
+	#ifdef DEBUG_EXECUTED_PROCESS
+		process->Start();
+	#endif
 	bool Finished = true;
 	float startTime = oTimerMSF();
 	uint timeSoFarMS = 0;

@@ -63,9 +63,8 @@ static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, o
 
 			oProcess::DESC ProcessDesc;
 			ProcessDesc.CommandLine = CommandLine;
-			ProcessDesc.StartSuspended = false;
 			ProcessDesc.StdHandleBufferSize = StdOutDrain.capacity() - 1;
-			ProcessDesc.ShowWindow = false;
+			ProcessDesc.Show = oPROCESS_HIDE;
 
 			oRef<threadsafe oProcess> Process;
 			if(!oProcessCreate(ProcessDesc, &Process))

@@ -30,14 +30,14 @@
 #include <set>
 #include "SoftLink/oWinPSAPI.h"
 
-struct Process_Impl : public oProcess
+struct oWinProcess : public oProcess
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oProcess);
 	oDEFINE_CONST_GETDESC_INTERFACE(Desc, threadsafe);
 
-	Process_Impl(const DESC& _Desc, bool* _pSuccess);
-	~Process_Impl();
+	oWinProcess(const DESC& _Desc, bool* _pSuccess);
+	~oWinProcess();
 
 	void Start() threadsafe override;
 	bool Kill(int _ExitCode) threadsafe override;
@@ -70,40 +70,24 @@ bool oProcessCreate(const oProcess::DESC& _Desc, threadsafe oProcess** _ppProces
 	if (!_ppProcess)
 		return oErrorSetLast(std::errc::invalid_argument);
 	bool success = false;
-	oCONSTRUCT(_ppProcess, Process_Impl(_Desc, &success));
+	oCONSTRUCT(_ppProcess, oWinProcess(_Desc, &success));
 	if (success)
 		oTRACE("Process %u created (attach to this in a debugger to get breakpoints)", (*_ppProcess)->GetProcessID());
 	return success;
 }
 
-Process_Impl::Process_Impl(const DESC& _Desc, bool* _pSuccess)
+oWinProcess::oWinProcess(const DESC& _Desc, bool* _pSuccess)
 	: Desc(_Desc)
 	, CommandLine(oSAFESTR(_Desc.CommandLine))
 	, EnvironmentString(oSAFESTR(_Desc.EnvironmentString))
 	, InitialWorkingDirectory(oSAFESTR(_Desc.InitialWorkingDirectory))
-	, hOutputRead(0)
-	, hOutputWrite(0)
-	, hInputRead(0)
-	, hInputWrite(0)
-	, hErrorWrite(0)
-	#if _DEBUG
-		, Suspended(_Desc.StartSuspended)
-	#else
-		, Suspended(false)
-	#endif
+	, hOutputRead(nullptr)
+	, hOutputWrite(nullptr)
+	, hInputRead(nullptr)
+	, hInputWrite(nullptr)
+	, hErrorWrite(nullptr)
+	, Suspended(_Desc.StartSuspended)
 {
-	DWORD dwCreationFlags = 0;
-
-	// Start suspended so that a debugger can be attached to the process before
-	// really executing it in case debugging must occur near the start of the new 
-	// process. Only do this in debug because in release, this can BSOD if the 
-	// process doesn't exist (i.e. CreateProcess would fail in debug, BSODs in 
-	// release).
-	#ifdef _DEBUG
-		if (_Desc.StartSuspended)
-			dwCreationFlags |= CREATE_SUSPENDED;
-	#endif
-
 	Desc.CommandLine = CommandLine.c_str();
 	Desc.EnvironmentString = EnvironmentString.c_str();
 	Desc.InitialWorkingDirectory = InitialWorkingDirectory.c_str();
@@ -117,16 +101,29 @@ Process_Impl::Process_Impl(const DESC& _Desc, bool* _pSuccess)
 	memset(&StartInfo, 0, sizeof(STARTUPINFO));
 	StartInfo.cb = sizeof(STARTUPINFO);
 
-	if (!Desc.SetFocus || Desc.StartMinimized || !Desc.ShowWindow)
+	DWORD dwCreationFlags = 0;
+	if (_Desc.StartSuspended)
+		dwCreationFlags |= CREATE_SUSPENDED;
+
+	switch (Desc.Show)
 	{
-		StartInfo.dwFlags |= STARTF_USESHOWWINDOW;
-		
-		if (!Desc.ShowWindow)
-			StartInfo.wShowWindow |= SW_HIDE;
-		else if (!Desc.SetFocus)
-			StartInfo.wShowWindow |= (Desc.StartMinimized ? SW_SHOWMINNOACTIVE : SW_SHOWNOACTIVATE);
-		else
-			StartInfo.wShowWindow |= (Desc.StartMinimized ? SW_SHOWMINIMIZED : SW_SHOWDEFAULT);
+		case oPROCESS_HIDE:
+			dwCreationFlags |= CREATE_NO_WINDOW;
+			StartInfo.wShowWindow = SW_HIDE;
+			break;
+		case oPROCESS_SHOW:
+			StartInfo.wShowWindow = SW_SHOWNOACTIVATE;
+			break;
+		case oPROCESS_SHOW_FOCUSED:
+			StartInfo.wShowWindow = SW_SHOWNORMAL;
+			break;
+		case oPROCESS_SHOW_MINIMIZED:
+			StartInfo.wShowWindow = SW_SHOWMINNOACTIVE;
+			break;
+		case oPROCESS_SHOW_MINIMIZED_FOCUSED:
+			StartInfo.wShowWindow = SW_SHOWMINIMIZED;
+			break;
+		oNODEFAULT;
 	}
 
 	if (Desc.StdHandleBufferSize)
@@ -153,6 +150,8 @@ Process_Impl::Process_Impl(const DESC& _Desc, bool* _pSuccess)
 
 		oVB(DuplicateHandle(GetCurrentProcess(), hOutputReadTmp, GetCurrentProcess(), &hOutputRead, 0, FALSE, DUPLICATE_SAME_ACCESS));
 		oVB(DuplicateHandle(GetCurrentProcess(), hInputWriteTmp, GetCurrentProcess(), &hInputWrite, 0, FALSE, DUPLICATE_SAME_ACCESS));
+		oVB(SetHandleInformation(hOutputRead, HANDLE_FLAG_INHERIT, 0));
+		oVB(SetHandleInformation(hInputWrite, HANDLE_FLAG_INHERIT, 0));
 
 		oVB(CloseHandle(hOutputReadTmp));
 		oVB(CloseHandle(hInputWriteTmp));
@@ -164,11 +163,11 @@ Process_Impl::Process_Impl(const DESC& _Desc, bool* _pSuccess)
 	}
 
 	else
-	{
 		dwCreationFlags |= CREATE_NEW_CONSOLE;
-	}
 
-	char* env = 0;
+	// Prepare to use specified environment
+	char* env = nullptr;
+	oStd::finally FreeEnv([&] { if (env) delete [] env; });
 	if (!EnvironmentString.empty())
 	{
 		env = new char[EnvironmentString.length()+1];
@@ -176,26 +175,27 @@ Process_Impl::Process_Impl(const DESC& _Desc, bool* _pSuccess)
 			return;
 	}
 
-	// @oooii-tony: Make a copy because CreateProcess does not take a const char*
-	char* cmdline = 0;
+	// Make a copy because CreateProcess does not take a const char*
+	char* cmdline = nullptr;
+	oStd::finally FreeCmd([&] { if (cmdline) delete [] cmdline; });
 	if (!CommandLine.empty())
 	{
 		cmdline = new char[CommandLine.length()+1];
 		oStrcpy(cmdline, CommandLine.length()+1, CommandLine.c_str());
 	}
 
-	if( !CreateProcessA(0, cmdline, 0, &sa, TRUE, dwCreationFlags, env, InitialWorkingDirectory.empty() ? nullptr : InitialWorkingDirectory.c_str(), &StartInfo, &ProcessInfo) )
+	if (!CreateProcessA(nullptr, cmdline, nullptr, &sa, TRUE, dwCreationFlags, env
+		, InitialWorkingDirectory.empty() ? nullptr : InitialWorkingDirectory.c_str()
+		, &StartInfo, &ProcessInfo))
 	{
 		oWinSetLastError();
 		return;
 	}
 
-	if (env) delete env;
-	if (cmdline) delete cmdline;
 	*_pSuccess = true;
 }
 
-Process_Impl::~Process_Impl()
+oWinProcess::~oWinProcess()
 {
 	if (Suspended)
 		Kill(std::errc::timed_out);
@@ -208,7 +208,7 @@ Process_Impl::~Process_Impl()
 	if (hErrorWrite) CloseHandle(hErrorWrite);
 }
 
-void Process_Impl::Start() threadsafe
+void oWinProcess::Start() threadsafe
 {
 	if (Suspended)
 	{
@@ -217,27 +217,27 @@ void Process_Impl::Start() threadsafe
 	}
 }
 
-bool Process_Impl::Kill(int _ExitCode) threadsafe
+bool oWinProcess::Kill(int _ExitCode) threadsafe
 {
 	return oProcessTerminate(ProcessInfo.dwProcessId, (unsigned int)_ExitCode);
 }
 
-bool Process_Impl::Wait(unsigned int _TimeoutMS) threadsafe
+bool oWinProcess::Wait(unsigned int _TimeoutMS) threadsafe
 {
 	return oWaitSingle(ProcessInfo.hProcess, _TimeoutMS);
 }
 
-unsigned int Process_Impl::GetThreadID() const threadsafe
+unsigned int oWinProcess::GetThreadID() const threadsafe
 {
 	return ProcessInfo.dwThreadId;
 }
 
-unsigned int Process_Impl::GetProcessID() const threadsafe
+unsigned int oWinProcess::GetProcessID() const threadsafe
 {
 	return ProcessInfo.dwProcessId;
 }
 
-bool Process_Impl::GetExitCode(int* _pExitCode) const threadsafe
+bool oWinProcess::GetExitCode(int* _pExitCode) const threadsafe
 {
 	DWORD exitCode = 0;
 	if (!GetExitCodeProcess(ProcessInfo.hProcess, &exitCode))
@@ -251,7 +251,7 @@ bool Process_Impl::GetExitCode(int* _pExitCode) const threadsafe
 	return true;
 }
 
-size_t Process_Impl::WriteToStdin(const void* _pSource, size_t _SizeofWrite) threadsafe
+size_t oWinProcess::WriteToStdin(const void* _pSource, size_t _SizeofWrite) threadsafe
 {
 	if (!hInputWrite)
 	{
@@ -265,7 +265,7 @@ size_t Process_Impl::WriteToStdin(const void* _pSource, size_t _SizeofWrite) thr
 	return sizeofWritten;
 }
 
-size_t Process_Impl::ReadFromStdout(void* _pDestination, size_t _SizeofRead) threadsafe
+size_t oWinProcess::ReadFromStdout(void* _pDestination, size_t _SizeofRead) threadsafe
 {
 	if (!hOutputRead)
 	{

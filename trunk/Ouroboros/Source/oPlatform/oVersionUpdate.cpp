@@ -230,15 +230,11 @@ static bool oVUFireAndForget(const char* _CommandLine)
 
 	oProcess::DESC pd;
 	pd.CommandLine = _CommandLine;
-	pd.StartMinimized = true;
-	#ifndef _DEBUG
-		pd.StartSuspended = false; // approved usage of non-start-need API.
-	#endif
+	pd.Show = oPROCESS_SHOW_MINIMIZED;
 	oTRACE("Spawning process: %s", _CommandLine);
 	oRef<threadsafe oProcess> NewProcess;
 	if (!oProcessCreate(pd, &NewProcess))
 		return false; // pass through error
-	NewProcess->Start();
 	return true;
 }
 

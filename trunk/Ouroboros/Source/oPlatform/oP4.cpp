@@ -227,7 +227,6 @@ bool oP4Label(const oP4_LABEL_SPEC& _Label)
 	oRef<threadsafe oProcess> process;
 	if (!oProcessCreate(desc, &process))
 		return false;
-	process->Start();
 
 	size_t sizeWritten = process->WriteToStdin(labelSpec.c_str(), labelSpec.size());
 	if (sizeWritten != labelSpec.size())

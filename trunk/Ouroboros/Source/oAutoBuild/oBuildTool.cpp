@@ -62,7 +62,6 @@ bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const c
 
 	oProcess::DESC TestDesc;
 	TestDesc.CommandLine = command_line.c_str();
-	TestDesc.StartSuspended = false;
 
 	oRef<threadsafe oProcess> TestProcess;
 	if (!oProcessCreate(TestDesc, &TestProcess))

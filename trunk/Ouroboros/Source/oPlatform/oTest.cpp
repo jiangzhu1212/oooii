@@ -573,12 +573,17 @@ bool oSpecialTest::CreateProcess(const char* _SpecialTestName, threadsafe oProce
 	return oProcessCreate(desc, _ppProcess);
 }
 
+//#define DEBUG_SPECIAL_TEST
+
 bool oSpecialTest::Start(threadsafe interface oProcess* _pProcess, char* _StrStatus, size_t _SizeofStrStatus, int* _pExitCode, unsigned int _TimeoutMS)
 {
 	if (!_pProcess || !_StrStatus || !_pExitCode)
 		return oErrorSetLast(std::errc::invalid_argument);
 
 	oProcess::DESC desc;
+	#ifdef DEBUG_SPECIAL_TEST
+		desc.StartSuspended = true;
+	#endif
 	_pProcess->GetDesc(&desc);
 	const char* SpecialTestName = oStrStrReverse(desc.CommandLine, "-s ") + 3;
 	if (!SpecialTestName || !*SpecialTestName)
@@ -588,7 +593,9 @@ bool oSpecialTest::Start(threadsafe interface oProcess* _pProcess, char* _StrSta
 	oPrintf(interprocessName, "oTest.%s.Started", SpecialTestName);
 	oInterprocessEvent Started(interprocessName);
 	oASSERTA(!Started.Wait(0), "Started event set when it shouldn't be (before start).");
-	_pProcess->Start();
+	#ifdef DEBUG_SPECIAL_TEST
+		_pProcess->Start();
+	#endif
 
 	oTestManager::DESC testingDesc;
 	oTestManager::Singleton()->GetDesc(&testingDesc);

@@ -36,6 +36,15 @@
 #include <oBasis/oStddef.h> // for oSleep
 #include <oConcurrency/oConcurrency.h>
 
+enum oPROCESS_SHOW_TYPE
+{
+	oPROCESS_HIDE,
+	oPROCESS_SHOW,
+	oPROCESS_SHOW_FOCUSED,
+	oPROCESS_SHOW_MINIMIZED,
+	oPROCESS_SHOW_MINIMIZED_FOCUSED,
+};
+
 // {EAA75587-9771-4d9e-A2EA-E406AA2E8B8F}
 oDEFINE_GUID_I(oProcess, 0xeaa75587, 0x9771, 0x4d9e, 0xa2, 0xea, 0xe4, 0x6, 0xaa, 0x2e, 0x8b, 0x8f);
 interface oProcess : oInterface
@@ -47,16 +56,8 @@ interface oProcess : oInterface
 			, EnvironmentString(nullptr)
 			, InitialWorkingDirectory(nullptr)
 			, StdHandleBufferSize(0)
-			, SetFocus(true)
-			, StartMinimized(false)
-			, ShowWindow(true)
-			// ALWAYS start suspended unless you have an excellent, approved reason 
-			// to not use this. Then use Start() so there's always a place to put a 
-			// breakpoint when spawning a new process so a debugger can be attached.
-			// Example of a good usage case to set this false: A launcher app needs to 
-			// launch the right version of a sub-executable. In release/the wild, it 
-			// should never launch a suspended process.
-			, StartSuspended(true)
+			, Show(oPROCESS_HIDE)
+			, StartSuspended(false)
 		{}
 
 		const char* CommandLine;
@@ -67,17 +68,17 @@ interface oProcess : oInterface
 		// and thus WriteToStdin and ReadFromStdout will return 0 with
 		// oErrorGetLast() set to std::errc::permission_denied.
 		size_t StdHandleBufferSize;
-		bool SetFocus:1;
-		bool StartMinimized:1;
-		bool StartSuspended:1;
-		bool ShowWindow:1;
+		oPROCESS_SHOW_TYPE Show;
+		bool StartSuspended;
 	};
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 
-	// Processes are created in a suspended state to give a developer an 
+	// Processes can be created in a suspended state to give the developer an 
 	// opportunity to set breakpoints and perform various other debugging 
-	// activities. Call this to resume the process.
+	// activities. Call this to resume the process. WARNING: This can BSOD the 
+	// computer in Windows (Windows7) if the win32 call to CreateProcess fails 
+	// because the command line is invalid. Use with caution.
 	virtual void Start() threadsafe = 0;
 
 	// Stops the process as immediately as it can
