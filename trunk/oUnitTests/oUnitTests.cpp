@@ -108,7 +108,7 @@ struct PARAMETERS
 // specified path parts.
 static bool oSCCCheckPathHasChanges(const char** _pPathParts, size_t _NumPathParts, bool* _pHasChanges, size_t _NumOpenedFilesToTest = 128)
 {
-	auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, oBIND4, oBIND5, false));
+	auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, false, oBIND4));
 
 	oStd::path_string BranchPath;
 	oVERIFY(oSystemGetPath(BranchPath, oSYSPATH_DEV));

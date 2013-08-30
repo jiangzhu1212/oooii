@@ -385,7 +385,7 @@ bool oVUUnzip(const char* _SfxURI)
 	oStd::fixed_string<char, oKB(16)> StdOut;
 	int ExitCode = 0;
 	const unsigned int kTwoMinutes = 2 * 60 * 1000;
-	if (!oSystemExecute(CmdLine, StdOut, &ExitCode, kTwoMinutes))
+	if (!oSystemExecute(CmdLine, [&](char* _Line) { strlcat(StdOut, _Line, StdOut.capacity()); }, &ExitCode, false, kTwoMinutes))
 		return false; // pass through error
 
 	if (ExitCode)

@@ -66,7 +66,14 @@ void scc_svn::spawn(const char* _Command, oStd::xlstring& _StdOut) const
 {
 	static const unsigned int kTimeout = 5000;
 	int ec = 0;
-	if (!Spawn(_Command, _StdOut, _StdOut.capacity(), &ec, kTimeout))
+	_StdOut.clear();
+	oFUNCTION<void(char* _Line)> GetLine = [&](char* _Line)
+	{
+		strlcat(_StdOut, _Line, _StdOut.capacity());
+		strlcat(_StdOut, "\n", _StdOut.capacity());
+	};
+
+	if (!Spawn(_Command, GetLine, &ec, kTimeout))
 		oTHROW(operation_not_supported, "svn exited with error code %d\nstdout: %s", ec, _StdOut.c_str());
 	if (svn_is_error(_StdOut))
 		oTHROW(operation_not_supported, "svn error: stdout: %s", _StdOut.c_str());
@@ -76,7 +83,8 @@ bool scc_svn::available() const
 {
 	int ec = 0;
 	oStd::xlstring StdOut;
-	if (!Spawn("svn", StdOut, StdOut.capacity(), &ec, 1000))
+	oFUNCTION<void(char* _Line)> GetLine = [&](char* _Line) { strlcat(StdOut, _Line, StdOut.capacity()); strlcat(StdOut, "\n", StdOut.capacity()); };
+	if (!Spawn("svn", GetLine, &ec, 1000))
 		oTHROW(operation_not_supported, "svn exited with error code %d", ec);
 	return !!strstr(StdOut, "Type 'svn help'");
 }

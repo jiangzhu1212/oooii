@@ -89,8 +89,7 @@ struct scc_revision
 };
 
 typedef oFUNCTION<bool(const char* _Commandline
-	, char* _StrStdout
-	, size_t _SizeofStrStdOut
+	, const oFUNCTION<void(char* _Line)>& _GetLine
 	, int* _pExitCode
 	, unsigned int _TimeoutMS)> scc_spawn;
 

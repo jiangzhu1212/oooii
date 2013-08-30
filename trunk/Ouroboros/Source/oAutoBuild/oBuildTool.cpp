@@ -138,7 +138,7 @@ bool oRunPackagingStage(const oBUILD_TOOL_PACKAGING_SETTINGS& _Settings, oPackag
 		int ExitCode = 0;
 		oFOR(auto& command_line, _Settings.CommandLines)
 		{
-			if (!oSystemExecute(command_line, nullptr, 0, &ExitCode, _Settings.TimeoutSeconds * 1000))
+			if (!oSystemExecute(command_line, nullptr, &ExitCode, false, _Settings.TimeoutSeconds * 1000))
 				return false;
 		}
 	}

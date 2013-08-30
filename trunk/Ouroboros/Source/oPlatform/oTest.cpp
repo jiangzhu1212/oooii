@@ -756,7 +756,7 @@ void oTestManager_Impl::PrintDesc()
 	for (unsigned int i = 0; i < DriverDescs.size(); i++)
 		Report(oConsoleReporting::INFO, "Video Driver %u: %s v%d.%d\n", i, DriverDescs[i].Description.c_str(), DriverDescs[i].Version.Major, DriverDescs[i].Version.Minor);
 
-	auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, oBIND4, oBIND5, false));
+	auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, false, oBIND4));
 
 	oStd::path_string DevPath;
 	oVERIFY(oSystemGetPath(DevPath, oSYSPATH_DEV));

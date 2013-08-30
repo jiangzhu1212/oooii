@@ -63,7 +63,7 @@ static bool ParseCommandLine(int argc, const char* argv[], oVERPATCH_DESC* _pDes
 	oSystemGetPath(sDefaultSCCRoot, oSYSPATH_APP);
 	_pDesc->SCCRoot = sDefaultSCCRoot;
 	#endif
-	_pDesc->VerPatch = "./";
+	_pDesc->VerPatch = "./verpatch.exe";
 
 	const char* value = 0;
 	char ch = oOptTok(&value, argc, argv, sOptions);
@@ -102,7 +102,7 @@ static bool CreateVersionString(oStd::mstring& _StrDestination, const oVERPATCH_
 	if (oStd::from_string(&v, _Desc.Version) && !v.IsValid())
 		v = d.FileVersion;
 
-	auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, oBIND4, oBIND5, false));
+	auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, false, oBIND4));
 	uint Revision = scc->revision(_Desc.SCCRoot);
 
 	// make revision readable, but fit Microsoft's standards
@@ -184,7 +184,7 @@ bool Main(int argc, const char* argv[])
 
 	oStd::xlstring Response;
 	int ExitCode = 0;
-	if (!oSystemExecute(verpatch.c_str(), Response, &ExitCode, 5000))
+	if (!oSystemExecute(verpatch.c_str(), [&](char* _Line) { strlcat(Response, _Line, Response.capacity()); }, &ExitCode, false, 5000))
 		return false; // pass through error
 
 	if (ExitCode)

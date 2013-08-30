@@ -164,13 +164,35 @@ bool oSystemScheduleWakeup(time_t _UnixAbsoluteTime, oTASK _OnWake)
 	return oScheduleTask("OOOii.Wakeup", _UnixAbsoluteTime, true, _OnWake);
 }
 
-#define DEBUG_EXECUTED_PROCESS
-bool oSystemExecute(const char* _CommandLine, char* _StrStdout, size_t _SizeofStrStdOut, int* _pExitCode, unsigned int _ExecutionTimeout, bool _ShowWindow)
+// This moves any leftovers to the front of the buffer and returns the offset
+// where a new write should start.
+static size_t VisitLines(char* _Buffer, size_t _ReadSize, const oFUNCTION<void(char* _Line)>& _GetLine)
 {
+	_Buffer[_ReadSize] = '\0';
+	char* line = _Buffer;
+	size_t eol = strcspn(line, oNEWLINE);
+
+	while (line[eol] != '\0')
+	{
+		line[eol] = '\0';
+		_GetLine(line);
+		line += eol + 1;
+		line += strspn(line, oNEWLINE);
+		eol = strcspn(line, oNEWLINE);
+	}
+
+	return strlcpy(_Buffer, line, _ReadSize);
+}
+
+
+#define DEBUG_EXECUTED_PROCESS
+bool oSystemExecute(const char* _CommandLine, const oFUNCTION<void(char* _Line)>& _GetLine, int* _pExitCode, bool _ShowWindow, unsigned int _ExecutionTimeout)
+{
+	oStd::xlstring tempStdOut;
 	oProcess::DESC desc;
 	desc.CommandLine = _CommandLine;
 	desc.EnvironmentString = 0;
-	desc.StdHandleBufferSize = _SizeofStrStdOut > 0 ? _SizeofStrStdOut - 1 : 0;
+	desc.StdHandleBufferSize = tempStdOut.capacity() - 1;
 	desc.Show = _ShowWindow ? oPROCESS_SHOW : oPROCESS_HIDE;
 	#ifdef DEBUG_EXECUTED_PROCESS
 		desc.StartSuspended = true;
@@ -187,38 +209,42 @@ bool oSystemExecute(const char* _CommandLine, char* _StrStdout, size_t _SizeofSt
 	float startTime = oTimerMSF();
 	uint timeSoFarMS = 0;
 	static const uint timePerFlushMS = 50;
-	oStd::xxlstring tempStdOut;
-	if(_SizeofStrStdOut) //older version of this code always cleared the passed in string indirectly, so doing so now as well.
-		_StrStdout[0] = 0;
+	
+	// need to flush stdout once in a while or it can hang the process if we are 
+	// redirecting output
+	bool once = false;
 
-	while(timeSoFarMS < _ExecutionTimeout && !process->Wait(timePerFlushMS)) //need to flush stdout once in a while or it can hang the process if we are redirecting output
+	do
 	{
-		timeSoFarMS = static_cast<int>(oTimerMSF() - startTime);
-
-		if (_StrStdout && _SizeofStrStdOut)
+		if (!once)
 		{
 			oTRACEA("oExecute: Reading from stdout... \"%s\"", oSAFESTRN(_CommandLine));
-			tempStdOut.clear();
-			size_t sizeRead = process->ReadFromStdout(tempStdOut, tempStdOut.capacity() - 1);
-			tempStdOut[sizeRead] = 0;
-			oStrncat(_StrStdout, _SizeofStrStdOut, tempStdOut);
+			once = true;
 		}
-	}
-
-	if (_StrStdout && _SizeofStrStdOut) // get any remaining text from stdout
-	{
-		tempStdOut.clear();
-		size_t sizeRead = process->ReadFromStdout(tempStdOut, tempStdOut.capacity() - 1);
-		while(sizeRead > 0)
+		
+		size_t ReadSize = process->ReadFromStdout((void*)tempStdOut.c_str(), tempStdOut.capacity());
+		while (ReadSize && _GetLine)
 		{
-			tempStdOut[sizeRead] = 0;
-			oStrncat(_StrStdout, _SizeofStrStdOut, tempStdOut);
-			tempStdOut.clear();
-			sizeRead = process->ReadFromStdout(tempStdOut, tempStdOut.capacity() - 1);
+			size_t offset = VisitLines(tempStdOut, ReadSize, _GetLine);
+			ReadSize = process->ReadFromStdout((void*)oStd::byte_add(tempStdOut.c_str(), offset), tempStdOut.capacity() - offset);
 		}
+
+		timeSoFarMS = static_cast<int>(oTimerMSF() - startTime);
+	} while(timeSoFarMS < _ExecutionTimeout && !process->Wait(timePerFlushMS));
+
+	// get any remaining text from stdout
+	size_t offset = 0;
+	size_t ReadSize = process->ReadFromStdout((void*)tempStdOut.c_str(), tempStdOut.capacity());
+	while (ReadSize && _GetLine)
+	{
+		offset = VisitLines(tempStdOut, ReadSize, _GetLine);
+		ReadSize = process->ReadFromStdout((void*)oStd::byte_add(tempStdOut.c_str(), offset), tempStdOut.capacity() - offset);
 	}
 
-	if (timeSoFarMS >= _ExecutionTimeout) //timed out
+	if (offset && _GetLine)
+		_GetLine(tempStdOut);
+
+	if (timeSoFarMS >= _ExecutionTimeout) // timed out
 	{
 		Finished = false;
 		oErrorSetLast(std::errc::timed_out, "Executing \"%s\" timed out after %.01f seconds.", _CommandLine, static_cast<float>(_ExecutionTimeout) / 1000.0f);
@@ -462,8 +488,9 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 			oStd::path_string app;
 			oSystemGetPath(app, oSYSPATH_APP);
 
-			auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, oBIND4, oBIND5, false));
-			scc->root(app, _StrSysPath, _SizeofStrSysPath);
+			auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, false, oBIND4));
+			try { scc->root(app, _StrSysPath, _SizeofStrSysPath); }
+			catch (std::exception& e) { oErrorSetLast(e); return nullptr; }
 
 			break;
 		}

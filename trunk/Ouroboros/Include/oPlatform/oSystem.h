@@ -94,15 +94,14 @@ oAPI bool oSystemAllowSleep(bool _Allow = true);
 // Use oSystem
 oAPI bool oSystemScheduleWakeup(time_t _UnixAbsoluteTime, oTASK _OnWake);
 
-// oSystemExecute spawns a child process to execute the specified command 
-// line. If a string buffer is specified, then after the process is 
-// finished its stdout is read into the buffer. If the address of an 
-// exitcode value is specified, the child process's exit code is filled 
-// in. If the specified timeout is reached, then the exitcode will be 
-// std::errc::operation_in_progress. Prefer the default _ShowWindow=false for console 
-// executions, but for Window applications requiring user interaction, use 
-// _ShowWindow=true.
-oAPI bool oSystemExecute(const char* _CommandLine, char* _StrStdout, size_t _SizeofStrStdOut, int* _pExitCode = 0, unsigned int _ExecutionTimeout = oInfiniteWait, bool _ShowWindow = false);
+// oSystemExecute spawns a child process to execute the specified command line. 
+// If a string buffer is specified, then after the process is finished its 
+// stdout is read into the buffer. If the address of an exitcode value is 
+// specified, the child process's exit code is filled in. If the specified 
+// timeout is reached, then the exitcode will be operation_in_progress. Prefer 
+// the default _ShowWindow=false for console executions, but for Window 
+// applications requiring user interaction, use _ShowWindow=true.
+bool oSystemExecute(const char* _CommandLine, const oFUNCTION<void(char* _Line)>& _GetLine = nullptr, int* _pExitCode = nullptr, bool _ShowWindow = false, unsigned int _ExecutionTimeout = oInfiniteWait);
 
 // Pool system for all processes to be relatively idle (i.e. <3% CPU usage). 
 // This is primarily intended to determine heuristically when a computer is 
@@ -210,7 +209,6 @@ template<size_t size> char* oSystemFindInPath(char(&_ResultingFullPath)[size], o
 template<size_t size> char* oSystemFindPath(char (&_ResultingFullPath)[size], const char* _RelativePath, const char* _DotPath, const char* _ExtraSearchPath, const oFUNCTION<bool(const char* _Path)>& _PathExists) { return oSystemFindPath(_ResultingFullPath, size, _RelativePath, _DotPath, _ExtraSearchPath, _PathExists); }
 
 #include <oStd/fixed_string.h>
-template<size_t capacity> bool oSystemExecute(const char* _CommandLine, oStd::fixed_string<char, capacity>& _StrStdout, int* _pExitCode = 0, unsigned int _ExecutionTimeout = oInfiniteWait) { return oSystemExecute(_CommandLine, _StrStdout, _StrStdout.capacity(), _pExitCode, _ExecutionTimeout); }
 template<size_t capacity> char* oSystemGetEnvironmentVariable(oStd::fixed_string<char, capacity>& _Value, const char* _Name) { return oSystemGetEnvironmentVariable(_Value, _Value.capacity(), _Name); }
 template<size_t capacity> char* oSystemTranslateEnvironmentVariables(oStd::fixed_string<char, capacity>& _Value, const char* _Name) { return oSystemTranslateEnvironmentVariables(_Value, _Value.capacity(), _Name); }
 template<size_t capacity> char* oGetEnvironmentString(oStd::fixed_string<char, capacity>& _StrEnvironment) { return oSystemGetEnvironmentString(_StrEnvironment, _StrEnvironment.capacity()); }

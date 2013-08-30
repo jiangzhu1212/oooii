@@ -127,7 +127,9 @@ static bool oP4IsExecutionError(const char* _P4ResponseString)
 
 static bool oP4Execute(const char* _CommandLine, const char* _CheckValidString, char* _P4ResponseString, size_t _SizeofP4ResponseString, unsigned int _TimeoutMS = kP4TypicalTimeoutMS)
 {
-	if (!oSystemExecute(_CommandLine, _P4ResponseString, _SizeofP4ResponseString, nullptr, _TimeoutMS))
+	if (_P4ResponseString)
+		*_P4ResponseString = 0;
+	if (!oSystemExecute(_CommandLine, [&](char* _Line) { if (_P4ResponseString) strlcat(_P4ResponseString, _Line, _SizeofP4ResponseString); }, nullptr, false, _TimeoutMS))
 		return false; // pass through error
 	if (!_P4ResponseString)
 		return true;
