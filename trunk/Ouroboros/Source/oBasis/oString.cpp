@@ -181,17 +181,17 @@ const char* oStrStr( const char* _pStr, const char* _pSubStr, size_t _MaxCharCou
 
 int oVPrintf(char* _StrDestination, size_t _NumDestinationChars, const char* _Format, va_list _Args)
 {
-	int status = vsnprintf_s(_StrDestination, _NumDestinationChars, _TRUNCATE, _Format, _Args);
+	int status = oStd::vsnprintf(_StrDestination, _NumDestinationChars, _Format, _Args);
 	if (status == -1)
-		oAddTruncationElipse(_StrDestination, _NumDestinationChars);
+		oStd::ellipsize(_StrDestination, _NumDestinationChars);
 	return status;
 }
 
 int oVPrintf(wchar_t* _StrDestination, size_t _NumDestinationChars, const wchar_t* _Format, va_list _Args)
 {
-	int status = _vsnwprintf_s(_StrDestination, _NumDestinationChars, _TRUNCATE, _Format, _Args);
+	int status = oStd::vsnwprintf(_StrDestination, _NumDestinationChars, _Format, _Args);
 	if (status == -1)
-		oAddTruncationElipse(_StrDestination, _NumDestinationChars);
+		oStd::wcsellipsize(_StrDestination, _NumDestinationChars);
 	return status;
 }
 
@@ -246,26 +246,6 @@ char* oPruneWhitespace(char* _StrDestination, size_t _SizeofStrDestination, cons
 
 	*w = 0;
 
-	return _StrDestination;
-}
-
-char* oAddTruncationElipse(char* _StrDestination, size_t _NumDestinationChars)
-{
-	oASSERT(_NumDestinationChars >= 4, "String buffer is too short for an elipse.");
-	_StrDestination[_NumDestinationChars-1] = '\0';
-	_StrDestination[_NumDestinationChars-2] = '.';
-	_StrDestination[_NumDestinationChars-3] = '.';
-	_StrDestination[_NumDestinationChars-4] = '.';
-	return _StrDestination;
-}
-
-wchar_t* oAddTruncationElipse(wchar_t* _StrDestination, size_t _NumDestinationChars)
-{
-	oASSERT(_NumDestinationChars >= 4, "String buffer is too short for an elipse.");
-	_StrDestination[_NumDestinationChars-1] = '\0';
-	_StrDestination[_NumDestinationChars-2] = '.';
-	_StrDestination[_NumDestinationChars-3] = '.';
-	_StrDestination[_NumDestinationChars-4] = '.';
 	return _StrDestination;
 }
 

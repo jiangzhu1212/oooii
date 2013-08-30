@@ -109,7 +109,7 @@ void oWinStatusBarSetText(HWND _hStatusBar, int _ItemIndex, oGUI_BORDER_STYLE _B
 {
 	oStd::lstring s;
 	oVPrintf(s, _Format, _Args);
-	oAddTruncationElipse(s);
+	oStd::ellipsize(s);
 	WPARAM w = (_ItemIndex & 0xff) | oWinStatusBarGetStyle(_BorderStyle);
 	if (!SendMessage(_hStatusBar, SB_SETTEXT, w, (LPARAM)s.c_str()))
 	{

@@ -130,8 +130,8 @@ bool oErrorSetLastV(errno_t _Error, const char* _Format, va_list _Args)
 	pErrorContext->Error = _Error;
 	pErrorContext->UseDefaultString = false;
 	_Format = _Format ? _Format : oErrorGetDefaultString(_Error);
-	oAddTruncationElipse(pErrorContext->ErrorString, oCOUNTOF(pErrorContext->ErrorString));
 	oVPrintf(pErrorContext->ErrorString, _Format, _Args);
+	oStd::ellipsize(pErrorContext->ErrorString, oCOUNTOF(pErrorContext->ErrorString));
 	return false;
 }
 

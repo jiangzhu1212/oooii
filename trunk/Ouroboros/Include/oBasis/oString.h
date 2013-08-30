@@ -105,11 +105,6 @@ char* oNewlinesToDos(char* _StrDestination, size_t _SizeofStrDestination, const 
 // Replaces any run of whitespace with a single ' ' character. Returns _StrDestination
 char* oPruneWhitespace(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource, char _Replacement = ' ', const char* _ToPrune = oWHITESPACE);
 
-// Overwrites the specified buffer's last 4 bytes of capacity with "...\0" so if
-// some strcpy were truncated, this would add a bit more visual sugar that the
-// truncation took place.
-template<typename CHAR_T> CHAR_T* oAddTruncationElipse(CHAR_T* _StrDestination, size_t _NumDestinationChars);
-
 // replace all occurrences of strFind in strSource with strReplace and copy the result to strDestination
 errno_t oReplace(char* oRESTRICT _StrResult, size_t _SizeofStrResult, const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace);
 
@@ -231,7 +226,6 @@ template<typename CHAR_T, size_t numchars> int oVPrintf(CHAR_T (&_StrDestination
 template<typename CHAR_T, size_t numchars> int oPrintf(CHAR_T (&_StrDestination)[numchars], const CHAR_T* _Format, ...) { va_list args; va_start(args, _Format); int n = oVPrintf(_StrDestination, numchars, _Format, args); va_end(args); return n; }
 template<size_t size> char* oNewlinesToDos(char (&_StrDestination)[size], const char* _StrSource) { return oNewlinesToDos(_StrDestination, size, _StrSource); }
 template<size_t size> char* oPruneWhitespace(char (&_StrDestination)[size], const char* _StrSource, char _Replacement = ' ', const char* _ToPrune = oWHITESPACE) { return oPruneWhitespace(_StrDestination, size, _StrSource, _Replacement, _ToPrune); }
-template<typename CHAR_T, size_t numchars> CHAR_T* oAddTruncationElipse(CHAR_T (&_StrDestination)[numchars]) { return oAddTruncationElipse(_StrDestination, numchars); }
 template<size_t size> errno_t oReplace(char (&_StrResult)[size], const char* _StrSource, const char* _StrFind, const char* _StrReplace) { return oReplace(_StrResult, size, _StrSource, _StrFind, _StrReplace); }
 template<size_t size> char* oInsert(char (&_StrSource)[size], char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion) { return oInsert(_StrSource, size, _InsertionPoint, _ReplacementLength, _Insertion); }
 template<size_t size> errno_t oStrVAppendf(char (&_StrDestination)[size], const char* _Format, va_list _Args) { return oStrVAppendf(_StrDestination, size, _Format, _Args); }
@@ -253,7 +247,6 @@ template<size_t capacity> char* oFormatMemorySize(oStd::fixed_string<char, capac
 template<size_t capacity> char* oFormatCommas(oStd::fixed_string<char, capacity>& _StrDestination, int _Number) { return oFormatCommas(_StrDestination, _StrDestination.capacity(), _Number); }
 template<size_t capacity> errno_t oReplace(oStd::fixed_string<char, capacity>& _StrDestination, const char* _StrSource, const char* _StrFind, const char* _StrReplace) { return oReplace(_StrDestination, _StrDestination.capacity(), _StrSource, _StrFind, _StrReplace); }
 template<size_t capacity> char* oInsert(oStd::fixed_string<char, capacity>& _StrDestination, char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion) { return oInsert(_StrDestination, _StrDestination.capacity(), _InsertionPoint, _ReplacementLength, _Insertion); }
-template<typename CHAR_T, size_t capacity> CHAR_T* oAddTruncationElipse(oStd::fixed_string<CHAR_T, capacity>& _StrDestination) { return oAddTruncationElipse(_StrDestination.c_str(), _StrDestination.capacity()); }
 template<size_t capacity> char* oOptDoc(oStd::fixed_string<char, capacity>& _StrDestination, const char* _AppName, const oOption* _pOptions) { return oOptDoc(_StrDestination, _StrDestination.capacity(), _AppName, _pOptions); }
 
 #endif

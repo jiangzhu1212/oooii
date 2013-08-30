@@ -204,16 +204,22 @@ void oWinProgressBar::SetStopped(bool _Stopped) threadsafe
 void oWinProgressBar::SetTextV(const char* _Format, va_list _Args) threadsafe
 {
 	oStd::lstring s;
-	if ((size_t)vsnprintf(s, _Format, _Args) >= s.capacity())
+	if (-1 == vsnprintf(s, _Format, _Args))
+	{
+		oStd::ellipsize(s);
 		oTHROW0(no_buffer_space);
+	}
 	Window->Dispatch([=] { oWinControlSetText(Get(PB_TEXT), s.c_str()); });
 }
 
 void oWinProgressBar::SetSubtextV(const char* _Format, va_list _Args) threadsafe
 {
 	oStd::lstring s;
-	if ((size_t)vsnprintf(s, _Format, _Args) >= s.capacity())
+	if (-1 == vsnprintf(s, _Format, _Args))
+	{
+		oStd::ellipsize(s);
 		oTHROW0(no_buffer_space);
+	}
 	Window->Dispatch([=] { oWinControlSetText(Get(PB_SUBTEXT), s.c_str()); });
 }
 
@@ -245,7 +251,7 @@ void oWinProgressBar::SetPercentageInternal(HWND _hProgress, HWND _hMarquee, HWN
 
 		char buf[16];
 		snprintf(buf, "%u%%", p);
-		oAddTruncationElipse(buf);
+		oStd::ellipsize(buf);
 		oVERIFY(oWinControlSetText(_hPercent, buf));
 
 		EnsureHidden(_hMarquee);

@@ -51,6 +51,7 @@
     <ClCompile Include="color.cpp" />
     <ClCompile Include="config.cpp" />
     <ClCompile Include="date.cpp" />
+    <ClCompile Include="elipsize.cpp" />
     <ClCompile Include="format_bytes.cpp" />
     <ClCompile Include="format_duration.cpp" />
     <ClCompile Include="is_ascii.cpp" />
@@ -92,6 +93,7 @@
     <ClCompile Include="trim.cpp" />
     <ClCompile Include="uri.cpp" />
     <ClCompile Include="utfcmp.cpp" />
+    <ClCompile Include="wcselipsize.cpp" />
     <ClCompile Include="wcsltombs.cpp" />
   </ItemGroup>
   <ItemGroup>

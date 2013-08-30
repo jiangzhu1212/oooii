@@ -203,7 +203,7 @@ bool oDebuggerTranslateSymbol(oDEBUGGER_SYMBOL* _pSymbol, unsigned long long _Sy
 
 		//oStrcpy(_pSymbol->Name, symbolInfo->Name);
 		memcpy(_pSymbol->Name, symbolInfo->Name, sizeof(_pSymbol->Name)-sizeof(TCHAR));
-		oAddTruncationElipse(_pSymbol->Name);
+		oStd::ellipsize(_pSymbol->Name);
 		_pSymbol->SymbolOffset = static_cast<unsigned int>(displacement);
 	}
 

@@ -60,6 +60,14 @@ namespace oStd {
 		#pragma warning(default:4996)
 		return l;
 	}
+
+	inline int vsnwprintf(wchar_t* _StrDestination, size_t _NumChars, const wchar_t* _Format, va_list _Args)
+	{
+		#pragma warning(disable:4996) // secure CRT warning
+		int l = ::_vsnwprintf(_StrDestination, _NumChars, _Format, _Args);
+		#pragma warning(default:4996)
+		return l;
+	}
 }
 
 inline int snprintf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, ...)
@@ -87,6 +95,14 @@ inline char* strtok_r(char* _strToken, const char* _strDelim, char** _Context)
 #endif
 
 namespace oStd {
+
+// Adds "...\0" to the end of the buffer - useful when recovering from string 
+// overruns that can be truncated.
+char* ellipsize(char* _StrDestination, size_t _SizeofStrDestination);
+template<size_t size> char* ellipsize(char (&_StrDestination)[size]) { return ellipsize(_StrDestination, size); }
+
+wchar_t* wcsellipsize(wchar_t* _StrDestination, size_t _NumChars);
+template<size_t n> wchar_t* ellipsize(wchar_t (&_StrDestination)[n]) { return wcsellipsize(_StrDestination, n); }
 
 // passing this to std::transform brings up warnings that are hard to disable,
 // so create a wrapper that is same type in and out.

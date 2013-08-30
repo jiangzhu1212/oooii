@@ -297,7 +297,7 @@ bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const
 	// MS recommends truncating at 200 for English: http://msdn.microsoft.com/en-us/library/bb773352(v=vs.85).aspx
 	static const int MaxInfo = 201;
 	oStrncpy(nid.szInfo, MaxInfo, _Message, MaxInfo - 1);
-	oAddTruncationElipse(nid.szInfo, MaxInfo);
+	oStd::ellipsize(nid.szInfo, MaxInfo);
 
 	// MS recommends truncating at 48 for English: http://msdn.microsoft.com/en-us/library/bb773352(v=vs.85).aspx
 	static const int MaxTitle = 49;

@@ -142,11 +142,17 @@
     <ClCompile Include="oStdFilesystem.cpp">
       <Filter>Source\C++11</Filter>
     </ClCompile>
-    <ClCompile Include="scc_svn.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="scc.cpp">
-      <Filter>Source</Filter>
+      <Filter>Source\scc</Filter>
+    </ClCompile>
+    <ClCompile Include="scc_svn.cpp">
+      <Filter>Source\scc</Filter>
+    </ClCompile>
+    <ClCompile Include="elipsize.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="wcselipsize.cpp">
+      <Filter>Source\string</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -313,7 +319,7 @@
       <Filter>oStd</Filter>
     </ClInclude>
     <ClInclude Include="scc_svn.h">
-      <Filter>Source</Filter>
+      <Filter>Source\scc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -361,6 +367,9 @@
     </Filter>
     <Filter Include="Source\memory">
       <UniqueIdentifier>{ab817143-789e-4c97-ba30-23b809ef8200}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\scc">
+      <UniqueIdentifier>{faf8a815-382c-4877-ac89-9124ec38fd94}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

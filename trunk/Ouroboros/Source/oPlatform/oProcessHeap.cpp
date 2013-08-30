@@ -409,7 +409,7 @@ bool oProcessHeapContextImpl::FindOrAllocate(const oGUID& _GUID, bool _IsThreadL
 		if (_DebugName)
 		{
 			memcpy_s(e.DebugName, sizeof(e.DebugName), _DebugName, __min(oStrlen(_DebugName)+1, sizeof(e.DebugName)));
-			oAddTruncationElipse(e.DebugName);
+			oStd::ellipsize(e.DebugName);
 		}
 
 		e.NumStackEntries = 0;

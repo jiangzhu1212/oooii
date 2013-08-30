@@ -22,43 +22,21 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Creating a standard exception can be very tedious, so wrap common patterns in 
-// convenience macros.
-#pragma once
-#ifndef oStd_throw_h
-#define oStd_throw_h
-
-#include <oStd/string.h>
-#include <system_error>
 
 namespace oStd {
-	namespace detail {
 
-inline std::string vformatf(const char* _Format, va_list _Args)
+wchar_t* wcsellipsize(wchar_t* _StrDestination, size_t _NumChars)
 {
-	char buf[2048];
-	#pragma warning(disable:4996) // secure CRT warning
-	const int len = vsnprintf(buf, sizeof(buf), _Format, _Args);
-	ellipsize(buf);
-	#pragma warning(default:4996)
-	if (len < 1) buf[2047] = 0;
-	return buf;
+	switch (_NumChars - 4)
+	{ // Duff's device (no breaks)
+		default: _StrDestination[_NumChars-4] = L'.';
+		case 3: _StrDestination[_NumChars-3] = L'.';
+		case 2: _StrDestination[_NumChars-2] = L'.';
+		case 1: _StrDestination[_NumChars-1] = 0;
+		case 0: break;
+	}
+
+	return _StrDestination;
 }
 
-inline std::string formatf(const char* _Format, ...)
-{
-	va_list a; va_start(a, _Format);
-	std::string s = vformatf(_Format, a);
-	va_end(a);
-	return std::move(s);
-}
-
-	} // namespace detail
 } // namespace oStd
-
-#define oTHROW(_SystemError, _Message, ...) do { throw std::system_error(std::make_error_code(std::errc::_SystemError), oStd::detail::formatf(_Message, ## __VA_ARGS__)); } while(false)
-#define oTHROW0(_SystemError) do { std::error_code ec = std::make_error_code(std::errc::_SystemError); throw std::system_error(ec, ec.message()); } while(false)
-#define oCHECK(_Expression, _Message, ...) do { if (!(_Expression)) oTHROW(protocol_error, _Message, ## __VA_ARGS__); } while(false)
-#define oCHECK0(_Expression) do { if (!(_Expression)) oTHROW(protocol_error, "%s", #_Expression); } while(false)
-
-#endif

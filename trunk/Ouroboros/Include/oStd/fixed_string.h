@@ -176,6 +176,9 @@ namespace oStd {
 	TSTR struct less<STRT> { bool operator()(const STRT& x, const STRT& y) const { return strcmp(x.c_str(), y.c_str()) < 0; } };
 	TSTR struct less_case_insensitive<STRT> { bool operator()(const STRT& x, const STRT& y) const { return _stricmp(x, y) < 0; } };
 
+	template<size_t capacity> char* ellipsize(fixed_string<char, capacity>& _StrDestination) { return ellipsize(_StrDestination.c_str(), _StrDestination.capacity()); }
+	template<size_t capacity> wchar_t* ellipsize(fixed_string<wchar_t, capacity>& _StrDestination) { return wcsellipsize(_StrDestination.c_str(), _StrDestination.capacity()); }
+
 	TSTR char* trim_left(STRT& _Trimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim_left(_Trimmed, _Trimmed.capacity(), _StrSource, _ToTrim); }
 	TSTR char* trim_right(STRT& _Trimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim_right(_Trimmed, _Trimmed.capacity(), _StrSource, _ToTrim); }
 	TSTR char* trim(STRT& _Trimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim(_Trimmed, _Trimmed.capacity(), _StrSource, _ToTrim); }
