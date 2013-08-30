@@ -460,7 +460,7 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 		case oSYSPATH_SCCROOT:
 		{
 			oStd::path_string app;
-			oSystemGetPath(app, oSYSPATH_APP_FULL);
+			oSystemGetPath(app, oSYSPATH_APP);
 
 			auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, oBIND4, oBIND5, false));
 			scc->root(app, _StrSysPath, _SizeofStrSysPath);
