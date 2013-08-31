@@ -408,7 +408,7 @@ oMAINA()
 	{
 		oMSGBOX_DESC mb;
 		mb.Type = oMSGBOX_WARN;
-		oMsgBox(mb, "Perforce is not available.  Shutting down.");
+		oMsgBox(mb, "SCC is not available.  Shutting down.");
 		return -1;
 	}
 

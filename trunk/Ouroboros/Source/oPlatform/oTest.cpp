@@ -764,7 +764,6 @@ void oTestManager_Impl::PrintDesc()
 	uint CL = scc->revision(DevPath);
 	if (CL)
 	{
-		oASSERT(false, "FIX THIS");
 		if (scc->is_up_to_date(DevPath, CL))
 			oPrintf(CLStr, "%d", CL);
 		else
@@ -773,7 +772,7 @@ void oTestManager_Impl::PrintDesc()
 	else
 		oPrintf(CLStr, "???");
 
-	Report(oConsoleReporting::INFO, "Perforce Changelist: %s\n", CLStr.c_str());
+	Report(oConsoleReporting::INFO, "SCC Revision: %s\n", CLStr.c_str());
 }
 
 void oTestManager_Impl::RegisterSpecialModeTests()
