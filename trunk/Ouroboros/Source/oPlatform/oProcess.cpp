@@ -88,6 +88,18 @@ oWinProcess::oWinProcess(const DESC& _Desc, bool* _pSuccess)
 	, hErrorWrite(nullptr)
 	, Suspended(_Desc.StartSuspended)
 {
+	*_pSuccess = false;
+
+	memset(&ProcessInfo, 0, sizeof(PROCESS_INFORMATION));
+	memset(&StartInfo, 0, sizeof(STARTUPINFO));
+	StartInfo.cb = sizeof(STARTUPINFO);
+
+	if (!oSTRVALID(_Desc.CommandLine))
+	{
+		oErrorSetLast(std::errc::invalid_argument, "invalid command line");
+		return;
+	}
+
 	Desc.CommandLine = CommandLine.c_str();
 	Desc.EnvironmentString = EnvironmentString.c_str();
 	Desc.InitialWorkingDirectory = InitialWorkingDirectory.c_str();
@@ -96,10 +108,6 @@ oWinProcess::oWinProcess(const DESC& _Desc, bool* _pSuccess)
 	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
 	sa.lpSecurityDescriptor = 0;
 	sa.bInheritHandle = TRUE;
-
-	memset(&ProcessInfo, 0, sizeof(PROCESS_INFORMATION));
-	memset(&StartInfo, 0, sizeof(STARTUPINFO));
-	StartInfo.cb = sizeof(STARTUPINFO);
 
 	DWORD dwCreationFlags = 0;
 	if (_Desc.StartSuspended)
@@ -184,6 +192,7 @@ oWinProcess::oWinProcess(const DESC& _Desc, bool* _pSuccess)
 		oStrcpy(cmdline, CommandLine.length()+1, CommandLine.c_str());
 	}
 
+	oASSERT(cmdline, "a null cmdline can BSOD a machine");
 	if (!CreateProcessA(nullptr, cmdline, nullptr, &sa, TRUE, dwCreationFlags, env
 		, InitialWorkingDirectory.empty() ? nullptr : InitialWorkingDirectory.c_str()
 		, &StartInfo, &ProcessInfo))
