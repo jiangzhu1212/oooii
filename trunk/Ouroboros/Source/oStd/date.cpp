@@ -46,7 +46,7 @@ static const unsigned long long kSecondsFrom1601To1900 = static_cast<unsigned lo
 
 namespace oStd {
 
-#define oDATE_OUT_OF_RANGE(_ToType) do { throw std::domain_error(oStd::detail::formatf("date_cast<%s>(const %s&) out of range", typeid(_Date).name(), typeid(_ToType).name())); } while(false)
+#define oDATE_OUT_OF_RANGE(_ToType) do { throw std::domain_error(oStd::formatf("date_cast<%s>(const %s&) out of range", typeid(_Date).name(), typeid(_ToType).name())); } while(false)
 
 // From NTP reference implementation ntp-dev-4.2.7p295/libntp/ntp_calendar.cpp:
 /*

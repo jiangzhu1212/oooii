@@ -28,15 +28,22 @@
 #include <oStd/stringize.h>
 #include <oStd/throw.h>
 
-#define SVNf(_Format, ...) \
-	oStd::lstring cmd; \
-	if (-1 == snprintf(cmd, _Format, ## __VA_ARGS__)) \
-		oTHROW0(no_buffer_space); \
-	oStd::xlstring StdOut; \
-	spawn(cmd, StdOut);
-
 namespace oStd {
 	namespace detail {
+
+#define SVN_CMDf(_Format, ...) \
+	lstring cmd; \
+	if (-1 == snprintf(cmd, _Format, ## __VA_ARGS__)) \
+		throw scc_exception(scc_error::command_string_too_long)
+
+#define SVNf(_Format, ...) \
+	SVN_CMDf(_Format, ## __VA_ARGS__); \
+	xlstring StdOut; \
+	spawn(cmd, StdOut)
+
+#define SVN_THROWE(_ExitCode) throw scc_exception(scc_error::scc_exe_error, oStd::formatf("svn exited with code %d", _ExitCode))
+#define SVN_THROWO(_ExitCode, _StdOut) throw scc_exception(scc_error::scc_exe_error, oStd::formatf("svn exited with code %d\n  stdout: %s", _ExitCode, _StdOut.c_str()))
+#define SVN_THROWF(_SCCError, _Format, ...) throw scc_exception(scc_error::_SCCError, oStd::vformatf(_Format, ## __VA_ARGS__ ))
 
 std::shared_ptr<scc> make_scc_svn(const scc_spawn& _Spawn)
 {
@@ -54,6 +61,7 @@ static bool svn_is_error(const char* _StdOut)
 		"has no committed revision",
 		"does not exist",
 		"Error resolving",
+		"E731001",
 	};
 
 	for(size_t i = 0; i < oCOUNTOF(sErrors); i++)
@@ -67,7 +75,7 @@ void scc_svn::spawn(const char* _Command, const oFUNCTION<void(char* _Line)>& _G
 	static const unsigned int kTimeout = 5000;
 	int ec = 0;
 	if (!Spawn(_Command, _GetLine, &ec, kTimeout))
-		oTHROW(operation_not_supported, "svn exited with error code %d", ec);
+		SVN_THROWE(ec);
 }
 
 void scc_svn::spawn(const char* _Command, oStd::xlstring& _StdOut) const
@@ -81,10 +89,8 @@ void scc_svn::spawn(const char* _Command, oStd::xlstring& _StdOut) const
 		strlcat(_StdOut, "\n", _StdOut.capacity());
 	};
 
-	if (!Spawn(_Command, GetLine, &ec, kTimeout))
-		oTHROW(operation_not_supported, "svn exited with error code %d\nstdout: %s", ec, _StdOut.c_str());
-	if (svn_is_error(_StdOut))
-		oTHROW(operation_not_supported, "svn error: stdout: %s", _StdOut.c_str());
+	if (!Spawn(_Command, GetLine, &ec, kTimeout) || svn_is_error(_StdOut))
+		SVN_THROWO(ec, _StdOut);
 }
 
 bool scc_svn::available() const
@@ -93,7 +99,7 @@ bool scc_svn::available() const
 	oStd::xlstring StdOut;
 	oFUNCTION<void(char* _Line)> GetLine = [&](char* _Line) { strlcat(StdOut, _Line, StdOut.capacity()); strlcat(StdOut, "\n", StdOut.capacity()); };
 	if (!Spawn("svn", GetLine, &ec, 1000))
-		oTHROW(operation_not_supported, "svn exited with error code %d", ec);
+		SVN_THROWE(ec);
 	return !!strstr(StdOut, "Type 'svn help'");
 }
 
@@ -104,48 +110,43 @@ char* scc_svn::root(const char* _Path, char* _StrDestination, size_t _SizeofStrD
 	static const size_t PathKeyLen = 24;
 	char* path = strstr(StdOut, "Working Copy Root Path: ");
 	if (!path)
-		oTHROW(protocol_error, "no path entry found");
+		SVN_THROWF(entry_not_found, "%s", "no working copy root path entry found");
 
 	path += PathKeyLen;
 	size_t len = strcspn(path, oNEWLINE); // move to end of line
 
 	if (len >= _SizeofStrDestination)
-		oTHROW0(no_buffer_space);
+		throw std::invalid_argument("destination buffer to receive scc root is too small");
 
 	memcpy(_StrDestination, path, len);
 	_StrDestination[len] = 0;
 
 	if (!clean_path(_StrDestination, _SizeofStrDestination, _StrDestination))
-		oTHROW0(no_buffer_space);
+		throw std::invalid_argument("destination buffer to receive scc root is too small");
 	return _StrDestination;
 }
 
 unsigned int scc_svn::revision(const char* _Path) const
 {
 	unsigned int r = 0;
-	try
-	{
-		SVNf("svn info \"%s\"", _Path);
-		static const size_t RevKeyLen = 10;
-		char* rev = strstr(StdOut, "Revision: ");
-		if (!rev)
-			return 0;
 
-		rev += RevKeyLen;
-		size_t len = strcspn(rev, oNEWLINE); // move to end of line
+	SVNf("svn info \"%s\"", _Path);
+	static const size_t RevKeyLen = 10;
+	char* rev = strstr(StdOut, "Revision: ");
+	if (!rev)
+		return 0;
+
+	rev += RevKeyLen;
+	size_t len = strcspn(rev, oNEWLINE); // move to end of line
 	
-		oStd::sstring s;
-		if (len >= s.capacity())
-			return r;
+	oStd::sstring s;
+	if (len >= s.capacity())
+		return r;
 
-		memcpy(s, rev, len);
-		s[len] = 0;
+	memcpy(s, rev, len);
+	s[len] = 0;
 
-		oStd::from_string(&r, s);
-	}
-	catch (std::exception&)
-	{
-	}
+	oStd::from_string(&r, s);
 
 	return r;
 }
@@ -212,17 +213,31 @@ void scc_svn::status(const char* _Path, unsigned int _UpToRevision, scc_visit_op
 	}
 
 	if (-1 == snprintf(cmd, "svn status -u%s \"%s\"", opt, _Path))
-		oTHROW0(no_buffer_space);
+		throw scc_exception(scc_error::command_string_too_long);
 
 	oStd::xlstring line;
+	scc_error::value errc = scc_error::none;
+	oStd::mstring errline;
 	spawn(cmd, [&](char* _Line)
 	{
-		if (svn_is_error(_Line))
-			oTHROW(operation_not_supported, "svn error");
-		scc_file file;
-		svn_parse_status_line(_Line, _UpToRevision, file);
-		_Visitor(file);
+		if (errc == scc_error::none)
+		{
+			if (svn_is_error(_Line))
+			{
+				errc = scc_error::scc_exe_error;
+				errline = _Line;
+			}
+			else
+			{
+				scc_file file;
+				svn_parse_status_line(_Line, _UpToRevision, file);
+				_Visitor(file);
+			}
+		}
 	});
+
+	if (errc != scc_error::none)
+		throw scc_exception(errc, errline);
 }
 
 static bool svn_from_string(ntp_date* _pDate, const char* _String)
@@ -252,18 +267,18 @@ scc_revision scc_svn::change(const char* _Path, unsigned int _Revision) const
 	if (_Revision)
 	{
 		if (-1 == snprintf(cmd, "svn log -r %d \"%s\"", _Revision, _Path))
-			oTHROW0(no_buffer_space);
+			throw scc_exception(scc_error::command_string_too_long);
 	}
 
 	else if (-1 == snprintf(cmd, "svn log \"%s\"", _Path))
-		oTHROW0(no_buffer_space);
+		throw scc_exception(scc_error::command_string_too_long);
 
 	oStd::xlstring StdOut;
 	spawn(cmd, StdOut);
 
 	char* rev = strchr(StdOut, 'r');
 	if (!rev)
-		oTHROW0(no_such_file_or_directory);
+		throw scc_exception(scc_error::entry_not_found);
 	rev++;
 	char* strWho = strchr(rev, '|');
 	*(strWho-1) = 0;
@@ -294,11 +309,11 @@ void scc_svn::sync(const char* _Path, unsigned int _Revision, bool _Force)
 	if (_Revision)
 	{
 		if (-1 == snprintf(cmd, "svn update%s -r %d \"%s\"", StrForce.c_str(), _Revision, _Path))
-			oTHROW0(no_buffer_space);
+			throw scc_exception(scc_error::command_string_too_long);
 	}
 
 	else if (-1 == snprintf(cmd, "svn update \"%s\"", _Path))
-		oTHROW0(no_buffer_space);
+		throw scc_exception(scc_error::command_string_too_long);
 
 	oStd::xlstring StdOut;
 	spawn(cmd, StdOut);
@@ -310,7 +325,7 @@ void scc_svn::sync(const char* _Path, const ntp_date& _Date, bool _Force)
 	oStd::sstring StrDate;
 	oStd::lstring cmd;
 	if (-1 == snprintf(cmd, "svn update%s -r {%d} \"%s\"", StrForce, svn_to_string(StrDate, _Date), _Path))
-		oTHROW0(no_buffer_space);
+		throw scc_exception(scc_error::command_string_too_long);
 	oStd::xlstring StdOut;
 	spawn(cmd, StdOut);
 }

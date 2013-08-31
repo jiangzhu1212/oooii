@@ -65,6 +65,36 @@ const char* as_string(const scc_status::value& _Status)
 	return "unrecognized scc_status";
 }
 
+namespace detail {
+
+class scc_category_impl : public std::error_category
+{
+public:
+	const char* name() const override { return "future"; }
+	std::string message(value_type _ErrCode) const override
+	{
+		switch (_ErrCode)
+		{
+			case scc_error::none: return "no error";
+			case scc_error::command_string_too_long: return "the command string is too long for internal buffers";
+			case scc_error::scc_exe_not_available: return "scc executable not available";
+			case scc_error::scc_exe_error: return "scc exe reported an error";
+			case scc_error::scc_server_not_available: return "scc server not available";
+			case scc_error::file_not_found: return "file not found";
+			case scc_error::entry_not_found: return "entry not found";
+			default: break;
+		}
+		return "unrecognized scc error code";
+	}
+};
+
+} // namespace detail
+
+const std::error_category& scc_category()
+{
+	static detail::scc_category_impl sSingleton;
+	return sSingleton;
+}
 
 std::shared_ptr<scc> make_scc(scc_protocol::value _Protocol, const scc_spawn& _Spawn)
 {

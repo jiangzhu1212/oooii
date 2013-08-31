@@ -32,7 +32,6 @@
 #include <system_error>
 
 namespace oStd {
-	namespace detail {
 
 inline std::string vformatf(const char* _Format, va_list _Args)
 {
@@ -53,10 +52,9 @@ inline std::string formatf(const char* _Format, ...)
 	return std::move(s);
 }
 
-	} // namespace detail
 } // namespace oStd
 
-#define oTHROW(_SystemError, _Message, ...) do { throw std::system_error(std::make_error_code(std::errc::_SystemError), oStd::detail::formatf(_Message, ## __VA_ARGS__)); } while(false)
+#define oTHROW(_SystemError, _Message, ...) do { throw std::system_error(std::make_error_code(std::errc::_SystemError), oStd::formatf(_Message, ## __VA_ARGS__)); } while(false)
 #define oTHROW0(_SystemError) do { std::error_code ec = std::make_error_code(std::errc::_SystemError); throw std::system_error(ec, ec.message()); } while(false)
 #define oCHECK(_Expression, _Message, ...) do { if (!(_Expression)) oTHROW(protocol_error, _Message, ## __VA_ARGS__); } while(false)
 #define oCHECK0(_Expression) do { if (!(_Expression)) oTHROW(protocol_error, "%s", #_Expression); } while(false)

@@ -36,6 +36,7 @@ static oStd::option sOptions[] =
 	{ 'f', "file", "path", "executable file to modify" },
 	{ '@', "verpatch", "path", "path to verpatch.exe" },
 	{ 'h', "help", 0, "Displays this message" },
+	{ 'n', "no-fail", 0, "Always return exit code 0, print errors only" },
 };
 
 struct oVERPATCH_DESC
@@ -51,6 +52,7 @@ struct oVERPATCH_DESC
 	const char* File;
 	const char* VerPatch;
 	bool ShowHelp;
+	bool AllowFail;
 };
 
 static oStd::path_string sDefaultSCCRoot;
@@ -65,6 +67,7 @@ static bool ParseCommandLine(int argc, const char* argv[], oVERPATCH_DESC* _pDes
 	_pDesc->SCCRoot = sDefaultSCCRoot;
 	#endif
 	_pDesc->VerPatch = "./verpatch.exe";
+	_pDesc->AllowFail = true;
 
 	const char* value = 0;
 	char ch = oStd::opttok(&value, argc, argv, sOptions);
@@ -83,6 +86,8 @@ static bool ParseCommandLine(int argc, const char* argv[], oVERPATCH_DESC* _pDes
 			case 'r': _pDesc->SCCRoot = value; break;
 			case 'f': _pDesc->File = value; break;
 			case '@': _pDesc->VerPatch = value; break;
+			case 'h': _pDesc->ShowHelp = true; break;
+			case 'n': _pDesc->AllowFail = false; break;
 			case ':': return oErrorSetLast(std::errc::invalid_argument, "The %d%s option is missing a parameter (does it begin with '-' or '/'?)", count, oStd::ordinal(count));
 		}
 
@@ -95,32 +100,40 @@ static bool ParseCommandLine(int argc, const char* argv[], oVERPATCH_DESC* _pDes
 
 static bool CreateVersionString(oStd::mstring& _StrDestination, const oVERPATCH_DESC& _Desc)
 {
-	oMODULE_DESC d;
-	if (!oModuleGetDesc(_Desc.File, &d))
-		return false; // pass through error
+	try
+	{
+		oMODULE_DESC d;
+		if (!oModuleGetDesc(_Desc.File, &d))
+			return false; // pass through error
 
-	oVersion v(1,0);
-	if (oStd::from_string(&v, _Desc.Version) && !v.IsValid())
-		v = d.FileVersion;
+		oVersion v(1,0);
+		if (oStd::from_string(&v, _Desc.Version) && !v.IsValid())
+			v = d.FileVersion;
 
-	auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, false, oBIND4));
-	uint Revision = scc->revision(_Desc.SCCRoot);
+		auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, false, oBIND4));
+		uint Revision = scc->revision(_Desc.SCCRoot);
 
-	// make revision readable, but fit Microsoft's standards
-	v.Build = static_cast<unsigned short>(Revision / 10000);
-	v.Revision = Revision % 10000;
+		// make revision readable, but fit Microsoft's standards
+		v.Build = static_cast<unsigned short>(Revision / 10000);
+		v.Revision = Revision % 10000;
 
-	// Now convert it to string
-	oStd::to_string(_StrDestination, v);
+		// Now convert it to string
+		oStd::to_string(_StrDestination, v);
 
-	// Mark if this is a modified build
-	oStd::scc_file f;
-	bool Special = !scc->is_up_to_date(_Desc.SCCRoot);
+		// Mark if this is a modified build
+		oStd::scc_file f;
+		bool Special = !scc->is_up_to_date(_Desc.SCCRoot);
 
-	if (d.IsDebugBuild)
-		oStrcat(_StrDestination, " (Debug)");
-	if (Special)
-		oStrcat(_StrDestination, " (Special)");
+		if (d.IsDebugBuild)
+			oStrcat(_StrDestination, " (Debug)");
+		if (Special)
+			oStrcat(_StrDestination, " (Special)");
+	}
+
+	catch (std::exception& e)
+	{
+		return oErrorSetLast(e);
+	}
 
 	return true;
 }
@@ -165,7 +178,7 @@ bool Main(int argc, const char* argv[])
 	{
 		oStd::mstring StrVersion;
 		if (!CreateVersionString(StrVersion, opts))
-			return false; // pass through error
+			goto fail; // pass through error
 
 		verpatch += " \"";
 		verpatch += StrVersion;
@@ -190,17 +203,25 @@ bool Main(int argc, const char* argv[])
 	oVERVAL(PrivateBuild);
 	oVERVAL(SpecialBuild);
 
-	oStd::xlstring Response;
-	int ExitCode = 0;
-	if (!oSystemExecute(verpatch.c_str(), [&](char* _Line) { strlcat(Response, _Line, Response.capacity()); }, &ExitCode, false, 5000))
-		return false; // pass through error
-
-	if (ExitCode)
 	{
-		printf("verpatch exited with code %d\n%s", ExitCode, Response.c_str());
-		return oErrorSetLast(std::errc::io_error, Response);
+		oStd::xlstring Response;
+		int ExitCode = 0;
+		if (!oSystemExecute(verpatch.c_str(), [&](char* _Line) { strlcat(Response, _Line, Response.capacity()); }, &ExitCode, false, 5000))
+			goto fail; // pass through error
+
+		if (ExitCode)
+		{
+			oErrorSetLast(std::errc::io_error, "verpatch exited with code %d\n%s", ExitCode, Response.c_str());
+			goto fail; // pass through error
+		}
 	}
 
+	return true;
+
+fail:
+	if (opts.AllowFail)
+		return false; // pass through error
+	printf("%s: %s: %s\n", oGetFilebase(argv[0]), oErrorAsString(oErrorGetLast()), oErrorGetLastString());
 	return true;
 }
 

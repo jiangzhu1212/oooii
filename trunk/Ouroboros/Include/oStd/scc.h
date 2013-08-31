@@ -33,6 +33,31 @@
 
 namespace oStd {
 
+namespace scc_error
+{	enum value {
+
+	none,
+	command_string_too_long,
+	scc_exe_not_available,
+	scc_exe_error,
+	scc_server_not_available,
+	file_not_found,
+	entry_not_found, // returned when parsing output fails
+
+};}
+
+const std::error_category& scc_category();
+/*constexpr*/ inline std::error_code make_error_code(scc_error::value _Errc) { return std::error_code(static_cast<int>(_Errc), scc_category()); }
+/*constexpr*/ inline std::error_condition make_error_condition(scc_error::value _Errc) { return std::error_condition(static_cast<int>(_Errc), scc_category()); }
+
+class scc_exception : public std::system_error
+{
+	public:
+		scc_exception(scc_error::value _Errc) : std::system_error(_Errc, scc_category(), scc_category().message(_Errc)) {}
+		scc_exception(scc_error::value _Errc, const char* _Message) : std::system_error(_Errc, scc_category(), _Message) {}
+		scc_exception(scc_error::value _Errc, const std::string& _Message) : std::system_error(_Errc, scc_category(), _Message) {}
+};
+
 namespace scc_protocol
 {	enum value {
 
