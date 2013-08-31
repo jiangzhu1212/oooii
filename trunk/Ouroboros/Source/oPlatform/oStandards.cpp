@@ -38,15 +38,6 @@
 #include <oPlatform/oFile.h>
 #include <oPlatform/oModule.h>
 
-int oWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow, int (*oMain)(int argc, const char* argv[]))
-{
-	int argc = 0;
-	const char** argv = oWinCommandLineToArgvA(true, lpCmdLine, &argc);
-	int result = oMain(argc, argv);
-	oWinCommandLineToArgvAFree(argv);
-	return result;
-}
-
 void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list _Args )
 {
 	static const oStd::color fg[] = 
@@ -93,10 +84,10 @@ bool oMoveMouseCursorOffscreen()
 	return !!SetCursorPos(p.x + sz.x, p.y-1);
 }
 
-bool oWaitForSystemSteadyState(oFUNCTION<bool()> _ContinueIdling )
+bool oWaitForSystemSteadyState(oFUNCTION<bool()> _ContinueIdling)
 {
 	//if (oProcessHasDebuggerAttached(oProcessGetCurrentID()))
-//		return true;
+	//		return true;
 
 	oTRACE("Waiting for system steady state...");
 
@@ -126,17 +117,6 @@ bool oWaitForSystemSteadyState(oFUNCTION<bool()> _ContinueIdling )
 
 	oTRACE("System has steadied, continuing...");
 	return true;
-}
-
-void oKillExplorer()
-{
-	// Explorer will auto-restart if terminated programmatically, so use a 
-	// more heavy-handed approach.
-	if (oProcessExists("explorer.exe"))
-	{
-		oTRACE("Terminating explorer.exe because the taskbar can interfere with cooperative fullscreen");
-		system("TASKKILL /F /IM explorer.exe");
-	}
 }
 
 void* oLoadIcon(oFUNCTION<void(const char** _ppBufferName, const void** _ppBuffer, size_t* _pSizeofBuffer)> _BufferGetDesc)

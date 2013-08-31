@@ -67,6 +67,7 @@
     <ClCompile Include="memset2d2.cpp" />
     <ClCompile Include="memset2d4.cpp" />
     <ClCompile Include="memset4.cpp" />
+    <ClCompile Include="opttok.cpp" />
     <ClCompile Include="ordinal.cpp" />
     <ClCompile Include="oStdChrono.cpp" />
     <ClCompile Include="oStdConditionVariable.cpp" />
@@ -127,6 +128,7 @@
     <ClInclude Include="..\..\Include\oStd\murmur3.h" />
     <ClInclude Include="..\..\Include\oStd\oFor.h" />
     <ClInclude Include="..\..\Include\oStd\operators.h" />
+    <ClInclude Include="..\..\Include\oStd\opttok.h" />
     <ClInclude Include="..\..\Include\oStd\oStdAtomic.h" />
     <ClInclude Include="..\..\Include\oStd\oStdChrono.h" />
     <ClInclude Include="..\..\Include\oStd\oStdConditionVariable.h" />

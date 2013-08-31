@@ -154,6 +154,9 @@
     <ClCompile Include="wcselipsize.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
+    <ClCompile Include="opttok.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -325,6 +328,9 @@
       <Filter>oStd</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oStd\backoff.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\opttok.h">
       <Filter>oStd</Filter>
     </ClInclude>
   </ItemGroup>

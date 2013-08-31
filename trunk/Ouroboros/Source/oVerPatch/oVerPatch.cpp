@@ -23,19 +23,19 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 
-static oOption sOptions[] = 
+static oStd::option sOptions[] = 
 {
-	{ "version", 'v', "major.minor", "File version (pass 0.0 to only update revision)" },
-	{ "productname", 'p', "name", "Product name" },
-	{ "company", 'c', "name", "Company" },
-	{ "copyright", 't', "string", "Copyright" },
-	{ "comments", 'm', "string", "Comments" },
-	{ "privatebuild", 'b', "string", "File type" },
-	{ "specialbuild", 's', "string", "File type" },
-	{ "sccroot", 'r', "path", "source code control repository root" },
-	{ "file", 'f', "path", "executable file to modify" },
-	{ "verpatch", '@', "path", "path to verpatch.exe" },
-	{ 0, 0, 0, 0 },
+	{ 'v', "version", "major.minor", "File version (pass 0.0 to only update revision)" },
+	{ 'p', "productname", "name", "Product name" },
+	{ 'c', "company", "name", "Company" },
+	{ 't', "copyright", "string", "Copyright" },
+	{ 'm', "comments", "string", "Comments" },
+	{ 'b', "privatebuild", "string", "File type" },
+	{ 's', "specialbuild", "string", "File type" },
+	{ 'r', "sccroot", "path", "source code control repository root" },
+	{ 'f', "file", "path", "executable file to modify" },
+	{ '@', "verpatch", "path", "path to verpatch.exe" },
+	{ 'h', "help", 0, "Displays this message" },
 };
 
 struct oVERPATCH_DESC
@@ -50,6 +50,7 @@ struct oVERPATCH_DESC
 	const char* SCCRoot;
 	const char* File;
 	const char* VerPatch;
+	bool ShowHelp;
 };
 
 static oStd::path_string sDefaultSCCRoot;
@@ -66,7 +67,7 @@ static bool ParseCommandLine(int argc, const char* argv[], oVERPATCH_DESC* _pDes
 	_pDesc->VerPatch = "./verpatch.exe";
 
 	const char* value = 0;
-	char ch = oOptTok(&value, argc, argv, sOptions);
+	char ch = oStd::opttok(&value, argc, argv, sOptions);
 	int count = 0;
 	while (ch)
 	{
@@ -85,7 +86,7 @@ static bool ParseCommandLine(int argc, const char* argv[], oVERPATCH_DESC* _pDes
 			case ':': return oErrorSetLast(std::errc::invalid_argument, "The %d%s option is missing a parameter (does it begin with '-' or '/'?)", count, oStd::ordinal(count));
 		}
 
-		ch = oOptTok(&value, 0, 0, 0);
+		ch = oStd::opttok(&value);
 		count++;
 	}
 
@@ -129,8 +130,8 @@ bool Main(int argc, const char* argv[])
 	if (argc <= 1)
 	{
 		char buf[1024];
-		printf("%s", oOptDoc(buf, oGetFilebase(argv[0]), sOptions));
-		return oErrorSetLast(std::errc::invalid_argument, ""); // don't print any other complaint
+		printf("%s", oStd::optdoc(buf, oGetFilebase(argv[0]), sOptions));
+		return true;
 	}
 
 	oVERPATCH_DESC opts;
@@ -138,6 +139,13 @@ bool Main(int argc, const char* argv[])
 	{
 		oStd::xlstring temp = oErrorGetLastString();
 		return oErrorSetLast(std::errc::invalid_argument, "bad command line: %s", temp.c_str());
+	}
+
+	if (opts.ShowHelp)
+	{
+		char buf[1024];
+		printf("%s", oStd::optdoc(buf, oGetFilebase(argv[0]), sOptions));
+		return true;
 	}
 
 	if (!opts.File)

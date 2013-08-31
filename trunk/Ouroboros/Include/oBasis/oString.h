@@ -165,37 +165,6 @@ bool oStrTokFinishedSuccessfully(char** _ppContext);
 const char* oStrTokSkip(const char* _pString, const char* _pDelimiters, int _Count, bool _SkipDelimiters=true);
 
 // _____________________________________________________________________________
-// Command-line parsing
-
-struct oOption
-{
-	const char* LongName;
-	char ShortName;
-	const char* ArgumentName;
-	const char* Description;
-};
-
-// Similar to strtok, first call should specify argv and argc from main(), and
-// subsequent calls should pass nullptr to those values.
-// This searches through the specified command line arguments and matches either 
-// "--LongName" or "-ShortName" and fills *value with the value for the arg (or 
-// if ArgumentName is nullptr, meaning there is no arg, then *value gets the 
-// option itself, or nullptr if the options does not exist.)
-// returns:
-// if there is a match, the ShortName of the match
-// 0 for no more matches
-// ' ' for regular arguments (non-option values)
-// '?' for an unrecognized option
-// ':' if there was a missing option value
-// to move through an entire argv list, each iteration should do argv++, argc--;
-// options specified in an array somewhere must be terminated with an extra
-// CMDLINE_OPTION entry that is all nullptr/0 values.
-char oOptTok(const char** _ppValue, int _Argc, const char* _Argv[], const oOption* _pOptions);
-
-// Prints documentation for the specified options to the specified buffer.
-char* oOptDoc(char* _StrDestination, size_t _SizeofStrDestination, const char* _AppName, const oOption* _pOptions);
-
-// _____________________________________________________________________________
 // Misc
 
 // Come up with every combination of every option specified. _ppOptions is an  
@@ -233,7 +202,6 @@ template<size_t size> errno_t oStrAppendf(char (&_StrDestination)[size], const c
 template<size_t size> char* oFormatMemorySize(char (&_StrDestination)[size], unsigned long long _NumBytes, size_t _NumPrecisionDigits) { return oFormatMemorySize(_StrDestination, size, _NumBytes, _NumPrecisionDigits); }
 template<size_t size> char* oFormatCommas(char (&_StrDestination)[size], int _Number) { return oFormatCommas(_StrDestination, size, _Number); }
 template<size_t size> char* oFormatCommas(char (&_StrDestination)[size], unsigned int _Number) { return oFormatCommas(_StrDestination, size, _Number); }
-template<size_t size> char* oOptDoc(char (&_StrDestination)[size], const char* _AppName, const oOption* _pOptions) { return oOptDoc(_StrDestination, size, _AppName, _pOptions); }
 
 // oStd::fixed_string support
 template<typename CHAR1_T, typename CHAR2_T, size_t capacity> CHAR1_T* oStrcpy(oStd::fixed_string<CHAR1_T, capacity>& _StrDestination, const CHAR2_T* _StrSource, bool _ZeroBuffer = false) { return oStrcpy(_StrDestination.c_str(), _StrDestination.capacity(), _StrSource, _ZeroBuffer); }
@@ -247,6 +215,5 @@ template<size_t capacity> char* oFormatMemorySize(oStd::fixed_string<char, capac
 template<size_t capacity> char* oFormatCommas(oStd::fixed_string<char, capacity>& _StrDestination, int _Number) { return oFormatCommas(_StrDestination, _StrDestination.capacity(), _Number); }
 template<size_t capacity> errno_t oReplace(oStd::fixed_string<char, capacity>& _StrDestination, const char* _StrSource, const char* _StrFind, const char* _StrReplace) { return oReplace(_StrDestination, _StrDestination.capacity(), _StrSource, _StrFind, _StrReplace); }
 template<size_t capacity> char* oInsert(oStd::fixed_string<char, capacity>& _StrDestination, char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion) { return oInsert(_StrDestination, _StrDestination.capacity(), _InsertionPoint, _ReplacementLength, _Insertion); }
-template<size_t capacity> char* oOptDoc(oStd::fixed_string<char, capacity>& _StrDestination, const char* _AppName, const oOption* _pOptions) { return oOptDoc(_StrDestination, _StrDestination.capacity(), _AppName, _pOptions); }
 
 #endif

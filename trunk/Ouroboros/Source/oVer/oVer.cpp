@@ -25,15 +25,15 @@
 #include <oPlatform/Windows/oWindows.h>
 #include <oPlatform/oModule.h>
 
-static oOption sOptions[] = 
+static oStd::option sOptions[] = 
 {
-	{ "FileDescription", 'd', 0, "File description" },
-	{ "Type", 't', 0, "File type" },
-	{ "FileVersion", 'f', 0, "File version" },
-	{ "ProductName", 'p', 0, "Product name" },
-	{ "ProductVersion", 'v', 0, "Product version" },
-	{ "Copyright", 'c', 0, "Copyright" },
-	{ 0, 0, 0, 0 },
+	{ 'd', "FileDescription", 0, "File description" },
+	{ 't', "Type", 0, "File type" },
+	{ 'f', "FileVersion", 0, "File version" },
+	{ 'p', "ProductName", 0, "Product name" },
+	{ 'v', "ProductVersion", 0, "Product version" },
+	{ 'c', "Copyright", 0, "Copyright" },
+	{ 'h', "help", 0, "Displays this message" },
 };
 
 // TODO: Expose all these as user options
@@ -45,6 +45,7 @@ struct oVER_DESC
 	bool PrintProductName;
 	bool PrintProductVersion;
 	bool PrintCopyright;
+	bool ShowHelp;
 	const char* InputPath;
 };
 
@@ -53,7 +54,7 @@ bool ParseCommandLine(int argc, const char* argv[], oVER_DESC* _pDesc)
 	memset(_pDesc, 0, sizeof(oVER_DESC));
 
 	const char* value = 0;
-	char ch = oOptTok(&value, argc, argv, sOptions);
+	char ch = oStd::opttok(&value, argc, argv, sOptions);
 	int count = 0;
 	while (ch)
 	{
@@ -65,11 +66,12 @@ bool ParseCommandLine(int argc, const char* argv[], oVER_DESC* _pDesc)
 			case 'p': _pDesc->PrintProductName = true; break;
 			case 'v': _pDesc->PrintProductVersion = true; break;
 			case 'c': _pDesc->PrintCopyright = true; break;
+			case 'h': _pDesc->ShowHelp = true; break;
 			case ' ': _pDesc->InputPath = value; break;
 			case ':': return oErrorSetLast(std::errc::invalid_argument, "The %d%s option is missing a parameter (does it begin with '-' or '/'?)", count, oStd::ordinal(count));
 		}
 
-		ch = oOptTok(&value, 0, 0, 0);
+		ch = oStd::opttok(&value);
 		count++;
 	}
 
@@ -81,8 +83,8 @@ bool Main(int argc, const char* argv[])
 	if (argc <= 1)
 	{
 		char buf[1024];
-		printf("%s", oOptDoc(buf, oGetFilebase(argv[0]), sOptions));
-		return oErrorSetLast(std::errc::invalid_argument, ""); // don't print any other complaint
+		printf("%s", oStd::optdoc(buf, oGetFilebase(argv[0]), sOptions));
+		return true;
 	}
 
 	oVER_DESC opts;
@@ -90,6 +92,13 @@ bool Main(int argc, const char* argv[])
 	{
 		oStd::xlstring temp = oErrorGetLastString();
 		return oErrorSetLast(std::errc::invalid_argument, "bad command line: %s", temp.c_str());
+	}
+
+	if (opts.ShowHelp)
+	{
+		char buf[1024];
+		printf("%s", oStd::optdoc(buf, oGetFilebase(argv[0]), sOptions));
+		return true;
 	}
 
 	if (!opts.InputPath)

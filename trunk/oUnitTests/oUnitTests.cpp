@@ -12,29 +12,29 @@
 #include <oPlatform/oStandards.h>
 #include <oPlatform/oSystem.h>
 #include <oBasis/oRef.h>
+#include <oStd/opttok.h>
 #include <oStd/scc.h>
 
 static const char* sTITLE = "OOOii Unit Test Suite";
 
-static const oOption sCmdLineOptions[] = 
+static const oStd::option sCmdLineOptions[] = 
 {
-	{ "include", 'i', "regex", "regex matching a test name to include" },
-	{ "exclude", 'e', "regex", "regex matching a test name to exclude" },
-	{ "path", 'p', "path", "Path where all test data is loaded from. The current working directory is used by default." },
-	{ "special-mode", 's', "mode", "Run the test harness in a special mode (used mostly by multi-process/client-server unit tests)" },
-	{ "random-seed", 'r', "seed", "Set the random seed to be used for this run. This is reset at the start of each test." },
-	{ "golden-binaries", 'b', "path", "Path where all known-good \"golden\" binaries are stored. The current working directory is used by default." },
-	{ "golden-images", 'g', "path", "Path where all known-good \"golden\" images are stored. The current working directory is used by default." },
-	{ "output-golden-images", 'z', nullptr, "Copy golden images of error images to the output as well, renamed to <image>_golden.png." },
-	{ "output", 'o', "path", "Path where all logging and error images are created." },
-	{ "repeat-number", 'n', "nRuntimes", "Repeat the test a certain number of times." },
-	{ "disable-timeouts", 'd', nullptr, "Disable timeouts, mainly while debugging." },
-	{ "capture-callstack", 'c', nullptr, "Capture full callstack to allocations for per-test leaks (slow!)" },
-	{ "disable-leaktracking", '_', nullptr, "Disable the leak tracking when it is suspected of causing performance issues" },
-	{ "automated", 'a', nullptr, "Run unit tests in automated mode, disable dialog boxes and exit on critical failure" },
-	{ "logfile", 'l', "path", "Uses specified path for the log file" },
-	{ "Exhaustive", 'x', nullptr, "Run tests in exhaustive mode. Probably should only be run in Release. May take a very long time." },
-	{ nullptr,0,nullptr,nullptr }
+	{ 'i', "include", "regex", "regex matching a test name to include" },
+	{ 'e', "exclude", "regex", "regex matching a test name to exclude" },
+	{ 'p', "path", "path", "Path where all test data is loaded from. The current working directory is used by default." },
+	{ 's', "special-mode", "mode", "Run the test harness in a special mode (used mostly by multi-process/client-server unit tests)" },
+	{ 'r', "random-seed", "seed", "Set the random seed to be used for this run. This is reset at the start of each test." },
+	{ 'b', "golden-binaries", "path", "Path where all known-good \"golden\" binaries are stored. The current working directory is used by default." },
+	{ 'g', "golden-images", "path", "Path where all known-good \"golden\" images are stored. The current working directory is used by default." },
+	{ 'z', "output-golden-images", 0, "Copy golden images of error images to the output as well, renamed to <image>_golden.png." },
+	{ 'o', "output", "path", "Path where all logging and error images are created." },
+	{ 'n', "repeat-number", "nRuntimes", "Repeat the test a certain number of times." },
+	{ 'd', "disable-timeouts", 0, "Disable timeouts, mainly while debugging." },
+	{ 'c', "capture-callstack", 0, "Capture full callstack to allocations for per-test leaks (slow!)" },
+	{ '_', "disable-leaktracking", 0, "Disable the leak tracking when it is suspected of causing performance issues" },
+	{ 'a', "automated", 0, "Run unit tests in automated mode, disable dialog boxes and exit on critical failure" },
+	{ 'l', "logfile", "path", "Uses specified path for the log file" },
+	{ 'x', "Exhaustive", 0, "Run tests in exhaustive mode. Probably should only be run in Release. May take a very long time." },
 };
 
 void InitEnv()
@@ -169,7 +169,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 	_pParameters->EnableOutputGoldenImages = false;
 
 	const char* value = 0;
-	char ch = oOptTok(&value, _Argc, _Argv, sCmdLineOptions);
+	char ch = oStd::opttok(&value, _Argc, _Argv, sCmdLineOptions);
 	while (ch)
 	{
 		switch (ch)
@@ -207,7 +207,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 			default: break;
 		}
 
-		ch = oOptTok(&value, 0, 0, 0);
+		ch = oStd::opttok(&value);
 	}
 
 	// @ooii-tony: Disabled in the OpenSource distro because running the unit 

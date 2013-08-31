@@ -560,6 +560,10 @@ bool oWinEnumInputDevices(bool _EnumerateAll, const oFUNCTION<void(const oWINDOW
 // _____________________________________________________________________________
 // Misc
 
+// Explorer will auto-restart if terminated programmatically, so use a 
+// more heavy-handed approach.
+void oWinKillExplorer();
+
 // Uses a waitable timer to call the specified function at the specified time.
 // If _Alertable is true, this can wake up a sleeping system.
 bool oScheduleTask(const char* _DebugName, time_t _AbsoluteTime, bool _Alertable, oTASK _Task);

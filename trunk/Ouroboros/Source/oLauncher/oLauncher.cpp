@@ -30,18 +30,16 @@
 #include <oPlatform/oVersionUpdate.h>
 #include <oPlatform/Windows/oWindows.h>
 
-static oOption sCmdOptions[] = 
+static oStd::option sCmdOptions[] = 
 {
-	{ "launcher-wait", 'w', "process-id", "The launcher should wait for the specified process to terminate before starting any meaningful work." },
-	{ "wait-timeout", 't', "milliseconds", "After this amount of time, give up waiting for the -w process to terminates and forcibly try to terminate it before moving on." },
-	{ "version", 'v', "ver", "Force execution of the specified version. Format is Microsoft standard 4-component version: Major.Minor.Build.Revision" },
-	{ "exe-name-override", 'e', "exe-name", "By default this launcher uses its own name to find the versioned exe to run. This switch uses the param explicitly." },
-	{ "command-line", 'c', "options", "The command line to pass to the actual executable" },
-	{ "prefix", 'p', "prefix", "A prefix to differentiate the actual exe from the launcher exe" },
-	{ 0, 0, 0, 0 },
+	{ 'w', "launcher-wait", "process-id", "Wait for process to terminate before launching" },
+	{ 't', "wait-timeout", "milliseconds", "Try to forcibly terminate the -w process after\nthis amount of time" },
+	{ 'v', "version", "Maj.Min.Build.Rev", "Force execution of the specified version" },
+	{ 'e', "exe-name-override", "exe-name", "Override the default of <version>/launcher-name\nwith an explicit exe name" },
+	{ 'c', "command-line", "options", "The command line to pass to the actual executable" },
+	{ 'p', "prefix", "prefix", "A prefix to differentiatethe actual exe from the\nlauncher exe" },
+	{ 'h', "help",  0, "Displays this message" },
 };
-
-// @oooii-tony: potentially promote this to a util lib to be used more broadly...
 
 namespace oStd {
 
@@ -56,10 +54,11 @@ namespace oStd {
 	case ':': { return oErrorSetLast(std::errc::invalid_argument, "Parameter %d is missing a value", (_NthOption)); break; } \
 	default: { oTRACE("Unhandled option -%c %s", (_ShortNameVariable), oSAFESTR(_Value)); break; }
 
-bool oParseCmdLine(int argc, const char* argv[], oVERSIONED_LAUNCH_DESC* _pDesc)
+bool oParseCmdLine(int argc, const char* argv[], oVERSIONED_LAUNCH_DESC* _pDesc, bool* _pShowHelp)
 {
+	*_pShowHelp = false;
 	const char* value = 0;
-	char ch = oOptTok(&value, argc, argv, sCmdOptions);
+	char ch = oStd::opttok(&value, argc, argv, sCmdOptions);
 	int count = 1;
 	while (ch)
 	{
@@ -72,9 +71,10 @@ bool oParseCmdLine(int argc, const char* argv[], oVERSIONED_LAUNCH_DESC* _pDesc)
 			oOPT_CASE('c', value, _pDesc->PassThroughCommandLine);
 			oOPT_CASE('p', value, _pDesc->ModuleNamePrefix);
 			oOPT_CASE_DEFAULT(ch, value, count);
+			case 'h': *_pShowHelp = true; break;
 		}
 
-		ch = oOptTok(&value, 0, 0, 0);
+		ch = oStd::opttok(&value);
 		count++;
 	}
 
@@ -85,8 +85,17 @@ static bool oLauncherMain1(int argc, const char* argv[])
 {
 	oVERSIONED_LAUNCH_DESC vld;
 
-	if (!oParseCmdLine(argc, argv, &vld))
+	bool ShowHelp = false;
+	if (!oParseCmdLine(argc, argv, &vld, &ShowHelp))
 		return false; // pass through error
+
+	if (ShowHelp)
+	{
+		char help[1024];
+		if (oStd::optdoc(help, oGetFilebase(argv[0]), sCmdOptions))
+			printf(help);
+		return true;
+	}
 
 	return oVURelaunch(vld);
 }

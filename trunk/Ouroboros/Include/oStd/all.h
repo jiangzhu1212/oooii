@@ -51,6 +51,7 @@
 #include <oStd/memory.h>
 #include <oStd/murmur3.h>
 #include <oStd/operators.h>
+#include <oStd/opttok.h>
 #include <oStd/oFor.h>
 #include <oStd/scc.h>
 #include <oStd/oStdAtomic.h>

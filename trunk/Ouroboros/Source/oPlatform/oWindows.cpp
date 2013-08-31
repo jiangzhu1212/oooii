@@ -35,6 +35,7 @@
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oFile.h>
 #include <oPlatform/oModule.h>
+#include <oPlatform/oProcess.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oSystem.h>
@@ -60,6 +61,15 @@
 
 // Use the Windows Vista UI look. If this causes issues or the dialog not to appear, try other values from processorAchitecture { x86 ia64 amd64 * }
 #pragma comment(linker, "\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+
+int oWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow, int (*oMain)(int argc, const char* argv[]))
+{
+	int argc = 0;
+	const char** argv = oWinCommandLineToArgvA(true, lpCmdLine, &argc);
+	int result = oMain(argc, argv);
+	oWinCommandLineToArgvAFree(argv);
+	return result;
+}
 
 // _____________________________________________________________________________
 
@@ -424,6 +434,15 @@ static bool oWinEnumInputDevices(bool _EnumerateAll, const char* _Enumerator, co
 bool oWinEnumInputDevices(bool _EnumerateAll, const oFUNCTION<void(const oWINDOWS_HID_DESC& _HIDDesc)>& _Visitor)
 {
 	return oWinEnumInputDevices(_EnumerateAll, "HID", _Visitor) && oWinEnumInputDevices(_EnumerateAll, "USB", _Visitor);
+}
+
+void oWinKillExplorer()
+{
+	if (oProcessExists("explorer.exe"))
+	{
+		oTRACE("Terminating explorer.exe because the taskbar can interfere with cooperative fullscreen");
+		system("TASKKILL /F /IM explorer.exe");
+	}
 }
 
 bool oScheduleTask(const char* _DebugName, time_t _AbsoluteTime, bool _Alertable, oTASK _Task)
