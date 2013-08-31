@@ -186,7 +186,7 @@ static char* svn_parse_status_line(char* _StatusBuffer, unsigned int _UpToRevisi
 	*_StatusBuffer++ = 0;
 	_File.revision = 0;
 	oStd::from_string(&_File.revision, rev);
-	if (_File.revision > _UpToRevision) _File.status = scc_status::out_of_date;
+	if (_UpToRevision != 0 && _File.revision > _UpToRevision) _File.status = scc_status::out_of_date;
 	_StatusBuffer += strspn(_StatusBuffer, oWHITESPACE);
 	char* p = _StatusBuffer;
 	_StatusBuffer += strcspn(_StatusBuffer, oNEWLINE);

@@ -131,7 +131,7 @@ public:
 	// their latest revisions up to the specified revision so this can be used 
 	// on historical changelists for builds after other commits are done. Passing
 	// zero implies the head revision.
-	inline bool is_up_to_date(const char* _Path, unsigned int _AtRevision) const
+	inline bool is_up_to_date(const char* _Path, unsigned int _AtRevision = 0) const
 	{
 		bool UpToDate = true;
 		status(_Path, _AtRevision, scc_visit_option::modified_only, [&](const scc_file& _File)
