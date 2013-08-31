@@ -37,6 +37,7 @@
 #include <oStd/djb2.h>
 #include <oStd/endian.h>
 #include <oStd/equal.h>
+#include <oStd/event.h>
 #include <oStd/finally.h>
 #include <oStd/fixed_string.h>
 #include <oStd/fixed_vector.h>

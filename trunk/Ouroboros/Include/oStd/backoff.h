@@ -22,18 +22,15 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// A useful concept for minimizing locks: this object encapsulates a temporary
-// spin lock.
-
-// The backoff concept is one of them: reproducing TBB functionality to 
-// intelligently spin and yield to avoid an OS sleep.
+// A useful concept for minimizing locks from TBB source: this object 
+// encapsulates a temporary spin lock.
 #pragma once
-#ifndef oConcurrency_backoff_h
-#define oConcurrency_backoff_h
+#ifndef oStd_backoff_h
+#define oStd_backoff_h
 
 #include <oStd/oStdThread.h>
 
-namespace oConcurrency {
+namespace oStd {
 
 class backoff
 {
@@ -97,6 +94,6 @@ inline void backoff::reset()
 	SpinCount = 1;
 }
 
-} // namespace oConcurrency
+} // namespace oStd
 
 #endif

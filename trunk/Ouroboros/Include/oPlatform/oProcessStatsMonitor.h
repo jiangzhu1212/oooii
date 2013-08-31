@@ -29,8 +29,8 @@
 #define oProcessStatsMonitor_h
 
 #include <oBasis/oMath.h>
+#include <oStd/backoff.h>
 #include <oStd/oStdThread.h>
-#include <oConcurrency/backoff.h>
 #include <oConcurrency/oConcurrency.h>
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oProcess.h>
@@ -52,7 +52,7 @@ public:
 	{
 		Reset();
 		Thread = std::move(oStd::thread(&oProcessStatsMonitor::Proc, this));
-		oConcurrency::backoff bo;
+		oStd::backoff bo;
 		while (Done)
 			bo.pause();
 	}

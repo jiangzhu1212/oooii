@@ -321,6 +321,12 @@
     <ClInclude Include="scc_svn.h">
       <Filter>Source\scc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\event.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\backoff.h">
+      <Filter>oStd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">

@@ -22,37 +22,36 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// A cross-platform event build on std::condition_variable, which is basically
-// how the Window's event is implemented. This supports the "WaitMultiple" 
-// concept by storing a 32-bit mask of bools, rather than just one bool like
-// the Windows event API suggests. Event flags can be defined then tested as 
-// appropriate. The wait_any() APIs are more like WaitSingle. In more complex
-// cases use condition_variables directly. Using this implementation as a 
-// reference but quite often an event is enough. NOTE: For a trivial bool-like
-// event, just use default parameters.
+// A cross-platform event built on condition_variable, which is basically how 
+// the Window's event is implemented. This supports the "WaitMultiple" concept 
+// by storing a 32-bit mask of bools, rather than just one bool like the Windows 
+// event API suggests. Event flags can be defined then tested as appropriate. 
+// The wait_any() APIs are more like WaitSingle. In more complex cases use 
+// condition_variables directly. Using this implementation as a reference but 
+// quite often an event is enough. NOTE: For a trivial bool-like event, just use 
+// default parameters.
 #pragma once
-#ifndef oConcurrency_basic_event_h
-#define oConcurrency_basic_event_h
+#ifndef oStd_event_h
+#define oStd_event_h
 
 #include <oStd/oStdConditionVariable.h>
 #include <oStd/oStdMutex.h>
-#include <oStd/oStdThread.h>
 
-namespace oConcurrency {
+namespace oStd {
 
-namespace autoreset_t { enum value { autoreset }; }
+enum autoreset_t { autoreset };
 
-class basic_event
+class event
 {
 public:
 	// Starts in the reset state. A call to set() sets the state and reset() 
 	// resets the state explicitly. If the set() (and thus wake) and then reset()
 	// needs to be atomic, use the autoreset constructor.
-	basic_event();
+	event();
 
 	// When set() is called, this will unblock all threads waiting on this event 
 	// but then atomically leaves the event in the reset state.
-	basic_event(autoreset_t::value _AutoReset);
+	event(autoreset_t _AutoReset);
 
 	// Sets the event mask by or'ing it with the existing mask, thus unblocking 
 	// any threads waiting on this event.
@@ -106,17 +105,17 @@ private:
 	bool DoAutoReset;
 };
 
-inline basic_event::basic_event()
+inline event::event()
 	: Set(0)
 	, DoAutoReset(false)
 {}
 
-inline basic_event::basic_event(autoreset_t::value _AutoReset)
+inline event::event(autoreset_t _AutoReset)
 	: Set(0)
 	, DoAutoReset(true)
 {}
 
-inline void basic_event::set(int _Mask)
+inline void event::set(int _Mask)
 {
 	if (!is_set(_Mask))
 	{
@@ -132,20 +131,20 @@ inline void basic_event::set(int _Mask)
 	}
 }
 
-inline void basic_event::reset(int _Mask)
+inline void event::reset(int _Mask)
 {
 	oStd::lock_guard<oStd::mutex> lock(M);
 	Set &=~ _Mask;
 }
 
-inline void basic_event::wait(int _Mask)
+inline void event::wait(int _Mask)
 {
 	oStd::unique_lock<oStd::mutex> lock(M);
 	while (!is_set(_Mask))
 		CV.wait(lock);
 }
 
-inline int basic_event::wait_any(int _Mask)
+inline int event::wait_any(int _Mask)
 {
 	oStd::unique_lock<oStd::mutex> lock(M);
 	while (!is_any_set(_Mask))
@@ -154,7 +153,7 @@ inline int basic_event::wait_any(int _Mask)
 }
 
 template <typename Clock, typename Duration>
-inline bool basic_event::wait_until(
+inline bool event::wait_until(
 	const oStd::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask)
 {
 	oStd::unique_lock<oStd::mutex> lock(M);
@@ -165,7 +164,7 @@ inline bool basic_event::wait_until(
 }
 
 template <typename Clock, typename Duration>
-inline int basic_event::wait_until_any(
+inline int event::wait_until_any(
 	const oStd::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask)
 {
 	oStd::unique_lock<oStd::mutex> lock(M);
@@ -176,7 +175,7 @@ inline int basic_event::wait_until_any(
 }
 
 template <typename Rep, typename Period>
-inline bool basic_event::wait_for(const oStd::chrono::duration<Rep, Period>& _RelativeTime, int _Mask)
+inline bool event::wait_for(const oStd::chrono::duration<Rep, Period>& _RelativeTime, int _Mask)
 {
 	oStd::unique_lock<oStd::mutex> lock(M);
 	while (!is_set(_Mask))
@@ -186,7 +185,7 @@ inline bool basic_event::wait_for(const oStd::chrono::duration<Rep, Period>& _Re
 }
 
 template <typename Rep, typename Period>
-inline int basic_event::wait_for_any(const oStd::chrono::duration<Rep, Period>& _RelativeTime, int _Mask)
+inline int event::wait_for_any(const oStd::chrono::duration<Rep, Period>& _RelativeTime, int _Mask)
 {
 	oStd::unique_lock<oStd::mutex> lock(M);
 	while (!is_any_set(_Mask))
@@ -195,16 +194,16 @@ inline int basic_event::wait_for_any(const oStd::chrono::duration<Rep, Period>& 
 	return Set;
 }
 
-inline bool basic_event::is_set(int _Mask) const
+inline bool event::is_set(int _Mask) const
 {
 	return (Set & _Mask) == _Mask;
 }
 
-inline bool basic_event::is_any_set(int _Mask) const
+inline bool event::is_any_set(int _Mask) const
 {
 	return !!(Set & _Mask);
 }
 
-} // namespace oConcurrency
+} // namespace oStd
 
 #endif

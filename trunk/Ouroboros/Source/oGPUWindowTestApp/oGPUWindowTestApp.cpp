@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 
-#include <oConcurrency/backoff.h>
+#include <oStd/backoff.h>
 #include <oPlatform/oDebugger.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/Windows/oGDI.h>
@@ -185,7 +185,7 @@ threadsafe oWindow* oGPUWindowThread::Start(oWindow* _pParent, const oGUI_ACTION
 	OnThreadExit = _OnThreadExit;
 	Thread = std::move(oStd::thread(&oGPUWindowThread::Run, this));
 
-	oConcurrency::backoff bo;
+	oStd::backoff bo;
 	while (!pGPUWindow)
 		bo.pause();
 	return pGPUWindow;

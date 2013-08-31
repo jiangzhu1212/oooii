@@ -22,22 +22,24 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// A wrapper for basic_event that adds only threadsafe keywording. For primary
-// documentation, see basic_event.h.
+// A wrapper for oStd::event that adds only threadsafe keywording. For primary
+// documentation, see oStd::event.h.
 #pragma once
 #ifndef oConcurrency_event_h
 #define oConcurrency_event_h
 
-#include <oConcurrency/basic_event.h>
+#include <oStd/event.h>
 #include <oConcurrency/thread_safe.h>
 
 namespace oConcurrency {
+
+enum autoreset_t { autoreset };
 
 class event
 {
 public:
 	event() {}
-	event(autoreset_t::value _AutoReset) : e(_AutoReset) {}
+	event(autoreset_t _AutoReset) : e(oStd::autoreset) {}
 	void set(int _Mask = 1) threadsafe { E().set(_Mask); }
 	void reset(int _Mask = ~0) threadsafe { E().reset(_Mask); }
 	void wait(int _Mask = 1) const threadsafe { E().wait(_Mask); }
@@ -59,8 +61,8 @@ public:
 	bool is_any_set(int _Mask = 1) const threadsafe { return E().is_any_set(_Mask); }
 
 private:
-	basic_event e;
-	basic_event& E() const threadsafe { return thread_cast<basic_event&>(e); }
+	oStd::event e;
+	oStd::event& E() const threadsafe { return thread_cast<oStd::event&>(e); }
 };
 
 } // namespace oConcurrency

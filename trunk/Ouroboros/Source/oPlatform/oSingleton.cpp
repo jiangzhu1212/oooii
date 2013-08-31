@@ -24,12 +24,12 @@
  **************************************************************************/
 #include <oPlatform/oSingleton.h>
 #include <oBasis/oBasisRequirements.h>
-#include <oConcurrency/backoff.h>
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oDebugger.h>
 #include <oPlatform/oModule.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSystem.h>
+#include <oStd/backoff.h>
 
 using namespace oConcurrency;
 
@@ -91,7 +91,7 @@ bool oConstructOnceV(void* volatile* _pPointer, void* (*_New)())
 
 		else
 		{
-			oConcurrency::backoff bo;
+			oStd::backoff bo;
 			while (*_pPointer <= CONSTRUCTING)
 				bo.pause();
 		}

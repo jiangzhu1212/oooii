@@ -32,8 +32,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oConcurrency\all.h" />
-    <ClInclude Include="..\..\Include\oConcurrency\backoff.h" />
-    <ClInclude Include="..\..\Include\oConcurrency\basic_event.h" />
     <ClInclude Include="..\..\Include\oConcurrency\basic_threadpool.h" />
     <ClInclude Include="..\..\Include\oConcurrency\block_allocator.h" />
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_index_allocator.h" />

@@ -23,53 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oStd/oStdMutex.h>
-
-// To prevent a dep on oBasis, duplicate oConcurrency::backoff here. This shouldn't be 
-// changing much since it's based on TBB code.
-// #include <oConcurrency/backoff.h>
-class oBackoff_InStdMutex
-{
-	static const size_t SpinThreshold = 16;
-	size_t SpinCount;
-
-	#pragma optimize("", off)
-	inline void spin(size_t _Count)
-	{
-		for (size_t i = 0; i < _Count; i++) {}
-	}
-	#pragma optimize("", on)
-
-public:
-	oBackoff_InStdMutex()
-		: SpinCount(1)
-	{}
-
-	inline void Pause()
-	{
-		if (SpinCount <= SpinThreshold)
-		{
-				spin(SpinCount);
-				SpinCount *= 2;
-		}
-
-		else
-			oStd::this_thread::yield();
-	}
-
-	inline bool TryPause()
-	{
-		if (SpinCount <= SpinThreshold)
-		{
-			spin(SpinCount);
-			SpinCount *= 2;
-			return true;
-		}
-
-		return false;
-	}
-
-	inline void Reset() { SpinCount = 1; }
-};
+#include <oStd/backoff.h>
 
 #include "oWinHeaders.h"
 #if NTDDI_VERSION >= NTDDI_WIN7
@@ -253,20 +207,21 @@ bool oStd::timed_mutex::try_lock_for(unsigned int _TimeoutMS)
 	// Based on:
 	// http://software.intel.com/en-us/blogs/2008/09/17/pondering-timed-mutex/
 
-	oBackoff_InStdMutex bo;
+	oStd::backoff bo;
 
 	do 
 	{
 		if (Mutex.try_lock())
 			return true;
 
-		if (!bo.TryPause())
+		if (!bo.try_pause())
 		{
-			_TimeoutMS--;
-			bo.Reset();
+			oStd::this_thread::sleep_for(oStd::chrono::milliseconds(10));
+			_TimeoutMS -= 10;
+			bo.reset();
 		}
 
-	} while (_TimeoutMS > 0);
+	} while ((int)_TimeoutMS > 0);
 
 	return false;
 }

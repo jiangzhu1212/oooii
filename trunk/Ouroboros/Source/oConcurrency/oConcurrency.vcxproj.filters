@@ -29,9 +29,6 @@
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\backoff.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\thread_safe.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
@@ -74,12 +71,6 @@
     <ClInclude Include="..\..\Include\oConcurrency\threadpool.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\basic_event.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\event.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_linear_allocator.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
@@ -105,6 +96,9 @@
       <Filter>oConcurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\oConcurrency.h">
+      <Filter>oConcurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oConcurrency\event.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
   </ItemGroup>

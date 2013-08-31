@@ -24,10 +24,10 @@
  **************************************************************************/
 #include "oIOCP.h"
 #include <oConcurrency/concurrent_index_allocator.h>
+#include <oStd/backoff.h>
 #include <oStd/fixed_string.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
-#include <oConcurrency/backoff.h>
 #include <oConcurrency/countdown_latch.h>
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oSingleton.h>
@@ -200,7 +200,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 
 	void Flush()
 	{
-		oConcurrency::backoff bo;
+		oStd::backoff bo;
 
 		#ifdef _DEBUG
 			oLocalTimeout to(5.0);

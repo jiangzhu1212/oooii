@@ -30,9 +30,9 @@
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinStatusBar.h>
 #include <oPlatform/Windows/oWinWindowing.h>
-#include <oConcurrency/backoff.h>
 #include <oConcurrency/event.h>
 #include <oConcurrency/mutex.h>
+#include <oStd/backoff.h>
 #include <vector>
 #include <windowsx.h>
 
@@ -701,7 +701,7 @@ void oWinWindow::Dispatch(const oTASK& _Task) threadsafe
 
 static bool oWinWaitUntilOpaque(HWND _hWnd, unsigned int _TimeoutMS)
 {
-	oConcurrency::backoff bo;
+	oStd::backoff bo;
 	unsigned int Now = oTimerMS();
 	unsigned int Then = Now + _TimeoutMS;
 	while (!oWinIsOpaque(_hWnd))

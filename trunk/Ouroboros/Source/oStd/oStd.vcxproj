@@ -102,6 +102,7 @@
     <ClInclude Include="..\..\Include\oStd\all.h" />
     <ClInclude Include="..\..\Include\oStd\assert.h" />
     <ClInclude Include="..\..\Include\oStd\atof.h" />
+    <ClInclude Include="..\..\Include\oStd\backoff.h" />
     <ClInclude Include="..\..\Include\oStd\byte.h" />
     <ClInclude Include="..\..\Include\oStd\callable.h" />
     <ClInclude Include="..\..\Include\oStd\color.h" />
@@ -111,6 +112,7 @@
     <ClInclude Include="..\..\Include\oStd\djb2.h" />
     <ClInclude Include="..\..\Include\oStd\endian.h" />
     <ClInclude Include="..\..\Include\oStd\equal.h" />
+    <ClInclude Include="..\..\Include\oStd\event.h" />
     <ClInclude Include="..\..\Include\oStd\finally.h" />
     <ClInclude Include="..\..\Include\oStd\fixed_string.h" />
     <ClInclude Include="..\..\Include\oStd\fixed_vector.h" />
