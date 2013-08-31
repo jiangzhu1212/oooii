@@ -184,8 +184,7 @@ static size_t VisitLines(char* _Buffer, size_t _ReadSize, const oFUNCTION<void(c
 	return strlcpy(_Buffer, line, _ReadSize);
 }
 
-
-#define DEBUG_EXECUTED_PROCESS
+//#define DEBUG_EXECUTED_PROCESS
 bool oSystemExecute(const char* _CommandLine, const oFUNCTION<void(char* _Line)>& _GetLine, int* _pExitCode, bool _ShowWindow, unsigned int _ExecutionTimeout)
 {
 	oStd::xlstring tempStdOut;
