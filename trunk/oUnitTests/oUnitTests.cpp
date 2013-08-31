@@ -116,11 +116,19 @@ static bool oSCCCheckPathHasChanges(const char** _pPathParts, size_t _NumPathPar
 	std::vector<oStd::scc_file> temp;
 	temp.resize(_NumOpenedFilesToTest);
 
-	size_t nOpenFiles = 0;
 	// If we can't connect to SCC, then always run all tests.
-	try { nOpenFiles = scc->modifications(BranchPath, 0, oStd::data(temp), temp.size()); }
+	std::vector<oStd::scc_file> ModifiedFiles;
+	try
+	{ 
+		scc->status(BranchPath, 0, oStd::scc_visit_option::modified_only, [&](const oStd::scc_file& _File)
+		{
+			ModifiedFiles.push_back(_File);
+		});
+	}
 	catch (std::exception&)
-	{ return oErrorSetLast(std::errc::io_error, "oSCCPathHasChanges could not find modified files. This may indicate %s is not accessible.", oStd::as_string(scc->protocol())); }
+	{
+		return oErrorSetLast(std::errc::io_error, "oSCCPathHasChanges could not find modified files. This may indicate %s is not accessible.", oStd::as_string(scc->protocol()));
+	}
 
 	memset(_pHasChanges, 0, _NumPathParts);
 
@@ -128,9 +136,9 @@ static bool oSCCCheckPathHasChanges(const char** _pPathParts, size_t _NumPathPar
 	for (size_t i = 0; i < _NumPathParts; i++)
 	{
 		oPrintf(LibWithSeps, "/%s/", _pPathParts[i]);
-		for (size_t j = 0; j < nOpenFiles; j++)
+		oFOR(const auto& f, ModifiedFiles)
 		{
-			if (strstr(temp[j].path, LibWithSeps))
+			if (strstr(f.path, LibWithSeps))
 			{
 				_pHasChanges[i] = true;
 				break;

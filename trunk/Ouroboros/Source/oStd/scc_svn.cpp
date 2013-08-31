@@ -30,7 +30,7 @@
 
 #define SVNf(_Format, ...) \
 	oStd::lstring cmd; \
-	if ((size_t)snprintf(cmd, _Format, ## __VA_ARGS__) >= cmd.capacity()) \
+	if (-1 == snprintf(cmd, _Format, ## __VA_ARGS__)) \
 		oTHROW0(no_buffer_space); \
 	oStd::xlstring StdOut; \
 	spawn(cmd, StdOut);
@@ -60,6 +60,14 @@ static bool svn_is_error(const char* _StdOut)
 		if (strstr(_StdOut, sErrors[i]))
 			return true;
 	return false;
+}
+
+void scc_svn::spawn(const char* _Command, const oFUNCTION<void(char* _Line)>& _GetLine) const
+{
+	static const unsigned int kTimeout = 5000;
+	int ec = 0;
+	if (!Spawn(_Command, _GetLine, &ec, kTimeout))
+		oTHROW(operation_not_supported, "svn exited with error code %d", ec);
 }
 
 void scc_svn::spawn(const char* _Command, oStd::xlstring& _StdOut) const
@@ -164,9 +172,10 @@ static scc_status::value get_status(char _Status)
 
 // returns new beginning into the status buffer. The contents of _StatusBuffer
 // are altered by this call.
-static char* svn_parse_status_line(char* _StatusBuffer, scc_file& _File)
+static char* svn_parse_status_line(char* _StatusBuffer, unsigned int _UpToRevision, scc_file& _File)
 {
 	if (!*_StatusBuffer) return nullptr;
+	if (!strncmp(_StatusBuffer, "Status against", 14)) return nullptr;
 	_File.status = get_status(_StatusBuffer[0]);
 	oASSERT(_StatusBuffer[1] == ' ', "haven't thought about this yet");
 	if (_StatusBuffer[8] == '*') _File.status = scc_status::out_of_date;
@@ -177,6 +186,7 @@ static char* svn_parse_status_line(char* _StatusBuffer, scc_file& _File)
 	*_StatusBuffer++ = 0;
 	_File.revision = 0;
 	oStd::from_string(&_File.revision, rev);
+	if (_File.revision > _UpToRevision) _File.status = scc_status::out_of_date;
 	_StatusBuffer += strspn(_StatusBuffer, oWHITESPACE);
 	char* p = _StatusBuffer;
 	_StatusBuffer += strcspn(_StatusBuffer, oNEWLINE);
@@ -187,15 +197,32 @@ static char* svn_parse_status_line(char* _StatusBuffer, scc_file& _File)
 	return _StatusBuffer;
 }
 
-size_t scc_svn::modifications(const char* _Path, unsigned int _UpToChangelist, scc_file* _pFiles, size_t _MaxNumFiles) const
+void scc_svn::status(const char* _Path, unsigned int _UpToRevision, scc_visit_option::value _Option, const scc_file_visitor& _Visitor) const
 {
-	SVNf("svn status -q -u \"%s\"", _Path);
+	oStd::lstring cmd;
+	
+	const char* opt = "";
+	switch (_Option)
+	{
+		case scc_visit_option::visit_all: opt = " -v"; break;
+		case scc_visit_option::skip_unversioned: opt = " -v -q"; break;
+		case scc_visit_option::skip_unmodified: opt = ""; break;
+		case scc_visit_option::modified_only: opt = " -q"; break;
+		default: break;
+	}
 
-	char* cur = StdOut;
-	size_t i = 0;
-	for (; i < _MaxNumFiles && cur; i++)
-		cur = svn_parse_status_line(cur, _pFiles[i]);
-	return i;
+	if (-1 == snprintf(cmd, "svn status -u%s \"%s\"", opt, _Path))
+		oTHROW0(no_buffer_space);
+
+	oStd::xlstring line;
+	spawn(cmd, [&](char* _Line)
+	{
+		if (svn_is_error(_Line))
+			oTHROW(operation_not_supported, "svn error");
+		scc_file file;
+		svn_parse_status_line(_Line, _UpToRevision, file);
+		_Visitor(file);
+	});
 }
 
 static bool svn_from_string(ntp_date* _pDate, const char* _String)
@@ -224,11 +251,11 @@ scc_revision scc_svn::change(const char* _Path, unsigned int _Revision) const
 	oStd::lstring cmd;
 	if (_Revision)
 	{
-		if ((size_t)snprintf(cmd, "svn log -r %d \"%s\"", _Revision, _Path) >= cmd.capacity())
+		if (-1 == snprintf(cmd, "svn log -r %d \"%s\"", _Revision, _Path))
 			oTHROW0(no_buffer_space);
 	}
 
-	else if ((size_t)snprintf(cmd, "svn log \"%s\"", _Path) >= cmd.capacity())
+	else if (-1 == snprintf(cmd, "svn log \"%s\"", _Path))
 		oTHROW0(no_buffer_space);
 
 	oStd::xlstring StdOut;
@@ -266,11 +293,11 @@ void scc_svn::sync(const char* _Path, unsigned int _Revision, bool _Force)
 	oStd::lstring cmd;
 	if (_Revision)
 	{
-		if ((size_t)snprintf(cmd, "svn update%s -r %d \"%s\"", StrForce.c_str(), _Revision, _Path) >= cmd.capacity())
+		if (-1 == snprintf(cmd, "svn update%s -r %d \"%s\"", StrForce.c_str(), _Revision, _Path))
 			oTHROW0(no_buffer_space);
 	}
 
-	else if ((size_t)snprintf(cmd, "svn update \"%s\"", _Path) >= cmd.capacity())
+	else if (-1 == snprintf(cmd, "svn update \"%s\"", _Path))
 		oTHROW0(no_buffer_space);
 
 	oStd::xlstring StdOut;
@@ -282,7 +309,7 @@ void scc_svn::sync(const char* _Path, const ntp_date& _Date, bool _Force)
 	const char* StrForce = _Force ? " --force" : "";
 	oStd::sstring StrDate;
 	oStd::lstring cmd;
-	if ((size_t)snprintf(cmd, "svn update%s -r {%d} \"%s\"", StrForce, svn_to_string(StrDate, _Date), _Path) >= cmd.capacity())
+	if (-1 == snprintf(cmd, "svn update%s -r {%d} \"%s\"", StrForce, svn_to_string(StrDate, _Date), _Path))
 		oTHROW0(no_buffer_space);
 	oStd::xlstring StdOut;
 	spawn(cmd, StdOut);

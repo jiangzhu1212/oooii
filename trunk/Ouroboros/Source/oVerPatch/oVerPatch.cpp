@@ -114,7 +114,7 @@ static bool CreateVersionString(oStd::mstring& _StrDestination, const oVERPATCH_
 
 	// Mark if this is a modified build
 	oStd::scc_file f;
-	bool Special = 0 != scc->modifications(_Desc.SCCRoot, 0, &f, 1);
+	bool Special = !scc->is_up_to_date(_Desc.SCCRoot);
 
 	if (d.IsDebugBuild)
 		oStrcat(_StrDestination, " (Debug)");

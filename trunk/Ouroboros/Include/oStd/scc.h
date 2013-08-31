@@ -62,18 +62,26 @@ namespace scc_status
 
 };}
 
+namespace scc_visit_option
+{	enum value {
+
+	visit_all,
+	skip_unversioned,
+	skip_unmodified,
+	modified_only,
+
+};}
+
 struct scc_file
 {
 	scc_file()
 		: status(scc_status::unknown)
 		, revision(~0u)
-		, text(true)
 	{}
 
 	path_string path;
 	scc_status::value status;
 	unsigned int revision;
-	bool text;
 };
 
 struct scc_revision
@@ -92,6 +100,8 @@ typedef oFUNCTION<bool(const char* _Commandline
 	, const oFUNCTION<void(char* _Line)>& _GetLine
 	, int* _pExitCode
 	, unsigned int _TimeoutMS)> scc_spawn;
+
+typedef oFUNCTION<void(const scc_file& _File)> scc_file_visitor;
 
 class scc
 {
@@ -113,12 +123,25 @@ public:
 	// 0 (zero).
 	virtual unsigned int revision(const char* _Path) const = 0;
 
-	// Returns all files that are not at the latest or specifed revision up to the
-	// max number of entries specified. This will return the actual number of 
-	// entries populated. For checkout-style paradigms such as perforce, this will
-	// also list opened files
-	virtual size_t modifications(const char* _Path, unsigned int _UpToRevision, scc_file* _pFiles, size_t _MaxNumFiles) const = 0;
-	template<size_t size> size_t modifications(const char* _Path, unsigned int _UpToRevision, scc_file (&_pFiles)[size]) const { return modifications(_Path, _UpToRevision, _pFiles, size); }
+	// Visits each file that matches the search under the specified path and given 
+	// the specified option.
+	virtual void status(const char* _Path, unsigned int _UpToRevision, scc_visit_option::value _Option, const scc_file_visitor& _Visitor) const = 0;
+
+	// Returns true if all files under the specified path are unmodified and at 
+	// their latest revisions up to the specified revision so this can be used 
+	// on historical changelists for builds after other commits are done. Passing
+	// zero implies the head revision.
+	inline bool is_up_to_date(const char* _Path, unsigned int _AtRevision) const
+	{
+		bool UpToDate = true;
+		status(_Path, _AtRevision, scc_visit_option::modified_only, [&](const scc_file& _File)
+		{
+			if (_File.status == scc_status::out_of_date || _File.status == scc_status::modified)
+				UpToDate = false;
+		});
+
+		return UpToDate;
+	}
 
 	// Returns information about the specified change. If 0, this will return the
 	// latest/head revision.

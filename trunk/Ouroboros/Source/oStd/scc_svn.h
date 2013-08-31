@@ -39,7 +39,7 @@ public:
 	bool available() const override;
 	char* root(const char* _Path, char* _StrDestination, size_t _SizeofStrDestination) const override;
 	unsigned int revision(const char* _Path) const override;
-	size_t modifications(const char* _Path, unsigned int _UpToRevision, scc_file* _pFiles, size_t _MaxNumFiles) const override;
+	void status(const char* _Path, unsigned int _UpToRevision, scc_visit_option::value _Option, const scc_file_visitor& _Visitor) const override;
 	scc_revision change(const char* _Path, unsigned int _Revision) const override;
 	void sync(const char* _Path, unsigned int _Revision, bool _Force = false) override;
 	void sync(const char* _Path, const ntp_date& _Date, bool _Force = false) override;
@@ -50,6 +50,7 @@ public:
 private:
 	scc_spawn Spawn;
 private:
+	void spawn(const char* _Command, const oFUNCTION<void(char* _Line)>& _GetLine) const;
 	void spawn(const char* _Command, oStd::xlstring& _Stdout) const;
 };
 

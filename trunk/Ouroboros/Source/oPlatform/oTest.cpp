@@ -764,8 +764,8 @@ void oTestManager_Impl::PrintDesc()
 	uint CL = scc->revision(DevPath);
 	if (CL)
 	{
-		oStd::scc_file f;
-		if (0 == scc->modifications(DevPath, CL, &f, 1))
+		oASSERT(false, "FIX THIS");
+		if (scc->is_up_to_date(DevPath, CL))
 			oPrintf(CLStr, "%d", CL);
 		else
 			oPrintf(CLStr, "%d + modifications", CL);
