@@ -139,9 +139,6 @@
     <ClCompile Include="utfcmp.cpp">
       <Filter>Source\memory</Filter>
     </ClCompile>
-    <ClCompile Include="oStdFilesystem.cpp">
-      <Filter>Source\C++11</Filter>
-    </ClCompile>
     <ClCompile Include="scc.cpp">
       <Filter>Source\scc</Filter>
     </ClCompile>
@@ -314,9 +311,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oStd\type_info.h">
       <Filter>oStd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oStd\oStdFilesystem.h">
-      <Filter>oStd\C++11</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oStd\scc.h">
       <Filter>oStd</Filter>

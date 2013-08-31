@@ -71,7 +71,6 @@
     <ClCompile Include="ordinal.cpp" />
     <ClCompile Include="oStdChrono.cpp" />
     <ClCompile Include="oStdConditionVariable.cpp" />
-    <ClCompile Include="oStdFilesystem.cpp" />
     <ClCompile Include="oStdFuture.cpp" />
     <ClCompile Include="oStdMutex.cpp" />
     <ClCompile Include="oStdThread.cpp" />
@@ -132,7 +131,6 @@
     <ClInclude Include="..\..\Include\oStd\oStdAtomic.h" />
     <ClInclude Include="..\..\Include\oStd\oStdChrono.h" />
     <ClInclude Include="..\..\Include\oStd\oStdConditionVariable.h" />
-    <ClInclude Include="..\..\Include\oStd\oStdFilesystem.h" />
     <ClInclude Include="..\..\Include\oStd\oStdFuture.h" />
     <ClInclude Include="..\..\Include\oStd\oStdMutex.h" />
     <ClInclude Include="..\..\Include\oStd\oStdRatio.h" />
