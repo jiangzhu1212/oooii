@@ -393,7 +393,7 @@ char* oURIResolve(char* _URIReference, size_t _SizeofURIReference, const char* _
 		{
 			oTrimFilename(ResultURIParts.Path);
 			oEnsureSeparator(ResultURIParts.Path);
-			oStrAppendf(ResultURIParts.Path, "%s", URIParts.Path.c_str());
+			oStd::sncatf(ResultURIParts.Path, "%s", URIParts.Path.c_str());
 		}
 
 		ResultURIParts.Query = URIParts.Query;
@@ -455,7 +455,7 @@ void oURIQueryEnumKeyValuePairs(const char* _URIQuery, oFUNCTION<void(const char
 
 	// FIXME: Copying the URI so we can append it with & so the regex matches
 	oStd::uri_string copy = _URIQuery;
-	oStrAppendf(copy, "&");
+	oStd::sncatf(copy, "&");
 
 	for (std::cregex_token_iterator Groups(copy, copy + copy.length(), QueryRegex, ArgsToCollect); Groups != end; ++Groups)
 	{

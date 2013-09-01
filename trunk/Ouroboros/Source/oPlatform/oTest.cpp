@@ -587,7 +587,7 @@ bool oSpecialTest::Start(threadsafe interface oProcess* _pProcess, char* _StrSta
 		desc.StartSuspended = true;
 	#endif
 	_pProcess->GetDesc(&desc);
-	const char* SpecialTestName = oStrStrReverse(desc.CommandLine, "-s ") + 3;
+	const char* SpecialTestName = oStd::rstrstr(desc.CommandLine, "-s ") + 3;
 	if (!SpecialTestName || !*SpecialTestName)
 		return oErrorSetLast(std::errc::invalid_argument, "Process with an invalid command line for oSpecialTest specified.");
 

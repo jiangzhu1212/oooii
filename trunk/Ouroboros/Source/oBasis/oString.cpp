@@ -237,25 +237,6 @@ char* oPruneWhitespace(char* _StrDestination, size_t _SizeofStrDestination, cons
 	return _StrDestination;
 }
 
-const char* oStrStrReverse(const char* _Str, const char* _SubStr)
-{
-	const char* c = _Str + oStrlen(_Str) - 1;
-	const size_t SubStrLen = oStrlen(_SubStr);
-	while (c > _Str)
-	{
-		if (!memcmp(c, _SubStr, SubStrLen))
-			return c;
-
-		c--;
-	}
-	return 0;
-}
-
-char* oStrStrReverse(char* _Str, const char* _SubStr)
-{
-	return const_cast<char*>(oStrStrReverse(static_cast<const char*>(_Str), _SubStr));
-}
-
 errno_t oStrVAppendf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args)
 {
 	if (-1 == oStd::vsncatf(_StrDestination, _SizeofStrDestination, _Format, _Args))

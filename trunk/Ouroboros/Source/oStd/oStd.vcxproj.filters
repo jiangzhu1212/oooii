@@ -163,6 +163,9 @@
     <ClCompile Include="replace.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
+    <ClCompile Include="rstrstr.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

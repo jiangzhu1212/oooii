@@ -86,6 +86,7 @@
     <ClCompile Include="percent_encode.cpp" />
     <ClCompile Include="relativize_path.cpp" />
     <ClCompile Include="replace.cpp" />
+    <ClCompile Include="rstrstr.cpp" />
     <ClCompile Include="scc.cpp" />
     <ClCompile Include="scc_svn.cpp" />
     <ClCompile Include="strbitmask.cpp" />

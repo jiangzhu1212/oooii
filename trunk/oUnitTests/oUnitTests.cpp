@@ -288,7 +288,7 @@ void DeleteOldLogFiles(const char* _SpecialModeName)
 	char logFileWildcard[_MAX_PATH];
 	oGetLogFilePath(logFileWildcard, _SpecialModeName);
 
-	char* p = oStrStrReverse(logFileWildcard, "_");
+	char* p = oStd::rstrstr(logFileWildcard, "_");
 	oStrcpy(p, oCOUNTOF(logFileWildcard) - std::distance(logFileWildcard, p), "*.txt");
 
 	std::vector<oNamedFileDesc> logs;

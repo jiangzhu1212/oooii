@@ -183,6 +183,10 @@ template<size_t size> char* trim(char (&_Trimmed)[size], const char* _StrSource,
 // _____________________________________________________________________________
 // Search
 
+// like strstr, but finds the last occurrence as if searching in reverse
+const char* rstrstr(const char* _String, const char* _Substring);
+char* rstrstr(char* _String, const char* _Substring);
+
 // Insert one string into another in-place. _InsertionPoint must point into 
 // _StrSource. If _ReplacementLength is non-zero then that number of characters 
 // from _InsertionPoint on will be overwritten by the _Insertion. This returns
