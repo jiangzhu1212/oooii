@@ -205,6 +205,9 @@ namespace oStd {
 
 	template<TSTR_PARAMS, typename T> char* to_string(STRT& _StrDestination, const T& _Value) { return to_string(_StrDestination.c_str(), _StrDestination.capacity(), _Value); }
 
+	TSTR void tolower(STRT& _String) { tolower<STRT::char_type>(_String.c_str()); }
+	TSTR void toupper(STRT& _String) { toupper<STRT::char_type>(_String.c_str()); }
+	
 	TSTR int vsncatf(STRT& _StrDestination, const char* _Format, va_list _Args) { return vsncatf(_StrDestination, _StrDestination.capacity(), _Format, _Args); }
 	TSTR int sncatf(STRT& _StrDestination, const char* _Format, ...)
 	{

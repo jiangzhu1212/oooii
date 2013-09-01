@@ -154,7 +154,7 @@ bool oURIDecompose(const char* _URIReference, char* _Scheme, size_t _SizeofSchem
 		#define COPY(part, index) do { if (_##part && !oStrcpy(_##part, _Sizeof##part, matches[index].first, matches[index].second)) return false; if (_##part && !oStd::percent_decode(_##part, _Sizeof##part, _##part)) return false; } while(false)
 			COPY(Scheme, 2);
 			if (_Scheme)
-				oToLower(_Scheme); // http://www.ietf.org/rfc/rfc2396.txt 3.1. Scheme Component
+				oStd::tolower(_Scheme); // http://www.ietf.org/rfc/rfc2396.txt 3.1. Scheme Component
 			COPY(Authority, 4);
 			COPY(Path, 5);
 			COPY(Query, 7);
@@ -192,7 +192,7 @@ char* oURIRecompose(char* _URIReference, size_t _SizeofURIReference, const char*
 	if (oSTRVALID(_Scheme))
 	{
 		SAFECAT(_Scheme);
-		oToLower(_URIReference); // http://www.ietf.org/rfc/rfc2396.txt 3.1. Scheme Component
+		oStd::tolower(_URIReference); // http://www.ietf.org/rfc/rfc2396.txt 3.1. Scheme Component
 		SAFECAT(":");
 	}
 

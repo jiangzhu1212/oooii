@@ -96,6 +96,9 @@ inline char* strtok_r(char* _strToken, const char* _strDelim, char** _Context)
 
 namespace oStd {
 
+// _____________________________________________________________________________
+// String formatting
+
 // Adds "...\0" to the end of the buffer - useful when recovering from string 
 // overruns that can be truncated.
 char* ellipsize(char* _StrDestination, size_t _SizeofStrDestination);
@@ -104,28 +107,35 @@ template<size_t size> char* ellipsize(char (&_StrDestination)[size]) { return el
 wchar_t* wcsellipsize(wchar_t* _StrDestination, size_t _NumChars);
 template<size_t n> wchar_t* ellipsize(wchar_t (&_StrDestination)[n]) { return wcsellipsize(_StrDestination, n); }
 
+// Fills the specified buffer with a size in days hours minutes seconds (and 
+// milliseconds). This returns the length the string would be but writing stops
+// at the end of _SizeofStrDestination. If length >= _SizeofStrDestination then
+// the destination is not large enough to hold the nul-terminated string. This
+// will not return -1 like snprintf does.
+int format_duration(char* _StrDestination, size_t _SizeofStrDestination, double _TimeInSeconds, bool _Abbreviated = false, bool _IncludeMS = true);
+template<size_t size> int format_duration(char (&_StrDestination)[size], double _TimeInSeconds, bool _Abbreviated = false, bool _IncludeMS = true) { return format_duration(_StrDestination, size, _TimeInSeconds, _Abbreviated, _IncludeMS); }
+
+// Fills the specified buffer with a size in either bytes, KB, MB, GB, or TB 
+// depending on the number of bytes specified. This returns the same result as 
+// snprintf.
+int format_bytes(char* _StrDestination, size_t _SizeofStrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits);
+
+// For numbers, this inserts commas where they ought to be (every 3 numbers)
+// this returns nullptr on failure, else _StrDestination.
+char* format_commas(char* _StrDestination, size_t _SizeofStrDestination, int _Number);
+template<size_t size> char* format_commas(char (&_StrDestination)[size], int _Number) { return format_commans(_StrDestination, size, _Number); }
+char* format_commas(char* _StrDestination, size_t _SizeofStrDestination, unsigned int _Number);
+template<size_t size> char* format_commas(char (&_StrDestination)[size], unsigned int _Number) { return format_commans(_StrDestination, size, _Number); }
+
+// Returns the appropriate suffix [st nd rd th] for a number
+const char* ordinal(size_t _Number);
+
 // passing this to std::transform brings up warnings that are hard to disable,
 // so create a wrapper that is same type in and out.
 template<typename charT> charT tolower(const charT& c) { return (charT)::tolower(c); }
 template<typename charT> charT toupper(const charT& c) { return (charT)::toupper(c); }
-
-// copy _strToken first for multi-threaded or non-destructive strtok. If the 
-// parsing exits early end_strtok() must be called on _Context. If parsing
-// exits due to a nullptr return value, cleanup need not be called.
-char* strtok(const char* _strToken, const char* _strDelim, char** _Context);
-void end_strtok(char** _Context);
-
-// This function takes a single value (usually an enum value) and returns a 
-// constant string representation of it.
-typedef const char* (*as_string_fn)(int _SingleFlag);
-
-// Fill _StrDestination with a string representation of _Flags by going through
-// each bit set and calling _AsString on that value. If no bits are set, 
-// _StrDestination will be set to _AllZerosValue.
-char* strbitmask(char* _StrDestination, size_t _SizeofStrDestination, int _Flags, const char* _AllZerosValue, as_string_fn _AsString);
-template<size_t size> char* strbitmask(char (&_StrDestination)[size], int _Flags, const char* _AllZerosValue, as_string_fn _AsString) { return strbitmask(_StrDestination, size, _Flags, _AllZerosValue, _AsString); }
-template<typename T> char* strbitmask(char* _StrDestination, size_t _SizeofStrDestination, int _Flags, const char* _AllZerosValue, const char* (*_AsString)(T _Value)) { return strbitmask(_StrDestination, _SizeofStrDestination, _Flags, _AllZerosValue, (as_string_fn)_AsString); }
-template<typename T, size_t size> char* strbitmask(char (&_StrDestination)[size], int _Flags, const char* _AllZerosValue, const char* (*_AsString)(T _Value)) { return strbitmask(_StrDestination, size, _Flags, _AllZerosValue, (as_string_fn)_AsString); }
+template<typename charT> void tolower(charT* _String) { while (*_String) *_String++ = tolower(*_String); }
+template<typename charT> void toupper(charT* _String) { while (*_String) *_String++ = toupper(*_String); }
 
 // does a formatted strcat. This returns the total new length of the string. If 
 // that length is >= _SizeofStrDestination, then the destination is not big 
@@ -156,26 +166,6 @@ template<size_t size> int sncatf(char (&_StrDestination)[size], const char* _For
 	return l;
 }
 
-// Fills the specified buffer with a size in days hours minutes seconds (and 
-// milliseconds). This returns the length the string would be but writing stops
-// at the end of _SizeofStrDestination. If length >= _SizeofStrDestination then
-// the destination is not large enough to hold the nul-terminated string. This
-// will not return -1 like snprintf does.
-int format_duration(char* _StrDestination, size_t _SizeofStrDestination, double _TimeInSeconds, bool _Abbreviated = false, bool _IncludeMS = true);
-template<size_t size> int format_duration(char (&_StrDestination)[size], double _TimeInSeconds, bool _Abbreviated = false, bool _IncludeMS = true) { return format_duration(_StrDestination, size, _TimeInSeconds, _Abbreviated, _IncludeMS); }
-
-// Fills the specified buffer with a size in either bytes, KB, MB, GB, or TB 
-// depending on the number of bytes specified. This returns the same result as 
-// snprintf.
-int format_bytes(char* _StrDestination, size_t _SizeofStrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits);
-
-// For numbers, this inserts commas where they ought to be (every 3 numbers)
-// this returns nullptr on failure, else _StrDestination.
-char* format_commas(char* _StrDestination, size_t _SizeofStrDestination, int _Number);
-template<size_t size> char* format_commas(char (&_StrDestination)[size], int _Number) { return format_commans(_StrDestination, size, _Number); }
-char* format_commas(char* _StrDestination, size_t _SizeofStrDestination, unsigned int _Number);
-template<size_t size> char* format_commas(char (&_StrDestination)[size], unsigned int _Number) { return format_commans(_StrDestination, size, _Number); }
-
 // Remove all chars found in _ToTrim from the beginning of the string. _Trimmed 
 // can be the same as _StrSource. Returns _Trimmed.
 char* trim_left(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource, const char* _ToTrim);
@@ -190,6 +180,9 @@ template<size_t size> char* trim_right(char (&_Trimmed)[size], const char* _StrS
 inline char* trim(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim_right(_Trimmed, _SizeofTrimmed, trim_left(_Trimmed, _SizeofTrimmed, _StrSource, _ToTrim), _ToTrim); }
 template<size_t size> char* trim(char (&_Trimmed)[size], const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim(_Trimmed, size, _StrSource, _ToTrim); }
 
+// _____________________________________________________________________________
+// Search
+
 // Insert one string into another in-place. _InsertionPoint must point into 
 // _StrSource. If _ReplacementLength is non-zero then that number of characters 
 // from _InsertionPoint on will be overwritten by the _Insertion. This returns
@@ -202,9 +195,6 @@ template<size_t size> char* insert(char (&_StrSource)[size], char* _InsertionPoi
 // the result to _StrDestination. 
 errno_t replace(char* oRESTRICT _StrResult, size_t _SizeofStrResult, const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace);
 template<size_t size> errno_t replace(char (&_StrResult)[size], const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace) { return replace(_StrResult, size, _StrSource, _StrFind, _StrReplace); }
-
-// Returns the appropriate suffix [st nd rd th] for a number
-const char* ordinal(size_t _Number);
 
 // first param must be pointing into a string at the open brace. From there this 
 // will find the brace at the same level of recursion - internal pairs are 
@@ -220,7 +210,28 @@ const char* next_matching(const char* _pPointingAtOpenBrace, const char* _OpenBr
 char* next_matching(char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace);
 
 // _____________________________________________________________________________
-// Text file format encoding.
+// Parsing
+
+// copy _strToken first for multi-threaded or non-destructive strtok. If the 
+// parsing exits early end_strtok() must be called on _Context. If parsing
+// exits due to a nullptr return value, cleanup need not be called.
+char* strtok(const char* _strToken, const char* _strDelim, char** _Context);
+void end_strtok(char** _Context);
+
+// This function takes a single value (usually an enum value) and returns a 
+// constant string representation of it.
+typedef const char* (*as_string_fn)(int _SingleFlag);
+
+// Fill _StrDestination with a string representation of _Flags by going through
+// each bit set and calling _AsString on that value. If no bits are set, 
+// _StrDestination will be set to _AllZerosValue.
+char* strbitmask(char* _StrDestination, size_t _SizeofStrDestination, int _Flags, const char* _AllZerosValue, as_string_fn _AsString);
+template<size_t size> char* strbitmask(char (&_StrDestination)[size], int _Flags, const char* _AllZerosValue, as_string_fn _AsString) { return strbitmask(_StrDestination, size, _Flags, _AllZerosValue, _AsString); }
+template<typename T> char* strbitmask(char* _StrDestination, size_t _SizeofStrDestination, int _Flags, const char* _AllZerosValue, const char* (*_AsString)(T _Value)) { return strbitmask(_StrDestination, _SizeofStrDestination, _Flags, _AllZerosValue, (as_string_fn)_AsString); }
+template<typename T, size_t size> char* strbitmask(char (&_StrDestination)[size], int _Flags, const char* _AllZerosValue, const char* (*_AsString)(T _Value)) { return strbitmask(_StrDestination, size, _Flags, _AllZerosValue, (as_string_fn)_AsString); }
+
+// _____________________________________________________________________________
+// Encoding
 
 // Text file formats are human readable! Except when storing human-readable 
 // data. This section includes format-specific encode/decode functions.
@@ -263,7 +274,7 @@ char* json_escape_decode(char* _StrDestination, size_t _SizeofStrDestination, co
 template<size_t size> char* json_escape_decode(char (&_StrDestination)[size], const char* _StrSource) { return json_escape_decode(_StrDestination, size, _StrSource); }
 
 // _____________________________________________________________________________
-// File path utilities
+// Path Parsing
 
 // If _ZeroBuffer is true, all extra chars in the destination will be set to 
 // zero such that a memcmp of two cleaned buffers would be reliable.

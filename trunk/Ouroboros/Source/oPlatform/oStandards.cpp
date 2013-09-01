@@ -68,7 +68,7 @@ void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list
 	{
 		char msg[2048];
 		oVPrintf(msg, _Format, _Args);
-		oToUpper(msg);
+		oStd::toupper(msg);
 		oConsole::fprintf(stdout, fg[_Type], bg[_Type], msg);
 	}
 	else

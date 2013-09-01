@@ -122,7 +122,7 @@ struct oStdHashI<oStd::fixed_string<CHAR_T, CAPACITY>> : public std::unary_funct
 	size_t operator()( const oStd::fixed_string<CHAR_T, CAPACITY>& _Key) const
 	{
 		oStd::fixed_string<CHAR_T, CAPACITY> lower = _Key;
-		oToLower(lower);
+		oStd::tolower(lower);
 		uint128 Hash = oStd::murmur3(lower.c_str(), oUInt(lower.length()));
 		return *(size_t*)&Hash;
 	}

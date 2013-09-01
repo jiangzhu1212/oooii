@@ -431,7 +431,7 @@ bool from_string(oSYSPATH* _pValue, const char* _StrSource)
 	};
 
 	oStd::sstring SourceUppercase = _StrSource;
-	oToUpper(SourceUppercase);
+	oStd::toupper(SourceUppercase);
 	oFORI(i, sStrings)
 	{
 		if (!oStrcmp(_StrSource, sStrings[i]) || !oStrcmp(SourceUppercase, sStrings[i]+9)) // +9 match against just "OS" or "HOST" after oSYSPATH_

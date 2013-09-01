@@ -123,7 +123,7 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 					while (pElement)
 					{
 						// Optimization so we can compare with lower case string matching, the actual header stays unchanged though
-						oToLower(pElement);
+						oStd::tolower(pElement);
 						
 						// keep-alive / close
 						if (strstr(pElement, "close"))

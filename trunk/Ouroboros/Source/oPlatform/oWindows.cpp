@@ -244,7 +244,7 @@ static char* oWinPnPEnumeratorToSetupClass(char* _StrDestination, size_t _Sizeof
 	*hash = '\0';
 	char* end = _StrDestination + len;
 	oStd::transform(_StrDestination, end, _StrDestination, [=](char c) { return (c == '#') ? '\\' : c; });
-	oStd::transform(_StrDestination, end, _StrDestination, oStd::toupper<char>);
+	oStd::transform(_StrDestination, end, _StrDestination, oStd::toupper<const char&>);
 	char* first_slash = strchr(_StrDestination, '\\');
 	if (!first_slash) return nullptr;
 	*first_slash = '\0';

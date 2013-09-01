@@ -143,7 +143,7 @@ public:
 		else if (_Scheme)
 		{
 			s += _Scheme;
-			transform(std::begin(s), std::end(s), std::begin(s), tolower<char_type>);
+			transform(std::begin(s), std::end(s), std::begin(s), tolower<const char_type&>);
 			s += traits::scheme_str();
 		}
 		else if (has_scheme())
@@ -455,7 +455,7 @@ private:
 		std::match_results<char_type*>::value_type& to_lower = 
 			*(std::match_results<char_type*>::value_type*)&matches[2];
 
-		transform(to_lower.first, to_lower.second, to_lower.first, tolower<char_type>);
+		transform(to_lower.first, to_lower.second, to_lower.first, tolower<const char_type&>);
 
 		// If the whole path isn't made lower-case for case-insensitive purposes, 
 		// the percent values at least should be made lower-case (i.e. this should 

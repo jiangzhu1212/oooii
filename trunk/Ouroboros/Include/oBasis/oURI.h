@@ -54,7 +54,7 @@ struct oURIParts
 
 	// one of the good practices from http://www.textuality.com/tag/uri-comp-2.html
 	// @oooii-tony: How do case-sensitive file systems work with this?
-	inline void ToLower() { oToLower(Scheme); oToLower(Authority); oToLower(Path);  oToLower(Query); oToLower(Fragment); }
+	inline void ToLower() { oStd::tolower(Scheme); oStd::tolower(Authority); oStd::tolower(Path);  oStd::tolower(Query); oStd::tolower(Fragment); }
 	inline bool Empty() const { return Scheme.empty() && Authority.empty() && Path.empty() && Query.empty() && Fragment.empty(); }
 
 	oStd::fixed_string<char, oMAX_SCHEME> Scheme;

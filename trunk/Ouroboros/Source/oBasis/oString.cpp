@@ -195,18 +195,6 @@ int oVPrintf(wchar_t* _StrDestination, size_t _NumDestinationChars, const wchar_
 	return status;
 }
 
-void oToLower(char* _String)
-{
-	while (*_String)
-		*_String++ = static_cast<char>(tolower(*_String));
-}
-
-void oToUpper(char* _String)
-{
-	while (*_String)
-		*_String++ = static_cast<char>(toupper(*_String));
-}
-
 char* oNewlinesToDos(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource)
 {
 	char* d = _StrDestination;

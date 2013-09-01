@@ -93,12 +93,6 @@ template<typename CHAR_T> int oPrintf(CHAR_T* _StrDestination, size_t _NumDestin
 // _____________________________________________________________________________
 // String cleanup
 
-// Convert all characters of the specified string to lowercase (in-place)
-void oToLower(char* _String);
-
-// Convert all characters of the specified string to uppercase (in-place)
-void oToUpper(char* _String);
-
 // Convert \n -> \r\n
 char* oNewlinesToDos(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource);
 
