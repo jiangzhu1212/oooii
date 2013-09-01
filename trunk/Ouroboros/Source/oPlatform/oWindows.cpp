@@ -1001,18 +1001,6 @@ void oLoadLibrarySingletonDestroy()
 	oLoadLibrarySingleton::Singleton()->Release();
 }
 
-//struct LoadLibrarySingletonInstaller
-//{
-//	LoadLibrarySingletonInstaller()
-//	{
-//		oProcessHeapEnsureRunning(); // ensure the process heap is instantiated before the Singleton below so it is tracked
-//		oLoadLibrarySingleton::Singleton();
-//	}
-//};
-//
-//// @oooii-kevin: OK Static, we need to make sure the exception handler is installed very early 
-//static LoadLibrarySingletonInstaller GInstallHandler;
-
 // {5E05E413-8A70-41D4-B058-3FE203D65841}
 const oGUID oLoadLibrarySingleton::GUID = { 0x5e05e413, 0x8a70, 0x41d4, { 0xb0, 0x58, 0x3f, 0xe2, 0x3, 0xd6, 0x58, 0x41 } };
 oSINGLETON_REGISTER(oLoadLibrarySingleton);

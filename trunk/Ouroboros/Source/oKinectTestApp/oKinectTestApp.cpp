@@ -27,6 +27,7 @@
 #include <oKinect/oKinectGDI.h>
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/Windows/oWindows.h>
+#include <oPlatform/Windows/oWinSkeleton.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/oSystem.h>
 #include <oPlatform/oStream.h>
@@ -520,7 +521,7 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 		case oGUI_ACTION_SKELETON:
 		{
 			oGUI_BONE_DESC Skeleton;
-			GetSkeletonDesc((HSKELETON)_Action.hSkeleton, &Skeleton);
+			oWinGetSkeletonDesc((HSKELETON)_Action.hSkeleton, &Skeleton);
 			AirKeyboard->Update(Skeleton, _Action.TimestampMS);
 
 			// this doesn't differentiate between multiple skeletons yet...

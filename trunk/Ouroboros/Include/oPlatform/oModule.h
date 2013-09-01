@@ -29,7 +29,6 @@
 #ifndef oModule_h
 #define oModule_h
 
-#include <oBasis/oStddef.h>
 #include <oStd/fixed_string.h>
 #include <oBasis/oVersion.h>
 

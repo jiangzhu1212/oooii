@@ -28,7 +28,6 @@
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oSystem.h>
 #include <oPlatform/Windows/oWindows.h>
-#include <oPlatform/oProcessHeap.h>
 #include "SoftLink/oWinVersion.h"
 
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oMODULE_TYPE)

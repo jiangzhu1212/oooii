@@ -28,7 +28,6 @@
 #include <oStd/oStdChrono.h>
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oDisplay.h>
-#include <oPlatform/oProcessHeap.h>
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/Windows/oWinAsString.h>
 #include <oPlatform/Windows/oWinRect.h>
@@ -55,105 +54,33 @@ static const char* kRegisteredWindowMessages[] =
 };
 static_assert(oCOUNTOF(kRegisteredWindowMessages) == oWM_REGISTERED_COUNT, "array mismatch");
 
-const char* oWinGetMessageRegisterString(oWM _RegisteredMessage)
+class oWinRegisteredMessages
 {
-	if (_RegisteredMessage < oWM_REGISTERED_FIRST) return nullptr;
-	return kRegisteredWindowMessages[_RegisteredMessage - oWM_REGISTERED_FIRST];
-}
-
-struct oWinRegisteredMessageContext : oProcessSingleton<oWinRegisteredMessageContext>
-{
-	static const oGUID GUID;
-	oWinRegisteredMessageContext()
+public:
+	oWinRegisteredMessages()
 	{
 		oFORI(i, kRegisteredWindowMessages)
 			RegisteredMessages[i] = RegisterWindowMessage(kRegisteredWindowMessages[i]);
 	}
 
-	UINT FindMessage(UINT _uMsg)
+	UINT Translate(UINT _uMsg)
 	{
-		oFORI(i, RegisteredMessages)
-			if (RegisteredMessages[i] == _uMsg)
-				return (UINT)(oWM_REGISTERED_FIRST + i);
-		return 0;
+		if (oWinIsRegisteredMessage(_uMsg))
+		{
+			oFORI(i, RegisteredMessages)
+				if (RegisteredMessages[i] == _uMsg)
+					return (UINT)(oWM_REGISTERED_FIRST + i);
+		}
+		return _uMsg;
 	}
 
+private:
 	UINT RegisteredMessages[oWM_REGISTERED_COUNT];
 };
 
-// {F2F6803E-B2F3-41F3-8C1A-9EA7ADB1EB90}
-const oGUID oWinRegisteredMessageContext::GUID = { 0xf2f6803e, 0xb2f3, 0x41f3, { 0x8c, 0x1a, 0x9e, 0xa7, 0xad, 0xb1, 0xeb, 0x90 } };
-
-oSINGLETON_REGISTER(oWinRegisteredMessageContext);
-
-struct oSkeletonInputContext : oProcessSingleton<oSkeletonInputContext>
+UINT oWinGetNativeRegisteredMessage(oWM _RegisteredMessage)
 {
-	static const oGUID GUID;
-
-	oSkeletonInputContext() {}
-	~oSkeletonInputContext()
-	{
-		oASSERT(Sources.empty(), "");
-	}
-
-	void Register(HSKELETON _hSkeleton, const oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>& _Get)
-	{
-		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
-		if (Sources.find(_hSkeleton) != Sources.end())
-			throw std::exception("redundant registration");
-		Sources[_hSkeleton] = _Get;
-	}
-
-	void Unregister(HSKELETON _hSkeleton)
-	{
-		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
-		auto it = Sources.find(_hSkeleton);
-		if (it != Sources.end())
-			Sources.erase(it);
-	}
-
-	bool Get(HSKELETON _hSkeleton, oGUI_BONE_DESC* _pSkeleton)
-	{
-		// prevent Unregister() from being called during a read
-		oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(Mutex);
-		auto it = Sources.find(_hSkeleton);
-		if (it == Sources.end())
-			return oErrorSetLast(std::errc::invalid_argument);
-		it->second(_pSkeleton);
-		return true;
-	}
-
-	bool Close(HSKELETON _hSkeleton)
-	{
-		return true;
-	}
-
-	oConcurrency::shared_mutex Mutex;
-	std::map<HSKELETON
-		, oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>
-		, std::less<HSKELETON>
-		, oProcessHeapAllocator<std::pair<HSKELETON, oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>>>> 
-	Sources;
-};
-
-// {7E5F5608-2C7A-43E7-B7A0-46293FEC653C}
-const oGUID oSkeletonInputContext::GUID = { 0x7e5f5608, 0x2c7a, 0x43e7, { 0xb7, 0xa0, 0x46, 0x29, 0x3f, 0xec, 0x65, 0x3c } };
-
-oSINGLETON_REGISTER(oSkeletonInputContext);
-
-void RegisterSkeletonSource(HSKELETON _hSkeleton, const oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>& _Get)
-{
-	oSkeletonInputContext::Singleton()->Register(_hSkeleton, _Get);
-}
-
-void UnregisterSkeletonSource(HSKELETON _hSkeleton)
-{
-	oSkeletonInputContext::Singleton()->Unregister(_hSkeleton);
-}
-
-bool GetSkeletonDesc(HSKELETON _hSkeleton, oGUI_BONE_DESC* _pSkeleton)
-{
-	return oSkeletonInputContext::Singleton()->Get(_hSkeleton, _pSkeleton);
+	return RegisterWindowMessage(kRegisteredWindowMessages[_RegisteredMessage - oWM_REGISTERED_FIRST]);
 }
 
 struct oWIN_DEVICE_CHANGE_CONTEXT
@@ -341,6 +268,7 @@ struct oWndExtra
 {
 	HMENU hMenu;
 	HWND hStatusBar;
+	oWinRegisteredMessages* pRegisteredMessages;
 	HDEVICECHANGE hDeviceChange;
 	LONG_PTR RestoredPosition; // MAKELPARAM(x,y)
 	LONG_PTR RestoredSize; // MAKELPARAM(w,h)
@@ -357,6 +285,7 @@ struct oWndExtra
 
 #define oGWLP_MENU (offsetof(oWndExtra, hMenu))
 #define oGWLP_STATUSBAR (offsetof(oWndExtra, hStatusBar))
+#define oGWLP_REGISTERED_MESSAGES (offsetof(oWndExtra, pRegisteredMessages))
 #define oGWLP_DEVICE_CHANGE (offsetof(oWndExtra, hDeviceChange))
 #define oGWLP_RESTORED_POSITION (offsetof(oWndExtra, RestoredPosition)) // use GET_X_LPARAM and GET_Y_LPARAM to decode
 #define oGWLP_RESTORED_SIZE (offsetof(oWndExtra, RestoredSize)) // use GET_X_LPARAM and GET_Y_LPARAM to decode
@@ -458,10 +387,6 @@ HWND oWinCreate(HWND _hParent
 		return nullptr;
 	}
 
-	// does this belong in WM_CREATE?
-	oFORI(i, kRegisteredWindowMessages)
-		oVB(RegisterWindowMessage(kRegisteredWindowMessages[i]));
-
 	oTRACE("HWND 0x%x '%s' running on thread %d (0x%x)"
 		, hWnd
 		, oSAFESTRN(_Title)
@@ -521,7 +446,7 @@ static void oWinSaveRestoredPosSize(HWND _hWnd)
 			oGUI_WINDOW_SHAPE_DESC s = oWinGetShape(_hWnd);
 			SetWindowLongPtr(_hWnd, oGWLP_RESTORED_POSITION, (LONG_PTR)MAKELPARAM(s.ClientPosition.x, s.ClientPosition.y));
 			SetWindowLongPtr(_hWnd, oGWLP_RESTORED_SIZE, (LONG_PTR)MAKELPARAM(s.ClientSize.x, s.ClientSize.y));
-			}
+		}
 	}
 }
 
@@ -545,6 +470,7 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 				oWIN_CREATESTRUCT* wcs = (oWIN_CREATESTRUCT*)cs->lpCreateParams;
 
 				// Set up internal/custom data.
+				SetWindowLongPtr(_hWnd, oGWLP_REGISTERED_MESSAGES, (LONG_PTR)new oWinRegisteredMessages);
 				SetWindowLongPtr(_hWnd, oGWLP_DEVICE_CHANGE, (LONG_PTR)oWinDeviceChangeCreate());
 				SetWindowLongPtr(_hWnd, oGWLP_MENU, (LONG_PTR)CreateMenu());
 				SetWindowLongPtr(_hWnd, oGWLP_STATUSBAR, (LONG_PTR)oWinStatusBarCreate(_hWnd, (HMENU)0x00005747));
@@ -568,7 +494,7 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 				break;
 
 			case WM_DESTROY:
-				
+			{
 				// If GetMenu returns the menu, then Windows will handle its destruction
 				if (!::GetMenu(_hWnd))
 					DestroyMenu((HMENU)SetWindowLongPtr(_hWnd, oGWLP_MENU, (LONG_PTR)nullptr));
@@ -584,8 +510,13 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 				oWinDeviceChangeDestroy((HDEVICECHANGE)GetWindowLongPtr(_hWnd, oGWLP_DEVICE_CHANGE));
 				SetWindowLongPtr(_hWnd, oGWLP_DEVICE_CHANGE, (LONG_PTR)nullptr);
 
+				oWinRegisteredMessages* pRegisteredMessages = (oWinRegisteredMessages*)GetWindowLongPtr(_hWnd, oGWLP_REGISTERED_MESSAGES);
+				delete pRegisteredMessages;
+				SetWindowLongPtr(_hWnd, oGWLP_REGISTERED_MESSAGES, (LONG_PTR)nullptr);
+
 				PostQuitMessage(0);
 				break;
+			}
 
 			case WM_SYSKEYDOWN:
 			{
@@ -670,15 +601,10 @@ void* oWinGetThis(HWND _hWnd)
 	return (void*)GetWindowLongPtr(_hWnd, GWLP_USERDATA);
 }
 
-// Returns true if the specified _uMsg is one that was assigned to this process
-// by a call to RegisterWindowMessage.
-static bool oWinIsRegisteredMessage(UINT _uMsg) { return _uMsg >= 0xC000 && _uMsg <= 0xFFFF; }
-
-UINT oWinTranslateMessage(UINT _uMsg)
+UINT oWinTranslateMessage(HWND _hWnd, UINT _uMsg)
 {
-	if (oWinIsRegisteredMessage(_uMsg))
-		return oWinRegisteredMessageContext::Singleton()->FindMessage(_uMsg);
-	return _uMsg;
+	oWinRegisteredMessages* p = (oWinRegisteredMessages*)GetWindowLongPtr(_hWnd, oGWLP_REGISTERED_MESSAGES);
+	return p ? p->Translate(_uMsg) : _uMsg;
 }
 
 oStd::thread::id oWinGetWindowThread(HWND _hWnd)

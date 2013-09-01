@@ -77,14 +77,13 @@ enum oWM
 	/**
 		Received when an input device has updated skeleton data. Use of this message 
 		is an attempt to model Kinect/Skeleton data (i.e. low-level gesture) on
-		WM_TOUCH, with a GetHandle/ReleaseHandle to iterate through the number of 
-		bones in the skeleton data.
+		WM_TOUCH.
 		wParam
 			The low-order word of wParam specifies the ID of the skeleton.
 			The high-order word of wParam is zero.
 		lParam
 			Contains a skeleton input handle that can be used in a call to 
-			GetSkeletonInputInfo to retrieve detailed information about the bones 
+			GetSkeletonDesc to retrieve detailed information about the bones 
 			associated with this message.
 		lResult
 			Returns 0.
@@ -139,52 +138,11 @@ enum oWM
 	oWM_REGISTERED_COUNT = oWM_REGISTERED_LAST - oWM_REGISTERED_FIRST + 1,
 };
 
-// Returns nullptr if the specified message is not a registered message.
-const char* oWinGetMessageRegisterString(oWM _RegisteredMessage);
-
-// _____________________________________________________________________________
-// Raw Input (WM_INPUT support) These are not defined anywhere I can find in
-// Windows headers.
-
-enum oUS_USAGE_PAGE_VALUES
-{
-	oUS_USAGE_PAGE_GENERIC_DESKTOP = 1,
-	oUS_USAGE_PAGE_SIMULATION = 2,
-	oUS_USAGE_PAGE_VIRTUAL_REALITY = 3,
-	oUS_USAGE_PAGE_SPORT = 4,
-	oUS_USAGE_PAGE_GAME = 5,
-	oUS_USAGE_PAGE_GENERIC_DEVICE = 6,
-	oUS_USAGE_PAGE_KEYBOARD = 7,
-	oUS_USAGE_PAGE_LEDS = 8,
-	oUS_USAGE_PAGE_BUTTON = 9,
-};
-
-enum oUS_USAGE
-{
-	oUS_USAGE_UNDEFINED = 0,
-	oUS_USAGE_POINTER = 1,
-	oUS_USAGE_MOUSE = 2,
-	oUS_USAGE_RESERVED = 3,
-	oUS_USAGE_JOYSTICK = 4,
-	oUS_USAGE_GAMEPAD = 5,
-	oUS_USAGE_KEYBOARD = 6,
-	oUS_USAGE_KEYPAD = 7,
-	oUS_USAGE_MULTIAXIS_CONTROLLER = 8,
-	oUS_USAGE_TABLET_CONTROLS = 9,
-};
-
-// _____________________________________________________________________________
-// Skeleton/Kinect integration
-
-oDECLARE_HANDLE(HSKELETON);
-
-// Use these to register a skeleton source, i.e. Kinect.
-void RegisterSkeletonSource(HSKELETON _hSkeleton, const oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>& _GetSkeleton);
-void UnregisterSkeletonSource(HSKELETON _hSkeleton);
-
-// Call this from a oWM_SKELETON message. Returns false if _pSkeleton is not 
-// valid.
-oAPI bool GetSkeletonDesc(HSKELETON _hSkeleton, oGUI_BONE_DESC* _pSkeleton);
+// Returns the native value for the specified oWM message. The value specified
+// must be >= oWM_REGISTERED_FIRST and <= oWM_REGISTERED_LAST, else this will
+// return 0. This is intended primarily for producers of the message since the 
+// window is set up to consume and convert native registered messages.
+UINT oWinGetNativeRegisteredMessage(oWM _RegisteredMessage);
 
 // _____________________________________________________________________________
 // Basic Top-Level Window Creation, Lifetime and Message Processing
@@ -248,7 +206,7 @@ template<typename T> inline T* oWinGetThis(HWND _hWnd) { return (T*)::oWinGetThi
 // whatever the first change at getting the message is so that this-class-
 // specific messages are properly recognized (most translations will become an 
 // oWM between oWM_REGISTERED_FIRST and oWM_REGISTERED_LAST).
-UINT oWinTranslateMessage(UINT _uMsg);
+UINT oWinTranslateMessage(HWND _hWnd, UINT _uMsg);
 
 // The "DefWindowProc" for Windows created with oWinCreate. This is generally
 // called before any user-specified callback (oDECLARE_WNDPROC) to handle the 
@@ -264,7 +222,7 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 #define oDECLARE_WNDPROC(_ClassName) \
 	LRESULT CALLBACK WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam); \
 	static LRESULT CALLBACK StaticWndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam) \
-	{ _uMsg = oWinTranslateMessage(_uMsg); \
+	{ _uMsg = oWinTranslateMessage(_hWnd, _uMsg); \
 		if (oWinWindowProc(_hWnd, _uMsg, _wParam, _lParam) >= 0) return 0; \
 		_ClassName* pThis = oWinGetThis<_ClassName>(_hWnd); \
 		if (!pThis) return DefWindowProc(_hWnd, _uMsg, _wParam, _lParam); \
@@ -279,6 +237,10 @@ oAPI oStd::thread::id oWinGetWindowThread(HWND _hWnd);
 // window. Many of the API declared below assert this condition to be true. This 
 // can be called from any thread.
 inline bool oWinIsWindowThread(HWND _hWnd) { return oStd::this_thread::get_id() == oWinGetWindowThread(_hWnd); }
+
+// Returns true if the specified message is a class-specifically registered 
+// custom message.
+inline bool oWinIsRegisteredMessage(UINT _uMsg) { return _uMsg >= 0xC000 && _uMsg <= 0xFFFF; }
 
 // Dispatches a single message from the Windows message queue. If _WaitForNext 
 // is true, the calling thread will sleep (GetMessage). If _WaitForNext is 
@@ -805,7 +767,7 @@ oAPI bool oWinControlClampPositionToSelected(HWND _hControl);
 
 #define oDEFINE_DLGPROC(_ClassName, _Name) \
 	INT_PTR CALLBACK _ClassName::_Name(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam) \
-	{ _uMsg = oWinTranslateMessage(_uMsg); \
+	{ _uMsg = oWinTranslateMessage(_hWnd, _uMsg); \
 		if (oWinWindowProc(_hWnd, _uMsg, _wParam, _lParam) >= 0) return 0; \
 		_ClassName* pThis = oWinGetThis<_ClassName>(_hWnd); \
 		if (!pThis) return DefWindowProc(_hWnd, _uMsg, _wParam, _lParam); \

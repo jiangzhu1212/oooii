@@ -26,6 +26,7 @@
 #include <oPlatform/oStreamUtil.h>
 #include <oPlatform/oSystem.h>
 #include <oPlatform/Windows/oGDI.h>
+#include <oPlatform/Windows/oWinSkeleton.h>
 #include <oKinect/oKinectGDI.h>
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oInputMapper.h>
@@ -753,7 +754,7 @@ void oGestureManagerImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 		case oGUI_ACTION_SKELETON:
 		{
 			oGUI_BONE_DESC Skeleton;
-			GetSkeletonDesc((HSKELETON)_Action.hSkeleton, &Skeleton);
+			oWinGetSkeletonDesc((HSKELETON)_Action.hSkeleton, &Skeleton);
 			AirKeyboard->Update(Skeleton, _Action.TimestampMS);
 			break;
 		}

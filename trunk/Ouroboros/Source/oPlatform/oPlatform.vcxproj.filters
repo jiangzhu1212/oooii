@@ -318,6 +318,9 @@
     <ClInclude Include="..\..\Include\oPlatform\oWindow.h">
       <Filter>Headers\UI</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinSkeleton.h">
+      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oooii_icon.cpp">
@@ -577,6 +580,9 @@
     </ClCompile>
     <ClCompile Include="oWindow.cpp">
       <Filter>Source\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinSkeleton.cpp">
+      <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

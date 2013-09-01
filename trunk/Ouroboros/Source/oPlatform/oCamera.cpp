@@ -815,8 +815,8 @@ bool oCameraEnum(unsigned int _Index, threadsafe oCamera** _ppCamera)
 		oRef<IAMStreamConfig> AMStreamConfig;
 		if (SUCCEEDED(CaptureGraphBuilder->FindInterface(nullptr, (const GUID*)&oGUID_MEDIATYPE_Video, BaseFilter, (const GUID&)oGUID_IID_IAMStreamConfig, (void**)&AMStreamConfig)))
 		{
-			// @oooii-tony: At this point there is a camera. A camera most likely can
-			// support several surface descs, so that's a mode to set on the camera.
+			// At this point there is a camera. A camera most likely can support 
+			// several surface descs, so that's a mode to set on the camera.
 
 			bool success = false;
 			oCONSTRUCT(_ppCamera, oDSCamera(GraphBuilder, AMStreamConfig, BaseFilter, Name, MonikerID, &success));

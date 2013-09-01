@@ -25,8 +25,6 @@
 #include <oPlatform/Windows/oGDI.h>
 #include <oStd/byte.h>
 #include <oPlatform/oDisplay.h>
-#include <oPlatform/oSingleton.h>
-#include <oPlatform/oModule.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinWindowing.h>
 #include "SoftLink/oWinMSIMG32.h"

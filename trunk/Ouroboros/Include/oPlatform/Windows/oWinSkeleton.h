@@ -22,57 +22,26 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// This provides an API similar to that for touch-based devices to abstract 
+// skeleton-tracking input devices such as Kinect.
 #pragma once
-#ifndef oCamera_h
-#define oCamera_h
+#ifndef oWinSkeleton_h
+#define oWinSkeleton_h
 
-#include <oBasis/oInterface.h>
-#include <oBasis/oMathTypes.h>
-#include <oBasis/oSurface.h>
+#include <oStd/macros.h>
+#include <oStd/function.h>
 
-interface oCamera : oInterface
-{
-	struct MODE
-	{
-		int2 Dimensions;
-		oSURFACE_FORMAT Format;
-		int BitRate;
-	};
+// Handle used in window messages to identify a particular skeleton
+oDECLARE_HANDLE(HSKELETON);
 
-	struct DESC
-	{
-		MODE Mode;
-	};
+// Use these to register a skeleton source, i.e. Kinect.
+// Basically all that's needed is an indirect to call into the integration code
+// to get a snapshot of the skeleton.
+void oWinRegisterSkeletonSource(HSKELETON _hSkeleton, const oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>& _GetSkeleton);
+void oWinUnregisterSkeletonSource(HSKELETON _hSkeleton);
 
-	struct MAPPED
-	{
-		const void* pData;
-		unsigned int RowPitch;
-		unsigned int Frame;
-	};
-
-	virtual void GetDesc(DESC* _pDesc) threadsafe = 0;
-
-	virtual const char* GetName() const threadsafe = 0;
-	virtual unsigned int GetID() const threadsafe = 0;
-
-	virtual bool FindClosestMatchingMode(const MODE& _ModeToMatch, MODE* _pClosestMatch) threadsafe = 0;
-	virtual bool GetModeList(unsigned int* _pNumModes, MODE* _pModes) threadsafe = 0;
-
-	virtual float GetFPS() const threadsafe = 0;
-
-	virtual bool SetMode(const MODE& _Mode) threadsafe = 0;
-
-	virtual bool SetCapturing(bool _Capturing = true) threadsafe = 0;
-	virtual bool IsCapturing() const threadsafe = 0;
-
-	virtual bool Map(MAPPED* _pMapped) threadsafe = 0;
-	virtual void Unmap() threadsafe = 0;
-};
-
-// Enumerate all cameras currently attached to the system. If this fails, 
-// check oErrorGetLast() for more details. If there is a failure it is often
-// because the installed drivers are not up-to-date.
-bool oCameraEnum(unsigned int _Index, threadsafe oCamera** _ppCamera);
+// Call this from an oWM_SKELETON message. Returns false if the results in 
+// _pSkeleton are not valid.
+bool oWinGetSkeletonDesc(HSKELETON _hSkeleton, oGUI_BONE_DESC* _pSkeleton);
 
 #endif

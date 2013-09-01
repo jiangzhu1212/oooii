@@ -179,6 +179,7 @@
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinKey.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinRect.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinRegistry.h" />
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinSkeleton.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinStatusBar.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinTray.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinWindowing.h" />
@@ -275,6 +276,7 @@
     <ClCompile Include="oWinKey.cpp" />
     <ClCompile Include="oWinRect.cpp" />
     <ClCompile Include="oWinRegistry.cpp" />
+    <ClCompile Include="oWinSkeleton.cpp" />
     <ClCompile Include="oWinStatusBar.cpp" />
     <ClCompile Include="oWinTray.cpp" />
     <ClCompile Include="oWinWindowing.cpp" />

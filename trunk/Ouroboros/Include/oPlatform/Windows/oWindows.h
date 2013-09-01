@@ -185,6 +185,37 @@
 #endif
 
 // _____________________________________________________________________________
+// Raw Input (WM_INPUT support) These are not defined anywhere I can find in
+// Windows headers.
+
+enum oUS_USAGE_PAGE_VALUES
+{
+	oUS_USAGE_PAGE_GENERIC_DESKTOP = 1,
+	oUS_USAGE_PAGE_SIMULATION = 2,
+	oUS_USAGE_PAGE_VIRTUAL_REALITY = 3,
+	oUS_USAGE_PAGE_SPORT = 4,
+	oUS_USAGE_PAGE_GAME = 5,
+	oUS_USAGE_PAGE_GENERIC_DEVICE = 6,
+	oUS_USAGE_PAGE_KEYBOARD = 7,
+	oUS_USAGE_PAGE_LEDS = 8,
+	oUS_USAGE_PAGE_BUTTON = 9,
+};
+
+enum oUS_USAGE
+{
+	oUS_USAGE_UNDEFINED = 0,
+	oUS_USAGE_POINTER = 1,
+	oUS_USAGE_MOUSE = 2,
+	oUS_USAGE_RESERVED = 3,
+	oUS_USAGE_JOYSTICK = 4,
+	oUS_USAGE_GAMEPAD = 5,
+	oUS_USAGE_KEYBOARD = 6,
+	oUS_USAGE_KEYPAD = 7,
+	oUS_USAGE_MULTIAXIS_CONTROLLER = 8,
+	oUS_USAGE_TABLET_CONTROLS = 9,
+};
+
+// _____________________________________________________________________________
 // Abstract between running with a console and not for release.
 // Example:
 //

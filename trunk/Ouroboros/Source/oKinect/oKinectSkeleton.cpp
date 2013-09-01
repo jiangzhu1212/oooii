@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oKinectSkeleton.h"
+#include <oPlatform/Windows/oWinSkeleton.h>
 #include <oPlatform/Windows/oWinWindowing.h>
 
 #ifdef oHAS_KINECT_SDK
@@ -43,7 +44,7 @@ oKinectSkeleton::oKinectSkeleton()
 	: LastTrackedTimestamp(0.0)
 {
 	Invalidate();
-	RegisterSkeletonSource((HSKELETON)this, oBIND(&oKinectSkeleton::GetSkeleton, this, oBIND1));
+	oWinRegisterSkeletonSource((HSKELETON)this, oBIND(&oKinectSkeleton::GetSkeleton, this, oBIND1));
 }
 
 bool oKinectSkeletonCreate(threadsafe oKinectSkeleton** _ppSkeleton)
@@ -54,7 +55,7 @@ bool oKinectSkeletonCreate(threadsafe oKinectSkeleton** _ppSkeleton)
 
 oKinectSkeleton::~oKinectSkeleton()
 {
-	UnregisterSkeletonSource((HSKELETON)this);
+	oWinUnregisterSkeletonSource((HSKELETON)this);
 }
 
 void oKinectSkeleton::Invalidate() threadsafe

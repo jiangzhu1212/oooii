@@ -2202,9 +2202,6 @@ size_t oD3D11GetHLSLByteCodeSize(const void* _pByteCode)
 
 bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, const char* _ShaderSource, oBuffer** _ppBuffer)
 {
-	// An ASCII version of CommandLineToArgvW. Use oWinCommandLineToArgvAFree() to
-	// free the buffer returned by this function.
-
 	int argc = 0;
 	const char** argv = oWinCommandLineToArgvA(false, _CommandLineOptions, &argc);
 	oStd::finally OSCFreeArgv([&] { oWinCommandLineToArgvAFree(argv); });

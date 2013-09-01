@@ -114,11 +114,6 @@ bool oCPUGetDesc(oCPU_DESC* _pDesc)
 
 	// Skip to the requested CPU index
 
-	// @oooii-tony: Hiding the idea of multiple CPUs for now because I cannot 
-	// think of when they are ever non-uniform and when a threadpool would ever
-	// not treat it all as a giant sea of threads or when one CPU would have a 
-	// feature that another does not (such as SSE versions).
-
 	static const int _CPUIndex = 0;
 	size_t offset_ex = 0;
 	for (int cpu = 0; cpu < _CPUIndex; cpu++)

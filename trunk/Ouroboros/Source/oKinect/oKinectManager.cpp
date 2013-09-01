@@ -45,7 +45,7 @@ oKinectManager::oKinectManager()
 {
 	oWinKinect10::Singleton()->Reference();
 	oWinKinect10::Singleton()->SafeNuiSetDeviceStatusCallback(StatusProc, this);
-	WMInputDeviceChange = RegisterWindowMessage(oWinGetMessageRegisterString(oWM_INPUT_DEVICE_CHANGE));
+	WMInputDeviceChange = oWinGetNativeRegisteredMessage(oWM_INPUT_DEVICE_CHANGE);
 }
 
 oKinectManager::~oKinectManager()
