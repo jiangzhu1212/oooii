@@ -46,7 +46,8 @@ void TraceAllocated(void* ptr, size_t size, int used, void* user)
 	if (used)
 	{
 		oStd::sstring mem;
-		oTRACE("TLSF LEAK %s: 0x%p %s", (const char*)user, ptr, oFormatMemorySize(mem, size, 2));
+		oStd::format_bytes(mem, size, 2);
+		oTRACE("TLSF LEAK %s: 0x%p %s", (const char*)user, ptr, mem.c_str());
 	}
 }
 

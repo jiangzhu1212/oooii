@@ -50,7 +50,7 @@ bool oP4CleanSync(int _ChangeList, const char* _SyncPath, const char* _CleanPath
 	if (_CleanPath)
 	{
 		oStd::path_string RootPath;
-		oReplace(RootPath, _CleanPath, "/", "\\");
+		oStd::replace(RootPath, _CleanPath, "/", "\\");
 		oTrimFilename(RootPath);
 		oStd::xlstring CmdLine;
 		oPrintf(CmdLine, "rmdir /S /Q %s", RootPath.c_str());
@@ -160,7 +160,7 @@ public:
 		}
 
 		oStd::path_string Temp;
-		oReplace(Temp, BuildSettings.Solution, oAUTO_BUILD_ROOT_PATH, P4Settings.Root);
+		oStd::replace(Temp, BuildSettings.Solution, oAUTO_BUILD_ROOT_PATH, P4Settings.Root);
 
 		if(!oP4GetClientPath(BuildSettings.Solution.c_str(), Temp))
 			return; // Sets last error
@@ -175,7 +175,7 @@ public:
 			[&](oStd::path_string& _PatchPath)
 		{
 			Temp = _PatchPath;
-			oReplace(_PatchPath, Temp, oAUTO_BUILD_ROOT_PATH, FileRoot);
+			oStd::replace(_PatchPath, Temp, oAUTO_BUILD_ROOT_PATH, FileRoot);
 		};
 		RootPatcher(TestSettings.CommandLine);
 		RootPatcher(TestSettings.FailedImageCompares);

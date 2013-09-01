@@ -22,43 +22,47 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oString.h>
-#include <oPlatform/oTest.h>
-#include <oGPU/oGPU.h>
+#include <stdlib.h>
+#include <oStd/string.h>
 
-struct GPU_Device : public oTest
+namespace oStd {
+
+char* format_commas(char* _StrDestination, size_t _SizeofStrDestination, unsigned int _Number)
 {
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
+	#ifdef _MSC_VER
+		_itoa_s(_Number, _StrDestination, _SizeofStrDestination, 10);
+	#else
+		itoa(_Number, _StrDestination, 10);
+	#endif
+	size_t len = strlen(_StrDestination);
+
+	size_t w = len % 3;
+	if (!w)
+		w = 3;
+
+	while (w < len)
 	{
-		oGPUDevice::INIT init("GPU_Device");
-		init.Version = oVersion(10,0); // for more compatibility when running on varied machines
-		oRef<oGPUDevice> Device;
-		oTESTB0(oGPUDeviceCreate(init, &Device));
-
-		oGPUDevice::DESC desc;
-		Device->GetDesc(&desc);
-
-		oTESTB(desc.AdapterIndex == 0, "Index is incorrect");
-		oTESTB(desc.FeatureVersion >= oVersion(9,0), "Invalid version retrieved");
-		oStd::sstring VRAMSize, SharedSize;
-		oStd::format_bytes(VRAMSize, desc.NativeMemory, 1);
-		oStd::format_bytes(SharedSize, desc.SharedSystemMemory, 1);
-		oPrintf(_StrStatus, _SizeofStrStatus, "%s %s %d.%d feature level %d.%d %s (%s shared) running on %s v%d.%d drivers (%s)"
-			, desc.DeviceDescription.c_str()
-			, oStd::as_string(desc.API)
-			, desc.InterfaceVersion.Major
-			, desc.InterfaceVersion.Minor
-			, desc.FeatureVersion.Major
-			, desc.FeatureVersion.Minor
-			, VRAMSize.c_str()
-			, SharedSize.c_str()
-			, oStd::as_string(desc.Vendor)
-			, desc.DriverVersion.Major
-			, desc.DriverVersion.Minor
-			, desc.DriverDescription.c_str());
-
-		return SUCCESS;
+		if (!insert(_StrDestination, _SizeofStrDestination, _StrDestination + w, 0, ","))
+			return nullptr;
+		w += 4;
 	}
-};
 
-oTEST_REGISTER(GPU_Device);
+	return _StrDestination;
+}
+
+char* format_commas(char* _StrDestination, size_t _SizeofStrDestination, int _Number)
+{
+	if (_Number < 0)
+	{
+		if (_SizeofStrDestination < 1)
+			return nullptr;
+
+		_Number = -_Number;
+		*_StrDestination++ = '-';
+		_SizeofStrDestination--;
+	}
+
+	return format_commas(_StrDestination, _SizeofStrDestination, static_cast<unsigned int>(_Number));
+}
+
+} // namespace oStd

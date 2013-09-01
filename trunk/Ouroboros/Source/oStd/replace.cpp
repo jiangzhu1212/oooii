@@ -22,43 +22,46 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oString.h>
-#include <oPlatform/oTest.h>
-#include <oGPU/oGPU.h>
+#include <oStd/config.h>
+#include <oStd/string.h>
 
-struct GPU_Device : public oTest
+namespace oStd {
+
+errno_t replace(char* oRESTRICT _StrResult, size_t _SizeofStrResult, const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace)
 {
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
+	if (!_StrResult || !_StrSource) return EINVAL;
+	if (_StrResult == _StrSource) return EINVAL;
+	if (!_StrFind)
+		return strlcpy(_StrResult, _StrSource, _SizeofStrResult) < _SizeofStrResult ? 0 : ENOBUFS;
+	if (!_StrReplace)
+		_StrReplace = "";
+
+	size_t findLen = strlen(_StrFind);
+	size_t replaceLen = strlen(_StrReplace);
+	const char* s = strstr(_StrSource, _StrFind);
+
+	while (s)
 	{
-		oGPUDevice::INIT init("GPU_Device");
-		init.Version = oVersion(10,0); // for more compatibility when running on varied machines
-		oRef<oGPUDevice> Device;
-		oTESTB0(oGPUDeviceCreate(init, &Device));
-
-		oGPUDevice::DESC desc;
-		Device->GetDesc(&desc);
-
-		oTESTB(desc.AdapterIndex == 0, "Index is incorrect");
-		oTESTB(desc.FeatureVersion >= oVersion(9,0), "Invalid version retrieved");
-		oStd::sstring VRAMSize, SharedSize;
-		oStd::format_bytes(VRAMSize, desc.NativeMemory, 1);
-		oStd::format_bytes(SharedSize, desc.SharedSystemMemory, 1);
-		oPrintf(_StrStatus, _SizeofStrStatus, "%s %s %d.%d feature level %d.%d %s (%s shared) running on %s v%d.%d drivers (%s)"
-			, desc.DeviceDescription.c_str()
-			, oStd::as_string(desc.API)
-			, desc.InterfaceVersion.Major
-			, desc.InterfaceVersion.Minor
-			, desc.FeatureVersion.Major
-			, desc.FeatureVersion.Minor
-			, VRAMSize.c_str()
-			, SharedSize.c_str()
-			, oStd::as_string(desc.Vendor)
-			, desc.DriverVersion.Major
-			, desc.DriverVersion.Minor
-			, desc.DriverDescription.c_str());
-
-		return SUCCESS;
+		size_t len = s - _StrSource;
+		#ifdef _MSC_VER
+			errno_t e = strncpy_s(_StrResult, _SizeofStrResult, _StrSource, len);
+			if (e)
+				return e;
+		#else
+			strncpy(_StrResult, _StrSource, len);
+		#endif
+		_StrResult += len;
+		_SizeofStrResult -= len;
+		if (strlcpy(_StrResult, _StrReplace, _SizeofStrResult) >= _SizeofStrResult)
+			return ENOBUFS;
+		_StrResult += replaceLen;
+		_SizeofStrResult -= replaceLen;
+		_StrSource += len + findLen;
+		s = strstr(_StrSource, _StrFind);
 	}
-};
 
-oTEST_REGISTER(GPU_Device);
+	// copy the rest
+	return strlcpy(_StrResult, _StrSource, _SizeofStrResult) ? 0 : EINVAL;
+}
+
+} // namespace oStd

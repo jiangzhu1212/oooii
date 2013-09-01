@@ -219,7 +219,7 @@
 	#define oV(fn) fn
 #endif
 
-#define oWIN_CHECK_HR(_Fn, _Message, ...) do { HRESULT HR__ = _Fn; if (FAILED(HR__)) { throw std::system_error(std::make_error_code(oWinGetErrc(HR__)), oStd::detail::formatf(_Message, ## __VA_ARGS__)); } } while(false)
+#define oWIN_CHECK_HR(_Fn, _Message, ...) do { HRESULT HR__ = _Fn; if (FAILED(HR__)) { throw std::system_error(std::make_error_code(oWinGetErrc(HR__)), oStd::formatf(_Message, ## __VA_ARGS__)); } } while(false)
 
 // _____________________________________________________________________________
 // Wrappers for the Windows-specific crtdbg API. Prefer oASSERT macros found

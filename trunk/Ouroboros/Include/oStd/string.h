@@ -169,6 +169,13 @@ template<size_t size> int format_duration(char (&_StrDestination)[size], double 
 // snprintf.
 int format_bytes(char* _StrDestination, size_t _SizeofStrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits);
 
+// For numbers, this inserts commas where they ought to be (every 3 numbers)
+// this returns nullptr on failure, else _StrDestination.
+char* format_commas(char* _StrDestination, size_t _SizeofStrDestination, int _Number);
+template<size_t size> char* format_commas(char (&_StrDestination)[size], int _Number) { return format_commans(_StrDestination, size, _Number); }
+char* format_commas(char* _StrDestination, size_t _SizeofStrDestination, unsigned int _Number);
+template<size_t size> char* format_commas(char (&_StrDestination)[size], unsigned int _Number) { return format_commans(_StrDestination, size, _Number); }
+
 // Remove all chars found in _ToTrim from the beginning of the string. _Trimmed 
 // can be the same as _StrSource. Returns _Trimmed.
 char* trim_left(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource, const char* _ToTrim);
@@ -182,6 +189,19 @@ template<size_t size> char* trim_right(char (&_Trimmed)[size], const char* _StrS
 // Trims both the left and right side of a string
 inline char* trim(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim_right(_Trimmed, _SizeofTrimmed, trim_left(_Trimmed, _SizeofTrimmed, _StrSource, _ToTrim), _ToTrim); }
 template<size_t size> char* trim(char (&_Trimmed)[size], const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim(_Trimmed, size, _StrSource, _ToTrim); }
+
+// Insert one string into another in-place. _InsertionPoint must point into 
+// _StrSource. If _ReplacementLength is non-zero then that number of characters 
+// from _InsertionPoint on will be overwritten by the _Insertion. This returns
+// the position immediately after the new insertion. If there isn't enough room
+// in the buffer, then nullptr is returned.
+char* insert(char* _StrSource, size_t _SizeofStrSource, char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion);
+template<size_t size> char* insert(char (&_StrSource)[size], char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion)  { return insert(_StrSource, size, _InsertionPoint, _ReplacementLength, _Insertion); }
+
+// replace all occurrences of _StrFind in _StrSource with _StrReplace and copy 
+// the result to _StrDestination. 
+errno_t replace(char* oRESTRICT _StrResult, size_t _SizeofStrResult, const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace);
+template<size_t size> errno_t replace(char (&_StrResult)[size], const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace) { return replace(_StrResult, size, _StrSource, _StrFind, _StrReplace); }
 
 // Returns the appropriate suffix [st nd rd th] for a number
 const char* ordinal(size_t _Number);

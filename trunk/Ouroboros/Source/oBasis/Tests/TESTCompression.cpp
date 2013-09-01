@@ -85,18 +85,23 @@ bool oBasisTest_oCompression(const oBasisTestServices& _Services)
 	t.reset();
 
 	oStd::sstring strUncompressed, strSnappy, strLZMA, strGZip, strSnappyTime, strLZMATime, strGZipTime;
+	oStd::format_bytes(strUncompressed, Size, 2);
+	oStd::format_bytes(strSnappyTime, CompressedSize0, 2);
+	oStd::format_bytes(strLZMATime, CompressedSize1, 2);
+	oStd::format_bytes(strGZip, CompressedSize2, 2);
+	
 	oStd::format_duration(strSnappyTime, timeSnappy, true);
 	oStd::format_duration(strLZMATime, timeLZMA, true);
 	oStd::format_duration(strGZipTime, timeGZip, true);
 
 	oErrorSetLast(0, "Compressed %s from %s to Snappy: %s in %s, LZMA: %s in %s, GZip: %s in %s"
 		, path.c_str()
-		, oFormatMemorySize(strUncompressed, Size, 2)
-		, oFormatMemorySize(strSnappyTime, CompressedSize0, 2)
+		, strUncompressed.c_str()
+		, strSnappy.c_str()
 		, strSnappyTime.c_str()
-		, oFormatMemorySize(strLZMATime, CompressedSize1, 2)
+		, strLZMA.c_str()
 		, strLZMATime.c_str()
-		, oFormatMemorySize(strGZipTime, CompressedSize2, 2)
+		, strGZip.c_str()
 		, strGZipTime.c_str());
 	return true;
 }

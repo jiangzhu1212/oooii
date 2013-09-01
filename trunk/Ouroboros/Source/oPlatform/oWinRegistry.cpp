@@ -36,7 +36,7 @@ static HKEY sRoots[] = { HKEY_CLASSES_ROOT, HKEY_CURRENT_USER, HKEY_LOCAL_MACHIN
 bool oWinRegistrySetValue(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName, const char* _Value)
 {
 	oStd::path_string KP;
-	oReplace(KP, _KeyPath, "/", "\\");
+	oStd::replace(KP, _KeyPath, "/", "\\");
 	HKEY hKey = nullptr;
 	oREG_CHECK(RegCreateKeyEx(sRoots[_Root], KP, 0, 0, 0, KEY_SET_VALUE, 0, &hKey, 0));
 	oStd::finally close([&](){ RegCloseKey(hKey); });
@@ -47,7 +47,7 @@ bool oWinRegistrySetValue(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const 
 char* oWinRegistryGetValue(char* _StrDestination, size_t _SizeofStrDestination, oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName)
 {
 	oStd::path_string KP;
-	oReplace(KP, _KeyPath, "/", "\\");
+	oStd::replace(KP, _KeyPath, "/", "\\");
 
 	DWORD type = 0;
 	oREG_CHECKP(RegGetValue(sRoots[_Root], KP, _ValueName, RRF_RT_ANY, &type, _StrDestination, (LPDWORD)&_SizeofStrDestination));
@@ -79,7 +79,7 @@ char* oWinRegistryGetValue(char* _StrDestination, size_t _SizeofStrDestination, 
 bool oWinRegistryDeleteValue(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName)
 {
 	oStd::path_string KP;
-	oReplace(KP, _KeyPath, "/", "\\");
+	oStd::replace(KP, _KeyPath, "/", "\\");
 	HKEY hKey = nullptr;
 	oREG_CHECK(RegOpenKeyEx(sRoots[_Root], KP, 0, KEY_ALL_ACCESS, &hKey));
 	oStd::finally close([&](){ RegCloseKey(hKey); });
@@ -90,7 +90,7 @@ bool oWinRegistryDeleteValue(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, con
 bool oWinRegistryDeleteKey(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, bool _Recursive)
 {
 	oStd::path_string KP;
-	oReplace(KP, _KeyPath, "/", "\\");
+	oStd::replace(KP, _KeyPath, "/", "\\");
 	long err = RegDeleteKey(sRoots[_Root], KP);
 	if (err)
 	{

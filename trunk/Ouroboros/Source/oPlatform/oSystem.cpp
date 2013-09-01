@@ -353,7 +353,7 @@ char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _Sizeof
 		auto EnvVariable = VecTok->str();
 		oStd::path_string TranslatedVariable;
 		oSystemGetEnvironmentVariable(TranslatedVariable, EnvVariable.c_str());
-		oReplace(_StrDestination, _SizeofStrDestination, Current, Replace.c_str(), TranslatedVariable.c_str());
+		oStd::replace(_StrDestination, _SizeofStrDestination, Current, Replace.c_str(), TranslatedVariable.c_str());
 		Current = _StrDestination;
 		NoTranslations = false;
 	}

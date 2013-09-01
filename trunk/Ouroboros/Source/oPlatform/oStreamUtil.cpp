@@ -42,7 +42,8 @@ bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oFUNCTION<void*(s
 	if (!r.pData)
 	{
 		oStd::sstring fileSize;
-		return oErrorSetLast(std::errc::no_buffer_space, "Out of memory allocating %s", oFormatMemorySize(fileSize, actualSize, 2));
+		oStd::format_bytes(fileSize, actualSize, 2);
+		return oErrorSetLast(std::errc::no_buffer_space, "Out of memory allocating %s", fileSize.c_str());
 	}
 
 	// Add nul terminator (readied for UTF supprot

@@ -388,7 +388,7 @@ bool oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const cha
 			oZeroSection(&include[0], "/*", "*/");
 
 			oTRACE("-- %s loaded: %u chars", includePath, (unsigned int)include.size());
-			if (!oInsert(_StrSourceCode, _SizeofStrSourceCode, const_cast<char*>(matches[0].first), matchLength, include.c_str()))
+			if (!oStd::insert(_StrSourceCode, _SizeofStrSourceCode, const_cast<char*>(matches[0].first), matchLength, include.c_str()))
 				return oErrorSetLast(std::errc::invalid_argument, "Merge failed: %s%s%s (source buffer too small)", isSystemPath?"<":"\"", includePath, isSystemPath?">":"\"");
 		}
 
@@ -432,8 +432,8 @@ template<> struct StaticArrayTraits<unsigned long long>
 
 char* CodifyBufferName(char* _StrDestination, size_t _SizeofStrDestination, const char* _Path)
 {
-	if (oReplace(_StrDestination, _SizeofStrDestination, oGetFilebase(_Path), ".", "_"))
-		return 0;
+	if (oStd::replace(_StrDestination, _SizeofStrDestination, oGetFilebase(_Path), ".", "_"))
+		return nullptr;
 	return _StrDestination;
 }
 

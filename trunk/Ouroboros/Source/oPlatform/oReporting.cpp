@@ -151,8 +151,8 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 		oSystemGetDate(&now);
 		oStd::sstring StrNow;
 		oStd::strftime(DumpStamp.c_str() + DumpStamp.length(), DumpStamp.capacity() - DumpStamp.length(), oStd::syslog_local_date_format, now, oStd::date_conversion::to_local);
-		oReplace(StrNow, DumpStamp, ":", "_");
-		oReplace(DumpStamp, StrNow, ".", "_");
+		oStd::replace(StrNow, DumpStamp, ":", "_");
+		oStd::replace(DumpStamp, StrNow, ".", "_");
 
 		bool Mini = false;
 		bool Full = false;

@@ -65,9 +65,9 @@ oCRTLeakTracker::~oCRTLeakTracker()
 
 	if (NonLinearBytes)
 	{
-		char buf[128];
-		oFormatMemorySize(buf, NonLinearBytes, 2);
-		oTRACE("CRT Leak Tracker: Allocated %s beyond the internal reserve. Increase kTrackingInternalReserve to improve performance, especially on shutdown.", buf);
+		oStd::mstring buf;
+		oStd::format_bytes(buf, NonLinearBytes, 2);
+		oTRACE("CRT Leak Tracker: Allocated %s beyond the internal reserve. Increase kTrackingInternalReserve to improve performance, especially on shutdown.", buf.c_str());
 	}
 
 	oReportingRelease();

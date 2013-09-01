@@ -249,41 +249,6 @@ char* oPruneWhitespace(char* _StrDestination, size_t _SizeofStrDestination, cons
 	return _StrDestination;
 }
 
-errno_t oReplace(char* oRESTRICT _StrResult, size_t _SizeofStrResult, const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace)
-{
-	if (!_StrResult || !_StrSource) return EINVAL;
-	oASSERT(_StrResult != _StrSource, "_StrResult and _StrSource cannot be the same buffer");
-	if (_StrResult == _StrSource) return EINVAL;
-	if (!_StrFind)
-		return oStrcpy(_StrResult, _SizeofStrResult, _StrSource) ? 0 : EINVAL;
-	if (!_StrReplace)
-		_StrReplace = "";
-
-	size_t findLen = oStrlen(_StrFind);
-	size_t replaceLen = oStrlen(_StrReplace);
-
-	errno_t err = 0;
-
-	const char* s = strstr(_StrSource, _StrFind);
-	while (s)
-	{
-		size_t len = s - _StrSource;
-		if (!oStrncpy(_StrResult, _SizeofStrResult, _StrSource, len))
-			return EINVAL;
-		_StrResult += len;
-		_SizeofStrResult -= len;
-		if (!oStrcpy(_StrResult, _SizeofStrResult, _StrReplace))
-			return EINVAL;
-		_StrResult += replaceLen;
-		_SizeofStrResult -= replaceLen;
-		_StrSource += len + findLen;
-		s = strstr(_StrSource, _StrFind);
-	}
-
-	// copy the rest
-	return oStrcpy(_StrResult, _SizeofStrResult, _StrSource) ? 0 : EINVAL;
-}
-
 const char* oStrStrReverse(const char* _Str, const char* _SubStr)
 {
 	const char* c = _Str + oStrlen(_Str) - 1;
@@ -303,69 +268,11 @@ char* oStrStrReverse(char* _Str, const char* _SubStr)
 	return const_cast<char*>(oStrStrReverse(static_cast<const char*>(_Str), _SubStr));
 }
 
-char* oInsert(char* _StrSource, size_t _SizeofStrResult, char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion)
-{
-	size_t insertionLength = oStrlen(_Insertion);
-	size_t afterInsertionLength = oStrlen(_InsertionPoint) - _ReplacementLength;
-	size_t newLen = static_cast<size_t>(_InsertionPoint - _StrSource) + afterInsertionLength;
-	if (newLen+1 > _SizeofStrResult) // +1 for null terminator
-		return nullptr;
-
-	// to avoid the overwrite of a direct memcpy, copy the remainder
-	// of the string out of the way and then copy it back in.
-	char* tmp = (char*)_alloca(afterInsertionLength);
-	memcpy(tmp, _InsertionPoint + _ReplacementLength, afterInsertionLength);
-	memcpy(_InsertionPoint, _Insertion, insertionLength);
-	char* p = _InsertionPoint + insertionLength;
-	memcpy(p, tmp, afterInsertionLength);
-	p[afterInsertionLength] = 0;
-	return p;
-}
-
 errno_t oStrVAppendf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args)
 {
 	if (-1 == oStd::vsncatf(_StrDestination, _SizeofStrDestination, _Format, _Args))
 		return ENOMEM;
 	return 0;
-}
-
-char* oFormatMemorySize(char* _StrDestination, size_t _SizeofStrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits)
-{
-	return -1 == oStd::format_bytes(_StrDestination, _SizeofStrDestination, _NumBytes, _NumPrecisionDigits) ? nullptr : _StrDestination;
-}
-
-char* oFormatCommas(char* _StrDestination, size_t _SizeofStrDestination, unsigned int _Number)
-{
-	_itoa_s(_Number, _StrDestination, _SizeofStrDestination, 10);
-	size_t len = oStrlen(_StrDestination);
-
-	size_t w = len % 3;
-	if (!w)
-		w = 3;
-
-	while (w < len)
-	{
-		if (!oInsert(_StrDestination, _SizeofStrDestination, _StrDestination + w, 0, ","))
-			return nullptr;
-		w += 4;
-	}
-
-	return _StrDestination;
-}
-
-char* oFormatCommas(char* _StrDestination, size_t _SizeofStrDestination, int _Number)
-{
-	if (_Number < 0)
-	{
-		if (_SizeofStrDestination < 1)
-			return nullptr;
-
-		_Number = -_Number;
-		*_StrDestination++ = '-';
-		_SizeofStrDestination--;
-	}
-
-	return oFormatCommas(_StrDestination, _SizeofStrDestination, static_cast<unsigned int>(_Number));
 }
 
 bool oStrTokFinishedSuccessfully(char** _ppContext)

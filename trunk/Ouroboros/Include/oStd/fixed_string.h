@@ -169,6 +169,9 @@ namespace oStd {
 	template<typename T> struct less_case_insensitive {};
 
 	TSTR int format_duration(STRT& _StrDestination, double _TimeInSeconds, bool _Abbreviated = false, bool _IncludeMS = true) { return format_duration(_StrDestination, Capacity, _TimeInSeconds, _Abbreviated, _IncludeMS); }
+	TSTR int format_bytes(STRT& _StrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits) { return format_bytes(_StrDestination, _StrDestination.capacity(), _NumBytes, _NumPrecisionDigits); }
+	TSTR char* format_commas(STRT& _StrDestination, int _Number) { return format_commas(_StrDestination, _StrDestination.capacity(), _Number); }
+	TSTR char* format_commas(STRT& _StrDestination, unsigned int _Number) { return format_commas(_StrDestination, _StrDestination.capacity(), _Number); }
 
 	TSTR struct equal_to<STRT> { bool operator()(const oStd::STRT& x, const STRT& y) const { return !strcmp(x, y); } };
 	TSTR struct equal_to_case_insensitive<STRT> { bool operator()(const oStd::STRT& x, const STRT& y) const { return !_stricmp(x, y); } };
@@ -182,6 +185,9 @@ namespace oStd {
 	TSTR char* trim_left(STRT& _Trimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim_left(_Trimmed, _Trimmed.capacity(), _StrSource, _ToTrim); }
 	TSTR char* trim_right(STRT& _Trimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim_right(_Trimmed, _Trimmed.capacity(), _StrSource, _ToTrim); }
 	TSTR char* trim(STRT& _Trimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim(_Trimmed, _Trimmed.capacity(), _StrSource, _ToTrim); }
+
+	TSTR char* insert(STRT& _StrSource, char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion)  { return insert(_StrSource, _StrSource.capacity(), _InsertionPoint, _ReplacementLength, _Insertion); }
+	TSTR errno_t replace(STRT& _StrResult, const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace) { return replace(_StrResult, _StrResult.capacity(), _StrSource, _StrFind, _StrReplace); }
 
 	TSTR char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const STRT& _Value)
 	{

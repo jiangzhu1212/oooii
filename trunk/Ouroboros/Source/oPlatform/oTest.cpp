@@ -374,8 +374,10 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 	if (_SizeofBuffer != GoldenBinary->GetSize())
 	{
 		oStd::sstring testSize, goldenSize;
+		oStd::format_bytes(testSize, _SizeofBuffer, 2);
+		oStd::format_bytes(goldenSize, GoldenBinary->GetSize(), 2);
 		bSaveTestBuffer = true;
-		return oErrorSetLast(std::errc::protocol_error, "Golden binary compare failed because the binaries are different sizes (test is %s, golden is %s)", oFormatMemorySize(testSize, _SizeofBuffer, 2), oFormatMemorySize(goldenSize, GoldenBinary->GetSize(), 2));
+		return oErrorSetLast(std::errc::protocol_error, "Golden binary compare failed because the binaries are different sizes (test is %s, golden is %s)", testSize.c_str(), goldenSize.c_str());
 	}
 
 	if (memcmp(_pBuffer, GoldenBinary->GetData(), GoldenBinary->GetSize()))
@@ -500,7 +502,7 @@ static bool oInitialize(const char* _RootPath, const char* _Filename, const oDIS
 
 	oStd::path_string tmp;
 	oPrintf(tmp, "%s%s/", _pDriverPaths->VendorSpecific.c_str(), _DriverDesc.Description.c_str());
-	oReplace(_pDriverPaths->CardSpecific, tmp, " ", "_");
+	oStd::replace(_pDriverPaths->CardSpecific, tmp, " ", "_");
 
 	oStd::sstring driverVer;
 	oPrintf(_pDriverPaths->DriverSpecific, "%s%s/", _pDriverPaths->CardSpecific.c_str(), oStd::to_string(driverVer, _DriverDesc.Version));

@@ -226,7 +226,7 @@ unsigned int oLeakTracker::InternalReportLeaks(bool _TraceReport, bool _WaitForA
 
 			if (_TraceReport)
 			{
-				oFormatMemorySize(memsize, d.Size, 2);
+				oStd::format_bytes(memsize, d.Size, 2);
 
 				if (Desc.ReportAllocationIDAsHex)
 				{
@@ -265,7 +265,8 @@ unsigned int oLeakTracker::InternalReportLeaks(bool _TraceReport, bool _WaitForA
 		{
 			oStd::sstring strTotalLeakBytes;
 			oStd::mstring Footer;
-			oPrintf(Footer, "========== Leak Report: %u Leak(s) %s%s ==========\n", nLeaks, oFormatMemorySize(strTotalLeakBytes, totalLeakBytes, 2), _WaitForAsyncAllocs ? " (recovered from async false positives)" : "");
+			oStd::format_bytes(strTotalLeakBytes, totalLeakBytes, 2);
+			oPrintf(Footer, "========== Leak Report: %u Leak(s) %s%s ==========\n", nLeaks, strTotalLeakBytes.c_str(), _WaitForAsyncAllocs ? " (recovered from async false positives)" : "");
 			This()->Desc.Print(Footer);
 		}
 	}

@@ -53,7 +53,9 @@
     <ClCompile Include="date.cpp" />
     <ClCompile Include="elipsize.cpp" />
     <ClCompile Include="format_bytes.cpp" />
+    <ClCompile Include="format_commas.cpp" />
     <ClCompile Include="format_duration.cpp" />
+    <ClCompile Include="insert.cpp" />
     <ClCompile Include="is_ascii.cpp" />
     <ClCompile Include="json_escape_decode.cpp" />
     <ClCompile Include="json_escape_encode.cpp" />
@@ -83,6 +85,7 @@
     <ClCompile Include="percent_decode.cpp" />
     <ClCompile Include="percent_encode.cpp" />
     <ClCompile Include="relativize_path.cpp" />
+    <ClCompile Include="replace.cpp" />
     <ClCompile Include="scc.cpp" />
     <ClCompile Include="scc_svn.cpp" />
     <ClCompile Include="strbitmask.cpp" />

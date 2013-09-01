@@ -105,31 +105,13 @@ char* oNewlinesToDos(char* _StrDestination, size_t _SizeofStrDestination, const 
 // Replaces any run of whitespace with a single ' ' character. Returns _StrDestination
 char* oPruneWhitespace(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource, char _Replacement = ' ', const char* _ToPrune = oWHITESPACE);
 
-// replace all occurrences of strFind in strSource with strReplace and copy the result to strDestination
-errno_t oReplace(char* oRESTRICT _StrResult, size_t _SizeofStrResult, const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace);
-
 // Search from the back of the string to find the specified substring
 const char* oStrStrReverse(const char* _Str, const char* _SubStr);
 char* oStrStrReverse(char* _Str, const char* _SubStr);
 
-// Insert one string into another in-place. _InsertionPoint must point into 
-// _StrSource If _ReplacementLength is non-zero, then that number of characters 
-// from _InsertionPoint on will be overwritten by the _Insertion. This returns
-// the position immediately after the new insertion. If there isn't enough room
-// in the buffer, then nullptr is returned.
-char* oInsert(char* _StrSource, size_t _SizeofStrSource, char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion);
-
 // Essentially a variadic oStrcat
 errno_t oStrVAppendf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args);
 inline errno_t oStrAppendf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); errno_t err = oStrVAppendf(_StrDestination, _SizeofStrDestination, _Format, args); va_end(args); return err; }
-
-// Fills the specified buffer with a size in either bytes, KB, MB, GB, or TB 
-// depending on the number of bytes specified.
-char* oFormatMemorySize(char* _StrDestination, size_t _SizeofStrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits);
-
-// For numbers, this inserts commas where they ought to be (every 3 numbers)
-char* oFormatCommas(char* _StrDestination, size_t _SizeofStrDestination, int _Number);
-char* oFormatCommas(char* _StrDestination, size_t _SizeofStrDestination, unsigned int _Number);
 
 // _____________________________________________________________________________
 // String tokenization
@@ -195,13 +177,8 @@ template<typename CHAR_T, size_t numchars> int oVPrintf(CHAR_T (&_StrDestination
 template<typename CHAR_T, size_t numchars> int oPrintf(CHAR_T (&_StrDestination)[numchars], const CHAR_T* _Format, ...) { va_list args; va_start(args, _Format); int n = oVPrintf(_StrDestination, numchars, _Format, args); va_end(args); return n; }
 template<size_t size> char* oNewlinesToDos(char (&_StrDestination)[size], const char* _StrSource) { return oNewlinesToDos(_StrDestination, size, _StrSource); }
 template<size_t size> char* oPruneWhitespace(char (&_StrDestination)[size], const char* _StrSource, char _Replacement = ' ', const char* _ToPrune = oWHITESPACE) { return oPruneWhitespace(_StrDestination, size, _StrSource, _Replacement, _ToPrune); }
-template<size_t size> errno_t oReplace(char (&_StrResult)[size], const char* _StrSource, const char* _StrFind, const char* _StrReplace) { return oReplace(_StrResult, size, _StrSource, _StrFind, _StrReplace); }
-template<size_t size> char* oInsert(char (&_StrSource)[size], char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion) { return oInsert(_StrSource, size, _InsertionPoint, _ReplacementLength, _Insertion); }
 template<size_t size> errno_t oStrVAppendf(char (&_StrDestination)[size], const char* _Format, va_list _Args) { return oStrVAppendf(_StrDestination, size, _Format, _Args); }
 template<size_t size> errno_t oStrAppendf(char (&_StrDestination)[size], const char* _Format, ...) { va_list args; va_start(args, _Format); errno_t err = oStrVAppendf(_StrDestination, size, _Format, args); va_end(args); return err; }
-template<size_t size> char* oFormatMemorySize(char (&_StrDestination)[size], unsigned long long _NumBytes, size_t _NumPrecisionDigits) { return oFormatMemorySize(_StrDestination, size, _NumBytes, _NumPrecisionDigits); }
-template<size_t size> char* oFormatCommas(char (&_StrDestination)[size], int _Number) { return oFormatCommas(_StrDestination, size, _Number); }
-template<size_t size> char* oFormatCommas(char (&_StrDestination)[size], unsigned int _Number) { return oFormatCommas(_StrDestination, size, _Number); }
 
 // oStd::fixed_string support
 template<typename CHAR1_T, typename CHAR2_T, size_t capacity> CHAR1_T* oStrcpy(oStd::fixed_string<CHAR1_T, capacity>& _StrDestination, const CHAR2_T* _StrSource, bool _ZeroBuffer = false) { return oStrcpy(_StrDestination.c_str(), _StrDestination.capacity(), _StrSource, _ZeroBuffer); }
@@ -211,9 +188,5 @@ template<typename CHAR_T, size_t capacity> size_t oStrlen(const oStd::fixed_stri
 template<typename CHAR_T, size_t capacity> int oVPrintf(oStd::fixed_string<CHAR_T, capacity>& _StrDestination, const CHAR_T* _Format, va_list _Args) { return oVPrintf(_StrDestination.c_str(), _StrDestination.capacity(), _Format, _Args); }
 template<typename CHAR_T, size_t capacity> int oPrintf(oStd::fixed_string<CHAR_T, capacity>& _StrDestination, const CHAR_T* _Format, ...) { va_list args; va_start(args, _Format); return oVPrintf(_StrDestination, _Format, args); }
 template<size_t capacity> errno_t oStrAppendf(oStd::fixed_string<char, capacity>& _StrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); errno_t err = oStrVAppendf(_StrDestination.c_str(), _StrDestination.capacity(), _Format, args); va_end(args); return err; }
-template<size_t capacity> char* oFormatMemorySize(oStd::fixed_string<char, capacity>& _StrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits) { return oFormatMemorySize(_StrDestination, _StrDestination.capacity(), _NumBytes, _NumPrecisionDigits); }
-template<size_t capacity> char* oFormatCommas(oStd::fixed_string<char, capacity>& _StrDestination, int _Number) { return oFormatCommas(_StrDestination, _StrDestination.capacity(), _Number); }
-template<size_t capacity> errno_t oReplace(oStd::fixed_string<char, capacity>& _StrDestination, const char* _StrSource, const char* _StrFind, const char* _StrReplace) { return oReplace(_StrDestination, _StrDestination.capacity(), _StrSource, _StrFind, _StrReplace); }
-template<size_t capacity> char* oInsert(oStd::fixed_string<char, capacity>& _StrDestination, char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion) { return oInsert(_StrDestination, _StrDestination.capacity(), _InsertionPoint, _ReplacementLength, _Insertion); }
 
 #endif

@@ -22,43 +22,27 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oString.h>
-#include <oPlatform/oTest.h>
-#include <oGPU/oGPU.h>
+#include <string.h>
+#include <malloc.h>
 
-struct GPU_Device : public oTest
+namespace oStd {
+
+char* insert(char* _StrSource, size_t _SizeofStrSource, char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion)
 {
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
-	{
-		oGPUDevice::INIT init("GPU_Device");
-		init.Version = oVersion(10,0); // for more compatibility when running on varied machines
-		oRef<oGPUDevice> Device;
-		oTESTB0(oGPUDeviceCreate(init, &Device));
+	size_t insertionLength = strlen(_Insertion);
+	size_t afterInsertionLength = strlen(_InsertionPoint) - _ReplacementLength;
+	size_t newLen = static_cast<size_t>(_InsertionPoint - _StrSource) + afterInsertionLength;
+	if (newLen >= _SizeofStrSource)
+		return nullptr;
+	// to avoid the overwrite of a direct memcpy, copy the remainder
+	// of the string out of the way and then copy it back in.
+	char* tmp = (char*)alloca(afterInsertionLength);
+	memcpy(tmp, _InsertionPoint + _ReplacementLength, afterInsertionLength);
+	memcpy(_InsertionPoint, _Insertion, insertionLength);
+	char* p = _InsertionPoint + insertionLength;
+	memcpy(p, tmp, afterInsertionLength);
+	p[afterInsertionLength] = '\0';
+	return p;
+}
 
-		oGPUDevice::DESC desc;
-		Device->GetDesc(&desc);
-
-		oTESTB(desc.AdapterIndex == 0, "Index is incorrect");
-		oTESTB(desc.FeatureVersion >= oVersion(9,0), "Invalid version retrieved");
-		oStd::sstring VRAMSize, SharedSize;
-		oStd::format_bytes(VRAMSize, desc.NativeMemory, 1);
-		oStd::format_bytes(SharedSize, desc.SharedSystemMemory, 1);
-		oPrintf(_StrStatus, _SizeofStrStatus, "%s %s %d.%d feature level %d.%d %s (%s shared) running on %s v%d.%d drivers (%s)"
-			, desc.DeviceDescription.c_str()
-			, oStd::as_string(desc.API)
-			, desc.InterfaceVersion.Major
-			, desc.InterfaceVersion.Minor
-			, desc.FeatureVersion.Major
-			, desc.FeatureVersion.Minor
-			, VRAMSize.c_str()
-			, SharedSize.c_str()
-			, oStd::as_string(desc.Vendor)
-			, desc.DriverVersion.Major
-			, desc.DriverVersion.Minor
-			, desc.DriverDescription.c_str());
-
-		return SUCCESS;
-	}
-};
-
-oTEST_REGISTER(GPU_Device);
+} // namespace oStd

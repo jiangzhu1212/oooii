@@ -84,7 +84,9 @@ bool oFileLoadHeader(void* _pHeader, size_t _SizeofHeader, const char* _Path)
 	if (actualSize != static_cast<unsigned long long>(_SizeofHeader))
 	{
 		oStd::sstring header, actual;
-		return oErrorSetLast(std::errc::io_error, "Expected %s, but read %s as header from file %s", oFormatMemorySize(header, _SizeofHeader, 2), oFormatMemorySize(actual, actualSize, 2), _Path);
+		oStd::format_bytes(header, _SizeofHeader, 2);
+		oStd::format_bytes(actual, actualSize, 2);
+		return oErrorSetLast(std::errc::io_error, "Expected %s, but read %s as header from file %s", header.c_str(), actual.c_str(), _Path);
 	}
 
 	return true;
@@ -110,7 +112,9 @@ bool oFileSave(const char* _Path, const void* _pSource, size_t _SizeofSource, bo
 	if (actualWritten != _SizeofSource)
 	{
 		oStd::sstring source, actual;
-		return oErrorSetLast(std::errc::io_error, "Expected to write %s, but wrote %s to file %s", oFormatMemorySize(source, _SizeofSource, 2), oFormatMemorySize(actual, actualWritten, 2), _Path);
+		oStd::format_bytes(source, _SizeofSource, 2);
+		oStd::format_bytes(actual, actualWritten, 2);
+		return oErrorSetLast(std::errc::io_error, "Expected to write %s, but wrote %s to file %s", source.c_str(), actual.c_str(), _Path);
 	}
 
 	return true;

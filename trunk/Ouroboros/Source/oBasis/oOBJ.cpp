@@ -493,7 +493,7 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 		if (IndexMapMallocBytes)
 		{
 			oStd::mstring reserved, additional;
-			oTRACE("oOBJ: %s index map allocated %s additional indices beyond the initial EstimatedNumIndices=%s", oSAFESTRN(_OBJPath), oFormatCommas(additional, oUInt(IndexMapMallocBytes / sizeof(unsigned int))), oFormatCommas(reserved, _Init.EstimatedNumVertices));
+			oTRACE("oOBJ: %s index map allocated %s additional indices beyond the initial EstimatedNumIndices=%s", oSAFESTRN(_OBJPath), oStd::format_commas(additional, (uint)oUInt(IndexMapMallocBytes / sizeof(unsigned int))), oStd::format_commas(reserved, _Init.EstimatedNumVertices));
 		}
 	#endif
 

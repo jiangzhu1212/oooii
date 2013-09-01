@@ -51,7 +51,8 @@ bool oBasisTest_oAllocatorTLSF(const oBasisTestServices& _Services)
 	#endif
 
 	oStd::sstring strArenaSize;
-	oTRACE("Allocating %s arena using CRT... (SLOW! OS has to defrag virtual memory to get a linear run of this size)", oFormatMemorySize(strArenaSize, ArenaSize, 2));
+	oStd::format_bytes(strArenaSize, ArenaSize, 2);
+	oTRACE("Allocating %s arena using CRT... (SLOW! OS has to defrag virtual memory to get a linear run of this size)", strArenaSize.c_str());
 
 	#if oENABLE_TRACES
 		oStd::timer t;
@@ -141,6 +142,11 @@ bool oBasisTest_oAllocatorTLSF(const oBasisTestServices& _Services)
 
 	// Fill out statistics and report
 	oStd::sstring RAMused, MINsize, MAXsize;
-	oErrorSetLast(0, "%sRAMused: %s, minsize:%s, maxsize:%s", EnoughPhysRamForFullTest ? "" : "WARNING: system memory not enough to run full test quickly. ", oFormatMemorySize(RAMused, ArenaSize, 1), oFormatMemorySize(MINsize, smallestAlloc, 1), oFormatMemorySize(MAXsize, largestAlloc, 1));
+	oStd::format_bytes(RAMused, ArenaSize, 2);
+	oStd::format_bytes(MINsize, smallestAlloc, 2);
+	oStd::format_bytes(MAXsize, largestAlloc, 2);
+	oErrorSetLast(0, "%sRAMused: %s, minsize:%s, maxsize:%s"
+		, EnoughPhysRamForFullTest ? "" : "WARNING: system memory not enough to run full test quickly. "
+		, RAMused.c_str(), MINsize.c_str(), MAXsize.c_str());
 	return true;
 }

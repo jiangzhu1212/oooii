@@ -154,6 +154,15 @@
     <ClCompile Include="opttok.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="format_commas.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="insert.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="replace.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

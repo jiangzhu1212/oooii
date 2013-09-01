@@ -72,16 +72,14 @@ static bool svn_is_error(const char* _StdOut)
 
 void scc_svn::spawn(const char* _Command, const oFUNCTION<void(char* _Line)>& _GetLine) const
 {
-	static const unsigned int kTimeout = 5000;
-	int ec = 0;
-	if (!Spawn(_Command, _GetLine, &ec, kTimeout))
+	int ec = std::errc::timed_out;
+	if (!Spawn(_Command, _GetLine, &ec, SpawnTimeoutMS))
 		SVN_THROWE(ec);
 }
 
 void scc_svn::spawn(const char* _Command, oStd::xlstring& _StdOut) const
 {
-	static const unsigned int kTimeout = 5000;
-	int ec = 0;
+	int ec = std::errc::timed_out;
 	_StdOut.clear();
 	oFUNCTION<void(char* _Line)> GetLine = [&](char* _Line)
 	{
@@ -89,16 +87,16 @@ void scc_svn::spawn(const char* _Command, oStd::xlstring& _StdOut) const
 		strlcat(_StdOut, "\n", _StdOut.capacity());
 	};
 
-	if (!Spawn(_Command, GetLine, &ec, kTimeout) || svn_is_error(_StdOut))
+	if (!Spawn(_Command, GetLine, &ec, SpawnTimeoutMS) || svn_is_error(_StdOut))
 		SVN_THROWO(ec, _StdOut);
 }
 
 bool scc_svn::available() const
 {
-	int ec = 0;
+	int ec = std::errc::timed_out;
 	oStd::xlstring StdOut;
 	oFUNCTION<void(char* _Line)> GetLine = [&](char* _Line) { strlcat(StdOut, _Line, StdOut.capacity()); strlcat(StdOut, "\n", StdOut.capacity()); };
-	if (!Spawn("svn", GetLine, &ec, 1000))
+	if (!Spawn("svn", GetLine, &ec, SpawnTimeoutMS))
 		SVN_THROWE(ec);
 	return !!strstr(StdOut, "Type 'svn help'");
 }

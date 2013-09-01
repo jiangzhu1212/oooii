@@ -33,7 +33,7 @@ namespace oStd {
 class scc_svn : public scc
 {
 public:
-	scc_svn(const scc_spawn& _Spawn) : Spawn(_Spawn) {}
+	scc_svn(const scc_spawn& _Spawn, unsigned int _SpawnTimeoutMS = 10000) : Spawn(_Spawn), SpawnTimeoutMS(_SpawnTimeoutMS) {}
 
 	scc_protocol::value protocol() const override { return scc_protocol::svn; }
 	bool available() const override;
@@ -49,6 +49,7 @@ public:
 	void revert(const char* _Path) override;
 private:
 	scc_spawn Spawn;
+	unsigned int SpawnTimeoutMS;
 private:
 	void spawn(const char* _Command, const oFUNCTION<void(char* _Line)>& _GetLine) const;
 	void spawn(const char* _Command, oStd::xlstring& _Stdout) const;
