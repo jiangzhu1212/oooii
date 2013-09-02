@@ -196,6 +196,7 @@ oGestureManagerImpl::oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, thr
 		return; // pass through error
 
 	// @oooii-tony: todo: make this respect oStream's path stuff.
+	// !!! un-hard-code the paths to oPlayer2 stuff !!!
 	{
 		oStd::uri_string dev_uri;
 		oVERIFY(oSystemGetURI(dev_uri, oSYSPATH_DEV));
