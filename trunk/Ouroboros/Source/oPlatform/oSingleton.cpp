@@ -56,7 +56,7 @@ namespace oSingletonPlatform
 		oVERIFY(oModuleGetName(modname, oModuleGetCurrent()));
 		char syspath[_MAX_PATH];
 		char msg[oKB(4)];
-		int offset = oPrintf(msg, "%s(%d): {%s} %s %s ", _File, _Line, oGetFilebase(modname), oSystemGetExecutionPath(syspath), oGetTypename(_TypeinfoName));
+		int offset = oPrintf(msg, "%s(%d): {%s} %s %s ", _File, _Line, oGetFilebase(modname), oSystemGetExecutionPath(syspath), oStd::type_name(_TypeinfoName));
 		va_list args;
 		va_start(args, _Format);
 		oVPrintf(msg + offset, oCOUNTOF(msg) - offset, _Format, args);
@@ -229,9 +229,9 @@ void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, oStd::type_i
 	}
 
 	oSingletonBase* p = nullptr;
-	if (oProcessHeapFindOrAllocate(_GUID, _IsThreadLocal, true, _Size, PlacementNew, oGetTypename(_TypeInfoName), (void**)&p))
+	if (oProcessHeapFindOrAllocate(_GUID, _IsThreadLocal, true, _Size, PlacementNew, oStd::type_name(_TypeInfoName), (void**)&p))
 	{
-		p->Name = oGetTypename(_TypeInfoName);
+		p->Name = oStd::type_name(_TypeInfoName);
 		oSINGLETON_TRACE(_TypeInfoName, "%ssingleton initialized using %s ctor", _IsThreadLocal ? "threadlocal " : "", !ctors ? "module-local" : "prime-module");
 
 		if (_IsThreadLocal)

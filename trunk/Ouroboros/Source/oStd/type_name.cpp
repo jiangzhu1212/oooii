@@ -22,56 +22,19 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#pragma once
-#ifndef oStaticMutex_h
-#define oStaticMutex_h
+#include <stdlib.h>
+#include <oStd/macros.h>
 
-#include <oConcurrency/mutex.h>
-#include <oPlatform/oProcessHeap.h>
+namespace oStd {
 
-template<typename MutexT, typename UniqueType>
-class oStaticMutex
+const char* type_name(const char* _TypeinfoName)
 {
-	oStaticMutex(const oStaticMutex&)/* = delete*/;
-	const oStaticMutex& operator=(const oStaticMutex&)/* = delete*/;
+	static struct { const char* s; size_t len; } sPrefixesToSkip[] = { { "enum ", 5 }, { "struct ", 7 }, { "class ", 6 }, { "interface ", 10 }, { "union ", 6 }, };
+	const char* n = _TypeinfoName;
+	for (size_t i = 0; i < oCOUNTOF(sPrefixesToSkip); i++)
+		if (!memcmp(n, sPrefixesToSkip[i].s, sPrefixesToSkip[i].len))
+			return n + sPrefixesToSkip[i].len;
+	return n;
+}
 
-public:
-	oStaticMutex() {}
-
-	inline void lock() threadsafe { mutex()->lock(); }
-	inline bool try_lock() threadsafe { return mutex()->try_lock(); }
-	inline void unlock() threadsafe { mutex()->unlock(); }
-	inline typename MutexT::native_handle_type native_handle() { mutex()->native_handle(); }
-
-protected:
-	MutexT* mutex() threadsafe
-	{
-		if (!pInternal)
-		{
-			if (oProcessHeapFindOrAllocate(GUID, false, true, sizeof(MutexT), NewMutex, oStd::type_name(typeid(*this).name()), (void**)&pInternal))
-				atexit(DeleteMutex);
-		}
-
-		return pInternal;
-	}
-
-	static void NewMutex(void* _pInstance) { new (_pInstance) MutexT(); }
-	static void DeleteMutex()
-	{
-		MutexT* pTemp = pInternal;
-		oStd::atomic_exchange(&pInternal, nullptr);
-		pTemp->~MutexT();
-		oProcessHeapDeallocate(pTemp);
-	}
-
-	static const oGUID GUID;
-	static MutexT* pInternal;
-};
-
-#define oDEFINE_STATIC_MUTEX(_MutexT, _UniqueName, _GUID) \
-	oDECLARE_HANDLE(_UniqueName##_t); \
-	static oStaticMutex<_MutexT, _UniqueName##_t> _UniqueName; \
-	const oGUID oStaticMutex<_MutexT, _UniqueName##_t>::GUID = _GUID; \
-	_MutexT* oStaticMutex<_MutexT, _UniqueName##_t>::pInternal = nullptr
-
-#endif
+} // namespace oStd

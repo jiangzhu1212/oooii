@@ -95,6 +95,7 @@
     <ClCompile Include="strtok.cpp" />
     <ClCompile Include="text_document.cpp" />
     <ClCompile Include="trim.cpp" />
+    <ClCompile Include="type_name.cpp" />
     <ClCompile Include="uri.cpp" />
     <ClCompile Include="utfcmp.cpp" />
     <ClCompile Include="wcselipsize.cpp" />

@@ -166,6 +166,9 @@
     <ClCompile Include="rstrstr.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
+    <ClCompile Include="type_name.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

@@ -295,7 +295,7 @@ bool oTest::BuildPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char*
 
 const char* oTest::GetName() const
 {
-	return oGetTypename(typeid(*this).name());
+	return oStd::type_name(typeid(*this).name());
 }
 
 static void BuildDataPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _TestName, const char* _DataPath, const char* _DataSubpath, const char* _Path, unsigned int _NthItem, const char* _Ext)
@@ -636,7 +636,7 @@ bool oSpecialTest::Start(threadsafe interface oProcess* _pProcess, char* _StrSta
 void oSpecialTest::NotifyReady()
 {
 	oStd::mstring interprocessName;
-	const char* testName = oGetTypename(typeid(*this).name());
+	const char* testName = oStd::type_name(typeid(*this).name());
 	oPrintf(interprocessName, "oTest.%s.Started", testName);
 	oInterprocessEvent Ready(interprocessName);
 	oASSERTA(!Ready.Wait(0), "Ready event set when it shouldn't be (in NotifyReady).");
@@ -784,7 +784,7 @@ void oTestManager_Impl::RegisterSpecialModeTests()
 		if (!pRTB->IsSpecialTest())
 			continue;
 
-		const char* Name = oGetTypename(pRTB->GetTypename());
+		const char* Name = oStd::type_name(pRTB->GetTypename());
 		oASSERT(SpecialModes[Name] == 0, "%s already registered", Name);
 		SpecialModes[Name] = pRTB;
 	}
@@ -917,7 +917,7 @@ size_t oTestManager_Impl::CalculateNumTests(const oTestManager::DESC& _Desc, thr
 		if (pRTB && !pRTB->IsSpecialTest())
 		{
 			oStd::mstring TestName;
-			TestName = oGetTypename(pRTB->GetTypename());
+			TestName = oStd::type_name(pRTB->GetTypename());
 			
 			if (!_pFilterChain || _pFilterChain->Passes(TestName, 0))
 				nTests++;
@@ -1112,7 +1112,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 			if (pRTB && !pRTB->IsSpecialTest())
 			{
 				oStd::mstring TestName;
-				oStrcpy(TestName, oGetTypename(pRTB->GetTypename()));
+				oStrcpy(TestName, oStd::type_name(pRTB->GetTypename()));
 				
 				double testDuration = 0.0;
 
