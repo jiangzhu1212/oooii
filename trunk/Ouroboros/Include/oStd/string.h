@@ -234,6 +234,11 @@ template<size_t size> char* strbitmask(char (&_StrDestination)[size], int _Flags
 template<typename T> char* strbitmask(char* _StrDestination, size_t _SizeofStrDestination, int _Flags, const char* _AllZerosValue, const char* (*_AsString)(T _Value)) { return strbitmask(_StrDestination, _SizeofStrDestination, _Flags, _AllZerosValue, (as_string_fn)_AsString); }
 template<typename T, size_t size> char* strbitmask(char (&_StrDestination)[size], int _Flags, const char* _AllZerosValue, const char* (*_AsString)(T _Value)) { return strbitmask(_StrDestination, size, _Flags, _AllZerosValue, (as_string_fn)_AsString); }
 
+// Returns the pointer into _TypeinfoName that represents just the name of the 
+// user type, thus skipping any prefix [enum|class|struct|union]. This does not
+// behave well for built-in types.
+const char* type_name(const char* _TypeinfoName);
+
 // _____________________________________________________________________________
 // Encoding
 

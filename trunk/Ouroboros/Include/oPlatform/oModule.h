@@ -31,6 +31,7 @@
 
 #include <oStd/fixed_string.h>
 #include <oBasis/oVersion.h>
+#include <oBasis/oRTTI.h>
 
 oDECLARE_HANDLE(oHMODULE);
 

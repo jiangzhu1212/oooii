@@ -78,13 +78,14 @@
 	// instantiated the HW may only support DX10 features.
 	oVersion oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter);
 
-	// List all adapters in DXGI-ordinal order. The enumerator should return true
-	// to continue or false to short-circuit. If no factory is specified, 
-	// oDXGICreateFactory is invoked to get one.
-	bool oDXGIEnumAdapters(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAdapter, const oDISPLAY_ADAPTER_DRIVER_DESC& _DriverDesc)>& _Enumerator, IDXGIFactory* _pFactory = nullptr);
-
 	// Returns a description and version of the driver for the specified adapter.
 	void oDXGIGetAdapterDriverDesc(IDXGIAdapter* _pAdapter, oDISPLAY_ADAPTER_DRIVER_DESC* _pDesc);
+
+	// Get the specified adapter and desc for the specified adapter index.
+	bool oDXGIEnumAdapters(int _AdapterIndex, IDXGIAdapter** _ppAdapter, oDISPLAY_ADAPTER_DRIVER_DESC* _pDesc);
+
+	// Uses the above version to visit each device.
+	bool oDXGIEnumAdapters(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAdapter, const oDISPLAY_ADAPTER_DRIVER_DESC& _DriverDesc)>& _Enumerator, IDXGIFactory* _pFactory = nullptr);
 
 	// Returns the index to pass to EnumAdapters to get this same adapter.
 	int oDXGIGetAdapterIndex(IDXGIAdapter* _pAdapter);

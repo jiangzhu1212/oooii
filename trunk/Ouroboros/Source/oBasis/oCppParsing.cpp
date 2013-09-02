@@ -50,24 +50,6 @@ char* oMoveToNextID(char* _pCurrent, const char* _Stop)
 	return _pCurrent;
 }
 
-const char* oGetTypename(const char* _TypeinfoName)
-{
-	static struct { const char* s; size_t len; } sPrefixesToSkip[] = 
-	{
-		{ "enum ", 5 },
-		{ "struct ", 7 },
-		{ "class ", 6 },
-		{ "interface ", 10 },
-		{ "union ", 6 },
-	};
-
-	const char* n = _TypeinfoName;
-	oFORI(i, sPrefixesToSkip)
-		if (!memcmp(n, sPrefixesToSkip[i].s, sPrefixesToSkip[i].len))
-			return n + sPrefixesToSkip[i].len;
-	return n;
-}
-
 static oIFDEF_BLOCK::TYPE GetType(const cmatch& _Matches)
 {
 	const char* opener = _Matches[1].first;

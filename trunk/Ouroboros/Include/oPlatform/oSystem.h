@@ -32,6 +32,7 @@
 #include <oBasis/oPlatformFeatures.h>
 #include <oBasis/oTimer.h> // for oInfiniteWait
 #include <oBasis/oURI.h>
+#include <oConcurrency/oConcurrency.h>
 
 struct oSYSTEM_HEAP_STATS
 {
@@ -92,7 +93,7 @@ oAPI bool oSystemAllowSleep(bool _Allow = true);
 
 // Schedules the specified function to be called at the specified absolute time.
 // Use oSystem
-oAPI bool oSystemScheduleWakeup(time_t _UnixAbsoluteTime, oTASK _OnWake);
+oAPI bool oSystemScheduleWakeup(time_t _UnixAbsoluteTime, const oTASK& _OnWake);
 
 // oSystemExecute spawns a child process to execute the specified command line. 
 // If a string buffer is specified, then after the process is finished its 

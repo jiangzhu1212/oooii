@@ -215,27 +215,6 @@ bool oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter, D3D_FEATURE_LEVEL* _pFeatureL
 #endif
 }
 
-bool oDXGIEnumAdapters(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAdapter, const oDISPLAY_ADAPTER_DRIVER_DESC& _DriverDesc)>& _Enumerator, IDXGIFactory* _pFactory)
-{
-	oRef<IDXGIFactory> Factory = _pFactory;
-	if (!Factory)
-		oDXGICreateFactory(&Factory);
-
-	int AdapterIndex = 0;
-	oDISPLAY_ADAPTER_DRIVER_DESC add;
-	oRef<IDXGIAdapter> Adapter;
-	while (DXGI_ERROR_NOT_FOUND != Factory->EnumAdapters(AdapterIndex, &Adapter))
-	{
-		oDXGIGetAdapterDriverDesc(Adapter, &add);
-		if (!_Enumerator(AdapterIndex, Adapter, add))
-			return true;
-		AdapterIndex++;
-		Adapter = nullptr;
-	}
-
-	return true;
-}
-
 void oDXGIGetAdapterDriverDesc(IDXGIAdapter* _pAdapter, oDISPLAY_ADAPTER_DRIVER_DESC* _pDesc)
 {
 	DXGI_ADAPTER_DESC ad;
@@ -249,6 +228,32 @@ void oDXGIGetAdapterDriverDesc(IDXGIAdapter* _pAdapter, oDISPLAY_ADAPTER_DRIVER_
 		if (strstr(_Desc.PlugNPlayID, vendor) && strstr(_Desc.PlugNPlayID, device))
 			*_pDesc = _Desc;
 	});
+}
+
+bool oDXGIEnumAdapters(int _AdapterIndex, IDXGIAdapter** _ppAdapter, oDISPLAY_ADAPTER_DRIVER_DESC* _pDesc)
+{
+	oRef<IDXGIFactory> Factory;
+	oDXGICreateFactory(&Factory);
+	if (DXGI_ERROR_NOT_FOUND == Factory->EnumAdapters(_AdapterIndex, _ppAdapter))
+		return oErrorSetLast(std::errc::no_such_device, "Adapter %d", _AdapterIndex);
+	oDXGIGetAdapterDriverDesc(*_ppAdapter, _pDesc);
+	return true;
+}
+
+bool oDXGIEnumAdapters(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAdapter, const oDISPLAY_ADAPTER_DRIVER_DESC& _DriverDesc)>& _Enumerator, IDXGIFactory* _pFactory)
+{
+	int AdapterIndex = 0;
+	oDISPLAY_ADAPTER_DRIVER_DESC add;
+	oRef<IDXGIAdapter> Adapter;
+	while (oDXGIEnumAdapters(AdapterIndex, &Adapter, &add))
+	{
+		if (!_Enumerator(AdapterIndex, Adapter, add))
+			return true;
+		AdapterIndex++;
+		Adapter = nullptr;
+	}
+
+	return true;
 }
 
 int oDXGIGetAdapterIndex(IDXGIAdapter* _pAdapter)

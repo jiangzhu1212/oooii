@@ -159,7 +159,7 @@ bool oSystemAllowSleep(bool _Allow)
 	return true;
 }
 
-bool oSystemScheduleWakeup(time_t _UnixAbsoluteTime, oTASK _OnWake)
+bool oSystemScheduleWakeup(time_t _UnixAbsoluteTime, const oTASK& _OnWake)
 {
 	return oScheduleTask("OOOii.Wakeup", _UnixAbsoluteTime, true, _OnWake);
 }

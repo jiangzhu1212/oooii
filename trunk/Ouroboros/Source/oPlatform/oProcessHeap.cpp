@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oProcessHeap.h>
+#include <oStd/memory.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
@@ -44,8 +45,8 @@ public:
 	// are not virtual, we run the risk that the code (and objects on the 
 	// underlying implementation) will not match in one module vs another.
 	virtual void* Allocate(size_t _Size) = 0;
-	virtual bool Find(const oGUID& _GUID, bool _IsThreadLocal, void** _pPointer) = 0;
-	virtual bool FindOrAllocate(const oGUID& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer) = 0;
+	virtual bool Find(const oStd::guid& _GUID, bool _IsThreadLocal, void** _pPointer) = 0;
+	virtual bool FindOrAllocate(const oStd::guid& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer) = 0;
 	virtual void Deallocate(void* _Pointer) = 0;
 	virtual void ReportLeaks() = 0;
 	virtual void Lock() = 0;
@@ -59,12 +60,12 @@ void* oProcessHeapAllocate(size_t _Size)
 	return oProcessHeapContext::Singleton()->Allocate(_Size);
 }
 
-bool oProcessHeapFindOrAllocate(const oGUID& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer)
+bool oProcessHeapFindOrAllocate(const oStd::guid& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer)
 {
 	return oProcessHeapContext::Singleton()->FindOrAllocate(_GUID, _IsThreadLocal, _IsLeakTracked, _Size, _PlacementConstructor, _DebugName, _pPointer);
 }
 
-bool oProcessHeapFind(const oGUID& _GUID, bool _IsThreadLocal, void** _pPointer)
+bool oProcessHeapFind(const oStd::guid& _GUID, bool _IsThreadLocal, void** _pPointer)
 {
 	return oProcessHeapContext::Singleton()->Find(_GUID, _IsThreadLocal, _pPointer);
 }
@@ -88,7 +89,7 @@ struct oProcessHeapContextImpl : oProcessHeapContext
 	struct MMAPFILE
 	{
 		oProcessHeapContext* pProcessStaticHeap;
-		oGUID guid;
+		oStd::guid guid;
 		DWORD processId;
 	};
 
@@ -103,7 +104,7 @@ protected:
 
 		void* Pointer;
 		oStd::thread::id InitThreadID; // threadID of init, and where deinit will probably take place
-		oGUID GUID;
+		oStd::guid GUID;
 		char DebugName[64];
 		bool IsThreadLocal;
 		bool IsTracked;
@@ -160,9 +161,10 @@ public:
 		oWinDbgHelp::Singleton()->Reference();
 		oStd::path_string moduleName;
 		oVERIFY(oModuleGetName(moduleName, oModuleGetCurrent()));
+		oStd::path modulePath(moduleName);
 		char buf[oKB(1)];
 		oStd::mstring exec;
-		oPrintf(buf, "%s(%d): {%s} %s ProcessHeap initialized at 0x%p\n", __FILE__, __LINE__, oGetFilebase(moduleName), oSystemGetExecutionPath(exec), this);
+		oPrintf(buf, "%s(%d): {%s} %s ProcessHeap initialized at 0x%p\n", __FILE__, __LINE__, modulePath.filename().c_str(), oSystemGetExecutionPath(exec), this);
 		oThreadsafeOutputDebugStringA(buf);
 	}
 
@@ -190,9 +192,9 @@ public:
 		}
 	}
 
-	inline size_t Hash(const oGUID& _GUID, bool _IsThreadLocal)
+	inline size_t Hash(const oStd::guid& _GUID, bool _IsThreadLocal)
 	{
-		size_t h = oStd::fnv1a<size_t>(&_GUID, sizeof(oGUID));
+		size_t h = oStd::fnv1a<size_t>(&_GUID, sizeof(oStd::guid));
 		if (_IsThreadLocal)
 		{
 			oStd::thread::id id = oStd::this_thread::get_id();
@@ -203,8 +205,8 @@ public:
 	}
 
 	void* Allocate(size_t _Size) override { return HeapAlloc(hHeap, 0, _Size); }
-	bool FindOrAllocate(const oGUID& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer) override;
-	bool Find(const oGUID& _GUID, bool _IsThreadLocal, void** _pPointer) override;
+	bool FindOrAllocate(const oStd::guid& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer) override;
+	bool Find(const oStd::guid& _GUID, bool _IsThreadLocal, void** _pPointer) override;
 	void Deallocate(void* _Pointer) override;
 	void ReportLeaks() override;
 
@@ -323,15 +325,19 @@ void oProcessHeapContextImpl::ReportLeaks()
 			nIgnoredLeaks++;
 	}
 
-	char moduleName[_MAX_PATH];
-	oVERIFY(oModuleGetName(moduleName, oModuleGetCurrent()));
+	oStd::path moduleName;
+	{
+		oStd::path_string m;
+		oVERIFY(oModuleGetName(m, oModuleGetCurrent()));
+		moduleName = m;
+	}
 	
 	char buf[oKB(1)];
 	
 	if (nLeaks)
 	{
 		oStd::mstring exec;
-		oPrintf(buf, "========== Process Heap Leak Report %s (Module %s) ==========\n", oSystemGetExecutionPath(exec), oGetFilebase(moduleName));
+		oPrintf(buf, "========== Process Heap Leak Report %s (Module %s) ==========\n", oSystemGetExecutionPath(exec), moduleName.filename().c_str());
 		OutputDebugStringA(buf);
 		for (container_t::const_iterator it = pSharedPointers->begin(); it != pSharedPointers->end(); ++it)
 		{
@@ -365,7 +371,7 @@ void oProcessHeapContextImpl::ReportLeaks()
 		Release();
 }
 
-bool oProcessHeapContextImpl::Find(const oGUID& _GUID, bool _IsThreadLocal, void** _pPointer)
+bool oProcessHeapContextImpl::Find(const oStd::guid& _GUID, bool _IsThreadLocal, void** _pPointer)
 {
 	oCRTASSERT(_pPointer, "oProcessHeap::Find(): Invalid parameter");
 	size_t h = Hash(_GUID, _IsThreadLocal);
@@ -378,7 +384,7 @@ bool oProcessHeapContextImpl::Find(const oGUID& _GUID, bool _IsThreadLocal, void
 	return !!*_pPointer;
 }
 
-bool oProcessHeapContextImpl::FindOrAllocate(const oGUID& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer)
+bool oProcessHeapContextImpl::FindOrAllocate(const oStd::guid& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer)
 {
 	bool Allocated = false;
 	oCRTASSERT(_Size && _pPointer, "oProcessHeap::FindOrAllocate(): Invalid parameter");
@@ -473,7 +479,7 @@ oProcessHeapContext* oProcessHeapContext::Singleton()
 	static oProcessHeapContext* sInstance;
 	if (!sInstance)
 	{
-		static const oGUID heapMMapGuid = { 0x7c5be6d1, 0xc5c2, 0x470e, { 0x85, 0x4a, 0x2b, 0x98, 0x48, 0xf8, 0x8b, 0xa9 } }; // {7C5BE6D1-C5C2-470e-854A-2B9848F88BA9}
+		static const oStd::guid heapMMapGuid = { 0x7c5be6d1, 0xc5c2, 0x470e, { 0x85, 0x4a, 0x2b, 0x98, 0x48, 0xf8, 0x8b, 0xa9 } }; // {7C5BE6D1-C5C2-470e-854A-2B9848F88BA9}
 
 		// Filename is "<GUID><CurrentProcessID>"
 		static char mmapFileName[128] = {0};
