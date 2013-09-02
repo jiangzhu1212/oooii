@@ -39,11 +39,6 @@ inline bool oIsCppID(char c) { return isalnum(c) || c == '_'; }
 const char* oMoveToNextID(const char* _pCurrent, const char* _Stop = "");
 char* oMoveToNextID(char* _pCurrent, const char* _Stop = "");
 
-// Returns the pointer into _TypeinfoName that represents just the name of the 
-// user type, thus skipping any prefix [enum|class|struct|union]. This does not
-// behave well for built-in types.
-const char* oGetTypename(const char* _TypeinfoName);
-
 // first param is assumed to be pointing to the open brace. From there this will 
 // find the  brace at the same level of recursion - internal pairs are ignored.
 const char* oGetNextMatchingBrace(const char* _pPointingAtOpenBrace, char _CloseBrace);
