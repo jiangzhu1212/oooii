@@ -36,6 +36,7 @@
 
 #include <oStd/guid.h>
 #include <oStd/throw.h>
+#include <oBasis/oGUI.h>
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oSurface.h>
 #include <oBasis/oVersion.h>

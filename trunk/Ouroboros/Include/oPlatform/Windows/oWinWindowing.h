@@ -404,6 +404,11 @@ oAPI bool oWinIsParent(HWND _hWnd);
 // render target is not allowed to have a status bar.
 oAPI bool oWinIsRenderTarget(HWND _hWnd);
 
+// Returns true if this window has been flagged as the owner of the thread it
+// was created on. Owners call PostQuitMessage when they are destroyed. Non-
+// owners (such as the assert dialog box) do not.
+oAPI bool oWinIsThreadOwner(HWND _hWnd);
+
 // Sets a flag to mark the specified window as a render target. This does 
 // nothing more than to cause oWinIsRenderTarget to return true or false and 
 // does nothing to actually make the specified window a render target since that

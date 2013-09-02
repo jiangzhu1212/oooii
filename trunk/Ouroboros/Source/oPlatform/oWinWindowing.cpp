@@ -300,6 +300,7 @@ struct oWndExtra
 #define oEF_FULLSCREEN_COOPERATIVE (1<<2)
 #define oEF_NO_SAVE_RESTORED_POSITION_SIZE (1<<3)
 #define oEF_ALT_F4_ENABLED (1<<4)
+#define oEF_THREAD_OWNER (1<<5)
 
 HWND oWinCreate(HWND _hParent
 	, const char* _Title
@@ -386,6 +387,9 @@ HWND oWinCreate(HWND _hParent
 			oWinSetLastError();
 		return nullptr;
 	}
+
+	// only top-level windows should be allowed to quit the message loop
+	SetWindowLongPtr(hWnd, oGWLP_EXTRA_FLAGS, GetWindowLongPtr(hWnd, oGWLP_EXTRA_FLAGS) | oEF_THREAD_OWNER);
 
 	oTRACE("HWND 0x%x '%s' running on thread %d (0x%x)"
 		, hWnd
@@ -514,7 +518,8 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 				delete pRegisteredMessages;
 				SetWindowLongPtr(_hWnd, oGWLP_REGISTERED_MESSAGES, (LONG_PTR)nullptr);
 
-				PostQuitMessage(0);
+				if (oWinIsThreadOwner(_hWnd))
+					PostQuitMessage(0);
 				break;
 			}
 
@@ -997,6 +1002,12 @@ bool oWinIsRenderTarget(HWND _hWnd)
 {
 	oWIN_CHECK(_hWnd);
 	return !!(GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) & oEF_RENDER_TARGET);
+}
+
+bool oWinIsThreadOwner(HWND _hWnd)
+{
+	oWIN_CHECK(_hWnd);
+	return !!(GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) & oEF_THREAD_OWNER);
 }
 
 bool oWinSetIsRenderTarget(HWND _hWnd, bool _IsRenderTarget)
