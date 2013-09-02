@@ -243,6 +243,21 @@ enum oUS_USAGE
 // anything but WIN32 API. oVB is for the return FALSE then GetLastError() 
 // pattern, and oV is for direct HRESULT return values.
 
+// Additional exceptions. Some here are user-defined to use with RaiseException
+// from a condition handler to redirect everything to one path.
+#define oEXCEPTION_CPP 0xe06d7363
+#define oEXCEPTION_DLL_NOT_FOUND 0xc0000135
+#define oEXCEPTION_DLL_BAD_INIT 0xc0000142
+#define oEXCEPTION_MODULE_NOT_FOUND 0xc06d007e
+#define oEXCEPTION_PROCEDURE_NOT_FOUND 0xc06d007f
+#define oEXCEPTION_PURE_VIRTUAL_CALL 0xc0de0000
+#define oEXCEPTION_UNEXPECTED 0xc0de0001
+#define oEXCEPTION_NEW 0xc0de0002
+#define oEXCEPTION_INVALID_PARAMETER 0xc0de0003
+#define oEXCEPTION_SIGABRT 0xc0de0004
+#define oEXCEPTION_SIGINT 0xc0de0005
+#define oEXCEPTION_SIGTERM 0xc0de0006
+
 #ifdef _DEBUG
 	#define oVB(fn) do { if (!(fn)) { oWinSetLastError(::GetLastError()); oASSERT_TRACE(oStd::assert_type::assertion, oStd::assert_action::ignore, #fn, "%s", oErrorGetLastString()); } } while(false)
 	#define oV(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) { oWinSetLastError(HR__); oASSERT_TRACE(oStd::assert_type::assertion, oStd::assert_action::ignore, #fn, "%s", oErrorGetLastString()); } } while(false)

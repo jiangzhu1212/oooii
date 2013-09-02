@@ -53,10 +53,10 @@ namespace oSingletonPlatform
 	static void Trace(const char* _TypeinfoName, const char* _File, int _Line, const char* _Format, ...)
 	{
 		char modname[_MAX_PATH];
-		oVERIFY(oModuleGetName(modname, oModuleGetCurrent()));
+		oVERIFY(oModuleGetName(modname, false, oModuleGetCurrent()));
 		char syspath[_MAX_PATH];
 		char msg[oKB(4)];
-		int offset = oPrintf(msg, "%s(%d): {%s} %s %s ", _File, _Line, oGetFilebase(modname), oSystemGetExecutionPath(syspath), oStd::type_name(_TypeinfoName));
+		int offset = oPrintf(msg, "%s(%d): {%s} %s %s ", _File, _Line, modname, oSystemGetExecutionPath(syspath), oStd::type_name(_TypeinfoName));
 		va_list args;
 		va_start(args, _Format);
 		oVPrintf(msg + offset, oCOUNTOF(msg) - offset, _Format, args);

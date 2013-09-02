@@ -178,6 +178,8 @@ bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3
 	// debug.
 	if (hr == E_FAIL)
 	{
+		oTRACE("The first-chance _com_error exception above is because there is no debug layer present during the creation of a D3D device, trying again without debug");
+
 		Flags &=~ D3D11_CREATE_DEVICE_DEBUG;
 		UsingDebug = false;
 

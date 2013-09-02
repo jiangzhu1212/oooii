@@ -29,6 +29,7 @@
 #include <oStd/fixed_string.h>
 #include <oPlatform/oDebugger.h>
 #include <oPlatform/oMsgBox.h>
+#include <oPlatform/oProcess.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oSystem.h>
@@ -37,9 +38,7 @@
 #include "SoftLink/oWinDbgHelp.h"
 #include "oCRTLeakTracker.h"
 #include "oFileInternal.h"
-
-#define oEXCEPTION_PURE_VIRTUAL_CALL 0x8badc0de
-#define oEXCEPTION_BAD_EXCEPTION 0x8badec10
+#include "oWinExceptionHandler.h"
 
 namespace oStd {
 
@@ -96,15 +95,6 @@ static bool oWinWriteDumpFile(MINIDUMP_TYPE _Type, const char* _Path, EXCEPTION_
 		return oErrorSetLast(std::errc::io_error, "Failed to write dump file %s", oSAFESTRN(_Path));
 	return success;
 }
-
-//static bool oWinWriteDumpFile(EXCEPTION_POINTERS* _pExceptionPointers)
-//{
-//	oStd::path_string DumpPath;
-//	oSystemGetPath(DumpPath, oSYSPATH_APP_FULL);
-//	oTrimFileExtension(DumpPath);
-//	oStrAppendf(DumpPath, ".dmp");
-//	return oWinWriteDumpFile(DumpPath, _pExceptionPointers);
-//}
 
 void ReportErrorAndExit()
 {
@@ -568,150 +558,63 @@ oStd::assert_action::value oReportingContext::DefaultVPrint(const oStd::assert_c
 	return action;
 }
 
-
-class ReportContextExceptionHandler : public oProcessSingleton<ReportContextExceptionHandler>
+static void DumpAndTerminate(const char* _ErrorMessage, const oWinCppException& _CppException, uintptr_t _ExceptionContext)
 {
-	// @oooii-tony: This is truly annoying. I would really like to merge this 
-	// singleton into oReportingContext, but for whatever reason, processes spawned
-	// from other processes crash when that is the case. Looking at the singleton
-	// trace stack, it should collapse nicely because this gets instantiated 
-	// after oReportingContext. So why can't this be simplified in code, unified
-	// in concept, and be installed earlier to catch even more problems?
+	EXCEPTION_POINTERS* pExceptionPointers = (EXCEPTION_POINTERS*) _ExceptionContext;
 
-public:
-	static const oGUID GUID;
-	oStd::mutex Mutex;
-
-	ReportContextExceptionHandler()
+	//if (Mutex.try_lock())
 	{
-		AddVectoredExceptionHandler(0, &ReportContextExceptionHandler::HandleAccessViolation);
-		_set_purecall_handler(ReportContextExceptionHandler::PureVirtualCallHandler);
-		set_unexpected(ReportContextExceptionHandler::UnexpectedHandler);
-	}
-
-	~ReportContextExceptionHandler()
-	{
-		RemoveVectoredExceptionHandler(&ReportContextExceptionHandler::HandleAccessViolation);
-	}
-
-	void DumpAndTerminate(EXCEPTION_POINTERS* _pExceptionPointers, const char* _ErrorMessage = "Unhandled Exception")
-	{
-		if (Mutex.try_lock())
+		if (!oProcessHasDebuggerAttached())
 		{
 			#ifdef _DEBUG
 				oASSERT_TRACE(oStd::assert_type::assertion, oStd::assert_action::abort, "", "%s", _ErrorMessage);
 				oASSERT(false, "%s", _ErrorMessage);
-				Mutex.unlock(); // No need to unlock when DumpAndTerminate is called as the app will exit
+				//Mutex.unlock(); // No need to unlock when DumpAndTerminate is called as the app will exit
 			#else
-				oReportingContext::Singleton()->DumpAndTerminate(_pExceptionPointers, _ErrorMessage);
+				oReportingContext::Singleton()->DumpAndTerminate(pExceptionPointers, _ErrorMessage);
 			#endif
 		}
-	};
-
-	static void PureVirtualCallHandler()
-	{
-		RaiseException(oEXCEPTION_PURE_VIRTUAL_CALL, EXCEPTION_NONCONTINUABLE, 0, nullptr);
-	}
-	static void UnexpectedHandler()
-	{
-		RaiseException(oEXCEPTION_BAD_EXCEPTION, EXCEPTION_NONCONTINUABLE, 0, nullptr);
-	}
-
-	// Allows us to break execution when an access violation occurs
-	static LONG CALLBACK HandleAccessViolation(PEXCEPTION_POINTERS _pExceptionPointers)
-	{
-    const unsigned int VISUAL_STUDIO_CPP_EXCEPTION = 0xe06d7363;
-
-		ReportContextExceptionHandler* p = ReportContextExceptionHandler::Singleton();
-
-		EXCEPTION_RECORD* pRecord = _pExceptionPointers->ExceptionRecord;
-		switch (pRecord->ExceptionCode)
-		{
-			case VISUAL_STUDIO_CPP_EXCEPTION:
-				break;
-
-			case oEXCEPTION_PURE_VIRTUAL_CALL:
-			{
-				p->DumpAndTerminate(_pExceptionPointers, "pure virtual function call");
-				break;
-			}
-			
-			case oEXCEPTION_BAD_EXCEPTION:
-			{
-				p->DumpAndTerminate(_pExceptionPointers, "bad exception");
-				break;
-			}
-
-			case EXCEPTION_ACCESS_VIOLATION:
-			{
-				void* pAddress = (void*)pRecord->ExceptionInformation[1];
-				const char* err = (0 == pRecord->ExceptionInformation[0]) ? "Read" : "Write";
-				oStd::lstring ErrorMessage;
-				sprintf_s(ErrorMessage.c_str(), "%s access violation at 0x%p", err, pAddress);
-
-				oDebuggerAllocationInfo AllocationInfo;
-				if (oDebuggerGuardedInfo(pAddress, &AllocationInfo))
-				{
-					if (oInvalid == AllocationInfo.ThreadFreedOn)
-						oStrAppendf(ErrorMessage, "Guarded allocation attempting to access outside of allocation");
-					else
-					{
-						double TimePassed = oTimer() - AllocationInfo.FreedTimer;
-						oStrAppendf(ErrorMessage, "Freed on thread %d %f seconds ago", AllocationInfo.ThreadFreedOn, TimePassed);
-					}
-				}
-
-				p->DumpAndTerminate(_pExceptionPointers, ErrorMessage);
-				break;
-			}
-			// Ensure any exception that is to be handled is listed explicitly. There
-			// are some working-as-intended uses of exceptions by Windows that should 
-			// not terminate execution, but instead should be passed through.
-			case EXCEPTION_DATATYPE_MISALIGNMENT:
-			case EXCEPTION_BREAKPOINT:
-			case EXCEPTION_SINGLE_STEP:
-			case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-			case EXCEPTION_FLT_DENORMAL_OPERAND:
-			case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-			case EXCEPTION_FLT_INEXACT_RESULT:
-			case EXCEPTION_FLT_INVALID_OPERATION:
-			case EXCEPTION_FLT_OVERFLOW:
-			case EXCEPTION_FLT_STACK_CHECK:
-			case EXCEPTION_FLT_UNDERFLOW:
-			case EXCEPTION_INT_DIVIDE_BY_ZERO:
-			case EXCEPTION_INT_OVERFLOW:
-			case EXCEPTION_PRIV_INSTRUCTION:
-			case EXCEPTION_IN_PAGE_ERROR:
-			case EXCEPTION_ILLEGAL_INSTRUCTION:
-			case EXCEPTION_NONCONTINUABLE_EXCEPTION:
-			case EXCEPTION_STACK_OVERFLOW:
-			case EXCEPTION_INVALID_DISPOSITION:
-			case EXCEPTION_GUARD_PAGE:
-			case EXCEPTION_INVALID_HANDLE:
-					p->DumpAndTerminate(_pExceptionPointers, oWinAsStringExceptionCode(pRecord->ExceptionCode));
-				break;
-
-			default:
-				break;
-		}
-
-		return EXCEPTION_CONTINUE_SEARCH;
 	}
 };
 
-// {9840E986-9ADE-4D11-AFCE-AB2D8AC530C0}
-const oGUID ReportContextExceptionHandler::GUID = { 0x9840e986, 0x9ade, 0x4d11, { 0xaf, 0xce, 0xab, 0x2d, 0x8a, 0xc5, 0x30, 0xc0 } };
-oSINGLETON_REGISTER(ReportContextExceptionHandler);
-
-struct ReportContextExceptionHandlerInstaller
+#if 0
+static void ReportException(const char* _ErrorMessage, const oWinCppException& _CppException, uintptr_t _ExceptionContext)
 {
-	ReportContextExceptionHandlerInstaller()
+	const char* eType = "";
+	if (_pStdException)
+	{
+		eType = oStd::type_name(typeid(*_pStdException).name());
+		const char* n = oStd::rstrstr(eType, "::");
+		if (n)
+			eType = n + 2;
+	}
+
+	if (oProcessHasDebuggerAttached())
+	{
+		if (_pStdException)
+			oASSERT_TRACE(oStd::assert_type::assertion, oStd::assert_action::abort, "", "%s: %s", eType, _pStdException->what());
+		else
+			oASSERT_TRACE(oStd::assert_type::assertion, oStd::assert_action::abort, "", "%s", _ErrorMessage);
+	}
+	else
+	{
+		EXCEPTION_POINTERS* pExceptionPointers = (EXCEPTION_POINTERS*)_ExceptionContext;
+		oStd::lstring msg(_ErrorMessage);
+		if (_pStdException)
+			snprintf(msg, "unhandled %s exception\n\n%s", eType, _pStdException->what());
+		oReportingContext::Singleton()->DumpAndTerminate(pExceptionPointers, msg);
+	}
+}
+#endif
+
+struct InstallExceptionHandler
+{
+	InstallExceptionHandler()
 	{
 		oProcessHeapEnsureRunning(); // ensure the process heap is instantiated before the Singleton below so it is tracked
-		ReportContextExceptionHandler::Singleton();
+		oSINGLETON_REGISTER(oWinExceptionHandler);
+		oWinExceptionHandler::Singleton()->SetHandler(DumpAndTerminate);
 	}
 };
 
-// @oooii-kevin: OK Static, we need to make sure the exception handler is installed very early 
-static ReportContextExceptionHandlerInstaller GInstallReportContextExceptionHandler;
-
+static InstallExceptionHandler GInstalledExceptionHandler; // ok static, used to register a singleton

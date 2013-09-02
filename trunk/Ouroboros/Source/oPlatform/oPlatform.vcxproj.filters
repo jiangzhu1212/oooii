@@ -321,6 +321,9 @@
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinSkeleton.h">
       <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
     </ClInclude>
+    <ClInclude Include="oWinExceptionHandler.h">
+      <Filter>Source\Windows API Convenience Wrappers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oooii_icon.cpp">
@@ -583,6 +586,9 @@
     </ClCompile>
     <ClCompile Include="oWinSkeleton.cpp">
       <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinExceptionHandler.cpp">
+      <Filter>Source\Windows API Convenience Wrappers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -192,6 +192,7 @@
     <ClInclude Include="oIOCP.h" />
     <ClInclude Include="oKeyState.h" />
     <ClInclude Include="oStaticMutex.h" />
+    <ClInclude Include="oWinExceptionHandler.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="SoftLink\oD3DX11.h" />
     <ClInclude Include="SoftLink\oOpenSSL.h" />
@@ -273,6 +274,7 @@
     <ClCompile Include="oWindow.cpp" />
     <ClCompile Include="oWindowAppController.cpp" />
     <ClCompile Include="oWindows.cpp" />
+    <ClCompile Include="oWinExceptionHandler.cpp" />
     <ClCompile Include="oWinKey.cpp" />
     <ClCompile Include="oWinRect.cpp" />
     <ClCompile Include="oWinRegistry.cpp" />

@@ -159,12 +159,12 @@ public:
 		// initialized and a call is made, so force this to stay around as long as 
 		// the idea of the process is around.
 		oWinDbgHelp::Singleton()->Reference();
-		oStd::path_string moduleName;
-		oVERIFY(oModuleGetName(moduleName, oModuleGetCurrent()));
+		oStd::sstring moduleName;
+		oVERIFY(oModuleGetName(moduleName, false, oModuleGetCurrent()));
 		oStd::path modulePath(moduleName);
 		char buf[oKB(1)];
 		oStd::mstring exec;
-		oPrintf(buf, "%s(%d): {%s} %s ProcessHeap initialized at 0x%p\n", __FILE__, __LINE__, modulePath.filename().c_str(), oSystemGetExecutionPath(exec), this);
+		oPrintf(buf, "%s(%d): {%s} %s ProcessHeap initialized at 0x%p\n", __FILE__, __LINE__, modulePath.c_str(), oSystemGetExecutionPath(exec), this);
 		oThreadsafeOutputDebugStringA(buf);
 	}
 
@@ -223,8 +223,6 @@ static void oProcessHeapOutputLeakReportFooter(size_t _NumLeaks)
 {
 	char buf[256];
 	oStd::mstring exec;
-	char moduleName[_MAX_PATH];
-	oVERIFY(oModuleGetName(moduleName, oModuleGetCurrent()));
 	oPrintf(buf, "========== Process Heap Leak Report: %u Leaks %s ==========\n", _NumLeaks, oSystemGetExecutionPath(exec));
 	OutputDebugStringA(buf);
 }
@@ -325,19 +323,15 @@ void oProcessHeapContextImpl::ReportLeaks()
 			nIgnoredLeaks++;
 	}
 
-	oStd::path moduleName;
-	{
-		oStd::path_string m;
-		oVERIFY(oModuleGetName(m, oModuleGetCurrent()));
-		moduleName = m;
-	}
+	oStd::sstring moduleName;
+	oVERIFY(oModuleGetName(moduleName, false, oModuleGetCurrent()));
 	
 	char buf[oKB(1)];
 	
 	if (nLeaks)
 	{
 		oStd::mstring exec;
-		oPrintf(buf, "========== Process Heap Leak Report %s (Module %s) ==========\n", oSystemGetExecutionPath(exec), moduleName.filename().c_str());
+		oPrintf(buf, "========== Process Heap Leak Report %s (Module %s) ==========\n", oSystemGetExecutionPath(exec), moduleName.c_str());
 		OutputDebugStringA(buf);
 		for (container_t::const_iterator it = pSharedPointers->begin(); it != pSharedPointers->end(); ++it)
 		{

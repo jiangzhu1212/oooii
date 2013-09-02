@@ -124,19 +124,41 @@ oHMODULE oModuleGetCurrent()
 	return (oHMODULE)hCurrentModule;
 }
 
-char* oModuleGetName(char* _StrDestination, size_t _SizeofStrDestination, oHMODULE _hModule)
+bool oModuleGetName(char* _StrDestination, size_t _SizeofStrDestination, bool _FullPath, oHMODULE _hModule)
 {
 	if (!_hModule)
 		_hModule = oModuleGetCurrent();
 
-	size_t length = static_cast<size_t>(GetModuleFileNameA((HMODULE)_hModule, _StrDestination, oUInt(_SizeofStrDestination)));
-	if (length+1 == _SizeofStrDestination && GetLastError())
+	if (_FullPath)
 	{
-		oErrorSetLast(std::errc::invalid_argument);
-		return nullptr;
+		size_t len = static_cast<size_t>(GetModuleFileNameA((HMODULE)_hModule
+			, _StrDestination
+			, static_cast<UINT>(_SizeofStrDestination)));
+
+		if (len+1 == _SizeofStrDestination && GetLastError())
+			return oErrorSetLast(std::errc::invalid_argument);
+
+		return true;
 	}
+
+	char tmp[_MAX_PATH];
+	DWORD len = GetModuleFileNameA((HMODULE)_hModule, tmp, sizeof(tmp));
+	if (!len)
+		return oWinSetLastError();
 	
-	return _StrDestination;
+	char* ShortName = tmp;
+	do
+	{
+		len--;
+		if (tmp[len] == '\\')
+		{
+			ShortName = &tmp[len+1];
+			break;
+		}
+
+	} while (len);
+
+	return strlcpy(_StrDestination, ShortName, _SizeofStrDestination) < _SizeofStrDestination;
 }
 
 static oMODULE_TYPE oGetType(const VS_FIXEDFILEINFO& _FFI)
@@ -187,7 +209,7 @@ static oMODULE_TYPE oGetType(const VS_FIXEDFILEINFO& _FFI)
 bool oModuleGetDesc(oHMODULE _hModule, oMODULE_DESC* _pDesc)
 {
 	oStd::path_string ModulePath;
-	if (!oModuleGetName(ModulePath, _hModule))
+	if (!oModuleGetName(ModulePath, true, _hModule))
 		return false; // pass through error
 
 	return oModuleGetDesc(ModulePath, _pDesc);

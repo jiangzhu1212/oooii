@@ -117,9 +117,9 @@ oHMODULE oModuleGetCurrent();
 // Fill the specified string with the name of the specified module. If this 
 // fails the function returns false; use oErrorGetLast() for more details. If 
 // _hModule is zero, then the current module will be used.
-char* oModuleGetName(char* _StrDestination, size_t _SizeofStrDestination, oHMODULE _hModule = 0);
-template<size_t size> char* oModuleGetName(char (&_StrDestination)[size], oHMODULE _hModule = 0) { return oModuleGetName(_StrDestination, size, _hModule); }
-template<size_t capacity> char* oModuleGetName(oStd::fixed_string<char, capacity>& _StrDestination, oHMODULE _hModule = 0) { return oModuleGetName(_StrDestination, _StrDestination.capacity(), _hModule); }
+bool oModuleGetName(char* _StrDestination, size_t _SizeofStrDestination, bool _FullPath = true, oHMODULE _hModule = 0);
+template<size_t size> bool oModuleGetName(char (&_StrDestination)[size], bool _FullPath = true, oHMODULE _hModule = 0) { return oModuleGetName(_StrDestination, size, _FullPath, _hModule); }
+template<size_t capacity> bool oModuleGetName(oStd::fixed_string<char, capacity>& _StrDestination, bool _FullPath = true, oHMODULE _hModule = 0) { return oModuleGetName(_StrDestination, _StrDestination.capacity(), _FullPath, _hModule); }
 
 // Returns information about the module, if available.
 bool oModuleGetDesc(oHMODULE _hModule, oMODULE_DESC* _pDesc);
