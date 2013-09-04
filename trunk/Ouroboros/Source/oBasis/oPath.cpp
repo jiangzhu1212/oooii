@@ -173,80 +173,6 @@ char* oEnsureSeparator(char* _Path, size_t _SizeofPath, char _FileSeparator)
 	return _Path;
 }
 
-char* oCleanPath(char* _CleanedPath, size_t _SizeofCleanedPath, const char* _SourcePath, char _FileSeparator, bool _ZeroBuffer)
-{
-	if (!_CleanedPath || !_SourcePath)
-		return nullptr;
-
-	char* w = _CleanedPath;
-	const char* r = _SourcePath;
-	// Completely relative paths should not cleanup the initial relativity,
-	// for instance ../../../foo should still be ../../../foo and
-	// ../foo/../bar should be ../bar
-	bool SeenNonRelative = false; 
-
-	if (!r)
-	{
-		*_CleanedPath = 0;
-		return _CleanedPath;
-	}
-
-	char* wend = _CleanedPath + _SizeofCleanedPath;
-
-	// Handle lead separators that won't have relative paths that require backup
-	while (oIsSeparator(*r) && w < (wend-1))
-	{
-		*w++ = _FileSeparator;
-		r++;
-		SeenNonRelative = true;
-	}
-
-	while (*r && w < (wend-1)) // leave one byte off wend so we can write the nul terminator
-	{
-		// skip all separators that are right in a row, except for the first ones that would constitute a valid UNC path
-		if (oIsSeparator(*r) && r != _SourcePath && r != _SourcePath+1)
-		{
-			while (oIsSeparator(*r)) r++; // move past any separators right in a row
-			if (w == _CleanedPath || !oIsSeparator(*(w-1))) // might've come from a ../ case where there's already a separator
-				*w++ = _FileSeparator; // write the separator we found above
-		}
-
-		else if (*r == '.' && (oIsSeparator(*(r+1)) || *(r+1)==0) && (*(r-1) != '.' || *(r-2) != '.')) // is dot, skip reading, it's a noop (ignore ... ellipse)
-			r++;
-
-		else if (*r == '.' && *(r+1) == '.' && (oIsSeparator(*(r+2)) || *(r+2)==0) && *(r-1) != '.') // is dot dot, so rewind the writing to overwrite last dir (ignore ... ellipse)
-		{
-			if (r > _SourcePath && SeenNonRelative)
-			{
-				r += 2; // move past reading
-				while (w != _CleanedPath && oIsSeparator(*(w-1))) w--; // find the end of the last dir
-				while (w != _CleanedPath && !oIsSeparator(*(w-1))) w--; // move to start of last dir
-			}
-
-			else // leave as a relative path, so copy it over
-			{
-
-				*w++ = *r++;
-				*w++ = *r++;
-				*w++ = *r++;
-			}
-		}
-
-		else
-		{
-			*w++ = *r++;
-			SeenNonRelative = true;
-		}
-	}
-
-	*w = 0;
-	if (_ZeroBuffer)
-		while (w < wend)
-			*w++ = 0;
-
-	return _CleanedPath;
-}
-
 template<typename T> static bool oXOr(const T& _A, const T& _B)
 {
 	return (_A && !_B) || (!_A && _B);
@@ -500,7 +426,7 @@ char* oStrTokToSwitches(char* _StrDestination, size_t _SizeofStrDestination, con
 		_StrDestination += len;
 		_SizeofStrDestination -= len;
 
-		oCleanPath(_StrDestination, _SizeofStrDestination, tok);
+		oStd::clean_path(_StrDestination, _SizeofStrDestination, tok);
 
 		len = oStrlen(_StrDestination);
 		_StrDestination += len;

@@ -34,7 +34,7 @@ struct PLATFORM_FileAsync : public oTest
 
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oStd::path_string testFilePath;
+		oStd::path testFilePath;
 		oTESTB0(FindInputFile(testFilePath, "oooii.ico"));
 
 		oConcurrency::countdown_latch Latch(1);
@@ -144,7 +144,7 @@ struct PLATFORM_FileAsync : public oTest
 		}
 
 		// Now test writing data out then reading it back
-		oStd::path_string TempFilePath;
+		oStd::path TempFilePath;
 		oTESTB0(BuildPath(TempFilePath, "TESTAsyncFileIO.bin", oTest::TEMP));
 
 		oRef<threadsafe oStreamReader> ReadFile;

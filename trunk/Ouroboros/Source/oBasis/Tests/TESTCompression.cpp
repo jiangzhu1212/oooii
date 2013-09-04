@@ -61,9 +61,8 @@ bool oBasisTest_oCompression(const oBasisTestServices& _Services)
 {
 	static const char* BenchmarkFilename = "Test/Geometry/buddha.obj";
 
-	oStd::path_string path;
-	oTESTB(_Services.ResolvePath(path.c_str(), path.capacity(), BenchmarkFilename, true), "not found: %s", BenchmarkFilename);
-	oTESTB(oCleanPath(path.c_str(), path.capacity(), path), "Failed to clean path on \"%s\"", path);
+	oStd::path path;
+	oTESTB(_Services.ResolvePath(path, BenchmarkFilename, true), "not found: %s", BenchmarkFilename);
 
 	char* pOBJBuffer = nullptr;
 	size_t Size = 0;

@@ -169,19 +169,12 @@ struct oTest : oProcessSingleton<oTest>
 	// resolve those relative paths to absolute paths. This returns false if the 
 	// path could not be built. If _PathMustExist, failure includes if the file 
 	// could not be found.
-	inline bool BuildPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath, PATH_TYPE _PathType) const { return BuildPath(_StrFullPath, _SizeofStrFullPath, _StrRelativePath, _PathType, false); }
-	inline bool BuildPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath, PATH_TYPE _PathType, const FileMustExistFlag&) const { return BuildPath(_StrFullPath, _SizeofStrFullPath, _StrRelativePath, _PathType, true); }
-
-	template<size_t size> bool BuildPath(char (&_StrFullPath)[size], const char* _StrRelativePath, PATH_TYPE _PathType) { return BuildPath(_StrFullPath, size, _StrRelativePath, _PathType, false); }
-	template<size_t size> bool BuildPath(char (&_StrFullPath)[size], const char* _StrRelativePath, PATH_TYPE _PathType, const FileMustExistFlag&) { return BuildPath(_StrFullPath, size, _StrRelativePath, _PathType, true); }
-
-	template<size_t size> bool BuildPath(oStd::fixed_string<char, size>& _StrDestination, const char* _StrRelativePath, PATH_TYPE _PathType) { return BuildPath(_StrDestination, _StrDestination.capacity(), _StrRelativePath, _PathType, false); }
-	template<size_t size> bool BuildPath(oStd::fixed_string<char, size>& _StrDestination, const char* _StrRelativePath, PATH_TYPE _PathType, const FileMustExistFlag&) { return BuildPath(_StrDestination, _StrDestination.capacity(), _StrRelativePath, _PathType, true); }
-
-	bool FindInputFile(oStd::path_string& _FullPath, const char* _StrRelativePath) { return BuildPath(_FullPath, _FullPath.capacity(), _StrRelativePath, INPUT, FileMustExist); }
+	inline bool BuildPath(oStd::path& _FullPath, const oStd::path& _RelativePath, PATH_TYPE _PathType) const { return BuildPath(_FullPath, _RelativePath, _PathType, false); }
+	inline bool BuildPath(oStd::path& _FullPath, const oStd::path& _RelativePath, PATH_TYPE _PathType, const FileMustExistFlag&) const { return BuildPath(_FullPath, _RelativePath, _PathType, true); }
+	inline bool FindInputFile(oStd::path& _FullPath, const oStd::path& _RelativePath) { return BuildPath(_FullPath, _RelativePath, INPUT, FileMustExist); }
 
 private:
-	virtual bool BuildPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath, PATH_TYPE _PathType, bool _PathMustExist) const;
+	virtual bool BuildPath(oStd::path& _Path, const oStd::path& _RelativePath, PATH_TYPE _PathType, bool _PathMustExist) const;
 	virtual bool TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const char* _FailedImagePath, unsigned int _NthImage, int _ColorChannelTolerance = oDEFAULT, float _MaxRMSError = -1.0f, unsigned int _DiffImageMultiplier = oDEFAULT, bool _OutputGoldenImage = false);
 };
 

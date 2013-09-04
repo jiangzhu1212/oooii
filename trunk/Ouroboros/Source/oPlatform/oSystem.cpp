@@ -531,7 +531,7 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 			{
 				oEnsureSeparator(_StrSysPath, _SizeofStrSysPath);
 				oStrcat(_StrSysPath, _SizeofStrSysPath, "../../VC/include/");
-				oCleanPath(_StrSysPath, _SizeofStrSysPath, _StrSysPath);
+				oStd::clean_path(_StrSysPath, _SizeofStrSysPath, _StrSysPath);
 			}
 
 			else
@@ -616,7 +616,7 @@ char* oSystemGetPath(char* _StrSysPath, size_t _SizeofStrSysPath, oSYSPATH _SysP
 	{
 		if (ensureSeparator)
 			oEnsureSeparator(_StrSysPath, _SizeofStrSysPath);
-		success = !!oCleanPath(_StrSysPath, _SizeofStrSysPath, _StrSysPath);
+		success = !!oStd::clean_path(_StrSysPath, _SizeofStrSysPath, _StrSysPath);
 	}
 
 	return success ? _StrSysPath : nullptr;

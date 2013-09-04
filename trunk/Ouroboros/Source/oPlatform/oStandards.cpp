@@ -173,7 +173,7 @@ char* oGetLogFilePath(char* _StrDestination, size_t _SizeofStrDestination, const
 		p += oPrintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%s", _ExeSuffix);
 
 	p += oPrintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%i.txt", oProcessGetCurrentID());
-	oCleanPath(_StrDestination, _SizeofStrDestination, _StrDestination);
+	oStd::clean_path(_StrDestination, _SizeofStrDestination, _StrDestination);
 	
 	return _StrDestination;
 }

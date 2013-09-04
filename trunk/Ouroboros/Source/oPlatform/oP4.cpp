@@ -342,7 +342,7 @@ bool oP4GetClientPath(char* _StrDestination, size_t _SizeofStrDestination, const
 		}
 		pFileLine[0] = 0;
 	}
-	oCleanPath(_StrDestination, _SizeofStrDestination, pFileName);
+	oStd::clean_path(_StrDestination, _SizeofStrDestination, pFileName);
 	return true;
 }
 

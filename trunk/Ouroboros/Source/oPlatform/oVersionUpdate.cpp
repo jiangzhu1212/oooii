@@ -212,7 +212,7 @@ static bool oVUFireAndForget(const char* _CommandLine)
 {
 	oStd::path_string ModuleName;
 	oVERIFY(oModuleGetName(ModuleName));
-	oCleanPath(ModuleName, ModuleName);
+	oStd::clean_path(ModuleName, ModuleName);
 
 	std::cmatch ModuleNameMatches;
 	if (!regex_match(ModuleName.c_str(), ModuleNameMatches, reAppName))
@@ -302,16 +302,16 @@ char* oVUGetLauncherName(char* _StrDestination, size_t _SizeofStrDestination)
 	oStd::path_string tmp;
 	std::vector<std::string> Paths;
 	oPrintf(tmp, "%s%s%s.exe", LauncherPath.c_str(), ModuleName.c_str(), oMODULE_DEBUG_SUFFIX_A);
-	Paths.push_back(std::string(oCleanPath(tmp, tmp)));
+	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
 	oPrintf(tmp, "%s%s%s.exe", LauncherPath.c_str(), sGenericLauncherName, oMODULE_DEBUG_SUFFIX_A);
-	Paths.push_back(std::string(oCleanPath(tmp, tmp)));
+	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
 	oPrintf(tmp, "%s%s.exe", LauncherPath.c_str(), ModuleName.c_str());
-	Paths.push_back(std::string(oCleanPath(tmp, tmp)));
+	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
 	oPrintf(tmp, "%s%s.exe", LauncherPath.c_str(), sGenericLauncherName);
-	Paths.push_back(std::string(oCleanPath(tmp, tmp)));
+	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
 	oFOR(const auto& path, Paths)
 	{
@@ -440,7 +440,7 @@ static bool oVUFindVersionPath(oStd::path_string& _StrPath, const char* _Specifi
 		}
 	}
 	
-	if (!oCleanPath(_StrPath, _StrPath))
+	if (!oStd::clean_path(_StrPath, _StrPath))
 		return false; // pass thr
 	return true;
 }
@@ -479,34 +479,34 @@ static bool oVUFindExePath(oStd::path_string& _ExePath, const oStd::path_string&
 
 	oPrintf(tmp, "%s%s%s" oMODULE_DEBUG_SUFFIX_A "%s", _VersionPath.c_str(), Prefix, ModuleNameMinusExtension.c_str(), ModuleNameExtension.c_str());
 	
-	Paths.push_back(std::string(oCleanPath(tmp, tmp)));
+	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
 	oPrintf(tmp, "%s%s%s" oMODULE_DEBUG_SUFFIX_A "%s", _VersionPath.c_str(), "", ModuleNameMinusExtension.c_str(), ModuleNameExtension.c_str());
-	Paths.push_back(std::string(oCleanPath(tmp, tmp)));
+	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
 	if (!oSTRVALID(_Desc.SpecificVersion))
 	{
 		oPrintf(tmp, "%s%s" oMODULE_DEBUG_SUFFIX_A "%s", Prefix, ModuleNameMinusExtension.c_str(), ModuleNameExtension.c_str());
-		Paths.push_back(std::string(oCleanPath(tmp, tmp)));
+		Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
 		oPrintf(tmp, "%s%s" oMODULE_DEBUG_SUFFIX_A "%s", "", ModuleNameMinusExtension.c_str(), ModuleNameExtension.c_str());
-		Paths.push_back(std::string(oCleanPath(tmp, tmp)));
+		Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 	}
 
 	// release...
 	oPrintf(tmp, "%s%s%s%s", _VersionPath.c_str(), Prefix, ModuleName.c_str(), ModuleNameExtension.c_str());
-	Paths.push_back(std::string(oCleanPath(tmp, tmp)));
+	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
 	oPrintf(tmp, "%s%s%s%s", _VersionPath.c_str(), "", ModuleName.c_str(), ModuleNameExtension.c_str());
-	Paths.push_back(std::string(oCleanPath(tmp, tmp)));
+	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
 	if (!oSTRVALID(_Desc.SpecificVersion))
 	{
 		oPrintf(tmp, "%s%s%s", Prefix, ModuleName.c_str(), ModuleNameExtension.c_str());
-		Paths.push_back(std::string(oCleanPath(tmp, tmp)));
+		Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
 		oPrintf(tmp, "%s%s%s", "", ModuleName.c_str(), ModuleNameExtension.c_str());
-		Paths.push_back(std::string(oCleanPath(tmp, tmp)));
+		Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 	}
 
 	// reduce duplicates
@@ -523,7 +523,7 @@ static bool oVUFindExePath(oStd::path_string& _ExePath, const oStd::path_string&
 
 	oStd::path_string ThisModuleName;
 	oVERIFY(oModuleGetName(ThisModuleName));
-	oCleanPath(ThisModuleName, ThisModuleName);
+	oStd::clean_path(ThisModuleName, ThisModuleName);
 	std::vector<std::string>::const_iterator itSelf = Paths.cend();
 	
 	oFOR(const auto& path, Paths)

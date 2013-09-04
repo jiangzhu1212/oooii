@@ -40,10 +40,10 @@ struct PLATFORM_oImage : public oTest
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		{
-			oStd::path_string path;
+			oStd::path path;
 			oTESTB0(FindInputFile(path, testImage));
 
-			oStd::path_string tmp;
+			oStd::path tmp;
 			oTESTB0(BuildPath(tmp, oGetFilebase(testImage), oTest::TEMP));
 
 			oRef<oBuffer> buffer1;
@@ -83,7 +83,7 @@ struct PLATFORM_oImage : public oTest
 
 		//TEST jpeg loading
 		{
-			oStd::path_string path;
+			oStd::path path;
 			oTESTB0(FindInputFile(path, testImageJpg));
 
 			oRef<oBuffer> buffer1;

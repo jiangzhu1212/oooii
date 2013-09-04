@@ -95,7 +95,7 @@ struct GPU_BCEncodeDecode : public oTest
 	{
 		static const char* TestImageFilename = "Test/Textures/lena_1.png";
 
-		oStd::path_string ImagePath;
+		oStd::path ImagePath;
 		oTESTB0(FindInputFile(ImagePath, TestImageFilename));
 
 		char base[64];
@@ -103,7 +103,7 @@ struct GPU_BCEncodeDecode : public oTest
 		char fn[64];
 		oPrintf(fn, "%s%s.dds", base, _FilenameSuffix);
 
-		oStd::path_string ConvertedPath;
+		oStd::path ConvertedPath;
 		oTESTB0(BuildPath(ConvertedPath, fn, oTest::TEMP));
 
 		oTRACE("Converting image to %s (may take a while)...", oStd::as_string(_TargetFormat));

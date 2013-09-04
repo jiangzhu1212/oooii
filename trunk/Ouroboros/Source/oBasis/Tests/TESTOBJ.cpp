@@ -70,9 +70,8 @@ static bool TestCorrectness(const threadsafe oBasisTestOBJ* _pExpected, const th
 
 static bool oBasisTest_oOBJLoad(const oBasisTestServices& _Services, const char* _Path, double* _pLoadTime = nullptr)
 {
-	oStd::path_string path;
-	oTESTB(_Services.ResolvePath(path, path.capacity(), _Path, true), "not found: %s", _Path);
-	oTESTB(oCleanPath(path, path), "Failed to clean path on \"%s\"", path);
+	oStd::path path;
+	oTESTB(_Services.ResolvePath(path, _Path, true), "not found: %s", _Path);
 
 	oRef<threadsafe oOBJ> obj;
 	char* pOBJBuffer = nullptr;

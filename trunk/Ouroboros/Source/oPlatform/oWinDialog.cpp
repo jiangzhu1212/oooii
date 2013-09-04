@@ -28,10 +28,14 @@
 #include <Commdlg.h>
 #include <CdErr.h>
 
-static bool oWinDialogGetOpenOrSavePath(char* _StrDestination, size_t _SizeofStrDestination, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent, bool _IsOpenNotSave)
+static bool oWinDialogGetOpenOrSavePath(oStd::path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent, bool _IsOpenNotSave)
 {
-	if (oSTRVALID(_StrDestination))
-		oCleanPath(_StrDestination, _SizeofStrDestination, _StrDestination, '\\');
+	oStd::path_string StrPath;
+	if (!_Path.empty())
+	{
+		if (!oStd::clean_path(StrPath, _Path, '\\'))
+			return oErrorSetLast(std::errc::invalid_argument, "bad path: %s", _Path.c_str());
+	}
 
 	std::string filters;
 	char defext[4] = {0};
@@ -63,8 +67,8 @@ static bool oWinDialogGetOpenOrSavePath(char* _StrDestination, size_t _SizeofStr
 	o.lpstrCustomFilter = nullptr;
 	o.nMaxCustFilter = 0;
 	o.nFilterIndex = 1;
-	o.lpstrFile = _StrDestination;
-	o.nMaxFile = oInt(_SizeofStrDestination);
+	o.lpstrFile = StrPath;
+	o.nMaxFile = oInt(StrPath.capacity());
 	o.lpstrFileTitle = nullptr;
 	o.nMaxFileTitle = 0;
 	o.lpstrInitialDir = nullptr;
@@ -94,17 +98,18 @@ static bool oWinDialogGetOpenOrSavePath(char* _StrDestination, size_t _SizeofStr
 		return oErrorSetLast(std::errc::protocol_error, "%s", oWinAsStringCDERR(err));
 	}
 
+	_Path = StrPath;
 	return true;
 }
 
-bool oWinDialogGetOpenPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent)
+bool oWinDialogGetOpenPath(oStd::path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent)
 {
-	return oWinDialogGetOpenOrSavePath(_StrDestination, _SizeofStrDestination, _DialogTitle, _FilterPairs, _hParent, true);
+	return oWinDialogGetOpenOrSavePath(_Path, _DialogTitle, _FilterPairs, _hParent, true);
 }
 
-bool oWinDialogGetSavePath(char* _StrDestination, size_t _SizeofStrDestination, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent)
+bool oWinDialogGetSavePath(oStd::path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent)
 {
-	return oWinDialogGetOpenOrSavePath(_StrDestination, _SizeofStrDestination, _DialogTitle, _FilterPairs, _hParent, false);
+	return oWinDialogGetOpenOrSavePath(_Path, _DialogTitle, _FilterPairs, _hParent, false);
 }
 
 bool oWinDialogGetColor(oStd::color* _pColor, HWND _hParent)

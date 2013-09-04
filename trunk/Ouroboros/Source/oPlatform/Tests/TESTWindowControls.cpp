@@ -393,8 +393,8 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 	{
 		case MENU_FILE_OPEN:
 		{
-			oStd::path_string path;
-			if (oWinDialogGetOpenPath(path, path.capacity(), "TESTWindowUI", "Source Files|*.cpp|Header Files|*.h", _hWnd))
+			oStd::path path;
+			if (oWinDialogGetOpenPath(path, "TESTWindowUI", "Source Files|*.cpp|Header Files|*.h", _hWnd))
 				oTRACE("Open %s", path.c_str());
 			else
 				oTRACE("Open dialog canceled.");
@@ -406,8 +406,8 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			break;
 		case MENU_FILE_SAVEAS:
 		{
-			oStd::path_string path;
-			if (oWinDialogGetSavePath(path, path.capacity(), "TESTWindowUI", "Source Files|*.cpp|Header Files|*.h", _hWnd))
+			oStd::path path;
+			if (oWinDialogGetSavePath(path, "TESTWindowUI", "Source Files|*.cpp|Header Files|*.h", _hWnd))
 				oTRACE("SaveAs %s", path.c_str());
 			else
 				oTRACE("SaveAs dialog canceled.");

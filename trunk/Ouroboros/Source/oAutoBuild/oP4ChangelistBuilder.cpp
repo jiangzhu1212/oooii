@@ -148,7 +148,7 @@ public:
 			section = _INI.next_section(section);
 		}
 
-		oCleanPath(LogRoot, _LogRoot);
+		oStd::clean_path(LogRoot, _LogRoot);
 
 		// Patch up all paths relative to the perforce root
 		oEnsureSeparator(P4Settings.Root);
@@ -580,7 +580,7 @@ void oP4ChangelistBuilderImpl::BuildNextBuild()
 	}
 
 	oStd::path_string Path;
-	oCleanPath(Path, LogRoot);
+	oStd::clean_path(Path, LogRoot);
 	oEnsureSeparator(Path);
 	oStrAppendf(Path, results.BuildName.c_str());
 	oEnsureSeparator(Path);

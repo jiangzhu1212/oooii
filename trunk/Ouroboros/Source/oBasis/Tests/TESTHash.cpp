@@ -32,8 +32,8 @@ bool oBasisTest_oHash(const oBasisTestServices& _Services)
 {
 	static const char* TestFile = "Test/Textures/lena_1.png";
 
-	oStd::path_string path;
-	if (!_Services.ResolvePath(path, path.capacity(), TestFile, true))
+	oStd::path path;
+	if (!_Services.ResolvePath(path, TestFile, true))
 		return oErrorSetLast(std::errc::no_such_file_or_directory, "not found: %s", TestFile);
 
 	void* pBuffer = nullptr;

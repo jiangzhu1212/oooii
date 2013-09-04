@@ -33,7 +33,7 @@ struct PLATFORM_FileSync : public oTest
 
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oStd::path_string testFilePath;
+		oStd::path testFilePath;
 		oTESTB0(FindInputFile(testFilePath, "oooii.ico"));
 
 		oRef<threadsafe oSchemeHandler> FileSchemeHandler;
@@ -83,10 +83,10 @@ struct PLATFORM_FileSync : public oTest
 		}
 
 		// Now test writing data out then reading it back
-		oStd::path_string TempFilePath;
+		oStd::path TempFilePath;
 		oTESTB0(BuildPath(TempFilePath, "", oTest::TEMP));
 		oTESTB0(oFileEnsureParentFolderExists(TempFilePath));
-		oStrAppendf(TempFilePath, "/TESTAsyncFileIO.bin");
+		TempFilePath /= "TESTAsyncFileIO.bin";
 
 		{
 			oRef<threadsafe oStreamReader> ReadFile;

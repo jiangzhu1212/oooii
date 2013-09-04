@@ -210,7 +210,7 @@ struct oTestManager_Impl : public oTestManager
 	bool KillZombies(const char* _Name);
 	bool KillZombies();
 
-	bool BuildPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath, oTest::PATH_TYPE _PathType, bool _FileMustExist) const;
+	bool BuildPath(oStd::path& _FullPath, const oStd::path& _RelativePath, oTest::PATH_TYPE _PathType, bool _FileMustExist) const;
 
 	inline void Report(oConsoleReporting::REPORT_TYPE _Type, const char* _Format, ...) { va_list args; va_start(args, _Format); oConsoleReporting::VReport(_Type, _Format, args); va_end(args); }
 	inline void ReportSep() { Report(oConsoleReporting::DEFAULT, "%c ", 179); }
@@ -288,9 +288,9 @@ oTest::~oTest()
 {
 }
 
-bool oTest::BuildPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath, PATH_TYPE _PathType, bool _FileMustExist) const
+bool oTest::BuildPath(oStd::path& _FullPath, const oStd::path& _RelativePath, PATH_TYPE _PathType, bool _FileMustExist) const
 {
-	return static_cast<oTestManager_Impl*>(oTestManager::Singleton())->BuildPath(_StrFullPath, _SizeofStrFullPath, _StrRelativePath, _PathType, _FileMustExist);
+	return static_cast<oTestManager_Impl*>(oTestManager::Singleton())->BuildPath(_FullPath, _RelativePath, _PathType, _FileMustExist);
 }
 
 const char* oTest::GetName() const
@@ -313,7 +313,7 @@ static void BuildDataPath(char* _StrDestination, size_t _SizeofStrDestination, c
 	else
 		oPrintf(_StrDestination, _SizeofStrDestination, "%s/%s%s", base.c_str(), _TestName, _Ext);
 
-	oCleanPath(_StrDestination, _SizeofStrDestination, _StrDestination);
+	oStd::clean_path(_StrDestination, _SizeofStrDestination, _StrDestination);
 }
 
 template<size_t size> void BuildDataPath(char (&_StrDestination)[size], const char* _TestName, const char* _DataPath, const char* _DataSubpath, const char* _Path, unsigned int _NthItem, const char* _Ext) { BuildDataPath(_StrDestination, size, _TestName, _DataPath, _DataSubpath, _Path, _NthItem, _Ext); }
@@ -496,7 +496,7 @@ static bool oInitialize(const char* _RootPath, const char* _Filename, const oDIS
 {
 	_pDriverPaths->Generic = _RootPath;
 	oEnsureSeparator(_pDriverPaths->Generic);
-	oCleanPath(_pDriverPaths->Generic, _pDriverPaths->Generic);
+	oStd::clean_path(_pDriverPaths->Generic, _pDriverPaths->Generic);
 
 	oPrintf(_pDriverPaths->VendorSpecific, "%s%s/", _pDriverPaths->Generic.c_str(), oStd::as_string(_DriverDesc.Vendor));
 
@@ -703,7 +703,7 @@ void oTestManager_Impl::SetDesc(DESC* _pDesc)
 		#else
 			#error Unknown bitness
 		#endif
-		ExecutablesPath = oCleanPath(exes.c_str(), exes);
+		ExecutablesPath = oStd::clean_path(exes.c_str(), exes);
 	}
 
 	GoldenBinariesPath = _pDesc->GoldenBinariesPath ? _pDesc->GoldenBinariesPath : (DataPath + "GoldenBinaries/");
@@ -740,7 +740,7 @@ void oTestManager_Impl::PrintDesc()
 	oStd::path_string cwd;
 	oSystemGetPath(cwd.c_str(), oSYSPATH_CWD);
 	oStd::path_string datapath;
-	oCleanPath(datapath.c_str(), Desc.DataPath);
+	oStd::clean_path(datapath.c_str(), Desc.DataPath);
 	oEnsureSeparator(datapath.c_str());
 	bool dataPathIsCWD = !oStricmp(cwd, datapath);
 
@@ -1301,28 +1301,22 @@ oTest::RESULT oTestManager_Impl::RunSpecialMode(const char* _Name)
 	return result;
 }
 
-bool oTestManager_Impl::BuildPath(char* _StrFullPath, size_t _SizeofStrFullPath, const char* _StrRelativePath, oTest::PATH_TYPE _PathType, bool _FileMustExist) const
+bool oTestManager_Impl::BuildPath(oStd::path& _FullPath, const oStd::path& _RelativePath, oTest::PATH_TYPE _PathType, bool _FileMustExist) const
 {
-	const char* root = nullptr;
 	switch (_PathType)
 	{
-		case oTest::EXECUTABLES: root = Desc.ExecutablesPath; break;
-		case oTest::DATA: root = Desc.DataPath; break;
-		case oTest::GOLDEN_BINARIES: root = Desc.GoldenBinariesPath; break;
-		case oTest::GOLDEN_IMAGES: root = Desc.GoldenImagesPath;	break;
-		case oTest::TEMP: root = Desc.TempPath; break;
-		case oTest::INPUT: root = Desc.InputPath; break;
-		case oTest::OUTPUT: root = Desc.OutputPath; break;
+		case oTest::EXECUTABLES: _FullPath = Desc.ExecutablesPath; break;
+		case oTest::DATA: _FullPath = Desc.DataPath; break;
+		case oTest::GOLDEN_BINARIES: _FullPath = Desc.GoldenBinariesPath; break;
+		case oTest::GOLDEN_IMAGES: _FullPath = Desc.GoldenImagesPath;	break;
+		case oTest::TEMP: _FullPath = Desc.TempPath; break;
+		case oTest::INPUT: _FullPath = Desc.InputPath; break;
+		case oTest::OUTPUT: _FullPath = Desc.OutputPath; break;
 		oNODEFAULT;
 	}
 
-	oStd::path_string RawPath(root);
-	oEnsureSeparator(RawPath);
-	oStrcat(RawPath, _StrRelativePath);
-	if (!oCleanPath(_StrFullPath, _SizeofStrFullPath, RawPath))
-		return oErrorSetLast(std::errc::invalid_argument);
-
-	if (_FileMustExist && !oStreamExists(_StrFullPath))
-		return oErrorSetLast(std::errc::no_such_file_or_directory, "not found: %s", _StrFullPath);
+	_FullPath /= _RelativePath;
+	if (_FileMustExist && !oStreamExists(_FullPath))
+		return oErrorSetLast(std::errc::no_such_file_or_directory, "not found: %s", _FullPath.c_str());
 	return true;
 }

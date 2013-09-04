@@ -259,7 +259,7 @@ bool oBasisTest_oURI()
 		if (oIsUNCPath(sExpectedPaths[i]))
 			oStrcpy(expectedCleaned, sExpectedPaths[i].c_str());
 		else
-			oCleanPath(expectedCleaned, sExpectedPaths[i]);
+			oStd::clean_path(expectedCleaned, sExpectedPaths[i]);
 
 		oTESTB(oStrncmp(testPath, expectedCleaned, testPath.capacity()) == 0, "URI %d did not convert back to a path properly. got %s expected %s", i, testPath.c_str(), sExpectedPaths[i]);
 

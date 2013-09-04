@@ -885,7 +885,7 @@ const char** oWinCommandLineToArgvA(bool _ExePathAsArg0, const char* CmdLine, in
 	if (_ExePathAsArg0)
 	{
 		oSystemGetPath(argv[argc], MAX_PATH, oSYSPATH_APP_FULL);
-		oCleanPath(argv[argc], MAX_PATH, argv[argc], '\\');
+		oStd::clean_path(argv[argc], MAX_PATH, argv[argc], '\\');
 		j = (ULONG)oStrlen(argv[argc])+1;
 		argc++;
 		argv[argc] = _argv+oStrlen(argv[0])+1;

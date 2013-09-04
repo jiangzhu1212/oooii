@@ -34,7 +34,7 @@ struct PLATFORM_oFileMap : public oTest
 	{
 		static const char* testPath = "Test/Textures/lena_1.png";
 		
-		oStd::path_string path;
+		oStd::path path;
 		oTESTB0(FindInputFile(path, testPath));
 
 		oSTREAM_RANGE r;

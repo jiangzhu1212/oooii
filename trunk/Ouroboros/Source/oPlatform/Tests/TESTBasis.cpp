@@ -38,11 +38,11 @@ static size_t GetTotalPhysicalMemory()
 	return static_cast<size_t>(stats.TotalPhysical);
 }
 
-static bool ResolvePath(char* _ResolvedFullPath, size_t _SizeofResolvedFullPath, const char* _RelativePath, bool _PathMustExist, oTest* _pTest)
+static bool ResolvePath(oStd::path& _Path, const char* _RelativePath, bool _PathMustExist, oTest* _pTest)
 {
 	if (_PathMustExist)	
-		return _pTest->BuildPath(_ResolvedFullPath, _SizeofResolvedFullPath, _RelativePath, oTest::DATA, oTest::FileMustExist);
-	else return _pTest->BuildPath(_ResolvedFullPath, _SizeofResolvedFullPath, _RelativePath, oTest::DATA);
+		return _pTest->BuildPath(_Path, _RelativePath, oTest::DATA, oTest::FileMustExist);
+	else return _pTest->BuildPath(_Path, _RelativePath, oTest::DATA);
 }
 
 static bool TestSurface(const char* _Name, const oSURFACE_DESC& _SourceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SourceMapped, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier, oTest* _pTest)
@@ -78,7 +78,7 @@ static void DeallocateSurface(void* _Handle)
 
 static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
 {
-	_pServices->ResolvePath = oBIND(ResolvePath, oBIND1, oBIND2, oBIND3, oBIND4, _pTest);
+	_pServices->ResolvePath = oBIND(ResolvePath, oBIND1, oBIND2, oBIND3, _pTest);
 	_pServices->AllocateAndLoadBuffer = oBIND(oStreamLoad, oBIND1, oBIND2, malloc, free, oBIND3, oBIND4);
 	_pServices->DeallocateLoadedBuffer = free;
 	_pServices->Rand = rand;

@@ -80,11 +80,6 @@ char* oTrimFileLeadingSeperators(char* _Path);
 // Ensures a backslash or forward slash is the rightmost char. Returns _Path
 char* oEnsureSeparator(char* _Path, size_t _SizeofPath, char _FileSeparator = '/');
 
-// Converts . and .. into something meaningful and replaces separators with the 
-// specified one. _CleanedPath and _SourcePath can be the same pointer. Returns
-// _CleanedPath
-char* oCleanPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _SourcePath, char _FileSeparator = '/', bool _ZeroBuffer = false);
-
 // Returns the length of characters from the beginning of the two specified 
 // strings where they match. This uses oIsSeparator() so '/' == '\\' for this
 // function.
@@ -122,7 +117,6 @@ template<size_t size> char* oGetFilebase(char (&_StrDestination)[size], const ch
 template<size_t size> char* oReplaceFileExtension(char (&_Path)[size], const char* _Extension) { return oReplaceFileExtension(_Path, size, _Extension); }
 template<size_t size> char* oReplaceFilename(char (&_Path)[size], const char* _Filename) { return oReplaceFilename(_Path, size, _Filename); }
 template<size_t size> char* oEnsureSeparator(char (&_Path)[size]) { return oEnsureSeparator(_Path, size); }
-template<size_t size> char* oCleanPath(char (&_StrDestination)[size], const char* _SourcePath, char _FileSeparator = '/', bool _ZeroBuffer = false) { return oCleanPath(_StrDestination, size, _SourcePath, _FileSeparator, _ZeroBuffer); }
 template<size_t size> char* oMakeRelativePath(char (&_StrDestination)[size], const char* _FullPath, const char* _BasePath, char _FileSeparator = '/') { return oMakeRelativePath(_StrDestination, size, _FullPath, _BasePath, _FileSeparator); }
 template<size_t size> char* oFindInPath(char (&_StrDestination)[size], const char* _SearchPath, const char* _RelativePath, const char* _DotPath, const oFUNCTION<bool(const char* _Path)>& _PathExists) { return oFindInPath(_StrDestination, size, _SearchPath, _RelativePath, _DotPath, _PathExists); }
 template<size_t size> char* oStrTokToSwitches(char (&_StrDestination)[size], const char* _Switch, const char* _Tokens, const char* _Separator) { return oStrTokToSwitches(_StrDestination, size, _Switch, _Tokens, _Separator); }
@@ -132,7 +126,6 @@ template<size_t capacity> char* oGetFilebase(oStd::fixed_string<char, capacity>&
 template<size_t capacity> char* oReplaceFileExtension(oStd::fixed_string<char, capacity>& _Path, const char* _Extension) { return oReplaceFileExtension(_Path, _Path.capacity(), _Extension); }
 template<size_t capacity> char* oReplaceFilename(oStd::fixed_string<char, capacity>& _Path, const char* _Filename) { return oReplaceFilename(_Path, _Path.capacity(), _Filename); }
 template<size_t capacity> char* oEnsureSeparator(oStd::fixed_string<char, capacity>& _Path, char _FileSeparator = '/') { return oEnsureSeparator(_Path, _Path.capacity(), _FileSeparator); }
-template<size_t capacity> char* oCleanPath(oStd::fixed_string<char, capacity>& _Path, const char* _SourcePath, char _FileSeparator = '/', bool _ZeroBuffer = false) { return oCleanPath(_Path, _Path.capacity(), _SourcePath, _FileSeparator, _ZeroBuffer); }
 template<size_t capacity> char* oMakeRelativePath(oStd::fixed_string<char, capacity>& _Path, const char* _FullPath, const char* _BasePath, char _FileSeparator = '/') { return oMakeRelativePath(_Path, _Path.capacity(), _FullPath, _BasePath, _FileSeparator); }
 template<size_t capacity> char* oFindInPath(oStd::fixed_string<char, capacity>& _Path, const char* _SearchPath, const char* _RelativePath, const char* _DotPath, const oFUNCTION<bool(const char* _Path)>& _PathExists) { return oFindInPath(_Path, _Path.capacity(), _SearchPath, _RelativePath, _DotPath, _PathExists); }
 template<size_t capacity> char* oStrTokToSwitches(oStd::fixed_string<char, capacity>& _StrDestination, const char* _Switch, const char* _Tokens, const char* _Separator) { return oStrTokToSwitches(_StrDestination, _StrDestination.capacity(), _Switch, _Tokens, _Separator); }

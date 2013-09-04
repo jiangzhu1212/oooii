@@ -106,7 +106,8 @@ int oLauncherMain(int argc, const char* argv[])
 	{
 		oStd::mstring ModuleName;
 		oMSGBOX_DESC d;
-		d.Title = oGetFilebase(oModuleGetName(ModuleName));
+		oModuleGetName(ModuleName);
+		d.Title = oGetFilebase(ModuleName);
 		d.Type = oMSGBOX_ERR;
 		oMsgBox(d, "%s", oErrorGetLastString());
 		return oErrorGetLast();

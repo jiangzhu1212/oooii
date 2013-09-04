@@ -32,19 +32,13 @@
 
 // Filter pairs are delimited by '|' and are the description, and the wildcard:
 // i.e. "Text Files|*.txt|Bitmap Files|*.bmp"
-// If _StrDestination contains a valid path, that path will be used
-// as the initial starting folder.
+// If _Path is not empty it will be used as the initial starting folder.
 // If there is an error this will return false. If the error was due to a user
-// canceling the dialog box, last error will be std::errc::operation_canceled. Most likely
-// any other error will be std::errc::protocol_error with a Windows common dialog error
-// to follow.
-bool oWinDialogGetOpenPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr);
-template<size_t size> bool oWinDialogGetOpenPath(char (&_StrDestination)[size], const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr) { return oWinDialogGetOpenPath(_StrDestination, size, _DialogTitle, _FilterPairs, _hParent); }
-template<size_t capacity> bool oWinDialogGetOpenPath(oStd::fixed_string<char, capacity>& _StrDestination, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr) { return oWinDialogGetOpenPath(_StrDestination, _StrDestination.capacity(), _DialogTitle, _FilterPairs, _hParent); }
-
-bool oWinDialogGetSavePath(char* _StrDestination, size_t _SizeofStrDestination, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr);
-template<size_t size> bool oWinDialogGetSavePath(char (&_StrDestination)[size], const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr) { return oWinDialogGetSavePath(_StrDestination, size, _DialogTitle, _FilterPairs, _hParent); }
-template<size_t capacity> bool oWinDialogGetSavePath(oStd::fixed_string<char, capacity>& _StrDestination, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr) { return oWinDialogGetSavePath(_StrDestination, _StrDestination.capacity(), _DialogTitle, _FilterPairs, _hParent); }
+// canceling the dialog box, last error will be std::errc::operation_canceled. 
+// Most likely any other error will be std::errc::protocol_error with a Windows 
+// common dialog error to follow.
+bool oWinDialogGetOpenPath(oStd::path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr);
+bool oWinDialogGetSavePath(oStd::path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr);
 
 // *_pColor is used as the initial value of the dialog
 bool oWinDialogGetColor(oStd::color* _pColor, HWND _hParent = nullptr);

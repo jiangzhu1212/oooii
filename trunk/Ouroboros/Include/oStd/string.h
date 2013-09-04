@@ -288,7 +288,7 @@ template<size_t size> char* json_escape_decode(char (&_StrDestination)[size], co
 // If _ZeroBuffer is true, all extra chars in the destination will be set to 
 // zero such that a memcmp of two cleaned buffers would be reliable.
 char* clean_path(char* _StrDestination, size_t _SizeofStrDestination, const char* _SourcePath, char _FileSeparator = '/', bool _ZeroBuffer = false);
-template<size_t size> char* clean_path(char (&_StrDestination)[size], const char* _SourcePath, char _FileSeparator = '/', bool _ZeroBuffer = false) { return clean_path(_StrDestination, _SizeofStrDestination, _SourcePath, _FileSeparator, _ZeroBuffer); }
+template<size_t size> char* clean_path(char (&_StrDestination)[size], const char* _SourcePath, char _FileSeparator = '/', bool _ZeroBuffer = false) { return clean_path(_StrDestination, size, _SourcePath, _FileSeparator, _ZeroBuffer); }
 
 // Fills _StrDestination with a version of FullPath that has all the common 
 // parts between _BasePath and _FullPath removed and additionally has ../ 

@@ -209,7 +209,7 @@ char* oURIRecompose(char* _URIReference, size_t _SizeofURIReference, const char*
 	}
 
 	oStd::path_string path;
-	if (!oCleanPath(path, _Path))
+	if (!oStd::clean_path(path, _Path))
 		return nullptr;
 
 	size_t URIReferenceLength = oStrlen(_URIReference);
@@ -266,7 +266,7 @@ char* oURIFromAbsolutePath(char* _URI, size_t _SizeofURI, const char* _AbsoluteP
 char* oURIFromRelativePath(char* _URIReference, size_t _SizeofURIReference, const char* _RelativePath)
 {
 	oStd::path_string path;
-	if (!oCleanPath(path, _RelativePath))
+	if (!oStd::clean_path(path, _RelativePath))
 		return nullptr;
 
 	if (!oURIPercentEncode(_URIReference, _SizeofURIReference, path, " "))
@@ -473,7 +473,7 @@ const oURI& oURI::operator=(const char* _That)
 	memset(this, 0, sizeof(*this));
 
 	// apply good practices from http://www.textuality.com/tag/uri-comp-2.html
-	if (!oURIDecompose(_That, &URIParts) || !oCleanPath(URIParts.Path, URIParts.Path, '/', true))
+	if (!oURIDecompose(_That, &URIParts) || !oStd::clean_path(URIParts.Path, URIParts.Path, '/', true))
 		Clear();
 	URIParts.ToLower();
 
