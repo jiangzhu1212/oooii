@@ -28,6 +28,7 @@
 #ifndef oStd_fixed_string_h
 #define oStd_fixed_string_h
 
+#include <oStd/opttok.h>
 #include <oStd/string.h>
 #include <oStd/string_traits.h>
 #include <cstring>
@@ -228,8 +229,10 @@ namespace oStd {
 	TSTR char* clean_path(STRT& _StrDestination, const char* _SourcePath, char _FileSeparator = '/', bool _ZeroBuffer = false) { return clean_path(_StrDestination, _StrDestination.capacity(), _SourcePath, _FileSeparator, _ZeroBuffer); }
 	TSTR char* relativize_path(STRT& _StrDestination, const char* _BasePath, const char* _FullPath) { return relativize_path(_StrDestination, _StrDestination.capacity(), _BasePath, _FullPath); }
 
-	TSTR int vsnprintf(oStd::STRT& _StrDestination, const char* _Format, va_list _Args) { return vsnprintf(_StrDestination, Capacity, _Format, _Args); }
+	TSTR int vsnprintf(STRT& _StrDestination, const char* _Format, va_list _Args) { return vsnprintf(_StrDestination, Capacity, _Format, _Args); }
 
+	TSTR char* optdoc(STRT& _StrDestination, const char* _AppName, const option* _pOptions, size_t _NumOptions, const char* _LooseParameters = "") { return optdoc(_StrDestination, _StrDestination.capacity(), _AppName, _pOptions, _NumOptions, _LooseParameters); }
+	template<typename charT, size_t Capacity, size_t size> char* optdoc(STRT& _StrDestination, const char* _AppName, const option (&_pOptions)[size], const char* _LooseParameters = "") { return optdoc(_StrDestination, _StrDestination.capacity(), _AppName, _pOptions, size, _LooseParameters); }
 } // namespace oStd
 
 TSTR int snprintf(oStd::STRT& _StrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); int l = oStd::vsnprintf(_StrDestination, _Format, args); va_end(args); return l; }

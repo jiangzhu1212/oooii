@@ -38,7 +38,22 @@ struct oVersion : oComparable<oVersion>
 		, Revision(0)
 	{}
 
-	/*constexpr*/ oVersion(unsigned short _Major, unsigned short _Minor, unsigned short _Build = 0, unsigned short _Revision = 0)
+	/*constexpr*/ oVersion(unsigned short _Major, unsigned short _Minor)
+		: Major(_Major)
+		, Minor(_Minor)
+		, Build(0)
+		, Revision(0)
+	{}
+
+	// _SCCRevision is split in a semi-user-readable way acress build and revision.
+	/*constexpr*/ oVersion(unsigned short _Major, unsigned short _Minor, unsigned int _SCCRevision)
+		: Major(_Major)
+		, Minor(_Minor)
+		, Build(static_cast<unsigned short>(_SCCRevision / 10000))
+		, Revision(static_cast<unsigned short>(_SCCRevision % 10000))
+	{}
+
+	/*constexpr*/ oVersion(unsigned short _Major, unsigned short _Minor, unsigned short _Build, unsigned short _Revision)
 		: Major(_Major)
 		, Minor(_Minor)
 		, Build(_Build)
@@ -51,6 +66,9 @@ struct oVersion : oComparable<oVersion>
 	unsigned short Revision;
 
 	bool IsValid() const { return Major || Minor || Build || Revision; }
+
+	// Converts a version build with an SCCRevision back to that SCCRevision
+	unsigned int scc_revision() const { return Build * 10000 + Revision; }
 
 	bool operator<(const oVersion& _That) const { return IsValid() && _That.IsValid() && ((Major < _That.Major) || (Major == _That.Major && Minor < _That.Minor) || (Major == _That.Major && Minor == _That.Minor && Build < _That.Build) || (Major == _That.Major && Minor == _That.Minor && Build == _That.Build) && Revision < _That.Revision); }
 	bool operator==(const oVersion& _That) const { return IsValid() && _That.IsValid() && Major == _That.Major && Minor == _That.Minor && Build == _That.Build && Revision == _That.Revision; }

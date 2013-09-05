@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{9B201A35-70FF-4CE2-8F00-31890A6196C0}</ProjectGuid>
-    <RootNamespace>oVerPatch</RootNamespace>
+    <RootNamespace>oRCGen</RootNamespace>
     <SccProjectName>
     </SccProjectName>
     <SccAuxPath>
@@ -51,6 +51,7 @@
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosCommonRCGen.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -58,6 +59,7 @@
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosCommonRCGen.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -65,6 +67,7 @@
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosCommonRCGen.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -72,16 +75,14 @@
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
+    <Import Project="..\Build\msvc100\Properties\OuroborosCommonRCGen.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
+    <PreBuildEvent />
     <CustomBuildStep>
       <Message>
       </Message>
@@ -98,12 +99,11 @@
     <Link>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PreBuildEvent />
+    <PreBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
+    <PreBuildEvent />
     <CustomBuildStep>
       <Message>
       </Message>
@@ -125,12 +125,11 @@
     <Link>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PreBuildEvent />
+    <PreBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
+    <PreBuildEvent />
     <CustomBuildStep>
       <Message>
       </Message>
@@ -147,12 +146,11 @@
     <Link>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PreBuildEvent />
+    <PreBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
+    <PreBuildEvent />
     <CustomBuildStep>
       <Message>
       </Message>
@@ -172,6 +170,8 @@
     <Link>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PreBuildEvent />
+    <PreBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
     <ProjectReference Include="..\oBasis\oBasis.vcxproj">
@@ -194,7 +194,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="oVerPatch.cpp" />
+    <ClCompile Include="oRCGen.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -207,7 +207,7 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="oVerPatch.rc" />
+    <ResourceCompile Include="oRCGen.rc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\Data\oooii.ico" />

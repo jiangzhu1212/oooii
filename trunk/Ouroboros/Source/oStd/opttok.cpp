@@ -74,6 +74,7 @@ char opttok(const char** _ppValue, int _Argc, const char* _Argv[], const option*
 					if (i == _Argc-1 || isopt(nextarg))
 					{
 						i++;
+						*_ppValue = (const char*)i;
 						return ':';
 					}
 
@@ -94,6 +95,7 @@ char opttok(const char** _ppValue, int _Argc, const char* _Argv[], const option*
 		}
 
 		i++; // skip unrecognized opt
+		*_ppValue = currarg;
 		return '?';
 	}
 
@@ -136,6 +138,7 @@ char opttok(const char** _ppValue, int _Argc, const char* _Argv[], const option*
 		}
 
 		i++; // skip unrecognized opt
+		*_ppValue = currarg;
 		return '?';
 	}
 
@@ -143,12 +146,12 @@ char opttok(const char** _ppValue, int _Argc, const char* _Argv[], const option*
 	return ' ';
 }
 
-char* optdoc(char* _StrDestination, size_t _SizeofStrDestination, const char* _AppName, const option* _pOptions, size_t _NumOptions)
+char* optdoc(char* _StrDestination, size_t _SizeofStrDestination, const char* _AppName, const option* _pOptions, size_t _NumOptions, const char* _LooseParameters)
 {
 	ellipsize(_StrDestination, _SizeofStrDestination);
 	char* dst = _StrDestination;
 
-	int w = snprintf(dst, _SizeofStrDestination, "%s ", _AppName);
+	int w = snprintf(dst, _SizeofStrDestination, "%s [options] ", _AppName);
 	if (w == -1)
 		return _StrDestination;
 	dst += w;
@@ -159,6 +162,13 @@ char* optdoc(char* _StrDestination, size_t _SizeofStrDestination, const char* _A
 	{
 		w = snprintf(dst, _SizeofStrDestination, "-%c%s%s ", o->abbrev, o->argname ? " " : "", o->argname ? o->argname : "");
 		if (w == -1) return _StrDestination;
+		dst += w;
+		_SizeofStrDestination -= w;
+	}
+
+	if (_LooseParameters && *_LooseParameters)
+	{
+		w = snprintf(dst, _SizeofStrDestination, "%s", _LooseParameters);
 		dst += w;
 		_SizeofStrDestination -= w;
 	}

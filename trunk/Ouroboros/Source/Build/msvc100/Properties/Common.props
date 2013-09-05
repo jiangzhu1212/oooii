@@ -48,11 +48,17 @@
       <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
     </ProjectReference>
     <PostBuildEvent>
-      <Command>echo "$(SolutionDir)bin\BuildTools\oVerPatch.exe" -@ "$(SolutionDir)bin\BuildTools\verpatch.exe" -n -v 0.0 -f "$(TargetPath)"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Patching Version...</Message>
+      <Message>
+      </Message>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <BuildMacro Include="oCompilerName">

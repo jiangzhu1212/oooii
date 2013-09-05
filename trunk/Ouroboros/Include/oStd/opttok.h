@@ -64,10 +64,10 @@ inline char opttok(const char** _ppValue) { return opttok(_ppValue, 0, nullptr, 
 template<size_t size> char opttok(const char** _ppValue, int _Argc, const char* _Argv[], const option (&_pOptions)[size]) { return opttok(_ppValue, _Argc, _Argv, _pOptions, size); }
 
 // Prints documentation for the specified options to the specified buffer.
-char* optdoc(char* _StrDestination, size_t _SizeofStrDestination, const char* _AppName, const option* _pOptions, size_t _NumOptions);
-template<size_t size> char* optdoc(char* _StrDestination, size_t _SizeofStrDestination, const char* _AppName, const option (&_pOptions)[size]) { return optdoc(_StrDestination, _SizeofStrDestination, _AppName, _pOptions, size); }
-template<size_t capacity> char* optdoc(char (&_StrDestination)[capacity], const char* _AppName, const option* _pOptions, size_t _NumOptions) { return optdoc(_StrDestination, capacity, _AppName, _pOptions, _NumOptions); }
-template<size_t capacity, size_t size> char* optdoc(char (&_StrDestination)[capacity], const char* _AppName, const option (&_pOptions)[size]) { return optdoc(_StrDestination, capacity, _AppName, _pOptions, size); }
+char* optdoc(char* _StrDestination, size_t _SizeofStrDestination, const char* _AppName, const option* _pOptions, size_t _NumOptions, const char* _LooseParameters = "");
+template<size_t size> char* optdoc(char* _StrDestination, size_t _SizeofStrDestination, const char* _AppName, const option (&_pOptions)[size], const char* _LooseParameters = "") { return optdoc(_StrDestination, _SizeofStrDestination, _AppName, _pOptions, size, _LooseParameters); }
+template<size_t capacity> char* optdoc(char (&_StrDestination)[capacity], const char* _AppName, const option* _pOptions, size_t _NumOptions, const char* _LooseParameters = "") { return optdoc(_StrDestination, capacity, _AppName, _pOptions, _NumOptions, _LooseParameters); }
+template<size_t capacity, size_t size> char* optdoc(char (&_StrDestination)[capacity], const char* _AppName, const option (&_pOptions)[size], const char* _LooseParameters = "") { return optdoc(_StrDestination, capacity, _AppName, _pOptions, size, _LooseParameters); }
 
 } // namespace oStd
 
