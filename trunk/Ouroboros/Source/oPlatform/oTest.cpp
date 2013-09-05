@@ -766,10 +766,19 @@ void oTestManager_Impl::PrintDesc()
 	uint CL = scc->revision(DevPath);
 	if (CL)
 	{
-		if (scc->is_up_to_date(DevPath, CL))
-			oPrintf(CLStr, "%d", CL);
-		else
-			oPrintf(CLStr, "%d + modifications", CL);
+		try
+		{
+			if (scc->is_up_to_date(DevPath, CL))
+				oPrintf(CLStr, "%d", CL);
+			else
+				oPrintf(CLStr, "%d + modifications", CL);
+		}
+
+		catch (std::exception& e)
+		{
+			oPrintf(CLStr, "%d + ???", CL);
+			oTRACE("scc failure: %s", e.what());
+		}
 	}
 	else
 		oPrintf(CLStr, "???");
