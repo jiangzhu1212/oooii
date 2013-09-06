@@ -947,20 +947,15 @@ void oWinCommandLineToArgvAFree(const char** _pArgv)
 	HeapFree(GetProcessHeap(), 0, _pArgv);
 }
 
-void oWinGetVersion(const oVersion& _Version, DWORD* _pVersionMS, DWORD* _pVersionLS)
+void oWinGetVersion(const oStd::version& _Version, DWORD* _pVersionMS, DWORD* _pVersionLS)
 {
-	*_pVersionMS = (_Version.Major << 16) | _Version.Minor;
-	*_pVersionLS = (_Version.Build << 16) | _Version.Revision;
+	*_pVersionMS = (_Version.major << 16) | _Version.minor;
+	*_pVersionLS = (_Version.build << 16) | _Version.revision;
 }
 
-oVersion oWinGetVersion(DWORD _VersionMS, DWORD _VersionLS)
+oStd::version oWinGetVersion(DWORD _VersionMS, DWORD _VersionLS)
 {
-	oVersion v;
-	v.Major = HIWORD(_VersionMS);
-	v.Minor = LOWORD(_VersionMS);
-	v.Build = HIWORD(_VersionLS);
-	v.Revision = LOWORD(_VersionLS);
-	return v;
+	return oStd::version(HIWORD(_VersionMS), LOWORD(_VersionMS), HIWORD(_VersionLS), LOWORD(_VersionLS));
 }
 
 void oGetScreenDPIScale(float* _pScaleX, float* _pScaleY)
@@ -1463,7 +1458,7 @@ LPDLGTEMPLATE oDlgNewTemplate(const oWINDOWS_DIALOG_DESC& _Desc)
 // (outside function below so this doesn't get tracked as a leak)
 static std::regex reNVVersionString("[0-9]+\\.[0-9]+\\.[0-9]+([0-9])\\.([0-9][0-9])([0-9]+)");
 
-static bool ParseVersionStringNV(const char* _VersionString, oVersion* _pVersion)
+static bool ParseVersionStringNV(const char* _VersionString, oStd::version* _pVersion)
 {
 	if (!_VersionString || !_pVersion)
 		return oErrorSetLast(std::errc::invalid_argument);
@@ -1477,7 +1472,7 @@ static bool ParseVersionStringNV(const char* _VersionString, oVersion* _pVersion
 	major[1] = *matches[2].first;
 	major[2] = *(matches[2].first+1);
 	major[3] = 0;
-	*_pVersion = oVersion(oUShort(atoi(major)), oUShort(atoi(matches[3].first)));
+	*_pVersion = oStd::version(oUShort(atoi(major)), oUShort(atoi(matches[3].first)));
 	return true;
 }
 
@@ -1486,7 +1481,7 @@ static bool ParseVersionStringNV(const char* _VersionString, oVersion* _pVersion
 // (outside function below so this doesn't get tracked as a leak)
 static std::regex reAMDVersionString("([0-9]+)\\.([0-9]+)\\.[0-9]+\\.[0-9]+");
 
-static bool ParseVersionStringAMD(const char* _VersionString, oVersion* _pVersion)
+static bool ParseVersionStringAMD(const char* _VersionString, oStd::version* _pVersion)
 {
 	if (!_VersionString || !_pVersion)
 		return oErrorSetLast(std::errc::invalid_argument);
@@ -1495,11 +1490,11 @@ static bool ParseVersionStringAMD(const char* _VersionString, oVersion* _pVersio
 	if (!regex_match(_VersionString, matches, reAMDVersionString))
 		return oErrorSetLast(std::errc::invalid_argument, "The specified string \"%s\" is not a well-formed AMD version string", oSAFESTRN(_VersionString));
 
-	*_pVersion = oVersion(oUShort(atoi(matches[1].first)), oUShort(atoi(matches[2].first)));
+	*_pVersion = oStd::version(oUShort(atoi(matches[1].first)), oUShort(atoi(matches[2].first)));
 	return true;
 }
 
-static bool ParseVersionStringIntel(const char* _VersionString, oVersion* _pVersion)
+static bool ParseVersionStringIntel(const char* _VersionString, oStd::version* _pVersion)
 {
 	// @oooii-tony: This initial version was done based on Dave's laptop which 
 	// appears to have AMD-like drivers... so use the same parsing for now...
@@ -1572,7 +1567,7 @@ bool oWinEnumVideoDriverDesc(oFUNCTION<void(const oDISPLAY_ADAPTER_DRIVER_DESC& 
 		else
 		{
 			desc.Vendor = oGPU_VENDOR_UNKNOWN;
-			desc.Version = oVersion();
+			desc.Version = oStd::version();
 		}
 
 		_Enumerator(desc);

@@ -52,9 +52,10 @@ struct oOPT
 	bool ShowHelp;
 };
 
-bool ParseOptions(int argc, const char* argv[], oOPT* _pOpt)
+oOPT ParseOptions(int argc, const char* argv[])
 {
-	memset(_pOpt, 0, sizeof(oOPT));
+	oOPT o;
+	memset(&o, 0, sizeof(oOPT));
 	const char* value = nullptr;
 	char ch = oStd::opttok(&value, argc, argv, sOptions);
 	while (ch)
@@ -68,36 +69,36 @@ bool ParseOptions(int argc, const char* argv[], oOPT* _pOpt)
 				if (majend)
 				{
 					*majend++ = '\0';
-					if (oStd::from_string(&_pOpt->Major, v) && oStd::from_string(&_pOpt->Minor, majend))
+					if (oStd::from_string(&o.Major, v) && oStd::from_string(&o.Minor, majend))
 						break;
 				}
-				return oErrorSetLast(std::errc::invalid_argument, "version number not well-formatted");
+				oTHROW(invalid_argument, "version number not well-formatted");
 			}
-			case 'a': _pOpt->AutoRevision = true; break;
+			case 'a': o.AutoRevision = true; break;
 			case 'r':
 			{
-				if (!oStd::from_string(&_pOpt->Revision, value))
-					return oErrorSetLast(std::errc::invalid_argument, "error: unrecognized -r value: it must be an non-negative integer", value);
+				if (!oStd::from_string(&o.Revision, value))
+					oTHROW(invalid_argument, "unrecognized -r value: it must be an non-negative integer", value);
 				break;
 			}
-			case 'p': _pOpt->ProductName = value; break;
-			case 'f': _pOpt->FileName = value; break;
-			case 'c': _pOpt->Company = value; break;
-			case 'C': _pOpt->Copyright = value; break;
-			case 'd': _pOpt->Description = value; break;
-			case 'h': _pOpt->ShowHelp = true; break;
-			case 'o': _pOpt->Output = value; break;
-			case '?': return oErrorSetLast(std::errc::invalid_argument, "error: unrecognized switch \"%s\"", value);
-			case ':': return oErrorSetLast(std::errc::invalid_argument, "missing parameter option for argument %d", (int)value);
+			case 'p': o.ProductName = value; break;
+			case 'f': o.FileName = value; break;
+			case 'c': o.Company = value; break;
+			case 'C': o.Copyright = value; break;
+			case 'd': o.Description = value; break;
+			case 'h': o.ShowHelp = true; break;
+			case 'o': o.Output = value; break;
+			case '?': oTHROW(invalid_argument, "unrecognized switch \"%s\"", value);
+			case ':': oTHROW(invalid_argument, "missing parameter option for argument %d", (int)value);
 		}
 
 		ch = oStd::opttok(&value);
 	}
 
-	if (!_pOpt->Output)
-		return oErrorSetLast(std::errc::invalid_argument, "-o specifying an output file is required");
+	if (!o.Output)
+		oTHROW(invalid_argument, "-o specifying an output file is required");
 
-	return true;
+	return o;
 }
 
 int ShowHelp(const char* argv0)
@@ -111,52 +112,56 @@ int ShowHelp(const char* argv0)
 
 int main(int argc, const char* argv[])
 {
-	oOPT opt;
-	if (!ParseOptions(argc, argv, &opt))
+	try
 	{
-		printf("%s: %s\n", oErrorAsString(oErrorGetLast()), oErrorGetLastString());
-		return oErrorGetLast();
+		oOPT opt = ParseOptions(argc, argv);
+
+		if (opt.ShowHelp)
+			return ShowHelp(argv[0]);
+
+		unsigned int Revision = opt.Revision;
+		if (opt.AutoRevision)
+		{
+			auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, false, oBIND4));
+			oStd::path_string DevPath;
+			oCHECK0(oSystemGetPath(DevPath, oSYSPATH_DEV));
+			printf("scc revision...", DevPath.c_str());
+			oStd::lstring RevStr;
+			try { Revision = scc->revision(DevPath); }
+			catch (std::exception& e) { printf("\n  %s", e.what()); }
+			printf("\b\b\b %s\n", Revision ? oStd::to_string(RevStr, Revision) : "");
+		}
+
+		oStd::version v(opt.Major, opt.Minor, Revision);
+		oStd::sstring VerStrMS, VerStrLX;
+		oStd::xlstring s;
+		int w = snprintf(s, 
+			"// generated file - do not modify\n" \
+			"#define oRC_SCC_REVISION %u\n" \
+			"#define oRC_VERSION_VAL %u,%u,%u,%u\n" \
+			"#define oRC_VERSION_STR_MS \"%s\"\n" \
+			"#define oRC_VERSION_STR_LINUX \"%u.%u.%u\"\n" \
+			, Revision
+			, v.major, v.minor, v.build, v.revision
+			, oStd::to_string4(VerStrMS, v)
+			, oStd::to_string3(VerStrLX, v));
+
+		if (opt.ProductName) sncatf(s, "#define oRC_PRODUCTNAME \"%s\"\n", opt.ProductName);
+		if (opt.FileName) sncatf(s, "#define oRC_FILENAME \"%s\"\n", opt.FileName);
+		if (opt.Company) sncatf(s, "#define oRC_COMPANY \"%s\"\n", opt.Company);
+		if (opt.Copyright) sncatf(s, "#define oRC_COPYRIGHT \"%s\"\n", opt.Copyright);
+		if (opt.Description) sncatf(s, "#define oRC_DESCRIPTION \"%s\"\n", opt.Description);
+
+		if (!oFileSave(opt.Output, s, s.length(), true))
+			oTHROW(io_error, "failed to save '%s'\n", opt.Output);
 	}
 
-	if (opt.ShowHelp)
-		return ShowHelp(argv[0]);
-
-	unsigned int Revision = opt.Revision;
-	if (opt.AutoRevision)
+	catch (std::exception& e)
 	{
-		auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, false, oBIND4));
-		oStd::path_string DevPath;
-		oVERIFY(oSystemGetPath(DevPath, oSYSPATH_DEV));
-		printf("scc revision for '%s'...", DevPath.c_str());
-		oStd::lstring RevStr;
-		try { Revision = scc->revision(DevPath); }
-		catch (std::exception& e) { printf("\nerror: %s", e.what()); }
-		printf("%s\n", Revision ? oStd::to_string(RevStr, Revision) : "");
+		printf("%s\n", e.what());
+		std::system_error* se = dynamic_cast<std::system_error*>(&e);
+		return se ? se->code().value() : -1;
 	}
-
-	oVersion v(opt.Major, opt.Minor, Revision);
-	oStd::sstring VerStr;
-	oStd::to_string(VerStr, v);
-	oStd::xlstring s;
-	int w = snprintf(s, 
-		"// generated file - do not modify\n" \
-		"#define oRC_SCC_REVISION %u\n" \
-		"#define oRC_VERSION_VAL %u,%u,%u,%u\n" \
-		"#define oRC_VERSION_STR_MS \"%s\"\n" \
-		"#define oRC_VERSION_STR_LINUX \"%u.%u.%u\"\n" \
-		, Revision
-		, v.Major, v.Minor, v.Build, v.Revision
-		, VerStr.c_str()
-		, v.Major, v.Minor, Revision);
-
-	if (opt.ProductName) sncatf(s, "#define oRC_PRODUCTNAME \"%s\"\n", opt.ProductName);
-	if (opt.FileName) sncatf(s, "#define oRC_FILENAME \"%s\"\n", opt.FileName);
-	if (opt.Company) sncatf(s, "#define oRC_COMPANY \"%s\"\n", opt.Company);
-	if (opt.Copyright) sncatf(s, "#define oRC_COPYRIGHT \"%s\"\n", opt.Copyright);
-	if (opt.Description) sncatf(s, "#define oRC_DESCRIPTION \"%s\"\n", opt.Description);
-
-	if (!oFileSave(opt.Output, s, s.length(), true))
-		return oErrorSetLast(std::errc::io_error, "failed to save '%s'\n", opt.Output);
 
 	return 0;
 }

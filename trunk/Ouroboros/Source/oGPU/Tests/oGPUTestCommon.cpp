@@ -39,7 +39,7 @@ bool oGPUTestApp::Create(const char* _Title, bool _DevMode, const int* _pSnapsho
 	{
 		oGPU_DEVICE_INIT init;
 		init.DebugName = "oGPUTestApp.Device";
-		init.Version = oVersion(10,0); // for broader compatibility
+		init.Version = oStd::version(10,0); // for broader compatibility
 		init.DriverDebugLevel = oGPU_DEBUG_NORMAL;
 		if (!oGPUDeviceCreate(init, &Device))
 			return false; // pass through error

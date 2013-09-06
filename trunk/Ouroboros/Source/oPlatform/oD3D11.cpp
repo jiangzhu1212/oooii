@@ -69,7 +69,7 @@ oD3D11::~oD3D11()
 const oGUID oD3D11::GUID = { 0x2bcf2584, 0x3de9, 0x4192, { 0x89, 0xd3, 0x7, 0x87, 0xe4, 0xde, 0x32, 0xf9 } };
 oSINGLETON_REGISTER(oD3D11);
 
-static bool oD3D11FindAdapter(int _Index, const int2& _VirtualDesktopPosition, const oVersion& _MinVersion, bool _ExactVersion, IDXGIAdapter** _ppAdapter)
+static bool oD3D11FindAdapter(int _Index, const int2& _VirtualDesktopPosition, const oStd::version& _MinVersion, bool _ExactVersion, IDXGIAdapter** _ppAdapter)
 {
 	bool ForceOneGPU = false;
 	char buf[32];
@@ -107,38 +107,40 @@ static bool oD3D11FindAdapter(int _Index, const int2& _VirtualDesktopPosition, c
 	oDISPLAY_ADAPTER_DRIVER_DESC add;
 	oDXGIGetAdapterDriverDesc(*_ppAdapter, &add);
 
-	oVersion RequiredVersion = _MinVersion;
+	oStd::version RequiredVersion = _MinVersion;
 
-	if (!RequiredVersion.IsValid())
+	if (RequiredVersion == oStd::version())
 	{
 		switch (add.Vendor)
 		{
 			case oGPU_VENDOR_NVIDIA:
-				RequiredVersion = oVersion(oNVVER_MAJOR, oNVVER_MINOR);
+				RequiredVersion = oStd::version(oNVVER_MAJOR, oNVVER_MINOR);
 				break;
 			case oGPU_VENDOR_AMD:
-				RequiredVersion = oVersion(oAMDVER_MAJOR, oAMDVER_MINOR);
+				RequiredVersion = oStd::version(oAMDVER_MAJOR, oAMDVER_MINOR);
 				break;
 			default:
 				break;
 		}
 	}
 
+	oStd::sstring StrAdd, StrReq;
+
 	if (_ExactVersion)
 	{
 		if (add.Version != RequiredVersion)
-			return oErrorSetLast(std::errc::invalid_argument, "Exact video driver version %d.%d required, but current driver is %d.%d", RequiredVersion.Major, RequiredVersion.Minor, add.Version.Major, add.Version.Minor);
+			return oErrorSetLast(std::errc::invalid_argument, "Exact video driver version %s required, but current driver is %s", oStd::to_string2(StrReq, RequiredVersion), oStd::to_string2(StrAdd, RequiredVersion));
 	}
 
 	else if (add.Version < RequiredVersion)
-		return oErrorSetLast(std::errc::invalid_argument, "Video driver version %d.%d or newer required, but current driver is %d.%d", RequiredVersion.Major, RequiredVersion.Minor, add.Version.Major, add.Version.Minor);
+		return oErrorSetLast(std::errc::invalid_argument, "Video driver version %s or newer required, but current driver is %s", oStd::to_string2(StrReq, RequiredVersion), oStd::to_string2(StrAdd, RequiredVersion));
 
 	return true;
 }
 
 bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3D11Device** _ppDevice)
 {
-	if (!_ppDevice || _Init.Version < oVersion(9,0))
+	if (!_ppDevice || _Init.Version < oStd::version(9,0))
 		return oErrorSetLast(std::errc::invalid_argument);
 
 	oRef<IDXGIAdapter> Adapter;
@@ -198,7 +200,7 @@ bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3
 		oTRACE("Debug D3D11 not found: device created in non-debug mode so driver error reporting will not be available.");
 	}
 
-	oVersion D3DVersion = oD3D11GetFeatureVersion(FeatureLevel);
+	oStd::version D3DVersion = oD3D11GetFeatureVersion(FeatureLevel);
 	if (D3DVersion < _Init.Version)
 	{
 		if (*_ppDevice) 
@@ -206,7 +208,8 @@ bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3
 			(*_ppDevice)->Release();
 			*_ppDevice = nullptr;
 		}
-		return oErrorSetLast(std::errc::not_supported, "Failed to create an ID3D11Device with a minimum feature set of DX %d.%d!", _Init.Version.Major, _Init.Version.Minor);
+		oStd::sstring StrVer;
+		return oErrorSetLast(std::errc::not_supported, "Failed to create an ID3D11Device with a minimum feature set of DX %s!", oStd::to_string(StrVer, _Init.Version));
 	}
 
 	oVERIFY(oD3D11SetDebugName(*_ppDevice, oSAFESTRN(_Init.DebugName)));
@@ -455,16 +458,16 @@ const char* as_string(const D3D11_USAGE& _Usage)
 
 } // namespace oStd
 
-oVersion oD3D11GetFeatureVersion(D3D_FEATURE_LEVEL _Level)
+oStd::version oD3D11GetFeatureVersion(D3D_FEATURE_LEVEL _Level)
 {
 	switch (_Level)
 	{
-		case D3D_FEATURE_LEVEL_11_0: return oVersion(11,0);
-		case D3D_FEATURE_LEVEL_10_1: return oVersion(10,1);
-		case D3D_FEATURE_LEVEL_10_0: return oVersion(10,0);
-		case D3D_FEATURE_LEVEL_9_3: return oVersion(9,3);
-		case D3D_FEATURE_LEVEL_9_2: return oVersion(9,2);
-		case D3D_FEATURE_LEVEL_9_1: return oVersion(9,1);
+		case D3D_FEATURE_LEVEL_11_0: return oStd::version(11,0);
+		case D3D_FEATURE_LEVEL_10_1: return oStd::version(10,1);
+		case D3D_FEATURE_LEVEL_10_0: return oStd::version(10,0);
+		case D3D_FEATURE_LEVEL_9_3: return oStd::version(9,3);
+		case D3D_FEATURE_LEVEL_9_2: return oStd::version(9,2);
+		case D3D_FEATURE_LEVEL_9_1: return oStd::version(9,1);
 		oNODEFAULT;
 	}
 }
@@ -610,17 +613,17 @@ uint oD3D11GetNumElements(D3D_PRIMITIVE_TOPOLOGY _PrimitiveTopology, uint _NumPr
 	}
 }
 
-bool oD3D11GetFeatureLevel(const oVersion& _ShaderModel, D3D_FEATURE_LEVEL* _pLevel)
+bool oD3D11GetFeatureLevel(const oStd::version& _ShaderModel, D3D_FEATURE_LEVEL* _pLevel)
 {
 	*_pLevel = D3D_FEATURE_LEVEL_9_1;
 
-	if (_ShaderModel == oVersion(3,0))
+	if (_ShaderModel == oStd::version(3,0))
 		*_pLevel = D3D_FEATURE_LEVEL_9_3;
-	else if (_ShaderModel == oVersion(4,0))
+	else if (_ShaderModel == oStd::version(4,0))
 		*_pLevel = D3D_FEATURE_LEVEL_10_0;
-	else if (_ShaderModel == oVersion(4,1))
+	else if (_ShaderModel == oStd::version(4,1))
 		*_pLevel = D3D_FEATURE_LEVEL_10_1;
-	else if (_ShaderModel == oVersion(5,0))
+	else if (_ShaderModel == oStd::version(5,0))
 		*_pLevel = D3D_FEATURE_LEVEL_11_0;
 
 	return *_pLevel != D3D_FEATURE_LEVEL_9_1;
@@ -691,8 +694,9 @@ const char* oD3D11GetShaderProfile(D3D_FEATURE_LEVEL _Level, oGPU_PIPELINE_STAGE
 	const char* profile = profiles[_Stage];
 	if (!profile)
 	{
-		oVersion ver = oD3D11GetFeatureVersion(_Level);
-		oErrorSetLast(std::errc::not_supported, "Shader profile does not exist for D3D%d.%d's stage %s", ver.Major, ver.Minor, oStd::as_string(_Stage));
+		oStd::version ver = oD3D11GetFeatureVersion(_Level);
+		oStd::sstring StrVer;
+		oErrorSetLast(std::errc::not_supported, "Shader profile does not exist for D3D%s's stage %s", oStd::to_string2(StrVer, ver), oStd::as_string(_Stage));
 	}
 
 	return profile;

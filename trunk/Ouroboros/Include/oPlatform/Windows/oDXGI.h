@@ -27,8 +27,8 @@
 #ifndef oDXGI_h
 #define oDXGI_h
 
+#include <oStd/version.h>
 #include <oBasis/oSurface.h>
-#include <oBasis/oVersion.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/Windows/oWindows.h>
 
@@ -71,12 +71,12 @@
 	// instantiated (i.e. whether you can create an ID3D10Device or an 
 	// ID3D11Device). This is related more to the OS version than the HW 
 	// capabilities.
-	oVersion oDXGIGetInterfaceVersion(IDXGIAdapter* _pAdapter);
+	oStd::version oDXGIGetInterfaceVersion(IDXGIAdapter* _pAdapter);
 
 	// Returns the highest D3D feature level version that can be HW accelerated by 
 	// the specified adapter. For example even though an ID3D11Device can be 
 	// instantiated the HW may only support DX10 features.
-	oVersion oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter);
+	oStd::version oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter);
 
 	// Returns a description and version of the driver for the specified adapter.
 	void oDXGIGetAdapterDriverDesc(IDXGIAdapter* _pAdapter, oDISPLAY_ADAPTER_DRIVER_DESC* _pDesc);

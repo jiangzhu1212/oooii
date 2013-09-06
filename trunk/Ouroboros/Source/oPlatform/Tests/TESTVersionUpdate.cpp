@@ -36,7 +36,7 @@ struct PLATFORM_oVersionUpdate : public oTest
 		oTESTB(0 == oStrcmp(Parts.Filebase, "oTest"), "UpdateURI decomposed filebase doesn't match");
 		oTESTB(Parts.IsDebugBuild, "UpdateURI should have been decomposed as a debug build");
 		oTESTB(0 == oStrcmp(Parts.Extension, ".exe"), "UpdateURI decomposed extension doesn't match");
-		oTESTB(Parts.Version == oVersion(1,0,2,2234), "UpdateURI decomposed version doesn't match");
+		oTESTB(Parts.Version == oStd::version(1,0,2,2234), "UpdateURI decomposed version doesn't match");
 
 		oStd::uri_string Result;
 		oTESTB(nullptr != oVURecompose(Result, Parts), "oVURecompose failed");

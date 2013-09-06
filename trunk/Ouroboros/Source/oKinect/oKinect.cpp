@@ -172,14 +172,16 @@ oKinectImpl::oKinectImpl(const oKINECT_DESC& _Desc, threadsafe oWindow* _pWindow
 {
 	*_pSuccess = false;
 
-	oVersion v = oWinKinect10::Singleton()->GetVersion();
+	oStd::version v = oWinKinect10::Singleton()->GetVersion();
 
-	if (v.Major != oKINECT_SDK_MAJOR || v.Minor != oKINECT_SDK_MINOR)
+	if (v.major != oKINECT_SDK_MAJOR || v.minor != oKINECT_SDK_MINOR)
 	{
-		if (v.Major == 0)
-			oErrorSetLast(std::errc::protocol_error, "oKinect requires the Kinect Runtime %d.%d to be installed.", oKINECT_SDK_MAJOR, oKINECT_SDK_MINOR);
+		oStd::sstring v1, v2;
+
+		if (v.major == 0)
+			oErrorSetLast(std::errc::protocol_error, "oKinect requires the Kinect Runtime %s to be installed.", oStd::to_string2(v1, oStd::version(oKINECT_SDK_MAJOR, oKINECT_SDK_MINOR)));
 		else
-			oErrorSetLast(std::errc::protocol_error, "oKinect requires %d.%d. Version %d.%d is currently installed.", oKINECT_SDK_MAJOR, oKINECT_SDK_MINOR, v.Major, v.Minor);
+			oErrorSetLast(std::errc::protocol_error, "oKinect requires %s. Version %s is currently installed.", oStd::to_string2(v1, oStd::version(oKINECT_SDK_MAJOR, oKINECT_SDK_MINOR)), oStd::to_string2(v2, v));
 		return;
 	}
 

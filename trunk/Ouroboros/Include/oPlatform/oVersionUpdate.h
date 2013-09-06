@@ -34,7 +34,7 @@
 #define oVersionUpdate_h
 
 #include <oStd/fixed_string.h>
-#include <oBasis/oVersion.h>
+#include <oStd/version.h>
 
 // _____________________________________________________________________________
 // Utilities to be called from the non-launcher/target executable
@@ -44,7 +44,7 @@ struct oVU_URI_PARTS
 	oURIParts URIParts; // Path is truncated to have the filename removed
 	oStd::mstring Filebase;
 	oStd::sstring Extension;
-	oVersion Version;
+	oStd::version Version;
 	bool IsDebugBuild;
 };
 
@@ -80,7 +80,7 @@ oAPI bool oVUGetLatestInstallerFilename(oStd::mstring& _StrDestination);
 
 // This should be called from a file in <some-path>\<version>\Exe.exe, so this
 // will look for the launcher in ../
-oAPI bool oVULaunchLauncher(unsigned int _ExpectedTimeToShutdownMS, const oVersion& _Version = oVersion());
+oAPI bool oVULaunchLauncher(unsigned int _ExpectedTimeToShutdownMS, const oStd::version& _Version = oStd::version());
 
 // _____________________________________________________________________________
 // Utilities to be called from the launcher/lightweight executable

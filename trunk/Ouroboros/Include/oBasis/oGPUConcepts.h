@@ -42,8 +42,7 @@
 #include <oBasis/oRTTI.h>
 #include <oBasis/oStddef.h>
 #include <oBasis/oSurface.h>
-#include <oBasis/oVersion.h>
-#include <oStd/operators.h>
+#include <oStd/version.h>
 #include <array>
 
 // _____________________________________________________________________________
@@ -742,10 +741,10 @@ struct oGPU_DEVICE_INIT
 	// internal value is used which represents a pivot point where QA was done at 
 	// OOOii that showed significant problems or missing features before that 
 	// default version.
-	oVersion MinDriverVersion;
+	oStd::version MinDriverVersion;
 
 	// The version of the underlying API to use.
-	oVersion Version;
+	oStd::version Version;
 
 	// Specify to what degree driver warnings/errors are reported. oGPU-level 
 	// errors and warnings are always reported.
@@ -805,15 +804,15 @@ struct oGPU_DEVICE_DESC
 
 	// The version for the software that supports the native API. This depends on 
 	// the API type being used.
-	oVersion DriverVersion;
+	oStd::version DriverVersion;
 
 	// The feature level the device supports. This depends on the API type being 
 	// used.
-	oVersion FeatureVersion; 
+	oStd::version FeatureVersion; 
 
 	// The driver/software interface version that might be different than the 
 	// capabilities of the device. This depends on the API type being used.
-	oVersion InterfaceVersion;
+	oStd::version InterfaceVersion;
 
 	// The zero-based index of the adapter. This may be different than what is 
 	// specified in oGPU_DEVICE_INIT in certain debug/development modes.

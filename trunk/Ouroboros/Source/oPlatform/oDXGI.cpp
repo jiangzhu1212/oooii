@@ -278,23 +278,23 @@ int oDXGIGetAdapterIndex(IDXGIAdapter* _pAdapter)
 	return Index;
 }
 
-oVersion oDXGIGetInterfaceVersion(IDXGIAdapter* _pAdapter)
+oStd::version oDXGIGetInterfaceVersion(IDXGIAdapter* _pAdapter)
 {
 	LARGE_INTEGER li;
 	#if D3D11_MAJOR_VERSION
 		D3D_FEATURE_LEVEL FeatureLevel;
-		if (oDXGIGetFeatureLevel(_pAdapter, &FeatureLevel)) return oVersion(11,0);
+		if (oDXGIGetFeatureLevel(_pAdapter, &FeatureLevel)) return oStd::version(11,0);
 	#endif
 	#ifdef _D3D10_1_CONSTANTS
-		if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D10Device1), &li)) return oVersion(10,1);
+		if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D10Device1), &li)) return oStd::version(10,1);
 	#endif
 	#ifdef _D3D10_CONSTANTS
-		if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D10Device), &li)) return oVersion(10,0);
+		if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D10Device), &li)) return oStd::version(10,0);
 	#endif
-	return oVersion();
+	return oStd::version();
 }
 
-oVersion oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter)
+oStd::version oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter)
 {
 #if D3D11_MAJOR_VERSION
 	D3D_FEATURE_LEVEL FeatureLevel;

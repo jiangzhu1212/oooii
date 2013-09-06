@@ -447,7 +447,7 @@ oAPI bool oGPUCompileShader(
 	                          // Use %DEV% for oSYSPATH_DEV
 	, const char* _CommonDefines // semi-colon delimited list of symbols (= value) 
 	, const char* _SpecificDefines // semi-colon delimited list of symbols (= value)
-	, const oVersion& _TargetShaderModel // shader model version to compile against
+	, const oStd::version& _TargetShaderModel // shader model version to compile against
 	, oGPU_PIPELINE_STAGE _Stage // type of shader to compile
 	, const char* _ShaderPath // full path to shader - mostly for error reporting
 	, const char* _EntryPoint // name of the top-level shader function to use

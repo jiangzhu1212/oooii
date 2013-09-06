@@ -92,7 +92,7 @@ static bool oVURecomposePath(oURIParts& _URIParts, const oVU_URI_PARTS& _Parts)
 	const char* BuildSuffix = _Parts.IsDebugBuild ? oMODULE_DEBUG_SUFFIX_A : "";
 	oStd::uri_string FilePath;
 	oURIRecompose(FilePath, _URIParts);
-	if (_Parts.Version.IsValid())
+	if (_Parts.Version != oStd::version())
 	{
 		oStd::sstring ver;
 		oStrAppendf(FilePath, "%s%s-%s%s", _Parts.Filebase.c_str(), BuildSuffix, oStd::to_string(ver, _Parts.Version), _Parts.Extension.c_str());
@@ -186,7 +186,7 @@ bool oVURenameLauncher(const char* _SfxURI)
 		oVERIFY(oVUDecompose(ThisInstallerFilename, true, &DestParts));
 	}
 
-	DestParts.Version = SourceParts.Version = oVersion();
+	DestParts.Version = SourceParts.Version = oStd::version();
 	DestParts.Extension = SourceParts.Extension;
 	DestParts.URIParts = SourceParts.URIParts;
 
@@ -263,7 +263,7 @@ bool oVUIsUpdateInstallerValid(const oStd::uri_string& _SfxURI, bool _IsNewer /*
 	if (!oVUDecompose(AppURI, false, &AppParts))
 		return false; // pass through error
 
-	if (!SfxParts.Version.IsValid() || (_MatchInstallerAndExecutableNames && oStricmp(SfxParts.Filebase, AppParts.Filebase)))
+	if (SfxParts.Version != oStd::version() || (_MatchInstallerAndExecutableNames && oStricmp(SfxParts.Filebase, AppParts.Filebase)))
 		return oErrorSetLast(std::errc::invalid_argument, "ignoring %s: not an installer for process %s", _SfxURI.c_str(), AppParts.Filebase.c_str());
 
 	if ((_IsNewer && (SfxParts.Version < AppParts.Version)) ||
@@ -329,7 +329,7 @@ char* oVUGetLauncherName(char* _StrDestination, size_t _SizeofStrDestination)
 template<size_t size> char* oVUGetLauncherName(char (&_StrDestination)[size]) { return oVUGetLauncherName(_StrDestination, size); }
 template<size_t capacity> char* oVUGetLauncherName(oStd::fixed_string<char, capacity>& _StrDestination) { return oVUGetLauncherName(_StrDestination, _StrDestination.capacity()); }
 
-bool oVULaunchLauncher(unsigned int _ExpectedTimeToShutdownMS, const oVersion& _Version)
+bool oVULaunchLauncher(unsigned int _ExpectedTimeToShutdownMS, const oStd::version& _Version)
 {
 	oStd::xlstring CmdLine;
 	if (!oVUGetLauncherName(CmdLine))
@@ -348,7 +348,7 @@ bool oVULaunchLauncher(unsigned int _ExpectedTimeToShutdownMS, const oVersion& _
 	}
 
 	oStd::sstring ForcedVersion;
-	if (_Version.IsValid())
+	if (_Version != oStd::version())
 	{
 		oStd::sstring StrVer;
 		oPrintf(ForcedVersion, "-v %s", oStd::to_string(StrVer, _Version));
@@ -404,7 +404,7 @@ bool oVUUnzip(const char* _SfxURI)
 static bool oVUEnumVersionFolders(const char* _FullPath, const oSTREAM_DESC& _Desc, std::vector<oStd::mstring>* _pVersionFolders)
 {
 	const char* ver = oGetFilebase(_FullPath);
-	oVersion v;
+	oStd::version v;
 	if (oStd::from_string(&v, ver))
 		_pVersionFolders->push_back(ver);
 	return true;

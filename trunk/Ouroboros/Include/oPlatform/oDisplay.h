@@ -33,7 +33,7 @@ struct oDISPLAY_ADAPTER_DRIVER_DESC
 {
 	oStd::mstring Description;
 	oStd::mstring PlugNPlayID;
-	oVersion Version;
+	oStd::version Version;
 	oGPU_VENDOR Vendor;
 };
 
@@ -87,7 +87,7 @@ void oDisplayAdapterEnum(const oFUNCTION<bool(int _AdapterIndex, const oDISPLAY_
 // driver that pre-date the ones returned by this. If this returns an invalid
 // version it means Ouroboros has not been extensively tested with that vendor's
 // adapter.
-oVersion oDisplayAdapterGetMinimumVersion(oGPU_VENDOR _Vendor);
+oStd::version oDisplayAdapterGetMinimumVersion(oGPU_VENDOR _Vendor);
 
 // Checks that all adapters are up-to-date.
 bool oDisplayAdapterIsUpToDate();

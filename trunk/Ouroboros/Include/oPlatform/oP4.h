@@ -26,11 +26,7 @@
 #ifndef oP4_h
 #define oP4_h
 
-// @oooii-tony: Refactor note... for DLL export ease, this should be turned into
-// an oP4Device interface.
-
 #include <oStd/fixed_string.h>
-#include <oBasis/oVersion.h>
 #include <oBasis/oRTTI.h>
 
 enum oP4_STATUS
@@ -130,12 +126,6 @@ struct oP4_LABEL_SPEC
 // _____________________________________________________________________________
 
 oAPI bool oP4IsAvailable();
-
-// It is often useful to imprint the actual source-control in the version 
-// number, but our version number is ushorts (as Window's is), so it's not 
-// straightforward.
-inline unsigned int oP4GetRevision(const oVersion& _Version) { return _Version.Build * 10000 + _Version.Revision; }
-inline void oP4SetRevision(unsigned int _Revision, oVersion* _pVersion) { _pVersion->Build = static_cast<unsigned short>(_Revision / 10000); _pVersion->Revision = _Revision % 10000; }
 
 // _____________________________________________________________________________
 // Direct communication API with P4... mostly these wrap a spawn-command as if 

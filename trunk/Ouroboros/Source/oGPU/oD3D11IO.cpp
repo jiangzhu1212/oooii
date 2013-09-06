@@ -36,7 +36,7 @@ bool oGPUCompileShader(
 	const char* _IncludePaths
 	, const char* _CommonDefines
 	, const char* _SpecificDefines
-	, const oVersion& _TargetShaderModel
+	, const oStd::version& _TargetShaderModel
 	, oGPU_PIPELINE_STAGE _Stage
 	, const char* _ShaderPath
 	, const char* _EntryPoint
@@ -57,11 +57,14 @@ bool oGPUCompileShader(
 
 	D3D_FEATURE_LEVEL TargetFeatureLevel = D3D_FEATURE_LEVEL_10_0;
 	if (!oD3D11GetFeatureLevel(_TargetShaderModel, &TargetFeatureLevel))
-		return oErrorSetLast(std::errc::protocol_error, "Could not determine feature level from shader model %d.%d", _TargetShaderModel.Major, _TargetShaderModel.Minor);
+		return oErrorSetLast(std::errc::protocol_error, "Could not determine feature level from shader model %d.%d", _TargetShaderModel.major, _TargetShaderModel.minor);
 
 	const char* Profile = oD3D11GetShaderProfile(TargetFeatureLevel, _Stage);
 	if (!Profile)
-		return oErrorSetLast(std::errc::not_supported, "%s not supported by shader model %d.%d", oStd::as_string(_Stage), _TargetShaderModel.Major, _TargetShaderModel.Minor);
+	{
+		oStd::sstring StrVer;
+		return oErrorSetLast(std::errc::not_supported, "%s not supported by shader model %s", oStd::as_string(_Stage), oStd::to_string2(StrVer, _TargetShaderModel));
+	}
 
 	if (!_EntryPoint)
 		_EntryPoint = "main";

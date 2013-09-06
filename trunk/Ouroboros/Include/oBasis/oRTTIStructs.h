@@ -70,7 +70,7 @@ public:
 	const char* AsString(const void* _pEnumValue) const;
 
 	// Compounds
-	oVersion GetVersion() const;
+	oStd::version GetVersion() const;
 	int GetNumBases() const;
 	const oRTTI* GetBaseRTTI(int _Index) const;
 	int GetBaseOffset(int _Index) const;

@@ -147,7 +147,7 @@ struct GPU_GenerateMips : public oTest
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oGPUDevice::INIT init("GPU_GenerateMips");
-		init.Version = oVersion(10,0); // for more compatibility when running on varied machines
+		init.Version = oStd::version(10,0); // for more compatibility when running on varied machines
 		oRef<oGPUDevice> Device;
 		oTESTB0(oGPUDeviceCreate(init, &Device));
 

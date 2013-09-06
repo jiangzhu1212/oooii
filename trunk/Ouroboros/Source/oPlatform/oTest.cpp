@@ -755,8 +755,9 @@ void oTestManager_Impl::PrintDesc()
 	Report(oConsoleReporting::INFO, "Random Seed: %u\n", Desc.RandomSeed);
 	Report(oConsoleReporting::INFO, "Special Test Timeouts: %sabled\n", Desc.EnableSpecialTestTimeouts ? "en" : "dis");
 
+	oStd::sstring StrVer;
 	for (unsigned int i = 0; i < DriverDescs.size(); i++)
-		Report(oConsoleReporting::INFO, "Video Driver %u: %s v%d.%d\n", i, DriverDescs[i].Description.c_str(), DriverDescs[i].Version.Major, DriverDescs[i].Version.Minor);
+		Report(oConsoleReporting::INFO, "Video Driver %u: %s v%s\n", i, DriverDescs[i].Description.c_str(), oStd::to_string2(StrVer, DriverDescs[i].Version));
 
 	auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, false, oBIND4));
 

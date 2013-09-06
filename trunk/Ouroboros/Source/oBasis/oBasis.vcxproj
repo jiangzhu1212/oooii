@@ -103,7 +103,6 @@
     <ClInclude Include="..\..\Include\oBasis\oTypes.h" />
     <ClInclude Include="..\..\Include\oBasis\oURI.h" />
     <ClInclude Include="..\..\Include\oBasis\oURIQuerySerialize.h" />
-    <ClInclude Include="..\..\Include\oBasis\oVersion.h" />
     <ClInclude Include="..\..\Include\oBasis\oXMLSerialize.h" />
     <ClInclude Include="..\..\Include\oBasis\SafeInt3.h" />
     <ClInclude Include="oAllocatorTLSF.h" />
@@ -159,7 +158,6 @@
     <ClCompile Include="oTypeID.cpp" />
     <ClCompile Include="oURI.cpp" />
     <ClCompile Include="oURIQuerySerialize.cpp" />
-    <ClCompile Include="oVersion.cpp" />
     <ClCompile Include="oXMLSerialize.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

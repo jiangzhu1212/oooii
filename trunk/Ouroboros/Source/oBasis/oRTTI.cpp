@@ -85,7 +85,7 @@ oRTTI_CONTAINER_BEGIN_DESCRIPTION(c_array)
 oRTTI_CONTAINER_END_DESCRIPTION(c_array)
 
 // TODO: Expand atom type support and move to appropriate place
-oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, oVersion, oVersion, 1)
+oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, ostd_version, ostd_version, 1)
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY_NO_STD, bool, bool, 1)
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, char, char, 1)
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, uchar, unsigned char, 1)
@@ -419,9 +419,9 @@ const char* oRTTI::AsString(const void* _pValue) const
 // _____________________________________________________________________________
 // Compounds
 
-oVersion oRTTI::GetVersion() const
+oStd::version oRTTI::GetVersion() const
 {
-	if (Type != oRTTI_TYPE_COMPOUND) return oVersion();
+	if (Type != oRTTI_TYPE_COMPOUND) return oStd::version();
 	return ((oRTTI_DATA_COMPOUND_BASE*)this)->Version;
 }
 

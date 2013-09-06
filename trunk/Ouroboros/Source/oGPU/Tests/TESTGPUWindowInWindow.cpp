@@ -55,7 +55,7 @@ public:
 
 		oGPUDevice::INIT DevInit;
 		DevInit.DebugName = "TestDevice";
-		DevInit.Version = oVersion(10, 0);
+		DevInit.Version = oStd::version(10, 0);
 		DevInit.DriverDebugLevel = oGPU_DEBUG_NORMAL;
 
 		if (!oGPUDeviceCreate(DevInit, &Device))

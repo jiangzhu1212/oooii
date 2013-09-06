@@ -30,7 +30,7 @@
 #define oModule_h
 
 #include <oStd/fixed_string.h>
-#include <oBasis/oVersion.h>
+#include <oStd/version.h>
 #include <oBasis/oRTTI.h>
 
 oDECLARE_HANDLE(oHMODULE);
@@ -79,8 +79,8 @@ struct oMODULE_DESC
 	oStd::mstring Comments;
 	oStd::mstring PrivateBuild;
 	oStd::mstring SpecialBuild;
-	oVersion FileVersion;
-	oVersion ProductVersion;
+	oStd::version FileVersion;
+	oStd::version ProductVersion;
 	oMODULE_TYPE Type;
 	bool IsDebugBuild;
 	bool IsPrereleaseBuild;

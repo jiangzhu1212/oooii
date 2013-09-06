@@ -78,5 +78,4 @@
 #include <oBasis/oTypeID.h>
 #include <oBasis/oTypes.h>
 #include <oBasis/oURI.h>
-#include <oBasis/oVersion.h>
 #endif

@@ -92,9 +92,9 @@ oAirKeySetImpl::oAirKeySetImpl(const oStd::xml& _XML, oStd::xml::node _AirSet, b
 		return;
 	}
 
-	oVersion v(1,0);
+	oStd::version v(1,0);
 	_XML.find_attr_value(_AirSet, "version", &v);
-	if (v == oVersion(1,0))
+	if (v == oStd::version(1,0))
 	{
 		_XML.find_attr_value(_AirSet, "name", &Name);
 		oXMLReadContainer(&Keys, sizeof(Keys), oRTTI_OF(std_vector_oAIR_KEY), "oAirKey", false, _XML, _AirSet, true);
@@ -102,7 +102,8 @@ oAirKeySetImpl::oAirKeySetImpl(const oStd::xml& _XML, oStd::xml::node _AirSet, b
 
 	else
 	{
-		oErrorSetLast(std::errc::protocol_error, "unsupported version %d.%d", v.Major, v.Minor);
+		oStd::sstring strVer;
+		oErrorSetLast(std::errc::protocol_error, "unsupported version %s", oStd::to_string(strVer, v));
 		return;
 	}
 

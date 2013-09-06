@@ -37,13 +37,13 @@ void oDisplayAdapterEnum(const oFUNCTION<bool(int _AdapterIndex, const oDISPLAY_
 	});
 }
 
-oVersion oDisplayAdapterGetMinimumVersion(oGPU_VENDOR _Vendor)
+oStd::version oDisplayAdapterGetMinimumVersion(oGPU_VENDOR _Vendor)
 {
 	switch (_Vendor)
 	{
-		case oGPU_VENDOR_NVIDIA: return oVersion(oNVVER_MAJOR, oNVVER_MINOR);
-		case oGPU_VENDOR_AMD: return oVersion(oAMDVER_MAJOR, oAMDVER_MINOR);
-		default: return oVersion();
+		case oGPU_VENDOR_NVIDIA: return oStd::version(oNVVER_MAJOR, oNVVER_MINOR);
+		case oGPU_VENDOR_AMD: return oStd::version(oAMDVER_MAJOR, oAMDVER_MINOR);
+		default: return oStd::version();
 	}
 }
 

@@ -37,7 +37,7 @@ struct oWinKinect10 : oProcessSingleton<oWinKinect10>
 	oWinKinect10();
 	~oWinKinect10();
 
-	oVersion GetVersion() const;
+	oStd::version GetVersion() const;
 
 	HRESULT (__stdcall* NuiCreateSensorByIndex__)(int index, INuiSensor** ppNuiSensor);
 	HRESULT (__stdcall* NuiCreateSensorById__)(const OLECHAR* strInstanceId, INuiSensor** ppNuiSensor);

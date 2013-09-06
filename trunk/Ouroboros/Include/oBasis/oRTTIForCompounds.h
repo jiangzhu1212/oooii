@@ -26,7 +26,7 @@
 #ifndef oRTTIForCompounds_h
 #define oRTTIForCompounds_h
 
-#include <oBasis/oVersion.h>
+#include <oStd/version.h>
 
 enum oRTTI_COMPOUND_ATTR_FLAGS
 {
@@ -91,7 +91,7 @@ struct oRTTI_DATA_COMPOUND // : oRTTI
 	uchar NumBases;
 	uchar NumAttrs;
 //	uchar NumFunctions;
-	oVersion Version;
+	oStd::version Version;
 	uint Size;
 	const char* TypeName;
 	uint TypeNameHash;
@@ -132,7 +132,7 @@ struct oRTTI_DATA_COMPOUND // : oRTTI
 	template<> struct oRTTI_COMPOUND_VERSION_HELPER<compound_type, true> { static const ushort Major = major; static const ushort Minor = minor; static const ushort Build = build; static const ushort Revision = revision; };
 
 #define oRTTI_COMPOUND_GET_VERSION(compound_type) \
-	oVersion(	oRTTI_COMPOUND_VERSION_HELPER<compound_type, oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type>::VALID != 0>::Major, \
+	oStd::version(	oRTTI_COMPOUND_VERSION_HELPER<compound_type, oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type>::VALID != 0>::Major, \
 				oRTTI_COMPOUND_VERSION_HELPER<compound_type, oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type>::VALID != 0>::Minor, \
 				oRTTI_COMPOUND_VERSION_HELPER<compound_type, oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type>::VALID != 0>::Build, \
 				oRTTI_COMPOUND_VERSION_HELPER<compound_type, oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type>::VALID != 0>::Revision)

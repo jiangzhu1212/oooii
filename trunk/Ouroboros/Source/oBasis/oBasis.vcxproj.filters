@@ -138,9 +138,6 @@
     <ClInclude Include="..\..\Include\oBasis\oSurface.h">
       <Filter>oBasis</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oVersion.h">
-      <Filter>oBasis\Types</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oSurfaceFill.h">
       <Filter>oBasis</Filter>
     </ClInclude>
@@ -403,9 +400,6 @@
     </ClCompile>
     <ClCompile Include="oGeometry.cpp">
       <Filter>Source\3D Math &amp; Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="oVersion.cpp">
-      <Filter>Source\Types</Filter>
     </ClCompile>
     <ClCompile Include="oOSC.cpp">
       <Filter>Source\String Parsing</Filter>

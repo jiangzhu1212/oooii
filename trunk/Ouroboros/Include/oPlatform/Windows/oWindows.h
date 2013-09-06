@@ -36,10 +36,10 @@
 
 #include <oStd/guid.h>
 #include <oStd/throw.h>
+#include <oStd/version.h>
 #include <oBasis/oGUI.h>
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oSurface.h>
-#include <oBasis/oVersion.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oModule.h> // for module-to-platform code in the Misc section
@@ -366,9 +366,9 @@ void oWinCommandLineToArgvAFree(const char** _pArgv);
 inline float oPointToDIP(float _Point) { return 96.0f * _Point / 72.0f; }
 inline float oDIPToPoint(float _DIP) { return 72.0f * _DIP / 96.0f; }
 
-// Convert from values in VS_FIXEDFILEINFO to oVersion and back
-void oWinGetVersion(const oVersion& _Version, DWORD* _pVersionMS, DWORD* _pVersionLS);
-oVersion oWinGetVersion(DWORD _VersionMS, DWORD _VersionLS);
+// Convert from values in VS_FIXEDFILEINFO to oStd::version and back
+void oWinGetVersion(const oStd::version& _Version, DWORD* _pVersionMS, DWORD* _pVersionLS);
+oStd::version oWinGetVersion(DWORD _VersionMS, DWORD _VersionLS);
 
 // _____________________________________________________________________________
 // Concurrency

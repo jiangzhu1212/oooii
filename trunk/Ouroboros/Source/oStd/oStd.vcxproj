@@ -98,6 +98,7 @@
     <ClCompile Include="type_name.cpp" />
     <ClCompile Include="uri.cpp" />
     <ClCompile Include="utfcmp.cpp" />
+    <ClCompile Include="version.cpp" />
     <ClCompile Include="wcselipsize.cpp" />
     <ClCompile Include="wcsltombs.cpp" />
   </ItemGroup>
@@ -154,6 +155,7 @@
     <ClInclude Include="..\..\Include\oStd\unordered_map.h" />
     <ClInclude Include="..\..\Include\oStd\uri.h" />
     <ClInclude Include="..\..\Include\oStd\uri_traits.h" />
+    <ClInclude Include="..\..\Include\oStd\version.h" />
     <ClInclude Include="..\..\Include\oStd\xml.h" />
     <ClInclude Include="calfaq.h" />
     <ClInclude Include="memduff.h" />

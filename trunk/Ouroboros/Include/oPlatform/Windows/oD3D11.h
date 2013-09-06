@@ -112,8 +112,8 @@ bool oD3D11DeviceGetDesc(ID3D11Device* _pDevice, bool _IsSoftwareEmulation, oGPU
 // Get the adapter with which the specified device was created
 bool oD3D11GetAdapter(ID3D11Device* _pDevice, IDXGIAdapter** _ppAdapter);
 
-// Converts the specified D3D_FEATURE_LEVEL into an oVersion.
-oVersion oD3D11GetFeatureVersion(D3D_FEATURE_LEVEL _Level);
+// Converts the specified D3D_FEATURE_LEVEL into an oStd::version.
+oStd::version oD3D11GetFeatureVersion(D3D_FEATURE_LEVEL _Level);
 
 // Returns an IFF based on the extension specified in the file path
 D3DX11_IMAGE_FILE_FORMAT oD3D11GetFormatFromPath(const char* _Path);
@@ -138,7 +138,7 @@ D3D11_PRIMITIVE_TOPOLOGY oD3D11ToPrimitiveTopology(oGPU_PRIMITIVE_TYPE _Type);
 uint oD3D11GetNumElements(D3D_PRIMITIVE_TOPOLOGY _PrimitiveTopology, uint _NumPrimitives);
 
 // Given a shader model (i.e. 4.0) return a feature level (i.e. D3D_FEATURE_LEVEL_10_1)
-bool oD3D11GetFeatureLevel(const oVersion& _ShaderModel, D3D_FEATURE_LEVEL* _pLevel);
+bool oD3D11GetFeatureLevel(const oStd::version& _ShaderModel, D3D_FEATURE_LEVEL* _pLevel);
 
 // Returns the shader profile for the specified stage of the specified feature
 // level. If the specified feature level does not support the specified stage,
