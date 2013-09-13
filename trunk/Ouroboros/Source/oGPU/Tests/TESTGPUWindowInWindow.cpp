@@ -162,11 +162,11 @@ public:
 	void IncrementClearCounter() { Counter++; }
 
 private:
-	oRef<oGPUDevice> Device;
-	oRef<oWindow> ParentWindow;
-	oRef<oWindow> GPUWindow;
-	oRef<oGPUCommandList> CommandList;
-	oRef<oGPURenderTarget> PrimaryRenderTarget;
+	oStd::ref<oGPUDevice> Device;
+	oStd::ref<oWindow> ParentWindow;
+	oStd::ref<oWindow> GPUWindow;
+	oStd::ref<oGPUCommandList> CommandList;
+	oStd::ref<oGPURenderTarget> PrimaryRenderTarget;
 
 	HWND hButton;
 	int Counter;
@@ -207,7 +207,7 @@ struct GPU_WindowInWindow : public oTest
 		{
 			test.FlushMessages();
 			test.Render();
-			oStd::future<oRef<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
+			oStd::future<oStd::ref<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
 			while (!snapshot.is_ready()) { test.FlushMessages(); }
 			oTESTFI(snapshot);
 			test.IncrementClearCounter();

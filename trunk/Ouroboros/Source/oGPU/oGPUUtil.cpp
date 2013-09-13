@@ -134,7 +134,7 @@ void oGPUCommitBuffer(oGPUDevice* _pDevice, oGPUBuffer* _pBuffer, const void* _p
 {
 	oASSERT(oStd::byte_aligned(_SizeofStruct, 16), "Structs must be aligned to 16 bytes");
 
-	oRef<oGPUCommandList> ICL;
+	oStd::ref<oGPUCommandList> ICL;
 	_pDevice->GetImmediateCommandList(&ICL);
 
 	oSURFACE_MAPPED_SUBRESOURCE msr;
@@ -158,7 +158,7 @@ bool oGPUCreateIndexBuffer(oGPUDevice* _pDevice
 
 	if (_MappedSubresource.pData)
 	{
-		oRef<oGPUCommandList> ICL;
+		oStd::ref<oGPUCommandList> ICL;
 		_pDevice->GetImmediateCommandList(&ICL);
 		oGPUCommitIndexBuffer(ICL, _MappedSubresource, *_ppIndexBuffer);
 	}
@@ -191,7 +191,7 @@ bool oGPUCreateVertexBuffer(oGPUDevice* _pDevice
 
 	if (!!_GetElementData)
 	{
-		oRef<oGPUCommandList> ICL;
+		oStd::ref<oGPUCommandList> ICL;
 		_pDevice->GetImmediateCommandList(&ICL);
 
 		if (!oGPUCommitVertexBuffer(ICL, _GetElementData, _pElements, _NumElements, _InputSlot, *_ppVertexBuffer))
@@ -268,7 +268,7 @@ bool oGPUCreateVertexBuffer(oGPUDevice* _pDevice
 
 bool oGPUCreateReadbackCopy(oGPUBuffer* _pSource, oGPUBuffer** _ppReadbackCopy)
 {
-	oRef<oGPUDevice> Device;
+	oStd::ref<oGPUDevice> Device;
 	_pSource->GetDevice(&Device);
 	oGPUBuffer::DESC d;
 	_pSource->GetDesc(&d);
@@ -288,10 +288,10 @@ uint oGPUReadbackCounter(oGPUBuffer* _pUnorderedBuffer, oGPUBuffer* _pPreallocat
 		return oInvalid;
 	}
 
-	oRef<oGPUDevice> Device;
+	oStd::ref<oGPUDevice> Device;
 	_pUnorderedBuffer->GetDevice(&Device);
 
-	oRef<oGPUBuffer> Counter = _pPreallocatedReadbackBuffer;
+	oStd::ref<oGPUBuffer> Counter = _pPreallocatedReadbackBuffer;
 	if (!Counter)
 	{
 		oStd::sstring Name;
@@ -305,7 +305,7 @@ uint oGPUReadbackCounter(oGPUBuffer* _pUnorderedBuffer, oGPUBuffer* _pPreallocat
 			return oInvalid; // pass through error
 	}
 
-	oRef<oGPUCommandList> ICL;
+	oStd::ref<oGPUCommandList> ICL;
 	Device->GetImmediateCommandList(&ICL);
 	ICL->CopyCounter(Counter, 0, _pUnorderedBuffer);
 
@@ -319,7 +319,7 @@ uint oGPUReadbackCounter(oGPUBuffer* _pUnorderedBuffer, oGPUBuffer* _pPreallocat
 
 bool oGPURead(oGPUResource* _pSourceResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Destination, bool _FlipVertically)
 {
-	oRef<oGPUDevice> Device;
+	oStd::ref<oGPUDevice> Device;
 	_pSourceResource->GetDevice(&Device);
 
 	switch (_pSourceResource->GetType())
@@ -364,7 +364,7 @@ bool oGPUGenerateMips(oGPUDevice* _pDevice, oGPUTexture* _pTexture)
 	oGPUTexture::DESC td;
 	_pTexture->GetDesc(&td);
 
-	oRef<oGPURenderTarget> RT;
+	oStd::ref<oGPURenderTarget> RT;
 	oGPURenderTarget::DESC RTDesc;
 	RTDesc.Dimensions = td.Dimensions;
 	RTDesc.ArraySize = td.ArraySize;
@@ -373,10 +373,10 @@ bool oGPUGenerateMips(oGPUDevice* _pDevice, oGPUTexture* _pTexture)
 	RTDesc.Type = oGPUTextureTypeStripReadbackType(oGPUTextureTypeGetMipMapType(td.Type));
 	oVERIFY(_pDevice->CreateRenderTarget("oGPUGenerateMips.TempRT", RTDesc, &RT));
 
-	oRef<oGPUTexture> RTTexture;
+	oStd::ref<oGPUTexture> RTTexture;
 	RT->GetTexture(0, &RTTexture);
 
-	oRef<oGPUCommandList> ICL;
+	oStd::ref<oGPUCommandList> ICL;
 	_pDevice->GetImmediateCommandList(&ICL);
 
 	ICL->Copy(RTTexture, _pTexture);
@@ -394,7 +394,7 @@ bool oGPUCreateTexture(oGPUDevice* _pDevice, const oImage* const* _ppSourceImage
 	oImage::DESC id;
 	_ppSourceImages[0]->GetDesc(&id);
 
-	oRef<oGPUTexture> Texture;
+	oStd::ref<oGPUTexture> Texture;
 	oGPUTexture::DESC td;
 	td.Format = oImageFormatToSurfaceFormat(id.Format);
 	td.Type = _Type;
@@ -420,7 +420,7 @@ bool oGPUCreateTexture(oGPUDevice* _pDevice, const oImage* const* _ppSourceImage
 	if (!_pDevice->CreateTexture(_ppSourceImages[0]->GetName(), td, &Texture))
 		return false; // pass through error
 
-	oRef<oGPUCommandList> ICL;
+	oStd::ref<oGPUCommandList> ICL;
 	_pDevice->GetImmediateCommandList(&ICL);
 
 	const int NumMips = oSurfaceCalcNumMips(oGPUTextureTypeHasMips(_Type), td.Dimensions);
@@ -482,7 +482,7 @@ static bool DEPRECATED_oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pM
 	}
 #endif
 
-	oRef<oGPURenderTarget> SurfaceRenderTarget;
+	oStd::ref<oGPURenderTarget> SurfaceRenderTarget;
 	oGPURenderTarget::DESC rtDesc;
 	rtDesc.Dimensions = td.Dimensions;
 	rtDesc.ArraySize = td.ArraySize;
@@ -491,10 +491,10 @@ static bool DEPRECATED_oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pM
 	rtDesc.Type = oGPUTextureTypeStripReadbackType(oGPUTextureTypeGetMipMapType(td.Type));
 	oVERIFY(_pDevice->CreateRenderTarget("oGPUGenerateMips temporary render target", rtDesc, &SurfaceRenderTarget));
 
-	oRef<oGPUTexture> Mip0Texture;
+	oStd::ref<oGPUTexture> Mip0Texture;
 	SurfaceRenderTarget->GetTexture(0, &Mip0Texture);
 
-	oRef<oGPUCommandList> ICL;
+	oStd::ref<oGPUCommandList> ICL;
 	_pDevice->GetImmediateCommandList(&ICL);
 
 	int numMipLevels = oSurfaceCalcNumMips(oSURFACE_LAYOUT_TIGHT, td.Dimensions);
@@ -536,7 +536,7 @@ bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _N
 	rbd.Format = _SurfaceDesc.Format;
 	rbd.ArraySize = _SurfaceDesc.ArraySize;
 	rbd.Type = oGPUTextureTypeGetReadbackType(oGPUTextureTypeGetMipMapType(_Type));
-	oRef<oGPUTexture> ReadbackTexture;
+	oStd::ref<oGPUTexture> ReadbackTexture;
 	_pDevice->CreateTexture("oGPUGenerateMips temporary readback texture", rbd, &ReadbackTexture);
 
 	DEPRECATED_oGPUGenerateMips(_pDevice, _pMip0Images, _NumImages, ReadbackTexture);
@@ -573,9 +573,9 @@ bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _N
 
 bool oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource, interface oImage** _ppImage)
 {
-	oRef<oGPUTexture> TextureToSave = _pTexture;
+	oStd::ref<oGPUTexture> TextureToSave = _pTexture;
 	
-	oRef<oGPUDevice> Device;
+	oStd::ref<oGPUDevice> Device;
 	_pTexture->GetDevice(&Device);
 
 	oGPUTexture::DESC d;
@@ -590,7 +590,7 @@ bool oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource, interface oImage** 
 		if (!Device->CreateTexture(Name, CPUCopyDesc, &TextureToSave))
 			return false; // pass through error
 
-		oRef<oGPUCommandList> ICL;
+		oStd::ref<oGPUCommandList> ICL;
 		Device->GetImmediateCommandList(&ICL);
 		ICL->Copy(TextureToSave, _pTexture);
 	}
@@ -604,7 +604,7 @@ bool oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource, interface oImage** 
 	oSURFACE_SUBRESOURCE_DESC ssrd;
 	oSurfaceSubresourceGetDesc(sd, _Subresource, &ssrd);
 
-	oRef<oImage> Image;
+	oStd::ref<oImage> Image;
 	oImage::DESC idesc;
 	idesc.RowPitch = oImageCalcRowPitch(oImageFormatFromSurfaceFormat(sd.Format), ssrd.Dimensions.x);
 	idesc.Dimensions = ssrd.Dimensions.xy();
@@ -751,8 +751,8 @@ struct oGPUUtilMeshImpl : oGPUUtilMesh
 	oGPUBuffer* GetVertexBuffer() override { return VB; }
 
 	oGPU_MESH_DESC Desc;
-	oRef<oGPUBuffer> IB;
-	oRef<oGPUBuffer> VB;
+	oStd::ref<oGPUBuffer> IB;
+	oStd::ref<oGPUBuffer> VB;
 	oRefCount RefCount;
 	uint NumPrimitives;
 };
@@ -794,11 +794,11 @@ bool oGPUUtilMeshCreate(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_
 
 	oStd::finally GeoUnmap([&]{ _pGeometry->UnmapConst(); });
 
-	oRef<oGPUUtilMesh> Mesh;
+	oStd::ref<oGPUUtilMesh> Mesh;
 	if (!oGPUUtilMeshCreate(_pDevice, _MeshName, d, GeoMapped.pRanges[0].NumPrimitives, &Mesh))
 		return false; // pass through error
 
-	oRef<oGPUCommandList> ICL;
+	oStd::ref<oGPUCommandList> ICL;
 	_pDevice->GetImmediateCommandList(&ICL);
 
 	// Ranges
@@ -848,11 +848,11 @@ bool oGPUUtilCreateFirstTriangle(oGPUDevice* _pDevice
 	md.NumVertexElements = _NumElements;
 
 	std::copy(_pElements, _pElements + _NumElements, md.VertexElements.begin());
-	oRef<oGPUUtilMesh> Mesh;
+	oStd::ref<oGPUUtilMesh> Mesh;
 	if (!oGPUUtilMeshCreate(_pDevice, "First Triangle", md, 1, &Mesh))
 		return false; // pass through error
 
-	oRef<oGPUCommandList> ICL;
+	oStd::ref<oGPUCommandList> ICL;
 	_pDevice->GetImmediateCommandList(&ICL);
 
 	oSURFACE_CONST_MAPPED_SUBRESOURCE msr;
@@ -895,11 +895,11 @@ bool oGPUUtilCreateFirstCube(oGPUDevice* _pDevice
 	bd.Color = oStd::White;
 	bd.FlipTexcoordV = false;
 
-	oRef<oGeometryFactory> Factory;
+	oStd::ref<oGeometryFactory> Factory;
 	if (!oGeometryFactoryCreate(&Factory))
 		return false;
 
-	oRef<oGeometry> geo;
+	oStd::ref<oGeometry> geo;
 	if (!Factory->Create(bd, layout, &geo))
 		return false;
 

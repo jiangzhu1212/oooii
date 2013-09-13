@@ -38,10 +38,10 @@ struct oGfxMosaicImpl : oGfxMosaic
 	void SetBlendState(oGPU_BLEND_STATE _BlendState) override { BlendState = _BlendState; }
 
 private:
-	oRef<oGPUDevice> Device;
-	oRef<oGPUPipeline> Pipeline;
-	oRef<oGPUBuffer> Indices;
-	oRef<oGPUBuffer> Vertices[2];
+	oStd::ref<oGPUDevice> Device;
+	oStd::ref<oGPUPipeline> Pipeline;
+	oStd::ref<oGPUBuffer> Indices;
+	oStd::ref<oGPUBuffer> Vertices[2];
 	uint NumPrimitives;
 	oGPU_BLEND_STATE BlendState;
 	oRefCount RefCount;
@@ -69,7 +69,7 @@ bool oGfxMosaicCreate(oGPUDevice* _pDevice, const oGPU_PIPELINE_DESC& _PipelineD
 
 bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const oRECT* _AdditionalSourceImageSpaces, const oRECT* const* _pAdditionalSourceRectArrays)
 {
-	oRef<oGeometryFactory> GeoFactory;
+	oStd::ref<oGeometryFactory> GeoFactory;
 	if (!oGeometryFactoryCreate(&GeoFactory))
 		return false; // pass through error
 
@@ -78,7 +78,7 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 	Layout.Positions = true;
 	Layout.Texcoords = _NumAdditionalTextureSets ? !!_Desc.pSourceRects : true;
 
-	oRef<oGeometry> Geo;
+	oStd::ref<oGeometry> Geo;
 	if (!GeoFactory->Create(_Desc, Layout, &Geo))
 		return false; // pass through error
 
@@ -116,11 +116,11 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 
 	if (_NumAdditionalTextureSets)
 	{
-		oRef<oGeometryFactory> GeoFactory;
+		oStd::ref<oGeometryFactory> GeoFactory;
 		if (!oGeometryFactoryCreate(&GeoFactory))
 			return false; // pass through error
 
-		std::vector<oRef<oGeometry>> ExtraGeos;
+		std::vector<oStd::ref<oGeometry>> ExtraGeos;
 		std::vector<oGeometry::CONST_MAPPED> ExtraGeoMapped;
 		ExtraGeos.resize(_NumAdditionalTextureSets);
 		ExtraGeoMapped.resize(_NumAdditionalTextureSets);

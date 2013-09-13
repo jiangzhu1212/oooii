@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// A scoped pointer object that uses the same pattern as oRef to lock and unlock 
+// A scoped pointer object that uses the same pattern as oStd::ref to lock and unlock 
 // threadsafe API and return a non-threadsafe pointer that is made safe for the 
 // scope of the oLockedPointer object. The user must define:
 // void intrusive_ptr_lock_shared(T* p);

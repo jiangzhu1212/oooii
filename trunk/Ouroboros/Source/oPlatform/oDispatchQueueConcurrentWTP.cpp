@@ -26,7 +26,6 @@
 #include <oStd/assert.h>
 #include <oBasis/oError.h>
 #include <oBasis/oInitOnce.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oConcurrency/block_allocator.h>
 #include <oPlatform/Windows/oWindows.h>

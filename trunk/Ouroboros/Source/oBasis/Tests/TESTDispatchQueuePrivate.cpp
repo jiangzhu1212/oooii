@@ -25,7 +25,6 @@
 #include <oBasis/oDispatchQueuePrivate.h>
 #include <oBasis/oError.h>
 #include <oStd/finally.h>
-#include <oBasis/oRef.h>
 #include <oStd/oStdConditionVariable.h>
 #include <oStd/oStdMutex.h>
 #include "oBasisTestCommon.h"
@@ -74,7 +73,7 @@ static void NotifyAll(oStd::mutex& _Mutex, oStd::condition_variable& _ConditionV
 
 bool oBasisTest_oDispatchQueuePrivate()
 {
-	oRef<threadsafe oDispatchQueuePrivate> q;
+	oStd::ref<threadsafe oDispatchQueuePrivate> q;
 	oTESTB(oDispatchQueueCreatePrivate("TESTDispatchQueuePrivate", 100, &q), "Failed to create private dispatch queue");
 	oStd::finally JoinQueue([&] { q->Join(); });
 

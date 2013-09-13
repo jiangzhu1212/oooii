@@ -34,7 +34,6 @@
 
 #include <oBasis/oError.h>
 #include <oBasis/oInitOnce.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oStd/fixed_string.h>
 #include <oStd/fnv1a.h>
@@ -95,7 +94,7 @@ struct oGPUDeviceChildMixinBase
 	const oGPUDeviceChildMixinBase& operator=(const oGPUDeviceChildMixinBase&)/* = delete*/;
 
 protected:
-	oRef<oGPUDevice> Device;
+	oStd::ref<oGPUDevice> Device;
 	oInitOnce<oStd::uri_string> Name;
 	oRefCount RefCount;
 

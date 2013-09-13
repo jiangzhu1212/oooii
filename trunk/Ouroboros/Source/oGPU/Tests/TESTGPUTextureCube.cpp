@@ -35,7 +35,7 @@ struct GPU_TextureCube_App : public oGPUTextureTestApp
 	oGPU_TEST_PIPELINE GetPipeline() override { return oGPU_TEST_TEXTURE_CUBE; }
 	bool CreateTexture() override
 	{
-		oRef<oImage> images[6];
+		oStd::ref<oImage> images[6];
 		if (!oImageLoad("file://DATA/Test/Textures/CubePosX.png", oImage::FORCE_ALPHA, &images[0]))
 			return false;
 		if (!oImageLoad("file://DATA/Test/Textures/CubeNegX.png", oImage::FORCE_ALPHA, &images[1]))

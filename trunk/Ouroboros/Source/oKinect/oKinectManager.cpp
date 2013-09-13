@@ -91,7 +91,7 @@ void oKinectManager::NotifyStatus(const char* _InstanceName, oGUI_INPUT_DEVICE_S
 
 void oKinectManager::OnStatus(oGUI_INPUT_DEVICE_STATUS _Status, const char* _InstanceName, const char* _UniqueDeviceName)
 {
-	oRef<threadsafe oKinect> StatusChanger;
+	oStd::ref<threadsafe oKinect> StatusChanger;
 	oKINECT_DESC kd;
 	{
 		lock_guard<mutex> lock(KinectsMutex);

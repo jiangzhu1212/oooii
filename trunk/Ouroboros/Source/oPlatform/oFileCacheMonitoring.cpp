@@ -45,8 +45,8 @@ private:
 	oRefCount RefCount;
 	oFileCacheMonitoring::DESC Desc;
 
-	oRef<threadsafe oFileCache> FileCache;
-	oRef<threadsafe oStreamMonitor> FolderMonitor;
+	oStd::ref<threadsafe oFileCache> FileCache;
+	oStd::ref<threadsafe oStreamMonitor> FolderMonitor;
 };
 
 oFileCacheMonitoringImpl::oFileCacheMonitoringImpl(const oFileCacheMonitoring::DESC& _Desc, bool* _pSuccess) : Desc(_Desc)

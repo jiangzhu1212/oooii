@@ -28,7 +28,6 @@
 #include <oBasis/oInitOnce.h>
 #include <oBasis/oLockedPointer.h>
 #include <oConcurrency/mutex.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oURI.h>
 

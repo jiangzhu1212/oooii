@@ -122,7 +122,7 @@ struct oFileReaderImpl : public oStreamReader
 		
 		if ((_StreamRead.Range.Offset + _StreamRead.Range.Size) <= fileSize)
 		{
-			oRef<threadsafe oFileReaderImpl> self(this);
+			oStd::ref<threadsafe oFileReaderImpl> self(this);
 			// Doing it this way because standard windows async file io is not 
 			// GUARANTEED to be asynchronous. Windows can decided to do the read 
 			// synchronously on its own, so FORCE async this way.
@@ -196,7 +196,7 @@ struct oFileReaderImpl : public oStreamReader
 	}
 
 	oInitOnce<oSTREAM_DESC> Desc;
-	oRef<threadsafe oDispatchQueueGlobal> ReadQueue;
+	oStd::ref<threadsafe oDispatchQueueGlobal> ReadQueue;
 	mutex Mutex;
 	oInitOnce<oURIParts> URIParts;
 	HANDLE hFile;
@@ -265,7 +265,7 @@ struct oFileWriterImpl : public oStreamWriter
 
 	void DispatchWrite(const oSTREAM_WRITE& _Write, continuation_t _Continuation) threadsafe override
 	{
-		oRef<threadsafe oFileWriterImpl> self(this);
+		oStd::ref<threadsafe oFileWriterImpl> self(this);
 		// Doing it this way because standard windows async file io is not 
 		// GUARANTEED to be asynchronous. Windows can decided to do the read 
 		// synchronously on its own, so FORCE async this way.
@@ -322,7 +322,7 @@ struct oFileWriterImpl : public oStreamWriter
 	oInitOnce<oURIParts> URIParts;
 	oInitOnce<oStd::path_string> ResolvedPath;
 	oHandle hFile;
-	oRef<threadsafe oDispatchQueueGlobal> WriteQueue;
+	oStd::ref<threadsafe oDispatchQueueGlobal> WriteQueue;
 	mutex Mutex;
 	oRefCount RefCount;
 };

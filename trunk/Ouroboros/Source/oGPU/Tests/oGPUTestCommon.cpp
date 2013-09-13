@@ -81,7 +81,7 @@ bool oGPUTestApp::CheckSnapshot(oTest* _pTest)
 	const int FrameID = Device->GetFrameID();
 	if (SnapshotFrames.end() != oStd::find(SnapshotFrames, FrameID))
 	{
-		oRef<oImage> Image;
+		oStd::ref<oImage> Image;
 		if (!PrimaryRenderTarget->CreateSnapshot(0, &Image))
 			return false; // pass through error
 

@@ -163,10 +163,10 @@ void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
 		d.Format = Desc.DepthStencilFormat;
 		d.Type = oGPU_TEXTURE_2D_RENDER_TARGET;
 
-		oRef<ID3D11Texture2D> Depth;
+		oStd::ref<ID3D11Texture2D> Depth;
 		oVERIFY(oD3D11CreateTexture(D3DDevice, name, d, nullptr, &Depth, nullptr, &DSV));
 		bool textureSuccess = false;
-		DepthStencilTexture = oRef<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, Depth), false);
+		DepthStencilTexture = oStd::ref<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, Depth), false);
 		oASSERT(textureSuccess, "Creation of oD3D11Texture failed from ID3D11Texture2D: %s", oErrorGetLastString());
 	}
 }
@@ -179,7 +179,7 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 	if (SwapChain)
 	{
 		BOOL IsFullScreen = FALSE;
-		oRef<IDXGIOutput> Output;
+		oStd::ref<IDXGIOutput> Output;
 		SwapChain->GetFullscreenState(&IsFullScreen, &Output);
 		if (IsFullScreen)
 		{
@@ -200,10 +200,10 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 			{
 				oASSERT(New.z == 1, "New.z must be set to 1 for primary render target");
 				oVERIFY(oDXGISwapChainResizeBuffers(SwapChain, New.xy()));
-				oRef<ID3D11Texture2D> SwapChainTexture;
+				oStd::ref<ID3D11Texture2D> SwapChainTexture;
 				oV(SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&SwapChainTexture));
 				bool textureSuccess = false;
-				Textures[0] = oRef<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, SwapChainTexture), false);
+				Textures[0] = oStd::ref<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, SwapChainTexture), false);
 				oVERIFY(textureSuccess);
 				oVERIFY(oD3D11CreateRenderTargetView(GetName(), SwapChainTexture, (ID3D11View**)&RTVs[0]));
 				Desc.ArraySize = 1;

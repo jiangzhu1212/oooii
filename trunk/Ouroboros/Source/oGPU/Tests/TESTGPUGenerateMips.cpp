@@ -35,10 +35,10 @@ struct GPU_GenerateMips : public oTest
 		imageDesc.Dimensions = int2(_Width, 1);
 		imageDesc.Format = oImage::BGRA32;
 		imageDesc.RowPitch = oImageCalcRowPitch(imageDesc.Format, imageDesc.Dimensions.x);
-		oRef<oImage> image;
+		oStd::ref<oImage> image;
 		oImageCreate("GPU_Texture1D", imageDesc, &image);
 
-		oRef<oBuffer> buffer;
+		oStd::ref<oBuffer> buffer;
 		int surfaceBufferSize = oImageCalcSize(imageDesc.Format, imageDesc.Dimensions);
 		void *pSurfaceBuffer = oBuffer::New(surfaceBufferSize);
 		oBufferCreate("GPU_Texture1D buffer", pSurfaceBuffer, surfaceBufferSize, oBuffer::Delete, &buffer);
@@ -58,7 +58,7 @@ struct GPU_GenerateMips : public oTest
 		sd.Format = oImageFormatToSurfaceFormat(imageDesc.Format);
 		sd.Layout = _Layout;
 
-		oRef<oImage> mipImage;
+		oStd::ref<oImage> mipImage;
 		oTESTB(oImageCreate("TestImageMips1D", sd, &mipImage), "Failed to create image for mipped surface");
 
 		oTESTB(oGPUGenerateMips(_pDevice, (const oImage**)&image, 1, sd, oGPU_TEXTURE_1D_MAP, mipImage), "Failed to generate mips with the GPU");
@@ -70,7 +70,7 @@ struct GPU_GenerateMips : public oTest
 
 	RESULT TestImageMips2D(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, char* _pFilename, oSURFACE_LAYOUT _Layout, int _StartIndex)
 	{
-		oRef<oImage> image;
+		oStd::ref<oImage> image;
 		oTESTB(oImageLoad(_pFilename, oImage::FORCE_ALPHA, &image), "Failed to load image");
 
 		oImage::DESC id;
@@ -81,7 +81,7 @@ struct GPU_GenerateMips : public oTest
 		sd.Format = oImageFormatToSurfaceFormat(id.Format);
 		sd.Layout = _Layout;
 
-		oRef<oImage> mipImage;
+		oStd::ref<oImage> mipImage;
 		oTESTB(oImageCreate("TestImageMips2D", sd, &mipImage), "Failed to create image for mipped surface");
 
 		oTESTB(oGPUGenerateMips(_pDevice, (const oImage**)&image, 1, sd, oGPU_TEXTURE_2D_MAP, mipImage), "Failed to generate mips with the GPU");
@@ -93,7 +93,7 @@ struct GPU_GenerateMips : public oTest
 
 	RESULT TestImageMips3D(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, char* _pFilename, oSURFACE_LAYOUT _Layout, int _StartIndex)
 	{
-		oRef<oImage> images[5];
+		oStd::ref<oImage> images[5];
 		oTESTB(oImageLoad(_pFilename, oImage::FORCE_ALPHA, &images[0]), "Failed to load image");
 		images[4] = images[3] = images[2] = images[1] = images[0];
 
@@ -105,7 +105,7 @@ struct GPU_GenerateMips : public oTest
 		sd.Format = oImageFormatToSurfaceFormat(id.Format);
 		sd.Layout = _Layout;
 
-		oRef<oImage> mipImage;
+		oStd::ref<oImage> mipImage;
 		oTESTB(oImageCreate("TestImageMips3D", sd, &mipImage), "Failed to create image for mipped surface");
 
 		oTESTB(oGPUGenerateMips(_pDevice, (const oImage**)&images, oCOUNTOF(images), sd, oGPU_TEXTURE_3D_MAP, mipImage), "Failed to generate mips with the GPU");
@@ -117,7 +117,7 @@ struct GPU_GenerateMips : public oTest
 
 	RESULT TestImageMipsCube(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, oSURFACE_LAYOUT _Layout, int _StartIndex)
 	{
-		oRef<oImage> images[6];
+		oStd::ref<oImage> images[6];
 		oTESTB(oImageLoad("file://DATA/Test/Textures/CubePosX.png", oImage::FORCE_ALPHA, &images[0]), "Failed to load image +X");
 		oTESTB(oImageLoad("file://DATA/Test/Textures/CubeNegX.png", oImage::FORCE_ALPHA, &images[1]), "Failed to load image -X");
 		oTESTB(oImageLoad("file://DATA/Test/Textures/CubePosY.png", oImage::FORCE_ALPHA, &images[2]), "Failed to load image +Y");
@@ -134,7 +134,7 @@ struct GPU_GenerateMips : public oTest
 		sd.ArraySize = oCOUNTOF(images);
 		sd.Layout = _Layout;
 
-		oRef<oImage> mipImage;
+		oStd::ref<oImage> mipImage;
 		oTESTB(oImageCreate("TestImageMipsCube", sd, &mipImage), "Failed to create image for mipped surface");
 
 		oTESTB(oGPUGenerateMips(_pDevice, (const oImage**)&images, oCOUNTOF(images), sd, oGPU_TEXTURE_CUBE_MAP, mipImage), "Failed to generate mips with the GPU");
@@ -148,7 +148,7 @@ struct GPU_GenerateMips : public oTest
 	{
 		oGPUDevice::INIT init("GPU_GenerateMips");
 		init.Version = oStd::version(10,0); // for more compatibility when running on varied machines
-		oRef<oGPUDevice> Device;
+		oStd::ref<oGPUDevice> Device;
 		oTESTB0(oGPUDeviceCreate(init, &Device));
 
 		// 1D non power of 2

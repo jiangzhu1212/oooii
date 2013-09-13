@@ -114,10 +114,10 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 	}
 
 private:
-	oRef<oGPUPipeline> Pipeline;
-	oRef<oGPUBuffer> InstanceList;
-	oRef<oGPUUtilMesh> Mesh;
-	oRef<oGPUBuffer> TestConstants;
+	oStd::ref<oGPUPipeline> Pipeline;
+	oStd::ref<oGPUBuffer> InstanceList;
+	oStd::ref<oGPUUtilMesh> Mesh;
+	oStd::ref<oGPUBuffer> TestConstants;
 };
 
 oDEFINE_GPU_TEST(GPU_InstancedTriangle)

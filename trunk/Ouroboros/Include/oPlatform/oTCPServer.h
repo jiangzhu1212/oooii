@@ -68,12 +68,12 @@ private:
 	void AcceptConnection(threadsafe oSocket* _Socket)
 	{
 		oSocket::ASYNC_SETTINGS settings;
-		settings.Callback = oRef<HandlerT>(new HandlerT(*Desc), false);
+		settings.Callback = oStd::ref<HandlerT>(new HandlerT(*Desc), false);
 		_Socket->GoAsynchronous(settings);
 
 		((HandlerT*)settings.Callback.c_ptr())->InitiateReceive(_Socket);
 
-		std::set<const oRef<threadsafe oSocket>> socketsToRemove;
+		std::set<const oStd::ref<threadsafe oSocket>> socketsToRemove;
 
 		{
 			oStd::lock_guard<oStd::shared_mutex> lock(ConnectedSocketsMutex);
@@ -89,7 +89,7 @@ private:
 			{
 				oSocket::DESC desc;
 				_socket->GetDesc(&desc);
-				oRef<HandlerT> handler;
+				oStd::ref<HandlerT> handler;
 				desc.AsyncSettings.Callback->QueryInterface(&handler);
 				if (handler->ShouldCloseSocket(_socket))
 					socketsToRemove.insert(_socket);
@@ -100,7 +100,7 @@ private:
 		if (!socketsToRemove.empty() && ConnectedSocketsMutex.try_lock())
 		{
 			auto it = std::remove_if(std::begin(ConnectedSockets), std::end(ConnectedSockets)
-				, [&](const oRef<threadsafe oSocket>& _socket) -> bool
+				, [&](const oStd::ref<threadsafe oSocket>& _socket) -> bool
 					{
 						if (socketsToRemove.find(_socket) != std::end(socketsToRemove))
 							return true;
@@ -112,9 +112,9 @@ private:
 	}
 
 	oInitOnce<DescT> Desc;
-	oRef<threadsafe oSocketServer2> SocketServer;
+	oStd::ref<threadsafe oSocketServer2> SocketServer;
 	oStd::shared_mutex ConnectedSocketsMutex;
-	std::vector<oRef<threadsafe oSocket>> ConnectedSockets;
+	std::vector<oStd::ref<threadsafe oSocket>> ConnectedSockets;
 };
 
 #endif

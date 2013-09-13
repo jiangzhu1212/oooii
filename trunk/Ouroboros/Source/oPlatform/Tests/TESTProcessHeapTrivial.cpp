@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oBuffer.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oLockedPointer.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oTest.h>

@@ -33,7 +33,7 @@
 #include <vector>
 
 #define oD3D11DEVICE() \
-	oRef<ID3D11Device> D3DDevice; \
+	oStd::ref<ID3D11Device> D3DDevice; \
 	oVERIFY(Device->QueryInterface(&D3DDevice));
 
 // Call reg/unreg from device children implementations
@@ -120,16 +120,16 @@ struct oD3D11Device : oGPUDevice
 	// _____________________________________________________________________________
 	// Members
 
-	oRef<ID3D11Device> D3DDevice;
-	oRef<ID3D11DeviceContext> ImmediateContext;
-	oRef<IDXGISwapChain> SwapChain;
-	oRef<ID3D11BlendState> BlendStates[oGPU_BLEND_STATE_COUNT];
-	oRef<ID3D11RasterizerState> SurfaceStates[oGPU_SURFACE_STATE_COUNT];
-	oRef<ID3D11DepthStencilState> DepthStencilStates[oGPU_DEPTH_STENCIL_STATE_COUNT];
-	oRef<ID3D11SamplerState> SamplerStates[oGPU_SAMPLER_STATE_COUNT];
+	oStd::ref<ID3D11Device> D3DDevice;
+	oStd::ref<ID3D11DeviceContext> ImmediateContext;
+	oStd::ref<IDXGISwapChain> SwapChain;
+	oStd::ref<ID3D11BlendState> BlendStates[oGPU_BLEND_STATE_COUNT];
+	oStd::ref<ID3D11RasterizerState> SurfaceStates[oGPU_SURFACE_STATE_COUNT];
+	oStd::ref<ID3D11DepthStencilState> DepthStencilStates[oGPU_DEPTH_STENCIL_STATE_COUNT];
+	oStd::ref<ID3D11SamplerState> SamplerStates[oGPU_SAMPLER_STATE_COUNT];
 
 	// used to flush an explicit setting of a UAV counter.
-	oRef<ID3D11ComputeShader> NoopCS;
+	oStd::ref<ID3D11ComputeShader> NoopCS;
 
 	// These will hold null/noop values and are initialized only at construction
 	// time, so it's safe to access from command lists in multiple threads.

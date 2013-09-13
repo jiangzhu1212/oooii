@@ -261,7 +261,7 @@ void oAutoBuildOutputResults(const oAutoBuildEmailSettings& _EmailSettings, int 
 		// that is connected to the internet and thus highly likely the LAN.
 		oStd::sstring serverIP;
 		{
-			oRef<threadsafe oSocket> Socket;
+			oStd::ref<threadsafe oSocket> Socket;
 			oSocket::DESC Desc;
 			Desc.Addr = _EmailSettings.EmailServer;
 			Desc.Protocol = oSocket::TCP;
@@ -308,7 +308,7 @@ void oAutoBuildOutputResults(const oAutoBuildEmailSettings& _EmailSettings, int 
 			return;
 		}
 
-		oRef<oEMail> Mail;
+		oStd::ref<oEMail> Mail;
 		oEMailCreate(oEMail::USE_TLS, _EmailSettings.EmailServer, &Mail);
 
 		if (Mail)
@@ -347,7 +347,7 @@ void oEmailAdminAndStop(const oAutoBuildEmailSettings& _EmailSettings, const cha
 	oStd::sstring Subject;
 	oPrintf(Subject, "%s Fatal Error. All builds halted. Stopped on %d", oBUILD_TOOL_STANDARD_SUBJECT, _CL);
 
-	oRef<oEMail> Mail;
+	oStd::ref<oEMail> Mail;
 	oEMailCreate(oEMail::USE_TLS, _EmailSettings.EmailServer, &Mail);
 
 	if (Mail)

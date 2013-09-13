@@ -29,7 +29,6 @@
 #ifndef oSocket_h
 #define oSocket_h
 
-#include <oBasis/oRef.h>
 #include <oBasis/oInterface.h>
 
 // A Host is a simple identifier for a net device. This is an IP address
@@ -108,7 +107,7 @@ interface oSocket : oInterface
 			: MaxSimultaneousMessages(16)
 		{}
 
-		oRef<threadsafe oSocketAsyncCallback> Callback;
+		oStd::ref<threadsafe oSocketAsyncCallback> Callback;
 
 		// The maximum number of messages that will be in flight in either direction,
 		// this only has implications for Asynchronous sockets in that if more messages

@@ -26,7 +26,6 @@
 #include <oStd/fixed_string.h>
 #include <oBasis/oInitOnce.h>
 #include <oConcurrency/lock_free_queue.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 
 struct oBufferPoolImpl : public oBufferPool
@@ -43,7 +42,7 @@ struct oBufferPoolImpl : public oBufferPool
 	oInitOnce<oStd::path_string> Name;
 	oRefCount RefCount;
 	oBuffer::DeallocateFn Dealloc;
-	oConcurrency::lock_free_queue<oRef<oBuffer>> FreeBuffers;
+	oConcurrency::lock_free_queue<oStd::ref<oBuffer>> FreeBuffers;
 	unsigned int BufferCount;
 	threadsafe size_t IndividualBufferSize;
 	void* pPoolBase;
@@ -65,7 +64,7 @@ oBufferPoolImpl::oBufferPoolImpl(const char* _Name, void* _pAllocation, size_t _
 	const unsigned char* pPoolEnd = (unsigned char*)pPoolBase + _AllocationSize;
 	while( pNextAlloc + IndividualBufferSize < pPoolEnd )
 	{
-		oRef<oBuffer> FreeBuffer;
+		oStd::ref<oBuffer> FreeBuffer;
 
 		if (!oBufferCreate(*BufferName, pNextAlloc, IndividualBufferSize, oBIND(&oBufferPoolImpl::DestroyBuffer, this, oBIND1), &FreeBuffer))
 			return;
@@ -93,7 +92,7 @@ oBufferPoolImpl::~oBufferPoolImpl()
 	oASSERT( FreeBuffers.size() == BufferCount, "Buffers have not been returned to the pool!" );
 	
 	// Pop all the references off so they go out of scope
-	oRef<oBuffer> FreeBuffer;
+	oStd::ref<oBuffer> FreeBuffer;
 	while( FreeBuffers.try_pop(FreeBuffer) )
 	{
 
@@ -121,7 +120,7 @@ void oBufferPoolImpl::DestroyBuffer(void* _pBufer) threadsafe
 		}
 
 		// Pool is still alive so recycle this memory back into the pool
-		oRef<oBuffer> FreeBuffer;
+		oStd::ref<oBuffer> FreeBuffer;
 		// Threadcasts safe because size and name don't change
 		if (!oBufferCreate(*BufferName, _pBufer, thread_cast<size_t&>(IndividualBufferSize), oBIND(&oBufferPoolImpl::DestroyBuffer, this, oBIND1), &FreeBuffer))
 			return;
@@ -137,7 +136,7 @@ bool oBufferPoolImpl::GetFreeBuffer(threadsafe oBuffer** _ppBuffer) threadsafe
 		(*_ppBuffer)->Release();
 		*_ppBuffer = nullptr;
 	}
-	oRef<oBuffer> FreeBuffer;
+	oStd::ref<oBuffer> FreeBuffer;
 	if( !FreeBuffers.try_pop(FreeBuffer) )
 		return oErrorSetLast(std::errc::no_buffer_space, "There are no free buffers left in the oBufferPool");
 

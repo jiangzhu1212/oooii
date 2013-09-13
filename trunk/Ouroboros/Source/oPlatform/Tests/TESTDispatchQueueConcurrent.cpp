@@ -34,7 +34,7 @@ struct oDQC_impl : oConcurrency::tests::test_threadpool
 	{
 		oVERIFY(oDispatchQueueCreateConcurrent("platform threadpool", 100000, &t));
 	}
-	oRef<threadsafe oDispatchQueueConcurrent> t;
+	oStd::ref<threadsafe oDispatchQueueConcurrent> t;
 	~oDQC_impl() { if (t) t->Join(); }
 	const char* name() const threadsafe override { return oConcurrency::task_scheduler_name(); }
 	void dispatch(const oTASK& _Task) threadsafe override { t->Dispatch(_Task); }

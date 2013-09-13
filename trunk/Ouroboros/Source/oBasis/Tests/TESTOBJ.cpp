@@ -26,7 +26,6 @@
 #include <oBasis/oError.h>
 #include <oStd/finally.h>
 #include <oBasis/oPath.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oString.h>
 #include <oBasis/oTimer.h>
 #include <oBasis/tests/oBasisTests.h>
@@ -73,7 +72,7 @@ static bool oBasisTest_oOBJLoad(const oBasisTestServices& _Services, const char*
 	oStd::path path;
 	oTESTB(_Services.ResolvePath(path, _Path, true), "not found: %s", _Path);
 
-	oRef<threadsafe oOBJ> obj;
+	oStd::ref<threadsafe oOBJ> obj;
 	char* pOBJBuffer = nullptr;
 	size_t Size = 0;
 	double start = oTimer();
@@ -102,7 +101,7 @@ bool oBasisTest_oOBJ(const oBasisTestServices& _Services)
 		const oBasisTestOBJ* pCube = nullptr;
 		oBasisTestOBJGet(oBASIS_TEST_CUBE_OBJ, &pCube);
 
-		oRef<threadsafe oOBJ> obj;
+		oStd::ref<threadsafe oOBJ> obj;
 		oTESTB(oOBJCreate("Correctness (cube) obj", pCube->GetFileContents(), oOBJ_INIT(), &obj), "Failed to parse correctness (cube) obj file");
 		oTESTB0(TestCorrectness(pCube, obj));
 	}

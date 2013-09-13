@@ -92,9 +92,9 @@ public:
 	}
 
 private:
-	oRef<oGPUPipeline> Pipeline;
-	oRef<oGPUUtilMesh> Mesh;
-	oRef<oGPUBuffer> TestConstants;
+	oStd::ref<oGPUPipeline> Pipeline;
+	oStd::ref<oGPUUtilMesh> Mesh;
+	oStd::ref<oGPUBuffer> TestConstants;
 };
 
 oDEFINE_GPU_TEST(GPU_SpinningTriangle)

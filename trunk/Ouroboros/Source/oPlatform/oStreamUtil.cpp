@@ -28,7 +28,7 @@
 
 bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oFUNCTION<void*(size_t _NumBytes)>& _Allocate, const oFUNCTION<void(void* _Pointer)>& _Deallocate, const char* _URIReference, bool _AsString)
 {
-	oRef<threadsafe oStreamReader> Reader;
+	oStd::ref<threadsafe oStreamReader> Reader;
 	if (!oStreamReaderCreate(_URIReference, &Reader))
 		return false; // pass through error
 
@@ -90,7 +90,7 @@ bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oFUNCTION<void*(s
 
 bool oStreamLoadPartial(void* _pBuffer, size_t _SizeofBuffer, const char* _URIReference)
 {
-	oRef<threadsafe oStreamReader> Reader;
+	oStd::ref<threadsafe oStreamReader> Reader;
 	if (!oStreamReaderCreate(_URIReference, &Reader))
 		return false;
 

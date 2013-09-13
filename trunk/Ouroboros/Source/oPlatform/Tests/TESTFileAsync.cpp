@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oBasis/oRef.h>
 #include <oPlatform/oFile.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oConcurrency/countdown_latch.h>
@@ -43,7 +42,7 @@ struct PLATFORM_FileAsync : public oTest
 		{
 			static const unsigned int NUM_READS = 5;
 
-			oRef<threadsafe oStreamReader> ReadFile;
+			oStd::ref<threadsafe oStreamReader> ReadFile;
 			oTESTB( oStreamReaderCreate(testFilePath, &ReadFile), oErrorGetLastString() );
 
 			oStd::uri_string ActualFilePath;
@@ -113,7 +112,7 @@ struct PLATFORM_FileAsync : public oTest
 			oSTREAM_RANGE Range;
 			Range.Offset = FileDesc.Size;
 			Range.Size = 4;
-			oRef<threadsafe oStreamReader> WindowedReader;
+			oStd::ref<threadsafe oStreamReader> WindowedReader;
 			oTESTB(!oStreamReaderCreateWindowed(ReadFile, Range, &WindowedReader), "oFileReaderCreateWindowed should have failed");
 
 			// Setup window to skip 16 bytes
@@ -147,7 +146,7 @@ struct PLATFORM_FileAsync : public oTest
 		oStd::path TempFilePath;
 		oTESTB0(BuildPath(TempFilePath, "TESTAsyncFileIO.bin", oTest::TEMP));
 
-		oRef<threadsafe oStreamReader> ReadFile;
+		oStd::ref<threadsafe oStreamReader> ReadFile;
 
 		oTESTB( !oStreamReaderCreate(TempFilePath, &ReadFile), "Test failed, FileReader create with non-existant file" );
 		
@@ -156,7 +155,7 @@ struct PLATFORM_FileAsync : public oTest
 		// Now test write the test file
 		{
 			oTRACE("TESTFileAsync: Starting write test");
-			oRef<threadsafe oStreamWriter> WriteFile;
+			oStd::ref<threadsafe oStreamWriter> WriteFile;
 			oTESTB( oStreamWriterCreate(TempFilePath, &WriteFile), oErrorGetLastString() );
 			
 			Latch.reset(1);
@@ -215,7 +214,7 @@ struct PLATFORM_FileAsync : public oTest
 		// Test large write
 		{
 			oTRACE("TESTFileAsync: Test large write.");
-			oRef<threadsafe oStreamWriter> WriteFile;
+			oStd::ref<threadsafe oStreamWriter> WriteFile;
 			oTESTB( oStreamWriterCreate(TempFilePath, &WriteFile), oErrorGetLastString() );
 
 			int TestSize = sizeof(TESTAsyncWrite);

@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oInputMapper.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oConcurrency/mutex.h>
 #include <array>
@@ -455,7 +454,7 @@ struct oInputMapperImpl : oInputMapper
 	void OnAction(const oGUI_ACTION_DESC& _Action) threadsafe override;
 	void OnLostCapture() threadsafe override;
 
-	oRef<threadsafe oInputSet> InputSet;
+	oStd::ref<threadsafe oInputSet> InputSet;
 	oInputHistory InputHistory;
 	shared_mutex Mutex;
 	oRefCount RefCount;

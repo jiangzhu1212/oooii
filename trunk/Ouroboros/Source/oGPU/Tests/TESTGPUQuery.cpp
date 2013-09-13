@@ -31,15 +31,15 @@ struct GPU_Query : public oTest
 	{
 		oGPUDevice::INIT init("GPU_Query");
 		init.DriverDebugLevel = oGPU_DEBUG_NORMAL;
-		oRef<oGPUDevice> Device;
+		oStd::ref<oGPUDevice> Device;
 		oTESTB0(oGPUDeviceCreate(init, &Device));
 
-		oRef<oGPUCommandList> ICL;
+		oStd::ref<oGPUCommandList> ICL;
 		Device->GetImmediateCommandList(&ICL);
 
 		// Test timer
 		{
-			oRef<oGPUQuery> Query;
+			oStd::ref<oGPUQuery> Query;
 
 			oGPUQuery::DESC QueryDesc;
 			QueryDesc.Type = oGPU_QUERY_TIMER;

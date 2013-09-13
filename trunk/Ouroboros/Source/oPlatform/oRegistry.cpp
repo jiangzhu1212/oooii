@@ -54,7 +54,7 @@ private:
 	struct RECORD
 	{
 		oREGISTRY_DESC Desc;
-		oRef<oInterface> Entry;
+		oStd::ref<oInterface> Entry;
 	};
 
 	struct TBBURIHash

@@ -232,7 +232,7 @@ static bool oVUFireAndForget(const char* _CommandLine)
 	pd.CommandLine = _CommandLine;
 	pd.Show = oPROCESS_SHOW_MINIMIZED;
 	oTRACE("Spawning process: %s", _CommandLine);
-	oRef<threadsafe oProcess> NewProcess;
+	oStd::ref<threadsafe oProcess> NewProcess;
 	if (!oProcessCreate(pd, &NewProcess))
 		return false; // pass through error
 	return true;

@@ -99,9 +99,6 @@
     <ClInclude Include="..\..\Include\oBasis\oRefCount.h">
       <Filter>oBasis\Types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oRef.h">
-      <Filter>oBasis\Types</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oMathTypes.h">
       <Filter>oBasis\Types</Filter>
     </ClInclude>

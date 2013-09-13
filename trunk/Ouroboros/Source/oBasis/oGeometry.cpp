@@ -29,7 +29,6 @@
 #include <oBasis/oMath.h>
 #include <oBasis/oMeshUtil.h>
 #include <oBasis/oOBJ.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 
 #define GEO_CONSTRUCT(fnName, SupportedLayout, InputLayout, FaceType) do { bool success = false; oCONSTRUCT(_ppGeometry, oGeometry_Impl(fnName, SupportedLayout, InputLayout, FaceType, &success)); } while (false); \
@@ -1872,7 +1871,7 @@ bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LA
 	init.CounterClockwiseFaces = !_Desc.FlipFaces;
 	init.CalcNormalsOnError = true;
 
-	oRef<threadsafe oOBJ> obj;
+	oStd::ref<threadsafe oOBJ> obj;
 	if (!oOBJCreate(_Desc.OBJPath, _Desc.OBJString, init, &obj))
 		return false;
 

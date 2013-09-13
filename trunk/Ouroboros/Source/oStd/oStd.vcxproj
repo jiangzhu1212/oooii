@@ -144,6 +144,7 @@
     <ClInclude Include="..\..\Include\oStd\oStdThread.h" />
     <ClInclude Include="..\..\Include\oStd\path.h" />
     <ClInclude Include="..\..\Include\oStd\path_traits.h" />
+    <ClInclude Include="..\..\Include\oStd\ref.h" />
     <ClInclude Include="..\..\Include\oStd\scc.h" />
     <ClInclude Include="..\..\Include\oStd\string.h" />
     <ClInclude Include="..\..\Include\oStd\stringize.h" />

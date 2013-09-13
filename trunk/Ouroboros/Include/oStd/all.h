@@ -64,6 +64,7 @@
 #include <oStd/oStdThread.h>
 #include <oStd/path.h>
 #include <oStd/path_traits.h>
+#include <oStd/ref.h>
 #include <oStd/string.h>
 #include <oStd/string_traits.h>
 #include <oStd/text_document.h>

@@ -174,6 +174,8 @@ static size_t VisitLines(char* _Buffer, size_t _ReadSize, const oFUNCTION<void(c
 
 	while (line[eol] != '\0')
 	{
+		oASSERT(&line[eol] <= &_Buffer[_ReadSize], "");
+
 		line[eol] = '\0';
 		_GetLine(line);
 		line += eol + 1;
@@ -196,7 +198,7 @@ bool oSystemExecute(const char* _CommandLine, const oFUNCTION<void(char* _Line)>
 	#ifdef DEBUG_EXECUTED_PROCESS
 		desc.StartSuspended = true;
 	#endif
-	oRef<threadsafe oProcess> process;
+	oStd::ref<threadsafe oProcess> process;
 	if (!oProcessCreate(desc, &process))
 		return false;
 
@@ -221,11 +223,11 @@ bool oSystemExecute(const char* _CommandLine, const oFUNCTION<void(char* _Line)>
 			once = true;
 		}
 		
-		size_t ReadSize = process->ReadFromStdout((void*)tempStdOut.c_str(), tempStdOut.capacity());
+		size_t ReadSize = process->ReadFromStdout((void*)tempStdOut.c_str(), tempStdOut.capacity() - 1);
 		while (ReadSize && _GetLine)
 		{
 			size_t offset = VisitLines(tempStdOut, ReadSize, _GetLine);
-			ReadSize = process->ReadFromStdout((void*)oStd::byte_add(tempStdOut.c_str(), offset), tempStdOut.capacity() - offset);
+			ReadSize = process->ReadFromStdout((void*)oStd::byte_add(tempStdOut.c_str(), offset), tempStdOut.capacity() - 1 - offset);
 		}
 
 		timeSoFarMS = static_cast<int>(oTimerMSF() - startTime);
@@ -233,11 +235,11 @@ bool oSystemExecute(const char* _CommandLine, const oFUNCTION<void(char* _Line)>
 
 	// get any remaining text from stdout
 	size_t offset = 0;
-	size_t ReadSize = process->ReadFromStdout((void*)tempStdOut.c_str(), tempStdOut.capacity());
+	size_t ReadSize = process->ReadFromStdout((void*)tempStdOut.c_str(), tempStdOut.capacity() - 1);
 	while (ReadSize && _GetLine)
 	{
 		offset = VisitLines(tempStdOut, ReadSize, _GetLine);
-		ReadSize = process->ReadFromStdout((void*)oStd::byte_add(tempStdOut.c_str(), offset), tempStdOut.capacity() - offset);
+		ReadSize = process->ReadFromStdout((void*)oStd::byte_add(tempStdOut.c_str(), offset), tempStdOut.capacity() - 1 - offset);
 	}
 
 	if (offset && _GetLine)
@@ -259,7 +261,7 @@ bool oSystemExecute(const char* _CommandLine, const oFUNCTION<void(char* _Line)>
 
 bool oSystemWaitIdle(unsigned int _TimeoutMS, oFUNCTION<bool()> _ContinueIdling)
 {
-	oRef<oProgressBar> PB;
+	oStd::ref<oProgressBar> PB;
 	if(!_ContinueIdling)
 	{
 		if (!oProgressBarCreate([=] {}, "Waiting for System Idle...", &PB))

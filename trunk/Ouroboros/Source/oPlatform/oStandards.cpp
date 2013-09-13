@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oPlatform/oStandards.h>
 #include <oStd/assert.h>
-#include <oBasis/oRef.h>
 #include <oStd/oStdChrono.h>
 #include <oBasis/oString.h>
 #include <oPlatform/oConsole.h>
@@ -126,7 +125,7 @@ void* oLoadIcon(oFUNCTION<void(const char** _ppBufferName, const void** _ppBuffe
 	size_t sizeofBuffer = 0;
 	_BufferGetDesc(&BufferName, &pBuffer, &sizeofBuffer);
 
-	oRef<oImage> ico;
+	oStd::ref<oImage> ico;
 	oVERIFY(oImageCreate(BufferName, pBuffer, sizeofBuffer, &ico));
 
 	#if defined(_WIN32) || defined (_WIN64)

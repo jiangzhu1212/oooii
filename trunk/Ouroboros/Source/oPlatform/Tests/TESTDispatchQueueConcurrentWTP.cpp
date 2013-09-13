@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oBasis/oRef.h>
 #include "../oDispatchQueueConcurrentWTP.h"
 #include "TESTConcurrencyRequirements.h"
 #include "oTestIntegration.h"
@@ -35,7 +34,7 @@ struct oDQCWTP_impl : oConcurrency::tests::test_threadpool
 	{
 		oVERIFY(oDispatchQueueCreateConcurrentWTP("WTP DQ", 100000, &t));
 	}
-	oRef<threadsafe oDispatchQueueConcurrent> t;
+	oStd::ref<threadsafe oDispatchQueueConcurrent> t;
 	~oDQCWTP_impl() { if (t) t->Join(); }
 	const char* name() const threadsafe override { return "WTP"; }
 	void dispatch(const oTASK& _Task) threadsafe override { t->Dispatch(_Task); }

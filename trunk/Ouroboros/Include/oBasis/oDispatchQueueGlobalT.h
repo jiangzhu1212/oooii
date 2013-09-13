@@ -26,7 +26,6 @@
 #ifndef oDispatchQueueGlobalT_h
 #define oDispatchQueueGlobalT_h
 
-#include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oConcurrency/mutex.h>
 #include <oStd/assert.h>
@@ -72,7 +71,7 @@ struct oDispatchQueueGlobalT : public oDispatchQueueGlobal, T
 	bool Joinable() const threadsafe override{ return IsJoinable; }
 	virtual const char* GetDebugName() const threadsafe { return DebugName->c_str(); }
 
-	void ExecuteNext(oRef<threadsafe oDispatchQueueGlobalT> _SelfRef, unsigned int _ExecuteKey) threadsafe;
+	void ExecuteNext(oStd::ref<threadsafe oDispatchQueueGlobalT> _SelfRef, unsigned int _ExecuteKey) threadsafe;
 
 	oInitOnce<oStd::sstring> DebugName;
 	typedef std::list<oTASK> tasks_t;
@@ -126,7 +125,7 @@ bool oDispatchQueueGlobalT<T>::Dispatch(const oTASK& _Task) threadsafe
 
 		// If this command is the only one in the queue kick off the execution
 		if (1 == TaskCount)
-			Issue(oBIND(&oDispatchQueueGlobalT::ExecuteNext, this, oRef<threadsafe oDispatchQueueGlobalT>(this), ExecuteKey));
+			Issue(oBIND(&oDispatchQueueGlobalT::ExecuteNext, this, oStd::ref<threadsafe oDispatchQueueGlobalT>(this), ExecuteKey));
 
 		FlushLock.unlock_shared();
 	}
@@ -177,7 +176,7 @@ void oDispatchQueueGlobalT<T>::Join() threadsafe
 };
 
 template<typename T>
-void oDispatchQueueGlobalT<T>::ExecuteNext(oRef<threadsafe oDispatchQueueGlobalT> _SelfRef, unsigned int _ExecuteKey) threadsafe
+void oDispatchQueueGlobalT<T>::ExecuteNext(oStd::ref<threadsafe oDispatchQueueGlobalT> _SelfRef, unsigned int _ExecuteKey) threadsafe
 {
 	if (IsJoinable && _ExecuteKey == ExecuteKey && FlushLock.try_lock_shared())
 	{
@@ -203,7 +202,7 @@ void oDispatchQueueGlobalT<T>::ExecuteNext(oRef<threadsafe oDispatchQueueGlobalT
 			
 		// If there are remaining Tasks execute the next
 		if (TaskCount > 0)
-			Issue(oBIND(&oDispatchQueueGlobalT::ExecuteNext, this, oRef<threadsafe oDispatchQueueGlobalT>(this), ExecuteKey));
+			Issue(oBIND(&oDispatchQueueGlobalT::ExecuteNext, this, oStd::ref<threadsafe oDispatchQueueGlobalT>(this), ExecuteKey));
 
 		FlushLock.unlock_shared();
 	}

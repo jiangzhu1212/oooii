@@ -33,7 +33,7 @@ struct GPU_BCEncodeDecode : public oTest
 {
 	RESULT LoadOriginalAndSaveConverted(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, oSURFACE_FORMAT _TargetFormat, const char* _OriginalPath, const char* _ConvertedPath)
 	{
-		oRef<oBuffer> OriginalFile;
+		oStd::ref<oBuffer> OriginalFile;
 		oTESTB(oBufferLoad(_OriginalPath, &OriginalFile), "Failed to load %s", _OriginalPath);
 
 		oGPU_TEXTURE_DESC d;
@@ -41,10 +41,10 @@ struct GPU_BCEncodeDecode : public oTest
 		d.ArraySize = oDEFAULT;
 		d.Format = oSURFACE_UNKNOWN;
 
-		oRef<oGPUTexture> OriginalAsTexture;
+		oStd::ref<oGPUTexture> OriginalAsTexture;
 		oTESTB(oGPUTextureLoad(_pDevice, d, "Source Texture", OriginalFile->GetData(), OriginalFile->GetSize(), &OriginalAsTexture), "Failed to parse %s", OriginalFile->GetName());
 
-		oRef<oGPUTexture> ConvertedTexture;
+		oStd::ref<oGPUTexture> ConvertedTexture;
 		oTESTB(oGPUSurfaceConvert(OriginalAsTexture, _TargetFormat, &ConvertedTexture), "Failed to convert %s to %s", OriginalFile->GetName(), oStd::as_string(_TargetFormat));
 
 		oStreamDelete(_ConvertedPath);
@@ -55,7 +55,7 @@ struct GPU_BCEncodeDecode : public oTest
 
 	RESULT LoadConvertedAndConvertToImage(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, const char* _ConvertedPath, oImage** _ppConvertedImage)
 	{
-		oRef<oBuffer> ConvertedFile;
+		oStd::ref<oBuffer> ConvertedFile;
 		oTESTB(oBufferLoad(_ConvertedPath, &ConvertedFile), "Failed to load %s", _ConvertedPath);
 
 		oGPUTexture::DESC td;
@@ -64,10 +64,10 @@ struct GPU_BCEncodeDecode : public oTest
 		td.Format = oSURFACE_UNKNOWN;
 		td.Type = oGPU_TEXTURE_2D_READBACK;
 
-		oRef<oGPUTexture> ConvertedFileAsTexture;
+		oStd::ref<oGPUTexture> ConvertedFileAsTexture;
 		oTESTB(oGPUTextureLoad(_pDevice, td, "Converted Texture", ConvertedFile->GetData(), ConvertedFile->GetSize(), &ConvertedFileAsTexture), "Failed to parse %s", ConvertedFile->GetName());
 
-		oRef<oGPUTexture> BGRATexture;
+		oStd::ref<oGPUTexture> BGRATexture;
 		oTESTB(oGPUSurfaceConvert(ConvertedFileAsTexture, oSURFACE_B8G8R8A8_UNORM, &BGRATexture), "Failed to convert %s to BGRA", ConvertedFile->GetName());
 
 		BGRATexture->GetDesc(&td);
@@ -77,7 +77,7 @@ struct GPU_BCEncodeDecode : public oTest
 		d.Format = oImageFormatFromSurfaceFormat(td.Format);
 		d.RowPitch = oImageCalcRowPitch(d.Format, d.Dimensions.x);
 
-		oRef<oImage> ConvertedImage;
+		oStd::ref<oImage> ConvertedImage;
 		oTESTB(oImageCreate("ConvertedImage", d, &ConvertedImage), "Failed to create a compatible oImage");
 
 		oSURFACE_MAPPED_SUBRESOURCE msrSource;
@@ -112,7 +112,7 @@ struct GPU_BCEncodeDecode : public oTest
 			return res;
 
 		oTRACE("Converting image back from %s (may take a while)...", oStd::as_string(_TargetFormat));
-		oRef<oImage> ConvertedImage;
+		oStd::ref<oImage> ConvertedImage;
 		res = LoadConvertedAndConvertToImage(_StrStatus, _SizeofStrStatus, _pDevice, ConvertedPath, &ConvertedImage);
 		if (SUCCESS != res)
 				return res;
@@ -134,7 +134,7 @@ struct GPU_BCEncodeDecode : public oTest
 			DeviceInit.DriverDebugLevel = oGPU_DEBUG_NORMAL;
 		#endif
 
-		oRef<oGPUDevice> Device;
+		oStd::ref<oGPUDevice> Device;
 		if (!oGPUDeviceCreate(DeviceInit, &Device))
 		{
 			#if 1

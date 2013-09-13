@@ -63,7 +63,7 @@ bool ByDrawOrder(const oGPUCommandList* _pCommandList1, const oGPUCommandList* _
 
 bool oGPUDeviceCreate(const oGPU_DEVICE_INIT& _Init, oGPUDevice** _ppDevice)
 {
-	oRef<ID3D11Device> Device;
+	oStd::ref<ID3D11Device> Device;
 	if (!oD3D11CreateDevice(_Init, false, &Device))
 		return false; // pass through error
 

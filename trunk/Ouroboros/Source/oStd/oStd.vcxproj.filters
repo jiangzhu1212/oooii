@@ -351,6 +351,9 @@
     <ClInclude Include="..\..\Include\oStd\version.h">
       <Filter>oStd\Types</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\ref.h">
+      <Filter>oStd\Types</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">

@@ -73,8 +73,8 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList, 0x2d6106c4, 0x7741, 
 	void Dispatch(oGPUComputeShader* _pComputeShader, const int3& _ThreadGroupCount) override;
 	void Dispatch(oGPUComputeShader* _pComputeShader, oGPUBuffer* _pThreadGroupCountBuffer, int _AlignedByteOffsetToThreadGroupCount) override;
 
-	oRef<ID3D11DeviceContext> Context;
-	oRef<ID3D11CommandList> CommandList;
+	oStd::ref<ID3D11DeviceContext> Context;
+	oStd::ref<ID3D11CommandList> CommandList;
 	DESC Desc;
 	D3D_PRIMITIVE_TOPOLOGY PrimitiveTopology;
 

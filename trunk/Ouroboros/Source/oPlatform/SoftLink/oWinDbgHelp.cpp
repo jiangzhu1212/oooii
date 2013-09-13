@@ -108,7 +108,7 @@ oWinDbgHelp::oWinDbgHelp(HANDLE _hProcess, const char* _SymbolPath, ModuleLoaded
 	: hProcess(_hProcess ? _hProcess : GetCurrentProcess())
 	, hDbgHelp(0)
 	, Handler(_Handler)
-	, oProcessSingleton<oWinDbgHelp>(2) // keep an extra reference to ourselves and use atexit which orders static deinit a bit better than the static oRef that will be receiving this newly created object
+	, oProcessSingleton<oWinDbgHelp>(2) // keep an extra reference to ourselves and use atexit which orders static deinit a bit better than the static oStd::ref that will be receiving this newly created object
 {
 	sInstanceForDeferredRelease = this;
 	atexit(AtExit);

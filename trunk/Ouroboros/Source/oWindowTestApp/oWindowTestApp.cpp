@@ -106,7 +106,7 @@ public:
 	void Run();
 
 private:
-	oRef<oWindow> Window;
+	oStd::ref<oWindow> Window;
 	oGUI_MENU Menus[oWMENU_COUNT];
 	oWindowTestAppPulseContext PulseContext;
 	oGUIMenuEnumRadioListHandler MERL; 

@@ -179,8 +179,8 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 	}
 
 protected:
-	oRef<oWinDbgHelp> DbgHelp;
-	oRef<threadsafe oStreamWriter> LogFile;
+	oStd::ref<oWinDbgHelp> DbgHelp;
+	oStd::ref<threadsafe oStreamWriter> LogFile;
 	oStd::sstring VersionString;
 	oREPORTING_DESC Desc;
 	typedef oStd::fixed_vector<size_t, 256> array_t;

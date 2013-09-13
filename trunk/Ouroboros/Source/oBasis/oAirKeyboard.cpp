@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oAirKeyboard.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oXMLSerialize.h>
 #include <oConcurrency/mutex.h>
@@ -135,7 +134,7 @@ struct oAirKeyboardImpl : oAirKeyboard
 
 private:
 	oConcurrency::shared_mutex KeySetMutex;
-	oRef<threadsafe oAirKeySet> KeySet;
+	oStd::ref<threadsafe oAirKeySet> KeySet;
 	std::vector<oGUI_ACTION> KeyAction;
 
 	oConcurrency::shared_mutex SkeletonsMutex;

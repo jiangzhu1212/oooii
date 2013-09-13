@@ -49,7 +49,7 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, Query, 0x47a1c5e7, 0xd484, 0x414c
 		TIMER_COUNT,
 	};
 
-	oRef<ID3D11Query> Queries[3];
+	oStd::ref<ID3D11Query> Queries[3];
 };
 
 #endif

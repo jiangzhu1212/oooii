@@ -29,7 +29,6 @@
 // opens an oWindow for each with its video stream for verification/iteration.
 
 #include <oPlatform/oCamera.h>
-#include <oBasis/oRef.h>
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/oMsgBox.h>
@@ -40,14 +39,14 @@ int ShowAllCameras()
 {
 	struct CONTEXT
 	{
-		CONTEXT(oRef<threadsafe oCamera> _pCamera)
+		CONTEXT(oStd::ref<threadsafe oCamera> _pCamera)
 			: Camera(_pCamera)
 			, LastFrame(oInvalid)
 			, Running(true)
 		{}
 
-		oRef<threadsafe oCamera> Camera;
-		oRef<oWindow> Window;
+		oStd::ref<threadsafe oCamera> Camera;
+		oStd::ref<oWindow> Window;
 		unsigned int LastFrame;
 		bool Running;
 
@@ -69,7 +68,7 @@ int ShowAllCameras()
 
 	while (1)
 	{
-		oRef<threadsafe oCamera> Camera;
+		oStd::ref<threadsafe oCamera> Camera;
 		if (oCameraEnum(index++, &Camera))
 		{
 			oCamera::MODE mode;

@@ -78,7 +78,6 @@
     <ClInclude Include="..\..\Include\oBasis\oOSC.h" />
     <ClInclude Include="..\..\Include\oBasis\oPath.h" />
     <ClInclude Include="..\..\Include\oBasis\oPlatformFeatures.h" />
-    <ClInclude Include="..\..\Include\oBasis\oRef.h" />
     <ClInclude Include="..\..\Include\oBasis\oRefCount.h" />
     <ClInclude Include="..\..\Include\oBasis\oResizedType.h" />
     <ClInclude Include="..\..\Include\oBasis\oRTTI.h" />

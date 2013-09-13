@@ -45,7 +45,7 @@ private:
 	oRefCount RefCount;
 	oFileCache::DESC Desc;
 	
-	oRef<threadsafe oRegistry> Registry;
+	oStd::ref<threadsafe oRegistry> Registry;
 };
 
 oFileCacheImpl::oFileCacheImpl(const oFileCache::DESC& _Desc, bool* _pSuccess) : Desc(_Desc)
@@ -78,14 +78,14 @@ bool oFileCacheImpl::Retrieve(oStd::path_string& _Path, const oBuffer** _Buffer)
 	}
 	
 	//It is possible for more than one thread to load the file here, slow in that case, but should be rare
-	oRef<threadsafe oStreamReader> fileReader;
+	oStd::ref<threadsafe oStreamReader> fileReader;
 	if (!oStreamReaderCreate(_Path, &fileReader))
 		return oErrorSetLast(std::errc::invalid_argument, "Could not open supplied file %s", _Path);
 
 	oSTREAM_DESC fileDesc;
 	fileReader->GetDesc(&fileDesc);
 
-	oRef<oBuffer> buffer;
+	oStd::ref<oBuffer> buffer;
 	if(!oBufferCreate("oFileCache entry buffer", oBuffer::New(oSizeT(fileDesc.Size)), oSizeT(fileDesc.Size), oBuffer::Delete, &buffer))
 		return oErrorSetLast(std::errc::invalid_argument, "Could not create an oBuffer to hold the file %s", _Path);
 		

@@ -30,7 +30,6 @@
 #include <oBasis/oError.h>
 #include <oBasis/oLockedPointer.h>
 #include <oConcurrency/mutex.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oPlatform/oPageAllocator.h>
 #include <oPlatform/Windows/oWindows.h>

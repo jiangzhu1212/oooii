@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oP4.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oString.h>
 #include <oPlatform/oReporting.h>
 #include <oBasis/oError.h>
@@ -226,7 +225,7 @@ bool oP4Label(const oP4_LABEL_SPEC& _Label)
 	desc.CommandLine = "p4 label -i";
 	desc.EnvironmentString = 0;
 	desc.StdHandleBufferSize = oKB(16);
-	oRef<threadsafe oProcess> process;
+	oStd::ref<threadsafe oProcess> process;
 	if (!oProcessCreate(desc, &process))
 		return false;
 

@@ -25,7 +25,6 @@
 #include <oBasis/oAllocatorTLSF.h>
 #include <oStd/byte.h>
 #include <oBasis/oPath.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oError.h>
 #include <oConcurrency/event.h>
 #include <oPlatform/oMirroredArena.h>
@@ -46,7 +45,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 {
 	*_StrStatus = 0;
 
-	oRef<threadsafe oProcess> Client;
+	oStd::ref<threadsafe oProcess> Client;
 	{
 		int exitcode = 0;
 		char msg[512];
@@ -56,7 +55,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 		oTRACE("SERVER: starting mirrored arena construction...");
 	}
 
-	oRef<oMirroredArena> MirroredArenaServer;
+	oStd::ref<oMirroredArena> MirroredArenaServer;
 
 	oStd::finally OnScopeExit([&] { 
 		oPageUnreserve(BASE_ADDRESS); 
@@ -94,7 +93,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 
 	oStd::memset4(BASE_ADDRESS, 0xdeadbeef, ARENA_SIZE);
 
-	oRef<oAllocator> AllocatorServer;
+	oStd::ref<oAllocator> AllocatorServer;
 	{
 		oAllocator::DESC desc;
 		desc.pArena = BASE_ADDRESS;
@@ -160,7 +159,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 	oTRACE("SERVER: creating a socket to send diffs...");
 
 	// Set up a socket to communicate with other process
-	oRef<threadsafe oSocket> ClientSocket;
+	oStd::ref<threadsafe oSocket> ClientSocket;
 	{
 		oSocket::DESC desc;
 		oStd::from_string( &desc.Addr, "127.0.0.1:1234" );
@@ -241,7 +240,7 @@ struct PLATFORM_oMirroredArenaClient : public oSpecialTest
 	{
 		oTRACE("%s: Run Start", GetName());
 
-		oRef<oMirroredArena> MirroredArenaClient;
+		oStd::ref<oMirroredArena> MirroredArenaClient;
 
 		oStd::finally OnScopeExit([&] { 
 			oPageUnreserve(BASE_ADDRESS); 
@@ -268,8 +267,8 @@ struct PLATFORM_oMirroredArenaClient : public oSpecialTest
 		oConcurrency::event connectEvent;
 		connectEvent.reset();
 		// Listen for a connection
-		oRef<threadsafe oSocketServer2> server;
-		oRef<threadsafe oSocket> client;
+		oStd::ref<threadsafe oSocketServer2> server;
+		oStd::ref<threadsafe oSocket> client;
 		{
 			oSocketServer2::DESC desc;
 			desc.ListenPort = 1234;

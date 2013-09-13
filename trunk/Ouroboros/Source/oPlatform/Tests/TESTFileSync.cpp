@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oBasis/oRef.h>
 #include <oPlatform/oFile.h>
 #include <oPlatform/oStreamUtil.h>
 
@@ -36,7 +35,7 @@ struct PLATFORM_FileSync : public oTest
 		oStd::path testFilePath;
 		oTESTB0(FindInputFile(testFilePath, "oooii.ico"));
 
-		oRef<threadsafe oSchemeHandler> FileSchemeHandler;
+		oStd::ref<threadsafe oSchemeHandler> FileSchemeHandler;
 		oTESTB(oFindSchemeHandler("file", &FileSchemeHandler), "There is no handler for files registered");
 		oTESTB0(FileSchemeHandler);
 
@@ -44,7 +43,7 @@ struct PLATFORM_FileSync : public oTest
 		{
 			static const unsigned int NUM_READS = 5;
 
-			oRef<threadsafe oStreamReader> ReadFile;
+			oStd::ref<threadsafe oStreamReader> ReadFile;
 			oTESTB( oStreamReaderCreate(testFilePath, &ReadFile), oErrorGetLastString() );
 
 			oSTREAM_DESC FileDesc;
@@ -89,14 +88,14 @@ struct PLATFORM_FileSync : public oTest
 		TempFilePath /= "TESTAsyncFileIO.bin";
 
 		{
-			oRef<threadsafe oStreamReader> ReadFile;
+			oStd::ref<threadsafe oStreamReader> ReadFile;
 			oTESTB( !oStreamReaderCreate(TempFilePath, &ReadFile), "Should not be able to create a FileReader for a file that does not exist." );
 		}
 
 		static const oGUID TestGUID = { 0x9aab7fc7, 0x6ad8, 0x4260, { 0x98, 0xef, 0xfd, 0x93, 0xda, 0x8e, 0xdc, 0x3c } };
 		// Now test write the test file
 		{
-			oRef<threadsafe oStreamWriter> WriteFile;
+			oStd::ref<threadsafe oStreamWriter> WriteFile;
 			oTESTB( oStreamWriterCreate(TempFilePath, &WriteFile), oErrorGetLastString() );
 		
 			oSTREAM_WRITE StreamWrite;

@@ -49,7 +49,7 @@ struct PLATFORM_oFileMap : public oTest
 		oTESTB0(oFileMap(path, true, r, &mapped));
 		oStd::finally OSEUnmap([&] { if (mapped) oFileUnmap(mapped); }); // safety unmap if we fail for some non-mapping reason
 
-		oRef<oBuffer> loaded;
+		oStd::ref<oBuffer> loaded;
 		oTESTB0(oBufferLoad(path, &loaded));
 
 		oTESTB(r.Size == loaded->GetSize(), "mismatch: mapped and loaded file sizes");

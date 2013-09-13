@@ -25,7 +25,6 @@
 #include <oPlatform/oSocket.h>
 #include <oBasis/oLockThis.h>
 #include <oConcurrency/mutex.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oString.h>
 #include <oConcurrency/concurrent_queue.h>
@@ -328,9 +327,9 @@ private:
 
 	oIOCP*		pIOCP;
 	SOCKET		hSocket;
-	oRef<threadsafe oSocketAsyncCallback> InternalCallback;
+	oStd::ref<threadsafe oSocketAsyncCallback> InternalCallback;
 
-	oRef<oSocketEncryptor> Encryptor;
+	oStd::ref<oSocketEncryptor> Encryptor;
 
 	ProxyDeleterFn ProxyDeleter;
 
@@ -986,7 +985,7 @@ private:
 	char DebugName[64];
 	DESC Desc;
 	oConcurrency::mutex AcceptedSocketsMutex;
-	std::vector<oRef<oSocket>> AcceptedSockets;
+	std::vector<oStd::ref<oSocket>> AcceptedSockets;
 };
 
 bool oSocketServerCreate(const char* _DebugName, const oSocketServer::DESC& _Desc, threadsafe oSocketServer** _ppSocketServer)
@@ -1061,7 +1060,7 @@ static bool UNIFIED_WaitForConnection(
 	, oSocket::DESC _Desc
 	, oFUNCTION<oSocket*(const char* _DebugName, SOCKET _hTarget, oSocket::DESC SocketDesc, bool* _pSuccess)> _CreateClientSocket
 	, threadsafe oConcurrency::mutex& _AcceptedSocketsMutex
-	, threadsafe std::vector<oRef<oSocket>>& _AcceptedSockets)
+	, threadsafe std::vector<oStd::ref<oSocket>>& _AcceptedSockets)
 {
 	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(_Mutex);
 	oWinsock* ws = oWinsock::Singleton();
@@ -1088,10 +1087,10 @@ static bool UNIFIED_WaitForConnection(
 		_Desc.ConnectionTimeoutMS = _TimeoutMS;
 		oSockAddrToNetAddr(saddr, &_Desc.Addr);
 
-		oRef<oSocket> newSocket(_CreateClientSocket("", hTarget, _Desc, &success), false);
+		oStd::ref<oSocket> newSocket(_CreateClientSocket("", hTarget, _Desc, &success), false);
 		{
 			oConcurrency::lock_guard<oConcurrency::mutex> lock(_AcceptedSocketsMutex);
-			thread_cast<std::vector<oRef<oSocket>>&>(_AcceptedSockets).push_back(newSocket); // safe because of lock above
+			thread_cast<std::vector<oStd::ref<oSocket>>&>(_AcceptedSockets).push_back(newSocket); // safe because of lock above
 		}
 
 		success = true;
@@ -1104,14 +1103,14 @@ static bool UNIFIED_WaitForConnection(
 	return success;
 }
 
-template<typename T> static inline bool FindTypedSocket(threadsafe oConcurrency::mutex& _AcceptedSocketsMutex, threadsafe std::vector<oRef<oSocket>>& _AcceptedSockets, T** _ppNewlyConnectedClient)
+template<typename T> static inline bool FindTypedSocket(threadsafe oConcurrency::mutex& _AcceptedSocketsMutex, threadsafe std::vector<oStd::ref<oSocket>>& _AcceptedSockets, T** _ppNewlyConnectedClient)
 {
 	oConcurrency::lock_guard<oConcurrency::mutex> lock(_AcceptedSocketsMutex);
-	std::vector<oRef<oSocket>>& SafeSockets = thread_cast<std::vector<oRef<oSocket>>&>(_AcceptedSockets);
+	std::vector<oStd::ref<oSocket>>& SafeSockets = thread_cast<std::vector<oStd::ref<oSocket>>&>(_AcceptedSockets);
 
 	if (!SafeSockets.empty())
 	{
-		for (std::vector<oRef<oSocket>>::iterator it = SafeSockets.begin(); it != SafeSockets.end(); ++it)
+		for (std::vector<oStd::ref<oSocket>>::iterator it = SafeSockets.begin(); it != SafeSockets.end(); ++it)
 		{
 			oSocket* s = *it;
 			if (s->QueryInterface(oGetGUID(_ppNewlyConnectedClient), (void**)_ppNewlyConnectedClient))
@@ -1326,7 +1325,7 @@ private:
 
 	char DebugName[64];
 	DESC Desc;
-	oRef<SocketServerPool> SocketPool;
+	oStd::ref<SocketServerPool> SocketPool;
 
 	int DesiredAccepts;
 	oStd::atomic_int IssuedAcceptCount; //once this exceeds DesiredAccepts, accepts will begin to get starved out.
@@ -1370,7 +1369,7 @@ SocketServer2_Impl::SocketServer2_Impl(const char* _DebugName, const DESC& _Desc
 	if (INVALID_SOCKET == hListenSocket)
 		return; // leave last error from inside oWinsockCreate
 	
-	SocketPool = oRef<SocketServerPool>(new SocketServerPool(oBIND(&SocketServer2_Impl::Disconnect, this, oBIND1) , _pSuccess), false);
+	SocketPool = oStd::ref<SocketServerPool>(new SocketServerPool(oBIND(&SocketServer2_Impl::Disconnect, this, oBIND1) , _pSuccess), false);
 	if(!(*_pSuccess))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "Failed to create the socket pool.");
@@ -1547,8 +1546,8 @@ void SocketServer2_Impl::IOCPCallback(oIOCPOp* _pSocketOp)
 		bool success;
 		success = oWinsockCompleteAsyncAccept(hListenSocket, pOp->Socket->GetHandle());
 
-		oRef<oSocket> socket = nullptr;
-		oRef<SocketServerPool> sPool = SocketPool;
+		oStd::ref<oSocket> socket = nullptr;
+		oStd::ref<SocketServerPool> sPool = SocketPool;
 		if(success)
 		{
 			auto deleter = [sPool](oSocketImpl* _socket) mutable {
@@ -1557,7 +1556,7 @@ void SocketServer2_Impl::IOCPCallback(oIOCPOp* _pSocketOp)
 			};
 
 			std::shared_ptr<oSocketImpl> socketPtr(pOp->Socket, deleter);
-			socket = oRef<oSocket>(oSocketCreateFromServer2(socketPtr, desc, &success), false);
+			socket = oStd::ref<oSocket>(oSocketCreateFromServer2(socketPtr, desc, &success), false);
 		}
 
 		if(success)

@@ -91,10 +91,10 @@ private:
 	bool AllSnapshotsSucceeded;
 
 protected:
-	oRef<oWindow> Window;
-	oRef<oGPUDevice> Device;
-	oRef<oGPUCommandList> CommandList;
-	oRef<oGPURenderTarget> PrimaryRenderTarget;
+	oStd::ref<oWindow> Window;
+	oStd::ref<oGPUDevice> Device;
+	oStd::ref<oGPUCommandList> CommandList;
+	oStd::ref<oGPURenderTarget> PrimaryRenderTarget;
 };
 
 class oGPUTextureTestApp : public oGPUTestApp
@@ -112,10 +112,10 @@ public:
 	bool Render() override;
 
 protected:
-	oRef<oGPUPipeline> Pipeline;
-	oRef<oGPUTexture> Texture;
-	oRef<oGPUUtilMesh> Mesh;
-	oRef<oGPUBuffer> TestConstants;
+	oStd::ref<oGPUPipeline> Pipeline;
+	oStd::ref<oGPUTexture> Texture;
+	oStd::ref<oGPUUtilMesh> Mesh;
+	oStd::ref<oGPUBuffer> TestConstants;
 
 	static const int sSnapshotFrames[2];
 };

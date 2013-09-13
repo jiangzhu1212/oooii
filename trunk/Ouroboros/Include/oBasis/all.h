@@ -64,7 +64,6 @@
 #include <oBasis/oOSC.h>
 #include <oBasis/oPath.h>
 #include <oBasis/oPlatformFeatures.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oResizedType.h>
 #include <oBasis/oSnappy.h>

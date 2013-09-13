@@ -27,7 +27,6 @@
 #include <oBasis/oCppParsing.h>
 #include <oBasis/oError.h>
 #include <oBasis/oLockedPointer.h>
-#include <oBasis/oRef.h>
 #include <oStd/scc.h>
 
 #include <oConcurrency/event.h>
@@ -252,7 +251,7 @@ struct oTestManagerImplSingleton : oProcessSingleton<oTestManagerImplSingleton>
 	oTestManager_Impl* pImpl;
 
 	static const oGUID GUID;
-	oRef<oCRTLeakTracker> CRTLeakTracker;
+	oStd::ref<oCRTLeakTracker> CRTLeakTracker;
 };
 
 // {97E7D7DD-B3B6-4691-A383-6D9F88C034C6}
@@ -343,7 +342,7 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 		}
 	});
 
-	oRef<oBuffer> GoldenBinary;
+	oStd::ref<oBuffer> GoldenBinary;
 	{
 		if (Vendor == oGPU_VENDOR_AMD)
 		{
@@ -398,9 +397,9 @@ bool oTest::TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const c
 	oImage::DESC iDesc;
 	_pTestImage->GetDesc(&iDesc);
 
-	oRef<oImage> GoldenImage;
+	oStd::ref<oImage> GoldenImage;
 	{
-		oRef<oBuffer> b;
+		oStd::ref<oBuffer> b;
 		if (!oBufferLoad(_GoldenImagePath, &b))
 			return oErrorSetLast(std::errc::io_error, "Load failed: (Golden)...%s", gPath);
 
@@ -451,7 +450,7 @@ bool oTest::TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const c
 	}
 
 	// Do the real test
-	oRef<oImage> diffs;
+	oStd::ref<oImage> diffs;
 	float RMSError = 0.0f;
 	bool compareSucceeded = oImageCompare(_pTestImage, GoldenImage, _ColorChannelTolerance, &RMSError, &diffs, _DiffImageMultiplier);
 
@@ -1050,7 +1049,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 			oConcurrency::begin_thread("Progress Bar Thread");
 			oStd::xlstring title;
 			oConsole::GetTitle(title);
-			oRef<oProgressBar> ProgressBar;
+			oStd::ref<oProgressBar> ProgressBar;
 			oVERIFY(oProgressBarCreate([&] { ShouldStop = true; }, title, &ProgressBar));
 			pProgressBar = ProgressBar;
 			Ready.set();

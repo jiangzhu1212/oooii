@@ -107,8 +107,8 @@ public:
 	}
 
 private:
-	oRef<oGPUPipeline> Pipeline;
-	oRef<oGPUBuffer> LineList;
+	oStd::ref<oGPUPipeline> Pipeline;
+	oStd::ref<oGPUBuffer> LineList;
 };
 
 oDEFINE_GPU_TEST(GPU_LineList)

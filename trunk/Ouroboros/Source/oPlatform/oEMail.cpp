@@ -112,7 +112,7 @@ private:
 	void Disconnect();
 
 	oRefCount Refcount;
-	oRef<threadsafe oSocketEncrypted> Socket;
+	oStd::ref<threadsafe oSocketEncrypted> Socket;
 
 	char ServerAddress[_MAX_PATH];
 	Encryption EncryptionType;

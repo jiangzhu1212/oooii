@@ -32,6 +32,7 @@
 
 #include <oStd/assert.h>
 #include <oStd/guid.h>
+#include <oStd/ref.h>
 #include <oBasis/oError.h>
 #include <oConcurrency/thread_safe.h>
 

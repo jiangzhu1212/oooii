@@ -25,7 +25,6 @@
 #include <oPlatform/oProcessHeap.h>
 #include <oStd/memory.h>
 #include <oBasis/oInterface.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oPlatform/oDebugger.h>
 #include <oPlatform/oModule.h>

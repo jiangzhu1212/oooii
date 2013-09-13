@@ -398,7 +398,7 @@ bool oImageLoad(const char* _Path, oImage::LOAD_FLAGS _Flags, oImage** _ppImage)
 	if (!oSTRVALID(_Path) || !_ppImage)
 		return oErrorSetLast(std::errc::invalid_argument);
 
-	oRef<oBuffer> FileData;
+	oStd::ref<oBuffer> FileData;
 	if (!oBufferLoad(_Path, &FileData))
 		return false; // pass error through
 
@@ -431,7 +431,7 @@ bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _
 	descDiff.Format = oImage::R8;
 	descDiff.RowPitch = oImageCalcRowPitch(descDiff.Format, descDiff.Dimensions.x);
 
-	oRef<oImage> DiffImage;
+	oStd::ref<oImage> DiffImage;
 	if (!oImageCreate("Diff Image", descDiff, &DiffImage))
 		return false; // pass through error
 

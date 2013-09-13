@@ -25,7 +25,6 @@
 #include "oManipulatorRotation.h"
 #include <oCompute/oComputeConstants.h>
 #include <oBasis/oGeometry.h>
-#include <oBasis/oRef.h>
 
 oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess) 
 	: oManipulatorBase(_Desc, _pSuccess)
@@ -35,7 +34,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 		return;
 	*_pSuccess = false;
 
-	oRef<oGeometry> CircleGeometry; 
+	oStd::ref<oGeometry> CircleGeometry; 
 	oGeometry::LAYOUT layout;
 	layout.Positions = true;
 	layout.Normals = false;
@@ -46,7 +45,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 
 	auto RotationScale = Desc.ManipularScale;
 
-	oRef<oGeometryFactory> GeometryFactory;
+	oStd::ref<oGeometryFactory> GeometryFactory;
 	if(!oGeometryFactoryCreate(&GeometryFactory))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a geometry factor for manipulator");
@@ -132,7 +131,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 
 	CircleGeometry->UnmapConst();
 
-	oRef<oGeometry> TorusGeometry; 
+	oStd::ref<oGeometry> TorusGeometry; 
 	oGeometryFactory::TORUS_DESC td;
 	td.FaceType = oGeometry::FRONT_CW;
 	td.InnerRadius = RotationScale - Desc.PickWidth;

@@ -63,7 +63,7 @@ bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const c
 	oProcess::DESC TestDesc;
 	TestDesc.CommandLine = command_line.c_str();
 
-	oRef<threadsafe oProcess> TestProcess;
+	oStd::ref<threadsafe oProcess> TestProcess;
 	if (!oProcessCreate(TestDesc, &TestProcess))
 		return oErrorSetLast(std::errc::invalid_argument);
 
@@ -101,7 +101,7 @@ bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const c
 
 	// Parse log file
 	_pResults->ParseLogfileSucceeded = true;
-	oRef<oBuffer> TestResultsBuffer;
+	oStd::ref<oBuffer> TestResultsBuffer;
 	if (!oBufferLoad(_pResults->StdoutLogfile, &TestResultsBuffer, true))
 	{
 		_pResults->ParseLogfileSucceeded = false;

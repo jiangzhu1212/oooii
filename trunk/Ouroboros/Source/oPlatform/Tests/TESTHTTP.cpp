@@ -40,7 +40,7 @@ struct PLATFORM_oHTTP : public oTest
 		if (_Request.RequestLine.Method == oHTTP_POST)
 		{
 			// Check if the image file came through correctly
-			oRef<oImage> image;
+			oStd::ref<oImage> image;
 			oImageCreate("http test image", _Request.Content.pData, _Request.Content.Length, &image);
 			if (TestImage(image))
 			{
@@ -133,13 +133,13 @@ struct PLATFORM_oHTTP : public oTest
 	{
 		const bool bDevelopmentMode = false;
 
-		oRef<oHTTPServer> Server;
+		oStd::ref<oHTTPServer> Server;
 		oHTTPServer::DESC desc;
 		desc.Port = 80;
 		desc.StartResponse = oBIND(&PLATFORM_oHTTP::StartResponse, this, oBIND1, oBIND2, oBIND3);
 		desc.FinishResponse = oBIND(&PLATFORM_oHTTP::FinishResponse, this, oBIND1);
 
-		oRef<oHTTPClient> Client;
+		oStd::ref<oHTTPClient> Client;
 		oHTTPClient::DESC clientDesc;
 		oStd::from_string(&clientDesc.ServerAddr, "localhost:80");
 		if (!oHTTPServerCreate(desc, &Server))
@@ -170,13 +170,13 @@ struct PLATFORM_oHTTP : public oTest
 			int bufferSize = (int)response.Content.Length;
 			char *pBuffer = new char[bufferSize];
 			memset(pBuffer, NULL, bufferSize);
-			oRef<oBuffer> imageBuffer;
+			oStd::ref<oBuffer> imageBuffer;
 			oBufferCreate("test get buffer", pBuffer, bufferSize, oBuffer::Delete, &imageBuffer);
 
 			// Test Get: Download and compare the image
 			Client->Get("/" TEST_FILE, &response, imageBuffer->GetData(), (int)imageBuffer->GetSize());
 
-			oRef<oImage> image;
+			oStd::ref<oImage> image;
 			oImageCreate("http test image", imageBuffer->GetData(), imageBuffer->GetSize(), &image);
 			oTESTB(TestImage(image), "Image compare failed.");
 
@@ -192,7 +192,7 @@ struct PLATFORM_oHTTP : public oTest
 
 				void *pImageFile = new char[(int)fileDesc.Size];
 				memset(pImageFile, NULL, oSizeT(fileDesc.Size));
-				oRef<oBuffer> postImageBuffer;
+				oStd::ref<oBuffer> postImageBuffer;
 				oBufferCreate("test post buffer", pImageFile, oSizeT(fileDesc.Size), oBuffer::Delete, &postImageBuffer);
 
 				oSTREAM_READ r;
@@ -213,7 +213,7 @@ struct PLATFORM_oHTTP : public oTest
 		return SUCCESS;
 	}
 
-	oRef<threadsafe oStreamReader> FileReader;
+	oStd::ref<threadsafe oStreamReader> FileReader;
 };
 
 struct PLATFORM_oHTTPLarge : public oTest
@@ -271,13 +271,13 @@ struct PLATFORM_oHTTPLarge : public oTest
 			TestBufferSize = oMB(2);
 		}
 
-		oRef<oHTTPServer> Server;
+		oStd::ref<oHTTPServer> Server;
 		oHTTPServer::DESC desc;
 		desc.Port = 80;
 		desc.StartResponse = oBIND(&PLATFORM_oHTTPLarge::StartResponse, this, oBIND1, oBIND2, oBIND3);
 		desc.FinishResponse = oBIND(&PLATFORM_oHTTPLarge::FinishResponse, this, oBIND1);
 
-		oRef<oHTTPClient> Client;
+		oStd::ref<oHTTPClient> Client;
 		oHTTPClient::DESC clientDesc;
 		oStd::from_string(&clientDesc.ServerAddr, "localhost:80");
 		if (!oHTTPServerCreate(desc, &Server))
@@ -313,7 +313,7 @@ struct PLATFORM_oHTTPLarge : public oTest
 		return SUCCESS;
 	}
 
-	oRef<threadsafe oStreamReader> FileReader;
+	oStd::ref<threadsafe oStreamReader> FileReader;
 };
 
 oTEST_REGISTER(PLATFORM_oHTTP);

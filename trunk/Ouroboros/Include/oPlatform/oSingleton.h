@@ -31,7 +31,6 @@
 #define oSingleton_h
 
 #include <oBasis/oInterface.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oRefCount.h>
 #include <oStd/type_info.h>
 
@@ -95,7 +94,7 @@ public:
 		static T* sInstance;
 		if (oConstructOnce(&sInstance, New))
 		{
-			// If the above static were an oRef, it is possible to go through static
+			// If the above static were an oStd::ref, it is possible to go through static
 			// deinit, see that sInstance is null and noop on the dtor, only to have
 			// later deinit code instantiate the singleton for the first time (for
 			// very low-level debug/reporting/allocation singletons). But the dtor had
@@ -103,7 +102,7 @@ public:
 			// that the first static might do and if we are truly the ones to create
 			// the instance, ref it here because this will be first-access of this 
 			// static and thus the dtor will be registered at this time.
-			static oRef<T> sAnotherInstance(sInstance, false);
+			static oStd::ref<T> sAnotherInstance(sInstance, false);
 		}
 
 		return sInstance;
@@ -122,7 +121,7 @@ public:
 			// We need to add a module singleton reference to this instance
 			// since we can get here more than once per thread if it is called
 			// from a different module. 
-			static oRef<T> sAnotherInstance(sInstance, true);
+			static oStd::ref<T> sAnotherInstance(sInstance, true);
 		}
 		return sInstance;
 	}

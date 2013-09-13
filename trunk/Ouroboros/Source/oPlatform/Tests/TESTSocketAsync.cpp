@@ -148,7 +148,7 @@ struct PLATFORM_oSocketAsync : public oTest
 		oStd::atomic_uint ReceiveCount;
 		oRefCount Refcount;
 
-		oRef<oBuffer> ReceiveBuffer;
+		oStd::ref<oBuffer> ReceiveBuffer;
 	};
 
 	RESULT TestUDPServerASYNC(char* _StrStatus, size_t _SizeofStrStatus, unsigned short Port)
@@ -158,12 +158,12 @@ struct PLATFORM_oSocketAsync : public oTest
 		oSocketPortSet(Port, &SocketDesc.Addr);
 		
 
-		oRef<GenericCallback> Sender( new GenericCallback, false );
+		oStd::ref<GenericCallback> Sender( new GenericCallback, false );
 		
 		SocketDesc.Style = oSocket::ASYNC;
 		SocketDesc.AsyncSettings.Callback = Sender;
 
-		oRef<threadsafe oSocket> Socket;
+		oStd::ref<threadsafe oSocket> Socket;
 		oTESTB(oSocketCreate("Test UDP", SocketDesc, &Socket), oErrorGetLastString());
 
 		char AddrStr[64];
@@ -183,10 +183,10 @@ struct PLATFORM_oSocketAsync : public oTest
 	}
 	RESULT TestTCPServerASYNC(char* _StrStatus, size_t _SizeofStrStatus)
 	{
-		oRef<TCPServerCallback> Receiver(new TCPServerCallback, false);
+		oStd::ref<TCPServerCallback> Receiver(new TCPServerCallback, false);
 
-		oRef<threadsafe oSocketServer2> Server;
-		oRef<threadsafe oSocket> Socket;
+		oStd::ref<threadsafe oSocketServer2> Server;
+		oStd::ref<threadsafe oSocket> Socket;
 		oConcurrency::event connectEvent;
 
 		oSocketServer2::DESC ServerDesc;
@@ -276,12 +276,12 @@ struct PLATFORM_oSocketAsync : public oTest
 				SocketDesc.Protocol = oSocket::UDP;
 				oSocketPortSet(TestPort, &SocketDesc.Addr);
 
-				oRef<GenericCallback> Callback(new GenericCallback, false );
+				oStd::ref<GenericCallback> Callback(new GenericCallback, false );
 
 				SocketDesc.Style = oSocket::ASYNC;
 				SocketDesc.AsyncSettings.Callback = Callback;
 
-				oRef<threadsafe oSocket> Socket;
+				oStd::ref<threadsafe oSocket> Socket;
 				oTESTB(oSocketCreate("Test UDP", SocketDesc, &Socket), oErrorGetLastString());
 
 				// Initiate the first receive
@@ -337,11 +337,11 @@ struct PLATFORM_oSocketAsync : public oTest
 				oRefCount Refcount;
 			};
 
-			oRef<TCPSender> Sender(new TCPSender, false );
+			oStd::ref<TCPSender> Sender(new TCPSender, false );
 
 			SocketDesc.Style = oSocket::ASYNC;
 			SocketDesc.AsyncSettings.Callback = Sender;
-			oRef<threadsafe oSocket> Socket;
+			oStd::ref<threadsafe oSocket> Socket;
 			oTESTB0(oSocketCreate("Test TCP", SocketDesc, &Socket));
 			oTESTB0(Socket->IsConnected());
 

@@ -32,7 +32,7 @@ struct GPU_Device : public oTest
 	{
 		oGPUDevice::INIT init("GPU_Device");
 		init.Version = oStd::version(10,0); // for more compatibility when running on varied machines
-		oRef<oGPUDevice> Device;
+		oStd::ref<oGPUDevice> Device;
 		oTESTB0(oGPUDeviceCreate(init, &Device));
 
 		oGPUDevice::DESC desc;

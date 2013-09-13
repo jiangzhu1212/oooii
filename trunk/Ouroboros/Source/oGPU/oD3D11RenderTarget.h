@@ -47,11 +47,11 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget, 0x772e2a04, 0x4c2d,
 
 	inline void Set(ID3D11DeviceContext* _pContext) { _pContext->OMSetRenderTargets(Desc.MRTCount, (ID3D11RenderTargetView* const*)RTVs.data(), DSV); }
 
-	std::array<oRef<oGPUTexture>, oGPU_MAX_NUM_MRTS> Textures;
-	std::array<oRef<ID3D11RenderTargetView>, oGPU_MAX_NUM_MRTS> RTVs;
-	oRef<oGPUTexture> DepthStencilTexture;
-	oRef<ID3D11DepthStencilView> DSV;
-	oRef<IDXGISwapChain> SwapChain;
+	std::array<oStd::ref<oGPUTexture>, oGPU_MAX_NUM_MRTS> Textures;
+	std::array<oStd::ref<ID3D11RenderTargetView>, oGPU_MAX_NUM_MRTS> RTVs;
+	oStd::ref<oGPUTexture> DepthStencilTexture;
+	oStd::ref<ID3D11DepthStencilView> DSV;
+	oStd::ref<IDXGISwapChain> SwapChain;
 
 	void ClearResources();
 

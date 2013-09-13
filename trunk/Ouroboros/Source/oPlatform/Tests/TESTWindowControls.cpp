@@ -42,7 +42,7 @@ public:
 	bool GetRunning() const { return Running; }
 
 private:
-	oRef<oWindow> Window;
+	oStd::ref<oWindow> Window;
 	bool Running;
 
 	enum
@@ -525,7 +525,7 @@ struct PLATFORM_WindowControls : public oTest
 
 		} while (oTimer() < WaitForSettle);
 
-		oStd::future<oRef<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
+		oStd::future<oStd::ref<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
 		
 		do
 		{

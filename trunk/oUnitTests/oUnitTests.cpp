@@ -11,7 +11,6 @@
 #include <oPlatform/oProcess.h>
 #include <oPlatform/oStandards.h>
 #include <oPlatform/oSystem.h>
-#include <oBasis/oRef.h>
 #include <oStd/opttok.h>
 #include <oStd/scc.h>
 

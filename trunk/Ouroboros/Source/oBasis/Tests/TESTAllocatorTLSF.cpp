@@ -27,7 +27,6 @@
 #include <oStd/assert.h>
 #include <oStd/timer.h>
 #include <oBasis/oInvalid.h>
-#include <oBasis/oRef.h>
 #include <oBasis/oString.h>
 #include <oBasis/tests/oBasisTests.h>
 #include <vector>
@@ -64,7 +63,7 @@ bool oBasisTest_oAllocatorTLSF(const oBasisTestServices& _Services)
 	desc.ArenaSize = arena.size();
 	desc.pArena = oStd::data(arena);
 
-	oRef<oAllocator> Allocator;
+	oStd::ref<oAllocator> Allocator;
 	oTESTB(oAllocatorCreateTLSF("TestAllocator", desc, &Allocator), "Failed to create a TLSF allocator");
 
 	const size_t NUM_POINTER_TESTS = 1000;

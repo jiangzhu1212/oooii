@@ -57,7 +57,7 @@ struct oConsoleContext : public oProcessSingleton<oConsoleContext>
 	bool CtrlHandlerSet;
 	oConsole::EventFn Functions[5];
 	oStd::path LogFilePath;
-	oRef<threadsafe oStreamWriter> LogFile;
+	oStd::ref<threadsafe oStreamWriter> LogFile;
 };
 
 // {145728A4-3A9A-47FD-BF88-8B61A1EC14AB}
