@@ -140,12 +140,17 @@ public:
 		return *this;
 	}
 
-	basic_path& replace_filename(const string_type& _NewFilename = string_type())
+	basic_path& replace_filename(const string_type& _NewFilename)
 	{
 		return replace_filename(_NewFilename.c_str());
 	}
 
-	basic_path& remove_leaf()
+	basic_path& replace_filename(const basic_path& _NewFilename)
+	{
+		return replace_filename(_NewFilename.c_str());
+	}
+
+	basic_path& remove_filename()
 	{
 		if (BasenameOffset != npos)
 		{
@@ -156,6 +161,7 @@ public:
 		{
 			EndsWithSep = false;
 			p[p.length()-1] = 0;
+			parse();
 		}
 		return *this;
 	}

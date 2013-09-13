@@ -259,16 +259,16 @@ void TESTpath()
 	if (strcmp(P, "c:/foo/bar/file.txt"))
 		oTHROW(protocol_error, "replace_filename failed");
 
-	P.remove_leaf();
+	P.remove_filename();
 	if (strcmp(P, "c:/foo/bar/"))
 		oTHROW(protocol_error, "remove_leaf failed");
 
-	P.remove_leaf();
+	P.remove_filename();
 	if (strcmp(P, "c:/foo/bar"))
 		oTHROW(protocol_error, "remove_leaf failed");
 
 	P = "/";
-	P.remove_leaf();
+	P.remove_filename();
 	if (!P.empty())
 		oTHROW(protocol_error, "remove_leaf failed");
 }

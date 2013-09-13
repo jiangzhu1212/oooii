@@ -96,8 +96,7 @@ static char* CPUGetBrandString(char* _StrDestination, size_t _SizeofStrDestinati
 	memcpy(_StrDestination + 16, CPUInfo, sizeof(CPUInfo));
 	__cpuid(CPUInfo, 0x80000004);
 	memcpy(_StrDestination + 32, CPUInfo, sizeof(CPUInfo));
-	oPruneWhitespace(_StrDestination, _SizeofStrDestination, _StrDestination);
-	return _StrDestination;
+	return oStd::clean_whitespace(_StrDestination, _SizeofStrDestination, _StrDestination);
 }
 
 template<size_t size> static inline char* CPUGetBrandString(char (&_StrDestination)[size]) { return CPUGetBrandString(_StrDestination, size); }

@@ -180,6 +180,10 @@ template<size_t size> char* trim_right(char (&_Trimmed)[size], const char* _StrS
 inline char* trim(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim_right(_Trimmed, _SizeofTrimmed, trim_left(_Trimmed, _SizeofTrimmed, _StrSource, _ToTrim), _ToTrim); }
 template<size_t size> char* trim(char (&_Trimmed)[size], const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim(_Trimmed, size, _StrSource, _ToTrim); }
 
+// Replaces any run of whitespace with a single ' ' character. Returns _StrDestination
+char* clean_whitespace(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource, char _Replacement = ' ', const char* _ToPrune = oWHITESPACE);
+template<size_t size> char* clean_whitespace(char (&_StrDestination)[size], const char* _StrSource, char _Replacement = ' ', const char* _ToPrune = oWHITESPACE) { return clean_whitespace(_StrDestination, _SizeofStrDestination, _StrSource, _Replacement, _ToPrune); }
+
 // _____________________________________________________________________________
 // Search
 
@@ -199,6 +203,10 @@ template<size_t size> char* insert(char (&_StrSource)[size], char* _InsertionPoi
 // the result to _StrDestination. 
 errno_t replace(char* oRESTRICT _StrResult, size_t _SizeofStrResult, const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace);
 template<size_t size> errno_t replace(char (&_StrResult)[size], const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace) { return replace(_StrResult, size, _StrSource, _StrFind, _StrReplace); }
+
+// char version of above
+errno_t replace(char* oRESTRICT _StrResult, size_t _SizeofStrResult, const char* oRESTRICT _StrSource, char _ChrFind, char _ChrReplace);
+template<size_t size> errno_t replace(char (&_StrResult)[size], const char* oRESTRICT _StrSource, char _ChrFind, char _ChrReplace) { return replace(_StrResult, size, _StrSource, _ChrFind, _ChrReplace); }
 
 // first param must be pointing into a string at the open brace. From there this 
 // will find the brace at the same level of recursion - internal pairs are 

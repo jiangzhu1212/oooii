@@ -186,9 +186,11 @@ namespace oStd {
 	TSTR char* trim_left(STRT& _Trimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim_left(_Trimmed, _Trimmed.capacity(), _StrSource, _ToTrim); }
 	TSTR char* trim_right(STRT& _Trimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim_right(_Trimmed, _Trimmed.capacity(), _StrSource, _ToTrim); }
 	TSTR char* trim(STRT& _Trimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim(_Trimmed, _Trimmed.capacity(), _StrSource, _ToTrim); }
+	TSTR char* clean_whitespace(STRT& _StrDestination, const char* _StrSource, char _Replacement = ' ', const char* _ToPrune = oWHITESPACE) { return clean_whitespace(_StrDestination, _StrDestination.capacity(), _StrSource, _Replacement, _ToPrune); }
 
 	TSTR char* insert(STRT& _StrSource, char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion)  { return insert(_StrSource, _StrSource.capacity(), _InsertionPoint, _ReplacementLength, _Insertion); }
 	TSTR errno_t replace(STRT& _StrResult, const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace) { return replace(_StrResult, _StrResult.capacity(), _StrSource, _StrFind, _StrReplace); }
+	TSTR errno_t replace(STRT& _StrResult, const char* oRESTRICT _StrSource, char _ChrFind, char _ChrReplace) { return replace(_StrResult, _StrResult.capacity(), _StrSource, _ChrFind, _ChrReplace); }
 
 	TSTR char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const STRT& _Value)
 	{
@@ -236,6 +238,12 @@ namespace oStd {
 } // namespace oStd
 
 TSTR int snprintf(oStd::STRT& _StrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); int l = oStd::vsnprintf(_StrDestination, _Format, args); va_end(args); return l; }
+TSTR size_t strlcat(oStd::STRT& _StrDestination, const char* _StrSource) { return strlcat(_StrDestination, _StrSource, _StrDestination.capacity()); }
+TSTR size_t strlcpy(oStd::STRT& _StrDestination, const char* _StrSource) { return strlcpy(_StrDestination, _StrSource, _StrDestination.capacity()); }
+TSTR size_t wcslcat(oStd::STRT& _StrDestination, const wchar_t* _StrSource) { return wcslcat(_StrDestination, _StrSource, _StrDestination.capacity()); }
+TSTR size_t wcslcpy(oStd::STRT& _StrDestination, const wchar_t* _StrSource) { return wcslcpy(_StrDestination, _StrSource, _StrDestination.capacity()); }
+TSTR size_t mbsltowsc(oStd::STRT& _StrDestination, const char* _StrSource) { return strlcpy(_StrDestination, _StrSource, _StrDestination.capacity()); }
+TSTR size_t wcsltombs(oStd::STRT& _StrDestination, const wchar_t* _StrSource) { return strlcpy(_StrDestination, _StrSource, _StrDestination.capacity()); }
 
 #undef STRT
 #undef TSTR

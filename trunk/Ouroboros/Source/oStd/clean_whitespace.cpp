@@ -22,60 +22,29 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/config.h>
-#include <oStd/string.h>
 
 namespace oStd {
 
-errno_t replace(char* oRESTRICT _StrResult, size_t _SizeofStrResult, const char* oRESTRICT _StrSource, char _ChrFind, char _ChrReplace)
+char* clean_whitespace(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource, char _Replacement, const char* _ToPrune)
 {
-	const char* oRESTRICT r = _StrSource;
-	char* oRESTRICT w = _StrResult;
-	while (1)
+	char* w = _StrDestination;
+	const char* r = _StrSource;
+	_SizeofStrDestination--;
+	while (static_cast<size_t>(w - _StrDestination) < _SizeofStrDestination && *r)
 	{
-		*w++ = *r == _ChrFind ? _ChrReplace : *r;
-		if (!*r)
-			break;
-		r++;
-	}
-	return 0;
-}
+		if (strchr(_ToPrune, *r))
+		{
+			*w++ = _Replacement;
+			r += strspn(r, _ToPrune);
+		}
 
-errno_t replace(char* oRESTRICT _StrResult, size_t _SizeofStrResult, const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace)
-{
-	if (!_StrResult || !_StrSource) return EINVAL;
-	if (_StrResult == _StrSource) return EINVAL;
-	if (!_StrFind)
-		return strlcpy(_StrResult, _StrSource, _SizeofStrResult) < _SizeofStrResult ? 0 : ENOBUFS;
-	if (!_StrReplace)
-		_StrReplace = "";
-
-	size_t findLen = strlen(_StrFind);
-	size_t replaceLen = strlen(_StrReplace);
-	const char* s = strstr(_StrSource, _StrFind);
-
-	while (s)
-	{
-		size_t len = s - _StrSource;
-		#ifdef _MSC_VER
-			errno_t e = strncpy_s(_StrResult, _SizeofStrResult, _StrSource, len);
-			if (e)
-				return e;
-		#else
-			strncpy(_StrResult, _StrSource, len);
-		#endif
-		_StrResult += len;
-		_SizeofStrResult -= len;
-		if (strlcpy(_StrResult, _StrReplace, _SizeofStrResult) >= _SizeofStrResult)
-			return ENOBUFS;
-		_StrResult += replaceLen;
-		_SizeofStrResult -= replaceLen;
-		_StrSource += len + findLen;
-		s = strstr(_StrSource, _StrFind);
+		else
+			*w++ = *r++;
 	}
 
-	// copy the rest
-	return strlcpy(_StrResult, _StrSource, _SizeofStrResult) ? 0 : EINVAL;
+	*w = 0;
+
+	return _StrDestination;
 }
 
 } // namespace oStd

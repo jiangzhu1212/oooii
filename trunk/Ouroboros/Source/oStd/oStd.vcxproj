@@ -48,6 +48,7 @@
     <ClCompile Include="ampersand_encode.cpp" />
     <ClCompile Include="calfaq.cpp" />
     <ClCompile Include="clean_path.cpp" />
+    <ClCompile Include="clean_whitespace.cpp" />
     <ClCompile Include="color.cpp" />
     <ClCompile Include="config.cpp" />
     <ClCompile Include="date.cpp" />

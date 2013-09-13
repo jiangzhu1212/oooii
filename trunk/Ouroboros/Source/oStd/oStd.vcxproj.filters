@@ -172,6 +172,9 @@
     <ClCompile Include="version.cpp">
       <Filter>Source\Types</Filter>
     </ClCompile>
+    <ClCompile Include="clean_whitespace.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

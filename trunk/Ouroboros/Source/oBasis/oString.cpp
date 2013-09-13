@@ -215,28 +215,6 @@ char* oNewlinesToDos(char* _StrDestination, size_t _SizeofStrDestination, const 
 	return _StrDestination;
 }
 
-char* oPruneWhitespace(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource, char _Replacement, const char* _ToPrune)
-{
-	char* w = _StrDestination;
-	const char* r = _StrSource;
-	_SizeofStrDestination--;
-	while (static_cast<size_t>(std::distance(_StrDestination, w)) < _SizeofStrDestination && *r)
-	{
-		if (strchr(_ToPrune, *r))
-		{
-			*w++ = _Replacement;
-			r += strspn(r, _ToPrune);
-		}
-
-		else
-			*w++ = *r++;
-	}
-
-	*w = 0;
-
-	return _StrDestination;
-}
-
 errno_t oStrVAppendf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args)
 {
 	if (-1 == oStd::vsncatf(_StrDestination, _SizeofStrDestination, _Format, _Args))

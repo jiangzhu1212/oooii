@@ -269,7 +269,7 @@ public:
 					if (!path_traits_type::is_sep(*(URI.c_str() + Path.first)))
 					{
 						mergedpath = _Base.path();
-						mergedpath.remove_leaf();
+						mergedpath.remove_filename();
 						mergedpath.append(convert(Path));
 						usemergedpath = true;
 					}
