@@ -225,7 +225,7 @@ bool oP4Label(const oP4_LABEL_SPEC& _Label)
 	desc.CommandLine = "p4 label -i";
 	desc.EnvironmentString = 0;
 	desc.StdHandleBufferSize = oKB(16);
-	oStd::ref<threadsafe oProcess> process;
+	oStd::intrusive_ptr<threadsafe oProcess> process;
 	if (!oProcessCreate(desc, &process))
 		return false;
 

@@ -38,12 +38,12 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, Pipeline, 0x772e2a04, 0x4c2d, 0x4
 
 	void GetDesc(DESC* _pDesc) const threadsafe override;
 
-	oStd::ref<ID3D11InputLayout> InputLayout;
-	oStd::ref<ID3D11VertexShader> VertexShader;
-	oStd::ref<ID3D11HullShader> HullShader;
-	oStd::ref<ID3D11DomainShader> DomainShader;
-	oStd::ref<ID3D11GeometryShader> GeometryShader;
-	oStd::ref<ID3D11PixelShader> PixelShader;
+	oStd::intrusive_ptr<ID3D11InputLayout> InputLayout;
+	oStd::intrusive_ptr<ID3D11VertexShader> VertexShader;
+	oStd::intrusive_ptr<ID3D11HullShader> HullShader;
+	oStd::intrusive_ptr<ID3D11DomainShader> DomainShader;
+	oStd::intrusive_ptr<ID3D11GeometryShader> GeometryShader;
+	oStd::intrusive_ptr<ID3D11PixelShader> PixelShader;
 
 	oGPU_VERTEX_ELEMENT* pElements;
 	uint NumElements;

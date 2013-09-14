@@ -39,10 +39,10 @@ struct GPU_Texture1D_App : public oGPUTextureTestApp
 		imageDesc.Dimensions = int2(512, 1);
 		imageDesc.Format = oImage::BGRA32;
 		imageDesc.RowPitch = oImageCalcRowPitch(imageDesc.Format, imageDesc.Dimensions.x);
-		oStd::ref<oImage> image;
+		oStd::intrusive_ptr<oImage> image;
 		oImageCreate("GPU_Texture1D", imageDesc, &image);
 
-		oStd::ref<oBuffer> buffer;
+		oStd::intrusive_ptr<oBuffer> buffer;
 		int surfaceBufferSize = oImageCalcSize(imageDesc.Format, imageDesc.Dimensions);
 		void *pSurfaceBuffer = oBuffer::New(surfaceBufferSize);
 		oBufferCreate("GPU_Texture1D buffer", pSurfaceBuffer, surfaceBufferSize, oBuffer::Delete, &buffer);

@@ -39,14 +39,14 @@ int ShowAllCameras()
 {
 	struct CONTEXT
 	{
-		CONTEXT(oStd::ref<threadsafe oCamera> _pCamera)
+		CONTEXT(oStd::intrusive_ptr<threadsafe oCamera> _pCamera)
 			: Camera(_pCamera)
 			, LastFrame(oInvalid)
 			, Running(true)
 		{}
 
-		oStd::ref<threadsafe oCamera> Camera;
-		oStd::ref<oWindow> Window;
+		oStd::intrusive_ptr<threadsafe oCamera> Camera;
+		oStd::intrusive_ptr<oWindow> Window;
 		unsigned int LastFrame;
 		bool Running;
 
@@ -68,7 +68,7 @@ int ShowAllCameras()
 
 	while (1)
 	{
-		oStd::ref<threadsafe oCamera> Camera;
+		oStd::intrusive_ptr<threadsafe oCamera> Camera;
 		if (oCameraEnum(index++, &Camera))
 		{
 			oCamera::MODE mode;

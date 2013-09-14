@@ -50,7 +50,7 @@ namespace
 		const oHTTPHandler* MatchURIPath(std::vector<oStringCapture>& _parsedURI, int _keyIndex, oFUNCTION<void (const char* _capture)> _CaptureVar, oFUNCTION<void (const char* _OSC)> _OSCCapture, oFUNCTION<const oHTTPURICapture* (const char* _key)> _GetCaptureHandler) const;
 
 		oStd::sstring Value;
-		oStd::ref<oHTTPHandler> Handler;
+		oStd::intrusive_ptr<oHTTPHandler> Handler;
 
 		std::vector<oHandlerEntry> LiteralChildren;
 		std::unique_ptr<oHandlerEntry> CaptureChild; //there can be only one capture
@@ -247,11 +247,11 @@ private:
 	oInitOnce<oHandlerEntry> HTTPHandlers;
 	oHandlerEntry BuildHandlers; //temporary, used while building pages.
 
-	typedef std::unordered_map<oStd::sstring, oStd::ref<oHTTPURICapture>, oStdHash<oStd::sstring>, oStd::equal_to<oStd::sstring>> URICaptureHandlers_t;
+	typedef std::unordered_map<oStd::sstring, oStd::intrusive_ptr<oHTTPURICapture>, oStdHash<oStd::sstring>, oStd::equal_to<oStd::sstring>> URICaptureHandlers_t;
 	oInitOnce<URICaptureHandlers_t> URICaptureHandlers;
 	URICaptureHandlers_t BuildURICaptureHandlers; //temporary, used while building pages.
 
-	oStd::ref<threadsafe oFileCacheMonitoring> FileCache;
+	oStd::intrusive_ptr<threadsafe oFileCacheMonitoring> FileCache;
 
 	oConcurrency::mutex AddHandlerMutex;
 	bool Started;
@@ -492,7 +492,7 @@ bool oWebServerImpl::Retrieve(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pR
 			return false; 
 		}
 		
-		const oStd::ref<oBuffer> cacheBuffer;
+		const oStd::intrusive_ptr<oBuffer> cacheBuffer;
 		if(!FileCache->Retrieve(uriParts.Path, &cacheBuffer) || !cacheBuffer)
 		{
 			return false; //file probably didn't exist

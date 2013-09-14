@@ -72,7 +72,7 @@ static bool oBasisTest_oOBJLoad(const oBasisTestServices& _Services, const char*
 	oStd::path path;
 	oTESTB(_Services.ResolvePath(path, _Path, true), "not found: %s", _Path);
 
-	oStd::ref<threadsafe oOBJ> obj;
+	oStd::intrusive_ptr<threadsafe oOBJ> obj;
 	char* pOBJBuffer = nullptr;
 	size_t Size = 0;
 	double start = oTimer();
@@ -101,7 +101,7 @@ bool oBasisTest_oOBJ(const oBasisTestServices& _Services)
 		const oBasisTestOBJ* pCube = nullptr;
 		oBasisTestOBJGet(oBASIS_TEST_CUBE_OBJ, &pCube);
 
-		oStd::ref<threadsafe oOBJ> obj;
+		oStd::intrusive_ptr<threadsafe oOBJ> obj;
 		oTESTB(oOBJCreate("Correctness (cube) obj", pCube->GetFileContents(), oOBJ_INIT(), &obj), "Failed to parse correctness (cube) obj file");
 		oTESTB0(TestCorrectness(pCube, obj));
 	}

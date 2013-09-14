@@ -135,7 +135,7 @@ public:
 	void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe override { return Window->Trigger(_Action); }
 	void Post(int _CustomEventCode, uintptr_t _Context) threadsafe override { return Window->Post(_CustomEventCode, _Context); }
 	void Dispatch(const oTASK& _Task) threadsafe override { return Window->Dispatch(_Task); }
-	oStd::future<oStd::ref<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const override { return std::move(Window->CreateSnapshot(_Frame, _IncludeBorder)); }
+	oStd::future<oStd::intrusive_ptr<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const override { return std::move(Window->CreateSnapshot(_Frame, _IncludeBorder)); }
 	void SetTimer(uintptr_t _Context, unsigned int _RelativeTimeMS) threadsafe override { Window->SetTimer(_Context, _RelativeTimeMS); }
 	void StopTimer(uintptr_t _Context) threadsafe override { return Window->StopTimer(_Context); }
 	void FlushMessages(bool _WaitForNext = false) override { return Window->FlushMessages(_WaitForNext); }
@@ -144,7 +144,7 @@ public:
 	void OnEvent(const oGUI_EVENT_DESC& _Event);
 private:
 	oRefCount RefCount;
-	oStd::ref<oWindow> Window;
+	oStd::intrusive_ptr<oWindow> Window;
 	HWND LinkHandle;
 	HWND CPUUtilization;
 	HWND NumberOfJobs;

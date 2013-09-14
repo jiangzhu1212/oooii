@@ -65,8 +65,8 @@ struct GPU_Triangle_App : public oGPUTestApp
 	}
 
 private:
-	oStd::ref<oGPUPipeline> Pipeline;
-	oStd::ref<oGPUUtilMesh> Mesh;
+	oStd::intrusive_ptr<oGPUPipeline> Pipeline;
+	oStd::intrusive_ptr<oGPUUtilMesh> Mesh;
 };
 
 oDEFINE_GPU_TEST(GPU_Triangle)

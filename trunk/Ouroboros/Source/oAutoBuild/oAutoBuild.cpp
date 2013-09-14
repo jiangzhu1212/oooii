@@ -83,7 +83,7 @@ public:
 	void OnDelete(CommonParams& _CommonParams) const override { oHTTPHandlerMethodNotAllowed(_CommonParams); }
 
 protected:
-	const oStd::ref<oP4ChangelistBuilder> CLBuilder;
+	const oStd::intrusive_ptr<oP4ChangelistBuilder> CLBuilder;
 	oRefCount RefCount;
 };
 
@@ -331,7 +331,7 @@ void oAutoBuildLogHandler::OnGet(CommonParams& _CommonParams) const
 
 	// TODO: Look into using the FileCache for this as well (oWebServer is also
 	// using it, so perhaps there is a way to share that)
-	oStd::ref<oBuffer> cacheBuffer;
+	oStd::intrusive_ptr<oBuffer> cacheBuffer;
 	if (!oBufferLoad(filepathAbsolute, &cacheBuffer))
 		return;
 
@@ -433,7 +433,7 @@ oMAINA()
 		section = INI->next_section(section);
 	}
 
-	oStd::ref<oWebAppWindow> Window;
+	oStd::intrusive_ptr<oWebAppWindow> Window;
 	if (!oWebAppWindowCreate("oAutoBuild", Settings.Port, &Window))
 		return -1;
 
@@ -441,7 +441,7 @@ oMAINA()
 	oSystemURIToPath(logroot, Settings.BuildLogsURI);
 	oFileEnsureParentFolderExists(logroot);
 
-	oStd::ref<oP4ChangelistBuilder> CLManager;
+	oStd::intrusive_ptr<oP4ChangelistBuilder> CLManager;
 	if (!oChangelistManagerCreate(*INI, logroot.c_str(), Settings.Port, &CLManager))
 	{
 		oMSGBOX_DESC mb;
@@ -450,17 +450,17 @@ oMAINA()
 		return -1;
 	}
 
-	oStd::ref<oHTTPHandler> Handlers[4];
-	Handlers[0] = oStd::ref<oHTTPHandler>(new oAutoBuildCompletedHandler(CLManager), false);
-	Handlers[1] = oStd::ref<oHTTPHandler>(new oAutoBuildPendingHandler(CLManager), false);
-	Handlers[2] = oStd::ref<oHTTPHandler>(new oAutoBuildDailyHandler(CLManager), false);
-	Handlers[3] = oStd::ref<oHTTPHandler>(new oAutoBuildLogHandler(CLManager, Settings.BuildLogsURI), false);
+	oStd::intrusive_ptr<oHTTPHandler> Handlers[4];
+	Handlers[0] = oStd::intrusive_ptr<oHTTPHandler>(new oAutoBuildCompletedHandler(CLManager), false);
+	Handlers[1] = oStd::intrusive_ptr<oHTTPHandler>(new oAutoBuildPendingHandler(CLManager), false);
+	Handlers[2] = oStd::intrusive_ptr<oHTTPHandler>(new oAutoBuildDailyHandler(CLManager), false);
+	Handlers[3] = oStd::intrusive_ptr<oHTTPHandler>(new oAutoBuildLogHandler(CLManager, Settings.BuildLogsURI), false);
 
-	oStd::ref<oHTTPURICapture> Captures[1];
-	Captures[0] = oStd::ref<oHTTPURICapture>(new oAutoBuildCaptureRemaining(), false);
+	oStd::intrusive_ptr<oHTTPURICapture> Captures[1];
+	Captures[0] = oStd::intrusive_ptr<oHTTPURICapture>(new oAutoBuildCaptureRemaining(), false);
 
-	oStd::ref<threadsafe oWebServer> WebServer;
-	oStd::ref<oHTTPServer> BuildServer;
+	oStd::intrusive_ptr<threadsafe oWebServer> WebServer;
+	oStd::intrusive_ptr<oHTTPServer> BuildServer;
 
 	oWebServer::DESC ServerDesc;
 	ServerDesc.AllocBufferCallback = [](size_t _BufferSize) { return new char[_BufferSize]; };
@@ -523,7 +523,7 @@ oMAINA()
 	md.TraceEvents = true;
 	md.WatchSubtree = false;
 
-	oStd::ref<threadsafe oStreamMonitor> NewVersionMonitor;
+	oStd::intrusive_ptr<threadsafe oStreamMonitor> NewVersionMonitor;
 	if (!oStreamMonitorCreate(md, oBIND(OnNewVersion, oBIND1, oBIND2, Window), &NewVersionMonitor))
 	{
 		oMSGBOX_DESC mb;

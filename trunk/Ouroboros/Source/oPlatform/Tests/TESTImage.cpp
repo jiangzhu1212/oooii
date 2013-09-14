@@ -45,15 +45,15 @@ struct PLATFORM_oImage : public oTest
 			oStd::path tmp;
 			oTESTB0(BuildPath(tmp, oGetFilebase(testImage), oTest::TEMP));
 
-			oStd::ref<oBuffer> buffer1;
+			oStd::intrusive_ptr<oBuffer> buffer1;
 			oTESTB(oBufferLoad(path.c_str(), &buffer1), "Load failed: %s", path.c_str());
 
-			oStd::ref<oImage> image1;
+			oStd::intrusive_ptr<oImage> image1;
 			oTESTB(oImageCreate(path.c_str(), buffer1->GetData(), buffer1->GetSize(), &image1), "Image create failed: %s", path.c_str());
 
 			oTESTB(oImageSave(image1, oImage::UNKNOWN_FILE, oImage::HIGH_COMPRESSION, oImage::DEFAULT, tmp), "Save failed: %s", tmp);
 
-			oStd::ref<oBuffer> buffer2;
+			oStd::intrusive_ptr<oBuffer> buffer2;
 			oTESTB(oBufferLoad(tmp, &buffer2), "Load failed: %s", tmp);
 
 			// Compare that what we saved is the same as what we loaded
@@ -61,7 +61,7 @@ struct PLATFORM_oImage : public oTest
 			oTESTB(buffer1->GetSize() == buffer2->GetSize(), "Buffer size mismatch (orig %u bytes, saved-and-reloaded %u bytes)", buffer1->GetSize(), buffer2->GetSize());
 			oTESTB(!memcmp(buffer1->GetData(), buffer2->GetData(), buffer1->GetSize()), "Save did not write the same bit pattern as was loaded");
 
-			oStd::ref<oImage> image2;
+			oStd::intrusive_ptr<oImage> image2;
 			oTESTB(oImageCreate(path.c_str(), buffer2->GetData(), buffer2->GetSize(), &image2), "Image create failed: %s", tmp);
 
 			// Compare that the bits written are the same as the bits read
@@ -85,10 +85,10 @@ struct PLATFORM_oImage : public oTest
 			oStd::path path;
 			oTESTB0(FindInputFile(path, testImageJpg));
 
-			oStd::ref<oBuffer> buffer1;
+			oStd::intrusive_ptr<oBuffer> buffer1;
 			oTESTB(oBufferLoad(path.c_str(), &buffer1), "Load failed: %s", path.c_str());
 
-			oStd::ref<oImage> image1;
+			oStd::intrusive_ptr<oImage> image1;
 			{
 				oStd::scoped_timer timer("***************** free image jpeg load time");
 				oTESTB(oImageCreate(path.c_str(), buffer1->GetData(), buffer1->GetSize(), &image1), "Image create failed: %s", path.c_str());

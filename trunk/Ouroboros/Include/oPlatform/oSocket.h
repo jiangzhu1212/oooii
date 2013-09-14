@@ -107,7 +107,7 @@ interface oSocket : oInterface
 			: MaxSimultaneousMessages(16)
 		{}
 
-		oStd::ref<threadsafe oSocketAsyncCallback> Callback;
+		oStd::intrusive_ptr<threadsafe oSocketAsyncCallback> Callback;
 
 		// The maximum number of messages that will be in flight in either direction,
 		// this only has implications for Asynchronous sockets in that if more messages

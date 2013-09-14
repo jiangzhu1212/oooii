@@ -52,7 +52,7 @@ private:
 
 	oRefCount RefCount;
 	DESC Desc;
-	oStd::ref<threadsafe oSocket> Socket;
+	oStd::intrusive_ptr<threadsafe oSocket> Socket;
 
 	oHTTPProtocol Protocol;
 

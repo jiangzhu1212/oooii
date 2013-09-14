@@ -29,9 +29,9 @@
 
 struct LineListContext
 {
-	oStd::ref<oGPUBuffer> LineList;
-	oStd::ref<oGPUUtilMesh> CapMesh;
-	oStd::ref<oGPUUtilMesh> PickMesh;
+	oStd::intrusive_ptr<oGPUBuffer> LineList;
+	oStd::intrusive_ptr<oGPUUtilMesh> CapMesh;
+	oStd::intrusive_ptr<oGPUUtilMesh> PickMesh;
 	oURI URI;
 	oStd::color LineColor;
 };
@@ -78,8 +78,8 @@ struct oGfxManipulatorImpl : public oGfxManipulator
 
 	oGfxManipulator::DESC Desc;
 	oRefCount RefCount;
-	oStd::ref<oManipulator> Manipulator;
-	oStd::ref<oGeometryFactory> GeometryFactory;
+	oStd::intrusive_ptr<oManipulator> Manipulator;
+	oStd::intrusive_ptr<oGeometryFactory> GeometryFactory;
 
 	float4x4 Transform;
 	float2 CurrentMousePosition;
@@ -103,7 +103,7 @@ bool oGfxManipulatorImpl::CreateGeometryMesh(oGPUDevice* _pDevice, const char* _
 	GeoLayout.Colors = false;
 	GeoLayout.ContinuityIDs = true;
 
-	oStd::ref<oGeometry> Geometry; 
+	oStd::intrusive_ptr<oGeometry> Geometry; 
 	if(!GeometryFactory->Create(_GeometryDesc, GeoLayout, &Geometry))
 		return false;
 

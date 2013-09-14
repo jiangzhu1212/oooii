@@ -66,8 +66,8 @@ struct oKinectImpl : oKinect
 	void Shutdown();
 
 protected:
-	oStd::ref<INuiSensor> NUISensor;
-	oStd::ref<threadsafe oWindow> Window;
+	oStd::intrusive_ptr<INuiSensor> NUISensor;
+	oStd::intrusive_ptr<threadsafe oWindow> Window;
 	oKINECT_DESC Desc;
 	oConcurrency::condition_variable PitchCV;
 	oConcurrency::mutex PitchMutex;
@@ -91,8 +91,8 @@ protected:
 	HANDLE hColorStream;
 	HANDLE hDepthStream;
 
-	oStd::ref<threadsafe oSurface> Color;
-	oStd::ref<threadsafe oSurface> Depth;
+	oStd::intrusive_ptr<threadsafe oSurface> Color;
+	oStd::intrusive_ptr<threadsafe oSurface> Depth;
 
 	oKinectSkeletonStream Skeletons;
 

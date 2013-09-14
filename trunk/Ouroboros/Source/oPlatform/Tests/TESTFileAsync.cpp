@@ -42,7 +42,7 @@ struct PLATFORM_FileAsync : public oTest
 		{
 			static const unsigned int NUM_READS = 5;
 
-			oStd::ref<threadsafe oStreamReader> ReadFile;
+			oStd::intrusive_ptr<threadsafe oStreamReader> ReadFile;
 			oTESTB( oStreamReaderCreate(testFilePath, &ReadFile), oErrorGetLastString() );
 
 			oStd::uri_string ActualFilePath;
@@ -112,7 +112,7 @@ struct PLATFORM_FileAsync : public oTest
 			oSTREAM_RANGE Range;
 			Range.Offset = FileDesc.Size;
 			Range.Size = 4;
-			oStd::ref<threadsafe oStreamReader> WindowedReader;
+			oStd::intrusive_ptr<threadsafe oStreamReader> WindowedReader;
 			oTESTB(!oStreamReaderCreateWindowed(ReadFile, Range, &WindowedReader), "oFileReaderCreateWindowed should have failed");
 
 			// Setup window to skip 16 bytes
@@ -146,7 +146,7 @@ struct PLATFORM_FileAsync : public oTest
 		oStd::path TempFilePath;
 		oTESTB0(BuildPath(TempFilePath, "TESTAsyncFileIO.bin", oTest::TEMP));
 
-		oStd::ref<threadsafe oStreamReader> ReadFile;
+		oStd::intrusive_ptr<threadsafe oStreamReader> ReadFile;
 
 		oTESTB( !oStreamReaderCreate(TempFilePath, &ReadFile), "Test failed, FileReader create with non-existant file" );
 		
@@ -155,7 +155,7 @@ struct PLATFORM_FileAsync : public oTest
 		// Now test write the test file
 		{
 			oTRACE("TESTFileAsync: Starting write test");
-			oStd::ref<threadsafe oStreamWriter> WriteFile;
+			oStd::intrusive_ptr<threadsafe oStreamWriter> WriteFile;
 			oTESTB( oStreamWriterCreate(TempFilePath, &WriteFile), oErrorGetLastString() );
 			
 			Latch.reset(1);
@@ -214,7 +214,7 @@ struct PLATFORM_FileAsync : public oTest
 		// Test large write
 		{
 			oTRACE("TESTFileAsync: Test large write.");
-			oStd::ref<threadsafe oStreamWriter> WriteFile;
+			oStd::intrusive_ptr<threadsafe oStreamWriter> WriteFile;
 			oTESTB( oStreamWriterCreate(TempFilePath, &WriteFile), oErrorGetLastString() );
 
 			int TestSize = sizeof(TESTAsyncWrite);

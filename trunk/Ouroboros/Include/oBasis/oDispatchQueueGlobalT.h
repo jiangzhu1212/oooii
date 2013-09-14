@@ -71,7 +71,7 @@ struct oDispatchQueueGlobalT : public oDispatchQueueGlobal, T
 	bool Joinable() const threadsafe override{ return IsJoinable; }
 	virtual const char* GetDebugName() const threadsafe { return DebugName->c_str(); }
 
-	void ExecuteNext(oStd::ref<threadsafe oDispatchQueueGlobalT> _SelfRef, unsigned int _ExecuteKey) threadsafe;
+	void ExecuteNext(oStd::intrusive_ptr<threadsafe oDispatchQueueGlobalT> _SelfRef, unsigned int _ExecuteKey) threadsafe;
 
 	oInitOnce<oStd::sstring> DebugName;
 	typedef std::list<oTASK> tasks_t;
@@ -125,7 +125,7 @@ bool oDispatchQueueGlobalT<T>::Dispatch(const oTASK& _Task) threadsafe
 
 		// If this command is the only one in the queue kick off the execution
 		if (1 == TaskCount)
-			Issue(oBIND(&oDispatchQueueGlobalT::ExecuteNext, this, oStd::ref<threadsafe oDispatchQueueGlobalT>(this), ExecuteKey));
+			Issue(oBIND(&oDispatchQueueGlobalT::ExecuteNext, this, oStd::intrusive_ptr<threadsafe oDispatchQueueGlobalT>(this), ExecuteKey));
 
 		FlushLock.unlock_shared();
 	}
@@ -176,7 +176,7 @@ void oDispatchQueueGlobalT<T>::Join() threadsafe
 };
 
 template<typename T>
-void oDispatchQueueGlobalT<T>::ExecuteNext(oStd::ref<threadsafe oDispatchQueueGlobalT> _SelfRef, unsigned int _ExecuteKey) threadsafe
+void oDispatchQueueGlobalT<T>::ExecuteNext(oStd::intrusive_ptr<threadsafe oDispatchQueueGlobalT> _SelfRef, unsigned int _ExecuteKey) threadsafe
 {
 	if (IsJoinable && _ExecuteKey == ExecuteKey && FlushLock.try_lock_shared())
 	{
@@ -202,7 +202,7 @@ void oDispatchQueueGlobalT<T>::ExecuteNext(oStd::ref<threadsafe oDispatchQueueGl
 			
 		// If there are remaining Tasks execute the next
 		if (TaskCount > 0)
-			Issue(oBIND(&oDispatchQueueGlobalT::ExecuteNext, this, oStd::ref<threadsafe oDispatchQueueGlobalT>(this), ExecuteKey));
+			Issue(oBIND(&oDispatchQueueGlobalT::ExecuteNext, this, oStd::intrusive_ptr<threadsafe oDispatchQueueGlobalT>(this), ExecuteKey));
 
 		FlushLock.unlock_shared();
 	}

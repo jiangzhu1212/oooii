@@ -94,7 +94,7 @@ struct oGPUDeviceChildMixinBase
 	const oGPUDeviceChildMixinBase& operator=(const oGPUDeviceChildMixinBase&)/* = delete*/;
 
 protected:
-	oStd::ref<oGPUDevice> Device;
+	oStd::intrusive_ptr<oGPUDevice> Device;
 	oInitOnce<oStd::uri_string> Name;
 	oRefCount RefCount;
 

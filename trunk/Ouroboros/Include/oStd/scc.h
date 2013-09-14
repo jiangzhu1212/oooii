@@ -27,9 +27,9 @@
 #ifndef oStd_scc_h
 #define oStd_scc_h
 
+#include <functional>
 #include <oStd/date.h>
 #include <oStd/fixed_string.h>
-#include <oStd/function.h>
 
 namespace oStd {
 
@@ -121,12 +121,14 @@ struct scc_revision
 	xlstring what;
 };
 
-typedef oFUNCTION<bool(const char* _Commandline
-	, const oFUNCTION<void(char* _Line)>& _GetLine
+typedef std::function<void(char* _Line)> scc_get_line;
+
+typedef std::function<bool(const char* _Commandline
+	, const scc_get_line& _GetLine
 	, int* _pExitCode
 	, unsigned int _TimeoutMS)> scc_spawn;
 
-typedef oFUNCTION<void(const scc_file& _File)> scc_file_visitor;
+typedef std::function<void(const scc_file& _File)> scc_file_enumerator;
 
 class scc
 {
@@ -150,7 +152,7 @@ public:
 
 	// Visits each file that matches the search under the specified path and given 
 	// the specified option.
-	virtual void status(const char* _Path, unsigned int _UpToRevision, scc_visit_option::value _Option, const scc_file_visitor& _Visitor) const = 0;
+	virtual void status(const char* _Path, unsigned int _UpToRevision, scc_visit_option::value _Option, const scc_file_enumerator& _Visitor) const = 0;
 
 	// Returns true if all files under the specified path are unmodified and at 
 	// their latest revisions up to the specified revision so this can be used 

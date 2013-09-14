@@ -61,10 +61,10 @@ public:
 
 private:
 	double TrackingTimeoutSeconds;
-	oStd::ref<threadsafe oWindow> Window;
+	oStd::intrusive_ptr<threadsafe oWindow> Window;
 
 	std::array<int, NUI_SKELETON_MAX_TRACKED_COUNT> ClosestSkeletonIndices;
-	std::array<oStd::ref<threadsafe oKinectSkeleton>, NUI_SKELETON_COUNT> Skeletons;
+	std::array<oStd::intrusive_ptr<threadsafe oKinectSkeleton>, NUI_SKELETON_COUNT> Skeletons;
 
 	void TrackClosestSkeletons(INuiSensor* _pSensor, const NUI_SKELETON_FRAME& _NSF) threadsafe;
 

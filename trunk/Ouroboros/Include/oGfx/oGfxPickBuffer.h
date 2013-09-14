@@ -53,10 +53,10 @@ public:
 private:
 	oRefCount RefCount;
 	int2 PicksInputBuffer[oGPU_MAX_NUM_PICKS_PER_FRAME];
-	oStd::ref<oGPUTexture> PicksInput;
-	oStd::ref<oGPUBuffer> PicksOutput;
-	oStd::ref<oGPUBuffer> PicksStaging;
- 	oStd::ref<oGPUComputeShader> PickResourceShader;
+	oStd::intrusive_ptr<oGPUTexture> PicksInput;
+	oStd::intrusive_ptr<oGPUBuffer> PicksOutput;
+	oStd::intrusive_ptr<oGPUBuffer> PicksStaging;
+ 	oStd::intrusive_ptr<oGPUComputeShader> PickResourceShader;
 };
 
 oAPI bool oGfxPickBufferCreate(oGPUDevice* _pDevice, const void* _pComputeShader, oGfxPickBuffer** _ppPickBuffer);

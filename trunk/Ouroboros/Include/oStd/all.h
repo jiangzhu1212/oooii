@@ -47,11 +47,11 @@
 #include <oStd/fnv1a.h>
 #include <oStd/for.h>
 #include <oStd/fourcc.h>
-#include <oStd/function.h>
 #include <oStd/future.h>
 #include <oStd/guid.h>
 #include <oStd/ini.h>
 #include <oStd/intrinsics.h>
+#include <oStd/intrusive_ptr.h>
 #include <oStd/macros.h>
 #include <oStd/make_unique.h>
 #include <oStd/memory.h>
@@ -62,7 +62,6 @@
 #include <oStd/path.h>
 #include <oStd/path_traits.h>
 #include <oStd/ratio.h>
-#include <oStd/ref.h>
 #include <oStd/scc.h>
 #include <oStd/string.h>
 #include <oStd/string_traits.h>

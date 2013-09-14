@@ -125,7 +125,7 @@ void* oLoadIcon(oFUNCTION<void(const char** _ppBufferName, const void** _ppBuffe
 	size_t sizeofBuffer = 0;
 	_BufferGetDesc(&BufferName, &pBuffer, &sizeofBuffer);
 
-	oStd::ref<oImage> ico;
+	oStd::intrusive_ptr<oImage> ico;
 	oVERIFY(oImageCreate(BufferName, pBuffer, sizeofBuffer, &ico));
 
 	#if defined(_WIN32) || defined (_WIN64)

@@ -25,7 +25,6 @@
 #include <oStd/algorithm.h>
 #include <oStd/atof.h>
 #include <oStd/assert.h>
-#include <oStd/function.h>
 #include <oStd/equal.h>
 #include <oStd/macros.h>
 #include <oStd/throw.h>

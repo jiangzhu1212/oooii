@@ -34,7 +34,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 		return;
 	*_pSuccess = false;
 
-	oStd::ref<oGeometry> CircleGeometry; 
+	oStd::intrusive_ptr<oGeometry> CircleGeometry; 
 	oGeometry::LAYOUT layout;
 	layout.Positions = true;
 	layout.Normals = false;
@@ -45,7 +45,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 
 	auto RotationScale = Desc.ManipularScale;
 
-	oStd::ref<oGeometryFactory> GeometryFactory;
+	oStd::intrusive_ptr<oGeometryFactory> GeometryFactory;
 	if(!oGeometryFactoryCreate(&GeometryFactory))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a geometry factor for manipulator");
@@ -131,7 +131,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 
 	CircleGeometry->UnmapConst();
 
-	oStd::ref<oGeometry> TorusGeometry; 
+	oStd::intrusive_ptr<oGeometry> TorusGeometry; 
 	oGeometryFactory::TORUS_DESC td;
 	td.FaceType = oGeometry::FRONT_CW;
 	td.InnerRadius = RotationScale - Desc.PickWidth;

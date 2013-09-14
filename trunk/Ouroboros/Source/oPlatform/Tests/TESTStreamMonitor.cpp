@@ -69,7 +69,7 @@ struct PLATFORM_oStreamMonitor : public oTest
 		md.TraceEvents = true;
 		md.WatchSubtree = true;
 
-		oStd::ref<threadsafe oStreamMonitor> Monitor;
+		oStd::intrusive_ptr<threadsafe oStreamMonitor> Monitor;
 		oTESTB0(oStreamMonitorCreate(md,
 			// It is not normally a good practice to capture the events by reference, 
 			// but for simplicity doing it here. counting on not getting further 
@@ -114,7 +114,7 @@ struct PLATFORM_oStreamMonitor : public oTest
 		oTESTB0(sd.Directory);
 
 		{
-			oStd::ref<threadsafe oStreamWriter> writer;
+			oStd::intrusive_ptr<threadsafe oStreamWriter> writer;
 			oTESTB(oStreamWriterCreate(TestFile, &writer), "couldn't create test file"); // should generate an added event.
 			char testData[64];
 			oSTREAM_WRITE w;
@@ -128,7 +128,7 @@ struct PLATFORM_oStreamMonitor : public oTest
 
 		// write a 0-len file
 		{
-			oStd::ref<threadsafe oStreamWriter> writer;
+			oStd::intrusive_ptr<threadsafe oStreamWriter> writer;
 			oTESTB(oStreamWriterCreate(TestFile, &writer), "couldn't create test file"); // should generate an added event.
 		}
 

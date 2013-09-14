@@ -148,7 +148,7 @@ struct oWinWindow : oWindow
 	void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe override;
 	void Post(int _CustomEventCode, uintptr_t _Context) threadsafe override;
 	void Dispatch(const oTASK& _Task) threadsafe override;
-	oStd::future<oStd::ref<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const override;
+	oStd::future<oStd::intrusive_ptr<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const override;
 	void SetTimer(uintptr_t _Context, unsigned int _RelativeTimeMS) threadsafe override;
 	void StopTimer(uintptr_t _Context) threadsafe override;
 	void FlushMessages(bool _WaitForNext = false) override;
@@ -181,8 +181,8 @@ private:
 	oConcurrency::event Destroyed;
 	oRefCount RefCount;
 
-	oStd::ref<oWindow> Owner;
-	oStd::ref<oWindow> Parent;
+	oStd::intrusive_ptr<oWindow> Owner;
+	oStd::intrusive_ptr<oWindow> Parent;
 
 private:
 
@@ -485,7 +485,7 @@ void oWinWindow::SetParent(oWindow* _pParent) threadsafe
 	DispatchInternal(std::move([=]
 	{
 		oASSERT(!Owner, "Can't have owner at same time as parent");
-		Parent = std::move(oStd::ref<oWindow>(_pParent, false));
+		Parent = std::move(oStd::intrusive_ptr<oWindow>(_pParent, false));
 		oVERIFY(oWinSetParent(hWnd, _pParent ? (HWND)_pParent->GetNativeHandle() : nullptr));
 	}));
 }
@@ -502,7 +502,7 @@ void oWinWindow::SetOwner(oWindow* _pOwner) threadsafe
 	DispatchInternal(std::move([=]
 	{
 		oASSERT(!Parent, "Can't have parent at same time as owner");
-		Owner = std::move(oStd::ref<oWindow>(_pOwner, false));
+		Owner = std::move(oStd::intrusive_ptr<oWindow>(_pOwner, false));
 		oWinSetOwner(hWnd, _pOwner ? (HWND)_pOwner->GetNativeHandle() : nullptr);
 	}));
 }
@@ -715,9 +715,9 @@ static bool oWinWaitUntilOpaque(HWND _hWnd, unsigned int _TimeoutMS)
 	return true;
 }
 
-oStd::future<oStd::ref<oImage>> oWinWindow::CreateSnapshot(int _Frame, bool _IncludeBorder) threadsafe const
+oStd::future<oStd::intrusive_ptr<oImage>> oWinWindow::CreateSnapshot(int _Frame, bool _IncludeBorder) threadsafe const
 {
-	auto PromisedImage = std::make_shared<oStd::promise<oStd::ref<oImage>>>();
+	auto PromisedImage = std::make_shared<oStd::promise<oStd::intrusive_ptr<oImage>>>();
 	auto Image = PromisedImage->get_future();
 
 	const_cast<threadsafe oWinWindow*>(this)->Dispatch([=]() mutable
@@ -732,7 +732,7 @@ oStd::future<oStd::ref<oImage>> oWinWindow::CreateSnapshot(int _Frame, bool _Inc
 				oASSERT(false, "A non-hidden window timed out waiting to become opaque");
 		}
 
-		oStd::ref<oImage> Image;
+		oStd::intrusive_ptr<oImage> Image;
 		void* buf = nullptr;
 		size_t size = 0;
 		oWinSetFocus(hWnd); // Windows doesn't do well with hidden contents.

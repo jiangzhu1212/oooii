@@ -280,11 +280,11 @@ protected:
 	bool GetSetModeList(unsigned int* _pNumModes, MODE* _pModes, const MODE* _pNewMode) threadsafe;
 
 	oDSSampleGrabberCB SampleGrabberCB;
-	oStd::ref<ISampleGrabber> SampleGrabber;
-	oStd::ref<IBaseFilter> VideoInput;
-	oStd::ref<IBaseFilter> VideoOutput;
-	oStd::ref<IGraphBuilder> GraphBuilder;
-	oStd::ref<IAMStreamConfig> StreamConfig;
+	oStd::intrusive_ptr<ISampleGrabber> SampleGrabber;
+	oStd::intrusive_ptr<IBaseFilter> VideoInput;
+	oStd::intrusive_ptr<IBaseFilter> VideoOutput;
+	oStd::intrusive_ptr<IGraphBuilder> GraphBuilder;
+	oStd::intrusive_ptr<IAMStreamConfig> StreamConfig;
 	oRefCount RefCount;
 	DESC Desc;
 	oConcurrency::shared_mutex DescMutex;
@@ -334,7 +334,7 @@ oDSCamera::oDSCamera(IGraphBuilder* _pGraphBuilder, IAMStreamConfig* _pStreamCon
 
 oDSCamera::~oDSCamera()
 {
-	oStd::ref<IMediaControl> MediaControl;
+	oStd::intrusive_ptr<IMediaControl> MediaControl;
 	oV(GraphBuilder->QueryInterface(IID_PPV_ARGS(&MediaControl)));
 	MediaControl->Stop();
 }
@@ -369,7 +369,7 @@ bool oDSCamera::RecreateOutput(const MODE& _Mode)
 	// Create an output node and attach it to the input
 	CoCreateInstance((const GUID&)oGUID_CLSID_SampleGrabber, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&VideoOutput));
 	oV(GraphBuilder->AddFilter(VideoOutput, L"Sample Grabber"));
-	oStd::ref<IEnumPins> EnumPins;
+	oStd::intrusive_ptr<IEnumPins> EnumPins;
 	if (FAILED(VideoInput->EnumPins(&EnumPins)))
 	{
 		oWinSetLastError();
@@ -377,7 +377,7 @@ bool oDSCamera::RecreateOutput(const MODE& _Mode)
 	}
 
 	bool connectedFilters = false;
-	oStd::ref<IPin> Pin;
+	oStd::intrusive_ptr<IPin> Pin;
 	while (S_OK == EnumPins->Next(1, &Pin, nullptr))
 	{
 		if (SUCCEEDED(SampleCode::ConnectFilters(GraphBuilder, Pin, VideoOutput)))
@@ -597,7 +597,7 @@ bool oDSCamera::SetMode(const MODE& _Mode) threadsafe
 
 	auto pThis = oLockThis(DescMutex);
 
-	oStd::ref<IMediaControl> MediaControl;
+	oStd::intrusive_ptr<IMediaControl> MediaControl;
 	oV(GraphBuilder->QueryInterface(IID_PPV_ARGS(&MediaControl)));
 
 	// Prevent deadlock in BufferCB, we've got an exclusive above
@@ -628,7 +628,7 @@ bool oDSCamera::SetCapturing(bool _Capturing) threadsafe
 {
 	auto pThis = oLockThis(DescMutex);
 
-	oStd::ref<IMediaControl> MediaControl;
+	oStd::intrusive_ptr<IMediaControl> MediaControl;
 	oV(GraphBuilder->QueryInterface(IID_PPV_ARGS(&MediaControl)));
 
 	Running = _Capturing;
@@ -722,15 +722,15 @@ static bool oDSCreateCaptureGraphBuilder(ICaptureGraphBuilder2** _ppCaptureGraph
 
 static bool oDSMonikerEnum(unsigned int _Index, IMoniker** _ppMoniker)
 {
-	oStd::ref<ICreateDevEnum> DevEnum;
+	oStd::intrusive_ptr<ICreateDevEnum> DevEnum;
 	oVB_RETURN2(CoCreateInstance((const GUID&)oGUID_CLSID_SystemDeviceEnum, nullptr, CLSCTX_INPROC_SERVER, (const GUID&)oGUID_IID_ICreateDevEnum, (void**)&DevEnum));
 
-	oStd::ref<IEnumMoniker> EnumMoniker;
+	oStd::intrusive_ptr<IEnumMoniker> EnumMoniker;
 	HRESULT hr = DevEnum->CreateClassEnumerator((const GUID&)oGUID_CLSID_VideoInputDeviceCategory, &EnumMoniker, 0);
 	if (S_OK != hr)
 		return oErrorSetLast(std::errc::no_such_device, "No video input devices found%s", oIsWindows64Bit() ? " (might be because of a 32-bit driver on 64-bit Windows)" : "");
 
-	std::vector<oStd::ref<IMoniker> > Monikers;
+	std::vector<oStd::intrusive_ptr<IMoniker> > Monikers;
 	Monikers.resize(_Index + 1);
 
 	ULONG nFetched = 0;
@@ -745,7 +745,7 @@ static bool oDSMonikerEnum(unsigned int _Index, IMoniker** _ppMoniker)
 
 bool oDSGetStringProperty(char* _StrDestination, size_t _SizeofStrDestination, IMoniker* _pMoniker, const char* _Property)
 {
-	oStd::ref<IPropertyBag> PropertyBag;
+	oStd::intrusive_ptr<IPropertyBag> PropertyBag;
 	oVB_RETURN2(_pMoniker->BindToStorage(nullptr, nullptr, IID_IPropertyBag, (void**)&PropertyBag));
 	VARIANT varName;
 	VariantInit(&varName);
@@ -761,7 +761,7 @@ bool oDSGetDisplayName(char* _StrDestination, size_t _SizeofStrDestination, IMon
 	LPOLESTR lpDisplayName = nullptr;
 	oVB_RETURN2(_pMoniker->GetDisplayName(nullptr, nullptr, &lpDisplayName));
 	oStrcpy(_StrDestination, _SizeofStrDestination, lpDisplayName);
-	oStd::ref<IMalloc> Malloc;
+	oStd::intrusive_ptr<IMalloc> Malloc;
 	oVB_RETURN2(CoGetMalloc(1, &Malloc));
 	Malloc->Free(lpDisplayName);
 	return true;
@@ -780,7 +780,7 @@ bool oCameraEnum(unsigned int _Index, threadsafe oCamera** _ppCamera)
 	oV(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED));
 	oStd::finally OnScopeExit([&] { CoUninitialize(); });
 
-	oStd::ref<IMoniker> Moniker;
+	oStd::intrusive_ptr<IMoniker> Moniker;
 	if (!oDSMonikerEnum(_Index, &Moniker))
 		return false;
 
@@ -796,7 +796,7 @@ bool oCameraEnum(unsigned int _Index, threadsafe oCamera** _ppCamera)
 	unsigned int MonikerID = 0;
 	oV(Moniker->Hash((DWORD*)&MonikerID));
 
-	oStd::ref<IBaseFilter> BaseFilter;
+	oStd::intrusive_ptr<IBaseFilter> BaseFilter;
 	if (FAILED(Moniker->BindToObject(nullptr, nullptr, (const GUID&)oGUID_IID_IBaseFilter, (void**)&BaseFilter)))
 		return oErrorSetLast(std::errc::function_not_supported, "Found device \"%s\" (ID=0x%x), but could not bind an interface for it", Name.c_str(), MonikerID);
 
@@ -804,14 +804,14 @@ bool oCameraEnum(unsigned int _Index, threadsafe oCamera** _ppCamera)
 
 	oTRACE("Found device \"%s\" (ID=0x%x), continuing...", Name.c_str(), MonikerID);
 
-	oStd::ref<ICaptureGraphBuilder2> CaptureGraphBuilder;
-	oStd::ref<IGraphBuilder> GraphBuilder;
+	oStd::intrusive_ptr<ICaptureGraphBuilder2> CaptureGraphBuilder;
+	oStd::intrusive_ptr<IGraphBuilder> GraphBuilder;
 	if (!oDSCreateCaptureGraphBuilder(&CaptureGraphBuilder, &GraphBuilder))
 		return oWinSetLastError();
 
 	if (SUCCEEDED(GraphBuilder->AddFilter(BaseFilter, L"Video Input")))
 	{
-		oStd::ref<IAMStreamConfig> AMStreamConfig;
+		oStd::intrusive_ptr<IAMStreamConfig> AMStreamConfig;
 		if (SUCCEEDED(CaptureGraphBuilder->FindInterface(nullptr, (const GUID*)&oGUID_MEDIATYPE_Video, BaseFilter, (const GUID&)oGUID_IID_IAMStreamConfig, (void**)&AMStreamConfig)))
 		{
 			// At this point there is a camera. A camera most likely can support 

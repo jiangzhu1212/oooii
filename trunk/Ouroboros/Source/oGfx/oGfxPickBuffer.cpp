@@ -85,7 +85,7 @@ void oGfxPickBuffer::PDraw(oGPUCommandList* _pCommandList, oGPUTexture* _pPickRe
 
 void oGfxPickBuffer::POMap(uint** _Picks) 
 {
-	oStd::ref<oGPUDevice> Device;
+	oStd::intrusive_ptr<oGPUDevice> Device;
 	PicksStaging->GetDevice(&Device);
 	oSURFACE_MAPPED_SUBRESOURCE mappedStaging;
 	// @oooii-jeffrey: This call is blocking/spin-locking because that was what the original D3D11 implementation did, this may still need some thought...
@@ -95,7 +95,7 @@ void oGfxPickBuffer::POMap(uint** _Picks)
 
 void oGfxPickBuffer::POUnmap() 
 {
-	oStd::ref<oGPUDevice> Device;
+	oStd::intrusive_ptr<oGPUDevice> Device;
 	PicksStaging->GetDevice(&Device);
 	Device->UnmapRead(PicksStaging, 0);
 }

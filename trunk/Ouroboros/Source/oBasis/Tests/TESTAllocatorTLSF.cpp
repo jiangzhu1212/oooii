@@ -63,7 +63,7 @@ bool oBasisTest_oAllocatorTLSF(const oBasisTestServices& _Services)
 	desc.ArenaSize = arena.size();
 	desc.pArena = oStd::data(arena);
 
-	oStd::ref<oAllocator> Allocator;
+	oStd::intrusive_ptr<oAllocator> Allocator;
 	oTESTB(oAllocatorCreateTLSF("TestAllocator", desc, &Allocator), "Failed to create a TLSF allocator");
 
 	const size_t NUM_POINTER_TESTS = 1000;

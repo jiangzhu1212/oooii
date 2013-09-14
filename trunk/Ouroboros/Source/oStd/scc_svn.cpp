@@ -70,7 +70,7 @@ static bool svn_is_error(const char* _StdOut)
 	return false;
 }
 
-void scc_svn::spawn(const char* _Command, const oFUNCTION<void(char* _Line)>& _GetLine) const
+void scc_svn::spawn(const char* _Command, const scc_get_line& _GetLine) const
 {
 	int ec = std::errc::timed_out;
 	if (!Spawn(_Command, _GetLine, &ec, SpawnTimeoutMS))
@@ -81,7 +81,7 @@ void scc_svn::spawn(const char* _Command, oStd::xlstring& _StdOut) const
 {
 	int ec = std::errc::timed_out;
 	_StdOut.clear();
-	oFUNCTION<void(char* _Line)> GetLine = [&](char* _Line)
+	scc_get_line GetLine = [&](char* _Line)
 	{
 		strlcat(_StdOut, _Line, _StdOut.capacity());
 		strlcat(_StdOut, "\n", _StdOut.capacity());
@@ -95,7 +95,12 @@ bool scc_svn::available() const
 {
 	int ec = std::errc::timed_out;
 	oStd::xlstring StdOut;
-	oFUNCTION<void(char* _Line)> GetLine = [&](char* _Line) { strlcat(StdOut, _Line, StdOut.capacity()); strlcat(StdOut, "\n", StdOut.capacity()); };
+	scc_get_line GetLine = [&](char* _Line)
+	{
+		strlcat(StdOut, _Line, StdOut.capacity());
+		strlcat(StdOut, "\n", StdOut.capacity());
+	};
+
 	if (!Spawn("svn", GetLine, &ec, SpawnTimeoutMS))
 		SVN_THROWE(ec);
 	return !!strstr(StdOut, "Type 'svn help'");
@@ -196,7 +201,7 @@ static char* svn_parse_status_line(char* _StatusBuffer, unsigned int _UpToRevisi
 	return _StatusBuffer;
 }
 
-void scc_svn::status(const char* _Path, unsigned int _UpToRevision, scc_visit_option::value _Option, const scc_file_visitor& _Visitor) const
+void scc_svn::status(const char* _Path, unsigned int _UpToRevision, scc_visit_option::value _Option, const scc_file_enumerator& _Enumerator) const
 {
 	oStd::lstring cmd;
 	
@@ -229,7 +234,7 @@ void scc_svn::status(const char* _Path, unsigned int _UpToRevision, scc_visit_op
 			{
 				scc_file file;
 				svn_parse_status_line(_Line, _UpToRevision, file);
-				_Visitor(file);
+				_Enumerator(file);
 			}
 		}
 	});

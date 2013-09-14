@@ -199,7 +199,7 @@ interface oWindow : oInterface
 	// Schedules an oImage to be generated from the oWindow. In the simple case,
 	// _Frame is not used and the front buffer is captured. Due to platform rules
 	// this may involve bringing the specified window to focus.
-	virtual oStd::future<oStd::ref<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const = 0;
+	virtual oStd::future<oStd::intrusive_ptr<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const = 0;
 
 	// Causes an oGUI_TIMER event to occur with the specified context after the 
 	// specified time. This will be called every specified millisections until 

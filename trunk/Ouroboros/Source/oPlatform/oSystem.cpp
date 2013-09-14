@@ -198,7 +198,7 @@ bool oSystemExecute(const char* _CommandLine, const oFUNCTION<void(char* _Line)>
 	#ifdef DEBUG_EXECUTED_PROCESS
 		desc.StartSuspended = true;
 	#endif
-	oStd::ref<threadsafe oProcess> process;
+	oStd::intrusive_ptr<threadsafe oProcess> process;
 	if (!oProcessCreate(desc, &process))
 		return false;
 
@@ -261,7 +261,7 @@ bool oSystemExecute(const char* _CommandLine, const oFUNCTION<void(char* _Line)>
 
 bool oSystemWaitIdle(unsigned int _TimeoutMS, oFUNCTION<bool()> _ContinueIdling)
 {
-	oStd::ref<oProgressBar> PB;
+	oStd::intrusive_ptr<oProgressBar> PB;
 	if(!_ContinueIdling)
 	{
 		if (!oProgressBarCreate([=] {}, "Waiting for System Idle...", &PB))

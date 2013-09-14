@@ -275,7 +275,7 @@ template<typename T, typename ContainerT> bool contains(const ContainerT& _Array
 template<typename ContainerT> typename ContainerT::iterator append(ContainerT& _Array) { _Array.resize(_Array.size() + 1); return std::end(_Array) - 1; }
 
 // Insert into a std::vector at its sorted spot, supply a compare function of 
-// type oFUNCTION<bool(const T& _ContainerItem, const T& _NewItem)>
+// type std::function<bool(const T& _ContainerItem, const T& _NewItem)>
 template<typename T, typename AllocatorT, class CompareT> size_t sorted_insert(std::vector<T, AllocatorT>& _Container, const T& _Item, const CompareT& _Compare)
 {
 	std::vector<T, AllocatorT>::iterator it = std::begin(_Container);

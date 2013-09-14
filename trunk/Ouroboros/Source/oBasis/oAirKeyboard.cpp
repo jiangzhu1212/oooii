@@ -134,7 +134,7 @@ struct oAirKeyboardImpl : oAirKeyboard
 
 private:
 	oConcurrency::shared_mutex KeySetMutex;
-	oStd::ref<threadsafe oAirKeySet> KeySet;
+	oStd::intrusive_ptr<threadsafe oAirKeySet> KeySet;
 	std::vector<oGUI_ACTION> KeyAction;
 
 	oConcurrency::shared_mutex SkeletonsMutex;

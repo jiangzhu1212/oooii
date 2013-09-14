@@ -100,10 +100,10 @@ private:
 
 	// Generic elements
 	
-	oStd::ref<threadsafe oWindow> Window;
-	oStd::ref<threadsafe oKinect> Kinect;
-	oStd::ref<threadsafe oAirKeyboard> AirKeyboard;
-	oStd::ref<threadsafe oInputMapper> InputMapper;
+	oStd::intrusive_ptr<threadsafe oWindow> Window;
+	oStd::intrusive_ptr<threadsafe oKinect> Kinect;
+	oStd::intrusive_ptr<threadsafe oAirKeyboard> AirKeyboard;
+	oStd::intrusive_ptr<threadsafe oInputMapper> InputMapper;
 
 	oStd::shared_mutex KinectMutex;
 
@@ -294,7 +294,7 @@ void oGestureManagerImpl::AttachKinect(bool _Attached, const char* _InstanceName
 		Reference();
 		oStd::async([&]
 		{
-			oStd::ref<threadsafe oKinect> NewKinect;
+			oStd::intrusive_ptr<threadsafe oKinect> NewKinect;
 			oKINECT_DESC kd;
 			kd.PitchDegrees = Desc.GestureCameraPitchDegrees;
 			bool Result = oKinectCreate(kd, Window, &NewKinect);
@@ -611,7 +611,7 @@ bool oGestureManagerImpl::SetCurrentKeyset(const char* _KeysetName)
 
 	else
 	{
-		oStd::ref<threadsafe oAirKeySet> KeySet;
+		oStd::intrusive_ptr<threadsafe oAirKeySet> KeySet;
 		if (oParseAirKeySetsList(*Keysets
 			, Keysets->first_child(Keysets->root(), "oAirKeySetList")
 			, _KeysetName
@@ -636,7 +636,7 @@ bool oGestureManagerImpl::SetCurrentInputSet(const oRTTI* _pDynamicEnum)
 	if (_pDynamicEnum && _pDynamicEnum->GetType() != oRTTI_TYPE_ENUM)
 		return oErrorSetLast(std::errc::invalid_argument, "oRTTI must be of an enum");
 
-	oStd::ref<threadsafe oInputSet> InputSet;
+	oStd::intrusive_ptr<threadsafe oInputSet> InputSet;
 	pCurrentInputSet = _pDynamicEnum;
 	if (pCurrentInputSet)
 	{
@@ -806,7 +806,7 @@ bool oGestureManagerImpl::ReloadAirKeySets(const oStd::uri_string& _AirKeySets_x
 	std::shared_ptr<oStd::xml> XML;
 	try
 	{
-		oStd::ref<threadsafe oAirKeySet> KeySet;
+		oStd::intrusive_ptr<threadsafe oAirKeySet> KeySet;
 		XML = oXMLLoad(_AirKeySets_xml);
 	}
 
@@ -826,7 +826,7 @@ bool oGestureManagerImpl::ReloadInputs(const oStd::uri_string& _Inputs_xml)
 	std::shared_ptr<oStd::xml> XML;
 	try
 	{
-		oStd::ref<threadsafe oInputSet> InputSet;
+		oStd::intrusive_ptr<threadsafe oInputSet> InputSet;
 		XML = oXMLLoad(_Inputs_xml);
 	}
 

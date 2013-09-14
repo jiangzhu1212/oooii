@@ -52,7 +52,7 @@ static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, o
 	int ConfigHead = oPrintf(CommandLine, "%s %s /p:Configuration=", ToolName, _Settings.Solution);
 
 	o_msbuild_stdout_t StdOutDrain;
-	std::unordered_map<oStd::uri_string, oStd::ref<threadsafe oProcess>, oStdHash<oStd::uri_string>, oStd::equal_to<oStd::uri_string>> BuildProcesses;
+	std::unordered_map<oStd::uri_string, oStd::intrusive_ptr<threadsafe oProcess>, oStdHash<oStd::uri_string>, oStd::equal_to<oStd::uri_string>> BuildProcesses;
 	oFOR(auto& Config, _Settings.Configurations)
 	{
 		int PlatformHead = ConfigHead + oPrintf(CommandLine.c_str() + ConfigHead, CommandLine.capacity() - ConfigHead, "%s /p:Platform=", Config);
@@ -66,7 +66,7 @@ static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, o
 			ProcessDesc.StdHandleBufferSize = StdOutDrain.capacity() - 1;
 			ProcessDesc.Show = oPROCESS_HIDE;
 
-			oStd::ref<threadsafe oProcess> Process;
+			oStd::intrusive_ptr<threadsafe oProcess> Process;
 			if(!oProcessCreate(ProcessDesc, &Process))
 			{
 				return false;
@@ -217,7 +217,7 @@ bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _LogFolder, 
 
 bool oMSBuildParseLogfile(oStd::path_string _Logfile, bool _IncludeWarnings, oFUNCTION<bool(o_msbuild_stdout_t _WarningOrError)> _Output)
 {
-	oStd::ref<oBuffer> Buffer;
+	oStd::intrusive_ptr<oBuffer> Buffer;
 	if (!oBufferLoad(_Logfile, &Buffer, true))
 		return false;
 

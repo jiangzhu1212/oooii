@@ -35,7 +35,7 @@ struct GPU_Buffer : public oTest
 	{
 		oGPUDevice::INIT init("GPU_Buffer");
 		init.DriverDebugLevel = oGPU_DEBUG_NORMAL;
-		oStd::ref<oGPUDevice> Device;
+		oStd::intrusive_ptr<oGPUDevice> Device;
 		oTESTB0(oGPUDeviceCreate(init, &Device));
 
 		oGPUBuffer::DESC BufferDesc;
@@ -43,27 +43,27 @@ struct GPU_Buffer : public oTest
 		BufferDesc.Type = oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND;
 		BufferDesc.ArraySize = oCOUNTOF(GPU_BufferAppendIndices) * 2;
 
-		oStd::ref<oGPUBuffer> AppendBuffer;
+		oStd::intrusive_ptr<oGPUBuffer> AppendBuffer;
 		oTESTB0( Device->CreateBuffer("GPU_BufferAppend", BufferDesc, &AppendBuffer) );
 
 		BufferDesc.Type = oGPU_BUFFER_READBACK;
 
-		oStd::ref<oGPUBuffer> AppendReadbackBuffer;
+		oStd::intrusive_ptr<oGPUBuffer> AppendReadbackBuffer;
 		oTESTB0( Device->CreateBuffer("GPU_BufferAppend", BufferDesc, &AppendReadbackBuffer) );
 
 		BufferDesc.Type = oGPU_BUFFER_READBACK;
 		BufferDesc.ArraySize = 1;
 
-		oStd::ref<oGPUBuffer> AppendBufferCount;
+		oStd::intrusive_ptr<oGPUBuffer> AppendBufferCount;
 		oTESTB0( Device->CreateBuffer("GPU_BufferAppendCount", BufferDesc, &AppendBufferCount) );
 		
 		oGPUPipeline::DESC PipelineDesc;
 		oTESTB0( oGPUTestGetPipeline(oGPU_TEST_BUFFER, &PipelineDesc) );
 
-		oStd::ref<oGPUPipeline> Pipeline;
+		oStd::intrusive_ptr<oGPUPipeline> Pipeline;
 		oTESTB0( Device->CreatePipeline("GPU_BufferPipeline", PipelineDesc, &Pipeline) );
 
-		oStd::ref<oGPUCommandList> CommandList;
+		oStd::intrusive_ptr<oGPUCommandList> CommandList;
 		Device->GetImmediateCommandList(&CommandList);
 
 		Device->BeginFrame();

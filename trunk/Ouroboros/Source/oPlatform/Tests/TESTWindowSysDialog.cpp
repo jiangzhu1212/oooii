@@ -131,7 +131,7 @@ public:
 
 private:
 	oWinControlSet ControlSet;
-	oStd::ref<oWindow> Window;
+	oStd::intrusive_ptr<oWindow> Window;
 	bool Running;
 
 	bool Reload(HWND _hParent, const int2& _ClientSize);
@@ -425,7 +425,7 @@ struct PLATFORM_WindowSysDialog : public oTest
 
 		if (!kInteractiveMode)
 		{
-			oStd::future<oStd::ref<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
+			oStd::future<oStd::intrusive_ptr<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
 			test.GetWindow()->FlushMessages();
 
 			oTESTFI(snapshot);
@@ -442,7 +442,7 @@ struct PLATFORM_WindowSysDialog : public oTest
 				if (i == 3)
 				{
 					oTEST_FUTURE(snapshot);
-					oStd::ref<oImage> image;
+					oStd::intrusive_ptr<oImage> image;
 					try { image = snapshot.get(); }
 					catch (std::exception& e)
 					{

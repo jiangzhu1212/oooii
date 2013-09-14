@@ -106,7 +106,7 @@ public:
 	void Run();
 
 private:
-	oStd::ref<oWindow> Window;
+	oStd::intrusive_ptr<oWindow> Window;
 	oGUI_MENU Menus[oWMENU_COUNT];
 	oWindowTestAppPulseContext PulseContext;
 	oGUIMenuEnumRadioListHandler MERL; 

@@ -1513,17 +1513,17 @@ bool oWinEnumVideoDriverDesc(oFUNCTION<void(const oDISPLAY_ADAPTER_DRIVER_DESC& 
 	CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 	oStd::finally OnScopeExit([&] { CoUninitialize(); });
 
-	oStd::ref<IWbemLocator> WbemLocator;
+	oStd::intrusive_ptr<IWbemLocator> WbemLocator;
 	oV(CoCreateInstance((const GUID&)oGUID_CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, (const IID&)oGUID_IID_WbemLocator, (LPVOID *) &WbemLocator));
 
-	oStd::ref<IWbemServices> WbemServices;
+	oStd::intrusive_ptr<IWbemServices> WbemServices;
 	oV(WbemLocator->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), NULL, NULL, 0, NULL, 0, 0, &WbemServices));
 	oV(CoSetProxyBlanket(WbemServices, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr, RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, nullptr, EOAC_NONE));
 	
-	oStd::ref<IEnumWbemClassObject> Enumerator;
+	oStd::intrusive_ptr<IEnumWbemClassObject> Enumerator;
 	oV(WbemServices->ExecQuery(bstr_t("WQL"), bstr_t("SELECT * FROM Win32_VideoController"), WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &Enumerator));
 
-	oStd::ref<IWbemClassObject> WbemClassObject;
+	oStd::intrusive_ptr<IWbemClassObject> WbemClassObject;
 	while (Enumerator)
 	{
 		oDISPLAY_ADAPTER_DRIVER_DESC desc;

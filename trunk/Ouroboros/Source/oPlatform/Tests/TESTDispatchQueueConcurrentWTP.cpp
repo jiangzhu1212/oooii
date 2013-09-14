@@ -34,7 +34,7 @@ struct oDQCWTP_impl : oConcurrency::tests::test_threadpool
 	{
 		oVERIFY(oDispatchQueueCreateConcurrentWTP("WTP DQ", 100000, &t));
 	}
-	oStd::ref<threadsafe oDispatchQueueConcurrent> t;
+	oStd::intrusive_ptr<threadsafe oDispatchQueueConcurrent> t;
 	~oDQCWTP_impl() { if (t) t->Join(); }
 	const char* name() const threadsafe override { return "WTP"; }
 	void dispatch(const oTASK& _Task) threadsafe override { t->Dispatch(_Task); }

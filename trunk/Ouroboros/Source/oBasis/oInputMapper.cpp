@@ -454,7 +454,7 @@ struct oInputMapperImpl : oInputMapper
 	void OnAction(const oGUI_ACTION_DESC& _Action) threadsafe override;
 	void OnLostCapture() threadsafe override;
 
-	oStd::ref<threadsafe oInputSet> InputSet;
+	oStd::intrusive_ptr<threadsafe oInputSet> InputSet;
 	oInputHistory InputHistory;
 	shared_mutex Mutex;
 	oRefCount RefCount;

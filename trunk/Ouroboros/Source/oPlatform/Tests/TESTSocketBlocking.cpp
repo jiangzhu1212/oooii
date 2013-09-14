@@ -46,8 +46,8 @@ struct PLATFORM_oSocketBlockingServer : public oSpecialTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{		
-		oStd::ref<threadsafe oSocketServer2> Server;
-		oStd::ref<threadsafe oSocket> Client;
+		oStd::intrusive_ptr<threadsafe oSocketServer2> Server;
+		oStd::intrusive_ptr<threadsafe oSocket> Client;
 		oConcurrency::event connectEvent;
 		connectEvent.reset();
 		
@@ -156,12 +156,12 @@ struct PLATFORM_oSocketBlocking : public oTest
 		{
 			int exitcode = 0;
 			char msg[512];
-			oStd::ref<threadsafe oProcess> Server;
+			oStd::intrusive_ptr<threadsafe oProcess> Server;
 			oTESTB(oSpecialTest::CreateProcess("PLATFORM_oSocketBlockingServer", &Server), "");
 			oTESTB(oSpecialTest::Start(Server, msg, oCOUNTOF(msg), &exitcode), "%s", msg);
 		}
 
-		oStd::ref<threadsafe oSocket> Client;
+		oStd::intrusive_ptr<threadsafe oSocket> Client;
 		{
 			oSocket::DESC desc;
 			oStd::from_string( &desc.Addr, SERVER_HOSTNAME );

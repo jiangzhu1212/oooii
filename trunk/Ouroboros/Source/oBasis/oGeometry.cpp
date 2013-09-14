@@ -1871,7 +1871,7 @@ bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LA
 	init.CounterClockwiseFaces = !_Desc.FlipFaces;
 	init.CalcNormalsOnError = true;
 
-	oStd::ref<threadsafe oOBJ> obj;
+	oStd::intrusive_ptr<threadsafe oOBJ> obj;
 	if (!oOBJCreate(_Desc.OBJPath, _Desc.OBJString, init, &obj))
 		return false;
 

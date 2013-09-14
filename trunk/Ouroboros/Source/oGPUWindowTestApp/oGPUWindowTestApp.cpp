@@ -136,12 +136,12 @@ private:
 	void Render();
 
 private:
-	oStd::ref<oWindow> Parent;
-	oStd::ref<oGPUDevice> Device;
-	oStd::ref<oGPUCommandList> CommandList;
-	oStd::ref<oGPURenderTarget> WindowRenderTarget;
-	oStd::ref<oGPUPipeline> Pipeline;
-	oStd::ref<oGPUUtilMesh> Mesh;
+	oStd::intrusive_ptr<oWindow> Parent;
+	oStd::intrusive_ptr<oGPUDevice> Device;
+	oStd::intrusive_ptr<oGPUCommandList> CommandList;
+	oStd::intrusive_ptr<oGPURenderTarget> WindowRenderTarget;
+	oStd::intrusive_ptr<oGPUPipeline> Pipeline;
+	oStd::intrusive_ptr<oGPUUtilMesh> Mesh;
 
 	oWindow* pGPUWindow;
 	oStd::thread Thread;
@@ -220,7 +220,7 @@ void oGPUWindowThread::Run()
 {
 	oConcurrency::begin_thread("Window Render Target Thread");
 	{
-		oStd::ref<oWindow> GPUWindow;
+		oStd::intrusive_ptr<oWindow> GPUWindow;
 
 		// Set up child window as a render target (this allows other client-area 
 		// controls to be drawn by parent since the primary render target consumes 
@@ -297,7 +297,7 @@ public:
 	void Run();
 
 private:
-	oStd::ref<oWindow> AppWindow;
+	oStd::intrusive_ptr<oWindow> AppWindow;
 	threadsafe oWindow* pGPUWindow;
 	oGPUWindowThread GPUWindow;
 

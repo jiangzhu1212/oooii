@@ -541,7 +541,7 @@ void oD3D11CommandList::Draw(const oGPUBuffer* _pIndices, int _StartSlot, int _N
 
 	#ifdef _DEBUG
 	{
-		oStd::ref<ID3D11InputLayout> InputLayout = 0;
+		oStd::intrusive_ptr<ID3D11InputLayout> InputLayout = 0;
 		Context->IAGetInputLayout(&InputLayout);
 		oASSERT(!_ppVertexBuffers || InputLayout, "No InputLayout specified");
 	}
@@ -589,7 +589,7 @@ bool oD3D11CommandList::GenerateMips(oGPURenderTarget* _pRenderTarget)
 	if (!oGPUTextureTypeHasMips(desc.Type))
 		return oErrorSetLast(std::errc::invalid_argument, "Cannot generate mips if the type doesn't contain oGPU_TRAIT_TEXTURE_MIPS");
 
-	oStd::ref<oGPUTexture> texture;
+	oStd::intrusive_ptr<oGPUTexture> texture;
 	_pRenderTarget->GetTexture(0, &texture);
 	oD3D11Texture* d3dTexture = static_cast<oD3D11Texture*>(texture.c_ptr());
 	Context->GenerateMips(d3dTexture->SRV);

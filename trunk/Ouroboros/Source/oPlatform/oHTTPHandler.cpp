@@ -36,7 +36,7 @@ oRTTI_COMPOUND_END_DESCRIPTION(oHTTPHandlerCommonQueryParams)
 
 void oHTTPHandlerBuildStaticFileResponse(const char* _FullPath, oHTTPHandler::CommonParams& _CommonParams)
 {
-	oStd::ref<threadsafe oStreamReader> reader;
+	oStd::intrusive_ptr<threadsafe oStreamReader> reader;
 	if(!oStreamReaderCreate(_FullPath, &reader))
 		return;
 

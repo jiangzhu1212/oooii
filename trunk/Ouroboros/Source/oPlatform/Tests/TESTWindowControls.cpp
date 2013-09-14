@@ -42,7 +42,7 @@ public:
 	bool GetRunning() const { return Running; }
 
 private:
-	oStd::ref<oWindow> Window;
+	oStd::intrusive_ptr<oWindow> Window;
 	bool Running;
 
 	enum
@@ -525,7 +525,7 @@ struct PLATFORM_WindowControls : public oTest
 
 		} while (oTimer() < WaitForSettle);
 
-		oStd::future<oStd::ref<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
+		oStd::future<oStd::intrusive_ptr<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
 		
 		do
 		{

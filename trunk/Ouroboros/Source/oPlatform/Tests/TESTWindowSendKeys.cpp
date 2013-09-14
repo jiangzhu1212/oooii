@@ -78,7 +78,7 @@ struct PLATFORM_WindowSendKeysClient : public oSpecialTest
 			}
 		};
 
-		oStd::ref<oWindow> TestWindow;
+		oStd::intrusive_ptr<oWindow> TestWindow;
 		oTESTB0( oWindowCreate(init, &TestWindow) );
 
 		NotifyReady();
@@ -94,7 +94,7 @@ struct PLATFORM_WindowSendKeys : public oTest
 	{
 		unsigned int ID = oProcessGetID("notepad.exe");
 
-		oStd::ref<threadsafe oProcess> Client;
+		oStd::intrusive_ptr<threadsafe oProcess> Client;
 		{
 			int exitcode = 0;
 			oStd::lstring msg;

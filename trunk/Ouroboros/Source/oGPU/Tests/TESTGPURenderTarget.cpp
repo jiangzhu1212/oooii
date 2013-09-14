@@ -104,7 +104,7 @@ struct GPU_RenderTarget_App : public oGPUTestApp
 		// draw order of the command lists defines the render target before the 
 		// main scene, this should come out as a cube with a triangle texture.
 
-		oStd::ref<oGPUTexture> Texture;
+		oStd::intrusive_ptr<oGPUTexture> Texture;
 		RenderTarget->GetTexture(0, &Texture);
 
 		RenderMainScene(CLMainScene, Texture, PrimaryRenderTarget);
@@ -113,14 +113,14 @@ struct GPU_RenderTarget_App : public oGPUTestApp
 	}
 
 private:
-	oStd::ref<oGPUCommandList> CLMainScene;
-	oStd::ref<oGPUCommandList> CLRenderTarget;
-	oStd::ref<oGPUPipeline> PLPassThrough;
-	oStd::ref<oGPUPipeline> PLTexture;
-	oStd::ref<oGPURenderTarget> RenderTarget;
-	oStd::ref<oGPUUtilMesh> Cube;
-	oStd::ref<oGPUUtilMesh> Triangle;
-	oStd::ref<oGPUBuffer> TestConstants;
+	oStd::intrusive_ptr<oGPUCommandList> CLMainScene;
+	oStd::intrusive_ptr<oGPUCommandList> CLRenderTarget;
+	oStd::intrusive_ptr<oGPUPipeline> PLPassThrough;
+	oStd::intrusive_ptr<oGPUPipeline> PLTexture;
+	oStd::intrusive_ptr<oGPURenderTarget> RenderTarget;
+	oStd::intrusive_ptr<oGPUUtilMesh> Cube;
+	oStd::intrusive_ptr<oGPUUtilMesh> Triangle;
+	oStd::intrusive_ptr<oGPUBuffer> TestConstants;
 
 	void RenderToTarget(oGPUCommandList* _pCommandList, oGPURenderTarget* _pTarget)
 	{

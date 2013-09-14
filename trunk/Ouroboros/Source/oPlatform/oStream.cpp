@@ -56,7 +56,7 @@ struct oStreamContext : public oProcessSingleton<oStreamContext>
 			// @oooii-tony: HACK!!! I wish self-registration can occur even in a static 
 			// lib, but until we can solve that issue, how can we guarantee we at least
 			// have a file system?
-			oStd::ref<threadsafe oFileSchemeHandler> SHFile;
+			oStd::intrusive_ptr<threadsafe oFileSchemeHandler> SHFile;
 			oVERIFY(oFileSchemeHandlerCreate(&SHFile));
 			oVERIFY(oStreamContext::RegisterSchemeHandler(SHFile));
 		}
@@ -87,7 +87,7 @@ protected:
 	oConcurrency::shared_mutex URIBasesMutex;
 	oConcurrency::shared_mutex SchemeHandlersMutex;
 
-	std::vector<oStd::ref<threadsafe oSchemeHandler>> SchemeHandlers;
+	std::vector<oStd::intrusive_ptr<threadsafe oSchemeHandler>> SchemeHandlers;
 	std::vector<oStd::uri_string> URIBases;
 };
 
@@ -186,14 +186,14 @@ bool oStreamContext::RegisterSchemeHandler(threadsafe oSchemeHandler* _pSchemeHa
 void oStreamContext::UnregisterSchemeHandler(threadsafe oSchemeHandler* _pSchemeHandler) threadsafe
 {
 	auto pThis = oLockThis(SchemeHandlersMutex);
-	oStd::find_and_erase(pThis->SchemeHandlers, oStd::ref<threadsafe oSchemeHandler>(_pSchemeHandler));
+	oStd::find_and_erase(pThis->SchemeHandlers, oStd::intrusive_ptr<threadsafe oSchemeHandler>(_pSchemeHandler));
 }
 
 bool oStreamContext::FindSchemeHandler(const char* _Scheme, threadsafe oSchemeHandler** _ppSchemeHandler) threadsafe
 {
 	*_ppSchemeHandler = nullptr;
 	auto pThis = oLockThis(SchemeHandlersMutex);
-	auto it = oStd::find_if(pThis->SchemeHandlers, [&](oStd::ref<threadsafe oSchemeHandler>& _SchemeHandler)->bool { return (!oStricmp(_SchemeHandler->GetScheme(), _Scheme)); });
+	auto it = oStd::find_if(pThis->SchemeHandlers, [&](oStd::intrusive_ptr<threadsafe oSchemeHandler>& _SchemeHandler)->bool { return (!oStricmp(_SchemeHandler->GetScheme(), _Scheme)); });
 	if (it != pThis->SchemeHandlers.end())
 	{
 		*_ppSchemeHandler = *it;
@@ -496,7 +496,7 @@ struct oStreamReaderWindowedImpl : oStreamReader
 
 	oRefCount RefCount;
 	oInitOnce<oSTREAM_DESC> Desc;
-	oStd::ref<threadsafe oStreamReader> Reader;
+	oStd::intrusive_ptr<threadsafe oStreamReader> Reader;
 	oInitOnce<unsigned long long> WindowStart;
 	oInitOnce<unsigned long long> WindowEnd;
 };
@@ -531,7 +531,7 @@ oStd::utf_type::value oStreamGetUTFType(const char* _URIReference)
 	static const size_t BLOCK_SIZE = 512;
 	static const float PERCENTAGE_THRESHOLD_TO_BE_BINARY = 0.10f; // 0.30f; // @oooii-tony: 30% seems too high to me.
 
-	oStd::ref<threadsafe oStreamReader> Reader;
+	oStd::intrusive_ptr<threadsafe oStreamReader> Reader;
 	if (!oStreamReaderCreate(_URIReference, &Reader))
 		return oStd::utf_type::unknown; // pass through error
 

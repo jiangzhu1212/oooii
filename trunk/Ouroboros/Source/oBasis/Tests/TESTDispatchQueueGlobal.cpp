@@ -63,7 +63,7 @@ static void NotifyAll(oStd::condition_variable& _ConditionVariable, oStd::mutex&
 
 bool oBasisTest_oDispatchQueueGlobal()
 {
-	oStd::ref<threadsafe oDispatchQueueGlobal> q;
+	oStd::intrusive_ptr<threadsafe oDispatchQueueGlobal> q;
 	oTESTB(oDispatchQueueCreateGlobal("TESTDispatchQueueGlobal", 100, &q), "Failed to create global dispatch queue");
 	oStd::finally JoinQueue([&] { q->Join(); });
 

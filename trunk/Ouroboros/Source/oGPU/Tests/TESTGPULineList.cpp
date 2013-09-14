@@ -107,8 +107,8 @@ public:
 	}
 
 private:
-	oStd::ref<oGPUPipeline> Pipeline;
-	oStd::ref<oGPUBuffer> LineList;
+	oStd::intrusive_ptr<oGPUPipeline> Pipeline;
+	oStd::intrusive_ptr<oGPUBuffer> LineList;
 };
 
 oDEFINE_GPU_TEST(GPU_LineList)

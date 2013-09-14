@@ -49,7 +49,7 @@ struct oWinProgressBar : oProgressBar
 	oWindow* GetWindow() override { return Window; }
 
 private:
-	oStd::ref<oWindow> Window;
+	oStd::intrusive_ptr<oWindow> Window;
 	oTASK OnStopPressed;
 
 	enum PB_CONTROL

@@ -103,7 +103,7 @@ bool oGPUSurfaceConvert(
 	, const int2& _MipDimensions)
 {
 	oGPU_DEVICE_INIT DeviceInit("oGPUSurfaceConvert Temp Device");
-	oStd::ref<ID3D11Device> D3DDevice;
+	oStd::intrusive_ptr<ID3D11Device> D3DDevice;
 	if (!oD3D11CreateDevice(DeviceInit, true, &D3DDevice))
 	{
 		DeviceInit.UseSoftwareEmulation = true;
@@ -125,11 +125,11 @@ bool oGPUSurfaceConvert(
 
 bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, oSURFACE_FORMAT _NewFormat, oGPUTexture** _ppDestinationTexture)
 {
-	oStd::ref<ID3D11Texture2D> D3DDestinationTexture;
+	oStd::intrusive_ptr<ID3D11Texture2D> D3DDestinationTexture;
 	if (!oD3D11Convert(static_cast<oD3D11Texture*>(_pSourceTexture)->Texture, _NewFormat, &D3DDestinationTexture))
 		return false; // pass through error
 
-	oStd::ref<oGPUDevice> Device;
+	oStd::intrusive_ptr<oGPUDevice> Device;
 	_pSourceTexture->GetDevice(&Device);
 
 	oGPUTexture::DESC d;
@@ -151,10 +151,10 @@ bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const
 	if (oStricmp(URIParts.Scheme, "file"))
 		return oErrorSetLast(std::errc::not_supported, "Currently only file schemed URIs are supported.");
 
-	oStd::ref<ID3D11Device> D3DDevice;
+	oStd::intrusive_ptr<ID3D11Device> D3DDevice;
 	oVERIFY(_pDevice->QueryInterface(&D3DDevice));
 
-	oStd::ref<ID3D11Texture2D> D3DTexture;
+	oStd::intrusive_ptr<ID3D11Texture2D> D3DTexture;
 	if (!oD3D11Load(D3DDevice, _Desc, URIParts.Path, _DebugName, (ID3D11Resource**)&D3DTexture))
 		return false;
 
@@ -165,10 +165,10 @@ bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const
 
 bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, oGPUTexture** _ppTexture)
 {
-	oStd::ref<ID3D11Device> D3DDevice;
+	oStd::intrusive_ptr<ID3D11Device> D3DDevice;
 	oVERIFY(_pDevice->QueryInterface(&D3DDevice));
 
-	oStd::ref<ID3D11Texture2D> D3DTexture;
+	oStd::intrusive_ptr<ID3D11Texture2D> D3DTexture;
 	if (!oD3D11Load(D3DDevice, _Desc, _DebugName, _pBuffer, _SizeofBuffer, (ID3D11Resource**)&D3DTexture))
 		return false;
 

@@ -162,9 +162,9 @@ private:
 			return *this;
 		}
 
-		oStd::ref<oWindow> Window;
-		oStd::ref<threadsafe oKinect> Kinect;
-		oStd::ref<threadsafe oInputMapper> InputMapper;
+		oStd::intrusive_ptr<oWindow> Window;
+		oStd::intrusive_ptr<threadsafe oKinect> Kinect;
+		oStd::intrusive_ptr<threadsafe oInputMapper> InputMapper;
 		
 		#ifdef oUSE_MEDIA_INPUT
 			oMEDIA_INPUT LastInput;
@@ -188,8 +188,8 @@ private:
 	oGDIScopedObject<HPEN> hKinectPen;
 	oGDIScopedObject<HBRUSH> hKinectBrush;
 
-	oStd::ref<threadsafe oStreamMonitor> StreamMonitor;
-	oStd::ref<threadsafe oAirKeyboard> AirKeyboard;
+	oStd::intrusive_ptr<threadsafe oStreamMonitor> StreamMonitor;
+	oStd::intrusive_ptr<threadsafe oAirKeyboard> AirKeyboard;
 
 	bool Ready;
 
@@ -252,7 +252,7 @@ oKinectTestApp::oKinectTestApp()
 			UpdateStatusBar(w.Window, s, "<Gesture>");
 		}
 
-		oStd::ref<threadsafe oKinect> Kinect;
+		oStd::intrusive_ptr<threadsafe oKinect> Kinect;
 		oKINECT_DESC kd;
 
 		kd.PitchDegrees = oDEFAULT;
@@ -542,7 +542,7 @@ void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const oStd::uri_string& 
 		{
 			try 
 			{
-				oStd::ref<threadsafe oInputSet> InputSet;
+				oStd::intrusive_ptr<threadsafe oInputSet> InputSet;
 				std::shared_ptr<oStd::xml> XML = oXMLLoad(_ChangedURI);
 				if (oParseInputSetList(*XML
 					, XML->first_child(XML->root(), "oInputSetList")
@@ -574,7 +574,7 @@ void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const oStd::uri_string& 
 
 			try
 			{
-				oStd::ref<threadsafe oAirKeySet> KeySet;
+				oStd::intrusive_ptr<threadsafe oAirKeySet> KeySet;
 				std::shared_ptr<oStd::xml> XML = oXMLLoad(_ChangedURI);
 				if (oParseAirKeySetsList(*XML
 					, XML->first_child(XML->root(), "oAirKeySetList")

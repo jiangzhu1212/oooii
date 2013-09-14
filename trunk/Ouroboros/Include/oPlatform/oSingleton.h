@@ -102,7 +102,7 @@ public:
 			// that the first static might do and if we are truly the ones to create
 			// the instance, ref it here because this will be first-access of this 
 			// static and thus the dtor will be registered at this time.
-			static oStd::ref<T> sAnotherInstance(sInstance, false);
+			static oStd::intrusive_ptr<T> sAnotherInstance(sInstance, false);
 		}
 
 		return sInstance;
@@ -121,7 +121,7 @@ public:
 			// We need to add a module singleton reference to this instance
 			// since we can get here more than once per thread if it is called
 			// from a different module. 
-			static oStd::ref<T> sAnotherInstance(sInstance, true);
+			static oStd::intrusive_ptr<T> sAnotherInstance(sInstance, true);
 		}
 		return sInstance;
 	}

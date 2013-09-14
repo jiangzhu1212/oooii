@@ -252,9 +252,9 @@ interface oGPUCommandList : oGPUDeviceChild
 	template<size_t size> void SetShaderResources(int _StartSlot, const oGPUBuffer* const (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
 	template<size_t size> void SetShaderResources(int _StartSlot, const oGPUTexture* const (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
 
-	template<size_t size> void SetShaderResources(int _StartSlot, const oStd::ref<oGPUResource> (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
-	template<size_t size> void SetShaderResources(int _StartSlot, const oStd::ref<oGPUBuffer> (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
-	template<size_t size> void SetShaderResources(int _StartSlot, const oStd::ref<oGPUTexture> (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
+	template<size_t size> void SetShaderResources(int _StartSlot, const oStd::intrusive_ptr<oGPUResource> (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
+	template<size_t size> void SetShaderResources(int _StartSlot, const oStd::intrusive_ptr<oGPUBuffer> (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
+	template<size_t size> void SetShaderResources(int _StartSlot, const oStd::intrusive_ptr<oGPUTexture> (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
 	
 	inline void SetShaderResources(int _StartSlot, const oGPUResource* _pResource) { SetShaderResources(_StartSlot, 1, &_pResource); }
 	inline void SetShaderResources(int _StartSlot, const oGPUTexture* _pResource) { SetShaderResources(_StartSlot, 1, &_pResource); }

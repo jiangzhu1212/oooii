@@ -31,9 +31,9 @@
 #ifndef oStd_text_document_h
 #define oStd_text_document_h
 
+#include <functional>
 #include <system_error>
 #include <oStd/fixed_string.h>
-#include <oStd/function.h>
 
 namespace oStd {
 
@@ -50,7 +50,7 @@ public:
 	text_document_error(text_document_errc::value _Errc) : logic_error(text_document_category().message(_Errc)) {}
 };
 
-typedef oFUNCTION<void(char* _pData)> text_document_deleter_t;
+typedef std::function<void(char* _pData)> text_document_deleter_t;
 
 	namespace detail {
 		class text_buffer

@@ -113,7 +113,7 @@ struct TESTSurfaceFill : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oStd::ref<oImage> Image[4];
+		oStd::intrusive_ptr<oImage> Image[4];
 		oStd::color gradiantColors0[4] = { oStd::Blue, oStd::Purple, oStd::Lime, oStd::Orange};
 		oTESTB0(oImageCreateNumberedGrid(int2(256,256), int2(64,64), oStd::Black, oStd::Black, gradiantColors0, &Image[0]));
 		oTESTI2(Image[0], 0);

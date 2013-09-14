@@ -47,7 +47,7 @@ static bool ResolvePath(oStd::path& _Path, const char* _RelativePath, bool _Path
 
 static bool TestSurface(const char* _Name, const oSURFACE_DESC& _SourceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SourceMapped, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier, oTest* _pTest)
 {
-	oStd::ref<oImage> image;
+	oStd::intrusive_ptr<oImage> image;
 	if (!oImageCreate(_Name, _SourceDesc, &image))
 		return false; // pass through error
 	image->CopyData(_SourceMapped.pData, _SourceMapped.RowPitch);
@@ -56,7 +56,7 @@ static bool TestSurface(const char* _Name, const oSURFACE_DESC& _SourceDesc, con
 
 static bool AllocateAndLoadSurface(void** _pHandle, oSURFACE_DESC* _pDesc, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMapped, const char* _URIReference)
 {
-	oStd::ref<oImage> image;
+	oStd::intrusive_ptr<oImage> image;
 	if (!oImageLoad(_URIReference, &image))
 		return false; // pass through error
 

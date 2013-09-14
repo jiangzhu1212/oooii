@@ -45,7 +45,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 {
 	*_StrStatus = 0;
 
-	oStd::ref<threadsafe oProcess> Client;
+	oStd::intrusive_ptr<threadsafe oProcess> Client;
 	{
 		int exitcode = 0;
 		char msg[512];
@@ -55,7 +55,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 		oTRACE("SERVER: starting mirrored arena construction...");
 	}
 
-	oStd::ref<oMirroredArena> MirroredArenaServer;
+	oStd::intrusive_ptr<oMirroredArena> MirroredArenaServer;
 
 	oStd::finally OnScopeExit([&] { 
 		oPageUnreserve(BASE_ADDRESS); 
@@ -93,7 +93,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 
 	oStd::memset4(BASE_ADDRESS, 0xdeadbeef, ARENA_SIZE);
 
-	oStd::ref<oAllocator> AllocatorServer;
+	oStd::intrusive_ptr<oAllocator> AllocatorServer;
 	{
 		oAllocator::DESC desc;
 		desc.pArena = BASE_ADDRESS;
@@ -159,7 +159,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 	oTRACE("SERVER: creating a socket to send diffs...");
 
 	// Set up a socket to communicate with other process
-	oStd::ref<threadsafe oSocket> ClientSocket;
+	oStd::intrusive_ptr<threadsafe oSocket> ClientSocket;
 	{
 		oSocket::DESC desc;
 		oStd::from_string( &desc.Addr, "127.0.0.1:1234" );
@@ -240,7 +240,7 @@ struct PLATFORM_oMirroredArenaClient : public oSpecialTest
 	{
 		oTRACE("%s: Run Start", GetName());
 
-		oStd::ref<oMirroredArena> MirroredArenaClient;
+		oStd::intrusive_ptr<oMirroredArena> MirroredArenaClient;
 
 		oStd::finally OnScopeExit([&] { 
 			oPageUnreserve(BASE_ADDRESS); 
@@ -267,8 +267,8 @@ struct PLATFORM_oMirroredArenaClient : public oSpecialTest
 		oConcurrency::event connectEvent;
 		connectEvent.reset();
 		// Listen for a connection
-		oStd::ref<threadsafe oSocketServer2> server;
-		oStd::ref<threadsafe oSocket> client;
+		oStd::intrusive_ptr<threadsafe oSocketServer2> server;
+		oStd::intrusive_ptr<threadsafe oSocket> client;
 		{
 			oSocketServer2::DESC desc;
 			desc.ListenPort = 1234;

@@ -341,11 +341,11 @@ namespace future_detail {
 		template <typename T, typename U> void typed_set_value_ref(void* _pValueMemory, const U& _Value)
 		{
 			if (work_steals())
-				internal_set_value_ref<T>(_pValueMemory, _Value);
+				internal_set_value_intrusive_ptr<T>(_pValueMemory, _Value);
 			else
 			{
 				unique_lock<mutex> lock(Mutex);
-				internal_set_value_ref<T>(_pValueMemory, _Value);
+				internal_set_value_intrusive_ptr<T>(_pValueMemory, _Value);
 				lock.unlock();
 				CV.notify_all();
 			}
@@ -495,12 +495,12 @@ namespace future_detail {
 
 		template <typename U> void set_value(const U& _Value)
 		{
-			typed_set_value_ref<T>(&Value, _Value);
+			typed_set_value_intrusive_ptr<T>(&Value, _Value);
 		}
 
 		template <typename U> void set_value_at_thread_exit(const U& _Value)
 		{
-			set_value_at_thread_exit_ref<T>(&Value, _Value, oBIND(&oCommitment<T&>::notify_value_set_and_release, this));
+			set_value_at_thread_exit_intrusive_ptr<T>(&Value, _Value, oBIND(&oCommitment<T&>::notify_value_set_and_release, this));
 		}
 
 	private:

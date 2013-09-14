@@ -35,7 +35,7 @@ struct GPU_Texture3DMip_App : public oGPUTextureTestApp
 	oGPU_TEST_PIPELINE GetPipeline() override { return oGPU_TEST_TEXTURE_3D; }
 	bool CreateTexture() override
 	{
-		oStd::ref<oImage> images[3];
+		oStd::intrusive_ptr<oImage> images[3];
 		if (!oImageLoad("file://DATA/Test/Textures/Red.png", oImage::FORCE_ALPHA, &images[0]))
 			return false;
 		if (!oImageLoad("file://DATA/Test/Textures/Green.png", oImage::FORCE_ALPHA, &images[1]))

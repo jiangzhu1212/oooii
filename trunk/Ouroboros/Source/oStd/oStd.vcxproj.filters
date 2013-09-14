@@ -327,9 +327,6 @@
     <ClInclude Include="..\..\Include\oStd\version.h">
       <Filter>oStd\Types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oStd\ref.h">
-      <Filter>oStd\Types</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oStd\future.h">
       <Filter>oStd\C++11</Filter>
     </ClInclude>
@@ -356,6 +353,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oStd\for.h">
       <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\intrusive_ptr.h">
+      <Filter>oStd\Types</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
