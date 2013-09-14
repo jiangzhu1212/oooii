@@ -31,7 +31,7 @@
 #endif
 
 #ifdef _WINDOWS_
-	#pragma message("BAD WINDOWS INCLUDE! Applications should #include <oWinHeaders.h> to limit the proliferation of macros and platform interfaces throughout the code.")
+	#pragma message("BAD WINDOWS INCLUDE! Applications should #include \"win.h\" to limit the proliferation of macros and platform interfaces throughout the code.")
 #endif
 
 #ifndef NOMINMAX

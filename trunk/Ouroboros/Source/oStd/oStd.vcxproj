@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\External\calfaq\calfaq.cpp" />
     <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcat.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
@@ -44,66 +45,66 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
     </ClCompile>
     <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp" />
-    <ClCompile Include="ampersand_decode.cpp" />
-    <ClCompile Include="ampersand_encode.cpp" />
-    <ClCompile Include="calfaq.cpp" />
-    <ClCompile Include="clean_path.cpp" />
-    <ClCompile Include="clean_whitespace.cpp" />
+    <ClCompile Include="chrono.cpp" />
     <ClCompile Include="color.cpp" />
+    <ClCompile Include="condition_variable.cpp" />
     <ClCompile Include="date.cpp" />
-    <ClCompile Include="dtoull.cpp" />
-    <ClCompile Include="elipsize.cpp" />
-    <ClCompile Include="format_bytes.cpp" />
-    <ClCompile Include="format_commas.cpp" />
-    <ClCompile Include="format_duration.cpp" />
-    <ClCompile Include="insert.cpp" />
-    <ClCompile Include="is_ascii.cpp" />
-    <ClCompile Include="json_escape_decode.cpp" />
-    <ClCompile Include="json_escape_encode.cpp" />
-    <ClCompile Include="mbsltowcs.cpp" />
-    <ClCompile Include="memcmp4.cpp" />
-    <ClCompile Include="memcpyuitous.cpp" />
-    <ClCompile Include="memcpyustoui.cpp" />
-    <ClCompile Include="memmem.cpp" />
-    <ClCompile Include="memset2.cpp" />
-    <ClCompile Include="memset2d.cpp" />
-    <ClCompile Include="memset2d2.cpp" />
-    <ClCompile Include="memset2d4.cpp" />
-    <ClCompile Include="memset4.cpp" />
+    <ClCompile Include="future.cpp" />
+    <ClCompile Include="memory\dtoull.cpp" />
+    <ClCompile Include="memory\is_ascii.cpp" />
+    <ClCompile Include="memory\memcmp4.cpp" />
+    <ClCompile Include="memory\memcpyuitous.cpp" />
+    <ClCompile Include="memory\memcpyustoui.cpp" />
+    <ClCompile Include="memory\memmem.cpp" />
+    <ClCompile Include="memory\memset2.cpp" />
+    <ClCompile Include="memory\memset2d.cpp" />
+    <ClCompile Include="memory\memset2d2.cpp" />
+    <ClCompile Include="memory\memset2d4.cpp" />
+    <ClCompile Include="memory\memset4.cpp" />
+    <ClCompile Include="memory\utfcmp.cpp" />
+    <ClCompile Include="mutex.cpp" />
     <ClCompile Include="opttok.cpp" />
-    <ClCompile Include="ordinal.cpp" />
-    <ClCompile Include="oStdChrono.cpp" />
-    <ClCompile Include="oStdConditionVariable.cpp" />
-    <ClCompile Include="oStdFuture.cpp" />
-    <ClCompile Include="oStdMutex.cpp" />
-    <ClCompile Include="oStdThread.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="percent_decode.cpp" />
-    <ClCompile Include="percent_encode.cpp" />
-    <ClCompile Include="relativize_path.cpp" />
-    <ClCompile Include="replace.cpp" />
-    <ClCompile Include="rstrstr.cpp" />
     <ClCompile Include="scc.cpp" />
     <ClCompile Include="scc_svn.cpp" />
-    <ClCompile Include="strbitmask.cpp" />
-    <ClCompile Include="stringize.cpp" />
-    <ClCompile Include="strmatch.cpp" />
-    <ClCompile Include="strtok.cpp" />
+    <ClCompile Include="string\ampersand_decode.cpp" />
+    <ClCompile Include="string\ampersand_encode.cpp" />
+    <ClCompile Include="string\clean_path.cpp" />
+    <ClCompile Include="string\clean_whitespace.cpp" />
+    <ClCompile Include="string\elipsize.cpp" />
+    <ClCompile Include="string\format_bytes.cpp" />
+    <ClCompile Include="string\format_commas.cpp" />
+    <ClCompile Include="string\format_duration.cpp" />
+    <ClCompile Include="string\insert.cpp" />
+    <ClCompile Include="string\json_escape_decode.cpp" />
+    <ClCompile Include="string\json_escape_encode.cpp" />
+    <ClCompile Include="string\mbsltowcs.cpp" />
+    <ClCompile Include="string\ordinal.cpp" />
+    <ClCompile Include="string\percent_decode.cpp" />
+    <ClCompile Include="string\percent_encode.cpp" />
+    <ClCompile Include="string\relativize_path.cpp" />
+    <ClCompile Include="string\replace.cpp" />
+    <ClCompile Include="string\rstrstr.cpp" />
+    <ClCompile Include="string\strbitmask.cpp" />
+    <ClCompile Include="string\stringize.cpp" />
+    <ClCompile Include="string\strmatch.cpp" />
+    <ClCompile Include="string\strtok.cpp" />
+    <ClCompile Include="string\trim.cpp" />
+    <ClCompile Include="string\type_name.cpp" />
+    <ClCompile Include="string\wcselipsize.cpp" />
+    <ClCompile Include="string\wcsltombs.cpp" />
     <ClCompile Include="text_document.cpp" />
-    <ClCompile Include="trim.cpp" />
-    <ClCompile Include="type_name.cpp" />
+    <ClCompile Include="thread.cpp" />
     <ClCompile Include="uri.cpp" />
-    <ClCompile Include="utfcmp.cpp" />
     <ClCompile Include="version.cpp" />
-    <ClCompile Include="wcselipsize.cpp" />
-    <ClCompile Include="wcsltombs.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\External\calfaq\calfaq.h" />
     <ClInclude Include="..\..\External\smhasher\MurmurHash3.h" />
     <ClInclude Include="..\..\Include\oStd\algorithm.h" />
     <ClInclude Include="..\..\Include\oStd\all.h" />
@@ -160,10 +161,10 @@
     <ClInclude Include="..\..\Include\oStd\uri_traits.h" />
     <ClInclude Include="..\..\Include\oStd\version.h" />
     <ClInclude Include="..\..\Include\oStd\xml.h" />
-    <ClInclude Include="calfaq.h" />
-    <ClInclude Include="memduff.h" />
+    <ClInclude Include="memory\memduff.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="scc_svn.h" />
+    <ClInclude Include="win.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6C467BDD-EEA7-4FF6-B594-26A760DF179F}</ProjectGuid>

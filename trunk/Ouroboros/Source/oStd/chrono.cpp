@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oStd/chrono.h>
 #include <ctime>
-#include "oWinHeaders.h"
+#include "win.h"
 
 oStd::chrono::high_resolution_clock::time_point oStd::chrono::high_resolution_clock::now()
 {

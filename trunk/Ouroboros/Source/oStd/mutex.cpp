@@ -25,7 +25,7 @@
 #include <oStd/mutex.h>
 #include <oStd/backoff.h>
 
-#include "oWinHeaders.h"
+#include "win.h"
 #if NTDDI_VERSION >= NTDDI_WIN7
 	#define oHAS_SLIM_TRY_LOCK
 #endif

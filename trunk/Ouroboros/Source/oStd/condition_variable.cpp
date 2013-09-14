@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oStd/condition_variable.h>
 #include <oStd/thread.h>
-#include "oWinHeaders.h"
+#include "win.h"
 
 oStd::condition_variable::condition_variable()
 {

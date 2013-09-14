@@ -32,6 +32,7 @@
 #include <oStd/string.h>
 #include <half.h>
 
+oDEFINE_WHITESPACE_PARSING();
 namespace oStd {
 
 const char* as_string(const bool& _Value) { return _Value ? "true" : "false"; }
@@ -120,11 +121,10 @@ bool from_string(half* _pValue, const char* _StrSource) { float v; if (!from_str
 bool from_string(fourcc* _pValue, const char* _StrSource) { oCHK; *_pValue = fourcc(_StrSource); return true; }
 bool from_string(guid* _pValue, const char* _StrSource) { oCHK; return 11 == sscanf_s(_StrSource, "{%08X-%04X-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X}", &_pValue->Data1, &_pValue->Data2, &_pValue->Data3, &_pValue->Data4[0], &_pValue->Data4[1], &_pValue->Data4[2], &_pValue->Data4[3], &_pValue->Data4[4], &_pValue->Data4[5], &_pValue->Data4[6], &_pValue->Data4[7]); }
 
-oDEFINE_WHITESPACE_PARSING();
 bool from_string_float_array(float* _pValue, size_t _NumValues, const char* _StrSource)
 {
 	if (!_pValue || !_StrSource) return false;
-	oStd::move_past_line_whitespace(&_StrSource);
+	move_past_line_whitespace(&_StrSource);
 	while (_NumValues--)
 	{
 		if (!*_StrSource) return false;
@@ -138,10 +138,10 @@ bool from_string_double_array(double* _pValue, size_t _NumValues, const char* _S
 	if (!_pValue || !_StrSource) return false;
 	while (_NumValues--)
 	{
-		oStd::move_past_line_whitespace(&_StrSource);
+		move_past_line_whitespace(&_StrSource);
 		if (!*_StrSource) return false;
 		if (1 != sscanf_s(_StrSource, "%f", _pValue)) return false;
-		oStd::move_to_whitespace(&_StrSource);
+		move_to_whitespace(&_StrSource);
 	}
 	return true;
 }

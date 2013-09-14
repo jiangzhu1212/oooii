@@ -27,7 +27,7 @@
 #include <oStd/string.h>
 #include <oStd/throw.h>
 #include <ctime>
-#include "calfaq.h"
+#include <calfaq/calfaq.h>
 // NTP v4
 
 using namespace oStd::chrono;

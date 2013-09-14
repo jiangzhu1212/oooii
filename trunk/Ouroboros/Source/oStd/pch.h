@@ -24,5 +24,5 @@
  **************************************************************************/
 #pragma once
 #ifdef oPCH
-#include "oWinHeaders.h"
+#include "win.h"
 #endif
