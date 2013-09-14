@@ -29,8 +29,8 @@
 // variables.
 
 #pragma once
-#ifndef oFor_h
-#define oFor_h
+#ifndef oStd_for_h
+#define oStd_for_h
 
 #include <oStd/config.h>
 #include <type_traits>

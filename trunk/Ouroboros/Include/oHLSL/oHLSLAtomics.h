@@ -33,7 +33,7 @@
 
 #ifndef oHLSL
 
-#include <oStd/oStdAtomic.h>
+#include <oStd/atomic.h>
 
 template<typename T> void InterlockedAdd(T& dest, T value, T& original_value) { original_value = oStd::atomic_fetch_add(&dest, value); }
 template<typename T> void InterlockedAdd(T& dest, T value) { oStd::atomic_fetch_add(&dest, value); }

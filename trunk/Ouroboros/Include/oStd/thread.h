@@ -25,12 +25,12 @@
 // Approximation of the upcoming C++11 std::thread interface. There has been no
 // attention paid to proper exception behavior.
 #pragma once
-#ifndef oStdThread_h
-#define oStdThread_h
+#ifndef oStd_thread_h
+#define oStd_thread_h
 
 #include <oStd/callable.h>
 #include <oStd/config.h>
-#include <oStd/oStdChrono.h>
+#include <oStd/chrono.h>
 #include <functional>
 
 namespace oStd {

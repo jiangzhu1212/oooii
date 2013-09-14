@@ -30,7 +30,7 @@
 
 #include <oConcurrency/concurrent_queue_base.h>
 #include <oConcurrency/thread_safe.h>
-#include <oStd/oStdAtomic.h>
+#include <oStd/atomic.h>
 #include <memory>
 
 namespace oConcurrency {

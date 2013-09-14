@@ -22,8 +22,8 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/oStdThread.h>
-#include <oStd/oStdAtomic.h>
+#include <oStd/thread.h>
+#include <oStd/atomic.h>
 #include <process.h> // _beginthread/_endthread
 #include "oWinHeaders.h"
 

@@ -25,7 +25,7 @@
 #include <oConcurrency/fixed_block_allocator.h>
 #include <oStd/byte.h>
 #include <oStd/macros.h>
-#include <oStd/oStdAtomic.h>
+#include <oStd/atomic.h>
 #include <oStd/config.h>
 
 using namespace oConcurrency;

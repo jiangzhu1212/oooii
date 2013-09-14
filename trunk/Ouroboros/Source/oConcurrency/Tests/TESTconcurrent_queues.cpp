@@ -28,10 +28,10 @@
 #include <oConcurrency/event.h>
 #include <oStd/finally.h>
 #include <oStd/assert.h>
-#include <oStd/oFor.h>
+#include <oStd/for.h>
 #include <oStd/function.h>
-#include <oStd/oStdAtomic.h>
-#include <oStd/oStdThread.h>
+#include <oStd/atomic.h>
+#include <oStd/thread.h>
 #include <oStd/throw.h>
 #include <oStd/timer.h>
 #include <vector>

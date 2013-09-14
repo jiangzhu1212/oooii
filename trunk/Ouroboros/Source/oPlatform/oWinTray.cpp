@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oPlatform/Windows/oWinTray.h>
 #include <oConcurrency/mutex.h>
-#include <oStd/oStdThread.h>
+#include <oStd/thread.h>
 #include <oBasis/oString.h>
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oSingleton.h>

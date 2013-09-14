@@ -180,30 +180,6 @@
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oStd\oStdAtomic.h">
-      <Filter>oStd\C++11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oStd\oStdChrono.h">
-      <Filter>oStd\C++11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oStd\oStdRatio.h">
-      <Filter>oStd\C++11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oStd\oStdThread.h">
-      <Filter>oStd\C++11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oStd\oStdMutex.h">
-      <Filter>oStd\C++11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oStd\oStdConditionVariable.h">
-      <Filter>oStd\C++11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oStd\oFor.h">
-      <Filter>oStd\C++11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oStd\oStdFuture.h">
-      <Filter>oStd\C++11</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oStd\byte.h">
       <Filter>oStd</Filter>
     </ClInclude>
@@ -353,6 +329,33 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oStd\ref.h">
       <Filter>oStd\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\future.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\make_unique.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\mutex.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\ratio.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\thread.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\atomic.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\chrono.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\condition_variable.h">
+      <Filter>oStd\C++11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\for.h">
+      <Filter>oStd\C++11</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -22,8 +22,8 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/oStdConditionVariable.h>
-#include <oStd/oStdThread.h>
+#include <oStd/condition_variable.h>
+#include <oStd/thread.h>
 #include "oWinHeaders.h"
 
 oStd::condition_variable::condition_variable()

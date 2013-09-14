@@ -24,11 +24,11 @@
  **************************************************************************/
 // Approximation of the upcoming C++11 std::chrono interface
 #pragma once
-#ifndef oStdChrono_h
-#define oStdChrono_h
+#ifndef oStd_chrono_h
+#define oStd_chrono_h
 
 #include <oStd/equal.h>
-#include <oStd/oStdRatio.h>
+#include <oStd/ratio.h>
 #include <oStd/config.h>
 
 namespace oStd {

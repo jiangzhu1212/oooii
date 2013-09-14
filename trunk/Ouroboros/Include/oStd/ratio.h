@@ -24,8 +24,8 @@
  **************************************************************************/
 // Approximation of the upcoming C++11 std::ratio interface
 #pragma once
-#ifndef oStdRatio_h
-#define oStdRatio_h
+#ifndef oStd_ratio_h
+#define oStd_ratio_h
 
 #include <type_traits>
 

@@ -24,9 +24,9 @@
  **************************************************************************/
 #include <oBasis/oTimer.h>
 #include <oStd/finally.h>
-#include <oStd/oFor.h>
+#include <oStd/for.h>
 #include <oStd/macros.h>
-#include <oStd/oStdFuture.h>
+#include <oStd/future.h>
 #include <oStd/throw.h>
 #include <oConcurrency/oConcurrency.h>
 #include <oPlatform/oProcessStatsMonitor.h>

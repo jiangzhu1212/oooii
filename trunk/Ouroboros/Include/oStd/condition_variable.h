@@ -28,11 +28,11 @@
 // the Guarded Suspension pattern (Google it) to address this issue.
 
 #pragma once
-#ifndef oStdConditionVariable_h
-#define oStdConditionVariable_h
+#ifndef oStd_condition_variable_h
+#define oStd_condition_variable_h
 
-#include <oStd/oStdChrono.h>
-#include <oStd/oStdMutex.h>
+#include <oStd/chrono.h>
+#include <oStd/mutex.h>
 #include <cassert>
 
 // To keep the main classes neat, collect all the platform-specific forward

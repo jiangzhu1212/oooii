@@ -28,7 +28,7 @@
 #define oConcurrency_concurrent_index_allocator_h
 
 #include <oConcurrency/index_allocator.h>
-#include <oStd/oStdAtomic.h>
+#include <oStd/atomic.h>
 
 namespace oConcurrency {
 

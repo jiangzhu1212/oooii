@@ -22,23 +22,19 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// This will be built into c++ 14. We use oRef's instead of shared_ptr's in 
-// general, however unique_ptr's are still useful for light weight objects that 
-// don't need the machinery of an oRef. Standards committee forgot to add 
-// make_unique though, so they are annoying to build. Use this until c++ 14 adds 
-// the missing function.
+// Missing make_unique is considered an oversight in C++11, so here it is.
 #pragma once
-#ifndef oStdMakeUnique_h
-#define oStdMakeUnique_h
+#ifndef oStd_make_unique_h
+#define oStd_make_unique_h
 #include <memory>
 
-//Herb Sutter's implementation from http://herbsutter.com/gotw/_102/ should work 
+// Herb Sutter's implementation from http://herbsutter.com/gotw/_102/ should work 
 // with second update to Visual Studio 2012
-//template<typename T, typename ...Args>
-//std::unique_ptr<T> make_unique(Args&& ...args)
-//{
-//	return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-//}
+// template<typename T, typename ...Args>
+// std::unique_ptr<T> make_unique(Args&& ...args)
+// {
+//	 return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+// }
 
 namespace oStd
 {

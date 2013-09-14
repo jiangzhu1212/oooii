@@ -27,7 +27,7 @@
 #ifndef oGDI_h
 #define oGDI_h
 
-#include <oStd/oStdAtomic.h>
+#include <oStd/atomic.h>
 #include <oStd/color.h>
 #include <oBasis/oGUI.h>
 #include <oPlatform/Windows/oWindows.h>

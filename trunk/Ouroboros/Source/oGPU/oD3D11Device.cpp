@@ -24,7 +24,7 @@
  **************************************************************************/
 #include "oD3D11Device.h"
 #include "oD3D11CommandList.h"
-#include <oStd/oFor.h>
+#include <oStd/for.h>
 #include <oBasis/oLockThis.h>
 #include <oPlatform/Windows/oD3D11.h>
 #include <oPlatform/Windows/oDXGI.h>

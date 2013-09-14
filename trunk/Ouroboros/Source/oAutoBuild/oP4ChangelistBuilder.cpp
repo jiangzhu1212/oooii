@@ -27,7 +27,7 @@
 #include "oAutoBuildOutput.h"
 #include <oConcurrency/mutex.h>
 #include <oBasis/oINISerialize.h>
-#include <oStd/oStdFuture.h>
+#include <oStd/future.h>
 
 static const char* oAUTO_BUILD_ROOT_PATH = "//Root/";
 

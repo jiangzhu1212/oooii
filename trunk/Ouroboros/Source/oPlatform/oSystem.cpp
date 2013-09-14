@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oSystem.h>
-#include <oStd/oStdChrono.h>
+#include <oStd/chrono.h>
 #include <oStd/scc.h>
 #include <oPlatform/oProcess.h>
 #include <oPlatform/oProgressBar.h>

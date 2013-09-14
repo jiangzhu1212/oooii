@@ -42,13 +42,13 @@
 // that returns a value, or has no return so there's permutations for that too.
 
 #pragma once
-#ifndef oStdFuture_h
-#define oStdFuture_h
+#ifndef oStd_future_h
+#define oStd_future_h
 
 #include <oStd/callable.h>
-#include <oStd/oStdAtomic.h>
-#include <oStd/oStdConditionVariable.h>
-#include <oStd/oStdMutex.h>
+#include <oStd/atomic.h>
+#include <oStd/condition_variable.h>
+#include <oStd/mutex.h>
 #include <oStd/config.h>
 #include <cassert>
 #include <exception>

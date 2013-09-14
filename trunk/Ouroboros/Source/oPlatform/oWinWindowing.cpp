@@ -25,7 +25,7 @@
 #include <oPlatform/Windows/oWinWindowing.h>
 #include <oStd/assert.h>
 #include <oStd/fixed_string.h>
-#include <oStd/oStdChrono.h>
+#include <oStd/chrono.h>
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/Windows/oGDI.h>

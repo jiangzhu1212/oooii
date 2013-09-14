@@ -34,8 +34,8 @@
 #ifndef oStd_event_h
 #define oStd_event_h
 
-#include <oStd/oStdConditionVariable.h>
-#include <oStd/oStdMutex.h>
+#include <oStd/condition_variable.h>
+#include <oStd/mutex.h>
 
 namespace oStd {
 

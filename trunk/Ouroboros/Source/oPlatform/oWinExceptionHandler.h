@@ -32,7 +32,7 @@
 #include <oPlatform/oSingleton.h>
 #include <oStd/function.h>
 #include <oStd/guid.h>
-#include <oStd/oStdMutex.h>
+#include <oStd/mutex.h>
 
 namespace windows_exception_type
 {	enum value {

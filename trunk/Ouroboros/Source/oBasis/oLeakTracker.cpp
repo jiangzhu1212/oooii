@@ -27,9 +27,9 @@
 #include <oBasis/oBasisRequirements.h>
 #include <oBasis/oLockThis.h>
 #include <oBasis/oString.h>
-#include <oStd/oFor.h>
-#include <oStd/oStdAtomic.h>
-#include <oStd/oStdChrono.h>
+#include <oStd/for.h>
+#include <oStd/atomic.h>
+#include <oStd/chrono.h>
 #include <cassert>
 
 // use lowest-level assert in case this is inside a more robust assert implementation

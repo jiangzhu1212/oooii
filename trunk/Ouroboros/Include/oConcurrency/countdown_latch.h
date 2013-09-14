@@ -33,7 +33,7 @@
 #include <oConcurrency/condition_variable.h>
 #include <oConcurrency/mutex.h>
 #include <oConcurrency/thread_safe.h>
-#include <oStd/oStdChrono.h>
+#include <oStd/chrono.h>
 #include <stdexcept>
 
 namespace oConcurrency {

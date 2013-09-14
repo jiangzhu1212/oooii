@@ -29,7 +29,7 @@
 
 #include <stdarg.h>
 #include <oStd/fixed_string.h>
-#include <oStd/oStdThread.h>
+#include <oStd/thread.h>
 
 // Sets the name of the specified thread in the debugger's UI. If the default ID
 // value is specified then the id of this_thread is used.

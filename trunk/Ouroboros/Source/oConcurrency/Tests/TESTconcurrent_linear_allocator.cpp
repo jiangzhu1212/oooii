@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oConcurrency/concurrent_linear_allocator.h>
 #include <oStd/macros.h>
-#include <oStd/oStdFuture.h>
+#include <oStd/future.h>
 #include <oStd/throw.h>
 #include <vector>
 

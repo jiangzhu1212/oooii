@@ -26,7 +26,7 @@
 #include <oPlatform/oSingleton.h>
 
 #include <oStd/algorithm.h>
-#include <oStd/oFor.h>
+#include <oStd/for.h>
 #include <oBasis/oLockThis.h>
 #include <oConcurrency/mutex.h>
 #include <oBasis/oRefCount.h>

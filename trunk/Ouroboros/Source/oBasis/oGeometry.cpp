@@ -25,7 +25,7 @@
 #include <oBasis/oGeometry.h>
 #include <oStd/algorithm.h>
 #include <oBasis/oError.h>
-#include <oStd/oFor.h>
+#include <oStd/for.h>
 #include <oBasis/oMath.h>
 #include <oBasis/oMeshUtil.h>
 #include <oBasis/oOBJ.h>

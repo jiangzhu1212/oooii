@@ -23,8 +23,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oStdAtomic_h
-#define oStdAtomic_h
+#ifndef oStd_atomic_h
+#define oStd_atomic_h
 
 #include <oStd/intrinsics.h>
 #include <cstddef> // ptrdiff_t

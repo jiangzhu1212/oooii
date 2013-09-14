@@ -29,7 +29,7 @@
 #include <oStd/fixed_string.h>
 #include <oStd/assert.h>
 #include <oStd/macros.h>
-#include <oStd/oFor.h>
+#include <oStd/for.h>
 #include <oStd/timer.h>
 #include <oStd/unordered_map.h>
 #include <oBasis/oContainer.h>

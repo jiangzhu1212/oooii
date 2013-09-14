@@ -29,7 +29,7 @@
 // Useful threadsafe storage for an array of keys/buttons like for keyboards
 // and mice.
 
-#include <oStd/oStdAtomic.h>
+#include <oStd/atomic.h>
 
 template<size_t size> class oKeyState
 {

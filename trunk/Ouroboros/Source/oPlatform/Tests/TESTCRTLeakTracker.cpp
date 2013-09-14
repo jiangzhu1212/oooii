@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oStd/oStdFuture.h>
+#include <oStd/future.h>
 #include "../oCRTLeakTracker.h"
 
 // @oooii-tony: This test has removed so many platform dependencies, it proves 

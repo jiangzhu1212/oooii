@@ -35,7 +35,7 @@
 
 #include <oStd/algorithm.h>
 #include <oBasis/oError.h>
-#include <oStd/oFor.h>
+#include <oStd/for.h>
 #include <oBasis/oInitOnce.h>
 #include <oConcurrency/thread_safe.h>
 #include <vector>

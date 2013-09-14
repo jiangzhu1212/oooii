@@ -26,7 +26,7 @@
 #include <oStd/byte.h>
 #include <oStd/finally.h>
 #include <oStd/fixed_string.h>
-#include <oStd/oStdAtomic.h>
+#include <oStd/atomic.h>
 #include <oStd/throw.h>
 #include <oStd/timer.h>
 #include <oConcurrency/tests/oConcurrencyTestRequirements.h>

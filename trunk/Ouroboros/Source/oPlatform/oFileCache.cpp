@@ -26,7 +26,7 @@
 #include <oPlatform/oStream.h>
 #include <oConcurrency/mutex.h>
 #include <oBasis/oLockThis.h>
-#include <oStd/oStdAtomic.h>
+#include <oStd/atomic.h>
 #include <oPlatform/oRegistry.h>
 
 class oFileCacheImpl : public oFileCache

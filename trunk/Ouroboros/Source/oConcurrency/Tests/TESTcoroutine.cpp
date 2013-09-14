@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oConcurrency/coroutine.h>
-#include <oStd/oStdFuture.h>
+#include <oStd/future.h>
 
 namespace oConcurrency {
 	namespace tests {

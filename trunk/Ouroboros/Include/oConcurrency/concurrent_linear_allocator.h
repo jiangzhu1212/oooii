@@ -40,7 +40,7 @@
 
 #include <oConcurrency/thread_safe.h>
 #include <oStd/byte.h>
-#include <oStd/oStdAtomic.h>
+#include <oStd/atomic.h>
 
 namespace oConcurrency {
 

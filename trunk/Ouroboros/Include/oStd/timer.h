@@ -28,7 +28,7 @@
 #define oStd_timer_h
 
 #include <oStd/assert.h>
-#include <oStd/oStdChrono.h>
+#include <oStd/chrono.h>
 
 namespace oStd {
 

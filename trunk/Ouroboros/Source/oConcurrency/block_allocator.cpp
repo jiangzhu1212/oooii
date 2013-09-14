@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oConcurrency/block_allocator.h>
 #include <oStd/byte.h>
-#include <oStd/oStdAtomic.h>
+#include <oStd/atomic.h>
 
 using namespace oConcurrency;
 

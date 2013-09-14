@@ -31,7 +31,7 @@
 
 #include <oConcurrency/mutex.h>
 #include <oConcurrency/thread_safe.h>
-#include <oStd/oStdConditionVariable.h>
+#include <oStd/condition_variable.h>
 
 namespace oConcurrency {
 

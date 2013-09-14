@@ -26,7 +26,7 @@
 #ifndef oManipulatorBase_h
 #define oManipulatorBase_h
 
-#include <oStd/oFor.h>
+#include <oStd/for.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oManipulator.h>
 #include <oBasis/oLinearAlgebra.h>

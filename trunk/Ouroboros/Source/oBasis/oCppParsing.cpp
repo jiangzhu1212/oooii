@@ -28,7 +28,7 @@
 #include <oBasis/oString.h>
 #include <oBasis/oPath.h>
 #include <oBasis/oError.h>
-#include <oStd/oFor.h>
+#include <oStd/for.h>
 #include <map>
 #include <regex>
 #include <unordered_map>

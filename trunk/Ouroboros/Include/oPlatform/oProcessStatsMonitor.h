@@ -30,7 +30,7 @@
 
 #include <oBasis/oMath.h>
 #include <oStd/backoff.h>
-#include <oStd/oStdThread.h>
+#include <oStd/thread.h>
 #include <oConcurrency/oConcurrency.h>
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oProcess.h>

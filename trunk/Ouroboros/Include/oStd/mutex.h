@@ -25,11 +25,11 @@
 // Approximation of the upcoming C++11 oStd::mutex interface.
 
 #pragma once
-#ifndef oStdMutex_h
-#define oStdMutex_h
+#ifndef oStd_mutex_h
+#define oStd_mutex_h
 
 #include <cassert>
-#include <oStd/oStdThread.h>
+#include <oStd/thread.h>
 
 // To keep the main classes neat, collect all the platform-specific forward
 // declaration here. This is done in this vague manner to avoid including 

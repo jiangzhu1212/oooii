@@ -38,7 +38,7 @@
 #ifndef oWinWindowing_h
 #define oWinWindowing_h
 
-#include <oStd/oStdThread.h>
+#include <oStd/thread.h>
 #include <oBasis/oGUI.h>
 #include <oPlatform/Windows/oWindows.h>
 

@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/oStdMutex.h>
+#include <oStd/mutex.h>
 #include <oStd/backoff.h>
 
 #include "oWinHeaders.h"

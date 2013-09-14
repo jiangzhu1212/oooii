@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oPlatform/oStandards.h>
 #include <oStd/assert.h>
-#include <oStd/oStdChrono.h>
+#include <oStd/chrono.h>
 #include <oBasis/oString.h>
 #include <oPlatform/oConsole.h>
 #include <oPlatform/oDisplay.h>

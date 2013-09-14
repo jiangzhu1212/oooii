@@ -29,7 +29,7 @@
 #define oConcurrency_tagged_pointer_h
 
 #include <oConcurrency/thread_safe.h>
-#include <oStd/oStdAtomic.h>
+#include <oStd/atomic.h>
 #include <stdexcept>
 
 namespace oConcurrency {

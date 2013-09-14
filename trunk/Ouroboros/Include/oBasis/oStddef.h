@@ -37,7 +37,7 @@
 #include <oStd/fixed_string.h>
 #include <oStd/macros.h>
 
-#include <oStd/oStdThread.h>
+#include <oStd/thread.h>
 // the standard is a bit too obtuse for sleeping a thread, so wrap it
 inline void oSleep(unsigned int _Milliseconds) { oStd::this_thread::sleep_for(oStd::chrono::milliseconds(_Milliseconds)); }
 

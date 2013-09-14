@@ -25,8 +25,8 @@
 #include <oBasis/oDispatchQueueGlobal.h>
 #include <oBasis/oError.h>
 #include <oStd/finally.h>
-#include <oStd/oStdConditionVariable.h>
-#include <oStd/oStdMutex.h>
+#include <oStd/condition_variable.h>
+#include <oStd/mutex.h>
 #include "oBasisTestCommon.h"
 
 static void SetLocation(size_t _Index, size_t _Start, int* _Array)

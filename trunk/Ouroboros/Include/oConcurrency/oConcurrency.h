@@ -36,7 +36,7 @@
 
 #include <oStd/callable.h>
 #include <oStd/function.h>
-#include <oStd/oStdThread.h>
+#include <oStd/thread.h>
 #include <oConcurrency/thread_safe.h>
 #include <system_error>
 

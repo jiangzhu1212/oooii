@@ -24,9 +24,9 @@
  **************************************************************************/
 #include <oConcurrency/countdown_latch.h>
 #include <oStd/finally.h>
-#include <oStd/oFor.h>
-#include <oStd/oStdAtomic.h>
-#include <oStd/oStdFuture.h>
+#include <oStd/for.h>
+#include <oStd/atomic.h>
+#include <oStd/future.h>
 #include <oStd/throw.h>
 #include <vector>
 

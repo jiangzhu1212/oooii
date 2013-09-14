@@ -32,7 +32,7 @@
 
 #include <oBasis/oGUI.h>
 #include <oConcurrency/oConcurrency.h>
-#include <oStd/oStdFuture.h>
+#include <oStd/future.h>
 
 interface oImage;
 
