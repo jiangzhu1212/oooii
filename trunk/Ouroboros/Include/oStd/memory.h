@@ -147,6 +147,10 @@ void memset2d(void* _pDestination, size_t _Pitch, int _Value, size_t _SetPitch, 
 void memset2d2(void* _pDestination, size_t _Pitch, short _Value, size_t _SetPitch, size_t _NumRows);
 void memset2d4(void* _pDestination, size_t _Pitch, long _Value, size_t _SetPitch, size_t _NumRows);
 
+// Visual Studio 2012 Win32 compiler's conversion (c-cast, static_cast) is 
+// bugged, so here's a software version.
+unsigned long long dtoull(double n);
+
 } // namespace oStd
 
 #endif

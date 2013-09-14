@@ -32,13 +32,18 @@
 #include <oStd/config.h>
 
 namespace oStd {
+
+#ifdef oHAS_BAD_DOUBLE_TO_ULLONG_CONVERSION
+	unsigned long long dtoull(double n);
+#endif
+
 	namespace chrono {
 
 // double -> ullong is broken in VS2010, so wrap it to a custom implementation
 template<typename T, typename U> T chrono_static_cast(const U& _Value) { return static_cast<T>(_Value); }
 
 #ifdef oHAS_BAD_DOUBLE_TO_ULLONG_CONVERSION
-		template<> inline unsigned long long chrono_static_cast(const double& _Value) { return oDtoULL(_Value); }
+		template<> inline unsigned long long chrono_static_cast(const double& _Value) { return dtoull(_Value); }
 #endif
 
 template<typename Rep> struct treat_as_floating_point : std::tr1::is_floating_point<Rep> {};

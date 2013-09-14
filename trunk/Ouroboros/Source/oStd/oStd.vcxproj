@@ -50,8 +50,8 @@
     <ClCompile Include="clean_path.cpp" />
     <ClCompile Include="clean_whitespace.cpp" />
     <ClCompile Include="color.cpp" />
-    <ClCompile Include="config.cpp" />
     <ClCompile Include="date.cpp" />
+    <ClCompile Include="dtoull.cpp" />
     <ClCompile Include="elipsize.cpp" />
     <ClCompile Include="format_bytes.cpp" />
     <ClCompile Include="format_commas.cpp" />

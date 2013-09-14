@@ -22,10 +22,10 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/config.h>
-
-#ifdef oHAS_BAD_DOUBLE_TO_ULLONG_CONVERSION
 #include <memory.h>
+
+namespace oStd {
+
 /** <citation
 	usage="Implementation" 
 	reason="win32 compiler double -> unsigned long long is not correct, this is"
@@ -36,7 +36,7 @@
 	modification="assert -> static assert. uint64 -> unsigned long long"
 />*/
 // $(CitedCodeBegin)
-unsigned long long oDtoULL(double input)
+unsigned long long dtoull(double input)
 {
 	static_assert(sizeof(double) == 8, "sizeof(double) == 8");
 	static_assert(sizeof(unsigned long long) == 8, "sizeof(unsigned long long) == 8");
@@ -73,4 +73,5 @@ unsigned long long oDtoULL(double input)
 		return fraction >> (1075ULL - exponent);
 }
 // $(CitedCodeEnd)
-#endif
+
+} // namespace oStd

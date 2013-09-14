@@ -154,10 +154,6 @@
 	} // namespace std
 #endif
 
-#ifdef oHAS_BAD_DOUBLE_TO_ULLONG_CONVERSION
-	unsigned long long oDtoULL(double input);
-#endif
-
 #if !defined(oHAS_MOVE_CTOR) || oHAS_MOVE_CTOR != 1
 	#error This code has not been tested on compilers without move ctors. In addition to functionality concern, there may be race conditions in concurrency implementations that might no longer explicitly call an object's destructor.
 #endif

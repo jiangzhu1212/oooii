@@ -40,9 +40,10 @@
     </Lib>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>dbghelp.lib;dwmapi.lib;dxerr.lib;dxgi.lib;powrprof.lib;psapi.lib;version.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/PDBALTPATH:%_PDB% /ignore:4199 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalLibraryDirectories>$(ProgramW6432)\Microsoft SDKs\Kinect\v1.7\lib\$(PlatformShortName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <DelayLoadDLLs>dbghelp.dll;dwmapi.dll;dxerr.dll;dxgi.dll;powrprof.dll;psapi.dll;version.dll;winmm.dll</DelayLoadDLLs>
     </Link>
     <ProjectReference>
       <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>

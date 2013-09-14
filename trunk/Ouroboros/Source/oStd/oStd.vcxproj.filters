@@ -37,9 +37,6 @@
     <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcat.c">
       <Filter>Source\string\strlcpy</Filter>
     </ClCompile>
-    <ClCompile Include="config.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="format_bytes.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
@@ -174,6 +171,9 @@
     </ClCompile>
     <ClCompile Include="clean_whitespace.cpp">
       <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="dtoull.cpp">
+      <Filter>Source\memory</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
