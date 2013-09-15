@@ -24,20 +24,18 @@
  **************************************************************************/
 #include <oPlatform/oReporting.h>
 #include <oStd/algorithm.h>
-#include <oStd/fixed_vector.h>
-#include <oBasis/oError.h>
 #include <oStd/fixed_string.h>
-#include <oPlatform/oDebugger.h>
+#include <oStd/fixed_vector.h>
+#include <oCore/debugger.h>
+#include <oBasis/oError.h>
 #include <oPlatform/oMsgBox.h>
-#include <oPlatform/oProcess.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSingleton.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/oStandards.h>
+#include <oPlatform/oStream.h>
 #include <oPlatform/Windows/oWinAsString.h>
 #include "SoftLink/oWinDbgHelp.h"
 #include "oCRTLeakTracker.h"
-#include "oFileInternal.h"
 #include "oWinExceptionHandler.h"
 
 namespace oStd {
@@ -53,48 +51,6 @@ const char* as_string(const oStd::assert_type::value& _Type)
 }
 
 } // namespace oStd
-
-static int oWinWriteDumpFile_Helper(MINIDUMP_TYPE _Type, HANDLE _hFile, bool* _pSuccess, EXCEPTION_POINTERS* _pExceptionPointers)
-{
-	_MINIDUMP_EXCEPTION_INFORMATION ExInfo;
-	ExInfo.ThreadId = GetCurrentThreadId();
-	ExInfo.ExceptionPointers = _pExceptionPointers;
-	ExInfo.ClientPointers = TRUE; // true because we're in THIS process, this might need to change if this is called from another process.
-	*_pSuccess = !!oWinDbgHelp::Singleton()->MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), _hFile, _Type, _pExceptionPointers ? &ExInfo : nullptr, nullptr, nullptr);
-	return EXCEPTION_EXECUTE_HANDLER;
-}
-
-static bool oWinWriteDumpFile(MINIDUMP_TYPE _Type, const char* _Path, EXCEPTION_POINTERS* _pExceptionPointers)
-{
-	// Use most-direct APIs for this so there's less chance another crash/assert
-	// can occur.
-	oFileEnsureParentFolderExists(_Path);
-	HANDLE hFile = CreateFileA(_Path, GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-	if (hFile == INVALID_HANDLE_VALUE)
-		return oErrorSetLast(std::errc::invalid_argument, "Failed to open %s for write.", oSAFESTRN(_Path));
-
-	bool success = false; 
-	if (_pExceptionPointers)
-		oWinWriteDumpFile_Helper(_Type, hFile, &success, _pExceptionPointers);
-	else
-	{
-		// If you're here, especially from a dump file, it's because the file was 
-		// dumped outside an exception handler. In order to get stack info, we need
-		// to cause an exception. See Remarks section:
-		// http://msdn.microsoft.com/en-us/library/windows/desktop/ms680360(v=vs.85).aspx
-
-		// So from here, somewhere up the stack should be the line of code that 
-		// triggered execution of this. Happy debugging!
-		const static DWORD FORCE_EXCEPTION_FOR_CALLSTACK_INFO = 0x1337c0de;
-		__try { RaiseException(FORCE_EXCEPTION_FOR_CALLSTACK_INFO, 0, 0, nullptr); }
-		__except(oWinWriteDumpFile_Helper(_Type, hFile, &success, GetExceptionInformation())) {}
-	}
-
-	CloseHandle(hFile);
-	if (!success)
-		return oErrorSetLast(std::errc::io_error, "Failed to write dump file %s", oSAFESTRN(_Path));
-	return success;
-}
 
 void ReportErrorAndExit()
 {
@@ -138,7 +94,7 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 		oStd::sstring DumpStamp = VersionString;
 
 		oStd::ntp_date now;
-		oSystemGetDate(&now);
+		oCore::system::now(&now);
 		oStd::sstring StrNow;
 		oStd::strftime(DumpStamp.c_str() + DumpStamp.length(), DumpStamp.capacity() - DumpStamp.length(), oStd::syslog_local_date_format, now, oStd::date_conversion::to_local);
 		oStd::replace(StrNow, DumpStamp, ":", "_");
@@ -151,13 +107,13 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 		if (!Desc.MiniDumpBase.empty())
 		{
 			oPrintf(DumpPath, "%s%s.dmp", Desc.MiniDumpBase, DumpStamp.c_str());
-			Mini = oWinWriteDumpFile(MiniDumpNormal, DumpPath, _pExceptionPtrs);
+			Mini = oCore::debugger::dump(oStd::path(DumpPath), false, _pExceptionPtrs);
 		}
 
 		if (!Desc.FullDumpBase.empty())
 		{
 			oPrintf(DumpPath, "%s%s.dmp", Desc.FullDumpBase, DumpStamp.c_str());
-			Full = oWinWriteDumpFile(MiniDumpWithFullMemory, DumpPath, _pExceptionPtrs);
+			Full = oCore::debugger::dump(oStd::path(DumpPath), true, _pExceptionPtrs);
 		}
 
 		if(!Desc.PostDumpExecution.empty())
@@ -169,8 +125,7 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 		if(Desc.PromptAfterDump)
 		{
 			oMSGBOX_DESC d;
-			oStd::path_string Name;
-			oModuleGetName(Name);
+			oStd::path Name = oCore::this_module::path();
 			d.Title = Name;
 			d.Type = oMSGBOX_ERR;
 			oMsgBox(d, "%s\n\nThe program will now exit.%s", _pUserErrorMessage, Mini || Full ? "\n\nA .dmp file has been written." : "\n\n.dmp file was not written.");
@@ -210,10 +165,9 @@ oReportingContext::oReportingContext()
 	// Cache the version string now in case we have to dump later (so we don't call complicated module code)
 	{
 		oMODULE_DESC ModuleDesc;
-		oModuleGetDesc(&ModuleDesc);
-
+		oCore::module::info mi = oCore::this_module::get_info();
 		VersionString[0] = 'V';
-		oStd::to_string(&VersionString[1], VersionString.capacity() - 1, ModuleDesc.ProductVersion);
+		oStd::to_string(&VersionString[1], VersionString.capacity() - 1, mi.version);
 		oStrAppendf(VersionString, "D");
 	}
 }
@@ -393,10 +347,9 @@ static oStd::assert_action::value ShowMsgBox(const oStd::assert_context& _Assert
 
 	oStrcpy(cur, std::distance(cur, end), _String);
 
-	char path[_MAX_PATH];
-	oSystemGetPath(path, oSYSPATH_APP_FULL);
+	oStd::path AppPath = oCore::filesystem::app_path(true);
 	char title[1024];
-	oPrintf(title, "%s (%s)", DIALOG_BOX_TITLE, path);
+	oPrintf(title, "%s (%s)", DIALOG_BOX_TITLE, AppPath.c_str());
 
 	oMSGBOX_DESC mb;
 	mb.Type = _Type;
@@ -424,9 +377,9 @@ void PrintCallStackToString(char* _StrDestination, size_t _SizeofStrDestination,
 	size_t offset = 6; // Start offset from where assert occurred, skipping any debug handling code
 	size_t nSymbols = 0;
 	*_StrDestination = 0;
-	unsigned long long address = 0;
+	oCore::debugger::symbol address = 0;
 	bool IsStdBind = false;
-	while (oDebuggerGetCallstack(&address, 1, offset++))
+	while (oCore::debugger::callstack(&address, 1, offset++))
 	{
 		if (nSymbols++ == 0) // if we have a callstack, label it
 		{
@@ -436,7 +389,7 @@ void PrintCallStackToString(char* _StrDestination, size_t _SizeofStrDestination,
 		}
 
 		bool WasStdBind = IsStdBind;
-		res = oDebuggerSymbolSPrintf(&_StrDestination[len], _SizeofStrDestination - len - 1, address, "", &IsStdBind);
+		res = oCore::debugger::format(&_StrDestination[len], _SizeofStrDestination - len - 1, address, "", &IsStdBind);
 		if (res == -1) goto TRUNCATION;
 		len += res;
 
@@ -469,7 +422,7 @@ char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, c
 	if (_Desc.PrefixTimestamp)
 	{
 		oStd::ntp_timestamp now = 0;
-		oSystemGetDate(&now);
+		oCore::system::now(&now);
 		res = (int)oStd::strftime(_StrDestination + len, _SizeofStrDestination - len - 1, oStd::sortable_date_ms_format, now, oStd::date_conversion::to_local);
 		oACCUM_PRINTF(" ");
 		if (res == 0) goto TRUNCATION;
@@ -482,7 +435,7 @@ char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, c
 	if (_Desc.PrefixThreadId)
 	{
 		oStd::mstring exec;
-		oACCUM_PRINTF("%s ", oSystemGetExecutionPath(exec));
+		oACCUM_PRINTF("%s ", oCore::system::exec_path(exec));
 	}
 
 	if (_Desc.PrefixMsgId)
@@ -516,7 +469,7 @@ oStd::assert_action::value oReportingContext::DefaultVPrint(const oStd::assert_c
 		PrintCallStackToString(cur, std::distance(cur, end), true);
 
 	// Always print any message to the debugger output
-	oDebuggerPrint(msg);
+	oCore::debugger::print(msg);
 
 	// And to log file
 	if (_pLogFile)
@@ -564,7 +517,7 @@ static void DumpAndTerminate(const char* _ErrorMessage, const oWinCppException& 
 
 	//if (Mutex.try_lock())
 	{
-		if (!oProcessHasDebuggerAttached())
+		if (!oCore::this_process::has_debugger_attached())
 		{
 			#ifdef _DEBUG
 				oASSERT_TRACE(oStd::assert_type::assertion, oStd::assert_action::abort, "", "%s", _ErrorMessage);

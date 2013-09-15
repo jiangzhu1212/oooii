@@ -141,9 +141,8 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 
 	WORD bitdepth = 0;
 	{
-		oDISPLAY_DESC DDesc;
-		oVERIFY(oDisplayEnum(oWinGetDisplayIndex(_hWnd), &DDesc));
-		bitdepth = static_cast<WORD>(DDesc.Mode.Bitdepth);
+		oCore::display::info di = oCore::display::get_info(oWinGetDisplayId(_hWnd));
+		bitdepth = static_cast<WORD>(di.mode.depth);
 		if (bitdepth == 32) bitdepth = 24;
 	}
 

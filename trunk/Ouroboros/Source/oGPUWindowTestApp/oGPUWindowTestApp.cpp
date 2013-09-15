@@ -24,11 +24,9 @@
  **************************************************************************/
 
 #include <oStd/backoff.h>
-#include <oPlatform/oDebugger.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/oGUIMenu.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oWindow.h>
 #include "resource.h"

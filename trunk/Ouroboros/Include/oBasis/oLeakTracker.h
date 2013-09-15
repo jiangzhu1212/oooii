@@ -31,6 +31,7 @@
 
 #include <oConcurrency/countdown_latch.h>
 #include <oConcurrency/mutex.h>
+#include <oCore/debugger.h>
 #include <oStd/fixed_string.h>
 #include <oBasis/oStdLinearAllocator.h>
 #include <oStd/unordered_map.h>
@@ -47,7 +48,7 @@ public:
 	// allows ignoring a number of entries just before the call location since
 	// typically a higher-level malloc call might have a known number of 
 	// sub-functions it calls. _pSymbols receives the values up to _MaxNumSymbols.
-	typedef oFUNCTION<size_t(unsigned long long* _pSymbols, size_t _MaxNumSymbols, size_t _StartingOffset)> GetCallstackFn;
+	typedef std::function<size_t(oCore::debugger::symbol* _pSymbols, size_t _MaxNumSymbols, size_t _StartingOffset)> GetCallstackFn;
 
 	// Function that behaves like snprintf but converts the specified symbol into
 	// a string fit for the PrintFn below. The function should concatenate the
@@ -56,12 +57,12 @@ public:
 	// symbols and fill the specified bool with true if it matches or false if it
 	// doesn't and the function should noop if the value is true going in, that
 	// way long callstacks of std::bind internals can be shortened.
-	typedef oFUNCTION<int(char* _Buffer, size_t _SizeofBuffer, unsigned long long _Symbol, const char* _PrefixString, bool* _pIsStdBind)> GetCallstackSymbolStringFn;
+	typedef std::function<int(char* _Buffer, size_t _SizeofBuffer, oCore::debugger::symbol _Symbol, const char* _PrefixString, bool* _pIsStdBind)> GetCallstackSymbolStringFn;
 
 	// Print a fixed string to some underlying destination. This makes no 
 	// assumptions about the string itself, and should add nothing to the string,
 	// such as an automatic newline or the like.
-	typedef oFUNCTION<void(const char* _String)> PrintFn;
+	typedef std::function<void(const char* _String)> PrintFn;
 
 	struct DESC
 	{
@@ -81,7 +82,7 @@ public:
 	{
 		uintptr_t AllocationID;
 		size_t Size;
-		unsigned long long StackTrace[STACK_TRACE_DEPTH];
+		oCore::debugger::symbol StackTrace[STACK_TRACE_DEPTH];
 		unsigned int NumStackEntries;
 		unsigned int Line;
 		unsigned int Context;

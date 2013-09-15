@@ -28,19 +28,14 @@
 #ifndef oPlatform_all_h
 #define oPlatform_all_h
 #include <oPlatform/oConsole.h>
-#include <oPlatform/oCPU.h>
-#include <oPlatform/oDebugger.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oInterprocessEvent.h>
-#include <oPlatform/oFile.h>
 #include <oPlatform/oGUIMenu.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oMirroredArena.h>
 #include <oPlatform/oModule.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oP4.h>
-#include <oPlatform/oPageAllocator.h>
-#include <oPlatform/oProcess.h>
 #include <oPlatform/oProcessStatsMonitor.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oProgressBar.h>
@@ -49,7 +44,6 @@
 #include <oPlatform/oSocket.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/oVersionUpdate.h>
 #include <oPlatform/oWindow.h>

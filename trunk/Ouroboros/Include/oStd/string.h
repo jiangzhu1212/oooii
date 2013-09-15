@@ -304,6 +304,45 @@ template<size_t size> char* clean_path(char (&_StrDestination)[size], const char
 char* relativize_path(char* _StrDestination, size_t _SizeofStrDestination, const char* _BasePath, const char* _FullPath);
 template<size_t size> char* relativize_path(char (&_StrDestination)[size], const char* _BasePath, const char* _FullPath) { return relativize_path(_StrDestination, size, _BasePath, _FullPath); }
 
+// Fills pointers into the specified path where different components start. If
+// the component value does not exists, the pointer is filled with nullptr. This 
+// returns the length of _Path.
+size_t split_path(const char* _Path
+	, bool _Posix
+	, const char** _ppRoot
+	, const char** _ppPath
+	, const char** _ppParentPathEnd
+	, const char** _ppBasename
+	, const char** _ppExt);
+
+size_t wsplit_path(const wchar_t* _Path
+	, bool _Posix
+	, const wchar_t** _ppRoot
+	, const wchar_t** _ppPath
+	, const wchar_t** _ppParentPathEnd
+	, const wchar_t** _ppBasename
+	, const wchar_t** _ppExt);
+
+template<typename charT>
+size_t tsplit_path(const charT* _Path
+	, bool _Posix
+	, const charT** _ppRoot
+	, const charT** _ppPath
+	, const charT** _ppParentPathEnd
+	, const charT** _ppBasename
+	, const charT** _ppExt)
+{ return split_path(_Path, _Posix, _ppRoot, _ppPath, _ppParentPathEnd, _ppBasename, _ppExt); }
+
+template<>
+inline size_t tsplit_path(const wchar_t* _Path
+	, bool _Posix
+	, const wchar_t** _ppRoot
+	, const wchar_t** _ppPath
+	, const wchar_t** _ppParentPathEnd
+	, const wchar_t** _ppBasename
+	, const wchar_t** _ppExt)
+{ return wsplit_path(_Path, _Posix, _ppRoot, _ppPath, _ppParentPathEnd, _ppBasename, _ppExt); }
+
 } // namespace oStd
 
 // The macros below are an inner-loop optimization with 5+% performance 

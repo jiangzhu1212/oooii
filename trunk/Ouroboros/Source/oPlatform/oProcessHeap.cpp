@@ -26,9 +26,7 @@
 #include <oStd/memory.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oRefCount.h>
-#include <oPlatform/oDebugger.h>
 #include <oPlatform/oModule.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/Windows/oWindows.h>
 #include <algorithm>
 #include <map>
@@ -107,7 +105,7 @@ protected:
 		char DebugName[64];
 		bool IsThreadLocal;
 		bool IsTracked;
-		unsigned long long StackTrace[STACK_TRACE_DEPTH];
+		oCore::debugger::symbol StackTrace[STACK_TRACE_DEPTH];
 		size_t NumStackEntries;
 		SRWLOCK EntryLock;
 	};
@@ -158,13 +156,11 @@ public:
 		// initialized and a call is made, so force this to stay around as long as 
 		// the idea of the process is around.
 		oWinDbgHelp::Singleton()->Reference();
-		oStd::sstring moduleName;
-		oVERIFY(oModuleGetName(moduleName, false, oModuleGetCurrent()));
-		oStd::path modulePath(moduleName);
+		oStd::path modulePath = oCore::this_module::path();
 		char buf[oKB(1)];
 		oStd::mstring exec;
-		oPrintf(buf, "%s(%d): {%s} %s ProcessHeap initialized at 0x%p\n", __FILE__, __LINE__, modulePath.c_str(), oSystemGetExecutionPath(exec), this);
-		oThreadsafeOutputDebugStringA(buf);
+		oPrintf(buf, "%s(%d): {%s} %s ProcessHeap initialized at 0x%p\n", __FILE__, __LINE__, modulePath.c_str(), oCore::system::exec_path(exec), this);
+		OutputDebugStringA(buf);
 	}
 
 	int Reference() threadsafe override
@@ -222,7 +218,7 @@ static void oProcessHeapOutputLeakReportFooter(size_t _NumLeaks)
 {
 	char buf[256];
 	oStd::mstring exec;
-	oPrintf(buf, "========== Process Heap Leak Report: %u Leaks %s ==========\n", _NumLeaks, oSystemGetExecutionPath(exec));
+	oPrintf(buf, "========== Process Heap Leak Report: %u Leaks %s ==========\n", _NumLeaks, oCore::system::exec_path(exec));
 	OutputDebugStringA(buf);
 }
 
@@ -249,7 +245,7 @@ bool oProcessHeapContextImpl::IsTBBEntry(container_t::const_iterator it)
 	for (size_t i = 0; i < it->second.NumStackEntries; i++)
 	{
 		bool WasStdBind = IsStdBind;
-		oDebuggerSymbolSPrintf(buf, it->second.StackTrace[i], "  ", &IsStdBind);
+		oCore::debugger::format(buf, it->second.StackTrace[i], "  ", &IsStdBind);
 		if (strstr(buf, "oStd::async") || strstr(buf, "tbbD!tbb::"))
 			return true;
 		if (!WasStdBind && IsStdBind) // skip a number of the internal wrappers
@@ -322,15 +318,14 @@ void oProcessHeapContextImpl::ReportLeaks()
 			nIgnoredLeaks++;
 	}
 
-	oStd::sstring moduleName;
-	oVERIFY(oModuleGetName(moduleName, false, oModuleGetCurrent()));
+	oStd::path moduleName = oCore::this_module::path();
 	
 	char buf[oKB(1)];
 	
 	if (nLeaks)
 	{
 		oStd::mstring exec;
-		oPrintf(buf, "========== Process Heap Leak Report %s (Module %s) ==========\n", oSystemGetExecutionPath(exec), moduleName.c_str());
+		oPrintf(buf, "========== Process Heap Leak Report %s (Module %s) ==========\n", oCore::system::exec_path(exec), moduleName.c_str());
 		OutputDebugStringA(buf);
 		for (container_t::const_iterator it = pSharedPointers->begin(); it != pSharedPointers->end(); ++it)
 		{
@@ -348,7 +343,7 @@ void oProcessHeapContextImpl::ReportLeaks()
 				for (size_t i = 0; i < e.NumStackEntries; i++)
 				{
 					bool WasStdBind = IsStdBind;
-					oDebuggerSymbolSPrintf(buf, e.StackTrace[i], "  ", &IsStdBind);
+					oCore::debugger::format(buf, e.StackTrace[i], "  ", &IsStdBind);
 					if (!WasStdBind && IsStdBind) // skip a number of the internal wrappers
 						i += 5;
 					OutputDebugStringA(buf); // use non-threadsafe version because that could alloc the mutex
@@ -417,7 +412,7 @@ bool oProcessHeapContextImpl::FindOrAllocate(const oStd::guid& _GUID, bool _IsTh
 		static bool captureCallstack = true;
 		if (captureCallstack)
 		{
-			e.NumStackEntries = oDebuggerGetCallstack(e.StackTrace, 3);
+			e.NumStackEntries = oCore::debugger::callstack(e.StackTrace, 3);
 		}
 
 		Reference();

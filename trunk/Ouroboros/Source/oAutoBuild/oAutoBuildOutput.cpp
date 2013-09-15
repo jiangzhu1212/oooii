@@ -153,22 +153,20 @@ static void FormatUnitTestResults(const oUnitTestResults& results, std::string& 
 		_LogHTML.append("</table></p>");
 
 		bool FoundAFailedImageCompare = false;
-		oFileEnumFilesRecursively(results.FailedImagePath.c_str(),
-			[&](const char* _pFullPath, const oSTREAM_DESC& _StreamDesc)->bool
+		oCore::filesystem::enumerate(oStd::path(results.FailedImagePath), 
+			[&](const oStd::path& _FullPath, const oCore::filesystem::file_status& _Status, unsigned long long _Size)->bool
 		{
-			oStd::path P(_pFullPath);
-			if (P.has_extension(".png"))
+			if (_FullPath.has_extension(".png"))
 			{
-				oStd::path_string filebase;
-				oGetFilebase(filebase, _pFullPath);
+				oStd::path_string filebase = _FullPath.basename();
 
 				// Skip _diff and _golden images, we'll add them in the table
 				// paired with the outputs
-				if (filebase.size() > 5 && 0 == oStrcmp(&filebase[filebase.size()-5], "_diff")) return true;
-				if (filebase.size() > 7 && 0 == oStrcmp(&filebase[filebase.size()-7], "_golden")) return true;
+				if (filebase.size() > 5 && 0 == strcmp(&filebase[filebase.size()-5], "_diff")) return true;
+				if (filebase.size() > 7 && 0 == strcmp(&filebase[filebase.size()-7], "_golden")) return true;
 
 				oStd::path_string ImagePath;
-				oMakeRelativePath(ImagePath, _pFullPath, results.FailedImagePath.c_str());
+				oMakeRelativePath(ImagePath, _FullPath, results.FailedImagePath.c_str());
 				if (!FoundAFailedImageCompare)
 				{
 					_LogHTML.append("<p>Here are the failed images:</p><table border=\"1\" cellpadding=\"2\" style=\"width:90%;\"><tr><th style=\"width:30%;\">TEST OUPUT</th><th style=\"width:30%;\">DIFF</th><th style=\"width:30%;\">GOLDEN IMAGE</th></tr>");
@@ -339,7 +337,7 @@ void oAutoBuildOutputResults(const oAutoBuildEmailSettings& _EmailSettings, int 
 	oStd::uri_string HTMLFilename = _Results.OutputFolder;
 	oEnsureSeparator(HTMLFilename);
 	oStrAppendf(HTMLFilename, "index.html");
-	oFileSave(HTMLFilename, &LogHTML[0], LogHTML.size(), true);
+	oCore::filesystem::save(oStd::path(HTMLFilename), &LogHTML[0], LogHTML.size(), oCore::filesystem::save_option::text_write);
 }
 
 void oEmailAdminAndStop(const oAutoBuildEmailSettings& _EmailSettings, const char* _pMessage, int _CL, bool _HTML)

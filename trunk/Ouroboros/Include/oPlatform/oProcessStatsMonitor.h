@@ -30,10 +30,10 @@
 
 #include <oBasis/oMath.h>
 #include <oStd/backoff.h>
+#include <oStd/mutex.h>
 #include <oStd/thread.h>
+#include <oCore/process.h>
 #include <oConcurrency/oConcurrency.h>
-#include <oConcurrency/mutex.h>
-#include <oPlatform/oProcess.h>
 
 struct oPROCESS_CPU_STATS
 {
@@ -45,8 +45,8 @@ struct oPROCESS_CPU_STATS
 class oProcessStatsMonitor
 {
 public:
-	inline oProcessStatsMonitor(unsigned int _ProcessID = oInvalid, oStd::chrono::milliseconds _PollRate = oStd::chrono::milliseconds(1000))
-		: PID(_ProcessID == oInvalid ? oProcessGetCurrentID() : _ProcessID)
+	inline oProcessStatsMonitor(oCore::process::id _ProcessID = oCore::process::id(), oStd::chrono::milliseconds _PollRate = oStd::chrono::milliseconds(1000))
+		: PID(_ProcessID == oCore::process::id() ? oCore::this_process::get_id() : _ProcessID)
 		, Done(true)
 		, PollRate(_PollRate)
 	{
@@ -64,7 +64,7 @@ public:
 
 	inline void GetStats(oPROCESS_CPU_STATS* _pStats) const
 	{
-		oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(StatsMutex);
+		oStd::shared_lock<oStd::shared_mutex> lock(const_cast<oStd::shared_mutex&>(StatsMutex));
 		*_pStats = Stats;
 	}
 
@@ -84,14 +84,14 @@ private:
 		oConcurrency::begin_thread("oPrcessStatsMonitor");
 		Done = false;
 
-		oProcessCalculateCPUUsage(PID, &PreviousSystemTime, &PreviousProcessTime);
+		oCore::process::cpu_usage(PID, &PreviousSystemTime, &PreviousProcessTime);
 		do
 		{
 			oStd::this_thread::sleep_for(PollRate);
-			double usage = oProcessCalculateCPUUsage(PID, &PreviousSystemTime, &PreviousProcessTime);
+			double usage = oCore::process::cpu_usage(PID, &PreviousSystemTime, &PreviousProcessTime);
 			float usagef = static_cast<float>(usage);
 			float avg = static_cast<float>(MA.Calc(usage));
-			oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(StatsMutex);
+			oStd::lock_guard<oStd::shared_mutex> lock(StatsMutex);
 			Stats.AverageUsage = avg;
 			Stats.LowUsage = __min(Stats.LowUsage, usagef);
 			Stats.HighUsage = __max(Stats.HighUsage, usagef);
@@ -107,13 +107,13 @@ private:
 		Thread.join();
 	}
 
-	oConcurrency::shared_mutex StatsMutex;
+	oStd::shared_mutex StatsMutex;
 	oPROCESS_CPU_STATS Stats;
 	unsigned long long PreviousSystemTime;
 	unsigned long long PreviousProcessTime;
 	oMovingAverage<double> MA;
 	oStd::chrono::milliseconds PollRate;
-	unsigned int PID;
+	oCore::process::id PID;
 	bool Done;
 	oStd::thread Thread;
 };

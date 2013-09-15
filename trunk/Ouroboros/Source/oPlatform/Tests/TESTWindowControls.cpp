@@ -25,7 +25,6 @@
 #include <oPlatform/oTest.h>
 #include <oPlatform/oGUIMenu.h>
 #include <oPlatform/oMsgBox.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/oWindow.h>
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/Windows/oWinDialog.h>
@@ -508,7 +507,7 @@ struct PLATFORM_WindowControls : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus)
 	{
-		if (oSystemIsRemote())
+		if (oCore::system::is_remote_session())
 		{
 			oPrintf(_StrStatus, _SizeofStrStatus, "Detected remote session: differing text anti-aliasing will cause bad image compares");
 			return SKIPPED;

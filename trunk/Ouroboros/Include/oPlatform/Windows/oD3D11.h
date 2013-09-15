@@ -262,15 +262,15 @@ bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, D3DX11_IMAGE_FILE_FOR
 // that result in a tool. Remember, only DDS really supports all surface formats.
 bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer);
 bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer);
-bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path);
-bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path);
+bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, const oStd::path& _Path);
+bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, const oStd::path& _Path);
 
 // Creates a new texture by parsing _pBuffer as a D3DX11-supported file format
 // Specify oSURFACE_UNKNOWN and oDEFAULT for x, y or ArraySize in the _Desc to 
 // use values from the specified file. If mips is specified as HAS_MIPs, then 
 // mips will be allocated, but not filled in. If AUTO_MIPS is specified, then 
 // mips will be generated.
-bool oD3D11Load(ID3D11Device* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const char* _Path, const char* _DebugName, ID3D11Resource** _ppTexture);
+bool oD3D11Load(ID3D11Device* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const oStd::path& _Path, const char* _DebugName, ID3D11Resource** _ppTexture);
 bool oD3D11Load(ID3D11Device* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, ID3D11Resource** _ppTexture);
 
 // Uses GPU acceleration for BC6H and BC7 conversions if the source is in the 

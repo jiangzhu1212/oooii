@@ -25,8 +25,6 @@
 
 #include <oPlatform/oModule.h>
 #include <oPlatform/oMsgBox.h>
-#include <oPlatform/oProcess.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/oVersionUpdate.h>
 #include <oPlatform/Windows/oWindows.h>
 
@@ -104,10 +102,9 @@ int oLauncherMain(int argc, const char* argv[])
 {
 	if (!oLauncherMain1(argc, argv))
 	{
-		oStd::mstring ModuleName;
+		oStd::path ModuleName = oCore::this_module::path();
 		oMSGBOX_DESC d;
-		oModuleGetName(ModuleName);
-		d.Title = oGetFilebase(ModuleName);
+		d.Title = ModuleName.filename();
 		d.Type = oMSGBOX_ERR;
 		oMsgBox(d, "%s", oErrorGetLastString());
 		return oErrorGetLast();

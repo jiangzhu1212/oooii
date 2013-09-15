@@ -175,6 +175,15 @@
     <ClCompile Include="string\stringize.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
+    <ClCompile Include="vendor.cpp">
+      <Filter>Source\types</Filter>
+    </ClCompile>
+    <ClCompile Include="string\wsplit_path.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\split_path.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -359,6 +368,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oStd\memory.h">
       <Filter>oStd\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\vendor.h">
+      <Filter>oStd\types</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

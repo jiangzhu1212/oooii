@@ -94,8 +94,10 @@ public:
 
 	const basic_uri& operator=(const path& _Path)
 	{
-		path_string p(traits::file_scheme_prefix_str());
-		if (!_Path.has_root_name())
+		string_type p(traits::file_scheme_prefix_str());
+		const char_type *rootname = nullptr, *path = nullptr, *parentend = nullptr, *base = nullptr, *ext = nullptr;
+		tsplit_path<char_type>(p, traits::path_traits_type::posix, &rootname, &path, &parentend, &base, &ext);
+		if (!rootname)
 			p += traits::sep_str();
 		p += (_Path.c_str());
 		return operator=(p);

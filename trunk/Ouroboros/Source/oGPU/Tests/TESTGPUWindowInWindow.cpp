@@ -23,9 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/oWindow.h>
 #include <oPlatform/Windows/oWinWindowing.h>
+#include <oCore/system.h>
 #include <oGPU/oGPU.h>
 
 static const bool kInteractiveMode = false;
@@ -177,14 +177,14 @@ struct GPU_WindowInWindow : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus)
 	{
-		if (oSystemIsRemote())
+		if (oCore::system::is_remote_session())
 		{
 			oPrintf(_StrStatus, _SizeofStrStatus, "Detected remote session: differing text anti-aliasing will cause bad image compares");
 			return SKIPPED;
 		}
 
 		// Turn display power on, otherwise the test will fail
-		oDisplaySetPowerOn(true);
+		oCore::display::set_power_on();
 
 		bool success = false;
 		WindowInWindow test(&success);

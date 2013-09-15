@@ -155,7 +155,7 @@ bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const
 	oVERIFY(_pDevice->QueryInterface(&D3DDevice));
 
 	oStd::intrusive_ptr<ID3D11Texture2D> D3DTexture;
-	if (!oD3D11Load(D3DDevice, _Desc, URIParts.Path, _DebugName, (ID3D11Resource**)&D3DTexture))
+	if (!oD3D11Load(D3DDevice, _Desc, oStd::path(URIParts.Path), _DebugName, (ID3D11Resource**)&D3DTexture))
 		return false;
 
 	bool success = false;

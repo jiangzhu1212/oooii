@@ -104,26 +104,23 @@ bool Main(int argc, const char* argv[])
 	if (!opts.InputPath)
 		return oErrorSetLast(std::errc::invalid_argument, "no input file specified.");
 
-	oMODULE_DESC md;
-	if (!oModuleGetDesc(opts.InputPath, &md))
-		return oErrorSetLast(std::errc::no_such_file_or_directory, "failed to get information for file \"%s\"", opts.InputPath);
-
+	oCore::module::info mi = oCore::module::get_info(oStd::path(opts.InputPath));
 	oStd::sstring FBuf, PBuf;
-	oVERIFY(oStd::to_string(FBuf, md.FileVersion));
-	oVERIFY(oStd::to_string(PBuf, md.ProductVersion));
+	oVERIFY(oStd::to_string(FBuf, mi.version));
+	oVERIFY(oStd::to_string(PBuf, mi.version));
 
 	if (opts.PrintFileDescription)
-		printf("%s\n", md.Description.c_str());
+		printf("%s\n", mi.description.c_str());
 	if (opts.PrintType)
-		printf("%s\n", oStd::as_string(md.Type));
+		printf("%s\n", oStd::as_string(mi.type));
 	if (opts.PrintFileVersion)
 		printf("%s\n", FBuf.c_str());
 	if (opts.PrintProductName)
-		printf("%s\n", md.ProductName.c_str());
+		printf("%s\n", mi.product_name.c_str());
 	if (opts.PrintProductVersion)
 		printf("%s\n", PBuf.c_str());
 	if (opts.PrintCopyright)
-		printf("%s\n", md.Copyright.c_str());
+		printf("%s\n", mi.copyright.c_str());
 
 	return true;
 }

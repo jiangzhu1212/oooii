@@ -87,7 +87,7 @@ struct oWinWindow : oWindow
 	
 	// Basic API
 	oGUI_WINDOW GetNativeHandle() const threadsafe override;
-	int GetDisplayIndex() const override;
+	oCore::display::id GetDisplayId() const override;
 	bool IsWindowThread() const threadsafe override;
 
 	// Client Position/Size API
@@ -348,10 +348,11 @@ oGUI_WINDOW oWinWindow::GetNativeHandle() const threadsafe
 	return (oGUI_WINDOW)hWnd;
 }
 
-int oWinWindow::GetDisplayIndex() const
+oCore::display::id oWinWindow::GetDisplayId() const
 {
 	oGUI_WINDOW_SHAPE_DESC s = GetShape();
-	return oDisplayFindIndex(s.ClientPosition + s.ClientSize / 2);
+	int2 center = s.ClientPosition + s.ClientSize / 2;
+	return oCore::display::find(center.x, center.y);
 }
 
 bool oWinWindow::IsWindowThread() const threadsafe

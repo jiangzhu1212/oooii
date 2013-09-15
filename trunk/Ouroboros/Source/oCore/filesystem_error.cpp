@@ -22,20 +22,28 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "oWinPSAPI.h"
-#include <oStd/assert.h>
+#include <oCore/filesystem_error.h>
+namespace oCore {
+	namespace filesystem {
+		namespace detail {
 
-static const char* sExportedAPIs[] = 
+			class filesystem_category_impl : public std::error_category
+			{
+			public:
+				const char* name() const override { return "filesystem"; }
+				std::string message(value_type _ErrCode) const override
+				{
+					return std::generic_category().message(_ErrCode);
+				}
+			};
+
+		} // namespace detail
+
+const std::error_category& filesystem_category()
 {
-	"EnumProcesses",
-	"EnumProcessModules",
-	"GetModuleBaseNameA",
-	"GetProcessMemoryInfo",
-	"GetModuleInformation",
-	"GetModuleFileNameExA",
-};
+	static detail::filesystem_category_impl sSingleton;
+	return sSingleton;
+}
 
-oDEFINE_DLL_SINGLETON_CTOR(oWinPSAPI, "psapi.dll", EnumProcesses)
-
-// {9ADA18F8-492F-48DA-B6D5-A6CCC0749ED4}
-const oGUID oWinPSAPI::GUID = { 0x9ada18f8, 0x492f, 0x48da, { 0xb6, 0xd5, 0xa6, 0xcc, 0xc0, 0x74, 0x9e, 0xd4 } };
+	} // namespace filesystem
+} // namespace oCore

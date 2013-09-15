@@ -23,8 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oPlatform/oFile.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/oWindow.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinControlSet.h>
@@ -316,7 +314,7 @@ bool oSystemProperties::Reload(HWND _hParent, const int2& _ClientSize)
 	{
 		oStd::mstring Hostname;
 		if (kInteractiveMode)
-			oSystemGetHostname(Hostname);
+			oCore::system::host_name(Hostname);
 		else
 			Hostname = "My local hostname";
 		oWinControlSetText(ControlSet[ID_COMPUTER_NAME_VALUE], Hostname);
@@ -407,7 +405,7 @@ struct PLATFORM_WindowSysDialog : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus)
 	{
-		if (oSystemIsRemote())
+		if (oCore::system::is_remote_session())
 		{
 			oPrintf(_StrStatus, _SizeofStrStatus, "Detected remote session: differing text anti-aliasing will cause bad image compares");
 			return SKIPPED;

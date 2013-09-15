@@ -28,7 +28,6 @@
 #include <oPlatform/oInterprocessEvent.h>
 #include <oPlatform/oSocket.h>
 #include <oPlatform/oTest.h>
-#include <oPlatform/oProcess.h>
 
 unsigned short SERVER_PORT = 1234;
 unsigned short SENDER_PORT = 1234;
@@ -156,9 +155,9 @@ struct PLATFORM_oSocketBlocking : public oTest
 		{
 			int exitcode = 0;
 			char msg[512];
-			oStd::intrusive_ptr<threadsafe oProcess> Server;
+			std::shared_ptr<oCore::process> Server;
 			oTESTB(oSpecialTest::CreateProcess("PLATFORM_oSocketBlockingServer", &Server), "");
-			oTESTB(oSpecialTest::Start(Server, msg, oCOUNTOF(msg), &exitcode), "%s", msg);
+			oTESTB(oSpecialTest::Start(Server.get(), msg, oCOUNTOF(msg), &exitcode), "%s", msg);
 		}
 
 		oStd::intrusive_ptr<threadsafe oSocket> Client;

@@ -59,6 +59,8 @@ template<> struct base_path_traits<char, false>
 	static bool is_native_sep(char_type c) { return c == '\\'; }
 	static bool is_unc(const char_type* p) { return p && is_sep(p[0]) && is_sep(p[1]) && !is_sep(p[2]); }
 	static bool has_vol(const char_type* p) { return p && p[0] && p[1] == ':';  }
+	static char_type generic_sep_chr() { return '/'; }
+	static char_type native_sep_chr() { return '\\'; }
 	static char_type* generic_sep_str() { return "/"; }
 	static char_type* native_sep_str() { return "\\"; }
 	static char_type* dot_str() { return "."; }
@@ -75,6 +77,8 @@ template<> struct base_path_traits<char, true>
 	static bool is_native_sep(char_type c) { return c == '/'; }
 	static bool is_unc(const char_type* p) { return p && is_sep(p[0]) && is_sep(p[1]) && !is_sep(p[2]); }
 	static bool has_vol(const char_type* p) { return false;  }
+	static char_type generic_sep_chr() { return '/'; }
+	static char_type native_sep_chr() { return '/'; }
 	static char_type* generic_sep_str() { return "/"; }
 	static char_type* native_sep_str() { return "/"; }
 	static char_type* dot_str() { return "."; }
@@ -91,6 +95,8 @@ template<> struct base_path_traits<wchar_t, false>
 	static bool is_native_sep(char_type c) { return c == L'\\'; }
 	static bool is_unc(const char_type* p) { return p && is_sep(p[0]) && is_sep(p[1]) && !is_sep(p[2]); }
 	static bool has_vol(const char_type* p) { return p && p[0] && p[1] == L':';  }
+	static char_type generic_sep_chr() { return L'/'; }
+	static char_type native_sep_chr() { return L'/'; }
 	static char_type* generic_sep_str() { return L"/"; }
 	static char_type* native_sep_str() { return L"\\"; }
 	static char_type* dot_str() { return L"."; }
@@ -107,6 +113,8 @@ template<> struct base_path_traits<wchar_t, true>
 	static bool is_native_sep(char_type c) { return c == L'/'; }
 	static bool is_unc(const char_type* p) { return p && is_sep(p[0]) && is_sep(p[1]) && !is_sep(p[2]); }
 	static bool has_vol(const char_type* p) { return false;  }
+	static char_type generic_sep_chr() { return L'/'; }
+	static char_type native_sep_chr() { return L'/'; }
 	static char_type* generic_sep_str() { return L"/"; }
 	static char_type* native_sep_str() { return L"/"; }
 	static char_type* dot_str() { return L"."; }

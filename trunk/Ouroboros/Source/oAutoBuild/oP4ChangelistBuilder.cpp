@@ -28,6 +28,7 @@
 #include <oConcurrency/mutex.h>
 #include <oBasis/oINISerialize.h>
 #include <oStd/future.h>
+#include <oCore/system.h>
 
 static const char* oAUTO_BUILD_ROOT_PATH = "//Root/";
 
@@ -59,24 +60,52 @@ bool oP4CleanSync(int _ChangeList, const char* _SyncPath, const char* _CleanPath
 	return oP4Sync(_ChangeList, _SyncPath, _CleanPath != nullptr);
 }
 
+static std::regex EncodedSearch("(%(.+?)%)");
+
+char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _SizeofStrDestination, const char* _RawString)
+{
+	oStd::path_string Current = _RawString;
+
+	const std::cregex_token_iterator end;
+	int arr[] = {1,2}; 
+	bool NoTranslations = true;
+	for ( std::cregex_token_iterator VecTok(_RawString, _RawString + oStrlen(_RawString), EncodedSearch, arr); VecTok != end; ++VecTok )
+	{
+		auto Replace = VecTok->str();
+		++VecTok;
+		auto EnvVariable = VecTok->str();
+		oStd::path_string TranslatedVariable;
+		oCore::system::getenv(TranslatedVariable, EnvVariable.c_str());
+		oStd::replace(_StrDestination, _SizeofStrDestination, Current, Replace.c_str(), TranslatedVariable.c_str());
+		Current = _StrDestination;
+		NoTranslations = false;
+	}
+	if( NoTranslations )
+		oStrcpy(_StrDestination, _SizeofStrDestination, Current);
+
+	return _StrDestination;
+}
+template<size_t size> char* oSystemTranslateEnvironmentVariables(char (&_Value)[size], const char* _Name) { return oSystemTranslateEnvironmentVariables(_Value, size, _Name); }
+template<size_t capacity> char* oSystemTranslateEnvironmentVariables(oStd::fixed_string<char, capacity>& _Value, const char* _Name) { return oSystemTranslateEnvironmentVariables(_Value, _Value.capacity(), _Name); }
+
 static const int NUM_BUILDS_TO_SERVE = 10;
 
 // Helper class that terminates all child processes of this process.
 // Assumes a choke point where both the main process and a single
 // worker thread are not making any system calls
-class oChildProcesTerminator
+class oChildProcessTerminator
 {
 public:
-	oChildProcesTerminator()
+	oChildProcessTerminator()
 	{
 		AssertIsMain();
-		ProcessID = oProcessGetCurrentID();
+		ProcessID = oCore::this_process::get_id();
 		Mutex.lock();
 	}
 	void Terminate()
 	{
 		oConcurrency::lock_guard<oConcurrency::mutex> Lock(Mutex);
-		oProcessTerminateChildren(ProcessID, 0, true);
+		oCore::process::terminate_children(ProcessID, 0, true);
 	}
 
 	void MainThreadYield(uint _YieldMS)
@@ -92,7 +121,7 @@ public:
 	}
 private:
 	oConcurrency::mutex Mutex;
-	uint ProcessID;
+	oCore::process::id ProcessID;
 
 	void AssertIsMain()
 	{
@@ -236,7 +265,7 @@ private:
 	void BuildNextBuild();
 
 	oRefCount Refcount;
-	oChildProcesTerminator Terminator;
+	oChildProcessTerminator Terminator;
 	oConcurrency::event CancelEvent;
 	oConcurrency::shared_mutex Mutex;
 	int ServerPort;
@@ -283,17 +312,17 @@ bool oChangelistManagerCreate(const oStd::ini& _INI, const char* _LogRoot, int _
 
 void oP4ChangelistBuilderImpl::ScanBuildLogsFolder()
 {
-	oStd::path_string FileWildCard;
-	oPrintf(FileWildCard, "%s*", LogRoot);
+	oStd::path FileWildCard(LogRoot);
+	FileWildCard /= "*";
 
 	std::vector<oStd::sstring> SpecialBuildPaths;
 	std::vector<oStd::sstring> SuccesfulBuildPaths;
-	oFileEnum(FileWildCard,
-		[&](const char* _pFullPath, const oSTREAM_DESC& _Desc)->bool
+	oCore::filesystem::enumerate(FileWildCard, 
+	[&](const oStd::path& _FullPath, const oCore::filesystem::file_status& _Status, unsigned long long _Size)->bool
 	{
 		oStd::path_string PossibleBuild;
-		oPrintf(PossibleBuild, "%s/index.html", _pFullPath);
-		if(oFileExists(PossibleBuild))
+		oPrintf(PossibleBuild, "%s/index.html", _FullPath.c_str());
+		if(oCore::filesystem::exists(oStd::path(PossibleBuild)))
 		{
 			char* pFileName = PossibleBuild.c_str() + oStrFindFirstDiff(FileWildCard, PossibleBuild);
 
@@ -444,8 +473,8 @@ void oP4ChangelistBuilderImpl::TryAddingChangelist(int _Changelist, bool _IsDail
 	if (_IsDaily)
 	{
 		oStd::date CurrentDate;
-		oSystemGetDate(&CurrentDate);
-		oSystemDateToLocal(CurrentDate, &CurrentDate);
+		oCore::system::now(&CurrentDate);
+		CurrentDate = oCore::system::to_local(CurrentDate);
 
 		oStd::sstring DateStr;
 		oStd::strftime(DateStr, "%Y%m%d", CurrentDate);
@@ -476,11 +505,11 @@ void oP4ChangelistBuilderImpl::TryNextBuild(int _DailyBuildHour)
 
 	// We only can run the daily build if we're not running a remote session as 
 	// this will do more extensive testing
-	if(!oSystemIsRemote())
+	if(!oCore::system::is_remote_session())
 	{
 		oStd::date CurrentDate;
-		oSystemGetDate(&CurrentDate);
-		oSystemDateToLocal(CurrentDate, &CurrentDate);
+		oCore::system::now(&CurrentDate);
+		CurrentDate = oCore::system::to_local(CurrentDate);
 
 		if (_DailyBuildHour == CurrentDate.hour && !WasChangelistAlreadyAdded(oInvalid, true))
 		{
@@ -579,13 +608,9 @@ void oP4ChangelistBuilderImpl::BuildNextBuild()
 		oEmailAdminAndStop(EmailSettings, Error, CurrentBuild->CL, false);
 	}
 
-	oStd::path_string Path;
-	oStd::clean_path(Path, LogRoot);
-	oEnsureSeparator(Path);
-	oStrAppendf(Path, results.BuildName.c_str());
-	oEnsureSeparator(Path);
-	oFileEnsureParentFolderExists(Path);
-
+	oStd::path Path(LogRoot);
+	Path /= results.BuildName;
+	oCore::filesystem::create_directories(Path.parent_path());
 	results.OutputFolder = Path;
 
 	if (CancelEvent.is_set())

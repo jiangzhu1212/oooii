@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oPlatform/oWebAppWindow.h>
 #include <oBasis/oLockThis.h>
-#include <oPlatform/oProcess.h>
 #include <oPlatform/Windows/oWinWindowing.h>
 
 enum OWEB_APP_WINDOW_CONTROLS
@@ -88,7 +87,7 @@ public:
 
 	// oWindow forwarding
 	oGUI_WINDOW GetNativeHandle() const threadsafe override { return Window->GetNativeHandle(); }
-	int GetDisplayIndex() const override { return Window->GetDisplayIndex(); }
+	oCore::display::id GetDisplayId() const override { return Window->GetDisplayId(); }
 	bool IsWindowThread() const threadsafe override { return Window->IsWindowThread(); }
 	void SetShape(const oGUI_WINDOW_SHAPE_DESC& _Shape) threadsafe override { Window->SetShape(_Shape); }
 	oGUI_WINDOW_SHAPE_DESC GetShape() const override { return Window->GetShape(); }
@@ -253,7 +252,7 @@ void oWebAppWindowImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 		{
 			if (_Event.AsTimer().Context == (uintptr_t)&CPUUsageStats)
 			{
-				double usage = oProcessCalculateCPUUsage(oProcessGetCurrentID(), &CPUUsageStats.previousSystemTime, &CPUUsageStats.previousProcessTime);
+				double usage = oCore::this_process::cpu_usage(&CPUUsageStats.previousSystemTime, &CPUUsageStats.previousProcessTime);
 				oStd::sstring usageString;
 				oPrintf(usageString, "CPU Utilization: %.0f%%", usage);
 				oWinControlSetText(CPUUtilization, usageString);

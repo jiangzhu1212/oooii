@@ -23,19 +23,16 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oPlatform/oFile.h>
 #include <oPlatform/oStreamUtil.h>
-#include <oPlatform/oSystem.h>
+#include <oCore/system.h>
 #include <oBasis/tests/oBasisTests.h>
 #include "oTestIntegration.h"
 #include "TESTConcurrencyRequirements.h"
 
 static size_t GetTotalPhysicalMemory()
 {
-	oSYSTEM_HEAP_STATS stats;
-	if (!oSystemGetHeapStats(&stats))
-		return 0;
-	return static_cast<size_t>(stats.TotalPhysical);
+	oCore::system::heap_info hi = oCore::system::get_heap_info();
+	return static_cast<size_t>(hi.total_physical);
 }
 
 static bool ResolvePath(oStd::path& _Path, const char* _RelativePath, bool _PathMustExist, oTest* _pTest)

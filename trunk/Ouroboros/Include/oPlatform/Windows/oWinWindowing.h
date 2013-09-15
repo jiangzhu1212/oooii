@@ -39,6 +39,7 @@
 #define oWinWindowing_h
 
 #include <oStd/thread.h>
+#include <oCore/display.h>
 #include <oBasis/oGUI.h>
 #include <oPlatform/Windows/oWindows.h>
 
@@ -376,7 +377,7 @@ oAPI bool oWinIsOpaque(HWND _hWnd);
 // Gets the index of the display that is most closely associated with the 
 // specified window. NOTE: This is an oDisplay-style index compatible with 
 // oDisplayEnum(), not a DirectX index.
-oAPI int oWinGetDisplayIndex(HWND _hWnd);
+oAPI oCore::display::id oWinGetDisplayId(HWND _hWnd);
 
 // Returns true if the specified _hWnd is valid and has focus
 oAPI bool oWinHasFocus(HWND _hWnd);

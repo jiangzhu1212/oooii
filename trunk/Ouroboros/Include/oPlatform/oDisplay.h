@@ -29,6 +29,8 @@
 
 #include <oBasis/oGPUConcepts.h>
 
+#if 0
+
 struct oDISPLAY_ADAPTER_DRIVER_DESC
 {
 	oStd::mstring Description;
@@ -122,4 +124,5 @@ int oDisplayFindIndex(const int2& _ScreenPosition);
 
 void oDisplayGetVirtualRect(int2* _pPosition, int2* _pSize);
 
+#endif
 #endif

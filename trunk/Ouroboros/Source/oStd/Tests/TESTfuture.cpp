@@ -32,6 +32,9 @@
 #include <oPlatform/oProcessStatsMonitor.h>
 #include <oStd/tests/oStdTestRequirements.h>
 
+#include <oBasis/oStddef.h>
+#include <oBasis/oError.h>
+
 namespace oStd {
 	namespace tests {
 

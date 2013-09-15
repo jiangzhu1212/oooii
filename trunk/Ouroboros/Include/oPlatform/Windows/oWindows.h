@@ -181,9 +181,11 @@
 	#include <dwrite.h>
 #endif
 
-#ifdef interface
+	#ifdef interface
 	#define INTERFACE_DEFINED
 #endif
+
+#include <oCore/process.h>
 
 // _____________________________________________________________________________
 // Raw Input (WM_INPUT support) These are not defined anywhere I can find in
@@ -380,10 +382,6 @@ oStd::version oWinGetVersion(DWORD _VersionMS, DWORD _VersionLS);
 HMODULE oThreadsafeLoadLibrary(LPCTSTR _lpFileName);
 BOOL oThreadsafeFreeLibrary(HMODULE _hModule);
 
-// Prefer this over direct usage of OutputDebugString. NOTE: The mutex is
-// process-wide, no matter what DLLs or how this code was linked.
-void oThreadsafeOutputDebugStringA(const char* _OutputString);
-
 // returns true if wait finished successfully, or false if
 // timed out or otherwise errored out.
 bool oWaitSingle(HANDLE _Handle, unsigned int _TimeoutMS = oInfiniteWait);
@@ -440,20 +438,7 @@ oWINDOWS_VERSION oGetWindowsVersion();
 void oVerifyMinimumWindowsVersion(oWINDOWS_VERSION _Version);
 bool oIsWindows64Bit();
 
-bool oIsAeroEnabled();
-bool oEnableAero(bool _Enabled, bool _Force = false);
-
-bool oIsRemoteDesktopConnected();
-
-// Some Windows API take string blocks, that is one buffer of 
-// nul-separated strings that end in a nul terminator. This is
-// often not convenient to construct, so allow construction in
-// another way and use this to convert.
-bool oConvertEnvStringToEnvBlock(char* _EnvBlock, size_t _SizeofEnvBlock, const char* _EnvString, char _Delimiter);
-template<size_t size> inline bool oConvertEnvStringToEnvBlock(char (&_EnvBlock)[size], const char* _EnvString, char _Delimiter) { return oConvertEnvStringToEnvBlock(_EnvBlock, size, _EnvString, _Delimiter); }
-
-// @oooii-tony: A wrapper for SetWindowsHookEx that includes a user-specified context.
-// (Is there a way to do this?! Please someone let me know!)
+// A wrapper for SetWindowsHookEx that includes a user-specified context.
 typedef LRESULT (CALLBACK* oHOOKPROC)(int _nCode, WPARAM _wParam, LPARAM _lParam, void* _pUserData);
 bool oUnhookWindowsHook(HHOOK _hHook);
 HHOOK oSetWindowsHook(int _idHook, oHOOKPROC _pHookProc, void* _pUserData, DWORD _dwThreadId);
@@ -506,30 +491,15 @@ struct oWINDOWS_DIALOG_DESC
 LPDLGTEMPLATE oDlgNewTemplate(const oWINDOWS_DIALOG_DESC& _Desc);
 void oDlgDeleteTemplate(LPDLGTEMPLATE _lpDlgTemplate);
 
-bool oWinEnumVideoDriverDesc(oFUNCTION<void(const oDISPLAY_ADAPTER_DRIVER_DESC& _pDesc)> _Enumerator);
-
 // _____________________________________________________________________________
 // System API - dealing with Windows as a whole
-
-// Goes through all services/drivers currently on the system
-bool oWinServicesEnum(oFUNCTION<bool(SC_HANDLE _hSCManager, const ENUM_SERVICE_STATUS_PROCESS& _Status)> _Enumerator);
 
 // Returns the resolved path to the binary that is the running service
 bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestination, SC_HANDLE _hSCManager, const char* _ServiceName);
 
 // Returns true if the specified file is a binary compiled for x64. If false,
 // it is reasonable to assume x86 (32-bit).
-bool oWinSystemIs64BitBinary(const char* _StrPath);
-
-// Returns true if all services on the system are not in a pending state.
-bool oWinSystemAllServicesInSteadyState();
-
-// Returns a percent [0,100] of CPU usage across all processes and all cores
-// (basically the summary percentage that Task Manager gives you). The value
-// returned is over a sample period, so it is required that two values are 
-// cached to be compared against for the calculation. Thus this function should
-// be called as a regular interval for refreshing the current CPU usage.
-double oWinSystemCalculateCPUUsage(unsigned long long* _pPreviousIdleTime, unsigned long long* _pPreviousSystemTime);
+bool oWinSystemIs64BitBinary(const oStd::path& _StrPath);
 
 // Spawns the application associated with the specified _DocumentName and opens
 // that document. For example: open a text file using Notepad or a URL using 
@@ -540,7 +510,7 @@ bool oWinSystemOpenDocument(const char* _DocumentName, bool _ForEdit = false);
 // the ID of the thread that services this window.  Since a process can have more
 // than one top level window an optional name can also be specified to make certain
 // the correct window is returned
-bool oWinGetProcessTopWindowAndThread(unsigned int _ProcessID, HWND* _pHWND, unsigned int* _pThreadID, const char* _pOptionalWindowName = nullptr);
+bool oWinGetProcessTopWindowAndThread(oCore::process::id _ProcessID, HWND* _pHWND, unsigned int* _pThreadID, const char* _pOptionalWindowName = nullptr);
 
 // _____________________________________________________________________________
 // Identification/ID Conversion API
@@ -561,23 +531,11 @@ template<size_t size> bool oWinGetWorkgroupName(char (&_StrDestination)[size]) {
 // of the main process module.
 HMODULE oGetModule(void* _ModuleFunctionPointer);
 
-// Returns true if _pOutProcessID has been filled with the ID of the specified
-// process image name (exe name). If this returns false, check oErrorGetLast()
-// for more information.
-bool oWinGetProcessID(const char* _Name, DWORD* _pOutProcessID);
-
 // Call the specified function for each thread in the current process. The 
 // function should return true to keep enumerating, or false to exit early. This
 // function returns false if there is a failure, check oErrorGetLast() for more
 // information.
 bool oEnumProcessThreads(DWORD _ProcessID, oFUNCTION<bool(DWORD _ThreadID, DWORD _ParentProcessID)> _Function);
-
-// Call the specified function for each of the child processes of the current
-// process. The function should return true to keep enumerating, or false to
-// exit early. This function returns false if there is a failure, check 
-// oErrorGetLast() for more information. The error can be ECHILD if there are no 
-// child processes.
-bool oWinEnumProcesses(oFUNCTION<bool(DWORD _ProcessID, DWORD _ParentProcessID, const char* _ProcessExePath)> _Function);
 
 // Call the specified function for each of the top level windows on the system. 
 // The function should return true to keep searching or false to exit early.
@@ -610,10 +568,6 @@ bool oWinEnumInputDevices(bool _EnumerateAll, const oFUNCTION<void(const oWINDOW
 // Explorer will auto-restart if terminated programmatically, so use a 
 // more heavy-handed approach.
 void oWinKillExplorer();
-
-// Uses a waitable timer to call the specified function at the specified time.
-// If _Alertable is true, this can wake up a sleeping system.
-bool oScheduleTask(const char* _DebugName, time_t _AbsoluteTime, bool _Alertable, oTASK _Task);
 
 // Adjusts privileges and calls ExitWindowsEx with the specified parameters
 bool oWinExitWindows(UINT _uFlags, DWORD _dwReason);

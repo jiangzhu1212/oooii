@@ -22,18 +22,20 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "oWinVersion.h"
-#include <oStd/assert.h>
-
-static const char* sExportedAPIs[] = 
-{
-	"GetFileVersionInfoSizeA",
-	"GetFileVersionInfoA",
-	"VerQueryValueA",
-	"VerQueryValueW",
-};
-
-oDEFINE_DLL_SINGLETON_CTOR(oWinVersion, "version.dll", GetFileVersionInfoSizeA)
-
-// {DF79FFE6-AF5D-49B8-8022-EEB84D9095B9}
-const oGUID oWinVersion::GUID = { 0xdf79ffe6, 0xaf5d, 0x49b8, { 0x80, 0x22, 0xee, 0xb8, 0x4d, 0x90, 0x95, 0xb9 } };
+// Convenience "all headers" header for precompiled header files. Do NOT use 
+// this to be lazy when including headers in .cpp files. Be explicit.
+#pragma once
+#ifndef oCore_all_h
+#define oCore_all_h
+#include <oCore/adapter.h>
+//#include <oCore/camera.h>
+#include <oCore/cpu.h>
+#include <oCore/debugger.h>
+#include <oCore/display.h>
+#include <oCore/filesystem.h>
+#include <oCore/filesystem_error.h>
+#include <oCore/module.h>
+#include <oCore/page_allocator.h>
+#include <oCore/process.h>
+#include <oCore/system.h>
+#endif

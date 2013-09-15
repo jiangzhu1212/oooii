@@ -22,26 +22,16 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oDebugger.h>
+#include <oCore/debugger.h>
 #include <oPlatform/oTest.h>
 #include <oBasis/oString.h>
+
+using namespace oCore;
 
 struct PLATFORM_oDebugger : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		size_t SizesToTest[] = {sizeof(int), oKB(4), oMB(4), oMB(2) - sizeof(int)};
-
-		for(int i = 0; i < oCOUNTOF(SizesToTest); ++i)
-		{
-			void* pAlloc = oDebuggerGuardedAlloc(SizesToTest[i]);
-			oTESTB(pAlloc, "oDebuggerGuardedAlloc failed on size %d", SizesToTest[i]);
-
-			oDebuggerAllocationInfo AllocInfo;
-			oTESTB( oDebuggerGuardedInfo(pAlloc, &AllocInfo) || oInvalid != AllocInfo.ThreadFreedOn, "oDebuggerGuardedInfo failed");
-			oDebuggerGuardedFree(pAlloc);
-		}
-
 		// inlining results in validly differing stack traces
 		#ifdef _DEBUG
 			#ifdef _WIN64
@@ -96,15 +86,15 @@ struct PLATFORM_oDebugger : public oTest
 
 		#if defined(_WIN64) || defined(_DEBUG)
 
-				unsigned long long addresses[32];
-				size_t nAddresses = oDebuggerGetCallstack(addresses, OFFSET);
+				debugger::symbol addresses[32];
+				size_t nAddresses = debugger::callstack(addresses, OFFSET);
 
 				for (size_t i = 0; i < nAddresses; i++)
 				{
-					oDEBUGGER_SYMBOL sym;
-					oTESTB(oDebuggerTranslateSymbol(&sym, addresses[i]), "TranslateSymbol failed on %u%s symbol", i, oStd::ordinal(i));
+					debugger::symbol_info sym;
+					sym = debugger::translate(addresses[i]);
 					//printf("%u: %s\n", i, sym.Name);
-					oTESTB(!oStrcmp(sym.Name, sExpectedStack[i]), "Mismatch on stack trace at level %u", i);
+					oTESTB(!strcmp(sym.name, sExpectedStack[i]), "Mismatch on stack trace at level %u", i);
 				}
 
 				return SUCCESS;

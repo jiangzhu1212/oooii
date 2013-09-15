@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oRegistry.h>
-#include <oPlatform/oSystem.h> // for oSystemGetDate()
 #include <oConcurrency/mutex.h>
 #include <tbb/concurrent_hash_map.h>
 
@@ -91,7 +90,7 @@ bool oRegistryTBB::Add(const oURI& _URIReference, oInterface* _pInterface, int _
 		a->second.Desc.Status = _Status;
 		a->second.Desc.AccessEpoch = Epoch;
 		a->second.Desc.AccessCount = 0;
-		oSystemGetDate(&a->second.Desc.Accessed);
+		oCore::system::now(&a->second.Desc.Accessed);
 		a->second.Entry = _pInterface;
 	}
 	
@@ -119,7 +118,7 @@ bool oRegistryTBB::Get(const oURI& _URIReference, oInterface** _ppInterface, oRE
 
 		a->second.Desc.AccessEpoch = Epoch;
 		a->second.Desc.AccessCount++;
-		oSystemGetDate(&a->second.Desc.Accessed);
+		oCore::system::now(&a->second.Desc.Accessed);
 
 		if (_pDesc)
 			*_pDesc = a->second.Desc;
@@ -138,7 +137,7 @@ bool oRegistryTBB::Set(const oURI& _URIReference, oInterface* _pInterface, int _
 		a->second.Desc.Status = _Status;
 		a->second.Desc.AccessEpoch = Epoch;
 		a->second.Desc.AccessCount = 0;
-		oSystemGetDate(&a->second.Desc.Accessed);
+		oCore::system::now(&a->second.Desc.Accessed);
 		a->second.Entry = _pInterface;
 	}
 

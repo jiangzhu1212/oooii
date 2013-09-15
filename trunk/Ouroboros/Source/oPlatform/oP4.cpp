@@ -26,8 +26,6 @@
 #include <oBasis/oString.h>
 #include <oPlatform/oReporting.h>
 #include <oBasis/oError.h>
-#include <oPlatform/oSystem.h>
-#include <oPlatform/oProcess.h>
 #include <time.h>
 
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oP4_STATUS)
@@ -128,8 +126,9 @@ static bool oP4Execute(const char* _CommandLine, const char* _CheckValidString, 
 {
 	if (_P4ResponseString)
 		*_P4ResponseString = 0;
-	if (!oSystemExecute(_CommandLine, [&](char* _Line) { if (_P4ResponseString) strlcat(_P4ResponseString, _Line, _SizeofP4ResponseString); }, nullptr, false, _TimeoutMS))
-		return false; // pass through error
+	int ec = oCore::system::spawn(_CommandLine, [&](char* _Line) { if (_P4ResponseString) strlcat(_P4ResponseString, _Line, _SizeofP4ResponseString); }, false, _TimeoutMS);
+	if (ec)
+		return oErrorSetLast(std::errc::io_error, "spawn '%s' returned %d", _CommandLine, ec); // pass through error
 	if (!_P4ResponseString)
 		return true;
 	if (oP4IsExecutionError(_P4ResponseString) || (oSTRVALID(_CheckValidString) && !strstr(_P4ResponseString, _CheckValidString)))
@@ -184,7 +183,7 @@ static void oP4CreateLabelSpec(const oP4_LABEL_SPEC& _Label, std::string& _OutLa
 {
 	oStd::mstring Owner(_Label.Owner);
 	if (Owner.empty())
-		oSystemGetEnvironmentVariable(Owner, "P4USER");
+		oCore::system::getenv(Owner, "P4USER");
 
 	oStd::lstring Desc(_Label.Description);
 	if (Desc.empty())
@@ -221,23 +220,21 @@ bool oP4Label(const oP4_LABEL_SPEC& _Label)
 	std::string labelSpec;
 	oP4CreateLabelSpec(_Label, labelSpec);
 
-	oProcess::DESC desc;
-	desc.CommandLine = "p4 label -i";
-	desc.EnvironmentString = 0;
-	desc.StdHandleBufferSize = oKB(16);
-	oStd::intrusive_ptr<threadsafe oProcess> process;
-	if (!oProcessCreate(desc, &process))
-		return false;
+	oCore::process::info pi;
+	pi.command_line = "p4 label -i";
+	pi.environment = 0;
+	pi.stdout_buffer_size = oKB(16);
+	auto process = oCore::process::make(pi);
 
-	size_t sizeWritten = process->WriteToStdin(labelSpec.c_str(), labelSpec.size());
+	size_t sizeWritten = process->to_stdin(labelSpec.c_str(), labelSpec.size());
 	if (sizeWritten != labelSpec.size())
 		return oErrorSetLast(std::errc::io_error, "Failed to write label spec to stdin of the p4 process.");
 
-	if (!process->Wait(kP4TypicalTimeoutMS))
-		return oErrorSetLast(std::errc::timed_out, "Executing \"%s\" timed out after %.01f seconds.", desc.CommandLine, static_cast<float>(kP4TypicalTimeoutMS) / 1000.0f);
+	if (!process->wait_for(oStd::chrono::milliseconds(kP4TypicalTimeoutMS)))
+		return oErrorSetLast(std::errc::timed_out, "Executing \"%s\" timed out after %.01f seconds.", pi.command_line, static_cast<float>(kP4TypicalTimeoutMS) / 1000.0f);
 
 	oStd::xlstring response;
-	size_t sizeRead = process->ReadFromStdout(response, response.capacity());
+	size_t sizeRead = process->from_stdout(response, response.capacity());
 	oASSERT(sizeRead < response.capacity(), "");
 	response[sizeRead] = 0;
 		

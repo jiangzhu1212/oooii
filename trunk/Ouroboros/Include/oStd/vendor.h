@@ -22,15 +22,35 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// Enumeration of common hardware vendors
 #pragma once
-#ifndef oWinPowrProf_h
-#define oWinPowrProf_h
+#ifndef oStd_vendor_h
+#define oStd_vendor_h
 
-#include <oPlatform/oModuleUtil.h>
-#include <PowrProf.h>
+namespace oStd {
 
-oDECLARE_DLL_SINGLETON_BEGIN(oWinPowrProf)
-	BOOLEAN (__stdcall *SetSuspendState)(BOOLEAN Hibernate, BOOLEAN ForceCritical, BOOLEAN DisableWakeEvent);
-oDECLARE_DLL_SINGLETON_END()
+/* enum class */ namespace vendor
+{	enum value {
+	
+	unknown,
+	amd,
+	apple,
+	arm,
+	intel,
+	internal,
+	lg,
+	maxtor,
+	microsoft,
+	nintendo,
+	nvidia,
+	sandisk,
+	samsung,
+	sony,
+	vizio,
+	western_digital,
+	
+};}
+
+} // namespace oStd
 
 #endif

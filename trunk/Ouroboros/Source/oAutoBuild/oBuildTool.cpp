@@ -60,12 +60,9 @@ bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const c
 	oPrintf(_pResults->StdoutLogfile, "%soUnitTests.stdout.txt", _BuildRoot);
 	oPrintf(_pResults->StderrLogfile, "%soUnitTests.stderr.txt", _BuildRoot);
 
-	oProcess::DESC TestDesc;
-	TestDesc.CommandLine = command_line.c_str();
-
-	oStd::intrusive_ptr<threadsafe oProcess> TestProcess;
-	if (!oProcessCreate(TestDesc, &TestProcess))
-		return oErrorSetLast(std::errc::invalid_argument);
+	oCore::process::info pi;
+	pi.command_line = command_line;
+	std::shared_ptr<oCore::process> TestProcess = oCore::process::make(pi);
 
 	uint TimeoutMS = _TestSettings.TimeoutSeconds * 1000;
 	oScopedPartialTimeout Timer(&TimeoutMS);
@@ -74,15 +71,15 @@ bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const c
 	{
 		if (_CancelEvent.is_set())
 		{
-			TestProcess->Kill(0);
+			TestProcess->kill(0);
 			return oErrorSetLast(std::errc::operation_canceled);
 		}
 
-		Finished = TestProcess->Wait(500);
+		Finished = TestProcess->wait_for(oStd::chrono::milliseconds(500));
 		Timer.UpdateTimeout();
 	}
 	// Always kill the process 
-	TestProcess->Kill(0);
+	TestProcess->kill(0);
 
 	// If timed out, wait a little bit otherwise the log files will get a
 	// sharing violation when we try to read them.
@@ -135,10 +132,10 @@ bool oRunPackagingStage(const oBUILD_TOOL_PACKAGING_SETTINGS& _Settings, oPackag
 	{
 		// FIXME: With CL 23502 the process will hang because of /S on Xcopy. Not capturing STDOUT fixes it
 		// oStd::xxlstring PackageResponse;
-		int ExitCode = 0;
 		oFOR(auto& command_line, _Settings.CommandLines)
 		{
-			if (!oSystemExecute(command_line, nullptr, &ExitCode, false, _Settings.TimeoutSeconds * 1000))
+			int ExitCode = oCore::system::spawn(command_line, nullptr, false, _Settings.TimeoutSeconds * 1000);
+			if (ExitCode)
 				return false;
 		}
 	}

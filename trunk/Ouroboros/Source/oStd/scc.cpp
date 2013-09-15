@@ -34,7 +34,7 @@ const char* as_string(const scc_protocol::value& _Protocol)
 {
 	switch (_Protocol)
 	{
-		case scc_protocol::perforce: return "perforce";
+		case scc_protocol::p4: return "perforce";
 		case scc_protocol::svn: return "svn";
 		case scc_protocol::git: return "git";
 		default: break;

@@ -27,7 +27,6 @@
 #include <oBasis/oRefCount.h>
 #include <oBasis/oError.h>
 #include <oConcurrency/mutex.h>
-#include <oPlatform/oFile.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oStreamUtil.h>
@@ -375,8 +374,7 @@ bool oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format, o
 	else if (_Flags == oImage::FORCE_NO_ALPHA && FIC_RGBALPHA == FreeImage_GetColorType(FIBitmap))
 		FIBitmap = FreeImage_ConvertTo24Bits(FIBitmap);
 
-	if (!oFileEnsureParentFolderExists(_Path))
-		return false; // pass through error
+	oCore::filesystem::create_directories(oStd::path(_Path).parent_path());
 
 	FIBITMAP* flipClone = FreeImage_Clone(FIBitmap);
 	oStd::finally unloadClone([&](){ FreeImage_Unload(flipClone); });

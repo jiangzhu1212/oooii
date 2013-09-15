@@ -31,7 +31,6 @@
 #include <oBasis/oFilterChain.h>
 #include <oBasis/oStddef.h>
 #include <oBasis/oString.h>
-#include <oPlatform/oProcess.h>
 #include <oPlatform/oSingleton.h> // @oooii-tony: Is it necessary to guarantee a test to be singular? If not this can take a step towards being cross-platform.
 
 #define oTESTERROR(format, ...) do { oPrintf(_StrStatus, _SizeofStrStatus, format, ## __VA_ARGS__); oTRACE("FAILING: %s (oErrorGetLast() == %s (%s))", _StrStatus, oErrorAsString(oErrorGetLast()), oErrorGetLastString()); return oTest::FAILURE; } while(false)
@@ -189,7 +188,7 @@ struct oSpecialTest : public oTest
 	// a client-server or multi-process test. The process is created and then run
 	// with a separate call to Run() so there is an opportunity for the developer
 	// to place a breakpoint and attach to this new process during development.
-	static bool CreateProcess(const char* _SpecialTestName, threadsafe oProcess** _ppProcess);
+	static bool CreateProcess(const char* _SpecialTestName, std::shared_ptr<oCore::process>* _pProcess);
 
 	// Run the specified process as was created from oSpecialTest::CreateProcess 
 	// in a special mode that runs the unit test with a specific test. This way 
@@ -202,7 +201,7 @@ struct oSpecialTest : public oTest
 	// suspended mode. By calling this and StartAndWaitToBeReady separately, a 
 	// developer can put breakpoints and attach to the process before it starts 
 	// running easily.
-	static bool Start(threadsafe interface oProcess* _pProcess, char* _StrStatus, size_t _SizeofStrStatus, int* _pExitCode, unsigned int _TimeoutMS = 10000);
+	static bool Start(oCore::process* _pProcess, char* _StrStatus, size_t _SizeofStrStatus, int* _pExitCode, unsigned int _TimeoutMS = 10000);
 
 	// Run blocks until it receives an event from the special test (this)
 	void NotifyReady();

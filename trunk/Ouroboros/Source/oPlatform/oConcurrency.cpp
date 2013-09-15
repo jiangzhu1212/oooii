@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oConcurrency/oConcurrency.h>
 #include <oBasis/oDispatchQueueConcurrent.h>
-#include <oPlatform/oDebugger.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSingleton.h>
 
@@ -240,7 +239,7 @@ typedef oProcessHeapAllocator<oTASK> allocator_t;
 			{
 			public:
 				Observer() { observe(); }
-				void on_scheduler_entry(bool is_worker) override { if (is_worker) oDebuggerSetThreadName("TBB Worker"); }
+				void on_scheduler_entry(bool is_worker) override { if (is_worker) oCore::debugger::thread_name("TBB Worker"); }
 				void on_scheduler_exit(bool is_worker) override { if (is_worker) oConcurrency::end_thread(); }
 			};
 
@@ -322,7 +321,7 @@ void oConcurrency::parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK&
 
 void oConcurrency::begin_thread(const char* _DebuggerName)
 {
-	oDebuggerSetThreadName(_DebuggerName);
+	oCore::debugger::thread_name(_DebuggerName);
 	#if oHAS_TBB
 		// Issuing a NOP task causes TBB to allocate bookkeeping for this thread's 
 		// memory which otherwise reports as a false-positive memory leak.

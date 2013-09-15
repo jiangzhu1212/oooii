@@ -122,14 +122,16 @@ int main(int argc, const char* argv[])
 		unsigned int Revision = opt.Revision;
 		if (opt.AutoRevision)
 		{
-			auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, false, oBIND4));
-			oStd::path_string DevPath;
-			oCHECK0(oSystemGetPath(DevPath, oSYSPATH_DEV));
-			printf("scc revision...", DevPath.c_str());
+			auto scc = oStd::make_scc(oStd::scc_protocol::svn, std::bind(oCore::system::spawn, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
+			oStd::path DevPath = oCore::filesystem::dev_path();
+			printf("scc");
 			oStd::lstring RevStr;
 			try { Revision = scc->revision(DevPath); }
-			catch (std::exception& e) { printf("\n  %s", e.what()); }
-			printf("\b\b\b %s\n", Revision ? oStd::to_string(RevStr, Revision) : "");
+			catch (std::exception& e) { RevStr = e.what(); }
+			if (RevStr.empty())
+				printf(" %s %s\n", Revision ? oStd::to_string(RevStr, Revision) : "?", DevPath.c_str());
+			else
+				printf(" ? %s %s\n", DevPath.c_str(), RevStr.c_str());
 		}
 
 		oStd::version v(opt.Major, opt.Minor, Revision);
@@ -152,8 +154,7 @@ int main(int argc, const char* argv[])
 		if (opt.Copyright) sncatf(s, "#define oRC_COPYRIGHT \"%s\"\n", opt.Copyright);
 		if (opt.Description) sncatf(s, "#define oRC_DESCRIPTION \"%s\"\n", opt.Description);
 
-		if (!oFileSave(opt.Output, s, s.length(), true))
-			oTHROW(io_error, "failed to save '%s'\n", opt.Output);
+		oCore::filesystem::save(opt.Output, s, s.length(), oCore::filesystem::save_option::text_write);
 	}
 
 	catch (std::exception& e)

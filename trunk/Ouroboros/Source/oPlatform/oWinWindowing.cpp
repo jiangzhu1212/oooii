@@ -335,9 +335,8 @@ HWND oWinCreate(HWND _hParent
 	int2 NewSize = _ClientSize;
 	if (NewPosition.x == oDEFAULT || NewPosition.y == oDEFAULT || NewSize.x == oDEFAULT || NewSize.y == oDEFAULT)
 	{
-		oDISPLAY_DESC dd;
-		oDisplayEnum(oDisplayGetPrimaryIndex(), &dd);
-		const RECT rPrimaryWorkarea = oWinRectWH(dd.WorkareaPosition, dd.WorkareaSize);
+		oCore::display::info di = oCore::display::get_info(oCore::display::primary_id());
+		const RECT rPrimaryWorkarea = oWinRectWH(int2(di.workarea_x, di.workarea_y), int2(di.workarea_width, di.workarea_height));
 		const int2 DefaultSize = oWinRectSize(rPrimaryWorkarea) / 4; // 25% of parent window by default
 		NewSize = oGUIResolveRectSize(NewSize, DefaultSize);
 		const RECT rCenteredClient = oWinRect(oGUIResolveRect(oRect(rPrimaryWorkarea), int2(0, 0), NewSize, oGUI_ALIGNMENT_MIDDLE_CENTER, false));
@@ -1145,9 +1144,8 @@ RECT oWinGetParentRect(HWND _hWnd, HWND _hExplicitParent)
 		oVERIFY(oWinGetClientRect(hParent, &rParent));
 	else
 	{
-		oDISPLAY_DESC dd;
-		oDisplayEnum(oWinGetDisplayIndex(_hWnd), &dd);
-		rParent = oWinRectWH(dd.WorkareaPosition, dd.WorkareaSize);
+		oCore::display::info di = oCore::display::get_info(oWinGetDisplayId(_hWnd));
+		rParent = oWinRectWH(int2(di.workarea_x, di.workarea_y), int2(di.workarea_width, di.workarea_height));
 	}
 	return rParent;
 }
@@ -1290,10 +1288,9 @@ bool oWinSetShape(HWND _hWnd, const oGUI_WINDOW_SHAPE_DESC& _Shape)
 
 	else if (New.State == oGUI_WINDOW_FULLSCREEN)
 	{
-		oDISPLAY_DESC dd;
-		oVERIFY(oDisplayEnum(oWinGetDisplayIndex(_hWnd), &dd));
-		New.ClientPosition = dd.Position;
-		New.ClientSize = dd.Mode.Size;
+		oCore::display::info di = oCore::display::get_info(oWinGetDisplayId(_hWnd));
+		New.ClientPosition = int2(di.x, di.y);
+		New.ClientSize = int2(di.mode.width, di.mode.height);
 	}
 
 	else
@@ -1429,10 +1426,9 @@ bool oWinAnimate(HWND _hWnd, const RECT& _From, const RECT& _To)
 	return true;
 }
 
-int oWinGetDisplayIndex(HWND _hWnd)
+oCore::display::id oWinGetDisplayId(HWND _hWnd)
 {
-	DISPLAY_DEVICE dev;
-	return oWinGetDisplayDevice(MonitorFromWindow(_hWnd, MONITOR_DEFAULTTONEAREST), &dev);
+	return oCore::display::get_id(MonitorFromWindow(_hWnd, MONITOR_DEFAULTTONEAREST));
 }
 
 HBRUSH oWinGetBackgroundBrush(HWND _hWnd)

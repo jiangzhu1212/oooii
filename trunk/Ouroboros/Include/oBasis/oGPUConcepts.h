@@ -42,6 +42,7 @@
 #include <oBasis/oRTTI.h>
 #include <oBasis/oStddef.h>
 #include <oBasis/oSurface.h>
+#include <oStd/vendor.h>
 #include <oStd/version.h>
 #include <array>
 
@@ -85,20 +86,6 @@ enum oGPU_API
 	oGPU_API_COUNT,
 };
 oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGPU_API)
-
-enum oGPU_VENDOR
-{
-	oGPU_VENDOR_UNKNOWN,
-	oGPU_VENDOR_NVIDIA,
-	oGPU_VENDOR_AMD,
-	oGPU_VENDOR_INTEL,
-	oGPU_VENDOR_ARM,
-	oGPU_VENDOR_CUSTOM,
-	oGPU_VENDOR_INTERNAL,
-	
-	oGPU_VENDOR_COUNT,
-};
-oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGPU_VENDOR)
 
 enum oGPU_CUBE_FACE
 {
@@ -777,7 +764,7 @@ struct oGPU_DEVICE_DESC
 		, SharedSystemMemory(0)
 		, AdapterIndex(0)
 		, API(oGPU_API_UNKNOWN)
-		, Vendor(oGPU_VENDOR_UNKNOWN)
+		, Vendor(oStd::vendor::unknown)
 		, IsSoftwareEmulation(false)
 		, DebugReportingEnabled(false)
 	{}
@@ -822,7 +809,7 @@ struct oGPU_DEVICE_DESC
 	oGPU_API API;
 
 	// Describes the company that made the device
-	oGPU_VENDOR Vendor;
+	oStd::vendor::value Vendor;
 
 	// True if the device was created in software emulation mode
 	bool IsSoftwareEmulation;

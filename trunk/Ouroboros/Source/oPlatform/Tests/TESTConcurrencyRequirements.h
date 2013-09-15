@@ -29,14 +29,13 @@
 #include <oStd/assert.h>
 #include <oConcurrency/tests/oConcurrencyTestRequirements.h>
 #include <oBasis/oError.h>
-#include <oPlatform/oProcess.h>
 
 namespace oConcurrency {
 	namespace tests {
 
 		struct requirements_implementation : requirements
 		{
-			bool is_debugger_attached() const { return oProcessHasDebuggerAttached(oProcessGetCurrentID()); }
+			bool is_debugger_attached() const { return oCore::this_process::has_debugger_attached(); }
 
 			void vreport(const char* _Format, va_list _Args) override
 			{

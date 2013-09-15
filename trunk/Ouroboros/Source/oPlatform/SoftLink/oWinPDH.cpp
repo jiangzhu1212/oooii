@@ -24,7 +24,6 @@
  **************************************************************************/
 #include "oWinPDH.h"
 #include <oStd/assert.h>
-#include <oPlatform/oSystem.h>
 #include <PdhMsg.h>
 
 // @oooii-tony: I cannot get this to work. If I put the query stuff in a loop in
@@ -150,10 +149,8 @@ oWinPDH::oWinPDH()
 	oPDH_V(PdhOpenQuery(nullptr, 0, &hQuery));
 	oPDH_V(PdhAddCounter(hQuery, "\\Processor(_Total)\\% Processor Time", 0, &hSystemCPUUsage));
 	
-	oStd::path_string ProcessPath;
-	oVERIFY(oSystemGetPath(ProcessPath, oSYSPATH_APP_FULL));
-
-	oStd::path_string ProcessName = oGetFilebase(ProcessPath);
+	oStd::path ProcessPath = oCore::filesystem::app_path(true);
+	oStd::path_string ProcessName = ProcessPath.basename();
 	*oGetFileExtension(ProcessName) = 0;
 
 	oStd::path_string CounterPath;

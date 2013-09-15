@@ -27,7 +27,6 @@
 #include <oBasis/oError.h>
 #include <oStd/fixed_string.h>
 #include <oConcurrency/mutex.h>
-#include <oPlatform/oProcess.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oStandards.h>
@@ -143,24 +142,6 @@ static WORD SetConsoleColor(HANDLE _hStream, oStd::color _Foreground, oStd::colo
 	return wOriginalAttributes;
 }
 
-static bool FindParentProcessID(DWORD _ProcessID, DWORD _ParentProcessID, const char* _ProcessExePath, unsigned int _SearchProcessID, unsigned int* _pOutSearchParentProcessID)
-{
-	if (_SearchProcessID == _ProcessID)
-	{
-		*_pOutSearchParentProcessID = _ParentProcessID;
-		return false;
-	}
-
-	return true;
-}
-
-unsigned int oProcessGetParentID(unsigned int _ProcessID)
-{
-	unsigned int ppid = 0;
-	oProcessEnum(oBIND(FindParentProcessID, oBIND1, oBIND2, oBIND3, _ProcessID, &ppid));
-	return ppid;
-}
-
 void* oConsole::GetNativeHandle()
 {
 	return GetConsoleWindow();
@@ -194,7 +175,7 @@ void oConsole::GetDesc(DESC* _pDesc)
 
 	if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info))
 	{
-		if (GetLastError() == ERROR_INVALID_HANDLE && oProcessGetParentID(oProcessGetCurrentID()))
+		if (GetLastError() == ERROR_INVALID_HANDLE && oCore::this_process::is_child())
 		{
 			oErrorSetLast(std::errc::permission_denied, "Failed to access console because this is a child process.");
 			return;
@@ -254,7 +235,7 @@ void oConsole::SetDesc(const DESC* _pDesc)
 	bufferDimension.Y = (SHORT)desc.BufferHeight;
 	if (!SetConsoleScreenBufferSize(hConsole, bufferDimension))
 	{
-		if (GetLastError() == ERROR_INVALID_HANDLE && oProcessGetParentID(oProcessGetCurrentID()))
+		if (GetLastError() == ERROR_INVALID_HANDLE && oCore::this_process::is_child())
 		{
 			oErrorSetLast(std::errc::permission_denied, "Failed to access console because this is a child process.");
 			return;

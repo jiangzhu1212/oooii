@@ -23,16 +23,168 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oFileSchemeHandler.h>
-#include <oPlatform/oFile.h>
-#include <oPlatform/oSystem.h>
 #include <oConcurrency/mutex.h>
 #include "oDispatchQueueGlobalIOCP.h"
-#include "oFileInternal.h"
 #include "oIOCP.h"
 
 using namespace oConcurrency;
 
 #define oTRACE_MONITOR oTRACE
+
+enum oSYSPATH
+{
+	oSYSPATH_CWD, // current working directory
+	oSYSPATH_APP, // application directory (path where exe is)
+	oSYSPATH_APP_FULL, // full path (with filename) to application executable
+	oSYSPATH_SYSTMP, // platform temporary directory
+	oSYSPATH_SYS, // platform system directory
+	oSYSPATH_OS, // platform installation directory
+	oSYSPATH_DEV, // current project development root directory
+	oSYSPATH_TESTTMP, // unit test temp path. destroyed if unit tests succeed
+	oSYSPATH_COMPILER_INCLUDES, // location of compiler includes
+	oSYSPATH_DESKTOP, // platform current user desktop
+	oSYSPATH_DESKTOP_ALLUSERS, // platform shared desktop
+	oSYSPATH_SCCROOT, // the root of the source control under which this code runs
+	oSYSPATH_DATA, // the data path of the application
+};
+
+char* oSystemURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIParts)
+{
+	if (_URIParts.Authority.empty())
+	{
+		if (_URIParts.Path[0]=='/' && _URIParts.Path[2]==':')
+			oStrcpy(_Path, _SizeofPath, _URIParts.Path+1);
+		else
+			oStrcpy(_Path, _SizeofPath, _URIParts.Path);
+	}
+	else
+	{
+		oSYSPATH SysPath;
+		if (oStd::from_string(&SysPath, _URIParts.Authority))
+		{
+			oStd::path path;
+			switch (SysPath)
+			{
+				case oSYSPATH_CWD: path = oCore::filesystem::current_path(); break;
+				case oSYSPATH_APP: path = oCore::filesystem::app_path(); break;
+				case oSYSPATH_SYSTMP: path = oCore::filesystem::temp_path(); break;
+				case oSYSPATH_SYS: path = oCore::filesystem::system_path(); break;
+				case oSYSPATH_OS: path = oCore::filesystem::os_path(); break;
+				case oSYSPATH_DEV: path = oCore::filesystem::dev_path(); break;
+				case oSYSPATH_TESTTMP: path = oCore::filesystem::temp_path(); break;
+				case oSYSPATH_DESKTOP: path = oCore::filesystem::desktop_path(); break;
+				case oSYSPATH_DESKTOP_ALLUSERS: path = oCore::filesystem::desktop_path(); break;
+				case oSYSPATH_DATA: path = oCore::filesystem::data_path(); break;
+				default: oErrorSetLast(std::errc::protocol_error, "Failed to find %s", oStd::as_string(SysPath)); return nullptr;
+			}
+
+			if (strlcpy(_Path, path, _SizeofPath) >= _SizeofPath)
+			{
+				oErrorSetLast(std::errc::no_buffer_space);
+				return nullptr;
+			}
+
+			if (!oEnsureSeparator(_Path, _SizeofPath) && oErrorGetLast() != std::errc::operation_in_progress)
+			{
+				oErrorSetLast(std::errc::no_buffer_space);
+				return nullptr;
+			}
+
+			if (-1 == oStrAppendf(_Path, _SizeofPath, _URIParts.Path))
+			{
+				oErrorSetLast(std::errc::no_buffer_space);
+				return nullptr;
+			}
+		}
+
+		else if (!oURIPartsToPath(_Path, _SizeofPath, _URIParts))
+		{
+			oErrorSetLast(std::errc::invalid_argument);
+			return nullptr;
+		}
+	}
+
+	return _Path;
+}
+template<size_t size> char* oSystemURIPartsToPath(char (&_ResultingFullPath)[size], const oURIParts& _URIParts) { return oSystemURIPartsToPath(_ResultingFullPath, size, _URIParts); }
+template<size_t capacity> char* oSystemURIPartsToPath(oStd::fixed_string<char, capacity>& _ResultingFullPath, const oURIParts& _URIParts) { return oSystemURIPartsToPath(_ResultingFullPath, _ResultingFullPath.capacity(), _URIParts); }
+
+static bool oFileGetDesc(const oStd::path& _Path, oSTREAM_DESC* _pDesc)
+{
+	try
+	{
+		auto status = oCore::filesystem::status(_Path);
+		_pDesc->Created = 0;
+		_pDesc->Accessed = 0;
+		_pDesc->Written = oCore::filesystem::last_write_time(_Path);
+		_pDesc->Size = oCore::filesystem::file_size(_Path);
+		_pDesc->Directory = oCore::filesystem::is_directory(status);
+		_pDesc->Hidden = false;
+		_pDesc->ReadOnly = oCore::filesystem::is_read_only(status);
+	}
+
+	catch (std::exception&)
+	{
+		return false;
+	}
+	return true;
+}
+
+namespace oStd {
+
+	const char* as_string(const oSYSPATH& _SysPath)
+	{
+		switch (_SysPath)
+		{
+			case oSYSPATH_CWD: return "oSYSPATH_CWD";
+			case oSYSPATH_APP: return "oSYSPATH_APP";
+			case oSYSPATH_APP_FULL: return "oSYSPATH_APP_FULL";
+			case oSYSPATH_SYSTMP: return "oSYSPATH_SYSTMP";
+			case oSYSPATH_SYS: return "oSYSPATH_SYS";
+			case oSYSPATH_OS: return "oSYSPATH_OS";
+			case oSYSPATH_DEV: return "oSYSPATH_DEV";
+			case oSYSPATH_TESTTMP: return "oSYSPATH_TESTTMP";
+			case oSYSPATH_COMPILER_INCLUDES: return "oSYSPATH_COMPILER_INCLUDES";
+			case oSYSPATH_DESKTOP: return "oSYSPATH_DESKTOP";
+			case oSYSPATH_DESKTOP_ALLUSERS: return "oSYSPATH_DESKTOP_ALLUSERS";
+			case oSYSPATH_DATA: return "oSYSPATH_DATA";
+			oNODEFAULT;
+		}
+	}
+
+bool from_string(oSYSPATH* _pValue, const char* _StrSource)
+{
+	static const char* sStrings[] =
+	{
+		"oSYSPATH_CWD",
+		"oSYSPATH_APP",
+		"oSYSPATH_APP_FULL",
+		"oSYSPATH_SYSTMP",
+		"oSYSPATH_SYS",
+		"oSYSPATH_OS",
+		"oSYSPATH_DEV",
+		"oSYSPATH_TESTTMP",
+		"oSYSPATH_COMPILER_INCLUDES",
+		"oSYSPATH_DESKTOP",
+		"oSYSPATH_DESKTOP_ALLUSERS",
+		"oSYSPATH_P4ROOT",
+		"oSYSPATH_DATA",
+	};
+
+	oStd::sstring SourceUppercase = _StrSource;
+	oStd::toupper(SourceUppercase);
+	oFORI(i, sStrings)
+	{
+		if (!oStrcmp(_StrSource, sStrings[i]) || !oStrcmp(SourceUppercase, sStrings[i]+9)) // +9 match against just "OS" or "HOST" after oSYSPATH_
+		{
+			*_pValue = (oSYSPATH)i;
+			return true;
+		}
+	}
+	return false;
+}
+
+} // namespace oStd
 
 static void oSetHighLowOffset(long& _low, long& _high, oULLong _offset)
 {
@@ -89,7 +241,7 @@ struct oFileReaderImpl : public oStreamReader
 		else
 		{
 			oSTREAM_DESC FDesc;
-			oFileGetDesc(Path, &FDesc);
+			oFileGetDesc(oStd::path(Path), &FDesc);
 			Desc.Initialize(FDesc);
 
 			if (!oDispatchQueueCreateGlobalIOCP("File reader dispatch queue", 10, &ReadQueue))
@@ -223,8 +375,8 @@ struct oFileWriterImpl : public oStreamWriter
 		*_pSuccess = false;
 
 		oSystemURIPartsToPath(ResolvedPath.Initialize(), _URIParts);
-		if (!oFileEnsureParentFolderExists(*ResolvedPath))
-			return; // pass through error
+		
+		oCore::filesystem::create_directories(oStd::path(*ResolvedPath).parent_path());
 
 		// @oooii-tony:
 		// FILE_SHARE_READ added here for a sole purpose: so a programmer can open
@@ -260,7 +412,7 @@ struct oFileWriterImpl : public oStreamWriter
 	
 	void GetDesc(oSTREAM_DESC* _pDesc) threadsafe override
 	{
-		oVERIFY(oFileGetDesc(*ResolvedPath, _pDesc));
+		oFileGetDesc(oStd::path(*ResolvedPath), _pDesc);
 	}
 
 	void DispatchWrite(const oSTREAM_WRITE& _Write, continuation_t _Continuation) threadsafe override
@@ -401,13 +553,7 @@ struct oFileMonitorImpl : public oStreamMonitor
 		URIParts.Initialize(FolderURIParts);
 
 		oSTREAM_DESC fd;
-		if (!oFileGetDesc(Path, &fd))
-		{
-			oStd::uri_string URI;
-			oURIRecompose(URI, _URIParts);
-			oErrorSetLast(std::errc::invalid_argument, "Invalid uri: %s", URI.c_str());
-			return;
-		}
+		oFileGetDesc(oStd::path(Path), &fd);
 		
 		if (!fd.Directory)
 		{
@@ -693,7 +839,7 @@ bool oFileSchemeHandlerImpl::GetDesc(const oURIParts& _URIParts, oSTREAM_DESC* _
 {
 	oStd::path_string Path;
 	oSystemURIPartsToPath(Path, _URIParts);
-	return oFileGetDesc(Path, _pDesc);
+	return oFileGetDesc(oStd::path(Path), _pDesc);
 }
 
 bool oFileSchemeHandlerImpl::Copy(const oURIParts& _Source, const oURIParts& _Destination, bool _Recursive) threadsafe
@@ -701,7 +847,13 @@ bool oFileSchemeHandlerImpl::Copy(const oURIParts& _Source, const oURIParts& _De
 	oStd::path_string S, D;
 	oSystemURIPartsToPath(S, _Source);
 	oSystemURIPartsToPath(D, _Destination);
-	return oFileCopy(S, D, _Recursive);
+
+	if (_Recursive)
+		oCore::filesystem::copy_all(oStd::path(S), oStd::path(D), oCore::filesystem::copy_option::overwrite_if_exists);
+	else
+		oCore::filesystem::copy_file(oStd::path(S), oStd::path(D), oCore::filesystem::copy_option::overwrite_if_exists);
+
+	return true;
 }
 
 bool oFileSchemeHandlerImpl::Move(const oURIParts& _Source, const oURIParts& _Destination, bool _OverwriteDestination) threadsafe
@@ -709,14 +861,16 @@ bool oFileSchemeHandlerImpl::Move(const oURIParts& _Source, const oURIParts& _De
 	oStd::path_string S, D;
 	oSystemURIPartsToPath(S, _Source);
 	oSystemURIPartsToPath(D, _Destination);
-	return oFileMove(S, D, _OverwriteDestination);
+	oCore::filesystem::rename(oStd::path(S), oStd::path(D), _OverwriteDestination ? oCore::filesystem::copy_option::overwrite_if_exists : oCore::filesystem::copy_option::fail_if_exists);
+	return true;
 }
 
 bool oFileSchemeHandlerImpl::Delete(const oURIParts& _URIParts) threadsafe
 {
 	oStd::path_string Path;
 	oSystemURIPartsToPath(Path, _URIParts);
-	return oFileDelete(Path);
+	oCore::filesystem::remove_all(oStd::path(Path));
+	return true;
 }
 
 bool oFileSchemeHandlerImpl::CreateStreamReader(const oURIParts& _URIParts, threadsafe oStreamReader** _ppReader) threadsafe

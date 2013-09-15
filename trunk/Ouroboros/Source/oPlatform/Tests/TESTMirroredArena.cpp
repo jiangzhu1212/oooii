@@ -24,14 +24,15 @@
  **************************************************************************/
 #include <oBasis/oAllocatorTLSF.h>
 #include <oStd/byte.h>
+#include <oCore/page_allocator.h>
 #include <oBasis/oPath.h>
 #include <oBasis/oError.h>
 #include <oConcurrency/event.h>
 #include <oPlatform/oMirroredArena.h>
-#include <oPlatform/oPageAllocator.h>
-#include <oPlatform/oProcess.h>
 #include <oPlatform/oSocket.h>
 #include <oPlatform/oTest.h>
+
+using namespace oCore::page_allocator;
 
 void* BASE_ADDRESS = (void*)(oMirroredArena::GetRequiredAlignment() * 10);
 const static size_t ARENA_SIZE = 512 * 1024;
@@ -45,26 +46,26 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 {
 	*_StrStatus = 0;
 
-	oStd::intrusive_ptr<threadsafe oProcess> Client;
+	std::shared_ptr<oCore::process> Client;
 	{
 		int exitcode = 0;
 		char msg[512];
 		*msg = 0;
 		oTESTB(oSpecialTest::CreateProcess("PLATFORM_oMirroredArenaClient", &Client), "");
-		oTESTB(oSpecialTest::Start(Client, msg, oCOUNTOF(msg), &exitcode), "%s", msg);
+		oTESTB(oSpecialTest::Start(Client.get(), msg, oCOUNTOF(msg), &exitcode), "%s", msg);
 		oTRACE("SERVER: starting mirrored arena construction...");
 	}
 
 	oStd::intrusive_ptr<oMirroredArena> MirroredArenaServer;
 
 	oStd::finally OnScopeExit([&] { 
-		oPageUnreserve(BASE_ADDRESS); 
+		unreserve(BASE_ADDRESS); 
 		MirroredArenaServer = nullptr;
 	});
 	{
 		oMirroredArena::DESC desc;
 		oTRACE("SERVER: oPageReserveAndCommit...");
-		desc.BaseAddress = oPageReserveAndCommit(BASE_ADDRESS, ARENA_SIZE);
+		desc.BaseAddress = reserve_and_commit(BASE_ADDRESS, ARENA_SIZE);
 
 		if (!desc.BaseAddress)
 		{
@@ -119,7 +120,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 
 	// ensure some space so when we're testing for ranges below, there's some
 	// gap.
-	static const size_t kPad = oPageGetPageSize() * 2;
+	static const size_t kPad = page_size() * 2;
 
 	char** test2Strings = static_cast<char**>(AllocatorServer->Allocate(kPad + oCOUNTOF(TEST2) * sizeof(char*)));
 	oTESTB(test2Strings, "test2Strings allocation failed");
@@ -190,16 +191,16 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 	AllocatorServer->Reset(); // blow away the memory, buffer is in flight
 
 	oTRACE("SERVER: waiting for client process to exit.");
-	oTESTB(Client->Wait(10000), "Client did not close cleanly");
+	oTESTB(Client->wait_for(oSeconds(10)), "Client did not close cleanly");
 	oTRACE("SERVER: client process exited.");
 
 	int exitcode = 0;
-	oTESTB(Client->GetExitCode(&exitcode), "Failed to get final exit code");
+	oTESTB(Client->exit_code(&exitcode), "Failed to get final exit code");
 
 	if (exitcode)
 	{
 		char msg[4096];
-		size_t bytes = Client->ReadFromStdout(msg, oCOUNTOF(msg));
+		size_t bytes = Client->from_stdout(msg, oCOUNTOF(msg));
 		msg[bytes] = 0;
 		oPrintf(_StrStatus, _SizeofStrStatus, "%s", msg);
 		return oTest::FAILURE;
@@ -243,12 +244,12 @@ struct PLATFORM_oMirroredArenaClient : public oSpecialTest
 		oStd::intrusive_ptr<oMirroredArena> MirroredArenaClient;
 
 		oStd::finally OnScopeExit([&] { 
-			oPageUnreserve(BASE_ADDRESS); 
+			unreserve(BASE_ADDRESS); 
 			MirroredArenaClient = nullptr;
 		});
 		{
 			oMirroredArena::DESC desc;
-			desc.BaseAddress = oPageReserveAndCommit(BASE_ADDRESS, ARENA_SIZE, false);
+			desc.BaseAddress = reserve_and_commit(BASE_ADDRESS, ARENA_SIZE, false);
 
 			if (!desc.BaseAddress)
 			{

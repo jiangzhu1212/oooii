@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oPlatform/oProcess.h>
 #include <oPlatform/oWindow.h>
 #include <oPlatform/Windows/oWinKey.h>
 #include <oConcurrency/event.h>
@@ -92,25 +91,25 @@ struct PLATFORM_WindowSendKeys : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		unsigned int ID = oProcessGetID("notepad.exe");
+		oCore::process::id ID = oCore::process::get_id("notepad.exe");
 
-		oStd::intrusive_ptr<threadsafe oProcess> Client;
+		std::shared_ptr<oCore::process> Client;
 		{
 			int exitcode = 0;
 			oStd::lstring msg;
 			oTESTB(oSpecialTest::CreateProcess("PLATFORM_WindowSendKeysClient", &Client), "");
-			oTESTB(oSpecialTest::Start(Client, msg, msg.capacity(), &exitcode), "%s", msg);
+			oTESTB(oSpecialTest::Start(Client.get(), msg, msg.capacity(), &exitcode), "%s", msg);
 		}
 
 		HWND Hwnd;
 		unsigned int ThreadID;
-		oWinGetProcessTopWindowAndThread(Client->GetProcessID(), &Hwnd, &ThreadID);
+		oWinGetProcessTopWindowAndThread(Client->get_id(), &Hwnd, &ThreadID);
 		oWinSendASCIIMessage(Hwnd, ThreadID, TESTMessage);
 
-		oTESTB0(Client->Wait());
+		oTESTB0(Client->wait_for(oSeconds(10)));
 
 		int ClientExitCode;
-		oTESTB(Client->GetExitCode(&ClientExitCode), "Could not get exit code for Client process");
+		oTESTB(Client->exit_code(&ClientExitCode), "Could not get exit code for Client process");
 
   		return SUCCESS;
 	}

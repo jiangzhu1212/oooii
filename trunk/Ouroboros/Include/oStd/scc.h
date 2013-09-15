@@ -61,7 +61,7 @@ class scc_exception : public std::system_error
 namespace scc_protocol
 {	enum value {
 
-	perforce,
+	p4,
 	svn,
 	git,
 
@@ -123,9 +123,8 @@ struct scc_revision
 
 typedef std::function<void(char* _Line)> scc_get_line;
 
-typedef std::function<bool(const char* _Commandline
+typedef std::function<int(const char* _Commandline
 	, const scc_get_line& _GetLine
-	, int* _pExitCode
 	, unsigned int _TimeoutMS)> scc_spawn;
 
 typedef std::function<void(const scc_file& _File)> scc_file_enumerator;

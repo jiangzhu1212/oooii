@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oKinect/oGestureManager.h>
 #include <oPlatform/oStreamUtil.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/Windows/oWinSkeleton.h>
 #include <oKinect/oKinectGDI.h>
@@ -198,8 +197,7 @@ oGestureManagerImpl::oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, thr
 	// @oooii-tony: todo: make this respect oStream's path stuff.
 	// !!! un-hard-code the paths to oPlayer2 stuff !!!
 	{
-		oStd::uri_string dev_uri;
-		oVERIFY(oSystemGetURI(dev_uri, oSYSPATH_DEV));
+		oStd::uri_string dev_uri(oCore::filesystem::dev_path());
 
 		oStd::uri_string AirKB = dev_uri;
 		oStrAppendf(AirKB, "oooii/Source/oPlayer2/AirKeyboards.xml");
@@ -675,10 +673,8 @@ void oGestureManagerImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 		case oGUI_SIZED:
 		{
 			// Keep the font proportional to the size of the rectangle.
-			int DIndex = oWinGetDisplayIndex((HWND)_Event.hWindow);
-			oDISPLAY_DESC dd;
-			oDisplayEnum(DIndex, &dd);
-			float2 Ratio = float2(VizDesc.Size) / float2(dd.Mode.Size);
+			oCore::display::info di = oCore::display::get_info(oWinGetDisplayId((HWND)_Event.hWindow));
+			float2 Ratio = float2(VizDesc.Size) / float2(int2(di.mode.width, di.mode.height));
 			float R = min(Ratio);
 			oGUI_FONT_DESC fd;
 			fd.PointSize = oInt(round(R * 50.0f));

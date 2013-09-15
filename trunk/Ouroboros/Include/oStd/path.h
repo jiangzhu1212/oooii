@@ -109,6 +109,12 @@ public:
 		}
 	}
 
+	basic_path operator/(const basic_path& _That) const
+	{
+		basic_path p(*this);
+		return std::move(p /= _That);
+	}
+
 	basic_path& operator/=(const char_type* _That)
 	{
 		append(_That);
@@ -124,7 +130,7 @@ public:
 		return *this;
 	}
 
-	basic_path& replace_extension(const string_type& _NewExtension = string_type())
+	basic_path& replace_extension(const string_type& _NewExtension)
 	{
 		return replace_extension(_NewExtension.c_str());
 	}
@@ -299,92 +305,12 @@ typedef basic_path<wchar_t, default_windows_path_traits<wchar_t>> windows_wpath;
 typedef posix_path path;
 typedef posix_wpath wpath;
 
-namespace detail
-{
-	// Helper for split_path below
-	template<typename charT, typename traits>
-	static const charT* find_parent_end(const charT* _Path, const charT* _Basename, bool _UNC)
-	{
-		const charT* end = _Basename;
-		while (end >= _Path && traits::is_sep(*end)) end--;
-		if (!_UNC && end > (_Path+1)) end--;
-		while (end > (_Path+1) && traits::is_sep(*end) && traits::is_sep(*(end-1))) end--;
-		return end;
-	}
-
-	// Fills the specified pointers with important components of _Path.
-	// This returns the length of _Path.
-	// Use _Path for the volume/unc root
-	// _ppPath will be filled with the directory path that starts after the volume 
-	// _ppParentPathEnd will be filled with the pointer just after the last 
-	// character in the path leading up to either the leaf directory or filename.
-	// or root, or _Path if there is no volume or root.
-	// _ppBasename will point to just after the right-most slash or nullptr if one 
-	// does not exist.
-	// _ppExt will point to the right-most dot or nullptr if one does not exist.
-	template<typename charT, typename traits>
-	size_t split_path(const charT* _Path, const charT** _ppRoot, const charT** _ppPath, const charT** _ppParentPathEnd, const charT** _ppBasename, const charT** _ppExt)
-	{
-		*_ppPath = *_ppParentPathEnd = *_ppBasename = *_ppExt = nullptr;
-		const size_t len = std::char_traits<charT>::length(_Path);
-		const bool unc = traits::is_unc(_Path);
-		const charT* NonUNCPath = _Path;
-		if (unc)
-		{
-			*_ppRoot = _Path;
-			NonUNCPath = _Path + 2;
-		}
-
-		else if (traits::has_vol(_Path))
-			*_ppRoot = _Path;
-
-		const charT* cur = _Path + len - 1;
-		while (cur >= NonUNCPath)
-		{
-			if (traits::is_sep(*cur))
-			{
-				// *(cur+1) fails with foo/ because it's a valid null basename
-				// cur != _Path fails with "/" because there is no parent
-				if (!*_ppBasename)
-				{
-					if (traits::is_sep(NonUNCPath[0]) && !NonUNCPath[1])
-						*_ppBasename = NonUNCPath;
-					else
-						*_ppBasename = cur + 1;
-					if (*_ppExt)
-					{
-						*_ppParentPathEnd = find_parent_end<charT, traits>(_Path, *_ppBasename, unc);
-						return len;
-					}
-				}
-			}
-
-			else if (traits::is_dot(*cur) && !*_ppExt)
-				*_ppExt = cur;
-
-			cur--;
-		}
-
-		if (*_ppExt && !*_ppBasename && (!(*_ppExt)[1] || traits::is_dot((*_ppExt)[1]))) // "." or ".."
-			*_ppExt = nullptr;
-
-		if (*_ppBasename)
-		{
-			*_ppParentPathEnd = find_parent_end<charT, traits>(_Path, *_ppBasename, unc);
-			if (!**_ppBasename)
-				*_ppBasename = nullptr;
-		}
-
-		return len;
-	}
-}
-
 template<typename charT, typename TraitsT>
 void basic_path<charT, TraitsT>::parse()
 {
 	if (traits::always_clean) clean_path(p, p);
 	const char_type *rootname = nullptr, *path = nullptr, *parentend = nullptr, *base = nullptr, *ext = nullptr;
-	Length = static_cast<index_type>(detail::split_path<charT, TraitsT>(p, &rootname, &path, &parentend, &base, &ext));
+	Length = static_cast<index_type>(tsplit_path<charT>(p, traits::posix, &rootname, &path, &parentend, &base, &ext));
 	HasRootName = !!rootname;
 	BasenameOffset = idx(base);
 	ExtensionOffset = idx(ext);

@@ -29,7 +29,6 @@
 #include <oPlatform/Windows/oWindows.h>
 #include <oPlatform/Windows/oWinSkeleton.h>
 #include <oPlatform/Windows/oWinRect.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oPlatform/oMsgBox.h>
@@ -299,8 +298,7 @@ oKinectTestApp::oKinectTestApp()
 
 	// Register input handlers
 
-	oStd::uri_string dev_uri;
-	oVERIFY(oSystemGetURI(dev_uri, oSYSPATH_DEV));
+	oStd::uri_string dev_uri(oCore::filesystem::dev_path());
 	
 	{
 		oVERIFY(oAirKeyboardCreate(&AirKeyboard));
@@ -412,10 +410,8 @@ void oKinectTestApp::MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index)
 	{
 		case oGUI_SIZED:
 		{
-			int DIndex = kw.Window->GetDisplayIndex();
-			oDISPLAY_DESC dd;
-			oDisplayEnum(DIndex, &dd);
-			float2 Ratio = float2(_Event.AsShape().Shape.ClientSize) / float2(dd.Mode.Size);
+			oCore::display::info di = oCore::display::get_info(kw.Window->GetDisplayId());
+			float2 Ratio = float2(_Event.AsShape().Shape.ClientSize) / float2(int2(di.mode.width, di.mode.height));
 			float R = max(Ratio);
 			oGUI_FONT_DESC fd;
 			fd.PointSize = oInt(round(R * 35.0f));

@@ -22,50 +22,33 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Use oStream API for most common I/O operations. In some cases, especially 
-// when dealing directly with platform API calls, more direct file access is
-// needed, however there is a certain amount of policy and common behavior to 
-// install on top of platform calls. To enable this, expose file APIs only to
-// oPlatform code and only advertise oStream and advanced oFile API outside of 
-// oPlatform implementation.
-#pragma once
-#ifndef oFileInternal_h
-#define oFileInternal_h
+#include <oStd/vendor.h>
 
-#include <oPlatform/oFile.h>
+namespace oStd {
 
-oDECLARE_HANDLE(oHFILE);
-
-enum oFILE_SEEK
+const char* as_string(const vendor::value& _Vendor)
 {
-	oSEEK_SET,
-	oSEEK_CUR,
-	oSEEK_END,
-};
+	switch (_Vendor)
+	{
+		case vendor::unknown: return "unknown";
+		case vendor::amd: return "amd";
+		case vendor::apple: return "Apple";
+		case vendor::arm: return "ARM";
+		case vendor::intel: return "Intel";
+		case vendor::internal: return "internal";
+		case vendor::lg: return "LG";
+		case vendor::maxtor: return "Maxtor";
+		case vendor::microsoft: return "Microsoft";
+		case vendor::nintendo: return "Nintendo";
+		case vendor::nvidia: return "NVIDIA";
+		case vendor::sandisk: return "SanDisk";
+		case vendor::samsung: return "Samsung";
+		case vendor::sony: return "Sony";
+		case vendor::vizio: return "Vizio";
+		case vendor::western_digital: return "Western Digital";
+		default: break;
+	}
+	return "unrecognized vendor";
+}
 
-enum oFILE_OPEN
-{
-	oFILE_OPEN_BIN_READ,
-	oFILE_OPEN_BIN_WRITE,
-	oFILE_OPEN_BIN_APPEND,
-	oFILE_OPEN_TEXT_READ,
-	oFILE_OPEN_TEXT_WRITE,
-	oFILE_OPEN_TEXT_APPEND,
-};
-
-bool oFileGetDesc(const char* _Path, oSTREAM_DESC* _pDesc);
-bool oFileExists(const char* _Path);
-bool oFileOpen(const char* _Path, oFILE_OPEN _Open, oHFILE* _phFile);
-bool oFileClose(oHFILE _hFile);
-unsigned long long oFileTell(oHFILE _hFile);
-bool oFileSeek(oHFILE _hFile, long long _Offset, oFILE_SEEK _Origin = oSEEK_SET);
-unsigned long long oFileRead(oHFILE _hFile, void* _pDestination, unsigned long long _SizeofDestination, unsigned long long _ReadSize);
-unsigned long long oFileWrite(oHFILE _hFile, const void* _pSource, unsigned long long _WriteSize, bool _Flush = false);
-unsigned long long oFileGetSize(oHFILE _hFile);
-bool oFileAtEnd(oHFILE _hFile);
-bool oFileTouch(oHFILE _hFile, time_t _PosixTimestamp);
-bool oFileCopy(const char* _PathFrom, const char* _PathTo, bool _Recursive = true);
-bool oFileMove(const char* _PathFrom, const char* _PathTo, bool _Force = false);
-bool oFileDelete(const char* _Path);
-
-#endif
+} // namespace oStd

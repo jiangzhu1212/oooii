@@ -183,6 +183,9 @@
     <ProjectReference Include="..\oConcurrency\oConcurrency.vcxproj">
       <Project>{08ec5ea1-284b-4688-b14b-4bd9945061fb}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\oCore\oCore.vcxproj">
+      <Project>{7dc758b0-32cf-4bbc-abde-0eb53b9ef93c}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\oHLSL\oHLSL.vcxproj">
       <Project>{aae3c7d9-8124-4b5a-856c-4c5bf23cdb09}</Project>
     </ProjectReference>

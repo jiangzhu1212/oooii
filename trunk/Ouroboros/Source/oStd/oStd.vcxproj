@@ -90,6 +90,7 @@
     <ClCompile Include="string\relativize_path.cpp" />
     <ClCompile Include="string\replace.cpp" />
     <ClCompile Include="string\rstrstr.cpp" />
+    <ClCompile Include="string\split_path.cpp" />
     <ClCompile Include="string\strbitmask.cpp" />
     <ClCompile Include="string\stringize.cpp" />
     <ClCompile Include="string\strmatch.cpp" />
@@ -98,9 +99,11 @@
     <ClCompile Include="string\type_name.cpp" />
     <ClCompile Include="string\wcselipsize.cpp" />
     <ClCompile Include="string\wcsltombs.cpp" />
+    <ClCompile Include="string\wsplit_path.cpp" />
     <ClCompile Include="text_document.cpp" />
     <ClCompile Include="thread.cpp" />
     <ClCompile Include="uri.cpp" />
+    <ClCompile Include="vendor.cpp" />
     <ClCompile Include="version.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -159,6 +162,7 @@
     <ClInclude Include="..\..\Include\oStd\unordered_map.h" />
     <ClInclude Include="..\..\Include\oStd\uri.h" />
     <ClInclude Include="..\..\Include\oStd\uri_traits.h" />
+    <ClInclude Include="..\..\Include\oStd\vendor.h" />
     <ClInclude Include="..\..\Include\oStd\version.h" />
     <ClInclude Include="..\..\Include\oStd\xml.h" />
     <ClInclude Include="memory\memduff.h" />

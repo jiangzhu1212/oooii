@@ -29,7 +29,6 @@
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinTray.h>
 #include <oPlatform/Windows/oWinWindowing.h>
-#include <oPlatform/oProcess.h>
 
 #if defined(_WIN32) || defined(_WIN64)
 	// Use the Windows Vista UI look. If this causes issues or the dialog not to appear, try other values from processorAchitecture { x86 ia64 amd64 * }
@@ -390,7 +389,7 @@ oMSGBOX_RESULT oMsgBoxV(const oMSGBOX_DESC& _Desc, const char* _Format, va_list 
 	unsigned int ThreadID;
 
 	if (!hWnd)
-		oWinGetProcessTopWindowAndThread(oProcessGetCurrentID(), &hWnd, &ThreadID);
+		oWinGetProcessTopWindowAndThread(oCore::this_process::get_id(), &hWnd, &ThreadID);
 
 	switch (_Desc.Type)
 	{

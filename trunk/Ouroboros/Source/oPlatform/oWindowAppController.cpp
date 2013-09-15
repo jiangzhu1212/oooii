@@ -26,7 +26,6 @@
 #include <oPlatform/Windows/oWinKey.h>
 #include <oPlatform/Windows/oWinWindowing.h>
 #include <oPlatform/Windows/oGDI.h>
-#include <oPlatform/oProcess.h>
 
 const oGUID& oGetGUID( threadsafe const oWindowAppController* threadsafe const * )
 {
@@ -51,8 +50,8 @@ public:
 private:
 	oRefCount Refcount;
 
-	unsigned int ProcessID;
-	unsigned int ProcessThreadID;
+	oCore::process::id ProcessID;
+	oCore::process::id ProcessThreadID;
 	HWND hWnd;
 };
 
@@ -65,14 +64,14 @@ bool oWindowAppControllerCreate(const char* _pProcessName, const char* _pWindowN
 
 oWindowAppControllerImpl::oWindowAppControllerImpl(const char* _pProcessName, const char* _pWindowName, bool* _pSuccess)
 {
-	ProcessID = oProcessGetID(_pProcessName);
+	ProcessID = oCore::process::get_id(_pProcessName);
 	if(0 == ProcessID)
 	{
 		oErrorSetLast(std::errc::no_such_process);
 		return; // Pass error
 	}
 
-	if(!oWinGetProcessTopWindowAndThread(ProcessID, &hWnd, &ProcessThreadID, _pWindowName))
+	if(!oWinGetProcessTopWindowAndThread(ProcessID, &hWnd, (unsigned int*)&ProcessThreadID, _pWindowName))
 		return; // Pass error
 
 	*_pSuccess = true;

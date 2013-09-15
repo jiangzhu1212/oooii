@@ -101,13 +101,10 @@ char* oURIFromAbsolutePath(char* _URI, size_t _SizeofURI, const char* _AbsoluteP
 char* oURIFromRelativePath(char* _URIReference, size_t _SizeofURIReference, const char* _RelativePath);
 
 // Converts a URI to a file path. This expects a file scheme, and also handles
-// UNC paths properly. NOTE: Prefer oSystemURIToPath in oPlatform/oSystem.h 
-// because it supports specifying oSYSPATHs as authorities.
+// UNC paths properly.
 char* oURIToPath(char* _Path, size_t _SizeofPath, const char* _URI);
 
-// Convert an oURIParts struct to a path, properly handling UNC paths. NOTE: 
-// Prefer oSystemURIPartsToPath in oPlatform/oSystem.h because it supports 
-// specifying oSYSPATHs as authorities.
+// Convert an oURIParts struct to a path, properly handling UNC paths.
 char* oURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIParts);
 
 // Note that this function doesn't conform 100% to expectation, it assumes that base and reference have

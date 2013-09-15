@@ -35,19 +35,14 @@
 // that lib too (without shims)...
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oConsole.h>
-#include <oPlatform/oCPU.h> // only used to print (TRACE) out CPU stats
-#include <oPlatform/oDebugger.h> // needed to ensure leak tracker is up before oTestManager
 #include <oPlatform/oDisplay.h> // to print out driver versions
 #include <oPlatform/oInterprocessEvent.h> // inter-process event required to sync "special tests" as they launch a new process
-#include <oPlatform/oFile.h> // needed for oFileExists... this could be passed through as an oFUNCTION
 #include <oPlatform/oImage.h> // the crux of most tests... going to be hard to get rid of this dependency
-#include <oPlatform/oModule.h> // For oModuleGetDesc
 #include <oPlatform/oMsgBox.h> // only used to notify about zombies
 #include <oPlatform/oProgressBar.h> // only really so it itself can be tested, but perhaps this can be moved to a unit test?
-#include <oPlatform/oProcess.h> // used to launch special tests
 #include <oPlatform/oStandards.h> // standard colors for a console app, maybe this can be callouts? log file path... can be an option?
+#include <oPlatform/oStream.h> // oStreamExists
 #include <oPlatform/oStreamUtil.h> // used for loading buffers
-#include <oPlatform/oSystem.h> // used for getting various paths
 #include <algorithm>
 #include <unordered_map>
 
@@ -71,14 +66,14 @@ static bool oTestTerminateInterferingProcesses(bool _PromptUser = true)
 		"FahCore_a4.exe",
 	};
 
-	oStd::fixed_vector<unsigned int, oCOUNTOF(sExternalProcessNames)> ActiveProcesses;
+	oStd::fixed_vector<oCore::process::id, oCOUNTOF(sExternalProcessNames)> ActiveProcesses;
 
 	oStd::xlstring Message;
 	oPrintf(Message, "The following active processes will interfere with tests either by using resources during benchmark tests or by altering image compares.\n");
 
 	oFORI(i, sExternalProcessNames)
 	{
-		unsigned int PID = oProcessGetID(sExternalProcessNames[i]);
+		oCore::process::id PID = oCore::process::get_id(sExternalProcessNames[i]);
 		if (PID)
 		{
 			oStrAppendf(Message, "%s\n", sExternalProcessNames[i]);
@@ -101,26 +96,33 @@ static bool oTestTerminateInterferingProcesses(bool _PromptUser = true)
 TryAgain:
 		if (r == oMSGBOX_YES && retries)
 		{
-			oFOR(unsigned int PID, ActiveProcesses)
+			oFOR(auto PID, ActiveProcesses)
 			{
-				if (!oProcessTerminate(PID, 0x0D1EC0DE) && oErrorGetLast() != std::errc::no_such_process)
+				try { oCore::process::terminate(PID, 0x0D1EC0DE); }
+				catch (std::system_error& e)
 				{
-					oStd::path_string Name("(null)");
-					if (!oProcessGetName(Name, PID))
-						continue; // might've been a child of another process on the list, so it appears it's no longer around, thus continue.
-
-					else if (_PromptUser)
-						r = oMsgBox(mb, "Terminating Process '%s' (%u) failed. Please close the process manually.\n\nTry Again?", Name.c_str(), PID);
-					else
+					if (e.code().value() != std::errc::no_such_process)
 					{
-						if (0 == --retries)
-							return oErrorSetLast(std::errc::permission_denied, "Process '%s' (%u) could not be terminated", Name.c_str(), PID);
+						oStd::path Name;
+						try { Name = oCore::process::get_name(PID); }
+						catch (std::exception&)
+						{
+							continue; // might've been a child of another process on the list, so it appears it's no longer around, thus continue.
+						}
+
+						if (_PromptUser)
+							r = oMsgBox(mb, "Terminating Process '%s' (%u) failed. Please close the process manually.\n\nTry Again?", Name.c_str(), PID);
+						else
+						{
+							if (0 == --retries)
+								return oErrorSetLast(std::errc::permission_denied, "Process '%s' (%u) could not be terminated", Name.c_str(), PID);
+						}
+
+						if (r == oMSGBOX_NO)
+							return oErrorSetLast(std::errc::operation_canceled, "Process '%s' (%u) could not be terminated and the user elected to continue", Name.c_str(), PID);
+
+						goto TryAgain;
 					}
-
-					if (r == oMSGBOX_NO)
-						return oErrorSetLast(std::errc::operation_canceled, "Process '%s' (%u) could not be terminated and the user elected to continue", Name.c_str(), PID);
-
-					goto TryAgain;
 				}
 			}
 		}
@@ -140,14 +142,13 @@ static bool oTestNotifyOfAntiVirus(bool _PromptUser)
 		"avgrsa.exe",
 		"avggui.exe",
 		"avgwdsvc.exe",
-
-		// @oooii-tony: TODO: Add more AntiVirus processes
+		// TODO: Add more AntiVirus processes
 	};
 
-	unsigned int AVPID = 0;
+	oCore::process::id AVPID;
 	oFORI(i, sAntiVirusProcesses)
 	{
-		AVPID = oProcessGetID(sAntiVirusProcesses[i]);
+		AVPID = oCore::process::get_id(sAntiVirusProcesses[i]);
 		if (AVPID)
 			break;
 	}
@@ -221,7 +222,7 @@ struct oTestManager_Impl : public oTestManager
 	typedef std::vector<RegisterTestBase*> tests_t;
 	tests_t Tests;
 	DESC Desc;
-	oStd::fixed_vector<oDISPLAY_ADAPTER_DRIVER_DESC, 8> DriverDescs;
+	oStd::fixed_vector<oCore::adapter::info, 8> DriverDescs;
 	bool ShowProgressBar;
 	std::string TestSuiteName;
 	std::string DataPath;
@@ -261,7 +262,9 @@ oSINGLETON_REGISTER(oTestManagerImplSingleton);
 oTestManagerImplSingleton::oTestManagerImplSingleton()
 	: CRTLeakTracker(oCRTLeakTracker::Singleton())
 {
-	oDebuggerReportCRTLeaksOnExit(true); // oTestManager can be instantiated very early in static init, so make sure we're tracking memory for it
+	// oTestManager can be instantiated very early in static init, so make sure 
+	// we're tracking memory for it
+	oCore::debugger::report_crt_leaks_on_exit(true);
 	pImpl = new oTestManager_Impl();
 }
 
@@ -321,7 +324,7 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 {
 	oTestManager::DESC desc;
 	oTestManager::Singleton()->GetDesc(&desc);
-	oGPU_VENDOR Vendor = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->DriverDescs[0].Vendor; // @oooii-tony: Make this more elegant
+	oStd::vendor::value Vendor = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->DriverDescs[0].vendor; // todo: Make this more elegant
 
 	oStd::path_string golden;
 	BuildDataPath(golden.c_str(), GetName(), desc.DataPath, "GoldenBinaries", desc.GoldenBinariesPath, _NthBinary, _FileExtension);
@@ -336,15 +339,12 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 	oStd::finally SaveTestBuffer([&]
 	{
 		if (bSaveTestBuffer)
-		{
-			if (!oFileSave(output, _pBuffer, _SizeofBuffer, false))
-				oErrorSetLast(std::errc::invalid_argument, "Output binary save failed: %s", output.c_str());
-		}
+			oCore::filesystem::save(oStd::path(output), _pBuffer, _SizeofBuffer, oCore::filesystem::save_option::binary_write);
 	});
 
 	oStd::intrusive_ptr<oBuffer> GoldenBinary;
 	{
-		if (Vendor == oGPU_VENDOR_AMD)
+		if (Vendor == oStd::vendor::amd)
 		{
 			// Try to load a more-specific golden binary, but if it's not there it's
 			// ok to try to use the default one.
@@ -355,7 +355,7 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 		{
 			if (!oBufferLoad(golden, &GoldenBinary))
 			{
-				if (Vendor != oGPU_VENDOR_NVIDIA)
+				if (Vendor != oStd::vendor::nvidia)
 				{
 					oStd::path_string outputAMD;
 					char ext[32];
@@ -491,20 +491,20 @@ struct DriverPaths
 	oStd::path_string DriverSpecific;
 };
 
-static bool oInitialize(const char* _RootPath, const char* _Filename, const oDISPLAY_ADAPTER_DRIVER_DESC& _DriverDesc, DriverPaths* _pDriverPaths)
+static bool oInitialize(const char* _RootPath, const char* _Filename, const oCore::adapter::info& _DriverDesc, DriverPaths* _pDriverPaths)
 {
 	_pDriverPaths->Generic = _RootPath;
 	oEnsureSeparator(_pDriverPaths->Generic);
 	oStd::clean_path(_pDriverPaths->Generic, _pDriverPaths->Generic);
 
-	oPrintf(_pDriverPaths->VendorSpecific, "%s%s/", _pDriverPaths->Generic.c_str(), oStd::as_string(_DriverDesc.Vendor));
+	oPrintf(_pDriverPaths->VendorSpecific, "%s%s/", _pDriverPaths->Generic.c_str(), oStd::as_string(_DriverDesc.vendor));
 
 	oStd::path_string tmp;
-	oPrintf(tmp, "%s%s/", _pDriverPaths->VendorSpecific.c_str(), _DriverDesc.Description.c_str());
+	oPrintf(tmp, "%s%s/", _pDriverPaths->VendorSpecific.c_str(), _DriverDesc.description.c_str());
 	oStd::replace(_pDriverPaths->CardSpecific, tmp, " ", "_");
 
 	oStd::sstring driverVer;
-	oPrintf(_pDriverPaths->DriverSpecific, "%s%s/", _pDriverPaths->CardSpecific.c_str(), oStd::to_string(driverVer, _DriverDesc.Version));
+	oPrintf(_pDriverPaths->DriverSpecific, "%s%s/", _pDriverPaths->CardSpecific.c_str(), oStd::to_string(driverVer, _DriverDesc.version));
 
 	oStrAppendf(_pDriverPaths->Generic, _Filename);
 	oStrAppendf(_pDriverPaths->VendorSpecific, _Filename);
@@ -523,7 +523,7 @@ bool oTest::TestImage(oImage* _pTestImage, unsigned int _NthImage, int _ColorCha
 	oTestManager::DESC TestDesc;
 	oTestManager::Singleton()->GetDesc(&TestDesc);
 
-	const oDISPLAY_ADAPTER_DRIVER_DESC& DriverDesc = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->DriverDescs[0]; // @oooii-tony: Make this more elegant
+	const oCore::adapter::info& DriverDesc = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->DriverDescs[0]; // todo: Make this more elegant
 
 	oStd::sstring nthImageBuf;
 	oStd::path_string Filename;
@@ -557,36 +557,34 @@ bool oTest::TestImage(oImage* _pTestImage, unsigned int _NthImage, int _ColorCha
 	return oErrorSetLast(std::errc::no_such_file_or_directory, "Not found: (Golden).../%s Test Image saved to %s", Filename, FailurePaths.DriverSpecific.c_str());
 }
 
-bool oSpecialTest::CreateProcess(const char* _SpecialTestName, threadsafe oProcess** _ppProcess)
+bool oSpecialTest::CreateProcess(const char* _SpecialTestName, std::shared_ptr<oCore::process>* _pProcess)
 {
-	if (!_SpecialTestName || !_ppProcess)
+	if (!_SpecialTestName || !_pProcess)
 		return oErrorSetLast(std::errc::invalid_argument);
 
-	oStd::xlstring cmdline;
-	if (!oSystemGetPath(cmdline.c_str(), oSYSPATH_APP_FULL))
-		return oErrorSetLast(std::errc::no_such_file_or_directory);
+	oStd::xlstring cmdline = oCore::filesystem::app_path(true);
 
-	oPrintf(cmdline, "%s -s %s", cmdline.c_str(), _SpecialTestName);
-	oProcess::DESC desc;
-	desc.CommandLine = cmdline;
-	desc.EnvironmentString = 0;
-	desc.StdHandleBufferSize = 64 * 1024;
-	return oProcessCreate(desc, _ppProcess);
+	snprintf(cmdline, "%s -s %s", cmdline.c_str(), _SpecialTestName);
+
+	oCore::process::info pi;
+	pi.command_line = cmdline;
+	pi.stdout_buffer_size = oKB(64);
+	*_pProcess = oCore::process::make(pi);
+	return true;
 }
 
 //#define DEBUG_SPECIAL_TEST
 
-bool oSpecialTest::Start(threadsafe interface oProcess* _pProcess, char* _StrStatus, size_t _SizeofStrStatus, int* _pExitCode, unsigned int _TimeoutMS)
+bool oSpecialTest::Start(oCore::process* _pProcess, char* _StrStatus, size_t _SizeofStrStatus, int* _pExitCode, unsigned int _TimeoutMS)
 {
 	if (!_pProcess || !_StrStatus || !_pExitCode)
 		return oErrorSetLast(std::errc::invalid_argument);
 
-	oProcess::DESC desc;
 	#ifdef DEBUG_SPECIAL_TEST
-		desc.StartSuspended = true;
+		pi.suspended = true;
 	#endif
-	_pProcess->GetDesc(&desc);
-	const char* SpecialTestName = oStd::rstrstr(desc.CommandLine, "-s ") + 3;
+	oCore::process::info pi = _pProcess->get_info();
+	const char* SpecialTestName = oStd::rstrstr(pi.command_line, "-s ") + 3;
 	if (!SpecialTestName || !*SpecialTestName)
 		return oErrorSetLast(std::errc::invalid_argument, "Process with an invalid command line for oSpecialTest specified.");
 
@@ -607,8 +605,8 @@ bool oSpecialTest::Start(threadsafe interface oProcess* _pProcess, char* _StrSta
 		{
 			oPrintf(_StrStatus, _SizeofStrStatus, "Timed out waiting for %s to start.", SpecialTestName);
 			oTRACE("*** SPECIAL MODE UNIT TEST %s timed out waiting for Started event. (Ensure the special mode test sets the started event when appropriate.) ***", SpecialTestName);
-			if (!_pProcess->GetExitCode(_pExitCode))
-				_pProcess->Kill(std::errc::timed_out);
+			if (!_pProcess->exit_code(_pExitCode))
+				_pProcess->kill(std::errc::timed_out);
 
 			oPrintf(_StrStatus, _SizeofStrStatus, "Special Mode %s timed out on start.", SpecialTestName);
 			return false;
@@ -619,10 +617,10 @@ bool oSpecialTest::Start(threadsafe interface oProcess* _pProcess, char* _StrSta
 		Started.Wait();
 
 	// If we timeout on ending, that's good, it means the app is still running
-	if ((_pProcess->Wait(200) && _pProcess->GetExitCode(_pExitCode)))
+	if ((_pProcess->wait_for(oStd::chrono::milliseconds(200)) && _pProcess->exit_code(_pExitCode)))
 	{
 		oStd::xlstring msg;
-		size_t bytes = _pProcess->ReadFromStdout(msg.c_str(), msg.capacity());
+		size_t bytes = _pProcess->from_stdout(msg.c_str(), msg.capacity());
 		msg[bytes] = 0;
 		if (bytes)
 			oPrintf(_StrStatus, _SizeofStrStatus, "%s: %s", SpecialTestName, msg.c_str());
@@ -678,17 +676,14 @@ void oTestManager_Impl::SetDesc(DESC* _pDesc)
 		TestSuiteName = _pDesc->TestSuiteName;
 	else
 	{
-		oMODULE_DESC md;
-		oModuleGetDesc(&md);
+		oCore::module::info mi = oCore::this_module::get_info();
 		oStd::sstring Ver;
-		TestSuiteName = md.ProductName;
+		TestSuiteName = mi.product_name;
 		TestSuiteName += " ";
-		TestSuiteName += oStd::to_string(Ver, md.ProductVersion);
+		TestSuiteName += oStd::to_string(Ver, mi.version);
 	}
 
-	oStd::path_string defaultDataPath;
-	oSystemGetPath(defaultDataPath.c_str(), oSYSPATH_DATA);
-
+	oStd::path_string defaultDataPath = oCore::filesystem::data_path();
 	DataPath = _pDesc->DataPath ? _pDesc->DataPath : defaultDataPath;
 	if (_pDesc->ExecutablesPath)
 		ExecutablesPath = _pDesc->ExecutablesPath;
@@ -707,7 +702,7 @@ void oTestManager_Impl::SetDesc(DESC* _pDesc)
 
 	GoldenBinariesPath = _pDesc->GoldenBinariesPath ? _pDesc->GoldenBinariesPath : (DataPath + "GoldenBinaries/");
 	GoldenImagesPath = _pDesc->GoldenImagesPath ? _pDesc->GoldenImagesPath : (DataPath + "GoldenImages/");
-	oSystemGetPath(TempPath, oSYSPATH_TESTTMP);
+	TempPath = oCore::filesystem::temp_path() / "oUnitTestTemp/";
 	InputPath = _pDesc->InputPath ? _pDesc->InputPath : DataPath;
 	OutputPath = _pDesc->OutputPath ? _pDesc->OutputPath : (DataPath + "FailedImageCompares/");
 
@@ -736,8 +731,7 @@ void oTestManager_Impl::SetDesc(DESC* _pDesc)
 
 void oTestManager_Impl::PrintDesc()
 {
-	oStd::path_string cwd;
-	oSystemGetPath(cwd.c_str(), oSYSPATH_CWD);
+	oStd::path cwd = oCore::filesystem::current_path();
 	oStd::path_string datapath;
 	oStd::clean_path(datapath.c_str(), Desc.DataPath);
 	oEnsureSeparator(datapath.c_str());
@@ -756,12 +750,17 @@ void oTestManager_Impl::PrintDesc()
 
 	oStd::sstring StrVer;
 	for (unsigned int i = 0; i < DriverDescs.size(); i++)
-		Report(oConsoleReporting::INFO, "Video Driver %u: %s v%s\n", i, DriverDescs[i].Description.c_str(), oStd::to_string2(StrVer, DriverDescs[i].Version));
+		Report(oConsoleReporting::INFO, "Video Driver %u: %s v%s\n", i, DriverDescs[i].description.c_str(), oStd::to_string2(StrVer, DriverDescs[i].version));
 
-	auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, false, oBIND4));
+	auto scc = oStd::make_scc(oStd::scc_protocol::svn, std::bind(oCore::system::spawn, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
 
-	oStd::path_string DevPath;
-	oVERIFY(oSystemGetPath(DevPath, oSYSPATH_DEV));
+	bool oSystemExecute(const char* _CommandLine
+		, const oFUNCTION<void(char* _Line)>& _GetLine = nullptr
+		, int* _pExitCode = nullptr
+		, bool _ShowWindow = false
+		, unsigned int _ExecutionTimeout = oInfiniteWait);
+
+	oStd::path DevPath = oCore::filesystem::dev_path();
 	oStd::lstring CLStr;
 	uint CL = scc->revision(DevPath);
 	if (CL)
@@ -820,7 +819,7 @@ void oTestManager_Impl::RegisterZombies()
 	}
 }
 
-static bool FindDuplicateProcessInstanceByName(unsigned int _ProcessID, unsigned int _ParentProcessID, const char* _ProcessExePath, unsigned int _IgnorePID, const char* _FindName, unsigned int* _pOutPIDs, size_t _NumOutPIDs, size_t* _pCurrentCount)
+static bool FindDuplicateProcessInstanceByName(oCore::process::id _ProcessID, oCore::process::id _ParentProcessID, const char* _ProcessExePath, oCore::process::id _IgnorePID, const char* _FindName, oCore::process::id* _pOutPIDs, size_t _NumOutPIDs, size_t* _pCurrentCount)
 {
 	if (_IgnorePID != _ProcessID && !oStricmp(_FindName, _ProcessExePath))
 	{
@@ -836,22 +835,20 @@ static bool FindDuplicateProcessInstanceByName(unsigned int _ProcessID, unsigned
 
 bool oTestManager_Impl::KillZombies(const char* _Name)
 {
-	unsigned int ThisID = oProcessGetCurrentID();
-
-	unsigned int pids[1024];
+	oCore::process::id ThisID = oCore::this_process::get_id();
+	oCore::process::id pids[1024];
 	size_t npids = 0;
 
-	oFUNCTION<bool(unsigned int _ProcessID, unsigned int _ParentProcessID, const char* _ProcessExePath)> FindDups = oBIND(FindDuplicateProcessInstanceByName, oBIND1, oBIND2, oBIND3, ThisID, _Name, pids, oCOUNTOF(pids), &npids);
-	oProcessEnum(FindDups);
+	oCore::process::enumerate(std::bind(FindDuplicateProcessInstanceByName, oBIND1, oBIND2, oBIND3, ThisID, _Name, pids, oCOUNTOF(pids), &npids));
 
 	unsigned int retries = 3;
 	for (size_t i = 0; i < npids; i++)
 	{
-		if (oProcessHasDebuggerAttached(pids[i]))
+		if (oCore::process::has_debugger_attached(pids[i]))
 			continue;
 
-		oProcessTerminate(pids[i], std::errc::operation_canceled);
-		if (!oProcessWaitExit(pids[i], 5000))
+		oCore::process::terminate(pids[i], std::errc::operation_canceled);
+		if (!oCore::process::wait_for(pids[i], oSeconds(5)))
 		{
 			oMSGBOX_DESC mb;
 			mb.Type = oMSGBOX_WARN;
@@ -891,8 +888,7 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 
 	srand(Desc.RandomSeed);
 
-	if (!oStreamDelete(TempPath) && oErrorGetLast() != std::errc::no_such_file_or_directory)
-		oVERIFY(false && "oStreamDelete(TempPath))");
+	oCore::filesystem::remove(oStd::path(TempPath));
 
 	// @oooii-tony: Moving other stuff that are false-positives here so I can see
 	// them all...
@@ -946,24 +942,20 @@ static void oTraceCPUFeatures()
 	// @oooii-tony: This and the header that is currently printed out is becoming 
 	// large... we should move it somewhere?
 
-	oCPU_DESC cpud;
-	if (oCPUGetDesc(&cpud))
-		oTRACE("CPU: %s. %d Processors, %d HWThreads", cpud.BrandString, cpud.NumProcessors, cpud.NumHardwareThreads);
+	oCore::cpu::info cpu_info = oCore::cpu::get_info();
+	oTRACE("CPU: %s. %d Processors, %d HWThreads", cpu_info.brand_string.c_str()
+		, cpu_info.processor_count, cpu_info.hardware_thread_count);
 
-	int i = 0;
-	const char* s = oCPUEnumFeatures(i++);
-	while (s)
+	oCore::cpu::enumerate_features([&](const char* _FeatureName, const oCore::cpu::support::value& _Support)->bool
 	{
-		oStd::mstring buf;
-		oPrintf(buf, " CPU Feature %s has %s", s, oStd::as_string(oCPUCheckFeatureSupport(s)));
-		oTRACE("%s", buf.c_str());
-		s = oCPUEnumFeatures(i++);
-	}
+		oTRACE(" CPU Feature %s has %s", _FeatureName, oStd::as_string(_Support));
+		return true;
+	});
 }
 
 oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, size_t _SizeofTestFilters)
 {
-	if (!oDisplayAdapterIsUpToDate())
+	if (!oCore::adapter::all_up_to_date())
 	{
 		oMSGBOX_DESC mb;
 		mb.Type = oMSGBOX_YESNO;
@@ -998,15 +990,15 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	std::sort(Tests.begin(), Tests.end(), SortAlphabetically);
 
 	DriverDescs.clear();
-	oDisplayAdapterEnum([&](unsigned int _AdapterIndex, const oDISPLAY_ADAPTER_DRIVER_DESC& _DriverDesc)->bool
+	oCore::adapter::enumerate([&](const oCore::adapter::info& _Info)->bool
 	{
-		if (_AdapterIndex > oCOUNTOF(DriverDescs))
+		if (*(int*)&_Info.id > oCOUNTOF(DriverDescs))
 		{
 			oTRACE("WARNING: There are more GPUs attached to the system than we have storage for! Only holding information for the first %d", oCOUNTOF(DriverDescs));
 			return false;
 		}
 		else
-			DriverDescs.push_back(_DriverDesc);
+			DriverDescs.push_back(_Info);
 		return true;
 	});
 

@@ -84,20 +84,8 @@
     <ClInclude Include="..\..\Include\oPlatform\oVTable.h">
       <Filter>Headers\Code Management</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oDebugger.h">
-      <Filter>Headers\Code Management</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oCamera.h">
       <Filter>Headers\Devices</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oCPU.h">
-      <Filter>Headers\Devices</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oSystem.h">
-      <Filter>Headers\Devices</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oFile.h">
-      <Filter>Headers\IO</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oConsole.h">
       <Filter>Headers\UI</Filter>
@@ -107,9 +95,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oProgressBar.h">
       <Filter>Headers\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oPageAllocator.h">
-      <Filter>Headers\Memory</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oMirroredArena.h">
       <Filter>Headers\Memory</Filter>
@@ -122,12 +107,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oSocket.h">
       <Filter>Headers\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oDisplay.h">
-      <Filter>Headers\Devices</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oProcess.h">
-      <Filter>Headers\Concurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oP4.h">
       <Filter>Headers\IO</Filter>
@@ -150,16 +129,10 @@
     <ClInclude Include="SoftLink\oWinDWMAPI.h">
       <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClInclude>
-    <ClInclude Include="SoftLink\oWinPSAPI.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClInclude>
     <ClInclude Include="SoftLink\oWinsock.h">
       <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClInclude>
     <ClInclude Include="SoftLink\oWinCommCtrl.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClInclude>
-    <ClInclude Include="SoftLink\oWinPowrProf.h">
       <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClInclude>
     <ClInclude Include="SoftLink\oD3DX11.h">
@@ -233,9 +206,6 @@
     </ClInclude>
     <ClInclude Include="oDispatchQueueConcurrentWTP.h">
       <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="SoftLink\oWinVersion.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinRegistry.h">
       <Filter>Headers\Windows API Convenience Wrappers</Filter>
@@ -383,16 +353,10 @@
     <ClCompile Include="SoftLink\oWinDWMAPI.cpp">
       <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClCompile>
-    <ClCompile Include="SoftLink\oWinPSAPI.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClCompile>
     <ClCompile Include="SoftLink\oWinsock.cpp">
       <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClCompile>
     <ClCompile Include="SoftLink\oWinCommCtrl.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClCompile>
-    <ClCompile Include="SoftLink\oWinPowrProf.cpp">
       <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClCompile>
     <ClCompile Include="SoftLink\oOpenSSL.cpp">
@@ -431,9 +395,6 @@
     <ClCompile Include="oDispatchQueueGlobalIOCP.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="SoftLink\oWinVersion.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClCompile>
     <ClCompile Include="oWinRegistry.cpp">
       <Filter>Source\Windows API Convenience Wrappers</Filter>
     </ClCompile>
@@ -445,12 +406,6 @@
     </ClCompile>
     <ClCompile Include="oInterprocessEvent.cpp">
       <Filter>Source\Concurrency</Filter>
-    </ClCompile>
-    <ClCompile Include="oProcess.cpp">
-      <Filter>Source\Concurrency</Filter>
-    </ClCompile>
-    <ClCompile Include="oDebugger.cpp">
-      <Filter>Source\Code Management</Filter>
     </ClCompile>
     <ClCompile Include="oModule.cpp">
       <Filter>Source\Code Management</Filter>
@@ -467,31 +422,13 @@
     <ClCompile Include="oCamera.cpp">
       <Filter>Source\Devices</Filter>
     </ClCompile>
-    <ClCompile Include="oDisplay.cpp">
-      <Filter>Source\Devices</Filter>
-    </ClCompile>
-    <ClCompile Include="oCPU.cpp">
-      <Filter>Source\Devices</Filter>
-    </ClCompile>
-    <ClCompile Include="oSystem.cpp">
-      <Filter>Source\Devices</Filter>
-    </ClCompile>
     <ClCompile Include="oMirroredArena.cpp">
-      <Filter>Source\Memory</Filter>
-    </ClCompile>
-    <ClCompile Include="oPageAllocator.cpp">
       <Filter>Source\Memory</Filter>
     </ClCompile>
     <ClCompile Include="oProcessHeap.cpp">
       <Filter>Source\Memory</Filter>
     </ClCompile>
     <ClCompile Include="oEMail.cpp">
-      <Filter>Source\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="oFile.cpp">
-      <Filter>Source\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="oFileGeneric.cpp">
       <Filter>Source\IO</Filter>
     </ClCompile>
     <ClCompile Include="oFileSchemeHandler.cpp">

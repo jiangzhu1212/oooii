@@ -215,39 +215,46 @@ bool oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter, D3D_FEATURE_LEVEL* _pFeatureL
 #endif
 }
 
-void oDXGIGetAdapterDriverDesc(IDXGIAdapter* _pAdapter, oDISPLAY_ADAPTER_DRIVER_DESC* _pDesc)
+oCore::adapter::info oDXGIGetAdapterDriverInfo(IDXGIAdapter* _pAdapter)
 {
 	DXGI_ADAPTER_DESC ad;
 	_pAdapter->GetDesc(&ad);
 
-	oWinEnumVideoDriverDesc([&](const oDISPLAY_ADAPTER_DRIVER_DESC& _Desc)
+	oCore::adapter::info adapter_info;
+	oCore::adapter::enumerate([&](const oCore::adapter::info& _Info)->bool
 	{
 		oStd::mstring vendor, device;
-		oPrintf(vendor, "VEN_%X", ad.VendorId);
-		oPrintf(device, "DEV_%04X", ad.DeviceId);
-		if (strstr(_Desc.PlugNPlayID, vendor) && strstr(_Desc.PlugNPlayID, device))
-			*_pDesc = _Desc;
+		snprintf(vendor, "VEN_%X", ad.VendorId);
+		snprintf(device, "DEV_%04X", ad.DeviceId);
+		if (strstr(_Info.plugnplay_id, vendor) && strstr(_Info.plugnplay_id, device))
+		{
+			adapter_info = _Info;
+			return false;
+		}
+		return true;
 	});
+
+	return std::move(adapter_info);
 }
 
-bool oDXGIEnumAdapters(int _AdapterIndex, IDXGIAdapter** _ppAdapter, oDISPLAY_ADAPTER_DRIVER_DESC* _pDesc)
+bool oDXGIEnumAdapters(int _AdapterIndex, IDXGIAdapter** _ppAdapter, oCore::adapter::info* _pAdapterInfo)
 {
 	oStd::intrusive_ptr<IDXGIFactory> Factory;
 	oDXGICreateFactory(&Factory);
 	if (DXGI_ERROR_NOT_FOUND == Factory->EnumAdapters(_AdapterIndex, _ppAdapter))
 		return oErrorSetLast(std::errc::no_such_device, "Adapter %d", _AdapterIndex);
-	oDXGIGetAdapterDriverDesc(*_ppAdapter, _pDesc);
+	*_pAdapterInfo = std::move(oDXGIGetAdapterDriverInfo(*_ppAdapter));
 	return true;
 }
 
-bool oDXGIEnumAdapters(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAdapter, const oDISPLAY_ADAPTER_DRIVER_DESC& _DriverDesc)>& _Enumerator, IDXGIFactory* _pFactory)
+bool oDXGIEnumAdapters(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAdapter, const oCore::adapter::info& _AdapterInfo)>& _Enumerator, IDXGIFactory* _pFactory)
 {
 	int AdapterIndex = 0;
-	oDISPLAY_ADAPTER_DRIVER_DESC add;
+	oCore::adapter::info adapter_info;
 	oStd::intrusive_ptr<IDXGIAdapter> Adapter;
-	while (oDXGIEnumAdapters(AdapterIndex, &Adapter, &add))
+	while (oDXGIEnumAdapters(AdapterIndex, &Adapter, &adapter_info))
 	{
-		if (!_Enumerator(AdapterIndex, Adapter, add))
+		if (!_Enumerator(AdapterIndex, Adapter, adapter_info))
 			return true;
 		AdapterIndex++;
 		Adapter = nullptr;
@@ -264,7 +271,7 @@ int oDXGIGetAdapterIndex(IDXGIAdapter* _pAdapter)
 	DXGI_ADAPTER_DESC ad, testDesc;
 	_pAdapter->GetDesc(&ad);
 	int Index = oInvalid;
-	oDXGIEnumAdapters([&](int _AdapterIndex, IDXGIAdapter* _pTestAdapter, const oDISPLAY_ADAPTER_DRIVER_DESC& _DriverDesc)->bool
+	oDXGIEnumAdapters([&](int _AdapterIndex, IDXGIAdapter* _pTestAdapter, const oCore::adapter::info& _AdapterInfo)->bool
 	{
 		_pTestAdapter->GetDesc(&testDesc);
 		if (!memcmp(&ad.AdapterLuid, &testDesc.AdapterLuid, sizeof(LUID)))
@@ -311,7 +318,7 @@ bool oDXGIEnumOutputs(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAd
 	if (!Factory)
 		oDXGICreateFactory(&Factory);
 
-	oDXGIEnumAdapters([&](int _AdapterIndex, IDXGIAdapter* _pAdapter, const oDISPLAY_ADAPTER_DRIVER_DESC& _DriverDesc)->bool
+	oDXGIEnumAdapters([&](int _AdapterIndex, IDXGIAdapter* _pAdapter, const oCore::adapter::info& _AdapterInfo)->bool
 	{
 		oStd::intrusive_ptr<IDXGIOutput> Output;
 		int o = 0;
@@ -429,19 +436,12 @@ int oDXGIFindDisplayIndex(IDXGIOutput* _pOutput)
 {
 	DXGI_OUTPUT_DESC odesc;
 	_pOutput->GetDesc(&odesc);
+
+	oCore::display::id ID;
+	try { ID = oCore::display::get_id(odesc.Monitor); }
+	catch (std::exception&) { oErrorSetLast(std::errc::no_such_device); return oInvalid; }
 	
-	oDISPLAY_DESC ddesc;
-
-	int index = 0;
-	while (oDisplayEnum(index, &ddesc))
-	{
-		if ((HMONITOR)ddesc.NativeHandle == odesc.Monitor)
-			return index;
-		index++;
-	}
-
-	oErrorSetLast(std::errc::no_such_device);
-	return oInvalid;
+	return *(int*)&ID;
 }
 
 bool oDXGIIsDepthFormat(DXGI_FORMAT _Format)

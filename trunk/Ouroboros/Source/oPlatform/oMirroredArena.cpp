@@ -31,8 +31,9 @@
 #include <oBasis/oLockedPointer.h>
 #include <oConcurrency/mutex.h>
 #include <oBasis/oRefCount.h>
-#include <oPlatform/oPageAllocator.h>
 #include <oPlatform/Windows/oWindows.h>
+
+using namespace oCore::page_allocator;
 
 // @oooii-tony: Note on future/potential cross-platform support. I admit it, I 
 // don't know linux other than it does have virtual memory and it can do some
@@ -52,7 +53,7 @@ uintptr_t oBitShiftLeft(unsigned int _BitIndex)
 namespace detail {
 
 	static const size_t NUM_WORD_BITS = 8 * sizeof(void*);
-	static const size_t PAGE_SIZE = oPageGetPageSize();
+	static const size_t PAGE_SIZE = page_size();
 
 	// @oooii-tony: We want to efficiently tell what arena we're in from the global 
 	// exception handler. To facilitate this, we'll assume some things about the
@@ -167,7 +168,7 @@ namespace detail {
 	static void UnlockPage(void* _pUserPointer)
 	{
 		void* pUserPage = GetPageBasePointer(_pUserPointer);
-		oPageSetReadWrite(pUserPage, PAGE_SIZE, true);
+		set_access(pUserPage, PAGE_SIZE, access::read_write);
 	}
 
 	static void* GetUserPointer(PEXCEPTION_POINTERS _pExceptionInfo)
@@ -389,7 +390,7 @@ oMirroredArena_Impl::oMirroredArena_Impl(const DESC& _Desc, bool* _pSuccess)
 {
 	*_pSuccess = false;
 
-	oASSERT(oPageGetPageSize() == detail::PAGE_SIZE, "Page size is not what's assumed in oMirroredArena");
+	oASSERT(page_size() == detail::PAGE_SIZE, "Page size is not what's assumed in oMirroredArena");
 
 	if (_Desc.BaseAddress == nullptr)
 	{
@@ -411,11 +412,11 @@ oMirroredArena_Impl::oMirroredArena_Impl(const DESC& _Desc, bool* _pSuccess)
 
 	if (Desc.Usage == READ_WRITE_DIFF)
 	{
-		if( !oPageSetReadWrite(Desc.BaseAddress, Desc.Size, false) )
-			goto error;
+		try { set_access(Desc.BaseAddress, Desc.Size, access::read_only); }
+		catch (std::exception&) { goto error; }
 
 		void* pDesiredBookkeeping = detail::GetBookkeepingBasePointer(Desc.BaseAddress);
-		void* pBookkeeping = oPageReserveAndCommit(pDesiredBookkeeping, detail::PAGE_SIZE, true);
+		void* pBookkeeping = reserve_and_commit(pDesiredBookkeeping, detail::PAGE_SIZE, true);
 		if (!pBookkeeping || pBookkeeping != pDesiredBookkeeping)
 			goto error;
 
@@ -434,7 +435,7 @@ oMirroredArena_Impl::oMirroredArena_Impl(const DESC& _Desc, bool* _pSuccess)
 
 	else if (Desc.Usage == READ_WRITE_DIFF_NO_EXCEPTIONS)
 	{
-		size_t pageSize = oPageGetPageSize();
+		size_t pageSize = page_size();
 		DirtyPagesCapacity = oStd::byte_align(Desc.Size, pageSize) / pageSize;
 		ppDirtyPages = new void*[DirtyPagesCapacity];
 	}
@@ -463,7 +464,7 @@ oMirroredArena_Impl::~oMirroredArena_Impl()
 	#endif
 
 	if (Desc.Usage == READ_WRITE_DIFF)
-		oPageUnreserve(detail::GetBookkeepingBasePointer(Desc.BaseAddress));
+		unreserve(detail::GetBookkeepingBasePointer(Desc.BaseAddress));
 }
 
 size_t oMirroredArena_Impl::GetNumDirtyPages() const threadsafe
@@ -533,7 +534,7 @@ bool oMirroredArena_Impl::COPYRetrieveChanges(void* _pChangeBuffer, size_t _Size
 
 bool oMirroredArena_Impl::DINERetrieveChanges(void* _pChangeBuffer, size_t _SizeofChangeBuffer, size_t* _pSizeRetrieved)
 {
-	oASSERT(oPageGetPageSize() == detail::PAGE_SIZE, "Page size changed unexpectedly");
+	oASSERT(page_size() == detail::PAGE_SIZE, "Page size changed unexpectedly");
 
 	ULONG pageSize = 0;
 	ULONG_PTR nDirtyPages = DirtyPagesCapacity;
@@ -544,7 +545,7 @@ bool oMirroredArena_Impl::DINERetrieveChanges(void* _pChangeBuffer, size_t _Size
 		return false;
 	}
 
-	oASSERT(oPageGetPageSize() == pageSize, "Page size is different from WriteWatch than from GetPageSize()");
+	oASSERT(page_size() == pageSize, "Page size is different from WriteWatch than from GetPageSize()");
 
 	size_t requiredSize = nDirtyPages * (sizeof(DIFF_HEADER) + pageSize);
 
@@ -574,7 +575,7 @@ bool oMirroredArena_Impl::DINERetrieveChanges(void* _pChangeBuffer, size_t _Size
 
 bool oMirroredArena_Impl::DIFFRetrieveChanges(void* _pChangeBuffer, size_t _SizeofChangeBuffer, size_t* _pSizeRetrieved)
 {
-	oASSERT(oPageGetPageSize() == detail::PAGE_SIZE, "Page size changed unexpectedly");
+	oASSERT(page_size() == detail::PAGE_SIZE, "Page size changed unexpectedly");
 
 	detail::BOOKKEEPING_HEADER* pBookkeepingHeader = 0;
 	void* pVoidDirtyBits = 0;
@@ -656,14 +657,14 @@ bool oMirroredArena_Impl::RetrieveChanges(void* _pChangeBuffer, size_t _SizeofCh
 		// because these will only be called from this function and we lock above.
 		case READ_WRITE:
 		{
-			oPageSetReadWrite(Desc.BaseAddress, Desc.Size, false);
+			set_access(Desc.BaseAddress, Desc.Size, access::read_only);
 			bool result = thread_cast<oMirroredArena_Impl*>(this)->COPYRetrieveChanges(_pChangeBuffer, _SizeofChangeBuffer, _pSizeRetrieved);
-			oPageSetReadWrite(Desc.BaseAddress, Desc.Size, true);
+			set_access(Desc.BaseAddress, Desc.Size, access::read_write);
 			return result;
 		}
 
 		case READ_WRITE_DIFF:
-			oPageSetReadWrite(Desc.BaseAddress, Desc.Size, false);
+			set_access(Desc.BaseAddress, Desc.Size, access::read_only);
 			return thread_cast<oMirroredArena_Impl*>(this)->DIFFRetrieveChanges(_pChangeBuffer, _SizeofChangeBuffer, _pSizeRetrieved);
 
 		case READ_WRITE_DIFF_NO_EXCEPTIONS:
@@ -690,19 +691,19 @@ bool oMirroredArena_Impl::COPYApplyChanges(const void* _pChangeBuffer)
 	}
 
 	if (Desc.Usage == READ)
-		oPageSetReadWrite(Desc.BaseAddress, Desc.Size, true);
+		set_access(Desc.BaseAddress, Desc.Size, access::read_write);
 
 	memcpy(Desc.BaseAddress, pChangeHeader + 1, static_cast<size_t>(pChangeHeader->Size));
 
 	if (Desc.Usage == READ)
-		oPageSetReadWrite(Desc.BaseAddress, Desc.Size, false);
+		set_access(Desc.BaseAddress, Desc.Size, access::read_only);
 
 	return true;
 }
 
 bool oMirroredArena_Impl::DIFFApplyChanges(const void* _pChangeBuffer)
 {
-	oASSERT(oPageGetPageSize() == detail::PAGE_SIZE, "Page size changed unexpectedly");
+	oASSERT(page_size() == detail::PAGE_SIZE, "Page size changed unexpectedly");
 	
 	const CHANGE_HEADER* pChangeHeader = reinterpret_cast<const CHANGE_HEADER*>(_pChangeBuffer);
 	const void* pPageDiffs = pChangeHeader + 1;
@@ -714,7 +715,7 @@ bool oMirroredArena_Impl::DIFFApplyChanges(const void* _pChangeBuffer)
 	// magic trade-off threshold.
 	
 	if (Desc.Usage == READ)
-		oPageSetReadWrite(Desc.BaseAddress, Desc.Size, true);
+		set_access(Desc.BaseAddress, Desc.Size, access::read_write);
 
 	while (pPageDiffs < pEnd)
 	{
@@ -727,7 +728,7 @@ bool oMirroredArena_Impl::DIFFApplyChanges(const void* _pChangeBuffer)
 	}
 
 	if (Desc.Usage == READ)
-		oPageSetReadWrite(Desc.BaseAddress, Desc.Size, false);
+		set_access(Desc.BaseAddress, Desc.Size, access::read_only);
 	
 	return true;
 }

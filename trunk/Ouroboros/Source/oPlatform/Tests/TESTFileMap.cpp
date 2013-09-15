@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 
-#include <oPlatform/oFile.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oPlatform/oTest.h>
@@ -45,16 +44,16 @@ struct PLATFORM_oFileMap : public oTest
 			r.Size = FDesc.Size;
 		}
 
-		void* mapped = nullptr;
-		oTESTB0(oFileMap(path, true, r, &mapped));
-		oStd::finally OSEUnmap([&] { if (mapped) oFileUnmap(mapped); }); // safety unmap if we fail for some non-mapping reason
+		void* mapped = oCore::filesystem::map(path, true, r.Offset, r.Size);
+		oTESTB0(mapped);
+		oStd::finally OSEUnmap([&] { if (mapped) oCore::filesystem::unmap(mapped); }); // safety unmap if we fail for some non-mapping reason
 
 		oStd::intrusive_ptr<oBuffer> loaded;
 		oTESTB0(oBufferLoad(path, &loaded));
 
 		oTESTB(r.Size == loaded->GetSize(), "mismatch: mapped and loaded file sizes");
 		oTESTB(!memcmp(loaded->GetData(), mapped, oSizeT(r.Size)), "memcmp failed between mapped and loaded files");
-		oTESTB0(oFileUnmap(mapped));
+		oCore::filesystem::unmap(mapped);
 		mapped = nullptr; // signal OSEUnmap to not re-unmap
 
 		return SUCCESS;

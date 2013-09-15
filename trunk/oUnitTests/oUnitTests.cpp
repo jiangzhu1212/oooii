@@ -2,15 +2,13 @@
 #include <oBasis/oString.h>
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oConsole.h>
-#include <oPlatform/oDebugger.h>
-#include <oPlatform/oFile.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oModule.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oTest.h>
-#include <oPlatform/oProcess.h>
 #include <oPlatform/oStandards.h>
-#include <oPlatform/oSystem.h>
+#include <oPlatform/oStream.h>
+#include <oCore/system.h>
 #include <oStd/opttok.h>
 #include <oStd/scc.h>
 
@@ -54,19 +52,18 @@ void InitEnv()
 
 	oConcurrency::init_task_scheduler();
 
-	oTRACEA("Aero is %sactive", oSystemGUIUsesGPUCompositing() ? "" : "in");
-	oTRACE("Remote desktop is %sactive", oSystemIsRemote() ? "" : "in");
+	oTRACEA("Aero is %sactive", oCore::system::uses_gpu_compositing() ? "" : "in");
+	oTRACE("Remote desktop is %sactive", oCore::system::is_remote_session() ? "" : "in");
 
 	// IOCP needs to be initialized or it will show up as a leak in the first test
 	// to use it.
 	void InitializeIOCP();
 	InitializeIOCP();
 
-	oMODULE_DESC md;
-	oModuleGetDesc(&md);
+	oCore::module::info mi = oCore::this_module::get_info();
 	oStd::sstring Ver;
 	oStd::mstring title2(sTITLE);
-	oStrAppendf(title2, " v%s%s", oStd::to_string(Ver, md.ProductVersion), md.IsSpecialBuild ? "*" : "");
+	oStrAppendf(title2, " v%s%s", oStd::to_string(Ver, mi.version), mi.is_special ? "*" : "");
 	oConsole::SetTitle(title2);
 
 	// Resize console
@@ -107,10 +104,9 @@ struct PARAMETERS
 // specified path parts.
 static bool oSCCCheckPathHasChanges(const char** _pPathParts, size_t _NumPathParts, bool* _pHasChanges, size_t _NumOpenedFilesToTest = 128)
 {
-	auto scc = oStd::make_scc(oStd::scc_protocol::svn, oBIND(oSystemExecute, oBIND1, oBIND2, oBIND3, false, oBIND4));
+	auto scc = oStd::make_scc(oStd::scc_protocol::svn, std::bind(oCore::system::spawn, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
 
-	oStd::path_string BranchPath;
-	oVERIFY(oSystemGetPath(BranchPath, oSYSPATH_DEV));
+	oStd::path BranchPath = oCore::filesystem::dev_path();
 
 	std::vector<oStd::scc_file> temp;
 	temp.resize(_NumOpenedFilesToTest);
@@ -221,6 +217,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 		const char* sLibNames[] =
 		{
 			"oStd",
+			"oCore",
 			"oHLSL",
 			"oCompute",
 			"oConcurrency",
@@ -231,6 +228,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 		const char* sFilter[] =
 		{
 			"oStd_.*",
+			"oCore_.*",
 			"oHLSL.*",
 			"oCompute_.*",
 			"oConcurrency_.*",
@@ -262,23 +260,15 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 	}
 }
 
-struct oNamedFileDesc : oSTREAM_DESC
+struct oNamedFileDesc
 {
-	char FileName[_MAX_PATH];
+	oStd::path Path;
+	time_t LastWritten;
 	static bool NewerToOlder(const oNamedFileDesc& _File1, const oNamedFileDesc& _File2)
 	{
-		return _File1.Written > _File2.Written;
+		return _File1.LastWritten > _File2.LastWritten;
 	}
 };
-
-static bool PushBackNFDs(const char* _Path, const oSTREAM_DESC& _Desc, std::vector<oNamedFileDesc>& _NFDs)
-{
-	oNamedFileDesc nfd;
-	reinterpret_cast<oSTREAM_DESC&>(nfd) = _Desc;
-	oStrcpy(nfd.FileName, _Path);
-	_NFDs.push_back(nfd);
-	return true;
-}
 
 void DeleteOldLogFiles(const char* _SpecialModeName)
 {
@@ -288,17 +278,25 @@ void DeleteOldLogFiles(const char* _SpecialModeName)
 	oGetLogFilePath(logFileWildcard, _SpecialModeName);
 
 	char* p = oStd::rstrstr(logFileWildcard, "_");
-	oStrcpy(p, oCOUNTOF(logFileWildcard) - std::distance(logFileWildcard, p), "*.txt");
+	oStrcpy(p, oCOUNTOF(logFileWildcard) - std::distance(logFileWildcard, p), "*.stdout");
 
 	std::vector<oNamedFileDesc> logs;
 	logs.reserve(20);
-	oFileEnum(logFileWildcard, oBIND(PushBackNFDs, oBIND1, oBIND2, oBINDREF(logs)));
+
+	oCore::filesystem::enumerate(logFileWildcard, [&](const oStd::path& _FullPath, const oCore::filesystem::file_status& _Status, unsigned long long _Size)->bool
+	{
+		oNamedFileDesc nfd;
+		nfd.LastWritten = oCore::filesystem::last_write_time(_FullPath);
+		nfd.Path = _FullPath;
+		logs.push_back(nfd);
+		return true;
+	});
 
 	if (logs.size() > kLogHistory)
 	{
 		std::sort(logs.begin(), logs.end(), oNamedFileDesc::NewerToOlder);
 		for (size_t i = kLogHistory; i < logs.size(); i++)
-			oStreamDelete(logs[i].FileName);
+			oCore::filesystem::remove_filename(logs[i].Path.replace_extension(".stderr"));
 	}
 }
 
@@ -329,11 +327,14 @@ void EnableLogFile(const char* _SpecialModeName, const char* _LogFileName)
 
 	oConsole::SetDesc(&cdesc);
 
-	oStd::path_string DumpBase;
-	oSystemGetPath(DumpBase, oSYSPATH_APP_FULL);
-	oTrimFileExtension(DumpBase);
+	oStd::path DumpBase = oCore::filesystem::app_path(true);
+	DumpBase.replace_extension();
 	if (_SpecialModeName)
-		oStrAppendf(DumpBase, "-%s", _SpecialModeName);
+	{
+		oStd::sstring suffix;
+		snprintf(suffix, "-%s", _SpecialModeName);
+		DumpBase /= suffix;
+	}
 
 	desc.MiniDumpBase = DumpBase;
 	desc.PromptAfterDump = false;
@@ -342,14 +343,12 @@ void EnableLogFile(const char* _SpecialModeName, const char* _LogFileName)
 
 void SetTestManagerDesc(const PARAMETERS* _pParameters)
 {
-	char dataPath[_MAX_PATH];
+	oStd::path dataPath;
 
 	if (_pParameters->DataPath)
-		oStrcpy(dataPath, _pParameters->DataPath);
-	else if (!oSystemGetPath(dataPath, oSYSPATH_DATA))
-	{
-		oASSERT(false, "Failed to find data dir");
-	}
+		dataPath = _pParameters->DataPath;
+	else
+		dataPath = oCore::filesystem::data_path();
 
 	// @oooii-tony: This is important to be here for now because it touches the 
 	// underlying singleton so it doesn't appear in unit tests as a leak. Also
@@ -379,7 +378,7 @@ void SetTestManagerDesc(const PARAMETERS* _pParameters)
 	oTestManager::Singleton()->SetDesc(&desc);
 }
 
-static bool FindDuplicateProcessInstanceByName(unsigned int _ProcessID, unsigned int _ParentProcessID, const char* _ProcessExePath, unsigned int _IgnorePID, const char* _FindName, unsigned int* _pOutPID)
+static bool FindDuplicateProcessInstanceByName(oCore::process::id _ProcessID, oCore::process::id _ParentProcessID, const char* _ProcessExePath, oCore::process::id _IgnorePID, const char* _FindName, oCore::process::id* _pOutPID)
 {
 	if (_IgnorePID != _ProcessID && !oStricmp(_FindName, _ProcessExePath))
 	{
@@ -392,9 +391,16 @@ static bool FindDuplicateProcessInstanceByName(unsigned int _ProcessID, unsigned
 
 bool TerminateDuplicateInstances(const char* _Name)
 {
-	unsigned int ThisID = oProcessGetCurrentID();
-	unsigned int duplicatePID = 0;
-	oProcessEnum(oBIND(FindDuplicateProcessInstanceByName, oBIND1, oBIND2, oBIND3, ThisID, _Name, &duplicatePID));
+	oCore::process::id ThisID = oCore::this_process::get_id();
+	oCore::process::id duplicatePID;
+	oCore::process::enumerate(std::bind(FindDuplicateProcessInstanceByName
+		, std::placeholders::_1
+		, std::placeholders::_2
+		, std::placeholders::_3
+		, ThisID
+		, _Name
+		, &duplicatePID));
+
 	while (duplicatePID)
 	{
 		oMSGBOX_DESC mb;
@@ -406,12 +412,18 @@ bool TerminateDuplicateInstances(const char* _Name)
 		if (result == oMSGBOX_NO)
 			return false;
 
-		oProcessTerminate(duplicatePID, ECANCELED);
-		if (!oProcessWaitExit(duplicatePID, 5000))
+		oCore::process::terminate(duplicatePID, ECANCELED);
+		if (!oCore::process::wait_for(duplicatePID, oSeconds(5)))
 			oMsgBox(mb, "Cannot terminate stale process %u, please end this process before continuing.", duplicatePID);
 
-		duplicatePID = 0;
-		oProcessEnum(oBIND(FindDuplicateProcessInstanceByName, oBIND1, oBIND2, oBIND3, ThisID, _Name, &duplicatePID));
+		duplicatePID = oCore::process::id();
+		oCore::process::enumerate(std::bind(FindDuplicateProcessInstanceByName
+			, std::placeholders::_1
+			, std::placeholders::_2
+			, std::placeholders::_3
+			, ThisID
+			, _Name
+			, &duplicatePID));
 	}
 
 	return true;
@@ -420,8 +432,7 @@ bool TerminateDuplicateInstances(const char* _Name)
 bool EnsureOneInstanceIsRunning()
 {
 	// Scan for both release and debug builds already running
-	char tmp[_MAX_PATH];
-	oVERIFY(oSystemGetPath(tmp, oSYSPATH_APP_FULL));
+	oStd::path tmp = oCore::filesystem::app_path(true);
 	oStd::path path(tmp);
 	oStd::path relname = path.basename();
 	relname.remove_basename_suffix(oMODULE_DEBUG_SUFFIX_A);
@@ -482,7 +493,7 @@ int main(int argc, const char* argv[])
 			oMsgBox(mb, "Completed%s", result ? " with errors" : " successfully");
 		}
 
-		if (oProcessHasDebuggerAttached(oProcessGetCurrentID()))
+		if (oCore::this_process::has_debugger_attached())
 		{
 			system("echo.");
 			system("pause");

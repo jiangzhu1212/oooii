@@ -27,7 +27,7 @@
 #ifndef oDXGI_h
 #define oDXGI_h
 
-#include <oStd/version.h>
+#include <oCore/adapter.h>
 #include <oBasis/oSurface.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/Windows/oWindows.h>
@@ -79,13 +79,13 @@
 	oStd::version oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter);
 
 	// Returns a description and version of the driver for the specified adapter.
-	void oDXGIGetAdapterDriverDesc(IDXGIAdapter* _pAdapter, oDISPLAY_ADAPTER_DRIVER_DESC* _pDesc);
+	oCore::adapter::info oDXGIGetAdapterDriverInfo(IDXGIAdapter* _pAdapter);
 
 	// Get the specified adapter and desc for the specified adapter index.
-	bool oDXGIEnumAdapters(int _AdapterIndex, IDXGIAdapter** _ppAdapter, oDISPLAY_ADAPTER_DRIVER_DESC* _pDesc);
+	bool oDXGIEnumAdapters(int _AdapterIndex, IDXGIAdapter** _ppAdapter, oCore::adapter::info* _pAdapterInfo);
 
 	// Uses the above version to visit each device.
-	bool oDXGIEnumAdapters(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAdapter, const oDISPLAY_ADAPTER_DRIVER_DESC& _DriverDesc)>& _Enumerator, IDXGIFactory* _pFactory = nullptr);
+	bool oDXGIEnumAdapters(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAdapter, const oCore::adapter::info& _AdapterInfo)>& _Enumerator, IDXGIFactory* _pFactory = nullptr);
 
 	// Returns the index to pass to EnumAdapters to get this same adapter.
 	int oDXGIGetAdapterIndex(IDXGIAdapter* _pAdapter);

@@ -202,6 +202,9 @@
     <ProjectReference Include="..\Ouroboros\Source\oConcurrency\oConcurrencyTests.vcxproj">
       <Project>{20a09cf6-97ce-4258-9f01-cfa2b1433df3}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oCore\oCore.vcxproj">
+      <Project>{7dc758b0-32cf-4bbc-abde-0eb53b9ef93c}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oGfx\oGfx.vcxproj">
       <Project>{72ee4284-df31-4d9f-b796-5de7e2521d5d}</Project>
     </ProjectReference>

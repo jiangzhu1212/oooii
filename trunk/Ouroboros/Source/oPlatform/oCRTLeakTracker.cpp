@@ -24,7 +24,6 @@
  **************************************************************************/
 #include "oCRTLeakTracker.h"
 #include <oBasis/oString.h>
-#include <oPlatform/oDebugger.h>
 #include <oPlatform/Windows/oCRTHeap.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oReporting.h>
@@ -45,7 +44,7 @@ oCRTLeakTracker::oCRTLeakTracker()
 {
 	oReportingReference(); // reporting keeps a log file... don't track that
 
-	pLeakTracker = new oLeakTracker(oDebuggerGetCallstack, oDebuggerSymbolSPrintf, oDebuggerPrint, false, false
+	pLeakTracker = new oLeakTracker(oCore::debugger::callstack, oCore::debugger::format, oCore::debugger::print, false, false
 		, oStdLinearAllocator<oLeakTracker::allocations_t::value_type>(untracked_malloc(kTrackingInternalReserve)
 			, kTrackingInternalReserve, &NonLinearBytes, untracked_malloc, untracked_free));
 

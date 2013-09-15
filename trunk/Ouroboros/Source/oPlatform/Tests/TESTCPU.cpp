@@ -22,19 +22,28 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oCPU.h>
+#include <oCore/cpu.h>
 #include <oBasis/oString.h>
 #include <oPlatform/oTest.h>
+
+using namespace oCore;
 
 struct PLATFORM_oCPU : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oCPU_DESC cpu;
-		oCPUGetDesc(&cpu);
-		bool HasHT = oCPUCheckFeatureSupport("Hyperthreading") >= oCPU_FULL_SUPPORT;
-		bool HasAVX = oCPUCheckFeatureSupport("AVX1") >= oCPU_FULL_SUPPORT;
-		oPrintf(_StrStatus, _SizeofStrStatus, "%s %s %s%s%s %d HWThreads", oStd::as_string(cpu.Type), cpu.String, cpu.BrandString, HasHT ? " HT" : "", HasAVX ? " AVX" : "", cpu.NumHardwareThreads);
+		cpu::info inf = cpu::get_info();
+		bool HasHT = false, HasAVX = false;
+		cpu::enumerate_features([&](const char* _FeatureName, const cpu::support::value& _Support)->bool
+		{
+			if (!_stricmp("Hyperthreading", _FeatureName))
+				HasHT = _Support == cpu::support::full;
+			else if (!_stricmp("AVX1", _FeatureName))
+				HasAVX = _Support == cpu::support::full;
+			return true;
+		});
+
+		snprintf(_StrStatus, _SizeofStrStatus, "%s %s %s%s%s %d HWThreads", oStd::as_string(inf.type), inf.string.c_str(), inf.brand_string.c_str(), HasHT ? " HT" : "", HasAVX ? " AVX" : "", inf.hardware_thread_count);
 		return SUCCESS;
 	}
 };

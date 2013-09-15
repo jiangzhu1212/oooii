@@ -24,8 +24,7 @@
  **************************************************************************/
 #include <oPlatform/oWebServer.h>
 #include <oPlatform/oFileCacheMonitoring.h>
-#include <oPlatform/oFile.h>
-#include <oPlatform/oSystem.h>
+#include <oPlatform/oStream.h>
 #include <oBasis/oLockThis.h>
 #include <oBasis/oOSC.h>
 
@@ -266,13 +265,9 @@ oWebServerImpl::oWebServerImpl(const DESC& _Desc, bool* _pSuccess) : Started(fal
 	DESC buildDesc = _Desc;
 	
 	oStd::uri_string resolvedRootURI;
-	
-	if (!oSystemURIToPath(RootPath, buildDesc.URIBase))
-	{
-		oErrorSetLast(std::errc::invalid_argument, "Invalid root uri given");
-		return;
-	}
 
+	RootPath = oStd::uri(buildDesc.URIBase).path();
+	
 	Desc.Initialize(buildDesc);
 
 	if(!oStreamExists(buildDesc.URIBase))

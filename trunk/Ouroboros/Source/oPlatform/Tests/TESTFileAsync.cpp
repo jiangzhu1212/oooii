@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oPlatform/oFile.h>
+#include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oConcurrency/countdown_latch.h>
 
@@ -145,9 +145,9 @@ struct PLATFORM_FileAsync : public oTest
 		// Now test writing data out then reading it back
 		oStd::path TempFilePath;
 		oTESTB0(BuildPath(TempFilePath, "TESTAsyncFileIO.bin", oTest::TEMP));
+		oCore::filesystem::remove(TempFilePath);
 
 		oStd::intrusive_ptr<threadsafe oStreamReader> ReadFile;
-
 		oTESTB( !oStreamReaderCreate(TempFilePath, &ReadFile), "Test failed, FileReader create with non-existant file" );
 		
 		static const oGUID TestGUID = { 0x9aab7fc7, 0x6ad8, 0x4260, { 0x98, 0xef, 0xfd, 0x93, 0xda, 0x8e, 0xdc, 0x3c } };

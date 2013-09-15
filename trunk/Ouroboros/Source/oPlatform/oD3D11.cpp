@@ -26,11 +26,9 @@
 #include <oStd/assert.h>
 #include <oStd/byte.h>
 #include <oPlatform/oDisplay.h>
-#include <oPlatform/oFile.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/Windows/oDXGI.h>
 #include "SoftLink/oD3DX11.h"
 #include <cerrno>
@@ -73,9 +71,9 @@ static bool oD3D11FindAdapter(int _Index, const int2& _VirtualDesktopPosition, c
 {
 	bool ForceOneGPU = false;
 	char buf[32];
-	if (oSystemGetEnvironmentVariable(buf, "OOOii.D3D11.ForceOneGPU") && oStd::from_string(&ForceOneGPU, buf) && ForceOneGPU)
+	if (oCore::system::getenv(buf, "Ouroboros.D3D11.ForceOneGPU") && oStd::from_string(&ForceOneGPU, buf) && ForceOneGPU)
 	{
-		oTRACE("Forcing D3D11Device index %d to 0 because OOOii.D3D11.ForceOneGPU is set.", _Index);
+		oTRACE("Forcing D3D11Device index %d to 0 because Ouroboros.D3D11.ForceOneGPU is set.", _Index);
 		_Index = 0;
 	}
 
@@ -104,35 +102,21 @@ static bool oD3D11FindAdapter(int _Index, const int2& _VirtualDesktopPosition, c
 	if (AdapterIndex == oInvalid)
 		return oErrorSetLast(std::errc::no_such_device, "No GPUIndex could be found from the DXGI adapter found");
 
-	oDISPLAY_ADAPTER_DRIVER_DESC add;
-	oDXGIGetAdapterDriverDesc(*_ppAdapter, &add);
-
+	oCore::adapter::info adapter_info = oDXGIGetAdapterDriverInfo(*_ppAdapter);
 	oStd::version RequiredVersion = _MinVersion;
 
 	if (RequiredVersion == oStd::version())
-	{
-		switch (add.Vendor)
-		{
-			case oGPU_VENDOR_NVIDIA:
-				RequiredVersion = oStd::version(oNVVER_MAJOR, oNVVER_MINOR);
-				break;
-			case oGPU_VENDOR_AMD:
-				RequiredVersion = oStd::version(oAMDVER_MAJOR, oAMDVER_MINOR);
-				break;
-			default:
-				break;
-		}
-	}
+		RequiredVersion = oCore::adapter::minimum_version(adapter_info.vendor);
 
 	oStd::sstring StrAdd, StrReq;
 
 	if (_ExactVersion)
 	{
-		if (add.Version != RequiredVersion)
+		if (adapter_info.version != RequiredVersion)
 			return oErrorSetLast(std::errc::invalid_argument, "Exact video driver version %s required, but current driver is %s", oStd::to_string2(StrReq, RequiredVersion), oStd::to_string2(StrAdd, RequiredVersion));
 	}
 
-	else if (add.Version < RequiredVersion)
+	else if (adapter_info.version < RequiredVersion)
 		return oErrorSetLast(std::errc::invalid_argument, "Video driver version %s or newer required, but current driver is %s", oStd::to_string2(StrReq, RequiredVersion), oStd::to_string2(StrAdd, RequiredVersion));
 
 	return true;
@@ -334,20 +318,19 @@ bool oD3D11DeviceGetDesc(ID3D11Device* _pDevice, bool _IsSoftwareEmulation, oGPU
 
 	DXGI_ADAPTER_DESC ad;
 	Adapter->GetDesc(&ad);
-	oDISPLAY_ADAPTER_DRIVER_DESC add;
-	oDXGIGetAdapterDriverDesc(Adapter, &add);
+	oCore::adapter::info adapter_info = oDXGIGetAdapterDriverInfo(Adapter);
 
 	_pDesc->DeviceDescription = ad.Description;
-	_pDesc->DriverDescription = add.Description;
+	_pDesc->DriverDescription = adapter_info.description;
 	_pDesc->NativeMemory = ad.DedicatedVideoMemory;
 	_pDesc->DedicatedSystemMemory = ad.DedicatedSystemMemory;
 	_pDesc->SharedSystemMemory = ad.SharedSystemMemory;
-	_pDesc->DriverVersion = add.Version;
+	_pDesc->DriverVersion = adapter_info.version;
 	_pDesc->FeatureVersion = oDXGIGetFeatureLevel(Adapter);
 	_pDesc->InterfaceVersion = oDXGIGetInterfaceVersion(Adapter);
 	_pDesc->AdapterIndex = oDXGIGetAdapterIndex(Adapter);
 	_pDesc->API = oGPU_API_D3D;
-	_pDesc->Vendor = add.Vendor;
+	_pDesc->Vendor = adapter_info.vendor;
 	_pDesc->IsSoftwareEmulation = _IsSoftwareEmulation;
 	_pDesc->DebugReportingEnabled = !!(_pDevice->GetCreationFlags() & D3D11_CREATE_DEVICE_DEBUG);
 	return true;
@@ -1730,9 +1713,9 @@ bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, void* _
 	return oD3D11Save(CPUCopy, _Format, _pBuffer, _SizeofBuffer); // pass through error
 }
 
-bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path)
+bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, const oStd::path& _Path)
 {
-	if (!_pTexture || !oSTRVALID(_Path))
+	if (!_pTexture || _Path.empty())
 		return oErrorSetLast(std::errc::invalid_argument);
 
 	oStd::intrusive_ptr<ID3D11Resource> CPUCopy;
@@ -1740,8 +1723,7 @@ bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, con
 	if (!oD3D11Save_PrepareCPUCopy(_pTexture, _Format, &D3DImmediateContext, &CPUCopy))
 		return false; // pass through error
 
-	if (!oFileEnsureParentFolderExists(_Path))
-		return false; // pass through error
+	oCore::filesystem::create_directories(_Path.parent_path());
 
 	oV(D3DX11SaveTextureToFileA(D3DImmediateContext, CPUCopy, _Format, _Path));
 	return true;
@@ -1756,7 +1738,7 @@ bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, const c
 	return oD3D11Save(CPUCopy, _Format, _Path); // pass through error
 }
 
-bool oD3D11Load(ID3D11Device* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const char* _Path, const char* _DebugName, ID3D11Resource** _ppTexture)
+bool oD3D11Load(ID3D11Device* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const oStd::path& _Path, const char* _DebugName, ID3D11Resource** _ppTexture)
 {
 	D3DX11_IMAGE_LOAD_INFO li;
 	oD3D11GetImageLoadInfo(_Desc, &li);

@@ -133,9 +133,8 @@ oWinKinect10::~oWinKinect10()
 
 oStd::version oWinKinect10::GetVersion() const
 {
-	oMODULE_DESC md;
-	oModuleGetDesc(hModule, &md);
-	return md.FileVersion;
+	oCore::module::info mi = oCore::module::get_info(*(oCore::module::id*)&hModule);
+	return mi.version;
 }
 
 #endif

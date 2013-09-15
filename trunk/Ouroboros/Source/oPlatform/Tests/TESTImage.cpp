@@ -25,10 +25,8 @@
 #include <oBasis/oBuffer.h>
 #include <oStd/color.h>
 #include <oBasis/oLockedPointer.h>
-#include <oPlatform/oFile.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oStreamUtil.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/oTest.h>
 
 static const char* testImage = "Test/Textures/lena_1.png";

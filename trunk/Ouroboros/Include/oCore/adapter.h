@@ -22,17 +22,61 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// Interface for working with display adapters (video cards)
 #pragma once
-#ifndef oWinVersion_h
-#define oWinVersion_h
+#ifndef oCore_adapter_h
+#define oCore_adapter_h
 
-#include <oPlatform/oModuleUtil.h>
+#include <oStd/function.h>
+#include <oStd/macros.h>
+#include <oStd/vendor.h>
+#include <oStd/version.h>
 
-oDECLARE_DLL_SINGLETON_BEGIN(oWinVersion)
-	DWORD (__stdcall *GetFileVersionInfoSizeA)(LPCTSTR lptstrFilename, LPDWORD lpdwHandle);
-	BOOL (__stdcall *GetFileVersionInfoA)(LPCTSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData);
-	BOOL (__stdcall *VerQueryValueA)(LPCVOID pBlock, LPCTSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen);
-	BOOL (__stdcall *VerQueryValueW)(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen);
-oDECLARE_DLL_SINGLETON_END()
+namespace oCore {
+	namespace adapter {
+
+class id
+{
+public:
+	id() : Handle(-1) {}
+
+	bool operator==(const id& _That) const { return Handle == _That.Handle; }
+	bool operator!=(const id& _That) const { return !(*this == _That); }
+	operator bool() const { return Handle != -1; }
+
+private:
+	int Handle;
+};
+
+struct info
+{
+	class id id;
+	oStd::mstring description;
+	oStd::mstring plugnplay_id;
+	struct oStd::version version;
+	oStd::vendor::value vendor;
+};
+
+void enumerate(const std::function<bool(const info& _Info)>& _Enumerator);
+
+// Ouroboros requires a minimum adapter driver version. This returns that 
+// version.
+oStd::version minimum_version(oStd::vendor::value _Vendor);
+
+// Checks that all adapters meet or exceed the minimum version
+inline bool all_up_to_date()
+{
+	bool IsUpToDate = true;
+	enumerate([&](const info& _Info)->bool
+	{
+		if (_Info.version < minimum_version(_Info.vendor))
+			IsUpToDate = false;
+		return IsUpToDate;
+	});
+	return IsUpToDate;
+}
+
+	} // namespace adapter
+} // namespace oCore
 
 #endif

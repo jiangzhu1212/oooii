@@ -33,6 +33,7 @@
 #include <oBasis/oGUI.h>
 #include <oConcurrency/oConcurrency.h>
 #include <oStd/future.h>
+#include <oCore/display.h>
 
 interface oImage;
 
@@ -52,7 +53,7 @@ interface oWindow : oInterface
 	
 	// Returns an index fit for use with oDisplay API based on the center of the
 	// window's client area.
-	virtual int GetDisplayIndex() const = 0;
+	virtual oCore::display::id GetDisplayId() const = 0;
 	virtual bool IsWindowThread() const threadsafe = 0;
 
 

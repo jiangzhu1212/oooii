@@ -32,20 +32,17 @@
 #include <oBasis/oPath.h>
 #include <oBasis/oString.h>
 #include <oPlatform/oDisplay.h>
-#include <oPlatform/oFile.h>
 #include <oPlatform/oModule.h>
-#include <oPlatform/oProcess.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSingleton.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinAsString.h>
 #include <oPlatform/oMsgBox.h>
+#include <oPlatform/oStream.h>
 #include "SoftLink/oWinDbgHelp.h"
 #include "SoftLink/oWinKernel32.h"
 #include "SoftLink/oWinNetApi32.h"
 #include "SoftLink/oWinDWMAPI.h"
-#include "SoftLink/oWinPSAPI.h"
 #include "SoftLink/oWinSetupAPI.h"
 #include "oStaticMutex.h"
 #include <io.h>
@@ -56,6 +53,7 @@
 #include <Wbemidl.h>
 #include <devguid.h>
 #include <devpkey.h>
+#include <psapi.h>
 
 
 // Use the Windows Vista UI look. If this causes issues or the dialog not to appear, try other values from processorAchitecture { x86 ia64 amd64 * }
@@ -437,45 +435,11 @@ bool oWinEnumInputDevices(bool _EnumerateAll, const oFUNCTION<void(const oWINDOW
 
 void oWinKillExplorer()
 {
-	if (oProcessExists("explorer.exe"))
+	if (oCore::process::exists("explorer.exe"))
 	{
 		oTRACE("Terminating explorer.exe because the taskbar can interfere with cooperative fullscreen");
 		system("TASKKILL /F /IM explorer.exe");
 	}
-}
-
-bool oScheduleTask(const char* _DebugName, time_t _AbsoluteTime, bool _Alertable, oTASK _Task)
-{
-	SCHEDULED_FUNCTION_CONTEXT& Context = *new SCHEDULED_FUNCTION_CONTEXT();
-	Context.hTimer = CreateWaitableTimer(nullptr, TRUE, nullptr);
-	oASSERT(Context.hTimer, "CreateWaitableTimer failed LastError=0x%08x", GetLastError());
-	Context.OnTimer = _Task;
-	Context.ScheduledTime = _AbsoluteTime;
-
-	if (_DebugName && *_DebugName)
-		oStrcpy(Context.DebugName, _DebugName);
-	
-	#ifdef _DEBUG
-		oStd::date then;
-		oStd::sstring StrTime, StrDiff;
-		try { then = oStd::date_cast<oStd::date>(_AbsoluteTime); }
-		catch (std::exception&) { StrTime = "(out-of-time_t-range)"; }
-		oStd::strftime(StrTime, oStd::sortable_date_format, then);
-		oStd::format_duration(StrDiff, (double)(time(nullptr) - Context.ScheduledTime));
-		oTRACE("Setting timer to run function \"%s\" at %s (%s from now)", oSAFESTRN(Context.DebugName), StrTime.c_str(), StrDiff.c_str());
-	#endif
-
-	FILETIME ft = oStd::date_cast<FILETIME>(_AbsoluteTime);
-	LARGE_INTEGER liDueTime;
-	liDueTime.LowPart = ft.dwLowDateTime;
-	liDueTime.HighPart = ft.dwHighDateTime;
-	if (!SetWaitableTimer(Context.hTimer, &liDueTime, 0, ExecuteScheduledFunctionAndCleanup, (LPVOID)&Context, _Alertable ? TRUE : FALSE))
-	{
-		oWinSetLastError();
-		return false;
-	}
-
-	return true;
 }
 
 oRECT oToRect(const RECT& _Rect)
@@ -721,27 +685,6 @@ const char* as_string(const oWINDOWS_VERSION& _Version)
 
 } // namespace oStd
 
-bool oConvertEnvStringToEnvBlock(char* _EnvBlock, size_t _SizeofEnvBlock, const char* _EnvString, char _Delimiter)
-{
-	if (!_EnvString || ((oStrlen(_EnvString)+1) > _SizeofEnvBlock))
-	{
-		oErrorSetLast(std::errc::invalid_argument, "EnvBlock buffer not large enough to contain converted EnvString");
-		return false;
-	}
-
-	const char* r = _EnvString;
-	char* w = _EnvBlock;
-	while (1)
-	{
-		*w++ = *r == _Delimiter ? '\0' : *r;
-		if (!*r)
-			break;
-		r++;
-	}
-
-	return true;
-}
-
 void oTaskbarGetRect(RECT* _pRect)
 {
 	APPBARDATA abd;
@@ -880,10 +823,11 @@ const char** oWinCommandLineToArgvA(bool _ExePathAsArg0, const char* CmdLine, in
 	i = 0;
 	j = 0;
 
-	// @oooii-tony: Optionally insert exe path so this is exactly like argc/argv
+	// optionally insert exe path so this is exactly like argc/argv
 	if (_ExePathAsArg0)
 	{
-		oSystemGetPath(argv[argc], MAX_PATH, oSYSPATH_APP_FULL);
+		oStd::path AppPath = oCore::filesystem::app_path();
+		strlcpy(argv[argc], AppPath, MAX_PATH);
 		oStd::clean_path(argv[argc], MAX_PATH, argv[argc], '\\');
 		j = (ULONG)oStrlen(argv[argc])+1;
 		argc++;
@@ -1009,16 +953,6 @@ BOOL oThreadsafeFreeLibrary(HMODULE _hModule)
 	return oLoadLibrarySingleton::Singleton()->ThreadsafeFreeLibrary(_hModule);
 }
 
-// {EE17C49C-A27A-45F0-B2C8-D049E0ECD3C6}
-const oGUID guid = { 0xee17c49c, 0xa27a, 0x45f0, { 0xb2, 0xc8, 0xd0, 0x49, 0xe0, 0xec, 0xd3, 0xc6 } };
-oDEFINE_STATIC_MUTEX(oConcurrency::recursive_mutex, sOutputDebugStringMutex, guid);
-
-void oThreadsafeOutputDebugStringA(const char* _OutputString)
-{
-	oConcurrency::lock_guard<oStaticMutex<oConcurrency::recursive_mutex, sOutputDebugStringMutex_t> > Lock(sOutputDebugStringMutex);
-	OutputDebugStringA(_OutputString);
-}
-
 bool oWaitSingle(HANDLE _Handle, unsigned int _TimeoutMS)
 {
 	return WAIT_OBJECT_0 == ::WaitForSingleObject(_Handle, _TimeoutMS == oInfiniteWait ? INFINITE : _TimeoutMS);
@@ -1130,65 +1064,10 @@ HMODULE oGetModule(void* _ModuleFunctionPointer)
 	else
 	{
 		DWORD cbNeeded;
-		oWinPSAPI::Singleton()->EnumProcessModules(GetCurrentProcess(), &hModule, sizeof(hModule), &cbNeeded);
+		EnumProcessModules(GetCurrentProcess(), &hModule, sizeof(hModule), &cbNeeded);
 	}
 	
 	return hModule;
-}
-
-bool oWinGetProcessID(const char* _Name, DWORD* _pOutProcessID)
-{
-	// From http://msdn.microsoft.com/en-us/library/ms682623(v=VS.85).aspx
-	// Get the list of process identifiers.
-
-	*_pOutProcessID = 0;
-	oWinPSAPI* pPSAPI = oWinPSAPI::Singleton();
-
-	DWORD ProcessIDs[1024], cbNeeded;
-	if (!pPSAPI->EnumProcesses(ProcessIDs, sizeof(ProcessIDs), &cbNeeded))
-	{
-		oWinSetLastError();
-		return false;
-	}
-
-	bool truncationResult = true;
-	const size_t nProcessIDs = cbNeeded / sizeof(DWORD);
-
-	for (size_t i = 0; i < nProcessIDs; i++)
-	{
-		if (ProcessIDs[i] != 0)
-		{
-			HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ|PROCESS_DUP_HANDLE, FALSE, ProcessIDs[i]);
-			if (hProcess)
-			{
-				HMODULE hMod;
-				DWORD cbNeeded;
-
-				char szProcessName[MAX_PATH];
-				if (pPSAPI->EnumProcessModules(hProcess, &hMod, sizeof(hMod), &cbNeeded))
-				{
-					pPSAPI->GetModuleBaseNameA(hProcess, hMod, szProcessName, sizeof(szProcessName)/sizeof(char));
-					CloseHandle(hProcess);
-					if (oStricmp(szProcessName, _Name) == 0)
-					{
-						*_pOutProcessID = ProcessIDs[i];
-						return true;
-					}
-				}
-			}
-		}
-	}
-
-	if (sizeof(ProcessIDs) == cbNeeded)
-	{
-		oErrorSetLast(std::errc::no_buffer_space, "There are more than %u processes on the system currently, oWinGetProcessID needs to be more general-purpose.", oCOUNTOF(ProcessIDs));
-		truncationResult = false;
-	}
-
-	else
-		oErrorSetLast(std::errc::no_such_process);
-
-	return false;
 }
 
 bool oEnumProcessThreads(DWORD _ProcessID, oFUNCTION<bool(DWORD _ThreadID, DWORD _ParentProcessID)> _Function)
@@ -1217,39 +1096,6 @@ bool oEnumProcessThreads(DWORD _ProcessID, oFUNCTION<bool(DWORD _ThreadID, DWORD
 			if (!_Function(entry.th32ThreadID, entry.th32OwnerProcessID))
 				break;
 		keepLooking = Thread32Next(hSnapshot, &entry);
-	}
-
-	oVB(CloseHandle(hSnapshot));
-	return true;
-}
-
-bool oWinEnumProcesses(oFUNCTION<bool(DWORD _ProcessID, DWORD _ParentProcessID, const char* _ProcessExePath)> _Function)
-{
-	if (!_Function)
-	{
-		oErrorSetLast(std::errc::invalid_argument);
-		return false;
-	}
-
-	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	if (hSnapshot == INVALID_HANDLE_VALUE)
-		return oErrorSetLast(std::errc::invalid_argument, "Failed to get a snapshot of current process");
-
-	DWORD ppid = 0;
-
-	PROCESSENTRY32 entry;
-	entry.dwSize = sizeof(entry);
-	BOOL keepLooking = Process32First(hSnapshot, &entry);
-
-	if (!keepLooking)
-		return oErrorSetLast(std::errc::no_child_process);
-
-	while (keepLooking)
-	{
-		if (!_Function(entry.th32ProcessID, entry.th32ParentProcessID, entry.szExeFile))
-			break;
-		entry.dwSize = sizeof(entry);
-		keepLooking = !ppid && Process32Next(hSnapshot, &entry);
 	}
 
 	oVB(CloseHandle(hSnapshot));
@@ -1287,31 +1133,6 @@ bool oIsWindows64Bit()
 	BOOL bWow64 = FALSE;
 	IsWow64Process(GetCurrentProcess(), &bWow64);
 	return !bWow64;
-}
-
-bool oIsAeroEnabled()
-{
-	BOOL enabled = FALSE;
-	oV(oWinDWMAPI::Singleton()->DwmIsCompositionEnabled(&enabled));
-	return !!enabled;
-}
-
-bool oEnableAero(bool _Enabled, bool _Force)
-{
-	if (_Enabled && _Force && !oIsAeroEnabled())
-	{
-		system("%SystemRoot%\\system32\\rundll32.exe %SystemRoot%\\system32\\shell32.dll,Control_RunDLL %SystemRoot%\\system32\\desk.cpl desk,@Themes /Action:OpenTheme /file:\"C:\\Windows\\Resources\\Themes\\aero.theme\"");
-		oSleep(31000); // Windows takes about 30 sec to settle after doing this.
-	}
-	else	
-		oVB_RETURN2(oWinDWMAPI::Singleton()->DwmEnableComposition(_Enabled ? DWM_EC_ENABLECOMPOSITION : DWM_EC_DISABLECOMPOSITION));
-	
-	return true;
-}
-
-bool oIsRemoteDesktopConnected()
-{
-	return GetSystemMetrics(SM_REMOTESESSION) != 0;
 }
 
 static WORD oDlgGetClass(oWINDOWS_DIALOG_ITEM_TYPE _Type)
@@ -1452,168 +1273,6 @@ LPDLGTEMPLATE oDlgNewTemplate(const oWINDOWS_DIALOG_DESC& _Desc)
 	return lpDlgTemplate;
 }
 
-// NVIDIA's version string is of the form "x.xx.xM.MMmm" where
-// MMM is the major version and mm is the minor version.
-// (outside function below so this doesn't get tracked as a leak)
-static std::regex reNVVersionString("[0-9]+\\.[0-9]+\\.[0-9]+([0-9])\\.([0-9][0-9])([0-9]+)");
-
-static bool ParseVersionStringNV(const char* _VersionString, oStd::version* _pVersion)
-{
-	if (!_VersionString || !_pVersion)
-		return oErrorSetLast(std::errc::invalid_argument);
-
-	std::cmatch matches;
-	if (!regex_match(_VersionString, matches, reNVVersionString))
-		return oErrorSetLast(std::errc::invalid_argument, "The specified string \"%s\" is not a well-formed NVIDIA version string", oSAFESTRN(_VersionString));
-
-	char major[4];
-	major[0] = *matches[1].first;
-	major[1] = *matches[2].first;
-	major[2] = *(matches[2].first+1);
-	major[3] = 0;
-	*_pVersion = oStd::version(oUShort(atoi(major)), oUShort(atoi(matches[3].first)));
-	return true;
-}
-
-// AMD's version string is of the form M.mm.x.x where
-// M is the major version and mm is the minor version.
-// (outside function below so this doesn't get tracked as a leak)
-static std::regex reAMDVersionString("([0-9]+)\\.([0-9]+)\\.[0-9]+\\.[0-9]+");
-
-static bool ParseVersionStringAMD(const char* _VersionString, oStd::version* _pVersion)
-{
-	if (!_VersionString || !_pVersion)
-		return oErrorSetLast(std::errc::invalid_argument);
-
-	std::cmatch matches;
-	if (!regex_match(_VersionString, matches, reAMDVersionString))
-		return oErrorSetLast(std::errc::invalid_argument, "The specified string \"%s\" is not a well-formed AMD version string", oSAFESTRN(_VersionString));
-
-	*_pVersion = oStd::version(oUShort(atoi(matches[1].first)), oUShort(atoi(matches[2].first)));
-	return true;
-}
-
-static bool ParseVersionStringIntel(const char* _VersionString, oStd::version* _pVersion)
-{
-	// @oooii-tony: This initial version was done based on Dave's laptop which 
-	// appears to have AMD-like drivers... so use the same parsing for now...
-	return ParseVersionStringAMD(_VersionString, _pVersion);
-}
-
-bool oWinEnumVideoDriverDesc(oFUNCTION<void(const oDISPLAY_ADAPTER_DRIVER_DESC& _Desc)> _Enumerator)
-{
-	// redefine some MS GUIDs so we don't have to link to them
-
-	// 4590F811-1D3A-11D0-891F-00AA004B2E24
-	static const oGUID oGUID_CLSID_WbemLocator = { 0x4590F811, 0x1D3A, 0x11D0, { 0x89, 0x1F, 0x00, 0xAA, 0x00, 0x4B, 0x2E, 0x24 } };
-
-	// DC12A687-737F-11CF-884D-00AA004B2E24
-	static const oGUID oGUID_IID_WbemLocator = { 0xdc12a687, 0x737f, 0x11cf, { 0x88, 0x4D, 0x00, 0xAA, 0x00, 0x4B, 0x2E, 0x24 } };
-
-	CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-	oStd::finally OnScopeExit([&] { CoUninitialize(); });
-
-	oStd::intrusive_ptr<IWbemLocator> WbemLocator;
-	oV(CoCreateInstance((const GUID&)oGUID_CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, (const IID&)oGUID_IID_WbemLocator, (LPVOID *) &WbemLocator));
-
-	oStd::intrusive_ptr<IWbemServices> WbemServices;
-	oV(WbemLocator->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), NULL, NULL, 0, NULL, 0, 0, &WbemServices));
-	oV(CoSetProxyBlanket(WbemServices, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr, RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, nullptr, EOAC_NONE));
-	
-	oStd::intrusive_ptr<IEnumWbemClassObject> Enumerator;
-	oV(WbemServices->ExecQuery(bstr_t("WQL"), bstr_t("SELECT * FROM Win32_VideoController"), WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &Enumerator));
-
-	oStd::intrusive_ptr<IWbemClassObject> WbemClassObject;
-	while (Enumerator)
-	{
-		oDISPLAY_ADAPTER_DRIVER_DESC desc;
-		memset(&desc, 0, sizeof(oDISPLAY_ADAPTER_DRIVER_DESC));
-
-		ULONG uReturn = 0;
-		WbemClassObject = nullptr;
-		oV(Enumerator->Next(WBEM_INFINITE, 1, &WbemClassObject, &uReturn));
-		if (0 == uReturn)
-			break;
-
-		VARIANT vtProp;
-		oV(WbemClassObject->Get(L"Description", 0, &vtProp, 0, 0));
-		desc.Description = vtProp.bstrVal;
-		VariantClear(&vtProp);
-		oV(WbemClassObject->Get(L"PNPDeviceID", 0, &vtProp, 0, 0));
-		desc.PlugNPlayID = vtProp.bstrVal;
-		VariantClear(&vtProp);
-		oV(WbemClassObject->Get(L"DriverVersion", 0, &vtProp, 0, 0));
-
-		oStd::sstring version = vtProp.bstrVal;
-		if (strstr(desc.Description, "NVIDIA"))
-		{
-			desc.Vendor = oGPU_VENDOR_NVIDIA;
-			oVERIFY(ParseVersionStringNV(version, &desc.Version));
-		}
-		
-		else if (strstr(desc.Description, "ATI") || strstr(desc.Description, "AMD"))
-		{
-			desc.Vendor = oGPU_VENDOR_AMD;
-			oVERIFY(ParseVersionStringAMD(version, &desc.Version));
-		}
-
-		else if (strstr(desc.Description, "Intel"))
-		{
-			desc.Vendor = oGPU_VENDOR_INTEL;
-			oVERIFY(ParseVersionStringIntel(version, &desc.Version));
-		}
-
-		else
-		{
-			desc.Vendor = oGPU_VENDOR_UNKNOWN;
-			desc.Version = oStd::version();
-		}
-
-		_Enumerator(desc);
-	}
-	
-	return true;
-}
-
-bool oWinServicesEnum(oFUNCTION<bool(SC_HANDLE _hSCManager, const ENUM_SERVICE_STATUS_PROCESS& _Status)> _Enumerator)
-{
-	SC_HANDLE hSCManager = OpenSCManager(nullptr, nullptr, SC_MANAGER_ENUMERATE_SERVICE);
-	if (!hSCManager)
-	{
-		oWinSetLastError();
-		return false;
-	}
-
-	DWORD requiredBytes = 0;
-	DWORD nServices = 0;
-	EnumServicesStatusEx(hSCManager, SC_ENUM_PROCESS_INFO, SERVICE_TYPE_ALL, SERVICE_STATE_ALL, nullptr, 0, &requiredBytes, &nServices, nullptr, nullptr);
-	oASSERT(GetLastError() == ERROR_MORE_DATA, "");
-
-	ENUM_SERVICE_STATUS_PROCESS* lpServices = (ENUM_SERVICE_STATUS_PROCESS*)malloc(requiredBytes);
-
-	bool result = false;
-	if (EnumServicesStatusEx(hSCManager, SC_ENUM_PROCESS_INFO, SERVICE_TYPE_ALL, SERVICE_STATE_ALL, (LPBYTE)lpServices, requiredBytes, &requiredBytes, &nServices, nullptr, nullptr))
-	{
-		for (DWORD i = 0; i < nServices; i++)
-			if (!_Enumerator(hSCManager, lpServices[i]))
-				break;
-				
-		result = true;
-	}
-	
-	else
-		oWinSetLastError();
-
-	free(lpServices);
-	if (!CloseServiceHandle(hSCManager))
-	{
-		oWinSetLastError();
-		return false;
-	}
-
-	return result;
-}
-
 bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestination, SC_HANDLE _hSCManager, const char* _ServiceName)
 {
 	if (!_StrDestination || !_SizeofStrDestination || !_hSCManager || !_ServiceName || !*_ServiceName)
@@ -1706,45 +1365,6 @@ bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestinatio
 	return result;
 }
 
-static bool CheckStatusForNonSteady(SC_HANDLE _hSCManager, const ENUM_SERVICE_STATUS_PROCESS& _Status, bool* _pNonSteadyFound)
-{
-	if (SERVICE_PAUSED != _Status.ServiceStatusProcess.dwCurrentState && SERVICE_RUNNING != _Status.ServiceStatusProcess.dwCurrentState && SERVICE_STOPPED != _Status.ServiceStatusProcess.dwCurrentState)
-	{
-		*_pNonSteadyFound = true;
-		return false;
-	}
-
-	return true;
-}
-
-bool oWinSystemAllServicesInSteadyState()
-{
-	bool NonSteadyStateFound = false;
-	if (!oWinServicesEnum(oBIND(CheckStatusForNonSteady, oBIND1, oBIND2, &NonSteadyStateFound)))
-		return false;
-	return !NonSteadyStateFound;
-}
-
-double oWinSystemCalculateCPUUsage(unsigned long long* _pPreviousIdleTime, unsigned long long* _pPreviousSystemTime)
-{
-	double CPUUsage = 0.0;
-
-	unsigned long long idleTime, kernelTime, userTime;
-	oVB(GetSystemTimes((LPFILETIME)&idleTime, (LPFILETIME)&kernelTime, (LPFILETIME)&userTime));
-	unsigned long long systemTime = kernelTime + userTime;
-	
-	if (*_pPreviousIdleTime && *_pPreviousSystemTime)
-	{
-		unsigned long long idleDelta = idleTime - *_pPreviousIdleTime;
-		unsigned long long systemDelta = systemTime - *_pPreviousSystemTime;
-		CPUUsage = (systemDelta - idleDelta) * 100.0 / (double)systemDelta;
-	}		
-
-	*_pPreviousIdleTime = idleTime;
-	*_pPreviousSystemTime = systemTime;
-	return CPUUsage; 
-}
-
 bool oWinSystemOpenDocument(const char* _DocumentName, bool _ForEdit)
 {
 	int hr = (int)ShellExecuteA(nullptr, _ForEdit ? "edit" : "open", _DocumentName, nullptr, nullptr, SW_SHOW);
@@ -1759,10 +1379,12 @@ bool oWinSystemOpenDocument(const char* _DocumentName, bool _ForEdit)
 	return true;
 }
 
-bool oWinGetProcessTopWindowAndThread(unsigned int _ProcessID, HWND* _pHWND, unsigned int* _pThreadID, const char* _pOptionalWindowName /*= nullptr*/)
+bool oWinGetProcessTopWindowAndThread(oCore::process::id _ProcessID, HWND* _pHWND, unsigned int* _pThreadID, const char* _pOptionalWindowName /*= nullptr*/)
 {
 	HWND Hwnd = 0;
 	unsigned int ThreadID = 0;
+
+	unsigned int PID = *(unsigned int*)&_ProcessID;
 
 	oWinEnumWindows(
 		[&](HWND _Hwnd)->bool
@@ -1770,7 +1392,7 @@ bool oWinGetProcessTopWindowAndThread(unsigned int _ProcessID, HWND* _pHWND, uns
 		unsigned int HWNDProcessID;
 		auto NewThreadID = GetWindowThreadProcessId(_Hwnd, (DWORD*)&HWNDProcessID);
 
-		if(HWNDProcessID != _ProcessID)
+		if (HWNDProcessID != PID)
 			return true;
 
 		// Look for windows that might get injected into our process that we would never want to target
@@ -1810,20 +1432,22 @@ bool oWinGetProcessTopWindowAndThread(unsigned int _ProcessID, HWND* _pHWND, uns
 	return true;
 }
 
-bool oWinSystemIs64BitBinary(const char* _StrPath)
+bool oWinSystemIs64BitBinary(const oStd::path& _Path)
 {
 	bool result = false;
-	void* mapped = nullptr;
+
+	unsigned long long size = oCore::filesystem::file_size(_Path);
 
 	oSTREAM_DESC FDesc;
-	if (!oStreamGetDesc(_StrPath, &FDesc))
+	if (!oStreamGetDesc(_Path, &FDesc))
 		return false; // pass through error
 
-	if (oFileMap(_StrPath, false, oSTREAM_RANGE(FDesc), &mapped))
+	void* mapped = oCore::filesystem::map(_Path, false, 0, size);
+	if (mapped)
 	{
 		IMAGE_NT_HEADERS* pHeader = oWinDbgHelp::Singleton()->ImageNtHeader(mapped);
 		result = pHeader->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64;
-		oVERIFY(oFileUnmap(mapped));
+		oCore::filesystem::unmap(mapped);
 	}
 
 	return result;

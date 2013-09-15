@@ -52,7 +52,7 @@ static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, o
 	int ConfigHead = oPrintf(CommandLine, "%s %s /p:Configuration=", ToolName, _Settings.Solution);
 
 	o_msbuild_stdout_t StdOutDrain;
-	std::unordered_map<oStd::uri_string, oStd::intrusive_ptr<threadsafe oProcess>, oStdHash<oStd::uri_string>, oStd::equal_to<oStd::uri_string>> BuildProcesses;
+	std::unordered_map<oStd::uri_string, std::shared_ptr<oCore::process>, oStdHash<oStd::uri_string>, oStd::equal_to<oStd::uri_string>> BuildProcesses;
 	oFOR(auto& Config, _Settings.Configurations)
 	{
 		int PlatformHead = ConfigHead + oPrintf(CommandLine.c_str() + ConfigHead, CommandLine.capacity() - ConfigHead, "%s /p:Platform=", Config);
@@ -61,17 +61,12 @@ static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, o
 		{
 			oPrintf(CommandLine.c_str() + PlatformHead, CommandLine.capacity() - PlatformHead, "%s %s", Platform, _pCommand);
 
-			oProcess::DESC ProcessDesc;
-			ProcessDesc.CommandLine = CommandLine;
-			ProcessDesc.StdHandleBufferSize = StdOutDrain.capacity() - 1;
-			ProcessDesc.Show = oPROCESS_HIDE;
+			oCore::process::info pi;
+			pi.command_line = CommandLine;
+			pi.stdout_buffer_size = StdOutDrain.capacity() - 1;
+			pi.show = oCore::process::hide;
 
-			oStd::intrusive_ptr<threadsafe oProcess> Process;
-			if(!oProcessCreate(ProcessDesc, &Process))
-			{
-				return false;
-			}
-
+			std::shared_ptr<oCore::process> Process = oCore::process::make(pi);
 			oStd::uri_string Name;
 			oPrintf(Name, "%s_%s", Config, Platform);
 			if( BuildProcesses.end() != BuildProcesses.find(Name) )
@@ -86,15 +81,15 @@ static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, o
 		{
 			auto& Process = BuildProcess->second;
 
-			bool Finished = Process->Wait(5);
+			bool Finished = Process->wait_for(oStd::chrono::milliseconds(5));
 
-			size_t SuccessRead = Process->ReadFromStdout(StdOutDrain.c_str(), StdOutDrain.capacity() - 1);
+			size_t SuccessRead = Process->from_stdout(StdOutDrain.c_str(), StdOutDrain.capacity() - 1);
 			StdOutDrain[SuccessRead] = 0;
 			if( SuccessRead > 0 && !_CommandLogger(BuildProcess->first, StdOutDrain) )
 			{
 				oFOR(auto ProcessToTerminate, BuildProcesses )
 				{
-					ProcessToTerminate.second->Kill(0);
+					ProcessToTerminate.second->kill(0);
 				}
 				return oErrorSetLast(std::errc::operation_canceled);
 			}
@@ -199,12 +194,14 @@ bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _LogFolder, 
 	oFOR(auto& BuildLog, BuildLogs)
 	{
 		// Save out the file
-		oStd::path_string FilePath = _LogFolder;
-		oEnsureSeparator(FilePath);
-		oStrAppendf(FilePath, "%s.txt", BuildLog.first.c_str());
+		oStd::path FilePath = _LogFolder;
+		oStd::sstring Filename;
+		snprintf(Filename, "%s.txt", BuildLog.first.c_str());
+		FilePath /= Filename;
 		auto& Log = BuildLog.second.GetLog();
-		if (!oFileSave(FilePath, &Log[0], Log.size(), true))
-			_pResults->SavingLogfilesSucceeded &= false;
+		
+		try { oCore::filesystem::save(FilePath, &Log[0], Log.size(), oCore::filesystem::save_option::text_write); }
+		catch (std::exception&) { _pResults->SavingLogfilesSucceeded &= false; }
 
 		_pResults->BuildLogfiles.push_back(FilePath);
 	}

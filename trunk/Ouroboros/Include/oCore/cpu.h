@@ -22,15 +22,65 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "oWinPowrProf.h"
-#include <oStd/assert.h>
+// Utility for querying the Central Processing Unit hardware of the current 
+// computer.
+#pragma once
+#ifndef oCore_cpu_h
+#define oCore_cpu_h
 
-static const char* sExportedAPIs[] = 
+#include <oStd/fixed_string.h>
+
+namespace oCore {
+	namespace cpu { 
+
+/* enum class */ namespace type
+{	enum value {
+
+	unknown,
+	x86,
+	x64,
+	ia64,
+	arm,
+
+};}
+
+/* enum class */ namespace support
+{	enum value {
+
+	none, // the feature does not exist
+	not_found, // the feature is not exposed
+	hardware_only, // no platform support/API exposure
+	full, // both the current platform and HW support the feature
+
+};}
+
+struct cache_info
 {
-	"SetSuspendState",
+	unsigned int size;
+	unsigned int line_size;
+	unsigned int associativity;
 };
 
-oDEFINE_DLL_SINGLETON_CTOR(oWinPowrProf, "PowrProf.dll", SetSuspendState)
+struct info
+{
+	type::value type;
+	int processor_count;
+	int processor_package_count;
+	int hardware_thread_count;
+	cache_info data_cache[3];
+	cache_info instruction_cache[3];
+	oStd::sstring string;
+	oStd::sstring brand_string;
+};
 
-// {3799C034-0395-405C-9A29-79E0E7BD2A68}
-const oGUID oWinPowrProf::GUID = { 0x3799c034, 0x395, 0x405c, { 0x9a, 0x29, 0x79, 0xe0, 0xe7, 0xbd, 0x2a, 0x68 } };
+// Returns a description of the current CPU
+info get_info();
+
+// Enumerates all cpu features. Return true to continue enumeration, false to 
+// exit early.
+void enumerate_features(const std::function<bool(const char* _FeatureName, const support::value& _Support)>& _Enumerator);
+
+	} // namespace cpu
+} // namespace oCore
+
+#endif

@@ -1,0 +1,278 @@
+/**************************************************************************
+ * The MIT License                                                        *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
+ *                                                                        *
+ * Permission is hereby granted, free of charge, to any person obtaining  *
+ * a copy of this software and associated documentation files (the        *
+ * "Software"), to deal in the Software without restriction, including    *
+ * without limitation the rights to use, copy, modify, merge, publish,    *
+ * distribute, sublicense, and/or sell copies of the Software, and to     *
+ * permit persons to whom the Software is furnished to do so, subject to  *
+ * the following conditions:                                              *
+ *                                                                        *
+ * The above copyright notice and this permission notice shall be         *
+ * included in all copies or substantial portions of the Software.        *
+ *                                                                        *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
+ **************************************************************************/
+#include <oCore/cpu.h>
+#include <oHLSL/oHLSLBit.h>
+#include "win.h"
+
+namespace oStd {
+
+const char* as_string(const oCore::cpu::type::value& _Type)
+{
+	switch (_Type)
+	{
+		case oCore::cpu::type::unknown: return "unknown";
+		case oCore::cpu::type::x86: return "x86";
+		case oCore::cpu::type::x64: return "x64";
+		case oCore::cpu::type::ia64: return "ia64";
+		case oCore::cpu::type::arm: return "arm";
+		default: oASSUME(0);
+	}
+}
+
+const char* as_string(const oCore::cpu::support::value& _Support)
+{
+	switch (_Support)
+	{
+		case oCore::cpu::support::none: return "none";
+		case oCore::cpu::support::not_found: return "not found";
+		case oCore::cpu::support::hardware_only: return "hardware only";
+		case oCore::cpu::support::full: return "full";
+		default: oASSUME(0);
+	}
+}
+
+} // namespace oStd
+
+using namespace oStd;
+
+namespace oCore {
+	namespace cpu {
+		namespace detail {
+
+struct cpu_feature
+{
+	const char* name;
+	int index;
+	int check_bit;
+	oCore::windows::version::value min_version;
+};
+
+static const cpu_feature sFeatures[] = 
+{
+	{ "X87FPU", 3, 0, oCore::windows::version::unknown },
+	{ "Hyperthreading", 3, 28, oCore::windows::version::unknown },
+	{ "8ByteAtomicSwap", 3, 8, oCore::windows::version::unknown },
+	{ "SSE1", 2, 25, oCore::windows::version::unknown },
+	{ "SSE2", 3, 26, oCore::windows::version::unknown },
+	{ "SSE3", 2, 0, oCore::windows::version::unknown },
+	{ "SSE4.1", 2, 19,  oCore::windows::version::unknown },
+	{ "SSE4.2", 2, 20, oCore::windows::version::unknown },
+	{ "XSAVE/XSTOR", 2, 26, oCore::windows::version::win7_sp1 },
+	{ "OSXSAVE", 2, 27, oCore::windows::version::win7_sp1 },
+	{ "AVX1", -1, 0, oCore::windows::version::win7_sp1 }, // AVX detection is a special-case
+};
+
+static sstring get_cpu_string()
+{
+	int CPUInfo[4];
+	__cpuid(CPUInfo, 0);
+	sstring s;
+	*((int*)s.c_str()) = CPUInfo[1];
+	*((int*)(s.c_str()+4)) = CPUInfo[3];
+	*((int*)(s.c_str()+8)) = CPUInfo[2];
+	s.c_str()[12] = '\0';
+	return std::move(s);
+}
+
+static sstring get_cpu_brand_string()
+{
+	int CPUInfo[4];
+	sstring s;
+	__cpuid(CPUInfo, 0x80000002);
+	memcpy(s.c_str(), CPUInfo, sizeof(CPUInfo));
+	__cpuid(CPUInfo, 0x80000003);
+	memcpy(s.c_str() + sizeof(CPUInfo), CPUInfo, sizeof(CPUInfo));
+	__cpuid(CPUInfo, 0x80000004);
+	memcpy(s.c_str() + 2*sizeof(CPUInfo), CPUInfo, sizeof(CPUInfo));
+	clean_whitespace(s, s);
+	return std::move(s);
+}
+
+		} // namespace detail
+
+info get_info()
+{
+	DWORD size_ex = 0;
+	GetLogicalProcessorInformationEx(RelationNumaNode, 0, &size_ex);
+	oASSERT(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "");
+	
+	SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX* lpi_ex = static_cast<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*>(_alloca(size_ex));
+	memset(lpi_ex, 0xff, size_ex);
+	oVB(GetLogicalProcessorInformationEx(RelationNumaNode, lpi_ex, &size_ex));
+
+	// Skip to the requested CPU index
+	static const int _CPUIndex = 0;
+	size_t offset_ex = 0;
+	for (int cpu = 0; cpu < _CPUIndex; cpu++)
+	{
+		offset_ex += lpi_ex->Size;
+		if (offset_ex >= size_ex)
+			oTHROW0(protocol_error);
+		lpi_ex = byte_add(lpi_ex, lpi_ex->Size);
+	}
+
+	info cpu_info;
+	memset(&cpu_info, 0, sizeof(cpu_info));
+
+	SYSTEM_INFO si;
+	GetSystemInfo(&si);
+	switch (si.wProcessorArchitecture)
+	{
+		case PROCESSOR_ARCHITECTURE_AMD64: cpu_info.type = type::x64; break;
+		case PROCESSOR_ARCHITECTURE_IA64: cpu_info.type = type::ia64; break;
+		case PROCESSOR_ARCHITECTURE_INTEL: cpu_info.type = type::x86; break;
+		default: cpu_info.type = type::unknown; break;
+	}
+
+	DWORD size = 0;
+	GetLogicalProcessorInformation(0, &size);
+	oASSERT(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "");
+	SYSTEM_LOGICAL_PROCESSOR_INFORMATION* lpi = static_cast<SYSTEM_LOGICAL_PROCESSOR_INFORMATION*>(_alloca(size));
+	memset(lpi, 0xff, size);
+	oVB(GetLogicalProcessorInformation(lpi, &size));
+
+	const size_t numInfos = size / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
+
+	for (size_t i = 0; i < numInfos; i++)
+	{
+		if ((lpi[i].ProcessorMask & lpi_ex->NumaNode.GroupMask.Mask) != 0)
+		{
+			switch (lpi[i].Relationship)
+			{
+				case RelationProcessorCore:
+				cpu_info.processor_count++;
+				cpu_info.hardware_thread_count += static_cast<unsigned int>(countbits(lpi[i].ProcessorMask));
+				break;
+
+				case RelationCache:
+				{
+					size_t cacheLevel = lpi[i].Cache.Level - 1;
+					cache_info& c = lpi[i].Cache.Type == CacheData ? cpu_info.data_cache[cacheLevel] : cpu_info.instruction_cache[cacheLevel];
+					c.size = lpi[i].Cache.Size;
+					c.line_size = lpi[i].Cache.LineSize;
+					c.associativity = lpi[i].Cache.Associativity;
+				}
+				break;
+
+				case RelationProcessorPackage:
+				cpu_info.processor_package_count++;
+				break;
+
+				default:
+				break;
+			}
+		}
+	}
+
+	if (cpu_info.type == type::x86 || cpu_info.type == type::x64)
+	{
+		// http://msdn.microsoft.com/en-us/library/hskdteyh(VS.80).aspx
+
+		cpu_info.string = detail::get_cpu_string();
+		cpu_info.brand_string = detail::get_cpu_brand_string();
+	}
+
+	return std::move(cpu_info);
+}
+
+static const char* feature_name(int _FeatureIndex)
+{
+	return (_FeatureIndex < 0 || _FeatureIndex >= oCOUNTOF(detail::sFeatures)) ? nullptr : detail::sFeatures[_FeatureIndex].name;
+}
+
+static support::value check(const char* _Feature)
+{
+	int CPUInfo[4];
+	__cpuid(CPUInfo, 1);
+
+	int i = 0;
+	const char* s = feature_name(i);
+	while (s)
+	{
+		if (!strcmp(_Feature, s))
+		{
+			const detail::cpu_feature& f = detail::sFeatures[i];
+			windows::version::value ver = windows::get_version();
+
+			if (f.index == -1)
+			{
+				// special cases
+				if (!strcmp(_Feature, "AVX1"))
+				{
+					// http://insufficientlycomplicated.wordpress.com/2011/11/07/detecting-intel-advanced-vector-extensions-avx-in-visual-studio/
+					bool HasXSAVE_XSTOR = CPUInfo[2] & (1<<27) || false;
+					bool HasAVX = CPUInfo[2] & (1<<28) || false;
+					
+					if (ver >= f.min_version)
+					{
+						if (HasXSAVE_XSTOR && HasAVX)
+						{
+							// Check if the OS will save the YMM registers
+							unsigned long long xcrFeatureMask = _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
+							return ((xcrFeatureMask & 0x6) || false) ? support::full : support::hardware_only;
+						}
+
+						else
+							return support::hardware_only;
+					}
+
+					else
+						return support::hardware_only;
+				}
+
+				break;
+			}
+
+			else
+			{
+				if ((CPUInfo[f.index] & (1<<f.check_bit)) == 0)
+					return support::none;
+
+				if (ver < f.min_version)
+					return support::hardware_only;
+
+				return support::full;
+			}
+		}
+
+		s = feature_name(++i);
+	}
+
+	return support::not_found;
+}
+
+void enumerate_features(const std::function<bool(const char* _FeatureName, const support::value& _Support)>& _Enumerator)
+{
+	int i = 0;
+	const char* f = nullptr;
+	while (nullptr != (f = feature_name(++i)))
+	{
+		support::value sup = check(f);
+		_Enumerator(f, sup);
+	}
+}
+
+	} // namespace cpu
+} // namespace oCore

@@ -24,7 +24,6 @@
  **************************************************************************/
 #include "oHTTPInternal.h"
 #include "oHTTPProtocol.h"
-#include <oPlatform/oSystem.h>
 
 const char *pDefaultPage = "<html><head><title>%u %s</title></head><body><p>%u %s</p></body></html>";
 
@@ -215,7 +214,7 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 			{
 				// Add Date header field
 				oStd::date date;
-				oSystemGetDate(&date);
+				oCore::system::now(&date);
 				oStd::sstring dateString;
 				oStd::strftime(dateString, oStd::http_date_format, date);
 				oHTTPAddHeader(TheResponse.HeaderFields, oHTTP_HEADER_DATE, dateString);

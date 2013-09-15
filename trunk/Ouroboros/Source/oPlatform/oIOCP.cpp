@@ -32,7 +32,6 @@
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oProcessHeap.h>
-#include <oPlatform/oDebugger.h>
 
 #define IOCPKEY_SHUTDOWN 1
 #define IOCPKEY_USER_TASK 2

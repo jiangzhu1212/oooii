@@ -36,6 +36,7 @@
 #include <oHLSL/all.h>
 #include <oConcurrency/all.h>
 #include <oStd/all.h>
+#include <oCore/all.h>
 #include <oBasis/oLibc.h>
 
 #endif

@@ -72,6 +72,7 @@ oConcurrency      <== Implementation of concurrency containers and sync objects
                       for either bring-up, debugging, or building more complex
                       systems.
 oConcurrencyTests <== Unit tests for oConcurrency.
+oCore             <== platform/OS concepts like files, debugger, adapters, cpus.
 oBasis            <== Basic algorithms, types and structures that have no platform 
                       dependencies (but perhaps lightweight compiler dependencies).
 oBasisTests       <== Unit tests for oBasis.

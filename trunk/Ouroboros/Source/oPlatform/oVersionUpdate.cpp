@@ -23,12 +23,14 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oVersionUpdate.h>
+#include <oPlatform/oStream.h>
 #include <oStd/algorithm.h>
 #include <oStd/fixed_string.h>
-#include <oPlatform/oFile.h>
 #include <oPlatform/oModule.h>
-#include <oPlatform/oProcess.h>
-#include <oPlatform/oSystem.h>
+
+char* oSystemURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIParts);
+template<size_t size> char* oSystemURIPartsToPath(char (&_ResultingFullPath)[size], const oURIParts& _URIParts) { return oSystemURIPartsToPath(_ResultingFullPath, size, _URIParts); }
+template<size_t capacity> char* oSystemURIPartsToPath(oStd::fixed_string<char, capacity>& _ResultingFullPath, const oURIParts& _URIParts) { return oSystemURIPartsToPath(_ResultingFullPath, _ResultingFullPath.capacity(), _URIParts); }
 
 static std::regex reAppName("(.+?)(" oMODULE_DEBUG_SUFFIX_A ")?(?:-([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+))?(\\.exe)(.*)", std::regex_constants::optimize);
 
@@ -53,10 +55,8 @@ bool oVUDecompose(const oStd::uri_string& _URI, bool _VersionFromFilename, oVU_U
 	oMODULE_DESC md;
 	if (!_VersionFromFilename)
 	{
-		if (oModuleGetDesc(FilePath, &md))
-			_pParts->Version = md.ProductVersion;
-		else
-			return false; // pass through error
+		oCore::module::info mi = oCore::module::get_info(oStd::path(FilePath));
+		_pParts->Version = mi.version;
 	}
 
 	oStd::mstring Filename = oGetFilebase(FilePath);
@@ -114,8 +114,7 @@ char* oVURecompose(oStd::uri_string& _URI, const oVU_URI_PARTS& _Parts)
 
 bool oVUGetThisAppsInstallerFilename(oStd::mstring& _StrDestination)
 {
-	oStd::uri_string AppURI;
-	oVERIFY(oSystemGetURI(AppURI, oSYSPATH_APP_FULL));
+	oStd::uri AppURI(oCore::filesystem::app_path(true));
 
 	// by decomposing and recomposing, we've included the version into the exe
 	// name for the installer's full name.
@@ -130,24 +129,23 @@ bool oVUGetThisAppsInstallerFilename(oStd::mstring& _StrDestination)
 	return true;
 }
 
-static bool oVUEnumInstallers(const char* _FullPath, const oSTREAM_DESC& _Desc, std::vector<oVU_URI_PARTS>* _pInstallers)
-{
-	oStd::uri_string URI;
-	oVERIFY(oURIFromAbsolutePath(URI, _FullPath));
-	oVU_URI_PARTS parts;
-	if (oVUDecompose(_FullPath, true, &parts))
-		_pInstallers->push_back(parts);
-	return true;
-}
-
 static bool oVUGetLatestInstallerFilename(oStd::mstring& _StrDestination, const char* _InstallersFolder)
 {
-	oStd::path_string Path;
-	oPrintf(Path, "%s/*", _InstallersFolder); // all folders
+	oStd::path Path(_InstallersFolder);
+	Path /= "/*";
 	std::vector<oVU_URI_PARTS> Installers;
 	Installers.reserve(10);
-	if (!oFileEnum(Path, oBIND(oVUEnumInstallers, oBIND1, oBIND2, &Installers)))
-		return false; // pass through error
+
+	oCore::filesystem::enumerate(Path, [&](const oStd::path& _FullPath, const oCore::filesystem::file_status& _Status, unsigned long long _Size)->bool
+	{
+		oStd::uri_string URI;
+		oVERIFY(oURIFromAbsolutePath(URI, _FullPath));
+		oVU_URI_PARTS parts;
+		if (oVUDecompose(_FullPath, true, &parts))
+			Installers.push_back(parts);
+		
+		return true;
+	});
 
 	if (Installers.empty())
 		return oErrorSetLast(std::errc::no_such_file_or_directory, "No installers found");
@@ -159,16 +157,15 @@ static bool oVUGetLatestInstallerFilename(oStd::mstring& _StrDestination, const 
 
 	oURIParts URIParts;
 	oVERIFY(oURIDecompose(LatestURI, &URIParts));
-	oVERIFY(oSystemURIPartsToPath(Path, URIParts));
-	_StrDestination = oGetFilebase(Path);
+	Path = URIParts.Path;
+	_StrDestination = Path.filename().c_str();
 	return true;
 }
 
 bool oVUGetLatestInstallerFilename(oStd::mstring& _StrDestination)
 {
-	oStd::path_string AppPath;
-	oVERIFY(oSystemGetPath(AppPath, oSYSPATH_APP));
-	oStrAppendf(AppPath, "../");
+	oStd::path AppPath = oCore::filesystem::app_path();
+	AppPath /= "../";
 	if (!oVUGetLatestInstallerFilename(_StrDestination, AppPath))
 		return false; // pass through error
 	return true;
@@ -210,10 +207,7 @@ bool oVURenameLauncher(const char* _SfxURI)
 
 static bool oVUFireAndForget(const char* _CommandLine)
 {
-	oStd::path_string ModuleName;
-	oVERIFY(oModuleGetName(ModuleName));
-	oStd::clean_path(ModuleName, ModuleName);
-
+	oStd::path ModuleName = oCore::this_module::path();
 	std::cmatch ModuleNameMatches;
 	if (!regex_match(ModuleName.c_str(), ModuleNameMatches, reAppName))
 		return oErrorSetLast(std::errc::invalid_argument, "malformed module name: %s", ModuleName.c_str());
@@ -228,13 +222,11 @@ static bool oVUFireAndForget(const char* _CommandLine)
 		(ModuleNameMatches.length(4) == CommandLineMatches.length(4) && 0 == _memicmp(ModuleNameMatches[4].first, CommandLineMatches[4].first, ModuleNameMatches.length(4))))
 		return oErrorSetLast(std::errc::operation_in_progress, "Asked to execute self, this will create an infinite loop.");
 
-	oProcess::DESC pd;
-	pd.CommandLine = _CommandLine;
-	pd.Show = oPROCESS_SHOW_MINIMIZED;
+	oCore::process::info pi;
+	pi.command_line = _CommandLine;
+	pi.show = oCore::process::minimized;
 	oTRACE("Spawning process: %s", _CommandLine);
-	oStd::intrusive_ptr<threadsafe oProcess> NewProcess;
-	if (!oProcessCreate(pd, &NewProcess))
-		return false; // pass through error
+	auto NewProcess = oCore::process::make(pi);
 	return true;
 }
 
@@ -257,9 +249,8 @@ bool oVUIsUpdateInstallerValid(const oStd::uri_string& _SfxURI, bool _IsNewer /*
 	if (!oVUDecompose(_SfxURI, true, &SfxParts))
 		return false; // pass through error
 	
-	oStd::path_string AppURI;
+	oStd::uri AppURI(oCore::filesystem::app_path(true));
 	oVU_URI_PARTS AppParts;
-	oVERIFY(oSystemGetURI(AppURI, oSYSPATH_APP_FULL));
 	if (!oVUDecompose(AppURI, false, &AppParts))
 		return false; // pass through error
 
@@ -278,9 +269,8 @@ bool oVUIsUpdateInstallerValid(const oStd::uri_string& _SfxURI, bool _IsNewer /*
 
 static bool oVUGetModuleShortName(oStd::mstring& _ModuleShortName)
 {
-	oStd::path_string ModulePath;
-	oModuleGetName(ModulePath);
-	oGetFilebase(_ModuleShortName, ModulePath.c_str());
+	oStd::path ModulePath = oCore::this_module::path();
+	_ModuleShortName = ModulePath.filename().c_str();
 	size_t suffixsize = oStrlen(oMODULE_DEBUG_SUFFIX_A);
 	if (0 == memcmp(_ModuleShortName.c_str() + _ModuleShortName.size() - suffixsize, oMODULE_DEBUG_SUFFIX_A, suffixsize))
 		*(_ModuleShortName.c_str() + _ModuleShortName.size() - suffixsize) = 0;
@@ -291,9 +281,8 @@ static const char* sGenericLauncherName = "oLauncher";
 
 char* oVUGetLauncherName(char* _StrDestination, size_t _SizeofStrDestination)
 {
-	oStd::path_string LauncherPath;
-	oSystemGetPath(LauncherPath, oSYSPATH_APP);
-	oStrAppendf(LauncherPath, "../");
+	oStd::path LauncherPath = oCore::filesystem::app_path();
+	LauncherPath /= "../";
 
 	oStd::mstring ModuleName;
 	oVERIFY(oVUGetModuleShortName(ModuleName));
@@ -354,10 +343,10 @@ bool oVULaunchLauncher(unsigned int _ExpectedTimeToShutdownMS, const oStd::versi
 		oPrintf(ForcedVersion, "-v %s", oStd::to_string(StrVer, _Version));
 	}
 
-	oStrAppendf(CmdLine, " -w %u -t %u %s", oProcessGetCurrentID(), _ExpectedTimeToShutdownMS, ForcedVersion.c_str());
+	oStrAppendf(CmdLine, " -w %u -t %u %s", oCore::this_process::get_id(), _ExpectedTimeToShutdownMS, ForcedVersion.c_str());
 
 	oStd::xlstring ModuleCmdLine;
-	oProcessGetCommandLine(ModuleCmdLine, true);
+	oCore::this_process::command_line(ModuleCmdLine, true);
 	if (!ModuleCmdLine.empty())
 		oStrAppendf(CmdLine, " -c\"%s\"", ModuleCmdLine.c_str());
 
@@ -383,17 +372,13 @@ bool oVUUnzip(const char* _SfxURI)
 	oStd::lstring CmdLine;
 	oPrintf(CmdLine, "%s x -y -o\"%s\"", Path.c_str(), TargetDir.c_str());
 	oStd::fixed_string<char, oKB(16)> StdOut;
-	int ExitCode = 0;
 	const unsigned int kTwoMinutes = 2 * 60 * 1000;
-	if (!oSystemExecute(CmdLine, [&](char* _Line) { strlcat(StdOut, _Line, StdOut.capacity()); }, &ExitCode, false, kTwoMinutes))
-		return false; // pass through error
-
+	int ExitCode = oCore::system::spawn(CmdLine, [&](char* _Line) { strlcat(StdOut, _Line, StdOut.capacity()); }, false, kTwoMinutes);
 	if (ExitCode)
 	{
-		oStd::path_string Path;
-		oSystemGetPath(Path, oSYSPATH_APP);
-		oStrAppendf(Path, "oYUVUnzip-Error.log");
-		oFileSave(Path, StdOut.c_str(), StdOut.size(), true, false);
+		oStd::path Path = oCore::filesystem::app_path();
+		Path /= "oYUVUnzip-Error.log";
+		oCore::filesystem::save(Path, StdOut.c_str(), StdOut.size(), oCore::filesystem::save_option::text_write);
 
 		return oErrorSetLast(std::errc::protocol_error, "7ZSfx exited with code %d: %s", ExitCode, StdOut.c_str());
 	}
@@ -401,18 +386,9 @@ bool oVUUnzip(const char* _SfxURI)
 	return true;
 }
 
-static bool oVUEnumVersionFolders(const char* _FullPath, const oSTREAM_DESC& _Desc, std::vector<oStd::mstring>* _pVersionFolders)
-{
-	const char* ver = oGetFilebase(_FullPath);
-	oStd::version v;
-	if (oStd::from_string(&v, ver))
-		_pVersionFolders->push_back(ver);
-	return true;
-}
-
 static bool oVUFindVersionPath(oStd::path_string& _StrPath, const char* _SpecificVersion)
 {
-	oSystemGetPath(_StrPath, oSYSPATH_APP);
+	_StrPath = oCore::filesystem::app_path();
 	if (oSTRVALID(_SpecificVersion))
 	{
 		oStrAppendf(_StrPath, "%s/", _SpecificVersion);
@@ -423,12 +399,18 @@ static bool oVUFindVersionPath(oStd::path_string& _StrPath, const char* _Specifi
 	else
 	{
 		// Search for most recent version folder
-		oStd::path_string Wildcard;
-		oPrintf(Wildcard, "%s*",_StrPath.c_str()); // all folders
+		oStd::path Wildcard(_StrPath);
+		Wildcard /= "/*";
 		std::vector<oStd::mstring> VersionFolders;
 		VersionFolders.reserve(10);
-		if (!oFileEnum(Wildcard, oBIND(oVUEnumVersionFolders, oBIND1, oBIND2, &VersionFolders)))
-			return false; // pass through error
+		oCore::filesystem::enumerate(Wildcard, [&](const oStd::path& _FullPath, const oCore::filesystem::file_status& _Status, unsigned long long _Size)->bool
+		{
+			oStd::path_string ver = _FullPath.basename();
+			oStd::version v;
+			if (oStd::from_string(&v, ver))
+				VersionFolders.push_back(ver);
+			return true;
+		});
 
 		// if empty, leave _StrPath alone, thus having the .\ path in it described 
 		// above
@@ -521,9 +503,7 @@ static bool oVUFindExePath(oStd::path_string& _ExePath, const oStd::path_string&
 			++it;
 	}
 
-	oStd::path_string ThisModuleName;
-	oVERIFY(oModuleGetName(ThisModuleName));
-	oStd::clean_path(ThisModuleName, ThisModuleName);
+	oStd::path ThisModuleName = oCore::this_module::path();
 	std::vector<std::string>::const_iterator itSelf = Paths.cend();
 	
 	oFOR(const auto& path, Paths)
@@ -557,21 +537,19 @@ bool oVURelaunch(const oVERSIONED_LAUNCH_DESC& _Desc)
 	bool KeepChecking = true;
 	while (_Desc.WaitForPID && KeepChecking)
 	{
-		oStd::path_string ProcessName;
-		if (!oProcessGetName(ProcessName, _Desc.WaitForPID))
-			ProcessName = "???";
+		oStd::path ProcessName = oCore::process::get_name(_Desc.WaitForPID);
 
 		oTRACE("Waiting for process exit %d %s (timeout = %.02f sec)...", _Desc.WaitForPID, ProcessName.c_str(), _Desc.WaitForPIDTimeout * 1000.0f);
-		if (oProcessWaitExit(_Desc.WaitForPID, _Desc.WaitForPIDTimeout))
+		if (oCore::process::wait_for(_Desc.WaitForPID, oStd::chrono::milliseconds(_Desc.WaitForPIDTimeout)))
 			KeepChecking = false;
 		else
 		{
 			oTRACE("Lasterr: %s", oErrorGetLastString());
-			if (!oProcessHasDebuggerAttached(_Desc.WaitForPID))
-				oProcessTerminate(_Desc.WaitForPID, 0xdeadbeef);
+			if (!oCore::process::has_debugger_attached(_Desc.WaitForPID))
+				oCore::process::terminate(_Desc.WaitForPID, 0xdeadbeef);
 		}
 
-		if (!oProcessHasDebuggerAttached(oProcessGetCurrentID()))
+		if (!oCore::this_process::has_debugger_attached())
 		{
 			oSleep(1000);
 			KeepChecking = false;

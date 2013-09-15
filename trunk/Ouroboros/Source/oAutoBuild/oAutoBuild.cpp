@@ -437,10 +437,9 @@ oMAINA()
 	if (!oWebAppWindowCreate("oAutoBuild", Settings.Port, &Window))
 		return -1;
 
-	oStd::path_string logroot;
-	oSystemURIToPath(logroot, Settings.BuildLogsURI);
-	oFileEnsureParentFolderExists(logroot);
-
+	oStd::path logroot = oStd::uri(Settings.BuildLogsURI).path();
+	oCore::filesystem::create_directories(logroot.parent_path());
+	
 	oStd::intrusive_ptr<oP4ChangelistBuilder> CLManager;
 	if (!oChangelistManagerCreate(*INI, logroot.c_str(), Settings.Port, &CLManager))
 	{
@@ -513,10 +512,8 @@ oMAINA()
 	}
 
 	// 4) Auto updater
-	oStd::path_string MonitorPath;
-	oVERIFY(oSystemGetPath(MonitorPath, oSYSPATH_APP_FULL));
-	*oGetFilebase(MonitorPath) = 0;
-	oStrAppendf(MonitorPath, "../*.exe");
+	oStd::path MonitorPath = oCore::filesystem::app_path(true);
+	MonitorPath.replace_filename("../*.exe");
 
 	oSTREAM_MONITOR_DESC md;
 	md.Monitor = MonitorPath;

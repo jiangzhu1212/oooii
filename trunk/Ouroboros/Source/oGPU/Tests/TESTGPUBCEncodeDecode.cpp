@@ -26,7 +26,6 @@
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oPlatform/oImage.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/oTest.h>
 
 struct GPU_BCEncodeDecode : public oTest

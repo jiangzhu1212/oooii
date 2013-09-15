@@ -45,7 +45,7 @@ interface oProgressBar : oInterface
 public:
 	// Allowable interface from oWindow
 	inline oGUI_WINDOW GetNativeHandle() const threadsafe { return GetWindow()->GetNativeHandle(); }
-	inline int GetDisplayIndex() const { return GetWindow()->GetDisplayIndex(); }
+	inline int GetDisplayId() const { return GetWindow()->GetDisplayId(); }
 	inline bool IsWindowThread() const threadsafe { return GetWindow()->IsWindowThread(); }
 	inline oGUI_WINDOW_STATE GetState() const { oGUI_WINDOW_SHAPE_DESC s = GetWindow()->GetShape(); return s.State; }
 	inline void Hide() threadsafe { GetWindow()->SetState(oGUI_WINDOW_HIDDEN); }

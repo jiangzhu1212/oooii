@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oPlatform/oFile.h>
+#include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
 
 struct PLATFORM_FileSync : public oTest
@@ -84,10 +84,11 @@ struct PLATFORM_FileSync : public oTest
 		// Now test writing data out then reading it back
 		oStd::path TempFilePath;
 		oTESTB0(BuildPath(TempFilePath, "", oTest::TEMP));
-		oTESTB0(oFileEnsureParentFolderExists(TempFilePath));
+		oCore::filesystem::create_directories(TempFilePath.parent_path());
 		TempFilePath /= "TESTAsyncFileIO.bin";
 
 		{
+			oCore::filesystem::remove(TempFilePath);
 			oStd::intrusive_ptr<threadsafe oStreamReader> ReadFile;
 			oTESTB( !oStreamReaderCreate(TempFilePath, &ReadFile), "Should not be able to create a FileReader for a file that does not exist." );
 		}

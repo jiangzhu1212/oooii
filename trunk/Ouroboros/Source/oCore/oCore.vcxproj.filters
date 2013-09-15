@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="oCore">
+      <UniqueIdentifier>{edef4b9c-3e2b-4a84-8124-bac935324076}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{32c14ac9-03be-4703-8322-80cc06f18ef6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\windows">
+      <UniqueIdentifier>{a37c1a79-fed8-4689-8df7-76ea5010c973}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="filesystem.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="filesystem_error.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="module.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="debugger.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="display.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="page_allocator.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="adapter.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="process.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="system.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="win.cpp">
+      <Filter>Source\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="cpu.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Include\oCore\filesystem.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\filesystem_error.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\module.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\cpu.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="win.h">
+      <Filter>Source\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\debugger.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\display.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\page_allocator.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\adapter.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\process.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\system.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="winqedit.h">
+      <Filter>Source\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\all.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

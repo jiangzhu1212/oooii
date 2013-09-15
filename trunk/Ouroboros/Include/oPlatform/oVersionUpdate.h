@@ -35,6 +35,7 @@
 
 #include <oStd/fixed_string.h>
 #include <oStd/version.h>
+#include <oCore/process.h>
 
 // _____________________________________________________________________________
 // Utilities to be called from the non-launcher/target executable
@@ -88,15 +89,14 @@ oAPI bool oVULaunchLauncher(unsigned int _ExpectedTimeToShutdownMS, const oStd::
 struct oVERSIONED_LAUNCH_DESC
 {
 	oVERSIONED_LAUNCH_DESC()
-		: WaitForPID(0)
-		, WaitForPIDTimeout(oInfiniteWait)
+		: WaitForPIDTimeout(oInfiniteWait)
 		, SpecificModuleName(nullptr)
 		, SpecificVersion(nullptr)
 		, ModuleNamePrefix(nullptr)
 		, PassThroughCommandLine(nullptr)
 	{}
 
-	unsigned int WaitForPID;
+	oCore::process::id WaitForPID;
 	unsigned int WaitForPIDTimeout;
 	const char* SpecificModuleName; // if null, use this launcher's module name
 	const char* SpecificVersion; // if null, use latest version

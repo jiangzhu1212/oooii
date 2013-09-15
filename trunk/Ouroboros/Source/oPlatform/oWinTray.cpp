@@ -28,7 +28,6 @@
 #include <oBasis/oString.h>
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oSingleton.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/Windows/oWinWindowing.h>
 #include <shellapi.h>
 #include <Windowsx.h>
@@ -149,8 +148,8 @@ struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
 		{
 			oStd::xlstring buf;
 			oStd::mstring exec;
-			oPrintf(buf, "oWindows Trace %s Cleaning up tray icons\n", oSystemGetExecutionPath(exec));
-			oThreadsafeOutputDebugStringA(buf);
+			oPrintf(buf, "oWindows Trace %s Cleaning up tray icons\n", oCore::system::exec_path(exec));
+			OutputDebugStringA(buf);
 		}
 
 		for (size_t i = 0; i < Removes.size(); i++)
@@ -176,7 +175,7 @@ struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
 			Removes.push_back(rti);
 		}
 		else
-			oThreadsafeOutputDebugStringA("--- Too many tray icons registered for cleanup: ignoring. ---");
+			OutputDebugStringA("--- Too many tray icons registered for cleanup: ignoring. ---");
 	}
 
 	void Unregister(HWND _hWnd, UINT _ID)

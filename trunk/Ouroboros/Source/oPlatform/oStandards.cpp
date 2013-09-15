@@ -31,11 +31,9 @@
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oMsgBox.h>
-#include <oPlatform/oProcess.h>
-#include <oPlatform/oSystem.h>
 #include <oPlatform/Windows/oWindows.h>
-#include <oPlatform/oFile.h>
 #include <oPlatform/oModule.h>
+#include <oPlatform/oStream.h>
 
 void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list _Args )
 {
@@ -79,7 +77,7 @@ void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list
 bool oMoveMouseCursorOffscreen()
 {
 	int2 p, sz;
-	oDisplayGetVirtualRect(&p, &sz);
+	oCore::display::virtual_rect(&p.x, &p.y, &sz.x, &sz.y);
 	return !!SetCursorPos(p.x + sz.x, p.y-1);
 }
 
@@ -91,7 +89,7 @@ bool oWaitForSystemSteadyState(oFUNCTION<bool()> _ContinueIdling)
 	oTRACE("Waiting for system steady state...");
 
 	const unsigned int TWO_MINUTES = 120000;
-	if (!oSystemWaitIdle(TWO_MINUTES, _ContinueIdling))
+	if (!oCore::system::wait_for_idle(TWO_MINUTES, _ContinueIdling))
 	{
 		if (oErrorGetLast() == ETIMEDOUT)
 		{
@@ -156,7 +154,8 @@ char* oGetLogFilePath(char* _StrDestination, size_t _SizeofStrDestination, const
 	tm t;
 	localtime_s(&t, &theTime);
 
-	if (!oSystemGetPath(_StrDestination, _SizeofStrDestination, oSYSPATH_APP_FULL))
+	oStd::path AppPath = oCore::filesystem::app_path(true);
+	if (strlcpy(_StrDestination, AppPath, _SizeofStrDestination) >= _SizeofStrDestination)
 		return nullptr; // pass through error
 
 	char fn[128];
@@ -171,7 +170,7 @@ char* oGetLogFilePath(char* _StrDestination, size_t _SizeofStrDestination, const
 	if (_ExeSuffix)
 		p += oPrintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%s", _ExeSuffix);
 
-	p += oPrintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%i.txt", oProcessGetCurrentID());
+	p += oPrintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%i.txt", oCore::this_process::get_id());
 	oStd::clean_path(_StrDestination, _SizeofStrDestination, _StrDestination);
 	
 	return _StrDestination;
@@ -183,8 +182,7 @@ bool oINIFindPath( char* _StrDestination, size_t _SizeofStrDestination, const ch
 	if(oStreamExists(_StrDestination))
 		return true;
 
-	oStd::path_string AppDir;
-	oSystemGetPath(AppDir, oSYSPATH_APP);
+	oStd::path AppDir = oCore::filesystem::app_path();
 
 	oPrintf(_StrDestination, _SizeofStrDestination, "%s/../%s", AppDir, _pININame);
 	if(oStreamExists(_StrDestination))
