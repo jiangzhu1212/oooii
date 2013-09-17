@@ -24,24 +24,20 @@
  **************************************************************************/
 // Declarations of oStd unit tests. These throw on failure.
 #pragma once
-#ifndef oStdTests_h
-#define oStdTests_h
+#ifndef oCoreTests_h
+#define oCoreTests_h
 
-#include <oStd/tests/oStdTestRequirements.h>
+#include <oCore/tests/oCoreTestRequirements.h>
 
-namespace oStd {
+namespace oCore {
 	namespace tests {
 
-		void TESTatof(requirements& _Requirements);
-		void TESTcsv();
-		void TESTdate(requirements& _Requirements);
-		void TESTini();
-		void TESTfuture(requirements& _Requirements);
-		void TESTpath();
-		void TESTuri();
-		void TESTxml();
+		void TESTadapter(requirements& _Requirements);
+		void TESTcpu(requirements& _Requirements);
+		void TESTdebugger(requirements& _Requirements);
+		void TESTfilesystem();
 
 	} // namespace tests
-} // namespace oStd
+} // namespace oCore
 
 #endif

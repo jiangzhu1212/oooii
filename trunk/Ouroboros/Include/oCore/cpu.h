@@ -29,6 +29,7 @@
 #define oCore_cpu_h
 
 #include <oStd/fixed_string.h>
+#include <functional>
 
 namespace oCore {
 	namespace cpu { 

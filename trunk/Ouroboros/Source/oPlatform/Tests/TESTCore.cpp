@@ -22,30 +22,34 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oCore/cpu.h>
-#include <oBasis/oString.h>
-#include <oPlatform/oTest.h>
+#include <oCore/tests/oCoreTests.h>
+#include "oTestIntegration.h"
+#include <cstdlib>
 
-using namespace oCore;
+namespace oCore {
+	namespace tests {
 
-struct PLATFORM_oCPU : public oTest
+struct requirements_implementation : requirements
 {
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
+	void vreport(const char* _Format, va_list _Args) override
 	{
-		cpu::info inf = cpu::get_info();
-		bool HasHT = false, HasAVX = false;
-		cpu::enumerate_features([&](const char* _FeatureName, const cpu::support::value& _Support)->bool
-		{
-			if (!_stricmp("Hyperthreading", _FeatureName))
-				HasHT = _Support == cpu::support::full;
-			else if (!_stricmp("AVX1", _FeatureName))
-				HasAVX = _Support == cpu::support::full;
-			return true;
-		});
-
-		snprintf(_StrStatus, _SizeofStrStatus, "%s %s %s%s%s %d HWThreads", oStd::as_string(inf.type), inf.string.c_str(), inf.brand_string.c_str(), HasHT ? " HT" : "", HasAVX ? " AVX" : "", inf.hardware_thread_count);
-		return SUCCESS;
+		oErrorSetLastV(0, _Format, _Args);
+		oTRACEA("%s", oErrorGetLastString());
 	}
 };
 
-oTEST_REGISTER(PLATFORM_oCPU);
+	} //namespace tests
+} // namespace oCore
+
+using namespace oCore::tests;
+
+#define oTEST_REGISTER_CORE_TEST0(_Name) oTEST_THROWS_REGISTER0(oCONCAT(oCore_, _Name), oCONCAT(TEST, _Name))
+#define oTEST_REGISTER_CORE_TEST(_Name) oTEST_THROWS_REGISTER(oCONCAT(oCore_, _Name), oCONCAT(TEST, _Name))
+
+#define oTEST_REGISTER_CORE_TEST_BUGGED0(_Name) oTEST_THROWS_REGISTER_BUGGED0(oCONCAT(oCore_, _Name), oCONCAT(TEST, _Name))
+#define oTEST_REGISTER_CORE_TEST_BUGGED(_Name) oTEST_THROWS_REGISTER_BUGGED(oCONCAT(oCore_, _Name), oCONCAT(TEST, _Name))
+
+oTEST_REGISTER_CORE_TEST(adapter);
+oTEST_REGISTER_CORE_TEST(cpu);
+oTEST_REGISTER_CORE_TEST(debugger);
+oTEST_REGISTER_CORE_TEST0(filesystem);

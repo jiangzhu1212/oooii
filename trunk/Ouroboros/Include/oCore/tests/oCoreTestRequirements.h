@@ -22,24 +22,22 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include <oPlatform/oDisplay.h>
+// Anything that might want to be consistently controlled by a unit test 
+// infrastructure is separated out into this virtual interface.
+#pragma once
+#ifndef oCoreTestRequirements_h
+#define oCoreTestRequirements_h
 
-struct TESTDisplayAdapter : public oTest
+namespace oCore {
+	namespace tests {
+
+interface requirements
 {
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
-	{
-		bool appending = false;
-		oTESTB0(oWinEnumVideoDriverDesc([&](const oDISPLAY_ADAPTER_DRIVER_DESC& _Desc)
-		{
-			if (appending)
-				oStrAppendf(_StrStatus, _SizeofStrStatus, ", ");
-			oStrAppendf(_StrStatus, _SizeofStrStatus, "%s - Driver: %i.%i", _Desc.Description.c_str(), _Desc.Version.Major, _Desc.Version.Minor);
-			appending = true;
-		}));
-
-		return SUCCESS;
-	}
+	virtual void vreport(const char* _Format, va_list _Args) = 0;
+	inline void report(const char* _Format, ...) { va_list a; va_start(a, _Format); vreport(_Format, a); va_end(a); }
 };
 
-oTEST_REGISTER(TESTDisplayAdapter);
+	} // namespace tests
+} // namespace oCore
+
+#endif

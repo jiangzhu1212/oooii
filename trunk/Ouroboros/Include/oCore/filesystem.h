@@ -28,7 +28,9 @@
 #define oCore_filesystem_h
 
 #include <oCore/filesystem_error.h>
+#include <functional>
 #include <stdio.h>
+#include <memory>
 
 namespace oCore {
 	namespace filesystem {
@@ -42,6 +44,14 @@ namespace oCore {
 	text_read,
 	text_write,
 	text_append,
+
+};}
+
+/* enum class */ namespace load_option
+{ enum value {
+
+	text_read,
+	binary_read,
 
 };}
 
@@ -265,6 +275,14 @@ unsigned long long write(file_handle _hFile
 // Writes the entire buffer to the specified file. Open is specified to allow 
 // text and write v. append specification.
 void save(const oStd::path& _Path, const void* _pSource, size_t _SizeofSource, save_option::value _SaveOption = save_option::text_write);
+
+// Allocates the size of the file, reads it into memory and returns that buffer.
+// If loaded as text, the allocation will be padded and a nul terminator will be
+// added so the buffer can immediately be used as a string.
+std::shared_ptr<char> load(const oStd::path& _Path, load_option::value _LoadOption);
+
+// retrieve file size in one go.
+std::shared_ptr<char> load(const oStd::path& _Path, size_t* _pSize, load_option::value _LoadOption);
 
 	} // namespace filesystem
 } // namespace oCore

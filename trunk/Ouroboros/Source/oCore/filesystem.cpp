@@ -27,6 +27,7 @@
 #include <oStd/macros.h>
 #include "win.h"
 #include <io.h>
+#include <memory>
 
 namespace oStd
 {
@@ -655,6 +656,61 @@ void save(const path& _Path, const void* _pSource, size_t _SizeofSource, save_op
 	file_handle f = open(_Path, OpenOption);
 	finally CloseFile([&] { close(f); });
 	write(f, _pSource, _SizeofSource);
+}
+
+void delete_buffer(char* _pBuffer)
+{
+	delete [] _pBuffer;
+}
+
+std::shared_ptr<char> load(const path& _Path, size_t* _pSize, load_option::value _LoadOption)
+{
+	unsigned long long FileSize = file_size(_Path);
+
+	// in case we need a UTF32 nul terminator
+	oCHECK_SIZE(size_t, FileSize);
+	size_t AllocSize = static_cast<size_t>(FileSize) + (_LoadOption == load_option::text_read ? 4 : 0);
+
+	char* p = new char[AllocSize];
+	std::shared_ptr<char> buffer(p, delete_buffer);
+
+	if (_LoadOption == load_option::text_read)
+	{
+		// put enough nul terminators for a UTF32 or 16 or 8
+		p[FileSize+0] = p[FileSize+1] = p[FileSize+2] = p[FileSize+3] = '\0';
+	}
+
+	{
+		file_handle f = open(_Path, _LoadOption == load_option::text_read ? open_option::text_read : open_option::binary_read);
+		finally CloseFile([&] { close(f); });
+		if (FileSize != read(f, p, AllocSize, FileSize))
+			oTHROW(io_error, "read failed: %s", _Path.c_str());
+	}
+
+	// record honest size (tools like FXC crash if any larger size is given)
+	if (_pSize)
+	{
+		oCHECK_SIZE(size_t, FileSize);
+		*_pSize = static_cast<size_t>(FileSize);
+
+		if (_LoadOption == load_option::text_read)
+		{
+			utf_type::value type = utfcmp(p, __min(static_cast<size_t>(FileSize), 512));
+			switch (type)
+			{
+				case utf_type::utf32be: case utf_type::utf32le: *_pSize += 4; break;
+				case utf_type::utf16be: case utf_type::utf16le: *_pSize += 2; break;
+				case utf_type::ascii: *_pSize += 1; break;
+			}
+		}
+	}
+
+	return std::move(buffer);
+}
+
+std::shared_ptr<char> load(const path& _Path, load_option::value _LoadOption)
+{
+	return std::move(load(_Path, nullptr, _LoadOption));
 }
 
 	} // namespace filesystem

@@ -22,26 +22,28 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Declarations of oStd unit tests. These throw on failure.
-#pragma once
-#ifndef oStdTests_h
-#define oStdTests_h
+#include <oCore/cpu.h>
+#include <oCore/tests/oCoreTestRequirements.h>
+#include <oStd/stringize.h>
 
-#include <oStd/tests/oStdTestRequirements.h>
-
-namespace oStd {
+namespace oCore {
 	namespace tests {
 
-		void TESTatof(requirements& _Requirements);
-		void TESTcsv();
-		void TESTdate(requirements& _Requirements);
-		void TESTini();
-		void TESTfuture(requirements& _Requirements);
-		void TESTpath();
-		void TESTuri();
-		void TESTxml();
+void TESTcpu(requirements& _Requirements)
+{
+	cpu::info inf = cpu::get_info();
+	bool HasHT = false, HasAVX = false;
+	cpu::enumerate_features([&](const char* _FeatureName, const cpu::support::value& _Support)->bool
+	{
+		if (!_stricmp("Hyperthreading", _FeatureName))
+			HasHT = _Support == cpu::support::full;
+		else if (!_stricmp("AVX1", _FeatureName))
+			HasAVX = _Support == cpu::support::full;
+		return true;
+	});
+
+	_Requirements.report("%s %s %s%s%s %d HWThreads", oStd::as_string(inf.type), inf.string.c_str(), inf.brand_string.c_str(), HasHT ? " HT" : "", HasAVX ? " AVX" : "", inf.hardware_thread_count);
+}
 
 	} // namespace tests
-} // namespace oStd
-
-#endif
+} // namespace oCore

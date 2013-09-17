@@ -170,7 +170,8 @@ size_t callstack(symbol* _pSymbols, size_t _NumSymbols, size_t _Offset)
 #else
 size_t callstack(symbol* _pSymbols, size_t _NumSymbols, size_t _Offset)
 {
-	return CaptureStackBackTrace(static_cast<ULONG>(_Offset), static_cast<ULONG>(_NumSymbols), (PVOID*)_pSymbols, nullptr);
+	// + 1 skips this call to callstack
+	return CaptureStackBackTrace(static_cast<ULONG>(_Offset + 1), static_cast<ULONG>(_NumSymbols), (PVOID*)_pSymbols, nullptr);
 }
 #endif
 
@@ -198,7 +199,7 @@ symbol_info translate(symbol _Symbol)
 	// symbolInfo just contains the first 512 characters and doesn't guarantee
 	// they will be null-terminated, so copy the buffer and ensure there's some
 	// rational terminator
-	//strcpy(si.Name, symbolInfo->Name);
+	//strcpy(si.name, symbolInfo->Name);
 	memcpy(si.name, symbolInfo->Name, si.name.capacity() - sizeof(TCHAR));
 	oStd::ellipsize(si.name);
 	si.symbol_offset = static_cast<unsigned int>(displacement);

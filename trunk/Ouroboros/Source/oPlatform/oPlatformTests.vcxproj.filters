@@ -12,9 +12,6 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTDebugger.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTFileAsync.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -34,9 +31,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Tests\TESTMirroredArena.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Tests\TESTPath.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Tests\TESTProcessHeapTrivial.cpp">
@@ -61,9 +55,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Tests\TESTCamera.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Tests\TESTCPU.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Tests\TESTCRTLeakTracker.cpp">

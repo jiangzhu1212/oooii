@@ -22,26 +22,68 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Declarations of oStd unit tests. These throw on failure.
-#pragma once
-#ifndef oStdTests_h
-#define oStdTests_h
+#include <oCore/filesystem.h>
+#include <oCore/tests/oCoreTestRequirements.h>
+#include <oStd/assert.h>
+#include <oStd/finally.h>
 
-#include <oStd/tests/oStdTestRequirements.h>
+using namespace oStd;
+using namespace oCore::filesystem;
 
-namespace oStd {
+namespace oCore {
 	namespace tests {
 
-		void TESTatof(requirements& _Requirements);
-		void TESTcsv();
-		void TESTdate(requirements& _Requirements);
-		void TESTini();
-		void TESTfuture(requirements& _Requirements);
-		void TESTpath();
-		void TESTuri();
-		void TESTxml();
+static void TESTfilesystem_paths()
+{
+	path path = current_path();
+	oTRACE("CWD: %s", path.c_str());
+	path = app_path();
+	oTRACE("APP: %s", path.c_str());
+	path = temp_path();
+	oTRACE("SYSTMP: %s", path.c_str());
+	path = system_path();
+	oTRACE("SYS: %s", path.c_str());
+	path = os_path();
+	oTRACE("OS: %s", path.c_str());
+	path = dev_path();
+	oTRACE("DEV: %s", path.c_str());
+	path = desktop_path();
+	oTRACE("DESKTOP: %s", path.c_str());
+	path = data_path();
+	oTRACE("DATA: %s", path.c_str());
+}
+
+static void TESTfilesystem_map()
+{
+	path TestPath = data_path() / "Test/Textures/lena_1.png";
+	if (!exists(TestPath))
+		oTHROW(no_such_file_or_directory, "not found: %s", TestPath.c_str());
+
+	unsigned long long size = file_size(TestPath);
+	
+	void* mapped = map(TestPath, true, 0, size);
+	if (!mapped)
+		oTHROW(protocol_error, "map failed");
+	finally Unmap([&] { if (mapped) unmap(mapped); }); // safety unmap if we fail for some non-mapping reason
+
+	size_t Size = 0;
+	std::shared_ptr<char> loaded = load(TestPath, &Size, load_option::binary_read);
+
+	if (Size != size)
+		oTHROW(io_error, "mismatch: mapped and loaded file sizes");
+
+	if (memcmp(loaded.get(), mapped, Size))
+		oTHROW(protocol_error, "memcmp failed between mapped and loaded files");
+		
+	unmap(mapped);
+	mapped = nullptr; // signal Unmap to noop
+}
+
+void TESTfilesystem()
+{
+	TESTfilesystem_paths();
+	TESTfilesystem_map();
+}
 
 	} // namespace tests
-} // namespace oStd
-
-#endif
+} // namespace oCore

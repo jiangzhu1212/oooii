@@ -28,6 +28,7 @@
 #define oCore_debugger_h
 
 #include <oStd/path.h>
+#include <oStd/thread.h>
 
 namespace oCore {
 	namespace debugger {
@@ -104,7 +105,13 @@ void break_on_alloc(uintptr_t _AllocationID);
 // user code where an error or assertion occurred. This returns the actual 
 // number of addresses retrieved.
 size_t callstack(symbol* _pSymbols, size_t _NumSymbols, size_t _Offset);
-template<size_t size> inline size_t callstack(symbol (&_pSymbols)[size], size_t _Offset) { return callstack(_pSymbols, size, _Offset); }
+template<size_t size> inline size_t callstack(symbol (&_pSymbols)[size], size_t _Offset)
+{
+#ifdef _DEBUG
+	_Offset++; // to ignore this inline function that isn't inlined in debug
+#endif
+	return callstack(_pSymbols, size, _Offset);
+}
 
 // Convert a symbol retrieved using oDebuggerGetCallstack() into more 
 // descriptive parts.

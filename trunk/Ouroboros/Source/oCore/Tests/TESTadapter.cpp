@@ -22,32 +22,31 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+#include <oCore/adapter.h>
+#include <oCore/tests/oCoreTestRequirements.h>
 #include <oStd/assert.h>
-#include <oPlatform/oTest.h>
-#include <oCore/filesystem.h>
 
-using namespace oCore::filesystem;
+using namespace oStd;
 
-struct PLATFORM_oSystemPaths : public oTest
+namespace oCore {
+	namespace tests {
+
+void TESTadapter(requirements& _Requirements)
 {
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
+	adapter::info inf;
+	int nAdapters = 0;
+
+	adapter::enumerate([&](const adapter::info& _Info)->bool
 	{
-		oStd::path path = current_path();
-		oTRACE("CWD: %s", path.c_str());
-		path = app_path();
-		oTRACE("APP: %s", path.c_str());
-		path = temp_path();
-		oTRACE("SYSTMP: %s", path.c_str());
-		path = system_path();
-		oTRACE("SYS: %s", path.c_str());
-		path = os_path();
-		oTRACE("OS: %s", path.c_str());
-		path = dev_path();
-		oTRACE("DEV: %s", path.c_str());
-		path = desktop_path();
-		oTRACE("DESKTOP: %s", path.c_str());
-		return SUCCESS;
-	}
+		sstring StrVer;
+		version min_ver = adapter::minimum_version(_Info.vendor);
+		if (nAdapters == 0)
+			_Requirements.report("%s v%s%s", _Info.description.c_str(), to_string2(StrVer, _Info.version), _Info.version >= min_ver ? " (meets version requirements)" : "below min requirments");
+		oTRACE("%s v%s%s", _Info.description.c_str(), to_string2(StrVer, _Info.version), _Info.version >= min_ver ? " (meets version requirements)" : "below min requirments");
+		nAdapters++;
+		return true;
+	});
 };
 
-oTEST_REGISTER(PLATFORM_oSystemPaths);
+	} // namespace tests
+} // namespace oCore
