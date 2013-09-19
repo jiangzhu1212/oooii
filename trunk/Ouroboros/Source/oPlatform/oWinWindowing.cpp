@@ -1512,7 +1512,7 @@ size_t oWinGetTruncatedLength(HWND _hWnd, const char* _StrSource)
 		return 0;
 	}
 
-	if (!oStrcmp(temp, _StrSource))
+	if (!strcmp(temp, _StrSource))
 	{
 		oErrorSetLast(std::errc::operation_in_progress, "Truncation not required");
 		return 0;
@@ -1527,9 +1527,9 @@ char* oWinTruncateLeft(char* _StrDestination, size_t _SizeofStrDestination, HWND
 	if (TruncatedLength)
 	{
 		oStd::uri_string Truncated;
-		const char* pCopy = _StrSource + oStrlen(_StrSource) - TruncatedLength + 3;
+		const char* pCopy = _StrSource + strlen(_StrSource) - TruncatedLength + 3;
 		oASSERT(pCopy >= _StrSource, "");
-		if (-1 == oPrintf(_StrDestination, _SizeofStrDestination, "...%s", pCopy))
+		if (-1 == snprintf(_StrDestination, _SizeofStrDestination, "...%s", pCopy))
 		{
 			oErrorSetLast(std::errc::no_buffer_space, "");
 			return nullptr;
@@ -1544,7 +1544,7 @@ char* oWinTruncatePath(char* _StrDestination, size_t _SizeofStrDestination, HWND
 	if (_SizeofStrDestination < MAX_PATH)
 		return nullptr; // can't pass this to the function
 
-	oStrcpy(_StrDestination, _SizeofStrDestination, _Path);
+	strlcpy(_StrDestination, _Path, _SizeofStrDestination);
 	RECT rClient;
 	GetClientRect(_hWnd, &rClient);
 	oGDIScopedGetDC hDC(_hWnd);
@@ -1665,7 +1665,7 @@ static LRESULT CALLBACK oSubclassProcFloatBox(HWND _hControl, UINT _uMsg, WPARAM
 				GetWindowText(_hControl, text, (int)text.capacity());
 				float f = 0.0f;
 				oStd::atof(text, &f);
-				oPrintf(text, oSubclassFloatBoxFormat, f);
+				snprintf(text, oSubclassFloatBoxFormat, f);
 				SetWindowText(_hControl, text);
 				break;
 			}
@@ -1678,7 +1678,7 @@ static LRESULT CALLBACK oSubclassProcFloatBox(HWND _hControl, UINT _uMsg, WPARAM
 					return FALSE;
 				
 				// Ensure consistent formatting
-				oPrintf(text, oSubclassFloatBoxFormat, f);
+				snprintf(text, oSubclassFloatBoxFormat, f);
 				oStd::mwstring wtext = text;
 				oWinCommCtrl::Singleton()->DefSubclassProc(_hControl, _uMsg, _wParam, (LPARAM)wtext.c_str());
 				return FALSE;
@@ -2251,7 +2251,7 @@ int oWinControlFindSubItem(HWND _hControl, const char* _SubItemText)
 			{
 				if (TabCtrl_GetItem(_hControl, i, &item))
 				{
-					if (!oStrcmp(text, _SubItemText))
+					if (!strcmp(text, _SubItemText))
 					{
 						index = i;
 						break;
@@ -2361,7 +2361,7 @@ oGUI_CONTROL_TYPE oWinControlGetType(HWND _hControl)
 	if (!GetClassName(_hControl, ClassName, static_cast<int>(ClassName.capacity())))
 		return oGUI_CONTROL_UNKNOWN;
 	
-	if (!oStricmp("Button", ClassName))
+	if (!_stricmp("Button", ClassName))
 	{
 		LONG dwStyle = 0xff & GetWindowLong(_hControl, GWL_STYLE);
 		switch (dwStyle)
@@ -2375,7 +2375,7 @@ oGUI_CONTROL_TYPE oWinControlGetType(HWND _hControl)
 		}
 	}
 
-	else if (!oStricmp("Static", ClassName))
+	else if (!_stricmp("Static", ClassName))
 	{
 		LONG dwStyle = 0xff & GetWindowLong(_hControl, GWL_STYLE);
 		if (dwStyle & SS_ICON)
@@ -2388,7 +2388,7 @@ oGUI_CONTROL_TYPE oWinControlGetType(HWND _hControl)
 			return oGUI_CONTROL_UNKNOWN;
 	}
 
-	else if (!oStricmp("Edit", ClassName))
+	else if (!_stricmp("Edit", ClassName))
 	{
 		DWORD dwStyle = 0xffff & (DWORD)GetWindowLong(_hControl, GWL_STYLE);
 		if (dwStyle == (dwStyle & oWinControlGetCreationDesc(oGUI_CONTROL_LABEL_SELECTABLE).dwStyle))
@@ -2405,7 +2405,7 @@ oGUI_CONTROL_TYPE oWinControlGetType(HWND _hControl)
 			return oGUI_CONTROL_UNKNOWN;
 	}
 
-	else if (!oStricmp("ComboBox", ClassName))
+	else if (!_stricmp("ComboBox", ClassName))
 	{
 		LONG dwStyle = 0xf & GetWindowLong(_hControl, GWL_STYLE);
 		switch (dwStyle)
@@ -2416,13 +2416,13 @@ oGUI_CONTROL_TYPE oWinControlGetType(HWND _hControl)
 		}
 	}
 
-	else if (!oStricmp(oWinControlGetCreationDesc(oGUI_CONTROL_FLOATBOX_SPINNER).ClassName, ClassName))
+	else if (!_stricmp(oWinControlGetCreationDesc(oGUI_CONTROL_FLOATBOX_SPINNER).ClassName, ClassName))
 		return oGUI_CONTROL_FLOATBOX_SPINNER;
 
-	else if (!oStricmp(oWinControlGetCreationDesc(oGUI_CONTROL_HYPERLABEL).ClassName, ClassName))
+	else if (!_stricmp(oWinControlGetCreationDesc(oGUI_CONTROL_HYPERLABEL).ClassName, ClassName))
 		return oGUI_CONTROL_HYPERLABEL;
 
-	else if (!oStricmp(oWinControlGetCreationDesc(oGUI_CONTROL_TAB).ClassName, ClassName))
+	else if (!_stricmp(oWinControlGetCreationDesc(oGUI_CONTROL_TAB).ClassName, ClassName))
 	{
 		// Don't identify a generic tab as an oGUI tab, only ones that
 		// behave properly
@@ -2431,14 +2431,14 @@ oGUI_CONTROL_TYPE oWinControlGetType(HWND _hControl)
 			return oGUI_CONTROL_TAB;
 		return oGUI_CONTROL_UNKNOWN;
 	}
-	else if (!oStricmp(oWinControlGetCreationDesc(oGUI_CONTROL_PROGRESSBAR).ClassName, ClassName))
+	else if (!_stricmp(oWinControlGetCreationDesc(oGUI_CONTROL_PROGRESSBAR).ClassName, ClassName))
 	{
 		DWORD dwStyle = (DWORD)GetWindowLong(_hControl, GWL_STYLE);
 		if (dwStyle & PBS_MARQUEE)
 			return oGUI_CONTROL_PROGRESSBAR_UNKNOWN;
 		return oGUI_CONTROL_PROGRESSBAR;
 	}
-	else if (!oStricmp(oWinControlGetCreationDesc(oGUI_CONTROL_SLIDER).ClassName, ClassName))
+	else if (!_stricmp(oWinControlGetCreationDesc(oGUI_CONTROL_SLIDER).ClassName, ClassName))
 	{
 		DWORD dwStyle = (DWORD)GetWindowLong(_hControl, GWL_STYLE);
 
@@ -2518,7 +2518,7 @@ char* oWinControlGetSelectedText(char* _StrDestination, size_t _SizeofStrDestina
 			if (start != end)
 	{
 		if (start)
-			oStrcpy(_StrDestination, _SizeofStrDestination, _StrDestination + start);
+			strlcpy(_StrDestination, _StrDestination + start, _SizeofStrDestination);
 		_StrDestination[len] = 0;
 	}
 
@@ -2571,7 +2571,7 @@ bool oWinControlSetValue(HWND _hControl, float _Value)
 			_hControl = oWinControlGetBuddy(_hControl);
 			// pass through
 		default:
-			oPrintf(text, oSubclassFloatBoxFormat, _Value);
+			snprintf(text, oSubclassFloatBoxFormat, _Value);
 			oVB(SetWindowText(_hControl, text));
 			return true;
 	}

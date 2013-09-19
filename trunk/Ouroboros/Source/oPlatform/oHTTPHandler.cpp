@@ -58,7 +58,7 @@ void oHTTPHandlerBuildStaticFileResponse(const char* _FullPath, oHTTPHandler::Co
 void oHTTPHandlerErrorV(oHTTPHandler::CommonParams& _CommonParams, oHTTP_STATUS_CODE _HTTPErrorCode, const char* _Format, va_list _Args)
 { 
 	oStd::xxlstring buildString;
-	oVPrintf(buildString, _Format, _Args);
+	oStd::vsnprintf(buildString, _Format, _Args);
 
 	_CommonParams.AllocateResponse(buildString.length());
 	memcpy(_CommonParams.pResponse->Content.pData, buildString.c_str(), buildString.length());

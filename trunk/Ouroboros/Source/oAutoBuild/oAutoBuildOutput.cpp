@@ -70,7 +70,7 @@ static void FormatMSBuildResults(const oMSBuildResults& _Results, std::string& _
 	// Note that this string gets parsed to determine build times and status
 	// so preferably don't change it.
 	oStd::mstring BuildTimeString;
-	oPrintf(BuildTimeString, "<p>Build %s, taking %.2f seconds.  Here are the logs:</p>", BuildStatus.c_str(), _Results.BuildTimeSeconds);
+	snprintf(BuildTimeString, "<p>Build %s, taking %.2f seconds.  Here are the logs:</p>", BuildStatus.c_str(), _Results.BuildTimeSeconds);
 	_LogHTML.append(BuildTimeString);
 
 	oFOR(auto& BuildLogfile, _Results.BuildLogfiles)
@@ -118,7 +118,7 @@ static void FormatUnitTestResults(const oUnitTestResults& results, std::string& 
 	// Note that this string gets parsed to determine build times and status
 	// so preferably don't change it.
 	oStd::mstring TestTimeString;
-	oPrintf(TestTimeString, "<p>Testing %s, taking %.2f seconds.  Here are the logs:</p>", TestingStatus.c_str(), results.TimePassedSeconds);
+	snprintf(TestTimeString, "<p>Testing %s, taking %.2f seconds.  Here are the logs:</p>", TestingStatus.c_str(), results.TimePassedSeconds);
 	_LogHTML.append(TestTimeString);
 	
 	_LogHTML.append("<p>");
@@ -206,7 +206,7 @@ static void FormatPackagingResults(const oPackagingResults& _Results, std::strin
 	_LogHTML.append("<p><b>Packaging stage...</b></p>");
 
 	oStd::mstring PackageString;
-	oPrintf(PackageString, "<p>Packaging finished, taking %f seconds.</p>", _Results.PackagingTimeSeconds);
+	snprintf(PackageString, "<p>Packaging finished, taking %f seconds.</p>", _Results.PackagingTimeSeconds);
 	_LogHTML.append(PackageString);
 }
 
@@ -233,7 +233,7 @@ void oAutoBuildOutputResults(const oAutoBuildEmailSettings& _EmailSettings, int 
 	oStd::ampersand_encode(EncodedDescription.c_str(), EncodedDescription.capacity(), Description.c_str());
 
 	oStd::mstring DescriptionHeader;
-	oPrintf(DescriptionHeader, "<p><b>Changelist %d by %s:</b></p><p>", _Results.ChangeList, User);
+	snprintf(DescriptionHeader, "<p><b>Changelist %d by %s:</b></p><p>", _Results.ChangeList, User);
 	LogHTML.append(DescriptionHeader);
 	LogHTML.append(EncodedDescription);
 	LogHTML.append("</p>");
@@ -274,7 +274,7 @@ void oAutoBuildOutputResults(const oAutoBuildEmailSettings& _EmailSettings, int 
 
 		// Patch all links to go to the server
 		oStd::uri_string ServerAddress;
-		oPrintf(ServerAddress, "http://%s:%i/logs/", serverIP.c_str(), _WebServerPort);
+		snprintf(ServerAddress, "http://%s:%i/logs/", serverIP.c_str(), _WebServerPort);
 		for(size_t i = 6; i < LogHTML.size(); ++i) // 6 is to skip past <html> which is implicit in the mime type
 		{
 			const char* LinkStrings[] = { "<a href=\"", "<img src=\""};
@@ -314,14 +314,14 @@ void oAutoBuildOutputResults(const oAutoBuildEmailSettings& _EmailSettings, int 
 			oStd::lstring EmailSubject;
 			if (_Results.IsDailyBuild)
 				if (_Results.BuildResults.BuildSucceeded)
-					oPrintf(EmailSubject, "%s Daily Build failed to pass unit tests with CL %d", oBUILD_TOOL_STANDARD_SUBJECT, _Results.ChangeList);
+					snprintf(EmailSubject, "%s Daily Build failed to pass unit tests with CL %d", oBUILD_TOOL_STANDARD_SUBJECT, _Results.ChangeList);
 				else
-					oPrintf(EmailSubject, "%s Daily Build failed to build with CL %d", oBUILD_TOOL_STANDARD_SUBJECT, _Results.ChangeList);
+					snprintf(EmailSubject, "%s Daily Build failed to build with CL %d", oBUILD_TOOL_STANDARD_SUBJECT, _Results.ChangeList);
 			else
 				if (_Results.BuildResults.BuildSucceeded)
-					oPrintf(EmailSubject, "%s %s failed to pass unit tests with CL %d", oBUILD_TOOL_STANDARD_SUBJECT, User, _Results.ChangeList);
+					snprintf(EmailSubject, "%s %s failed to pass unit tests with CL %d", oBUILD_TOOL_STANDARD_SUBJECT, User, _Results.ChangeList);
 				else
-					oPrintf(EmailSubject, "%s %s broke the build with CL %d", oBUILD_TOOL_STANDARD_SUBJECT, User, _Results.ChangeList);
+					snprintf(EmailSubject, "%s %s broke the build with CL %d", oBUILD_TOOL_STANDARD_SUBJECT, User, _Results.ChangeList);
 			auto EmailList = _EmailSettings.UserEmails;
 			oFOR(auto Email, EmailList)
 			{
@@ -336,14 +336,14 @@ void oAutoBuildOutputResults(const oAutoBuildEmailSettings& _EmailSettings, int 
 	// Save HTML to the output folder
 	oStd::uri_string HTMLFilename = _Results.OutputFolder;
 	oEnsureSeparator(HTMLFilename);
-	oStrAppendf(HTMLFilename, "index.html");
+	oStd::sncatf(HTMLFilename, "index.html");
 	oCore::filesystem::save(oStd::path(HTMLFilename), &LogHTML[0], LogHTML.size(), oCore::filesystem::save_option::text_write);
 }
 
 void oEmailAdminAndStop(const oAutoBuildEmailSettings& _EmailSettings, const char* _pMessage, int _CL, bool _HTML)
 {
 	oStd::sstring Subject;
-	oPrintf(Subject, "%s Fatal Error. All builds halted. Stopped on %d", oBUILD_TOOL_STANDARD_SUBJECT, _CL);
+	snprintf(Subject, "%s Fatal Error. All builds halted. Stopped on %d", oBUILD_TOOL_STANDARD_SUBJECT, _CL);
 
 	oStd::intrusive_ptr<oEMail> Mail;
 	oEMailCreate(oEMail::USE_TLS, _EmailSettings.EmailServer, &Mail);

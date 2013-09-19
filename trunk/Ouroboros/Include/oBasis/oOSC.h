@@ -34,7 +34,7 @@
 //        buffer will be treated as a string, so serialization to a buffer is no 
 //        different than with 's', but this allows some avoidance of char 
 //        pointers in relatively simple cases such as small names and paths. The
-//        _SizeofField param will still be oStrlen()+1.
+//        _SizeofField param will still be strlen()+1.
 
 #pragma once
 #ifndef oOSC_h

@@ -148,7 +148,7 @@ struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
 		{
 			oStd::xlstring buf;
 			oStd::mstring exec;
-			oPrintf(buf, "oWindows Trace %s Cleaning up tray icons\n", oCore::system::exec_path(exec));
+			snprintf(buf, "oWindows Trace %s Cleaning up tray icons\n", oCore::system::exec_path(exec));
 			OutputDebugStringA(buf);
 		}
 
@@ -295,12 +295,12 @@ bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const
 
 	// MS recommends truncating at 200 for English: http://msdn.microsoft.com/en-us/library/bb773352(v=vs.85).aspx
 	static const int MaxInfo = 201;
-	oStrncpy(nid.szInfo, MaxInfo, _Message, MaxInfo - 1);
+	oStd::strncpy(nid.szInfo, MaxInfo, _Message, MaxInfo - 1);
 	oStd::ellipsize(nid.szInfo, MaxInfo);
 
 	// MS recommends truncating at 48 for English: http://msdn.microsoft.com/en-us/library/bb773352(v=vs.85).aspx
 	static const int MaxTitle = 49;
-	oStrncpy(nid.szInfoTitle, MaxTitle, _Title, MaxTitle - 1);
+	oStd::strncpy(nid.szInfoTitle, MaxTitle, _Title, MaxTitle - 1);
 
 	nid.dwInfoFlags = NIIF_NOSOUND;
 

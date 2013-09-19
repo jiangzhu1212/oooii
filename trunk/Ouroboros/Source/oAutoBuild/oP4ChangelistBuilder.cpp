@@ -54,7 +54,7 @@ bool oP4CleanSync(int _ChangeList, const char* _SyncPath, const char* _CleanPath
 		oStd::replace(RootPath, _CleanPath, "/", "\\");
 		oTrimFilename(RootPath);
 		oStd::xlstring CmdLine;
-		oPrintf(CmdLine, "rmdir /S /Q %s", RootPath.c_str());
+		snprintf(CmdLine, "rmdir /S /Q %s", RootPath.c_str());
 		system(CmdLine.c_str());
 	}
 	return oP4Sync(_ChangeList, _SyncPath, _CleanPath != nullptr);
@@ -69,7 +69,7 @@ char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _Sizeof
 	const std::cregex_token_iterator end;
 	int arr[] = {1,2}; 
 	bool NoTranslations = true;
-	for ( std::cregex_token_iterator VecTok(_RawString, _RawString + oStrlen(_RawString), EncodedSearch, arr); VecTok != end; ++VecTok )
+	for ( std::cregex_token_iterator VecTok(_RawString, _RawString + strlen(_RawString), EncodedSearch, arr); VecTok != end; ++VecTok )
 	{
 		auto Replace = VecTok->str();
 		++VecTok;
@@ -81,7 +81,7 @@ char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _Sizeof
 		NoTranslations = false;
 	}
 	if( NoTranslations )
-		oStrcpy(_StrDestination, _SizeofStrDestination, Current);
+		strlcpy(_StrDestination, Current, _SizeofStrDestination);
 
 	return _StrDestination;
 }
@@ -148,29 +148,29 @@ public:
 		while (section)
 		{
 			const char* pSectionName = _INI.section_name(section);
-			if(0 == oStricmp(pSectionName, "Perforce"))
+			if(0 == _stricmp(pSectionName, "Perforce"))
 			{
 				oINIReadCompound(&P4Settings, oRTTI_OF(oBUILD_TOOL_P4_SETTINGS), _INI, section, false);
 			}
-			else if(0 == oStricmp(pSectionName, "Email"))
+			else if(0 == _stricmp(pSectionName, "Email"))
 			{
 				oINIReadCompound(&EmailSettings, oRTTI_OF(oAutoBuildEmailSettings), _INI, section, false);
 			}
-			else if(0 == oStricmp(pSectionName, "MSBuild"))
+			else if(0 == _stricmp(pSectionName, "MSBuild"))
 			{
 				oINIReadCompound(&BuildSettings, oRTTI_OF(oMSBUILD_SETTINGS), _INI, section, false);
 				auto Temp = BuildSettings.ToolPath;
 				oSystemTranslateEnvironmentVariables(BuildSettings.ToolPath, Temp);
 			}
-			else if(0 == oStricmp(pSectionName, "TestingChangelist"))
+			else if(0 == _stricmp(pSectionName, "TestingChangelist"))
 			{
 				oINIReadCompound(&TestSettings, oRTTI_OF(oBUILD_TOOL_TESTING_SETTINGS), _INI, section, false);
 			}
-			else if(0 == oStricmp(pSectionName, "TestingDaily"))
+			else if(0 == _stricmp(pSectionName, "TestingDaily"))
 			{
 				oINIReadCompound(&TestSettingsDaily, oRTTI_OF(oBUILD_TOOL_TESTING_SETTINGS), _INI, section, false);
 			}
-			else if(0 == oStricmp(pSectionName, "Packaging"))
+			else if(0 == _stricmp(pSectionName, "Packaging"))
 			{
 				oINIReadCompound(&PackagingSettings, oRTTI_OF(oBUILD_TOOL_PACKAGING_SETTINGS), _INI, section, false);
 			}
@@ -215,7 +215,7 @@ public:
 			RootPatcher(command_line);
 		}
 
-		oStrAppendf(P4Settings.Root, "...");
+		oStd::sncatf(P4Settings.Root, "...");
 
 		ScanBuildLogsFolder();
 		UpdateBuildStatistics();
@@ -321,12 +321,12 @@ void oP4ChangelistBuilderImpl::ScanBuildLogsFolder()
 	[&](const oStd::path& _FullPath, const oCore::filesystem::file_status& _Status, unsigned long long _Size)->bool
 	{
 		oStd::path_string PossibleBuild;
-		oPrintf(PossibleBuild, "%s/index.html", _FullPath.c_str());
+		snprintf(PossibleBuild, "%s/index.html", _FullPath.c_str());
 		if(oCore::filesystem::exists(oStd::path(PossibleBuild)))
 		{
 			char* pFileName = PossibleBuild.c_str() + oStrFindFirstDiff(FileWildCard, PossibleBuild);
 
-			if(0 == oStrncmp(pFileName, oAUTO_BUILD_SPECIAL_PREFIX, 5))
+			if(0 == strncmp(pFileName, oAUTO_BUILD_SPECIAL_PREFIX, 5))
 				SpecialBuildPaths.push_back(pFileName);
 			else
 				SuccesfulBuildPaths.push_back(pFileName);
@@ -479,7 +479,7 @@ void oP4ChangelistBuilderImpl::TryAddingChangelist(int _Changelist, bool _IsDail
 		oStd::sstring DateStr;
 		oStd::strftime(DateStr, "%Y%m%d", CurrentDate);
 
-		oPrintf(NextBuild.UserName, "%s_%s_%d", oAUTO_BUILD_SPECIAL_PREFIX, DateStr.c_str(), _Changelist);
+		snprintf(NextBuild.UserName, "%s_%s_%d", oAUTO_BUILD_SPECIAL_PREFIX, DateStr.c_str(), _Changelist);
 
 		oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(Mutex);
 		NextBuildInfos.push_back(NextBuild);
@@ -604,7 +604,7 @@ void oP4ChangelistBuilderImpl::BuildNextBuild()
 	if (!oP4CleanSync(CurrentBuild->CL, P4Settings.Root.c_str(), CurrentTestSettings.ReSync ? BuildSettings.Solution.c_str() : nullptr))
 	{
 		oStd::lstring Error;
-		oPrintf(Error, "P4 failed to sync with %s", oErrorGetLastString());
+		snprintf(Error, "P4 failed to sync with %s", oErrorGetLastString());
 		oEmailAdminAndStop(EmailSettings, Error, CurrentBuild->CL, false);
 	}
 
@@ -723,14 +723,14 @@ void oP4ChangelistBuilderImpl::ReportLastSpecialBuild(oFUNCTION<void(const char*
 bool oP4ChangelistBuilderImpl::ParseAutoBuildResults(int _CL, ChangeInfo* _pInfo)
 {
 	oStd::path_string PathToCL;
-	oPrintf(PathToCL, "%s%d/index.html", LogRoot.c_str(), _CL);
+	snprintf(PathToCL, "%s%d/index.html", LogRoot.c_str(), _CL);
 	return ParseAutoBuildResults(PathToCL, _pInfo);
 }
 
 bool oP4ChangelistBuilderImpl::ParseAutoBuildResultsSpecialBuild(const char* _pName, ChangeInfo* _pInfo)
 {
 	oStd::path_string AbsolutePath;
-	oPrintf(AbsolutePath, "%s%s/index.html", LogRoot.c_str(), _pName);
+	snprintf(AbsolutePath, "%s%s/index.html", LogRoot.c_str(), _pName);
 	return ParseAutoBuildResults(AbsolutePath, _pInfo);
 }
 

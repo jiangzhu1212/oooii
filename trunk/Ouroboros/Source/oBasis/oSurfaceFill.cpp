@@ -128,7 +128,7 @@ bool oSurfaceFillGridNumbers(const int2& _Dimensions, const int2& _GridDimension
 		{
 			DBPosition.x = x;
 			oStd::sstring buf;
-			oPrintf(buf, "%d", i++);
+			snprintf(buf, "%d", i++);
 			if (!_DrawText(DBPosition, _GridDimensions, buf))
 				return false; // pass through error
 		}

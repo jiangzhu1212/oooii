@@ -66,8 +66,8 @@ struct PLATFORM_WindowSendKeysClient : public oSpecialTest
 					if(Capped)
 						ASCIIKey = (char)toupper(ASCIIKey);
 
-					oStrAppendf(Result.c_str(), "%c", ASCIIKey);
-					if(Result.length() == oStrlen(TESTMessage))
+					oStd::sncatf(Result.c_str(), "%c", ASCIIKey);
+					if(Result.length() == strlen(TESTMessage))
 						WaitEvent.set();
 				}
 			}
@@ -82,7 +82,7 @@ struct PLATFORM_WindowSendKeysClient : public oSpecialTest
 
 		NotifyReady();
 		WaitEvent.wait_for(oStd::chrono::milliseconds(5000));
-		oTESTB(0 == oStrcmp(Result.c_str(), TESTMessage), "Didn't correct receive test message");
+		oTESTB(0 == strcmp(Result.c_str(), TESTMessage), "Didn't correct receive test message");
 		return SUCCESS;
 	}
 };

@@ -98,7 +98,7 @@ static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
 				default: r = oTest::FAILURE; break; \
 			} \
 		} \
-		oPrintf(_StrStatus, _SizeofStrStatus, "%s", oErrorGetLastString()); \
+		snprintf(_StrStatus, _SizeofStrStatus, "%s", oErrorGetLastString()); \
 		oTRACE("%s: %s (oErrorGetLast() == %s)", oStd::as_string(r), _StrStatus, oErrorAsString(oErrorGetLast())); \
 		return r; \
 	} while (false)

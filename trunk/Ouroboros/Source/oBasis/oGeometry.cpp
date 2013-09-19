@@ -1921,9 +1921,9 @@ bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LA
 
 #if 0
 	char mtlpath[256];
-	oStrcpy(mtlpath, obj.OBJPath.c_str());
+	strlcpy(mtlpath, obj.OBJPath.c_str());
 	oTrimFilename(mtlpath);
-	oStrcat(mtlpath, obj.MaterialLibraryPath.c_str());
+	strlcat(mtlpath, obj.MaterialLibraryPath.c_str());
 	
 	void* pBuffer = 0;
 	size_t size = 0;

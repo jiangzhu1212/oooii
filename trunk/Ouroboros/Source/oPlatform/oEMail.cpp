@@ -139,14 +139,14 @@ int GrabResponseCode(const char *_Response)
 {
 	bool bSuccessful = false;
 	char retCode[4];
-	oStrncpy(retCode, _Response, 3);
+	oStd::strncpy(retCode, _Response, 3);
 	return atoi(retCode);
 }
 
 bool oEMail_Impl::SendSocket(const char *_pMessage)
 {
-	return bUseEncryption ? Socket->SendEncrypted(_pMessage, (oSocket::size_t)oStrlen(_pMessage)) 
-		: Socket->Send(_pMessage, (oSocket::size_t)oStrlen(_pMessage));
+	return bUseEncryption ? Socket->SendEncrypted(_pMessage, (oSocket::size_t)strlen(_pMessage)) 
+		: Socket->Send(_pMessage, (oSocket::size_t)strlen(_pMessage));
 }
 
 bool oEMail_Impl::SendSocket(const void *_pData, size_t _SizeOfData)
@@ -188,7 +188,7 @@ bool oEMail_Impl::EstablishConnection(const char *_pToAddress, const char *_pFro
 
 	// Send EHLO in the clear
 	Socket->GetHostname(hostname, _MAX_PATH, ipAddress, _MAX_PATH, port, _MAX_PATH);
-	oPrintf(sendBuffer, "EHLO %s\r\n", ipAddress);
+	snprintf(sendBuffer, "EHLO %s\r\n", ipAddress);
 	oSMTPCOMMAND(SendSocket(sendBuffer) && SMTP_OK == ReceiveSocket(recvBuffer, _MAX_PATH));
 
 	if (EncryptionType == USE_TLS)
@@ -203,31 +203,31 @@ bool oEMail_Impl::EstablishConnection(const char *_pToAddress, const char *_pFro
 		oSMTPCOMMAND(SendSocket(sendBuffer) && SMTP_OK == ReceiveSocket(recvBuffer, _MAX_PATH));
 
 		// Request login
-		oPrintf(sendBuffer, "AUTH LOGIN\r\n");
+		snprintf(sendBuffer, "AUTH LOGIN\r\n");
 		oSMTPCOMMAND(SendSocket(sendBuffer) && SMTP_ENCRYPTION_OK == ReceiveSocket(recvBuffer, _MAX_PATH));
 
 		// Send base64 encrypted username
 		char encLogin[_MAX_PATH];
-		Base64Encode(_pFromAddress, encLogin, (int)oStrlen(_pFromAddress), _MAX_PATH);
-		oPrintf(sendBuffer, "%s\r\n", encLogin);
+		Base64Encode(_pFromAddress, encLogin, (int)strlen(_pFromAddress), _MAX_PATH);
+		snprintf(sendBuffer, "%s\r\n", encLogin);
 		oSMTPCOMMAND(SendSocket(sendBuffer) && SMTP_ENCRYPTION_OK == ReceiveSocket(recvBuffer, _MAX_PATH));
 
 		// Send base64 encrypted password
 		char encPass[_MAX_PATH];
 		if (_bPasswordEncoded)
-			oStrcpy(encPass, _pPassword);
+			strlcpy(encPass, _pPassword);
 		else
-			Base64Encode(_pPassword, encPass, (int)oStrlen(_pPassword), _MAX_PATH);
-		oPrintf(sendBuffer, "%s\r\n", encPass);
+			Base64Encode(_pPassword, encPass, (int)strlen(_pPassword), _MAX_PATH);
+		snprintf(sendBuffer, "%s\r\n", encPass);
 		oSMTPCOMMAND(SendSocket(sendBuffer) && SMTP_ACCEPTED == ReceiveSocket(recvBuffer, _MAX_PATH));
 	}
 
 	// Send from email address (this will actually be ignored by google, the account name will be used instead)
-	oPrintf(sendBuffer, "MAIL FROM:<%s>\r\n", _pFromAddress);
+	snprintf(sendBuffer, "MAIL FROM:<%s>\r\n", _pFromAddress);
 	oSMTPCOMMAND(SendSocket(sendBuffer) && SMTP_OK == ReceiveSocket(recvBuffer, _MAX_PATH));
 
 	// Send to address
-	oPrintf(sendBuffer, "RCPT TO:<%s>\r\n", _pToAddress);
+	snprintf(sendBuffer, "RCPT TO:<%s>\r\n", _pToAddress);
 	oSMTPCOMMAND(SendSocket(sendBuffer) && SMTP_OK == ReceiveSocket(recvBuffer, _MAX_PATH));
 
 	return true;
@@ -237,18 +237,18 @@ bool oEMail_Impl::SendMessage(const char *_pSubject, const char *_pMessage, bool
 {
 	char sendBuffer[_MAX_PATH];
 	// Send Subject
-	oPrintf(sendBuffer, "Subject: %s\n", _pSubject); 
+	snprintf(sendBuffer, "Subject: %s\n", _pSubject); 
 	oSMTPCOMMAND(SendSocket(sendBuffer));
 
 		// MIME Version
 	oSMTPCOMMAND(SendSocket("MIME-Version: 1.0\r\n"));
 	oSMTPCOMMAND(SendSocket("Content-Type: multipart/mixed;\r\n"));
-	oPrintf(sendBuffer, "    boundary=\"%s\"\r\n", BOUNDARY);
+	snprintf(sendBuffer, "    boundary=\"%s\"\r\n", BOUNDARY);
 	oSMTPCOMMAND(SendSocket(sendBuffer));
 	
 	oSMTPCOMMAND(SendSocket("\r\n"));
 	oSMTPCOMMAND(SendSocket("\r\n"));
-	oPrintf(sendBuffer, "--%s\r\n", BOUNDARY);
+	snprintf(sendBuffer, "--%s\r\n", BOUNDARY);
 	oSMTPCOMMAND(SendSocket(sendBuffer));
 
 	if(_AsHTML)
@@ -278,13 +278,13 @@ bool oEMail_Impl::SendAttachment(const char *_pAttachmentName, const void *_pAtt
 	// once data mode has been started the server will not send back any responses until we send "\r\n.\r\n"
 	char sendBuffer[_MAX_PATH];
 
-	oPrintf(sendBuffer, "--%s\r\n", BOUNDARY);
+	snprintf(sendBuffer, "--%s\r\n", BOUNDARY);
 	oSMTPCOMMAND(SendSocket(sendBuffer));
 
 	oSMTPCOMMAND(SendSocket("Content-Type: application/octet-stream\r\n"));
 	oSMTPCOMMAND(SendSocket("Content-Transfer-Encoding: base64\r\n"));
 	oSMTPCOMMAND(SendSocket("Content-Disposition: attachment;"));
-	oPrintf(sendBuffer, " filename=\"%s\"\r\n", _pAttachmentName);
+	snprintf(sendBuffer, " filename=\"%s\"\r\n", _pAttachmentName);
 	oSMTPCOMMAND(SendSocket(sendBuffer));
 	oSMTPCOMMAND(SendSocket("\r\n"));
 	
@@ -307,7 +307,7 @@ bool oEMail_Impl::SendEndData()
 	char sendBuffer[_MAX_PATH];
 	char recvBuffer[_MAX_PATH];
 
-	oPrintf(sendBuffer, "--%s--\r\n", BOUNDARY);
+	snprintf(sendBuffer, "--%s--\r\n", BOUNDARY);
 	oSMTPCOMMAND(SendSocket(sendBuffer));
 	oSMTPCOMMAND(SendSocket("\r\n"));
 	// Send Body, must end with \r\n.\r\n  the . indicates the end of data mode

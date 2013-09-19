@@ -216,7 +216,7 @@ unsigned int oLeakTracker::InternalReportLeaks(bool _TraceReport, bool _WaitForA
 			if (!headerPrinted && _TraceReport)
 			{
 				oStd::mstring Header;
-				oPrintf(Header, "========== Leak Report%s ==========\n", RecoveredFromAsyncLeaks ? " (recovered from async false positives)" : "");
+				snprintf(Header, "========== Leak Report%s ==========\n", RecoveredFromAsyncLeaks ? " (recovered from async false positives)" : "");
 				This()->Desc.Print(Header);
 				headerPrinted = true;
 			}
@@ -231,17 +231,17 @@ unsigned int oLeakTracker::InternalReportLeaks(bool _TraceReport, bool _WaitForA
 				if (Desc.ReportAllocationIDAsHex)
 				{
 					if (d.Path && *d.Path)
-						oPrintf(buf, "%s(%u) : {0x%p} %s\n", d.Path, d.Line, d.AllocationID, memsize.c_str());
+						snprintf(buf, "%s(%u) : {0x%p} %s\n", d.Path, d.Line, d.AllocationID, memsize.c_str());
 					else
-						oPrintf(buf, "<no filename> : {0x%p} %s (probably a call to ::new(size_t))\n", d.AllocationID, memsize.c_str());
+						snprintf(buf, "<no filename> : {0x%p} %s (probably a call to ::new(size_t))\n", d.AllocationID, memsize.c_str());
 				}
 
 				else
 				{
 					if (d.Path && *d.Path)
-						oPrintf(buf, "%s(%u) : {%d} %s\n", d.Path, d.Line, d.AllocationID, memsize);
+						snprintf(buf, "%s(%u) : {%d} %s\n", d.Path, d.Line, d.AllocationID, memsize);
 					else
-						oPrintf(buf, "<no filename> : {%d} %s (probably a call to ::new(size_t))\n", d.AllocationID, memsize.c_str());
+						snprintf(buf, "<no filename> : {%d} %s (probably a call to ::new(size_t))\n", d.AllocationID, memsize.c_str());
 				}
 
 				This()->Desc.Print(buf);
@@ -266,7 +266,7 @@ unsigned int oLeakTracker::InternalReportLeaks(bool _TraceReport, bool _WaitForA
 			oStd::sstring strTotalLeakBytes;
 			oStd::mstring Footer;
 			oStd::format_bytes(strTotalLeakBytes, totalLeakBytes, 2);
-			oPrintf(Footer, "========== Leak Report: %u Leak(s) %s%s ==========\n", nLeaks, strTotalLeakBytes.c_str(), _WaitForAsyncAllocs ? " (recovered from async false positives)" : "");
+			snprintf(Footer, "========== Leak Report: %u Leak(s) %s%s ==========\n", nLeaks, strTotalLeakBytes.c_str(), _WaitForAsyncAllocs ? " (recovered from async false positives)" : "");
 			This()->Desc.Print(Footer);
 		}
 	}

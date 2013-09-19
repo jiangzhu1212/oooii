@@ -74,7 +74,7 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oNetH
 	const oNetHost_Internal* pHost = reinterpret_cast<const oNetHost_Internal*>(&_Host);
 	oWinsock* ws = oWinsock::Singleton();
 	unsigned long addr = ws->ntohl(pHost->IP);
-	return -1 != oPrintf(_StrDestination, _SizeofStrDestination, "%u.%u.%u.%u", (addr&0xFF000000)>>24, (addr&0xFF0000)>>16, (addr&0xFF00)>>8, addr&0xFF) ? _StrDestination : nullptr;
+	return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%u.%u.%u.%u", (addr&0xFF000000)>>24, (addr&0xFF0000)>>16, (addr&0xFF00)>>8, addr&0xFF) ? _StrDestination : nullptr;
 }
 
 bool from_string(oNetHost* _pHost, const char* _StrSource)
@@ -102,8 +102,8 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oNetA
 	{
 		const oNetAddr_Internal* pAddress = reinterpret_cast<const oNetAddr_Internal*>(&_Address);
 		oWinsock* ws = oWinsock::Singleton();
-		size_t len = oStrlen(_StrDestination);
-		return -1 == oPrintf(_StrDestination + len, _SizeofStrDestination - len, ":%u", ws->ntohs(pAddress->Port)) ? _StrDestination : nullptr;
+		size_t len = strlen(_StrDestination);
+		return -1 == snprintf(_StrDestination + len, _SizeofStrDestination - len, ":%u", ws->ntohs(pAddress->Port)) ? _StrDestination : nullptr;
 	}
 
 	return nullptr;
@@ -112,8 +112,8 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oNetA
 bool from_string(oNetAddr* _pAddress, const char* _StrSource)
 {
 	char tempStr[512];
-	oASSERT(oStrlen(_StrSource) < oCOUNTOF(tempStr)+1, "");
-	oStrcpy(tempStr, _StrSource);
+	oASSERT(strlen(_StrSource) < oCOUNTOF(tempStr)+1, "");
+	strlcpy(tempStr, _StrSource);
 
 	char* seperator = strstr(tempStr, ":");
 
@@ -142,10 +142,10 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oSock
 	switch (_Protocol)
 	{
 	case oSocket::TCP:
-		oPrintf(_StrDestination, _SizeofStrDestination, "tcp");
+		snprintf(_StrDestination, _SizeofStrDestination, "tcp");
 		break;
 	case oSocket::UDP:
-		oPrintf(_StrDestination, _SizeofStrDestination, "udp");
+		snprintf(_StrDestination, _SizeofStrDestination, "udp");
 		break;
 	default:
 		return nullptr;
@@ -157,11 +157,11 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oSock
 
 bool from_string(oSocket::PROTOCOL* _Protocol, const char* _StrSource)
 {
-	if(oStrncmp(_StrSource, "tcp", 3) == 0)
+	if(strncmp(_StrSource, "tcp", 3) == 0)
 	{
 		*_Protocol = oSocket::TCP;
 	}
-	else if(oStrncmp(_StrSource, "udp", 3) == 0)
+	else if(strncmp(_StrSource, "udp", 3) == 0)
 	{
 		*_Protocol = oSocket::UDP;
 	}
@@ -1003,7 +1003,7 @@ SocketServer_Impl::SocketServer_Impl(const char* _DebugName, const DESC& _Desc, 
 {
 	*DebugName = 0;
 	if (_DebugName)
-		oStrcpy(DebugName, _DebugName);
+		strlcpy(DebugName, _DebugName);
 
 	*_pSuccess = false;
 
@@ -1356,7 +1356,7 @@ SocketServer2_Impl::SocketServer2_Impl(const char* _DebugName, const DESC& _Desc
 {
 	*DebugName = 0;
 	if (_DebugName)
-		oStrcpy(DebugName, _DebugName);
+		strlcpy(DebugName, _DebugName);
 
 	*_pSuccess = false;
 

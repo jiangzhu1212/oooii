@@ -38,7 +38,7 @@ struct PLATFORM_oWinRegistry : public oTest
 		oTESTB(!oWinRegistryGetValue(data, oHKEY_CURRENT_USER, KeyPath, "Non-existant-ValueName"), "Succeeded reading a non-existant key %s", oErrorGetLastString());
 		oTESTB(oWinRegistryGetValue(data, oHKEY_CURRENT_USER, KeyPath, ValueName), "Failed to read key %s", oErrorGetLastString());
 
-		oTESTB(oStrcmp(data, KeyTestValue) == 0, "Set/Read values do not match");
+		oTESTB(strcmp(data, KeyTestValue) == 0, "Set/Read values do not match");
 		oTESTB(oWinRegistryDeleteValue(oHKEY_CURRENT_USER, KeyPath, ValueName), "Failed to delete key %s", oErrorGetLastString());
 
 		// Delete oUnitTest (if empty) and delete OOOii (if empty)

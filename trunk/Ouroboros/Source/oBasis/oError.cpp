@@ -130,7 +130,7 @@ bool oErrorSetLastV(errno_t _Error, const char* _Format, va_list _Args)
 	pErrorContext->Error = _Error;
 	pErrorContext->UseDefaultString = false;
 	_Format = _Format ? _Format : oErrorGetDefaultString(_Error);
-	oVPrintf(pErrorContext->ErrorString, _Format, _Args);
+	oStd::vsnprintf(pErrorContext->ErrorString, _Format, _Args);
 	oStd::ellipsize(pErrorContext->ErrorString, oCOUNTOF(pErrorContext->ErrorString));
 	return false;
 }
@@ -139,10 +139,10 @@ bool oErrorPrefixLastV(const char* _Format, va_list _Args)
 {
 	ERROR_CONTEXT* pErrorContext = GetErrorContext();
 	oStd::xlstring CurrentCopy;
-	oPrintf(CurrentCopy, pErrorContext->ErrorString);
+	snprintf(CurrentCopy, pErrorContext->ErrorString);
 
-	oVPrintf(pErrorContext->ErrorString, _Format, _Args);
-	oStrAppendf(pErrorContext->ErrorString, "%s", CurrentCopy);
+	oStd::vsnprintf(pErrorContext->ErrorString, _Format, _Args);
+	oStd::sncatf(pErrorContext->ErrorString, "%s", CurrentCopy);
 	return false;
 }
 

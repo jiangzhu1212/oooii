@@ -167,7 +167,7 @@ struct PLATFORM_oSocketAsync : public oTest
 		oTESTB(oSocketCreate("Test UDP", SocketDesc, &Socket), oErrorGetLastString());
 
 		char AddrStr[64];
-		oPrintf(AddrStr, "localhost:%u", Port);
+		snprintf(AddrStr, "localhost:%u", Port);
 
 		oNetAddr Addr;
 		oStd::from_string(&Addr, AddrStr);
@@ -211,14 +211,14 @@ struct PLATFORM_oSocketAsync : public oTest
 		Settings.Callback = Receiver;
 		Socket->GoAsynchronous(Settings);
 
-		Receiver->ExpectedMessageLength = oUInt(oStrlen(TESTSocketTCP0)) + 1;
+		Receiver->ExpectedMessageLength = oUInt(strlen(TESTSocketTCP0)) + 1;
 		
 		oSocket::DESC Desc;
 		Socket->GetDesc(&Desc);
 		Receiver->InitiateReceive(Socket);
 
 		oTESTB(Receiver->MessageArrived.wait_for(oStd::chrono::milliseconds(TESTSocketTCPTimeout)), "Failed to recieve TCP message from client");
-		oTESTB(0 == oStricmp(Receiver->Results, TESTSocketTCP0), "Failed to retrieve TCP message");
+		oTESTB(0 == _stricmp(Receiver->Results, TESTSocketTCP0), "Failed to retrieve TCP message");
 		Receiver->MessageArrived.reset();
 		Socket->Send(TESTSocketTCP1, oCOUNTOF(TESTSocketTCP1));
 		oTESTB(Receiver->MessageArrived.wait_for(oStd::chrono::milliseconds(TESTSocketTCPTimeout)), "Failed to send TCP message to client");
@@ -300,7 +300,7 @@ struct PLATFORM_oSocketAsync : public oTest
 			}
 
 			if (bSuccess)
-				oPrintf(_StrStatus, _SizeofStrStatus, "UDP Tests Successful: (%i tries)", totalCount + 1);
+				snprintf(_StrStatus, _SizeofStrStatus, "UDP Tests Successful: (%i tries)", totalCount + 1);
 			else
 			{
 				oTESTB(bSuccess, "Receive failed to get message (%i tries)", totalCount + 1);

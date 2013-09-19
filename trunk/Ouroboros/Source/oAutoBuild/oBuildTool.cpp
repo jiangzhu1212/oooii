@@ -54,11 +54,11 @@ bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const c
 	oStreamDelete(_TestSettings.FailedImageCompares);
 
 	oStd::path_string command_line = _TestSettings.CommandLine;
-	oStrAppendf(command_line, " -z -l %soUnitTests.txt", _BuildRoot);
+	oStd::sncatf(command_line, " -z -l %soUnitTests.txt", _BuildRoot);
 
 	// oUnitTests adds stdout/stderr to the filename
-	oPrintf(_pResults->StdoutLogfile, "%soUnitTests.stdout.txt", _BuildRoot);
-	oPrintf(_pResults->StderrLogfile, "%soUnitTests.stderr.txt", _BuildRoot);
+	snprintf(_pResults->StdoutLogfile, "%soUnitTests.stdout.txt", _BuildRoot);
+	snprintf(_pResults->StderrLogfile, "%soUnitTests.stderr.txt", _BuildRoot);
 
 	oCore::process::info pi;
 	pi.command_line = command_line;

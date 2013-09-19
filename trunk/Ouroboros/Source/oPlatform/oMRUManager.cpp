@@ -61,7 +61,7 @@ oMRUManagerRegistry::oMRUManagerRegistry(const oMRU_DESC& _Desc, bool* _pSuccess
 		return;
 	}
 
-	if (0 > oPrintf(MRUKeyFormat, "%s%%02d", _Desc.MRUEntryPrefix))
+	if (0 > snprintf(MRUKeyFormat, "%s%%02d", _Desc.MRUEntryPrefix))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "MRUEntryPrefix is too long.");
 		return;
@@ -79,7 +79,7 @@ bool oMRUManagerCreate(const oMRU_DESC& _Desc, oMRUManager** _ppMRUManager)
 
 void oMRUManagerRegistry::GetEntryName(oStd::sstring& _EntryName, int _Index)
 {
-	oPrintf(_EntryName, "MRU%02d", _Index);
+	snprintf(_EntryName, "MRU%02d", _Index);
 }
 
 void oMRUManagerRegistry::GetEntries(std::vector<oStd::uri_string>& _Entries)
@@ -108,11 +108,11 @@ void oMRUManagerRegistry::Add(const char* _Entry)
 	GetEntries(Entries);
 
 	// Remove any duplicates of the incoming URI
-	auto it = oStd::find_if(Entries, [&](const oStd::uri_string& x)->bool { return !oStricmp(x, _Entry); });
+	auto it = oStd::find_if(Entries, [&](const oStd::uri_string& x)->bool { return !_stricmp(x, _Entry); });
 	while (it != Entries.end())
 	{
 		Entries.erase(it);
-		it = oStd::find_if(Entries, [&](const oStd::uri_string& x)->bool { return !oStricmp(x, _Entry); });
+		it = oStd::find_if(Entries, [&](const oStd::uri_string& x)->bool { return !_stricmp(x, _Entry); });
 	}
 
 	// Insert this as the front of the list

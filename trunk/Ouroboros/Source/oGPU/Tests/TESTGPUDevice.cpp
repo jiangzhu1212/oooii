@@ -43,7 +43,7 @@ struct GPU_Device : public oTest
 		oStd::sstring VRAMSize, SharedSize, IVer, FVer, DVer;
 		oStd::format_bytes(VRAMSize, desc.NativeMemory, 1);
 		oStd::format_bytes(SharedSize, desc.SharedSystemMemory, 1);
-		oPrintf(_StrStatus, _SizeofStrStatus, "%s %s %s feature level %s %s (%s shared) running on %s v%s drivers (%s)"
+		snprintf(_StrStatus, _SizeofStrStatus, "%s %s %s feature level %s %s (%s shared) running on %s v%s drivers (%s)"
 			, desc.DeviceDescription.c_str()
 			, oStd::as_string(desc.API)
 			, oStd::to_string2(IVer, desc.InterfaceVersion)

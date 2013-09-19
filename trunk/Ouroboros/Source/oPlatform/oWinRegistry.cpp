@@ -40,7 +40,7 @@ bool oWinRegistrySetValue(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const 
 	HKEY hKey = nullptr;
 	oREG_CHECK(RegCreateKeyEx(sRoots[_Root], KP, 0, 0, 0, KEY_SET_VALUE, 0, &hKey, 0));
 	oStd::finally close([&](){ RegCloseKey(hKey); });
-	oREG_CHECK(RegSetValueEx(hKey, _ValueName, 0, REG_SZ, (BYTE*)_Value, (DWORD) (oStrlen(_Value) + 1))); // +1 for null terminating, the null character must also be counted
+	oREG_CHECK(RegSetValueEx(hKey, _ValueName, 0, REG_SZ, (BYTE*)_Value, (DWORD) (strlen(_Value) + 1))); // +1 for null terminating, the null character must also be counted
 	return true;
 }
 

@@ -80,7 +80,7 @@ bool GetSDKPath(char* _Path, size_t _SizeofPath, const char* _SDKRelativePath)
 	DWORD len = GetEnvironmentVariableA("ProgramFiles", _Path, static_cast<DWORD>(_SizeofPath));
 	if (len && len < _SizeofPath)
 	{
-		oStrcat(_Path, _SizeofPath, _SDKRelativePath);
+		strlcat(_Path, _SDKRelativePath, _SizeofPath);
 		result = Exists(_Path);
 	}
 
@@ -120,7 +120,7 @@ oWinDbgHelp::oWinDbgHelp(HANDLE _hProcess, const char* _SymbolPath, ModuleLoaded
 	if (!GetLastError())
 	{
 		// first local override
-		oStrcat(path, ".local");
+		strlcat(path, ".local");
 		if (!detail::Exists(path))
 		{
 			// then for an installed version (32/64-bit)
@@ -149,7 +149,7 @@ oWinDbgHelp::oWinDbgHelp(HANDLE _hProcess, const char* _SymbolPath, ModuleLoaded
 			oTrimFilename(path);
 		}
 		else
-			oStrcpy(path, _SymbolPath);
+			strlcpy(path, _SymbolPath);
 
 		if (SymInitialize(hProcess, path, FALSE))
 		{

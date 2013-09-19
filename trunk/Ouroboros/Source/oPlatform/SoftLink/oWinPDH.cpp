@@ -154,7 +154,7 @@ oWinPDH::oWinPDH()
 	*oGetFileExtension(ProcessName) = 0;
 
 	oStd::path_string CounterPath;
-	oPrintf(CounterPath, "\\Process(%s)\\%% Processor Time", ProcessName.c_str());
+	snprintf(CounterPath, "\\Process(%s)\\%% Processor Time", ProcessName.c_str());
 	oPDH_V(PdhAddCounter(hQuery, CounterPath, 0, &hProcessCPUUsage));
 	
 	// the idea here is to seed values so that first-calls to get stats functions

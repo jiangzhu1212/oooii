@@ -31,7 +31,7 @@ const oInterprocessEvent::AutoReset_t oInterprocessEvent::AutoReset;
 oHEVENT oInterprocessEventCreate(bool _AutoReset, const char* _InterprocessName)
 {
 	char windowsInterProcessName[1024];
-	oPrintf(windowsInterProcessName, "Global\\%s", oSAFESTR(_InterprocessName));
+	snprintf(windowsInterProcessName, "Global\\%s", oSAFESTR(_InterprocessName));
 	HANDLE hEvent = CreateEvent(0, _AutoReset ? FALSE : TRUE, FALSE, _InterprocessName ? windowsInterProcessName : nullptr);
 	if (!hEvent) oWinSetLastError();
 	return (oHEVENT)hEvent;

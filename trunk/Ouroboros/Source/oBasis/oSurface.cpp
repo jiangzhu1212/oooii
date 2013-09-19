@@ -285,7 +285,7 @@ const char* as_string(const oSURFACE_FORMAT& _Format)
 
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oSURFACE_FORMAT& _Format)
 {
-	return oStrcpy(_StrDestination, _SizeofStrDestination, oStd::as_string(_Format));
+	return strlcpy(_StrDestination, oStd::as_string(_Format), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
 }
 
 bool from_string(oSURFACE_FORMAT* _pFormat, const char* _StrSource)
@@ -293,7 +293,7 @@ bool from_string(oSURFACE_FORMAT* _pFormat, const char* _StrSource)
 	*_pFormat = oSURFACE_UNKNOWN;
 	oFORI(i, sFormatDescs)
 	{
-		if (!oStricmp(_StrSource, sFormatDescs[i].String))
+		if (!_stricmp(_StrSource, sFormatDescs[i].String))
 		{
 			*_pFormat = (oSURFACE_FORMAT)i;
 			return true;

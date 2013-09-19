@@ -124,7 +124,7 @@ bool oGfxManipulatorImpl::CreateAxisGeometry(oGPUDevice* _pDevice, const char* _
 	desc.ArraySize = _NumLines * 2;
 	
 	oStd::uri_string Name;
-	oPrintf(Name, "%s_%s", _BaseName, oStd::as_string(_Axis));
+	snprintf(Name, "%s_%s", _BaseName, oStd::as_string(_Axis));
 	if(!_pDevice->CreateBuffer(Name, desc, &Line.LineList))
 		return oErrorPrefixLast("Failed to create a line list for a manipulator: ");
 
@@ -223,7 +223,7 @@ oGfxManipulatorImpl::oGfxManipulatorImpl(const char* _Name, const oGfxManipulato
 					return;
 
 				oStd::uri_string AxisName;
-				oPrintf(AxisName, "%s_%s", _Name, oStd::as_string(oManipulator::SCREEN));
+				snprintf(AxisName, "%s_%s", _Name, oStd::as_string(oManipulator::SCREEN));
 				Lines[oManipulator::SCREEN].URI = AxisName;
 			}
 

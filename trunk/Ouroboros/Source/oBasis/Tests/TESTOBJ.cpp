@@ -40,7 +40,7 @@ static bool TestCorrectness(const threadsafe oBasisTestOBJ* _pExpected, const th
 	oOBJ_DESC d;
 	_pOBJ->GetDesc(&d);
 
-	oTESTB(!oStrcmp(Expected.MTLPath, d.MTLPath), "MaterialLibraryPath \"%s\" (should be %s) does not match in obj file \"%s\"", d.MTLPath, Expected.MTLPath, d.OBJPath);
+	oTESTB(!strcmp(Expected.MTLPath, d.MTLPath), "MaterialLibraryPath \"%s\" (should be %s) does not match in obj file \"%s\"", d.MTLPath, Expected.MTLPath, d.OBJPath);
 
 	oTESTB(Expected.NumVertices == d.NumVertices, "Position counts do not match in obj file \"%s\"", d.OBJPath);
 	for (uint i = 0; i < d.NumVertices; i++)
@@ -57,8 +57,8 @@ static bool TestCorrectness(const threadsafe oBasisTestOBJ* _pExpected, const th
 	oTESTB(Expected.NumGroups == d.NumGroups, "Group counts do not match in obj file \"%s\"", d.OBJPath);
 	for (uint i = 0; i < d.NumGroups; i++)
 	{
-		oTESTB(!oStrcmp(Expected.pGroups[i].GroupName.c_str(), d.pGroups[i].GroupName.c_str()), "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
-		oTESTB(!oStrcmp(Expected.pGroups[i].MaterialName.c_str(), d.pGroups[i].MaterialName.c_str()), "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
+		oTESTB(!strcmp(Expected.pGroups[i].GroupName.c_str(), d.pGroups[i].GroupName.c_str()), "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
+		oTESTB(!strcmp(Expected.pGroups[i].MaterialName.c_str(), d.pGroups[i].MaterialName.c_str()), "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
 		oTESTB(Expected.pGroups[i].Range.StartPrimitive == d.pGroups[i].Range.StartPrimitive, "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
 		oTESTB(Expected.pGroups[i].Range.NumPrimitives == d.pGroups[i].Range.NumPrimitives, "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
 	}

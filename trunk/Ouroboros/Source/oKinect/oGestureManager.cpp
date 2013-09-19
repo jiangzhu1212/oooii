@@ -200,12 +200,12 @@ oGestureManagerImpl::oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, thr
 		oStd::uri_string dev_uri(oCore::filesystem::dev_path());
 
 		oStd::uri_string AirKB = dev_uri;
-		oStrAppendf(AirKB, "oooii/Source/oPlayer2/AirKeyboards.xml");
+		oStd::sncatf(AirKB, "oooii/Source/oPlayer2/AirKeyboards.xml");
 		if (!OnFileChange(oSTREAM_ACCESSIBLE, AirKB))
 			return; // pass through error
 
 		oStd::uri_string Inputs = dev_uri;
-		oStrAppendf(Inputs, "oooii/Source/oPlayer2/Inputs.xml");
+		oStd::sncatf(Inputs, "oooii/Source/oPlayer2/Inputs.xml");
 		if (!OnFileChange(oSTREAM_ACCESSIBLE, Inputs))
 			return; // pass through error
 	}

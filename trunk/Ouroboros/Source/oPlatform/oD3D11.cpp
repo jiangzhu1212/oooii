@@ -463,7 +463,7 @@ bool oD3D11SetDebugName(ID3D11Device* _pDevice, const char* _Name)
 	UINT CreationFlags = _pDevice->GetCreationFlags();
 	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
 	{
-		HRESULT hr = _pDevice->SetPrivateData(oWKPDID_D3DDebugObjectName, static_cast<UINT>(oStrlen(_Name) + 1), _Name);
+		HRESULT hr = _pDevice->SetPrivateData(oWKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(_Name) + 1), _Name);
 		if (FAILED(hr))
 			return oWinSetLastError(hr);
 	}
@@ -484,7 +484,7 @@ char* oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, co
 	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
 		return S_OK == const_cast<ID3D11Device*>(_pDevice)->GetPrivateData(oWKPDID_D3DDebugObjectName, &size, _StrDestination) ? _StrDestination : "(null)";
 	else
-		return oStrcpy(_StrDestination, _SizeofStrDestination, "non-debug device");
+		return strlcpy(_StrDestination, "non-debug device", _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
 }
 
 bool oD3D11SetDebugName(ID3D11DeviceChild* _pDeviceChild, const char* _Name)
@@ -515,7 +515,7 @@ char* oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, co
 	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
 		return S_OK == const_cast<ID3D11DeviceChild*>(_pDeviceChild)->GetPrivateData(oWKPDID_D3DDebugObjectName, &size, _StrDestination) ? _StrDestination : "(null)";
 	else
-		oStrcpy(_StrDestination, _SizeofStrDestination, "non-debug device child");
+		strlcpy(_StrDestination, "non-debug device child", _SizeofStrDestination);
 	return _StrDestination;
 }
 
@@ -541,7 +541,7 @@ D3DX11_IMAGE_FILE_FORMAT oD3D11GetFormatFromPath(const char* _Path)
 	};
 
 	oFORI(i, sExtensions)
-		if (!oStricmp(sExtensions[i].Extension, ext))
+		if (!_stricmp(sExtensions[i].Extension, ext))
 			return sExtensions[i].Format;
 
 	return D3DX11_IFF_DDS;
@@ -739,7 +739,7 @@ bool oD3D11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _Sizeo
 			}
 		}
 
-		oStrcpy(_OutErrorMessageString, _SizeofOutErrorMessageString, tmp.c_str());
+		strlcpy(_OutErrorMessageString, tmp.c_str(), _SizeofOutErrorMessageString);
 	}
 
 	else
@@ -751,7 +751,7 @@ bool oD3D11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _Sizeo
 int oD3D11VTrace(ID3D11InfoQueue* _pInfoQueue, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args)
 {
 	oStd::xlstring buf;
-	int len = oVPrintf(buf, _Format, _Args);
+	int len = oStd::vsnprintf(buf, _Format, _Args);
 	if (len == oInvalid)
 	{
 		oErrorSetLast(std::errc::no_buffer_space, "message too long");
@@ -1526,7 +1526,7 @@ bool oD3D11CreateCPUCopy(ID3D11Resource* _pResource, ID3D11Resource** _ppCPUCopy
 	oD3D11GetDebugName(RTName, _pResource);
 
 	oStd::lstring copyName;
-	oPrintf(copyName, "%s.CPUCopy", RTName.c_str());
+	snprintf(copyName, "%s.CPUCopy", RTName.c_str());
 
 	D3D11_RESOURCE_DIMENSION type;
 	_pResource->GetType(&type);
@@ -2154,7 +2154,7 @@ HRESULT oD3DInclude::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOI
 	{
 		oFOR(const char* p, HeaderSearchPaths)
 		{
-			oPrintf(Path, "%s/%s", p, pFileName);
+			snprintf(Path, "%s/%s", p, pFileName);
 			exists = oStreamExists(Path);
 			if (exists)
 				goto hack_break; // @oooii-tony: oFOR uses a double-for loop, so one break isn't enough. We should fix this!
@@ -2298,7 +2298,7 @@ bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, co
 					if (sep)
 						v = TRIML(v);
 					else
-						sep = k + oStrlen(k);
+						sep = k + strlen(k);
 
 					Defines.resize(Defines.size() + 1);
 					Defines.back().first.assign(k, sep-k);
@@ -2315,7 +2315,7 @@ bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, co
 	{
 		size_t size = UnsupportedOptions.length() + 1;
 		oVERIFY(oBufferCreate("Parameter Errors", oBuffer::New(size), size, oBuffer::Delete, _ppBuffer));
-		oStrcpy((char*)(*_ppBuffer)->GetData(), (*_ppBuffer)->GetSize(), UnsupportedOptions.c_str());
+		strlcpy((char*)(*_ppBuffer)->GetData(), UnsupportedOptions.c_str(), (*_ppBuffer)->GetSize());
 		return oErrorSetLast(std::errc::invalid_argument);
 	}
 
@@ -2331,12 +2331,12 @@ bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, co
 	Macros.back().Definition = nullptr;
 
 	oStd::uri_string SourceName;
-	oPrintf(SourceName, "%s", _ShaderSourceFilePath);
+	snprintf(SourceName, "%s", _ShaderSourceFilePath);
 
 	oD3DInclude D3DInclude(_ShaderSourceFilePath, IncludePaths);
 	oStd::intrusive_ptr<ID3DBlob> Code, Errors;
 	HRESULT hr = D3DCompile(_ShaderSource
-		, oStrlen(_ShaderSource)
+		, strlen(_ShaderSource)
 		, SourceName
 		, oStd::data(Macros)
 		, &D3DInclude

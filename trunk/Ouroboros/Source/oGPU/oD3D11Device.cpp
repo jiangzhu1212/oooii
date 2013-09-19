@@ -125,7 +125,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 
 			if (!StateExists(i, BlendStates))
 			{
-				oPrintf(StateName, "%s.%s", _Init.DebugName.c_str(), oStd::as_string((oGPU_BLEND_STATE)i));
+				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), oStd::as_string((oGPU_BLEND_STATE)i));
 				oV(oD3D11SetDebugName(BlendStates[i], StateName));
 			}
 		}
@@ -144,7 +144,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 			oV(_pDevice->CreateDepthStencilState(&sDepthStencils[i], &DepthStencilStates[i]));
 			if (!StateExists(i, DepthStencilStates))
 			{
-				oPrintf(StateName, "%s.%s", _Init.DebugName.c_str(), oStd::as_string((oGPU_DEPTH_STENCIL_STATE)i));
+				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), oStd::as_string((oGPU_DEPTH_STENCIL_STATE)i));
 				oV(oD3D11SetDebugName(DepthStencilStates[i], StateName));
 			}
 		}
@@ -186,7 +186,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 	
 			if (!StateExists(i, SurfaceStates))
 			{
-				oPrintf(StateName, "%s.%s", _Init.DebugName.c_str(), oStd::as_string((oGPU_SURFACE_STATE)i));
+				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), oStd::as_string((oGPU_SURFACE_STATE)i));
 				oV(oD3D11SetDebugName(SurfaceStates[i], StateName));
 			}
 		}
@@ -244,7 +244,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 				desc.MaxAnisotropy = 16; // documented default
 				desc.ComparisonFunc = D3D11_COMPARISON_NEVER;  // documented default
 
-				oPrintf(StateName, "%s.%s", _Init.DebugName.c_str(), oStd::as_string(oGPU_SAMPLER_STATE(NUM_ADDRESS_STATES * bias + state)));
+				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), oStd::as_string(oGPU_SAMPLER_STATE(NUM_ADDRESS_STATES * bias + state)));
 				oV(_pDevice->CreateSamplerState(&desc, &SamplerStates[i]));
 				oV(oD3D11SetDebugName(SamplerStates[i], StateName));
 				i++;
@@ -270,7 +270,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 
 		oStd::sstring CSName;
 		oD3D11GetDebugName(CSName, _pDevice);
-		oStrAppendf(CSName, "NoopCS");
+		oStd::sncatf(CSName, "NoopCS");
 		oVERIFY(oD3D11SetDebugName(NoopCS, CSName));
 	}
 

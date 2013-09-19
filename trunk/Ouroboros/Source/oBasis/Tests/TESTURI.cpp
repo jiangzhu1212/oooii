@@ -214,13 +214,13 @@ static bool Test_oURIResolve()
 	{
 		oStd::uri_string Result;
 		oURIResolve(Result, sReferenceResolutionBaseURI, sReferenceResolutionExamples[i].first);
-		oTESTB(oStricmp(Result.c_str(), sReferenceResolutionExamples[i].second.c_str())==0, "Unexpected result oURIResolve returned '%s', expected '%s'", Result.c_str(), sReferenceResolutionExamples[i].second.c_str());
+		oTESTB(_stricmp(Result.c_str(), sReferenceResolutionExamples[i].second.c_str())==0, "Unexpected result oURIResolve returned '%s', expected '%s'", Result.c_str(), sReferenceResolutionExamples[i].second.c_str());
 	}
 	oFORI(i, sReferenceResolutionExamples2)
 	{
 		oStd::uri_string Result;
 		oURIResolve(Result, sReferenceResolutionBaseURI2, sReferenceResolutionExamples2[i].first);
-		oTESTB(oStricmp(Result.c_str(), sReferenceResolutionExamples2[i].second.c_str())==0, "Unexpected result oURIResolve returned '%s', expected '%s'", Result.c_str(), sReferenceResolutionExamples2[i].second.c_str());
+		oTESTB(_stricmp(Result.c_str(), sReferenceResolutionExamples2[i].second.c_str())==0, "Unexpected result oURIResolve returned '%s', expected '%s'", Result.c_str(), sReferenceResolutionExamples2[i].second.c_str());
 	}
 
 	return true;
@@ -232,7 +232,7 @@ static bool Test_oURIRelativize()
 	{
 		oStd::uri_string Result;
 		oURIRelativize(Result, sReferenceMakeRelativeBaseURI, sReferenceMakeRelativeExamples[i].first);
-		oTESTB(oStricmp(Result.c_str(), sReferenceMakeRelativeExamples[i].second.c_str())==0, "Unexpected result oURIRelativize returned '%s', expected '%s'", Result.c_str(), sReferenceMakeRelativeExamples[i].second.c_str());
+		oTESTB(_stricmp(Result.c_str(), sReferenceMakeRelativeExamples[i].second.c_str())==0, "Unexpected result oURIRelativize returned '%s', expected '%s'", Result.c_str(), sReferenceMakeRelativeExamples[i].second.c_str());
 	}
 	return true;
 }
@@ -245,7 +245,7 @@ bool oBasisTest_oURI()
 		if (!oURIDecompose(sTestUris[i], &parts))
 			return oErrorSetLast(std::errc::protocol_error, "decompose failed: %s", sTestUris[i]);
 		
-		#define oURITESTB(_Part) if (oStrcmp(parts._Part, sExpectedParts[i]._Part)) return oErrorSetLast(std::errc::protocol_error, "Did not get expected results for " #_Part " %s", sTestUris[i])
+		#define oURITESTB(_Part) if (strcmp(parts._Part, sExpectedParts[i]._Part)) return oErrorSetLast(std::errc::protocol_error, "Did not get expected results for " #_Part " %s", sTestUris[i])
 		oURITESTB(Scheme);
 		oURITESTB(Authority);
 		oURITESTB(Path);
@@ -257,18 +257,18 @@ bool oBasisTest_oURI()
 		oURIToPath(testPath, sTestUris[i]);
 
 		if (oIsUNCPath(sExpectedPaths[i]))
-			oStrcpy(expectedCleaned, sExpectedPaths[i].c_str());
+			strlcpy(expectedCleaned, sExpectedPaths[i].c_str());
 		else
 			oStd::clean_path(expectedCleaned, sExpectedPaths[i]);
 
-		oTESTB(oStrncmp(testPath, expectedCleaned, testPath.capacity()) == 0, "URI %d did not convert back to a path properly. got %s expected %s", i, testPath.c_str(), sExpectedPaths[i]);
+		oTESTB(strncmp(testPath, expectedCleaned, testPath.capacity()) == 0, "URI %d did not convert back to a path properly. got %s expected %s", i, testPath.c_str(), sExpectedPaths[i]);
 
 		oURIPartsToPath(testPath, parts);
-		oTESTB(oStrncmp(testPath, expectedCleaned, testPath.capacity()) == 0, "URIParts %d did not convert back to a path properly. got %s expected %s", i, testPath.c_str(), sExpectedPaths[i]);
+		oTESTB(strncmp(testPath, expectedCleaned, testPath.capacity()) == 0, "URIParts %d did not convert back to a path properly. got %s expected %s", i, testPath.c_str(), sExpectedPaths[i]);
 
 		oStd::uri_string reconstructedURI;
 		oURIRecompose(reconstructedURI, sExpectedParts[i]);
-		oTESTB(oStrncmp(reconstructedURI, sTestUris[i], reconstructedURI.capacity()) == 0, "URI parts %d did not convert back to proper uri. got %s expected %s", i, reconstructedURI, sTestUris[i]);
+		oTESTB(strncmp(reconstructedURI, sTestUris[i], reconstructedURI.capacity()) == 0, "URI parts %d did not convert back to proper uri. got %s expected %s", i, reconstructedURI, sTestUris[i]);
 	}
 	
 	oURI A, B, C;

@@ -77,7 +77,7 @@ struct PLATFORM_oSocketBlockingServer : public oSpecialTest
 
 		const char* s = "Server acknowledges your connection, waiting to receive data.";
 
-		oTESTB( Client->Send(s, (oSocket::size_t)oStrlen(s)+1), "SERVER: Client %s send failed", Client->GetDebugName() );
+		oTESTB( Client->Send(s, (oSocket::size_t)strlen(s)+1), "SERVER: Client %s send failed", Client->GetDebugName() );
 
 		while( 1 )
 		{
@@ -98,15 +98,15 @@ struct PLATFORM_oSocketBlockingServer : public oSpecialTest
 					else
 						oTRACE("SVRCXN: wanted OnConnectMsg data, got %s", msg);
 
-					if (bytesReceived > (oStrlen(msg) + 1))
+					if (bytesReceived > (strlen(msg) + 1))
 					{
-						char* curr = msg + oStrlen(msg) + 1;
+						char* curr = msg + strlen(msg) + 1;
 						char* end = msg + sizeof(msg);
 
 						while (*curr && curr < end)
 						{
 							oTRACE("SVRCXN: Nagel-concatenated messages: %s", curr);
-							curr += oStrlen(curr) + 1;
+							curr += strlen(curr) + 1;
 						}
 					}
 				}
@@ -114,9 +114,9 @@ struct PLATFORM_oSocketBlockingServer : public oSpecialTest
 
 			else
 			{
-				oPrintf(msg, "ok to start upload %u", Counter);
+				snprintf(msg, "ok to start upload %u", Counter);
 				Counter++;
-				oTESTB( Client->Send(msg, (oSocket::size_t)oStrlen(msg)+1), "SERVER: %s send failed", Server->GetDebugName() );
+				oTESTB( Client->Send(msg, (oSocket::size_t)strlen(msg)+1), "SERVER: %s send failed", Server->GetDebugName() );
 				oTRACE("SVRCXN: %s waiting to receive...", Client->GetDebugName());
 				size_t bytesReceived = Client->Recv(msg, oCOUNTOF(msg));
 
@@ -185,7 +185,7 @@ struct PLATFORM_oSocketBlocking : public oTest
 
 		oTRACE("CLIENT: Sending...");
 		const char* onConnect = "OnConnectMsg";
-		oTESTB(Client->Send(onConnect, (oSocket::size_t)oStrlen(onConnect)+1), "Client Send failed: %s", oErrorAsString(oErrorGetLast()));
+		oTESTB(Client->Send(onConnect, (oSocket::size_t)strlen(onConnect)+1), "Client Send failed: %s", oErrorAsString(oErrorGetLast()));
 
 		oTRACE("CLIENT: waiting to receive...");
 
@@ -221,7 +221,7 @@ struct PLATFORM_oSocketBlocking : public oTest
 					break;
 				}
 
-				if (!Client->Send(sMessages[i], (oSocket::size_t)oStrlen(sMessages[i])+1))
+				if (!Client->Send(sMessages[i], (oSocket::size_t)strlen(sMessages[i])+1))
 				{
 					errno_t err = oErrorGetLast();
 					if (err)

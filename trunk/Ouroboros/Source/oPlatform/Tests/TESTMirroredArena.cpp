@@ -40,7 +40,7 @@ const static size_t ARENA_SIZE = 512 * 1024;
 static const unsigned int TEST1[] = { 0, 1, 2, 3, 4, 5, 6, };
 static const char* TEST2[] = { "This is a test", "This is only a test", "We now return you to " };
 
-#define oTESTB_MIR(fn, msg, ...) do { if (!(expr)) { oPrintf(_StrStatus, _SizeofStrStatus, format, ## __VA_ARGS__); oTRACE("FAILING: %s", _StrStatus); goto FailureLabel; } } while(false)
+#define oTESTB_MIR(fn, msg, ...) do { if (!(expr)) { snprintf(_StrStatus, _SizeofStrStatus, format, ## __VA_ARGS__); oTRACE("FAILING: %s", _StrStatus); goto FailureLabel; } } while(false)
 
 static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirroredArena::USAGE _Usage)
 {
@@ -71,7 +71,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 		{
 			oTRACE("SERVER: no base address (this should return skipped).");
 			oErrorSetLast(std::errc::permission_denied, "Could not allocate arena at 0x%p from server (another process may be using that space).", BASE_ADDRESS);
-			oPrintf(_StrStatus, _SizeofStrStatus, oErrorGetLastString());
+			snprintf(_StrStatus, _SizeofStrStatus, oErrorGetLastString());
 			return oTest::SKIPPED;
 		}
 		else
@@ -128,10 +128,10 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 
 	for (size_t i = 0; i < oCOUNTOF(TEST2); i++)
 	{
-		size_t bufferSize = 1 + oStrlen(TEST2[i]);
+		size_t bufferSize = 1 + strlen(TEST2[i]);
 		test2Strings[i] = static_cast<char*>(AllocatorServer->Allocate(sizeof(char) * bufferSize));
 		oTESTB(test2Strings[i], "test2Strings[%u] allocation failed", i);
-		oStrcpy(test2Strings[i], bufferSize, TEST2[i]);
+		strlcpy(test2Strings[i], TEST2[i], bufferSize);
 	}
 
 	size_t sizeRequired = 0;
@@ -202,7 +202,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 		char msg[4096];
 		size_t bytes = Client->from_stdout(msg, oCOUNTOF(msg));
 		msg[bytes] = 0;
-		oPrintf(_StrStatus, _SizeofStrStatus, "%s", msg);
+		snprintf(_StrStatus, _SizeofStrStatus, "%s", msg);
 		return oTest::FAILURE;
 	}
 
@@ -214,7 +214,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 #define RUNTEST(_DiffType) do \
 	{	oTest::RESULT r = RunTest(subStatus, oCOUNTOF(subStatus), oMirroredArena::_DiffType); \
 		if (r != SUCCESS) \
-		{	oPrintf(_StrStatus, _SizeofStrStatus, #_DiffType ": %s", subStatus); \
+		{	snprintf(_StrStatus, _SizeofStrStatus, #_DiffType ": %s", subStatus); \
 			return r; \
 		} \
 	} while (false)
@@ -254,7 +254,7 @@ struct PLATFORM_oMirroredArenaClient : public oSpecialTest
 			if (!desc.BaseAddress)
 			{
 				oErrorSetLast(std::errc::permission_denied, "Could not allocate arena at 0x%p from client (another process may be using that space).", BASE_ADDRESS);
-				oStrcpy(_StrStatus, _SizeofStrStatus, oErrorGetLastString());
+				strlcpy(_StrStatus, oErrorGetLastString(), _SizeofStrStatus);
 				return oTest::SKIPPED;
 			}
 
@@ -339,7 +339,7 @@ struct PLATFORM_oMirroredArenaClient : public oSpecialTest
 		oTESTB(MirroredArenaClient->ApplyChanges(diffs), "ApplyChanges failed");
 		oTESTB(!memcmp(test1, TEST1, sizeof(TEST1)), "memcmp of TEST1 failed");
 		for (size_t i = 0; i < oCOUNTOF(TEST2); i++)
-			oTESTB(!oStrcmp(test2Strings[i], TEST2[i]), "memcmp of test2Strings[%u] failed", i);
+			oTESTB(!strcmp(test2Strings[i], TEST2[i]), "memcmp of test2Strings[%u] failed", i);
 
 		return SUCCESS;
 	}

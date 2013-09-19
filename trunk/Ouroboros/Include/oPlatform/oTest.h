@@ -34,9 +34,9 @@
 #include <oPlatform/oSingleton.h> // @oooii-tony: Is it necessary to guarantee a test to be singular? If not this can take a step towards being cross-platform.
 #include <oStd/path.h>
 
-#define oTESTERROR(format, ...) do { oPrintf(_StrStatus, _SizeofStrStatus, format, ## __VA_ARGS__); oTRACE("FAILING: %s (oErrorGetLast() == %s (%s))", _StrStatus, oErrorAsString(oErrorGetLast()), oErrorGetLastString()); return oTest::FAILURE; } while(false)
+#define oTESTERROR(format, ...) do { snprintf(_StrStatus, _SizeofStrStatus, format, ## __VA_ARGS__); oTRACE("FAILING: %s (oErrorGetLast() == %s (%s))", _StrStatus, oErrorAsString(oErrorGetLast()), oErrorGetLastString()); return oTest::FAILURE; } while(false)
 #define oTESTB(expr, errMsg, ...) do { if (!(expr)) { oTESTERROR(errMsg, ## __VA_ARGS__); } } while(false)
-#define oTESTB0(expr) do { if (!(expr)) { oPrintf(_StrStatus, _SizeofStrStatus, "%s: %s", oErrorAsString(oErrorGetLast()), oErrorGetLastString()); return oTest::FAILURE; } } while(false)
+#define oTESTB0(expr) do { if (!(expr)) { snprintf(_StrStatus, _SizeofStrStatus, "%s: %s", oErrorAsString(oErrorGetLast()), oErrorGetLastString()); return oTest::FAILURE; } } while(false)
 #define oTESTB_FWD( _FWDFn) \
 	{ \
 		RESULT Result = _FWDFn; \
@@ -52,7 +52,7 @@
 {	try { _Future.wait(); } \
 	catch (std::exception& e) \
 	{	oErrorSetLast(e); \
-		oPrintf(_StrStatus, _SizeofStrStatus, "%s: %s", oErrorAsString(oErrorGetLast()), oErrorGetLastString()); \
+		snprintf(_StrStatus, _SizeofStrStatus, "%s: %s", oErrorAsString(oErrorGetLast()), oErrorGetLastString()); \
 		return oTest::FAILURE; \
 	} \
 } while (false)

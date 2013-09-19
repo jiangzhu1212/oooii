@@ -41,7 +41,7 @@ static bool oWinDialogGetOpenOrSavePath(oStd::path& _Path, const char* _DialogTi
 	char defext[4] = {0};
 	if (_FilterPairs)
 	{
-		filters.assign(_FilterPairs, _FilterPairs+oStrlen(_FilterPairs)+1);
+		filters.assign(_FilterPairs, _FilterPairs+strlen(_FilterPairs)+1);
 		filters.append("x"); // set up double nul ptr
 		filters[filters.size()-1] = 0;
 		for (size_t i = 0; i < filters.size(); i++)
@@ -49,7 +49,7 @@ static bool oWinDialogGetOpenOrSavePath(oStd::path& _Path, const char* _DialogTi
 				filters[i] = '\0';
 
 		// use first ext as default ext...
-		const char* first = filters.c_str() + oStrlen(filters.c_str())+1;
+		const char* first = filters.c_str() + strlen(filters.c_str())+1;
 		first = strchr(first, '.');
 		if (first)
 		{

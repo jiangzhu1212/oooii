@@ -123,7 +123,7 @@ static bool TestArray()
 	{
 		oTESTB(i == Test.IntValues[i], "TestArray: Expected value at index %d to be %d, but got %d",i,i,Test.IntValues[i]);
 		oStd::sstring val;
-		oPrintf(val, "%d", i);
+		snprintf(val, "%d", i);
 		oTESTB(0 == strcmp(val.c_str(), Test.StringValues[i].c_str()), "TestArray: Expected value at index %d to be %d, but got %d",i,i,Test.IntValues[i]);
 		oTESTB(Test.Float2Values[i] == float2(0.5f, 1.0f), "TestArray: Expected value at index %d to be (0.5, 1.0), but got (%f, %f)", Test.Float2Values[i].x, Test.Float2Values[i].y);
 	}

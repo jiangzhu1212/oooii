@@ -237,7 +237,7 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 					oHTTPAddHeader(TheResponse.HeaderFields, oHTTP_HEADER_CONTENT_TYPE, oStd::as_string(oMIME_TEXT_HTML));
 
 					// TODO: Possible race condition on DefaultResponseBody? Could a previous send of DefaultResponseBody still be in progress at this time?
-					oPrintf(DefaultResponseBody, pDefaultPage, TheResponse.StatusLine.StatusCode, oStd::as_string(TheResponse.StatusLine.StatusCode), TheResponse.StatusLine.StatusCode, oStd::as_string(TheResponse.StatusLine.StatusCode));
+					snprintf(DefaultResponseBody, pDefaultPage, TheResponse.StatusLine.StatusCode, oStd::as_string(TheResponse.StatusLine.StatusCode), TheResponse.StatusLine.StatusCode, oStd::as_string(TheResponse.StatusLine.StatusCode));
 					TheResponse.Content.Length = oUInt(DefaultResponseBody.size());
 
 					// If MIMEData was set by StartResponse, finish it early because something went wrong (Response.Size==0)

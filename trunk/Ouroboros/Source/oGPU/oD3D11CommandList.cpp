@@ -150,9 +150,9 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, CommandList)
 			UINT DeviceCreationFlags = D3DDevice->GetCreationFlags();
 
 			if (DeviceCreationFlags & D3D11_CREATE_DEVICE_SINGLETHREADED)
-				oPrintf(err, "oGPUCommandLists cannot be created on an oGPUDevice created as single-threaded: ");
+				snprintf(err, "oGPUCommandLists cannot be created on an oGPUDevice created as single-threaded: ");
 			else
-				oPrintf(err, "Failed to create oGPUDeviceContext %u: ", _Desc.DrawOrder);
+				snprintf(err, "Failed to create oGPUDeviceContext %u: ", _Desc.DrawOrder);
 
 			oWinSetLastError(hr, err);
 			return;

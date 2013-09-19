@@ -155,26 +155,26 @@ bool oP4Open(oP4_STATUS _Type, const char* _Path)
 		return oErrorSetLast(std::errc::invalid_argument, "invalid open type");
 
 	oStd::xlstring cmdline, validstring, response;
-	oPrintf(cmdline, "p4 %s \"%s\"", oStd::as_string(_Type), oSAFESTR(_Path));
-	oPrintf(validstring, " - opened for %s", oStd::as_string(_Type));
+	snprintf(cmdline, "p4 %s \"%s\"", oStd::as_string(_Type), oSAFESTR(_Path));
+	snprintf(validstring, " - opened for %s", oStd::as_string(_Type));
 	return oP4Execute(cmdline, validstring, response);
 }
 
 bool oP4Revert(const char* _Path)
 {
 	oStd::xlstring cmdline, response;
-	oPrintf(cmdline, "p4 revert \"%s\"", _Path);
+	snprintf(cmdline, "p4 revert \"%s\"", _Path);
 	return oP4Execute(cmdline, ", reverted", response);
 }
 
 oAPI bool oP4Sync(int _ChangeList, const char* _Path/*= nullptr*/, bool _Force/*= false*/)
 {
 	oStd::xlstring cmdline, response;
-	oPrintf(cmdline, "p4 sync %s \"%s\"@%d", _Force ? "-f":"", _Path, _ChangeList);
+	snprintf(cmdline, "p4 sync %s \"%s\"@%d", _Force ? "-f":"", _Path, _ChangeList);
 
 	// Try twice.  Once to sync, and once to verify
 	oP4Execute(cmdline, "", nullptr, 0, kP4FileTimeoutMS);
-	oPrintf(cmdline, "p4 sync \"%s\"@%d", _Path, _ChangeList);
+	snprintf(cmdline, "p4 sync \"%s\"@%d", _Path, _ChangeList);
 	return oP4Execute(cmdline, "up-to-date", response);
 }
 
@@ -187,7 +187,7 @@ static void oP4CreateLabelSpec(const oP4_LABEL_SPEC& _Label, std::string& _OutLa
 
 	oStd::lstring Desc(_Label.Description);
 	if (Desc.empty())
-		oPrintf(Desc, "Created by %s", Owner.c_str());
+		snprintf(Desc, "Created by %s", Owner.c_str());
 
 	_OutLabelSpec = "Label:	";
 	_OutLabelSpec.append(_Label.Label);
@@ -247,7 +247,7 @@ bool oP4Label(const oP4_LABEL_SPEC& _Label)
 bool oP4GetChangelistShared(const char* _pSearch, int _ChangeList, oFUNCTION<void(char* _Result)> _Result)
 {
 	oStd::xlstring cmdline, response;
-	oPrintf(cmdline, "p4 change -o %d",_ChangeList);
+	snprintf(cmdline, "p4 change -o %d",_ChangeList);
 	if (!oP4Execute(cmdline, "A Perforce Change Specification", response))
 		return false;
 
@@ -280,7 +280,7 @@ bool oP4GetChangelistDescription(char* _StrDestination, size_t _SizeofStrDestina
 		{
 			++_Result;
 		}
-		oStrcpy(_StrDestination, _SizeofStrDestination, _Result);
+		strlcpy(_StrDestination, _Result, _SizeofStrDestination);
 	});
 }
 
@@ -297,7 +297,7 @@ bool oP4GetChangelistUser(char* _StrDestination, size_t _SizeofStrDestination, i
 				}
 				_Result[0] = 0;
 			}
-			oStrcpy(_StrDestination, _SizeofStrDestination, pUserName);
+			strlcpy(_StrDestination, pUserName, _SizeofStrDestination);
 		});
 }
 
@@ -314,14 +314,14 @@ bool oP4GetChangelistDate(char* _StrDestination, size_t _SizeofStrDestination, i
 			}
 			_Result[0] = 0;
 		}
-		oStrcpy(_StrDestination, _SizeofStrDestination, pDate);
+		strlcpy(_StrDestination, pDate, _SizeofStrDestination);
 	});
 }
 
 bool oP4GetClientPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _pDepotPath)
 {
 	oStd::xlstring cmdline, response;
-	oPrintf(cmdline, "p4 fstat %s", _pDepotPath);
+	snprintf(cmdline, "p4 fstat %s", _pDepotPath);
 
 	const char ClientFile[] = "clientFile";
 	if (!oP4Execute(cmdline, ClientFile, response))
@@ -346,7 +346,7 @@ bool oP4GetClientPath(char* _StrDestination, size_t _SizeofStrDestination, const
 bool oP4GetLabelSpecString(char* _P4LabelSpecString, size_t _SizeofP4LabelSpecString, const char* _Label)
 {
 	oStd::lstring cmdline;
-	oPrintf(cmdline, "p4 label -o %s", oSAFESTRN(_Label));
+	snprintf(cmdline, "p4 label -o %s", oSAFESTRN(_Label));
 	return oP4Execute(cmdline, "# A Perforce Label", _P4LabelSpecString, _SizeofP4LabelSpecString);
 }
 
@@ -375,15 +375,15 @@ static char* oP4ParseFilesLine(oP4_FILE_DESC* _pFile, char* _P4FilesLine)
 	oStd::from_string(&_pFile->Status, tok);
 
 	tok = oStrTok(nullptr, " ", &ctx);
-	if (!oStrcmp("default", tok))
+	if (!strcmp("default", tok))
 		_pFile->Changelist = oInvalid;
 
 	tok = oStrTok(nullptr, " ", &ctx);
-	if (oStrcmp("change", tok))
+	if (strcmp("change", tok))
 		_pFile->Changelist = atoi(tok);
 
 	tok = oStrTok(nullptr, " ", &ctx);
-	_pFile->IsText = !oStrcmp("(text)", tok);
+	_pFile->IsText = !strcmp("(text)", tok);
 
 	oStrTokClose(&ctx);
 
@@ -394,7 +394,7 @@ static char* oP4ParseFilesLine(oP4_FILE_DESC* _pFile, char* _P4FilesLine)
 static size_t oP4ParseOpenedList(oP4_FILE_DESC* _pOpenedFiles, size_t _MaxNumOpenedFiles, char* _FileListString)
 {
 	char* c = _FileListString;
-	char* end = c + oStrlen(c);
+	char* end = c + strlen(c);
 	size_t i = 0;
 	while (c < end)
 	{
@@ -413,11 +413,11 @@ size_t oP4ListOpened(oP4_FILE_DESC* _pOpenedFiles, size_t _MaxNumOpenedFiles, co
 	std::vector<char> response;
 	response.resize(oKB(100));
 	char* result = oStd::data(response);
-	oPrintf(cmdline, "p4 opened -m %u %s", _MaxNumOpenedFiles, oSAFESTR(_P4Base));
+	snprintf(cmdline, "p4 opened -m %u %s", _MaxNumOpenedFiles, oSAFESTR(_P4Base));
 	if (!oP4Execute(cmdline, nullptr, result, response.size()))
 		return oInvalid; // pass through error
 
-	if (!oStrncmp("File(s) not", oStd::data(response), 11))
+	if (!strncmp("File(s) not", oStd::data(response), 11))
 		return 0;
 
 	if (strstr(result, "file(s) not opened"))
@@ -459,7 +459,7 @@ static char* oP4ParseSyncLine(oP4_FILE_DESC* _pFile, char* _P4SyncLine)
 			oVERIFY(oStd::from_string(&_pFile->Status, tok));
 
 			tok = oStrTok(nullptr, " ", &ctx);
-			if (!oStrcmp("as", tok))
+			if (!strcmp("as", tok))
 				tok = oStrTok(nullptr, " ", &ctx);
 
 			oStrTokClose(&ctx);
@@ -480,7 +480,7 @@ static char* oP4ParseSyncLine(oP4_FILE_DESC* _pFile, char* _P4SyncLine)
 static size_t oP4ParseOutOfDateList(oP4_FILE_DESC* _pOutOfDateFiles, size_t _MaxNumOutOfDateFiles, char* _OutOfDateListString)
 {
 	char* c = _OutOfDateListString;
-	char* end = c + oStrlen(c);
+	char* end = c + strlen(c);
 
 	size_t i = 0;
 	while (c < end)
@@ -505,9 +505,9 @@ size_t oP4ListOutOfDate(oP4_FILE_DESC* _pOutOfDateFiles, size_t _MaxNumOutOfDate
 		_P4Base = "//...";
 
 	if (_UpToChangelist != oInvalid)
-		oPrintf(cmdline, "p4 sync -n %s@%d", oSAFESTR(_P4Base), _UpToChangelist);
+		snprintf(cmdline, "p4 sync -n %s@%d", oSAFESTR(_P4Base), _UpToChangelist);
 	else
-		oPrintf(cmdline, "p4 sync -n %s", oSAFESTR(_P4Base));
+		snprintf(cmdline, "p4 sync -n %s", oSAFESTR(_P4Base));
 
 	if (!oP4Execute(cmdline, nullptr, result, response.size()))
 		return oInvalid; // pass through error
@@ -523,9 +523,9 @@ size_t oP4ListOutOfDate(oP4_FILE_DESC* _pOutOfDateFiles, size_t _MaxNumOutOfDate
 	for (size_t i = 0; i < nFiles; i++)
 	{
 		if (_UpToChangelist != oInvalid)
-			oPrintf(cmdline, "p4 files %s@%d", _pOutOfDateFiles[i].Path.c_str(), _UpToChangelist);
+			snprintf(cmdline, "p4 files %s@%d", _pOutOfDateFiles[i].Path.c_str(), _UpToChangelist);
 		else
-			oPrintf(cmdline, "p4 files %s", _pOutOfDateFiles[i].Path.c_str());
+			snprintf(cmdline, "p4 files %s", _pOutOfDateFiles[i].Path.c_str());
 
 		if (!oP4Execute(cmdline, nullptr, result, response.size()))
 			return oInvalid; // pass through error
@@ -563,7 +563,7 @@ bool oP4ParseWorkspace(oP4_WORKSPACE* _pWorkspace, const char* _P4WorkspaceStrin
 	const char* c = _P4WorkspaceString;
 	c = strstr(c, "views and options.");
 	if (!c) return false;
-	c += oStrlen("views and options.");
+	c += strlen("views and options.");
 	bool bNextStrExists = false;
 
 	//Client
@@ -597,7 +597,7 @@ bool oP4ParseWorkspace(oP4_WORKSPACE* _pWorkspace, const char* _P4WorkspaceStrin
 
 	// Description is multi-line...
 	c += strspn(c, oWHITESPACE);
-	c += oStrlen("Description:");
+	c += strlen("Description:");
 	c += strspn(c, oWHITESPACE);
 	const char* end = strstr(c, oNEWLINE oNEWLINE "Root:");
 
@@ -638,8 +638,8 @@ bool oP4ParseWorkspace(oP4_WORKSPACE* _pWorkspace, const char* _P4WorkspaceStrin
 
 	// View is multi-line...
 	c += strspn(c, oWHITESPACE);
-	c += oStrlen("View:");
-	oStrcpy(_pWorkspace->View, c);
+	c += strlen("View:");
+	strlcpy(_pWorkspace->View, c);
 
 	return true;
 }
@@ -667,7 +667,7 @@ bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecStri
 	const char* c = _P4LabelSpecString;
 	c = strstr(c, "about label views.");
 	if (!c) return false;
-	c += oStrlen("about label views.");
+	c += strlen("about label views.");
 	bool bNextStrExists = false;
 
 	//Label
@@ -696,7 +696,7 @@ bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecStri
 
 	// Description is multi-line...
 	c += strspn(c, oWHITESPACE);
-	c += oStrlen("Description:");
+	c += strlen("Description:");
 	c += strspn(c, oWHITESPACE);
 	const char* end = strstr(c, oNEWLINE oNEWLINE "Options:");
 
@@ -719,8 +719,8 @@ bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecStri
 
 	//View is multi-line...
 	c += strspn(c, oWHITESPACE);
-	c += oStrlen("View:");
-	oStrcpy(_pLabelSpec->View, c);
+	c += strlen("View:");
+	strlcpy(_pLabelSpec->View, c);
 
 	return true;
 }
@@ -735,7 +735,7 @@ static int oP4RunChangesCommand(const char* _P4Base, const char* _pCommand)
 	if (!oSTRVALID(_P4Base))
 		_P4Base = "//...";
 
-	oPrintf(cmdline, "p4 changes -m1 %s%s", _P4Base, _pCommand);
+	snprintf(cmdline, "p4 changes -m1 %s%s", _P4Base, _pCommand);
 
 	if (!oP4Execute(cmdline, nullptr, result, response.size()))
 		return oInvalid; // pass through error
@@ -804,7 +804,7 @@ int oP4GetNextChangelist(int _CurrentCL, const char* _P4Base /*= nullptr*/)
 	{
 		// Check CL in between to see if they have changes
 		oStd::sstring cmd;
-		oPrintf(cmd, "@%d", CL);
+		snprintf(cmd, "@%d", CL);
 		int ChangesUpTo = oP4RunChangesCommand(_P4Base, cmd);
 
 		if(oInvalid == ChangesUpTo || ChangesUpTo == CL)

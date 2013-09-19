@@ -73,19 +73,19 @@ bool oURIIsSameDocument(const char* _URIReference, const char* _DocumentURI)
 	oURIParts ResolvedParts;
 	oURIDecompose(ResolvedURI, &ResolvedParts);
 
-	return oStricmp(DocumentParts.Scheme, ResolvedParts.Scheme)==0 && 
-		oStricmp(DocumentParts.Authority, ResolvedParts.Authority)==0 &&
-		oStricmp(DocumentParts.Path, ResolvedParts.Path)==0 &&
-		oStricmp(DocumentParts.Query, ResolvedParts.Query)==0;
+	return _stricmp(DocumentParts.Scheme, ResolvedParts.Scheme)==0 && 
+		_stricmp(DocumentParts.Authority, ResolvedParts.Authority)==0 &&
+		_stricmp(DocumentParts.Path, ResolvedParts.Path)==0 &&
+		_stricmp(DocumentParts.Query, ResolvedParts.Query)==0;
 }
 
 oURIParts::oURIParts(const char* _Scheme, const char* _Authority, const char* _Path, const char* _Query, const char* _Fragment)
 {
-	oStrcpy(Scheme.c_str(), _Scheme);
-	oStrcpy(Authority.c_str(), _Authority);
-	oStrcpy(Path.c_str(), _Path);
-	oStrcpy(Query.c_str(), _Query);
-	oStrcpy(Fragment.c_str(), _Fragment);
+	strlcpy(Scheme, oSAFESTR(_Scheme));
+	strlcpy(Authority, oSAFESTR(_Authority));
+	strlcpy(Path, oSAFESTR(_Path));
+	strlcpy(Query, oSAFESTR(_Query));
+	strlcpy(Fragment, oSAFESTR(_Fragment));
 }
 
 // Copies a begin/end iterator range into the specified destination as a string
@@ -122,7 +122,7 @@ char* oURIPercentEncode(char* _StrDestination, size_t _SizeofStrDestination, con
 
 			// @oooii-tony: This assumes ascii-in... no UTF-8 support here.
 			*d++ = '%';
-			oPrintf(d, std::distance(d, end), "%02x", *s++); // use lower-case escaping http://www.textuality.com/tag/uri-comp-2.html
+			snprintf(d, std::distance(d, end), "%02x", *s++); // use lower-case escaping http://www.textuality.com/tag/uri-comp-2.html
 			d += 2;
 		}
 
@@ -180,7 +180,7 @@ char* oURIRecompose(char* _URIReference, size_t _SizeofURIReference, const char*
 		licenseurl="http://research.scea.com/scea_shared_source_license.html"
 	/>*/
 
-	#define SAFECAT(str) do {	if (!oStrcat(_URIReference, _SizeofURIReference, str)) return nullptr; } while(false)
+	#define SAFECAT(str) do {	if (strlcat(_URIReference, str, _SizeofURIReference) >= _SizeofURIReference) return nullptr; } while(false)
 
 	oASSERT(_Scheme < _URIReference || _Scheme >= (_URIReference + _SizeofURIReference), "Overlapping buffers not allowed");
 	oASSERT(_Authority < _URIReference || _Authority >= (_URIReference + _SizeofURIReference), "Overlapping buffers not allowed");
@@ -212,7 +212,7 @@ char* oURIRecompose(char* _URIReference, size_t _SizeofURIReference, const char*
 	if (!oStd::clean_path(path, _Path))
 		return nullptr;
 
-	size_t URIReferenceLength = oStrlen(_URIReference);
+	size_t URIReferenceLength = strlen(_URIReference);
 	if (!oURIPercentEncode(_URIReference + URIReferenceLength, _SizeofURIReference - URIReferenceLength, path, " "))
 		return nullptr;
 
@@ -251,13 +251,13 @@ char* oURIFromAbsolutePath(char* _URI, size_t _SizeofURI, const char* _AbsoluteP
 		while (*end && !oIsSeparator(*end))
 			end++;
 
-		oStrncpy(Authority, _AbsolutePath + 2, end - (_AbsolutePath + 2));
+		strncpy_s(Authority, Authority.capacity(), _AbsolutePath + 2, end - (_AbsolutePath + 2));
 		_AbsolutePath = end;
 		Path = _AbsolutePath;
 	}
 	else
 	{
-		oPrintf(Path, "/%s", _AbsolutePath);
+		snprintf(Path, "/%s", _AbsolutePath);
 	}
 
 	return oURIRecompose(_URI, _SizeofURI, "file", Authority, Path, "", "");
@@ -288,7 +288,7 @@ char* oURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIPart
 {
 	*_Path = 0;
 
-	#define SAFECAT(str) do { if (!oStrcat(_Path, _SizeofPath, str)) return false; } while(false)
+	#define SAFECAT(str) do { if (strlcat(_Path, str, _SizeofPath) >= _SizeofPath) return false; } while(false)
 
 	const bool isWindows = true;
 	const char* p = _URIParts.Path.c_str();
@@ -346,7 +346,7 @@ char* oURIRelativize(char* _URIReference, size_t _SizeofURIReference, const char
 		return nullptr;
 
 	// Can only do this function if both URIs have the same Scheme and Authority
-	if (oStricmp(base_d.Scheme, d.Scheme) || oStricmp(base_d.Authority, d.Authority))
+	if (_stricmp(base_d.Scheme, d.Scheme) || _stricmp(base_d.Authority, d.Authority))
 		return nullptr;
 
 	// Since we're outputting a URI reference with a relative path, 
@@ -416,7 +416,7 @@ char* oURIEnsureFileExtension(char* _URIReferenceWithExtension, size_t _SizeofUR
 {
 	if (!oSTRVALID(_Extension))
 	{
-		if (oStrcpy(_URIReferenceWithExtension, _SizeofURIReferenceWithExtension, _SourceURIReference))
+		if (strlcpy(_URIReferenceWithExtension, _SourceURIReference, _SizeofURIReferenceWithExtension) >= _SizeofURIReferenceWithExtension)
 			return nullptr;
 	}
 
@@ -437,7 +437,7 @@ namespace oStd {
 
 bool from_string(char (*_pStrDestination)[oMAX_URI], const char* _StrSource)
 {
-	return !!oStrcpy(*_pStrDestination, oMAX_URI, _StrSource);
+	return strlcpy(*_pStrDestination, _StrSource, oMAX_URI) < oMAX_URI;
 }
 
 bool from_string(oURIParts* _pURIParts, const char* _StrSource)

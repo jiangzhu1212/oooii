@@ -170,7 +170,7 @@ bool oGetNextMatchingIfdefBlocks(oIFDEF_BLOCK* _pBlocks, size_t _MaxNumBlocks, s
 char* oZeroSection(char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace, char _Replacement)
 {
 	char* close = oStd::next_matching(_pPointingAtOpenBrace, _OpenBrace, _CloseBrace);
-	close += oStrlen(_CloseBrace);
+	close += strlen(_CloseBrace);
 
 	char* cur = _pPointingAtOpenBrace;
 
@@ -189,7 +189,7 @@ char* oZeroLineComments(char* _String, const char* _CommentPrefix, char _Replace
 {
 	if (_String)
 	{
-		size_t l = oStrlen(_CommentPrefix);
+		size_t l = strlen(_CommentPrefix);
 		while (*_String)
 		{
 			if (!memcmp(_CommentPrefix, _String, l))
@@ -302,7 +302,7 @@ char* oGetStdVectorType(char* _StrDestination, size_t _SizeofStrDestination, con
 		char* token = oStrTok(cur, delims, &ctx, "<", ">");
 		if (token)
 		{
-			oStrcpy(_StrDestination, _SizeofStrDestination, token);
+			strlcpy(_StrDestination, token, _SizeofStrDestination);
 			oStrTokClose(&ctx);
 		}
 	}
@@ -429,7 +429,7 @@ static size_t CodifyData(char* _StrDestination, size_t _SizeofStrDestination, co
 	char* end = str + _SizeofStrDestination - 1; // -1 for terminator
 	const size_t nWords = _SizeofBuffer / sizeof(T);
 
-	str += oPrintf(str, _SizeofStrDestination, "const %s sBuffer[] = \n{ // *** AUTO-GENERATED BUFFER, DO NOT EDIT ***", StaticArrayTraits<T>::GetType());
+	str += snprintf(str, _SizeofStrDestination, "const %s sBuffer[] = \n{ // *** AUTO-GENERATED BUFFER, DO NOT EDIT ***", StaticArrayTraits<T>::GetType());
 	for (size_t i = 0; i < nWords; i++)
 	{
 		size_t numberOfElementsLeft = std::distance(str, end);
@@ -440,7 +440,7 @@ static size_t CodifyData(char* _StrDestination, size_t _SizeofStrDestination, co
 			numberOfElementsLeft -= 2;
 		}
 
-		str += oPrintf(str, numberOfElementsLeft, StaticArrayTraits<T>::GetFormat(), *words++);
+		str += snprintf(str, numberOfElementsLeft, StaticArrayTraits<T>::GetFormat(), *words++);
 	}
 
 	// handle any remaining bytes
@@ -449,10 +449,10 @@ static size_t CodifyData(char* _StrDestination, size_t _SizeofStrDestination, co
 	{
 		unsigned long long tmp = 0;
 		memcpy(&tmp, &reinterpret_cast<const unsigned char*>(_pBuffer)[sizeof(T) * nWords], nExtraBytes);
-		str += oPrintf(str, std::distance(str, end), StaticArrayTraits<T>::GetFormat(), static_cast<T>(tmp));
+		str += snprintf(str, std::distance(str, end), StaticArrayTraits<T>::GetFormat(), static_cast<T>(tmp));
 	}
 
-	str += oPrintf(str, std::distance(str, end), "\n};\n");
+	str += snprintf(str, std::distance(str, end), "\n};\n");
 
 	// add accessor function
 
@@ -460,7 +460,7 @@ static size_t CodifyData(char* _StrDestination, size_t _SizeofStrDestination, co
 	CodifyBufferName(bufferId, _BufferName);
 
 	unsigned long long sz = _SizeofBuffer; // explicitly size this out so printf formatting below can remain the same between 32- and 64-bit
-	str += oPrintf(str, std::distance(str, end), "void GetDesc%s(const char** ppBufferName, const void** ppBuffer, size_t* pSize) { *ppBufferName = \"%s\"; *ppBuffer = sBuffer; *pSize = %llu; }\n", bufferId, oGetFilebase(_BufferName), sz);
+	str += snprintf(str, std::distance(str, end), "void GetDesc%s(const char** ppBufferName, const void** ppBuffer, size_t* pSize) { *ppBufferName = \"%s\"; *ppBuffer = sBuffer; *pSize = %llu; }\n", bufferId, oGetFilebase(_BufferName), sz);
 
 	if (str < end)
 		*str++ = 0;
@@ -493,8 +493,8 @@ bool CollectHeaders(headers_t& _Headers, const char* _StrSourceCode, const char*
 	// way?
 
 	// Make an internal copy so we can clean up the defines
-	std::vector<char> sourceCodeCopy(oStrlen(_StrSourceCode) + 1);
-	oStrcpy(oStd::data(sourceCodeCopy), sourceCodeCopy.capacity(), _StrSourceCode);
+	std::vector<char> sourceCodeCopy(strlen(_StrSourceCode) + 1);
+	strlcpy(oStd::data(sourceCodeCopy), _StrSourceCode, sourceCodeCopy.capacity());
 
 	if (!oZeroIfdefs(_Macros, oStd::data(sourceCodeCopy), 0))
 		return false;
@@ -545,8 +545,8 @@ bool oHeadersAreUpToDate(const char* _StrSourceCode
 	HashMacros(macros, _pMacros);
 
 	// Make an internal copy so we can clean up the defines
-	std::vector<char> sourceCodeCopy(oStrlen(_StrSourceCode) + 1);
-	oStrcpy(oStd::data(sourceCodeCopy), oStd::size(sourceCodeCopy), _StrSourceCode);
+	std::vector<char> sourceCodeCopy(strlen(_StrSourceCode) + 1);
+	strlcpy(oStd::data(sourceCodeCopy), _StrSourceCode, oStd::size(sourceCodeCopy));
 
 	if (!oZeroIfdefs(macros, oStd::data(sourceCodeCopy), 0))
 		return false;
@@ -557,7 +557,7 @@ bool oHeadersAreUpToDate(const char* _StrSourceCode
 		return oErrorSetLast(std::errc::no_such_file_or_directory, "Could not find %s", _SourceFullPath);
 
 	char sourcePath[_MAX_PATH];
-	oStrcpy(sourcePath, _SourceFullPath);
+	strlcpy(sourcePath, _SourceFullPath);
 	oTrimFilename(sourcePath);
 
 	// Hash headers so we don't recurse down deep include trees more than once

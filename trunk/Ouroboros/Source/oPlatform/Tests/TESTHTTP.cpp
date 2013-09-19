@@ -44,30 +44,30 @@ struct PLATFORM_oHTTP : public oTest
 			if (TestImage(image))
 			{
 				const char *indexHtmlPage = "<html><head><title>Received Post</title></head><body><p>Image compare successful</p></body></html>";
-				int size = (int)oStrlen(indexHtmlPage) + 1;
+				int size = (int)strlen(indexHtmlPage) + 1;
 				_pResponse->Content.pData = new char[size];
 
-				oStrcpy((char *)_pResponse->Content.pData, size, indexHtmlPage);
+				strlcpy((char *)_pResponse->Content.pData, indexHtmlPage, size);
 				_pResponse->StatusLine.StatusCode = oHTTP_OK;
 				_pResponse->Content.Type = oMIME_TEXT_HTML;
-				_pResponse->Content.Length = oUInt(oStrlen(indexHtmlPage));
+				_pResponse->Content.Length = oUInt(strlen(indexHtmlPage));
 			}
 			else
 			{
 				const char *indexHtmlPage = "<html><head><title>500 Internal Server Error</title></head><body><p>Internal Server Error, image compare failed.</p></body></html>";
-				int size = (int)oStrlen(indexHtmlPage) + 1;
+				int size = (int)strlen(indexHtmlPage) + 1;
 				_pResponse->Content.pData = new char[size];
 
-				oStrcpy((char *)_pResponse->Content.pData, size, indexHtmlPage);
+				strlcpy((char *)_pResponse->Content.pData, indexHtmlPage, size);
 				_pResponse->StatusLine.StatusCode = oHTTP_INTERNAL_SERVER_ERROR;
 				_pResponse->Content.Type = oMIME_TEXT_HTML;
-				_pResponse->Content.Length = oUInt(oStrlen(indexHtmlPage));
+				_pResponse->Content.Length = oUInt(strlen(indexHtmlPage));
 			}
 		}
 		else
 		{
 			//favicon gets first try
-			if(oStrncmp(_Request.RequestLine.RequestURI, "/favicon.ico", 11) == 0)
+			if(strncmp(_Request.RequestLine.RequestURI, "/favicon.ico", 11) == 0)
 			{
 				extern void GetDescoooii_ico(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
 
@@ -81,16 +81,16 @@ struct PLATFORM_oHTTP : public oTest
 				_pResponse->Content.pData = new char[_pResponse->Content.Length];
 				memcpy(_pResponse->Content.pData, pBuffer, _pResponse->Content.Length);
 			}
-			else if (oStrcmp(_Request.RequestLine.RequestURI, "/ ") == 0 || oStrcmp(_Request.RequestLine.RequestURI, "/") == 0 || oStrcmp(_Request.RequestLine.RequestURI, "/index.html") == 0)
+			else if (strcmp(_Request.RequestLine.RequestURI, "/ ") == 0 || strcmp(_Request.RequestLine.RequestURI, "/") == 0 || strcmp(_Request.RequestLine.RequestURI, "/index.html") == 0)
 			{
 				const char *indexHtmlPage = "<html><head><title>Test Page</title></head><body><p>Welcome to OOOii test HTTP server<br/><img src=\"" TEST_FILE "\"/></p></body></html>";
-				int size = (int)oStrlen(indexHtmlPage) + 1;
+				int size = (int)strlen(indexHtmlPage) + 1;
 				_pResponse->Content.pData = new char[size];
 
-				oStrcpy((char *)_pResponse->Content.pData, size, indexHtmlPage);
+				strlcpy((char *)_pResponse->Content.pData, indexHtmlPage, size);
 				_pResponse->Content.Type = oMIME_TEXT_HTML;
 				_pResponse->StatusLine.StatusCode = oHTTP_OK;
-				_pResponse->Content.Length = oUInt(oStrlen(indexHtmlPage));
+				_pResponse->Content.Length = oUInt(strlen(indexHtmlPage));
 			}
 			else
 				_pResponse->StatusLine.StatusCode = oHTTP_NOT_FOUND;
@@ -98,7 +98,7 @@ struct PLATFORM_oHTTP : public oTest
 			{
 				oStd::path defaultDataPath = oCore::filesystem::data_path();
 				oStd::path_string golden;
-				oPrintf(golden, "%sGoldenImages%s", defaultDataPath.c_str(), _Request.RequestLine.RequestURI.c_str());
+				snprintf(golden, "%sGoldenImages%s", defaultDataPath.c_str(), _Request.RequestLine.RequestURI.c_str());
 
 				if (oStreamReaderCreate(golden, &FileReader))
 				{
@@ -146,7 +146,7 @@ struct PLATFORM_oHTTP : public oTest
 			{
 				if (strstr(oErrorGetLastString(), "WSAEACCES"))
 				{
-					oPrintf(_StrStatus, _SizeofStrStatus, "Permission denied when trying to create a new HTTP server. This can happen if the current machine is already running an HTTP server such as IIS or Apache.");
+					snprintf(_StrStatus, _SizeofStrStatus, "Permission denied when trying to create a new HTTP server. This can happen if the current machine is already running an HTTP server such as IIS or Apache.");
 					return FAILURE;
 				}
 			}
@@ -181,7 +181,7 @@ struct PLATFORM_oHTTP : public oTest
 			// Test POST: Sending an image file with POST.  Server will compare the image to the original and returned OK for success and 500 Internal Error for failure
 			oStd::path defaultDataPath = oCore::filesystem::data_path();
 			oStd::path_string golden;
-			oPrintf(golden, "%sGoldenImages/" TEST_FILE, defaultDataPath.c_str());
+			snprintf(golden, "%sGoldenImages/" TEST_FILE, defaultDataPath.c_str());
 			if (oStreamReaderCreate(golden, &FileReader))
 			{
 				oSTREAM_DESC fileDesc;
@@ -264,7 +264,7 @@ struct PLATFORM_oHTTPLarge : public oTest
 		}
 		else
 		{
-			oPrintf(_StrStatus, _SizeofStrStatus, "Large buffer test reduced in size. Use -x for exhaustive mode.");
+			snprintf(_StrStatus, _SizeofStrStatus, "Large buffer test reduced in size. Use -x for exhaustive mode.");
 			TestBufferSize = oMB(2);
 		}
 
@@ -283,7 +283,7 @@ struct PLATFORM_oHTTPLarge : public oTest
 			{
 				if (strstr(oErrorGetLastString(), "WSAEACCES"))
 				{
-					oPrintf(_StrStatus, _SizeofStrStatus, "Permission denied when trying to create a new HTTP server. This can happen if the current machine is already running an HTTP server such as IIS or Apache.");
+					snprintf(_StrStatus, _SizeofStrStatus, "Permission denied when trying to create a new HTTP server. This can happen if the current machine is already running an HTTP server such as IIS or Apache.");
 					return FAILURE;
 				}
 			}

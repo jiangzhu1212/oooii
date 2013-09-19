@@ -81,15 +81,9 @@ oSURFACE_FORMAT oImageFormatToSurfaceFormat(oImage::FORMAT _Format)
 
 oAPI oImage::FILE_FORMAT oImageFormatFromExtension(const char* _URIReference)
 {
-	oURIParts URIParts;
-	if (!oURIDecompose(_URIReference, &URIParts))
-	{
-		oErrorSetLast(std::errc::invalid_argument);
-		return oImage::UNKNOWN_FILE;
-	}
-
-	const char* ext = oGetFileExtension(URIParts.Path);
-	if (!ext)
+	oStd::uri u(_URIReference);
+	auto ext = u.path().extension();
+	if (ext.empty())
 	{
 		oErrorSetLast(0);
 		return oImage::UNKNOWN_FILE;
@@ -105,7 +99,7 @@ oAPI oImage::FILE_FORMAT oImageFormatFromExtension(const char* _URIReference)
 	};
 
 	oFORI(i, sSupportedExts)
-		if (!oStricmp(ext, sSupportedExts[i]))
+		if (!_stricmp(ext, sSupportedExts[i]))
 			return static_cast<oImage::FILE_FORMAT>(i);
 
 	oErrorSetLast(std::errc::not_supported, "Unrecognized extension %s", oSAFESTR(ext));

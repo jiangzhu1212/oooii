@@ -106,13 +106,13 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 		oStd::path_string DumpPath;
 		if (!Desc.MiniDumpBase.empty())
 		{
-			oPrintf(DumpPath, "%s%s.dmp", Desc.MiniDumpBase, DumpStamp.c_str());
+			snprintf(DumpPath, "%s%s.dmp", Desc.MiniDumpBase, DumpStamp.c_str());
 			Mini = oCore::debugger::dump(oStd::path(DumpPath), false, _pExceptionPtrs);
 		}
 
 		if (!Desc.FullDumpBase.empty())
 		{
-			oPrintf(DumpPath, "%s%s.dmp", Desc.FullDumpBase, DumpStamp.c_str());
+			snprintf(DumpPath, "%s%s.dmp", Desc.FullDumpBase, DumpStamp.c_str());
 			Full = oCore::debugger::dump(oStd::path(DumpPath), true, _pExceptionPtrs);
 		}
 
@@ -168,7 +168,7 @@ oReportingContext::oReportingContext()
 		oCore::module::info mi = oCore::this_module::get_info();
 		VersionString[0] = 'V';
 		oStd::to_string(&VersionString[1], VersionString.capacity() - 1, mi.version);
-		oStrAppendf(VersionString, "D");
+		oStd::sncatf(VersionString, "D");
 	}
 }
 
@@ -204,7 +204,7 @@ void oReportingContext::SetDesc(const oREPORTING_DESC& _Desc)
 	if (Desc.LogFilePath)
 	{
 		Desc.LogFilePath = _Desc.LogFilePath;
-		if (oStricmp(OldLogPath, Desc.LogFilePath))
+		if (_stricmp(OldLogPath, Desc.LogFilePath))
 		{
 			LogFile = nullptr;
 			if (!oStreamLogWriterCreate(Desc.LogFilePath, &LogFile))
@@ -340,16 +340,16 @@ static oStd::assert_action::value ShowMsgBox(const oStd::assert_context& _Assert
 	*format = 0;
 	char* end = format + sizeof(format);
 	char* cur = format;
-	cur += oPrintf(format, MESSAGE_PREFIX, _Type == oMSGBOX_WARN ? "Warning" : "Error");
+	cur += snprintf(format, MESSAGE_PREFIX, _Type == oMSGBOX_WARN ? "Warning" : "Error");
 	
 	if (oSTRVALID(_Assertion.Expression))
-		cur += oPrintf(cur, std::distance(cur, end), "%s\n", _Assertion.Expression);
+		cur += snprintf(cur, std::distance(cur, end), "%s\n", _Assertion.Expression);
 
-	oStrcpy(cur, std::distance(cur, end), _String);
+	strlcpy(cur, _String, std::distance(cur, end));
 
 	oStd::path AppPath = oCore::filesystem::app_path(true);
 	char title[1024];
-	oPrintf(title, "%s (%s)", DIALOG_BOX_TITLE, AppPath.c_str());
+	snprintf(title, "%s (%s)", DIALOG_BOX_TITLE, AppPath.c_str());
 
 	oMSGBOX_DESC mb;
 	mb.Type = _Type;
@@ -358,13 +358,13 @@ static oStd::assert_action::value ShowMsgBox(const oStd::assert_context& _Assert
 }
 
 #define oACCUM_PRINTF(_Format, ...) do \
-	{	res = oPrintf(_StrDestination + len, _SizeofStrDestination - len - 1, _Format, ## __VA_ARGS__); \
+	{	res = snprintf(_StrDestination + len, _SizeofStrDestination - len - 1, _Format, ## __VA_ARGS__); \
 		if (res == -1) goto TRUNCATION; \
 		len += res; \
 	} while(false)
 
 #define oACCUM_VPRINTF(_Format, _Args) do \
-	{	res = oVPrintf(_StrDestination + len, _SizeofStrDestination - len - 1, _Format, _Args); \
+	{	res = oStd::vsnprintf(_StrDestination + len, _SizeofStrDestination - len - 1, _Format, _Args); \
 		if (res == -1) goto TRUNCATION; \
 		len += res; \
 	} while(false)
@@ -401,8 +401,8 @@ void PrintCallStackToString(char* _StrDestination, size_t _SizeofStrDestination,
 
 	TRUNCATION:
 		static const char* kStackTooLargeMessage = "\n... truncated ...";
-		size_t TLMLength = oStrlen(kStackTooLargeMessage);
-		oPrintf(_StrDestination + _SizeofStrDestination - 1 - TLMLength, TLMLength + 1, kStackTooLargeMessage);
+		size_t TLMLength = strlen(kStackTooLargeMessage);
+		snprintf(_StrDestination + _SizeofStrDestination - 1 - TLMLength, TLMLength + 1, kStackTooLargeMessage);
 }
 
 char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, const oREPORTING_DESC& _Desc, const oStd::assert_context& _Assertion, const char* _Format, va_list _Args)
@@ -446,8 +446,8 @@ char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, c
 
 TRUNCATION:
 	static const char* kStackTooLargeMessage = "\n... truncated ...";
-	size_t TLMLength = oStrlen(kStackTooLargeMessage);
-	oPrintf(_StrDestination + _SizeofStrDestination - 1 - TLMLength, TLMLength + 1, kStackTooLargeMessage);
+	size_t TLMLength = strlen(kStackTooLargeMessage);
+	snprintf(_StrDestination + _SizeofStrDestination - 1 - TLMLength, TLMLength + 1, kStackTooLargeMessage);
 	return _StrDestination + _SizeofStrDestination;
 }
 
@@ -476,7 +476,7 @@ oStd::assert_action::value oReportingContext::DefaultVPrint(const oStd::assert_c
 	{
 		oSTREAM_WRITE w;
 		w.pData = msg;
-		w.Range = oSTREAM_RANGE(oSTREAM_APPEND, oStrlen(msg));
+		w.Range = oSTREAM_RANGE(oSTREAM_APPEND, strlen(msg));
 		_pLogFile->Write(w);
 	}
 

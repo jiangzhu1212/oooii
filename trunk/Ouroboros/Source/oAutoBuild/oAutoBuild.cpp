@@ -204,7 +204,7 @@ void oAutoBuildCompletedHandler::OnGet(CommonParams& _CommonParams) const
 			CompletedTask.build_time = FinishedBuildInfo->BuildTime;
 			CompletedTask.test_time = FinishedBuildInfo->TestTime;
 			CompletedTask.pack_time = FinishedBuildInfo->PackTime;
-			oPrintf(CompletedTask.HTML, "/logs/%d/index.html", FinishedBuildInfo->CL);
+			snprintf(CompletedTask.HTML, "/logs/%d/index.html", FinishedBuildInfo->CL);
 			CompletedTasks.push_back(CompletedTask);
 			if (count++ == 10) break;
 		}
@@ -290,7 +290,7 @@ void oAutoBuildDailyHandler::OnGet(CommonParams& _CommonParams) const
 		{
 			Daily.success =  Success;
 			Daily.name = pName;
-			oPrintf(Daily.HTML, "/logs/%s/index.html", pName);
+			snprintf(Daily.HTML, "/logs/%s/index.html", pName);
 		}
 	});
 
@@ -327,7 +327,7 @@ void oAutoBuildLogHandler::OnGet(CommonParams& _CommonParams) const
 
 	oStd::uri_string filepathAbsolute = BuildLogsURI;
 	oEnsureSeparator(filepathAbsolute);
-	oStrcat(filepathAbsolute, filepath.c_str());
+	strlcat(filepathAbsolute, filepath);
 
 	// TODO: Look into using the FileCache for this as well (oWebServer is also
 	// using it, so perhaps there is a way to share that)
@@ -425,7 +425,7 @@ oMAINA()
 	while (section)
 	{
 		const char* pSectionName = INI->section_name(section);
-		if (0 == oStricmp(pSectionName, "Server"))
+		if (0 == _stricmp(pSectionName, "Server"))
 		{
 			oINIReadCompound(&Settings, oRTTI_OF(oBUILD_TOOL_SERVER_SETTINGS), *INI, section, false);
 			break;

@@ -77,7 +77,7 @@ namespace
 		std::vector<std::pair<bool, oStd::sstring>> key; //true if a literal, false for a capture
 
 		oStrParse(_key, "/", [&](const char* _part){
-			int len = oInt(oStrlen(_part));
+			int len = oInt(strlen(_part));
 			key.resize(key.size()+1);
 			auto& entry = key.back();
 			if(_part[0] == '?')
@@ -109,7 +109,7 @@ namespace
 
 		if(entry.first) //literal
 		{
-			auto result = std::find_if(begin(LiteralChildren), end(LiteralChildren), [&](const oHandlerEntry& _entry) -> bool { return oStrcmp(_entry.Value.c_str(), entry.second.c_str()) == 0; });
+			auto result = std::find_if(begin(LiteralChildren), end(LiteralChildren), [&](const oHandlerEntry& _entry) -> bool { return strcmp(_entry.Value.c_str(), entry.second.c_str()) == 0; });
 			++_keyIndex;
 			if(result == end(LiteralChildren))
 			{
@@ -130,7 +130,7 @@ namespace
 				CaptureChild.reset(new oHandlerEntry);
 				CaptureChild->Value = entry.second;
 			}
-			oASSERT(oStrcmp(CaptureChild->Value, entry.second) == 0, "all osc strings for a capture must be the same");
+			oASSERT(strcmp(CaptureChild->Value, entry.second) == 0, "all osc strings for a capture must be the same");
 
 			CaptureChild->AddKey(_key, _keyIndex, _handler);
 		}
@@ -177,7 +177,7 @@ namespace
 
 		oFOR(auto& _entry, LiteralChildren)
 		{
-			if(oStrcmp(_entry.Value, _parsedURI[_keyIndex]) == 0)
+			if(strcmp(_entry.Value, _parsedURI[_keyIndex]) == 0)
 			{
 				return _entry.MatchURIPath(_parsedURI, _keyIndex+1, _CaptureVar, _OSCCapture, _GetCaptureHandler);
 			}
@@ -194,8 +194,8 @@ namespace
 				oStd::uri_string captureURI;
 				for (int i = _keyIndex; i < oInt(_parsedURI.size()); ++i)
 				{
-					oStrcat(captureURI, _parsedURI[i].c_str());
-					oStrcat(captureURI, "/");
+					strlcat(captureURI, _parsedURI[i].c_str());
+					strlcat(captureURI, "/");
 				}
 
 				const char* remaining = captureURI;
@@ -350,7 +350,7 @@ bool oWebServerImpl::Retrieve(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pR
 	oHTTPAddHeader(_pResponse->HeaderFields, oHTTP_HEADER_CACHE_CONTROL, "no-cache");
 
 	//favicon gets first try
-	if(oStrncmp(oGetFilebase(uriParts.Path), "favicon.ico", 11) == 0)
+	if(strncmp(oGetFilebase(uriParts.Path), "favicon.ico", 11) == 0)
 	{
 		if(_Request.RequestLine.Method != oHTTP_GET) //users can't be modifying or deleting our icon
 		{
@@ -374,7 +374,7 @@ bool oWebServerImpl::Retrieve(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pR
 	}
 
 	//redirect
-	if(oStrcmp(uriParts.Path, "/") == 0) 
+	if(strcmp(uriParts.Path, "/") == 0) 
 	{
 		oHTTPAddHeader(_pResponse->HeaderFields, oHTTP_HEADER_LOCATION, Desc->DefaultURIReference);
 		_pResponse->StatusLine.StatusCode = oHTTP_MOVED_PERMANENTLY;
@@ -389,7 +389,7 @@ bool oWebServerImpl::Retrieve(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pR
 		auto handler = HTTPHandlers->MatchURIPath(uriParts.Path, [&](const char* _Capture){
 			captures.push_back(_Capture);
 		}, [&](const char* _OSC){
-			oStrcat(oscString, _OSC);
+			strlcat(oscString, _OSC);
 		}, [&](const char* _key) -> const oHTTPURICapture*
 		{
 			auto cap = URICaptureHandlers->find(_key);
@@ -437,8 +437,8 @@ bool oWebServerImpl::Retrieve(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pR
 						break;
 					case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 						{
-							int maxChars = (_Type - '0') * 64;
-							parsed = oStrcpy(reinterpret_cast<char*>(_pField), maxChars, captures[capIndex].c_str()) != nullptr;
+							unsigned int maxChars = (_Type - '0') * 64;
+							parsed = strlcpy(reinterpret_cast<char*>(_pField), captures[capIndex].c_str(), maxChars) < maxChars;
 						}
 						break;
 					default:

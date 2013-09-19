@@ -47,7 +47,7 @@ struct PLATFORM_FileAsync : public oTest
 
 			oStd::uri_string ActualFilePath;
 			oURIPartsToPath(ActualFilePath, ReadFile->GetURIParts());
-			oTESTB( 0 == oStricmp(testFilePath, ActualFilePath), "Paths do not match");
+			oTESTB( 0 == _stricmp(testFilePath, ActualFilePath), "Paths do not match");
 
 			oSTREAM_DESC FileDesc;
 			ReadFile->GetDesc(&FileDesc), oErrorGetLastString();

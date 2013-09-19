@@ -667,7 +667,7 @@ static char* oWinPrintStyleChange(char* _StrDestination, size_t _SizeofStrDestin
 		oWinParseStyleFlags(tmp, ((STYLESTRUCT*)_lParam)->styleOld);
 		oWinParseStyleFlags(tmp2, ((STYLESTRUCT*)_lParam)->styleNew);
 	}
-	oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x %s %s %s -> %s", _hWnd, _MsgName, StyleName, tmp, tmp2);
+	snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x %s %s %s -> %s", _hWnd, _MsgName, StyleName, tmp, tmp2);
 	return _StrDestination;
 }
 
@@ -694,56 +694,56 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 
 	switch (_uMsg)
 	{ 
-		case WM_ACTIVATE: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_ACTIVATE %s, other HWND 0x%x %sactivated", _hWnd, oWinAsStringWA((UINT)_wParam), _lParam, _wParam == WA_INACTIVE ? "" : "de"); break;
-		case WM_ACTIVATEAPP: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_ACTIVATEAPP %sactivated, other thread %d %sactivated", _hWnd, _wParam ? "" : "de", _lParam, _wParam ? "de" : ""); break;
-		case WM_NCACTIVATE: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_NCACTIVATE titlebar/icon needs to be changed: %s lParam=%x", _hWnd, _wParam ? "true" : "false", _lParam); break;
-		case WM_SETTEXT: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SETTEXT: lParam=%s", _hWnd, _lParam); break;
-		case WM_WINDOWPOSCHANGING: { char tmp[1024]; WINDOWPOS& wp = *(WINDOWPOS*)_lParam; oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_WINDOWPOSCHANGING hwndInsertAfter=%x xy=%d,%d wh=%dx%d flags=%s", _hWnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, oWinParseSWPFlags(tmp, wp.flags)); break; }
-		case WM_WINDOWPOSCHANGED: { char tmp[1024]; WINDOWPOS& wp = *(WINDOWPOS*)_lParam; oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_WINDOWPOSCHANGED hwndInsertAfter=%x xy=%d,%d wh=%dx%d flags=%s", _hWnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, oWinParseSWPFlags(tmp, wp.flags)); break; }
+		case WM_ACTIVATE: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_ACTIVATE %s, other HWND 0x%x %sactivated", _hWnd, oWinAsStringWA((UINT)_wParam), _lParam, _wParam == WA_INACTIVE ? "" : "de"); break;
+		case WM_ACTIVATEAPP: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_ACTIVATEAPP %sactivated, other thread %d %sactivated", _hWnd, _wParam ? "" : "de", _lParam, _wParam ? "de" : ""); break;
+		case WM_NCACTIVATE: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_NCACTIVATE titlebar/icon needs to be changed: %s lParam=%x", _hWnd, _wParam ? "true" : "false", _lParam); break;
+		case WM_SETTEXT: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SETTEXT: lParam=%s", _hWnd, _lParam); break;
+		case WM_WINDOWPOSCHANGING: { char tmp[1024]; WINDOWPOS& wp = *(WINDOWPOS*)_lParam; snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_WINDOWPOSCHANGING hwndInsertAfter=%x xy=%d,%d wh=%dx%d flags=%s", _hWnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, oWinParseSWPFlags(tmp, wp.flags)); break; }
+		case WM_WINDOWPOSCHANGED: { char tmp[1024]; WINDOWPOS& wp = *(WINDOWPOS*)_lParam; snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_WINDOWPOSCHANGED hwndInsertAfter=%x xy=%d,%d wh=%dx%d flags=%s", _hWnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, oWinParseSWPFlags(tmp, wp.flags)); break; }
 		case WM_STYLECHANGING: { oWinPrintStyleChange(_StrDestination, _SizeofStrDestination, _hWnd, "WM_STYLECHANGING", _wParam, _lParam); break; }
 		case WM_STYLECHANGED: { oWinPrintStyleChange(_StrDestination, _SizeofStrDestination, _hWnd, "WM_STYLECHANGED", _wParam, _lParam); break; }
-		case WM_DISPLAYCHANGE: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DISPLAYCHANGE %dx%dx%d", _hWnd, static_cast<int>(GET_X_LPARAM(_lParam)), static_cast<int>(GET_Y_LPARAM(_lParam)), _wParam); break;
-		case WM_DWMCOLORIZATIONCOLORCHANGED: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DWMCOLORIZATIONCOLORCHANGED", _hWnd); break;
-		case WM_DWMCOMPOSITIONCHANGED: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DWMCOMPOSITIONCHANGED", _hWnd); break;
-		case WM_DWMNCRENDERINGCHANGED: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DWMNCRENDERINGCHANGED Desktop Window Manager (DWM) %s", _hWnd, (BOOL)_wParam ? "enabled" : "disabled"); break;
-		case WM_DWMWINDOWMAXIMIZEDCHANGE: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DWMWINDOWMAXIMIZEDCHANGE", _hWnd); break;
-		case WM_MOVE: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MOVE %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_SETCURSOR: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SETCURSOR %s hit=%s, id=%s", _hWnd, (HWND)_wParam == _hWnd ? "In Window" : "Out of Window", oWinAsStringHT(GET_X_LPARAM(_lParam)), oWinAsStringWM(GET_Y_LPARAM(_lParam))); break;
-		case WM_SHOWWINDOW: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SHOWWINDOW: wParam=%s lParam=%s", _hWnd, _wParam ? "shown" : "hidden", oWinAsStringWMSW(_lParam));  break;
-		case WM_SIZE: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SIZE %dx%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_SYSCOMMAND: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSCOMMAND: wParam=%s screenpos=%d,%d", _hWnd, oWinAsStringSC((UINT)(_wParam&0xfff0)), GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_SYSKEYDOWN: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSKEYDOWN: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
-		case WM_SYSKEYUP: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSKEYUP: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
-		case WM_KEYDOWN: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_KEYDOWN: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
-		case WM_KEYUP: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_KEYUP: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
-		case WM_MOUSEMOVE: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MOUSEMOVE %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_LBUTTONDOWN: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_LBUTTONDOWN %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_LBUTTONUP: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_LBUTTONUP %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_MBUTTONDOWN: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MBUTTONDOWN %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_MBUTTONUP: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MBUTTONUP %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_RBUTTONDOWN: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_RBUTTONDOWN %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_RBUTTONUP: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_RBUTTONUP %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_XBUTTONDOWN: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_XBUTTONDOWN(%d) %d,%d", _hWnd, GET_XBUTTON_WPARAM(_wParam), GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_XBUTTONUP: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_XBUTTONUP(%d) %d,%d", _hWnd, GET_XBUTTON_WPARAM(_wParam), GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_MOUSEWHEEL: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MOUSEWHEEL %d", _hWnd, GET_WHEEL_DELTA_WPARAM(_wParam)); break;
-		case WM_MOUSEHWHEEL: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MOUSEHWHEEL %d", _hWnd, GET_WHEEL_DELTA_WPARAM(_wParam)); break;
-		case WM_INPUT: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_INPUT %s", _hWnd, _wParam == RIM_INPUT ? "RIM_INPUT" : "RIM_INPUTSINK"); break;
-		case WM_IME_SETCONTEXT: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_IME_SETCONTEXT window %sactive... display flags 0x%x", _hWnd, _wParam ? "" : "in", _lParam); break;
-		case WM_IME_NOTIFY: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_IME_NOTIFY wParam == 0x%x lParam = 0x%x", _hWnd, _wParam, _lParam); break;
-		case WM_CTLCOLORBTN: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORBTN HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
-		case WM_CTLCOLORDLG: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORDLG HDC 0x%x Dlghwnd = %p", _hWnd, _wParam, _lParam); break;
-		case WM_CTLCOLOREDIT: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLOREDIT HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
-		case WM_CTLCOLORLISTBOX: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORLISTBOX HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
-		case WM_CTLCOLORMSGBOX: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORMSGBOX HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
-		case WM_CTLCOLORSCROLLBAR: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORSCROLLBAR HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
-		case WM_CTLCOLORSTATIC: oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORSTATIC HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
-		case WM_NOTIFY: { const NMHDR& h = *(NMHDR*)_lParam; oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_NOTIFY WPARAM=%u from hwndFrom=0x%x idFrom=%d notification code=%s", _hWnd, _wParam, h.hwndFrom, h.idFrom, oWinAsStringNM(h.code)); break; }
+		case WM_DISPLAYCHANGE: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DISPLAYCHANGE %dx%dx%d", _hWnd, static_cast<int>(GET_X_LPARAM(_lParam)), static_cast<int>(GET_Y_LPARAM(_lParam)), _wParam); break;
+		case WM_DWMCOLORIZATIONCOLORCHANGED: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DWMCOLORIZATIONCOLORCHANGED", _hWnd); break;
+		case WM_DWMCOMPOSITIONCHANGED: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DWMCOMPOSITIONCHANGED", _hWnd); break;
+		case WM_DWMNCRENDERINGCHANGED: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DWMNCRENDERINGCHANGED Desktop Window Manager (DWM) %s", _hWnd, (BOOL)_wParam ? "enabled" : "disabled"); break;
+		case WM_DWMWINDOWMAXIMIZEDCHANGE: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DWMWINDOWMAXIMIZEDCHANGE", _hWnd); break;
+		case WM_MOVE: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MOVE %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
+		case WM_SETCURSOR: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SETCURSOR %s hit=%s, id=%s", _hWnd, (HWND)_wParam == _hWnd ? "In Window" : "Out of Window", oWinAsStringHT(GET_X_LPARAM(_lParam)), oWinAsStringWM(GET_Y_LPARAM(_lParam))); break;
+		case WM_SHOWWINDOW: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SHOWWINDOW: wParam=%s lParam=%s", _hWnd, _wParam ? "shown" : "hidden", oWinAsStringWMSW(_lParam));  break;
+		case WM_SIZE: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SIZE %dx%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
+		case WM_SYSCOMMAND: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSCOMMAND: wParam=%s screenpos=%d,%d", _hWnd, oWinAsStringSC((UINT)(_wParam&0xfff0)), GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
+		case WM_SYSKEYDOWN: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSKEYDOWN: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
+		case WM_SYSKEYUP: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSKEYUP: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
+		case WM_KEYDOWN: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_KEYDOWN: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
+		case WM_KEYUP: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_KEYUP: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
+		case WM_MOUSEMOVE: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MOUSEMOVE %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
+		case WM_LBUTTONDOWN: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_LBUTTONDOWN %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
+		case WM_LBUTTONUP: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_LBUTTONUP %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
+		case WM_MBUTTONDOWN: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MBUTTONDOWN %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
+		case WM_MBUTTONUP: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MBUTTONUP %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
+		case WM_RBUTTONDOWN: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_RBUTTONDOWN %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
+		case WM_RBUTTONUP: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_RBUTTONUP %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
+		case WM_XBUTTONDOWN: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_XBUTTONDOWN(%d) %d,%d", _hWnd, GET_XBUTTON_WPARAM(_wParam), GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
+		case WM_XBUTTONUP: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_XBUTTONUP(%d) %d,%d", _hWnd, GET_XBUTTON_WPARAM(_wParam), GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
+		case WM_MOUSEWHEEL: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MOUSEWHEEL %d", _hWnd, GET_WHEEL_DELTA_WPARAM(_wParam)); break;
+		case WM_MOUSEHWHEEL: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MOUSEHWHEEL %d", _hWnd, GET_WHEEL_DELTA_WPARAM(_wParam)); break;
+		case WM_INPUT: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_INPUT %s", _hWnd, _wParam == RIM_INPUT ? "RIM_INPUT" : "RIM_INPUTSINK"); break;
+		case WM_IME_SETCONTEXT: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_IME_SETCONTEXT window %sactive... display flags 0x%x", _hWnd, _wParam ? "" : "in", _lParam); break;
+		case WM_IME_NOTIFY: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_IME_NOTIFY wParam == 0x%x lParam = 0x%x", _hWnd, _wParam, _lParam); break;
+		case WM_CTLCOLORBTN: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORBTN HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
+		case WM_CTLCOLORDLG: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORDLG HDC 0x%x Dlghwnd = %p", _hWnd, _wParam, _lParam); break;
+		case WM_CTLCOLOREDIT: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLOREDIT HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
+		case WM_CTLCOLORLISTBOX: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORLISTBOX HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
+		case WM_CTLCOLORMSGBOX: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORMSGBOX HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
+		case WM_CTLCOLORSCROLLBAR: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORSCROLLBAR HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
+		case WM_CTLCOLORSTATIC: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORSTATIC HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
+		case WM_NOTIFY: { const NMHDR& h = *(NMHDR*)_lParam; snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_NOTIFY WPARAM=%u from hwndFrom=0x%x idFrom=%d notification code=%s", _hWnd, _wParam, h.hwndFrom, h.idFrom, oWinAsStringNM(h.code)); break; }
 		case WM_DROPFILES:
 		{
 			oStd::path_string p;
 			UINT nFiles = DragQueryFile((HDROP)_wParam, ~0u, p, oUInt(p.capacity()));
 			DragQueryFile((HDROP)_wParam, 0, p, oUInt(p.capacity()));
-			oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DROPFILES hDrop=0x%x %u files starting with \"%s\"", _hWnd, _wParam, nFiles, p.c_str());
+			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DROPFILES hDrop=0x%x %u files starting with \"%s\"", _hWnd, _wParam, nFiles, p.c_str());
 			break;
 		}
 		case WM_INPUT_DEVICE_CHANGE:
@@ -773,7 +773,7 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 			}
 
 			oStd::sstring StrType;
-			oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_INPUT_DEVICE_CHANGE %s type=%s devname=%s", _hWnd, type, oStd::to_string(StrType, InpType), Name.c_str());
+			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_INPUT_DEVICE_CHANGE %s type=%s devname=%s", _hWnd, type, oStd::to_string(StrType, InpType), Name.c_str());
 			break;
 		}
 
@@ -831,15 +831,15 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 			}
 
 			oStd::sstring StrGUID;
-			oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DEVICECHANGE %s devtype=%s GUID=%s name=%s", _hWnd, oWinAsStringDBT(oInt(_wParam)), devtype, oStd::to_string(StrGUID, *pGUID), name);
+			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DEVICECHANGE %s devtype=%s GUID=%s name=%s", _hWnd, oWinAsStringDBT(oInt(_wParam)), devtype, oStd::to_string(StrGUID, *pGUID), name);
 			break;
 		}
 		default:
 		{
 			const char* WMStr = oWinAsStringWM(_uMsg);
-			oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x %s", _hWnd, WMStr);
+			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x %s", _hWnd, WMStr);
 			if (*WMStr == 'u') // unrecognized
-				oPrintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x Unrecognized uMsg=0x%x (%u)", _hWnd, _uMsg, _uMsg); break;
+				snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x Unrecognized uMsg=0x%x (%u)", _hWnd, _uMsg, _uMsg); break;
 			break;
 		}
 	}
@@ -965,14 +965,14 @@ bool oWinParseHRESULT(char* _StrDestination, size_t _SizeofStrDestination, HRESU
 		if (UNRECOG(s))
 		{
 			#if defined(_DX9) || defined(_DX10) || defined(_DX11)
-				oStrcpy(_StrDestination, _SizeofStrDestination, DXGetErrorStringA(_hResult));
+				strlcpy(_StrDestination, DXGetErrorStringA(_hResult), _SizeofStrDestination);
 			#else
-				len = oPrintf(_StrDestination, _SizeofStrDestination, "unrecognized error code 0x%08x", _hResult);
+				len = snprintf(_StrDestination, _SizeofStrDestination, "unrecognized error code 0x%08x", _hResult);
 			#endif
 		}
 
 		else
-			len = oPrintf(_StrDestination, _SizeofStrDestination, s);
+			len = snprintf(_StrDestination, _SizeofStrDestination, s);
 	}
 
 	if (len == -1)

@@ -226,7 +226,7 @@ bool from_string(oSystemProperties::CONTROL* _pControl, const char* _StrSource)
 	static_assert(oCOUNTOF(sStrings) == oSystemProperties::NUM_CONTROLS, "Mismatched Control enum");
 	for (size_t i = 0; i < oCOUNTOF(sStrings); i++)
 	{
-		if (!oStrcmp(_StrSource, sStrings[i]))
+		if (!strcmp(_StrSource, sStrings[i]))
 		{
 			*_pControl = (oSystemProperties::CONTROL)i;
 			return true;
@@ -407,7 +407,7 @@ struct PLATFORM_WindowSysDialog : public oTest
 	{
 		if (oCore::system::is_remote_session())
 		{
-			oPrintf(_StrStatus, _SizeofStrStatus, "Detected remote session: differing text anti-aliasing will cause bad image compares");
+			snprintf(_StrStatus, _SizeofStrStatus, "Detected remote session: differing text anti-aliasing will cause bad image compares");
 			return SKIPPED;
 		}
 

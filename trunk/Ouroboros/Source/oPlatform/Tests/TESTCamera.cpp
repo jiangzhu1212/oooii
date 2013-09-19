@@ -123,7 +123,7 @@ int ShowAllCameras()
 		Contexts[i].Camera->GetDesc(&cd);
 
 		oStd::lstring Title;
-		oPrintf(Title, "%s (%dx%d %s)", Contexts[i].Camera->GetName(), cd.Mode.Dimensions.x, cd.Mode.Dimensions.y, oStd::as_string(cd.Mode.Format));
+		snprintf(Title, "%s (%dx%d %s)", Contexts[i].Camera->GetName(), cd.Mode.Dimensions.x, cd.Mode.Dimensions.y, oStd::as_string(cd.Mode.Format));
 
 		oWINDOW_INIT init;
 		init.Shape.ClientSize = cd.Mode.Dimensions;
@@ -159,7 +159,7 @@ int ShowAllCameras()
 
 					float fps = Contexts[i].Camera->GetFPS();
 					oStd::sstring sFPS;
-					oPrintf(sFPS, "FPS: %.01f", fps + (rand() %100) / 100.0f);
+					snprintf(sFPS, "FPS: %.01f", fps + (rand() %100) / 100.0f);
 					
 					RECT rClient;
 					GetClientRect(hWnd, &rClient);

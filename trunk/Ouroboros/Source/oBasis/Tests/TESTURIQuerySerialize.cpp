@@ -116,7 +116,7 @@ static const char* sURIQueryTestCompoundReferenceResult = "BaseInt=11000&BaseStr
 bool operator ==(const oURIQueryTestCompound& _LHS, const oURIQueryTestCompound& _RHS)
 {
 	if (_LHS.BaseInt != _RHS.BaseInt) return false;
-	if (0 != oStrcmp(_LHS.BaseString.c_str(), _RHS.BaseString.c_str())) return false;
+	if (0 != strcmp(_LHS.BaseString.c_str(), _RHS.BaseString.c_str())) return false;
 
 	if (_LHS.Bool != _RHS.Bool) return false;
 	if (_LHS.Char != _RHS.Char) return false;
@@ -125,7 +125,7 @@ bool operator ==(const oURIQueryTestCompound& _LHS, const oURIQueryTestCompound&
 	if (_LHS.Llong != _RHS.Llong) return false;
 	if (_LHS.Float != _RHS.Float) return false;
 	if (_LHS.Double != _RHS.Double) return false;
-	if (0 != oStrcmp(_LHS.String.c_str(), _RHS.String.c_str())) return false;
+	if (0 != strcmp(_LHS.String.c_str(), _RHS.String.c_str())) return false;
 	if (_LHS.Int2 != _RHS.Int2) return false;
 	if (_LHS.Enum != _RHS.Enum) return false;
 	return true;
@@ -137,7 +137,7 @@ bool oBasisTest_oURIQuerySerialize()
 
 	oStd::xxlstring URIQueryWriteTestResult;
 	oTESTB0(oURIQueryWriteCompound(URIQueryWriteTestResult.c_str(), URIQueryWriteTestResult.capacity(), &sURIQueryTestCompound, oRTTI_OF(oURIQueryTestCompound)));
-	oTESTB(0 == oStrcmp(URIQueryWriteTestResult.c_str(), sURIQueryTestCompoundReferenceResult), "oURIQueryWriteCompound result doesn't match the expected one");
+	oTESTB(0 == strcmp(URIQueryWriteTestResult.c_str(), sURIQueryTestCompoundReferenceResult), "oURIQueryWriteCompound result doesn't match the expected one");
 
 	oURIQueryTestCompound URIQueryReadTestResult;
 	oURIQueryReadCompound(&URIQueryReadTestResult, oRTTI_OF(oURIQueryTestCompound), sURIQueryTestCompoundReferenceResult, true);

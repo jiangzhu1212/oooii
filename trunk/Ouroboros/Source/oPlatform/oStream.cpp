@@ -145,7 +145,7 @@ char* oStreamContext::GetURIBaseSearchPath(char* _StrDestination, size_t _Sizeof
 	auto pThis = oLockSharedThis(URIBasesMutex);
 	oFOR(auto& p, pThis->URIBases)
 	{
-		oStrAppendf(_StrDestination, _SizeofStrDestination, "%s%s", once ? ";" : "");
+		oStd::sncatf(_StrDestination, _SizeofStrDestination, "%s%s", once ? ";" : "");
 		once = true;
 	}
 
@@ -160,7 +160,7 @@ bool oStreamContext::RegisterSchemeHandler(threadsafe oSchemeHandler* _pSchemeHa
 	// that our sort order number is also unique
 	oFOR(auto& sh, pThis->SchemeHandlers)
 	{
-		if (!oStricmp(sh->GetScheme(), _pSchemeHandler->GetScheme()))
+		if (!_stricmp(sh->GetScheme(), _pSchemeHandler->GetScheme()))
 			return oErrorSetLast(std::errc::operation_in_progress, "There is already a scheme handler for scheme %s", sh->GetScheme());
 
 		if (sh->GetOrder() == _pSchemeHandler->GetOrder())
@@ -193,7 +193,7 @@ bool oStreamContext::FindSchemeHandler(const char* _Scheme, threadsafe oSchemeHa
 {
 	*_ppSchemeHandler = nullptr;
 	auto pThis = oLockThis(SchemeHandlersMutex);
-	auto it = oStd::find_if(pThis->SchemeHandlers, [&](oStd::intrusive_ptr<threadsafe oSchemeHandler>& _SchemeHandler)->bool { return (!oStricmp(_SchemeHandler->GetScheme(), _Scheme)); });
+	auto it = oStd::find_if(pThis->SchemeHandlers, [&](oStd::intrusive_ptr<threadsafe oSchemeHandler>& _SchemeHandler)->bool { return (!_stricmp(_SchemeHandler->GetScheme(), _Scheme)); });
 	if (it != pThis->SchemeHandlers.end())
 	{
 		*_ppSchemeHandler = *it;
@@ -206,7 +206,7 @@ bool oStreamContext::FindSchemeHandler(const char* _Scheme, threadsafe oSchemeHa
 threadsafe oSchemeHandler* oStreamContext::GetSchemeHandler(const char* _Scheme)
 {
 	oFOR(auto& sh, SchemeHandlers)
-		if (!oStricmp(_Scheme, sh->GetScheme()))
+		if (!_stricmp(_Scheme, sh->GetScheme()))
 			return sh;
 	return nullptr;
 }
@@ -254,8 +254,8 @@ bool oStreamContext::VisitURIReference(const char* _URIReference, const oFUNCTIO
 		auto pThis2 = oLockThis(URIBasesMutex);
 		oFOR(auto& base, pThis->URIBases)
 		{
-			if (0 > oPrintf(URI, "%s/%s", base.c_str(), _URIReference))
-				oASSERT(false, "Error in oPrintf (URI too long?)");
+			if (0 > snprintf(URI, "%s/%s", base.c_str(), _URIReference))
+				oASSERT(false, "Error in snprintf (URI too long?)");
 
 			bool success = pThis->VisitURIReferenceInternal(URI, _URIVisitor);
 			if (success)
@@ -321,7 +321,7 @@ bool oStreamContext::Copy(const char* _SourceURIReference, const char* _Destinat
 
 	return VisitURIReference(_SourceURIReference, [&](threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts) -> bool
 	{
-		if (oStrcmp(_URIParts.Scheme, DestURIParts.Scheme))
+		if (strcmp(_URIParts.Scheme, DestURIParts.Scheme))
 			return oErrorSetLast(std::errc::permission_denied, "Copying from scheme %s to scheme %s is not supported. Only same-scheme copies are currently supported.", _URIParts.Scheme.c_str(), DestURIParts.Scheme.c_str());
 		return _pSchemeHandler->Copy(_URIParts, DestURIParts, _Recursive);
 	});
@@ -335,7 +335,7 @@ bool oStreamContext::Move(const char* _SourceURIReference, const char* _Destinat
 
 	return VisitURIReference(_SourceURIReference, [&](threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts) -> bool
 	{
-		if (oStrcmp(_URIParts.Scheme, DestURIParts.Scheme))
+		if (strcmp(_URIParts.Scheme, DestURIParts.Scheme))
 			return oErrorSetLast(std::errc::permission_denied, "Moving from scheme %s to scheme %s is not supported. Only same-scheme moves are currently supported.", _URIParts.Scheme.c_str(), DestURIParts.Scheme.c_str());
 		return _pSchemeHandler->Move(_URIParts, DestURIParts, _OverwriteDestination);
 	});

@@ -66,7 +66,7 @@ bool from_string(oTYPE_ID* _pTypeID, const char* _StrSource)
 	*_pTypeID = oTYPE_UNKNOWN;
 	for (int i = 0; i < oNUM_TYPES; i++)
 	{
-		if (!oStrcmp(_StrSource, as_string(oTYPE_ID(i))))
+		if (!strcmp(_StrSource, as_string(oTYPE_ID(i))))
 		{
 			*_pTypeID = oTYPE_ID(i);
 			return true;
@@ -78,7 +78,7 @@ bool from_string(oTYPE_ID* _pTypeID, const char* _StrSource)
 
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oTYPE_ID& _Value)
 {
-	return oStrcpy(_StrDestination, _SizeofStrDestination, as_string(_Value));
+	return strlcpy(_StrDestination, as_string(_Value), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
 }
 
 } // namespace oStd

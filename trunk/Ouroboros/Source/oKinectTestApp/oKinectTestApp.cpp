@@ -304,7 +304,7 @@ oKinectTestApp::oKinectTestApp()
 		oVERIFY(oAirKeyboardCreate(&AirKeyboard));
 		AirKeyboard->HookActions(oBIND(&oKinectTestApp::BroadcastActions, this, oBIND1));
 		oStd::uri_string AirKB = dev_uri;
-		oStrAppendf(AirKB, "Ouroboros/Source/oKinectTestApp/AirKeyboards.xml");
+		oStd::sncatf(AirKB, "Ouroboros/Source/oKinectTestApp/AirKeyboards.xml");
 		OnFileChange(oSTREAM_ACCESSIBLE, AirKB);
 	}
 
@@ -316,14 +316,14 @@ oKinectTestApp::oKinectTestApp()
 		}
 
 		oStd::uri_string Inputs = dev_uri;
-		oStrAppendf(Inputs, "Ouroboros/Source/oKinectTestApp/Inputs.xml");
+		oStd::sncatf(Inputs, "Ouroboros/Source/oKinectTestApp/Inputs.xml");
 		OnFileChange(oSTREAM_ACCESSIBLE, Inputs);
 	}
 
 	{
 		oSTREAM_MONITOR_DESC smd;
 		smd.Monitor = dev_uri;
-		oStrAppendf(smd.Monitor, "Ouroboros/Source/oKinectTestApp/*.xml");
+		oStd::sncatf(smd.Monitor, "Ouroboros/Source/oKinectTestApp/*.xml");
 		smd.TraceEvents = false;
 		smd.WatchSubtree = false;
 		oVERIFY(oStreamMonitorCreate(smd, oBIND(&oKinectTestApp::OnFileChange, this, oBIND1, oBIND2), &StreamMonitor));

@@ -509,7 +509,7 @@ struct PLATFORM_WindowControls : public oTest
 	{
 		if (oCore::system::is_remote_session())
 		{
-			oPrintf(_StrStatus, _SizeofStrStatus, "Detected remote session: differing text anti-aliasing will cause bad image compares");
+			snprintf(_StrStatus, _SizeofStrStatus, "Detected remote session: differing text anti-aliasing will cause bad image compares");
 			return SKIPPED;
 		}
 

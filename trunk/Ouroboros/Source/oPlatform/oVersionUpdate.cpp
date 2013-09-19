@@ -95,10 +95,10 @@ static bool oVURecomposePath(oURIParts& _URIParts, const oVU_URI_PARTS& _Parts)
 	if (_Parts.Version != oStd::version())
 	{
 		oStd::sstring ver;
-		oStrAppendf(FilePath, "%s%s-%s%s", _Parts.Filebase.c_str(), BuildSuffix, oStd::to_string(ver, _Parts.Version), _Parts.Extension.c_str());
+		oStd::sncatf(FilePath, "%s%s-%s%s", _Parts.Filebase.c_str(), BuildSuffix, oStd::to_string(ver, _Parts.Version), _Parts.Extension.c_str());
 	}
 	else
-		oStrAppendf(FilePath, "%s%s%s", _Parts.Filebase.c_str(), BuildSuffix, _Parts.Extension.c_str());
+		oStd::sncatf(FilePath, "%s%s%s", _Parts.Filebase.c_str(), BuildSuffix, _Parts.Extension.c_str());
 
 	oURIDecompose(FilePath, &_URIParts);
 	return true;
@@ -254,7 +254,7 @@ bool oVUIsUpdateInstallerValid(const oStd::uri_string& _SfxURI, bool _IsNewer /*
 	if (!oVUDecompose(AppURI, false, &AppParts))
 		return false; // pass through error
 
-	if (SfxParts.Version != oStd::version() || (_MatchInstallerAndExecutableNames && oStricmp(SfxParts.Filebase, AppParts.Filebase)))
+	if (SfxParts.Version != oStd::version() || (_MatchInstallerAndExecutableNames && _stricmp(SfxParts.Filebase, AppParts.Filebase)))
 		return oErrorSetLast(std::errc::invalid_argument, "ignoring %s: not an installer for process %s", _SfxURI.c_str(), AppParts.Filebase.c_str());
 
 	if ((_IsNewer && (SfxParts.Version < AppParts.Version)) ||
@@ -271,7 +271,7 @@ static bool oVUGetModuleShortName(oStd::mstring& _ModuleShortName)
 {
 	oStd::path ModulePath = oCore::this_module::path();
 	_ModuleShortName = ModulePath.filename().c_str();
-	size_t suffixsize = oStrlen(oMODULE_DEBUG_SUFFIX_A);
+	size_t suffixsize = strlen(oMODULE_DEBUG_SUFFIX_A);
 	if (0 == memcmp(_ModuleShortName.c_str() + _ModuleShortName.size() - suffixsize, oMODULE_DEBUG_SUFFIX_A, suffixsize))
 		*(_ModuleShortName.c_str() + _ModuleShortName.size() - suffixsize) = 0;
 	return true;
@@ -290,23 +290,23 @@ char* oVUGetLauncherName(char* _StrDestination, size_t _SizeofStrDestination)
 	// keep big fixed strings off stack
 	oStd::path_string tmp;
 	std::vector<std::string> Paths;
-	oPrintf(tmp, "%s%s%s.exe", LauncherPath.c_str(), ModuleName.c_str(), oMODULE_DEBUG_SUFFIX_A);
+	snprintf(tmp, "%s%s%s.exe", LauncherPath.c_str(), ModuleName.c_str(), oMODULE_DEBUG_SUFFIX_A);
 	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
-	oPrintf(tmp, "%s%s%s.exe", LauncherPath.c_str(), sGenericLauncherName, oMODULE_DEBUG_SUFFIX_A);
+	snprintf(tmp, "%s%s%s.exe", LauncherPath.c_str(), sGenericLauncherName, oMODULE_DEBUG_SUFFIX_A);
 	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
-	oPrintf(tmp, "%s%s.exe", LauncherPath.c_str(), ModuleName.c_str());
+	snprintf(tmp, "%s%s.exe", LauncherPath.c_str(), ModuleName.c_str());
 	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
-	oPrintf(tmp, "%s%s.exe", LauncherPath.c_str(), sGenericLauncherName);
+	snprintf(tmp, "%s%s.exe", LauncherPath.c_str(), sGenericLauncherName);
 	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
 	oFOR(const auto& path, Paths)
 	{
 		if (oStreamExists(path.c_str()))
 		{
-			oStrcpy(_StrDestination, _SizeofStrDestination, path.c_str());
+			strlcpy(_StrDestination, path.c_str(), _SizeofStrDestination);
 			return _StrDestination;
 		}
 	}
@@ -333,22 +333,22 @@ bool oVULaunchLauncher(unsigned int _ExpectedTimeToShutdownMS, const oStd::versi
 
 		// @oooii-tony: this is probably reason enough to encapsulate the cmdline
 		// params inside oVersionUpdate.cpp...
-		oStrAppendf(CmdLine, " -e\"%s\"", ModuleName.c_str());
+		oStd::sncatf(CmdLine, " -e\"%s\"", ModuleName.c_str());
 	}
 
 	oStd::sstring ForcedVersion;
 	if (_Version != oStd::version())
 	{
 		oStd::sstring StrVer;
-		oPrintf(ForcedVersion, "-v %s", oStd::to_string(StrVer, _Version));
+		snprintf(ForcedVersion, "-v %s", oStd::to_string(StrVer, _Version));
 	}
 
-	oStrAppendf(CmdLine, " -w %u -t %u %s", oCore::this_process::get_id(), _ExpectedTimeToShutdownMS, ForcedVersion.c_str());
+	oStd::sncatf(CmdLine, " -w %u -t %u %s", oCore::this_process::get_id(), _ExpectedTimeToShutdownMS, ForcedVersion.c_str());
 
 	oStd::xlstring ModuleCmdLine;
 	oCore::this_process::command_line(ModuleCmdLine, true);
 	if (!ModuleCmdLine.empty())
-		oStrAppendf(CmdLine, " -c\"%s\"", ModuleCmdLine.c_str());
+		oStd::sncatf(CmdLine, " -c\"%s\"", ModuleCmdLine.c_str());
 
 	return oVUFireAndForget(CmdLine);
 }
@@ -359,7 +359,7 @@ bool oVUUnzip(const char* _SfxURI)
 	if (!oURIDecompose(_SfxURI, &URIParts))
 		return false; // pass through error
 
-	if (oStricmp(URIParts.Scheme, "file"))
+	if (_stricmp(URIParts.Scheme, "file"))
 		return oErrorSetLast(std::errc::invalid_argument, "invalid scheme: %s", oSAFESTRN(_SfxURI));
 
 	oStd::path_string Path, TargetDir;
@@ -370,7 +370,7 @@ bool oVUUnzip(const char* _SfxURI)
 	*oGetFilebase(TargetDir) = 0;
 
 	oStd::lstring CmdLine;
-	oPrintf(CmdLine, "%s x -y -o\"%s\"", Path.c_str(), TargetDir.c_str());
+	snprintf(CmdLine, "%s x -y -o\"%s\"", Path.c_str(), TargetDir.c_str());
 	oStd::fixed_string<char, oKB(16)> StdOut;
 	const unsigned int kTwoMinutes = 2 * 60 * 1000;
 	int ExitCode = oCore::system::spawn(CmdLine, [&](char* _Line) { strlcat(StdOut, _Line, StdOut.capacity()); }, false, kTwoMinutes);
@@ -391,7 +391,7 @@ static bool oVUFindVersionPath(oStd::path_string& _StrPath, const char* _Specifi
 	_StrPath = oCore::filesystem::app_path();
 	if (oSTRVALID(_SpecificVersion))
 	{
-		oStrAppendf(_StrPath, "%s/", _SpecificVersion);
+		oStd::sncatf(_StrPath, "%s/", _SpecificVersion);
 		if (!oStreamExists(_StrPath))
 			return oErrorSetLast(std::errc::invalid_argument, "not found: specified version folder \"%s\"", _StrPath.c_str());
 	}
@@ -416,9 +416,9 @@ static bool oVUFindVersionPath(oStd::path_string& _StrPath, const char* _Specifi
 		// above
 		if (!VersionFolders.empty())
 		{
-			std::sort(VersionFolders.begin(), VersionFolders.end(), [=](const oStd::sstring& _S1, const oStd::sstring& _S2)->bool { return oStricmp(_S1, _S2) < 1; });
+			std::sort(VersionFolders.begin(), VersionFolders.end(), [=](const oStd::sstring& _S1, const oStd::sstring& _S2)->bool { return _stricmp(_S1, _S2) < 1; });
 			oStd::sstring StrVer;
-			oStrAppendf(_StrPath, "%s/", VersionFolders.back().c_str());
+			oStd::sncatf(_StrPath, "%s/", VersionFolders.back().c_str());
 		}
 	}
 	
@@ -459,35 +459,35 @@ static bool oVUFindExePath(oStd::path_string& _ExePath, const oStd::path_string&
 
 	// This is the evaluation order: All things debug first...
 
-	oPrintf(tmp, "%s%s%s" oMODULE_DEBUG_SUFFIX_A "%s", _VersionPath.c_str(), Prefix, ModuleNameMinusExtension.c_str(), ModuleNameExtension.c_str());
+	snprintf(tmp, "%s%s%s" oMODULE_DEBUG_SUFFIX_A "%s", _VersionPath.c_str(), Prefix, ModuleNameMinusExtension.c_str(), ModuleNameExtension.c_str());
 	
 	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
-	oPrintf(tmp, "%s%s%s" oMODULE_DEBUG_SUFFIX_A "%s", _VersionPath.c_str(), "", ModuleNameMinusExtension.c_str(), ModuleNameExtension.c_str());
+	snprintf(tmp, "%s%s%s" oMODULE_DEBUG_SUFFIX_A "%s", _VersionPath.c_str(), "", ModuleNameMinusExtension.c_str(), ModuleNameExtension.c_str());
 	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
 	if (!oSTRVALID(_Desc.SpecificVersion))
 	{
-		oPrintf(tmp, "%s%s" oMODULE_DEBUG_SUFFIX_A "%s", Prefix, ModuleNameMinusExtension.c_str(), ModuleNameExtension.c_str());
+		snprintf(tmp, "%s%s" oMODULE_DEBUG_SUFFIX_A "%s", Prefix, ModuleNameMinusExtension.c_str(), ModuleNameExtension.c_str());
 		Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
-		oPrintf(tmp, "%s%s" oMODULE_DEBUG_SUFFIX_A "%s", "", ModuleNameMinusExtension.c_str(), ModuleNameExtension.c_str());
+		snprintf(tmp, "%s%s" oMODULE_DEBUG_SUFFIX_A "%s", "", ModuleNameMinusExtension.c_str(), ModuleNameExtension.c_str());
 		Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 	}
 
 	// release...
-	oPrintf(tmp, "%s%s%s%s", _VersionPath.c_str(), Prefix, ModuleName.c_str(), ModuleNameExtension.c_str());
+	snprintf(tmp, "%s%s%s%s", _VersionPath.c_str(), Prefix, ModuleName.c_str(), ModuleNameExtension.c_str());
 	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
-	oPrintf(tmp, "%s%s%s%s", _VersionPath.c_str(), "", ModuleName.c_str(), ModuleNameExtension.c_str());
+	snprintf(tmp, "%s%s%s%s", _VersionPath.c_str(), "", ModuleName.c_str(), ModuleNameExtension.c_str());
 	Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
 	if (!oSTRVALID(_Desc.SpecificVersion))
 	{
-		oPrintf(tmp, "%s%s%s", Prefix, ModuleName.c_str(), ModuleNameExtension.c_str());
+		snprintf(tmp, "%s%s%s", Prefix, ModuleName.c_str(), ModuleNameExtension.c_str());
 		Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 
-		oPrintf(tmp, "%s%s%s", "", ModuleName.c_str(), ModuleNameExtension.c_str());
+		snprintf(tmp, "%s%s%s", "", ModuleName.c_str(), ModuleNameExtension.c_str());
 		Paths.push_back(std::string(oStd::clean_path(tmp, tmp)));
 	}
 
@@ -497,7 +497,7 @@ static bool oVUFindExePath(oStd::path_string& _ExePath, const oStd::path_string&
 	{
 		auto itPrev = it - 1;
 
-		if (!oStricmp(itPrev->c_str(), it->c_str()))
+		if (!_stricmp(itPrev->c_str(), it->c_str()))
 			it = Paths.erase(it);
 		else
 			++it;
@@ -508,7 +508,7 @@ static bool oVUFindExePath(oStd::path_string& _ExePath, const oStd::path_string&
 	
 	oFOR(const auto& path, Paths)
 	{
-		if (oStricmp(ThisModuleName, path.c_str()) && oStreamExists(path.c_str())) // don't execute self (infinite loop)
+		if (_stricmp(ThisModuleName, path.c_str()) && oStreamExists(path.c_str())) // don't execute self (infinite loop)
 		{
 			_ExePath = path.c_str();
 			return true;
@@ -558,9 +558,9 @@ bool oVURelaunch(const oVERSIONED_LAUNCH_DESC& _Desc)
 
 	oStd::xlstring CmdLine;
 	if (oSTRVALID(_Desc.PassThroughCommandLine))
-		oPrintf(CmdLine, "%s %s", ExePath.c_str(), _Desc.PassThroughCommandLine);
+		snprintf(CmdLine, "%s %s", ExePath.c_str(), _Desc.PassThroughCommandLine);
 	else
-		oPrintf(CmdLine, "%s", ExePath.c_str());
+		snprintf(CmdLine, "%s", ExePath.c_str());
 	
 	return oVUFireAndForget(CmdLine);
 }

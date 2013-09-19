@@ -38,11 +38,11 @@ namespace oStd {
 
 bool from_string(OWEB_APP_WINDOW_CONTROLS* _pValue, const char* _StrSource)
 {
-	if( 0 == oStricmp("ID_WEB_LINK", _StrSource) )
+	if( 0 == _stricmp("ID_WEB_LINK", _StrSource) )
 	{*_pValue = ID_WEB_LINK; return true;}
-	else if( 0 == oStricmp("ID_NUM_JOBS", _StrSource) )
+	else if( 0 == _stricmp("ID_NUM_JOBS", _StrSource) )
 	{*_pValue = ID_NUM_JOBS; return true;}
-	else if( 0 == oStricmp("ID_CPU_UTIL", _StrSource) )
+	else if( 0 == _stricmp("ID_CPU_UTIL", _StrSource) )
 	{*_pValue = ID_CPU_UTIL; return true;}
 	return false;
 }
@@ -196,7 +196,7 @@ oWebAppWindowImpl::~oWebAppWindowImpl()
 void oWebAppWindowImpl::SetCurrentJobCount(uint _JobCount) threadsafe
 {
 	oStd::sstring jobCountString;
-	oPrintf(jobCountString, "Number of Jobs: %d", _JobCount);
+	snprintf(jobCountString, "Number of Jobs: %d", _JobCount);
 	Window->Dispatch([=](){
 		oWinControlSetText(NumberOfJobs, jobCountString);
 	});
@@ -214,7 +214,7 @@ void oWebAppWindowImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 			// Make the link
 			{
 				oStd::mstring localHostString;
-				oPrintf(localHostString, "<a href=\"http://localhost:%d/\">Launch %s App</a>", *ServerPort, Title);
+				snprintf(localHostString, "<a href=\"http://localhost:%d/\">Launch %s App</a>", *ServerPort, Title);
 
 				ControlDesc.Position = int2(45, 50);
 				ControlDesc.Size = int2(200, 30);
@@ -254,7 +254,7 @@ void oWebAppWindowImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 			{
 				double usage = oCore::this_process::cpu_usage(&CPUUsageStats.previousSystemTime, &CPUUsageStats.previousProcessTime);
 				oStd::sstring usageString;
-				oPrintf(usageString, "CPU Utilization: %.0f%%", usage);
+				snprintf(usageString, "CPU Utilization: %.0f%%", usage);
 				oWinControlSetText(CPUUtilization, usageString);
 			}
 

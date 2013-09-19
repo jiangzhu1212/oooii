@@ -52,11 +52,11 @@ struct PLATFORM_oStreamMonitor : public oTest
 
 		oStd::path_string NonZeroFile = TestFile;
 		*oGetFileExtension(NonZeroFile) = 0;
-		oStrAppendf(NonZeroFile, "-NZ.txt");
+		oStd::sncatf(NonZeroFile, "-NZ.txt");
 
 		oStd::path_string ZeroFile = TestFile;
 		*oGetFileExtension(ZeroFile) = 0;
-		oStrAppendf(ZeroFile, "-Z.txt");
+		oStd::sncatf(ZeroFile, "-Z.txt");
 
 		oStreamDelete(TestFile); // should fail, but try anyway in case it was left over from a previous canceled or failed run.
 		oStreamDelete(NonZeroFile);

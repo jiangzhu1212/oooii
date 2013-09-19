@@ -133,7 +133,7 @@ bool operator ==(const oJSONTestCompound& _LHS, const oJSONTestCompound& _RHS)
 	if (_LHS.Llong != _RHS.Llong) return false;
 	if (_LHS.Float != _RHS.Float) return false;
 	if (_LHS.Double != _RHS.Double) return false;
-	if (0 != oStrcmp(_LHS.String.c_str(), _RHS.String.c_str())) return false;
+	if (0 != strcmp(_LHS.String.c_str(), _RHS.String.c_str())) return false;
 	if (_LHS.Int2 != _RHS.Int2) return false;
 	if (_LHS.Enum != _RHS.Enum) return false;
 	return true;
@@ -150,7 +150,7 @@ oJSONTestContainer sJSONTestContainer =
 bool operator ==(const oJSONTestContainer& _LHS, const oJSONTestContainer& _RHS)
 {
 	if (_LHS.changelist != _RHS.changelist) return false;
-	if (0 != oStrcmp(_LHS.user.c_str(), _RHS.user.c_str())) return false;
+	if (0 != strcmp(_LHS.user.c_str(), _RHS.user.c_str())) return false;
 	if (_LHS.remainingms != _RHS.remainingms) return false;
 	if (_LHS.progress != _RHS.progress) return false;
 	return true;
@@ -162,7 +162,7 @@ bool oBasisTest_oJSONSerialize()
 {
 	oStd::xxlstring JSONWriteTestResult;
 	oTESTB0(oJSONWriteCompound(JSONWriteTestResult.c_str(), JSONWriteTestResult.capacity(), &sJSONTestCompound, oRTTI_OF(oJSONTestCompound)));
-	oTESTB(0 == oStrcmp(JSONWriteTestResult.c_str(), sJSONTestCompoundReferenceResult), "oJSONWriteCompound result doesn't match the expected one");
+	oTESTB(0 == strcmp(JSONWriteTestResult.c_str(), sJSONTestCompoundReferenceResult), "oJSONWriteCompound result doesn't match the expected one");
 
 	oStd::json JSON("Test JSON", (char*)sJSONTestCompoundReferenceResult, nullptr);
 
@@ -176,7 +176,7 @@ bool oBasisTest_oJSONSerialize()
 
 	oStd::xxlstring PendingTasksJSON;
 	oJSONWriteContainer(PendingTasksJSON.c_str(), PendingTasksJSON.capacity(), &JSONWriteContainerTest, sizeof(JSONWriteContainerTest), oRTTI_OF(std_vector_oJSONTestContainer));
-	oTESTB(0 == oStrcmp(PendingTasksJSON.c_str(), oJSONTestContainerReferenceResult), "oJSONReadCompound result doesn't match the expected one");
+	oTESTB(0 == strcmp(PendingTasksJSON.c_str(), oJSONTestContainerReferenceResult), "oJSONReadCompound result doesn't match the expected one");
 
 	JSON = std::move(oStd::json("2nd Test JSON", (char*)oJSONTestContainerReferenceResult, nullptr));
 	

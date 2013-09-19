@@ -357,7 +357,7 @@ void oWinsockCreateAddr(sockaddr_in* _pOutSockAddr, const char* _Hostname)
 	oWinsock* ws = oWinsock::Singleton();
 
 	char host[1024];
-	oStrcpy(host, _Hostname);
+	strlcpy(host, _Hostname);
 	unsigned short port = 0;
 	char* strPort = strstr(host, ":");
 	if (strPort)
@@ -380,7 +380,7 @@ void oWinsockAddrToHostname(sockaddr_in* _pSockAddr, char* _OutHostname, size_t 
 	unsigned long addr = ws->ntohl(_pSockAddr->sin_addr.s_addr);
 	unsigned short port = ws->ntohs(_pSockAddr->sin_port);
 
-	oPrintf(_OutHostname, _SizeOfHostname, "%u.%u.%u.%u:%u", (addr&0xFF000000)>>24, (addr&0xFF0000)>>16, (addr&0xFF00)>>8, addr&0xFF, port);
+	snprintf(_OutHostname, _SizeOfHostname, "%u.%u.%u.%u:%u", (addr&0xFF000000)>>24, (addr&0xFF0000)>>16, (addr&0xFF00)>>8, addr&0xFF, port);
 }
 
 //#define FD_TRACE(TracePrefix, TraceName, FDEvent) oTRACE("%s%s%s: %s (%s)", oSAFESTR(TracePrefix), _TracePrefix ? " " : "", oSAFESTR(TraceName), #FDEvent, oWinsock::GetErrorString(_pNetworkEvents->iErrorCode[FDEvent##_BIT]))
@@ -886,7 +886,7 @@ bool oWinsockGetNameBase(char* _OutHostname, size_t _SizeofOutHostname, char* _O
 	if (_OutIPAddress)
 	{
 		const char* ip = ws->inet_ntoa(saddr.sin_addr);
-		if (!oStrcpy(_OutIPAddress, _SizeofOutIPAddress, ip))
+		if (strlcpy(_OutIPAddress, ip, _SizeofOutIPAddress) >= _SizeofOutIPAddress)
 			return oErrorSetLast(std::errc::protocol_error);
 	}
 

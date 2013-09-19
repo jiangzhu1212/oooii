@@ -751,7 +751,7 @@ bool oDSGetStringProperty(char* _StrDestination, size_t _SizeofStrDestination, I
 	VariantInit(&varName);
 	oStd::lwstring PropertyName = _Property;
 	oVB_RETURN2(PropertyBag->Read(PropertyName.c_str(), &varName, 0));
-	oStrcpy(_StrDestination, _SizeofStrDestination, varName.bstrVal);
+	wcsltombs(_StrDestination, varName.bstrVal, _SizeofStrDestination);
 	VariantClear(&varName);
 	return true;
 }
@@ -760,7 +760,7 @@ bool oDSGetDisplayName(char* _StrDestination, size_t _SizeofStrDestination, IMon
 {
 	LPOLESTR lpDisplayName = nullptr;
 	oVB_RETURN2(_pMoniker->GetDisplayName(nullptr, nullptr, &lpDisplayName));
-	oStrcpy(_StrDestination, _SizeofStrDestination, lpDisplayName);
+	wcsltombs(_StrDestination, lpDisplayName, _SizeofStrDestination);
 	oStd::intrusive_ptr<IMalloc> Malloc;
 	oVB_RETURN2(CoGetMalloc(1, &Malloc));
 	Malloc->Free(lpDisplayName);

@@ -278,7 +278,7 @@ oMSGBOX_RESULT AssertDialog(oMSGBOX_TYPE _Type, const char* _Caption, const char
 	{
 		char s[2048];
 		oWinParseHRESULT(s, GetLastError());
-		oPrintf(s, "DialogBoxIndirectParam failed. %s", s);
+		snprintf(s, "DialogBoxIndirectParam failed. %s", s);
 		__debugbreak(); // debug msgbox called from oASSERTs, so don't recurse into it
 	}
 
@@ -382,7 +382,7 @@ void oSetupNextMessageBoxWndProc(HWND _hParent)
 oMSGBOX_RESULT oMsgBoxV(const oMSGBOX_DESC& _Desc, const char* _Format, va_list _Args)
 {
 	std::vector<char> msg(oKB(128));
-	oVPrintf(oStd::data(msg), oStd::size(msg), _Format, _Args);
+	oStd::vsnprintf(oStd::data(msg), oStd::size(msg), _Format, _Args);
 	oMSGBOX_RESULT result = oMSGBOX_YES;
 	HICON hIcon = nullptr;
 

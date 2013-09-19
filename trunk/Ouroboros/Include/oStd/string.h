@@ -43,7 +43,7 @@ template<size_t count> size_t strlcat(char (&_StrDestination)[count], const char
 template<size_t count> size_t strlcpy(char (&_StrDestination)[count], const char* _StrSource) { return strlcpy(_StrDestination, _StrSource, count); }
 template<size_t count> size_t wcslcat(wchar_t (&_StrDestination)[count], const wchar_t* _StrSource) { return wcslcat(_StrDestination, _StrSource, count); }
 template<size_t count> size_t wcslcpy(wchar_t (&_StrDestination)[count], const wchar_t* _StrSource) { return wcslcpy(_StrDestination, _StrSource, count); }
-template<size_t count> size_t mbsltowsc(wchar_t (&_StrDestination)[count], const char* _StrSource) { return mbsltowsc(_StrDestination, _StrSource, count); }
+template<size_t count> size_t mbsltowcs(wchar_t (&_StrDestination)[count], const char* _StrSource) { return mbsltowcs(_StrDestination, _StrSource, count); }
 template<size_t count> size_t wcsltombs(char* _StrDestination, const wchar_t* _StrSource, size_t _StrDestinationCount) { return wcsltombs(_StrDestination, _StrSource, count); }
 
 #ifdef _MSC_VER
@@ -70,6 +70,20 @@ namespace oStd {
 		return l;
 	}
 	template<size_t size> int vsnwprintf(wchar_t (&_StrDestination)[size], const wchar_t* _Format, va_list _Args) { return vsnwprintf(_StrDestination, size, _Format, _Args); }
+
+	inline char* strncpy(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource, size_t _NumChars)
+	{
+		return strncpy_s(_StrDestination, _SizeofStrDestination, _StrSource, _NumChars) ? nullptr : _StrDestination;
+	}
+
+	template<size_t size> char* strncpy(char (&_StrDestination)[size], const char* _StrSource, size_t _NumChars) { return strncpy(_StrDestination, size, _StrSource, _NumChars); }
+
+	inline wchar_t* wcsncpy(wchar_t* _StrDestination, size_t _NumDestinationChars, const wchar_t* _StrSource, size_t _NumChars)
+	{
+		return wcsncpy_s(_StrDestination, _NumDestinationChars, _StrSource, _NumChars) ? nullptr : _StrDestination;
+	}
+
+	template<size_t size> char* wcsncpy(wchar_t (&_StrDestination)[size], const wchar_t* _StrSource, size_t _NumChars) { return wcsncpy(_StrDestination, size, _StrSource, _NumChars); }
 }
 
 inline int snprintf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, ...)

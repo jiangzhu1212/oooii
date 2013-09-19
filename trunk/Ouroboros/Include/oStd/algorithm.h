@@ -414,8 +414,8 @@ template<typename T, typename TraitsT, typename AllocatorT>
 int replace_all(std::basic_string<T, TraitsT, AllocatorT>& _String, const char* _Find, const char* _Replace)
 {
 	int nReplacements = 0;
-	std::basic_string<T, TraitsT, AllocatorT>::size_type FindLength = oStrlen(_Find);
-	std::basic_string<T, TraitsT, AllocatorT>::size_type ReplaceLength = oStrlen(_Replace);
+	std::basic_string<T, TraitsT, AllocatorT>::size_type FindLength = strlen(_Find);
+	std::basic_string<T, TraitsT, AllocatorT>::size_type ReplaceLength = strlen(_Replace);
 	std::basic_string<T, TraitsT, AllocatorT>::size_type pos = _String.find(_Find, 0);
 	for (; pos != std::string::npos; pos += ReplaceLength)
 	{

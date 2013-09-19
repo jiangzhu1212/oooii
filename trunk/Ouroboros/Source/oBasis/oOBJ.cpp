@@ -61,7 +61,7 @@ static inline const char* ParseString(char* _StrDestination, size_t _SizeofStrDe
 	const char* start = _S;
 	oStd::move_to_line_end(&_S);
 	size_t len = std::distance(start, _S);
-	oStrncpy(_StrDestination, _SizeofStrDestination, start, len);
+	oStd::strncpy(_StrDestination, _SizeofStrDestination, start, len);
 	return _S;
 }
 

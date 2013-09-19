@@ -59,7 +59,7 @@ bool oURIQueryReadCompound(void* _pDestination, const oRTTI& _RTTI, const char* 
 		// Enumerating RTTI compound attributes is lighter weight than enumerating
 		// the query pairs, so let's do that in the inner loop
 		_RTTI.EnumAttrs(true, [&](const oRTTI_ATTR& _Attr)->bool{
-			if (0 == oStricmp(_Attr.Name, _key))
+			if (0 == _stricmp(_Attr.Name, _key))
 			{
 				Found = true;
 				switch(_Attr.RTTI->Type)
@@ -98,14 +98,14 @@ bool oURIQueryWriteValue(char* _StrDestination, size_t _SizeofStrDestination, co
 		if ((_RTTI.GetTraits() & (oStd::type_trait_flag::is_integralf | oStd::type_trait_flag::is_floating_pointf)) != 0  && (_RTTI.GetNumStringTokens() == 1))
 		{
 			if (strstr(_RTTI.GetName(Typename), "uchar"))
-				oStrAppendf(_StrDestination, _SizeofStrDestination, "%d", (int)*(uchar*)_pSource);
+				oStd::sncatf(_StrDestination, _SizeofStrDestination, "%d", (int)*(uchar*)_pSource);
 			else if (strstr(_RTTI.GetName(Typename), "char"))
-				oStrAppendf(_StrDestination, _SizeofStrDestination, "%d", (int)*(char*)_pSource);
+				oStd::sncatf(_StrDestination, _SizeofStrDestination, "%d", (int)*(char*)_pSource);
 			else
-				oStrAppendf(_StrDestination, _SizeofStrDestination, "%s", buf.c_str());
+				oStd::sncatf(_StrDestination, _SizeofStrDestination, "%s", buf.c_str());
 		}
 		else
-			oStrcpy(_StrDestination, _SizeofStrDestination, buf.c_str());
+			strlcpy(_StrDestination, buf.c_str(), _SizeofStrDestination);
 	}
 	else
 		return false;
@@ -129,8 +129,8 @@ bool oURIQueryWriteCompound(char* _StrDestination, size_t _SizeofStrDestination,
 				oStd::xxlstring buf;
 				if (oURIQueryWriteValue(buf.c_str(), buf.capacity(), _Attr.GetSrcPtr(_pSource), *_Attr.RTTI))
 				{
-					if (!firstNameValuePair) oStrAppendf(_StrDestination, _SizeofStrDestination, "&"); firstNameValuePair = false;
-					oStrAppendf(_StrDestination, _SizeofStrDestination, "%s=%s", _Attr.Name, buf.c_str());
+					if (!firstNameValuePair) oStd::sncatf(_StrDestination, _SizeofStrDestination, "&"); firstNameValuePair = false;
+					oStd::sncatf(_StrDestination, _SizeofStrDestination, "%s=%s", _Attr.Name, buf.c_str());
 				}
 				break;
 			}

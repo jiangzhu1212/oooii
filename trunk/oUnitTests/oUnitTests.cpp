@@ -63,7 +63,7 @@ void InitEnv()
 	oCore::module::info mi = oCore::this_module::get_info();
 	oStd::sstring Ver;
 	oStd::mstring title2(sTITLE);
-	oStrAppendf(title2, " v%s%s", oStd::to_string(Ver, mi.version), mi.is_special ? "*" : "");
+	oStd::sncatf(title2, " v%s%s", oStd::to_string(Ver, mi.version), mi.is_special ? "*" : "");
 	oConsole::SetTitle(title2);
 
 	// Resize console
@@ -130,7 +130,7 @@ static bool oSCCCheckPathHasChanges(const char** _pPathParts, size_t _NumPathPar
 	oStd::path_string LibWithSeps;
 	for (size_t i = 0; i < _NumPathParts; i++)
 	{
-		oPrintf(LibWithSeps, "/%s/", _pPathParts[i]);
+		snprintf(LibWithSeps, "/%s/", _pPathParts[i]);
 		oFOR(const auto& f, ModifiedFiles)
 		{
 			if (strstr(f.path, LibWithSeps))
@@ -278,7 +278,7 @@ void DeleteOldLogFiles(const char* _SpecialModeName)
 	oGetLogFilePath(logFileWildcard, _SpecialModeName);
 
 	char* p = oStd::rstrstr(logFileWildcard, "_");
-	oStrcpy(p, oCOUNTOF(logFileWildcard) - std::distance(logFileWildcard, p), "*.stdout");
+	strlcpy(p, "*.stdout", oCOUNTOF(logFileWildcard) - std::distance(logFileWildcard, p));
 
 	std::vector<oNamedFileDesc> logs;
 	logs.reserve(20);
@@ -306,7 +306,7 @@ void EnableLogFile(const char* _SpecialModeName, const char* _LogFileName)
 	if (_LogFileName == nullptr)
 		oGetLogFilePath(logFilePath, _SpecialModeName);
 	else
-		oStrcpy(logFilePath, _LogFileName);
+		strlcpy(logFilePath, _LogFileName);
 	oREPORTING_DESC desc;
 	oReportingGetDesc(&desc);
 	desc.LogFilePath = logFilePath;
@@ -380,7 +380,7 @@ void SetTestManagerDesc(const PARAMETERS* _pParameters)
 
 static bool FindDuplicateProcessInstanceByName(oCore::process::id _ProcessID, oCore::process::id _ParentProcessID, const char* _ProcessExePath, oCore::process::id _IgnorePID, const char* _FindName, oCore::process::id* _pOutPID)
 {
-	if (_IgnorePID != _ProcessID && !oStricmp(_FindName, _ProcessExePath))
+	if (_IgnorePID != _ProcessID && !_stricmp(_FindName, _ProcessExePath))
 	{
 		*_pOutPID = _ProcessID;
 		return false;

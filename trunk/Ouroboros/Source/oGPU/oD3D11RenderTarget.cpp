@@ -152,7 +152,7 @@ void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
 	if (Desc.DepthStencilFormat != DXGI_FORMAT_UNKNOWN)
 	{
 		oStd::lstring name;
-		oPrintf(name, "%s.DS", GetName());
+		snprintf(name, "%s.DS", GetName());
 		oD3D11DEVICE();
 		DepthStencilTexture = nullptr;
 		DSV = nullptr;
@@ -216,7 +216,7 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 				for (int i = 0; i < Desc.MRTCount; i++)
 				{
 					oStd::lstring name;
-					oPrintf(name, "%s%02d", GetName(), i);
+					snprintf(name, "%s%02d", GetName(), i);
 					oGPUTexture::DESC d;
 					d.Dimensions = New;
 					d.Format = Desc.Format[i];

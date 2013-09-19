@@ -154,7 +154,7 @@ namespace oStd {
 
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTPHeaderField& _Fields) 
 {
-	if (-1 == oPrintf(_StrDestination, _SizeofStrDestination, "%s:%s" oNEWLINE, _Fields.Key.c_str(), _Fields.Value.c_str()))
+	if (-1 == snprintf(_StrDestination, _SizeofStrDestination, "%s:%s" oNEWLINE, _Fields.Key.c_str(), _Fields.Value.c_str()))
 		return nullptr;
 
 	return _StrDestination;
@@ -182,13 +182,13 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTP
 	if (!oStd::to_string(_StrDestination, _SizeofStrDestination, _Request.RequestLine))
 		return nullptr;
 
-	char* StrDest = oStd::byte_add(_StrDestination, oStrlen(_StrDestination));
+	char* StrDest = oStd::byte_add(_StrDestination, strlen(_StrDestination));
 	size_t SizeRemaining = _SizeofStrDestination - (StrDest - _StrDestination);
 
 	if (!oStd::to_string(StrDest, SizeRemaining, _Request.HeaderFieldsInternal))
 		return nullptr;
 
-	if (oStrAppendf(_StrDestination, _SizeofStrDestination, oNEWLINE))
+	if (oStd::sncatf(_StrDestination, _SizeofStrDestination, oNEWLINE))
 		return nullptr;
 
 	return _StrDestination;
@@ -214,7 +214,7 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTP
 	// LF             = <US-ASCII LF, linefeed (10)>
 	// SP             = <US-ASCII SP, space (32)>
 	// Status-Line	  = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
-	return -1 != oPrintf(_StrDestination, _SizeofStrDestination, "%s %u %s" oNEWLINE, oStd::as_string(_StatusLine.Version), _StatusLine.StatusCode, _StatusLine.ReasonPhrase.c_str()) ? _StrDestination : nullptr; 
+	return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%s %u %s" oNEWLINE, oStd::as_string(_StatusLine.Version), _StatusLine.StatusCode, _StatusLine.ReasonPhrase.c_str()) ? _StrDestination : nullptr; 
 }
 
 bool from_string(oHTTP_RESPONSE::oHTTP_STATUS_LINE* _pValue, const char* _StrSource)
@@ -243,13 +243,13 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTP
 	if (!oStd::to_string(_StrDestination, _SizeofStrDestination, _Response.StatusLine))
 		return nullptr;
 
-	char* StrDest = oStd::byte_add(_StrDestination, oStrlen(_StrDestination));
+	char* StrDest = oStd::byte_add(_StrDestination, strlen(_StrDestination));
 	size_t SizeRemaining = _SizeofStrDestination - (StrDest - _StrDestination);
 
 	if (!oStd::to_string(StrDest, SizeRemaining, _Response.HeaderFieldsInternal))
 		return nullptr;
 
-	if (oStrAppendf(_StrDestination, _SizeofStrDestination, oNEWLINE))
+	if (oStd::sncatf(_StrDestination, _SizeofStrDestination, oNEWLINE))
 		return nullptr;
 
 	return _StrDestination;
@@ -311,7 +311,7 @@ char* oStd::to_string(char* _StrDestination, size_t _SizeofStrDestination, const
 		if (!oStd::to_string(NextLine, SizeRemaining, _Fields.Vector[i]))
 			return nullptr;
 
-		size_t LineLength = oStrlen(NextLine);
+		size_t LineLength = strlen(NextLine);
 		NextLine += LineLength;
 		SizeRemaining -= LineLength;
 	}
@@ -344,7 +344,7 @@ char* oStd::to_string(char* _StrDestination, size_t _SizeofStrDestination, const
 	// LF             = <US-ASCII LF, linefeed (10)>
 	// SP             = <US-ASCII SP, space (32)>
 	// Request-Line   = Method SP Request-URI SP HTTP-Version CRLF
-	return -1 != oPrintf(_StrDestination, _SizeofStrDestination, "%s %s %s" oNEWLINE, oStd::as_string(_RequestLine.Method), _RequestLine.RequestURI.c_str(), oStd::as_string(_RequestLine.Version)) ? _StrDestination : nullptr; 
+	return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%s %s %s" oNEWLINE, oStd::as_string(_RequestLine.Method), _RequestLine.RequestURI.c_str(), oStd::as_string(_RequestLine.Version)) ? _StrDestination : nullptr; 
 }
 bool oStd::from_string(oHTTP_REQUEST::oHTTP_REQUEST_LINE* _pValue, const char* _StrSource)
 {
@@ -414,7 +414,7 @@ oAPI bool oHTTPAddHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _
 	if(!_HeaderFields)
 		return false;
 	oStd::sstring StrValue;
-	oPrintf(StrValue, "%u", _Value);
+	snprintf(StrValue, "%u", _Value);
 	return _HeaderFields->AddHeader(oStd::as_string(_Field), StrValue.c_str());
 }
 oAPI bool oHTTPFindHeader(const oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, const char** _Value)

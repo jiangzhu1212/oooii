@@ -32,7 +32,7 @@
 
 template<typename T> T* oGetFileExtensionT(T* _Path)
 {
-	size_t len = oStrlen(_Path);
+	size_t len = strlen(_Path);
 	T* cur = _Path + len-1;
 	while (cur >= _Path && !(oIsSeparator(*cur) || *cur == ':'))
 	{
@@ -56,7 +56,7 @@ const char* oGetFileExtension(const char* _Path)
 
 template<typename T> T* oGetFileBaseT(T* _Path)
 {
-	T* cur = _Path + oStrlen(_Path)-1;
+	T* cur = _Path + strlen(_Path)-1;
 	while (cur >= _Path && !(oIsSeparator(*cur) || *cur == ':'))
 		cur--;
 	cur++;
@@ -98,11 +98,11 @@ char* oReplaceFileExtension(char* _Path, size_t _SizeofPath, const char* _Extens
 		*start = 0;
 	else
 	{
-		if (!oStrcat(_Path, _SizeofPath, "."))
+		if (strlcat(_Path, ".", _SizeofPath) >= _SizeofPath)
 			return nullptr;
 	}
 	
-	if (!oStrcat(_Path, _SizeofPath, _Extension))
+	if (strlcat(_Path, _Extension, _SizeofPath) >= _SizeofPath)
 		return nullptr;
 	return _Path;
 }
@@ -112,14 +112,14 @@ char* oReplaceFilename(char* _Path, size_t _SizeofPath, const char* _Filename)
 	char* start = oGetFilebase(_Path);
 	if (start && !oIsSeparator(*start))
 		*start = 0;
-	if (!oStrcat(_Path, _SizeofPath, _Filename))
+	if (strlcat(_Path, _Filename, _SizeofPath) >= _SizeofPath)
 		return nullptr;
 	return _Path;
 }
 
 char* oTrimFilename(char* _Path, bool _IgnoreTrailingSeparator)
 {
-	char* cur = _Path + oStrlen(_Path);
+	char* cur = _Path + strlen(_Path);
 	// Handle the case where a path ends in a separator, indicating that it is
 	// a directory path, so trim back another step.
 	if (_IgnoreTrailingSeparator && oIsSeparator(*(cur-1)))
@@ -133,7 +133,7 @@ char* oTrimFilename(char* _Path, bool _IgnoreTrailingSeparator)
 
 char* oTrimFileExtension(char* _Path)
 {
-	char* cur = _Path + oStrlen(_Path);
+	char* cur = _Path + strlen(_Path);
 	while (cur >= _Path && *cur != '.')
 		--cur;
 	*cur = 0;
@@ -161,7 +161,7 @@ char* oTrimFileLeadingSeperators(char* _Path)
 
 char* oEnsureSeparator(char* _Path, size_t _SizeofPath, char _FileSeparator)
 {
-	size_t len = oStrlen(_Path);
+	size_t len = strlen(_Path);
 	char* cur = _Path + len-1;
 	if (!oIsSeparator(*cur) && _SizeofPath)
 	{
@@ -237,11 +237,13 @@ char* oMakeRelativePath(char* _StrDestination, size_t _SizeofStrDestination, con
 
 		for (size_t i = 0; i < nSeperators; i++)
 		{
-			if (!oStrcat(_StrDestination + 3*i, _SizeofStrDestination - 3*i, _FileSeparator == '/' ? "../" : "..\\"))
+			size_t sz = _SizeofStrDestination - 3*i;
+			if (strlcat(_StrDestination + 3*i, _FileSeparator == '/' ? "../" : "..\\", sz) >= sz)
 				return nullptr;
 		}
 
-		if (!oStrcat(_StrDestination+3*nSeperators, _SizeofStrDestination-3*nSeperators, _FullPath + rootLength))
+		size_t sz = _SizeofStrDestination-3*nSeperators;
+		if (strlcat(_StrDestination+3*nSeperators, _FullPath + rootLength, sz) >= sz)
 			return nullptr;
 	}
 
@@ -385,10 +387,10 @@ char* oFindInPath(char* _StrDestination, size_t _SizeofStrDestination, const cha
 		char* end = dst + _SizeofStrDestination - 1;
 		if (*cur == '.' && oSTRVALID(_DotPath))
 		{
-			if (!oStrcpy(_StrDestination, _SizeofStrDestination, _DotPath))
+			if (!strlcpy(_StrDestination, _DotPath, _SizeofStrDestination))
 				return nullptr;
 			oEnsureSeparator(_StrDestination, _SizeofStrDestination);
-			dst = _StrDestination + oStrlen(_StrDestination);
+			dst = _StrDestination + strlen(_StrDestination);
 		}
 
 		while (dst < end && *cur && *cur != ';')
@@ -398,7 +400,7 @@ char* oFindInPath(char* _StrDestination, size_t _SizeofStrDestination, const cha
 			*(++dst) = '/';
 		oASSERT(dst < end, "");
 		*(++dst) = 0;
-		if (!oStrcat(_StrDestination, _SizeofStrDestination, _RelativePath))
+		if (strlcat(_StrDestination, _RelativePath, _SizeofStrDestination) >= _SizeofStrDestination)
 			return nullptr;
 		if (_PathExists(_StrDestination))
 			return _StrDestination;
@@ -413,7 +415,7 @@ char* oFindInPath(char* _StrDestination, size_t _SizeofStrDestination, const cha
 
 char* oStrTokToSwitches(char* _StrDestination, size_t _SizeofStrDestination, const char* _Switch, const char* _Tokens, const char* _Separator)
 {
-	size_t len = oStrlen(_StrDestination);
+	size_t len = strlen(_StrDestination);
 	_StrDestination += len;
 	_SizeofStrDestination -= len;
 
@@ -421,14 +423,14 @@ char* oStrTokToSwitches(char* _StrDestination, size_t _SizeofStrDestination, con
 	const char* tok = oStrTok(_Tokens, _Separator, &ctx);
 	while (tok)
 	{
-		oStrcpy(_StrDestination, _SizeofStrDestination, _Switch);
-		size_t len = oStrlen(_StrDestination);
+		strlcpy(_StrDestination, _Switch, _SizeofStrDestination);
+		size_t len = strlen(_StrDestination);
 		_StrDestination += len;
 		_SizeofStrDestination -= len;
 
 		oStd::clean_path(_StrDestination, _SizeofStrDestination, tok);
 
-		len = oStrlen(_StrDestination);
+		len = strlen(_StrDestination);
 		_StrDestination += len;
 		_SizeofStrDestination -= len;
 
@@ -441,7 +443,7 @@ char* oStrTokToSwitches(char* _StrDestination, size_t _SizeofStrDestination, con
 bool oHasMatchingExtension(const char* _Path, const char* _Extensions[], size_t _NumExtensions)
 {
 	return std::any_of(_Extensions, _Extensions + _NumExtensions, [&](const char* _Extension) -> bool {
-		if (oStricmp(oGetFileExtension(_Path), _Extension) == 0)
+		if (_stricmp(oGetFileExtension(_Path), _Extension) == 0)
 			return true;
 		return false;
 	});

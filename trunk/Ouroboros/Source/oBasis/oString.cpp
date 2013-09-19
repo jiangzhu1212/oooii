@@ -33,134 +33,12 @@
 
 template<typename T> T SS(T _String) { return _String ? _String : T(""); }
 
-template<typename CHAR_T> static void ZeroBalance(CHAR_T* _StrDestination, size_t _NumDestinationChars)
-{
-	size_t len = oStrlen(_StrDestination);
-	memset(_StrDestination + len, 0, (_NumDestinationChars - len) * sizeof(CHAR_T));
-}
-
-size_t oStrlen(const char* _StrSource)
-{
-	return strlen(SS(_StrSource));
-}
-
-size_t oStrlen(const wchar_t* _StrSource)
-{
-	return wcslen(SS(_StrSource));
-}
-
-char* oStrcpy(char* _StrDestination, size_t _NumDestinationChars, const char* _StrSource, bool _ZeroBuffer)
-{
-	if (oStrlen(_StrSource) >= _NumDestinationChars) return nullptr;
-	if (0 != strcpy_s(_StrDestination, _NumDestinationChars, SS(_StrSource))) return nullptr;
-	if (_ZeroBuffer) ZeroBalance(_StrDestination, _NumDestinationChars);
-	return _StrDestination;
-}
-
-wchar_t* oStrcpy(wchar_t* _StrDestination, size_t _NumDestinationChars, const wchar_t* _StrSource, bool _ZeroBuffer)
-{
-	if (oStrlen(_StrSource) >= _NumDestinationChars) return nullptr;
-	if (0 != wcscpy_s(_StrDestination, _NumDestinationChars, SS(_StrSource))) return nullptr;
-	if (_ZeroBuffer) ZeroBalance(_StrDestination, _NumDestinationChars);
-	return _StrDestination;
-}
-
-char* oStrcpy(char* _StrDestination, size_t _NumDestinationChars, const wchar_t* _StrSource, bool _ZeroBuffer)
-{
-	if (oStrlen(_StrSource) >= _NumDestinationChars) return nullptr;
-	size_t sz = 0;
-	const wchar_t* src = SS(_StrSource);
-	if (0 != wcsrtombs_s(&sz, _StrDestination, _NumDestinationChars, &src, _NumDestinationChars, nullptr)) return nullptr;
-	if (_ZeroBuffer) ZeroBalance(_StrDestination, _NumDestinationChars);
-	return _StrDestination;
-}
-
-wchar_t* oStrcpy(wchar_t* _StrDestination, size_t _NumDestinationChars, const char* _StrSource, bool _ZeroBuffer)
-{
-	if (oStrlen(_StrSource) >= _NumDestinationChars) return nullptr;
-	size_t sz = 0;
-	const char* src = SS(_StrSource);
-	if (0 != mbsrtowcs_s(&sz, _StrDestination, _NumDestinationChars, &src, _NumDestinationChars, nullptr)) return nullptr;
-	if (_ZeroBuffer) ZeroBalance(_StrDestination, _NumDestinationChars);
-	return _StrDestination;
-}
-
-char* oStrncpy(char* _StrDestination, size_t _NumDestinationChars, const char* _StrSource, size_t _NumChars)
-{
-	return strncpy_s(_StrDestination, _NumDestinationChars, _StrSource, _NumChars) ? nullptr : _StrDestination;
-}
-
-wchar_t* oStrncpy(wchar_t* _StrDestination, size_t _NumDestinationChars, const wchar_t* _StrSource, size_t _NumChars)
-{
-	return wcsncpy_s(_StrDestination, _NumDestinationChars, _StrSource, _NumChars) ? nullptr : _StrDestination;
-}
-
-int oStrcmp(const char* _Str1, const char* _Str2)
-{
-	return strcmp(_Str1, _Str2);
-}
-
-int oStrcmp(const wchar_t* _Str1, const wchar_t* _Str2)
-{
-	return wcscmp(_Str1, _Str2);
-}
-
-int oStricmp(const char* _Str1, const char* _Str2)
-{
-	return _stricmp(_Str1, _Str2);
-}
-
-int oStricmp(const wchar_t* _Str1, const wchar_t* _Str2)
-{
-	return _wcsicmp(_Str1, _Str2);
-}
-
-int oStrncmp(const char* _Str1, const char* _Str2, size_t _NumChars)
-{
-	return strncmp(_Str1, _Str2, _NumChars);
-}
-
-int oStrncmp(const wchar_t* _Str1, const wchar_t* _Str2, size_t _NumChars)
-{
-	return wcsncmp(_Str1, _Str2, _NumChars);
-}
-
-int oStrnicmp(const char* _Str1, const char* _Str2, size_t _NumChars)
-{
-	return _strnicmp(_Str1, _Str2, _NumChars);
-}
-
-int oStrnicmp(const wchar_t* _Str1, const wchar_t* _Str2, size_t _NumChars)
-{
-	return _wcsnicmp(_Str1, _Str2, _NumChars);
-}
-
-char* oStrcat(char* _StrDestination, size_t _NumDestinationChars, const char* _Source)
-{
-	return strcat_s(_StrDestination, _NumDestinationChars, _Source) ? nullptr : _StrDestination;
-}
-
-wchar_t* oStrcat(wchar_t* _StrDestination, size_t _NumDestinationChars, const wchar_t* _Source)
-{
-	return wcscat_s(_StrDestination, _NumDestinationChars, _Source) ? nullptr : _StrDestination;
-}
-
-char* oStrncat(char* _StrDestination, size_t _NumDestinationChars, const char* _Source)
-{
-	return strncat_s(_StrDestination, _NumDestinationChars, _Source, _TRUNCATE) ? nullptr : _StrDestination;
-}
-
-wchar_t* oStrncat(wchar_t* _StrDestination, size_t _NumDestinationChars, const wchar_t* _Source)
-{
-	return wcsncat_s(_StrDestination, _NumDestinationChars, _Source, _TRUNCATE) ? nullptr : _StrDestination;
-}
-
 const char* oStrStr( const char* _pStr, const char* _pSubStr, size_t _MaxCharCount /*= oInvalid*/ )
 {
 	if(oInvalid == _MaxCharCount)
 		return strstr(_pStr, _pSubStr);
 
-	size_t SearchLen = oStrlen(_pSubStr);
+	size_t SearchLen = strlen(_pSubStr);
 	size_t SearchHead = 0;
 	for(size_t i = 0; i < _MaxCharCount; ++i)
 	{
@@ -215,7 +93,7 @@ void oStrTokClose(char** _ppContext)
 	if (start)
 	{
 		*_ppContext = nullptr;
-		start += oStrlen(start);
+		start += strlen(start);
 		char* origAlloc = *reinterpret_cast<char**>(start+1);
 		free(origAlloc);
 	}
@@ -230,11 +108,11 @@ char* oStrTok(const char* _Token, const char* _Delimiter, char** _ppContext, con
 	if (_Token)
 	{
 		// copy string and also store pointer so it can be freed
-		size_t n = oStrlen(_Token);
+		size_t n = strlen(_Token);
 		if (!n)
 			return nullptr;
 		*_ppContext = static_cast<char*>(malloc(n + 1 + sizeof(char*)));
-		oStrcpy(*_ppContext, n + 1, _Token);
+		strlcpy(*_ppContext, _Token, n + 1);
 		*reinterpret_cast<char**>((*_ppContext) + n + 1) = *_ppContext;
 		start = *_ppContext;
 	}
@@ -352,8 +230,8 @@ void oPermutate(const char*** _ppOptions, size_t* _pSizes, int _NumOptions, oFUN
 		for (int i = 0; i < _NumOptions; i++)
 		{
 			if (i)
-				oStrcat(s, _Delim);
-			oStrcat(s, _ppOptions[i][pIndices[i]]);
+				strlcat(s, _Delim);
+			strlcat(s, _ppOptions[i][pIndices[i]]);
 		}
 
 		_Visitor(s);

@@ -82,7 +82,7 @@
 // The one true hash. This is a persistent hash that can be used at tool time 
 // and at runtime and should be capable of uniquely identifying any resource 
 // in the system.
-inline unsigned int oGPUDeviceResourceHash(const char* _SourceName, oGPU_RESOURCE_TYPE _Type) { return oStd::fnv1a<unsigned int>(_SourceName, oInt(oStrlen(_SourceName)), _Type); }
+inline unsigned int oGPUDeviceResourceHash(const char* _SourceName, oGPU_RESOURCE_TYPE _Type) { return oStd::fnv1a<unsigned int>(_SourceName, oInt(strlen(_SourceName)), _Type); }
 
 template<typename InterfaceT, typename ImplementationT>
 struct oGPUDeviceChildMixinBase

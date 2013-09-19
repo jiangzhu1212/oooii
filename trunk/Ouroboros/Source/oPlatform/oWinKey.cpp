@@ -667,7 +667,7 @@ void oWinKeySendMouse(HWND _hWnd, const int2& _Position)
 
 void oWinKeySend(HWND _hWnd, const char* _String)
 {
-	size_t len = oStrlen(_String);
+	size_t len = strlen(_String);
 	if (len)
 	{
 		for (size_t i = 0; i < len; i++)
@@ -809,7 +809,7 @@ bool oWinSendKeys(HWND _hWnd, unsigned int _ThreadID, short int* _pVKeys, int _N
 bool oWinSendASCIIMessage(HWND _hWnd, unsigned int _ThreadID, const char* _pMessage)
 {
 	short int VirtualKeys[64];
-	int MessageLength = oInt(oStrlen(_pMessage));
+	int MessageLength = oInt(strlen(_pMessage));
 	if(MessageLength > oCOUNTOF(VirtualKeys))
 		return oErrorSetLast(std::errc::no_buffer_space, "Only support %d length messages", oCOUNTOF(VirtualKeys));
 

@@ -44,11 +44,11 @@
 			std::system_error* se = dynamic_cast<std::system_error*>(&e); \
 			if (se && se->code().value() == std::errc::permission_denied) \
 				r = oTest::SKIPPED; \
-			oPrintf(_StrStatus, _SizeofStrStatus, "%s", e.what()); \
+			snprintf(_StrStatus, _SizeofStrStatus, "%s", e.what()); \
 			oTRACE("%s: %s", oStd::as_string(r), _StrStatus); \
 		} \
 		if (r == oTest::SUCCESS && oErrorGetLast() == 0) \
-			oPrintf(_StrStatus, _SizeofStrStatus, oErrorGetLastString()); \
+			snprintf(_StrStatus, _SizeofStrStatus, oErrorGetLastString()); \
 		return r; \
 	} while (false)
 

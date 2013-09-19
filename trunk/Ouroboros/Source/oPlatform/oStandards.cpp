@@ -64,7 +64,7 @@ void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list
 	if (_Type == HEADING)
 	{
 		char msg[2048];
-		oVPrintf(msg, _Format, _Args);
+		oStd::vsnprintf(msg, _Format, _Args);
 		oStd::toupper(msg);
 		oConsole::fprintf(stdout, fg[_Type], bg[_Type], msg);
 	}
@@ -160,17 +160,17 @@ char* oGetLogFilePath(char* _StrDestination, size_t _SizeofStrDestination, const
 
 	char fn[128];
 	char* p = oGetFilebase(_StrDestination);
-	oStrcpy(fn, p);
+	strlcpy(fn, p);
 	oTrimFileExtension(fn);
-	p += oPrintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "Logs/");
+	p += snprintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "Logs/");
 	p += strftime(p, _SizeofStrDestination - std::distance(_StrDestination, p), "%Y-%m-%d-%H-%M-%S_", &t);
-	p += oPrintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "%s", fn);
+	p += snprintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "%s", fn);
 
 	errno_t err = 0;
 	if (_ExeSuffix)
-		p += oPrintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%s", _ExeSuffix);
+		p += snprintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%s", _ExeSuffix);
 
-	p += oPrintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%i.txt", oCore::this_process::get_id());
+	p += snprintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%i.txt", oCore::this_process::get_id());
 	oStd::clean_path(_StrDestination, _SizeofStrDestination, _StrDestination);
 	
 	return _StrDestination;
@@ -178,21 +178,21 @@ char* oGetLogFilePath(char* _StrDestination, size_t _SizeofStrDestination, const
 
 bool oINIFindPath( char* _StrDestination, size_t _SizeofStrDestination, const char* _pININame )
 {
-	oPrintf(_StrDestination, _SizeofStrDestination, "../%s", _pININame);
+	snprintf(_StrDestination, _SizeofStrDestination, "../%s", _pININame);
 	if(oStreamExists(_StrDestination))
 		return true;
 
 	oStd::path AppDir = oCore::filesystem::app_path();
 
-	oPrintf(_StrDestination, _SizeofStrDestination, "%s/../%s", AppDir, _pININame);
+	snprintf(_StrDestination, _SizeofStrDestination, "%s/../%s", AppDir, _pININame);
 	if(oStreamExists(_StrDestination))
 		return true;
 
-	oPrintf(_StrDestination, _SizeofStrDestination, "%s", _pININame);
+	snprintf(_StrDestination, _SizeofStrDestination, "%s", _pININame);
 	if(oStreamExists(_StrDestination))
 		return true;
 
-	oPrintf(_StrDestination, _SizeofStrDestination, "%s/%s", AppDir, _pININame);
+	snprintf(_StrDestination, _SizeofStrDestination, "%s/%s", AppDir, _pININame);
 	if(oStreamExists(_StrDestination))
 		return true;
 

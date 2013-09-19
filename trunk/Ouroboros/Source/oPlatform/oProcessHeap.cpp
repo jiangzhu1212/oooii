@@ -159,7 +159,7 @@ public:
 		oStd::path modulePath = oCore::this_module::path();
 		char buf[oKB(1)];
 		oStd::mstring exec;
-		oPrintf(buf, "%s(%d): {%s} %s ProcessHeap initialized at 0x%p\n", __FILE__, __LINE__, modulePath.c_str(), oCore::system::exec_path(exec), this);
+		snprintf(buf, "%s(%d): {%s} %s ProcessHeap initialized at 0x%p\n", __FILE__, __LINE__, modulePath.c_str(), oCore::system::exec_path(exec), this);
 		OutputDebugStringA(buf);
 	}
 
@@ -218,7 +218,7 @@ static void oProcessHeapOutputLeakReportFooter(size_t _NumLeaks)
 {
 	char buf[256];
 	oStd::mstring exec;
-	oPrintf(buf, "========== Process Heap Leak Report: %u Leaks %s ==========\n", _NumLeaks, oCore::system::exec_path(exec));
+	snprintf(buf, "========== Process Heap Leak Report: %u Leaks %s ==========\n", _NumLeaks, oCore::system::exec_path(exec));
 	OutputDebugStringA(buf);
 }
 
@@ -279,7 +279,7 @@ bool oProcessHeapContextImpl::ShouldConsider(container_t::const_iterator it)
 
 	// Special-case oWinDbgHelp since we're using it so very late for IsTBBEntry
 	// and printing callstacks.
-	if (!oStrcmp("oWinDbgHelp", it->second.DebugName))
+	if (!strcmp("oWinDbgHelp", it->second.DebugName))
 	{
 		oInterface* i = static_cast<oInterface*>(it->second.Pointer);
 		int r = i->Reference() - 1;
@@ -325,7 +325,7 @@ void oProcessHeapContextImpl::ReportLeaks()
 	if (nLeaks)
 	{
 		oStd::mstring exec;
-		oPrintf(buf, "========== Process Heap Leak Report %s (Module %s) ==========\n", oCore::system::exec_path(exec), moduleName.c_str());
+		snprintf(buf, "========== Process Heap Leak Report %s (Module %s) ==========\n", oCore::system::exec_path(exec), moduleName.c_str());
 		OutputDebugStringA(buf);
 		for (container_t::const_iterator it = pSharedPointers->begin(); it != pSharedPointers->end(); ++it)
 		{
@@ -334,9 +334,9 @@ void oProcessHeapContextImpl::ReportLeaks()
 				const ENTRY& e = it->second;
 
 				char TLBuf[128];
-				oPrintf(TLBuf, " (thread_local in thread 0x%x%s)", *(unsigned int*)&e.InitThreadID, oConcurrency::main_thread::get_id() == e.InitThreadID ? " (main)" : "");
+				snprintf(TLBuf, " (thread_local in thread 0x%x%s)", *(unsigned int*)&e.InitThreadID, oConcurrency::main_thread::get_id() == e.InitThreadID ? " (main)" : "");
 				char GUIDStr[128];
-				oPrintf(buf, "%s %s%s\n", oStd::to_string(GUIDStr, e.GUID), oSAFESTRN(e.DebugName), e.IsThreadLocal ? TLBuf : "");
+				snprintf(buf, "%s %s%s\n", oStd::to_string(GUIDStr, e.GUID), oSAFESTRN(e.DebugName), e.IsThreadLocal ? TLBuf : "");
 				OutputDebugStringA(buf); // use non-threadsafe version because that could alloc the mutex
 
 				bool IsStdBind = false;
@@ -402,7 +402,7 @@ bool oProcessHeapContextImpl::FindOrAllocate(const oStd::guid& _GUID, bool _IsTh
 		*e.DebugName = 0;
 		if (_DebugName)
 		{
-			memcpy_s(e.DebugName, sizeof(e.DebugName), _DebugName, __min(oStrlen(_DebugName)+1, sizeof(e.DebugName)));
+			memcpy_s(e.DebugName, sizeof(e.DebugName), _DebugName, __min(strlen(_DebugName)+1, sizeof(e.DebugName)));
 			oStd::ellipsize(e.DebugName);
 		}
 
@@ -472,7 +472,7 @@ oProcessHeapContext* oProcessHeapContext::Singleton()
 		// Filename is "<GUID><CurrentProcessID>"
 		static char mmapFileName[128] = {0};
 		oStd::to_string(mmapFileName, heapMMapGuid);
-		oPrintf(mmapFileName + oStrlen(mmapFileName), 128 - oStrlen(mmapFileName), "%u", GetCurrentProcessId());
+		snprintf(mmapFileName + strlen(mmapFileName), 128 - strlen(mmapFileName), "%u", GetCurrentProcessId());
 
 		// Create a memory-mapped File to store the location of the oProcessHeapContext
 		SetLastError(ERROR_SUCCESS);

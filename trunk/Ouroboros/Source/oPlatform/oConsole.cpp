@@ -203,7 +203,7 @@ void oConsole::SetDesc(const DESC* _pDesc)
 	if (!_pDesc->LogFilePath.empty())
 	{
 		c->LogFilePath = _pDesc->LogFilePath;
-		if (0 != oStricmp(OldLogPath, c->LogFilePath))
+		if (0 != _stricmp(OldLogPath, c->LogFilePath))
 		{
 			c->LogFile = nullptr;
 			if (!oStreamLogWriterCreate(c->LogFilePath, &c->LogFile))
@@ -332,7 +332,7 @@ int oConsole::vfprintf(FILE* _pStream, oStd::color _Foreground, oStd::color _Bac
 	}
 
 	char msg[oKB(8)];
-	oVPrintf(msg, _Format, _Args);
+	oStd::vsnprintf(msg, _Format, _Args);
 
 	// Always print any message to _pStream
 	int n = ::fprintf(_pStream, msg);
@@ -342,7 +342,7 @@ int oConsole::vfprintf(FILE* _pStream, oStd::color _Foreground, oStd::color _Bac
 	{
 		oSTREAM_WRITE w;
 		w.pData = msg;
-		w.Range = oSTREAM_RANGE(oSTREAM_APPEND, oStrlen(msg));
+		w.Range = oSTREAM_RANGE(oSTREAM_APPEND, strlen(msg));
 		c->LogFile->Write(w);
 	}
 

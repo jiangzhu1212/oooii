@@ -274,7 +274,7 @@ bool oGPUCreateReadbackCopy(oGPUBuffer* _pSource, oGPUBuffer** _ppReadbackCopy)
 	_pSource->GetDesc(&d);
 	d.Type = oGPU_BUFFER_READBACK;
 	oStd::sstring Name;
-	oPrintf(Name, "%s.Readback", _pSource->GetName());
+	snprintf(Name, "%s.Readback", _pSource->GetName());
 	return Device->CreateBuffer(Name, d, _ppReadbackCopy);
 }
 
@@ -295,7 +295,7 @@ uint oGPUReadbackCounter(oGPUBuffer* _pUnorderedBuffer, oGPUBuffer* _pPreallocat
 	if (!Counter)
 	{
 		oStd::sstring Name;
-		oPrintf(Name, "%s.Readback", _pUnorderedBuffer->GetName());
+		snprintf(Name, "%s.Readback", _pUnorderedBuffer->GetName());
 
 		oGPUBuffer::DESC rb;
 		rb.Type = oGPU_BUFFER_READBACK;
@@ -584,7 +584,7 @@ bool oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource, interface oImage** 
 	if (!oGPUTextureTypeIsReadback(d.Type))
 	{
 		oStd::uri_string Name(_pTexture->GetName());
-		oStrAppendf(Name, "#CPUCopy");
+		oStd::sncatf(Name, "#CPUCopy");
 		oGPUTexture::DESC CPUCopyDesc(d);
 		CPUCopyDesc.Type = oGPUTextureTypeGetReadbackType(d.Type);
 		if (!Device->CreateTexture(Name, CPUCopyDesc, &TextureToSave))

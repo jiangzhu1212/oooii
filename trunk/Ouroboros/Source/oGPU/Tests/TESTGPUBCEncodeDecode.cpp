@@ -100,7 +100,7 @@ struct GPU_BCEncodeDecode : public oTest
 		char base[64];
 		oGetFilebase(base, ImagePath);
 		char fn[64];
-		oPrintf(fn, "%s%s.dds", base, _FilenameSuffix);
+		snprintf(fn, "%s%s.dds", base, _FilenameSuffix);
 
 		oStd::path ConvertedPath;
 		oTESTB0(BuildPath(ConvertedPath, fn, oTest::TEMP));
@@ -137,7 +137,7 @@ struct GPU_BCEncodeDecode : public oTest
 		if (!oGPUDeviceCreate(DeviceInit, &Device))
 		{
 			#if 1
-				oPrintf(_StrStatus, _SizeofStrStatus, "Non-D3D or Pre-D3D11 HW detected: Using the non-accelerated path will take too long, so this test will be skipped.");
+				snprintf(_StrStatus, _SizeofStrStatus, "Non-D3D or Pre-D3D11 HW detected: Using the non-accelerated path will take too long, so this test will be skipped.");
 				return SKIPPED;
 			#else
 				DeviceInit.UseSoftwareEmulation = true;

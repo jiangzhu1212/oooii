@@ -53,7 +53,7 @@ namespace oSingletonPlatform
 		oStd::path modname = oCore::this_module::path();
 		char syspath[_MAX_PATH];
 		char msg[oKB(4)];
-		int offset = oPrintf(msg, "%s(%d): {%s} %s %s ", _File, _Line, modname.basename().c_str(), oSystemGetExecutionPath(syspath), oStd::type_name(_TypeinfoName));
+		int offset = snprintf(msg, "%s(%d): {%s} %s %s ", _File, _Line, modname.basename().c_str(), oSystemGetExecutionPath(syspath), oStd::type_name(_TypeinfoName));
 		va_list args;
 		va_start(args, _Format);
 		oVPrintf(msg + offset, oCOUNTOF(msg) - offset, _Format, args);

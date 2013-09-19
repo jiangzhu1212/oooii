@@ -39,7 +39,7 @@ static bool CreateSecondTexture(oGPUDevice* _pDevice, const char* _Texture1Name,
 		Texture2Desc.Dimensions = oSurfaceMipCalcDimensionsNPOT(_Texture1Desc.Format, _Texture1Desc.Dimensions, 0, 1);
 
 		oStd::mstring Texture2Name(_Texture1Name);
-		oStrAppendf(Texture2Name, ".Texture2");
+		oStd::sncatf(Texture2Name, ".Texture2");
 		
 		return _pDevice->CreateTexture(Texture2Name, Texture2Desc, _ppTexture2);
 	}
@@ -75,7 +75,7 @@ oD3D11Texture::oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char
 			if (!SRV && *_pSuccess)
 			{
 				oStd::mstring name;
-				oPrintf(name, "%s.SRV", _Name);
+				snprintf(name, "%s.SRV", _Name);
 				if (!oD3D11CreateShaderResourceView(name, Texture, &SRV))
 					*_pSuccess = false; // pass through error
 			}

@@ -44,22 +44,22 @@ static const char* oMSBUILD_WARNING_PATTERN = ": warning ";
 static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, oFUNCTION<bool(const oStd::uri_string& _CommandName, const char* _pLog)> _CommandLogger)
 {
 	oStd::lstring ToolName;
-	oPrintf(ToolName, "%s /nodereuse:false /maxcpucount", _Settings.ToolPath);
+	snprintf(ToolName, "%s /nodereuse:false /maxcpucount", _Settings.ToolPath);
 	if(_Settings.ThreadsPerBuild > 0)
-		oStrAppendf(ToolName, ":%d", _Settings.ThreadsPerBuild);
+		oStd::sncatf(ToolName, ":%d", _Settings.ThreadsPerBuild);
 
 	oStd::path_string CommandLine;
-	int ConfigHead = oPrintf(CommandLine, "%s %s /p:Configuration=", ToolName, _Settings.Solution);
+	int ConfigHead = snprintf(CommandLine, "%s %s /p:Configuration=", ToolName, _Settings.Solution);
 
 	o_msbuild_stdout_t StdOutDrain;
 	std::unordered_map<oStd::uri_string, std::shared_ptr<oCore::process>, oStdHash<oStd::uri_string>, oStd::equal_to<oStd::uri_string>> BuildProcesses;
 	oFOR(auto& Config, _Settings.Configurations)
 	{
-		int PlatformHead = ConfigHead + oPrintf(CommandLine.c_str() + ConfigHead, CommandLine.capacity() - ConfigHead, "%s /p:Platform=", Config);
+		int PlatformHead = ConfigHead + snprintf(CommandLine.c_str() + ConfigHead, CommandLine.capacity() - ConfigHead, "%s /p:Platform=", Config);
 
 		oFOR(auto& Platform, _Settings.Platforms)
 		{
-			oPrintf(CommandLine.c_str() + PlatformHead, CommandLine.capacity() - PlatformHead, "%s %s", Platform, _pCommand);
+			snprintf(CommandLine.c_str() + PlatformHead, CommandLine.capacity() - PlatformHead, "%s %s", Platform, _pCommand);
 
 			oCore::process::info pi;
 			pi.command_line = CommandLine;
@@ -68,7 +68,7 @@ static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, o
 
 			std::shared_ptr<oCore::process> Process = oCore::process::make(pi);
 			oStd::uri_string Name;
-			oPrintf(Name, "%s_%s", Config, Platform);
+			snprintf(Name, "%s_%s", Config, Platform);
 			if( BuildProcesses.end() != BuildProcesses.find(Name) )
 				return oErrorSetLast(std::errc::invalid_argument, "Duplicate build requested %s", Name);
 			BuildProcesses[Name] = Process;
@@ -240,7 +240,7 @@ bool oMSBuildParseLogfile(oStd::path_string _Logfile, bool _IncludeWarnings, oFU
 		if (WarningOrError)
 		{
 			o_msbuild_stdout_t ErrorLine;
-			oStrncpy(ErrorLine, pLog, LineLength);
+			oStd::strncpy(ErrorLine, pLog, LineLength);
 			if (!_Output(ErrorLine))
 				break;
 		}

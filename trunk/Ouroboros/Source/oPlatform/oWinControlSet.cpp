@@ -232,7 +232,7 @@ bool oWinControlSet::CreateControlsRecursive(const XML_CONTEXT& _XmlContext, con
 		bool VisitChildren = false;
 		int2 RelativePos;
 		int2 Size(oInvalid, oInvalid);
-		if (!oStricmp("RefPoint", NodeName))
+		if (!_stricmp("RefPoint", NodeName))
 		{
 			//#ifdef _DEBUG
 			//	oTRACE("<RefPoint Name=\"%s\" ... >", oSAFESTRN(_XmlContext.pXML->GetValue(_XmlContext.hNode, "Name")));
@@ -254,7 +254,7 @@ bool oWinControlSet::CreateControlsRecursive(const XML_CONTEXT& _XmlContext, con
 			VisitChildren = true;
 		}
 
-		else if (!oStricmp("Control", NodeName))
+		else if (!_stricmp("Control", NodeName))
 		{
 			Current.hParent = CreateControl(_XmlContext, Current, _pControls, Current.ParentPosition);
 			if (!Current.hParent)

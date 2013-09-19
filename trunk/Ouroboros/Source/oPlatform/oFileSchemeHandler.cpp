@@ -53,9 +53,9 @@ char* oSystemURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _U
 	if (_URIParts.Authority.empty())
 	{
 		if (_URIParts.Path[0]=='/' && _URIParts.Path[2]==':')
-			oStrcpy(_Path, _SizeofPath, _URIParts.Path+1);
+			strlcpy(_Path, _URIParts.Path+1, _SizeofPath);
 		else
-			oStrcpy(_Path, _SizeofPath, _URIParts.Path);
+			strlcpy(_Path, _URIParts.Path, _SizeofPath);
 	}
 	else
 	{
@@ -90,7 +90,7 @@ char* oSystemURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _U
 				return nullptr;
 			}
 
-			if (-1 == oStrAppendf(_Path, _SizeofPath, _URIParts.Path))
+			if (-1 == oStd::sncatf(_Path, _SizeofPath, _URIParts.Path))
 			{
 				oErrorSetLast(std::errc::no_buffer_space);
 				return nullptr;
@@ -175,7 +175,7 @@ bool from_string(oSYSPATH* _pValue, const char* _StrSource)
 	oStd::toupper(SourceUppercase);
 	oFORI(i, sStrings)
 	{
-		if (!oStrcmp(_StrSource, sStrings[i]) || !oStrcmp(SourceUppercase, sStrings[i]+9)) // +9 match against just "OS" or "HOST" after oSYSPATH_
+		if (!strcmp(_StrSource, sStrings[i]) || !strcmp(SourceUppercase, sStrings[i]+9)) // +9 match against just "OS" or "HOST" after oSYSPATH_
 		{
 			*_pValue = (oSYSPATH)i;
 			return true;
@@ -651,7 +651,7 @@ struct oFileMonitorImpl : public oStreamMonitor
 
 				oURIParts parts;
 				parts = *URIParts;
-				oStrAppendf(parts.Path, "/%s", path.c_str());
+				oStd::sncatf(parts.Path, "/%s", path.c_str());
 
 				oStd::uri_string URI;
 				oVERIFY(oURIRecompose(URI, parts));

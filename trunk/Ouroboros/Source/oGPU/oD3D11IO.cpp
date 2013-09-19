@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oGPU/oGPU.h>
 #include <oPlatform/Windows/oD3D11.h>
+#include <oCore/filesystem.h>
 #include "oD3D11Texture.h"
 #include "oD3D11Device.h"
 
@@ -142,20 +143,20 @@ bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, oSURFACE_FORMAT _NewFormat
 
 bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const char* _URIReference, const char* _DebugName, oGPUTexture** _ppTexture)
 {
-	oURIParts URIParts;
-	oSTREAM_DESC sd;
-
-	if (!oStreamGetDesc(_URIReference, &sd, &URIParts))
-		return oErrorSetLast(std::errc::no_such_file_or_directory, "%s not found", oSAFESTRN(_URIReference));
-
-	if (oStricmp(URIParts.Scheme, "file"))
+	oStd::uri u(_URIReference);
+	if (_stricmp(u.scheme(), "file"))
 		return oErrorSetLast(std::errc::not_supported, "Currently only file schemed URIs are supported.");
+
+	oStd::path p(u.path());
+
+	if (!oCore::filesystem::exists(p))
+		return oErrorSetLast(std::errc::no_such_file_or_directory, "%s not found", oSAFESTRN(_URIReference));
 
 	oStd::intrusive_ptr<ID3D11Device> D3DDevice;
 	oVERIFY(_pDevice->QueryInterface(&D3DDevice));
 
 	oStd::intrusive_ptr<ID3D11Texture2D> D3DTexture;
-	if (!oD3D11Load(D3DDevice, _Desc, oStd::path(URIParts.Path), _DebugName, (ID3D11Resource**)&D3DTexture))
+	if (!oD3D11Load(D3DDevice, _Desc, p, _DebugName, (ID3D11Resource**)&D3DTexture))
 		return false;
 
 	bool success = false;

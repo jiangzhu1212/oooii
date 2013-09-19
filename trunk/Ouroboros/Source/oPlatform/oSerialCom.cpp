@@ -86,19 +86,19 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oSeri
 	switch(_Value)
 	{
 	case oSerialCom::COM1:
-		oStrcpy(_StrDestination, _SizeofStrDestination, "COM1");
+		strlcpy(_StrDestination, "COM1", _SizeofStrDestination);
 		return _StrDestination;
 
 	case oSerialCom::COM2:
-		oStrcpy(_StrDestination, _SizeofStrDestination, "COM2");
+		strlcpy(_StrDestination, "COM2", _SizeofStrDestination);
 		return _StrDestination;
 
 	case oSerialCom::COM3:
-		oStrcpy(_StrDestination, _SizeofStrDestination, "COM3");
+		strlcpy(_StrDestination, "COM3", _SizeofStrDestination);
 		return _StrDestination;
 
 	case oSerialCom::COM4:
-		oStrcpy(_StrDestination, _SizeofStrDestination, "COM4");
+		strlcpy(_StrDestination, "COM4", _SizeofStrDestination);
 		return _StrDestination;
 	}
 
@@ -108,25 +108,25 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oSeri
 
 bool from_string(oSerialCom::COM* _pAddress, const char* _StrSource)
 {
-	if (0 == oStricmp(_StrSource, "COM1"))
+	if (0 == _stricmp(_StrSource, "COM1"))
 	{
 		*_pAddress = oSerialCom::COM1;
 		return true;
 	}
 
-	if (0 == oStricmp(_StrSource, "COM2"))
+	if (0 == _stricmp(_StrSource, "COM2"))
 	{
 		*_pAddress = oSerialCom::COM2;
 		return true;
 	}
 
-	if (0 == oStricmp(_StrSource, "COM3"))
+	if (0 == _stricmp(_StrSource, "COM3"))
 	{
 		*_pAddress = oSerialCom::COM3;
 		return true;
 	}
 
-	if (0 == oStricmp(_StrSource, "COM4"))
+	if (0 == _stricmp(_StrSource, "COM4"))
 	{
 		*_pAddress = oSerialCom::COM4;
 		return true;

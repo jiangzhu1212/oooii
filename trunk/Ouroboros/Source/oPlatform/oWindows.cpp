@@ -94,7 +94,7 @@ bool oWinSetLastError(HRESULT _hResult, const char* _ErrorDescPrefix)
 	size_t count = oCOUNTOF(err);
 	if (_ErrorDescPrefix)
 	{
-		size_t len = oPrintf(err, "%s", _ErrorDescPrefix);
+		size_t len = snprintf(err, "%s", _ErrorDescPrefix);
 		p += len;
 		count -= len;
 	}
@@ -102,9 +102,9 @@ bool oWinSetLastError(HRESULT _hResult, const char* _ErrorDescPrefix)
 	size_t len = 0;
 	const char* HRAsString = oWinAsStringHR(_hResult);
 	if ('u' == *HRAsString)
-		len = oPrintf(p, count, " (HRESULT 0x%08x: ", _hResult);
+		len = snprintf(p, count, " (HRESULT 0x%08x: ", _hResult);
 	else
-		len = oPrintf(p, count, " (%s: ", HRAsString);
+		len = snprintf(p, count, " (%s: ", HRAsString);
 
 	p += len;
 	count -= len;
@@ -112,7 +112,7 @@ bool oWinSetLastError(HRESULT _hResult, const char* _ErrorDescPrefix)
 	if (!oWinParseHRESULT(p, count, _hResult))
 		return false;
 
-	oStrcat(p, count, ")");
+	strlcat(p, ")", count);
 
 	std::errc::errc std_err = oWinGetErrc(_hResult);
 	return oErrorSetLast(std_err, err);
@@ -703,7 +703,7 @@ int oWinGetDisplayDevice(HMONITOR _hMonitor, DISPLAY_DEVICE* _pDevice)
 		unsigned int index = 0;
 		while (EnumDisplayDevices(0, index, _pDevice, 0))
 		{
-			if (!oStrcmp(mi.szDevice, _pDevice->DeviceName))
+			if (!strcmp(mi.szDevice, _pDevice->DeviceName))
 				return index;
 			index++;
 		}
@@ -802,7 +802,7 @@ const char** oWinCommandLineToArgvA(bool _ExePathAsArg0, const char* CmdLine, in
 	BOOLEAN  in_TEXT;
 	BOOLEAN  in_SPACE;
 
-	len = (ULONG)oStrlen(CmdLine);
+	len = (ULONG)strlen(CmdLine);
 	if (_ExePathAsArg0) // @oooii
 		len += MAX_PATH * sizeof(CHAR);
 
@@ -829,9 +829,9 @@ const char** oWinCommandLineToArgvA(bool _ExePathAsArg0, const char* CmdLine, in
 		oStd::path AppPath = oCore::filesystem::app_path();
 		strlcpy(argv[argc], AppPath, MAX_PATH);
 		oStd::clean_path(argv[argc], MAX_PATH, argv[argc], '\\');
-		j = (ULONG)oStrlen(argv[argc])+1;
+		j = (ULONG)strlen(argv[argc])+1;
 		argc++;
-		argv[argc] = _argv+oStrlen(argv[0])+1;
+		argv[argc] = _argv+strlen(argv[0])+1;
 	}
 
 	while( (a = CmdLine[i]) != 0 ) {
@@ -1155,7 +1155,7 @@ static WORD oDlgGetClass(oWINDOWS_DIALOG_ITEM_TYPE _Type)
 
 static size_t oDlgCalcTextSize(const char* _Text)
 {
-	return sizeof(WCHAR) * (oStrlen(_Text) + 1);
+	return sizeof(WCHAR) * (strlen(_Text) + 1);
 }
 
 static size_t oDlgCalcTemplateSize(const char* _MenuName, const char* _ClassName, const char* _Caption, const char* _FontName)
@@ -1180,8 +1180,8 @@ static size_t oDlgCalcTemplateItemSize(const char* _Text)
 static WORD* oDlgCopyString(WORD* _pDestination, const char* _String)
 {
 	if (!_String) _String = "";
-	size_t len = oStrlen(_String);
-	oStrcpy((WCHAR*)_pDestination, len+1, _String);
+	size_t len = strlen(_String);
+	mbsltowsc((WCHAR*)_pDestination, _String, len+1);
 	return oStd::byte_add(_pDestination, (len+1) * sizeof(WCHAR));
 }
 
@@ -1305,50 +1305,50 @@ bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestinatio
 		oStd::path_string SystemRootPath;
 		GetEnvironmentVariable("SYSTEMROOT", SystemRootPath.c_str(), oUInt(SystemRootPath.capacity()));
 
-		oStrcpy(_StrDestination, _SizeofStrDestination, pQSC->lpBinaryPathName);
+		strlcpy(_StrDestination, pQSC->lpBinaryPathName, _SizeofStrDestination);
 		char* lpFirstOccurance = nullptr;
 		lpFirstOccurance = strstr(_StrDestination, "\\SystemRoot");
-		if (oStrlen(_StrDestination) > 0 && lpFirstOccurance)
+		if (strlen(_StrDestination) > 0 && lpFirstOccurance)
 		{
 			// replace \SysteRoot with system root value obtained by
 			// calling GetEnvironmentVariable() to get SYSTEMROOT
-			lpFirstOccurance += oStrlen("\\SystemRoot");
-			oPrintf(_StrDestination, _SizeofStrDestination, "%s%s", SystemRootPath.c_str(), lpFirstOccurance);
+			lpFirstOccurance += strlen("\\SystemRoot");
+			snprintf(_StrDestination, _SizeofStrDestination, "%s%s", SystemRootPath.c_str(), lpFirstOccurance);
 		}
 
 		else
 		{
 			lpFirstOccurance = nullptr;
 			lpFirstOccurance = strstr(_StrDestination, "\\??\\");
-			if (oStrlen(_StrDestination) > 0 && lpFirstOccurance != nullptr)
+			if (strlen(_StrDestination) > 0 && lpFirstOccurance != nullptr)
 			{
 				// Remove \??\ at the starting of binary path
-				lpFirstOccurance += oStrlen("\\??\\");
-				oPrintf(_StrDestination, _SizeofStrDestination, "%s", lpFirstOccurance);
+				lpFirstOccurance += strlen("\\??\\");
+				snprintf(_StrDestination, _SizeofStrDestination, "%s", lpFirstOccurance);
 			}
 
 			else
 			{
 				lpFirstOccurance = nullptr;
 				lpFirstOccurance = strstr(_StrDestination, "system32");
-				if (oStrlen(_StrDestination) > 0 && lpFirstOccurance && _StrDestination == lpFirstOccurance)
+				if (strlen(_StrDestination) > 0 && lpFirstOccurance && _StrDestination == lpFirstOccurance)
 				{
 					// Add SYSTEMROOT value if there is only system32 mentioned in binary path
 					oStd::path_string temp;
-					oPrintf(temp.c_str(), temp.capacity(), "%s\\%s", SystemRootPath.c_str(), _StrDestination); 
-					oStrcpy(_StrDestination, _SizeofStrDestination, temp);
+					snprintf(temp, "%s\\%s", SystemRootPath.c_str(), _StrDestination); 
+					strlcpy(_StrDestination, temp, _SizeofStrDestination);
 				}
 
 				else
 				{
 					lpFirstOccurance = nullptr;
 					lpFirstOccurance = strstr(_StrDestination, "System32");
-					if (oStrlen(_StrDestination) > 0 && lpFirstOccurance && _StrDestination == lpFirstOccurance)
+					if (strlen(_StrDestination) > 0 && lpFirstOccurance && _StrDestination == lpFirstOccurance)
 					{
 						// Add SYSTEMROOT value if there is only System32 mentioned in binary path
 						oStd::path_string temp;
-						oPrintf(temp.c_str(), temp.capacity(), "%s\\%s", SystemRootPath.c_str(), _StrDestination); 
-						oStrcpy(_StrDestination, _SizeofStrDestination, temp); 
+						snprintf(temp, "%s\\%s", SystemRootPath.c_str(), _StrDestination); 
+						strlcpy(_StrDestination, temp, _SizeofStrDestination); 
 					}
 				}
 			}
@@ -1408,7 +1408,7 @@ bool oWinGetProcessTopWindowAndThread(oCore::process::id _ProcessID, HWND* _pHWN
 		{
 			oFORI(i, WindowsToSkip)
 			{
-				if( 0 == oStrcmp(WindowText.c_str(), WindowsToSkip[i]) )
+				if( 0 == strcmp(WindowText.c_str(), WindowsToSkip[i]) )
 				{
 					return true;
 				}
@@ -1416,7 +1416,7 @@ bool oWinGetProcessTopWindowAndThread(oCore::process::id _ProcessID, HWND* _pHWN
 		}
 
 		// If the caller specified a window name make certain this is the right window or else keep searching
-		if(_pOptionalWindowName && 0 != oStrcmp(_pOptionalWindowName, WindowText))
+		if(_pOptionalWindowName && 0 != strcmp(_pOptionalWindowName, WindowText))
 			return true;
 
 		Hwnd = _Hwnd;

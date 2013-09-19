@@ -106,7 +106,7 @@ struct PLATFORM_oCRTLeakTracker : public oTest
 			oTESTB(pTracker->ReportLeaks(), "Tracker failed to detect char leak from different thread");
 			delete pCharAllocThreaded;
 		#else
-			oPrintf(_StrStatus, _SizeofStrStatus, "Not available in Release");
+			snprintf(_StrStatus, _SizeofStrStatus, "Not available in Release");
 		#endif
 		return SUCCESS;
 	}
@@ -114,7 +114,7 @@ struct PLATFORM_oCRTLeakTracker : public oTest
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oTESTB(oPlatformTest_oCRTLeakTracker(), "%s", oErrorGetLastString());
-		oPrintf(_StrStatus, _SizeofStrStatus, "%s: %s", oErrorAsString(oErrorGetLast()), oErrorGetLastString());
+		snprintf(_StrStatus, _SizeofStrStatus, "%s: %s", oErrorAsString(oErrorGetLast()), oErrorGetLastString());
 		return SUCCESS;
 	}
 };

@@ -98,9 +98,9 @@ oRTTI_COMPOUND_END_DESCRIPTION(oXMLRawArrayTest)
 static std::shared_ptr<oStd::xml> InitXML(const char* _pXMLString)
 {
 	// Exercise the buffer as if it were loaded from a file...
-	size_t size = oStrlen(_pXMLString)+1;
+	size_t size = strlen(_pXMLString)+1;
 	char* pBuffer = (char*)malloc(size);
-	oStrcpy(pBuffer, size, _pXMLString);
+	strlcpy(pBuffer, _pXMLString, size);
 
 	try { return std::move(std::make_shared<oStd::xml>("Test XML Document", (char*)pBuffer, [](const char* _pXMLString){ free((void*)_pXMLString); }, 100000)); }
 	catch (std::exception& e)
