@@ -195,26 +195,6 @@ int oVPrintf(wchar_t* _StrDestination, size_t _NumDestinationChars, const wchar_
 	return status;
 }
 
-char* oNewlinesToDos(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource)
-{
-	char* d = _StrDestination;
-	char* end = d + _SizeofStrDestination;
-	while (*_StrSource)
-	{
-		if (*_StrSource == '\n' && d != end)
-			*d++ = '\r';
-		if (d != end)
-			*d++ = *_StrSource++;
-		else
-		{
-			oASSERT(false, "oNewlinesToDos: destination string too small.");
-		}
-	}
-
-	*d = 0;
-	return _StrDestination;
-}
-
 errno_t oStrVAppendf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args)
 {
 	if (-1 == oStd::vsncatf(_StrDestination, _SizeofStrDestination, _Format, _Args))

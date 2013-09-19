@@ -211,7 +211,8 @@ oMSGBOX_RESULT AssertDialog(oMSGBOX_TYPE _Type, const char* _Caption, const char
 	RECT rString;
 	std::vector<char> string(oKB(128));
 
-	calcStringRect(rString, oNewlinesToDos(oStd::data(string), oStd::size(string), _String), MinW, MinH, MaxW, MaxH);
+	oStd::replace(oStd::data(string), oStd::size(string), _String, "\n", "\n\r");
+	calcStringRect(rString, oStd::data(string), MinW, MinH, MaxW, MaxH);
 
 	// Figure out where interface goes based on string RECT
 	const LONG BtnPanelLeft = (rString.right - BtnPanelW) - FrameSpacingX;

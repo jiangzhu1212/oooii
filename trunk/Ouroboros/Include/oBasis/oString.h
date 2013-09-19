@@ -93,9 +93,6 @@ template<typename CHAR_T> int oPrintf(CHAR_T* _StrDestination, size_t _NumDestin
 // _____________________________________________________________________________
 // String cleanup
 
-// Convert \n -> \r\n
-char* oNewlinesToDos(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource);
-
 // Essentially a variadic oStrcat
 errno_t oStrVAppendf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args);
 inline errno_t oStrAppendf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); errno_t err = oStrVAppendf(_StrDestination, _SizeofStrDestination, _Format, args); va_end(args); return err; }
