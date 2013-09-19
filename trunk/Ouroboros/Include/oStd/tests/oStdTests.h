@@ -36,6 +36,7 @@ namespace oStd {
 		void TESTcsv();
 		void TESTdate(requirements& _Requirements);
 		void TESTini();
+		void TESTfourcc();
 		void TESTfuture(requirements& _Requirements);
 		void TESTpath();
 		void TESTuri();

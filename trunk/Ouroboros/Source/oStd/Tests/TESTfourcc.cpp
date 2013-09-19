@@ -24,22 +24,30 @@
  **************************************************************************/
 #include <oStd/fourcc.h>
 #include <oStd/stringize.h>
-#include "oBasisTestCommon.h"
-#include <cstring>
+#include <oStd/throw.h>
 
-bool oBasisTest_oFourCC()
+namespace oStd {
+	namespace tests {
+
+void TESTfourcc()
 {
-	oStd::fourcc fcc('TEST');
+	fourcc fcc('TEST');
 
 	char str[16];
 
-	oTESTB(oStd::to_string(str, fcc), "oStd::to_string on oStd::fourcc failed 1");
-	oTESTB(!strcmp("TEST", str), "oStd::to_string on oStd::fourcc failed 2");
+	if (!to_string(str, fcc))
+		oTHROW(protocol_error, "to_string on fourcc failed 1");
+
+	if (strcmp("TEST", str))
+		oTHROW(protocol_error, "to_string on fourcc failed 2");
 
 	const char* fccStr = "RGBA";
-	oTESTB(oStd::from_string(&fcc, fccStr), "oFromSTring on oStd::fourcc failed 1");
-	oTESTB(oStd::fourcc('RGBA') == fcc, "oFromSTring on oStd::fourcc failed 2");
+	if (!from_string(&fcc, fccStr))
+		oTHROW(protocol_error, "from_string on fourcc failed 1");
 
-	oErrorSetLast(0, "");
-	return true;
+	if (fourcc('RGBA') != fcc)
+		oTHROW(protocol_error, "from_string on fourcc failed 2");
 }
+
+	} // namespace tests
+} // namespace oStd

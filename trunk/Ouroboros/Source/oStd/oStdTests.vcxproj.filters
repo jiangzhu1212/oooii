@@ -36,6 +36,9 @@
     <ClCompile Include="Tests\TESTuri.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\TESTfourcc.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oStd\tests\oStdTestRequirements.h">

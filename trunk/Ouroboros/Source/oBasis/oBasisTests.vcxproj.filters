@@ -28,9 +28,6 @@
     <ClCompile Include="Tests\TESTFilterChain.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTFourCC.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTHash.cpp">
       <Filter>Source</Filter>
     </ClCompile>
