@@ -60,6 +60,7 @@ namespace oStd {
 		#pragma warning(default:4996)
 		return l;
 	}
+	template<size_t size> int vsnprintf(char (&_StrDestination)[size], const char* _Format, va_list _Args) { return vsnprintf(_StrDestination, size, _Format, _Args); }
 
 	inline int vsnwprintf(wchar_t* _StrDestination, size_t _NumChars, const wchar_t* _Format, va_list _Args)
 	{
@@ -68,6 +69,7 @@ namespace oStd {
 		#pragma warning(default:4996)
 		return l;
 	}
+	template<size_t size> int vsnwprintf(wchar_t (&_StrDestination)[size], const wchar_t* _Format, va_list _Args) { return vsnwprintf(_StrDestination, size, _Format, _Args); }
 }
 
 inline int snprintf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, ...)
@@ -132,10 +134,12 @@ const char* ordinal(size_t _Number);
 
 // passing this to std::transform brings up warnings that are hard to disable,
 // so create a wrapper that is same type in and out.
-template<typename charT> charT tolower(const charT& c) { return (charT)::tolower(c); }
-template<typename charT> charT toupper(const charT& c) { return (charT)::toupper(c); }
+template<typename charT> charT tolower(charT c) { return (charT)::tolower(c); }
+template<typename charT> charT toupper(charT c) { return (charT)::toupper(c); }
 template<typename charT> void tolower(charT* _String) { while (*_String) *_String++ = tolower(*_String); }
 template<typename charT> void toupper(charT* _String) { while (*_String) *_String++ = toupper(*_String); }
+template<typename charT> void tolower(charT* _Begin, charT* _End) { while (_Begin < _End) *_Begin++ = tolower(*_Begin); }
+template<typename charT> void toupper(charT* _Begin, charT* _End) { while (_Begin < _End) *_Begin++ = toupper(*_Begin); }
 
 // does a formatted strcat. This returns the total new length of the string. If 
 // that length is >= _SizeofStrDestination, then the destination is not big 

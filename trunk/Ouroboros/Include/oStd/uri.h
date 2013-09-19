@@ -53,9 +53,9 @@ public:
 	typedef typename traits::char_type char_type;
 	typedef typename traits::size_type size_type;
 	static const size_type Capacity = traits::capacity;
-	typedef uri_string string_type;
+	typedef fixed_string<char_type, 512> string_type;
 	typedef unsigned long long hash_type;
-	typedef string_type::string_piece_type string_piece_type;
+	typedef typename string_type::string_piece_type string_piece_type;
 	typedef const char_type(&const_array_ref)[Capacity];
 
 	static const char_type* remove_flag() { return (const char_type*)(-1); }
@@ -140,12 +140,12 @@ public:
 		, const char_type* _Fragment = nullptr)
 	{
 		bool reparse = false;
-		uri_string s;
+		string_type s;
 		if (_Scheme == remove_flag()) { reparse = true; }
 		else if (_Scheme)
 		{
 			s += _Scheme;
-			transform(std::begin(s), std::end(s), std::begin(s), tolower<const char_type&>);
+			tolower(std::begin(s), std::end(s));
 			s += traits::scheme_str();
 		}
 		else if (has_scheme())
@@ -457,14 +457,14 @@ private:
 		std::match_results<char_type*>::value_type& to_lower = 
 			*(std::match_results<char_type*>::value_type*)&matches[2];
 
-		transform(to_lower.first, to_lower.second, to_lower.first, tolower<const char_type&>);
+		tolower(to_lower.first, to_lower.second);
 
 		// If the whole path isn't made lower-case for case-insensitive purposes, 
 		// the percent values at least should be made lower-case (i.e. this should 
 		// be true: &7A == &7a)
 		percent_to_lower(URI, URI);
 
-		uint128 Hash128 = oStd::murmur3(URI, static_cast<size_t>(matches[0].second - matches[0].first));
+		uint128 Hash128 = murmur3(URI, static_cast<size_t>(matches[0].second - matches[0].first));
 		if (sizeof(hash_type) < 16) // use upper bits because they are more random
 			Hash128 >>= 64;
 		Hash = (hash_type)Hash128;
