@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oP4.h>
-#include <oBasis/oString.h>
 #include <oPlatform/oReporting.h>
 #include <oBasis/oError.h>
 #include <time.h>

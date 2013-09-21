@@ -24,7 +24,6 @@
  **************************************************************************/
 #include "oAllocatorTLSF.h"
 #include <oStd/byte.h>
-#include <oBasis/oString.h>
 #include "tlsf.h"
 
 oAllocatorTLSF::oAllocatorTLSF(const char* _DebugName, const DESC& _Desc, bool* _pSuccess)

@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oPlatform/Windows/oWinAsString.h>
 #include <oPlatform/Windows/oWinWindowing.h>
-#include <oBasis/oString.h>
 #include <oBasis/oError.h>
 #include <Windowsx.h>
 #include <DShow.h>

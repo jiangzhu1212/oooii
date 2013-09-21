@@ -38,7 +38,6 @@
 #include <oBasis/oMeshUtil.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oStdLinearAllocator.h>
-#include <oBasis/oString.h>
 
 // To translate from several index streams - one per vertex element stream - to 
 // a single index buffer, we'll need to replicate vertices by their unique 

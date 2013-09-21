@@ -36,7 +36,6 @@
 #include <oStd/macros.h> // oCOUNTOF
 #include <oStd/operators.h>
 #include <oBasis/oPlatformFeatures.h> // nullptr
-#include <oBasis/oString.h>
 #include <oBasis/oRTTI.h>
 
 #define oMAX_SCHEME 32

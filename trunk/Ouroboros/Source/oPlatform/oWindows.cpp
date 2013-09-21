@@ -30,7 +30,6 @@
 #include <oStd/fixed_string.h>
 #include <oConcurrency/mutex.h>
 #include <oBasis/oPath.h>
-#include <oBasis/oString.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oModule.h>
 #include <oPlatform/oProcessHeap.h>

@@ -81,9 +81,6 @@
     <ClInclude Include="..\..\Include\oBasis\oFilterChain.h">
       <Filter>oBasis</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oString.h">
-      <Filter>oBasis\String Parsing</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oURI.h">
       <Filter>oBasis\String Parsing</Filter>
     </ClInclude>
@@ -348,6 +345,9 @@
     <ClInclude Include="..\..\Include\oBasis\oGZip.h">
       <Filter>oBasis\Compression</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oStrTok.h">
+      <Filter>oBasis\String Parsing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -402,9 +402,6 @@
       <Filter>Source\String Parsing</Filter>
     </ClCompile>
     <ClCompile Include="oPath.cpp">
-      <Filter>Source\String Parsing</Filter>
-    </ClCompile>
-    <ClCompile Include="oString.cpp">
       <Filter>Source\String Parsing</Filter>
     </ClCompile>
     <ClCompile Include="oDispatchQueuePrivate.cpp">
@@ -487,6 +484,9 @@
     </ClCompile>
     <ClCompile Include="oGZip.cpp">
       <Filter>Source\Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="oStrTok.cpp">
+      <Filter>Source\String Parsing</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

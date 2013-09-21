@@ -25,7 +25,7 @@
 #include <oBasis/oINISerialize.h>
 #include <oBasis/oError.h>
 #include <oBasis/oInt.h>
-#include <oBasis/oString.h>
+#include <oBasis/oStrTok.h>
 #include <oStd/fixed_string.h>
 #include <vector>
 

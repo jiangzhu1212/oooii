@@ -38,6 +38,29 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oMSBUILD_SETTINGS)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oMSBUILD_SETTINGS)
 oRTTI_COMPOUND_END_DESCRIPTION(oMSBUILD_SETTINGS)
 
+static const char* oStrStr( const char* _pStr, const char* _pSubStr, size_t _MaxCharCount /*= oInvalid*/ )
+{
+	if(oInvalid == _MaxCharCount)
+		return strstr(_pStr, _pSubStr);
+
+	size_t SearchLen = strlen(_pSubStr);
+	size_t SearchHead = 0;
+	for(size_t i = 0; i < _MaxCharCount; ++i)
+	{
+		if(_pStr[i] == _pSubStr[SearchHead])
+		{
+			if( ++SearchHead == SearchLen)
+			{
+				// Found a match
+				return _pStr + ( i - SearchLen );
+			}
+		}
+		else
+			SearchHead = 0;
+	}
+	return nullptr;
+}
+
 static const char* oMSBUILD_ERROR_PATTERNS[2] = {": error ", ": fatal error"};
 static const char* oMSBUILD_WARNING_PATTERN = ": warning ";
 

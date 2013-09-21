@@ -25,7 +25,7 @@
 #include <oBasis/oPath.h>
 #include <oStd/assert.h>
 #include <oStd/macros.h>
-#include <oBasis/oString.h>
+#include <oBasis/oStrTok.h>
 #include <cstring>
 #include <cctype>
 #include <algorithm>

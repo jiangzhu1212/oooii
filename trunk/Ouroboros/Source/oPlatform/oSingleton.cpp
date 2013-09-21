@@ -56,7 +56,7 @@ namespace oSingletonPlatform
 		int offset = snprintf(msg, "%s(%d): {%s} %s %s ", _File, _Line, modname.basename().c_str(), oSystemGetExecutionPath(syspath), oStd::type_name(_TypeinfoName));
 		va_list args;
 		va_start(args, _Format);
-		oVPrintf(msg + offset, oCOUNTOF(msg) - offset, _Format, args);
+		oStd::vsnprintf(msg + offset, oCOUNTOF(msg) - offset, _Format, args);
 		va_end(args);
 		oStrcat(msg, "\n");
 		oCore::debugger::print(msg);

@@ -1,5 +1,4 @@
 // $(header)
-#include <oBasis/oString.h>
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oConsole.h>
 #include <oPlatform/oImage.h>

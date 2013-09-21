@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oCRTLeakTracker.h"
-#include <oBasis/oString.h>
 #include <oPlatform/Windows/oCRTHeap.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oReporting.h>

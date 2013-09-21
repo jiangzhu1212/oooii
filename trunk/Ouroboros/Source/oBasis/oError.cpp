@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBasis/oError.h>
 #include <oBasis/oBasisRequirements.h>
-#include <oBasis/oString.h>
 #include <oStd/fixed_string.h>
 #include <oStd/macros.h>
 

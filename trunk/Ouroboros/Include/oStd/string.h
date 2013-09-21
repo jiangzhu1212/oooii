@@ -265,6 +265,42 @@ template<typename T, size_t size> char* strbitmask(char (&_StrDestination)[size]
 // behave well for built-in types.
 const char* type_name(const char* _TypeinfoName);
 
+// Like this very C++ comment! This function replaces the comment with the 
+// specified char. _CommentPrefix for C++ would be "//" but could also be ";" or 
+// "'" or "--" for other languages.
+char* zero_line_comments(char* _String, const char* _CommentPrefix, char _Replacement = ' ');
+
+// Zeros-out the entire section delimited by the open and close braces, useful
+// for getting rid of block comments or #if 0/#endif blocks
+char* zero_block_comments(char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace, char _Replacement = ' ');
+
+// This function uses the specified macros to go through and evaluate C-style
+// #if* statements (#if, #ifdef, #elif, #else, #endif) to zero out undefined
+// code. The final macro should be { nullptr, nullptr } as a nul terminator.
+struct macro
+{
+	const char* symbol;
+	const char* value;
+};
+
+char* zero_ifdefs(char* _StrSourceCode, const macro* _pMacros, char _Replacement);
+
+// Convert a buffer into a C++ array. This is useful when you want to embed data 
+// in code itself. This fills the destination string with a declaration of the 
+// form:
+// const <specifiedType> <specifiedName>[] = { <buffer data> };
+// This also defines a function of the form:
+// void get_<_BufferName>(const char** ppBufferName, const void** ppBuffer, size_t* pSize)
+// that can be externed and used to access the buffer. Any extension '.' in the
+// specified bufferName will be replaced with '_', so get_MyFile_txt(...)
+
+size_t oCodifyData(char* _StrDestination
+	, size_t _SizeofStrDestination
+	, const char* _BufferName
+	, const void* _pBuffer
+	, size_t _SizeofBuffer
+	, size_t _WordSize);
+
 // _____________________________________________________________________________
 // Encoding
 

@@ -26,7 +26,6 @@
 #include <oStd/assert.h>
 #include <oStd/macros.h>
 #include <oBasis/oMath.h>
-#include <oBasis/oString.h>
 #include <cstring>
 
 #define oCHECK_SURFACE_DESC(_Desc) \

@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oSurfaceFill.h>
-#include <oBasis/oString.h>
 #include <oStd/fixed_string.h>
 #include <oStd/byte.h>
 

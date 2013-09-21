@@ -23,25 +23,10 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oString_h
-#define oString_h
+#ifndef oStrTok_h
+#define oStrTok_h
 
-#include <oStd/fixed_string.h>
-#include <oStd/function.h>
-#include <oStd/macros.h>
-#include <oBasis/oPlatformFeatures.h>
-#include <oBasis/oInvalid.h>
-#include <stdarg.h> // va_start
-#include <stddef.h> // errno_t
-
-// _____________________________________________________________________________
-// Platform-abstractions of string comparisons to support char and wchar_t.
-// This also abstracts differences between standard C/C++, Posix, and SecureCRT
-// forms. Use these in the code and let abstraction depending on compiler 
-// support happen underneath these calls.
-
-// Like strstr however a maximum number of characters to search can be specified
-const char* oStrStr(const char* _pStr, const char* _pSubStr, size_t _MaxCharCount = oInvalid);
+#include <functional>
 
 // _____________________________________________________________________________
 // String tokenization
@@ -76,24 +61,7 @@ bool oStrTokFinishedSuccessfully(char** _ppContext);
 // _pDelimiters in _pString
 const char* oStrTokSkip(const char* _pString, const char* _pDelimiters, int _Count, bool _SkipDelimiters=true);
 
-// _____________________________________________________________________________
-// Misc
-
-// Come up with every combination of every option specified. _ppOptions is an  
-// array of options lists. Each options list is an array of strings naming each 
-// option. _pSizes is the number of options in each options list. Given all 
-// that, this code will generate in the form of "opt1a|opt2a|opt3a" all 
-// combinations of the specified strings. This uses a 4k internal string buffer
-// that will be truncated if the permutation string gets too long.
-void oPermutate(const char*** _ppOptions, size_t* _pSizes, int _NumOptions, oFUNCTION<void(const char* _Permutation)> _Visitor, const char* _Delim = "|");
-
-//simple string parsing. easier to use that oStrTok. splits string by _Delimiter, calling back _Enumerator for each parsed string.
-void oStrParse(const char* _StrSource, const char* _Delimiter, oFUNCTION<void(const char* _Value)> _Enumerator);
-
-//Count the number of occurrences of _CountChar in _StrSource
-int oStrCCount(const char* _StrSource, char _CountChar);
-
-//returns index of first character that is different between the 2 strings. If strings are identical, then returns -1
-int oStrFindFirstDiff(const char* _StrSource1, const char* _StrSource2);
+// A more convenient form of oStrTok
+void oStrParse(const char* _StrSource, const char* _Delimiter, const std::function<void(const char* _Value)>& _Enumerator);
 
 #endif

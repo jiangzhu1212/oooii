@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBasis/oURI.h>
 #include <oStd/assert.h>
-#include <oBasis/oString.h>
 #include <oBasis/oPath.h>
 #include <oBasis/oError.h>
 #include <cerrno>

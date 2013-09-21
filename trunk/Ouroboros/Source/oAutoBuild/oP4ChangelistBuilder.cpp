@@ -32,6 +32,19 @@
 
 static const char* oAUTO_BUILD_ROOT_PATH = "//Root/";
 
+static int oStrFindFirstDiff(const char* _StrSource1, const char* _StrSource2)
+{
+	const char* origSrc1 = _StrSource1;
+	while(*_StrSource1 && *_StrSource2 && *_StrSource1 == *_StrSource2)
+	{
+		++_StrSource1;
+		++_StrSource2;
+	}
+	if(!*_StrSource1 && !*_StrSource2)
+		return -1;
+	return oInt(oStd::byte_diff(_StrSource1, origSrc1));
+}
+
 struct oBUILD_TOOL_P4_SETTINGS
 {
 	oStd::uri_string Root;

@@ -25,7 +25,6 @@
 #include <oPlatform/oStandards.h>
 #include <oStd/assert.h>
 #include <oStd/chrono.h>
-#include <oBasis/oString.h>
 #include <oPlatform/oConsole.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/Windows/oGDI.h>

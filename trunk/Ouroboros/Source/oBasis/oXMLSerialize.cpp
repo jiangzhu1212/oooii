@@ -23,9 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oXMLSerialize.h>
+#include <oBasis/oStrTok.h>
 #include <oBasis/oInt.h>
 #include <oStd/fixed_string.h>
-#include <oBasis/oString.h>
 #include <oBasis/oError.h>
 #include <vector>
 

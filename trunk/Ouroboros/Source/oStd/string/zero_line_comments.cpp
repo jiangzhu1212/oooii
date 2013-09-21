@@ -22,62 +22,25 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oTypeID.h>
+#include <string.h>
 
 namespace oStd {
 
-const char* as_string(const oTYPE_ID& _TypeID)
+char* zero_line_comments(char* _String, const char* _CommentPrefix, char _Replacement)
 {
-	switch (_TypeID)
+	if (_String)
 	{
-		default:
-		case oTYPE_UNKNOWN: return "unknown_type";
-		case oTYPE_BOOL: return "bool";
-		case oTYPE_CHAR: return "char";
-		case oTYPE_UCHAR: return "unsigned char";
-		case oTYPE_WCHAR: return "wchar";
-		case oTYPE_SHORT: return "short";
-		case oTYPE_USHORT: return "unsigned short";
-		case oTYPE_INT: return "int";
-		case oTYPE_UINT: return "unsigned int";
-		case oTYPE_LONG: return "long";
-		case oTYPE_ULONG: return "unsigned long";
-		case oTYPE_LLONG: return "long long";
-		case oTYPE_ULLONG: return "unsigned long long";
-		case oTYPE_FLOAT: return "float";
-		case oTYPE_DOUBLE: return "double";
-		case oTYPE_HALF: return "half";
-		case oTYPE_INT2: return "int2";
-		case oTYPE_INT3: return "int3";
-		case oTYPE_INT4: return "int4";
-		case oTYPE_UINT2: return "uint2";
-		case oTYPE_UINT3: return "uint3";
-		case oTYPE_UINT4: return "uint4";
-		case oTYPE_FLOAT2: return "float2";
-		case oTYPE_FLOAT3: return "float3";
-		case oTYPE_FLOAT4: return "float4";
-		case oTYPE_FLOAT4X4: return "float4x4";
-	}
-}
-
-bool from_string(oTYPE_ID* _pTypeID, const char* _StrSource)
-{
-	*_pTypeID = oTYPE_UNKNOWN;
-	for (int i = 0; i < oNUM_TYPES; i++)
-	{
-		if (!strcmp(_StrSource, as_string(oTYPE_ID(i))))
+		size_t l = strlen(_CommentPrefix);
+		while (*_String)
 		{
-			*_pTypeID = oTYPE_ID(i);
-			return true;
+			if (!memcmp(_CommentPrefix, _String, l))
+				while (*_String && *_String != '\n')
+					*_String++ = _Replacement;
+			_String++;
 		}
 	}
 
-	return false;
-}
-
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oTYPE_ID& _Value)
-{
-	return strlcpy(_StrDestination, as_string(_Value), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
+	return _String;
 }
 
 } // namespace oStd

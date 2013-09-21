@@ -76,6 +76,7 @@
     <ClCompile Include="string\ampersand_encode.cpp" />
     <ClCompile Include="string\clean_path.cpp" />
     <ClCompile Include="string\clean_whitespace.cpp" />
+    <ClCompile Include="string\codify_data.cpp" />
     <ClCompile Include="string\elipsize.cpp" />
     <ClCompile Include="string\format_bytes.cpp" />
     <ClCompile Include="string\format_commas.cpp" />
@@ -84,6 +85,7 @@
     <ClCompile Include="string\json_escape_decode.cpp" />
     <ClCompile Include="string\json_escape_encode.cpp" />
     <ClCompile Include="string\mbsltowcs.cpp" />
+    <ClCompile Include="string\next_matching.cpp" />
     <ClCompile Include="string\ordinal.cpp" />
     <ClCompile Include="string\percent_decode.cpp" />
     <ClCompile Include="string\percent_encode.cpp" />
@@ -93,13 +95,15 @@
     <ClCompile Include="string\split_path.cpp" />
     <ClCompile Include="string\strbitmask.cpp" />
     <ClCompile Include="string\stringize.cpp" />
-    <ClCompile Include="string\strmatch.cpp" />
     <ClCompile Include="string\strtok.cpp" />
     <ClCompile Include="string\trim.cpp" />
     <ClCompile Include="string\type_name.cpp" />
     <ClCompile Include="string\wcselipsize.cpp" />
     <ClCompile Include="string\wcsltombs.cpp" />
     <ClCompile Include="string\wsplit_path.cpp" />
+    <ClCompile Include="string\zero_block_comments.cpp" />
+    <ClCompile Include="string\zero_ifdefs.cpp" />
+    <ClCompile Include="string\zero_line_comments.cpp" />
     <ClCompile Include="text_document.cpp" />
     <ClCompile Include="thread.cpp" />
     <ClCompile Include="uri.cpp" />

@@ -22,62 +22,29 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oTypeID.h>
+#include <memory.h>
+#include <oStd/macros.h>
 
 namespace oStd {
 
-const char* as_string(const oTYPE_ID& _TypeID)
-{
-	switch (_TypeID)
-	{
-		default:
-		case oTYPE_UNKNOWN: return "unknown_type";
-		case oTYPE_BOOL: return "bool";
-		case oTYPE_CHAR: return "char";
-		case oTYPE_UCHAR: return "unsigned char";
-		case oTYPE_WCHAR: return "wchar";
-		case oTYPE_SHORT: return "short";
-		case oTYPE_USHORT: return "unsigned short";
-		case oTYPE_INT: return "int";
-		case oTYPE_UINT: return "unsigned int";
-		case oTYPE_LONG: return "long";
-		case oTYPE_ULONG: return "unsigned long";
-		case oTYPE_LLONG: return "long long";
-		case oTYPE_ULLONG: return "unsigned long long";
-		case oTYPE_FLOAT: return "float";
-		case oTYPE_DOUBLE: return "double";
-		case oTYPE_HALF: return "half";
-		case oTYPE_INT2: return "int2";
-		case oTYPE_INT3: return "int3";
-		case oTYPE_INT4: return "int4";
-		case oTYPE_UINT2: return "uint2";
-		case oTYPE_UINT3: return "uint3";
-		case oTYPE_UINT4: return "uint4";
-		case oTYPE_FLOAT2: return "float2";
-		case oTYPE_FLOAT3: return "float3";
-		case oTYPE_FLOAT4: return "float4";
-		case oTYPE_FLOAT4X4: return "float4x4";
-	}
-}
+char* next_matching(char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace);
 
-bool from_string(oTYPE_ID* _pTypeID, const char* _StrSource)
+char* zero_block_comments(char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace, char _Replacement)
 {
-	*_pTypeID = oTYPE_UNKNOWN;
-	for (int i = 0; i < oNUM_TYPES; i++)
+	char* close = next_matching(_pPointingAtOpenBrace, _OpenBrace, _CloseBrace);
+	close += strlen(_CloseBrace);
+
+	char* cur = _pPointingAtOpenBrace;
+
+	while (cur < close)
 	{
-		if (!strcmp(_StrSource, as_string(oTYPE_ID(i))))
-		{
-			*_pTypeID = oTYPE_ID(i);
-			return true;
-		}
+		size_t offset = __min(strcspn(cur, oNEWLINE), static_cast<size_t>(close-cur));
+		memset(cur, _Replacement, offset);
+		cur += offset;
+		cur += strspn(cur, oNEWLINE);
 	}
 
-	return false;
-}
-
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oTYPE_ID& _Value)
-{
-	return strlcpy(_StrDestination, as_string(_Value), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
+	return close;
 }
 
 } // namespace oStd

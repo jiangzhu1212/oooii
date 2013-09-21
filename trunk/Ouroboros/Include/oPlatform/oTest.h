@@ -30,7 +30,6 @@
 
 #include <oBasis/oFilterChain.h>
 #include <oBasis/oStddef.h>
-#include <oBasis/oString.h>
 #include <oPlatform/oSingleton.h> // @oooii-tony: Is it necessary to guarantee a test to be singular? If not this can take a step towards being cross-platform.
 #include <oStd/path.h>
 

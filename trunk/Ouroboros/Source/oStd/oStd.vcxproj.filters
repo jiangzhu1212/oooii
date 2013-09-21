@@ -163,9 +163,6 @@
     <ClCompile Include="string\json_escape_decode.cpp">
       <Filter>Source\string\encoding</Filter>
     </ClCompile>
-    <ClCompile Include="string\strmatch.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
     <ClCompile Include="string\strtok.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
@@ -182,6 +179,21 @@
       <Filter>Source\string</Filter>
     </ClCompile>
     <ClCompile Include="string\split_path.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\next_matching.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\zero_line_comments.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\zero_block_comments.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\zero_ifdefs.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\codify_data.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
   </ItemGroup>

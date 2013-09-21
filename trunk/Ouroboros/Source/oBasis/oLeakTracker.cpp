@@ -26,7 +26,6 @@
 #include <oStd/algorithm.h>
 #include <oBasis/oBasisRequirements.h>
 #include <oBasis/oLockThis.h>
-#include <oBasis/oString.h>
 #include <oStd/for.h>
 #include <oStd/atomic.h>
 #include <oStd/chrono.h>

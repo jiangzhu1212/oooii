@@ -26,7 +26,6 @@
 #include <oBasis/oError.h>
 #include <oStd/finally.h>
 #include <oBasis/oPath.h>
-#include <oBasis/oString.h>
 #include <oBasis/oTimer.h>
 #include <oBasis/tests/oBasisTests.h>
 #include "oBasisTestCommon.h"

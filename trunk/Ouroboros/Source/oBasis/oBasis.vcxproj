@@ -93,7 +93,7 @@
     <ClInclude Include="..\..\Include\oBasis\oStddef.h" />
     <ClInclude Include="..\..\Include\oBasis\oStdLinearAllocator.h" />
     <ClInclude Include="..\..\Include\oBasis\oStdStringSupport.h" />
-    <ClInclude Include="..\..\Include\oBasis\oString.h" />
+    <ClInclude Include="..\..\Include\oBasis\oStrTok.h" />
     <ClInclude Include="..\..\Include\oBasis\oSurface.h" />
     <ClInclude Include="..\..\Include\oBasis\oSurfaceFill.h" />
     <ClInclude Include="..\..\Include\oBasis\oSurfaceResize.h" />
@@ -149,7 +149,7 @@
     <ClCompile Include="oPath.cpp" />
     <ClCompile Include="oRTTI.cpp" />
     <ClCompile Include="oSnappy.cpp" />
-    <ClCompile Include="oString.cpp" />
+    <ClCompile Include="oStrTok.cpp" />
     <ClCompile Include="oSurface.cpp" />
     <ClCompile Include="oSurfaceFill.cpp" />
     <ClCompile Include="oSurfaceResize.cpp" />

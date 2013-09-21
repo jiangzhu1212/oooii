@@ -27,7 +27,6 @@
 #include <oBasis/oLZMA.h>
 #include <oBasis/oPath.h>
 #include <oBasis/oSnappy.h>
-#include <oBasis/oString.h>
 #include <oBasis/oTimer.h>
 #include <oStd/finally.h>
 #include <oStd/timer.h>

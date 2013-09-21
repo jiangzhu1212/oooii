@@ -113,7 +113,6 @@ char* exec_path(char* _StrDestination, size_t _SizeofStrDestination);
 template<size_t size> char* exec_path(char (&_StrDestination)[size]) { return host_name(_StrDestination, size); }
 template<size_t capacity> char* exec_path(oStd::fixed_string<char, capacity>& _StrDestination) { return exec_path(_StrDestination, _StrDestination.capacity()); }
 
-
 void setenv(const char* _EnvVarName, const char* _Value);
 char* getenv(char* _Value, size_t _SizeofValue, const char* _EnvVarName);
 template<size_t size> char* getenv(char (&_Value)[size], const char* _EnvVarName) { return getenv(_Value, size, _EnvVarName); }

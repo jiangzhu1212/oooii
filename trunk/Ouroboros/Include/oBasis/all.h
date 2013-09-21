@@ -69,7 +69,7 @@
 #include <oBasis/oSnappy.h>
 #include <oBasis/oStddef.h>
 #include <oBasis/oStdStringSupport.h>
-#include <oBasis/oString.h>
+#include <oBasis/oStrTok.h>
 #include <oBasis/oSurface.h>
 #include <oBasis/oSurfaceFill.h>
 #include <oBasis/oSurfaceResize.h>

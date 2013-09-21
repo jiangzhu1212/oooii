@@ -28,6 +28,18 @@
 #include <oBasis/oLockThis.h>
 #include <oBasis/oOSC.h>
 
+static int oStrCCount(const char* _StrSource, char _CountChar)
+{
+	int result = 0;
+	while(*_StrSource)
+	{
+		if(*_StrSource == _CountChar)
+			++result;
+		++_StrSource;
+	}
+	return result;
+}
+
 namespace
 {
 	class oHandlerEntry

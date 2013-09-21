@@ -27,7 +27,6 @@
 #include <oStd/assert.h>
 #include <oStd/timer.h>
 #include <oBasis/oInvalid.h>
-#include <oBasis/oString.h>
 #include <oBasis/tests/oBasisTests.h>
 #include <vector>
 #include "oBasisTestCommon.h"

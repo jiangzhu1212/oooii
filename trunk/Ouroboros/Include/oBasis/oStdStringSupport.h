@@ -28,7 +28,6 @@
 #define oStdStringSupport_h
 
 #include <string>
-#include <oBasis/oString.h>
 
 // Copy from wchar_t std::basic_string to char std::basic_string
 inline void oStrcpy(std::string& _StrDestination, const std::wstring& _StrSource)
