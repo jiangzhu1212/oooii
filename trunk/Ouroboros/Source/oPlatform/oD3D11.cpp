@@ -81,7 +81,7 @@ static bool oD3D11FindAdapter(int _Index, const int2& _VirtualDesktopPosition, c
 	if (!oDXGICreateFactory(&Factory))
 		return oErrorSetLast(std::errc::no_such_device, "Failed to create DXGI factory");
 
-	if (any_equal(_VirtualDesktopPosition, int2(oDEFAULT, oDEFAULT)))
+	if (any(_VirtualDesktopPosition == int2(oDEFAULT, oDEFAULT)))
 	{
 		if (_Index < 0)
 			return oErrorSetLast(std::errc::invalid_argument, "An invalid index and an invalid virtual desktop point where specified. One must be valid.");

@@ -126,7 +126,7 @@ inline o3DDARay oDeltaRayCreate(oIN(float3, _Ray))
 struct o3DDARayContext
 {
 #ifndef oHLSL
-	bool operator == (const o3DDARayContext& _rhs) const { return _rhs.CurrentPosition == CurrentPosition; }
+	bool operator==(const o3DDARayContext& _rhs) const { return all(_rhs.CurrentPosition == CurrentPosition); }
 #endif
 	float3 DeltaSum;
 	int3 CurrentPosition;

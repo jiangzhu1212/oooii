@@ -429,7 +429,7 @@ bool oGPUCreateTexture(oGPUDevice* _pDevice, const oImage* const* _ppSourceImage
 	{
 		oImage::DESC idslice;
 		_ppSourceImages[i]->GetDesc(&idslice);
-		if (idslice.Dimensions != id.Dimensions || idslice.Format != id.Format)
+		if (any(idslice.Dimensions != id.Dimensions) || idslice.Format != id.Format)
 			return oErrorSetLast(std::errc::invalid_argument, "Source images don't have the same dimensions and/or format");
 
 		oSURFACE_MAPPED_SUBRESOURCE msr;
@@ -477,7 +477,7 @@ static bool DEPRECATED_oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pM
 		oImage::DESC idslice;
 		_pMip0Images[imageIndex]->GetDesc(&idslice);
 
-		if (idslice.Dimensions != id.Dimensions || idslice.Format != id.Format)
+		if (any(idslice.Dimensions != id.Dimensions) || idslice.Format != id.Format)
 			return oErrorSetLast(std::errc::invalid_argument, "Source images don't have the same dimensions and/or format");
 	}
 #endif

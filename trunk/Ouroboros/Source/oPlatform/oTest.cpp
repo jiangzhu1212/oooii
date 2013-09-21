@@ -421,7 +421,7 @@ bool oTest::TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const c
 
 	// Compare dimensions/format before going into pixels
 	{
-		if (iDesc.Dimensions != gDesc.Dimensions)
+		if (any(iDesc.Dimensions != gDesc.Dimensions))
 		{
 			if (!oImageSave(_pTestImage, oImageIsAlphaFormat(iDesc.Format) ? oImage::FORCE_ALPHA : oImage::FORCE_NO_ALPHA, _FailedImagePath))
 				return oErrorSetLast(std::errc::io_error, "Save failed: (Output)...%s", fPath);

@@ -196,7 +196,7 @@ bool oBasisTest_oRTTI()
 
 	f = oRTTI_OF(Test).GetAttr(10);
 	f->RTTI->FromString("1.1 2.2 3.3 4.4", f->GetDestPtr(&test), oInt(f->Size));
-	oTESTB(oStd::equal(test.SphereMember, oSpheref(float3(1.1f, 2.2f, 3.3f), 4.4f)), "Failed FromString(test.SphereMember)");
+	oTESTB(all(test.SphereMember == oSpheref(float3(1.1f, 2.2f, 3.3f), 4.4f)), "Failed FromString(test.SphereMember)");
 
 	str.clear();
 	oTESTB(f->RTTI->ToString(str, f->GetDestPtr(&test)), "Failed ToString(test.SphereMember)");

@@ -214,7 +214,7 @@ oCONTAINMENT oContains(const oRECT& _Rect0, const oRECT& _Rect1)
 		|| _Rect0.Max.y < _Rect1.Min.y)
 		return oNOT_CONTAINED;
 
-	if (greater_than_equal(_Rect1.Min, _Rect0.Min) && less_than_equal(_Rect1.Max, _Rect0.Max))
+	if (all(_Rect1.Min >= _Rect0.Min) && all(_Rect1.Max <= _Rect0.Max))
 		return oWHOLLY_CONTAINED;
 
 	return oPARTIALLY_CONTAINED;
@@ -222,15 +222,10 @@ oCONTAINMENT oContains(const oRECT& _Rect0, const oRECT& _Rect1)
 
 oCONTAINMENT oContains(const oAABoxf& _Box0, const oAABoxf& _Box1)
 {
-	if (_Box0.Min.x > _Box1.Max.x
-		|| _Box0.Max.x < _Box1.Min.x
-		|| _Box0.Min.y > _Box1.Max.y
-		|| _Box0.Max.y < _Box1.Min.y
-		|| _Box0.Min.z > _Box1.Max.z
-		|| _Box0.Max.z < _Box1.Max.z)
+	if (any(_Box0.Min > _Box1.Max) || any(_Box0.Max < _Box1.Min))
 		return oNOT_CONTAINED;
 
-	if (greater_than_equal(_Box1.Min, _Box0.Min) && less_than_equal(_Box1.Max, _Box0.Max))
+	if (all(_Box1.Min >= _Box0.Min) && all(_Box1.Max <= _Box0.Max))
 		return oWHOLLY_CONTAINED;
 
 	return oPARTIALLY_CONTAINED;

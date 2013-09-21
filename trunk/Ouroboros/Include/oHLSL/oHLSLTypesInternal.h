@@ -38,7 +38,6 @@
 #define oHLSL_CONCAT(a,b) a##b
 
 #define oHLSL_MEMBER_OP(return_t, param_t, op) inline const return_t& operator op##=(const param_t& a) { *this = *this op a; return *this; }
-#define oHLSL_MEMBER_EQOP(param_t, op) bool operator op(const param_t& a) const { return ::operator op(*this, a); }
 #define oHLSL_ELOPT4_SCALAR(type, op) template<typename T> type<T> operator op(const type<T>& a, const T& b) { return type<T>(a.x op b, a.y op b, a.z op b, a.w op b); } template<typename T> type<T> operator op(const T& a, const type<T>& b) { return type<T>(a op b.x, a op b.y, a op b.z, a op b.w); }
 #define oHLSL_ELOPT4_VECTOR(type, op) template<typename T> type<T> operator op(const type<T>& a, const type<T>& b) { return type<T>(a.x op b.x, a.y op b.y, a.z op b.z, a.w op b.w); }
 #define oHLSL_ELOP2(op) template<typename T> oHLSL::TVEC2<T> operator op(const oHLSL::TVEC2<T>& a, const oHLSL::TVEC2<T>& b) { return oHLSL::TVEC2<T>(a.x op b.x, a.y op b.y); } template<typename T> oHLSL::TVEC2<T> operator op(const oHLSL::TVEC2<T>& a, const T& b) { return oHLSL::TVEC2<T>(a.x op b, a.y op b); } template<typename T> oHLSL::TVEC2<T> operator op(const T& a, const oHLSL::TVEC2<T>& b) { return oHLSL::TVEC2<T>(a op b.x, a op b.y); }
@@ -53,27 +52,15 @@
 #define oHLSL_ELBFN2(pubfn, implfn) template<typename T> oHLSL::TVEC2<T> pubfn(const oHLSL::TVEC2<T>& a, const oHLSL::TVEC2<T>& b) { return oHLSL::TVEC2<T>(implfn(a.x, b.x), implfn(a.y, b.y)); }
 #define oHLSL_ELBFN3(pubfn, implfn) template<typename T> oHLSL::TVEC3<T> pubfn(const oHLSL::TVEC3<T>& a, const oHLSL::TVEC3<T>& b) { return oHLSL::TVEC3<T>(implfn(a.x, b.x), implfn(a.y, b.y), implfn(a.z, b.z)); }
 #define oHLSL_ELBFN4(pubfn, implfn) template<typename T> oHLSL::TVEC4<T> pubfn(const oHLSL::TVEC4<T>& a, const oHLSL::TVEC4<T>& b) { return oHLSL::TVEC4<T>(implfn(a.x, b.x), implfn(a.y, b.y), implfn(a.z, b.z), implfn(a.w, b.w)); }
-#define oHLSL_NEQ(type) template<typename T> bool operator!=(const type& a, const type& b) { return !(a == b); }
-#define oHLSL_CMP2(fn,cmp) template<typename T> bool fn(const oHLSL::TVEC2<T>& a, const oHLSL::TVEC2<T>& b) { return a.x cmp b.x && a.y cmp b.y; }
-#define oHLSL_CMP3(fn,cmp) template<typename T> bool fn(const oHLSL::TVEC3<T>& a, const oHLSL::TVEC3<T>& b) { return a.x cmp b.x && a.y cmp b.y && a.z cmp b.z; }
-#define oHLSL_CMP4(fn,cmp) template<typename T> bool fn(const oHLSL::TVEC4<T>& a, const oHLSL::TVEC4<T>& b) { return a.x cmp b.x && a.y cmp b.y && a.z cmp b.z && a.w cmp b.w; }
-#define oHLSL_ANYCMP2(fn,cmp) template<typename T> bool fn(const oHLSL::TVEC2<T>& a, const oHLSL::TVEC2<T>& b) { return a.x cmp b.x || a.y cmp b.y; }
-#define oHLSL_ANYCMP3(fn,cmp) template<typename T> bool fn(const oHLSL::TVEC3<T>& a, const oHLSL::TVEC3<T>& b) { return a.x cmp b.x || a.y cmp b.y || a.z cmp b.z; }
-#define oHLSL_ANYCMP4(fn,cmp) template<typename T> bool fn(const oHLSL::TVEC4<T>& a, const oHLSL::TVEC4<T>& b) { return a.x cmp b.x || a.y cmp b.y || a.z cmp b.z || a.w cmp b.w; }
+#define oHLSL_CMP2(cmp) template<typename T> oHLSL::TVEC2<bool> operator##cmp(const oHLSL::TVEC2<T>& a, const oHLSL::TVEC2<T>& b) { return oHLSL::TVEC2<bool>(a.x cmp b.x, a.y cmp b.y); }
+#define oHLSL_CMP3(cmp) template<typename T> oHLSL::TVEC3<bool> operator##cmp(const oHLSL::TVEC3<T>& a, const oHLSL::TVEC3<T>& b) { return oHLSL::TVEC3<bool>(a.x cmp b.x, a.y cmp b.y, a.z cmp b.z); }
+#define oHLSL_CMP4(cmp) template<typename T> oHLSL::TVEC4<bool> operator##cmp(const oHLSL::TVEC4<T>& a, const oHLSL::TVEC4<T>& b) { return oHLSL::TVEC4<bool>(a.x cmp b.x, a.y cmp b.y, a.z cmp b.z, a.w cmp b.w); }
 // Macros to get through the boilerplate for operators, compares, etc.
-#define oHLSL_MEMBER_OPS(type, scalar_t) oHLSL_MEMBER_EQOP(type, ==) oHLSL_MEMBER_EQOP(type, !=) oHLSL_MEMBER_OP(type, scalar_t, *) oHLSL_MEMBER_OP(type, scalar_t, /) oHLSL_MEMBER_OP(type, scalar_t, +) oHLSL_MEMBER_OP(type, scalar_t, -) oHLSL_MEMBER_OP(type, scalar_t, &) oHLSL_MEMBER_OP(type, scalar_t, |) oHLSL_MEMBER_OP(type, scalar_t, ^) oHLSL_MEMBER_OP(type, scalar_t, <<) oHLSL_MEMBER_OP(type, scalar_t, >>) oHLSL_MEMBER_OP(type, type, *) oHLSL_MEMBER_OP(type, type, /) oHLSL_MEMBER_OP(type, type, +) oHLSL_MEMBER_OP(type, type, -) oHLSL_MEMBER_OP(type, type, &) oHLSL_MEMBER_OP(type, type, |) oHLSL_MEMBER_OP(type, type, ^) oHLSL_MEMBER_OP(type, type, <<) oHLSL_MEMBER_OP(type, type, >>) oHLSL_VBRACKET_OP(scalar_t)
+#define oHLSL_MEMBER_OPS(type, scalar_t) oHLSL_MEMBER_OP(type, scalar_t, *) oHLSL_MEMBER_OP(type, scalar_t, /) oHLSL_MEMBER_OP(type, scalar_t, +) oHLSL_MEMBER_OP(type, scalar_t, -) oHLSL_MEMBER_OP(type, scalar_t, &) oHLSL_MEMBER_OP(type, scalar_t, |) oHLSL_MEMBER_OP(type, scalar_t, ^) oHLSL_MEMBER_OP(type, scalar_t, <<) oHLSL_MEMBER_OP(type, scalar_t, >>) oHLSL_MEMBER_OP(type, type, *) oHLSL_MEMBER_OP(type, type, /) oHLSL_MEMBER_OP(type, type, +) oHLSL_MEMBER_OP(type, type, -) oHLSL_MEMBER_OP(type, type, &) oHLSL_MEMBER_OP(type, type, |) oHLSL_MEMBER_OP(type, type, ^) oHLSL_MEMBER_OP(type, type, <<) oHLSL_MEMBER_OP(type, type, >>) oHLSL_VBRACKET_OP(scalar_t)
 #define oHLSL_ELOPS(N) oHLSL_ELOP##N(*) oHLSL_ELOP##N(/) oHLSL_ELOP##N(+) oHLSL_ELOP##N(-) oHLSL_ELOP##N(%) oHLSL_ELOPT##N(<<, int) oHLSL_ELOPT##N(>>, int) oHLSL_ELOPT##N(&, int) oHLSL_ELOPT##N(|, int) oHLSL_ELOPT##N(^, int)
 #define oHLSL_ELUFNS(fn) oHLSL_ELUFN2(fn) oHLSL_ELUFN3(fn) oHLSL_ELUFN4(fn)
 #define oHLSL_ELBFNS(pubfn, implfn) oHLSL_ELBFN2(pubfn, implfn) oHLSL_ELBFN3(pubfn, implfn) oHLSL_ELBFN4(pubfn, implfn)
-// NOTE: This does not define most operators because of the ambiguity between 
-// any and all, but rather the named functions in the macros
-// (i.e. any_greater_than) NOTE: == and != are defined as HLSL and C++ define 
-// them: as a memcmp(). This is generally bad, but HLSL does direct comparisons
-// for float and double types, so it is the same here. oStd::equal is defined 
-// for robust equality comparisons for floating point types.
-#define oHLSL_CMP(num) oHLSL_NEQ(oHLSL_CONCAT(oHLSL::TVEC, num)<T>) oHLSL_CONCAT(oHLSL_CMP, num)(operator==, ==) \
-	oHLSL_CONCAT(oHLSL_CMP, num)(less_than, <) oHLSL_CONCAT(oHLSL_CMP, num)(greater_than, >)  oHLSL_CONCAT(oHLSL_CMP, num)(less_than_equal, <=)  oHLSL_CONCAT(oHLSL_CMP, num)(greater_than_equal, >=) \
-	oHLSL_CONCAT(oHLSL_ANYCMP, num)(any_less_than, <) oHLSL_CONCAT(oHLSL_ANYCMP, num)(any_greater_than, >)  oHLSL_CONCAT(oHLSL_ANYCMP, num)(any_less_than_equal, <=) oHLSL_CONCAT(oHLSL_ANYCMP, num)(any_greater_than_equal, >=) oHLSL_CONCAT(oHLSL_ANYCMP, num)(any_equal, ==)
+#define oHLSL_CMP(num) oHLSL_CONCAT(oHLSL_CMP, num)(!=) oHLSL_CONCAT(oHLSL_CMP, num)(==) oHLSL_CONCAT(oHLSL_CMP, num)(<) oHLSL_CONCAT(oHLSL_CMP, num)(>)  oHLSL_CONCAT(oHLSL_CMP, num)(<=)  oHLSL_CONCAT(oHLSL_CMP, num)(>=)
 #define oHLSL_VBRACKET_OP(return_t) const return_t& operator[](size_t i) const { return *(&x + i); } return_t& operator[](size_t i) { return *(&x + i); }
 #define oHLSL_MBRACKET_OP(return_t) const return_t& operator[](size_t i) const { return *(&Column0 + i); } return_t& operator[](size_t i) { return *(&Column0 + i); }
 

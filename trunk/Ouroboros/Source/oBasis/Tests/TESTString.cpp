@@ -52,8 +52,8 @@ bool oBasisTest_oString()
 
 	for(int i = 0; i < 3; ++i)
 	{
-		oTESTB(testRect[i].Min == mins[i], "Incorrect min: %i %i should be %i %i", testRect[i].Min.x, testRect[i].Min.y, mins[i].x, mins[i].y);
-		oTESTB(testRect[i].Max == maxs[i], "Incorrect max: %i %i should be %i %i", testRect[i].Max.x, testRect[i].Max.y, maxs[i].x, maxs[i].y);
+		oTESTB(all(testRect[i].Min == mins[i]), "Incorrect min: %i %i should be %i %i", testRect[i].Min.x, testRect[i].Min.y, mins[i].x, mins[i].y);
+		oTESTB(all(testRect[i].Max == maxs[i]), "Incorrect max: %i %i should be %i %i", testRect[i].Max.x, testRect[i].Max.y, maxs[i].x, maxs[i].y);
 	}
 
 	oErrorSetLast(0, "");

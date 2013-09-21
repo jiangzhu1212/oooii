@@ -29,11 +29,11 @@
 #include <cstring>
 
 #define oCHECK_SURFACE_DESC(_Desc) \
-	oASSERT(greater_than_equal(_Desc.Dimensions, int3(1,1,1)), "invalid dimensions: [%d,%d,%d]", _Desc.Dimensions.x, _Desc.Dimensions.y, _Desc.Dimensions.z); \
+	oASSERT(all(_Desc.Dimensions >= int3(1,1,1)), "invalid dimensions: [%d,%d,%d]", _Desc.Dimensions.x, _Desc.Dimensions.y, _Desc.Dimensions.z); \
 	oASSERT(_Desc.ArraySize == 1 || _Desc.Dimensions.z == 1, "ArraySize or Depth has to be 1 [%d,%d]", _Desc.ArraySize, _Desc.Dimensions.z);
 #define oCHECK_DIM(_Format, _Dim) oASSERT(_Dim >= oSurfaceFormatGetMinDimensions(_Format).x, "invalid dimension: %d", _Dim);
-#define oCHECK_DIM2(_Format, _Dim) oASSERT(greater_than_equal(_Dim, oSurfaceFormatGetMinDimensions(_Format)), "invalid dimensions: [%d,%d]", _Dim.x, _Dim.y);
-#define oCHECK_DIM3(_Format, _Dim) oASSERT(greater_than_equal(_Dim.xy, oSurfaceFormatGetMinDimensions(_Format)), "invalid dimensions: [%d,%d,%d]", _Dim.x, _Dim.y, _Dim.z);
+#define oCHECK_DIM2(_Format, _Dim) oASSERT(all(_Dim >= oSurfaceFormatGetMinDimensions(_Format)), "invalid dimensions: [%d,%d]", _Dim.x, _Dim.y);
+#define oCHECK_DIM3(_Format, _Dim) oASSERT(all(_Dim.xy >= oSurfaceFormatGetMinDimensions(_Format)), "invalid dimensions: [%d,%d,%d]", _Dim.x, _Dim.y, _Dim.z);
 
 #define oASSERT_PLANAR_SUPPORT(_Format) oASSERT(!oSurfaceFormatIsPlanar(_Format), "Planar formats may not behave well with this API. Review usage in this code and remove this when verified.");
 
@@ -305,15 +305,10 @@ bool from_string(oSURFACE_FORMAT* _pFormat, const char* _StrSource)
 
 bool operator==(const oSURFACE_DESC& _A, const oSURFACE_DESC& _B)
 {
-	if(_A.Dimensions != _B.Dimensions)
-		return false;
-	if(_A.ArraySize != _B.ArraySize)
-		return false;
-	if(_A.Format != _B.Format)
-		return false;
-	if(_A.Layout != _B.Layout)
-		return false;
-
+	if (any(_A.Dimensions != _B.Dimensions)) return false;
+	if (any(_A.ArraySize != _B.ArraySize)) return false;
+	if (_A.Format != _B.Format) return false;
+	if (_A.Layout != _B.Layout) return false;
 	return true;
 }
 
@@ -439,7 +434,7 @@ int oSurfaceCalcNumMips(bool _HasMips, const int3& _Mip0Dimensions)
 
 	int nMips = 1;
 	int3 mip = _Mip0Dimensions;
-	while (_HasMips && mip != int3(1,1,1))
+	while (_HasMips && any(mip != int3(1,1,1)))
 	{
 		nMips++;
 		mip = max(int3(1,1,1), mip / int3(2,2,2));
@@ -861,9 +856,9 @@ int oSurfaceTileCalcBestFitMipLevel(const oSURFACE_DESC& _SurfaceDesc, const int
 
 	int nthMip = 0;
 	int3 mip = _SurfaceDesc.Dimensions;
-	while (mip != int3(1,1,1))
+	while (any(mip != int3(1,1,1)))
 	{
-		if (less_than_equal(_SurfaceDesc.Dimensions.xy(), _TileDimensions))
+		if (all(_SurfaceDesc.Dimensions.xy() <= _TileDimensions))
 			break;
 
 		nthMip++;
@@ -1114,7 +1109,7 @@ void oSurfaceVisitPixel(const oSURFACE_DESC& _SurfaceDescInput
 	, oSURFACE_MAPPED_SUBRESOURCE& _MappedSubresourceOutput
 	, const oFUNCTION<void(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut)>& _Visitor)
 {
-	oASSERT(_SurfaceDescInput.Dimensions == _SurfaceDescOutput.Dimensions, "Dimensions mismatch In(%dx%d) != Out(%dx%d)", _SurfaceDescInput.Dimensions.x, _SurfaceDescInput.Dimensions.y, _SurfaceDescOutput.Dimensions.x, _SurfaceDescOutput.Dimensions.y);
+	oASSERT(all(_SurfaceDescInput.Dimensions == _SurfaceDescOutput.Dimensions), "Dimensions mismatch In(%dx%d) != Out(%dx%d)", _SurfaceDescInput.Dimensions.x, _SurfaceDescInput.Dimensions.y, _SurfaceDescOutput.Dimensions.x, _SurfaceDescOutput.Dimensions.y);
 
 	const void* pRow1 = _MappedSubresourceInput1.pData;
 	const void* pRow2 = _MappedSubresourceInput2.pData;

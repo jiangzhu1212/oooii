@@ -125,7 +125,7 @@ bool operator ==(const oURIQueryTestCompound& _LHS, const oURIQueryTestCompound&
 	if (_LHS.Float != _RHS.Float) return false;
 	if (_LHS.Double != _RHS.Double) return false;
 	if (0 != strcmp(_LHS.String.c_str(), _RHS.String.c_str())) return false;
-	if (_LHS.Int2 != _RHS.Int2) return false;
+	if (any(_LHS.Int2 != _RHS.Int2)) return false;
 	if (_LHS.Enum != _RHS.Enum) return false;
 	return true;
 }

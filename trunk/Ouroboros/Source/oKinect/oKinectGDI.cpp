@@ -34,13 +34,13 @@ static const int2 kNoDraw = int2(oDEFAULT, oDEFAULT);
 
 static void oGDIDrawKinectBone(HDC _hDC, const int2& _SSBonePos0, const int2& _SSBonePos1)
 {
-	if (_SSBonePos0 != kNoDraw && _SSBonePos1 != kNoDraw)
+	if (any(_SSBonePos0 != kNoDraw) && any(_SSBonePos1 != kNoDraw))
 		oVB(oGDIDrawLine(_hDC, _SSBonePos0, _SSBonePos1));
 }
 
 static void oGDIDrawKinectJoint(HDC _hDC, const int2& _SSBonePos, int _Radius)
 {
-	if (_SSBonePos != kNoDraw)
+	if (any(_SSBonePos != kNoDraw))
 	{
 		RECT r = oWinRectDilate(oWinRectWH(_SSBonePos, int2(0, 0)), _Radius);
 		oVB(oGDIDrawEllipse(_hDC, r));

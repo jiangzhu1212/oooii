@@ -189,7 +189,7 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 		}
 	}
 
-	if (Desc.Dimensions != New)
+	if (any(Desc.Dimensions != New))
 	{
 		oTRACE("%s %s Resize %dx%dx%d -> %dx%dx%d", oStd::type_name(typeid(*this).name()), GetName(), Desc.Dimensions.x, Desc.Dimensions.y, Desc.Dimensions.z, _NewDimensions.x, _NewDimensions.y, _NewDimensions.z);
 		ClearResources();

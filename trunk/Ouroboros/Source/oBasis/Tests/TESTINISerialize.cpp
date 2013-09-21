@@ -98,9 +98,9 @@ static bool TestCompound()
 	oTESTB0(oINIReadCompound(&Test, oRTTI_OF(oINICompoundTest), INI, INI.find_section("CompoundTest"), true));
 	oTESTB(Test.Bool, "TestCompound: Expected Bool=true");
 	oTESTB(Test.Int == 31337, "TestCompound: Expected Int=31337");
-	oTESTB(Test.Int2 == int2(1, 2), "TestCompound: Expected Int2=(1, 2)");
+	oTESTB(all(Test.Int2 == int2(1, 2)), "TestCompound: Expected Int2=(1, 2)");
 	oTESTB(Test.Float == 255.0f, "TestCompound: Expected Float=255");
-	oTESTB(Test.Float4 == float4(0.5f, 255.f, 1.f, 2.5f), "TestCompound: Expected Float4=(0.5, 255., 1., 2.5)");
+	oTESTB(all(Test.Float4 == float4(0.5f, 255.f, 1.f, 2.5f)), "TestCompound: Expected Float4=(0.5, 255., 1., 2.5)");
 	oTESTB(Test.LongLong == 54491065317, "TestCompound: Expected LongLong=54491065317");
 	oTESTB(strcmp(Test.String, "Some test text") == 0, "TestCompound: Expected String=\"Some test text\"");
 
@@ -124,7 +124,7 @@ static bool TestArray()
 		oStd::sstring val;
 		snprintf(val, "%d", i);
 		oTESTB(0 == strcmp(val.c_str(), Test.StringValues[i].c_str()), "TestArray: Expected value at index %d to be %d, but got %d",i,i,Test.IntValues[i]);
-		oTESTB(Test.Float2Values[i] == float2(0.5f, 1.0f), "TestArray: Expected value at index %d to be (0.5, 1.0), but got (%f, %f)", Test.Float2Values[i].x, Test.Float2Values[i].y);
+		oTESTB(all(Test.Float2Values[i] == float2(0.5f, 1.0f)), "TestArray: Expected value at index %d to be (0.5, 1.0), but got (%f, %f)", Test.Float2Values[i].x, Test.Float2Values[i].y);
 	}
 	oStd::xlstring TestBuffer;
 	oTESTB0(oINIWriteCompound(TestBuffer.c_str(), TestBuffer.capacity(), &Test, oRTTI_OF(oINIArrayTest), "ArrayTest"));

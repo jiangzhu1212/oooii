@@ -1018,7 +1018,7 @@ bool oWinWindow::HandleInput(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPa
 				RECT rClient;
 				GetClientRect(_hWnd, &rClient);
 				int2 P(GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam));
-				if (greater_than_equal(P, int2(0,0)) && less_than_equal(P, oWinRectSize(rClient)))
+				if (all(P >= int2(0,0)) && all(P <= oWinRectSize(rClient)))
 					SetCursor();
 			}
 

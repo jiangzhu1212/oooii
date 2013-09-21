@@ -259,7 +259,7 @@ oSystemProperties::oSystemProperties(bool* _pSuccess)
 			HWND hWnd = (HWND)Window->GetNativeHandle();
 			RECT rClient;
 			GetClientRect(hWnd, &rClient);
-			oASSERT(oWinRectSize(rClient) == init.Shape.ClientSize, "Client size mismatch");
+			oASSERT(all(oWinRectSize(rClient) == init.Shape.ClientSize), "Client size mismatch");
 		#endif
 
 		// Disable anti-aliasing since on Windows ClearType seems to be non-deterministic

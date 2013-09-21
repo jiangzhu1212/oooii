@@ -59,6 +59,10 @@
 	typedef TVEC3<float> float3; typedef TVEC3<double> double3;
 	typedef TVEC4<float> float4; typedef TVEC4<double> double4;
 
+	typedef TVEC2<bool> bool2;
+	typedef TVEC3<bool> bool3;
+	typedef TVEC4<bool> bool4;
+
 	typedef TMAT3<float> float3x3; typedef TMAT3<double> double3x3;
 	typedef TMAT4<float> float4x4; typedef TMAT4<double> double4x4;
 

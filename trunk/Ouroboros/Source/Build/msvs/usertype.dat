@@ -3,7 +3,6 @@ acos
 asin
 atan
 atan2
-bool
 cbuffer
 ceil
 clamp
@@ -27,6 +26,10 @@ fixed1
 fixed2
 fixed3
 fixed4
+bool
+bool2
+bool3
+bool4
 float
 float1
 float2

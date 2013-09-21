@@ -56,7 +56,7 @@ namespace oCompute {
 		aabox(ctor_type _Type, const TVec& _Val1, const TVec& _Val2) : Min(_Val1), Max(_Type == pos_size ? (_Val1 + _Val2) : _Val2) {}
 		inline const aabox<T,TVec>& operator=(const TVec& _That) { Min = _That.Min; Max = _That.Max; return *this; }
 		inline aabox<T,TVec>& operator=(TVec&& _That) { if (this != &_That) { Min = _That.Min; Max = _That.Max; _That.clear(); } return *this; }
-		inline bool empty() const { return any_less_than(Max, Min); } 
+		inline bool empty() const { return any(Max < Min); } 
 		inline void clear() { Min = TVec(std::numeric_limits<T>::max()); Max = TVec(std::numeric_limits<T>::lowest()); }
 		inline TVec size() const { return abs(Max - Min); }
 		inline TVec center() const { return Min + size() / T(2.0); }
@@ -99,7 +99,7 @@ template<typename T> void oDecompose(const oCompute::aabox<T, TVEC3<T>>& _Box, T
 template<typename T, typename TVec> void oExtendBy(oCompute::aabox<T, TVec>& _AABox, const TVec& _Point) { _AABox.Min = min(_AABox.Min, _Point); _AABox.Max = max(_AABox.Max, _Point); }
 template<typename T, typename TVec> void oExtendBy(oCompute::aabox<T, TVec>& _AABox1, const oCompute::aabox<T, TVec>& _AABox2) { oExtendBy(_AABox1, _AABox2.Min); oExtendBy(_AABox1, _AABox2.Max); }
 template<typename T, typename TVec> void oTranslate(oCompute::aabox<T, TVec>& _AABox, const TVec& _Translation) { _AABox.Min += _Translation; _AABox.Max += _Translation; }
-template<typename T, typename TVec> inline bool oContains(const oCompute::aabox<T, TVec>& _Box, const TVec& _Point) { return greater_than_equal(_Point, _Box.Min) && less_than_equal(_Point, _Box.Max); }
+template<typename T, typename TVec> inline bool oContains(const oCompute::aabox<T, TVec>& _Box, const TVec& _Point) { return all(_Point >= _Box.Min) && all(_Point <= _Box.Max); }
 
 // Axis-aligned boxes/rects are always axis-aligned. An axis-aligned box that 
 // is naively transformed becomes an oriented bounding box. Take the points of

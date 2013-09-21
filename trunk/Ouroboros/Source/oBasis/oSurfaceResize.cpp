@@ -279,7 +279,7 @@ bool oSurfaceResize(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_S
 {
 	//Assuming all our filters are separable for now.
 
-	if (_SrcDesc.Dimensions == _DstDesc.Dimensions) //no actual resize, just copy
+	if (all(_SrcDesc.Dimensions == _DstDesc.Dimensions)) //no actual resize, just copy
 	{
 		oSurfaceCopySubresource(_SrcDesc, _SrcMap, _DstMap, false);
 	}

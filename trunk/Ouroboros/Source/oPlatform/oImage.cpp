@@ -412,7 +412,7 @@ bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _
 	if (ImgDesc1.Format != ImgDesc2.Format)
 		return oErrorSetLast(std::errc::invalid_argument, "oImages must be in in the same format to be compared. (%s v. %s)", oStd::as_string(ImgDesc1.Format), oStd::as_string(ImgDesc2.Format));
 
-	if (ImgDesc1.Dimensions != ImgDesc2.Dimensions)
+	if (any(ImgDesc1.Dimensions != ImgDesc2.Dimensions))
 		return oErrorSetLast(std::errc::invalid_argument, "oImages differ in dimensions. ([%dx%d] v. [%dx%d])", ImgDesc1.Dimensions.x, ImgDesc1.Dimensions.y, ImgDesc2.Dimensions.x, ImgDesc2.Dimensions.y);
 
 	if (LockedImage1->GetSize() != LockedImage2->GetSize())

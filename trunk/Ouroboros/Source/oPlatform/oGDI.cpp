@@ -523,7 +523,7 @@ static bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Tex
 		_pActual->bottom = 1;
 	}
 
-	if (sa && _Desc.ShadowOffset != int2(0,0))
+	if (sa && any(_Desc.ShadowOffset != int2(0,0)))
 	{
 		// If the background is opaque, cast an opaque shadow
 		oGDIScopedTextColor ShadowState(_hDC, RGB(sr,sg,sb), RGB(sr,sg,sb), ba);
