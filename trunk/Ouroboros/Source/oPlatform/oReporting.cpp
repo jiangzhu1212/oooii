@@ -34,7 +34,6 @@
 #include <oPlatform/oStandards.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/Windows/oWinAsString.h>
-#include "SoftLink/oWinDbgHelp.h"
 #include "oCRTLeakTracker.h"
 #include "oWinExceptionHandler.h"
 
@@ -134,7 +133,6 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 	}
 
 protected:
-	oStd::intrusive_ptr<oWinDbgHelp> DbgHelp;
 	oStd::intrusive_ptr<threadsafe oStreamWriter> LogFile;
 	oStd::sstring VersionString;
 	oREPORTING_DESC Desc;
@@ -156,15 +154,13 @@ const oGUID oReportingContext::GUID = { 0x338d483b, 0x7793, 0x4be1, { 0x90, 0xb1
 oSINGLETON_REGISTER(oReportingContext);
 
 oReportingContext::oReportingContext()
-	: DbgHelp(oWinDbgHelp::Singleton())
-	, bDialogBoxesEnabled(true)
+	: bDialogBoxesEnabled(true)
 {
 	PushReporter(DefaultVPrint);
 	std::set_terminate(ReportErrorAndExit);
 
 	// Cache the version string now in case we have to dump later (so we don't call complicated module code)
 	{
-		oMODULE_DESC ModuleDesc;
 		oCore::module::info mi = oCore::this_module::get_info();
 		VersionString[0] = 'V';
 		oStd::to_string(&VersionString[1], VersionString.capacity() - 1, mi.version);

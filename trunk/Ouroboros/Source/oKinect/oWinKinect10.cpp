@@ -101,7 +101,7 @@ oWinKinect10::oWinKinect10()
 	, KinectThreadTerminated(false)
 	, NuiSetDeviceStatusCallbackWasCalled(false)
 {	
-	hModule = oModuleLinkSafe("Kinect10.dll", sExportedAPIs, (void**)&NuiCreateSensorByIndex__, oCOUNTOF(sExportedAPIs));
+	hModule = oCore::module::link("Kinect10.dll", sExportedAPIs, (void**)&NuiCreateSensorByIndex__, oCOUNTOF(sExportedAPIs));
 }
 oSINGLETON_REGISTER(oWinKinect10);
 
@@ -128,7 +128,7 @@ oWinKinect10::~oWinKinect10()
 	if (NuiSetDeviceStatusCallbackWasCalled)
 		oTRACE("NuiSetDeviceStatusCallback was called, which would cause the DLL unload to crash, so skipping unload.");
 	else
-		oModuleUnlink(hModule);
+		oCore::module::close(hModule);
 }
 
 oStd::version oWinKinect10::GetVersion() const

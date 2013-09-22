@@ -28,7 +28,7 @@
 #ifndef oModuleUtil_h
 #define oModuleUtil_h
 
-#include <oPlatform/oModule.h>
+#include <oCore/module.h>
 #include <oPlatform/oSingleton.h>
 
 // List all Windows API as <retval> (__stdcall *WinAPIFunction)(<params>);
@@ -40,9 +40,9 @@
 	struct _ClassName : oProcessSingleton<_ClassName> \
 	{	static const oGUID GUID; \
 		_ClassName(); \
-		~_ClassName() { oModuleUnlink(hModule); }
+		~_ClassName() { oCore::module::close(hModule); }
 
-#define oDECLARE_DLL_SINGLETON_END() protected: oHMODULE hModule; };
+#define oDECLARE_DLL_SINGLETON_END() protected: oCore::module::id hModule; };
 
 // Define this in an associated .cpp files to implement the details of loading
 // and binding the softlinked functions/procedures. NOTE: There must be an array 
@@ -50,6 +50,6 @@
 // The name of the array must be "static const char* sExportedAPIs[] = {...};". 
 // _FirstAPI is the first API declared in the class defined by the above macros
 // so its function pointer's address can be taken to fill in all the pointers.
-#define oDEFINE_DLL_SINGLETON_CTOR(_ClassName, _StrModuleName, _FirstAPI) _ClassName::_ClassName() { hModule = oModuleLinkSafe(_StrModuleName, sExportedAPIs, (void**)&_FirstAPI, oCOUNTOF(sExportedAPIs)); } oSINGLETON_REGISTER(_ClassName);
+#define oDEFINE_DLL_SINGLETON_CTOR(_ClassName, _StrModuleName, _FirstAPI) _ClassName::_ClassName() { hModule = oCore::module::link(_StrModuleName, sExportedAPIs, (void**)&_FirstAPI, oCOUNTOF(sExportedAPIs)); } oSINGLETON_REGISTER(_ClassName);
 
 #endif

@@ -30,26 +30,10 @@
 #define oD3D11_h
 
 #include <oBasis/oGPUConcepts.h>
-#include <oPlatform/oModule.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/Windows/oWindows.h>
 #include <vector>
-
-// _____________________________________________________________________________
-// Soft-link
-
-struct oD3D11 : oProcessSingleton<oD3D11>
-{
-	static const oGUID GUID;
-	oD3D11();
-	~oD3D11();
-
-	HRESULT (__stdcall *D3D11CreateDevice)(IDXGIAdapter* pAdapter, D3D_DRIVER_TYPE DriverType, HMODULE Software, UINT Flags, CONST D3D_FEATURE_LEVEL* pFeatureLevels, UINT FeatureLevels, UINT SDKVersion, ID3D11Device** ppDevice, D3D_FEATURE_LEVEL* pFeatureLevel, ID3D11DeviceContext** ppImmediateContext);
-
-protected:
-	oHMODULE hModule;
-};
 
 // _____________________________________________________________________________
 // Debugging API

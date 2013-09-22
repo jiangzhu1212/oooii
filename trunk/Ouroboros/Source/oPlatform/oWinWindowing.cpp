@@ -32,11 +32,10 @@
 #include <oPlatform/Windows/oWinAsString.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinStatusBar.h>
-#include "SoftLink/oWinCommCtrl.h"
-#include "SoftLink/oWinShlwapi.h"
 #include <WindowsX.h>
 #include <CdErr.h>
 #include <Shellapi.h>
+#include <Shlwapi.h>
 
 #define oWIN_CHECK(_hWnd) do \
 	{	if (!oWinExists(_hWnd)) return oErrorSetLast(std::errc::invalid_argument, "Invalid HWND 0x%x specified", _hWnd); \
@@ -1506,7 +1505,7 @@ size_t oWinGetTruncatedLength(HWND _hWnd, const char* _StrSource)
 	GetClientRect(_hWnd, &rClient);
 	oGDIScopedGetDC hDC(_hWnd);
 
-	if (!oWinShlwapi::Singleton()->PathCompactPathA(hDC, temp, oWinRectW(rClient) + 70)) // @oooii-tony: This constant was measured empirically. I think this should work without the +70, but truncation happens too aggressively.
+	if (!PathCompactPathA(hDC, temp, oWinRectW(rClient) + 70)) // @oooii-tony: This constant was measured empirically. I think this should work without the +70, but truncation happens too aggressively.
 	{
 		oErrorSetLast(std::errc::no_buffer_space, "Buffer must be at least MAX_PATH (%u) chars big", MAX_PATH);
 		return 0;
@@ -1549,7 +1548,7 @@ char* oWinTruncatePath(char* _StrDestination, size_t _SizeofStrDestination, HWND
 	GetClientRect(_hWnd, &rClient);
 	oGDIScopedGetDC hDC(_hWnd);
 
-	if (!oWinShlwapi::Singleton()->PathCompactPathA(hDC, _StrDestination, oWinRectW(rClient) + 70)) // @oooii-tony: This constant was measured empirically. I think this should work without the +70, but truncation happens too aggressively.
+	if (!PathCompactPathA(hDC, _StrDestination, oWinRectW(rClient) + 70)) // @oooii-tony: This constant was measured empirically. I think this should work without the +70, but truncation happens too aggressively.
 	{
 		oErrorSetLast(std::errc::no_buffer_space, "Buffer must be at least MAX_PATH (%u) chars big", MAX_PATH);
 		return nullptr;
@@ -1680,7 +1679,7 @@ static LRESULT CALLBACK oSubclassProcFloatBox(HWND _hControl, UINT _uMsg, WPARAM
 				// Ensure consistent formatting
 				snprintf(text, oSubclassFloatBoxFormat, f);
 				oStd::mwstring wtext = text;
-				oWinCommCtrl::Singleton()->DefSubclassProc(_hControl, _uMsg, _wParam, (LPARAM)wtext.c_str());
+				DefSubclassProc(_hControl, _uMsg, _wParam, (LPARAM)wtext.c_str());
 				return FALSE;
 			}
 
@@ -1741,7 +1740,7 @@ static LRESULT CALLBACK oSubclassProcFloatBox(HWND _hControl, UINT _uMsg, WPARAM
 		}
 	}
 
-	return oWinCommCtrl::Singleton()->DefSubclassProc(_hControl, _uMsg, _wParam, _lParam);
+	return DefSubclassProc(_hControl, _uMsg, _wParam, _lParam);
 }
 
 static UINT_PTR oSubclassTabID = 0x13370001;
@@ -1761,7 +1760,7 @@ static LRESULT CALLBACK oSubclassProcTab(HWND _hControl, UINT _uMsg, WPARAM _wPa
 		}
 	}
 
-	return oWinCommCtrl::Singleton()->DefSubclassProc(_hControl, _uMsg, _wParam, _lParam);
+	return DefSubclassProc(_hControl, _uMsg, _wParam, _lParam);
 }
 
 static UINT_PTR oSubclassGroupID = 0x13370002;
@@ -1785,7 +1784,7 @@ static LRESULT CALLBACK oSubclassProcGroup(HWND _hControl, UINT _uMsg, WPARAM _w
 		}
 	}
 
-	return oWinCommCtrl::Singleton()->DefSubclassProc(_hControl, _uMsg, _wParam, _lParam);
+	return DefSubclassProc(_hControl, _uMsg, _wParam, _lParam);
 }
 
 static bool OnCreateAddSubItems(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
@@ -1801,18 +1800,18 @@ static bool OnCreateAddSubItems(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
 
 static bool OnCreateTab(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
 {
-	oVERIFY_R(oWinCommCtrl::Singleton()->SetWindowSubclass(_hControl, oSubclassProcTab, oSubclassTabID, (DWORD_PTR)nullptr));
+	oVERIFY_R(SetWindowSubclass(_hControl, oSubclassProcTab, oSubclassTabID, (DWORD_PTR)nullptr));
 	return OnCreateAddSubItems(_hControl, _Desc);
 }
 
 static bool OnCreateGroup(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
 {
-	return !!oWinCommCtrl::Singleton()->SetWindowSubclass(_hControl, oSubclassProcGroup, oSubclassGroupID, (DWORD_PTR)nullptr);
+	return !!SetWindowSubclass(_hControl, oSubclassProcGroup, oSubclassGroupID, (DWORD_PTR)nullptr);
 }
 
 static bool OnCreateFloatBox(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
 {
-	oVERIFY_R(oWinCommCtrl::Singleton()->SetWindowSubclass(_hControl, oSubclassProcFloatBox, oSubclassFloatBoxID, (DWORD_PTR)nullptr));
+	oVERIFY_R(SetWindowSubclass(_hControl, oSubclassProcFloatBox, oSubclassFloatBoxID, (DWORD_PTR)nullptr));
 	SetWindowText(_hControl, _Desc.Text);
 	return true;
 }
@@ -2395,7 +2394,7 @@ oGUI_CONTROL_TYPE oWinControlGetType(HWND _hControl)
 			return oGUI_CONTROL_LABEL_SELECTABLE;
 
 			DWORD_PTR data;
-		if (oWinCommCtrl::Singleton()->GetWindowSubclass(_hControl, oSubclassProcFloatBox, oSubclassFloatBoxID, &data))
+		if (GetWindowSubclass(_hControl, oSubclassProcFloatBox, oSubclassFloatBoxID, &data))
 			return oGUI_CONTROL_FLOATBOX;
 
 		else if (dwStyle == (dwStyle & oWinControlGetCreationDesc(oGUI_CONTROL_TEXTBOX).dwStyle))
@@ -2427,7 +2426,7 @@ oGUI_CONTROL_TYPE oWinControlGetType(HWND _hControl)
 		// Don't identify a generic tab as an oGUI tab, only ones that
 		// behave properly
 		DWORD_PTR data;
-		if (oWinCommCtrl::Singleton()->GetWindowSubclass(_hControl, oSubclassProcTab, oSubclassTabID, &data))
+		if (GetWindowSubclass(_hControl, oSubclassProcTab, oSubclassTabID, &data))
 			return oGUI_CONTROL_TAB;
 		return oGUI_CONTROL_UNKNOWN;
 	}

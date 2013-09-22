@@ -30,9 +30,9 @@
 #define oWinExceptionHandler_h
 
 #include <oPlatform/oSingleton.h>
-#include <oStd/function.h>
 #include <oStd/guid.h>
 #include <oStd/mutex.h>
+#include <functional>
 
 namespace windows_exception_type
 {	enum value {
@@ -69,7 +69,7 @@ struct oWinCppException
 
 // NOTE: _pStdException may be nullptr if the exception is not derived from 
 // std::exception.
-typedef oFUNCTION<void(const char* _Message, const oWinCppException& _CppException, uintptr_t _ExceptionContext)> oExceptionHandler;
+typedef std::function<void(const char* _Message, const oWinCppException& _CppException, uintptr_t _ExceptionContext)> oExceptionHandler;
 
 class oWinExceptionHandler : public oProcessSingleton<oWinExceptionHandler>
 {

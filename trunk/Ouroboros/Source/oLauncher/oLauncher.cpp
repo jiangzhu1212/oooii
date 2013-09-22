@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 
-#include <oPlatform/oModule.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oVersionUpdate.h>
 #include <oPlatform/Windows/oWindows.h>

@@ -88,6 +88,7 @@
 #include <Wbemidl.h>
 #include <psapi.h>
 #include <PowrProf.h>
+#include <lm.h>
 
 #if (defined(NTDDI_WIN7) && (NTDDI_VERSION >= NTDDI_WIN7))
 	#define oWINDOWS_HAS_TRAY_NOTIFYICONIDENTIFIER
@@ -213,9 +214,6 @@ const char* as_string_display_code(UINT _DISPCode);
 };}
 
 version::value get_version();
-
-// returns true if the current process is running in 64-bit mode (not WOW64)
-bool is_64bit();
 
 	} // namespace windows
 } // namespace oCore

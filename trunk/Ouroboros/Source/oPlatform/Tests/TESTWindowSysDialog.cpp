@@ -324,7 +324,7 @@ bool oSystemProperties::Reload(HWND _hParent, const int2& _ClientSize)
 	{
 		oStd::mstring WorkgroupName;
 		if (kInteractiveMode)
-			oWinGetWorkgroupName(WorkgroupName, WorkgroupName.capacity());
+			oCore::system::workgroup_name(WorkgroupName);
 		else
 			WorkgroupName = "MY_WORKGROUP";
 		oWinControlSetText(ControlSet[ID_COMPUTER_WORKGROUP_VALUE], WorkgroupName);

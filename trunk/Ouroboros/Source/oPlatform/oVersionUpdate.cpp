@@ -26,7 +26,6 @@
 #include <oPlatform/oStream.h>
 #include <oStd/algorithm.h>
 #include <oStd/fixed_string.h>
-#include <oPlatform/oModule.h>
 
 char* oSystemURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIParts);
 template<size_t size> char* oSystemURIPartsToPath(char (&_ResultingFullPath)[size], const oURIParts& _URIParts) { return oSystemURIPartsToPath(_ResultingFullPath, size, _URIParts); }
@@ -52,7 +51,7 @@ bool oVUDecompose(const oStd::uri_string& _URI, bool _VersionFromFilename, oVU_U
 		//return oErrorSetLast(std::errc::protocol_error, "cannot convert URI to path: %s", _URI.c_str());
 	}
 
-	oMODULE_DESC md;
+	oCore::module::info md;
 	if (!_VersionFromFilename)
 	{
 		oCore::module::info mi = oCore::module::get_info(oStd::path(FilePath));

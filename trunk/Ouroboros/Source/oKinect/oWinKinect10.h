@@ -77,7 +77,7 @@ struct oWinKinect10 : oProcessSingleton<oWinKinect10>
 	void SafeNuiShutdown(INuiSensor* _pSensor);
 
 protected: 
-	oHMODULE hModule;
+	oCore::module::id hModule;
 	std::vector<DWORD, oProcessHeapAllocator<DWORD>> TIDs;
 	bool TIDsRecorded;
 	bool KinectThreadTerminated;

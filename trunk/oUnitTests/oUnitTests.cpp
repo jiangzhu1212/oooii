@@ -2,7 +2,6 @@
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oConsole.h>
 #include <oPlatform/oImage.h>
-#include <oPlatform/oModule.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/oStandards.h>

@@ -25,13 +25,11 @@
 #include <oStd/fixed_string.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oMsgBox.h>
-#include <oPlatform/oModule.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/Windows/oD3D11.h>
 #include <oPlatform/Windows/oDXGI.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinWindowing.h>
-#include "SoftLink/oWinDXGI.h"
 
 #if oDXVER >= oDXVER_10
 
@@ -60,7 +58,7 @@ DXGI_FORMAT oDXGIFromSurfaceFormat(oSURFACE_FORMAT _Format)
 
 bool oDXGICreateFactory(IDXGIFactory** _ppFactory)
 {
-	HRESULT hr = oWinDXGI::Singleton()->CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)_ppFactory); 
+	HRESULT hr = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)_ppFactory); 
 	if (FAILED(hr))
 		return oWinSetLastError(hr);
 	return true;
@@ -197,7 +195,7 @@ bool oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter, D3D_FEATURE_LEVEL* _pFeatureL
 	// flag to get the feature level, so passing 0 seems to fix that problem.
 	
 	// Note that the out-device is null, thus this isn't that expensive a call
-	if (FAILED(oD3D11::Singleton()->D3D11CreateDevice(
+	if (FAILED(D3D11CreateDevice(
 		_pAdapter
 		, D3D_DRIVER_TYPE_UNKNOWN
 		, nullptr

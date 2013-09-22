@@ -106,11 +106,15 @@ bool gui_is_drawable();
 
 char* host_name(char* _StrDestination, size_t _SizeofStrDestination);
 template<size_t size> char* host_name(char (&_StrDestination)[size]) { return host_name(_StrDestination, size); }
-template<size_t capacity> char* host_name(oStd::fixed_string<char, capacity>& _StrDestination) { return exec_path(_StrDestination, _StrDestination.capacity()); }
+template<size_t capacity> char* host_name(oStd::fixed_string<char, capacity>& _StrDestination) { return host_name(_StrDestination, _StrDestination.capacity()); }
+
+char* workgroup_name(char* _StrDestination, size_t _SizeofStrDestination);
+template<size_t size> char* workgroup_name(char (&_StrDestination)[size]) { return workgroup_name(_StrDestination, size); }
+template<size_t capacity> char* workgroup_name(oStd::fixed_string<char, capacity>& _StrDestination) { return workgroup_name(_StrDestination, _StrDestination.capacity()); }
 
 // fills destination with the string "[<hostname>.process_id.thread_id]"
 char* exec_path(char* _StrDestination, size_t _SizeofStrDestination);
-template<size_t size> char* exec_path(char (&_StrDestination)[size]) { return host_name(_StrDestination, size); }
+template<size_t size> char* exec_path(char (&_StrDestination)[size]) { return exec_path(_StrDestination, size); }
 template<size_t capacity> char* exec_path(oStd::fixed_string<char, capacity>& _StrDestination) { return exec_path(_StrDestination, _StrDestination.capacity()); }
 
 void setenv(const char* _EnvVarName, const char* _Value);

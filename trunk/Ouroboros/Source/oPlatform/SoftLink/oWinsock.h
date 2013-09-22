@@ -30,9 +30,9 @@
 #ifndef oWinsock_h
 #define oWinsock_h
 
-#include <oPlatform/oModule.h>
 #include <oPlatform/Windows/oWindows.h>
 #include <oPlatform/oSingleton.h>
+#include <oCore/module.h>
 #include <Winsock.h>
 #include <winsock2.h>
 #include <Mstcpip.h>
@@ -51,9 +51,9 @@ class oWinsock : public oProcessSingleton<oWinsock>
 {
 	// NOTE: gai_strerror is an inline function, so does not need to be linked
 	// against or called from this oWinSock interface.
-	oHMODULE hMswsock;
-	oHMODULE hWs2_32;
-	oHMODULE hFwpucint;
+	oCore::module::id hMswsock;
+	oCore::module::id hWs2_32;
+	oCore::module::id hFwpucint;
 
 public:
 	static const oGUID GUID;

@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCore/module.h>
+#include <oCore/filesystem.h>
 #include "win.h"
 
 namespace oStd {
@@ -72,12 +73,24 @@ id open(const path& _Path)
 
 void close(id _ModuleID)
 {
-	FreeLibrary(*(HMODULE*)&_ModuleID);
+	if (_ModuleID)
+		FreeLibrary(*(HMODULE*)&_ModuleID);
 }
 
 void* sym(id _ModuleID, const char* _SymbolName)
 {
 	return GetProcAddress(*(HMODULE*)&_ModuleID, _SymbolName);
+}
+
+void link(id _ModuleID, const char** _pInterfaceFunctionNames, void** _ppInterfaces, size_t _CountofInterfaces)
+{
+	memset(_ppInterfaces, 0, sizeof(void*) * _CountofInterfaces);
+	for (size_t i = 0; i < _CountofInterfaces; i++)
+	{
+		_ppInterfaces[i] = sym(_ModuleID, _pInterfaceFunctionNames[i]);
+		if (!_ppInterfaces[i])
+			oTHROW(function_not_supported, "'%s' not found in '%s'", _pInterfaceFunctionNames[i], get_path(_ModuleID).c_str());
+	}
 }
 
 id get_id(const void* _Symbol)
@@ -157,6 +170,42 @@ static type::value get_type(const VS_FIXEDFILEINFO& _FFI)
 	return type::unknown;
 }
 
+static bool is_64bit()
+{
+	if (sizeof(void*) != 4) // If ptr size is larger than 32-bit we must be on 64-bit windows
+		return true;
+
+	// If ptr size is 4 bytes then we're a 32-bit process so check if we're running under
+	// wow64 which would indicate that we're on a 64-bit system
+	BOOL bWow64 = FALSE;
+	IsWow64Process(GetCurrentProcess(), &bWow64);
+	return !bWow64;
+}
+
+static bool is_64bit(const oStd::path& _Path)
+{
+	bool result = false;
+
+	HMODULE hModule = LoadLibrary(_Path);
+	oStd::finally Close([&] { FreeLibrary(hModule); });
+
+	// can't map the 'this' module for access, so use another method
+	if (GetModuleHandle(nullptr) == hModule)
+		return is_64bit();
+
+	unsigned long long size = filesystem::file_size(_Path);
+
+	void* mapped = oCore::filesystem::map(_Path, false, 0, size);
+	if (mapped)
+	{
+		IMAGE_NT_HEADERS* pHeader = ImageNtHeader(mapped);
+		result = pHeader->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64;
+		filesystem::unmap(mapped);
+	}
+
+	return result;
+}
+
 info get_info(const path& _Path)
 {
 	DWORD hFVI = 0;
@@ -190,6 +239,7 @@ info get_info(const path& _Path)
 	i.is_patched = (pFFI->dwFileFlags & VS_FF_PATCHED) == VS_FF_PATCHED;
 	i.is_private = (pFFI->dwFileFlags & VS_FF_PRIVATEBUILD) == VS_FF_PRIVATEBUILD;
 	i.is_special = (pFFI->dwFileFlags & VS_FF_SPECIALBUILD) == VS_FF_SPECIALBUILD;
+	i.is_64bit_binary = is_64bit(_Path);
 
 	// _____________________________________________________________________________
 	// Now do some of the more complicated ones
@@ -263,6 +313,16 @@ oStd::path path()
 module::info get_info()
 {
 	return std::move(module::get_info(module::id()));
+}
+
+module::id get_id()
+{
+	// static is unique per module, so copies and thus unique addresses live in 
+	// each module.
+	static module::id CurrentId;
+	if (!CurrentId)
+		CurrentId = module::get_id(&CurrentId);
+	return CurrentId;
 }
 
 	} // namespace this_module

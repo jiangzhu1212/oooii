@@ -33,7 +33,6 @@
 #include <oPlatform/oGUIMenu.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oMirroredArena.h>
-#include <oPlatform/oModule.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oP4.h>
 #include <oPlatform/oProcessStatsMonitor.h>

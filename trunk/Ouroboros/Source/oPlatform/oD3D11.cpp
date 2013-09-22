@@ -30,7 +30,6 @@
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oPlatform/Windows/oDXGI.h>
-#include "SoftLink/oD3DX11.h"
 #include <cerrno>
 
 // {13BA565C-4766-49C4-8C1C-C1F459F00A65}
@@ -46,26 +45,6 @@ const oGUID& oGetGUID(threadsafe const ID3D11Device* threadsafe const*) { return
 const oGUID& oGetGUID(threadsafe const ID3D11DeviceContext* threadsafe const*) { return (const oGUID&)__uuidof(ID3D11DeviceContext); }
 const oGUID& oGetGUID(threadsafe const ID3D11RenderTargetView* threadsafe const*) { return (const oGUID&)__uuidof(ID3D11RenderTargetView); }
 const oGUID& oGetGUID(threadsafe const ID3D11Texture2D* threadsafe const*) { return (const oGUID&)__uuidof(ID3D11Texture2D); }
-
-static const char* d3d11_dll_functions[] = 
-{
-	"D3D11CreateDevice",
-};
-
-oD3D11::oD3D11()
-{
-	hModule = oModuleLinkSafe("d3d11.dll", d3d11_dll_functions, (void**)&D3D11CreateDevice, oCOUNTOF(d3d11_dll_functions));
-	oASSERT(hModule, "");
-}
-
-oD3D11::~oD3D11()
-{
-	oModuleUnlink(hModule);
-}
-
-// {2BCF2584-3DE9-4192-89D3-0787E4DE32F9}
-const oGUID oD3D11::GUID = { 0x2bcf2584, 0x3de9, 0x4192, { 0x89, 0xd3, 0x7, 0x87, 0xe4, 0xde, 0x32, 0xf9 } };
-oSINGLETON_REGISTER(oD3D11);
 
 static bool oD3D11FindAdapter(int _Index, const int2& _VirtualDesktopPosition, const oStd::version& _MinVersion, bool _ExactVersion, IDXGIAdapter** _ppAdapter)
 {
@@ -147,7 +126,7 @@ bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3
 		Flags |= D3D11_CREATE_DEVICE_SINGLETHREADED;
 
 	D3D_FEATURE_LEVEL FeatureLevel;
-	HRESULT hr = oD3D11::Singleton()->D3D11CreateDevice(
+	HRESULT hr = D3D11CreateDevice(
 		Adapter
 		, _Init.UseSoftwareEmulation ? D3D_DRIVER_TYPE_REFERENCE : D3D_DRIVER_TYPE_UNKNOWN
 		, 0
@@ -169,7 +148,7 @@ bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3
 		Flags &=~ D3D11_CREATE_DEVICE_DEBUG;
 		UsingDebug = false;
 
-		oVB_RETURN2(oD3D11::Singleton()->D3D11CreateDevice(
+		oVB_RETURN2(D3D11CreateDevice(
 			Adapter
 			, _Init.UseSoftwareEmulation ? D3D_DRIVER_TYPE_REFERENCE : D3D_DRIVER_TYPE_UNKNOWN
 			, 0
@@ -1609,7 +1588,7 @@ bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, D3DX11_IMAGE_FILE_FOR
 	oStd::intrusive_ptr<ID3D11DeviceContext> D3DImmediateContext;
 	D3DDevice->GetImmediateContext(&D3DImmediateContext);
 
-	oV(oD3DX11::Singleton()->D3DX11SaveTextureToFileA(D3DImmediateContext, D3DTexture, _Format, _Path));
+	oV(D3DX11SaveTextureToFileA(D3DImmediateContext, D3DTexture, _Format, _Path));
 	return true;
 }
 
@@ -1691,7 +1670,7 @@ bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, voi
 		return false; // pass through error
 
 	oStd::intrusive_ptr<ID3D10Blob> Blob;
-	oV(oD3DX11::Singleton()->D3DX11SaveTextureToMemory(D3DImmediateContext, CPUCopy, _Format, &Blob, 0));
+	oV(D3DX11SaveTextureToMemory(D3DImmediateContext, CPUCopy, _Format, &Blob, 0));
 
 	if (Blob->GetBufferSize() > _SizeofBuffer)
 		return oErrorSetLast(std::errc::no_buffer_space, "Buffer is too small for image");
@@ -1742,7 +1721,7 @@ bool oD3D11Load(ID3D11Device* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const oS
 {
 	D3DX11_IMAGE_LOAD_INFO li;
 	oD3D11GetImageLoadInfo(_Desc, &li);
-	HRESULT hr = oD3DX11::Singleton()->D3DX11CreateTextureFromFile(_pDevice
+	HRESULT hr = D3DX11CreateTextureFromFile(_pDevice
 		, _Path
 		, &li
 		, nullptr
@@ -1758,7 +1737,7 @@ bool oD3D11Load(ID3D11Device* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const ch
 {
 	D3DX11_IMAGE_LOAD_INFO li;
 	oD3D11GetImageLoadInfo(_Desc, &li);
-	HRESULT hr = oD3DX11::Singleton()->D3DX11CreateTextureFromMemory(_pDevice
+	HRESULT hr = D3DX11CreateTextureFromMemory(_pDevice
 		, _pBuffer
 		, _SizeofBuffer
 		, &li
@@ -1845,7 +1824,7 @@ bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, oSURFACE_FORMAT _NewFormat,
 
 	oStd::intrusive_ptr<ID3D11DeviceContext> D3DContext;
 	D3DDevice->GetImmediateContext(&D3DContext);
-	HRESULT hr = oD3DX11::Singleton()->D3DX11LoadTextureFromTexture(D3DContext, _pSourceTexture, nullptr, NewTexture);
+	HRESULT hr = D3DX11LoadTextureFromTexture(D3DContext, _pSourceTexture, nullptr, NewTexture);
 	if (FAILED(hr))
 		return oWinSetLastError(hr);
 

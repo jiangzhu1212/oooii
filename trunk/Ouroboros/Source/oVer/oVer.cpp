@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oWindows.h>
-#include <oPlatform/oModule.h>
 
 static oStd::option sOptions[] = 
 {

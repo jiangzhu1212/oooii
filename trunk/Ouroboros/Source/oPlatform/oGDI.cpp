@@ -27,7 +27,6 @@
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinWindowing.h>
-#include "SoftLink/oWinMSIMG32.h"
 
 int oGDIPointToLogicalHeight(HDC _hDC, int _Point)
 {
@@ -298,7 +297,7 @@ BOOL oGDIStretchBlendBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, H
 		hDCBitmap = CreateCompatibleDC(_hDC);
 		GetObject(_hBitmap, sizeof(BITMAP), (LPSTR)&Bitmap);
 		HGDIOBJ hOld = SelectObject(hDCBitmap, _hBitmap);
-		bResult = oWinMSIMG32::Singleton()->AlphaBlend(_hDC, _X, _Y, _Width, _Height, hDCBitmap, 0, 0, Bitmap.bmWidth, Bitmap.bmHeight, kBlend);
+		bResult = AlphaBlend(_hDC, _X, _Y, _Width, _Height, hDCBitmap, 0, 0, Bitmap.bmWidth, Bitmap.bmHeight, kBlend);
 		SelectObject(hDCBitmap, hOld);
 		DeleteDC(hDCBitmap);
 	}
@@ -424,7 +423,7 @@ bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness, float _Alpha)
 	}
 
 	BLENDFUNCTION blend = { AC_SRC_OVER, 0, (BYTE)(static_cast<int>(_Alpha * 255.0f) & 0xff), 0 };
-	if (!oWinMSIMG32::Singleton()->AlphaBlend(_hDC, _rBox.left, _rBox.top, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, hDCBitmap, 0, 0, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, blend))
+	if (!AlphaBlend(_hDC, _rBox.left, _rBox.top, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, hDCBitmap, 0, 0, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, blend))
 		return oWinSetLastError();
 	return true;
 }

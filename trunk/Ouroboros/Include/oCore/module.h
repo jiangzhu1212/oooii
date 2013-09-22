@@ -75,6 +75,7 @@ struct info
 {
 	info()
 		: type(type::unknown)
+		, is_64bit_binary(false)
 		, is_debug(false)
 		, is_prerelease(false)
 		, is_patched(false)
@@ -92,6 +93,7 @@ struct info
 	oStd::mstring private_message;
 	oStd::mstring special_message;
 	type::value type;
+	bool is_64bit_binary;
 	bool is_debug;
 	bool is_prerelease;
 	bool is_patched;
@@ -104,11 +106,22 @@ id open(const oStd::path& _Path);
 void close(id _ModuleID);
 void* sym(id _ModuleID, const char* _SymbolName);
 
+// convenience function that given an array of function names will fill an array 
+// of the same size with the resolved symbols. If a class is defined that has a 
+// run of members defined for the functions, then the address of the first 
+// function can be passed as the array to quickly fill an interface of typed
+// functions ready for use.
+void link(id _ModuleID, const char** _pInterfaceFunctionNames, void** _ppInterfaces, size_t _CountofInterfaces);
+template<size_t size> void link(id _ModuleID, const char* (&_pInterfaceFunctionNames)[size], void** _ppInterfaces) { link(_ModuleID, _pInterfaceFunctionNames, _ppInterfaces, size); }
+
+inline id link(const oStd::path& _Path, const char** _pInterfaceFunctionNames, void** _ppInterfaces, size_t _CountofInterfaces) { id ID = open(_Path); link(ID, _pInterfaceFunctionNames, _ppInterfaces, _CountofInterfaces); return ID; }
+template<size_t size> id link(const oStd::path& _Path, const char* (&_InterfaceFunctionNames)[size], void** _ppInterfaces) { return link(_Path, _InterfaceFunctionNames, _ppInterfaces, size); }
+
 oStd::path get_path(id _ModuleID);
 
 // given an address in a module, retreive that module's handle
 // fit for name(), sym() or close() APIs.
-id get_id(void* _Symbol);
+id get_id(const void* _Symbol);
 
 info get_info(const oStd::path& _Path);
 info get_info(id _ModuleID);
@@ -117,6 +130,7 @@ info get_info(id _ModuleID);
 
 	namespace this_module {
 
+module::id get_id();
 oStd::path path();
 module::info get_info();
 

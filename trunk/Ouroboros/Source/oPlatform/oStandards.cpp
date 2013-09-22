@@ -31,7 +31,6 @@
 #include <oPlatform/oImage.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/Windows/oWindows.h>
-#include <oPlatform/oModule.h>
 #include <oPlatform/oStream.h>
 
 void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list _Args )

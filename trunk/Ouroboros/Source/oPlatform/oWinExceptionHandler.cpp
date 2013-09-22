@@ -154,31 +154,6 @@ static oWinCppException oWinVEHGetException(const EXCEPTION_RECORD& _Record)
 	return e;
 }
 
-size_t oModuleGetShortName(char* _StrDestination, size_t _SizeofStrDestination, oHMODULE _hModule)
-{
-	char tmp[_MAX_PATH];
-	DWORD len = GetModuleFileNameA((HMODULE)_hModule, tmp, sizeof(tmp));
-	char* ShortName = tmp;
-	if (len)
-	{
-		do
-		{
-			len--;
-			if (tmp[len] == '\\')
-			{
-				ShortName = &tmp[len+1];
-				break;
-			}
-
-		} while (len);
-	}
-	else
-		ShortName = "?";
-	
-	return strlcpy(_StrDestination, ShortName, _SizeofStrDestination);
-}
-template<size_t size> size_t oModuleGetShortName(char (&_StrDestination)[size], oHMODULE _hModule) { return oModuleGetShortName(_StrDestination, size, _hModule); }
-
 // Allows us to break execution when an access violation occurs
 LONG oWinExceptionHandler::OnException(EXCEPTION_POINTERS* _pExceptionPointers)
 {
@@ -203,9 +178,8 @@ LONG oWinExceptionHandler::OnException(EXCEPTION_POINTERS* _pExceptionPointers)
 			CppException = oWinVEHGetException(*pRecord);
 			if (oSTRVALID(CppException.What))
 			{
-				char msg[2048];
-				char ModuleName[64];
-				oModuleGetShortName(ModuleName, (oHMODULE)GetModuleHandle(nullptr));
+				oStd::xlstring msg;
+				oStd::path ModulePath = std::move(oCore::this_module::path());
 				#ifdef _WIN64
 					#define LOWER_CASE_PTR_FMT "%016llx"
 				#else
@@ -213,7 +187,7 @@ LONG oWinExceptionHandler::OnException(EXCEPTION_POINTERS* _pExceptionPointers)
 				#endif
 
 				snprintf(msg, "First-chance exception at 0x" LOWER_CASE_PTR_FMT ": in %s: %s: %s\n"
-					, pRecord->ExceptionAddress, ModuleName, CppException.TypeName, CppException.What);
+					, pRecord->ExceptionAddress, ModulePath.filename().c_str(), CppException.TypeName, CppException.What);
 				OutputDebugStringA(msg);
 			}
 			break;

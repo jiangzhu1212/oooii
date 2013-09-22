@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "win.h"
+#include <oCore/filesystem.h>
 #include <oStd/throw.h>
 
 namespace oStd {
@@ -308,18 +309,6 @@ version::value get_version()
 	}
 
 	return version::unknown;
-}
-
-bool is_64bit()
-{
-	if (sizeof(void*) != 4) // If ptr size is larger than 32-bit we must be on 64-bit windows
-		return true;
-
-	// If ptr size is 4 bytes then we're a 32-bit process so check if we're running under
-	// wow64 which would indicate that we're on a 64-bit system
-	BOOL bWow64 = FALSE;
-	IsWow64Process(GetCurrentProcess(), &bWow64);
-	return !bWow64;
 }
 
 class windows_category_impl : public std::error_category

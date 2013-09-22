@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oPlatform/oMRUManager.h>
 #include <oPlatform/oGUIMenu.h>
-#include <oPlatform/oModule.h>
 #include <oPlatform/Windows/oWinRegistry.h>
 
 struct oMRUManagerRegistry : oMRUManager

@@ -42,7 +42,7 @@
 #include <oBasis/oSurface.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oImage.h>
-#include <oPlatform/oModule.h> // for module-to-platform code in the Misc section
+#include <oCore/module.h>
 
 // _____________________________________________________________________________
 // Simplify the contents of Windows.h
@@ -497,10 +497,6 @@ void oDlgDeleteTemplate(LPDLGTEMPLATE _lpDlgTemplate);
 // Returns the resolved path to the binary that is the running service
 bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestination, SC_HANDLE _hSCManager, const char* _ServiceName);
 
-// Returns true if the specified file is a binary compiled for x64. If false,
-// it is reasonable to assume x86 (32-bit).
-bool oWinSystemIs64BitBinary(const oStd::path& _StrPath);
-
 // Spawns the application associated with the specified _DocumentName and opens
 // that document. For example: open a text file using Notepad or a URL using 
 // Explorer.
@@ -517,19 +513,6 @@ bool oWinGetProcessTopWindowAndThread(oCore::process::id _ProcessID, HWND* _pHWN
 
 // Converts a standard C file handle from fopen to a windows handle
 HANDLE oGetFileHandle(FILE* _File);
-
-DWORD oGetThreadID(HANDLE _hThread);
-
-// Fills the specified buffer with the name of the workgroup for the system
-bool oWinGetWorkgroupName(char* _StrDestination, size_t _SizeofStrDestination);
-template<size_t size> bool oWinGetWorkgroupName(char (&_StrDestination)[size]) { return oWinGetWorkgroupName(_StrDestination, size); }
-
-// Returns the current module. Unlike GetModuleHandle(NULL), this returns the
-// module handle containing the specified pointer. A typical use case would be
-// to pass the address of the function calling oGetModule() to return the 
-// current module at that point. If NULL is specified, this returns the handle
-// of the main process module.
-HMODULE oGetModule(void* _ModuleFunctionPointer);
 
 // Call the specified function for each thread in the current process. The 
 // function should return true to keep enumerating, or false to exit early. This
@@ -595,10 +578,10 @@ bool oWinEnableDebugPrivilege(bool _Enabled);
 void oWinDumpAndTerminate(EXCEPTION_POINTERS* _pExceptionPtrs, const char* _pUserErrorMessage);
 
 // value to set for FILEFLAGS in a resource script (.rc)
-long oWinRCGetFileFlags(const oMODULE_DESC& _Desc);
+long oWinRCGetFileFlags(const oCore::module::info& _Info);
 
 // Returns the values for FILETYPE and FILESUBTYPE in a resource script (.rc)
-void oWinRCGetFileType(const oMODULE_TYPE _Type, DWORD* _pType, DWORD* _pSubtype);
+void oWinRCGetFileType(const oCore::module::type::value _Type, DWORD* _pType, DWORD* _pSubtype);
 
 #else
 	#error Unsupported platform

@@ -25,7 +25,6 @@
 #include <oPlatform/oSingleton.h>
 #include <oBasis/oBasisRequirements.h>
 #include <oConcurrency/mutex.h>
-#include <oPlatform/oModule.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oStd/backoff.h>
 
@@ -63,7 +62,7 @@ namespace oSingletonPlatform
 	}
 #endif
 
-	oHMODULE GetCurrentModule() { return oModuleGetCurrent(); }
+	oCore::module::id GetCurrentModule() { return oCore::this_module::get_id(); }
 
 } // namespace oSingletonPlatform
 
@@ -184,10 +183,12 @@ void oThreadlocalRegistryDestroy()
 }
 
 oSingletonBase::oSingletonBase(int _InitialRefCount)
-	: hModule(oSingletonPlatform::GetCurrentModule())
-	, Name("")
+	: Name("")
 	, RefCount(_InitialRefCount)
-{}
+{
+	auto id = oSingletonPlatform::GetCurrentModule();
+	hModule = *(void**)&id;
+}
 
 oSingletonBase::~oSingletonBase()
 {
@@ -207,7 +208,10 @@ void oSingletonBase::Release() threadsafe
 	oSINGLETON_TRACE(typeid(*this).name(), "released %d -> %d", r, r-1);
 	if (RefCount.Release())
 	{
-		oASSERT(hModule == oSingletonPlatform::GetCurrentModule(), "Singleton being freed by a module different than the one creating it.");
+		#if oENABLE_ASSERTS
+			auto id = oSingletonPlatform::GetCurrentModule();
+			oASSERT(hModule == *(void**)&id, "Singleton being freed by a module different than the one creating it.");
+		#endif
 		this->~oSingletonBase();
 		oProcessHeapDeallocate(thread_cast<oSingletonBase*>(this)); // safe because we're not using this anymore
 	}

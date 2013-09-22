@@ -244,8 +244,8 @@ TSTR size_t strlcat(oStd::STRT& _StrDestination, const char* _StrSource) { retur
 TSTR size_t strlcpy(oStd::STRT& _StrDestination, const char* _StrSource) { return strlcpy(_StrDestination, _StrSource, _StrDestination.capacity()); }
 TSTR size_t wcslcat(oStd::STRT& _StrDestination, const wchar_t* _StrSource) { return wcslcat(_StrDestination, _StrSource, _StrDestination.capacity()); }
 TSTR size_t wcslcpy(oStd::STRT& _StrDestination, const wchar_t* _StrSource) { return wcslcpy(_StrDestination, _StrSource, _StrDestination.capacity()); }
-TSTR size_t mbsltowsc(oStd::STRT& _StrDestination, const char* _StrSource) { return strlcpy(_StrDestination, _StrSource, _StrDestination.capacity()); }
-TSTR size_t wcsltombs(oStd::STRT& _StrDestination, const wchar_t* _StrSource) { return strlcpy(_StrDestination, _StrSource, _StrDestination.capacity()); }
+TSTR size_t mbsltowsc(oStd::STRT& _StrDestination, const char* _StrSource) { return mbsltowsc(_StrDestination, _StrSource, _StrDestination.capacity()); }
+TSTR size_t wcsltombs(oStd::STRT& _StrDestination, const wchar_t* _StrSource) { return wcsltombs(_StrDestination, _StrSource, _StrDestination.capacity()); }
 
 #undef STRT
 #undef TSTR

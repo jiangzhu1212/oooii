@@ -31,18 +31,12 @@
 #include <oConcurrency/mutex.h>
 #include <oBasis/oPath.h>
 #include <oPlatform/oDisplay.h>
-#include <oPlatform/oModule.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinAsString.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oStream.h>
-#include "SoftLink/oWinDbgHelp.h"
-#include "SoftLink/oWinKernel32.h"
-#include "SoftLink/oWinNetApi32.h"
-#include "SoftLink/oWinDWMAPI.h"
-#include "SoftLink/oWinSetupAPI.h"
 #include "oStaticMutex.h"
 #include <io.h>
 #include <time.h>
@@ -53,7 +47,7 @@
 #include <devguid.h>
 #include <devpkey.h>
 #include <psapi.h>
-
+#include <SetupAPI.h>
 
 // Use the Windows Vista UI look. If this causes issues or the dialog not to appear, try other values from processorAchitecture { x86 ia64 amd64 * }
 #pragma comment(linker, "\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -274,12 +268,12 @@ static bool oWinSetupGetString(oStd::mstring& _StrDestination, HDEVINFO _hDevInf
 {
 	DEVPROPTYPE dpType;
 	DWORD size = 0;
-	oWinSetupAPI::Singleton()->SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, nullptr, 0, &size, 0);
+	SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, nullptr, 0, &size, 0);
 	if (size)
 	{
 		oStd::mwstring buffer;
 		oASSERT(buffer.capacity() > (size / sizeof(oStd::mwstring::char_type)), "");
-		if (!oWinSetupAPI::Singleton()->SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) || dpType != DEVPROP_TYPE_STRING)
+		if (!SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) || dpType != DEVPROP_TYPE_STRING)
 			return oWinSetLastError();
 		_StrDestination = buffer;
 	}
@@ -294,12 +288,12 @@ static bool oWinSetupGetStringList(oStd::mstring* _StrDestination, size_t& _NumS
 {
 	DEVPROPTYPE dpType;
 	DWORD size = 0;
-	oWinSetupAPI::Singleton()->SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, nullptr, 0, &size, 0);
+	SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, nullptr, 0, &size, 0);
 	if (size)
 	{
 		oStd::xlwstring buffer;
 		oASSERT(buffer.capacity() > size, "");
-		if (!oWinSetupAPI::Singleton()->SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) || dpType != DEVPROP_TYPE_STRING_LIST)
+		if (!SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) || dpType != DEVPROP_TYPE_STRING_LIST)
 			return oWinSetLastError();
 
 		const wchar_t* c = buffer.c_str();
@@ -343,14 +337,14 @@ static bool oWinEnumInputDevices(bool _EnumerateAll, const char* _Enumerator, co
 	oStd::finally([=]
 	{ 
 		if (hDevInfo != INVALID_HANDLE_VALUE) 
-			oWinSetupAPI::Singleton()->SetupDiDestroyDeviceInfoList(hDevInfo);
+			SetupDiDestroyDeviceInfoList(hDevInfo);
 	});
 
 	DWORD dwFlag = DIGCF_ALLCLASSES;
 	if (!_EnumerateAll)
 		dwFlag |= DIGCF_PRESENT;
 
-	hDevInfo = oWinSetupAPI::Singleton()->SetupDiGetClassDevsA(nullptr, _Enumerator, nullptr, dwFlag);
+	hDevInfo = SetupDiGetClassDevsA(nullptr, _Enumerator, nullptr, dwFlag);
 	if (INVALID_HANDLE_VALUE == hDevInfo)
 		return oWinSetLastError();
 
@@ -365,7 +359,7 @@ static bool oWinEnumInputDevices(bool _EnumerateAll, const char* _Enumerator, co
 	oStd::mstring KinectCameraSibling;
 	oStd::mstring KinectCameraParent;
 
-	while (oWinSetupAPI::Singleton()->SetupDiEnumDeviceInfo(hDevInfo, DeviceIndex, &SPDID))
+	while (SetupDiEnumDeviceInfo(hDevInfo, DeviceIndex, &SPDID))
 	{
 		DeviceIndex++;
 
@@ -565,13 +559,14 @@ HHOOK oSetWindowsHook(int _idHook, oHOOKPROC _pHookProc, void* _pUserData, DWORD
 	bool isProcessThread = false;
 	oVERIFY(oEnumProcessThreads(GetCurrentProcessId(), oBIND(IsProcessThread, oBIND1, oBIND2, _dwThreadId, &isProcessThread)));
 
-	HMODULE hMod = oGetModule(_pHookProc);
-	if (hMod == (HMODULE)oModuleGetCurrent() && isProcessThread)
-		hMod = nullptr;
+	oCore::module::id hookModuleId = oCore::module::get_id(_pHookProc);
+	oCore::module::id currentModuleId = oCore::this_module::get_id();
+	if (hookModuleId == currentModuleId && isProcessThread)
+		hookModuleId = oCore::module::id();
 
 	hc->pUserData = _pUserData;
 	hc->UserHookProc = _pHookProc;
-	hc->hHook = ::SetWindowsHookExA(_idHook, hc->UniqueHookProc, hMod, _dwThreadId);
+	hc->hHook = ::SetWindowsHookExA(_idHook, hc->UniqueHookProc, *(HMODULE*)&hookModuleId, _dwThreadId);
 	oVB(hc->hHook && "SetWindowsHookEx");
 
 	// recover from any error
@@ -1018,57 +1013,6 @@ HANDLE oGetFileHandle(FILE* _File)
 	return (HANDLE)_get_osfhandle(_fileno(_File));
 }
 
-DWORD oGetThreadID(HANDLE _hThread)
-{
-	#if oDXVER >= oDXVER_10
-		DWORD ID = 0;
-		if (!_hThread)
-			ID = GetCurrentThreadId();
-		else if (oGetWindowsVersion() >= oWINDOWS_VISTA)
-			ID = oWinKernel32::Singleton()->GetThreadId((HANDLE)_hThread);
-		else
-			oTRACE("WARNING: oGetThreadID doesn't work with non-zero thread handles on versions of Windows prior to Vista.");
-			// todo: Traverse all threads in the system to find the one with the specified handle, then from that struct return the ID.
-
-		return ID;
-	#else
-		oTRACE("oGetThreadID doesn't behave properly on versions of Windows prior to Vista because GetThreadId(HANDLE _hThread) didn't exist.");
-		return 0;
-	#endif
-}
-
-bool oWinGetWorkgroupName(char* _StrDestination, size_t _SizeofStrDestination)
-{
-	LPWKSTA_INFO_102 pInfo = nullptr;
-	NET_API_STATUS nStatus;
-	LPTSTR pszServerName = nullptr;
-
-	nStatus = oWinNetApi32::Singleton()->NetWkstaGetInfo(nullptr, 102, (LPBYTE *)&pInfo);
-	oStd::finally OSCFreeBuffer([&] { if (pInfo) oWinNetApi32::Singleton()->NetApiBufferFree(pInfo); });
-	if (nStatus == NERR_Success)
-	{
-		WideCharToMultiByte(CP_ACP, 0, pInfo->wki102_langroup, -1, _StrDestination, oInt(_SizeofStrDestination), 0, 0);
-		return true;
-	}
-
-	return false;
-}
-
-HMODULE oGetModule(void* _ModuleFunctionPointer)
-{
-	HMODULE hModule = 0;
-
-	if (_ModuleFunctionPointer)
-		oVB(GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCTSTR)_ModuleFunctionPointer, &hModule));	
-	else
-	{
-		DWORD cbNeeded;
-		EnumProcessModules(GetCurrentProcess(), &hModule, sizeof(hModule), &cbNeeded);
-	}
-	
-	return hModule;
-}
-
 bool oEnumProcessThreads(DWORD _ProcessID, oFUNCTION<bool(DWORD _ThreadID, DWORD _ParentProcessID)> _Function)
 {
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GetCurrentProcessId());
@@ -1431,27 +1375,6 @@ bool oWinGetProcessTopWindowAndThread(oCore::process::id _ProcessID, HWND* _pHWN
 	return true;
 }
 
-bool oWinSystemIs64BitBinary(const oStd::path& _Path)
-{
-	bool result = false;
-
-	unsigned long long size = oCore::filesystem::file_size(_Path);
-
-	oSTREAM_DESC FDesc;
-	if (!oStreamGetDesc(_Path, &FDesc))
-		return false; // pass through error
-
-	void* mapped = oCore::filesystem::map(_Path, false, 0, size);
-	if (mapped)
-	{
-		IMAGE_NT_HEADERS* pHeader = oWinDbgHelp::Singleton()->ImageNtHeader(mapped);
-		result = pHeader->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64;
-		oCore::filesystem::unmap(mapped);
-	}
-
-	return result;
-}
-
 bool oWinSetPrivilege(HANDLE _hProcessToken, LPCTSTR _PrivilegeName, bool _Enabled)
 {
 	TOKEN_PRIVILEGES TP;
@@ -1486,49 +1409,49 @@ bool oWinEnableDebugPrivilege(bool _Enabled)
 	return true;
 }
 
-long oWinRCGetFileFlags(const oMODULE_DESC& _Desc)
+long oWinRCGetFileFlags(const oCore::module::info& _Info)
 {
 	long flags = 0;
-	if (_Desc.IsDebugBuild)
+	if (_Info.is_debug)
 		flags |= VS_FF_DEBUG;
-	if (_Desc.IsPrereleaseBuild)
+	if (_Info.is_prerelease)
 		flags |= VS_FF_PRERELEASE;
-	if (_Desc.IsPatchedBuild)
+	if (_Info.is_patched)
 		flags |= VS_FF_PATCHED;
-	if (_Desc.IsPrivateBuild)
+	if (_Info.is_private)
 		flags |= VS_FF_PRIVATEBUILD;
-	if (_Desc.IsSpecialBuild)
+	if (_Info.is_special)
 		flags |= VS_FF_SPECIALBUILD;
 
 	return flags;
 }
 
-void oWinRCGetFileType(const oMODULE_TYPE _Type, DWORD* _pType, DWORD* _pSubtype)
+void oWinRCGetFileType(const oCore::module::type::value _Type, DWORD* _pType, DWORD* _pSubtype)
 {
 	*_pType = VFT_UNKNOWN;
 	*_pSubtype = VFT2_UNKNOWN;
 
 	switch (_Type)
 	{
-		case oMODULE_APP: *_pType = VFT_APP; break;
-		case oMODULE_DLL: *_pType = VFT_DLL; break;
-		case oMODULE_LIB: *_pType = VFT_STATIC_LIB; break;
-		case oMODULE_FONT_UNKNOWN: *_pType = VFT_FONT; break;
-		case oMODULE_FONT_RASTER: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_RASTER; break;
-		case oMODULE_FONT_TRUETYPE: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_TRUETYPE; break;
-		case oMODULE_FONT_VECTOR: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_VECTOR; break;
-		case oMODULE_VIRTUAL_DEVICE: *_pType = VFT_VXD; break;
-		case oMODULE_DRV_UNKNOWN: *_pType = VFT_DRV; break;
-		case oMODULE_DRV_COMM: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_COMM; break;
-		case oMODULE_DRV_DISPLAY: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_DISPLAY; break;
-		case oMODULE_DRV_INSTALLABLE: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_INSTALLABLE; break;
-		case oMODULE_DRV_KEYBOARD: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_KEYBOARD; break;
-		case oMODULE_DRV_LANGUAGE: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_LANGUAGE; break;
-		case oMODULE_DRV_MOUSE: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_MOUSE; break;
-		case oMODULE_DRV_NETWORK: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_NETWORK; break;
-		case oMODULE_DRV_PRINTER: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_PRINTER; break;
-		case oMODULE_DRV_SOUND: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_SOUND; break;
-		case oMODULE_DRV_SYSTEM: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_SYSTEM; break;
+		case oCore::module::type::app: *_pType = VFT_APP; break;
+		case oCore::module::type::dll: *_pType = VFT_DLL; break;
+		case oCore::module::type::lib: *_pType = VFT_STATIC_LIB; break;
+		case oCore::module::type::font_unknown: *_pType = VFT_FONT; break;
+		case oCore::module::type::font_raster: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_RASTER; break;
+		case oCore::module::type::font_truetype: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_TRUETYPE; break;
+		case oCore::module::type::font_vector: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_VECTOR; break;
+		case oCore::module::type::virtual_device: *_pType = VFT_VXD; break;
+		case oCore::module::type::drv_unknown: *_pType = VFT_DRV; break;
+		case oCore::module::type::drv_comm: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_COMM; break;
+		case oCore::module::type::drv_display: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_DISPLAY; break;
+		case oCore::module::type::drv_installable: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_INSTALLABLE; break;
+		case oCore::module::type::drv_keyboard: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_KEYBOARD; break;
+		case oCore::module::type::drv_language: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_LANGUAGE; break;
+		case oCore::module::type::drv_mouse: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_MOUSE; break;
+		case oCore::module::type::drv_network: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_NETWORK; break;
+		case oCore::module::type::drv_printer: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_PRINTER; break;
+		case oCore::module::type::drv_sound: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_SOUND; break;
+		case oCore::module::type::drv_system: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_SYSTEM; break;
 	default: break;
 	}
 }

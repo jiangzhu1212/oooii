@@ -135,7 +135,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oHTTPServer.h" />
     <ClInclude Include="..\..\Include\oPlatform\oInterprocessEvent.h" />
     <ClInclude Include="..\..\Include\oPlatform\oMirroredArena.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oModuleUtil.h" />
     <ClInclude Include="..\..\Include\oPlatform\oMRUManager.h" />
     <ClInclude Include="..\..\Include\oPlatform\oMsgBox.h" />
     <ClInclude Include="..\..\Include\oPlatform\oProcessHeap.h" />
@@ -151,7 +150,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oWebAppWindow.h" />
     <ClInclude Include="..\..\Include\oPlatform\oWebServer.h" />
     <ClInclude Include="..\..\Include\oPlatform\oImage.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oModule.h" />
     <ClInclude Include="..\..\Include\oPlatform\oP4.h" />
     <ClInclude Include="..\..\Include\oPlatform\oReporting.h" />
     <ClInclude Include="..\..\Include\oPlatform\oSingleton.h" />
@@ -187,18 +185,7 @@
     <ClInclude Include="oStaticMutex.h" />
     <ClInclude Include="oWinExceptionHandler.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="SoftLink\oD3DX11.h" />
     <ClInclude Include="SoftLink\oOpenSSL.h" />
-    <ClInclude Include="SoftLink\oWinCommCtrl.h" />
-    <ClInclude Include="SoftLink\oWinDbgHelp.h" />
-    <ClInclude Include="SoftLink\oWinDWMAPI.h" />
-    <ClInclude Include="SoftLink\oWinDXGI.h" />
-    <ClInclude Include="SoftLink\oWinKernel32.h" />
-    <ClInclude Include="SoftLink\oWinMSIMG32.h" />
-    <ClInclude Include="SoftLink\oWinNetApi32.h" />
-    <ClInclude Include="SoftLink\oWinPDH.h" />
-    <ClInclude Include="SoftLink\oWinSetupAPI.h" />
-    <ClInclude Include="SoftLink\oWinShlwapi.h" />
     <ClInclude Include="SoftLink\oWinsock.h" />
   </ItemGroup>
   <ItemGroup>
@@ -229,7 +216,6 @@
     <ClCompile Include="oInvisible_ico.cpp" />
     <ClCompile Include="oIOCP.cpp" />
     <ClCompile Include="oMirroredArena.cpp" />
-    <ClCompile Include="oModule.cpp" />
     <ClCompile Include="oMRUManager.cpp" />
     <ClCompile Include="oMsgBox.cpp" />
     <ClCompile Include="oooii_icon.cpp" />
@@ -270,18 +256,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="SoftLink\oD3DX11.cpp" />
     <ClCompile Include="SoftLink\oOpenSSL.cpp" />
-    <ClCompile Include="SoftLink\oWinCommCtrl.cpp" />
-    <ClCompile Include="SoftLink\oWinDbgHelp.cpp" />
-    <ClCompile Include="SoftLink\oWinDWMAPI.cpp" />
-    <ClCompile Include="SoftLink\oWinDXGI.cpp" />
-    <ClCompile Include="SoftLink\oWinKernel32.cpp" />
-    <ClCompile Include="SoftLink\oWinMSIMG32.cpp" />
-    <ClCompile Include="SoftLink\oWinNetApi32.cpp" />
-    <ClCompile Include="SoftLink\oWinPDH.cpp" />
-    <ClCompile Include="SoftLink\oWinSetupAPI.cpp" />
-    <ClCompile Include="SoftLink\oWinShlwapi.cpp" />
     <ClCompile Include="SoftLink\oWinsock.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

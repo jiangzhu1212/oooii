@@ -175,6 +175,96 @@ size_t callstack(symbol* _pSymbols, size_t _NumSymbols, size_t _Offset)
 }
 #endif
 
+bool sdk_path(char* _Path, size_t _SizeofPath, const char* _SDKRelativePath)
+{
+	bool result = false;
+	DWORD len = GetEnvironmentVariableA("ProgramFiles", _Path, static_cast<DWORD>(_SizeofPath));
+	if (len && len < _SizeofPath)
+	{
+		strlcat(_Path, _SDKRelativePath, _SizeofPath);
+		result = GetFileAttributesA(_Path) != INVALID_FILE_ATTRIBUTES;
+	}
+
+	return result;
+}
+
+template<size_t size> inline BOOL sdk_path(char (&_Path)[size], const char* _SDKRelativePath) { return sdk_path(_Path, size, _SDKRelativePath); }
+
+static BOOL CALLBACK load_module(PCSTR ModuleName, DWORD64 ModuleBase, ULONG ModuleSize, PVOID UserContext)
+{
+	//const oWinDbgHelp* d = static_cast<const oWinDbgHelp*>(UserContext);
+	HANDLE hProcess = (HANDLE)UserContext;
+	bool success = !!SymLoadModule64(hProcess, 0, ModuleName, 0, ModuleBase, ModuleSize);
+	//if (d->GetModuleLoadedHandler())
+	//	(*d->GetModuleLoadedHandler())(ModuleName, success);
+	return success;
+}
+
+static HMODULE init_dbghelp(HANDLE _hProcess
+	, bool _SoftLink
+	, const char* _SymbolPath
+	, char* _OutSymbolSearchPath
+	, size_t _SizeofOutSymbolSearchPath)
+{
+	HMODULE hDbgHelp = nullptr;
+
+	if (!_hProcess || _hProcess == INVALID_HANDLE_VALUE)
+		_hProcess = GetCurrentProcess();
+
+	char path[512];
+	if (_SoftLink)
+	{
+		GetModuleFileNameA(0, path, oCOUNTOF(path));
+		if (!GetLastError())
+		{
+			// first local override
+			strlcat(path, ".local");
+			if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES)
+			{
+				// then for an installed version (32/64-bit)
+				if (sdk_path(path, "/Debugging Tools for Windows/dbghelp.dll") && GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES)
+					hDbgHelp = LoadLibraryA(path);
+
+				if (!hDbgHelp && sdk_path(path, "/Debugging Tools for Windows 64-Bit/dbghelp.dll") && GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES)
+					hDbgHelp = LoadLibraryA(path);
+			}
+		}
+
+		// else punt to wherever the system can find it
+		if (!hDbgHelp)
+			hDbgHelp = LoadLibraryA("dbghelp.dll");
+	}
+
+	if (hDbgHelp || !_SoftLink)
+	{
+		if (_OutSymbolSearchPath)
+			*_OutSymbolSearchPath = '\0';
+
+		// Our PDBs no longer have absolute paths, so we set the search path to
+		// the executable path, unless the user specified _SymbolPath
+		if (!_SymbolPath || !*_SymbolPath)
+		{
+			GetModuleFileNameA(0, path, oCOUNTOF(path));
+			*(rstrstr(path, "\\") + 1) = '\0'; // trim filename
+		}
+		else
+			strlcpy(path, _SymbolPath);
+
+		if (SymInitialize(_hProcess, path, FALSE))
+		{
+			SymSetOptions(SymGetOptions() | SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_FAIL_CRITICAL_ERRORS);
+			if (_OutSymbolSearchPath)
+				SymGetSearchPath(_hProcess, _OutSymbolSearchPath, static_cast<DWORD>(_SizeofOutSymbolSearchPath));
+
+			EnumerateLoadedModules64(_hProcess, &load_module, _hProcess);
+		}
+		else
+			oTHROW0(io_error);
+	}
+
+	return hDbgHelp;
+}
+
 symbol_info translate(symbol _Symbol)
 {
 	IMAGEHLP_MODULE64 module;
@@ -184,7 +274,11 @@ symbol_info translate(symbol _Symbol)
 	symbol_info si;
 	si.address = reinterpret_cast<unsigned long long>(_Symbol);
 	
-	oVB(SymGetModuleInfo64(GetCurrentProcess(), reinterpret_cast<unsigned long long>(_Symbol), &module));
+	if (!SymGetModuleInfo64(GetCurrentProcess(), reinterpret_cast<unsigned long long>(_Symbol), &module))
+	{
+		init_dbghelp(nullptr, false, nullptr, nullptr, 0);
+		oVB(SymGetModuleInfo64(GetCurrentProcess(), reinterpret_cast<unsigned long long>(_Symbol), &module));
+	}
 	
 	si.module = module.ModuleName;
 	BYTE buf[sizeof(IMAGEHLP_SYMBOL64) + oStd::mstring::Capacity * sizeof(TCHAR)];
@@ -269,7 +363,7 @@ int format(char* _StrDestination, size_t _SizeofStrDestination, symbol _Symbol, 
 	return rv;
 }
 
-static int oWinWriteDumpFile_Helper(MINIDUMP_TYPE _Type, HANDLE _hFile, bool* _pSuccess, EXCEPTION_POINTERS* _pExceptionPointers)
+static int write_dump_file(MINIDUMP_TYPE _Type, HANDLE _hFile, bool* _pSuccess, EXCEPTION_POINTERS* _pExceptionPointers)
 {
 	_MINIDUMP_EXCEPTION_INFORMATION ExInfo;
 	ExInfo.ThreadId = GetCurrentThreadId();
@@ -292,7 +386,7 @@ bool dump(const path& _Path, bool _Full, void* _Exceptions)
 	const MINIDUMP_TYPE kType = _Full ? MiniDumpWithFullMemory : MiniDumpNormal;
 	bool success = false; 
 	if (_Exceptions)
-		oWinWriteDumpFile_Helper(kType, hFile, &success, (EXCEPTION_POINTERS*)_Exceptions);
+		write_dump_file(kType, hFile, &success, (EXCEPTION_POINTERS*)_Exceptions);
 	else
 	{
 		// If you're here, especially from a dump file, it's because the file was 
@@ -304,7 +398,7 @@ bool dump(const path& _Path, bool _Full, void* _Exceptions)
 		// triggered execution of this
 		const static DWORD FORCE_EXCEPTION_FOR_CALLSTACK_INFO = 0x1337c0de;
 		__try { RaiseException(FORCE_EXCEPTION_FOR_CALLSTACK_INFO, 0, 0, nullptr); }
-		__except(oWinWriteDumpFile_Helper(kType, hFile, &success, GetExceptionInformation())) {}
+		__except(write_dump_file(kType, hFile, &success, GetExceptionInformation())) {}
 	}
 
 	CloseHandle(hFile);

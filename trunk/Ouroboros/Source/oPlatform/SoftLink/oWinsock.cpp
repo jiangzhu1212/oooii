@@ -196,10 +196,10 @@ oWinsock::oWinsock()
 
 	oReportingReference();
 
-	hWs2_32 = oModuleLinkSafe("ws2_32.dll", detail::ws2_32_dll_Functions, (void**)&accept, oCOUNTOF(detail::ws2_32_dll_Functions));
+	hWs2_32 = oCore::module::link("ws2_32.dll", detail::ws2_32_dll_Functions, (void**)&accept);
 	oASSERT(hWs2_32, "Failed to load and link ws2_32.dll");
 
-	hMswsock = oModuleLinkSafe("mswsock.dll", detail::mswsock_dll_Functions, (void**)&GetAddressByName, oCOUNTOF(detail::mswsock_dll_Functions));
+	hMswsock = oCore::module::link("mswsock.dll", detail::mswsock_dll_Functions, (void**)&GetAddressByName);
 	oASSERT(hMswsock, "Failed to load and link mswsock.dll");
 
 	//hFwpucint = oModule::Link("fwpucint.dll", detail::fwpucint_dll_Functions, (void**)&WSADeleteSocketPeerTargetName, oCOUNTOF(detail::fwpucint_dll_Functions));
@@ -223,11 +223,9 @@ oWinsock::~oWinsock()
 
 	WSACleanup();
 
-	if (hMswsock)
-		oModuleUnlink(hMswsock);
+	oCore::module::close(hMswsock);
 
-	if (hWs2_32)
-		oModuleUnlink(hWs2_32);
+	oCore::module::close(hWs2_32);
 
 	oReportingRelease();
 }

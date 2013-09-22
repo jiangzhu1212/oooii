@@ -72,9 +72,6 @@
     <ClInclude Include="oIOCP.h">
       <Filter>Headers\Windows API Convenience Wrappers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oModule.h">
-      <Filter>Headers\Code Management</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oReporting.h">
       <Filter>Headers\Code Management</Filter>
     </ClInclude>
@@ -123,44 +120,14 @@
     <ClInclude Include="oStaticMutex.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="SoftLink\oWinDbgHelp.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClInclude>
-    <ClInclude Include="SoftLink\oWinDWMAPI.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClInclude>
     <ClInclude Include="SoftLink\oWinsock.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClInclude>
-    <ClInclude Include="SoftLink\oWinCommCtrl.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClInclude>
-    <ClInclude Include="SoftLink\oD3DX11.h">
       <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClInclude>
     <ClInclude Include="SoftLink\oOpenSSL.h">
       <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClInclude>
-    <ClInclude Include="SoftLink\oWinMSIMG32.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClInclude>
-    <ClInclude Include="SoftLink\oWinKernel32.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClInclude>
-    <ClInclude Include="SoftLink\oWinDXGI.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClInclude>
-    <ClInclude Include="SoftLink\oWinNetApi32.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oInterprocessEvent.h">
       <Filter>Headers\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="SoftLink\oWinPDH.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClInclude>
-    <ClInclude Include="SoftLink\oWinShlwapi.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\Windows\oCRTHeap.h">
       <Filter>Headers\Windows API Convenience Wrappers</Filter>
@@ -273,14 +240,8 @@
     <ClInclude Include="..\..\Include\oPlatform\all.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oModuleUtil.h">
-      <Filter>Headers\Code Management</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinKey.h">
       <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="SoftLink\oWinSetupAPI.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinControlSet.h">
       <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
@@ -347,31 +308,10 @@
     <ClCompile Include="oWinStatusBar.cpp">
       <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
     </ClCompile>
-    <ClCompile Include="SoftLink\oWinDbgHelp.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClCompile>
-    <ClCompile Include="SoftLink\oWinDWMAPI.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClCompile>
     <ClCompile Include="SoftLink\oWinsock.cpp">
       <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClCompile>
-    <ClCompile Include="SoftLink\oWinCommCtrl.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClCompile>
     <ClCompile Include="SoftLink\oOpenSSL.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClCompile>
-    <ClCompile Include="SoftLink\oD3DX11.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClCompile>
-    <ClCompile Include="SoftLink\oWinMSIMG32.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClCompile>
-    <ClCompile Include="SoftLink\oWinKernel32.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClCompile>
-    <ClCompile Include="SoftLink\oWinDXGI.cpp">
       <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClCompile>
     <ClCompile Include="oWinCursor.cpp">
@@ -379,15 +319,6 @@
     </ClCompile>
     <ClCompile Include="oWinDialog.cpp">
       <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="SoftLink\oWinNetApi32.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClCompile>
-    <ClCompile Include="SoftLink\oWinPDH.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClCompile>
-    <ClCompile Include="SoftLink\oWinShlwapi.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClCompile>
     <ClCompile Include="oDispatchQueueConcurrentWTP.cpp">
       <Filter>Source</Filter>
@@ -406,9 +337,6 @@
     </ClCompile>
     <ClCompile Include="oInterprocessEvent.cpp">
       <Filter>Source\Concurrency</Filter>
-    </ClCompile>
-    <ClCompile Include="oModule.cpp">
-      <Filter>Source\Code Management</Filter>
     </ClCompile>
     <ClCompile Include="oSingleton.cpp">
       <Filter>Source\Code Management</Filter>
@@ -511,9 +439,6 @@
     </ClCompile>
     <ClCompile Include="oWinKey.cpp">
       <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="SoftLink\oWinSetupAPI.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClCompile>
     <ClCompile Include="oWinControlSet.cpp">
       <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
