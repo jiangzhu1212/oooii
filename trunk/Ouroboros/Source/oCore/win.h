@@ -133,11 +133,9 @@
 #endif
 
 // RAII and size_t support
-#include <oStd/finally.h>
 #include <system_error>
 
 #define oCLOSE(hHandle) do { if (hHandle && hHandle != INVALID_HANDLE_VALUE) ::CloseHandle(hHandle); } while(false)
-#define oFINALLY_CLOSE(hHandle) oStd::finally Close##hHandle([&] { oCLOSE(hHandle); })
 #define oCHECK_SIZE(_WinType, _SizeTValue) if (static_cast<size_t>(static_cast<_WinType>(_SizeTValue)) != (_SizeTValue)) throw std::invalid_argument("out of range: size_t -> " #_WinType);
 
 // Error checking support
@@ -181,6 +179,41 @@ private:
 };
 
 	namespace windows {
+
+class scoped_handle
+{
+	scoped_handle(scoped_handle&);
+	const scoped_handle& operator=(scoped_handle&);
+
+public:
+	scoped_handle() : h(nullptr) {}
+	scoped_handle(HANDLE _Handle) : h(_Handle) { if (h == INVALID_HANDLE_VALUE) throw windows_error(); }
+	scoped_handle(scoped_handle&& _That) { operator=(std::move(_That)); }
+	const scoped_handle& operator=(scoped_handle&& _That)
+	{
+		if (this != &_That)
+		{
+			close();
+			h = _That.h;
+			_That.h = nullptr;
+		}
+		return *this;
+	}
+
+	const scoped_handle& operator=(HANDLE _That)
+	{
+		close();
+		h = _That;
+	}
+
+	~scoped_handle() { close(); }
+
+	operator HANDLE() { return h; }
+
+private:
+	HANDLE h;
+	void close() { if (h && h != INVALID_HANDLE_VALUE) { ::CloseHandle(h); h = nullptr; } }
+};
 
 std::string message(HRESULT _hResult);
 

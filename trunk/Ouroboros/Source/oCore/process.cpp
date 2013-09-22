@@ -264,10 +264,7 @@ std::shared_ptr<process> process::make(const info& _Info)
 
 void process::enumerate(const std::function<bool(id _ID, id _ParentID, const path& _ProcessExePath)>& _Enumerator)
 {
-	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	if (hSnapshot == INVALID_HANDLE_VALUE)
-		throw windows_error();
-	oFINALLY_CLOSE(hSnapshot);
+	windows::scoped_handle hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
 	PROCESSENTRY32 entry;
 	entry.dwSize = sizeof(entry);
@@ -331,13 +328,10 @@ void process::wait(id _ID)
 
 bool process::wait_for_ms(id _ID, unsigned int _TimeoutMS)
 {
-	HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, *(DWORD*)&_ID);
+	windows::scoped_handle hProcess = OpenProcess(SYNCHRONIZE, FALSE, *(DWORD*)&_ID);
 	bool result = true; // No process means it's exited
 	if (hProcess)
-	{
-		oFINALLY_CLOSE(hProcess);
 		result = WAIT_OBJECT_0 == ::WaitForSingleObject(hProcess, _TimeoutMS);
-	}
 	return result;
 }
 
@@ -376,10 +370,9 @@ static void terminate_internal(process::id _ID
 		process::enumerate(std::bind(terminate_child, _1, _2, _3, _ID, _ExitCode
 			, _AllChildProcessesToo, std::ref(_HandledProcessIDs)));
 
-	HANDLE hProcess = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, *(DWORD*)&_ID);
+	windows::scoped_handle hProcess = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, *(DWORD*)&_ID);
 	if (!hProcess)
 		oTHROW0(no_such_process);
-	oFINALLY_CLOSE(hProcess);
 
 	path ProcessName = process::get_name(_ID);
 	oTRACE("Terminating process %u (%s) with ExitCode %u", *(unsigned int*)&_ID, ProcessName.c_str(), _ExitCode);
@@ -402,11 +395,7 @@ void process::terminate_children(id _ID, int _ExitCode, bool _AllChildProcessesT
 
 path process::get_name(id _ID)
 {
-	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, *(DWORD*)&_ID);
-	if (!hProcess)
-		oTHROW0(no_such_process);
-	oFINALLY_CLOSE(hProcess);
-
+	windows::scoped_handle hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, *(DWORD*)&_ID);
 	path_string Temp;
 	oCHECK_SIZE(unsigned int, Temp.capacity());
 	oVB(GetModuleFileNameExA(hProcess, nullptr, Temp.c_str(), static_cast<unsigned int>(Temp.capacity())));
@@ -419,12 +408,9 @@ process::memory_info process::get_memory_info(id _ID)
 	memset(&m, 0, sizeof(m));
 	m.cb = sizeof(m);
 
-	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, *(DWORD*)&_ID);
+	windows::scoped_handle hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, *(DWORD*)&_ID);
 	if (hProcess)
-	{
-		oFINALLY_CLOSE(hProcess);
 		oVB(GetProcessMemoryInfo(hProcess, (PROCESS_MEMORY_COUNTERS*)&m, m.cb));
-	}
 	else
 		oTHROW0(no_such_process);
 
@@ -441,14 +427,11 @@ process::memory_info process::get_memory_info(id _ID)
 
 process::time_info process::get_time_info(id _ID)
 {
-	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, *(DWORD*)&_ID);
-	if (!hProcess)
-		oTHROW0(no_such_process);
-
-	BOOL result = false;
 	FILETIME c, e, k, u;
 	{
-		oFINALLY_CLOSE(hProcess);
+		windows::scoped_handle hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, *(DWORD*)&_ID);
+		if (!hProcess)
+			oTHROW0(no_such_process);
 		oVB(GetProcessTimes(hProcess, &c, &e, &k, &u));
 	}
 

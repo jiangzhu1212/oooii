@@ -124,10 +124,10 @@ date to_local(const date& _UTCDate)
 
 static void windows_set_privileges(const char* _privilege)
 {
-	HANDLE hToken;
+	HANDLE hT;
 	TOKEN_PRIVILEGES tkp;
-	oVB(!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken));
-	oFINALLY_CLOSE(hToken);
+	oVB(!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hT));
+	windows::scoped_handle hToken(hT);
 	oVB(!LookupPrivilegeValue(nullptr, _privilege, &tkp.Privileges[0].Luid));
 	tkp.PrivilegeCount = 1;      
 	tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED; 
