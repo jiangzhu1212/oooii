@@ -7,9 +7,6 @@
     <Filter Include="Source">
       <UniqueIdentifier>{32c14ac9-03be-4703-8322-80cc06f18ef6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\windows">
-      <UniqueIdentifier>{a37c1a79-fed8-4689-8df7-76ea5010c973}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="filesystem.cpp">
@@ -42,9 +39,6 @@
     <ClCompile Include="system.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="win.cpp">
-      <Filter>Source\windows</Filter>
-    </ClCompile>
     <ClCompile Include="cpu.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -65,9 +59,6 @@
     <ClInclude Include="..\..\Include\oCore\cpu.h">
       <Filter>oCore</Filter>
     </ClInclude>
-    <ClInclude Include="win.h">
-      <Filter>Source\windows</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oCore\debugger.h">
       <Filter>oCore</Filter>
     </ClInclude>
@@ -85,9 +76,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oCore\system.h">
       <Filter>oCore</Filter>
-    </ClInclude>
-    <ClInclude Include="winqedit.h">
-      <Filter>Source\windows</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oCore\all.h">
       <Filter>oCore</Filter>

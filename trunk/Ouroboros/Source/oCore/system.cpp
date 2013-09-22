@@ -25,7 +25,7 @@
 #include <oCore/system.h>
 #include <oCore/process.h>
 #include <oStd/date.h>
-#include "win.h"
+#include "../oStd/win.h"
 
 using namespace oStd;
 
@@ -382,7 +382,7 @@ char* workgroup_name(char* _StrDestination, size_t _SizeofStrDestination)
 	nStatus = NetWkstaGetInfo(nullptr, 102, (LPBYTE *)&pInfo);
 	oStd::finally OSCFreeBuffer([&] { if (pInfo) NetApiBufferFree(pInfo); });
 	if (nStatus != NERR_Success)
-		throw oCore::windows::error();
+		throw oStd::windows::error();
 	
 	WideCharToMultiByte(CP_ACP, 0, pInfo->wki102_langroup, -1, _StrDestination, static_cast<int>(_SizeofStrDestination), 0, 0);
 	return _StrDestination;

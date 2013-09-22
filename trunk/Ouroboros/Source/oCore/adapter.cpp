@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oCore/adapter.h>
 #include <oStd/guid.h>
-#include "win.h"
+#include "../oStd/win.h"
 #include <regex>
 
 #define oNVVER_MAJOR 285

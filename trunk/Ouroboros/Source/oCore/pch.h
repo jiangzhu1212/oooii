@@ -25,4 +25,5 @@
 #pragma once
 #ifdef oPCH
 #include <oStd/all.h>
+#include "../oStd/win.h"
 #endif

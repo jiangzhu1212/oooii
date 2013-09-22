@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oCore/cpu.h>
 #include <oHLSL/oHLSLBit.h>
-#include "win.h"
+#include "../oStd/win.h"
 
 namespace oStd {
 
@@ -66,22 +66,22 @@ struct cpu_feature
 	const char* name;
 	int index;
 	int check_bit;
-	oCore::windows::version::value min_version;
+	oStd::windows::version::value min_version;
 };
 
 static const cpu_feature sFeatures[] = 
 {
-	{ "X87FPU", 3, 0, oCore::windows::version::unknown },
-	{ "Hyperthreading", 3, 28, oCore::windows::version::unknown },
-	{ "8ByteAtomicSwap", 3, 8, oCore::windows::version::unknown },
-	{ "SSE1", 2, 25, oCore::windows::version::unknown },
-	{ "SSE2", 3, 26, oCore::windows::version::unknown },
-	{ "SSE3", 2, 0, oCore::windows::version::unknown },
-	{ "SSE4.1", 2, 19,  oCore::windows::version::unknown },
-	{ "SSE4.2", 2, 20, oCore::windows::version::unknown },
-	{ "XSAVE/XSTOR", 2, 26, oCore::windows::version::win7_sp1 },
-	{ "OSXSAVE", 2, 27, oCore::windows::version::win7_sp1 },
-	{ "AVX1", -1, 0, oCore::windows::version::win7_sp1 }, // AVX detection is a special-case
+	{ "X87FPU", 3, 0, oStd::windows::version::unknown },
+	{ "Hyperthreading", 3, 28, oStd::windows::version::unknown },
+	{ "8ByteAtomicSwap", 3, 8, oStd::windows::version::unknown },
+	{ "SSE1", 2, 25, oStd::windows::version::unknown },
+	{ "SSE2", 3, 26, oStd::windows::version::unknown },
+	{ "SSE3", 2, 0, oStd::windows::version::unknown },
+	{ "SSE4.1", 2, 19,  oStd::windows::version::unknown },
+	{ "SSE4.2", 2, 20, oStd::windows::version::unknown },
+	{ "XSAVE/XSTOR", 2, 26, oStd::windows::version::win7_sp1 },
+	{ "OSXSAVE", 2, 27, oStd::windows::version::win7_sp1 },
+	{ "AVX1", -1, 0, oStd::windows::version::win7_sp1 }, // AVX detection is a special-case
 };
 
 static sstring get_cpu_string()

@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="pch.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="date.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
@@ -196,11 +193,14 @@
     <ClCompile Include="string\codify_data.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
+    <ClCompile Include="win.cpp">
+      <Filter>Source\os</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oStd\finally.h">
       <Filter>oStd</Filter>
     </ClInclude>
@@ -354,9 +354,6 @@
     <ClInclude Include="memory\memduff.h">
       <Filter>Source\memory</Filter>
     </ClInclude>
-    <ClInclude Include="win.h">
-      <Filter>Source\c++11</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\External\calfaq\calfaq.h">
       <Filter>Source\types</Filter>
     </ClInclude>
@@ -383,6 +380,12 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oStd\vendor.h">
       <Filter>oStd\types</Filter>
+    </ClInclude>
+    <ClInclude Include="win.h">
+      <Filter>Source\os</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -439,6 +442,9 @@
     </Filter>
     <Filter Include="oStd\memory">
       <UniqueIdentifier>{531d9ca9-e272-4b70-9390-6852f1d9c924}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\os">
+      <UniqueIdentifier>{76b7346d-f39a-49b8-a247-a331e7bf5882}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

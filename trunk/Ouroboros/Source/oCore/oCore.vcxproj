@@ -35,7 +35,6 @@
     </ClCompile>
     <ClCompile Include="process.cpp" />
     <ClCompile Include="system.cpp" />
-    <ClCompile Include="win.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\adapter.h" />
@@ -50,8 +49,6 @@
     <ClInclude Include="..\..\Include\oCore\process.h" />
     <ClInclude Include="..\..\Include\oCore\system.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="win.h" />
-    <ClInclude Include="winqedit.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7DC758B0-32CF-4BBC-ABDE-0EB53B9EF93C}</ProjectGuid>

@@ -23,40 +23,36 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "win.h"
-#include <oCore/filesystem.h>
-#include <oStd/throw.h>
+#include <oStd/config.h>
 
 namespace oStd {
 
-const char* as_string(const oCore::windows::version::value& _Version)
+const char* as_string(const oStd::windows::version::value& _Version)
 {
 	switch (_Version)
 	{
-		case oCore::windows::version::win2000: return "Windows 2000";
-		case oCore::windows::version::xp: return "Windows XP";
-		case oCore::windows::version::xp_pro_64bit: return "Windows XP Pro 64-bit";
-		case oCore::windows::version::server_2003: return "Windows Server 2003";
-		case oCore::windows::version::home_server: return "Windows Home Server";
-		case oCore::windows::version::server_2003r2: return "Windows Server 2003R2";
-		case oCore::windows::version::vista: return "Windows Vista";
-		case oCore::windows::version::server_2008: return "Windows Server 2008";
-		case oCore::windows::version::server_2008r2: return "Windows Server 2008R2";
-		case oCore::windows::version::win7: return "Windows 7";
-		case oCore::windows::version::win7_sp1: return "Windows 7 SP1";
-		case oCore::windows::version::win8: return "Windows 8";
-		case oCore::windows::version::server_2012: "Windows Server 2012";
-		case oCore::windows::version::win8_1: return "Windows 8.1";
-		case oCore::windows::version::server_2012_sp1: "Windows Server 2012 SP1";
-		case oCore::windows::version::unknown:
+		case oStd::windows::version::win2000: return "Windows 2000";
+		case oStd::windows::version::xp: return "Windows XP";
+		case oStd::windows::version::xp_pro_64bit: return "Windows XP Pro 64-bit";
+		case oStd::windows::version::server_2003: return "Windows Server 2003";
+		case oStd::windows::version::home_server: return "Windows Home Server";
+		case oStd::windows::version::server_2003r2: return "Windows Server 2003R2";
+		case oStd::windows::version::vista: return "Windows Vista";
+		case oStd::windows::version::server_2008: return "Windows Server 2008";
+		case oStd::windows::version::server_2008r2: return "Windows Server 2008R2";
+		case oStd::windows::version::win7: return "Windows 7";
+		case oStd::windows::version::win7_sp1: return "Windows 7 SP1";
+		case oStd::windows::version::win8: return "Windows 8";
+		case oStd::windows::version::server_2012: "Windows Server 2012";
+		case oStd::windows::version::win8_1: return "Windows 8.1";
+		case oStd::windows::version::server_2012_sp1: "Windows Server 2012 SP1";
+		case oStd::windows::version::unknown:
 		default: break;
 	}
 
 	return "?";
 }
 
-} // namespace oStd
-
-namespace oCore {
 	namespace windows {
 
 errno_t errno_from_hresult(HRESULT _hResult)
@@ -208,12 +204,22 @@ const char* as_string_HR_VFW(HRESULT _hResult)
 	return as_string_HR(_hResult);
 }
 
+class scoped_local_alloc
+{
+public:
+	scoped_local_alloc() : p(nullptr) {}
+	scoped_local_alloc(void* _Pointer) : p(_Pointer) {}
+	~scoped_local_alloc() { if (p) LocalFree(p); }
+private:
+	void* p;
+};
+
 std::string message(HRESULT _hResult)
 {
 	std::string msg;
 	char* pMessage = nullptr;
 	FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM, 0, static_cast<DWORD>(_hResult), 0, (LPTSTR)&pMessage, 16, 0);
-	oStd::finally freeMessage([&] { if (pMessage) LocalFree(pMessage); });
+	scoped_local_alloc Message(pMessage);
 
 	if (!*pMessage || !memcmp(pMessage, "???", 3))
 	{
@@ -320,7 +326,7 @@ public:
 		errno_t e = windows::errno_from_hresult((HRESULT)_ErrCode);
 		if (e)
 			return std::generic_category().message(e);
-		return std::move(oCore::windows::message((HRESULT)_ErrCode));
+		return std::move(oStd::windows::message((HRESULT)_ErrCode));
 	}
 };
 
@@ -331,4 +337,4 @@ const std::error_category& category()
 }
 
 	} // namespace windows
-} // namespace oCore
+} // namespace oStd

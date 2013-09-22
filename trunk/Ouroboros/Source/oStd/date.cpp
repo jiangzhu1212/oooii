@@ -28,6 +28,7 @@
 #include <oStd/throw.h>
 #include <ctime>
 #include <calfaq/calfaq.h>
+#include "win.h"
 // NTP v4
 
 using namespace oStd::chrono;
@@ -418,6 +419,7 @@ template<> date date_cast<date>(const file_time_t& _Date)
 
 // _____________________________________________________________________________
 // to FILETIME
+
 #ifdef _MSC_VER
 	template<> ntp_timestamp date_cast<ntp_timestamp>(const FILETIME& _Date) { return date_cast<ntp_timestamp>((const file_time_t&)_Date); }
 	template<> ntp_date date_cast<ntp_date>(const FILETIME& _Date) { return date_cast<ntp_date>((const file_time_t&)_Date); }

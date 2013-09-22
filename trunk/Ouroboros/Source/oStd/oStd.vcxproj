@@ -109,6 +109,7 @@
     <ClCompile Include="uri.cpp" />
     <ClCompile Include="vendor.cpp" />
     <ClCompile Include="version.cpp" />
+    <ClCompile Include="win.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\External\calfaq\calfaq.h" />

@@ -25,8 +25,10 @@
 #include <oCore/process.h>
 #include <oCore/filesystem.h>
 #include <oStd/date.h>
-#include "win.h"
+#include "../oStd/win.h"
 #include <set>
+
+#define oCLOSE(hHandle) do { if (hHandle && hHandle != INVALID_HANDLE_VALUE) ::CloseHandle(hHandle); } while(false)
 
 namespace oStd {
 

@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oCore/module.h>
 #include <oCore/filesystem.h>
-#include "win.h"
+#include "../oStd/win.h"
 
 namespace oStd {
 

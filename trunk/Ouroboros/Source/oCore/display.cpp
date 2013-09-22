@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCore/display.h>
-#include "win.h"
+#include "../oStd/win.h"
 
 using namespace oStd;
 
