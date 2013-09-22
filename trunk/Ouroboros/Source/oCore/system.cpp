@@ -136,7 +136,7 @@ static void windows_set_privileges(const char* _privilege)
 	// because the app did not have permissions, then it succeeds (result will be 
 	// true), but sets last error to ERROR_NOT_ALL_ASSIGNED.
 	if (GetLastError() != ERROR_SUCCESS)
-		throw windows_error();
+		throw windows::error();
 }
 
 void reboot()
@@ -208,7 +208,7 @@ static void schedule_task(const char* _DebugName
 	SCHEDULED_FUNCTION_CONTEXT& Context = *new SCHEDULED_FUNCTION_CONTEXT();
 	Context.hTimer = CreateWaitableTimer(nullptr, TRUE, nullptr);
 	if (!Context.hTimer)
-		throw windows_error();
+		throw windows::error();
 	Context.OnTimer = _Task;
 	Context.ScheduledTime = _AbsoluteTime;
 
@@ -246,14 +246,14 @@ void windows_enumerate_services(const std::function<bool(SC_HANDLE _hSCManager, 
 {
 	SC_HANDLE hSCManager = OpenSCManager(nullptr, nullptr, SC_MANAGER_ENUMERATE_SERVICE);
 	if (!hSCManager)
-		throw windows_error();
+		throw windows::error();
 	finally closeSCManager([&] { oVB(CloseServiceHandle(hSCManager)); });
 
 	DWORD requiredBytes = 0;
 	DWORD nServices = 0;
 	EnumServicesStatusEx(hSCManager, SC_ENUM_PROCESS_INFO, SERVICE_TYPE_ALL, SERVICE_STATE_ALL, nullptr, 0, &requiredBytes, &nServices, nullptr, nullptr);
 	if (GetLastError() != ERROR_MORE_DATA)
-		throw windows_error();
+		throw windows::error();
 
 	ENUM_SERVICE_STATUS_PROCESS* lpServices = (ENUM_SERVICE_STATUS_PROCESS*)malloc(requiredBytes);
 	finally freeServices([&] { free(lpServices); });
@@ -382,7 +382,7 @@ char* workgroup_name(char* _StrDestination, size_t _SizeofStrDestination)
 	nStatus = NetWkstaGetInfo(nullptr, 102, (LPBYTE *)&pInfo);
 	oStd::finally OSCFreeBuffer([&] { if (pInfo) NetApiBufferFree(pInfo); });
 	if (nStatus != NERR_Success)
-		throw oCore::windows_error();
+		throw oCore::windows::error();
 	
 	WideCharToMultiByte(CP_ACP, 0, pInfo->wki102_langroup, -1, _StrDestination, static_cast<int>(_SizeofStrDestination), 0, 0);
 	return _StrDestination;

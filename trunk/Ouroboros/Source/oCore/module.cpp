@@ -211,7 +211,7 @@ info get_info(const path& _Path)
 	DWORD hFVI = 0;
 	DWORD FVISize = GetFileVersionInfoSizeA(_Path, &hFVI);
 	if (!FVISize)
-		throw windows_error();
+		throw windows::error();
 
 	std::vector<char> buf;
 	buf.resize(FVISize);
@@ -222,7 +222,7 @@ info get_info(const path& _Path)
 	// http://msdn.microsoft.com/en-us/library/ms647003(VS.85).aspx
 	// Based on a comment that questions the reliablility of the return value
 	if (GetLastError() != S_OK)
-		throw windows_error();
+		throw windows::error();
 
 	// _____________________________________________________________________________
 	// Get the basics from VS_FIXEDFILEINFO
@@ -289,7 +289,7 @@ info get_info(const path& _Path)
 		// VerQueryValueA version seems bugged... it returns one char short of the
 		// proper size.
 		if (!VerQueryValueW(pData, WKey, (LPVOID*)&pVal, &ValLen) && m[j].Required)
-			throw windows_error();
+			throw windows::error();
 		*m[j].Dest = pVal;
 	}
 

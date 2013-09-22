@@ -98,7 +98,7 @@ public:
 				HRESULT hr = GetLastError();
 				oVB(CloseHandle(hOutputReadTmp));
 				oVB(CloseHandle(hOutputWrite));
-				throw windows_error(hr);
+				throw windows::error(hr);
 			}
 
 			oVB(DuplicateHandle(GetCurrentProcess(), hOutputReadTmp, GetCurrentProcess(), &hOutputRead, 0, FALSE, DUPLICATE_SAME_ACCESS));
@@ -202,7 +202,7 @@ public:
 		{
 			if (GetLastError() == STILL_ACTIVE)
 				return false;
-			throw windows_error();
+			throw windows::error();
 		}
 
 		*_pExitCode = *(int*)&dwExitCode;
@@ -312,7 +312,7 @@ bool process::has_debugger_attached(id _ID)
 			if (result)
 				return !!present;
 			else
-				throw windows_error();
+				throw windows::error();
 		}
 
 		oTHROW0(no_such_process);
@@ -377,7 +377,7 @@ static void terminate_internal(process::id _ID
 	path ProcessName = process::get_name(_ID);
 	oTRACE("Terminating process %u (%s) with ExitCode %u", *(unsigned int*)&_ID, ProcessName.c_str(), _ExitCode);
 	if (!TerminateProcess(hProcess, _ExitCode))
-		throw windows_error();
+		throw windows::error();
 }
 
 void process::terminate(id _ID, int _ExitCode, bool _AllChildProcessesToo)

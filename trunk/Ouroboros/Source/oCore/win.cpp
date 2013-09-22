@@ -311,7 +311,7 @@ version::value get_version()
 	return version::unknown;
 }
 
-class windows_category_impl : public std::error_category
+class category_impl : public std::error_category
 {
 public:
 	const char* name() const override { return "windows"; }
@@ -324,12 +324,11 @@ public:
 	}
 };
 
-	} // namespace windows
-
-const std::error_category& windows_category()
+const std::error_category& category()
 {
-	static windows::windows_category_impl sSingleton;
+	static windows::category_impl sSingleton;
 	return sSingleton;
 }
 
+	} // namespace windows
 } // namespace oCore

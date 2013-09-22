@@ -76,9 +76,9 @@ using namespace oStd;
 	throw filesystem_error(msg, _Path1, _Path2, make_error_code(std::errc::_ErrCode)); \
 } while (false)
 
-#define oFSTHROWLAST() throw windows_error()
-#define oFSTHROWLAST1(_Path1) throw windows_error()
-#define oFSTHROWLAST2(_Path1, _Path2) throw windows_error()
+#define oFSTHROWLAST() throw windows::error()
+#define oFSTHROWLAST1(_Path1) throw windows::error()
+#define oFSTHROWLAST2(_Path1, _Path2) throw windows::error()
 
 #define oFSTHROW_FOPEN(err, _Path) do \
 {	char strerr[256]; \

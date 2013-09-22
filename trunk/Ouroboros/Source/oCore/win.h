@@ -139,46 +139,32 @@
 #define oCHECK_SIZE(_WinType, _SizeTValue) if (static_cast<size_t>(static_cast<_WinType>(_SizeTValue)) != (_SizeTValue)) throw std::invalid_argument("out of range: size_t -> " #_WinType);
 
 // Error checking support
-#define oV(_HRWinFn) do { HRESULT HR__ = _HRWinFn; if (FAILED(HR__)) throw oCore::windows_error(HR__); } while(false)
-#define oVB(_BoolWinFn) do { if (!(_BoolWinFn)) throw oCore::windows_error(); } while(false)
+#define oV(_HRWinFn) do { HRESULT HR__ = _HRWinFn; if (FAILED(HR__)) throw oCore::windows::error(HR__); } while(false)
+#define oVB(_BoolWinFn) do { if (!(_BoolWinFn)) throw oCore::windows::error(); } while(false)
 
-// oStd::ref support
+// intrusive_ptr support
 inline ULONG ref_count(IUnknown* unk) { ULONG r = unk->AddRef()-1; unk->Release(); return r; }
 inline void intrusive_ptr_add_ref(IUnknown* unk) { unk->AddRef(); }
 inline void intrusive_ptr_release(IUnknown* unk) { unk->Release(); }
 
 namespace oCore {
+	namespace windows {
 
-const std::error_category& windows_category();
-/*constexpr*/ inline std::error_code make_error_code(HRESULT _hResult) { return std::error_code(_hResult, windows_category()); }
-/*constexpr*/ inline std::error_condition make_error_condition(HRESULT _hResult) { return std::error_condition(_hResult, windows_category()); }
+const std::error_category& category();
+/*constexpr*/ inline std::error_code make_error_code(HRESULT _hResult) { return std::error_code(_hResult, category()); }
+/*constexpr*/ inline std::error_condition make_error_condition(HRESULT _hResult) { return std::error_condition(_hResult, category()); }
 
-class windows_error : public std::system_error
+class error : public std::system_error
 {
 public:
-	windows_error(const windows_error& _That) : std::system_error(_That) {}
-
-	windows_error()
-		: system_error(make_error_code(GetLastError()), make_error_code(GetLastError()).message())
-	{ trace(); }
-
-	windows_error(HRESULT _hResult)
-		: system_error(make_error_code(_hResult), make_error_code(_hResult).message())
-	{ trace(); }
-
-	windows_error(HRESULT _hResult, const char* _Message)
-		: system_error(make_error_code(_hResult), _Message)
-	{ trace(); }
-
-	windows_error(HRESULT _hResult, const std::string& _Message)
-		: system_error(make_error_code(_hResult), _Message)
-	{ trace(); }
-
+	error(const error& _That) : std::system_error(_That) {}
+	error() : system_error(make_error_code(GetLastError()), make_error_code(GetLastError()).message()) { trace(); }
+	error(HRESULT _hResult) : system_error(make_error_code(_hResult), make_error_code(_hResult).message()) { trace(); }
+	error(HRESULT _hResult, const char* _Message) : system_error(make_error_code(_hResult), _Message) { trace(); }
+	error(HRESULT _hResult, const std::string& _Message) : system_error(make_error_code(_hResult), _Message) { trace(); }
 private:
-	void trace() { char buf[1024]; snprintf(buf, "\noCore::windows_error: 0x%08x: %s\n\n", code().value(), what()); OutputDebugStringA(buf); }
+	void trace() { char buf[1024]; snprintf(buf, "\noCore::windows::error: 0x%08x: %s\n\n", code().value(), what()); OutputDebugStringA(buf); }
 };
-
-	namespace windows {
 
 class scoped_handle
 {
@@ -187,7 +173,7 @@ class scoped_handle
 
 public:
 	scoped_handle() : h(nullptr) {}
-	scoped_handle(HANDLE _Handle) : h(_Handle) { if (h == INVALID_HANDLE_VALUE) throw windows_error(); }
+	scoped_handle(HANDLE _Handle) : h(_Handle) { if (h == INVALID_HANDLE_VALUE) throw windows::error(); }
 	scoped_handle(scoped_handle&& _That) { operator=(std::move(_That)); }
 	const scoped_handle& operator=(scoped_handle&& _That)
 	{
