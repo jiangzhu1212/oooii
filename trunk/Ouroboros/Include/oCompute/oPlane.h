@@ -38,6 +38,7 @@
 #include <oHLSL/oHLSLMacros.h>
 #include <oHLSL/oHLSLMath.h>
 #include <oHLSL/oHLSLTypes.h>
+#include <oStd/equal.h>
 
 #ifdef oHLSL
 

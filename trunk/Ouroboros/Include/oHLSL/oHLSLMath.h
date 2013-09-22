@@ -35,7 +35,6 @@
 #include <oHLSL/oHLSLTypes.h>
 #include <math.h>
 #include <oStd/byte.h>
-#include <oStd/equal.h>
 
 #ifndef oHLSL_USE_FAST_ASINT
 	#define oHLSL_USE_FAST_ASINT 0
