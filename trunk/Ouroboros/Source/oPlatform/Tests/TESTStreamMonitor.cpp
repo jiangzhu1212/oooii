@@ -50,13 +50,13 @@ struct PLATFORM_oStreamMonitor : public oTest
 	{
 		auto Events = std::make_shared<TESTStreamMonitorEvents>();
 
-		oStd::path_string NonZeroFile = TestFile;
+		ouro::path_string NonZeroFile = TestFile;
 		*oGetFileExtension(NonZeroFile) = 0;
-		oStd::sncatf(NonZeroFile, "-NZ.txt");
+		ouro::sncatf(NonZeroFile, "-NZ.txt");
 
-		oStd::path_string ZeroFile = TestFile;
+		ouro::path_string ZeroFile = TestFile;
 		*oGetFileExtension(ZeroFile) = 0;
-		oStd::sncatf(ZeroFile, "-Z.txt");
+		ouro::sncatf(ZeroFile, "-Z.txt");
 
 		oStreamDelete(TestFile); // should fail, but try anyway in case it was left over from a previous canceled or failed run.
 		oStreamDelete(NonZeroFile);
@@ -69,12 +69,12 @@ struct PLATFORM_oStreamMonitor : public oTest
 		md.TraceEvents = true;
 		md.WatchSubtree = true;
 
-		oStd::intrusive_ptr<threadsafe oStreamMonitor> Monitor;
+		ouro::intrusive_ptr<threadsafe oStreamMonitor> Monitor;
 		oTESTB0(oStreamMonitorCreate(md,
 			// It is not normally a good practice to capture the events by reference, 
 			// but for simplicity doing it here. counting on not getting further 
 			// callbacks once the test is finished.
-			[startTime, Events](oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI)
+			[startTime, Events](oSTREAM_EVENT _Event, const ouro::uri_string& _ChangedURI)
 			{
 				int timeMS = static_cast<int>((oTimer() - startTime) * 1000);
 				switch (_Event)
@@ -114,7 +114,7 @@ struct PLATFORM_oStreamMonitor : public oTest
 		oTESTB0(sd.Directory);
 
 		{
-			oStd::intrusive_ptr<threadsafe oStreamWriter> writer;
+			ouro::intrusive_ptr<threadsafe oStreamWriter> writer;
 			oTESTB(oStreamWriterCreate(TestFile, &writer), "couldn't create test file"); // should generate an added event.
 			char testData[64];
 			oSTREAM_WRITE w;
@@ -128,7 +128,7 @@ struct PLATFORM_oStreamMonitor : public oTest
 
 		// write a 0-len file
 		{
-			oStd::intrusive_ptr<threadsafe oStreamWriter> writer;
+			ouro::intrusive_ptr<threadsafe oStreamWriter> writer;
 			oTESTB(oStreamWriterCreate(TestFile, &writer), "couldn't create test file"); // should generate an added event.
 		}
 

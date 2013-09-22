@@ -41,7 +41,7 @@ public:
 	bool GetRunning() const { return Running; }
 
 private:
-	oStd::intrusive_ptr<oWindow> Window;
+	ouro::intrusive_ptr<oWindow> Window;
 	bool Running;
 
 	enum
@@ -133,9 +133,9 @@ void oWindowUITest::ActionHook(const oGUI_ACTION_DESC& _Action)
 			// pass through
 		case oGUI_ACTION_CONTROL_ACTIVATED:
 		{
-			oStd::lstring text;
+			ouro::lstring text;
 			oWinControlGetText(text, (HWND)_Action.hWindow);
-			oTRACE("Action %s \"%s\" code=%d", oStd::as_string(oWinControlGetType((HWND)_Action.hWindow)), text.c_str(), _Action.ActionCode);
+			oTRACE("Action %s \"%s\" code=%d", ouro::as_string(oWinControlGetType((HWND)_Action.hWindow)), text.c_str(), _Action.ActionCode);
 			break;
 		}
 		case oGUI_ACTION_KEY_DOWN:
@@ -392,7 +392,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 	{
 		case MENU_FILE_OPEN:
 		{
-			oStd::path path;
+			ouro::path path;
 			if (oWinDialogGetOpenPath(path, "TESTWindowUI", "Source Files|*.cpp|Header Files|*.h", _hWnd))
 				oTRACE("Open %s", path.c_str());
 			else
@@ -405,7 +405,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			break;
 		case MENU_FILE_SAVEAS:
 		{
-			oStd::path path;
+			ouro::path path;
 			if (oWinDialogGetSavePath(path, "TESTWindowUI", "Source Files|*.cpp|Header Files|*.h", _hWnd))
 				oTRACE("SaveAs %s", path.c_str());
 			else
@@ -425,7 +425,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			break;
 		case MENU_EDIT_COLOR:
 		{
-			oStd::color c = oStd::Red;
+			ouro::color c = ouro::Red;
 
 			if (!oWinDialogGetColor(&c, _hWnd))
 			{
@@ -443,7 +443,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 		}
 		case MENU_EDIT_FONT:
 		{
-			oStd::color c = oStd::Red;
+			ouro::color c = ouro::Red;
 			LOGFONT lf = {0};
 			GetObject((HFONT)GetStockObject(DEFAULT_GUI_FONT), sizeof(LOGFONT), &lf);
 			if (!oWinDialogGetFont(&lf, &c, _hWnd))
@@ -507,7 +507,7 @@ struct PLATFORM_WindowControls : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus)
 	{
-		if (oCore::system::is_remote_session())
+		if (ouro::system::is_remote_session())
 		{
 			snprintf(_StrStatus, _SizeofStrStatus, "Detected remote session: differing text anti-aliasing will cause bad image compares");
 			return SKIPPED;
@@ -524,7 +524,7 @@ struct PLATFORM_WindowControls : public oTest
 
 		} while (oTimer() < WaitForSettle);
 
-		oStd::future<oStd::intrusive_ptr<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
+		oStd::future<ouro::intrusive_ptr<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
 		
 		do
 		{

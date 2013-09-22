@@ -55,7 +55,7 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oKINECT_DESC)
 		oRTTI_COMPOUND_ATTR(oKINECT_DESC, PitchDegrees, oRTTI_OF(int), "PitchDegrees", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oKINECT_DESC, Features, oRTTI_OF(oKINECT_FEATURES), "Features", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oKINECT_DESC, Index, oRTTI_OF(int), "Index", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oKINECT_DESC, ID, oRTTI_OF(ostd_sstring), "ID", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oKINECT_DESC, ID, oRTTI_OF(ouro_sstring), "ID", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oKINECT_DESC)
 oRTTI_COMPOUND_END_DESCRIPTION(oKINECT_DESC)
 
@@ -65,6 +65,8 @@ oRTTI_COMPOUND_END_DESCRIPTION(oKINECT_DESC)
 #include "oKinectInternal.h"
 #include "oWinKinect10.h"
 #include "oKinectManager.h"
+
+using namespace ouro;
 
 static const NUI_IMAGE_RESOLUTION kResolution = NUI_IMAGE_RESOLUTION_640x480;
 
@@ -103,7 +105,7 @@ bool oKinectImpl::Reinitialize()
 	else
 	{
 		static_assert(sizeof(wchar_t) == sizeof(std::remove_pointer<BSTR>::type), "BSTR size mismatch");
-		oStd::swstring wID = Desc.ID;
+		swstring wID = Desc.ID;
 		HRESULT hr = oWinKinect10::Singleton()->SafeNuiCreateSensorById(wID, &NUISensor); 
 		if (hr == E_NUI_BADIINDEX)
 			return oErrorSetLast(std::errc::no_such_device);
@@ -172,16 +174,16 @@ oKinectImpl::oKinectImpl(const oKINECT_DESC& _Desc, threadsafe oWindow* _pWindow
 {
 	*_pSuccess = false;
 
-	oStd::version v = oWinKinect10::Singleton()->GetVersion();
+	version v = oWinKinect10::Singleton()->GetVersion();
 
 	if (v.major != oKINECT_SDK_MAJOR || v.minor != oKINECT_SDK_MINOR)
 	{
-		oStd::sstring v1, v2;
+		sstring v1, v2;
 
 		if (v.major == 0)
-			oErrorSetLast(std::errc::protocol_error, "oKinect requires the Kinect Runtime %s to be installed.", oStd::to_string2(v1, oStd::version(oKINECT_SDK_MAJOR, oKINECT_SDK_MINOR)));
+			oErrorSetLast(std::errc::protocol_error, "oKinect requires the Kinect Runtime %s to be installed.", to_string2(v1, version(oKINECT_SDK_MAJOR, oKINECT_SDK_MINOR)));
 		else
-			oErrorSetLast(std::errc::protocol_error, "oKinect requires %s. Version %s is currently installed.", oStd::to_string2(v1, oStd::version(oKINECT_SDK_MAJOR, oKINECT_SDK_MINOR)), oStd::to_string2(v2, v));
+			oErrorSetLast(std::errc::protocol_error, "oKinect requires %s. Version %s is currently installed.", to_string2(v1, version(oKINECT_SDK_MAJOR, oKINECT_SDK_MINOR)), to_string2(v2, v));
 		return;
 	}
 
@@ -277,7 +279,7 @@ void oKinectImpl::SetPitch(int _Degrees) threadsafe
 void oKinectImpl::OnPitch()
 {
 	{
-		oStd::mstring Name;
+		mstring Name;
 		snprintf(Name, "oKinect[%d].SetPitch", Desc.Index);
 		oConcurrency::begin_thread(Name);
 	}
@@ -357,7 +359,7 @@ void oKinectImpl::UnmapRead(oKINECT_FRAME_TYPE _Type) const threadsafe
 void oKinectImpl::OnEvent()
 {
 	{
-		oStd::mstring Name;
+		mstring Name;
 		snprintf(Name, "oKinect[%d]", Desc.Index);
 		oConcurrency::begin_thread(Name);
 	}

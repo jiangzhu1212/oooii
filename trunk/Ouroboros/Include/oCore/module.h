@@ -27,9 +27,9 @@
 #ifndef oCore_module_h
 #define oCore_module_h
 
-#include <oStd/version.h>
+#include <oBase/version.h>
 
-namespace oCore {
+namespace ouro {
 	namespace module {
 
 /* enum class */ namespace type
@@ -83,15 +83,15 @@ struct info
 		, is_special(false)
 	{}
 
-	struct oStd::version version;
-	oStd::mstring company;
-	oStd::mstring description;
-	oStd::mstring product_name;
-	oStd::mstring copyright;
-	oStd::mstring original_filename;
-	oStd::mstring comments;
-	oStd::mstring private_message;
-	oStd::mstring special_message;
+	struct version version;
+	mstring company;
+	mstring description;
+	mstring product_name;
+	mstring copyright;
+	mstring original_filename;
+	mstring comments;
+	mstring private_message;
+	mstring special_message;
 	type::value type;
 	bool is_64bit_binary;
 	bool is_debug;
@@ -102,7 +102,7 @@ struct info
 };
 
 // similar to dlopen, et al.
-id open(const oStd::path& _Path);
+id open(const path& _Path);
 void close(id _ModuleID);
 void* sym(id _ModuleID, const char* _SymbolName);
 
@@ -114,16 +114,16 @@ void* sym(id _ModuleID, const char* _SymbolName);
 void link(id _ModuleID, const char** _pInterfaceFunctionNames, void** _ppInterfaces, size_t _CountofInterfaces);
 template<size_t size> void link(id _ModuleID, const char* (&_pInterfaceFunctionNames)[size], void** _ppInterfaces) { link(_ModuleID, _pInterfaceFunctionNames, _ppInterfaces, size); }
 
-inline id link(const oStd::path& _Path, const char** _pInterfaceFunctionNames, void** _ppInterfaces, size_t _CountofInterfaces) { id ID = open(_Path); link(ID, _pInterfaceFunctionNames, _ppInterfaces, _CountofInterfaces); return ID; }
-template<size_t size> id link(const oStd::path& _Path, const char* (&_InterfaceFunctionNames)[size], void** _ppInterfaces) { return link(_Path, _InterfaceFunctionNames, _ppInterfaces, size); }
+inline id link(const path& _Path, const char** _pInterfaceFunctionNames, void** _ppInterfaces, size_t _CountofInterfaces) { id ID = open(_Path); link(ID, _pInterfaceFunctionNames, _ppInterfaces, _CountofInterfaces); return ID; }
+template<size_t size> id link(const path& _Path, const char* (&_InterfaceFunctionNames)[size], void** _ppInterfaces) { return link(_Path, _InterfaceFunctionNames, _ppInterfaces, size); }
 
-oStd::path get_path(id _ModuleID);
+path get_path(id _ModuleID);
 
 // given an address in a module, retreive that module's handle
 // fit for name(), sym() or close() APIs.
 id get_id(const void* _Symbol);
 
-info get_info(const oStd::path& _Path);
+info get_info(const path& _Path);
 info get_info(id _ModuleID);
 
 	} // namespace module
@@ -131,10 +131,10 @@ info get_info(id _ModuleID);
 	namespace this_module {
 
 module::id get_id();
-oStd::path path();
+path path();
 module::info get_info();
 
 	} // namespace this_module
-} // namespace oCore
+} // namespace ouro
 
 #endif

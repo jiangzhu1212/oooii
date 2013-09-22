@@ -26,7 +26,7 @@
 #ifndef TESTConcurrencyRequirements_h
 #define TESTConcurrencyRequirements_h
 
-#include <oStd/assert.h>
+#include <oBase/assert.h>
 #include <oConcurrency/tests/oConcurrencyTestRequirements.h>
 #include <oBasis/oError.h>
 
@@ -35,7 +35,7 @@ namespace oConcurrency {
 
 		struct requirements_implementation : requirements
 		{
-			bool is_debugger_attached() const { return oCore::this_process::has_debugger_attached(); }
+			bool is_debugger_attached() const { return ouro::this_process::has_debugger_attached(); }
 
 			void vreport(const char* _Format, va_list _Args) override
 			{

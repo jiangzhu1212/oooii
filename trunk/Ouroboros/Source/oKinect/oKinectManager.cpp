@@ -32,6 +32,7 @@
 #include "oWinKinect10.h"
 #include "oKinectInternal.h"
 
+using namespace ouro;
 using namespace oConcurrency;
 
 // {1ECB3B76-4BB7-4B7A-B413-3BE946A44128}
@@ -60,7 +61,7 @@ void oKinectManager::Register(threadsafe oKinect* _pKinect)
 	oKINECT_DESC kd;
 	_pKinect->GetDesc(&kd);
 	lock_guard<mutex> lock(KinectsMutex);
-	oASSERT(oStd::find(Kinects, _pKinect) == std::end(Kinects), "");
+	oASSERT(find(Kinects, _pKinect) == std::end(Kinects), "");
 	Kinects.push_back(_pKinect);
 }
 
@@ -69,14 +70,14 @@ void oKinectManager::Unregister(threadsafe oKinect* _pKinect)
 	oKINECT_DESC kd;
 	_pKinect->GetDesc(&kd);
 	lock_guard<mutex> lock(KinectsMutex);
-	oStd::find_and_erase(Kinects, _pKinect);
+	find_and_erase(Kinects, _pKinect);
 }
 
 void oKinectManager::StatusProc(HRESULT _hrStatus, const OLECHAR* _InstanceName, const OLECHAR* _UniqueDeviceName, void* _pThis)
 {
 	oGUI_INPUT_DEVICE_STATUS hrStatus = oKinectStatusFromHR(_hrStatus);
-	oStd::sstring InstanceName(_InstanceName);
-	oStd::sstring UniqueDeviceName(_UniqueDeviceName);
+	sstring InstanceName(_InstanceName);
+	sstring UniqueDeviceName(_UniqueDeviceName);
 	static_cast<oKinectManager*>(_pThis)->OnStatus(hrStatus, InstanceName, UniqueDeviceName);
 }
 
@@ -91,7 +92,7 @@ void oKinectManager::NotifyStatus(const char* _InstanceName, oGUI_INPUT_DEVICE_S
 
 void oKinectManager::OnStatus(oGUI_INPUT_DEVICE_STATUS _Status, const char* _InstanceName, const char* _UniqueDeviceName)
 {
-	oStd::intrusive_ptr<threadsafe oKinect> StatusChanger;
+	intrusive_ptr<threadsafe oKinect> StatusChanger;
 	oKINECT_DESC kd;
 	{
 		lock_guard<mutex> lock(KinectsMutex);
@@ -106,7 +107,7 @@ void oKinectManager::OnStatus(oGUI_INPUT_DEVICE_STATUS _Status, const char* _Ins
 		}
 	}
 
-	//oTRACE("%segistered oKinect Ptr=0x%p Inst=%s UID=%s: %s", StatusChanger ? "R" : "Unr", StatusChanger.c_ptr(), _InstanceName, _UniqueDeviceName, oStd::as_string(_Status));
+	//oTRACE("%segistered oKinect Ptr=0x%p Inst=%s UID=%s: %s", StatusChanger ? "R" : "Unr", StatusChanger.c_ptr(), _InstanceName, _UniqueDeviceName, ouro::as_string(_Status));
 
 	threadsafe oKinectImpl* pImpl = static_cast<threadsafe oKinectImpl*>(StatusChanger.c_ptr());
 

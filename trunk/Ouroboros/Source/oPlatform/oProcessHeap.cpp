@@ -23,13 +23,15 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oProcessHeap.h>
-#include <oStd/memory.h>
+#include <oBase/memory.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oRefCount.h>
 #include <oPlatform/Windows/oWindows.h>
 #include <algorithm>
 #include <map>
 #include "oCRTLeakTracker.h"
+
+using namespace ouro;
 
 struct oProcessHeapContext : oInterface
 {
@@ -40,8 +42,8 @@ public:
 	// are not virtual, we run the risk that the code (and objects on the 
 	// underlying implementation) will not match in one module vs another.
 	virtual void* Allocate(size_t _Size) = 0;
-	virtual bool Find(const oStd::guid& _GUID, bool _IsThreadLocal, void** _pPointer) = 0;
-	virtual bool FindOrAllocate(const oStd::guid& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer) = 0;
+	virtual bool Find(const guid& _GUID, bool _IsThreadLocal, void** _pPointer) = 0;
+	virtual bool FindOrAllocate(const guid& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer) = 0;
 	virtual void Deallocate(void* _Pointer) = 0;
 	virtual void ReportLeaks() = 0;
 	virtual void Lock() = 0;
@@ -55,12 +57,12 @@ void* oProcessHeapAllocate(size_t _Size)
 	return oProcessHeapContext::Singleton()->Allocate(_Size);
 }
 
-bool oProcessHeapFindOrAllocate(const oStd::guid& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer)
+bool oProcessHeapFindOrAllocate(const guid& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer)
 {
 	return oProcessHeapContext::Singleton()->FindOrAllocate(_GUID, _IsThreadLocal, _IsLeakTracked, _Size, _PlacementConstructor, _DebugName, _pPointer);
 }
 
-bool oProcessHeapFind(const oStd::guid& _GUID, bool _IsThreadLocal, void** _pPointer)
+bool oProcessHeapFind(const guid& _GUID, bool _IsThreadLocal, void** _pPointer)
 {
 	return oProcessHeapContext::Singleton()->Find(_GUID, _IsThreadLocal, _pPointer);
 }
@@ -84,7 +86,7 @@ struct oProcessHeapContextImpl : oProcessHeapContext
 	struct MMAPFILE
 	{
 		oProcessHeapContext* pProcessStaticHeap;
-		oStd::guid guid;
+		guid guid;
 		DWORD processId;
 	};
 
@@ -99,11 +101,11 @@ protected:
 
 		void* Pointer;
 		oStd::thread::id InitThreadID; // threadID of init, and where deinit will probably take place
-		oStd::guid GUID;
+		guid GUID;
 		char DebugName[64];
 		bool IsThreadLocal;
 		bool IsTracked;
-		oCore::debugger::symbol StackTrace[STACK_TRACE_DEPTH];
+		ouro::debugger::symbol StackTrace[STACK_TRACE_DEPTH];
 		size_t NumStackEntries;
 		SRWLOCK EntryLock;
 	};
@@ -148,10 +150,10 @@ public:
 		atexit(AtExit);
 		IsValid = true;
 
-		oStd::path modulePath = oCore::this_module::path();
+		path modulePath = ouro::this_module::path();
 		char buf[oKB(1)];
-		oStd::mstring exec;
-		snprintf(buf, "%s(%d): {%s} %s ProcessHeap initialized at 0x%p\n", __FILE__, __LINE__, modulePath.c_str(), oCore::system::exec_path(exec), this);
+		mstring exec;
+		snprintf(buf, "%s(%d): {%s} %s ProcessHeap initialized at 0x%p\n", __FILE__, __LINE__, modulePath.c_str(), ouro::system::exec_path(exec), this);
 		OutputDebugStringA(buf);
 	}
 
@@ -167,7 +169,7 @@ public:
 			IsValid = false;
 			
 			pSharedPointers->~container_t();
-			oStd::memset4(pSharedPointers, 0xfeeefeee, sizeof(container_t));
+			memset4(pSharedPointers, 0xfeeefeee, sizeof(container_t));
 			HeapFree(hHeap, 0, pSharedPointers);
 			pSharedPointers = nullptr;
 			
@@ -179,21 +181,21 @@ public:
 		}
 	}
 
-	inline size_t Hash(const oStd::guid& _GUID, bool _IsThreadLocal)
+	inline size_t Hash(const guid& _GUID, bool _IsThreadLocal)
 	{
-		size_t h = oStd::fnv1a<size_t>(&_GUID, sizeof(oStd::guid));
+		size_t h = fnv1a<size_t>(&_GUID, sizeof(guid));
 		if (_IsThreadLocal)
 		{
 			oStd::thread::id id = oStd::this_thread::get_id();
-			h = oStd::fnv1a<size_t>(&id, sizeof(oStd::thread::id), h);
+			h = fnv1a<size_t>(&id, sizeof(oStd::thread::id), h);
 		}
 
 		return h;
 	}
 
 	void* Allocate(size_t _Size) override { return HeapAlloc(hHeap, 0, _Size); }
-	bool FindOrAllocate(const oStd::guid& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer) override;
-	bool Find(const oStd::guid& _GUID, bool _IsThreadLocal, void** _pPointer) override;
+	bool FindOrAllocate(const guid& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer) override;
+	bool Find(const guid& _GUID, bool _IsThreadLocal, void** _pPointer) override;
 	void Deallocate(void* _Pointer) override;
 	void ReportLeaks() override;
 
@@ -209,8 +211,8 @@ public:
 static void oProcessHeapOutputLeakReportFooter(size_t _NumLeaks)
 {
 	char buf[256];
-	oStd::mstring exec;
-	snprintf(buf, "========== Process Heap Leak Report: %u Leaks %s ==========\n", _NumLeaks, oCore::system::exec_path(exec));
+	mstring exec;
+	snprintf(buf, "========== Process Heap Leak Report: %u Leaks %s ==========\n", _NumLeaks, ouro::system::exec_path(exec));
 	OutputDebugStringA(buf);
 }
 
@@ -233,8 +235,8 @@ bool oProcessHeapContextImpl::IsTBBEntry(container_t::const_iterator it)
 	for (size_t i = 0; i < it->second.NumStackEntries; i++)
 	{
 		bool WasStdBind = IsStdBind;
-		oCore::debugger::format(buf, it->second.StackTrace[i], "  ", &IsStdBind);
-		if (strstr(buf, "oStd::async") || strstr(buf, "tbbD!tbb::"))
+		ouro::debugger::format(buf, it->second.StackTrace[i], "  ", &IsStdBind);
+		if (strstr(buf, "async") || strstr(buf, "tbbD!tbb::"))
 			return true;
 		if (!WasStdBind && IsStdBind) // skip a number of the internal wrappers
 			i += 5;
@@ -266,7 +268,7 @@ bool oProcessHeapContextImpl::ShouldConsider(container_t::const_iterator it)
 	//	return false;
 
 	#ifdef oIGNORE_SAME_THREAD_FALSE_LEAKS
-		if (it->second.InitThreadID == oStd::this_thread::get_id())
+		if (it->second.InitThreadID == this_thread::get_id())
 			return false;
 	#endif
 
@@ -293,14 +295,14 @@ void oProcessHeapContextImpl::ReportLeaks()
 			nIgnoredLeaks++;
 	}
 
-	oStd::path moduleName = oCore::this_module::path();
+	path moduleName = ouro::this_module::path();
 	
 	char buf[oKB(1)];
 	
 	if (nLeaks)
 	{
-		oStd::mstring exec;
-		snprintf(buf, "========== Process Heap Leak Report %s (Module %s) ==========\n", oCore::system::exec_path(exec), moduleName.c_str());
+		mstring exec;
+		snprintf(buf, "========== Process Heap Leak Report %s (Module %s) ==========\n", ouro::system::exec_path(exec), moduleName.c_str());
 		OutputDebugStringA(buf);
 		for (container_t::const_iterator it = pSharedPointers->begin(); it != pSharedPointers->end(); ++it)
 		{
@@ -311,14 +313,14 @@ void oProcessHeapContextImpl::ReportLeaks()
 				char TLBuf[128];
 				snprintf(TLBuf, " (thread_local in thread 0x%x%s)", *(unsigned int*)&e.InitThreadID, oConcurrency::main_thread::get_id() == e.InitThreadID ? " (main)" : "");
 				char GUIDStr[128];
-				snprintf(buf, "%s %s%s\n", oStd::to_string(GUIDStr, e.GUID), oSAFESTRN(e.DebugName), e.IsThreadLocal ? TLBuf : "");
+				snprintf(buf, "%s %s%s\n", to_string(GUIDStr, e.GUID), oSAFESTRN(e.DebugName), e.IsThreadLocal ? TLBuf : "");
 				OutputDebugStringA(buf); // use non-threadsafe version because that could alloc the mutex
 
 				bool IsStdBind = false;
 				for (size_t i = 0; i < e.NumStackEntries; i++)
 				{
 					bool WasStdBind = IsStdBind;
-					oCore::debugger::format(buf, e.StackTrace[i], "  ", &IsStdBind);
+					ouro::debugger::format(buf, e.StackTrace[i], "  ", &IsStdBind);
 					if (!WasStdBind && IsStdBind) // skip a number of the internal wrappers
 						i += 5;
 					OutputDebugStringA(buf); // use non-threadsafe version because that could alloc the mutex
@@ -334,7 +336,7 @@ void oProcessHeapContextImpl::ReportLeaks()
 		Release();
 }
 
-bool oProcessHeapContextImpl::Find(const oStd::guid& _GUID, bool _IsThreadLocal, void** _pPointer)
+bool oProcessHeapContextImpl::Find(const guid& _GUID, bool _IsThreadLocal, void** _pPointer)
 {
 	oCRTASSERT(_pPointer, "oProcessHeap::Find(): Invalid parameter");
 	size_t h = Hash(_GUID, _IsThreadLocal);
@@ -347,7 +349,7 @@ bool oProcessHeapContextImpl::Find(const oStd::guid& _GUID, bool _IsThreadLocal,
 	return !!*_pPointer;
 }
 
-bool oProcessHeapContextImpl::FindOrAllocate(const oStd::guid& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer)
+bool oProcessHeapContextImpl::FindOrAllocate(const guid& _GUID, bool _IsThreadLocal, bool _IsLeakTracked, size_t _Size, oFUNCTION<void (void* _Pointer)> _PlacementConstructor, const char* _DebugName, void** _pPointer)
 {
 	bool Allocated = false;
 	oCRTASSERT(_Size && _pPointer, "oProcessHeap::FindOrAllocate(): Invalid parameter");
@@ -378,7 +380,7 @@ bool oProcessHeapContextImpl::FindOrAllocate(const oStd::guid& _GUID, bool _IsTh
 		if (_DebugName)
 		{
 			memcpy_s(e.DebugName, sizeof(e.DebugName), _DebugName, __min(strlen(_DebugName)+1, sizeof(e.DebugName)));
-			oStd::ellipsize(e.DebugName);
+			ellipsize(e.DebugName);
 		}
 
 		e.NumStackEntries = 0;
@@ -387,7 +389,7 @@ bool oProcessHeapContextImpl::FindOrAllocate(const oStd::guid& _GUID, bool _IsTh
 		static bool captureCallstack = true;
 		if (captureCallstack)
 		{
-			e.NumStackEntries = oCore::debugger::callstack(e.StackTrace, 3);
+			e.NumStackEntries = ouro::debugger::callstack(e.StackTrace, 3);
 		}
 
 		Reference();
@@ -442,11 +444,11 @@ oProcessHeapContext* oProcessHeapContext::Singleton()
 	static oProcessHeapContext* sInstance;
 	if (!sInstance)
 	{
-		static const oStd::guid heapMMapGuid = { 0x7c5be6d1, 0xc5c2, 0x470e, { 0x85, 0x4a, 0x2b, 0x98, 0x48, 0xf8, 0x8b, 0xa9 } }; // {7C5BE6D1-C5C2-470e-854A-2B9848F88BA9}
+		static const guid heapMMapGuid = { 0x7c5be6d1, 0xc5c2, 0x470e, { 0x85, 0x4a, 0x2b, 0x98, 0x48, 0xf8, 0x8b, 0xa9 } }; // {7C5BE6D1-C5C2-470e-854A-2B9848F88BA9}
 
 		// Filename is "<GUID><CurrentProcessID>"
 		static char mmapFileName[128] = {0};
-		oStd::to_string(mmapFileName, heapMMapGuid);
+		to_string(mmapFileName, heapMMapGuid);
 		snprintf(mmapFileName + strlen(mmapFileName), 128 - strlen(mmapFileName), "%u", GetCurrentProcessId());
 
 		// Create a memory-mapped File to store the location of the oProcessHeapContext

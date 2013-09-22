@@ -33,8 +33,8 @@
 #ifndef oVersionUpdate_h
 #define oVersionUpdate_h
 
-#include <oStd/fixed_string.h>
-#include <oStd/version.h>
+#include <oBase/fixed_string.h>
+#include <oBase/version.h>
 #include <oCore/process.h>
 
 // _____________________________________________________________________________
@@ -43,21 +43,21 @@
 struct oVU_URI_PARTS
 {
 	oURIParts URIParts; // Path is truncated to have the filename removed
-	oStd::mstring Filebase;
-	oStd::sstring Extension;
-	oStd::version Version;
+	ouro::mstring Filebase;
+	ouro::sstring Extension;
+	ouro::version Version;
 	bool IsDebugBuild;
 };
 
-oAPI bool oVUDecompose(const oStd::uri_string& _URI, bool _VersionFromFilename, oVU_URI_PARTS* _pParts);
+oAPI bool oVUDecompose(const ouro::uri_string& _URI, bool _VersionFromFilename, oVU_URI_PARTS* _pParts);
 
-oAPI char* oVURecompose(oStd::uri_string& _URI, const oVU_URI_PARTS& _Parts);
+oAPI char* oVURecompose(ouro::uri_string& _URI, const oVU_URI_PARTS& _Parts);
 
 // Returns true if the installer advertises a different version than the 
 // currently running executable. If _IsNewer is true, the version will have to
 // be newer than the current one. If _MatchInstallerAndExecutableNames is false, 
 // then no verification that this installer is meant for this executable is done.
-oAPI bool oVUIsUpdateInstallerValid(const oStd::uri_string& _SfxURI, bool _IsNewer = true, bool _MatchInstallerAndExecutableNames = true);
+oAPI bool oVUIsUpdateInstallerValid(const ouro::uri_string& _SfxURI, bool _IsNewer = true, bool _MatchInstallerAndExecutableNames = true);
 
 // This expects a file:// URI to a 7-zip console sfx executable specified as 
 // _SfxURI matching the regex format:
@@ -75,13 +75,13 @@ oAPI bool oVURenameLauncher(const char* _SfxURI);
 // Returns the filename of the installer that might've installed this executable
 // by using its name and version. This is a convenient function built on top of
 // oVUDecompose/oVURecompose.
-oAPI bool oVUGetThisAppsInstallerFilename(oStd::mstring& _StrDestination);
+oAPI bool oVUGetThisAppsInstallerFilename(ouro::mstring& _StrDestination);
 
-oAPI bool oVUGetLatestInstallerFilename(oStd::mstring& _StrDestination);
+oAPI bool oVUGetLatestInstallerFilename(ouro::mstring& _StrDestination);
 
 // This should be called from a file in <some-path>\<version>\Exe.exe, so this
 // will look for the launcher in ../
-oAPI bool oVULaunchLauncher(unsigned int _ExpectedTimeToShutdownMS, const oStd::version& _Version = oStd::version());
+oAPI bool oVULaunchLauncher(unsigned int _ExpectedTimeToShutdownMS, const ouro::version& _Version = ouro::version());
 
 // _____________________________________________________________________________
 // Utilities to be called from the launcher/lightweight executable
@@ -96,7 +96,7 @@ struct oVERSIONED_LAUNCH_DESC
 		, PassThroughCommandLine(nullptr)
 	{}
 
-	oCore::process::id WaitForPID;
+	ouro::process::id WaitForPID;
 	unsigned int WaitForPIDTimeout;
 	const char* SpecificModuleName; // if null, use this launcher's module name
 	const char* SpecificVersion; // if null, use latest version

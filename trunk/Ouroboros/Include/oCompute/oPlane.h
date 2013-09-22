@@ -38,7 +38,7 @@
 #include <oHLSL/oHLSLMacros.h>
 #include <oHLSL/oHLSLMath.h>
 #include <oHLSL/oHLSLTypes.h>
-#include <oStd/equal.h>
+#include <oBase/equal.h>
 
 #ifdef oHLSL
 
@@ -67,8 +67,8 @@ namespace oCompute {
 } // namespace oCompute
 
 typedef oCompute::plane<float> oPlanef; typedef oCompute::plane<double> oPlaned;
-template<> inline bool oStd::equal(const oPlanef& a, const oPlanef& b, unsigned int maxUlps) { return oStd::equal(a.x, b.x, maxUlps) && oStd::equal(a.y, b.y, maxUlps) && oStd::equal(a.z, b.z, maxUlps) && oStd::equal(a.w, b.w, maxUlps); }
-template<> inline bool oStd::equal(const oPlaned& a, const oPlaned& b, unsigned int maxUlps) { return oStd::equal(a.x, b.x, maxUlps) && oStd::equal(a.y, b.y, maxUlps) && oStd::equal(a.z, b.z, maxUlps) && oStd::equal(a.w, b.w, maxUlps); }
+template<> inline bool ouro::equal(const oPlanef& a, const oPlanef& b, unsigned int maxUlps) { return ouro::equal(a.x, b.x, maxUlps) && ouro::equal(a.y, b.y, maxUlps) && ouro::equal(a.z, b.z, maxUlps) && ouro::equal(a.w, b.w, maxUlps); }
+template<> inline bool ouro::equal(const oPlaned& a, const oPlaned& b, unsigned int maxUlps) { return ouro::equal(a.x, b.x, maxUlps) && ouro::equal(a.y, b.y, maxUlps) && ouro::equal(a.z, b.z, maxUlps) && ouro::equal(a.w, b.w, maxUlps); }
 
 #endif
 #include <oHLSL/oHLSLSwizzlesOn.h>
@@ -99,15 +99,15 @@ inline bool oIntersects(oIN(oPlanef, _Plane0), oIN(oPlanef, _Plane1), oIN(oPlane
 
 	// check that there is a valid cross product
 	float3 P1X2 = cross(_Plane1.xyz, _Plane2.xyz);
-	if (oStd::equal(dot(P1X2,P1X2), 0.0f)) 
+	if (ouro::equal(dot(P1X2,P1X2), 0.0f)) 
 		return false;
 
 	float3 P2X0 = cross(_Plane2.xyz, _Plane0.xyz);
-	if (oStd::equal(dot(P2X0,P2X0), 0.0f)) 
+	if (ouro::equal(dot(P2X0,P2X0), 0.0f)) 
 		return false;
 
 	float3 P0X1 = cross(_Plane0.xyz, _Plane1.xyz);
-	if (oStd::equal(dot(P0X1,P0X1), 0.0f)) 
+	if (ouro::equal(dot(P0X1,P0X1), 0.0f)) 
 		return false;
 
 	_Intersection = (-_Plane0.w * P1X2 - _Plane1.w * P2X0 - _Plane2.w * P0X1) / determinant(float3x3(_Plane0.xyz, _Plane1.xyz, _Plane2.xyz));

@@ -1,0 +1,375 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcat.c">
+      <Filter>Source\string\strlcpy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcpy.c">
+      <Filter>Source\string\strlcpy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcpy.c">
+      <Filter>Source\string\strlcpy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcat.c">
+      <Filter>Source\string\strlcpy</Filter>
+    </ClCompile>
+    <ClCompile Include="text_document.cpp">
+      <Filter>Source\text</Filter>
+    </ClCompile>
+    <ClCompile Include="color.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp">
+      <Filter>Source\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="uri.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="scc.cpp">
+      <Filter>Source\scc</Filter>
+    </ClCompile>
+    <ClCompile Include="scc_svn.cpp">
+      <Filter>Source\scc</Filter>
+    </ClCompile>
+    <ClCompile Include="opttok.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="version.cpp">
+      <Filter>Source\types</Filter>
+    </ClCompile>
+    <ClCompile Include="string\strbitmask.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\trim.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\type_name.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\wcselipsize.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\wcsltombs.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\clean_path.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\clean_whitespace.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\elipsize.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\format_bytes.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\format_commas.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\format_duration.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\insert.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\mbsltowcs.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\ordinal.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\relativize_path.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\replace.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\rstrstr.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="memory\dtoull.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memory\is_ascii.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memory\memcmp4.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memory\memcpyuitous.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memory\memcpyustoui.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memory\memmem.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memory\memset2.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memory\memset2d.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memory\memset2d2.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memory\memset2d4.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memory\memset4.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memory\utfcmp.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="string\json_escape_encode.cpp">
+      <Filter>Source\string\encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="string\percent_decode.cpp">
+      <Filter>Source\string\encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="string\percent_encode.cpp">
+      <Filter>Source\string\encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="string\ampersand_decode.cpp">
+      <Filter>Source\string\encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="string\ampersand_encode.cpp">
+      <Filter>Source\string\encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="string\json_escape_decode.cpp">
+      <Filter>Source\string\encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="string\strtok.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\stringize.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="vendor.cpp">
+      <Filter>Source\types</Filter>
+    </ClCompile>
+    <ClCompile Include="string\wsplit_path.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\split_path.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\next_matching.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\zero_line_comments.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\zero_block_comments.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\zero_ifdefs.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\codify_data.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Include\oBase\finally.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\algorithm.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\timer.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\fixed_vector.h">
+      <Filter>oBase\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\unordered_map.h">
+      <Filter>oBase\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\uint128.h">
+      <Filter>oBase\types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\color.h">
+      <Filter>oBase\types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\guid.h">
+      <Filter>oBase\types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\fixed_string.h">
+      <Filter>oBase\types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\equal.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\macros.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\operators.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\config.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\function.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\all.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\assert.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\xml.h">
+      <Filter>oBase\text</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\ini.h">
+      <Filter>oBase\text</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\csv.h">
+      <Filter>oBase\text</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\text_document.h">
+      <Filter>oBase\text</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\json.h">
+      <Filter>oBase\text</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\path.h">
+      <Filter>oBase\types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\throw.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\djb2.h">
+      <Filter>oBase\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\fnv1a.h">
+      <Filter>oBase\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\smhasher\MurmurHash3.h">
+      <Filter>Source\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\murmur3.h">
+      <Filter>oBase\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\uri.h">
+      <Filter>oBase\types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\path_traits.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\uri_traits.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\type_info.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\scc.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="scc_svn.h">
+      <Filter>Source\scc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\event.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\backoff.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\opttok.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\version.h">
+      <Filter>oBase\types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\intrusive_ptr.h">
+      <Filter>oBase\types</Filter>
+    </ClInclude>
+    <ClInclude Include="memory\memduff.h">
+      <Filter>Source\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\string_traits.h">
+      <Filter>oBase\string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\string.h">
+      <Filter>oBase\string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\stringize.h">
+      <Filter>oBase\string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\atof.h">
+      <Filter>oBase\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\endian.h">
+      <Filter>oBase\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\byte.h">
+      <Filter>oBase\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\memory.h">
+      <Filter>oBase\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\vendor.h">
+      <Filter>oBase\types</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{9eb95642-ff91-42cd-8c84-4ca4de26ae7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBase">
+      <UniqueIdentifier>{d637e98e-1add-49e9-95e0-bd1b71955a2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\string">
+      <UniqueIdentifier>{74ccdd39-7420-4a6f-b4ed-3ddbaf0c707e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\string\strlcpy">
+      <UniqueIdentifier>{5b273b6d-f324-41e0-b8c8-cdf5a2ccd533}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\string\encoding">
+      <UniqueIdentifier>{64ebc3e4-476b-40f8-be6c-c986a61913cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\scc">
+      <UniqueIdentifier>{faf8a815-382c-4877-ac89-9124ec38fd94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\memory">
+      <UniqueIdentifier>{ab817143-789e-4c97-ba30-23b809ef8200}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\types">
+      <UniqueIdentifier>{c27deb6f-a0b6-4c75-a1d1-93fb595d0465}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\text">
+      <UniqueIdentifier>{c25da8f7-f63f-46b7-bd00-3fc2e5ec27c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\hash">
+      <UniqueIdentifier>{e3dc22ea-5155-4a45-831d-942d07c523aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBase\containers">
+      <UniqueIdentifier>{f6f94d2f-b3e2-4c61-b2e5-8a7fbbe8f2db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBase\hash">
+      <UniqueIdentifier>{c7a9dc6d-1391-4cb7-b517-ff831fbcaa78}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBase\text">
+      <UniqueIdentifier>{3f1040d7-d083-4d58-a596-6bc86bce2028}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBase\types">
+      <UniqueIdentifier>{50ae8ce8-bcf2-4d43-b130-18d954a2237d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBase\string">
+      <UniqueIdentifier>{c61ed5aa-1491-430d-93e3-5c788c5b6ab2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBase\memory">
+      <UniqueIdentifier>{531d9ca9-e272-4b70-9390-6852f1d9c924}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

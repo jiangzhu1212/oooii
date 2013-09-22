@@ -20,159 +20,33 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\External\calfaq\calfaq.cpp" />
-    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcat.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcpy.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcat.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcpy.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp" />
     <ClCompile Include="chrono.cpp" />
-    <ClCompile Include="color.cpp" />
     <ClCompile Include="condition_variable.cpp" />
     <ClCompile Include="date.cpp" />
     <ClCompile Include="future.cpp" />
-    <ClCompile Include="memory\dtoull.cpp" />
-    <ClCompile Include="memory\is_ascii.cpp" />
-    <ClCompile Include="memory\memcmp4.cpp" />
-    <ClCompile Include="memory\memcpyuitous.cpp" />
-    <ClCompile Include="memory\memcpyustoui.cpp" />
-    <ClCompile Include="memory\memmem.cpp" />
-    <ClCompile Include="memory\memset2.cpp" />
-    <ClCompile Include="memory\memset2d.cpp" />
-    <ClCompile Include="memory\memset2d2.cpp" />
-    <ClCompile Include="memory\memset2d4.cpp" />
-    <ClCompile Include="memory\memset4.cpp" />
-    <ClCompile Include="memory\utfcmp.cpp" />
     <ClCompile Include="mutex.cpp" />
-    <ClCompile Include="opttok.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="scc.cpp" />
-    <ClCompile Include="scc_svn.cpp" />
-    <ClCompile Include="string\ampersand_decode.cpp" />
-    <ClCompile Include="string\ampersand_encode.cpp" />
-    <ClCompile Include="string\clean_path.cpp" />
-    <ClCompile Include="string\clean_whitespace.cpp" />
-    <ClCompile Include="string\codify_data.cpp" />
-    <ClCompile Include="string\elipsize.cpp" />
-    <ClCompile Include="string\format_bytes.cpp" />
-    <ClCompile Include="string\format_commas.cpp" />
-    <ClCompile Include="string\format_duration.cpp" />
-    <ClCompile Include="string\insert.cpp" />
-    <ClCompile Include="string\json_escape_decode.cpp" />
-    <ClCompile Include="string\json_escape_encode.cpp" />
-    <ClCompile Include="string\mbsltowcs.cpp" />
-    <ClCompile Include="string\next_matching.cpp" />
-    <ClCompile Include="string\ordinal.cpp" />
-    <ClCompile Include="string\percent_decode.cpp" />
-    <ClCompile Include="string\percent_encode.cpp" />
-    <ClCompile Include="string\relativize_path.cpp" />
-    <ClCompile Include="string\replace.cpp" />
-    <ClCompile Include="string\rstrstr.cpp" />
-    <ClCompile Include="string\split_path.cpp" />
-    <ClCompile Include="string\strbitmask.cpp" />
-    <ClCompile Include="string\stringize.cpp" />
-    <ClCompile Include="string\strtok.cpp" />
-    <ClCompile Include="string\trim.cpp" />
-    <ClCompile Include="string\type_name.cpp" />
-    <ClCompile Include="string\wcselipsize.cpp" />
-    <ClCompile Include="string\wcsltombs.cpp" />
-    <ClCompile Include="string\wsplit_path.cpp" />
-    <ClCompile Include="string\zero_block_comments.cpp" />
-    <ClCompile Include="string\zero_ifdefs.cpp" />
-    <ClCompile Include="string\zero_line_comments.cpp" />
-    <ClCompile Include="text_document.cpp" />
     <ClCompile Include="thread.cpp" />
-    <ClCompile Include="uri.cpp" />
-    <ClCompile Include="vendor.cpp" />
-    <ClCompile Include="version.cpp" />
     <ClCompile Include="win.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\External\calfaq\calfaq.h" />
-    <ClInclude Include="..\..\External\smhasher\MurmurHash3.h" />
-    <ClInclude Include="..\..\Include\oStd\algorithm.h" />
     <ClInclude Include="..\..\Include\oStd\all.h" />
-    <ClInclude Include="..\..\Include\oStd\assert.h" />
-    <ClInclude Include="..\..\Include\oStd\atof.h" />
     <ClInclude Include="..\..\Include\oStd\atomic.h" />
-    <ClInclude Include="..\..\Include\oStd\backoff.h" />
-    <ClInclude Include="..\..\Include\oStd\byte.h" />
-    <ClInclude Include="..\..\Include\oStd\callable.h" />
     <ClInclude Include="..\..\Include\oStd\chrono.h" />
-    <ClInclude Include="..\..\Include\oStd\color.h" />
     <ClInclude Include="..\..\Include\oStd\condition_variable.h" />
-    <ClInclude Include="..\..\Include\oStd\config.h" />
-    <ClInclude Include="..\..\Include\oStd\csv.h" />
-    <ClInclude Include="..\..\Include\oStd\date.h" />
-    <ClInclude Include="..\..\Include\oStd\djb2.h" />
-    <ClInclude Include="..\..\Include\oStd\endian.h" />
-    <ClInclude Include="..\..\Include\oStd\equal.h" />
-    <ClInclude Include="..\..\Include\oStd\event.h" />
-    <ClInclude Include="..\..\Include\oStd\finally.h" />
-    <ClInclude Include="..\..\Include\oStd\fixed_string.h" />
-    <ClInclude Include="..\..\Include\oStd\fixed_vector.h" />
-    <ClInclude Include="..\..\Include\oStd\fnv1a.h" />
     <ClInclude Include="..\..\Include\oStd\for.h" />
-    <ClInclude Include="..\..\Include\oStd\function.h" />
     <ClInclude Include="..\..\Include\oStd\future.h" />
-    <ClInclude Include="..\..\Include\oStd\guid.h" />
-    <ClInclude Include="..\..\Include\oStd\ini.h" />
-    <ClInclude Include="..\..\Include\oStd\intrinsics.h" />
-    <ClInclude Include="..\..\Include\oStd\intrusive_ptr.h" />
-    <ClInclude Include="..\..\Include\oStd\json.h" />
-    <ClInclude Include="..\..\Include\oStd\macros.h" />
     <ClInclude Include="..\..\Include\oStd\make_unique.h" />
-    <ClInclude Include="..\..\Include\oStd\memory.h" />
-    <ClInclude Include="..\..\Include\oStd\murmur3.h" />
     <ClInclude Include="..\..\Include\oStd\mutex.h" />
-    <ClInclude Include="..\..\Include\oStd\operators.h" />
-    <ClInclude Include="..\..\Include\oStd\opttok.h" />
-    <ClInclude Include="..\..\Include\oStd\path.h" />
-    <ClInclude Include="..\..\Include\oStd\path_traits.h" />
     <ClInclude Include="..\..\Include\oStd\ratio.h" />
-    <ClInclude Include="..\..\Include\oStd\scc.h" />
-    <ClInclude Include="..\..\Include\oStd\string.h" />
-    <ClInclude Include="..\..\Include\oStd\stringize.h" />
-    <ClInclude Include="..\..\Include\oStd\string_traits.h" />
-    <ClInclude Include="..\..\Include\oStd\text_document.h" />
     <ClInclude Include="..\..\Include\oStd\thread.h" />
-    <ClInclude Include="..\..\Include\oStd\throw.h" />
-    <ClInclude Include="..\..\Include\oStd\timer.h" />
-    <ClInclude Include="..\..\Include\oStd\type_info.h" />
-    <ClInclude Include="..\..\Include\oStd\uint128.h" />
-    <ClInclude Include="..\..\Include\oStd\unordered_map.h" />
-    <ClInclude Include="..\..\Include\oStd\uri.h" />
-    <ClInclude Include="..\..\Include\oStd\uri_traits.h" />
-    <ClInclude Include="..\..\Include\oStd\vendor.h" />
-    <ClInclude Include="..\..\Include\oStd\version.h" />
-    <ClInclude Include="..\..\Include\oStd\xml.h" />
-    <ClInclude Include="memory\memduff.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="scc_svn.h" />
     <ClInclude Include="win.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

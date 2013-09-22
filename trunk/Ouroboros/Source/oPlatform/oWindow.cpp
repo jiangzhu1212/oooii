@@ -32,9 +32,11 @@
 #include <oPlatform/Windows/oWinWindowing.h>
 #include <oConcurrency/event.h>
 #include <oConcurrency/mutex.h>
-#include <oStd/backoff.h>
+#include <oBase/backoff.h>
 #include <vector>
 #include <windowsx.h>
+
+using namespace ouro;
 
 static bool kForceDebug = false;
 
@@ -54,13 +56,13 @@ public:
 	int Hook(const hook_type& _Hook) threadsafe
 	{
 		lock_t lock(HooksMutex);
-		return static_cast<int>(oStd::sparse_set(oThreadsafe(Hooks), _Hook));
+		return static_cast<int>(sparse_set(oThreadsafe(Hooks), _Hook));
 	}
 
 	void Unhook(int _hHook) threadsafe
 	{
 		lock_t lock(HooksMutex);
-		oStd::ranged_set(oThreadsafe(Hooks), _hHook, nullptr);
+		ranged_set(oThreadsafe(Hooks), _hHook, nullptr);
 	}
 
 	void Visit(const param_type& _Param) threadsafe
@@ -87,7 +89,7 @@ struct oWinWindow : oWindow
 	
 	// Basic API
 	oGUI_WINDOW GetNativeHandle() const threadsafe override;
-	oCore::display::id GetDisplayId() const override;
+	ouro::display::id GetDisplayId() const override;
 	bool IsWindowThread() const threadsafe override;
 
 	// Client Position/Size API
@@ -148,7 +150,7 @@ struct oWinWindow : oWindow
 	void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe override;
 	void Post(int _CustomEventCode, uintptr_t _Context) threadsafe override;
 	void Dispatch(const oTASK& _Task) threadsafe override;
-	oStd::future<oStd::intrusive_ptr<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const override;
+	oStd::future<intrusive_ptr<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const override;
 	void SetTimer(uintptr_t _Context, unsigned int _RelativeTimeMS) threadsafe override;
 	void StopTimer(uintptr_t _Context) threadsafe override;
 	void FlushMessages(bool _WaitForNext = false) override;
@@ -181,8 +183,8 @@ private:
 	oConcurrency::event Destroyed;
 	oRefCount RefCount;
 
-	oStd::intrusive_ptr<oWindow> Owner;
-	oStd::intrusive_ptr<oWindow> Parent;
+	intrusive_ptr<oWindow> Owner;
+	intrusive_ptr<oWindow> Parent;
 
 private:
 
@@ -214,7 +216,7 @@ private:
 		}
 		*(size_t*)p = _NumObjects;
 
-		T* pObjects = (T*)oStd::byte_add(p, sizeof(size_t));
+		T* pObjects = (T*)byte_add(p, sizeof(size_t));
 		for (size_t i = 0; i < _NumObjects; i++)
 			pObjects[i] = std::move(T());
 		return pObjects;
@@ -223,7 +225,7 @@ private:
 	template<typename T>
 	void DeleteArray(T* _pObjects) threadsafe
 	{
-		size_t* pNumObjects = (size_t*)(oStd::byte_sub(_pObjects, sizeof(size_t)));
+		size_t* pNumObjects = (size_t*)(byte_sub(_pObjects, sizeof(size_t)));
 		*pNumObjects;
 		for (size_t i = 0; i < *pNumObjects; i++)
 			_pObjects[i].~T();
@@ -240,13 +242,13 @@ private:
 			s = (char*)HeapAlloc(hHeap, HEAP_GENERATE_EXCEPTIONS, kStartLength);
 		}
 
-		int len = oStd::vsnprintf(s, kStartLength, _Format, _Args);
+		int len = ouro::vsnprintf(s, kStartLength, _Format, _Args);
 		if (len >= kStartLength)
 		{
 			oScopedHeapLock lock(hHeap);
 			Delete(s);
 			s = (char*)HeapAlloc(hHeap, HEAP_GENERATE_EXCEPTIONS, len + 1);
-			oStd::vsnprintf(s, len + 1, _Format, _Args);
+			ouro::vsnprintf(s, len + 1, _Format, _Args);
 		}
 
 		return s;
@@ -348,11 +350,11 @@ oGUI_WINDOW oWinWindow::GetNativeHandle() const threadsafe
 	return (oGUI_WINDOW)hWnd;
 }
 
-oCore::display::id oWinWindow::GetDisplayId() const
+ouro::display::id oWinWindow::GetDisplayId() const
 {
 	oGUI_WINDOW_SHAPE_DESC s = GetShape();
 	int2 center = s.ClientPosition + s.ClientSize / 2;
-	return oCore::display::find(center.x, center.y);
+	return ouro::display::find(center.x, center.y);
 }
 
 bool oWinWindow::IsWindowThread() const threadsafe
@@ -486,7 +488,7 @@ void oWinWindow::SetParent(oWindow* _pParent) threadsafe
 	DispatchInternal(std::move([=]
 	{
 		oASSERT(!Owner, "Can't have owner at same time as parent");
-		Parent = std::move(oStd::intrusive_ptr<oWindow>(_pParent, false));
+		Parent = std::move(intrusive_ptr<oWindow>(_pParent, false));
 		oVERIFY(oWinSetParent(hWnd, _pParent ? (HWND)_pParent->GetNativeHandle() : nullptr));
 	}));
 }
@@ -503,7 +505,7 @@ void oWinWindow::SetOwner(oWindow* _pOwner) threadsafe
 	DispatchInternal(std::move([=]
 	{
 		oASSERT(!Parent, "Can't have parent at same time as owner");
-		Owner = std::move(oStd::intrusive_ptr<oWindow>(_pOwner, false));
+		Owner = std::move(intrusive_ptr<oWindow>(_pOwner, false));
 		oWinSetOwner(hWnd, _pOwner ? (HWND)_pOwner->GetNativeHandle() : nullptr);
 	}));
 }
@@ -702,7 +704,7 @@ void oWinWindow::Dispatch(const oTASK& _Task) threadsafe
 
 static bool oWinWaitUntilOpaque(HWND _hWnd, unsigned int _TimeoutMS)
 {
-	oStd::backoff bo;
+	backoff bo;
 	unsigned int Now = oTimerMS();
 	unsigned int Then = Now + _TimeoutMS;
 	while (!oWinIsOpaque(_hWnd))
@@ -716,9 +718,9 @@ static bool oWinWaitUntilOpaque(HWND _hWnd, unsigned int _TimeoutMS)
 	return true;
 }
 
-oStd::future<oStd::intrusive_ptr<oImage>> oWinWindow::CreateSnapshot(int _Frame, bool _IncludeBorder) threadsafe const
+oStd::future<intrusive_ptr<oImage>> oWinWindow::CreateSnapshot(int _Frame, bool _IncludeBorder) threadsafe const
 {
-	auto PromisedImage = std::make_shared<oStd::promise<oStd::intrusive_ptr<oImage>>>();
+	auto PromisedImage = std::make_shared<oStd::promise<intrusive_ptr<oImage>>>();
 	auto Image = PromisedImage->get_future();
 
 	const_cast<threadsafe oWinWindow*>(this)->Dispatch([=]() mutable
@@ -733,7 +735,7 @@ oStd::future<oStd::intrusive_ptr<oImage>> oWinWindow::CreateSnapshot(int _Frame,
 				oASSERT(false, "A non-hidden window timed out waiting to become opaque");
 		}
 
-		oStd::intrusive_ptr<oImage> Image;
+		intrusive_ptr<oImage> Image;
 		void* buf = nullptr;
 		size_t size = 0;
 		oWinSetFocus(hWnd); // Windows doesn't do well with hidden contents.
@@ -1119,7 +1121,7 @@ bool oWinWindow::HandleInput(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPa
 			int2 p(0, 0);
 			DragQueryPoint((HDROP)_wParam, (POINT*)&p);
 			const int NumPaths = DragQueryFile((HDROP)_wParam, ~0u, nullptr, 0); 
-			oStd::path_string* pPaths = new oStd::path_string[NumPaths];
+			path_string* pPaths = new path_string[NumPaths];
 			for (int i = 0; i < NumPaths; i++)
 				DragQueryFile((HDROP)_wParam, i, const_cast<char*>(pPaths[i].c_str()), oUInt(pPaths[i].capacity()));
 			DragFinish((HDROP)_wParam);
@@ -1141,7 +1143,7 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 {
 	if ((Debug || kForceDebug))
 	{
-		oStd::xlstring s;
+		xlstring s;
 		oTRACE("%s", oWinParseWMMessage(s, s.capacity(), &ControlKeyState, _hWnd, _uMsg, _wParam, _lParam));
 	}
 

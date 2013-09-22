@@ -24,14 +24,16 @@
  **************************************************************************/
 #include "oIOCP.h"
 #include <oConcurrency/concurrent_index_allocator.h>
-#include <oStd/backoff.h>
-#include <oStd/fixed_string.h>
+#include <oBase/backoff.h>
+#include <oBase/fixed_string.h>
 #include <oBasis/oRefCount.h>
 #include <oConcurrency/countdown_latch.h>
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oProcessHeap.h>
+
+using namespace ouro;
 
 #define IOCPKEY_SHUTDOWN 1
 #define IOCPKEY_USER_TASK 2
@@ -198,10 +200,10 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 
 	void Flush()
 	{
-		oStd::backoff bo;
+		backoff bo;
 
 		#ifdef _DEBUG
-			oLocalTimeout to(5.0);
+			local_timeout to(5.0);
 		#endif
 
 		while(OutstandingContextCount > 0)
@@ -209,10 +211,10 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 			bo.pause();
 
 			#ifdef _DEBUG
-				if (to.TimedOut())
+				if (to.timed_out())
 				{
 					oTRACE("Waiting for %d outstanding IOCP contexts to unregister themselves...", OutstandingContextCount);
-					to.Reset(5.0);
+					to.reset(5.0);
 				}
 			#endif
 		}
@@ -310,7 +312,7 @@ private:
 		oIOCPContext* pContext;
 	};
 
-	typedef oStd::fixed_vector<oIOCPOrphan,oKB(16)> tOrphanList;
+	typedef fixed_vector<oIOCPOrphan,oKB(16)> tOrphanList;
 	typedef std::vector<oStd::thread> tThreadList;			
 
 	HANDLE			hIOCP;

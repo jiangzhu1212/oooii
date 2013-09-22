@@ -25,21 +25,23 @@
 #include <oBasis/oXMLSerialize.h>
 #include <oBasis/oStrTok.h>
 #include <oBasis/oInt.h>
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <oBasis/oError.h>
 #include <vector>
 
-bool oXMLReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::xml& _XML, oStd::xml::node _Node, bool _FailOnMissingValues)
+using namespace ouro;
+
+bool oXMLReadCompound(void* _pDestination, const oRTTI& _RTTI, const xml& _XML, xml::node _Node, bool _FailOnMissingValues)
 {
 	if (_RTTI.GetType() != oRTTI_TYPE_COMPOUND)
 		return oErrorSetLast(std::errc::invalid_argument);
 
-	std::vector<oStd::sstring> FromStringFailed;
+	std::vector<sstring> FromStringFailed;
 
 	for (int b = 0; b < _RTTI.GetNumBases(); b++)
 	{
 		const oRTTI* baseRTTI = _RTTI.GetBaseRTTI(b);
-		oXMLReadCompound(oStd::byte_add(_pDestination, _RTTI.GetBaseOffset(b)), *baseRTTI, _XML, _Node, _FailOnMissingValues);
+		oXMLReadCompound(byte_add(_pDestination, _RTTI.GetBaseOffset(b)), *baseRTTI, _XML, _Node, _FailOnMissingValues);
 	}
 
 	for (int i = 0; i < _RTTI.GetNumAttrs(); i++)
@@ -53,7 +55,7 @@ bool oXMLReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::xml& 
 			{
 				if (f->Flags & oRTTI_COMPOUND_ATTR_XML_STYLE_NODE)
 				{
-					oStd::xml::node n = (f->Flags & oRTTI_COMPOUND_ATTR_XML_STYLE_NODE_EMBEDDED) == oRTTI_COMPOUND_ATTR_XML_STYLE_NODE_EMBEDDED 
+					xml::node n = (f->Flags & oRTTI_COMPOUND_ATTR_XML_STYLE_NODE_EMBEDDED) == oRTTI_COMPOUND_ATTR_XML_STYLE_NODE_EMBEDDED 
 						? _Node 
 						: _XML.first_child(_Node, f->Name);
 
@@ -79,7 +81,7 @@ bool oXMLReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::xml& 
 
 		case oRTTI_TYPE_COMPOUND:
 			{
-				oStd::xml::node node = _XML.first_child(_Node, f->Name);
+				xml::node node = _XML.first_child(_Node, f->Name);
 				if (node)
 				{
 					notFound = false;
@@ -92,7 +94,7 @@ bool oXMLReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::xml& 
 		case oRTTI_TYPE_CONTAINER:
 			{
 				bool isEmbedded = (f->Flags & oRTTI_COMPOUND_ATTR_XML_STYLE_NODE_EMBEDDED) == oRTTI_COMPOUND_ATTR_XML_STYLE_NODE_EMBEDDED;
-				oStd::xml::node node = isEmbedded ? _Node : _XML.first_child(_Node, f->Name);
+				xml::node node = isEmbedded ? _Node : _XML.first_child(_Node, f->Name);
 				if (node)
 				{
 					notFound = false;
@@ -105,7 +107,7 @@ bool oXMLReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::xml& 
 		default:
 			{
 				notFound = false;
-				oStd::sstring rttiName;
+				sstring rttiName;
 				oTRACE("No support for RTTI type: %s", f->RTTI->TypeToString(rttiName));
 			}
 			break;
@@ -113,7 +115,7 @@ bool oXMLReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::xml& 
 
 		if (notFound)
 		{
-			oStd::sstring compoundName;
+			sstring compoundName;
 			oTRACE("No XML attribute/node for: %s::%s in XML node %s in %s", _RTTI.GetName(compoundName), f->Name, _XML.node_name(_Node), _XML.name());
 
 			if (_FailOnMissingValues)
@@ -123,11 +125,11 @@ bool oXMLReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::xml& 
 
 	if (!FromStringFailed.empty())
 	{
-		oStd::xxlstring ErrorString;
+		xxlstring ErrorString;
 		snprintf(ErrorString, "Error parsing the following type(s):");
 		oFORI(i, FromStringFailed)
 		{
-			oStd::sncatf(ErrorString, " '%s'", FromStringFailed[i].c_str());
+			sncatf(ErrorString, " '%s'", FromStringFailed[i].c_str());
 		}
 		oTRACE("%s", ErrorString.c_str());
 		return oErrorSetLast(std::errc::protocol_error, "%s", ErrorString);
@@ -136,12 +138,12 @@ bool oXMLReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::xml& 
 	return true;
 }
 
-bool oXMLReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& _RTTI, const char* _pElementName, bool _IsRaw, const oStd::xml& _XML, oStd::xml::node _Node, bool _FailOnMissingValues)
+bool oXMLReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& _RTTI, const char* _pElementName, bool _IsRaw, const xml& _XML, xml::node _Node, bool _FailOnMissingValues)
 {
 	if (_RTTI.GetType() != oRTTI_TYPE_CONTAINER)
 		return oErrorSetLast(std::errc::invalid_argument);
 
-	std::vector<oStd::sstring> FromStringFailed;
+	std::vector<sstring> FromStringFailed;
 
 	const oRTTI* itemRTTI = _RTTI.GetItemRTTI();
 
@@ -177,7 +179,7 @@ bool oXMLReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& _
 	}
 
 	int i=0;
-	for (oStd::xml::node node = _XML.first_child(_Node, _pElementName); node; node = _XML.next_sibling(node, _pElementName), ++i)
+	for (xml::node node = _XML.first_child(_Node, _pElementName); node; node = _XML.next_sibling(node, _pElementName), ++i)
 	{
 		int cur_count = _RTTI.GetItemCount(_pDestination, _DestSizeInBytes);
 		int new_count = i + 1;
@@ -206,7 +208,7 @@ bool oXMLReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& _
 
 		default:
 			{
-				oStd::sstring rttiName;
+				sstring rttiName;
 				itemRTTI->TypeToString(rttiName.c_str(), rttiName.capacity());
 				oTRACE("No support for RTTI type: %s", rttiName.c_str());
 			}
@@ -216,11 +218,11 @@ bool oXMLReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& _
 
 	if (!FromStringFailed.empty())
 	{
-		oStd::xxlstring ErrorString;
+		xxlstring ErrorString;
 		snprintf(ErrorString, "Error parsing the following type(s):");
-		oFOR(oStd::sstring& item, FromStringFailed)
+		oFOR(sstring& item, FromStringFailed)
 		{
-			oStd::sncatf(ErrorString, " '%s'", item.c_str());
+			sncatf(ErrorString, " '%s'", item.c_str());
 		}
 		oTRACE("%s", ErrorString.c_str());
 		return oErrorSetLast(std::errc::protocol_error, "%s", ErrorString);

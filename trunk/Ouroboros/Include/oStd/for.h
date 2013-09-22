@@ -32,12 +32,7 @@
 #ifndef oStd_for_h
 #define oStd_for_h
 
-#include <oStd/config.h>
 #include <type_traits>
-
-#ifndef oHAS_AUTO
-	#error unsupported platform
-#endif
 
 template<typename ContainerType> auto oFORBegin(ContainerType& _Container) -> 
 	typename std::enable_if<!std::is_const<ContainerType>::value

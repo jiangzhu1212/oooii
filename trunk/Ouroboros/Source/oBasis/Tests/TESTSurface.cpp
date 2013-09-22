@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oBasis/oSurface.h>
 #include <oBasis/oError.h>
-#include <oStd/macros.h>
+#include <oBase/macros.h>
 #include "oBasisTestCommon.h"
 
 #define oTESTB2(test) do { if (!(test)) return false; } while(false)

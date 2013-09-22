@@ -24,6 +24,8 @@
  **************************************************************************/
 #include <oBasis/oGPUConcepts.h>
 
+using namespace ouro;
+
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGPU_API)
 	oRTTI_ENUM_BEGIN_VALUES(oGPU_API)
 		oRTTI_VALUE_CUSTOM(oGPU_API_UNKNOWN, "Unknown")
@@ -252,17 +254,17 @@ oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGPU_CLEAR)
 oRTTI_ENUM_END_DESCRIPTION(oGPU_CLEAR)
 
 static_assert(sizeof(oGPU_RANGE) == 16, "unexpected struct packing for oGPU_RANGE");
-static_assert(sizeof(oStd::fourcc) == 4, "unexpected struct packing for oStd::fourcc");
+static_assert(sizeof(fourcc) == 4, "unexpected struct packing for fourcc");
 static_assert(sizeof(oResizedType<oSURFACE_FORMAT, short>) == 2, "unexpected struct packing for oResizedType<oSURFACE_FORMAT, short>");
 static_assert(sizeof(oGPU_VERTEX_ELEMENT) == 8, "unexpected struct packing for oGPU_VERTEX_ELEMENT");
 
-bool oGPUParseSemantic(const oStd::fourcc& _FourCC, char _Name[5], uint* _pIndex)
+bool oGPUParseSemantic(const fourcc& _FourCC, char _Name[5], uint* _pIndex)
 {
 	*_pIndex = 0;
 	*_Name = 0;
 
 	char fcc[5];
-	oStd::to_string(fcc, _FourCC);
+	to_string(fcc, _FourCC);
 	char* i = &fcc[3];
 	while (isspace(*i)) i--;
 	if (i == fcc)

@@ -49,9 +49,9 @@ struct oRTTI_DATA_ENUM // : oRTTI
 		const char* Name;
 	};
 
-	uchar Type;
-	uchar Size;
-	ushort NumValues;
+	unsigned char Type;
+	unsigned char Size;
+	unsigned short NumValues;
 	const char* TypeName;
 	const VALUE* Values;
 	bool CaseSensitive;
@@ -62,7 +62,7 @@ struct oRTTI_DATA_ENUM // : oRTTI
 #define oRTTI_ENUM_DECLARATION(rtti_add_caps, type_name) \
 	extern oRTTI_DATA_ENUM oRTTI_##type_name; \
 	rtti_add_caps(DECLARATION, type_name) \
-	namespace oStd { \
+	namespace ouro { \
 		inline bool from_string(type_name* _pEnum, const char* _String) { return oRTTI_OF(type_name).FromString(_String, _pEnum); } \
 		inline char* to_string(char* _StrDestination, size_t _SizeofDestination, const type_name& _Enum) { return oRTTI_OF(type_name).ToString(_StrDestination, _SizeofDestination, &_Enum); } \
 		inline const char* as_string(const type_name& _Enum) { return oRTTI_OF(type_name).AsString(&_Enum); } \

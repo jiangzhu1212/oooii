@@ -44,8 +44,8 @@ interface oWebServer : oInterface
 		DESC() : DisableCache(false), DefaultURIReference("index.html") {}
 
 		bool DisableCache; // If true, every request will freshly load the file, i.e. no caching.
-		oStd::uri_string URIBase; //static content base location as a uri, i.e. file://DATA/webstuff/
-		oStd::uri_string DefaultURIReference; //If a request comes in, and it is empty. i.e. http://localhost/ then it will get redirected to this uri. omit the http://localhost/. 
+		ouro::uri_string URIBase; //static content base location as a uri, i.e. file://DATA/webstuff/
+		ouro::uri_string DefaultURIReference; //If a request comes in, and it is empty. i.e. http://localhost/ then it will get redirected to this uri. omit the http://localhost/. 
 		oFUNCTION<void* (size_t _RequiredBufferSize)> AllocBufferCallback;
 	};
 

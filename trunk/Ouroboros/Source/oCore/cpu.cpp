@@ -26,38 +26,38 @@
 #include <oHLSL/oHLSLBit.h>
 #include "../oStd/win.h"
 
-namespace oStd {
+namespace ouro {
 
-const char* as_string(const oCore::cpu::type::value& _Type)
+const char* as_string(const ouro::cpu::type::value& _Type)
 {
 	switch (_Type)
 	{
-		case oCore::cpu::type::unknown: return "unknown";
-		case oCore::cpu::type::x86: return "x86";
-		case oCore::cpu::type::x64: return "x64";
-		case oCore::cpu::type::ia64: return "ia64";
-		case oCore::cpu::type::arm: return "arm";
+		case ouro::cpu::type::unknown: return "unknown";
+		case ouro::cpu::type::x86: return "x86";
+		case ouro::cpu::type::x64: return "x64";
+		case ouro::cpu::type::ia64: return "ia64";
+		case ouro::cpu::type::arm: return "arm";
 		default: oASSUME(0);
 	}
 }
 
-const char* as_string(const oCore::cpu::support::value& _Support)
+const char* as_string(const ouro::cpu::support::value& _Support)
 {
 	switch (_Support)
 	{
-		case oCore::cpu::support::none: return "none";
-		case oCore::cpu::support::not_found: return "not found";
-		case oCore::cpu::support::hardware_only: return "hardware only";
-		case oCore::cpu::support::full: return "full";
+		case ouro::cpu::support::none: return "none";
+		case ouro::cpu::support::not_found: return "not found";
+		case ouro::cpu::support::hardware_only: return "hardware only";
+		case ouro::cpu::support::full: return "full";
 		default: oASSUME(0);
 	}
 }
 
-} // namespace oStd
+} // namespace ouro
 
 using namespace oStd;
 
-namespace oCore {
+namespace ouro {
 	namespace cpu {
 		namespace detail {
 
@@ -275,4 +275,4 @@ void enumerate_features(const std::function<bool(const char* _FeatureName, const
 }
 
 	} // namespace cpu
-} // namespace oCore
+} // namespace ouro

@@ -88,7 +88,7 @@ struct oKINECT_DESC
 	// Create Kinect by index or by ID. If ID is not empty, it overrides the use
 	// of Index.
 	int Index;
-	oStd::sstring ID;
+	ouro::sstring ID;
 };
 oRTTI_COMPOUND_DECLARATION(oRTTI_CAPS_ARRAY, oKINECT_DESC)
 

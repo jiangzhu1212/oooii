@@ -23,9 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oStd/date.h>
-#include <oStd/assert.h>
-#include <oStd/string.h>
-#include <oStd/throw.h>
+#include <cassert>
 #include <ctime>
 #include <calfaq/calfaq.h>
 #include "win.h"
@@ -45,9 +43,34 @@ static const int kLastNonGregorianJDN = 2299150;
 static const unsigned long long kSecondsFrom1900To1970 = 25567ull * kNumSecondsPerDay;
 static const unsigned long long kSecondsFrom1601To1900 = static_cast<unsigned long long>(kNTPEpochJDN - kFileTimeEpochJDN) * kNumSecondsPerDay;
 
+inline int vsnprintf__(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args)
+{
+	#pragma warning(disable:4996) // secure CRT warning
+	int l = ::vsnprintf(_StrDestination, _SizeofStrDestination, _Format, _Args);
+	#pragma warning(default:4996)
+	return l;
+}
+
+inline int snprintf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, ...)
+{
+	va_list args; va_start(args, _Format);
+	int l = vsnprintf__(_StrDestination, _SizeofStrDestination, _Format, args);
+	va_end(args);
+	return l;
+}
+
+template<size_t size> static int snprintf(char (&_StrDestination)[size], const char* _Format, ...)
+{
+	va_list args; va_start(args, _Format);
+	int l = ouro::vsnprintf(_StrDestination, size, _Format, args);
+	va_end(args);
+	return l;
+}
+
 namespace oStd {
 
-#define oDATE_OUT_OF_RANGE(_ToType) do { throw std::domain_error(oStd::formatf("date_cast<%s>(const %s&) out of range", typeid(_Date).name(), typeid(_ToType).name())); } while(false)
+#define oDATE_OUT_OF_RANGE(_ToType) do { char buf[1024]; snprintf(buf, sizeof(buf), "date_cast<%s>(const %s&) out of range", typeid(_Date).name(), typeid(_ToType).name()); throw std::domain_error(buf); } while(false)
+#define oDATE_INVALID_ARG(_Format, ...) do { char buf[1024]; snprintf(buf, sizeof(buf), _Format, ## __VA_ARGS__); throw std::invalid_argument(buf); } while(false)
 
 // From NTP reference implementation ntp-dev-4.2.7p295/libntp/ntp_calendar.cpp:
 /*
@@ -466,7 +489,8 @@ size_t strftime(char* _StrDestination, size_t _SizeofStrDestination, const char*
 	char* w = _StrDestination;
 	char* wend = _StrDestination + _SizeofStrDestination;
 	const char* f = _Format;
-	oStd::mstring s;
+	char s[128];
+	*s = '\0';
 	size_t len = 0;
 
 #define ADD_CHECK() do \
@@ -476,7 +500,7 @@ size_t strftime(char* _StrDestination, size_t _SizeofStrDestination, const char*
 	} while(false)
 
 #define ADDS() do \
-	{	len = snprintf(w, std::distance(w, wend), "%s", s.c_str()); \
+	{	len = snprintf(w, std::distance(w, wend), "%s", s); \
 	ADD_CHECK(); \
 	} while(false)
 
@@ -519,18 +543,18 @@ size_t strftime(char* _StrDestination, size_t _SizeofStrDestination, const char*
 			f++;
 			switch (*f)
 			{
-			case 'a': s = as_string(d.day_of_week); s[3] = 0; ADDS(); break;
-			case 'A': ADDSTR(as_string(d.day_of_week)); break;
-			case 'b': s = as_string(d.month); s[3] = 0; ADDS(); break;
-			case 'B': ADDSTR(as_string(d.month)); break;
-			case 'c': ADDDATE("%a %b %d %H:%M:%S %Y"); break;
-			case 'd': ADD2DIG(d.day); break;
-			case 'H': ADD2DIG(d.hour); break;
-			case 'I': ADD2DIG(d.hour % 12); break;
-			case 'j': oASSERT(false, "Day of year not yet supported"); break;
-			case 'm': ADD2DIG(d.month); break;
-			case 'M': ADD2DIG(d.minute); break;
-			case 'o': 
+				case 'a': strcpy_s(s, as_string(d.day_of_week)); s[3] = 0; ADDS(); break;
+				case 'A': ADDSTR(as_string(d.day_of_week)); break;
+				case 'b': strcpy_s(s, as_string(d.month)); s[3] = 0; ADDS(); break;
+				case 'B': ADDSTR(as_string(d.month)); break;
+				case 'c': ADDDATE("%a %b %d %H:%M:%S %Y"); break;
+				case 'd': ADD2DIG(d.day); break;
+				case 'H': ADD2DIG(d.hour); break;
+				case 'I': ADD2DIG(d.hour % 12); break;
+				case 'j': assert(0 && "Day of year not yet supported"); break;
+				case 'm': ADD2DIG(d.month); break;
+				case 'M': ADD2DIG(d.minute); break;
+				case 'o': 
 				{
 					int Hours = TimezoneOffsetSeconds / 3600;
 					int Minutes = (abs(TimezoneOffsetSeconds) / 60) - abs(Hours * 60);
@@ -539,15 +563,15 @@ size_t strftime(char* _StrDestination, size_t _SizeofStrDestination, const char*
 					break;
 				}
 
-			case 'p': ADDSTR(d.hour < 12 ? "AM" : "PM"); break;
-			case 'S': ADD2DIG(d.second); break;
-			case 'U': oASSERT(false, "Week of year not yet supported"); break;
-			case 'w': ADDDIG(d.day_of_week); break;
-			case 'W': oASSERT(false, "Week of year not yet supported"); break;
-			case 'x': ADDDATE("%m/%d/%y"); break;
-			case 'X': ADDDATE("%H:%M:%S"); break;
-			case 'y': ADD2DIG(d.year % 100); break;
-			case 'Y':
+				case 'p': ADDSTR(d.hour < 12 ? "AM" : "PM"); break;
+				case 'S': ADD2DIG(d.second); break;
+				case 'U': assert(0 && "Week of year not yet supported"); break;
+				case 'w': ADDDIG(d.day_of_week); break;
+				case 'W': assert(0 && "Week of year not yet supported"); break;
+				case 'x': ADDDATE("%m/%d/%y"); break;
+				case 'X': ADDDATE("%H:%M:%S"); break;
+				case 'y': ADD2DIG(d.year % 100); break;
+				case 'Y':
 				{
 					if (d.year >= 1)
 						ADDDIG(d.year);
@@ -559,7 +583,7 @@ size_t strftime(char* _StrDestination, size_t _SizeofStrDestination, const char*
 					break;
 				}
 
-			case 'Z':
+				case 'Z':
 				{
 					time_t t;
 					time(&t);
@@ -570,14 +594,14 @@ size_t strftime(char* _StrDestination, size_t _SizeofStrDestination, const char*
 					break;
 				}
 
-			case '%': *w++ = *f++; break;
+				case '%': *w++ = *f++; break;
 				// Non-standard fractional seconds
-			case 's': ADDDUR(milliseconds); break;
-			case 'u': ADDDUR(microseconds); break;
-			case 'P': ADDDUR(picoseconds); break;
-			case 't': ADDDUR(attoseconds); break;
+				case 's': ADDDUR(milliseconds); break;
+				case 'u': ADDDUR(microseconds); break;
+				case 'P': ADDDUR(picoseconds); break;
+				case 't': ADDDUR(attoseconds); break;
 
-			case '0':
+				case '0':
 				{
 					f++;
 					switch (*f)
@@ -585,14 +609,14 @@ size_t strftime(char* _StrDestination, size_t _SizeofStrDestination, const char*
 						case 's': ADDDUR0(3, milliseconds); break;
 						case 'u': ADDDUR0(6, microseconds); break;
 						default:
-							oTHROW(protocol_error, "not supported: formatting token %%0%c", *f);
+							oDATE_INVALID_ARG("not supported: formatting token %%0%c", *f);
 					}
 
 					break;
 				}
 
-			default:
-				oTHROW(protocol_error, "not supported: formatting token %%%c", *f);
+				default:
+					oDATE_INVALID_ARG("not supported: formatting token %%%c", *f);
 			}
 
 			f++;
@@ -604,49 +628,6 @@ size_t strftime(char* _StrDestination, size_t _SizeofStrDestination, const char*
 
 	*w = 0;
 	return std::distance(_StrDestination, w);
-}
-
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const date& _Date)
-{
-	return strftime(_StrDestination, _SizeofStrDestination, sortable_date_format, date_cast<ntp_date>(_Date)) ? _StrDestination : nullptr;
-}
-
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const weekday::value& _Weekday)
-{
-	return strlcpy(_StrDestination, as_string(_Weekday), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
-}
-
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const month::value& _Month)
-{
-	return strlcpy(_StrDestination, as_string(_Month), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
-}
-
-bool from_string(weekday::value* _pValue, const char* _StrSource)
-{
-	for (size_t i = 0; i < 7; i++)
-	{
-		const char* s = as_string(weekday::value(i));
-		if (!_stricmp(_StrSource, s) || (!_memicmp(_StrSource, s, 3) && _StrSource[3] == 0))
-		{
-			*_pValue = weekday::value(i);
-			return true;
-		}
-	}
-	return false;
-}
-
-bool from_string(month::value* _pValue, const char* _StrSource)
-{
-	for (size_t i = 0; i < 12; i++)
-	{
-		const char* s = as_string(month::value(i));
-		if (!_stricmp(_StrSource, s) || (!_memicmp(_StrSource, s, 3) && _StrSource[3] == 0))
-		{
-			*_pValue = month::value(i);
-			return true;
-		}
-	}
-	return false;
 }
 
 } // namespace oStd

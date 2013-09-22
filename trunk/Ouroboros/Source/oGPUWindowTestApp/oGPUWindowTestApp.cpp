@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 
-#include <oStd/backoff.h>
+#include <oBase/backoff.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/oGUIMenu.h>
@@ -39,6 +39,8 @@
 
 #include <oGPU/oGPU.h>
 #include <oGPU/oGPUUtil.h>
+
+using namespace ouro;
 
 enum oWMENU
 {
@@ -94,13 +96,13 @@ enum oWMI // menuitems
 
 struct oGPUWindowClearToggle
 {
-	oGPUWindowClearToggle(oStd::color _Color1, oStd::color _Color2)
+	oGPUWindowClearToggle(color _Color1, color _Color2)
 	{
 		Color[0] = _Color1;
 		Color[1] = _Color2;
 	}
 
-	oStd::color Color[2];
+	color Color[2];
 };
 
 oGUI_HOTKEY_DESC_NO_CTOR HotKeys[] =
@@ -134,12 +136,12 @@ private:
 	void Render();
 
 private:
-	oStd::intrusive_ptr<oWindow> Parent;
-	oStd::intrusive_ptr<oGPUDevice> Device;
-	oStd::intrusive_ptr<oGPUCommandList> CommandList;
-	oStd::intrusive_ptr<oGPURenderTarget> WindowRenderTarget;
-	oStd::intrusive_ptr<oGPUPipeline> Pipeline;
-	oStd::intrusive_ptr<oGPUUtilMesh> Mesh;
+	intrusive_ptr<oWindow> Parent;
+	intrusive_ptr<oGPUDevice> Device;
+	intrusive_ptr<oGPUCommandList> CommandList;
+	intrusive_ptr<oGPURenderTarget> WindowRenderTarget;
+	intrusive_ptr<oGPUPipeline> Pipeline;
+	intrusive_ptr<oGPUUtilMesh> Mesh;
 
 	oWindow* pGPUWindow;
 	oStd::thread Thread;
@@ -183,7 +185,7 @@ threadsafe oWindow* oGPUWindowThread::Start(oWindow* _pParent, const oGUI_ACTION
 	OnThreadExit = _OnThreadExit;
 	Thread = std::move(oStd::thread(&oGPUWindowThread::Run, this));
 
-	oStd::backoff bo;
+	backoff bo;
 	while (!pGPUWindow)
 		bo.pause();
 	return pGPUWindow;
@@ -218,7 +220,7 @@ void oGPUWindowThread::Run()
 {
 	oConcurrency::begin_thread("Window Render Target Thread");
 	{
-		oStd::intrusive_ptr<oWindow> GPUWindow;
+		intrusive_ptr<oWindow> GPUWindow;
 
 		// Set up child window as a render target (this allows other client-area 
 		// controls to be drawn by parent since the primary render target consumes 
@@ -295,7 +297,7 @@ public:
 	void Run();
 
 private:
-	oStd::intrusive_ptr<oWindow> AppWindow;
+	intrusive_ptr<oWindow> AppWindow;
 	threadsafe oWindow* pGPUWindow;
 	oGPUWindowThread GPUWindow;
 
@@ -325,7 +327,7 @@ oGPUWindowTestApp::oGPUWindowTestApp()
 	, UIMode(true)
 	, AllowUIModeChange(true)
 	, PreFullscreenState(oGUI_WINDOW_HIDDEN)
-	, ClearToggle(oStd::Green, oStd::Red)
+	, ClearToggle(Green, Red)
 {
 	// Set up application window
 	{
@@ -524,7 +526,7 @@ void oGPUWindowTestApp::AppEventHook(const oGUI_EVENT_DESC& _Event)
 
 		case oGUI_SIZED:
 		{
-			oTRACE("oGUI_SIZED %s %dx%d", oStd::as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
+			oTRACE("oGUI_SIZED %s %dx%d", ouro::as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
 			if (pGPUWindow)
 				pGPUWindow->SetClientSize(_Event.AsShape().Shape.ClientSize);
 			CheckState(_Event.AsShape().Shape.State);

@@ -104,7 +104,7 @@ interface oGPURenderTarget : oGPUDeviceChild
 	// Modifies the values for clearing without modifying other topology
 	virtual void SetClearDesc(const oGPU_CLEAR_DESC& _ClearDesc) threadsafe = 0;
 
-	inline void SetClearColor(int _Index, oStd::color _Color) threadsafe
+	inline void SetClearColor(int _Index, ouro::color _Color) threadsafe
 	{
 		DESC d;
 		GetDesc(&d);
@@ -112,7 +112,7 @@ interface oGPURenderTarget : oGPUDeviceChild
 		SetClearDesc(d.ClearDesc);
 	}
 
-	inline void SetClearColor(oStd::color _Color) threadsafe { SetClearColor(0, _Color); }
+	inline void SetClearColor(ouro::color _Color) threadsafe { SetClearColor(0, _Color); }
 
 	// Resizes all buffers without changing formats or other topology
 	virtual void Resize(const int3& _NewDimensions) = 0;
@@ -252,9 +252,9 @@ interface oGPUCommandList : oGPUDeviceChild
 	template<size_t size> void SetShaderResources(int _StartSlot, const oGPUBuffer* const (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
 	template<size_t size> void SetShaderResources(int _StartSlot, const oGPUTexture* const (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
 
-	template<size_t size> void SetShaderResources(int _StartSlot, const oStd::intrusive_ptr<oGPUResource> (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
-	template<size_t size> void SetShaderResources(int _StartSlot, const oStd::intrusive_ptr<oGPUBuffer> (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
-	template<size_t size> void SetShaderResources(int _StartSlot, const oStd::intrusive_ptr<oGPUTexture> (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
+	template<size_t size> void SetShaderResources(int _StartSlot, const ouro::intrusive_ptr<oGPUResource> (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
+	template<size_t size> void SetShaderResources(int _StartSlot, const ouro::intrusive_ptr<oGPUBuffer> (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
+	template<size_t size> void SetShaderResources(int _StartSlot, const ouro::intrusive_ptr<oGPUTexture> (&_ppResources)[size]) { SetShaderResources(_StartSlot, size, (const oGPUBuffer* const*)_ppResources); }
 	
 	inline void SetShaderResources(int _StartSlot, const oGPUResource* _pResource) { SetShaderResources(_StartSlot, 1, &_pResource); }
 	inline void SetShaderResources(int _StartSlot, const oGPUTexture* _pResource) { SetShaderResources(_StartSlot, 1, &_pResource); }
@@ -446,7 +446,7 @@ oAPI bool oGPUCompileShader(
 	                          // Use %DEV% for oSYSPATH_DEV
 	, const char* _CommonDefines // semi-colon delimited list of symbols (= value) 
 	, const char* _SpecificDefines // semi-colon delimited list of symbols (= value)
-	, const oStd::version& _TargetShaderModel // shader model version to compile against
+	, const ouro::version& _TargetShaderModel // shader model version to compile against
 	, oGPU_PIPELINE_STAGE _Stage // type of shader to compile
 	, const char* _ShaderPath // full path to shader - mostly for error reporting
 	, const char* _EntryPoint // name of the top-level shader function to use

@@ -33,7 +33,7 @@
 #ifndef oFilterChain_h
 #define oFilterChain_h
 
-#include <oStd/algorithm.h>
+#include <oBase/algorithm.h>
 #include <oBasis/oError.h>
 #include <oStd/for.h>
 #include <oBasis/oInitOnce.h>

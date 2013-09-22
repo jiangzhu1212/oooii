@@ -23,10 +23,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oGDI.h>
-#include <oStd/byte.h>
+#include <oBase/byte.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinWindowing.h>
+
+using namespace ouro;
 
 int oGDIPointToLogicalHeight(HDC _hDC, int _Point)
 {
@@ -50,7 +52,7 @@ int oGDIPointToLogicalHeight(HDC _hDC, float _Point)
 
 void oGDIInitializeBMI(const oBMI_DESC& _Desc, BITMAPINFO* _pBMI)
 {
-	const int kPitch = _Desc.RowPitch > 0 ? _Desc.RowPitch : oSurfaceMipCalcRowSize(_Desc.Format, oStd::byte_align(_Desc.Dimensions.x, 4));
+	const int kPitch = _Desc.RowPitch > 0 ? _Desc.RowPitch : oSurfaceMipCalcRowSize(_Desc.Format, byte_align(_Desc.Dimensions.x, 4));
 
 	_pBMI->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	_pBMI->bmiHeader.biBitCount = static_cast<WORD>(oSurfaceFormatGetBitSize(_Desc.Format));
@@ -140,7 +142,7 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 
 	WORD bitdepth = 0;
 	{
-		oCore::display::info di = oCore::display::get_info(oWinGetDisplayId(_hWnd));
+		ouro::display::info di = ouro::display::get_info(oWinGetDisplayId(_hWnd));
 		bitdepth = static_cast<WORD>(di.mode.depth);
 		if (bitdepth == 32) bitdepth = 24;
 	}
@@ -155,7 +157,7 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 	_pBitmapInfo->bmiHeader.biPlanes = 1;
 	_pBitmapInfo->bmiHeader.biBitCount = bitdepth;
 	_pBitmapInfo->bmiHeader.biCompression = BI_RGB;
-	_pBitmapInfo->bmiHeader.biSizeImage = oStd::byte_align(size.x, 4) * size.y * bitdepth / 8;
+	_pBitmapInfo->bmiHeader.biSizeImage = byte_align(size.x, 4) * size.y * bitdepth / 8;
 
 	if (_pImageBuffer)
 	{
@@ -209,8 +211,8 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, oFUNCTION<void*(si
 		*_pBufferSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO) + bmi.bmiHeader.biSizeImage;
 		*_ppBuffer = _Allocate(*_pBufferSize);
 		memcpy(*_ppBuffer, &bmfh, sizeof(bmfh));
-		memcpy(oStd::byte_add(*_ppBuffer, sizeof(bmfh)), &bmi, sizeof(bmi));
-		return oGDIScreenCaptureWindow(_hWnd, pRect, oStd::byte_add(*_ppBuffer, sizeof(bmfh) + sizeof(bmi)), bmi.bmiHeader.biSizeImage, &bmi, _RedrawWindow);
+		memcpy(byte_add(*_ppBuffer, sizeof(bmfh)), &bmi, sizeof(bmi));
+		return oGDIScreenCaptureWindow(_hWnd, pRect, byte_add(*_ppBuffer, sizeof(bmfh) + sizeof(bmi)), bmi.bmiHeader.biSizeImage, &bmi, _RedrawWindow);
 	}
 
 	return false;
@@ -367,7 +369,7 @@ bool oGDIDrawLine(HDC _hDC, const int2& _P0, const int2& _P1)
 
 bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness, float _Alpha)
 {
-	if (oStd::equal(_Alpha, 1.0f))
+	if (ouro::equal(_Alpha, 1.0f))
 	{
 		if (_EdgeRoundness)
 		{
@@ -546,14 +548,14 @@ bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Text)
 	return oGDIDrawText(_hDC, _Desc, _Text, nullptr);
 }
 
-HPEN oGDICreatePen(oStd::color _Color, int _Width)
+HPEN oGDICreatePen(color _Color, int _Width)
 {
 	int r,g,b,a;
 	_Color.decompose(&r, &g, &b, &a);
 	return CreatePen(a ? PS_SOLID : PS_NULL, _Width, RGB(r,g,b));
 }
 
-HBRUSH oGDICreateBrush(oStd::color _Color)
+HBRUSH oGDICreateBrush(color _Color)
 {
 	int r,g,b,a;
 	_Color.decompose(&r, &g, &b, &a);

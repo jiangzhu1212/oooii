@@ -32,6 +32,8 @@
 #include <oPlatform/oWebServer.h>
 #include <oPlatform/oStandards.h>
 
+using namespace ouro;
+
 // @oooii-jeffrey: If other code needs these, move them to a better place
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, oNetHost)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, oNetAddr)
@@ -48,8 +50,8 @@ struct oBUILD_TOOL_SERVER_SETTINGS
 	{}
 	unsigned short Port;
 	oNetHost PublicIP;
-	oStd::uri_string StaticBaseURI; //path to all static html, js, and css files.;
-	oStd::uri_string BuildLogsURI;
+	uri_string StaticBaseURI; //path to all static html, js, and css files.;
+	uri_string BuildLogsURI;
 	int DailyBuildHour;
 	uint NewBuildCheckSeconds;
 };
@@ -61,8 +63,8 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oBUILD_TOOL_SERVER_SETTINGS)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oBUILD_TOOL_SERVER_SETTINGS)
 		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_SERVER_SETTINGS, Port, oRTTI_OF(ushort), "Port", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_SERVER_SETTINGS, PublicIP, oRTTI_OF(oNetHost), "PublicIP", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_SERVER_SETTINGS, StaticBaseURI, oRTTI_OF(ostd_uri_string), "StaticBaseURI", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_SERVER_SETTINGS, BuildLogsURI, oRTTI_OF(ostd_uri_string), "BuildLogsURI", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_SERVER_SETTINGS, StaticBaseURI, oRTTI_OF(ouro_uri_string), "StaticBaseURI", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_SERVER_SETTINGS, BuildLogsURI, oRTTI_OF(ouro_uri_string), "BuildLogsURI", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_SERVER_SETTINGS, DailyBuildHour, oRTTI_OF(int), "DailyBuildHour", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_SERVER_SETTINGS, NewBuildCheckSeconds, oRTTI_OF(uint), "NewBuildCheckSeconds", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oBUILD_TOOL_SERVER_SETTINGS)
@@ -83,7 +85,7 @@ public:
 	void OnDelete(CommonParams& _CommonParams) const override { oHTTPHandlerMethodNotAllowed(_CommonParams); }
 
 protected:
-	const oStd::intrusive_ptr<oP4ChangelistBuilder> CLBuilder;
+	const intrusive_ptr<oP4ChangelistBuilder> CLBuilder;
 	oRefCount RefCount;
 };
 
@@ -93,7 +95,7 @@ public:
 	oAutoBuildPendingHandler(oP4ChangelistBuilder* _pCLBuilder)
 		: oAutoBuildHandler(_pCLBuilder)
 	{}
-	oStd::lstring HandlesPath() const override { return "pending"; }
+	lstring HandlesPath() const override { return "pending"; }
 
 	void OnGet(CommonParams& _CommonParams) const override;
 };
@@ -101,11 +103,11 @@ public:
 struct oAutoBuild_Pending
 {
 	int changelist;
-	oStd::sstring user;
-	oStd::sstring date;
+	sstring user;
+	sstring date;
 	int remainingms;
 	int progress;
-	oStd::sstring stage;
+	sstring stage;
 };
 oRTTI_COMPOUND_DECLARATION(oRTTI_CAPS_ARRAY, oAutoBuild_Pending)
 
@@ -114,11 +116,11 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oAutoBuild_Pending)
 	oRTTI_COMPOUND_VERSION(oAutoBuild_Pending, 0,1,0,0)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oAutoBuild_Pending)
 		oRTTI_COMPOUND_ATTR(oAutoBuild_Pending, changelist, oRTTI_OF(int), "changelist", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oAutoBuild_Pending, user, oRTTI_OF(ostd_sstring), "user", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oAutoBuild_Pending, date, oRTTI_OF(ostd_sstring), "date", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oAutoBuild_Pending, user, oRTTI_OF(ouro_sstring), "user", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oAutoBuild_Pending, date, oRTTI_OF(ouro_sstring), "date", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oAutoBuild_Pending, remainingms, oRTTI_OF(int), "remainingms", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oAutoBuild_Pending, progress, oRTTI_OF(int), "progress", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oAutoBuild_Pending, stage, oRTTI_OF(ostd_sstring), "stage", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oAutoBuild_Pending, stage, oRTTI_OF(ouro_sstring), "stage", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oAutoBuild_Pending)
 oRTTI_COMPOUND_END_DESCRIPTION(oAutoBuild_Pending)
 
@@ -139,7 +141,7 @@ void oAutoBuildPendingHandler::OnGet(CommonParams& _CommonParams) const
 		PendingTasks.push_back(PendingTask);
 	});
 
-	oStd::xxlstring PendingTasksJSON;
+	xxlstring PendingTasksJSON;
 	oJSONWriteContainer(PendingTasksJSON.c_str(), PendingTasksJSON.capacity(), &PendingTasks, sizeof(PendingTasks), oRTTI_OF(std_vector_oAutoBuild_Pending));
 	
 	_CommonParams.AllocateResponse(PendingTasksJSON.length());
@@ -154,7 +156,7 @@ public:
 	oAutoBuildCompletedHandler(oP4ChangelistBuilder* _pCLBuilder)
 		: oAutoBuildHandler(_pCLBuilder)
 	{}
-	oStd::lstring HandlesPath() const override { return "completed"; }
+	lstring HandlesPath() const override { return "completed"; }
 
 	void OnGet(CommonParams& _CommonParams) const override;
 };
@@ -163,9 +165,9 @@ struct oAutoBuild_Completed
 {
 	int changelist;
 	bool success;
-	oStd::sstring user;
-	oStd::sstring date;
-	oStd::uri_string HTML;
+	sstring user;
+	sstring date;
+	uri_string HTML;
 	int build_time;
 	int test_time;
 	int pack_time;
@@ -178,9 +180,9 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oAutoBuild_Completed)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oAutoBuild_Completed)
 		oRTTI_COMPOUND_ATTR(oAutoBuild_Completed, changelist, oRTTI_OF(int), "changelist", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oAutoBuild_Completed, success, oRTTI_OF(bool), "success", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oAutoBuild_Completed, user, oRTTI_OF(ostd_sstring), "user", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oAutoBuild_Completed, date, oRTTI_OF(ostd_sstring), "date", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oAutoBuild_Completed, HTML, oRTTI_OF(ostd_uri_string), "HTML", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oAutoBuild_Completed, user, oRTTI_OF(ouro_sstring), "user", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oAutoBuild_Completed, date, oRTTI_OF(ouro_sstring), "date", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oAutoBuild_Completed, HTML, oRTTI_OF(ouro_uri_string), "HTML", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oAutoBuild_Completed, build_time, oRTTI_OF(int), "build_time", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oAutoBuild_Completed, test_time, oRTTI_OF(int), "test_time", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oAutoBuild_Completed, pack_time, oRTTI_OF(int), "pack_time", oRTTI_COMPOUND_ATTR_REGULAR)
@@ -210,7 +212,7 @@ void oAutoBuildCompletedHandler::OnGet(CommonParams& _CommonParams) const
 		}
 	});
 
-	oStd::xxlstring CompletedTasksJSON;
+	xxlstring CompletedTasksJSON;
 	oJSONWriteContainer(CompletedTasksJSON.c_str(), CompletedTasksJSON.capacity(), &CompletedTasks, sizeof(CompletedTasks), oRTTI_OF(std_vector_oAutoBuild_Completed));
 
 	_CommonParams.AllocateResponse(CompletedTasksJSON.length());
@@ -225,7 +227,7 @@ public:
 	oAutoBuildDailyHandler(oP4ChangelistBuilder* _pCLBuilder)
 		: oAutoBuildHandler(_pCLBuilder)
 	{}
-	oStd::lstring HandlesPath() const override { return "daily"; }
+	lstring HandlesPath() const override { return "daily"; }
 
 	void OnGet(CommonParams& _CommonParams) const override;
 };
@@ -249,8 +251,8 @@ oRTTI_COMPOUND_END_DESCRIPTION(DailyQuery)
 struct oAutoBuild_Daily
 {
 	bool success;
-	oStd::sstring name;
-	oStd::sstring HTML;
+	sstring name;
+	sstring HTML;
 };
 oRTTI_COMPOUND_DECLARATION(oRTTI_CAPS_NONE, oAutoBuild_Daily)
 
@@ -259,8 +261,8 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oAutoBuild_Daily)
 	oRTTI_COMPOUND_VERSION(oAutoBuild_Daily, 0,1,0,0)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oAutoBuild_Daily)
 		oRTTI_COMPOUND_ATTR(oAutoBuild_Daily, success, oRTTI_OF(bool), "success", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oAutoBuild_Daily, name, oRTTI_OF(ostd_sstring), "name", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oAutoBuild_Daily, HTML, oRTTI_OF(ostd_sstring), "HTML", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oAutoBuild_Daily, name, oRTTI_OF(ouro_sstring), "name", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oAutoBuild_Daily, HTML, oRTTI_OF(ouro_sstring), "HTML", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oAutoBuild_Daily)
 oRTTI_COMPOUND_END_DESCRIPTION(oAutoBuild_Daily)
 
@@ -294,7 +296,7 @@ void oAutoBuildDailyHandler::OnGet(CommonParams& _CommonParams) const
 		}
 	});
 
-	oStd::xlstring DailyJSON;
+	xlstring DailyJSON;
 	oJSONWriteCompound(DailyJSON.c_str(), DailyJSON.capacity(), &Daily, oRTTI_OF(oAutoBuild_Daily));
 
 	_CommonParams.AllocateResponse(DailyJSON.length());
@@ -306,36 +308,36 @@ void oAutoBuildDailyHandler::OnGet(CommonParams& _CommonParams) const
 class oAutoBuildLogHandler : public oAutoBuildHandler
 {
 public:
-	oAutoBuildLogHandler(oP4ChangelistBuilder* _pCLBuilder, oStd::uri_string _BuildLogsURI)
+	oAutoBuildLogHandler(oP4ChangelistBuilder* _pCLBuilder, uri_string _BuildLogsURI)
 		: oAutoBuildHandler(_pCLBuilder)
 		, BuildLogsURI(_BuildLogsURI)
 	{ }
 
 	// Because the BuildLogsURI can be outside of the WebRoot, we add a virtual
 	// path handler and serve content from that folder that way.
-	oStd::lstring HandlesPath() const override { return "logs/?remaining"; }
+	lstring HandlesPath() const override { return "logs/?remaining"; }
 
 	void OnGet(CommonParams& _CommonParams) const override;
 
-	oStd::uri_string BuildLogsURI;
+	uri_string BuildLogsURI;
 };
 
 void oAutoBuildLogHandler::OnGet(CommonParams& _CommonParams) const
 {
-	oStd::uri_string filepath;
+	uri_string filepath;
 	_CommonParams.GetCaptured(&filepath);
 
-	oStd::uri_string filepathAbsolute = BuildLogsURI;
+	uri_string filepathAbsolute = BuildLogsURI;
 	oEnsureSeparator(filepathAbsolute);
 	strlcat(filepathAbsolute, filepath);
 
 	// TODO: Look into using the FileCache for this as well (oWebServer is also
 	// using it, so perhaps there is a way to share that)
-	oStd::intrusive_ptr<oBuffer> cacheBuffer;
+	intrusive_ptr<oBuffer> cacheBuffer;
 	if (!oBufferLoad(filepathAbsolute, &cacheBuffer))
 		return;
 
-	oStd::path P(filepathAbsolute);
+	path P(filepathAbsolute);
 
 	oMIMEFromExtension(&_CommonParams.pResponse->Content.Type, P.extension());
 	_CommonParams.pResponse->Content.Length = oInt(cacheBuffer->GetSize());
@@ -353,7 +355,7 @@ public:
 
 	// TODO: This seems like an over engineered way of handling URI paths to 
 	// determine who handles what (and parsing it at the same time). 
-	oStd::sstring GetCaptureName() const override { return "remaining"; }
+	sstring GetCaptureName() const override { return "remaining"; }
 	bool AttemptCapture(const char* _URI, const char** _Remaining) const override;
 
 private:
@@ -362,14 +364,14 @@ private:
 
 bool oAutoBuildCaptureRemaining::AttemptCapture(const char* _URI, const char** _Remaining) const 
 {
-	oStd::uri_string capture;
-	oStd::trim_right(capture, _URI, "/");
+	uri_string capture;
+	trim_right(capture, _URI, "/");
 	*_Remaining = _URI + capture.length();
 
 	return true;
 }
 
-void OnNewVersion(oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI, oWebAppWindow* _pAppWindow)
+void OnNewVersion(oSTREAM_EVENT _Event, const uri_string& _ChangedURI, oWebAppWindow* _pAppWindow)
 {
 	static bool NewVersionFound = false;
 	switch (_Event)
@@ -412,16 +414,16 @@ oMAINA()
 		return -1;
 	}
 
-	oStd::path_string IniPath;
+	path_string IniPath;
 	if (!oINIFindPath(IniPath, "oAutoBuild.ini"))
 		return false; // Pass error
 
-	std::shared_ptr<oStd::ini> INI = oINILoad(IniPath);
+	std::shared_ptr<ini> INI = oINILoad(IniPath);
 	if (!INI)
 		return false; // PassError
 
 	oBUILD_TOOL_SERVER_SETTINGS Settings;
-	oStd::ini::section section = INI->first_section();
+	ini::section section = INI->first_section();
 	while (section)
 	{
 		const char* pSectionName = INI->section_name(section);
@@ -433,14 +435,14 @@ oMAINA()
 		section = INI->next_section(section);
 	}
 
-	oStd::intrusive_ptr<oWebAppWindow> Window;
+	intrusive_ptr<oWebAppWindow> Window;
 	if (!oWebAppWindowCreate("oAutoBuild", Settings.Port, &Window))
 		return -1;
 
-	oStd::path logroot = oStd::uri(Settings.BuildLogsURI).path();
-	oCore::filesystem::create_directories(logroot.parent_path());
+	path logroot = uri(Settings.BuildLogsURI).path();
+	ouro::filesystem::create_directories(logroot.parent_path());
 	
-	oStd::intrusive_ptr<oP4ChangelistBuilder> CLManager;
+	intrusive_ptr<oP4ChangelistBuilder> CLManager;
 	if (!oChangelistManagerCreate(*INI, logroot.c_str(), Settings.Port, &CLManager))
 	{
 		oMSGBOX_DESC mb;
@@ -449,17 +451,17 @@ oMAINA()
 		return -1;
 	}
 
-	oStd::intrusive_ptr<oHTTPHandler> Handlers[4];
-	Handlers[0] = oStd::intrusive_ptr<oHTTPHandler>(new oAutoBuildCompletedHandler(CLManager), false);
-	Handlers[1] = oStd::intrusive_ptr<oHTTPHandler>(new oAutoBuildPendingHandler(CLManager), false);
-	Handlers[2] = oStd::intrusive_ptr<oHTTPHandler>(new oAutoBuildDailyHandler(CLManager), false);
-	Handlers[3] = oStd::intrusive_ptr<oHTTPHandler>(new oAutoBuildLogHandler(CLManager, Settings.BuildLogsURI), false);
+	intrusive_ptr<oHTTPHandler> Handlers[4];
+	Handlers[0] = intrusive_ptr<oHTTPHandler>(new oAutoBuildCompletedHandler(CLManager), false);
+	Handlers[1] = intrusive_ptr<oHTTPHandler>(new oAutoBuildPendingHandler(CLManager), false);
+	Handlers[2] = intrusive_ptr<oHTTPHandler>(new oAutoBuildDailyHandler(CLManager), false);
+	Handlers[3] = intrusive_ptr<oHTTPHandler>(new oAutoBuildLogHandler(CLManager, Settings.BuildLogsURI), false);
 
-	oStd::intrusive_ptr<oHTTPURICapture> Captures[1];
-	Captures[0] = oStd::intrusive_ptr<oHTTPURICapture>(new oAutoBuildCaptureRemaining(), false);
+	intrusive_ptr<oHTTPURICapture> Captures[1];
+	Captures[0] = intrusive_ptr<oHTTPURICapture>(new oAutoBuildCaptureRemaining(), false);
 
-	oStd::intrusive_ptr<threadsafe oWebServer> WebServer;
-	oStd::intrusive_ptr<oHTTPServer> BuildServer;
+	intrusive_ptr<threadsafe oWebServer> WebServer;
+	intrusive_ptr<oHTTPServer> BuildServer;
 
 	oWebServer::DESC ServerDesc;
 	ServerDesc.AllocBufferCallback = [](size_t _BufferSize) { return new char[_BufferSize]; };
@@ -512,7 +514,7 @@ oMAINA()
 	}
 
 	// 4) Auto updater
-	oStd::path MonitorPath = oCore::filesystem::app_path(true);
+	path MonitorPath = ouro::filesystem::app_path(true);
 	MonitorPath.replace_filename("../*.exe");
 
 	oSTREAM_MONITOR_DESC md;
@@ -520,7 +522,7 @@ oMAINA()
 	md.TraceEvents = true;
 	md.WatchSubtree = false;
 
-	oStd::intrusive_ptr<threadsafe oStreamMonitor> NewVersionMonitor;
+	intrusive_ptr<threadsafe oStreamMonitor> NewVersionMonitor;
 	if (!oStreamMonitorCreate(md, oBIND(OnNewVersion, oBIND1, oBIND2, Window), &NewVersionMonitor))
 	{
 		oMSGBOX_DESC mb;

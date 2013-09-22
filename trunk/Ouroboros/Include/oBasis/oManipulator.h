@@ -107,6 +107,6 @@ interface oManipulator : oInterface
 	virtual bool IsClipped(AXIS _Axis) const = 0;
 };
 
-oAPI bool oManipulatorCreate(const oManipulator::DESC& _Desc, oManipulator** _ppManipulator);
+bool oManipulatorCreate(const oManipulator::DESC& _Desc, oManipulator** _ppManipulator);
 
 #endif // oManipulator_h

@@ -40,7 +40,7 @@
 #ifndef oOSC_h
 #define oOSC_h
 
-#include <oStd/function.h>
+#include <oBase/function.h>
 #include <oStd/date.h>
 
 static const int oOSC_MAX_FIXED_STRING_LENGTH = 9*64;

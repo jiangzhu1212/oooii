@@ -29,7 +29,7 @@
 #define oConcurrencyTests_h
 
 #include <oConcurrency/tests/oConcurrencyTestRequirements.h>
-#include <oStd/finally.h>
+#include <oBase/finally.h>
 
 namespace oConcurrency {
 	namespace tests {
@@ -64,7 +64,7 @@ namespace oConcurrency {
 		template<typename test_threadpool_impl_t> void TESTthreadpool_performance_impl(requirements& _Requirements)
 		{
 			test_threadpool_impl_t tp;
-			oStd::finally Release([&] { tp.release(); });
+			ouro::finally Release([&] { tp.release(); });
 			TESTthreadpool_performance(_Requirements, tp);
 		}
 

@@ -24,13 +24,13 @@
  **************************************************************************/
 #include <oCore/filesystem.h>
 #include <oCore/tests/oCoreTestRequirements.h>
-#include <oStd/assert.h>
-#include <oStd/finally.h>
+#include <oBase/assert.h>
+#include <oBase/finally.h>
 
 using namespace oStd;
-using namespace oCore::filesystem;
+using namespace ouro::filesystem;
 
-namespace oCore {
+namespace ouro {
 	namespace tests {
 
 static void TESTfilesystem_paths()
@@ -86,4 +86,4 @@ void TESTfilesystem()
 }
 
 	} // namespace tests
-} // namespace oCore
+} // namespace ouro

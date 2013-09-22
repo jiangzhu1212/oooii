@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oBuffer.h>
-#include <oStd/color.h>
+#include <oBase/color.h>
 #include <oBasis/oLockedPointer.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oStreamUtil.h>
@@ -37,21 +37,21 @@ struct PLATFORM_oImage : public oTest
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		{
-			oStd::path path;
+			ouro::path path;
 			oTESTB0(FindInputFile(path, testImage));
 
-			oStd::path tmp;
+			ouro::path tmp;
 			oTESTB0(BuildPath(tmp, oGetFilebase(testImage), oTest::TEMP));
 
-			oStd::intrusive_ptr<oBuffer> buffer1;
+			ouro::intrusive_ptr<oBuffer> buffer1;
 			oTESTB(oBufferLoad(path.c_str(), &buffer1), "Load failed: %s", path.c_str());
 
-			oStd::intrusive_ptr<oImage> image1;
+			ouro::intrusive_ptr<oImage> image1;
 			oTESTB(oImageCreate(path.c_str(), buffer1->GetData(), buffer1->GetSize(), &image1), "Image create failed: %s", path.c_str());
 
 			oTESTB(oImageSave(image1, oImage::UNKNOWN_FILE, oImage::HIGH_COMPRESSION, oImage::DEFAULT, tmp), "Save failed: %s", tmp);
 
-			oStd::intrusive_ptr<oBuffer> buffer2;
+			ouro::intrusive_ptr<oBuffer> buffer2;
 			oTESTB(oBufferLoad(tmp, &buffer2), "Load failed: %s", tmp);
 
 			// Compare that what we saved is the same as what we loaded
@@ -59,17 +59,17 @@ struct PLATFORM_oImage : public oTest
 			oTESTB(buffer1->GetSize() == buffer2->GetSize(), "Buffer size mismatch (orig %u bytes, saved-and-reloaded %u bytes)", buffer1->GetSize(), buffer2->GetSize());
 			oTESTB(!memcmp(buffer1->GetData(), buffer2->GetData(), buffer1->GetSize()), "Save did not write the same bit pattern as was loaded");
 
-			oStd::intrusive_ptr<oImage> image2;
+			ouro::intrusive_ptr<oImage> image2;
 			oTESTB(oImageCreate(path.c_str(), buffer2->GetData(), buffer2->GetSize(), &image2), "Image create failed: %s", tmp);
 
 			// Compare that the bits written are the same as the bits read
 
-			const oStd::color* c1 = (const oStd::color*)image1->GetData();
-			const oStd::color* c2 = (const oStd::color*)image2->GetData();
+			const ouro::color* c1 = (const ouro::color*)image1->GetData();
+			const ouro::color* c2 = (const ouro::color*)image2->GetData();
 
 			oImage::DESC i1Desc;
 			image1->GetDesc(&i1Desc);	
-			const size_t nPixels = image1->GetSize() / sizeof(oStd::color);
+			const size_t nPixels = image1->GetSize() / sizeof(ouro::color);
 			for (size_t i = 0; i < nPixels; i++)
 				oTESTB(c1[i] == c2[i], "Pixel mismatch: %u [%u,%u]", i, i % i1Desc.Dimensions.x, i / i1Desc.Dimensions.x);
 
@@ -80,15 +80,15 @@ struct PLATFORM_oImage : public oTest
 
 		//TEST jpeg loading
 		{
-			oStd::path path;
+			ouro::path path;
 			oTESTB0(FindInputFile(path, testImageJpg));
 
-			oStd::intrusive_ptr<oBuffer> buffer1;
+			ouro::intrusive_ptr<oBuffer> buffer1;
 			oTESTB(oBufferLoad(path.c_str(), &buffer1), "Load failed: %s", path.c_str());
 
-			oStd::intrusive_ptr<oImage> image1;
+			ouro::intrusive_ptr<oImage> image1;
 			{
-				oStd::scoped_timer timer("***************** free image jpeg load time");
+				ouro::scoped_timer timer("***************** free image jpeg load time");
 				oTESTB(oImageCreate(path.c_str(), buffer1->GetData(), buffer1->GetSize(), &image1), "Image create failed: %s", path.c_str());
 			}
 

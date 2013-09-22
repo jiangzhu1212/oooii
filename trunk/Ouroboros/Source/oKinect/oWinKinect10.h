@@ -37,7 +37,7 @@ struct oWinKinect10 : oProcessSingleton<oWinKinect10>
 	oWinKinect10();
 	~oWinKinect10();
 
-	oStd::version GetVersion() const;
+	ouro::version GetVersion() const;
 
 	HRESULT (__stdcall* NuiCreateSensorByIndex__)(int index, INuiSensor** ppNuiSensor);
 	HRESULT (__stdcall* NuiCreateSensorById__)(const OLECHAR* strInstanceId, INuiSensor** ppNuiSensor);
@@ -77,7 +77,7 @@ struct oWinKinect10 : oProcessSingleton<oWinKinect10>
 	void SafeNuiShutdown(INuiSensor* _pSensor);
 
 protected: 
-	oCore::module::id hModule;
+	ouro::module::id hModule;
 	std::vector<DWORD, oProcessHeapAllocator<DWORD>> TIDs;
 	bool TIDsRecorded;
 	bool KinectThreadTerminated;

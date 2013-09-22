@@ -50,8 +50,8 @@ public:
 private:
 	oRefCount Refcount;
 
-	oCore::process::id ProcessID;
-	oCore::process::id ProcessThreadID;
+	ouro::process::id ProcessID;
+	ouro::process::id ProcessThreadID;
 	HWND hWnd;
 };
 
@@ -64,7 +64,7 @@ bool oWindowAppControllerCreate(const char* _pProcessName, const char* _pWindowN
 
 oWindowAppControllerImpl::oWindowAppControllerImpl(const char* _pProcessName, const char* _pWindowName, bool* _pSuccess)
 {
-	ProcessID = oCore::process::get_id(_pProcessName);
+	ProcessID = ouro::process::get_id(_pProcessName);
 	if(0 == ProcessID)
 	{
 		oErrorSetLast(std::errc::no_such_process);

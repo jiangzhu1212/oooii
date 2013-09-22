@@ -25,6 +25,8 @@
 #include <oBasis/oFilterChain.h>
 #include <oBasis/oError.h>
 
+using namespace ouro;
+
 bool oBasisTest_oFilterChain()
 {
 	oFilterChain::FILTER filters[] =
@@ -61,7 +63,7 @@ bool oBasisTest_oFilterChain()
 
 	oFORI(i, symbols)
 		if (FilterChain.Passes(symbols[i]) != expected[i])
-			return oErrorSetLast(std::errc::protocol_error, "Failed filter on %d%s symbol", i, oStd::ordinal(i));
+			return oErrorSetLast(std::errc::protocol_error, "Failed filter on %d%s symbol", i, ordinal(i));
 
 	oErrorSetLast(0, "");
 	return true;

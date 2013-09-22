@@ -35,8 +35,8 @@
 #include <oBasis/oError.h>
 #include <oBasis/oInitOnce.h>
 #include <oBasis/oRefCount.h>
-#include <oStd/fixed_string.h>
-#include <oStd/fnv1a.h>
+#include <oBase/fixed_string.h>
+#include <oBase/fnv1a.h>
 
 // Use this instead of "struct oMyDerivedClass" to enforce naming consistency 
 // and allow for any shared code changes to happen in a central place. If the 
@@ -82,7 +82,7 @@
 // The one true hash. This is a persistent hash that can be used at tool time 
 // and at runtime and should be capable of uniquely identifying any resource 
 // in the system.
-inline unsigned int oGPUDeviceResourceHash(const char* _SourceName, oGPU_RESOURCE_TYPE _Type) { return oStd::fnv1a<unsigned int>(_SourceName, oInt(strlen(_SourceName)), _Type); }
+inline unsigned int oGPUDeviceResourceHash(const char* _SourceName, oGPU_RESOURCE_TYPE _Type) { return ouro::fnv1a<unsigned int>(_SourceName, oInt(strlen(_SourceName)), _Type); }
 
 template<typename InterfaceT, typename ImplementationT>
 struct oGPUDeviceChildMixinBase
@@ -94,8 +94,8 @@ struct oGPUDeviceChildMixinBase
 	const oGPUDeviceChildMixinBase& operator=(const oGPUDeviceChildMixinBase&)/* = delete*/;
 
 protected:
-	oStd::intrusive_ptr<oGPUDevice> Device;
-	oInitOnce<oStd::uri_string> Name;
+	ouro::intrusive_ptr<oGPUDevice> Device;
+	oInitOnce<ouro::uri_string> Name;
 	oRefCount RefCount;
 
 	// Because of the vtable and the desire to work on the actual class and not

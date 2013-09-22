@@ -23,8 +23,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oConcurrency/block_allocator.h>
-#include <oStd/assert.h>
-#include <oStd/throw.h>
+#include <oBase/assert.h>
+#include <oBase/throw.h>
 #include <vector>
 
 namespace oConcurrency {

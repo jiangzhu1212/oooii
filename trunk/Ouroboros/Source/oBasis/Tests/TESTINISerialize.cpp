@@ -28,6 +28,8 @@
 #include "oBasisTestCommon.h"
 #include <vector>
 
+using namespace ouro;
+
 static const char* sINICompoundTest = 
 	"[CompoundTest]\r\n"
 	"Bool = true\r\n"
@@ -54,14 +56,14 @@ struct oINICompoundTest
 	float Float;
 	float4 Float4;
 	long long LongLong;
-	oStd::lstring String;
+	lstring String;
 };
 oRTTI_COMPOUND_DECLARATION(oRTTI_CAPS_NONE, oINICompoundTest)
 
 struct oINIArrayTest
 {
 	std::vector<int> IntValues;
-	std::vector<oStd::sstring> StringValues;
+	std::vector<sstring> StringValues;
 	std::vector<float2> Float2Values;
 };
 oRTTI_COMPOUND_DECLARATION(oRTTI_CAPS_NONE, oINIArrayTest)
@@ -76,7 +78,7 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oINICompoundTest)
 		oRTTI_COMPOUND_ATTR(oINICompoundTest, Float, oRTTI_OF(float), "Float", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oINICompoundTest, Float4, oRTTI_OF(float4), "Float4", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oINICompoundTest, LongLong, oRTTI_OF(llong), "LongLong", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oINICompoundTest, String, oRTTI_OF(ostd_lstring), "String", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oINICompoundTest, String, oRTTI_OF(ouro_lstring), "String", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oINICompoundTest)
 oRTTI_COMPOUND_END_DESCRIPTION(oINICompoundTest)
 
@@ -85,14 +87,14 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oINIArrayTest)
 	oRTTI_COMPOUND_VERSION(oINIArrayTest, 0,1,0,0)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oINIArrayTest)
 		oRTTI_COMPOUND_ATTR(oINIArrayTest, IntValues, oRTTI_OF(std_vector_int), "IntValues", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oINIArrayTest, StringValues, oRTTI_OF(std_vector_ostd_sstring), "StringValues", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oINIArrayTest, StringValues, oRTTI_OF(std_vector_ouro_sstring), "StringValues", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oINIArrayTest, Float2Values, oRTTI_OF(std_vector_float2), "Float2Values", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oINIArrayTest)
 oRTTI_COMPOUND_END_DESCRIPTION(oINIArrayTest)
 
 static bool TestCompound()
 {
-	oStd::ini INI("Test INI Document", const_cast<char*>(sINICompoundTest), nullptr, 100);
+	ini INI("Test INI Document", const_cast<char*>(sINICompoundTest), nullptr, 100);
 
 	oINICompoundTest Test;
 	oTESTB0(oINIReadCompound(&Test, oRTTI_OF(oINICompoundTest), INI, INI.find_section("CompoundTest"), true));
@@ -104,7 +106,7 @@ static bool TestCompound()
 	oTESTB(Test.LongLong == 54491065317, "TestCompound: Expected LongLong=54491065317");
 	oTESTB(strcmp(Test.String, "Some test text") == 0, "TestCompound: Expected String=\"Some test text\"");
 
-	oStd::xlstring TestBuffer;
+	xlstring TestBuffer;
 	oTESTB0(oINIWriteCompound(TestBuffer.c_str(), TestBuffer.capacity(), &Test, oRTTI_OF(oINICompoundTest), "CompoundTest"));
 	oTESTB(0 == strcmp(TestBuffer.c_str(), sINICompoundTest), "TestCompound: oINIWriteCompound result not as expected");
 	return true;
@@ -112,7 +114,7 @@ static bool TestCompound()
 
 static bool TestArray()
 {
-	oStd::ini INI("Test INI Document", const_cast<char*>(sINIArrayTest), nullptr, 100);
+	ini INI("Test INI Document", const_cast<char*>(sINIArrayTest), nullptr, 100);
 	oINIArrayTest Test;
 	oTESTB0(oINIReadCompound(&Test, oRTTI_OF(oINIArrayTest), INI, INI.find_section("ArrayTest"), true));
 	oTESTB(Test.IntValues.size() == 6, "TestArray: Expected 6 values of Int");
@@ -121,12 +123,12 @@ static bool TestArray()
 	for (int i = 0; i < oInt(Test.IntValues.size()); i++)
 	{
 		oTESTB(i == Test.IntValues[i], "TestArray: Expected value at index %d to be %d, but got %d",i,i,Test.IntValues[i]);
-		oStd::sstring val;
+		sstring val;
 		snprintf(val, "%d", i);
 		oTESTB(0 == strcmp(val.c_str(), Test.StringValues[i].c_str()), "TestArray: Expected value at index %d to be %d, but got %d",i,i,Test.IntValues[i]);
 		oTESTB(all(Test.Float2Values[i] == float2(0.5f, 1.0f)), "TestArray: Expected value at index %d to be (0.5, 1.0), but got (%f, %f)", Test.Float2Values[i].x, Test.Float2Values[i].y);
 	}
-	oStd::xlstring TestBuffer;
+	xlstring TestBuffer;
 	oTESTB0(oINIWriteCompound(TestBuffer.c_str(), TestBuffer.capacity(), &Test, oRTTI_OF(oINIArrayTest), "ArrayTest"));
 	oTESTB(0 == strcmp(TestBuffer.c_str(), sINIArrayTest), "TestArray: oINIWriteCompound result not as expected");
 	return true;

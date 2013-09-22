@@ -23,8 +23,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oConcurrency/oConcurrency.h>
-#include <oStd/macros.h>
-#include <oStd/throw.h>
+#include <oBase/macros.h>
+#include <oBase/throw.h>
 
 namespace oConcurrency {
 	namespace tests {

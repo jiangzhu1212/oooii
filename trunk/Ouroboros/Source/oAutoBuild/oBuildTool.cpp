@@ -24,14 +24,16 @@
  **************************************************************************/
 #include "oBuildTool.h"
 
+using namespace ouro;
+
 oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oBUILD_TOOL_TESTING_SETTINGS)
 	oRTTI_COMPOUND_ABSTRACT(oBUILD_TOOL_TESTING_SETTINGS)
 	oRTTI_COMPOUND_VERSION(oBUILD_TOOL_TESTING_SETTINGS, 0,1,0,0)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oBUILD_TOOL_TESTING_SETTINGS)
 		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_TESTING_SETTINGS, ReSync, oRTTI_OF(bool), "ReSync", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_TESTING_SETTINGS, TimeoutSeconds, oRTTI_OF(uint), "TimeoutSeconds", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_TESTING_SETTINGS, CommandLine, oRTTI_OF(ostd_path_string), "CommandLine", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_TESTING_SETTINGS, FailedImageCompares, oRTTI_OF(ostd_path_string), "FailedImageCompares", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_TESTING_SETTINGS, CommandLine, oRTTI_OF(ouro_path_string), "CommandLine", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_TESTING_SETTINGS, FailedImageCompares, oRTTI_OF(ouro_path_string), "FailedImageCompares", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oBUILD_TOOL_TESTING_SETTINGS)
 oRTTI_COMPOUND_END_DESCRIPTION(oBUILD_TOOL_TESTING_SETTINGS)
 
@@ -40,7 +42,7 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oBUILD_TOOL_PACKAGING_SETTINGS
 	oRTTI_COMPOUND_VERSION(oBUILD_TOOL_PACKAGING_SETTINGS, 0,1,0,0)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oBUILD_TOOL_PACKAGING_SETTINGS)
 		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_PACKAGING_SETTINGS, TimeoutSeconds, oRTTI_OF(uint), "TimeoutSeconds", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_PACKAGING_SETTINGS, CommandLines, oRTTI_OF(std_vector_ostd_path_string), "CommandLines", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_PACKAGING_SETTINGS, CommandLines, oRTTI_OF(std_vector_ouro_path_string), "CommandLines", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oBUILD_TOOL_PACKAGING_SETTINGS)
 oRTTI_COMPOUND_END_DESCRIPTION(oBUILD_TOOL_PACKAGING_SETTINGS)
 
@@ -53,16 +55,16 @@ bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const c
 	// Clean the failed image directory
 	oStreamDelete(_TestSettings.FailedImageCompares);
 
-	oStd::path_string command_line = _TestSettings.CommandLine;
-	oStd::sncatf(command_line, " -z -l %soUnitTests.txt", _BuildRoot);
+	path_string command_line = _TestSettings.CommandLine;
+	sncatf(command_line, " -z -l %soUnitTests.txt", _BuildRoot);
 
 	// oUnitTests adds stdout/stderr to the filename
 	snprintf(_pResults->StdoutLogfile, "%soUnitTests.stdout.txt", _BuildRoot);
 	snprintf(_pResults->StderrLogfile, "%soUnitTests.stderr.txt", _BuildRoot);
 
-	oCore::process::info pi;
+	ouro::process::info pi;
 	pi.command_line = command_line;
-	std::shared_ptr<oCore::process> TestProcess = oCore::process::make(pi);
+	std::shared_ptr<ouro::process> TestProcess = ouro::process::make(pi);
 
 	uint TimeoutMS = _TestSettings.TimeoutSeconds * 1000;
 	oScopedPartialTimeout Timer(&TimeoutMS);
@@ -89,16 +91,16 @@ bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const c
 	_pResults->TimePassedSeconds = (float)((1000*_TestSettings.TimeoutSeconds) - TimeoutMS) / 1000.0f;
 
 	// Copy failed images to the build root
-	oStd::uri_string FailedImagesSource;
+	uri_string FailedImagesSource;
 	oURIFromAbsolutePath(FailedImagesSource, _TestSettings.FailedImageCompares);
-	oStd::uri_string FailedImagesDestination;
+	uri_string FailedImagesDestination;
 	oURIFromAbsolutePath(FailedImagesDestination, _BuildRoot);
 	oStreamCopy(FailedImagesSource, FailedImagesDestination);
 	_pResults->FailedImagePath = _BuildRoot;
 
 	// Parse log file
 	_pResults->ParseLogfileSucceeded = true;
-	oStd::intrusive_ptr<oBuffer> TestResultsBuffer;
+	intrusive_ptr<oBuffer> TestResultsBuffer;
 	if (!oBufferLoad(_pResults->StdoutLogfile, &TestResultsBuffer, true))
 	{
 		_pResults->ParseLogfileSucceeded = false;
@@ -131,10 +133,10 @@ bool oRunPackagingStage(const oBUILD_TOOL_PACKAGING_SETTINGS& _Settings, oPackag
 	if (!_Settings.CommandLines.empty())
 	{
 		// FIXME: With CL 23502 the process will hang because of /S on Xcopy. Not capturing STDOUT fixes it
-		// oStd::xxlstring PackageResponse;
+		// xxlstring PackageResponse;
 		oFOR(auto& command_line, _Settings.CommandLines)
 		{
-			int ExitCode = oCore::system::spawn(command_line, nullptr, false, _Settings.TimeoutSeconds * 1000);
+			int ExitCode = ouro::system::spawn(command_line, nullptr, false, _Settings.TimeoutSeconds * 1000);
 			if (ExitCode)
 				return false;
 		}

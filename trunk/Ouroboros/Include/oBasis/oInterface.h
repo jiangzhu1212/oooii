@@ -30,13 +30,13 @@
 #ifndef oInterface_h
 #define oInterface_h
 
-#include <oStd/assert.h>
-#include <oStd/guid.h>
-#include <oStd/intrusive_ptr.h>
+#include <oBase/assert.h>
+#include <oBase/guid.h>
+#include <oBase/intrusive_ptr.h>
 #include <oBasis/oError.h>
 #include <oConcurrency/thread_safe.h>
 
-typedef oStd::guid oGUID;
+typedef ouro::guid oGUID;
 
 template<typename T> const oGUID& oGetGUID(volatile const T* volatile const* = 0);
 
@@ -46,16 +46,16 @@ template<typename T> const oGUID& oGetGUID(volatile const T* volatile const* = 0
 // there will be strange memory corruptions in things like vtables or stack 
 // corruption.
 #define oDEFINE_GUID_I(TYPE, _32BitA, _16BitB, _16BitC, _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK) \
-	static const oStd::guid oCONCAT(oGUID_, TYPE) = { _32BitA, _16BitB, _16BitC, { _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK } }; \
-	template<> inline const oStd::guid& oGetGUID<interface TYPE>(volatile const interface TYPE* volatile const*) { return oCONCAT(oGUID_, TYPE); }
+	static const ouro::guid oCONCAT(oGUID_, TYPE) = { _32BitA, _16BitB, _16BitC, { _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK } }; \
+	template<> inline const ouro::guid& oGetGUID<interface TYPE>(volatile const interface TYPE* volatile const*) { return oCONCAT(oGUID_, TYPE); }
 
 #define oDEFINE_GUID_C(TYPE, _32BitA, _16BitB, _16BitC, _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK) \
-	static const oStd::guid oCONCAT(oGUID_, TYPE) = { _32BitA, _16BitB, _16BitC, { _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK } }; \
-	template<> inline const oStd::guid& oGetGUID<class TYPE>(volatile const class TYPE* volatile const*) { return oCONCAT(oGUID_, TYPE); }
+	static const ouro::guid oCONCAT(oGUID_, TYPE) = { _32BitA, _16BitB, _16BitC, { _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK } }; \
+	template<> inline const ouro::guid& oGetGUID<class TYPE>(volatile const class TYPE* volatile const*) { return oCONCAT(oGUID_, TYPE); }
 
 #define oDEFINE_GUID_S(TYPE, _32BitA, _16BitB, _16BitC, _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK) \
-	static const oStd::guid oCONCAT(oGUID_, TYPE) = { _32BitA, _16BitB, _16BitC, { _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK } }; \
-	template<> inline const oStd::guid& oGetGUID<struct TYPE>(volatile const struct TYPE* volatile const*) { return oCONCAT(oGUID_, TYPE); }
+	static const ouro::guid oCONCAT(oGUID_, TYPE) = { _32BitA, _16BitB, _16BitC, { _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK } }; \
+	template<> inline const ouro::guid& oGetGUID<struct TYPE>(volatile const struct TYPE* volatile const*) { return oCONCAT(oGUID_, TYPE); }
 
 // {9370A4C3-B863-40c7-87F7-614474F40C20}
 oDEFINE_GUID_I(oInterface, 0x9370a4c3, 0xb863, 0x40c7, 0x87, 0xf7, 0x61, 0x44, 0x74, 0xf4, 0xc, 0x20);

@@ -23,9 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oReporting.h>
-#include <oStd/algorithm.h>
-#include <oStd/fixed_string.h>
-#include <oStd/fixed_vector.h>
+#include <oBase/algorithm.h>
+#include <oBase/fixed_string.h>
+#include <oBase/fixed_vector.h>
 #include <oCore/debugger.h>
 #include <oBasis/oError.h>
 #include <oPlatform/oMsgBox.h>
@@ -37,19 +37,21 @@
 #include "oCRTLeakTracker.h"
 #include "oWinExceptionHandler.h"
 
-namespace oStd {
+using namespace ouro;
 
-const char* as_string(const oStd::assert_type::value& _Type)
+namespace ouro {
+
+const char* as_string(const assert_type::value& _Type)
 {
 	switch (_Type)
 	{
-		case oStd::assert_type::trace: return "Trace";
-		case oStd::assert_type::assertion: return "Error";
+		case assert_type::trace: return "Trace";
+		case assert_type::assertion: return "Error";
 		oNODEFAULT;
 	}
 }
 
-} // namespace oStd
+} // namespace ouro
 
 void ReportErrorAndExit()
 {
@@ -66,10 +68,10 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 	inline void GetDesc(oREPORTING_DESC* _pDesc) { *_pDesc = Desc; }
 	bool PushReporter(oReportingVPrint _Reporter);
 	oReportingVPrint PopReporter();
-	inline void AddFilter(size_t _AssertionID) { oStd::push_back_unique(FilteredMessages, _AssertionID); }
-	inline void RemoveFilter(size_t _AssertionID) { oStd::find_and_erase(FilteredMessages, _AssertionID); }
-	oStd::assert_action::value VPrint(const oStd::assert_context& _Assertion, const char* _Format, va_list _Args);
-	static oStd::assert_action::value DefaultVPrint(const oStd::assert_context& _Assertion, threadsafe oStreamWriter* _pLogFile, const char* _Format, va_list _Args);
+	inline void AddFilter(size_t _AssertionID) { push_back_unique(FilteredMessages, _AssertionID); }
+	inline void RemoveFilter(size_t _AssertionID) { find_and_erase(FilteredMessages, _AssertionID); }
+	assert_action::value VPrint(const assert_context& _Assertion, const char* _Format, va_list _Args);
+	static assert_action::value DefaultVPrint(const assert_context& _Assertion, threadsafe oStreamWriter* _pLogFile, const char* _Format, va_list _Args);
 	static const oGUID GUID;
 	void EnableErrorDialogBoxes(bool _bValue);
 	bool AreDialogBoxesEnabled() const { return bDialogBoxesEnabled; }
@@ -90,41 +92,41 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 
 	void DumpAndTerminate(EXCEPTION_POINTERS* _pExceptionPtrs, const char* _pUserErrorMessage)
 	{
-		oStd::sstring DumpStamp = VersionString;
+		sstring DumpStamp = VersionString;
 
 		oStd::ntp_date now;
-		oCore::system::now(&now);
-		oStd::sstring StrNow;
-		oStd::strftime(DumpStamp.c_str() + DumpStamp.length(), DumpStamp.capacity() - DumpStamp.length(), oStd::syslog_local_date_format, now, oStd::date_conversion::to_local);
-		oStd::replace(StrNow, DumpStamp, ":", "_");
-		oStd::replace(DumpStamp, StrNow, ".", "_");
+		ouro::system::now(&now);
+		sstring StrNow;
+		strftime(DumpStamp.c_str() + DumpStamp.length(), DumpStamp.capacity() - DumpStamp.length(), oStd::syslog_local_date_format, now, oStd::date_conversion::to_local);
+		replace(StrNow, DumpStamp, ":", "_");
+		replace(DumpStamp, StrNow, ".", "_");
 
 		bool Mini = false;
 		bool Full = false;
 
-		oStd::path_string DumpPath;
+		path_string DumpPath;
 		if (!Desc.MiniDumpBase.empty())
 		{
 			snprintf(DumpPath, "%s%s.dmp", Desc.MiniDumpBase, DumpStamp.c_str());
-			Mini = oCore::debugger::dump(oStd::path(DumpPath), false, _pExceptionPtrs);
+			Mini = ouro::debugger::dump(path(DumpPath), false, _pExceptionPtrs);
 		}
 
 		if (!Desc.FullDumpBase.empty())
 		{
 			snprintf(DumpPath, "%s%s.dmp", Desc.FullDumpBase, DumpStamp.c_str());
-			Full = oCore::debugger::dump(oStd::path(DumpPath), true, _pExceptionPtrs);
+			Full = ouro::debugger::dump(path(DumpPath), true, _pExceptionPtrs);
 		}
 
 		if(!Desc.PostDumpExecution.empty())
 		{
 			// Use raw system command to avoid code complexity during dump
-			system(Desc.PostDumpExecution.c_str());
+			::system(Desc.PostDumpExecution.c_str());
 		}
 
 		if(Desc.PromptAfterDump)
 		{
 			oMSGBOX_DESC d;
-			oStd::path Name = oCore::this_module::path();
+			path Name = ouro::this_module::path();
 			d.Title = Name;
 			d.Type = oMSGBOX_ERR;
 			oMsgBox(d, "%s\n\nThe program will now exit.%s", _pUserErrorMessage, Mini || Full ? "\n\nA .dmp file has been written." : "\n\n.dmp file was not written.");
@@ -133,12 +135,12 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 	}
 
 protected:
-	oStd::intrusive_ptr<threadsafe oStreamWriter> LogFile;
-	oStd::sstring VersionString;
+	intrusive_ptr<threadsafe oStreamWriter> LogFile;
+	sstring VersionString;
 	oREPORTING_DESC Desc;
-	typedef oStd::fixed_vector<size_t, 256> array_t;
+	typedef fixed_vector<size_t, 256> array_t;
 	array_t FilteredMessages;
-	oStd::fixed_vector<oReportingVPrint, 8> VPrintStack;
+	fixed_vector<oReportingVPrint, 8> VPrintStack;
 	oConcurrency::recursive_mutex Mutex;
 	bool bDialogBoxesEnabled;
 };
@@ -161,10 +163,10 @@ oReportingContext::oReportingContext()
 
 	// Cache the version string now in case we have to dump later (so we don't call complicated module code)
 	{
-		oCore::module::info mi = oCore::this_module::get_info();
+		ouro::module::info mi = ouro::this_module::get_info();
 		VersionString[0] = 'V';
-		oStd::to_string(&VersionString[1], VersionString.capacity() - 1, mi.version);
-		oStd::sncatf(VersionString, "D");
+		to_string(&VersionString[1], VersionString.capacity() - 1, mi.version);
+		sncatf(VersionString, "D");
 	}
 }
 
@@ -195,7 +197,7 @@ void oReportingContext::SetDesc(const oREPORTING_DESC& _Desc)
 {
 	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
 
-	oStd::path OldLogPath(Desc.LogFilePath);
+	path OldLogPath(Desc.LogFilePath);
 	Desc = _Desc;
 	if (Desc.LogFilePath)
 	{
@@ -238,18 +240,18 @@ oReportingVPrint oReportingContext::PopReporter()
 	return fn;
 }
 
-oStd::assert_action::value oReportingContext::VPrint(const oStd::assert_context& _Assertion, const char* _Format, va_list _Args)
+assert_action::value oReportingContext::VPrint(const assert_context& _Assertion, const char* _Format, va_list _Args)
 {
-	size_t ID = oStd::fnv1a<size_t>(_Format);
+	size_t ID = fnv1a<size_t>(_Format);
 	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
 
-	if (!oStd::contains(FilteredMessages, ID) && !VPrintStack.empty())
+	if (!contains(FilteredMessages, ID) && !VPrintStack.empty())
 	{
 		oReportingVPrint VPrintMessage = VPrintStack.back();
 		return VPrintMessage(_Assertion, LogFile, _Format, _Args);
 	}
 
-	return oStd::assert_action::ignore;
+	return assert_action::ignore;
 }
 
 void oReportingReference()
@@ -304,25 +306,27 @@ void oReportingRemoveFilter(size_t _AssertionID)
 	oReportingContext::Singleton()->RemoveFilter(_AssertionID);
 }
 
-oStd::assert_action::value oStd::vtracef(const oStd::assert_context& _Assertion, const char* _Format, va_list _Args)
-{
-	return oReportingContext::Singleton()->VPrint(_Assertion, _Format, _Args);
-}
+namespace ouro {
+	assert_action::value vtracef(const assert_context& _Assertion, const char* _Format, va_list _Args)
+	{
+		return oReportingContext::Singleton()->VPrint(_Assertion, _Format, _Args);
+	}
+} // namespace ouro
 
-static oStd::assert_action::value GetAction(oMSGBOX_RESULT _Result)
+static assert_action::value GetAction(oMSGBOX_RESULT _Result)
 {
 	switch (_Result)
 	{
-		case oMSGBOX_ABORT: return oStd::assert_action::abort;
-		case oMSGBOX_BREAK: return oStd::assert_action::debug;
-		case oMSGBOX_IGNORE: return oStd::assert_action::ignore_always;
+		case oMSGBOX_ABORT: return assert_action::abort;
+		case oMSGBOX_BREAK: return assert_action::debug;
+		case oMSGBOX_IGNORE: return assert_action::ignore_always;
 		default: break;
 	}
 
-	return oStd::assert_action::ignore;
+	return assert_action::ignore;
 }
 
-static oStd::assert_action::value ShowMsgBox(const oStd::assert_context& _Assertion, oMSGBOX_TYPE _Type, const char* _String)
+static assert_action::value ShowMsgBox(const assert_context& _Assertion, oMSGBOX_TYPE _Type, const char* _String)
 {
 #ifdef _DEBUG
 	static const char* MESSAGE_PREFIX = "Debug %s!\n\n";
@@ -343,7 +347,7 @@ static oStd::assert_action::value ShowMsgBox(const oStd::assert_context& _Assert
 
 	strlcpy(cur, _String, std::distance(cur, end));
 
-	oStd::path AppPath = oCore::filesystem::app_path(true);
+	path AppPath = ouro::filesystem::app_path(true);
 	char title[1024];
 	snprintf(title, "%s (%s)", DIALOG_BOX_TITLE, AppPath.c_str());
 
@@ -360,7 +364,7 @@ static oStd::assert_action::value ShowMsgBox(const oStd::assert_context& _Assert
 	} while(false)
 
 #define oACCUM_VPRINTF(_Format, _Args) do \
-	{	res = oStd::vsnprintf(_StrDestination + len, _SizeofStrDestination - len - 1, _Format, _Args); \
+	{	res = ouro::vsnprintf(_StrDestination + len, _SizeofStrDestination - len - 1, _Format, _Args); \
 		if (res == -1) goto TRUNCATION; \
 		len += res; \
 	} while(false)
@@ -373,9 +377,9 @@ void PrintCallStackToString(char* _StrDestination, size_t _SizeofStrDestination,
 	size_t offset = 6; // Start offset from where assert occurred, skipping any debug handling code
 	size_t nSymbols = 0;
 	*_StrDestination = 0;
-	oCore::debugger::symbol address = 0;
+	ouro::debugger::symbol address = 0;
 	bool IsStdBind = false;
-	while (oCore::debugger::callstack(&address, 1, offset++))
+	while (ouro::debugger::callstack(&address, 1, offset++))
 	{
 		if (nSymbols++ == 0) // if we have a callstack, label it
 		{
@@ -385,7 +389,7 @@ void PrintCallStackToString(char* _StrDestination, size_t _SizeofStrDestination,
 		}
 
 		bool WasStdBind = IsStdBind;
-		res = oCore::debugger::format(&_StrDestination[len], _SizeofStrDestination - len - 1, address, "", &IsStdBind);
+		res = ouro::debugger::format(&_StrDestination[len], _SizeofStrDestination - len - 1, address, "", &IsStdBind);
 		if (res == -1) goto TRUNCATION;
 		len += res;
 
@@ -401,7 +405,7 @@ void PrintCallStackToString(char* _StrDestination, size_t _SizeofStrDestination,
 		snprintf(_StrDestination + _SizeofStrDestination - 1 - TLMLength, TLMLength + 1, kStackTooLargeMessage);
 }
 
-char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, const oREPORTING_DESC& _Desc, const oStd::assert_context& _Assertion, const char* _Format, va_list _Args)
+char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, const oREPORTING_DESC& _Desc, const assert_context& _Assertion, const char* _Format, va_list _Args)
 {
 	int res = 0;
 	size_t len = 0;
@@ -418,7 +422,7 @@ char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, c
 	if (_Desc.PrefixTimestamp)
 	{
 		oStd::ntp_timestamp now = 0;
-		oCore::system::now(&now);
+		system::now(&now);
 		res = (int)oStd::strftime(_StrDestination + len, _SizeofStrDestination - len - 1, oStd::sortable_date_ms_format, now, oStd::date_conversion::to_local);
 		oACCUM_PRINTF(" ");
 		if (res == 0) goto TRUNCATION;
@@ -426,16 +430,16 @@ char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, c
 	}
 
 	if (_Desc.PrefixMsgType)
-		oACCUM_PRINTF("%s ", oStd::as_string(_Assertion.Type));
+		oACCUM_PRINTF("%s ", as_string(_Assertion.Type));
 
 	if (_Desc.PrefixThreadId)
 	{
-		oStd::mstring exec;
-		oACCUM_PRINTF("%s ", oCore::system::exec_path(exec));
+		mstring exec;
+		oACCUM_PRINTF("%s ", ouro::system::exec_path(exec));
 	}
 
 	if (_Desc.PrefixMsgId)
-		oACCUM_PRINTF("{0x%08x} ", oStd::fnv1a<unsigned int>(_Format));
+		oACCUM_PRINTF("{0x%08x} ", fnv1a<unsigned int>(_Format));
 
 	oACCUM_VPRINTF(_Format, _Args);
 	return _StrDestination + len;
@@ -447,14 +451,14 @@ TRUNCATION:
 	return _StrDestination + _SizeofStrDestination;
 }
 
-template<size_t size> inline char* FormatAssertMessage(char (&_StrDestination)[size], const oREPORTING_DESC& _Desc, const oStd::assert_context& _Assertion, const char* _Format, va_list _Args) { return FormatAssertMessage(_StrDestination, size, _Desc, _Assertion, _Format, _Args); }
+template<size_t size> inline char* FormatAssertMessage(char (&_StrDestination)[size], const oREPORTING_DESC& _Desc, const assert_context& _Assertion, const char* _Format, va_list _Args) { return FormatAssertMessage(_StrDestination, size, _Desc, _Assertion, _Format, _Args); }
 
-oStd::assert_action::value oReportingContext::DefaultVPrint(const oStd::assert_context& _Assertion, threadsafe oStreamWriter* _pLogFile, const char* _Format, va_list _Args)
+assert_action::value oReportingContext::DefaultVPrint(const assert_context& _Assertion, threadsafe oStreamWriter* _pLogFile, const char* _Format, va_list _Args)
 {
 	oREPORTING_DESC desc;
 	oReportingGetDesc(&desc);
 
-	bool addCallStack = desc.PrintCallstack && (_Assertion.Type == oStd::assert_type::assertion);
+	bool addCallStack = desc.PrintCallstack && (_Assertion.Type == assert_type::assertion);
 
 	// add prefixes to original message
 	char msg[oKB(8)];
@@ -465,7 +469,7 @@ oStd::assert_action::value oReportingContext::DefaultVPrint(const oStd::assert_c
 		PrintCallStackToString(cur, std::distance(cur, end), true);
 
 	// Always print any message to the debugger output
-	oCore::debugger::print(msg);
+	ouro::debugger::print(msg);
 
 	// And to log file
 	if (_pLogFile)
@@ -477,13 +481,13 @@ oStd::assert_action::value oReportingContext::DefaultVPrint(const oStd::assert_c
 	}
 
 	// Output message
-	oStd::assert_action::value action = _Assertion.DefaultResponse;
+	assert_action::value action = _Assertion.DefaultResponse;
 	switch (_Assertion.Type)
 	{
-		case oStd::assert_type::trace:
+		case assert_type::trace:
 			break;
 
-		case oStd::assert_type::assertion:
+		case assert_type::assertion:
 			if (oReportingAreDialogBoxesEnabled())
 			{
 				if (desc.PromptAsserts)
@@ -513,10 +517,10 @@ static void DumpAndTerminate(const char* _ErrorMessage, const oWinCppException& 
 
 	//if (Mutex.try_lock())
 	{
-		if (!oCore::this_process::has_debugger_attached())
+		if (!ouro::this_process::has_debugger_attached())
 		{
 			#ifdef _DEBUG
-				oASSERT_TRACE(oStd::assert_type::assertion, oStd::assert_action::abort, "", "%s", _ErrorMessage);
+				oASSERT_TRACE(assert_type::assertion, assert_action::abort, "", "%s", _ErrorMessage);
 				oASSERT(false, "%s", _ErrorMessage);
 				//Mutex.unlock(); // No need to unlock when DumpAndTerminate is called as the app will exit
 			#else
@@ -532,8 +536,8 @@ static void ReportException(const char* _ErrorMessage, const oWinCppException& _
 	const char* eType = "";
 	if (_pStdException)
 	{
-		eType = oStd::type_name(typeid(*_pStdException).name());
-		const char* n = oStd::rstrstr(eType, "::");
+		eType = type_name(typeid(*_pStdException).name());
+		const char* n = rstrstr(eType, "::");
 		if (n)
 			eType = n + 2;
 	}
@@ -541,14 +545,14 @@ static void ReportException(const char* _ErrorMessage, const oWinCppException& _
 	if (oProcessHasDebuggerAttached())
 	{
 		if (_pStdException)
-			oASSERT_TRACE(oStd::assert_type::assertion, oStd::assert_action::abort, "", "%s: %s", eType, _pStdException->what());
+			oASSERT_TRACE(assert_type::assertion, assert_action::abort, "", "%s: %s", eType, _pStdException->what());
 		else
-			oASSERT_TRACE(oStd::assert_type::assertion, oStd::assert_action::abort, "", "%s", _ErrorMessage);
+			oASSERT_TRACE(assert_type::assertion, assert_action::abort, "", "%s", _ErrorMessage);
 	}
 	else
 	{
 		EXCEPTION_POINTERS* pExceptionPointers = (EXCEPTION_POINTERS*)_ExceptionContext;
-		oStd::lstring msg(_ErrorMessage);
+		lstring msg(_ErrorMessage);
 		if (_pStdException)
 			snprintf(msg, "unhandled %s exception\n\n%s", eType, _pStdException->what());
 		oReportingContext::Singleton()->DumpAndTerminate(pExceptionPointers, msg);

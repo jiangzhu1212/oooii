@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oReporting.h>
-#include <oStd/color.h>
+#include <oBase/color.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oError.h>
 #include <oConcurrency/mutex.h>
@@ -33,7 +33,9 @@
 #include <oPlatform/Windows/oWindows.h>
 #include "FreeImageHelpers.h"
 
-namespace oStd {
+using namespace ouro;
+
+namespace ouro {
 
 const char* as_string(const oImage::FORMAT& _Format)
 {
@@ -49,7 +51,7 @@ const char* as_string(const oImage::FORMAT& _Format)
 	}
 }
 
-} // namespace oStd
+} // namespace ouro
 
 oImage::FORMAT oImageFormatFromSurfaceFormat(oSURFACE_FORMAT _Format)
 {
@@ -81,7 +83,7 @@ oSURFACE_FORMAT oImageFormatToSurfaceFormat(oImage::FORMAT _Format)
 
 oAPI oImage::FILE_FORMAT oImageFormatFromExtension(const char* _URIReference)
 {
-	oStd::uri u(_URIReference);
+	uri u(_URIReference);
 	auto ext = u.path().extension();
 	if (ext.empty())
 	{
@@ -176,14 +178,14 @@ struct oImageImpl : public oImage
 		FreeImage_Unload(FIBitmap);
 	}
 
-	void Put(const int2& _Coord, oStd::color _Color) override
+	void Put(const int2& _Coord, color _Color) override
 	{
 		FreeImage_SetPixelColor(FIBitmap, _Coord.x, _Coord.y, (RGBQUAD*)&_Color);
 	}
 
-	oStd::color Get(const int2& _Coord) const override
+	color Get(const int2& _Coord) const override
 	{
-		oStd::color c;
+		color c;
 		FreeImage_GetPixelColor(FIBitmap, _Coord.x, _Coord.y, (RGBQUAD*)&c);
 		return c;
 	}
@@ -193,7 +195,7 @@ struct oImageImpl : public oImage
 		oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(Mutex);
 		DESC d;
 		GetDesc(&d);
-		oStd::memcpy2d(FreeImage_GetBits(FIBitmap), d.RowPitch, _pSourceBuffer, _SourceRowPitch, d.Dimensions.x * oImageGetSize(d.Format), d.Dimensions.y, _FlipVertically);
+		memcpy2d(FreeImage_GetBits(FIBitmap), d.RowPitch, _pSourceBuffer, _SourceRowPitch, d.Dimensions.x * oImageGetSize(d.Format), d.Dimensions.y, _FlipVertically);
 	}
 		
 	void CopyData(struct HBITMAP__* _hBitmap) threadsafe override
@@ -209,14 +211,14 @@ struct oImageImpl : public oImage
 		oConcurrency::shared_lock<oConcurrency::shared_mutex> Lock(Mutex);
 		DESC d;
 		GetDesc(&d);
-		oStd::memcpy2d(_pDestinationBuffer, _DestinationRowPitch, FreeImage_GetBits(FIBitmap), d.RowPitch, d.Dimensions.x * oImageGetSize(d.Format), d.Dimensions.y, _FlipVertically);
+		memcpy2d(_pDestinationBuffer, _DestinationRowPitch, FreeImage_GetBits(FIBitmap), d.RowPitch, d.Dimensions.x * oImageGetSize(d.Format), d.Dimensions.y, _FlipVertically);
 	}
 
 private:
 	FIBITMAP* FIBitmap;
 	oRefCount RefCount;
 	oConcurrency::shared_mutex Mutex;
-	oStd::uri_string Name;
+	uri_string Name;
 };
 
 bool oImageGetDesc(const void* _pBuffer, size_t _SizeofBuffer, oImage::DESC* _pDesc)
@@ -286,14 +288,14 @@ static size_t oImageSave(FIBITMAP* _bmp, oImage::FILE_FORMAT _Format, oImage::CO
 {
 	oASSERT((size_t)((DWORD)_SizeofBuffer) == _SizeofBuffer, "Size of buffer too large for underlying implementation.");
 	FIMEMORY* pMemory = FreeImage_OpenMemory(nullptr, 0);
-	oStd::finally CloseMem([&] { FreeImage_CloseMemory(pMemory); });
+	finally CloseMem([&] { FreeImage_CloseMemory(pMemory); });
 
 	FREE_IMAGE_FORMAT fif = FIToFIF(_Format);
 
 	size_t written = 0;
 
 	FIBITMAP* flipClone = FreeImage_Clone(_bmp);
-	oStd::finally unloadClone([&](){ FreeImage_Unload(flipClone); });
+	finally unloadClone([&](){ FreeImage_Unload(flipClone); });
 	FreeImage_FlipVertical(flipClone);
 
 	if (FreeImage_SaveToMemory(fif, flipClone, pMemory, FIGetSaveFlags(fif, _CompressionLevel)))
@@ -368,10 +370,10 @@ bool oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format, o
 	else if (_Flags == oImage::FORCE_NO_ALPHA && FIC_RGBALPHA == FreeImage_GetColorType(FIBitmap))
 		FIBitmap = FreeImage_ConvertTo24Bits(FIBitmap);
 
-	oCore::filesystem::create_directories(oStd::path(_Path).parent_path());
+	ouro::filesystem::create_directories(path(_Path).parent_path());
 
 	FIBITMAP* flipClone = FreeImage_Clone(FIBitmap);
-	oStd::finally unloadClone([&](){ FreeImage_Unload(flipClone); });
+	finally unloadClone([&](){ FreeImage_Unload(flipClone); });
 	FreeImage_FlipVertical(flipClone);
 
 	bool success = !!FreeImage_Save(fif, flipClone, _Path, FIGetSaveFlags(fif, _CompressionLevel));
@@ -390,7 +392,7 @@ bool oImageLoad(const char* _Path, oImage::LOAD_FLAGS _Flags, oImage** _ppImage)
 	if (!oSTRVALID(_Path) || !_ppImage)
 		return oErrorSetLast(std::errc::invalid_argument);
 
-	oStd::intrusive_ptr<oBuffer> FileData;
+	intrusive_ptr<oBuffer> FileData;
 	if (!oBufferLoad(_Path, &FileData))
 		return false; // pass error through
 
@@ -410,7 +412,7 @@ bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _
 	_pImage2->GetDesc(&ImgDesc2);
 
 	if (ImgDesc1.Format != ImgDesc2.Format)
-		return oErrorSetLast(std::errc::invalid_argument, "oImages must be in in the same format to be compared. (%s v. %s)", oStd::as_string(ImgDesc1.Format), oStd::as_string(ImgDesc2.Format));
+		return oErrorSetLast(std::errc::invalid_argument, "oImages must be in in the same format to be compared. (%s v. %s)", as_string(ImgDesc1.Format), as_string(ImgDesc2.Format));
 
 	if (any(ImgDesc1.Dimensions != ImgDesc2.Dimensions))
 		return oErrorSetLast(std::errc::invalid_argument, "oImages differ in dimensions. ([%dx%d] v. [%dx%d])", ImgDesc1.Dimensions.x, ImgDesc1.Dimensions.y, ImgDesc2.Dimensions.x, ImgDesc2.Dimensions.y);
@@ -423,7 +425,7 @@ bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _
 	descDiff.Format = oImage::R8;
 	descDiff.RowPitch = oImageCalcRowPitch(descDiff.Format, descDiff.Dimensions.x);
 
-	oStd::intrusive_ptr<oImage> DiffImage;
+	intrusive_ptr<oImage> DiffImage;
 	if (!oImageCreate("Diff Image", descDiff, &DiffImage))
 		return false; // pass through error
 

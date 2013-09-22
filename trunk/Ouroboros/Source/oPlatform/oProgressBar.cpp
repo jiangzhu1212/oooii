@@ -26,6 +26,8 @@
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinWindowing.h>
 
+using namespace ouro;
+
 struct oWinProgressBar : oProgressBar
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
@@ -49,7 +51,7 @@ struct oWinProgressBar : oProgressBar
 	oWindow* GetWindow() override { return Window; }
 
 private:
-	oStd::intrusive_ptr<oWindow> Window;
+	intrusive_ptr<oWindow> Window;
 	oTASK OnStopPressed;
 
 	enum PB_CONTROL
@@ -203,10 +205,10 @@ void oWinProgressBar::SetStopped(bool _Stopped) threadsafe
 
 void oWinProgressBar::SetTextV(const char* _Format, va_list _Args) threadsafe
 {
-	oStd::lstring s;
+	lstring s;
 	if (-1 == vsnprintf(s, _Format, _Args))
 	{
-		oStd::ellipsize(s);
+		ellipsize(s);
 		oTHROW0(no_buffer_space);
 	}
 	Window->Dispatch([=] { oWinControlSetText(Get(PB_TEXT), s.c_str()); });
@@ -214,10 +216,10 @@ void oWinProgressBar::SetTextV(const char* _Format, va_list _Args) threadsafe
 
 void oWinProgressBar::SetSubtextV(const char* _Format, va_list _Args) threadsafe
 {
-	oStd::lstring s;
+	lstring s;
 	if (-1 == vsnprintf(s, _Format, _Args))
 	{
-		oStd::ellipsize(s);
+		ellipsize(s);
 		oTHROW0(no_buffer_space);
 	}
 	Window->Dispatch([=] { oWinControlSetText(Get(PB_SUBTEXT), s.c_str()); });
@@ -251,7 +253,7 @@ void oWinProgressBar::SetPercentageInternal(HWND _hProgress, HWND _hMarquee, HWN
 
 		char buf[16];
 		snprintf(buf, "%u%%", p);
-		oStd::ellipsize(buf);
+		ellipsize(buf);
 		oVERIFY(oWinControlSetText(_hPercent, buf));
 
 		EnsureHidden(_hMarquee);

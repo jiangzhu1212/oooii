@@ -29,7 +29,7 @@
 #ifndef oWinRegistry_h
 #define oWinRegistry_h
 
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 
 enum oWIN_REGISTRY_ROOT
 {
@@ -51,7 +51,7 @@ bool oWinRegistryDeleteValue(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, con
 bool oWinRegistryDeleteKey(oWIN_REGISTRY_ROOT _Root, const char*_KeyPath, bool _Recursive = true);
 
 template<size_t size> char* oWinRegistryGetValue(char (&_StrDestination)[size], oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName) { return oWinRegistryGetValue(_StrDestination, size, _Root, _KeyPath, _ValueName); }
-template<size_t capacity> char* oWinRegistryGetValue(oStd::fixed_string<char, capacity>& _StrDestination, oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName) { return oWinRegistryGetValue(_StrDestination, _StrDestination.capacity(), _Root, _KeyPath, _ValueName); }
+template<size_t capacity> char* oWinRegistryGetValue(ouro::fixed_string<char, capacity>& _StrDestination, oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName) { return oWinRegistryGetValue(_StrDestination, _StrDestination.capacity(), _Root, _KeyPath, _ValueName); }
 
 template<typename T> bool oWinRegistryGetValue(T* _pTypedValue, oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName)
 {

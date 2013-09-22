@@ -28,6 +28,8 @@
 #include "oBasisTestCommon.h"
 #include <cstring>
 
+using namespace ouro;
+
 static const char* sTestUris[] = 
 {
 	"file:///C:/trees/sys3/int/src/core/tests/TestString.cpp",
@@ -42,89 +44,89 @@ static const oURIParts sExpectedParts[] =
 	oURIParts("file", "abyss", "/trees/sys3/int/src/core/all tests/TestString.cpp", nullptr, nullptr),
 };
 
-static const oStd::uri_string sExpectedPaths[] = 
+static const uri_string sExpectedPaths[] = 
 {
-	oStd::uri_string("C:\\trees\\sys3\\int\\src\\core\\tests\\TestString.cpp"),
-	oStd::uri_string("\\\\msdn.microsoft.com\\en-us\\library\\bb982727.aspx"), // this doesn't make sense from an http server best-practices view, but this is what's expected
-	oStd::uri_string("\\\\abyss\\trees\\sys3\\int\\src\\core\\all tests\\TestString.cpp"),
+	uri_string("C:\\trees\\sys3\\int\\src\\core\\tests\\TestString.cpp"),
+	uri_string("\\\\msdn.microsoft.com\\en-us\\library\\bb982727.aspx"), // this doesn't make sense from an http server best-practices view, but this is what's expected
+	uri_string("\\\\abyss\\trees\\sys3\\int\\src\\core\\all tests\\TestString.cpp"),
 };
 
-typedef std::pair<oStd::uri_string,oStd::uri_string> oStringURIPair;
+typedef std::pair<uri_string,uri_string> oStringURIPair;
 
-static const oStd::uri_string sReferenceResolutionBaseURI = oStd::uri_string("http://a/b/c/d;p?q");
+static const uri_string sReferenceResolutionBaseURI = uri_string("http://a/b/c/d;p?q");
 static const oStringURIPair sReferenceResolutionExamples[] =
 {
 	// http://tools.ietf.org/html/rfc3986#section-5.4.1
-	oStringURIPair(oStd::uri_string("g:h"	   ), oStd::uri_string("g:h")),
-	oStringURIPair(oStd::uri_string("g"      ), oStd::uri_string("http://a/b/c/g")),
-	oStringURIPair(oStd::uri_string("./g"    ), oStd::uri_string("http://a/b/c/g")),
-	oStringURIPair(oStd::uri_string("g/"     ), oStd::uri_string("http://a/b/c/g/")),
-	oStringURIPair(oStd::uri_string("/g"     ), oStd::uri_string("http://a/g")),
-	oStringURIPair(oStd::uri_string("//g"    ), oStd::uri_string("http://g")),
-	oStringURIPair(oStd::uri_string("?y"     ), oStd::uri_string("http://a/b/c/d;p?y")),
-	oStringURIPair(oStd::uri_string("g?y"    ), oStd::uri_string("http://a/b/c/g?y")),
-	oStringURIPair(oStd::uri_string("#s"     ), oStd::uri_string("http://a/b/c/d;p?q#s")),
-	oStringURIPair(oStd::uri_string("g#s"    ), oStd::uri_string("http://a/b/c/g#s")),
-	oStringURIPair(oStd::uri_string("g?y#s"  ), oStd::uri_string("http://a/b/c/g?y#s")),
-	oStringURIPair(oStd::uri_string(";x"     ), oStd::uri_string("http://a/b/c/;x")),
-	oStringURIPair(oStd::uri_string("g;x"    ), oStd::uri_string("http://a/b/c/g;x")),
-	oStringURIPair(oStd::uri_string("g;x?y#s"), oStd::uri_string("http://a/b/c/g;x?y#s")),
-	oStringURIPair(oStd::uri_string(""       ), oStd::uri_string("http://a/b/c/d;p?q")),
-	oStringURIPair(oStd::uri_string("."      ), oStd::uri_string("http://a/b/c/")),
-	oStringURIPair(oStd::uri_string("./"     ), oStd::uri_string("http://a/b/c/")),
-	oStringURIPair(oStd::uri_string(".."     ), oStd::uri_string("http://a/b/")),
-	oStringURIPair(oStd::uri_string("../"    ), oStd::uri_string("http://a/b/")),
-	oStringURIPair(oStd::uri_string("../g"   ), oStd::uri_string("http://a/b/g")),
-	oStringURIPair(oStd::uri_string("../.."  ), oStd::uri_string("http://a/")),
-	oStringURIPair(oStd::uri_string("../../" ), oStd::uri_string("http://a/")),
-	oStringURIPair(oStd::uri_string("../../g"), oStd::uri_string("http://a/g")),
+	oStringURIPair(uri_string("g:h"	   ), uri_string("g:h")),
+	oStringURIPair(uri_string("g"      ), uri_string("http://a/b/c/g")),
+	oStringURIPair(uri_string("./g"    ), uri_string("http://a/b/c/g")),
+	oStringURIPair(uri_string("g/"     ), uri_string("http://a/b/c/g/")),
+	oStringURIPair(uri_string("/g"     ), uri_string("http://a/g")),
+	oStringURIPair(uri_string("//g"    ), uri_string("http://g")),
+	oStringURIPair(uri_string("?y"     ), uri_string("http://a/b/c/d;p?y")),
+	oStringURIPair(uri_string("g?y"    ), uri_string("http://a/b/c/g?y")),
+	oStringURIPair(uri_string("#s"     ), uri_string("http://a/b/c/d;p?q#s")),
+	oStringURIPair(uri_string("g#s"    ), uri_string("http://a/b/c/g#s")),
+	oStringURIPair(uri_string("g?y#s"  ), uri_string("http://a/b/c/g?y#s")),
+	oStringURIPair(uri_string(";x"     ), uri_string("http://a/b/c/;x")),
+	oStringURIPair(uri_string("g;x"    ), uri_string("http://a/b/c/g;x")),
+	oStringURIPair(uri_string("g;x?y#s"), uri_string("http://a/b/c/g;x?y#s")),
+	oStringURIPair(uri_string(""       ), uri_string("http://a/b/c/d;p?q")),
+	oStringURIPair(uri_string("."      ), uri_string("http://a/b/c/")),
+	oStringURIPair(uri_string("./"     ), uri_string("http://a/b/c/")),
+	oStringURIPair(uri_string(".."     ), uri_string("http://a/b/")),
+	oStringURIPair(uri_string("../"    ), uri_string("http://a/b/")),
+	oStringURIPair(uri_string("../g"   ), uri_string("http://a/b/g")),
+	oStringURIPair(uri_string("../.."  ), uri_string("http://a/")),
+	oStringURIPair(uri_string("../../" ), uri_string("http://a/")),
+	oStringURIPair(uri_string("../../g"), uri_string("http://a/g")),
 
 	// http://tools.ietf.org/html/rfc3986#section-5.4.2
-	oStringURIPair(oStd::uri_string("../../../g"   ), oStd::uri_string("http://a/g")),
-	oStringURIPair(oStd::uri_string("../../../../g"), oStd::uri_string("http://a/g")),
-	oStringURIPair(oStd::uri_string("/./g"         ), oStd::uri_string("http://a/g")),
-	oStringURIPair(oStd::uri_string("/../g"        ), oStd::uri_string("http://a/g")),
-//	oStringURIPair(oStd::uri_string("g."           ), oStd::uri_string("http://a/b/c/g.")), // FIXME
-	oStringURIPair(oStd::uri_string(".g"           ), oStd::uri_string("http://a/b/c/.g")),
-//	oStringURIPair(oStd::uri_string("g.."          ), oStd::uri_string("http://a/b/c/g..")), // FIXME
-	oStringURIPair(oStd::uri_string("..g"          ), oStd::uri_string("http://a/b/c/..g")),
-	oStringURIPair(oStd::uri_string("./../g"       ), oStd::uri_string("http://a/b/g")),
-	oStringURIPair(oStd::uri_string("./g/."        ), oStd::uri_string("http://a/b/c/g/")),
-	oStringURIPair(oStd::uri_string("g/./h"        ), oStd::uri_string("http://a/b/c/g/h")),
-	oStringURIPair(oStd::uri_string("g/../h"       ), oStd::uri_string("http://a/b/c/h")),
-	oStringURIPair(oStd::uri_string("g;x=1/./y"    ), oStd::uri_string("http://a/b/c/g;x=1/y")),
-	oStringURIPair(oStd::uri_string("g;x=1/../y"   ), oStd::uri_string("http://a/b/c/y")),
-	oStringURIPair(oStd::uri_string("g?y/./x"      ), oStd::uri_string("http://a/b/c/g?y/./x")),
-	oStringURIPair(oStd::uri_string("g?y/../x"     ), oStd::uri_string("http://a/b/c/g?y/../x")),
-	oStringURIPair(oStd::uri_string("g#s/./x"      ), oStd::uri_string("http://a/b/c/g#s/./x")),
-	oStringURIPair(oStd::uri_string("g#s/../x"     ), oStd::uri_string("http://a/b/c/g#s/../x")),
+	oStringURIPair(uri_string("../../../g"   ), uri_string("http://a/g")),
+	oStringURIPair(uri_string("../../../../g"), uri_string("http://a/g")),
+	oStringURIPair(uri_string("/./g"         ), uri_string("http://a/g")),
+	oStringURIPair(uri_string("/../g"        ), uri_string("http://a/g")),
+//	oStringURIPair(uri_string("g."           ), uri_string("http://a/b/c/g.")), // FIXME
+	oStringURIPair(uri_string(".g"           ), uri_string("http://a/b/c/.g")),
+//	oStringURIPair(uri_string("g.."          ), uri_string("http://a/b/c/g..")), // FIXME
+	oStringURIPair(uri_string("..g"          ), uri_string("http://a/b/c/..g")),
+	oStringURIPair(uri_string("./../g"       ), uri_string("http://a/b/g")),
+	oStringURIPair(uri_string("./g/."        ), uri_string("http://a/b/c/g/")),
+	oStringURIPair(uri_string("g/./h"        ), uri_string("http://a/b/c/g/h")),
+	oStringURIPair(uri_string("g/../h"       ), uri_string("http://a/b/c/h")),
+	oStringURIPair(uri_string("g;x=1/./y"    ), uri_string("http://a/b/c/g;x=1/y")),
+	oStringURIPair(uri_string("g;x=1/../y"   ), uri_string("http://a/b/c/y")),
+	oStringURIPair(uri_string("g?y/./x"      ), uri_string("http://a/b/c/g?y/./x")),
+	oStringURIPair(uri_string("g?y/../x"     ), uri_string("http://a/b/c/g?y/../x")),
+	oStringURIPair(uri_string("g#s/./x"      ), uri_string("http://a/b/c/g#s/./x")),
+	oStringURIPair(uri_string("g#s/../x"     ), uri_string("http://a/b/c/g#s/../x")),
 };
 
-static const oStd::uri_string sReferenceResolutionBaseURI2 = oStd::uri_string("file://DATA/Test/Scenes/TestTextureSet.xml");
+static const uri_string sReferenceResolutionBaseURI2 = uri_string("file://DATA/Test/Scenes/TestTextureSet.xml");
 static const oStringURIPair sReferenceResolutionExamples2[] =
 {
-	oStringURIPair(oStd::uri_string("/test.xml"),					oStd::uri_string("file://DATA/test.xml")),
-	oStringURIPair(oStd::uri_string("#Node"),						oStd::uri_string("file://DATA/Test/Scenes/TestTextureSet.xml#Node")),
-	oStringURIPair(oStd::uri_string("../Textures/Hatch1.png"),	oStd::uri_string("file://DATA/Test/Textures/Hatch1.png")),
-	oStringURIPair(oStd::uri_string("test.xml"),					oStd::uri_string("file://DATA/Test/Scenes/test.xml")),
-	oStringURIPair(oStd::uri_string("file://DATA2/test.xml"),		oStd::uri_string("file://DATA2/test.xml")),
-	oStringURIPair(oStd::uri_string("http://DATA/test.xml"),		oStd::uri_string("http://DATA/test.xml")),
-	oStringURIPair(oStd::uri_string("http://DATA2/test.xml"),		oStd::uri_string("http://DATA2/test.xml")),
+	oStringURIPair(uri_string("/test.xml"),					uri_string("file://DATA/test.xml")),
+	oStringURIPair(uri_string("#Node"),						uri_string("file://DATA/Test/Scenes/TestTextureSet.xml#Node")),
+	oStringURIPair(uri_string("../Textures/Hatch1.png"),	uri_string("file://DATA/Test/Textures/Hatch1.png")),
+	oStringURIPair(uri_string("test.xml"),					uri_string("file://DATA/Test/Scenes/test.xml")),
+	oStringURIPair(uri_string("file://DATA2/test.xml"),		uri_string("file://DATA2/test.xml")),
+	oStringURIPair(uri_string("http://DATA/test.xml"),		uri_string("http://DATA/test.xml")),
+	oStringURIPair(uri_string("http://DATA2/test.xml"),		uri_string("http://DATA2/test.xml")),
 };
 
-static const oStd::uri_string sReferenceMakeRelativeBaseURI = oStd::uri_string("file://DATA/Test/Scenes/TestTextureSet.xml");
+static const uri_string sReferenceMakeRelativeBaseURI = uri_string("file://DATA/Test/Scenes/TestTextureSet.xml");
 static const oStringURIPair sReferenceMakeRelativeExamples[] = 
 {
-	oStringURIPair(oStd::uri_string("file://DATA/Test/Scenes/TestTextureSet.xml"),		oStd::uri_string("TestTextureSet.xml")), // Should be ""
-	oStringURIPair(oStd::uri_string("file://DATA/Test/Scenes/TestTextureSet.xml#item"),	oStd::uri_string("TestTextureSet.xml#item")), // Should be "#item"
-	oStringURIPair(oStd::uri_string("file://DATA/Test/Scenes/TestTextureSet.xml?query"),	oStd::uri_string("TestTextureSet.xml?query")), // Should be "?query"
+	oStringURIPair(uri_string("file://DATA/Test/Scenes/TestTextureSet.xml"),		uri_string("TestTextureSet.xml")), // Should be ""
+	oStringURIPair(uri_string("file://DATA/Test/Scenes/TestTextureSet.xml#item"),	uri_string("TestTextureSet.xml#item")), // Should be "#item"
+	oStringURIPair(uri_string("file://DATA/Test/Scenes/TestTextureSet.xml?query"),	uri_string("TestTextureSet.xml?query")), // Should be "?query"
 
-	oStringURIPair(oStd::uri_string("file://DATA/Test/Scenes/test/test/test.xml"),		oStd::uri_string("test/test/test.xml")),
-	oStringURIPair(oStd::uri_string("file://DATA/Test/Scenes/test/test.xml"),				oStd::uri_string("test/test.xml")),
-	oStringURIPair(oStd::uri_string("file://DATA/Test/Scenes/test.xml"),					oStd::uri_string("test.xml")),
-	oStringURIPair(oStd::uri_string("file://DATA/Test/test.xml"),							oStd::uri_string("../test.xml")),
-	oStringURIPair(oStd::uri_string("file://DATA/test.xml"),								oStd::uri_string("../../test.xml")),
-	oStringURIPair(oStd::uri_string("file://DATA/"),										oStd::uri_string("../../")),
+	oStringURIPair(uri_string("file://DATA/Test/Scenes/test/test/test.xml"),		uri_string("test/test/test.xml")),
+	oStringURIPair(uri_string("file://DATA/Test/Scenes/test/test.xml"),				uri_string("test/test.xml")),
+	oStringURIPair(uri_string("file://DATA/Test/Scenes/test.xml"),					uri_string("test.xml")),
+	oStringURIPair(uri_string("file://DATA/Test/test.xml"),							uri_string("../test.xml")),
+	oStringURIPair(uri_string("file://DATA/test.xml"),								uri_string("../../test.xml")),
+	oStringURIPair(uri_string("file://DATA/"),										uri_string("../../")),
 };
 
 static bool Test_oURIIsURI()
@@ -212,13 +214,13 @@ static bool Test_oURIResolve()
 {
 	oFORI(i, sReferenceResolutionExamples)
 	{
-		oStd::uri_string Result;
+		uri_string Result;
 		oURIResolve(Result, sReferenceResolutionBaseURI, sReferenceResolutionExamples[i].first);
 		oTESTB(_stricmp(Result.c_str(), sReferenceResolutionExamples[i].second.c_str())==0, "Unexpected result oURIResolve returned '%s', expected '%s'", Result.c_str(), sReferenceResolutionExamples[i].second.c_str());
 	}
 	oFORI(i, sReferenceResolutionExamples2)
 	{
-		oStd::uri_string Result;
+		uri_string Result;
 		oURIResolve(Result, sReferenceResolutionBaseURI2, sReferenceResolutionExamples2[i].first);
 		oTESTB(_stricmp(Result.c_str(), sReferenceResolutionExamples2[i].second.c_str())==0, "Unexpected result oURIResolve returned '%s', expected '%s'", Result.c_str(), sReferenceResolutionExamples2[i].second.c_str());
 	}
@@ -230,7 +232,7 @@ static bool Test_oURIRelativize()
 {
 	oFORI(i, sReferenceMakeRelativeExamples)
 	{
-		oStd::uri_string Result;
+		uri_string Result;
 		oURIRelativize(Result, sReferenceMakeRelativeBaseURI, sReferenceMakeRelativeExamples[i].first);
 		oTESTB(_stricmp(Result.c_str(), sReferenceMakeRelativeExamples[i].second.c_str())==0, "Unexpected result oURIRelativize returned '%s', expected '%s'", Result.c_str(), sReferenceMakeRelativeExamples[i].second.c_str());
 	}
@@ -252,21 +254,21 @@ bool oBasisTest_oURI()
 		oURITESTB(Query);
 		oURITESTB(Fragment);
 
-		oStd::uri_string testPath;
-		oStd::uri_string expectedCleaned;
+		uri_string testPath;
+		uri_string expectedCleaned;
 		oURIToPath(testPath, sTestUris[i]);
 
 		if (oIsUNCPath(sExpectedPaths[i]))
 			strlcpy(expectedCleaned, sExpectedPaths[i].c_str());
 		else
-			oStd::clean_path(expectedCleaned, sExpectedPaths[i]);
+			clean_path(expectedCleaned, sExpectedPaths[i]);
 
 		oTESTB(strncmp(testPath, expectedCleaned, testPath.capacity()) == 0, "URI %d did not convert back to a path properly. got %s expected %s", i, testPath.c_str(), sExpectedPaths[i]);
 
 		oURIPartsToPath(testPath, parts);
 		oTESTB(strncmp(testPath, expectedCleaned, testPath.capacity()) == 0, "URIParts %d did not convert back to a path properly. got %s expected %s", i, testPath.c_str(), sExpectedPaths[i]);
 
-		oStd::uri_string reconstructedURI;
+		uri_string reconstructedURI;
 		oURIRecompose(reconstructedURI, sExpectedParts[i]);
 		oTESTB(strncmp(reconstructedURI, sTestUris[i], reconstructedURI.capacity()) == 0, "URI parts %d did not convert back to proper uri. got %s expected %s", i, reconstructedURI, sTestUris[i]);
 	}

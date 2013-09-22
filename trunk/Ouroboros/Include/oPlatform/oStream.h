@@ -28,8 +28,8 @@
 #ifndef oStream_h
 #define oStream_h
 
-#include <oStd/function.h>
-#include <oStd/memory.h>
+#include <oBase/function.h>
+#include <oBase/memory.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oURI.h>
 #include <oBasis/oRTTI.h>
@@ -43,7 +43,7 @@ enum oSTREAM_EVENT
 	oSTREAM_ACCESSIBLE, // after an add the stream is polled until it can be accessed for reading. Once it can, this event occurs.
 };
 oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oSTREAM_EVENT)
-typedef oFUNCTION<void (oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI)> oSTREAM_ON_EVENT;
+typedef oFUNCTION<void (oSTREAM_EVENT _Event, const ouro::uri_string& _ChangedURI)> oSTREAM_ON_EVENT;
 
 struct oSTREAM_DESC
 {
@@ -65,7 +65,7 @@ struct oSTREAM_MONITOR_DESC
 		, WatchSubtree(true)
 	{}
 
-	oStd::uri_string Monitor;
+	ouro::uri_string Monitor;
 	unsigned int AccessibilityCheckMS;
 	unsigned int EventTimeoutMS;
 	bool TraceEvents;
@@ -297,7 +297,7 @@ oAPI bool oStreamSetURIBaseSearchPath(const char* _URIBaseSearchPath);
 // currently set in this object. If none are set, the empty string is copied.
 oAPI char* oStreamGetURIBaseSearchPath(char* _StrDestination, size_t _SizeofStrDestination);
 template<size_t size> inline char* oStreamGetURIBaseSearchPath(char (&_StrDestination)[size]) { return oStreamGetURIBaseSearchPath(_StrDestination, size); }
-template<size_t capacity> inline char* oStreamGetURIBaseSearchPath(oStd::fixed_string<char, capacity>& _StrDestination) { return oStreamGetURIBaseSearchPath(_StrDestination, _StrDestination.capacity()); }
+template<size_t capacity> inline char* oStreamGetURIBaseSearchPath(ouro::fixed_string<char, capacity>& _StrDestination) { return oStreamGetURIBaseSearchPath(_StrDestination, _StrDestination.capacity()); }
 
 // Creates a new oStreamReader interface for a subset of the specified 
 // oStreamReader.
@@ -308,6 +308,6 @@ oAPI bool oStreamReaderCreateWindowed(threadsafe oStreamReader* _pReader, const 
 // to make its determination. The rules for determining if the stream is an 
 // ascii stream are the same as Perl -T.
 // http://code.activestate.com/recipes/173220-test-if-a-file-or-string-is-text-or-binary/
-oAPI oStd::utf_type::value oStreamGetUTFType(const char* _URIReference);
+oAPI ouro::utf_type::value oStreamGetUTFType(const char* _URIReference);
 
 #endif

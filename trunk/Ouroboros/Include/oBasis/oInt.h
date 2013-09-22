@@ -31,7 +31,7 @@
 #define oInt_h
 
 #include "SafeInt3.h"
-#include <oStd/byte.h>
+#include <oBase/byte.h>
 #include <type_traits>
 
 typedef SafeInt<char> oChar;
@@ -80,12 +80,12 @@ struct common_type<SafeInt<_Ty0>, SafeInt<_Ty1>>
 
 } // namespace std
 
-namespace oStd {
+namespace ouro {
 	template<typename T> SafeInt<T> endian_swap(SafeInt<T> x) { return endian_swap((T)x); }
 	template<typename T> SafeInt<T> to_big_endian(SafeInt<T> x) { return to_big_endian((T)x); }
 	template<typename T> SafeInt<T> from_big_endian(SafeInt<T> x) { return from_big_endian((T)x); }
 	template<typename T> SafeInt<T> to_little_endian(SafeInt<T> x) { return to_little_endian((T)x); }
 	template<typename T> SafeInt<T> from_little_endian(SafeInt<T> x) { return from_little_endian((T)x); }
-} // namespace oStd
+} // namespace ouro
 
 #endif

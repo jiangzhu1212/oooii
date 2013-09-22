@@ -26,7 +26,7 @@
 #include "oTestIntegration.h"
 #include <cstdlib>
 
-namespace oCore {
+namespace ouro {
 	namespace tests {
 
 struct requirements_implementation : requirements
@@ -39,9 +39,9 @@ struct requirements_implementation : requirements
 };
 
 	} //namespace tests
-} // namespace oCore
+} // namespace ouro
 
-using namespace oCore::tests;
+using namespace ouro::tests;
 
 #define oTEST_REGISTER_CORE_TEST0(_Name) oTEST_THROWS_REGISTER0(oCONCAT(oCore_, _Name), oCONCAT(TEST, _Name))
 #define oTEST_REGISTER_CORE_TEST(_Name) oTEST_THROWS_REGISTER(oCONCAT(oCore_, _Name), oCONCAT(TEST, _Name))

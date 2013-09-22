@@ -45,7 +45,7 @@
 			if (se && se->code().value() == std::errc::permission_denied) \
 				r = oTest::SKIPPED; \
 			snprintf(_StrStatus, _SizeofStrStatus, "%s", e.what()); \
-			oTRACE("%s: %s", oStd::as_string(r), _StrStatus); \
+			oTRACE("%s: %s", ouro::as_string(r), _StrStatus); \
 		} \
 		if (r == oTest::SUCCESS && oErrorGetLast() == 0) \
 			snprintf(_StrStatus, _SizeofStrStatus, oErrorGetLastString()); \

@@ -23,12 +23,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 // This cpp contains implemenations of to_string and from_string for intrinsic
-// types as well as oStd types.
+// types as well as ouro types.
 
 #include <oHLSL/oHLSLMath.h>
-#include <oStd/stringize.h>
+#include <oBase/stringize.h>
 
-namespace oStd {
+namespace ouro {
 
 bool from_string(float2* _pValue, const char* _StrSource)
 {
@@ -107,4 +107,4 @@ template<typename T> char* to_stringT(char* _StrDestination, size_t _SizeofStrDe
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const float4x4& _Value) { return to_stringT(_StrDestination, _SizeofStrDestination, _Value); }
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const double4x4& _Value) { return to_stringT(_StrDestination, _SizeofStrDestination, _Value); }
 
-} // namespace oStd
+} // namespace ouro

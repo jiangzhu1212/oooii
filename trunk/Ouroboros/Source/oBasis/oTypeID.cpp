@@ -23,8 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oTypeID.h>
+#include <oBase/string.h>
 
-namespace oStd {
+namespace ouro {
 
 const char* as_string(const oTYPE_ID& _TypeID)
 {
@@ -80,4 +81,4 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oTYPE
 	return strlcpy(_StrDestination, as_string(_Value), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
 }
 
-} // namespace oStd
+} // namespace ouro

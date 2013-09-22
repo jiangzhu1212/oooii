@@ -28,6 +28,8 @@
 #include "oD3D11Texture.h"
 #include "oD3D11Device.h"
 
+using namespace ouro;
+
 // @oooii-tony: Here's a flavor that works on a pre-loaded source since we want 
 // to support more than one shader entry. Right now to keep it simple, the 
 // include system still hits the file system for each header. How can we get 
@@ -37,7 +39,7 @@ bool oGPUCompileShader(
 	const char* _IncludePaths
 	, const char* _CommonDefines
 	, const char* _SpecificDefines
-	, const oStd::version& _TargetShaderModel
+	, const version& _TargetShaderModel
 	, oGPU_PIPELINE_STAGE _Stage
 	, const char* _ShaderPath
 	, const char* _EntryPoint
@@ -45,7 +47,7 @@ bool oGPUCompileShader(
 	, oBuffer** _ppByteCode
 	, oBuffer** _ppErrors)
 {
-	oStd::xxlstring IncludeSwitches, DefineSwitches;
+	xxlstring IncludeSwitches, DefineSwitches;
 
 	if (_IncludePaths && !oStrTokToSwitches(IncludeSwitches, " /I", _IncludePaths, ";"))
 		return false; // pass through error
@@ -63,8 +65,8 @@ bool oGPUCompileShader(
 	const char* Profile = oD3D11GetShaderProfile(TargetFeatureLevel, _Stage);
 	if (!Profile)
 	{
-		oStd::sstring StrVer;
-		return oErrorSetLast(std::errc::not_supported, "%s not supported by shader model %s", oStd::as_string(_Stage), oStd::to_string2(StrVer, _TargetShaderModel));
+		sstring StrVer;
+		return oErrorSetLast(std::errc::not_supported, "%s not supported by shader model %s", ouro::as_string(_Stage), to_string2(StrVer, _TargetShaderModel));
 	}
 
 	if (!_EntryPoint)
@@ -104,7 +106,7 @@ bool oGPUSurfaceConvert(
 	, const int2& _MipDimensions)
 {
 	oGPU_DEVICE_INIT DeviceInit("oGPUSurfaceConvert Temp Device");
-	oStd::intrusive_ptr<ID3D11Device> D3DDevice;
+	intrusive_ptr<ID3D11Device> D3DDevice;
 	if (!oD3D11CreateDevice(DeviceInit, true, &D3DDevice))
 	{
 		DeviceInit.UseSoftwareEmulation = true;
@@ -126,11 +128,11 @@ bool oGPUSurfaceConvert(
 
 bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, oSURFACE_FORMAT _NewFormat, oGPUTexture** _ppDestinationTexture)
 {
-	oStd::intrusive_ptr<ID3D11Texture2D> D3DDestinationTexture;
+	intrusive_ptr<ID3D11Texture2D> D3DDestinationTexture;
 	if (!oD3D11Convert(static_cast<oD3D11Texture*>(_pSourceTexture)->Texture, _NewFormat, &D3DDestinationTexture))
 		return false; // pass through error
 
-	oStd::intrusive_ptr<oGPUDevice> Device;
+	intrusive_ptr<oGPUDevice> Device;
 	_pSourceTexture->GetDevice(&Device);
 
 	oGPUTexture::DESC d;
@@ -143,19 +145,19 @@ bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, oSURFACE_FORMAT _NewFormat
 
 bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const char* _URIReference, const char* _DebugName, oGPUTexture** _ppTexture)
 {
-	oStd::uri u(_URIReference);
+	uri u(_URIReference);
 	if (_stricmp(u.scheme(), "file"))
 		return oErrorSetLast(std::errc::not_supported, "Currently only file schemed URIs are supported.");
 
-	oStd::path p(u.path());
+	path p(u.path());
 
-	if (!oCore::filesystem::exists(p))
+	if (!ouro::filesystem::exists(p))
 		return oErrorSetLast(std::errc::no_such_file_or_directory, "%s not found", oSAFESTRN(_URIReference));
 
-	oStd::intrusive_ptr<ID3D11Device> D3DDevice;
+	intrusive_ptr<ID3D11Device> D3DDevice;
 	oVERIFY(_pDevice->QueryInterface(&D3DDevice));
 
-	oStd::intrusive_ptr<ID3D11Texture2D> D3DTexture;
+	intrusive_ptr<ID3D11Texture2D> D3DTexture;
 	if (!oD3D11Load(D3DDevice, _Desc, p, _DebugName, (ID3D11Resource**)&D3DTexture))
 		return false;
 
@@ -166,10 +168,10 @@ bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const
 
 bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, oGPUTexture** _ppTexture)
 {
-	oStd::intrusive_ptr<ID3D11Device> D3DDevice;
+	intrusive_ptr<ID3D11Device> D3DDevice;
 	oVERIFY(_pDevice->QueryInterface(&D3DDevice));
 
-	oStd::intrusive_ptr<ID3D11Texture2D> D3DTexture;
+	intrusive_ptr<ID3D11Texture2D> D3DTexture;
 	if (!oD3D11Load(D3DDevice, _Desc, _DebugName, _pBuffer, _SizeofBuffer, (ID3D11Resource**)&D3DTexture))
 		return false;
 

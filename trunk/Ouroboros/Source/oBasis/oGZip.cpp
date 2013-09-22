@@ -27,7 +27,7 @@
 #include <oBasis/oInt.h>
 #include <zlib/zlib.h>
 
-//#include <oStaging/oByteStreamHelpers.h>
+using namespace ouro;
 
 // GZip format
 // 1 byte ID1 - 0x1f
@@ -86,7 +86,7 @@ size_t oGZipCompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, c
 
 		memcpy(_pDestination, &h, sizeof(h));
 		_SizeofDestination -= sizeof(h);
-		_pDestination = oStd::byte_add(_pDestination, sizeof(h));
+		_pDestination = byte_add(_pDestination, sizeof(h));
 	
 		uLongf bytesWritten = oUInt(_SizeofDestination);
 		int result = compress2(static_cast<Bytef*>(_pDestination), &bytesWritten, static_cast<const Bytef*>(_pSource), oUInt(_SizeofSource), 9);
@@ -97,7 +97,7 @@ size_t oGZipCompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, c
 		}
 
 		_SizeofDestination -= bytesWritten;
-		_pDestination = oStd::byte_add(_pDestination, bytesWritten);
+		_pDestination = byte_add(_pDestination, bytesWritten);
 
 		if (_SizeofDestination < GZipFooterSize)
 		{
@@ -110,7 +110,7 @@ size_t oGZipCompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, c
 		CRC32 = crc32(CRC32, static_cast<const Bytef*>(_pSource), oUInt(_SizeofSource));
 
 		_SizeofDestination -= sizeof(CRC32);
-		_pDestination = oStd::byte_add(_pDestination, sizeof(CRC32));
+		_pDestination = byte_add(_pDestination, sizeof(CRC32));
 		*(unsigned int*)_pDestination = oUInt(_SizeofSource);
 
 		CompressedSize = sizeof(h) + bytesWritten + GZipFooterSize;
@@ -133,33 +133,33 @@ size_t oGZipDecompress(void* oRESTRICT _pDestination, size_t _SizeofDestination,
 		return 0;
 	}
 
-	src = oStd::byte_add(src, sizeof(GZIP_HDR));
+	src = byte_add(src, sizeof(GZIP_HDR));
 
 	// we don't generate optional fields but we need to skip over them if someone 
 	// else did
 	if (h.FLG && GZipFlgFExtra)
 	{
 		unsigned short extraSize = *(unsigned short*)src;
-		src = oStd::byte_add(src, sizeof(unsigned short) + extraSize);
+		src = byte_add(src, sizeof(unsigned short) + extraSize);
 	}
 
 	if (h.FLG && GZipFlgFName)
 	{
 		while (*static_cast<const char*>(src))
-			src = oStd::byte_add(src, 1);
+			src = byte_add(src, 1);
 	}
 
 	if (h.FLG && GZipFlgFComment)
 	{
 		while (*static_cast<const char*>(src))
-			src = oStd::byte_add(src, 1);
+			src = byte_add(src, 1);
 	}
 
 	if (h.FLG && GZipFlgFHCrc)
-		src = oStd::byte_add(src, 2);
+		src = byte_add(src, 2);
 
-	unsigned int compressedSize = oUInt(_SizeofSource - oStd::byte_diff(src, _pSource) - GZipFooterSize);
-	unsigned int UncompressedSize = *(unsigned int*)oStd::byte_add(_pSource, sizeof(h) + compressedSize + sizeof(unsigned int));
+	unsigned int compressedSize = oUInt(_SizeofSource - byte_diff(src, _pSource) - GZipFooterSize);
+	unsigned int UncompressedSize = *(unsigned int*)byte_add(_pSource, sizeof(h) + compressedSize + sizeof(unsigned int));
 
 	if (_pDestination)
 	{
@@ -175,7 +175,7 @@ size_t oGZipDecompress(void* oRESTRICT _pDestination, size_t _SizeofDestination,
 		unsigned int expectedCRC32 = crc32(0, Z_NULL, 0);
 		expectedCRC32 = crc32(expectedCRC32, static_cast<const Bytef*>(_pDestination), UncompressedSize);
 
-		unsigned int CRC32 = *(unsigned int*)oStd::byte_add(_pSource, sizeof(h) + compressedSize);
+		unsigned int CRC32 = *(unsigned int*)byte_add(_pSource, sizeof(h) + compressedSize);
 		if (expectedCRC32 != CRC32)
 		{
 			oErrorSetLast(std::errc::protocol_error, "CRC mismatch in GZip stream");

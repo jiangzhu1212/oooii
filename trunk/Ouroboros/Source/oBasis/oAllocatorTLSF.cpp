@@ -23,8 +23,10 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oAllocatorTLSF.h"
-#include <oStd/byte.h>
+#include <oBase/byte.h>
 #include "tlsf.h"
+
+using namespace ouro;
 
 oAllocatorTLSF::oAllocatorTLSF(const char* _DebugName, const DESC& _Desc, bool* _pSuccess)
 	: Desc(_Desc)
@@ -44,8 +46,8 @@ void TraceAllocated(void* ptr, size_t size, int used, void* user)
 {
 	if (used)
 	{
-		oStd::sstring mem;
-		oStd::format_bytes(mem, size, 2);
+		sstring mem;
+		format_bytes(mem, size, 2);
 		oTRACE("TLSF LEAK %s: 0x%p %s", (const char*)user, ptr, mem.c_str());
 	}
 }
@@ -143,7 +145,7 @@ size_t oAllocatorTLSF::GetBlockSize(void* _Pointer)
 void oAllocatorTLSF::Reset()
 {
 	memset(&Stats, 0, sizeof(Stats));
-	void* pRealArenaStart = oStd::byte_align(oStd::byte_add(Desc.pArena, sizeof(*this)), oDEFAULT_MEMORY_ALIGNMENT);
+	void* pRealArenaStart = byte_align(byte_add(Desc.pArena, sizeof(*this)), oDEFAULT_MEMORY_ALIGNMENT);
 	size_t realArenaSize = Desc.ArenaSize - std::distance((char*)Desc.pArena, (char*)pRealArenaStart);
 	hPool = tlsf_create(pRealArenaStart, realArenaSize);
 	Stats.NumAllocations = 0;

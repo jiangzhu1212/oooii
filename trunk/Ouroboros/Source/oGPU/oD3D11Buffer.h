@@ -35,10 +35,10 @@ oDECLARE_GPURESOURCE_IMPLEMENTATION(oD3D11, Buffer, oGPU_BUFFER, 0x6cb53116, 0x9
 {
 	oDEFINE_GPURESOURCE_INTERFACE();
 	oDECLARE_GPURESOURCE_CTOR(oD3D11, Buffer);
-	oStd::intrusive_ptr<ID3D11Buffer> Buffer;
-	oStd::intrusive_ptr<ID3D11UnorderedAccessView> UAV;
-	oStd::intrusive_ptr<ID3D11UnorderedAccessView> UAVAppend;
-	oStd::intrusive_ptr<ID3D11ShaderResourceView> SRV;
+	ouro::intrusive_ptr<ID3D11Buffer> Buffer;
+	ouro::intrusive_ptr<ID3D11UnorderedAccessView> UAV;
+	ouro::intrusive_ptr<ID3D11UnorderedAccessView> UAVAppend;
+	ouro::intrusive_ptr<ID3D11ShaderResourceView> SRV;
 };
 
 #endif

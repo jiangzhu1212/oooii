@@ -23,13 +23,16 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oOSC.h>
-#include <oStd/assert.h>
-#include <oStd/byte.h>
+#include <oBase/assert.h>
+#include <oBase/byte.h>
+#include <oBase/string.h>
 #include <oBasis/oError.h>
+
+using namespace ouro;
 
 #define oUNKNOWN_SIZE SIZE_MAX
 
-#define oASSERT_ALIGNED(_pDestination) oASSERT(oStd::byte_aligned(_pDestination, 4), "The destination pointer must be 4-byte aligned");
+#define oASSERT_ALIGNED(_pDestination) oASSERT(byte_aligned(_pDestination, 4), "The destination pointer must be 4-byte aligned");
 
 // If a nullptr is serialized as a string, we still need to identify that the
 // occurance happened, so write a special character.
@@ -38,7 +41,7 @@ static const char NULL_STRING = -1;
 template<typename T> static T oOSCPlatformEndianSwap(const T& _X)
 {
 	#ifdef oLITTLEENDIAN
-		return oStd::endian_swap(_X);
+		return endian_swap(_X);
 	#else
 		return _X;
 	#endif
@@ -49,8 +52,8 @@ template<typename T> static T oOSCPlatformEndianSwap(const T& _X)
 // long longs on 32-bit builds.
 void* MoveToNextField(const void* _pStructBase, const void* _pUnalignedEndOfLastField, size_t _AlignmentOfNextField)
 {
-	ptrdiff_t offset = oStd::byte_diff(_pUnalignedEndOfLastField, _pStructBase);
-	return oStd::byte_add((void*)_pStructBase, oStd::byte_align(offset, _AlignmentOfNextField));
+	ptrdiff_t offset = byte_diff(_pUnalignedEndOfLastField, _pStructBase);
+	return byte_add((void*)_pStructBase, byte_align(offset, _AlignmentOfNextField));
 }
 
 size_t SizeofFixedString(int _Type)
@@ -74,14 +77,14 @@ static ptr_t VisitNextIntrinsic(int _Type, ptr_t _pStructBase, ptr_t _pField, si
 {
 	void* p = MoveToNextField(_pStructBase, _pField, _SizeofField);
 	_Visitor(_Type, p, _SizeofField);
-	return oStd::byte_add(p, _SizeofField);
+	return byte_add(p, _SizeofField);
 }
 
 template<typename ptr_t>
 static ptr_t VisitNextChar(ptr_t _pStructBase, ptr_t _pField, const typename Visitor<ptr_t>::Fn& _Visitor)
 {
 	_Visitor('c', _pField, sizeof(char));
-	return oStd::byte_add(_pField, sizeof(char));
+	return byte_add(_pField, sizeof(char));
 }
 
 template<typename ptr_t>
@@ -90,7 +93,7 @@ static ptr_t VisitNextString(ptr_t _pStructBase, ptr_t _pField, const typename V
 	void* p = MoveToNextField(_pStructBase, _pField, sizeof(const char*));
 	const char* s = *(const char**)p;
 	_Visitor('s', p, s ? (strlen(s)+1) : sizeof(NULL_STRING));
-	return oStd::byte_add(p, sizeof(ptr_t));
+	return byte_add(p, sizeof(ptr_t));
 }
 
 template<typename ptr_t>
@@ -98,7 +101,7 @@ static ptr_t VisitNextFixedString(int _Type, ptr_t _pStructBase, ptr_t _pField, 
 {
 	void* p = MoveToNextField(_pStructBase, _pField, sizeof(char));
 	_Visitor(_Type, p, strlen((const char*)p)+1);
-	return oStd::byte_add(p, SizeofFixedString(_Type));
+	return byte_add(p, SizeofFixedString(_Type));
 }
 
 template<typename ptr_t>
@@ -106,9 +109,9 @@ static ptr_t VisitNextBlob(ptr_t _pStructBase, ptr_t _pField, const typename Vis
 {
 	void* p = MoveToNextField(_pStructBase, _pField, sizeof(int));
 	int size = *(int*)p;
-	p = MoveToNextField(_pStructBase, oStd::byte_add(p, sizeof(int)), sizeof(ptr_t));
+	p = MoveToNextField(_pStructBase, byte_add(p, sizeof(int)), sizeof(ptr_t));
 	_Visitor('b', *(void**)p, size);
-	return oStd::byte_add(p, sizeof(ptr_t));
+	return byte_add(p, sizeof(ptr_t));
 }
 
 } // namespace STRUCT
@@ -125,7 +128,7 @@ bool oOSCVisitStructFieldsInternal(const typename Visitor<ptr_t>::Fn& _Visitor, 
 	auto tag = _TypeTags;
 	auto patchTag = _pOptionalPatchTags;
 	ptr_t p = _pStruct;
-	auto end = oStd::byte_add(p, _SizeofStruct);
+	auto end = byte_add(p, _SizeofStruct);
 
 	while (*(++tag))
 	{
@@ -166,10 +169,10 @@ bool oOSCVisitStructFieldsInternal(const typename Visitor<ptr_t>::Fn& _Visitor, 
 					++bits;
 					++tag;
 					++pBTag;
-					p = oStd::byte_add( p, 1);
+					p = byte_add( p, 1);
 				}
 				// Offset number of bytes plus padding
-				//p = oStd::byte_add( p, ( bits / 8 ) + 1);
+				//p = byte_add( p, ( bits / 8 ) + 1);
 
 				// Back the tags up so we increment correctly in the next pass
 				--tag; 
@@ -201,7 +204,7 @@ static ptr_t VisitNextIntrinsic(int _Type, ptr_t _pArgument, const fn_t& _Visito
 {
 	T swapped = oOSCPlatformEndianSwap(*(const T*)_pArgument);
 	_Visitor(_Type, &swapped, sizeof(T));
-	return oStd::byte_add(_pArgument, sizeof(T));
+	return byte_add(_pArgument, sizeof(T));
 }
 
 template<typename ptr_t, typename fn_t>
@@ -210,7 +213,7 @@ static ptr_t VisitNextChar( ptr_t _pArgument, const fn_t& _Visitor)
 	int cAsInt = oOSCPlatformEndianSwap(*(const int*)_pArgument);
 	char c = (char)cAsInt;
 	_Visitor('c', &c, sizeof(char)); // be honest about data and describe as a char
-	return oStd::byte_add(_pArgument, sizeof(int)); // move past the original int in the buffer
+	return byte_add(_pArgument, sizeof(int)); // move past the original int in the buffer
 }
 
 template<typename ptr_t, typename fn_t>
@@ -218,16 +221,16 @@ static ptr_t VisitNextString(int _Type, ptr_t _pArgument, const fn_t& _Visitor)
 {
 	size_t size = strlen((const char*)_pArgument) + 1;
 	_Visitor(_Type, _pArgument, size);
-	return oStd::byte_add(_pArgument, oStd::byte_align(size, 4));
+	return byte_add(_pArgument, byte_align(size, 4));
 }
 
 template<typename ptr_t, typename fn_t>
 static ptr_t VisitNextBlob( ptr_t _pArgument, const fn_t& _Visitor)
 {
 	int size = oOSCPlatformEndianSwap(*(const int*)_pArgument);
-	ptr_t p = oStd::byte_add(_pArgument, sizeof(int));
+	ptr_t p = byte_add(_pArgument, sizeof(int));
 	_Visitor('b', p, size);
-	return oStd::byte_add(p, oStd::byte_align(size, 4));
+	return byte_add(p, byte_align(size, 4));
 }
 
 } // namespace TAG
@@ -268,7 +271,7 @@ bool oOSCVisitMessageTypeTags(const char* _TypeTags, void* _pMessageArguments, o
 
 static void oOSCSumFieldSizes(int _Type, const void* _pField, size_t _SizeofField, size_t* _pOutSizeSum)
 {
-	*_pOutSizeSum += oStd::byte_align(_SizeofField, 4);
+	*_pOutSizeSum += byte_align(_SizeofField, 4);
 	if (_Type == 'b') *_pOutSizeSum += 4; // for the size item
 }
 
@@ -307,9 +310,9 @@ size_t oOSCCalculateArgumentsDataSize(const char* _TypeTags, const void* _pStruc
 
 size_t oOSCCalculateMessageSize(const char* _Address, const char* _TypeTags, size_t _ArgumentsDataSize)
 {
-	size_t size = oStd::byte_align(strlen(_Address) + 1, 4);
+	size_t size = byte_align(strlen(_Address) + 1, 4);
 	if (_TypeTags)
-		size += oStd::byte_align(strlen(_TypeTags) + 1, 4);
+		size += byte_align(strlen(_TypeTags) + 1, 4);
 	return size + _ArgumentsDataSize;
 }
 
@@ -321,7 +324,7 @@ size_t oOSCCalculateBundleSize(size_t _NumSubbundles, size_t _SumOfAllSubbundleS
 template<typename T>
 void AlignedIncrement(size_t* pSize)
 {
-	*pSize = oStd::byte_align(*pSize, sizeof(T)) + sizeof(T);
+	*pSize = byte_align(*pSize, sizeof(T)) + sizeof(T);
 }
 
 size_t oOSCCalculateDeserializedStructSize(const char* _TypeTags)
@@ -357,7 +360,7 @@ size_t oOSCCalculateDeserializedStructSize(const char* _TypeTags)
 		}
 	}
 
-	return oStd::byte_align(size, sizeof(int));
+	return byte_align(size, sizeof(int));
 }
 const char* oOSCGetMessageAddress(const void* _pMessage)
 {
@@ -369,7 +372,7 @@ const char* oOSCGetMessageTypeTags(const void* _pMessage)
 	const char* Address = oOSCGetMessageAddress(_pMessage);
 	if (Address)
 	{
-		const char* TypeTags = oStd::byte_add(Address, oStd::byte_align(strlen(Address)+1, 4));
+		const char* TypeTags = byte_add(Address, byte_align(strlen(Address)+1, 4));
 		return *TypeTags == ',' ? TypeTags : nullptr;
 	}
 	
@@ -383,7 +386,7 @@ template<typename T> static void* NextIntrinsic(const void* _pStructBase, void* 
 	oASSERT_ALIGNED(_pDestination);
 	const void* s = MoveToNextField(_pStructBase, _pUnalignedEndOfLastField, std::alignment_of<T>::value);
 	*(T*)_pDestination = oOSCPlatformEndianSwap(*(const T*)s);
-	return oStd::byte_add(_pDestination, sizeof(T));
+	return byte_add(_pDestination, sizeof(T));
 }
 
 static void* NextChar(void* _pDestination, const void* _pSource)
@@ -391,18 +394,18 @@ static void* NextChar(void* _pDestination, const void* _pSource)
 	oASSERT_ALIGNED(_pDestination);
 	int cAsInt = *(const char*)_pSource;
 	*(int*)_pDestination = oOSCPlatformEndianSwap(cAsInt);
-	return oStd::byte_add(_pDestination, sizeof(int));
+	return byte_add(_pDestination, sizeof(int));
 }
 
 static void* CopyNextBuffer(void* _pDestination, size_t _SizeofDestination, const void* _pBuffer, size_t _SizeofBuffer)
 {
 	oASSERT_ALIGNED(_pDestination);
-	oASSERT(_SizeofDestination >= oStd::byte_align(_SizeofBuffer, 4), "");
+	oASSERT(_SizeofDestination >= byte_align(_SizeofBuffer, 4), "");
 	oASSERT(_pBuffer, "A valid buffer must be specified");
 	memcpy(_pDestination, _pBuffer, _SizeofBuffer);
 	// pad with zeros out to 4-byte alignment
-	char* p = (char*)oStd::byte_add(_pDestination, _SizeofBuffer);
-	char* pend = oStd::byte_align(p, 4);
+	char* p = (char*)byte_add(_pDestination, _SizeofBuffer);
+	char* pend = byte_align(p, 4);
 	while (p < pend)
 		*p++ = 0;
 	return p;
@@ -420,7 +423,7 @@ static void* NextBlob(void* _pDestination, size_t _SizeofDestination, const void
 {
 	oASSERT_ALIGNED(_pDestination);
 	*(int*)_pDestination = oOSCPlatformEndianSwap((int)_SizeofBuffer);
-	return CopyNextBuffer(oStd::byte_add(_pDestination, sizeof(int)), oUNKNOWN_SIZE, _pBuffer, _SizeofBuffer);
+	return CopyNextBuffer(byte_add(_pDestination, sizeof(int)), oUNKNOWN_SIZE, _pBuffer, _SizeofBuffer);
 }
 
 } // namespace SERIALIZE
@@ -446,7 +449,7 @@ template<typename T> static void* NextIntrinsic(void* _pStructBase, void* _pDest
 {
 	void* p = MoveToNextField(_pStructBase, _pDestination, std::alignment_of<T>::value);
 	*(T*)p = *(const T*)_pSource;
-	return oStd::byte_add(p, sizeof(T));
+	return byte_add(p, sizeof(T));
 }
 
 static void* NextString(void* _pStructBase, void* _pDestination, const char* _String)
@@ -454,7 +457,7 @@ static void* NextString(void* _pStructBase, void* _pDestination, const char* _St
 	// assign pointer into message buffer
 	const char** s = (const char**)MoveToNextField(_pStructBase, _pDestination, std::alignment_of<const char**>::value);
 	*s = *(const char*)_String == NULL_STRING ? nullptr : (const char*)_String;
-	return oStd::byte_add(s, sizeof(const char*));
+	return byte_add(s, sizeof(const char*));
 }
 
 static void* NextFixedString(void* _pStructBase, void* _pDestination, const char* _String, size_t _NumChars)
@@ -462,16 +465,16 @@ static void* NextFixedString(void* _pStructBase, void* _pDestination, const char
 	// assign pointer into message buffer
 	char* s = (char*)MoveToNextField(_pStructBase, _pDestination, std::alignment_of<char>::value);
 	strlcpy(s, _String, _NumChars);
-	return oStd::byte_add(s, _NumChars * sizeof(char));
+	return byte_add(s, _NumChars * sizeof(char));
 }
 
 static void* NextBlob(void* _pStructBase, void* _pDestination, const void* _pSource, size_t _SizeofSource)
 {
 	int* p = (int*)MoveToNextField(_pStructBase, _pDestination, std::alignment_of<int>::value);
 	*p = (int)_SizeofSource;
-	p = (int*)MoveToNextField(_pStructBase, oStd::byte_add(p, sizeof(int)), std::alignment_of<void*>::value);
+	p = (int*)MoveToNextField(_pStructBase, byte_add(p, sizeof(int)), std::alignment_of<void*>::value);
 	*(const void**)p = _pSource;
-	return oStd::byte_add(p, sizeof(const void*));
+	return byte_add(p, sizeof(const void*));
 }
 
 } // namespace DESERIALIZE
@@ -480,7 +483,7 @@ static void oOSCDeserializer(int _Type, const void* _pField, size_t _SizeofField
 {
 	oASSERT(*_ppDestination < _pDestinationEnd || _Type == '[' || _Type == ']', "Writing past end of buffer");
 	if('T' != _Type && 'F' != _Type)
-		*_ppDestination = oStd::byte_align(*_ppDestination, sizeof(char));
+		*_ppDestination = byte_align(*_ppDestination, sizeof(char));
 
 	switch (_Type)
 	{
@@ -502,14 +505,14 @@ size_t oOSCSerializeStructToMessage(const char* _Address, const char* _TypeTags,
 		return (size_t)oErrorSetLast(std::errc::invalid_argument);
 
 	void* p = _pMessage;
-	void* pend = oStd::byte_add(p, _SizeofMessage);
+	void* pend = byte_add(p, _SizeofMessage);
 
 	p = SERIALIZE::NextString(p, _SizeofMessage, _Address);
 	char* pPatchTag = (char*)p;
-	p = SERIALIZE::NextString(p, oStd::byte_diff(pend, p), _TypeTags);
+	p = SERIALIZE::NextString(p, byte_diff(pend, p), _TypeTags);
 
 	size_t szSerializedMessage = 0;
-	oASSERT((size_t)oStd::byte_diff(pend, p) >= oOSCCalculateArgumentsDataSize(_TypeTags, _pStruct, _SizeofStruct), "");
+	oASSERT((size_t)byte_diff(pend, p) >= oOSCCalculateArgumentsDataSize(_TypeTags, _pStruct, _SizeofStruct), "");
 	if( !oOSCVisitStructFieldsInternal(oBIND(oOSCSerializer, oBIND1, oBIND2, oBIND3, _pStruct, &p, pend), _TypeTags, _pStruct, _SizeofStruct, pPatchTag) )
 		return 0;
 
@@ -519,16 +522,16 @@ size_t oOSCSerializeStructToMessage(const char* _Address, const char* _TypeTags,
 bool oOSCDeserializeMessageToStruct(const void* _pMessage, void* _pStruct, size_t _SizeofStruct)
 {
 	// if struct ptr is not aligned, all the alignment logic will be off
-	if (!_pMessage || !oStd::byte_aligned(_pStruct, 4))
+	if (!_pMessage || !byte_aligned(_pStruct, 4))
 		return oErrorSetLast(std::errc::invalid_argument);
 
 	const char* tags = oOSCGetMessageTypeTags(_pMessage);
 	if (!tags)
 		return oErrorSetLast(std::errc::protocol_error, "failed to read message type tags");
 
-	const void* args = (const void*)oStd::byte_add(tags, oStd::byte_align(strlen(tags)+1, 4));
+	const void* args = (const void*)byte_add(tags, byte_align(strlen(tags)+1, 4));
 	void* p = _pStruct;
-	void* pend = oStd::byte_add(_pStruct, _SizeofStruct);
+	void* pend = byte_add(_pStruct, _SizeofStruct);
 
 	return oOSCVisitMessageTypeTags(tags, args, oBIND(oOSCDeserializer, oBIND1, oBIND2, oBIND3, _pStruct, &p, pend));
 }
@@ -562,7 +565,7 @@ bool oOSCTypeTagsMatch(const char* _TypeTags0, const char* _TypeTags1)
 oStd::ntp_timestamp oOSCGetBundleTimestamp(const void* _pOSCBundle)
 {
 	oASSERT(oOSCIsBundle(oOSCIsBundle), "The specified pointer is not a bundle");
-	return oOSCPlatformEndianSwap(*(oStd::ntp_timestamp*)oStd::byte_add(_pOSCBundle, 8));
+	return oOSCPlatformEndianSwap(*(oStd::ntp_timestamp*)byte_add(_pOSCBundle, 8));
 }
 
 struct oOSCTokContext
@@ -580,11 +583,11 @@ const void* oOSCTok(const void* _pOSCPacket, size_t _SizeofOSCPacket, void** _pp
 		*_ppContext = nullptr;
 		if (!oOSCIsBundle(_pOSCPacket))
 			return nullptr;
-		const void* p = oStd::byte_add(_pOSCPacket, 16); // +8 #bundle + 8 NTPTime
+		const void* p = byte_add(_pOSCPacket, 16); // +8 #bundle + 8 NTPTime
 		oOSCTokContext* ctx = new oOSCTokContext();
 		ctx->Size = oOSCPlatformEndianSwap(*(int*)p);
-		ctx->pSubbundle = oStd::byte_add(p, sizeof(int));
-		ctx->pEnd = oStd::byte_add(_pOSCPacket, _SizeofOSCPacket);
+		ctx->pSubbundle = byte_add(p, sizeof(int));
+		ctx->pEnd = byte_add(_pOSCPacket, _SizeofOSCPacket);
 		ctx->Cookie = 'OSCT';
 		*_ppContext = ctx;
 		return ctx->pSubbundle;
@@ -594,7 +597,7 @@ const void* oOSCTok(const void* _pOSCPacket, size_t _SizeofOSCPacket, void** _pp
 	oOSCTokContext* ctx = (oOSCTokContext*)*_ppContext;
 	oASSERT(ctx && ctx->Cookie == 'OSCT', "Invalid context");
 
-	const void* pNext = oStd::byte_add(ctx->pSubbundle, ctx->Size);
+	const void* pNext = byte_add(ctx->pSubbundle, ctx->Size);
 	if (pNext >= ctx->pEnd)
 	{
 		delete ctx;
@@ -603,7 +606,7 @@ const void* oOSCTok(const void* _pOSCPacket, size_t _SizeofOSCPacket, void** _pp
 	}
 
 	ctx->Size = oOSCPlatformEndianSwap(*(int*)pNext);
-	ctx->pSubbundle = oStd::byte_add(pNext, sizeof(int));
+	ctx->pSubbundle = byte_add(pNext, sizeof(int));
 	return ctx->pSubbundle;
 }
 

@@ -27,14 +27,14 @@
 #ifndef oBasisTests_h
 #define oBasisTests_h
 
-#include <oStd/function.h>
-#include <oStd/path.h>
+#include <oBase/function.h>
+#include <oBase/path.h>
 #include <oBasis/oPlatformFeatures.h>
 #include <oBasis/oSurface.h>
 
 struct oBasisTestServices
 {
-	oFUNCTION<bool(oStd::path& _AbsolutePath, const oStd::path& _RelativePath, bool _PathMustExist)> ResolvePath;
+	oFUNCTION<bool(ouro::path& _AbsolutePath, const ouro::path& _RelativePath, bool _PathMustExist)> ResolvePath;
 	oFUNCTION<bool(void** _ppBuffer, size_t* _pSize, const char* _FullPath, bool _AsText)> AllocateAndLoadBuffer;
 	oFUNCTION<void(void* _pBuffer)> DeallocateLoadedBuffer;
 	oFUNCTION<int()> Rand;

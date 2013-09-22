@@ -49,7 +49,6 @@
 #include <oStd/atomic.h>
 #include <oStd/condition_variable.h>
 #include <oStd/mutex.h>
-#include <oStd/config.h>
 #include <cassert>
 #include <exception>
 #include <memory>
@@ -72,7 +71,7 @@ namespace oStd {
 		// appropriate implementation to ensure proper work-stealing with the 
 		// overall scheduler is enabled. This is not public API; just an 
 		// implementation detail of oStd::future.
-		interface waitable_task
+		struct waitable_task
 		{
 			// Waits for the task to finish
 			virtual void wait() = 0;

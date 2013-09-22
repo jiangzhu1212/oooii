@@ -129,7 +129,7 @@ public:
 
 private:
 	oWinControlSet ControlSet;
-	oStd::intrusive_ptr<oWindow> Window;
+	ouro::intrusive_ptr<oWindow> Window;
 	bool Running;
 
 	bool Reload(HWND _hParent, const int2& _ClientSize);
@@ -152,7 +152,7 @@ private:
 	void ActionHook(const oGUI_ACTION_DESC& _Action);
 };
 
-namespace oStd {
+namespace ouro {
 
 bool from_string(oSystemProperties::CONTROL* _pControl, const char* _StrSource)
 {
@@ -236,7 +236,7 @@ bool from_string(oSystemProperties::CONTROL* _pControl, const char* _StrSource)
 	return false;
 }
 
-} // namespace oStd
+} // namespace ouro
 
 oSystemProperties::oSystemProperties(bool* _pSuccess)
 	: Running(true)
@@ -291,7 +291,7 @@ oSystemProperties::oSystemProperties(bool* _pSuccess)
 
 bool oSystemProperties::Reload(HWND _hParent, const int2& _ClientSize)
 {
-	std::shared_ptr<oStd::xml> XML;
+	std::shared_ptr<ouro::xml> XML;
 
 	#if 0
 		// Load from files for fast iteration, then compile the xml using oFile2cpp
@@ -302,19 +302,19 @@ bool oSystemProperties::Reload(HWND _hParent, const int2& _ClientSize)
 		const void* pBuffer = nullptr;
 		size_t Size = 0;
 		GetDescSystemProperties_xml(&pBufferName, &pBuffer, &Size);
-		XML = std::make_shared<oStd::xml>(pBufferName, (char*)pBuffer, nullptr);
+		XML = std::make_shared<ouro::xml>(pBufferName, (char*)pBuffer, nullptr);
 	#endif
 
 	ControlSet.Deinitialize();
 
-	oWinControlSet::IDFROMSTRING FromString = [&](int* _pID, const char* _StrSource)->bool { return oStd::from_string((oSystemProperties::CONTROL*)_pID, _StrSource); };
+	oWinControlSet::IDFROMSTRING FromString = [&](int* _pID, const char* _StrSource)->bool { return ouro::from_string((oSystemProperties::CONTROL*)_pID, _StrSource); };
 	oVERIFY(ControlSet.Initialize(_hParent, _ClientSize, *XML, FromString));
 
 	if (ControlSet[ID_COMPUTER_NAME_VALUE])
 	{
-		oStd::mstring Hostname;
+		ouro::mstring Hostname;
 		if (kInteractiveMode)
-			oCore::system::host_name(Hostname);
+			ouro::system::host_name(Hostname);
 		else
 			Hostname = "My local hostname";
 		oWinControlSetText(ControlSet[ID_COMPUTER_NAME_VALUE], Hostname);
@@ -322,9 +322,9 @@ bool oSystemProperties::Reload(HWND _hParent, const int2& _ClientSize)
 
 	if (ControlSet[ID_COMPUTER_WORKGROUP_VALUE])
 	{
-		oStd::mstring WorkgroupName;
+		ouro::mstring WorkgroupName;
 		if (kInteractiveMode)
-			oCore::system::workgroup_name(WorkgroupName);
+			ouro::system::workgroup_name(WorkgroupName);
 		else
 			WorkgroupName = "MY_WORKGROUP";
 		oWinControlSetText(ControlSet[ID_COMPUTER_WORKGROUP_VALUE], WorkgroupName);
@@ -398,14 +398,14 @@ static void OverwriteVariableColors(oImage* _pImage)
 {
 	static const int2 VarCoords[] = { int2(25,125), int2(26,125), int2(30,125), int2(31,125), int2(32,125), int2(83,125), int2(84,125), int2(135,125), int2(136,125), int2(137,125), int2(173,125), int2(174,125), int2(175,125), };
 	oFOR(const int2& c, VarCoords)
-		_pImage->Put(c, oStd::Red);
+		_pImage->Put(c, ouro::Red);
 }
 
 struct PLATFORM_WindowSysDialog : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus)
 	{
-		if (oCore::system::is_remote_session())
+		if (ouro::system::is_remote_session())
 		{
 			snprintf(_StrStatus, _SizeofStrStatus, "Detected remote session: differing text anti-aliasing will cause bad image compares");
 			return SKIPPED;
@@ -423,7 +423,7 @@ struct PLATFORM_WindowSysDialog : public oTest
 
 		if (!kInteractiveMode)
 		{
-			oStd::future<oStd::intrusive_ptr<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
+			oStd::future<ouro::intrusive_ptr<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
 			test.GetWindow()->FlushMessages();
 
 			oTESTFI(snapshot);
@@ -440,7 +440,7 @@ struct PLATFORM_WindowSysDialog : public oTest
 				if (i == 3)
 				{
 					oTEST_FUTURE(snapshot);
-					oStd::intrusive_ptr<oImage> image;
+					ouro::intrusive_ptr<oImage> image;
 					try { image = snapshot.get(); }
 					catch (std::exception& e)
 					{

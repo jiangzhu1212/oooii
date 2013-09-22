@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oConcurrency/fixed_block_allocator.h>
 #include <oConcurrency/oConcurrency.h>
-#include <oStd/throw.h>
+#include <oBase/throw.h>
 #include <vector>
 
 namespace oConcurrency {

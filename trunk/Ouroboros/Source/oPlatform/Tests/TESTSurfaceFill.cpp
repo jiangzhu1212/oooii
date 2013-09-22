@@ -27,9 +27,11 @@
 #include <oPlatform/oTest.h>
 #include <oPlatform/Windows/oWinRect.h>
 
+using namespace ouro;
+
 // Creates an image filled with a gradiant of 4 colors then draws a grid on it
 // with numbers in each grid in order left to right, top to bottom.
-bool oImageCreateNumberedGrid(const int2& _Dimensions, const int2& _GridDimensions, oStd::color _GridColor, oStd::color _NumberColor, oStd::color _CornerColors[4], oImage** _ppImage)
+bool oImageCreateNumberedGrid(const int2& _Dimensions, const int2& _GridDimensions, color _GridColor, color _NumberColor, color _CornerColors[4], oImage** _ppImage)
 {
 	oImage::DESC d;
 	d.Dimensions = _Dimensions;
@@ -39,7 +41,7 @@ bool oImageCreateNumberedGrid(const int2& _Dimensions, const int2& _GridDimensio
 		return false; // pass through error
 	(*_ppImage)->GetDesc(&d);
 
-	oStd::color* c = (oStd::color*)(*_ppImage)->GetData();
+	color* c = (color*)(*_ppImage)->GetData();
 	oSurfaceFillGradient(c, d.RowPitch, d.Dimensions, _CornerColors);
 	oSurfaceFillGridLines(c, d.RowPitch, d.Dimensions, _GridDimensions, _GridColor);
 
@@ -83,7 +85,7 @@ bool oImageCreateNumberedGrid(const int2& _Dimensions, const int2& _GridDimensio
 	return true;
 }
 
-bool oImageCreateCheckerboard(const int2& _Dimensions, const int2& _GridDimensions, oStd::color _Color0, oStd::color _Color1, oImage** _ppImage)
+bool oImageCreateCheckerboard(const int2& _Dimensions, const int2& _GridDimensions, color _Color0, color _Color1, oImage** _ppImage)
 {
 	oImage::DESC d;
 	d.Dimensions = _Dimensions;
@@ -92,11 +94,11 @@ bool oImageCreateCheckerboard(const int2& _Dimensions, const int2& _GridDimensio
 	if (!oImageCreate("CheckerImage", d, _ppImage))
 		return false; // pass through error
 	(*_ppImage)->GetDesc(&d);
-	oSurfaceFillCheckerboard((oStd::color*)(*_ppImage)->GetData(), d.RowPitch, d.Dimensions, int2(64,64), _Color0, _Color1);
+	oSurfaceFillCheckerboard((color*)(*_ppImage)->GetData(), d.RowPitch, d.Dimensions, int2(64,64), _Color0, _Color1);
 	return true;
 }
 
-bool oImageCreateSolid(const int2& _Dimensions, oStd::color _Color, oImage** _ppImage)
+bool oImageCreateSolid(const int2& _Dimensions, color _Color, oImage** _ppImage)
 {
 	oImage::DESC d;
 	d.Dimensions = _Dimensions;
@@ -105,7 +107,7 @@ bool oImageCreateSolid(const int2& _Dimensions, oStd::color _Color, oImage** _pp
 	if (!oImageCreate("CheckerImage", d, _ppImage))
 		return false; // pass through error
 	(*_ppImage)->GetDesc(&d);
-	oSurfaceFillSolid((oStd::color*)(*_ppImage)->GetData(), d.RowPitch, d.Dimensions, _Color);
+	oSurfaceFillSolid((color*)(*_ppImage)->GetData(), d.RowPitch, d.Dimensions, _Color);
 	return true;
 }
 
@@ -113,16 +115,16 @@ struct TESTSurfaceFill : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oStd::intrusive_ptr<oImage> Image[4];
-		oStd::color gradiantColors0[4] = { oStd::Blue, oStd::Purple, oStd::Lime, oStd::Orange};
-		oTESTB0(oImageCreateNumberedGrid(int2(256,256), int2(64,64), oStd::Black, oStd::Black, gradiantColors0, &Image[0]));
+		intrusive_ptr<oImage> Image[4];
+		color gradiantColors0[4] = { Blue, Purple, Lime, Orange};
+		oTESTB0(oImageCreateNumberedGrid(int2(256,256), int2(64,64), Black, Black, gradiantColors0, &Image[0]));
 		oTESTI2(Image[0], 0);
-		oStd::color gradiantColors1[4] = { oStd::MidnightBlue, oStd::DarkSlateBlue, oStd::Green, oStd::Chocolate };
-		oTESTB0(oImageCreateNumberedGrid(int2(512,512), int2(32,32), oStd::Gray, oStd::White, gradiantColors1, &Image[1]));
+		color gradiantColors1[4] = { MidnightBlue, DarkSlateBlue, Green, Chocolate };
+		oTESTB0(oImageCreateNumberedGrid(int2(512,512), int2(32,32), Gray, White, gradiantColors1, &Image[1]));
 		oTESTI2(Image[1], 1);
-		oTESTB0(oImageCreateCheckerboard(int2(256,256), int2(32,32), oStd::Cyan, oStd::Pink, &Image[2]));
+		oTESTB0(oImageCreateCheckerboard(int2(256,256), int2(32,32), Cyan, Pink, &Image[2]));
 		oTESTI2(Image[2], 2);
-		oTESTB0(oImageCreateSolid(int2(256,256), oStd::TangentSpaceNormalBlue, &Image[3]));
+		oTESTB0(oImageCreateSolid(int2(256,256), TangentSpaceNormalBlue, &Image[3]));
 		oTESTI2(Image[3], 3);
 
 		return SUCCESS;

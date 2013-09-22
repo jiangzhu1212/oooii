@@ -29,7 +29,7 @@
 #define oProcessStatsMonitor_h
 
 #include <oBasis/oMath.h>
-#include <oStd/backoff.h>
+#include <oBase/backoff.h>
 #include <oStd/mutex.h>
 #include <oStd/thread.h>
 #include <oCore/process.h>
@@ -45,14 +45,14 @@ struct oPROCESS_CPU_STATS
 class oProcessStatsMonitor
 {
 public:
-	inline oProcessStatsMonitor(oCore::process::id _ProcessID = oCore::process::id(), oStd::chrono::milliseconds _PollRate = oStd::chrono::milliseconds(1000))
-		: PID(_ProcessID == oCore::process::id() ? oCore::this_process::get_id() : _ProcessID)
+	inline oProcessStatsMonitor(ouro::process::id _ProcessID = ouro::process::id(), oStd::chrono::milliseconds _PollRate = oStd::chrono::milliseconds(1000))
+		: PID(_ProcessID == ouro::process::id() ? ouro::this_process::get_id() : _ProcessID)
 		, Done(true)
 		, PollRate(_PollRate)
 	{
 		Reset();
 		Thread = std::move(oStd::thread(&oProcessStatsMonitor::Proc, this));
-		oStd::backoff bo;
+		ouro::backoff bo;
 		while (Done)
 			bo.pause();
 	}
@@ -84,11 +84,11 @@ private:
 		oConcurrency::begin_thread("oPrcessStatsMonitor");
 		Done = false;
 
-		oCore::process::cpu_usage(PID, &PreviousSystemTime, &PreviousProcessTime);
+		ouro::process::cpu_usage(PID, &PreviousSystemTime, &PreviousProcessTime);
 		do
 		{
 			oStd::this_thread::sleep_for(PollRate);
-			double usage = oCore::process::cpu_usage(PID, &PreviousSystemTime, &PreviousProcessTime);
+			double usage = ouro::process::cpu_usage(PID, &PreviousSystemTime, &PreviousProcessTime);
 			float usagef = static_cast<float>(usage);
 			float avg = static_cast<float>(MA.Calc(usage));
 			oStd::lock_guard<oStd::shared_mutex> lock(StatsMutex);
@@ -113,7 +113,7 @@ private:
 	unsigned long long PreviousProcessTime;
 	oMovingAverage<double> MA;
 	oStd::chrono::milliseconds PollRate;
-	oCore::process::id PID;
+	ouro::process::id PID;
 	bool Done;
 	oStd::thread Thread;
 };

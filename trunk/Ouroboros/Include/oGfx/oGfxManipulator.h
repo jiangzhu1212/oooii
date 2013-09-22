@@ -55,7 +55,7 @@ public:
 	// is drawn hence GetManipulatorPickLineMeshes
 	virtual void GetManipulatorPickLineMeshes(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUUtilMesh* _pMesh, uint _ObjectID)> _Callback) = 0;
 	virtual void GetManipulatorVisualLines(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUBuffer* _pLineList, uint _NumLines)> _Callback) = 0;
-	virtual void GetManipulatorMeshes(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUUtilMesh* _pMesh, float4x4 _Transform, oStd::color _MeshColor, uint _ObjectID)> _Callback) = 0;
+	virtual void GetManipulatorMeshes(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUUtilMesh* _pMesh, float4x4 _Transform, ouro::color _MeshColor, uint _ObjectID)> _Callback) = 0;
 };
 
 oAPI bool oGfxManipulatorCreate(const char* _Name, const oGfxManipulator::DESC& _Desc, oGPUDevice* _pDevice, oGfxManipulator** _ppManipulator);

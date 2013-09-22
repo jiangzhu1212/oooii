@@ -27,9 +27,9 @@
 #define AllocatorTLSF_Impl_h
 
 #include <oBasis/oAllocatorTLSF.h>
-#include <oStd/fixed_string.h>
 #include <oBasis/oInitOnce.h>
 #include <oBasis/oRefCount.h>
+#include <oBase/fixed_string.h>
 
 // {5CFA8784-E09D-40e3-8C7A-C4809577F02F}
 oDEFINE_GUID_S(oAllocatorTLSF, 0x5cfa8784, 0xe09d, 0x40e3, 0x8c, 0x7a, 0xc4, 0x80, 0x95, 0x77, 0xf0, 0x2f);
@@ -66,7 +66,7 @@ public:
 	STATS Stats;
 	oRefCount RefCount;
 	void* hPool;
-	oInitOnce<oStd::sstring> DebugName;
+	oInitOnce<ouro::sstring> DebugName;
 };
 
 #endif

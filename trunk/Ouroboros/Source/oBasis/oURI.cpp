@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oURI.h>
-#include <oStd/assert.h>
+#include <oBase/assert.h>
 #include <oBasis/oPath.h>
 #include <oBasis/oError.h>
 #include <cerrno>
@@ -31,7 +31,7 @@
 #include <regex>
 
 using namespace std;
-using namespace std::tr1;
+using namespace ouro;
 
 bool oURIIsURI(const char* _URIReference)
 {
@@ -60,7 +60,7 @@ bool oURIIsSameDocument(const char* _URIReference, const char* _DocumentURI)
 
 	// See if we end up with the same URIs (minus fragment) if we'd resolve
 	// the _URIReference with the _DocumentAbsoluteURI
-	oStd::uri_string ResolvedURI;
+	uri_string ResolvedURI;
 	oURIResolve(ResolvedURI, _DocumentURI, _URIReference); // TODO: Rename this function to resolve, as absolute URIs can't have fragments and this function doesn't intend that
 
 	// Note: an Absolute URI can not contain a fragment, so we could also
@@ -150,10 +150,10 @@ bool oURIDecompose(const char* _URIReference, char* _Scheme, size_t _SizeofSchem
 		if (matches.empty())
 			return false;
 
-		#define COPY(part, index) do { if (_##part && !oStrcpy(_##part, _Sizeof##part, matches[index].first, matches[index].second)) return false; if (_##part && !oStd::percent_decode(_##part, _Sizeof##part, _##part)) return false; } while(false)
+		#define COPY(part, index) do { if (_##part && !oStrcpy(_##part, _Sizeof##part, matches[index].first, matches[index].second)) return false; if (_##part && !percent_decode(_##part, _Sizeof##part, _##part)) return false; } while(false)
 			COPY(Scheme, 2);
 			if (_Scheme)
-				oStd::tolower(_Scheme); // http://www.ietf.org/rfc/rfc2396.txt 3.1. Scheme Component
+				tolower(_Scheme); // http://www.ietf.org/rfc/rfc2396.txt 3.1. Scheme Component
 			COPY(Authority, 4);
 			COPY(Path, 5);
 			COPY(Query, 7);
@@ -161,7 +161,7 @@ bool oURIDecompose(const char* _URIReference, char* _Scheme, size_t _SizeofSchem
 		#undef COPY
 
 		// Decode any percent-encoded stuff now. http://tools.ietf.org/html/rfc3986#page-14 section 2.4
-		oStd::percent_decode(_Path, _SizeofPath, _Path);
+		percent_decode(_Path, _SizeofPath, _Path);
 		return true;
 	}
 
@@ -191,7 +191,7 @@ char* oURIRecompose(char* _URIReference, size_t _SizeofURIReference, const char*
 	if (oSTRVALID(_Scheme))
 	{
 		SAFECAT(_Scheme);
-		oStd::tolower(_URIReference); // http://www.ietf.org/rfc/rfc2396.txt 3.1. Scheme Component
+		tolower(_URIReference); // http://www.ietf.org/rfc/rfc2396.txt 3.1. Scheme Component
 		SAFECAT(":");
 	}
 
@@ -207,8 +207,8 @@ char* oURIRecompose(char* _URIReference, size_t _SizeofURIReference, const char*
 			SAFECAT("/");
 	}
 
-	oStd::path_string path;
-	if (!oStd::clean_path(path, _Path))
+	path_string path;
+	if (!clean_path(path, _Path))
 		return nullptr;
 
 	size_t URIReferenceLength = strlen(_URIReference);
@@ -240,8 +240,8 @@ char* oURIFromAbsolutePath(char* _URI, size_t _SizeofURI, const char* _AbsoluteP
 		return _URI;
 	}
 
-	oStd::uri_string Authority;
-	oStd::uri_string Path;
+	uri_string Authority;
+	uri_string Path;
 
 	if (oIsUNCPath(_AbsolutePath))
 	{
@@ -264,8 +264,8 @@ char* oURIFromAbsolutePath(char* _URI, size_t _SizeofURI, const char* _AbsoluteP
 
 char* oURIFromRelativePath(char* _URIReference, size_t _SizeofURIReference, const char* _RelativePath)
 {
-	oStd::path_string path;
-	if (!oStd::clean_path(path, _RelativePath))
+	path_string path;
+	if (!clean_path(path, _RelativePath))
 		return nullptr;
 
 	if (!oURIPercentEncode(_URIReference, _SizeofURIReference, path, " "))
@@ -354,8 +354,8 @@ char* oURIRelativize(char* _URIReference, size_t _SizeofURIReference, const char
 	d.Scheme.clear();
 	d.Authority.clear();
 
-	oStd::path_string new_Path;
-	if (!oStd::relativize_path(new_Path, base_d.Path, d.Path))
+	path_string new_Path;
+	if (!relativize_path(new_Path, base_d.Path, d.Path))
 		return nullptr;
 
 	return oURIRecompose(_URIReference, _SizeofURIReference, d.Scheme, d.Authority, new_Path, d.Query, d.Fragment);
@@ -392,7 +392,7 @@ char* oURIResolve(char* _URIReference, size_t _SizeofURIReference, const char* _
 		{
 			oTrimFilename(ResultURIParts.Path);
 			oEnsureSeparator(ResultURIParts.Path);
-			oStd::sncatf(ResultURIParts.Path, "%s", URIParts.Path.c_str());
+			sncatf(ResultURIParts.Path, "%s", URIParts.Path.c_str());
 		}
 
 		ResultURIParts.Query = URIParts.Query;
@@ -432,7 +432,7 @@ char* oURIEnsureFileExtension(char* _URIReferenceWithExtension, size_t _SizeofUR
 	return _URIReferenceWithExtension;
 }
 
-namespace oStd {
+namespace ouro {
 
 bool from_string(char (*_pStrDestination)[oMAX_URI], const char* _StrSource)
 {
@@ -444,7 +444,7 @@ bool from_string(oURIParts* _pURIParts, const char* _StrSource)
 	return oURIDecompose(_StrSource, _pURIParts);
 }
 
-} // namespace oStd
+} // namespace ouro
 
 static std::regex QueryRegex("(.+?)=(.+?)&", std::tr1::regex_constants::optimize); // @oooii-tony: ok static (duplication in DLLs won't affect correctness)
 void oURIQueryEnumKeyValuePairs(const char* _URIQuery, oFUNCTION<void(const char* _Key, const char* _Value)> _Enumerator)
@@ -453,8 +453,8 @@ void oURIQueryEnumKeyValuePairs(const char* _URIQuery, oFUNCTION<void(const char
 	int ArgsToCollect[] = {1,2};
 
 	// FIXME: Copying the URI so we can append it with & so the regex matches
-	oStd::uri_string copy = _URIQuery;
-	oStd::sncatf(copy, "&");
+	uri_string copy = _URIQuery;
+	sncatf(copy, "&");
 
 	for (std::cregex_token_iterator Groups(copy, copy + copy.length(), QueryRegex, ArgsToCollect); Groups != end; ++Groups)
 	{
@@ -472,11 +472,11 @@ const oURI& oURI::operator=(const char* _That)
 	memset(this, 0, sizeof(*this));
 
 	// apply good practices from http://www.textuality.com/tag/uri-comp-2.html
-	if (!oURIDecompose(_That, &URIParts) || !oStd::clean_path(URIParts.Path, URIParts.Path, '/', true))
+	if (!oURIDecompose(_That, &URIParts) || !clean_path(URIParts.Path, URIParts.Path, '/', true))
 		Clear();
 	URIParts.ToLower();
 
-	uint128 h = oStd::murmur3(this, sizeof(*this));
+	uint128 h = murmur3(this, sizeof(*this));
 	HashID = (size_t)h; // we want the most random bits of the 128, but it seems from the avalanching of murmur, it doesn't matter (http://blog.aggregateknowledge.com/tag/murmur-hash/)
 	return *this;
 }
@@ -488,7 +488,7 @@ bool oURI::operator==(const oURI& _That) const
 		#ifdef _DEBUG
 			if (memcmp(this, &_That, sizeof(*this)))
 			{
-				oStd::uri_string A, B;
+				uri_string A, B;
 				oURIRecompose(A, URIParts);
 				oURIRecompose(B, _That.URIParts);
 				oASSERT(false, "oURI hash collision between \"%s\" and \"%s\"", A.c_str(), B.c_str());
@@ -502,7 +502,7 @@ bool oURI::operator<(const oURI& _That) const
 	return memcmp(this, &_That, sizeof(*this)) < 0;
 }
 
-namespace oStd {
+namespace ouro {
 
 bool from_string(oURI* _pURI, const char* _StrSource)
 {
@@ -515,14 +515,14 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oURI&
 	return oURIRecompose(_StrDestination, _SizeofStrDestination, _URI.GetParts());
 }
 
-} // namespace oStd
+} // namespace ouro
 
 typedef bool (*s_oURI_FromString)(oURI*, const char*);
 typedef char* (*s_oURI_ToString)(char*, size_t, const oURI&);
 
 oRTTI_ATOM_DESCRIPTION(oURI,oURI,false,false,oURI, 1, \
-	(oRTTIFromString)(s_oURI_FromString)oStd::from_string, \
-	(oRTTIToString)(s_oURI_ToString)oStd::to_string, \
+	(oRTTIFromString)(s_oURI_FromString)from_string, \
+	(oRTTIToString)(s_oURI_ToString)to_string, \
 	nullptr, \
 	nullptr, \
 	nullptr, \

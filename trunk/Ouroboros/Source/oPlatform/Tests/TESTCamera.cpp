@@ -39,14 +39,14 @@ int ShowAllCameras()
 {
 	struct CONTEXT
 	{
-		CONTEXT(oStd::intrusive_ptr<threadsafe oCamera> _pCamera)
+		CONTEXT(ouro::intrusive_ptr<threadsafe oCamera> _pCamera)
 			: Camera(_pCamera)
 			, LastFrame(oInvalid)
 			, Running(true)
 		{}
 
-		oStd::intrusive_ptr<threadsafe oCamera> Camera;
-		oStd::intrusive_ptr<oWindow> Window;
+		ouro::intrusive_ptr<threadsafe oCamera> Camera;
+		ouro::intrusive_ptr<oWindow> Window;
 		unsigned int LastFrame;
 		bool Running;
 
@@ -68,7 +68,7 @@ int ShowAllCameras()
 
 	while (1)
 	{
-		oStd::intrusive_ptr<threadsafe oCamera> Camera;
+		ouro::intrusive_ptr<threadsafe oCamera> Camera;
 		if (oCameraEnum(index++, &Camera))
 		{
 			oCamera::MODE mode;
@@ -85,7 +85,7 @@ int ShowAllCameras()
 				oMSGBOX_DESC d;
 				d.Type = oMSGBOX_ERR;
 				d.Title = "oCamera Test";
-				oMsgBox(d, "Camera %s does not support mode %s %dx%d", Camera->GetName(), oStd::as_string(mode.Format), mode.Dimensions.x, mode.Dimensions.y);
+				oMsgBox(d, "Camera %s does not support mode %s %dx%d", Camera->GetName(), ouro::as_string(mode.Format), mode.Dimensions.x, mode.Dimensions.y);
 				continue;
 			}
 
@@ -122,8 +122,8 @@ int ShowAllCameras()
 		oCamera::DESC cd;
 		Contexts[i].Camera->GetDesc(&cd);
 
-		oStd::lstring Title;
-		snprintf(Title, "%s (%dx%d %s)", Contexts[i].Camera->GetName(), cd.Mode.Dimensions.x, cd.Mode.Dimensions.y, oStd::as_string(cd.Mode.Format));
+		ouro::lstring Title;
+		snprintf(Title, "%s (%dx%d %s)", Contexts[i].Camera->GetName(), cd.Mode.Dimensions.x, cd.Mode.Dimensions.y, ouro::as_string(cd.Mode.Format));
 
 		oWINDOW_INIT init;
 		init.Shape.ClientSize = cd.Mode.Dimensions;
@@ -158,17 +158,17 @@ int ShowAllCameras()
 					Contexts[i].LastFrame = mapped.Frame;
 
 					float fps = Contexts[i].Camera->GetFPS();
-					oStd::sstring sFPS;
+					ouro::sstring sFPS;
 					snprintf(sFPS, "FPS: %.01f", fps + (rand() %100) / 100.0f);
 					
 					RECT rClient;
 					GetClientRect(hWnd, &rClient);
 
 					oGUI_TEXT_DESC td;
-					td.Foreground = oStd::OOOiiGreen;
+					td.Foreground = ouro::OOOiiGreen;
 					td.Position = int2(0, 0);
 					td.Size = oWinRectSize(rClient);
-					td.Shadow = oStd::Black;
+					td.Shadow = ouro::Black;
 					td.ShadowOffset = int2(1,1);
 					td.Alignment = oGUI_ALIGNMENT_MIDDLE_LEFT;
 

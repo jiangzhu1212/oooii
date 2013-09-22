@@ -28,6 +28,8 @@
 #include <oCore/system.h>
 #include <oGPU/oGPU.h>
 
+using namespace ouro;
+
 static const bool kInteractiveMode = false;
 
 class WindowInWindow
@@ -55,7 +57,7 @@ public:
 
 		oGPUDevice::INIT DevInit;
 		DevInit.DebugName = "TestDevice";
-		DevInit.Version = oStd::version(10, 0);
+		DevInit.Version = version(10, 0);
 		DevInit.DriverDebugLevel = oGPU_DEBUG_NORMAL;
 
 		if (!oGPUDeviceCreate(DevInit, &Device))
@@ -94,7 +96,7 @@ public:
 			if (Device->BeginFrame())
 			{
 				oGPU_CLEAR_DESC CD;
-				CD.ClearColor[0] = (Counter & 0x1) ? oStd::White : oStd::Blue;
+				CD.ClearColor[0] = (Counter & 0x1) ? White : Blue;
 				PrimaryRenderTarget->SetClearDesc(CD);
 
 				CommandList->Begin();
@@ -162,11 +164,11 @@ public:
 	void IncrementClearCounter() { Counter++; }
 
 private:
-	oStd::intrusive_ptr<oGPUDevice> Device;
-	oStd::intrusive_ptr<oWindow> ParentWindow;
-	oStd::intrusive_ptr<oWindow> GPUWindow;
-	oStd::intrusive_ptr<oGPUCommandList> CommandList;
-	oStd::intrusive_ptr<oGPURenderTarget> PrimaryRenderTarget;
+	intrusive_ptr<oGPUDevice> Device;
+	intrusive_ptr<oWindow> ParentWindow;
+	intrusive_ptr<oWindow> GPUWindow;
+	intrusive_ptr<oGPUCommandList> CommandList;
+	intrusive_ptr<oGPURenderTarget> PrimaryRenderTarget;
 
 	HWND hButton;
 	int Counter;
@@ -177,14 +179,14 @@ struct GPU_WindowInWindow : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus)
 	{
-		if (oCore::system::is_remote_session())
+		if (ouro::system::is_remote_session())
 		{
 			snprintf(_StrStatus, _SizeofStrStatus, "Detected remote session: differing text anti-aliasing will cause bad image compares");
 			return SKIPPED;
 		}
 
 		// Turn display power on, otherwise the test will fail
-		oCore::display::set_power_on();
+		ouro::display::set_power_on();
 
 		bool success = false;
 		WindowInWindow test(&success);
@@ -207,7 +209,7 @@ struct GPU_WindowInWindow : public oTest
 		{
 			test.FlushMessages();
 			test.Render();
-			oStd::future<oStd::intrusive_ptr<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
+			oStd::future<intrusive_ptr<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
 			while (!snapshot.is_ready()) { test.FlushMessages(); }
 			oTESTFI(snapshot);
 			test.IncrementClearCounter();

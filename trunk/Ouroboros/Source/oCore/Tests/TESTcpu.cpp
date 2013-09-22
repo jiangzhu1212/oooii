@@ -24,9 +24,9 @@
  **************************************************************************/
 #include <oCore/cpu.h>
 #include <oCore/tests/oCoreTestRequirements.h>
-#include <oStd/stringize.h>
+#include <oBase/stringize.h>
 
-namespace oCore {
+namespace ouro {
 	namespace tests {
 
 void TESTcpu(requirements& _Requirements)
@@ -42,8 +42,8 @@ void TESTcpu(requirements& _Requirements)
 		return true;
 	});
 
-	_Requirements.report("%s %s %s%s%s %d HWThreads", oStd::as_string(inf.type), inf.string.c_str(), inf.brand_string.c_str(), HasHT ? " HT" : "", HasAVX ? " AVX" : "", inf.hardware_thread_count);
+	_Requirements.report("%s %s %s%s%s %d HWThreads", ouro::as_string(inf.type), inf.string.c_str(), inf.brand_string.c_str(), HasHT ? " HT" : "", HasAVX ? " AVX" : "", inf.hardware_thread_count);
 }
 
 	} // namespace tests
-} // namespace oCore
+} // namespace ouro

@@ -23,8 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oStrTok.h>
-#include <oStd/assert.h>
-#include <oStd/byte.h>
+#include <oBase/assert.h>
+#include <oBase/byte.h>
+#include <oBase/string.h>
 #include <oBasis/oInt.h>
 #include <cctype>
 #include <cerrno>

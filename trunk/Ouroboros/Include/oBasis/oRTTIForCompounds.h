@@ -26,7 +26,7 @@
 #ifndef oRTTIForCompounds_h
 #define oRTTIForCompounds_h
 
-#include <oStd/version.h>
+#include <oBase/version.h>
 
 enum oRTTI_COMPOUND_ATTR_FLAGS
 {
@@ -91,7 +91,7 @@ struct oRTTI_DATA_COMPOUND // : oRTTI
 	uchar NumBases;
 	uchar NumAttrs;
 //	uchar NumFunctions;
-	oStd::version Version;
+	ouro::version Version;
 	uint Size;
 	const char* TypeName;
 	uint TypeNameHash;
@@ -125,14 +125,14 @@ struct oRTTI_DATA_COMPOUND // : oRTTI
 #define oRTTI_COMPOUND_VERSION_DEFAULT(major, minor, build, revision) \
 	template<typename T> struct oRTTI_COMPOUND_VERSION_HELPER_IS_VALID { enum { VALID = 0 }; }; \
 	template<typename T, bool U> struct oRTTI_COMPOUND_VERSION_HELPER { }; \
-	template<typename T> struct oRTTI_COMPOUND_VERSION_HELPER<T, false> { static const ushort Major = major; static const ushort Minor = minor; static const ushort Build = build; static const ushort Revision = revision; };
+	template<typename T> struct oRTTI_COMPOUND_VERSION_HELPER<T, false> { static const unsigned short Major = major; static const unsigned short Minor = minor; static const unsigned short Build = build; static const unsigned short Revision = revision; };
 
 #define oRTTI_COMPOUND_SET_VERSION(compound_type, major, minor, build, revision) \
 	template<> struct oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type> { enum { VALID = 1 }; }; \
-	template<> struct oRTTI_COMPOUND_VERSION_HELPER<compound_type, true> { static const ushort Major = major; static const ushort Minor = minor; static const ushort Build = build; static const ushort Revision = revision; };
+	template<> struct oRTTI_COMPOUND_VERSION_HELPER<compound_type, true> { static const unsigned short Major = major; static const unsigned short Minor = minor; static const unsigned short Build = build; static const unsigned short Revision = revision; };
 
 #define oRTTI_COMPOUND_GET_VERSION(compound_type) \
-	oStd::version(	oRTTI_COMPOUND_VERSION_HELPER<compound_type, oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type>::VALID != 0>::Major, \
+	ouro::version(	oRTTI_COMPOUND_VERSION_HELPER<compound_type, oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type>::VALID != 0>::Major, \
 				oRTTI_COMPOUND_VERSION_HELPER<compound_type, oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type>::VALID != 0>::Minor, \
 				oRTTI_COMPOUND_VERSION_HELPER<compound_type, oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type>::VALID != 0>::Build, \
 				oRTTI_COMPOUND_VERSION_HELPER<compound_type, oRTTI_COMPOUND_VERSION_HELPER_IS_VALID<compound_type>::VALID != 0>::Revision)

@@ -243,6 +243,8 @@ const char* as_string_display_code(UINT _DISPCode);
 
 };}
 
+const char* as_string(const version::value& _Version);
+
 version::value get_version();
 
 	} // namespace windows

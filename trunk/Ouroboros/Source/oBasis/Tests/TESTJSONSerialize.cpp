@@ -27,6 +27,8 @@
 #include <oBasis/oJSONSerialize.h>
 #include "oBasisTestCommon.h"
 
+using namespace ouro;
+
 enum oJSONTestEnum
 {
 	ENUM1,
@@ -52,7 +54,7 @@ struct oJSONTestCompound
 	llong Llong;
 	float Float;
 	double Double;
-	oStd::lstring String;
+	lstring String;
 	int2 Int2;
 	oJSONTestEnum Enum;
 };
@@ -69,7 +71,7 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oJSONTestCompound)
 		oRTTI_COMPOUND_ATTR(oJSONTestCompound, Llong, oRTTI_OF(llong), "Llong", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oJSONTestCompound, Float, oRTTI_OF(float), "Float", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oJSONTestCompound, Double, oRTTI_OF(double), "Double", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oJSONTestCompound, String, oRTTI_OF(ostd_lstring), "String", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oJSONTestCompound, String, oRTTI_OF(ouro_lstring), "String", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oJSONTestCompound, Int2, oRTTI_OF(int2), "Int2", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oJSONTestCompound, Enum, oRTTI_OF(oJSONTestEnum), "Enum", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oJSONTestCompound)
@@ -78,7 +80,7 @@ oRTTI_COMPOUND_END_DESCRIPTION(oJSONTestCompound)
 struct oJSONTestContainer
 {
 	int changelist;
-	oStd::sstring user;
+	sstring user;
 	int remainingms;
 	float progress;
 };
@@ -89,7 +91,7 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oJSONTestContainer)
 	oRTTI_COMPOUND_VERSION(oJSONTestContainer, 0,1,0,0)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oJSONTestContainer)
 		oRTTI_COMPOUND_ATTR(oJSONTestContainer, changelist, oRTTI_OF(int), "changelist", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oJSONTestContainer, user, oRTTI_OF(ostd_sstring), "user", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oJSONTestContainer, user, oRTTI_OF(ouro_sstring), "user", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oJSONTestContainer, remainingms, oRTTI_OF(int), "remainingms", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oJSONTestContainer, progress, oRTTI_OF(float), "progress", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oJSONTestContainer)
@@ -159,11 +161,11 @@ static const char* oJSONTestContainerReferenceResult = "[{\"changelist\":10,\"us
 
 bool oBasisTest_oJSONSerialize()
 {
-	oStd::xxlstring JSONWriteTestResult;
+	xxlstring JSONWriteTestResult;
 	oTESTB0(oJSONWriteCompound(JSONWriteTestResult.c_str(), JSONWriteTestResult.capacity(), &sJSONTestCompound, oRTTI_OF(oJSONTestCompound)));
 	oTESTB(0 == strcmp(JSONWriteTestResult.c_str(), sJSONTestCompoundReferenceResult), "oJSONWriteCompound result doesn't match the expected one");
 
-	oStd::json JSON("Test JSON", (char*)sJSONTestCompoundReferenceResult, nullptr);
+	json JSON("Test JSON", (char*)sJSONTestCompoundReferenceResult, nullptr);
 
 	oJSONTestCompound JSONReadTestResult;
 	oTESTB0(oJSONReadCompound(&JSONReadTestResult, oRTTI_OF(oJSONTestCompound), JSON, JSON.root(), true));
@@ -173,11 +175,11 @@ bool oBasisTest_oJSONSerialize()
 	JSONWriteContainerTest.push_back(sJSONTestContainer);
 	JSONWriteContainerTest.push_back(sJSONTestContainer);
 
-	oStd::xxlstring PendingTasksJSON;
+	xxlstring PendingTasksJSON;
 	oJSONWriteContainer(PendingTasksJSON.c_str(), PendingTasksJSON.capacity(), &JSONWriteContainerTest, sizeof(JSONWriteContainerTest), oRTTI_OF(std_vector_oJSONTestContainer));
 	oTESTB(0 == strcmp(PendingTasksJSON.c_str(), oJSONTestContainerReferenceResult), "oJSONReadCompound result doesn't match the expected one");
 
-	JSON = std::move(oStd::json("2nd Test JSON", (char*)oJSONTestContainerReferenceResult, nullptr));
+	JSON = std::move(json("2nd Test JSON", (char*)oJSONTestContainerReferenceResult, nullptr));
 	
 	std::vector<oJSONTestContainer> JSONReadContainerTestResult;
 	oTESTB0(oJSONReadContainer(&JSONReadContainerTestResult, sizeof(JSONReadContainerTestResult), oRTTI_OF(std_vector_oJSONTestContainer), JSON, JSON.root(), true));

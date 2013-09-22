@@ -29,13 +29,15 @@
 #include "oTestIntegration.h"
 #include "TESTConcurrencyRequirements.h"
 
+using namespace ouro;
+
 static size_t GetTotalPhysicalMemory()
 {
-	oCore::system::heap_info hi = oCore::system::get_heap_info();
+	ouro::system::heap_info hi = ouro::system::get_heap_info();
 	return static_cast<size_t>(hi.total_physical);
 }
 
-static bool ResolvePath(oStd::path& _Path, const char* _RelativePath, bool _PathMustExist, oTest* _pTest)
+static bool ResolvePath(path& _Path, const char* _RelativePath, bool _PathMustExist, oTest* _pTest)
 {
 	if (_PathMustExist)	
 		return _pTest->BuildPath(_Path, _RelativePath, oTest::DATA, oTest::FileMustExist);
@@ -44,7 +46,7 @@ static bool ResolvePath(oStd::path& _Path, const char* _RelativePath, bool _Path
 
 static bool TestSurface(const char* _Name, const oSURFACE_DESC& _SourceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SourceMapped, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier, oTest* _pTest)
 {
-	oStd::intrusive_ptr<oImage> image;
+	intrusive_ptr<oImage> image;
 	if (!oImageCreate(_Name, _SourceDesc, &image))
 		return false; // pass through error
 	image->CopyData(_SourceMapped.pData, _SourceMapped.RowPitch);
@@ -53,7 +55,7 @@ static bool TestSurface(const char* _Name, const oSURFACE_DESC& _SourceDesc, con
 
 static bool AllocateAndLoadSurface(void** _pHandle, oSURFACE_DESC* _pDesc, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMapped, const char* _URIReference)
 {
-	oStd::intrusive_ptr<oImage> image;
+	intrusive_ptr<oImage> image;
 	if (!oImageLoad(_URIReference, &image))
 		return false; // pass through error
 
@@ -99,7 +101,7 @@ static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
 			} \
 		} \
 		snprintf(_StrStatus, _SizeofStrStatus, "%s", oErrorGetLastString()); \
-		oTRACE("%s: %s (oErrorGetLast() == %s)", oStd::as_string(r), _StrStatus, oErrorAsString(oErrorGetLast())); \
+		oTRACE("%s: %s (oErrorGetLast() == %s)", ouro::as_string(r), _StrStatus, oErrorAsString(oErrorGetLast())); \
 		return r; \
 	} while (false)
 

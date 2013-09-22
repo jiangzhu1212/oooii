@@ -59,7 +59,7 @@
 // debugging purposes.
 oAPI char* oCameraControllerParseResponse(char* _StrDestination, size_t _SizeofStrDestination, int _ResponseFlags);
 template<size_t size> char* oCameraControllerParseResponse(char (&_StrDestination)[size], int _ResponseFlags) { return oCameraControllerParseResponse(_StrDestination, size, _ResponseFlags); }
-template<size_t capacity> char* oCameraControllerParseResponse(oStd::fixed_string<char, capacity>& _StrDestination, int _ResponseFlags) { return oCameraControllerParseResponse(_StrDestination, _StrDestination.capacity(), _ResponseFlags); }
+template<size_t capacity> char* oCameraControllerParseResponse(ouro::fixed_string<char, capacity>& _StrDestination, int _ResponseFlags) { return oCameraControllerParseResponse(_StrDestination, _StrDestination.capacity(), _ResponseFlags); }
 
 // {D7874299-6F52-4E5F-A76E-9ACB37A35316}
 oDEFINE_GUID_I(oCameraController, 0xd7874299, 0x6f52, 0x4e5f, 0xa7, 0x6e, 0x9a, 0xcb, 0x37, 0xa3, 0x53, 0x16);

@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oBasis/oBuffer.h>
 #include <oConcurrency/event.h>
-#include <oStd/finally.h>
+#include <oBase/finally.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/oSocket.h>
 
@@ -148,7 +148,7 @@ struct PLATFORM_oSocketAsync : public oTest
 		oStd::atomic_uint ReceiveCount;
 		oRefCount Refcount;
 
-		oStd::intrusive_ptr<oBuffer> ReceiveBuffer;
+		ouro::intrusive_ptr<oBuffer> ReceiveBuffer;
 	};
 
 	RESULT TestUDPServerASYNC(char* _StrStatus, size_t _SizeofStrStatus, unsigned short Port)
@@ -158,19 +158,19 @@ struct PLATFORM_oSocketAsync : public oTest
 		oSocketPortSet(Port, &SocketDesc.Addr);
 		
 
-		oStd::intrusive_ptr<GenericCallback> Sender( new GenericCallback, false );
+		ouro::intrusive_ptr<GenericCallback> Sender( new GenericCallback, false );
 		
 		SocketDesc.Style = oSocket::ASYNC;
 		SocketDesc.AsyncSettings.Callback = Sender;
 
-		oStd::intrusive_ptr<threadsafe oSocket> Socket;
+		ouro::intrusive_ptr<threadsafe oSocket> Socket;
 		oTESTB(oSocketCreate("Test UDP", SocketDesc, &Socket), oErrorGetLastString());
 
 		char AddrStr[64];
 		snprintf(AddrStr, "localhost:%u", Port);
 
 		oNetAddr Addr;
-		oStd::from_string(&Addr, AddrStr);
+		ouro::from_string(&Addr, AddrStr);
 
 		for(unsigned int i = 0; i < SocketDesc.AsyncSettings.MaxSimultaneousMessages; ++i)
 		{
@@ -183,10 +183,10 @@ struct PLATFORM_oSocketAsync : public oTest
 	}
 	RESULT TestTCPServerASYNC(char* _StrStatus, size_t _SizeofStrStatus)
 	{
-		oStd::intrusive_ptr<TCPServerCallback> Receiver(new TCPServerCallback, false);
+		ouro::intrusive_ptr<TCPServerCallback> Receiver(new TCPServerCallback, false);
 
-		oStd::intrusive_ptr<threadsafe oSocketServer2> Server;
-		oStd::intrusive_ptr<threadsafe oSocket> Socket;
+		ouro::intrusive_ptr<threadsafe oSocketServer2> Server;
+		ouro::intrusive_ptr<threadsafe oSocket> Socket;
 		oConcurrency::event connectEvent;
 
 		oSocketServer2::DESC ServerDesc;
@@ -238,7 +238,7 @@ struct PLATFORM_oSocketAsync : public oTest
 		// Test support code
 		{
 			oNetAddr TestAddress;
-			oStd::from_string(&TestAddress, "192.168.10.2:1234");
+			ouro::from_string(&TestAddress, "192.168.10.2:1234");
 
 			unsigned short Port = 0;
 			oSocketPortGet(TestAddress, &Port);
@@ -254,7 +254,7 @@ struct PLATFORM_oSocketAsync : public oTest
 		// Create our server thread
 		
 		std::shared_ptr<oConcurrency::task_group> g = oConcurrency::make_task_group();
-		oStd::finally onexit([&] { g->wait(); });
+		ouro::finally onexit([&] { g->wait(); });
 
 		static const unsigned short TestPort = 30777;
 
@@ -276,12 +276,12 @@ struct PLATFORM_oSocketAsync : public oTest
 				SocketDesc.Protocol = oSocket::UDP;
 				oSocketPortSet(TestPort, &SocketDesc.Addr);
 
-				oStd::intrusive_ptr<GenericCallback> Callback(new GenericCallback, false );
+				ouro::intrusive_ptr<GenericCallback> Callback(new GenericCallback, false );
 
 				SocketDesc.Style = oSocket::ASYNC;
 				SocketDesc.AsyncSettings.Callback = Callback;
 
-				oStd::intrusive_ptr<threadsafe oSocket> Socket;
+				ouro::intrusive_ptr<threadsafe oSocket> Socket;
 				oTESTB(oSocketCreate("Test UDP", SocketDesc, &Socket), oErrorGetLastString());
 
 				// Initiate the first receive
@@ -319,7 +319,7 @@ struct PLATFORM_oSocketAsync : public oTest
 			oSocket::DESC SocketDesc;
 			SocketDesc.Protocol = Protocols[i];
 			SocketDesc.ConnectionTimeoutMS = TESTSocketTCPTimeout;
-			oStd::from_string(&SocketDesc.Addr, TESTSocketTCPServer);
+			ouro::from_string(&SocketDesc.Addr, TESTSocketTCPServer);
 
 			struct TCPSender : public oSocketAsyncCallback
 			{
@@ -337,17 +337,17 @@ struct PLATFORM_oSocketAsync : public oTest
 				oRefCount Refcount;
 			};
 
-			oStd::intrusive_ptr<TCPSender> Sender(new TCPSender, false );
+			ouro::intrusive_ptr<TCPSender> Sender(new TCPSender, false );
 
 			SocketDesc.Style = oSocket::ASYNC;
 			SocketDesc.AsyncSettings.Callback = Sender;
-			oStd::intrusive_ptr<threadsafe oSocket> Socket;
+			ouro::intrusive_ptr<threadsafe oSocket> Socket;
 			oTESTB0(oSocketCreate("Test TCP", SocketDesc, &Socket));
 			oTESTB0(Socket->IsConnected());
 
 			// Split the send into two parts
 			oSocket::size_t Split = 128;
-			Socket->Send(TESTSocketTCP0, Split, oStd::byte_add(TESTSocketTCP0, Split), oCOUNTOF(TESTSocketTCP0) - Split);
+			Socket->Send(TESTSocketTCP0, Split, ouro::byte_add(TESTSocketTCP0, Split), oCOUNTOF(TESTSocketTCP0) - Split);
 
 			g->wait();
 			oTESTB(SUCCESS == ServerResult, ServerResultString.c_str());
@@ -357,7 +357,7 @@ struct PLATFORM_oSocketAsync : public oTest
 	}
 
 	RESULT ServerResult;
-	oStd::fixed_string<char, 256> ServerResultString;
+	ouro::fixed_string<char, 256> ServerResultString;
 };
 
 oTEST_REGISTER(PLATFORM_oSocketAsync);

@@ -30,7 +30,7 @@
 #ifndef oError_h
 #define oError_h
 
-#include <oStd/assert.h>
+#include <oBase/assert.h>
 #include <system_error>
 
 // Sets a thread_local value and string that can be retrieved with API described

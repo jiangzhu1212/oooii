@@ -23,13 +23,15 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oLeakTracker.h>
-#include <oStd/algorithm.h>
+#include <oBase/algorithm.h>
 #include <oBasis/oBasisRequirements.h>
 #include <oBasis/oLockThis.h>
 #include <oStd/for.h>
 #include <oStd/atomic.h>
 #include <oStd/chrono.h>
 #include <cassert>
+
+using namespace ouro;
 
 // use lowest-level assert in case this is inside a more robust assert implementation
 #define oLEAK_ASSERT(_Expression, _Message) assert((_Expression) && _Message);
@@ -76,7 +78,7 @@ static int& GetThreadlocalTrackingEnabled()
 	// a DLL perspective must point to the same bool value)
 	thread_local static int* pThreadlocalTrackingEnabled = nullptr;
 	// {410D255E-F3B1-4A37-B511-521627F7341E}
-	static const oStd::guid GUIDEnabled = { 0x410d255e, 0xf3b1, 0x4a37, { 0xb5, 0x11, 0x52, 0x16, 0x27, 0xf7, 0x34, 0x1e } };
+	static const guid GUIDEnabled = { 0x410d255e, 0xf3b1, 0x4a37, { 0xb5, 0x11, 0x52, 0x16, 0x27, 0xf7, 0x34, 0x1e } };
 	if (!pThreadlocalTrackingEnabled)
 	{
 		oThreadlocalMalloc(GUIDEnabled
@@ -111,7 +113,7 @@ void oLeakTracker::OnAllocation(uintptr_t _AllocationID, size_t _Size, const cha
 		#if oENABLE_RELEASE_ASSERTS == 1 || oENABLE_ASSERTS == 1
 			bool erased = 
 		#endif
-		oStd::find_and_erase((allocations_t::map_type&)This()->Allocations, _OldAllocationID);
+		find_and_erase((allocations_t::map_type&)This()->Allocations, _OldAllocationID);
 		oASSERT(_OldAllocationID || !erased, "Address already tracked, and this event type is not a reallocation");
 
 		ALLOCATION_DESC d;
@@ -140,7 +142,7 @@ void oLeakTracker::OnDeallocation(uintptr_t _AllocationID) threadsafe
 		InInternalProcesses = true;
 		// there may be existing allocs before tracking was enabled, so we're going 
 		// to have to ignore those since they weren't captured
-		oStd::find_and_erase(This()->Allocations, _AllocationID);
+		find_and_erase(This()->Allocations, _AllocationID);
 		InInternalProcesses = false;
 	}
 }
@@ -177,8 +179,8 @@ bool oLeakTracker::FindAllocation(uintptr_t _AllocationID, ALLOCATION_DESC* _pDe
 
 unsigned int oLeakTracker::InternalReportLeaks(bool _TraceReport, bool _WaitForAsyncAllocs, bool _CurrentContextOnly) const threadsafe
 {
-	oStd::xlstring buf;
-	oStd::sstring memsize;
+	xlstring buf;
+	sstring memsize;
 
 	This()->DelayLatch.release(); // inherently threadsafe API
 	if (oStd::cv_status::timeout == This()->DelayLatch.wait_for(oStd::chrono::milliseconds(5000))) // some delayed frees might be in threads that get stomped on (thus no exit code runs) during static deinit, so don't wait forever
@@ -214,7 +216,7 @@ unsigned int oLeakTracker::InternalReportLeaks(bool _TraceReport, bool _WaitForA
 
 			if (!headerPrinted && _TraceReport)
 			{
-				oStd::mstring Header;
+				mstring Header;
 				snprintf(Header, "========== Leak Report%s ==========\n", RecoveredFromAsyncLeaks ? " (recovered from async false positives)" : "");
 				This()->Desc.Print(Header);
 				headerPrinted = true;
@@ -225,7 +227,7 @@ unsigned int oLeakTracker::InternalReportLeaks(bool _TraceReport, bool _WaitForA
 
 			if (_TraceReport)
 			{
-				oStd::format_bytes(memsize, d.Size, 2);
+				format_bytes(memsize, d.Size, 2);
 
 				if (Desc.ReportAllocationIDAsHex)
 				{
@@ -262,9 +264,9 @@ unsigned int oLeakTracker::InternalReportLeaks(bool _TraceReport, bool _WaitForA
 
 		if (nLeaks && _TraceReport)
 		{
-			oStd::sstring strTotalLeakBytes;
-			oStd::mstring Footer;
-			oStd::format_bytes(strTotalLeakBytes, totalLeakBytes, 2);
+			sstring strTotalLeakBytes;
+			mstring Footer;
+			format_bytes(strTotalLeakBytes, totalLeakBytes, 2);
 			snprintf(Footer, "========== Leak Report: %u Leak(s) %s%s ==========\n", nLeaks, strTotalLeakBytes.c_str(), _WaitForAsyncAllocs ? " (recovered from async false positives)" : "");
 			This()->Desc.Print(Footer);
 		}

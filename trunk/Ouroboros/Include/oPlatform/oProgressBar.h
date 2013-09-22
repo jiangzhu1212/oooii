@@ -68,7 +68,7 @@ public:
 	char* GetTitle(char* _StrDestination, size_t _SizeofStrDestination) const { return GetWindow()->GetTitle(_StrDestination, _SizeofStrDestination); }
 	inline void SetTitle(const char* _Format, ...) threadsafe { va_list args; va_start(args, _Format); SetTitleV(_Format, args); va_end(args); }
 	template<size_t size> char* GetTitle(char (&_StrDestination)[size]) const { return GetTitle(_StrDestination, size); }
-	template<size_t capacity> char* GetTitle(oStd::fixed_string<char, capacity>& _StrDestination) const { return GetTitle(_StrDestination, _StrDestination.capacity()); }
+	template<size_t capacity> char* GetTitle(ouro::fixed_string<char, capacity>& _StrDestination) const { return GetTitle(_StrDestination, _StrDestination.capacity()); }
 	inline void FlushMessages(bool _WaitForNext = false) { GetWindow()->FlushMessages(_WaitForNext); }
 	inline void Quit() threadsafe { GetWindow()->Quit(); }
 	// Unique to oProgressBar
@@ -84,14 +84,14 @@ public:
 
 	inline void SetText(const char* _Format, ...) threadsafe { va_list args; va_start(args, _Format); SetTextV(_Format, args); va_end(args); }
 	template<size_t size> char* GetText(char (&_StrDestination)[size]) const { return GetText(_StrDestination, size); }
-	template<size_t capacity> char* GetText(oStd::fixed_string<char, capacity>& _StrDestination) const { return GetText(_StrDestination, _StrDestination.capacity()); }
+	template<size_t capacity> char* GetText(ouro::fixed_string<char, capacity>& _StrDestination) const { return GetText(_StrDestination, _StrDestination.capacity()); }
 
 	virtual void SetSubtextV(const char* _Format, va_list _Args) threadsafe = 0;
 	virtual char* GetSubtext(char* _StrDestination, size_t _SizeofStrDestination) const = 0;
 
 	inline void SetSubtext(const char* _Format, ...) threadsafe { va_list args; va_start(args, _Format); SetSubtextV(_Format, args); va_end(args); }
 	template<size_t size> char* GetSubtext(char (&_StrDestination)[size]) const { return GetSubtext(_StrDestination, size); }
-	template<size_t capacity> char* GetSubtext(oStd::fixed_string<char, capacity>& _StrDestination) const { return GetSubtext(_StrDestination, _StrDestination.capacity()); }
+	template<size_t capacity> char* GetSubtext(ouro::fixed_string<char, capacity>& _StrDestination) const { return GetSubtext(_StrDestination, _StrDestination.capacity()); }
 
 	// Sets the percentage complete. This value is internally clamped to [0,100], 
 	// unless set to a negative value in which case an unknown progress display is

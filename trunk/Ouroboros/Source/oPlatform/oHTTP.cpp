@@ -150,7 +150,7 @@ oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oHTTP_HEADER_FIELD)
 	oRTTI_ENUM_END_VALUES(oHTTP_HEADER_FIELD)
 oRTTI_ENUM_END_DESCRIPTION(oHTTP_HEADER_FIELD)
 
-namespace oStd {
+namespace ouro {
 
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTPHeaderField& _Fields) 
 {
@@ -171,7 +171,7 @@ bool from_string(oHTTPHeaderField* _pValue, const char* _StrSource)
 		++Value;
 	_pValue->Key = Key;
 	_pValue->Value = Value;
-// 	if (!oStd::from_string(&_pValue->Field, Value))
+// 	if (!ouro::from_string(&_pValue->Field, Value))
 // 		_pValue->Field = oHTTP_HEADER_NON_STANDARD;
 	oStrTokClose(&ctx);
 	return true;
@@ -179,16 +179,16 @@ bool from_string(oHTTPHeaderField* _pValue, const char* _StrSource)
 
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTPRequestInternal& _Request) 
 { 
-	if (!oStd::to_string(_StrDestination, _SizeofStrDestination, _Request.RequestLine))
+	if (!ouro::to_string(_StrDestination, _SizeofStrDestination, _Request.RequestLine))
 		return nullptr;
 
-	char* StrDest = oStd::byte_add(_StrDestination, strlen(_StrDestination));
+	char* StrDest = ouro::byte_add(_StrDestination, strlen(_StrDestination));
 	size_t SizeRemaining = _SizeofStrDestination - (StrDest - _StrDestination);
 
-	if (!oStd::to_string(StrDest, SizeRemaining, _Request.HeaderFieldsInternal))
+	if (!ouro::to_string(StrDest, SizeRemaining, _Request.HeaderFieldsInternal))
 		return nullptr;
 
-	if (oStd::sncatf(_StrDestination, _SizeofStrDestination, oNEWLINE))
+	if (ouro::sncatf(_StrDestination, _SizeofStrDestination, oNEWLINE))
 		return nullptr;
 
 	return _StrDestination;
@@ -199,10 +199,10 @@ bool from_string(oHTTPRequestInternal* _pValue, const char* _StrSource)
 	char* ctx = nullptr;
 	char* RequestLine = oStrTok(_StrSource, oNEWLINE, &ctx);
 	if (!RequestLine) return false;
-	oStd::finally free_ctx([&]() { oStrTokClose(&ctx); });
-	if (!oStd::from_string(&_pValue->RequestLine, RequestLine))
+	ouro::finally free_ctx([&]() { oStrTokClose(&ctx); });
+	if (!ouro::from_string(&_pValue->RequestLine, RequestLine))
 		return false;
-	if (!oStd::from_string(&_pValue->HeaderFieldsInternal, ctx))
+	if (!ouro::from_string(&_pValue->HeaderFieldsInternal, ctx))
 		return false;
 	return true;
 }
@@ -214,7 +214,7 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTP
 	// LF             = <US-ASCII LF, linefeed (10)>
 	// SP             = <US-ASCII SP, space (32)>
 	// Status-Line	  = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
-	return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%s %u %s" oNEWLINE, oStd::as_string(_StatusLine.Version), _StatusLine.StatusCode, _StatusLine.ReasonPhrase.c_str()) ? _StrDestination : nullptr; 
+	return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%s %u %s" oNEWLINE, ouro::as_string(_StatusLine.Version), _StatusLine.StatusCode, _StatusLine.ReasonPhrase.c_str()) ? _StrDestination : nullptr; 
 }
 
 bool from_string(oHTTP_RESPONSE::oHTTP_STATUS_LINE* _pValue, const char* _StrSource)
@@ -222,8 +222,8 @@ bool from_string(oHTTP_RESPONSE::oHTTP_STATUS_LINE* _pValue, const char* _StrSou
 	char* ctx = nullptr;
 	char* Version = oStrTok(_StrSource, " ", &ctx);
 	if (!Version) return false;
-	oStd::finally free_ctx([&]() { oStrTokClose(&ctx); });
-	if (!oStd::from_string(&_pValue->Version, Version))
+	ouro::finally free_ctx([&]() { oStrTokClose(&ctx); });
+	if (!ouro::from_string(&_pValue->Version, Version))
 		return false;
 
 	char* StatusCode = oStrTok(nullptr, " ", &ctx);
@@ -240,16 +240,16 @@ bool from_string(oHTTP_RESPONSE::oHTTP_STATUS_LINE* _pValue, const char* _StrSou
 
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTPResponseInternal& _Response) 
 { 
-	if (!oStd::to_string(_StrDestination, _SizeofStrDestination, _Response.StatusLine))
+	if (!ouro::to_string(_StrDestination, _SizeofStrDestination, _Response.StatusLine))
 		return nullptr;
 
-	char* StrDest = oStd::byte_add(_StrDestination, strlen(_StrDestination));
+	char* StrDest = ouro::byte_add(_StrDestination, strlen(_StrDestination));
 	size_t SizeRemaining = _SizeofStrDestination - (StrDest - _StrDestination);
 
-	if (!oStd::to_string(StrDest, SizeRemaining, _Response.HeaderFieldsInternal))
+	if (!ouro::to_string(StrDest, SizeRemaining, _Response.HeaderFieldsInternal))
 		return nullptr;
 
-	if (oStd::sncatf(_StrDestination, _SizeofStrDestination, oNEWLINE))
+	if (ouro::sncatf(_StrDestination, _SizeofStrDestination, oNEWLINE))
 		return nullptr;
 
 	return _StrDestination;
@@ -260,15 +260,15 @@ bool from_string(oHTTPResponseInternal* _pValue, const char* _StrSource)
 	char* ctx = nullptr;
 	char* RequestLine = oStrTok(_StrSource, oNEWLINE, &ctx);
 	if (!RequestLine) return false;
-	oStd::finally free_ctx([&]() { oStrTokClose(&ctx); });
-	if (!oStd::from_string(&_pValue->StatusLine, RequestLine))
+	ouro::finally free_ctx([&]() { oStrTokClose(&ctx); });
+	if (!ouro::from_string(&_pValue->StatusLine, RequestLine))
 		return false;
-	if (!oStd::from_string(&_pValue->HeaderFieldsInternal, ctx))
+	if (!ouro::from_string(&_pValue->HeaderFieldsInternal, ctx))
 		return false;
 	return true;
 }
 
-} // namespace oStd
+} // namespace ouro
 
 bool oHTTPHeaderFields::AddHeader(const char* _Header, const char* _Value)
 {
@@ -302,13 +302,13 @@ void oHTTPHeaderFields::ClearHeaders()
 	Vector.clear();
 }
 
-char* oStd::to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTPHeaderFields& _Fields) 
+char* ouro::to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTPHeaderFields& _Fields) 
 {
 	char* NextLine = _StrDestination;
 	size_t SizeRemaining = _SizeofStrDestination;
 	for (unsigned int i=0; i<_Fields.Vector.size(); ++i)
 	{
-		if (!oStd::to_string(NextLine, SizeRemaining, _Fields.Vector[i]))
+		if (!ouro::to_string(NextLine, SizeRemaining, _Fields.Vector[i]))
 			return nullptr;
 
 		size_t LineLength = strlen(NextLine);
@@ -317,16 +317,16 @@ char* oStd::to_string(char* _StrDestination, size_t _SizeofStrDestination, const
 	}
 	return _StrDestination;
 }
-bool oStd::from_string(oHTTPHeaderFields* _pValue, const char* _StrSource)
+bool ouro::from_string(oHTTPHeaderFields* _pValue, const char* _StrSource)
 {
 	// FIXME: oStrTok will probably not return the empty line and skip right over the two newlines in a row...
 	char* ctx;
 	char* Header = oStrTok(_StrSource, oNEWLINE, &ctx);
-	oStd::finally free_ctx([&]() { oStrTokClose(&ctx); });
+	ouro::finally free_ctx([&]() { oStrTokClose(&ctx); });
 	while (Header)
 	{
 		oHTTPHeaderField Field;
-		if (!oStd::from_string(&Field, Header))
+		if (!ouro::from_string(&Field, Header))
 			return false;
 		_pValue->Vector.push_back(Field);
 
@@ -337,22 +337,22 @@ bool oStd::from_string(oHTTPHeaderFields* _pValue, const char* _StrSource)
 	return true;
 }
 
-char* oStd::to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTP_REQUEST::oHTTP_REQUEST_LINE& _RequestLine) 
+char* ouro::to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTP_REQUEST::oHTTP_REQUEST_LINE& _RequestLine) 
 { 
 	// From RFC 2616 - HTTP/1.1: 
 	// CR             = <US-ASCII CR, carriage return (13)>
 	// LF             = <US-ASCII LF, linefeed (10)>
 	// SP             = <US-ASCII SP, space (32)>
 	// Request-Line   = Method SP Request-URI SP HTTP-Version CRLF
-	return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%s %s %s" oNEWLINE, oStd::as_string(_RequestLine.Method), _RequestLine.RequestURI.c_str(), oStd::as_string(_RequestLine.Version)) ? _StrDestination : nullptr; 
+	return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%s %s %s" oNEWLINE, ouro::as_string(_RequestLine.Method), _RequestLine.RequestURI.c_str(), ouro::as_string(_RequestLine.Version)) ? _StrDestination : nullptr; 
 }
-bool oStd::from_string(oHTTP_REQUEST::oHTTP_REQUEST_LINE* _pValue, const char* _StrSource)
+bool ouro::from_string(oHTTP_REQUEST::oHTTP_REQUEST_LINE* _pValue, const char* _StrSource)
 {
 	char* ctx = nullptr;
 	char* Value = oStrTok(_StrSource, " ", &ctx);
-	oStd::finally free_ctx([&]() { oStrTokClose(&ctx); });
+	ouro::finally free_ctx([&]() { oStrTokClose(&ctx); });
 	if (!Value) return false;
-	if (!oStd::from_string(&_pValue->Method, Value))
+	if (!ouro::from_string(&_pValue->Method, Value))
 		return false;
 
 	Value = oStrTok(nullptr, " ", &ctx);
@@ -361,7 +361,7 @@ bool oStd::from_string(oHTTP_REQUEST::oHTTP_REQUEST_LINE* _pValue, const char* _
 
 	Value = oStrTok(nullptr, " " oNEWLINE, &ctx);
 	if (!Value) return false;
-	if (!oStd::from_string(&_pValue->Version, Value))
+	if (!ouro::from_string(&_pValue->Version, Value))
 		return false;
 
 	return true;
@@ -407,36 +407,36 @@ oAPI bool oHTTPAddHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _
 {
 	if(!_HeaderFields)
 		return false;
-	return _HeaderFields->AddHeader(oStd::as_string(_Field), _Value);
+	return _HeaderFields->AddHeader(ouro::as_string(_Field), _Value);
 }
 oAPI bool oHTTPAddHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, unsigned int _Value)
 {
 	if(!_HeaderFields)
 		return false;
-	oStd::sstring StrValue;
+	ouro::sstring StrValue;
 	snprintf(StrValue, "%u", _Value);
-	return _HeaderFields->AddHeader(oStd::as_string(_Field), StrValue.c_str());
+	return _HeaderFields->AddHeader(ouro::as_string(_Field), StrValue.c_str());
 }
 oAPI bool oHTTPFindHeader(const oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, const char** _Value)
 {
 	if(!_HeaderFields)
 		return false;
-	return _HeaderFields->FindHeader(oStd::as_string(_Field), _Value);
+	return _HeaderFields->FindHeader(ouro::as_string(_Field), _Value);
 }
 oAPI bool oHTTPFindHeader(const oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, unsigned int* _Value)
 {
 	if(!_HeaderFields)
 		return false;
 	const char* Value;
-	if (!_HeaderFields->FindHeader(oStd::as_string(_Field), &Value))
+	if (!_HeaderFields->FindHeader(ouro::as_string(_Field), &Value))
 		return false;
-	return oStd::from_string(_Value, Value);
+	return ouro::from_string(_Value, Value);
 }
 oAPI bool oHTTPRemoveHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field)
 {
 	if(!_HeaderFields)
 		return false;
-	return _HeaderFields->RemoveHeader(oStd::as_string(_Field));
+	return _HeaderFields->RemoveHeader(ouro::as_string(_Field));
 }
 oAPI void oHTTPClearHeaders(oHTTP_HEADER_FIELDS _HeaderFields)
 {
@@ -466,7 +466,7 @@ bool oExtractHTTPHeader(const char* _pData, size_t _SizeofData, char* _pHeader, 
 		return false;
 
 	// First copy the new data to the header buffer, since the end-marker (two oNEWLINEs in a row) might be split into multiple data packets
-	memcpy_s(oStd::byte_add(_pHeader, *_pSizeofHeader), (_MaxHeaderSize - *_pSizeofHeader), _pData, _SizeofData);
+	memcpy_s(ouro::byte_add(_pHeader, *_pSizeofHeader), (_MaxHeaderSize - *_pSizeofHeader), _pData, _SizeofData);
 
 	// Put a zero terminator at the end of what we just copied (or at the end of the buffer in case of it filling up)
 	_pHeader[__min(*_pSizeofHeader + _SizeofData, _MaxHeaderSize - 1)] = 0;
@@ -483,7 +483,7 @@ bool oExtractHTTPHeader(const char* _pData, size_t _SizeofData, char* _pHeader, 
 		return false;
 	}
 
-	// Zero terminate, oStd::from_string() needs to know when to stop parsing header fields
+	// Zero terminate, ouro::from_string() needs to know when to stop parsing header fields
 	HeaderEnd[0] = 0;
 
 	*_pSizeofDataTaken += ((HeaderEnd - _pHeader) - *_pSizeofHeader);
@@ -500,7 +500,7 @@ bool oExtractContent(const void* _pData, size_t _SizeofData, void* _pContent, si
 
 	size_t SizeToCopy = NewContentSize - *_pSizeofContent;
 	if (SizeToCopy)
-		memcpy_s(oStd::byte_add(_pContent, *_pSizeofContent), (_TotalContentSize - *_pSizeofContent), _pData, SizeToCopy);
+		memcpy_s(ouro::byte_add(_pContent, *_pSizeofContent), (_TotalContentSize - *_pSizeofContent), _pData, SizeToCopy);
 
 	*_pSizeofDataTaken += NewContentSize - *_pSizeofContent;
 	*_pSizeofContent = NewContentSize;
@@ -517,7 +517,7 @@ bool oInsertContent(const void* _pContent, size_t _SizeofContent, void* _pBuffer
 
 	size_t SizeToCopy = NewBufferSize - *_pSizeofBuffer;
 	if (SizeToCopy)
-		memcpy_s(oStd::byte_add(_pBuffer, *_pSizeofBuffer), _TotalBufferSize - *_pSizeofBuffer, _pContent, SizeToCopy);
+		memcpy_s(ouro::byte_add(_pBuffer, *_pSizeofBuffer), _TotalBufferSize - *_pSizeofBuffer, _pContent, SizeToCopy);
 
 	if (_pSizeofContentTaken)
 	{

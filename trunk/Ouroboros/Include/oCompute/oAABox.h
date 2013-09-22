@@ -61,7 +61,7 @@ namespace oCompute {
 		inline TVec size() const { return abs(Max - Min); }
 		inline TVec center() const { return Min + size() / T(2.0); }
 		inline T bounding_radius() const { return length(Max - Min) / T(2.0); }
-		inline bool operator==(const aabox<T, TVec>& _That) const { return oStd::equal(Min, _That.Min) && oStd::equal(Max, _That.Max); }
+		inline bool operator==(const aabox<T, TVec>& _That) const { return ouro::equal(Min, _That.Min) && ouro::equal(Max, _That.Max); }
 		TVec Min;
 		TVec Max;
 	};

@@ -27,13 +27,15 @@
 #include <oBasis/oLockThis.h>
 #include <oBasis/oRefCount.h>
 #include <oConcurrency/mutex.h>
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/Windows/oWindows.h>
 #include <dshow.h>
 #include <assert.h>
 #include <vector>
 #include "oCamera_QEdit.h"
+
+using namespace ouro;
 
 // 73646976-0000-0010-8000-00AA00389B71
 static const oGUID oGUID_MEDIATYPE_Video = { 0x73646976, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71 } };
@@ -280,18 +282,18 @@ protected:
 	bool GetSetModeList(unsigned int* _pNumModes, MODE* _pModes, const MODE* _pNewMode) threadsafe;
 
 	oDSSampleGrabberCB SampleGrabberCB;
-	oStd::intrusive_ptr<ISampleGrabber> SampleGrabber;
-	oStd::intrusive_ptr<IBaseFilter> VideoInput;
-	oStd::intrusive_ptr<IBaseFilter> VideoOutput;
-	oStd::intrusive_ptr<IGraphBuilder> GraphBuilder;
-	oStd::intrusive_ptr<IAMStreamConfig> StreamConfig;
+	intrusive_ptr<ISampleGrabber> SampleGrabber;
+	intrusive_ptr<IBaseFilter> VideoInput;
+	intrusive_ptr<IBaseFilter> VideoOutput;
+	intrusive_ptr<IGraphBuilder> GraphBuilder;
+	intrusive_ptr<IAMStreamConfig> StreamConfig;
 	oRefCount RefCount;
 	DESC Desc;
 	oConcurrency::shared_mutex DescMutex;
 	oStd::atomic_uint RingBufferReadIndex;
 	unsigned int MonotonicCounter;
 	unsigned int ID;
-	oInitOnce<oStd::uri_string> Name;
+	oInitOnce<uri_string> Name;
 	volatile bool Running;
 
 	struct FRAME
@@ -334,7 +336,7 @@ oDSCamera::oDSCamera(IGraphBuilder* _pGraphBuilder, IAMStreamConfig* _pStreamCon
 
 oDSCamera::~oDSCamera()
 {
-	oStd::intrusive_ptr<IMediaControl> MediaControl;
+	intrusive_ptr<IMediaControl> MediaControl;
 	oV(GraphBuilder->QueryInterface(IID_PPV_ARGS(&MediaControl)));
 	MediaControl->Stop();
 }
@@ -364,12 +366,12 @@ void oDSCamera::DestroyOutput()
 bool oDSCamera::RecreateOutput(const MODE& _Mode)
 {
 	if (GUID_NULL == oDSGetMediaSubType(_Mode.Format))
-		return oErrorSetLast(std::errc::invalid_argument, "Unsupported format %s", oStd::as_string(_Mode.Format));
+		return oErrorSetLast(std::errc::invalid_argument, "Unsupported format %s", as_string(_Mode.Format));
 
 	// Create an output node and attach it to the input
 	CoCreateInstance((const GUID&)oGUID_CLSID_SampleGrabber, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&VideoOutput));
 	oV(GraphBuilder->AddFilter(VideoOutput, L"Sample Grabber"));
-	oStd::intrusive_ptr<IEnumPins> EnumPins;
+	intrusive_ptr<IEnumPins> EnumPins;
 	if (FAILED(VideoInput->EnumPins(&EnumPins)))
 	{
 		oWinSetLastError();
@@ -377,7 +379,7 @@ bool oDSCamera::RecreateOutput(const MODE& _Mode)
 	}
 
 	bool connectedFilters = false;
-	oStd::intrusive_ptr<IPin> Pin;
+	intrusive_ptr<IPin> Pin;
 	while (S_OK == EnumPins->Next(1, &Pin, nullptr))
 	{
 		if (SUCCEEDED(SampleCode::ConnectFilters(GraphBuilder, Pin, VideoOutput)))
@@ -398,7 +400,7 @@ bool oDSCamera::RecreateOutput(const MODE& _Mode)
 	outputType.majortype = (const GUID&)oGUID_MEDIATYPE_Video;
 	outputType.subtype = oDSGetMediaSubType(_Mode.Format);
 	if (outputType.subtype == GUID_NULL)
-		return oErrorSetLast(std::errc::not_supported, "Unsupported format: %s", oStd::as_string(_Mode.Format));
+		return oErrorSetLast(std::errc::not_supported, "Unsupported format: %s", as_string(_Mode.Format));
 
 	oV(SampleGrabber->SetMediaType(&outputType));
 	return true;
@@ -567,7 +569,7 @@ bool oDSCamera::GetSetModeList(unsigned int* _pNumModes, MODE* _pModes, const MO
 		std::sort(_pModes, _pModes + *_pNumModes);
 
 	if (_pNewMode)
-		return oErrorSetLast(std::errc::not_supported, "Mode not valid %s %dx%d", oStd::as_string(_pNewMode->Format), _pNewMode->Dimensions.x, _pNewMode->Dimensions.y);
+		return oErrorSetLast(std::errc::not_supported, "Mode not valid %s %dx%d", as_string(_pNewMode->Format), _pNewMode->Dimensions.x, _pNewMode->Dimensions.y);
 
 	return true;
 }
@@ -586,18 +588,18 @@ float oDSCamera::GetFPS() const threadsafe
 bool oDSCamera::SetMode(const MODE& _Mode) threadsafe
 {
 	if (GUID_NULL == oDSGetMediaSubType(_Mode.Format))
-		return oErrorSetLast(std::errc::invalid_argument, "Unsupported format %s", oStd::as_string(_Mode.Format));
+		return oErrorSetLast(std::errc::invalid_argument, "Unsupported format %s", as_string(_Mode.Format));
 
 	MODE closest;
 	if (!FindClosestMatchingMode(_Mode, &closest))
 		return false;
 
 	if (memcmp(&closest, &_Mode, sizeof(MODE)))
-		return oErrorSetLast(std::errc::not_supported, "Unsupported mode specified: %s %dx%d", oStd::as_string(_Mode.Format), _Mode.Dimensions.x, _Mode.Dimensions.y);
+		return oErrorSetLast(std::errc::not_supported, "Unsupported mode specified: %s %dx%d", as_string(_Mode.Format), _Mode.Dimensions.x, _Mode.Dimensions.y);
 
 	auto pThis = oLockThis(DescMutex);
 
-	oStd::intrusive_ptr<IMediaControl> MediaControl;
+	intrusive_ptr<IMediaControl> MediaControl;
 	oV(GraphBuilder->QueryInterface(IID_PPV_ARGS(&MediaControl)));
 
 	// Prevent deadlock in BufferCB, we've got an exclusive above
@@ -628,7 +630,7 @@ bool oDSCamera::SetCapturing(bool _Capturing) threadsafe
 {
 	auto pThis = oLockThis(DescMutex);
 
-	oStd::intrusive_ptr<IMediaControl> MediaControl;
+	intrusive_ptr<IMediaControl> MediaControl;
 	oV(GraphBuilder->QueryInterface(IID_PPV_ARGS(&MediaControl)));
 
 	Running = _Capturing;
@@ -658,7 +660,7 @@ bool oDSCamera::Map(MAPPED* _pMapped) threadsafe
 		d.Dimensions = int3(thread_cast<DESC&>(Desc).Mode.Dimensions, 1);
 		d.Format = Desc.Mode.Format;
 		d.Layout = oSURFACE_LAYOUT_IMAGE;
-		_pMapped->pData = oStd::data(pThis->RingBuffer[index].Data);
+		_pMapped->pData = data(pThis->RingBuffer[index].Data);
 		_pMapped->RowPitch = oSurfaceMipCalcRowPitch(d);
 		_pMapped->Frame = pThis->RingBuffer[index].Frame;
 	}
@@ -680,7 +682,7 @@ unsigned int oDSCamera::CalculateSourceRowPitch() const
 {
 	// BITMAPINFOHEADER rules, BITMAPs are aligned to 4 pixels per row when 
 	// allocating the image size.
-	return oStd::byte_align(Desc.Mode.Dimensions.x, 4) * oSurfaceFormatGetSize(Desc.Mode.Format);
+	return byte_align(Desc.Mode.Dimensions.x, 4) * oSurfaceFormatGetSize(Desc.Mode.Format);
 }
 
 bool oDSCamera::BufferCB(double _SampleTime, void* _pBuffer, size_t _SizeofBuffer)
@@ -692,8 +694,8 @@ bool oDSCamera::BufferCB(double _SampleTime, void* _pBuffer, size_t _SizeofBuffe
 		int WriteIndex = (RingBufferReadIndex + 1) % oCOUNTOF(RingBuffer);
 	
 		FRAME& f = RingBuffer[WriteIndex];
-		oCRTASSERT(_SizeofBuffer == oStd::size(f.Data), "Mismatched buffer size. Got %u bytes, expected %u bytes", _SizeofBuffer, oStd::size(f.Data));
-		if (_SizeofBuffer != oStd::size(f.Data))
+		oCRTASSERT(_SizeofBuffer == size(f.Data), "Mismatched buffer size. Got %u bytes, expected %u bytes", _SizeofBuffer, size(f.Data));
+		if (_SizeofBuffer != size(f.Data))
 			return false;
 		f.Frame = MonotonicCounter++;
 		f.SampleTime = _SampleTime;
@@ -705,7 +707,7 @@ bool oDSCamera::BufferCB(double _SampleTime, void* _pBuffer, size_t _SizeofBuffe
 		int DestRowPitch = oSurfaceMipCalcRowPitch(d);
 		int DestRowSize = oSurfaceMipCalcRowSize(Desc.Mode.Format, Desc.Mode.Dimensions);
 		int NumRows = oSurfaceMipCalcNumRows(Desc.Mode.Format, Desc.Mode.Dimensions);
-		oStd::memcpy2dvflip(oStd::data(f.Data), DestRowPitch, _pBuffer, CalculateSourceRowPitch(), DestRowSize, NumRows);
+		memcpy2dvflip(data(f.Data), DestRowPitch, _pBuffer, CalculateSourceRowPitch(), DestRowSize, NumRows);
 		RingBufferReadIndex.exchange(WriteIndex);
 	}
 
@@ -722,15 +724,15 @@ static bool oDSCreateCaptureGraphBuilder(ICaptureGraphBuilder2** _ppCaptureGraph
 
 static bool oDSMonikerEnum(unsigned int _Index, IMoniker** _ppMoniker)
 {
-	oStd::intrusive_ptr<ICreateDevEnum> DevEnum;
+	intrusive_ptr<ICreateDevEnum> DevEnum;
 	oVB_RETURN2(CoCreateInstance((const GUID&)oGUID_CLSID_SystemDeviceEnum, nullptr, CLSCTX_INPROC_SERVER, (const GUID&)oGUID_IID_ICreateDevEnum, (void**)&DevEnum));
 
-	oStd::intrusive_ptr<IEnumMoniker> EnumMoniker;
+	intrusive_ptr<IEnumMoniker> EnumMoniker;
 	HRESULT hr = DevEnum->CreateClassEnumerator((const GUID&)oGUID_CLSID_VideoInputDeviceCategory, &EnumMoniker, 0);
 	if (S_OK != hr)
-		return oErrorSetLast(std::errc::no_such_device, "No video input devices found%s", oIsWindows64Bit() ? " (might be because of a 32-bit driver on 64-bit Windows)" : "");
+		return oErrorSetLast(std::errc::no_such_device, "No video input devices found%s", /*oIsWindows64Bit()*/true ? " (might be because of a 32-bit driver on 64-bit Windows)" : "");
 
-	std::vector<oStd::intrusive_ptr<IMoniker> > Monikers;
+	std::vector<intrusive_ptr<IMoniker> > Monikers;
 	Monikers.resize(_Index + 1);
 
 	ULONG nFetched = 0;
@@ -745,11 +747,11 @@ static bool oDSMonikerEnum(unsigned int _Index, IMoniker** _ppMoniker)
 
 bool oDSGetStringProperty(char* _StrDestination, size_t _SizeofStrDestination, IMoniker* _pMoniker, const char* _Property)
 {
-	oStd::intrusive_ptr<IPropertyBag> PropertyBag;
+	intrusive_ptr<IPropertyBag> PropertyBag;
 	oVB_RETURN2(_pMoniker->BindToStorage(nullptr, nullptr, IID_IPropertyBag, (void**)&PropertyBag));
 	VARIANT varName;
 	VariantInit(&varName);
-	oStd::lwstring PropertyName = _Property;
+	lwstring PropertyName = _Property;
 	oVB_RETURN2(PropertyBag->Read(PropertyName.c_str(), &varName, 0));
 	wcsltombs(_StrDestination, varName.bstrVal, _SizeofStrDestination);
 	VariantClear(&varName);
@@ -761,7 +763,7 @@ bool oDSGetDisplayName(char* _StrDestination, size_t _SizeofStrDestination, IMon
 	LPOLESTR lpDisplayName = nullptr;
 	oVB_RETURN2(_pMoniker->GetDisplayName(nullptr, nullptr, &lpDisplayName));
 	wcsltombs(_StrDestination, lpDisplayName, _SizeofStrDestination);
-	oStd::intrusive_ptr<IMalloc> Malloc;
+	intrusive_ptr<IMalloc> Malloc;
 	oVB_RETURN2(CoGetMalloc(1, &Malloc));
 	Malloc->Free(lpDisplayName);
 	return true;
@@ -778,25 +780,25 @@ bool oCameraEnum(unsigned int _Index, threadsafe oCamera** _ppCamera)
 	//	return oErrorSetLast(std::errc::not_supported, "oCamera is not supported in 64-bit builds because of the lack of valid 64-bit camera drivers or a way of reliably determining if a camera returned uses 32- or 64-bit drivers.");
 
 	oV(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED));
-	oStd::finally OnScopeExit([&] { CoUninitialize(); });
+	finally OnScopeExit([&] { CoUninitialize(); });
 
-	oStd::intrusive_ptr<IMoniker> Moniker;
+	intrusive_ptr<IMoniker> Moniker;
 	if (!oDSMonikerEnum(_Index, &Moniker))
 		return false;
 
-	oStd::uri_string Name;
+	uri_string Name;
 	oDSGetStringProperty(Name.c_str(), Name.capacity(), Moniker, "FriendlyName");
-	//oStd::mstring Description;
+	//mstring Description;
 	//oDSGetStringProperty(Description.c_str(), Description.capacity(), Moniker, "Description");
-	//oStd::mstring DevicePath;
+	//mstring DevicePath;
 	//oDSGetStringProperty(DevicePath.c_str(), DevicePath.capacity(), Moniker, "DevicePath");
 	// This comes out more consistently than DevicePath, but we use ID below
-	//oStd::mstring DisplayName;
+	//mstring DisplayName;
 	//oVERIFY(oDSGetDisplayName(DisplayName.c_str(), DisplayName.capacity(), Moniker));
 	unsigned int MonikerID = 0;
 	oV(Moniker->Hash((DWORD*)&MonikerID));
 
-	oStd::intrusive_ptr<IBaseFilter> BaseFilter;
+	intrusive_ptr<IBaseFilter> BaseFilter;
 	if (FAILED(Moniker->BindToObject(nullptr, nullptr, (const GUID&)oGUID_IID_IBaseFilter, (void**)&BaseFilter)))
 		return oErrorSetLast(std::errc::function_not_supported, "Found device \"%s\" (ID=0x%x), but could not bind an interface for it", Name.c_str(), MonikerID);
 
@@ -804,14 +806,14 @@ bool oCameraEnum(unsigned int _Index, threadsafe oCamera** _ppCamera)
 
 	oTRACE("Found device \"%s\" (ID=0x%x), continuing...", Name.c_str(), MonikerID);
 
-	oStd::intrusive_ptr<ICaptureGraphBuilder2> CaptureGraphBuilder;
-	oStd::intrusive_ptr<IGraphBuilder> GraphBuilder;
+	intrusive_ptr<ICaptureGraphBuilder2> CaptureGraphBuilder;
+	intrusive_ptr<IGraphBuilder> GraphBuilder;
 	if (!oDSCreateCaptureGraphBuilder(&CaptureGraphBuilder, &GraphBuilder))
 		return oWinSetLastError();
 
 	if (SUCCEEDED(GraphBuilder->AddFilter(BaseFilter, L"Video Input")))
 	{
-		oStd::intrusive_ptr<IAMStreamConfig> AMStreamConfig;
+		intrusive_ptr<IAMStreamConfig> AMStreamConfig;
 		if (SUCCEEDED(CaptureGraphBuilder->FindInterface(nullptr, (const GUID*)&oGUID_MEDIATYPE_Video, BaseFilter, (const GUID&)oGUID_IID_IAMStreamConfig, (void**)&AMStreamConfig)))
 		{
 			// At this point there is a camera. A camera most likely can support 

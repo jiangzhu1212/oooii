@@ -26,6 +26,8 @@
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinWindowing.h>
 
+using namespace ouro;
+
 HWND oWinStatusBarCreate(HWND _hParent, HMENU _ID, int _MinHeight)
 {
 	HWND hWnd = CreateWindowEx(
@@ -50,7 +52,7 @@ HWND oWinStatusBarCreate(HWND _hParent, HMENU _ID, int _MinHeight)
 
 bool oWinIsStatusBar(HWND _hStatusBar)
 {
-	oStd::sstring ClassName;
+	sstring ClassName;
 	if (!GetClassName(_hStatusBar, ClassName.c_str(), oInt(ClassName.capacity())))
 		return false;
 
@@ -107,9 +109,9 @@ static int oWinStatusBarGetStyle(oGUI_BORDER_STYLE _Style)
 
 void oWinStatusBarSetText(HWND _hStatusBar, int _ItemIndex, oGUI_BORDER_STYLE _BorderStyle, const char* _Format, va_list _Args)
 {
-	oStd::lstring s;
-	oStd::vsnprintf(s, _Format, _Args);
-	oStd::ellipsize(s);
+	lstring s;
+	vsnprintf(s, _Format, _Args);
+	ellipsize(s);
 	WPARAM w = (_ItemIndex & 0xff) | oWinStatusBarGetStyle(_BorderStyle);
 	if (!SendMessage(_hStatusBar, SB_SETTEXT, w, (LPARAM)s.c_str()))
 	{

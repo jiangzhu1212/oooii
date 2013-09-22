@@ -23,17 +23,19 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oBasisTestCommon.h"
-#include <oStd/algorithm.h>
+#include <oBase/algorithm.h>
 #include <oBasis/oStdStringSupport.h>
 #include <oBasis/oMath.h>
 #include <vector>
+
+using namespace ouro;
 
 bool oBasisTest_oString()
 {
 	std::vector<oRECT> testRect;
 
 	const char* rectString = "-6 -7 8 4, 0 0 1 1, -4 5 3 34";
-	oStd::from_string(&testRect, rectString);
+	from_string(&testRect, rectString);
 	oTESTB(testRect.size() == 3, "Should have converted 3 rects but instead converted %i", testRect.size());
 
 	int2 mins[] = 

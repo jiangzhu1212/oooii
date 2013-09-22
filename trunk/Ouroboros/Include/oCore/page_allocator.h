@@ -29,7 +29,7 @@
 #ifndef oCore_page_allocator_h
 #define oCore_page_allocator_h
 
-namespace oCore {
+namespace ouro {
 	namespace page_allocator {
 
 /* enum class */ namespace status
@@ -112,6 +112,6 @@ void set_access(void* _BaseAddress, size_t _Size, access::value _Access);
 void set_pagability(void* _BaseAddress, size_t _Size, bool _Pageable);
 
 	} // namespace page_allocator
-} // namespace oCore
+} // namespace ouro
 
 #endif

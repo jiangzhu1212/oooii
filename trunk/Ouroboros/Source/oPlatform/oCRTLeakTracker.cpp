@@ -27,6 +27,8 @@
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oReporting.h>
 
+using namespace ouro;
+
 // {F253EA65-29FC-47D0-9E2E-400DAC41D861}
 const oGUID oCRTLeakTracker::GUID = { 0xf253ea65, 0x29fc, 0x47d0, { 0x9e, 0x2e, 0x40, 0xd, 0xac, 0x41, 0xd8, 0x61 } };
 oSINGLETON_REGISTER(oCRTLeakTracker);
@@ -43,7 +45,7 @@ oCRTLeakTracker::oCRTLeakTracker()
 {
 	oReportingReference(); // reporting keeps a log file... don't track that
 
-	pLeakTracker = new oLeakTracker(oCore::debugger::callstack, oCore::debugger::format, oCore::debugger::print, false, false
+	pLeakTracker = new oLeakTracker(ouro::debugger::callstack, ouro::debugger::format, ouro::debugger::print, false, false
 		, oStdLinearAllocator<oLeakTracker::allocations_t::value_type>(untracked_malloc(kTrackingInternalReserve)
 			, kTrackingInternalReserve, &NonLinearBytes, untracked_malloc, untracked_free));
 
@@ -63,8 +65,8 @@ oCRTLeakTracker::~oCRTLeakTracker()
 
 	if (NonLinearBytes)
 	{
-		oStd::mstring buf;
-		oStd::format_bytes(buf, NonLinearBytes, 2);
+		mstring buf;
+		format_bytes(buf, NonLinearBytes, 2);
 		oTRACE("CRT Leak Tracker: Allocated %s beyond the internal reserve. Increase kTrackingInternalReserve to improve performance, especially on shutdown.", buf.c_str());
 	}
 

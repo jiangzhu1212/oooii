@@ -28,6 +28,7 @@
 #include <oConcurrency/mutex.h>
 #include <oConcurrency/thread_safe.h>
 
+using namespace ouro;
 using namespace oConcurrency;
 
 oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oAIR_KEY)
@@ -41,13 +42,13 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oAIR_KEY)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oAIR_KEY)
 oRTTI_COMPOUND_END_DESCRIPTION(oAIR_KEY)
 
-bool oParseAirKeySetsList(const oStd::xml& _XML, oStd::xml::node _AirSetList, const char* _AirKeySetName, threadsafe oAirKeySet** _ppAirKeySet)
+bool oParseAirKeySetsList(const xml& _XML, xml::node _AirSetList, const char* _AirKeySetName, threadsafe oAirKeySet** _ppAirKeySet)
 {
 	const char* Name = _XML.node_name(_AirSetList);
 	if (!oSTRVALID(Name) && _stricmp(Name, "oAirKeySetList"))
 		return oErrorSetLast(std::errc::invalid_argument, "The specified node is not an \"oAirKeySetList\" in %s", _XML.name());
 
-	oStd::xml::node AirKeySet = _XML.first_child(_AirSetList, "oAirKeySet");
+	xml::node AirKeySet = _XML.first_child(_AirSetList, "oAirKeySet");
 	if (!AirKeySet)
 		return oErrorSetLast(std::errc::protocol_error, "Could not find \"oAirKeySet\" named \"%s\" in %s", oSAFESTRN(_AirKeySetName), _XML.name());
 
@@ -72,16 +73,16 @@ struct oAirKeySetImpl : oAirKeySet
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_NOOP_QUERYINTERFACE();
 
-	oAirKeySetImpl(const oStd::xml& _XML, oStd::xml::node _AirSet, bool* _pSuccess);
+	oAirKeySetImpl(const xml& _XML, xml::node _AirSet, bool* _pSuccess);
 
 	const char* GetName() const threadsafe override { return oThreadsafe(this)->Name; }
 
 	std::vector<oAIR_KEY> Keys;
-	oStd::mstring Name;
+	mstring Name;
 	oRefCount RefCount;
 };
 
-oAirKeySetImpl::oAirKeySetImpl(const oStd::xml& _XML, oStd::xml::node _AirSet, bool* _pSuccess)
+oAirKeySetImpl::oAirKeySetImpl(const xml& _XML, xml::node _AirSet, bool* _pSuccess)
 {
 	*_pSuccess = false;
 
@@ -91,9 +92,9 @@ oAirKeySetImpl::oAirKeySetImpl(const oStd::xml& _XML, oStd::xml::node _AirSet, b
 		return;
 	}
 
-	oStd::version v(1,0);
+	version v(1,0);
 	_XML.find_attr_value(_AirSet, "version", &v);
-	if (v == oStd::version(1,0))
+	if (v == version(1,0))
 	{
 		_XML.find_attr_value(_AirSet, "name", &Name);
 		oXMLReadContainer(&Keys, sizeof(Keys), oRTTI_OF(std_vector_oAIR_KEY), "oAirKey", false, _XML, _AirSet, true);
@@ -101,15 +102,15 @@ oAirKeySetImpl::oAirKeySetImpl(const oStd::xml& _XML, oStd::xml::node _AirSet, b
 
 	else
 	{
-		oStd::sstring strVer;
-		oErrorSetLast(std::errc::protocol_error, "unsupported version %s", oStd::to_string(strVer, v));
+		sstring strVer;
+		oErrorSetLast(std::errc::protocol_error, "unsupported version %s", to_string(strVer, v));
 		return;
 	}
 
 	*_pSuccess = true;
 }
 
-bool oAirKeySetCreate(const oStd::xml& _XML, oStd::xml::node _AirSetNode, threadsafe oAirKeySet** _ppAirKeySet)
+bool oAirKeySetCreate(const xml& _XML, xml::node _AirSetNode, threadsafe oAirKeySet** _ppAirKeySet)
 {
 	bool success = false;
 	oCONSTRUCT(_ppAirKeySet, oAirKeySetImpl(_XML, _AirSetNode, &success));
@@ -134,7 +135,7 @@ struct oAirKeyboardImpl : oAirKeyboard
 
 private:
 	oConcurrency::shared_mutex KeySetMutex;
-	oStd::intrusive_ptr<threadsafe oAirKeySet> KeySet;
+	intrusive_ptr<threadsafe oAirKeySet> KeySet;
 	std::vector<oGUI_ACTION> KeyAction;
 
 	oConcurrency::shared_mutex SkeletonsMutex;
@@ -171,7 +172,7 @@ void oAirKeyboardImpl::SetKeySet(threadsafe oAirKeySet* _pKeySet) threadsafe
 		const auto& Keys = thread_cast<oAirKeySetImpl*>(static_cast<threadsafe oAirKeySetImpl*>(KeySet.c_ptr()))->Keys;
 		auto& Actions = oThreadsafe(this)->KeyAction;
 		Actions.resize(Keys.size());
-		oStd::fill(Actions, oGUI_ACTION_KEY_UP);
+		fill(Actions, oGUI_ACTION_KEY_UP);
 	}
 }
 
@@ -190,25 +191,25 @@ void oAirKeyboardImpl::VisitKeys(const oAIR_KEY_VISITOR& _Visitor) threadsafe
 bool oAirKeyboardImpl::AddSkeleton(int _ID) threadsafe
 {
 	lock_guard<shared_mutex> lock(SkeletonsMutex);
-	return oStd::unique_set(oThreadsafe(Skeletons), _ID, oGUI_BONE_DESC());
+	return unique_set(oThreadsafe(Skeletons), _ID, oGUI_BONE_DESC());
 }
 
 void oAirKeyboardImpl::RemoveSkeleton(int _ID) threadsafe
 {
 	lock_guard<shared_mutex> lock(SkeletonsMutex);
-	oStd::find_and_erase(oThreadsafe(Skeletons), _ID);
+	find_and_erase(oThreadsafe(Skeletons), _ID);
 }
 
 int oAirKeyboardImpl::HookActions(const oGUI_ACTION_HOOK& _Hook) threadsafe
 {
 	lock_guard<shared_mutex> lockB(HooksMutex);
-	return oInt(oStd::sparse_set(oThreadsafe(Hooks), _Hook));
+	return oInt(sparse_set(oThreadsafe(Hooks), _Hook));
 }
 
 void oAirKeyboardImpl::UnhookActions(int _HookID) threadsafe
 {
 	lock_guard<shared_mutex> lock(HooksMutex);
-	oStd::ranged_set(oThreadsafe(Hooks), _HookID, nullptr);
+	ranged_set(oThreadsafe(Hooks), _HookID, nullptr);
 }
 
 void oAirKeyboardImpl::Update(const oGUI_BONE_DESC& _Skeleton, unsigned int _TimestampMS) threadsafe

@@ -31,6 +31,8 @@
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinWindowing.h>
 
+using namespace ouro;
+
 bool oD3D11CreateRenderTarget(oGPUDevice* _pDevice, const char* _Name, IDXGISwapChain* _pSwapChain, oSURFACE_FORMAT _DepthStencilFormat, oGPURenderTarget** _ppRenderTarget)
 {
 	oGPU_CREATE_CHECK_NAME();
@@ -52,7 +54,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget)
 	{
 		if (oSurfaceFormatIsYUV(Desc.Format[i]))
 		{
-			oErrorSetLast(std::errc::invalid_argument, "YUV render targets are not supported (format %s specified)", oStd::as_string(Desc.Format[i]));
+			oErrorSetLast(std::errc::invalid_argument, "YUV render targets are not supported (format %s specified)", ouro::as_string(Desc.Format[i]));
 			return;
 		}
 	}
@@ -151,7 +153,7 @@ void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
 {
 	if (Desc.DepthStencilFormat != DXGI_FORMAT_UNKNOWN)
 	{
-		oStd::lstring name;
+		lstring name;
 		snprintf(name, "%s.DS", GetName());
 		oD3D11DEVICE();
 		DepthStencilTexture = nullptr;
@@ -163,10 +165,10 @@ void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
 		d.Format = Desc.DepthStencilFormat;
 		d.Type = oGPU_TEXTURE_2D_RENDER_TARGET;
 
-		oStd::intrusive_ptr<ID3D11Texture2D> Depth;
+		intrusive_ptr<ID3D11Texture2D> Depth;
 		oVERIFY(oD3D11CreateTexture(D3DDevice, name, d, nullptr, &Depth, nullptr, &DSV));
 		bool textureSuccess = false;
-		DepthStencilTexture = oStd::intrusive_ptr<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, Depth), false);
+		DepthStencilTexture = intrusive_ptr<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, Depth), false);
 		oASSERT(textureSuccess, "Creation of oD3D11Texture failed from ID3D11Texture2D: %s", oErrorGetLastString());
 	}
 }
@@ -179,7 +181,7 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 	if (SwapChain)
 	{
 		BOOL IsFullScreen = FALSE;
-		oStd::intrusive_ptr<IDXGIOutput> Output;
+		intrusive_ptr<IDXGIOutput> Output;
 		SwapChain->GetFullscreenState(&IsFullScreen, &Output);
 		if (IsFullScreen)
 		{
@@ -191,7 +193,7 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 
 	if (any(Desc.Dimensions != New))
 	{
-		oTRACE("%s %s Resize %dx%dx%d -> %dx%dx%d", oStd::type_name(typeid(*this).name()), GetName(), Desc.Dimensions.x, Desc.Dimensions.y, Desc.Dimensions.z, _NewDimensions.x, _NewDimensions.y, _NewDimensions.z);
+		oTRACE("%s %s Resize %dx%dx%d -> %dx%dx%d", type_name(typeid(*this).name()), GetName(), Desc.Dimensions.x, Desc.Dimensions.y, Desc.Dimensions.z, _NewDimensions.x, _NewDimensions.y, _NewDimensions.z);
 		ClearResources();
 
 		if (New.x && New.y && New.z)
@@ -200,10 +202,10 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 			{
 				oASSERT(New.z == 1, "New.z must be set to 1 for primary render target");
 				oVERIFY(oDXGISwapChainResizeBuffers(SwapChain, New.xy()));
-				oStd::intrusive_ptr<ID3D11Texture2D> SwapChainTexture;
+				intrusive_ptr<ID3D11Texture2D> SwapChainTexture;
 				oV(SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&SwapChainTexture));
 				bool textureSuccess = false;
-				Textures[0] = oStd::intrusive_ptr<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, SwapChainTexture), false);
+				Textures[0] = intrusive_ptr<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, SwapChainTexture), false);
 				oVERIFY(textureSuccess);
 				oVERIFY(oD3D11CreateRenderTargetView(GetName(), SwapChainTexture, (ID3D11View**)&RTVs[0]));
 				Desc.ArraySize = 1;
@@ -215,7 +217,7 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 			{
 				for (int i = 0; i < Desc.MRTCount; i++)
 				{
-					oStd::lstring name;
+					lstring name;
 					snprintf(name, "%s%02d", GetName(), i);
 					oGPUTexture::DESC d;
 					d.Dimensions = New;

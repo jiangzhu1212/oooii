@@ -90,7 +90,7 @@ interface oGeometry : oInterface
 		float3* pNormals;
 		float4* pTangents; // handedness in w component
 		float3* pTexcoords;
-		oStd::color* pColors;
+		ouro::color* pColors;
 	};
 
 	struct CONST_MAPPED
@@ -101,7 +101,7 @@ interface oGeometry : oInterface
 		const float3* pNormals;
 		const float4* pTangents; // handedness in w component
 		const float3* pTexcoords;
-		const oStd::color* pColors;
+		const ouro::color* pColors;
 	};
 
 	virtual void GetDesc(DESC* _pDesc) const = 0;
@@ -125,7 +125,7 @@ interface oGeometryFactory : oInterface
 		float Width;
 		float Height;
 		unsigned int Divide;
-		oStd::color Color;
+		ouro::color Color;
 		bool Centered;
 		bool FlipTexcoordV;
 	};
@@ -135,7 +135,7 @@ interface oGeometryFactory : oInterface
 		oGeometry::FACE_TYPE FaceType;
 		oAABoxf Bounds;
 		unsigned int Divide;
-		oStd::color Color;
+		ouro::color Color;
 		bool FlipTexcoordV;
 	};
 
@@ -144,7 +144,7 @@ interface oGeometryFactory : oInterface
 		oGeometry::FACE_TYPE FaceType;
 		oFrustumf Bounds;
 		unsigned int Divide;
-		oStd::color Color;
+		ouro::color Color;
 	};
 
 	struct CIRCLE_DESC
@@ -152,7 +152,7 @@ interface oGeometryFactory : oInterface
 		oGeometry::FACE_TYPE FaceType;
 		float Radius;
 		unsigned int Facet;
-		oStd::color Color;
+		ouro::color Color;
 	};
 
 	struct WASHER_DESC
@@ -161,7 +161,7 @@ interface oGeometryFactory : oInterface
 		float InnerRadius;
 		float OuterRadius;
 		unsigned int Facet;
-		oStd::color Color;
+		ouro::color Color;
 	};
 
 	struct SPHERE_DESC
@@ -177,7 +177,7 @@ interface oGeometryFactory : oInterface
 		// 7 Takes ~11 sec. 8, I didn't wait for it to finish.
 		unsigned int Divide;
 
-		oStd::color Color;
+		ouro::color Color;
 		bool Hemisphere;
 		bool Icosahedron;
 
@@ -192,7 +192,7 @@ interface oGeometryFactory : oInterface
 		float Radius0;
 		float Radius1;
 		float Height;
-		oStd::color Color;
+		ouro::color Color;
 		bool IncludeBase;
 		//Number of vertical lines to skip when generating an outline. 1 means skip every other line, ect.
 		unsigned int OutlineVerticalSkip;
@@ -209,7 +209,7 @@ interface oGeometryFactory : oInterface
 		unsigned int Facet;
 		float Radius;
 		float Height;
-		oStd::color Color;
+		ouro::color Color;
 		bool IncludeBase;
 		//Number of vertical lines to skip when generating an outline. 1 means skip every other line, ect.
 		unsigned int OutlineVerticalSkip;
@@ -222,7 +222,7 @@ interface oGeometryFactory : oInterface
 		unsigned int Facet;
 		float InnerRadius;
 		float OuterRadius;
-		oStd::color Color;
+		ouro::color Color;
 	};
 
 	struct TEARDROP_DESC
@@ -230,7 +230,7 @@ interface oGeometryFactory : oInterface
 		oGeometry::FACE_TYPE FaceType;
 		unsigned int Divide;
 		unsigned int Facet;
-		oStd::color Color;
+		ouro::color Color;
 	};
 
 	struct OBJ_DESC

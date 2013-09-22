@@ -26,6 +26,8 @@
 #include <oGPU/oGPU.h>
 #include <oGPU/oGPUUtil.h>
 
+using namespace ouro;
+
 struct GPU_GenerateMips : public oTest
 {
 	RESULT TestImageMips1D(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, int _Width, oSURFACE_LAYOUT _Layout, int _StartIndex)
@@ -34,17 +36,17 @@ struct GPU_GenerateMips : public oTest
 		imageDesc.Dimensions = int2(_Width, 1);
 		imageDesc.Format = oImage::BGRA32;
 		imageDesc.RowPitch = oImageCalcRowPitch(imageDesc.Format, imageDesc.Dimensions.x);
-		oStd::intrusive_ptr<oImage> image;
+		intrusive_ptr<oImage> image;
 		oImageCreate("GPU_Texture1D", imageDesc, &image);
 
-		oStd::intrusive_ptr<oBuffer> buffer;
+		intrusive_ptr<oBuffer> buffer;
 		int surfaceBufferSize = oImageCalcSize(imageDesc.Format, imageDesc.Dimensions);
 		void *pSurfaceBuffer = oBuffer::New(surfaceBufferSize);
 		oBufferCreate("GPU_Texture1D buffer", pSurfaceBuffer, surfaceBufferSize, oBuffer::Delete, &buffer);
 
-		static const oStd::color sConsoleColors[] = { oStd::Black, oStd::Navy, oStd::Green, oStd::Teal, oStd::Maroon, oStd::Purple, oStd::Olive, oStd::Silver, oStd::Gray, oStd::Blue, oStd::Lime, oStd::Aqua, oStd::Red, oStd::Fuchsia, oStd::Yellow, oStd::White };
+		static const color sConsoleColors[] = { Black, Navy, Green, Teal, Maroon, Purple, Olive, Silver, Gray, Blue, Lime, Aqua, Red, Fuchsia, Yellow, White };
 
-		oStd::color* texture1Ddata = (oStd::color*)buffer->GetData();
+		color* texture1Ddata = (color*)buffer->GetData();
 		for (int i=0; i<imageDesc.Dimensions.x; ++i)
 		{
 			texture1Ddata[i] = sConsoleColors[i % oCOUNTOF(sConsoleColors)];
@@ -57,7 +59,7 @@ struct GPU_GenerateMips : public oTest
 		sd.Format = oImageFormatToSurfaceFormat(imageDesc.Format);
 		sd.Layout = _Layout;
 
-		oStd::intrusive_ptr<oImage> mipImage;
+		intrusive_ptr<oImage> mipImage;
 		oTESTB(oImageCreate("TestImageMips1D", sd, &mipImage), "Failed to create image for mipped surface");
 
 		oTESTB(oGPUGenerateMips(_pDevice, (const oImage**)&image, 1, sd, oGPU_TEXTURE_1D_MAP, mipImage), "Failed to generate mips with the GPU");
@@ -69,7 +71,7 @@ struct GPU_GenerateMips : public oTest
 
 	RESULT TestImageMips2D(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, char* _pFilename, oSURFACE_LAYOUT _Layout, int _StartIndex)
 	{
-		oStd::intrusive_ptr<oImage> image;
+		intrusive_ptr<oImage> image;
 		oTESTB(oImageLoad(_pFilename, oImage::FORCE_ALPHA, &image), "Failed to load image");
 
 		oImage::DESC id;
@@ -80,7 +82,7 @@ struct GPU_GenerateMips : public oTest
 		sd.Format = oImageFormatToSurfaceFormat(id.Format);
 		sd.Layout = _Layout;
 
-		oStd::intrusive_ptr<oImage> mipImage;
+		intrusive_ptr<oImage> mipImage;
 		oTESTB(oImageCreate("TestImageMips2D", sd, &mipImage), "Failed to create image for mipped surface");
 
 		oTESTB(oGPUGenerateMips(_pDevice, (const oImage**)&image, 1, sd, oGPU_TEXTURE_2D_MAP, mipImage), "Failed to generate mips with the GPU");
@@ -92,7 +94,7 @@ struct GPU_GenerateMips : public oTest
 
 	RESULT TestImageMips3D(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, char* _pFilename, oSURFACE_LAYOUT _Layout, int _StartIndex)
 	{
-		oStd::intrusive_ptr<oImage> images[5];
+		intrusive_ptr<oImage> images[5];
 		oTESTB(oImageLoad(_pFilename, oImage::FORCE_ALPHA, &images[0]), "Failed to load image");
 		images[4] = images[3] = images[2] = images[1] = images[0];
 
@@ -104,7 +106,7 @@ struct GPU_GenerateMips : public oTest
 		sd.Format = oImageFormatToSurfaceFormat(id.Format);
 		sd.Layout = _Layout;
 
-		oStd::intrusive_ptr<oImage> mipImage;
+		intrusive_ptr<oImage> mipImage;
 		oTESTB(oImageCreate("TestImageMips3D", sd, &mipImage), "Failed to create image for mipped surface");
 
 		oTESTB(oGPUGenerateMips(_pDevice, (const oImage**)&images, oCOUNTOF(images), sd, oGPU_TEXTURE_3D_MAP, mipImage), "Failed to generate mips with the GPU");
@@ -116,7 +118,7 @@ struct GPU_GenerateMips : public oTest
 
 	RESULT TestImageMipsCube(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, oSURFACE_LAYOUT _Layout, int _StartIndex)
 	{
-		oStd::intrusive_ptr<oImage> images[6];
+		intrusive_ptr<oImage> images[6];
 		oTESTB(oImageLoad("file://DATA/Test/Textures/CubePosX.png", oImage::FORCE_ALPHA, &images[0]), "Failed to load image +X");
 		oTESTB(oImageLoad("file://DATA/Test/Textures/CubeNegX.png", oImage::FORCE_ALPHA, &images[1]), "Failed to load image -X");
 		oTESTB(oImageLoad("file://DATA/Test/Textures/CubePosY.png", oImage::FORCE_ALPHA, &images[2]), "Failed to load image +Y");
@@ -133,7 +135,7 @@ struct GPU_GenerateMips : public oTest
 		sd.ArraySize = oCOUNTOF(images);
 		sd.Layout = _Layout;
 
-		oStd::intrusive_ptr<oImage> mipImage;
+		intrusive_ptr<oImage> mipImage;
 		oTESTB(oImageCreate("TestImageMipsCube", sd, &mipImage), "Failed to create image for mipped surface");
 
 		oTESTB(oGPUGenerateMips(_pDevice, (const oImage**)&images, oCOUNTOF(images), sd, oGPU_TEXTURE_CUBE_MAP, mipImage), "Failed to generate mips with the GPU");
@@ -146,8 +148,8 @@ struct GPU_GenerateMips : public oTest
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oGPUDevice::INIT init("GPU_GenerateMips");
-		init.Version = oStd::version(10,0); // for more compatibility when running on varied machines
-		oStd::intrusive_ptr<oGPUDevice> Device;
+		init.Version = version(10,0); // for more compatibility when running on varied machines
+		intrusive_ptr<oGPUDevice> Device;
 		oTESTB0(oGPUDeviceCreate(init, &Device));
 
 		// 1D non power of 2

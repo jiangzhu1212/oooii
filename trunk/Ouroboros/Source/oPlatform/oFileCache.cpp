@@ -29,6 +29,8 @@
 #include <oStd/atomic.h>
 #include <oPlatform/oRegistry.h>
 
+using namespace ouro;
+
 class oFileCacheImpl : public oFileCache
 {
 public:
@@ -38,14 +40,14 @@ public:
 	oFileCacheImpl(const oFileCache::DESC& _Desc, bool* _pSuccess);
 	~oFileCacheImpl();
 
-	bool Retrieve(oStd::path_string& _Uri, const oBuffer** _Buffer) threadsafe override;
-	void Evict(oStd::path_string& _Path) threadsafe override;
+	bool Retrieve(path_string& _Uri, const oBuffer** _Buffer) threadsafe override;
+	void Evict(path_string& _Path) threadsafe override;
 
 private:
 	oRefCount RefCount;
 	oFileCache::DESC Desc;
 	
-	oStd::intrusive_ptr<threadsafe oRegistry> Registry;
+	intrusive_ptr<threadsafe oRegistry> Registry;
 };
 
 oFileCacheImpl::oFileCacheImpl(const oFileCache::DESC& _Desc, bool* _pSuccess) : Desc(_Desc)
@@ -62,9 +64,9 @@ oFileCacheImpl::~oFileCacheImpl()
 {
 }
 
-bool oFileCacheImpl::Retrieve(oStd::path_string& _Path, const oBuffer** _Buffer) threadsafe
+bool oFileCacheImpl::Retrieve(path_string& _Path, const oBuffer** _Buffer) threadsafe
 {
-	oStd::uri_string suri;
+	uri_string suri;
 	oURIFromAbsolutePath(suri, _Path);
 	oURI uri = suri;
 
@@ -78,14 +80,14 @@ bool oFileCacheImpl::Retrieve(oStd::path_string& _Path, const oBuffer** _Buffer)
 	}
 	
 	//It is possible for more than one thread to load the file here, slow in that case, but should be rare
-	oStd::intrusive_ptr<threadsafe oStreamReader> fileReader;
+	intrusive_ptr<threadsafe oStreamReader> fileReader;
 	if (!oStreamReaderCreate(_Path, &fileReader))
 		return oErrorSetLast(std::errc::invalid_argument, "Could not open supplied file %s", _Path);
 
 	oSTREAM_DESC fileDesc;
 	fileReader->GetDesc(&fileDesc);
 
-	oStd::intrusive_ptr<oBuffer> buffer;
+	intrusive_ptr<oBuffer> buffer;
 	if(!oBufferCreate("oFileCache entry buffer", oBuffer::New(oSizeT(fileDesc.Size)), oSizeT(fileDesc.Size), oBuffer::Delete, &buffer))
 		return oErrorSetLast(std::errc::invalid_argument, "Could not create an oBuffer to hold the file %s", _Path);
 		
@@ -113,9 +115,9 @@ bool oFileCacheImpl::Retrieve(oStd::path_string& _Path, const oBuffer** _Buffer)
 	return true;
 }
 
-void oFileCacheImpl::Evict(oStd::path_string& _Path) threadsafe
+void oFileCacheImpl::Evict(path_string& _Path) threadsafe
 {
-	oStd::uri_string suri;
+	uri_string suri;
 	oURIFromAbsolutePath(suri, _Path);
 	oURI uri = suri;
 

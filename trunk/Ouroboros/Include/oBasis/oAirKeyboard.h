@@ -37,7 +37,7 @@
 
 #include <oBasis/oGUI.h>
 #include <oBasis/oMathTypes.h>
-#include <oStd/xml.h>
+#include <oBase/xml.h>
 
 struct oAIR_KEY
 {
@@ -91,7 +91,7 @@ interface oAirKeySet : oInterface
 		</oAirKeySet>
 	</oAirKeySetList>
 */
-bool oParseAirKeySetsList(const oStd::xml& _XML, oStd::xml::node _AirSetList, const char* _AirKeySetName, threadsafe oAirKeySet** _ppAirKeySet);
+bool oParseAirKeySetsList(const ouro::xml& _XML, ouro::xml::node _AirSetList, const char* _AirKeySetName, threadsafe oAirKeySet** _ppAirKeySet);
 
 // Parses an XML file to build an oAirKeyboard object. The expected XML format
 // of the node is:
@@ -101,7 +101,7 @@ bool oParseAirKeySetsList(const oStd::xml& _XML, oStd::xml::node _AirSetList, co
 		<oAirKey Key="oKB_Media_Play_Pause" Origin="rshoulder" Trigger="Rhand" Bounds="0.0 -0.2 -1.0 0.3 0.3 -0.2" />
 	</oAirKeyboard>
 */
-bool oAirKeySetCreate(const oStd::xml& _pXML, oStd::xml::node _AirSet, threadsafe oAirKeySet** _ppAirKeySet);
+bool oAirKeySetCreate(const ouro::xml& _pXML, ouro::xml::node _AirSet, threadsafe oAirKeySet** _ppAirKeySet);
 
 interface oAirKeyboard : oInterface
 {

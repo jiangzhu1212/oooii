@@ -29,13 +29,12 @@
 // that is human-workable: date.
 // NTP v4: http://tools.ietf.org/html/rfc5905#section-6
 #pragma once
-#ifndef oDate_h
-#define oDate_h
+#ifndef oStd_date_h
+#define oStd_date_h
 
-#include <oStd/fixed_string.h>
-#include <oStd/operators.h>
 #include <oStd/chrono.h>
-#include <oStd/uint128.h>
+#include <oBase/uint128.h> // hacky, this violates lib dependency order
+
 #include <climits>
 
 namespace oStd {
@@ -237,8 +236,6 @@ size_t strftime(char (&_StrDestination)[size]
 {
 	return strftime(_StrDestination, size, _Format, _Date, _Conversion);
 }
-
-template<typename DATE_T, size_t capacity> size_t strftime(fixed_string<char, capacity>& _StrDestination, const char* _Format, const DATE_T& _Date, date_conversion::value _Conversion = date_conversion::none) { return oStd::strftime(_StrDestination, _StrDestination.capacity(), _Format, _Date, _Conversion); }
 
 } // namespace oStd
 

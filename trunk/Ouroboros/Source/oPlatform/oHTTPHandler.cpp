@@ -26,6 +26,8 @@
 #include <oPlatform/oStream.h>
 #include <oBasis/oRTTI.h>
 
+using namespace ouro;
+
 oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oHTTPHandlerCommonQueryParams)
 	oRTTI_COMPOUND_ABSTRACT(oHTTPHandlerCommonQueryParams)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oHTTPHandlerCommonQueryParams)
@@ -36,7 +38,7 @@ oRTTI_COMPOUND_END_DESCRIPTION(oHTTPHandlerCommonQueryParams)
 
 void oHTTPHandlerBuildStaticFileResponse(const char* _FullPath, oHTTPHandler::CommonParams& _CommonParams)
 {
-	oStd::intrusive_ptr<threadsafe oStreamReader> reader;
+	intrusive_ptr<threadsafe oStreamReader> reader;
 	if(!oStreamReaderCreate(_FullPath, &reader))
 		return;
 
@@ -57,8 +59,8 @@ void oHTTPHandlerBuildStaticFileResponse(const char* _FullPath, oHTTPHandler::Co
 
 void oHTTPHandlerErrorV(oHTTPHandler::CommonParams& _CommonParams, oHTTP_STATUS_CODE _HTTPErrorCode, const char* _Format, va_list _Args)
 { 
-	oStd::xxlstring buildString;
-	oStd::vsnprintf(buildString, _Format, _Args);
+	xxlstring buildString;
+	vsnprintf(buildString, _Format, _Args);
 
 	_CommonParams.AllocateResponse(buildString.length());
 	memcpy(_CommonParams.pResponse->Content.pData, buildString.c_str(), buildString.length());

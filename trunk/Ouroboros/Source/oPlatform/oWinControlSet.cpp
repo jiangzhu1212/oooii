@@ -23,16 +23,18 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oWinControlSet.h>
-#include <oStd/algorithm.h>
+#include <oBase/algorithm.h>
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/Windows/oWinRect.h>
 
-bool oWinControlSet::Initialize(HWND _hParent, const int2& _ParentClientSize, const oStd::xml& _XML, const IDFROMSTRING& _IDFromString)
+using namespace ouro;
+
+bool oWinControlSet::Initialize(HWND _hParent, const int2& _ParentClientSize, const xml& _XML, const IDFROMSTRING& _IDFromString)
 {
 	if (!_hParent)
 		return oErrorSetLast(std::errc::invalid_argument, "A valid HWND must be specified as the parent");
 
-	oStd::xml::node hRoot = _XML.first_child(_XML.root(), "oUI");
+	xml::node hRoot = _XML.first_child(_XML.root(), "oUI");
 	if (!hRoot)
 		return oErrorSetLast(std::errc::invalid_argument, "XML root node \"oUI\" not found");
 
@@ -71,13 +73,13 @@ HWND oWinControlSet::GetControl(int _ID) const
 	return Controls[_ID];
 }
 
-bool oWinControlSet::CreateFontsSibling(const oStd::xml& _XML, fonts_t* _pFonts)
+bool oWinControlSet::CreateFontsSibling(const xml& _XML, fonts_t* _pFonts)
 {
-	oStd::xml::node hRoot = _XML.first_child(_XML.root(), "oUI");
+	xml::node hRoot = _XML.first_child(_XML.root(), "oUI");
 	if (!hRoot)
 		return oErrorSetLast(std::errc::invalid_argument, "XML root node \"oUI\" not found");
 
-	oStd::xml::node hChild = _XML.first_child(hRoot, "Font");
+	xml::node hChild = _XML.first_child(hRoot, "Font");
 	while (hChild)
 	{
 		const char* StrFont = _XML.find_attr_value(hChild, "Name");
@@ -106,7 +108,7 @@ bool oWinControlSet::CreateFontsSibling(const oStd::xml& _XML, fonts_t* _pFonts)
 // @oooii-tony: Should this be promoted to somewhere more generic?
 #define oXML_GETVALUE(_XML, _hNode, _pDestStruct, _FieldName) _XML.find_attr_value(_hNode, #_FieldName, &_pDestStruct->_FieldName);
 
-bool oWinControlSet::ParseFontDesc(const oStd::xml& _XML, oStd::xml::node _hNode, oGUI_FONT_DESC* _pDesc)
+bool oWinControlSet::ParseFontDesc(const xml& _XML, xml::node _hNode, oGUI_FONT_DESC* _pDesc)
 {
 	oXML_GETVALUE(_XML, _hNode, _pDesc, FontName);
 	oXML_GETVALUE(_XML, _hNode, _pDesc, PointSize);
@@ -175,7 +177,7 @@ bool oWinControlSet::ParseControlDesc(const XML_CONTEXT& _XmlContext, const CONT
 
 void oWinControlSet::AddControl(int _ID, HWND _hHandle)
 {
-	oStd::safe_set(Controls, _ID, _hHandle);
+	safe_set(Controls, _ID, _hHandle);
 }
 
 HWND oWinControlSet::CreateControl(const XML_CONTEXT& _XmlContext, const CONTROL_CONTEXT& _ControlContext, controls_t* _pControls, int2 _ParentOffset)
@@ -204,13 +206,13 @@ HWND oWinControlSet::CreateControl(const XML_CONTEXT& _XmlContext, const CONTROL
 	if (!visible)
 		oWinControlSetVisible(hControl, false);
 
-	oStd::safe_set(*_pControls, d.ID, hControl);
+	safe_set(*_pControls, d.ID, hControl);
 	return hControl;
 }
 
 bool oWinControlSet::CreateControlsSibling(const XML_CONTEXT& _XmlContext, const CONTROL_CONTEXT& _ControlContext, controls_t* _pControls)
 {
-	oStd::xml::node hChild = _XmlContext.pXML->first_child(_XmlContext.hNode);
+	xml::node hChild = _XmlContext.pXML->first_child(_XmlContext.hNode);
 	while (hChild)
 	{
 		XML_CONTEXT xc = _XmlContext;

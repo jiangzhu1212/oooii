@@ -24,8 +24,10 @@
  **************************************************************************/
 #include <oBasis/oLZMA.h>
 #include <oBasis/oError.h>
-//#include "oWinHeaders.h"
+#include <oBase/byte.h>
 #include <Lzma/C/LzmaLib.h>
+
+using namespace ouro;
 
 // From LzmaLib.h documentation:
 static const int LZMADEFAULT_level = 5;
@@ -88,7 +90,7 @@ size_t oLZMACompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, c
 		size_t outPropsSize = LZMA_PROPS_SIZE;
 		unsigned char outProps[LZMA_PROPS_SIZE];
 		int LZMAError = LzmaCompress(
-			static_cast<unsigned char*>(oStd::byte_add(_pDestination, sizeof(HDR)))
+			static_cast<unsigned char*>(byte_add(_pDestination, sizeof(HDR)))
 			, &CompressedSize
 			, static_cast<const unsigned char*>(_pSource)
 			, _SizeofSource
@@ -125,7 +127,7 @@ size_t oLZMADecompress(void* oRESTRICT _pDestination, size_t _SizeofDestination,
 	int LZMAError = LzmaUncompress(
 		static_cast<unsigned char*>(_pDestination)
 		, &destLen
-		, static_cast<const unsigned char*>(oStd::byte_add(_pSource, sizeof(HDR)))
+		, static_cast<const unsigned char*>(byte_add(_pSource, sizeof(HDR)))
 		, &srcLen
 		, LZMADEFAULT_Props
 		, LZMA_PROPS_SIZE);

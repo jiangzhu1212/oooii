@@ -26,6 +26,8 @@
 #include <oPlatform/oGUIMenu.h>
 #include <oPlatform/Windows/oWinRegistry.h>
 
+using namespace ouro;
+
 struct oMRUManagerRegistry : oMRUManager
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
@@ -40,12 +42,12 @@ struct oMRUManagerRegistry : oMRUManager
 
 private:
 	oMRU_DESC Desc;
-	oStd::sstring MRUKeyFormat;
+	sstring MRUKeyFormat;
 	oRefCount RefCount;
 	int NumMRUs;
 
-	void GetEntryName(oStd::sstring& _EntryName, int _Index);
-	void GetEntries(std::vector<oStd::uri_string>& _Entries);
+	void GetEntryName(sstring& _EntryName, int _Index);
+	void GetEntries(std::vector<uri_string>& _Entries);
 };
 
 oMRUManagerRegistry::oMRUManagerRegistry(const oMRU_DESC& _Desc, bool* _pSuccess)
@@ -76,19 +78,19 @@ bool oMRUManagerCreate(const oMRU_DESC& _Desc, oMRUManager** _ppMRUManager)
 	return success;
 }
 
-void oMRUManagerRegistry::GetEntryName(oStd::sstring& _EntryName, int _Index)
+void oMRUManagerRegistry::GetEntryName(sstring& _EntryName, int _Index)
 {
 	snprintf(_EntryName, "MRU%02d", _Index);
 }
 
-void oMRUManagerRegistry::GetEntries(std::vector<oStd::uri_string>& _Entries)
+void oMRUManagerRegistry::GetEntries(std::vector<uri_string>& _Entries)
 {
-	oStd::uri_string Entry;
+	uri_string Entry;
 	_Entries.clear();
 	_Entries.reserve(NumMRUs);
 	for (int i = 0; i < NumMRUs; i++)
 	{
-		oStd::sstring EntryName;
+		sstring EntryName;
 		GetEntryName(EntryName, i);
 		if (oWinRegistryGetValue(Entry, oHKEY_CURRENT_USER, Desc.MRURegistryKey, EntryName))
 			_Entries.push_back(Entry);
@@ -102,16 +104,16 @@ void oMRUManagerRegistry::GetDesc(oMRU_DESC* _pDesc)
 
 void oMRUManagerRegistry::Add(const char* _Entry)
 {
-	oStd::sstring EntryName;
-	std::vector<oStd::uri_string> Entries;
+	sstring EntryName;
+	std::vector<uri_string> Entries;
 	GetEntries(Entries);
 
 	// Remove any duplicates of the incoming URI
-	auto it = oStd::find_if(Entries, [&](const oStd::uri_string& x)->bool { return !_stricmp(x, _Entry); });
+	auto it = find_if(Entries, [&](const uri_string& x)->bool { return !_stricmp(x, _Entry); });
 	while (it != Entries.end())
 	{
 		Entries.erase(it);
-		it = oStd::find_if(Entries, [&](const oStd::uri_string& x)->bool { return !_stricmp(x, _Entry); });
+		it = find_if(Entries, [&](const uri_string& x)->bool { return !_stricmp(x, _Entry); });
 	}
 
 	// Insert this as the front of the list
@@ -141,7 +143,7 @@ char* oMRUManagerRegistry::Get(char* _StrDestination, size_t _SizeofStrDestinati
 {
 	if (_ID >= Desc.FirstID && _ID <= Desc.LastID)
 	{
-		oStd::sstring EntryName;
+		sstring EntryName;
 		GetEntryName(EntryName, _ID - Desc.FirstID);
 		if (oWinRegistryGetValue(_StrDestination, _SizeofStrDestination, oHKEY_CURRENT_USER, Desc.MRURegistryKey, EntryName))
 			return _StrDestination;
@@ -154,8 +156,8 @@ void oMRUManagerRegistry::RefreshMenu()
 {
 	oGUIMenuRemoveAllItems(Desc.hMenu);
 
-	oStd::sstring EntryName;
-	oStd::uri_string Entry;
+	sstring EntryName;
+	uri_string Entry;
 	for (int i = 0; i < NumMRUs; i++)
 	{
 		GetEntryName(EntryName, i);

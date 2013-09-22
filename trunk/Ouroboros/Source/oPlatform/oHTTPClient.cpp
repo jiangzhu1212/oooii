@@ -27,6 +27,7 @@
 #include "oHTTPInternal.h"
 #include "oHTTPProtocol.h"
 
+using namespace ouro;
 
 class oHTTPClient_Impl : public oHTTPClient
 {
@@ -52,14 +53,14 @@ private:
 
 	oRefCount RefCount;
 	DESC Desc;
-	oStd::intrusive_ptr<threadsafe oSocket> Socket;
+	intrusive_ptr<threadsafe oSocket> Socket;
 
 	oHTTPProtocol Protocol;
 
 	// Internal parsed data
 	oHTTPRequestInternal TheRequest;
 	oHTTPResponseInternal TheResponse;
-	oStd::xxlstring TheHeader;
+	xxlstring TheHeader;
 };
 
 oHTTPClient_Impl::oHTTPClient_Impl(DESC _Desc, bool *pSuccess)
@@ -79,8 +80,8 @@ bool oHTTPClient_Impl::StartRequest(oHTTP_METHOD _Method, const char* _pRelative
 	if (!Socket || !Socket->IsConnected())
 		return oErrorSetLast(std::errc::timed_out);
 
-	oStd::xxlstring requestPath;
-	oStd::percent_encode(requestPath, _pRelativePath, " ");
+	xxlstring requestPath;
+	percent_encode(requestPath, _pRelativePath, " ");
 	TheRequest.Reset(_Method, requestPath, oHTTP_1_1);
 	if (_ppRequest)
 		*_ppRequest = &TheRequest;
@@ -88,8 +89,8 @@ bool oHTTPClient_Impl::StartRequest(oHTTP_METHOD _Method, const char* _pRelative
 	// TODO: Make adding a Host: header field optional, and making it the actual hostname instead of just an IP address
 	if (true)
 	{
-		oStd::sstring hostname;
-		oStd::to_string(hostname, Desc.ServerAddr);
+		sstring hostname;
+		to_string(hostname, Desc.ServerAddr);
 		oHTTPAddHeader(TheRequest.HeaderFields, oHTTP_HEADER_HOST, hostname.c_str());
 	}
 	return true;
@@ -99,13 +100,13 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 {
 	// Add content headers
 	if (TheRequest.Content.Type != oMIME_UNKNOWN)
-		oHTTPAddHeader(TheRequest.HeaderFields, oHTTP_HEADER_CONTENT_TYPE, oStd::as_string(TheRequest.Content.Type));
+		oHTTPAddHeader(TheRequest.HeaderFields, oHTTP_HEADER_CONTENT_TYPE, as_string(TheRequest.Content.Type));
 
 	if (TheRequest.Content.Length)
 		oHTTPAddHeader(TheRequest.HeaderFields, oHTTP_HEADER_CONTENT_LENGTH, oUInt(TheRequest.Content.Length));
 
 	// Create request header
-	oStd::to_string(TheHeader, TheRequest);
+	to_string(TheHeader, TheRequest);
 
 	// Send header and body
 	if (TheRequest.Content.pData && TheRequest.Content.Length)
@@ -148,7 +149,7 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 			break;
 
 		case oSTATE_RECEIVE_HEADER:
-			if (!oExtractHTTPHeader(oStd::byte_add((const char*)ReceiveBuffer, SizeofDataTaken), (SizeReceived - SizeofDataTaken), TheHeader.c_str(), &TheHeaderPos, TheHeader.capacity(), &SizeofDataTaken))
+			if (!oExtractHTTPHeader(byte_add((const char*)ReceiveBuffer, SizeofDataTaken), (SizeReceived - SizeofDataTaken), TheHeader.c_str(), &TheHeaderPos, TheHeader.capacity(), &SizeofDataTaken))
 			{
 				// If the HTTP header is bigger than our capacity, then send an error back
 				if (TheHeaderPos >= TheHeader.capacity())
@@ -188,7 +189,7 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 
 		case oSTATE_PARSE_HEADER:
 			// We received the header in full, now parse it
-			if (!oStd::from_string(&TheResponse, TheHeader.c_str()))
+			if (!from_string(&TheResponse, TheHeader.c_str()))
 				return false;
 			State = oSTATE_PROCESS_HEADER;
 			break;
@@ -208,7 +209,7 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 					while (pElement)
 					{
 						// Optimization so we can compare with lower case string matching, the actual header stays unchanged though
-						oStd::tolower(pElement);
+						tolower(pElement);
 						
 						// keep-alive / close
 						if (strstr(pElement, "close"))
@@ -220,7 +221,7 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 
 				// Content-Type
 				if (oHTTPFindHeader(TheResponse.HeaderFields, oHTTP_HEADER_CONTENT_TYPE, &pValue))
-					oStd::from_string(&TheResponse.Content.Type, pValue);
+					from_string(&TheResponse.Content.Type, pValue);
 
 				// Content-Length
 				if (oHTTPFindHeader(TheResponse.HeaderFields, oHTTP_HEADER_CONTENT_LENGTH, &ValueUInt))
@@ -249,7 +250,7 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 				State = oSTATE_FINISHED;
 				break;
 			}
-			if (!oExtractContent(oStd::byte_add(ReceiveBuffer, SizeofDataTaken), (SizeReceived - SizeofDataTaken), TheBody, &TheBodyPos, __min(_MaxResponseBufferSize, TheResponse.Content.Length), &SizeofDataTaken))
+			if (!oExtractContent(byte_add(ReceiveBuffer, SizeofDataTaken), (SizeReceived - SizeofDataTaken), TheBody, &TheBodyPos, __min(_MaxResponseBufferSize, TheResponse.Content.Length), &SizeofDataTaken))
 			{
 				// Request more data
 				oASSERT(SizeofDataTaken==SizeReceived, "Assuming that we took all data, before requesting more");

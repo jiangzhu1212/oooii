@@ -37,7 +37,7 @@ static bool oInitializeInputElementDesc(D3D11_INPUT_ELEMENT_DESC* _pInputElement
 		const oGPU_VERTEX_ELEMENT& e = _pVertexElements[i];
 
 		if (!oGPUParseSemantic(e.Semantic, s, &el.SemanticIndex))
-			return oErrorSetLast(std::errc::invalid_argument, "Invalid semantic %s", oStd::to_string(fcc, e.Semantic));
+			return oErrorSetLast(std::errc::invalid_argument, "Invalid semantic %s", to_string(fcc, e.Semantic));
 
 		el.SemanticName = s;
 		s += strlen(s) + 1;
@@ -80,7 +80,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Pipeline)
 	// Verify input against shaders
 	if ((InputTopology == D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED || InputTopology < D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST) && (_Desc.pHullShader || _Desc.pDomainShader))
 	{
-		oErrorSetLast(std::errc::invalid_argument, "%s inputs cannot have a hull or domain shader bound", oStd::as_string(_Desc.InputType));
+		oErrorSetLast(std::errc::invalid_argument, "%s inputs cannot have a hull or domain shader bound", ouro::as_string(_Desc.InputType));
 		return;
 	}
 
@@ -96,7 +96,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Pipeline)
 
 			if (_Desc.pGeometryShader)
 			{
-				oErrorSetLast(std::errc::invalid_argument, "%s inputs cannot have a geometry shader bound", oStd::as_string(_Desc.InputType));
+				oErrorSetLast(std::errc::invalid_argument, "%s inputs cannot have a geometry shader bound", ouro::as_string(_Desc.InputType));
 				return;
 			}
 

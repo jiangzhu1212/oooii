@@ -49,12 +49,12 @@ bool oD3D11SetDebugName(ID3D11DeviceChild* _pDeviceChild, const char* _Name);
 
 char* oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11Device* _pDevice);
 template<size_t size> char* oD3D11GetDebugName(char (&_StrDestination)[size], const ID3D11Device* _pDevice) { return oD3D11GetDebugName(_StrDestination, size, _pDevice); }
-template<size_t capacity> char* oD3D11GetDebugName(oStd::fixed_string<char, capacity>& _StrDestination, const ID3D11Device* _pDevice) { return oD3D11GetDebugName(_StrDestination, _StrDestination.capacity(), _pDevice); }
+template<size_t capacity> char* oD3D11GetDebugName(ouro::fixed_string<char, capacity>& _StrDestination, const ID3D11Device* _pDevice) { return oD3D11GetDebugName(_StrDestination, _StrDestination.capacity(), _pDevice); }
 
 // Fills the specified buffer with the string set with oD3D11SetDebugName().
 char* oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11DeviceChild* _pDeviceChild);
 template<size_t size> char* oD3D11GetDebugName(char (&_StrDestination)[size], const ID3D11DeviceChild* _pDeviceChild) { return oD3D11GetDebugName(_StrDestination, size, _pDeviceChild); }
-template<size_t capacity> char* oD3D11GetDebugName(oStd::fixed_string<char, capacity>& _StrDestination, const ID3D11DeviceChild* _pDeviceChild) { return oD3D11GetDebugName(_StrDestination, _StrDestination.capacity(), _pDeviceChild); }
+template<size_t capacity> char* oD3D11GetDebugName(ouro::fixed_string<char, capacity>& _StrDestination, const ID3D11DeviceChild* _pDeviceChild) { return oD3D11GetDebugName(_StrDestination, _StrDestination.capacity(), _pDeviceChild); }
 
 // The error message returned from D3DX11CompileFromMemory is not fit for
 // passing to printf directly, so pass it to this to create a cleaner string.
@@ -62,12 +62,12 @@ template<size_t capacity> char* oD3D11GetDebugName(oStd::fixed_string<char, capa
 // error filling the specified string buffer.
 bool oD3D11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _SizeofOutErrorMessageString, ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths);
 template<size_t size> bool oD3D11ConvertCompileErrorBuffer(char (&_OutErrorMessageString)[size], ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths) { return oD3D11ConvertCompileErrorBuffer(_OutErrorMessageString, size, _pErrorMessages, _pIncludePaths, _NumIncludePaths); }
-template<size_t capacity> bool oD3D11ConvertCompileErrorBuffer(oStd::fixed_string<char, capacity>& _OutErrorMessageString, ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths) { return oD3D11ConvertCompileErrorBuffer(_OutErrorMessageString, _OutErrorMessageString.capacity(), _pErrorMessages, _pIncludePaths, _NumIncludePaths); }
+template<size_t capacity> bool oD3D11ConvertCompileErrorBuffer(ouro::fixed_string<char, capacity>& _OutErrorMessageString, ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths) { return oD3D11ConvertCompileErrorBuffer(_OutErrorMessageString, _OutErrorMessageString.capacity(), _pErrorMessages, _pIncludePaths, _NumIncludePaths); }
 
 // Use ID3D11InfoQueue::AddApplicationMessage to trace user errors.
 int oD3D11VTrace(ID3D11InfoQueue* _pInfoQueue, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args);
-inline int oD3D11VTrace(ID3D11Device* _pDevice, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args) { oStd::intrusive_ptr<ID3D11InfoQueue> InfoQueue; oVERIFY(_pDevice->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&InfoQueue)); return oD3D11VTrace(InfoQueue, _Severity, _Format, _Args); }
-inline int oD3D11VTrace(ID3D11DeviceContext* _pDeviceContext, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args) { oStd::intrusive_ptr<ID3D11Device> Device; _pDeviceContext->GetDevice(&Device); return oD3D11VTrace(Device, _Severity, _Format, _Args); }
+inline int oD3D11VTrace(ID3D11Device* _pDevice, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args) { ouro::intrusive_ptr<ID3D11InfoQueue> InfoQueue; oVERIFY(_pDevice->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&InfoQueue)); return oD3D11VTrace(InfoQueue, _Severity, _Format, _Args); }
+inline int oD3D11VTrace(ID3D11DeviceContext* _pDeviceContext, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args) { ouro::intrusive_ptr<ID3D11Device> Device; _pDeviceContext->GetDevice(&Device); return oD3D11VTrace(Device, _Severity, _Format, _Args); }
 inline int oD3D11Trace(ID3D11InfoQueue* _pInfoQueue, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, ...) { va_list args; va_start(args, _Format); int len = oD3D11VTrace(_pInfoQueue, _Severity, _Format, args); va_end(args); return len; }
 inline int oD3D11Trace(ID3D11Device* _pDevice, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, ...) { va_list args; va_start(args, _Format); int len = oD3D11VTrace(_pDevice, _Severity, _Format, args); va_end(args); return len; }
 inline int oD3D11Trace(ID3D11DeviceContext* _pDeviceContext, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, ...) { va_list args; va_start(args, _Format); int len = oD3D11VTrace(_pDeviceContext, _Severity, _Format, args); va_end(args); return len; }
@@ -95,8 +95,8 @@ bool oD3D11DeviceGetDesc(ID3D11Device* _pDevice, bool _IsSoftwareEmulation, oGPU
 // Get the adapter with which the specified device was created
 bool oD3D11GetAdapter(ID3D11Device* _pDevice, IDXGIAdapter** _ppAdapter);
 
-// Converts the specified D3D_FEATURE_LEVEL into an oStd::version.
-oStd::version oD3D11GetFeatureVersion(D3D_FEATURE_LEVEL _Level);
+// Converts the specified D3D_FEATURE_LEVEL into an ouro::version.
+ouro::version oD3D11GetFeatureVersion(D3D_FEATURE_LEVEL _Level);
 
 // Returns an IFF based on the extension specified in the file path
 D3DX11_IMAGE_FILE_FORMAT oD3D11GetFormatFromPath(const char* _Path);
@@ -121,7 +121,7 @@ D3D11_PRIMITIVE_TOPOLOGY oD3D11ToPrimitiveTopology(oGPU_PRIMITIVE_TYPE _Type);
 uint oD3D11GetNumElements(D3D_PRIMITIVE_TOPOLOGY _PrimitiveTopology, uint _NumPrimitives);
 
 // Given a shader model (i.e. 4.0) return a feature level (i.e. D3D_FEATURE_LEVEL_10_1)
-bool oD3D11GetFeatureLevel(const oStd::version& _ShaderModel, D3D_FEATURE_LEVEL* _pLevel);
+bool oD3D11GetFeatureLevel(const ouro::version& _ShaderModel, D3D_FEATURE_LEVEL* _pLevel);
 
 // Returns the shader profile for the specified stage of the specified feature
 // level. If the specified feature level does not support the specified stage,
@@ -246,15 +246,15 @@ bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, D3DX11_IMAGE_FILE_FOR
 // that result in a tool. Remember, only DDS really supports all surface formats.
 bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer);
 bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer);
-bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, const oStd::path& _Path);
-bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, const oStd::path& _Path);
+bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, const ouro::path& _Path);
+bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, const ouro::path& _Path);
 
 // Creates a new texture by parsing _pBuffer as a D3DX11-supported file format
 // Specify oSURFACE_UNKNOWN and oDEFAULT for x, y or ArraySize in the _Desc to 
 // use values from the specified file. If mips is specified as HAS_MIPs, then 
 // mips will be allocated, but not filled in. If AUTO_MIPS is specified, then 
 // mips will be generated.
-bool oD3D11Load(ID3D11Device* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const oStd::path& _Path, const char* _DebugName, ID3D11Resource** _ppTexture);
+bool oD3D11Load(ID3D11Device* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const ouro::path& _Path, const char* _DebugName, ID3D11Resource** _ppTexture);
 bool oD3D11Load(ID3D11Device* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, ID3D11Resource** _ppTexture);
 
 // Uses GPU acceleration for BC6H and BC7 conversions if the source is in the 
@@ -284,18 +284,18 @@ static const DXGI_FORMAT oD3D11BC6HRequiredSourceFormat = DXGI_FORMAT_R32G32B32A
 // Sets the specified buffers on all pipeline stages. This may not be the most
 // efficient thing to do, but is convenient during initial renderer bringup.
 void oD3D11SetConstantBuffers(ID3D11DeviceContext* _pDeviceContext, uint _StartSlot, uint _NumBuffers, const ID3D11Buffer* const* _ppConstantBuffers);
-inline void oD3D11SetConstantBuffers(ID3D11DeviceContext* _pDeviceContext, uint _StartSlot, uint _NumBuffers, oStd::intrusive_ptr<ID3D11Buffer>* _ppConstantBuffers) { oD3D11SetConstantBuffers(_pDeviceContext, _StartSlot, _NumBuffers, (const ID3D11Buffer* const*)_ppConstantBuffers); }
+inline void oD3D11SetConstantBuffers(ID3D11DeviceContext* _pDeviceContext, uint _StartSlot, uint _NumBuffers, ouro::intrusive_ptr<ID3D11Buffer>* _ppConstantBuffers) { oD3D11SetConstantBuffers(_pDeviceContext, _StartSlot, _NumBuffers, (const ID3D11Buffer* const*)_ppConstantBuffers); }
 
 // Sets the specified sampler sates on all pipeline stages. This may not be the 
 // most efficient thing to do, but is convenient during initial renderer 
 // bringup.
 void oD3D11SetSamplers(ID3D11DeviceContext* _pDeviceContext, uint _StartSlot, uint _NumSamplers, const ID3D11SamplerState* const* _ppSamplers);
-inline void oD3D11SetSamplers(ID3D11DeviceContext* _pDeviceContext, uint _StartSlot, uint _NumSamplers, oStd::intrusive_ptr<ID3D11SamplerState>* _ppSamplers) { oD3D11SetSamplers(_pDeviceContext, _StartSlot, _NumSamplers, (const ID3D11SamplerState* const*)_ppSamplers); }
+inline void oD3D11SetSamplers(ID3D11DeviceContext* _pDeviceContext, uint _StartSlot, uint _NumSamplers, ouro::intrusive_ptr<ID3D11SamplerState>* _ppSamplers) { oD3D11SetSamplers(_pDeviceContext, _StartSlot, _NumSamplers, (const ID3D11SamplerState* const*)_ppSamplers); }
 
 // Sets the specified SRVs on all pipeline stages. This may not be the most 
 // efficient thing to do, but is convenient during initial renderer bringup.
 void oD3D11SetShaderResourceViews(ID3D11DeviceContext* _pDeviceContext, uint _StartSlot, uint _NumShaderResourceViews, const ID3D11ShaderResourceView* const* _ppViews);
-inline void oD3D11SetShaderResourceViews(ID3D11DeviceContext* _pDeviceContext, uint _StartSlot, uint _NumShaderResourceViews, oStd::intrusive_ptr<ID3D11ShaderResourceView>* _ppViews) { oD3D11SetShaderResourceViews(_pDeviceContext, _StartSlot, _NumShaderResourceViews, (const ID3D11ShaderResourceView* const*)_ppViews); }
+inline void oD3D11SetShaderResourceViews(ID3D11DeviceContext* _pDeviceContext, uint _StartSlot, uint _NumShaderResourceViews, ouro::intrusive_ptr<ID3D11ShaderResourceView>* _ppViews) { oD3D11SetShaderResourceViews(_pDeviceContext, _StartSlot, _NumShaderResourceViews, (const ID3D11ShaderResourceView* const*)_ppViews); }
 
 // Converts a viewport to an oAABoxf.
 void oD3D11FromViewport(const D3D11_VIEWPORT& _Viewport, oAABoxf* _pBox);

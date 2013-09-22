@@ -28,12 +28,14 @@
 #include <Commdlg.h>
 #include <CdErr.h>
 
-static bool oWinDialogGetOpenOrSavePath(oStd::path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent, bool _IsOpenNotSave)
+using namespace ouro;
+
+static bool oWinDialogGetOpenOrSavePath(path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent, bool _IsOpenNotSave)
 {
-	oStd::path_string StrPath;
+	path_string StrPath;
 	if (!_Path.empty())
 	{
-		if (!oStd::clean_path(StrPath, _Path, '\\'))
+		if (!clean_path(StrPath, _Path, '\\'))
 			return oErrorSetLast(std::errc::invalid_argument, "bad path: %s", _Path.c_str());
 	}
 
@@ -102,17 +104,17 @@ static bool oWinDialogGetOpenOrSavePath(oStd::path& _Path, const char* _DialogTi
 	return true;
 }
 
-bool oWinDialogGetOpenPath(oStd::path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent)
+bool oWinDialogGetOpenPath(path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent)
 {
 	return oWinDialogGetOpenOrSavePath(_Path, _DialogTitle, _FilterPairs, _hParent, true);
 }
 
-bool oWinDialogGetSavePath(oStd::path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent)
+bool oWinDialogGetSavePath(path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent)
 {
 	return oWinDialogGetOpenOrSavePath(_Path, _DialogTitle, _FilterPairs, _hParent, false);
 }
 
-bool oWinDialogGetColor(oStd::color* _pColor, HWND _hParent)
+bool oWinDialogGetColor(color* _pColor, HWND _hParent)
 {
 	int r,g,b,a;
 	_pColor->decompose(&r, &g, &b, &a);
@@ -135,11 +137,11 @@ bool oWinDialogGetColor(oStd::color* _pColor, HWND _hParent)
 		return oErrorSetLast(std::errc::protocol_error, "%s", oWinAsStringCDERR(err));
 	}
 
-	*_pColor = oStd::color(GetRValue(cc.rgbResult), GetGValue(cc.rgbResult), GetBValue(cc.rgbResult), a);
+	*_pColor = color(GetRValue(cc.rgbResult), GetGValue(cc.rgbResult), GetBValue(cc.rgbResult), a);
 	return true;
 }
 
-bool oWinDialogGetFont(LOGFONT* _pLogicalFont, oStd::color* _pColor, HWND _hParent)
+bool oWinDialogGetFont(LOGFONT* _pLogicalFont, color* _pColor, HWND _hParent)
 {
 	oGDIScopedGetDC hDC(_hParent);
 	CHOOSEFONT cf = {0};
@@ -170,7 +172,7 @@ bool oWinDialogGetFont(LOGFONT* _pLogicalFont, oStd::color* _pColor, HWND _hPare
 	}
 
 	if (_pColor)
-		*_pColor = oStd::color(GetRValue(cf.rgbColors), GetGValue(cf.rgbColors), GetBValue(cf.rgbColors), 255);
+		*_pColor = color(GetRValue(cf.rgbColors), GetGValue(cf.rgbColors), GetBValue(cf.rgbColors), 255);
 
 	return true;
 }

@@ -26,6 +26,8 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
+using namespace ouro;
+
 static const int sSnapshotFrames[] = { 0, 2, 4, 6 };
 static const bool kIsDevMode = false;
 
@@ -36,7 +38,7 @@ public:
 
 	bool Initialize() override
 	{
-		PrimaryRenderTarget->SetClearColor(oStd::AlmostBlack);
+		PrimaryRenderTarget->SetClearColor(AlmostBlack);
 
 		oGPUBuffer::DESC DCDesc;
 		DCDesc.StructByteSize = sizeof(oGPUTestConstants);
@@ -75,7 +77,7 @@ public:
 
 		CommandList->Begin();
 
-		oGPUCommitBuffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, oStd::White));
+		oGPUCommitBuffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, White));
 
 		CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
 		CommandList->SetBlendState(oGPU_OPAQUE);
@@ -92,9 +94,9 @@ public:
 	}
 
 private:
-	oStd::intrusive_ptr<oGPUPipeline> Pipeline;
-	oStd::intrusive_ptr<oGPUUtilMesh> Mesh;
-	oStd::intrusive_ptr<oGPUBuffer> TestConstants;
+	intrusive_ptr<oGPUPipeline> Pipeline;
+	intrusive_ptr<oGPUUtilMesh> Mesh;
+	intrusive_ptr<oGPUBuffer> TestConstants;
 };
 
 oDEFINE_GPU_TEST(GPU_SpinningTriangle)

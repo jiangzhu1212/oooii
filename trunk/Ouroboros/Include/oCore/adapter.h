@@ -27,12 +27,12 @@
 #ifndef oCore_adapter_h
 #define oCore_adapter_h
 
-#include <oStd/function.h>
-#include <oStd/macros.h>
-#include <oStd/vendor.h>
-#include <oStd/version.h>
+#include <oBase/macros.h>
+#include <oBase/vendor.h>
+#include <oBase/version.h>
+#include <functional>
 
-namespace oCore {
+namespace ouro {
 	namespace adapter {
 
 class id
@@ -51,17 +51,17 @@ private:
 struct info
 {
 	class id id;
-	oStd::mstring description;
-	oStd::mstring plugnplay_id;
-	struct oStd::version version;
-	oStd::vendor::value vendor;
+	mstring description;
+	mstring plugnplay_id;
+	struct version version;
+	vendor::value vendor;
 };
 
 void enumerate(const std::function<bool(const info& _Info)>& _Enumerator);
 
 // Ouroboros requires a minimum adapter driver version. This returns that 
 // version.
-oStd::version minimum_version(oStd::vendor::value _Vendor);
+version minimum_version(vendor::value _Vendor);
 
 // Checks that all adapters meet or exceed the minimum version
 inline bool all_up_to_date()
@@ -77,6 +77,6 @@ inline bool all_up_to_date()
 }
 
 	} // namespace adapter
-} // namespace oCore
+} // namespace ouro
 
 #endif

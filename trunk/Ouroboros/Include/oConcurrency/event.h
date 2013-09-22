@@ -28,7 +28,7 @@
 #ifndef oConcurrency_event_h
 #define oConcurrency_event_h
 
-#include <oStd/event.h>
+#include <oBase/event.h>
 #include <oConcurrency/thread_safe.h>
 
 namespace oConcurrency {
@@ -39,7 +39,7 @@ class event
 {
 public:
 	event() {}
-	event(autoreset_t _AutoReset) : e(oStd::autoreset) {}
+	event(autoreset_t _AutoReset) : e(ouro::autoreset) {}
 	void set(int _Mask = 1) threadsafe { E().set(_Mask); }
 	void reset(int _Mask = ~0) threadsafe { E().reset(_Mask); }
 	void wait(int _Mask = 1) const threadsafe { E().wait(_Mask); }
@@ -61,8 +61,8 @@ public:
 	bool is_any_set(int _Mask = 1) const threadsafe { return E().is_any_set(_Mask); }
 
 private:
-	oStd::event e;
-	oStd::event& E() const threadsafe { return thread_cast<oStd::event&>(e); }
+	ouro::event e;
+	ouro::event& E() const threadsafe { return thread_cast<ouro::event&>(e); }
 };
 
 } // namespace oConcurrency

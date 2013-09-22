@@ -87,9 +87,9 @@
 #ifndef oSurface_h
 #define oSurface_h
 
-#include <oStd/byte.h>
-#include <oStd/fourcc.h>
-#include <oStd/function.h>
+#include <oBase/byte.h>
+#include <oBase/fourcc.h>
+#include <oBase/function.h>
 #include <oBasis/oInt.h>
 #include <oBasis/oInvalid.h>
 #include <oBasis/oMathTypes.h>
@@ -455,11 +455,11 @@ oSURFACE_FORMAT oSurfaceGetSubformat(oSURFACE_FORMAT _Format, int _SubsurfaceInd
 // Most formats for data types have a fourcc that is unique at least amongst 
 // other oSURFACE_FORMATs. This is useful for serialization where you want 
 // something a bit more version-stable than an enum value.
-oStd::fourcc oSurfaceFormatToFourcc(oSURFACE_FORMAT _Format);
+ouro::fourcc oSurfaceFormatToFourcc(oSURFACE_FORMAT _Format);
 
-// Convert an oStd::fourcc as returned from oSurfaceFormatToFourCC to its associated 
+// Convert an ouro::fourcc as returned from oSurfaceFormatToFourCC to its associated 
 // oSURFACE_FORMAT.
-oSURFACE_FORMAT oSurfaceFormatFromFourcc(oStd::fourcc _FourCC);
+oSURFACE_FORMAT oSurfaceFormatFromFourcc(ouro::fourcc _FourCC);
 
 // _____________________________________________________________________________
 // Mip Level (1 2D plane/slice, a simple image) introspection
@@ -682,7 +682,7 @@ void oSurfaceCopySubresource(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_C
 
 // For 3d textures a mapped subresource contains all depth slices at that mip level,
 // this function will output the data pointer adjusted for the requested depth index.
-inline void oSurfaceMappedSubresourceOffsetDepthIndex(const oSURFACE_MAPPED_SUBRESOURCE& _MappedSubresource, int _DepthIndex, void** _pMappedSubResourceData) { *_pMappedSubResourceData = oStd::byte_add(_MappedSubresource.pData, _MappedSubresource.DepthPitch, _DepthIndex); }
+inline void oSurfaceMappedSubresourceOffsetDepthIndex(const oSURFACE_MAPPED_SUBRESOURCE& _MappedSubresource, int _DepthIndex, void** _pMappedSubResourceData) { *_pMappedSubResourceData = ouro::byte_add(_MappedSubresource.pData, _MappedSubresource.DepthPitch, _DepthIndex); }
 
 // _____________________________________________________________________________
 // Heavier-weight util functions that might need to be broken out into their own

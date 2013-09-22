@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oOpenSSL.h"
-#include <oStd/assert.h>
+#include <oBase/assert.h>
 #include "oWinsock.h"
 
 static const char* sExportedAPIs[] = 

@@ -23,6 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPU/oGPUUtil.h>
+#include <oBase/finally.h>
+
+using namespace ouro;
 
 void oGPUGetIndexBufferDesc(uint _NumIndices, uint _NumVertices, oGPU_BUFFER_DESC* _pDesc)
 {
@@ -45,9 +48,9 @@ void oGPUCopyIndices(oSURFACE_MAPPED_SUBRESOURCE& _Destination, const oSURFACE_C
 	if (_Destination.RowPitch == _Source.RowPitch)
 		memcpy(_Destination.pData, _Source.pData, _NumIndices * _Destination.RowPitch);
 	else if (_Destination.RowPitch == sizeof(uint) && _Source.RowPitch == sizeof(ushort))
-		oStd::memcpyustoui((uint*)_Destination.pData, (const ushort*)_Source.pData, _NumIndices);
+		memcpyustoui((uint*)_Destination.pData, (const ushort*)_Source.pData, _NumIndices);
 	else if (_Destination.RowPitch == sizeof(ushort) && _Source.RowPitch == sizeof(uint))
-		oStd::memcpyuitous((ushort*)_Destination.pData, (const uint*)_Source.pData, _NumIndices);
+		memcpyuitous((ushort*)_Destination.pData, (const uint*)_Source.pData, _NumIndices);
 	else
 		oASSERT(false, "Bad strides");
 }
@@ -87,7 +90,7 @@ bool oGPUCommitVertexBuffer(oGPUCommandList* _pCommandList
 	else
 		memset(&msr, 0, sizeof(oSURFACE_MAPPED_SUBRESOURCE));
 
-	oStd::finally UnmapMSRs([&]
+	finally UnmapMSRs([&]
 	{
 		if (msr.pData)
 			_pCommandList->Commit(_pVertexBuffer, 0, msr);
@@ -101,18 +104,18 @@ bool oGPUCommitVertexBuffer(oGPUCommandList* _pCommandList
 			_GetElementData(_pElements[i], &Source);
 			uint ElStride = oSurfaceFormatGetSize(_pElements[i].Format);
 			oASSERT((offset + ElStride) <= stride, "write will be out-of-bounds");
-			void* pDestination = oStd::byte_add(msr.pData, offset);
+			void* pDestination = byte_add(msr.pData, offset);
 			offset += ElStride;
 
 			if (Source.pData)
-				oStd::memcpy2d(pDestination, stride, Source.pData, Source.RowPitch, ElStride, d.ArraySize);
+				memcpy2d(pDestination, stride, Source.pData, Source.RowPitch, ElStride, d.ArraySize);
 			else
 			{
 				#ifdef _DEBUG
 					char buf[5];
-					oTRACE("No data for %s (%d%s IAElement) for VB %s", oStd::to_string(buf, _pElements[i].Semantic), i, oStd::ordinal(i), _pVertexBuffer->GetName());
+					oTRACE("No data for %s (%d%s IAElement) for VB %s", to_string(buf, _pElements[i].Semantic), i, ordinal(i), _pVertexBuffer->GetName());
 				#endif
-				oStd::memset2d(pDestination, stride, 0, ElStride, d.ArraySize);
+				memset2d(pDestination, stride, 0, ElStride, d.ArraySize);
 			}
 		}
 	}
@@ -122,7 +125,7 @@ bool oGPUCommitVertexBuffer(oGPUCommandList* _pCommandList
 
 void oGPUCommitBuffer(oGPUCommandList* _pCommandList, oGPUBuffer* _pBuffer, const void* _pStruct, uint _SizeofStruct, uint _NumStructs)
 {
-	oASSERT(oStd::byte_aligned(_SizeofStruct, 16), "Structs must be aligned to 16 bytes (%u bytes specified %.02f of alignment)", _SizeofStruct, _SizeofStruct / 16.0f);
+	oASSERT(byte_aligned(_SizeofStruct, 16), "Structs must be aligned to 16 bytes (%u bytes specified %.02f of alignment)", _SizeofStruct, _SizeofStruct / 16.0f);
 	oSURFACE_MAPPED_SUBRESOURCE msr;
 	msr.pData = const_cast<void*>(_pStruct);
 	msr.RowPitch = _SizeofStruct;
@@ -132,9 +135,9 @@ void oGPUCommitBuffer(oGPUCommandList* _pCommandList, oGPUBuffer* _pBuffer, cons
 
 void oGPUCommitBuffer(oGPUDevice* _pDevice, oGPUBuffer* _pBuffer, const void* _pStruct, uint _SizeofStruct, uint _NumStructs)
 {
-	oASSERT(oStd::byte_aligned(_SizeofStruct, 16), "Structs must be aligned to 16 bytes");
+	oASSERT(byte_aligned(_SizeofStruct, 16), "Structs must be aligned to 16 bytes");
 
-	oStd::intrusive_ptr<oGPUCommandList> ICL;
+	intrusive_ptr<oGPUCommandList> ICL;
 	_pDevice->GetImmediateCommandList(&ICL);
 
 	oSURFACE_MAPPED_SUBRESOURCE msr;
@@ -158,7 +161,7 @@ bool oGPUCreateIndexBuffer(oGPUDevice* _pDevice
 
 	if (_MappedSubresource.pData)
 	{
-		oStd::intrusive_ptr<oGPUCommandList> ICL;
+		intrusive_ptr<oGPUCommandList> ICL;
 		_pDevice->GetImmediateCommandList(&ICL);
 		oGPUCommitIndexBuffer(ICL, _MappedSubresource, *_ppIndexBuffer);
 	}
@@ -191,7 +194,7 @@ bool oGPUCreateVertexBuffer(oGPUDevice* _pDevice
 
 	if (!!_GetElementData)
 	{
-		oStd::intrusive_ptr<oGPUCommandList> ICL;
+		intrusive_ptr<oGPUCommandList> ICL;
 		_pDevice->GetImmediateCommandList(&ICL);
 
 		if (!oGPUCommitVertexBuffer(ICL, _GetElementData, _pElements, _NumElements, _InputSlot, *_ppVertexBuffer))
@@ -202,7 +205,7 @@ bool oGPUCreateVertexBuffer(oGPUDevice* _pDevice
 }
 
 static void oGPUGetVertexSource(uint _NumSemantics
-	, const oStd::fourcc* _pSupportedSemantics
+	, const fourcc* _pSupportedSemantics
 	, const void** _ppData
 	, const uint* _pElementStrides
 	, const oGPU_VERTEX_ELEMENT& _Element
@@ -223,7 +226,7 @@ static void oGPUGetVertexSourceFromGeometry(const oGeometry::DESC& _Desc
 	, const oGPU_VERTEX_ELEMENT& _Element
 	, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pElementData)
 {
-	static const oStd::fourcc sSemantics[] =  { 'POS0', 'NML0', 'TAN0', 'TEX0', 'CLR0', 'CON0', };
+	static const fourcc sSemantics[] =  { 'POS0', 'NML0', 'TAN0', 'TEX0', 'CLR0', 'CON0', };
 
 	const void* sData[] = 
 	{
@@ -268,12 +271,12 @@ bool oGPUCreateVertexBuffer(oGPUDevice* _pDevice
 
 bool oGPUCreateReadbackCopy(oGPUBuffer* _pSource, oGPUBuffer** _ppReadbackCopy)
 {
-	oStd::intrusive_ptr<oGPUDevice> Device;
+	intrusive_ptr<oGPUDevice> Device;
 	_pSource->GetDevice(&Device);
 	oGPUBuffer::DESC d;
 	_pSource->GetDesc(&d);
 	d.Type = oGPU_BUFFER_READBACK;
-	oStd::sstring Name;
+	sstring Name;
 	snprintf(Name, "%s.Readback", _pSource->GetName());
 	return Device->CreateBuffer(Name, d, _ppReadbackCopy);
 }
@@ -288,13 +291,13 @@ uint oGPUReadbackCounter(oGPUBuffer* _pUnorderedBuffer, oGPUBuffer* _pPreallocat
 		return oInvalid;
 	}
 
-	oStd::intrusive_ptr<oGPUDevice> Device;
+	intrusive_ptr<oGPUDevice> Device;
 	_pUnorderedBuffer->GetDevice(&Device);
 
-	oStd::intrusive_ptr<oGPUBuffer> Counter = _pPreallocatedReadbackBuffer;
+	intrusive_ptr<oGPUBuffer> Counter = _pPreallocatedReadbackBuffer;
 	if (!Counter)
 	{
-		oStd::sstring Name;
+		sstring Name;
 		snprintf(Name, "%s.Readback", _pUnorderedBuffer->GetName());
 
 		oGPUBuffer::DESC rb;
@@ -305,7 +308,7 @@ uint oGPUReadbackCounter(oGPUBuffer* _pUnorderedBuffer, oGPUBuffer* _pPreallocat
 			return oInvalid; // pass through error
 	}
 
-	oStd::intrusive_ptr<oGPUCommandList> ICL;
+	intrusive_ptr<oGPUCommandList> ICL;
 	Device->GetImmediateCommandList(&ICL);
 	ICL->CopyCounter(Counter, 0, _pUnorderedBuffer);
 
@@ -319,7 +322,7 @@ uint oGPUReadbackCounter(oGPUBuffer* _pUnorderedBuffer, oGPUBuffer* _pPreallocat
 
 bool oGPURead(oGPUResource* _pSourceResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Destination, bool _FlipVertically)
 {
-	oStd::intrusive_ptr<oGPUDevice> Device;
+	intrusive_ptr<oGPUDevice> Device;
 	_pSourceResource->GetDevice(&Device);
 
 	switch (_pSourceResource->GetType())
@@ -353,7 +356,7 @@ bool oGPURead(oGPUResource* _pSourceResource, int _Subresource, oSURFACE_MAPPED_
 		return false; // pass through error
 
 	int2 ByteDimensions = _pSourceResource->GetByteDimensions(_Subresource);
-	oStd::memcpy2d(_Destination.pData, _Destination.RowPitch, source.pData, source.RowPitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
+	memcpy2d(_Destination.pData, _Destination.RowPitch, source.pData, source.RowPitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
 
 	pDevice->UnmapRead(_pSourceResource, _Subresource);
 	return true;
@@ -364,7 +367,7 @@ bool oGPUGenerateMips(oGPUDevice* _pDevice, oGPUTexture* _pTexture)
 	oGPUTexture::DESC td;
 	_pTexture->GetDesc(&td);
 
-	oStd::intrusive_ptr<oGPURenderTarget> RT;
+	intrusive_ptr<oGPURenderTarget> RT;
 	oGPURenderTarget::DESC RTDesc;
 	RTDesc.Dimensions = td.Dimensions;
 	RTDesc.ArraySize = td.ArraySize;
@@ -373,10 +376,10 @@ bool oGPUGenerateMips(oGPUDevice* _pDevice, oGPUTexture* _pTexture)
 	RTDesc.Type = oGPUTextureTypeStripReadbackType(oGPUTextureTypeGetMipMapType(td.Type));
 	oVERIFY(_pDevice->CreateRenderTarget("oGPUGenerateMips.TempRT", RTDesc, &RT));
 
-	oStd::intrusive_ptr<oGPUTexture> RTTexture;
+	intrusive_ptr<oGPUTexture> RTTexture;
 	RT->GetTexture(0, &RTTexture);
 
-	oStd::intrusive_ptr<oGPUCommandList> ICL;
+	intrusive_ptr<oGPUCommandList> ICL;
 	_pDevice->GetImmediateCommandList(&ICL);
 
 	ICL->Copy(RTTexture, _pTexture);
@@ -394,7 +397,7 @@ bool oGPUCreateTexture(oGPUDevice* _pDevice, const oImage* const* _ppSourceImage
 	oImage::DESC id;
 	_ppSourceImages[0]->GetDesc(&id);
 
-	oStd::intrusive_ptr<oGPUTexture> Texture;
+	intrusive_ptr<oGPUTexture> Texture;
 	oGPUTexture::DESC td;
 	td.Format = oImageFormatToSurfaceFormat(id.Format);
 	td.Type = _Type;
@@ -420,7 +423,7 @@ bool oGPUCreateTexture(oGPUDevice* _pDevice, const oImage* const* _ppSourceImage
 	if (!_pDevice->CreateTexture(_ppSourceImages[0]->GetName(), td, &Texture))
 		return false; // pass through error
 
-	oStd::intrusive_ptr<oGPUCommandList> ICL;
+	intrusive_ptr<oGPUCommandList> ICL;
 	_pDevice->GetImmediateCommandList(&ICL);
 
 	const int NumMips = oSurfaceCalcNumMips(oGPUTextureTypeHasMips(_Type), td.Dimensions);
@@ -482,7 +485,7 @@ static bool DEPRECATED_oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pM
 	}
 #endif
 
-	oStd::intrusive_ptr<oGPURenderTarget> SurfaceRenderTarget;
+	intrusive_ptr<oGPURenderTarget> SurfaceRenderTarget;
 	oGPURenderTarget::DESC rtDesc;
 	rtDesc.Dimensions = td.Dimensions;
 	rtDesc.ArraySize = td.ArraySize;
@@ -491,10 +494,10 @@ static bool DEPRECATED_oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pM
 	rtDesc.Type = oGPUTextureTypeStripReadbackType(oGPUTextureTypeGetMipMapType(td.Type));
 	oVERIFY(_pDevice->CreateRenderTarget("oGPUGenerateMips temporary render target", rtDesc, &SurfaceRenderTarget));
 
-	oStd::intrusive_ptr<oGPUTexture> Mip0Texture;
+	intrusive_ptr<oGPUTexture> Mip0Texture;
 	SurfaceRenderTarget->GetTexture(0, &Mip0Texture);
 
-	oStd::intrusive_ptr<oGPUCommandList> ICL;
+	intrusive_ptr<oGPUCommandList> ICL;
 	_pDevice->GetImmediateCommandList(&ICL);
 
 	int numMipLevels = oSurfaceCalcNumMips(oSURFACE_LAYOUT_TIGHT, td.Dimensions);
@@ -536,7 +539,7 @@ bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _N
 	rbd.Format = _SurfaceDesc.Format;
 	rbd.ArraySize = _SurfaceDesc.ArraySize;
 	rbd.Type = oGPUTextureTypeGetReadbackType(oGPUTextureTypeGetMipMapType(_Type));
-	oStd::intrusive_ptr<oGPUTexture> ReadbackTexture;
+	intrusive_ptr<oGPUTexture> ReadbackTexture;
 	_pDevice->CreateTexture("oGPUGenerateMips temporary readback texture", rbd, &ReadbackTexture);
 
 	DEPRECATED_oGPUGenerateMips(_pDevice, _pMip0Images, _NumImages, ReadbackTexture);
@@ -562,7 +565,7 @@ bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _N
 			_pDevice->MapRead(ReadbackTexture, subresource, &msrMipSrc, true);
 			oSurfaceMappedSubresourceOffsetDepthIndex(msrMipSrc, depthIndex, &msrMipSrc.pData);
 
-			oStd::memcpy2d(msrMipDest.pData, msrMipDest.RowPitch, msrMipSrc.pData, msrMipSrc.RowPitch, byteDimensions.x, byteDimensions.y, false);
+			memcpy2d(msrMipDest.pData, msrMipDest.RowPitch, msrMipSrc.pData, msrMipSrc.RowPitch, byteDimensions.x, byteDimensions.y, false);
 
 			_pDevice->UnmapRead(ReadbackTexture, subresource);
 		}
@@ -573,9 +576,9 @@ bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _N
 
 bool oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource, interface oImage** _ppImage)
 {
-	oStd::intrusive_ptr<oGPUTexture> TextureToSave = _pTexture;
+	intrusive_ptr<oGPUTexture> TextureToSave = _pTexture;
 	
-	oStd::intrusive_ptr<oGPUDevice> Device;
+	intrusive_ptr<oGPUDevice> Device;
 	_pTexture->GetDevice(&Device);
 
 	oGPUTexture::DESC d;
@@ -583,14 +586,14 @@ bool oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource, interface oImage** 
 
 	if (!oGPUTextureTypeIsReadback(d.Type))
 	{
-		oStd::uri_string Name(_pTexture->GetName());
-		oStd::sncatf(Name, "#CPUCopy");
+		uri_string Name(_pTexture->GetName());
+		sncatf(Name, "#CPUCopy");
 		oGPUTexture::DESC CPUCopyDesc(d);
 		CPUCopyDesc.Type = oGPUTextureTypeGetReadbackType(d.Type);
 		if (!Device->CreateTexture(Name, CPUCopyDesc, &TextureToSave))
 			return false; // pass through error
 
-		oStd::intrusive_ptr<oGPUCommandList> ICL;
+		intrusive_ptr<oGPUCommandList> ICL;
 		Device->GetImmediateCommandList(&ICL);
 		ICL->Copy(TextureToSave, _pTexture);
 	}
@@ -604,7 +607,7 @@ bool oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource, interface oImage** 
 	oSURFACE_SUBRESOURCE_DESC ssrd;
 	oSurfaceSubresourceGetDesc(sd, _Subresource, &ssrd);
 
-	oStd::intrusive_ptr<oImage> Image;
+	intrusive_ptr<oImage> Image;
 	oImage::DESC idesc;
 	idesc.RowPitch = oImageCalcRowPitch(oImageFormatFromSurfaceFormat(sd.Format), ssrd.Dimensions.x);
 	idesc.Dimensions = ssrd.Dimensions.xy();
@@ -641,15 +644,15 @@ static void oGPUGetVertexSourceFromOBJ(const threadsafe oOBJ* _pOBJ, oOBJExtraVe
 		if (d.pPositions && d.pNormals && d.pTexcoords)
 		{
 			oTRACE("Calculating Tangents...");
-			oCalcTangents(oStd::data(_pExtra->Tangents), d.pIndices, d.NumIndices, d.pPositions, d.pNormals, d.pTexcoords, d.NumVertices);
+			oCalcTangents(data(_pExtra->Tangents), d.pIndices, d.NumIndices, d.pPositions, d.pNormals, d.pTexcoords, d.NumVertices);
 		}
 
 		else
 			oTRACE("Cannot calculate tangents, missing:%s%s%s", d.pPositions ? "" : " Positions", d.pNormals ? "" : " Normals", d.pTexcoords ? "" : " Texcoords");
 	}
 
-	static const oStd::fourcc sSemantics[] = { 'POS0', 'NML0', 'TEX0', 'TAN0' };
-	const void* sData[] = { d.pPositions, d.pNormals, d.pTexcoords, oStd::data(_pExtra->Tangents) };
+	static const fourcc sSemantics[] = { 'POS0', 'NML0', 'TEX0', 'TAN0' };
+	const void* sData[] = { d.pPositions, d.pNormals, d.pTexcoords, data(_pExtra->Tangents) };
 	const uint sStrides[] = { sizeof(*d.pPositions), sizeof(*d.pNormals), sizeof(*d.pTexcoords), sizeof(float4) };
 	oGPUGetVertexSource(oCOUNTOF(sSemantics), sSemantics, sData, sStrides, _Element, _pElementData);
 }
@@ -663,7 +666,7 @@ static bool oGPUReadVertexSource(int _Slot, int _NumVertices, oSURFACE_MAPPED_SU
 	{
 		int msrI = _pElements[i].InputSlot;
 		if (msrI >= 3) // TODO: Define 3
-			return oErrorSetLast(std::errc::invalid_argument, "The %d%s element uses InputSlot %d, which is out of range for an oGfxMesh (must be 0 <= InputSlot <= 2)", oStd::ordinal(i), _pElements[i].InputSlot);
+			return oErrorSetLast(std::errc::invalid_argument, "The %d%s element uses InputSlot %d, which is out of range for an oGfxMesh (must be 0 <= InputSlot <= 2)", ordinal(i), _pElements[i].InputSlot);
 		if (msrI != _Slot)
 			continue;
 
@@ -675,18 +678,18 @@ static bool oGPUReadVertexSource(int _Slot, int _NumVertices, oSURFACE_MAPPED_SU
 		// semantic it supports.
 		_GetVertexSource(_pElements[i], &Source);
 
-		void* pDestination = oStd::byte_add(_Mapped.pData, offset);
+		void* pDestination = byte_add(_Mapped.pData, offset);
 		offset += ElStride;
 
 		if (Source.pData)
-			oStd::memcpy2d(pDestination, vertexStride, Source.pData, Source.RowPitch, ElStride, _NumVertices);
+			memcpy2d(pDestination, vertexStride, Source.pData, Source.RowPitch, ElStride, _NumVertices);
 		else
 		{
 			#ifdef _DEBUG
 				char buf[5];
-				oTRACE("No data for %s (%d%s IAElement) for mesh", oStd::to_string(buf, _pElements[i].Semantic), i, oStd::ordinal(i));
+				oTRACE("No data for %s (%d%s IAElement) for mesh", to_string(buf, _pElements[i].Semantic), i, ordinal(i));
 			#endif
-			oStd::memset2d(pDestination, vertexStride, 0, ElStride, _NumVertices);
+			memset2d(pDestination, vertexStride, 0, ElStride, _NumVertices);
 		}
 	}
 
@@ -751,8 +754,8 @@ struct oGPUUtilMeshImpl : oGPUUtilMesh
 	oGPUBuffer* GetVertexBuffer() override { return VB; }
 
 	oGPU_MESH_DESC Desc;
-	oStd::intrusive_ptr<oGPUBuffer> IB;
-	oStd::intrusive_ptr<oGPUBuffer> VB;
+	intrusive_ptr<oGPUBuffer> IB;
+	intrusive_ptr<oGPUBuffer> VB;
 	oRefCount RefCount;
 	uint NumPrimitives;
 };
@@ -792,13 +795,13 @@ bool oGPUUtilMeshCreate(oGPUDevice* _pDevice, const char* _MeshName, const oGPU_
 	if (!_pGeometry->MapConst(&GeoMapped))
 		return false; // pass through error
 
-	oStd::finally GeoUnmap([&]{ _pGeometry->UnmapConst(); });
+	ouro::finally GeoUnmap([&]{ _pGeometry->UnmapConst(); });
 
-	oStd::intrusive_ptr<oGPUUtilMesh> Mesh;
+	intrusive_ptr<oGPUUtilMesh> Mesh;
 	if (!oGPUUtilMeshCreate(_pDevice, _MeshName, d, GeoMapped.pRanges[0].NumPrimitives, &Mesh))
 		return false; // pass through error
 
-	oStd::intrusive_ptr<oGPUCommandList> ICL;
+	intrusive_ptr<oGPUCommandList> ICL;
 	_pDevice->GetImmediateCommandList(&ICL);
 
 	// Ranges
@@ -848,11 +851,11 @@ bool oGPUUtilCreateFirstTriangle(oGPUDevice* _pDevice
 	md.NumVertexElements = _NumElements;
 
 	std::copy(_pElements, _pElements + _NumElements, md.VertexElements.begin());
-	oStd::intrusive_ptr<oGPUUtilMesh> Mesh;
+	intrusive_ptr<oGPUUtilMesh> Mesh;
 	if (!oGPUUtilMeshCreate(_pDevice, "First Triangle", md, 1, &Mesh))
 		return false; // pass through error
 
-	oStd::intrusive_ptr<oGPUCommandList> ICL;
+	intrusive_ptr<oGPUCommandList> ICL;
 	_pDevice->GetImmediateCommandList(&ICL);
 
 	oSURFACE_CONST_MAPPED_SUBRESOURCE msr;
@@ -892,14 +895,14 @@ bool oGPUUtilCreateFirstCube(oGPUDevice* _pDevice
 	bd.FaceType = oGeometry::FRONT_CCW;
 	bd.Bounds = oAABoxf(oAABoxf::min_max, float3(-1.0f), float3(1.0f));
 	bd.Divide = 1;
-	bd.Color = oStd::White;
+	bd.Color = White;
 	bd.FlipTexcoordV = false;
 
-	oStd::intrusive_ptr<oGeometryFactory> Factory;
+	intrusive_ptr<oGeometryFactory> Factory;
 	if (!oGeometryFactoryCreate(&Factory))
 		return false;
 
-	oStd::intrusive_ptr<oGeometry> geo;
+	intrusive_ptr<oGeometry> geo;
 	if (!Factory->Create(bd, layout, &geo))
 		return false;
 

@@ -40,14 +40,14 @@
 
 #else
 
-#include <oStd/color.h>
-#include <oStd/operators.h>
+#include <oBase/color.h>
+#include <oBase/operators.h>
 
 #include <oHLSL/oHLSLSwizzlesOn.h>
 
 class oRGBf
 {
-	// Handle automatic expansion of oStd::color to float3s. Using this type
+	// Handle automatic expansion of ouro::color to float3s. Using this type
 	// allows for a single header to be defined for usage in both C++ and HLSL. 
 	// NOTE: Alpha is quietly dropped/ignored when using this.
 
@@ -57,17 +57,17 @@ public:
 	oRGBf() : r(0.0f), g(0.0f), b(0.0f) {}
 	oRGBf(float _R, float _G, float _B) : r(_R), g(_G), b(_B) {}
 	oRGBf(const float3& _Color) : r(_Color.x), g(_Color.y), b(_Color.z) {}
-	oRGBf(const oStd::color& _Color) { _Color.decompose(&r, &g, &b); }
+	oRGBf(const ouro::color& _Color) { _Color.decompose(&r, &g, &b); }
 	oRGBf(const oRGBf& _RGB) : r(_RGB.r), g(_RGB.g), b(_RGB.b) {}
 
 	inline operator float3&() { return *(float3*)this; }
 	inline operator const float3&() const { return *(float3*)this; }
 	inline operator float3() const { return *(float3*)this; }
-	inline operator oStd::color() const { return oStd::color(r, g, b, 1.0f); }
+	inline operator ouro::color() const { return ouro::color(r, g, b, 1.0f); }
 	inline const oRGBf& operator=(int _Color) { r = static_cast<float>(_Color); g = static_cast<float>(_Color); b = static_cast<float>(_Color); return *this; }
 	inline const oRGBf& operator=(const oRGBf& _Color) { r = _Color.r; g = _Color.g; b = _Color.b; return *this; }
 	inline const oRGBf& operator=(const float3& _Color) { r = _Color.x; g = _Color.y; b = _Color.z; return *this; }
-	inline const oRGBf& operator=(const oStd::color& _Color) { _Color.decompose(&r, &g, &b); return *this; }
+	inline const oRGBf& operator=(const ouro::color& _Color) { _Color.decompose(&r, &g, &b); return *this; }
 
 	oRGBf& operator+=(const oRGBf& _That) { *this = saturate((const float3&)*this + (const float3&)_That); return *this; }
 	oRGBf& operator-=(const oRGBf& _That) { *this = saturate((const float3&)*this - (const float3&)_That); return *this; }
@@ -93,7 +93,7 @@ public:
 
 class oRGBAf
 {
-	// Handle automatic expansion of oStd::color to float3s. Using this type 
+	// Handle automatic expansion of ouro::color to float3s. Using this type 
 	// allows for a single header to be defined for usage in both C++ and HLSL. 
 
 public:
@@ -102,17 +102,17 @@ public:
 	oRGBAf() : r(0.0f), g(0.0f), b(0.0f), a(1.0f) {}
 	oRGBAf(float _R, float _G, float _B, float _A) : r(_R), g(_G), b(_B), a(_A) {}
 	oRGBAf(const float4& _Color) : r(_Color.x), g(_Color.y), b(_Color.z), a(_Color.w) {}
-	oRGBAf(const oStd::color& _Color) { _Color.decompose(&r, &g, &b, &a); }
+	oRGBAf(const ouro::color& _Color) { _Color.decompose(&r, &g, &b, &a); }
 	oRGBAf(const oRGBAf& _RGBA) : r(_RGBA.r), g(_RGBA.g), b(_RGBA.b), a(_RGBA.a) {}
 
 	inline const float3& rgb() const { return *(const float3*)this; }
 	inline operator float4&() { return *(float4*)this; }
 	inline operator const float4&() const { return *(const float4*)this; }
-	inline operator oStd::color() const { return oStd::color(r, g, b, a); }
+	inline operator ouro::color() const { return ouro::color(r, g, b, a); }
 	inline const oRGBAf& operator=(int _Color) { r = static_cast<float>(_Color); g = static_cast<float>(_Color); b = static_cast<float>(_Color); a = static_cast<float>(_Color); return *this; }
 	inline const oRGBAf& operator=(const oRGBAf& _Color) { r = _Color.r; g = _Color.g; b = _Color.b; a = _Color.a; return *this; }
 	inline const oRGBAf& operator=(const float4& _Color) { r = _Color.x; g = _Color.y; b = _Color.z; a = _Color.w; return *this; }
-	inline const oRGBAf& operator=(const oStd::color& _Color) { _Color.decompose(&r, &g, &b, &a); return *this; }
+	inline const oRGBAf& operator=(const ouro::color& _Color) { _Color.decompose(&r, &g, &b, &a); return *this; }
 
 	oRGBAf& operator+=(const oRGBAf& _That) { *this = saturate((const float4&)*this + (const float4&)_That); return *this; }
 	oRGBAf& operator-=(const oRGBAf& _That) { *this = saturate((const float4&)*this - (const float4&)_That); return *this; }

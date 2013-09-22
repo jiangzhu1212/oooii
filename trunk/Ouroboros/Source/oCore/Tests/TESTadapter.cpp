@@ -24,11 +24,11 @@
  **************************************************************************/
 #include <oCore/adapter.h>
 #include <oCore/tests/oCoreTestRequirements.h>
-#include <oStd/assert.h>
+#include <oBase/assert.h>
 
 using namespace oStd;
 
-namespace oCore {
+namespace ouro {
 	namespace tests {
 
 void TESTadapter(requirements& _Requirements)
@@ -49,4 +49,4 @@ void TESTadapter(requirements& _Requirements)
 };
 
 	} // namespace tests
-} // namespace oCore
+} // namespace ouro

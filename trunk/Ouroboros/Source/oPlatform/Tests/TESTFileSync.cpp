@@ -32,10 +32,10 @@ struct PLATFORM_FileSync : public oTest
 
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oStd::path testFilePath;
+		ouro::path testFilePath;
 		oTESTB0(FindInputFile(testFilePath, "oooii.ico"));
 
-		oStd::intrusive_ptr<threadsafe oSchemeHandler> FileSchemeHandler;
+		ouro::intrusive_ptr<threadsafe oSchemeHandler> FileSchemeHandler;
 		oTESTB(oFindSchemeHandler("file", &FileSchemeHandler), "There is no handler for files registered");
 		oTESTB0(FileSchemeHandler);
 
@@ -43,7 +43,7 @@ struct PLATFORM_FileSync : public oTest
 		{
 			static const unsigned int NUM_READS = 5;
 
-			oStd::intrusive_ptr<threadsafe oStreamReader> ReadFile;
+			ouro::intrusive_ptr<threadsafe oStreamReader> ReadFile;
 			oTESTB( oStreamReaderCreate(testFilePath, &ReadFile), oErrorGetLastString() );
 
 			oSTREAM_DESC FileDesc;
@@ -65,7 +65,7 @@ struct PLATFORM_FileSync : public oTest
 				StreamRead.pData = pHead;
 				TestSuccess = ReadFile->Read(StreamRead);
 				
-				pHead = oStd::byte_add(pHead, BytesPerRead);
+				pHead = ouro::byte_add(pHead, BytesPerRead);
 				StreamRead.Range.Offset += BytesPerRead;
 			}
 			auto RemainingBytes = FileDesc.Size - r;
@@ -78,25 +78,25 @@ struct PLATFORM_FileSync : public oTest
 
 			static const uint128 ExpectedFileHash(13254728276562583748ull, 8059648572410507760ull);
 			oTESTB(TestSuccess, "Test failed, ReadFile->Read returned false");
-			oTESTB( oStd::murmur3( TempFileBlob, oUInt( FileDesc.Size ) ) == ExpectedFileHash, "Test failed to compute correct hash" );
+			oTESTB( ouro::murmur3( TempFileBlob, oUInt( FileDesc.Size ) ) == ExpectedFileHash, "Test failed to compute correct hash" );
 		}
 
 		// Now test writing data out then reading it back
-		oStd::path TempFilePath;
+		ouro::path TempFilePath;
 		oTESTB0(BuildPath(TempFilePath, "", oTest::TEMP));
-		oCore::filesystem::create_directories(TempFilePath.parent_path());
+		ouro::filesystem::create_directories(TempFilePath.parent_path());
 		TempFilePath /= "TESTAsyncFileIO.bin";
 
 		{
-			oCore::filesystem::remove(TempFilePath);
-			oStd::intrusive_ptr<threadsafe oStreamReader> ReadFile;
+			ouro::filesystem::remove(TempFilePath);
+			ouro::intrusive_ptr<threadsafe oStreamReader> ReadFile;
 			oTESTB( !oStreamReaderCreate(TempFilePath, &ReadFile), "Should not be able to create a FileReader for a file that does not exist." );
 		}
 
 		static const oGUID TestGUID = { 0x9aab7fc7, 0x6ad8, 0x4260, { 0x98, 0xef, 0xfd, 0x93, 0xda, 0x8e, 0xdc, 0x3c } };
 		// Now test write the test file
 		{
-			oStd::intrusive_ptr<threadsafe oStreamWriter> WriteFile;
+			ouro::intrusive_ptr<threadsafe oStreamWriter> WriteFile;
 			oTESTB( oStreamWriterCreate(TempFilePath, &WriteFile), oErrorGetLastString() );
 		
 			oSTREAM_WRITE StreamWrite;

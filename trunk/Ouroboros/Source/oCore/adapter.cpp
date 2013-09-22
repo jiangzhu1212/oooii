@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCore/adapter.h>
-#include <oStd/guid.h>
+#include <oBase/guid.h>
 #include "../oStd/win.h"
 #include <regex>
 
@@ -35,7 +35,7 @@
 
 using namespace oStd;
 
-namespace oCore {
+namespace ouro {
 	namespace adapter {
 		namespace detail {
 
@@ -202,8 +202,8 @@ static info get_info(int _AdapterIndex, IDXGIAdapter* _pAdapter)
 
 void enumerate(const std::function<bool(const info& _Info)>& _Enumerator)
 {
-	oStd::intrusive_ptr<IDXGIFactory> Factory;
-	oStd::intrusive_ptr<IDXGIAdapter> Adapter;
+	intrusive_ptr<IDXGIFactory> Factory;
+	intrusive_ptr<IDXGIAdapter> Adapter;
 	oV(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&Factory));
 
 	int AdapterIndex = 0;
@@ -231,4 +231,4 @@ version minimum_version(vendor::value _Vendor)
 }
 
 	} // namespace adapter
-} // namespace oCore
+} // namespace ouro

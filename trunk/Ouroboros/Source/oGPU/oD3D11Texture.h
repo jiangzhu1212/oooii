@@ -37,15 +37,15 @@ oDECLARE_GPURESOURCE_IMPLEMENTATION(oD3D11, Texture, oGPU_TEXTURE, 0x75d2c3fa, 0
 	//oDECLARE_GPURESOURCE_CTOR(oD3D11, Texture);
 	oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess, ID3D11Texture2D* _pTexture = nullptr);
 
-	oStd::intrusive_ptr<ID3D11Texture2D> Texture;
-	oStd::intrusive_ptr<ID3D11ShaderResourceView> SRV;
-	oStd::intrusive_ptr<ID3D11UnorderedAccessView> UAV;
+	ouro::intrusive_ptr<ID3D11Texture2D> Texture;
+	ouro::intrusive_ptr<ID3D11ShaderResourceView> SRV;
+	ouro::intrusive_ptr<ID3D11UnorderedAccessView> UAV;
 
 	// Texture2 is used to emulate YUV aniso-sized formats. As DXGI specs more YUV
 	// formats and HW supports them, this might get used less, but there are still
 	// formats OOOii requires not on the posted DXGI roadmap, so this will be 
 	// needed for the foreseeable future.
-	oStd::intrusive_ptr<oD3D11Texture> Texture2;
+	ouro::intrusive_ptr<oD3D11Texture> Texture2;
 };
 
 #endif

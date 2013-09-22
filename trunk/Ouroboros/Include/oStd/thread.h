@@ -29,9 +29,9 @@
 #define oStd_thread_h
 
 #include <oStd/callable.h>
-#include <oStd/config.h>
 #include <oStd/chrono.h>
 #include <functional>
+#include <memory>
 
 namespace oStd {
 

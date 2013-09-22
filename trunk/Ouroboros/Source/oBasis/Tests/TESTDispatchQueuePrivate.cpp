@@ -24,10 +24,13 @@
  **************************************************************************/
 #include <oBasis/oDispatchQueuePrivate.h>
 #include <oBasis/oError.h>
-#include <oStd/finally.h>
+#include <oBase/finally.h>
 #include <oStd/condition_variable.h>
 #include <oStd/mutex.h>
 #include "oBasisTestCommon.h"
+
+using namespace ouro;
+using namespace oStd;
 
 static void SetLocation(size_t _Index, size_t _Start, int* _Array)
 {
@@ -35,20 +38,20 @@ static void SetLocation(size_t _Index, size_t _Start, int* _Array)
 	_Array[_Index] = startValue + static_cast<int>(_Index + 1 - _Start);
 }
 
-static void FillArray(int* _Array, size_t _Start, size_t _End, oStd::thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
+static void FillArray(int* _Array, size_t _Start, size_t _End, thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
 {
-	if (*_pExecutionThreadID == oStd::thread::id()) // this command should execute before any others.
-		*_pExecutionThreadID = oStd::this_thread::get_id();
+	if (*_pExecutionThreadID == thread::id()) // this command should execute before any others.
+		*_pExecutionThreadID = this_thread::get_id();
 
-	if (*_pExecutionThreadID != oStd::this_thread::get_id())
+	if (*_pExecutionThreadID != this_thread::get_id())
 		*_pWrongThreadError = true;
 
 	oConcurrency::parallel_for(_Start, _End, oBIND(&SetLocation, oBIND1, _Start, _Array));
 }
 
-static void CheckTest(int* _Array, size_t _Size, bool* _pResult, oStd::thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
+static void CheckTest(int* _Array, size_t _Size, bool* _pResult, thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
 {
-	if (*_pExecutionThreadID != oStd::this_thread::get_id())
+	if (*_pExecutionThreadID != this_thread::get_id())
 		*_pWrongThreadError = true;
 
 	*_pResult = false;
@@ -58,13 +61,13 @@ static void CheckTest(int* _Array, size_t _Size, bool* _pResult, oStd::thread::i
 	*_pResult = true;
 }
 
-static void NotifyAll(oStd::mutex& _Mutex, oStd::condition_variable& _ConditionVariable, oStd::thread::id* _pExecutionThreadID, bool* _pNotified, bool* _pWrongThreadError)
+static void NotifyAll(mutex& _Mutex, condition_variable& _ConditionVariable, thread::id* _pExecutionThreadID, bool* _pNotified, bool* _pWrongThreadError)
 {
-	if (*_pExecutionThreadID != oStd::this_thread::get_id())
+	if (*_pExecutionThreadID != this_thread::get_id())
 		*_pWrongThreadError = true;
 
 	{
-		oStd::lock_guard<oStd::mutex> Lock(_Mutex);
+		lock_guard<mutex> Lock(_Mutex);
 		*_pNotified = true;
 	}
 
@@ -73,9 +76,9 @@ static void NotifyAll(oStd::mutex& _Mutex, oStd::condition_variable& _ConditionV
 
 bool oBasisTest_oDispatchQueuePrivate()
 {
-	oStd::intrusive_ptr<threadsafe oDispatchQueuePrivate> q;
+	intrusive_ptr<threadsafe oDispatchQueuePrivate> q;
 	oTESTB(oDispatchQueueCreatePrivate("TESTDispatchQueuePrivate", 100, &q), "Failed to create private dispatch queue");
-	oStd::finally JoinQueue([&] { q->Join(); });
+	finally JoinQueue([&] { q->Join(); });
 
 	static const size_t TestSize = 4096;
 	int TestArray[TestSize];
@@ -84,13 +87,13 @@ bool oBasisTest_oDispatchQueuePrivate()
 	{
 		bool bResult = false;
 
-		oStd::condition_variable Finished;
-		oStd::mutex FinishedMutex;
+		condition_variable Finished;
+		mutex FinishedMutex;
 
 		memset(TestArray, -1, TestSize * sizeof(int));
 		TestArray[0] = 0;
 
-		oStd::thread::id ExecutionThreadID;
+		thread::id ExecutionThreadID;
 		bool WrongThread = false;
 
 		q->Dispatch(&FillArray, TestArray, 1, 1024, &ExecutionThreadID, &WrongThread);
@@ -103,7 +106,7 @@ bool oBasisTest_oDispatchQueuePrivate()
 
 		// @oooii-tony: there's a race here because the notify can happen before we settle into the wait, so the notify never comes through.
 
-		oStd::unique_lock<oStd::mutex> FinishedLock(FinishedMutex);
+		unique_lock<mutex> FinishedLock(FinishedMutex);
 		while (!Notified)
 			Finished.wait(FinishedLock);
 

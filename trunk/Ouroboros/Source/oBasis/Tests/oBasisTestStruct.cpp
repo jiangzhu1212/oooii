@@ -24,6 +24,7 @@
  **************************************************************************/
 #include "oBasisTestStruct.h"
 #include <oBasis/oError.h>
+#include <oBase/string.h>
 #include <time.h>
 
 void oBasisTestStructInit(oBASIS_TEST_STRUCT* _pTest, const void* _pBuffer1, int _SizeofBuffer1, const void* _pBuffer2, int _SizeofBuffer2)

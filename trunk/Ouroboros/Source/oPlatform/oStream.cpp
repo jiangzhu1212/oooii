@@ -25,7 +25,7 @@
 #include <oPlatform/oStream.h> // @oooii-tony: honestly only in oPlatform for oSingleton usage
 #include <oPlatform/oSingleton.h>
 
-#include <oStd/algorithm.h>
+#include <oBase/algorithm.h>
 #include <oStd/for.h>
 #include <oBasis/oLockThis.h>
 #include <oConcurrency/mutex.h>
@@ -33,6 +33,8 @@
 #include <vector>
 
 #include <oPlatform/oFileSchemeHandler.h> // @oooii-tony: hacky, see ctor comment below
+
+using namespace ouro;
 
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oSTREAM_EVENT)
 	oRTTI_ENUM_BEGIN_VALUES(oSTREAM_EVENT)
@@ -56,7 +58,7 @@ struct oStreamContext : public oProcessSingleton<oStreamContext>
 			// @oooii-tony: HACK!!! I wish self-registration can occur even in a static 
 			// lib, but until we can solve that issue, how can we guarantee we at least
 			// have a file system?
-			oStd::intrusive_ptr<threadsafe oFileSchemeHandler> SHFile;
+			intrusive_ptr<threadsafe oFileSchemeHandler> SHFile;
 			oVERIFY(oFileSchemeHandlerCreate(&SHFile));
 			oVERIFY(oStreamContext::RegisterSchemeHandler(SHFile));
 		}
@@ -87,8 +89,8 @@ protected:
 	oConcurrency::shared_mutex URIBasesMutex;
 	oConcurrency::shared_mutex SchemeHandlersMutex;
 
-	std::vector<oStd::intrusive_ptr<threadsafe oSchemeHandler>> SchemeHandlers;
-	std::vector<oStd::uri_string> URIBases;
+	std::vector<intrusive_ptr<threadsafe oSchemeHandler>> SchemeHandlers;
+	std::vector<uri_string> URIBases;
 };
 
 // {463EF9A3-3CBE-40B9-9658-A6160CE058BA}
@@ -145,7 +147,7 @@ char* oStreamContext::GetURIBaseSearchPath(char* _StrDestination, size_t _Sizeof
 	auto pThis = oLockSharedThis(URIBasesMutex);
 	oFOR(auto& p, pThis->URIBases)
 	{
-		oStd::sncatf(_StrDestination, _SizeofStrDestination, "%s%s", once ? ";" : "");
+		sncatf(_StrDestination, _SizeofStrDestination, "%s%s", once ? ";" : "");
 		once = true;
 	}
 
@@ -186,14 +188,14 @@ bool oStreamContext::RegisterSchemeHandler(threadsafe oSchemeHandler* _pSchemeHa
 void oStreamContext::UnregisterSchemeHandler(threadsafe oSchemeHandler* _pSchemeHandler) threadsafe
 {
 	auto pThis = oLockThis(SchemeHandlersMutex);
-	oStd::find_and_erase(pThis->SchemeHandlers, oStd::intrusive_ptr<threadsafe oSchemeHandler>(_pSchemeHandler));
+	find_and_erase(pThis->SchemeHandlers, intrusive_ptr<threadsafe oSchemeHandler>(_pSchemeHandler));
 }
 
 bool oStreamContext::FindSchemeHandler(const char* _Scheme, threadsafe oSchemeHandler** _ppSchemeHandler) threadsafe
 {
 	*_ppSchemeHandler = nullptr;
 	auto pThis = oLockThis(SchemeHandlersMutex);
-	auto it = oStd::find_if(pThis->SchemeHandlers, [&](oStd::intrusive_ptr<threadsafe oSchemeHandler>& _SchemeHandler)->bool { return (!_stricmp(_SchemeHandler->GetScheme(), _Scheme)); });
+	auto it = find_if(pThis->SchemeHandlers, [&](intrusive_ptr<threadsafe oSchemeHandler>& _SchemeHandler)->bool { return (!_stricmp(_SchemeHandler->GetScheme(), _Scheme)); });
 	if (it != pThis->SchemeHandlers.end())
 	{
 		*_ppSchemeHandler = *it;
@@ -220,7 +222,7 @@ bool oStreamContext::VisitURIReferenceInternal(const char* _URIReference, const 
 
 	if (oIsUNCPath(_URIReference) || oIsFullPath(_URIReference))
 	{
-		oStd::uri_string URI;
+		uri_string URI;
 		if (!oURIFromAbsolutePath(URI, _URIReference))
 			return false;
 
@@ -238,7 +240,7 @@ bool oStreamContext::VisitURIReferenceInternal(const char* _URIReference, const 
 
 bool oStreamContext::VisitURIReference(const char* _URIReference, const oFUNCTION<bool(threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts)>& _URIVisitor) threadsafe
 {
-	oStd::uri_string URI;
+	uri_string URI;
 	auto pThis = oLockThis(SchemeHandlersMutex);
 
 	// try the URI reference as a full URI
@@ -246,7 +248,7 @@ bool oStreamContext::VisitURIReference(const char* _URIReference, const oFUNCTIO
 		return true;
 
 	errno_t LastErr = oErrorGetLast();
-	oStd::lstring LastErrString = oErrorGetLastString();
+	lstring LastErrString = oErrorGetLastString();
 
 	// If not, try the search paths/bases
 	if (oErrorGetLast() == std::errc::not_supported)
@@ -496,7 +498,7 @@ struct oStreamReaderWindowedImpl : oStreamReader
 
 	oRefCount RefCount;
 	oInitOnce<oSTREAM_DESC> Desc;
-	oStd::intrusive_ptr<threadsafe oStreamReader> Reader;
+	intrusive_ptr<threadsafe oStreamReader> Reader;
 	oInitOnce<unsigned long long> WindowStart;
 	oInitOnce<unsigned long long> WindowEnd;
 };
@@ -518,7 +520,7 @@ bool oStreamIsNewer(const char* _URIReference, time_t _ReferenceUnixTimestamp)
 	return true;
 }
 
-oStd::utf_type::value oStreamGetUTFType(const char* _URIReference)
+utf_type::value oStreamGetUTFType(const char* _URIReference)
 {
 	// http://code.activestate.com/recipes/173220-test-if-a-file-or-string-is-text-or-binary/
 	// "The difference between text and binary is ill-defined, so this duplicates 
@@ -531,15 +533,15 @@ oStd::utf_type::value oStreamGetUTFType(const char* _URIReference)
 	static const size_t BLOCK_SIZE = 512;
 	static const float PERCENTAGE_THRESHOLD_TO_BE_BINARY = 0.10f; // 0.30f; // @oooii-tony: 30% seems too high to me.
 
-	oStd::intrusive_ptr<threadsafe oStreamReader> Reader;
+	intrusive_ptr<threadsafe oStreamReader> Reader;
 	if (!oStreamReaderCreate(_URIReference, &Reader))
-		return oStd::utf_type::unknown; // pass through error
+		return utf_type::unknown; // pass through error
 
 	char buf[BLOCK_SIZE];
 	oSTREAM_READ r;
 	r.pData = buf;
 	r.Range.Size = __min(BLOCK_SIZE, sizeof(buf));
 	if (!Reader->Read(r))
-		return oStd::utf_type::unknown; // pass through error
-	return oStd::utfcmp(buf, sizeof(buf));
+		return utf_type::unknown; // pass through error
+	return utfcmp(buf, sizeof(buf));
 }

@@ -24,7 +24,9 @@
  **************************************************************************/
 #include "oD3D11Device.h"
 #include "oD3D11Query.h"
-#include <oStd/backoff.h>
+#include <oBase/backoff.h>
+
+using namespace ouro;
 
 oDEFINE_GPUDEVICE_CREATE(oD3D11, Query);
 oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Query)
@@ -90,7 +92,7 @@ void oD3D11Query::End(ID3D11DeviceContext* _pDeviceContext)
 
 static bool PollAsync(ID3D11DeviceContext* _pDeviceContext, ID3D11Asynchronous* _pAsync, void* _pData, uint _SizeofData)
 {
-	oStd::backoff bo;
+	backoff bo;
 	HRESULT hr = S_FALSE;
 
 	while(true)

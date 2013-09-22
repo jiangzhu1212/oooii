@@ -26,6 +26,8 @@
 #include <oBasis/oDispatchQueueConcurrentT.h>
 #include <oConcurrency/threadpool.h>
 
+using namespace ouro;
+
 typedef oConcurrency::threadpool<std::allocator<oTASK>> threadpool_t;
 
 const oGUID& oGetGUID(threadsafe const oDispatchQueueConcurrentT<threadpool_t>* threadsafe const*)
@@ -67,7 +69,7 @@ struct oDispatchQueueConcurrentSerial : public oDispatchQueueConcurrent
 	bool Joinable() const threadsafe override { return IsJoinable; }
 	const char* GetDebugName() const threadsafe override { return DebugName; }
 
-	oStd::sstring DebugName;
+	sstring DebugName;
 	bool IsJoinable;
 	oRefCount RefCount;
 };

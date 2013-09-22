@@ -26,8 +26,9 @@
 #include <oBasis/oBasisRequirements.h>
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oProcessHeap.h>
-#include <oStd/backoff.h>
+#include <oBase/backoff.h>
 
+using namespace ouro;
 using namespace oConcurrency;
 
 // @oooii-tony: Singletons are useful concepts and really cross-platform. It is
@@ -49,20 +50,20 @@ namespace oSingletonPlatform
 	// debug info.
 	static void Trace(const char* _TypeinfoName, const char* _File, int _Line, const char* _Format, ...)
 	{
-		oStd::path modname = oCore::this_module::path();
+		path modname = ouro::this_module::path();
 		char syspath[_MAX_PATH];
 		char msg[oKB(4)];
-		int offset = snprintf(msg, "%s(%d): {%s} %s %s ", _File, _Line, modname.basename().c_str(), oSystemGetExecutionPath(syspath), oStd::type_name(_TypeinfoName));
+		int offset = snprintf(msg, "%s(%d): {%s} %s %s ", _File, _Line, modname.basename().c_str(), oSystemGetExecutionPath(syspath), type_name(_TypeinfoName));
 		va_list args;
 		va_start(args, _Format);
-		oStd::vsnprintf(msg + offset, oCOUNTOF(msg) - offset, _Format, args);
+		vsnprintf(msg + offset, oCOUNTOF(msg) - offset, _Format, args);
 		va_end(args);
 		oStrcat(msg, "\n");
-		oCore::debugger::print(msg);
+		ouro::debugger::print(msg);
 	}
 #endif
 
-	oCore::module::id GetCurrentModule() { return oCore::this_module::get_id(); }
+	ouro::module::id GetCurrentModule() { return ouro::this_module::get_id(); }
 
 } // namespace oSingletonPlatform
 
@@ -87,7 +88,7 @@ bool oConstructOnceV(void* volatile* _pPointer, void* (*_New)())
 
 		else
 		{
-			oStd::backoff bo;
+			backoff bo;
 			while (*_pPointer <= CONSTRUCTING)
 				bo.pause();
 		}
@@ -98,7 +99,7 @@ bool oConstructOnceV(void* volatile* _pPointer, void* (*_New)())
 	
 // {7F15EF8E-3AA2-43D8-B802-06A3E195E21C}
 static const oGUID IID_oSingletonCtors = { 0x7f15ef8e, 0x3aa2, 0x43d8, { 0xb8, 0x2, 0x6, 0xa3, 0xe1, 0x95, 0xe2, 0x1c } };
-typedef std::unordered_map<oGUID, oStd::type_info_default_constructor, std::hash<oGUID>, std::equal_to<oGUID>, oProcessHeapAllocator<std::pair<oGUID, oStd::type_info_default_constructor>>> oSingletonCtors;
+typedef std::unordered_map<oGUID, type_info_default_constructor, std::hash<oGUID>, std::equal_to<oGUID>, oProcessHeapAllocator<std::pair<oGUID, type_info_default_constructor>>> oSingletonCtors;
 void oPlacementNewSingletonCtor(void* _Pointer) { new(_Pointer) oSingletonCtors(); }
 
 void* oSingletonCtorRegistryCreate()
@@ -108,7 +109,7 @@ void* oSingletonCtorRegistryCreate()
 	return p;
 }
 
-oSingletonRegister::oSingletonRegister(const char* _SingletonName, const oGUID& _SingletonGUID, oStd::type_info_default_constructor _PlacementNew)
+oSingletonRegister::oSingletonRegister(const char* _SingletonName, const oGUID& _SingletonGUID, type_info_default_constructor _PlacementNew)
 {
 	oSingletonCtors& ctors = *(oSingletonCtors*)oSingletonCtorRegistryCreate();
 	if (ctors.find(_SingletonGUID) == ctors.end())
@@ -132,7 +133,7 @@ public:
 	static oThreadlocalRegistry* Singleton()
 	{
 		oThreadlocalRegistry* p = nullptr;
-		oProcessHeapFindOrAllocate(GUID, false, true, sizeof(oThreadlocalRegistry), oStd::type_info<oThreadlocalRegistry>::default_construct, "oThreadlocalRegistry", (void**)&p);
+		oProcessHeapFindOrAllocate(GUID, false, true, sizeof(oThreadlocalRegistry), ouro::type_info<oThreadlocalRegistry>::default_construct, "oThreadlocalRegistry", (void**)&p);
 		return p;
 	}
 
@@ -154,11 +155,11 @@ protected:
 	static const oGUID GUID;
 	oConcurrency::recursive_mutex Mutex;
 
-	typedef oStd::fixed_vector<oSingletonBase*, 32> thread_singletons_t;
+	typedef fixed_vector<oSingletonBase*, 32> thread_singletons_t;
 	typedef std::unordered_map<oStd::thread::id, thread_singletons_t, std::hash<oStd::thread::id>, std::equal_to<oStd::thread::id>, oStdUserAllocator<std::pair<const oStd::thread::id, thread_singletons_t>>> singletons_t;
 	singletons_t Singletons;
 
-	typedef oStd::fixed_vector<oFUNCTION<void()>, 32> atexitlist_t;
+	typedef fixed_vector<oFUNCTION<void()>, 32> atexitlist_t;
 	typedef std::unordered_map<oStd::thread::id, atexitlist_t, std::hash<oStd::thread::id>, std::equal_to<oStd::thread::id>, oStdUserAllocator<std::pair<const oStd::thread::id, atexitlist_t>>> atexits_t;
 	atexits_t AtExits;
 };
@@ -217,9 +218,9 @@ void oSingletonBase::Release() threadsafe
 	}
 }
 	
-void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, oStd::type_info_default_constructor _Ctor, const oGUID& _GUID, bool _IsThreadLocal)
+void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, type_info_default_constructor _Ctor, const oGUID& _GUID, bool _IsThreadLocal)
 {
-	oStd::type_info_default_constructor PlacementNew = _Ctor;
+	type_info_default_constructor PlacementNew = _Ctor;
 
 	oSingletonCtors* ctors = nullptr;
 	if (oProcessHeapFind(IID_oSingletonCtors, _IsThreadLocal, (void**)&ctors))
@@ -230,9 +231,9 @@ void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, oStd::type_i
 	}
 
 	oSingletonBase* p = nullptr;
-	if (oProcessHeapFindOrAllocate(_GUID, _IsThreadLocal, true, _Size, PlacementNew, oStd::type_name(_TypeInfoName), (void**)&p))
+	if (oProcessHeapFindOrAllocate(_GUID, _IsThreadLocal, true, _Size, PlacementNew, type_name(_TypeInfoName), (void**)&p))
 	{
-		p->Name = oStd::type_name(_TypeInfoName);
+		p->Name = type_name(_TypeInfoName);
 		oSINGLETON_TRACE(_TypeInfoName, "%ssingleton initialized using %s ctor", _IsThreadLocal ? "threadlocal " : "", !ctors ? "module-local" : "prime-module");
 
 		if (_IsThreadLocal)
@@ -273,7 +274,7 @@ void oThreadlocalRegistry::EndThread()
 		atexits_t::iterator it = pThis->AtExits.find(oStd::this_thread::get_id());
 		if (it != pThis->AtExits.end())
 		{
-			oFOR(oFUNCTION<void()>& AtExit, it->second)
+			oFOR(std::function<void()>& AtExit, it->second)
 				AtExit();
 
 			it->second.clear();

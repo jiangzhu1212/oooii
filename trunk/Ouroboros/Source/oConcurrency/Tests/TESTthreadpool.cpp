@@ -22,16 +22,18 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/assert.h>
-#include <oStd/byte.h>
-#include <oStd/finally.h>
-#include <oStd/fixed_string.h>
+#include <oBase/assert.h>
+#include <oBase/byte.h>
+#include <oBase/finally.h>
+#include <oBase/fixed_string.h>
 #include <oStd/atomic.h>
-#include <oStd/throw.h>
-#include <oStd/timer.h>
+#include <oBase/throw.h>
+#include <oBase/timer.h>
 #include <oConcurrency/tests/oConcurrencyTestRequirements.h>
 #include <oConcurrency/basic_threadpool.h>
 #include <oConcurrency/threadpool.h>
+
+using namespace ouro;
 
 namespace oConcurrency {
 	namespace tests {
@@ -108,7 +110,7 @@ template<typename ThreadpoolT> static void test_parallel_for(ThreadpoolT& _Threa
 template<typename ThreadpoolT> static void TestT()
 {
 	ThreadpoolT t;
-	oStd::finally OSE([&] { t.join(); });
+	ouro::finally OSE([&] { t.join(); });
 
 	test_basics(t);
 	t.join();
@@ -128,7 +130,7 @@ void TESTthreadpool()
 void TESTtask_group()
 {
 	threadpool<std::allocator<oTASK>> t;
-	oStd::finally OSE([&] { t.join(); });
+	ouro::finally OSE([&] { t.join(); });
 
 	detail::task_group<std::allocator<oTASK>> g(t);
 	test_task_group(g);
@@ -189,10 +191,10 @@ static void MandelbrotTask(size_t _Index, void* _pData, double _FX, double _FY, 
 	unsigned int Ys = static_cast<unsigned int>(_Index / TILE_SIZE);
 	const size_t stride = FRACTAL_SIZE * sizeof(unsigned char);
 	const size_t offset = Ys*stride + Xs*sizeof(unsigned char);
-	unsigned char* fractal_image = oStd::byte_add((unsigned char*)_pData, offset);
+	unsigned char* fractal_image = byte_add((unsigned char*)_pData, offset);
 	for (unsigned int y=0; y<SWARM_SIZE; y++)
 	{
-		unsigned char* pDest = oStd::byte_add(fractal_image, stride*y);
+		unsigned char* pDest = byte_add(fractal_image, stride*y);
 		for (unsigned int x=0; x<SWARM_SIZE; x++)
 		{
 			unsigned int v = 0xff & solvePoint(x+Xs,y+Ys,_FX,_FY,_XScale,_YScale);
@@ -227,7 +229,7 @@ void TESTthreadpool_performance(requirements& _Requirements, test_threadpool& _T
 	const char* n = _Threadpool.name() ? _Threadpool.name() : "(null)";
 
 	oTRACEA("%s::dispatch()...", n);
-	oStd::timer t;
+	timer t;
 	for (unsigned int y=0; y<TILE_SIZE; y++)
 		for (unsigned int x=0; x<TILE_SIZE; x++)
 			_Threadpool.dispatch(oBIND(RatcliffJobSwarm::MandelbrotTask
@@ -246,10 +248,10 @@ void TESTthreadpool_performance(requirements& _Requirements, test_threadpool& _T
 	double parallel_for_time = t.seconds();
 	const char* DebuggerDisclaimer = _Requirements.is_debugger_attached() ? "(DEBUGGER ATTACHED: Non-authoritive) " : "";
 
-	oStd::sstring st, et, pt;
-	oStd::format_duration(st, scheduling_time, true, true);
-	oStd::format_duration(et, execution_time, true, true);
-	oStd::format_duration(pt, parallel_for_time, true, true);
+	sstring st, et, pt;
+	format_duration(st, scheduling_time, true, true);
+	format_duration(et, execution_time, true, true);
+	format_duration(pt, parallel_for_time, true, true);
 
 	_Requirements.report(DEBUG_DISCLAIMER 
 		"%s%s: dispatch %s (%s sched), parallel_for %s"
@@ -288,7 +290,7 @@ namespace {
 	template<typename test_threadpool_impl_t> void TESTthreadpool_performance_impl1(requirements& _Requirements)
 	{
 		test_threadpool_impl_t tp;
-		oStd::finally Release([&] { tp.release(); });
+		ouro::finally Release([&] { tp.release(); });
 		TESTthreadpool_performance(_Requirements, tp);
 	}
 }

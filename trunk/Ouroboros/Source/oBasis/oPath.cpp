@@ -23,12 +23,14 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oPath.h>
-#include <oStd/assert.h>
-#include <oStd/macros.h>
+#include <oBase/assert.h>
+#include <oBase/macros.h>
 #include <oBasis/oStrTok.h>
 #include <cstring>
 #include <cctype>
 #include <algorithm>
+
+using namespace ouro;
 
 template<typename T> T* oGetFileExtensionT(T* _Path)
 {
@@ -428,7 +430,7 @@ char* oStrTokToSwitches(char* _StrDestination, size_t _SizeofStrDestination, con
 		_StrDestination += len;
 		_SizeofStrDestination -= len;
 
-		oStd::clean_path(_StrDestination, _SizeofStrDestination, tok);
+		clean_path(_StrDestination, _SizeofStrDestination, tok);
 
 		len = strlen(_StrDestination);
 		_StrDestination += len;

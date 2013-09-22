@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oDispatchQueueConcurrentWTP.h"
-#include <oStd/assert.h>
+#include <oBase/assert.h>
 #include <oBasis/oError.h>
 #include <oBasis/oInitOnce.h>
 #include <oBasis/oRefCount.h>

@@ -168,7 +168,7 @@ interface oGestureManager : oInterface
 
 	// Call this from an oStreamMonitor callback to handle the reload of 
 	// airkeyboard and combo files.
-	virtual bool OnFileChange(oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI) = 0;
+	virtual bool OnFileChange(oSTREAM_EVENT _Event, const ouro::uri_string& _ChangedURI) = 0;
 };
 
 bool oGestureManagerCreate(const oGESTURE_MANAGER_INIT& _Init, threadsafe oWindow* _pWindow, oGestureManager** _ppGestureManager);

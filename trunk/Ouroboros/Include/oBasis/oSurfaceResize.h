@@ -42,10 +42,10 @@ enum oSURFACE_FILTER
 	oSURFACE_FILTER_COUNT,
 };
 
-oAPI bool oSurfaceResize(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SrcMap, const oSURFACE_DESC& _DstDesc, oSURFACE_MAPPED_SUBRESOURCE* _DstMap, oSURFACE_FILTER _Filter = oSURFACE_FILTER_LANCZOS3);
+bool oSurfaceResize(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SrcMap, const oSURFACE_DESC& _DstDesc, oSURFACE_MAPPED_SUBRESOURCE* _DstMap, oSURFACE_FILTER _Filter = oSURFACE_FILTER_LANCZOS3);
 
-oAPI bool oSurfaceClip(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SrcMap, const oSURFACE_DESC& _DstDesc, oSURFACE_MAPPED_SUBRESOURCE* _DstMap, int2 _SrcOffset = int2(0,0));
+bool oSurfaceClip(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SrcMap, const oSURFACE_DESC& _DstDesc, oSURFACE_MAPPED_SUBRESOURCE* _DstMap, int2 _SrcOffset = int2(0,0));
 
-oAPI bool oSurfacePad(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SrcMap, const oSURFACE_DESC& _DstDesc, oSURFACE_MAPPED_SUBRESOURCE* _DstMap, int2 _DstOffset = int2(0,0));
+bool oSurfacePad(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SrcMap, const oSURFACE_DESC& _DstDesc, oSURFACE_MAPPED_SUBRESOURCE* _DstMap, int2 _DstOffset = int2(0,0));
 
 #endif

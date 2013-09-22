@@ -23,10 +23,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oBufferPool.h>
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <oBasis/oInitOnce.h>
 #include <oConcurrency/lock_free_queue.h>
 #include <oBasis/oRefCount.h>
+
+using namespace ouro;
 
 struct oBufferPoolImpl : public oBufferPool
 {
@@ -38,11 +40,11 @@ struct oBufferPoolImpl : public oBufferPool
 	bool GetFreeBuffer(threadsafe oBuffer** _ppBuffer) threadsafe override;
 	void DestroyBuffer(void* _pBuffer) threadsafe;
 
-	oInitOnce<oStd::path_string> BufferName;
-	oInitOnce<oStd::path_string> Name;
+	oInitOnce<path_string> BufferName;
+	oInitOnce<path_string> Name;
 	oRefCount RefCount;
 	oBuffer::DeallocateFn Dealloc;
-	oConcurrency::lock_free_queue<oStd::intrusive_ptr<oBuffer>> FreeBuffers;
+	oConcurrency::lock_free_queue<intrusive_ptr<oBuffer>> FreeBuffers;
 	unsigned int BufferCount;
 	threadsafe size_t IndividualBufferSize;
 	void* pPoolBase;
@@ -64,7 +66,7 @@ oBufferPoolImpl::oBufferPoolImpl(const char* _Name, void* _pAllocation, size_t _
 	const unsigned char* pPoolEnd = (unsigned char*)pPoolBase + _AllocationSize;
 	while( pNextAlloc + IndividualBufferSize < pPoolEnd )
 	{
-		oStd::intrusive_ptr<oBuffer> FreeBuffer;
+		intrusive_ptr<oBuffer> FreeBuffer;
 
 		if (!oBufferCreate(*BufferName, pNextAlloc, IndividualBufferSize, oBIND(&oBufferPoolImpl::DestroyBuffer, this, oBIND1), &FreeBuffer))
 			return;
@@ -92,7 +94,7 @@ oBufferPoolImpl::~oBufferPoolImpl()
 	oASSERT( FreeBuffers.size() == BufferCount, "Buffers have not been returned to the pool!" );
 	
 	// Pop all the references off so they go out of scope
-	oStd::intrusive_ptr<oBuffer> FreeBuffer;
+	intrusive_ptr<oBuffer> FreeBuffer;
 	while( FreeBuffers.try_pop(FreeBuffer) )
 	{
 
@@ -120,7 +122,7 @@ void oBufferPoolImpl::DestroyBuffer(void* _pBufer) threadsafe
 		}
 
 		// Pool is still alive so recycle this memory back into the pool
-		oStd::intrusive_ptr<oBuffer> FreeBuffer;
+		intrusive_ptr<oBuffer> FreeBuffer;
 		// Threadcasts safe because size and name don't change
 		if (!oBufferCreate(*BufferName, _pBufer, thread_cast<size_t&>(IndividualBufferSize), oBIND(&oBufferPoolImpl::DestroyBuffer, this, oBIND1), &FreeBuffer))
 			return;
@@ -136,7 +138,7 @@ bool oBufferPoolImpl::GetFreeBuffer(threadsafe oBuffer** _ppBuffer) threadsafe
 		(*_ppBuffer)->Release();
 		*_ppBuffer = nullptr;
 	}
-	oStd::intrusive_ptr<oBuffer> FreeBuffer;
+	intrusive_ptr<oBuffer> FreeBuffer;
 	if( !FreeBuffers.try_pop(FreeBuffer) )
 		return oErrorSetLast(std::errc::no_buffer_space, "There are no free buffers left in the oBufferPool");
 

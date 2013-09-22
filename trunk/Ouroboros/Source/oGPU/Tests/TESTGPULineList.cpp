@@ -26,21 +26,23 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
+using namespace ouro;
+
 static const int sSnapshotFrames[] = { 0 };
 static const bool kIsDevMode = false;
 
 struct oGPU_LINE_VERTEX
 {
 	float3 Position;
-	oStd::color Color;
+	color Color;
 };
 
 struct oGPU_LINE
 {
 	float3 Start;
-	oStd::color StartColor;
+	color StartColor;
 	float3 End;
-	oStd::color EndColor;
+	color EndColor;
 };
 
 class GPU_LineList_App : public oGPUTestApp
@@ -50,7 +52,7 @@ public:
 
 	bool Initialize()
 	{
-		PrimaryRenderTarget->SetClearColor(oStd::AlmostBlack);
+		PrimaryRenderTarget->SetClearColor(AlmostBlack);
 
 		oGPUPipeline::DESC pld;
 		if (!oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH_COLOR, &pld))
@@ -80,12 +82,12 @@ public:
 
 		static const float3 TrianglePoints[] = { float3(-0.75f, -0.667f, 0.0f), float3(0.0f, 0.667f, 0.0f), float3(0.75f, -0.667f, 0.0f) };
 
-		pLines[0].StartColor = oStd::Red;
-		pLines[0].EndColor = oStd::Green;
-		pLines[1].StartColor = oStd::Green;
-		pLines[1].EndColor = oStd::Blue;
-		pLines[2].StartColor = oStd::Blue;
-		pLines[2].EndColor = oStd::Red;
+		pLines[0].StartColor = Red;
+		pLines[0].EndColor = Green;
+		pLines[1].StartColor = Green;
+		pLines[1].EndColor = Blue;
+		pLines[2].StartColor = Blue;
+		pLines[2].EndColor = Red;
 
 		pLines[0].Start = TrianglePoints[0];
 		pLines[0].End = TrianglePoints[1];
@@ -107,8 +109,8 @@ public:
 	}
 
 private:
-	oStd::intrusive_ptr<oGPUPipeline> Pipeline;
-	oStd::intrusive_ptr<oGPUBuffer> LineList;
+	intrusive_ptr<oGPUPipeline> Pipeline;
+	intrusive_ptr<oGPUBuffer> LineList;
 };
 
 oDEFINE_GPU_TEST(GPU_LineList)

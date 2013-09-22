@@ -23,11 +23,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "win.h"
-#include <oStd/config.h>
 
 namespace oStd {
 
-const char* as_string(const oStd::windows::version::value& _Version)
+	namespace windows {
+
+const char* as_string(const version::value& _Version)
 {
 	switch (_Version)
 	{
@@ -52,8 +53,6 @@ const char* as_string(const oStd::windows::version::value& _Version)
 
 	return "?";
 }
-
-	namespace windows {
 
 errno_t errno_from_hresult(HRESULT _hResult)
 {
@@ -320,8 +319,8 @@ version::value get_version()
 class category_impl : public std::error_category
 {
 public:
-	const char* name() const override { return "windows"; }
-	std::string message(value_type _ErrCode) const override
+	const char* name() const { return "windows"; }
+	std::string message(value_type _ErrCode) const
 	{
 		errno_t e = windows::errno_from_hresult((HRESULT)_ErrCode);
 		if (e)

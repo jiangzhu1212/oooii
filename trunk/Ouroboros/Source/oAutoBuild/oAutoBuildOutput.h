@@ -33,10 +33,10 @@
 struct oAutoBuildEmailSettings
 {
 	oNetAddr EmailServer;
-	oStd::sstring FromAddress;
-	oStd::sstring FromPasswordBase64;
-	std::vector<oStd::sstring> AdminEmails;
-	std::vector<oStd::sstring> UserEmails;
+	ouro::sstring FromAddress;
+	ouro::sstring FromPasswordBase64;
+	std::vector<ouro::sstring> AdminEmails;
+	std::vector<ouro::sstring> UserEmails;
 };
 oRTTI_COMPOUND_DECLARATION(oRTTI_CAPS_NONE, oAutoBuildEmailSettings)
 
@@ -44,8 +44,8 @@ struct oAutoBuildResults
 {
 	bool IsDailyBuild;
 	int ChangeList;
-	oStd::sstring BuildName;
-	oStd::path_string OutputFolder;
+	ouro::sstring BuildName;
+	ouro::path_string OutputFolder;
 
 	oMSBuildResults BuildResults;
 	oUnitTestResults TestResults;

@@ -29,7 +29,7 @@
 #ifndef oGUI_h
 #define oGUI_h
 
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <oBasis/oStddef.h>
 #include <oBasis/oRTTI.h>
 #include <array>
@@ -854,7 +854,7 @@ struct oGUI_EVENT_TIMER_DESC : oGUI_EVENT_DESC
 struct oGUI_EVENT_DROP_DESC : oGUI_EVENT_DESC
 {
 	oGUI_EVENT_DROP_DESC(oGUI_WINDOW _hWindow
-		, const oStd::path_string* _pPaths
+		, const ouro::path_string* _pPaths
 		, int _NumPaths
 		, const int2& _ClientDropPosition)
 		: oGUI_EVENT_DESC(_hWindow, oGUI_DROP_FILES)
@@ -862,7 +862,7 @@ struct oGUI_EVENT_DROP_DESC : oGUI_EVENT_DESC
 		, NumPaths(_NumPaths)
 		, ClientDropPosition(_ClientDropPosition)
 	{}
-	const oStd::path_string* pPaths;
+	const ouro::path_string* pPaths;
 	int NumPaths;
 	int2 ClientDropPosition;
 };
@@ -1055,7 +1055,7 @@ struct oGUI_FONT_DESC
 		, AntiAliased(true)
 	{}
 
-	oStd::sstring FontName;
+	ouro::sstring FontName;
 	float PointSize;
 	bool Bold;
 	bool Italic;
@@ -1070,7 +1070,7 @@ struct oGUI_TEXT_DESC
 		: Position(int2(oDEFAULT, oDEFAULT))
 		, Size(int2(oDEFAULT, oDEFAULT))
 		, Alignment(oGUI_ALIGNMENT_TOP_LEFT)
-		, Foreground(oStd::White)
+		, Foreground(ouro::White)
 		, Background(0)
 		, Shadow(0)
 		, ShadowOffset(int2(2,2))
@@ -1085,9 +1085,9 @@ struct oGUI_TEXT_DESC
 	int2 Size;
 	oGUI_ALIGNMENT Alignment;
 	// Any non-1.0 (non-0xff) alpha will be not-drawn
-	oStd::color Foreground;
-	oStd::color Background;
-	oStd::color Shadow;
+	ouro::color Foreground;
+	ouro::color Background;
+	ouro::color Shadow;
 	int2 ShadowOffset;
 	bool SingleLine;
 };

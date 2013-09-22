@@ -25,6 +25,9 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCore.cpp">
       <Filter>Source Files\Sub-Platform Tests</Filter>
     </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTBase.cpp">
+      <Filter>Source Files\Sub-Platform Tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

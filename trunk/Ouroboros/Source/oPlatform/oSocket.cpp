@@ -32,6 +32,8 @@
 #include "SoftLink/oWinsock.h"
 #include "SoftLink/oOpenSSL.h"
 
+using namespace ouro;
+
 // The Internal versions of these structs simply have the private
 // classification removed. In the event that we need to address multiple
 // families of address types in the same program we can convert this to
@@ -66,7 +68,7 @@ inline void oSockAddrToNetAddr(const SOCKADDR_IN& _SockAddr, oNetAddr* _pNetAddr
 	pAddr->Port = _SockAddr.sin_port;
 }
 
-namespace oStd {
+namespace ouro {
 
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oNetHost& _Host)
 {
@@ -172,7 +174,7 @@ bool from_string(oSocket::PROTOCOL* _Protocol, const char* _StrSource)
 	return true;
 }
 
-} // namespace oStd
+} // namespace ouro
 
 oAPI void oSocketPortGet(const oNetAddr& _Addr, unsigned short* _pPort)
 {
@@ -321,14 +323,14 @@ private:
 	oSocket::DESC Desc;
 	oSocket* Proxy;
 
-	oInitOnce<oStd::sstring>	DebugName;
+	oInitOnce<sstring>	DebugName;
 	SOCKADDR_IN DefaultAndRecvAddr;
 
 	oIOCP*		pIOCP;
 	SOCKET		hSocket;
-	oStd::intrusive_ptr<threadsafe oSocketAsyncCallback> InternalCallback;
+	intrusive_ptr<threadsafe oSocketAsyncCallback> InternalCallback;
 
-	oStd::intrusive_ptr<oSocketEncryptor> Encryptor;
+	intrusive_ptr<oSocketEncryptor> Encryptor;
 
 	ProxyDeleterFn ProxyDeleter;
 
@@ -984,7 +986,7 @@ private:
 	char DebugName[64];
 	DESC Desc;
 	oConcurrency::mutex AcceptedSocketsMutex;
-	std::vector<oStd::intrusive_ptr<oSocket>> AcceptedSockets;
+	std::vector<intrusive_ptr<oSocket>> AcceptedSockets;
 };
 
 bool oSocketServerCreate(const char* _DebugName, const oSocketServer::DESC& _Desc, threadsafe oSocketServer** _ppSocketServer)
@@ -1059,7 +1061,7 @@ static bool UNIFIED_WaitForConnection(
 	, oSocket::DESC _Desc
 	, oFUNCTION<oSocket*(const char* _DebugName, SOCKET _hTarget, oSocket::DESC SocketDesc, bool* _pSuccess)> _CreateClientSocket
 	, threadsafe oConcurrency::mutex& _AcceptedSocketsMutex
-	, threadsafe std::vector<oStd::intrusive_ptr<oSocket>>& _AcceptedSockets)
+	, threadsafe std::vector<intrusive_ptr<oSocket>>& _AcceptedSockets)
 {
 	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(_Mutex);
 	oWinsock* ws = oWinsock::Singleton();
@@ -1086,10 +1088,10 @@ static bool UNIFIED_WaitForConnection(
 		_Desc.ConnectionTimeoutMS = _TimeoutMS;
 		oSockAddrToNetAddr(saddr, &_Desc.Addr);
 
-		oStd::intrusive_ptr<oSocket> newSocket(_CreateClientSocket("", hTarget, _Desc, &success), false);
+		intrusive_ptr<oSocket> newSocket(_CreateClientSocket("", hTarget, _Desc, &success), false);
 		{
 			oConcurrency::lock_guard<oConcurrency::mutex> lock(_AcceptedSocketsMutex);
-			thread_cast<std::vector<oStd::intrusive_ptr<oSocket>>&>(_AcceptedSockets).push_back(newSocket); // safe because of lock above
+			thread_cast<std::vector<intrusive_ptr<oSocket>>&>(_AcceptedSockets).push_back(newSocket); // safe because of lock above
 		}
 
 		success = true;
@@ -1102,14 +1104,14 @@ static bool UNIFIED_WaitForConnection(
 	return success;
 }
 
-template<typename T> static inline bool FindTypedSocket(threadsafe oConcurrency::mutex& _AcceptedSocketsMutex, threadsafe std::vector<oStd::intrusive_ptr<oSocket>>& _AcceptedSockets, T** _ppNewlyConnectedClient)
+template<typename T> static inline bool FindTypedSocket(threadsafe oConcurrency::mutex& _AcceptedSocketsMutex, threadsafe std::vector<intrusive_ptr<oSocket>>& _AcceptedSockets, T** _ppNewlyConnectedClient)
 {
 	oConcurrency::lock_guard<oConcurrency::mutex> lock(_AcceptedSocketsMutex);
-	std::vector<oStd::intrusive_ptr<oSocket>>& SafeSockets = thread_cast<std::vector<oStd::intrusive_ptr<oSocket>>&>(_AcceptedSockets);
+	std::vector<intrusive_ptr<oSocket>>& SafeSockets = thread_cast<std::vector<intrusive_ptr<oSocket>>&>(_AcceptedSockets);
 
 	if (!SafeSockets.empty())
 	{
-		for (std::vector<oStd::intrusive_ptr<oSocket>>::iterator it = SafeSockets.begin(); it != SafeSockets.end(); ++it)
+		for (std::vector<intrusive_ptr<oSocket>>::iterator it = SafeSockets.begin(); it != SafeSockets.end(); ++it)
 		{
 			oSocket* s = *it;
 			if (s->QueryInterface(oGetGUID(_ppNewlyConnectedClient), (void**)_ppNewlyConnectedClient))
@@ -1324,7 +1326,7 @@ private:
 
 	char DebugName[64];
 	DESC Desc;
-	oStd::intrusive_ptr<SocketServerPool> SocketPool;
+	intrusive_ptr<SocketServerPool> SocketPool;
 
 	int DesiredAccepts;
 	oStd::atomic_int IssuedAcceptCount; //once this exceeds DesiredAccepts, accepts will begin to get starved out.
@@ -1368,7 +1370,7 @@ SocketServer2_Impl::SocketServer2_Impl(const char* _DebugName, const DESC& _Desc
 	if (INVALID_SOCKET == hListenSocket)
 		return; // leave last error from inside oWinsockCreate
 	
-	SocketPool = oStd::intrusive_ptr<SocketServerPool>(new SocketServerPool(oBIND(&SocketServer2_Impl::Disconnect, this, oBIND1) , _pSuccess), false);
+	SocketPool = intrusive_ptr<SocketServerPool>(new SocketServerPool(oBIND(&SocketServer2_Impl::Disconnect, this, oBIND1) , _pSuccess), false);
 	if(!(*_pSuccess))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "Failed to create the socket pool.");
@@ -1545,8 +1547,8 @@ void SocketServer2_Impl::IOCPCallback(oIOCPOp* _pSocketOp)
 		bool success;
 		success = oWinsockCompleteAsyncAccept(hListenSocket, pOp->Socket->GetHandle());
 
-		oStd::intrusive_ptr<oSocket> socket = nullptr;
-		oStd::intrusive_ptr<SocketServerPool> sPool = SocketPool;
+		intrusive_ptr<oSocket> socket = nullptr;
+		intrusive_ptr<SocketServerPool> sPool = SocketPool;
 		if(success)
 		{
 			auto deleter = [sPool](oSocketImpl* _socket) mutable {
@@ -1555,7 +1557,7 @@ void SocketServer2_Impl::IOCPCallback(oIOCPOp* _pSocketOp)
 			};
 
 			std::shared_ptr<oSocketImpl> socketPtr(pOp->Socket, deleter);
-			socket = oStd::intrusive_ptr<oSocket>(oSocketCreateFromServer2(socketPtr, desc, &success), false);
+			socket = intrusive_ptr<oSocket>(oSocketCreateFromServer2(socketPtr, desc, &success), false);
 		}
 
 		if(success)
@@ -1607,7 +1609,7 @@ bool oSocketRecvWithTimeout(threadsafe oSocket* _pSocket, void* _pData, unsigned
 	oScopedPartialTimeout ScopedTimeout(&_TimeoutMS);
 	while(Received < _SizeofData && _TimeoutMS)
 	{
-		Received += _pSocket->Recv(oStd::byte_add(_pData, Received), _SizeofData - Received);
+		Received += _pSocket->Recv(byte_add(_pData, Received), _SizeofData - Received);
 		ScopedTimeout.UpdateTimeout();
 	}
 	if (Received != _SizeofData)

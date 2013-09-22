@@ -23,9 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oConsole.h>
-#include <oStd/assert.h>
+#include <oBase/assert.h>
 #include <oBasis/oError.h>
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSingleton.h>
@@ -34,6 +34,8 @@
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinWindowing.h>
 #include <oPlatform/oStream.h>
+
+using namespace ouro;
 
 // TODO: Add GetConsoleMode support
 
@@ -55,8 +57,8 @@ struct oConsoleContext : public oProcessSingleton<oConsoleContext>
 	oConcurrency::recursive_mutex ConsoleLock;
 	bool CtrlHandlerSet;
 	oConsole::EventFn Functions[5];
-	oStd::path LogFilePath;
-	oStd::intrusive_ptr<threadsafe oStreamWriter> LogFile;
+	path LogFilePath;
+	intrusive_ptr<threadsafe oStreamWriter> LogFile;
 };
 
 // {145728A4-3A9A-47FD-BF88-8B61A1EC14AB}
@@ -86,7 +88,7 @@ BOOL oConsoleContext::CtrlHandler(DWORD fdwCtrlType)
 	return FALSE;
 }
 
-static void GetColor(WORD _wAttributes, oStd::color* _pForeground, oStd::color* _pBackground)
+static void GetColor(WORD _wAttributes, color* _pForeground, color* _pBackground)
 {
 	{
 		float r = 0.0f, g = 0.0f, b = 0.0f;
@@ -94,7 +96,7 @@ static void GetColor(WORD _wAttributes, oStd::color* _pForeground, oStd::color* 
 		if (_wAttributes & FOREGROUND_RED) r = intense ? 1.0f : 0.5f;
 		if (_wAttributes & FOREGROUND_GREEN) g = intense ? 1.0f : 0.5f;
 		if (_wAttributes & FOREGROUND_BLUE) b = intense ? 1.0f : 0.5f;
-		*_pForeground = oStd::color(r, g, b, 1.0f);
+		*_pForeground = color(r, g, b, 1.0f);
 	}
 		
 	{
@@ -103,7 +105,7 @@ static void GetColor(WORD _wAttributes, oStd::color* _pForeground, oStd::color* 
 		if (_wAttributes & BACKGROUND_RED) r = intense ? 1.0f : 0.5f;
 		if (_wAttributes & BACKGROUND_GREEN) g = intense ? 1.0f : 0.5f;
 		if (_wAttributes & BACKGROUND_BLUE) b = intense ? 1.0f : 0.5f;
-		*_pBackground = oStd::color(r, g, b, 1.0f);
+		*_pBackground = color(r, g, b, 1.0f);
 	}
 }
 
@@ -113,14 +115,14 @@ static void GetColor(WORD _wAttributes, oStd::color* _pForeground, oStd::color* 
 #define BACKGROUND_MASK (BACKGROUND_INTENSITY|BACKGROUND_GRAY)
 
 // returns prior wAttributes
-static WORD SetConsoleColor(HANDLE _hStream, oStd::color _Foreground, oStd::color _Background)
+static WORD SetConsoleColor(HANDLE _hStream, color _Foreground, color _Background)
 {
 	#define RED__ FOREGROUND_RED|BACKGROUND_RED
 	#define GREEN__ FOREGROUND_GREEN|BACKGROUND_GREEN
 	#define BLUE__ FOREGROUND_BLUE|BACKGROUND_BLUE
 	#define BRIGHT__ FOREGROUND_INTENSITY|BACKGROUND_INTENSITY
 
-	static const oStd::color sConsoleColors[] = { oStd::Black, oStd::Navy, oStd::Green, oStd::Teal, oStd::Maroon, oStd::Purple, oStd::Olive, oStd::Silver, oStd::Gray, oStd::Blue, oStd::Lime, oStd::Aqua, oStd::Red, oStd::Fuchsia, oStd::Yellow, oStd::White };
+	static const color sConsoleColors[] = { Black, Navy, Green, Teal, Maroon, Purple, Olive, Silver, Gray, Blue, Lime, Aqua, Red, Fuchsia, Yellow, White };
 	static const WORD sConsoleColorWords[] = { 0, BLUE__, GREEN__, BLUE__|GREEN__, RED__, RED__|BLUE__, RED__|GREEN__, RED__|GREEN__|BLUE__, BRIGHT__, BRIGHT__|BLUE__, BRIGHT__|GREEN__, BRIGHT__|BLUE__|GREEN__, BRIGHT__|RED__, BRIGHT__|RED__|BLUE__, BRIGHT__|RED__|GREEN__, BRIGHT__|RED__|GREEN__|BLUE__ };
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -175,7 +177,7 @@ void oConsole::GetDesc(DESC* _pDesc)
 
 	if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info))
 	{
-		if (GetLastError() == ERROR_INVALID_HANDLE && oCore::this_process::is_child())
+		if (GetLastError() == ERROR_INVALID_HANDLE && ouro::this_process::is_child())
 		{
 			oErrorSetLast(std::errc::permission_denied, "Failed to access console because this is a child process.");
 			return;
@@ -199,7 +201,7 @@ void oConsole::SetDesc(const DESC* _pDesc)
 
 	// Set LogFilePath first, in case the standard pipes are captured
 	// GetConsoleScreenBufferInfo may error out because there is no window.
-	oStd::path_string OldLogPath = c->LogFilePath;
+	path_string OldLogPath = c->LogFilePath;
 	if (!_pDesc->LogFilePath.empty())
 	{
 		c->LogFilePath = _pDesc->LogFilePath;
@@ -235,7 +237,7 @@ void oConsole::SetDesc(const DESC* _pDesc)
 	bufferDimension.Y = (SHORT)desc.BufferHeight;
 	if (!SetConsoleScreenBufferSize(hConsole, bufferDimension))
 	{
-		if (GetLastError() == ERROR_INVALID_HANDLE && oCore::this_process::is_child())
+		if (GetLastError() == ERROR_INVALID_HANDLE && ouro::this_process::is_child())
 		{
 			oErrorSetLast(std::errc::permission_denied, "Failed to access console because this is a child process.");
 			return;
@@ -309,7 +311,7 @@ int2 oConsole::GetCursorPosition()
 
 void oConsole::Clear()
 {
-	system("cls");
+	::system("cls");
 }
 
 bool oConsole::HasFocus()
@@ -317,7 +319,7 @@ bool oConsole::HasFocus()
 	return oWinHasFocus(GetConsoleWindow());
 }
 
-int oConsole::vfprintf(FILE* _pStream, oStd::color _Foreground, oStd::color _Background, const char* _Format, va_list _Args)
+int oConsole::vfprintf(FILE* _pStream, color _Foreground, color _Background, const char* _Format, va_list _Args)
 {
 	HANDLE hConsole = 0;
 	WORD wOriginalAttributes = 0;
@@ -332,7 +334,7 @@ int oConsole::vfprintf(FILE* _pStream, oStd::color _Foreground, oStd::color _Bac
 	}
 
 	char msg[oKB(8)];
-	oStd::vsnprintf(msg, _Format, _Args);
+	vsnprintf(msg, _Format, _Args);
 
 	// Always print any message to _pStream
 	int n = ::fprintf(_pStream, msg);

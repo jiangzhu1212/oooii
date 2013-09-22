@@ -101,8 +101,8 @@ interface oImage : oBuffer
 	// Non-performant API used for test cases. Do not use this unless in the most
 	// trivial of debug code. Operation on the contents of GetData without 
 	// conversion, preferably using parallelism.
-	virtual void Put(const int2& _Coord, oStd::color _Color) = 0;
-	virtual oStd::color Get(const int2& _Coord) const = 0;
+	virtual void Put(const int2& _Coord, ouro::color _Color) = 0;
+	virtual ouro::color Get(const int2& _Coord) const = 0;
 
 	// Assumes the source buffer is the same format as this oImage and copies its
 	// bitmap data into this oImage's store without changing topology information.

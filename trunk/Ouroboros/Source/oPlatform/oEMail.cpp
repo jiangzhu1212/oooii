@@ -23,6 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oEMail.h>
+#include <oBase/string.h>
+
+using namespace ouro;
 
 #define oSMTPCOMMAND(expr) do { if (!(expr)) { Disconnect(); return false; } } while(false)
 #define SMTP_CONNECTION_OK 220
@@ -112,7 +115,7 @@ private:
 	void Disconnect();
 
 	oRefCount Refcount;
-	oStd::intrusive_ptr<threadsafe oSocketEncrypted> Socket;
+	intrusive_ptr<threadsafe oSocketEncrypted> Socket;
 
 	char ServerAddress[_MAX_PATH];
 	Encryption EncryptionType;
@@ -139,7 +142,7 @@ int GrabResponseCode(const char *_Response)
 {
 	bool bSuccessful = false;
 	char retCode[4];
-	oStd::strncpy(retCode, _Response, 3);
+	strlcpy(retCode, _Response, 3);
 	return atoi(retCode);
 }
 

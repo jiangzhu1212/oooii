@@ -29,7 +29,7 @@
 #ifndef oFreeImageHelpers_h
 #define oFreeImageHelpers_h
 
-#include <oStd/macros.h>
+#include <oBase/macros.h>
 #include <oPlatform/oImage.h>
 #include <oPlatform/oSingleton.h>
 #include <freeimage.h>

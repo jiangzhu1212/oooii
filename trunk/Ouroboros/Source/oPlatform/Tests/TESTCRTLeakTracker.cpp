@@ -41,11 +41,11 @@ bool oPlatformTest_oCRTLeakTracker()
 	
 		oCRTLeakTracker* pTracker = oCRTLeakTracker::Singleton();
 
-		oStd::finally OSEDisableTracking;
+		ouro::finally OSEDisableTracking;
 
 		if (!pTracker->IsEnabled())
 		{
-			OSEDisableTracking = oStd::finally([&] { pTracker->Enable(false); });
+			OSEDisableTracking = ouro::finally([&] { pTracker->Enable(false); });
 			pTracker->Enable(true);
 		}
 

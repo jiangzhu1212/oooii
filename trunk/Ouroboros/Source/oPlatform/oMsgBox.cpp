@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oMsgBox.h>
-#include <oStd/byte.h>
+#include <oBase/byte.h>
 #include <oPlatform/Windows/oWinAsString.h>
 #include <oPlatform/Windows/oWinCursor.h>
 #include <oPlatform/Windows/oWinRect.h>
@@ -211,8 +211,8 @@ oMSGBOX_RESULT AssertDialog(oMSGBOX_TYPE _Type, const char* _Caption, const char
 	RECT rString;
 	std::vector<char> string(oKB(128));
 
-	oStd::replace(oStd::data(string), oStd::size(string), _String, "\n", "\n\r");
-	calcStringRect(rString, oStd::data(string), MinW, MinH, MaxW, MaxH);
+	ouro::replace(ouro::data(string), ouro::size(string), _String, "\n", "\r\n");
+	calcStringRect(rString, ouro::data(string), MinW, MinH, MaxW, MaxH);
 
 	// Figure out where interface goes based on string RECT
 	const LONG BtnPanelLeft = (rString.right - BtnPanelW) - FrameSpacingX;
@@ -248,7 +248,7 @@ oMSGBOX_RESULT AssertDialog(oMSGBOX_TYPE _Type, const char* _Caption, const char
 		{ "&Continue", oDLG_BUTTON, IDCONTINUE, rContinue, TimedoutControlledEnable, true, true },
 		{ "I&gnore", oDLG_BUTTON, IDIGNORE, rIgnore, TimedoutControlledEnable, true, true },
 		{ "Copy &To Clipboard", oDLG_BUTTON, IDCOPYTOCLIPBOARD, rCopyToClipboard, true, true, true },
-		{ oStd::data(string), oDLG_LARGELABEL, IDMESSAGE, rString, true, true, true },
+		{ ouro::data(string), oDLG_LARGELABEL, IDMESSAGE, rString, true, true, true },
 		{ "", oDLG_ICON, IDICON, rIcon, true, true, false },
 	};
 
@@ -276,9 +276,9 @@ oMSGBOX_RESULT AssertDialog(oMSGBOX_TYPE _Type, const char* _Caption, const char
 
 	if (int_ptr == -1)
 	{
-		char s[2048];
-		oWinParseHRESULT(s, GetLastError());
-		snprintf(s, "DialogBoxIndirectParam failed. %s", s);
+		char err[512];
+		oWinParseHRESULT(err, GetLastError());
+		oTRACE("DialogBoxIndirectParam failed. %s\n", err);
 		__debugbreak(); // debug msgbox called from oASSERTs, so don't recurse into it
 	}
 
@@ -382,7 +382,7 @@ void oSetupNextMessageBoxWndProc(HWND _hParent)
 oMSGBOX_RESULT oMsgBoxV(const oMSGBOX_DESC& _Desc, const char* _Format, va_list _Args)
 {
 	std::vector<char> msg(oKB(128));
-	oStd::vsnprintf(oStd::data(msg), oStd::size(msg), _Format, _Args);
+	ouro::vsnprintf(ouro::data(msg), ouro::size(msg), _Format, _Args);
 	oMSGBOX_RESULT result = oMSGBOX_YES;
 	HICON hIcon = nullptr;
 
@@ -390,12 +390,12 @@ oMSGBOX_RESULT oMsgBoxV(const oMSGBOX_DESC& _Desc, const char* _Format, va_list 
 	unsigned int ThreadID;
 
 	if (!hWnd)
-		oWinGetProcessTopWindowAndThread(oCore::this_process::get_id(), &hWnd, &ThreadID);
+		oWinGetProcessTopWindowAndThread(ouro::this_process::get_id(), &hWnd, &ThreadID);
 
 	switch (_Desc.Type)
 	{
 		case oMSGBOX_DEBUG:
-			result = AssertDialog(_Desc.Type, _Desc.Title, oStd::data(msg), _Desc.TimeoutMS, 0);
+			result = AssertDialog(_Desc.Type, _Desc.Title, ouro::data(msg), _Desc.TimeoutMS, 0);
 			break;
 		
 		case oMSGBOX_NOTIFY_INFO:
@@ -405,14 +405,14 @@ oMSGBOX_RESULT oMsgBoxV(const oMSGBOX_DESC& _Desc, const char* _Format, va_list 
 			// pass thru
 
 		case oMSGBOX_NOTIFY:
-			oVERIFY(oTrayShowMessage(hWnd, 0, hIcon, __max(2000, _Desc.TimeoutMS), _Desc.Title, oStd::data(msg)));
+			oVERIFY(oTrayShowMessage(hWnd, 0, hIcon, __max(2000, _Desc.TimeoutMS), _Desc.Title, ouro::data(msg)));
 			result = oMSGBOX_CONTINUE;
 			break;
 
 		default:
 		{
 			oSetupNextMessageBoxWndProc(hWnd);
-			result = GetResult(MessageBoxTimeout(hWnd, oStd::data(msg), _Desc.Title, AsFlags(_Desc.Type), 0, _Desc.TimeoutMS));
+			result = GetResult(MessageBoxTimeout(hWnd, ouro::data(msg), _Desc.Title, AsFlags(_Desc.Type), 0, _Desc.TimeoutMS));
 			break;
 		}
 	}

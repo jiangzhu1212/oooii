@@ -33,8 +33,8 @@
 #include <oKinect/oKinectUtil.h>
 #include <oPlatform/oSingleton.h>
 #include <oConcurrency/mutex.h>
-#include <oStd/fixed_string.h>
-#include <oStd/fixed_vector.h>
+#include <oBase/fixed_string.h>
+#include <oBase/fixed_vector.h>
 
 struct oKinectManager : oProcessSingleton<oKinectManager>
 {
@@ -49,12 +49,12 @@ struct oKinectManager : oProcessSingleton<oKinectManager>
 private:
 
 	oConcurrency::mutex KinectsMutex;
-	oStd::fixed_vector<threadsafe oKinect*, 3> Kinects;
+	ouro::fixed_vector<threadsafe oKinect*, 3> Kinects;
 
 	UINT WMInputDeviceChange;
 
 	// To avoid memory allocation troubles when broadcasting (who frees?)
-	std::array<oStd::mstring, 3> DeviceInstanceNames;
+	std::array<ouro::mstring, 3> DeviceInstanceNames;
 	unsigned int CurrentDeviceInstanceName;
 
 	void OnStatus(oGUI_INPUT_DEVICE_STATUS _Status, const char* _InstanceName, const char* _UniqueDeviceName);

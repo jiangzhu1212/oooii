@@ -29,7 +29,7 @@
 
 #include <functional>
 
-namespace oCore {
+namespace ouro {
 	namespace system {
 
 struct heap_info
@@ -57,18 +57,18 @@ oStd::date to_local(const oStd::date& _UTCDate);
 template<typename date1T, typename date2T> bool from_local(const date1T& _LocalDate, date2T* _pUTCDate)
 {
 	oStd::date local, utc;
-	local = oStd::date_cast<oStd::date>(_LocalDate);
+	local = date_cast<date>(_LocalDate);
 	if (!from_local(local, &utc)) return false;
-	*_pUTCDate = oStd::date_cast<date2T>(utc);
+	*_pUTCDate = date_cast<date2T>(utc);
 	return true;
 }
 
 template<typename date1T, typename date2T> bool to_local(const date1T& _UTCDate, date2T* _pLocalDate)
 {
 	oStd::date local, utc;
-	utc = oStd::date_cast<oStd::date>(_UTCDate);
+	utc = date_cast<date>(_UTCDate);
 	if (!to_local(utc, &local)) return false;
-	*_pLocalDate = oStd::date_cast<date2T>(local);
+	*_pLocalDate = date_cast<date2T>(local);
 	return true;
 }
 
@@ -106,26 +106,26 @@ bool gui_is_drawable();
 
 char* host_name(char* _StrDestination, size_t _SizeofStrDestination);
 template<size_t size> char* host_name(char (&_StrDestination)[size]) { return host_name(_StrDestination, size); }
-template<size_t capacity> char* host_name(oStd::fixed_string<char, capacity>& _StrDestination) { return host_name(_StrDestination, _StrDestination.capacity()); }
+template<size_t capacity> char* host_name(fixed_string<char, capacity>& _StrDestination) { return host_name(_StrDestination, _StrDestination.capacity()); }
 
 char* workgroup_name(char* _StrDestination, size_t _SizeofStrDestination);
 template<size_t size> char* workgroup_name(char (&_StrDestination)[size]) { return workgroup_name(_StrDestination, size); }
-template<size_t capacity> char* workgroup_name(oStd::fixed_string<char, capacity>& _StrDestination) { return workgroup_name(_StrDestination, _StrDestination.capacity()); }
+template<size_t capacity> char* workgroup_name(fixed_string<char, capacity>& _StrDestination) { return workgroup_name(_StrDestination, _StrDestination.capacity()); }
 
 // fills destination with the string "[<hostname>.process_id.thread_id]"
 char* exec_path(char* _StrDestination, size_t _SizeofStrDestination);
 template<size_t size> char* exec_path(char (&_StrDestination)[size]) { return exec_path(_StrDestination, size); }
-template<size_t capacity> char* exec_path(oStd::fixed_string<char, capacity>& _StrDestination) { return exec_path(_StrDestination, _StrDestination.capacity()); }
+template<size_t capacity> char* exec_path(fixed_string<char, capacity>& _StrDestination) { return exec_path(_StrDestination, _StrDestination.capacity()); }
 
 void setenv(const char* _EnvVarName, const char* _Value);
 char* getenv(char* _Value, size_t _SizeofValue, const char* _EnvVarName);
 template<size_t size> char* getenv(char (&_Value)[size], const char* _EnvVarName) { return getenv(_Value, size, _EnvVarName); }
-template<size_t capacity> char* getenv(oStd::fixed_string<char, capacity>& _Value, const char* _EnvVarName) { return getenv(_Value, _Value.capacity(), _EnvVarName); }
+template<size_t capacity> char* getenv(fixed_string<char, capacity>& _Value, const char* _EnvVarName) { return getenv(_Value, _Value.capacity(), _EnvVarName); }
 
 // retrieve entire environment string
 char* envstr(char* _StrEnvironment, size_t _SizeofStrEnvironment);
 template<size_t size> char* envstr(char (&_StrEnvironment)[size]) { return envstr(_StrEnvironment, size); }
-template<size_t capacity> char* envstr(oStd::fixed_string<char, capacity>& _StrEnvironment) { return envstr(_StrEnvironment, _StrEnvironment.capacity()); }
+template<size_t capacity> char* envstr(fixed_string<char, capacity>& _StrEnvironment) { return envstr(_StrEnvironment, _StrEnvironment.capacity()); }
 
 // Spawns a child process to execute the specified command line. For each line
 // emitted to stdout by the process, _GetLine is called so this calling process
@@ -144,6 +144,6 @@ int spawn(const char* _CommandLine
 	, bool _ShowWindow);
 
 	} // namespace system
-} // namespace oCore
+} // namespace ouro
 
 #endif

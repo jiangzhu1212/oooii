@@ -27,13 +27,15 @@
 #include <oGfx/oGfxPipelines.h>
 #include <oGfx/oGfxVertexElements.h>
 
+using namespace ouro;
+
 struct LineListContext
 {
-	oStd::intrusive_ptr<oGPUBuffer> LineList;
-	oStd::intrusive_ptr<oGPUUtilMesh> CapMesh;
-	oStd::intrusive_ptr<oGPUUtilMesh> PickMesh;
+	intrusive_ptr<oGPUBuffer> LineList;
+	intrusive_ptr<oGPUUtilMesh> CapMesh;
+	intrusive_ptr<oGPUUtilMesh> PickMesh;
 	oURI URI;
-	oStd::color LineColor;
+	color LineColor;
 };
 
 struct oGfxManipulatorImpl : public oGfxManipulator
@@ -61,7 +63,7 @@ struct oGfxManipulatorImpl : public oGfxManipulator
 	
 	void GetManipulatorPickLineMeshes(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUUtilMesh* _pMesh, uint _ObjectID)> _Callback) override;
 	void GetManipulatorVisualLines(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUBuffer* _pLineList, uint _NumLines)> _Callback) override;
-	void GetManipulatorMeshes(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUUtilMesh* _pMesh, float4x4 _Transform, oStd::color _MeshColor, uint _ObjectID)> _Callback) override;
+	void GetManipulatorMeshes(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUUtilMesh* _pMesh, float4x4 _Transform, color _MeshColor, uint _ObjectID)> _Callback) override;
 
 	oGfxManipulatorImpl(const char* _Name, const oGfxManipulator::DESC& _Desc, oGPUDevice* _pDevice, bool* _pSuccess);
 
@@ -78,8 +80,8 @@ struct oGfxManipulatorImpl : public oGfxManipulator
 
 	oGfxManipulator::DESC Desc;
 	oRefCount RefCount;
-	oStd::intrusive_ptr<oManipulator> Manipulator;
-	oStd::intrusive_ptr<oGeometryFactory> GeometryFactory;
+	intrusive_ptr<oManipulator> Manipulator;
+	intrusive_ptr<oGeometryFactory> GeometryFactory;
 
 	float4x4 Transform;
 	float2 CurrentMousePosition;
@@ -103,7 +105,7 @@ bool oGfxManipulatorImpl::CreateGeometryMesh(oGPUDevice* _pDevice, const char* _
 	GeoLayout.Colors = false;
 	GeoLayout.ContinuityIDs = true;
 
-	oStd::intrusive_ptr<oGeometry> Geometry; 
+	intrusive_ptr<oGeometry> Geometry; 
 	if(!GeometryFactory->Create(_GeometryDesc, GeoLayout, &Geometry))
 		return false;
 
@@ -123,8 +125,8 @@ bool oGfxManipulatorImpl::CreateAxisGeometry(oGPUDevice* _pDevice, const char* _
 	desc.StructByteSize = sizeof(oGFX_LINE_VERTEX);
 	desc.ArraySize = _NumLines * 2;
 	
-	oStd::uri_string Name;
-	snprintf(Name, "%s_%s", _BaseName, oStd::as_string(_Axis));
+	uri_string Name;
+	snprintf(Name, "%s_%s", _BaseName, ouro::as_string(_Axis));
 	if(!_pDevice->CreateBuffer(Name, desc, &Line.LineList))
 		return oErrorPrefixLast("Failed to create a line list for a manipulator: ");
 
@@ -222,8 +224,8 @@ oGfxManipulatorImpl::oGfxManipulatorImpl(const char* _Name, const oGfxManipulato
 				if(!CreateGeometryMesh(_pDevice, _Name, boxd, &Lines[oManipulator::SCREEN].CapMesh) )
 					return;
 
-				oStd::uri_string AxisName;
-				snprintf(AxisName, "%s_%s", _Name, oStd::as_string(oManipulator::SCREEN));
+				uri_string AxisName;
+				snprintf(AxisName, "%s_%s", _Name, ouro::as_string(oManipulator::SCREEN));
 				Lines[oManipulator::SCREEN].URI = AxisName;
 			}
 
@@ -237,7 +239,7 @@ oGfxManipulatorImpl::oGfxManipulatorImpl(const char* _Name, const oGfxManipulato
 			pickd.OuterRadius = 7;
 			pickd.Divide = oManipulator::ROTATION_PICK_TORUS_DIVIDE;
 			pickd.Facet = oManipulator::ROTATION_PICK_TORUS_FACET;
-			pickd.Color = oStd::White;
+			pickd.Color = White;
 
 			if(!CreateAxisGeometry(_pDevice, _Name, pickd, oManipulator::ROTATION_CIRCLE_VCOUNT*2, oManipulator::X))
 				return;
@@ -260,7 +262,7 @@ oGfxManipulatorImpl::oGfxManipulatorImpl(const char* _Name, const oGfxManipulato
 
 bool oGfxManipulatorImpl::Pick(uint _ObjectID)
 {
-	static const oStd::color unpickedColors[oManipulator::NUM_AXES] = {oStd::Red, oStd::Green, oStd::Blue, oStd::Gray};
+	static const color unpickedColors[oManipulator::NUM_AXES] = {Red, Green, Blue, Gray};
 	for(size_t i = 0; i < oManipulator::NUM_AXES; ++i)
 		Lines[i].LineColor = unpickedColors[i];
 
@@ -272,7 +274,7 @@ bool oGfxManipulatorImpl::Pick(uint _ObjectID)
 			auto& Line = Lines[Axis];
 			if(_ObjectID == (uint)Line.URI.Hash())
 			{
-				Line.LineColor = oStd::Yellow;
+				Line.LineColor = Yellow;
 				if(PickedAxis != Axis)
 				{
 					PickedAxis = Axis;
@@ -391,7 +393,7 @@ void oGfxManipulatorImpl::GetManipulatorVisualLines(oGPUCommandList* _pCommandLi
 	}
 }
 
-void oGfxManipulatorImpl::GetManipulatorMeshes(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUUtilMesh* _pMesh, float4x4 _Transform, oStd::color _MeshColor, uint _ObjectID)> _Callback)
+void oGfxManipulatorImpl::GetManipulatorMeshes(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUUtilMesh* _pMesh, float4x4 _Transform, color _MeshColor, uint _ObjectID)> _Callback)
 {
 	for(size_t i = 0; i < oManipulator::NUM_AXES; ++i)
 	{

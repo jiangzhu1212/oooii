@@ -34,7 +34,7 @@ struct PLATFORM_oWinRegistry : public oTest
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oTESTB(oWinRegistrySetValue(oHKEY_CURRENT_USER, KeyPath, ValueName, KeyTestValue), "Failed to set key %s", oErrorGetLastString());
-		oStd::lstring data;
+		ouro::lstring data;
 		oTESTB(!oWinRegistryGetValue(data, oHKEY_CURRENT_USER, KeyPath, "Non-existant-ValueName"), "Succeeded reading a non-existant key %s", oErrorGetLastString());
 		oTESTB(oWinRegistryGetValue(data, oHKEY_CURRENT_USER, KeyPath, ValueName), "Failed to read key %s", oErrorGetLastString());
 

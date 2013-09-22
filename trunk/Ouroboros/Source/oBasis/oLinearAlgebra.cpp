@@ -46,11 +46,11 @@ template<typename T> TMAT4<T> oCreateRotation(const TVEC3<T>& _NormalizedSrcVec,
 	T a = angle(_NormalizedSrcVec, _NormalizedDstVec);
 
 	// Check for identity
-	if (oStd::equal(a, T(0)))
+	if (ouro::equal(a, T(0)))
 		return oIdentity<TMAT4<T>>();
 
 	// Check for flip
-	if(oStd::equal(a, T(oPI)))
+	if(ouro::equal(a, T(oPI)))
 		return TMAT4<T>(
 			TVEC4<T>(T(-1), T(0), T(0), T(0)),
 			TVEC4<T>(T(0), T(-1), T(0), T(0)),
@@ -83,7 +83,7 @@ template<typename T> const TVEC3<T> combine(const TVEC3<T>& a, const TVEC3<T>& b
 template<typename T> TVEC3<T> oScale(const TVEC3<T>& a, T newLength)
 {
 	T oldLength = length(a);
-	if (oStd::equal(oldLength, T(0.0)))
+	if (ouro::equal(oldLength, T(0.0)))
 		return a;
 	return a * (newLength / oldLength);
 }

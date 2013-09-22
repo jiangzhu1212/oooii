@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oInterprocessEvent.h>
-#include <oStd/assert.h>
+#include <oBase/assert.h>
 #include <oPlatform/Windows/oWindows.h>
 
 const oInterprocessEvent::AutoReset_t oInterprocessEvent::AutoReset;

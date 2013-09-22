@@ -23,9 +23,10 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oConcurrency/block_allocator.h>
-#include <oStd/byte.h>
+#include <oBase/byte.h>
 #include <oStd/atomic.h>
 
+using namespace ouro;
 using namespace oConcurrency;
 
 block_allocator::block_allocator(size_t _BlockSize, size_t _NumBlocksPerChunk, const allocate_t& _Platformallocate, const deallocate_t& _Platformdeallocate)
@@ -121,7 +122,7 @@ threadsafe fixed_block_allocator* block_allocator::find_chunk_allocator(void* _P
 	threadsafe fixed_block_allocator* pChunkAllocator = pLastDealloc;
 
 	// Check a cached version to avoid a linear lookup
-	if (pChunkAllocator && oStd::in_range(_Pointer, (const void*)pChunkAllocator, ChunkSize))
+	if (pChunkAllocator && in_range(_Pointer, (const void*)pChunkAllocator, ChunkSize))
 		return pChunkAllocator;
 
 	// There is no threadsafe condition where the Chunks list shrinks, and 
@@ -130,7 +131,7 @@ threadsafe fixed_block_allocator* block_allocator::find_chunk_allocator(void* _P
 	chunk_t* c = Chunks.peek();
 	while (c)
 	{
-		if (oStd::in_range(_Pointer, c->pAllocator, ChunkSize))
+		if (in_range(_Pointer, c->pAllocator, ChunkSize))
 			return c->pAllocator;
 		c = c->pNext;
 	}

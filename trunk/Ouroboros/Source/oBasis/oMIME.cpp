@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oBasis/oMIME.h>
 #include <unordered_map>
-#include <oStd/algorithm.h>
+#include <oBase/algorithm.h>
 
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oMIME_TYPE)
 	oRTTI_ENUM_BEGIN_VALUES(oMIME_TYPE)

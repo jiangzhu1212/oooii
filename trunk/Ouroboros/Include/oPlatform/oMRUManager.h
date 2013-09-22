@@ -27,17 +27,17 @@
 #ifndef oMRUManager_h
 #define oMRUManager_h
 
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <oBasis/oGUI.h>
 #include <oBasis/oInterface.h>
 
 struct oMRU_DESC
 {
 	// Path to where the MRUs will be kept
-	oStd::path_string MRURegistryKey;
+	ouro::path_string MRURegistryKey;
 
 	// Prefixes the MRUs so that several MRUs can be stored at the same key
-	oStd::sstring MRUEntryPrefix;
+	ouro::sstring MRUEntryPrefix;
 
 	// The MRU menu that will be populated with a call to RefreshMenu
 	oGUI_MENU hMenu;
@@ -63,7 +63,7 @@ interface oMRUManager : oInterface
 	virtual char* Get(char* _StrDestination, size_t _SizeofStrDestination, int _ID) = 0;
 
 	template<size_t size> char* Get(char (&_StrDestination)[size], int _ID) { return Get(_StrDestination, size, _ID); }
-	template<size_t capacity> char* Get(oStd::fixed_string<char, capacity>& _StrDestination, int _ID) { return Get(_StrDestination, _StrDestination.capacity(), _ID); }
+	template<size_t capacity> char* Get(ouro::fixed_string<char, capacity>& _StrDestination, int _ID) { return Get(_StrDestination, _StrDestination.capacity(), _ID); }
 
 	// Deletes all entries in the menu specified in oMRU_DESC and refills it with
 	// the latest data.

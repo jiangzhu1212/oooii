@@ -31,7 +31,7 @@
 
 interface oHTTPURICapture : oInterface
 {
-	virtual oStd::sstring GetCaptureName() const = 0;
+	virtual ouro::sstring GetCaptureName() const = 0;
 	virtual bool AttemptCapture(const char* _URI, const char** _Remaining) const = 0;
 };
 
@@ -46,7 +46,7 @@ interface oHTTPHandler : oInterface
 	// If you get call you can from within your handler call GetCaptured, and give a struct that matches the 
 	// osc tags to get the portion of the uri that you want. the osc tags in HandlesPath are just concatenated in order
 	// to describe the layout of the struct you pass to GetCaptured.
-	virtual oStd::lstring HandlesPath() const = 0; 
+	virtual ouro::lstring HandlesPath() const = 0; 
 	
 	struct CommonParams
 	{

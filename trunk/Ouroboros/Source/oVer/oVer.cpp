@@ -22,9 +22,10 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/Windows/oWindows.h>
 
-static oStd::option sOptions[] = 
+using namespace ouro;
+
+static option sOptions[] = 
 {
 	{ 'd', "FileDescription", 0, "File description" },
 	{ 't', "Type", 0, "File type" },
@@ -53,7 +54,7 @@ bool ParseCommandLine(int argc, const char* argv[], oVER_DESC* _pDesc)
 	memset(_pDesc, 0, sizeof(oVER_DESC));
 
 	const char* value = 0;
-	char ch = oStd::opttok(&value, argc, argv, sOptions);
+	char ch = opttok(&value, argc, argv, sOptions);
 	int count = 0;
 	while (ch)
 	{
@@ -67,10 +68,10 @@ bool ParseCommandLine(int argc, const char* argv[], oVER_DESC* _pDesc)
 			case 'c': _pDesc->PrintCopyright = true; break;
 			case 'h': _pDesc->ShowHelp = true; break;
 			case ' ': _pDesc->InputPath = value; break;
-			case ':': return oErrorSetLast(std::errc::invalid_argument, "The %d%s option is missing a parameter (does it begin with '-' or '/'?)", count, oStd::ordinal(count));
+			case ':': return oErrorSetLast(std::errc::invalid_argument, "The %d%s option is missing a parameter (does it begin with '-' or '/'?)", count, ordinal(count));
 		}
 
-		ch = oStd::opttok(&value);
+		ch = opttok(&value);
 		count++;
 	}
 
@@ -82,36 +83,36 @@ bool Main(int argc, const char* argv[])
 	if (argc <= 1)
 	{
 		char buf[1024];
-		printf("%s", oStd::optdoc(buf, oGetFilebase(argv[0]), sOptions));
+		printf("%s", optdoc(buf, oGetFilebase(argv[0]), sOptions));
 		return true;
 	}
 
 	oVER_DESC opts;
 	if (!ParseCommandLine(argc, argv, &opts))
 	{
-		oStd::xlstring temp = oErrorGetLastString();
+		xlstring temp = oErrorGetLastString();
 		return oErrorSetLast(std::errc::invalid_argument, "bad command line: %s", temp.c_str());
 	}
 
 	if (opts.ShowHelp)
 	{
 		char buf[1024];
-		printf("%s", oStd::optdoc(buf, oGetFilebase(argv[0]), sOptions));
+		printf("%s", optdoc(buf, oGetFilebase(argv[0]), sOptions));
 		return true;
 	}
 
 	if (!opts.InputPath)
 		return oErrorSetLast(std::errc::invalid_argument, "no input file specified.");
 
-	oCore::module::info mi = oCore::module::get_info(oStd::path(opts.InputPath));
-	oStd::sstring FBuf, PBuf;
-	oVERIFY(oStd::to_string(FBuf, mi.version));
-	oVERIFY(oStd::to_string(PBuf, mi.version));
+	ouro::module::info mi = ouro::module::get_info(path(opts.InputPath));
+	sstring FBuf, PBuf;
+	oVERIFY(to_string(FBuf, mi.version));
+	oVERIFY(to_string(PBuf, mi.version));
 
 	if (opts.PrintFileDescription)
 		printf("%s\n", mi.description.c_str());
 	if (opts.PrintType)
-		printf("%s\n", oStd::as_string(mi.type));
+		printf("%s\n", ouro::as_string(mi.type));
 	if (opts.PrintFileVersion)
 		printf("%s\n", FBuf.c_str());
 	if (opts.PrintProductName)

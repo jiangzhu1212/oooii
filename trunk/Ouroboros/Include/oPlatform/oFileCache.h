@@ -41,10 +41,10 @@ interface oFileCache : oInterface
 	};
 
 	//Note that multiple threads can retrieve a file at the same time. they may get different oBuffer's
-	virtual bool Retrieve(oStd::path_string& _Path, const oBuffer** _Buffer) threadsafe = 0;
+	virtual bool Retrieve(ouro::path_string& _Path, const oBuffer** _Buffer) threadsafe = 0;
 
 	//Evict the given file from the cache. If requested again it will be reloaded from disk. no-op if the file is not currently cached.
-	virtual void Evict(oStd::path_string& _Path) threadsafe = 0;
+	virtual void Evict(ouro::path_string& _Path) threadsafe = 0;
 };	
 
 bool oFileCacheCreate(const oFileCache::DESC& _Desc, threadsafe oFileCache** _ppObject);

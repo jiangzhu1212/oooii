@@ -48,7 +48,7 @@ protected:
 	{
 		if (!pInternal)
 		{
-			if (oProcessHeapFindOrAllocate(GUID, false, true, sizeof(MutexT), NewMutex, oStd::type_name(typeid(*this).name()), (void**)&pInternal))
+			if (oProcessHeapFindOrAllocate(GUID, false, true, sizeof(MutexT), NewMutex, ouro::type_name(typeid(*this).name()), (void**)&pInternal))
 				atexit(DeleteMutex);
 		}
 

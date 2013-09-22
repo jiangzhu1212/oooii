@@ -40,7 +40,7 @@
 #define oConcurrency_fixed_block_allocator_h
 
 #include <oStd/callable.h>
-#include <oStd/config.h>
+#include <oBase/config.h>
 #include <oConcurrency/thread_safe.h>
 
 // Defines methods for calling ctors and dtors on allocations

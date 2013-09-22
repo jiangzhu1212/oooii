@@ -31,7 +31,7 @@
 #include <oBasis/oFilterChain.h>
 #include <oBasis/oStddef.h>
 #include <oPlatform/oSingleton.h> // @oooii-tony: Is it necessary to guarantee a test to be singular? If not this can take a step towards being cross-platform.
-#include <oStd/path.h>
+#include <oBase/path.h>
 
 #define oTESTERROR(format, ...) do { snprintf(_StrStatus, _SizeofStrStatus, format, ## __VA_ARGS__); oTRACE("FAILING: %s (oErrorGetLast() == %s (%s))", _StrStatus, oErrorAsString(oErrorGetLast()), oErrorGetLastString()); return oTest::FAILURE; } while(false)
 #define oTESTB(expr, errMsg, ...) do { if (!(expr)) { oTESTERROR(errMsg, ## __VA_ARGS__); } } while(false)
@@ -168,12 +168,12 @@ struct oTest : oProcessSingleton<oTest>
 	// resolve those relative paths to absolute paths. This returns false if the 
 	// path could not be built. If _PathMustExist, failure includes if the file 
 	// could not be found.
-	inline bool BuildPath(oStd::path& _FullPath, const oStd::path& _RelativePath, PATH_TYPE _PathType) const { return BuildPath(_FullPath, _RelativePath, _PathType, false); }
-	inline bool BuildPath(oStd::path& _FullPath, const oStd::path& _RelativePath, PATH_TYPE _PathType, const FileMustExistFlag&) const { return BuildPath(_FullPath, _RelativePath, _PathType, true); }
-	inline bool FindInputFile(oStd::path& _FullPath, const oStd::path& _RelativePath) { return BuildPath(_FullPath, _RelativePath, INPUT, FileMustExist); }
+	inline bool BuildPath(ouro::path& _FullPath, const ouro::path& _RelativePath, PATH_TYPE _PathType) const { return BuildPath(_FullPath, _RelativePath, _PathType, false); }
+	inline bool BuildPath(ouro::path& _FullPath, const ouro::path& _RelativePath, PATH_TYPE _PathType, const FileMustExistFlag&) const { return BuildPath(_FullPath, _RelativePath, _PathType, true); }
+	inline bool FindInputFile(ouro::path& _FullPath, const ouro::path& _RelativePath) { return BuildPath(_FullPath, _RelativePath, INPUT, FileMustExist); }
 
 private:
-	virtual bool BuildPath(oStd::path& _Path, const oStd::path& _RelativePath, PATH_TYPE _PathType, bool _PathMustExist) const;
+	virtual bool BuildPath(ouro::path& _Path, const ouro::path& _RelativePath, PATH_TYPE _PathType, bool _PathMustExist) const;
 	virtual bool TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const char* _FailedImagePath, unsigned int _NthImage, int _ColorChannelTolerance = oDEFAULT, float _MaxRMSError = -1.0f, unsigned int _DiffImageMultiplier = oDEFAULT, bool _OutputGoldenImage = false);
 };
 
@@ -188,7 +188,7 @@ struct oSpecialTest : public oTest
 	// a client-server or multi-process test. The process is created and then run
 	// with a separate call to Run() so there is an opportunity for the developer
 	// to place a breakpoint and attach to this new process during development.
-	static bool CreateProcess(const char* _SpecialTestName, std::shared_ptr<oCore::process>* _pProcess);
+	static bool CreateProcess(const char* _SpecialTestName, std::shared_ptr<ouro::process>* _pProcess);
 
 	// Run the specified process as was created from oSpecialTest::CreateProcess 
 	// in a special mode that runs the unit test with a specific test. This way 
@@ -201,7 +201,7 @@ struct oSpecialTest : public oTest
 	// suspended mode. By calling this and StartAndWaitToBeReady separately, a 
 	// developer can put breakpoints and attach to the process before it starts 
 	// running easily.
-	static bool Start(oCore::process* _pProcess, char* _StrStatus, size_t _SizeofStrStatus, int* _pExitCode, unsigned int _TimeoutMS = 10000);
+	static bool Start(ouro::process* _pProcess, char* _StrStatus, size_t _SizeofStrStatus, int* _pExitCode, unsigned int _TimeoutMS = 10000);
 
 	// Run blocks until it receives an event from the special test (this)
 	void NotifyReady();

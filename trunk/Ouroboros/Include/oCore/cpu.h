@@ -28,10 +28,10 @@
 #ifndef oCore_cpu_h
 #define oCore_cpu_h
 
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <functional>
 
-namespace oCore {
+namespace ouro {
 	namespace cpu { 
 
 /* enum class */ namespace type
@@ -70,8 +70,8 @@ struct info
 	int hardware_thread_count;
 	cache_info data_cache[3];
 	cache_info instruction_cache[3];
-	oStd::sstring string;
-	oStd::sstring brand_string;
+	ouro::sstring string;
+	ouro::sstring brand_string;
 };
 
 // Returns a description of the current CPU
@@ -82,6 +82,6 @@ info get_info();
 void enumerate_features(const std::function<bool(const char* _FeatureName, const support::value& _Support)>& _Enumerator);
 
 	} // namespace cpu
-} // namespace oCore
+} // namespace ouro
 
 #endif

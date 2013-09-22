@@ -102,7 +102,7 @@ struct oGFX_LINE_VERTEX
 	#ifdef oHLSL
 		float4 Color : CLR0;
 	#else
-		oStd::color Color;
+		ouro::color Color;
 	#endif
 };
 

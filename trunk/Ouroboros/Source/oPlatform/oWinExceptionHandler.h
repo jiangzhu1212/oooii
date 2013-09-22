@@ -30,7 +30,7 @@
 #define oWinExceptionHandler_h
 
 #include <oPlatform/oSingleton.h>
-#include <oStd/guid.h>
+#include <oBase/guid.h>
 #include <oStd/mutex.h>
 #include <functional>
 
@@ -74,7 +74,7 @@ typedef std::function<void(const char* _Message, const oWinCppException& _CppExc
 class oWinExceptionHandler : public oProcessSingleton<oWinExceptionHandler>
 {
 public:
-	static const oStd::guid GUID;
+	static const ouro::guid GUID;
 	oWinExceptionHandler();
 	~oWinExceptionHandler();
 

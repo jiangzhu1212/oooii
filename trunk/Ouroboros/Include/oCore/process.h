@@ -28,9 +28,9 @@
 #define oCore_process_h
 
 #include <oStd/chrono.h>
-#include <oStd/path.h>
+#include <oBase/path.h>
 
-namespace oCore {
+namespace ouro {
 
 class process
 {
@@ -139,7 +139,7 @@ public:
 
 	static std::shared_ptr<process> make(const info& _Info);
 
-	static void enumerate(const std::function<bool(id _ID, id _ParentID, const oStd::path& _ProcessExePath)>& _Enumerator);
+	static void enumerate(const std::function<bool(id _ID, id _ParentID, const path& _ProcessExePath)>& _Enumerator);
 	static id get_id(const char* _Name);
 	static inline bool exists(const char* _Name) { return process::id() != get_id(_Name); }
 	static bool has_debugger_attached(id _ID);
@@ -157,7 +157,7 @@ public:
 	static void terminate_children(id _ID, int _ExitCode, bool _AllChildProcessesToo = true);
 
 	// Returns the short name of the process (module name) specified by its ID.
-	static oStd::path get_name(id _ID);
+	static path get_name(id _ID);
 
 	static memory_info get_memory_info(id _ID);
 	static time_info get_time_info(id _ID);
@@ -185,23 +185,23 @@ process::id get_parent_id();
 inline bool is_child() { return get_parent_id() != process::id(); }
 bool has_debugger_attached();
 
-inline double cpu_usage(unsigned long long* _pPreviousSystemTime, unsigned long long* _pPreviousProcessTime) { return oCore::process::cpu_usage(get_id(), _pPreviousSystemTime, _pPreviousProcessTime); }
+inline double cpu_usage(unsigned long long* _pPreviousSystemTime, unsigned long long* _pPreviousProcessTime) { return ouro::process::cpu_usage(get_id(), _pPreviousSystemTime, _pPreviousProcessTime); }
 
 // Returns the command line used to start this process. If _ParametersOnly is 
 // true then the path of the exe will not be returned. The buffer must still be 
 // large enough to hold that path.
 char* command_line(char* _StrDestination, size_t _SizeofStrDestination, bool _ParametersOnly = false);
 template<size_t size> char* command_line(char (&_StrDestination)[size], bool _ParametersOnly = false) { return command_line(_StrDestination, size, _ParametersOnly); }
-template<size_t capacity> char* command_line(oStd::fixed_string<char, capacity>& _StrDestination, bool _ParametersOnly = false) { return command_line(_StrDestination, _StrDestination.capacity(), _ParametersOnly); }
+template<size_t capacity> char* command_line(fixed_string<char, capacity>& _StrDestination, bool _ParametersOnly = false) { return command_line(_StrDestination, _StrDestination.capacity(), _ParametersOnly); }
 
 // Call the specified function for each of the child processes of the current
 // process. The function should return true to keep enumerating, or false to
 // exit early. This function returns false if there is a failure, check 
 // oErrorGetLast() for more information. The error can be 
 // std::errc::no_child_process if there are no child processes.
-void enumerate_children(const std::function<bool(process::id _ID, process::id _ParentID, const oStd::path& _ProcessExePath)>& _Enumerator);
+void enumerate_children(const std::function<bool(process::id _ID, process::id _ParentID, const path& _ProcessExePath)>& _Enumerator);
 
 	} // namespace this_process
-} // namespace oCore
+} // namespace ouro
 
 #endif

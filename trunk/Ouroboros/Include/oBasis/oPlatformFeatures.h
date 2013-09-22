@@ -29,7 +29,7 @@
 #ifndef oPlatformFeatures_h
 #define oPlatformFeatures_h
 
-#include <oStd/config.h>
+#include <oBase/config.h>
 
 #ifdef _MSC_VER
 	#define oHAS_ASSUME

@@ -51,16 +51,16 @@ class oWinsock : public oProcessSingleton<oWinsock>
 {
 	// NOTE: gai_strerror is an inline function, so does not need to be linked
 	// against or called from this oWinSock interface.
-	oCore::module::id hMswsock;
-	oCore::module::id hWs2_32;
-	oCore::module::id hFwpucint;
+	ouro::module::id hMswsock;
+	ouro::module::id hWs2_32;
+	ouro::module::id hFwpucint;
 
 public:
 	static const oGUID GUID;
 	oWinsock();
 	~oWinsock();
 
-	// Enum as string (similar to oStd::as_string())
+	// Enum as string (similar to ouro::as_string())
 	static const char* AsString(int _WSAWinSockError);
 
 	// Returns the extended MSDN error description of the error

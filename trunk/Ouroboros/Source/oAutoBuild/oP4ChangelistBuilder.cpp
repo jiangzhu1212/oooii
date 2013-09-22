@@ -30,6 +30,8 @@
 #include <oStd/future.h>
 #include <oCore/system.h>
 
+using namespace ouro;
+
 static const char* oAUTO_BUILD_ROOT_PATH = "//Root/";
 
 static int oStrFindFirstDiff(const char* _StrSource1, const char* _StrSource2)
@@ -42,12 +44,12 @@ static int oStrFindFirstDiff(const char* _StrSource1, const char* _StrSource2)
 	}
 	if(!*_StrSource1 && !*_StrSource2)
 		return -1;
-	return oInt(oStd::byte_diff(_StrSource1, origSrc1));
+	return oInt(byte_diff(_StrSource1, origSrc1));
 }
 
 struct oBUILD_TOOL_P4_SETTINGS
 {
-	oStd::uri_string Root;
+	uri_string Root;
 };
 oRTTI_COMPOUND_DECLARATION(oRTTI_CAPS_NONE, oBUILD_TOOL_P4_SETTINGS)
 
@@ -55,7 +57,7 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oBUILD_TOOL_P4_SETTINGS)
 	oRTTI_COMPOUND_ABSTRACT(oBUILD_TOOL_P4_SETTINGS)
 	oRTTI_COMPOUND_VERSION(oBUILD_TOOL_P4_SETTINGS, 0,1,0,0)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oBUILD_TOOL_P4_SETTINGS)
-		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_P4_SETTINGS, Root, oRTTI_OF(ostd_uri_string), "Root", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oBUILD_TOOL_P4_SETTINGS, Root, oRTTI_OF(ouro_uri_string), "Root", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oBUILD_TOOL_P4_SETTINGS)
 oRTTI_COMPOUND_END_DESCRIPTION(oBUILD_TOOL_P4_SETTINGS)
 
@@ -63,12 +65,12 @@ bool oP4CleanSync(int _ChangeList, const char* _SyncPath, const char* _CleanPath
 {
 	if (_CleanPath)
 	{
-		oStd::path_string RootPath;
-		oStd::replace(RootPath, _CleanPath, "/", "\\");
+		path_string RootPath;
+		replace(RootPath, _CleanPath, "/", "\\");
 		oTrimFilename(RootPath);
-		oStd::xlstring CmdLine;
+		xlstring CmdLine;
 		snprintf(CmdLine, "rmdir /S /Q %s", RootPath.c_str());
-		system(CmdLine.c_str());
+		::system(CmdLine.c_str());
 	}
 	return oP4Sync(_ChangeList, _SyncPath, _CleanPath != nullptr);
 }
@@ -77,7 +79,7 @@ static std::regex EncodedSearch("(%(.+?)%)");
 
 char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _SizeofStrDestination, const char* _RawString)
 {
-	oStd::path_string Current = _RawString;
+	path_string Current = _RawString;
 
 	const std::cregex_token_iterator end;
 	int arr[] = {1,2}; 
@@ -87,9 +89,9 @@ char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _Sizeof
 		auto Replace = VecTok->str();
 		++VecTok;
 		auto EnvVariable = VecTok->str();
-		oStd::path_string TranslatedVariable;
-		oCore::system::getenv(TranslatedVariable, EnvVariable.c_str());
-		oStd::replace(_StrDestination, _SizeofStrDestination, Current, Replace.c_str(), TranslatedVariable.c_str());
+		path_string TranslatedVariable;
+		ouro::system::getenv(TranslatedVariable, EnvVariable.c_str());
+		replace(_StrDestination, _SizeofStrDestination, Current, Replace.c_str(), TranslatedVariable.c_str());
 		Current = _StrDestination;
 		NoTranslations = false;
 	}
@@ -99,7 +101,7 @@ char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _Sizeof
 	return _StrDestination;
 }
 template<size_t size> char* oSystemTranslateEnvironmentVariables(char (&_Value)[size], const char* _Name) { return oSystemTranslateEnvironmentVariables(_Value, size, _Name); }
-template<size_t capacity> char* oSystemTranslateEnvironmentVariables(oStd::fixed_string<char, capacity>& _Value, const char* _Name) { return oSystemTranslateEnvironmentVariables(_Value, _Value.capacity(), _Name); }
+template<size_t capacity> char* oSystemTranslateEnvironmentVariables(ouro::fixed_string<char, capacity>& _Value, const char* _Name) { return oSystemTranslateEnvironmentVariables(_Value, _Value.capacity(), _Name); }
 
 static const int NUM_BUILDS_TO_SERVE = 10;
 
@@ -112,13 +114,13 @@ public:
 	oChildProcessTerminator()
 	{
 		AssertIsMain();
-		ProcessID = oCore::this_process::get_id();
+		ProcessID = ouro::this_process::get_id();
 		Mutex.lock();
 	}
 	void Terminate()
 	{
 		oConcurrency::lock_guard<oConcurrency::mutex> Lock(Mutex);
-		oCore::process::terminate_children(ProcessID, 0, true);
+		ouro::process::terminate_children(ProcessID, 0, true);
 	}
 
 	void MainThreadYield(uint _YieldMS)
@@ -134,7 +136,7 @@ public:
 	}
 private:
 	oConcurrency::mutex Mutex;
-	oCore::process::id ProcessID;
+	ouro::process::id ProcessID;
 
 	void AssertIsMain()
 	{
@@ -148,7 +150,7 @@ public:
 	oDEFINE_REFCOUNT_INTERFACE(Refcount);
 	oDEFINE_NOOP_QUERYINTERFACE();
 
-	oP4ChangelistBuilderImpl(const oStd::ini& _INI, const char* _LogRoot, int _ServerPort, bool *_pSuccess)
+	oP4ChangelistBuilderImpl(const ini& _INI, const char* _LogRoot, int _ServerPort, bool *_pSuccess)
 		: ServerPort(_ServerPort)
 		, LastCL(oInvalid)
 		, StartBuildMS(0)
@@ -157,7 +159,7 @@ public:
 		, LastBuildMS(0)
 		, LastDailyBuildMS(0)
 	{
-		oStd::ini::section section = _INI.first_section();
+		ini::section section = _INI.first_section();
 		while (section)
 		{
 			const char* pSectionName = _INI.section_name(section);
@@ -190,7 +192,7 @@ public:
 			section = _INI.next_section(section);
 		}
 
-		oStd::clean_path(LogRoot, _LogRoot);
+		clean_path(LogRoot, _LogRoot);
 
 		// Patch up all paths relative to the perforce root
 		oEnsureSeparator(P4Settings.Root);
@@ -201,23 +203,23 @@ public:
 			return;
 		}
 
-		oStd::path_string Temp;
-		oStd::replace(Temp, BuildSettings.Solution, oAUTO_BUILD_ROOT_PATH, P4Settings.Root);
+		path_string Temp;
+		replace(Temp, BuildSettings.Solution, oAUTO_BUILD_ROOT_PATH, P4Settings.Root);
 
 		if(!oP4GetClientPath(BuildSettings.Solution.c_str(), Temp))
 			return; // Sets last error
 
 		// The directory of the solution will determine our root
-		oStd::path_string FileRoot;
+		path_string FileRoot;
 		FileRoot = BuildSettings.Solution.c_str();
 		oTrimFilename(FileRoot.c_str());
 
 		// Patch everything else relative to this
-		oFUNCTION<void(oStd::path_string& _PatchPath)> RootPatcher = 
-			[&](oStd::path_string& _PatchPath)
+		oFUNCTION<void(path_string& _PatchPath)> RootPatcher = 
+			[&](path_string& _PatchPath)
 		{
 			Temp = _PatchPath;
-			oStd::replace(_PatchPath, Temp, oAUTO_BUILD_ROOT_PATH, FileRoot);
+			replace(_PatchPath, Temp, oAUTO_BUILD_ROOT_PATH, FileRoot);
 		};
 		RootPatcher(TestSettings.CommandLine);
 		RootPatcher(TestSettings.FailedImageCompares);
@@ -228,7 +230,7 @@ public:
 			RootPatcher(command_line);
 		}
 
-		oStd::sncatf(P4Settings.Root, "...");
+		sncatf(P4Settings.Root, "...");
 
 		ScanBuildLogsFolder();
 		UpdateBuildStatistics();
@@ -284,7 +286,7 @@ private:
 	int ServerPort;
 
 	// Settings
-	oStd::path_string LogRoot;
+	path_string LogRoot;
 	oAutoBuildEmailSettings EmailSettings;
 	oBUILD_TOOL_P4_SETTINGS P4Settings;
 	oMSBUILD_SETTINGS BuildSettings;
@@ -316,7 +318,7 @@ private:
 	int AverageDailyBuildTimeMS;
 };
 
-bool oChangelistManagerCreate(const oStd::ini& _INI, const char* _LogRoot, int _ServerPort, oP4ChangelistBuilder** _ppChangelistManager)
+bool oChangelistManagerCreate(const ini& _INI, const char* _LogRoot, int _ServerPort, oP4ChangelistBuilder** _ppChangelistManager)
 {
 	bool success = false;
 	oCONSTRUCT(_ppChangelistManager, oP4ChangelistBuilderImpl(_INI, _LogRoot, _ServerPort, &success));
@@ -325,17 +327,17 @@ bool oChangelistManagerCreate(const oStd::ini& _INI, const char* _LogRoot, int _
 
 void oP4ChangelistBuilderImpl::ScanBuildLogsFolder()
 {
-	oStd::path FileWildCard(LogRoot);
+	path FileWildCard(LogRoot);
 	FileWildCard /= "*";
 
-	std::vector<oStd::sstring> SpecialBuildPaths;
-	std::vector<oStd::sstring> SuccesfulBuildPaths;
-	oCore::filesystem::enumerate(FileWildCard, 
-	[&](const oStd::path& _FullPath, const oCore::filesystem::file_status& _Status, unsigned long long _Size)->bool
+	std::vector<sstring> SpecialBuildPaths;
+	std::vector<sstring> SuccesfulBuildPaths;
+	ouro::filesystem::enumerate(FileWildCard, 
+	[&](const path& _FullPath, const ouro::filesystem::file_status& _Status, unsigned long long _Size)->bool
 	{
-		oStd::path_string PossibleBuild;
+		path_string PossibleBuild;
 		snprintf(PossibleBuild, "%s/index.html", _FullPath.c_str());
-		if(oCore::filesystem::exists(oStd::path(PossibleBuild)))
+		if(ouro::filesystem::exists(path(PossibleBuild)))
 		{
 			char* pFileName = PossibleBuild.c_str() + oStrFindFirstDiff(FileWildCard, PossibleBuild);
 
@@ -352,11 +354,11 @@ void oP4ChangelistBuilderImpl::ScanBuildLogsFolder()
 	bool foundLastSuccessful = false;
 	oFOR(auto& _Path, SuccesfulBuildPaths)
 	{
-		oStd::path_string TempPath = _Path;
+		path_string TempPath = _Path;
 		strchr(TempPath.c_str(), '/')[0] = 0;
 		ChangeInfo Info;
 		Info.IsDaily = false;
-		if(oStd::from_string(&Info.CL, TempPath))
+		if(from_string(&Info.CL, TempPath))
 		{
 			Info.Succeeded = ParseAutoBuildResults(Info.CL, &Info);
 			FinishedBuildInfos.push_back(Info);
@@ -385,7 +387,7 @@ void oP4ChangelistBuilderImpl::ScanBuildLogsFolder()
 	foundLastSuccessful = false;
 	oFOR(auto& _Path, SpecialBuildPaths)
 	{
-		oStd::path_string TempPath = _Path;
+		path_string TempPath = _Path;
 		strchr(TempPath.c_str(), '/')[0] = 0;
 		ChangeInfo Info;
 		Info.IsDaily = true;
@@ -486,11 +488,11 @@ void oP4ChangelistBuilderImpl::TryAddingChangelist(int _Changelist, bool _IsDail
 	if (_IsDaily)
 	{
 		oStd::date CurrentDate;
-		oCore::system::now(&CurrentDate);
-		CurrentDate = oCore::system::to_local(CurrentDate);
+		ouro::system::now(&CurrentDate);
+		CurrentDate = ouro::system::to_local(CurrentDate);
 
-		oStd::sstring DateStr;
-		oStd::strftime(DateStr, "%Y%m%d", CurrentDate);
+		sstring DateStr;
+		strftime(DateStr, "%Y%m%d", CurrentDate);
 
 		snprintf(NextBuild.UserName, "%s_%s_%d", oAUTO_BUILD_SPECIAL_PREFIX, DateStr.c_str(), _Changelist);
 
@@ -518,11 +520,11 @@ void oP4ChangelistBuilderImpl::TryNextBuild(int _DailyBuildHour)
 
 	// We only can run the daily build if we're not running a remote session as 
 	// this will do more extensive testing
-	if(!oCore::system::is_remote_session())
+	if(!ouro::system::is_remote_session())
 	{
 		oStd::date CurrentDate;
-		oCore::system::now(&CurrentDate);
-		CurrentDate = oCore::system::to_local(CurrentDate);
+		ouro::system::now(&CurrentDate);
+		CurrentDate = ouro::system::to_local(CurrentDate);
 
 		if (_DailyBuildHour == CurrentDate.hour && !WasChangelistAlreadyAdded(oInvalid, true))
 		{
@@ -609,21 +611,21 @@ void oP4ChangelistBuilderImpl::BuildNextBuild()
 	if (CurrentBuild->IsDaily)
 		results.BuildName = CurrentBuild->UserName;
 	else
-		oStd::to_string(results.BuildName, CurrentBuild->CL);
+		to_string(results.BuildName, CurrentBuild->CL);
 
 	UpdateBuildProgress(CurrentBuild, "P4 Sync");
 
 	// When re-syncing we blow away the old directory then force sync the directory again
 	if (!oP4CleanSync(CurrentBuild->CL, P4Settings.Root.c_str(), CurrentTestSettings.ReSync ? BuildSettings.Solution.c_str() : nullptr))
 	{
-		oStd::lstring Error;
+		lstring Error;
 		snprintf(Error, "P4 failed to sync with %s", oErrorGetLastString());
 		oEmailAdminAndStop(EmailSettings, Error, CurrentBuild->CL, false);
 	}
 
-	oStd::path Path(LogRoot);
+	path Path(LogRoot);
 	Path /= results.BuildName;
-	oCore::filesystem::create_directories(Path.parent_path());
+	ouro::filesystem::create_directories(Path.parent_path());
 	results.OutputFolder = Path;
 
 	if (CancelEvent.is_set())
@@ -735,14 +737,14 @@ void oP4ChangelistBuilderImpl::ReportLastSpecialBuild(oFUNCTION<void(const char*
 
 bool oP4ChangelistBuilderImpl::ParseAutoBuildResults(int _CL, ChangeInfo* _pInfo)
 {
-	oStd::path_string PathToCL;
+	path_string PathToCL;
 	snprintf(PathToCL, "%s%d/index.html", LogRoot.c_str(), _CL);
 	return ParseAutoBuildResults(PathToCL, _pInfo);
 }
 
 bool oP4ChangelistBuilderImpl::ParseAutoBuildResultsSpecialBuild(const char* _pName, ChangeInfo* _pInfo)
 {
-	oStd::path_string AbsolutePath;
+	path_string AbsolutePath;
 	snprintf(AbsolutePath, "%s%s/index.html", LogRoot.c_str(), _pName);
 	return ParseAutoBuildResults(AbsolutePath, _pInfo);
 }
@@ -753,7 +755,7 @@ bool oP4ChangelistBuilderImpl::ParseAutoBuildResults(const char* _pAbsolutePath,
 	_pInfo->TestTime = 0;
 	_pInfo->PackTime = 0;
 
-	std::shared_ptr<oStd::xml> XML = oXMLLoad(_pAbsolutePath);
+	std::shared_ptr<xml> XML = oXMLLoad(_pAbsolutePath);
 	if (!XML)
 		return false;
 
@@ -761,7 +763,7 @@ bool oP4ChangelistBuilderImpl::ParseAutoBuildResults(const char* _pAbsolutePath,
 	if (!TitleNode)
 		return false;
 
-	oStd::sstring Title = XML->node_value(TitleNode);
+	sstring Title = XML->node_value(TitleNode);
 	if (Title.empty())
 		return false;
 

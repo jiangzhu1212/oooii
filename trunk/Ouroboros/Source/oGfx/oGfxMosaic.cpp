@@ -24,6 +24,9 @@
  **************************************************************************/
 #include <oGfx/oGfxMosaic.h>
 #include <oGPU/oGPUUtil.h>
+#include <oBase/finally.h>
+
+using namespace ouro;
 
 struct oGfxMosaicImpl : oGfxMosaic
 {
@@ -38,10 +41,10 @@ struct oGfxMosaicImpl : oGfxMosaic
 	void SetBlendState(oGPU_BLEND_STATE _BlendState) override { BlendState = _BlendState; }
 
 private:
-	oStd::intrusive_ptr<oGPUDevice> Device;
-	oStd::intrusive_ptr<oGPUPipeline> Pipeline;
-	oStd::intrusive_ptr<oGPUBuffer> Indices;
-	oStd::intrusive_ptr<oGPUBuffer> Vertices[2];
+	intrusive_ptr<oGPUDevice> Device;
+	intrusive_ptr<oGPUPipeline> Pipeline;
+	intrusive_ptr<oGPUBuffer> Indices;
+	intrusive_ptr<oGPUBuffer> Vertices[2];
 	uint NumPrimitives;
 	oGPU_BLEND_STATE BlendState;
 	oRefCount RefCount;
@@ -69,7 +72,7 @@ bool oGfxMosaicCreate(oGPUDevice* _pDevice, const oGPU_PIPELINE_DESC& _PipelineD
 
 bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const oRECT* _AdditionalSourceImageSpaces, const oRECT* const* _pAdditionalSourceRectArrays)
 {
-	oStd::intrusive_ptr<oGeometryFactory> GeoFactory;
+	intrusive_ptr<oGeometryFactory> GeoFactory;
 	if (!oGeometryFactoryCreate(&GeoFactory))
 		return false; // pass through error
 
@@ -78,7 +81,7 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 	Layout.Positions = true;
 	Layout.Texcoords = _NumAdditionalTextureSets ? !!_Desc.pSourceRects : true;
 
-	oStd::intrusive_ptr<oGeometry> Geo;
+	intrusive_ptr<oGeometry> Geo;
 	if (!GeoFactory->Create(_Desc, Layout, &Geo))
 		return false; // pass through error
 
@@ -89,7 +92,7 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 	if (!Geo->MapConst(&GeoMapped))
 		return false; // pass through error
 
-	oStd::finally OSEGeoUnmap([&] { Geo->UnmapConst(); });
+	finally OSEGeoUnmap([&] { Geo->UnmapConst(); });
 
 	oSURFACE_CONST_MAPPED_SUBRESOURCE MSRGeo;
 	MSRGeo.pData = GeoMapped.pIndices;
@@ -116,15 +119,15 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 
 	if (_NumAdditionalTextureSets)
 	{
-		oStd::intrusive_ptr<oGeometryFactory> GeoFactory;
+		intrusive_ptr<oGeometryFactory> GeoFactory;
 		if (!oGeometryFactoryCreate(&GeoFactory))
 			return false; // pass through error
 
-		std::vector<oStd::intrusive_ptr<oGeometry>> ExtraGeos;
+		std::vector<intrusive_ptr<oGeometry>> ExtraGeos;
 		std::vector<oGeometry::CONST_MAPPED> ExtraGeoMapped;
 		ExtraGeos.resize(_NumAdditionalTextureSets);
 		ExtraGeoMapped.resize(_NumAdditionalTextureSets);
-		oStd::finally OSEGeoUnmap([&] { oFOR(auto geo, ExtraGeos) geo->UnmapConst(); });
+		finally OSEGeoUnmap([&] { oFOR(auto geo, ExtraGeos) geo->UnmapConst(); });
 
 		for (int i = 0; i < _NumAdditionalTextureSets; i++)
 		{

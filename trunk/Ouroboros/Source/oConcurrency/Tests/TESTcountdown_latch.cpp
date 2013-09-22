@@ -23,11 +23,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oConcurrency/countdown_latch.h>
-#include <oStd/finally.h>
+#include <oBase/finally.h>
 #include <oStd/for.h>
 #include <oStd/atomic.h>
 #include <oStd/future.h>
-#include <oStd/throw.h>
+#include <oBase/throw.h>
 #include <vector>
 
 namespace oConcurrency {

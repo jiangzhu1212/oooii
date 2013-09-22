@@ -26,6 +26,8 @@
 #include <oCompute/oComputeConstants.h>
 #include <oBasis/oGeometry.h>
 
+using namespace ouro;
+
 oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess) 
 	: oManipulatorBase(_Desc, _pSuccess)
 	, Arcball(oARCBALL_CONSTRAINT_NONE)
@@ -34,7 +36,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 		return;
 	*_pSuccess = false;
 
-	oStd::intrusive_ptr<oGeometry> CircleGeometry; 
+	intrusive_ptr<oGeometry> CircleGeometry; 
 	oGeometry::LAYOUT layout;
 	layout.Positions = true;
 	layout.Normals = false;
@@ -45,7 +47,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 
 	auto RotationScale = Desc.ManipularScale;
 
-	oStd::intrusive_ptr<oGeometryFactory> GeometryFactory;
+	intrusive_ptr<oGeometryFactory> GeometryFactory;
 	if(!oGeometryFactoryCreate(&GeometryFactory))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a geometry factor for manipulator");
@@ -56,7 +58,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	d.FaceType = oGeometry::OUTLINE;
 	d.Radius = 1;
 	d.Facet = ROTATION_CIRCLE_VCOUNT;
-	d.Color = oStd::White;
+	d.Color = White;
 
 	if(!GeometryFactory->CreateCircle(d, layout, &CircleGeometry))
 	{
@@ -131,14 +133,14 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 
 	CircleGeometry->UnmapConst();
 
-	oStd::intrusive_ptr<oGeometry> TorusGeometry; 
+	intrusive_ptr<oGeometry> TorusGeometry; 
 	oGeometryFactory::TORUS_DESC td;
 	td.FaceType = oGeometry::FRONT_CW;
 	td.InnerRadius = RotationScale - Desc.PickWidth;
 	td.OuterRadius = RotationScale + Desc.PickWidth;
 	td.Divide = ROTATION_PICK_TORUS_DIVIDE;
 	td.Facet = ROTATION_PICK_TORUS_FACET;
-	td.Color = oStd::White;
+	td.Color = White;
 
 	if(!GeometryFactory->CreateTorus(td, layout, &TorusGeometry))
 	{

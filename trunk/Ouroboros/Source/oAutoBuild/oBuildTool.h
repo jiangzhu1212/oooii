@@ -31,15 +31,15 @@ struct oBUILD_TOOL_TESTING_SETTINGS
 {
 	bool ReSync;
 	uint TimeoutSeconds;
-	oStd::path_string CommandLine;
-	oStd::path_string FailedImageCompares;
+	ouro::path_string CommandLine;
+	ouro::path_string FailedImageCompares;
 };
 oRTTI_COMPOUND_DECLARATION(oRTTI_CAPS_NONE, oBUILD_TOOL_TESTING_SETTINGS)
 
 struct oBUILD_TOOL_PACKAGING_SETTINGS
 {
 	uint TimeoutSeconds;
-	std::vector<oStd::path_string> CommandLines;
+	std::vector<ouro::path_string> CommandLines;
 };
 oRTTI_COMPOUND_DECLARATION(oRTTI_CAPS_NONE, oBUILD_TOOL_PACKAGING_SETTINGS)
 
@@ -49,15 +49,15 @@ struct oUnitTestResults
 	bool HasTimedOut;
 	bool ParseLogfileSucceeded;
 	bool TestingSucceeded;
-	oStd::uri_string StdoutLogfile;
-	oStd::uri_string StderrLogfile;
-	oStd::uri_string FailedImagePath;
+	ouro::uri_string StdoutLogfile;
+	ouro::uri_string StderrLogfile;
+	ouro::uri_string FailedImagePath;
 
 	struct TestItem
 	{
-		oStd::sstring Name;
-		oStd::sstring Status;
-		oStd::lstring Message;
+		ouro::sstring Name;
+		ouro::sstring Status;
+		ouro::lstring Message;
 	};
 	std::vector<TestItem> FailedTests;
 };

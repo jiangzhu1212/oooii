@@ -33,6 +33,9 @@
 #include <oPlatform/Windows/oWindows.h>
 #include "resource.h"
 
+using namespace ouro;
+using namespace oStd;
+
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGESTURE_VISUALIZATION)
 	oRTTI_ENUM_BEGIN_VALUES(oGESTURE_VISUALIZATION)
 		oRTTI_VALUE_CUSTOM(oGESTURE_VIZ_NONE, "None")
@@ -93,30 +96,30 @@ struct oGestureManagerImpl : oGestureManager
 	bool SetCurrentKeyset(const char* _KeysetName);
 	bool SetCurrentInputSet(const oRTTI* _pDynamicEnum);
 
-	bool OnFileChange(oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI) override;
+	bool OnFileChange(oSTREAM_EVENT _Event, const uri_string& _ChangedURI) override;
 
 private:
 
 	// Generic elements
 	
-	oStd::intrusive_ptr<threadsafe oWindow> Window;
-	oStd::intrusive_ptr<threadsafe oKinect> Kinect;
-	oStd::intrusive_ptr<threadsafe oAirKeyboard> AirKeyboard;
-	oStd::intrusive_ptr<threadsafe oInputMapper> InputMapper;
+	intrusive_ptr<threadsafe oWindow> Window;
+	intrusive_ptr<threadsafe oKinect> Kinect;
+	intrusive_ptr<threadsafe oAirKeyboard> AirKeyboard;
+	intrusive_ptr<threadsafe oInputMapper> InputMapper;
 
-	oStd::shared_mutex KinectMutex;
+	shared_mutex KinectMutex;
 
 	oGESTURE_MANAGER_DESC Desc;
 	oGESTURE_VISUALIZATION_DESC VizDesc;
 	oGESTURE_DEVICE_VISUALIZATION_DESC DeviceVizDesc;
 	oKINECT_STATUS_DRAW_STATE KinectDrawState;
 
-	oStd::sstring CurrentKeysetName;
+	sstring CurrentKeysetName;
 	const oRTTI* pCurrentInputSet;
-	std::shared_ptr<oStd::xml> Keysets;
-	std::shared_ptr<oStd::xml> Inputs;
-	std::array<oStd::sstring, 2> ComboMessage;
-	oStd::sstring NoKinectMessage;
+	std::shared_ptr<xml> Keysets;
+	std::shared_ptr<xml> Inputs;
+	std::array<sstring, 2> ComboMessage;
+	sstring NoKinectMessage;
 
 	int hookAirKeys;
 	int hookInputMaps;
@@ -128,7 +131,7 @@ private:
 
 	// GDI-specific elements
 
-	oStd::shared_mutex DeviceIconMutex;
+	shared_mutex DeviceIconMutex;
 
 	oGDIScopedObject<HFONT> hFont;
 	oGDIScopedObject<HPEN> hBonePen;
@@ -156,17 +159,17 @@ private:
 	void OnAction(const oGUI_ACTION_DESC& _Action);
 	void OnDeviceChange(const oGUI_EVENT_DESC& _Event);
 
-	bool ReloadAirKeySets(const oStd::uri_string& _AirKeySets_xml);
-	bool ReloadInputs(const oStd::uri_string& _Inputs_xml);
+	bool ReloadAirKeySets(const uri_string& _AirKeySets_xml);
+	bool ReloadInputs(const uri_string& _Inputs_xml);
 };
 
 oGestureManagerImpl::oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, threadsafe oWindow* _pWindow, bool* _pSuccess)
 	: Window(_pWindow)
 	, VizDesc(_Init.VizDesc)
 	, DeviceVizDesc(_Init.DeviceVizDesc)
-	, hBonePen(oGDICreatePen(oStd::OOOiiGreen, 2))
-	, hBoneBrush(oGDICreateBrush(oStd::White))
-	, hBlankBG(oGDICreateBrush(oStd::Black))
+	, hBonePen(oGDICreatePen(OOOiiGreen, 2))
+	, hBoneBrush(oGDICreateBrush(White))
+	, hBlankBG(oGDICreateBrush(Black))
 	, KinectDrawState(oKINECT_STATUS_DRAW_INITIALIZING_1)
 	, LastSetTimerState(oKINECT_STATUS_DRAW_NONE)
 	, TimerMessageVersion(0)
@@ -197,15 +200,15 @@ oGestureManagerImpl::oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, thr
 	// @oooii-tony: todo: make this respect oStream's path stuff.
 	// !!! un-hard-code the paths to oPlayer2 stuff !!!
 	{
-		oStd::uri_string dev_uri(oCore::filesystem::dev_path());
+		uri_string dev_uri(ouro::filesystem::dev_path());
 
-		oStd::uri_string AirKB = dev_uri;
-		oStd::sncatf(AirKB, "oooii/Source/oPlayer2/AirKeyboards.xml");
+		uri_string AirKB = dev_uri;
+		sncatf(AirKB, "oooii/Source/oPlayer2/AirKeyboards.xml");
 		if (!OnFileChange(oSTREAM_ACCESSIBLE, AirKB))
 			return; // pass through error
 
-		oStd::uri_string Inputs = dev_uri;
-		oStd::sncatf(Inputs, "oooii/Source/oPlayer2/Inputs.xml");
+		uri_string Inputs = dev_uri;
+		sncatf(Inputs, "oooii/Source/oPlayer2/Inputs.xml");
 		if (!OnFileChange(oSTREAM_ACCESSIBLE, Inputs))
 			return; // pass through error
 	}
@@ -272,7 +275,7 @@ void oGestureManagerImpl::HookWindow(bool _Hooked)
 
 void oGestureManagerImpl::AttachKinect(bool _Attached, const char* _InstanceName)
 {
-	oStd::lock_guard<oStd::shared_mutex> lock(KinectMutex);
+	lock_guard<shared_mutex> lock(KinectMutex);
 
 	if (_Attached)
 	{
@@ -290,9 +293,9 @@ void oGestureManagerImpl::AttachKinect(bool _Attached, const char* _InstanceName
 		// creation.
 
 		Reference();
-		oStd::async([&]
+		async([&]
 		{
-			oStd::intrusive_ptr<threadsafe oKinect> NewKinect;
+			intrusive_ptr<threadsafe oKinect> NewKinect;
 			oKINECT_DESC kd;
 			kd.PitchDegrees = Desc.GestureCameraPitchDegrees;
 			bool Result = oKinectCreate(kd, Window, &NewKinect);
@@ -306,7 +309,7 @@ void oGestureManagerImpl::AttachKinect(bool _Attached, const char* _InstanceName
 				oTRACE("GMGR: connection failed Kinect %s: %s", kd.ID.c_str(), oErrorGetLastString());
 
 			{
-				oStd::lock_guard<oStd::shared_mutex> lock2(KinectMutex);
+				lock_guard<shared_mutex> lock2(KinectMutex);
 				
 				if (Result)
 				{
@@ -361,7 +364,7 @@ void oGestureManagerImpl::SetDesc(const oGESTURE_MANAGER_DESC& _Desc)
 
 	if (CHANGED(GestureCameraPitchDegrees))
 	{
-		oStd::lock_guard<oStd::shared_mutex> lock(KinectMutex);
+		lock_guard<shared_mutex> lock(KinectMutex);
 		if (Kinect && _Desc.GestureCameraPitchDegrees != oDEFAULT)
 			Kinect->SetPitch(_Desc.GestureCameraPitchDegrees);
 	}
@@ -387,7 +390,7 @@ void oGestureManagerImpl::GetDeviceVisualizationDesc(oGESTURE_DEVICE_VISUALIZATI
 
 void oGestureManagerImpl::SetDeviceVisualizationDesc(const oGESTURE_DEVICE_VISUALIZATION_DESC& _Desc)
 {
-	oStd::lock_guard<oStd::shared_mutex> lock(DeviceIconMutex);
+	lock_guard<shared_mutex> lock(DeviceIconMutex);
 
 	if (DeviceVizDesc.hGestureDevice && DeviceVizDesc.hGestureDevice != _Desc.hGestureDevice)
 		DestroyIcon((HICON)DeviceVizDesc.hGestureDevice);
@@ -411,7 +414,7 @@ bool oGestureManagerImpl::SetCurrentGestureSet(const char* _KeySetName, const oR
 
 bool oGestureManagerImpl::GDIDrawKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize)
 {
-	oStd::shared_lock<oStd::shared_mutex> lock(KinectMutex);
+	shared_lock<shared_mutex> lock(KinectMutex);
 
 	if (Kinect)
 	{
@@ -469,9 +472,9 @@ bool oGestureManagerImpl::GDIDrawKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _Cli
 				oGUI_TEXT_DESC td;
 				td.Position = float2((float)rTarget.left, VerticalOffset);
 				td.Size = oWinRectSize(rTarget);
-				td.Shadow = oStd::Black;
+				td.Shadow = Black;
 				const float4& h = Skeleton.Positions[oGUI_BONE_HIP_CENTER];
-				oStd::mstring text;
+				mstring text;
 				snprintf(text, "HIP: %.02f %.02f %.02f\n", h.x, h.y, h.z);
 				oGDIDrawText(hDC, td, text);
 
@@ -508,7 +511,7 @@ void oGestureManagerImpl::GDIDrawNoKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _C
 	oGUI_TEXT_DESC td;
 	td.Position = float2(oWinRectPosition(rTarget));
 	td.Size = oWinRectSize(rTarget);
-	td.Shadow = oStd::Gray;
+	td.Shadow = Gray;
 	td.Alignment = oGUI_ALIGNMENT_MIDDLE_CENTER;
 	oGDIDrawText(hDC, td, NoKinectMessage);
 }
@@ -541,7 +544,7 @@ void oGestureManagerImpl::GDIDrawNotStatusIcon(oGUI_DRAW_CONTEXT _hDC, const int
 
 void oGestureManagerImpl::GDIDrawKinectStatus(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize)
 {
-	oStd::shared_lock<oStd::shared_mutex> lock(DeviceIconMutex);
+	shared_lock<shared_mutex> lock(DeviceIconMutex);
 
 	switch (KinectDrawState)
 	{
@@ -609,7 +612,7 @@ bool oGestureManagerImpl::SetCurrentKeyset(const char* _KeysetName)
 
 	else
 	{
-		oStd::intrusive_ptr<threadsafe oAirKeySet> KeySet;
+		intrusive_ptr<threadsafe oAirKeySet> KeySet;
 		if (oParseAirKeySetsList(*Keysets
 			, Keysets->first_child(Keysets->root(), "oAirKeySetList")
 			, _KeysetName
@@ -634,7 +637,7 @@ bool oGestureManagerImpl::SetCurrentInputSet(const oRTTI* _pDynamicEnum)
 	if (_pDynamicEnum && _pDynamicEnum->GetType() != oRTTI_TYPE_ENUM)
 		return oErrorSetLast(std::errc::invalid_argument, "oRTTI must be of an enum");
 
-	oStd::intrusive_ptr<threadsafe oInputSet> InputSet;
+	intrusive_ptr<threadsafe oInputSet> InputSet;
 	pCurrentInputSet = _pDynamicEnum;
 	if (pCurrentInputSet)
 	{
@@ -646,7 +649,7 @@ bool oGestureManagerImpl::SetCurrentInputSet(const oRTTI* _pDynamicEnum)
 	}
 
 	InputMapper->SetInputSet(InputSet);
-	oStd::sstring typeName;
+	sstring typeName;
 	oTRACE("GMGR: inputset activated: %s", pCurrentInputSet ? pCurrentInputSet->GetName(typeName) : "(none)");
 	return true;
 }
@@ -673,7 +676,7 @@ void oGestureManagerImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 		case oGUI_SIZED:
 		{
 			// Keep the font proportional to the size of the rectangle.
-			oCore::display::info di = oCore::display::get_info(oWinGetDisplayId((HWND)_Event.hWindow));
+			ouro::display::info di = ouro::display::get_info(oWinGetDisplayId((HWND)_Event.hWindow));
 			float2 Ratio = float2(VizDesc.Size) / float2(int2(di.mode.width, di.mode.height));
 			float R = min(Ratio);
 			oGUI_FONT_DESC fd;
@@ -734,7 +737,7 @@ void oGestureManagerImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 	{
 		case oGUI_ACTION_SKELETON_ACQUIRED:
 		{
-			oStd::sstring text;
+			sstring text;
 			snprintf(text, "GMGR: Skeleton[%d] activated", _Action.DeviceID);
 			AirKeyboard->AddSkeleton(_Action.DeviceID);
 			break;
@@ -742,7 +745,7 @@ void oGestureManagerImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 
 		case oGUI_ACTION_SKELETON_LOST:
 		{
-			oStd::sstring text;
+			sstring text;
 			snprintf(text, "GMGR: Skeleton[%d] deactivated", _Action.DeviceID);
 			AirKeyboard->RemoveSkeleton(_Action.DeviceID);
 			break;
@@ -797,12 +800,12 @@ void oGestureManagerImpl::OnDeviceChange(const oGUI_EVENT_DESC& _Event)
 	}
 }
 
-bool oGestureManagerImpl::ReloadAirKeySets(const oStd::uri_string& _AirKeySets_xml)
+bool oGestureManagerImpl::ReloadAirKeySets(const uri_string& _AirKeySets_xml)
 {
-	std::shared_ptr<oStd::xml> XML;
+	std::shared_ptr<xml> XML;
 	try
 	{
-		oStd::intrusive_ptr<threadsafe oAirKeySet> KeySet;
+		intrusive_ptr<threadsafe oAirKeySet> KeySet;
 		XML = oXMLLoad(_AirKeySets_xml);
 	}
 
@@ -817,12 +820,12 @@ bool oGestureManagerImpl::ReloadAirKeySets(const oStd::uri_string& _AirKeySets_x
 	return true;
 }
 
-bool oGestureManagerImpl::ReloadInputs(const oStd::uri_string& _Inputs_xml)
+bool oGestureManagerImpl::ReloadInputs(const uri_string& _Inputs_xml)
 {
-	std::shared_ptr<oStd::xml> XML;
+	std::shared_ptr<xml> XML;
 	try
 	{
-		oStd::intrusive_ptr<threadsafe oInputSet> InputSet;
+		intrusive_ptr<threadsafe oInputSet> InputSet;
 		XML = oXMLLoad(_Inputs_xml);
 	}
 
@@ -837,14 +840,14 @@ bool oGestureManagerImpl::ReloadInputs(const oStd::uri_string& _Inputs_xml)
 	return true;
 }
 
-bool oGestureManagerImpl::OnFileChange(oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI)
+bool oGestureManagerImpl::OnFileChange(oSTREAM_EVENT _Event, const uri_string& _ChangedURI)
 {
 	switch (_Event)
 	{
 		case oSTREAM_ACCESSIBLE:
 		{
-			oStd::uri URI(_ChangedURI);
-			oStd::path path = URI.path();
+			uri URI(_ChangedURI);
+			path path = URI.path();
 			auto filename = path.filename();
 
 			if (!_stricmp("Inputs.xml", filename))

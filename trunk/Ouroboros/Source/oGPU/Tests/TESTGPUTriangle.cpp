@@ -26,6 +26,8 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
+using namespace ouro;
+
 static const int sSnapshotFrames[] = { 0 };
 static const bool kIsDevMode = false;
 
@@ -35,7 +37,7 @@ struct GPU_Triangle_App : public oGPUTestApp
 
 	bool Initialize() override
 	{
-		PrimaryRenderTarget->SetClearColor(oStd::AlmostBlack);
+		PrimaryRenderTarget->SetClearColor(AlmostBlack);
 
 		oGPUPipeline::DESC pld;
 		if (!oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH, &pld))
@@ -65,8 +67,8 @@ struct GPU_Triangle_App : public oGPUTestApp
 	}
 
 private:
-	oStd::intrusive_ptr<oGPUPipeline> Pipeline;
-	oStd::intrusive_ptr<oGPUUtilMesh> Mesh;
+	intrusive_ptr<oGPUPipeline> Pipeline;
+	intrusive_ptr<oGPUUtilMesh> Mesh;
 };
 
 oDEFINE_GPU_TEST(GPU_Triangle)

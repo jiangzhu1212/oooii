@@ -23,11 +23,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oWindows.h>
-#include <oStd/assert.h>
-#include <oStd/byte.h>
-#include <oStd/color.h>
+#include <oBase/assert.h>
+#include <oBase/byte.h>
+#include <oBase/color.h>
 #include <oBasis/oError.h>
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <oConcurrency/mutex.h>
 #include <oBasis/oPath.h>
 #include <oPlatform/oDisplay.h>
@@ -190,7 +190,7 @@ struct SCHEDULED_FUNCTION_CONTEXT
 	HANDLE hTimer;
 	oTASK OnTimer;
 	time_t ScheduledTime;
-	oStd::sstring DebugName;
+	ouro::sstring DebugName;
 };
 
 static void CALLBACK ExecuteScheduledFunctionAndCleanup(LPVOID lpArgToCompletionRoutine, DWORD dwTimerLowValue, DWORD dwTimerHighValue)
@@ -199,8 +199,8 @@ static void CALLBACK ExecuteScheduledFunctionAndCleanup(LPVOID lpArgToCompletion
 	if (Context.OnTimer)
 	{
 		#ifdef _DEBUG
-			oStd::sstring diff;
-			oStd::format_duration(diff, (double)(time(nullptr) - Context.ScheduledTime));
+			ouro::sstring diff;
+			ouro::format_duration(diff, (double)(time(nullptr) - Context.ScheduledTime));
 			oTRACE("Running scheduled function \"%s\" %s after it was scheduled", oSAFESTRN(Context.DebugName), diff.c_str());
 		#endif
 
@@ -233,8 +233,8 @@ static char* oWinPnPEnumeratorToSetupClass(char* _StrDestination, size_t _Sizeof
 	if (!hash) return nullptr;
 	*hash = '\0';
 	char* end = _StrDestination + len;
-	oStd::transform(_StrDestination, end, _StrDestination, [=](char c) { return (c == '#') ? '\\' : c; });
-	oStd::transform(_StrDestination, end, _StrDestination, oStd::toupper<const char&>);
+	ouro::transform(_StrDestination, end, _StrDestination, [=](char c) { return (c == '#') ? '\\' : c; });
+	ouro::transform(_StrDestination, end, _StrDestination, ouro::toupper<const char&>);
 	char* first_slash = strchr(_StrDestination, '\\');
 	if (!first_slash) return nullptr;
 	*first_slash = '\0';
@@ -242,7 +242,7 @@ static char* oWinPnPEnumeratorToSetupClass(char* _StrDestination, size_t _Sizeof
 }
 
 template<size_t size> char* oWinPnPEnumeratorToSetupClass(char (&_StrDestination)[size], const char* _PnPEnumerator) { return oWinPnPEnumeratorToSetupClass(_StrDestination, size, _PnPEnumerator); }
-template<typename charT, size_t capacity> char* oWinPnPEnumeratorToSetupClass(oStd::fixed_string<charT, capacity>& _StrDestination, const char* _PnPEnumerator) { return oWinPnPEnumeratorToSetupClass(_StrDestination, _StrDestination.capacity(), _PnPEnumerator); }
+template<typename charT, size_t capacity> char* oWinPnPEnumeratorToSetupClass(ouro::fixed_string<charT, capacity>& _StrDestination, const char* _PnPEnumerator) { return oWinPnPEnumeratorToSetupClass(_StrDestination, _StrDestination.capacity(), _PnPEnumerator); }
 
 oGUI_INPUT_DEVICE_TYPE oWinGetDeviceTypeFromClass(const char* _Class)
 {
@@ -264,15 +264,15 @@ oGUI_INPUT_DEVICE_TYPE oWinGetDeviceTypeFromClass(const char* _Class)
 	return oGUI_INPUT_DEVICE_UNKNOWN;
 }
 
-static bool oWinSetupGetString(oStd::mstring& _StrDestination, HDEVINFO _hDevInfo, SP_DEVINFO_DATA* _pSPDID, const DEVPROPKEY* _pPropKey)
+static bool oWinSetupGetString(ouro::mstring& _StrDestination, HDEVINFO _hDevInfo, SP_DEVINFO_DATA* _pSPDID, const DEVPROPKEY* _pPropKey)
 {
 	DEVPROPTYPE dpType;
 	DWORD size = 0;
 	SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, nullptr, 0, &size, 0);
 	if (size)
 	{
-		oStd::mwstring buffer;
-		oASSERT(buffer.capacity() > (size / sizeof(oStd::mwstring::char_type)), "");
+		ouro::mwstring buffer;
+		oASSERT(buffer.capacity() > (size / sizeof(ouro::mwstring::char_type)), "");
 		if (!SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) || dpType != DEVPROP_TYPE_STRING)
 			return oWinSetLastError();
 		_StrDestination = buffer;
@@ -284,14 +284,14 @@ static bool oWinSetupGetString(oStd::mstring& _StrDestination, HDEVINFO _hDevInf
 }
 
 // _NumStrings must be initialized to maximum capacity
-static bool oWinSetupGetStringList(oStd::mstring* _StrDestination, size_t& _NumStrings, HDEVINFO _hDevInfo, SP_DEVINFO_DATA* _pSPDID, const DEVPROPKEY* _pPropKey)
+static bool oWinSetupGetStringList(ouro::mstring* _StrDestination, size_t& _NumStrings, HDEVINFO _hDevInfo, SP_DEVINFO_DATA* _pSPDID, const DEVPROPKEY* _pPropKey)
 {
 	DEVPROPTYPE dpType;
 	DWORD size = 0;
 	SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, nullptr, 0, &size, 0);
 	if (size)
 	{
-		oStd::xlwstring buffer;
+		ouro::xlwstring buffer;
 		oASSERT(buffer.capacity() > size, "");
 		if (!SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) || dpType != DEVPROP_TYPE_STRING_LIST)
 			return oWinSetLastError();
@@ -334,7 +334,7 @@ static bool oWinEnumInputDevices(bool _EnumerateAll, const char* _Enumerator, co
 		return oErrorSetLast(std::errc::invalid_argument, "Must specify a visitor.");
 
 	HDEVINFO hDevInfo = INVALID_HANDLE_VALUE;
-	oStd::finally([=]
+	ouro::finally([=]
 	{ 
 		if (hDevInfo != INVALID_HANDLE_VALUE) 
 			SetupDiDestroyDeviceInfoList(hDevInfo);
@@ -356,14 +356,14 @@ static bool oWinEnumInputDevices(bool _EnumerateAll, const char* _Enumerator, co
 
 	oWINDOWS_HID_DESC HIDDesc;
 
-	oStd::mstring KinectCameraSibling;
-	oStd::mstring KinectCameraParent;
+	ouro::mstring KinectCameraSibling;
+	ouro::mstring KinectCameraParent;
 
 	while (SetupDiEnumDeviceInfo(hDevInfo, DeviceIndex, &SPDID))
 	{
 		DeviceIndex++;
 
-		oStd::mstring ClassValue;
+		ouro::mstring ClassValue;
 		if (!oWinSetupGetString(ClassValue, hDevInfo, &SPDID, &oDEVPKEY_Device_Class))
 			return false; // pass through error
 
@@ -382,7 +382,7 @@ static bool oWinEnumInputDevices(bool _EnumerateAll, const char* _Enumerator, co
 				ClassValue = "Skeleton";
 				HIDDesc.DeviceInstancePath = HIDDesc.ParentDeviceInstancePath;
 
-				oStd::mstring Strings[2];
+				ouro::mstring Strings[2];
 				size_t Capacity = oCOUNTOF(Strings);
 				if (!oWinSetupGetStringList(Strings, Capacity, hDevInfo, &SPDID, &oDEVPKEY_Device_Siblings) || Capacity != 1)
 					return false; // pass through error
@@ -428,7 +428,7 @@ bool oWinEnumInputDevices(bool _EnumerateAll, const oFUNCTION<void(const oWINDOW
 
 void oWinKillExplorer()
 {
-	if (oCore::process::exists("explorer.exe"))
+	if (ouro::process::exists("explorer.exe"))
 	{
 		oTRACE("Terminating explorer.exe because the taskbar can interfere with cooperative fullscreen");
 		system("TASKKILL /F /IM explorer.exe");
@@ -559,10 +559,10 @@ HHOOK oSetWindowsHook(int _idHook, oHOOKPROC _pHookProc, void* _pUserData, DWORD
 	bool isProcessThread = false;
 	oVERIFY(oEnumProcessThreads(GetCurrentProcessId(), oBIND(IsProcessThread, oBIND1, oBIND2, _dwThreadId, &isProcessThread)));
 
-	oCore::module::id hookModuleId = oCore::module::get_id(_pHookProc);
-	oCore::module::id currentModuleId = oCore::this_module::get_id();
+	ouro::module::id hookModuleId = ouro::module::get_id(_pHookProc);
+	ouro::module::id currentModuleId = ouro::this_module::get_id();
 	if (hookModuleId == currentModuleId && isProcessThread)
-		hookModuleId = oCore::module::id();
+		hookModuleId = ouro::module::id();
 
 	hc->pUserData = _pUserData;
 	hc->UserHookProc = _pHookProc;
@@ -648,12 +648,12 @@ void oVerifyMinimumWindowsVersion( oWINDOWS_VERSION _Version )
 {
 	if( oGetWindowsVersion() < _Version )
 	{
-		oMsgBox(oMSGBOX_DESC(oMSGBOX_ERR, "Invalid Windows Version"), "%s or greater required.  Application will now terminate.", oStd::as_string(_Version));
+		oMsgBox(oMSGBOX_DESC(oMSGBOX_ERR, "Invalid Windows Version"), "%s or greater required.  Application will now terminate.", ouro::as_string(_Version));
 		std::terminate();
 	}
 }
 
-namespace oStd {
+namespace ouro {
 
 const char* as_string(const oWINDOWS_VERSION& _Version)
 {
@@ -677,7 +677,7 @@ const char* as_string(const oWINDOWS_VERSION& _Version)
 	return "unknown Windows version";
 }
 
-} // namespace oStd
+} // namespace ouro
 
 void oTaskbarGetRect(RECT* _pRect)
 {
@@ -820,9 +820,9 @@ const char** oWinCommandLineToArgvA(bool _ExePathAsArg0, const char* CmdLine, in
 	// optionally insert exe path so this is exactly like argc/argv
 	if (_ExePathAsArg0)
 	{
-		oStd::path AppPath = oCore::filesystem::app_path();
+		ouro::path AppPath = ouro::filesystem::app_path();
 		strlcpy(argv[argc], AppPath, MAX_PATH);
-		oStd::clean_path(argv[argc], MAX_PATH, argv[argc], '\\');
+		ouro::clean_path(argv[argc], MAX_PATH, argv[argc], '\\');
 		j = (ULONG)strlen(argv[argc])+1;
 		argc++;
 		argv[argc] = _argv+strlen(argv[0])+1;
@@ -884,15 +884,15 @@ void oWinCommandLineToArgvAFree(const char** _pArgv)
 	HeapFree(GetProcessHeap(), 0, _pArgv);
 }
 
-void oWinGetVersion(const oStd::version& _Version, DWORD* _pVersionMS, DWORD* _pVersionLS)
+void oWinGetVersion(const ouro::version& _Version, DWORD* _pVersionMS, DWORD* _pVersionLS)
 {
 	*_pVersionMS = (_Version.major << 16) | _Version.minor;
 	*_pVersionLS = (_Version.build << 16) | _Version.revision;
 }
 
-oStd::version oWinGetVersion(DWORD _VersionMS, DWORD _VersionLS)
+ouro::version oWinGetVersion(DWORD _VersionMS, DWORD _VersionLS)
 {
-	return oStd::version(HIWORD(_VersionMS), LOWORD(_VersionMS), HIWORD(_VersionLS), LOWORD(_VersionLS));
+	return ouro::version(HIWORD(_VersionMS), LOWORD(_VersionMS), HIWORD(_VersionLS), LOWORD(_VersionLS));
 }
 
 void oGetScreenDPIScale(float* _pScaleX, float* _pScaleY)
@@ -1056,28 +1056,6 @@ bool oWinEnumWindows( oFUNCTION<bool(HWND _Hwnd)> _Function )
 	return TRUE == EnumWindows((WNDENUMPROC)oWinEnumWindowsProc, (LPARAM)pFunc);
 }
 
-#pragma pack(push,8)
-typedef struct tagTHREADNAME_INFO
-{
-   DWORD dwType; // Must be 0x1000.
-   LPCSTR szName; // Pointer to name (in user addr space).
-   DWORD dwThreadID; // Thread ID (-1=caller thread).
-   DWORD dwFlags; // Reserved for future use, must be zero.
-} THREADNAME_INFO;
-#pragma pack(pop)
-
-bool oIsWindows64Bit()
-{
-	if (sizeof(void*) != 4) // If ptr size is larger than 32-bit we must be on 64-bit windows
-		return true;
-
-	// If ptr size is 4 bytes then we're a 32-bit process so check if we're running under
-	// wow64 which would indicate that we're on a 64-bit system
-	BOOL bWow64 = FALSE;
-	IsWow64Process(GetCurrentProcess(), &bWow64);
-	return !bWow64;
-}
-
 static WORD oDlgGetClass(oWINDOWS_DIALOG_ITEM_TYPE _Type)
 {
 	switch (_Type)
@@ -1098,7 +1076,7 @@ static WORD oDlgGetClass(oWINDOWS_DIALOG_ITEM_TYPE _Type)
 
 static size_t oDlgCalcTextSize(const char* _Text)
 {
-	return sizeof(WCHAR) * (strlen(_Text) + 1);
+	return sizeof(WCHAR) * (strlen(_Text ? _Text : "") + 1);
 }
 
 static size_t oDlgCalcTemplateSize(const char* _MenuName, const char* _ClassName, const char* _Caption, const char* _FontName)
@@ -1108,12 +1086,12 @@ static size_t oDlgCalcTemplateSize(const char* _MenuName, const char* _ClassName
 	size += oDlgCalcTextSize(_ClassName);
 	size += oDlgCalcTextSize(_Caption);
 	size += oDlgCalcTextSize(_FontName);
-	return oStd::byte_align(size, sizeof(DWORD)); // align to DWORD because dialog items need DWORD alignment, so make up for any padding here
+	return ouro::byte_align(size, sizeof(DWORD)); // align to DWORD because dialog items need DWORD alignment, so make up for any padding here
 }
 
 static size_t oDlgCalcTemplateItemSize(const char* _Text)
 {
-	return oStd::byte_align(sizeof(DLGITEMTEMPLATE) +
+	return ouro::byte_align(sizeof(DLGITEMTEMPLATE) +
 		2 * sizeof(WORD) + // will keep it simple 0xFFFF and the ControlClass
 		oDlgCalcTextSize(_Text) + // text
 		sizeof(WORD), // 0x0000. This is used for data to be passed to WM_CREATE, bypass this for now
@@ -1125,7 +1103,7 @@ static WORD* oDlgCopyString(WORD* _pDestination, const char* _String)
 	if (!_String) _String = "";
 	size_t len = strlen(_String);
 	mbsltowsc((WCHAR*)_pDestination, _String, len+1);
-	return oStd::byte_add(_pDestination, (len+1) * sizeof(WCHAR));
+	return ouro::byte_add(_pDestination, (len+1) * sizeof(WCHAR));
 }
 
 // Returns a DWORD-aligned pointer to where to write the first item
@@ -1160,7 +1138,7 @@ static LPDLGITEMTEMPLATE oDlgInitialize(const oWINDOWS_DIALOG_DESC& _Desc, LPDLG
 		p = oDlgCopyString(p, _Desc.Font);
 	}
 
-	return (LPDLGITEMTEMPLATE)oStd::byte_align(p, sizeof(DWORD));
+	return (LPDLGITEMTEMPLATE)ouro::byte_align(p, sizeof(DWORD));
 }
 #pragma warning(disable:4505)
 // Returns a DWORD-aligned pointer to the next place to write a DLGITEMTEMPLATE
@@ -1188,12 +1166,12 @@ static LPDLGITEMTEMPLATE oDlgItemInitialize(const oWINDOWS_DIALOG_ITEM& _Desc, L
 	_lpDlgItemTemplate->cx = short(oWinRectW(_Desc.Rect));
 	_lpDlgItemTemplate->cy = short(oWinRectH(_Desc.Rect));
 	_lpDlgItemTemplate->id = _Desc.ItemID;
-	WORD* p = oStd::byte_add((WORD*)_lpDlgItemTemplate, sizeof(DLGITEMTEMPLATE));
+	WORD* p = ouro::byte_add((WORD*)_lpDlgItemTemplate, sizeof(DLGITEMTEMPLATE));
 	*p++ = 0xFFFF; // flag that a simple ControlClass is to follow
 	*p++ = oDlgGetClass(_Desc.Type);
 	p = oDlgCopyString(p, _Desc.Text);
 	*p++ = 0x0000; // no WM_CREATE data
-	return (LPDLGITEMTEMPLATE)oStd::byte_align(p, sizeof(DWORD));
+	return (LPDLGITEMTEMPLATE)ouro::byte_align(p, sizeof(DWORD));
 }
 
 void oDlgDeleteTemplate(LPDLGTEMPLATE _lpDlgTemplate)
@@ -1245,7 +1223,7 @@ bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestinatio
 		// http://www.codeproject.com/KB/system/SigmaDriverList.aspx
 
 		// There's some env vars to resolve, so prepare for that
-		oStd::path_string SystemRootPath;
+		ouro::path_string SystemRootPath;
 		GetEnvironmentVariable("SYSTEMROOT", SystemRootPath.c_str(), oUInt(SystemRootPath.capacity()));
 
 		strlcpy(_StrDestination, pQSC->lpBinaryPathName, _SizeofStrDestination);
@@ -1277,7 +1255,7 @@ bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestinatio
 				if (strlen(_StrDestination) > 0 && lpFirstOccurance && _StrDestination == lpFirstOccurance)
 				{
 					// Add SYSTEMROOT value if there is only system32 mentioned in binary path
-					oStd::path_string temp;
+					ouro::path_string temp;
 					snprintf(temp, "%s\\%s", SystemRootPath.c_str(), _StrDestination); 
 					strlcpy(_StrDestination, temp, _SizeofStrDestination);
 				}
@@ -1289,7 +1267,7 @@ bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestinatio
 					if (strlen(_StrDestination) > 0 && lpFirstOccurance && _StrDestination == lpFirstOccurance)
 					{
 						// Add SYSTEMROOT value if there is only System32 mentioned in binary path
-						oStd::path_string temp;
+						ouro::path_string temp;
 						snprintf(temp, "%s\\%s", SystemRootPath.c_str(), _StrDestination); 
 						strlcpy(_StrDestination, temp, _SizeofStrDestination); 
 					}
@@ -1322,7 +1300,7 @@ bool oWinSystemOpenDocument(const char* _DocumentName, bool _ForEdit)
 	return true;
 }
 
-bool oWinGetProcessTopWindowAndThread(oCore::process::id _ProcessID, HWND* _pHWND, unsigned int* _pThreadID, const char* _pOptionalWindowName /*= nullptr*/)
+bool oWinGetProcessTopWindowAndThread(ouro::process::id _ProcessID, HWND* _pHWND, unsigned int* _pThreadID, const char* _pOptionalWindowName /*= nullptr*/)
 {
 	HWND Hwnd = 0;
 	unsigned int ThreadID = 0;
@@ -1340,9 +1318,9 @@ bool oWinGetProcessTopWindowAndThread(oCore::process::id _ProcessID, HWND* _pHWN
 
 		// Look for windows that might get injected into our process that we would never want to target
 		const char* WindowsToSkip[] = {"Default IME", "MSCTFIME UI"};
-		oStd::mstring WindowText;
+		ouro::mstring WindowText;
 		// For some reason in release builds Default IME can take a while to respond to this. so wait longer unless the app appears to be hung.
-		if (SendMessageTimeout(_Hwnd, WM_GETTEXT, oStd::mstring::Capacity - 1, (LPARAM)WindowText.c_str(), SMTO_ABORTIFHUNG, 2000, nullptr) == 0)
+		if (SendMessageTimeout(_Hwnd, WM_GETTEXT, ouro::mstring::Capacity - 1, (LPARAM)WindowText.c_str(), SMTO_ABORTIFHUNG, 2000, nullptr) == 0)
 		{
 			WindowText = "";
 		}
@@ -1409,7 +1387,7 @@ bool oWinEnableDebugPrivilege(bool _Enabled)
 	return true;
 }
 
-long oWinRCGetFileFlags(const oCore::module::info& _Info)
+long oWinRCGetFileFlags(const ouro::module::info& _Info)
 {
 	long flags = 0;
 	if (_Info.is_debug)
@@ -1426,32 +1404,32 @@ long oWinRCGetFileFlags(const oCore::module::info& _Info)
 	return flags;
 }
 
-void oWinRCGetFileType(const oCore::module::type::value _Type, DWORD* _pType, DWORD* _pSubtype)
+void oWinRCGetFileType(const ouro::module::type::value _Type, DWORD* _pType, DWORD* _pSubtype)
 {
 	*_pType = VFT_UNKNOWN;
 	*_pSubtype = VFT2_UNKNOWN;
 
 	switch (_Type)
 	{
-		case oCore::module::type::app: *_pType = VFT_APP; break;
-		case oCore::module::type::dll: *_pType = VFT_DLL; break;
-		case oCore::module::type::lib: *_pType = VFT_STATIC_LIB; break;
-		case oCore::module::type::font_unknown: *_pType = VFT_FONT; break;
-		case oCore::module::type::font_raster: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_RASTER; break;
-		case oCore::module::type::font_truetype: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_TRUETYPE; break;
-		case oCore::module::type::font_vector: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_VECTOR; break;
-		case oCore::module::type::virtual_device: *_pType = VFT_VXD; break;
-		case oCore::module::type::drv_unknown: *_pType = VFT_DRV; break;
-		case oCore::module::type::drv_comm: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_COMM; break;
-		case oCore::module::type::drv_display: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_DISPLAY; break;
-		case oCore::module::type::drv_installable: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_INSTALLABLE; break;
-		case oCore::module::type::drv_keyboard: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_KEYBOARD; break;
-		case oCore::module::type::drv_language: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_LANGUAGE; break;
-		case oCore::module::type::drv_mouse: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_MOUSE; break;
-		case oCore::module::type::drv_network: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_NETWORK; break;
-		case oCore::module::type::drv_printer: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_PRINTER; break;
-		case oCore::module::type::drv_sound: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_SOUND; break;
-		case oCore::module::type::drv_system: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_SYSTEM; break;
+		case ouro::module::type::app: *_pType = VFT_APP; break;
+		case ouro::module::type::dll: *_pType = VFT_DLL; break;
+		case ouro::module::type::lib: *_pType = VFT_STATIC_LIB; break;
+		case ouro::module::type::font_unknown: *_pType = VFT_FONT; break;
+		case ouro::module::type::font_raster: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_RASTER; break;
+		case ouro::module::type::font_truetype: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_TRUETYPE; break;
+		case ouro::module::type::font_vector: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_VECTOR; break;
+		case ouro::module::type::virtual_device: *_pType = VFT_VXD; break;
+		case ouro::module::type::drv_unknown: *_pType = VFT_DRV; break;
+		case ouro::module::type::drv_comm: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_COMM; break;
+		case ouro::module::type::drv_display: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_DISPLAY; break;
+		case ouro::module::type::drv_installable: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_INSTALLABLE; break;
+		case ouro::module::type::drv_keyboard: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_KEYBOARD; break;
+		case ouro::module::type::drv_language: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_LANGUAGE; break;
+		case ouro::module::type::drv_mouse: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_MOUSE; break;
+		case ouro::module::type::drv_network: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_NETWORK; break;
+		case ouro::module::type::drv_printer: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_PRINTER; break;
+		case ouro::module::type::drv_sound: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_SOUND; break;
+		case ouro::module::type::drv_system: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_SYSTEM; break;
 	default: break;
 	}
 }

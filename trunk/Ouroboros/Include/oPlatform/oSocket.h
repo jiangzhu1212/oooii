@@ -32,7 +32,7 @@
 #include <oBasis/oInterface.h>
 
 // A Host is a simple identifier for a net device. This is an IP address
-// for Internet connections. Use oStd::from_string to create a new oNetHost.
+// for Internet connections. Use ouro::from_string to create a new oNetHost.
 struct oNetHost
 {
 	oNetHost()
@@ -51,7 +51,7 @@ private:
 
 // An Address is the combination of a Host and any data used to distinguish
 // it from other connections from the same Host. In Internet terms this is an
-// IP address and a port together. Use oStd::from_string to create a new oNetAddress
+// IP address and a port together. Use ouro::from_string to create a new oNetAddress
 // in the form "<host>:<port>" ex: "google.com:http" or "127.0.0.1:11000".
 struct oNetAddr
 {
@@ -67,7 +67,7 @@ private:
 	unsigned short Port;
 };
 
-// In addition to oStd::from_string/oStd::to_string these helper functions aid in working with oNetAddr
+// In addition to ouro::from_string/ouro::to_string these helper functions aid in working with oNetAddr
 oAPI void oSocketPortGet(const oNetAddr& _Addr, unsigned short* _pPort);
 oAPI void oSocketPortSet(const unsigned short _Port, oNetAddr* _pAddr);
 oAPI bool oSocketHostIsLocal(oNetHost _Host);
@@ -107,7 +107,7 @@ interface oSocket : oInterface
 			: MaxSimultaneousMessages(16)
 		{}
 
-		oStd::intrusive_ptr<threadsafe oSocketAsyncCallback> Callback;
+		ouro::intrusive_ptr<threadsafe oSocketAsyncCallback> Callback;
 
 		// The maximum number of messages that will be in flight in either direction,
 		// this only has implications for Asynchronous sockets in that if more messages

@@ -28,6 +28,8 @@
 #include "oBasisTestCommon.h"
 #include <vector>
 
+using namespace ouro;
+
 static const char* sXMLArrayTest = 
 	"<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>"
 	"<Values>"
@@ -94,14 +96,14 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oXMLRawArrayTest)
 oRTTI_COMPOUND_END_DESCRIPTION(oXMLRawArrayTest)
 
 
-static std::shared_ptr<oStd::xml> InitXML(const char* _pXMLString)
+static std::shared_ptr<xml> InitXML(const char* _pXMLString)
 {
 	// Exercise the buffer as if it were loaded from a file...
 	size_t size = strlen(_pXMLString)+1;
 	char* pBuffer = (char*)malloc(size);
 	strlcpy(pBuffer, _pXMLString, size);
 
-	try { return std::move(std::make_shared<oStd::xml>("Test XML Document", (char*)pBuffer, [](const char* _pXMLString){ free((void*)_pXMLString); }, 100000)); }
+	try { return std::move(std::make_shared<xml>("Test XML Document", (char*)pBuffer, [](const char* _pXMLString){ free((void*)_pXMLString); }, 100000)); }
 	catch (std::exception& e)
 	{
 		oErrorSetLast(e);
@@ -111,7 +113,7 @@ static std::shared_ptr<oStd::xml> InitXML(const char* _pXMLString)
 
 static bool TestArray()
 {
-	std::shared_ptr<oStd::xml> XML = InitXML(sXMLArrayTest);
+	std::shared_ptr<xml> XML = InitXML(sXMLArrayTest);
 	if (!XML)
 		return false; // Pass through error
 
@@ -130,7 +132,7 @@ static bool TestArray()
 
 static bool TestEmbeddedArray()
 {
-	std::shared_ptr<oStd::xml> XML = InitXML(sXMLEmbeddedArrayTest);
+	std::shared_ptr<xml> XML = InitXML(sXMLEmbeddedArrayTest);
 	if (!XML)
 		return false; // Pass through error
 
@@ -149,7 +151,7 @@ static bool TestEmbeddedArray()
 
 static bool TestRawArray()
 {
-	std::shared_ptr<oStd::xml> XML = InitXML(sXMLRawArrayTest);
+	std::shared_ptr<xml> XML = InitXML(sXMLRawArrayTest);
 	if (!XML)
 		return false; // Pass through error
 

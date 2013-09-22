@@ -27,7 +27,7 @@
 
 using namespace oStd;
 
-namespace oCore {
+namespace ouro {
 	namespace display {
 
 id primary_id()
@@ -242,4 +242,4 @@ void set_power_on(bool _On)
 }
 
 	} // namespace display
-} // namespace oCore
+} // namespace ouro

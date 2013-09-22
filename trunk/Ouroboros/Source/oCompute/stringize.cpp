@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 // This cpp contains implemenations of to_string and from_string for intrinsic
-// types as well as oStd types.
+// types as well as ouro types.
 
 #include <oCompute/oComputeColor.h>
 #include <oCompute/oAABox.h>
@@ -31,9 +31,9 @@
 #include <oCompute/oPlane.h>
 #include <oCompute/oQuaternion.h>
 #include <oCompute/oSphere.h>
-#include <oStd/stringize.h>
+#include <oBase/stringize.h>
 
-namespace oStd {
+namespace ouro {
 
 bool from_string(quatf* _pValue, const char* _StrSource)
 {
@@ -47,7 +47,7 @@ bool from_string(quatd* _pValue, const char* _StrSource)
 
 bool from_string(oAABoxf* _pValue, const char* _StrSource)
 {
-	return oStd::from_string_float_array((float*)_pValue, 6, _StrSource);
+	return from_string_float_array((float*)_pValue, 6, _StrSource);
 }
 
 bool from_string(oRECT* _pValue, const char* _StrSource)
@@ -118,4 +118,4 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oRGBf
 	return _StrDestination;
 }
 
-} // namespace oStd
+} // namespace ouro

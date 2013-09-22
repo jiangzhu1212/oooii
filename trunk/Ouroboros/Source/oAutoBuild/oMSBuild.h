@@ -38,11 +38,11 @@ struct oMSBUILD_SETTINGS
 	{}
 
 	uint TimeoutSeconds;
-	oStd::path_string ToolPath;
-	oStd::path_string Solution;
+	ouro::path_string ToolPath;
+	ouro::path_string Solution;
 	bool CleanAlways;
-	std::vector<oStd::sstring> Configurations;
-	std::vector<oStd::sstring> Platforms;
+	std::vector<ouro::sstring> Configurations;
+	std::vector<ouro::sstring> Platforms;
 	int ThreadsPerBuild;
 };
 oRTTI_COMPOUND_DECLARATION(oRTTI_CAPS_NONE, oMSBUILD_SETTINGS)
@@ -58,16 +58,16 @@ struct oMSBuildResults
 	float SavingLogfilesTimeSeconds;
 
 	bool BuildTimedOut;
-	std::vector<oStd::path_string> BuildLogfiles;
+	std::vector<ouro::path_string> BuildLogfiles;
 };
 
-typedef oStd::xxlstring o_msbuild_stdout_t;
+typedef ouro::xxlstring o_msbuild_stdout_t;
 
 // Returns std::errc::protocol_error if the build fails due to a bad build.  
 // Returns std::errc::invalid_argument if the build tool can't run.
 bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _pLogFolder, const oConcurrency::event& _CancelEvent, oMSBuildResults* _pResults);
 
 // Returns false if the log file cannot be opened or read
-bool oMSBuildParseLogfile(oStd::path_string _Logfile, bool _IncludeWarnings, oFUNCTION<bool(o_msbuild_stdout_t _WarningOrError)> _Output);
+bool oMSBuildParseLogfile(ouro::path_string _Logfile, bool _IncludeWarnings, oFUNCTION<bool(o_msbuild_stdout_t _WarningOrError)> _Output);
 
 #endif

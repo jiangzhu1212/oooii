@@ -34,8 +34,8 @@
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oPlatformFeatures.h>
 #include <oConcurrency/thread_safe.h>
-#include <oStd/fixed_string.h>
-#include <oStd/macros.h>
+#include <oBase/fixed_string.h>
+#include <oBase/macros.h>
 
 #include <oStd/thread.h>
 // the standard is a bit too obtuse for sleeping a thread, so wrap it

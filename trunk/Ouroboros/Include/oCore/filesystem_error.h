@@ -27,16 +27,16 @@
 #ifndef oCore_filesystem_error_h
 #define oCore_filesystem_error_h
 
-#include <oStd/path.h>
+#include <oBase/path.h>
 
-namespace oCore {
+namespace ouro {
 	namespace filesystem {
 
-template<typename charT, typename TraitsT = oStd::default_posix_path_traits<charT>>
+template<typename charT, typename TraitsT = default_posix_path_traits<charT>>
 class basic_filesystem_error : public std::system_error
 {
 public:
-	typedef oStd::basic_path<charT, TraitsT> path_type;
+	typedef basic_path<charT, TraitsT> path_type;
 
 	basic_filesystem_error() {}
 	~basic_filesystem_error() {}
@@ -87,8 +87,8 @@ private:
 typedef basic_filesystem_error<char> filesystem_error;
 typedef basic_filesystem_error<wchar_t> wfilesystem_error;
 
-typedef basic_filesystem_error<char, oStd::default_windows_path_traits<char>> windows_filesystem_error;
-typedef basic_filesystem_error<wchar_t, oStd::default_windows_path_traits<wchar_t>> windows_wfilesystem_error;
+typedef basic_filesystem_error<char, default_windows_path_traits<char>> windows_filesystem_error;
+typedef basic_filesystem_error<wchar_t, default_windows_path_traits<wchar_t>> windows_wfilesystem_error;
 
 const std::error_category& filesystem_category();
 
@@ -96,6 +96,6 @@ const std::error_category& filesystem_category();
 /*constexpr*/ inline std::error_condition make_error_condition(std::errc::errc _Errc) { return std::error_condition(static_cast<int>(_Errc), filesystem_category()); }
 
 	} // namespace filesystem
-} // namespace oDevice
+} // namespace ouro
 
 #endif

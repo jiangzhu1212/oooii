@@ -42,8 +42,8 @@
 #include <oBasis/oRTTI.h>
 #include <oBasis/oStddef.h>
 #include <oBasis/oSurface.h>
-#include <oStd/vendor.h>
-#include <oStd/version.h>
+#include <oBase/vendor.h>
+#include <oBase/version.h>
 #include <array>
 
 // _____________________________________________________________________________
@@ -476,7 +476,7 @@ struct oGPU_RANGE
 	uint MaxVertex; // max index into vertex buffer that will be accessed
 };
 
-#define oGPU_VERTEX_ELEMENT_NULL { oStd::fourcc(0), oSURFACE_UNKNOWN, 0, false }
+#define oGPU_VERTEX_ELEMENT_NULL { ouro::fourcc(0), oSURFACE_UNKNOWN, 0, false }
 struct oGPU_VERTEX_ELEMENT
 {
 	// Generic description of an element in a heterogeneous (AOS) vertex. This 
@@ -492,9 +492,9 @@ struct oGPU_VERTEX_ELEMENT
 	// Name, such as 'POS0' for position. This code should be fit for writing to 
 	// disk and uniquely identifying a semantic channel and its index. The 
 	// following rules should be applied for index: if the right-most char in the 
-	// oStd::fourcc is numeric, use that value, else the value is zero. ('TANG' for 
+	// ouro::fourcc is numeric, use that value, else the value is zero. ('TANG' for 
 	// example would be index 0).
-	oStd::fourcc Semantic;
+	ouro::fourcc Semantic;
 
 	// The format of the data, i.e. a float4 would be oSURFACE_R32G32B32A32_FLOAT
 	oResizedType<oSURFACE_FORMAT, short> Format;
@@ -528,7 +528,7 @@ struct oGPU_VERTEX_ELEMENT
 
 // Break out all right-most digits to fill *_pIndex and all left-most remaining
 // characters are turned into a string in _Name.
-oAPI bool oGPUParseSemantic(const oStd::fourcc& _FourCC, char _Name[5], uint* _pIndex);
+oAPI bool oGPUParseSemantic(const ouro::fourcc& _FourCC, char _Name[5], uint* _pIndex);
 
 // Returns the size in bytes of the sum of all vertex elements for the specified 
 // input slot.
@@ -679,7 +679,7 @@ struct oGPU_CLEAR_DESC
 		, StencilClearValue(0)
 	{ ClearColor.fill(0); }
 
-	std::array<oStd::color, oGPU_MAX_NUM_MRTS> ClearColor;
+	std::array<ouro::color, oGPU_MAX_NUM_MRTS> ClearColor;
 	float DepthClearValue;
 	uchar StencilClearValue;
 };
@@ -721,17 +721,17 @@ struct oGPU_DEVICE_INIT
 	{}
 
 	// Name associated with this device in debug output
-	oStd::sstring DebugName;
+	ouro::sstring DebugName;
 
 	// The minimum version of the driver required to successfully create the 
 	// device. If the driver version is 0.0.0.0 (the default) then a hard-coded
 	// internal value is used which represents a pivot point where QA was done at 
 	// OOOii that showed significant problems or missing features before that 
 	// default version.
-	oStd::version MinDriverVersion;
+	ouro::version MinDriverVersion;
 
 	// The version of the underlying API to use.
-	oStd::version Version;
+	ouro::version Version;
 
 	// Specify to what degree driver warnings/errors are reported. oGPU-level 
 	// errors and warnings are always reported.
@@ -764,19 +764,19 @@ struct oGPU_DEVICE_DESC
 		, SharedSystemMemory(0)
 		, AdapterIndex(0)
 		, API(oGPU_API_UNKNOWN)
-		, Vendor(oStd::vendor::unknown)
+		, Vendor(ouro::vendor::unknown)
 		, IsSoftwareEmulation(false)
 		, DebugReportingEnabled(false)
 	{}
 
 	// Name associated with this device in debug output
-	oStd::sstring DebugName;
+	ouro::sstring DebugName;
 
 	// Description as provided by the device vendor
-	oStd::mstring DeviceDescription;
+	ouro::mstring DeviceDescription;
 
 	// Description as provided by the driver vendor
-	oStd::mstring DriverDescription;
+	ouro::mstring DriverDescription;
 
 	// Number of bytes present on the device (AKA VRAM)
 	ullong NativeMemory;
@@ -791,15 +791,15 @@ struct oGPU_DEVICE_DESC
 
 	// The version for the software that supports the native API. This depends on 
 	// the API type being used.
-	oStd::version DriverVersion;
+	ouro::version DriverVersion;
 
 	// The feature level the device supports. This depends on the API type being 
 	// used.
-	oStd::version FeatureVersion; 
+	ouro::version FeatureVersion; 
 
 	// The driver/software interface version that might be different than the 
 	// capabilities of the device. This depends on the API type being used.
-	oStd::version InterfaceVersion;
+	ouro::version InterfaceVersion;
 
 	// The zero-based index of the adapter. This may be different than what is 
 	// specified in oGPU_DEVICE_INIT in certain debug/development modes.
@@ -809,7 +809,7 @@ struct oGPU_DEVICE_DESC
 	oGPU_API API;
 
 	// Describes the company that made the device
-	oStd::vendor::value Vendor;
+	ouro::vendor::value Vendor;
 
 	// True if the device was created in software emulation mode
 	bool IsSoftwareEmulation;

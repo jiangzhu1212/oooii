@@ -23,11 +23,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oOSC.h>
-#include <oStd/algorithm.h>
-#include <oStd/memory.h>
+#include <oBase/algorithm.h>
+#include <oBase/memory.h>
 #include <oBasis/oError.h>
 #include "oBasisTestStruct.h"
 #include <vector>
+
+using namespace ouro;
 
 static const char* GetTypeTags() { return ",Tc3Tih[fff]iTTs2f1sicbsi[iiii]dIfbt"; }
 
@@ -41,8 +43,8 @@ bool oBasisTest_oOSC()
 	memset(b2, 22, sizeof(b2));
 
 	oBASIS_TEST_STRUCT sent, received;
-	oStd::memset4(&sent, 0xdeadc0de, sizeof(sent));
-	oStd::memset4(&received, 0xdeadc0de, sizeof(received));
+	memset4(&sent, 0xdeadc0de, sizeof(sent));
+	memset4(&received, 0xdeadc0de, sizeof(received));
 	oBasisTestStructInit(&sent, b1, sizeof(b1), b2, sizeof(b2));
 
 	const char* _MessageName = "/TESTOSC/Run/TEST/sent";
@@ -63,10 +65,10 @@ bool oBasisTest_oOSC()
 
 	{
 		std::vector<char> ScopedBuffer(msgSize);
-		size_t SerializedSize = oOSCSerializeStructToMessage(_MessageName, GetTypeTags(), sent, oStd::data(ScopedBuffer), oStd::size(ScopedBuffer));
+		size_t SerializedSize = oOSCSerializeStructToMessage(_MessageName, GetTypeTags(), sent, data(ScopedBuffer), size(ScopedBuffer));
 		if (SerializedSize <= 0)
 			return oErrorSetLast(std::errc::protocol_error, "Failed to serialize buffer");
-		if (!oOSCDeserializeMessageToStruct(oStd::data(ScopedBuffer), &received))
+		if (!oOSCDeserializeMessageToStruct(data(ScopedBuffer), &received))
 			return oErrorSetLast(std::errc::protocol_error, "Deserialization failed");
 
 		// NOTE: Remember that received has string and blob pointers that point

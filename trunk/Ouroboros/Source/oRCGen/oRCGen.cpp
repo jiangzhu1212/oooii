@@ -22,8 +22,11 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+#include <oBase/scc.h>
 
-static oStd::option sOptions[] = 
+using namespace ouro;
+
+static option sOptions[] = 
 {
 	{ 'v', "version", "maj.min", "Major/minor version to use" },
 	{ 'a', "auto-revision", nullptr, "Obtain revision information from scc" },
@@ -57,19 +60,19 @@ oOPT ParseOptions(int argc, const char* argv[])
 	oOPT o;
 	memset(&o, 0, sizeof(oOPT));
 	const char* value = nullptr;
-	char ch = oStd::opttok(&value, argc, argv, sOptions);
+	char ch = opttok(&value, argc, argv, sOptions);
 	while (ch)
 	{
 		switch (ch)
 		{
 			case 'v':
 			{
-				oStd::sstring v(value);
+				sstring v(value);
 				char* majend = strchr(v, '.');
 				if (majend)
 				{
 					*majend++ = '\0';
-					if (oStd::from_string(&o.Major, v) && oStd::from_string(&o.Minor, majend))
+					if (from_string(&o.Major, v) && from_string(&o.Minor, majend))
 						break;
 				}
 				oTHROW(invalid_argument, "version number not well-formatted");
@@ -77,7 +80,7 @@ oOPT ParseOptions(int argc, const char* argv[])
 			case 'a': o.AutoRevision = true; break;
 			case 'r':
 			{
-				if (!oStd::from_string(&o.Revision, value))
+				if (!from_string(&o.Revision, value))
 					oTHROW(invalid_argument, "unrecognized -r value: it must be an non-negative integer", value);
 				break;
 			}
@@ -92,7 +95,7 @@ oOPT ParseOptions(int argc, const char* argv[])
 			case ':': oTHROW(invalid_argument, "missing parameter option for argument %d", (int)value);
 		}
 
-		ch = oStd::opttok(&value);
+		ch = opttok(&value);
 	}
 
 	if (!o.Output)
@@ -103,8 +106,8 @@ oOPT ParseOptions(int argc, const char* argv[])
 
 int ShowHelp(const char* argv0)
 {
-	oStd::path path = argv0;
-	oStd::lstring doc;
+	path path = argv0;
+	lstring doc;
 	optdoc(doc, path.filename().c_str(), sOptions);
 	printf("%s\n", doc.c_str());
 	return 0;
@@ -122,21 +125,21 @@ int main(int argc, const char* argv[])
 		unsigned int Revision = opt.Revision;
 		if (opt.AutoRevision)
 		{
-			auto scc = oStd::make_scc(oStd::scc_protocol::svn, std::bind(oCore::system::spawn, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
-			oStd::path DevPath = oCore::filesystem::dev_path();
+			auto scc = make_scc(scc_protocol::svn, std::bind(ouro::system::spawn, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
+			path DevPath = ouro::filesystem::dev_path();
 			printf("scc");
-			oStd::lstring RevStr;
+			lstring RevStr;
 			try { Revision = scc->revision(DevPath); }
 			catch (std::exception& e) { RevStr = e.what(); }
 			if (RevStr.empty())
-				printf(" %s %s\n", Revision ? oStd::to_string(RevStr, Revision) : "?", DevPath.c_str());
+				printf(" %s %s\n", Revision ? to_string(RevStr, Revision) : "?", DevPath.c_str());
 			else
 				printf(" ? %s %s\n", DevPath.c_str(), RevStr.c_str());
 		}
 
-		oStd::version v(opt.Major, opt.Minor, Revision);
-		oStd::sstring VerStrMS, VerStrLX;
-		oStd::xlstring s;
+		version v(opt.Major, opt.Minor, Revision);
+		sstring VerStrMS, VerStrLX;
+		xlstring s;
 		int w = snprintf(s, 
 			"// generated file - do not modify\n" \
 			"#define oRC_SCC_REVISION %u\n" \
@@ -145,8 +148,8 @@ int main(int argc, const char* argv[])
 			"#define oRC_VERSION_STR_LINUX \"%u.%u.%u\"\n" \
 			, Revision
 			, v.major, v.minor, v.build, v.revision
-			, oStd::to_string4(VerStrMS, v)
-			, oStd::to_string3(VerStrLX, v));
+			, to_string4(VerStrMS, v)
+			, to_string3(VerStrLX, v));
 
 		if (opt.ProductName) sncatf(s, "#define oRC_PRODUCTNAME \"%s\"\n", opt.ProductName);
 		if (opt.FileName) sncatf(s, "#define oRC_FILENAME \"%s\"\n", opt.FileName);
@@ -154,7 +157,7 @@ int main(int argc, const char* argv[])
 		if (opt.Copyright) sncatf(s, "#define oRC_COPYRIGHT \"%s\"\n", opt.Copyright);
 		if (opt.Description) sncatf(s, "#define oRC_DESCRIPTION \"%s\"\n", opt.Description);
 
-		oCore::filesystem::save(opt.Output, s, s.length(), oCore::filesystem::save_option::text_write);
+		ouro::filesystem::save(opt.Output, s, s.length(), ouro::filesystem::save_option::text_write);
 	}
 
 	catch (std::exception& e)

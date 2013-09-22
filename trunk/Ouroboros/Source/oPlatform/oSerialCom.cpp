@@ -79,7 +79,7 @@ private:
 	HANDLE File;
 };
 
-namespace oStd {
+namespace ouro {
 
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oSerialCom::COM& _Value)
 {
@@ -135,14 +135,14 @@ bool from_string(oSerialCom::COM* _pAddress, const char* _StrSource)
 	return false;
 }
 
-} // namespace oStd
+} // namespace ouro
 
 oSerialComImpl::oSerialComImpl( const DESC& _Desc, bool* _pSuccess )
 	: Desc(_Desc)
 	, File(nullptr)
 {
 	char com[64];
-	if (!oStd::to_string(com, Desc.Com))
+	if (!ouro::to_string(com, Desc.Com))
 		return;
 
 	File = CreateFile( com,

@@ -34,9 +34,9 @@
 	#pragma message("BAD WINDOWS INCLUDE! Applications should #include <oWindows.h> to prevent extra and sometimes conflicting cruft from being included.")
 #endif
 
-#include <oStd/guid.h>
-#include <oStd/throw.h>
-#include <oStd/version.h>
+#include <oBase/guid.h>
+#include <oBase/throw.h>
+#include <oBase/version.h>
 #include <oBasis/oGUI.h>
 #include <oBasis/oMathTypes.h>
 #include <oBasis/oSurface.h>
@@ -261,14 +261,14 @@ enum oUS_USAGE
 #define oEXCEPTION_SIGTERM 0xc0de0006
 
 #ifdef _DEBUG
-	#define oVB(fn) do { if (!(fn)) { oWinSetLastError(::GetLastError()); oASSERT_TRACE(oStd::assert_type::assertion, oStd::assert_action::ignore, #fn, "%s", oErrorGetLastString()); } } while(false)
-	#define oV(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) { oWinSetLastError(HR__); oASSERT_TRACE(oStd::assert_type::assertion, oStd::assert_action::ignore, #fn, "%s", oErrorGetLastString()); } } while(false)
+	#define oVB(fn) do { if (!(fn)) { oWinSetLastError(::GetLastError()); oASSERT_TRACE(ouro::assert_type::assertion, ouro::assert_action::ignore, #fn, "%s", oErrorGetLastString()); } } while(false)
+	#define oV(fn) do { HRESULT HR__ = fn; if (FAILED(HR__)) { oWinSetLastError(HR__); oASSERT_TRACE(ouro::assert_type::assertion, ouro::assert_action::ignore, #fn, "%s", oErrorGetLastString()); } } while(false)
 #else
 	#define oVB(fn) fn
 	#define oV(fn) fn
 #endif
 
-#define oWIN_CHECK_HR(_Fn, _Message, ...) do { HRESULT HR__ = _Fn; if (FAILED(HR__)) { throw std::system_error(std::make_error_code(oWinGetErrc(HR__)), oStd::formatf(_Message, ## __VA_ARGS__)); } } while(false)
+#define oWIN_CHECK_HR(_Fn, _Message, ...) do { HRESULT HR__ = _Fn; if (FAILED(HR__)) { throw std::system_error(std::make_error_code(oWinGetErrc(HR__)), ouro::formatf(_Message, ## __VA_ARGS__)); } } while(false)
 
 // _____________________________________________________________________________
 // Wrappers for the Windows-specific crtdbg API. Prefer oASSERT macros found
@@ -368,9 +368,9 @@ void oWinCommandLineToArgvAFree(const char** _pArgv);
 inline float oPointToDIP(float _Point) { return 96.0f * _Point / 72.0f; }
 inline float oDIPToPoint(float _DIP) { return 72.0f * _DIP / 96.0f; }
 
-// Convert from values in VS_FIXEDFILEINFO to oStd::version and back
-void oWinGetVersion(const oStd::version& _Version, DWORD* _pVersionMS, DWORD* _pVersionLS);
-oStd::version oWinGetVersion(DWORD _VersionMS, DWORD _VersionLS);
+// Convert from values in VS_FIXEDFILEINFO to ouro::version and back
+void oWinGetVersion(const ouro::version& _Version, DWORD* _pVersionMS, DWORD* _pVersionLS);
+ouro::version oWinGetVersion(DWORD _VersionMS, DWORD _VersionLS);
 
 // _____________________________________________________________________________
 // Concurrency
@@ -436,7 +436,6 @@ oWINDOWS_VERSION oGetWindowsVersion();
 // an error message will be thrown up and the application will
 // terminate
 void oVerifyMinimumWindowsVersion(oWINDOWS_VERSION _Version);
-bool oIsWindows64Bit();
 
 // A wrapper for SetWindowsHookEx that includes a user-specified context.
 typedef LRESULT (CALLBACK* oHOOKPROC)(int _nCode, WPARAM _wParam, LPARAM _lParam, void* _pUserData);
@@ -506,7 +505,7 @@ bool oWinSystemOpenDocument(const char* _DocumentName, bool _ForEdit = false);
 // the ID of the thread that services this window.  Since a process can have more
 // than one top level window an optional name can also be specified to make certain
 // the correct window is returned
-bool oWinGetProcessTopWindowAndThread(oCore::process::id _ProcessID, HWND* _pHWND, unsigned int* _pThreadID, const char* _pOptionalWindowName = nullptr);
+bool oWinGetProcessTopWindowAndThread(ouro::process::id _ProcessID, HWND* _pHWND, unsigned int* _pThreadID, const char* _pOptionalWindowName = nullptr);
 
 // _____________________________________________________________________________
 // Identification/ID Conversion API
@@ -535,8 +534,8 @@ struct oWINDOWS_HID_DESC
 
 	oGUI_INPUT_DEVICE_TYPE Type;
 	DWORD DevInst;
-	oStd::mstring ParentDeviceInstancePath;
-	oStd::mstring DeviceInstancePath;
+	ouro::mstring ParentDeviceInstancePath;
+	ouro::mstring DeviceInstancePath;
 };
 
 // Translate a PnP enumerator name (DEV_BROADCAST_DEVICEINTERFACE_A::dbcc_name)
@@ -578,10 +577,10 @@ bool oWinEnableDebugPrivilege(bool _Enabled);
 void oWinDumpAndTerminate(EXCEPTION_POINTERS* _pExceptionPtrs, const char* _pUserErrorMessage);
 
 // value to set for FILEFLAGS in a resource script (.rc)
-long oWinRCGetFileFlags(const oCore::module::info& _Info);
+long oWinRCGetFileFlags(const ouro::module::info& _Info);
 
 // Returns the values for FILETYPE and FILESUBTYPE in a resource script (.rc)
-void oWinRCGetFileType(const oCore::module::type::value _Type, DWORD* _pType, DWORD* _pSubtype);
+void oWinRCGetFileType(const ouro::module::type::value _Type, DWORD* _pType, DWORD* _pSubtype);
 
 #else
 	#error Unsupported platform

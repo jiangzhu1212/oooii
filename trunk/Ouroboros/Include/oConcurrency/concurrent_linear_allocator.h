@@ -39,7 +39,8 @@
 #define oConcurrency_concurrent_linear_allocator_h
 
 #include <oConcurrency/thread_safe.h>
-#include <oStd/byte.h>
+#include <oBase/byte.h>
+#include <oBase/config.h>
 #include <oStd/atomic.h>
 
 namespace oConcurrency {
@@ -88,7 +89,7 @@ inline concurrent_linear_allocator::concurrent_linear_allocator()
 
 inline void concurrent_linear_allocator::initialize(size_t _ArenaSize)
 {
-	End = oStd::byte_add(this, _ArenaSize);
+	End = ouro::byte_add(this, _ArenaSize);
 	reset();
 }
 
@@ -98,10 +99,10 @@ inline void* concurrent_linear_allocator::allocate(size_t _Size) threadsafe
 	do
 	{
 		Old = Head;
-		New = oStd::byte_add(Old, _Size);
+		New = ouro::byte_add(Old, _Size);
 		if (New > End)
 			return nullptr;
-		New = oStd::byte_align(New, oDEFAULT_MEMORY_ALIGNMENT);
+		New = ouro::byte_align(New, oDEFAULT_MEMORY_ALIGNMENT);
 	} while (!oStd::atomic_compare_exchange(&Head, New, Old));
 	return Old;
 }
@@ -119,12 +120,12 @@ inline void concurrent_linear_allocator::reset() threadsafe
 
 inline bool concurrent_linear_allocator::valid(void* _Pointer) const threadsafe
 {
-	return oStd::in_range(_Pointer, begin(), Head);
+	return ouro::in_range(_Pointer, begin(), Head);
 }
 
 inline size_t concurrent_linear_allocator::bytes_available() const threadsafe
 {
-	ptrdiff_t diff = oStd::byte_diff(End, Head);
+	ptrdiff_t diff = ouro::byte_diff(End, Head);
 	return diff > 0 ? diff : 0;
 }
 

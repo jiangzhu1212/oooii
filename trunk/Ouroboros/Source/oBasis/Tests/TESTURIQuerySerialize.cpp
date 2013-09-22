@@ -27,6 +27,8 @@
 #include <oBasis/oURIQuerySerialize.h>
 #include "oBasisTestCommon.h"
 
+using namespace ouro;
+
 enum oURIQueryTestEnum
 {
 	ENUM1,
@@ -46,7 +48,7 @@ oRTTI_ENUM_END_DESCRIPTION(oURIQueryTestEnum)
 struct oURIQueryTestCompoundBase
 {
 	int BaseInt;
-	oStd::sstring BaseString;
+	sstring BaseString;
 };
 oRTTI_COMPOUND_DECLARATION(oRTTI_CAPS_NONE, oURIQueryTestCompoundBase)
 
@@ -55,7 +57,7 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oURIQueryTestCompoundBase)
 	oRTTI_COMPOUND_VERSION(oURIQueryTestCompoundBase, 0,1,0,0)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oURIQueryTestCompoundBase)
 		oRTTI_COMPOUND_ATTR(oURIQueryTestCompoundBase, BaseInt, oRTTI_OF(int), "BaseInt", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oURIQueryTestCompoundBase, BaseString, oRTTI_OF(ostd_sstring), "BaseString", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oURIQueryTestCompoundBase, BaseString, oRTTI_OF(ouro_sstring), "BaseString", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oURIQueryTestCompoundBase)
 oRTTI_COMPOUND_END_DESCRIPTION(oURIQueryTestCompoundBase)
 
@@ -68,7 +70,7 @@ struct oURIQueryTestCompound : oURIQueryTestCompoundBase
 	llong Llong;
 	float Float;
 	double Double;
-	oStd::lstring String;
+	lstring String;
 	int2 Int2;
 	oURIQueryTestEnum Enum;
 };
@@ -86,7 +88,7 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oURIQueryTestCompound)
 		oRTTI_COMPOUND_ATTR(oURIQueryTestCompound, Llong, oRTTI_OF(llong), "Llong", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oURIQueryTestCompound, Float, oRTTI_OF(float), "Float", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oURIQueryTestCompound, Double, oRTTI_OF(double), "Double", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oURIQueryTestCompound, String, oRTTI_OF(ostd_lstring), "String", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oURIQueryTestCompound, String, oRTTI_OF(ouro_lstring), "String", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oURIQueryTestCompound, Int2, oRTTI_OF(int2), "Int2", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oURIQueryTestCompound, Enum, oRTTI_OF(oURIQueryTestEnum), "Enum", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oURIQueryTestCompound)
@@ -134,7 +136,7 @@ bool oBasisTest_oURIQuerySerialize()
 {
 	sInitURIQueryTestCompound();
 
-	oStd::xxlstring URIQueryWriteTestResult;
+	xxlstring URIQueryWriteTestResult;
 	oTESTB0(oURIQueryWriteCompound(URIQueryWriteTestResult.c_str(), URIQueryWriteTestResult.capacity(), &sURIQueryTestCompound, oRTTI_OF(oURIQueryTestCompound)));
 	oTESTB(0 == strcmp(URIQueryWriteTestResult.c_str(), sURIQueryTestCompoundReferenceResult), "oURIQueryWriteCompound result doesn't match the expected one");
 

@@ -26,6 +26,7 @@
 #include <oConcurrency/mutex.h>
 #include <tbb/concurrent_hash_map.h>
 
+using namespace ouro;
 using namespace oConcurrency;
 
 struct oRegistryTBB : oRegistry
@@ -53,7 +54,7 @@ private:
 	struct RECORD
 	{
 		oREGISTRY_DESC Desc;
-		oStd::intrusive_ptr<oInterface> Entry;
+		intrusive_ptr<oInterface> Entry;
 	};
 
 	struct TBBURIHash
@@ -90,7 +91,7 @@ bool oRegistryTBB::Add(const oURI& _URIReference, oInterface* _pInterface, int _
 		a->second.Desc.Status = _Status;
 		a->second.Desc.AccessEpoch = Epoch;
 		a->second.Desc.AccessCount = 0;
-		oCore::system::now(&a->second.Desc.Accessed);
+		ouro::system::now(&a->second.Desc.Accessed);
 		a->second.Entry = _pInterface;
 	}
 	
@@ -118,7 +119,7 @@ bool oRegistryTBB::Get(const oURI& _URIReference, oInterface** _ppInterface, oRE
 
 		a->second.Desc.AccessEpoch = Epoch;
 		a->second.Desc.AccessCount++;
-		oCore::system::now(&a->second.Desc.Accessed);
+		ouro::system::now(&a->second.Desc.Accessed);
 
 		if (_pDesc)
 			*_pDesc = a->second.Desc;
@@ -137,7 +138,7 @@ bool oRegistryTBB::Set(const oURI& _URIReference, oInterface* _pInterface, int _
 		a->second.Desc.Status = _Status;
 		a->second.Desc.AccessEpoch = Epoch;
 		a->second.Desc.AccessCount = 0;
-		oCore::system::now(&a->second.Desc.Accessed);
+		ouro::system::now(&a->second.Desc.Accessed);
 		a->second.Entry = _pInterface;
 	}
 

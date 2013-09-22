@@ -146,17 +146,17 @@ struct GPU_Traits : public oTest
 			IsReadBack = true;
 			break;
 		default:
-			oTESTB(false, "Unknown texture type %s", oStd::as_string(_Type));
+			oTESTB(false, "Unknown texture type %s", ouro::as_string(_Type));
 		}
 
-		oTESTB(oGPUTextureTypeHasMips(_Type) == HasMips, "oGPUTextureTypeHasMips incorrectly returning %s for %s", HasMips ? "false" : "true", oStd::as_string(_Type));
-		oTESTB(oGPUTextureTypeIsReadback(_Type) == IsReadBack, "oGPUTextureTypeIsReadback incorrectly returning %s for %s", IsReadBack ? "false" : "true", oStd::as_string(_Type));
-		oTESTB(oGPUTextureTypeIsRenderTarget(_Type) == IsRenderTarget, "oGPUTextureTypeIsRenderTarget incorrectly returning %s for %s", IsRenderTarget ? "false" : "true", oStd::as_string(_Type));
-		oTESTB(oGPUTextureTypeIs1DMap(_Type) == Is1D, "oGPUTextureTypeIs1DMap incorrectly returning %s for %s", Is1D ? "false" : "true", oStd::as_string(_Type));
-		oTESTB(oGPUTextureTypeIs2DMap(_Type) == Is2D, "oGPUTextureTypeIs2DMap incorrectly returning %s for %s", Is2D ? "false" : "true", oStd::as_string(_Type));
-		oTESTB(oGPUTextureTypeIsCubeMap(_Type) == IsCube, "oGPUTextureTypeIsCubeMap incorrectly returning %s for %s", IsCube ? "false" : "true", oStd::as_string(_Type));
-		oTESTB(oGPUTextureTypeIs3DMap(_Type) == Is3D, "oGPUTextureTypeIs3DMap incorrectly returning %s for %s", Is3D ? "false" : "true", oStd::as_string(_Type));
-		oTESTB(oGPUTextureTypeIsUnordered(_Type) == IsUnordered, "oGPUTextureTypeIsUnordered incorrectly returning %s for %s", IsUnordered ? "false" : "true", oStd::as_string(_Type));
+		oTESTB(oGPUTextureTypeHasMips(_Type) == HasMips, "oGPUTextureTypeHasMips incorrectly returning %s for %s", HasMips ? "false" : "true", ouro::as_string(_Type));
+		oTESTB(oGPUTextureTypeIsReadback(_Type) == IsReadBack, "oGPUTextureTypeIsReadback incorrectly returning %s for %s", IsReadBack ? "false" : "true", ouro::as_string(_Type));
+		oTESTB(oGPUTextureTypeIsRenderTarget(_Type) == IsRenderTarget, "oGPUTextureTypeIsRenderTarget incorrectly returning %s for %s", IsRenderTarget ? "false" : "true", ouro::as_string(_Type));
+		oTESTB(oGPUTextureTypeIs1DMap(_Type) == Is1D, "oGPUTextureTypeIs1DMap incorrectly returning %s for %s", Is1D ? "false" : "true", ouro::as_string(_Type));
+		oTESTB(oGPUTextureTypeIs2DMap(_Type) == Is2D, "oGPUTextureTypeIs2DMap incorrectly returning %s for %s", Is2D ? "false" : "true", ouro::as_string(_Type));
+		oTESTB(oGPUTextureTypeIsCubeMap(_Type) == IsCube, "oGPUTextureTypeIsCubeMap incorrectly returning %s for %s", IsCube ? "false" : "true", ouro::as_string(_Type));
+		oTESTB(oGPUTextureTypeIs3DMap(_Type) == Is3D, "oGPUTextureTypeIs3DMap incorrectly returning %s for %s", Is3D ? "false" : "true", ouro::as_string(_Type));
+		oTESTB(oGPUTextureTypeIsUnordered(_Type) == IsUnordered, "oGPUTextureTypeIsUnordered incorrectly returning %s for %s", IsUnordered ? "false" : "true", ouro::as_string(_Type));
 
 		return SUCCESS;
 	}

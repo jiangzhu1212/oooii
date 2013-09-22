@@ -26,23 +26,21 @@
 #include <oCore/filesystem.h>
 #include <oStd/date.h>
 #include "../oStd/win.h"
+#include <intrin.h>
+#include <math.h>
 #include <set>
 
 #define oCLOSE(hHandle) do { if (hHandle && hHandle != INVALID_HANDLE_VALUE) ::CloseHandle(hHandle); } while(false)
 
-namespace oStd {
-
-bool from_string(oCore::process::id* _pProcessID, const char* _String)
-{
-	return from_string((unsigned int*)_pProcessID, _String);
-}
-
-} // namespace oStd
-
 using namespace oStd;
 using namespace std::placeholders;
 
-namespace oCore {
+namespace ouro {
+
+bool from_string(process::id* _pProcessID, const char* _String)
+{
+	return from_string((unsigned int*)_pProcessID, _String);
+}
 
 class windows_process : public process
 {
@@ -302,7 +300,7 @@ process::id process::get_id(const char* _Name)
 
 bool process::has_debugger_attached(id _ID)
 {
-	if (_ID != id() && _ID != oCore::this_process::get_id())
+	if (_ID != id() && _ID != ouro::this_process::get_id())
 	{
 		HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ|PROCESS_DUP_HANDLE, FALSE, *(DWORD*)&_ID);
 		if (hProcess)
@@ -492,7 +490,7 @@ double process::cpu_usage(id _ID, unsigned long long* _pPreviousSystemTime, unsi
 	*_pPreviousSystemTime = totalSystemTime;
 	*_pPreviousProcessTime = totalProcessTime;
 
-	if (isnan(CPUUsage) || isinf(CPUUsage))
+	if (_isnan(CPUUsage) || !_finite(CPUUsage))
 		return 0.0;
 
 	// If the diffs are measured at not exactly the same time we can get a value 
@@ -668,4 +666,4 @@ void enumerate_children(const std::function<bool(process::id _ID, process::id _P
 }
 
 	} // namespace this_process
-} // namespace oCore
+} // namespace ouro

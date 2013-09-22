@@ -32,10 +32,9 @@
 #ifndef oURI_h
 #define oURI_h
 
-#include <oStd/fixed_string.h>
-#include <oStd/macros.h> // oCOUNTOF
-#include <oStd/operators.h>
-#include <oBasis/oPlatformFeatures.h> // nullptr
+#include <oBase/fixed_string.h>
+#include <oBase/macros.h> // oCOUNTOF
+#include <oBase/operators.h>
 #include <oBasis/oRTTI.h>
 
 #define oMAX_SCHEME 32
@@ -53,14 +52,14 @@ struct oURIParts
 
 	// one of the good practices from http://www.textuality.com/tag/uri-comp-2.html
 	// @oooii-tony: How do case-sensitive file systems work with this?
-	inline void ToLower() { oStd::tolower(Scheme); oStd::tolower(Authority); oStd::tolower(Path);  oStd::tolower(Query); oStd::tolower(Fragment); }
+	inline void ToLower() { ouro::tolower(Scheme); ouro::tolower(Authority); ouro::tolower(Path);  ouro::tolower(Query); ouro::tolower(Fragment); }
 	inline bool Empty() const { return Scheme.empty() && Authority.empty() && Path.empty() && Query.empty() && Fragment.empty(); }
 
-	oStd::fixed_string<char, oMAX_SCHEME> Scheme;
-	oStd::fixed_string<char, oMAX_AUTHORITY> Authority;
-	oStd::path_string Path;
-	oStd::fixed_string<char, oMAX_QUERY> Query;
-	oStd::fixed_string<char, oMAX_FRAGMENT> Fragment;
+	ouro::fixed_string<char, oMAX_SCHEME> Scheme;
+	ouro::fixed_string<char, oMAX_AUTHORITY> Authority;
+	ouro::path_string Path;
+	ouro::fixed_string<char, oMAX_QUERY> Query;
+	ouro::fixed_string<char, oMAX_FRAGMENT> Fragment;
 };
 
 // A URI reference could be a relative path and may not include an authority or 
@@ -137,17 +136,17 @@ template<size_t size> char* oURIRelativize(char (&_URIReference)[size], const ch
 template<size_t size> char* oURIResolve(char (&_URIReference)[size], const char* _URIBase, const char* _URI) { return oURIResolve(_URIReference, size, _URIBase, _URI); }
 template<size_t size> char* oURIEnsureFileExtension(char (&_URIReferenceWithExtension)[size], const char* _SourceURIReference, const char* _Extension) { return oURIEnsureFileExtension(_URIReferenceWithExtension, size, _SourceURIReference, _Extension); }
 
-// oStd::fixed_string support
-template<size_t capacity> char* oURIRecompose(oStd::fixed_string<char, capacity>& _URIReference, const char* _Scheme, const char* _Authority, const char* _Path, const char* _Query, const char* _Fragment) { return oURIRecompose(_URIReference, _URIReference.capacity(), _Scheme, _Authority, _Path, _Query, _Fragment); }
-template<size_t capacity> char* oURIRecompose(oStd::fixed_string<char, capacity>& _URIReference, const oURIParts& _Parts) { return oURIRecompose(_URIReference, _URIReference.capacity(), _Parts); }
-template<size_t capacity> char* oURINormalize(oStd::fixed_string<char, capacity>& _NormalizedURI, const char* _SourceURI) { return oURINormalize(_NormalizedURI, _NormalizedURI.capacity(), _SourceURI); }
-template<size_t capacity> char* oURIFromAbsolutePath(oStd::fixed_string<char, capacity>& _URI, const char* _AbsolutePath) { return oURIFromAbsolutePath(_URI, _URI.capacity(), _AbsolutePath); }
-template<size_t capacity> char* oURIFromRelativePath(oStd::fixed_string<char, capacity>& _URIReference, const char* _RelativePath) { return oURIFromRelativePath(_URIReference, _URIReference.capacity(), _RelativePath); }
-template<size_t capacity> char* oURIToPath(oStd::fixed_string<char, capacity>& _Path, const char* _URI) { return oURIToPath(_Path, _Path.capacity(), _URI); }
-template<size_t capacity> char* oURIPartsToPath(oStd::fixed_string<char, capacity>& _Path, const oURIParts& _URIParts) { return oURIPartsToPath(_Path, _Path.capacity(), _URIParts); }
-template<size_t capacity> char* oURIRelativize(oStd::fixed_string<char, capacity>& _URIReference, const char* _URIBase, const char* _URI) { return oURIRelativize(_URIReference, _URIReference.capacity(), _URIBase, _URI); }
-template<size_t capacity> char* oURIResolve(oStd::fixed_string<char, capacity>& _URIReference, const char* _URIBase, const char* _URI) { return oURIResolve(_URIReference, _URIReference.capacity(), _URIBase, _URI); }
-template<size_t capacity> char* oURIEnsureFileExtension(oStd::fixed_string<char, capacity>& _URIReferenceWithExtension, const char* _SourceURIReference, const char* _Extension) { return oURIEnsureFileExtension(_URIReferenceWithExtension, _URIReferenceWithExtension.capacity(), _SourceURIReference, _Extension); }
+// ouro::fixed_string support
+template<size_t capacity> char* oURIRecompose(ouro::fixed_string<char, capacity>& _URIReference, const char* _Scheme, const char* _Authority, const char* _Path, const char* _Query, const char* _Fragment) { return oURIRecompose(_URIReference, _URIReference.capacity(), _Scheme, _Authority, _Path, _Query, _Fragment); }
+template<size_t capacity> char* oURIRecompose(ouro::fixed_string<char, capacity>& _URIReference, const oURIParts& _Parts) { return oURIRecompose(_URIReference, _URIReference.capacity(), _Parts); }
+template<size_t capacity> char* oURINormalize(ouro::fixed_string<char, capacity>& _NormalizedURI, const char* _SourceURI) { return oURINormalize(_NormalizedURI, _NormalizedURI.capacity(), _SourceURI); }
+template<size_t capacity> char* oURIFromAbsolutePath(ouro::fixed_string<char, capacity>& _URI, const char* _AbsolutePath) { return oURIFromAbsolutePath(_URI, _URI.capacity(), _AbsolutePath); }
+template<size_t capacity> char* oURIFromRelativePath(ouro::fixed_string<char, capacity>& _URIReference, const char* _RelativePath) { return oURIFromRelativePath(_URIReference, _URIReference.capacity(), _RelativePath); }
+template<size_t capacity> char* oURIToPath(ouro::fixed_string<char, capacity>& _Path, const char* _URI) { return oURIToPath(_Path, _Path.capacity(), _URI); }
+template<size_t capacity> char* oURIPartsToPath(ouro::fixed_string<char, capacity>& _Path, const oURIParts& _URIParts) { return oURIPartsToPath(_Path, _Path.capacity(), _URIParts); }
+template<size_t capacity> char* oURIRelativize(ouro::fixed_string<char, capacity>& _URIReference, const char* _URIBase, const char* _URI) { return oURIRelativize(_URIReference, _URIReference.capacity(), _URIBase, _URI); }
+template<size_t capacity> char* oURIResolve(ouro::fixed_string<char, capacity>& _URIReference, const char* _URIBase, const char* _URI) { return oURIResolve(_URIReference, _URIReference.capacity(), _URIBase, _URI); }
+template<size_t capacity> char* oURIEnsureFileExtension(ouro::fixed_string<char, capacity>& _URIReferenceWithExtension, const char* _SourceURIReference, const char* _Extension) { return oURIEnsureFileExtension(_URIReferenceWithExtension, _URIReferenceWithExtension.capacity(), _SourceURIReference, _Extension); }
 
 
 // Class that enforces some well-formed URI ideas as described here:

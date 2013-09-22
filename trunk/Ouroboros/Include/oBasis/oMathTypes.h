@@ -29,8 +29,8 @@
 #ifndef oMathTypes_h
 #define oMathTypes_h
 
-#include <oStd/color.h>
-#include <oStd/operators.h>
+#include <oBase/color.h>
+#include <oBase/operators.h>
 #include <oHLSL/oHLSLMath.h>
 #include <oCompute/oAABox.h>
 #include <oCompute/oFrustum.h>

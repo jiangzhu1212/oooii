@@ -27,13 +27,13 @@
 #ifndef oStd_chrono_h
 #define oStd_chrono_h
 
-#include <oStd/equal.h>
 #include <oStd/ratio.h>
-#include <oStd/config.h>
 
 namespace oStd {
 
-#ifdef oHAS_BAD_DOUBLE_TO_ULLONG_CONVERSION
+#ifdef _WIN32
+	// win32 has a bug in its double to unsigned long long conversion
+	// http://www.gamedev.net/topic/591975-c-unsigned-__int64-tofrom-double-conversions/
 	unsigned long long dtoull(double n);
 #endif
 
@@ -42,8 +42,8 @@ namespace oStd {
 // double -> ullong is broken in VS2010, so wrap it to a custom implementation
 template<typename T, typename U> T chrono_static_cast(const U& _Value) { return static_cast<T>(_Value); }
 
-#ifdef oHAS_BAD_DOUBLE_TO_ULLONG_CONVERSION
-		template<> inline unsigned long long chrono_static_cast(const double& _Value) { return dtoull(_Value); }
+#ifdef _WIN32
+	template<> inline unsigned long long chrono_static_cast(const double& _Value) { return dtoull(_Value); }
 #endif
 
 template<typename Rep> struct treat_as_floating_point : std::tr1::is_floating_point<Rep> {};
@@ -110,8 +110,8 @@ template<typename Rep1, typename Period1, typename Rep2, typename Period2> durat
  }
 
 template<typename Rep, typename Period> bool operator==(const duration<Rep, Period>& x, const duration<Rep, Period>& y) { return x.count() == y.count(); }
-template<typename Period> bool operator==(const duration<float, Period>& x, const duration<float, Period>& y) { return oStd::equal(x.count(), y.count()); }
-template<typename Period> bool operator==(const duration<double, Period>& x, const duration<double, Period>& y) { return oStd::equal(x.count(), y.count()); }
+template<typename Period> bool operator==(const duration<float, Period>& x, const duration<float, Period>& y) { return absf(x.count() - y.count()) < EPS; }
+template<typename Period> bool operator==(const duration<double, Period>& x, const duration<double, Period>& y) { return abs(x.count() - y.count()) < EPS; }
 template<typename Rep, typename Period> bool operator!=(const duration<Rep, Period>& x, const duration<Rep, Period>& y) { return !(x == y); }
 template<typename Rep, typename Period> bool operator<(const duration<Rep, Period>& x, const duration<Rep, Period>& y) { return x.count() < y.count(); }
 template<typename Rep, typename Period> bool operator>=(const duration<Rep, Period>& x, const duration<Rep, Period>& y) { return !(x < y); }

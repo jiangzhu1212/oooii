@@ -37,13 +37,13 @@
 // canceling the dialog box, last error will be std::errc::operation_canceled. 
 // Most likely any other error will be std::errc::protocol_error with a Windows 
 // common dialog error to follow.
-bool oWinDialogGetOpenPath(oStd::path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr);
-bool oWinDialogGetSavePath(oStd::path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr);
+bool oWinDialogGetOpenPath(ouro::path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr);
+bool oWinDialogGetSavePath(ouro::path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr);
 
 // *_pColor is used as the initial value of the dialog
-bool oWinDialogGetColor(oStd::color* _pColor, HWND _hParent = nullptr);
+bool oWinDialogGetColor(ouro::color* _pColor, HWND _hParent = nullptr);
 
 // *_pLogicalFont is used to initialize the dialog
-bool oWinDialogGetFont(LOGFONT* _pLogicalFont, oStd::color* _pColor, HWND _hParent);
+bool oWinDialogGetFont(LOGFONT* _pLogicalFont, ouro::color* _pColor, HWND _hParent);
 
 #endif

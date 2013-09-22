@@ -31,6 +31,8 @@
 #include <shellapi.h>
 #include <Windowsx.h>
 
+using namespace ouro;
+
 HWND oTrayGetHwnd()
 {
 	static const char* sHierarchy[] = 
@@ -145,9 +147,9 @@ struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
 
 		if (!Removes.empty())
 		{
-			oStd::xlstring buf;
-			oStd::mstring exec;
-			snprintf(buf, "oWindows Trace %s Cleaning up tray icons\n", oCore::system::exec_path(exec));
+			xlstring buf;
+			mstring exec;
+			snprintf(buf, "oWindows Trace %s Cleaning up tray icons\n", ouro::system::exec_path(exec));
 			OutputDebugStringA(buf);
 		}
 
@@ -188,7 +190,7 @@ struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
 		rti.ID = _ID;
 		rti.TimeoutMS = 0;
 
-		oStd::find_and_erase(Removes, rti);
+		find_and_erase(Removes, rti);
 	}
 
 	void Register(oStd::thread&& _DeferredHideIconThread)
@@ -211,8 +213,8 @@ struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
 	}
 
 	static const oGUID GUID;
-	oStd::fixed_vector<REMOVE_TRAY_ICON, 20> Removes;
-	oStd::fixed_vector<oStd::thread, 20> DeferredHideIconThreads;
+	fixed_vector<REMOVE_TRAY_ICON, 20> Removes;
+	fixed_vector<oStd::thread, 20> DeferredHideIconThreads;
 	oConcurrency::shared_mutex Mutex;
 	volatile bool AllowInteraction;
 };
@@ -294,12 +296,12 @@ bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const
 
 	// MS recommends truncating at 200 for English: http://msdn.microsoft.com/en-us/library/bb773352(v=vs.85).aspx
 	static const int MaxInfo = 201;
-	oStd::strncpy(nid.szInfo, MaxInfo, _Message, MaxInfo - 1);
-	oStd::ellipsize(nid.szInfo, MaxInfo);
+	strncpy(nid.szInfo, MaxInfo, _Message, MaxInfo - 1);
+	ellipsize(nid.szInfo, MaxInfo);
 
 	// MS recommends truncating at 48 for English: http://msdn.microsoft.com/en-us/library/bb773352(v=vs.85).aspx
 	static const int MaxTitle = 49;
-	oStd::strncpy(nid.szInfoTitle, MaxTitle, _Title, MaxTitle - 1);
+	strncpy(nid.szInfoTitle, MaxTitle, _Title, MaxTitle - 1);
 
 	nid.dwInfoFlags = NIIF_NOSOUND;
 

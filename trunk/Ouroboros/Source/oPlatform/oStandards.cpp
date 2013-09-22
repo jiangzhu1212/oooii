@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oStandards.h>
-#include <oStd/assert.h>
+#include <oBase/assert.h>
 #include <oStd/chrono.h>
 #include <oPlatform/oConsole.h>
 #include <oPlatform/oDisplay.h>
@@ -33,21 +33,23 @@
 #include <oPlatform/Windows/oWindows.h>
 #include <oPlatform/oStream.h>
 
+using namespace ouro;
+
 void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list _Args )
 {
-	static const oStd::color fg[] = 
+	static const color fg[] = 
 	{
 		0,
-		oStd::Lime,
-		oStd::White,
+		Lime,
+		White,
 		0,
-		oStd::Yellow,
-		oStd::Red,
-		oStd::Yellow,
+		Yellow,
+		Red,
+		Yellow,
 	};
 	static_assert(oCOUNTOF(fg) == NUM_REPORT_TYPES, "");
 
-	static const oStd::color bg[] = 
+	static const color bg[] = 
 	{
 		0,
 		0,
@@ -55,15 +57,15 @@ void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list
 		0,
 		0,
 		0,
-		oStd::Red,
+		Red,
 	};
 	static_assert(oCOUNTOF(fg) == NUM_REPORT_TYPES, "");
 
 	if (_Type == HEADING)
 	{
 		char msg[2048];
-		oStd::vsnprintf(msg, _Format, _Args);
-		oStd::toupper(msg);
+		vsnprintf(msg, _Format, _Args);
+		toupper(msg);
 		oConsole::fprintf(stdout, fg[_Type], bg[_Type], msg);
 	}
 	else
@@ -75,7 +77,7 @@ void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list
 bool oMoveMouseCursorOffscreen()
 {
 	int2 p, sz;
-	oCore::display::virtual_rect(&p.x, &p.y, &sz.x, &sz.y);
+	ouro::display::virtual_rect(&p.x, &p.y, &sz.x, &sz.y);
 	return !!SetCursorPos(p.x + sz.x, p.y-1);
 }
 
@@ -87,7 +89,7 @@ bool oWaitForSystemSteadyState(oFUNCTION<bool()> _ContinueIdling)
 	oTRACE("Waiting for system steady state...");
 
 	const unsigned int TWO_MINUTES = 120000;
-	if (!oCore::system::wait_for_idle(TWO_MINUTES, _ContinueIdling))
+	if (!ouro::system::wait_for_idle(TWO_MINUTES, _ContinueIdling))
 	{
 		if (oErrorGetLast() == ETIMEDOUT)
 		{
@@ -121,7 +123,7 @@ void* oLoadIcon(oFUNCTION<void(const char** _ppBufferName, const void** _ppBuffe
 	size_t sizeofBuffer = 0;
 	_BufferGetDesc(&BufferName, &pBuffer, &sizeofBuffer);
 
-	oStd::intrusive_ptr<oImage> ico;
+	intrusive_ptr<oImage> ico;
 	oVERIFY(oImageCreate(BufferName, pBuffer, sizeofBuffer, &ico));
 
 	#if defined(_WIN32) || defined (_WIN64)
@@ -152,7 +154,7 @@ char* oGetLogFilePath(char* _StrDestination, size_t _SizeofStrDestination, const
 	tm t;
 	localtime_s(&t, &theTime);
 
-	oStd::path AppPath = oCore::filesystem::app_path(true);
+	path AppPath = ouro::filesystem::app_path(true);
 	if (strlcpy(_StrDestination, AppPath, _SizeofStrDestination) >= _SizeofStrDestination)
 		return nullptr; // pass through error
 
@@ -168,8 +170,8 @@ char* oGetLogFilePath(char* _StrDestination, size_t _SizeofStrDestination, const
 	if (_ExeSuffix)
 		p += snprintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%s", _ExeSuffix);
 
-	p += snprintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%i.txt", oCore::this_process::get_id());
-	oStd::clean_path(_StrDestination, _SizeofStrDestination, _StrDestination);
+	p += snprintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%i.txt", ouro::this_process::get_id());
+	clean_path(_StrDestination, _SizeofStrDestination, _StrDestination);
 	
 	return _StrDestination;
 }
@@ -180,7 +182,7 @@ bool oINIFindPath( char* _StrDestination, size_t _SizeofStrDestination, const ch
 	if(oStreamExists(_StrDestination))
 		return true;
 
-	oStd::path AppDir = oCore::filesystem::app_path();
+	path AppDir = ouro::filesystem::app_path();
 
 	snprintf(_StrDestination, _SizeofStrDestination, "%s/../%s", AppDir, _pININame);
 	if(oStreamExists(_StrDestination))

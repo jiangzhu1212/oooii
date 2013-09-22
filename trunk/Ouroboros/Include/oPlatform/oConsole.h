@@ -29,9 +29,9 @@
 #define oConsole_h
 
 #include <oBasis/oMathTypes.h>
-#include <oStd/color.h>
-#include <oStd/function.h>
-#include <oStd/path.h>
+#include <oBase/color.h>
+#include <oBase/function.h>
+#include <oBase/path.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -74,13 +74,13 @@ namespace oConsole
 		unsigned short Left;  // in pixels
 		unsigned short Width;  // in characters
 		unsigned short Height;  // in characters
-		oStd::color Foreground; // 0 means don't set color
-		oStd::color Background; // 0 means don't set color
+		ouro::color Foreground; // 0 means don't set color
+		ouro::color Background; // 0 means don't set color
 		bool Show;
 	
 		// If specified and a valid, accessible file path, all output through this 
 		// console will be written to the specified file. 
-		oStd::path LogFilePath;
+		ouro::path LogFilePath;
 	};
 
 	void* GetNativeHandle(); // returns HWND on Windows
@@ -94,7 +94,7 @@ namespace oConsole
 	void SetTitle(const char* _Title);
 	char* GetTitle(char* _StrDestination, size_t _SizeofStrDestination);
 	template<size_t size> char*GetTitle(char (&_StrDestination)[size]) { return GetTitle(_StrDestination, size); }
-	template<size_t capacity> char*GetTitle(oStd::fixed_string<char, capacity>& _StrDestination) { return GetTitle(_StrDestination, _StrDestination.capacity()); }
+	template<size_t capacity> char*GetTitle(ouro::fixed_string<char, capacity>& _StrDestination) { return GetTitle(_StrDestination, _StrDestination.capacity()); }
 
 	// If you specify DEFAULT for one of these, then it will be whatever it was
 	// before.
@@ -105,9 +105,9 @@ namespace oConsole
 
 	bool HasFocus();
 
-	int vfprintf(FILE* _pStream, oStd::color _Foreground, oStd::color _Background, const char* _Format, va_list _Args);
-	inline int fprintf(FILE* _pStream, oStd::color _Foreground, oStd::color _Background, const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(_pStream, _Foreground, _Background, _Format, args); va_end(args); return n; }
-	inline int printf(oStd::color _Foreground, oStd::color _Background, const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(stdout, _Foreground, _Background, _Format, args); va_end(args); return n; }
+	int vfprintf(FILE* _pStream, ouro::color _Foreground, ouro::color _Background, const char* _Format, va_list _Args);
+	inline int fprintf(FILE* _pStream, ouro::color _Foreground, ouro::color _Background, const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(_pStream, _Foreground, _Background, _Format, args); va_end(args); return n; }
+	inline int printf(ouro::color _Foreground, ouro::color _Background, const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(stdout, _Foreground, _Background, _Format, args); va_end(args); return n; }
 
 	void HookEvent(EVENT _Event, EventFn _Function);
 };

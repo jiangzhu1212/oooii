@@ -25,7 +25,7 @@
 #include <oCore/debugger.h>
 #include <oCore/tests/oCoreTestRequirements.h>
 
-namespace oCore {
+namespace ouro {
 	namespace tests {
 
 void TESTdebugger(requirements& _Requirements)
@@ -35,7 +35,7 @@ void TESTdebugger(requirements& _Requirements)
 		#ifdef _WIN64
 			static const char* sExpectedStack[] = 
 			{
-				"oCore::tests::TESTdebugger",
+				"ouro::tests::TESTdebugger",
 				"oCore_debugger::Run",
 				"oTestManager_Impl::RunTest",
 				"oTestManager_Impl::RunTests",
@@ -48,7 +48,7 @@ void TESTdebugger(requirements& _Requirements)
 		#else
 			static const char* sExpectedStack[] = 
 			{
-				"oCore::tests::TESTdebugger",
+				"ouro::tests::TESTdebugger",
 				"oCore_debugger::Run",
 				"oTestManager_Impl::RunTest",
 				"oTestManager_Impl::RunTests",
@@ -64,7 +64,7 @@ void TESTdebugger(requirements& _Requirements)
 		#ifdef _WIN64
 			static const char* sExpectedStack[] = 
 			{
-				"oCore::tests::TESTdebugger",
+				"ouro::tests::TESTdebugger",
 				"oCore_debugger::Run",
 				"oTestManager_Impl::RunTest",
 				"oTestManager_Impl::RunTests",
@@ -91,7 +91,7 @@ void TESTdebugger(requirements& _Requirements)
 				debugger::symbol_info sym = debugger::translate(addresses[i]);
 				//printf("%u: %s\n", i, sym.Name);
 				if (strcmp(sym.name, sExpectedStack[i]))
-					throw std::exception(oStd::formatf("Mismatch on stack trace at level %u", i).c_str());
+					throw std::exception(ouro::formatf("Mismatch on stack trace at level %u", i).c_str());
 			}
 
 	#endif
@@ -99,4 +99,4 @@ void TESTdebugger(requirements& _Requirements)
 
 
 	} // namespace debugger
-} // namespace oCore
+} // namespace ouro

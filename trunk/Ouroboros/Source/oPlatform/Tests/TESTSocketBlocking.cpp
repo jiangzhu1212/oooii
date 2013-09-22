@@ -45,8 +45,8 @@ struct PLATFORM_oSocketBlockingServer : public oSpecialTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{		
-		oStd::intrusive_ptr<threadsafe oSocketServer2> Server;
-		oStd::intrusive_ptr<threadsafe oSocket> Client;
+		ouro::intrusive_ptr<threadsafe oSocketServer2> Server;
+		ouro::intrusive_ptr<threadsafe oSocket> Client;
 		oConcurrency::event connectEvent;
 		connectEvent.reset();
 		
@@ -155,15 +155,15 @@ struct PLATFORM_oSocketBlocking : public oTest
 		{
 			int exitcode = 0;
 			char msg[512];
-			std::shared_ptr<oCore::process> Server;
+			std::shared_ptr<ouro::process> Server;
 			oTESTB(oSpecialTest::CreateProcess("PLATFORM_oSocketBlockingServer", &Server), "");
 			oTESTB(oSpecialTest::Start(Server.get(), msg, oCOUNTOF(msg), &exitcode), "%s", msg);
 		}
 
-		oStd::intrusive_ptr<threadsafe oSocket> Client;
+		ouro::intrusive_ptr<threadsafe oSocket> Client;
 		{
 			oSocket::DESC desc;
-			oStd::from_string( &desc.Addr, SERVER_HOSTNAME );
+			ouro::from_string( &desc.Addr, SERVER_HOSTNAME );
 			desc.ConnectionTimeoutMS = INITIAL_CONNECTION_TIMEOUT;
 			desc.BlockingSettings.RecvTimeout = TIMEOUT;
 			desc.BlockingSettings.SendTimeout = TIMEOUT;
@@ -173,7 +173,7 @@ struct PLATFORM_oSocketBlocking : public oTest
 
 		std::vector<char> msg(oMB(2));
 
-		size_t bytesReceived = Client->Recv(oStd::data(msg), (oSocket::size_t)oStd::size(msg));
+		size_t bytesReceived = Client->Recv(ouro::data(msg), (oSocket::size_t)ouro::size(msg));
 		if (bytesReceived)
 		{
 			oTRACE("CLIENT: %s received message: %s", Client->GetDebugName(), msg);
@@ -193,19 +193,19 @@ struct PLATFORM_oSocketBlocking : public oTest
 		{
 			"Here's message 1",
 			"And message 2",
-			"And oStd::finally a goodbye",
+			"And ouro::finally a goodbye",
 			"This message should not be sent because the server will close the connection. It is sent in response to receiving a large buffer.",
 		};
 
 		for (size_t i = 0; i < oCOUNTOF(sMessages); i++)
 		{
-			*oStd::data(msg) = 0;
+			*ouro::data(msg) = 0;
 			oTRACE("CLIENT: Waiting to receive data from server (%u)... ", i);
-			size_t bytesReceived = Client->Recv(oStd::data(msg), (oSocket::size_t)oStd::size(msg));
+			size_t bytesReceived = Client->Recv(ouro::data(msg), (oSocket::size_t)ouro::size(msg));
 			oTESTB(bytesReceived, "%u == Receive() failed on message %u %s: %s: %s", bytesReceived, i, i == 3 ? "(a large buffer)" : "", oErrorAsString(oErrorGetLast()), oErrorGetLastString());
 			if (bytesReceived)
 			{
-				oTRACE("CLIENT: received: %s", bytesReceived < 1024 ? oStd::data(msg) : "A large buffer");
+				oTRACE("CLIENT: received: %s", bytesReceived < 1024 ? ouro::data(msg) : "A large buffer");
 
 				if (bytesReceived > 1024)
 				{
@@ -236,7 +236,7 @@ struct PLATFORM_oSocketBlocking : public oTest
 		}
 
 		// Try to receive data beyond that which is sent to test failure condition
-		bytesReceived = Client->Recv(oStd::data(msg), (oSocket::size_t)oStd::size(msg));
+		bytesReceived = Client->Recv(ouro::data(msg), (oSocket::size_t)ouro::size(msg));
 
 		oTESTB(!bytesReceived, "client should not have received more data");
 

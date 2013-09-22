@@ -25,7 +25,7 @@
 #include "oManipulatorBase.h"
 #include <oCompute/oComputeConstants.h>
 
-namespace oStd { 
+namespace ouro { 
 
 const char* as_string(const oManipulator::AXIS& _Axis)
 {
@@ -46,7 +46,7 @@ const char* as_string(const oManipulator::AXIS& _Axis)
 	}
 }
 
-} // namespace oStd
+} // namespace ouro
 
 oManipulatorBase::oManipulatorBase(const DESC& _Desc, bool *_pSuccess) : Desc(_Desc), Picking(false)
 {

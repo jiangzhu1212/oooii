@@ -33,7 +33,7 @@
 #include <vector>
 
 #define oD3D11DEVICE() \
-	oStd::intrusive_ptr<ID3D11Device> D3DDevice; \
+	ouro::intrusive_ptr<ID3D11Device> D3DDevice; \
 	oVERIFY(Device->QueryInterface(&D3DDevice));
 
 // Call reg/unreg from device children implementations
@@ -120,16 +120,16 @@ struct oD3D11Device : oGPUDevice
 	// _____________________________________________________________________________
 	// Members
 
-	oStd::intrusive_ptr<ID3D11Device> D3DDevice;
-	oStd::intrusive_ptr<ID3D11DeviceContext> ImmediateContext;
-	oStd::intrusive_ptr<IDXGISwapChain> SwapChain;
-	oStd::intrusive_ptr<ID3D11BlendState> BlendStates[oGPU_BLEND_STATE_COUNT];
-	oStd::intrusive_ptr<ID3D11RasterizerState> SurfaceStates[oGPU_SURFACE_STATE_COUNT];
-	oStd::intrusive_ptr<ID3D11DepthStencilState> DepthStencilStates[oGPU_DEPTH_STENCIL_STATE_COUNT];
-	oStd::intrusive_ptr<ID3D11SamplerState> SamplerStates[oGPU_SAMPLER_STATE_COUNT];
+	ouro::intrusive_ptr<ID3D11Device> D3DDevice;
+	ouro::intrusive_ptr<ID3D11DeviceContext> ImmediateContext;
+	ouro::intrusive_ptr<IDXGISwapChain> SwapChain;
+	ouro::intrusive_ptr<ID3D11BlendState> BlendStates[oGPU_BLEND_STATE_COUNT];
+	ouro::intrusive_ptr<ID3D11RasterizerState> SurfaceStates[oGPU_SURFACE_STATE_COUNT];
+	ouro::intrusive_ptr<ID3D11DepthStencilState> DepthStencilStates[oGPU_DEPTH_STENCIL_STATE_COUNT];
+	ouro::intrusive_ptr<ID3D11SamplerState> SamplerStates[oGPU_SAMPLER_STATE_COUNT];
 
 	// used to flush an explicit setting of a UAV counter.
-	oStd::intrusive_ptr<ID3D11ComputeShader> NoopCS;
+	ouro::intrusive_ptr<ID3D11ComputeShader> NoopCS;
 
 	// These will hold null/noop values and are initialized only at construction
 	// time, so it's safe to access from command lists in multiple threads.

@@ -34,7 +34,7 @@
 #define oArcball_h
 
 #include <oBasis/oLinearAlgebra.h>
-#include <oStd/macros.h>
+#include <oBase/macros.h>
 #include <oCompute/oComputeConstants.h>
 
 enum oARCBALL_CONSTRAINT
@@ -129,7 +129,7 @@ public:
 	// (LastPos - PointerPos) * SpeedScalar
 	inline void Rotate(const float2& _ScreenPointDelta)
 	{
-		if (!oStd::equal(_ScreenPointDelta, oZERO2))
+		if (!ouro::equal(_ScreenPointDelta, oZERO2))
 		{
 			float3 OldT = qmul(invert(R), T - LookAt);
 			// Order matters on these multiplies.

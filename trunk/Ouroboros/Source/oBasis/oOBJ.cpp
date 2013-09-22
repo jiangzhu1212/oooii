@@ -23,21 +23,23 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oOBJ.h>
-#include <oStd/algorithm.h>
-#include <oStd/atof.h>
-#include <oStd/finally.h>
-#include <oStd/fixed_string.h>
-#include <oStd/assert.h>
-#include <oStd/macros.h>
+#include <oBase/algorithm.h>
+#include <oBase/atof.h>
+#include <oBase/finally.h>
+#include <oBase/fixed_string.h>
+#include <oBase/assert.h>
+#include <oBase/macros.h>
 #include <oStd/for.h>
-#include <oStd/timer.h>
-#include <oStd/unordered_map.h>
+#include <oBase/timer.h>
+#include <oBase/unordered_map.h>
 #include <oBasis/oContainer.h>
 #include <oBasis/oInvalid.h>
 #include <oBasis/oMath.h>
 #include <oBasis/oMeshUtil.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oStdLinearAllocator.h>
+
+using namespace ouro;
 
 // To translate from several index streams - one per vertex element stream - to 
 // a single index buffer, we'll need to replicate vertices by their unique 
@@ -50,21 +52,21 @@ typedef unsigned long long key_t;
 typedef unsigned int val_t;
 typedef std::pair<const key_t, val_t> pair_type;
 typedef oStdLinearAllocator<pair_type> allocator_type;
-typedef oStd::unordered_map<key_t, val_t, oNoopHash<key_t>, std::equal_to<key_t>, std::less<key_t>, allocator_type> index_map_t;
+typedef unordered_map<key_t, val_t, oNoopHash<key_t>, std::equal_to<key_t>, std::less<key_t>, allocator_type> index_map_t;
 
 oDEFINE_WHITESPACE_PARSING();
 
 static inline const char* ParseString(char* _StrDestination, size_t _SizeofStrDestination, const char* _S)
 {
-	oStd::move_next_word(&_S);
+	move_next_word(&_S);
 	const char* start = _S;
-	oStd::move_to_line_end(&_S);
+	move_to_line_end(&_S);
 	size_t len = std::distance(start, _S);
-	oStd::strncpy(_StrDestination, _SizeofStrDestination, start, len);
+	strncpy(_StrDestination, _SizeofStrDestination, start, len);
 	return _S;
 }
 
-template<size_t size> static inline const char* ParseString(oStd::fixed_string<char, size>& _StrDestination, const char* r) { return ParseString(_StrDestination, _StrDestination.capacity(), r); }
+template<size_t size> static inline const char* ParseString(ouro::fixed_string<char, size>& _StrDestination, const char* r) { return ParseString(_StrDestination, _StrDestination.capacity(), r); }
 
 enum oOBJ_VERTEX_ELEMENT
 {
@@ -116,7 +118,7 @@ struct oOBJ_ELEMENTS
 	// valid. The range is calculated in the second reduction pass.
 	std::vector<oOBJ_GROUP> Groups;
 
-	oStd::path_string MTLPath;
+	path_string MTLPath;
 };
 
 // Given a string that starts with the letter 'v', parse as a line of vector
@@ -129,25 +131,25 @@ static const char* oOBJParseVLine(const char* _V, bool _FlipHandedness, oOBJ_ELE
 	switch(*_V)
 	{
 		case ' ':
-			oStd::atof(&_V, &temp.x);
-			oStd::atof(&_V, &temp.y);
-			oStd::atof(&_V, &temp.z); if (_FlipHandedness) temp.z = -temp.z;
+			atof(&_V, &temp.x);
+			atof(&_V, &temp.y);
+			atof(&_V, &temp.z); if (_FlipHandedness) temp.z = -temp.z;
 			_pElements->Positions.push_back(temp);
 			oExtendBy(_pElements->Bound, temp);
 			break;
 		case 't':
-			oStd::move_to_whitespace(&_V);
-			oStd::atof(&_V, &temp.x);
-			oStd::atof(&_V, &temp.y);
-			if (!oStd::atof(&_V, &temp.z)) temp.z = 0.0f;
+			move_to_whitespace(&_V);
+			atof(&_V, &temp.x);
+			atof(&_V, &temp.y);
+			if (!atof(&_V, &temp.z)) temp.z = 0.0f;
 			if (_FlipHandedness) temp.y = 1.0f - temp.y;
 			_pElements->Texcoords.push_back(temp);
 			break;
 		case 'n':
-			oStd::move_to_whitespace(&_V);
-			oStd::atof(&_V, &temp.x);
-			oStd::atof(&_V, &temp.y);
-			oStd::atof(&_V, &temp.z); if (_FlipHandedness) temp.z = -temp.z;
+			move_to_whitespace(&_V);
+			atof(&_V, &temp.x);
+			atof(&_V, &temp.y);
+			atof(&_V, &temp.z); if (_FlipHandedness) temp.z = -temp.z;
 			_pElements->Normals.push_back(temp);
 			break;
 		oNODEFAULT;
@@ -161,12 +163,12 @@ static const char* oOBJParseVLine(const char* _V, bool _FlipHandedness, oOBJ_ELE
 // either the end of the string, or the end of the line.
 static const char* oOBJParseFLine(const char* _F, oOBJ_ELEMENTS* _pElements)
 {
-	oStd::move_to_whitespace(&_F);
-	oStd::move_past_line_whitespace(&_F);
+	move_to_whitespace(&_F);
+	move_past_line_whitespace(&_F);
 	oOBJ_FACE face;
 	face.NumIndices = 0;
 	face.GroupIndex = oUInt(_pElements->Groups.size());
-	while (face.NumIndices < 4 && *_F != 0 && !oStd::is_newline(*_F))
+	while (face.NumIndices < 4 && *_F != 0 && !is_newline(*_F))
 	{
 		bool foundSlash = false;
 		int element = oOBJ_POSITIONS;
@@ -218,11 +220,11 @@ static const char* oOBJParseFLine(const char* _F, oOBJ_ELEMENTS* _pElements)
 			else
 				break;
 
-			oStd::move_past_line_whitespace(&_F);
+			move_past_line_whitespace(&_F);
 
 		} while(foundSlash);
 
-		oStd::move_next_word(&_F);
+		move_next_word(&_F);
 		face.NumIndices++;
 	}
 
@@ -240,7 +242,7 @@ static bool oOBJParseElements(const char* _OBJString, bool _FlipHandedness, oOBJ
 	const char* line = _OBJString;
 	while (*line)
 	{
-		oStd::move_past_line_whitespace(&line);
+		move_past_line_whitespace(&line);
 		switch (*line)
 		{
 			case 'v':
@@ -265,8 +267,8 @@ static bool oOBJParseElements(const char* _OBJString, bool _FlipHandedness, oOBJ
 			default:
 				break;
 		}
-		oStd::move_to_line_end(&line);
-		oStd::move_past_newline(&line);
+		move_to_line_end(&line);
+		move_past_newline(&line);
 	}
 
 	// close out a remaining group one last time
@@ -390,7 +392,7 @@ static void ReduceElements(const oOBJ_INIT& _Init
 
 	// Go back through groups and calc min/max verts
 	oFOR(oOBJ_GROUP& g, _pSinglyIndexedElements->Groups)
-		oCalcMinMaxVertices(oStd::data(*_pIndices), g.Range.StartPrimitive*3, g.Range.NumPrimitives*3, oUInt(_pSinglyIndexedElements->Positions.size()), &g.Range.MinVertex, &g.Range.MaxVertex);
+		oCalcMinMaxVertices(data(*_pIndices), g.Range.StartPrimitive*3, g.Range.NumPrimitives*3, oUInt(_pSinglyIndexedElements->Positions.size()), &g.Range.MinVertex, &g.Range.MaxVertex);
 }
 
 static uint oOBJGetVertexElements(oGPU_VERTEX_ELEMENT* _pElements, uint _MaxNumElements, const oOBJ_DESC& _OBJDesc)
@@ -442,7 +444,7 @@ protected:
 	std::vector<unsigned int> Indices;
 	oGPU_VERTEX_ELEMENT GPUVertexElements[3];
 	uint NumGPUVertexElements;
-	oStd::path_string OBJPath;
+	path_string OBJPath;
 	oRefCount RefCount;
 };
 
@@ -463,7 +465,7 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 	
 	{
 		void* pIndexAllocatorArena = malloc(kInitialReserve);
-		oStd::finally FreeArena([&] { if (pIndexAllocatorArena) free(pIndexAllocatorArena); });
+		finally FreeArena([&] { if (pIndexAllocatorArena) free(pIndexAllocatorArena); });
 		index_map_t IndexMap(0, index_map_t::hasher(), index_map_t::key_equal(), std::less<key_t>(), allocator_type(pIndexAllocatorArena, kInitialReserve, &IndexMapMallocBytes));
 
 		// OBJ files don't contain a same-sized vertex streams for each elements, 
@@ -491,8 +493,8 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 	#ifdef _DEBUG
 		if (IndexMapMallocBytes)
 		{
-			oStd::mstring reserved, additional;
-			oTRACE("oOBJ: %s index map allocated %s additional indices beyond the initial EstimatedNumIndices=%s", oSAFESTRN(_OBJPath), oStd::format_commas(additional, (uint)oUInt(IndexMapMallocBytes / sizeof(unsigned int))), oStd::format_commas(reserved, _Init.EstimatedNumVertices));
+			mstring reserved, additional;
+			oTRACE("oOBJ: %s index map allocated %s additional indices beyond the initial EstimatedNumIndices=%s", oSAFESTRN(_OBJPath), format_commas(additional, (uint)oUInt(IndexMapMallocBytes / sizeof(unsigned int))), format_commas(reserved, _Init.EstimatedNumVertices));
 		}
 	#endif
 
@@ -515,11 +517,11 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 		if (CalcNormals)
 		{
 			oTRACE("Calculating vertex normals... (%s)", oSAFESTRN(_OBJPath));
-			oStd::sstring StrTime;
-			oStd::timer t;
+			sstring StrTime;
+			timer t;
 			VertexElements.Normals.resize(VertexElements.Positions.size());
-			oCalcVertexNormals(oStd::data(VertexElements.Normals), oStd::data(Indices), Indices.size(), oStd::data(VertexElements.Positions), VertexElements.Positions.size(), _Init.CounterClockwiseFaces, true);
-			oStd::format_duration(StrTime, t.seconds(), true, true);
+			oCalcVertexNormals(data(VertexElements.Normals), data(Indices), Indices.size(), data(VertexElements.Positions), VertexElements.Positions.size(), _Init.CounterClockwiseFaces, true);
+			format_duration(StrTime, t.seconds(), true, true);
 			oTRACE("Calculating vertex normals done in %s. (%s)", StrTime.c_str(), oSAFESTRN(_OBJPath));
 		}
 	}
@@ -542,16 +544,16 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 		if (CalcTexcoords)
 		{
 			VertexElements.Texcoords.resize(VertexElements.Positions.size());
-			oStd::sstring StrTime;
+			sstring StrTime;
 			double SolverTime = 0.0;
 			oTRACE("Calculating texture coordinates... (%s)", oSAFESTRN(_OBJPath));
-			if (!oCalcTexcoords(VertexElements.Bound, oStd::data(Indices), oUInt(Indices.size()), oStd::data(VertexElements.Positions), oStd::data(VertexElements.Texcoords), oUInt(VertexElements.Texcoords.size()), &SolverTime))
+			if (!oCalcTexcoords(VertexElements.Bound, data(Indices), oUInt(Indices.size()), data(VertexElements.Positions), data(VertexElements.Texcoords), oUInt(VertexElements.Texcoords.size()), &SolverTime))
 			{
 				VertexElements.Texcoords.clear();
 				oTRACE("Calculating texture coordinates failed. %s (%s)", oErrorGetLastString(), _OBJPath);
 			}
 
-			oStd::format_duration(StrTime, SolverTime, true, true);
+			format_duration(StrTime, SolverTime, true, true);
 			oTRACE("Calculating texture coordinates done in %s. (%s)", StrTime.c_str(), oSAFESTRN(_OBJPath));
 		}
 	}
@@ -567,11 +569,11 @@ void oOBJImpl::GetDesc(oOBJ_DESC* _pDesc) const
 {
 	_pDesc->OBJPath = OBJPath;
 	_pDesc->MTLPath = VertexElements.MTLPath;
-	_pDesc->pPositions = oStd::data(VertexElements.Positions);
-	_pDesc->pNormals = oStd::data(VertexElements.Normals);
-	_pDesc->pTexcoords = oStd::data(VertexElements.Texcoords);
-	_pDesc->pIndices = oStd::data(Indices);
-	_pDesc->pGroups = oStd::data(VertexElements.Groups);
+	_pDesc->pPositions = data(VertexElements.Positions);
+	_pDesc->pNormals = data(VertexElements.Normals);
+	_pDesc->pTexcoords = data(VertexElements.Texcoords);
+	_pDesc->pIndices = data(Indices);
+	_pDesc->pGroups = data(VertexElements.Groups);
 	_pDesc->pVertexElements = GPUVertexElements;
 	_pDesc->NumVertexElements = NumGPUVertexElements;
 	_pDesc->NumVertices = oUInt(VertexElements.Positions.size());
@@ -592,7 +594,7 @@ bool oOBJCreate(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT& _
 	return success;
 }
 
-namespace oStd {
+namespace ouro {
 
 bool from_string(oOBJ_TEXTURE_TYPE* _pType, const char* _StrSource)
 {
@@ -621,34 +623,34 @@ bool from_string(oOBJ_TEXTURE_TYPE* _pType, const char* _StrSource)
 	return false;
 }
 
-} // namespace oStd
+} // namespace ouro
 
 bool oFromStringOptVec(float3* _pDest, const char** _pStart)
 {
 	const char* c = *_pStart;
-	oStd::move_past_line_whitespace(&++c);
-	if (!oStd::from_string(_pDest, c))
+	move_past_line_whitespace(&++c);
+	if (!from_string(_pDest, c))
 	{
-		if (!oStd::from_string((float2*)_pDest, c))
+		if (!from_string((float2*)_pDest, c))
 		{
-			if (!oStd::from_string((float*)&_pDest, c))
+			if (!from_string((float*)&_pDest, c))
 				return false;
 
-			oStd::move_to_whitespace(&c);
+			move_to_whitespace(&c);
 		}
 
 		else
 		{
-			oStd::move_next_word(&c);
-			oStd::move_to_whitespace(&c);
+			move_next_word(&c);
+			move_to_whitespace(&c);
 		}
 	}
 
 	else
 	{
-		oStd::move_next_word(&c);
-		oStd::move_next_word(&c);
-		oStd::move_to_whitespace(&c);
+		move_next_word(&c);
+		move_next_word(&c);
+		move_to_whitespace(&c);
 	}
 
 	*_pStart = c;
@@ -685,28 +687,28 @@ static bool oOBJParseTextureDesc(const char* _TextureLine, oOBJ_TEXTURE* _pTextu
 			else if (*c == 'm' && *(c+1) == 'm')
 			{
 				c += 2;
-				oStd::move_past_line_whitespace(&++c);
-				if (!oStd::from_string(&_pTexture->BrightnessGain, c))
+				move_past_line_whitespace(&++c);
+				if (!from_string(&_pTexture->BrightnessGain, c))
 					return false;
 
-				oStd::move_next_word(&c);
-				oStd::move_to_whitespace(&c);
+				move_next_word(&c);
+				move_to_whitespace(&c);
 			}
 
 			else if (*c == 'b' && *(c+1) == 'm')
 			{
 				c += 2;
-				oStd::move_past_line_whitespace(&++c);
-				if (!oStd::from_string(&_pTexture->BumpMultiplier, c))
+				move_past_line_whitespace(&++c);
+				if (!from_string(&_pTexture->BumpMultiplier, c))
 					return false;
 
-				oStd::move_to_whitespace(&c);
+				move_to_whitespace(&c);
 			}
 
 			else if (!_memicmp(c, "blendu", 6))
 			{
 				c += 6;
-				oStd::move_past_line_whitespace(&c);
+				move_past_line_whitespace(&c);
 				_pTexture->Blendu = !!_memicmp(c, "on", 2);
 				c += _pTexture->Blendu ? 2 : 3;
 			}
@@ -714,7 +716,7 @@ static bool oOBJParseTextureDesc(const char* _TextureLine, oOBJ_TEXTURE* _pTextu
 			else if (!_memicmp(c, "blendv", 6))
 			{
 				c += 6;
-				oStd::move_past_line_whitespace(&c);
+				move_past_line_whitespace(&c);
 				_pTexture->Blendv = !!_memicmp(c, "on", 2);
 				c += _pTexture->Blendv ? 2 : 3;
 			}
@@ -722,28 +724,28 @@ static bool oOBJParseTextureDesc(const char* _TextureLine, oOBJ_TEXTURE* _pTextu
 			else if (!_memicmp(c, "boost", 5))
 			{
 				c += 5;
-				oStd::move_past_line_whitespace(&c);
-				if (!oStd::from_string(&_pTexture->Boost, c))
+				move_past_line_whitespace(&c);
+				if (!from_string(&_pTexture->Boost, c))
 					return false;
 
-				oStd::move_to_whitespace(&c);
+				move_to_whitespace(&c);
 			}
 
 			else if (!_memicmp(c, "texres", 6))
 			{
 				c += 6;
-				oStd::move_past_line_whitespace(&c);
-				if (!oStd::from_string(&_pTexture->Resolution, c))
+				move_past_line_whitespace(&c);
+				if (!from_string(&_pTexture->Resolution, c))
 					return false;
 
-				oStd::move_next_word(&c);
-				oStd::move_to_whitespace(&c);
+				move_next_word(&c);
+				move_to_whitespace(&c);
 			}
 
 			else if (!_memicmp(c, "clamp", 5))
 			{
 				c += 5;
-				oStd::move_past_line_whitespace(&c);
+				move_past_line_whitespace(&c);
 				_pTexture->Blendv = !!_memicmp(c, "on", 2);
 				c += _pTexture->Blendv ? 2 : 3;
 			}
@@ -751,22 +753,22 @@ static bool oOBJParseTextureDesc(const char* _TextureLine, oOBJ_TEXTURE* _pTextu
 			else if (!_memicmp(c, "imfchan", 7))
 			{
 				c += 7;
-				oStd::move_past_line_whitespace(&c);
+				move_past_line_whitespace(&c);
 				_pTexture->IMFChan = *c++;
 			}
 
 			else if (!_memicmp(c, "type", 4))
 			{
 				c += 4;
-				oStd::move_past_line_whitespace(&c);
+				move_past_line_whitespace(&c);
 
-				if (!oStd::from_string(&_pTexture->Type, c))
+				if (!from_string(&_pTexture->Type, c))
 					return false;
 			}
 		}
 		else
 		{
-			oStd::move_past_line_whitespace(&c);
+			move_past_line_whitespace(&c);
 			_pTexture->Path = c;
 			return true;
 		}
@@ -788,12 +790,12 @@ static bool oMTLParse(const char* _MTLPath, const char* _MTLString, std::vector<
 	const char* r = _MTLString;
 	while (*r)
 	{
-		oStd::move_past_line_whitespace(&r);
+		move_past_line_whitespace(&r);
 		switch (*r)
 		{
 			case 'n':
 				r += 6; // "newmtl"
-				oStd::move_past_line_whitespace(&r);
+				move_past_line_whitespace(&r);
 				sscanf_s(r, "%[^\r|^\n]", buf, oCOUNTOF(buf));
 				_pMTLLibrary->resize(_pMTLLibrary->size() + 1);
 				_pMTLLibrary->back().Name = buf;
@@ -843,14 +845,14 @@ static bool oMTLParse(const char* _MTLPath, const char* _MTLString, std::vector<
 				break;
 			case 'i':
 				r += 5; // "illum"
-				oStd::move_past_line_whitespace(&r);
+				move_past_line_whitespace(&r);
 				sscanf_s(r, "%d", &_pMTLLibrary->back().Illum);
 				break;
 			default:
 				break;
 		}
-		oStd::move_to_line_end(&r);
-		oStd::move_past_newline(&r);
+		move_to_line_end(&r);
+		move_past_newline(&r);
 	}
 
 	return true;
@@ -863,7 +865,7 @@ struct oMTLImpl : oMTL
 	oMTLImpl(const char* _MTLPath, const char* _MTLString, bool* _pSuccess);
 	void GetDesc(oMTL_DESC* _pDesc) const threadsafe override;
 	std::vector<oOBJ_MATERIAL> Materials;
-	oStd::path_string MTLPath;
+	path_string MTLPath;
 	oRefCount RefCount;
 };
 
@@ -879,7 +881,7 @@ void oMTLImpl::GetDesc(oMTL_DESC* _pDesc) const threadsafe
 	auto& m = oThreadsafe(Materials); // safe because data is const throughout this object's lifetime
 
 	_pDesc->MTLPath = MTLPath;
-	_pDesc->pMaterials = oStd::data(m);
+	_pDesc->pMaterials = data(m);
 	_pDesc->NumMaterials = oUInt(m.size());
 }
 

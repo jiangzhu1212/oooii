@@ -23,12 +23,15 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oSurfaceResize.h>
-#include <oStd/fixed_vector.h>
+#include <oBase/fixed_vector.h>
+#include <oBase/memory.h>
 #include <oConcurrency/oConcurrency.h>
 #include <oBasis/oError.h>
 #include <oBasis/oMath.h>
 #include <oBasis/oRTTI.h>
 #include <vector>
+
+using namespace ouro;
 
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oSURFACE_FILTER)
 	oRTTI_ENUM_BEGIN_VALUES(oSURFACE_FILTER)
@@ -121,7 +124,7 @@ struct Filter : public T
 	static const int Support = 2*Width + 1;
 	struct Entry
 	{
-		oStd::fixed_vector<float, Support> Cache;
+		fixed_vector<float, Support> Cache;
 		int Left, Right;
 	};
 	std::vector<Entry> FilterCache;
@@ -198,8 +201,8 @@ bool oSurfaceResizeHorizontal(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONS
 
 	oConcurrency::serial_for(0, _DstDesc.Dimensions.y, [&](size_t _y){
 		int y = oInt(_y);
-		const uchar* oRESTRICT srcRow = (uchar*)oStd::byte_add(srcData, y*_SrcMap.RowPitch);
-		uchar* oRESTRICT dstRow = (uchar*)oStd::byte_add(dstData, y*_DstMap->RowPitch);
+		const uchar* oRESTRICT srcRow = (uchar*)byte_add(srcData, y*_SrcMap.RowPitch);
+		uchar* oRESTRICT dstRow = (uchar*)byte_add(dstData, y*_DstMap->RowPitch);
 
 		for(int x = 0; x < _DstDesc.Dimensions.x; ++x)
 		{
@@ -242,7 +245,7 @@ bool oSurfaceResizeVertical(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_
 
 	oConcurrency::serial_for(0, _DstDesc.Dimensions.y, [&](size_t _y){
 		int y = oInt(_y);
-		uchar* oRESTRICT dstRow = oStd::byte_add(dstData, y*_DstMap->RowPitch);
+		uchar* oRESTRICT dstRow = byte_add(dstData, y*_DstMap->RowPitch);
 
 		for(int x = 0; x < _DstDesc.Dimensions.x; ++x)
 		{
@@ -255,7 +258,7 @@ bool oSurfaceResizeVertical(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_
 
 			for (int srcY = filterEntry.Left;srcY <= filterEntry.Right; ++srcY)
 			{
-				const uchar* oRESTRICT srcElement = oStd::byte_add(srcData, srcY*_SrcMap.RowPitch + x*ELEMENT_SIZE);
+				const uchar* oRESTRICT srcElement = byte_add(srcData, srcY*_SrcMap.RowPitch + x*ELEMENT_SIZE);
 
 				for (int i = 0;i < ELEMENT_SIZE; ++i)
 				{
@@ -296,8 +299,8 @@ bool oSurfaceResize(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_S
 		oConcurrency::serial_for(0, _DstDesc.Dimensions.y, [&](size_t _y){
 			int y = oInt(_y);
 			int row = (y*_SrcDesc.Dimensions.y)/_DstDesc.Dimensions.y;
-			const char* oRESTRICT srcRow = oStd::byte_add(srcData, row*_SrcMap.RowPitch);
-			char* oRESTRICT dstRow = oStd::byte_add(dstData, y*_DstMap->RowPitch);
+			const char* oRESTRICT srcRow = byte_add(srcData, row*_SrcMap.RowPitch);
+			char* oRESTRICT dstRow = byte_add(dstData, y*_DstMap->RowPitch);
 
 			int step = 0;
 			for(int x = 0; x < _DstDesc.Dimensions.x; ++x)
@@ -465,7 +468,7 @@ bool oSurfaceClip(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUB
 		return oErrorSetLast(std::errc::invalid_argument, "_srcOffset + the dimensions of the destination, must be within the dimensions of the source");
 
 	int elementSize = oSurfaceFormatGetSize(_SrcDesc.Format);
-	oStd::memcpy2d(_DstMap->pData, _DstMap->RowPitch, oStd::byte_add(_SrcMap.pData, _SrcMap.RowPitch*_SrcOffset.y + elementSize*_SrcOffset.x), _SrcMap.RowPitch, _DstDesc.Dimensions.x*elementSize, _DstDesc.Dimensions.y);
+	memcpy2d(_DstMap->pData, _DstMap->RowPitch, byte_add(_SrcMap.pData, _SrcMap.RowPitch*_SrcOffset.y + elementSize*_SrcOffset.x), _SrcMap.RowPitch, _DstDesc.Dimensions.x*elementSize, _DstDesc.Dimensions.y);
 
 	return true;
 }
@@ -486,7 +489,7 @@ bool oSurfacePad(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUBR
 		return oErrorSetLast(std::errc::invalid_argument, "_srcOffset + the dimensions of the destination, must be within the dimensions of the source");
 
 	int elementSize = oSurfaceFormatGetSize(_SrcDesc.Format);
-	oStd::memcpy2d(oStd::byte_add(_DstMap->pData, _DstMap->RowPitch*_DstOffset.y + elementSize*_DstOffset.x), _DstMap->RowPitch, _SrcMap.pData, _SrcMap.RowPitch, _SrcDesc.Dimensions.x*elementSize, _SrcDesc.Dimensions.y);
+	memcpy2d(byte_add(_DstMap->pData, _DstMap->RowPitch*_DstOffset.y + elementSize*_DstOffset.x), _DstMap->RowPitch, _SrcMap.pData, _SrcMap.RowPitch, _SrcDesc.Dimensions.x*elementSize, _SrcDesc.Dimensions.y);
 	
 	return true;
 }

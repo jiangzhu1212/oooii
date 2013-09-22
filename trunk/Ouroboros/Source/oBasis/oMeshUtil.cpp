@@ -23,9 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oMeshUtil.h>
-#include <oStd/algorithm.h>
-#include <oStd/assert.h>
-#include <oStd/byte.h>
+#include <oBase/algorithm.h>
+#include <oBase/assert.h>
+#include <oBase/byte.h>
 #include <oConcurrency/oConcurrency.h>
 #include <oBasis/oError.h>
 #include <oBasis/oInt.h>
@@ -33,13 +33,15 @@
 #include <oBasis/oMath.h>
 #include <vector>
 
+using namespace ouro;
+
 void oTransformPoints(const float4x4& _Matrix, float3* oRESTRICT _pDestination, unsigned int _DestinationStride, const float3* oRESTRICT _pSource, unsigned int _SourceStride, unsigned int _NumPoints)
 {
 	for (unsigned int i = 0; i < _NumPoints; i++)
 	{
 		*_pDestination = mul(_Matrix, float4(*_pSource, 1.0f)).xyz();
-		_pDestination = oStd::byte_add(_pDestination, _DestinationStride);
-		_pSource = oStd::byte_add(_pSource, _SourceStride);
+		_pDestination = byte_add(_pDestination, _DestinationStride);
+		_pSource = byte_add(_pSource, _SourceStride);
 	}
 }
 
@@ -50,8 +52,8 @@ void oTransformVectors(const float4x4& _Matrix, float3* oRESTRICT _pDestination,
 	for (unsigned int i = 0; i < _NumVectors; i++)
 	{
 		*_pDestination = m_ * (*_pSource);
-		_pDestination = oStd::byte_add(_pDestination, _DestinationStride);
-		_pSource = oStd::byte_add(_pSource, _SourceStride);
+		_pDestination = byte_add(_pDestination, _DestinationStride);
+		_pSource = byte_add(_pSource, _SourceStride);
 	}
 }
 
@@ -73,7 +75,7 @@ template<typename T> bool oRemoveDegeneratesT(const TVEC3<T>* _pPositions, size_
 		const TVEC3<T>& b = _pPositions[_pIndices[J]];
 		const TVEC3<T>& c = _pPositions[_pIndices[K]];
 
-		if (oStd::equal(cross(a - b, a - c), TVEC3<T>(T(0.0), T(0.0), T(0.0))))
+		if (ouro::equal(cross(a - b, a - c), TVEC3<T>(T(0.0), T(0.0), T(0.0))))
 		{
 			_pIndices[I] = oInvalid;
 			_pIndices[J] = oInvalid;
@@ -118,7 +120,7 @@ template<typename T> static void CalculateFace(size_t index, TVEC3<T>* _pFaceNor
 
 	// gracefully put in a zero vector for degenerate faces
 	float3 cr = cross(a - b, a - c);
-	_pFaceNormals[index] = oStd::equal(cr, float3(0.0f, 0.0f, 0.0f)) ? float3(0.0f, 0.0f, 0.0f) : CCWMultiplier * normalize(cr);
+	_pFaceNormals[index] = ouro::equal(cr, float3(0.0f, 0.0f, 0.0f)) ? float3(0.0f, 0.0f, 0.0f) : CCWMultiplier * normalize(cr);
 }
 
 template<typename T> bool oCalcFaceNormalsT(TVEC3<T>* _pFaceNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const TVEC3<T>* _pPositions, size_t _NumberOfPositions, bool _CCW)
@@ -150,7 +152,7 @@ template<typename InnerContainerT, typename VecT> void oCalcVertexNormalsT_Avera
 	for (size_t i = 0; i < _NumberOfVertices; i++)
 	{
 		// If there is length on the data already, leave it alone
-		if (!_OverwriteAll && oStd::equal(_pNormals[i], TVEC3<VecT>(VecT(0.0), VecT(0.0), VecT(0.0))))
+		if (!_OverwriteAll && ouro::equal(_pNormals[i], TVEC3<VecT>(VecT(0.0), VecT(0.0), VecT(0.0))))
 			continue;
 
 		TVEC3<VecT> N(VecT(0.0), VecT(0.0), VecT(0.0));
@@ -158,7 +160,7 @@ template<typename InnerContainerT, typename VecT> void oCalcVertexNormalsT_Avera
 		for (size_t t = 0; t < TrianglesUsed.size(); t++)
 		{
 			uint faceIndex = TrianglesUsed[t];
-			if (!oStd::equal(dot(_FaceNormals[faceIndex], _FaceNormals[faceIndex]), 0.0f))
+			if (!ouro::equal(dot(_FaceNormals[faceIndex], _FaceNormals[faceIndex]), 0.0f))
 				N += _FaceNormals[faceIndex];
 		}
 
@@ -170,13 +172,13 @@ template<typename T> bool oCalcVertexNormalsT(TVEC3<T>* _pVertexNormals, const u
 {											
 	std::vector<TVEC3<T>> faceNormals(_NumberOfIndices / 3, TVEC3<T>(T(0.0), T(0.0), T(0.0)));
 
-	if (!oCalcFaceNormals(oStd::data(faceNormals), _pIndices, _NumberOfIndices, _pPositions, _NumberOfVertices, _CCW))
+	if (!oCalcFaceNormals(data(faceNormals), _pIndices, _NumberOfIndices, _pPositions, _NumberOfVertices, _CCW))
 		return false;
 
 	const uint nFaces = oUInt(_NumberOfIndices) / 3;
 
 	const size_t REASONABLE_MAX_FACES_PER_VERTEX = 32;
-	std::vector<oStd::fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>> trianglesUsedByVertexA(_NumberOfVertices);
+	std::vector<fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>> trianglesUsedByVertexA(_NumberOfVertices);
 	std::vector<std::vector<uint>> trianglesUsedByVertex;
 	bool UseVecVec = false;
 
@@ -186,9 +188,9 @@ template<typename T> bool oCalcVertexNormalsT(TVEC3<T>* _pVertexNormals, const u
 	// for each vertex, store a list of the faces to which it contributes
 	for (uint i = 0; i < nFaces; i++)
 	{
-		oStd::fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>& a = trianglesUsedByVertexA[_pIndices[i*3]];
-		oStd::fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>& b = trianglesUsedByVertexA[_pIndices[i*3+1]];
-		oStd::fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>& c = trianglesUsedByVertexA[_pIndices[i*3+2]];
+		fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>& a = trianglesUsedByVertexA[_pIndices[i*3]];
+		fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>& b = trianglesUsedByVertexA[_pIndices[i*3+1]];
+		fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>& c = trianglesUsedByVertexA[_pIndices[i*3+2]];
 
 		// maybe oArray should throw? and catch it here instead of this?
 		if (a.size() == a.capacity() || b.size() == b.capacity() || c.size() == c.capacity())
@@ -197,23 +199,23 @@ template<typename T> bool oCalcVertexNormalsT(TVEC3<T>* _pVertexNormals, const u
 			break;
 		}
 
-		oStd::push_back_unique(a, i);
-		oStd::push_back_unique(b, i);
-		oStd::push_back_unique(c, i);
+		push_back_unique(a, i);
+		push_back_unique(b, i);
+		push_back_unique(c, i);
 	}
 
 	if (UseVecVec)
 	{
-		oStd::free_memory(trianglesUsedByVertexA);
+		free_memory(trianglesUsedByVertexA);
 		trianglesUsedByVertex.resize(_NumberOfVertices);
 
 		// Without MSVC's std::vector/secure CRT slowness, this would be all that's
 		// needed to bin all the faces for each vertex.
 		for (uint i = 0; i < nFaces; i++)
 		{
-			oStd::push_back_unique(trianglesUsedByVertex[_pIndices[i*3]], i);
-			oStd::push_back_unique(trianglesUsedByVertex[_pIndices[i*3+1]], i);
-			oStd::push_back_unique(trianglesUsedByVertex[_pIndices[i*3+2]], i);
+			push_back_unique(trianglesUsedByVertex[_pIndices[i*3]], i);
+			push_back_unique(trianglesUsedByVertex[_pIndices[i*3+1]], i);
+			push_back_unique(trianglesUsedByVertex[_pIndices[i*3+2]], i);
 		}
 
 		oCalcVertexNormalsT_AverageFaceNormals(trianglesUsedByVertex, faceNormals, _pVertexNormals, _NumberOfVertices, _OverwriteAll);

@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oSingleton.h>
@@ -30,6 +30,8 @@
 #include <oPlatform/Windows/oDXGI.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinWindowing.h>
+
+using namespace ouro;
 
 #if oDXVER >= oDXVER_10
 
@@ -93,13 +95,13 @@ bool oDXGICreateSwapChain(IUnknown* _pDevice, bool _Fullscreen, UINT _Width, UIN
 	if (_EnableGDICompatibility)
 		d.Flags |= DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
 	
-	oStd::intrusive_ptr<IDXGIDevice> D3DDevice;
+	intrusive_ptr<IDXGIDevice> D3DDevice;
 	oVB_RETURN2(_pDevice->QueryInterface(&D3DDevice));
 
-	oStd::intrusive_ptr<IDXGIAdapter> Adapter;
+	intrusive_ptr<IDXGIAdapter> Adapter;
 	oVB_RETURN2(D3DDevice->GetAdapter(&Adapter));
 
-	oStd::intrusive_ptr<IDXGIFactory> Factory;
+	intrusive_ptr<IDXGIFactory> Factory;
 	oVB_RETURN2(Adapter->GetParent(__uuidof(IDXGIFactory), (void**)&Factory));
 	oVB_RETURN2(Factory->CreateSwapChain(_pDevice, &d, _ppSwapChain));
 	
@@ -137,9 +139,9 @@ struct oSCREEN_MODE
 
 bool oDXGIGetDC(ID3D11RenderTargetView* _pRTV, HDC* _phDC)
 {
-	oStd::intrusive_ptr<ID3D11Resource> RT;
+	intrusive_ptr<ID3D11Resource> RT;
 	_pRTV->GetResource(&RT);
-	oStd::intrusive_ptr<IDXGISurface1> DXGISurface;
+	intrusive_ptr<IDXGISurface1> DXGISurface;
 	oVB_RETURN2(RT->QueryInterface(&DXGISurface));
 	oVB_RETURN2(DXGISurface->GetDC(false, _phDC));
 	return true;
@@ -147,9 +149,9 @@ bool oDXGIGetDC(ID3D11RenderTargetView* _pRTV, HDC* _phDC)
 
 bool oDXGIReleaseDC(ID3D11RenderTargetView* _pRTV, RECT* _pDirtyRect)
 {
-	oStd::intrusive_ptr<ID3D11Resource> RT;
+	intrusive_ptr<ID3D11Resource> RT;
 	_pRTV->GetResource(&RT);
-	oStd::intrusive_ptr<IDXGISurface1> DXGISurface;
+	intrusive_ptr<IDXGISurface1> DXGISurface;
 	oVB_RETURN2(RT->QueryInterface(&DXGISurface));
 	oVB_RETURN2(DXGISurface->ReleaseDC(_pDirtyRect));
 	return true;
@@ -157,9 +159,9 @@ bool oDXGIReleaseDC(ID3D11RenderTargetView* _pRTV, RECT* _pDirtyRect)
 
 bool oDXGIGetDC(IDXGISwapChain* _pSwapChain, HDC* _phDC)
 {
-	oStd::intrusive_ptr<ID3D11Texture2D> RT;
+	intrusive_ptr<ID3D11Texture2D> RT;
 	oVB_RETURN2(_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
-	oStd::intrusive_ptr<IDXGISurface1> DXGISurface;
+	intrusive_ptr<IDXGISurface1> DXGISurface;
 	oVB_RETURN2(RT->QueryInterface(&DXGISurface));
 	//oTRACE("GetDC() exception below (if it happens) cannot be try-catch caught, so ignore it or don't use GDI drawing.");
 	oVB_RETURN2(DXGISurface->GetDC(false, _phDC));
@@ -168,9 +170,9 @@ bool oDXGIGetDC(IDXGISwapChain* _pSwapChain, HDC* _phDC)
 
 bool oDXGIReleaseDC(IDXGISwapChain* _pSwapChain, RECT* _pDirtyRect)
 {
-	oStd::intrusive_ptr<ID3D11Texture2D> RT;
+	intrusive_ptr<ID3D11Texture2D> RT;
 	oVB_RETURN2(_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
-	oStd::intrusive_ptr<IDXGISurface1> DXGISurface;
+	intrusive_ptr<IDXGISurface1> DXGISurface;
 	oVB_RETURN2(RT->QueryInterface(&DXGISurface));
 	//oTRACE("ReleaseDC() exception below (if it happens) cannot be try-catch caught, so ignore it or don't use GDI drawing.");
 	oVB_RETURN2(DXGISurface->ReleaseDC(_pDirtyRect));
@@ -213,15 +215,15 @@ bool oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter, D3D_FEATURE_LEVEL* _pFeatureL
 #endif
 }
 
-oCore::adapter::info oDXGIGetAdapterDriverInfo(IDXGIAdapter* _pAdapter)
+ouro::adapter::info oDXGIGetAdapterDriverInfo(IDXGIAdapter* _pAdapter)
 {
 	DXGI_ADAPTER_DESC ad;
 	_pAdapter->GetDesc(&ad);
 
-	oCore::adapter::info adapter_info;
-	oCore::adapter::enumerate([&](const oCore::adapter::info& _Info)->bool
+	ouro::adapter::info adapter_info;
+	ouro::adapter::enumerate([&](const ouro::adapter::info& _Info)->bool
 	{
-		oStd::mstring vendor, device;
+		mstring vendor, device;
 		snprintf(vendor, "VEN_%X", ad.VendorId);
 		snprintf(device, "DEV_%04X", ad.DeviceId);
 		if (strstr(_Info.plugnplay_id, vendor) && strstr(_Info.plugnplay_id, device))
@@ -235,9 +237,9 @@ oCore::adapter::info oDXGIGetAdapterDriverInfo(IDXGIAdapter* _pAdapter)
 	return std::move(adapter_info);
 }
 
-bool oDXGIEnumAdapters(int _AdapterIndex, IDXGIAdapter** _ppAdapter, oCore::adapter::info* _pAdapterInfo)
+bool oDXGIEnumAdapters(int _AdapterIndex, IDXGIAdapter** _ppAdapter, ouro::adapter::info* _pAdapterInfo)
 {
-	oStd::intrusive_ptr<IDXGIFactory> Factory;
+	intrusive_ptr<IDXGIFactory> Factory;
 	oDXGICreateFactory(&Factory);
 	if (DXGI_ERROR_NOT_FOUND == Factory->EnumAdapters(_AdapterIndex, _ppAdapter))
 		return oErrorSetLast(std::errc::no_such_device, "Adapter %d", _AdapterIndex);
@@ -245,11 +247,11 @@ bool oDXGIEnumAdapters(int _AdapterIndex, IDXGIAdapter** _ppAdapter, oCore::adap
 	return true;
 }
 
-bool oDXGIEnumAdapters(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAdapter, const oCore::adapter::info& _AdapterInfo)>& _Enumerator, IDXGIFactory* _pFactory)
+bool oDXGIEnumAdapters(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAdapter, const ouro::adapter::info& _AdapterInfo)>& _Enumerator, IDXGIFactory* _pFactory)
 {
 	int AdapterIndex = 0;
-	oCore::adapter::info adapter_info;
-	oStd::intrusive_ptr<IDXGIAdapter> Adapter;
+	ouro::adapter::info adapter_info;
+	intrusive_ptr<IDXGIAdapter> Adapter;
 	while (oDXGIEnumAdapters(AdapterIndex, &Adapter, &adapter_info))
 	{
 		if (!_Enumerator(AdapterIndex, Adapter, adapter_info))
@@ -263,13 +265,13 @@ bool oDXGIEnumAdapters(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pA
 
 int oDXGIGetAdapterIndex(IDXGIAdapter* _pAdapter)
 {
-	oStd::intrusive_ptr<IDXGIFactory> Factory;
+	intrusive_ptr<IDXGIFactory> Factory;
 	oV(_pAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&Factory));
 
 	DXGI_ADAPTER_DESC ad, testDesc;
 	_pAdapter->GetDesc(&ad);
 	int Index = oInvalid;
-	oDXGIEnumAdapters([&](int _AdapterIndex, IDXGIAdapter* _pTestAdapter, const oCore::adapter::info& _AdapterInfo)->bool
+	oDXGIEnumAdapters([&](int _AdapterIndex, IDXGIAdapter* _pTestAdapter, const ouro::adapter::info& _AdapterInfo)->bool
 	{
 		_pTestAdapter->GetDesc(&testDesc);
 		if (!memcmp(&ad.AdapterLuid, &testDesc.AdapterLuid, sizeof(LUID)))
@@ -283,23 +285,23 @@ int oDXGIGetAdapterIndex(IDXGIAdapter* _pAdapter)
 	return Index;
 }
 
-oStd::version oDXGIGetInterfaceVersion(IDXGIAdapter* _pAdapter)
+version oDXGIGetInterfaceVersion(IDXGIAdapter* _pAdapter)
 {
 	LARGE_INTEGER li;
 	#if D3D11_MAJOR_VERSION
 		D3D_FEATURE_LEVEL FeatureLevel;
-		if (oDXGIGetFeatureLevel(_pAdapter, &FeatureLevel)) return oStd::version(11,0);
+		if (oDXGIGetFeatureLevel(_pAdapter, &FeatureLevel)) return version(11,0);
 	#endif
 	#ifdef _D3D10_1_CONSTANTS
-		if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D10Device1), &li)) return oStd::version(10,1);
+		if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D10Device1), &li)) return version(10,1);
 	#endif
 	#ifdef _D3D10_CONSTANTS
-		if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D10Device), &li)) return oStd::version(10,0);
+		if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D10Device), &li)) return version(10,0);
 	#endif
-	return oStd::version();
+	return version();
 }
 
-oStd::version oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter)
+version oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter)
 {
 #if D3D11_MAJOR_VERSION
 	D3D_FEATURE_LEVEL FeatureLevel;
@@ -311,14 +313,14 @@ oStd::version oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter)
 
 bool oDXGIEnumOutputs(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAdapter, int _OutputIndex, IDXGIOutput* _pOutput)>& _Enumerator, IDXGIFactory* _pFactory)
 {
-	oStd::intrusive_ptr<IDXGIFactory> Factory = _pFactory;
+	intrusive_ptr<IDXGIFactory> Factory = _pFactory;
 
 	if (!Factory)
 		oDXGICreateFactory(&Factory);
 
-	oDXGIEnumAdapters([&](int _AdapterIndex, IDXGIAdapter* _pAdapter, const oCore::adapter::info& _AdapterInfo)->bool
+	oDXGIEnumAdapters([&](int _AdapterIndex, IDXGIAdapter* _pAdapter, const ouro::adapter::info& _AdapterInfo)->bool
 	{
-		oStd::intrusive_ptr<IDXGIOutput> Output;
+		intrusive_ptr<IDXGIOutput> Output;
 		int o = 0;
 		while (DXGI_ERROR_NOT_FOUND != _pAdapter->EnumOutputs(o, &Output))
 		{
@@ -435,8 +437,8 @@ int oDXGIFindDisplayIndex(IDXGIOutput* _pOutput)
 	DXGI_OUTPUT_DESC odesc;
 	_pOutput->GetDesc(&odesc);
 
-	oCore::display::id ID;
-	try { ID = oCore::display::get_id(odesc.Monitor); }
+	ouro::display::id ID;
+	try { ID = ouro::display::get_id(odesc.Monitor); }
 	catch (std::exception&) { oErrorSetLast(std::errc::no_such_device); return oInvalid; }
 	
 	return *(int*)&ID;
@@ -500,7 +502,7 @@ void oDXGIGetCompatibleFormats(DXGI_FORMAT _DesiredFormat, DXGI_FORMAT* _pTextur
 	}
 }
 
-namespace oStd {
+namespace ouro {
 
 const char* as_string(const DXGI_FORMAT& _Format)
 {
@@ -626,6 +628,6 @@ const char* as_string(const DXGI_FORMAT& _Format)
 	}
 }
 
-} // namespace oStd
+} // namespace ouro
 
 #endif // oDXVER >= oDXVER_10

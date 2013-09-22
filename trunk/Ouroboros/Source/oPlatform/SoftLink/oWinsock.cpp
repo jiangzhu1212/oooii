@@ -23,10 +23,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oWinsock.h"
-#include <oStd/assert.h>
+#include <oBase/assert.h>
 #include <oBasis/oError.h>
 #include <oPlatform/oReporting.h>
 #include <cerrno>
+
+using namespace ouro;
 
 namespace detail {
 
@@ -196,13 +198,13 @@ oWinsock::oWinsock()
 
 	oReportingReference();
 
-	hWs2_32 = oCore::module::link("ws2_32.dll", detail::ws2_32_dll_Functions, (void**)&accept);
+	hWs2_32 = ouro::module::link("ws2_32.dll", ::detail::ws2_32_dll_Functions, (void**)&accept);
 	oASSERT(hWs2_32, "Failed to load and link ws2_32.dll");
 
-	hMswsock = oCore::module::link("mswsock.dll", detail::mswsock_dll_Functions, (void**)&GetAddressByName);
+	hMswsock = ouro::module::link("mswsock.dll", ::detail::mswsock_dll_Functions, (void**)&GetAddressByName);
 	oASSERT(hMswsock, "Failed to load and link mswsock.dll");
 
-	//hFwpucint = oModule::Link("fwpucint.dll", detail::fwpucint_dll_Functions, (void**)&WSADeleteSocketPeerTargetName, oCOUNTOF(detail::fwpucint_dll_Functions));
+	//hFwpucint = oModule::Link("fwpucint.dll", ::detail::fwpucint_dll_Functions, (void**)&WSADeleteSocketPeerTargetName, oCOUNTOF(detail::fwpucint_dll_Functions));
 	//oASSERT(hFwpucint, "Failed to load and link fwpucint.dll");
 
 	WORD wVersion = MAKEWORD(kWinsockMajorVersion, kWinsockMinorVersion);
@@ -223,9 +225,9 @@ oWinsock::~oWinsock()
 
 	WSACleanup();
 
-	oCore::module::close(hMswsock);
+	ouro::module::close(hMswsock);
 
-	oCore::module::close(hWs2_32);
+	ouro::module::close(hWs2_32);
 
 	oReportingRelease();
 }
@@ -845,7 +847,7 @@ bool oWinsockReceiveNonBlocking(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDesti
 	//else if ((ne.lNetworkEvents & FD_CLOSE) || ((ne.lNetworkEvents & FD_CONNECT) && err))
 	//{
 	//	oErrorSetLast(oWinsock::GetErrno(ne.iErrorCode[FD_CLOSE_BIT]));
-	//	oStd::atomic_exchange(_pInOutCanReceive, false);
+	//	atomic_exchange(_pInOutCanReceive, false);
 	//}
 
 	*_pBytesReceived = bytesReceived;
@@ -973,7 +975,7 @@ void oWinsockEnumerateAllAddress(oFUNCTION<void(sockaddr_in _Addr)> _Enumerator)
 	// From http://support.microsoft.com/kb/129315
 	oWinsock* ws = oWinsock::Singleton();
 
-	oStd::sstring HostName;
+	sstring HostName;
 	ws->gethostname( HostName.c_str(), oInt(HostName.capacity()));
 	HOSTENT* pHostEntry = ws->gethostbyname( HostName );
 

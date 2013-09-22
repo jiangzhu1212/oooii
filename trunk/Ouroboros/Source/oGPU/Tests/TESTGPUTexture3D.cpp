@@ -26,6 +26,8 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
+using namespace ouro;
+
 static const bool kIsDevMode = false;
 
 struct GPU_Texture3D_App : public oGPUTextureTestApp
@@ -35,7 +37,7 @@ struct GPU_Texture3D_App : public oGPUTextureTestApp
 	oGPU_TEST_PIPELINE GetPipeline() override { return oGPU_TEST_TEXTURE_3D; }
 	bool CreateTexture() override
 	{
-		oStd::intrusive_ptr<oImage> images[3];
+		intrusive_ptr<oImage> images[3];
 		if (!oImageLoad("file://DATA/Test/Textures/Red.png", oImage::FORCE_ALPHA, &images[0]))
 			return false;
 		if (!oImageLoad("file://DATA/Test/Textures/Green.png", oImage::FORCE_ALPHA, &images[1]))

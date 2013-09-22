@@ -34,7 +34,7 @@
 
 #include <oHLSL/oHLSLTypes.h>
 #include <math.h>
-#include <oStd/byte.h>
+#include <oBase/byte.h>
 
 #ifndef oHLSL_USE_FAST_ASINT
 	#define oHLSL_USE_FAST_ASINT 0
@@ -152,28 +152,28 @@ inline int asint(float f)
 	#endif
 }
 
-inline double asdouble(unsigned int lowbits, unsigned int highbits) { oStd::byte_swizzle64 s; s.as_unsigned_int[0] = lowbits; s.as_unsigned_int[1] = highbits; return s.as_double; }
-inline double2 asdouble(const uint2& lowbits, const uint2& highbits) { oStd::byte_swizzle64 s[2]; s[0].as_unsigned_int[0] = lowbits.x; s[0].as_unsigned_int[1] = highbits.x; s[1].as_unsigned_int[0] = lowbits.y; s[1].as_unsigned_int[1] = highbits.y; return double2(s[0].as_double, s[1].as_double); }
+inline double asdouble(unsigned int lowbits, unsigned int highbits) { ouro::byte_swizzle64 s; s.as_unsigned_int[0] = lowbits; s.as_unsigned_int[1] = highbits; return s.as_double; }
+inline double2 asdouble(const uint2& lowbits, const uint2& highbits) { ouro::byte_swizzle64 s[2]; s[0].as_unsigned_int[0] = lowbits.x; s[0].as_unsigned_int[1] = highbits.x; s[1].as_unsigned_int[0] = lowbits.y; s[1].as_unsigned_int[1] = highbits.y; return double2(s[0].as_double, s[1].as_double); }
 template<typename T> double asdouble(const T& value) { return *(double*)&value; }
 template<typename T> double2 asdouble(const TVEC2<T>& value) { return double2(asdouble(value.x), asdouble(value.y)); }
 template<typename T> double3 asdouble(const TVEC3<T>& value) { return double3(asdouble(value.x), asdouble(value.y), asdouble(value.z)); }
 template<typename T> double4 asdouble(const TVEC4<T>& value) { return double4(asdouble(value.x), asdouble(value.y), asdouble(value.z), asdouble(value.w)); }
 template<typename T> double4x4 asdouble(const TMAT4<T>& value) { return double4x4(asdouble(value.Column0), asdouble(value.Column1), asdouble(value.Column2), asdouble(value.Column3)); }
-inline float2 asfloat(const double& value) { oStd::byte_swizzle64 s; s.as_double = value; return float2(s.as_float[0], s.as_float[1]); }
-inline float4 asfloat(const double2& value) { oStd::byte_swizzle64 s[2]; s[0].as_double = value.x; s[1].as_double = value.y; return float4(s[0].as_float[0], s[0].as_float[1], s[1].as_float[0], s[1].as_float[1]); }
+inline float2 asfloat(const double& value) { ouro::byte_swizzle64 s; s.as_double = value; return float2(s.as_float[0], s.as_float[1]); }
+inline float4 asfloat(const double2& value) { ouro::byte_swizzle64 s[2]; s[0].as_double = value.x; s[1].as_double = value.y; return float4(s[0].as_float[0], s[0].as_float[1], s[1].as_float[0], s[1].as_float[1]); }
 template<typename T> float asfloat(const T& value) { return *(float*)&value; }
 template<typename T> float2 asfloat(const TVEC2<T>& value) { return float2(asfloat(value.x), asfloat(value.y)); }
 template<typename T> float3 asfloat(const TVEC3<T>& value) { return float3(asfloat(value.x), asfloat(value.y), asfloat(value.z)); }
 template<typename T> float4 asfloat(const TVEC4<T>& value) { return float4(asfloat(value.x), asfloat(value.y), asfloat(value.z), asfloat(value.w)); }
 template<typename T> float4x4 asfloat(const TMAT4<T>& value) { return float4x4(asfloat(value.Column0), asfloat(value.Column1), asfloat(value.Column2), asfloat(value.Column3)); }
-inline int2 asint(double value) { oStd::byte_swizzle64 s; s.as_double = value; return int2(s.as_int[0], s.as_int[1]); }
-inline int4 asint(double2 value) { oStd::byte_swizzle64 s[2]; s[0].as_double = value.x; s[1].as_double = value.y; return int4(s[0].as_int[0], s[0].as_int[1], s[1].as_int[0], s[1].as_int[1]); }
+inline int2 asint(double value) { ouro::byte_swizzle64 s; s.as_double = value; return int2(s.as_int[0], s.as_int[1]); }
+inline int4 asint(double2 value) { ouro::byte_swizzle64 s[2]; s[0].as_double = value.x; s[1].as_double = value.y; return int4(s[0].as_int[0], s[0].as_int[1], s[1].as_int[0], s[1].as_int[1]); }
 template<typename T> int asint(const T& value) { return *(int*)&value; }
 template<typename T> int2 asint(const TVEC2<T>& value) { return int2(asint(value.x), asint(value.y)); }
 template<typename T> int3 asint(const TVEC3<T>& value) { return int3(asint(value.x), asint(value.y), asint(value.z)); }
 template<typename T> int4 asint(const TVEC4<T>& value) { return int4(asint(value.x), asint(value.y), asint(value.z), asint(value.w)); }
 
-inline void asuint(double value, unsigned int& a, unsigned int& b) { oStd::byte_swizzle64 s; s.as_double = value; a = s.as_unsigned_int[0]; b = s.as_unsigned_int[1]; }
+inline void asuint(double value, unsigned int& a, unsigned int& b) { ouro::byte_swizzle64 s; s.as_double = value; a = s.as_unsigned_int[0]; b = s.as_unsigned_int[1]; }
 template<typename T> uint asuint(const T& value) { return *(uint*)&value; }
 template<typename T> uint2 asuint(const TVEC2<T>& value) { return uint2(asuint(value.x), asuint(value.y)); }
 template<typename T> uint3 asuint(const TVEC3<T>& value) { return uint3(asuint(value.x), asuint(value.y), asuint(value.z)); }

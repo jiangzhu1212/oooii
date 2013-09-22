@@ -24,36 +24,35 @@
  **************************************************************************/
 #include <oCore/filesystem.h>
 #include <oStd/date.h>
-#include <oStd/macros.h>
+#include <oBase/macros.h>
 #include "../oStd/win.h"
 #include <io.h>
 #include <memory>
 
-namespace oStd
-{
+namespace ouro {
 
-const char* as_string(const oCore::filesystem::file_type::value& _Type)
+const char* as_string(const ouro::filesystem::file_type::value& _Type)
 {
 	switch (_Type)
 	{
-		case oCore::filesystem::file_type::block_file: return "block_file";
-		case oCore::filesystem::file_type::character_file: return "character_file";
-		case oCore::filesystem::file_type::directory_file: return "directory_file";
-		case oCore::filesystem::file_type::fifo_file: return "fifo_file";
-		case oCore::filesystem::file_type::file_not_found: return "file_not_found";
-		case oCore::filesystem::file_type::regular_file: return "regular_file";
-		case oCore::filesystem::file_type::socket_file: return "socket_file";
-		case oCore::filesystem::file_type::status_unknown: return "status_unknown";
-		case oCore::filesystem::file_type::symlink_file: return "symlink_file";
-		case oCore::filesystem::file_type::type_unknown: return "type_unknown";
-		case oCore::filesystem::file_type::read_only_directory_file: return "read_only_directory_file";
-		case oCore::filesystem::file_type::read_only_file: return "read_only_file";
+		case ouro::filesystem::file_type::block_file: return "block_file";
+		case ouro::filesystem::file_type::character_file: return "character_file";
+		case ouro::filesystem::file_type::directory_file: return "directory_file";
+		case ouro::filesystem::file_type::fifo_file: return "fifo_file";
+		case ouro::filesystem::file_type::file_not_found: return "file_not_found";
+		case ouro::filesystem::file_type::regular_file: return "regular_file";
+		case ouro::filesystem::file_type::socket_file: return "socket_file";
+		case ouro::filesystem::file_type::status_unknown: return "status_unknown";
+		case ouro::filesystem::file_type::symlink_file: return "symlink_file";
+		case ouro::filesystem::file_type::type_unknown: return "type_unknown";
+		case ouro::filesystem::file_type::read_only_directory_file: return "read_only_directory_file";
+		case ouro::filesystem::file_type::read_only_file: return "read_only_file";
 		default: break;
 	}
 	return "?";
 }
 
-} // namespace oStd
+} // namespace ouro
 
 using namespace oStd;
 
@@ -94,7 +93,7 @@ using namespace oStd;
 	throw filesystem_error(strerr, make_error_code((std::errc::errc)err)); \
 } while (false)
 
-namespace oCore {
+namespace ouro {
 	namespace filesystem {
 
 static bool is_dot(const char* _Filename)
@@ -714,4 +713,4 @@ std::shared_ptr<char> load(const path& _Path, load_option::value _LoadOption)
 }
 
 	} // namespace filesystem
-} // namespace oCore
+} // namespace ouro

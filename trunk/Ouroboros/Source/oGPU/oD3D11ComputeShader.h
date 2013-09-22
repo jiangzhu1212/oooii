@@ -35,8 +35,8 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, ComputeShader, 0x17749c8b, 0x641,
 	oDEFINE_GPUDEVICECHILD_INTERFACE();
 	oDECLARE_GPUDEVICECHILD_CTOR(oD3D11, ComputeShader);
 	void GetDesc(DESC* _pDesc) const threadsafe override;
-	oStd::intrusive_ptr<ID3D11ComputeShader> ComputeShader;
-	oStd::sstring DebugName;
+	ouro::intrusive_ptr<ID3D11ComputeShader> ComputeShader;
+	ouro::sstring DebugName;
 };
 
 #endif

@@ -31,6 +31,8 @@
 
 #include <oPlatform/oWindow.h>
 
+using namespace ouro;
+
 static const int sSnapshotFrames[] = { 0, 1 };
 static const bool kIsDevMode = false;
 
@@ -41,7 +43,7 @@ public:
 
 	bool Render() override
 	{
-		static oStd::color sClearColors[] = { oStd::OOOiiGreen, oStd::White };
+		static color sClearColors[] = { OOOiiGreen, White };
 		PrimaryRenderTarget->SetClearColor(sClearColors[Device->GetFrameID() % oCOUNTOF(sClearColors)]);
 		CommandList->Begin();
 		CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);

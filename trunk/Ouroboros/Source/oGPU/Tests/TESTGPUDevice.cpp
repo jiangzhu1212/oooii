@@ -25,32 +25,34 @@
 #include <oPlatform/oTest.h>
 #include <oGPU/oGPU.h>
 
+using namespace ouro;
+
 struct GPU_Device : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oGPUDevice::INIT init("GPU_Device");
-		init.Version = oStd::version(10,0); // for more compatibility when running on varied machines
-		oStd::intrusive_ptr<oGPUDevice> Device;
+		init.Version = version(10,0); // for more compatibility when running on varied machines
+		intrusive_ptr<oGPUDevice> Device;
 		oTESTB0(oGPUDeviceCreate(init, &Device));
 
 		oGPUDevice::DESC desc;
 		Device->GetDesc(&desc);
 
 		oTESTB(desc.AdapterIndex == 0, "Index is incorrect");
-		oTESTB(desc.FeatureVersion >= oStd::version(9,0), "Invalid version retrieved");
-		oStd::sstring VRAMSize, SharedSize, IVer, FVer, DVer;
-		oStd::format_bytes(VRAMSize, desc.NativeMemory, 1);
-		oStd::format_bytes(SharedSize, desc.SharedSystemMemory, 1);
+		oTESTB(desc.FeatureVersion >= version(9,0), "Invalid version retrieved");
+		sstring VRAMSize, SharedSize, IVer, FVer, DVer;
+		format_bytes(VRAMSize, desc.NativeMemory, 1);
+		format_bytes(SharedSize, desc.SharedSystemMemory, 1);
 		snprintf(_StrStatus, _SizeofStrStatus, "%s %s %s feature level %s %s (%s shared) running on %s v%s drivers (%s)"
 			, desc.DeviceDescription.c_str()
-			, oStd::as_string(desc.API)
-			, oStd::to_string2(IVer, desc.InterfaceVersion)
-			, oStd::to_string2(FVer, desc.FeatureVersion)
+			, ouro::as_string(desc.API)
+			, to_string2(IVer, desc.InterfaceVersion)
+			, to_string2(FVer, desc.FeatureVersion)
 			, VRAMSize.c_str()
 			, SharedSize.c_str()
-			, oStd::as_string(desc.Vendor)
-			, oStd::to_string2(DVer, desc.DriverVersion)
+			, ouro::as_string(desc.Vendor)
+			, to_string2(DVer, desc.DriverVersion)
 			, desc.DriverDescription.c_str());
 
 		return SUCCESS;

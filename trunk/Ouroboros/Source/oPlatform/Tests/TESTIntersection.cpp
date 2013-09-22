@@ -82,7 +82,7 @@ struct PLATFORM_Intersection : public oTest
 		InitializeAGridOfBoxes(&Boxes, W, H, D, SIZE, SPACING);
 
 		std::vector<int> Results(W * H * D);
-		oStd::fill(Results, 0xdeaddead);
+		ouro::fill(Results, 0xdeaddead);
 
 		static const EYE sEyes[] =
 		{

@@ -28,7 +28,7 @@
 #ifndef oCoreTestRequirements_h
 #define oCoreTestRequirements_h
 
-namespace oCore {
+namespace ouro {
 	namespace tests {
 
 interface requirements
@@ -38,6 +38,6 @@ interface requirements
 };
 
 	} // namespace tests
-} // namespace oCore
+} // namespace ouro
 
 #endif

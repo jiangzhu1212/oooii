@@ -29,10 +29,9 @@
 #ifndef oTimer_h
 #define oTimer_h
 
-#include <oStd/assert.h>
+#include <oBase/assert.h>
 #include <oStd/chrono.h>
 #include <oBasis/oInvalid.h>
-
 
 // returns system ticks as seconds since the std (Unix) epoch.
 inline double oTimer() { return oStd::chrono::high_resolution_clock::now().time_since_epoch().count(); }
@@ -45,20 +44,6 @@ inline unsigned int oTimerMS() { return static_cast<unsigned int>(oTimerMSF()); 
 // _____________________________________________________________________________
 // Generic inline utilities for making common timing problems more 
 // self-documenting. These use the above API.
-
-class oLocalTimeout
-{
-	// For those times a loop should only continue for a limited time, favor using
-	// this class as it is more self-documenting and more centralized than just
-	// doing the math directly.
-	double End;
-public:
-	oLocalTimeout(double _Timeout) { Reset(_Timeout); }
-	oLocalTimeout(unsigned int _TimeoutMS) { Reset(_TimeoutMS / 1000.0); }
-	inline void Reset(double _Timeout) { End = oTimer() + _Timeout; }
-	inline void Reset(unsigned int _TimeoutMS) { Reset(_TimeoutMS / 1000.0); }
-	inline bool TimedOut() const { return oTimer() >= End; }
-};
 
 class oScopedPartialTimeout
 {

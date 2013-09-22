@@ -26,6 +26,8 @@
 #include <oGPU/oGPUUtil.h>
 #include <oGPUTestColorPSByteCode.h>
 
+using namespace ouro;
+
 bool oGPUTestApp::Create(const char* _Title, bool _DevMode, const int* _pSnapshotFrameIDs, size_t _NumSnapshotFrameIDs, const int2& _Size)
 {
 	NthSnapshot = 0;
@@ -39,7 +41,7 @@ bool oGPUTestApp::Create(const char* _Title, bool _DevMode, const int* _pSnapsho
 	{
 		oGPU_DEVICE_INIT init;
 		init.DebugName = "oGPUTestApp.Device";
-		init.Version = oStd::version(10,0); // for broader compatibility
+		init.Version = version(10,0); // for broader compatibility
 		init.DriverDebugLevel = oGPU_DEBUG_NORMAL;
 		if (!oGPUDeviceCreate(init, &Device))
 			return false; // pass through error
@@ -79,9 +81,9 @@ void oGPUTestApp::OnEvent(const oGUI_EVENT_DESC& _Event)
 bool oGPUTestApp::CheckSnapshot(oTest* _pTest)
 {
 	const int FrameID = Device->GetFrameID();
-	if (SnapshotFrames.end() != oStd::find(SnapshotFrames, FrameID))
+	if (SnapshotFrames.end() != find(SnapshotFrames, FrameID))
 	{
-		oStd::intrusive_ptr<oImage> Image;
+		intrusive_ptr<oImage> Image;
 		if (!PrimaryRenderTarget->CreateSnapshot(0, &Image))
 			return false; // pass through error
 
@@ -133,7 +135,7 @@ const int oGPUTextureTestApp::sSnapshotFrames[2] = { 0, 2 };
 
 bool oGPUTextureTestApp::Initialize()
 {
-	PrimaryRenderTarget->SetClearColor(oStd::AlmostBlack);
+	PrimaryRenderTarget->SetClearColor(AlmostBlack);
 
 	oGPUBuffer::DESC DCDesc;
 	DCDesc.StructByteSize = sizeof(oGPUTestConstants);
@@ -175,7 +177,7 @@ bool oGPUTextureTestApp::Render()
 
 	CommandList->Begin();
 
-	oGPUCommitBuffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, oStd::White));
+	oGPUCommitBuffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, White));
 
 	CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
 	CommandList->SetBlendState(oGPU_OPAQUE);

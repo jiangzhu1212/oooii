@@ -37,6 +37,8 @@
 
 #include "NoopCSByteCode.h"
 
+using namespace ouro;
+
 struct DrawOrderEqual
 {
 	int DrawOrder;
@@ -63,7 +65,7 @@ bool ByDrawOrder(const oGPUCommandList* _pCommandList1, const oGPUCommandList* _
 
 bool oGPUDeviceCreate(const oGPU_DEVICE_INIT& _Init, oGPUDevice** _ppDevice)
 {
-	oStd::intrusive_ptr<ID3D11Device> Device;
+	intrusive_ptr<ID3D11Device> Device;
 	if (!oD3D11CreateDevice(_Init, false, &Device))
 		return false; // pass through error
 
@@ -94,7 +96,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 	HeapAllocations.reserve(500);
 
 	D3DDevice->GetImmediateContext(&ImmediateContext);
-	oStd::lstring StateName;
+	lstring StateName;
 
 	// Blend States
 	{
@@ -125,7 +127,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 
 			if (!StateExists(i, BlendStates))
 			{
-				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), oStd::as_string((oGPU_BLEND_STATE)i));
+				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), ouro::as_string((oGPU_BLEND_STATE)i));
 				oV(oD3D11SetDebugName(BlendStates[i], StateName));
 			}
 		}
@@ -144,7 +146,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 			oV(_pDevice->CreateDepthStencilState(&sDepthStencils[i], &DepthStencilStates[i]));
 			if (!StateExists(i, DepthStencilStates))
 			{
-				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), oStd::as_string((oGPU_DEPTH_STENCIL_STATE)i));
+				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), ouro::as_string((oGPU_DEPTH_STENCIL_STATE)i));
 				oV(oD3D11SetDebugName(DepthStencilStates[i], StateName));
 			}
 		}
@@ -186,7 +188,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 	
 			if (!StateExists(i, SurfaceStates))
 			{
-				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), oStd::as_string((oGPU_SURFACE_STATE)i));
+				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), ouro::as_string((oGPU_SURFACE_STATE)i));
 				oV(oD3D11SetDebugName(SurfaceStates[i], StateName));
 			}
 		}
@@ -231,7 +233,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 
 		D3D11_SAMPLER_DESC desc;
 		memset(&desc, 0, sizeof(desc));
-		oStd::mstring StateName;
+		mstring StateName;
 
 		for (size_t bias = 0, i = 0; bias < NUM_MIP_BIAS_LEVELS; bias++)
 		{
@@ -244,7 +246,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 				desc.MaxAnisotropy = 16; // documented default
 				desc.ComparisonFunc = D3D11_COMPARISON_NEVER;  // documented default
 
-				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), oStd::as_string(oGPU_SAMPLER_STATE(NUM_ADDRESS_STATES * bias + state)));
+				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), ouro::as_string(oGPU_SAMPLER_STATE(NUM_ADDRESS_STATES * bias + state)));
 				oV(_pDevice->CreateSamplerState(&desc, &SamplerStates[i]));
 				oV(oD3D11SetDebugName(SamplerStates[i], StateName));
 				i++;
@@ -268,9 +270,9 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 	{
 		oV(D3DDevice->CreateComputeShader(NoopCSByteCode, oD3D11GetHLSLByteCodeSize(NoopCSByteCode), nullptr, &NoopCS));
 
-		oStd::sstring CSName;
+		sstring CSName;
 		oD3D11GetDebugName(CSName, _pDevice);
-		oStd::sncatf(CSName, "NoopCS");
+		sncatf(CSName, "NoopCS");
 		oVERIFY(oD3D11SetDebugName(NoopCS, CSName));
 	}
 
@@ -358,7 +360,7 @@ bool oD3D11Device::CreatePrimaryRenderTarget(oWindow* _pWindow, oSURFACE_FORMAT 
 		, &SwapChain))
 		return false; // pass through error
 
-	oStd::sstring RTName;
+	sstring RTName;
 	snprintf(RTName, "%s.PrimaryRT", GetName());
 	if (!oD3D11CreateRenderTarget(this, RTName, SwapChain, _DepthStencilFormat, _ppPrimaryRenderTarget))
 		return false;
@@ -371,11 +373,11 @@ bool oD3D11Device::CLInsert(oGPUCommandList* _pCommandList) threadsafe
 
 	oGPUCommandList::DESC d;
 	_pCommandList->GetDesc(&d);
-	auto it = oStd::find_if(pThis->CommandLists, DrawOrderEqual(d.DrawOrder));
+	auto it = find_if(pThis->CommandLists, DrawOrderEqual(d.DrawOrder));
 
 	if (it == pThis->CommandLists.end())
 	{
-		oStd::sorted_insert(pThis->CommandLists, _pCommandList, ByDrawOrder);
+		sorted_insert(pThis->CommandLists, _pCommandList, ByDrawOrder);
 		return true;
 	}
 
@@ -428,7 +430,7 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 
 	oD3D11UpdateSubresource(_pDeviceContext, pD3DResource, D3DSubresource, pBox, _Source.pData, _Source.RowPitch, _Source.DepthPitch);
 	HeapLock(hHeap);
-	if (oStd::find_and_erase(thread_cast<oD3D11Device*>(this)->HeapAllocations, _Source.pData)) // safe because vector is protected with HeapLock
+	if (find_and_erase(thread_cast<oD3D11Device*>(this)->HeapAllocations, _Source.pData)) // safe because vector is protected with HeapLock
 		HeapFree(hHeap, 0, _Source.pData);
 	HeapUnlock(hHeap);
 }
@@ -436,7 +438,7 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 void oD3D11Device::CLRemove(oGPUCommandList* _pCommandList) threadsafe
 {
 	auto pThis = oLockThis(CommandListsInsertRemoveMutex);
-	oStd::find_and_erase(pThis->CommandLists, _pCommandList);
+	find_and_erase(pThis->CommandLists, _pCommandList);
 }
 
 void oD3D11Device::CLLockSubmit() threadsafe

@@ -28,7 +28,7 @@
 #define oGDI_h
 
 #include <oStd/atomic.h>
-#include <oStd/color.h>
+#include <oBase/color.h>
 #include <oBasis/oGUI.h>
 #include <oPlatform/Windows/oWindows.h>
 #include <oPlatform/Windows/oWinWindowing.h>
@@ -410,16 +410,16 @@ struct oBMI_DESC
 		, Format(oSURFACE_UNKNOWN)
 		, RowPitch(oInvalid)
 		, FlipVertically(true)
-		, ARGBMonochrome8Zero(oStd::Black)
-		, ARGBMonochrome8One(oStd::White)
+		, ARGBMonochrome8Zero(ouro::Black)
+		, ARGBMonochrome8One(ouro::White)
 	{}
 
 	int2 Dimensions;
 	oSURFACE_FORMAT Format;
 	int RowPitch;
 	bool FlipVertically;
-	oStd::color ARGBMonochrome8Zero;
-	oStd::color ARGBMonochrome8One;
+	ouro::color ARGBMonochrome8Zero;
+	ouro::color ARGBMonochrome8One;
 };
 
 // Initialize a BITMAPINFO with information from the specified oBMI_DESC. The 
@@ -499,8 +499,8 @@ bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Text);
 // If color alpha is true 0, then a null/empty objects is returned. Use 
 // DeleteObject on the value returned from these functions when finish with the
 // object. (width == 0 means "default")
-HPEN oGDICreatePen(oStd::color _Color, int _Width = 0);
-HBRUSH oGDICreateBrush(oStd::color _Color);
+HPEN oGDICreatePen(ouro::color _Color, int _Width = 0);
+HBRUSH oGDICreateBrush(ouro::color _Color);
 
 inline HBITMAP oGDIGetBitmap(HDC _hDC) { return (HBITMAP)GetCurrentObject(_hDC, OBJ_BITMAP); }
 inline HBRUSH oGDIGetBrush(HDC _hDC) { return (HBRUSH)GetCurrentObject(_hDC, OBJ_BRUSH); }
@@ -537,15 +537,15 @@ public:
 	{
 		DESC()
 			: hParent(nullptr)
-			, Fill(oStd::color(oStd::DodgerBlue, 0.33f))
-			, Border(oStd::DodgerBlue)
+			, Fill(ouro::color(ouro::DodgerBlue, 0.33f))
+			, Border(ouro::DodgerBlue)
 			, EdgeRoundness(0)
 			, UseOffscreenRender(false)
 		{}
 
 		HWND hParent;
-		oStd::color Fill; // can have alpha value
-		oStd::color Border;
+		ouro::color Fill; // can have alpha value
+		ouro::color Border;
 		int EdgeRoundness;
 
 		// DXGI back-buffers don't like rounded edge rendering, so copy contents

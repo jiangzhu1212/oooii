@@ -23,9 +23,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oWinKinect10.h"
-#include <oStd/assert.h>
+#include <oBase/assert.h>
 
 #ifdef oHAS_KINECT_SDK
+
+using namespace ouro;
 
 #pragma comment(lib, "Kinect10.lib")
 
@@ -61,7 +63,7 @@ void oWinKinect10::RecordKinectWorkerThreads()
 
 	oFOR(DWORD TID, BeforeTIDs)
 	{
-		auto it = oStd::find(TIDs, TID);
+		auto it = find(TIDs, TID);
 		if (it != TIDs.end())
 			TIDs.erase(it);
 	}
@@ -101,7 +103,7 @@ oWinKinect10::oWinKinect10()
 	, KinectThreadTerminated(false)
 	, NuiSetDeviceStatusCallbackWasCalled(false)
 {	
-	hModule = oCore::module::link("Kinect10.dll", sExportedAPIs, (void**)&NuiCreateSensorByIndex__, oCOUNTOF(sExportedAPIs));
+	hModule = ouro::module::link("Kinect10.dll", sExportedAPIs, (void**)&NuiCreateSensorByIndex__, oCOUNTOF(sExportedAPIs));
 }
 oSINGLETON_REGISTER(oWinKinect10);
 
@@ -128,12 +130,12 @@ oWinKinect10::~oWinKinect10()
 	if (NuiSetDeviceStatusCallbackWasCalled)
 		oTRACE("NuiSetDeviceStatusCallback was called, which would cause the DLL unload to crash, so skipping unload.");
 	else
-		oCore::module::close(hModule);
+		ouro::module::close(hModule);
 }
 
-oStd::version oWinKinect10::GetVersion() const
+version oWinKinect10::GetVersion() const
 {
-	oCore::module::info mi = oCore::module::get_info(*(oCore::module::id*)&hModule);
+	ouro::module::info mi = ouro::module::get_info(*(ouro::module::id*)&hModule);
 	return mi.version;
 }
 

@@ -23,9 +23,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oDispatchQueuePrivate.h>
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <oBasis/oRefCount.h>
 #include <oConcurrency/threadpool.h>
+
+using namespace ouro;
 
 struct oDispatchQueuePrivate_Impl : oDispatchQueuePrivate
 {
@@ -48,7 +50,7 @@ struct oDispatchQueuePrivate_Impl : oDispatchQueuePrivate
 protected:
 	oConcurrency::threadpool<std::allocator<oTASK>> Threadpool;
 	oRefCount RefCount;
-	oStd::sstring DebugName;
+	sstring DebugName;
 };
 
 // _DebugName must be a constant string

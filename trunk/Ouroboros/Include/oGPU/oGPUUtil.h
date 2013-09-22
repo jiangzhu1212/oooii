@@ -161,7 +161,7 @@ inline void oGPURenderTargetSetShaderResources(oGPUCommandList* _pCommandList, i
 {
 	oGPU_RENDER_TARGET_DESC rtd;
 	_pRenderTarget->GetDesc(&rtd);
-	oStd::intrusive_ptr<oGPUTexture> MRTs[oGPU_MAX_NUM_MRTS+1];
+	ouro::intrusive_ptr<oGPUTexture> MRTs[oGPU_MAX_NUM_MRTS+1];
 	int i = 0;
 	for (; i < rtd.MRTCount; i++)
 		_pRenderTarget->GetTexture(i, &MRTs[i]);
@@ -176,7 +176,7 @@ bool oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource, interface oImage** 
 
 // Given a list of bytecode buffers create a pipeline. This is most useful when
 // compiling shaders dynamically rather than using the static-compilation path.
-bool oGPUPipelineCreate(oGPUDevice* _pDevice, const char* _Name, oStd::intrusive_ptr<oBuffer> _ByteCode[oGPU_PIPELINE_STAGE_COUNT], const oGPU_VERTEX_ELEMENT* _pElements, size_t _NumElements, oGPU_PRIMITIVE_TYPE _InputType, oGPUPipeline** _ppPipeline);
+bool oGPUPipelineCreate(oGPUDevice* _pDevice, const char* _Name, ouro::intrusive_ptr<oBuffer> _ByteCode[oGPU_PIPELINE_STAGE_COUNT], const oGPU_VERTEX_ELEMENT* _pElements, size_t _NumElements, oGPU_PRIMITIVE_TYPE _InputType, oGPUPipeline** _ppPipeline);
 
 // _____________________________________________________________________________
 // Mesh convenience functions

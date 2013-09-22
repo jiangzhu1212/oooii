@@ -91,10 +91,10 @@ private:
 	bool AllSnapshotsSucceeded;
 
 protected:
-	oStd::intrusive_ptr<oWindow> Window;
-	oStd::intrusive_ptr<oGPUDevice> Device;
-	oStd::intrusive_ptr<oGPUCommandList> CommandList;
-	oStd::intrusive_ptr<oGPURenderTarget> PrimaryRenderTarget;
+	ouro::intrusive_ptr<oWindow> Window;
+	ouro::intrusive_ptr<oGPUDevice> Device;
+	ouro::intrusive_ptr<oGPUCommandList> CommandList;
+	ouro::intrusive_ptr<oGPURenderTarget> PrimaryRenderTarget;
 };
 
 class oGPUTextureTestApp : public oGPUTestApp
@@ -112,10 +112,10 @@ public:
 	bool Render() override;
 
 protected:
-	oStd::intrusive_ptr<oGPUPipeline> Pipeline;
-	oStd::intrusive_ptr<oGPUTexture> Texture;
-	oStd::intrusive_ptr<oGPUUtilMesh> Mesh;
-	oStd::intrusive_ptr<oGPUBuffer> TestConstants;
+	ouro::intrusive_ptr<oGPUPipeline> Pipeline;
+	ouro::intrusive_ptr<oGPUTexture> Texture;
+	ouro::intrusive_ptr<oGPUUtilMesh> Mesh;
+	ouro::intrusive_ptr<oGPUBuffer> TestConstants;
 
 	static const int sSnapshotFrames[2];
 };

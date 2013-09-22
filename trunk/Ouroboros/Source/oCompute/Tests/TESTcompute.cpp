@@ -25,7 +25,7 @@
 #include <oCompute/oComputeMorton.h>
 #include <oCompute/oComputeRaycast.h>
 #include <oGfx/oGfxHLSL.h>
-#include <oStd/throw.h>
+#include <oBase/throw.h>
 #include <vector>
 
 namespace oCompute {

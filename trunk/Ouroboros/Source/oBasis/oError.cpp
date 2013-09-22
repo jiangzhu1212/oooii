@@ -24,8 +24,10 @@
  **************************************************************************/
 #include <oBasis/oError.h>
 #include <oBasis/oBasisRequirements.h>
-#include <oStd/fixed_string.h>
-#include <oStd/macros.h>
+#include <oBase/fixed_string.h>
+#include <oBase/macros.h>
+
+using namespace ouro;
 
 const char* oErrorAsString(errno_t _Error)
 {
@@ -97,7 +99,7 @@ ERROR_CONTEXT* GetErrorContext()
 	if(!pErrorContext)
 	{
 		// {99091828-104D-4320-92C9-FD41810C352D}
-		static const oStd::guid GUIDErrorContext = { 0x99091828, 0x104d, 0x4320, { 0x92, 0xc9, 0xfd, 0x41, 0x81, 0xc, 0x35, 0x2d } };
+		static const guid GUIDErrorContext = { 0x99091828, 0x104d, 0x4320, { 0x92, 0xc9, 0xfd, 0x41, 0x81, 0xc, 0x35, 0x2d } };
 
 		oThreadlocalMalloc(GUIDErrorContext, [=](void* _pMemory)
 		{
@@ -129,19 +131,19 @@ bool oErrorSetLastV(errno_t _Error, const char* _Format, va_list _Args)
 	pErrorContext->Error = _Error;
 	pErrorContext->UseDefaultString = false;
 	_Format = _Format ? _Format : oErrorGetDefaultString(_Error);
-	oStd::vsnprintf(pErrorContext->ErrorString, _Format, _Args);
-	oStd::ellipsize(pErrorContext->ErrorString, oCOUNTOF(pErrorContext->ErrorString));
+	vsnprintf(pErrorContext->ErrorString, _Format, _Args);
+	ellipsize(pErrorContext->ErrorString, oCOUNTOF(pErrorContext->ErrorString));
 	return false;
 }
 
 bool oErrorPrefixLastV(const char* _Format, va_list _Args)
 {
 	ERROR_CONTEXT* pErrorContext = GetErrorContext();
-	oStd::xlstring CurrentCopy;
+	xlstring CurrentCopy;
 	snprintf(CurrentCopy, pErrorContext->ErrorString);
 
-	oStd::vsnprintf(pErrorContext->ErrorString, _Format, _Args);
-	oStd::sncatf(pErrorContext->ErrorString, "%s", CurrentCopy);
+	vsnprintf(pErrorContext->ErrorString, _Format, _Args);
+	sncatf(pErrorContext->ErrorString, "%s", CurrentCopy);
 	return false;
 }
 

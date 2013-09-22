@@ -38,7 +38,7 @@ typedef struct tagTHREADNAME_INFO
 } THREADNAME_INFO;
 #pragma pack(pop)
 
-namespace oCore {
+namespace ouro {
 	namespace debugger {
 
 void thread_name(const char* _Name, thread::id _ID)
@@ -281,7 +281,7 @@ symbol_info translate(symbol _Symbol)
 	}
 	
 	si.module = module.ModuleName;
-	BYTE buf[sizeof(IMAGEHLP_SYMBOL64) + oStd::mstring::Capacity * sizeof(TCHAR)];
+	BYTE buf[sizeof(IMAGEHLP_SYMBOL64) + mstring::Capacity * sizeof(TCHAR)];
 	IMAGEHLP_SYMBOL64* symbolInfo = (IMAGEHLP_SYMBOL64*)buf;
 	memset(buf, 0, sizeof(IMAGEHLP_SYMBOL64));
 	symbolInfo->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
@@ -295,7 +295,7 @@ symbol_info translate(symbol _Symbol)
 	// rational terminator
 	//strcpy(si.name, symbolInfo->Name);
 	memcpy(si.name, symbolInfo->Name, si.name.capacity() - sizeof(TCHAR));
-	oStd::ellipsize(si.name);
+	ellipsize(si.name);
 	si.symbol_offset = static_cast<unsigned int>(displacement);
 
  	IMAGEHLP_LINE64 line;
@@ -349,7 +349,7 @@ int format(char* _StrDestination, size_t _SizeofStrDestination, symbol _Symbol, 
 		if (_pIsStdBind)
 			*_pIsStdBind = false;
 
-		oStd::path fn_ = s.filename.filename();
+		path fn_ = s.filename.filename();
 		const char* fn = fn_.empty() ? "unknown" : fn_.c_str();
 
 		if (s.line && s.char_offset)
@@ -406,4 +406,4 @@ bool dump(const path& _Path, bool _Full, void* _Exceptions)
 }
 
 	} // namespace debugger
-} // namespace oCore
+} // namespace ouro

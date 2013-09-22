@@ -66,7 +66,7 @@
 #include <oHLSL/oHLSLTypes.h>
 #include <oCompute/oQuaternion.h>
 #include <oCompute/oComputeConstants.h>
-#include <oStd/equal.h>
+#include <oBase/equal.h>
 #include <limits>
 
 // _____________________________________________________________________________
@@ -80,18 +80,18 @@ template<> inline quatf oIdentity() { return oIDENTITYQ; }
 template<> inline quatd oIdentity() { return oIDENTITYQD; }
 
 // _____________________________________________________________________________
-// oStd::equal support
+// ouro::equal support
 
-template<> inline bool oStd::equal(const TVEC2<float>& a, const TVEC2<float>& b, unsigned int maxUlps) { return oStd::equal(a.x, b.x, maxUlps) && oStd::equal(a.y, b.y, maxUlps); }
-template<> inline bool oStd::equal(const TVEC3<float>& a, const TVEC3<float>& b, unsigned int maxUlps) { return oStd::equal(a.x, b.x, maxUlps) && oStd::equal(a.y, b.y, maxUlps) && oStd::equal(a.z, b.z, maxUlps); }
-template<> inline bool oStd::equal(const TVEC4<float>& a, const TVEC4<float>& b, unsigned int maxUlps) { return oStd::equal(a.x, b.x, maxUlps) && oStd::equal(a.y, b.y, maxUlps) && oStd::equal(a.z, b.z, maxUlps) && oStd::equal(a.w, b.w, maxUlps); }
-template<> inline bool oStd::equal(const TMAT3<float>& a, const TMAT3<float>& b, unsigned int maxUlps) { return oStd::equal(a.Column0, b.Column0, maxUlps) && oStd::equal(a.Column1, b.Column1, maxUlps) && oStd::equal(a.Column2, b.Column2, maxUlps); }
-template<> inline bool oStd::equal(const TMAT4<float>& a, const TMAT4<float>& b, unsigned int maxUlps) { return oStd::equal(a.Column0, b.Column0, maxUlps) && oStd::equal(a.Column1, b.Column1, maxUlps) && oStd::equal(a.Column2, b.Column2, maxUlps) && oStd::equal(a.Column3, b.Column3, maxUlps); }
-template<> inline bool oStd::equal(const TVEC2<double>& a, const TVEC2<double>& b, unsigned int maxUlps) { return oStd::equal(a.x, b.x, maxUlps) && oStd::equal(a.y, b.y, maxUlps); }
-template<> inline bool oStd::equal(const TVEC3<double>& a, const TVEC3<double>& b, unsigned int maxUlps) { return oStd::equal(a.x, b.x, maxUlps) && oStd::equal(a.y, b.y, maxUlps) && oStd::equal(a.z, b.z, maxUlps); }
-template<> inline bool oStd::equal(const TVEC4<double>& a, const TVEC4<double>& b, unsigned int maxUlps) { return oStd::equal(a.x, b.x, maxUlps) && oStd::equal(a.y, b.y, maxUlps) && oStd::equal(a.z, b.z, maxUlps) && oStd::equal(a.w, b.w, maxUlps); }
-template<> inline bool oStd::equal(const TMAT3<double>& a, const TMAT3<double>& b, unsigned int maxUlps) { return oStd::equal(a.Column0, b.Column0, maxUlps) && oStd::equal(a.Column1, b.Column1, maxUlps) && oStd::equal(a.Column2, b.Column2, maxUlps); }
-template<> inline bool oStd::equal(const TMAT4<double>& a, const TMAT4<double>& b, unsigned int maxUlps) { return oStd::equal(a.Column0, b.Column0, maxUlps) && oStd::equal(a.Column1, b.Column1, maxUlps) && oStd::equal(a.Column2, b.Column2, maxUlps) && oStd::equal(a.Column3, b.Column3, maxUlps); }
+template<> inline bool ouro::equal(const TVEC2<float>& a, const TVEC2<float>& b, unsigned int maxUlps) { return ouro::equal(a.x, b.x, maxUlps) && ouro::equal(a.y, b.y, maxUlps); }
+template<> inline bool ouro::equal(const TVEC3<float>& a, const TVEC3<float>& b, unsigned int maxUlps) { return ouro::equal(a.x, b.x, maxUlps) && ouro::equal(a.y, b.y, maxUlps) && ouro::equal(a.z, b.z, maxUlps); }
+template<> inline bool ouro::equal(const TVEC4<float>& a, const TVEC4<float>& b, unsigned int maxUlps) { return ouro::equal(a.x, b.x, maxUlps) && ouro::equal(a.y, b.y, maxUlps) && ouro::equal(a.z, b.z, maxUlps) && ouro::equal(a.w, b.w, maxUlps); }
+template<> inline bool ouro::equal(const TMAT3<float>& a, const TMAT3<float>& b, unsigned int maxUlps) { return ouro::equal(a.Column0, b.Column0, maxUlps) && ouro::equal(a.Column1, b.Column1, maxUlps) && ouro::equal(a.Column2, b.Column2, maxUlps); }
+template<> inline bool ouro::equal(const TMAT4<float>& a, const TMAT4<float>& b, unsigned int maxUlps) { return ouro::equal(a.Column0, b.Column0, maxUlps) && ouro::equal(a.Column1, b.Column1, maxUlps) && ouro::equal(a.Column2, b.Column2, maxUlps) && ouro::equal(a.Column3, b.Column3, maxUlps); }
+template<> inline bool ouro::equal(const TVEC2<double>& a, const TVEC2<double>& b, unsigned int maxUlps) { return ouro::equal(a.x, b.x, maxUlps) && ouro::equal(a.y, b.y, maxUlps); }
+template<> inline bool ouro::equal(const TVEC3<double>& a, const TVEC3<double>& b, unsigned int maxUlps) { return ouro::equal(a.x, b.x, maxUlps) && ouro::equal(a.y, b.y, maxUlps) && ouro::equal(a.z, b.z, maxUlps); }
+template<> inline bool ouro::equal(const TVEC4<double>& a, const TVEC4<double>& b, unsigned int maxUlps) { return ouro::equal(a.x, b.x, maxUlps) && ouro::equal(a.y, b.y, maxUlps) && ouro::equal(a.z, b.z, maxUlps) && ouro::equal(a.w, b.w, maxUlps); }
+template<> inline bool ouro::equal(const TMAT3<double>& a, const TMAT3<double>& b, unsigned int maxUlps) { return ouro::equal(a.Column0, b.Column0, maxUlps) && ouro::equal(a.Column1, b.Column1, maxUlps) && ouro::equal(a.Column2, b.Column2, maxUlps); }
+template<> inline bool ouro::equal(const TMAT4<double>& a, const TMAT4<double>& b, unsigned int maxUlps) { return ouro::equal(a.Column0, b.Column0, maxUlps) && ouro::equal(a.Column1, b.Column1, maxUlps) && ouro::equal(a.Column2, b.Column2, maxUlps) && ouro::equal(a.Column3, b.Column3, maxUlps); }
 
 // _____________________________________________________________________________
 // General transformation functions
@@ -330,14 +330,14 @@ template<typename T> void oExtractNearFarPlanesDistance(const TMAT4<T>& _Project
 	T C = _Projection[2][2];
 	T D = _Projection[3][2];
 
-	if (oStd::equal(C, T(0)))
+	if (ouro::equal(C, T(0)))
 		N = T(0);
 	else
 		N = (-D / C);
 
 	if (oHasPerspective(_Projection))
 	{
-		if (oStd::equal(C, T(1)) || oStd::equal(D, T(0)))
+		if (ouro::equal(C, T(1)) || ouro::equal(D, T(0)))
 			F = T(1) / abs(D);
 		else
 			F = D / (T(1) - C);

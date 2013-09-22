@@ -23,15 +23,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oStd/date.h>
-#include <oStd/throw.h>
+#include <oBase/throw.h>
 #include <oStd/tests/oStdTestRequirements.h>
 
 namespace oStd {
 	namespace tests {
 
 template<typename T> T round(const T& x) { return floor(x + T(0.5)); }
-
-using namespace oStd;
 
 struct oNTPDATE_TEST
 {
@@ -282,7 +280,7 @@ static void test_date_ntp(requirements& _Requirements)
 			oTESTDATENOCONVERT(T, NTPDateNoMS, &ft);
 		}
 
-		oStd::mstring StrDate;
+		char StrDate[128];
 		strftime(StrDate, T.TimeFormat, NTPDateNoMS);
 		
 		if (strcmp(StrDate, T.ExpectedTimeString))

@@ -25,17 +25,19 @@
 #include <oBasis/oURIQuerySerialize.h>
 #include <oBasis/oError.h>
 #include <oBasis/oInt.h>
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
+
+using namespace ouro;
 
 bool oURIQueryReadValue(void* _pDest, int _SizeOfDest, const char* _StrSource, const oRTTI& _RTTI)
 {
-	if ((_RTTI.GetTraits() & (oStd::type_trait_flag::is_integralf | oStd::type_trait_flag::is_floating_pointf)) != 0 && (_RTTI.GetNumStringTokens() == 1) && (*_StrSource != '\"'))
+	if ((_RTTI.GetTraits() & (type_trait_flag::is_integralf | type_trait_flag::is_floating_pointf)) != 0 && (_RTTI.GetNumStringTokens() == 1) && (*_StrSource != '\"'))
 	{
-		oStd::sstring Typename;
+		sstring Typename;
 		if (strstr(_RTTI.GetName(Typename), "char"))
 		{
 			int Value;
-			if (!oStd::from_string(&Value, _StrSource)) 
+			if (!from_string(&Value, _StrSource)) 
 				return false;
 			*((char*)_pDest) = (Value & 0xff);
 			return true;
@@ -91,18 +93,18 @@ bool oURIQueryReadCompound(void* _pDestination, const oRTTI& _RTTI, const char* 
 
 bool oURIQueryWriteValue(char* _StrDestination, size_t _SizeofStrDestination, const void* _pSource, const oRTTI& _RTTI)
 {
-	oStd::xxlstring buf;
-	oStd::sstring Typename;
+	xxlstring buf;
+	sstring Typename;
 	if (_RTTI.ToString(buf, _pSource))
 	{
-		if ((_RTTI.GetTraits() & (oStd::type_trait_flag::is_integralf | oStd::type_trait_flag::is_floating_pointf)) != 0  && (_RTTI.GetNumStringTokens() == 1))
+		if ((_RTTI.GetTraits() & (type_trait_flag::is_integralf | type_trait_flag::is_floating_pointf)) != 0  && (_RTTI.GetNumStringTokens() == 1))
 		{
 			if (strstr(_RTTI.GetName(Typename), "uchar"))
-				oStd::sncatf(_StrDestination, _SizeofStrDestination, "%d", (int)*(uchar*)_pSource);
+				sncatf(_StrDestination, _SizeofStrDestination, "%d", (int)*(uchar*)_pSource);
 			else if (strstr(_RTTI.GetName(Typename), "char"))
-				oStd::sncatf(_StrDestination, _SizeofStrDestination, "%d", (int)*(char*)_pSource);
+				sncatf(_StrDestination, _SizeofStrDestination, "%d", (int)*(char*)_pSource);
 			else
-				oStd::sncatf(_StrDestination, _SizeofStrDestination, "%s", buf.c_str());
+				sncatf(_StrDestination, _SizeofStrDestination, "%s", buf.c_str());
 		}
 		else
 			strlcpy(_StrDestination, buf.c_str(), _SizeofStrDestination);
@@ -126,18 +128,18 @@ bool oURIQueryWriteCompound(char* _StrDestination, size_t _SizeofStrDestination,
 		case oRTTI_TYPE_ENUM:
 		case oRTTI_TYPE_ATOM:
 			{
-				oStd::xxlstring buf;
+				xxlstring buf;
 				if (oURIQueryWriteValue(buf.c_str(), buf.capacity(), _Attr.GetSrcPtr(_pSource), *_Attr.RTTI))
 				{
-					if (!firstNameValuePair) oStd::sncatf(_StrDestination, _SizeofStrDestination, "&"); firstNameValuePair = false;
-					oStd::sncatf(_StrDestination, _SizeofStrDestination, "%s=%s", _Attr.Name, buf.c_str());
+					if (!firstNameValuePair) sncatf(_StrDestination, _SizeofStrDestination, "&"); firstNameValuePair = false;
+					sncatf(_StrDestination, _SizeofStrDestination, "%s=%s", _Attr.Name, buf.c_str());
 				}
 				break;
 			}
 
 		default:
 			{
-				oStd::sstring rttiName;
+				sstring rttiName;
 				return oErrorSetLast(std::errc::not_supported, "No support for RTTI type: %s", _Attr.RTTI->TypeToString(rttiName));
 			}
 		}

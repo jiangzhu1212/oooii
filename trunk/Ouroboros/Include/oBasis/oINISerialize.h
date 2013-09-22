@@ -27,9 +27,9 @@
 #define oINISerialize_h
 
 #include <oBasis/oRTTI.h>
-#include <oStd/ini.h>
+#include <oBase/ini.h>
 
-bool oINIReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::ini& _INI, oStd::ini::section _Section, bool _FailOnMissingValues);
+bool oINIReadCompound(void* _pDestination, const oRTTI& _RTTI, const ouro::ini& _INI, ouro::ini::section _Section, bool _FailOnMissingValues);
 bool oINIWriteCompound(char* _StrDestination, size_t _SizeofStrDestination, const void* _pSource, const oRTTI& _RTTI, const char* _Heading);
 
 #endif

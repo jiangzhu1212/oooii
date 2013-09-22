@@ -26,7 +26,7 @@
 #ifndef oP4_h
 #define oP4_h
 
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <oBasis/oRTTI.h>
 
 enum oP4_STATUS
@@ -77,7 +77,7 @@ struct oP4_FILE_DESC
 		, IsText(true)
 	{}
 
-	oStd::uri_string Path;
+	ouro::uri_string Path;
 	oP4_STATUS Status;
 	int Revision;
 	int Changelist; // oInvalid is the default changelist
@@ -86,12 +86,12 @@ struct oP4_FILE_DESC
 
 struct oP4_WORKSPACE
 {
-	oStd::mstring Client;
-	oStd::mstring Owner;
-	oStd::mstring Host;
-	oStd::xlstring Description;
-	oStd::path_string Root;
-	oStd::xxlstring View;
+	ouro::mstring Client;
+	ouro::mstring Owner;
+	ouro::mstring Host;
+	ouro::xlstring Description;
+	ouro::path_string Root;
+	ouro::xxlstring View;
 	time_t LastUpdated;
 	time_t LastAccessed;
 	oP4_SUBMIT_OPTIONS SubmitOptions;
@@ -113,12 +113,12 @@ struct oP4_LABEL_SPEC
 		, Locked(false)
 	{}
 
-	oStd::mstring Label;
+	ouro::mstring Label;
 	time_t LastUpdated;
 	time_t LastAccessed;
-	oStd::mstring Owner;
-	oStd::xlstring Description;
-	oStd::xxlstring View;
+	ouro::mstring Owner;
+	ouro::xlstring Description;
+	ouro::xxlstring View;
 	unsigned int Revision;
 	bool Locked;
 };
@@ -133,11 +133,11 @@ oAPI bool oP4IsAvailable();
 
 oAPI bool oP4GetWorkspaceString(char* _StrDestination, size_t _SizeofStrDestination);
 template<size_t size> inline bool oP4GetWorkspaceString(char (&_StrDestination)[size]) { return oP4GetWorkspaceString(_StrDestination, size); }
-template<size_t capacity> inline bool oP4GetWorkspaceString(oStd::fixed_string<char, capacity>& _StrDestination) { return oP4GetWorkspaceString(_StrDestination, _StrDestination.capacity()); }
+template<size_t capacity> inline bool oP4GetWorkspaceString(ouro::fixed_string<char, capacity>& _StrDestination) { return oP4GetWorkspaceString(_StrDestination, _StrDestination.capacity()); }
 
 oAPI bool oP4GetLabelSpecString(char* _P4LabelSpecString, size_t _SizeofP4LabelSpecString, const char* _Label);
 template<size_t size> inline bool oP4GetLabelSpecString(char (&_StrDestination)[size], const char* _Label) { return oP4GetLabelSpecString(_StrDestination, size, _Label); }
-template<size_t capacity> inline bool oP4GetLabelSpecString(oStd::fixed_string<char, capacity>& _StrDestination, const char* _Label) { return oP4GetLabelSpecString(_StrDestination, _StrDestination.capacity(), _Label); }
+template<size_t capacity> inline bool oP4GetLabelSpecString(ouro::fixed_string<char, capacity>& _StrDestination, const char* _Label) { return oP4GetLabelSpecString(_StrDestination, _StrDestination.capacity(), _Label); }
 
 // OpenType can only be one of the first 3 status values or this will return 
 // false.
@@ -154,22 +154,22 @@ oAPI bool oP4Label(const oP4_LABEL_SPEC& _Label);
 // Returns the user supplied description associated with a given changelist
 oAPI bool oP4GetChangelistDescription(char* _StrDestination, size_t _SizeofStrDestination, int _ChangeList);
 template<size_t size> bool oP4GetChangelistDescription(char (&_StrDestination)[size], int _ChangeList) { return oP4GetChangelistDescription(_StrDestination, size, _ChangeList); }
-template<size_t capacity> bool oP4GetChangelistDescription(oStd::fixed_string<char, capacity>& _StrDestination, int _ChangeList){ return oP4GetChangelistDescription(_StrDestination, _StrDestination.capacity(), _ChangeList); }
+template<size_t capacity> bool oP4GetChangelistDescription(ouro::fixed_string<char, capacity>& _StrDestination, int _ChangeList){ return oP4GetChangelistDescription(_StrDestination, _StrDestination.capacity(), _ChangeList); }
 
 // Returns the username associated with a specific changelist
 oAPI bool oP4GetChangelistUser(char* _StrDestination, size_t _SizeofStrDestination, int _ChangeList);
 template<size_t size> bool oP4GetChangelistUser(char (&_StrDestination)[size], int _ChangeList) { return oP4GetChangelistUser(_StrDestination, size, _ChangeList); }
-template<size_t capacity> bool oP4GetChangelistUser(oStd::fixed_string<char, capacity>& _StrDestination, int _ChangeList){ return oP4GetChangelistUser(_StrDestination, _StrDestination.capacity(), _ChangeList); }
+template<size_t capacity> bool oP4GetChangelistUser(ouro::fixed_string<char, capacity>& _StrDestination, int _ChangeList){ return oP4GetChangelistUser(_StrDestination, _StrDestination.capacity(), _ChangeList); }
 
 // Returns the date associated with a specific changelist
 oAPI bool oP4GetChangelistDate(char* _StrDestination, size_t _SizeofStrDestination, int _ChangeList);
 template<size_t size> bool oP4GetChangelistDate(char (&_StrDestination)[size], int _ChangeList) { return oP4GetChangelistDate(_StrDestination, size, _ChangeList); }
-template<size_t capacity> bool oP4GetChangelistDate(oStd::fixed_string<char, capacity>& _StrDestination, int _ChangeList){ return oP4GetChangelistDate(_StrDestination, _StrDestination.capacity(), _ChangeList); }
+template<size_t capacity> bool oP4GetChangelistDate(ouro::fixed_string<char, capacity>& _StrDestination, int _ChangeList){ return oP4GetChangelistDate(_StrDestination, _StrDestination.capacity(), _ChangeList); }
 
 // Takes a p4 depot path and converts it into a client file path
 oAPI bool oP4GetClientPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _pDepotPath);
 template<size_t size> bool oP4GetClientPath(char (&_StrDestination)[size], const char* _pDepotPath) { return oP4GetClientPath(_StrDestination, size, _pDepotPath); }
-template<size_t capacity> bool oP4GetClientPath(oStd::fixed_string<char, capacity>& _StrDestination, const char* _pDepotPath) { return oP4GetClientPath(_StrDestination, _StrDestination.capacity(), _pDepotPath); }
+template<size_t capacity> bool oP4GetClientPath(ouro::fixed_string<char, capacity>& _StrDestination, const char* _pDepotPath) { return oP4GetClientPath(_StrDestination, _StrDestination.capacity(), _pDepotPath); }
 
 // Fill the specified array with file descs for all files that are opened in a 
 // pending changelist (oInvalid is the default changelist) under the specified 
@@ -201,7 +201,7 @@ oAPI int oP4ParseChangesLine(const char* _ChangesLine);
 
 inline bool oP4GetLabelSpec(const char* _Label, oP4_LABEL_SPEC* _pLabelSpec)
 {
-	oStd::xxlstring lstr;
+	ouro::xxlstring lstr;
 	if (!oP4GetLabelSpecString(lstr, _Label))
 		return false;
 	return oP4ParseLabelSpec(_pLabelSpec, lstr);
@@ -212,7 +212,7 @@ inline bool oP4GetLabelSpec(const char* _Label, oP4_LABEL_SPEC* _pLabelSpec)
 
 inline bool oP4GetWorkspace(oP4_WORKSPACE* _pWorkspace)
 {
-	oStd::xxlstring tmp;
+	ouro::xxlstring tmp;
 	if (!oP4GetWorkspaceString(tmp))
 		return false; // pass through error
 	return oP4ParseWorkspace(_pWorkspace, tmp);

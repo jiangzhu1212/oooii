@@ -23,8 +23,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oWinWindowing.h>
-#include <oStd/assert.h>
-#include <oStd/fixed_string.h>
+#include <oBase/assert.h>
+#include <oBase/fixed_string.h>
 #include <oStd/chrono.h>
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oDisplay.h>
@@ -36,6 +36,8 @@
 #include <CdErr.h>
 #include <Shellapi.h>
 #include <Shlwapi.h>
+
+using namespace ouro;
 
 #define oWIN_CHECK(_hWnd) do \
 	{	if (!oWinExists(_hWnd)) return oErrorSetLast(std::errc::invalid_argument, "Invalid HWND 0x%x specified", _hWnd); \
@@ -90,7 +92,7 @@ struct oWIN_DEVICE_CHANGE_CONTEXT
 	}
 
 	std::vector<RAWINPUTDEVICELIST> RawInputs;
-	std::vector<oStd::mstring> RawInputInstanceNames;
+	std::vector<mstring> RawInputInstanceNames;
 	std::array<unsigned int, oGUI_INPUT_DEVICE_TYPE_COUNT> LastChangeTimestamp;
 };
 
@@ -158,7 +160,7 @@ static bool oWinTranslateDeviceChange(HWND _hWnd, WPARAM _wParam, LPARAM _lParam
 	oWIN_DEVICE_CHANGE_CONTEXT* ctx = (oWIN_DEVICE_CHANGE_CONTEXT*)_hDeviceChance;
 	oGUI_INPUT_DEVICE_TYPE Type = oGUI_INPUT_DEVICE_UNKNOWN;
 	oGUI_INPUT_DEVICE_STATUS Status = _wParam == GIDC_ARRIVAL ? oGUI_INPUT_DEVICE_READY : oGUI_INPUT_DEVICE_NOT_READY;
-	oStd::mstring InstanceName;
+	mstring InstanceName;
 
 	switch (_wParam)
 	{
@@ -227,9 +229,9 @@ static bool oWinTranslateDeviceChange(HWND _hWnd, WPARAM _wParam, LPARAM _lParam
 		{ oErrorSetLast(std::errc::invalid_argument, "Invalid HWND %p specified", _hWnd); return nullptr; } \
 	oASSERT(oWinIsWindowThread(_hWnd), "This function must be called on the window thread %d for %p", oConcurrency::asuint(oStd::this_thread::get_id()), _hWnd)
 
-inline bool oErrorSetLastBadType(HWND _hControl, oGUI_CONTROL_TYPE _Type) { return oErrorSetLast(std::errc::invalid_argument, "The specified %s %p (%d) is not valid for this operation", oStd::as_string(_Type), _hControl, GetDlgCtrlID(_hControl)); }
+inline bool oErrorSetLastBadType(HWND _hControl, oGUI_CONTROL_TYPE _Type) { return oErrorSetLast(std::errc::invalid_argument, "The specified %s %p (%d) is not valid for this operation", as_string(_Type), _hControl, GetDlgCtrlID(_hControl)); }
 
-inline bool oErrorSetLastBadIndex(HWND _hControl, oGUI_CONTROL_TYPE _Type, int _SubItemIndex) { return oErrorSetLast(std::errc::invalid_argument, "_SubItemIndex %d was not found in %s %p (%d)", _SubItemIndex, oStd::as_string(_Type), _hControl, GetDlgCtrlID(_hControl)); }
+inline bool oErrorSetLastBadIndex(HWND _hControl, oGUI_CONTROL_TYPE _Type, int _SubItemIndex) { return oErrorSetLast(std::errc::invalid_argument, "_SubItemIndex %d was not found in %s %p (%d)", _SubItemIndex, as_string(_Type), _hControl, GetDlgCtrlID(_hControl)); }
 
 inline HWND oWinControlGetBuddy(HWND _hControl) { return (HWND)SendMessage(_hControl, UDM_GETBUDDY, 0, 0); }
 
@@ -310,7 +312,7 @@ HWND oWinCreate(HWND _hParent
 	, void* _pInit
 	, void* _pThis)
 {
-	oStd::sstring ClassName;
+	sstring ClassName;
 	WNDCLASSEXA wc;
 	ZeroMemory(&wc, sizeof(WNDCLASSEX));
 	wc.cbSize = sizeof(WNDCLASSEX);
@@ -334,7 +336,7 @@ HWND oWinCreate(HWND _hParent
 	int2 NewSize = _ClientSize;
 	if (NewPosition.x == oDEFAULT || NewPosition.y == oDEFAULT || NewSize.x == oDEFAULT || NewSize.y == oDEFAULT)
 	{
-		oCore::display::info di = oCore::display::get_info(oCore::display::primary_id());
+		ouro::display::info di = ouro::display::get_info(ouro::display::primary_id());
 		const RECT rPrimaryWorkarea = oWinRectWH(int2(di.workarea_x, di.workarea_y), int2(di.workarea_width, di.workarea_height));
 		const int2 DefaultSize = oWinRectSize(rPrimaryWorkarea) / 4; // 25% of parent window by default
 		NewSize = oGUIResolveRectSize(NewSize, DefaultSize);
@@ -416,7 +418,7 @@ char* oWinMakeClassName(char* _StrDestination, size_t _SizeofStrDestination, WND
 
 bool oWinIsClass(HWND _hWnd, WNDPROC _Wndproc)
 {
-	oStd::sstring ClassName, ExpectedClassName;
+	sstring ClassName, ExpectedClassName;
 	oVERIFY_R(oWinMakeClassName(ExpectedClassName, _Wndproc));
 	oVERIFY_R(GetClassName(_hWnd, ClassName.c_str(), oInt(ClassName.capacity())));
 	return !strcmp(ClassName, ExpectedClassName);
@@ -1143,7 +1145,7 @@ RECT oWinGetParentRect(HWND _hWnd, HWND _hExplicitParent)
 		oVERIFY(oWinGetClientRect(hParent, &rParent));
 	else
 	{
-		oCore::display::info di = oCore::display::get_info(oWinGetDisplayId(_hWnd));
+		ouro::display::info di = ouro::display::get_info(oWinGetDisplayId(_hWnd));
 		rParent = oWinRectWH(int2(di.workarea_x, di.workarea_y), int2(di.workarea_width, di.workarea_height));
 	}
 	return rParent;
@@ -1249,7 +1251,7 @@ bool oWinSetShape(HWND _hWnd, const oGUI_WINDOW_SHAPE_DESC& _Shape)
 	if (Old.State == oGUI_WINDOW_RESTORED)
 		oWinSaveRestoredPosSize(_hWnd);
 
-	oStd::finally f([&] {SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) &~ oEF_NO_SAVE_RESTORED_POSITION_SIZE);});
+	finally f([&] {SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) &~ oEF_NO_SAVE_RESTORED_POSITION_SIZE);});
 	if (New.State == oGUI_WINDOW_FULLSCREEN || New.State == oGUI_WINDOW_MINIMIZED || New.State == oGUI_WINDOW_MAXIMIZED)
 		SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) | oEF_NO_SAVE_RESTORED_POSITION_SIZE);
 
@@ -1287,7 +1289,7 @@ bool oWinSetShape(HWND _hWnd, const oGUI_WINDOW_SHAPE_DESC& _Shape)
 
 	else if (New.State == oGUI_WINDOW_FULLSCREEN)
 	{
-		oCore::display::info di = oCore::display::get_info(oWinGetDisplayId(_hWnd));
+		ouro::display::info di = ouro::display::get_info(oWinGetDisplayId(_hWnd));
 		New.ClientPosition = int2(di.x, di.y);
 		New.ClientSize = int2(di.mode.width, di.mode.height);
 	}
@@ -1425,9 +1427,9 @@ bool oWinAnimate(HWND _hWnd, const RECT& _From, const RECT& _To)
 	return true;
 }
 
-oCore::display::id oWinGetDisplayId(HWND _hWnd)
+ouro::display::id oWinGetDisplayId(HWND _hWnd)
 {
-	return oCore::display::get_id(MonitorFromWindow(_hWnd, MONITOR_DEFAULTTONEAREST));
+	return ouro::display::get_id(MonitorFromWindow(_hWnd, MONITOR_DEFAULTTONEAREST));
 }
 
 HBRUSH oWinGetBackgroundBrush(HWND _hWnd)
@@ -1499,7 +1501,7 @@ bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex)
 
 size_t oWinGetTruncatedLength(HWND _hWnd, const char* _StrSource)
 {
-	oStd::xxlstring temp(_StrSource);
+	xxlstring temp(_StrSource);
 
 	RECT rClient;
 	GetClientRect(_hWnd, &rClient);
@@ -1525,7 +1527,7 @@ char* oWinTruncateLeft(char* _StrDestination, size_t _SizeofStrDestination, HWND
 	size_t TruncatedLength = oWinGetTruncatedLength(_hWnd, _StrSource);
 	if (TruncatedLength)
 	{
-		oStd::uri_string Truncated;
+		uri_string Truncated;
 		const char* pCopy = _StrSource + strlen(_StrSource) - TruncatedLength + 3;
 		oASSERT(pCopy >= _StrSource, "");
 		if (-1 == snprintf(_StrDestination, _SizeofStrDestination, "...%s", pCopy))
@@ -1660,10 +1662,10 @@ static LRESULT CALLBACK oSubclassProcFloatBox(HWND _hControl, UINT _uMsg, WPARAM
 		{
 			case WM_KILLFOCUS:
 			{
-				oStd::mstring text;
+				mstring text;
 				GetWindowText(_hControl, text, (int)text.capacity());
 				float f = 0.0f;
-				oStd::atof(text, &f);
+				atof(text, &f);
 				snprintf(text, oSubclassFloatBoxFormat, f);
 				SetWindowText(_hControl, text);
 				break;
@@ -1672,13 +1674,13 @@ static LRESULT CALLBACK oSubclassProcFloatBox(HWND _hControl, UINT _uMsg, WPARAM
 			case WM_SETTEXT:
 			{
 				float f = 0.0f;
-				oStd::mstring text = (const wchar_t*)_lParam; // handle wchar
-				if (!oStd::atof(text, &f))
+				mstring text = (const wchar_t*)_lParam; // handle wchar
+				if (!atof(text, &f))
 					return FALSE;
 				
 				// Ensure consistent formatting
 				snprintf(text, oSubclassFloatBoxFormat, f);
-				oStd::mwstring wtext = text;
+				mwstring wtext = text;
 				DefSubclassProc(_hControl, _uMsg, _wParam, (LPARAM)wtext.c_str());
 				return FALSE;
 			}
@@ -1689,7 +1691,7 @@ static LRESULT CALLBACK oSubclassProcFloatBox(HWND _hControl, UINT _uMsg, WPARAM
 				if ((GetKeyState(VK_LCONTROL) & 0x1000) || (GetKeyState(VK_RCONTROL) & 0x1000))
 					return DLGC_WANTALLKEYS;
 
-				oStd::mstring text;
+				mstring text;
 				GetWindowText(_hControl, text, (int)text.capacity());
 
 				// refresh/commit if the user presses enter
@@ -1973,7 +1975,7 @@ bool oWinControlDefaultOnNotify(HWND _hControl, const NMHDR& _NotifyMessageHeade
 			if (_NotifyMessageHeader.code == NM_CLICK || _NotifyMessageHeader.code == NM_RETURN)
 			{
 				const NMLINK& NMLink = (const NMLINK&)_NotifyMessageHeader;
-				oStd::xlstring asMultiByte(NMLink.item.szUrl);
+				xlstring asMultiByte(NMLink.item.szUrl);
 				oVERIFY(oWinSystemOpenDocument(asMultiByte));
 			}
 
@@ -2234,13 +2236,13 @@ int oWinControlFindSubItem(HWND _hControl, const char* _SubItemText)
 		{
 			int index = ComboBox_FindStringExact(_hControl, 0, _SubItemText);
 			if (index == CB_ERR)
-				oErrorSetLast(std::errc::invalid_argument, "Text %s was not found in %s %p (%d)", oSAFESTRN(_SubItemText), oStd::as_string(type), _hControl, GetDlgCtrlID(_hControl));
+				oErrorSetLast(std::errc::invalid_argument, "Text %s was not found in %s %p (%d)", oSAFESTRN(_SubItemText), as_string(type), _hControl, GetDlgCtrlID(_hControl));
 			break;
 		}
 
 		case oGUI_CONTROL_TAB:
 		{
-			oStd::mstring text;
+			mstring text;
 			TCITEM item;
 			item.mask = TCIF_TEXT;
 			item.pszText = (LPSTR)text.c_str();
@@ -2356,7 +2358,7 @@ int oWinControlGetSelectedSubItem(HWND _hControl)
 
 oGUI_CONTROL_TYPE oWinControlGetType(HWND _hControl)
 {
-	oStd::mstring ClassName;
+	mstring ClassName;
 	if (!GetClassName(_hControl, ClassName, static_cast<int>(ClassName.capacity())))
 		return oGUI_CONTROL_UNKNOWN;
 	
@@ -2562,7 +2564,7 @@ bool oWinControlSelect(HWND _hControl, int _Start, int _Length)
 bool oWinControlSetValue(HWND _hControl, float _Value)
 {
 	oWIN_CHECK(_hControl);
-	oStd::mstring text;
+	mstring text;
 	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch (type)
 	{
@@ -2578,7 +2580,7 @@ bool oWinControlSetValue(HWND _hControl, float _Value)
 
 float oWinControlGetFloat(HWND _hControl)
 {
-	oStd::mstring text;
+	mstring text;
 	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch (type)
 	{
@@ -2591,7 +2593,7 @@ float oWinControlGetFloat(HWND _hControl)
 	}
 
 	float f = 0.0f;
-	if (!oStd::atof(text, &f))
+	if (!atof(text, &f))
 		return std::numeric_limits<float>::quiet_NaN();
 	return f;
 }

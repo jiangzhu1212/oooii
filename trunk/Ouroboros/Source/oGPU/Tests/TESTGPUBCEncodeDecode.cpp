@@ -28,11 +28,13 @@
 #include <oPlatform/oImage.h>
 #include <oPlatform/oTest.h>
 
+using namespace ouro;
+
 struct GPU_BCEncodeDecode : public oTest
 {
 	RESULT LoadOriginalAndSaveConverted(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, oSURFACE_FORMAT _TargetFormat, const char* _OriginalPath, const char* _ConvertedPath)
 	{
-		oStd::intrusive_ptr<oBuffer> OriginalFile;
+		intrusive_ptr<oBuffer> OriginalFile;
 		oTESTB(oBufferLoad(_OriginalPath, &OriginalFile), "Failed to load %s", _OriginalPath);
 
 		oGPU_TEXTURE_DESC d;
@@ -40,11 +42,11 @@ struct GPU_BCEncodeDecode : public oTest
 		d.ArraySize = oDEFAULT;
 		d.Format = oSURFACE_UNKNOWN;
 
-		oStd::intrusive_ptr<oGPUTexture> OriginalAsTexture;
+		intrusive_ptr<oGPUTexture> OriginalAsTexture;
 		oTESTB(oGPUTextureLoad(_pDevice, d, "Source Texture", OriginalFile->GetData(), OriginalFile->GetSize(), &OriginalAsTexture), "Failed to parse %s", OriginalFile->GetName());
 
-		oStd::intrusive_ptr<oGPUTexture> ConvertedTexture;
-		oTESTB(oGPUSurfaceConvert(OriginalAsTexture, _TargetFormat, &ConvertedTexture), "Failed to convert %s to %s", OriginalFile->GetName(), oStd::as_string(_TargetFormat));
+		intrusive_ptr<oGPUTexture> ConvertedTexture;
+		oTESTB(oGPUSurfaceConvert(OriginalAsTexture, _TargetFormat, &ConvertedTexture), "Failed to convert %s to %s", OriginalFile->GetName(), ouro::as_string(_TargetFormat));
 
 		oStreamDelete(_ConvertedPath);
 
@@ -54,7 +56,7 @@ struct GPU_BCEncodeDecode : public oTest
 
 	RESULT LoadConvertedAndConvertToImage(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, const char* _ConvertedPath, oImage** _ppConvertedImage)
 	{
-		oStd::intrusive_ptr<oBuffer> ConvertedFile;
+		intrusive_ptr<oBuffer> ConvertedFile;
 		oTESTB(oBufferLoad(_ConvertedPath, &ConvertedFile), "Failed to load %s", _ConvertedPath);
 
 		oGPUTexture::DESC td;
@@ -63,10 +65,10 @@ struct GPU_BCEncodeDecode : public oTest
 		td.Format = oSURFACE_UNKNOWN;
 		td.Type = oGPU_TEXTURE_2D_READBACK;
 
-		oStd::intrusive_ptr<oGPUTexture> ConvertedFileAsTexture;
+		intrusive_ptr<oGPUTexture> ConvertedFileAsTexture;
 		oTESTB(oGPUTextureLoad(_pDevice, td, "Converted Texture", ConvertedFile->GetData(), ConvertedFile->GetSize(), &ConvertedFileAsTexture), "Failed to parse %s", ConvertedFile->GetName());
 
-		oStd::intrusive_ptr<oGPUTexture> BGRATexture;
+		intrusive_ptr<oGPUTexture> BGRATexture;
 		oTESTB(oGPUSurfaceConvert(ConvertedFileAsTexture, oSURFACE_B8G8R8A8_UNORM, &BGRATexture), "Failed to convert %s to BGRA", ConvertedFile->GetName());
 
 		BGRATexture->GetDesc(&td);
@@ -76,13 +78,13 @@ struct GPU_BCEncodeDecode : public oTest
 		d.Format = oImageFormatFromSurfaceFormat(td.Format);
 		d.RowPitch = oImageCalcRowPitch(d.Format, d.Dimensions.x);
 
-		oStd::intrusive_ptr<oImage> ConvertedImage;
+		intrusive_ptr<oImage> ConvertedImage;
 		oTESTB(oImageCreate("ConvertedImage", d, &ConvertedImage), "Failed to create a compatible oImage");
 
 		oSURFACE_MAPPED_SUBRESOURCE msrSource;
 		_pDevice->MapRead(BGRATexture, 0, &msrSource, true);
 		int2 ByteDimensions = oSurfaceMipCalcByteDimensions(td.Format, td.Dimensions);
-		oStd::memcpy2d(ConvertedImage->GetData(), d.RowPitch, msrSource.pData, msrSource.RowPitch, ByteDimensions.x, ByteDimensions.y);
+		memcpy2d(ConvertedImage->GetData(), d.RowPitch, msrSource.pData, msrSource.RowPitch, ByteDimensions.x, ByteDimensions.y);
 		_pDevice->UnmapRead(BGRATexture, 0);
 
 		*_ppConvertedImage = ConvertedImage;
@@ -94,7 +96,7 @@ struct GPU_BCEncodeDecode : public oTest
 	{
 		static const char* TestImageFilename = "Test/Textures/lena_1.png";
 
-		oStd::path ImagePath;
+		path ImagePath;
 		oTESTB0(FindInputFile(ImagePath, TestImageFilename));
 
 		char base[64];
@@ -102,16 +104,16 @@ struct GPU_BCEncodeDecode : public oTest
 		char fn[64];
 		snprintf(fn, "%s%s.dds", base, _FilenameSuffix);
 
-		oStd::path ConvertedPath;
+		path ConvertedPath;
 		oTESTB0(BuildPath(ConvertedPath, fn, oTest::TEMP));
 
-		oTRACE("Converting image to %s (may take a while)...", oStd::as_string(_TargetFormat));
+		oTRACE("Converting image to %s (may take a while)...", ouro::as_string(_TargetFormat));
 		RESULT res = LoadOriginalAndSaveConverted(_StrStatus, _SizeofStrStatus, _pDevice, _TargetFormat, ImagePath, ConvertedPath);
 		if (SUCCESS != res)
 			return res;
 
-		oTRACE("Converting image back from %s (may take a while)...", oStd::as_string(_TargetFormat));
-		oStd::intrusive_ptr<oImage> ConvertedImage;
+		oTRACE("Converting image back from %s (may take a while)...", ouro::as_string(_TargetFormat));
+		intrusive_ptr<oImage> ConvertedImage;
 		res = LoadConvertedAndConvertToImage(_StrStatus, _SizeofStrStatus, _pDevice, ConvertedPath, &ConvertedImage);
 		if (SUCCESS != res)
 				return res;
@@ -133,7 +135,7 @@ struct GPU_BCEncodeDecode : public oTest
 			DeviceInit.DriverDebugLevel = oGPU_DEBUG_NORMAL;
 		#endif
 
-		oStd::intrusive_ptr<oGPUDevice> Device;
+		intrusive_ptr<oGPUDevice> Device;
 		if (!oGPUDeviceCreate(DeviceInit, &Device))
 		{
 			#if 1

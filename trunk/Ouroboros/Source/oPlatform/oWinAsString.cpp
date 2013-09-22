@@ -32,6 +32,8 @@
 #include <Dbt.h>
 #include <SetupAPI.h>
 
+using namespace ouro;
+
 const char* oWinAsStringHT(int _HTCode)
 {
 	switch (_HTCode)
@@ -637,17 +639,17 @@ const char* oWinAsStringSPDRP(int _SPDRPValue)
 
 char* oWinParseStyleFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSFlags)
 {
-	return oStd::strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_WSFlags, oWinAsStringWS(WS_OVERLAPPED), oWinAsStringWS);
+	return strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_WSFlags, oWinAsStringWS(WS_OVERLAPPED), oWinAsStringWS);
 }
 
 char* oWinParseStyleExFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSEXFlags)
 {
-	return oStd::strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_WSEXFlags, oWinAsStringWSEX(0), oWinAsStringWSEX);
+	return strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_WSEXFlags, oWinAsStringWSEX(0), oWinAsStringWSEX);
 }
 
 char* oWinParseSWPFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _SWPFlags)
 {
-	return oStd::strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_SWPFlags & 0x07ff, "0", oWinAsStringSWP);
+	return strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_SWPFlags & 0x07ff, "0", oWinAsStringSWP);
 }
 
 static char* oWinPrintStyleChange(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, const char* _MsgName, WPARAM _wParam, LPARAM _lParam)
@@ -689,7 +691,7 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 {
 	// http://www.autoitscript.com/autoit3/docs/appendix/WinMsgCodes.htm
 
-	#define KEYSTR oStd::as_string(oWinKeyToKey((DWORD)oWinKeyTranslate(_wParam, _pState)))
+	#define KEYSTR as_string(oWinKeyToKey((DWORD)oWinKeyTranslate(_wParam, _pState)))
 
 	switch (_uMsg)
 	{ 
@@ -739,7 +741,7 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 		case WM_NOTIFY: { const NMHDR& h = *(NMHDR*)_lParam; snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_NOTIFY WPARAM=%u from hwndFrom=0x%x idFrom=%d notification code=%s", _hWnd, _wParam, h.hwndFrom, h.idFrom, oWinAsStringNM(h.code)); break; }
 		case WM_DROPFILES:
 		{
-			oStd::path_string p;
+			path_string p;
 			UINT nFiles = DragQueryFile((HDROP)_wParam, ~0u, p, oUInt(p.capacity()));
 			DragQueryFile((HDROP)_wParam, 0, p, oUInt(p.capacity()));
 			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DROPFILES hDrop=0x%x %u files starting with \"%s\"", _hWnd, _wParam, nFiles, p.c_str());
@@ -749,8 +751,8 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 		{
 			const char* type = _wParam == GIDC_ARRIVAL ? "arrival" : "removal";
 
-			oStd::mstring Name;
-			UINT Size = oUInt(Name.capacity() * sizeof(oStd::mstring::char_type));
+			mstring Name;
+			UINT Size = oUInt(Name.capacity() * sizeof(mstring::char_type));
 			GetRawInputDeviceInfo((HANDLE)_lParam, RIDI_DEVICENAME, Name.c_str(), &Size);
 
 			RID_DEVICE_INFO RIDDI;
@@ -771,8 +773,8 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 					break;
 			}
 
-			oStd::sstring StrType;
-			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_INPUT_DEVICE_CHANGE %s type=%s devname=%s", _hWnd, type, oStd::to_string(StrType, InpType), Name.c_str());
+			sstring StrType;
+			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_INPUT_DEVICE_CHANGE %s type=%s devname=%s", _hWnd, type, to_string(StrType, InpType), Name.c_str());
 			break;
 		}
 
@@ -781,7 +783,7 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 			DEV_BROADCAST_HDR* pDBHdr = (DEV_BROADCAST_HDR*)_lParam;
 			const char* devtype = pDBHdr ? oWinAsStringDBTDT(pDBHdr->dbch_devicetype) : "(null)";
 
-			const oStd::guid* pGUID = &oStd::null_guid;
+			const guid* pGUID = &null_guid;
 			const char* name = "(null)";
 
 			if (pDBHdr)
@@ -791,14 +793,14 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 					case DBT_DEVTYP_DEVICEINTERFACE:
 					{
 						DEV_BROADCAST_DEVICEINTERFACE_A* pDBDI = (DEV_BROADCAST_DEVICEINTERFACE_A*)_lParam;
-						pGUID = (const oStd::guid*)&pDBDI->dbcc_classguid;
+						pGUID = (const guid*)&pDBDI->dbcc_classguid;
 						name = pDBDI->dbcc_name;
 						break;
 					}
 					case DBT_DEVTYP_HANDLE:
 					{
 						DEV_BROADCAST_HANDLE* pDBH = (DEV_BROADCAST_HANDLE*)_lParam;
-						pGUID = (const oStd::guid*)&pDBH->dbch_eventguid;
+						pGUID = (const guid*)&pDBH->dbch_eventguid;
 						break;
 					}
 					case DBT_DEVTYP_OEM:
@@ -829,8 +831,8 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 				}
 			}
 
-			oStd::sstring StrGUID;
-			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DEVICECHANGE %s devtype=%s GUID=%s name=%s", _hWnd, oWinAsStringDBT(oInt(_wParam)), devtype, oStd::to_string(StrGUID, *pGUID), name);
+			sstring StrGUID;
+			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DEVICECHANGE %s devtype=%s GUID=%s name=%s", _hWnd, oWinAsStringDBT(oInt(_wParam)), devtype, to_string(StrGUID, *pGUID), name);
 			break;
 		}
 		default:

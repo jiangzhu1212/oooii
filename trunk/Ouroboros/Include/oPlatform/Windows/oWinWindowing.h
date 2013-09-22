@@ -153,7 +153,7 @@ UINT oWinGetNativeRegisteredMessage(oWM _RegisteredMessage);
 // retrieve a name.
 oAPI char* oWinMakeClassName(char* _StrDestination, size_t _SizeofStrDestination, WNDPROC _Wndproc);
 template<size_t size> char* oWinMakeClassName(char (&_StrDestination)[size], WNDPROC _Wndproc) { return oWinMakeClassName(_StrDestination, size, _Wndproc); }
-template<typename charT, size_t capacity> char* oWinMakeClassName(oStd::fixed_string<charT, capacity>& _StrDestination, WNDPROC _Wndproc) { return oWinMakeClassName(_StrDestination, _StrDestination.capacity(), _Wndproc); }
+template<typename charT, size_t capacity> char* oWinMakeClassName(ouro::fixed_string<charT, capacity>& _StrDestination, WNDPROC _Wndproc) { return oWinMakeClassName(_StrDestination, _StrDestination.capacity(), _Wndproc); }
 
 // Returns true if the specified window uses the specified _Wndproc and was
 // created with oWinCreate.
@@ -315,7 +315,7 @@ oAPI bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex = oInvali
 // Returns _StrDestination on success, otherwise nullptr.
 oAPI char* oWinGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, int _SubItemIndex = oInvalid);
 template<size_t size> char* oWinGetText(char (&_StrDestination)[size], HWND _hWnd, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, size, _hWnd, _SubItemIndex); }
-template<size_t capacity> char* oWinGetText(oStd::fixed_string<char, capacity>& _StrDestination, HWND _hWnd, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _StrDestination.capacity(), _hWnd, _SubItemIndex); }
+template<size_t capacity> char* oWinGetText(ouro::fixed_string<char, capacity>& _StrDestination, HWND _hWnd, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _StrDestination.capacity(), _hWnd, _SubItemIndex); }
 
 // Returns the window class's hbrBackground value. This is a non-counted 
 // reference, so no lifetime management should be performed on the HBRUSH.
@@ -377,7 +377,7 @@ oAPI bool oWinIsOpaque(HWND _hWnd);
 // Gets the index of the display that is most closely associated with the 
 // specified window. NOTE: This is an oDisplay-style index compatible with 
 // oDisplayEnum(), not a DirectX index.
-oAPI oCore::display::id oWinGetDisplayId(HWND _hWnd);
+oAPI ouro::display::id oWinGetDisplayId(HWND _hWnd);
 
 // Returns true if the specified _hWnd is valid and has focus
 oAPI bool oWinHasFocus(HWND _hWnd);
@@ -497,14 +497,14 @@ oAPI size_t oWinGetTruncatedLength(HWND _hWnd, const char* _StrSource);
 // the string as possible.
 oAPI char* oWinTruncateLeft(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, const char* _StrSource);
 template<size_t size> char* oWinTruncateLeft(char (&_StrDestination)[size], HWND _hWnd, const char* _StrSource) { return oWinTruncateLeft(_StrDestination, size, _hWnd, _StrSource); }
-template<size_t capacity> char* oWinTruncateLeft(oStd::fixed_string<char, capacity>& _StrDestination, HWND _hWnd, const char* _StrSource) { return oWinTruncateLeft(_StrDestination, _StrDestination.capacity(), _hWnd, _StrSource); }
+template<size_t capacity> char* oWinTruncateLeft(ouro::fixed_string<char, capacity>& _StrDestination, HWND _hWnd, const char* _StrSource) { return oWinTruncateLeft(_StrDestination, _StrDestination.capacity(), _hWnd, _StrSource); }
 
 // Fills _StrDestination with a copy of the path that has ellipse placed in the 
 // middle of the path according to windows rules sized to the rectangle and 
 // context used by the specified HWND for drawing.
 oAPI char* oWinTruncatePath(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, const char* _Path);
 template<size_t size> char* oWinTruncatePath(char (&_StrDestination)[size], HWND _hWnd, const char* _Path) { return oWinTruncatePath(_StrDestination, size, _hWnd, _Path); }
-template<size_t capacity> char* oWinTruncatePath(oStd::fixed_string<char, capacity>& _StrDestination, HWND _hWnd, const char* _Path) { return oWinTruncatePath(_StrDestination, _StrDestination.capacity(), _hWnd, _Path); }
+template<size_t capacity> char* oWinTruncatePath(ouro::fixed_string<char, capacity>& _StrDestination, HWND _hWnd, const char* _Path) { return oWinTruncatePath(_StrDestination, _StrDestination.capacity(), _hWnd, _Path); }
 
 // _____________________________________________________________________________
 // UI Control Creation, Lifetime and Message Processing
@@ -661,7 +661,7 @@ inline bool oWinControlSetText(HWND _hControl, const char* _Text, int _SubItemIn
 // Returns _StrDestination on success, otherwise nullptr.
 inline char* oWinControlGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hControl, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _SizeofStrDestination, _hControl, _SubItemIndex); }
 template<size_t size> char* oWinControlGetText(char (&_StrDestination)[size], HWND _hControl, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _hControl, _SubItemIndex); }
-template<size_t capacity> char* oWinControlGetText(oStd::fixed_string<char, capacity>& _StrDestination, HWND _hControl, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _hControl, _SubItemIndex); }
+template<size_t capacity> char* oWinControlGetText(ouro::fixed_string<char, capacity>& _StrDestination, HWND _hControl, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _hControl, _SubItemIndex); }
 
 // Returns _StrDestination on success, otherwise nullptr. _StrDestination is 
 // filled with the portion of the specified _hControl that is considered 
@@ -669,7 +669,7 @@ template<size_t capacity> char* oWinControlGetText(oStd::fixed_string<char, capa
 // Valid for: ComboTextbox, TextBox, FloatBox, FloatBoxSpinner
 oAPI char* oWinControlGetSelectedText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hControl);
 template<size_t size> char* oWinControlGetSelectedText(char (&_StrDestination)[size], HWND _hControl) { return oWinControlGetSelectedText(_StrDestination, size, _hWnd); }
-template<size_t capacity> char* oWinControlGetSelectedText(oStd::fixed_string<char, capacity>& _StrDestination, HWND _hControl) { return oWinControlGetSelectedText(_StrDestination, _StrDestination.capacity(), _hWnd); }
+template<size_t capacity> char* oWinControlGetSelectedText(ouro::fixed_string<char, capacity>& _StrDestination, HWND _hControl) { return oWinControlGetSelectedText(_StrDestination, _StrDestination.capacity(), _hWnd); }
 
 // Applies a selection highlight to the specified _hWnd according to the 
 // specified range.

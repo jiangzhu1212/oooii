@@ -22,13 +22,15 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/finally.h>
-#include <oStd/timer.h>
+#include <oBase/finally.h>
+#include <oBase/timer.h>
 #include <oBasis/oSurfaceResize.h>
 #include <oBasis/oTimer.h>
 #include "oBasisTestCommon.h"
 #include <oBasis/tests/oBasisTests.h>
 #include <vector>
+
+using namespace ouro;
 
 static bool oBasisTest_oSurfaceResize_TestSize(const oBasisTestServices& _Services, const oSURFACE_DESC& _SourceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SourceMapped, oSURFACE_FILTER _Filter, const int3& _NewSize, unsigned int _NthImage)
 {
@@ -42,7 +44,7 @@ static bool oBasisTest_oSurfaceResize_TestSize(const oBasisTestServices& _Servic
 	oSurfaceCalcMappedSubresource(destDesc, 0, 0, destMapData.data(), &destMap);
 
 	{
-		oStd::scoped_timer timer("resize time");
+		scoped_timer timer("resize time");
 		oSurfaceResize(_SourceDesc, _SourceMapped, destDesc, &destMap, _Filter);
 	}
 
@@ -68,7 +70,7 @@ bool oBasisTest_oSurfaceResize(const oBasisTestServices& _Services)
 	if (!_Services.AllocateAndLoadSurface(&hSurface, &SourceDesc, &SourceMapped, testImage))
 		return false; // pass through error
 
-	oStd::finally ose([&] { _Services.DeallocateSurface(hSurface); });
+	ouro::finally ose([&] { _Services.DeallocateSurface(hSurface); });
 
 	unsigned int NthImage = 0;
 	for (int i = 0; i < oSURFACE_FILTER_COUNT; i++, NthImage += 2)

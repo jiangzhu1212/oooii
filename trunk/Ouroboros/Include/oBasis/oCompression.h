@@ -28,7 +28,7 @@
 #ifndef oCompression_h
 #define oCompression_h
 
-#include <oStd/config.h>
+#include <oBase/config.h>
 
 // If _pDestination is nullptr, this will return an estimation of the size 
 // _pDestination should be. If _pDestination is valid, this will return the 

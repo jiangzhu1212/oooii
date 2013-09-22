@@ -29,11 +29,17 @@
 #ifndef oStd_intrinsics_h
 #define oStd_intrinsics_h
 
-#include <oStd/config.h>
-
 #ifdef __cplusplus
 	extern "C" {
 #endif
+
+// @tony - where should these come from?
+#if _MSC_VER >= 1600
+	#define oHAS_8BIT_ATOMICS
+	#define oHAS_16BIT_ATOMICS
+#endif
+
+#define oHAS_64BIT_ATOMICS
 
 // _____________________________________________________________________________
 // Bit scanning
@@ -43,7 +49,7 @@ unsigned char _BitScanReverse(unsigned long* Index, unsigned long Mask);
 #pragma intrinsic(_BitScanReverse)
 #pragma intrinsic(_BitScanForward)
 
-#ifdef o64BIT
+#ifdef _M_X64
 	unsigned char _BitScanForward64(unsigned long* Index, unsigned __int64 Mask);
 	unsigned char _BitScanReverse64(unsigned long* Index, unsigned __int64 Mask);
 	#pragma intrinsic(_BitScanReverse64)
@@ -102,7 +108,7 @@ long _InterlockedXor(long volatile *Destination, long Value);
 	#pragma intrinsic(_InterlockedCompareExchange16)
 #endif
 
-#ifdef o64BIT
+#ifdef _M_X64
 	void* _InterlockedExchangePointer(void* volatile *Target, void* Value);
 	void* _InterlockedCompareExchangePointer(void* volatile *Destination, void* Exchange, void* Comperand);
 
@@ -122,7 +128,7 @@ long _InterlockedXor(long volatile *Destination, long Value);
 	long long _InterlockedCompareExchange64(long long volatile *Destination, long long ExChange, long long Comperand);
 	long long _InterlockedOr64(long long volatile *Destination, long long Value);
 	long long _InterlockedXor64(long long volatile *Destination, long long Value);
-	#ifdef o64BIT
+	#ifdef _M_X64
 		//#pragma intrinsic(_InterlockedAdd64)
 		#pragma intrinsic(_InterlockedAnd64)
 		#pragma intrinsic(_InterlockedIncrement64)

@@ -115,7 +115,7 @@ int oCameraControllerModelerImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 		if (WasTumbling || WasTracking || WasDolly)
 			Response |= oCAMERA_CONTROLLER_UNLOCK_POINTER;
 
-		if (!oStd::equal(PointerPosition.z, 0.0f))
+		if (!ouro::equal(PointerPosition.z, 0.0f))
 		{
 			float2 delta(PointerPosition.z, 0.0f);
 			Arcball.Dolly(delta * 0.05f * Desc.DollySpeed);

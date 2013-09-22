@@ -29,8 +29,8 @@
 #ifndef oReporting_h
 #define oReporting_h
 
-#include <oStd/assert.h>
-#include <oStd/path.h>
+#include <oBase/assert.h>
+#include <oBase/path.h>
 
 struct oREPORTING_DESC
 {
@@ -48,16 +48,16 @@ struct oREPORTING_DESC
 
 	// If specified and a valid, accessible file path, all output through this 
 	// error system will be written to the specified file. 
-	oStd::path LogFilePath;
+	ouro::path LogFilePath;
 
 	// Base path to where both the Mini and Full memory dumps should be placed
     // when a dump occurs these will be appended with oGetModuleFileStampString
     // and a .dmp extension.
-	oStd::path MiniDumpBase;
-	oStd::path FullDumpBase;
+	ouro::path MiniDumpBase;
+	ouro::path FullDumpBase;
 
 	// Final system command executed before termination.
-	oStd::xlstring PostDumpExecution;
+	ouro::xlstring PostDumpExecution;
 
 	// Throws up a dialog box after dumping and PostDumpExecution that indicates
 	// if the dump succeeded prior to aborting.
@@ -73,7 +73,7 @@ struct oREPORTING_DESC
 	bool PrefixMsgId;
 };
 
-typedef oStd::assert_action::value (*oReportingVPrint)(const oStd::assert_context& _Assertion, threadsafe interface oStreamWriter* _pLogFile, const char* _Format, va_list _Args);
+typedef ouro::assert_action::value (*oReportingVPrint)(const ouro::assert_context& _Assertion, threadsafe interface oStreamWriter* _pLogFile, const char* _Format, va_list _Args);
 
 // Some objects use reporting in init/deinit, and those objects might be part of
 // static init/deinit. To ensure oReporting resources are available during that

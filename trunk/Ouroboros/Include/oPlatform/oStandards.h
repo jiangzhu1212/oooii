@@ -29,7 +29,7 @@
 #ifndef oStandards_h
 #define oStandards_h
 
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <stdarg.h>
 
 namespace oConsoleReporting
@@ -90,7 +90,7 @@ void* oLoadStandardIcon();
 // filename to ensure uniqueness.
 char* oGetLogFilePath(char* _StrDestination, size_t _SizeofStrDestination, const char* _ExeSuffix = nullptr);
 template<size_t size> char* oGetLogFilePath(char (&_StrDestination)[size], const char* _ExeSuffix = nullptr) { return oGetLogFilePath(_StrDestination, size, _ExeSuffix); }
-template<size_t CAPACITY> char* oGetLogFilePath(oStd::fixed_string<char, CAPACITY>& _StrDestination, const char* _ExeSuffix = nullptr) { return oGetLogFilePath(_StrDestination, _StrDestination.capacity(), _ExeSuffix); }
+template<size_t CAPACITY> char* oGetLogFilePath(ouro::fixed_string<char, CAPACITY>& _StrDestination, const char* _ExeSuffix = nullptr) { return oGetLogFilePath(_StrDestination, _StrDestination.capacity(), _ExeSuffix); }
 
 
 // Finds the path to the specified ini according to OOOii's override rules which 
@@ -103,7 +103,7 @@ template<size_t CAPACITY> char* oGetLogFilePath(oStd::fixed_string<char, CAPACIT
 // the /.. directory.
 bool oINIFindPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _pININame);
 template<size_t size> bool oINIFindPath(char (&_StrDestination)[size], const char* _pININame) { return oINIFindPath(_StrDestination, size, _pININame); }
-template<size_t CAPACITY> bool oINIFindPath(oStd::fixed_string<char, CAPACITY>& _StrDestination, const char* _pININame) { return oINIFindPath(_StrDestination, _StrDestination.capacity(), _pININame); }
+template<size_t CAPACITY> bool oINIFindPath(ouro::fixed_string<char, CAPACITY>& _StrDestination, const char* _pININame) { return oINIFindPath(_StrDestination, _StrDestination.capacity(), _pININame); }
 
 
 #endif

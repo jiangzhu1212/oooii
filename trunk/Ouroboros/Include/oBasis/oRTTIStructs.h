@@ -26,14 +26,15 @@
 #ifndef oRTTIStructs_h
 #define oRTTIStructs_h
 
-#include <oStd/fixed_string.h>
-#include <oStd/function.h>
+#include <oBase/byte.h>
+#include <oBase/fixed_string.h>
+#include <oBase/function.h>
 
 typedef oRTTI_DATA_COMPOUND<oRTTI_OBJECT>::ATTR oRTTI_ATTR_BASE;
 struct oRTTI_ATTR : oRTTI_ATTR_BASE
 {
-	const void* GetSrcPtr(const void* _pCompound) const { return oStd::byte_add(_pCompound, Offset); }
-	void* GetDestPtr(void* _pCompound) const { return oStd::byte_add(_pCompound, Offset); }
+	const void* GetSrcPtr(const void* _pCompound) const { return ouro::byte_add(_pCompound, Offset); }
+	void* GetDestPtr(void* _pCompound) const { return ouro::byte_add(_pCompound, Offset); }
 };
 
 class oRTTI
@@ -46,17 +47,17 @@ public:
 	inline oRTTI_TYPE GetType() const { return (oRTTI_TYPE)Type; }
 
 	char* GetName(char* _StrDestination, size_t _SizeofDestination) const;
-	template<size_t capacity> inline char* GetName(oStd::fixed_string<char, capacity>& _StrDestination) const { return GetName(_StrDestination.c_str(), _StrDestination.capacity()); }
+	template<size_t capacity> inline char* GetName(ouro::fixed_string<char, capacity>& _StrDestination) const { return GetName(_StrDestination.c_str(), _StrDestination.capacity()); }
 
 	int GetSize() const;
 
 	char* TypeToString(char* _StrDestination, size_t _SizeofDestination) const;
-	template<size_t capacity> inline char* TypeToString(oStd::fixed_string<char, capacity>& _StrDestination) const { return TypeToString(_StrDestination.c_str(), _StrDestination.capacity()); }
+	template<size_t capacity> inline char* TypeToString(ouro::fixed_string<char, capacity>& _StrDestination) const { return TypeToString(_StrDestination.c_str(), _StrDestination.capacity()); }
 
 	// General
 	bool FromString(const char* _String, void* _pValue, int _SizeOfValue = -1) const;
 	char* ToString(char* _StrDestination, size_t _SizeofDestination, const void* _pValue) const;
-	template<size_t capacity> inline char* ToString(oStd::fixed_string<char, capacity>& _StrDestination, const void* _pValue) const { return ToString(_StrDestination.c_str(), _StrDestination.capacity(), _pValue); }
+	template<size_t capacity> inline char* ToString(ouro::fixed_string<char, capacity>& _StrDestination, const void* _pValue) const { return ToString(_StrDestination.c_str(), _StrDestination.capacity(), _pValue); }
 
 	int GetNumStringTokens() const;
 
@@ -70,7 +71,7 @@ public:
 	const char* AsString(const void* _pEnumValue) const;
 
 	// Compounds
-	oStd::version GetVersion() const;
+	ouro::version GetVersion() const;
 	int GetNumBases() const;
 	const oRTTI* GetBaseRTTI(int _Index) const;
 	int GetBaseOffset(int _Index) const;

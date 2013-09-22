@@ -44,7 +44,7 @@ struct PLATFORM_WindowSendKeysClient : public oSpecialTest
 
 		bool CapsLock = GetKeyState(VK_CAPITAL) == 0 ? false : true;
 		bool Shift = false;
-		oStd::sstring Result;
+		ouro::sstring Result;
 
 		init.ActionHook = [&](const oGUI_ACTION_DESC& _Action)
 		{
@@ -66,7 +66,7 @@ struct PLATFORM_WindowSendKeysClient : public oSpecialTest
 					if(Capped)
 						ASCIIKey = (char)toupper(ASCIIKey);
 
-					oStd::sncatf(Result.c_str(), "%c", ASCIIKey);
+					ouro::sncatf(Result.c_str(), "%c", ASCIIKey);
 					if(Result.length() == strlen(TESTMessage))
 						WaitEvent.set();
 				}
@@ -77,7 +77,7 @@ struct PLATFORM_WindowSendKeysClient : public oSpecialTest
 			}
 		};
 
-		oStd::intrusive_ptr<oWindow> TestWindow;
+		ouro::intrusive_ptr<oWindow> TestWindow;
 		oTESTB0( oWindowCreate(init, &TestWindow) );
 
 		NotifyReady();
@@ -91,12 +91,12 @@ struct PLATFORM_WindowSendKeys : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oCore::process::id ID = oCore::process::get_id("notepad.exe");
+		ouro::process::id ID = ouro::process::get_id("notepad.exe");
 
-		std::shared_ptr<oCore::process> Client;
+		std::shared_ptr<ouro::process> Client;
 		{
 			int exitcode = 0;
-			oStd::lstring msg;
+			ouro::lstring msg;
 			oTESTB(oSpecialTest::CreateProcess("PLATFORM_WindowSendKeysClient", &Client), "");
 			oTESTB(oSpecialTest::Start(Client.get(), msg, msg.capacity(), &exitcode), "%s", msg);
 		}

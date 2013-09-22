@@ -32,7 +32,7 @@
 
 #include <oBasis/oGUI.h>
 #include <oBasis/oRTTI.h>
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <vector>
 
 // If _IsTopLevelMenu is true, the returned oGUI_MENU can be associated with an
@@ -94,11 +94,11 @@ oAPI int oGUIMenuGetCheckedRadio(oGUI_MENU _hMenu, int _ItemIDRadioRangeFirst, i
 
 oAPI char* oGUIMenuGetText(char* _StrDestination, size_t _SizeofStrDestination, oGUI_MENU _hMenu, int _ItemID);
 template<size_t size> char* oGUIMenuGetText(char (&_StrDestination)[size], oGUI_MENU _hMenu, int _ItemID) { return oGUIMenuGetText(_StrDestination, size, _hMenu, _ItemID); }
-template<size_t capacity> char* oGUIMenuGetText(oStd::fixed_string<char, capacity>& _StrDestination, oGUI_MENU _hMenu, int _ItemID) { return oGUIMenuGetText(_StrDestination, _StrDestination.capacity(), _hMenu, _ItemID); }
+template<size_t capacity> char* oGUIMenuGetText(ouro::fixed_string<char, capacity>& _StrDestination, oGUI_MENU _hMenu, int _ItemID) { return oGUIMenuGetText(_StrDestination, _StrDestination.capacity(), _hMenu, _ItemID); }
 
 oAPI char* oGUIMenuGetText(char* _StrDestination, size_t _SizeofStrDestination, oGUI_MENU _hMenu, oGUI_MENU _hSubmenu);
 template<size_t size> char* oGUIMenuGetText(char (&_StrDestination)[size], oGUI_MENU _hParentMenu, oGUI_MENU _hSubmenu) { return oGUIMenuGetText(_StrDestination, size, _hParentMenu, _hSubmenu); }
-template<size_t capacity> char* oGUIMenuGetText(oStd::fixed_string<char, capacity>& _StrDestination, oGUI_MENU _hParentMenu, oGUI_MENU _hSubmenu) { return oGUIMenuGetText(_StrDestination, _StrDestination.capacity(), _hParentMenu, _hSubmenu); }
+template<size_t capacity> char* oGUIMenuGetText(ouro::fixed_string<char, capacity>& _StrDestination, oGUI_MENU _hParentMenu, oGUI_MENU _hSubmenu) { return oGUIMenuGetText(_StrDestination, _StrDestination.capacity(), _hParentMenu, _hSubmenu); }
 
 // Create a menu populated with all values of an enum in the specified range.
 // This is useful to pair with oGUIMenuEnumRadioListHandler below for quick

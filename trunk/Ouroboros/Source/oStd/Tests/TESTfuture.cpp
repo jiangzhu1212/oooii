@@ -22,15 +22,11 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oTimer.h>
-#include <oStd/finally.h>
-#include <oStd/for.h>
-#include <oStd/macros.h>
-#include <oStd/future.h>
-#include <oStd/throw.h>
 #include <oConcurrency/oConcurrency.h>
-#include <oPlatform/oProcessStatsMonitor.h>
+#include <oPlatform/oProcessStatsMonitor.h> // @tony: fixme
 #include <oStd/tests/oStdTestRequirements.h>
+#include <oStd/for.h>
+#include <oStd/future.h>
 
 #include <oBasis/oStddef.h>
 #include <oBasis/oError.h>
@@ -41,9 +37,13 @@ namespace oStd {
 static void exercise_thread(size_t _Index, int* _pResults, unsigned int _RuntimeMS)
 {
 	int n = 0;
-	oLocalTimeout to(_RuntimeMS);
-	while (!to.TimedOut())
+	double t = oStd::chrono::high_resolution_clock::now().time_since_epoch().count();
+	double timeout = t + _RuntimeMS / 1000.0;
+	while (t < timeout)
+	{
 		n += rand();
+		t = oStd::chrono::high_resolution_clock::now().time_since_epoch().count();
+	}
 
 	_pResults[_Index] = n;
 }

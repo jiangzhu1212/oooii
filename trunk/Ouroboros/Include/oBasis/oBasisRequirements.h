@@ -30,8 +30,8 @@
 #ifndef oBasisRequirements_h
 #define oBasisRequirements_h
 
-#include <oStd/function.h>
-#include <oStd/guid.h>
+#include <oBase/function.h>
+#include <oBase/guid.h>
 
 typedef oFUNCTION<void(void* _pMemory)> oLIFETIME_TASK;
 
@@ -44,7 +44,7 @@ typedef oFUNCTION<void(void* _pMemory)> oLIFETIME_TASK;
 // that once it also calls _Create on the allocation. The implementation should
 // also at that time schedule _Destroy as well as the freeing of the specified
 // memory using oConcurrency::thread_at_exit.
-void oThreadlocalMalloc(const oStd::guid& _GUID, const oLIFETIME_TASK& _Create, const oLIFETIME_TASK& _Destroy, size_t _Size, void** _ppAllocation);
-template<typename T> void oThreadlocalMalloc(const oStd::guid& _GUID, const oLIFETIME_TASK& _Create, const oLIFETIME_TASK& _Destroy, T** _ppAllocation) { oThreadlocalMalloc(_GUID, _Create, _Destroy, sizeof(T), (void**)_ppAllocation); }
+void oThreadlocalMalloc(const ouro::guid& _GUID, const oLIFETIME_TASK& _Create, const oLIFETIME_TASK& _Destroy, size_t _Size, void** _ppAllocation);
+template<typename T> void oThreadlocalMalloc(const ouro::guid& _GUID, const oLIFETIME_TASK& _Create, const oLIFETIME_TASK& _Destroy, T** _ppAllocation) { oThreadlocalMalloc(_GUID, _Create, _Destroy, sizeof(T), (void**)_ppAllocation); }
 
 #endif

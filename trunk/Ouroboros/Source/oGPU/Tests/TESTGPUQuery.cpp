@@ -25,21 +25,23 @@
 #include <oPlatform/oTest.h>
 #include <oGPU/oGPU.h>
 
+using namespace ouro;
+
 struct GPU_Query : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oGPUDevice::INIT init("GPU_Query");
 		init.DriverDebugLevel = oGPU_DEBUG_NORMAL;
-		oStd::intrusive_ptr<oGPUDevice> Device;
+		intrusive_ptr<oGPUDevice> Device;
 		oTESTB0(oGPUDeviceCreate(init, &Device));
 
-		oStd::intrusive_ptr<oGPUCommandList> ICL;
+		intrusive_ptr<oGPUCommandList> ICL;
 		Device->GetImmediateCommandList(&ICL);
 
 		// Test timer
 		{
-			oStd::intrusive_ptr<oGPUQuery> Query;
+			intrusive_ptr<oGPUQuery> Query;
 
 			oGPUQuery::DESC QueryDesc;
 			QueryDesc.Type = oGPU_QUERY_TIMER;

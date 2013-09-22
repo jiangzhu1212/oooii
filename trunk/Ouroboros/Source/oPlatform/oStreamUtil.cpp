@@ -26,9 +26,11 @@
 #include <oPlatform/oStream.h>
 #include <oBasis/oBuffer.h>
 
+using namespace ouro;
+
 bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oFUNCTION<void*(size_t _NumBytes)>& _Allocate, const oFUNCTION<void(void* _Pointer)>& _Deallocate, const char* _URIReference, bool _AsString)
 {
-	oStd::intrusive_ptr<threadsafe oStreamReader> Reader;
+	intrusive_ptr<threadsafe oStreamReader> Reader;
 	if (!oStreamReaderCreate(_URIReference, &Reader))
 		return false; // pass through error
 
@@ -41,8 +43,8 @@ bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oFUNCTION<void*(s
 
 	if (!r.pData)
 	{
-		oStd::sstring fileSize;
-		oStd::format_bytes(fileSize, actualSize, 2);
+		sstring fileSize;
+		format_bytes(fileSize, actualSize, 2);
 		return oErrorSetLast(std::errc::no_buffer_space, "Out of memory allocating %s", fileSize.c_str());
 	}
 
@@ -67,18 +69,18 @@ bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oFUNCTION<void*(s
 	*_pOutSize = oSizeT(sd.Size);
 	if (_AsString)
 	{
-		oStd::utf_type::value type = oStd::utfcmp(r.pData, oSizeT(__min(sd.Size, 512ull)));
+		utf_type::value type = utfcmp(r.pData, oSizeT(__min(sd.Size, 512ull)));
 		switch (type)
 		{
-			case oStd::utf_type::utf32be:
-			case oStd::utf_type::utf32le:
+			case utf_type::utf32be:
+			case utf_type::utf32le:
 				*_pOutSize += 4;
 				break;
-			case oStd::utf_type::utf16be:
-			case oStd::utf_type::utf16le:
+			case utf_type::utf16be:
+			case utf_type::utf16le:
 				*_pOutSize += 2;
 				break;
-			case oStd::utf_type::ascii: 
+			case utf_type::ascii: 
 				(*_pOutSize)++;
 				break;
 		}
@@ -90,7 +92,7 @@ bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oFUNCTION<void*(s
 
 bool oStreamLoadPartial(void* _pBuffer, size_t _SizeofBuffer, const char* _URIReference)
 {
-	oStd::intrusive_ptr<threadsafe oStreamReader> Reader;
+	intrusive_ptr<threadsafe oStreamReader> Reader;
 	if (!oStreamReaderCreate(_URIReference, &Reader))
 		return false;
 
@@ -131,7 +133,7 @@ bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ
 	if (!oStreamLoad(&pBuffer, &Size, malloc, free, _URIReference, true))
 		return false; // pass through error
 
-	oStd::finally FreeBuffer([&] { if (pBuffer) free(pBuffer); });
+	finally FreeBuffer([&] { if (pBuffer) free(pBuffer); });
 
 	if (!oOBJCreate(_URIReference, (const char*)pBuffer, _Init, _ppOBJ))
 		return false; // pass through error
@@ -147,7 +149,7 @@ bool oMTLLoad(const char* _URIReference, threadsafe oMTL** _ppMTL)
 	if (!oStreamLoad(&pBuffer, &Size, malloc, free, _URIReference, true))
 		return false; // pass through error
 
-	oStd::finally FreeBuffer([&] { if (pBuffer) free(pBuffer); });
+	finally FreeBuffer([&] { if (pBuffer) free(pBuffer); });
 
 	if (!oMTLCreate(_URIReference, (const char*)pBuffer, _ppMTL))
 		return false; // pass through error
@@ -167,7 +169,7 @@ bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ
 	{
 		if (oSTRVALID(d.MTLPath))
 		{
-			oStd::path_string mtlPath;
+			path_string mtlPath;
 			if (oIsFullPath(d.MTLPath))
 				mtlPath = d.MTLPath;
 			else
@@ -193,10 +195,10 @@ bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ
 	if (!oStreamLoad(&pBuffer, &Size, malloc, free, _URIReference, true)) \
 		return false; // pass through error
 
-std::shared_ptr<oStd::csv> oCSVLoad(const char* _URIReference)
+std::shared_ptr<csv> oCSVLoad(const char* _URIReference)
 {
 	LOAD_BUFFER
-	try { return std::move(std::make_shared<oStd::csv>(_URIReference, (char*)pBuffer, FreeString)); }
+	try { return std::move(std::make_shared<csv>(_URIReference, (char*)pBuffer, FreeString)); }
 	catch (std::exception& e)
 	{
 		oErrorSetLast(e);
@@ -204,10 +206,10 @@ std::shared_ptr<oStd::csv> oCSVLoad(const char* _URIReference)
 	}
 }
 
-std::shared_ptr<oStd::ini> oINILoad(const char* _URIReference)
+std::shared_ptr<ini> oINILoad(const char* _URIReference)
 {
 	LOAD_BUFFER
-	try { return std::move(std::make_shared<oStd::ini>(_URIReference, (char*)pBuffer, FreeString)); }
+	try { return std::move(std::make_shared<ini>(_URIReference, (char*)pBuffer, FreeString)); }
 	catch (std::exception& e)
 	{
 		oErrorSetLast(e);
@@ -215,10 +217,10 @@ std::shared_ptr<oStd::ini> oINILoad(const char* _URIReference)
 	}
 }
 
-std::shared_ptr<oStd::xml> oXMLLoad(const char* _URIReference)
+std::shared_ptr<xml> oXMLLoad(const char* _URIReference)
 {
 	LOAD_BUFFER
-	try { return std::move(std::make_shared<oStd::xml>(_URIReference, (char*)pBuffer, FreeString)); }
+	try { return std::move(std::make_shared<xml>(_URIReference, (char*)pBuffer, FreeString)); }
 	catch (std::exception& e)
 	{
 		oErrorSetLast(e);

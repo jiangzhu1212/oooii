@@ -27,9 +27,9 @@
 #ifndef oCore_display_h
 #define oCore_display_h
 
-#include <oStd/macros.h>
+#include <oBase/macros.h>
 
-namespace oCore {
+namespace ouro {
 	namespace display {
 
 class id
@@ -115,6 +115,6 @@ void virtual_rect(int* _pX, int* _pY, int* _pWidth, int* _pHeight);
 void set_power_on(bool _On = true);
 
 	} // namespace display
-} // namespace oCore
+} // namespace ouro
 
 #endif

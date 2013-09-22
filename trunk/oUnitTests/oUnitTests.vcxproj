@@ -164,6 +164,7 @@
     <Link />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTBase.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTBasis.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCompute.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrency.cpp" />
@@ -185,6 +186,12 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ouroboros\Source\oBase\oBase.vcxproj">
+      <Project>{b13f3cbd-b601-4196-bf6f-2eaa8cdfedc3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oBase\oBaseTests.vcxproj">
+      <Project>{f02df42c-54f3-4d80-b233-1d310b41917c}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oBasis\oBasis.vcxproj">
       <Project>{0110f712-0d38-4a54-9849-52786b26481b}</Project>
     </ProjectReference>

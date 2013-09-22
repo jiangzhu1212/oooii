@@ -27,7 +27,7 @@
 #ifndef oResizedType_h
 #define oResizedType_h
 
-#include <oStd/operators.h>
+#include <oBase/operators.h>
 
 template<typename T, typename StorageT> class oResizedType : public oOperators<oResizedType<T, StorageT>, T>
 {

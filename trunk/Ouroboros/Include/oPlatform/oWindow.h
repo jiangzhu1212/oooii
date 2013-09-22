@@ -53,7 +53,7 @@ interface oWindow : oInterface
 	
 	// Returns an index fit for use with oDisplay API based on the center of the
 	// window's client area.
-	virtual oCore::display::id GetDisplayId() const = 0;
+	virtual ouro::display::id GetDisplayId() const = 0;
 	virtual bool IsWindowThread() const threadsafe = 0;
 
 
@@ -94,7 +94,7 @@ interface oWindow : oInterface
 
 	inline void SetTitle(const char* _Format, ...) threadsafe { va_list args; va_start(args, _Format); SetTitleV(_Format, args); va_end(args); }
 	template<size_t size> char* GetTitle(char (&_StrDestination)[size]) const { return GetTitle(_StrDestination, size); }
-	template<size_t capacity> char* GetTitle(oStd::fixed_string<char, capacity>& _StrDestination) const { return GetTitle(_StrDestination, _StrDestination.capacity()); }
+	template<size_t capacity> char* GetTitle(ouro::fixed_string<char, capacity>& _StrDestination) const { return GetTitle(_StrDestination, _StrDestination.capacity()); }
 
 	// For widths, if the last width is -1, it will be interpreted as "take up 
 	// rest of width of window".
@@ -107,7 +107,7 @@ interface oWindow : oInterface
 
 	inline void SetStatusText(int _StatusSectionIndex, const char* _Format, ...) threadsafe { va_list args; va_start(args, _Format); SetStatusTextV(_StatusSectionIndex, _Format, args); va_end(args); }
 	template<size_t size> char* GetStatusText(char (&_StrDestination)[size], int _StatusSectionIndex) const threadsafe { return GetStatusText(_StrDestination, size, _StatusSectionIndex); }
-	template<size_t capacity> char* GetStatusText(oStd::fixed_string<char, capacity>& _StrDestination, int _StatusSectionIndex) const { return GetStatusText(_StrDestination, _StrDestination.capacity(), _StatusSectionIndex); }
+	template<size_t capacity> char* GetStatusText(ouro::fixed_string<char, capacity>& _StrDestination, int _StatusSectionIndex) const { return GetStatusText(_StrDestination, _StrDestination.capacity(), _StatusSectionIndex); }
 
 	virtual void SetStatusIcon(int _StatusSectionIndex, oGUI_ICON _hIcon) threadsafe = 0;
 	virtual oGUI_ICON GetStatusIcon(int _StatusSectionIndex) const = 0;
@@ -200,7 +200,7 @@ interface oWindow : oInterface
 	// Schedules an oImage to be generated from the oWindow. In the simple case,
 	// _Frame is not used and the front buffer is captured. Due to platform rules
 	// this may involve bringing the specified window to focus.
-	virtual oStd::future<oStd::intrusive_ptr<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const = 0;
+	virtual oStd::future<ouro::intrusive_ptr<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const = 0;
 
 	// Causes an oGUI_TIMER event to occur with the specified context after the 
 	// specified time. This will be called every specified millisections until 

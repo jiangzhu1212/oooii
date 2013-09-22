@@ -30,6 +30,8 @@
 #include "oD3D11Query.h"
 #include <oPlatform/Windows/oDXGI.h>
 
+using namespace ouro;
+
 // @oooii-tony: Now that prim topo is exposed through oGPUPipeline, should we
 // move some of the tricky overrides to oGPUUtil?
 class oD3D11OverrideIAPrimitiveTopology
@@ -145,7 +147,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, CommandList)
 		HRESULT hr = D3DDevice->CreateDeferredContext(0, &Context);
 		if (FAILED(hr))
 		{
-			oStd::mstring err;
+			mstring err;
 
 			UINT DeviceCreationFlags = D3DDevice->GetCreationFlags();
 
@@ -266,7 +268,7 @@ void oD3D11CommandList::Copy(oGPUBuffer* _pDestination, int _DestinationOffsetBy
 
 void oD3D11CommandList::Copy(oGPUResource* _pDestination, oGPUResource* _pSource)
 {
-	oASSERT(_pDestination && _pSource && _pDestination->GetType() == _pSource->GetType(), "Copy(%s, %s) can only occur between two same-typed objects", _pDestination ? oStd::as_string(_pDestination->GetType()) : "(null)", _pSource ? oStd::as_string(_pSource->GetType()) : "(null)");
+	oASSERT(_pDestination && _pSource && _pDestination->GetType() == _pSource->GetType(), "Copy(%s, %s) can only occur between two same-typed objects", _pDestination ? ouro::as_string(_pDestination->GetType()) : "(null)", _pSource ? ouro::as_string(_pSource->GetType()) : "(null)");
 	int D3DSubresourceIndex = 0;
 	oASSERT(_pDestination->GetType() != oGPU_MESH, "Do not use GPU mesh directly, use its buffers");
 	ID3D11Resource* d = oD3D11GetSubresource(_pDestination, 0, &D3DSubresourceIndex);
@@ -282,7 +284,7 @@ void oD3D11CommandList::CopyCounter(oGPUBuffer* _pDestination, uint _Destination
 		oASSERT(d.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND || d.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_COUNTER, "Source must be an unordered structured buffer with APPEND or COUNTER modifiers");
 	#endif
 
-	oASSERT(oStd::byte_aligned(_DestinationAlignedOffset, sizeof(uint)), "_DestinationAlignedOffset must be sizeof(uint)-aligned");
+	oASSERT(byte_aligned(_DestinationAlignedOffset, sizeof(uint)), "_DestinationAlignedOffset must be sizeof(uint)-aligned");
 	Context->CopyStructureCount(static_cast<oD3D11Buffer*>(_pDestination)->Buffer, _DestinationAlignedOffset, oD3D11GetUAV(_pUnorderedSource, 0, 0, true));
 }
 
@@ -541,7 +543,7 @@ void oD3D11CommandList::Draw(const oGPUBuffer* _pIndices, int _StartSlot, int _N
 
 	#ifdef _DEBUG
 	{
-		oStd::intrusive_ptr<ID3D11InputLayout> InputLayout = 0;
+		intrusive_ptr<ID3D11InputLayout> InputLayout = 0;
 		Context->IAGetInputLayout(&InputLayout);
 		oASSERT(!_ppVertexBuffers || InputLayout, "No InputLayout specified");
 	}
@@ -589,7 +591,7 @@ bool oD3D11CommandList::GenerateMips(oGPURenderTarget* _pRenderTarget)
 	if (!oGPUTextureTypeHasMips(desc.Type))
 		return oErrorSetLast(std::errc::invalid_argument, "Cannot generate mips if the type doesn't contain oGPU_TRAIT_TEXTURE_MIPS");
 
-	oStd::intrusive_ptr<oGPUTexture> texture;
+	intrusive_ptr<oGPUTexture> texture;
 	_pRenderTarget->GetTexture(0, &texture);
 	oD3D11Texture* d3dTexture = static_cast<oD3D11Texture*>(texture.c_ptr());
 	Context->GenerateMips(d3dTexture->SRV);

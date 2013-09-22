@@ -29,7 +29,7 @@
 #define oDispatchQueueConcurrentT_h
 
 #include <oBasis/oDispatchQueueConcurrent.h>
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <oBasis/oRefCount.h>
 #include <oConcurrency/thread_safe.h>
 
@@ -62,7 +62,7 @@ template<typename ThreadpoolT> struct oDispatchQueueConcurrentT : public oDispat
 
 	ThreadpoolT Threadpool;
 	oRefCount RefCount;
-	oStd::sstring DebugName;
+	ouro::sstring DebugName;
 };
 
 #endif

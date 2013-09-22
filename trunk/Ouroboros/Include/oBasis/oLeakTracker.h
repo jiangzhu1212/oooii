@@ -32,11 +32,11 @@
 #include <oConcurrency/countdown_latch.h>
 #include <oConcurrency/mutex.h>
 #include <oCore/debugger.h>
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <oBasis/oStdLinearAllocator.h>
-#include <oStd/unordered_map.h>
-#include <oStd/fnv1a.h>
-#include <oStd/function.h>
+#include <oBase/unordered_map.h>
+#include <oBase/fnv1a.h>
+#include <oBase/function.h>
 
 class oLeakTracker
 {
@@ -48,7 +48,7 @@ public:
 	// allows ignoring a number of entries just before the call location since
 	// typically a higher-level malloc call might have a known number of 
 	// sub-functions it calls. _pSymbols receives the values up to _MaxNumSymbols.
-	typedef std::function<size_t(oCore::debugger::symbol* _pSymbols, size_t _MaxNumSymbols, size_t _StartingOffset)> GetCallstackFn;
+	typedef std::function<size_t(ouro::debugger::symbol* _pSymbols, size_t _MaxNumSymbols, size_t _StartingOffset)> GetCallstackFn;
 
 	// Function that behaves like snprintf but converts the specified symbol into
 	// a string fit for the PrintFn below. The function should concatenate the
@@ -57,7 +57,7 @@ public:
 	// symbols and fill the specified bool with true if it matches or false if it
 	// doesn't and the function should noop if the value is true going in, that
 	// way long callstacks of std::bind internals can be shortened.
-	typedef std::function<int(char* _Buffer, size_t _SizeofBuffer, oCore::debugger::symbol _Symbol, const char* _PrefixString, bool* _pIsStdBind)> GetCallstackSymbolStringFn;
+	typedef std::function<int(char* _Buffer, size_t _SizeofBuffer, ouro::debugger::symbol _Symbol, const char* _PrefixString, bool* _pIsStdBind)> GetCallstackSymbolStringFn;
 
 	// Print a fixed string to some underlying destination. This makes no 
 	// assumptions about the string itself, and should add nothing to the string,
@@ -82,21 +82,21 @@ public:
 	{
 		uintptr_t AllocationID;
 		size_t Size;
-		oCore::debugger::symbol StackTrace[STACK_TRACE_DEPTH];
+		ouro::debugger::symbol StackTrace[STACK_TRACE_DEPTH];
 		unsigned int NumStackEntries;
 		unsigned int Line;
 		unsigned int Context;
-		oStd::path_string	Path;
+		ouro::path_string	Path;
 		bool Tracked; // true if the allocation occurred when tracking wasn't enabled
 		inline bool operator==(const ALLOCATION_DESC& _Other) { return AllocationID == _Other.AllocationID; }
 	};
 
 	// Type of container exposed so we can pass in an allocator.
-	static struct HashAllocation { size_t operator()(uintptr_t _AllocationID) const { return oStd::fnv1a<size_t>(&_AllocationID, sizeof(_AllocationID)); } };
+	static struct HashAllocation { size_t operator()(uintptr_t _AllocationID) const { return ouro::fnv1a<size_t>(&_AllocationID, sizeof(_AllocationID)); } };
 	
 	typedef std::pair<const uintptr_t, ALLOCATION_DESC> pair_type;
 	typedef oStdLinearAllocator<pair_type> allocator_type;
-	typedef oStd::unordered_map<uintptr_t, ALLOCATION_DESC, HashAllocation, std::equal_to<uintptr_t>, std::less<uintptr_t>, allocator_type> allocations_t;
+	typedef ouro::unordered_map<uintptr_t, ALLOCATION_DESC, HashAllocation, std::equal_to<uintptr_t>, std::less<uintptr_t>, allocator_type> allocations_t;
 
 	oLeakTracker(const DESC& _Desc, allocations_t::allocator_type _Allocator /*= allocations_t::allocator_type()*/);
 	oLeakTracker(GetCallstackFn _GetCallstack, GetCallstackSymbolStringFn _GetCallstackSymbolString, PrintFn _Print, bool _ReportHexAllocationID, bool _CaptureCallstack, allocations_t::allocator_type _Allocator /*= allocations_t::allocator_type()*/);

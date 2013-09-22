@@ -31,8 +31,8 @@ namespace oStd
 		class future_category_impl : public std::error_category
 		{
 		public:
-			const char* name() const override { return "future"; }
-			std::string message(value_type _ErrCode) const override
+			const char* name() const { return "future"; }
+			std::string message(value_type _ErrCode) const
 			{
 				switch (_ErrCode)
 				{

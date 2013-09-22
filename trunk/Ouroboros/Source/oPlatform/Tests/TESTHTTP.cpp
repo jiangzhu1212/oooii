@@ -28,7 +28,7 @@
 #include <oPlatform/oImage.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oStream.h>
-#include <oStd/finally.h>
+#include <oBase/finally.h>
 
 #define TEST_FILE "PLATFORM_oHTTP.png"
 
@@ -39,7 +39,7 @@ struct PLATFORM_oHTTP : public oTest
 		if (_Request.RequestLine.Method == oHTTP_POST)
 		{
 			// Check if the image file came through correctly
-			oStd::intrusive_ptr<oImage> image;
+			ouro::intrusive_ptr<oImage> image;
 			oImageCreate("http test image", _Request.Content.pData, _Request.Content.Length, &image);
 			if (TestImage(image))
 			{
@@ -96,8 +96,8 @@ struct PLATFORM_oHTTP : public oTest
 				_pResponse->StatusLine.StatusCode = oHTTP_NOT_FOUND;
 			if (strstr(_Request.RequestLine.RequestURI, TEST_FILE) != 0)
 			{
-				oStd::path defaultDataPath = oCore::filesystem::data_path();
-				oStd::path_string golden;
+				ouro::path defaultDataPath = ouro::filesystem::data_path();
+				ouro::path_string golden;
 				snprintf(golden, "%sGoldenImages%s", defaultDataPath.c_str(), _Request.RequestLine.RequestURI.c_str());
 
 				if (oStreamReaderCreate(golden, &FileReader))
@@ -131,15 +131,15 @@ struct PLATFORM_oHTTP : public oTest
 	{
 		const bool bDevelopmentMode = false;
 
-		oStd::intrusive_ptr<oHTTPServer> Server;
+		ouro::intrusive_ptr<oHTTPServer> Server;
 		oHTTPServer::DESC desc;
 		desc.Port = 80;
 		desc.StartResponse = oBIND(&PLATFORM_oHTTP::StartResponse, this, oBIND1, oBIND2, oBIND3);
 		desc.FinishResponse = oBIND(&PLATFORM_oHTTP::FinishResponse, this, oBIND1);
 
-		oStd::intrusive_ptr<oHTTPClient> Client;
+		ouro::intrusive_ptr<oHTTPClient> Client;
 		oHTTPClient::DESC clientDesc;
-		oStd::from_string(&clientDesc.ServerAddr, "localhost:80");
+		ouro::from_string(&clientDesc.ServerAddr, "localhost:80");
 		if (!oHTTPServerCreate(desc, &Server))
 		{
 			if (oErrorGetLast() == std::errc::io_error)
@@ -168,19 +168,19 @@ struct PLATFORM_oHTTP : public oTest
 			int bufferSize = (int)response.Content.Length;
 			char *pBuffer = new char[bufferSize];
 			memset(pBuffer, NULL, bufferSize);
-			oStd::intrusive_ptr<oBuffer> imageBuffer;
+			ouro::intrusive_ptr<oBuffer> imageBuffer;
 			oBufferCreate("test get buffer", pBuffer, bufferSize, oBuffer::Delete, &imageBuffer);
 
 			// Test Get: Download and compare the image
 			Client->Get("/" TEST_FILE, &response, imageBuffer->GetData(), (int)imageBuffer->GetSize());
 
-			oStd::intrusive_ptr<oImage> image;
+			ouro::intrusive_ptr<oImage> image;
 			oImageCreate("http test image", imageBuffer->GetData(), imageBuffer->GetSize(), &image);
 			oTESTB(TestImage(image), "Image compare failed.");
 
 			// Test POST: Sending an image file with POST.  Server will compare the image to the original and returned OK for success and 500 Internal Error for failure
-			oStd::path defaultDataPath = oCore::filesystem::data_path();
-			oStd::path_string golden;
+			ouro::path defaultDataPath = ouro::filesystem::data_path();
+			ouro::path_string golden;
 			snprintf(golden, "%sGoldenImages/" TEST_FILE, defaultDataPath.c_str());
 			if (oStreamReaderCreate(golden, &FileReader))
 			{
@@ -189,7 +189,7 @@ struct PLATFORM_oHTTP : public oTest
 
 				void *pImageFile = new char[(int)fileDesc.Size];
 				memset(pImageFile, NULL, oSizeT(fileDesc.Size));
-				oStd::intrusive_ptr<oBuffer> postImageBuffer;
+				ouro::intrusive_ptr<oBuffer> postImageBuffer;
 				oBufferCreate("test post buffer", pImageFile, oSizeT(fileDesc.Size), oBuffer::Delete, &postImageBuffer);
 
 				oSTREAM_READ r;
@@ -210,7 +210,7 @@ struct PLATFORM_oHTTP : public oTest
 		return SUCCESS;
 	}
 
-	oStd::intrusive_ptr<threadsafe oStreamReader> FileReader;
+	ouro::intrusive_ptr<threadsafe oStreamReader> FileReader;
 };
 
 struct PLATFORM_oHTTPLarge : public oTest
@@ -268,15 +268,15 @@ struct PLATFORM_oHTTPLarge : public oTest
 			TestBufferSize = oMB(2);
 		}
 
-		oStd::intrusive_ptr<oHTTPServer> Server;
+		ouro::intrusive_ptr<oHTTPServer> Server;
 		oHTTPServer::DESC desc;
 		desc.Port = 80;
 		desc.StartResponse = oBIND(&PLATFORM_oHTTPLarge::StartResponse, this, oBIND1, oBIND2, oBIND3);
 		desc.FinishResponse = oBIND(&PLATFORM_oHTTPLarge::FinishResponse, this, oBIND1);
 
-		oStd::intrusive_ptr<oHTTPClient> Client;
+		ouro::intrusive_ptr<oHTTPClient> Client;
 		oHTTPClient::DESC clientDesc;
-		oStd::from_string(&clientDesc.ServerAddr, "localhost:80");
+		ouro::from_string(&clientDesc.ServerAddr, "localhost:80");
 		if (!oHTTPServerCreate(desc, &Server))
 		{
 			if (oErrorGetLast() == std::errc::io_error)
@@ -310,7 +310,7 @@ struct PLATFORM_oHTTPLarge : public oTest
 		return SUCCESS;
 	}
 
-	oStd::intrusive_ptr<threadsafe oStreamReader> FileReader;
+	ouro::intrusive_ptr<threadsafe oStreamReader> FileReader;
 };
 
 oTEST_REGISTER(PLATFORM_oHTTP);

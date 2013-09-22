@@ -32,15 +32,8 @@
 namespace oStd {
 	namespace tests {
 
-		void TESTatof(requirements& _Requirements);
-		void TESTcsv();
 		void TESTdate(requirements& _Requirements);
-		void TESTini();
-		void TESTfourcc();
 		void TESTfuture(requirements& _Requirements);
-		void TESTpath();
-		void TESTuri();
-		void TESTxml();
 
 	} // namespace tests
 } // namespace oStd

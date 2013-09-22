@@ -29,7 +29,13 @@
 
 using namespace oStd;
 
-namespace oCore {
+namespace ouro {
+
+	const char* as_string(const oStd::windows::version::value& _Version)
+	{
+		return oStd::windows::as_string(_Version);
+	}
+
 	namespace system {
 
 heap_info get_heap_info()
@@ -380,7 +386,7 @@ char* workgroup_name(char* _StrDestination, size_t _SizeofStrDestination)
 	LPTSTR pszServerName = nullptr;
 
 	nStatus = NetWkstaGetInfo(nullptr, 102, (LPBYTE *)&pInfo);
-	oStd::finally OSCFreeBuffer([&] { if (pInfo) NetApiBufferFree(pInfo); });
+	finally OSCFreeBuffer([&] { if (pInfo) NetApiBufferFree(pInfo); });
 	if (nStatus != NERR_Success)
 		throw oStd::windows::error();
 	
@@ -391,7 +397,7 @@ char* workgroup_name(char* _StrDestination, size_t _SizeofStrDestination)
 char* exec_path(char* _StrDestination, size_t _SizeofStrDestination)
 {
 	sstring hostname;
-	if (-1 == snprintf(_StrDestination, _SizeofStrDestination, "[%s.%u.%u]", hostname.c_str(), oCore::this_process::get_id(), oStd::this_thread::get_id()))
+	if (-1 == snprintf(_StrDestination, _SizeofStrDestination, "[%s.%u.%u]", host_name(hostname), ouro::this_process::get_id(), oStd::this_thread::get_id()))
 		oTHROW0(no_buffer_space);
 	return _StrDestination;
 }
@@ -457,14 +463,15 @@ int spawn(const char* _CommandLine
 	, bool _ShowWindow
 	, unsigned int _ExecutionTimeout)
 {
-	xlstring tempStdOut;
+	std::vector<char> buffer;
+	buffer.resize(oKB(100));
 	std::shared_ptr<process> P;
 	{
 		process::info process_info;
 		process_info.command_line = _CommandLine;
 		process_info.environment = nullptr;
 		process_info.initial_directory = nullptr;
-		process_info.stdout_buffer_size = tempStdOut.capacity() - 1;
+		process_info.stdout_buffer_size = buffer.size() - 1;
 		process_info.show = _ShowWindow ? process::show : process::hide;
 		#ifdef DEBUG_EXECUTED_PROCESS
 			process_info.suspended = true;
@@ -493,11 +500,11 @@ int spawn(const char* _CommandLine
 			once = true;
 		}
 		
-		size_t ReadSize = P->from_stdout((void*)tempStdOut.c_str(), tempStdOut.capacity() - 1);
+		size_t ReadSize = P->from_stdout((void*)buffer.data(), buffer.size() - 1);
 		while (ReadSize && _GetLine)
 		{
-			size_t offset = line_enumerator(tempStdOut, ReadSize, _GetLine);
-			ReadSize = P->from_stdout((void*)byte_add(tempStdOut.c_str(), offset), tempStdOut.capacity() - 1 - offset);
+			size_t offset = line_enumerator(buffer.data(), ReadSize, _GetLine);
+			ReadSize = P->from_stdout((void*)byte_add(buffer.data(), offset), buffer.size() - 1 - offset);
 		}
 
 		TimeSoFar = t.seconds();
@@ -506,15 +513,15 @@ int spawn(const char* _CommandLine
 	
 	// get any remaining text from stdout
 	size_t offset = 0;
-	size_t ReadSize = P->from_stdout((void*)tempStdOut.c_str(), tempStdOut.capacity() - 1);
+	size_t ReadSize = P->from_stdout((void*)buffer.data(), buffer.size() - 1);
 	while (ReadSize && _GetLine)
 	{
-		offset = line_enumerator(tempStdOut, ReadSize, _GetLine);
-		ReadSize = P->from_stdout((void*)byte_add(tempStdOut.c_str(), offset), tempStdOut.capacity() - 1 - offset);
+		offset = line_enumerator(buffer.data(), ReadSize, _GetLine);
+		ReadSize = P->from_stdout((void*)byte_add(buffer.data(), offset), buffer.size() - 1 - offset);
 	}
 
 	if (offset && _GetLine)
-		_GetLine(tempStdOut);
+		_GetLine(buffer.data());
 
 	if (TimeSoFar >= Timeout)
 		return std::errc::timed_out;
@@ -534,4 +541,4 @@ int spawn(const char* _CommandLine
 }
 
 	} // namespace system
-} // namespace oCore
+} // namespace ouro

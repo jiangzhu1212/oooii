@@ -34,7 +34,7 @@ enum OWEB_APP_WINDOW_CONTROLS
 	ID_STATIC_COUNT,
 };
 
-namespace oStd {
+namespace ouro {
 
 bool from_string(OWEB_APP_WINDOW_CONTROLS* _pValue, const char* _StrSource)
 {
@@ -47,7 +47,7 @@ bool from_string(OWEB_APP_WINDOW_CONTROLS* _pValue, const char* _StrSource)
 	return false;
 }
 
-} // namespace oStd
+} // namespace ouro
 
 struct oCPUUsageStats
 {
@@ -87,7 +87,7 @@ public:
 
 	// oWindow forwarding
 	oGUI_WINDOW GetNativeHandle() const threadsafe override { return Window->GetNativeHandle(); }
-	oCore::display::id GetDisplayId() const override { return Window->GetDisplayId(); }
+	ouro::display::id GetDisplayId() const override { return Window->GetDisplayId(); }
 	bool IsWindowThread() const threadsafe override { return Window->IsWindowThread(); }
 	void SetShape(const oGUI_WINDOW_SHAPE_DESC& _Shape) threadsafe override { Window->SetShape(_Shape); }
 	oGUI_WINDOW_SHAPE_DESC GetShape() const override { return Window->GetShape(); }
@@ -134,7 +134,7 @@ public:
 	void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe override { return Window->Trigger(_Action); }
 	void Post(int _CustomEventCode, uintptr_t _Context) threadsafe override { return Window->Post(_CustomEventCode, _Context); }
 	void Dispatch(const oTASK& _Task) threadsafe override { return Window->Dispatch(_Task); }
-	oStd::future<oStd::intrusive_ptr<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const override { return std::move(Window->CreateSnapshot(_Frame, _IncludeBorder)); }
+	oStd::future<ouro::intrusive_ptr<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const override { return std::move(Window->CreateSnapshot(_Frame, _IncludeBorder)); }
 	void SetTimer(uintptr_t _Context, unsigned int _RelativeTimeMS) threadsafe override { Window->SetTimer(_Context, _RelativeTimeMS); }
 	void StopTimer(uintptr_t _Context) threadsafe override { return Window->StopTimer(_Context); }
 	void FlushMessages(bool _WaitForNext = false) override { return Window->FlushMessages(_WaitForNext); }
@@ -143,14 +143,14 @@ public:
 	void OnEvent(const oGUI_EVENT_DESC& _Event);
 private:
 	oRefCount RefCount;
-	oStd::intrusive_ptr<oWindow> Window;
+	ouro::intrusive_ptr<oWindow> Window;
 	HWND LinkHandle;
 	HWND CPUUtilization;
 	HWND NumberOfJobs;
 	bool Running;
 
 	oInitOnce<unsigned short> ServerPort;
-	oInitOnce<oStd::sstring> Title;
+	oInitOnce<ouro::sstring> Title;
 
 	oCPUUsageStats CPUUsageStats;
 };
@@ -195,7 +195,7 @@ oWebAppWindowImpl::~oWebAppWindowImpl()
 
 void oWebAppWindowImpl::SetCurrentJobCount(uint _JobCount) threadsafe
 {
-	oStd::sstring jobCountString;
+	ouro::sstring jobCountString;
 	snprintf(jobCountString, "Number of Jobs: %d", _JobCount);
 	Window->Dispatch([=](){
 		oWinControlSetText(NumberOfJobs, jobCountString);
@@ -213,7 +213,7 @@ void oWebAppWindowImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 
 			// Make the link
 			{
-				oStd::mstring localHostString;
+				ouro::mstring localHostString;
 				snprintf(localHostString, "<a href=\"http://localhost:%d/\">Launch %s App</a>", *ServerPort, Title);
 
 				ControlDesc.Position = int2(45, 50);
@@ -252,8 +252,8 @@ void oWebAppWindowImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 		{
 			if (_Event.AsTimer().Context == (uintptr_t)&CPUUsageStats)
 			{
-				double usage = oCore::this_process::cpu_usage(&CPUUsageStats.previousSystemTime, &CPUUsageStats.previousProcessTime);
-				oStd::sstring usageString;
+				double usage = ouro::this_process::cpu_usage(&CPUUsageStats.previousSystemTime, &CPUUsageStats.previousProcessTime);
+				ouro::sstring usageString;
 				snprintf(usageString, "CPU Utilization: %.0f%%", usage);
 				oWinControlSetText(CPUUtilization, usageString);
 			}

@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCore/filesystem_error.h>
-namespace oCore {
+namespace ouro {
 	namespace filesystem {
 		namespace detail {
 
@@ -46,4 +46,4 @@ const std::error_category& filesystem_category()
 }
 
 	} // namespace filesystem
-} // namespace oCore
+} // namespace ouro

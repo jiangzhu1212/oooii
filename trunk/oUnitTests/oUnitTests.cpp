@@ -7,12 +7,14 @@
 #include <oPlatform/oStandards.h>
 #include <oPlatform/oStream.h>
 #include <oCore/system.h>
-#include <oStd/opttok.h>
-#include <oStd/scc.h>
+#include <oBase/opttok.h>
+#include <oBase/scc.h>
+
+using namespace ouro;
 
 static const char* sTITLE = "OOOii Unit Test Suite";
 
-static const oStd::option sCmdLineOptions[] = 
+static const option sCmdLineOptions[] = 
 {
 	{ 'i', "include", "regex", "regex matching a test name to include" },
 	{ 'e', "exclude", "regex", "regex matching a test name to exclude" },
@@ -50,18 +52,18 @@ void InitEnv()
 
 	oConcurrency::init_task_scheduler();
 
-	oTRACEA("Aero is %sactive", oCore::system::uses_gpu_compositing() ? "" : "in");
-	oTRACE("Remote desktop is %sactive", oCore::system::is_remote_session() ? "" : "in");
+	oTRACEA("Aero is %sactive", ouro::system::uses_gpu_compositing() ? "" : "in");
+	oTRACE("Remote desktop is %sactive", ouro::system::is_remote_session() ? "" : "in");
 
 	// IOCP needs to be initialized or it will show up as a leak in the first test
 	// to use it.
 	void InitializeIOCP();
 	InitializeIOCP();
 
-	oCore::module::info mi = oCore::this_module::get_info();
-	oStd::sstring Ver;
-	oStd::mstring title2(sTITLE);
-	oStd::sncatf(title2, " v%s%s", oStd::to_string(Ver, mi.version), mi.is_special ? "*" : "");
+	ouro::module::info mi = ouro::this_module::get_info();
+	sstring Ver;
+	mstring title2(sTITLE);
+	sncatf(title2, " v%s%s", to_string(Ver, mi.version), mi.is_special ? "*" : "");
 	oConsole::SetTitle(title2);
 
 	// Resize console
@@ -73,8 +75,8 @@ void InitEnv()
 		desc.Left = 10;
 		desc.Width = 120;
 		desc.Height = 50;
-		desc.Foreground = oStd::LimeGreen;
-		desc.Background = oStd::Black;
+		desc.Foreground = LimeGreen;
+		desc.Background = Black;
 		oConsole::SetDesc(&desc);
 	}
 }
@@ -102,30 +104,30 @@ struct PARAMETERS
 // specified path parts.
 static bool oSCCCheckPathHasChanges(const char** _pPathParts, size_t _NumPathParts, bool* _pHasChanges, size_t _NumOpenedFilesToTest = 128)
 {
-	auto scc = oStd::make_scc(oStd::scc_protocol::svn, std::bind(oCore::system::spawn, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
+	auto scc = make_scc(scc_protocol::svn, std::bind(ouro::system::spawn, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
 
-	oStd::path BranchPath = oCore::filesystem::dev_path();
+	path BranchPath = ouro::filesystem::dev_path();
 
-	std::vector<oStd::scc_file> temp;
+	std::vector<scc_file> temp;
 	temp.resize(_NumOpenedFilesToTest);
 
 	// If we can't connect to SCC, then always run all tests.
-	std::vector<oStd::scc_file> ModifiedFiles;
+	std::vector<scc_file> ModifiedFiles;
 	try
 	{ 
-		scc->status(BranchPath, 0, oStd::scc_visit_option::modified_only, [&](const oStd::scc_file& _File)
+		scc->status(BranchPath, 0, scc_visit_option::modified_only, [&](const scc_file& _File)
 		{
 			ModifiedFiles.push_back(_File);
 		});
 	}
 	catch (std::exception&)
 	{
-		return oErrorSetLast(std::errc::io_error, "oSCCPathHasChanges could not find modified files. This may indicate %s is not accessible.", oStd::as_string(scc->protocol()));
+		return oErrorSetLast(std::errc::io_error, "oSCCPathHasChanges could not find modified files. This may indicate %s is not accessible.", ouro::as_string(scc->protocol()));
 	}
 
 	memset(_pHasChanges, 0, _NumPathParts);
 
-	oStd::path_string LibWithSeps;
+	path_string LibWithSeps;
 	for (size_t i = 0; i < _NumPathParts; i++)
 	{
 		snprintf(LibWithSeps, "/%s/", _pPathParts[i]);
@@ -162,7 +164,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 	_pParameters->EnableOutputGoldenImages = false;
 
 	const char* value = 0;
-	char ch = oStd::opttok(&value, _Argc, _Argv, sCmdLineOptions);
+	char ch = opttok(&value, _Argc, _Argv, sCmdLineOptions);
 	while (ch)
 	{
 		switch (ch)
@@ -200,7 +202,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 			default: break;
 		}
 
-		ch = oStd::opttok(&value);
+		ch = opttok(&value);
 	}
 
 	// @ooii-tony: Disabled in the OpenSource distro because running the unit 
@@ -249,7 +251,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 
 				if (!ThisHasChanges && oSTRVALID(sFilter))
 				{
-					auto pFilter = oStd::append(_pParameters->Filters);
+					auto pFilter = append(_pParameters->Filters);
 					pFilter->Type = oFilterChain::EXCLUDE1;
 					pFilter->RegularExpression = sFilter[i];
 				}
@@ -260,7 +262,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 
 struct oNamedFileDesc
 {
-	oStd::path Path;
+	path Path;
 	time_t LastWritten;
 	static bool NewerToOlder(const oNamedFileDesc& _File1, const oNamedFileDesc& _File2)
 	{
@@ -275,16 +277,16 @@ void DeleteOldLogFiles(const char* _SpecialModeName)
 	char logFileWildcard[_MAX_PATH];
 	oGetLogFilePath(logFileWildcard, _SpecialModeName);
 
-	char* p = oStd::rstrstr(logFileWildcard, "_");
+	char* p = rstrstr(logFileWildcard, "_");
 	strlcpy(p, "*.stdout", oCOUNTOF(logFileWildcard) - std::distance(logFileWildcard, p));
 
 	std::vector<oNamedFileDesc> logs;
 	logs.reserve(20);
 
-	oCore::filesystem::enumerate(logFileWildcard, [&](const oStd::path& _FullPath, const oCore::filesystem::file_status& _Status, unsigned long long _Size)->bool
+	ouro::filesystem::enumerate(logFileWildcard, [&](const path& _FullPath, const ouro::filesystem::file_status& _Status, unsigned long long _Size)->bool
 	{
 		oNamedFileDesc nfd;
-		nfd.LastWritten = oCore::filesystem::last_write_time(_FullPath);
+		nfd.LastWritten = ouro::filesystem::last_write_time(_FullPath);
 		nfd.Path = _FullPath;
 		logs.push_back(nfd);
 		return true;
@@ -294,7 +296,7 @@ void DeleteOldLogFiles(const char* _SpecialModeName)
 	{
 		std::sort(logs.begin(), logs.end(), oNamedFileDesc::NewerToOlder);
 		for (size_t i = kLogHistory; i < logs.size(); i++)
-			oCore::filesystem::remove_filename(logs[i].Path.replace_extension(".stderr"));
+			ouro::filesystem::remove_filename(logs[i].Path.replace_extension(".stderr"));
 	}
 }
 
@@ -325,11 +327,11 @@ void EnableLogFile(const char* _SpecialModeName, const char* _LogFileName)
 
 	oConsole::SetDesc(&cdesc);
 
-	oStd::path DumpBase = oCore::filesystem::app_path(true);
+	path DumpBase = ouro::filesystem::app_path(true);
 	DumpBase.replace_extension();
 	if (_SpecialModeName)
 	{
-		oStd::sstring suffix;
+		sstring suffix;
 		snprintf(suffix, "-%s", _SpecialModeName);
 		DumpBase /= suffix;
 	}
@@ -341,12 +343,12 @@ void EnableLogFile(const char* _SpecialModeName, const char* _LogFileName)
 
 void SetTestManagerDesc(const PARAMETERS* _pParameters)
 {
-	oStd::path dataPath;
+	path dataPath;
 
 	if (_pParameters->DataPath)
 		dataPath = _pParameters->DataPath;
 	else
-		dataPath = oCore::filesystem::data_path();
+		dataPath = ouro::filesystem::data_path();
 
 	// @oooii-tony: This is important to be here for now because it touches the 
 	// underlying singleton so it doesn't appear in unit tests as a leak. Also
@@ -376,7 +378,7 @@ void SetTestManagerDesc(const PARAMETERS* _pParameters)
 	oTestManager::Singleton()->SetDesc(&desc);
 }
 
-static bool FindDuplicateProcessInstanceByName(oCore::process::id _ProcessID, oCore::process::id _ParentProcessID, const char* _ProcessExePath, oCore::process::id _IgnorePID, const char* _FindName, oCore::process::id* _pOutPID)
+static bool FindDuplicateProcessInstanceByName(ouro::process::id _ProcessID, ouro::process::id _ParentProcessID, const char* _ProcessExePath, ouro::process::id _IgnorePID, const char* _FindName, ouro::process::id* _pOutPID)
 {
 	if (_IgnorePID != _ProcessID && !_stricmp(_FindName, _ProcessExePath))
 	{
@@ -389,9 +391,9 @@ static bool FindDuplicateProcessInstanceByName(oCore::process::id _ProcessID, oC
 
 bool TerminateDuplicateInstances(const char* _Name)
 {
-	oCore::process::id ThisID = oCore::this_process::get_id();
-	oCore::process::id duplicatePID;
-	oCore::process::enumerate(std::bind(FindDuplicateProcessInstanceByName
+	ouro::process::id ThisID = ouro::this_process::get_id();
+	ouro::process::id duplicatePID;
+	ouro::process::enumerate(std::bind(FindDuplicateProcessInstanceByName
 		, std::placeholders::_1
 		, std::placeholders::_2
 		, std::placeholders::_3
@@ -410,12 +412,12 @@ bool TerminateDuplicateInstances(const char* _Name)
 		if (result == oMSGBOX_NO)
 			return false;
 
-		oCore::process::terminate(duplicatePID, ECANCELED);
-		if (!oCore::process::wait_for(duplicatePID, oSeconds(5)))
+		ouro::process::terminate(duplicatePID, ECANCELED);
+		if (!ouro::process::wait_for(duplicatePID, oSeconds(5)))
 			oMsgBox(mb, "Cannot terminate stale process %u, please end this process before continuing.", duplicatePID);
 
-		duplicatePID = oCore::process::id();
-		oCore::process::enumerate(std::bind(FindDuplicateProcessInstanceByName
+		duplicatePID = ouro::process::id();
+		ouro::process::enumerate(std::bind(FindDuplicateProcessInstanceByName
 			, std::placeholders::_1
 			, std::placeholders::_2
 			, std::placeholders::_3
@@ -430,12 +432,12 @@ bool TerminateDuplicateInstances(const char* _Name)
 bool EnsureOneInstanceIsRunning()
 {
 	// Scan for both release and debug builds already running
-	oStd::path tmp = oCore::filesystem::app_path(true);
-	oStd::path path(tmp);
-	oStd::path relname = path.basename();
+	path tmp = ouro::filesystem::app_path(true);
+	path Path(tmp);
+	path relname = Path.basename();
 	relname.remove_basename_suffix(oMODULE_DEBUG_SUFFIX_A);
 
-	oStd::path dbgname(relname);
+	path dbgname(relname);
 	dbgname.insert_basename_suffix(oMODULE_DEBUG_SUFFIX_A);
 
 	if (!TerminateDuplicateInstances(dbgname))
@@ -491,17 +493,17 @@ int main(int argc, const char* argv[])
 			oMsgBox(mb, "Completed%s", result ? " with errors" : " successfully");
 		}
 
-		if (oCore::this_process::has_debugger_attached())
+		if (ouro::this_process::has_debugger_attached())
 		{
-			system("echo.");
-			system("pause");
+			::system("echo.");
+			::system("pause");
 		}
 	}
 
 	if (parameters.SpecialMode)
-		oTRACE("Unit test (special mode %s) exiting with result: %s", parameters.SpecialMode, oStd::as_string((oTest::RESULT)result));
+		oTRACE("Unit test (special mode %s) exiting with result: %s", parameters.SpecialMode, ouro::as_string((oTest::RESULT)result));
 	else
-		oTRACE("Unit test exiting with result: %s", oStd::as_string((oTest::RESULT)result));
+		oTRACE("Unit test exiting with result: %s", ouro::as_string((oTest::RESULT)result));
 
 	// Final flush to ensure oBuildTool gets all our stdout
 	::_flushall();

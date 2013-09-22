@@ -23,9 +23,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oError.h>
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <oBasis/oRTTI.h>
 #include "oBasisTestCommon.h"
+
+using namespace ouro;
 
 enum oGPU_API2
 {
@@ -96,8 +98,8 @@ public:
 	int Member1;
 	uint Member2;
 	float Member3;
-	oStd::sstring Member4;
-	oStd::mstring Member5;
+	sstring Member4;
+	mstring Member5;
 	float2 Float2Member;
 	float3 Float3Member;
 	float4 Float4Member;
@@ -123,8 +125,8 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, Test)
 		oRTTI_COMPOUND_ATTR(Test, Member1, oRTTI_OF(int), "Member1", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(Test, Member2, oRTTI_OF(uint), "Member2", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(Test, Member3, oRTTI_OF(float), "Member3", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(Test, Member4, oRTTI_OF(ostd_sstring), "Member4", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(Test, Member5, oRTTI_OF(ostd_mstring), "Member5", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(Test, Member4, oRTTI_OF(ouro_sstring), "Member4", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(Test, Member5, oRTTI_OF(ouro_mstring), "Member5", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(Test, Float2Member, oRTTI_OF(float2), "Float2Member", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(Test, Float3Member, oRTTI_OF(float3), "Float3Member", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(Test, Float4Member, oRTTI_OF(float4), "Float4Member", oRTTI_COMPOUND_ATTR_REGULAR)
@@ -139,15 +141,15 @@ oRTTI_COMPOUND_END_DESCRIPTION(Test)
 bool oBasisTest_oRTTI()
 {
 	oGPU_API2 value = oGPU_API_OGL;
-	oStd::lstring enumText;
-	oTESTB(!strcmp(oStd::to_string(enumText, value), "OpenGL"), "Failed to_string(oGPU_API_OGL)");
-	oTESTB(!strcmp(oStd::as_string(value), "OpenGL"), "Failed as_string(oGPU_API_OGL)");
+	lstring enumText;
+	oTESTB(!strcmp(to_string(enumText, value), "OpenGL"), "Failed to_string(oGPU_API_OGL)");
+	oTESTB(!strcmp(ouro::as_string(value), "OpenGL"), "Failed as_string(oGPU_API_OGL)");
 
 	value = oGPU_API_UNKNOWN;
-	oStd::from_string(&value, "OpenGL");
+	from_string(&value, "OpenGL");
 	oTESTB(oGPU_API_OGL== value, "Failed from_string(oGPU_API_OGL)");
 
-	oTESTB(!strcmp(oStd::as_string(oGPU_HULL_SHADER), "oGPU_HULL_SHADER"), "Failed as_string(oGPU_HULL_SHADER)");
+	oTESTB(!strcmp(ouro::as_string(oGPU_HULL_SHADER), "oGPU_HULL_SHADER"), "Failed as_string(oGPU_HULL_SHADER)");
 
 	Test test(1);
 	oRTTI_Test.Constructor(oRTTI_OF(Test), &test);
@@ -158,21 +160,21 @@ bool oBasisTest_oRTTI()
 	// can't handle that
 	//oTESTB(!f->RTTI->FromString("0123456789012345678901234567890123456789012345678901234567890123", f->GetDestPtr(&test), oInt(f->Size)), "Should have failed FromString(test.Member4)");
 
-	oStd::sstring TestMember4;
+	sstring TestMember4;
 	f->RTTI->ToString(TestMember4, f->GetDestPtr(&test));
 	oTESTB(0==strcmp(TestMember4.c_str(), "012345678901234567890123456789012345678901234567890123456789012"), "Failed ToString(test.Member4)");
 
 	f = oRTTI_OF(Test).GetAttr(6);
 	f->RTTI->FromString("	 1.0 2.0", f->GetDestPtr(&test), oInt(f->Size));
-	oTESTB(oStd::equal(test.Float2Member, float2(1.0f, 2.0f)), "Failed FromString(test.Float2Member)");
+	oTESTB(ouro::equal(test.Float2Member, float2(1.0f, 2.0f)), "Failed FromString(test.Float2Member)");
 
-	oStd::sstring str;
+	sstring str;
 	oTESTB(f->RTTI->ToString(str, f->GetDestPtr(&test)), "Failed ToString(test.Float2Member)");
 	oTESTB(!strcmp("1.000000 2.000000", str), "Failed ToString(test.Float2Member)");
 
 	f = oRTTI_OF(Test).GetAttr(7);
 	f->RTTI->FromString("	 1.0 2.0  3.0", f->GetDestPtr(&test), oInt(f->Size));
-	oTESTB(oStd::equal(test.Float3Member, float3(1.0f, 2.0f, 3.0f)), "Failed FromString(test.Float3Member)");
+	oTESTB(ouro::equal(test.Float3Member, float3(1.0f, 2.0f, 3.0f)), "Failed FromString(test.Float3Member)");
 
 	str.clear();
 	oTESTB(f->RTTI->ToString(str, f->GetDestPtr(&test)), "Failed ToString(test.Float3Member)");
@@ -180,7 +182,7 @@ bool oBasisTest_oRTTI()
 
 	f = oRTTI_OF(Test).GetAttr(8);
 	f->RTTI->FromString("	 1.0   2.0  3.0 4.0", f->GetDestPtr(&test), oInt(f->Size));
-	oTESTB(oStd::equal(test.Float4Member, float4(1.0f, 2.0f, 3.0f, 4.0f)), "Failed FromString(test.Float4Member)");
+	oTESTB(ouro::equal(test.Float4Member, float4(1.0f, 2.0f, 3.0f, 4.0f)), "Failed FromString(test.Float4Member)");
 
 	str.clear();
 	oTESTB(f->RTTI->ToString(str, f->GetDestPtr(&test)), "Failed ToString(test.Float4Member)");
@@ -188,7 +190,7 @@ bool oBasisTest_oRTTI()
 
 	f = oRTTI_OF(Test).GetAttr(9);
 	f->RTTI->FromString("4.0 3.0 2.0 1.0", f->GetDestPtr(&test), oInt(f->Size));
-	oTESTB(oStd::equal(test.PlaneMember, oPlanef(float4(4.0f, 3.0f, 2.0f, 1.0f))), "Failed FromString(test.PlaneMember)");
+	oTESTB(ouro::equal(test.PlaneMember, oPlanef(float4(4.0f, 3.0f, 2.0f, 1.0f))), "Failed FromString(test.PlaneMember)");
 
 	str.clear();
 	oTESTB(f->RTTI->ToString(str, f->GetDestPtr(&test)), "Failed ToString(test.PlaneMember)");
@@ -204,7 +206,7 @@ bool oBasisTest_oRTTI()
 
 	f = oRTTI_OF(Test).GetAttr(11);
 	f->RTTI->FromString("	 1.0   2.0  3.0 4.0 5.0   6.0", f->GetDestPtr(&test), oInt(f->Size));
-	oTESTB(oStd::equal(test.BoxMember, oAABoxf(oAABoxf::min_max, float3(1.0f, 2.0f, 3.0f), float3(4.0f, 5.0f, 6.0f))), "Failed FromString(test.BoxMember)");
+	oTESTB(ouro::equal(test.BoxMember, oAABoxf(oAABoxf::min_max, float3(1.0f, 2.0f, 3.0f), float3(4.0f, 5.0f, 6.0f))), "Failed FromString(test.BoxMember)");
 
 	str.clear();
 	oTESTB(f->RTTI->ToString(str, f->GetDestPtr(&test)), "Failed ToString(test.BoxMember)");

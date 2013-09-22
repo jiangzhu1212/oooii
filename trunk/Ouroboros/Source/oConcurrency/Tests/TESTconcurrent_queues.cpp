@@ -26,15 +26,17 @@
 #include <oConcurrency/concurrent_queue_opt.h>
 #include <oConcurrency/concurrent_worklist.h>
 #include <oConcurrency/event.h>
-#include <oStd/finally.h>
-#include <oStd/assert.h>
+#include <oBase/finally.h>
+#include <oBase/assert.h>
 #include <oStd/for.h>
-#include <oStd/function.h>
+#include <oBase/function.h>
 #include <oStd/atomic.h>
 #include <oStd/thread.h>
-#include <oStd/throw.h>
-#include <oStd/timer.h>
+#include <oBase/throw.h>
+#include <oBase/timer.h>
 #include <vector>
+
+using namespace ouro;
 
 namespace oConcurrency {
 	namespace tests {
@@ -131,7 +133,7 @@ static void push_and_pop_task(QueueT* _pQueue, size_t _NumPushPops, size_t _NumI
 			_pQueue->pop(j);
 	}
 
-	//oTRACE("TESTQueues_PushAndPop finished (0x%x)", asuint(oStd::this_thread::get_id()));
+	//oTRACE("TESTQueues_PushAndPop finished (0x%x)", asuint(this_thread::get_id()));
 }
 
 template<typename T, typename QueueT>
@@ -146,7 +148,7 @@ template<typename T, typename QueueT>
 static void test_concurrent_pushes(const char* _QueueName)
 {
 	QueueT q;
-	oStd::finally ClearQueue([&] { q.clear(); });
+	ouro::finally ClearQueue([&] { q.clear(); });
 
 	const size_t NumPushes = 1000;
 	size_t ExpectedSize = 0;
@@ -238,23 +240,23 @@ static double test_performance(const char* _QueueName)
 
 	// Scope to ensure queue is cleaned up AFTER all threads.
 	{
-		std::vector<oStd::thread> threadArray(oStd::thread::hardware_concurrency());
+		std::vector<thread> threadArray(thread::hardware_concurrency());
 		std::vector<double> Times(threadArray.size(), 0.0);
 
 		for (size_t i = 0; i < threadArray.size(); i++)
-			threadArray[i] = std::move(oStd::thread(push_and_pop_task_performance<T, QueueT>, &q, NumPushPops, NumIterations, &Start));
+			threadArray[i] = std::move(thread(push_and_pop_task_performance<T, QueueT>, &q, NumPushPops, NumIterations, &Start));
 
-		oStd::finally JoinThreads([&]
+		ouro::finally JoinThreads([&]
 		{
 			for (size_t i = 0; i < threadArray.size(); i++)
 				threadArray[i].join();
 		});
 
 		// Get all thread setup out of the way
-		oStd::this_thread::sleep_for(oStd::chrono::milliseconds(500));
+		this_thread::sleep_for(chrono::milliseconds(500));
 		Start.set();
 
-		oStd::local_timer t;
+		local_timer t;
 
 		//JoinThreads();
 		for (size_t i = 0; i < threadArray.size(); i++)
@@ -263,7 +265,7 @@ static double test_performance(const char* _QueueName)
 
 		time = t.seconds();
 	
-		//oStd::this_thread::sleep_for(oStd::chrono::milliseconds(500));
+		//this_thread::sleep_for(chrono::milliseconds(500));
 	}
 
 	return time;
@@ -402,7 +404,7 @@ static void push_pop_local(worklist_t& _Work, int* _Results, bool* _pDone)
 static void try_steal(worklist_t& _Work, int* _Results, bool* _pDone)
 {
 	begin_thread("thief");
-	oStd::timer timer;
+	timer timer;
 
 	while (timer.seconds() < 5.0)
 	{
@@ -427,7 +429,7 @@ static void test_stealing(const oFUNCTION<void(worklist_t& _WorkParam, int* _Res
 	, int* _pNumDoubleTouchedValues
 	, int* _pNumUnexpectedValues)
 {
-	oStd::finally clear_work([&]{ _Work.clear(); });
+	ouro::finally clear_work([&]{ _Work.clear(); });
 
 	int Results[kNumTasks];
 	memset(Results, 0, sizeof(Results));

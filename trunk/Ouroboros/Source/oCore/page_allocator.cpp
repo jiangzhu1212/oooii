@@ -27,7 +27,7 @@
 
 using namespace oStd;
 
-namespace oCore {
+namespace ouro {
 	namespace page_allocator {
 
 static status::value get_status(DWORD _State)
@@ -198,4 +198,4 @@ void set_pagability(void* _BaseAddress, size_t _Size, bool _Pageable)
 }
 
 	} // namespace page_allocator
-} // namespace oCore
+} // namespace ouro

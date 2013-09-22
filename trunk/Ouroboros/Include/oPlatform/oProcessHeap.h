@@ -32,8 +32,8 @@
 #ifndef oProcessHeap_h
 #define oProcessHeap_h
 
-#include <oStd/guid.h>
-#include <oStd/function.h>
+#include <oBase/guid.h>
+#include <oBase/function.h>
 
 // Allocate from the process-global heap directly. This memory is page-aligned.
 void* oProcessHeapAllocate(size_t _Size);
@@ -48,7 +48,7 @@ void* oProcessHeapAllocate(size_t _Size);
 // a valid object. To facilitate this, pass an oFUNCTION that reduces to 
 // calling placement new on the void* parameter. For raw allocations that are
 // valid in and of themselves, pass a noop function.
-bool oProcessHeapFindOrAllocate(const oStd::guid& _AllocationID
+bool oProcessHeapFindOrAllocate(const ouro::guid& _AllocationID
 	, bool _IsThreadLocal
 	, bool _IsLeakTracked
 	, size_t _Size
@@ -58,7 +58,7 @@ bool oProcessHeapFindOrAllocate(const oStd::guid& _AllocationID
 
 // Returns true if the specified allocation already exists and *_pPointer is 
 // valid and false if the allocation does not exist.
-bool oProcessHeapFind(const oStd::guid& _AllocationID, bool _IsThreadLocal, void** _pPointer);
+bool oProcessHeapFind(const ouro::guid& _AllocationID, bool _IsThreadLocal, void** _pPointer);
 
 // Deallocate memory allocated from Allocate() or FindOrAllocate(). No matter
 // how many times FindOrAllocate evaluates to a pre-existing pointer, this

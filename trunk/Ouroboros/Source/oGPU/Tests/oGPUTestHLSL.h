@@ -51,7 +51,7 @@ struct oGPUTestConstants
 	{
 		World = oIDENTITY4x4;
 		WorldViewProjection = oIDENTITY4x4;
-		Color = oStd::White;
+		Color = ouro::White;
 	}
 
 #endif

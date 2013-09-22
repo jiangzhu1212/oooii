@@ -24,10 +24,13 @@
  **************************************************************************/
 #include <oBasis/oDispatchQueueGlobal.h>
 #include <oBasis/oError.h>
-#include <oStd/finally.h>
+#include <oBase/finally.h>
 #include <oStd/condition_variable.h>
 #include <oStd/mutex.h>
 #include "oBasisTestCommon.h"
+
+using namespace ouro;
+using namespace oStd;
 
 static void SetLocation(size_t _Index, size_t _Start, int* _Array)
 {
@@ -35,13 +38,13 @@ static void SetLocation(size_t _Index, size_t _Start, int* _Array)
 	_Array[_Index] = startValue + static_cast<int>(_Index + 1 - _Start);
 }
 
-static void FillArray(int* _Array, size_t _Start, size_t _End, oStd::thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
+static void FillArray(int* _Array, size_t _Start, size_t _End, thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
 {
 	oTRACE("FillArray %u -> %u", _Start, _End);
 	oConcurrency::parallel_for(_Start, _End, oBIND(&SetLocation, oBIND1, _Start, _Array));
 }
 
-static void CheckTest(int* _Array, size_t _Size, bool* _pResult, oStd::thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
+static void CheckTest(int* _Array, size_t _Size, bool* _pResult, thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
 {
 	oTRACE("CheckTest %u", _Size);
 	*_pResult = false;
@@ -51,11 +54,11 @@ static void CheckTest(int* _Array, size_t _Size, bool* _pResult, oStd::thread::i
 	*_pResult = true;
 }
 
-static void NotifyAll(oStd::condition_variable& _ConditionVariable, oStd::mutex& _Mutex, oStd::thread::id* _pExecutionThreadID, bool* _pNotify, bool* _pWrongThreadError)
+static void NotifyAll(condition_variable& _ConditionVariable, mutex& _Mutex, thread::id* _pExecutionThreadID, bool* _pNotify, bool* _pWrongThreadError)
 {
 	oTRACE("NotifyAll");
 	{
-		oStd::unique_lock<oStd::mutex> FinishedLock(_Mutex);
+		unique_lock<mutex> FinishedLock(_Mutex);
 		*_pNotify = true;
 	}
 	_ConditionVariable.notify_all();
@@ -63,9 +66,9 @@ static void NotifyAll(oStd::condition_variable& _ConditionVariable, oStd::mutex&
 
 bool oBasisTest_oDispatchQueueGlobal()
 {
-	oStd::intrusive_ptr<threadsafe oDispatchQueueGlobal> q;
+	intrusive_ptr<threadsafe oDispatchQueueGlobal> q;
 	oTESTB(oDispatchQueueCreateGlobal("TESTDispatchQueueGlobal", 100, &q), "Failed to create global dispatch queue");
-	oStd::finally JoinQueue([&] { q->Join(); });
+	finally JoinQueue([&] { q->Join(); });
 
 	static const size_t TestSize = 4096;
 	int TestArray[TestSize];
@@ -74,13 +77,13 @@ bool oBasisTest_oDispatchQueueGlobal()
 	{
 		bool bResult = false;
 
-		oStd::condition_variable Finished;
-		oStd::mutex FinishedMutex;
+		condition_variable Finished;
+		mutex FinishedMutex;
 
 		memset(TestArray, -1, TestSize * sizeof(int));
 		TestArray[0] = 0;
 
-		oStd::thread::id ExecutionThreadID;
+		thread::id ExecutionThreadID;
 		bool WrongThread = false;
 		bool Notify = false;
 
@@ -90,7 +93,7 @@ bool oBasisTest_oDispatchQueueGlobal()
 		q->Dispatch(&CheckTest, TestArray, TestSize, &bResult, &ExecutionThreadID, &WrongThread);
 		q->Dispatch(&NotifyAll, oBINDREF(Finished), oBINDREF(FinishedMutex), &ExecutionThreadID, &Notify, &WrongThread);
 
-		oStd::unique_lock<oStd::mutex> FinishedLock(FinishedMutex);
+		unique_lock<mutex> FinishedLock(FinishedMutex);
 		while (!Notify)
 			Finished.wait(FinishedLock);
 

@@ -33,7 +33,7 @@
 
 #include <oBasis/oGUI.h>
 #include <oBasis/oRTTI.h>
-#include <oStd/xml.h>
+#include <oBase/xml.h>
 
 interface oInputSet : oInterface
 {
@@ -71,7 +71,7 @@ interface oInputMapper : oInterface
 		</oInputSet>
 	</oInputSetList>
 */
-bool oParseInputSetList(const oStd::xml& _XML, oStd::xml::node _hInputSetList, const oRTTI& _InputEnum, threadsafe oInputSet** _ppInputSet);
+bool oParseInputSetList(const ouro::xml& _XML, ouro::xml::node _hInputSetList, const oRTTI& _InputEnum, threadsafe oInputSet** _ppInputSet);
 
 // Parses an XML file to build an InputSet object. The expected XML format
 // of the node is:
@@ -117,8 +117,8 @@ bool oParseInputSetList(const oStd::xml& _XML, oStd::xml::node _hInputSetList, c
 //      will be reinterpreted as a single new combo input. Specifying the name
 //      alone means "key down". Putting an exclamation in front of the name 
 //      specifies "key up".
-bool oInputSetCreate(const oStd::xml& _XML, oStd::xml::node _hInputSet, const oRTTI& _IDEnum, oInputSet** _ppInputSet);
-inline bool oInputSetCreate(const oStd::xml& _XML, oStd::xml::node _hInputSet, const oRTTI& _IDEnum, threadsafe oInputSet** _ppInputSet) { return oInputSetCreate(_XML, _hInputSet, _IDEnum, thread_cast<oInputSet**>(_ppInputSet)); }
+bool oInputSetCreate(const ouro::xml& _XML, ouro::xml::node _hInputSet, const oRTTI& _IDEnum, oInputSet** _ppInputSet);
+inline bool oInputSetCreate(const ouro::xml& _XML, ouro::xml::node _hInputSet, const oRTTI& _IDEnum, threadsafe oInputSet** _ppInputSet) { return oInputSetCreate(_XML, _hInputSet, _IDEnum, thread_cast<oInputSet**>(_ppInputSet)); }
 
 bool oInputMapperCreate(threadsafe oInputMapper** _ppInputMapper);
 

@@ -26,6 +26,8 @@
 #include <oGPU/oGPU.h>
 #include "oGPUTestPipelines.h"
 
+using namespace ouro;
+
 int GPU_BufferAppendIndices[20] = 
 { 5, 6, 7, 18764, 2452, 2423, 52354, 344, -1542, 3434, 53, -4535, 3535, 88884747, 534535, 88474, -445, 4428855, -1235, 4661};
 
@@ -35,7 +37,7 @@ struct GPU_Buffer : public oTest
 	{
 		oGPUDevice::INIT init("GPU_Buffer");
 		init.DriverDebugLevel = oGPU_DEBUG_NORMAL;
-		oStd::intrusive_ptr<oGPUDevice> Device;
+		intrusive_ptr<oGPUDevice> Device;
 		oTESTB0(oGPUDeviceCreate(init, &Device));
 
 		oGPUBuffer::DESC BufferDesc;
@@ -43,27 +45,27 @@ struct GPU_Buffer : public oTest
 		BufferDesc.Type = oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND;
 		BufferDesc.ArraySize = oCOUNTOF(GPU_BufferAppendIndices) * 2;
 
-		oStd::intrusive_ptr<oGPUBuffer> AppendBuffer;
+		intrusive_ptr<oGPUBuffer> AppendBuffer;
 		oTESTB0( Device->CreateBuffer("GPU_BufferAppend", BufferDesc, &AppendBuffer) );
 
 		BufferDesc.Type = oGPU_BUFFER_READBACK;
 
-		oStd::intrusive_ptr<oGPUBuffer> AppendReadbackBuffer;
+		intrusive_ptr<oGPUBuffer> AppendReadbackBuffer;
 		oTESTB0( Device->CreateBuffer("GPU_BufferAppend", BufferDesc, &AppendReadbackBuffer) );
 
 		BufferDesc.Type = oGPU_BUFFER_READBACK;
 		BufferDesc.ArraySize = 1;
 
-		oStd::intrusive_ptr<oGPUBuffer> AppendBufferCount;
+		intrusive_ptr<oGPUBuffer> AppendBufferCount;
 		oTESTB0( Device->CreateBuffer("GPU_BufferAppendCount", BufferDesc, &AppendBufferCount) );
 		
 		oGPUPipeline::DESC PipelineDesc;
 		oTESTB0( oGPUTestGetPipeline(oGPU_TEST_BUFFER, &PipelineDesc) );
 
-		oStd::intrusive_ptr<oGPUPipeline> Pipeline;
+		intrusive_ptr<oGPUPipeline> Pipeline;
 		oTESTB0( Device->CreatePipeline("GPU_BufferPipeline", PipelineDesc, &Pipeline) );
 
-		oStd::intrusive_ptr<oGPUCommandList> CommandList;
+		intrusive_ptr<oGPUCommandList> CommandList;
 		Device->GetImmediateCommandList(&CommandList);
 
 		Device->BeginFrame();
@@ -92,7 +94,7 @@ struct GPU_Buffer : public oTest
 			Values.push_back(GPU_BufferAppendIndices[i]);
 
 		for(int i = 0; i < oCOUNTOF(GPU_BufferAppendIndices); ++i)
-			oTESTB( oStd::find_and_erase(Values, GPU_BufferAppendIndices[i]), "GPU Appended bad value");
+			oTESTB( find_and_erase(Values, GPU_BufferAppendIndices[i]), "GPU Appended bad value");
 
 		Device->UnmapRead(AppendReadbackBuffer, 0);
 

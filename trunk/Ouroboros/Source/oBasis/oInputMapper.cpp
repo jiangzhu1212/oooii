@@ -27,6 +27,7 @@
 #include <oConcurrency/mutex.h>
 #include <array>
 
+using namespace ouro;
 using namespace oConcurrency;
 
 class oActionHookHelper
@@ -40,13 +41,13 @@ public:
 	inline int Hook(const oGUI_ACTION_HOOK& _Hook) threadsafe
 	{
 		oConcurrency::lock_guard<oConcurrency::shared_mutex> lockB(Mutex);
-		return oInt(oStd::sparse_set(oThreadsafe(Hooks), _Hook));
+		return oInt(sparse_set(oThreadsafe(Hooks), _Hook));
 	}
 
 	inline void Unhook(int _HookID) threadsafe
 	{
 		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
-		oStd::ranged_set(oThreadsafe(Hooks), _HookID, nullptr);
+		ranged_set(oThreadsafe(Hooks), _HookID, nullptr);
 	}
 
 	void Call(const oGUI_ACTION_DESC& _Action) threadsafe
@@ -103,7 +104,7 @@ void oInput::Parse(const char* _InputMapping)
 {
 	if (_InputMapping)
 	{
-		oStd::lstring temp(_InputMapping);
+		lstring temp(_InputMapping);
 
 		char* ctx = nullptr;
 		char* tok = strtok_s(temp, oWHITESPACE, &ctx);
@@ -173,7 +174,7 @@ struct oINPUT_STATE
 class oInputSequence
 {
 public:
-	oInputSequence(const oStd::xml& _XML, oStd::xml::node _hInputSequence, const oRTTI& _IDEnum, bool* _pSuccess);
+	oInputSequence(const xml& _XML, xml::node _hInputSequence, const oRTTI& _IDEnum, bool* _pSuccess);
 
 	oInputSequence(oInputSequence&& _That) { operator=(std::move(_That)); }
 	oInputSequence& operator=(oInputSequence&& _That)
@@ -202,7 +203,7 @@ private:
 	bool Parse(const char* _SeqMapping, const oRTTI& _IDEnum);
 };
 
-oInputSequence::oInputSequence(const oStd::xml& _XML, oStd::xml::node _hInputSequence, const oRTTI& _IDEnum, bool* _pSuccess)
+oInputSequence::oInputSequence(const xml& _XML, xml::node _hInputSequence, const oRTTI& _IDEnum, bool* _pSuccess)
 	: MinTimeMS(oInvalid)
 	, MaxTimeMS(oInvalid)
 	, InputID(oInvalid)
@@ -212,7 +213,7 @@ oInputSequence::oInputSequence(const oStd::xml& _XML, oStd::xml::node _hInputSeq
 	const char* IDStr = _XML.find_attr_value(_hInputSequence, "ID");
 	if (!_IDEnum.FromString(IDStr, &InputID, sizeof(int)))
 	{
-		oStd::sstring name;
+		sstring name;
 		oErrorSetLast(std::errc::protocol_error, "ID %s is not a valid %s (%s)", IDStr, _IDEnum.GetName(name), _XML.name());
 		return;
 	}
@@ -237,7 +238,7 @@ bool oInputSequence::Parse(const char* _SeqMapping, const oRTTI& _IDEnum)
 {
 	if (_SeqMapping)
 	{
-		oStd::lstring temp(_SeqMapping);
+		lstring temp(_SeqMapping);
 
 		char* ctx = nullptr;
 		char* tok = strtok_s(temp, oWHITESPACE, &ctx);
@@ -250,7 +251,7 @@ bool oInputSequence::Parse(const char* _SeqMapping, const oRTTI& _IDEnum)
 
 			if (!_IDEnum.FromString(tok, &s.InputID, sizeof(s.InputID)))
 			{
-				oStd::sstring name;
+				sstring name;
 				return oErrorSetLast(std::errc::protocol_error, "unrecognized %s \"%s\"", _IDEnum.GetName(name), tok);
 			}
 
@@ -268,27 +269,27 @@ struct oInputSetImpl : oInputSet
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_NOOP_QUERYINTERFACE();
 
-	oInputSetImpl(const oStd::xml& _XML, oStd::xml::node _InputSet, const oRTTI& _IDEnum, bool* _pSuccess);
+	oInputSetImpl(const xml& _XML, xml::node _InputSet, const oRTTI& _IDEnum, bool* _pSuccess);
 
 	const oRTTI& GetRTTI() const threadsafe { return oThreadsafe(this)->IDRTTI; }
 	const char* GetName() const threadsafe override { return oThreadsafe(this)->Name; }
 
 	const oRTTI& IDRTTI;
-	oStd::mstring Name;
+	mstring Name;
 	std::vector<oInput> Inputs;
 	std::vector<oInputSequence> InputSequences;
 	int MaxTimeMS;
 	oRefCount RefCount;
 };
 
-oInputSetImpl::oInputSetImpl(const oStd::xml& _XML, oStd::xml::node _InputSet, const oRTTI& _IDEnum, bool* _pSuccess)
+oInputSetImpl::oInputSetImpl(const xml& _XML, xml::node _InputSet, const oRTTI& _IDEnum, bool* _pSuccess)
 	: IDRTTI(_IDEnum)
 {
 	*_pSuccess = false;
 
 	MaxTimeMS = oInvalid;
 	_XML.find_attr_value(_InputSet, "id", &Name);
-	for (oStd::xml::node hChild = _XML.first_child(_InputSet); hChild; hChild = _XML.next_sibling(hChild))
+	for (xml::node hChild = _XML.first_child(_InputSet); hChild; hChild = _XML.next_sibling(hChild))
 	{
 		if (!_stricmp("oInput", _XML.node_name(hChild)))
 		{
@@ -302,7 +303,7 @@ oInputSetImpl::oInputSetImpl(const oStd::xml& _XML, oStd::xml::node _InputSet, c
 			int EnumValue = oInvalid;
 			if (!_IDEnum.FromString(IDString, &EnumValue, sizeof(int)))
 			{
-				oStd::mstring temp;
+				mstring temp;
 				oErrorSetLast(std::errc::protocol_error, "ID(%s) not recognized as a %s for a oInput in oInputSet(%s) in %s", IDString, _IDEnum.GetName(temp), Name.c_str(), _XML.name());
 				return;
 			}
@@ -315,7 +316,7 @@ oInputSetImpl::oInputSetImpl(const oStd::xml& _XML, oStd::xml::node _InputSet, c
 			}
 
 			oInput Input(InputMapping);
-			oStd::safe_set(Inputs, EnumValue, Input);
+			safe_set(Inputs, EnumValue, Input);
 		}
 
 		else if (!_stricmp("oInputSequence", _XML.node_name(hChild)))
@@ -333,22 +334,22 @@ oInputSetImpl::oInputSetImpl(const oStd::xml& _XML, oStd::xml::node _InputSet, c
 	*_pSuccess = true;
 }
 
-bool oInputSetCreate(const oStd::xml& _XML, oStd::xml::node _InputSet, const oRTTI& _IDEnum, oInputSet** _ppInputSet)
+bool oInputSetCreate(const xml& _XML, xml::node _InputSet, const oRTTI& _IDEnum, oInputSet** _ppInputSet)
 {
 	bool success = false;
 	oCONSTRUCT(_ppInputSet, oInputSetImpl(_XML, _InputSet, _IDEnum, &success));
 	return success;
 }
 
-bool oParseInputSetList(const oStd::xml& _XML, oStd::xml::node _InputSetList, const oRTTI& _InputEnum, threadsafe oInputSet** _ppInputSet)
+bool oParseInputSetList(const xml& _XML, xml::node _InputSetList, const oRTTI& _InputEnum, threadsafe oInputSet** _ppInputSet)
 {
 	const char* Name = _XML.node_name(_InputSetList);
 	if (_stricmp(Name, "oInputSetList"))
 		return oErrorSetLast(std::errc::invalid_argument, "The specified node is not an \"oInputSetList\" in %s", _XML.name());
 
-	oStd::mstring EnumName;
+	mstring EnumName;
 	_InputEnum.GetName(EnumName);
-	oStd::xml::node hInputSet = _XML.first_child(_InputSetList, "oInputSet");
+	xml::node hInputSet = _XML.first_child(_InputSetList, "oInputSet");
 	if (!hInputSet)
 		return oErrorSetLast(std::errc::protocol_error, "Could not find \"oInputSet\" named \"%s\" in %s", EnumName.c_str(), _XML.name());
 
@@ -375,7 +376,7 @@ public:
 		: Latest(oInvalid)
 	{
 		History.resize(_HistorySize);
-		oStd::fill(History, oINPUT_LOG(0, oInvalid, false));
+		fill(History, oINPUT_LOG(0, oInvalid, false));
 	}
 
 	void Add(unsigned int _TimestampMS, int _InputID, bool _IsDown)
@@ -454,7 +455,7 @@ struct oInputMapperImpl : oInputMapper
 	void OnAction(const oGUI_ACTION_DESC& _Action) threadsafe override;
 	void OnLostCapture() threadsafe override;
 
-	oStd::intrusive_ptr<threadsafe oInputSet> InputSet;
+	intrusive_ptr<threadsafe oInputSet> InputSet;
 	oInputHistory InputHistory;
 	shared_mutex Mutex;
 	oRefCount RefCount;

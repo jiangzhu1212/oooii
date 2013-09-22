@@ -47,5 +47,5 @@ static const char* oAsStringCCFlags(int _CCFlags)
 
 char* oCameraControllerParseResponse(char* _StrDestination, size_t _SizeofStrDestination, int _ResponseFlags)
 {
-	return oStd::strbitmask(_StrDestination, _SizeofStrDestination, _ResponseFlags, "0", oAsStringCCFlags);
+	return ouro::strbitmask(_StrDestination, _SizeofStrDestination, _ResponseFlags, "0", oAsStringCCFlags);
 }

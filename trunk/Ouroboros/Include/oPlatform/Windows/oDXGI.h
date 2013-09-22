@@ -71,21 +71,21 @@
 	// instantiated (i.e. whether you can create an ID3D10Device or an 
 	// ID3D11Device). This is related more to the OS version than the HW 
 	// capabilities.
-	oStd::version oDXGIGetInterfaceVersion(IDXGIAdapter* _pAdapter);
+	ouro::version oDXGIGetInterfaceVersion(IDXGIAdapter* _pAdapter);
 
 	// Returns the highest D3D feature level version that can be HW accelerated by 
 	// the specified adapter. For example even though an ID3D11Device can be 
 	// instantiated the HW may only support DX10 features.
-	oStd::version oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter);
+	ouro::version oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter);
 
 	// Returns a description and version of the driver for the specified adapter.
-	oCore::adapter::info oDXGIGetAdapterDriverInfo(IDXGIAdapter* _pAdapter);
+	ouro::adapter::info oDXGIGetAdapterDriverInfo(IDXGIAdapter* _pAdapter);
 
 	// Get the specified adapter and desc for the specified adapter index.
-	bool oDXGIEnumAdapters(int _AdapterIndex, IDXGIAdapter** _ppAdapter, oCore::adapter::info* _pAdapterInfo);
+	bool oDXGIEnumAdapters(int _AdapterIndex, IDXGIAdapter** _ppAdapter, ouro::adapter::info* _pAdapterInfo);
 
 	// Uses the above version to visit each device.
-	bool oDXGIEnumAdapters(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAdapter, const oCore::adapter::info& _AdapterInfo)>& _Enumerator, IDXGIFactory* _pFactory = nullptr);
+	bool oDXGIEnumAdapters(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAdapter, const ouro::adapter::info& _AdapterInfo)>& _Enumerator, IDXGIFactory* _pFactory = nullptr);
 
 	// Returns the index to pass to EnumAdapters to get this same adapter.
 	int oDXGIGetAdapterIndex(IDXGIAdapter* _pAdapter);

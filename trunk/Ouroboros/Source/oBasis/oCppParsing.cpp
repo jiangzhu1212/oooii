@@ -24,17 +24,17 @@
  **************************************************************************/
 #include <oBasis/oCppParsing.h>
 #include <oBasis/oStrTok.h>
-#include <oStd/algorithm.h>
-#include <oStd/assert.h>
+#include <oBase/assert.h>
 #include <oBasis/oPath.h>
 #include <oBasis/oError.h>
+#include <oBase/algorithm.h>
 #include <oStd/for.h>
 #include <map>
 #include <regex>
 #include <unordered_map>
 
 using namespace std;
-using namespace std::tr1;
+using namespace ouro;
 
 const char* oMoveToNextID(const char* _pCurrent, const char* _Stop)
 {
@@ -107,7 +107,7 @@ bool oGetNextInclude(char* _StrDestination, size_t _SizeofStrDestination, const 
 	{
 		if (regex_search(*_ppContext, matches, reInclude))
 		{
-			oStd::copy_match_result(_StrDestination, _SizeofStrDestination, matches, 2);
+			copy_match_result(_StrDestination, _SizeofStrDestination, matches, 2);
 			*_ppContext = 1 + matches[matches.size()-1].second;
 			result = true;
 		}
@@ -128,7 +128,7 @@ bool oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const cha
 	cmatch matches;
 	while (regex_search(_StrSourceCode, matches, reInclude))
 	{
-		oStd::copy_match_result(includePath, matches, 2);
+		copy_match_result(includePath, matches, 2);
 		bool isSystemPath = *matches[1].first == '<';
 		oTRACE("#include %s%s%s.", isSystemPath?"<":"\"", includePath, isSystemPath?">":"\"");
 		size_t matchLength = static_cast<size_t>(matches[0].length()) + 1; // +1 for newline
@@ -142,11 +142,11 @@ bool oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const cha
 
 			include = inc;
 
-			oStd::zero_line_comments(&include[0], "//");
-			oStd::zero_block_comments(&include[0], "/*", "*/");
+			zero_line_comments(&include[0], "//");
+			zero_block_comments(&include[0], "/*", "*/");
 
 			oTRACE("-- %s loaded: %u chars", includePath, (unsigned int)include.size());
-			if (!oStd::insert(_StrSourceCode, _SizeofStrSourceCode, const_cast<char*>(matches[0].first), matchLength, include.c_str()))
+			if (!insert(_StrSourceCode, _SizeofStrSourceCode, const_cast<char*>(matches[0].first), matchLength, include.c_str()))
 				return oErrorSetLast(std::errc::invalid_argument, "Merge failed: %s%s%s (source buffer too small)", isSystemPath?"<":"\"", includePath, isSystemPath?">":"\"");
 		}
 

@@ -30,6 +30,8 @@
 #include <oPlatform/oWindow.h>
 #include "resource.h"
 
+using namespace ouro;
+
 enum oWMENU
 {
 	oWMENU_FILE,
@@ -105,7 +107,7 @@ public:
 	void Run();
 
 private:
-	oStd::intrusive_ptr<oWindow> Window;
+	intrusive_ptr<oWindow> Window;
 	oGUI_MENU Menus[oWMENU_COUNT];
 	oWindowTestAppPulseContext PulseContext;
 	oGUIMenuEnumRadioListHandler MERL; 
@@ -256,11 +258,11 @@ void oWindowTestApp::EventHook(const oGUI_EVENT_DESC& _Event)
 			oTRACE("oGUI_MOVED %dx%d", _Event.AsShape().Shape.ClientPosition.x, _Event.AsShape().Shape.ClientPosition.y);
 			break;
 		case oGUI_SIZING:
-			oTRACE("oGUI_SIZING %s %dx%d", oStd::as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
+			oTRACE("oGUI_SIZING %s %dx%d", ouro::as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
 			break;
 		case oGUI_SIZED:
 		{
-			oTRACE("oGUI_SIZED %s %dx%d", oStd::as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
+			oTRACE("oGUI_SIZED %s %dx%d", ouro::as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
 			CheckState(_Event.AsShape().Shape.State);
 			CheckStyle(_Event.AsShape().Shape.Style);
 
@@ -294,7 +296,7 @@ void oWindowTestApp::EventHook(const oGUI_EVENT_DESC& _Event)
 			oTRACE("oGUI_DROP_FILES (at %d,%d starting with %s)", _Event.AsDrop().ClientDropPosition.x, _Event.AsDrop().ClientDropPosition.y, _Event.AsDrop().pPaths[0]);
 			break;
 		case oGUI_INPUT_DEVICE_CHANGED:
-			oTRACE("oGUI_INPUT_DEVICE_CHANGED %s %s %s", oStd::as_string(_Event.AsInputDevice().Type), oStd::as_string(_Event.AsInputDevice().Status), _Event.AsInputDevice().InstanceName);
+			oTRACE("oGUI_INPUT_DEVICE_CHANGED %s %s %s", ouro::as_string(_Event.AsInputDevice().Type), ouro::as_string(_Event.AsInputDevice().Status), _Event.AsInputDevice().InstanceName);
 			break;
 		oNODEFAULT;
 	}
@@ -332,10 +334,10 @@ void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 			{
 				case oWCTL_EASY_BUTTON:
 				{
-					oStd::sstring text;
+					sstring text;
 					Window->GetStatusText(text, 2);
 					int n = 0;
-					oStd::from_string(&n, text.c_str() + 6);
+					from_string(&n, text.c_str() + 6);
 					n++;
 					Window->SetStatusText(2, "Easy: %d", n);
 					break;
@@ -385,10 +387,10 @@ void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 			
 			break;
 		case oGUI_ACTION_KEY_DOWN:
-			oTRACE("oGUI_ACTION_KEY_DOWN %s", oStd::as_string(_Action.Key));
+			oTRACE("oGUI_ACTION_KEY_DOWN %s", ouro::as_string(_Action.Key));
 			break;
 		case oGUI_ACTION_KEY_UP:
-			oTRACE("oGUI_ACTION_KEY_UP %s", oStd::as_string(_Action.Key));
+			oTRACE("oGUI_ACTION_KEY_UP %s", ouro::as_string(_Action.Key));
 			break;
 		case oGUI_ACTION_POINTER_MOVE:
 			//oTRACE("oGUI_ACTION_POINTER_MOVE");

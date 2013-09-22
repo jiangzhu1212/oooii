@@ -23,10 +23,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oConcurrency/concurrent_linear_allocator.h>
-#include <oStd/macros.h>
+#include <oBase/byte.h>
+#include <oBase/macros.h>
 #include <oStd/future.h>
-#include <oStd/throw.h>
+#include <oBase/throw.h>
 #include <vector>
+
+using namespace ouro;
 
 namespace oConcurrency {
 	namespace tests {
@@ -55,8 +58,8 @@ static void test_basics()
 	char* c5 = pAllocator->allocate<char>(1024);
 	oCHECK(!c5, "Too large an allocation should have failed, but succeeded");
 
-	size_t nFree = 1024 - oStd::byte_align(sizeof(oConcurrency::concurrent_linear_allocator), oDEFAULT_MEMORY_ALIGNMENT);
-	nFree -= 4 * oStd::byte_align(kAllocSize, oDEFAULT_MEMORY_ALIGNMENT);
+	size_t nFree = 1024 - byte_align(sizeof(oConcurrency::concurrent_linear_allocator), oDEFAULT_MEMORY_ALIGNMENT);
+	nFree -= 4 * byte_align(kAllocSize, oDEFAULT_MEMORY_ALIGNMENT);
 
 	oCHECK(pAllocator->bytes_available() == nFree, "Bytes available is incorrect");
 

@@ -27,6 +27,8 @@
 #include <oBasis/oError.h>
 #include <time.h>
 
+using namespace ouro;
+
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oP4_STATUS)
 	oRTTI_ENUM_BEGIN_VALUES(oP4_STATUS)
 		oRTTI_VALUE_CUSTOM(oP4_OPEN_FOR_EDIT, "edit")
@@ -97,9 +99,9 @@ bool get_kvpair(char* _KeyDestination, size_t _SizeofKeyDestination, char* _Valu
 template<size_t size> bool get_kvpair(char (&_KeyDestination)[size], char* _ValueDestination, size_t _SizeofValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return get_kvpair(_KeyDestination, size, _ValueDestination, _SizeofValueDestination, _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
 template<size_t size> bool get_kvpair(char* _KeyDestination, size_t _SizeofKeyDestination, char (&_ValueDestination)[size], char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return get_kvpair(_KeyDestination, _SizeofKeyDestination, _ValueDestination, size, _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
 template<size_t key_size, size_t value_size> bool get_kvpair(char (&_KeyDestination)[key_size], char (&_ValueDestination)[value_size], const char* _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return get_kvpair(_KeyDestination, key_size, _ValueDestination, value_size, _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
-template<size_t capacity> bool get_kvpair(oStd::fixed_string<char, capacity>& _KeyDestination, char* _ValueDestination, size_t _SizeofValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return get_kvpair(_KeyDestination, _KeyDestination.capacity(), _ValueDestination, _SizeofValueDestination, _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
-template<size_t capacity> bool get_kvpair(char* _KeyDestination, size_t _SizeofKeyDestination, oStd::fixed_string<char, capacity>& _ValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return get_kvpair(_KeyDestination, _SizeofKeyDestination, _ValueDestination, _ValueDestination.capacity(), _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
-template<size_t KEY_capacity, size_t VALUE_capacity> bool get_kvpair(oStd::fixed_string<char, KEY_capacity>& _KeyDestination, oStd::fixed_string<char, VALUE_capacity>& _ValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return get_kvpair(_KeyDestination, _KeyDestination.capacity(), _ValueDestination, _ValueDestination.capacity(), _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
+template<size_t capacity> bool get_kvpair(ouro::fixed_string<char, capacity>& _KeyDestination, char* _ValueDestination, size_t _SizeofValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return get_kvpair(_KeyDestination, _KeyDestination.capacity(), _ValueDestination, _SizeofValueDestination, _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
+template<size_t capacity> bool get_kvpair(char* _KeyDestination, size_t _SizeofKeyDestination, ouro::fixed_string<char, capacity>& _ValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return get_kvpair(_KeyDestination, _SizeofKeyDestination, _ValueDestination, _ValueDestination.capacity(), _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
+template<size_t KEY_capacity, size_t VALUE_capacity> bool get_kvpair(ouro::fixed_string<char, KEY_capacity>& _KeyDestination, ouro::fixed_string<char, VALUE_capacity>& _ValueDestination, char _KeyValueSeparator, const char* _KeyValuePairSeparators, const char* _SourceString, const char** _ppLeftOff = 0) { return get_kvpair(_KeyDestination, _KeyDestination.capacity(), _ValueDestination, _ValueDestination.capacity(), _KeyValueSeparator, _KeyValuePairSeparators, _SourceString, _ppLeftOff); }
 
 static bool oP4IsExecutionError(const char* _P4ResponseString)
 {
@@ -125,7 +127,7 @@ static bool oP4Execute(const char* _CommandLine, const char* _CheckValidString, 
 {
 	if (_P4ResponseString)
 		*_P4ResponseString = 0;
-	int ec = oCore::system::spawn(_CommandLine, [&](char* _Line) { if (_P4ResponseString) strlcat(_P4ResponseString, _Line, _SizeofP4ResponseString); }, false, _TimeoutMS);
+	int ec = ouro::system::spawn(_CommandLine, [&](char* _Line) { if (_P4ResponseString) strlcat(_P4ResponseString, _Line, _SizeofP4ResponseString); }, false, _TimeoutMS);
 	if (ec)
 		return oErrorSetLast(std::errc::io_error, "spawn '%s' returned %d", _CommandLine, ec); // pass through error
 	if (!_P4ResponseString)
@@ -135,11 +137,11 @@ static bool oP4Execute(const char* _CommandLine, const char* _CheckValidString, 
 	return true;
 }
 
-template<typename T, size_t Capacity> inline bool oP4Execute(const char* _CommandLine, const char* _CheckValidString, oStd::fixed_string<T, Capacity>& _P4ResponseString) { return oP4Execute(_CommandLine, _CheckValidString, _P4ResponseString, _P4ResponseString.capacity()); }
+template<typename T, size_t Capacity> inline bool oP4Execute(const char* _CommandLine, const char* _CheckValidString, ouro::fixed_string<T, Capacity>& _P4ResponseString) { return oP4Execute(_CommandLine, _CheckValidString, _P4ResponseString, _P4ResponseString.capacity()); }
 
 bool oP4IsAvailable()
 {
-	oStd::xlstring response;
+	xlstring response;
 	return oP4Execute("p4", "Perforce --", response);
 }
 
@@ -153,22 +155,22 @@ bool oP4Open(oP4_STATUS _Type, const char* _Path)
 	if (_Type > oP4_OPEN_FOR_DELETE)
 		return oErrorSetLast(std::errc::invalid_argument, "invalid open type");
 
-	oStd::xlstring cmdline, validstring, response;
-	snprintf(cmdline, "p4 %s \"%s\"", oStd::as_string(_Type), oSAFESTR(_Path));
-	snprintf(validstring, " - opened for %s", oStd::as_string(_Type));
+	xlstring cmdline, validstring, response;
+	snprintf(cmdline, "p4 %s \"%s\"", as_string(_Type), oSAFESTR(_Path));
+	snprintf(validstring, " - opened for %s", as_string(_Type));
 	return oP4Execute(cmdline, validstring, response);
 }
 
 bool oP4Revert(const char* _Path)
 {
-	oStd::xlstring cmdline, response;
+	xlstring cmdline, response;
 	snprintf(cmdline, "p4 revert \"%s\"", _Path);
 	return oP4Execute(cmdline, ", reverted", response);
 }
 
 oAPI bool oP4Sync(int _ChangeList, const char* _Path/*= nullptr*/, bool _Force/*= false*/)
 {
-	oStd::xlstring cmdline, response;
+	xlstring cmdline, response;
 	snprintf(cmdline, "p4 sync %s \"%s\"@%d", _Force ? "-f":"", _Path, _ChangeList);
 
 	// Try twice.  Once to sync, and once to verify
@@ -180,11 +182,11 @@ oAPI bool oP4Sync(int _ChangeList, const char* _Path/*= nullptr*/, bool _Force/*
 
 static void oP4CreateLabelSpec(const oP4_LABEL_SPEC& _Label, std::string& _OutLabelSpec)
 {
-	oStd::mstring Owner(_Label.Owner);
+	mstring Owner(_Label.Owner);
 	if (Owner.empty())
-		oCore::system::getenv(Owner, "P4USER");
+		ouro::system::getenv(Owner, "P4USER");
 
-	oStd::lstring Desc(_Label.Description);
+	lstring Desc(_Label.Description);
 	if (Desc.empty())
 		snprintf(Desc, "Created by %s", Owner.c_str());
 
@@ -199,9 +201,9 @@ static void oP4CreateLabelSpec(const oP4_LABEL_SPEC& _Label, std::string& _OutLa
 
 	if (_Label.Revision)
 	{
-		oStd::sstring StrRev;
+		sstring StrRev;
 		_OutLabelSpec.append("\nRevision:	");
-		_OutLabelSpec.append(oStd::to_string(StrRev, _Label.Revision));
+		_OutLabelSpec.append(to_string(StrRev, _Label.Revision));
 	}
 
 	_OutLabelSpec.append("\nView:\n");
@@ -219,11 +221,11 @@ bool oP4Label(const oP4_LABEL_SPEC& _Label)
 	std::string labelSpec;
 	oP4CreateLabelSpec(_Label, labelSpec);
 
-	oCore::process::info pi;
+	ouro::process::info pi;
 	pi.command_line = "p4 label -i";
 	pi.environment = 0;
 	pi.stdout_buffer_size = oKB(16);
-	auto process = oCore::process::make(pi);
+	auto process = ouro::process::make(pi);
 
 	size_t sizeWritten = process->to_stdin(labelSpec.c_str(), labelSpec.size());
 	if (sizeWritten != labelSpec.size())
@@ -232,7 +234,7 @@ bool oP4Label(const oP4_LABEL_SPEC& _Label)
 	if (!process->wait_for(oStd::chrono::milliseconds(kP4TypicalTimeoutMS)))
 		return oErrorSetLast(std::errc::timed_out, "Executing \"%s\" timed out after %.01f seconds.", pi.command_line, static_cast<float>(kP4TypicalTimeoutMS) / 1000.0f);
 
-	oStd::xlstring response;
+	xlstring response;
 	size_t sizeRead = process->from_stdout(response, response.capacity());
 	oASSERT(sizeRead < response.capacity(), "");
 	response[sizeRead] = 0;
@@ -245,7 +247,7 @@ bool oP4Label(const oP4_LABEL_SPEC& _Label)
 
 bool oP4GetChangelistShared(const char* _pSearch, int _ChangeList, oFUNCTION<void(char* _Result)> _Result)
 {
-	oStd::xlstring cmdline, response;
+	xlstring cmdline, response;
 	snprintf(cmdline, "p4 change -o %d",_ChangeList);
 	if (!oP4Execute(cmdline, "A Perforce Change Specification", response))
 		return false;
@@ -319,7 +321,7 @@ bool oP4GetChangelistDate(char* _StrDestination, size_t _SizeofStrDestination, i
 
 bool oP4GetClientPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _pDepotPath)
 {
-	oStd::xlstring cmdline, response;
+	xlstring cmdline, response;
 	snprintf(cmdline, "p4 fstat %s", _pDepotPath);
 
 	const char ClientFile[] = "clientFile";
@@ -337,14 +339,14 @@ bool oP4GetClientPath(char* _StrDestination, size_t _SizeofStrDestination, const
 		}
 		pFileLine[0] = 0;
 	}
-	oStd::clean_path(_StrDestination, _SizeofStrDestination, pFileName);
+	clean_path(_StrDestination, _SizeofStrDestination, pFileName);
 	return true;
 }
 
 
 bool oP4GetLabelSpecString(char* _P4LabelSpecString, size_t _SizeofP4LabelSpecString, const char* _Label)
 {
-	oStd::lstring cmdline;
+	lstring cmdline;
 	snprintf(cmdline, "p4 label -o %s", oSAFESTRN(_Label));
 	return oP4Execute(cmdline, "# A Perforce Label", _P4LabelSpecString, _SizeofP4LabelSpecString);
 }
@@ -371,7 +373,7 @@ static char* oP4ParseFilesLine(oP4_FILE_DESC* _pFile, char* _P4FilesLine)
 
 	char* ctx = nullptr;
 	char* tok = oStrTok(attribs, " ", &ctx);
-	oStd::from_string(&_pFile->Status, tok);
+	from_string(&_pFile->Status, tok);
 
 	tok = oStrTok(nullptr, " ", &ctx);
 	if (!strcmp("default", tok))
@@ -408,21 +410,21 @@ static size_t oP4ParseOpenedList(oP4_FILE_DESC* _pOpenedFiles, size_t _MaxNumOpe
 
 size_t oP4ListOpened(oP4_FILE_DESC* _pOpenedFiles, size_t _MaxNumOpenedFiles, const char* _P4Base)
 {
-	oStd::xlstring cmdline;
+	xlstring cmdline;
 	std::vector<char> response;
 	response.resize(oKB(100));
-	char* result = oStd::data(response);
+	char* result = data(response);
 	snprintf(cmdline, "p4 opened -m %u %s", _MaxNumOpenedFiles, oSAFESTR(_P4Base));
 	if (!oP4Execute(cmdline, nullptr, result, response.size()))
 		return oInvalid; // pass through error
 
-	if (!strncmp("File(s) not", oStd::data(response), 11))
+	if (!strncmp("File(s) not", data(response), 11))
 		return 0;
 
 	if (strstr(result, "file(s) not opened"))
 		return 0;
 
-	return oP4ParseOpenedList(_pOpenedFiles, _MaxNumOpenedFiles, oStd::data(response));
+	return oP4ParseOpenedList(_pOpenedFiles, _MaxNumOpenedFiles, data(response));
 }
 
 // Parses the pieces from the format returned by "p4 sync -n"
@@ -455,7 +457,7 @@ static char* oP4ParseSyncLine(oP4_FILE_DESC* _pFile, char* _P4SyncLine)
 		{
 			char* ctx = nullptr;
 			char* tok = oStrTok(attribs, " ", &ctx);
-			oVERIFY(oStd::from_string(&_pFile->Status, tok));
+			oVERIFY(from_string(&_pFile->Status, tok));
 
 			tok = oStrTok(nullptr, " ", &ctx);
 			if (!strcmp("as", tok))
@@ -495,10 +497,10 @@ static size_t oP4ParseOutOfDateList(oP4_FILE_DESC* _pOutOfDateFiles, size_t _Max
 
 size_t oP4ListOutOfDate(oP4_FILE_DESC* _pOutOfDateFiles, size_t _MaxNumOutOfDateFiles, const char* _P4Base, int _UpToChangelist)
 {
-	oStd::xlstring cmdline;
+	xlstring cmdline;
 	std::vector<char> response;
 	response.resize(oKB(100));
-	char* result = oStd::data(response);
+	char* result = data(response);
 
 	if (!oSTRVALID(_P4Base) && _UpToChangelist != oInvalid)
 		_P4Base = "//...";
@@ -570,7 +572,7 @@ bool oP4ParseWorkspace(oP4_WORKSPACE* _pWorkspace, const char* _P4WorkspaceStrin
 	if (bNextStrExists && !get_kvpair(0, 0, _pWorkspace->Client, ':', oNEWLINE, c, &c))
 		return false;
 
-	oStd::mstring tmp;
+	mstring tmp;
 
 	//Update
 	NEXT_STR_EXISTS(c, "Update:", bNextStrExists);
@@ -625,14 +627,14 @@ bool oP4ParseWorkspace(oP4_WORKSPACE* _pWorkspace, const char* _P4WorkspaceStrin
 	NEXT_STR_EXISTS(c, "SubmitOptions:", bNextStrExists);
 	if (bNextStrExists && !get_kvpair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
-	if (!oStd::from_string(&_pWorkspace->SubmitOptions, tmp))
+	if (!from_string(&_pWorkspace->SubmitOptions, tmp))
 		return false;
 
 	//LineEnd
 	NEXT_STR_EXISTS(c, "LineEnd:", bNextStrExists);
 	if (bNextStrExists && !get_kvpair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
-	if (!oStd::from_string(&_pWorkspace->LineEnd, tmp))
+	if (!from_string(&_pWorkspace->LineEnd, tmp))
 		return false;
 
 	// View is multi-line...
@@ -647,7 +649,7 @@ int oP4ParseChangesLine(const char* _ChangesLine)
 {
 	char* ctx = nullptr;
 	const char* tok = oStrTok(_ChangesLine, " ", &ctx);
-	oStd::finally OSEClose([&]{ oStrTokClose(&ctx); });
+	finally OSEClose([&]{ oStrTokClose(&ctx); });
 
 	if (tok)
 	{
@@ -674,7 +676,7 @@ bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecStri
 	if (bNextStrExists && !get_kvpair(0, 0, _pLabelSpec->Label, ':', oNEWLINE, c, &c))
 		return false;
 
-	oStd::mstring tmp;
+	mstring tmp;
 
 	//Update
 	NEXT_STR_EXISTS(c, "Update:", bNextStrExists);
@@ -713,7 +715,7 @@ bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecStri
 	NEXT_STR_EXISTS(c, "Revision:", bNextStrExists);
 	if (bNextStrExists && !get_kvpair(0, 0, tmp, ':', oNEWLINE, c, &c))
 		return false;
-	if (!oStd::from_string(&_pLabelSpec->Revision, tmp))
+	if (!from_string(&_pLabelSpec->Revision, tmp))
 		return false;
 
 	//View is multi-line...
@@ -726,10 +728,10 @@ bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecStri
 
 static int oP4RunChangesCommand(const char* _P4Base, const char* _pCommand)
 {
-	oStd::xlstring cmdline;
+	xlstring cmdline;
 	std::vector<char> response;
 	response.resize(oKB(100));
-	char* result = oStd::data(response);
+	char* result = data(response);
 
 	if (!oSTRVALID(_P4Base))
 		_P4Base = "//...";
@@ -759,7 +761,7 @@ int oP4GetCurrentChangelist(const char* _P4Base)
 	std::vector<oP4_FILE_DESC> files;
 	files.resize(1); // for speed, don't check every file, just see if anything is open or out-of-date.
 	// Check all open files if they're under P4Base
-	size_t nOpened = oP4ListOpened(oStd::data(files), files.size(), _P4Base);
+	size_t nOpened = oP4ListOpened(data(files), files.size(), _P4Base);
 	if (nOpened == oInvalid)
 		return oInvalid; // pass through error
 
@@ -770,7 +772,7 @@ int oP4GetCurrentChangelist(const char* _P4Base)
 		oTRACEA("P4 Changelist is non-pure due to opened: %s", files[i].Path.c_str());
 
 	// Now check for needed updates
-	size_t nOutOfDate = oP4ListOutOfDate(oStd::data(files), files.size(), _P4Base, CL);
+	size_t nOutOfDate = oP4ListOutOfDate(data(files), files.size(), _P4Base, CL);
 	if (nOutOfDate == oInvalid)
 		return oInvalid; // pass through error
 	
@@ -802,7 +804,7 @@ int oP4GetNextChangelist(int _CurrentCL, const char* _P4Base /*= nullptr*/)
 	for(int CL = _CurrentCL + 1; CL < TOT; ++CL)
 	{
 		// Check CL in between to see if they have changes
-		oStd::sstring cmd;
+		sstring cmd;
 		snprintf(cmd, "@%d", CL);
 		int ChangesUpTo = oP4RunChangesCommand(_P4Base, cmd);
 

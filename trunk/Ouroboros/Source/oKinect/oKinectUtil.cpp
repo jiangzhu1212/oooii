@@ -22,10 +22,11 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-
 #include <oKinect/oKinectUtil.h>
 
 #ifdef oHAS_KINECT_SDK
+
+using namespace ouro;
 
 static_assert(NUI_SKELETON_POSITION_COUNT == oGUI_BONE_COUNT, "bone count mismatch");
 
@@ -173,17 +174,17 @@ unsigned char oKinectGetDepthIntensity(unsigned short _Depth)
 
 RGBQUAD oKinectGetColoredDepth(unsigned short _DepthAndIndex)
 {
-	static const oStd::color kPlayerColors[] =
+	static const color kPlayerColors[] =
 	{ 
-		oStd::Gray, oStd::Red, oStd::Orange, oStd::Yellow, oStd::Lime, oStd::Blue, 
-		oStd::Indigo, oStd::Violet
+		Gray, Red, Orange, Yellow, Lime, Blue, 
+		Indigo, Violet
 	};
 	static_assert(oCOUNTOF(kPlayerColors) == (1<<NUI_IMAGE_PLAYER_INDEX_SHIFT), "color count mismatch");
 
 	const unsigned short D = NuiDepthPixelToDepth(_DepthAndIndex);
 	const unsigned short I = NuiDepthPixelToPlayerIndex(_DepthAndIndex);
 	const unsigned char Intensity = (D < oKINECT_MIN_DEPTH || D > oKINECT_MAX_DEPTH) ? 0 : oKinectGetDepthIntensity(D);//255 - (unsigned char)(256 * D / 0x0fff);
-	const oStd::color Color = kPlayerColors[I] * (Intensity / 255.0f);
+	const color Color = kPlayerColors[I] * (Intensity / 255.0f);
 	int r,g,b;
 	Color.decompose(&r, &g, &b);
 
@@ -204,7 +205,7 @@ void oKinectCopyBits(const NUI_IMAGE_FRAME& _NIF, oSURFACE_MAPPED_SUBRESOURCE& _
 	switch (_NIF.eImageType)
 	{
 		case NUI_IMAGE_TYPE_COLOR:
-			oStd::memcpy2d(_Destination.pData, _Destination.RowPitch, r.pBits, r.Pitch, Dimensions.x * sizeof(RGBQUAD), Dimensions.y);
+			memcpy2d(_Destination.pData, _Destination.RowPitch, r.pBits, r.Pitch, Dimensions.x * sizeof(RGBQUAD), Dimensions.y);
 			break;
 
 		case NUI_IMAGE_TYPE_DEPTH:

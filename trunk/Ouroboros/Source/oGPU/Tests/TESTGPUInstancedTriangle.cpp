@@ -26,6 +26,8 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
+using namespace ouro;
+
 static const int sSnapshotFrames[] = { 1, 23, 46 };
 static const bool kIsDevMode = false;
 
@@ -35,7 +37,7 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 
 	bool Initialize() override
 	{
-		PrimaryRenderTarget->SetClearColor(oStd::AlmostBlack);
+		PrimaryRenderTarget->SetClearColor(AlmostBlack);
 
 		oGPUBuffer::DESC DCDesc;
 		DCDesc.StructByteSize = sizeof(oGPUTestConstants);
@@ -96,7 +98,7 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 
 		CommandList->Begin();
 
-		oGPUCommitBuffer(CommandList, TestConstants, oGPUTestConstants(oIDENTITY4x4, V, P, oStd::White));
+		oGPUCommitBuffer(CommandList, TestConstants, oGPUTestConstants(oIDENTITY4x4, V, P, White));
 
 		CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
 		CommandList->SetBlendState(oGPU_OPAQUE);
@@ -114,10 +116,10 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 	}
 
 private:
-	oStd::intrusive_ptr<oGPUPipeline> Pipeline;
-	oStd::intrusive_ptr<oGPUBuffer> InstanceList;
-	oStd::intrusive_ptr<oGPUUtilMesh> Mesh;
-	oStd::intrusive_ptr<oGPUBuffer> TestConstants;
+	intrusive_ptr<oGPUPipeline> Pipeline;
+	intrusive_ptr<oGPUBuffer> InstanceList;
+	intrusive_ptr<oGPUUtilMesh> Mesh;
+	intrusive_ptr<oGPUBuffer> TestConstants;
 };
 
 oDEFINE_GPU_TEST(GPU_InstancedTriangle)

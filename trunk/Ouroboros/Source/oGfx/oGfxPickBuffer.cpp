@@ -24,6 +24,8 @@
  **************************************************************************/
 #include <oGfx/oGfxPickBuffer.h>
 
+using namespace ouro;
+
 bool oGfxPickBufferCreate(oGPUDevice* _pDevice, const void* _pComputeShader, oGfxPickBuffer** _ppPickBuffer)
 {
 	bool success = false;
@@ -85,7 +87,7 @@ void oGfxPickBuffer::PDraw(oGPUCommandList* _pCommandList, oGPUTexture* _pPickRe
 
 void oGfxPickBuffer::POMap(uint** _Picks) 
 {
-	oStd::intrusive_ptr<oGPUDevice> Device;
+	intrusive_ptr<oGPUDevice> Device;
 	PicksStaging->GetDevice(&Device);
 	oSURFACE_MAPPED_SUBRESOURCE mappedStaging;
 	// @oooii-jeffrey: This call is blocking/spin-locking because that was what the original D3D11 implementation did, this may still need some thought...
@@ -95,7 +97,7 @@ void oGfxPickBuffer::POMap(uint** _Picks)
 
 void oGfxPickBuffer::POUnmap() 
 {
-	oStd::intrusive_ptr<oGPUDevice> Device;
+	intrusive_ptr<oGPUDevice> Device;
 	PicksStaging->GetDevice(&Device);
 	Device->UnmapRead(PicksStaging, 0);
 }

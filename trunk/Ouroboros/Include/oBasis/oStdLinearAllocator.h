@@ -42,7 +42,7 @@
 #include <oBasis/oPlatformFeatures.h>
 #include <oConcurrency/concurrent_linear_allocator.h>
 #include <oConcurrency/thread_safe.h>
-#include <oStd/macros.h>
+#include <oBase/macros.h>
 
 template<typename T> struct oStdLinearAllocator
 {

@@ -23,10 +23,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oMath.h>
-#include <oStd/assert.h>
-#include <oStd/byte.h>
+#include <oBase/assert.h>
+#include <oBase/byte.h>
 
-namespace oStd {
+using namespace ouro;
+
+namespace ouro {
 
 const char* as_string(const oFRUSTUM_CORNER& _Corner)
 {
@@ -44,7 +46,7 @@ const char* as_string(const oFRUSTUM_CORNER& _Corner)
 	}
 }
 
-} // namespace oStd
+} // namespace ouro
 
 template<typename T> static TMAT4<T> oFitToViewT(const TMAT4<T>& _View, T _FovYRadians, const oCompute::sphere<T>& _Bounds, T _OffsetMultiplier)
 {
@@ -76,8 +78,8 @@ bool oCalculateAreaAndCentriod(float* _pArea, float2* _pCentroid, const float2* 
 
 	float atmp = float(0), xtmp = float(0), ytmp = float(0);
 	const float2* vj = _pVertices;
-	const float2* vi = oStd::byte_add(_pVertices, _VertexStride, _NumVertices-1);
-	const float2* end = oStd::byte_add(vi, _VertexStride, 1);
+	const float2* vi = byte_add(_pVertices, _VertexStride, _NumVertices-1);
+	const float2* end = byte_add(vi, _VertexStride, 1);
 	while (vj < end)
 	{
 		float ai = vi->x * vj->y - vj->x * vi->y;
@@ -90,7 +92,7 @@ bool oCalculateAreaAndCentriod(float* _pArea, float2* _pCentroid, const float2* 
 	}
 
 	*_pArea = atmp / 2.0f;
-	if (!oStd::equal(atmp, 0.0f))
+	if (!ouro::equal(atmp, 0.0f))
 	{
 		_pCentroid->x = xtmp / (3.0f * atmp);
 		_pCentroid->y = ytmp / (3.0f * atmp);

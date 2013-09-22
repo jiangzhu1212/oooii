@@ -25,6 +25,8 @@
 #include "oHTTPInternal.h"
 #include "oHTTPProtocol.h"
 
+using namespace ouro;
+
 const char *pDefaultPage = "<html><head><title>%u %s</title></head><body><p>%u %s</p></body></html>";
 
 bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, interface oSocket* _pSocket)
@@ -59,7 +61,7 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 				break;
 			}
 			// Try to (continue to) extract an HTTP header
-			if (!oExtractHTTPHeader(oStd::byte_add((const char*)_pData, SizeofDataTaken), (_SizeData - SizeofDataTaken), TheHeader.c_str(), &TheHeaderPos, TheHeader.capacity(), &SizeofDataTaken))
+			if (!oExtractHTTPHeader(byte_add((const char*)_pData, SizeofDataTaken), (_SizeData - SizeofDataTaken), TheHeader.c_str(), &TheHeaderPos, TheHeader.capacity(), &SizeofDataTaken))
 			{
 				// If the HTTP header is bigger than our capacity, then send an error back
 				if (TheHeaderPos >= TheHeader.capacity())
@@ -88,7 +90,7 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 		case oSTATE_PARSE_HEADER:
 			// We received the header in full, now parse it
 			TheRequest.Reset();
-			if (!oStd::from_string(&TheRequest, TheHeader.c_str()))
+			if (!from_string(&TheRequest, TheHeader.c_str()))
 			{
 				TheResponse.StatusLine.StatusCode = oHTTP_BAD_REQUEST;
 				bPrepareToCloseSocket = true;
@@ -122,7 +124,7 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 					while (pElement)
 					{
 						// Optimization so we can compare with lower case string matching, the actual header stays unchanged though
-						oStd::tolower(pElement);
+						tolower(pElement);
 						
 						// keep-alive / close
 						if (strstr(pElement, "close"))
@@ -134,7 +136,7 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 
 				// Content-Type
 				if (oHTTPFindHeader(TheRequest.HeaderFields, oHTTP_HEADER_CONTENT_TYPE, &pValue))
-					oStd::from_string(&TheRequest.Content.Type, pValue);
+					from_string(&TheRequest.Content.Type, pValue);
 
 				// Content-Length
 				if (oHTTPFindHeader(TheRequest.HeaderFields, oHTTP_HEADER_CONTENT_LENGTH, &ValueUInt))
@@ -171,7 +173,7 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 				State = oSTATE_WAIT_FOR_CLOSE;
 				break;
 			}
-			if (!oExtractContent(oStd::byte_add(_pData, SizeofDataTaken), (_SizeData - SizeofDataTaken), TheBody, &TheBodyPos, TheRequest.Content.Length, &SizeofDataTaken))
+			if (!oExtractContent(byte_add(_pData, SizeofDataTaken), (_SizeData - SizeofDataTaken), TheBody, &TheBodyPos, TheRequest.Content.Length, &SizeofDataTaken))
 			{
 				// Request more data
 				oASSERT(SizeofDataTaken==_SizeData, "Assuming that we took all data, before requesting more");
@@ -214,9 +216,9 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 			{
 				// Add Date header field
 				oStd::date date;
-				oCore::system::now(&date);
-				oStd::sstring dateString;
-				oStd::strftime(dateString, oStd::http_date_format, date);
+				ouro::system::now(&date);
+				sstring dateString;
+				strftime(dateString, oStd::http_date_format, date);
 				oHTTPAddHeader(TheResponse.HeaderFields, oHTTP_HEADER_DATE, dateString);
 
 				// Add Content header fields
@@ -225,7 +227,7 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 				if (TheResponse.StatusLine.StatusCode == oHTTP_OK || (TheResponse.Content.pData && TheResponse.Content.Length != 0))
 				{
 					if (TheResponse.Content.Type != oMIME_UNKNOWN)
-						oHTTPAddHeader(TheResponse.HeaderFields, oHTTP_HEADER_CONTENT_TYPE, oStd::as_string(TheResponse.Content.Type));
+						oHTTPAddHeader(TheResponse.HeaderFields, oHTTP_HEADER_CONTENT_TYPE, as_string(TheResponse.Content.Type));
 				}
 				else
 				{
@@ -234,10 +236,10 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 						oHTTPAddHeader(TheResponse.HeaderFields, oHTTP_HEADER_CONNECTION, "close");
 
 					// Generate a default response (HTML) with the response code and response code as string in the title/body of the HTML
-					oHTTPAddHeader(TheResponse.HeaderFields, oHTTP_HEADER_CONTENT_TYPE, oStd::as_string(oMIME_TEXT_HTML));
+					oHTTPAddHeader(TheResponse.HeaderFields, oHTTP_HEADER_CONTENT_TYPE, as_string(oMIME_TEXT_HTML));
 
 					// TODO: Possible race condition on DefaultResponseBody? Could a previous send of DefaultResponseBody still be in progress at this time?
-					snprintf(DefaultResponseBody, pDefaultPage, TheResponse.StatusLine.StatusCode, oStd::as_string(TheResponse.StatusLine.StatusCode), TheResponse.StatusLine.StatusCode, oStd::as_string(TheResponse.StatusLine.StatusCode));
+					snprintf(DefaultResponseBody, pDefaultPage, TheResponse.StatusLine.StatusCode, as_string(TheResponse.StatusLine.StatusCode), TheResponse.StatusLine.StatusCode, as_string(TheResponse.StatusLine.StatusCode));
 					TheResponse.Content.Length = oUInt(DefaultResponseBody.size());
 
 					// If MIMEData was set by StartResponse, finish it early because something went wrong (Response.Size==0)
@@ -272,11 +274,11 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 				}
 
 				// Set ReasonPhrase
-				TheResponse.StatusLine.ReasonPhrase = oStd::as_string(TheResponse.StatusLine.StatusCode);
+				TheResponse.StatusLine.ReasonPhrase = as_string(TheResponse.StatusLine.StatusCode);
 
 				// oHTTPResponse -> String
 				// We can re-use the header buffer that was used for parsing the initial request
-				oStd::to_string(TheHeader, TheResponse);
+				to_string(TheHeader, TheResponse);
 			}
 
 			State = oSTATE_SEND_RESPONSE;

@@ -35,13 +35,15 @@
 #include <oPlatform/oWindow.h>
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oInputMapper.h>
-#include <oStd/color.h>
+#include <oBase/color.h>
 #include "resource.h"
 
 #include <oConcurrency/mutex.h>
+
+using namespace ouro;
 using namespace oConcurrency;
 
-typedef std::array<oStd::sstring, 2> head_messages_t;
+typedef std::array<sstring, 2> head_messages_t;
 
 #define oUSE_MEDIA_INPUT
 
@@ -161,9 +163,9 @@ private:
 			return *this;
 		}
 
-		oStd::intrusive_ptr<oWindow> Window;
-		oStd::intrusive_ptr<threadsafe oKinect> Kinect;
-		oStd::intrusive_ptr<threadsafe oInputMapper> InputMapper;
+		intrusive_ptr<oWindow> Window;
+		intrusive_ptr<threadsafe oKinect> Kinect;
+		intrusive_ptr<threadsafe oInputMapper> InputMapper;
 		
 		#ifdef oUSE_MEDIA_INPUT
 			oMEDIA_INPUT LastInput;
@@ -187,8 +189,8 @@ private:
 	oGDIScopedObject<HPEN> hKinectPen;
 	oGDIScopedObject<HBRUSH> hKinectBrush;
 
-	oStd::intrusive_ptr<threadsafe oStreamMonitor> StreamMonitor;
-	oStd::intrusive_ptr<threadsafe oAirKeyboard> AirKeyboard;
+	intrusive_ptr<threadsafe oStreamMonitor> StreamMonitor;
+	intrusive_ptr<threadsafe oAirKeyboard> AirKeyboard;
 
 	bool Ready;
 
@@ -207,7 +209,7 @@ private:
 			w.Window->Trigger(_Action);
 	}
 
-	void OnFileChange(oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI);
+	void OnFileChange(oSTREAM_EVENT _Event, const uri_string& _ChangedURI);
 
 	void OnPaint(HWND _hWnd
 		, const int2& _ClientSize
@@ -217,8 +219,8 @@ private:
 };
 
 oKinectTestApp::oKinectTestApp()
-	: hKinectPen(oGDICreatePen(oStd::OOOiiGreen, 2))
-	, hKinectBrush(oGDICreateBrush(oStd::White))
+	: hKinectPen(oGDICreatePen(OOOiiGreen, 2))
+	, hKinectBrush(oGDICreateBrush(White))
 	, Ready(false)
 {
 	int nKinects = oKinectGetCount();
@@ -251,7 +253,7 @@ oKinectTestApp::oKinectTestApp()
 			UpdateStatusBar(w.Window, s, "<Gesture>");
 		}
 
-		oStd::intrusive_ptr<threadsafe oKinect> Kinect;
+		intrusive_ptr<threadsafe oKinect> Kinect;
 		oKINECT_DESC kd;
 
 		kd.PitchDegrees = oDEFAULT;
@@ -273,7 +275,7 @@ oKinectTestApp::oKinectTestApp()
 				oKINECT_DESC kd;
 				Kinect->GetDesc(&kd);
 
-				oStd::mstring Name;
+				mstring Name;
 				snprintf(Name, "Kinect[%d] ID=%s", kd.Index, kd.ID.c_str());
 
 				KinectWindows[kd.Index].Window->SetTitle(Name);
@@ -298,13 +300,13 @@ oKinectTestApp::oKinectTestApp()
 
 	// Register input handlers
 
-	oStd::uri_string dev_uri(oCore::filesystem::dev_path());
+	uri_string dev_uri(ouro::filesystem::dev_path());
 	
 	{
 		oVERIFY(oAirKeyboardCreate(&AirKeyboard));
 		AirKeyboard->HookActions(oBIND(&oKinectTestApp::BroadcastActions, this, oBIND1));
-		oStd::uri_string AirKB = dev_uri;
-		oStd::sncatf(AirKB, "Ouroboros/Source/oKinectTestApp/AirKeyboards.xml");
+		uri_string AirKB = dev_uri;
+		sncatf(AirKB, "Ouroboros/Source/oKinectTestApp/AirKeyboards.xml");
 		OnFileChange(oSTREAM_ACCESSIBLE, AirKB);
 	}
 
@@ -315,15 +317,15 @@ oKinectTestApp::oKinectTestApp()
 			w.InputMapper->HookActions(oBIND(&oKinectTestApp::BroadcastActions, this, oBIND1));
 		}
 
-		oStd::uri_string Inputs = dev_uri;
-		oStd::sncatf(Inputs, "Ouroboros/Source/oKinectTestApp/Inputs.xml");
+		uri_string Inputs = dev_uri;
+		sncatf(Inputs, "Ouroboros/Source/oKinectTestApp/Inputs.xml");
 		OnFileChange(oSTREAM_ACCESSIBLE, Inputs);
 	}
 
 	{
 		oSTREAM_MONITOR_DESC smd;
 		smd.Monitor = dev_uri;
-		oStd::sncatf(smd.Monitor, "Ouroboros/Source/oKinectTestApp/*.xml");
+		sncatf(smd.Monitor, "Ouroboros/Source/oKinectTestApp/*.xml");
 		smd.TraceEvents = false;
 		smd.WatchSubtree = false;
 		oVERIFY(oStreamMonitorCreate(smd, oBIND(&oKinectTestApp::OnFileChange, this, oBIND1, oBIND2), &StreamMonitor));
@@ -379,10 +381,10 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 			oGUI_TEXT_DESC td;
 			td.Position = float2(0.0f, VerticalOffset);
 			td.Size = _ClientSize;
-			td.Shadow = oStd::Black;
+			td.Shadow = Black;
 			const float4& h = Skeleton.Positions[oGUI_BONE_HIP_CENTER];
 			const float4& hr = Skeleton.Positions[oGUI_BONE_ANKLE_RIGHT];
-			oStd::mstring text;
+			mstring text;
 			snprintf(text, "HIP: %.02f %.02f %.02f\nRANKLE: %.02f %.02f %.02f", h.x, h.y, h.z, hr.x, hr.y, hr.z);
 			oGDIDrawText(hDC, td, text);
 
@@ -410,7 +412,7 @@ void oKinectTestApp::MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index)
 	{
 		case oGUI_SIZED:
 		{
-			oCore::display::info di = oCore::display::get_info(kw.Window->GetDisplayId());
+			ouro::display::info di = ouro::display::get_info(kw.Window->GetDisplayId());
 			float2 Ratio = float2(_Event.AsShape().Shape.ClientSize) / float2(int2(di.mode.width, di.mode.height));
 			float R = max(Ratio);
 			oGUI_FONT_DESC fd;
@@ -421,7 +423,7 @@ void oKinectTestApp::MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index)
 
 		case oGUI_INPUT_DEVICE_CHANGED:
 		{
-			oTRACE("%s %s status change, now: %s", oStd::as_string(_Event.Type), _Event.AsInputDevice().InstanceName, oStd::as_string(_Event.AsInputDevice().Status));
+			oTRACE("%s %s status change, now: %s", ouro::as_string(_Event.Type), _Event.AsInputDevice().InstanceName, ouro::as_string(_Event.AsInputDevice().Status));
 			break;
 		}
 
@@ -453,7 +455,7 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 	{
 		case oGUI_ACTION_SKELETON_ACQUIRED:
 		{
-			oStd::sstring text;
+			sstring text;
 			snprintf(text, "Skeleton[%d] activated", _Action.DeviceID);
 			UpdateStatusBar(kw.Window, text);
 			AirKeyboard->AddSkeleton(_Action.DeviceID);
@@ -462,7 +464,7 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 
 		case oGUI_ACTION_SKELETON_LOST:
 		{
-			oStd::sstring text;
+			sstring text;
 			snprintf(text, "Skeleton[%d] deactivated", _Action.DeviceID);
 			UpdateStatusBar(kw.Window, text);
 			AirKeyboard->RemoveSkeleton(_Action.DeviceID);
@@ -510,7 +512,7 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 		case oGUI_ACTION_KEY_UP:
 		{
  			kw.InputMapper->OnAction(_Action);
-			oTRACE("%s: %s", oStd::as_string(_Action.Action), oStd::as_string(_Action.Key));
+			oTRACE("%s: %s", ouro::as_string(_Action.Action), ouro::as_string(_Action.Key));
 			break;
 		}
 
@@ -530,7 +532,7 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 	}
 }
 
-void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI)
+void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const uri_string& _ChangedURI)
 {
 	if (_Event == oSTREAM_ACCESSIBLE)
 	{
@@ -538,8 +540,8 @@ void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const oStd::uri_string& 
 		{
 			try 
 			{
-				oStd::intrusive_ptr<threadsafe oInputSet> InputSet;
-				std::shared_ptr<oStd::xml> XML = oXMLLoad(_ChangedURI);
+				intrusive_ptr<threadsafe oInputSet> InputSet;
+				std::shared_ptr<xml> XML = oXMLLoad(_ChangedURI);
 				if (oParseInputSetList(*XML
 					, XML->first_child(XML->root(), "oInputSetList")
 					#ifdef oUSE_MEDIA_INPUT
@@ -570,8 +572,8 @@ void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const oStd::uri_string& 
 
 			try
 			{
-				oStd::intrusive_ptr<threadsafe oAirKeySet> KeySet;
-				std::shared_ptr<oStd::xml> XML = oXMLLoad(_ChangedURI);
+				intrusive_ptr<threadsafe oAirKeySet> KeySet;
+				std::shared_ptr<xml> XML = oXMLLoad(_ChangedURI);
 				if (oParseAirKeySetsList(*XML
 					, XML->first_child(XML->root(), "oAirKeySetList")
 					#ifdef oUSE_MEDIA_INPUT

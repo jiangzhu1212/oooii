@@ -38,14 +38,14 @@ interface oFileCacheMonitoring : oInterface
 		DESC() : Disable(false) {}
 
 		bool Disable; // Not sure if this is useful for this version of oFileCache. changed files get evicted automatically anyway.
-		oStd::path_string RootPath;
+		ouro::path_string RootPath;
 	};
 
 	//Path is relative to the root path in the Desc.
-	virtual bool Retrieve(oStd::path_string& _RelativePath, const oBuffer** _Buffer) threadsafe = 0;
+	virtual bool Retrieve(ouro::path_string& _RelativePath, const oBuffer** _Buffer) threadsafe = 0;
 
 	//Evict the given file from the cache. If requested again it will be reloaded from disk. no-op if the file is not currently cached.
-	virtual void Evict(oStd::path_string& _RelativePath) threadsafe = 0;
+	virtual void Evict(ouro::path_string& _RelativePath) threadsafe = 0;
 };	
 
 bool oFileCacheMonitoringCreate(const oFileCacheMonitoring::DESC& _Desc, threadsafe oFileCacheMonitoring** _ppObject);

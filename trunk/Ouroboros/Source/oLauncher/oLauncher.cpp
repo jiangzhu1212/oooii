@@ -22,12 +22,13 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+using namespace ouro;
 
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oVersionUpdate.h>
 #include <oPlatform/Windows/oWindows.h>
 
-static oStd::option sCmdOptions[] = 
+static option sCmdOptions[] = 
 {
 	{ 'w', "launcher-wait", "process-id", "Wait for process to terminate before launching" },
 	{ 't', "wait-timeout", "milliseconds", "Try to forcibly terminate the -w process after\nthis amount of time" },
@@ -38,13 +39,13 @@ static oStd::option sCmdOptions[] =
 	{ 'h', "help",  0, "Displays this message" },
 };
 
-namespace oStd {
+namespace ouro {
 
 	bool from_string(const char** _ppConstStr, const char* _Value) { *_ppConstStr = _Value; return true; }
 
-} // namespace oStd
+} // namespace ouro
 
-#define oOPT_CASE(_ShortNameConstant, _Value, _Dest) case _ShortNameConstant: { if (!oStd::from_string(&(_Dest), value)) { return oErrorSetLast(std::errc::invalid_argument, "-%c %s cannot be interpreted as a(n) %s", (_ShortNameConstant), (_Value), typeid(_Dest).name()); } break; }
+#define oOPT_CASE(_ShortNameConstant, _Value, _Dest) case _ShortNameConstant: { if (!from_string(&(_Dest), value)) { return oErrorSetLast(std::errc::invalid_argument, "-%c %s cannot be interpreted as a(n) %s", (_ShortNameConstant), (_Value), typeid(_Dest).name()); } break; }
 #define oOPT_CASE_DEFAULT(_ShortNameVariable, _Value, _NthOption) \
 	case ' ': { return oErrorSetLast(std::errc::invalid_argument, "There should be no parameters that aren't switches passed"); break; } \
 	case '?': { return oErrorSetLast(std::errc::invalid_argument, "Parameter %d is not recognized", (_NthOption)); break; } \
@@ -55,7 +56,7 @@ bool oParseCmdLine(int argc, const char* argv[], oVERSIONED_LAUNCH_DESC* _pDesc,
 {
 	*_pShowHelp = false;
 	const char* value = 0;
-	char ch = oStd::opttok(&value, argc, argv, sCmdOptions);
+	char ch = opttok(&value, argc, argv, sCmdOptions);
 	int count = 1;
 	while (ch)
 	{
@@ -71,7 +72,7 @@ bool oParseCmdLine(int argc, const char* argv[], oVERSIONED_LAUNCH_DESC* _pDesc,
 			case 'h': *_pShowHelp = true; break;
 		}
 
-		ch = oStd::opttok(&value);
+		ch = opttok(&value);
 		count++;
 	}
 
@@ -89,7 +90,7 @@ static bool oLauncherMain1(int argc, const char* argv[])
 	if (ShowHelp)
 	{
 		char help[1024];
-		if (oStd::optdoc(help, oGetFilebase(argv[0]), sCmdOptions))
+		if (optdoc(help, oGetFilebase(argv[0]), sCmdOptions))
 			printf(help);
 		return true;
 	}
@@ -101,7 +102,7 @@ int oLauncherMain(int argc, const char* argv[])
 {
 	if (!oLauncherMain1(argc, argv))
 	{
-		oStd::path ModuleName = oCore::this_module::path();
+		path ModuleName = ouro::this_module::path();
 		oMSGBOX_DESC d;
 		d.Title = ModuleName.filename();
 		d.Type = oMSGBOX_ERR;

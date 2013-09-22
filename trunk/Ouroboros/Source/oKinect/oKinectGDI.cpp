@@ -30,6 +30,8 @@
 #include <oPlatform/Windows/oWinRect.h>
 #include <NuiApi.h>
 
+using namespace ouro;
+
 static const int2 kNoDraw = int2(oDEFAULT, oDEFAULT);
 
 static void oGDIDrawKinectBone(HDC _hDC, const int2& _SSBonePos0, const int2& _SSBonePos1)
@@ -125,10 +127,10 @@ static void oGDIDrawKinectBoneNames(HDC _hDC, const RECT& _rTarget, int2 _Screen
 	td.Alignment = oGUI_ALIGNMENT_TOP_LEFT;
 	COLORREF rgb = oGDIGetBrushColor(oGDIGetBrush(_hDC));
 	td.Foreground = 0xff000000 | rgb;
-	td.Shadow = oStd::Black;
+	td.Shadow = Black;
 	for (int i = 0; i < oGUI_BONE_COUNT; i++)
 	{
-		const char* Name = oStd::as_string(oGUI_BONE(i)) + 14; // skip "oGUI_BONE_"
+		const char* Name = ouro::as_string(oGUI_BONE(i)) + 14; // skip "oGUI_BONE_"
 		td.Position = _ScreenSpaceBonePositions[i] + int2(5,5);
 		oGDIDrawText(_hDC, td, Name);
 	}
@@ -161,7 +163,7 @@ void oGDIDrawBoneText(
 	td.Alignment = _Alignment;
 	COLORREF rgb = oGDIGetBrushColor(oGDIGetBrush(_hDC));
 	td.Foreground = 0xff000000 | rgb;
-	td.Shadow = oStd::Black;
+	td.Shadow = Black;
 	oGDIDrawText(_hDC, td, _Text);
 }
 
@@ -232,11 +234,11 @@ void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& 
 
 	int2 SSCenter = oKinectSkeletonToScreen(float4(Bounds.center(), 1.0f), oWinRectPosition(_rTarget), oWinRectSize(_rTarget), int2(320,240));
 
-	oStd::sstring text;
+	sstring text;
 	oGUI_TEXT_DESC td;
 	td.Position = SSMin + int2(2,2);
 	td.Size = (SSMax - SSMin) - int2(4,4);
-	td.Shadow = oStd::Black;
+	td.Shadow = Black;
 	
 	if (_Flags & oGDI_AIR_KEY_DRAW_MIN)
 	{
@@ -255,9 +257,9 @@ void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& 
 	if (_Flags & oGDI_AIR_KEY_DRAW_KEY)
 	{
 		if (_LastAction == oGUI_ACTION_KEY_DOWN)
-			td.Foreground = oStd::OOOiiGreen;
+			td.Foreground = OOOiiGreen;
 		td.Alignment = oGUI_ALIGNMENT_MIDDLE_CENTER;
-		oGDIDrawText(_hDC, td, oStd::as_string(_Key.Key));
+		oGDIDrawText(_hDC, td, ouro::as_string(_Key.Key));
 	}
 
 	if (_Flags & oGDI_AIR_KEY_DRAW_BOX)

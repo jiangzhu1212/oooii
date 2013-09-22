@@ -62,8 +62,8 @@ enum oOBJ_TEXTURE_TYPE
 
 struct oOBJ_GROUP
 {
-	oStd::mstring GroupName;
-	oStd::mstring MaterialName;
+	ouro::mstring GroupName;
+	ouro::mstring MaterialName;
 	oGPU_RANGE Range;
 };
 
@@ -84,7 +84,7 @@ struct oOBJ_TEXTURE
 		, Clamp(false)
 	{}
 
-	oStd::path_string Path;
+	ouro::path_string Path;
 	float Boost;
 	float2 BrightnessGain;
 	float3 OriginOffset;
@@ -102,10 +102,10 @@ struct oOBJ_TEXTURE
 struct oOBJ_MATERIAL
 {
 	oOBJ_MATERIAL()
-		: AmbientColor(oStd::Black)
-		, EmissiveColor(oStd::Black)
-		, DiffuseColor(oStd::WhiteSmoke)
-		, SpecularColor(oStd::White)
+		: AmbientColor(ouro::Black)
+		, EmissiveColor(ouro::Black)
+		, DiffuseColor(ouro::WhiteSmoke)
+		, SpecularColor(ouro::White)
 		, Specularity(0.25f)
 		, Transparency(1.0f) // (1 means opaque 0 means transparent)
 		, RefractionIndex(1.0f)
@@ -122,7 +122,7 @@ struct oOBJ_MATERIAL
 	float RefractionIndex;
 	oOBJ_ILLUMINATION Illum;
 
-	oStd::path_string Name;
+	ouro::path_string Name;
 	oOBJ_TEXTURE Ambient;
 	oOBJ_TEXTURE Diffuse;
 	oOBJ_TEXTURE Alpha;

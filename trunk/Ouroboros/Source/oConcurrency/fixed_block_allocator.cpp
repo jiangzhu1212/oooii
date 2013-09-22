@@ -23,11 +23,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oConcurrency/fixed_block_allocator.h>
-#include <oStd/byte.h>
-#include <oStd/macros.h>
+#include <oBase/byte.h>
+#include <oBase/macros.h>
 #include <oStd/atomic.h>
-#include <oStd/config.h>
+#include <oBase/config.h>
 
+using namespace ouro;
 using namespace oConcurrency;
 
 // helpers
@@ -36,19 +37,19 @@ typedef unsigned short index_type;
 static /*constexpr*/ size_t index_mask() { return std::numeric_limits<index_type>::max(); }
 static /*constexpr*/ index_type invalid_index() { return static_cast<index_type>(index_mask()); }
 
-static inline index_type* begin(const threadsafe fixed_block_allocator* _pThis) { return (index_type*)oStd::byte_align(_pThis+1, fixed_block_allocator::default_alignment); }
-static inline index_type* at(const threadsafe fixed_block_allocator* _pThis, size_t _BlockSize, size_t _Index) { return oStd::byte_add(begin(_pThis), _BlockSize, _Index); }
+static inline index_type* begin(const threadsafe fixed_block_allocator* _pThis) { return (index_type*)byte_align(_pThis+1, fixed_block_allocator::default_alignment); }
+static inline index_type* at(const threadsafe fixed_block_allocator* _pThis, size_t _BlockSize, size_t _Index) { return byte_add(begin(_pThis), _BlockSize, _Index); }
 
 size_t fixed_block_allocator::calc_required_size(size_t _BlockSize, size_t _NumBlocks)
 {
-	return (_BlockSize * _NumBlocks) + oStd::byte_align(sizeof(fixed_block_allocator), default_alignment);
+	return (_BlockSize * _NumBlocks) + byte_align(sizeof(fixed_block_allocator), default_alignment);
 }
 
 bool fixed_block_allocator::valid(size_t _BlockSize, size_t _NumBlocks, void* _Pointer) const threadsafe
 {
 	const index_type* pBegin = begin(this);
-	ptrdiff_t diff = oStd::byte_diff(_Pointer, pBegin);
-	return oStd::in_range(_Pointer, pBegin, _NumBlocks * _BlockSize) && oStd::byte_aligned(_Pointer, sizeof(void*)) && ((diff % _BlockSize) == 0);
+	ptrdiff_t diff = byte_diff(_Pointer, pBegin);
+	return in_range(_Pointer, pBegin, _NumBlocks * _BlockSize) && byte_aligned(_Pointer, sizeof(void*)) && ((diff % _BlockSize) == 0);
 }
 
 fixed_block_allocator::fixed_block_allocator(size_t _BlockSize, size_t _NumBlocks)
@@ -97,7 +98,7 @@ void fixed_block_allocator::deallocate(size_t _BlockSize, size_t _NumBlocks, voi
 	{
 		Old.All = NextAvailable.All;
 		*reinterpret_cast<index_type*>(_Pointer) = static_cast<index_type>(Old.Index & index_mask());
-		New.Index = oStd::index_of(_Pointer, begin(this), _BlockSize);
+		New.Index = index_of(_Pointer, begin(this), _BlockSize);
 		New.Tag = Old.Tag + 1;
 	} while (!oStd::atomic_compare_exchange(&NextAvailable.All, New.All, Old.All));
 	//oTRACE("dealloc %p index %u (then %u)", _Pointer, New.Index, *reinterpret_cast<index_type*>(_Pointer));

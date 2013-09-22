@@ -23,14 +23,16 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oWinExceptionHandler.h"
-#include <oStd/string.h>
+#include <oBase/string.h>
 #include <new.h>
 #include <signal.h>
 #include <oPlatform/Windows/oWinAsString.h>
-#include <oStd/type_info.h>
+#include <oBase/type_info.h>
 #include <comdef.h>
 
-namespace oStd
+using namespace ouro;
+
+namespace ouro
 {
 	const char* as_string(const windows_exception_type::value& _Type)
 	{
@@ -47,7 +49,7 @@ namespace oStd
 }
 
 // {9840E986-9ADE-4D11-AFCE-AB2D8AC530C0}
-const oStd::guid oWinExceptionHandler::GUID = { 0x9840e986, 0x9ade, 0x4d11, { 0xaf, 0xce, 0xab, 0x2d, 0x8a, 0xc5, 0x30, 0xc0 } };
+const guid oWinExceptionHandler::GUID = { 0x9840e986, 0x9ade, 0x4d11, { 0xaf, 0xce, 0xab, 0x2d, 0x8a, 0xc5, 0x30, 0xc0 } };
 oSINGLETON_REGISTER(oWinExceptionHandler);
 
 static void PureVirtualCallHandler()
@@ -103,7 +105,7 @@ static void RedirectOtherHandlersToExceptions()
 	signal(SIGTERM, SigtermHandler);
 }
 
-static const type_info* oWinVEHGetTypeInfo(const EXCEPTION_RECORD& _Record)
+static const ::type_info* oWinVEHGetTypeInfo(const EXCEPTION_RECORD& _Record)
 {
 	// http://blogs.msdn.com/b/oldnewthing/archive/2010/07/30/10044061.aspx
 	if (_Record.ExceptionCode != oEXCEPTION_CPP)
@@ -115,9 +117,9 @@ static const type_info* oWinVEHGetTypeInfo(const EXCEPTION_RECORD& _Record)
 		HMODULE hModule = nullptr;
 	#endif
 	DWORD A = ((DWORD*)_Record.ExceptionInformation[2])[3];
-	DWORD B = ((DWORD*)oStd::byte_add(hModule, A))[1];
-	DWORD C = ((DWORD*)oStd::byte_add(hModule, B))[1];
-	return (type_info*)oStd::byte_add(hModule, C);
+	DWORD B = ((DWORD*)byte_add(hModule, A))[1];
+	DWORD C = ((DWORD*)byte_add(hModule, B))[1];
+	return (::type_info*)byte_add(hModule, C);
 }
 
 static oWinCppException oWinVEHGetException(const EXCEPTION_RECORD& _Record)
@@ -126,10 +128,10 @@ static oWinCppException oWinVEHGetException(const EXCEPTION_RECORD& _Record)
 	if (_Record.ExceptionCode == oEXCEPTION_CPP)
 	{
 		e.VoidException = (void*)_Record.ExceptionInformation[1];
-		const type_info* ti = oWinVEHGetTypeInfo(_Record);
+		const ::type_info* ti = oWinVEHGetTypeInfo(_Record);
 		if (ti)
 		{
-			e.TypeName = oStd::type_name(ti->name());
+			e.TypeName = type_name(ti->name());
 			// how can this deal with exceptions derived from std::exception?
 			// Weak answer for now: assume it's either namespaced in std:: or
 			// it is postfixed with _exception.
@@ -165,7 +167,7 @@ LONG oWinExceptionHandler::OnException(EXCEPTION_POINTERS* _pExceptionPointers)
 		{
 			void* pAddress = (void*)pRecord->ExceptionInformation[1];
 			const char* err = (0 == pRecord->ExceptionInformation[0]) ? "Read" : "Write";
-			oStd::lstring ErrorMessage;
+			lstring ErrorMessage;
 			snprintf(ErrorMessage, "%s access violation at 0x%p", err, pAddress);
 			Handler(ErrorMessage, CppException, (uintptr_t)_pExceptionPointers);
 			break;
@@ -178,8 +180,8 @@ LONG oWinExceptionHandler::OnException(EXCEPTION_POINTERS* _pExceptionPointers)
 			CppException = oWinVEHGetException(*pRecord);
 			if (oSTRVALID(CppException.What))
 			{
-				oStd::xlstring msg;
-				oStd::path ModulePath = std::move(oCore::this_module::path());
+				xlstring msg;
+				path ModulePath = std::move(ouro::this_module::path());
 				#ifdef _WIN64
 					#define LOWER_CASE_PTR_FMT "%016llx"
 				#else

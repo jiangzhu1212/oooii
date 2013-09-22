@@ -26,6 +26,8 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
+using namespace ouro;
+
 static const bool kIsDevMode = false;
 
 struct GPU_Texture1D_App : public oGPUTextureTestApp
@@ -39,17 +41,17 @@ struct GPU_Texture1D_App : public oGPUTextureTestApp
 		imageDesc.Dimensions = int2(512, 1);
 		imageDesc.Format = oImage::BGRA32;
 		imageDesc.RowPitch = oImageCalcRowPitch(imageDesc.Format, imageDesc.Dimensions.x);
-		oStd::intrusive_ptr<oImage> image;
+		intrusive_ptr<oImage> image;
 		oImageCreate("GPU_Texture1D", imageDesc, &image);
 
-		oStd::intrusive_ptr<oBuffer> buffer;
+		intrusive_ptr<oBuffer> buffer;
 		int surfaceBufferSize = oImageCalcSize(imageDesc.Format, imageDesc.Dimensions);
 		void *pSurfaceBuffer = oBuffer::New(surfaceBufferSize);
 		oBufferCreate("GPU_Texture1D buffer", pSurfaceBuffer, surfaceBufferSize, oBuffer::Delete, &buffer);
 
-		static const oStd::color sConsoleColors[] = { oStd::Black, oStd::Navy, oStd::Green, oStd::Teal, oStd::Maroon, oStd::Purple, oStd::Olive, oStd::Silver, oStd::Gray, oStd::Blue, oStd::Lime, oStd::Aqua, oStd::Red, oStd::Fuchsia, oStd::Yellow, oStd::White };
+		static const color sConsoleColors[] = { Black, Navy, Green, Teal, Maroon, Purple, Olive, Silver, Gray, Blue, Lime, Aqua, Red, Fuchsia, Yellow, White };
 
-		oStd::color* texture1Ddata = (oStd::color*)buffer->GetData();
+		color* texture1Ddata = (color*)buffer->GetData();
 		for (int i=0; i<imageDesc.Dimensions.x; ++i)
 			texture1Ddata[i] = sConsoleColors[i % oCOUNTOF(sConsoleColors)];
 

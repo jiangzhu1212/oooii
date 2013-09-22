@@ -29,7 +29,7 @@
 
 #include <oCore/tests/oCoreTestRequirements.h>
 
-namespace oCore {
+namespace ouro {
 	namespace tests {
 
 		void TESTadapter(requirements& _Requirements);
@@ -38,6 +38,6 @@ namespace oCore {
 		void TESTfilesystem();
 
 	} // namespace tests
-} // namespace oCore
+} // namespace ouro
 
 #endif

@@ -27,6 +27,9 @@
 #include <oPlatform/oStream.h>
 #include <oBasis/oLockThis.h>
 #include <oBasis/oOSC.h>
+#include <oBase/string.h>
+
+using namespace ouro;
 
 static int oStrCCount(const char* _StrSource, char _CountChar)
 {
@@ -45,7 +48,7 @@ namespace
 	class oHandlerEntry
 	{
 	public:
-		typedef oStd::fixed_string<char, oOSC_MAX_FIXED_STRING_LENGTH> oStringCapture;
+		typedef ouro::fixed_string<char, oOSC_MAX_FIXED_STRING_LENGTH> oStringCapture;
 
 		oHandlerEntry() {}
 		oHandlerEntry(oHandlerEntry&& _other);
@@ -57,11 +60,11 @@ namespace
 		oHandlerEntry(const oHandlerEntry& _other);
 		oHandlerEntry& operator=(const oHandlerEntry& _other);
 
-		void AddKey(std::vector<std::pair<bool, oStd::sstring>>& _key, int _keyIndex, oHTTPHandler* _handler);
+		void AddKey(std::vector<std::pair<bool, sstring>>& _key, int _keyIndex, oHTTPHandler* _handler);
 		const oHTTPHandler* MatchURIPath(std::vector<oStringCapture>& _parsedURI, int _keyIndex, oFUNCTION<void (const char* _capture)> _CaptureVar, oFUNCTION<void (const char* _OSC)> _OSCCapture, oFUNCTION<const oHTTPURICapture* (const char* _key)> _GetCaptureHandler) const;
 
-		oStd::sstring Value;
-		oStd::intrusive_ptr<oHTTPHandler> Handler;
+		sstring Value;
+		intrusive_ptr<oHTTPHandler> Handler;
 
 		std::vector<oHandlerEntry> LiteralChildren;
 		std::unique_ptr<oHandlerEntry> CaptureChild; //there can be only one capture
@@ -86,7 +89,7 @@ namespace
 
 	void oHandlerEntry::AddKey(const char* _key, oHTTPHandler* _handler)
 	{
-		std::vector<std::pair<bool, oStd::sstring>> key; //true if a literal, false for a capture
+		std::vector<std::pair<bool, sstring>> key; //true if a literal, false for a capture
 
 		oStrParse(_key, "/", [&](const char* _part){
 			int len = oInt(strlen(_part));
@@ -107,7 +110,7 @@ namespace
 		AddKey(key, 0, _handler);
 	}
 
-	void oHandlerEntry::AddKey(std::vector<std::pair<bool, oStd::sstring>>& _key, int _keyIndex, oHTTPHandler* _handler)
+	void oHandlerEntry::AddKey(std::vector<std::pair<bool, sstring>>& _key, int _keyIndex, oHTTPHandler* _handler)
 	{
 		if(_keyIndex == oInt(_key.size()))
 		{
@@ -203,7 +206,7 @@ namespace
 				if(!capHandler)
 					return nullptr;
 
-				oStd::uri_string captureURI;
+				uri_string captureURI;
 				for (int i = _keyIndex; i < oInt(_parsedURI.size()); ++i)
 				{
 					strlcat(captureURI, _parsedURI[i].c_str());
@@ -253,16 +256,16 @@ private:
 
 	oRefCount RefCount;
 	oInitOnce<DESC> Desc;
-	oStd::path_string RootPath;
+	path_string RootPath;
 	
 	oInitOnce<oHandlerEntry> HTTPHandlers;
 	oHandlerEntry BuildHandlers; //temporary, used while building pages.
 
-	typedef std::unordered_map<oStd::sstring, oStd::intrusive_ptr<oHTTPURICapture>, oStdHash<oStd::sstring>, oStd::equal_to<oStd::sstring>> URICaptureHandlers_t;
+	typedef std::unordered_map<sstring, intrusive_ptr<oHTTPURICapture>, oStdHash<sstring>, ouro::equal_to<sstring>> URICaptureHandlers_t;
 	oInitOnce<URICaptureHandlers_t> URICaptureHandlers;
 	URICaptureHandlers_t BuildURICaptureHandlers; //temporary, used while building pages.
 
-	oStd::intrusive_ptr<threadsafe oFileCacheMonitoring> FileCache;
+	intrusive_ptr<threadsafe oFileCacheMonitoring> FileCache;
 
 	oConcurrency::mutex AddHandlerMutex;
 	bool Started;
@@ -276,9 +279,9 @@ oWebServerImpl::oWebServerImpl(const DESC& _Desc, bool* _pSuccess) : Started(fal
 
 	DESC buildDesc = _Desc;
 	
-	oStd::uri_string resolvedRootURI;
+	uri_string resolvedRootURI;
 
-	RootPath = oStd::uri(buildDesc.URIBase).path();
+	RootPath = uri(buildDesc.URIBase).path();
 	
 	Desc.Initialize(buildDesc);
 
@@ -314,7 +317,7 @@ void oWebServerImpl::AddURICaptureHandler(oHTTPURICapture *_CaptureHandler) thre
 	oASSERT(!Started, "All capture handlers should be added before retrieve is called");
 	if(!Started)
 	{
-		oStd::sstring key = _CaptureHandler->GetCaptureName();
+		sstring key = _CaptureHandler->GetCaptureName();
 		oASSERT(lockedThis->BuildURICaptureHandlers.find(key) == end(lockedThis->BuildURICaptureHandlers), "already a capture handler registered to handle the tag %s", key.c_str());
 
 		lockedThis->BuildURICaptureHandlers[key] = _CaptureHandler;
@@ -327,7 +330,7 @@ namespace
 	bool ConvertStringToOSCStruct(void* _pField, const char* _CaptureString)
 	{
 		FieldType* field = reinterpret_cast<FieldType*>(_pField);
-		return oStd::from_string(field, _CaptureString);
+		return from_string(field, _CaptureString);
 	}
 }
 
@@ -397,7 +400,7 @@ bool oWebServerImpl::Retrieve(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pR
 	//rest handlers next
 	{
 		std::vector<oHandlerEntry::oStringCapture> captures;
-		oStd::sstring oscString;
+		sstring oscString;
 		auto handler = HTTPHandlers->MatchURIPath(uriParts.Path, [&](const char* _Capture){
 			captures.push_back(_Capture);
 		}, [&](const char* _OSC){
@@ -499,7 +502,7 @@ bool oWebServerImpl::Retrieve(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pR
 			return false; 
 		}
 		
-		const oStd::intrusive_ptr<oBuffer> cacheBuffer;
+		const intrusive_ptr<oBuffer> cacheBuffer;
 		if(!FileCache->Retrieve(uriParts.Path, &cacheBuffer) || !cacheBuffer)
 		{
 			return false; //file probably didn't exist

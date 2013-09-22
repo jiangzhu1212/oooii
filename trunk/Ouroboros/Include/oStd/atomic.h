@@ -40,8 +40,8 @@ namespace oStd {
 	// how these map. Why can't people just use the words read and read-write so
 	// that anyone who has every opened a file understands the behavior??
 
-	oFORCEINLINE void atomic_thread_fence_read() { _ReadBarrier(); }
-	oFORCEINLINE void atomic_thread_fence_read_write() { _ReadWriteBarrier(); }
+	__forceinline void atomic_thread_fence_read() { _ReadBarrier(); }
+	__forceinline void atomic_thread_fence_read_write() { _ReadWriteBarrier(); }
 
 	template<typename T, typename U> T atomic_exchange(volatile T* _X, U _Y) { return atomic_exchange(_X, (T)_Y); }
 	template<typename T> T atomic_exchange(volatile T* _X, T _Y) { std::make_signed<T>::type t = atomic_exchange((std::make_signed<T>::type*)_X, *(std::make_signed<T>::type*)&_Y); return *(T*)&t; }

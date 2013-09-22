@@ -33,9 +33,9 @@
 
 #include <vector>
 #include <oBasis/oOBJ.h>
-#include <oStd/csv.h>
-#include <oStd/ini.h>
-#include <oStd/xml.h>
+#include <oBase/csv.h>
+#include <oBase/ini.h>
+#include <oBase/xml.h>
 
 // Prefer using oBufferLoad to oStreamLoad - it's more RAII and encapsulates the
 // allocation. But for some platform APIs, oStreamLoad needs to be exposed.
@@ -55,8 +55,8 @@ bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ
 bool oMTLLoad(const char* _URIReference, threadsafe oMTL** _ppMTL);
 bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ, threadsafe oMTL** _ppMTL);
 
-std::shared_ptr<oStd::csv> oCSVLoad(const char* _URIReference);
-std::shared_ptr<oStd::ini> oINILoad(const char* _URIReference);
-std::shared_ptr<oStd::xml> oXMLLoad(const char* _URIReference);
+std::shared_ptr<ouro::csv> oCSVLoad(const char* _URIReference);
+std::shared_ptr<ouro::ini> oINILoad(const char* _URIReference);
+std::shared_ptr<ouro::xml> oXMLLoad(const char* _URIReference);
 
 #endif

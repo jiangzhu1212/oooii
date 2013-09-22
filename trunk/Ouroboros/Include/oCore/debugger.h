@@ -27,10 +27,10 @@
 #ifndef oCore_debugger_h
 #define oCore_debugger_h
 
-#include <oStd/path.h>
+#include <oBase/path.h>
 #include <oStd/thread.h>
 
-namespace oCore {
+namespace ouro {
 	namespace debugger {
 
 /* enum class */ namespace exception_code
@@ -72,9 +72,9 @@ namespace oCore {
 struct symbol_info
 {
 	unsigned long long address;
-	oStd::path module;
-	oStd::path filename;
-	oStd::mstring name;
+	path module;
+	path filename;
+	mstring name;
 	unsigned int symbol_offset;
 	unsigned int line;
 	unsigned int char_offset;
@@ -128,9 +128,9 @@ template<size_t size> int format(char (&_StrDestination)[size], symbol _Symbol, 
 // Saves a file containing debug information that can be used to do postmortem 
 // debugging. Exceptions is the platform-specific context during exception
 // handling.
-bool dump(const oStd::path& _Path, bool _Full, void* _Exceptions);
+bool dump(const path& _Path, bool _Full, void* _Exceptions);
 
 	} // namespace debugger
-} // namespace oCore
+} // namespace ouro
 
 #endif

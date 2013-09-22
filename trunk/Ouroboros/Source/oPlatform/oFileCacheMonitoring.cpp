@@ -28,6 +28,8 @@
 #include <oConcurrency/mutex.h>
 #include <oBasis/oLockThis.h>
 
+using namespace ouro;
+
 class oFileCacheMonitoringImpl : public oFileCacheMonitoring
 {
 public:
@@ -36,17 +38,17 @@ public:
 
 	oFileCacheMonitoringImpl(const oFileCacheMonitoring::DESC& _Desc, bool* _pSuccess);
 
-	bool Retrieve(oStd::path_string& _RelativePath, const oBuffer** _Buffer) threadsafe override;
-	void Evict(oStd::path_string& _RelativePath) threadsafe override;
+	bool Retrieve(path_string& _RelativePath, const oBuffer** _Buffer) threadsafe override;
+	void Evict(path_string& _RelativePath) threadsafe override;
 
 private:
-	void FolderUpdate(oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI);
+	void FolderUpdate(oSTREAM_EVENT _Event, const uri_string& _ChangedURI);
 
 	oRefCount RefCount;
 	oFileCacheMonitoring::DESC Desc;
 
-	oStd::intrusive_ptr<threadsafe oFileCache> FileCache;
-	oStd::intrusive_ptr<threadsafe oStreamMonitor> FolderMonitor;
+	intrusive_ptr<threadsafe oFileCache> FileCache;
+	intrusive_ptr<threadsafe oStreamMonitor> FolderMonitor;
 };
 
 oFileCacheMonitoringImpl::oFileCacheMonitoringImpl(const oFileCacheMonitoring::DESC& _Desc, bool* _pSuccess) : Desc(_Desc)
@@ -58,7 +60,7 @@ oFileCacheMonitoringImpl::oFileCacheMonitoringImpl(const oFileCacheMonitoring::D
 	if(!oFileCacheCreate(cacheDesc, &FileCache))
 		return;
 
-	oStd::uri_string monitorURI;
+	uri_string monitorURI;
 	oURIFromAbsolutePath(monitorURI, Desc.RootPath);
 
 	oSTREAM_MONITOR_DESC md;
@@ -72,29 +74,29 @@ oFileCacheMonitoringImpl::oFileCacheMonitoringImpl(const oFileCacheMonitoring::D
 	*_pSuccess = true;
 }
 
-bool oFileCacheMonitoringImpl::Retrieve(oStd::path_string& _RelativePath, const oBuffer** _Buffer) threadsafe
+bool oFileCacheMonitoringImpl::Retrieve(path_string& _RelativePath, const oBuffer** _Buffer) threadsafe
 {
-	oStd::path_string fullPath = Desc.RootPath;
+	path_string fullPath = Desc.RootPath;
 	oEnsureSeparator(fullPath);
 	strlcat(fullPath, _RelativePath);
 
 	return FileCache->Retrieve(fullPath, _Buffer);
 }
 
-void oFileCacheMonitoringImpl::Evict(oStd::path_string& _RelativePath) threadsafe
+void oFileCacheMonitoringImpl::Evict(path_string& _RelativePath) threadsafe
 {
-	oStd::path_string fullPath = Desc.RootPath;
+	path_string fullPath = Desc.RootPath;
 	oEnsureSeparator(fullPath);
 	strlcat(fullPath, _RelativePath);
 
 	FileCache->Evict(fullPath);
 }
 
-void oFileCacheMonitoringImpl::FolderUpdate(oSTREAM_EVENT _Event, const oStd::uri_string& _ChangedURI)
+void oFileCacheMonitoringImpl::FolderUpdate(oSTREAM_EVENT _Event, const uri_string& _ChangedURI)
 {
 	if(_Event == oSTREAM_MODIFIED || _Event == oSTREAM_REMOVED)
 	{
-		oStd::path_string path;
+		path_string path;
 		oURIToPath(path, _ChangedURI);
 		FileCache->Evict(path);
 	}

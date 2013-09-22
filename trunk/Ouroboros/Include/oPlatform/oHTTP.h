@@ -214,7 +214,7 @@ struct oHTTP_REQUEST
 	struct oHTTP_REQUEST_LINE
 	{
 		oHTTP_METHOD Method;
-		oStd::xxlstring RequestURI;
+		ouro::xxlstring RequestURI;
 		oHTTP_VERSION Version;
 	};
 	oHTTP_REQUEST_LINE RequestLine;
@@ -228,7 +228,7 @@ struct oHTTP_RESPONSE
 	{
 		oHTTP_VERSION Version;
 		oHTTP_STATUS_CODE StatusCode;
-		oStd::sstring ReasonPhrase;
+		ouro::sstring ReasonPhrase;
 	};
 	oHTTP_STATUS_LINE StatusLine;
 	oHTTP_HEADER_FIELDS HeaderFields;

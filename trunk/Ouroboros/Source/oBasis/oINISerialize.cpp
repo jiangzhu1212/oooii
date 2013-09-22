@@ -26,20 +26,22 @@
 #include <oBasis/oError.h>
 #include <oBasis/oInt.h>
 #include <oBasis/oStrTok.h>
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <vector>
 
-bool oINIReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::ini& _INI, oStd::ini::section _Section, bool _FailOnMissingValues)
+using namespace ouro;
+
+bool oINIReadCompound(void* _pDestination, const oRTTI& _RTTI, const ouro::ini& _INI, ouro::ini::section _Section, bool _FailOnMissingValues)
 {
 	if (_RTTI.GetType() != oRTTI_TYPE_COMPOUND)
 		return oErrorSetLast(std::errc::invalid_argument);
 
-	std::vector<oStd::sstring> FromStringFailed;
+	std::vector<ouro::sstring> FromStringFailed;
 
 	for (int b = 0; b < _RTTI.GetNumBases(); b++)
 	{
 		const oRTTI* baseRTTI = _RTTI.GetBaseRTTI(b);
-		oINIReadCompound(oStd::byte_add(_pDestination, _RTTI.GetBaseOffset(b)), *baseRTTI, _INI, _Section, _FailOnMissingValues);
+		oINIReadCompound(ouro::byte_add(_pDestination, _RTTI.GetBaseOffset(b)), *baseRTTI, _INI, _Section, _FailOnMissingValues);
 	}
 
 	for (int i = 0; i < _RTTI.GetNumAttrs(); i++)
@@ -93,7 +95,7 @@ bool oINIReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::ini& 
 			default:
 			{
 				notFound = false;
-				oStd::sstring rttiName;
+				ouro::sstring rttiName;
 				oTRACE("No support for RTTI type: %s", f->RTTI->TypeToString(rttiName));
 				break;
 			}
@@ -101,7 +103,7 @@ bool oINIReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::ini& 
 
 		if (notFound)
 		{
-			oStd::sstring compoundName;
+			ouro::sstring compoundName;
 			oTRACE("No INI value for: %s::%s in INI section %s in %s", _RTTI.GetName(compoundName), f->Name, _INI.section_name(_Section), _INI.name());
 		}
 	}
@@ -117,11 +119,11 @@ bool oINIWriteCompound(char* _StrDestination, size_t _SizeofStrDestination, cons
 	if (_RTTI.GetType() != oRTTI_TYPE_COMPOUND)
 		return oErrorSetLast(std::errc::invalid_argument);
 
-	oStd::sncatf(_StrDestination, _SizeofStrDestination, "[%s]\r\n", _Heading);
+	ouro::sncatf(_StrDestination, _SizeofStrDestination, "[%s]\r\n", _Heading);
 
 	bool AtLeastOneMissing = false;
-	oStd::xlstring Missing("The following fields were not written correctly: ");
-	oStd::xlstring buf;
+	ouro::xlstring Missing("The following fields were not written correctly: ");
+	ouro::xlstring buf;
 
 	for (int i=0; i<_RTTI.GetNumAttrs(); ++i)
 	{
@@ -132,10 +134,10 @@ bool oINIWriteCompound(char* _StrDestination, size_t _SizeofStrDestination, cons
 			case oRTTI_TYPE_ATOM:
 			{
 				if (f->RTTI->ToString(buf, f->GetSrcPtr(_pSource)))
-					oStd::sncatf(_StrDestination, _SizeofStrDestination, "%s = %s\r\n", f->Name, buf.c_str());
+					ouro::sncatf(_StrDestination, _SizeofStrDestination, "%s = %s\r\n", f->Name, buf.c_str());
 				else
 				{	
-					oStd::sncatf(Missing, "%s%s", AtLeastOneMissing ? ", " : "", f->Name);
+					ouro::sncatf(Missing, "%s%s", AtLeastOneMissing ? ", " : "", f->Name);
 					AtLeastOneMissing = true;
 				}
 				break;
@@ -147,7 +149,7 @@ bool oINIWriteCompound(char* _StrDestination, size_t _SizeofStrDestination, cons
 				bool first = true;
 				for (int i = 0; i < f->RTTI->GetItemCount(f->GetSrcPtr(_pSource), f->Size); i++)
 				{
-					oStd::lstring elem_buf;
+					ouro::lstring elem_buf;
 					switch(itemRTTI->Type)
 					{
 						case oRTTI_TYPE_ENUM:
@@ -156,12 +158,12 @@ bool oINIWriteCompound(char* _StrDestination, size_t _SizeofStrDestination, cons
 							if (itemRTTI->ToString(elem_buf, f->RTTI->GetItemPtr(f->GetSrcPtr(_pSource), f->Size, i)))
 							{
 								if (first) snprintf(buf, "%s", elem_buf.c_str()); 
-								else oStd::sncatf(buf, ",%s", elem_buf.c_str()); 
+								else ouro::sncatf(buf, ",%s", elem_buf.c_str()); 
 								first = false;
 							}
 							else
 							{	
-								oStd::sncatf(Missing, "%s%s", AtLeastOneMissing ? ", " : "", f->Name);
+								ouro::sncatf(Missing, "%s%s", AtLeastOneMissing ? ", " : "", f->Name);
 								AtLeastOneMissing = true;
 							}
 							break;
@@ -173,13 +175,13 @@ bool oINIWriteCompound(char* _StrDestination, size_t _SizeofStrDestination, cons
 						}
 					}
 				}
-				oStd::sncatf(_StrDestination, _SizeofStrDestination, "%s = %s\r\n", f->Name, buf.c_str());
+				ouro::sncatf(_StrDestination, _SizeofStrDestination, "%s = %s\r\n", f->Name, buf.c_str());
 				break;
 			}
 
 			default:
 			{
-				oStd::sstring rttiName;
+				ouro::sstring rttiName;
 				oTRACE("No support for RTTI type: %s", f->RTTI->TypeToString(rttiName));
 				AtLeastOneMissing = true;
 				break;
@@ -188,7 +190,7 @@ bool oINIWriteCompound(char* _StrDestination, size_t _SizeofStrDestination, cons
 	}
 	
 	// Close with an empty line
-	oStd::sncatf(_StrDestination, _SizeofStrDestination, "\r\n");
+	ouro::sncatf(_StrDestination, _SizeofStrDestination, "\r\n");
 
 	if (AtLeastOneMissing)
 		return oErrorSetLast(std::errc::io_error, Missing);

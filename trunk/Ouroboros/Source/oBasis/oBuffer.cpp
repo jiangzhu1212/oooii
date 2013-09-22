@@ -23,13 +23,15 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oBuffer.h>
-#include <oStd/assert.h>
-#include <oStd/fixed_string.h>
+#include <oBase/assert.h>
+#include <oBase/fixed_string.h>
 #include <oBasis/oInitOnce.h>
 #include <oBasis/oLockedPointer.h>
 #include <oConcurrency/mutex.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oURI.h>
+
+using namespace ouro;
 
 struct oBuffer_Impl : public oBuffer
 {
@@ -47,7 +49,7 @@ struct oBuffer_Impl : public oBuffer
 	const char* GetName() const threadsafe override;
 
 	void* Allocation;
-	oInitOnce<oStd::uri_string> Name;
+	oInitOnce<uri_string> Name;
 	size_t Size;
 	DeallocateFn Deallocate;
 	mutable oConcurrency::shared_mutex RWMutex;

@@ -25,22 +25,24 @@
 #include <oBasis/oJSONSerialize.h>
 #include <oBasis/oError.h>
 #include <oBasis/oInt.h>
-#include <oStd/fixed_string.h>
+#include <oBase/fixed_string.h>
 #include <vector>
 
-bool oJSONReadValue(void* _pDest, int _SizeOfDest, const oRTTI& _RTTI, const oStd::json& _JSON, oStd::json::node _Node)
+using namespace ouro;
+
+bool oJSONReadValue(void* _pDest, int _SizeOfDest, const oRTTI& _RTTI, const json& _JSON, json::node _Node)
 {
 	const char* value = _JSON.node_value(_Node);
 	if (!value)
 		return false;
 
-	if ((_RTTI.GetTraits() & (oStd::type_trait_flag::is_integralf | oStd::type_trait_flag::is_floating_pointf)) != 0 && (_RTTI.GetNumStringTokens() == 1) && (*value != '\"'))
+	if ((_RTTI.GetTraits() & (type_trait_flag::is_integralf | type_trait_flag::is_floating_pointf)) != 0 && (_RTTI.GetNumStringTokens() == 1) && (*value != '\"'))
 	{
-		oStd::sstring Typename;
+		sstring Typename;
 		if (strstr(_RTTI.GetName(Typename), "char"))
 		{
 			int Value;
-			if (!oStd::from_string(&Value, value)) 
+			if (!from_string(&Value, value)) 
 				return false;
 			*((char*)_pDest) = (Value & 0xff);
 			return true;
@@ -49,24 +51,24 @@ bool oJSONReadValue(void* _pDest, int _SizeOfDest, const oRTTI& _RTTI, const oSt
 	}
 	else
 	{
-		oStd::xxlstring buf;
-		if (!oStd::json_escape_decode(buf.c_str(), buf.capacity(), value))
+		xxlstring buf;
+		if (!json_escape_decode(buf.c_str(), buf.capacity(), value))
 			return false;
 		return _RTTI.FromString(buf.c_str(), _pDest, _SizeOfDest);
 	}
 }
 
-bool oJSONReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::json& _JSON, oStd::json::node _Node, bool _FailOnMissingValues)
+bool oJSONReadCompound(void* _pDestination, const oRTTI& _RTTI, const json& _JSON, json::node _Node, bool _FailOnMissingValues)
 {
 	if (_RTTI.GetType() != oRTTI_TYPE_COMPOUND)
 		return oErrorSetLast(std::errc::invalid_argument);
 
-	std::vector<oStd::sstring> FromStringFailed;
+	std::vector<sstring> FromStringFailed;
 
 	for (int b = 0; b < _RTTI.GetNumBases(); b++)
 	{
 		const oRTTI* baseRTTI = _RTTI.GetBaseRTTI(b);
-		oJSONReadCompound(oStd::byte_add(_pDestination, _RTTI.GetBaseOffset(b)), *baseRTTI, _JSON, _Node, _FailOnMissingValues);
+		oJSONReadCompound(byte_add(_pDestination, _RTTI.GetBaseOffset(b)), *baseRTTI, _JSON, _Node, _FailOnMissingValues);
 	}
 
 	for (int i = 0; i < _RTTI.GetNumAttrs(); i++)
@@ -78,7 +80,7 @@ bool oJSONReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::json
 		case oRTTI_TYPE_ENUM:
 		case oRTTI_TYPE_ATOM:
 			{
-				oStd::json::node node = _JSON.first_child(_Node, f->Name);
+				json::node node = _JSON.first_child(_Node, f->Name);
 				if (node)
 				{
 					notFound = false;
@@ -90,7 +92,7 @@ bool oJSONReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::json
 
 		case oRTTI_TYPE_COMPOUND:
 			{
-				oStd::json::node node = _JSON.first_child(_Node, f->Name);
+				json::node node = _JSON.first_child(_Node, f->Name);
 				if (node)
 				{
 					notFound = false;
@@ -102,7 +104,7 @@ bool oJSONReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::json
 
 		case oRTTI_TYPE_CONTAINER:
 			{
-				oStd::json::node node = _JSON.first_child(_Node, f->Name);
+				json::node node = _JSON.first_child(_Node, f->Name);
 				if (node)
 				{
 					notFound = false;
@@ -115,7 +117,7 @@ bool oJSONReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::json
 		default:
 			{
 				notFound = false;
-				oStd::sstring rttiName;
+				sstring rttiName;
 				oTRACE("No support for RTTI type: %s", f->RTTI->TypeToString(rttiName));
 			}
 			break;
@@ -123,7 +125,7 @@ bool oJSONReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::json
 
 		if (notFound)
 		{
-			oStd::sstring compoundName;
+			sstring compoundName;
 			oTRACE("No JSON attribute/node for: %s::%s in JSON node %s in %s", _RTTI.GetName(compoundName), f->Name, _JSON.node_name(_Node), _JSON.name());
 
 			if (_FailOnMissingValues)
@@ -133,11 +135,11 @@ bool oJSONReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::json
 
 	if (!FromStringFailed.empty())
 	{
-		oStd::xxlstring ErrorString;
+		xxlstring ErrorString;
 		snprintf(ErrorString, "Error parsing the following type(s):");
 		oFORI(i, FromStringFailed)
 		{
-			oStd::sncatf(ErrorString, " '%s'", FromStringFailed[i].c_str());
+			sncatf(ErrorString, " '%s'", FromStringFailed[i].c_str());
 		}
 		oTRACE("%s", ErrorString.c_str());
 		return oErrorSetLast(std::errc::protocol_error, "%s", ErrorString);
@@ -146,17 +148,17 @@ bool oJSONReadCompound(void* _pDestination, const oRTTI& _RTTI, const oStd::json
 	return true;
 }
 
-bool oJSONReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& _RTTI, const oStd::json& _JSON, oStd::json::node _Node, bool _FailOnMissingValues)
+bool oJSONReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& _RTTI, const json& _JSON, json::node _Node, bool _FailOnMissingValues)
 {
 	if (_RTTI.GetType() != oRTTI_TYPE_CONTAINER)
 		return oErrorSetLast(std::errc::invalid_argument);
 
-	std::vector<oStd::sstring> FromStringFailed;
+	std::vector<sstring> FromStringFailed;
 
 	const oRTTI* itemRTTI = _RTTI.GetItemRTTI();
 
 	int i=0;
-	for (oStd::json::node node = _JSON.first_child(_Node); node; node = _JSON.next_sibling(node), ++i)
+	for (json::node node = _JSON.first_child(_Node); node; node = _JSON.next_sibling(node), ++i)
 	{
 		switch(itemRTTI->Type)
 		{
@@ -184,7 +186,7 @@ bool oJSONReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& 
 
 			default:
 			{
-				oStd::sstring rttiName;
+				sstring rttiName;
 				itemRTTI->TypeToString(rttiName.c_str(), rttiName.capacity());
 				oTRACE("No support for RTTI type: %s", rttiName.c_str());
 				break;
@@ -194,11 +196,11 @@ bool oJSONReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& 
 
 	if (!FromStringFailed.empty())
 	{
-		oStd::xxlstring ErrorString;
+		xxlstring ErrorString;
 		snprintf(ErrorString, "Error parsing the following type(s):");
-		oFOR(oStd::sstring& item, FromStringFailed)
+		oFOR(sstring& item, FromStringFailed)
 		{
-			oStd::sncatf(ErrorString, " '%s'", item.c_str());
+			sncatf(ErrorString, " '%s'", item.c_str());
 		}
 		oTRACE("%s", ErrorString.c_str());
 		return oErrorSetLast(std::errc::protocol_error, "%s", ErrorString);
@@ -209,25 +211,25 @@ bool oJSONReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& 
 
 bool oJSONWriteValue(char* _StrDestination, size_t _SizeofStrDestination, const void* _pSource, const oRTTI& _RTTI)
 {
-	oStd::xxlstring buf;
-	oStd::sstring Typename;
+	xxlstring buf;
+	sstring Typename;
 	if (_RTTI.ToString(buf, _pSource))
 	{
-		if ((_RTTI.GetTraits() & (oStd::type_trait_flag::is_integralf | oStd::type_trait_flag::is_floating_pointf)) != 0  && (_RTTI.GetNumStringTokens() == 1))
+		if ((_RTTI.GetTraits() & (type_trait_flag::is_integralf | type_trait_flag::is_floating_pointf)) != 0  && (_RTTI.GetNumStringTokens() == 1))
 		{
 			if (strstr(_RTTI.GetName(Typename), "uchar"))
-				oStd::sncatf(_StrDestination, _SizeofStrDestination, "%d", (int)*(uchar*)_pSource);
+				sncatf(_StrDestination, _SizeofStrDestination, "%d", (int)*(uchar*)_pSource);
 			else if (strstr(_RTTI.GetName(Typename), "char"))
-				oStd::sncatf(_StrDestination, _SizeofStrDestination, "%d", (int)*(char*)_pSource);
+				sncatf(_StrDestination, _SizeofStrDestination, "%d", (int)*(char*)_pSource);
 			else
-				oStd::sncatf(_StrDestination, _SizeofStrDestination, "%s", buf.c_str());
+				sncatf(_StrDestination, _SizeofStrDestination, "%s", buf.c_str());
 		}
 		else
-			oStd::json_escape_encode(_StrDestination, _SizeofStrDestination, buf.c_str());
+			json_escape_encode(_StrDestination, _SizeofStrDestination, buf.c_str());
 	}
 	else
 	{	
-		oStd::sncatf(_StrDestination, _SizeofStrDestination, "null");
+		sncatf(_StrDestination, _SizeofStrDestination, "null");
 	}
 	return true;
 }
@@ -237,7 +239,7 @@ bool oJSONWriteCompound(char* _StrDestination, size_t _SizeofStrDestination, con
 	if (_RTTI.GetType() != oRTTI_TYPE_COMPOUND)
 		return oErrorSetLast(std::errc::invalid_argument);
 
-	oStd::sncatf(_StrDestination, _SizeofStrDestination, "{");
+	sncatf(_StrDestination, _SizeofStrDestination, "{");
 	bool firstNameValuePair = true;
 
 	for (int i=0; i<_RTTI.GetNumAttrs(); ++i)
@@ -248,8 +250,8 @@ bool oJSONWriteCompound(char* _StrDestination, size_t _SizeofStrDestination, con
 			case oRTTI_TYPE_ENUM:
 			case oRTTI_TYPE_ATOM:
 			{
-				if (!firstNameValuePair) oStd::sncatf(_StrDestination, _SizeofStrDestination, ","); firstNameValuePair = false;
-				oStd::sncatf(_StrDestination, _SizeofStrDestination, "\"%s\":", f->Name);
+				if (!firstNameValuePair) sncatf(_StrDestination, _SizeofStrDestination, ","); firstNameValuePair = false;
+				sncatf(_StrDestination, _SizeofStrDestination, "\"%s\":", f->Name);
 				if (!oJSONWriteValue(_StrDestination, _SizeofStrDestination, f->GetSrcPtr(_pSource), *f->RTTI))
 					return false; // forward error
 				break;
@@ -257,8 +259,8 @@ bool oJSONWriteCompound(char* _StrDestination, size_t _SizeofStrDestination, con
 
 			case oRTTI_TYPE_COMPOUND:
 			{
-				if (!firstNameValuePair) oStd::sncatf(_StrDestination, _SizeofStrDestination, ","); firstNameValuePair = false;
-				oStd::sncatf(_StrDestination, _SizeofStrDestination, "\"%s\":", f->Name);
+				if (!firstNameValuePair) sncatf(_StrDestination, _SizeofStrDestination, ","); firstNameValuePair = false;
+				sncatf(_StrDestination, _SizeofStrDestination, "\"%s\":", f->Name);
 				if (!oJSONWriteCompound(_StrDestination, _SizeofStrDestination, f->GetSrcPtr(_pSource), *f->RTTI))
 					return false; // forward error
 				break;
@@ -266,8 +268,8 @@ bool oJSONWriteCompound(char* _StrDestination, size_t _SizeofStrDestination, con
 
 			case oRTTI_TYPE_CONTAINER:
 			{
-				if (!firstNameValuePair) oStd::sncatf(_StrDestination, _SizeofStrDestination, ","); firstNameValuePair = false;
-				oStd::sncatf(_StrDestination, _SizeofStrDestination, "\"%s\":", f->Name);
+				if (!firstNameValuePair) sncatf(_StrDestination, _SizeofStrDestination, ","); firstNameValuePair = false;
+				sncatf(_StrDestination, _SizeofStrDestination, "\"%s\":", f->Name);
 				if (!oJSONWriteContainer(_StrDestination, _SizeofStrDestination, f->GetSrcPtr(_pSource), f->Size, *f->RTTI))
 					return false; // forward error
 				break;
@@ -275,13 +277,13 @@ bool oJSONWriteCompound(char* _StrDestination, size_t _SizeofStrDestination, con
 
 			default:
 			{
-				oStd::sstring rttiName;
+				sstring rttiName;
 				return oErrorSetLast(std::errc::not_supported, "No support for RTTI type: %s", f->RTTI->TypeToString(rttiName));
 			}
 		}
 	}
 
-	oStd::sncatf(_StrDestination, _SizeofStrDestination, "}");
+	sncatf(_StrDestination, _SizeofStrDestination, "}");
 	return true;
 }
 
@@ -291,22 +293,22 @@ bool oJSONWriteContainer(char* _StrDestination, size_t _SizeofStrDestination, co
 	if (_RTTI.GetType() != oRTTI_TYPE_CONTAINER)
 		return oErrorSetLast(std::errc::invalid_argument);
 
-	std::vector<oStd::sstring> FromStringFailed;
+	std::vector<sstring> FromStringFailed;
 
 	const oRTTI* itemRTTI = _RTTI.GetItemRTTI();
 
-	oStd::sncatf(_StrDestination, _SizeofStrDestination, "[");
+	sncatf(_StrDestination, _SizeofStrDestination, "[");
 	bool firstValue = true;
 
 	for (int i = 0; i < _RTTI.GetItemCount(_pSource, _SourceSize); i++)
 	{
-		oStd::lstring elem_buf;
+		lstring elem_buf;
 		switch(itemRTTI->Type)
 		{
 			case oRTTI_TYPE_ENUM:
 			case oRTTI_TYPE_ATOM:
 			{
-				if (!firstValue) oStd::sncatf(_StrDestination, _SizeofStrDestination, ","); firstValue = false;
+				if (!firstValue) sncatf(_StrDestination, _SizeofStrDestination, ","); firstValue = false;
 				if (!oJSONWriteValue(_StrDestination, _SizeofStrDestination, _RTTI.GetItemPtr(_pSource, _SourceSize, i), *itemRTTI))
 					return false; // forward error
 				break;
@@ -314,7 +316,7 @@ bool oJSONWriteContainer(char* _StrDestination, size_t _SizeofStrDestination, co
 
 			case oRTTI_TYPE_COMPOUND:
 			{
-				if (!firstValue) oStd::sncatf(_StrDestination, _SizeofStrDestination, ","); firstValue = false;
+				if (!firstValue) sncatf(_StrDestination, _SizeofStrDestination, ","); firstValue = false;
 				if (!oJSONWriteCompound(_StrDestination, _SizeofStrDestination, _RTTI.GetItemPtr(_pSource, _SourceSize, i), *itemRTTI))
 					return false; // forward error
 				break;
@@ -322,7 +324,7 @@ bool oJSONWriteContainer(char* _StrDestination, size_t _SizeofStrDestination, co
 
 			case oRTTI_TYPE_CONTAINER:
 			{
-				if (!firstValue) oStd::sncatf(_StrDestination, _SizeofStrDestination, ","); firstValue = false;
+				if (!firstValue) sncatf(_StrDestination, _SizeofStrDestination, ","); firstValue = false;
 				if (!oJSONWriteContainer(_StrDestination, _SizeofStrDestination, _RTTI.GetItemPtr(_pSource, _SourceSize, i), itemRTTI->GetSize(), *itemRTTI))
 					return false; // forward error
 				break;
@@ -330,12 +332,12 @@ bool oJSONWriteContainer(char* _StrDestination, size_t _SizeofStrDestination, co
 
 			default:
 			{
-				oStd::sstring rttiName;
+				sstring rttiName;
 				return oErrorSetLast(std::errc::not_supported, "No support for RTTI type: %s", itemRTTI->TypeToString(rttiName));
 			}
 		}
 	}
 	
-	oStd::sncatf(_StrDestination, _SizeofStrDestination, "]");
+	sncatf(_StrDestination, _SizeofStrDestination, "]");
 	return true;
 }

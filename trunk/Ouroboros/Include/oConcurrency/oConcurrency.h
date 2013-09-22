@@ -35,7 +35,7 @@
 #define oConcurrencyRequirements_h
 
 #include <oStd/callable.h>
-#include <oStd/function.h>
+#include <oBase/function.h>
 #include <oStd/thread.h>
 #include <oConcurrency/thread_safe.h>
 #include <system_error>

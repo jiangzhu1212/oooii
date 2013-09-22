@@ -26,6 +26,8 @@
 #include "oMSBuild.h"
 #include <oPlatform/oEMail.h>
 
+using namespace ouro;
+
 // TODO: Where to put this?
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, oNetAddr)
 
@@ -34,10 +36,10 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oAutoBuildEmailSettings)
 	oRTTI_COMPOUND_VERSION(oAutoBuildEmailSettings, 0,1,0,0)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oAutoBuildEmailSettings)
 		oRTTI_COMPOUND_ATTR(oAutoBuildEmailSettings, EmailServer, oRTTI_OF(oNetAddr), "EmailServer", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oAutoBuildEmailSettings, FromAddress, oRTTI_OF(ostd_sstring), "FromAddress", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oAutoBuildEmailSettings, FromPasswordBase64, oRTTI_OF(ostd_sstring), "FromPasswordBase64", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oAutoBuildEmailSettings, AdminEmails, oRTTI_OF(std_vector_ostd_sstring), "AdminEmails", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oAutoBuildEmailSettings, UserEmails, oRTTI_OF(std_vector_ostd_sstring), "UserEmails", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oAutoBuildEmailSettings, FromAddress, oRTTI_OF(ouro_sstring), "FromAddress", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oAutoBuildEmailSettings, FromPasswordBase64, oRTTI_OF(ouro_sstring), "FromPasswordBase64", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oAutoBuildEmailSettings, AdminEmails, oRTTI_OF(std_vector_ouro_sstring), "AdminEmails", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oAutoBuildEmailSettings, UserEmails, oRTTI_OF(std_vector_ouro_sstring), "UserEmails", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oAutoBuildEmailSettings)
 oRTTI_COMPOUND_END_DESCRIPTION(oAutoBuildEmailSettings)
 
@@ -61,7 +63,7 @@ static void FormatMSBuildResults(const oMSBuildResults& _Results, std::string& _
 		_LogHTML.append("<p>Build failed due to clean failing.</p>");
 	}
 
-	oStd::mstring BuildStatus;
+	mstring BuildStatus;
 	if (_Results.BuildSucceeded)
 		BuildStatus = "succeeded";
 	else
@@ -69,13 +71,13 @@ static void FormatMSBuildResults(const oMSBuildResults& _Results, std::string& _
 
 	// Note that this string gets parsed to determine build times and status
 	// so preferably don't change it.
-	oStd::mstring BuildTimeString;
+	mstring BuildTimeString;
 	snprintf(BuildTimeString, "<p>Build %s, taking %.2f seconds.  Here are the logs:</p>", BuildStatus.c_str(), _Results.BuildTimeSeconds);
 	_LogHTML.append(BuildTimeString);
 
 	oFOR(auto& BuildLogfile, _Results.BuildLogfiles)
 	{
-		oStd::sstring BuildName;
+		sstring BuildName;
 		oGetFilebase(BuildName, BuildLogfile.c_str());
 		_LogHTML.append("<p>");
 		oHTMLLink(_LogHTML, oGetFilebase(BuildLogfile.c_str()), BuildName);
@@ -91,7 +93,7 @@ static void FormatMSBuildResults(const oMSBuildResults& _Results, std::string& _
 				FirstWarningOrError = false;
 
 				o_msbuild_stdout_t encodedWarningOrError;
-				oStd::ampersand_encode(encodedWarningOrError.c_str(), encodedWarningOrError.capacity(), _WarningOrError.c_str());
+				ampersand_encode(encodedWarningOrError.c_str(), encodedWarningOrError.capacity(), _WarningOrError.c_str());
 
 				_LogHTML.append("<p>");
 				_LogHTML.append(encodedWarningOrError);
@@ -109,7 +111,7 @@ static void FormatUnitTestResults(const oUnitTestResults& results, std::string& 
 {
 	_LogHTML.append("<p><b>Testing stage...</b></p>");
 
-	oStd::mstring TestingStatus;
+	mstring TestingStatus;
 	if (results.TestingSucceeded)
 		TestingStatus = "succeeded";
 	else
@@ -117,7 +119,7 @@ static void FormatUnitTestResults(const oUnitTestResults& results, std::string& 
 
 	// Note that this string gets parsed to determine build times and status
 	// so preferably don't change it.
-	oStd::mstring TestTimeString;
+	mstring TestTimeString;
 	snprintf(TestTimeString, "<p>Testing %s, taking %.2f seconds.  Here are the logs:</p>", TestingStatus.c_str(), results.TimePassedSeconds);
 	_LogHTML.append(TestTimeString);
 	
@@ -138,8 +140,8 @@ static void FormatUnitTestResults(const oUnitTestResults& results, std::string& 
 
 		oFOR(auto& item, results.FailedTests)
 		{
-			oStd::lstring message;
-			oStd::ampersand_encode(message.c_str(), message.capacity(), item.Message.c_str());
+			lstring message;
+			ampersand_encode(message.c_str(), message.capacity(), item.Message.c_str());
 
 			_LogHTML.append("<tr><td>");
 			_LogHTML.append(item.Name);
@@ -153,19 +155,19 @@ static void FormatUnitTestResults(const oUnitTestResults& results, std::string& 
 		_LogHTML.append("</table></p>");
 
 		bool FoundAFailedImageCompare = false;
-		oCore::filesystem::enumerate(oStd::path(results.FailedImagePath), 
-			[&](const oStd::path& _FullPath, const oCore::filesystem::file_status& _Status, unsigned long long _Size)->bool
+		ouro::filesystem::enumerate(path(results.FailedImagePath), 
+			[&](const path& _FullPath, const ouro::filesystem::file_status& _Status, unsigned long long _Size)->bool
 		{
 			if (_FullPath.has_extension(".png"))
 			{
-				oStd::path_string filebase = _FullPath.basename();
+				path_string filebase = _FullPath.basename();
 
 				// Skip _diff and _golden images, we'll add them in the table
 				// paired with the outputs
 				if (filebase.size() > 5 && 0 == strcmp(&filebase[filebase.size()-5], "_diff")) return true;
 				if (filebase.size() > 7 && 0 == strcmp(&filebase[filebase.size()-7], "_golden")) return true;
 
-				oStd::path_string ImagePath;
+				path_string ImagePath;
 				oMakeRelativePath(ImagePath, _FullPath, results.FailedImagePath.c_str());
 				if (!FoundAFailedImageCompare)
 				{
@@ -177,13 +179,13 @@ static void FormatUnitTestResults(const oUnitTestResults& results, std::string& 
 				_LogHTML.append("\"><img src=\"");
 				_LogHTML.append(&ImagePath[1]); // Skip leading '/' to make image relative to FailedImagePath
 				_LogHTML.append("\" style=\"width:100%;\"/></a></td><td style=\"width:30%;\"><a href=\"");
-				oStd::path_string ImagePathDiff = ImagePath;
+				path_string ImagePathDiff = ImagePath;
 				oReplaceFileExtension(ImagePathDiff, "_diff.png");
 				_LogHTML.append(&ImagePathDiff[1]); // Skip leading '/' to make image relative to FailedImagePath
 				_LogHTML.append("\"><img src=\"");
 				_LogHTML.append(&ImagePathDiff[1]); // Skip leading '/' to make image relative to FailedImagePath
 				_LogHTML.append("\" style=\"width:100%;\"/></a></td><td style=\"width:30%;\"><a href=\"");
-				oStd::path_string ImagePathGolden = ImagePath;
+				path_string ImagePathGolden = ImagePath;
 				oReplaceFileExtension(ImagePathGolden, "_golden.png");
 				_LogHTML.append(&ImagePathGolden[1]); // Skip leading '/' to make image relative to FailedImagePath
 				_LogHTML.append("\"><img src=\"");
@@ -205,7 +207,7 @@ static void FormatPackagingResults(const oPackagingResults& _Results, std::strin
 {
 	_LogHTML.append("<p><b>Packaging stage...</b></p>");
 
-	oStd::mstring PackageString;
+	mstring PackageString;
 	snprintf(PackageString, "<p>Packaging finished, taking %f seconds.</p>", _Results.PackagingTimeSeconds);
 	_LogHTML.append(PackageString);
 }
@@ -222,17 +224,17 @@ void oAutoBuildOutputResults(const oAutoBuildEmailSettings& _EmailSettings, int 
 	LogHTML.reserve(oKB(4));
 
 	// Add a description of the build
-	oStd::sstring User;
+	sstring User;
 	oP4GetChangelistUser(User, _Results.ChangeList);
-	oStd::xxlstring Description;
+	xxlstring Description;
 	oP4GetChangelistDescription(Description, _Results.ChangeList);
 
-	oStd::trim(Description, Description.c_str());
+	trim(Description, Description.c_str());
 
-	oStd::xxlstring EncodedDescription;
-	oStd::ampersand_encode(EncodedDescription.c_str(), EncodedDescription.capacity(), Description.c_str());
+	xxlstring EncodedDescription;
+	ampersand_encode(EncodedDescription.c_str(), EncodedDescription.capacity(), Description.c_str());
 
-	oStd::mstring DescriptionHeader;
+	mstring DescriptionHeader;
 	snprintf(DescriptionHeader, "<p><b>Changelist %d by %s:</b></p><p>", _Results.ChangeList, User);
 	LogHTML.append(DescriptionHeader);
 	LogHTML.append(EncodedDescription);
@@ -257,23 +259,23 @@ void oAutoBuildOutputResults(const oAutoBuildEmailSettings& _EmailSettings, int 
 		// (using the EmailServer) and then the host name of the socket.
 		// This should guarantee that the server IP address is on the adapter
 		// that is connected to the internet and thus highly likely the LAN.
-		oStd::sstring serverIP;
+		sstring serverIP;
 		{
-			oStd::intrusive_ptr<threadsafe oSocket> Socket;
+			intrusive_ptr<threadsafe oSocket> Socket;
 			oSocket::DESC Desc;
 			Desc.Addr = _EmailSettings.EmailServer;
 			Desc.Protocol = oSocket::TCP;
 			Desc.Style = oSocket::BLOCKING;
 			if (oSocketCreate( "Server Connection", Desc, &Socket))
 			{
-				oStd::uri_string serverHostname;
-				oStd::sstring port;
+				uri_string serverHostname;
+				sstring port;
 				Socket->GetHostname(serverHostname.c_str(), serverIP.c_str(), port.c_str());
 			}
 		}
 
 		// Patch all links to go to the server
-		oStd::uri_string ServerAddress;
+		uri_string ServerAddress;
 		snprintf(ServerAddress, "http://%s:%i/logs/", serverIP.c_str(), _WebServerPort);
 		for(size_t i = 6; i < LogHTML.size(); ++i) // 6 is to skip past <html> which is implicit in the mime type
 		{
@@ -306,12 +308,12 @@ void oAutoBuildOutputResults(const oAutoBuildEmailSettings& _EmailSettings, int 
 			return;
 		}
 
-		oStd::intrusive_ptr<oEMail> Mail;
+		intrusive_ptr<oEMail> Mail;
 		oEMailCreate(oEMail::USE_TLS, _EmailSettings.EmailServer, &Mail);
 
 		if (Mail)
 		{
-			oStd::lstring EmailSubject;
+			lstring EmailSubject;
 			if (_Results.IsDailyBuild)
 				if (_Results.BuildResults.BuildSucceeded)
 					snprintf(EmailSubject, "%s Daily Build failed to pass unit tests with CL %d", oBUILD_TOOL_STANDARD_SUBJECT, _Results.ChangeList);
@@ -334,18 +336,18 @@ void oAutoBuildOutputResults(const oAutoBuildEmailSettings& _EmailSettings, int 
 	LogHTML.append("</html>");
 
 	// Save HTML to the output folder
-	oStd::uri_string HTMLFilename = _Results.OutputFolder;
+	uri_string HTMLFilename = _Results.OutputFolder;
 	oEnsureSeparator(HTMLFilename);
-	oStd::sncatf(HTMLFilename, "index.html");
-	oCore::filesystem::save(oStd::path(HTMLFilename), &LogHTML[0], LogHTML.size(), oCore::filesystem::save_option::text_write);
+	sncatf(HTMLFilename, "index.html");
+	ouro::filesystem::save(path(HTMLFilename), &LogHTML[0], LogHTML.size(), ouro::filesystem::save_option::text_write);
 }
 
 void oEmailAdminAndStop(const oAutoBuildEmailSettings& _EmailSettings, const char* _pMessage, int _CL, bool _HTML)
 {
-	oStd::sstring Subject;
+	sstring Subject;
 	snprintf(Subject, "%s Fatal Error. All builds halted. Stopped on %d", oBUILD_TOOL_STANDARD_SUBJECT, _CL);
 
-	oStd::intrusive_ptr<oEMail> Mail;
+	intrusive_ptr<oEMail> Mail;
 	oEMailCreate(oEMail::USE_TLS, _EmailSettings.EmailServer, &Mail);
 
 	if (Mail)

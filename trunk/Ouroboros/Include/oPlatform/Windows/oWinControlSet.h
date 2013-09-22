@@ -82,7 +82,7 @@ The fields are:
   alignment.
 * Size: int2 describing how large the control is
 * ID: A string representing the logical ID used for events and actions when this
-  control is used. In code oStd::from_string is used to link this to a real code enum
+  control is used. In code ouro::from_string is used to link this to a real code enum
 	and if not, an error will be broadcast. Minimize the need to compile be 
 	designing functionality and general layout first, enumerating all the controls
 	to be defined, compiling that, and positioning and tweaking with the XML.
@@ -112,7 +112,7 @@ An example XML:
 #include <oBasis/oContainer.h>
 #include <oBasis/oGUI.h>
 #include <oPlatform/Windows/oWinWindowing.h>
-#include <oStd/xml.h>
+#include <oBase/xml.h>
 #include <map>
 #include <string>
 #include <vector>
@@ -124,7 +124,7 @@ public:
 
 	// Respect ParentClientSize since Initialize might be called from a WM_CREATE 
 	// message before the window is actually properly sized.
-	bool Initialize(HWND _hParent, const int2& _ParentClientSize, const oStd::xml& _XML, const IDFROMSTRING& _IDFromString);
+	bool Initialize(HWND _hParent, const int2& _ParentClientSize, const ouro::xml& _XML, const IDFROMSTRING& _IDFromString);
 	void Deinitialize();
 
 	HWND GetControl(int _ID) const;
@@ -133,7 +133,7 @@ public:
 	inline HWND operator[](int _Index) const { return GetControl(_Index); }
 
 private:
-	typedef std::map<oStd::mstring, HFONT, oStdLessI<oStd::mstring>> fonts_t;
+	typedef std::map<ouro::mstring, HFONT, oStdLessI<ouro::mstring>> fonts_t;
 
 	struct CONTROL_CONTEXT
 	{
@@ -161,16 +161,16 @@ private:
 			: Fonts(_Fonts)
 		{}
 
-		const oStd::xml* pXML;
-		oStd::xml::node hNode;
+		const ouro::xml* pXML;
+		ouro::xml::node hNode;
 		const fonts_t& Fonts;
 	};
 
 	typedef std::vector<HWND> controls_t;
 	controls_t Controls;
 
-	bool ParseFontDesc(const oStd::xml& _XML, oStd::xml::node _hNode, oGUI_FONT_DESC* _pDesc);
-	bool CreateFontsSibling(const oStd::xml& _XML, fonts_t* _pFonts);
+	bool ParseFontDesc(const ouro::xml& _XML, ouro::xml::node _hNode, oGUI_FONT_DESC* _pDesc);
+	bool CreateFontsSibling(const ouro::xml& _XML, fonts_t* _pFonts);
 	bool ParseControlDesc(const XML_CONTEXT& _XmlContext, const CONTROL_CONTEXT& _ControlContext, const controls_t& _Controls, oGUI_CONTROL_DESC* _pDesc);
 	HWND CreateControl(const XML_CONTEXT& _XmlContext, const CONTROL_CONTEXT& _ControlContext, controls_t* _pControls, int2 _ParentOffset);
 	bool CreateControlsRecursive(const XML_CONTEXT& _XmlContext, const CONTROL_CONTEXT& _ControlContext, controls_t* _pControls);

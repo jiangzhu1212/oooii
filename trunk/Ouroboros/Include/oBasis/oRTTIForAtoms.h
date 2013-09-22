@@ -26,7 +26,7 @@
 #ifndef oRTTIForAtoms_h
 #define oRTTIForAtoms_h
 
-#include <oStd/type_info.h>
+#include <oBase/type_info.h>
 
 struct oRTTI_DATA_ATOM // : oRTTI
 {
@@ -75,7 +75,7 @@ struct oRTTI_DATA_ATOM // : oRTTI
 		sizeof(atom_type), \
 		#atom_type_name, \
 		(const oRTTI*)&oRTTI_##atom_base_type, \
-		oStd::type_info<atom_type>::traits, \
+		ouro::type_info<atom_type>::traits, \
 		atom_fromstring, \
 		atom_tostring, \
 		atom_copy, \
@@ -96,8 +96,8 @@ struct oRTTI_DATA_ATOM // : oRTTI
 	static bool s_##atom_type_name##_Serialize(const void* _pValue, void* _pData, bool _EndianSwap) { *(atom_type *)_pData = *(atom_type *)_pValue; return true; } \
 	static bool s_##atom_type_name##_Deserialize(const void* _pData, void* _pValue, bool _EndianSwap) { *(atom_type *)_pValue = *(atom_type *)_pData; return true; } \
 	oRTTI_ATOM_DESCRIPTION(atom_type, atom_type_name, true, false, atom_type_name, atom_num_string_tokens, \
-		(oRTTIFromString)(s_##atom_type_name##_FromString)oStd::from_string, \
-		(oRTTIToString)(s_##atom_type_name##_ToString)oStd::to_string, \
+		(oRTTIFromString)(s_##atom_type_name##_FromString)ouro::from_string, \
+		(oRTTIToString)(s_##atom_type_name##_ToString)ouro::to_string, \
 		(oRTTICopy)s_##atom_type_name##_Copy, \
 		(oRTTIConstructor)s_##atom_type_name##_Constructor, \
 		nullptr, \
@@ -115,8 +115,8 @@ struct oRTTI_DATA_ATOM // : oRTTI
 	static bool s_##atom_type_name##_Serialize(const void* _pValue, void* _pData, bool _EndianSwap) { *(atom_type *)_pData = *(atom_type *)_pValue; return true; } \
 	static bool s_##atom_type_name##_Deserialize(const void* _pData, void* _pValue, bool _EndianSwap) { *(atom_type *)_pValue = *(atom_type *)_pData; return true; } \
 	oRTTI_ATOM_DESCRIPTION(atom_type, atom_type_name, true, false, atom_type_name, atom_num_string_tokens, \
-	(oRTTIFromString)(s_##atom_type_name##_FromString)oStd::from_string, \
-	(oRTTIToString)(s_##atom_type_name##_ToString)oStd::to_string, \
+	(oRTTIFromString)(s_##atom_type_name##_FromString)ouro::from_string, \
+	(oRTTIToString)(s_##atom_type_name##_ToString)ouro::to_string, \
 	(oRTTICopy)s_##atom_type_name##_Copy, \
 	(oRTTIConstructor)s_##atom_type_name##_Constructor, \
 	nullptr, \

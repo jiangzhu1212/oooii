@@ -23,7 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform//oGUIMenu.h>
-#include <oStd/assert.h>
+#include <oBase/assert.h>
+
+using namespace ouro;
 
 #if 0
 // not in use (yet?)
@@ -147,7 +149,7 @@ void oGUIMenuRemoveAllItems(oGUI_MENU _hMenu)
 
 void oGUIMenuItemToSubmenu(oGUI_MENU _hParentMenu, int _ItemID, oGUI_MENU _hSubmenu)
 {
-	oStd::mstring text;
+	mstring text;
 	oVERIFY(oGUIMenuGetText(text, _hParentMenu, _ItemID));
 	oVB(RemoveMenu((HMENU)_hParentMenu, _ItemID, MF_BYCOMMAND));
 	oVB(InsertMenu((HMENU)_hParentMenu, _ItemID, MF_STRING|MF_POPUP, (UINT_PTR)_hSubmenu, text));
@@ -158,7 +160,7 @@ void oGUIMenuSubmenuToItem(oGUI_MENU _hParentMenu, oGUI_MENU _hSubmenu, int _Ite
 	int p = oGUIMenuFindPosition(_hParentMenu, _hSubmenu);
 	oASSERT(p != oInvalid, "the specified submenu is not under the specified parent menu");
 	
-	oStd::mstring text;	
+	mstring text;	
 	oVERIFY(oGUIMenuGetTextByPosition(text, text.capacity(), _hParentMenu, p));
 	oVB(DeleteMenu((HMENU)_hParentMenu, p, MF_BYPOSITION));
 
@@ -256,7 +258,7 @@ bool oGUIMenuAppendEnumItems(oGUI_MENU _hMenu, int _FirstMenuItem, int _LastMenu
 	if (nItems != _Enum.GetNumValues())
 		return oErrorSetLast(std::errc::protocol_error, "Enum count and first/last menu item indices mismatch");
 
-	oStd::sstring en;
+	sstring en;
 	for (int i = 0; i < nItems; i++)
 		oGUIMenuAppendItem(_hMenu, _FirstMenuItem + i, _Enum.ToString(en, &i));
 

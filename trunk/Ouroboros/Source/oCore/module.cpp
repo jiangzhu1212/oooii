@@ -26,42 +26,42 @@
 #include <oCore/filesystem.h>
 #include "../oStd/win.h"
 
-namespace oStd {
+namespace ouro {
 
-const char* as_string(const oCore::module::type::value& _Type)
+const char* as_string(const ouro::module::type::value& _Type)
 {
 	switch (_Type)
 	{
-		case oCore::module::type::unknown: return "unknown";
-		case oCore::module::type::app: return "application";
-		case oCore::module::type::dll: return "dll";
-		case oCore::module::type::lib: return "library";
-		case oCore::module::type::font_unknown: return "unknown font";
-		case oCore::module::type::font_raster: return "raster font";
-		case oCore::module::type::font_truetype: return "truetype font";
-		case oCore::module::type::font_vector: return "vector font";
-		case oCore::module::type::virtual_device: return "virtual device";
-		case oCore::module::type::drv_unknown: return "unknown driver";
-		case oCore::module::type::drv_comm: return "comm driver";
-		case oCore::module::type::drv_display: return "display driver";
-		case oCore::module::type::drv_installable: return "installable driver";
-		case oCore::module::type::drv_keyboard: return "keyboard driver";
-		case oCore::module::type::drv_language: return "language driver";
-		case oCore::module::type::drv_mouse: return "mouse driver";
-		case oCore::module::type::drv_network: return "network driver";
-		case oCore::module::type::drv_printer: return "printer driver";
-		case oCore::module::type::drv_sound: return "sound driver";
-		case oCore::module::type::drv_system: return "system driver";
+		case ouro::module::type::unknown: return "unknown";
+		case ouro::module::type::app: return "application";
+		case ouro::module::type::dll: return "dll";
+		case ouro::module::type::lib: return "library";
+		case ouro::module::type::font_unknown: return "unknown font";
+		case ouro::module::type::font_raster: return "raster font";
+		case ouro::module::type::font_truetype: return "truetype font";
+		case ouro::module::type::font_vector: return "vector font";
+		case ouro::module::type::virtual_device: return "virtual device";
+		case ouro::module::type::drv_unknown: return "unknown driver";
+		case ouro::module::type::drv_comm: return "comm driver";
+		case ouro::module::type::drv_display: return "display driver";
+		case ouro::module::type::drv_installable: return "installable driver";
+		case ouro::module::type::drv_keyboard: return "keyboard driver";
+		case ouro::module::type::drv_language: return "language driver";
+		case ouro::module::type::drv_mouse: return "mouse driver";
+		case ouro::module::type::drv_network: return "network driver";
+		case ouro::module::type::drv_printer: return "printer driver";
+		case ouro::module::type::drv_sound: return "sound driver";
+		case ouro::module::type::drv_system: return "system driver";
 		default: break;
 	}
 	return "?";
 }
 
-} // namespace oStd
+} // namespace ouro
 
 using namespace oStd;
 
-namespace oCore {
+namespace ouro {
 	namespace module {
 
 id open(const path& _Path)
@@ -182,12 +182,12 @@ static bool is_64bit()
 	return !bWow64;
 }
 
-static bool is_64bit(const oStd::path& _Path)
+static bool is_64bit(const path& _Path)
 {
 	bool result = false;
 
 	HMODULE hModule = LoadLibrary(_Path);
-	oStd::finally Close([&] { FreeLibrary(hModule); });
+	finally Close([&] { FreeLibrary(hModule); });
 
 	// can't map the 'this' module for access, so use another method
 	if (GetModuleHandle(nullptr) == hModule)
@@ -195,7 +195,7 @@ static bool is_64bit(const oStd::path& _Path)
 
 	unsigned long long size = filesystem::file_size(_Path);
 
-	void* mapped = oCore::filesystem::map(_Path, false, 0, size);
+	void* mapped = ouro::filesystem::map(_Path, false, 0, size);
 	if (mapped)
 	{
 		IMAGE_NT_HEADERS* pHeader = ImageNtHeader(mapped);
@@ -305,7 +305,7 @@ info get_info(id _ModuleID)
 
 	namespace this_module {
 
-oStd::path path()
+ouro::path path()
 {
 	return std::move(module::get_path(module::id()));
 }
@@ -326,4 +326,4 @@ module::id get_id()
 }
 
 	} // namespace this_module
-} // namespace oCore
+} // namespace ouro

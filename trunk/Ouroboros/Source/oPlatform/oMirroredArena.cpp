@@ -24,16 +24,17 @@
  **************************************************************************/
 #include <oPlatform/oMirroredArena.h>
 #include <oHLSL/oHLSLBit.h>
-#include <oStd/assert.h>
+#include <oBase/assert.h>
 #include <oBasis/oBuffer.h>
-#include <oStd/byte.h>
+#include <oBase/byte.h>
 #include <oBasis/oError.h>
 #include <oBasis/oLockedPointer.h>
 #include <oConcurrency/mutex.h>
 #include <oBasis/oRefCount.h>
 #include <oPlatform/Windows/oWindows.h>
 
-using namespace oCore::page_allocator;
+using namespace ouro;
+using namespace ouro::page_allocator;
 
 // @oooii-tony: Note on future/potential cross-platform support. I admit it, I 
 // don't know linux other than it does have virtual memory and it can do some
@@ -77,23 +78,23 @@ namespace detail {
 
 	static void* GetBasePointer(void* _pUserPointer)
 	{
-		return oStd::byte_align_down(_pUserPointer, REQUIRED_ALIGNMENT);
+		return byte_align_down(_pUserPointer, REQUIRED_ALIGNMENT);
 	}
 
 	static unsigned int GetPageNumber(void* _pUserPointer)
 	{
 		void* pBase = GetBasePointer(_pUserPointer);
-		return static_cast<unsigned int>(oStd::byte_diff(_pUserPointer, pBase) / PAGE_SIZE);
+		return static_cast<unsigned int>(byte_diff(_pUserPointer, pBase) / PAGE_SIZE);
 	}
 
 	static void* GetPageBasePointer(void* _pBasePointer, unsigned int _PageNumber)
 	{
-		return oStd::byte_add(_pBasePointer, _PageNumber * PAGE_SIZE);
+		return byte_add(_pBasePointer, _PageNumber * PAGE_SIZE);
 	}
 
 	static void* GetPageBasePointer(void* _pUserPointer)
 	{
-		return oStd::byte_align_down(_pUserPointer, PAGE_SIZE);
+		return byte_align_down(_pUserPointer, PAGE_SIZE);
 	}
 
 	static void* GetBookkeepingBasePointer(void* _pUserPointer)
@@ -265,7 +266,7 @@ namespace detail {
 					// behave well.
 
 					size_t arenaSize = pLockedHandler->GetArenaSize(pUserPointer);
-					if (!arenaSize || (pUserPointer >= oStd::byte_add(GetBasePointer(pUserPointer), arenaSize)))
+					if (!arenaSize || (pUserPointer >= byte_add(GetBasePointer(pUserPointer), arenaSize)))
 						return EXCEPTION_CONTINUE_SEARCH;
 				#endif
 
@@ -295,10 +296,10 @@ namespace detail {
 
 } // namespace detail
 
-inline void intrusive_ptr_lock(threadsafe detail::oAccessViolationHandler* p) { p->Lock(); }
-inline void intrusive_ptr_unlock(threadsafe detail::oAccessViolationHandler* p) { p->Unlock(); }
-inline void intrusive_ptr_lock_shared(threadsafe detail::oAccessViolationHandler* p) { p->LockRead(); }
-inline void intrusive_ptr_unlock_shared(threadsafe detail::oAccessViolationHandler* p) { p->UnlockRead(); }
+inline void intrusive_ptr_lock(threadsafe ::detail::oAccessViolationHandler* p) { p->Lock(); }
+inline void intrusive_ptr_unlock(threadsafe ::detail::oAccessViolationHandler* p) { p->Unlock(); }
+inline void intrusive_ptr_lock_shared(threadsafe ::detail::oAccessViolationHandler* p) { p->LockRead(); }
+inline void intrusive_ptr_unlock_shared(threadsafe ::detail::oAccessViolationHandler* p) { p->UnlockRead(); }
 
 struct oMirroredArena_Impl : public oMirroredArena
 {
@@ -352,12 +353,12 @@ struct oMirroredArena_Impl : public oMirroredArena
 
 size_t oMirroredArena::GetRequiredAlignment()
 {
-	return detail::REQUIRED_ALIGNMENT;
+	return ::detail::REQUIRED_ALIGNMENT;
 }
 
 size_t oMirroredArena::GetMaxSize()
 {
-	return detail::MAX_SIZE;
+	return ::detail::MAX_SIZE;
 }
 
 size_t oMirroredArena::GetChangeBufferSize(const void* _pChangeBuffer)
@@ -390,7 +391,7 @@ oMirroredArena_Impl::oMirroredArena_Impl(const DESC& _Desc, bool* _pSuccess)
 {
 	*_pSuccess = false;
 
-	oASSERT(page_size() == detail::PAGE_SIZE, "Page size is not what's assumed in oMirroredArena");
+	oASSERT(page_size() == ::detail::PAGE_SIZE, "Page size is not what's assumed in oMirroredArena");
 
 	if (_Desc.BaseAddress == nullptr)
 	{
@@ -398,7 +399,7 @@ oMirroredArena_Impl::oMirroredArena_Impl(const DESC& _Desc, bool* _pSuccess)
 		goto error;
 	}
 
-	if (!oStd::byte_aligned(_Desc.BaseAddress, oMirroredArena::GetRequiredAlignment()))
+	if (!byte_aligned(_Desc.BaseAddress, oMirroredArena::GetRequiredAlignment()))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "Base address alignment not correct. It must be aligned to 0x%p", oMirroredArena::GetRequiredAlignment());
 		goto error;
@@ -415,20 +416,20 @@ oMirroredArena_Impl::oMirroredArena_Impl(const DESC& _Desc, bool* _pSuccess)
 		try { set_access(Desc.BaseAddress, Desc.Size, access::read_only); }
 		catch (std::exception&) { goto error; }
 
-		void* pDesiredBookkeeping = detail::GetBookkeepingBasePointer(Desc.BaseAddress);
-		void* pBookkeeping = reserve_and_commit(pDesiredBookkeeping, detail::PAGE_SIZE, true);
+		void* pDesiredBookkeeping = ::detail::GetBookkeepingBasePointer(Desc.BaseAddress);
+		void* pBookkeeping = reserve_and_commit(pDesiredBookkeeping, ::detail::PAGE_SIZE, true);
 		if (!pBookkeeping || pBookkeeping != pDesiredBookkeeping)
 			goto error;
 
-		detail::ResetBookkeeping(Desc.BaseAddress);
+		::detail::ResetBookkeeping(Desc.BaseAddress);
 
 		// Ensure access violation handler is instantiated
-		detail::oAccessViolationHandler::Singleton();
+		::detail::oAccessViolationHandler::Singleton();
 
 #ifdef _DEBUG
 		// Register with a double-checker
 		{
-			detail::oAccessViolationHandler::Singleton()->RegisterArena(Desc.BaseAddress, Desc.Size);
+			::detail::oAccessViolationHandler::Singleton()->RegisterArena(Desc.BaseAddress, Desc.Size);
 		}
 #endif
 	}
@@ -436,7 +437,7 @@ oMirroredArena_Impl::oMirroredArena_Impl(const DESC& _Desc, bool* _pSuccess)
 	else if (Desc.Usage == READ_WRITE_DIFF_NO_EXCEPTIONS)
 	{
 		size_t pageSize = page_size();
-		DirtyPagesCapacity = oStd::byte_align(Desc.Size, pageSize) / pageSize;
+		DirtyPagesCapacity = byte_align(Desc.Size, pageSize) / pageSize;
 		ppDirtyPages = new void*[DirtyPagesCapacity];
 	}
 
@@ -459,12 +460,12 @@ oMirroredArena_Impl::~oMirroredArena_Impl()
 	#ifdef _DEBUG
 		// Unregister with a double-checker
 		{
-			detail::oAccessViolationHandler::Singleton()->UnregisterArena(Desc.BaseAddress);
+			::detail::oAccessViolationHandler::Singleton()->UnregisterArena(Desc.BaseAddress);
 		}
 	#endif
 
 	if (Desc.Usage == READ_WRITE_DIFF)
-		unreserve(detail::GetBookkeepingBasePointer(Desc.BaseAddress));
+		unreserve(::detail::GetBookkeepingBasePointer(Desc.BaseAddress));
 }
 
 size_t oMirroredArena_Impl::GetNumDirtyPages() const threadsafe
@@ -475,9 +476,9 @@ size_t oMirroredArena_Impl::GetNumDirtyPages() const threadsafe
 	{
 		case READ_WRITE_DIFF:
 		{
-			detail::BOOKKEEPING_HEADER* pBookkeepingHeader = 0;
+			::detail::BOOKKEEPING_HEADER* pBookkeepingHeader = 0;
 			void* pVoidDirtyBits = 0;
-			detail::GetBookkeepingPointers(Desc.BaseAddress, &pBookkeepingHeader, &pVoidDirtyBits);
+			::detail::GetBookkeepingPointers(Desc.BaseAddress, &pBookkeepingHeader, &pVoidDirtyBits);
 			oASSERT(pBookkeepingHeader->MagicNumber == 'OOii', "Arena bookkeeping corrupt");
 			nDirtyPages = pBookkeepingHeader->NumDirtyPages;
 			break;
@@ -489,7 +490,7 @@ size_t oMirroredArena_Impl::GetNumDirtyPages() const threadsafe
 
 		case READ_WRITE:
 			// No way to know, assume worst-case.
-			nDirtyPages = Desc.Size / detail::PAGE_SIZE;
+			nDirtyPages = Desc.Size / ::detail::PAGE_SIZE;
 			break;
 
 		case READ: // no dirty pages in read-only memory
@@ -534,7 +535,7 @@ bool oMirroredArena_Impl::COPYRetrieveChanges(void* _pChangeBuffer, size_t _Size
 
 bool oMirroredArena_Impl::DINERetrieveChanges(void* _pChangeBuffer, size_t _SizeofChangeBuffer, size_t* _pSizeRetrieved)
 {
-	oASSERT(page_size() == detail::PAGE_SIZE, "Page size changed unexpectedly");
+	oASSERT(page_size() == ::detail::PAGE_SIZE, "Page size changed unexpectedly");
 
 	ULONG pageSize = 0;
 	ULONG_PTR nDirtyPages = DirtyPagesCapacity;
@@ -563,10 +564,10 @@ bool oMirroredArena_Impl::DINERetrieveChanges(void* _pChangeBuffer, size_t _Size
 		for (unsigned int i = 0; i < nDirtyPages; i++)
 		{
 			DIFF_HEADER* pDiffHeader = reinterpret_cast<DIFF_HEADER*>(pCurrent);
-			pDiffHeader->PageNumber = static_cast<unsigned int>(oStd::byte_diff(ppDirtyPages[i], Desc.BaseAddress) / pageSize);
-			pCurrent = oStd::byte_add(pCurrent, sizeof(DIFF_HEADER));
+			pDiffHeader->PageNumber = static_cast<unsigned int>(byte_diff(ppDirtyPages[i], Desc.BaseAddress) / pageSize);
+			pCurrent = byte_add(pCurrent, sizeof(DIFF_HEADER));
 			memcpy(pCurrent, ppDirtyPages[i], pageSize);
-			pCurrent = oStd::byte_add(pCurrent, pageSize);
+			pCurrent = byte_add(pCurrent, pageSize);
 		}
 	}
 
@@ -575,14 +576,14 @@ bool oMirroredArena_Impl::DINERetrieveChanges(void* _pChangeBuffer, size_t _Size
 
 bool oMirroredArena_Impl::DIFFRetrieveChanges(void* _pChangeBuffer, size_t _SizeofChangeBuffer, size_t* _pSizeRetrieved)
 {
-	oASSERT(page_size() == detail::PAGE_SIZE, "Page size changed unexpectedly");
+	oASSERT(page_size() == ::detail::PAGE_SIZE, "Page size changed unexpectedly");
 
-	detail::BOOKKEEPING_HEADER* pBookkeepingHeader = 0;
+	::detail::BOOKKEEPING_HEADER* pBookkeepingHeader = 0;
 	void* pVoidDirtyBits = 0;
-	detail::GetBookkeepingPointers(Desc.BaseAddress, &pBookkeepingHeader, &pVoidDirtyBits);
+	::detail::GetBookkeepingPointers(Desc.BaseAddress, &pBookkeepingHeader, &pVoidDirtyBits);
 
 	// @oooii-tony: Do I need to lock here against other pages being dirtied?
-	const size_t requiredSize = pBookkeepingHeader->NumDirtyPages * (sizeof(DIFF_HEADER) + detail::PAGE_SIZE);
+	const size_t requiredSize = pBookkeepingHeader->NumDirtyPages * (sizeof(DIFF_HEADER) + ::detail::PAGE_SIZE);
 
 	if (_pSizeRetrieved)
 		*_pSizeRetrieved = sizeof(CHANGE_HEADER) + requiredSize;
@@ -613,7 +614,7 @@ bool oMirroredArena_Impl::DIFFRetrieveChanges(void* _pChangeBuffer, size_t _Size
 	// memcpy could be done rather than 32 or 64 small memcpys.
 
 	unsigned int pagesCopied = 0;
-	const size_t nWords = detail::GetNumBookkeepingBytes(Desc.Size) / sizeof(uintptr_t);
+	const size_t nWords = ::detail::GetNumBookkeepingBytes(Desc.Size) / sizeof(uintptr_t);
 	for (size_t i = 0; i < nWords; i++)
 	{
 		size_t word = pDirtyBits[i];
@@ -622,10 +623,10 @@ bool oMirroredArena_Impl::DIFFRetrieveChanges(void* _pChangeBuffer, size_t _Size
 		while (bitindex >= 0)
 		{
 			DIFF_HEADER* pDiffHeader = reinterpret_cast<DIFF_HEADER*>(pCurrent);
-			pDiffHeader->PageNumber = static_cast<unsigned int>(i * detail::NUM_WORD_BITS + bitindex);
-			pCurrent = oStd::byte_add(pCurrent, sizeof(DIFF_HEADER));
-			memcpy(pCurrent, detail::GetPageBasePointer(Desc.BaseAddress, pDiffHeader->PageNumber), detail::PAGE_SIZE);
-			pCurrent = oStd::byte_add(pCurrent, detail::PAGE_SIZE);
+			pDiffHeader->PageNumber = static_cast<unsigned int>(i * ::detail::NUM_WORD_BITS + bitindex);
+			pCurrent = byte_add(pCurrent, sizeof(DIFF_HEADER));
+			memcpy(pCurrent, ::detail::GetPageBasePointer(Desc.BaseAddress, pDiffHeader->PageNumber), ::detail::PAGE_SIZE);
+			pCurrent = byte_add(pCurrent, ::detail::PAGE_SIZE);
 			pagesCopied++;
 			word &=~ oBitShiftLeft(bitindex);
 			bitindex = firstbitlow(word);
@@ -633,14 +634,14 @@ bool oMirroredArena_Impl::DIFFRetrieveChanges(void* _pChangeBuffer, size_t _Size
 	}
 
 	oASSERT(pagesCopied == pBookkeepingHeader->NumDirtyPages, "");
-	detail::ResetBookkeeping(Desc.BaseAddress);
+	::detail::ResetBookkeeping(Desc.BaseAddress);
 	
 	return true;
 }
 
 bool oMirroredArena_Impl::RetrieveChanges(void* _pChangeBuffer, size_t _SizeofChangeBuffer, size_t* _pSizeRetrieved) threadsafe
 {
-	oLockedPointer<detail::oAccessViolationHandler> pLockedHandler(detail::oAccessViolationHandler::Singleton());
+	oLockedPointer<::detail::oAccessViolationHandler> pLockedHandler(::detail::oAccessViolationHandler::Singleton());
 
 	// 1. Lock the exception handler - no new pages get marked
 	// 2. Mark all pages read-only so anyone has to go through the exception 
@@ -703,11 +704,11 @@ bool oMirroredArena_Impl::COPYApplyChanges(const void* _pChangeBuffer)
 
 bool oMirroredArena_Impl::DIFFApplyChanges(const void* _pChangeBuffer)
 {
-	oASSERT(page_size() == detail::PAGE_SIZE, "Page size changed unexpectedly");
+	oASSERT(page_size() == ::detail::PAGE_SIZE, "Page size changed unexpectedly");
 	
 	const CHANGE_HEADER* pChangeHeader = reinterpret_cast<const CHANGE_HEADER*>(_pChangeBuffer);
 	const void* pPageDiffs = pChangeHeader + 1;
-	const void* pEnd = oStd::byte_add(pPageDiffs, (size_t)pChangeHeader->Size);
+	const void* pEnd = byte_add(pPageDiffs, (size_t)pChangeHeader->Size);
 
 	// @oooii-tony: Is it more efficient to mark the whole arena, or just the pages
 	// that changed? It's probably dependent on how much the arena has changed, so
@@ -720,11 +721,11 @@ bool oMirroredArena_Impl::DIFFApplyChanges(const void* _pChangeBuffer)
 	while (pPageDiffs < pEnd)
 	{
 		const DIFF_HEADER* pDiffHeader = reinterpret_cast<const DIFF_HEADER*>(pPageDiffs);
-		oASSERT(pDiffHeader->PageNumber < detail::GetNumPages(Desc.Size), "Page number out of range");
+		oASSERT(pDiffHeader->PageNumber < ::detail::GetNumPages(Desc.Size), "Page number out of range");
 		const void* pSource = pDiffHeader + 1;
-		void* pDestination = oStd::byte_add(Desc.BaseAddress, pDiffHeader->PageNumber * detail::PAGE_SIZE);
-		memcpy(pDestination, pSource, detail::PAGE_SIZE);
-		pPageDiffs = oStd::byte_add(pPageDiffs, sizeof(DIFF_HEADER) + detail::PAGE_SIZE);
+		void* pDestination = byte_add(Desc.BaseAddress, pDiffHeader->PageNumber * ::detail::PAGE_SIZE);
+		memcpy(pDestination, pSource, ::detail::PAGE_SIZE);
+		pPageDiffs = byte_add(pPageDiffs, sizeof(DIFF_HEADER) + ::detail::PAGE_SIZE);
 	}
 
 	if (Desc.Usage == READ)
@@ -748,8 +749,8 @@ bool oMirroredArena_Impl::ApplyChanges(const void* _pChangeBuffer)
 
 static size_t CalculateSizeInRange(const void* _pAddress, size_t _Size, const void* _pPage, size_t _PageSize)
 {
-	const void* pEnd = oStd::byte_add(_pAddress, _Size);
-	const void* pPageEnd = oStd::byte_add(_pPage, _PageSize);
+	const void* pEnd = byte_add(_pAddress, _Size);
+	const void* pPageEnd = byte_add(_pPage, _PageSize);
 
 	// range doesn't overlap at all.
 	if (pEnd < _pPage || _pAddress >= pPageEnd)
@@ -766,8 +767,8 @@ static size_t CalculateSizeInRange(const void* _pAddress, size_t _Size, const vo
 	switch ((static_cast<int>(EndsInPage)<<1) | static_cast<int>(StartsInPage))
 	{
 		case 0: return _PageSize;
-		case 1: return static_cast<size_t>(_PageSize - oStd::byte_diff(_pAddress, _pPage));
-		case 2: return static_cast<size_t>(_Size - oStd::byte_diff(_pPage, _pAddress));
+		case 1: return static_cast<size_t>(_PageSize - byte_diff(_pAddress, _pPage));
+		case 2: return static_cast<size_t>(_Size - byte_diff(_pPage, _pAddress));
 		case 3: return _Size;
 		oNODEFAULT;
 	}
@@ -781,10 +782,10 @@ bool oMirroredArena_Impl::IsInChanges(const void* _pAddress, size_t _Size, const
 	{
 		case 'COPY':
 		{
-			if (_pAddress < Desc.BaseAddress || _pAddress >= oStd::byte_add(Desc.BaseAddress, oUInt(pChangeHeader->Size)))
+			if (_pAddress < Desc.BaseAddress || _pAddress >= byte_add(Desc.BaseAddress, oUInt(pChangeHeader->Size)))
 				return false;
 
-			size_t offset = oStd::byte_diff(_pAddress, Desc.BaseAddress);
+			size_t offset = byte_diff(_pAddress, Desc.BaseAddress);
 			return _Size <= (pChangeHeader->Size - offset);
 		}
 
@@ -795,15 +796,15 @@ bool oMirroredArena_Impl::IsInChanges(const void* _pAddress, size_t _Size, const
 				return false;
 
 			const void* pPageDiffs = pChangeHeader + 1;
-			const void* pEnd = oStd::byte_add(pPageDiffs, (size_t)pChangeHeader->Size);
+			const void* pEnd = byte_add(pPageDiffs, (size_t)pChangeHeader->Size);
 
 			size_t sizeLeft = _Size;
-			for (; (sizeLeft > 0) && (pPageDiffs < pEnd); pPageDiffs = oStd::byte_add(pPageDiffs, sizeof(DIFF_HEADER) + detail::PAGE_SIZE))
+			for (; (sizeLeft > 0) && (pPageDiffs < pEnd); pPageDiffs = byte_add(pPageDiffs, sizeof(DIFF_HEADER) + ::detail::PAGE_SIZE))
 			{
 				const DIFF_HEADER* pDiffHeader = reinterpret_cast<const DIFF_HEADER*>(pPageDiffs);
-				const void* pPageBaseAddress = oStd::byte_add(Desc.BaseAddress, pDiffHeader->PageNumber * detail::PAGE_SIZE);
+				const void* pPageBaseAddress = byte_add(Desc.BaseAddress, pDiffHeader->PageNumber * ::detail::PAGE_SIZE);
 
-				size_t sizeInRange = CalculateSizeInRange(_pAddress, _Size, pPageBaseAddress, detail::PAGE_SIZE);
+				size_t sizeInRange = CalculateSizeInRange(_pAddress, _Size, pPageBaseAddress, ::detail::PAGE_SIZE);
 				oASSERT(sizeInRange <= sizeLeft, "Size in range is larger than we're looking for... there's a bug in the calculation somewhere");
 				sizeLeft -= sizeInRange;
 			}

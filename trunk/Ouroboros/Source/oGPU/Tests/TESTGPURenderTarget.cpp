@@ -26,6 +26,8 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
+using namespace ouro;
+
 static const int sSnapshotFrames[] = { 0, 50 };
 static const bool kIsDevMode = false;
 
@@ -35,7 +37,7 @@ struct GPU_RenderTarget_App : public oGPUTestApp
 
 	bool Initialize() override
 	{
-		PrimaryRenderTarget->SetClearColor(oStd::AlmostBlack);
+		PrimaryRenderTarget->SetClearColor(AlmostBlack);
 
 		oGPUCommandList::DESC cld;
 		cld.DrawOrder = 1;
@@ -73,7 +75,7 @@ struct GPU_RenderTarget_App : public oGPUTestApp
 			return false;
 
 		oGPU_CLEAR_DESC cd;
-		cd.ClearColor[0] = oStd::DeepSkyBlue;
+		cd.ClearColor[0] = DeepSkyBlue;
 
 		oGPURenderTarget::DESC rtd;
 		rtd.Dimensions = int3(256, 256, 1);
@@ -104,7 +106,7 @@ struct GPU_RenderTarget_App : public oGPUTestApp
 		// draw order of the command lists defines the render target before the 
 		// main scene, this should come out as a cube with a triangle texture.
 
-		oStd::intrusive_ptr<oGPUTexture> Texture;
+		intrusive_ptr<oGPUTexture> Texture;
 		RenderTarget->GetTexture(0, &Texture);
 
 		RenderMainScene(CLMainScene, Texture, PrimaryRenderTarget);
@@ -113,14 +115,14 @@ struct GPU_RenderTarget_App : public oGPUTestApp
 	}
 
 private:
-	oStd::intrusive_ptr<oGPUCommandList> CLMainScene;
-	oStd::intrusive_ptr<oGPUCommandList> CLRenderTarget;
-	oStd::intrusive_ptr<oGPUPipeline> PLPassThrough;
-	oStd::intrusive_ptr<oGPUPipeline> PLTexture;
-	oStd::intrusive_ptr<oGPURenderTarget> RenderTarget;
-	oStd::intrusive_ptr<oGPUUtilMesh> Cube;
-	oStd::intrusive_ptr<oGPUUtilMesh> Triangle;
-	oStd::intrusive_ptr<oGPUBuffer> TestConstants;
+	intrusive_ptr<oGPUCommandList> CLMainScene;
+	intrusive_ptr<oGPUCommandList> CLRenderTarget;
+	intrusive_ptr<oGPUPipeline> PLPassThrough;
+	intrusive_ptr<oGPUPipeline> PLTexture;
+	intrusive_ptr<oGPURenderTarget> RenderTarget;
+	intrusive_ptr<oGPUUtilMesh> Cube;
+	intrusive_ptr<oGPUUtilMesh> Triangle;
+	intrusive_ptr<oGPUBuffer> TestConstants;
 
 	void RenderToTarget(oGPUCommandList* _pCommandList, oGPURenderTarget* _pTarget)
 	{
@@ -148,7 +150,7 @@ private:
 
 		_pCommandList->Begin();
 
-		oGPUCommitBuffer(_pCommandList, TestConstants, oGPUTestConstants(W, V, P, oStd::White));
+		oGPUCommitBuffer(_pCommandList, TestConstants, oGPUTestConstants(W, V, P, White));
 
 		_pCommandList->Clear(_pTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
 		_pCommandList->SetBlendState(oGPU_OPAQUE);

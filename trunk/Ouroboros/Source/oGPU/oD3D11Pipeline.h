@@ -38,18 +38,18 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, Pipeline, 0x772e2a04, 0x4c2d, 0x4
 
 	void GetDesc(DESC* _pDesc) const threadsafe override;
 
-	oStd::intrusive_ptr<ID3D11InputLayout> InputLayout;
-	oStd::intrusive_ptr<ID3D11VertexShader> VertexShader;
-	oStd::intrusive_ptr<ID3D11HullShader> HullShader;
-	oStd::intrusive_ptr<ID3D11DomainShader> DomainShader;
-	oStd::intrusive_ptr<ID3D11GeometryShader> GeometryShader;
-	oStd::intrusive_ptr<ID3D11PixelShader> PixelShader;
+	ouro::intrusive_ptr<ID3D11InputLayout> InputLayout;
+	ouro::intrusive_ptr<ID3D11VertexShader> VertexShader;
+	ouro::intrusive_ptr<ID3D11HullShader> HullShader;
+	ouro::intrusive_ptr<ID3D11DomainShader> DomainShader;
+	ouro::intrusive_ptr<ID3D11GeometryShader> GeometryShader;
+	ouro::intrusive_ptr<ID3D11PixelShader> PixelShader;
 
 	oGPU_VERTEX_ELEMENT* pElements;
 	uint NumElements;
 	D3D_PRIMITIVE_TOPOLOGY InputTopology;
 
-	oStd::sstring DebugName;
+	ouro::sstring DebugName;
 };
 
 #endif

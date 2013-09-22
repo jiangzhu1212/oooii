@@ -27,6 +27,7 @@
 #include "oDispatchQueueGlobalIOCP.h"
 #include "oIOCP.h"
 
+using namespace ouro;
 using namespace oConcurrency;
 
 #define oTRACE_MONITOR oTRACE
@@ -60,22 +61,22 @@ char* oSystemURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _U
 	else
 	{
 		oSYSPATH SysPath;
-		if (oStd::from_string(&SysPath, _URIParts.Authority))
+		if (from_string(&SysPath, _URIParts.Authority))
 		{
-			oStd::path path;
+			path path;
 			switch (SysPath)
 			{
-				case oSYSPATH_CWD: path = oCore::filesystem::current_path(); break;
-				case oSYSPATH_APP: path = oCore::filesystem::app_path(); break;
-				case oSYSPATH_SYSTMP: path = oCore::filesystem::temp_path(); break;
-				case oSYSPATH_SYS: path = oCore::filesystem::system_path(); break;
-				case oSYSPATH_OS: path = oCore::filesystem::os_path(); break;
-				case oSYSPATH_DEV: path = oCore::filesystem::dev_path(); break;
-				case oSYSPATH_TESTTMP: path = oCore::filesystem::temp_path(); break;
-				case oSYSPATH_DESKTOP: path = oCore::filesystem::desktop_path(); break;
-				case oSYSPATH_DESKTOP_ALLUSERS: path = oCore::filesystem::desktop_path(); break;
-				case oSYSPATH_DATA: path = oCore::filesystem::data_path(); break;
-				default: oErrorSetLast(std::errc::protocol_error, "Failed to find %s", oStd::as_string(SysPath)); return nullptr;
+				case oSYSPATH_CWD: path = ouro::filesystem::current_path(); break;
+				case oSYSPATH_APP: path = ouro::filesystem::app_path(); break;
+				case oSYSPATH_SYSTMP: path = ouro::filesystem::temp_path(); break;
+				case oSYSPATH_SYS: path = ouro::filesystem::system_path(); break;
+				case oSYSPATH_OS: path = ouro::filesystem::os_path(); break;
+				case oSYSPATH_DEV: path = ouro::filesystem::dev_path(); break;
+				case oSYSPATH_TESTTMP: path = ouro::filesystem::temp_path(); break;
+				case oSYSPATH_DESKTOP: path = ouro::filesystem::desktop_path(); break;
+				case oSYSPATH_DESKTOP_ALLUSERS: path = ouro::filesystem::desktop_path(); break;
+				case oSYSPATH_DATA: path = ouro::filesystem::data_path(); break;
+				default: oErrorSetLast(std::errc::protocol_error, "Failed to find %s", as_string(SysPath)); return nullptr;
 			}
 
 			if (strlcpy(_Path, path, _SizeofPath) >= _SizeofPath)
@@ -90,7 +91,7 @@ char* oSystemURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _U
 				return nullptr;
 			}
 
-			if (-1 == oStd::sncatf(_Path, _SizeofPath, _URIParts.Path))
+			if (-1 == sncatf(_Path, _SizeofPath, _URIParts.Path))
 			{
 				oErrorSetLast(std::errc::no_buffer_space);
 				return nullptr;
@@ -107,20 +108,22 @@ char* oSystemURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _U
 	return _Path;
 }
 template<size_t size> char* oSystemURIPartsToPath(char (&_ResultingFullPath)[size], const oURIParts& _URIParts) { return oSystemURIPartsToPath(_ResultingFullPath, size, _URIParts); }
-template<size_t capacity> char* oSystemURIPartsToPath(oStd::fixed_string<char, capacity>& _ResultingFullPath, const oURIParts& _URIParts) { return oSystemURIPartsToPath(_ResultingFullPath, _ResultingFullPath.capacity(), _URIParts); }
+template<size_t capacity> char* oSystemURIPartsToPath(ouro::fixed_string<char, capacity>& _ResultingFullPath, const oURIParts& _URIParts) { return oSystemURIPartsToPath(_ResultingFullPath, _ResultingFullPath.capacity(), _URIParts); }
 
-static bool oFileGetDesc(const oStd::path& _Path, oSTREAM_DESC* _pDesc)
+static bool oFileGetDesc(const path& _Path, oSTREAM_DESC* _pDesc)
 {
 	try
 	{
-		auto status = oCore::filesystem::status(_Path);
+		auto status = ouro::filesystem::status(_Path);
+		if (!ouro::filesystem::exists(status))
+			return false;
 		_pDesc->Created = 0;
 		_pDesc->Accessed = 0;
-		_pDesc->Written = oCore::filesystem::last_write_time(_Path);
-		_pDesc->Size = oCore::filesystem::file_size(_Path);
-		_pDesc->Directory = oCore::filesystem::is_directory(status);
+		_pDesc->Written = ouro::filesystem::last_write_time(_Path);
+		_pDesc->Size = ouro::filesystem::file_size(_Path);
+		_pDesc->Directory = ouro::filesystem::is_directory(status);
 		_pDesc->Hidden = false;
-		_pDesc->ReadOnly = oCore::filesystem::is_read_only(status);
+		_pDesc->ReadOnly = ouro::filesystem::is_read_only(status);
 	}
 
 	catch (std::exception&)
@@ -130,7 +133,7 @@ static bool oFileGetDesc(const oStd::path& _Path, oSTREAM_DESC* _pDesc)
 	return true;
 }
 
-namespace oStd {
+namespace ouro {
 
 	const char* as_string(const oSYSPATH& _SysPath)
 	{
@@ -171,8 +174,8 @@ bool from_string(oSYSPATH* _pValue, const char* _StrSource)
 		"oSYSPATH_DATA",
 	};
 
-	oStd::sstring SourceUppercase = _StrSource;
-	oStd::toupper(SourceUppercase);
+	sstring SourceUppercase = _StrSource;
+	toupper(SourceUppercase);
 	oFORI(i, sStrings)
 	{
 		if (!strcmp(_StrSource, sStrings[i]) || !strcmp(SourceUppercase, sStrings[i]+9)) // +9 match against just "OS" or "HOST" after oSYSPATH_
@@ -184,7 +187,7 @@ bool from_string(oSYSPATH* _pValue, const char* _StrSource)
 	return false;
 }
 
-} // namespace oStd
+} // namespace ouro
 
 static void oSetHighLowOffset(long& _low, long& _high, oULLong _offset)
 {
@@ -208,7 +211,7 @@ struct oFileReaderImpl : public oStreamReader
 	{
 		*_pSuccess = false;
 
-		oStd::path_string Path;
+		path_string Path;
 		oSystemURIPartsToPath(Path, _URIParts);
 		hFile = CreateFile(Path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, Unbuffered ? FILE_FLAG_NO_BUFFERING : 0, NULL);
 		if (hFile == INVALID_HANDLE_VALUE)
@@ -218,7 +221,7 @@ struct oFileReaderImpl : public oStreamReader
 			{
 				case std::errc::no_such_file_or_directory:
 				{
-					oStd::uri_string URIRef;
+					uri_string URIRef;
 					oVERIFY(oURIRecompose(URIRef, _URIParts));
 					oErrorSetLast(std::errc::no_such_file_or_directory, "not found: %s", URIRef.c_str());
 					break;
@@ -226,7 +229,7 @@ struct oFileReaderImpl : public oStreamReader
 
 				case std::errc::invalid_argument:
 				{
-					oStd::uri_string URIRef;
+					uri_string URIRef;
 					oVERIFY(oURIRecompose(URIRef, _URIParts));
 					oErrorSetLast(std::errc::invalid_argument, "invalid URI: %s", URIRef.c_str());
 					break;
@@ -241,7 +244,7 @@ struct oFileReaderImpl : public oStreamReader
 		else
 		{
 			oSTREAM_DESC FDesc;
-			oFileGetDesc(oStd::path(Path), &FDesc);
+			oFileGetDesc(path(Path), &FDesc);
 			Desc.Initialize(FDesc);
 
 			if (!oDispatchQueueCreateGlobalIOCP("File reader dispatch queue", 10, &ReadQueue))
@@ -270,11 +273,11 @@ struct oFileReaderImpl : public oStreamReader
 	{
 		unsigned long long fileSize = Desc->Size;
 		if(Unbuffered)
-			fileSize = oStd::byte_align(fileSize, UNBUFFERED_ALIGN_REQUIREMENT); // unbuffered io is always a multiple of the alignment
+			fileSize = byte_align(fileSize, UNBUFFERED_ALIGN_REQUIREMENT); // unbuffered io is always a multiple of the alignment
 		
 		if ((_StreamRead.Range.Offset + _StreamRead.Range.Size) <= fileSize)
 		{
-			oStd::intrusive_ptr<threadsafe oFileReaderImpl> self(this);
+			intrusive_ptr<threadsafe oFileReaderImpl> self(this);
 			// Doing it this way because standard windows async file io is not 
 			// GUARANTEED to be asynchronous. Windows can decided to do the read 
 			// synchronously on its own, so FORCE async this way.
@@ -293,8 +296,8 @@ struct oFileReaderImpl : public oStreamReader
 
 	bool Read(const oSTREAM_READ& _StreamRead) threadsafe
 	{
-		oASSERT(!Unbuffered || (oStd::byte_aligned(_StreamRead.pData, UNBUFFERED_ALIGN_REQUIREMENT) && 
-			oStd::byte_aligned(_StreamRead.Range.Offset, UNBUFFERED_ALIGN_REQUIREMENT) && oStd::byte_aligned(_StreamRead.Range.Size, UNBUFFERED_ALIGN_REQUIREMENT)), 
+		oASSERT(!Unbuffered || (byte_aligned(_StreamRead.pData, UNBUFFERED_ALIGN_REQUIREMENT) && 
+			byte_aligned(_StreamRead.Range.Offset, UNBUFFERED_ALIGN_REQUIREMENT) && byte_aligned(_StreamRead.Range.Size, UNBUFFERED_ALIGN_REQUIREMENT)), 
 			"Unbuffered io has very restrict requirements. file offset, read size, and pointer address must be 4k aligned");
 
 		DWORD numBytesRead;
@@ -348,7 +351,7 @@ struct oFileReaderImpl : public oStreamReader
 	}
 
 	oInitOnce<oSTREAM_DESC> Desc;
-	oStd::intrusive_ptr<threadsafe oDispatchQueueGlobal> ReadQueue;
+	intrusive_ptr<threadsafe oDispatchQueueGlobal> ReadQueue;
 	mutex Mutex;
 	oInitOnce<oURIParts> URIParts;
 	HANDLE hFile;
@@ -376,7 +379,7 @@ struct oFileWriterImpl : public oStreamWriter
 
 		oSystemURIPartsToPath(ResolvedPath.Initialize(), _URIParts);
 		
-		oCore::filesystem::create_directories(oStd::path(*ResolvedPath).parent_path());
+		ouro::filesystem::create_directories(path(*ResolvedPath).parent_path());
 
 		// @oooii-tony:
 		// FILE_SHARE_READ added here for a sole purpose: so a programmer can open
@@ -412,12 +415,12 @@ struct oFileWriterImpl : public oStreamWriter
 	
 	void GetDesc(oSTREAM_DESC* _pDesc) threadsafe override
 	{
-		oFileGetDesc(oStd::path(*ResolvedPath), _pDesc);
+		oFileGetDesc(path(*ResolvedPath), _pDesc);
 	}
 
 	void DispatchWrite(const oSTREAM_WRITE& _Write, continuation_t _Continuation) threadsafe override
 	{
-		oStd::intrusive_ptr<threadsafe oFileWriterImpl> self(this);
+		intrusive_ptr<threadsafe oFileWriterImpl> self(this);
 		// Doing it this way because standard windows async file io is not 
 		// GUARANTEED to be asynchronous. Windows can decided to do the read 
 		// synchronously on its own, so FORCE async this way.
@@ -472,9 +475,9 @@ struct oFileWriterImpl : public oStreamWriter
 	}
 
 	oInitOnce<oURIParts> URIParts;
-	oInitOnce<oStd::path_string> ResolvedPath;
+	oInitOnce<path_string> ResolvedPath;
 	oHandle hFile;
-	oStd::intrusive_ptr<threadsafe oDispatchQueueGlobal> WriteQueue;
+	intrusive_ptr<threadsafe oDispatchQueueGlobal> WriteQueue;
 	mutex Mutex;
 	oRefCount RefCount;
 };
@@ -535,10 +538,10 @@ struct oFileMonitorImpl : public oStreamMonitor
 			return;
 		}
 
-		oStd::path_string Path;
+		path_string Path;
 		if (!oSystemURIPartsToPath(Path, _URIParts))
 		{
-			oStd::uri_string URI;
+			uri_string URI;
 			oURIRecompose(URI, _URIParts);
 			oErrorSetLast(std::errc::invalid_argument, "Invalid uri: %s", URI.c_str());
 			return;
@@ -553,11 +556,11 @@ struct oFileMonitorImpl : public oStreamMonitor
 		URIParts.Initialize(FolderURIParts);
 
 		oSTREAM_DESC fd;
-		oFileGetDesc(oStd::path(Path), &fd);
+		oFileGetDesc(path(Path), &fd);
 		
 		if (!fd.Directory)
 		{
-			oStd::uri_string URI;
+			uri_string URI;
 			oURIRecompose(URI, _URIParts);
 			oErrorSetLast(std::errc::invalid_argument, "Invalid uri (filename should have been stripped): %s", URI.c_str());
 			return;
@@ -637,23 +640,23 @@ struct oFileMonitorImpl : public oStreamMonitor
 			oSTREAM_EVENT e = oAsStreamEvent(n->Action);
 			if (e != oSTREAM_UNSUPPORTED)
 			{
-				oASSERT(n->FileNameLength < (oStd::path_string::Capacity*2), "not expecting paths that are longer than they should be"); // *2 for that fact that FileNameLength is # bytes for a wide-char non-null-term string
+				oASSERT(n->FileNameLength < (path_string::Capacity*2), "not expecting paths that are longer than they should be"); // *2 for that fact that FileNameLength is # bytes for a wide-char non-null-term string
 
 				// note the path given to us by windows is only the portion after the 
 				// path of the folder we are monitoring, so have to reform the full uri.
 
 				// These strings aren't null-terminated, AND in wide-character. Make it
 				// not this way...
-				wchar_t ForNullTermination[oStd::path_string::Capacity];
+				wchar_t ForNullTermination[path_string::Capacity];
 				memcpy(ForNullTermination, n->FileName, n->FileNameLength);
 				ForNullTermination[n->FileNameLength / 2] = 0;
-				oStd::path_string path(ForNullTermination);
+				path_string path(ForNullTermination);
 
 				oURIParts parts;
 				parts = *URIParts;
-				oStd::sncatf(parts.Path, "/%s", path.c_str());
+				sncatf(parts.Path, "/%s", path.c_str());
 
-				oStd::uri_string URI;
+				uri_string URI;
 				oVERIFY(oURIRecompose(URI, parts));
 				
 				if (MonitorFilename->empty() || oMatchesWildcard(MonitorFilename->c_str(), path.c_str()))
@@ -669,18 +672,18 @@ struct oFileMonitorImpl : public oStreamMonitor
 					}
 
 					if (MDesc.TraceEvents)
-						oTRACE_MONITOR("%s: %s", oStd::as_string(e), URI.c_str());
+						oTRACE_MONITOR("%s: %s", as_string(e), URI.c_str());
 
 					OnEvent(e, URI);
 				}
 				else
 				{
 					if (MDesc.TraceEvents)
-						oTRACE_MONITOR("%s: %s not matched by %s", oStd::as_string(e), URI.c_str(), MonitorFilename->c_str());
+						oTRACE_MONITOR("%s: %s not matched by %s", as_string(e), URI.c_str(), MonitorFilename->c_str());
 				}
 			}
 
-			n = oStd::byte_add(n, n->NextEntryOffset);
+			n = byte_add(n, n->NextEntryOffset);
 
 		} while (n->NextEntryOffset);
 	}
@@ -701,7 +704,7 @@ struct oFileMonitorImpl : public oStreamMonitor
 				{
 					bool IncrementIterator = true;
 
-					const oStd::uri_string& URI = it->first;
+					const uri_string& URI = it->first;
 					oEVENT_RECORD& r = it->second;
 					if (r.Handled)
 					{
@@ -714,7 +717,7 @@ struct oFileMonitorImpl : public oStreamMonitor
 
 					else
 					{
-						oStd::path_string path;
+						path_string path;
 						oURIParts p;
 						oURIDecompose(URI, &p);
 						oSystemURIPartsToPath(path, p);
@@ -782,8 +785,8 @@ private:
 	oIOCP* pIOCP; // Because of IOCP requirements, lifetime management of the IOCP is special
 	oSTREAM_MONITOR_DESC MDesc;
 	oSTREAM_ON_EVENT OnEvent;
-	oInitOnce<oStd::path_string> MonitorPath;
-	oInitOnce<oStd::path_string> MonitorFilename;
+	oInitOnce<path_string> MonitorPath;
+	oInitOnce<path_string> MonitorFilename;
 	oInitOnce<oURIParts> URIParts;
 	oInitOnce<oSTREAM_DESC> Desc;
 
@@ -801,8 +804,8 @@ private:
 	};
 
 	mutex CheckAccessibleMutex;
-	std::map<oStd::uri_string, oEVENT_RECORD, oStd::less_case_insensitive<oStd::uri_string>> EventRecords;
-	std::vector<oStd::uri_string> Accessibles;
+	std::map<uri_string, oEVENT_RECORD, less_case_insensitive<uri_string>> EventRecords;
+	std::vector<uri_string> Accessibles;
 	HANDLE hTimerQueue;
 
 	bool Closing;
@@ -837,39 +840,39 @@ bool oFileSchemeHandlerCreate(threadsafe oFileSchemeHandler** _ppFileSchemeHandl
 
 bool oFileSchemeHandlerImpl::GetDesc(const oURIParts& _URIParts, oSTREAM_DESC* _pDesc) threadsafe
 {
-	oStd::path_string Path;
+	path_string Path;
 	oSystemURIPartsToPath(Path, _URIParts);
-	return oFileGetDesc(oStd::path(Path), _pDesc);
+	return oFileGetDesc(path(Path), _pDesc);
 }
 
 bool oFileSchemeHandlerImpl::Copy(const oURIParts& _Source, const oURIParts& _Destination, bool _Recursive) threadsafe
 {
-	oStd::path_string S, D;
+	path_string S, D;
 	oSystemURIPartsToPath(S, _Source);
 	oSystemURIPartsToPath(D, _Destination);
 
 	if (_Recursive)
-		oCore::filesystem::copy_all(oStd::path(S), oStd::path(D), oCore::filesystem::copy_option::overwrite_if_exists);
+		ouro::filesystem::copy_all(path(S), path(D), ouro::filesystem::copy_option::overwrite_if_exists);
 	else
-		oCore::filesystem::copy_file(oStd::path(S), oStd::path(D), oCore::filesystem::copy_option::overwrite_if_exists);
+		ouro::filesystem::copy_file(path(S), path(D), ouro::filesystem::copy_option::overwrite_if_exists);
 
 	return true;
 }
 
 bool oFileSchemeHandlerImpl::Move(const oURIParts& _Source, const oURIParts& _Destination, bool _OverwriteDestination) threadsafe
 {
-	oStd::path_string S, D;
+	path_string S, D;
 	oSystemURIPartsToPath(S, _Source);
 	oSystemURIPartsToPath(D, _Destination);
-	oCore::filesystem::rename(oStd::path(S), oStd::path(D), _OverwriteDestination ? oCore::filesystem::copy_option::overwrite_if_exists : oCore::filesystem::copy_option::fail_if_exists);
+	ouro::filesystem::rename(path(S), path(D), _OverwriteDestination ? ouro::filesystem::copy_option::overwrite_if_exists : ouro::filesystem::copy_option::fail_if_exists);
 	return true;
 }
 
 bool oFileSchemeHandlerImpl::Delete(const oURIParts& _URIParts) threadsafe
 {
-	oStd::path_string Path;
+	path_string Path;
 	oSystemURIPartsToPath(Path, _URIParts);
-	oCore::filesystem::remove_all(oStd::path(Path));
+	ouro::filesystem::remove_all(path(Path));
 	return true;
 }
 

@@ -25,7 +25,7 @@
 #include <oPlatform/oTest.h>
 #include <oPlatform/oVersionUpdate.h>
 
-static oStd::uri_string sUpdateURI = "oTestD-1.0.2.2234.exe";
+static ouro::uri_string sUpdateURI = "oTestD-1.0.2.2234.exe";
 
 struct PLATFORM_oVersionUpdate : public oTest
 {
@@ -36,9 +36,9 @@ struct PLATFORM_oVersionUpdate : public oTest
 		oTESTB(0 == strcmp(Parts.Filebase, "oTest"), "UpdateURI decomposed filebase doesn't match");
 		oTESTB(Parts.IsDebugBuild, "UpdateURI should have been decomposed as a debug build");
 		oTESTB(0 == strcmp(Parts.Extension, ".exe"), "UpdateURI decomposed extension doesn't match");
-		oTESTB(Parts.Version == oStd::version(1,0,2,2234), "UpdateURI decomposed version doesn't match");
+		oTESTB(Parts.Version == ouro::version(1,0,2,2234), "UpdateURI decomposed version doesn't match");
 
-		oStd::uri_string Result;
+		ouro::uri_string Result;
 		oTESTB(nullptr != oVURecompose(Result, Parts), "oVURecompose failed");
 		oTESTB(0==strcmp(Result.c_str(), sUpdateURI.c_str()), "oVURecompose result doesn't match");
 

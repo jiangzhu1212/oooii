@@ -24,16 +24,18 @@
  **************************************************************************/
 #include "oMSBuild.h"
 
+using namespace ouro;
+
 oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oMSBUILD_SETTINGS)
 	oRTTI_COMPOUND_ABSTRACT(oMSBUILD_SETTINGS)
 	oRTTI_COMPOUND_VERSION(oMSBUILD_SETTINGS, 0,1,0,0)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oMSBUILD_SETTINGS)
 		oRTTI_COMPOUND_ATTR(oMSBUILD_SETTINGS, TimeoutSeconds, oRTTI_OF(uint), "TimeoutSeconds", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oMSBUILD_SETTINGS, ToolPath, oRTTI_OF(ostd_path_string), "ToolPath", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oMSBUILD_SETTINGS, Solution, oRTTI_OF(ostd_path_string), "Solution", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oMSBUILD_SETTINGS, ToolPath, oRTTI_OF(ouro_path_string), "ToolPath", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oMSBUILD_SETTINGS, Solution, oRTTI_OF(ouro_path_string), "Solution", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oMSBUILD_SETTINGS, CleanAlways, oRTTI_OF(bool), "CleanAlways", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oMSBUILD_SETTINGS, Configurations, oRTTI_OF(std_vector_ostd_sstring), "Configurations", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(oMSBUILD_SETTINGS, Platforms, oRTTI_OF(std_vector_ostd_sstring), "Platforms", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oMSBUILD_SETTINGS, Configurations, oRTTI_OF(std_vector_ouro_sstring), "Configurations", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(oMSBUILD_SETTINGS, Platforms, oRTTI_OF(std_vector_ouro_sstring), "Platforms", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(oMSBUILD_SETTINGS, ThreadsPerBuild, oRTTI_OF(int), "ThreadsPerBuild", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oMSBUILD_SETTINGS)
 oRTTI_COMPOUND_END_DESCRIPTION(oMSBUILD_SETTINGS)
@@ -64,18 +66,18 @@ static const char* oStrStr( const char* _pStr, const char* _pSubStr, size_t _Max
 static const char* oMSBUILD_ERROR_PATTERNS[2] = {": error ", ": fatal error"};
 static const char* oMSBUILD_WARNING_PATTERN = ": warning ";
 
-static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, oFUNCTION<bool(const oStd::uri_string& _CommandName, const char* _pLog)> _CommandLogger)
+static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, oFUNCTION<bool(const uri_string& _CommandName, const char* _pLog)> _CommandLogger)
 {
-	oStd::lstring ToolName;
+	lstring ToolName;
 	snprintf(ToolName, "%s /nodereuse:false /maxcpucount", _Settings.ToolPath);
 	if(_Settings.ThreadsPerBuild > 0)
-		oStd::sncatf(ToolName, ":%d", _Settings.ThreadsPerBuild);
+		sncatf(ToolName, ":%d", _Settings.ThreadsPerBuild);
 
-	oStd::path_string CommandLine;
+	path_string CommandLine;
 	int ConfigHead = snprintf(CommandLine, "%s %s /p:Configuration=", ToolName, _Settings.Solution);
 
 	o_msbuild_stdout_t StdOutDrain;
-	std::unordered_map<oStd::uri_string, std::shared_ptr<oCore::process>, oStdHash<oStd::uri_string>, oStd::equal_to<oStd::uri_string>> BuildProcesses;
+	std::unordered_map<uri_string, std::shared_ptr<ouro::process>, oStdHash<uri_string>, ouro::equal_to<uri_string>> BuildProcesses;
 	oFOR(auto& Config, _Settings.Configurations)
 	{
 		int PlatformHead = ConfigHead + snprintf(CommandLine.c_str() + ConfigHead, CommandLine.capacity() - ConfigHead, "%s /p:Platform=", Config);
@@ -84,13 +86,13 @@ static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, o
 		{
 			snprintf(CommandLine.c_str() + PlatformHead, CommandLine.capacity() - PlatformHead, "%s %s", Platform, _pCommand);
 
-			oCore::process::info pi;
+			ouro::process::info pi;
 			pi.command_line = CommandLine;
 			pi.stdout_buffer_size = StdOutDrain.capacity() - 1;
-			pi.show = oCore::process::hide;
+			pi.show = ouro::process::hide;
 
-			std::shared_ptr<oCore::process> Process = oCore::process::make(pi);
-			oStd::uri_string Name;
+			std::shared_ptr<ouro::process> Process = ouro::process::make(pi);
+			uri_string Name;
 			snprintf(Name, "%s_%s", Config, Platform);
 			if( BuildProcesses.end() != BuildProcesses.find(Name) )
 				return oErrorSetLast(std::errc::invalid_argument, "Duplicate build requested %s", Name);
@@ -171,14 +173,14 @@ private:
 
 bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _LogFolder, const oConcurrency::event& _CancelEvent, oMSBuildResults* _pResults)
 {
-	std::unordered_map<oStd::uri_string, LogContext, oStdHash<oStd::uri_string>, oStd::equal_to<oStd::uri_string>> BuildLogs;
+	std::unordered_map<uri_string, LogContext, oStdHash<uri_string>, ouro::equal_to<uri_string>> BuildLogs;
 
 	_pResults->CleanSucceeded = true;
 	_pResults->CleanTimeSeconds = 0.0f;
 	if (_Settings.CleanAlways)
 	{
 		float StartCleanTimeMS = oTimerMSF();
-		_pResults->CleanSucceeded = MSBuild(_Settings, "/t:Clean", [&](const oStd::uri_string& _CommandName, const char* _pLog)->bool
+		_pResults->CleanSucceeded = MSBuild(_Settings, "/t:Clean", [&](const uri_string& _CommandName, const char* _pLog)->bool
 		{
 			return true;
 		});
@@ -196,7 +198,7 @@ bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _LogFolder, 
 
 	float StartBuildTimeMS = oTimerMSF();
 	_pResults->BuildTimeSeconds = 0.0f;
-	_pResults->BuildSucceeded = MSBuild(_Settings, "", [&](const oStd::uri_string& _CommandName, const char* _pLog)->bool
+	_pResults->BuildSucceeded = MSBuild(_Settings, "", [&](const uri_string& _CommandName, const char* _pLog)->bool
 	{
 		if (_CancelEvent.is_set() || 0 == TimeoutMS)
 			return false;
@@ -217,13 +219,13 @@ bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _LogFolder, 
 	oFOR(auto& BuildLog, BuildLogs)
 	{
 		// Save out the file
-		oStd::path FilePath = _LogFolder;
-		oStd::sstring Filename;
+		path FilePath = _LogFolder;
+		sstring Filename;
 		snprintf(Filename, "%s.txt", BuildLog.first.c_str());
 		FilePath /= Filename;
 		auto& Log = BuildLog.second.GetLog();
 		
-		try { oCore::filesystem::save(FilePath, &Log[0], Log.size(), oCore::filesystem::save_option::text_write); }
+		try { ouro::filesystem::save(FilePath, &Log[0], Log.size(), ouro::filesystem::save_option::text_write); }
 		catch (std::exception&) { _pResults->SavingLogfilesSucceeded &= false; }
 
 		_pResults->BuildLogfiles.push_back(FilePath);
@@ -235,9 +237,9 @@ bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _LogFolder, 
 	return true;
 }
 
-bool oMSBuildParseLogfile(oStd::path_string _Logfile, bool _IncludeWarnings, oFUNCTION<bool(o_msbuild_stdout_t _WarningOrError)> _Output)
+bool oMSBuildParseLogfile(path_string _Logfile, bool _IncludeWarnings, oFUNCTION<bool(o_msbuild_stdout_t _WarningOrError)> _Output)
 {
-	oStd::intrusive_ptr<oBuffer> Buffer;
+	intrusive_ptr<oBuffer> Buffer;
 	if (!oBufferLoad(_Logfile, &Buffer, true))
 		return false;
 
@@ -263,7 +265,7 @@ bool oMSBuildParseLogfile(oStd::path_string _Logfile, bool _IncludeWarnings, oFU
 		if (WarningOrError)
 		{
 			o_msbuild_stdout_t ErrorLine;
-			oStd::strncpy(ErrorLine, pLog, LineLength);
+			strncpy(ErrorLine, pLog, LineLength);
 			if (!_Output(ErrorLine))
 				break;
 		}
