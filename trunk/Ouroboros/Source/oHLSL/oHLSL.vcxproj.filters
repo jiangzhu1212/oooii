@@ -4,9 +4,6 @@
     <Filter Include="oHLSL">
       <UniqueIdentifier>{3d630964-46d0-4ddc-8351-069967fda0c3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source">
-      <UniqueIdentifier>{ec0246ef-c4e0-4435-af97-56e1c36b0d06}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oHLSL\oHLSLTypesInternal.h">
@@ -39,16 +36,5 @@
     <ClInclude Include="..\..\Include\oHLSL\all.h">
       <Filter>oHLSL</Filter>
     </ClInclude>
-    <ClInclude Include="pch.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="stringize.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="pch.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

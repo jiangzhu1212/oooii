@@ -89,6 +89,7 @@
     <ClCompile Include="string\split_path.cpp" />
     <ClCompile Include="string\strbitmask.cpp" />
     <ClCompile Include="string\stringize.cpp" />
+    <ClCompile Include="string\stringize_hlsl.cpp" />
     <ClCompile Include="string\strtok.cpp" />
     <ClCompile Include="string\trim.cpp" />
     <ClCompile Include="string\type_name.cpp" />

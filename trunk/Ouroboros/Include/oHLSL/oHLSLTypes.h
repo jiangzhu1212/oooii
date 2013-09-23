@@ -71,6 +71,9 @@
 		static const bool value = 
 			std::is_floating_point<T>::value ||
 			std::is_same<bool,std::remove_cv<T>::type>::value ||
+			std::is_same<bool2,std::remove_cv<T>::type>::value ||
+			std::is_same<bool3,std::remove_cv<T>::type>::value ||
+			std::is_same<bool4,std::remove_cv<T>::type>::value ||
 			std::is_same<int,std::remove_cv<T>::type>::value ||
 			std::is_same<uint,std::remove_cv<T>::type>::value ||
 			std::is_same<int2,std::remove_cv<T>::type>::value ||
