@@ -373,6 +373,9 @@ bool oAutoBuildCaptureRemaining::AttemptCapture(const char* _URI, const char** _
 
 void OnNewVersion(oSTREAM_EVENT _Event, const uri_string& _ChangedURI, oWebAppWindow* _pAppWindow)
 {
+	oASSERT(false, "Disabled until version packing gets resurrected.");
+#if 0
+
 	static bool NewVersionFound = false;
 	switch (_Event)
 	{
@@ -402,6 +405,7 @@ void OnNewVersion(oSTREAM_EVENT _Event, const uri_string& _ChangedURI, oWebAppWi
 	default:
 		break;
 	}
+#endif
 }
 
 oMAINA()

@@ -169,13 +169,11 @@ bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ
 	{
 		if (oSTRVALID(d.MTLPath))
 		{
-			path_string mtlPath;
-			if (oIsFullPath(d.MTLPath))
-				mtlPath = d.MTLPath;
-			else
+			ouro::path mtlPath(d.MTLPath);
+			if (!mtlPath.is_absolute())
 			{
-				mtlPath = _URIReference;
-				oReplaceFilename(mtlPath, d.MTLPath);
+				mtlPath = ouro::uri(_URIReference).path();
+				mtlPath.replace_filename(d.MTLPath);
 			}
 
 			if (!oMTLLoad(mtlPath, _ppMTL))

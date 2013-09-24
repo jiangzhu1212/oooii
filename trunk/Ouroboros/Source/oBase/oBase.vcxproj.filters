@@ -178,6 +178,9 @@
     <ClCompile Include="string\stringize_hlsl.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
+    <ClCompile Include="string\matches_wildcard.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\finally.h">

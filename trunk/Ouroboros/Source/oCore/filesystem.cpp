@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCore/filesystem.h>
+#include <oCore/process.h>
 #include <oStd/date.h>
 #include <oBase/macros.h>
 #include "../oStd/win.h"
@@ -132,6 +133,36 @@ path temp_path(bool _IncludeFilename)
 		oTHROW0(operation_not_permitted);
 	if (_IncludeFilename && !GetTempFileNameA(Path, "tmp", 0, Path))
 			oFSTHROWLAST();
+	return Path;
+}
+
+path log_path(bool _IncludeFilename, const char* _ExeSuffix)
+{
+	path Path = app_path(true);
+	path Basename = Path.basename();
+	Path.replace_filename();
+	Path /= "Logs/";
+
+	if (_IncludeFilename)
+	{
+		time_t theTime;
+		time(&theTime);
+		tm t;
+		localtime_s(&t, &theTime);
+
+		ouro::path_string StrLogFilename;
+		char* p = StrLogFilename.c_str();
+		p += ::strftime(StrLogFilename, StrLogFilename.capacity(), "%Y-%m-%d-%H-%M-%S_", &t);
+		snprintf(p, StrLogFilename.capacity() - std::distance(StrLogFilename.c_str(), p)
+			, "%s%s%s_%u.txt"
+			, Basename.c_str()
+			, _ExeSuffix ? "_" : ""
+			, _ExeSuffix ? _ExeSuffix : ""
+			, ouro::this_process::get_id());
+
+		Path.replace_filename(StrLogFilename);
+	}
+
 	return Path;
 }
 

@@ -146,7 +146,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oStream.h" />
     <ClInclude Include="..\..\Include\oPlatform\oStreamUtil.h" />
     <ClInclude Include="..\..\Include\oPlatform\oTCPServer.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oVersionUpdate.h" />
     <ClInclude Include="..\..\Include\oPlatform\oWebAppWindow.h" />
     <ClInclude Include="..\..\Include\oPlatform\oWebServer.h" />
     <ClInclude Include="..\..\Include\oPlatform\oImage.h" />
@@ -231,7 +230,6 @@
     <ClCompile Include="oStream.cpp" />
     <ClCompile Include="oStreamUtil.cpp" />
     <ClCompile Include="oTest.cpp" />
-    <ClCompile Include="oVersionUpdate.cpp" />
     <ClCompile Include="oVTable.cpp" />
     <ClCompile Include="oWebAppWindow.cpp" />
     <ClCompile Include="oWebServer.cpp" />

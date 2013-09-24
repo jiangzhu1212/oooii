@@ -81,41 +81,6 @@ bool oMoveMouseCursorOffscreen()
 	return !!SetCursorPos(p.x + sz.x, p.y-1);
 }
 
-bool oWaitForSystemSteadyState(oFUNCTION<bool()> _ContinueIdling)
-{
-	//if (oProcessHasDebuggerAttached(oProcessGetCurrentID()))
-	//		return true;
-
-	oTRACE("Waiting for system steady state...");
-
-	const unsigned int TWO_MINUTES = 120000;
-	if (!ouro::system::wait_for_idle(TWO_MINUTES, _ContinueIdling))
-	{
-		if (oErrorGetLast() == ETIMEDOUT)
-		{
-			oMSGBOX_DESC d;
-			d.Type = oMSGBOX_ERR;
-			d.Title = "ExProx2.exe";
-			d.TimeoutMS = 30000;
-			oMsgBox(d, "The application waited for the system to reach a steady state, but it did not occur within the timeout period.");
-			return false;
-		}
-
-		else if (oErrorGetLast() != std::errc::operation_canceled)
-		{
-			oMSGBOX_DESC d;
-			d.Type = oMSGBOX_ERR;
-			d.Title = "ExProx2.exe";
-			d.TimeoutMS = 30000;
-			oMsgBox(d, "The application waited for the system to reach a steady state, but it did not occur for a reason other than timeout (needs more debugging).");
-			return false;
-		}
-	}
-
-	oTRACE("System has steadied, continuing...");
-	return true;
-}
-
 void* oLoadIcon(oFUNCTION<void(const char** _ppBufferName, const void** _ppBuffer, size_t* _pSizeofBuffer)> _BufferGetDesc)
 {
 	const char* BufferName = nullptr;
@@ -145,35 +110,6 @@ void* oLoadStandardIcon()
 {
 	extern void GetDescoooii_ico(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
 	return oLoadIcon(GetDescoooii_ico);
-}
-
-char* oGetLogFilePath(char* _StrDestination, size_t _SizeofStrDestination, const char* _ExeSuffix)
-{
-	time_t theTime;
-	time(&theTime);
-	tm t;
-	localtime_s(&t, &theTime);
-
-	path AppPath = ouro::filesystem::app_path(true);
-	if (strlcpy(_StrDestination, AppPath, _SizeofStrDestination) >= _SizeofStrDestination)
-		return nullptr; // pass through error
-
-	char fn[128];
-	char* p = oGetFilebase(_StrDestination);
-	strlcpy(fn, p);
-	oTrimFileExtension(fn);
-	p += snprintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "Logs/");
-	p += strftime(p, _SizeofStrDestination - std::distance(_StrDestination, p), "%Y-%m-%d-%H-%M-%S_", &t);
-	p += snprintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "%s", fn);
-
-	errno_t err = 0;
-	if (_ExeSuffix)
-		p += snprintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%s", _ExeSuffix);
-
-	p += snprintf(p, _SizeofStrDestination - std::distance(_StrDestination, p), "_%i.txt", ouro::this_process::get_id());
-	clean_path(_StrDestination, _SizeofStrDestination, _StrDestination);
-	
-	return _StrDestination;
 }
 
 bool oINIFindPath( char* _StrDestination, size_t _SizeofStrDestination, const char* _pININame )

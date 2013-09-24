@@ -358,6 +358,9 @@ template<size_t size> char* clean_path(char (&_StrDestination)[size], const char
 char* relativize_path(char* _StrDestination, size_t _SizeofStrDestination, const char* _BasePath, const char* _FullPath);
 template<size_t size> char* relativize_path(char (&_StrDestination)[size], const char* _BasePath, const char* _FullPath) { return relativize_path(_StrDestination, size, _BasePath, _FullPath); }
 
+// Standard Unix/MS-DOS style wildcard matching
+bool matches_wildcard(const char* _Wildcard, const char* _Path);
+
 // Fills pointers into the specified path where different components start. If
 // the component value does not exists, the pointer is filled with nullptr. This 
 // returns the length of _Path.

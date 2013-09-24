@@ -55,43 +55,11 @@ namespace oConsoleReporting
 // useful for fullscreen apps.
 bool oMoveMouseCursorOffscreen();
 
-// Many applications are part of an auto-boot system that treats the operating
-// system like a console/embedded-one-app system. The idea is to come up as 
-// quickly as possible at 100% performance. To avoid the "what happened there?"
-// behavior of running a performance app while the OS is still loading services
-// and other on-boot systems, put in a pause here until CPU usage and other 
-// system metrics are in a steady state. This way the "why is it slow?" is 
-// explicit. Most for-deployment apps should call this very early in their oMAIN
-// function (@oooii-tony: Perhaps we should consider moving this into oMAIN?)
-// _ContinueIdling is an optional function that is called while waiting.  If it 
-// ever returns false the wait will terminate.
-bool oWaitForSystemSteadyState(oFUNCTION<bool()> _ContinueIdling = nullptr);
-
-// For our multi-screen produces, exclusive fullscreen doesn't work when one
-// computer is controlling several fullscreen windows, so we use cooperative
-// fullscreen - always-on-top. Windows thinks it deserves the right to always
-// show the taskbar, so it can fight the idea that we don't want it shown. Many
-// of our apps are console-style apps - i.e. we 100% control the interaction 
-// experience, so close the regular user interface of windows when our app takes
-// over. Remember it's Ctrl-Shift-Esc to bring up the task manager and then
-// File|Run "explorer.exe" to bring it all back. Since our apps tend to shut 
-// down the machine if they close or crash, there is no auto-restore explorer at 
-// this time.
-void oKillExplorer();
-
 // Returns platform-native handle to a file that should be closed
 // using appropriate platform API. On Windows this returns an HICON
 // that should be treated appropriately, including final destruction
 // with DeleteObject().
 void* oLoadStandardIcon();
-
-// Returns the path to a .txt file with the name of the current exe concatenated 
-// with the (optionally) specified suffix and a sortable timestamp in the 
-// filename to ensure uniqueness.
-char* oGetLogFilePath(char* _StrDestination, size_t _SizeofStrDestination, const char* _ExeSuffix = nullptr);
-template<size_t size> char* oGetLogFilePath(char (&_StrDestination)[size], const char* _ExeSuffix = nullptr) { return oGetLogFilePath(_StrDestination, size, _ExeSuffix); }
-template<size_t CAPACITY> char* oGetLogFilePath(ouro::fixed_string<char, CAPACITY>& _StrDestination, const char* _ExeSuffix = nullptr) { return oGetLogFilePath(_StrDestination, _StrDestination.capacity(), _ExeSuffix); }
-
 
 // Finds the path to the specified ini according to OOOii's override rules which 
 // are ordered as follows:
@@ -104,6 +72,5 @@ template<size_t CAPACITY> char* oGetLogFilePath(ouro::fixed_string<char, CAPACIT
 bool oINIFindPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _pININame);
 template<size_t size> bool oINIFindPath(char (&_StrDestination)[size], const char* _pININame) { return oINIFindPath(_StrDestination, size, _pININame); }
 template<size_t CAPACITY> bool oINIFindPath(ouro::fixed_string<char, CAPACITY>& _StrDestination, const char* _pININame) { return oINIFindPath(_StrDestination, _StrDestination.capacity(), _pININame); }
-
 
 #endif

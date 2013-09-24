@@ -213,9 +213,6 @@
     <ClInclude Include="FreeImageHelpers.h">
       <Filter>Source\IO</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oVersionUpdate.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oTCPServer.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
@@ -412,9 +409,6 @@
     </ClCompile>
     <ClCompile Include="oReporting.cpp">
       <Filter>Source\Code Management</Filter>
-    </ClCompile>
-    <ClCompile Include="oVersionUpdate.cpp">
-      <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oWebAppWindow.cpp">
       <Filter>Source\UI</Filter>

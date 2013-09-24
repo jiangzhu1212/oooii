@@ -547,12 +547,12 @@ struct oFileMonitorImpl : public oStreamMonitor
 			return;
 		}
 
-		char* filebase = oGetFilebase(Path.c_str());
-		MonitorFilename.Initialize(filebase);
-		*filebase = 0;
+		ouro::path p(Path);
+		MonitorFilename.Initialize(p.filename());
+		p.remove_filename();
 
 		oURIParts FolderURIParts = _URIParts;
-		*oGetFilebase(FolderURIParts.Path.c_str()) = 0;
+		//FolderURIParts.Path = p;
 		URIParts.Initialize(FolderURIParts);
 
 		oSTREAM_DESC fd;
@@ -659,7 +659,7 @@ struct oFileMonitorImpl : public oStreamMonitor
 				uri_string URI;
 				oVERIFY(oURIRecompose(URI, parts));
 				
-				if (MonitorFilename->empty() || oMatchesWildcard(MonitorFilename->c_str(), path.c_str()))
+				if (MonitorFilename->empty() || ouro::matches_wildcard(MonitorFilename->c_str(), path.c_str()))
 				{
 					if (e == oSTREAM_ADDED || e == oSTREAM_MODIFIED)
 					{

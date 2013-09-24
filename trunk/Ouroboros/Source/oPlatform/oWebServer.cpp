@@ -365,7 +365,7 @@ bool oWebServerImpl::Retrieve(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pR
 	oHTTPAddHeader(_pResponse->HeaderFields, oHTTP_HEADER_CACHE_CONTROL, "no-cache");
 
 	//favicon gets first try
-	if(strncmp(oGetFilebase(uriParts.Path), "favicon.ico", 11) == 0)
+	if(strncmp(path(uriParts.Path).filename().c_str(), "favicon.ico", 11) == 0)
 	{
 		if(_Request.RequestLine.Method != oHTTP_GET) //users can't be modifying or deleting our icon
 		{
@@ -495,7 +495,7 @@ bool oWebServerImpl::Retrieve(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pR
 	if(_Request.RequestLine.Method == oHTTP_GET)
 	{
 		oMIME_TYPE mimeType;
-		oMIMEFromExtension(&mimeType, oGetFileExtension(uriParts.Path));
+		oMIMEFromExtension(&mimeType, path(uriParts.Path).extension());
 		if(mimeType == oMIME_UNKNOWN)
 		{
 			_pResponse->StatusLine.StatusCode = oHTTP_UNAUTHORIZED; //invalid extension

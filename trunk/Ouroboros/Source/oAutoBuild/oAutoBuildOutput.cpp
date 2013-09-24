@@ -77,10 +77,9 @@ static void FormatMSBuildResults(const oMSBuildResults& _Results, std::string& _
 
 	oFOR(auto& BuildLogfile, _Results.BuildLogfiles)
 	{
-		sstring BuildName;
-		oGetFilebase(BuildName, BuildLogfile.c_str());
+		sstring BuildName = path(BuildLogfile).basename().c_str();
 		_LogHTML.append("<p>");
-		oHTMLLink(_LogHTML, oGetFilebase(BuildLogfile.c_str()), BuildName);
+		oHTMLLink(_LogHTML, BuildName, BuildName);
 		if (_Results.BuildSucceeded)
 			_LogHTML.append("</p>");
 		else
@@ -124,13 +123,13 @@ static void FormatUnitTestResults(const oUnitTestResults& results, std::string& 
 	_LogHTML.append(TestTimeString);
 	
 	_LogHTML.append("<p>");
-	const char* stdoutLogfile = oGetFilebase(results.StdoutLogfile.c_str());
+	path stdoutLogfile = path(results.StdoutLogfile).filename();
 	oHTMLLink(_LogHTML, stdoutLogfile, stdoutLogfile);
 	_LogHTML.append("</p>");
 
 	_LogHTML.append("<p>");
-	const char* stderrLogfile = oGetFilebase(results.StderrLogfile.c_str());
-	oHTMLLink(_LogHTML, stderrLogfile, stderrLogfile);
+	path stderrLogfile = path(results.StderrLogfile).filename();
+	oHTMLLink(_LogHTML, stderrLogfile, stderrLogfile.c_str());
 	_LogHTML.append("</p>");
 
 	if (!results.TestingSucceeded)
@@ -179,14 +178,14 @@ static void FormatUnitTestResults(const oUnitTestResults& results, std::string& 
 				_LogHTML.append("\"><img src=\"");
 				_LogHTML.append(&ImagePath[1]); // Skip leading '/' to make image relative to FailedImagePath
 				_LogHTML.append("\" style=\"width:100%;\"/></a></td><td style=\"width:30%;\"><a href=\"");
-				path_string ImagePathDiff = ImagePath;
-				oReplaceFileExtension(ImagePathDiff, "_diff.png");
+				ouro::path ImagePathDiff(ImagePath);
+				ImagePathDiff.replace_extension_with_suffix("_diff.png");
 				_LogHTML.append(&ImagePathDiff[1]); // Skip leading '/' to make image relative to FailedImagePath
 				_LogHTML.append("\"><img src=\"");
 				_LogHTML.append(&ImagePathDiff[1]); // Skip leading '/' to make image relative to FailedImagePath
 				_LogHTML.append("\" style=\"width:100%;\"/></a></td><td style=\"width:30%;\"><a href=\"");
-				path_string ImagePathGolden = ImagePath;
-				oReplaceFileExtension(ImagePathGolden, "_golden.png");
+				ouro::path ImagePathGolden(ImagePath);
+				ImagePathGolden.replace_extension_with_suffix("_golden.png");
 				_LogHTML.append(&ImagePathGolden[1]); // Skip leading '/' to make image relative to FailedImagePath
 				_LogHTML.append("\"><img src=\"");
 				_LogHTML.append(&ImagePathGolden[1]); // Skip leading '/' to make image relative to FailedImagePath

@@ -123,7 +123,7 @@ struct date : oComparable<date>
 	int hour; // [0,23]
 	int minute; // [0,59]
 	int second; // [0,59] We don't support leap seconds because the standards don't
-	int millisecond; // [0,999] @oooii-tony: NTPv4: Attoseconds, Picoseconds, really? I'll update the code when I can measure those kind of numbers.
+	int millisecond; // [0,999]
 
 	inline bool operator==(const date& _That) const { return year == _That.year && month == _That.month && day == _That.day && hour == _That.hour && minute == _That.minute && second == _That.second && millisecond == _That.millisecond; }
 	inline bool operator<(const date& _That) const

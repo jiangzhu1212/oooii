@@ -274,11 +274,8 @@ void DeleteOldLogFiles(const char* _SpecialModeName)
 {
 	const size_t kLogHistory = 10;
 
-	char logFileWildcard[_MAX_PATH];
-	oGetLogFilePath(logFileWildcard, _SpecialModeName);
-
-	char* p = rstrstr(logFileWildcard, "_");
-	strlcpy(p, "*.stdout", oCOUNTOF(logFileWildcard) - std::distance(logFileWildcard, p));
+	path logFileWildcard = filesystem::log_path(true, _SpecialModeName);
+	logFileWildcard.replace_extension_with_suffix("_*.stdout");
 
 	std::vector<oNamedFileDesc> logs;
 	logs.reserve(20);
@@ -302,11 +299,7 @@ void DeleteOldLogFiles(const char* _SpecialModeName)
 
 void EnableLogFile(const char* _SpecialModeName, const char* _LogFileName)
 {
-	char logFilePath[_MAX_PATH];
-	if (_LogFileName == nullptr)
-		oGetLogFilePath(logFilePath, _SpecialModeName);
-	else
-		strlcpy(logFilePath, _LogFileName);
+	path logFilePath = _LogFileName ? _LogFileName : filesystem::log_path(true, _SpecialModeName);
 	oREPORTING_DESC desc;
 	oReportingGetDesc(&desc);
 	desc.LogFilePath = logFilePath;

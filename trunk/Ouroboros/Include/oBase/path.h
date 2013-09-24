@@ -135,6 +135,19 @@ public:
 		return replace_extension(_NewExtension.c_str());
 	}
 
+	basic_path& replace_extension_with_suffix(const char_type* _NewExtension = traits::empty_str())
+	{
+		if (has_extension()) p[ExtensionOffset] = 0;
+		p.append(_NewExtension);
+		parse();
+		return *this;
+	}
+
+	basic_path& replace_extension_with_suffix(const string_type& _NewExtension)
+	{
+		return replace_extension_with_suffix(_NewExtension.c_str());
+	}
+
 	basic_path& replace_filename(const char_type* _NewFilename = traits::empty_str())
 	{
 		if (BasenameOffset != npos)
@@ -173,14 +186,19 @@ public:
 	}
 
 	// Inserts text after basename and before extension
-	basic_path& insert_basename_suffix(const string_type& NewSuffix)
+	basic_path& insert_basename_suffix(const char_type* _NewSuffix)
 	{
 		auto tmp = extension();
 		if (has_extension())
 			p[ExtensionOffset] = 0;
-		p.append(NewSuffix).append(tmp);
+		p.append(_NewSuffix).append(tmp);
 		parse();
 		return *this;
+	}
+
+	basic_path& insert_basename_suffix(const string_type& _NewSuffix)
+	{
+		return insert_basename_suffix(_NewSuffix.c_str());
 	}
 
 	basic_path& remove_basename_suffix(const char_type* _Suffix)
@@ -203,6 +221,11 @@ public:
 		}
 
 		return *this;
+	}
+
+	basic_path& remove_basename_suffix(const string_type& _Suffix)
+	{
+		return basic_path& remove_basename_suffix(_Suffix.c_str());
 	}
 	
 	// decomposition
@@ -250,9 +273,12 @@ public:
 	bool has_parent_path() const { return ParentEndOffset != 0 && ParentEndOffset != npos; }
 	bool has_filename() const { return !p.empty(); }
 
-	bool is_absolute() const { return has_root_directory() && (!traits::posix && has_root_name());  }
+	bool is_absolute() const { return (has_root_directory() && !traits::posix && has_root_name());  }
+	bool is_windows_absolute() const { return is_absolute() || base_path_traits<char_type, false>::has_vol(p);  } // it is too annoying to live without this
 	bool is_relative() const { return !is_absolute(); }
+	bool is_windows_relative() const { return !is_windows_absolute(); }
 	bool is_unc() const { return traits::is_unc(p); }
+	bool is_windows_unc() const { return base_path_traits<char_type, false>::is_unc(p); }
 	bool has_basename() const { return BasenameOffset != npos; }
 	bool has_extension() const { return ExtensionOffset != npos; }
 	bool has_extension(const char_type* _Extension) const { return _Extension && traits::is_dot(*_Extension) && has_extension() ? !traits::compare(&p[ExtensionOffset], _Extension) : false; }

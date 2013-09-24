@@ -25,7 +25,7 @@
 using namespace ouro;
 
 #include <oPlatform/oMsgBox.h>
-#include <oPlatform/oVersionUpdate.h>
+//#include <oPlatform/oVersionUpdate.h>
 #include <oPlatform/Windows/oWindows.h>
 
 static option sCmdOptions[] = 
@@ -51,7 +51,7 @@ namespace ouro {
 	case '?': { return oErrorSetLast(std::errc::invalid_argument, "Parameter %d is not recognized", (_NthOption)); break; } \
 	case ':': { return oErrorSetLast(std::errc::invalid_argument, "Parameter %d is missing a value", (_NthOption)); break; } \
 	default: { oTRACE("Unhandled option -%c %s", (_ShortNameVariable), oSAFESTR(_Value)); break; }
-
+#if 0
 bool oParseCmdLine(int argc, const char* argv[], oVERSIONED_LAUNCH_DESC* _pDesc, bool* _pShowHelp)
 {
 	*_pShowHelp = false;
@@ -90,17 +90,17 @@ static bool oLauncherMain1(int argc, const char* argv[])
 	if (ShowHelp)
 	{
 		char help[1024];
-		if (optdoc(help, oGetFilebase(argv[0]), sCmdOptions))
+		if (optdoc(help, ouro::path(argv[0]).filename().c_str(), sCmdOptions))
 			printf(help);
 		return true;
 	}
 
 	return oVURelaunch(vld);
 }
-
+#endif
 int oLauncherMain(int argc, const char* argv[])
 {
-	if (!oLauncherMain1(argc, argv))
+	if (0 /*&& !oLauncherMain1(argc, argv)*/)
 	{
 		path ModuleName = ouro::this_module::path();
 		oMSGBOX_DESC d;
@@ -115,5 +115,7 @@ int oLauncherMain(int argc, const char* argv[])
 
 oMAIN()
 {
+	oASSERT(false, "Disabled until version update is resurrected");
+
 	return oLauncherMain(argc, argv);
 }

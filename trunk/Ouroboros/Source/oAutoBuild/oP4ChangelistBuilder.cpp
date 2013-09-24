@@ -65,9 +65,8 @@ bool oP4CleanSync(int _ChangeList, const char* _SyncPath, const char* _CleanPath
 {
 	if (_CleanPath)
 	{
-		path_string RootPath;
-		replace(RootPath, _CleanPath, "/", "\\");
-		oTrimFilename(RootPath);
+		windows_path RootPath(_CleanPath);
+		RootPath.replace_filename();
 		xlstring CmdLine;
 		snprintf(CmdLine, "rmdir /S /Q %s", RootPath.c_str());
 		::system(CmdLine.c_str());
@@ -210,9 +209,8 @@ public:
 			return; // Sets last error
 
 		// The directory of the solution will determine our root
-		path_string FileRoot;
-		FileRoot = BuildSettings.Solution.c_str();
-		oTrimFilename(FileRoot.c_str());
+		path FileRoot(BuildSettings.Solution);
+		FileRoot.replace_filename();
 
 		// Patch everything else relative to this
 		oFUNCTION<void(path_string& _PatchPath)> RootPatcher = 

@@ -53,7 +53,7 @@ void oHTTPHandlerBuildStaticFileResponse(const char* _FullPath, oHTTPHandler::Co
 	if(!reader->Read(read))
 		return;
 
-	oMIMEFromExtension(&_CommonParams.pResponse->Content.Type, oGetFileExtension(_FullPath));
+	oMIMEFromExtension(&_CommonParams.pResponse->Content.Type, path(_FullPath).extension());
 	_CommonParams.pResponse->StatusLine.StatusCode = oHTTP_OK;
 }
 

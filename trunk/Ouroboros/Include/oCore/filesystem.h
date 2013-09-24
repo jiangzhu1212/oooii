@@ -131,6 +131,7 @@ private:
 // All paths to folders end with a separator
 path app_path(bool _IncludeFilename = false); // includes executable name
 path temp_path(bool _IncludeFilename = false); // includes a uniquely named file
+path log_path(bool _IncludeFilename = false, const char* _ExeSuffix = nullptr); // includes a name based on the app name, date and process id
 path desktop_path();
 path system_path();
 path os_path();

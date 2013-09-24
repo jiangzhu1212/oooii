@@ -462,8 +462,8 @@ bool oTest::TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const c
 		if (!oImageSave(_pTestImage, oImageIsAlphaFormat(iDesc.Format) ? oImage::FORCE_ALPHA : oImage::FORCE_NO_ALPHA , _FailedImagePath))
 			return oErrorSetLast(std::errc::io_error, "Save failed: (Output)...%s", fPath);
 
-		path_string diffPath(_FailedImagePath);
-		oReplaceFileExtension(diffPath, diffPath.capacity(), "_diff.png");
+		ouro::path diffPath(_FailedImagePath);
+		diffPath.replace_extension_with_suffix("_diff.png");
 		const char* dPath = diffPath.c_str() + commonPathLength;
 
 		if (diffs && !oImageSave(diffs, oImageIsAlphaFormat(iDesc.Format) ? oImage::FORCE_ALPHA : oImage::FORCE_NO_ALPHA, diffPath))
@@ -471,8 +471,8 @@ bool oTest::TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const c
 
 		if (_OutputGoldenImage)
 		{
-			path_string goldenPath(_FailedImagePath);
-			oReplaceFileExtension(goldenPath, goldenPath.capacity(), "_golden.png");
+			ouro::path goldenPath(_FailedImagePath);
+			goldenPath.replace_extension_with_suffix("_golden.png");
 			const char* gPath = goldenPath.c_str() + commonPathLength;
 
 			if (GoldenImage && !oImageSave(GoldenImage, oImageIsAlphaFormat(iDesc.Format) ? oImage::FORCE_ALPHA : oImage::FORCE_NO_ALPHA, goldenPath))

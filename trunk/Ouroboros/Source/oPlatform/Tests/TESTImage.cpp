@@ -41,7 +41,7 @@ struct PLATFORM_oImage : public oTest
 			oTESTB0(FindInputFile(path, testImage));
 
 			ouro::path tmp;
-			oTESTB0(BuildPath(tmp, oGetFilebase(testImage), oTest::TEMP));
+			oTESTB0(BuildPath(tmp, ouro::path(testImage).filename(), oTest::TEMP));
 
 			ouro::intrusive_ptr<oBuffer> buffer1;
 			oTESTB(oBufferLoad(path.c_str(), &buffer1), "Load failed: %s", path.c_str());

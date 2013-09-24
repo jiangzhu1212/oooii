@@ -237,12 +237,17 @@ public:
 
 	basic_uri& replace_extension(const char_type* _NewExtension = traits::empty_str())
 	{
-		return replace_path(path().replace_extension(_NewExtension.c_str()));
+		return replace_path(path().replace_extension(_NewExtension));
+	}
+
+	basic_uri& replace_extension_with_suffix(const char_type* _NewSuffix)
+	{
+		return replace_path(path().replace_extension_with_suffix(_NewSuffix));
 	}
 
 	basic_uri& replace_filename(const char_type* _NewFilename = traits::empty_str())
 	{
-		return replace_path(path().replace_filename(_NewFilename.c_str()));
+		return replace_path(path().replace_filename(_NewFilename));
 	}
 
 	// Returns a basic_uri reference relative to the specified _URIBase. If this basic_uri 

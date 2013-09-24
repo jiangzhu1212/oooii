@@ -220,7 +220,7 @@ bool oStreamContext::VisitURIReferenceInternal(const char* _URIReference, const 
 
 	bool DoDecompose = false;
 
-	if (oIsUNCPath(_URIReference) || oIsFullPath(_URIReference))
+	if (ouro::path(_URIReference).is_windows_absolute())
 	{
 		uri_string URI;
 		if (!oURIFromAbsolutePath(URI, _URIReference))

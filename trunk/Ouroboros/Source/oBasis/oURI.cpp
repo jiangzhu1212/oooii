@@ -243,7 +243,7 @@ char* oURIFromAbsolutePath(char* _URI, size_t _SizeofURI, const char* _AbsoluteP
 	uri_string Authority;
 	uri_string Path;
 
-	if (oIsUNCPath(_AbsolutePath))
+	if (ouro::path(_AbsolutePath).is_windows_unc())
 	{
 		// Move to end of authority
 		const char* end = _AbsolutePath + 2;
@@ -291,6 +291,7 @@ char* oURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIPart
 
 	const bool isWindows = true;
 	const char* p = _URIParts.Path.c_str();
+	bool skipFirstTwo = false;
 
 	if (isWindows)
 	{
@@ -312,11 +313,10 @@ char* oURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIPart
 	if (!_URIParts.Authority.empty())
 	{
 		char* p = _Path;
-		while (*p)
+		if (p[0] == '/' && p[1] == '/')
 		{
-			if (*p == '/')
-				*p = '\\';
-			p++;
+			p[0] = '\\';
+			p[1] = '\\';
 		}
 	}
 
@@ -390,9 +390,10 @@ char* oURIResolve(char* _URIReference, size_t _SizeofURIReference, const char* _
 			ResultURIParts.Path = URIParts.Path;
 		else
 		{
-			oTrimFilename(ResultURIParts.Path);
-			oEnsureSeparator(ResultURIParts.Path);
-			sncatf(ResultURIParts.Path, "%s", URIParts.Path.c_str());
+			path p = ResultURIParts.Path;
+			p.remove_filename();
+			p /= URIParts.Path;
+			ResultURIParts.Path = p;
 		}
 
 		ResultURIParts.Query = URIParts.Query;
@@ -424,7 +425,7 @@ char* oURIEnsureFileExtension(char* _URIReferenceWithExtension, size_t _SizeofUR
 		oURIParts parts;
 		if (!oURIDecompose(_SourceURIReference, &parts))
 			return nullptr;
-		oReplaceFileExtension(parts.Path.c_str(), _Extension);
+		parts.Path = ouro::path(parts.Path).replace_extension(_Extension).c_str();
 		if (!oURIRecompose(_URIReferenceWithExtension, _SizeofURIReferenceWithExtension, parts))
 			return nullptr;
 	}

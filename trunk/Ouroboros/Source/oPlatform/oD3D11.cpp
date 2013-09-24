@@ -502,7 +502,7 @@ char* oD3D11GetDebugName(char* _StrDestination, size_t _SizeofStrDestination, co
 
 D3DX11_IMAGE_FILE_FORMAT oD3D11GetFormatFromPath(const char* _Path)
 {
-	const char* ext = oGetFileExtension(_Path);
+	path ext = path(_Path).extension();
 
 	struct EXT_MAPPING
 	{

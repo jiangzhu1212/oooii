@@ -138,6 +138,16 @@ int spawn(const char* _CommandLine
 	, bool _ShowWindow
 	, unsigned int _ExecutionTimeout);
 
+template<typename Rep, typename Period>
+int spawn(const char* _CommandLine
+	, const std::function<void(char* _Line)>& _GetLine
+	, bool _ShowWindow
+	, const oStd::chrono::duration<Rep, Period>& _Timeout)
+{
+	oStd::chrono::milliseconds ms = oStd::chrono::duration_cast<oStd::chrono::milliseconds>(_Timeout);
+	return spawn(_CommandLine, _GetLine, _ShowWindow, static_cast<unsigned int>(ms.count()));
+}
+
 // Same as above, but no timeout
 int spawn(const char* _CommandLine
 	, const std::function<void(char* _Line)>& _GetLine

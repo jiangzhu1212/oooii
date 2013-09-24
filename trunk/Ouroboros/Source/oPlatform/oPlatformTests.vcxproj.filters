@@ -63,9 +63,6 @@
     <ClCompile Include="Tests\TESTDispatchQueueConcurrent.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTVersionUpdate.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTWindowSysDialog_UI.cpp">
       <Filter>Source</Filter>
     </ClCompile>

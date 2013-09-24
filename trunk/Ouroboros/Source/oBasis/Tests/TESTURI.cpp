@@ -258,7 +258,7 @@ bool oBasisTest_oURI()
 		uri_string expectedCleaned;
 		oURIToPath(testPath, sTestUris[i]);
 
-		if (oIsUNCPath(sExpectedPaths[i]))
+		if (ouro::path(sExpectedPaths[i]).is_unc())
 			strlcpy(expectedCleaned, sExpectedPaths[i].c_str());
 		else
 			clean_path(expectedCleaned, sExpectedPaths[i]);

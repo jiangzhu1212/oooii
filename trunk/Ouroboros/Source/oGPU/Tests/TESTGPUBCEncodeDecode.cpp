@@ -99,10 +99,8 @@ struct GPU_BCEncodeDecode : public oTest
 		path ImagePath;
 		oTESTB0(FindInputFile(ImagePath, TestImageFilename));
 
-		char base[64];
-		oGetFilebase(base, ImagePath);
 		char fn[64];
-		snprintf(fn, "%s%s.dds", base, _FilenameSuffix);
+		snprintf(fn, "%s%s.dds", ImagePath.basename().c_str(), _FilenameSuffix);
 
 		path ConvertedPath;
 		oTESTB0(BuildPath(ConvertedPath, fn, oTest::TEMP));

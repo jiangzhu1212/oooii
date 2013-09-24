@@ -78,6 +78,7 @@
     <ClCompile Include="string\insert.cpp" />
     <ClCompile Include="string\json_escape_decode.cpp" />
     <ClCompile Include="string\json_escape_encode.cpp" />
+    <ClCompile Include="string\matches_wildcard.cpp" />
     <ClCompile Include="string\mbsltowcs.cpp" />
     <ClCompile Include="string\next_matching.cpp" />
     <ClCompile Include="string\ordinal.cpp" />

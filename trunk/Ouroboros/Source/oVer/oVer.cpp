@@ -83,7 +83,7 @@ bool Main(int argc, const char* argv[])
 	if (argc <= 1)
 	{
 		char buf[1024];
-		printf("%s", optdoc(buf, oGetFilebase(argv[0]), sOptions));
+		printf("%s", optdoc(buf, ouro::path(argv[0]).filename().c_str(), sOptions));
 		return true;
 	}
 
@@ -97,7 +97,7 @@ bool Main(int argc, const char* argv[])
 	if (opts.ShowHelp)
 	{
 		char buf[1024];
-		printf("%s", optdoc(buf, oGetFilebase(argv[0]), sOptions));
+		printf("%s", optdoc(buf, ouro::path(argv[0]).filename().c_str(), sOptions));
 		return true;
 	}
 

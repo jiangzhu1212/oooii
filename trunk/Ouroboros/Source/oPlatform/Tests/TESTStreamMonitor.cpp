@@ -50,13 +50,11 @@ struct PLATFORM_oStreamMonitor : public oTest
 	{
 		auto Events = std::make_shared<TESTStreamMonitorEvents>();
 
-		ouro::path_string NonZeroFile = TestFile;
-		*oGetFileExtension(NonZeroFile) = 0;
-		ouro::sncatf(NonZeroFile, "-NZ.txt");
+		ouro::uri NonZeroFile = TestFile;
+		NonZeroFile.replace_extension_with_suffix("-NZ.txt");
 
-		ouro::path_string ZeroFile = TestFile;
-		*oGetFileExtension(ZeroFile) = 0;
-		ouro::sncatf(ZeroFile, "-Z.txt");
+		ouro::uri ZeroFile = TestFile;
+		ZeroFile.replace_extension_with_suffix("-Z.txt");
 
 		oStreamDelete(TestFile); // should fail, but try anyway in case it was left over from a previous canceled or failed run.
 		oStreamDelete(NonZeroFile);
