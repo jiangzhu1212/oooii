@@ -166,8 +166,8 @@ static void FormatUnitTestResults(const oUnitTestResults& results, std::string& 
 				if (filebase.size() > 5 && 0 == strcmp(&filebase[filebase.size()-5], "_diff")) return true;
 				if (filebase.size() > 7 && 0 == strcmp(&filebase[filebase.size()-7], "_golden")) return true;
 
-				path_string ImagePath;
-				oMakeRelativePath(ImagePath, _FullPath, results.FailedImagePath.c_str());
+				path ImagePath(_FullPath);
+				ImagePath.make_relative(results.FailedImagePath);
 				if (!FoundAFailedImageCompare)
 				{
 					_LogHTML.append("<p>Here are the failed images:</p><table border=\"1\" cellpadding=\"2\" style=\"width:90%;\"><tr><th style=\"width:30%;\">TEST OUPUT</th><th style=\"width:30%;\">DIFF</th><th style=\"width:30%;\">GOLDEN IMAGE</th></tr>");
@@ -335,10 +335,9 @@ void oAutoBuildOutputResults(const oAutoBuildEmailSettings& _EmailSettings, int 
 	LogHTML.append("</html>");
 
 	// Save HTML to the output folder
-	uri_string HTMLFilename = _Results.OutputFolder;
-	oEnsureSeparator(HTMLFilename);
-	sncatf(HTMLFilename, "index.html");
-	ouro::filesystem::save(path(HTMLFilename), &LogHTML[0], LogHTML.size(), ouro::filesystem::save_option::text_write);
+	path HTMLFilename = _Results.OutputFolder;
+	HTMLFilename /= "index.html";
+	ouro::filesystem::save(HTMLFilename, &LogHTML[0], LogHTML.size(), ouro::filesystem::save_option::text_write);
 }
 
 void oEmailAdminAndStop(const oAutoBuildEmailSettings& _EmailSettings, const char* _pMessage, int _CL, bool _HTML)

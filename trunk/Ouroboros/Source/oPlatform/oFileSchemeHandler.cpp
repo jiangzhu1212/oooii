@@ -49,6 +49,21 @@ enum oSYSPATH
 	oSYSPATH_DATA, // the data path of the application
 };
 
+inline bool oIsSeparator(int _Char) { return _Char == '\\' || _Char == '/'; }
+char* oEnsureSeparator(char* _Path, size_t _SizeofPath, char _FileSeparator = '/')
+{
+	size_t len = strlen(_Path);
+	char* cur = _Path + len-1;
+	if (!oIsSeparator(*cur) && _SizeofPath)
+	{
+		oASSERT((len+1) < _SizeofPath, "Path string does not have the capacity to have a separate appended (%s)", oSAFESTRN(_Path));
+		*(++cur) = _FileSeparator;
+		*(++cur) = 0;
+	}
+
+	return _Path;
+}
+
 char* oSystemURIPartsToPath(char* _Path, size_t _SizeofPath, const oURIParts& _URIParts)
 {
 	if (_URIParts.Authority.empty())

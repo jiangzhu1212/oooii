@@ -22,58 +22,33 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
-#pragma once
-#ifndef oBasis_all_h
-#define oBasis_all_h
-#include <oBasis/oAirKeyboard.h>
-#include <oBasis/oAllocator.h>
-#include <oBasis/oAllocatorTLSF.h>
-#include <oBasis/oArcball.h>
-#include <oBasis/oBasisRequirements.h>
-#include <oBasis/oBuffer.h>
-#include <oBasis/oBufferPool.h>
-#include <oBasis/oCameraController.h>
-#include <oBasis/oCameraControllerArcball.h>
-#include <oBasis/oCameraControllerMaya.h>
-#include <oBasis/oCameraControllerMMO.h>
-#include <oBasis/oCompression.h>
-#include <oBasis/oContainer.h>
-#include <oBasis/oCppParsing.h>
-#include <oBasis/oDispatchQueue.h>
-#include <oBasis/oDispatchQueueConcurrent.h>
-#include <oBasis/oDispatchQueueGlobal.h>
-#include <oBasis/oDispatchQueuePrivate.h>
-#include <oBasis/oError.h>
-#include <oBasis/oEye.h>
-#include <oBasis/oFilterChain.h>
-#include <oBasis/oGeometry.h>
-#include <oBasis/oGUI.h>
-#include <oBasis/oGZip.h>
-#include <oBasis/oInputMapper.h>
-#include <oBasis/oInt.h>
-#include <oBasis/oInterface.h>
-#include <oBasis/oInvalid.h>
-#include <oBasis/oLockedPointer.h>
-#include <oBasis/oLZMA.h>
-#include <oBasis/oMath.h>
-#include <oBasis/oMeshUtil.h>
-#include <oBasis/oMIME.h>
-#include <oBasis/oOBJ.h>
-#include <oBasis/oOSC.h>
-#include <oBasis/oPlatformFeatures.h>
-#include <oBasis/oRefCount.h>
-#include <oBasis/oResizedType.h>
-#include <oBasis/oSnappy.h>
-#include <oBasis/oStddef.h>
-#include <oBasis/oStdStringSupport.h>
-#include <oBasis/oStrTok.h>
-#include <oBasis/oSurface.h>
-#include <oBasis/oSurfaceFill.h>
-#include <oBasis/oSurfaceResize.h>
-#include <oBasis/oTimer.h>
-#include <oBasis/oTypeID.h>
-#include <oBasis/oTypes.h>
-#include <oBasis/oURI.h>
-#endif
+
+namespace ouro {
+
+bool is_sep(char c) { return c == '/' || c == '\\'; }
+
+size_t cmnroot(const char* _Path1, const char* _Path2)
+{
+	size_t last_sep = 0;
+	size_t len = 0;
+	if (_Path1 && *_Path1 && _Path2 && *_Path2)
+	{
+		while (_Path1[len] && _Path2[len])
+		{
+			char a = tolower(_Path1[len]);
+			char b = tolower(_Path2[len]);
+
+			if (a != b || is_sep(a) != is_sep(b))
+				break;
+
+			if (is_sep(a) || is_sep(b))
+				last_sep = len;
+			
+			len++;
+		}
+	}
+
+	return last_sep;
+}
+
+} // namespace ouro

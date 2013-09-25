@@ -77,7 +77,9 @@ oFileCacheMonitoringImpl::oFileCacheMonitoringImpl(const oFileCacheMonitoring::D
 bool oFileCacheMonitoringImpl::Retrieve(path_string& _RelativePath, const oBuffer** _Buffer) threadsafe
 {
 	path_string fullPath = Desc.RootPath;
-	oEnsureSeparator(fullPath);
+	if (fullPath[fullPath.length()-1] != '/')
+		strlcat(fullPath, "/");
+
 	strlcat(fullPath, _RelativePath);
 
 	return FileCache->Retrieve(fullPath, _Buffer);
@@ -86,7 +88,9 @@ bool oFileCacheMonitoringImpl::Retrieve(path_string& _RelativePath, const oBuffe
 void oFileCacheMonitoringImpl::Evict(path_string& _RelativePath) threadsafe
 {
 	path_string fullPath = Desc.RootPath;
-	oEnsureSeparator(fullPath);
+	if (fullPath[fullPath.length()-1] != '/')
+		strlcat(fullPath, "/");
+
 	strlcat(fullPath, _RelativePath);
 
 	FileCache->Evict(fullPath);

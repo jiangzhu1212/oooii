@@ -225,7 +225,7 @@ public:
 
 	basic_path& remove_basename_suffix(const string_type& _Suffix)
 	{
-		return basic_path& remove_basename_suffix(_Suffix.c_str());
+		return remove_basename_suffix(_Suffix.c_str());
 	}
 	
 	// decomposition
@@ -288,6 +288,34 @@ public:
 	int compare(const basic_path& _That) const { return traits::compare(this->c_str(), _That.c_str()); }
 	int compare(const char_type* _That) const { return traits::compare(this->c_str(), _That); }
 
+	const basic_path& make_relative(const char* _Root)
+	{
+		if (_Root && *_Root)
+		{
+			basic_path relPath;
+
+			size_t CommonLen = cmnroot(p, _Root);
+			if (CommonLen)
+			{
+				size_t nSeperators = 0;
+				size_t index = CommonLen - 1;
+				while (_Root[index])
+				{
+					if (traits::is_sep(_Root[index]) && 0 != _Root[index + 1])
+						nSeperators++;
+					index++;
+				}
+
+				clear();
+				for (size_t i = 0; i < nSeperators; i++)
+					relPath /= traits::dotdot_str();
+
+				relPath /= (*this).c_str() + CommonLen;
+			}
+		}
+		return *this;
+	}
+
 private:
 	typedef unsigned short index_type;
 	static const index_type npos = ~0u & 0xffff;
@@ -319,7 +347,42 @@ private:
 		return dir;
 	}
 
-	void parse();
+	static size_t common_base_length(const char* _Path1, const char* _Path2)
+	{
+		size_t last_sep = 0;
+		size_t len = 0;
+		if (_Path1 && *_Path1 && _Path2 && *_Path2)
+		{
+			while (_Path1[len] && _Path2[len])
+			{
+				char_type a = tolower(_Path1[len]);
+				char_type b = tolower(_Path2[len]);
+
+				if (a != b || traits::is_sep(a) != traits::is_sep(b))
+					break;
+
+				if (traits::is_sep(a) || traits::is_sep(b))
+					last_sep = len;
+			
+				len++;
+			}
+		}
+
+		return last_sep;
+	}
+
+	void parse()
+	{
+		if (traits::always_clean) clean_path(p, p);
+		const char_type *rootname = nullptr, *path = nullptr, *parentend = nullptr, *base = nullptr, *ext = nullptr;
+		Length = static_cast<index_type>(tsplit_path<char_type>(p, traits::posix, &rootname, &path, &parentend, &base, &ext));
+		HasRootName = !!rootname;
+		BasenameOffset = idx(base);
+		ExtensionOffset = idx(ext);
+		RootDirOffset = idx(find_root_directory(p, rootname));
+		ParentEndOffset = idx(parentend);
+		EndsWithSep = Length > 1 && traits::is_sep(p[Length-1]);
+	}
 };
 
 typedef basic_path<char> posix_path;
@@ -330,20 +393,6 @@ typedef basic_path<wchar_t, default_windows_path_traits<wchar_t>> windows_wpath;
 
 typedef posix_path path;
 typedef posix_wpath wpath;
-
-template<typename charT, typename TraitsT>
-void basic_path<charT, TraitsT>::parse()
-{
-	if (traits::always_clean) clean_path(p, p);
-	const char_type *rootname = nullptr, *path = nullptr, *parentend = nullptr, *base = nullptr, *ext = nullptr;
-	Length = static_cast<index_type>(tsplit_path<charT>(p, traits::posix, &rootname, &path, &parentend, &base, &ext));
-	HasRootName = !!rootname;
-	BasenameOffset = idx(base);
-	ExtensionOffset = idx(ext);
-	RootDirOffset = idx(find_root_directory(p, rootname));
-	ParentEndOffset = idx(parentend);
-	EndsWithSep = Length > 1 && traits::is_sep(p[Length-1]);
-}
 
 template<typename charT, typename TraitsT>
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const basic_path<charT, TraitsT>& _Value)

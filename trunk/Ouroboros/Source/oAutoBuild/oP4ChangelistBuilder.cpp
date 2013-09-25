@@ -194,7 +194,8 @@ public:
 		clean_path(LogRoot, _LogRoot);
 
 		// Patch up all paths relative to the perforce root
-		oEnsureSeparator(P4Settings.Root);
+		if (P4Settings.Root[P4Settings.Root.length()-1] != '/')
+			strlcat(P4Settings.Root, "/");
 
 		if (BuildSettings.Solution.empty())
 		{

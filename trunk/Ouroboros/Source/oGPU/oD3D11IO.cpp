@@ -30,6 +30,35 @@
 
 using namespace ouro;
 
+static char* oStrTokToSwitches(char* _StrDestination, size_t _SizeofStrDestination, const char* _Switch, const char* _Tokens, const char* _Separator)
+{
+	size_t len = strlen(_StrDestination);
+	_StrDestination += len;
+	_SizeofStrDestination -= len;
+
+	char* ctx = nullptr;
+	const char* tok = oStrTok(_Tokens, _Separator, &ctx);
+	while (tok)
+	{
+		strlcpy(_StrDestination, _Switch, _SizeofStrDestination);
+		size_t len = strlen(_StrDestination);
+		_StrDestination += len;
+		_SizeofStrDestination -= len;
+
+		clean_path(_StrDestination, _SizeofStrDestination, tok);
+
+		len = strlen(_StrDestination);
+		_StrDestination += len;
+		_SizeofStrDestination -= len;
+
+		tok = oStrTok(nullptr, ";", &ctx);
+	}
+
+	return _StrDestination;
+}
+template<size_t size> char* oStrTokToSwitches(char (&_StrDestination)[size], const char* _Switch, const char* _Tokens, const char* _Separator) { return oStrTokToSwitches(_StrDestination, size, _Switch, _Tokens, _Separator); }
+template<size_t capacity> char* oStrTokToSwitches(ouro::fixed_string<char, capacity>& _StrDestination, const char* _Switch, const char* _Tokens, const char* _Separator) { return oStrTokToSwitches(_StrDestination, _StrDestination.capacity(), _Switch, _Tokens, _Separator); }
+
 // @oooii-tony: Here's a flavor that works on a pre-loaded source since we want 
 // to support more than one shader entry. Right now to keep it simple, the 
 // include system still hits the file system for each header. How can we get 

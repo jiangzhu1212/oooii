@@ -84,9 +84,6 @@
     <ClInclude Include="..\..\Include\oBasis\oURI.h">
       <Filter>oBasis\String Parsing</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oPath.h">
-      <Filter>oBasis\String Parsing</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oError.h">
       <Filter>oBasis\Language Enhancements</Filter>
     </ClInclude>
@@ -399,9 +396,6 @@
       <Filter>Source\3D Math &amp; Graphics</Filter>
     </ClCompile>
     <ClCompile Include="oOSC.cpp">
-      <Filter>Source\String Parsing</Filter>
-    </ClCompile>
-    <ClCompile Include="oPath.cpp">
       <Filter>Source\String Parsing</Filter>
     </ClCompile>
     <ClCompile Include="oDispatchQueuePrivate.cpp">

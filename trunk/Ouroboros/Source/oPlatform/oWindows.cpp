@@ -29,7 +29,6 @@
 #include <oBasis/oError.h>
 #include <oBase/fixed_string.h>
 #include <oConcurrency/mutex.h>
-#include <oBasis/oPath.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSingleton.h>

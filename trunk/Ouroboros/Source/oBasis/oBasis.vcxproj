@@ -76,7 +76,6 @@
     <ClInclude Include="..\..\Include\oBasis\oMIME.h" />
     <ClInclude Include="..\..\Include\oBasis\oOBJ.h" />
     <ClInclude Include="..\..\Include\oBasis\oOSC.h" />
-    <ClInclude Include="..\..\Include\oBasis\oPath.h" />
     <ClInclude Include="..\..\Include\oBasis\oPlatformFeatures.h" />
     <ClInclude Include="..\..\Include\oBasis\oRefCount.h" />
     <ClInclude Include="..\..\Include\oBasis\oResizedType.h" />
@@ -146,7 +145,6 @@
     <ClCompile Include="oMIME.cpp" />
     <ClCompile Include="oOBJ.cpp" />
     <ClCompile Include="oOSC.cpp" />
-    <ClCompile Include="oPath.cpp" />
     <ClCompile Include="oRTTI.cpp" />
     <ClCompile Include="oSnappy.cpp" />
     <ClCompile Include="oStrTok.cpp" />

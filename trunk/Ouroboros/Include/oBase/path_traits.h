@@ -46,7 +46,9 @@ struct base_path_traits
 	static char_type* generic_sep_str();
 	static char_type* native_sep_str();
 	static char_type* dot_str();
+	static char_type* dotdot_str();
 	static char_type* empty_str();
+	static size_t cmnroot(const char_type* _Path1, const char_type* _Path2);
 	static int compare(const char_type* a, const char_type* b); // strcmp/stricmp
 };
 
@@ -64,7 +66,9 @@ template<> struct base_path_traits<char, false>
 	static char_type* generic_sep_str() { return "/"; }
 	static char_type* native_sep_str() { return "\\"; }
 	static char_type* dot_str() { return "."; }
+	static char_type* dotdot_str() { return ".."; }
 	static char_type* empty_str() { return ""; }
+	static size_t cmnroot(const char_type* _Path1, const char_type* _Path2) { return cmnroot(_Path1, _Path2); }
 	static int compare(const char_type* a, const char_type* b) { return _stricmp(a, b); }
 };
 
@@ -82,7 +86,9 @@ template<> struct base_path_traits<char, true>
 	static char_type* generic_sep_str() { return "/"; }
 	static char_type* native_sep_str() { return "/"; }
 	static char_type* dot_str() { return "."; }
+	static char_type* dotdot_str() { return ".."; }
 	static char_type* empty_str() { return ""; }
+	static size_t cmnroot(const char_type* _Path1, const char_type* _Path2) { return cmnroot(_Path1, _Path2); }
 	static int compare(const char_type* a, const char_type* b) { return strcmp(a, b); }
 };
 
@@ -100,7 +106,9 @@ template<> struct base_path_traits<wchar_t, false>
 	static char_type* generic_sep_str() { return L"/"; }
 	static char_type* native_sep_str() { return L"\\"; }
 	static char_type* dot_str() { return L"."; }
+	static char_type* dotdot_str() { return L".."; }
 	static char_type* empty_str() { return L""; }
+	static size_t cmnroot(const char_type* _Path1, const char_type* _Path2) { return wcmnroot(_Path1, _Path2); }
 	static int compare(const char_type* a, const char_type* b) { return _wcsicmp(a, b); }
 };
 
@@ -118,7 +126,9 @@ template<> struct base_path_traits<wchar_t, true>
 	static char_type* generic_sep_str() { return L"/"; }
 	static char_type* native_sep_str() { return L"/"; }
 	static char_type* dot_str() { return L"."; }
+	static char_type* dotdot_str() { return L".."; }
 	static char_type* empty_str() { return L""; };
+	static size_t cmnroot(const char_type* _Path1, const char_type* _Path2) { return wcmnroot(_Path1, _Path2); }
 	static int compare(const char_type* a, const char_type* b) { return wcscmp(a, b); }
 };
 

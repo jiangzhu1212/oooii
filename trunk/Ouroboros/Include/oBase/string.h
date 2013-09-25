@@ -29,6 +29,7 @@
 
 #include <oBase/config.h>
 #include <oBase/macros.h>
+#include <functional>
 
 // The most-standard (but not standard) secure strcpy/strcats. The 3rd parameter
 // is in number of characters, not bytes.
@@ -361,6 +362,10 @@ template<size_t size> char* relativize_path(char (&_StrDestination)[size], const
 // Standard Unix/MS-DOS style wildcard matching
 bool matches_wildcard(const char* _Wildcard, const char* _Path);
 
+// Returns the number of characters common to both specified paths.
+size_t cmnroot(const char* _Path1, const char* _Path2);
+size_t wcmnroot(const wchar_t* _Path1, const wchar_t* _Path2);
+
 // Fills pointers into the specified path where different components start. If
 // the component value does not exists, the pointer is filled with nullptr. This 
 // returns the length of _Path.
@@ -399,6 +404,30 @@ inline size_t tsplit_path(const wchar_t* _Path
 	, const wchar_t** _ppBasename
 	, const wchar_t** _ppExt)
 { return wsplit_path(_Path, _Posix, _ppRoot, _ppPath, _ppParentPathEnd, _ppBasename, _ppExt); }
+
+// _SearchPaths is a semi-colon-delimited set of strings (like Window's PATH
+// environment variable). _DotPath is a path to append if _RelativePath begins
+// with a '.', like "./myfile.txt". This function goes through each of 
+// _SearchPaths paths and _DotPath and prepends it to _RelativePath. If the 
+// result causes the _PathExists function to return true the full path is copied 
+// into _StrDestination and a pointer to _StrDestination is returned. If all
+// paths are exhausted without passing _PathExists nullptr is returned.
+char* search_path(char* _StrDestination
+	, size_t _SizeofStrDestination
+	, const char* _SearchPaths
+	, const char* _RelativePath
+	, const char* _DotPath
+	, const std::function<bool(const char* _Path)>& _PathExists);
+
+template<size_t size>
+char* search_path(char (&_StrDestination)[size]
+	, const char* _SearchPaths
+	, const char* _RelativePath
+	, const char* _DotPath
+	, const std::function<bool(const char* _Path)>& _PathExists)
+{
+	return search_path(_StrDestination, size, _SearchPaths, _RelativePath, _DotPath, _PathExists);
+}
 
 } // namespace ouro
 

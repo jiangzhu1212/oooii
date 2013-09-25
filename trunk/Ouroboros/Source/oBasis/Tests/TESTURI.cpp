@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBasis/oURI.h>
 #include <oBasis/oError.h>
-#include <oBasis/oPath.h>
 #include "oBasisTestCommon.h"
 #include <cstring>
 

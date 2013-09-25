@@ -392,7 +392,7 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 
 bool oTest::TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const char* _FailedImagePath, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier, bool _OutputGoldenImage)
 {
-	size_t commonPathLength = oGetCommonBaseLength(_GoldenImagePath, _FailedImagePath);
+	size_t commonPathLength = cmnroot(_GoldenImagePath, _FailedImagePath);
 	const char* gPath = _GoldenImagePath + commonPathLength;
 	const char* fPath = _FailedImagePath + commonPathLength;
 
@@ -487,31 +487,29 @@ bool oTest::TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const c
 
 struct DriverPaths
 {
-	path_string Generic;
-	path_string VendorSpecific;
-	path_string CardSpecific;
-	path_string DriverSpecific;
+	path Generic;
+	path VendorSpecific;
+	path CardSpecific;
+	path DriverSpecific;
 };
 
 static bool oInitialize(const char* _RootPath, const char* _Filename, const ouro::adapter::info& _DriverDesc, DriverPaths* _pDriverPaths)
 {
 	_pDriverPaths->Generic = _RootPath;
-	oEnsureSeparator(_pDriverPaths->Generic);
-	clean_path(_pDriverPaths->Generic, _pDriverPaths->Generic);
+	_pDriverPaths->VendorSpecific = _pDriverPaths->Generic / as_string(_DriverDesc.vendor);
 
-	snprintf(_pDriverPaths->VendorSpecific, "%s%s/", _pDriverPaths->Generic.c_str(), as_string(_DriverDesc.vendor));
-
-	path_string tmp;
+	path_string tmp, tmp2;
 	snprintf(tmp, "%s%s/", _pDriverPaths->VendorSpecific.c_str(), _DriverDesc.description.c_str());
-	replace(_pDriverPaths->CardSpecific, tmp, " ", "_");
+	replace(tmp2, tmp, " ", "_");
+	_pDriverPaths->CardSpecific = tmp2; 
 
 	sstring driverVer;
-	snprintf(_pDriverPaths->DriverSpecific, "%s%s/", _pDriverPaths->CardSpecific.c_str(), to_string(driverVer, _DriverDesc.version));
+	_pDriverPaths->DriverSpecific = _pDriverPaths->CardSpecific / to_string(driverVer, _DriverDesc.version);
 
-	sncatf(_pDriverPaths->Generic, _Filename);
-	sncatf(_pDriverPaths->VendorSpecific, _Filename);
-	sncatf(_pDriverPaths->CardSpecific, _Filename);
-	sncatf(_pDriverPaths->DriverSpecific, _Filename);
+	_pDriverPaths->Generic /= _Filename;
+	_pDriverPaths->VendorSpecific /= _Filename;
+	_pDriverPaths->CardSpecific /= _Filename;
+	_pDriverPaths->DriverSpecific /= _Filename;
 
 	return true;
 }
@@ -734,9 +732,7 @@ void oTestManager_Impl::SetDesc(DESC* _pDesc)
 void oTestManager_Impl::PrintDesc()
 {
 	path cwd = ouro::filesystem::current_path();
-	path_string datapath;
-	clean_path(datapath.c_str(), Desc.DataPath);
-	oEnsureSeparator(datapath.c_str());
+	path datapath(Desc.DataPath);
 	bool dataPathIsCWD = !_stricmp(cwd, datapath);
 
 	Report(oConsoleReporting::INFO, "CWD Path: %s\n", cwd.c_str());

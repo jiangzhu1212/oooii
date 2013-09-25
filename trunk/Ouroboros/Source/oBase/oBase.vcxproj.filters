@@ -187,6 +187,15 @@
     <ClCompile Include="..\..\External\calfaq\calfaq.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
+    <ClCompile Include="string\search_path.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\cmnroot.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\wcmnroot.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\finally.h">

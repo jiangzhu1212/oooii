@@ -328,7 +328,8 @@ void oAutoBuildLogHandler::OnGet(CommonParams& _CommonParams) const
 	_CommonParams.GetCaptured(&filepath);
 
 	uri_string filepathAbsolute = BuildLogsURI;
-	oEnsureSeparator(filepathAbsolute);
+	if (filepathAbsolute[filepathAbsolute.length()-1] != '/')
+		strlcat(filepathAbsolute, "/");
 	strlcat(filepathAbsolute, filepath);
 
 	// TODO: Look into using the FileCache for this as well (oWebServer is also

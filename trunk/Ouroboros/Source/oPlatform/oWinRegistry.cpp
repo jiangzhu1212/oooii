@@ -102,7 +102,8 @@ bool oWinRegistryDeleteKey(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, bool 
 		HKEY hKey = nullptr;
 		oREG_CHECK(RegOpenKeyEx(sRoots[_Root], KP, 0, KEY_READ, &hKey));
 		finally close([&](){ RegCloseKey(hKey); });
-		oEnsureSeparator(KP, '\\');
+		if (KP[KP.length()-1] != '\\')
+			strlcat(KP, "\\");
 		size_t KPLen = KP.length();
 		DWORD dwSize = oUInt(KP.capacity() - KPLen);
 		err = RegEnumKeyEx(hKey, 0, &KP[KPLen], &dwSize, nullptr, nullptr, nullptr, nullptr);

@@ -25,7 +25,6 @@
 #include <oBasis/oCppParsing.h>
 #include <oBasis/oStrTok.h>
 #include <oBase/assert.h>
-#include <oBasis/oPath.h>
 #include <oBasis/oError.h>
 #include <oBase/algorithm.h>
 #include <oStd/for.h>

@@ -72,6 +72,7 @@
     <ClCompile Include="string\ampersand_encode.cpp" />
     <ClCompile Include="string\clean_path.cpp" />
     <ClCompile Include="string\clean_whitespace.cpp" />
+    <ClCompile Include="string\cmnroot.cpp" />
     <ClCompile Include="string\codify_data.cpp" />
     <ClCompile Include="string\elipsize.cpp" />
     <ClCompile Include="string\format_bytes.cpp" />
@@ -89,6 +90,7 @@
     <ClCompile Include="string\relativize_path.cpp" />
     <ClCompile Include="string\replace.cpp" />
     <ClCompile Include="string\rstrstr.cpp" />
+    <ClCompile Include="string\search_path.cpp" />
     <ClCompile Include="string\split_path.cpp" />
     <ClCompile Include="string\strbitmask.cpp" />
     <ClCompile Include="string\stringize.cpp" />
@@ -96,6 +98,7 @@
     <ClCompile Include="string\strtok.cpp" />
     <ClCompile Include="string\trim.cpp" />
     <ClCompile Include="string\type_name.cpp" />
+    <ClCompile Include="string\wcmnroot.cpp" />
     <ClCompile Include="string\wcselipsize.cpp" />
     <ClCompile Include="string\wcsltombs.cpp" />
     <ClCompile Include="string\wsplit_path.cpp" />

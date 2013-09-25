@@ -22,58 +22,65 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
-#pragma once
-#ifndef oBasis_all_h
-#define oBasis_all_h
-#include <oBasis/oAirKeyboard.h>
-#include <oBasis/oAllocator.h>
-#include <oBasis/oAllocatorTLSF.h>
-#include <oBasis/oArcball.h>
-#include <oBasis/oBasisRequirements.h>
-#include <oBasis/oBuffer.h>
-#include <oBasis/oBufferPool.h>
-#include <oBasis/oCameraController.h>
-#include <oBasis/oCameraControllerArcball.h>
-#include <oBasis/oCameraControllerMaya.h>
-#include <oBasis/oCameraControllerMMO.h>
-#include <oBasis/oCompression.h>
-#include <oBasis/oContainer.h>
-#include <oBasis/oCppParsing.h>
-#include <oBasis/oDispatchQueue.h>
-#include <oBasis/oDispatchQueueConcurrent.h>
-#include <oBasis/oDispatchQueueGlobal.h>
-#include <oBasis/oDispatchQueuePrivate.h>
-#include <oBasis/oError.h>
-#include <oBasis/oEye.h>
-#include <oBasis/oFilterChain.h>
-#include <oBasis/oGeometry.h>
-#include <oBasis/oGUI.h>
-#include <oBasis/oGZip.h>
-#include <oBasis/oInputMapper.h>
-#include <oBasis/oInt.h>
-#include <oBasis/oInterface.h>
-#include <oBasis/oInvalid.h>
-#include <oBasis/oLockedPointer.h>
-#include <oBasis/oLZMA.h>
-#include <oBasis/oMath.h>
-#include <oBasis/oMeshUtil.h>
-#include <oBasis/oMIME.h>
-#include <oBasis/oOBJ.h>
-#include <oBasis/oOSC.h>
-#include <oBasis/oPlatformFeatures.h>
-#include <oBasis/oRefCount.h>
-#include <oBasis/oResizedType.h>
-#include <oBasis/oSnappy.h>
-#include <oBasis/oStddef.h>
-#include <oBasis/oStdStringSupport.h>
-#include <oBasis/oStrTok.h>
-#include <oBasis/oSurface.h>
-#include <oBasis/oSurfaceFill.h>
-#include <oBasis/oSurfaceResize.h>
-#include <oBasis/oTimer.h>
-#include <oBasis/oTypeID.h>
-#include <oBasis/oTypes.h>
-#include <oBasis/oURI.h>
-#endif
+#include <functional>
+
+namespace ouro {
+
+char* search_path(char* _StrDestination
+	, size_t _SizeofStrDestination
+	, const char* _SearchPaths
+	, const char* _RelativePath
+	, const char* _DotPath
+	, const std::function<bool(const char* _Path)>& _PathExists)
+{
+	if (!_StrDestination || !_SearchPaths) return nullptr;
+	const char* cur = _SearchPaths;
+
+	while (*cur)
+	{
+		cur += strspn(cur, oWHITESPACE);
+		if (*cur == ';')
+		{
+			cur++;
+			continue;
+		}
+
+		char* dst = _StrDestination;
+		char* end = dst + _SizeofStrDestination - 1;
+		if (*cur == '.' && _DotPath && *_DotPath)
+		{
+			size_t len = strlcpy(_StrDestination, _DotPath, _SizeofStrDestination);
+			if (len >= _SizeofStrDestination)
+				return nullptr;
+			if (_StrDestination[len-1] != '/' && _StrDestination[len-1] != '\\')
+			{
+				if ((len+1) >= _SizeofStrDestination)
+					return nullptr;
+				_StrDestination[len-1] = '/';
+				_StrDestination[len++] = '\0';
+			}
+				
+			dst = _StrDestination + len;
+		}
+
+		while (dst < end && *cur && *cur != ';')
+			*dst++ = *cur++;
+		while (isspace(*(--dst))); // empty
+		if (*dst == '/' || *dst == '\\')
+			*(++dst) = '/';
+		assert(dst < end);
+		*(++dst) = 0;
+		if (strlcat(_StrDestination, _RelativePath, _SizeofStrDestination) >= _SizeofStrDestination)
+			return nullptr;
+		if (_PathExists(_StrDestination))
+			return _StrDestination;
+		if (*cur == 0)
+			break;
+		cur++;
+	}
+
+	*_StrDestination = 0;
+	return nullptr;
+}
+
+} // namespace ouro

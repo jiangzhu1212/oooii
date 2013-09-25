@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBasis/oURI.h>
 #include <oBase/assert.h>
-#include <oBasis/oPath.h>
 #include <oBasis/oError.h>
 #include <cerrno>
 #include <cstdlib>
@@ -32,6 +31,10 @@
 
 using namespace std;
 using namespace ouro;
+
+// Returns true if the specified character is a path separator on either Linux
+// or Windows.
+inline bool oIsSeparator(int _Char) { return _Char == '\\' || _Char == '/'; }
 
 bool oURIIsURI(const char* _URIReference)
 {
