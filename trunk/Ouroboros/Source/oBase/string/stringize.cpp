@@ -30,7 +30,7 @@
 #include <oBase/fourcc.h>
 #include <oBase/guid.h>
 #include <oBase/string.h>
-#include <oStd/date.h>
+#include <oBase/date.h>
 #include <half.h>
 
 using namespace oStd;
@@ -148,59 +148,5 @@ bool from_string_double_array(double* _pValue, size_t _NumValues, const char* _S
 	}
 	return true;
 }
-
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oStd::date& _Date)
-{
-	return strftime(_StrDestination, _SizeofStrDestination, sortable_date_format, date_cast<ntp_date>(_Date)) ? _StrDestination : nullptr;
-}
-
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const weekday::value& _Weekday)
-{
-	return strlcpy(_StrDestination, as_string(_Weekday), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
-}
-
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const month::value& _Month)
-{
-	return strlcpy(_StrDestination, as_string(_Month), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
-}
-
-bool from_string(weekday::value* _pValue, const char* _StrSource)
-{
-	for (size_t i = 0; i < 7; i++)
-	{
-		const char* s = as_string(weekday::value(i));
-		if (!_stricmp(_StrSource, s) || (!_memicmp(_StrSource, s, 3) && _StrSource[3] == 0))
-		{
-			*_pValue = weekday::value(i);
-			return true;
-		}
-	}
-	return false;
-}
-
-bool from_string(month::value* _pValue, const char* _StrSource)
-{
-	for (size_t i = 0; i < 12; i++)
-	{
-		const char* s = as_string(month::value(i));
-		if (!_stricmp(_StrSource, s) || (!_memicmp(_StrSource, s, 3) && _StrSource[3] == 0))
-		{
-			*_pValue = month::value(i);
-			return true;
-		}
-	}
-	return false;
-}
-
-const char* as_string(const weekday::value& _Weekday)
-{
-	return oStd::as_string(_Weekday);
-}
-
-const char* as_string(const month::value& _Month)
-{
-	return oStd::as_string(_Month);
-}
-
 
 } // namespace ouro

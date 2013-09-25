@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Tests\TESTdate.cpp" />
     <ClCompile Include="Tests\TESTfuture.cpp" />
   </ItemGroup>
   <ItemGroup>

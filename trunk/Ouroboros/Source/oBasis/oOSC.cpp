@@ -562,10 +562,10 @@ bool oOSCTypeTagsMatch(const char* _TypeTags0, const char* _TypeTags1)
 	return true;
 }
 
-oStd::ntp_timestamp oOSCGetBundleTimestamp(const void* _pOSCBundle)
+ouro::ntp_timestamp oOSCGetBundleTimestamp(const void* _pOSCBundle)
 {
 	oASSERT(oOSCIsBundle(oOSCIsBundle), "The specified pointer is not a bundle");
-	return oOSCPlatformEndianSwap(*(oStd::ntp_timestamp*)byte_add(_pOSCBundle, 8));
+	return oOSCPlatformEndianSwap(*(ouro::ntp_timestamp*)byte_add(_pOSCBundle, 8));
 }
 
 struct oOSCTokContext

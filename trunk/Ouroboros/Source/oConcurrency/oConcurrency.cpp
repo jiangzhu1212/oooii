@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oConcurrency/oConcurrency.h>
 #include <oConcurrency/concurrent_queue_base.h>
+#include <oBase/config.h>
 
 namespace oConcurrency {
 	namespace detail {

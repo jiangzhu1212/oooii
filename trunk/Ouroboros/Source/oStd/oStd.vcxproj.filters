@@ -22,12 +22,6 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="date.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\External\calfaq\calfaq.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="win.h">
@@ -65,9 +59,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oStd\all.h">
       <Filter>oStd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\External\calfaq\calfaq.h">
-      <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

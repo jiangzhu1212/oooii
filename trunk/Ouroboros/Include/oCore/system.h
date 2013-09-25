@@ -49,14 +49,14 @@ heap_info get_heap_info();
 template<typename dateT> void now(dateT* _pDate);
 
 // Convert from a local timezone-specific time to UTC (GMT) time.
-oStd::date from_local(const oStd::date& _LocalDate);
+date from_local(const date& _LocalDate);
 
 // Convert from UTC (GMT) time to a local timezone-specific time.
-oStd::date to_local(const oStd::date& _UTCDate);
+date to_local(const date& _UTCDate);
 
 template<typename date1T, typename date2T> bool from_local(const date1T& _LocalDate, date2T* _pUTCDate)
 {
-	oStd::date local, utc;
+	date local, utc;
 	local = date_cast<date>(_LocalDate);
 	if (!from_local(local, &utc)) return false;
 	*_pUTCDate = date_cast<date2T>(utc);
@@ -65,7 +65,7 @@ template<typename date1T, typename date2T> bool from_local(const date1T& _LocalD
 
 template<typename date1T, typename date2T> bool to_local(const date1T& _UTCDate, date2T* _pLocalDate)
 {
-	oStd::date local, utc;
+	date local, utc;
 	utc = date_cast<date>(_UTCDate);
 	if (!to_local(utc, &local)) return false;
 	*_pLocalDate = date_cast<date2T>(local);

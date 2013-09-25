@@ -31,7 +31,7 @@
 #include <oBase/opttok.h>
 #include <oBase/string.h>
 #include <oBase/string_traits.h>
-#include <oStd/date.h>
+#include <oBase/date.h>
 #include <cstring>
 #include <cwchar>
 #include <stdexcept>
@@ -238,6 +238,10 @@ namespace ouro {
 
 	TSTR char* optdoc(STRT& _StrDestination, const char* _AppName, const option* _pOptions, size_t _NumOptions, const char* _LooseParameters = "") { return optdoc(_StrDestination, _StrDestination.capacity(), _AppName, _pOptions, _NumOptions, _LooseParameters); }
 	template<typename charT, size_t Capacity, size_t size> char* optdoc(STRT& _StrDestination, const char* _AppName, const option (&_pOptions)[size], const char* _LooseParameters = "") { return optdoc(_StrDestination, _StrDestination.capacity(), _AppName, _pOptions, size, _LooseParameters); }
+
+	template<typename charT, size_t Capacity, typename DateT> 
+	size_t strftime(STRT& _StrDestination, const char* _Format, const DateT& _Date, date_conversion::value _Conversion = date_conversion::none) { return ouro::strftime(_StrDestination, _StrDestination.capacity(), _Format, _Date, _Conversion); }
+
 } // namespace ouro
 
 TSTR int snprintf(ouro::STRT& _StrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); int l = ouro::vsnprintf(_StrDestination, _Format, args); va_end(args); return l; }
@@ -247,11 +251,6 @@ TSTR size_t wcslcat(ouro::STRT& _StrDestination, const wchar_t* _StrSource) { re
 TSTR size_t wcslcpy(ouro::STRT& _StrDestination, const wchar_t* _StrSource) { return wcslcpy(_StrDestination, _StrSource, _StrDestination.capacity()); }
 TSTR size_t mbsltowsc(ouro::STRT& _StrDestination, const char* _StrSource) { return mbsltowsc(_StrDestination, _StrSource, _StrDestination.capacity()); }
 TSTR size_t wcsltombs(ouro::STRT& _StrDestination, const wchar_t* _StrSource) { return wcsltombs(_StrDestination, _StrSource, _StrDestination.capacity()); }
-
-namespace ouro {
-	template<typename charT, size_t Capacity, typename DateT> 
-	size_t strftime(ouro::STRT& _StrDestination, const char* _Format, const DateT& _Date, oStd::date_conversion::value _Conversion = oStd::date_conversion::none) { return oStd::strftime(_StrDestination, _StrDestination.capacity(), _Format, _Date, _Conversion); }
-} // namespace ouro
 
 #undef STRT
 #undef TSTR

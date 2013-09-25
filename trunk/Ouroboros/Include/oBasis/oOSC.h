@@ -41,7 +41,7 @@
 #define oOSC_h
 
 #include <oBase/function.h>
-#include <oStd/date.h>
+#include <oBase/date.h>
 
 static const int oOSC_MAX_FIXED_STRING_LENGTH = 9*64;
 
@@ -149,7 +149,7 @@ inline bool oOSCIsMessage(const void* _pOSCPacket) { return _pOSCPacket && *(con
 inline bool oOSCIsBundle(const void* _pOSCPacket) { return _pOSCPacket && *(const char*)_pOSCPacket == '#'; }
 
 // Returns the timestamp in the specified bundle.
-oStd::ntp_timestamp oOSCGetBundleTimestamp(const void* _pOSCBundle);
+ouro::ntp_timestamp oOSCGetBundleTimestamp(const void* _pOSCBundle);
 
 // Like strtok, this iterates through all subbundles found inside an OSC packet
 // that IS a bundle. Per the spec, size must be provided by either the packet or

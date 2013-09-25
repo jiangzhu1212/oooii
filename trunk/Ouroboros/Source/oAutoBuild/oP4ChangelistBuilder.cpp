@@ -485,7 +485,7 @@ void oP4ChangelistBuilderImpl::TryAddingChangelist(int _Changelist, bool _IsDail
 
 	if (_IsDaily)
 	{
-		oStd::date CurrentDate;
+		ouro::date CurrentDate;
 		ouro::system::now(&CurrentDate);
 		CurrentDate = ouro::system::to_local(CurrentDate);
 
@@ -520,7 +520,7 @@ void oP4ChangelistBuilderImpl::TryNextBuild(int _DailyBuildHour)
 	// this will do more extensive testing
 	if(!ouro::system::is_remote_session())
 	{
-		oStd::date CurrentDate;
+		ouro::date CurrentDate;
 		ouro::system::now(&CurrentDate);
 		CurrentDate = ouro::system::to_local(CurrentDate);
 

@@ -16,9 +16,6 @@
     <ClCompile Include="text_document.cpp">
       <Filter>Source\text</Filter>
     </ClCompile>
-    <ClCompile Include="color.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp">
       <Filter>Source\hash</Filter>
     </ClCompile>
@@ -181,6 +178,15 @@
     <ClCompile Include="string\matches_wildcard.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
+    <ClCompile Include="date.cpp">
+      <Filter>Source\types</Filter>
+    </ClCompile>
+    <ClCompile Include="color.cpp">
+      <Filter>Source\types</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\External\calfaq\calfaq.cpp">
+      <Filter>Source\types</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\finally.h">
@@ -326,6 +332,12 @@
     </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\date.h">
+      <Filter>oBase\types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\External\calfaq\calfaq.h">
+      <Filter>Source\types</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

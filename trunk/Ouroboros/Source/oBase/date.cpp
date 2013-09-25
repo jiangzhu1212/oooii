@@ -22,11 +22,11 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/date.h>
+#include <oBase/date.h>
 #include <cassert>
 #include <ctime>
 #include <calfaq/calfaq.h>
-#include "win.h"
+#include "../oStd/win.h"
 // NTP v4
 
 using namespace oStd::chrono;
@@ -43,31 +43,7 @@ static const int kLastNonGregorianJDN = 2299150;
 static const unsigned long long kSecondsFrom1900To1970 = 25567ull * kNumSecondsPerDay;
 static const unsigned long long kSecondsFrom1601To1900 = static_cast<unsigned long long>(kNTPEpochJDN - kFileTimeEpochJDN) * kNumSecondsPerDay;
 
-inline int vsnprintf__(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args)
-{
-	#pragma warning(disable:4996) // secure CRT warning
-	int l = ::vsnprintf(_StrDestination, _SizeofStrDestination, _Format, _Args);
-	#pragma warning(default:4996)
-	return l;
-}
-
-inline int snprintf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, ...)
-{
-	va_list args; va_start(args, _Format);
-	int l = vsnprintf__(_StrDestination, _SizeofStrDestination, _Format, args);
-	va_end(args);
-	return l;
-}
-
-template<size_t size> static int snprintf(char (&_StrDestination)[size], const char* _Format, ...)
-{
-	va_list args; va_start(args, _Format);
-	int l = ouro::vsnprintf(_StrDestination, size, _Format, args);
-	va_end(args);
-	return l;
-}
-
-namespace oStd {
+namespace ouro {
 
 #define oDATE_OUT_OF_RANGE(_ToType) do { char buf[1024]; snprintf(buf, sizeof(buf), "date_cast<%s>(const %s&) out of range", typeid(_Date).name(), typeid(_ToType).name()); throw std::domain_error(buf); } while(false)
 #define oDATE_INVALID_ARG(_Format, ...) do { char buf[1024]; snprintf(buf, sizeof(buf), _Format, ## __VA_ARGS__); throw std::invalid_argument(buf); } while(false)
@@ -98,7 +74,7 @@ namespace oStd {
 // _____________________________________________________________________________
 // Julian Date Support
 
-long long oStd::julian_day_number(const date& _Date)
+long long julian_day_number(const date& _Date)
 {
 	if (_Date.year < min_julian_valid_date.year || (_Date.year == min_julian_valid_date.year && _Date.month < min_julian_valid_date.month))
 		return -1;
@@ -110,7 +86,7 @@ long long oStd::julian_day_number(const date& _Date)
 	return date_to_jdn(style, _Date.year, _Date.month, _Date.day);
 }
 
-double oStd::julian_date(const date& _Date)
+double julian_date(const date& _Date)
 {
 	long long JDN = julian_day_number(_Date);
 	if (JDN == -1)
@@ -118,7 +94,7 @@ double oStd::julian_date(const date& _Date)
 	return JDN + (_Date.hour-12)/24.0 + _Date.minute/1440.0 + _Date.second/86400.0;
 }
 
-double oStd::modified_julian_date(const date& _Date)
+double modified_julian_date(const date& _Date)
 {
 	double JD = julian_date(_Date);
 	if (JD != JD) // where's my std::isnan()?
@@ -131,7 +107,7 @@ weekday::value day_of_week(const date& _Date)
 	int style = JULIAN; // 0 = julian, 1 = gregorian
 	IF_SHOULD_USE_GREGORIAN(_Date)
 		style = GREGORIAN;
-	return static_cast<oStd::weekday::value>(::day_of_week(style, abs(_Date.year), _Date.month, _Date.day));
+	return static_cast<weekday::value>(::day_of_week(style, abs(_Date.year), _Date.month, _Date.day));
 }
 
 static void oDateCalcFromJulianDayNumber(long long _JDN, date* _pDate)
@@ -174,7 +150,7 @@ static bool date_cast(const date& _Source, int* _pNTPEra, unsigned int* _pNTPTim
 	return true;
 }
 
-template<> ntp_timestamp oStd::date_cast<ntp_timestamp>(const date& _Date)
+template<> ntp_timestamp date_cast<ntp_timestamp>(const date& _Date)
 {
 	int Era = 0;
 	unsigned int Timestamp = 0;
@@ -236,10 +212,10 @@ template<> ntp_date date_cast<ntp_date>(const ntp_date& _Date)
 
 template<> time_t date_cast<time_t>(const ntp_date& _Date)
 {
-	int Era = oStd::get_ntp_era(_Date);
+	int Era = get_ntp_era(_Date);
 	if (Era != 0)
 		oDATE_OUT_OF_RANGE(time_t);
-	long long s = oStd::get_ntp_seconds(_Date);
+	long long s = get_ntp_seconds(_Date);
 	if (s < kSecondsFrom1900To1970)
 		oDATE_OUT_OF_RANGE(time_t);
 	return s - kSecondsFrom1900To1970;
@@ -247,10 +223,10 @@ template<> time_t date_cast<time_t>(const ntp_date& _Date)
 
 template<> file_time_t date_cast<file_time_t>(const ntp_date& _Date)
 {
-	int Era = oStd::get_ntp_era(_Date);
+	int Era = get_ntp_era(_Date);
 	if (Era < -3) // the era when 1601 is
 		oDATE_OUT_OF_RANGE(file_time_t);
-	seconds s(oStd::get_ntp_seconds(_Date) + kSecondsFrom1601To1900);
+	seconds s(get_ntp_seconds(_Date) + kSecondsFrom1601To1900);
 	if (s.count() < 0)
 		oDATE_OUT_OF_RANGE(file_time_t);
 	file_time whole = duration_cast<file_time>(s);
@@ -309,7 +285,7 @@ template<> file_time_t date_cast<file_time_t>(const ntp_timestamp& _Date)
 
 template<> date date_cast<date>(const ntp_timestamp& _Date)
 {
-	unsigned int s = oStd::get_ntp_timestamp(_Date);
+	unsigned int s = get_ntp_timestamp(_Date);
 	long long JDN = (s / kNumSecondsPerDay) + kNTPEpochJDN;
 	date d;
 	oDateCalcFromJulianDayNumber(JDN, &d);
@@ -405,8 +381,8 @@ template<> date date_cast<date>(const time_t& _Date)
 template<> ntp_timestamp date_cast<ntp_timestamp>(const file_time_t& _Date)
 {
 	long long usec = (long long)_Date / 10;
-	fractional_second32 fractional = duration_cast<fractional_second32>(microseconds(usec % micro::den));
-	long long s = (usec / micro::den) - kSecondsFrom1601To1900;
+	fractional_second32 fractional = duration_cast<fractional_second32>(microseconds(usec % oStd::micro::den));
+	long long s = (usec / oStd::micro::den) - kSecondsFrom1601To1900;
 	if (s < 0 || ((s & ~0u) != s))
 		oDATE_OUT_OF_RANGE(ntp_timestamp);
 	return (s << 32) | fractional.count();
@@ -416,7 +392,7 @@ template<> ntp_date date_cast<ntp_date>(const file_time_t& _Date)
 {
 	long long usec = (long long)_Date / 10;
 	ntp_date d;
-	d.DataMS = (usec / micro::den) - kSecondsFrom1601To1900;
+	d.DataMS = (usec / oStd::micro::den) - kSecondsFrom1601To1900;
 	d.DataLS = duration_cast<fractional_second64>(file_time((long long)_Date % file_time::period::den)).count();
 	return std::move(d);
 }
@@ -630,4 +606,47 @@ size_t strftime(char* _StrDestination, size_t _SizeofStrDestination, const char*
 	return std::distance(_StrDestination, w);
 }
 
-} // namespace oStd
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const date& _Date)
+{
+	return strftime(_StrDestination, _SizeofStrDestination, sortable_date_format, date_cast<ntp_date>(_Date)) ? _StrDestination : nullptr;
+}
+
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const weekday::value& _Weekday)
+{
+	return strlcpy(_StrDestination, as_string(_Weekday), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
+}
+
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const month::value& _Month)
+{
+	return strlcpy(_StrDestination, as_string(_Month), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
+}
+
+bool from_string(weekday::value* _pValue, const char* _StrSource)
+{
+	for (size_t i = 0; i < 7; i++)
+	{
+		const char* s = as_string(weekday::value(i));
+		if (!_stricmp(_StrSource, s) || (!_memicmp(_StrSource, s, 3) && _StrSource[3] == 0))
+		{
+			*_pValue = weekday::value(i);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool from_string(month::value* _pValue, const char* _StrSource)
+{
+	for (size_t i = 0; i < 12; i++)
+	{
+		const char* s = as_string(month::value(i));
+		if (!_stricmp(_StrSource, s) || (!_memicmp(_StrSource, s, 3) && _StrSource[3] == 0))
+		{
+			*_pValue = month::value(i);
+			return true;
+		}
+	}
+	return false;
+}
+
+} // namespace ouro

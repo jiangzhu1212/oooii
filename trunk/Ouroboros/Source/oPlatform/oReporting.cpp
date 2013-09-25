@@ -94,10 +94,10 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 	{
 		sstring DumpStamp = VersionString;
 
-		oStd::ntp_date now;
+		ouro::ntp_date now;
 		ouro::system::now(&now);
 		sstring StrNow;
-		strftime(DumpStamp.c_str() + DumpStamp.length(), DumpStamp.capacity() - DumpStamp.length(), oStd::syslog_local_date_format, now, oStd::date_conversion::to_local);
+		strftime(DumpStamp.c_str() + DumpStamp.length(), DumpStamp.capacity() - DumpStamp.length(), ouro::syslog_local_date_format, now, ouro::date_conversion::to_local);
 		replace(StrNow, DumpStamp, ":", "_");
 		replace(DumpStamp, StrNow, ".", "_");
 
@@ -421,9 +421,9 @@ char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, c
 
 	if (_Desc.PrefixTimestamp)
 	{
-		oStd::ntp_timestamp now = 0;
+		ouro::ntp_timestamp now = 0;
 		system::now(&now);
-		res = (int)oStd::strftime(_StrDestination + len, _SizeofStrDestination - len - 1, oStd::sortable_date_ms_format, now, oStd::date_conversion::to_local);
+		res = (int)ouro::strftime(_StrDestination + len, _SizeofStrDestination - len - 1, ouro::sortable_date_ms_format, now, ouro::date_conversion::to_local);
 		oACCUM_PRINTF(" ");
 		if (res == 0) goto TRUNCATION;
 		len += res;

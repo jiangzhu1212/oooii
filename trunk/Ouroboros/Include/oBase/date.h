@@ -29,15 +29,15 @@
 // that is human-workable: date.
 // NTP v4: http://tools.ietf.org/html/rfc5905#section-6
 #pragma once
-#ifndef oStd_date_h
-#define oStd_date_h
+#ifndef oBase_date_h
+#define oBase_date_h
 
 #include <oStd/chrono.h>
-#include <oBase/uint128.h> // hacky, this violates lib dependency order
+#include <oBase/uint128.h>
 
 #include <climits>
 
-namespace oStd {
+namespace ouro {
 
 // A directly-comparable NTP short format timestamp. Use this for small delta 
 // time comparisons. (though using a raw oTimer or oTimerMS will be as effective).
@@ -55,14 +55,14 @@ struct ntp_date : uint128 {};
 // This is a fixed-point representation of a portion of a second. According
 // to NTPv4 docs, oFractionalSecond32 will be in units of about 232 picoseconds 
 // and oFractionalSecond64 is in units of 0.05 attoseconds
-typedef chrono::duration<unsigned short, ratio<1,USHRT_MAX>> fractional_second16;
-typedef chrono::duration<unsigned int, ratio<1,UINT_MAX>> fractional_second32;
-typedef chrono::duration<unsigned long long, ratio<1,ULLONG_MAX>> fractional_second64;
-typedef chrono::duration<long long, pico> picoseconds;
-typedef chrono::duration<long long, atto> attoseconds;
+typedef oStd::chrono::duration<unsigned short, oStd::ratio<1,USHRT_MAX>> fractional_second16;
+typedef oStd::chrono::duration<unsigned int, oStd::ratio<1,UINT_MAX>> fractional_second32;
+typedef oStd::chrono::duration<unsigned long long, oStd::ratio<1,ULLONG_MAX>> fractional_second64;
+typedef oStd::chrono::duration<long long, oStd::pico> picoseconds;
+typedef oStd::chrono::duration<long long, oStd::atto> attoseconds;
 
 // this is in 100 nanosecond units
-typedef chrono::duration<long long, ratio<1,10000000>> file_time;
+typedef oStd::chrono::duration<long long, oStd::ratio<1,10000000>> file_time;
 
 class file_time_t // FILETIME on windows
 {
@@ -211,7 +211,7 @@ namespace date_conversion
 size_t strftime(char* _StrDestination
 	, size_t _SizeofStrDestination
 	, const char* _Format
-	, const oStd::ntp_date& _Date
+	, const ntp_date& _Date
 	, date_conversion::value _Conversion = date_conversion::none);
 
 template<typename DATE_T>
@@ -224,7 +224,7 @@ size_t strftime(char* _StrDestination
 	return strftime(_StrDestination
 		, _SizeofStrDestination
 		, _Format
-		, date_cast<oStd::ntp_date>(_Date)
+		, date_cast<ntp_date>(_Date)
 		, _Conversion);
 }
 
@@ -237,12 +237,12 @@ size_t strftime(char (&_StrDestination)[size]
 	return strftime(_StrDestination, size, _Format, _Date, _Conversion);
 }
 
-} // namespace oStd
+} // namespace ouro
 
 namespace std {
 
-inline std::string to_string(const oStd::weekday::value& _Weekday) { return oStd::as_string(_Weekday); }
-inline std::string to_string(const oStd::month::value& _Month) { return oStd::as_string(_Month); }
+inline std::string to_string(const ouro::weekday::value& _Weekday) { return ouro::as_string(_Weekday); }
+inline std::string to_string(const ouro::month::value& _Month) { return ouro::as_string(_Month); }
 
 } // namespace std
 

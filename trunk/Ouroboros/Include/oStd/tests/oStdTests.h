@@ -32,7 +32,6 @@
 namespace oStd {
 	namespace tests {
 
-		void TESTdate(requirements& _Requirements);
 		void TESTfuture(requirements& _Requirements);
 
 	} // namespace tests

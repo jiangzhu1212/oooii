@@ -34,6 +34,7 @@ namespace ouro {
 
 		void TESTatof(requirements& _Requirements);
 		void TESTcsv();
+		void TESTdate(requirements& _Requirements);
 		void TESTini();
 		void TESTfourcc();
 		void TESTpath();

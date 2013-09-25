@@ -19,10 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\External\calfaq\calfaq.cpp" />
     <ClCompile Include="chrono.cpp" />
     <ClCompile Include="condition_variable.cpp" />
-    <ClCompile Include="date.cpp" />
     <ClCompile Include="future.cpp" />
     <ClCompile Include="mutex.cpp" />
     <ClCompile Include="pch.cpp">
@@ -35,7 +33,6 @@
     <ClCompile Include="win.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\External\calfaq\calfaq.h" />
     <ClInclude Include="..\..\Include\oStd\all.h" />
     <ClInclude Include="..\..\Include\oStd\atomic.h" />
     <ClInclude Include="..\..\Include\oStd\chrono.h" />

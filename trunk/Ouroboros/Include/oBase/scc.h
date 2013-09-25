@@ -28,7 +28,7 @@
 #define oBase_scc_h
 
 #include <functional>
-#include <oStd/date.h>
+#include <oBase/date.h>
 #include <oBase/fixed_string.h>
 
 namespace ouro {
@@ -117,7 +117,7 @@ struct scc_revision
 
 	unsigned int revision;
 	mstring who;
-	oStd::ntp_date when;
+	ntp_date when;
 	xlstring what;
 };
 
@@ -176,7 +176,7 @@ public:
 	// Sync the specified path to the specified revision or date. Revision 0 will 
 	// sync to the head revision.
 	virtual void sync(const char* _Path, unsigned int _Revision, bool _Force = false) = 0;
-	virtual void sync(const char* _Path, const oStd::ntp_date& _Date, bool _Force = false) = 0;
+	virtual void sync(const char* _Path, const ntp_date& _Date, bool _Force = false) = 0;
 
 	virtual void add(const char* _Path) = 0;
 

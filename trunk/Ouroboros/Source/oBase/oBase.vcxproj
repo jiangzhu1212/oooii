@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\External\calfaq\calfaq.cpp" />
     <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcat.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
@@ -45,6 +46,7 @@
     </ClCompile>
     <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp" />
     <ClCompile Include="color.cpp" />
+    <ClCompile Include="date.cpp" />
     <ClCompile Include="memory\dtoull.cpp" />
     <ClCompile Include="memory\is_ascii.cpp" />
     <ClCompile Include="memory\memcmp4.cpp" />
@@ -106,6 +108,7 @@
     <ClCompile Include="version.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\External\calfaq\calfaq.h" />
     <ClInclude Include="..\..\External\smhasher\MurmurHash3.h" />
     <ClInclude Include="..\..\Include\oBase\algorithm.h" />
     <ClInclude Include="..\..\Include\oBase\all.h" />
@@ -116,6 +119,7 @@
     <ClInclude Include="..\..\Include\oBase\color.h" />
     <ClInclude Include="..\..\Include\oBase\config.h" />
     <ClInclude Include="..\..\Include\oBase\csv.h" />
+    <ClInclude Include="..\..\Include\oBase\date.h" />
     <ClInclude Include="..\..\Include\oBase\djb2.h" />
     <ClInclude Include="..\..\Include\oBase\endian.h" />
     <ClInclude Include="..\..\Include\oBase\equal.h" />

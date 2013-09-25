@@ -215,10 +215,10 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 		case oSTATE_PROCESS_RESPONSE:
 			{
 				// Add Date header field
-				oStd::date date;
+				ouro::date date;
 				ouro::system::now(&date);
 				sstring dateString;
-				strftime(dateString, oStd::http_date_format, date);
+				strftime(dateString, ouro::http_date_format, date);
 				oHTTPAddHeader(TheResponse.HeaderFields, oHTTP_HEADER_DATE, dateString);
 
 				// Add Content header fields

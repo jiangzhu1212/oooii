@@ -32,6 +32,7 @@
 #include <oBase/atof.h>
 #include <oBase/byte.h>
 #include <oBase/color.h>
+#include <oBase/date.h>
 #include <oBase/djb2.h>
 #include <oBase/endian.h>
 #include <oBase/equal.h>

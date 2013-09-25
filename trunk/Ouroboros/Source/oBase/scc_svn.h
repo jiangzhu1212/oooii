@@ -42,7 +42,7 @@ public:
 	void status(const char* _Path, unsigned int _UpToRevision, scc_visit_option::value _Option, const scc_file_enumerator& _Enumerator) const override;
 	scc_revision change(const char* _Path, unsigned int _Revision) const override;
 	void sync(const char* _Path, unsigned int _Revision, bool _Force = false) override;
-	void sync(const char* _Path, const oStd::ntp_date& _Date, bool _Force = false) override;
+	void sync(const char* _Path, const ntp_date& _Date, bool _Force = false) override;
 	void add(const char* _Path) override;
 	void remove(const char* _Path, bool _Force = false) override;
 	void edit(const char* _Path) override;

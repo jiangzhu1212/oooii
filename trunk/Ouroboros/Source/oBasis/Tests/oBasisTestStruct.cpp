@@ -62,7 +62,7 @@ void oBasisTestStructInit(oBASIS_TEST_STRUCT* _pTest, const void* _pBuffer1, int
 	strlcpy(_pTest->FinalTestString, "FinalTestString");
 	_pTest->b2 = _pBuffer2;
 	time_t t = time(nullptr);
-	_pTest->time = oStd::date_cast<oStd::ntp_timestamp>(t);
+	_pTest->time = ouro::date_cast<ouro::ntp_timestamp>(t);
 }
 
 bool operator==(const oBASIS_TEST_STRUCT& x, const oBASIS_TEST_STRUCT& y)

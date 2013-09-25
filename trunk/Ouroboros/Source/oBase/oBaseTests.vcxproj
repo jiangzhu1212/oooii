@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="Tests\TESTatof.cpp" />
     <ClCompile Include="Tests\TESTcsv.cpp" />
+    <ClCompile Include="tests\TESTdate.cpp" />
     <ClCompile Include="Tests\TESTfourcc.cpp" />
     <ClCompile Include="Tests\TESTini.cpp" />
     <ClCompile Include="Tests\TESTjson.cpp" />

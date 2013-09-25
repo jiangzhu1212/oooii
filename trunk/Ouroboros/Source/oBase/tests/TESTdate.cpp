@@ -22,11 +22,11 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/date.h>
+#include <oBase/date.h>
 #include <oBase/throw.h>
-#include <oStd/tests/oStdTestRequirements.h>
+#include <oBase/tests/oBaseTestRequirements.h>
 
-namespace oStd {
+namespace ouro {
 	namespace tests {
 
 template<typename T> T round(const T& x) { return floor(x + T(0.5)); }
