@@ -79,7 +79,7 @@ public:
 			if (!oWindowCreate(init, &GPUWindow))
 				return; // pass through error
 
-			Device->CreatePrimaryRenderTarget(GPUWindow, oSURFACE_UNKNOWN, true, &PrimaryRenderTarget);
+			Device->CreatePrimaryRenderTarget(GPUWindow, ouro::surface::unknown, true, &PrimaryRenderTarget);
 			GPUWindow->SetParent(ParentWindow);
 		}
 

@@ -120,46 +120,51 @@ interface oImage : oBuffer
 // Conversions so oSurface API can be used while still retaining the notion that
 // oImage is a small, small subset of oSurfaces, not the full wrapper for all 
 // that oSurface can do.
-oAPI oImage::FORMAT oImageFormatFromSurfaceFormat(oSURFACE_FORMAT _Format);
-oAPI oSURFACE_FORMAT oImageFormatToSurfaceFormat(oImage::FORMAT _Format);
+oAPI oImage::FORMAT oImageFormatFromSurfaceFormat(ouro::surface::format _Format);
+oAPI ouro::surface::format oImageFormatToSurfaceFormat(oImage::FORMAT _Format);
 
 // Returns the format as interpreted from the extension of the file
 oAPI oImage::FILE_FORMAT oImageFormatFromExtension(const char* _URIReference);
 
 // Wrappers for oSurface API that constrain things to the policies of oImage.
-inline int oImageCalcRowPitch(oImage::FORMAT _Format, int _Width) { return oSurfaceMipCalcRowSize(oImageFormatToSurfaceFormat(_Format), _Width); }
-inline int oImageGetBitSize(oImage::FORMAT _Format) { return oSurfaceFormatGetBitSize(oImageFormatToSurfaceFormat(_Format)); }
-inline int oImageGetSize(oImage::FORMAT _Format) { return oSurfaceFormatGetSize(oImageFormatToSurfaceFormat(_Format)); }
-inline int oImageCalcSize(oImage::FORMAT _Format, const int2& _Dimensions) { return oSurfaceMipCalcSize(oImageFormatToSurfaceFormat(_Format), _Dimensions); }
-inline bool oImageIsAlphaFormat(oImage::FORMAT _Format) { return oSurfaceFormatIsAlpha(oImageFormatToSurfaceFormat(_Format)); }
+inline int oImageCalcRowPitch(oImage::FORMAT _Format, int _Width) { return ouro::surface::row_size(oImageFormatToSurfaceFormat(_Format), _Width); }
+inline int oImageGetBitSize(oImage::FORMAT _Format) { return ouro::surface::bits(oImageFormatToSurfaceFormat(_Format)); }
+inline int oImageGetSize(oImage::FORMAT _Format) { return ouro::surface::element_size(oImageFormatToSurfaceFormat(_Format)); }
+inline int oImageCalcSize(oImage::FORMAT _Format, const int2& _Dimensions) { return ouro::surface::mip_size(oImageFormatToSurfaceFormat(_Format), _Dimensions); }
+inline bool oImageIsAlphaFormat(oImage::FORMAT _Format) { return ouro::surface::has_alpha(oImageFormatToSurfaceFormat(_Format)); }
 
-inline void oImageGetSurfaceDesc(const threadsafe oImage* _pImage, oSURFACE_DESC* _pSurfaceDesc)
+inline ouro::surface::info oImageGetSurfaceInfo(const threadsafe oImage* _pImage)
 {
 	oImage::DESC IDesc;
 	_pImage->GetDesc(&IDesc);
-
-	_pSurfaceDesc->Dimensions = int3(IDesc.Dimensions, 1);
-	_pSurfaceDesc->ArraySize = 1;
-	_pSurfaceDesc->Format = oImageFormatToSurfaceFormat(IDesc.Format);
-	_pSurfaceDesc->Layout = oSURFACE_LAYOUT_IMAGE;
+	ouro::surface::info inf;
+	inf.dimensions = int3(IDesc.Dimensions, 1);
+	inf.array_size = 1;
+	inf.format = oImageFormatToSurfaceFormat(IDesc.Format);
+	inf.layout = ouro::surface::image;
+	return inf;
 }
 
-inline void oImageGetMappedSubresource(oImage* _pImage, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource)
+inline ouro::surface::mapped_subresource oImageGetMappedSubresource(oImage* _pImage)
 {
 	oImage::DESC d;
 	_pImage->GetDesc(&d);
-	_pMappedSubresource->pData = _pImage->GetData();
-	_pMappedSubresource->RowPitch = d.RowPitch;
-	_pMappedSubresource->DepthPitch = oImageCalcSize(d.Format, d.Dimensions);
+	ouro::surface::mapped_subresource msr;
+	msr.data = _pImage->GetData();
+	msr.row_pitch= d.RowPitch;
+	msr.depth_pitch = oImageCalcSize(d.Format, d.Dimensions);
+	return msr;
 }
 
-inline void oImageGetMappedSubresource(const oImage* _pImage, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMappedSubresource)
+inline ouro::surface::const_mapped_subresource oImageGetMappedSubresource(const oImage* _pImage)
 {
 	oImage::DESC d;
 	_pImage->GetDesc(&d);
-	_pMappedSubresource->pData = _pImage->GetData();
-	_pMappedSubresource->RowPitch = d.RowPitch;
-	_pMappedSubresource->DepthPitch = oImageCalcSize(d.Format, d.Dimensions);
+	ouro::surface::const_mapped_subresource msr;
+	msr.data = _pImage->GetData();
+	msr.row_pitch = d.RowPitch;
+	msr.depth_pitch = oImageCalcSize(d.Format, d.Dimensions);
+	return msr;
 }
 
 // _____________________________________________________________________________
@@ -191,7 +196,7 @@ inline bool oImageCreate(const char* _Name, const void* _pBuffer, size_t _SizeOf
 oAPI bool oImageCreate(const char* _Name, const oImage::DESC& _Desc, oImage** _ppImage);
 
 // Creates an uninitialized oImage from the specified oSURFACE_DESC.
-oAPI bool oImageCreate(const char* _Name, const oSURFACE_DESC& _Desc, oImage** _ppImage);
+oAPI bool oImageCreate(const char* _Name, const ouro::surface::info& _Info, oImage** _ppImage);
 
 // Creates a copy of the specified _pSourceImage in the form of a Windows 
 // platform HBITMAP. Use DeleteObject() when finished with the HBITMAP.

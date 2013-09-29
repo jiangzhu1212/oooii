@@ -31,14 +31,14 @@ using namespace ouro;
 
 static bool CreateSecondTexture(oGPUDevice* _pDevice, const char* _Texture1Name, const oGPU_TEXTURE_DESC& _Texture1Desc, oGPUTexture** _ppTexture2)
 {
-	oASSERT(oSurfaceFormatGetNumSubformats(_Texture1Desc.Format) <= 2, "Many-plane textures not supported");
-	if (oSurfaceFormatGetNumSubformats(_Texture1Desc.Format) == 2)
+	oASSERT(ouro::surface::num_subformats(_Texture1Desc.Format) <= 2, "Many-plane textures not supported");
+	if (ouro::surface::num_subformats(_Texture1Desc.Format) == 2)
 	{
 		// To keep YUV textures singular to prepare for new YUV-based DXGI formats
 		// coming, create a private data companion texture.
 		oGPU_TEXTURE_DESC Texture2Desc(_Texture1Desc);
-		Texture2Desc.Format = oSurfaceGetSubformat(_Texture1Desc.Format, 1);
-		Texture2Desc.Dimensions = oSurfaceMipCalcDimensionsNPOT(_Texture1Desc.Format, _Texture1Desc.Dimensions, 0, 1);
+		Texture2Desc.Format = ouro::surface::subformat(_Texture1Desc.Format, 1);
+		Texture2Desc.Dimensions = ouro::surface::dimensions_npot(_Texture1Desc.Format, _Texture1Desc.Dimensions, 0, 1);
 
 		mstring Texture2Name(_Texture1Name);
 		sncatf(Texture2Name, ".Texture2");
@@ -96,17 +96,16 @@ oD3D11Texture::oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char
 int2 oD3D11Texture::GetByteDimensions(int _Subresource) const threadsafe
 {
 	const oGPUTexture::DESC& d = thread_cast<oD3D11Texture*>(this)->Desc;
-	int numMips = oSurfaceCalcNumMips(oGPUTextureTypeHasMips(d.Type), d.Dimensions); 
+	int numMips = ouro::surface::num_mips(oGPUTextureTypeHasMips(d.Type), d.Dimensions); 
 	int mipLevel, sliceIndex, surfaceIndex;
-	oSurfaceSubresourceUnpack(_Subresource, numMips, d.ArraySize, &mipLevel, &sliceIndex, &surfaceIndex);
+	ouro::surface::unpack_subresource(_Subresource, numMips, d.ArraySize, &mipLevel, &sliceIndex, &surfaceIndex);
 	if (surfaceIndex > 0)
-		return Texture2->GetByteDimensions(oSurfaceCalcSubresource(mipLevel, sliceIndex, surfaceIndex - 1, numMips, d.ArraySize));
+		return Texture2->GetByteDimensions(ouro::surface::calc_subresource(mipLevel, sliceIndex, surfaceIndex - 1, numMips, d.ArraySize));
 
-	oSURFACE_DESC sd;
-	sd.Dimensions = d.Dimensions;
-	sd.Format = d.Format;
-	sd.ArraySize = d.ArraySize;
-	sd.Layout = oGPUTextureTypeHasMips(d.Type) ? oSURFACE_LAYOUT_TIGHT : oSURFACE_LAYOUT_IMAGE;
-	oSURFACE_SUBRESOURCE_DESC srd;
-	return oSurfaceSubresourceCalcByteDimensions(sd, _Subresource);
+	ouro::surface::info inf;
+	inf.dimensions = d.Dimensions;
+	inf.format = d.Format;
+	inf.array_size = d.ArraySize;
+	inf.layout = oGPUTextureTypeHasMips(d.Type) ? ouro::surface::tight : ouro::surface::image;
+	return ouro::surface::byte_dimensions(inf, _Subresource);
 }

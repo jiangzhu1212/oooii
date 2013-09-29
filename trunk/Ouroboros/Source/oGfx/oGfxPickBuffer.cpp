@@ -38,7 +38,7 @@ oGfxPickBuffer::oGfxPickBuffer(oGPUDevice* _pDevice, const void* _pComputeShader
 	oGPUTexture::DESC d;
 	d.Dimensions = int3(oGPU_MAX_NUM_PICKS_PER_FRAME, 1, 1);
 	d.ArraySize = 1;
-	d.Format = oSURFACE_R32G32_SINT;
+	d.Format = ouro::surface::r32g32_sint;
 	d.Type = oGPU_TEXTURE_2D_MAP;
 	oVERIFY(_pDevice->CreateTexture("oGfxPickBuffer.PicksInput", d, &PicksInput));
 
@@ -65,10 +65,10 @@ void oGfxPickBuffer::PIMap(oGPUCommandList* _pCommandList, int2** _Picks)
 
 void oGfxPickBuffer::PIUnmap(oGPUCommandList* _pCommandList)
 {
-	oSURFACE_MAPPED_SUBRESOURCE mappedInput;
-	mappedInput.pData = PicksInputBuffer;
-	mappedInput.RowPitch = 0x80;
-	mappedInput.DepthPitch = 0x80;
+	ouro::surface::mapped_subresource mappedInput;
+	mappedInput.data = PicksInputBuffer;
+	mappedInput.row_pitch = 0x80;
+	mappedInput.depth_pitch = 0x80;
 	_pCommandList->Commit(PicksInput, 0, mappedInput);
 }
 
@@ -89,10 +89,10 @@ void oGfxPickBuffer::POMap(uint** _Picks)
 {
 	intrusive_ptr<oGPUDevice> Device;
 	PicksStaging->GetDevice(&Device);
-	oSURFACE_MAPPED_SUBRESOURCE mappedStaging;
+	ouro::surface::mapped_subresource mappedStaging;
 	// @oooii-jeffrey: This call is blocking/spin-locking because that was what the original D3D11 implementation did, this may still need some thought...
 	oVERIFY(Device->MapRead(PicksStaging, 0, &mappedStaging, true));
-	*_Picks = (uint*)mappedStaging.pData;
+	*_Picks = (uint*)mappedStaging.data;
 }
 
 void oGfxPickBuffer::POUnmap() 

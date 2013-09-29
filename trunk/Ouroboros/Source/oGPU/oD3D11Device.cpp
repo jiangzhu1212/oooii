@@ -338,7 +338,7 @@ void oD3D11Device::GetImmediateCommandList(oGPUCommandList** _ppCommandList)
 	oVERIFY(oD3D11Device::CreateCommandList("Immediate", CLDesc, _ppCommandList));
 }
 
-bool oD3D11Device::CreatePrimaryRenderTarget(oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, bool _EnableOSRendering, oGPURenderTarget** _ppPrimaryRenderTarget)
+bool oD3D11Device::CreatePrimaryRenderTarget(oWindow* _pWindow, ouro::surface::format _DepthStencilFormat, bool _EnableOSRendering, oGPURenderTarget** _ppPrimaryRenderTarget)
 {
 	if (SwapChain)
 		return oErrorSetLast(std::errc::protocol_error, "There already exists a primary render target, only one can exist for a given device at a time.");
@@ -384,7 +384,7 @@ bool oD3D11Device::CLInsert(oGPUCommandList* _pCommandList) threadsafe
 	return oErrorSetLast(std::errc::operation_in_progress, "Entry with DrawOrder %d already exists", d.DrawOrder);
 }
 
-void oD3D11Device::MEMReserve(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource) threadsafe
+void oD3D11Device::MEMReserve(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, ouro::surface::mapped_subresource* _pMappedSubresource) threadsafe
 {
 	int2 ByteDimensions = _pResource->GetByteDimensions(_Subresource);
 	size_t size = ByteDimensions.x * ByteDimensions.y;
@@ -392,12 +392,12 @@ void oD3D11Device::MEMReserve(ID3D11DeviceContext* _pDeviceContext, oGPUResource
 	void* p = HeapAlloc(hHeap, 0, size);
 	thread_cast<oD3D11Device*>(this)->HeapAllocations.push_back(p); // safe because vector is protected with HeapLock
 	HeapUnlock(hHeap);
-	_pMappedSubresource->pData = p;
-	_pMappedSubresource->RowPitch = ByteDimensions.x;
-	_pMappedSubresource->DepthPitch = oUInt(size);
+	_pMappedSubresource->data = p;
+	_pMappedSubresource->row_pitch = ByteDimensions.x;
+	_pMappedSubresource->depth_pitch = oUInt(size);
 }
 
-void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, const oSURFACE_MAPPED_SUBRESOURCE& _Source, const oSURFACE_BOX& _Subregion) threadsafe
+void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, const ouro::surface::mapped_subresource& _Source, const ouro::surface::box& _Subregion) threadsafe
 {
 	int D3DSubresource = oInvalid;
 	oGPU_RESOURCE_TYPE type = _pResource->GetType();
@@ -408,7 +408,7 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 	D3D11_BOX box;
 	D3D11_BOX* pBox = nullptr;
 
-	if (!oSurfaceBoxIsEmpty(_Subregion))
+	if (!_Subregion.empty())
 	{
 		uint StructureByteStride = 1;
 		if (type == oGPU_BUFFER)
@@ -416,22 +416,22 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 			oGPU_BUFFER_DESC d;
 			oD3D11BufferGetDesc(static_cast<ID3D11Buffer*>(pD3DResource), &d);
 			StructureByteStride = __max(1, d.StructByteSize);
-			oASSERT(_Subregion.Top == 0 && _Subregion.Bottom == 1, "Buffer subregion must have Top == 0 and Bottom == 1");
+			oASSERT(_Subregion.top == 0 && _Subregion.bottom == 1, "Buffer subregion must have top == 0 and bottom == 1");
 		}
 
-		box.left = _Subregion.Left * StructureByteStride;
-		box.top = _Subregion.Top;
-		box.right = _Subregion.Right * StructureByteStride;
-		box.bottom = _Subregion.Bottom; 
-		box.front = _Subregion.Front;
-		box.back = _Subregion.Back;
+		box.left = _Subregion.left * StructureByteStride;
+		box.top = _Subregion.top;
+		box.right = _Subregion.right * StructureByteStride;
+		box.bottom = _Subregion.bottom; 
+		box.front = _Subregion.front;
+		box.back = _Subregion.back;
 		pBox = &box;
 	}
 
-	oD3D11UpdateSubresource(_pDeviceContext, pD3DResource, D3DSubresource, pBox, _Source.pData, _Source.RowPitch, _Source.DepthPitch);
+	oD3D11UpdateSubresource(_pDeviceContext, pD3DResource, D3DSubresource, pBox, _Source.data, _Source.row_pitch, _Source.depth_pitch);
 	HeapLock(hHeap);
-	if (find_and_erase(thread_cast<oD3D11Device*>(this)->HeapAllocations, _Source.pData)) // safe because vector is protected with HeapLock
-		HeapFree(hHeap, 0, _Source.pData);
+	if (find_and_erase(thread_cast<oD3D11Device*>(this)->HeapAllocations, _Source.data)) // safe because vector is protected with HeapLock
+		HeapFree(hHeap, 0, _Source.data);
 	HeapUnlock(hHeap);
 }
 
@@ -473,7 +473,7 @@ void oD3D11Device::RTReleaseSwapChain() threadsafe
 	SwapChain = nullptr;
 }
 
-bool oD3D11Device::MapRead(oGPUResource* _pReadbackResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource, bool _bBlocking)
+bool oD3D11Device::MapRead(oGPUResource* _pReadbackResource, int _Subresource, ouro::surface::mapped_subresource* _pMappedSubresource, bool _bBlocking)
 {
 	int D3DSubresourceIndex = 0;
 	ID3D11Resource* r = oD3D11GetSubresource(_pReadbackResource, _Subresource, &D3DSubresourceIndex);
@@ -484,9 +484,9 @@ bool oD3D11Device::MapRead(oGPUResource* _pReadbackResource, int _Subresource, o
 		return oErrorSetLast(std::errc::operation_would_block);
 	if (FAILED(hr))
 		return oWinSetLastError();
-	_pMappedSubresource->pData = msr.pData;
-	_pMappedSubresource->RowPitch = msr.RowPitch;
-	_pMappedSubresource->DepthPitch = msr.DepthPitch;
+	_pMappedSubresource->data = msr.pData;
+	_pMappedSubresource->row_pitch = msr.RowPitch;
+	_pMappedSubresource->depth_pitch = msr.DepthPitch;
 	return true;
 }
 

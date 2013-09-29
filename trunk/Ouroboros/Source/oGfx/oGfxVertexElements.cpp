@@ -26,40 +26,40 @@
 
 static const oGPU_VERTEX_ELEMENT sVEPosition[] = 
 {
-	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false },
+	{ 'POS0', ouro::surface::r32g32b32a32_float, 0, false },
 };
 
 static const oGPU_VERTEX_ELEMENT sVEPositionInstanced[] = 
 {
-	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false },
-	{ 'TX  ', oSURFACE_R32G32B32_FLOAT, 1, true }, // translation
-	{ 'ROT ', oSURFACE_R32G32B32A32_FLOAT, 1, true }, // quaternion
-	{ 'SCAL', oSURFACE_R32_FLOAT, 1, true }, // uniform scale
+	{ 'POS0', ouro::surface::r32g32b32a32_float, 0, false },
+	{ 'TX  ', ouro::surface::r32g32b32a32_float, 1, true }, // translation
+	{ 'ROT ', ouro::surface::r32g32b32a32_float, 1, true }, // quaternion
+	{ 'SCAL', ouro::surface::r32_float, 1, true }, // uniform scale
 };
 
 static const oGPU_VERTEX_ELEMENT sVERigid[] = 
 {
-	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false },
-	{ 'TEX0', oSURFACE_R32G32_FLOAT, 0, false },
-	{ 'NML0', oSURFACE_R32G32B32_FLOAT, 0, false },
-	{ 'TAN0', oSURFACE_R32G32B32A32_FLOAT, 0, false },
+	{ 'POS0', ouro::surface::r32g32b32a32_float, 0, false },
+	{ 'TEX0', ouro::surface::r32g32_float, 0, false },
+	{ 'NML0', ouro::surface::r32g32b32a32_float, 0, false },
+	{ 'TAN0', ouro::surface::r32g32b32a32_float, 0, false },
 };
 
 static const oGPU_VERTEX_ELEMENT sVERigidInstanced[] = 
 {
-	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false },
-	{ 'TEX0', oSURFACE_R32G32_FLOAT, 0, false },
-	{ 'NML0', oSURFACE_R32G32B32_FLOAT, 0, false },
-	{ 'TAN0', oSURFACE_R32G32B32A32_FLOAT, 0, false },
-	{ 'TX  ', oSURFACE_R32G32B32_FLOAT, 1, true }, // translation
-	{ 'ROT ', oSURFACE_R32G32B32A32_FLOAT, 1, true }, // quaternion
-	{ 'SCAL', oSURFACE_R32_FLOAT, 1, true }, // uniform scale
+	{ 'POS0', ouro::surface::r32g32b32a32_float, 0, false },
+	{ 'TEX0', ouro::surface::r32g32_float, 0, false },
+	{ 'NML0', ouro::surface::r32g32b32a32_float, 0, false },
+	{ 'TAN0', ouro::surface::r32g32b32a32_float, 0, false },
+	{ 'TX  ', ouro::surface::r32g32b32a32_float, 1, true }, // translation
+	{ 'ROT ', ouro::surface::r32g32b32a32_float, 1, true }, // quaternion
+	{ 'SCAL', ouro::surface::r32_float, 1, true }, // uniform scale
 };
 
 static const oGPU_VERTEX_ELEMENT sVELine[] =
 {
-	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false },
-	{ 'CLR0', oSURFACE_B8G8R8A8_UNORM, 0, false },
+	{ 'POS0', ouro::surface::r32g32b32a32_float, 0, false },
+	{ 'CLR0', ouro::surface::b8g8r8a8_unorm, 0, false },
 };
 
 #define oGET_VE(_Name) do { *_ppVertexElements = _Name; *_pNumVertexElements = oCOUNTOF(_Name); } while (false)

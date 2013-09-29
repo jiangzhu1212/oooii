@@ -167,11 +167,11 @@ void oD3D11UpdateSubresource(ID3D11DeviceContext* _pDeviceContext, ID3D11Resourc
 // default resource than it is to map/unmap a dynamic resource, so using this 
 // API allows better abstraction based on resource specification rather than 
 // coding a particular choice throughout user code.
-void oD3D11MapWriteDiscard(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pResource, uint _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedResource);
+void oD3D11MapWriteDiscard(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pResource, uint _Subresource, ouro::surface::mapped_subresource* _pMappedResource);
 
 // Undo what oD3D11MapWriteDiscard did. Because it may have to free memory, the
 // mapped subresource should be passed to this.
-void oD3D11Unmap(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pResource, uint _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _MappedResource);
+void oD3D11Unmap(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pResource, uint _Subresource, ouro::surface::mapped_subresource& _MappedResource);
 
 // Uses oD3D11MapWriteDiscard/oD3D11Unmap to copy the specified source buffer
 // into the specified index buffer, swizzling the data as appropriate. No error
@@ -222,9 +222,9 @@ bool oD3D11CreateUnorderedAccessView(const char* _DebugName, ID3D11Resource* _pT
 // and optionally _ppRenderTargetView will be filled in. If a depth format is 
 // specified, then the view will be an ID3D11DepthStencilView instead of an
 // ID3D11RenderTargetView.
-bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const oGPU_TEXTURE_DESC& _Desc, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pInitData, ID3D11Resource** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView = nullptr, ID3D11View** _ppRenderTargetView = nullptr);
-template<typename TextureT> bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const oGPU_TEXTURE_DESC& _Desc, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pInitData, TextureT** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView = nullptr, ID3D11View** _ppRenderTargetView = nullptr) { return oD3D11CreateTexture(_pDevice, _DebugName, _Desc, _pInitData, (ID3D11Resource**)_ppTexture, _ppShaderResourceView, _ppRenderTargetView); }
-template<typename TextureT, typename ViewT> bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const oGPU_TEXTURE_DESC& _Desc, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pInitData, TextureT** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView = nullptr, ViewT** _ppRenderTargetView = nullptr) { return oD3D11CreateTexture(_pDevice, _DebugName, _Desc, _pInitData, (ID3D11Resource**)_ppTexture, _ppShaderResourceView, (ID3D11View**)_ppRenderTargetView); }
+bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const oGPU_TEXTURE_DESC& _Desc, ouro::surface::const_mapped_subresource* _pInitData, ID3D11Resource** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView = nullptr, ID3D11View** _ppRenderTargetView = nullptr);
+template<typename TextureT> bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const oGPU_TEXTURE_DESC& _Desc, ouro::surface::const_mapped_subresource* _pInitData, TextureT** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView = nullptr, ID3D11View** _ppRenderTargetView = nullptr) { return oD3D11CreateTexture(_pDevice, _DebugName, _Desc, _pInitData, (ID3D11Resource**)_ppTexture, _ppShaderResourceView, _ppRenderTargetView); }
+template<typename TextureT, typename ViewT> bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const oGPU_TEXTURE_DESC& _Desc, ouro::surface::const_mapped_subresource* _pInitData, TextureT** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView = nullptr, ViewT** _ppRenderTargetView = nullptr) { return oD3D11CreateTexture(_pDevice, _DebugName, _Desc, _pInitData, (ID3D11Resource**)_ppTexture, _ppShaderResourceView, (ID3D11View**)_ppRenderTargetView); }
 
 // Creates a CPU-readable copy of the specified texture/render target. Only 
 // textures are currently supported.
@@ -250,7 +250,7 @@ bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, con
 bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, const ouro::path& _Path);
 
 // Creates a new texture by parsing _pBuffer as a D3DX11-supported file format
-// Specify oSURFACE_UNKNOWN and oDEFAULT for x, y or ArraySize in the _Desc to 
+// Specify ouro::surface::unknown and oDEFAULT for x, y or ArraySize in the _Desc to 
 // use values from the specified file. If mips is specified as HAS_MIPs, then 
 // mips will be allocated, but not filled in. If AUTO_MIPS is specified, then 
 // mips will be generated.
@@ -259,12 +259,12 @@ bool oD3D11Load(ID3D11Device* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const ch
 
 // Uses GPU acceleration for BC6H and BC7 conversions if the source is in the 
 // correct format. All other conversions go through D3DX11LoadTextureFromTexture
-bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, oSURFACE_FORMAT _NewFormat, ID3D11Texture2D** _ppDestinationTexture);
+bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, ouro::surface::format _NewFormat, ID3D11Texture2D** _ppDestinationTexture);
 
 // Use the above oD3D11Convert(), but the parameters could be CPU buffers. This
 // means there's a copy-in and a copy-out to set up the source and destination
 // textures for the internal call.
-bool oD3D11Convert(ID3D11Device* _pDevice, oSURFACE_MAPPED_SUBRESOURCE& _Destination, oSURFACE_FORMAT _DestinationFormat, oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source, oSURFACE_FORMAT _SourceFormat, const int2& _MipDimensions);
+bool oD3D11Convert(ID3D11Device* _pDevice, ouro::surface::mapped_subresource& _Destination, ouro::surface::format _DestinationFormat, ouro::surface::const_mapped_subresource& _Source, ouro::surface::format _SourceFormat, const int2& _MipDimensions);
 
 // These functions repeated from <oBC6HBC7EncoderDecoder.h> in External so as
 // not to require extra path info in build settings to get at that header. 

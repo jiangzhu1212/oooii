@@ -81,8 +81,8 @@ struct GPU_RenderTarget_App : public oGPUTestApp
 		rtd.Dimensions = int3(256, 256, 1);
 		rtd.ArraySize = 1;
 		rtd.MRTCount = 1;
-		rtd.Format[0] = oSURFACE_B8G8R8A8_UNORM;
-		rtd.DepthStencilFormat = oSURFACE_D24_UNORM_S8_UINT;
+		rtd.Format[0] = ouro::surface::b8g8r8a8_unorm;
+		rtd.DepthStencilFormat = ouro::surface::d24_unorm_s8_uint;
 		rtd.ClearDesc = cd;
 		if (!Device->CreateRenderTarget("RenderTarget", rtd, &RenderTarget))
 			return false;

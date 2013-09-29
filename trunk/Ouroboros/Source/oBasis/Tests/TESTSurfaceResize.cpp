@@ -32,30 +32,28 @@
 
 using namespace ouro;
 
-static bool oBasisTest_oSurfaceResize_TestSize(const oBasisTestServices& _Services, const oSURFACE_DESC& _SourceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SourceMapped, oSURFACE_FILTER _Filter, const int3& _NewSize, unsigned int _NthImage)
+static bool oBasisTest_oSurfaceResize_TestSize(const oBasisTestServices& _Services, const ouro::surface::info& _SourceInfo, const ouro::surface::const_mapped_subresource& _SourceMapped, ouro::surface::filter::value _Filter, const int3& _NewSize, unsigned int _NthImage)
 {
-	oSURFACE_DESC destDesc;
-	destDesc = _SourceDesc;
-	destDesc.Dimensions = _NewSize;
-	int destMapSize = oSurfaceSubresourceCalcSize(destDesc, 0);
+	ouro::surface::info destInfo = _SourceInfo;
+	destInfo.dimensions = _NewSize;
+	int destMapSize = ouro::surface::total_size(destInfo, 0);
 	std::vector<char> destMapData;
 	destMapData.resize(destMapSize);
-	oSURFACE_MAPPED_SUBRESOURCE destMap;
-	oSurfaceCalcMappedSubresource(destDesc, 0, 0, destMapData.data(), &destMap);
+	ouro::surface::mapped_subresource destMap = ouro::surface::get_mapped_subresource(destInfo, 0, 0, destMapData.data());
 
 	{
 		scoped_timer timer("resize time");
-		oSurfaceResize(_SourceDesc, _SourceMapped, destDesc, &destMap, _Filter);
+		ouro::surface::resize(_SourceInfo, _SourceMapped, destInfo, &destMap, _Filter);
 	}
 
-	return _Services.TestSurface("oSurfaceResize result", destDesc, destMap, _NthImage, oDEFAULT, -1.0f, oDEFAULT);
+	return _Services.TestSurface("oSurfaceResize result", destInfo, destMap, _NthImage, oDEFAULT, -1.0f, oDEFAULT);
 }
 
-static bool oBasisTest_oSurfaceResize_TestFilter(const oBasisTestServices& _Services, const oSURFACE_DESC& _SourceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SourceMapped, oSURFACE_FILTER _Filter, unsigned int _NthImage)
+static bool oBasisTest_oSurfaceResize_TestFilter(const oBasisTestServices& _Services, const ouro::surface::info& _SourceInfo, const ouro::surface::const_mapped_subresource& _SourceMapped, ouro::surface::filter::value _Filter, unsigned int _NthImage)
 {
-	if (!oBasisTest_oSurfaceResize_TestSize(_Services, _SourceDesc, _SourceMapped, _Filter, _SourceDesc.Dimensions * int3(2,2,1), _NthImage))
+	if (!oBasisTest_oSurfaceResize_TestSize(_Services, _SourceInfo, _SourceMapped, _Filter, _SourceInfo.dimensions * int3(2,2,1), _NthImage))
 		return false; // pass through error
-	if (!oBasisTest_oSurfaceResize_TestSize(_Services, _SourceDesc, _SourceMapped, _Filter, _SourceDesc.Dimensions / int3(2,2,1), _NthImage+1))
+	if (!oBasisTest_oSurfaceResize_TestSize(_Services, _SourceInfo, _SourceMapped, _Filter, _SourceInfo.dimensions / int3(2,2,1), _NthImage+1))
 		return false; // pass through error
 	return true;
 }
@@ -65,17 +63,17 @@ bool oBasisTest_oSurfaceResize(const oBasisTestServices& _Services)
 	static const char* testImage = "file://DATA/Test/Textures/lena_1.png";
 
 	void* hSurface = nullptr;
-	oSURFACE_DESC SourceDesc;
-	oSURFACE_CONST_MAPPED_SUBRESOURCE SourceMapped;
-	if (!_Services.AllocateAndLoadSurface(&hSurface, &SourceDesc, &SourceMapped, testImage))
+	ouro::surface::info SourceInfo;
+	ouro::surface::const_mapped_subresource SourceMapped;
+	if (!_Services.AllocateAndLoadSurface(&hSurface, &SourceInfo, &SourceMapped, testImage))
 		return false; // pass through error
 
 	ouro::finally ose([&] { _Services.DeallocateSurface(hSurface); });
 
 	unsigned int NthImage = 0;
-	for (int i = 0; i < oSURFACE_FILTER_COUNT; i++, NthImage += 2)
+	for (int i = 0; i < ouro::surface::filter::filter_count; i++, NthImage += 2)
 	{
-		if (!oBasisTest_oSurfaceResize_TestFilter(_Services, SourceDesc, SourceMapped, oSURFACE_FILTER(i), NthImage))
+		if (!oBasisTest_oSurfaceResize_TestFilter(_Services, SourceInfo, SourceMapped, ouro::surface::filter::value(i), NthImage))
 			return false; // pass through error
 	}
 

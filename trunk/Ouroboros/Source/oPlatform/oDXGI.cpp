@@ -37,22 +37,22 @@ using namespace ouro;
 
 const oGUID& oGetGUID(threadsafe const IDXGISwapChain* threadsafe const*) { return (const oGUID&)__uuidof(IDXGISwapChain); }
 
-oSURFACE_FORMAT oDXGIToSurfaceFormat(DXGI_FORMAT _Format)
+ouro::surface::format oDXGIToSurfaceFormat(DXGI_FORMAT _Format)
 {
-	// @oooii-tony: For now, oSURFACE_FORMAT and DXGI_FORMAT are the same thing.
-	return static_cast<oSURFACE_FORMAT>(_Format <= DXGI_FORMAT_BC7_UNORM_SRGB ? _Format : DXGI_FORMAT_UNKNOWN);
+	// @oooii-tony: For now, ouro::surface::format and DXGI_FORMAT are the same thing.
+	return static_cast<ouro::surface::format>(_Format <= DXGI_FORMAT_BC7_UNORM_SRGB ? _Format : DXGI_FORMAT_UNKNOWN);
 }
 
-DXGI_FORMAT oDXGIFromSurfaceFormat(oSURFACE_FORMAT _Format)
+DXGI_FORMAT oDXGIFromSurfaceFormat(ouro::surface::format _Format)
 {
 	if (_Format <= DXGI_FORMAT_BC7_UNORM_SRGB)
 		return static_cast<DXGI_FORMAT>(_Format);
 
-	if (oSurfaceFormatIsYUV(_Format) && oSurfaceFormatGetNumSubformats(_Format) > 1)
+	if (ouro::surface::is_yuv(_Format) && ouro::surface::num_subformats(_Format) > 1)
 	{
 		// Until DXGI_FORMAT gets its extended YUV formats, assume when using this 
 		// API return the dominant plane (usually plane0).
-		return oDXGIFromSurfaceFormat(oSurfaceGetSubformat(_Format, 0));
+		return oDXGIFromSurfaceFormat(ouro::surface::subformat(_Format, 0));
 	}
 
 	return DXGI_FORMAT_UNKNOWN;

@@ -81,14 +81,14 @@ struct GPU_Buffer : public oTest
 		CommandList->CopyCounter(AppendBufferCount, 0, AppendBuffer);
 		CommandList->Copy(AppendReadbackBuffer, AppendBuffer);
 
-		oSURFACE_MAPPED_SUBRESOURCE ReadBack;
+		ouro::surface::mapped_subresource ReadBack;
 		oTESTB0( Device->MapRead(AppendBufferCount, 0, &ReadBack, true) );
-		oTESTB(oCOUNTOF( GPU_BufferAppendIndices) == *(int*)ReadBack.pData, "Append counter didn't reach %d", oCOUNTOF(GPU_BufferAppendIndices));
+		oTESTB(oCOUNTOF( GPU_BufferAppendIndices) == *(int*)ReadBack.data, "Append counter didn't reach %d", oCOUNTOF(GPU_BufferAppendIndices));
 		Device->UnmapRead(AppendBufferCount, 0);
 
 		oTESTB0( Device->MapRead(AppendReadbackBuffer, 0, &ReadBack, true) );
 
-		const int* pBuffer = (const int*)ReadBack.pData;
+		const int* pBuffer = (const int*)ReadBack.data;
 		std::vector<int> Values;
 		for(int i = 0; i < oCOUNTOF(GPU_BufferAppendIndices); ++i)
 			Values.push_back(GPU_BufferAppendIndices[i]);

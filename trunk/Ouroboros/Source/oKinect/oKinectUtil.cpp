@@ -126,37 +126,38 @@ void oKinectGetLatestFrame(INuiSensor* _pSensor, HANDLE _hStream, DWORD _Timeout
 	while (SUCCEEDED(hr));
 }
 
-oSURFACE_FORMAT oKinectGetFormat(NUI_IMAGE_TYPE _Type)
+ouro::surface::format oKinectGetFormat(NUI_IMAGE_TYPE _Type)
 {
 	// All are currently BGRA8 basically to support player index coloring.
 	switch (_Type)
 	{
 		case NUI_IMAGE_TYPE_COLOR: 
 		case NUI_IMAGE_TYPE_COLOR_YUV:
-		case NUI_IMAGE_TYPE_DEPTH_AND_PLAYER_INDEX: return oSURFACE_B8G8R8A8_UNORM;
-		case NUI_IMAGE_TYPE_COLOR_INFRARED: return oSURFACE_B8G8R8A8_UNORM;
-		case NUI_IMAGE_TYPE_COLOR_RAW_BAYER: return oSURFACE_B8G8R8A8_UNORM;
-		case NUI_IMAGE_TYPE_COLOR_RAW_YUV: return oSURFACE_B8G8R8A8_UNORM;
-		case NUI_IMAGE_TYPE_DEPTH: return oSURFACE_B8G8R8A8_UNORM;
+		case NUI_IMAGE_TYPE_DEPTH_AND_PLAYER_INDEX: return ouro::surface::b8g8r8a8_unorm;
+		case NUI_IMAGE_TYPE_COLOR_INFRARED: return ouro::surface::b8g8r8a8_unorm;
+		case NUI_IMAGE_TYPE_COLOR_RAW_BAYER: return ouro::surface::b8g8r8a8_unorm;
+		case NUI_IMAGE_TYPE_COLOR_RAW_YUV: return ouro::surface::b8g8r8a8_unorm;
+		case NUI_IMAGE_TYPE_DEPTH: return ouro::surface::b8g8r8a8_unorm;
 		default: break;
 	}
-	return oSURFACE_UNKNOWN;
+	return ouro::surface::unknown;
 }
 
-void oKinectGetDesc(NUI_IMAGE_TYPE _Type, NUI_IMAGE_RESOLUTION _Resolution, oSURFACE_DESC* _pDesc)
+void oKinectGetDesc(NUI_IMAGE_TYPE _Type, NUI_IMAGE_RESOLUTION _Resolution, ouro::surface::info* _pInfo)
 {
-	_pDesc->Dimensions.z = 1;
-	NuiImageResolutionToSize(_Resolution, (DWORD&)_pDesc->Dimensions.x, (DWORD&)_pDesc->Dimensions.y);
-	_pDesc->Format = oKinectGetFormat(_Type);
-	_pDesc->Layout = oSURFACE_LAYOUT_IMAGE;
-	_pDesc->ArraySize = 1;
+	_pInfo->dimensions.z = 1;
+	NuiImageResolutionToSize(_Resolution, (DWORD&)_pInfo->dimensions.x, (DWORD&)_pInfo->dimensions.y);
+	_pInfo->format = oKinectGetFormat(_Type);
+	_pInfo->layout = ouro::surface::image;
+	_pInfo->array_size = 1;
 }
 
-bool oKinectCreateSurface(NUI_IMAGE_TYPE _Type, NUI_IMAGE_RESOLUTION _Resolution, threadsafe oSurface** _ppSurface)
+bool oKinectCreateSurface(NUI_IMAGE_TYPE _Type, NUI_IMAGE_RESOLUTION _Resolution, std::shared_ptr<ouro::surface::buffer>* _ppSurface)
 {
-	oSURFACE_DESC Desc;
-	oKinectGetDesc(NUI_IMAGE_TYPE_COLOR, NUI_IMAGE_RESOLUTION_640x480, &Desc);
-	return oSurfaceCreate(Desc, _ppSurface);
+	ouro::surface::info info;
+	oKinectGetDesc(NUI_IMAGE_TYPE_COLOR, NUI_IMAGE_RESOLUTION_640x480, &info);
+	*_ppSurface = std::make_shared<ouro::surface::buffer>(info);
+	return true;
 }
 
 unsigned char oKinectGetDepthIntensity(unsigned short _Depth)
@@ -196,7 +197,7 @@ RGBQUAD oKinectGetColoredDepth(unsigned short _DepthAndIndex)
 	return q;
 }
 
-void oKinectCopyBits(const NUI_IMAGE_FRAME& _NIF, oSURFACE_MAPPED_SUBRESOURCE& _Destination)
+void oKinectCopyBits(const NUI_IMAGE_FRAME& _NIF, ouro::surface::mapped_subresource& _Destination)
 {
 	NUI_LOCKED_RECT r;
 	int2 Dimensions;
@@ -205,14 +206,14 @@ void oKinectCopyBits(const NUI_IMAGE_FRAME& _NIF, oSURFACE_MAPPED_SUBRESOURCE& _
 	switch (_NIF.eImageType)
 	{
 		case NUI_IMAGE_TYPE_COLOR:
-			memcpy2d(_Destination.pData, _Destination.RowPitch, r.pBits, r.Pitch, Dimensions.x * sizeof(RGBQUAD), Dimensions.y);
+			memcpy2d(_Destination.data, _Destination.row_pitch, r.pBits, r.Pitch, Dimensions.x * sizeof(RGBQUAD), Dimensions.y);
 			break;
 
 		case NUI_IMAGE_TYPE_DEPTH:
 		case NUI_IMAGE_TYPE_DEPTH_AND_PLAYER_INDEX:
 			{
 				const unsigned short* pSrc = (unsigned short*)r.pBits;
-				RGBQUAD* pDest = (RGBQUAD*)_Destination.pData;
+				RGBQUAD* pDest = (RGBQUAD*)_Destination.data;
 				for (int y = 0; y < Dimensions.y; y++)
 					for (int x = 0; x < Dimensions.x; x++)
 						*pDest++ = oKinectGetColoredDepth(*pSrc++);
@@ -226,7 +227,7 @@ void oKinectCopyBits(const NUI_IMAGE_FRAME& _NIF, oSURFACE_MAPPED_SUBRESOURCE& _
 	_NIF.pFrameTexture->UnlockRect(0);
 }
 
-unsigned int oKinectUpdate(INuiSensor* _pSensor, HANDLE _hStream, threadsafe oSurface* _pSurface)
+unsigned int oKinectUpdate(INuiSensor* _pSensor, HANDLE _hStream, ouro::surface::buffer* _pSurface)
 {
 	unsigned int FrameNumber = oInvalid;
 
@@ -234,11 +235,11 @@ unsigned int oKinectUpdate(INuiSensor* _pSensor, HANDLE _hStream, threadsafe oSu
 	oKinectGetLatestFrame(_pSensor, _hStream, 10000, &NIF);
 
 	FrameNumber = NIF.dwFrameNumber;
-	oSURFACE_MAPPED_SUBRESOURCE Mapped;
+	ouro::surface::mapped_subresource Mapped;
 	int2 ByteDimensions;
-	_pSurface->Map(0, &Mapped, &ByteDimensions);
+	_pSurface->map(0, &Mapped, &ByteDimensions);
 	oKinectCopyBits(NIF, Mapped);
-	_pSurface->Unmap(0);
+	_pSurface->unmap(0);
 
 	oWIN_CHECK_HR(_pSensor->NuiImageStreamReleaseFrame(_hStream, &NIF)
 		, "failed to release frame");

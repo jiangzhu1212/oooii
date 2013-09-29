@@ -128,10 +128,10 @@ bool oGPUCompileShader(
 bool oGPUSurfaceConvert(
 	void* oRESTRICT _pDestination
 	, size_t _DestinationRowPitch
-	, oSURFACE_FORMAT _DestinationFormat
+	, ouro::surface::format _DestinationFormat
 	, const void* oRESTRICT _pSource
 	, size_t _SourceRowPitch
-	, oSURFACE_FORMAT _SourceFormat
+	, ouro::surface::format _SourceFormat
 	, const int2& _MipDimensions)
 {
 	oGPU_DEVICE_INIT DeviceInit("oGPUSurfaceConvert Temp Device");
@@ -143,19 +143,19 @@ bool oGPUSurfaceConvert(
 			return false; // pass through error
 	}
 
-	oSURFACE_MAPPED_SUBRESOURCE Destination;
-	Destination.pData = _pDestination;
-	Destination.RowPitch = oUInt(_DestinationRowPitch);
-	Destination.DepthPitch = 0;
+	ouro::surface::mapped_subresource Destination;
+	Destination.data = _pDestination;
+	Destination.row_pitch = oUInt(_DestinationRowPitch);
+	Destination.depth_pitch = 0;
 
-	oSURFACE_CONST_MAPPED_SUBRESOURCE Source;
-	Source.pData = _pSource;
-	Source.RowPitch = oULLong(_SourceRowPitch);
-	Source.DepthPitch = 0;
+	ouro::surface::const_mapped_subresource Source;
+	Source.data = _pSource;
+	Source.row_pitch = oULLong(_SourceRowPitch);
+	Source.depth_pitch = 0;
 	return oD3D11Convert(D3DDevice, Destination, _DestinationFormat, Source, _SourceFormat, _MipDimensions);
 }
 
-bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, oSURFACE_FORMAT _NewFormat, oGPUTexture** _ppDestinationTexture)
+bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, ouro::surface::format _NewFormat, oGPUTexture** _ppDestinationTexture)
 {
 	intrusive_ptr<ID3D11Texture2D> D3DDestinationTexture;
 	if (!oD3D11Convert(static_cast<oD3D11Texture*>(_pSourceTexture)->Texture, _NewFormat, &D3DDestinationTexture))

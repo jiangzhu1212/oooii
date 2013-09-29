@@ -82,9 +82,9 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 		float4x4 P = oCreatePerspectiveLH(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
 
 		{
-			oSURFACE_MAPPED_SUBRESOURCE msr;
+			ouro::surface::mapped_subresource msr;
 			CommandList->Reserve(InstanceList, 0, &msr);
-			oGPU_TEST_INSTANCE* pInstances = (oGPU_TEST_INSTANCE*)msr.pData;
+			oGPU_TEST_INSTANCE* pInstances = (oGPU_TEST_INSTANCE*)msr.data;
 			{
 				pInstances[0].Translation = float3(-0.5f, 0.5f, 0.0f);
 				pInstances[1].Translation = float3(0.5f, -0.5f, 0.0f);

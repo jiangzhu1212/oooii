@@ -49,7 +49,7 @@ struct oKinectImpl : oKinect
 	oGUI_INPUT_DEVICE_STATUS GetStatus() const threadsafe override;
 	void SetPitch(int _Degrees) threadsafe override;
 
-	bool MapRead(oKINECT_FRAME_TYPE _Type, oSURFACE_DESC* _pDesc, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pDestination) const threadsafe override;
+	bool MapRead(oKINECT_FRAME_TYPE _Type, ouro::surface::info* _pInfo, ouro::surface::const_mapped_subresource* _pDestination) const threadsafe override;
 	void UnmapRead(oKINECT_FRAME_TYPE _Type) const threadsafe override;
 
 	bool GetSkeletonByIndex(int _PlayerIndex, oGUI_BONE_DESC* _pSkeleton) const threadsafe override;
@@ -91,8 +91,8 @@ protected:
 	HANDLE hColorStream;
 	HANDLE hDepthStream;
 
-	ouro::intrusive_ptr<threadsafe oSurface> Color;
-	ouro::intrusive_ptr<threadsafe oSurface> Depth;
+	std::shared_ptr<ouro::surface::buffer> Color;
+	std::shared_ptr<ouro::surface::buffer> Depth;
 
 	oKinectSkeletonStream Skeletons;
 

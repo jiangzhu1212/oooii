@@ -32,32 +32,32 @@
 bool Test_oSurfaceMipCalcRowPitch(int _Depth, int _ArraySize)
 {
 	// This tests whether the row pitch remains the same per mip level regardless of depth or number of slices
-	oSURFACE_DESC desc;
-	desc.Dimensions = int3(512,512, _Depth);
-	desc.ArraySize = _ArraySize;
-	desc.Format = oSURFACE_R8G8B8A8_UNORM;
+	ouro::surface::info inf;
+	inf.dimensions = int3(512,512, _Depth);
+	inf.array_size = _ArraySize;
+	inf.format = ouro::surface::r8g8b8a8_unorm;
 
 	int RowPitches[10] = { 0x800, 0x400, 0x200, 0x100, 0x80, 0x40, 0x20, 0x10, 0x8, 0x4 };
 
-	desc.Layout = oSURFACE_LAYOUT_IMAGE;
+	inf.layout = ouro::surface::image;
 	oFORI(mipLevel, RowPitches)
 	{
-		oTESTB(oSurfaceMipCalcRowPitch(desc, 0) == RowPitches[mipLevel], "Test_oSurfaceMipCalcRowPitch(%d, %d) oSURFACE_LAYOUT_IMAGE failed", _Depth, _ArraySize);
-		desc.Dimensions = oSurfaceMipCalcDimensionsNPOT(desc.Format, desc.Dimensions, 1);
+		oTESTB(ouro::surface::row_pitch(inf, 0) == RowPitches[mipLevel], "Test_oSurfaceMipCalcRowPitch(%d, %d) ouro::surface::image failed", _Depth, _ArraySize);
+		inf.dimensions = ouro::surface::dimensions_npot(inf.format, inf.dimensions, 1);
 	}
-	desc.Dimensions = int3(512,512,_Depth);
+	inf.dimensions = int3(512, 512, _Depth);
 
-	desc.Layout = oSURFACE_LAYOUT_TIGHT;
+	inf.layout = ouro::surface::tight;
 	oFORI(mipLevel, RowPitches)
-		oTESTB(oSurfaceMipCalcRowPitch(desc, (int)mipLevel) == RowPitches[mipLevel], "Test_oSurfaceMipCalcRowPitch(%d, %d) oSURFACE_LAYOUT_TIGHT failed", _Depth, _ArraySize);
+		oTESTB(ouro::surface::row_pitch(inf, (int)mipLevel) == RowPitches[mipLevel], "Test_oSurfaceMipCalcRowPitch(%d, %d) oSURFACE_LAYOUT_TIGHT failed", _Depth, _ArraySize);
 
-	desc.Layout = oSURFACE_LAYOUT_BELOW;
+	inf.layout = ouro::surface::below;
 	oFORI(mipLevel, RowPitches)
-		oTESTB(oSurfaceMipCalcRowPitch(desc, (int)mipLevel) == RowPitches[0], "Test_oSurfaceMipCalcRowPitch(%d, %d) oSURFACE_LAYOUT_BELOW failed", _Depth, _ArraySize);
+		oTESTB(ouro::surface::row_pitch(inf, (int)mipLevel) == RowPitches[0], "Test_oSurfaceMipCalcRowPitch(%d, %d) oSURFACE_LAYOUT_BELOW failed", _Depth, _ArraySize);
 
-	desc.Layout = oSURFACE_LAYOUT_RIGHT;
+	inf.layout = ouro::surface::right;
 	oFORI(mipLevel, RowPitches)
-		oTESTB(oSurfaceMipCalcRowPitch(desc, (int)mipLevel) == (RowPitches[0]+RowPitches[1]), "Test_oSurfaceMipCalcRowPitch(%d, %d) oSURFACE_LAYOUT_RIGHT failed", _Depth, _ArraySize);
+		oTESTB(ouro::surface::row_pitch(inf, (int)mipLevel) == (RowPitches[0]+RowPitches[1]), "Test_oSurfaceMipCalcRowPitch(%d, %d) oSURFACE_LAYOUT_RIGHT failed", _Depth, _ArraySize);
 
 	return true;
 }
@@ -65,102 +65,102 @@ bool Test_oSurfaceMipCalcRowPitch(int _Depth, int _ArraySize)
 bool Test_oSurfaceMipCalcDepthPitch(int _Depth, int _ArraySize)
 {
 	// This tests whether the depth pitch remains the same per mip level regardless of depth or number of slices
-	oSURFACE_DESC desc;
-	desc.Dimensions = int3(512,512,_Depth);
-	desc.ArraySize = _ArraySize;
-	desc.Format = oSURFACE_R8G8B8A8_UNORM;
+	ouro::surface::info inf;
+	inf.dimensions = int3(512,512,_Depth);
+	inf.array_size = _ArraySize;
+	inf.format = ouro::surface::r8g8b8a8_unorm;
 
 	int DepthPitches[10] = { 0x100000, 0x40000, 0x10000, 0x4000, 0x1000, 0x400, 0x100, 0x40, 0x10, 0x4 };
 
-	desc.Layout = oSURFACE_LAYOUT_IMAGE;
+	inf.layout = ouro::surface::image;
 	oFORI(mipLevel, DepthPitches)
 	{
-		oTESTB(oSurfaceMipCalcDepthPitch(desc, 0) == DepthPitches[mipLevel], "Test_oSurfaceMipCalcDepthPitch() oSURFACE_LAYOUT_IMAGE failed");
-		desc.Dimensions = oSurfaceMipCalcDimensionsNPOT(desc.Format, desc.Dimensions, 1);
+		oTESTB(ouro::surface::depth_pitch(inf, 0) == DepthPitches[mipLevel], "Test_oSurfaceMipCalcDepthPitch() ouro::surface::image failed");
+		inf.dimensions = ouro::surface::dimensions_npot(inf.format, inf.dimensions, 1);
 	}
-	desc.Dimensions = int3(512,512,_Depth);
+	inf.dimensions = int3(512,512,_Depth);
 
-	desc.Layout = oSURFACE_LAYOUT_TIGHT;
+	inf.layout = ouro::surface::tight;
 	oFORI(mipLevel, DepthPitches)
-		oTESTB(oSurfaceMipCalcDepthPitch(desc, (int)mipLevel) == DepthPitches[mipLevel], "Test_oSurfaceMipCalcDepthPitch() oSURFACE_LAYOUT_TIGHT failed");
+		oTESTB(ouro::surface::depth_pitch(inf, (int)mipLevel) == DepthPitches[mipLevel], "Test_oSurfaceMipCalcDepthPitch() oSURFACE_LAYOUT_TIGHT failed");
 
-	desc.Layout = oSURFACE_LAYOUT_BELOW;
+	inf.layout = ouro::surface::below;
 	oFORI(mipLevel, DepthPitches)
-		oTESTB(oSurfaceMipCalcDepthPitch(desc, (int)mipLevel) == DepthPitches[mipLevel] << mipLevel, "oSurfaceMipCalcDepthPitch() oSURFACE_LAYOUT_BELOW failed");
+		oTESTB(ouro::surface::depth_pitch(inf, (int)mipLevel) == DepthPitches[mipLevel] << mipLevel, "ouro::surface::depth_pitch() oSURFACE_LAYOUT_BELOW failed");
 
-	desc.Layout = oSURFACE_LAYOUT_RIGHT;
+	inf.layout = ouro::surface::right;
 	oFORI(mipLevel, DepthPitches)
-		oTESTB(oSurfaceMipCalcDepthPitch(desc, (int)mipLevel) == (DepthPitches[mipLevel] << mipLevel) + ((DepthPitches[mipLevel] >> 1) << mipLevel), "oSurfaceMipCalcDepthPitch() oSURFACE_LAYOUT_RIGHT failed");
+		oTESTB(ouro::surface::depth_pitch(inf, (int)mipLevel) == (DepthPitches[mipLevel] << mipLevel) + ((DepthPitches[mipLevel] >> 1) << mipLevel), "ouro::surface::depth_pitch() oSURFACE_LAYOUT_RIGHT failed");
 
 	return true;
 }
 
 bool Test_oSurfaceSliceCalcPitch(int _ArraySize)
 {
-	oSURFACE_DESC desc;
-	desc.Dimensions = int3(512,512,1);
-	desc.ArraySize = _ArraySize;
-	desc.Format = oSURFACE_R8G8B8A8_UNORM;
+	ouro::surface::info inf;
+	inf.dimensions = int3(512,512,1);
+	inf.array_size = _ArraySize;
+	inf.format = ouro::surface::r8g8b8a8_unorm;
 
 	if (_ArraySize > 1)
 	{
 		// This tests whether the slice pitch remains the same regardless of number of slices
-		oSURFACE_DESC desc1 = desc;
-		desc1.ArraySize = 1;
+		ouro::surface::info inf1 = inf;
+		inf1.array_size = 1;
 
-		desc.Layout = oSURFACE_LAYOUT_IMAGE;
-		oTESTB(oSurfaceSliceCalcPitch(desc) == 0x00100000, "oSurfaceSliceCalcPitch() failed");
-		oTESTB(oSurfaceSliceCalcPitch(desc) == oSurfaceMipCalcDepthPitch(desc), "oSurfaceSliceCalcPitch() failed");
+		inf.layout = ouro::surface::image;
+		oTESTB(ouro::surface::slice_pitch(inf) == 0x00100000, "ouro::surface::slice_pitch() failed");
+		oTESTB(ouro::surface::slice_pitch(inf) == ouro::surface::depth_pitch(inf), "ouro::surface::slice_pitch() failed");
 		
-		desc.Layout = oSURFACE_LAYOUT_TIGHT;
-		oTESTB(oSurfaceSliceCalcPitch(desc) == 0x00155800, "oSurfaceSliceCalcPitch() failed");
-		oTESTB(oSurfaceSliceCalcPitch(desc) == (oSurfaceCalcSize(desc) / _ArraySize), "oSurfaceSliceCalcPitch()==(oSurfaceCalcSize()/slices) failed");
+		inf.layout = ouro::surface::tight;
+		oTESTB(ouro::surface::slice_pitch(inf) == 0x00155800, "ouro::surface::slice_pitch() failed");
+		oTESTB(ouro::surface::slice_pitch(inf) == (ouro::surface::total_size(inf) / _ArraySize), "ouro::surface::slice_pitch()==(ouro::surface::total_size()/slices) failed");
 
-		desc.Layout = oSURFACE_LAYOUT_BELOW;
-		oTESTB(oSurfaceSliceCalcPitch(desc) == 0x00180000, "oSurfaceSliceCalcPitch() failed");
-		oTESTB(oSurfaceSliceCalcPitch(desc) == (oSurfaceCalcSize(desc) / _ArraySize), "oSurfaceSliceCalcPitch()==(oSurfaceCalcSize()/slices) failed");
+		inf.layout = ouro::surface::below;
+		oTESTB(ouro::surface::slice_pitch(inf) == 0x00180000, "ouro::surface::slice_pitch() failed");
+		oTESTB(ouro::surface::slice_pitch(inf) == (ouro::surface::total_size(inf) / _ArraySize), "ouro::surface::slice_pitch()==(ouro::surface::total_size()/slices) failed");
 
-		desc.Layout = oSURFACE_LAYOUT_RIGHT;
-		oTESTB(oSurfaceSliceCalcPitch(desc) == 0x00180000, "oSurfaceSliceCalcPitch() failed");
-		oTESTB(oSurfaceSliceCalcPitch(desc) == (oSurfaceCalcSize(desc) / _ArraySize), "oSurfaceSliceCalcPitch()==(oSurfaceCalcSize()/slices) failed");
+		inf.layout = ouro::surface::right;
+		oTESTB(ouro::surface::slice_pitch(inf) == 0x00180000, "ouro::surface::slice_pitch() failed");
+		oTESTB(ouro::surface::slice_pitch(inf) == (ouro::surface::total_size(inf) / _ArraySize), "ouro::surface::slice_pitch()==(ouro::surface::total_size()/slices) failed");
 		return true;
 	}
 
 	// This tests whether the slice pitch is the same as the depth pitch multiplied by the depth
-	desc.Layout = oSURFACE_LAYOUT_IMAGE;
+	inf.layout = ouro::surface::image;
 	for(int depthLevel=0; depthLevel<10; depthLevel++)
 	{
-		desc.Dimensions.z = (int)depthLevel + 1;
-		oTESTB(oSurfaceSliceCalcPitch(desc) == (oSurfaceMipCalcDepthPitch(desc, 0) * desc.Dimensions.z), "oSurfaceSliceCalcPitch()==(oSurfaceMipCalcDepthPitch()*depth) failed");
-		oTESTB(oSurfaceSliceCalcPitch(desc) == oSurfaceCalcSize(desc), "oSurfaceSliceCalcPitch()==oSurfaceCalcSize() failed");
+		inf.dimensions.z = (int)depthLevel + 1;
+		oTESTB(ouro::surface::slice_pitch(inf) == (ouro::surface::depth_pitch(inf, 0) * inf.dimensions.z), "ouro::surface::slice_pitch()==(ouro::surface::depth_pitch()*depth) failed");
+		oTESTB(ouro::surface::slice_pitch(inf) == ouro::surface::total_size(inf), "ouro::surface::slice_pitch()==ouro::surface::total_size() failed");
 	}
 
 	// The rest below tests the slice pitches for a number of depth levels, and 3d textures don't support more than one slice
-	desc.Layout = oSURFACE_LAYOUT_TIGHT;
+	inf.layout = ouro::surface::tight;
 	int SlicePitches[15] = { 0x00155800, 0x00255800, 0x00355800, 0x00495800, 0x00595800, 0x006d5800, 0x007d5800, 0x00925800, 0x00a25800, 0x00b65800, 0x00c65800, 0x00db5800, 0x00eb5800, 0x00ff5800, 0x010f5800 };
 	oFORI(depthLevel, SlicePitches)
 	{
-		desc.Dimensions.z = (int)depthLevel + 1;
-		oTESTB(oSurfaceSliceCalcPitch(desc) == SlicePitches[depthLevel], "oSurfaceSliceCalcPitch() failed");
-		oTESTB(oSurfaceSliceCalcPitch(desc) == oSurfaceCalcSize(desc), "oSurfaceSliceCalcPitch()==oSurfaceCalcSize() failed");
+		inf.dimensions.z = (int)depthLevel + 1;
+		oTESTB(ouro::surface::slice_pitch(inf) == SlicePitches[depthLevel], "ouro::surface::slice_pitch() failed");
+		oTESTB(ouro::surface::slice_pitch(inf) == ouro::surface::total_size(inf), "ouro::surface::slice_pitch()==ouro::surface::total_size() failed");
 	}
 
-	desc.Layout = oSURFACE_LAYOUT_BELOW;
+	inf.layout = ouro::surface::below;
 	int SlicePitchesVertical[15] = { 0x00180000, 0x00280000, 0x00380000, 0x00500000, 0x00600000, 0x00780000, 0x00880000, 0x00a00000, 0x00b00000, 0x00c80000, 0x00d80000, 0x00f00000, 0x01000000, 0x01180000, 0x01280000 };
 	oFORI(depthLevel, SlicePitchesVertical)
 	{
-		desc.Dimensions.z = (int)depthLevel + 1;
-		oTESTB(oSurfaceSliceCalcPitch(desc) == SlicePitchesVertical[depthLevel], "oSurfaceSliceCalcPitch() failed");
-		oTESTB(oSurfaceSliceCalcPitch(desc) == oSurfaceCalcSize(desc), "oSurfaceSliceCalcPitch()==oSurfaceCalcSize() failed");
+		inf.dimensions.z = (int)depthLevel + 1;
+		oTESTB(ouro::surface::slice_pitch(inf) == SlicePitchesVertical[depthLevel], "ouro::surface::slice_pitch() failed");
+		oTESTB(ouro::surface::slice_pitch(inf) == ouro::surface::total_size(inf), "ouro::surface::slice_pitch()==ouro::surface::total_size() failed");
 	}
 
-	desc.Layout = oSURFACE_LAYOUT_RIGHT;
+	inf.layout = ouro::surface::right;
 	int SlicePitchesHorizontal[15] = { 0x00180000, 0x00300000, 0x00480000, 0x00600000, 0x00780000, 0x00900000, 0x00a80000, 0x00c00000, 0x00d80000, 0x00f00000, 0x01080000, 0x01200000, 0x01380000, 0x01500000, 0x01680000 };
 	oFORI(depthLevel, SlicePitchesHorizontal)
 	{
-		desc.Dimensions.z = (int)depthLevel + 1;
-		oTESTB(oSurfaceSliceCalcPitch(desc) == SlicePitchesHorizontal[depthLevel], "oSurfaceSliceCalcPitch() failed");
-		oTESTB(oSurfaceSliceCalcPitch(desc) == oSurfaceCalcSize(desc), "oSurfaceSliceCalcPitch()==oSurfaceCalcSize() failed");
+		inf.dimensions.z = (int)depthLevel + 1;
+		oTESTB(ouro::surface::slice_pitch(inf) == SlicePitchesHorizontal[depthLevel], "ouro::surface::slice_pitch() failed");
+		oTESTB(ouro::surface::slice_pitch(inf) == ouro::surface::total_size(inf), "ouro::surface::slice_pitch()==ouro::surface::total_size() failed");
 	}
 
 	return true;
@@ -177,12 +177,12 @@ bool Test_oSurface()
 		if (!Test_oSurfaceSliceCalcPitch(i)) return false;
 	}
 
-	oSURFACE_DESC desc;
-	desc.Dimensions = int3(512,512,511);
-	desc.ArraySize = 1;
-	desc.Format = oSURFACE_R8G8B8A8_UNORM;
-	desc.Layout = oSURFACE_LAYOUT_TIGHT;
-	oTESTB(oSurfaceMipCalcOffset(desc, 1)==0x1ff00000, "");
+	ouro::surface::info inf;
+	inf.dimensions = int3(512,512,511);
+	inf.array_size = 1;
+	inf.format = ouro::surface::r8g8b8a8_unorm;
+	inf.layout = ouro::surface::tight;
+	oTESTB(ouro::surface::offset(inf, 1)==0x1ff00000, "");
 
 	int3 MipDimensions[] = 
 	{ 
@@ -204,7 +204,7 @@ bool Test_oSurface()
 	};
 
 	oFORI(i, MipDimensions)
-		oTESTB(oSurfaceCalcNumMips(oSURFACE_LAYOUT_TIGHT, MipDimensions[i]) == NumMips[i], "oSurfaceCalcNumMips(.., int3(%d,%d,%d))==%d failed", MipDimensions[i].x, MipDimensions[i].y, MipDimensions[i].z, NumMips[i]);
+		oTESTB(ouro::surface::num_mips(ouro::surface::tight, MipDimensions[i]) == NumMips[i], "ouro::surface::num_mips(.., int3(%d,%d,%d))==%d failed", MipDimensions[i].x, MipDimensions[i].y, MipDimensions[i].z, NumMips[i]);
 
 	oErrorSetLast(0, "");
 	return true;

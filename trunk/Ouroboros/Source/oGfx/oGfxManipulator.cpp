@@ -344,10 +344,10 @@ void oGfxManipulatorImpl::GetManipulatorPickLineMeshes(oGPUCommandList* _pComman
 				oGPUUtilMesh::DESC MeshDesc;
 				Mesh->GetDesc(&MeshDesc);
 
-				oSURFACE_CONST_MAPPED_SUBRESOURCE msr;
-				msr.pData = &VerticesWorking[0];
-				msr.RowPitch = sizeof(VerticesWorking[0]);
-				msr.DepthPitch = MeshDesc.NumVertices * msr.RowPitch;
+				ouro::surface::const_mapped_subresource msr;
+				msr.data = &VerticesWorking[0];
+				msr.row_pitch = sizeof(VerticesWorking[0]);
+				msr.depth_pitch = MeshDesc.NumVertices * msr.row_pitch;
 				_pCommandList->Commit(Mesh->GetVertexBuffer(), 0, msr);
 				_Callback(Mesh, (uint)Line.URI.Hash());
 			}
@@ -372,21 +372,21 @@ void oGfxManipulatorImpl::GetManipulatorVisualLines(oGPUCommandList* _pCommandLi
 			Manipulator->GetLines(Axis, &VerticesWorking[0], LineVertexCount);
 			if(LineVertexCount > 0)
 			{
-				oSURFACE_MAPPED_SUBRESOURCE msr;
+				ouro::surface::mapped_subresource msr;
 				_pCommandList->Reserve(Line.LineList, 0, &msr);
 
 				auto LineCount = LineVertexCount == 2 ? 1 : LineVertexCount;
 
 				for(size_t i = 0; i < LineCount; ++i)
 				{
-					((oGFX_LINE_VERTEX*)msr.pData)[2 * i].LSPosition = VerticesWorking[i];
-					((oGFX_LINE_VERTEX*)msr.pData)[2 * i].Color = Line.LineColor;
+					((oGFX_LINE_VERTEX*)msr.data)[2 * i].LSPosition = VerticesWorking[i];
+					((oGFX_LINE_VERTEX*)msr.data)[2 * i].Color = Line.LineColor;
 
-					((oGFX_LINE_VERTEX*)msr.pData)[2 * i + 1].LSPosition = VerticesWorking[(i + 1)%LineVertexCount];
-					((oGFX_LINE_VERTEX*)msr.pData)[2 * i + 1].Color = Line.LineColor;
+					((oGFX_LINE_VERTEX*)msr.data)[2 * i + 1].LSPosition = VerticesWorking[(i + 1)%LineVertexCount];
+					((oGFX_LINE_VERTEX*)msr.data)[2 * i + 1].Color = Line.LineColor;
 				}
 
-				_pCommandList->Commit(Line.LineList, 0, msr, oSURFACE_BOX(oInt(LineCount * 2)));
+				_pCommandList->Commit(Line.LineList, 0, msr, ouro::surface::box(oInt(LineCount * 2)));
 				_Callback(Line.LineList, oUInt(LineCount));
 			}
 		}

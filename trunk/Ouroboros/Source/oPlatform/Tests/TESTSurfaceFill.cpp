@@ -42,8 +42,8 @@ bool oImageCreateNumberedGrid(const int2& _Dimensions, const int2& _GridDimensio
 	(*_ppImage)->GetDesc(&d);
 
 	color* c = (color*)(*_ppImage)->GetData();
-	oSurfaceFillGradient(c, d.RowPitch, d.Dimensions, _CornerColors);
-	oSurfaceFillGridLines(c, d.RowPitch, d.Dimensions, _GridDimensions, _GridColor);
+	ouro::surface::fill_gradient(c, d.RowPitch, d.Dimensions, _CornerColors);
+	ouro::surface::fill_grid_lines(c, d.RowPitch, d.Dimensions, _GridDimensions, _GridColor);
 
 	// Lots of code to create an HBITMAP usable by GDI, then draw text to it, then
 	// copy it back to the image.
@@ -65,19 +65,23 @@ bool oImageCreateNumberedGrid(const int2& _Dimensions, const int2& _GridDimensio
 		oGDIScopedSelect SelectBmp(hDC, hBmp);
 		oGDIScopedSelect SelectFont(hDC, hFont);
 
-		if (!oSurfaceFillGridNumbers(d.Dimensions, _GridDimensions,
-			[&](const int2& _DrawBoxPosition, const int2& _DrawBoxSize, const char* _Text)->bool
-		{
-			oGUI_TEXT_DESC td;
-			td.Position = _DrawBoxPosition;
-			td.Size = _DrawBoxSize;
-			td.Alignment = oGUI_ALIGNMENT_MIDDLE_CENTER;
-			td.Foreground = _NumberColor;
-			td.Shadow = 0;
-			td.SingleLine = true;
-			return oGDIDrawText(hDC, td, _Text);
-		}))
-			return false; // pass through error
+		try
+		{	
+			ouro::surface::fill_grid_numbers(d.Dimensions, _GridDimensions,
+				[&](const int2& _DrawBoxPosition, const int2& _DrawBoxSize, const char* _Text)->bool
+			{
+				oGUI_TEXT_DESC td;
+				td.Position = _DrawBoxPosition;
+				td.Size = _DrawBoxSize;
+				td.Alignment = oGUI_ALIGNMENT_MIDDLE_CENTER;
+				td.Foreground = _NumberColor;
+				td.Shadow = 0;
+				td.SingleLine = true;
+				return oGDIDrawText(hDC, td, _Text);
+			});
+		}
+
+		catch (std::exception& e) { return oErrorSetLast(e); } // pass through error
 
 		(*_ppImage)->CopyData(hBmp);
 	}
@@ -94,7 +98,7 @@ bool oImageCreateCheckerboard(const int2& _Dimensions, const int2& _GridDimensio
 	if (!oImageCreate("CheckerImage", d, _ppImage))
 		return false; // pass through error
 	(*_ppImage)->GetDesc(&d);
-	oSurfaceFillCheckerboard((color*)(*_ppImage)->GetData(), d.RowPitch, d.Dimensions, int2(64,64), _Color0, _Color1);
+	ouro::surface::fill_checkerboard((color*)(*_ppImage)->GetData(), d.RowPitch, d.Dimensions, int2(64,64), _Color0, _Color1);
 	return true;
 }
 
@@ -107,7 +111,7 @@ bool oImageCreateSolid(const int2& _Dimensions, color _Color, oImage** _ppImage)
 	if (!oImageCreate("CheckerImage", d, _ppImage))
 		return false; // pass through error
 	(*_ppImage)->GetDesc(&d);
-	oSurfaceFillSolid((color*)(*_ppImage)->GetData(), d.RowPitch, d.Dimensions, _Color);
+	ouro::surface::fill_solid((color*)(*_ppImage)->GetData(), d.RowPitch, d.Dimensions, _Color);
 	return true;
 }
 

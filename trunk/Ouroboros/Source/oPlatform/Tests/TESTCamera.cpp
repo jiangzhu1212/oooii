@@ -73,7 +73,7 @@ int ShowAllCameras()
 		{
 			oCamera::MODE mode;
 			mode.Dimensions = int2(640, 480);
-			mode.Format = oSURFACE_R8G8B8_UNORM;
+			mode.Format = ouro::surface::r8g8b8_unorm;
 			mode.BitRate = ~0u;
 
 			oCamera::MODE closest;

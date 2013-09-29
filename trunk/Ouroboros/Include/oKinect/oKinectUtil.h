@@ -59,10 +59,10 @@ const char* oKinectGetErrcStringFromStatus(oGUI_INPUT_DEVICE_STATUS _Status);
 // NuiImageStreamGetNextFrame normally requires.
 void oKinectGetLatestFrame(INuiSensor* _pSensor, HANDLE _hStream, DWORD _Timeout, NUI_IMAGE_FRAME* _pLatest);
 
-oSURFACE_FORMAT oKinectGetFormat(NUI_IMAGE_TYPE _Type);
+ouro::surface::format oKinectGetFormat(NUI_IMAGE_TYPE _Type);
 
-void oKinectGetDesc(NUI_IMAGE_TYPE _Type, NUI_IMAGE_RESOLUTION _Resolution, oSURFACE_DESC* _pDesc);
-bool oKinectCreateSurface(NUI_IMAGE_TYPE _Type, NUI_IMAGE_RESOLUTION _Resolution, threadsafe oSurface** _ppSurface);
+void oKinectGetDesc(NUI_IMAGE_TYPE _Type, NUI_IMAGE_RESOLUTION _Resolution, ouro::surface::info* _pInfo);
+bool oKinectCreateSurface(NUI_IMAGE_TYPE _Type, NUI_IMAGE_RESOLUTION _Resolution, std::shared_ptr<ouro::surface::buffer>* _ppSurface);
 
 // This must be pure depth, not depth+index. This adjusts the specified value
 // so that there is more contrast when rendering visuals of the depth value.
@@ -74,12 +74,12 @@ RGBQUAD oKinectGetColoredDepth(unsigned short _DepthAndIndex);
 
 // Copies the specified NUI frame to the specified properly allocated 
 // destination surface.
-void oKinectCopyBits(const NUI_IMAGE_FRAME& _NIF, oSURFACE_MAPPED_SUBRESOURCE& _Destination);
+void oKinectCopyBits(const NUI_IMAGE_FRAME& _NIF, ouro::surface::mapped_subresource& _Destination);
 
 // Uses the above utility code to copy the latest from from the specified stream
 // and fills the properly allocated surface with the image contents. This 
 // returns the FrameNumber (NUI_IMAGE_FRAME::dwFrameNumber).
-unsigned int oKinectUpdate(INuiSensor* _pSensor, HANDLE _hStream, threadsafe oSurface* _pSurface);
+unsigned int oKinectUpdate(INuiSensor* _pSensor, HANDLE _hStream, ouro::surface::buffer* _pSurface);
 
 // Converts to a position in pixels for the specified target dimensions. If the 
 // specified position is invalid (w < 0) then the return value will be 

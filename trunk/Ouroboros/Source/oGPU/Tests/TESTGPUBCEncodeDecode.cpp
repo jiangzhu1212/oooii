@@ -32,7 +32,7 @@ using namespace ouro;
 
 struct GPU_BCEncodeDecode : public oTest
 {
-	RESULT LoadOriginalAndSaveConverted(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, oSURFACE_FORMAT _TargetFormat, const char* _OriginalPath, const char* _ConvertedPath)
+	RESULT LoadOriginalAndSaveConverted(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, ouro::surface::format _TargetFormat, const char* _OriginalPath, const char* _ConvertedPath)
 	{
 		intrusive_ptr<oBuffer> OriginalFile;
 		oTESTB(oBufferLoad(_OriginalPath, &OriginalFile), "Failed to load %s", _OriginalPath);
@@ -40,7 +40,7 @@ struct GPU_BCEncodeDecode : public oTest
 		oGPU_TEXTURE_DESC d;
 		d.Dimensions = int3(oDEFAULT, oDEFAULT, 1);
 		d.ArraySize = oDEFAULT;
-		d.Format = oSURFACE_UNKNOWN;
+		d.Format = ouro::surface::unknown;
 
 		intrusive_ptr<oGPUTexture> OriginalAsTexture;
 		oTESTB(oGPUTextureLoad(_pDevice, d, "Source Texture", OriginalFile->GetData(), OriginalFile->GetSize(), &OriginalAsTexture), "Failed to parse %s", OriginalFile->GetName());
@@ -62,14 +62,14 @@ struct GPU_BCEncodeDecode : public oTest
 		oGPUTexture::DESC td;
 		td.Dimensions = int3(oDEFAULT, oDEFAULT, 1);
 		td.ArraySize = oDEFAULT;
-		td.Format = oSURFACE_UNKNOWN;
+		td.Format = ouro::surface::unknown;
 		td.Type = oGPU_TEXTURE_2D_READBACK;
 
 		intrusive_ptr<oGPUTexture> ConvertedFileAsTexture;
 		oTESTB(oGPUTextureLoad(_pDevice, td, "Converted Texture", ConvertedFile->GetData(), ConvertedFile->GetSize(), &ConvertedFileAsTexture), "Failed to parse %s", ConvertedFile->GetName());
 
 		intrusive_ptr<oGPUTexture> BGRATexture;
-		oTESTB(oGPUSurfaceConvert(ConvertedFileAsTexture, oSURFACE_B8G8R8A8_UNORM, &BGRATexture), "Failed to convert %s to BGRA", ConvertedFile->GetName());
+		oTESTB(oGPUSurfaceConvert(ConvertedFileAsTexture, ouro::surface::b8g8r8a8_unorm, &BGRATexture), "Failed to convert %s to BGRA", ConvertedFile->GetName());
 
 		BGRATexture->GetDesc(&td);
 
@@ -81,10 +81,10 @@ struct GPU_BCEncodeDecode : public oTest
 		intrusive_ptr<oImage> ConvertedImage;
 		oTESTB(oImageCreate("ConvertedImage", d, &ConvertedImage), "Failed to create a compatible oImage");
 
-		oSURFACE_MAPPED_SUBRESOURCE msrSource;
+		ouro::surface::mapped_subresource msrSource;
 		_pDevice->MapRead(BGRATexture, 0, &msrSource, true);
-		int2 ByteDimensions = oSurfaceMipCalcByteDimensions(td.Format, td.Dimensions);
-		memcpy2d(ConvertedImage->GetData(), d.RowPitch, msrSource.pData, msrSource.RowPitch, ByteDimensions.x, ByteDimensions.y);
+		int2 ByteDimensions = ouro::surface::byte_dimensions(td.Format, td.Dimensions);
+		memcpy2d(ConvertedImage->GetData(), d.RowPitch, msrSource.data, msrSource.row_pitch, ByteDimensions.x, ByteDimensions.y);
 		_pDevice->UnmapRead(BGRATexture, 0);
 
 		*_ppConvertedImage = ConvertedImage;
@@ -92,7 +92,7 @@ struct GPU_BCEncodeDecode : public oTest
 		return oTest::SUCCESS;
 	}
 
-	RESULT ConvertAndTest(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, oSURFACE_FORMAT _TargetFormat, const char* _FilenameSuffix, unsigned int _NthTest)
+	RESULT ConvertAndTest(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, ouro::surface::format _TargetFormat, const char* _FilenameSuffix, unsigned int _NthTest)
 	{
 		static const char* TestImageFilename = "Test/Textures/lena_1.png";
 
@@ -118,7 +118,7 @@ struct GPU_BCEncodeDecode : public oTest
 
 		// Even on different series AMD cards there is a bit of variation, so use a 
 		// more forgiving tolerance
-		if (_TargetFormat == oSURFACE_BC7_UNORM)
+		if (_TargetFormat == ouro::surface::bc7_unorm)
 			oTESTI_CUSTOM_TOLERANCE(ConvertedImage, _NthTest, oDEFAULT, 7.2f, oDEFAULT);
 		else
 			oTESTI2(ConvertedImage, _NthTest);
@@ -145,15 +145,15 @@ struct GPU_BCEncodeDecode : public oTest
 			#endif
 		}
 
-		RESULT res = ConvertAndTest(_StrStatus, _SizeofStrStatus, Device, oSURFACE_BC7_UNORM, "_BC7", 0);
+		RESULT res = ConvertAndTest(_StrStatus, _SizeofStrStatus, Device, ouro::surface::bc7_unorm, "_BC7", 0);
 		if (SUCCESS != res)
 			return res;
 
-		res = ConvertAndTest(_StrStatus, _SizeofStrStatus, Device, oSURFACE_BC6H_SF16, "_BC6HS", 1);
+		res = ConvertAndTest(_StrStatus, _SizeofStrStatus, Device, ouro::surface::bc6h_sf16, "_BC6HS", 1);
 		if (SUCCESS != res)
 			return res;
 
-		res = ConvertAndTest(_StrStatus, _SizeofStrStatus, Device, oSURFACE_BC6H_UF16, "_BC6HU", 2);
+		res = ConvertAndTest(_StrStatus, _SizeofStrStatus, Device, ouro::surface::bc6h_uf16, "_BC6HU", 2);
 		if (SUCCESS != res)
 			return res;
 

@@ -43,6 +43,11 @@ static const char* TEST2[] = { "This is a test", "This is only a test", "We now 
 
 static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirroredArena::USAGE _Usage)
 {
+#ifdef o32BIT
+	snprintf(_StrStatus, _SizeofStrStatus, "disabled in 32-bit for now");
+	return oTest::SKIPPED;
+#endif
+
 	*_StrStatus = 0;
 
 	std::shared_ptr<ouro::process> Client;

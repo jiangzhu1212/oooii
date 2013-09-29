@@ -927,7 +927,7 @@ bool oD3D11BufferCreate(ID3D11Device* _pDevice, const char* _DebugName, const oG
 {
 	D3D11_USAGE Usage = D3D11_USAGE_DEFAULT;
 	UINT BindFlags = 0;
-	oSURFACE_FORMAT Format = _Desc.Format;
+	ouro::surface::format Format = _Desc.Format;
 
 	switch (_Desc.Type)
 	{
@@ -940,10 +940,10 @@ bool oD3D11BufferCreate(ID3D11Device* _pDevice, const char* _DebugName, const oG
 			Usage = D3D11_USAGE_STAGING;
 			break;
 		case oGPU_BUFFER_INDEX:
-			if (_Desc.Format != oSURFACE_R16_UINT && _Desc.Format != oSURFACE_R32_UINT)
-				return oErrorSetLast(std::errc::invalid_argument, "An index buffer must specify a format of oSURFACE_R16_UINT or oSURFACE_R32_UINT only (%s specified).", as_string(_Desc.Format));
+			if (_Desc.Format != ouro::surface::r16_uint && _Desc.Format != ouro::surface::r32_uint)
+				return oErrorSetLast(std::errc::invalid_argument, "An index buffer must specify a format of r16_uint or r32_uint only (%s specified).", as_string(_Desc.Format));
 
-			if (_Desc.StructByteSize != oInvalid && _Desc.StructByteSize != oUInt(oSurfaceFormatGetSize(_Desc.Format)))
+			if (_Desc.StructByteSize != oInvalid && _Desc.StructByteSize != oUInt(ouro::surface::element_size(_Desc.Format)))
 				return oErrorSetLast(std::errc::invalid_argument, "An index buffer must specify StructByteSize properly, or set it to oInvalid.");
 
 			BindFlags = D3D11_BIND_INDEX_BUFFER;
@@ -959,7 +959,7 @@ bool oD3D11BufferCreate(ID3D11Device* _pDevice, const char* _DebugName, const oG
 			break;
 		case oGPU_BUFFER_UNORDERED_RAW:
 			BindFlags = D3D11_BIND_UNORDERED_ACCESS;
-			Format = oSURFACE_R32_TYPELESS;
+			Format = ouro::surface::r32_typeless;
 			if (_Desc.StructByteSize != sizeof(uint))
 				return oErrorSetLast(std::errc::invalid_argument, "A raw buffer must specify a StructByteSize of 4.");
 			if (_Desc.ArraySize < 3)
@@ -967,7 +967,7 @@ bool oD3D11BufferCreate(ID3D11Device* _pDevice, const char* _DebugName, const oG
 			break;
 		case oGPU_BUFFER_UNORDERED_UNSTRUCTURED:
 			BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
-			if (Format == oSURFACE_UNKNOWN)
+			if (Format == ouro::surface::unknown)
 				return oErrorSetLast(std::errc::invalid_argument, "An unordered, unstructured buffer requires a valid surface format to be specified.");
 			break;
 		case oGPU_BUFFER_UNORDERED_STRUCTURED:
@@ -987,8 +987,8 @@ bool oD3D11BufferCreate(ID3D11Device* _pDevice, const char* _DebugName, const oG
 	}
 
 	uint ElementStride = _Desc.StructByteSize;
-	if (ElementStride == oInvalid && Format != oSURFACE_UNKNOWN)
-		ElementStride = oSurfaceFormatGetSize(Format);
+	if (ElementStride == oInvalid && Format != ouro::surface::unknown)
+		ElementStride = ouro::surface::element_size(Format);
 
 	if (ElementStride == 0 || ElementStride == oInvalid)
 		return oErrorSetLast(std::errc::invalid_argument, "A structured buffer requires a valid non-zero buffer size to be specified.");
@@ -1098,7 +1098,7 @@ bool oD3D11CopyTo(ID3D11Resource* _pTexture, uint _Subresource, void* _pDestinat
 	if (FAILED(hr))
 		return oWinSetLastError(hr);
 
-	int2 ByteDimensions = oSurfaceMipCalcByteDimensions(desc.Format, desc.Dimensions);
+	int2 ByteDimensions = ouro::surface::byte_dimensions(desc.Format, desc.Dimensions);
 	memcpy2d(_pDestination, _DestinationRowPitch, source.pData, source.RowPitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
 	D3DDeviceContext->Unmap(_pTexture, _Subresource);
 	return true;
@@ -1125,7 +1125,7 @@ void oD3D11UpdateSubresource(ID3D11DeviceContext* _pDeviceContext, ID3D11Resourc
 			if (type == D3D11_RESOURCE_DIMENSION_BUFFER)
 				ByteDimensions = d.Dimensions.xy();
 			else
-				ByteDimensions = oSurfaceMipCalcByteDimensions(d.Format, d.Dimensions);
+				ByteDimensions = ouro::surface::byte_dimensions(d.Format, d.Dimensions);
 
 			D3D11_MAPPED_SUBRESOURCE msr;
 			_pDeviceContext->Map(_pDstResource, _DstSubresource, D3D11_MAP_WRITE_DISCARD, 0, &msr);
@@ -1137,7 +1137,7 @@ void oD3D11UpdateSubresource(ID3D11DeviceContext* _pDeviceContext, ID3D11Resourc
 	}
 }
 
-void oD3D11MapWriteDiscard(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pResource, uint _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedResource)
+void oD3D11MapWriteDiscard(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pResource, uint _Subresource, ouro::surface::mapped_subresource* _pMappedResource)
 {
 	D3D11_USAGE Usage = D3D11_USAGE_DEFAULT;
 	oGPU_TEXTURE_DESC d;
@@ -1147,10 +1147,10 @@ void oD3D11MapWriteDiscard(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource*
 	{
 		case D3D11_USAGE_DEFAULT:
 		{
-			int2 ByteDimensions = oSurfaceMipCalcByteDimensions(d.Format, d.Dimensions);
-			_pMappedResource->DepthPitch = ByteDimensions.x * ByteDimensions.y;
-			_pMappedResource->RowPitch = ByteDimensions.x;
-			_pMappedResource->pData = new char[_pMappedResource->DepthPitch];
+			int2 ByteDimensions = ouro::surface::byte_dimensions(d.Format, d.Dimensions);
+			_pMappedResource->depth_pitch = ByteDimensions.x * ByteDimensions.y;
+			_pMappedResource->row_pitch = ByteDimensions.x;
+			_pMappedResource->data = new char[_pMappedResource->depth_pitch];
 			break;
 		}
 		
@@ -1163,7 +1163,7 @@ void oD3D11MapWriteDiscard(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource*
 	}
 }
 
-void oD3D11Unmap(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pResource, uint _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _MappedResource)
+void oD3D11Unmap(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pResource, uint _Subresource, ouro::surface::mapped_subresource& _MappedResource)
 {
 	D3D11_USAGE Usage = D3D11_USAGE_DEFAULT;
 	oGPU_TEXTURE_DESC d;
@@ -1172,7 +1172,7 @@ void oD3D11Unmap(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pResourc
 	{
 		case D3D11_USAGE_DEFAULT:
 		{
-			delete [] _MappedResource.pData;
+			delete [] _MappedResource.data;
 			break;
 		}
 
@@ -1198,22 +1198,22 @@ template<typename T> void oD3D11UpdateIndexBuffer(ID3D11DeviceContext* _pDeviceC
 	oGPU_BUFFER_DESC d;
 	oVERIFY(oD3D11BufferGetDesc(_pIndexBuffer, &d));
 
-	oSURFACE_MAPPED_SUBRESOURCE msr;
+	ouro::surface::mapped_subresource msr;
 	oD3D11MapWriteDiscard(_pDeviceContext, _pIndexBuffer, 0, &msr);
 
 	if (d.StructByteSize == sizeof(T))
-		memcpy(msr.pData, _pSourceIndices, d.ArraySize * d.StructByteSize);
+		memcpy(msr.data, _pSourceIndices, d.ArraySize * d.StructByteSize);
 
 	if (d.StructByteSize == 2)
 	{
 		oASSERT(sizeof(T) == 4, "");
-		memcpyuitous((ushort*)msr.pData, (const uint*)_pSourceIndices, d.ArraySize);
+		memcpyuitous((ushort*)msr.data, (const uint*)_pSourceIndices, d.ArraySize);
 	}
 
 	else
 	{
 		oASSERT(sizeof(T) == 2 && d.StructByteSize == 4, "");
-		memcpyustoui((uint*)msr.pData, (const ushort*)_pSourceIndices, d.ArraySize);
+		memcpyustoui((uint*)msr.data, (const ushort*)_pSourceIndices, d.ArraySize);
 	}
 
 	oD3D11Unmap(_pDeviceContext, _pIndexBuffer, 0, msr);
@@ -1312,7 +1312,7 @@ static void oD3D11InitSRVDesc(const oGPU_TEXTURE_DESC& _Desc, D3D11_RESOURCE_DIM
 
 	// All texture share basically the same memory footprint, so just write once
 	_pSRVDesc->Texture2DArray.MostDetailedMip = 0;
-	_pSRVDesc->Texture2DArray.MipLevels = oSurfaceCalcNumMips(oGPUTextureTypeHasMips(_Desc.Type), _Desc.Dimensions);
+	_pSRVDesc->Texture2DArray.MipLevels = ouro::surface::num_mips(oGPUTextureTypeHasMips(_Desc.Type), _Desc.Dimensions);
 	_pSRVDesc->Texture2DArray.FirstArraySlice = 0;
 	_pSRVDesc->Texture2DArray.ArraySize = _Desc.ArraySize;
 
@@ -1342,7 +1342,7 @@ bool oD3D11CreateShaderResourceView(const char* _DebugName, ID3D11Resource* _pTe
 	D3D11_SHADER_RESOURCE_VIEW_DESC* pSRV = nullptr;
 	oGPU_TEXTURE_DESC desc;
 	oD3D11GetTextureDesc(_pTexture, &desc);
-	if (oSurfaceFormatIsDepth(desc.Format))
+	if (ouro::surface::is_depth(desc.Format))
 	{
 		D3D11_RESOURCE_DIMENSION type;
 		_pTexture->GetType(&type);
@@ -1374,7 +1374,7 @@ bool oD3D11CreateRenderTargetView(const char* _DebugName, ID3D11Resource* _pText
 	HRESULT hr = S_OK;
 	oGPU_TEXTURE_DESC desc;
 	oD3D11GetTextureDesc(_pTexture, &desc);
-	if (oSurfaceFormatIsDepth(desc.Format))
+	if (ouro::surface::is_depth(desc.Format))
 	{
 		D3D11_RESOURCE_DIMENSION type;
 		_pTexture->GetType(&type);
@@ -1417,7 +1417,7 @@ bool oD3D11CreateUnorderedAccessView(const char* _DebugName, ID3D11Resource* _pT
 	return true;
 }
 
-bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const oGPU_TEXTURE_DESC& _Desc, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pInitData, ID3D11Resource** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView, ID3D11View** _ppRenderTargetView)
+bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const oGPU_TEXTURE_DESC& _Desc, ouro::surface::const_mapped_subresource* _pInitData, ID3D11Resource** _ppTexture, ID3D11ShaderResourceView** _ppShaderResourceView, ID3D11View** _ppRenderTargetView)
 {
 	bool IsShaderResource = false;
 	HRESULT hr = S_OK;
@@ -1602,7 +1602,7 @@ static bool oD3D11Save_PrepareCPUCopy(ID3D11Resource* _pTexture, D3DX11_IMAGE_FI
 
 	oGPU_TEXTURE_DESC desc;
 	oD3D11GetTextureDesc(_pTexture, &desc);
-	if (oSurfaceFormatIsBlockCompressed(desc.Format) && _Format != D3DX11_IFF_DDS)
+	if (ouro::surface::is_block_compressed(desc.Format) && _Format != D3DX11_IFF_DDS)
 		return oErrorSetLast(std::errc::invalid_argument, "D3DX11 can save block compressed formats only to .dds files.");
 
 	if (oGPUTextureTypeIsReadback(desc.Type))
@@ -1635,13 +1635,13 @@ static bool oD3D11Save_PrepareCPUCopy(const oImage* _pImage, D3DX11_IMAGE_FILE_F
 	desc.ArraySize = 1;
 	desc.Type = oGPU_TEXTURE_2D_READBACK;
 
-	if (desc.Format == oSURFACE_UNKNOWN)
+	if (desc.Format == ouro::surface::unknown)
 		return oErrorSetLast(std::errc::invalid_argument, "Image format %s cannot be saved", as_string(idesc.Format));
 
-	oSURFACE_CONST_MAPPED_SUBRESOURCE msr;
-	msr.pData = _pImage->GetData();
-	msr.RowPitch = idesc.RowPitch;
-	msr.DepthPitch = oImageCalcSize(idesc.Format, idesc.Dimensions);
+	ouro::surface::const_mapped_subresource msr;
+	msr.data = _pImage->GetData();
+	msr.row_pitch = idesc.RowPitch;
+	msr.depth_pitch = oImageCalcSize(idesc.Format, idesc.Dimensions);
 
 	if (!oD3D11CreateTexture(D3DDevice, "oD3D11Save.Temp", desc, &msr, _ppCPUResource, nullptr))
 		return false; // pass through error
@@ -1752,7 +1752,7 @@ bool oD3D11Load(ID3D11Device* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const ch
 	return true;
 }
 
-bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, oSURFACE_FORMAT _NewFormat, ID3D11Texture2D** _ppDestinationTexture)
+bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, ouro::surface::format _NewFormat, ID3D11Texture2D** _ppDestinationTexture)
 {
 	if (!_pSourceTexture || !_ppDestinationTexture)
 		return oErrorSetLast(std::errc::invalid_argument);
@@ -1836,7 +1836,7 @@ bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, oSURFACE_FORMAT _NewFormat,
 	return true;
 }
 
-bool oD3D11Convert(ID3D11Device* _pDevice, oSURFACE_MAPPED_SUBRESOURCE& _Destination, oSURFACE_FORMAT _DestinationFormat, oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source, oSURFACE_FORMAT _SourceFormat, const int2& _MipDimensions)
+bool oD3D11Convert(ID3D11Device* _pDevice, ouro::surface::mapped_subresource& _Destination, ouro::surface::format _DestinationFormat, ouro::surface::const_mapped_subresource& _Source, ouro::surface::format _SourceFormat, const int2& _MipDimensions)
 {
 	oGPU_TEXTURE_DESC d;
 	d.Dimensions = int3(_MipDimensions, 1);
@@ -1855,7 +1855,7 @@ bool oD3D11Convert(ID3D11Device* _pDevice, oSURFACE_MAPPED_SUBRESOURCE& _Destina
 	if (!convertSuccessful)
 		return false; // pass through error
 
-	return oD3D11CopyTo(DestinationTexture, 0, _Destination.pData, _Destination.RowPitch); // pass through error
+	return oD3D11CopyTo(DestinationTexture, 0, _Destination.data, _Destination.row_pitch); // pass through error
 }
 
 void oD3D11SetConstantBuffers(ID3D11DeviceContext* _pDeviceContext, uint _StartSlot, uint _NumBuffers, const ID3D11Buffer* const* _ppConstantBuffers)

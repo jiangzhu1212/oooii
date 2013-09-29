@@ -46,6 +46,9 @@
 #define oHLSL_ELOPT2(op, param_t) template<typename T> oHLSL::TVEC2<T> operator op(const oHLSL::TVEC2<T>& a, param_t b) { return oHLSL::TVEC2<T>(a.x op b, a.y op b); } 
 #define oHLSL_ELOPT3(op, param_t) template<typename T> oHLSL::TVEC3<T> operator op(const oHLSL::TVEC3<T>& a, param_t b) { return oHLSL::TVEC3<T>(a.x op b, a.y op b, a.z op b); } 
 #define oHLSL_ELOPT4(op, param_t) template<typename T> oHLSL::TVEC4<T> operator op(const oHLSL::TVEC4<T>& a, param_t b) { return oHLSL::TVEC4<T>(a.x op b, a.y op b, a.z op b, a.w op b); } 
+#define oHLSL_MELOPT2(ret, op) TVEC2<ret> operator op(const TVEC2<T>& _That) const { return TVEC2<ret>(x op _That.x, y op _That.y); }
+#define oHLSL_MELOPT3(ret, op) TVEC3<ret> operator op(const TVEC3<T>& _That) const { return TVEC3<ret>(x op _That.x, y op _That.y, z op _That.z); }
+#define oHLSL_MELOPT4(ret, op) TVEC4<ret> operator op(const TVEC4<T>& _That) const { return TVEC4<ret>(x op _That.x, y op _That.y, z op _That.z, w op _That.w); }
 #define oHLSL_ELUFN2(fn) template<typename T> oHLSL::TVEC2<T> fn(const oHLSL::TVEC2<T>& a) { return oHLSL::TVEC2<T>(fn(a.x), fn(a.y)); }
 #define oHLSL_ELUFN3(fn) template<typename T> oHLSL::TVEC3<T> fn(const oHLSL::TVEC3<T>& a) { return oHLSL::TVEC3<T>(fn(a.x), fn(a.y), fn(a.z)); }
 #define oHLSL_ELUFN4(fn) template<typename T> oHLSL::TVEC4<T> fn(const oHLSL::TVEC4<T>& a) { return oHLSL::TVEC4<T>(fn(a.x), fn(a.y), fn(a.z), fn(a.w)); }
@@ -57,6 +60,9 @@
 #define oHLSL_CMP4(cmp) template<typename T> oHLSL::TVEC4<bool> operator##cmp(const oHLSL::TVEC4<T>& a, const oHLSL::TVEC4<T>& b) { return oHLSL::TVEC4<bool>(a.x cmp b.x, a.y cmp b.y, a.z cmp b.z, a.w cmp b.w); }
 // Macros to get through the boilerplate for operators, compares, etc.
 #define oHLSL_MEMBER_OPS(type, scalar_t) oHLSL_MEMBER_OP(type, scalar_t, *) oHLSL_MEMBER_OP(type, scalar_t, /) oHLSL_MEMBER_OP(type, scalar_t, +) oHLSL_MEMBER_OP(type, scalar_t, -) oHLSL_MEMBER_OP(type, scalar_t, &) oHLSL_MEMBER_OP(type, scalar_t, |) oHLSL_MEMBER_OP(type, scalar_t, ^) oHLSL_MEMBER_OP(type, scalar_t, <<) oHLSL_MEMBER_OP(type, scalar_t, >>) oHLSL_MEMBER_OP(type, type, *) oHLSL_MEMBER_OP(type, type, /) oHLSL_MEMBER_OP(type, type, +) oHLSL_MEMBER_OP(type, type, -) oHLSL_MEMBER_OP(type, type, &) oHLSL_MEMBER_OP(type, type, |) oHLSL_MEMBER_OP(type, type, ^) oHLSL_MEMBER_OP(type, type, <<) oHLSL_MEMBER_OP(type, type, >>) oHLSL_VBRACKET_OP(scalar_t)
+#define oHLSL_MELOPTS2() oHLSL_MELOPT2(T, +) oHLSL_MELOPT2(T, -) oHLSL_MELOPT2(T, *) oHLSL_MELOPT2(T, /) oHLSL_MELOPT2(T, %) oHLSL_MELOPT2(bool, ==) oHLSL_MELOPT2(bool, !=) oHLSL_MELOPT2(bool, <) oHLSL_MELOPT2(bool, >) oHLSL_MELOPT2(bool, <=) oHLSL_MELOPT2(bool, >=)
+#define oHLSL_MELOPTS3() oHLSL_MELOPT3(T, +) oHLSL_MELOPT3(T, -) oHLSL_MELOPT3(T, *) oHLSL_MELOPT3(T, /) oHLSL_MELOPT3(T, %) oHLSL_MELOPT3(bool, ==) oHLSL_MELOPT3(bool, !=) oHLSL_MELOPT3(bool, <) oHLSL_MELOPT3(bool, >) oHLSL_MELOPT3(bool, <=) oHLSL_MELOPT3(bool, >=)
+#define oHLSL_MELOPTS4() oHLSL_MELOPT4(T, +) oHLSL_MELOPT4(T, -) oHLSL_MELOPT4(T, *) oHLSL_MELOPT4(T, /) oHLSL_MELOPT4(T, %) oHLSL_MELOPT4(bool, ==) oHLSL_MELOPT4(bool, !=) oHLSL_MELOPT4(bool, <) oHLSL_MELOPT4(bool, >) oHLSL_MELOPT4(bool, <=) oHLSL_MELOPT4(bool, >=)
 #define oHLSL_ELOPS(N) oHLSL_ELOP##N(*) oHLSL_ELOP##N(/) oHLSL_ELOP##N(+) oHLSL_ELOP##N(-) oHLSL_ELOP##N(%) oHLSL_ELOPT##N(<<, int) oHLSL_ELOPT##N(>>, int) oHLSL_ELOPT##N(&, int) oHLSL_ELOPT##N(|, int) oHLSL_ELOPT##N(^, int)
 #define oHLSL_ELUFNS(fn) oHLSL_ELUFN2(fn) oHLSL_ELUFN3(fn) oHLSL_ELUFN4(fn)
 #define oHLSL_ELBFNS(pubfn, implfn) oHLSL_ELBFN2(pubfn, implfn) oHLSL_ELBFN3(pubfn, implfn) oHLSL_ELBFN4(pubfn, implfn)
@@ -108,6 +114,7 @@ template<typename T> struct TVEC2
 	inline TVEC2(T _XY) : x(_XY), y(_XY) {}
 	inline TVEC2(T _X, T _Y) : x(_X), y(_Y) {}
 	oHLSL_SWIZZLE2(T);
+	oHLSL_MELOPTS2();
 	oHLSL_MEMBER_OPS(TVEC2<T>, T);
 };
 
@@ -129,6 +136,7 @@ template<typename T> struct TVEC3
 	inline TVEC3(T _X, T _Y, T _Z) : x(_X), y(_Y), z(_Z) {}
 	inline TVEC3(const TVEC2<T>& _XY, T _Z) : x(_XY.x), y(_XY.y), z(_Z) {}
 	oHLSL_SWIZZLE3(T);
+	oHLSL_MELOPTS3();
 	oHLSL_MEMBER_OPS(TVEC3<T>, T);
 };
 
@@ -154,6 +162,7 @@ template<typename T> struct TVEC4
 	inline TVEC4(T _X, const TVEC3<T>& _YZW) : x(_X), y(_YZW.y), z(_YZW.z), w(_YZW.w) {}
 	inline TVEC4(T _X, T _Y, T _Z, T _W) : x(_X), y(_Y), z(_Z), w(_W) {}
 	oHLSL_SWIZZLE4(T);
+	oHLSL_MELOPTS4();
 	inline TVEC3<T>& xyz() { return *(TVEC3<T>*)&x; }
 	oHLSL_MEMBER_OPS(TVEC4<T>, T);
 };

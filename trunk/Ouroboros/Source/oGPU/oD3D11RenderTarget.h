@@ -35,7 +35,7 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget, 0x772e2a04, 0x4c2d,
 {
 	oDEFINE_GPUDEVICECHILD_INTERFACE_EXPLICIT_QI();
 	oDECLARE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget);
-	oD3D11RenderTarget(oGPUDevice* _pDevice, IDXGISwapChain* _pSwapChain, oSURFACE_FORMAT _DepthStencilFormat, const char* _Name, bool* _pSuccess);
+	oD3D11RenderTarget(oGPUDevice* _pDevice, IDXGISwapChain* _pSwapChain, ouro::surface::format _DepthStencilFormat, const char* _Name, bool* _pSuccess);
 	~oD3D11RenderTarget();
 
 	void GetDesc(DESC* _pDesc) const threadsafe override;
@@ -62,6 +62,6 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget, 0x772e2a04, 0x4c2d,
 	DESC Desc;
 };
 
-bool oD3D11CreateRenderTarget(oGPUDevice* _pDevice, const char* _Name, IDXGISwapChain* _pSwapChain, oSURFACE_FORMAT _DepthStencilFormat, oGPURenderTarget** _ppRenderTarget);
+bool oD3D11CreateRenderTarget(oGPUDevice* _pDevice, const char* _Name, IDXGISwapChain* _pSwapChain, ouro::surface::format _DepthStencilFormat, oGPURenderTarget** _ppRenderTarget);
 
 #endif

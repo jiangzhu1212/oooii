@@ -119,7 +119,6 @@ oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGPU_RESOURCE_TYPE)
 		oRTTI_VALUE(oGPU_BUFFER)
 		oRTTI_VALUE(oGPU_MESH)
 		oRTTI_VALUE(oGPU_TEXTURE)
-		oRTTI_VALUE(oGPU_TEXTURE_YUV)
 	oRTTI_ENUM_END_VALUES(oGPU_RESOURCE_TYPE)
 oRTTI_ENUM_END_DESCRIPTION(oGPU_RESOURCE_TYPE)
 
@@ -255,7 +254,7 @@ oRTTI_ENUM_END_DESCRIPTION(oGPU_CLEAR)
 
 static_assert(sizeof(oGPU_RANGE) == 16, "unexpected struct packing for oGPU_RANGE");
 static_assert(sizeof(fourcc) == 4, "unexpected struct packing for fourcc");
-static_assert(sizeof(oResizedType<oSURFACE_FORMAT, short>) == 2, "unexpected struct packing for oResizedType<oSURFACE_FORMAT, short>");
+static_assert(sizeof(oResizedType<ouro::surface::format, short>) == 2, "unexpected struct packing for oResizedType<ouro::surface::format, short>");
 static_assert(sizeof(oGPU_VERTEX_ELEMENT) == 8, "unexpected struct packing for oGPU_VERTEX_ELEMENT");
 
 bool oGPUParseSemantic(const fourcc& _FourCC, char _Name[5], uint* _pIndex)
@@ -310,7 +309,7 @@ uint oGPUCalcVertexSize(const threadsafe oGPU_VERTEX_ELEMENT* _pElements, uint _
 			else
 				oASSERT(IsInstanceList == _pElements[i].Instanced, "Elements in the same slot must either be all instanced or all not instanced.");
 
-			size += oSurfaceFormatGetSize(thread_cast<const oGPU_VERTEX_ELEMENT*>(_pElements)[i].Format); // ok thread_cast, the array is immutable
+			size += ouro::surface::element_size(thread_cast<const oGPU_VERTEX_ELEMENT*>(_pElements)[i].Format); // ok thread_cast, the array is immutable
 		}
 	}
 

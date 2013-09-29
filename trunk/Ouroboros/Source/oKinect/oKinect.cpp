@@ -235,20 +235,22 @@ void oKinectImpl::GetDesc(oKINECT_DESC* _pDesc) const threadsafe
 
 int2 oKinectImpl::GetDimensions(oKINECT_FRAME_TYPE _Type) const threadsafe
 {
-	oSURFACE_DESC sd;
+	ouro::surface::info inf;
+
+	oKinectImpl* pThis = thread_cast<oKinectImpl*>(this);
 
 	switch (_Type)
 	{
 		case oKINECT_FRAME_COLOR:
-			if (Color)
-				Color->GetDesc(&sd);
+			if (pThis->Color)
+				inf = pThis->Color->info();
 			break;
 		case oKINECT_FRAME_DEPTH:
-			if (Depth)
-				Depth->GetDesc(&sd);
+			if (pThis->Depth)
+				inf = pThis->Depth->info();
 		default: break;
 	}
-	return sd.Dimensions.xy();
+	return inf.dimensions.xy();
 }
 
 bool oKinectImpl::GetSkeletonByIndex(int _PlayerIndex, oGUI_BONE_DESC* _pSkeleton) const threadsafe
@@ -312,23 +314,25 @@ void oKinectImpl::OnPitch()
 	oConcurrency::end_thread();
 }
 
-bool oKinectImpl::MapRead(oKINECT_FRAME_TYPE _Type, oSURFACE_DESC* _pDesc, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMapped) const threadsafe
+bool oKinectImpl::MapRead(oKINECT_FRAME_TYPE _Type, ouro::surface::info* _pInfo, ouro::surface::const_mapped_subresource* _pMapped) const threadsafe
 {
 	int2 ByteDimensions;
+
+	oKinectImpl* pThis = thread_cast<oKinectImpl*>(this);
 
 	switch (_Type)
 	{
 		case oKINECT_FRAME_COLOR:
-			if (!Color)
+			if (!pThis->Color)
 				return oErrorSetLast(std::errc::operation_not_supported, "color support not configured");
-			Color->GetDesc(_pDesc);
-			Color->MapConst(0, _pMapped, &ByteDimensions);
+			*_pInfo = pThis->Color->info();
+			pThis->Color->map_const(0, _pMapped, &ByteDimensions);
 			break;
 		case oKINECT_FRAME_DEPTH:
-			if (!Depth)
+			if (!pThis->Depth)
 				return oErrorSetLast(std::errc::operation_not_supported, "depth support not configured");
-			Depth->GetDesc(_pDesc);
-			Depth->MapConst(0, _pMapped, &ByteDimensions);
+			*_pInfo = pThis->Depth->info();
+			pThis->Depth->map_const(0, _pMapped, &ByteDimensions);
 			break;
 		default:
 			return oErrorSetLast(std::errc::operation_not_supported, "_Type %d not supported", _Type);
@@ -339,17 +343,19 @@ bool oKinectImpl::MapRead(oKINECT_FRAME_TYPE _Type, oSURFACE_DESC* _pDesc, oSURF
 
 void oKinectImpl::UnmapRead(oKINECT_FRAME_TYPE _Type) const threadsafe
 {
+	oKinectImpl* pThis = thread_cast<oKinectImpl*>(this);
+
 	switch (_Type)
 	{
 		case oKINECT_FRAME_COLOR:
-			if (!Color)
+			if (!pThis->Color)
 				oTHROW(operation_not_supported, "color image not configured");
-			Color->UnmapConst(0);
+			pThis->Color->unmap_const(0);
 			break;
 		case oKINECT_FRAME_DEPTH:
-			if (!Depth)
+			if (!pThis->Depth)
 				oTHROW(operation_not_supported, "depth image not configured");
-			Depth->UnmapConst(0);
+			pThis->Depth->unmap_const(0);
 			break;
 		default:
 			throw std::runtime_error("bad frame type");
@@ -374,10 +380,10 @@ void oKinectImpl::OnEvent()
 				// Multiple events can be set for the same wake, so check each individually
 
 				if (WAIT_OBJECT_0 == WaitForSingleObject(hEvents[oKINECT_EVENT_COLOR_FRAME], 0))
-					oKinectUpdate(NUISensor, hColorStream, Color);
+					oKinectUpdate(NUISensor, hColorStream, Color.get());
 
 				if (WAIT_OBJECT_0 == WaitForSingleObject(hEvents[oKINECT_EVENT_DEPTH_FRAME], 0))
-					oKinectUpdate(NUISensor, hDepthStream, Depth);
+					oKinectUpdate(NUISensor, hDepthStream, Depth.get());
 
 				if (WAIT_OBJECT_0 == WaitForSingleObject(hEvents[oKINECT_EVENT_SKELETON], 0))
 					Skeletons.CacheNextFrame(NUISensor);

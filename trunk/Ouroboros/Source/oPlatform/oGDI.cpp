@@ -52,10 +52,10 @@ int oGDIPointToLogicalHeight(HDC _hDC, float _Point)
 
 void oGDIInitializeBMI(const oBMI_DESC& _Desc, BITMAPINFO* _pBMI)
 {
-	const int kPitch = _Desc.RowPitch > 0 ? _Desc.RowPitch : oSurfaceMipCalcRowSize(_Desc.Format, byte_align(_Desc.Dimensions.x, 4));
+	const int kPitch = _Desc.RowPitch > 0 ? _Desc.RowPitch : ouro::surface::row_size(_Desc.Format, byte_align(_Desc.Dimensions.x, 4));
 
 	_pBMI->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	_pBMI->bmiHeader.biBitCount = static_cast<WORD>(oSurfaceFormatGetBitSize(_Desc.Format));
+	_pBMI->bmiHeader.biBitCount = static_cast<WORD>(ouro::surface::bits(_Desc.Format));
 	_pBMI->bmiHeader.biClrImportant = 0;
 	_pBMI->bmiHeader.biClrUsed = 0;
 	_pBMI->bmiHeader.biCompression = BI_RGB;
@@ -77,31 +77,31 @@ void oGDIInitializeBMI(const oBMI_DESC& _Desc, BITMAPINFO* _pBMI)
 
 		for (size_t i = 0; i < 256; i++)
 		{
-			float4 c = lerp(c0, c1, oUBYTEAsUNORM(i));
+			float4 c = lerp(c0, c1, ouro::ubyte_to_unorm(i));
 			RGBQUAD& q = _pBMI->bmiColors[i];
-			q.rgbRed = oUNORMAsUBYTE(c.x);
-			q.rgbGreen = oUNORMAsUBYTE(c.y);
-			q.rgbBlue = oUNORMAsUBYTE(c.z);
-			q.rgbReserved = oUNORMAsUBYTE(c.w);
+			q.rgbRed = ouro::unorm_to_ubyte(c.x);
+			q.rgbGreen = ouro::unorm_to_ubyte(c.y);
+			q.rgbBlue = ouro::unorm_to_ubyte(c.z);
+			q.rgbReserved = ouro::unorm_to_ubyte(c.w);
 		}
 	}
 }
 
-size_t oGDIGetBMISize(oSURFACE_FORMAT _Format)
+size_t oGDIGetBMISize(ouro::surface::format _Format)
 {
-	return oSurfaceFormatGetBitSize(_Format) == 8 ? (sizeof(BITMAPINFO) + sizeof(RGBQUAD) * 255) : sizeof(BITMAPINFO);
+	return ouro::surface::bits(_Format) == 8 ? (sizeof(BITMAPINFO) + sizeof(RGBQUAD) * 255) : sizeof(BITMAPINFO);
 }
 
-oSURFACE_FORMAT oGDIGetFormat(const BITMAPINFOHEADER& _BitmapInfoHeader)
+ouro::surface::format oGDIGetFormat(const BITMAPINFOHEADER& _BitmapInfoHeader)
 {
 	switch (_BitmapInfoHeader.biBitCount)
 	{
-		case 1: return oSURFACE_R1_UNORM;
-		case 16: return oSURFACE_B5G5R5A1_UNORM; // not sure if alpha is respected/but there is no B5G5R5X1_UNORM currently
+		case 1: return ouro::surface::r1_unorm;
+		case 16: return ouro::surface::b5g5r5a1_unorm; // not sure if alpha is respected/but there is no B5G5R5X1_UNORM currently
 		case 0:
-		case 24: return oSURFACE_B8G8R8_UNORM;
-		case 32: return oSURFACE_B8G8R8X8_UNORM;
-		default: return oSURFACE_UNKNOWN; // no FORMAT for paletted types currently
+		case 24: return ouro::surface::b8g8r8_unorm;
+		case 32: return ouro::surface::b8g8r8x8_unorm;
+		default: return ouro::surface::unknown; // no FORMAT for paletted types currently
 	}
 }
 
@@ -307,7 +307,7 @@ BOOL oGDIStretchBlendBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, H
 	return bResult;
 }
 
-bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
+bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
 {
 	oBMI_DESC bmid;
 	bmid.Dimensions = _SourceSize;
@@ -323,7 +323,7 @@ bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, o
 	return true;
 }
 
-bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
+bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
 {
 	RECT destRect;
 	if (_DestRect.bottom == oInvalid || _DestRect.top == oInvalid ||
@@ -340,7 +340,7 @@ bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize,
 	return oGDIStretchBits(hDC, destRect, _SourceSize, _SourceFormat, _pSourceBits, _SourceRowPitch, _FlipVertically);
 }
 
-bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
+bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
 {
 	RECT destRect;
 	destRect.bottom = oInvalid;

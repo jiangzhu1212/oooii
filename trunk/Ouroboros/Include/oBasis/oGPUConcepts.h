@@ -172,21 +172,9 @@ oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGPU_PRIMITIVE_TYPE)
 
 enum oGPU_RESOURCE_TYPE
 {
-	// @oooii-tony: The GPU concept level deals with real buffers of data, not 
-	// inter-buffer referencing, so some of these resource types will come out
-	// soon such as material, material_set, skeleton (it's a buffer), 
-	// and skeleton_pose.
-
-	// oGPU_TEXTURE_YUV will soon be collapsed into supporting YUV formats as part 
-	// of oSURFACE_FORMAT, as appears DirectX 11.1 will do.
-
 	oGPU_BUFFER, // generic RO, WO or RW non-texture buffer, or index/vertex buffer
 	oGPU_MESH, // description of a geometry using index and vertex buffers to form triangles
 	oGPU_TEXTURE, // buffer able to be bound as a rasterization target or HW sampled
-
-	// @oooii-tony: Start using oGPU_TEXTURE and new YUV-related formats in 
-	// oSURFACE_FORMAT. the _RGB and _YUV types will be going away soon.
-	oGPU_TEXTURE_YUV, // deprecated format on its way out, YUV support is now directly in oSURFACE_FORMAT
 
 	oGPU_RESOURCE_TYPE_COUNT,
 };
@@ -227,7 +215,7 @@ enum oGPU_BUFFER_TYPE
 
 	// Buffer that does not guarantee order of access. Such ordering must be done
 	// by the explicit use of atomics in client shader code. Using this requires
-	// an oSURFACE_FORMAT to be specified.
+	// an ouro::surface::format to be specified.
 	oGPU_BUFFER_UNORDERED_UNSTRUCTURED,
 
 	// Buffer that does not guarantee order of access. Such ordering must be done
@@ -476,7 +464,7 @@ struct oGPU_RANGE
 	uint MaxVertex; // max index into vertex buffer that will be accessed
 };
 
-#define oGPU_VERTEX_ELEMENT_NULL { ouro::fourcc(0), oSURFACE_UNKNOWN, 0, false }
+#define oGPU_VERTEX_ELEMENT_NULL { ouro::fourcc(0), ouro::surface::unknown, 0, false }
 struct oGPU_VERTEX_ELEMENT
 {
 	// Generic description of an element in a heterogeneous (AOS) vertex. This 
@@ -485,7 +473,7 @@ struct oGPU_VERTEX_ELEMENT
 
 	//oGPU_VERTEX_ELEMENT()
 	//	: InputSlot(0)
-	//	, Format(oSURFACE_UNKNOWN)
+	//	, Format(ouro::surface::unknown)
 	//	, Instanced(false)
 	//{}
 
@@ -496,8 +484,8 @@ struct oGPU_VERTEX_ELEMENT
 	// example would be index 0).
 	ouro::fourcc Semantic;
 
-	// The format of the data, i.e. a float4 would be oSURFACE_R32G32B32A32_FLOAT
-	oResizedType<oSURFACE_FORMAT, short> Format;
+	// The format of the data, i.e. a float4 would be ouro::surface::r32g32b32a32_float
+	oResizedType<ouro::surface::format, short> Format;
 
 	// The input slot this will be bound too. Basically modern pipelines allow
 	// several vertex arrays to be bound, so this specifies from which this 
@@ -574,7 +562,7 @@ struct oGPU_BUFFER_DESC
 
 	oGPU_BUFFER_DESC()
 		: Type(oGPU_BUFFER_DEFAULT)
-		, Format(oSURFACE_UNKNOWN)
+		, Format(ouro::surface::unknown)
 		, StructByteSize(oInvalid)
 		, ArraySize(1)
 	{}
@@ -586,8 +574,8 @@ struct oGPU_BUFFER_DESC
 	oGPU_BUFFER_TYPE Type;
 
 	// This must be valid for oGPU_BUFFER_UNORDERED_UNSTRUCTURED types, and 
-	// oSURFACE_UNKNOWN for all other types.
-	oSURFACE_FORMAT Format;
+	// ouro::surface::unknown for all other types.
+	ouro::surface::format Format;
 
 	// This must be oInvalid for oGPU_BUFFER_UNORDERED_UNSTRUCTURED types,
 	// but valid for all other types.
@@ -601,13 +589,13 @@ struct oGPU_TEXTURE_DESC
 {
 	oGPU_TEXTURE_DESC()
 		: Type(oGPU_TEXTURE_2D_MAP)
-		, Format(oSURFACE_B8G8R8A8_UNORM)
+		, Format(ouro::surface::b8g8r8a8_unorm)
 		, ArraySize(oInvalid)
 		, Dimensions(oInvalid, oInvalid, oInvalid)
 	{}
 
 	oGPU_TEXTURE_TYPE Type;
-	oSURFACE_FORMAT Format;
+	ouro::surface::format Format;
 	int ArraySize;
 	int3 Dimensions;
 };
@@ -688,15 +676,15 @@ struct oGPU_RENDER_TARGET_DESC
 {
 	oGPU_RENDER_TARGET_DESC()
 		: Type(oGPU_TEXTURE_2D_RENDER_TARGET)
-		, DepthStencilFormat(oSURFACE_UNKNOWN)
+		, DepthStencilFormat(ouro::surface::unknown)
 		, ArraySize(1)
 		, MRTCount(1)
 		, Dimensions(oInvalid, oInvalid, oInvalid)
-	{ Format.fill(oSURFACE_UNKNOWN); }
+	{ Format.fill(ouro::surface::unknown); }
 
 	oGPU_TEXTURE_TYPE Type;
-	std::array<oSURFACE_FORMAT, oGPU_MAX_NUM_MRTS> Format;
-	oSURFACE_FORMAT DepthStencilFormat; // Use UNKNOWN for no depth
+	std::array<ouro::surface::format, oGPU_MAX_NUM_MRTS> Format;
+	ouro::surface::format DepthStencilFormat; // Use UNKNOWN for no depth
 	int ArraySize;
 	int MRTCount;
 	int3 Dimensions;

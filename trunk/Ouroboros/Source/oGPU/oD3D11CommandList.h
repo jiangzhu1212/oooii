@@ -47,8 +47,8 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList, 0x2d6106c4, 0x7741, 
 	void EndQuery(oGPUQuery* _pQuery) override;
 	void Flush() override;
 	void Reset() override;
-	void Reserve(oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource) override;
-	void Commit(oGPUResource* _pResource, int _Subresource, const oSURFACE_MAPPED_SUBRESOURCE& _Source, const oSURFACE_BOX& _Subregion = oSURFACE_BOX()) override;
+	void Reserve(oGPUResource* _pResource, int _Subresource, ouro::surface::mapped_subresource* _pMappedSubresource) override;
+	void Commit(oGPUResource* _pResource, int _Subresource, const ouro::surface::mapped_subresource& _Source, const ouro::surface::box& _Subregion = ouro::surface::box()) override;
 	void Copy(oGPUResource* _pDestination, oGPUResource* _pSource) override;
 	void Copy(oGPUBuffer* _pDestination, int _DestinationOffsetBytes, oGPUBuffer* _pSource, int _SourceOffsetBytes, int _SizeBytes) override;
 	void CopyCounter(oGPUBuffer* _pDestination, uint _DestinationAlignedOffset, oGPUBuffer* _pUnorderedSource) override;

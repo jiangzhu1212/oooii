@@ -42,14 +42,14 @@ oAPI void oGPUGetVertexBufferDesc(uint _NumVertices, const oGPU_VERTEX_ELEMENT* 
 
 // Copies indices to/from either ushorts or uints. This compares the RowPitches 
 // and does the proper swizzle copy.
-oAPI void oGPUCopyIndices(oSURFACE_MAPPED_SUBRESOURCE& _Destination
-	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source
+oAPI void oGPUCopyIndices(ouro::surface::mapped_subresource& _Destination
+	, const ouro::surface::const_mapped_subresource& _Source
 	, uint _NumIndices);
 
 // Commit the specified mapped subresource to the specified index buffer, 
 // regardless of whether its ushort or uint source/destinations.
 oAPI void oGPUCommitIndexBuffer(oGPUCommandList* _pCommandList
-	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresource
+	, const ouro::surface::const_mapped_subresource& _MappedSubresource
 	, oGPUBuffer* _pIndexBuffer);
 
 // Commit memory to the specified vertex buffer whose layout is described by the
@@ -61,7 +61,7 @@ oAPI void oGPUCommitIndexBuffer(oGPUCommandList* _pCommandList
 // This is to support copying from array-of-structures (AoS) sources. DepthPitch
 // is ignored.
 oAPI bool oGPUCommitVertexBuffer(oGPUCommandList* _pCommandList
-	, const oFUNCTION<void(const oGPU_VERTEX_ELEMENT& _Element, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pElementData)>& _GetElementData
+	, const oFUNCTION<void(const oGPU_VERTEX_ELEMENT& _Element, ouro::surface::const_mapped_subresource* _pElementData)>& _GetElementData
 	, const oGPU_VERTEX_ELEMENT* _pElements
 	, uint _NumElements
 	, uint _InputSlot
@@ -85,7 +85,7 @@ oAPI bool oGPUCreateIndexBuffer(oGPUDevice* _pDevice
 	, const char* _Name
 	, uint _NumIndices
 	, uint _NumVertices
-	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresource
+	, const ouro::surface::const_mapped_subresource& _MappedSubresource
 	, oGPUBuffer** _ppIndexBuffer);
 
 // Creates a vertex buffer based on the parameters. If _GetElementData is 
@@ -94,7 +94,7 @@ oAPI bool oGPUCreateIndexBuffer(oGPUDevice* _pDevice
 oAPI bool oGPUCreateVertexBuffer(oGPUDevice* _pDevice
 	, const char* _Name	
 	, uint _NumVertices
-	, const oFUNCTION<void(const oGPU_VERTEX_ELEMENT& _Element, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pElementData)>& _GetElementData
+	, const oFUNCTION<void(const oGPU_VERTEX_ELEMENT& _Element, ouro::surface::const_mapped_subresource* _pElementData)>& _GetElementData
 	, uint _NumElements
 	, const oGPU_VERTEX_ELEMENT* _pElements
 	, uint _InputSlot
@@ -134,7 +134,7 @@ oAPI uint oGPUReadbackCounter(oGPUBuffer* _pUnorderedBuffer, oGPUBuffer* _pPreal
 // Reads the source resource into the memory pointed at in the destination
 // struct. Since this is often used for textures, flip vertically can do an
 // in-place/during-copy flip.
-oAPI bool oGPURead(oGPUResource* _pSourceResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE& _Destination, bool _FlipVertically);
+oAPI bool oGPURead(oGPUResource* _pSourceResource, int _Subresource, ouro::surface::mapped_subresource& _Destination, bool _FlipVertically);
 
 // _____________________________________________________________________________
 // Texture convenience functions
@@ -148,13 +148,13 @@ oAPI bool oGPUCreateTexture(oGPUDevice* _pDevice, const oImage* const* _ppSource
 oAPI bool oGPUGenerateMips(oGPUDevice* _pDevice, oGPUTexture* _pTexture);
 
 // Generate mips with the GPU from source oImage(s) to a preallocated oBuffer with oSURFACE_DESC and oGPU_TEXTURE_TYPE
-oAPI bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _NumImages, oSURFACE_DESC& _SurfaceDesc, oGPU_TEXTURE_TYPE _Type, oBuffer* _pMipBuffer);
+oAPI bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _NumImages, ouro::surface::info& _SurfaceInfo, oGPU_TEXTURE_TYPE _Type, oBuffer* _pMipBuffer);
 
-// Creates a texture with mips from the specified oBuffer, described by an oSURFACE_DESC.
-oAPI bool oGPUCreateTexture1DMip(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
-oAPI bool oGPUCreateTexture2DMip(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
-oAPI bool oGPUCreateTexture3DMip(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
-oAPI bool oGPUCreateTextureCubeMip(oGPUDevice* _pDevice, oSURFACE_DESC& _SurfaceDesc, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
+// Creates a texture with mips from the specified oBuffer, described by an ouro::surface::info.
+oAPI bool oGPUCreateTexture1DMip(oGPUDevice* _pDevice, const ouro::surface::info& _SurfaceInfo, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTexture2DMip(oGPUDevice* _pDevice, const ouro::surface::info& _SurfaceInfo, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTexture3DMip(oGPUDevice* _pDevice, const ouro::surface::info& _SurfaceInfo, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTextureCubeMip(oGPUDevice* _pDevice, const ouro::surface::info& _SurfaceInfo, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
 
 // Binds the readable (samplable) shader resources from a render target in order
 inline void oGPURenderTargetSetShaderResources(oGPUCommandList* _pCommandList, int _StartSlot, bool _IncludeDepthStencil, oGPURenderTarget* _pRenderTarget)
@@ -181,8 +181,8 @@ bool oGPUPipelineCreate(oGPUDevice* _pDevice, const char* _Name, ouro::intrusive
 // _____________________________________________________________________________
 // Mesh convenience functions
 
-oAPI bool oGPUReadVertexSource(int _Slot, int _NumVertices, oSURFACE_MAPPED_SUBRESOURCE& _Mapped, uint _NumElements, const oGPU_VERTEX_ELEMENT* _pElements, const oGeometry::DESC& _Desc, oGeometry::CONST_MAPPED& _GeoMapped);
-oAPI bool oGPUReadVertexSource(int _Slot, int _NumVertices, oSURFACE_MAPPED_SUBRESOURCE& _Mapped, uint _NumElements, const oGPU_VERTEX_ELEMENT* _pElements, const threadsafe oOBJ* _pOBJ);
+oAPI bool oGPUReadVertexSource(int _Slot, int _NumVertices, ouro::surface::mapped_subresource& _Mapped, uint _NumElements, const oGPU_VERTEX_ELEMENT* _pElements, const oGeometry::DESC& _Desc, oGeometry::CONST_MAPPED& _GeoMapped);
+oAPI bool oGPUReadVertexSource(int _Slot, int _NumVertices, ouro::surface::mapped_subresource& _Mapped, uint _NumElements, const oGPU_VERTEX_ELEMENT* _pElements, const threadsafe oOBJ* _pOBJ);
 
 // {D12BFBB0-28EE-4E0A-BFF1-EAC858BB3AD3}
 oDEFINE_GUID_I(oGPUUtilMesh, 0xd12bfbb0, 0x28ee, 0x4e0a, 0xbf, 0xf1, 0xea, 0xc8, 0x58, 0xbb, 0x3a, 0xd3);

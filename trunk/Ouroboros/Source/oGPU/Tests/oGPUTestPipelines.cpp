@@ -42,38 +42,38 @@
 
 static const oGPU_VERTEX_ELEMENT oGPU_TEST_POSITION_ONLY_VERTEX[] = 
 {
-	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false },
+	{ 'POS0', ouro::surface::r32g32b32a32_float, 0, false },
 };
 
 static const oGPU_VERTEX_ELEMENT oGPU_TEST_POSITION_COLOR_VERTEX[] = 
 {
-	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false },
-	{ 'CLR0', oSURFACE_B8G8R8A8_UNORM, 0, false },
+	{ 'POS0', ouro::surface::r32g32b32a32_float, 0, false },
+	{ 'CLR0', ouro::surface::b8g8r8a8_unorm, 0, false },
 };
 
 static const oGPU_VERTEX_ELEMENT oGPU_TEST_POSITION_ONLY_INSTANCED_VERTEX[] = 
 {
-	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false },
-	{ 'TX  ', oSURFACE_R32G32B32_FLOAT, 1, true },
-	{ 'ROT ', oSURFACE_R32G32B32A32_FLOAT, 1, true },
+	{ 'POS0', ouro::surface::r32g32b32a32_float, 0, false },
+	{ 'TX  ', ouro::surface::r32g32b32a32_float, 1, true },
+	{ 'ROT ', ouro::surface::r32g32b32a32_float, 1, true },
 };
 
 static const oGPU_VERTEX_ELEMENT oGPU_TEST_POSITION_TEXCOORD1D_VERTEX[] = 
 {
-	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false },
-	{ 'TEX0', oSURFACE_R32_FLOAT, 0, false },
+	{ 'POS0', ouro::surface::r32g32b32a32_float, 0, false },
+	{ 'TEX0', ouro::surface::r32_float, 0, false },
 };
 
 static const oGPU_VERTEX_ELEMENT oGPU_TEST_POSITION_TEXCOORD2D_VERTEX[] = 
 {
-	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false },
-	{ 'TEX0', oSURFACE_R32G32_FLOAT, 0, false },
+	{ 'POS0', ouro::surface::r32g32b32a32_float, 0, false },
+	{ 'TEX0', ouro::surface::r32g32_float, 0, false },
 };
 
 static const oGPU_VERTEX_ELEMENT oGPU_TEST_POSITION_TEXCOORD3D_VERTEX[] = 
 {
-	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false },
-	{ 'TEX0', oSURFACE_R32G32B32_FLOAT, 0, false },
+	{ 'POS0', ouro::surface::r32g32b32a32_float, 0, false },
+	{ 'TEX0', ouro::surface::r32g32b32a32_float, 0, false },
 };
 
 bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDesc)

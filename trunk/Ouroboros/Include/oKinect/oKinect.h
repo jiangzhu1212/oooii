@@ -104,7 +104,7 @@ interface oKinect : oInterface
 
 	virtual void SetPitch(int _Degrees) threadsafe = 0;
 	
-	virtual bool MapRead(oKINECT_FRAME_TYPE _Type, oSURFACE_DESC* _pDesc, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMapped) const threadsafe = 0;
+	virtual bool MapRead(oKINECT_FRAME_TYPE _Type, ouro::surface::info* _pInfo, ouro::surface::const_mapped_subresource* _pMapped) const threadsafe = 0;
 	virtual void UnmapRead(oKINECT_FRAME_TYPE _Type) const threadsafe = 0;
 
 	// Returns the number of valid bones.

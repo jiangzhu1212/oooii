@@ -34,13 +34,13 @@
 
 #if oDXVER >= oDXVER_10
 
-	// Convert to an oSURFACE_FORMAT from a DXGI_FORMAT. If the format is not 
-	// supported this will return oSURFACE_UNKNOWN.
-	oSURFACE_FORMAT oDXGIToSurfaceFormat(DXGI_FORMAT _Format);
+	// Convert to an ouro::surface::format from a DXGI_FORMAT. If the format is not 
+	// supported this will return ouro::surface::unknown.
+	ouro::surface::format oDXGIToSurfaceFormat(DXGI_FORMAT _Format);
 
-	// Convert to an oSURFACE_FORMAT from a DXGI_FORMAT. If the format is not 
+	// Convert to an ouro::surface::format from a DXGI_FORMAT. If the format is not 
 	// supported this will return DXGI_FORMAT_UNKNOWN.
-	DXGI_FORMAT oDXGIFromSurfaceFormat(oSURFACE_FORMAT _Format);
+	DXGI_FORMAT oDXGIFromSurfaceFormat(ouro::surface::format _Format);
 
 	// IDXGIFactory is special as it loads DLLs so it can not be statically held
 	// as it can not be released from DLLmain, so always create it.

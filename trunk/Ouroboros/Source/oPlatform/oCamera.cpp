@@ -220,16 +220,16 @@ void _DeleteMediaType(AM_MEDIA_TYPE *pmt)
 
 } // namespace SampleCode
 
-static GUID oDSGetMediaSubType(oSURFACE_FORMAT _Format)
+static GUID oDSGetMediaSubType(ouro::surface::format _Format)
 {
-	size_t size = oSurfaceFormatGetSize(_Format);
+	size_t size = ouro::surface::element_size(_Format);
 	if (size == 2)
 		return (const GUID&)oGUID_MEDIASUBTYPE_RGB565;
 	else if (size == 3)
 		return (const GUID&)oGUID_MEDIASUBTYPE_RGB24;
 	else if (size == 4)
 	{
-		if (oSurfaceFormatIsAlpha(_Format))
+		if (ouro::surface::has_alpha(_Format))
 			return (const GUID&)oGUID_MEDIASUBTYPE_ARGB32;
 		else
 			return (const GUID&)oGUID_MEDIASUBTYPE_RGB32;
@@ -345,7 +345,7 @@ void oDSCamera::ResizeTarget(const MODE& _Mode)
 {
 	MonotonicCounter = 0;
 	RingBufferReadIndex.exchange(0);
-	size_t frameSize = oSurfaceMipCalcSize(_Mode.Format, _Mode.Dimensions);
+	size_t frameSize = ouro::surface::mip_size(_Mode.Format, _Mode.Dimensions);
 	oFORI(i, RingBuffer)
 	{
 		RingBuffer[i].SampleTime = 0.0;
@@ -431,8 +431,8 @@ template<typename T> inline T sqDiff(const T& _A, const T& _B)
 static bool operator<(const oCamera::MODE& _This, const oCamera::MODE& _That)
 {
 	int nBitsR1, nBitsG1, nBitsB1, nBitsA1, nBitsR2, nBitsG2, nBitsB2, nBitsA2;
-	oSurfaceGetChannelBitSize(_This.Format, &nBitsR1, &nBitsG1, &nBitsB1, &nBitsA1);
-	oSurfaceGetChannelBitSize(_That.Format, &nBitsR2, &nBitsG2, &nBitsB2, &nBitsA2);
+	ouro::surface::channel_bits(_This.Format, &nBitsR1, &nBitsG1, &nBitsB1, &nBitsA1);
+	ouro::surface::channel_bits(_That.Format, &nBitsR2, &nBitsG2, &nBitsB2, &nBitsA2);
 
 	if (nBitsR1 >= nBitsR2)
 		return false;
@@ -446,11 +446,11 @@ static bool operator<(const oCamera::MODE& _This, const oCamera::MODE& _That)
 	if (nBitsA1 >= nBitsA2)
 		return false;
 
-	if (!oSurfaceFormatIsBlockCompressed(_This.Format) && oSurfaceFormatIsBlockCompressed(_That.Format))
+	if (!ouro::surface::is_block_compressed(_This.Format) && ouro::surface::is_block_compressed(_That.Format))
 		return false;
 
-	size_t thisSize = oSurfaceFormatGetSize(_This.Format);
-	size_t thatSize = oSurfaceFormatGetSize(_That.Format);
+	size_t thisSize = ouro::surface::element_size(_This.Format);
+	size_t thatSize = ouro::surface::element_size(_That.Format);
 
 	if (thisSize < thatSize)
 		return true;
@@ -484,8 +484,8 @@ static float Distance(const oCamera::MODE& _ModeToMatch, const oCamera::MODE _Te
 	static const float kBitRateWeight = 0.0f;
 
 	int nBitsR1, nBitsG1, nBitsB1, nBitsA1, nBitsR2, nBitsG2, nBitsB2, nBitsA2;
-	oSurfaceGetChannelBitSize(_ModeToMatch.Format, &nBitsR1, &nBitsG1, &nBitsB1, &nBitsA1);
-	oSurfaceGetChannelBitSize(_TestMode.Format, &nBitsR2, &nBitsG2, &nBitsB2, &nBitsA2);
+	ouro::surface::channel_bits(_ModeToMatch.Format, &nBitsR1, &nBitsG1, &nBitsB1, &nBitsA1);
+	ouro::surface::channel_bits(_TestMode.Format, &nBitsR2, &nBitsG2, &nBitsB2, &nBitsA2);
 
 	int FormatDiff = sqDiff(nBitsR1, nBitsR2) + sqDiff(nBitsG1, nBitsG2) + sqDiff(nBitsB1, nBitsB2) + sqDiff(nBitsA1, nBitsA2);
 	int2 SizeDiff = sqDiff(_ModeToMatch.Dimensions, _TestMode.Dimensions);
@@ -543,9 +543,9 @@ bool oDSCamera::GetSetModeList(unsigned int* _pNumModes, MODE* _pModes, const MO
 		VIDEOINFOHEADER* pVideoHeader = (VIDEOINFOHEADER*)type->pbFormat;
 		if (type->majortype == (const GUID&)oGUID_MEDIATYPE_Video && pVideoHeader->bmiHeader.biWidth > 0 && pVideoHeader->bmiHeader.biHeight > 0)
 		{
-			oSURFACE_FORMAT format = oGDIGetFormat(pVideoHeader->bmiHeader);
+			ouro::surface::format format = oGDIGetFormat(pVideoHeader->bmiHeader);
 
-			if (format != oSURFACE_UNKNOWN)
+			if (format != ouro::surface::unknown)
 			{
 				MODE& m = _pModes ? _pModes[(*_pNumModes)] : testMode;
 				m.Format = format;
@@ -656,12 +656,12 @@ bool oDSCamera::Map(MAPPED* _pMapped) threadsafe
 		oDSCamera* pThis = thread_cast<oDSCamera*>(this); // protected by Mutex above
 		unsigned int index = RingBufferReadIndex;
 		
-		oSURFACE_DESC d;
-		d.Dimensions = int3(thread_cast<DESC&>(Desc).Mode.Dimensions, 1);
-		d.Format = Desc.Mode.Format;
-		d.Layout = oSURFACE_LAYOUT_IMAGE;
+		ouro::surface::info inf;
+		inf.dimensions = int3(thread_cast<DESC&>(Desc).Mode.Dimensions, 1);
+		inf.format = Desc.Mode.Format;
+		inf.layout = ouro::surface::image;
 		_pMapped->pData = data(pThis->RingBuffer[index].Data);
-		_pMapped->RowPitch = oSurfaceMipCalcRowPitch(d);
+		_pMapped->RowPitch = ouro::surface::row_pitch(inf);
 		_pMapped->Frame = pThis->RingBuffer[index].Frame;
 	}
 
@@ -682,7 +682,7 @@ unsigned int oDSCamera::CalculateSourceRowPitch() const
 {
 	// BITMAPINFOHEADER rules, BITMAPs are aligned to 4 pixels per row when 
 	// allocating the image size.
-	return byte_align(Desc.Mode.Dimensions.x, 4) * oSurfaceFormatGetSize(Desc.Mode.Format);
+	return byte_align(Desc.Mode.Dimensions.x, 4) * ouro::surface::element_size(Desc.Mode.Format);
 }
 
 bool oDSCamera::BufferCB(double _SampleTime, void* _pBuffer, size_t _SizeofBuffer)
@@ -699,14 +699,14 @@ bool oDSCamera::BufferCB(double _SampleTime, void* _pBuffer, size_t _SizeofBuffe
 			return false;
 		f.Frame = MonotonicCounter++;
 		f.SampleTime = _SampleTime;
-		oSURFACE_DESC d;
-		d.Dimensions = int3(thread_cast<DESC&>(Desc).Mode.Dimensions, 1);
-		d.Format = Desc.Mode.Format;
-		d.Layout = oSURFACE_LAYOUT_IMAGE;
+		ouro::surface::info inf;
+		inf.dimensions = int3(thread_cast<DESC&>(Desc).Mode.Dimensions, 1);
+		inf.format = Desc.Mode.Format;
+		inf.layout = ouro::surface::image;
 
-		int DestRowPitch = oSurfaceMipCalcRowPitch(d);
-		int DestRowSize = oSurfaceMipCalcRowSize(Desc.Mode.Format, Desc.Mode.Dimensions);
-		int NumRows = oSurfaceMipCalcNumRows(Desc.Mode.Format, Desc.Mode.Dimensions);
+		int DestRowPitch = ouro::surface::row_pitch(inf);
+		int DestRowSize = ouro::surface::row_size(Desc.Mode.Format, Desc.Mode.Dimensions);
+		int NumRows = ouro::surface::num_rows(Desc.Mode.Format, Desc.Mode.Dimensions);
 		memcpy2dvflip(data(f.Data), DestRowPitch, _pBuffer, CalculateSourceRowPitch(), DestRowSize, NumRows);
 		RingBufferReadIndex.exchange(WriteIndex);
 	}

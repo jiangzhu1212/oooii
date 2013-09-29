@@ -98,11 +98,6 @@ template<typename T> uint2 oCastAsUint(const TVEC2<T>& value) { return uint2(oCa
 template<typename T> uint3 oCastAsUint(const TVEC3<T>& value) { return uint3(oCastAsUint(value.x), oCastAsUint(value.y), oCastAsUint(value.z)); }
 template<typename T> uint4 oCastAsUint(const TVEC4<T>& value) { return uint4(oCastAsUint(value.x), oCastAsUint(value.y), oCastAsUint(value.z), oCastAsUint(value.w)); }
 
-inline unsigned char oUNORMAsUBYTE(float x) { return static_cast<unsigned char>(floor(x * 255.0f + 0.5f)); }
-inline unsigned short oUNORMAsUSHORT(float x) { return static_cast<unsigned char>(floor(x * 65535.0f + 0.5f)); }
-inline float oUBYTEAsUNORM(size_t c) { return (c & 0xff) / 255.0f; }
-inline float oUSHORTAsUNORM(size_t c) { return (c & 0xffff) / 65535.0f; }
-
 // _____________________________________________________________________________
 // Containment/intersection/base collision
 

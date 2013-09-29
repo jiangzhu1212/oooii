@@ -239,7 +239,7 @@ void oGPUWindowThread::Run()
 			Init.AltF4Closes = true;
 			oVERIFY(oWindowCreate(Init, &GPUWindow));
 			GPUWindow->SetHotKeys(HotKeys);
-			oVERIFY(Device->CreatePrimaryRenderTarget(GPUWindow, oSURFACE_D24_UNORM_S8_UINT, true, &WindowRenderTarget));
+			oVERIFY(Device->CreatePrimaryRenderTarget(GPUWindow, ouro::surface::d24_unorm_s8_uint, true, &WindowRenderTarget));
 			GPUWindow->SetParent(Parent);
 			GPUWindow->Show(); // now that the window is a child, show it (it will only show when parent shows)
 			pGPUWindow = GPUWindow;

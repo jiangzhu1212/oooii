@@ -62,7 +62,7 @@ struct oD3D11Device : oGPUDevice
 
 	void GetImmediateCommandList(oGPUCommandList** _ppCommandList) override;
 	
-	bool CreatePrimaryRenderTarget(oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, bool _EnableOSRendering, oGPURenderTarget** _ppPrimaryRenderTarget) override;
+	bool CreatePrimaryRenderTarget(oWindow* _pWindow, ouro::surface::format _DepthStencilFormat, bool _EnableOSRendering, oGPURenderTarget** _ppPrimaryRenderTarget) override;
 
 	bool CreateCommandList(const char* _Name, const oGPUCommandList::DESC& _Desc, oGPUCommandList** _ppCommandList) override;
 	bool CreatePipeline(const char* _Name, const oGPUPipeline::DESC& _Desc, oGPUPipeline** _ppPipeline) override;
@@ -72,7 +72,7 @@ struct oD3D11Device : oGPUDevice
 	bool CreateBuffer(const char* _Name, const oGPUBuffer::DESC& _Desc, oGPUBuffer** _ppBuffer) override;
 	bool CreateTexture(const char* _Name, const oGPUTexture::DESC& _Desc, oGPUTexture** _ppTexture) override;
 
-	bool MapRead(oGPUResource* _pReadbackResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource, bool _bBlocking=false) override;
+	bool MapRead(oGPUResource* _pReadbackResource, int _Subresource, ouro::surface::mapped_subresource* _pMappedSubresource, bool _bBlocking=false) override;
 	void UnmapRead(oGPUResource* _pReadbackResource, int _Subresource) override;
 	bool ReadQuery(oGPUQuery* _pQuery, void* _pData, uint _SizeofData) override;
 	bool BeginFrame() override;
@@ -99,10 +99,10 @@ struct oD3D11Device : oGPUDevice
 	// mutex, guaranteeing its threadsafety for the shared immediate context.
 
 	// Implements Reserve() in the specified context (immediate or deferred).
-	void MEMReserve(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource) threadsafe;
+	void MEMReserve(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, ouro::surface::mapped_subresource* _pMappedSubresource) threadsafe;
 
 	// Implements Commit() in the specified context (immediate or deferred).
-	void MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, const oSURFACE_MAPPED_SUBRESOURCE& _Source, const oSURFACE_BOX& _Subregion) threadsafe;
+	void MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, const ouro::surface::mapped_subresource& _Source, const ouro::surface::box& _Subregion) threadsafe;
 
 	// Registers a command list in the submission vector sorted by its DrawOrder.
 	// If there is already a command list at the specified order, then this 

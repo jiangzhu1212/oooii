@@ -239,9 +239,9 @@ oOBJ_GROUP oBasisTestOBJ_Cube::sGroups[6];
 
 const oGPU_VERTEX_ELEMENT oBasisTestOBJ_Cube::sVertexElements[3] =
 {
-	{ 'POS0', oSURFACE_R32G32B32_FLOAT, 0, false },
-	{ 'TEX0', oSURFACE_R32G32B32_FLOAT, 1, false },
-	{ 'NRM0', oSURFACE_R32G32B32_FLOAT, 2, false },
+	{ 'POS0', ouro::surface::r32g32b32a32_float, 0, false },
+	{ 'TEX0', ouro::surface::r32g32b32a32_float, 1, false },
+	{ 'NRM0', ouro::surface::r32g32b32a32_float, 2, false },
 };
 
 bool oBasisTestOBJGet(oBASIS_TEST_OBJ _OBJ, const oBasisTestOBJ** _ppTestOBJ)

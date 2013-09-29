@@ -407,7 +407,7 @@ struct oBMI_DESC
 {
 	oBMI_DESC()
 		: Dimensions(oInvalid, oInvalid)
-		, Format(oSURFACE_UNKNOWN)
+		, Format(ouro::surface::unknown)
 		, RowPitch(oInvalid)
 		, FlipVertically(true)
 		, ARGBMonochrome8Zero(ouro::Black)
@@ -415,7 +415,7 @@ struct oBMI_DESC
 	{}
 
 	int2 Dimensions;
-	oSURFACE_FORMAT Format;
+	ouro::surface::format Format;
 	int RowPitch;
 	bool FlipVertically;
 	ouro::color ARGBMonochrome8Zero;
@@ -430,10 +430,10 @@ void oGDIInitializeBMI(const oBMI_DESC& _Desc, BITMAPINFO* _pBMI);
 
 // 8 bit formats won't render correctly because BITMAPINFO infers palette data 
 // from 8-bit, so allocate enough room for the palette.
-size_t oGDIGetBMISize(oSURFACE_FORMAT _Format);
+size_t oGDIGetBMISize(ouro::surface::format _Format);
 inline size_t oGDIGetBMISize(oImage::FORMAT _Format) { return oGDIGetBMISize(oImageFormatToSurfaceFormat(_Format)); }
 
-oSURFACE_FORMAT oGDIGetFormat(const BITMAPINFOHEADER& _BitmapInfoHeader);
+ouro::surface::format oGDIGetFormat(const BITMAPINFOHEADER& _BitmapInfoHeader);
 
 // Captures image data of the specified window and fills _pImageBuffer.
 // pImageBuffer can be NULL, in which case only _pBitmapInfo is filled out.
@@ -466,13 +466,13 @@ BOOL oGDIStretchBlendBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, H
 
 // This stretches the source bits directly to fill the specified rectangle in
 // the specified device context.
-bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically = true);
+bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically = true);
 
 // This stretches the source bits directly to fill the specified HWND's client
 // area. This is a nice shortcut when working with cameras that will fill some
 // UI element, or a top-level window.
-bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically = true);
-bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, oSURFACE_FORMAT _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically = true);
+bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically = true);
+bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically = true);
 
 // _____________________________________________________________________________
 // Other APIs

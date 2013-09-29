@@ -347,9 +347,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oSurface.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -481,6 +478,9 @@
     </ClCompile>
     <ClCompile Include="oStrTok.cpp">
       <Filter>Source\String Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

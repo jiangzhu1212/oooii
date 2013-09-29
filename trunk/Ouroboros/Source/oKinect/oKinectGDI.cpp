@@ -178,11 +178,11 @@ void oGDIDrawKinect(HDC _hDC, const RECT& _rTarget, oKINECT_FRAME_TYPE _Type, in
 
 	if (_Type != oKINECT_FRAME_NONE)
 	{
-		oSURFACE_DESC sd;
-		oSURFACE_CONST_MAPPED_SUBRESOURCE m;
-		if (_pKinect->MapRead(_Type, &sd, &m))
+		ouro::surface::info inf;
+		ouro::surface::const_mapped_subresource m;
+		if (_pKinect->MapRead(_Type, &inf, &m))
 		{
-			oV(oGDIStretchBits(_hDC, _rTarget, sd.Dimensions.xy(), sd.Format, m.pData, m.RowPitch));
+			oV(oGDIStretchBits(_hDC, _rTarget, inf.dimensions.xy(), inf.format, m.data, m.row_pitch));
 			_pKinect->UnmapRead(_Type);
 		}
 	}

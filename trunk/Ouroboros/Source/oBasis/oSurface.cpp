@@ -23,66 +23,53 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oSurface.h>
-#include <oBase/assert.h>
-#include <oBase/macros.h>
-#include <oBase/memory.h>
-#include <oBase/string.h>
-#include <oBase/throw.h>
-#include <oBasis/oMath.h>
-#include <cstring>
 
-using namespace ouro;
+using namespace std::placeholders;
+using namespace oStd;
 
-#define oCHECK_SURFACE_DESC(_Desc) \
-	oASSERT(all(_Desc.Dimensions >= int3(1,1,1)), "invalid dimensions: [%d,%d,%d]", _Desc.Dimensions.x, _Desc.Dimensions.y, _Desc.Dimensions.z); \
-	oASSERT(_Desc.ArraySize == 1 || _Desc.Dimensions.z == 1, "ArraySize or Depth has to be 1 [%d,%d]", _Desc.ArraySize, _Desc.Dimensions.z);
-#define oCHECK_DIM(_Format, _Dim) oASSERT(_Dim >= oSurfaceFormatGetMinDimensions(_Format).x, "invalid dimension: %d", _Dim);
-#define oCHECK_DIM2(_Format, _Dim) oASSERT(all(_Dim >= oSurfaceFormatGetMinDimensions(_Format)), "invalid dimensions: [%d,%d]", _Dim.x, _Dim.y);
-#define oCHECK_DIM3(_Format, _Dim) oASSERT(all(_Dim.xy >= oSurfaceFormatGetMinDimensions(_Format)), "invalid dimensions: [%d,%d,%d]", _Dim.x, _Dim.y, _Dim.z);
+namespace ouro {
+	namespace surface {
 
-#define oASSERT_PLANAR_SUPPORT(_Format) oASSERT(!oSurfaceFormatIsPlanar(_Format), "Planar formats may not behave well with this API. Review usage in this code and remove this when verified.");
+#define oCHECK_INFO(_Info) \
+	if (any(_Info.dimensions < int3(1,1,1))) throw std::invalid_argument(formatf("invalid dimensions: [%d,%d,%d]", _Info.dimensions.x, _Info.dimensions.y, _Info.dimensions.z)); \
+	if (_Info.array_size != 1 && _Info.dimensions.z != 1) throw std::invalid_argument(formatf("array_size or depth has to be 1 [%d,%d]", _Info.array_size, _Info.dimensions.z));
 
-struct BIT_SIZE
+#define oCHECK_DIM(_Format, _Dim) if (_Dim < min_dimensions(_Format).x) throw std::invalid_argument(formatf("invalid dimension: %d", _Dim));
+#define oCHECK_DIM2(_Format, _Dim) if (any(_Dim < min_dimensions(_Format))) throw std::invalid_argument(formatf("invalid dimensions: [%d,%d]", _Dim.x, _Dim.y));
+#define oCHECK_DIM3(_Format, _Dim) if (any(_Dim.xy < min_dimensions(_Format))) throw std::invalid_argument(formatf("invalid dimensions: [%d,%d,%d]", _Dim.x, _Dim.y, _Dim.z));
+#define oCHECK_NOT_PLANAR(_Format) if (is_planar(_Format)) throw std::invalid_argument("Planar formats may not behave well with this API. Review usage in this code and remove this when verified.");
+
+struct bit_size { uchar r,g,b,a; };
+struct subformats { enum format format[4]; };
+
+namespace traits
+{	enum value {
+
+	is_bc = 1 << 0,
+	is_unorm = 1 << 1,
+	has_alpha = 1 << 2,
+	is_depth = 1 << 3,
+	is_planar = 1 << 4 ,
+	is_yuv = 1 << 5,
+	paletted = 1 << 6,
+	subsurface1_bias1 = 1 << 7,
+	subsurface2_bias1 = 1 << 8,
+	subsurface3_bias1 = 1 << 9,
+
+};}
+
+struct format_info
 {
-	unsigned char R;
-	unsigned char G;
-	unsigned char B;
-	unsigned char A;
-};
-
-struct oSURFACE_SUBFORMATS_DESC
-{
-	oSURFACE_FORMAT Format[4];
-};
-
-enum oSURFACE_FORMAT_TRAIT
-{
-	oSURFACE_IS_BC = 1,
-	oSURFACE_IS_UNORM = oSURFACE_IS_BC<<1,
-	oSURFACE_HAS_ALPHA = oSURFACE_IS_UNORM<<1,
-	oSURFACE_IS_DEPTH = oSURFACE_HAS_ALPHA<<1,
-	oSURFACE_IS_PLANAR = oSURFACE_IS_DEPTH<<1,
-	oSURFACE_IS_YUV = oSURFACE_IS_PLANAR<<1,
-	oSURFACE_PALETTED = oSURFACE_IS_YUV<<1,
-	oSURFACE_SUBSURFACE1_BIAS1 = oSURFACE_PALETTED<<1,
-	oSURFACE_SUBSURFACE2_BIAS1 = oSURFACE_SUBSURFACE1_BIAS1<<1,
-	oSURFACE_SUBSURFACE3_BIAS1 = oSURFACE_SUBSURFACE2_BIAS1<<1,
-};
-
-struct FORMAT_DESC
-{
-	const char* String;
-	unsigned int FourCC;
-	unsigned int Size;
-	int2 MinDimensions;
-	BIT_SIZE BitSize;
-	unsigned char NumChannels;
-	unsigned char NumSubformats;
+	const char* string;
+	uint fourcc;
+	uint size;
+	int2 min_dimensions;
+	struct bit_size bit_size;
+	uchar num_channels;
+	uchar num_subformats;
 	
-	// @oooii-tony: Consider calling this a ProxyFormat and then using this same
-	// mechanism for dealing with depth v. color types.
-	oSURFACE_SUBFORMATS_DESC Subformats;
-	int Traits;
+	struct subformats subformats;
+	int traits;
 };
 
 #define k0_0 (0)
@@ -113,323 +100,327 @@ static const int2 kSmallestMip(1,1);
 static const int2 kSmallestMipBC(4,4);
 static const int2 kSmallestMipYUV(2,2);
 
-static const BIT_SIZE kBS_UNK = {0,0,0,0};
-static const BIT_SIZE kBS_4_32 = {32,32,32,32};
-static const BIT_SIZE kBS_3_32 = {32,32,32,0};
-static const BIT_SIZE kBS_2_32 = {32,32,0,0};
-static const BIT_SIZE kBS_1_32 = {32,0,0,0};
-static const BIT_SIZE kBS_4_16 = {16,16,16,16};
-static const BIT_SIZE kBS_3_16 = {16,16,16,0};
-static const BIT_SIZE kBS_2_16 = {16,16,0,0};
-static const BIT_SIZE kBS_1_16 = {16,0,0,0};
-static const BIT_SIZE kBS_4_8 = {8,8,8,8};
-static const BIT_SIZE kBS_3_8 = {8,8,8,0};
-static const BIT_SIZE kBS_2_8 = {8,8,0,0};
-static const BIT_SIZE kBS_1_8 = {8,0,0,0};
-static const BIT_SIZE kBS_565 = {5,6,5,0};
-static const BIT_SIZE kBS_DEC3N = {10,10,10,2};
-static const BIT_SIZE kBS_DS = {24,8,0,0};
-static const BIT_SIZE kBS_4_4 = {4,4,4,4};
-static const BIT_SIZE kBS_3_4 = {4,4,4,0};
-static const BIT_SIZE kBS_2_4 = {4,4,0,0};
-static const BIT_SIZE kBS_1_4 = {4,0,0,0};
+static const bit_size kBS_UNK = {0,0,0,0};
+static const bit_size kBS_4_32 = {32,32,32,32};
+static const bit_size kBS_3_32 = {32,32,32,0};
+static const bit_size kBS_2_32 = {32,32,0,0};
+static const bit_size kBS_1_32 = {32,0,0,0};
+static const bit_size kBS_4_16 = {16,16,16,16};
+static const bit_size kBS_3_16 = {16,16,16,0};
+static const bit_size kBS_2_16 = {16,16,0,0};
+static const bit_size kBS_1_16 = {16,0,0,0};
+static const bit_size kBS_4_8 = {8,8,8,8};
+static const bit_size kBS_3_8 = {8,8,8,0};
+static const bit_size kBS_2_8 = {8,8,0,0};
+static const bit_size kBS_1_8 = {8,0,0,0};
+static const bit_size kBS_565 = {5,6,5,0};
+static const bit_size kBS_DEC3N = {10,10,10,2};
+static const bit_size kBS_DS = {24,8,0,0};
+static const bit_size kBS_4_4 = {4,4,4,4};
+static const bit_size kBS_3_4 = {4,4,4,0};
+static const bit_size kBS_2_4 = {4,4,0,0};
+static const bit_size kBS_1_4 = {4,0,0,0};
 
 static const fourcc kFCC_UNK = oFCC('????');
 
-static const oSURFACE_SUBFORMATS_DESC kSFD_UNK = {oSURFACE_UNKNOWN, oSURFACE_UNKNOWN, oSURFACE_UNKNOWN, oSURFACE_UNKNOWN};
-static const oSURFACE_SUBFORMATS_DESC kSFD_R8_R8 = {oSURFACE_R8_UNORM, oSURFACE_R8_UNORM, oSURFACE_UNKNOWN, oSURFACE_UNKNOWN};
-static const oSURFACE_SUBFORMATS_DESC kSFD_R8_RG8 = {oSURFACE_R8_UNORM, oSURFACE_R8G8_UNORM, oSURFACE_UNKNOWN, oSURFACE_UNKNOWN};
-static const oSURFACE_SUBFORMATS_DESC kSFD_RG8_RG8 = {oSURFACE_R8G8_UNORM, oSURFACE_R8G8_UNORM, oSURFACE_UNKNOWN, oSURFACE_UNKNOWN};
-static const oSURFACE_SUBFORMATS_DESC kSFD_R16_RG16 = {oSURFACE_R16_UNORM, oSURFACE_R16G16_UNORM, oSURFACE_UNKNOWN, oSURFACE_UNKNOWN};
-static const oSURFACE_SUBFORMATS_DESC kSFD_BC4_BC4 = {oSURFACE_BC4_UNORM, oSURFACE_BC4_UNORM, oSURFACE_UNKNOWN, oSURFACE_UNKNOWN};
-static const oSURFACE_SUBFORMATS_DESC kSFD_BC4_BC5 = {oSURFACE_BC4_UNORM, oSURFACE_BC5_UNORM, oSURFACE_UNKNOWN, oSURFACE_UNKNOWN};
-static const oSURFACE_SUBFORMATS_DESC kSFD_BC5_BC5 = {oSURFACE_BC5_UNORM, oSURFACE_BC5_UNORM, oSURFACE_UNKNOWN, oSURFACE_UNKNOWN};
-static const oSURFACE_SUBFORMATS_DESC kSFD_R8_4 = {oSURFACE_R8_UNORM, oSURFACE_R8_UNORM, oSURFACE_R8_UNORM, oSURFACE_R8_UNORM};
-static const oSURFACE_SUBFORMATS_DESC kSFD_R8_3 = {oSURFACE_R8_UNORM, oSURFACE_R8_UNORM, oSURFACE_R8_UNORM, oSURFACE_UNKNOWN};
-static const oSURFACE_SUBFORMATS_DESC kSFD_BC4_4 = {oSURFACE_BC4_UNORM, oSURFACE_BC4_UNORM, oSURFACE_BC4_UNORM, oSURFACE_BC4_UNORM};
-static const oSURFACE_SUBFORMATS_DESC kSFD_BC4_3 = {oSURFACE_BC4_UNORM, oSURFACE_BC4_UNORM, oSURFACE_BC4_UNORM, oSURFACE_UNKNOWN};
+static const subformats kSFD_UNK = {unknown, unknown, unknown, unknown};
+static const subformats kSFD_R8_R8 = {r8_unorm, r8_unorm, unknown, unknown};
+static const subformats kSFD_R8_RG8 = {r8_unorm, r8g8_unorm, unknown, unknown};
+static const subformats kSFD_RG8_RG8 = {r8g8_unorm, r8g8_unorm, unknown, unknown};
+static const subformats kSFD_R16_RG16 = {r16_unorm, r16g16_unorm, unknown, unknown};
+static const subformats kSFD_BC4_BC4 = {bc4_unorm, bc4_unorm, unknown, unknown};
+static const subformats kSFD_BC4_BC5 = {bc4_unorm, bc5_unorm, unknown, unknown};
+static const subformats kSFD_BC5_BC5 = {bc5_unorm, bc5_unorm, unknown, unknown};
+static const subformats kSFD_R8_4 = {r8_unorm, r8_unorm, r8_unorm, r8_unorm};
+static const subformats kSFD_R8_3 = {r8_unorm, r8_unorm, r8_unorm, unknown};
+static const subformats kSFD_BC4_4 = {bc4_unorm, bc4_unorm, bc4_unorm, bc4_unorm};
+static const subformats kSFD_BC4_3 = {bc4_unorm, bc4_unorm, bc4_unorm, unknown};
 
-static const FORMAT_DESC sFormatDescs[] = 
+static const format_info sFormatInfo[] = 
 {
-	{ "UNKNOWN", kFCC_UNK, k0_0, kSmallestMip, kBS_UNK, 0, 0, kSFD_UNK, 0 },
-	{ "R32G32B32A32_TYPELESS", oFCC('?i4 '), k4_32, kSmallestMip, kBS_4_32, 4, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R32G32B32A32_FLOAT", oFCC('f4  '), k4_32, kSmallestMip, kBS_4_32, 4, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R32G32B32A32_UINT", oFCC('ui4 '), k4_32, kSmallestMip, kBS_4_32, 4, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R32G32B32A32_SINT", oFCC('si4 '), k4_32, kSmallestMip, kBS_4_32, 4, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R32G32B32_TYPELESS", oFCC('?i3 '), k3_32, kSmallestMip, kBS_3_32, 3, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R32G32B32_FLOAT", oFCC('f3  '), k3_32, kSmallestMip, kBS_3_32, 3, 1, kSFD_UNK, 0 },
-	{ "R32G32B32_UINT", oFCC('ui3 '), k4_32, kSmallestMip, kBS_3_32, 3, 1, kSFD_UNK, 0 },
-	{ "R32G32B32_SINT", oFCC('si3 '), k4_32, kSmallestMip, kBS_3_32, 3, 1, kSFD_UNK, 0 },
-	{ "R16G16B16A16_TYPELESS", oFCC('?s4 '), k4_16, kSmallestMip, kBS_4_16, 4, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R16G16B16A16_FLOAT", oFCC('h4  '), k4_16, kSmallestMip, kBS_4_16, 4, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R16G16B16A16_UNORM", oFCC('h4u '), k4_16, kSmallestMip, kBS_4_16, 4, 1, kSFD_UNK, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA },
-	{ "R16G16B16A16_UINT", oFCC('us4 '), k4_16, kSmallestMip, kBS_4_16, 4, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R16G16B16A16_SNORM", oFCC('h4s '), k4_16, kSmallestMip, kBS_4_16, 4, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R16G16B16A16_SINT", oFCC('ss4 '), k4_16, kSmallestMip, kBS_4_16, 4, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R32G32_TYPELESS", oFCC('?i2 '), k2_32, kSmallestMip, kBS_2_32, 2, 1, kSFD_UNK, 0 },
-	{ "R32G32_FLOAT", oFCC('f2  '), k2_32, kSmallestMip, kBS_2_32, 2, 1, kSFD_UNK, 0 },
-	{ "R32G32_UINT", oFCC('ui2 '), k2_32, kSmallestMip, kBS_2_32, 2, 1, kSFD_UNK, 0 },
-	{ "R32G32_SINT", oFCC('si2 '), k2_32, kSmallestMip, kBS_2_32, 2, 1, kSFD_UNK, 0 },
-	{ "R32G8X24_TYPELESS", kFCC_UNK, k2_32, kSmallestMip, {32,8,0,24}, 3, 1, kSFD_UNK, 0 },
-	{ "D32_FLOAT_S8X24_UINT", kFCC_UNK, k2_32, kSmallestMip, {32,8,0,24}, 3, 1, kSFD_UNK, oSURFACE_IS_DEPTH },
-	{ "R32_FLOAT_X8X24_TYPELESS", kFCC_UNK, k2_32, kSmallestMip, {32,8,0,24}, 3, 1, kSFD_UNK, oSURFACE_IS_DEPTH },
-	{ "X32_TYPELESS_G8X24_UINT", kFCC_UNK, k2_32, kSmallestMip, {32,8,0,24}, 3, 1, kSFD_UNK, 0 },
-	{ "R10G10B10A2_TYPELESS", kFCC_UNK, k1_32, kSmallestMip, kBS_DEC3N, 4, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R10G10B10A2_UNORM", kFCC_UNK, k1_32, kSmallestMip, kBS_DEC3N, 4, 1, kSFD_UNK, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA },
-	{ "R10G10B10A2_UINT", kFCC_UNK, k1_32, kSmallestMip, kBS_DEC3N, 4, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R11G11B10_FLOAT", kFCC_UNK, k1_32, kSmallestMip, {11,11,10,0}, 3, 1, kSFD_UNK, 0 },
-	{ "R8G8B8A8_TYPELESS", oFCC('?c4 '), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R8G8B8A8_UNORM", oFCC('c4u '), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA },
-	{ "R8G8B8A8_UNORM_SRGB", oFCC('c4us'), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA },
-	{ "R8G8B8A8_UINT", oFCC('uc4 '), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R8G8B8A8_SNORM", oFCC('c4s '), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R8G8B8A8_SINT", oFCC('sc4 '), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, oSURFACE_HAS_ALPHA },
-	{ "R16G16_TYPELESS", oFCC('?s2 '), k2_16, kSmallestMip, kBS_2_16, 2, 1, kSFD_UNK, 0 },
-	{ "R16G16_FLOAT", oFCC('h2 '), k2_16, kSmallestMip, kBS_2_16, 2, 1, kSFD_UNK, 0 },
-	{ "R16G16_UNORM", oFCC('h2u '), k2_16, kSmallestMip, kBS_2_16, 2, 1, kSFD_UNK, oSURFACE_IS_UNORM },
-	{ "R16G16_UINT", oFCC('us2 '), k2_16, kSmallestMip, kBS_2_16, 2, 1, kSFD_UNK, 0 },
-	{ "R16G16_SNORM", oFCC('h2s '), k2_16, kSmallestMip, kBS_2_16, 2, 1, kSFD_UNK, 0 },
-	{ "R16G16_SINT", oFCC('ss2 '), k2_16, kSmallestMip, kBS_2_16, 2, 1, kSFD_UNK, 0 },
-	{ "R32_TYPELESS", oFCC('?i1 '), k1_32, kSmallestMip, kBS_1_32, 1, 1, kSFD_UNK, oSURFACE_IS_DEPTH },
-	{ "D32_FLOAT", oFCC('f1d '), k1_32, kSmallestMip, kBS_1_32, 1, 1, kSFD_UNK, oSURFACE_IS_DEPTH },
-	{ "R32_FLOAT", oFCC('f1  '), k1_32, kSmallestMip, kBS_1_32, 1, 1, kSFD_UNK, 0 },
-	{ "R32_UINT", oFCC('ui1 '), k1_32, kSmallestMip, kBS_1_32, 1, 1, kSFD_UNK, 0 },
-	{ "R32_SINT", oFCC('si1 '), k1_32, kSmallestMip, kBS_1_32, 1, 1, kSFD_UNK, 0 },
-	{ "R24G8_TYPELESS", kFCC_UNK, k1_32, kSmallestMip, kBS_DS, 2, 1, kSFD_UNK, oSURFACE_IS_DEPTH },
-	{ "D24_UNORM_S8_UINT", kFCC_UNK, k1_32, kSmallestMip, kBS_DS, 2, 1, kSFD_UNK, oSURFACE_IS_UNORM|oSURFACE_IS_DEPTH },
-	{ "R24_UNORM_X8_TYPELESS", kFCC_UNK, k1_32, kSmallestMip, kBS_DS, 2, 1, kSFD_UNK, oSURFACE_IS_UNORM|oSURFACE_IS_DEPTH },
-	{ "X24_TYPELESS_G8_UINT", kFCC_UNK, k1_32, kSmallestMip, kBS_DS, 2, 1, kSFD_UNK, oSURFACE_IS_DEPTH },
-	{ "R8G8_TYPELESS", oFCC('?c2 '), k2_8, kSmallestMip, kBS_2_8, 2, 1, kSFD_UNK, 0 },
-	{ "R8G8_UNORM", oFCC('uc2u'), k2_8, kSmallestMip, kBS_2_8, 2, 1, kSFD_UNK, oSURFACE_IS_UNORM },
-	{ "R8G8_UINT", oFCC('ui2 '), k2_8, kSmallestMip, kBS_2_8, 2, 1, kSFD_UNK, 0 },
-	{ "R8G8_SNORM", oFCC('uc2s'), k2_8, kSmallestMip, kBS_2_8, 2, 1, kSFD_UNK, 0 },
-	{ "R8G8_SINT", oFCC('si2 '), k2_8, kSmallestMip, kBS_2_8, 2, 1, kSFD_UNK, 0 },
-	{ "R16_TYPELESS", oFCC('?s1 '), k1_16, kSmallestMip, kBS_1_16, 1, 1, kSFD_UNK, oSURFACE_IS_DEPTH },
-	{ "R16_FLOAT", oFCC('h1  '), k1_16, kSmallestMip, kBS_1_16, 1, 1, kSFD_UNK, 0 },
-	{ "D16_UNORM", oFCC('h1ud'), k1_16, kSmallestMip, kBS_1_16, 1, 1, kSFD_UNK, oSURFACE_IS_UNORM|oSURFACE_IS_DEPTH },
-	{ "R16_UNORM", oFCC('h1u '), k1_16, kSmallestMip, kBS_1_16, 1, 1, kSFD_UNK, oSURFACE_IS_UNORM },
-	{ "R16_UINT", oFCC('us1 '), k1_16, kSmallestMip, kBS_1_16, 1, 1, kSFD_UNK, 0 },
-	{ "R16_SNORM", oFCC('h1s '), k1_16, kSmallestMip, kBS_1_16, 1, 1, kSFD_UNK, 0 },
-	{ "R16_SINT", oFCC('ss1 '), k1_16, kSmallestMip, kBS_1_16, 1, 1, kSFD_UNK, 0 },
-	{ "R8_TYPELESS", oFCC('?c1 '), k1_8, kSmallestMip, kBS_1_8, 1, 1, kSFD_UNK, 0 },
-	{ "R8_UNORM", oFCC('uc1u'), k1_8, kSmallestMip, kBS_1_8, 1, 1, kSFD_UNK, oSURFACE_IS_UNORM },
-	{ "R8_UINT", oFCC('uc1 '), k1_8, kSmallestMip, kBS_1_8, 1, 1, kSFD_UNK, 0 },
-	{ "R8_SNORM", oFCC('uc1s'), k1_8, kSmallestMip, kBS_1_8, 1, 1, kSFD_UNK, 0 },
-	{ "R8_SINT", oFCC('sc1 '), k1_8, kSmallestMip, kBS_1_8, 1, 1, kSFD_UNK, 0 },
-	{ "A8_UNORM", oFCC('ac1u'), k1_8, kSmallestMip, kBS_1_8, 1, 1, kSFD_UNK, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA },
-	{ "R1_UNORM", oFCC('bitu'), 1, kSmallestMip, {1,0,0,0}, 1, 1, kSFD_UNK, oSURFACE_IS_UNORM },
-	{ "R9G9B9E5_SHAREDEXP", kFCC_UNK, k1_32, kSmallestMip, {9,9,9,5}, 4, 1, kSFD_UNK, 0 },
-	{ "R8G8_B8G8_UNORM", kFCC_UNK, k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, oSURFACE_IS_UNORM },
-	{ "G8R8_G8B8_UNORM", kFCC_UNK, k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, oSURFACE_IS_UNORM },
-	{ "BC1_TYPELESS", oFCC('BC1?'), kBC_8, kSmallestMipBC, kBS_565, 3, 1, kSFD_UNK, oSURFACE_IS_BC },
-	{ "BC1_UNORM", oFCC('BC1u'), kBC_8, kSmallestMipBC, kBS_565, 3, 1, kSFD_UNK, oSURFACE_IS_BC|oSURFACE_IS_UNORM },
-	{ "BC1_UNORM_SRGB", oFCC('BC1s'), kBC_8, kSmallestMipBC, kBS_565, 3, 1, kSFD_UNK, oSURFACE_IS_BC|oSURFACE_IS_UNORM },
-	{ "BC2_TYPELESS", oFCC('BC2?'), kBC_16, kSmallestMipBC, {5,6,5,4}, 4, 1, kSFD_UNK, oSURFACE_IS_BC|oSURFACE_HAS_ALPHA },
-	{ "BC2_UNORM", oFCC('BC2u'), kBC_16, kSmallestMipBC, {5,6,5,4}, 4, 1, kSFD_UNK, oSURFACE_IS_BC|oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA },
-	{ "BC2_UNORM_SRGB", oFCC('BC2s'), kBC_16, kSmallestMipBC, {5,6,5,4}, 4, 1, kSFD_UNK, oSURFACE_IS_BC|oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA },
-	{ "BC3_TYPELESS", oFCC('BC3?'), kBC_16, kSmallestMipBC, {5,6,5,8}, 4, 1, kSFD_UNK, oSURFACE_IS_BC|oSURFACE_HAS_ALPHA },
-	{ "BC3_UNORM", oFCC('BC3u'), kBC_16, kSmallestMipBC, {5,6,5,8}, 4, 1, kSFD_UNK, oSURFACE_IS_BC|oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA },
-	{ "BC3_UNORM_SRGB", oFCC('BC3s'), kBC_16, kSmallestMipBC, {5,6,5,8}, 4, 1, kSFD_UNK, oSURFACE_IS_BC|oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA },
-	{ "BC4_TYPELESS", oFCC('BC4?'), kBC_8, kSmallestMipBC, kBS_1_8, 1, 1, kSFD_UNK, oSURFACE_IS_BC },
-	{ "BC4_UNORM", oFCC('BC4u'), kBC_8, kSmallestMipBC, kBS_1_8, 1, 1, kSFD_UNK, oSURFACE_IS_BC|oSURFACE_IS_UNORM },
-	{ "BC4_SNORM", oFCC('BC4s'), kBC_8, kSmallestMipBC, kBS_1_8, 1, 1, kSFD_UNK, oSURFACE_IS_BC },
-	{ "BC5_TYPELESS", oFCC('BC5?'), kBC_16, kSmallestMipBC, kBS_2_8, 2, 1, kSFD_UNK, oSURFACE_IS_BC },
-	{ "BC5_UNORM", oFCC('BC5u'), kBC_16, kSmallestMipBC, kBS_2_8, 2, 1, kSFD_UNK, oSURFACE_IS_BC|oSURFACE_IS_UNORM },
-	{ "BC5_SNORM", oFCC('BC5s'), kBC_16, kSmallestMipBC, kBS_2_8, 2, 1, kSFD_UNK, oSURFACE_IS_BC },
-	{ "B5G6R5_UNORM", kFCC_UNK, k1_16, kSmallestMip, kBS_565, 3, 1, kSFD_UNK, oSURFACE_IS_UNORM },
-	{ "B5G5R5A1_UNORM", kFCC_UNK, k1_16, kSmallestMip, {5,6,5,1}, 4, 1, kSFD_UNK, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA },
-	{ "B8G8R8A8_UNORM", oFCC('c4u '), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA },
-	{ "B8G8R8X8_UNORM", oFCC('c4u '), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, oSURFACE_IS_UNORM },
-	{ "R10G10B10_XR_BIAS_A2_UNORM", kFCC_UNK, k1_32, kSmallestMip, kBS_DEC3N, 4, 1, kSFD_UNK, oSURFACE_IS_UNORM },
-	{ "B8G8R8A8_TYPELESS", kFCC_UNK, k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, 0 },
-	{ "B8G8R8A8_UNORM_SRGB", kFCC_UNK, k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, oSURFACE_IS_UNORM },
-	{ "B8G8R8X8_TYPELESS", kFCC_UNK, k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, 0 },
-	{ "B8G8R8X8_UNORM_SRGB", kFCC_UNK, k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, oSURFACE_IS_UNORM },
-	{ "BC6H_TYPELESS", oFCC('BC6?'), kBC_16, kSmallestMipBC, kBS_UNK, 3, 1, kSFD_UNK, oSURFACE_IS_BC },
-	{ "BC6H_UF16", oFCC('BC6u'), kBC_16, kSmallestMipBC, kBS_UNK, 3, 1, kSFD_UNK, oSURFACE_IS_BC },
-	{ "BC6H_SF16", oFCC('BC6s'), kBC_16, kSmallestMipBC, kBS_UNK, 3, 1, kSFD_UNK, oSURFACE_IS_BC },
-	{ "BC7_TYPELESS", oFCC('BC7?'), kBC_16, kSmallestMipBC, kBS_UNK, 4, 1, kSFD_UNK, oSURFACE_IS_BC|oSURFACE_HAS_ALPHA },
-	{ "BC7_UNORM", oFCC('BC7u'), kBC_16, kSmallestMipBC, kBS_UNK, 4, 1, kSFD_UNK, oSURFACE_IS_BC|oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA },
-	{ "BC7_UNORM_SRGB", oFCC('BC7s'), kBC_16, kSmallestMipBC, kBS_UNK, 4, 1, kSFD_UNK, oSURFACE_IS_BC|oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA },
-	{ "AYUV", oFCC('AYUV'), k4_32, kSmallestMip, kBS_4_4, 4, 1, kSFD_UNK, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA|oSURFACE_IS_YUV },
-	{ "Y410", oFCC('Y410'), k1_32, kSmallestMip, kBS_DEC3N, 4, 1, {oSURFACE_R10G10B10A2_UNORM,oSURFACE_UNKNOWN}, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA|oSURFACE_IS_YUV },
-	{ "Y416", oFCC('Y416'), k4_8 , kSmallestMip, kBS_4_16, 4, 1,{oSURFACE_B8G8R8A8_UNORM,oSURFACE_UNKNOWN}, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA|oSURFACE_IS_YUV },
-	{ "NV12", oFCC('NV12'), kYUV, kSmallestMipYUV, kBS_3_8, 3, 2, kSFD_R8_RG8, oSURFACE_IS_UNORM|oSURFACE_IS_YUV },
-	{ "YUV2", oFCC('YUV2'), k4_8, kSmallestMip, kBS_4_8, 4, 1, kSFD_R8_RG8, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA|oSURFACE_IS_YUV },
-	{ "P010", oFCC('P010'), k1_16, kSmallestMip, {10,10,10,0}, 3, 2, kSFD_R16_RG16, oSURFACE_IS_UNORM|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV },
-	{ "P016", oFCC('P016'), k1_16, kSmallestMip, kBS_3_16, 3, 2, kSFD_R16_RG16, oSURFACE_IS_UNORM|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV },
-	{ "420_OPAQUE", oFCC('420O'), k1_8, kSmallestMipYUV, kBS_3_8, 3, 2, kSFD_R8_RG8, oSURFACE_IS_UNORM|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV },
-	{ "Y210", oFCC('Y210'), k4_16, kSmallestMipYUV, kBS_4_16, 3, 1, kSFD_UNK, oSURFACE_IS_UNORM|oSURFACE_IS_YUV },
-	{ "Y216", oFCC('Y216'), k4_16, kSmallestMipYUV, kBS_4_16, 3, 1, kSFD_UNK, oSURFACE_IS_UNORM|	oSURFACE_IS_YUV },
-	{ "NV11", kFCC_UNK, kYUV, kSmallestMipYUV, kBS_3_8, 3, 2, kSFD_R8_RG8, oSURFACE_IS_UNORM|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV },
-	{ "IA44", oFCC('IA44'), k2_4, kSmallestMip, {4,0,0,4}, 2, 1, kSFD_UNK, oSURFACE_HAS_ALPHA|oSURFACE_PALETTED }, // index-alpha
-	{ "AI44", oFCC('AI44'), k2_4, kSmallestMip, {4,0,0,4}, 2, 1, kSFD_UNK, oSURFACE_HAS_ALPHA|oSURFACE_PALETTED }, // alpha-index
-	{ "P8", oFCC('P8  '), k1_8, kSmallestMip, kBS_UNK, 1, 1, kSFD_UNK, oSURFACE_PALETTED }, // paletted
-	{ "A8P8", oFCC('A8P8'), k2_8, kSmallestMip, kBS_UNK, 2, 1, kSFD_UNK, oSURFACE_HAS_ALPHA|oSURFACE_PALETTED },
-	{ "B4G4R4A4_UNORM", oFCC('n4u '), k1_16, kSmallestMip, kBS_4_4, 4, 1, kSFD_UNK, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA },
-	{ "R8G8B8_UNORM", oFCC('c3u '), k3_8, kSmallestMip, kBS_3_8, 3, 1, kSFD_UNK, oSURFACE_IS_UNORM },
-	{ "B8G8R8_UNORM", oFCC('c3u '), k3_8, kSmallestMip, kBS_3_8, 3, 1, kSFD_UNK, oSURFACE_IS_UNORM },
-	{ "Y8_U8_V8_UNORM", oFCC('yuv8'), k1_8, kSmallestMipYUV, kBS_3_8, 3, 3, kSFD_R8_3, oSURFACE_IS_UNORM|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1|oSURFACE_SUBSURFACE2_BIAS1 },
-	{ "Y8_A8_U8_V8_UNORM", oFCC('auv8'), k1_8, kSmallestMipYUV, kBS_3_8, 3, 4, kSFD_R8_4, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE2_BIAS1|oSURFACE_SUBSURFACE3_BIAS1 },
-	{ "YBC4_UBC4_VBC4_UNORM", oFCC('yuvb'), kBC_8, kSmallestMipYUV, kBS_4_8, 3, 3, kSFD_BC4_3, oSURFACE_IS_BC|oSURFACE_IS_UNORM|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1|oSURFACE_SUBSURFACE2_BIAS1 },
-	{ "YBC4_ABC4_UBC4_VBC4_UNORM", oFCC('auvb'), kBC_8, kSmallestMipYUV, kBS_4_8, 3, 4, kSFD_BC4_4, oSURFACE_IS_BC|oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE2_BIAS1|oSURFACE_SUBSURFACE3_BIAS1 },
-	{ "Y8_U8V8_UNORM", oFCC('yv8u'), kYUV , kSmallestMipYUV, kBS_3_8, 3, 2, kSFD_R8_RG8, oSURFACE_IS_UNORM|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1 },
-	{ "Y8A8_U8V8_UNORM", oFCC('av8u'), kYAUV, kSmallestMipYUV, kBS_4_8, 4, 2, kSFD_RG8_RG8, oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1 },
-	{ "YBC4_UVBC5_UNORM", oFCC('yvbu'), kYUV_BC, kSmallestMipYUV, kBS_3_8, 3, 2, kSFD_BC4_BC5, oSURFACE_IS_BC|oSURFACE_IS_UNORM|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1 },
-	{ "YABC5_UVBC5_UNORM", oFCC('avbu'), kYAUV_BC, kSmallestMipYUV, kBS_4_8, 4, 2, kSFD_BC5_BC5, oSURFACE_IS_BC|oSURFACE_IS_UNORM|oSURFACE_HAS_ALPHA|oSURFACE_IS_PLANAR|oSURFACE_IS_YUV|oSURFACE_SUBSURFACE1_BIAS1 },
+	{ "unknown", kFCC_UNK, k0_0, kSmallestMip, kBS_UNK, 0, 0, kSFD_UNK, 0 },
+	{ "r32g32b32a32_typeless", oFCC('?i4 '), k4_32, kSmallestMip, kBS_4_32, 4, 1, kSFD_UNK, traits::has_alpha },
+	{ "r32g32b32a32_float", oFCC('f4  '), k4_32, kSmallestMip, kBS_4_32, 4, 1, kSFD_UNK, traits::has_alpha },
+	{ "r32g32b32a32_uint", oFCC('ui4 '), k4_32, kSmallestMip, kBS_4_32, 4, 1, kSFD_UNK, traits::has_alpha },
+	{ "r32g32b32a32_sint", oFCC('si4 '), k4_32, kSmallestMip, kBS_4_32, 4, 1, kSFD_UNK, traits::has_alpha },
+	{ "r32g32b32_typeless", oFCC('?i3 '), k3_32, kSmallestMip, kBS_3_32, 3, 1, kSFD_UNK, traits::has_alpha },
+	{ "r32g32b32_float", oFCC('f3  '), k3_32, kSmallestMip, kBS_3_32, 3, 1, kSFD_UNK, 0 },
+	{ "r32g32b32_uint", oFCC('ui3 '), k4_32, kSmallestMip, kBS_3_32, 3, 1, kSFD_UNK, 0 },
+	{ "r32g32b32_sint", oFCC('si3 '), k4_32, kSmallestMip, kBS_3_32, 3, 1, kSFD_UNK, 0 },
+	{ "r16g16b16a16_typeless", oFCC('?s4 '), k4_16, kSmallestMip, kBS_4_16, 4, 1, kSFD_UNK, traits::has_alpha },
+	{ "r16g16b16a16_float", oFCC('h4  '), k4_16, kSmallestMip, kBS_4_16, 4, 1, kSFD_UNK, traits::has_alpha },
+	{ "r16g16b16a16_unorm", oFCC('h4u '), k4_16, kSmallestMip, kBS_4_16, 4, 1, kSFD_UNK, traits::is_unorm|traits::has_alpha },
+	{ "r16g16b16a16_uint", oFCC('us4 '), k4_16, kSmallestMip, kBS_4_16, 4, 1, kSFD_UNK, traits::has_alpha },
+	{ "r16g16b16a16_snorm", oFCC('h4s '), k4_16, kSmallestMip, kBS_4_16, 4, 1, kSFD_UNK, traits::has_alpha },
+	{ "r16g16b16a16_sint", oFCC('ss4 '), k4_16, kSmallestMip, kBS_4_16, 4, 1, kSFD_UNK, traits::has_alpha },
+	{ "r32g32_typeless", oFCC('?i2 '), k2_32, kSmallestMip, kBS_2_32, 2, 1, kSFD_UNK, 0 },
+	{ "r32g32_float", oFCC('f2  '), k2_32, kSmallestMip, kBS_2_32, 2, 1, kSFD_UNK, 0 },
+	{ "r32g32_uint", oFCC('ui2 '), k2_32, kSmallestMip, kBS_2_32, 2, 1, kSFD_UNK, 0 },
+	{ "R32G32_sINT", oFCC('si2 '), k2_32, kSmallestMip, kBS_2_32, 2, 1, kSFD_UNK, 0 },
+	{ "r32g8x24_typeless", kFCC_UNK, k2_32, kSmallestMip, {32,8,0,24}, 3, 1, kSFD_UNK, 0 },
+	{ "d32_float_s8x24_uint", kFCC_UNK, k2_32, kSmallestMip, {32,8,0,24}, 3, 1, kSFD_UNK, traits::is_depth },
+	{ "r32_float_x8x24_typeless", kFCC_UNK, k2_32, kSmallestMip, {32,8,0,24}, 3, 1, kSFD_UNK, traits::is_depth },
+	{ "x32_typeless_g8x24_uint", kFCC_UNK, k2_32, kSmallestMip, {32,8,0,24}, 3, 1, kSFD_UNK, 0 },
+	{ "r10g10b10a2_typeless", kFCC_UNK, k1_32, kSmallestMip, kBS_DEC3N, 4, 1, kSFD_UNK, traits::has_alpha },
+	{ "r10g10b10a2_unorm", kFCC_UNK, k1_32, kSmallestMip, kBS_DEC3N, 4, 1, kSFD_UNK, traits::is_unorm|traits::has_alpha },
+	{ "r10g10b10a2_uint", kFCC_UNK, k1_32, kSmallestMip, kBS_DEC3N, 4, 1, kSFD_UNK, traits::has_alpha },
+	{ "r11g11b10_float", kFCC_UNK, k1_32, kSmallestMip, {11,11,10,0}, 3, 1, kSFD_UNK, 0 },
+	{ "r8g8b8a8_typeless", oFCC('?c4 '), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, traits::has_alpha },
+	{ "r8g8b8a8_unorm", oFCC('c4u '), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, traits::is_unorm|traits::has_alpha },
+	{ "r8g8b8a8_unorm_srgb", oFCC('c4us'), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, traits::is_unorm|traits::has_alpha },
+	{ "r8g8b8a8_uint", oFCC('uc4 '), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, traits::has_alpha },
+	{ "r8g8b8a8_snorm", oFCC('c4s '), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, traits::has_alpha },
+	{ "r8g8b8a8_sint", oFCC('sc4 '), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, traits::has_alpha },
+	{ "r16g16_typeless", oFCC('?s2 '), k2_16, kSmallestMip, kBS_2_16, 2, 1, kSFD_UNK, 0 },
+	{ "r16g16_float", oFCC('h2 '), k2_16, kSmallestMip, kBS_2_16, 2, 1, kSFD_UNK, 0 },
+	{ "r16g16_unorm", oFCC('h2u '), k2_16, kSmallestMip, kBS_2_16, 2, 1, kSFD_UNK, traits::is_unorm },
+	{ "r16g16_uint", oFCC('us2 '), k2_16, kSmallestMip, kBS_2_16, 2, 1, kSFD_UNK, 0 },
+	{ "r16g16_snorm", oFCC('h2s '), k2_16, kSmallestMip, kBS_2_16, 2, 1, kSFD_UNK, 0 },
+	{ "r16g16_sint", oFCC('ss2 '), k2_16, kSmallestMip, kBS_2_16, 2, 1, kSFD_UNK, 0 },
+	{ "r32_typeless", oFCC('?i1 '), k1_32, kSmallestMip, kBS_1_32, 1, 1, kSFD_UNK, traits::is_depth },
+	{ "d32_float", oFCC('f1d '), k1_32, kSmallestMip, kBS_1_32, 1, 1, kSFD_UNK, traits::is_depth },
+	{ "r32_float", oFCC('f1  '), k1_32, kSmallestMip, kBS_1_32, 1, 1, kSFD_UNK, 0 },
+	{ "r32_uint", oFCC('ui1 '), k1_32, kSmallestMip, kBS_1_32, 1, 1, kSFD_UNK, 0 },
+	{ "r32_sint", oFCC('si1 '), k1_32, kSmallestMip, kBS_1_32, 1, 1, kSFD_UNK, 0 },
+	{ "r24g8_typeless", kFCC_UNK, k1_32, kSmallestMip, kBS_DS, 2, 1, kSFD_UNK, traits::is_depth },
+	{ "d24_unorm_s8_uint", kFCC_UNK, k1_32, kSmallestMip, kBS_DS, 2, 1, kSFD_UNK, traits::is_unorm|traits::is_depth },
+	{ "r24_unorm_x8_typeless", kFCC_UNK, k1_32, kSmallestMip, kBS_DS, 2, 1, kSFD_UNK, traits::is_unorm|traits::is_depth },
+	{ "x24_typeless_g8_uint", kFCC_UNK, k1_32, kSmallestMip, kBS_DS, 2, 1, kSFD_UNK, traits::is_depth },
+	{ "r8g8_typeless", oFCC('?c2 '), k2_8, kSmallestMip, kBS_2_8, 2, 1, kSFD_UNK, 0 },
+	{ "r8g8_unorm", oFCC('uc2u'), k2_8, kSmallestMip, kBS_2_8, 2, 1, kSFD_UNK, traits::is_unorm },
+	{ "r8g8_uint", oFCC('ui2 '), k2_8, kSmallestMip, kBS_2_8, 2, 1, kSFD_UNK, 0 },
+	{ "r8g8_snorm", oFCC('uc2s'), k2_8, kSmallestMip, kBS_2_8, 2, 1, kSFD_UNK, 0 },
+	{ "r8g8_sint", oFCC('si2 '), k2_8, kSmallestMip, kBS_2_8, 2, 1, kSFD_UNK, 0 },
+	{ "r16_typeless", oFCC('?s1 '), k1_16, kSmallestMip, kBS_1_16, 1, 1, kSFD_UNK, traits::is_depth },
+	{ "r16_float", oFCC('h1  '), k1_16, kSmallestMip, kBS_1_16, 1, 1, kSFD_UNK, 0 },
+	{ "d16_unorm", oFCC('h1ud'), k1_16, kSmallestMip, kBS_1_16, 1, 1, kSFD_UNK, traits::is_unorm|traits::is_depth },
+	{ "r16_unorm", oFCC('h1u '), k1_16, kSmallestMip, kBS_1_16, 1, 1, kSFD_UNK, traits::is_unorm },
+	{ "r16_uint", oFCC('us1 '), k1_16, kSmallestMip, kBS_1_16, 1, 1, kSFD_UNK, 0 },
+	{ "r16_snorm", oFCC('h1s '), k1_16, kSmallestMip, kBS_1_16, 1, 1, kSFD_UNK, 0 },
+	{ "r16_sint", oFCC('ss1 '), k1_16, kSmallestMip, kBS_1_16, 1, 1, kSFD_UNK, 0 },
+	{ "r8_typeless", oFCC('?c1 '), k1_8, kSmallestMip, kBS_1_8, 1, 1, kSFD_UNK, 0 },
+	{ "r8_unorm", oFCC('uc1u'), k1_8, kSmallestMip, kBS_1_8, 1, 1, kSFD_UNK, traits::is_unorm },
+	{ "r8_uint", oFCC('uc1 '), k1_8, kSmallestMip, kBS_1_8, 1, 1, kSFD_UNK, 0 },
+	{ "r8_snorm", oFCC('uc1s'), k1_8, kSmallestMip, kBS_1_8, 1, 1, kSFD_UNK, 0 },
+	{ "r8_sint", oFCC('sc1 '), k1_8, kSmallestMip, kBS_1_8, 1, 1, kSFD_UNK, 0 },
+	{ "a8_unorm", oFCC('ac1u'), k1_8, kSmallestMip, kBS_1_8, 1, 1, kSFD_UNK, traits::is_unorm|traits::has_alpha },
+	{ "r1_unorm", oFCC('bitu'), 1, kSmallestMip, {1,0,0,0}, 1, 1, kSFD_UNK, traits::is_unorm },
+	{ "r9g9b9e5_sharedexp", kFCC_UNK, k1_32, kSmallestMip, {9,9,9,5}, 4, 1, kSFD_UNK, 0 },
+	{ "r8g8_b8g8_unorm", kFCC_UNK, k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, traits::is_unorm },
+	{ "g8r8_g8b8_unorm", kFCC_UNK, k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, traits::is_unorm },
+	{ "bc1_typeless", oFCC('BC1?'), kBC_8, kSmallestMipBC, kBS_565, 3, 1, kSFD_UNK, traits::is_bc },
+	{ "bc1_unorm", oFCC('BC1u'), kBC_8, kSmallestMipBC, kBS_565, 3, 1, kSFD_UNK, traits::is_bc|traits::is_unorm },
+	{ "bc1_unorm_srgb", oFCC('BC1s'), kBC_8, kSmallestMipBC, kBS_565, 3, 1, kSFD_UNK, traits::is_bc|traits::is_unorm },
+	{ "bc2_typeless", oFCC('BC2?'), kBC_16, kSmallestMipBC, {5,6,5,4}, 4, 1, kSFD_UNK, traits::is_bc|traits::has_alpha },
+	{ "bc2_unorm", oFCC('BC2u'), kBC_16, kSmallestMipBC, {5,6,5,4}, 4, 1, kSFD_UNK, traits::is_bc|traits::is_unorm|traits::has_alpha },
+	{ "bc2_unorm_srgb", oFCC('BC2s'), kBC_16, kSmallestMipBC, {5,6,5,4}, 4, 1, kSFD_UNK, traits::is_bc|traits::is_unorm|traits::has_alpha },
+	{ "bc3_typeless", oFCC('BC3?'), kBC_16, kSmallestMipBC, {5,6,5,8}, 4, 1, kSFD_UNK, traits::is_bc|traits::has_alpha },
+	{ "bc3_unorm", oFCC('BC3u'), kBC_16, kSmallestMipBC, {5,6,5,8}, 4, 1, kSFD_UNK, traits::is_bc|traits::is_unorm|traits::has_alpha },
+	{ "bc3_unorm_srgb", oFCC('BC3s'), kBC_16, kSmallestMipBC, {5,6,5,8}, 4, 1, kSFD_UNK, traits::is_bc|traits::is_unorm|traits::has_alpha },
+	{ "bc4_typeless", oFCC('BC4?'), kBC_8, kSmallestMipBC, kBS_1_8, 1, 1, kSFD_UNK, traits::is_bc },
+	{ "bc4_unorm", oFCC('BC4u'), kBC_8, kSmallestMipBC, kBS_1_8, 1, 1, kSFD_UNK, traits::is_bc|traits::is_unorm },
+	{ "bc4_snorm", oFCC('BC4s'), kBC_8, kSmallestMipBC, kBS_1_8, 1, 1, kSFD_UNK, traits::is_bc },
+	{ "bc5_typeless", oFCC('BC5?'), kBC_16, kSmallestMipBC, kBS_2_8, 2, 1, kSFD_UNK, traits::is_bc },
+	{ "bc5_unorm", oFCC('BC5u'), kBC_16, kSmallestMipBC, kBS_2_8, 2, 1, kSFD_UNK, traits::is_bc|traits::is_unorm },
+	{ "bc5_snorm", oFCC('BC5s'), kBC_16, kSmallestMipBC, kBS_2_8, 2, 1, kSFD_UNK, traits::is_bc },
+	{ "b5g6r5_unorm", kFCC_UNK, k1_16, kSmallestMip, kBS_565, 3, 1, kSFD_UNK, traits::is_unorm },
+	{ "b5g5r5a1_unorm", kFCC_UNK, k1_16, kSmallestMip, {5,6,5,1}, 4, 1, kSFD_UNK, traits::is_unorm|traits::has_alpha },
+	{ "b8g8r8a8_unorm", oFCC('c4u '), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, traits::is_unorm|traits::has_alpha },
+	{ "b8g8r8x8_unorm", oFCC('c4u '), k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, traits::is_unorm },
+	{ "r10g10b10_xr_bias_a2_unorm", kFCC_UNK, k1_32, kSmallestMip, kBS_DEC3N, 4, 1, kSFD_UNK, traits::is_unorm },
+	{ "b8g8r8a8_typeless", kFCC_UNK, k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, 0 },
+	{ "b8g8r8a8_unorm_srgb", kFCC_UNK, k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, traits::is_unorm },
+	{ "b8g8r8x8_typeless", kFCC_UNK, k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, 0 },
+	{ "b8g8r8x8_unorm_srgb", kFCC_UNK, k1_32, kSmallestMip, kBS_4_8, 4, 1, kSFD_UNK, traits::is_unorm },
+	{ "bc6h_typeless", oFCC('BC6?'), kBC_16, kSmallestMipBC, kBS_UNK, 3, 1, kSFD_UNK, traits::is_bc },
+	{ "bc6h_uf16", oFCC('BC6u'), kBC_16, kSmallestMipBC, kBS_UNK, 3, 1, kSFD_UNK, traits::is_bc },
+	{ "bc6h_sf16", oFCC('BC6s'), kBC_16, kSmallestMipBC, kBS_UNK, 3, 1, kSFD_UNK, traits::is_bc },
+	{ "bc7_typeless", oFCC('BC7?'), kBC_16, kSmallestMipBC, kBS_UNK, 4, 1, kSFD_UNK, traits::is_bc|traits::has_alpha },
+	{ "bc7_unorm", oFCC('BC7u'), kBC_16, kSmallestMipBC, kBS_UNK, 4, 1, kSFD_UNK, traits::is_bc|traits::is_unorm|traits::has_alpha },
+	{ "bc7_unorm_srgb", oFCC('BC7s'), kBC_16, kSmallestMipBC, kBS_UNK, 4, 1, kSFD_UNK, traits::is_bc|traits::is_unorm|traits::has_alpha },
+	{ "ayuv", oFCC('AYUV'), k4_32, kSmallestMip, kBS_4_4, 4, 1, kSFD_UNK, traits::is_unorm|traits::has_alpha|traits::is_yuv },
+	{ "y410", oFCC('Y410'), k1_32, kSmallestMip, kBS_DEC3N, 4, 1, {r10g10b10a2_unorm,unknown}, traits::is_unorm|traits::has_alpha|traits::is_yuv },
+	{ "y416", oFCC('Y416'), k4_8 , kSmallestMip, kBS_4_16, 4, 1,{b8g8r8a8_unorm,unknown}, traits::is_unorm|traits::has_alpha|traits::is_yuv },
+	{ "nv12", oFCC('NV12'), kYUV, kSmallestMipYUV, kBS_3_8, 3, 2, kSFD_R8_RG8, traits::is_unorm|traits::is_yuv },
+	{ "yuv2", oFCC('YUV2'), k4_8, kSmallestMip, kBS_4_8, 4, 1, kSFD_R8_RG8, traits::is_unorm|traits::has_alpha|traits::is_yuv },
+	{ "p010", oFCC('P010'), k1_16, kSmallestMip, {10,10,10,0}, 3, 2, kSFD_R16_RG16, traits::is_unorm|traits::is_planar|traits::is_yuv },
+	{ "p016", oFCC('P016'), k1_16, kSmallestMip, kBS_3_16, 3, 2, kSFD_R16_RG16, traits::is_unorm|traits::is_planar|traits::is_yuv },
+	{ "420_opaque", oFCC('420O'), k1_8, kSmallestMipYUV, kBS_3_8, 3, 2, kSFD_R8_RG8, traits::is_unorm|traits::is_planar|traits::is_yuv },
+	{ "y210", oFCC('Y210'), k4_16, kSmallestMipYUV, kBS_4_16, 3, 1, kSFD_UNK, traits::is_unorm|traits::is_yuv },
+	{ "y216", oFCC('Y216'), k4_16, kSmallestMipYUV, kBS_4_16, 3, 1, kSFD_UNK, traits::is_unorm|	traits::is_yuv },
+	{ "nv11", kFCC_UNK, kYUV, kSmallestMipYUV, kBS_3_8, 3, 2, kSFD_R8_RG8, traits::is_unorm|traits::is_planar|traits::is_yuv },
+	{ "ia44", oFCC('IA44'), k2_4, kSmallestMip, {4,0,0,4}, 2, 1, kSFD_UNK, traits::has_alpha|traits::paletted }, // index-alpha
+	{ "ai44", oFCC('AI44'), k2_4, kSmallestMip, {4,0,0,4}, 2, 1, kSFD_UNK, traits::has_alpha|traits::paletted }, // alpha-index
+	{ "p8", oFCC('P8  '), k1_8, kSmallestMip, kBS_UNK, 1, 1, kSFD_UNK, traits::paletted },
+	{ "a8p8", oFCC('A8P8'), k2_8, kSmallestMip, kBS_UNK, 2, 1, kSFD_UNK, traits::has_alpha|traits::paletted },
+	{ "b4g4r4a4_unorm", oFCC('n4u '), k1_16, kSmallestMip, kBS_4_4, 4, 1, kSFD_UNK, traits::is_unorm|traits::has_alpha },
+	{ "r8g8b8_unorm", oFCC('c3u '), k3_8, kSmallestMip, kBS_3_8, 3, 1, kSFD_UNK, traits::is_unorm },
+	{ "b8g8r8_unorm", oFCC('c3u '), k3_8, kSmallestMip, kBS_3_8, 3, 1, kSFD_UNK, traits::is_unorm },
+	{ "y8_u8_v8_unorm", oFCC('yuv8'), k1_8, kSmallestMipYUV, kBS_3_8, 3, 3, kSFD_R8_3, traits::is_unorm|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1|traits::subsurface2_bias1 },
+	{ "y8_a8_u8_v8_unorm", oFCC('auv8'), k1_8, kSmallestMipYUV, kBS_3_8, 3, 4, kSFD_R8_4, traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface2_bias1|traits::subsurface3_bias1 },
+	{ "ybc4_ubc4_vbc4_unorm", oFCC('yuvb'), kBC_8, kSmallestMipYUV, kBS_4_8, 3, 3, kSFD_BC4_3, traits::is_bc|traits::is_unorm|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1|traits::subsurface2_bias1 },
+	{ "ybc4_abc4_ubc4_vbc4_unorm", oFCC('auvb'), kBC_8, kSmallestMipYUV, kBS_4_8, 3, 4, kSFD_BC4_4, traits::is_bc|traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface2_bias1|traits::subsurface3_bias1 },
+	{ "y8_u8v8_unorm", oFCC('yv8u'), kYUV , kSmallestMipYUV, kBS_3_8, 3, 2, kSFD_R8_RG8, traits::is_unorm|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
+	{ "y8a8_u8v8_unorm", oFCC('av8u'), kYAUV, kSmallestMipYUV, kBS_4_8, 4, 2, kSFD_RG8_RG8, traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
+	{ "ybc4_uvbc5_unorm", oFCC('yvbu'), kYUV_BC, kSmallestMipYUV, kBS_3_8, 3, 2, kSFD_BC4_BC5, traits::is_bc|traits::is_unorm|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
+	{ "yabc5_uvbc5_unorM", oFCC('avbu'), kYAUV_BC, kSmallestMipYUV, kBS_4_8, 4, 2, kSFD_BC5_BC5, traits::is_bc|traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
 };
-static_assert(oCOUNTOF(sFormatDescs) == oSURFACE_NUM_FORMATS, "");
+static_assert(oCOUNTOF(sFormatInfo) == format_count, "");
 
-namespace ouro {
+	} // namespace surface
 
-const char* as_string(const oSURFACE_FORMAT& _Format)
+const char* as_string(const surface::format& _Format)
 {
-	return (_Format < oSURFACE_NUM_FORMATS) ? sFormatDescs[_Format].String : "UNKNOWN";
+	return (_Format < surface::format_count) ? surface::sFormatInfo[_Format].string : "unknown";
 }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oSURFACE_FORMAT& _Format)
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const surface::format& _Format)
 {
 	return strlcpy(_StrDestination, as_string(_Format), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
 }
 
-bool from_string(oSURFACE_FORMAT* _pFormat, const char* _StrSource)
+bool from_string(surface::format* _pFormat, const char* _StrSource)
 {
-	*_pFormat = oSURFACE_UNKNOWN;
-	oFORI(i, sFormatDescs)
+	*_pFormat = surface::unknown;
+	oFORI(i, surface::sFormatInfo)
 	{
-		if (!_stricmp(_StrSource, sFormatDescs[i].String))
+		if (!_stricmp(_StrSource, surface::sFormatInfo[i].string))
 		{
-			*_pFormat = (oSURFACE_FORMAT)i;
+			*_pFormat = surface::format(i);
 			return true;
 		}
 	}
 	return false;
 }
 
-} // namespace ouro
+	namespace surface {
 
-bool operator==(const oSURFACE_DESC& _A, const oSURFACE_DESC& _B)
+static bool has_trait(format _Format, uint _Trait)
 {
-	if (any(_A.Dimensions != _B.Dimensions)) return false;
-	if (any(_A.ArraySize != _B.ArraySize)) return false;
-	if (_A.Format != _B.Format) return false;
-	if (_A.Layout != _B.Layout) return false;
-	return true;
+	return ((_Format) < format_count) ? !!(sFormatInfo[_Format].traits & (_Trait)) : false;
 }
 
-inline bool oSurfaceFormatHasTrait(oSURFACE_FORMAT _Format, oSURFACE_FORMAT_TRAIT _Trait)
+bool is_block_compressed(format _Format)
 {
-	return ((_Format) < oSURFACE_NUM_FORMATS) ? !!(sFormatDescs[_Format].Traits & (_Trait)) : false;
+	return has_trait(_Format, traits::is_bc);
 }
 
-bool oSurfaceFormatIsBlockCompressed(oSURFACE_FORMAT _Format)
+bool is_depth(format _Format)
 {
-	return oSurfaceFormatHasTrait(_Format, oSURFACE_IS_BC);
+	return has_trait(_Format, traits::is_depth);
 }
 
-bool oSurfaceFormatIsDepth(oSURFACE_FORMAT _Format)
+bool has_alpha(format _Format)
 {
-	return oSurfaceFormatHasTrait(_Format, oSURFACE_IS_DEPTH);
+	return has_trait(_Format, traits::has_alpha);
 }
 
-bool oSurfaceFormatIsAlpha(oSURFACE_FORMAT _Format)
+bool is_unorm(format _Format)
 {
-	return oSurfaceFormatHasTrait(_Format, oSURFACE_HAS_ALPHA);
+	return has_trait(_Format, traits::is_unorm);
 }
 
-bool oSurfaceFormatIsUNORM(oSURFACE_FORMAT _Format)
+bool is_planar(format _Format)
 {
-	return oSurfaceFormatHasTrait(_Format, oSURFACE_IS_UNORM);
+	return has_trait(_Format, traits::is_planar);
 }
 
-bool oSurfaceFormatIsPlanar(oSURFACE_FORMAT _Format)
+bool is_yuv(format _Format)
 {
-	return oSurfaceFormatHasTrait(_Format, oSURFACE_IS_PLANAR);
+	return has_trait(_Format, traits::is_yuv);
 }
 
-bool oSurfaceFormatIsYUV(oSURFACE_FORMAT _Format)
+int num_channels(format _Format)
 {
-	return oSurfaceFormatHasTrait(_Format, oSURFACE_IS_YUV);
+	return (_Format < format_count) ? sFormatInfo[_Format].num_channels : 0;
 }
 
-int oSurfaceFormatGetNumChannels(oSURFACE_FORMAT _Format)
+int num_subformats(format _Format)
 {
-	return (_Format < oSURFACE_NUM_FORMATS) ? sFormatDescs[_Format].NumChannels : 0;
+	return (_Format < format_count) ? sFormatInfo[_Format].num_subformats: 0;
 }
 
-int oSurfaceFormatGetNumSubformats(oSURFACE_FORMAT _Format)
+int subsample_bias(format _Format, int _SubsurfaceIndex)
 {
-	return (_Format < oSURFACE_NUM_FORMATS) ? sFormatDescs[_Format].NumSubformats: 0;
-}
-
-int oSurfaceFormatGetSubsampleBias(oSURFACE_FORMAT _Format, int _SubsurfaceIndex)
-{
-	if (_Format < oSURFACE_NUM_FORMATS)
+	if (_Format < format_count)
 	{
-		if (_SubsurfaceIndex == 1 && sFormatDescs[_Format].Traits & oSURFACE_SUBSURFACE1_BIAS1) return 1;
-		if (_SubsurfaceIndex == 2 && sFormatDescs[_Format].Traits & oSURFACE_SUBSURFACE2_BIAS1) return 1;
-		if (_SubsurfaceIndex == 3 && sFormatDescs[_Format].Traits & oSURFACE_SUBSURFACE3_BIAS1) return 1;
+		if (_SubsurfaceIndex == 1 && sFormatInfo[_Format].traits & traits::subsurface1_bias1) return 1;
+		if (_SubsurfaceIndex == 2 && sFormatInfo[_Format].traits & traits::subsurface2_bias1) return 1;
+		if (_SubsurfaceIndex == 3 && sFormatInfo[_Format].traits & traits::subsurface3_bias1) return 1;
 	}
 
 	return 0;
 }
 
-int oSurfaceFormatGetSize(oSURFACE_FORMAT _Format, int _SubsurfaceIndex)
+int element_size(format _Format, int _SubsurfaceIndex)
 {
-	return (_Format < oSURFACE_NUM_FORMATS) ? (_SubsurfaceIndex ? oSurfaceFormatGetSize(sFormatDescs[_Format].Subformats.Format[_SubsurfaceIndex]) : sFormatDescs[_Format].Size) : 0;
+	return (_Format < format_count) ? (_SubsurfaceIndex ? element_size(sFormatInfo[_Format].subformats.format[_SubsurfaceIndex]) : sFormatInfo[_Format].size) : 0;
 }
 
-int2 oSurfaceFormatGetMinDimensions(oSURFACE_FORMAT _Format)
+int2 min_dimensions(format _Format)
 {
-	return (_Format < oSURFACE_NUM_FORMATS) ? sFormatDescs[_Format].MinDimensions : int2(0, 0);
+	return (_Format < format_count) ? sFormatInfo[_Format].min_dimensions : int2(0, 0);
 }
 
-int oSurfaceFormatGetBitSize(oSURFACE_FORMAT _Format)
+int bits(format _Format)
 {
-	if (_Format == oSURFACE_R1_UNORM) return 1;
-	return 8 * oSurfaceFormatGetSize(_Format);
+	if (_Format == r1_unorm) return 1;
+	return 8 * element_size(_Format);
 }
 
-void oSurfaceGetChannelBitSize(oSURFACE_FORMAT _Format, int* _pNBitsR, int* _pNBitsG, int* _pNBitsB, int* _pNBitsA)
+void channel_bits(format _Format, int* _pNBitsR, int* _pNBitsG, int* _pNBitsB, int* _pNBitsA)
 {
-	if (_Format < oSURFACE_NUM_FORMATS)
+	if (_Format < format_count)
 	{
-		const BIT_SIZE& b = sFormatDescs[_Format].BitSize;
-		*_pNBitsR = b.G; *_pNBitsG = b.G; *_pNBitsB = b.B; *_pNBitsA = b.A;
+		const struct bit_size& b = sFormatInfo[_Format].bit_size;
+		*_pNBitsR = b.r; *_pNBitsG = b.g; *_pNBitsB = b.b; *_pNBitsA = b.a;
 	}
 
 	else
 		*_pNBitsR = *_pNBitsG = *_pNBitsB = *_pNBitsA = 0;
 }
 
-oSURFACE_FORMAT oSurfaceGetSubformat(oSURFACE_FORMAT _Format, int _SubsurfaceIndex)
+format subformat(format _Format, int _SubsurfaceIndex)
 {
-	oASSERT(_SubsurfaceIndex >= 0, "SubsurfaceIndex can't be negative");
-	if (sFormatDescs[_Format].NumSubformats < _SubsurfaceIndex)
-		return oSURFACE_UNKNOWN;
+	if (_SubsurfaceIndex < 0)
+		throw std::invalid_argument("SubsurfaceIndex can't be negative");
 
-	if (!!(sFormatDescs[_Format].Traits & oSURFACE_IS_YUV))
-		return sFormatDescs[_Format].Subformats.Format[_SubsurfaceIndex];
+	if (sFormatInfo[_Format].num_subformats < _SubsurfaceIndex)
+		return unknown;
+
+	if (!!(sFormatInfo[_Format].traits & traits::is_yuv))
+		return sFormatInfo[_Format].subformats.format[_SubsurfaceIndex];
 
 	return _Format;
 }
 
-fourcc oSurfaceFormatToFourcc(oSURFACE_FORMAT _Format)
+fourcc to_fourcc(format _Format)
 {
-	return (_Format < oSURFACE_NUM_FORMATS) ? sFormatDescs[_Format].FourCC : fourcc(0);
+	return (_Format < format_count) ? sFormatInfo[_Format].fourcc : fourcc(0);
 }
 
-oSURFACE_FORMAT oSurfaceFormatFromFourcc(fourcc _FourCC)
+format from_fourcc(fourcc _FourCC)
 {
-	oFORI(i, sFormatDescs)
+	oFORI(i, sFormatInfo)
 	{
-		if (_FourCC == sFormatDescs[i].FourCC)
-			return (oSURFACE_FORMAT)i;
+		if (_FourCC == sFormatInfo[i].fourcc)
+			return format(i);
 	}
-	return oSURFACE_UNKNOWN;
+	return unknown;
 }
 
-int oSurfaceCalcNumMips(bool _HasMips, const int3& _Mip0Dimensions)
+format closest_nv12(format _Format)
+{
+	if (num_subformats(_Format) == 2) // already nv12
+		return _Format;
+	if (num_subformats(_Format) == 3) // no alpha
+		return (is_block_compressed(_Format)) ? ybc4_uvbc5_unorm : y8_u8v8_unorm;
+	if (is_block_compressed(_Format)) // alpha
+		return yabc5_uvbc5_unorm;
+	return y8a8_u8v8_unorm;
+}
+
+int num_mips(bool _HasMips, const int3& _Mip0Dimensions)
 {
 	// Rules of mips are to go to 1x1... so a 1024x8 texture has many more than 4
 	// mips.
@@ -439,6 +430,7 @@ int oSurfaceCalcNumMips(bool _HasMips, const int3& _Mip0Dimensions)
 
 	int nMips = 1;
 	int3 mip = _Mip0Dimensions;
+
 	while (_HasMips && any(mip != int3(1,1,1)))
 	{
 		nMips++;
@@ -448,119 +440,118 @@ int oSurfaceCalcNumMips(bool _HasMips, const int3& _Mip0Dimensions)
 	return nMips;
 }
 
-int oSurfaceMipCalcDimension(oSURFACE_FORMAT _Format, int _Mip0Dimension, int _MipLevel, int _SubsurfaceIndex)
+int dimension(format _Format, int _Mip0Dimension, int _MipLevel, int _SubsurfaceIndex)
 {
 	oCHECK_DIM(_Format, _Mip0Dimension);
-	oASSERT(_Format != oSURFACE_UNKNOWN, "Unknown surface format passed to CalcMipDimension");
-	const int subsampleBias = oSurfaceFormatGetSubsampleBias(_Format, _SubsurfaceIndex);
+	if (_Format == unknown)
+		throw std::invalid_argument("Unknown surface format passed to surface::dimension");
+	const int subsampleBias = subsample_bias(_Format, _SubsurfaceIndex);
 	int d = max(1, _Mip0Dimension >> (_MipLevel + subsampleBias));
-	return oSurfaceFormatIsBlockCompressed(_Format) ? static_cast<int>(byte_align(d, 4)) : d;
+	return is_block_compressed(_Format) ? static_cast<int>(byte_align(d, 4)) : d;
 }
 
-int2 oSurfaceMipCalcDimensions(oSURFACE_FORMAT _Format, const int2& _Mip0Dimensions, int _MipLevel, int _SubsurfaceIndex)
+int2 dimensions(format _Format, const int2& _Mip0Dimensions, int _MipLevel, int _SubsurfaceIndex)
 {
-	return int2(
-		oSurfaceMipCalcDimension(_Format, _Mip0Dimensions.x, _MipLevel, _SubsurfaceIndex)
-		, oSurfaceMipCalcDimension(_Format, _Mip0Dimensions.y, _MipLevel, _SubsurfaceIndex));
+	return int2(dimension(_Format, _Mip0Dimensions.x, _MipLevel, _SubsurfaceIndex)
+		, dimension(_Format, _Mip0Dimensions.y, _MipLevel, _SubsurfaceIndex));
 }
 
-int3 oSurfaceMipCalcDimensions(oSURFACE_FORMAT _Format, const int3& _Mip0Dimensions, int _MipLevel, int _SubsurfaceIndex)
+int3 dimensions(format _Format, const int3& _Mip0Dimensions, int _MipLevel, int _SubsurfaceIndex)
 {
-	return int3(
-		oSurfaceMipCalcDimension(_Format, _Mip0Dimensions.x, _MipLevel, _SubsurfaceIndex)
-		, oSurfaceMipCalcDimension(_Format, _Mip0Dimensions.y, _MipLevel, _SubsurfaceIndex)
-		, oSurfaceMipCalcDimension(oSURFACE_R32_UINT, _Mip0Dimensions.z, _MipLevel, _SubsurfaceIndex)); // No block-compression alignment for depth
+	return int3(dimension(_Format, _Mip0Dimensions.x, _MipLevel, _SubsurfaceIndex)
+		, dimension(_Format, _Mip0Dimensions.y, _MipLevel, _SubsurfaceIndex)
+		, dimension(r32_uint, _Mip0Dimensions.z, _MipLevel, _SubsurfaceIndex)); // No block-compression alignment for depth
 }
 
-int oSurfaceMipCalcDimensionNPOT(oSURFACE_FORMAT _Format, int _Mip0Dimension, int _MipLevel, int _SubsurfaceIndex)
+int dimension_npot(format _Format, int _Mip0Dimension, int _MipLevel, int _SubsurfaceIndex)
 {
 	oCHECK_DIM(_Format, _Mip0Dimension);
 
-	oSURFACE_FORMAT NthSurfaceFormat = oSurfaceGetSubformat(_Format, _SubsurfaceIndex);
-	const int MipLevelBias = oSurfaceFormatGetSubsampleBias(_Format, _SubsurfaceIndex);
+	format NthSurfaceFormat = subformat(_Format, _SubsurfaceIndex);
+	const int MipLevelBias = subsample_bias(_Format, _SubsurfaceIndex);
 	
 	// @oooii-tony: This was added while merging oYUVSurface functionality into 
 	// oSurface, so we recognize that the int2 values may not be the same and 
 	// won't be for formats like YUV9, but first get the lion's share of the code
 	// across and revisit this once the main algo is vetted.
-	const int2 MinDimension = oSurfaceFormatGetMinDimensions(_Format);
+	const int2 MinDimension = min_dimensions(_Format);
 
 	int d = max(1, _Mip0Dimension >> (_MipLevel + MipLevelBias));
-	int NPOTDim = oSurfaceFormatIsBlockCompressed(NthSurfaceFormat) ? static_cast<int>(byte_align(d, 4)) : d;
+	int NPOTDim = is_block_compressed(NthSurfaceFormat) ? static_cast<int>(byte_align(d, 4)) : d;
 
-	if (_SubsurfaceIndex == 0 && oSurfaceFormatGetSubsampleBias(_Format, 1) != 0)
+	if (_SubsurfaceIndex == 0 && subsample_bias(_Format, 1) != 0)
 		NPOTDim = max(MinDimension.x, NPOTDim & ~(MinDimension.x-1)); // always even down to 2x2
 
 	return NPOTDim;
 }
 
-int2 oSurfaceMipCalcDimensionsNPOT(oSURFACE_FORMAT _Format, const int2& _Mip0Dimensions, int _MipLevel, int _SubsurfaceIndex)
+int2 dimensions_npot(format _Format, const int2& _Mip0Dimensions, int _MipLevel, int _SubsurfaceIndex)
 {
 	#ifdef _DEBUG
-		const int2 MinDimension = oSurfaceFormatGetMinDimensions(_Format);
+		const int2 MinDimension = min_dimensions(_Format);
 		oASSERT(MinDimension.x == MinDimension.y, "There is currently no support for aniso min dimensions");
 	#endif
 
 	return int2(
-		oSurfaceMipCalcDimensionNPOT(_Format, _Mip0Dimensions.x, _MipLevel, _SubsurfaceIndex)
-		, oSurfaceMipCalcDimensionNPOT(_Format, _Mip0Dimensions.y, _MipLevel, _SubsurfaceIndex));
+		dimension_npot(_Format, _Mip0Dimensions.x, _MipLevel, _SubsurfaceIndex)
+		, dimension_npot(_Format, _Mip0Dimensions.y, _MipLevel, _SubsurfaceIndex));
 }
 
-int3 oSurfaceMipCalcDimensionsNPOT(oSURFACE_FORMAT _Format, const int3& _Mip0Dimensions, int _MipLevel, int _SubsurfaceIndex)
+int3 dimensions_npot(format _Format, const int3& _Mip0Dimensions, int _MipLevel, int _SubsurfaceIndex)
 {
 	#ifdef _DEBUG
-		const int2 MinDimension = oSurfaceFormatGetMinDimensions(_Format);
+		const int2 MinDimension = min_dimensions(_Format);
 		oASSERT(MinDimension.x == MinDimension.y, "There is currently no support for aniso min dimensions");
 	#endif
 
 	return int3(
-		oSurfaceMipCalcDimensionNPOT(_Format, _Mip0Dimensions.x, _MipLevel, _SubsurfaceIndex)
-		, oSurfaceMipCalcDimensionNPOT(_Format, _Mip0Dimensions.y, _MipLevel, _SubsurfaceIndex)
-		, oSurfaceMipCalcDimensionNPOT(oSURFACE_R32_UINT, _Mip0Dimensions.z, _MipLevel, _SubsurfaceIndex)); // No block-compression alignment for depth
+		dimension_npot(_Format, _Mip0Dimensions.x, _MipLevel, _SubsurfaceIndex)
+		, dimension_npot(_Format, _Mip0Dimensions.y, _MipLevel, _SubsurfaceIndex)
+		, dimension_npot(r32_uint, _Mip0Dimensions.z, _MipLevel, _SubsurfaceIndex)); // No block-compression alignment for depth
 }
 
-int oSurfaceMipCalcRowSize(oSURFACE_FORMAT _Format, int _MipWidth, int _SubsurfaceIndex)
+int row_size(format _Format, int _MipWidth, int _SubsurfaceIndex)
 {
 	oCHECK_DIM(_Format, _MipWidth);
-	oASSERT(_Format != oSURFACE_UNKNOWN, "Unknown surface format passed to GetRowPitch");
-	int w = oSurfaceMipCalcDimension(_Format, _MipWidth, 0, _SubsurfaceIndex);
-	if (oSurfaceFormatIsBlockCompressed(_Format)) // because the atom is a 4x4 block
+	oASSERT(_Format != unknown, "Unknown surface format passed to GetRowPitch");
+	int w = dimension(_Format, _MipWidth, 0, _SubsurfaceIndex);
+	if (is_block_compressed(_Format)) // because the atom is a 4x4 block
 		w /= 4;
-	const int s = oSurfaceFormatGetSize(_Format, _SubsurfaceIndex);
-	return oInt(byte_align(w * s, s));
+	const int s = element_size(_Format, _SubsurfaceIndex);
+	return byte_align(w * s, s);
 }
 
-int oSurfaceMipCalcRowPitch(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel, int _SubsurfaceIndex)
+int row_pitch(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
 {
-	oCHECK_SURFACE_DESC(_SurfaceDesc);
-	const int numMips = oSurfaceCalcNumMips(_SurfaceDesc.Layout, _SurfaceDesc.Dimensions);
+	oCHECK_INFO(_SurfaceInfo)
+	const int numMips = num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions);
 	if (_MipLevel >= numMips)
-		return oInvalid;
+		throw std::invalid_argument("invalid _MipLevel");
 
-	switch (_SurfaceDesc.Layout)
+	switch (_SurfaceInfo.layout)
 	{
-		case oSURFACE_LAYOUT_IMAGE: 
-			return oSurfaceMipCalcRowSize(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, _SubsurfaceIndex);
-		case oSURFACE_LAYOUT_TIGHT: 
-			return oSurfaceMipCalcRowSize(_SurfaceDesc.Format, oSurfaceMipCalcDimensionNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x, _MipLevel, _SubsurfaceIndex), _SubsurfaceIndex);
-		case oSURFACE_LAYOUT_BELOW: 
+		case image: 
+			return row_size(_SurfaceInfo.format, _SurfaceInfo.dimensions, _SubsurfaceIndex);
+		case tight: 
+			return row_size(_SurfaceInfo.format, dimension_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, _MipLevel, _SubsurfaceIndex), _SubsurfaceIndex);
+		case below: 
 		{
-			const int mip0RowSize = oSurfaceMipCalcRowSize(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x, _SubsurfaceIndex);
+			const int mip0RowSize = row_size(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, _SubsurfaceIndex);
 			if (numMips > 2)
 			{
 					return max(mip0RowSize, 
-					oSurfaceMipCalcRowSize(_SurfaceDesc.Format, oSurfaceMipCalcDimensionNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x, 1, _SubsurfaceIndex)) + 
-					oSurfaceMipCalcRowSize(_SurfaceDesc.Format, oSurfaceMipCalcDimensionNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x, 2, _SubsurfaceIndex)) );
+					row_size(_SurfaceInfo.format, dimension_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, 1, _SubsurfaceIndex)) + 
+					row_size(_SurfaceInfo.format, dimension_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, 2, _SubsurfaceIndex)) );
 			}
 			else
 				return mip0RowSize;
 		}
 
-		case oSURFACE_LAYOUT_RIGHT: 
+		case right: 
 		{
-			const int mip0RowSize = oSurfaceMipCalcRowSize(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x, _SubsurfaceIndex);
+			const int mip0RowSize = row_size(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, _SubsurfaceIndex);
 			if (numMips > 1)
-				return mip0RowSize + oSurfaceMipCalcRowSize(_SurfaceDesc.Format, oSurfaceMipCalcDimensionNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.x, 1, _SubsurfaceIndex), _SubsurfaceIndex);
+				return mip0RowSize + row_size(_SurfaceInfo.format, dimension_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, 1, _SubsurfaceIndex), _SubsurfaceIndex);
 			else
 				return mip0RowSize;
 		}
@@ -569,209 +560,152 @@ int oSurfaceMipCalcRowPitch(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel, in
 	}
 }
 
-int2 oSurfaceCalcDimensions(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceIndex)
+int depth_pitch(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
 {
-	int2 sliceDimensions = oSurfaceSliceCalcDimensions(_SurfaceDesc, _SubsurfaceIndex);
-	return int2(sliceDimensions.x, sliceDimensions.y * _SurfaceDesc.ArraySize);
+	oCHECK_INFO(_SurfaceInfo)
+	int3 mipDimensions = dimensions_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions, _MipLevel, 0);
+	return row_pitch(_SurfaceInfo, _MipLevel, _SubsurfaceIndex) * num_rows(_SurfaceInfo.format, mipDimensions.xy(), _SubsurfaceIndex);
 }
 
-int2 oSurfaceSliceCalcDimensions(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceIndex)
-{
-	oCHECK_SURFACE_DESC(_SurfaceDesc);
-	int3 mip0dimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, 0, _SubsurfaceIndex);
-	switch (_SurfaceDesc.Layout)
-	{
-		case oSURFACE_LAYOUT_IMAGE: 
-			return int2(mip0dimensions.x, (mip0dimensions.y * mip0dimensions.z));
-		
-		case oSURFACE_LAYOUT_TIGHT: 
-		{
-			const int surfaceSlicePitch = oSurfaceSliceCalcPitch(_SurfaceDesc, _SubsurfaceIndex);
-			const int mip0RowPitch = oSurfaceMipCalcRowPitch(_SurfaceDesc, 0, _SubsurfaceIndex);
-			return int2(mip0dimensions.x, (surfaceSlicePitch / mip0RowPitch));
-		}
-		case oSURFACE_LAYOUT_BELOW: 
-		{
-			int numMips = oSurfaceCalcNumMips(_SurfaceDesc.Layout, mip0dimensions);
-			int3 mip1dimensions = numMips > 1 ? oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, 1, _SubsurfaceIndex) : int3(0);
-			int3 mip2dimensions = numMips > 2 ? oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, 2, _SubsurfaceIndex) : int3(0);
-
-			int mip0height = mip0dimensions.y * mip0dimensions.z;
-			int mip1height = mip1dimensions.y * mip1dimensions.z;
-			int mip2andUpHeight = mip2dimensions.y * mip2dimensions.z;
-			for (int mip=3; mip<numMips; ++mip)
-			{
-				int3 mipNdimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, mip, _SubsurfaceIndex);
-				mip2andUpHeight += mipNdimensions.y * mipNdimensions.z;
-			}
-			return int2(max(mip0dimensions.x, mip1dimensions.x + mip2dimensions.x), (mip0height + max(mip1height, mip2andUpHeight)));
-		}
-		case oSURFACE_LAYOUT_RIGHT: 
-		{
-
-			int numMips = oSurfaceCalcNumMips(_SurfaceDesc.Layout, mip0dimensions);
-			int3 mip1dimensions = numMips > 1 ? oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, 1, _SubsurfaceIndex) : int3(0);
-
-			int mip0height = mip0dimensions.y * mip0dimensions.z;
-			int mip1andUpHeight = mip1dimensions.y * mip1dimensions.z;
-			for (int mip=2; mip<numMips; ++mip)
-			{
-				int3 mipNdimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, mip, _SubsurfaceIndex);
-				mip1andUpHeight += mipNdimensions.y * mipNdimensions.z;
-			}
-			return int2(mip0dimensions.x + mip1dimensions.x, max(mip0height, mip1andUpHeight));
-		}
-		oNODEFAULT;
-	}
-}
-
-int oSurfaceMipCalcNumColumns(oSURFACE_FORMAT _Format, int _MipWidth, int _SubsurfaceIndex)
+int num_columns(format _Format, int _MipWidth, int _SubsurfaceIndex)
 {
 	oCHECK_DIM(_Format, _MipWidth);
-	int widthInPixels = oSurfaceMipCalcDimension(_Format, _MipWidth, _SubsurfaceIndex);
-	return oSurfaceFormatIsBlockCompressed(_Format) ? __max(1, widthInPixels/4) : widthInPixels;
+	int widthInPixels = dimension(_Format, _MipWidth, _SubsurfaceIndex);
+	return is_block_compressed(_Format) ? __max(1, widthInPixels/4) : widthInPixels;
 }
 
-int oSurfaceMipCalcNumRows(oSURFACE_FORMAT _Format, int _MipHeight, int _SubsurfaceIndex)
+int num_rows(format _Format, int _MipHeight, int _SubsurfaceIndex)
 {
 	oCHECK_DIM(_Format, _MipHeight);
-	int heightInPixels = oSurfaceMipCalcDimensionNPOT(_Format, _MipHeight, 0, _SubsurfaceIndex);
-	return oSurfaceFormatIsBlockCompressed(_Format) ? __max(1, heightInPixels/4) : heightInPixels;
+	int heightInPixels = dimension_npot(_Format, _MipHeight, 0, _SubsurfaceIndex);
+	return is_block_compressed(_Format) ? __max(1, heightInPixels/4) : heightInPixels;
 }
 
-int oSurfaceMipCalcSize(oSURFACE_FORMAT _Format, const int2& _MipDimensions, int _SubsurfaceIndex)
+int mip_size(format _Format, const int2& _MipDimensions, int _SubsurfaceIndex)
 {
 	oCHECK_DIM2(_Format, _MipDimensions);
-	return oInt(oSurfaceMipCalcRowSize(_Format, _MipDimensions, _SubsurfaceIndex) * oSurfaceMipCalcNumRows(_Format, _MipDimensions, _SubsurfaceIndex));
+	return row_size(_Format, _MipDimensions, _SubsurfaceIndex) * num_rows(_Format, _MipDimensions, _SubsurfaceIndex);
 }
 
-static int oSurfaceMipCalcOffset_Image(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel, int _SubsurfaceIndex)
+static int offset_image(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
 {
-	oASSERT(_MipLevel == 0, "oSURFACE_LAYOUT_IMAGE doesn't have mip levels");
-
-	oInt offset = 0;
+	oASSERT(_MipLevel == 0, "layout::image doesn't have mip levels");
+	int offset = 0;
 	for (int i = 0; i < _SubsurfaceIndex; i++)
-	{
-		offset += byte_align(oSurfaceCalcSize(_SurfaceDesc, i), oDEFAULT_MEMORY_ALIGNMENT);
-	}
+		offset += byte_align(total_size(_SurfaceInfo, i), oDEFAULT_MEMORY_ALIGNMENT);
 	return offset;
 }
 
-static int oSurfaceMipCalcOffset_Tight(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel, int _SubsurfaceIndex)
+static int offset_tight(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
 {
-	oCHECK_SURFACE_DESC(_SurfaceDesc);
-
-	int3 mip0dimensions = _SurfaceDesc.Dimensions;
-
-	oInt offset = 0;
+	oCHECK_INFO(_SurfaceInfo)
+	int3 mip0dimensions = _SurfaceInfo.dimensions;
+	int offset = 0;
 	int mip = 0;
 	while (mip != _MipLevel)
 	{
-		int3 previousMipDimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, mip, _SubsurfaceIndex);
-		offset += oSurfaceMipCalcSize(_SurfaceDesc.Format, previousMipDimensions, _SubsurfaceIndex);
+		int3 previousMipDimensions = dimensions_npot(_SurfaceInfo.format, mip0dimensions, mip, _SubsurfaceIndex);
+		offset += mip_size(_SurfaceInfo.format, previousMipDimensions, _SubsurfaceIndex);
 		mip++;
 	}
-
 	return offset;
 }
 
-static int oSurfaceMipCalcOffset_Below(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel, int _SubsurfaceIndex)
+static int offset_below(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
 {
-	oCHECK_SURFACE_DESC(_SurfaceDesc);
+	oCHECK_INFO(_SurfaceInfo)
 	if (0 == _MipLevel)
 		return 0;
 
-	int3 mip0dimensions = _SurfaceDesc.Dimensions;
-	int3 mip1dimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, 1, _SubsurfaceIndex);
-	int surfaceRowPitch = oSurfaceMipCalcRowPitch(_SurfaceDesc, 0, _SubsurfaceIndex);
+	int3 mip0dimensions = _SurfaceInfo.dimensions;
+	int3 mip1dimensions = dimensions_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions, 1, _SubsurfaceIndex);
+	int surfaceRowPitch = row_pitch(_SurfaceInfo, 0, _SubsurfaceIndex);
 
 	// Step down when moving from Mip0 to Mip1
-	oInt offset = surfaceRowPitch * oSurfaceMipCalcNumRows(_SurfaceDesc.Format, mip0dimensions, _SubsurfaceIndex);
+	int offset = surfaceRowPitch * num_rows(_SurfaceInfo.format, mip0dimensions, _SubsurfaceIndex);
 	if (1 == _MipLevel)
 		return offset;
 
 	// Step right when moving from Mip1 to Mip2
-	offset += oSurfaceMipCalcRowSize(_SurfaceDesc.Format, mip1dimensions, _SubsurfaceIndex);
+	offset += row_size(_SurfaceInfo.format, mip1dimensions, _SubsurfaceIndex);
 
 	// Step down for all of the other MIPs
 	int mip = 2;
 	while (mip != _MipLevel)
 	{
-		int3 previousMipDimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, mip, _SubsurfaceIndex);
-		offset += surfaceRowPitch * oSurfaceMipCalcNumRows(_SurfaceDesc.Format, previousMipDimensions, _SubsurfaceIndex);
+		int3 previousMipDimensions = dimensions_npot(_SurfaceInfo.format, mip0dimensions, mip, _SubsurfaceIndex);
+		offset += surfaceRowPitch * num_rows(_SurfaceInfo.format, previousMipDimensions, _SubsurfaceIndex);
 		mip++;
 	}		
 
 	return offset;
 }
 
-static int oSurfaceMipCalcOffset_Right(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel, int _SubsurfaceIndex)
+static int offset_right(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
 {
-	oCHECK_SURFACE_DESC(_SurfaceDesc);
+	oCHECK_INFO(_SurfaceInfo)
 	if (0 == _MipLevel)
 		return 0;
 
-	int3 mip0dimensions = _SurfaceDesc.Dimensions;
-	int surfaceRowPitch = oSurfaceMipCalcRowPitch(_SurfaceDesc, 0, _SubsurfaceIndex);
+	int3 mip0dimensions = _SurfaceInfo.dimensions;
+	int surfaceRowPitch = row_pitch(_SurfaceInfo, 0, _SubsurfaceIndex);
 
 	// Step right when moving from Mip0 to Mip1
-	oInt offset = oSurfaceMipCalcRowSize(_SurfaceDesc.Format, mip0dimensions, _SubsurfaceIndex);
+	int offset = row_size(_SurfaceInfo.format, mip0dimensions, _SubsurfaceIndex);
 
 	// Step down for all of the other MIPs
 	int mip = 1;
 	while (mip != _MipLevel)
 	{
-		int3 previousMipDimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, mip0dimensions, mip, _SubsurfaceIndex);
-		offset += surfaceRowPitch * oSurfaceMipCalcNumRows(_SurfaceDesc.Format, previousMipDimensions, _SubsurfaceIndex);
+		int3 previousMipDimensions = dimensions_npot(_SurfaceInfo.format, mip0dimensions, mip, _SubsurfaceIndex);
+		offset += surfaceRowPitch * num_rows(_SurfaceInfo.format, previousMipDimensions, _SubsurfaceIndex);
 		mip++;
 	}		
 
 	return offset;
 }
 
-int oSurfaceMipCalcOffset(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel, int _SubsurfaceIndex)
+int offset(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
 {
-	oCHECK_SURFACE_DESC(_SurfaceDesc);
-	const int numMips = oSurfaceCalcNumMips(_SurfaceDesc.Layout, _SurfaceDesc.Dimensions);
+	oCHECK_INFO(_SurfaceInfo)
+	const int numMips = num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions);
 	if (_MipLevel >= numMips) 
-		return oInvalid;
+		throw std::invalid_argument("invalid _MipLevel");
 
-	switch (_SurfaceDesc.Layout)
+	switch (_SurfaceInfo.layout)
 	{
-		case oSURFACE_LAYOUT_IMAGE: return oSurfaceMipCalcOffset_Image(_SurfaceDesc, _MipLevel, _SubsurfaceIndex);
-		case oSURFACE_LAYOUT_TIGHT: return oSurfaceMipCalcOffset_Tight(_SurfaceDesc, _MipLevel, _SubsurfaceIndex);
-		case oSURFACE_LAYOUT_BELOW: return oSurfaceMipCalcOffset_Below(_SurfaceDesc, _MipLevel, _SubsurfaceIndex);
-		case oSURFACE_LAYOUT_RIGHT: return oSurfaceMipCalcOffset_Right(_SurfaceDesc, _MipLevel, _SubsurfaceIndex);
+		case image: return offset_image(_SurfaceInfo, _MipLevel, _SubsurfaceIndex);
+		case tight: return offset_tight(_SurfaceInfo, _MipLevel, _SubsurfaceIndex);
+		case below: return offset_below(_SurfaceInfo, _MipLevel, _SubsurfaceIndex);
+		case right: return offset_right(_SurfaceInfo, _MipLevel, _SubsurfaceIndex);
 		oNODEFAULT;
 	}
 }
 
-int oSurfaceSliceCalcPitch(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceIndex)
+int slice_pitch(const info& _SurfaceInfo, int _SubsurfaceIndex)
 {
-	oCHECK_SURFACE_DESC(_SurfaceDesc);
-	oInt pitch = 0;
+	oCHECK_INFO(_SurfaceInfo)
+	int pitch = 0;
 
-	switch (_SurfaceDesc.Layout)
+	switch (_SurfaceInfo.layout)
 	{
-		case oSURFACE_LAYOUT_IMAGE:
-		case oSURFACE_LAYOUT_RIGHT:
-		case oSURFACE_LAYOUT_BELOW:
-			return oSurfaceMipCalcSize(_SurfaceDesc.Format, oSurfaceSliceCalcDimensions(_SurfaceDesc, 0), _SubsurfaceIndex);
+		case image: case right: case below:
+			return mip_size(_SurfaceInfo.format, slice_dimensions(_SurfaceInfo, 0), _SubsurfaceIndex);
 
-		case oSURFACE_LAYOUT_TIGHT:
+		case tight:
 		{
 			// Sum the size of all mip levels
-			int3 dimensions = _SurfaceDesc.Dimensions;
-			int nMips = oSurfaceCalcNumMips(_SurfaceDesc.Layout, dimensions);
+			int3 dimensions = _SurfaceInfo.dimensions;
+			int nMips = num_mips(_SurfaceInfo.layout, dimensions);
 			while (nMips > 0)
 			{
-				pitch += oSurfaceMipCalcSize(_SurfaceDesc.Format, dimensions.xy(), _SubsurfaceIndex) * dimensions.z;
+				pitch += mip_size(_SurfaceInfo.format, dimensions.xy(), _SubsurfaceIndex) * dimensions.z;
 				dimensions = max(int3(1,1,1), dimensions / int3(2,2,2));
 				nMips--;
 			}
 
 			// Align slicePitch to mip0RowPitch
-			const int mip0RowPitch = oSurfaceMipCalcRowPitch(_SurfaceDesc, 0, _SubsurfaceIndex);
+			const int mip0RowPitch = row_pitch(_SurfaceInfo, 0, _SubsurfaceIndex);
 			pitch = (((pitch + (mip0RowPitch - 1)) / mip0RowPitch) * mip0RowPitch);
 			break;
 		}
@@ -781,89 +715,177 @@ int oSurfaceSliceCalcPitch(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceInd
 	return pitch;
 }
 
-int oSurfaceMipCalcDepthPitch(const oSURFACE_DESC& _SurfaceDesc, int _MipLevel, int _SubsurfaceIndex)
+int total_size(const info& _SurfaceInfo, int _SubsurfaceIndex)
 {
-	oCHECK_SURFACE_DESC(_SurfaceDesc);
-
-	int3 mipDimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, _MipLevel, 0);
-	return oSurfaceMipCalcRowPitch(_SurfaceDesc, _MipLevel, _SubsurfaceIndex) * oSurfaceMipCalcNumRows(_SurfaceDesc.Format, mipDimensions.xy(), _SubsurfaceIndex);
-}
-
-int oSurfaceCalcSize(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceIndex)
-{
-	if (_SubsurfaceIndex == oInvalid)
+	if (_SubsurfaceIndex < 0)
 	{
 		int size = 0;
-		const int nSurfaces = oSurfaceFormatGetNumSubformats(_SurfaceDesc.Format);
+		const int nSurfaces = num_subformats(_SurfaceInfo.format);
 		for (int i = 0; i < nSurfaces; i++)
 		{
-			// byte_align is needed here to avoid a memory corruption crash. I'm not sure why it is needed, but I think that size is a memory
-			// structure containing all surface sizes, so they are all expected to be aligned.
-			size += byte_align(oSurfaceCalcSize(_SurfaceDesc, i), oDEFAULT_MEMORY_ALIGNMENT);
+			// byte_align is needed here to avoid a memory corruption crash. I'm not 
+			// sure why it is needed, but I think that size is a memory structure 
+			// containing all surface sizes, so they are all expected to be aligned.
+			size += byte_align(total_size(_SurfaceInfo, i), oDEFAULT_MEMORY_ALIGNMENT);
 		}
 		return size;
 	}
-	else
+	
+	return slice_pitch(_SurfaceInfo, _SubsurfaceIndex) * _SurfaceInfo.array_size;
+}
+
+int2 dimensions(const info& _SurfaceInfo, int _SubsurfaceIndex)
+{
+	int2 sliceDimensions = slice_dimensions(_SurfaceInfo, _SubsurfaceIndex);
+	return int2(sliceDimensions.x, sliceDimensions.y * _SurfaceInfo.array_size);
+}
+
+int2 slice_dimensions(const info& _SurfaceInfo, int _SubsurfaceIndex)
+{
+	oCHECK_INFO(_SurfaceInfo)
+	int3 mip0dimensions = dimensions_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions, 0, _SubsurfaceIndex);
+	switch (_SurfaceInfo.layout)
 	{
-		return oSurfaceSliceCalcPitch(_SurfaceDesc, _SubsurfaceIndex) * _SurfaceDesc.ArraySize;
+		case image: 
+			return int2(mip0dimensions.x, (mip0dimensions.y * mip0dimensions.z));
+		
+		case tight: 
+		{
+			const int surfaceSlicePitch = slice_pitch(_SurfaceInfo, _SubsurfaceIndex);
+			const int mip0RowPitch = row_pitch(_SurfaceInfo, 0, _SubsurfaceIndex);
+			return int2(mip0dimensions.x, (surfaceSlicePitch / mip0RowPitch));
+		}
+		case below: 
+		{
+			int numMips = num_mips(_SurfaceInfo.layout, mip0dimensions);
+			int3 mip1dimensions = numMips > 1 ? dimensions_npot(_SurfaceInfo.format, mip0dimensions, 1, _SubsurfaceIndex) : int3(0);
+			int3 mip2dimensions = numMips > 2 ? dimensions_npot(_SurfaceInfo.format, mip0dimensions, 2, _SubsurfaceIndex) : int3(0);
+
+			int mip0height = mip0dimensions.y * mip0dimensions.z;
+			int mip1height = mip1dimensions.y * mip1dimensions.z;
+			int mip2andUpHeight = mip2dimensions.y * mip2dimensions.z;
+			for (int mip=3; mip<numMips; ++mip)
+			{
+				int3 mipNdimensions = dimensions_npot(_SurfaceInfo.format, mip0dimensions, mip, _SubsurfaceIndex);
+				mip2andUpHeight += mipNdimensions.y * mipNdimensions.z;
+			}
+			return int2(max(mip0dimensions.x, mip1dimensions.x + mip2dimensions.x), (mip0height + max(mip1height, mip2andUpHeight)));
+		}
+		case right: 
+		{
+			int numMips = num_mips(_SurfaceInfo.layout, mip0dimensions);
+			int3 mip1dimensions = numMips > 1 ? dimensions_npot(_SurfaceInfo.format, mip0dimensions, 1, _SubsurfaceIndex) : int3(0);
+
+			int mip0height = mip0dimensions.y * mip0dimensions.z;
+			int mip1andUpHeight = mip1dimensions.y * mip1dimensions.z;
+			for (int mip=2; mip<numMips; ++mip)
+			{
+				int3 mipNdimensions = dimensions_npot(_SurfaceInfo.format, mip0dimensions, mip, _SubsurfaceIndex);
+				mip1andUpHeight += mipNdimensions.y * mipNdimensions.z;
+			}
+			return int2(mip0dimensions.x + mip1dimensions.x, max(mip0height, mip1andUpHeight));
+		}
+		oNODEFAULT;
 	}
 }
 
-void oSurfaceSubresourceGetDesc(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, oSURFACE_SUBRESOURCE_DESC* _pSubresourceDesc)
+subresource_info subresource(const info& _SurfaceInfo, int _Subresource)
 {
-	oCHECK_SURFACE_DESC(_SurfaceDesc);
-	int numMips = oSurfaceCalcNumMips(_SurfaceDesc.Layout, _SurfaceDesc.Dimensions);
-	oSurfaceSubresourceUnpack(_Subresource, numMips, _SurfaceDesc.ArraySize, &_pSubresourceDesc->MipLevel, &_pSubresourceDesc->ArraySlice, &_pSubresourceDesc->Subsurface);
-	oASSERT(_pSubresourceDesc->ArraySlice < _SurfaceDesc.ArraySize, "Slice index is out of range for the specified surface");
-	oASSERT(_pSubresourceDesc->Subsurface < oSurfaceFormatGetNumSubformats(_SurfaceDesc.Format), "Subsurface index is out of range for the specified surface");
-	_pSubresourceDesc->Dimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, _pSubresourceDesc->MipLevel, _pSubresourceDesc->Subsurface);
+	oCHECK_INFO(_SurfaceInfo)
+	subresource_info inf;
+	int numMips = num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions);
+	unpack_subresource(_Subresource, numMips, _SurfaceInfo.array_size, &inf.mip_level, &inf.array_slice, &inf.subsurface);
+	if (inf.array_slice >= _SurfaceInfo.array_size) throw std::invalid_argument("Slice index is out of range for the specified surface");
+	if (inf.subsurface >= num_subformats(_SurfaceInfo.format)) throw std::invalid_argument("Subsurface index is out of range for the specified surface");
+	inf.dimensions = dimensions_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions, inf.mip_level, inf.subsurface);
+	return inf;
 }
 
-void oSurfaceSubresourceGetDesc(const oSURFACE_DESC& _SurfaceDesc, int _SubsurfaceIndex, int _MipLevel, oSURFACE_DESC* _pSurfaceDesc, int2* _pByteDimensions)
+info subsurface(const info& _SurfaceInfo, int _SubsurfaceIndex, int _MipLevel, int2* _pByteDimensions)
 {
-	_pSurfaceDesc->Dimensions = oSurfaceMipCalcDimensionsNPOT(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, _MipLevel, _SubsurfaceIndex);
-	_pSurfaceDesc->ArraySize = _SurfaceDesc.ArraySize;
-	_pSurfaceDesc->Format = oSurfaceGetSubformat(_SurfaceDesc.Format, _SubsurfaceIndex);
-	_pSurfaceDesc->Layout = _SurfaceDesc.Layout;
-
+	info inf;
+	inf.dimensions = dimensions_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions, _MipLevel, _SubsurfaceIndex);
+	inf.array_size = _SurfaceInfo.array_size;
+	inf.format = subformat(_SurfaceInfo.format, _SubsurfaceIndex);
+	inf.layout = _SurfaceInfo.layout;
 	if (_pByteDimensions)
 	{
-		_pByteDimensions->x = oSurfaceMipCalcRowSize(_pSurfaceDesc->Format, _pSurfaceDesc->Dimensions);
-		_pByteDimensions->y = oSurfaceMipCalcNumRows(_pSurfaceDesc->Format, _pSurfaceDesc->Dimensions);
+		_pByteDimensions->x = row_size(inf.format, inf.dimensions);
+		_pByteDimensions->y = num_rows(inf.format, inf.dimensions);
 	}
+	return inf;
 }
 
-int oSurfaceSubresourceCalcSize(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_SUBRESOURCE_DESC& _SubresourceDesc)
+int subresource_size(const info& _SurfaceInfo, const subresource_info& _SubresourceInfo)
 {
-	return oSurfaceMipCalcSize(_SurfaceDesc.Format, _SubresourceDesc.Dimensions, _SubresourceDesc.Subsurface);
+	return mip_size(_SurfaceInfo.format, _SubresourceInfo.dimensions, _SubresourceInfo.subsurface);
 }
 
-int oSurfaceSubresourceCalcOffset(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, int _DepthIndex)
+int subresource_offset(const info& _SurfaceInfo, int _Subresource, int _DepthIndex)
 {
-	oASSERT(_DepthIndex < _SurfaceDesc.Dimensions.z, "Depth index is out of range");
-	oSURFACE_SUBRESOURCE_DESC ssrd;
-	oSurfaceSubresourceGetDesc(_SurfaceDesc, _Subresource, &ssrd);
-
-	int offset = oSurfaceMipCalcOffset(_SurfaceDesc, ssrd.MipLevel, ssrd.Subsurface);
+	oASSERT(_DepthIndex < _SurfaceInfo.dimensions.z, "Depth index is out of range");
+	subresource_info inf = subresource(_SurfaceInfo, _Subresource);
+	int off = offset(_SurfaceInfo, inf.mip_level, inf.subsurface);
 	if (_DepthIndex)
-		offset += oSurfaceMipCalcDepthPitch(_SurfaceDesc, ssrd.MipLevel, ssrd.Subsurface) * _DepthIndex;
-	else if (ssrd.ArraySlice)
-		offset += oSurfaceSliceCalcPitch(_SurfaceDesc, ssrd.Subsurface) * ssrd.ArraySlice;
-
-	return offset;
+		off += depth_pitch(_SurfaceInfo, inf.mip_level, inf.subsurface) * _DepthIndex;
+	else if (inf.array_slice > 0)
+		off += slice_pitch(_SurfaceInfo, inf.subsurface) * inf.array_slice;
+	return off;
 }
 
-int oSurfaceTileCalcBestFitMipLevel(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDimensions)
+const_mapped_subresource get_const_mapped_subresource(const info& _SurfaceInfo, int _Subresource, int _DepthIndex, const void* _pSurface, int2* _pByteDimensions)
 {
-	oCHECK_SURFACE_DESC(_SurfaceDesc);
-	if (oSURFACE_LAYOUT_IMAGE == _SurfaceDesc.Layout)
+	subresource_info inf = subresource(_SurfaceInfo, _Subresource);
+
+	const_mapped_subresource msr;
+	msr.row_pitch = row_pitch(_SurfaceInfo, inf.mip_level, inf.subsurface);
+	msr.depth_pitch = depth_pitch(_SurfaceInfo, inf.mip_level, inf.subsurface);
+	msr.data = byte_add(_pSurface, subresource_offset(_SurfaceInfo, _Subresource, _DepthIndex));
+
+	if (_pByteDimensions)
+		*_pByteDimensions = byte_dimensions(_SurfaceInfo.format, inf.dimensions.xy(), inf.subsurface);
+	return msr;
+}
+
+mapped_subresource get_mapped_subresource(const info& _SurfaceInfo, int _Subresource, int _DepthIndex, void* _pSurface, int2* _pByteDimensions)
+{
+	const_mapped_subresource msr = get_const_mapped_subresource(_SurfaceInfo, _Subresource, _DepthIndex, _pSurface, _pByteDimensions);
+	return (mapped_subresource&)msr;
+}
+
+void update(const info& _SurfaceInfo, int _Subresource, int _DepthIndex, void* _pDestinationSurface, const void* _pSource, size_t _SourceRowPitch, bool _FlipVertical)
+{
+	int2 ByteDimensions;
+	mapped_subresource msr = get_mapped_subresource(_SurfaceInfo, _Subresource, _DepthIndex, _pDestinationSurface, &ByteDimensions);
+	memcpy2d(msr.data, msr.row_pitch, _pSource, _SourceRowPitch, ByteDimensions.x, ByteDimensions.y, _FlipVertical);
+}
+
+void copy(const info& _SurfaceInfo, int _Subresource, int _DepthIndex, const void* _pSourceSurface, void* _pDestination, size_t _DestinationRowPitch, bool _FlipVertical)
+{
+	int2 ByteDimensions;
+	const_mapped_subresource msr = get_const_mapped_subresource(_SurfaceInfo, _Subresource, _DepthIndex, _pSourceSurface, &ByteDimensions);
+	memcpy2d(_pDestination, _DestinationRowPitch, msr.data, msr.row_pitch, ByteDimensions.x, ByteDimensions.y, _FlipVertical);
+}
+
+void copy(const info& _SurfaceInfo, const const_mapped_subresource& _Source, mapped_subresource* _Destination, bool _FlipVertical)
+{
+	memcpy2d(_Destination->data, _Destination->row_pitch, _Source.data, _Source.row_pitch, _SurfaceInfo.dimensions.x*element_size(_SurfaceInfo.format), _SurfaceInfo.dimensions.y, _FlipVertical);
+}
+
+// Returns the nth mip where the mip level best-fits into a tile. i.e. several
+// tiles are no longer required to store all the mip data, and all mip levels
+// after the one returned by this function can together fit into one mip level.
+static int best_fit_mip_level(const info& _SurfaceInfo, const int2& _TileDimensions)
+{
+	oCHECK_INFO(_SurfaceInfo)
+	if (image == _SurfaceInfo.layout)
 		return 0;
 
 	int nthMip = 0;
-	int3 mip = _SurfaceDesc.Dimensions;
+	int3 mip = _SurfaceInfo.dimensions;
 	while (any(mip != int3(1,1,1)))
 	{
-		if (all(_SurfaceDesc.Dimensions.xy() <= _TileDimensions))
+		if (all(_SurfaceInfo.dimensions.xy() <= _TileDimensions))
 			break;
 
 		nthMip++;
@@ -873,7 +895,25 @@ int oSurfaceTileCalcBestFitMipLevel(const oSURFACE_DESC& _SurfaceDesc, const int
 	return nthMip;
 }
 
-int oSurfaceMipCalcDimensionInTiles(int _MipDimension, int _TileDimension)
+int num_slice_tiles(const info& _SurfaceInfo, const int2& _TileDimensions)
+{
+	oCHECK_NOT_PLANAR(_SurfaceInfo.format);
+
+	if (image == _SurfaceInfo.layout)
+		return num_tiles(_SurfaceInfo.dimensions, _TileDimensions);
+
+	int numTiles = 0;
+	int lastMip = 1 + best_fit_mip_level(_SurfaceInfo, _TileDimensions);
+	for (int i = 0; i <= lastMip; i++)
+	{
+		int3 mipDim = dimensions(_SurfaceInfo.format, _SurfaceInfo.dimensions, i);
+		numTiles += num_tiles(mipDim, _TileDimensions);
+	}
+
+	return numTiles;
+}
+
+int dimension_in_tiles(int _MipDimension, int _TileDimension)
 {
 	int div = _MipDimension / _TileDimension;
 	if (0 != (_MipDimension % _TileDimension))
@@ -881,278 +921,228 @@ int oSurfaceMipCalcDimensionInTiles(int _MipDimension, int _TileDimension)
 	return div;
 }
 
-int2 oSurfaceMipCalcDimensionsInTiles(const int2& _MipDimensions, const int2& _TileDimensions)
+int2 dimensions_in_tiles(const int2& _MipDimensions, const int2& _TileDimensions)
 {
-	return int2(
-		oSurfaceMipCalcDimensionInTiles(_MipDimensions.x, _TileDimensions.x)
-		, oSurfaceMipCalcDimensionInTiles(_MipDimensions.y, _TileDimensions.y));
+	return int2(dimension_in_tiles(_MipDimensions.x, _TileDimensions.x)
+		, dimension_in_tiles(_MipDimensions.y, _TileDimensions.y));
 }
 
-int3 oSurfaceMipCalcDimensionsInTiles(const int3& _MipDimensions, const int2& _TileDimensions)
+int3 dimensions_in_tiles(const int3& _MipDimensions, const int2& _TileDimensions)
 {
-	return int3(
-		oSurfaceMipCalcDimensionInTiles(_MipDimensions.x, _TileDimensions.x)
-		, oSurfaceMipCalcDimensionInTiles(_MipDimensions.y, _TileDimensions.y)
+	return int3(dimension_in_tiles(_MipDimensions.x, _TileDimensions.x)
+		, dimension_in_tiles(_MipDimensions.y, _TileDimensions.y)
 		, _MipDimensions.z);
 }
 
-int oSurfaceMipCalcNumTiles(const int2& _MipDimensions, const int2& _TileDimensions)
+int num_tiles(const int2& _MipDimensions, const int2& _TileDimensions)
 {
-	int2 mipDimInTiles = oSurfaceMipCalcDimensionsInTiles(_MipDimensions, _TileDimensions);
+	int2 mipDimInTiles = dimensions_in_tiles(_MipDimensions, _TileDimensions);
 	return mipDimInTiles.x * mipDimInTiles.y;
 }
 
-int oSurfaceMipCalcNumTiles(const int3& _MipDimensions, const int2& _TileDimensions)
+int num_tiles(const int3& _MipDimensions, const int2& _TileDimensions)
 {
-	int3 mipDimInTiles = oSurfaceMipCalcDimensionsInTiles(_MipDimensions, _TileDimensions);
+	int3 mipDimInTiles = dimensions_in_tiles(_MipDimensions, _TileDimensions);
 	return mipDimInTiles.x * mipDimInTiles.y;
 }
 
-int oSurfaceSliceCalcNumTiles(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDimensions)
+// calculate the tile id of the first tile in the specified slice
+static int slice_first_tile_id(const info& _SurfaceInfo, const int2& _TileDimensions, int _Slice)
 {
-	oASSERT_PLANAR_SUPPORT(_SurfaceDesc.Format);
-
-	if (oSURFACE_LAYOUT_IMAGE == _SurfaceDesc.Layout)
-		return oSurfaceMipCalcNumTiles(_SurfaceDesc.Dimensions, _TileDimensions);
-
-	int numTiles = 0;
-	int lastMip = 1 + oSurfaceTileCalcBestFitMipLevel(_SurfaceDesc, _TileDimensions);
-	for (int i = 0; i <= lastMip; i++)
-	{
-		int3 mipDim = oSurfaceMipCalcDimensions(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, i);
-		numTiles += oSurfaceMipCalcNumTiles(mipDim, _TileDimensions);
-	}
-
-	return numTiles;
-}
-
-static int oSurfaceSliceCalcStartTileID(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDimensions, int _Slice)
-{
-	oASSERT_PLANAR_SUPPORT(_SurfaceDesc.Format);
-
-	int numTilesPerSlice = oSurfaceSliceCalcNumTiles(_SurfaceDesc, _TileDimensions);
+	oCHECK_NOT_PLANAR(_SurfaceInfo.format);
+	int numTilesPerSlice = num_slice_tiles(_SurfaceInfo, _TileDimensions);
 	return _Slice * numTilesPerSlice;
 }
 
 // how many tiles from the startID to start the specified mip
-static int oSurfaceSliceCalcMipTileIDOffset(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDimensions, int _MipLevel)
+static int tile_id_offset(const info& _SurfaceInfo, const int2& _TileDimensions, int _MipLevel)
 {
-	oASSERT_PLANAR_SUPPORT(_SurfaceDesc.Format);
-
-	if (oSURFACE_LAYOUT_IMAGE == _SurfaceDesc.Layout)
+	oCHECK_NOT_PLANAR(_SurfaceInfo.format);
+	if (image == _SurfaceInfo.layout)
 		return 0;
-
 	int numTiles = 0;
-	int numMips = __min(_MipLevel, 1 + oSurfaceTileCalcBestFitMipLevel(_SurfaceDesc, _TileDimensions));
+	int numMips = __min(_MipLevel, 1 + best_fit_mip_level(_SurfaceInfo, _TileDimensions));
 	for (int i = 0; i < numMips; i++)
 	{
-		int3 mipDim = oSurfaceMipCalcDimensions(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, i);
-		numTiles += oSurfaceMipCalcNumTiles(mipDim, _TileDimensions);
+		int3 mipDim = dimensions(_SurfaceInfo.format, _SurfaceInfo.dimensions, i);
+		numTiles += num_tiles(mipDim, _TileDimensions);
 	}
 
 	return numTiles;
 }
 
-static int oSurfaceMipCalcStartTileID(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDimensions, int _MipLevel, int _Slice)
+static int mip_first_tile_id(const info& _SurfaceInfo, const int2& _TileDimensions, int _MipLevel, int _Slice)
 {
-	oASSERT_PLANAR_SUPPORT(_SurfaceDesc.Format);
+	oCHECK_NOT_PLANAR(_SurfaceInfo.format);
 
-	int sliceStartID = oSurfaceSliceCalcStartTileID(_SurfaceDesc, _TileDimensions, _Slice);
-	int mipIDOffset = oSurfaceSliceCalcMipTileIDOffset(_SurfaceDesc, _TileDimensions, _MipLevel);
+	int sliceStartID = slice_first_tile_id(_SurfaceInfo, _TileDimensions, _Slice);
+	int mipIDOffset = tile_id_offset(_SurfaceInfo, _TileDimensions, _MipLevel);
 	return sliceStartID + mipIDOffset;
 }
 
-int oSurfaceCalcTile(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDimensions, oSURFACE_TILE_DESC& _InOutTileDesc)
+bool use_large_pages(const info& _SurfaceInfo, const int2& _TileDimensions, int _SmallPageSize, int _LargePageSize)
 {
-	oASSERT_PLANAR_SUPPORT(_SurfaceDesc.Format);
+	oCHECK_NOT_PLANAR(_SurfaceInfo.format);
+	int surfaceSize = mip_size(_SurfaceInfo.format, _SurfaceInfo.dimensions);
+	if (surfaceSize < (_LargePageSize / 4))
+		return false;
 
-	int mipStartTileID = oSurfaceMipCalcStartTileID(_SurfaceDesc, _TileDimensions, _InOutTileDesc.MipLevel, _InOutTileDesc.ArraySlice);
-	int2 PositionInTiles = _InOutTileDesc.Position / _TileDimensions;
-	int2 mipDim = oSurfaceMipCalcDimensions(_SurfaceDesc.Format, _SurfaceDesc.Dimensions.xy(), _InOutTileDesc.MipLevel);
-	int2 mipDimInTiles = oSurfaceMipCalcDimensionsInTiles(mipDim, _TileDimensions);
+	int surfacePitch = row_pitch(_SurfaceInfo);
+
+	// number of rows before we get a page miss
+	float numRowsPerPage = _SmallPageSize / static_cast<float>(surfacePitch);
+
+	int tileByteWidth = row_size(_SurfaceInfo.format, _TileDimensions);
+	
+	// estimate how many bytes we would work on in a tile before encountering a 
+	// tlb cache miss... not precise, but should be close enough for our purpose 
+	// here. 
+	float numBytesPerTLBMiss = tileByteWidth * numRowsPerPage - std::numeric_limits<float>::epsilon(); 
+	
+	// If we are not going to get at least half a small page size of work done per tlb miss, better to use large pages instead.
+	return numBytesPerTLBMiss <= (_SmallPageSize / 2);
+}
+
+int calc_tile_id(const info& _SurfaceInfo, const tile_info& _TileInfo, int2* _pPosition)
+{
+	oCHECK_NOT_PLANAR(_SurfaceInfo.format);
+	int mipStartTileID = mip_first_tile_id(_SurfaceInfo, _TileInfo.dimensions, _TileInfo.mip_level, _TileInfo.array_slice);
+	int2 PositionInTiles = _TileInfo.position / _TileInfo.dimensions;
+	int2 mipDim = dimensions(_SurfaceInfo.format, _SurfaceInfo.dimensions.xy(), _TileInfo.mip_level);
+	int2 mipDimInTiles = dimensions_in_tiles(mipDim, _TileInfo.dimensions);
 	int tileID = mipStartTileID + (mipDimInTiles.x * PositionInTiles.y) + PositionInTiles.x;
-	_InOutTileDesc.Position = PositionInTiles * _TileDimensions;
+	if (_pPosition)
+		*_pPosition = PositionInTiles * _TileInfo.dimensions;
 	return tileID;
 }
 
-void oSurfaceTileGetDesc(const oSURFACE_DESC& _SurfaceDesc, const int2& _TileDimensions, int _TileID, oSURFACE_TILE_DESC* _pTileDesc)
+tile_info get_tile(const info& _SurfaceInfo, const int2& _TileDimensions, int _TileID)
 {
-	oASSERT_PLANAR_SUPPORT(_SurfaceDesc.Format);
+	tile_info inf;
 
-	int numTilesPerSlice = oSurfaceSliceCalcNumTiles(_SurfaceDesc, _TileDimensions);
-	_pTileDesc->ArraySlice = _TileID / numTilesPerSlice;
-	oASSERT(_pTileDesc->ArraySlice < _SurfaceDesc.ArraySize, "TileID is out of range for the specified mip dimensions");
+	oCHECK_NOT_PLANAR(_SurfaceInfo.format);
+	int numTilesPerSlice = num_slice_tiles(_SurfaceInfo, _TileDimensions);
+	inf.dimensions = _TileDimensions;
+	inf.array_slice = _TileID / numTilesPerSlice;
+	if (inf.array_slice >= _SurfaceInfo.array_size) throw std::invalid_argument("TileID is out of range for the specified mip dimensions");
 
 	int firstTileInMip = 0;
-	int3 mipDim = _SurfaceDesc.Dimensions;
-	_pTileDesc->MipLevel = 0;
+	int3 mipDim = _SurfaceInfo.dimensions;
+	inf.mip_level = 0;
 	int nthTileIntoSlice = _TileID % numTilesPerSlice; 
 
 	if (nthTileIntoSlice > 0)
 	{
 		do 
 		{
-			mipDim = oSurfaceMipCalcDimensions(_SurfaceDesc.Format, _SurfaceDesc.Dimensions, ++_pTileDesc->MipLevel);
-			firstTileInMip += oSurfaceMipCalcNumTiles(mipDim, _TileDimensions);
+			mipDim = dimensions(_SurfaceInfo.format, _SurfaceInfo.dimensions, ++inf.mip_level);
+			firstTileInMip += num_tiles(mipDim, _TileDimensions);
 
 		} while (nthTileIntoSlice < firstTileInMip);
 	}
 	
 	int tileOffsetFromMipStart = nthTileIntoSlice - firstTileInMip;
-	int3 mipDimInTiles = oSurfaceMipCalcDimensionsInTiles(mipDim, _TileDimensions);
+	int3 mipDimInTiles = dimensions_in_tiles(mipDim, _TileDimensions);
 	int2 positionInTiles = int2(tileOffsetFromMipStart % mipDimInTiles.x, tileOffsetFromMipStart / mipDimInTiles.y);
-	_pTileDesc->Position = positionInTiles * _TileDimensions;
+	inf.position = positionInTiles * _TileDimensions;
+	return inf;
 }
 
-//currently fairly aggressive at suggesting large pages
-bool oShouldUseLargePages(const int3& _SurfaceDimensions, oSURFACE_FORMAT _Format, int _TileWidth, int _SmallPageSize, int _LargePageSize)
+void enumerate_pixels(const info& _SurfaceInfo
+	, const const_mapped_subresource& _MappedSubresource
+	, const std::function<void(const void* _pPixel)>& _Enumerator)
 {
-	oASSERT_PLANAR_SUPPORT(_Format);
-
-	int surfaceSize = oSurfaceMipCalcSize(_Format, _SurfaceDimensions);
-	if(surfaceSize < (_LargePageSize/4))
-		return false;
-
-	oSURFACE_DESC desc;
-	desc.Format = _Format;
-	desc.Dimensions = _SurfaceDimensions;
-	int surfacePitch = oSurfaceMipCalcRowPitch(desc);
-
-	float numRowsPerPage = _SmallPageSize/static_cast<float>(surfacePitch); //number of rows before we get a page miss
-
-	int tileByteWidth = oSurfaceMipCalcRowSize(_Format, _TileWidth);
-	//estimate how many bytes we would work on in a tile before encountering a tlb cache miss
-	float numBytesPerTLBMiss = tileByteWidth * numRowsPerPage - std::numeric_limits<float>::epsilon(); //not precise, but should be close enough for our purpose here. 
-	//If we are not going to get at least half a small page size of work done per tlb miss, better to use large pages instead.
-	if(numBytesPerTLBMiss <= (_SmallPageSize/2))
-		return true;
-	else
-		return false;
-}
-
-oSURFACE_FORMAT oSurfaceGetClosestNV12Format(oSURFACE_FORMAT _Format)
-{
-	if (oSurfaceFormatGetNumSubformats(_Format) == 2) //already nv12
-		return _Format;
-
-	if (oSurfaceFormatGetNumSubformats(_Format) == 3) //no alpha
-	{
-		if (oSurfaceFormatIsBlockCompressed(_Format))
-			return oSURFACE_YBC4_UVBC5_UNORM;
-		else
-			return oSURFACE_Y8_U8V8_UNORM;
-	}
-	else //alpha
-	{
-		if (oSurfaceFormatIsBlockCompressed(_Format))
-			return oSURFACE_YABC5_UVBC5_UNORM;
-		else
-			return oSURFACE_Y8A8_U8V8_UNORM;
-	}
-}
-
-void oSurfaceCalcMappedSubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, int _DepthIndex, const void* _pSurface, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMappedSubresource, int2* _pByteDimensions)
-{
-	oSURFACE_SUBRESOURCE_DESC ssrd;
-	oSurfaceSubresourceGetDesc(_SurfaceDesc, _Subresource, &ssrd);
-
-	_pMappedSubresource->RowPitch = oSurfaceMipCalcRowPitch(_SurfaceDesc, ssrd.MipLevel, ssrd.Subsurface);
-	_pMappedSubresource->DepthPitch = oSurfaceMipCalcDepthPitch(_SurfaceDesc, ssrd.MipLevel, ssrd.Subsurface);
-	_pMappedSubresource->pData = byte_add(_pSurface, oSurfaceSubresourceCalcOffset(_SurfaceDesc, _Subresource, _DepthIndex));
-
-	if (_pByteDimensions)
-		*_pByteDimensions = oSurfaceMipCalcByteDimensions(_SurfaceDesc.Format, ssrd.Dimensions.xy(), ssrd.Subsurface);
-}
-
-void oSurfaceCalcMappedSubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, int _DepthIndex, void* _pSurface, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource, int2* _pByteDimensions)
-{
-	oSurfaceCalcMappedSubresource(_SurfaceDesc, _Subresource, _DepthIndex, _pSurface, (oSURFACE_CONST_MAPPED_SUBRESOURCE*)_pMappedSubresource, _pByteDimensions);
-}
-
-void oSurfaceUpdateSubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, int _DepthIndex, void* _pDestinationSurface, const void* _pSource, size_t _SourceRowPitch, bool _FlipVertical)
-{
-	oSURFACE_MAPPED_SUBRESOURCE mapped;
-	int2 ByteDimensions;
-	oSurfaceCalcMappedSubresource(_SurfaceDesc, _Subresource, _DepthIndex, _pDestinationSurface, &mapped, &ByteDimensions);
-	memcpy2d(mapped.pData, mapped.RowPitch, _pSource, _SourceRowPitch, ByteDimensions.x, ByteDimensions.y, _FlipVertical);
-}
-
-void oSurfaceCopySubresource(const oSURFACE_DESC& _SurfaceDesc, int _Subresource, int _DepthIndex, const void* _pSourceSurface, void* _pDestination, size_t _DestinationRowPitch, bool _FlipVertical)
-{
-	oSURFACE_CONST_MAPPED_SUBRESOURCE mapped;
-	int2 ByteDimensions;
-	oSurfaceCalcMappedSubresource(_SurfaceDesc, _Subresource, _DepthIndex, _pSourceSurface, &mapped, &ByteDimensions);
-	memcpy2d(_pDestination, _DestinationRowPitch, mapped.pData, mapped.RowPitch, ByteDimensions.x, ByteDimensions.y, _FlipVertical);
-}
-
-void oSurfaceCopySubresource(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SrcMap, oSURFACE_MAPPED_SUBRESOURCE* _DstMap, bool _FlipVertical)
-{
-	memcpy2d(_DstMap->pData, _DstMap->RowPitch, _SrcMap.pData, _SrcMap.RowPitch, _SurfaceDesc.Dimensions.x*oSurfaceFormatGetSize(_SurfaceDesc.Format), _SurfaceDesc.Dimensions.y, _FlipVertical);
-}
-
-// @oooii-tony: This stuff might get refactored pretty soon...
-#include <oBasis/oError.h>
-
-void oSurfaceVisitPixel(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresource, const oFUNCTION<void(const void* _pPixel)>& _Visitor)
-{
-	const void* pRow = _MappedSubresource.pData;
-	const void* pEnd = byte_add(pRow, _SurfaceDesc.Dimensions.y * _MappedSubresource.RowPitch); // should this be depth/slice pitch?
-	const int FormatSize = oSurfaceFormatGetSize(_SurfaceDesc.Format);
-	for (; pRow < pEnd; pRow = byte_add(pRow, _MappedSubresource.RowPitch))
+	const void* pRow = _MappedSubresource.data;
+	const void* pEnd = byte_add(pRow, _SurfaceInfo.dimensions.y * _MappedSubresource.row_pitch); // should this be depth/slice pitch?
+	const int FormatSize = element_size(_SurfaceInfo.format);
+	for (; pRow < pEnd; pRow = byte_add(pRow, _MappedSubresource.row_pitch))
 	{
 		const void* pPixel = pRow;
-		const void* pRowEnd = byte_add(pPixel, _SurfaceDesc.Dimensions.x * FormatSize);
+		const void* pRowEnd = byte_add(pPixel, _SurfaceInfo.dimensions.x * FormatSize);
 		for (; pPixel < pRowEnd; pPixel = byte_add(pPixel, FormatSize))
-			_Visitor(pPixel);
+			_Enumerator(pPixel);
 	}
 }
 
-void oSurfaceVisitPixel(const oSURFACE_DESC& _SurfaceDescInput
-	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresourceInput1
-	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresourceInput2
-	, const oSURFACE_DESC& _SurfaceDescOutput
-	, oSURFACE_MAPPED_SUBRESOURCE& _MappedSubresourceOutput
-	, const oFUNCTION<void(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut)>& _Visitor)
+// Calls the specified function on each pixel of two same-formatted images.
+void enumerate_pixels(const info& _SurfaceInfo
+	, const const_mapped_subresource& _MappedSubresource1
+	, const const_mapped_subresource& _MappedSubresource2
+	, const std::function<void(const void* _pPixel1, const void* _pPixel2)>& _Enumerator)
 {
-	oASSERT(all(_SurfaceDescInput.Dimensions == _SurfaceDescOutput.Dimensions), "Dimensions mismatch In(%dx%d) != Out(%dx%d)", _SurfaceDescInput.Dimensions.x, _SurfaceDescInput.Dimensions.y, _SurfaceDescOutput.Dimensions.x, _SurfaceDescOutput.Dimensions.y);
-
-	const void* pRow1 = _MappedSubresourceInput1.pData;
-	const void* pRow2 = _MappedSubresourceInput2.pData;
-	const void* pEnd1 = byte_add(pRow1, _SurfaceDescInput.Dimensions.y * _MappedSubresourceInput1.RowPitch);
-	void* pRowOut = _MappedSubresourceOutput.pData;
-	const int InputFormatSize = oSurfaceFormatGetSize(_SurfaceDescInput.Format);
-	const int OutputFormatSize = oSurfaceFormatGetSize(_SurfaceDescOutput.Format);
+	const void* pRow1 = _MappedSubresource1.data;
+	const void* pRow2 = _MappedSubresource2.data;
+	const void* pEnd1 = byte_add(pRow1, _SurfaceInfo.dimensions.y * _MappedSubresource1.row_pitch);
+	const int FormatSize = element_size(_SurfaceInfo.format);
 	while (pRow1 < pEnd1)
 	{
 		const void* pPixel1 = pRow1;
 		const void* pPixel2 = pRow2;
-		const void* pRowEnd1 = byte_add(pPixel1, _SurfaceDescInput.Dimensions.x * InputFormatSize);
+		const void* pRowEnd1 = byte_add(pPixel1, _SurfaceInfo.dimensions.x * FormatSize);
+		while (pPixel1 < pRowEnd1)
+		{
+			_Enumerator(pPixel1, pPixel2);
+			pPixel1 = byte_add(pPixel1, FormatSize);
+			pPixel2 = byte_add(pPixel2, FormatSize);
+		}
+
+		pRow1 = byte_add(pRow1, _MappedSubresource1.row_pitch);
+		pRow2 = byte_add(pRow2, _MappedSubresource2.row_pitch);
+	}
+}
+
+void enumerate_pixels(const info& _SurfaceInfoInput
+	, const const_mapped_subresource& _MappedSubresourceInput1
+	, const const_mapped_subresource& _MappedSubresourceInput2
+	, const info& _SurfaceInfoOutput
+	, mapped_subresource& _MappedSubresourceOutput
+	, const std::function<void(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut)>& _Enumerator)
+{
+	if (any(_SurfaceInfoInput.dimensions != _SurfaceInfoOutput.dimensions))
+		throw std::invalid_argument(formatf("Dimensions mismatch In(%dx%d) != Out(%dx%d)"
+			, _SurfaceInfoInput.dimensions.x
+			, _SurfaceInfoInput.dimensions.y
+			, _SurfaceInfoOutput.dimensions.x
+			, _SurfaceInfoOutput.dimensions.y));
+	
+	const void* pRow1 = _MappedSubresourceInput1.data;
+	const void* pRow2 = _MappedSubresourceInput2.data;
+	const void* pEnd1 = byte_add(pRow1, _SurfaceInfoInput.dimensions.y * _MappedSubresourceInput1.row_pitch);
+	void* pRowOut = _MappedSubresourceOutput.data;
+	const int InputFormatSize = element_size(_SurfaceInfoInput.format);
+	const int OutputFormatSize = element_size(_SurfaceInfoOutput.format);
+	while (pRow1 < pEnd1)
+	{
+		const void* pPixel1 = pRow1;
+		const void* pPixel2 = pRow2;
+		const void* pRowEnd1 = byte_add(pPixel1, _SurfaceInfoInput.dimensions.x * InputFormatSize);
 		void* pOutPixel = pRowOut;
 		while (pPixel1 < pRowEnd1)
 		{
-			_Visitor(pPixel1, pPixel2, pOutPixel);
+			_Enumerator(pPixel1, pPixel2, pOutPixel);
 			pPixel1 = byte_add(pPixel1, InputFormatSize);
 			pPixel2 = byte_add(pPixel2, InputFormatSize);
 			pOutPixel = byte_add(pOutPixel, OutputFormatSize);
 		}
 
-		pRow1 = byte_add(pRow1, _MappedSubresourceInput1.RowPitch);
-		pRow2 = byte_add(pRow2, _MappedSubresourceInput2.RowPitch);
-		pRowOut = byte_add(pRowOut, _MappedSubresourceOutput.RowPitch);
+		pRow1 = byte_add(pRow1, _MappedSubresourceInput1.row_pitch);
+		pRow2 = byte_add(pRow2, _MappedSubresourceInput2.row_pitch);
+		pRowOut = byte_add(pRowOut, _MappedSubresourceOutput.row_pitch);
 	}
 }
 
-static void AbsDiffR8toR8(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut, uint* _pSum, uint* _pSquaredSum)
+typedef void (*rms_enumerator)(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut, uint* _pAccum);
+
+static void sum_squared_diff_r8_to_r8(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut, uint* _pAccum)
 {
 	const uchar* p1 = (const uchar*)_pPixel1;
 	const uchar* p2 = (const uchar*)_pPixel2;
-	uchar absDiff = oUChar(abs(*p1 - *p2));
-	oStd::atomic_fetch_add(_pSum, (uint)absDiff);
-	oStd::atomic_fetch_add(_pSquaredSum, (uint)absDiff*absDiff);
+	uchar absDiff = uchar (abs(*p1 - *p2));
 	*(uchar*)_pPixelOut = absDiff;
+	oStd::atomic_fetch_add(_pAccum, uint(absDiff * absDiff));
 }
 
-static void AbsDiffB8G8R8toR8(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut, uint* _pSum, uint* _pSquaredSum)
+static void sum_squared_diff_b8g8r8_to_r8(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut, uint* _pAccum)
 {
 	const uchar* p = (const uchar*)_pPixel1;
 	uchar b = *p++; uchar g = *p++; uchar r = *p++;
@@ -1160,13 +1150,12 @@ static void AbsDiffB8G8R8toR8(const void* _pPixel1, const void* _pPixel2, void* 
 	p = (const uchar*)_pPixel2;
 	b = *p++; g = *p++; r = *p++;
 	float L2 = color(r, g, b, 255).luminance();
-	uchar absDiff = oUNORMAsUBYTE(abs(L1 - L2));
-	oStd::atomic_fetch_add(_pSum, (uint)absDiff);
-	oStd::atomic_fetch_add(_pSquaredSum, (uint)absDiff*absDiff);
+	uchar absDiff = unorm_to_ubyte(abs(L1 - L2));
 	*(uchar*)_pPixelOut = absDiff;
+	oStd::atomic_fetch_add(_pAccum, uint(absDiff * absDiff));
 }
 
-static void AbsDiffB8G8R8A8toR8(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut, uint* _pSum, uint* _pSquaredSum)
+static void sum_squared_diff_b8g8r8a8_to_r8(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut, uint* _pAccum)
 {
 	const uchar* p = (const uchar*)_pPixel1;
 	uchar a = *p++; uchar b = *p++; uchar g = *p++; uchar r = *p++;
@@ -1174,224 +1163,223 @@ static void AbsDiffB8G8R8A8toR8(const void* _pPixel1, const void* _pPixel2, void
 	p = (const uchar*)_pPixel2;
 	a = *p++; b = *p++; g = *p++; r = *p++;
 	float L2 = color(r, g, b, a).luminance();
-	uchar absDiff = oUNORMAsUBYTE(abs(L1 - L2));
-	oStd::atomic_fetch_add(_pSum, (uint)absDiff);
-	oStd::atomic_fetch_add(_pSquaredSum, (uint)absDiff*absDiff);
+	uchar absDiff = unorm_to_ubyte(abs(L1 - L2));
 	*(uchar*)_pPixelOut = absDiff;
+	oStd::atomic_fetch_add(_pAccum, uint(absDiff * absDiff));
 }
 
-bool oSurfaceCalcAbsDiff(const oSURFACE_DESC& _SurfaceDescInput
-	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresourceInput1
-	, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresourceInput2
-	, const oSURFACE_DESC& _SurfaceDescOutput
-	, oSURFACE_MAPPED_SUBRESOURCE& _MappedSubresourceOutput, float* _pRootMeanSquare, float* _pAverageDiff)
+static rms_enumerator get_rms_enumerator(format _InFormat, format _OutFormat)
 {
-	oFUNCTION<void(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut)> Fn;
+	#define IO(i,o) (((i)<<16) | (o))
+	int req = IO(_InFormat, _OutFormat);
 
-	#define oIO(In, Out) (((In)<<16) | (Out))
-	
-	const int ID = oIO(_SurfaceDescInput.Format, _SurfaceDescOutput.Format);
-
-	uint Sum = 0, SquaredSum = 0;
-
-	switch (ID)
+	switch (req)
 	{
-		case oIO(oSURFACE_R8_UNORM, oSURFACE_R8_UNORM): Fn = oBIND(AbsDiffR8toR8, oBIND1, oBIND2, oBIND3, &Sum, &SquaredSum); break;
-		case oIO(oSURFACE_B8G8R8_UNORM, oSURFACE_R8_UNORM): Fn = oBIND(AbsDiffB8G8R8toR8, oBIND1, oBIND2, oBIND3, &Sum, &SquaredSum); break;
-		case oIO(oSURFACE_B8G8R8A8_UNORM, oSURFACE_R8_UNORM): Fn = oBIND(AbsDiffB8G8R8A8toR8, oBIND1, oBIND2, oBIND3, &Sum, &SquaredSum); break;
-		default: return oErrorSetLast(std::errc::invalid_argument, "%s -> %s not supported", as_string(_SurfaceDescInput.Format), as_string(_SurfaceDescOutput.Format));
+		case IO(r8_unorm, r8_unorm): return sum_squared_diff_r8_to_r8;
+		case IO(b8g8r8_unorm, r8_unorm): return sum_squared_diff_b8g8r8_to_r8;
+		case IO(b8g8r8a8_unorm, r8_unorm): return sum_squared_diff_b8g8r8a8_to_r8;
+		default: break;
 	}
 
-	oSurfaceVisitPixel(_SurfaceDescInput, _MappedSubresourceInput1, _MappedSubresourceInput2, _SurfaceDescOutput, _MappedSubresourceOutput, Fn);
+	throw std::invalid_argument(formatf("%s -> %s not supported", as_string(_InFormat), as_string(_OutFormat)));
 
-	if (_pRootMeanSquare)
-		*_pRootMeanSquare = sqrt(Sum / float(_SurfaceDescInput.Dimensions.x * _SurfaceDescInput.Dimensions.y));
-
-	if (_pAverageDiff)
-		*_pAverageDiff = Sum / float(_SurfaceDescInput.Dimensions.x * _SurfaceDescInput.Dimensions.y);
-
-	return true;
+	#undef IO
 }
 
-static void RMSR8(const void* _pPixel, uint* _pAccum)
+float calc_rms(const info& _SurfaceInfo
+	, const const_mapped_subresource& _MappedSubresource1
+	, const const_mapped_subresource& _MappedSubresource2)
 {
-	const uchar& p = *(const uchar*)_pPixel;
-	uint p2 = p * p;
-	oStd::atomic_fetch_add(_pAccum, p2);
+	std::function<void(const void* _pPixel1, const void* _pPixel2)> Fn;
+
+	rms_enumerator en = get_rms_enumerator(_SurfaceInfo.format, r8_unorm);
+	uint SumOfSquares = 0;
+	uint DummyPixelOut[4]; // largest a pixel can ever be currently
+
+	enumerate_pixels(_SurfaceInfo
+		, _MappedSubresource1
+		, _MappedSubresource2
+		, std::bind(en, _1, _2, &DummyPixelOut, &SumOfSquares));
+
+	return sqrt(SumOfSquares / float(_SurfaceInfo.dimensions.x * _SurfaceInfo.dimensions.y));
 }
 
-bool oSurfaceCalcRootMeanSquare(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresource, float* _pRootMeanSquare)
+float calc_rms(const info& _SurfaceInfoInput
+	, const const_mapped_subresource& _MappedSubresourceInput1
+	, const const_mapped_subresource& _MappedSubresourceInput2
+	, const info& _SurfaceInfoOutput
+	, mapped_subresource& _MappedSubresourceOutput)
 {
-	oFUNCTION<void(const void* _pPixel)> Fn;
+	std::function<void(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut)> Fn;
 
-	uint Accum = 0;
+	rms_enumerator en = get_rms_enumerator(_SurfaceInfoInput.format, _SurfaceInfoOutput.format);
+	uint SumOfSquares = 0;
 
-	switch (_SurfaceDesc.Format)
-	{
-		case oSURFACE_R8_UNORM: Fn = oBIND(RMSR8, oBIND1, &Accum); break;
-		default: return oErrorSetLast(std::errc::invalid_argument, "%s not supported", as_string(_SurfaceDesc.Format));
-	}
+	enumerate_pixels(_SurfaceInfoInput
+		, _MappedSubresourceInput1
+		, _MappedSubresourceInput2
+		, _SurfaceInfoOutput
+		, _MappedSubresourceOutput
+		, std::bind(en, _1, _2, _3, &SumOfSquares));
 
-	oSurfaceVisitPixel(_SurfaceDesc, _MappedSubresource, Fn);
-	*_pRootMeanSquare = sqrt(Accum / float(_SurfaceDesc.Dimensions.x * _SurfaceDesc.Dimensions.y));
-
-	return true;
+	return sqrt(SumOfSquares / float(_SurfaceInfoInput.dimensions.x * _SurfaceInfoInput.dimensions.y));
 }
 
-static void HistogramR8(const void* _pPixel, uint _Histogram[256])
+typedef void (*histogram_enumerator)(const void* _pPixel, uint* _Histogram);
+
+static void histogram_r8_unorm_8bit(const void* _pPixel, uint* _Histogram)
 {
 	uchar c = *(const uchar*)_pPixel;
 	oStd::atomic_increment(&_Histogram[c]);
 }
 
-static void HistogramB8G8R8A8(const void* _pPixel, uint _Histogram[256])
+static void histogram_b8g8r8a8_unorm_8bit(const void* _pPixel, uint* _Histogram)
 {
 	const uchar* p = (const uchar*)_pPixel;
 	uchar b = *p++; uchar g = *p++; uchar r = *p++;
-	uchar Index = oUNORMAsUBYTE(color(r, g, b, 255).luminance());
+	uchar Index = unorm_to_ubyte(color(r, g, b, 255).luminance());
 	oStd::atomic_increment(&_Histogram[Index]);
 }
 
-bool oSurfaceCalcHistogram(const oSURFACE_DESC& _SurfaceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _MappedSubresource, uint _Histogram[256])
+static void histogram_r16_unorm_16bit(const void* _pPixel, uint* _Histogram)
 {
-	memset(_Histogram, 0, sizeof(_Histogram));
+	ushort c = *(const ushort*)_pPixel;
+	oStd::atomic_increment(&_Histogram[c]);
+}
 
-	oFUNCTION<void(const void* _pPixel)> Fn;
-	switch (_SurfaceDesc.Format)
+static void histogram_r16_float_16bit(const void* _pPixel, uint* _Histogram)
+{
+	half h = saturate(*(const half*)_pPixel);
+	ushort c = static_cast<ushort>(round(65535.0f * h));
+	oStd::atomic_increment(&_Histogram[c]);
+}
+
+histogram_enumerator get_histogram_enumerator(format _Format, int _Bitdepth)
+{
+	#define IO(f,b) (((f) << 16) | (b))
+	int sel = IO(_Format, _Bitdepth);
+	switch (sel)
 	{
-		case oSURFACE_R8_UNORM: Fn = oBIND(HistogramR8, oBIND1, _Histogram); break;
-
-		case oSURFACE_B8G8R8_UNORM:
-		case oSURFACE_B8G8R8A8_UNORM: Fn = oBIND(HistogramB8G8R8A8, oBIND1, _Histogram); break;
-
-		default: return oErrorSetLast(std::errc::invalid_argument, "%s not supported", as_string(_SurfaceDesc.Format));
+		case IO(r8_unorm, 8): return histogram_r8_unorm_8bit;
+		case IO(b8g8r8a8_unorm, 8): return histogram_b8g8r8a8_unorm_8bit;
+		case IO(r16_unorm, 16): return histogram_r16_unorm_16bit;
+		case IO(r16_float, 16): return histogram_r16_float_16bit;
+		default: break;
 	}
 
-	oSurfaceVisitPixel(_SurfaceDesc, _MappedSubresource, Fn);
-	return true;
+	throw std::invalid_argument(formatf("%dbit histogram on %s not supported", _Bitdepth, as_string(_Format)));
+
+	#undef IO
 }
 
-// @oooii-tony: This should probably be separate from the generic functional 
-// API because ideas like interface and oRefCount are separate.
-
-#include <oBasis/oRefCount.h>
-#include <oConcurrency/mutex.h>
-
-using namespace oConcurrency;
-
-struct oSurfaceImpl : oSurface
+void histogram8(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[256])
 {
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_NOOP_QUERYINTERFACE();
+	memset(_Histogram, 0, sizeof(uint) * 256);
+	histogram_enumerator en = get_histogram_enumerator(_SurfaceInfo.format, 8);
+	enumerate_pixels(_SurfaceInfo, _MappedSubresource, std::bind(en, _1, _Histogram));
+}
 
-	oSurfaceImpl(const oSURFACE_DESC& _Desc, bool* _pSuccess);
-	~oSurfaceImpl();
-
-	void GetDesc(oSURFACE_DESC* _pDesc) const threadsafe override { *_pDesc = oThreadsafe(Desc); }
-
-	void UpdateSubresource(int _Subresource, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source) threadsafe override;
-	void UpdateSubresource(int _Subresource, const oSURFACE_BOX& _Box, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source) threadsafe override;
-
-	void Map(int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMapped, int2* _pByteDimensions) threadsafe override;
-	void Unmap(int _Subresource) threadsafe override;
-
-	void MapConst(int _Subresource, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMapped, int2* _pByteDimensions) const threadsafe override;
-	void UnmapConst(int _Subresource) const threadsafe override;
-
-private:
-	void* pData;
-	oSURFACE_DESC Desc;
-	oRefCount RefCount;
-	shared_mutex Mutex; // todo: separate locking mechanism to be per-subresource
-};
-
-oSurfaceImpl::oSurfaceImpl(const oSURFACE_DESC& _Desc, bool* _pSuccess)
-	: Desc(_Desc)
-	, pData(nullptr)
+void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[65536])
 {
-	*_pSuccess = false;
+	memset(_Histogram, 0, sizeof(uint) * 65536);
+	histogram_enumerator en = get_histogram_enumerator(_SurfaceInfo.format, 16);
+	enumerate_pixels(_SurfaceInfo, _MappedSubresource, std::bind(en, _1, _Histogram));
+}
 
-	const int kBufferSize = oSurfaceCalcSize(_Desc);
-	pData = new char[kBufferSize];
+buffer::buffer()
+	: Data(nullptr)
+{}
 
-	if (!pData)
+buffer::buffer(const surface::info& _SurfaceInfo)
+	: Data(new char[total_size(_SurfaceInfo)])
+	, Info(_SurfaceInfo)
+{}
+
+buffer::buffer(buffer&& _That)
+{
+	operator=(std::move(_That));
+}
+
+buffer::~buffer()
+{
+	if (Data)
+		delete [] Data;
+}
+
+buffer& buffer::operator=(buffer&& _That)
+{
+	if (this != &_That)
 	{
-		oErrorSetLast(std::errc::no_buffer_space);
-		return;
+		Mutex.lock();
+		_That.Mutex.lock();
+		Data = _That.Data; _That.Data = nullptr;
+		Info = _That.Info; _That.Info = info();
+		_That.Mutex.unlock();
+		Mutex.unlock();
 	}
-
-	*_pSuccess = true;
+	return *this;
 }
 
-bool oSurfaceCreate(const oSURFACE_DESC& _Desc, threadsafe oSurface** _ppSurface)
+struct info buffer::info() const
 {
-	// todo: make this alloc sizeof(oSurfaceImpl) + aligned(new char[buffersize]) to avoid the extra malloc.
-	bool success = false;
-	oCONSTRUCT(_ppSurface, oSurfaceImpl(_Desc, &success));
-	return success;
+	return Info;
 }
 
-oSurfaceImpl::~oSurfaceImpl()
+void buffer::update_subresource(int _Subresource, const const_mapped_subresource& _Source)
 {
-	if (pData)
-		delete [] pData;
-}
-
-void oSurfaceImpl::UpdateSubresource(int _Subresource, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source) threadsafe
-{
-	oSURFACE_MAPPED_SUBRESOURCE Dest;
 	int2 ByteDimensions;
-	oSurfaceCalcMappedSubresource(oThreadsafe(Desc), _Subresource, 0, pData, &Dest, &ByteDimensions);
-
+	mapped_subresource Dest = get_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
 	lock_guard<shared_mutex> lock(Mutex);
-	memcpy2d(Dest.pData, Dest.RowPitch, _Source.pData, _Source.RowPitch, ByteDimensions.x, ByteDimensions.y);
+	memcpy2d(Dest.data, Dest.row_pitch, _Source.data, _Source.row_pitch, ByteDimensions.x, ByteDimensions.y);
 }
 
-void oSurfaceImpl::UpdateSubresource(int _Subresource, const oSURFACE_BOX& _Box, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source) threadsafe
+void buffer::update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source)
 {
-	if (oSurfaceFormatIsBlockCompressed(Desc.Format) || Desc.Format == oSURFACE_R1_UNORM)
-		oTHROW(protocol_error, "block compressed formats not supported");
+	if (is_block_compressed(Info.format) || Info.format == r1_unorm)
+		throw std::invalid_argument("block compressed and bit formats not supported");
 
-	oSURFACE_MAPPED_SUBRESOURCE Dest;
 	int2 ByteDimensions;
-	oSurfaceCalcMappedSubresource(oThreadsafe(Desc), _Subresource, 0, pData, &Dest, &ByteDimensions);
+	mapped_subresource Dest = get_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
 
-	const int NumRows = _Box.Bottom - _Box.Top;
-	int PixelSize = oSurfaceFormatGetSize(Desc.Format);
-	int RowSize = PixelSize * (_Box.Right - _Box.Left);
+	const int NumRows = _Box.height();
+	int PixelSize = element_size(Info.format);
+	int RowSize = PixelSize * _Box.width();
 
 	// Dest points at start of subresource, so offset to subrect of first slice
-	Dest.pData = byte_add(Dest.pData, (_Box.Top * Dest.RowPitch) + _Box.Left * PixelSize);
+	Dest.data = byte_add(Dest.data, (_Box.top * Dest.row_pitch) + _Box.left * PixelSize);
 
-	const void* pSource = _Source.pData;
+	const void* pSource = _Source.data;
 
 	lock_guard<shared_mutex> lock(Mutex);
-	for (uint slice = _Box.Front; slice < _Box.Back; slice++)
+	for (uint slice = _Box.front; slice < _Box.back; slice++)
 	{
-		memcpy2d(Dest.pData, Dest.RowPitch, pSource, _Source.RowPitch, RowSize, NumRows);
-		Dest.pData = byte_add(Dest.pData, Dest.DepthPitch);
-		pSource = byte_add(pSource, _Source.DepthPitch);
+		memcpy2d(Dest.data, Dest.row_pitch, pSource, _Source.row_pitch, RowSize, NumRows);
+		Dest.data = byte_add(Dest.data, Dest.depth_pitch);
+		pSource = byte_add(pSource, _Source.depth_pitch);
 	}
 }
 
-void oSurfaceImpl::Map(int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMapped, int2* _pByteDimensions) threadsafe
+void buffer::map(int _Subresource, mapped_subresource* _pMapped, int2* _pByteDimensions)
 {
 	Mutex.lock();
-	oSurfaceCalcMappedSubresource(oThreadsafe(Desc), _Subresource, 0, pData, _pMapped, _pByteDimensions);
+	*_pMapped = get_mapped_subresource(Info, _Subresource, 0, Data, _pByteDimensions);
 }
 
-void oSurfaceImpl::Unmap(int _Subresource) threadsafe
+void buffer::unmap(int _Subresource)
 {
 	Mutex.unlock();
 }
 
-void oSurfaceImpl::MapConst(int _Subresource, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMapped, int2* _pByteDimensions) const threadsafe
+void buffer::map_const(int _Subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions) const
 {
-	Mutex.lock_shared();
-	oSurfaceCalcMappedSubresource(oThreadsafe(Desc), _Subresource, 0, pData, _pMapped, _pByteDimensions);
+	const_cast<shared_mutex&>(Mutex).lock_shared();
+	*_pMapped = get_const_mapped_subresource(Info, _Subresource, 0, Data, _pByteDimensions);
 }
 
-void oSurfaceImpl::UnmapConst(int _Subresource) const threadsafe
+void buffer::unmap_const(int _Subresource) const
 {
-	Mutex.unlock_shared();
+	const_cast<shared_mutex&>(Mutex).unlock_shared();
 }
+
+	} // namespace surface
+} // namespace ouro

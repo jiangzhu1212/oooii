@@ -35,7 +35,7 @@ interface oCamera : oInterface
 	struct MODE
 	{
 		int2 Dimensions;
-		oSURFACE_FORMAT Format;
+		ouro::surface::format Format;
 		int BitRate;
 	};
 

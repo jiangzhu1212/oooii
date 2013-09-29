@@ -33,7 +33,7 @@
 
 using namespace ouro;
 
-bool oD3D11CreateRenderTarget(oGPUDevice* _pDevice, const char* _Name, IDXGISwapChain* _pSwapChain, oSURFACE_FORMAT _DepthStencilFormat, oGPURenderTarget** _ppRenderTarget)
+bool oD3D11CreateRenderTarget(oGPUDevice* _pDevice, const char* _Name, IDXGISwapChain* _pSwapChain, ouro::surface::format _DepthStencilFormat, oGPURenderTarget** _ppRenderTarget)
 {
 	oGPU_CREATE_CHECK_NAME();
 	if (!_pSwapChain)
@@ -52,7 +52,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget)
 	
 	for (uint i = 0; i < oCOUNTOF(Desc.Format); i++)
 	{
-		if (oSurfaceFormatIsYUV(Desc.Format[i]))
+		if (ouro::surface::is_yuv(Desc.Format[i]))
 		{
 			oErrorSetLast(std::errc::invalid_argument, "YUV render targets are not supported (format %s specified)", ouro::as_string(Desc.Format[i]));
 			return;
@@ -65,7 +65,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget)
 	*_pSuccess = true;
 }
 
-oD3D11RenderTarget::oD3D11RenderTarget(oGPUDevice* _pDevice, IDXGISwapChain* _pSwapChain, oSURFACE_FORMAT _DepthStencilFormat, const char* _Name, bool* _pSuccess)
+oD3D11RenderTarget::oD3D11RenderTarget(oGPUDevice* _pDevice, IDXGISwapChain* _pSwapChain, ouro::surface::format _DepthStencilFormat, const char* _Name, bool* _pSuccess)
 	: oGPUDeviceChildMixin(_pDevice, _Name)
 	, SwapChain(_pSwapChain)
 {
@@ -132,7 +132,7 @@ void oD3D11RenderTarget::GetDesc(DESC* _pDesc) const threadsafe
 		}
 
 		else
-			_pDesc->DepthStencilFormat = oSURFACE_UNKNOWN;
+			_pDesc->DepthStencilFormat = ouro::surface::unknown;
 	}
 }
 

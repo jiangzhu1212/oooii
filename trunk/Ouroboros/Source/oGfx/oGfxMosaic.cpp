@@ -94,10 +94,10 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 
 	finally OSEGeoUnmap([&] { Geo->UnmapConst(); });
 
-	oSURFACE_CONST_MAPPED_SUBRESOURCE MSRGeo;
-	MSRGeo.pData = GeoMapped.pIndices;
-	MSRGeo.RowPitch = sizeof(uint);
-	MSRGeo.DepthPitch = MSRGeo.RowPitch * GeoDesc.NumIndices;
+	ouro::surface::const_mapped_subresource MSRGeo;
+	MSRGeo.data = GeoMapped.pIndices;
+	MSRGeo.row_pitch = sizeof(uint);
+	MSRGeo.depth_pitch = MSRGeo.row_pitch * GeoDesc.NumIndices;
 
 	if (!oGPUCreateIndexBuffer(Device, "MosaicIB", GeoDesc.NumIndices, GeoDesc.NumVertices, MSRGeo, &Indices))
 		return false; // pass through error
@@ -152,7 +152,7 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 		if (!oGPUCreateVertexBuffer(Device
 			, "MosaicExVB"
 			, GeoDesc.NumVertices
-			, [&](const oGPU_VERTEX_ELEMENT& _Element, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pElementData)
+			, [&](const oGPU_VERTEX_ELEMENT& _Element, ouro::surface::const_mapped_subresource* _pElementData)
 				{
 					if (!_Element.Instanced)
 					{
@@ -172,12 +172,12 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 						}
 						if (textureSet != oInvalid)
 						{
-							_pElementData->pData = ExtraGeoMapped[textureSet].pTexcoords;
-							_pElementData->RowPitch = sizeof(*ExtraGeoMapped[textureSet].pTexcoords);
-							_pElementData->DepthPitch = 0;
+							_pElementData->data = ExtraGeoMapped[textureSet].pTexcoords;
+							_pElementData->row_pitch = sizeof(*ExtraGeoMapped[textureSet].pTexcoords);
+							_pElementData->depth_pitch = 0;
 						}
 						else
-							_pElementData->pData = nullptr;
+							_pElementData->data = nullptr;
 					}
 				}
 			, pd.NumElements

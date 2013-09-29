@@ -44,27 +44,27 @@ static bool ResolvePath(path& _Path, const char* _RelativePath, bool _PathMustEx
 	else return _pTest->BuildPath(_Path, _RelativePath, oTest::DATA);
 }
 
-static bool TestSurface(const char* _Name, const oSURFACE_DESC& _SourceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SourceMapped, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier, oTest* _pTest)
+static bool TestSurface(const char* _Name, const ouro::surface::info& _SourceInfo, const ouro::surface::const_mapped_subresource& _SourceMapped, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier, oTest* _pTest)
 {
 	intrusive_ptr<oImage> image;
-	if (!oImageCreate(_Name, _SourceDesc, &image))
+	if (!oImageCreate(_Name, _SourceInfo, &image))
 		return false; // pass through error
-	image->CopyData(_SourceMapped.pData, _SourceMapped.RowPitch);
+	image->CopyData(_SourceMapped.data, _SourceMapped.row_pitch);
 	return _pTest->TestImage(image, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier);
 }
 
-static bool AllocateAndLoadSurface(void** _pHandle, oSURFACE_DESC* _pDesc, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMapped, const char* _URIReference)
+static bool AllocateAndLoadSurface(void** _pHandle, ouro::surface::info* _pInfo, ouro::surface::const_mapped_subresource* _pMapped, const char* _URIReference)
 {
 	intrusive_ptr<oImage> image;
 	if (!oImageLoad(_URIReference, &image))
 		return false; // pass through error
 
-	oImageGetSurfaceDesc(image, _pDesc);
-	int imageMapSize = oSurfaceSubresourceCalcSize(*_pDesc, 0);
+	*_pInfo = oImageGetSurfaceInfo(image);
+	int imageMapSize = ouro::surface::subresource_size(*_pInfo, 0);
 	std::vector<char>* pBuf = new std::vector<char>();
 	pBuf->resize(imageMapSize);
-	oSurfaceCalcMappedSubresource(*_pDesc, 0, 0, pBuf->data(), _pMapped);
-	image->CopyDataTo((void*)_pMapped->pData, _pMapped->RowPitch);
+	*_pMapped = ouro::surface::get_const_mapped_subresource(*_pInfo, 0, 0, pBuf->data());
+	image->CopyDataTo((void*)_pMapped->data, _pMapped->row_pitch);
 	*_pHandle = pBuf;
 	return true;
 }

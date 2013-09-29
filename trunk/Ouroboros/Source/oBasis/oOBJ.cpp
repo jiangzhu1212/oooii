@@ -402,7 +402,7 @@ static uint oOBJGetVertexElements(oGPU_VERTEX_ELEMENT* _pElements, uint _MaxNumE
 	if (_OBJDesc.pPositions)
 	{
 		_pElements[n].Semantic = 'POS0';
-		_pElements[n].Format = oSURFACE_R32G32B32_FLOAT;
+		_pElements[n].Format = ouro::surface::r32g32b32_float;
 		_pElements[n].InputSlot = 0;
 		_pElements[n].Instanced = false;
 		n++;
@@ -411,7 +411,7 @@ static uint oOBJGetVertexElements(oGPU_VERTEX_ELEMENT* _pElements, uint _MaxNumE
 	if (_OBJDesc.pTexcoords)
 	{
 		_pElements[n].Semantic = 'TEX0';
-		_pElements[n].Format = oSURFACE_R32G32B32_FLOAT;
+		_pElements[n].Format = ouro::surface::r32g32b32_float;
 		_pElements[n].InputSlot = n;
 		_pElements[n].Instanced = false;
 		n++;
@@ -420,7 +420,7 @@ static uint oOBJGetVertexElements(oGPU_VERTEX_ELEMENT* _pElements, uint _MaxNumE
 	if (_OBJDesc.pNormals)
 	{
 		_pElements[n].Semantic = 'NRM0';
-		_pElements[n].Format = oSURFACE_R32G32B32_FLOAT;
+		_pElements[n].Format = ouro::surface::r32g32b32_float;
 		_pElements[n].InputSlot = n;
 		_pElements[n].Instanced = false;
 		n++;

@@ -26,9 +26,10 @@
 #include <oBase/fixed_string.h>
 #include <oBase/byte.h>
 
-using namespace ouro;
+namespace ouro {
+	namespace surface {
 
-void oSurfaceFillSolid(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const color& _Color)
+void fill_solid(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const color& _Color)
 {
 	for (int y = 0; y < _Dimensions.y; y++)
 	{
@@ -38,7 +39,7 @@ void oSurfaceFillSolid(color* _pColors, size_t _RowPitch, const int2& _Dimension
 	}
 }
 
-void oSurfaceFillSolidMasked(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const color& _Color, uint _Mask)
+void fill_solid_masked(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const color& _Color, uint _Mask)
 {
 	for (int y = 0; y < _Dimensions.y; y++)
 	{
@@ -48,7 +49,7 @@ void oSurfaceFillSolidMasked(color* _pColors, size_t _RowPitch, const int2& _Dim
 	}
 }
 
-void oSurfaceFillCheckerboard(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const int2& _GridDimensions, const color& _Color0, const color& _Color1)
+void fill_checkerboard(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const int2& _GridDimensions, const color& _Color0, const color& _Color1)
 {
 	color c[2];
 	for (int y = 0; y < _Dimensions.y; y++)
@@ -77,7 +78,7 @@ void oSurfaceFillCheckerboard(color* _pColors, size_t _RowPitch, const int2& _Di
 	}
 }
 
-void oSurfaceFillGradient(color* _pColors, size_t _RowPitch, const int2& _Dimensions, color _CornerColors[4])
+void fill_gradient(color* _pColors, size_t _RowPitch, const int2& _Dimensions, color _CornerColors[4])
 {
 	for (int y = 0; y < _Dimensions.y; y++)
 	{
@@ -93,7 +94,7 @@ void oSurfaceFillGradient(color* _pColors, size_t _RowPitch, const int2& _Dimens
 	}
 }
 
-void oSurfaceFillGridLines(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const int2& _GridDimensions, const color& _GridColor)
+void fill_grid_lines(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const int2& _GridDimensions, const color& _GridColor)
 {
 	for (int y = 0; y < _Dimensions.y; y++)
 	{
@@ -117,7 +118,7 @@ void oSurfaceFillGridLines(color* _pColors, size_t _RowPitch, const int2& _Dimen
 	}
 }
 
-bool oSurfaceFillGridNumbers(const int2& _Dimensions, const int2& _GridDimensions, oFUNCTION<bool(const int2& _DrawBoxPosition, const int2& _DrawBoxSize, const char* _Text)> _DrawText)
+bool fill_grid_numbers(const int2& _Dimensions, const int2& _GridDimensions, std::function<bool(const int2& _DrawBoxPosition, const int2& _DrawBoxSize, const char* _Text)> _DrawText)
 {
 	int2 DBPosition;
 
@@ -137,3 +138,6 @@ bool oSurfaceFillGridNumbers(const int2& _Dimensions, const int2& _GridDimension
 
 	return true;
 }
+
+	} // namespace surface
+} // namespace ouro

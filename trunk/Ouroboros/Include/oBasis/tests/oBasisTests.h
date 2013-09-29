@@ -44,10 +44,10 @@ struct oBasisTestServices
 	// receives an opaque state object that will hold the memory that is pointed
 	// at by *_pMapped and should have DeallocateSurface() called on it when 
 	// finished.
-	oFUNCTION<bool(void** _pHandle, oSURFACE_DESC* _pDesc, oSURFACE_CONST_MAPPED_SUBRESOURCE* _pMapped, const char* _URIReference)> AllocateAndLoadSurface;
+	oFUNCTION<bool(void** _pHandle, ouro::surface::info* _pInfo, ouro::surface::const_mapped_subresource* _pMapped, const char* _URIReference)> AllocateAndLoadSurface;
 	oFUNCTION<void(void* _Handle)> DeallocateSurface;
 
-	oFUNCTION<bool(const char* _Name, const oSURFACE_DESC& _SourceDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SourceMapped, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier)> TestSurface;
+	oFUNCTION<bool(const char* _Name, const ouro::surface::info& _SourceInfo, const ouro::surface::const_mapped_subresource& _SourceMapped, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier)> TestSurface;
 };
 
 // oBasisTests follows a pattern: all functions return true if successful, false

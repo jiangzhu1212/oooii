@@ -29,30 +29,36 @@
 #define oSurfaceFill_h
 
 #include <oBase/color.h>
-#include <oBase/function.h>
 #include <oBasis/oMathTypes.h>
+#include <functional>
 
-// Fills the specified 32-bit BGRA (ouro::color) buffer with the specified solid 
+namespace ouro {
+	namespace surface {
+
+// Fills the specified 32-bit BGRA (color) buffer with the specified solid 
 // color.
-void oSurfaceFillSolid(ouro::color* _pColors, size_t _RowPitch, const int2& _Dimensions, const ouro::color& _Color);
+void fill_solid(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const color& _Color);
 
-// Fills the specified 32-bit BGRA (ouro::color) buffer with the specified solid 
+// Fills the specified 32-bit BGRA (color) buffer with the specified solid 
 // color, but doesn't touch the bits that are masked out.
-void oSurfaceFillSolidMasked(ouro::color* _pColors, size_t _RowPitch, const int2& _Dimensions, const ouro::color& _Color, uint _Mask);
+void fill_solid_masked(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const color& _Color, uint _Mask);
 
-// Fills the specified 32-bit BGRA (ouro::color buffer) with a checkerboard pattern
+// Fills the specified 32-bit BGRA (color buffer) with a checkerboard pattern
 // of the specified dimensions and two colors.
-void oSurfaceFillCheckerboard(ouro::color* _pColors, size_t _RowPitch, const int2& _Dimensions, const int2& _GridDimensions, const ouro::color& _Color0, const ouro::color& _Color1);
+void fill_checkerboard(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const int2& _GridDimensions, const color& _Color0, const color& _Color1);
 
 // Fills the specified 32-bit BGRA buffer with a gradient that goes between the
 // 4 specified colors at the corners of the image.
-void oSurfaceFillGradient(ouro::color* _pColors, size_t _RowPitch, const int2& _Dimensions, ouro::color _CornerColors[4]);
+void fill_gradient(color* _pColors, size_t _RowPitch, const int2& _Dimensions, color _CornerColors[4]);
 
 // This draws a rectangle at [(0,0),_GridDim-int2(1,1)] in the specified color,
 // thus producing a grid pattern.
-void oSurfaceFillGridLines(ouro::color* _pColors, size_t _RowPitch, const int2& _Dimensions, const int2& _GridDimensions, const ouro::color& _GridColor);
+void fill_grid_lines(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const int2& _GridDimensions, const color& _GridColor);
 
 // This iterates through each grid box and calls the _DrawText function
-bool oSurfaceFillGridNumbers(const int2& _Dimensions, const int2& _GridDimensions, oFUNCTION<bool(const int2& _DrawBoxPosition, const int2& _DrawBoxSize, const char* _Text)> _DrawText);
+bool fill_grid_numbers(const int2& _Dimensions, const int2& _GridDimensions, std::function<bool(const int2& _DrawBoxPosition, const int2& _DrawBoxSize, const char* _Text)> _DrawText);
+
+	} // namespace surface
+} // namespace ouro
 
 #endif

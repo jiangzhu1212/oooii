@@ -53,30 +53,30 @@ const char* as_string(const oImage::FORMAT& _Format)
 
 } // namespace ouro
 
-oImage::FORMAT oImageFormatFromSurfaceFormat(oSURFACE_FORMAT _Format)
+oImage::FORMAT oImageFormatFromSurfaceFormat(ouro::surface::format _Format)
 {
 	switch (_Format)
 	{
-		case oSURFACE_UNKNOWN: return oImage::UNKNOWN;
-		case oSURFACE_R8G8B8A8_UNORM: return oImage::RGBA32;
-		case oSURFACE_R8G8B8_UNORM: return oImage::RGB24;
-		case oSURFACE_B8G8R8A8_UNORM: return oImage::BGRA32;
-		case oSURFACE_B8G8R8_UNORM: return oImage::BGR24;
-		case oSURFACE_R8_UNORM: return oImage::R8;
+		case ouro::surface::unknown: return oImage::UNKNOWN;
+		case ouro::surface::r8g8b8a8_unorm: return oImage::RGBA32;
+		case ouro::surface::r8g8b8_unorm: return oImage::RGB24;
+		case ouro::surface::b8g8r8a8_unorm: return oImage::BGRA32;
+		case ouro::surface::b8g8r8_unorm: return oImage::BGR24;
+		case ouro::surface::r8_unorm: return oImage::R8;
 		oNODEFAULT;
 	}
 }
 
-oSURFACE_FORMAT oImageFormatToSurfaceFormat(oImage::FORMAT _Format)
+ouro::surface::format oImageFormatToSurfaceFormat(oImage::FORMAT _Format)
 {
 	switch (_Format)
 	{
-		case oImage::UNKNOWN: return oSURFACE_UNKNOWN;
-		case oImage::RGBA32: return oSURFACE_R8G8B8A8_UNORM;
-		case oImage::RGB24: return oSURFACE_R8G8B8_UNORM;
-		case oImage::BGRA32: return oSURFACE_B8G8R8A8_UNORM;
-		case oImage::BGR24: return oSURFACE_B8G8R8_UNORM;
-		case oImage::R8: return oSURFACE_R8_UNORM;
+		case oImage::UNKNOWN: return ouro::surface::unknown;
+		case oImage::RGBA32: return ouro::surface::r8g8b8a8_unorm;
+		case oImage::RGB24: return ouro::surface::r8g8b8_unorm;
+		case oImage::BGRA32: return ouro::surface::b8g8r8a8_unorm;
+		case oImage::BGR24: return ouro::surface::b8g8r8_unorm;
+		case oImage::R8: return ouro::surface::r8_unorm;
 		oNODEFAULT;
 	}
 }
@@ -250,12 +250,12 @@ bool oImageCreate(const char* _Name, const oImage::DESC& _Desc, oImage** _ppImag
 	return success;
 }
 
-bool oImageCreate(const char* _Name, const oSURFACE_DESC& _Desc, oImage** _ppImage)
+bool oImageCreate(const char* _Name, const ouro::surface::info& _Info, oImage** _ppImage)
 {
 	oImage::DESC id;
-	id.Format = oImageFormatFromSurfaceFormat(_Desc.Format);
-	id.Dimensions = oSurfaceCalcDimensions(_Desc);
-	id.RowPitch = oSurfaceMipCalcRowPitch(_Desc, 0);
+	id.Format = oImageFormatFromSurfaceFormat(_Info.format);
+	id.Dimensions = ouro::surface::dimensions(_Info);
+	id.RowPitch = ouro::surface::row_pitch(_Info, 0);
 	return oImageCreate(_Name, id, _ppImage);
 }
 
@@ -429,19 +429,14 @@ bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _
 	if (!oImageCreate("Diff Image", descDiff, &DiffImage))
 		return false; // pass through error
 
-	oSURFACE_DESC In;
-	oImageGetSurfaceDesc(_pImage1, &In);
-	oSURFACE_CONST_MAPPED_SUBRESOURCE msr1, msr2;
-	oImageGetMappedSubresource(LockedImage1, &msr1);
-	oImageGetMappedSubresource(LockedImage2, &msr2);
+	ouro::surface::info In = oImageGetSurfaceInfo(_pImage1);
+	ouro::surface::const_mapped_subresource msr1 = oImageGetMappedSubresource(LockedImage1);
+	ouro::surface::const_mapped_subresource msr2 = oImageGetMappedSubresource(LockedImage2);
 
-	oSURFACE_DESC Out;
-	oSURFACE_MAPPED_SUBRESOURCE msrDiff;
-	oImageGetSurfaceDesc(DiffImage, &Out);
-	oImageGetMappedSubresource(DiffImage, &msrDiff);
+	ouro::surface::info Out = oImageGetSurfaceInfo(DiffImage);
+	ouro::surface::mapped_subresource msrDiff = oImageGetMappedSubresource(DiffImage);
 
-	if (!oSurfaceCalcAbsDiff(In, msr1, msr2, Out, msrDiff, _pRootMeanSquare))
-		return false; // pass through error
+	float rms = calc_rms(In, msr1, msr2, Out, msrDiff);
 
 	if (_ppDiffImage)
 	{

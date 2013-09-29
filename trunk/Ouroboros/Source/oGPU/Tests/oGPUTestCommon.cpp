@@ -59,7 +59,7 @@ bool oGPUTestApp::Create(const char* _Title, bool _DevMode, const int* _pSnapsho
 			oThrowLastError();
 	}
 
-	if (!Device->CreatePrimaryRenderTarget(Window, oSURFACE_D24_UNORM_S8_UINT, true, &PrimaryRenderTarget))
+	if (!Device->CreatePrimaryRenderTarget(Window, ouro::surface::d24_unorm_s8_uint, true, &PrimaryRenderTarget))
 		return false; // pass through error
 
 	Device->GetImmediateCommandList(&CommandList);

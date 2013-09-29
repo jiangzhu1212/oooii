@@ -31,21 +31,28 @@
 
 #include <oBasis/oSurface.h>
 
-enum oSURFACE_FILTER
-{
-	oSURFACE_FILTER_POINT,
-	oSURFACE_FILTER_BOX,
-	oSURFACE_FILTER_TRIANGLE,
-	oSURFACE_FILTER_LANCZOS2, // sinc filter
-	oSURFACE_FILTER_LANCZOS3, // another sinc filter, sharper than Lanczos2, but also adds a little ringing.
+namespace ouro {
+	namespace surface {
 
-	oSURFACE_FILTER_COUNT,
-};
+namespace filter
+{	enum value {
 
-bool oSurfaceResize(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SrcMap, const oSURFACE_DESC& _DstDesc, oSURFACE_MAPPED_SUBRESOURCE* _DstMap, oSURFACE_FILTER _Filter = oSURFACE_FILTER_LANCZOS3);
+	point,
+	box,
+	triangle,
+	lanczos2, // sinc filter
+	lanczos3, // sharper than lancsos2, but adds slight ringing
+	filter_count,
 
-bool oSurfaceClip(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SrcMap, const oSURFACE_DESC& _DstDesc, oSURFACE_MAPPED_SUBRESOURCE* _DstMap, int2 _SrcOffset = int2(0,0));
+};}
 
-bool oSurfacePad(const oSURFACE_DESC& _SrcDesc, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _SrcMap, const oSURFACE_DESC& _DstDesc, oSURFACE_MAPPED_SUBRESOURCE* _DstMap, int2 _DstOffset = int2(0,0));
+void resize(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, filter::value _Filter = filter::lanczos3);
+
+void clip(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, int2 _SourceOffset = int2(0, 0));
+
+void pad(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, int2 _DestinationOffset = int2(0, 0));
+
+	} // namespace surface
+} // namespace ouro
 
 #endif

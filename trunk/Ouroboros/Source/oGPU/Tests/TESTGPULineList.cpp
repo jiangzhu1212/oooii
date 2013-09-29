@@ -76,9 +76,9 @@ public:
 	{
 		CommandList->Begin();
 
-		oSURFACE_MAPPED_SUBRESOURCE msr;
+		ouro::surface::mapped_subresource msr;
 		CommandList->Reserve(LineList, 0, &msr);
-		oGPU_LINE* pLines = (oGPU_LINE*)msr.pData;
+		oGPU_LINE* pLines = (oGPU_LINE*)msr.data;
 
 		static const float3 TrianglePoints[] = { float3(-0.75f, -0.667f, 0.0f), float3(0.0f, 0.667f, 0.0f), float3(0.75f, -0.667f, 0.0f) };
 
@@ -96,7 +96,7 @@ public:
 		pLines[2].Start = TrianglePoints[2];
 		pLines[2].End = TrianglePoints[0];
 
-		CommandList->Commit(LineList, 0, msr, oSURFACE_BOX(6));
+		CommandList->Commit(LineList, 0, msr, ouro::surface::box(6));
 
 		CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
 		CommandList->SetBlendState(oGPU_OPAQUE);

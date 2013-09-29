@@ -30,6 +30,7 @@
 
 #include <oBasis/oGPUConcepts.h>
 #include <oBasis/oBuffer.h>
+#include <oBasis/oSurface.h>
 #include <oPlatform/oWindow.h>
 
 // Main SW abstraction for a graphics processor
@@ -198,7 +199,7 @@ interface oGPUCommandList : oGPUDeviceChild
 
 	// Allocates internal device memory that can be written to (not read) and 
 	// committed to the device to update the specified resource.
-	virtual void Reserve(oGPUResource* _pResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource) = 0;
+	virtual void Reserve(oGPUResource* _pResource, int _Subresource, ouro::surface::mapped_subresource* _pMappedSubresource) = 0;
 
 	// Commits memory to the specified resource. If the memory in _Source.pData 
 	// was reserved, then this will free the memory. If _Source.pData is user 
@@ -207,8 +208,8 @@ interface oGPUCommandList : oGPUDeviceChild
 	// the item is an oGPUBuffer then units are in structs, i.e. Left=0, 
 	// Right=ArraySize would be a full copy. Ensure that the other dimension are
 	// not empty/equal even in the buffer case.
-	virtual void Commit(oGPUResource* _pResource, int _Subresource, const oSURFACE_MAPPED_SUBRESOURCE& _Source, const oSURFACE_BOX& _Subregion = oSURFACE_BOX()) = 0;
-	inline void Commit(oGPUResource* _pResource, int _Subresource, const oSURFACE_CONST_MAPPED_SUBRESOURCE& _Source, const oSURFACE_BOX& _Subregion = oSURFACE_BOX()) { Commit(_pResource, _Subresource, (const oSURFACE_MAPPED_SUBRESOURCE&)_Source, _Subregion); }
+	virtual void Commit(oGPUResource* _pResource, int _Subresource, const ouro::surface::mapped_subresource& _Source, const ouro::surface::box& _Subregion = ouro::surface::box()) = 0;
+	inline void Commit(oGPUResource* _pResource, int _Subresource, const ouro::surface::const_mapped_subresource& _Source, const ouro::surface::box& _Subregion = ouro::surface::box()) { Commit(_pResource, _Subresource, (const ouro::surface::mapped_subresource&)_Source, _Subregion); }
 
 	// Copies the contents from one resource to another. Both must have compatible 
 	// (often identical) topologies. A common use of this API is to copy from a 
@@ -394,7 +395,7 @@ interface oGPUDevice : oInterface
 	// (though timing and order differences are likely).
 	virtual void GetImmediateCommandList(oGPUCommandList** _ppCommandList) = 0;
 
-	virtual bool CreatePrimaryRenderTarget(oWindow* _pWindow, oSURFACE_FORMAT _DepthStencilFormat, bool _EnableOSRendering, oGPURenderTarget** _ppPrimaryRenderTarget) = 0;
+	virtual bool CreatePrimaryRenderTarget(oWindow* _pWindow, ouro::surface::format _DepthStencilFormat, bool _EnableOSRendering, oGPURenderTarget** _ppPrimaryRenderTarget) = 0;
 
 	virtual bool CreateCommandList(const char* _Name, const oGPUCommandList::DESC& _Desc, oGPUCommandList** _ppCommandList) = 0;
 	virtual bool CreatePipeline(const char* _Name, const oGPUPipeline::DESC& _Desc, oGPUPipeline** _ppPipeline) = 0;
@@ -408,7 +409,7 @@ interface oGPUDevice : oInterface
 	// mapped data populated in the specified _pMappedSubresource. If the function
 	// would block, this returns false. If it succeeds, call ReadEnd to unlock.
 	// the buffer. This will also return false for resources not of type READBACK.
-	virtual bool MapRead(oGPUResource* _pReadbackResource, int _Subresource, oSURFACE_MAPPED_SUBRESOURCE* _pMappedSubresource, bool _bBlocking=false) = 0;
+	virtual bool MapRead(oGPUResource* _pReadbackResource, int _Subresource, ouro::surface::mapped_subresource* _pMappedSubresource, bool _bBlocking=false) = 0;
 	virtual void UnmapRead(oGPUResource* _pReadbackResource, int _Subresource) = 0;
 
 	virtual bool ReadQuery(oGPUQuery* _pQuery, void* _pData, uint _SizeofData) = 0;
@@ -475,21 +476,21 @@ oAPI bool oGPUCompileShader(
 oAPI bool oGPUSurfaceConvert(
 	void* oRESTRICT _pDestination
 	, uint _DestinationRowPitch
-	, oSURFACE_FORMAT _DestinationFormat
+	, ouro::surface::format _DestinationFormat
 	, const void* oRESTRICT _pSource
 	, uint _SourceRowPitch
-	, oSURFACE_FORMAT _SourceFormat
+	, ouro::surface::format _SourceFormat
 	, const int2& _MipDimensions);
 
 // Extract the parameters for the above call directly from textures
-oAPI bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, oSURFACE_FORMAT _NewFormat, oGPUTexture** _ppDestinationTexture);
+oAPI bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, ouro::surface::format _NewFormat, oGPUTexture** _ppDestinationTexture);
 
 // Loads a texture from disk. The _Desc specifies certain conversions/resizes
-// that can occur on load. Use oDEFAULT or oSURFACE_UNKNOWN to use values as 
+// that can occur on load. Use oDEFAULT or ouro::surface::unknown to use values as 
 // they are found in the specified image resource/buffer.
 // @oooii-tony: At this time the implementation does NOT use oImage loading 
 // code plus a simple call to call oGPUCreateTexture(). Because this API 
-// supports conversion for any oSURFACE_FORMAT, at this time we defer to 
+// supports conversion for any ouro::surface::format, at this time we defer to 
 // DirectX's .dds support for advanced formats like BC6 and BC7 as well as their
 // internal conversion library. When it's time to go cross-platform, we'll 
 // revisit this and hopefully call more generic code.
