@@ -156,7 +156,7 @@ bool oKinectCreateSurface(NUI_IMAGE_TYPE _Type, NUI_IMAGE_RESOLUTION _Resolution
 {
 	ouro::surface::info info;
 	oKinectGetDesc(NUI_IMAGE_TYPE_COLOR, NUI_IMAGE_RESOLUTION_640x480, &info);
-	*_ppSurface = std::make_shared<ouro::surface::buffer>(info);
+	*_ppSurface = ouro::surface::buffer::make(info);
 	return true;
 }
 

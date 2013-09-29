@@ -1286,54 +1286,57 @@ void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _Mapp
 	enumerate_pixels(_SurfaceInfo, _MappedSubresource, std::bind(en, _1, _Histogram));
 }
 
-buffer::buffer()
-	: Data(nullptr)
-{}
+class buffer_impl : public buffer
+{
+public:
+	buffer_impl(const surface::info& _SurfaceInfo);
+	~buffer_impl();
 
-buffer::buffer(const surface::info& _SurfaceInfo)
+	struct info info() const override;
+	void update_subresource(int _Subresource, const const_mapped_subresource& _Source, bool _FlipVertically = false) override;
+	void update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source, bool _FlipVertically = false) override;
+	void map(int _Subresource, mapped_subresource* _pMapped, int2* _pByteDimensions = nullptr) override;
+	void unmap(int _Subresource) override;
+	void map_const(int _Subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions = nullptr) const override;
+	void unmap_const(int _Subresource) const override;
+	void copy_to(int _Subresource, mapped_subresource* _pMapped, bool _FlipVertically = false) const override;
+
+private:
+	void* Data;
+	surface::info Info;
+	oStd::shared_mutex Mutex; // todo: separate locking mechanism to be per-subresource
+};
+
+buffer_impl::buffer_impl(const surface::info& _SurfaceInfo)
 	: Data(new char[total_size(_SurfaceInfo)])
 	, Info(_SurfaceInfo)
 {}
 
-buffer::buffer(buffer&& _That)
-{
-	operator=(std::move(_That));
-}
-
-buffer::~buffer()
+buffer_impl::~buffer_impl()
 {
 	if (Data)
 		delete [] Data;
 }
 
-buffer& buffer::operator=(buffer&& _That)
+std::shared_ptr<buffer> buffer::make(const surface::info& _Info)
 {
-	if (this != &_That)
-	{
-		Mutex.lock();
-		_That.Mutex.lock();
-		Data = _That.Data; _That.Data = nullptr;
-		Info = _That.Info; _That.Info = info();
-		_That.Mutex.unlock();
-		Mutex.unlock();
-	}
-	return *this;
+	return std::move(std::make_shared<buffer_impl>(_Info));
 }
 
-struct info buffer::info() const
+struct info buffer_impl::info() const
 {
 	return Info;
 }
 
-void buffer::update_subresource(int _Subresource, const const_mapped_subresource& _Source)
+void buffer_impl::update_subresource(int _Subresource, const const_mapped_subresource& _Source, bool _FlipVertically)
 {
 	int2 ByteDimensions;
 	mapped_subresource Dest = get_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
 	lock_guard<shared_mutex> lock(Mutex);
-	memcpy2d(Dest.data, Dest.row_pitch, _Source.data, _Source.row_pitch, ByteDimensions.x, ByteDimensions.y);
+	memcpy2d(Dest.data, Dest.row_pitch, _Source.data, _Source.row_pitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
 }
 
-void buffer::update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source)
+void buffer_impl::update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source, bool _FlipVertically)
 {
 	if (is_block_compressed(Info.format) || Info.format == r1_unorm)
 		throw std::invalid_argument("block compressed and bit formats not supported");
@@ -1353,32 +1356,40 @@ void buffer::update_subresource(int _Subresource, const box& _Box, const const_m
 	lock_guard<shared_mutex> lock(Mutex);
 	for (uint slice = _Box.front; slice < _Box.back; slice++)
 	{
-		memcpy2d(Dest.data, Dest.row_pitch, pSource, _Source.row_pitch, RowSize, NumRows);
+		memcpy2d(Dest.data, Dest.row_pitch, pSource, _Source.row_pitch, RowSize, NumRows, _FlipVertically);
 		Dest.data = byte_add(Dest.data, Dest.depth_pitch);
 		pSource = byte_add(pSource, _Source.depth_pitch);
 	}
 }
 
-void buffer::map(int _Subresource, mapped_subresource* _pMapped, int2* _pByteDimensions)
+void buffer_impl::map(int _Subresource, mapped_subresource* _pMapped, int2* _pByteDimensions)
 {
 	Mutex.lock();
 	*_pMapped = get_mapped_subresource(Info, _Subresource, 0, Data, _pByteDimensions);
 }
 
-void buffer::unmap(int _Subresource)
+void buffer_impl::unmap(int _Subresource)
 {
 	Mutex.unlock();
 }
 
-void buffer::map_const(int _Subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions) const
+void buffer_impl::map_const(int _Subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions) const
 {
 	const_cast<shared_mutex&>(Mutex).lock_shared();
 	*_pMapped = get_const_mapped_subresource(Info, _Subresource, 0, Data, _pByteDimensions);
 }
 
-void buffer::unmap_const(int _Subresource) const
+void buffer_impl::unmap_const(int _Subresource) const
 {
 	const_cast<shared_mutex&>(Mutex).unlock_shared();
+}
+
+void buffer_impl::copy_to(int _Subresource, mapped_subresource* _pMapped, bool _FlipVertically) const
+{
+	int2 ByteDimensions;
+	const_mapped_subresource Source = get_const_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
+	shared_lock<shared_mutex> lock(const_cast<shared_mutex&>(Mutex));
+	memcpy2d(_pMapped->data, _pMapped->row_pitch, Source.data, Source.row_pitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
 }
 
 	} // namespace surface

@@ -222,7 +222,7 @@ enum format
 	a8p8,
 	b4g4r4a4_unorm,
 
-	//formats below here are not currently directly loadable to directx.
+	// formats below here are not currently directly loadable to directx.
 	r8g8b8_unorm,
 	b8g8r8_unorm,
 
@@ -724,30 +724,20 @@ void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _Mapp
 class buffer
 {
 public:
-	buffer();
-	buffer(const info& _SurfaceInfo);
-	buffer(buffer&& _That);
-	~buffer();
-	buffer& operator=(buffer&& _That);
+	static std::shared_ptr<buffer> make(const info& _Info);
 
-	struct info info() const;
+	virtual struct info info() const = 0;
 
-	void update_subresource(int _Subresource, const const_mapped_subresource& _Source);
-	void update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source);
+	virtual void update_subresource(int _Subresource, const const_mapped_subresource& _Source, bool _FlipVertically = false) = 0;
+	virtual void update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source, bool _FlipVertically = false) = 0;
 
-	void map(int _Subresource, mapped_subresource* _pMapped, int2* _pByteDimensions);
-	void unmap(int _Subresource);
+	virtual void map(int _Subresource, mapped_subresource* _pMapped, int2* _pByteDimensions = nullptr) = 0;
+	virtual void unmap(int _Subresource) = 0;
 
-	void map_const(int _Subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions) const;
-	void unmap_const(int _Subresource) const;
+	virtual void map_const(int _Subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions = nullptr) const = 0;
+	virtual void unmap_const(int _Subresource) const = 0;
 
-private:
-	buffer(const buffer&);
-	const buffer& operator=(const buffer&);
-
-	void* Data;
-	surface::info Info;
-	oStd::shared_mutex Mutex; // todo: separate locking mechanism to be per-subresource
+	virtual void copy_to(int _Subresource, mapped_subresource* _pMapped, bool _FlipVertically = false) const = 0;
 };
 
 	} // namespace surface
