@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oSurfaceFill.h>
+#include <oBase/surface_fill.h>
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/Windows/oWinRect.h>

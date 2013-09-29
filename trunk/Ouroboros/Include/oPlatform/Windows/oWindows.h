@@ -39,7 +39,7 @@
 #include <oBase/version.h>
 #include <oBasis/oGUI.h>
 #include <oBasis/oMathTypes.h>
-#include <oBasis/oSurface.h>
+#include <oBase/surface.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oImage.h>
 #include <oCore/module.h>

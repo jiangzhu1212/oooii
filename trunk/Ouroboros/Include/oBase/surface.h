@@ -84,12 +84,12 @@
 // divided amongst threads.
 
 #pragma once
-#ifndef oSurface_h
-#define oSurface_h
+#ifndef oBase_surface_h
+#define oBase_surface_h
 
 #include <oBase/byte.h>
 #include <oBase/fourcc.h>
-#include <oBasis/oMathTypes.h>
+#include <oBase/types.h>
 #include <oStd/mutex.h>
 #include <functional>
 
@@ -254,7 +254,7 @@ enum layout
 	//        or Mip0 width of 4 or less for block compressed formats.
 	// right: Step right when moving from Mip0 to Mip1
 	//        Step down for all of the other MIPs.
-	//        RowPitch is generally the next-scanline stride of Mip0 plus the 
+	//        RowPitch is generZy the next-scanline stride of Mip0 plus the 
 	//        stride of mip1.
 	// Note that for below and right the lowest Mip can be below the bottom
 	// line of Mip1 and Mip0 respectively for alignment reasons and/or block 
@@ -294,7 +294,9 @@ struct info
 	{
 		return layout == _That.layout
 			&& format == _That.format
-			&& all(dimensions == _That.dimensions)
+			&& dimensions.x == _That.dimensions.x
+			&& dimensions.y == _That.dimensions.y
+			&& dimensions.z == _That.dimensions.z
 			&& array_size == _That.array_size;
 	}
 
@@ -450,18 +452,18 @@ void channel_bits(format _Format, int* _pNBitsR, int* _pNBitsG, int* _pNBitsB, i
 
 // Returns the surface format of the specified format's nth subformat. For RGBA-
 // based formats, this will return the same value as _Format for index 0 and 
-// ouro::surface::unknown for any other plane. For YUV formats this will return the
+// surface::unknown for any other plane. For YUV formats this will return the
 // format needed for each oSURFACE used to emulate the YUV format.
 format subformat(format _Format, int _SubsurfaceIndex);
 
 // Most formats for data types have a fourcc that is unique at least amongst 
 // other formats. This is useful for serialization where you want 
 // something a bit more version-stable than an enum value.
-ouro::fourcc to_fourcc(format _Format);
+fourcc to_fourcc(format _Format);
 
-// Convert an ouro::fourcc as returned from oSurfaceFormatToFourCC to its associated 
+// Convert an fourcc as returned from oSurfaceFormatToFourCC to its associated 
 // format.
-format from_fourcc(ouro::fourcc _FourCC);
+format from_fourcc(fourcc _FourCC);
 
 // Given a surface format, determine the NV12 format that comes closest to it.
 format closest_nv12(format _Format);
@@ -658,7 +660,7 @@ int num_slice_tiles(const info& _SurfaceInfo, const int2& _TileDimensions);
 // _TileDesc.Position start position that is aligned to the tile, which might be 
 // different if a less rigorous value is chosen for _Position. Tile IDs are 
 // calculated from the top-left and count up left-to-right, then top-to-bottom,
-// then to the next smaller mip as described by ouro::surface::layout, then continues
+// then to the next smaller mip as described by surface::layout, then continues
 // counting into the top level mip of the next slice and so on.
 int calc_tile_id(const info& _SurfaceInfo, const tile_info& _TileInfo, int2* _pPosition);
 
@@ -738,6 +740,42 @@ public:
 	virtual void unmap_const(int _Subresource) const = 0;
 
 	virtual void copy_to(int _Subresource, mapped_subresource* _pMapped, bool _FlipVertically = false) const = 0;
+};
+
+class lock_guard
+{
+public:
+	lock_guard(std::shared_ptr<buffer> _Buffer, int _Subresource = 0)
+		: Buffer(_Buffer)
+		, Subresource(_Subresource)
+	{ Buffer->map(Subresource, &mapped, &byte_dimensions); }
+
+	~lock_guard() { Buffer->unmap(Subresource); }
+
+	mapped_subresource mapped;
+	int2 byte_dimensions;
+
+private:
+	int Subresource;
+	std::shared_ptr<buffer> Buffer;
+};
+
+class shared_lock
+{
+public:
+	shared_lock(std::shared_ptr<const buffer> _Buffer, int _Subresource = 0)
+		: Buffer(_Buffer)
+		, Subresource(_Subresource)
+	{ Buffer->map_const(Subresource, &mapped, &byte_dimensions); }
+
+	~shared_lock() { Buffer->unmap_const(Subresource); }
+
+	const_mapped_subresource mapped;
+	int2 byte_dimensions;
+
+private:
+	int Subresource;
+	std::shared_ptr<const buffer> Buffer;
 };
 
 	} // namespace surface

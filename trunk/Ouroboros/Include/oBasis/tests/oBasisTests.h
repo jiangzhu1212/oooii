@@ -30,7 +30,7 @@
 #include <oBase/function.h>
 #include <oBase/path.h>
 #include <oBasis/oPlatformFeatures.h>
-#include <oBasis/oSurface.h>
+#include <oBase/surface.h>
 
 struct oBasisTestServices
 {
@@ -92,8 +92,6 @@ oAPI bool oBasisTest_oOBJ(const oBasisTestServices& _Services);
 oAPI bool oBasisTest_oOSC();
 oAPI bool oBasisTest_oRTTI();
 oAPI bool oBasisTest_oString();
-oAPI bool oBasisTest_oSurface();
-oAPI bool oBasisTest_oSurfaceResize(const oBasisTestServices& _Services);
 oAPI bool oBasisTest_oTaskGroup();
 oAPI bool oBasisTest_oThreadpool();
 oAPI bool oBasisTest_oThreadpoolTrivial();

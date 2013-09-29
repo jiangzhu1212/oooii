@@ -67,7 +67,7 @@ namespace oStd {
 	//template<> inline short atomic_fetch_add(volatile short* _X, short _Y) { return _InterlockedAdd16(_X, _Y); }
 	template<> inline long atomic_fetch_add(volatile long* _X, long _Y)
 	{
-		#ifdef o64BIT
+		#if 0 // only on itanium
 			return (int)_InterlockedAdd((long*)_X, (long)_Y);
 		#else
 			_InterlockedExchangeAdd((long*)_X, (long)_Y);

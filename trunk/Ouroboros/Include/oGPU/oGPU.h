@@ -30,7 +30,7 @@
 
 #include <oBasis/oGPUConcepts.h>
 #include <oBasis/oBuffer.h>
-#include <oBasis/oSurface.h>
+#include <oBase/surface.h>
 #include <oPlatform/oWindow.h>
 
 // Main SW abstraction for a graphics processor

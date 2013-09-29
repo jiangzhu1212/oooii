@@ -38,6 +38,8 @@ namespace ouro {
 		void TESTini();
 		void TESTfourcc();
 		void TESTpath();
+		void TESTsurface();
+		void TESTsurface_resize(requirements& _Requirements);
 		void TESTuri();
 		void TESTxml();
 

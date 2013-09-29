@@ -69,9 +69,6 @@
 #include <oBasis/oStddef.h>
 #include <oBasis/oStdStringSupport.h>
 #include <oBasis/oStrTok.h>
-#include <oBasis/oSurface.h>
-#include <oBasis/oSurfaceFill.h>
-#include <oBasis/oSurfaceResize.h>
 #include <oBasis/oTimer.h>
 #include <oBasis/oTypeID.h>
 #include <oBasis/oTypes.h>

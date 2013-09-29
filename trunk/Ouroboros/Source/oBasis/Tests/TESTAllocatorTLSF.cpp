@@ -30,6 +30,7 @@
 #include <oBasis/tests/oBasisTests.h>
 #include <vector>
 #include "oBasisTestCommon.h"
+#include <oHLSL/oHLSLMath.h>
 
 using namespace ouro;
 

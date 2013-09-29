@@ -22,49 +22,59 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
-#pragma once
-#ifndef oBase_all_h
-#define oBase_all_h
-#include <oBase/algorithm.h>
-#include <oBase/assert.h>
-#include <oBase/atof.h>
-#include <oBase/byte.h>
-#include <oBase/color.h>
-#include <oBase/date.h>
-#include <oBase/djb2.h>
-#include <oBase/endian.h>
-#include <oBase/equal.h>
-#include <oBase/event.h>
-#include <oBase/finally.h>
-#include <oBase/fixed_string.h>
-#include <oBase/fixed_vector.h>
-#include <oBase/fnv1a.h>
-#include <oBase/fourcc.h>
-#include <oBase/guid.h>
-#include <oBase/ini.h>
-#include <oBase/intrusive_ptr.h>
-#include <oBase/macros.h>
-#include <oBase/memory.h>
-#include <oBase/murmur3.h>
-#include <oBase/operators.h>
-#include <oBase/opttok.h>
-#include <oBase/path.h>
-#include <oBase/path_traits.h>
-#include <oBase/scc.h>
-#include <oBase/string.h>
-#include <oBase/string_traits.h>
-#include <oBase/surface.h>
-#include <oBase/surface_fill.h>
 #include <oBase/surface_resize.h>
-#include <oBase/text_document.h>
 #include <oBase/throw.h>
+//#include <oBase/finally.h>
 #include <oBase/timer.h>
-#include <oBase/type_info.h>
-#include <oBase/types.h>
-#include <oBase/uint128.h>
-#include <oBase/unordered_map.h>
-#include <oBase/uri.h>
-#include <oBase/xml.h>
-#endif
+#include <oBase/tests/oBaseTestRequirements.h>
+#include <vector>
+
+namespace ouro { 
+	namespace tests {
+
+static void TESTsurface_resize_test_size(requirements& _Requirements
+	, const surface::info& _SourceInfo
+	, const surface::const_mapped_subresource& _Source
+	, surface::filter::value _Filter
+	, const int3& _NewSize
+	, int _NthImage)
+{
+	surface::info destInfo = _SourceInfo;
+	destInfo.dimensions = _NewSize;
+	int destMapSize = surface::total_size(destInfo, 0);
+	std::vector<char> destMapData;
+	destMapData.resize(destMapSize);
+	surface::mapped_subresource destMap = surface::get_mapped_subresource(destInfo, 0, 0, destMapData.data());
+
+	{
+		scoped_timer timer("resize time");
+		surface::resize(_SourceInfo, _Source, destInfo, &destMap, _Filter);
+	}
+
+	_Requirements.check(destInfo, destMap, _NthImage);
+}
+
+static void TESTsurface_resize_test_filter(requirements& _Requirements
+	, const surface::info& _SourceInfo
+	, const surface::const_mapped_subresource& _Source
+	, surface::filter::value _Filter
+	, int _NthImage)
+{
+	TESTsurface_resize_test_size(_Requirements, _SourceInfo, _Source, _Filter, _SourceInfo.dimensions * int3(2,2,1), _NthImage);
+	TESTsurface_resize_test_size(_Requirements, _SourceInfo, _Source, _Filter, _SourceInfo.dimensions / int3(2,2,1), _NthImage+1);
+}
+
+void TESTsurface_resize(requirements& _Requirements)
+{
+	std::shared_ptr<surface::buffer> s = _Requirements.load_surface(path("Test/Textures/lena_1.png"));
+
+	int NthImage = 0;
+	for (int i = 0; i < surface::filter::filter_count; i++, NthImage += 2)
+	{
+		surface::shared_lock lock(s);
+		TESTsurface_resize_test_filter(_Requirements, s->info(), lock.mapped, surface::filter::value(i), NthImage);
+	}
+}
+
+	} // namespace tests
+} // namespace ouro

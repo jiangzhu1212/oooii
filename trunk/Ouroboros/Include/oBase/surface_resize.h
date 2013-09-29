@@ -22,41 +22,35 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Simple utilities for filling a 2D surface with color in various patterns. 
-// This is useful in generating debug images/textures for infrastructure 
-// bringup.
-#ifndef oSurfaceFill_h
-#define oSurfaceFill_h
+// API to change the size of a surface through filtering, clipping or padding.
+// These APIs do not allocate memory so all buffers should be valid before
+// calling any of these.
+#pragma once
+#ifndef oBase_surface_resize_h
+#define oBase_surface_resize_h
 
-#include <oBase/color.h>
-#include <oBasis/oMathTypes.h>
-#include <functional>
+#include <oBase/surface.h>
 
 namespace ouro {
 	namespace surface {
 
-// Fills the specified 32-bit BGRA (color) buffer with the specified solid 
-// color.
-void fill_solid(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const color& _Color);
+namespace filter
+{	enum value {
 
-// Fills the specified 32-bit BGRA (color) buffer with the specified solid 
-// color, but doesn't touch the bits that are masked out.
-void fill_solid_masked(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const color& _Color, uint _Mask);
+	point,
+	box,
+	triangle,
+	lanczos2, // sinc filter
+	lanczos3, // sharper than lancsos2, but adds slight ringing
+	filter_count,
 
-// Fills the specified 32-bit BGRA (color buffer) with a checkerboard pattern
-// of the specified dimensions and two colors.
-void fill_checkerboard(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const int2& _GridDimensions, const color& _Color0, const color& _Color1);
+};}
 
-// Fills the specified 32-bit BGRA buffer with a gradient that goes between the
-// 4 specified colors at the corners of the image.
-void fill_gradient(color* _pColors, size_t _RowPitch, const int2& _Dimensions, color _CornerColors[4]);
+void resize(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, filter::value _Filter = filter::lanczos3);
 
-// This draws a rectangle at [(0,0),_GridDim-int2(1,1)] in the specified color,
-// thus producing a grid pattern.
-void fill_grid_lines(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const int2& _GridDimensions, const color& _GridColor);
+void clip(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, int2 _SourceOffset = int2(0, 0));
 
-// This iterates through each grid box and calls the _DrawText function
-bool fill_grid_numbers(const int2& _Dimensions, const int2& _GridDimensions, std::function<bool(const int2& _DrawBoxPosition, const int2& _DrawBoxSize, const char* _Text)> _DrawText);
+void pad(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, int2 _DestinationOffset = int2(0, 0));
 
 	} // namespace surface
 } // namespace ouro

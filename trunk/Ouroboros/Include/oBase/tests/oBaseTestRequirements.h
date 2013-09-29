@@ -25,8 +25,11 @@
 // Anything that might want to be consistently controlled by a unit test 
 // infrastructure is separated out into this virtual interface.
 #pragma once
-#ifndef oStdTestRequirements_h
-#define oStdTestRequirements_h
+#ifndef oBaseTestRequirements_h
+#define oBaseTestRequirements_h
+
+#include <oBase/path.h>
+#include <oBase/surface.h>
 
 namespace ouro {
 	namespace tests {
@@ -38,6 +41,17 @@ interface requirements
 
 	virtual void vreport(const char* _Format, va_list _Args) = 0;
 	inline void report(const char* _Format, ...) { va_list a; va_start(a, _Format); vreport(_Format, a); va_end(a); }
+
+	virtual std::shared_ptr<surface::buffer> load_surface(const path& _Path) = 0;
+
+	// This function compares the specified surface to a golden image named after
+	// the test's name suffixed with _NthTest. If _NthTest is 0 then the golden 
+	// image should not have a suffix. If _MaxRMSError is negative a default 
+	// should be used. If the surfaces are not similar this throws an exception.
+	virtual void check(const surface::info& _SourceInfo
+		, const surface::const_mapped_subresource& _Source
+		, int _NthTest = 0
+		, float _MaxRMSError = -1.0f) = 0;
 };
 
 	} // namespace tests

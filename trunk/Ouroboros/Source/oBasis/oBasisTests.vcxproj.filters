@@ -49,12 +49,6 @@
     <ClCompile Include="Tests\TESTString.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTSurface.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Tests\TESTSurfaceResize.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTURI.cpp">
       <Filter>Source</Filter>
     </ClCompile>

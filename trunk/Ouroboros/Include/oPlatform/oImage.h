@@ -39,7 +39,7 @@
 #include <oBasis/oBuffer.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oMathTypes.h>
-#include <oBasis/oSurface.h>
+#include <oBase/surface.h>
 
 // {83CECF1C-316F-4ed4-9B20-4180B2ED4B4E}
 oDEFINE_GUID_I(oImage, 0x83cecf1c, 0x316f, 0x4ed4, 0x9b, 0x20, 0x41, 0x80, 0xb2, 0xed, 0x4b, 0x4e);

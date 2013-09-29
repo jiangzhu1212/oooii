@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oBasis/tests/oBasisTests.h>
 #include <oBasis/oEasing.h>
+#include <oBasis/oMathTypes.h>
 #include "oBasisTestCommon.h"
 
 bool oBasisTest_oEasing()

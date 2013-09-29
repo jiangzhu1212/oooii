@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/tests/oBaseTests.h>
+#include <oCore/filesystem.h>
 #include "oTestIntegration.h"
 #include <cstdlib>
 
@@ -38,9 +39,38 @@ struct requirements_implementation : requirements
 		oErrorSetLastV(0, _Format, _Args);
 		oTRACEA("%s", oErrorGetLastString());
 	}
+
+	std::shared_ptr<surface::buffer> load_surface(const path& _Path)
+	{
+		path FullPath = filesystem::data_path() / _Path;
+		intrusive_ptr<oImage> image;
+		if (!oImageLoad(FullPath, &image))
+			oThrowLastError();
+
+		surface::info si = oImageGetSurfaceInfo(image);
+		std::shared_ptr<surface::buffer> b = surface::buffer::make(si);
+		surface::const_mapped_subresource msr = oImageGetMappedSubresource(image);
+		b->update_subresource(0, msr);
+		return b;
+	}
+
+	void check(const surface::info& _SourceInfo
+		, const surface::const_mapped_subresource& _Source
+		, int _NthTest = 0
+		, float _MaxRMSError = -1.0f)
+	{
+		intrusive_ptr<oImage> image;
+		if (!oImageCreate("check image", _SourceInfo, &image))
+			oThrowLastError();
+		
+		image->CopyData(_Source.data, _Source.row_pitch);
+		extern oTest* g_Test;
+		if (!g_Test->TestImage(image, _NthTest, oDEFAULT, _MaxRMSError, oDEFAULT))
+			oThrowLastError();
+	}
 };
 
-	} //namespace tests
+	} // namespace tests
 } // namespace oStd
 
 using namespace ouro::tests;
@@ -57,5 +87,7 @@ oTEST_REGISTER_BASE_TEST(date);
 oTEST_REGISTER_BASE_TEST0(fourcc);
 oTEST_REGISTER_BASE_TEST0(ini);
 oTEST_REGISTER_BASE_TEST0(path);
+oTEST_REGISTER_BASE_TEST0(surface);
+oTEST_REGISTER_BASE_TEST(surface_resize);
 oTEST_REGISTER_BASE_TEST0(uri);
 oTEST_REGISTER_BASE_TEST0(xml);

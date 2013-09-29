@@ -26,7 +26,7 @@
 #include "oD3D11Device.h"
 #include "oD3D11Texture.h"
 #include <oBasis/oLockThis.h>
-#include <oBasis/oSurface.h>
+#include <oBase/surface.h>
 #include <oPlatform/Windows/oDXGI.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinWindowing.h>

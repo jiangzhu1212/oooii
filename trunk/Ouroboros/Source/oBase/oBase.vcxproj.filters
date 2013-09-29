@@ -196,6 +196,15 @@
     <ClCompile Include="string\wcmnroot.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
+    <ClCompile Include="surface.cpp">
+      <Filter>Source\2D</Filter>
+    </ClCompile>
+    <ClCompile Include="surface_fill.cpp">
+      <Filter>Source\2D</Filter>
+    </ClCompile>
+    <ClCompile Include="surface_resize.cpp">
+      <Filter>Source\2D</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\finally.h">
@@ -348,6 +357,18 @@
     <ClInclude Include="..\..\External\calfaq\calfaq.h">
       <Filter>Source\types</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\types.h">
+      <Filter>oBase\types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\surface.h">
+      <Filter>oBase\2D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\surface_resize.h">
+      <Filter>oBase\2D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\surface_fill.h">
+      <Filter>oBase\2D</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -397,6 +418,12 @@
     </Filter>
     <Filter Include="oBase\memory">
       <UniqueIdentifier>{531d9ca9-e272-4b70-9390-6852f1d9c924}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\2D">
+      <UniqueIdentifier>{6531f936-e096-409c-91ab-40c283450d0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBase\2D">
+      <UniqueIdentifier>{61c2961c-275d-423c-820c-06890221b8ef}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

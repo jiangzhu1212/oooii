@@ -874,6 +874,9 @@ bool oTestManager_Impl::KillZombies()
 	return true;
 }
 
+// @tony: hack for some macro glue as the codebase gets converted to exceptions.
+oTest* g_Test = nullptr;
+
 oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, char* _StatusMessage, size_t _SizeofStatusMessage)
 {
 	if (!KillZombies())
@@ -893,7 +896,9 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 	oCRTLeakTracker::Singleton()->NewContext();
 
 	oTest* pTest = _pRegisterTestBase->New();
+	g_Test = pTest;
 	oTest::RESULT result = pTest->Run(_StatusMessage, _SizeofStatusMessage);
+	g_Test = nullptr;
 	delete pTest;
 
 	// obug_1763: We need to forcefully flushIOCP to ensure it doesn't report 

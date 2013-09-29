@@ -105,6 +105,9 @@
     <ClCompile Include="string\zero_block_comments.cpp" />
     <ClCompile Include="string\zero_ifdefs.cpp" />
     <ClCompile Include="string\zero_line_comments.cpp" />
+    <ClCompile Include="surface.cpp" />
+    <ClCompile Include="surface_fill.cpp" />
+    <ClCompile Include="surface_resize.cpp" />
     <ClCompile Include="text_document.cpp" />
     <ClCompile Include="uri.cpp" />
     <ClCompile Include="vendor.cpp" />
@@ -147,9 +150,13 @@
     <ClInclude Include="..\..\Include\oBase\string.h" />
     <ClInclude Include="..\..\Include\oBase\stringize.h" />
     <ClInclude Include="..\..\Include\oBase\string_traits.h" />
+    <ClInclude Include="..\..\Include\oBase\surface.h" />
+    <ClInclude Include="..\..\Include\oBase\surface_fill.h" />
+    <ClInclude Include="..\..\Include\oBase\surface_resize.h" />
     <ClInclude Include="..\..\Include\oBase\text_document.h" />
     <ClInclude Include="..\..\Include\oBase\throw.h" />
     <ClInclude Include="..\..\Include\oBase\timer.h" />
+    <ClInclude Include="..\..\Include\oBase\types.h" />
     <ClInclude Include="..\..\Include\oBase\type_info.h" />
     <ClInclude Include="..\..\Include\oBase\uint128.h" />
     <ClInclude Include="..\..\Include\oBase\unordered_map.h" />

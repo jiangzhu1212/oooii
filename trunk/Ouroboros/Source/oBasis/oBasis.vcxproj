@@ -93,9 +93,6 @@
     <ClInclude Include="..\..\Include\oBasis\oStdLinearAllocator.h" />
     <ClInclude Include="..\..\Include\oBasis\oStdStringSupport.h" />
     <ClInclude Include="..\..\Include\oBasis\oStrTok.h" />
-    <ClInclude Include="..\..\Include\oBasis\oSurface.h" />
-    <ClInclude Include="..\..\Include\oBasis\oSurfaceFill.h" />
-    <ClInclude Include="..\..\Include\oBasis\oSurfaceResize.h" />
     <ClInclude Include="..\..\Include\oBasis\oTimer.h" />
     <ClInclude Include="..\..\Include\oBasis\oTypeID.h" />
     <ClInclude Include="..\..\Include\oBasis\oTypes.h" />
@@ -148,9 +145,6 @@
     <ClCompile Include="oRTTI.cpp" />
     <ClCompile Include="oSnappy.cpp" />
     <ClCompile Include="oStrTok.cpp" />
-    <ClCompile Include="oSurface.cpp" />
-    <ClCompile Include="oSurfaceFill.cpp" />
-    <ClCompile Include="oSurfaceResize.cpp" />
     <ClCompile Include="oTimer.cpp" />
     <ClCompile Include="oTypeID.cpp" />
     <ClCompile Include="oURI.cpp" />

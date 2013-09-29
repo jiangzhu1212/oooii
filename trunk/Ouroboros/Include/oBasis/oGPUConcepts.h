@@ -41,7 +41,7 @@
 #include <oBasis/oResizedType.h>
 #include <oBasis/oRTTI.h>
 #include <oBasis/oStddef.h>
-#include <oBasis/oSurface.h>
+#include <oBase/surface.h>
 #include <oBase/vendor.h>
 #include <oBase/version.h>
 #include <array>

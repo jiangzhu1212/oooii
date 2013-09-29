@@ -28,7 +28,7 @@
 
 #include <oBasis/oInterface.h>
 #include <oBasis/oMathTypes.h>
-#include <oBasis/oSurface.h>
+#include <oBase/surface.h>
 
 interface oCamera : oInterface
 {

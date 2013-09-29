@@ -22,49 +22,31 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
+// Make HLSL a part of base C++ and define other types consistently with HLSL
+// naming conventions.
 #pragma once
-#ifndef oBase_all_h
-#define oBase_all_h
-#include <oBase/algorithm.h>
-#include <oBase/assert.h>
-#include <oBase/atof.h>
-#include <oBase/byte.h>
-#include <oBase/color.h>
-#include <oBase/date.h>
-#include <oBase/djb2.h>
-#include <oBase/endian.h>
-#include <oBase/equal.h>
-#include <oBase/event.h>
-#include <oBase/finally.h>
-#include <oBase/fixed_string.h>
-#include <oBase/fixed_vector.h>
-#include <oBase/fnv1a.h>
-#include <oBase/fourcc.h>
-#include <oBase/guid.h>
-#include <oBase/ini.h>
-#include <oBase/intrusive_ptr.h>
-#include <oBase/macros.h>
-#include <oBase/memory.h>
-#include <oBase/murmur3.h>
-#include <oBase/operators.h>
-#include <oBase/opttok.h>
-#include <oBase/path.h>
-#include <oBase/path_traits.h>
-#include <oBase/scc.h>
-#include <oBase/string.h>
-#include <oBase/string_traits.h>
-#include <oBase/surface.h>
-#include <oBase/surface_fill.h>
-#include <oBase/surface_resize.h>
-#include <oBase/text_document.h>
-#include <oBase/throw.h>
-#include <oBase/timer.h>
-#include <oBase/type_info.h>
-#include <oBase/types.h>
+#ifndef oBase_types_h
+#define oBase_types_h
+
+#include <oHLSL/oHLSLTypes.h>
 #include <oBase/uint128.h>
-#include <oBase/unordered_map.h>
-#include <oBase/uri.h>
-#include <oBase/xml.h>
+
+typedef unsigned char uchar;
+typedef unsigned short ushort;
+typedef unsigned int uint;
+typedef long long llong;
+typedef unsigned long long ullong;
+
+typedef TVEC2<char> char2; typedef TVEC2<uchar> uchar2;
+typedef TVEC3<char> char3; typedef TVEC3<uchar> uchar3;
+typedef TVEC4<char> char4; typedef TVEC4<uchar> uchar4;
+
+typedef TVEC2<short> short2; typedef TVEC2<ushort> ushort2;
+typedef TVEC3<short> short3; typedef TVEC3<ushort> ushort3;
+typedef TVEC4<short> short4; typedef TVEC4<ushort> ushort4;
+
+typedef TVEC2<llong> llong2; typedef TVEC2<ullong> ullong2;
+typedef TVEC3<llong> llong3; typedef TVEC3<ullong> ullong3;
+typedef TVEC4<llong> llong4; typedef TVEC4<ullong> ullong4;
+
 #endif

@@ -22,10 +22,9 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oSurfaceResize.h>
+#include <oBase/surface_resize.h>
 #include <oBase/fixed_vector.h>
 #include <oBase/memory.h>
-#include <oConcurrency/oConcurrency.h>
 #include <oBasis/oMath.h>
 #include <vector>
 
@@ -199,9 +198,8 @@ void resize_horizontal(const info& _SourceInfo, const const_mapped_subresource& 
 	const char* srcData = (char*)_Source.data;
 	char* dstData = (char*)_pDestination->data;
 
-	oConcurrency::serial_for(0, _DestinationInfo.dimensions.y, [&](size_t _y)
+	for (int y = 0; y < _DestinationInfo.dimensions.y; y++)
 	{
-		int y = static_cast<int>(_y);
 		const uchar* oRESTRICT srcRow = (uchar*)byte_add(srcData, y*_Source.row_pitch);
 		uchar* oRESTRICT dstRow = (uchar*)byte_add(dstData, y*_pDestination->row_pitch);
 
@@ -224,7 +222,7 @@ void resize_horizontal(const info& _SourceInfo, const const_mapped_subresource& 
 			for (int i = 0; i < ELEMENT_SIZE; i++)
 				dstRow[x*ELEMENT_SIZE + i] = static_cast<uchar>(clamp(result[i], 0.0f, 255.0f));
 		}
-	});
+	}
 }
 
 template<typename FILTER, int ELEMENT_SIZE>
@@ -239,9 +237,8 @@ void resize_vertical(const info& _SourceInfo, const const_mapped_subresource& _S
 	const uchar* oRESTRICT srcData = (uchar*)_Source.data;
 	uchar* oRESTRICT dstData = (uchar*)_pDestination->data;
 
-	oConcurrency::serial_for(0, _DestinationInfo.dimensions.y, [&](size_t _y)
+	for(int y = 0; y < _DestinationInfo.dimensions.y; y++)
 	{
-		int y = static_cast<int>(_y);
 		uchar* oRESTRICT dstRow = byte_add(dstData, y*_pDestination->row_pitch);
 
 		for(int x = 0; x < _DestinationInfo.dimensions.x; ++x)
@@ -269,7 +266,7 @@ void resize_vertical(const info& _SourceInfo, const const_mapped_subresource& _S
 				dstRow[x*ELEMENT_SIZE + i] = static_cast<uchar>(clamp(result[i], 0.0f, 255.0f));
 			}
 		}
-	});
+	}
 }
 
 template<typename FILTER, int ELEMENT_SIZE>
@@ -288,10 +285,8 @@ void resize_internal(const info& _SourceInfo, const const_mapped_subresource& _S
 		int fixedStep = (_SourceInfo.dimensions.x / _DestinationInfo.dimensions.x)*ELEMENT_SIZE;
 		int remainder = (_SourceInfo.dimensions.x % _DestinationInfo.dimensions.x);
 
-		//  Parallel for doesn't help
-		oConcurrency::serial_for(0, _DestinationInfo.dimensions.y, [&](size_t _y)
+		for (int y = 0; y < _DestinationInfo.dimensions.y; y++)
 		{
-			int y = static_cast<int>(_y);
 			int row = (y*_SourceInfo.dimensions.y)/_DestinationInfo.dimensions.y;
 			const char* oRESTRICT srcRow = byte_add(srcData, row*_Source.row_pitch);
 			char* oRESTRICT dstRow = byte_add(dstData, y*_pDestination->row_pitch);
@@ -309,7 +304,7 @@ void resize_internal(const info& _SourceInfo, const const_mapped_subresource& _S
 					step -= _DestinationInfo.dimensions.x;
 				}
 			}
-		});
+		}
 	}
 	else // have to run a real filter
 	{

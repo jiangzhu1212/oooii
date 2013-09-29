@@ -22,7 +22,9 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oSurface.h>
+#include <oBase/surface.h>
+#include <oBase/byte.h>
+#include <oStd/atomic.h>
 
 using namespace std::placeholders;
 using namespace oStd;
@@ -1332,7 +1334,7 @@ void buffer_impl::update_subresource(int _Subresource, const const_mapped_subres
 {
 	int2 ByteDimensions;
 	mapped_subresource Dest = get_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
-	lock_guard<shared_mutex> lock(Mutex);
+	oStd::lock_guard<shared_mutex> lock(Mutex);
 	memcpy2d(Dest.data, Dest.row_pitch, _Source.data, _Source.row_pitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
 }
 
@@ -1353,7 +1355,7 @@ void buffer_impl::update_subresource(int _Subresource, const box& _Box, const co
 
 	const void* pSource = _Source.data;
 
-	lock_guard<shared_mutex> lock(Mutex);
+	oStd::lock_guard<shared_mutex> lock(Mutex);
 	for (uint slice = _Box.front; slice < _Box.back; slice++)
 	{
 		memcpy2d(Dest.data, Dest.row_pitch, pSource, _Source.row_pitch, RowSize, NumRows, _FlipVertically);
@@ -1388,7 +1390,7 @@ void buffer_impl::copy_to(int _Subresource, mapped_subresource* _pMapped, bool _
 {
 	int2 ByteDimensions;
 	const_mapped_subresource Source = get_const_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
-	shared_lock<shared_mutex> lock(const_cast<shared_mutex&>(Mutex));
+	oStd::shared_lock<shared_mutex> lock(const_cast<shared_mutex&>(Mutex));
 	memcpy2d(_pMapped->data, _pMapped->row_pitch, Source.data, Source.row_pitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
 }
 

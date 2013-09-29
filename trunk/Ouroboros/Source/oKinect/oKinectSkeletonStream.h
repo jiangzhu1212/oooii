@@ -32,7 +32,7 @@
 #ifdef oHAS_KINECT_SDK
 
 #include <oKinect/oKinect.h>
-#include <oBasis/oSurface.h>
+#include <oBase/surface.h>
 #include <oConcurrency/mutex.h>
 #include "oKinectSkeleton.h"
 #include <NuiApi.h>

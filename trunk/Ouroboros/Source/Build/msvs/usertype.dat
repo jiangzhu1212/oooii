@@ -499,6 +499,9 @@ thread_local
 noexcept
 nullptr
 uint128
+char2
+char3
+char4
 uchar
 uchar2
 uchar3

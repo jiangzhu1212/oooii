@@ -28,7 +28,7 @@
 #define oDXGI_h
 
 #include <oCore/adapter.h>
-#include <oBasis/oSurface.h>
+#include <oBase/surface.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/Windows/oWindows.h>
 
