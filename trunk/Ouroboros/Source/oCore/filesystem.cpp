@@ -693,7 +693,7 @@ void delete_buffer(char* _pBuffer)
 	delete [] _pBuffer;
 }
 
-std::shared_ptr<char> load(const path& _Path, size_t* _pSize, load_option::value _LoadOption)
+std::shared_ptr<char> load(const path& _Path, load_option::value _LoadOption, size_t* _pSize)
 {
 	unsigned long long FileSize = file_size(_Path);
 
@@ -736,11 +736,6 @@ std::shared_ptr<char> load(const path& _Path, size_t* _pSize, load_option::value
 	}
 
 	return std::move(buffer);
-}
-
-std::shared_ptr<char> load(const path& _Path, load_option::value _LoadOption)
-{
-	return std::move(load(_Path, nullptr, _LoadOption));
 }
 
 	} // namespace filesystem

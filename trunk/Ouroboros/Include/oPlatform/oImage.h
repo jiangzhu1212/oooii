@@ -38,6 +38,7 @@
 
 #include <oBasis/oBuffer.h>
 #include <oBasis/oInterface.h>
+#include <oBasis/oInvalid.h>
 #include <oBasis/oMathTypes.h>
 #include <oBase/surface.h>
 
@@ -120,11 +121,11 @@ interface oImage : oBuffer
 // Conversions so oSurface API can be used while still retaining the notion that
 // oImage is a small, small subset of oSurfaces, not the full wrapper for all 
 // that oSurface can do.
-oAPI oImage::FORMAT oImageFormatFromSurfaceFormat(ouro::surface::format _Format);
-oAPI ouro::surface::format oImageFormatToSurfaceFormat(oImage::FORMAT _Format);
+oImage::FORMAT oImageFormatFromSurfaceFormat(ouro::surface::format _Format);
+ouro::surface::format oImageFormatToSurfaceFormat(oImage::FORMAT _Format);
 
 // Returns the format as interpreted from the extension of the file
-oAPI oImage::FILE_FORMAT oImageFormatFromExtension(const char* _URIReference);
+oImage::FILE_FORMAT oImageFormatFromExtension(const char* _URIReference);
 
 // Wrappers for oSurface API that constrain things to the policies of oImage.
 inline int oImageCalcRowPitch(oImage::FORMAT _Format, int _Width) { return ouro::surface::row_size(oImageFormatToSurfaceFormat(_Format), _Width); }
@@ -180,30 +181,30 @@ inline ouro::surface::const_mapped_subresource oImageGetMappedSubresource(const 
 // file's header information, not all the color data. This is most useful in
 // streaming systems that can quickly read the first 1k or so and start building
 // system buffers, then stream directly into those buffers.
-oAPI bool oImageGetDesc(const void* _pBuffer, size_t _SizeofBuffer, oImage::DESC* _pDesc);
+bool oImageGetDesc(const void* _pBuffer, size_t _SizeofBuffer, oImage::DESC* _pDesc);
 
 // Creates an image from an in-memory file image. (i.e. _pBuffer is the result
 // of a full fread of a file). _Name can be whatever label is appropriate, but
 // is often the source URI. Typically if an RGB is loaded, it will remain RGB. 
 // If RGBA is loaded it will remain RGBA. If ForceAlpha is specified it will 
 // noop on RGBA data, but will force an opaque channel for RGB source data.
-oAPI bool oImageCreate(const char* _Name, const void* _pBuffer, size_t _SizeOfBuffer, oImage::LOAD_FLAGS _LoadFlags, oImage** _ppImage);
+bool oImageCreate(const char* _Name, const void* _pBuffer, size_t _SizeOfBuffer, oImage::LOAD_FLAGS _LoadFlags, oImage** _ppImage);
 inline bool oImageCreate(const char* _Name, const void* _pBuffer, size_t _SizeOfBuffer, oImage** _ppImage) { return oImageCreate(_Name, _pBuffer, _SizeOfBuffer, oImage::DEFAULT, _ppImage); }
 
 // Creates an uninitialized oImage from the specified DESC. Ensure 
 // oSurfaceCalcRowPitch is used to specify the pitch or this function will 
 // return false in error.
-oAPI bool oImageCreate(const char* _Name, const oImage::DESC& _Desc, oImage** _ppImage);
+bool oImageCreate(const char* _Name, const oImage::DESC& _Desc, oImage** _ppImage);
 
 // Creates an uninitialized oImage from the specified oSURFACE_DESC.
-oAPI bool oImageCreate(const char* _Name, const ouro::surface::info& _Info, oImage** _ppImage);
+bool oImageCreate(const char* _Name, const ouro::surface::info& _Info, oImage** _ppImage);
 
 // Creates a copy of the specified _pSourceImage in the form of a Windows 
 // platform HBITMAP. Use DeleteObject() when finished with the HBITMAP.
-oAPI bool oImageCreateBitmap(const threadsafe oImage* _pSourceImage, struct HBITMAP__** _ppBitmap);
+bool oImageCreateBitmap(const threadsafe oImage* _pSourceImage, struct HBITMAP__** _ppBitmap);
 
 // Creates a copy of the specified Windows HBITMAP as a new oImage.
-oAPI bool oImageCreate(const char* _Name, struct HBITMAP__* _pBitmap, oImage** _ppImage);
+bool oImageCreate(const char* _Name, struct HBITMAP__* _pBitmap, oImage** _ppImage);
 
 // _____________________________________________________________________________
 // Load/Save (heavy on platform I/O)
@@ -211,12 +212,12 @@ oAPI bool oImageCreate(const char* _Name, struct HBITMAP__* _pBitmap, oImage** _
 // Saves the specified _pImage to the specified buffer in file format (as 
 // opposed to runtime format). At this time, this function will fail if the 
 // buffer is not large enough to hold the specified oImage.
-oAPI size_t oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format, oImage::COMPRESSION_LEVEL _CompressionLevel, oImage::LOAD_FLAGS _Flags, void* _pBuffer, size_t _SizeofBuffer);
-oAPI bool oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format, oImage::COMPRESSION_LEVEL _CompressionLevel, oImage::LOAD_FLAGS _Flags, const char* _Path);
+size_t oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format, oImage::COMPRESSION_LEVEL _CompressionLevel, oImage::LOAD_FLAGS _Flags, void* _pBuffer, size_t _SizeofBuffer);
+bool oImageSave(const threadsafe oImage* _pImage, oImage::FILE_FORMAT _Format, oImage::COMPRESSION_LEVEL _CompressionLevel, oImage::LOAD_FLAGS _Flags, const char* _Path);
 inline bool oImageSave(const threadsafe oImage* _pImage, const char* _Path) { return oImageSave(_pImage, oImage::UNKNOWN_FILE, oImage::NO_COMPRESSION, oImage::FORCE_NO_ALPHA, _Path); }
 inline bool oImageSave(const threadsafe oImage* _pImage, oImage::LOAD_FLAGS _Flags, const char* _Path) { return oImageSave(_pImage, oImage::UNKNOWN_FILE, oImage::NO_COMPRESSION, _Flags, _Path); }
 
-oAPI bool oImageLoad(const char* _Path, oImage::LOAD_FLAGS _Flags, oImage** _ppImage);
+bool oImageLoad(const char* _Path, oImage::LOAD_FLAGS _Flags, oImage** _ppImage);
 inline bool oImageLoad(const char* _Path, oImage** _ppImage) { return oImageLoad(_Path, oImage::DEFAULT, _ppImage); }
 
 // Compare the two specified images according to the specified parameters, 
@@ -226,6 +227,6 @@ inline bool oImageLoad(const char* _Path, oImage** _ppImage) { return oImageLoad
 // the pixel compare was able to complete. So images are the same if this 
 // function returns true AND RootMeanSquare is below a threshold the client 
 // code finds acceptable.
-oAPI bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _pImage2, unsigned int _BitTolerance, float* _pRootMeanSquare = nullptr, oImage** _ppDiffImage = nullptr, unsigned int _DiffMultiplier = 1);
+bool oImageCompare(const threadsafe oImage* _pImage1, const threadsafe oImage* _pImage2, unsigned int _BitTolerance, float* _pRootMeanSquare = nullptr, oImage** _ppDiffImage = nullptr, unsigned int _DiffMultiplier = 1);
 
 #endif

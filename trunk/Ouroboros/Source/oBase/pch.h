@@ -24,6 +24,7 @@
  **************************************************************************/
 #pragma once
 #ifdef oPCH
-#include <oBase/all.h>
+#include <oStd/all.h>
+#include <oHLSL/all.h>
 //#include "win.h"
 #endif

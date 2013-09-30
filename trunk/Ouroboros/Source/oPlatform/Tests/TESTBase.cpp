@@ -40,6 +40,13 @@ struct requirements_implementation : requirements
 		oTRACEA("%s", oErrorGetLastString());
 	}
 
+	std::shared_ptr<char> load_buffer(const path& _Path, size_t* _pSize = nullptr)
+	{
+		path FullPath = filesystem::data_path() / _Path;
+
+		return std::move(filesystem::load(FullPath, filesystem::load_option::binary_read, _pSize));
+	}
+
 	std::shared_ptr<surface::buffer> load_surface(const path& _Path)
 	{
 		path FullPath = filesystem::data_path() / _Path;

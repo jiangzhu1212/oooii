@@ -22,42 +22,30 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Anything that might want to be consistently controlled by a unit test 
-// infrastructure is separated out into this virtual interface.
 #pragma once
-#ifndef oBaseTestRequirements_h
-#define oBaseTestRequirements_h
+#ifndef oBase_surface_convert_h
+#define oBase_surface_convert_h
 
-#include <oBase/path.h>
-#include <oBase/surface_buffer.h>
+#include <oBase/surface.h>
 
 namespace ouro {
-	namespace tests {
+	namespace surface {
 
-interface requirements
-{
-	// Implements a C-standard rand call
-	virtual int rand() = 0;
+// Converts the specified subresource into the destination subresource.
+void convert_subresource(const subresource_info& _SubresourceInfo
+	, format _SourceFormat, const const_mapped_subresource& _Source
+	, format _DestinationFormat, mapped_subresource* _pDestination);
 
-	virtual void vreport(const char* _Format, va_list _Args) = 0;
-	inline void report(const char* _Format, ...) { va_list a; va_start(a, _Format); vreport(_Format, a); va_end(a); }
+// Converts the specified source into the specified destination. This assumes
+// all memory has been properly allocated. If a conversion is not supported this
+// throws an exception.
+void convert(const info& _SourceInfo, const const_mapped_subresource& _Source
+	, const info& _DestinationInfo, mapped_subresource* _pDestination);
 
-	// fread's the file's contents and returns the pointer
-	virtual std::shared_ptr<char> load_buffer(const path& _Path, size_t* _pSize = nullptr) = 0;
+// This is a conversion in-place for RGB v. BGR and similar permutations.
+void convert_swizzle(const info& _SurfaceInfo, surface::format _NewFormat, mapped_subresource* _pSurface);
 
-	virtual std::shared_ptr<surface::buffer> load_surface(const path& _Path) = 0;
-
-	// This function compares the specified surface to a golden image named after
-	// the test's name suffixed with _NthTest. If _NthTest is 0 then the golden 
-	// image should not have a suffix. If _MaxRMSError is negative a default 
-	// should be used. If the surfaces are not similar this throws an exception.
-	virtual void check(const surface::info& _SourceInfo
-		, const surface::const_mapped_subresource& _Source
-		, int _NthTest = 0
-		, float _MaxRMSError = -1.0f) = 0;
-};
-
-	} // namespace tests
+	} // namespace surface
 } // namespace ouro
 
 #endif

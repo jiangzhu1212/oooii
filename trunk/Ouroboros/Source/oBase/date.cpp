@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/date.h>
+#include <oBase/throw.h>
 #include <cassert>
 #include <ctime>
 #include <calfaq/calfaq.h>

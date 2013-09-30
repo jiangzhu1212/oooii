@@ -22,42 +22,62 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Anything that might want to be consistently controlled by a unit test 
-// infrastructure is separated out into this virtual interface.
 #pragma once
-#ifndef oBaseTestRequirements_h
-#define oBaseTestRequirements_h
+#ifndef oBase_surface_codec_h
+#define oBase_surface_codec_h
 
-#include <oBase/path.h>
 #include <oBase/surface_buffer.h>
 
 namespace ouro {
-	namespace tests {
+	namespace surface {
 
-interface requirements
-{
-	// Implements a C-standard rand call
-	virtual int rand() = 0;
+namespace file_format
+{	enum value {
 
-	virtual void vreport(const char* _Format, va_list _Args) = 0;
-	inline void report(const char* _Format, ...) { va_list a; va_start(a, _Format); vreport(_Format, a); va_end(a); }
+	unknown,
+	png,
+	jpg,
 
-	// fread's the file's contents and returns the pointer
-	virtual std::shared_ptr<char> load_buffer(const path& _Path, size_t* _pSize = nullptr) = 0;
+};}
 
-	virtual std::shared_ptr<surface::buffer> load_surface(const path& _Path) = 0;
+namespace compression
+{	enum value {
 
-	// This function compares the specified surface to a golden image named after
-	// the test's name suffixed with _NthTest. If _NthTest is 0 then the golden 
-	// image should not have a suffix. If _MaxRMSError is negative a default 
-	// should be used. If the surfaces are not similar this throws an exception.
-	virtual void check(const surface::info& _SourceInfo
-		, const surface::const_mapped_subresource& _Source
-		, int _NthTest = 0
-		, float _MaxRMSError = -1.0f) = 0;
-};
+	none,
+  low,
+  medium,
+  high,
 
-	} // namespace tests
+};}
+
+namespace alpha_option
+{	enum value {
+
+	preserve,
+	force_alpha,
+	force_no_alpha,
+
+};}
+
+// Analyzes the buffer to determine its file format
+file_format::value get_file_format(const void* _pBuffer, size_t _BufferSize);
+
+// Returns the info from a buffer formatted as a file in memory
+info get_info(const void* _pBuffer, size_t _BufferSize);
+
+// Returns a buffer ready to be written to disk in the specified format.
+std::shared_ptr<char> encode(const buffer* _pBuffer
+	, size_t* _pSize
+	, file_format::value _FileFormat
+	, alpha_option::value _Option = alpha_option::preserve
+	, compression::value _Compression = compression::low);
+
+// Parses the in-memory formatted buffer into a surface.
+std::shared_ptr<buffer> decode(const void* _pBuffer
+	, size_t _BufferSize
+	, alpha_option::value _Option);
+
+	} // namespace surface
 } // namespace ouro
 
 #endif

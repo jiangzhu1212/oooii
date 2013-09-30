@@ -72,7 +72,7 @@ void TESTsurface_resize(requirements& _Requirements)
 	for (int i = 0; i < surface::filter::filter_count; i++, NthImage += 2)
 	{
 		surface::shared_lock lock(s);
-		TESTsurface_resize_test_filter(_Requirements, s->info(), lock.mapped, surface::filter::value(i), NthImage);
+		TESTsurface_resize_test_filter(_Requirements, s->get_info(), lock.mapped, surface::filter::value(i), NthImage);
 	}
 }
 

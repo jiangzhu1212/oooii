@@ -23,8 +23,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/surface.h>
+#include <oBase/assert.h>
 #include <oBase/byte.h>
+#include <oBase/color.h>
+#include <oBase/memory.h>
+#include <oBase/throw.h>
 #include <oStd/atomic.h>
+#include <oHLSL/oHLSLMath.h>
 
 using namespace std::placeholders;
 using namespace oStd;
@@ -1066,11 +1071,27 @@ void enumerate_pixels(const info& _SurfaceInfo
 	}
 }
 
+void enumerate_pixels(const info& _SurfaceInfo
+	, mapped_subresource& _MappedSubresource
+	, const std::function<void(void* _pPixel)>& _Enumerator)
+{
+	void* pRow = _MappedSubresource.data;
+	void* pEnd = byte_add(pRow, _SurfaceInfo.dimensions.y * _MappedSubresource.row_pitch); // should this be depth/slice pitch?
+	const int FormatSize = element_size(_SurfaceInfo.format);
+	for (; pRow < pEnd; pRow = byte_add(pRow, _MappedSubresource.row_pitch))
+	{
+		void* pPixel = pRow;
+		void* pRowEnd = byte_add(pPixel, _SurfaceInfo.dimensions.x * FormatSize);
+		for (; pPixel < pRowEnd; pPixel = byte_add(pPixel, FormatSize))
+			_Enumerator(pPixel);
+	}
+}
+
 // Calls the specified function on each pixel of two same-formatted images.
 void enumerate_pixels(const info& _SurfaceInfo
 	, const const_mapped_subresource& _MappedSubresource1
 	, const const_mapped_subresource& _MappedSubresource2
-	, const std::function<void(const void* _pPixel1, const void* _pPixel2)>& _Enumerator)
+	, const std::function<void(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2)>& _Enumerator)
 {
 	const void* pRow1 = _MappedSubresource1.data;
 	const void* pRow2 = _MappedSubresource2.data;
@@ -1098,7 +1119,7 @@ void enumerate_pixels(const info& _SurfaceInfoInput
 	, const const_mapped_subresource& _MappedSubresourceInput2
 	, const info& _SurfaceInfoOutput
 	, mapped_subresource& _MappedSubresourceOutput
-	, const std::function<void(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut)>& _Enumerator)
+	, const std::function<void(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut)>& _Enumerator)
 {
 	if (any(_SurfaceInfoInput.dimensions != _SurfaceInfoOutput.dimensions))
 		throw std::invalid_argument(formatf("Dimensions mismatch In(%dx%d) != Out(%dx%d)"
@@ -1133,9 +1154,9 @@ void enumerate_pixels(const info& _SurfaceInfoInput
 	}
 }
 
-typedef void (*rms_enumerator)(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut, uint* _pAccum);
+typedef void (*rms_enumerator)(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, uint* _pAccum);
 
-static void sum_squared_diff_r8_to_r8(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut, uint* _pAccum)
+static void sum_squared_diff_r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, uint* _pAccum)
 {
 	const uchar* p1 = (const uchar*)_pPixel1;
 	const uchar* p2 = (const uchar*)_pPixel2;
@@ -1144,7 +1165,7 @@ static void sum_squared_diff_r8_to_r8(const void* _pPixel1, const void* _pPixel2
 	oStd::atomic_fetch_add(_pAccum, uint(absDiff * absDiff));
 }
 
-static void sum_squared_diff_b8g8r8_to_r8(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut, uint* _pAccum)
+static void sum_squared_diff_b8g8r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, uint* _pAccum)
 {
 	const uchar* p = (const uchar*)_pPixel1;
 	uchar b = *p++; uchar g = *p++; uchar r = *p++;
@@ -1157,7 +1178,7 @@ static void sum_squared_diff_b8g8r8_to_r8(const void* _pPixel1, const void* _pPi
 	oStd::atomic_fetch_add(_pAccum, uint(absDiff * absDiff));
 }
 
-static void sum_squared_diff_b8g8r8a8_to_r8(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut, uint* _pAccum)
+static void sum_squared_diff_b8g8r8a8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, uint* _pAccum)
 {
 	const uchar* p = (const uchar*)_pPixel1;
 	uchar a = *p++; uchar b = *p++; uchar g = *p++; uchar r = *p++;
@@ -1192,8 +1213,6 @@ float calc_rms(const info& _SurfaceInfo
 	, const const_mapped_subresource& _MappedSubresource1
 	, const const_mapped_subresource& _MappedSubresource2)
 {
-	std::function<void(const void* _pPixel1, const void* _pPixel2)> Fn;
-
 	rms_enumerator en = get_rms_enumerator(_SurfaceInfo.format, r8_unorm);
 	uint SumOfSquares = 0;
 	uint DummyPixelOut[4]; // largest a pixel can ever be currently
@@ -1286,112 +1305,6 @@ void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _Mapp
 	memset(_Histogram, 0, sizeof(uint) * 65536);
 	histogram_enumerator en = get_histogram_enumerator(_SurfaceInfo.format, 16);
 	enumerate_pixels(_SurfaceInfo, _MappedSubresource, std::bind(en, _1, _Histogram));
-}
-
-class buffer_impl : public buffer
-{
-public:
-	buffer_impl(const surface::info& _SurfaceInfo);
-	~buffer_impl();
-
-	struct info info() const override;
-	void update_subresource(int _Subresource, const const_mapped_subresource& _Source, bool _FlipVertically = false) override;
-	void update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source, bool _FlipVertically = false) override;
-	void map(int _Subresource, mapped_subresource* _pMapped, int2* _pByteDimensions = nullptr) override;
-	void unmap(int _Subresource) override;
-	void map_const(int _Subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions = nullptr) const override;
-	void unmap_const(int _Subresource) const override;
-	void copy_to(int _Subresource, mapped_subresource* _pMapped, bool _FlipVertically = false) const override;
-
-private:
-	void* Data;
-	surface::info Info;
-	oStd::shared_mutex Mutex; // todo: separate locking mechanism to be per-subresource
-};
-
-buffer_impl::buffer_impl(const surface::info& _SurfaceInfo)
-	: Data(new char[total_size(_SurfaceInfo)])
-	, Info(_SurfaceInfo)
-{}
-
-buffer_impl::~buffer_impl()
-{
-	if (Data)
-		delete [] Data;
-}
-
-std::shared_ptr<buffer> buffer::make(const surface::info& _Info)
-{
-	return std::move(std::make_shared<buffer_impl>(_Info));
-}
-
-struct info buffer_impl::info() const
-{
-	return Info;
-}
-
-void buffer_impl::update_subresource(int _Subresource, const const_mapped_subresource& _Source, bool _FlipVertically)
-{
-	int2 ByteDimensions;
-	mapped_subresource Dest = get_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
-	oStd::lock_guard<shared_mutex> lock(Mutex);
-	memcpy2d(Dest.data, Dest.row_pitch, _Source.data, _Source.row_pitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
-}
-
-void buffer_impl::update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source, bool _FlipVertically)
-{
-	if (is_block_compressed(Info.format) || Info.format == r1_unorm)
-		throw std::invalid_argument("block compressed and bit formats not supported");
-
-	int2 ByteDimensions;
-	mapped_subresource Dest = get_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
-
-	const int NumRows = _Box.height();
-	int PixelSize = element_size(Info.format);
-	int RowSize = PixelSize * _Box.width();
-
-	// Dest points at start of subresource, so offset to subrect of first slice
-	Dest.data = byte_add(Dest.data, (_Box.top * Dest.row_pitch) + _Box.left * PixelSize);
-
-	const void* pSource = _Source.data;
-
-	oStd::lock_guard<shared_mutex> lock(Mutex);
-	for (uint slice = _Box.front; slice < _Box.back; slice++)
-	{
-		memcpy2d(Dest.data, Dest.row_pitch, pSource, _Source.row_pitch, RowSize, NumRows, _FlipVertically);
-		Dest.data = byte_add(Dest.data, Dest.depth_pitch);
-		pSource = byte_add(pSource, _Source.depth_pitch);
-	}
-}
-
-void buffer_impl::map(int _Subresource, mapped_subresource* _pMapped, int2* _pByteDimensions)
-{
-	Mutex.lock();
-	*_pMapped = get_mapped_subresource(Info, _Subresource, 0, Data, _pByteDimensions);
-}
-
-void buffer_impl::unmap(int _Subresource)
-{
-	Mutex.unlock();
-}
-
-void buffer_impl::map_const(int _Subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions) const
-{
-	const_cast<shared_mutex&>(Mutex).lock_shared();
-	*_pMapped = get_const_mapped_subresource(Info, _Subresource, 0, Data, _pByteDimensions);
-}
-
-void buffer_impl::unmap_const(int _Subresource) const
-{
-	const_cast<shared_mutex&>(Mutex).unlock_shared();
-}
-
-void buffer_impl::copy_to(int _Subresource, mapped_subresource* _pMapped, bool _FlipVertically) const
-{
-	int2 ByteDimensions;
-	const_mapped_subresource Source = get_const_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
-	oStd::shared_lock<shared_mutex> lock(const_cast<shared_mutex&>(Mutex));
-	memcpy2d(_pMapped->data, _pMapped->row_pitch, Source.data, Source.row_pitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
 }
 
 	} // namespace surface

@@ -477,6 +477,7 @@ int num_mips(bool _HasMips, const int3& _Mip0Dimensions);
 inline int num_mips(bool _HasMips, const int2& _Mip0Dimensions) { return num_mips(_HasMips, int3(_Mip0Dimensions, 1)); }
 inline int num_mips(layout _Layout, const int3& _Mip0Dimensions) { return num_mips(_Layout != image, _Mip0Dimensions); }
 inline int num_mips(layout _Layout, const int2& _Mip0Dimensions) { return num_mips(_Layout != image, int3(_Mip0Dimensions, 1)); }
+inline int num_mips(const info& _SurfaceInfo) { return num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions); }
 
 // Returns the width, height, or depth dimension of the specified mip level
 // given mip0's dimension. This appropriately pads BC formats and conforms to 
@@ -686,11 +687,15 @@ void enumerate_pixels(const info& _SurfaceInfo
 	, const const_mapped_subresource& _MappedSubresource
 	, const std::function<void(const void* _pPixel)>& _Enumerator);
 
+void enumerate_pixels(const info& _SurfaceInfo
+	, mapped_subresource& _MappedSubresource
+	, const std::function<void(void* _pPixel)>& _Enumerator);
+
 // Calls the specified function on each pixel of two same-formatted surfaces.
 void enumerate_pixels(const info& _SurfaceInfo
 	, const const_mapped_subresource& _MappedSubresource1
 	, const const_mapped_subresource& _MappedSubresource2
-	, const std::function<void(const void* _pPixel1, const void* _pPixel2)>& _Enumerator);
+	, const std::function<void(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2)>& _Enumerator);
 
 // Calls the specified function on each pixel of two same-formatted surfaces.
 // and writes to a 3rd other-format surface.
@@ -699,7 +704,7 @@ void enumerate_pixels(const info& _SurfaceInfoInput
 	, const const_mapped_subresource& _MappedSubresourceInput2
 	, const info& _SurfaceInfoOutput
 	, mapped_subresource& _MappedSubresourceOutput
-	, const std::function<void(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut)>& _Enumerator);
+	, const std::function<void(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut)>& _Enumerator);
 
 // Returns the root mean square of the difference between the two surfaces.
 float calc_rms(const info& _SurfaceInfo
@@ -719,64 +724,6 @@ float calc_rms(const info& _SurfaceInfoInput
 // (lum [0,1] mapped to [0,255] or [0,256]).
 void histogram8(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[256]);
 void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[65536]);
-
-// _____________________________________________________________________________
-// Surface container
-
-class buffer
-{
-public:
-	static std::shared_ptr<buffer> make(const info& _Info);
-
-	virtual struct info info() const = 0;
-
-	virtual void update_subresource(int _Subresource, const const_mapped_subresource& _Source, bool _FlipVertically = false) = 0;
-	virtual void update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source, bool _FlipVertically = false) = 0;
-
-	virtual void map(int _Subresource, mapped_subresource* _pMapped, int2* _pByteDimensions = nullptr) = 0;
-	virtual void unmap(int _Subresource) = 0;
-
-	virtual void map_const(int _Subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions = nullptr) const = 0;
-	virtual void unmap_const(int _Subresource) const = 0;
-
-	virtual void copy_to(int _Subresource, mapped_subresource* _pMapped, bool _FlipVertically = false) const = 0;
-};
-
-class lock_guard
-{
-public:
-	lock_guard(std::shared_ptr<buffer> _Buffer, int _Subresource = 0)
-		: Buffer(_Buffer)
-		, Subresource(_Subresource)
-	{ Buffer->map(Subresource, &mapped, &byte_dimensions); }
-
-	~lock_guard() { Buffer->unmap(Subresource); }
-
-	mapped_subresource mapped;
-	int2 byte_dimensions;
-
-private:
-	int Subresource;
-	std::shared_ptr<buffer> Buffer;
-};
-
-class shared_lock
-{
-public:
-	shared_lock(std::shared_ptr<const buffer> _Buffer, int _Subresource = 0)
-		: Buffer(_Buffer)
-		, Subresource(_Subresource)
-	{ Buffer->map_const(Subresource, &mapped, &byte_dimensions); }
-
-	~shared_lock() { Buffer->unmap_const(Subresource); }
-
-	const_mapped_subresource mapped;
-	int2 byte_dimensions;
-
-private:
-	int Subresource;
-	std::shared_ptr<const buffer> Buffer;
-};
 
 	} // namespace surface
 } // namespace ouro

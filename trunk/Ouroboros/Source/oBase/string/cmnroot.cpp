@@ -22,6 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+#include <ctype.h>
 
 namespace ouro {
 
@@ -35,8 +36,8 @@ size_t cmnroot(const char* _Path1, const char* _Path2)
 	{
 		while (_Path1[len] && _Path2[len])
 		{
-			char a = tolower(_Path1[len]);
-			char b = tolower(_Path2[len]);
+			char a = (char)tolower(_Path1[len]);
+			char b = (char)tolower(_Path2[len]);
 
 			if (a != b || is_sep(a) != is_sep(b))
 				break;

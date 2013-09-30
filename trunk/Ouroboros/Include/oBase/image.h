@@ -22,42 +22,64 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Anything that might want to be consistently controlled by a unit test 
-// infrastructure is separated out into this virtual interface.
 #pragma once
-#ifndef oBaseTestRequirements_h
-#define oBaseTestRequirements_h
+#ifndef oBase_image_h
+#define oBase_image_h
 
-#include <oBase/path.h>
-#include <oBase/surface_buffer.h>
+#include <oBase/color.h>
+#include <oBase/surface_codec.h>
 
 namespace ouro {
-	namespace tests {
 
-interface requirements
+class image
 {
-	// Implements a C-standard rand call
-	virtual int rand() = 0;
+public:
+	enum format // only a subset of surface formats are supported as images
+	{
+		unknown = surface::unknown,
+		rgba32 = surface::r8g8b8a8_unorm,
+		rgb24 = surface::r8g8b8_unorm,
+		bgra32 = surface::b8g8r8a8_unorm,
+		bgr24 = surface::b8g8r8_unorm,
+		r8 = surface::r8_unorm,
+	};
 
-	virtual void vreport(const char* _Format, va_list _Args) = 0;
-	inline void report(const char* _Format, ...) { va_list a; va_start(a, _Format); vreport(_Format, a); va_end(a); }
+	struct info
+	{
+		info()
+			: format(bgra32)
+			, row_pitch(0)
+			, dimensions(0, 0)
+		{}
 
-	// fread's the file's contents and returns the pointer
-	virtual std::shared_ptr<char> load_buffer(const path& _Path, size_t* _pSize = nullptr) = 0;
+		enum format format;
+		uint row_pitch;
+		int2 dimensions;
+	};
 
-	virtual std::shared_ptr<surface::buffer> load_surface(const path& _Path) = 0;
+	static std::shared_ptr<image> make(const info& _Info);
 
-	// This function compares the specified surface to a golden image named after
-	// the test's name suffixed with _NthTest. If _NthTest is 0 then the golden 
-	// image should not have a suffix. If _MaxRMSError is negative a default 
-	// should be used. If the surfaces are not similar this throws an exception.
-	virtual void check(const surface::info& _SourceInfo
-		, const surface::const_mapped_subresource& _Source
-		, int _NthTest = 0
-		, float _MaxRMSError = -1.0f) = 0;
+	virtual info get_info() const = 0;
+
+	virtual void copy_from(const void* _pSourceBuffer, size_t _SourceRowPitch, bool _FlipVertically = false) = 0;
+	virtual void copy_to(void* _pDestinationBuffer, size_t _DestinationRowPitch, bool _FlipVertically = false) const = 0;
+
+	virtual void convert(format _NewFormat) = 0;
+
+	virtual std::shared_ptr<surface::buffer> buffer() = 0;
+	virtual std::shared_ptr<const surface::buffer> buffer() const = 0;
+
+	// These are non-performant and should only be used for debugging situations
+	virtual void put(const int2& _Coordinate, color _Color) = 0;
+	virtual color get(const int2& _Coordinate) const = 0;
 };
 
-	} // namespace tests
+// Returns the pixel data based on the specified buffer that is an in-memory 
+// file of one of the supported formats. (For encode pass the underlying surface 
+// to surface::encode directly.
+
+std::shared_ptr<image> decode(const void* _pBuffer, size_t _BufferSize, surface::alpha_option::value _Option);
+
 } // namespace ouro
 
 #endif

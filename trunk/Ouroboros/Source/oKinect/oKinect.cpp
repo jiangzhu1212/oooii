@@ -243,11 +243,11 @@ int2 oKinectImpl::GetDimensions(oKINECT_FRAME_TYPE _Type) const threadsafe
 	{
 		case oKINECT_FRAME_COLOR:
 			if (pThis->Color)
-				inf = pThis->Color->info();
+				inf = pThis->Color->get_info();
 			break;
 		case oKINECT_FRAME_DEPTH:
 			if (pThis->Depth)
-				inf = pThis->Depth->info();
+				inf = pThis->Depth->get_info();
 		default: break;
 	}
 	return inf.dimensions.xy();
@@ -325,13 +325,13 @@ bool oKinectImpl::MapRead(oKINECT_FRAME_TYPE _Type, ouro::surface::info* _pInfo,
 		case oKINECT_FRAME_COLOR:
 			if (!pThis->Color)
 				return oErrorSetLast(std::errc::operation_not_supported, "color support not configured");
-			*_pInfo = pThis->Color->info();
+			*_pInfo = pThis->Color->get_info();
 			pThis->Color->map_const(0, _pMapped, &ByteDimensions);
 			break;
 		case oKINECT_FRAME_DEPTH:
 			if (!pThis->Depth)
 				return oErrorSetLast(std::errc::operation_not_supported, "depth support not configured");
-			*_pInfo = pThis->Depth->info();
+			*_pInfo = pThis->Depth->get_info();
 			pThis->Depth->map_const(0, _pMapped, &ByteDimensions);
 			break;
 		default:

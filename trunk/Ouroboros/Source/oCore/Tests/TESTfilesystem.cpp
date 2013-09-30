@@ -67,7 +67,7 @@ static void TESTfilesystem_map()
 	finally Unmap([&] { if (mapped) unmap(mapped); }); // safety unmap if we fail for some non-mapping reason
 
 	size_t Size = 0;
-	std::shared_ptr<char> loaded = load(TestPath, &Size, load_option::binary_read);
+	std::shared_ptr<char> loaded = load(TestPath, load_option::binary_read, &Size);
 
 	if (Size != size)
 		oTHROW(io_error, "mismatch: mapped and loaded file sizes");

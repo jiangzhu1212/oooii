@@ -280,10 +280,7 @@ void save(const path& _Path, const void* _pSource, size_t _SizeofSource, save_op
 // Allocates the size of the file, reads it into memory and returns that buffer.
 // If loaded as text, the allocation will be padded and a nul terminator will be
 // added so the buffer can immediately be used as a string.
-std::shared_ptr<char> load(const path& _Path, load_option::value _LoadOption);
-
-// retrieve file size in one go.
-std::shared_ptr<char> load(const path& _Path, size_t* _pSize, load_option::value _LoadOption);
+std::shared_ptr<char> load(const path& _Path, load_option::value _LoadOption, size_t* _pSize = nullptr);
 
 	} // namespace filesystem
 } // namespace ouro
