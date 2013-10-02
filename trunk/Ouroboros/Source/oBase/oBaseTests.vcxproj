@@ -27,6 +27,7 @@
     <ClCompile Include="Tests\TESTjson.cpp" />
     <ClCompile Include="Tests\TESTpath.cpp" />
     <ClCompile Include="tests\TESTsurface.cpp" />
+    <ClCompile Include="tests\TESTsurface_codec.cpp" />
     <ClCompile Include="tests\TESTsurface_resize.cpp" />
     <ClCompile Include="Tests\TESTuri.cpp" />
     <ClCompile Include="Tests\TESTxml.cpp" />

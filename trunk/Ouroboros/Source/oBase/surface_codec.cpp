@@ -28,6 +28,18 @@
 #include <oStd/mutex.h>
 
 namespace ouro {
+
+const char* as_string(const surface::file_format::value& _FileFormat)
+{
+	switch (_FileFormat)
+	{
+		case surface::file_format::png: "PNG";
+		case surface::file_format::jpg: "JPEG";
+		default: break;
+	}
+	return "?";
+}
+
 	namespace surface {
 
 info get_info_png(const void* _pBuffer, size_t _BufferSize);

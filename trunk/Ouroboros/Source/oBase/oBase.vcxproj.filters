@@ -211,12 +211,6 @@
     <ClCompile Include="surface_fill.cpp">
       <Filter>Source\surface</Filter>
     </ClCompile>
-    <ClCompile Include="surface_png.cpp">
-      <Filter>Source\surface</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\External\lodepng\lodepng.cpp">
-      <Filter>Source\surface</Filter>
-    </ClCompile>
     <ClCompile Include="image.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -224,6 +218,9 @@
       <Filter>Source\surface</Filter>
     </ClCompile>
     <ClCompile Include="surface_jpg.cpp">
+      <Filter>Source\surface</Filter>
+    </ClCompile>
+    <ClCompile Include="surface_libpng.cpp">
       <Filter>Source\surface</Filter>
     </ClCompile>
   </ItemGroup>
@@ -401,9 +398,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\image.h">
       <Filter>oBase</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\External\lodepng\lodepng.h">
-      <Filter>Source\surface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

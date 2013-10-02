@@ -41,6 +41,7 @@ public:
 	static std::shared_ptr<buffer> buffer::make(const info& _Info, void* _pData);
 
 	virtual info get_info() const = 0;
+	inline size_t size() const { return total_size(get_info()); }
 
 	virtual void update_subresource(int _Subresource, const const_mapped_subresource& _Source, bool _FlipVertically = false) = 0;
 	virtual void update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source, bool _FlipVertically = false) = 0;

@@ -101,6 +101,7 @@ pixel_convert get_pixel_convert(format _SourceFormat, format _DestinationFormat)
 		case IO(r8g8b8a8_unorm, r8g8b8_unorm): return r8g8b8a8_unorm_to_r8g8b8_unorm;
 		case IO(r8g8b8_unorm, r8g8b8a8_unorm): return r8g8b8_unorm_to_r8g8b8a8_unorm;
 		case IO(b8g8r8a8_unorm, b8g8r8_unorm): return b8g8r8a8_unorm_to_b8g8r8_unorm;
+		case IO(b8g8r8a8_unorm, r8g8b8_unorm): return swap_red_blue_r8g8b8_unorm;
 		case IO(b8g8r8_unorm, b8g8r8a8_unorm): return b8g8r8_unorm_to_b8g8r8a8_unorm;
 		case IO(b8g8r8_unorm, r8g8b8_unorm): 
 		case IO(r8g8b8_unorm, b8g8r8_unorm): return swap_red_blue_r8g8b8_unorm;
@@ -108,7 +109,7 @@ pixel_convert get_pixel_convert(format _SourceFormat, format _DestinationFormat)
 		case IO(r8g8b8a8_unorm, b8g8r8a8_unorm): return swap_red_blue_r8g8b8a8_unorm;
 		default: break;
 	}
-	throw std::invalid_argument(formatf("%s -> %s conversion not supported", as_string(_SourceFormat), as_string(_DestinationFormat)));
+	throw std::invalid_argument(formatf("%s -> %s not supported", as_string(_SourceFormat), as_string(_DestinationFormat)));
 	#undef IO
 }
 
