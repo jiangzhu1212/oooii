@@ -27,7 +27,6 @@
 #include <oBase/surface_codec.h>
 #include <oBase/throw.h>
 #include <lodepng/lodepng.h>
-#include <pnglite/pnglite.h>
 
 #define LODE_CALL(fn) do \
 { uint lodeerror__ = fn; \
