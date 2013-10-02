@@ -26,7 +26,6 @@
 #include <oBase/finally.h>
 #include <oBase/surface_convert.h>
 #include <oBase/throw.h>
-#include <lodepng/lodepng.h>
 
 #define LODE_CALL(fn) do \
 { uint lodeerror__ = fn; \
