@@ -30,7 +30,7 @@
 #ifdef oHAS_KINECT_SDK
 
 #include <oKinect/oKinect.h>
-#include <oBase/surface.h>
+#include <oSurface/buffer.h>
 #include <oPlatform/Windows/oWindows.h>
 #include <NuiApi.h>
 

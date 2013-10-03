@@ -22,28 +22,62 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// Describes encoding and decoding functions (basically file formats) for 
+// surfaces.
 #pragma once
-#ifndef oBase_surface_convert_h
-#define oBase_surface_convert_h
+#ifndef oSurface_codec_h
+#define oSurface_codec_h
 
-#include <oBase/surface.h>
+#include <oSurface/buffer.h>
 
 namespace ouro {
 	namespace surface {
 
-// Converts the specified subresource into the destination subresource.
-void convert_subresource(const subresource_info& _SubresourceInfo
-	, format _SourceFormat, const const_mapped_subresource& _Source
-	, format _DestinationFormat, mapped_subresource* _pDestination);
+namespace file_format
+{	enum value {
 
-// Converts the specified source into the specified destination. This assumes
-// all memory has been properly allocated. If a conversion is not supported this
-// throws an exception.
-void convert(const info& _SourceInfo, const const_mapped_subresource& _Source
-	, const info& _DestinationInfo, mapped_subresource* _pDestination);
+	unknown,
+	png,
+	jpg,
 
-// This is a conversion in-place for RGB v. BGR and similar permutations.
-void convert_swizzle(const info& _SurfaceInfo, surface::format _NewFormat, mapped_subresource* _pSurface);
+};}
+
+namespace compression
+{	enum value {
+
+	none,
+  low,
+  medium,
+  high,
+
+};}
+
+namespace alpha_option
+{	enum value {
+
+	preserve,
+	force_alpha,
+	force_no_alpha,
+
+};}
+
+// Analyzes the buffer to determine its file format
+file_format::value get_file_format(const void* _pBuffer, size_t _BufferSize);
+
+// Returns the info from a buffer formatted as a file in memory
+info get_info(const void* _pBuffer, size_t _BufferSize);
+
+// Returns a buffer ready to be written to disk in the specified format.
+std::shared_ptr<char> encode(const buffer* _pBuffer
+	, size_t* _pSize
+	, file_format::value _FileFormat
+	, alpha_option::value _Option = alpha_option::preserve
+	, compression::value _Compression = compression::low);
+
+// Parses the in-memory formatted buffer into a surface.
+std::shared_ptr<buffer> decode(const void* _pBuffer
+	, size_t _BufferSize
+	, alpha_option::value _Option = alpha_option::preserve);
 
 	} // namespace surface
 } // namespace ouro

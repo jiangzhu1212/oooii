@@ -22,57 +22,32 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// Facade for various conversion formats. Not all are supported, but could be
+// added over time.
 #pragma once
-#ifndef oCamera_h
-#define oCamera_h
+#ifndef oSurface_convert_h
+#define oSurface_convert_h
 
-#include <oBasis/oInterface.h>
-#include <oBasis/oMathTypes.h>
 #include <oSurface/surface.h>
 
-interface oCamera : oInterface
-{
-	struct MODE
-	{
-		int2 Dimensions;
-		ouro::surface::format Format;
-		int BitRate;
-	};
+namespace ouro {
+	namespace surface {
 
-	struct DESC
-	{
-		MODE Mode;
-	};
+// Converts the specified subresource into the destination subresource.
+void convert_subresource(const subresource_info& _SubresourceInfo
+	, format _SourceFormat, const const_mapped_subresource& _Source
+	, format _DestinationFormat, mapped_subresource* _pDestination);
 
-	struct MAPPED
-	{
-		const void* pData;
-		unsigned int RowPitch;
-		unsigned int Frame;
-	};
+// Converts the specified source into the specified destination. This assumes
+// all memory has been properly allocated. If a conversion is not supported this
+// throws an exception.
+void convert(const info& _SourceInfo, const const_mapped_subresource& _Source
+	, const info& _DestinationInfo, mapped_subresource* _pDestination);
 
-	virtual void GetDesc(DESC* _pDesc) threadsafe = 0;
+// This is a conversion in-place for RGB v. BGR and similar permutations.
+void convert_swizzle(const info& _SurfaceInfo, surface::format _NewFormat, mapped_subresource* _pSurface);
 
-	virtual const char* GetName() const threadsafe = 0;
-	virtual unsigned int GetID() const threadsafe = 0;
-
-	virtual bool FindClosestMatchingMode(const MODE& _ModeToMatch, MODE* _pClosestMatch) threadsafe = 0;
-	virtual bool GetModeList(unsigned int* _pNumModes, MODE* _pModes) threadsafe = 0;
-
-	virtual float GetFPS() const threadsafe = 0;
-
-	virtual bool SetMode(const MODE& _Mode) threadsafe = 0;
-
-	virtual bool SetCapturing(bool _Capturing = true) threadsafe = 0;
-	virtual bool IsCapturing() const threadsafe = 0;
-
-	virtual bool Map(MAPPED* _pMapped) threadsafe = 0;
-	virtual void Unmap() threadsafe = 0;
-};
-
-// Enumerate all cameras currently attached to the system. If this fails, 
-// check oErrorGetLast() for more details. If there is a failure it is often
-// because the installed drivers are not up-to-date.
-bool oCameraEnum(unsigned int _Index, threadsafe oCamera** _ppCamera);
+	} // namespace surface
+} // namespace ouro
 
 #endif

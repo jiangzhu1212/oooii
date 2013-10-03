@@ -63,8 +63,16 @@ oStd              <== Implementations of C++11 std namespace objects not yet
 oStdTests         <== Unit tests for oStd.
 oHLSL             <== Implementation of the HLSL language for C++. Many of the 
                       math functions in HLSL and utils written for shader code 
-					  are useful at tool-time or for C++ code so enable cross-
-					  compilation.
+                      are useful at tool-time or for C++ code so enable cross-
+                      compilation.
+oBase             <== Very common utility functions especially relating to 
+                      string and memory parsing.
+oBaseTests        <== Unit tests for oBase
+oSurface          <== Texture/advanced image support including image loading,
+                      format introspection, utilities for dealing with 2D and 3D 
+                      dimensions as well as mips, arrays, slices and cube maps.
+                      this also includes simple fill and conversion utilities.
+oSurfaceTests     <== Unit tests for oSurface
 oCompute          <== Semi-basic math functions that cross-compile on compute 
                       languages. At the moment this is only HLSL and C++.
 oComputeTests     <== Unit tests for oCompute.
@@ -87,7 +95,7 @@ oKinect           <== Platform-level integration/wrapper for the Kinect API alon
                       oPlatform.
 oFramework        <== Cross-platform layer that implements complex concepts 
                       generically using oPlatform interfaces, but is not platform
-					  -dependent.
+                      -dependent.
 
 NOTE: As of 6/21/2013, oFramework does not exist. Its contents are still inside 
 oPlatform as we build more complex ideas around our solidifying platform layer.

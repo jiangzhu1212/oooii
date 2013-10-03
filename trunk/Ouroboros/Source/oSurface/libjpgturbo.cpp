@@ -22,59 +22,29 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBase/surface_resize.h>
+#include <oSurface/codec.h>
 #include <oBase/throw.h>
-//#include <oBase/finally.h>
-#include <oBase/timer.h>
-#include <oBase/tests/oBaseTestRequirements.h>
-#include <vector>
 
-namespace ouro { 
-	namespace tests {
+namespace ouro {
+	namespace surface {
 
-static void TESTsurface_resize_test_size(requirements& _Requirements
-	, const surface::info& _SourceInfo
-	, const surface::const_mapped_subresource& _Source
-	, surface::filter::value _Filter
-	, const int3& _NewSize
-	, int _NthImage)
+info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
 {
-	surface::info destInfo = _SourceInfo;
-	destInfo.dimensions = _NewSize;
-	int destMapSize = surface::total_size(destInfo, 0);
-	std::vector<char> destMapData;
-	destMapData.resize(destMapSize);
-	surface::mapped_subresource destMap = surface::get_mapped_subresource(destInfo, 0, 0, destMapData.data());
-
-	{
-		scoped_timer timer("resize time");
-		surface::resize(_SourceInfo, _Source, destInfo, &destMap, _Filter);
-	}
-
-	_Requirements.check(destInfo, destMap, _NthImage);
+	oTHROW(function_not_supported, "jpg not supported");
 }
 
-static void TESTsurface_resize_test_filter(requirements& _Requirements
-	, const surface::info& _SourceInfo
-	, const surface::const_mapped_subresource& _Source
-	, surface::filter::value _Filter
-	, int _NthImage)
+std::shared_ptr<char> encode_jpg(const buffer* _pBuffer
+	, size_t* _pSize
+	, alpha_option::value _Option
+	, compression::value _Compression)
 {
-	TESTsurface_resize_test_size(_Requirements, _SourceInfo, _Source, _Filter, _SourceInfo.dimensions * int3(2,2,1), _NthImage);
-	TESTsurface_resize_test_size(_Requirements, _SourceInfo, _Source, _Filter, _SourceInfo.dimensions / int3(2,2,1), _NthImage+1);
+	oTHROW(function_not_supported, "jpg not supported");
 }
 
-void TESTsurface_resize(requirements& _Requirements)
+std::shared_ptr<buffer> decode_jpg(const void* _pBuffer, size_t _BufferSize, alpha_option::value _Option)
 {
-	std::shared_ptr<surface::buffer> s = _Requirements.load_surface(path("Test/Textures/lena_1.png"));
-
-	int NthImage = 0;
-	for (int i = 0; i < surface::filter::filter_count; i++, NthImage += 2)
-	{
-		surface::shared_lock lock(s);
-		TESTsurface_resize_test_filter(_Requirements, s->get_info(), lock.mapped, surface::filter::value(i), NthImage);
-	}
+	oTHROW(function_not_supported, "jpg not supported");
 }
 
-	} // namespace tests
+	} // namespace surface
 } // namespace ouro

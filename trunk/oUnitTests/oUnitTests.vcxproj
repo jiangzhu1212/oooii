@@ -170,6 +170,7 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrency.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCore.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTStd.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurface.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurfaceFill.cpp" />
     <ClCompile Include="oUnitTests.cpp" />
     <ClCompile Include="pch.cpp">
@@ -239,6 +240,12 @@
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oStd\oStdTests.vcxproj">
       <Project>{7cbfb2e5-2ba4-43a0-9a61-b45e7d7e8978}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oSurface\oSurface.vcxproj">
+      <Project>{ec39f58b-4343-4884-9bae-5d5a8d101440}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oSurface\oSurfaceTests.vcxproj">
+      <Project>{76618711-9e0a-4efd-8d9e-b41215e0ab78}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

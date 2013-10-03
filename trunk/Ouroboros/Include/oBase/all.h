@@ -55,11 +55,6 @@
 #include <oBase/scc.h>
 #include <oBase/string.h>
 #include <oBase/string_traits.h>
-#include <oBase/surface.h>
-#include <oBase/surface_buffer.h>
-#include <oBase/surface_convert.h>
-#include <oBase/surface_fill.h>
-#include <oBase/surface_resize.h>
 #include <oBase/text_document.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>

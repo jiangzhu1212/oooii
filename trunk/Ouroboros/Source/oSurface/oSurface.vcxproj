@@ -18,13 +18,37 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="buffer.cpp" />
+    <ClCompile Include="codec.cpp" />
+    <ClCompile Include="convert.cpp" />
+    <ClCompile Include="fill.cpp" />
+    <ClCompile Include="libjpgturbo.cpp" />
+    <ClCompile Include="libpng.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="resize.cpp" />
+    <ClCompile Include="surface.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Include\oSurface\all.h" />
+    <ClInclude Include="..\..\Include\oSurface\buffer.h" />
+    <ClInclude Include="..\..\Include\oSurface\codec.h" />
+    <ClInclude Include="..\..\Include\oSurface\convert.h" />
+    <ClInclude Include="..\..\Include\oSurface\fill.h" />
+    <ClInclude Include="..\..\Include\oSurface\resize.h" />
+    <ClInclude Include="..\..\Include\oSurface\surface.h" />
+    <ClInclude Include="pch.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{9B201A35-70FF-4CE2-8F00-31890A6196C0}</ProjectGuid>
-    <RootNamespace>oRCGen</RootNamespace>
+    <ProjectGuid>{EC39F58B-4343-4884-9BAE-5D5A8D101440}</ProjectGuid>
+    <RootNamespace>oSurface</RootNamespace>
     <SccProjectName>
     </SccProjectName>
-    <SccAuxPath>
-    </SccAuxPath>
     <SccLocalPath>
     </SccLocalPath>
     <SccProvider>
@@ -32,16 +56,16 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings" />
@@ -49,178 +73,79 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Build\msvc100\Properties\Release32.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
     <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
-    <Import Project="..\Build\msvc100\Properties\OuroborosCommonRCGen.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Build\msvc100\Properties\Debug32.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
     <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
-    <Import Project="..\Build\msvc100\Properties\OuroborosCommonRCGen.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Build\msvc100\Properties\Release64.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
     <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
-    <Import Project="..\Build\msvc100\Properties\OuroborosCommonRCGen.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Build\msvc100\Properties\Debug64.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\Build\msvc100\Properties\lib.props" />
     <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
-    <Import Project="..\Build\msvc100\Properties\OuroborosCommonRCGen.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <PreBuildEvent />
-    <CustomBuildStep>
-      <Message>
-      </Message>
-      <Command>
-      </Command>
-      <Inputs>%(Inputs)</Inputs>
-      <Outputs>%(Outputs)</Outputs>
-    </CustomBuildStep>
+    <ClCompile />
+    <Lib />
+    <ClCompile />
     <ClCompile>
-      <PreprocessorDefinitions>oSTATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
-    <Link />
-    <PostBuildEvent />
-    <Link>
-      <OptimizeReferences>true</OptimizeReferences>
-    </Link>
-    <PreBuildEvent />
-    <PreBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <PreBuildEvent />
-    <CustomBuildStep>
-      <Message>
-      </Message>
-      <Command>
-      </Command>
-      <Inputs>%(Inputs)</Inputs>
-      <Outputs>%(Outputs)</Outputs>
-    </CustomBuildStep>
     <Midl>
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile />
-    <Link />
-    <PostBuildEvent />
+    <Lib />
+    <ClCompile />
     <ClCompile>
-      <PreprocessorDefinitions>oSTATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
-    <Link />
-    <Link>
-      <OptimizeReferences>true</OptimizeReferences>
-    </Link>
-    <PreBuildEvent />
-    <PreBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <PreBuildEvent />
-    <CustomBuildStep>
-      <Message>
-      </Message>
-      <Command>
-      </Command>
-      <Inputs>%(Inputs)</Inputs>
-      <Outputs>%(Outputs)</Outputs>
-    </CustomBuildStep>
+    <ClCompile />
+    <Lib />
+    <ClCompile />
     <ClCompile>
-      <PreprocessorDefinitions>oSTATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
-    <Link />
-    <PostBuildEvent />
-    <Link>
-      <OptimizeReferences>true</OptimizeReferences>
-    </Link>
-    <PreBuildEvent />
-    <PreBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <PreBuildEvent />
-    <CustomBuildStep>
-      <Message>
-      </Message>
-      <Command>
-      </Command>
-      <Inputs>%(Inputs)</Inputs>
-      <Outputs>%(Outputs)</Outputs>
-    </CustomBuildStep>
     <Midl>
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
+    <ClCompile />
+    <Lib>
+      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
+    </Lib>
+    <ClCompile />
+    <ClCompile />
     <ClCompile>
-      <PreprocessorDefinitions>oSTATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
-    <Link />
-    <PostBuildEvent />
-    <Link>
-      <OptimizeReferences>true</OptimizeReferences>
-    </Link>
-    <PreBuildEvent />
-    <PreBuildEvent />
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\oBase\oBase.vcxproj">
-      <Project>{b13f3cbd-b601-4196-bf6f-2eaa8cdfedc3}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\oBasis\oBasis.vcxproj">
-      <Project>{0110f712-0d38-4a54-9849-52786b26481b}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\oCompute\oCompute.vcxproj">
-      <Project>{64e65a9e-fd6c-4b17-8fa7-a7d686ccea42}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\oConcurrency\oConcurrency.vcxproj">
-      <Project>{08ec5ea1-284b-4688-b14b-4bd9945061fb}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\oCore\oCore.vcxproj">
-      <Project>{7dc758b0-32cf-4bbc-abde-0eb53b9ef93c}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\oHLSL\oHLSL.vcxproj">
-      <Project>{aae3c7d9-8124-4b5a-856c-4c5bf23cdb09}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\oPlatform\oPlatform.vcxproj">
-      <Project>{8eb33511-eed5-48ac-99f9-efa2a34bb2dd}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\oStd\oStd.vcxproj">
-      <Project>{6c467bdd-eea7-4ff6-b594-26a760df179f}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\oSurface\oSurface.vcxproj">
-      <Project>{ec39f58b-4343-4884-9bae-5d5a8d101440}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="oRCGen.cpp" />
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="resource.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="oRCGen.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\..\Data\oooii.ico" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>

@@ -19,23 +19,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Tests\TESTatof.cpp" />
-    <ClCompile Include="Tests\TESTcsv.cpp" />
-    <ClCompile Include="tests\TESTdate.cpp" />
-    <ClCompile Include="Tests\TESTfourcc.cpp" />
-    <ClCompile Include="Tests\TESTini.cpp" />
-    <ClCompile Include="Tests\TESTjson.cpp" />
-    <ClCompile Include="Tests\TESTpath.cpp" />
-    <ClCompile Include="Tests\TESTuri.cpp" />
-    <ClCompile Include="Tests\TESTxml.cpp" />
+    <ClCompile Include="tests\TESTsurface.cpp" />
+    <ClCompile Include="tests\TESTsurface_codec.cpp" />
+    <ClCompile Include="tests\TESTsurface_resize.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oBase\tests\oBaseTestRequirements.h" />
-    <ClInclude Include="..\..\Include\oBase\tests\oBaseTests.h" />
+    <ClInclude Include="..\..\Include\oSurface\tests\oSurfaceTestRequirements.h" />
+    <ClInclude Include="..\..\Include\oSurface\tests\oSurfaceTests.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{F02DF42C-54F3-4D80-B233-1D310B41917C}</ProjectGuid>
-    <RootNamespace>oBaseTests
+    <ProjectGuid>{76618711-9E0A-4EFD-8D9E-B41215E0AB78}</ProjectGuid>
+    <RootNamespace>oSurfaceTests
     </RootNamespace>
     <SccProjectName>
     </SccProjectName>

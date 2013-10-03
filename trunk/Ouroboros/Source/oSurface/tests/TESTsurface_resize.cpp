@@ -22,31 +22,61 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Anything that might want to be consistently controlled by a unit test 
-// infrastructure is separated out into this virtual interface.
-#pragma once
-#ifndef oBaseTestRequirements_h
-#define oBaseTestRequirements_h
+#include <oSurface/resize.h>
+#include <oSurface/codec.h>
+#include <oSurface/tests/oSurfaceTestRequirements.h>
+#include <oBase/throw.h>
+#include <oBase/timer.h>
+#include <vector>
 
-#include <oBase/path.h>
-#include <oSurface/buffer.h>
-
-namespace ouro {
+namespace ouro { 
 	namespace tests {
 
-interface requirements
+static void TESTsurface_resize_test_size(requirements& _Requirements
+	, const surface::info& _SourceInfo
+	, const surface::const_mapped_subresource& _Source
+	, surface::filter::value _Filter
+	, const int3& _NewSize
+	, int _NthImage)
 {
-	// Implements a C-standard rand call
-	virtual int rand() = 0;
+	surface::info destInfo = _SourceInfo;
+	destInfo.dimensions = _NewSize;
+	int destMapSize = surface::total_size(destInfo, 0);
+	std::vector<char> destMapData;
+	destMapData.resize(destMapSize);
+	surface::mapped_subresource destMap = surface::get_mapped_subresource(destInfo, 0, 0, destMapData.data());
 
-	virtual void vreport(const char* _Format, va_list _Args) = 0;
-	inline void report(const char* _Format, ...) { va_list a; va_start(a, _Format); vreport(_Format, a); va_end(a); }
+	{
+		scoped_timer timer("resize time");
+		surface::resize(_SourceInfo, _Source, destInfo, &destMap, _Filter);
+	}
 
-	// fread's the file's contents and returns the pointer
-	virtual std::shared_ptr<char> load_buffer(const path& _Path, size_t* _pSize = nullptr) = 0;
-};
+	_Requirements.check(destInfo, destMap, _NthImage);
+}
+
+static void TESTsurface_resize_test_filter(requirements& _Requirements
+	, const surface::info& _SourceInfo
+	, const surface::const_mapped_subresource& _Source
+	, surface::filter::value _Filter
+	, int _NthImage)
+{
+	TESTsurface_resize_test_size(_Requirements, _SourceInfo, _Source, _Filter, _SourceInfo.dimensions * int3(2,2,1), _NthImage);
+	TESTsurface_resize_test_size(_Requirements, _SourceInfo, _Source, _Filter, _SourceInfo.dimensions / int3(2,2,1), _NthImage+1);
+}
+
+void TESTsurface_resize(requirements& _Requirements)
+{
+	size_t Size = 0;
+	std::shared_ptr<char> b = _Requirements.load_buffer(path("Test/Textures/lena_1.png"), &Size);
+	std::shared_ptr<surface::buffer> s = surface::decode(b.get(), Size);
+
+	int NthImage = 0;
+	for (int i = 0; i < surface::filter::filter_count; i++, NthImage += 2)
+	{
+		surface::shared_lock lock(s);
+		TESTsurface_resize_test_filter(_Requirements, s->get_info(), lock.mapped, surface::filter::value(i), NthImage);
+	}
+}
 
 	} // namespace tests
 } // namespace ouro
-
-#endif

@@ -196,33 +196,6 @@
     <ClCompile Include="uri.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
-    <ClCompile Include="surface.cpp">
-      <Filter>Source\surface</Filter>
-    </ClCompile>
-    <ClCompile Include="surface_resize.cpp">
-      <Filter>Source\surface</Filter>
-    </ClCompile>
-    <ClCompile Include="surface_buffer.cpp">
-      <Filter>Source\surface</Filter>
-    </ClCompile>
-    <ClCompile Include="surface_convert.cpp">
-      <Filter>Source\surface</Filter>
-    </ClCompile>
-    <ClCompile Include="surface_fill.cpp">
-      <Filter>Source\surface</Filter>
-    </ClCompile>
-    <ClCompile Include="image.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="surface_codec.cpp">
-      <Filter>Source\surface</Filter>
-    </ClCompile>
-    <ClCompile Include="surface_jpg.cpp">
-      <Filter>Source\surface</Filter>
-    </ClCompile>
-    <ClCompile Include="surface_libpng.cpp">
-      <Filter>Source\surface</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\finally.h">
@@ -378,27 +351,6 @@
     <ClInclude Include="..\..\Include\oBase\types.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\surface.h">
-      <Filter>oBase\surface</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\surface_resize.h">
-      <Filter>oBase\surface</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\surface_buffer.h">
-      <Filter>oBase\surface</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\surface_codec.h">
-      <Filter>oBase\surface</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\surface_convert.h">
-      <Filter>oBase\surface</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\surface_fill.h">
-      <Filter>oBase\surface</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\image.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -448,12 +400,6 @@
     </Filter>
     <Filter Include="oBase\memory">
       <UniqueIdentifier>{531d9ca9-e272-4b70-9390-6852f1d9c924}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="oBase\surface">
-      <UniqueIdentifier>{ceae3dcc-3fc3-4b20-af04-ff2b1d71c668}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\surface">
-      <UniqueIdentifier>{b0f601a9-28c1-4c1d-94c4-2ebd22ed1c56}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

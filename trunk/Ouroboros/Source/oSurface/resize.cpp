@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBase/surface_resize.h>
+#include <oSurface/resize.h>
 #include <oBase/fixed_vector.h>
 #include <oBase/memory.h>
 #include <oBasis/oMath.h>

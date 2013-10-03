@@ -22,37 +22,21 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// API to change the size of a surface through filtering, clipping or padding.
-// These APIs do not allocate memory so all buffers should be valid before
-// calling any of these.
+// Declarations of oStd unit tests. These throw on failure.
 #pragma once
-#ifndef oBase_surface_resize_h
-#define oBase_surface_resize_h
+#ifndef oSurfaceTests_h
+#define oSurfaceTests_h
 
-#include <oBase/surface.h>
+#include <oSurface/tests/oSurfaceTestRequirements.h>
 
 namespace ouro {
-	namespace surface {
+	namespace tests {
 
-namespace filter
-{	enum value {
+		void TESTsurface();
+		void TESTsurface_codec(requirements& _Requirements);
+		void TESTsurface_resize(requirements& _Requirements);
 
-	point,
-	box,
-	triangle,
-	lanczos2, // sinc filter
-	lanczos3, // sharper than lancsos2, but adds slight ringing
-	filter_count,
-
-};}
-
-void resize(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, filter::value _Filter = filter::lanczos3);
-
-void clip(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, int2 _SourceOffset = int2(0, 0));
-
-void pad(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, int2 _DestinationOffset = int2(0, 0));
-
-	} // namespace surface
+	} // namespace tests
 } // namespace ouro
 
 #endif

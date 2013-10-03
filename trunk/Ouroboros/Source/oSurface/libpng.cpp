@@ -22,10 +22,10 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBase/surface_codec.h>
+#include <oSurface/codec.h>
+#include <oSurface/codec.h>
 #include <oBase/byte.h>
 #include <oBase/finally.h>
-#include <oBase/surface_codec.h>
 #include <oBase/throw.h>
 #include <libpng/png.h>
 #include <zlib/zlib.h>

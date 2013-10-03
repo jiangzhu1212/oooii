@@ -6,10 +6,17 @@ future.
 
 == oStd ==
 
-This is where super-generic heavily header-only code goes. Probably the C++11
-implementation pieces will be left in oStd, but everything else will be moved to 
-a new library that may even be separate from Ouroboros.
+This is where things that get replaced by a full C++11 implementation will go.
 
+== Base == 
+
+This is where things that ought to be in C++ go such as POSIX elements, more 
+robust string and memory parsing, and simple ubiquitous file formats and types.
+
+== Surface ==
+
+Everything to work with textures and images and all the advanced formats 
+supported by compute/GPU devices.
 
 == Computation (oHLSL, oCompute) ==
 

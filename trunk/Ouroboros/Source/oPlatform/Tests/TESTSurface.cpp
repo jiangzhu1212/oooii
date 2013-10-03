@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBase/tests/oBaseTests.h>
+#include <oSurface/tests/oSurfaceTests.h>
 #include <oCore/filesystem.h>
 #include "oTestIntegration.h"
 #include <cstdlib>
@@ -47,20 +47,6 @@ struct requirements_implementation : requirements
 		return std::move(filesystem::load(FullPath, filesystem::load_option::binary_read, _pSize));
 	}
 
-	std::shared_ptr<surface::buffer> load_surface(const path& _Path)
-	{
-		path FullPath = filesystem::data_path() / _Path;
-		intrusive_ptr<oImage> image;
-		if (!oImageLoad(FullPath, &image))
-			oThrowLastError();
-
-		surface::info si = oImageGetSurfaceInfo(image);
-		std::shared_ptr<surface::buffer> b = surface::buffer::make(si);
-		surface::const_mapped_subresource msr = oImageGetMappedSubresource(image);
-		b->update_subresource(0, msr);
-		return b;
-	}
-
 	void check(const surface::info& _SourceInfo
 		, const surface::const_mapped_subresource& _Source
 		, int _NthTest = 0
@@ -82,17 +68,12 @@ struct requirements_implementation : requirements
 
 using namespace ouro::tests;
 
-#define oTEST_REGISTER_BASE_TEST0(_Name) oTEST_THROWS_REGISTER0(oCONCAT(oBase_, _Name), oCONCAT(TEST, _Name))
-#define oTEST_REGISTER_BASE_TEST(_Name) oTEST_THROWS_REGISTER(oCONCAT(oBase_, _Name), oCONCAT(TEST, _Name))
+#define oTEST_REGISTER_BASE_TEST0(_Name) oTEST_THROWS_REGISTER0(oCONCAT(oSurface_, _Name), oCONCAT(TEST, _Name))
+#define oTEST_REGISTER_BASE_TEST(_Name) oTEST_THROWS_REGISTER(oCONCAT(oSurface_, _Name), oCONCAT(TEST, _Name))
 
-#define oTEST_REGISTER_BASE_TEST_BUGGED0(_Name) oTEST_THROWS_REGISTER_BUGGED0(oCONCAT(oBase_, _Name), oCONCAT(TEST, _Name))
-#define oTEST_REGISTER_BASE_TEST_BUGGED(_Name) oTEST_THROWS_REGISTER_BUGGED(oCONCAT(oBase_, _Name), oCONCAT(TEST, _Name))
+#define oTEST_REGISTER_BASE_TEST_BUGGED0(_Name) oTEST_THROWS_REGISTER_BUGGED0(oCONCAT(oSurface_, _Name), oCONCAT(TEST, _Name))
+#define oTEST_REGISTER_BASE_TEST_BUGGED(_Name) oTEST_THROWS_REGISTER_BUGGED(oCONCAT(oSurface_, _Name), oCONCAT(TEST, _Name))
 
-oTEST_REGISTER_BASE_TEST(atof);
-oTEST_REGISTER_BASE_TEST0(csv);
-oTEST_REGISTER_BASE_TEST(date);
-oTEST_REGISTER_BASE_TEST0(fourcc);
-oTEST_REGISTER_BASE_TEST0(ini);
-oTEST_REGISTER_BASE_TEST0(path);
-oTEST_REGISTER_BASE_TEST0(uri);
-oTEST_REGISTER_BASE_TEST0(xml);
+oTEST_REGISTER_BASE_TEST0(surface);
+oTEST_REGISTER_BASE_TEST(surface_codec);
+oTEST_REGISTER_BASE_TEST(surface_resize);

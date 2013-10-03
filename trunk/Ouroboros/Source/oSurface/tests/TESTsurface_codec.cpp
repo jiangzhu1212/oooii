@@ -22,9 +22,9 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBase/surface_codec.h>
-#include <oBase/surface_fill.h>
-#include <oBase/tests/oBaseTestRequirements.h>
+#include <oSurface/codec.h>
+#include <oSurface/fill.h>
+#include <oSurface/tests/oSurfaceTestRequirements.h>
 #include <oBase/timer.h>
 
 namespace ouro { 

@@ -84,8 +84,8 @@
 // divided amongst threads.
 
 #pragma once
-#ifndef oBase_surface_h
-#define oBase_surface_h
+#ifndef oSurface_h
+#define oSurface_h
 
 #include <oBase/byte.h>
 #include <oBase/fourcc.h>

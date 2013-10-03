@@ -26,10 +26,10 @@
 // surface can support. This is basically a CPU-side version of similar GPU 
 // buffers in D3D and OGL.
 #pragma once
-#ifndef oBase_surface_buffer_h
-#define oBase_surface_buffer_h
+#ifndef oSurface_buffer_h
+#define oSurface_buffer_h
 
-#include <oBase/surface.h>
+#include <oSurface/surface.h>
 
 namespace ouro {
 	namespace surface {

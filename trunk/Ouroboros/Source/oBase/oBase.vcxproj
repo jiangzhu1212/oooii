@@ -47,7 +47,6 @@
     <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp" />
     <ClCompile Include="color.cpp" />
     <ClCompile Include="date.cpp" />
-    <ClCompile Include="image.cpp" />
     <ClCompile Include="memory\dtoull.cpp" />
     <ClCompile Include="memory\is_ascii.cpp" />
     <ClCompile Include="memory\memcmp4.cpp" />
@@ -106,14 +105,6 @@
     <ClCompile Include="string\zero_block_comments.cpp" />
     <ClCompile Include="string\zero_ifdefs.cpp" />
     <ClCompile Include="string\zero_line_comments.cpp" />
-    <ClCompile Include="surface.cpp" />
-    <ClCompile Include="surface_buffer.cpp" />
-    <ClCompile Include="surface_codec.cpp" />
-    <ClCompile Include="surface_convert.cpp" />
-    <ClCompile Include="surface_fill.cpp" />
-    <ClCompile Include="surface_jpg.cpp" />
-    <ClCompile Include="surface_libpng.cpp" />
-    <ClCompile Include="surface_resize.cpp" />
     <ClCompile Include="text_document.cpp" />
     <ClCompile Include="uri.cpp" />
     <ClCompile Include="vendor.cpp" />
@@ -142,7 +133,6 @@
     <ClInclude Include="..\..\Include\oBase\fnv1a.h" />
     <ClInclude Include="..\..\Include\oBase\function.h" />
     <ClInclude Include="..\..\Include\oBase\guid.h" />
-    <ClInclude Include="..\..\Include\oBase\image.h" />
     <ClInclude Include="..\..\Include\oBase\ini.h" />
     <ClInclude Include="..\..\Include\oBase\intrusive_ptr.h" />
     <ClInclude Include="..\..\Include\oBase\json.h" />
@@ -157,12 +147,6 @@
     <ClInclude Include="..\..\Include\oBase\string.h" />
     <ClInclude Include="..\..\Include\oBase\stringize.h" />
     <ClInclude Include="..\..\Include\oBase\string_traits.h" />
-    <ClInclude Include="..\..\Include\oBase\surface.h" />
-    <ClInclude Include="..\..\Include\oBase\surface_buffer.h" />
-    <ClInclude Include="..\..\Include\oBase\surface_codec.h" />
-    <ClInclude Include="..\..\Include\oBase\surface_convert.h" />
-    <ClInclude Include="..\..\Include\oBase\surface_fill.h" />
-    <ClInclude Include="..\..\Include\oBase\surface_resize.h" />
     <ClInclude Include="..\..\Include\oBase\text_document.h" />
     <ClInclude Include="..\..\Include\oBase\throw.h" />
     <ClInclude Include="..\..\Include\oBase\timer.h" />

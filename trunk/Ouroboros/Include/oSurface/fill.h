@@ -25,11 +25,10 @@
 // Simple utilities for filling a 2D surface with color in various patterns. 
 // This is useful in generating debug images/textures for infrastructure 
 // bringup.
-#ifndef oBase_surface_fill_h
-#define oBase_surface_fill_h
+#ifndef oSurface_fill_h
+#define oSurface_fill_h
 
 #include <oBase/color.h>
-#include <oBasis/oMathTypes.h>
 #include <functional>
 
 namespace ouro {

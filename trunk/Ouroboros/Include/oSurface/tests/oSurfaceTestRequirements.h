@@ -22,57 +22,40 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// Anything that might want to be consistently controlled by a unit test 
+// infrastructure is separated out into this virtual interface.
 #pragma once
-#ifndef oCamera_h
-#define oCamera_h
+#ifndef oSurfaceTestRequirements_h
+#define oSurfaceTestRequirements_h
 
-#include <oBasis/oInterface.h>
-#include <oBasis/oMathTypes.h>
-#include <oSurface/surface.h>
+#include <oBase/path.h>
+#include <oSurface/buffer.h>
 
-interface oCamera : oInterface
+namespace ouro {
+	namespace tests {
+
+interface requirements
 {
-	struct MODE
-	{
-		int2 Dimensions;
-		ouro::surface::format Format;
-		int BitRate;
-	};
+	// Implements a C-standard rand call
+	virtual int rand() = 0;
 
-	struct DESC
-	{
-		MODE Mode;
-	};
+	virtual void vreport(const char* _Format, va_list _Args) = 0;
+	inline void report(const char* _Format, ...) { va_list a; va_start(a, _Format); vreport(_Format, a); va_end(a); }
 
-	struct MAPPED
-	{
-		const void* pData;
-		unsigned int RowPitch;
-		unsigned int Frame;
-	};
+	// fread's the file's contents and returns the pointer
+	virtual std::shared_ptr<char> load_buffer(const path& _Path, size_t* _pSize = nullptr) = 0;
 
-	virtual void GetDesc(DESC* _pDesc) threadsafe = 0;
-
-	virtual const char* GetName() const threadsafe = 0;
-	virtual unsigned int GetID() const threadsafe = 0;
-
-	virtual bool FindClosestMatchingMode(const MODE& _ModeToMatch, MODE* _pClosestMatch) threadsafe = 0;
-	virtual bool GetModeList(unsigned int* _pNumModes, MODE* _pModes) threadsafe = 0;
-
-	virtual float GetFPS() const threadsafe = 0;
-
-	virtual bool SetMode(const MODE& _Mode) threadsafe = 0;
-
-	virtual bool SetCapturing(bool _Capturing = true) threadsafe = 0;
-	virtual bool IsCapturing() const threadsafe = 0;
-
-	virtual bool Map(MAPPED* _pMapped) threadsafe = 0;
-	virtual void Unmap() threadsafe = 0;
+	// This function compares the specified surface to a golden image named after
+	// the test's name suffixed with _NthTest. If _NthTest is 0 then the golden 
+	// image should not have a suffix. If _MaxRMSError is negative a default 
+	// should be used. If the surfaces are not similar this throws an exception.
+	virtual void check(const surface::info& _SourceInfo
+		, const surface::const_mapped_subresource& _Source
+		, int _NthTest = 0
+		, float _MaxRMSError = -1.0f) = 0;
 };
 
-// Enumerate all cameras currently attached to the system. If this fails, 
-// check oErrorGetLast() for more details. If there is a failure it is often
-// because the installed drivers are not up-to-date.
-bool oCameraEnum(unsigned int _Index, threadsafe oCamera** _ppCamera);
+	} // namespace tests
+} // namespace ouro
 
 #endif

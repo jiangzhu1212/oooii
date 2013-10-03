@@ -22,29 +22,4 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBase/surface_codec.h>
-#include <oBase/throw.h>
-
-namespace ouro {
-	namespace surface {
-
-info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
-{
-	oTHROW(function_not_supported, "jpg not supported");
-}
-
-std::shared_ptr<char> encode_jpg(const buffer* _pBuffer
-	, size_t* _pSize
-	, alpha_option::value _Option
-	, compression::value _Compression)
-{
-	oTHROW(function_not_supported, "jpg not supported");
-}
-
-std::shared_ptr<buffer> decode_jpg(const void* _pBuffer, size_t _BufferSize, alpha_option::value _Option)
-{
-	oTHROW(function_not_supported, "jpg not supported");
-}
-
-	} // namespace surface
-} // namespace ouro
+#include "pch.h"

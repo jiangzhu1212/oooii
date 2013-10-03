@@ -36,15 +36,6 @@
     <ClCompile Include="tests\TESTdate.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="tests\TESTsurface.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\TESTsurface_resize.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\TESTsurface_codec.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\tests\oBaseTestRequirements.h">

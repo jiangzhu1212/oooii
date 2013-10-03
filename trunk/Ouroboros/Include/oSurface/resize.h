@@ -22,57 +22,37 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// API to change the size of a surface through filtering, clipping or padding.
+// These APIs do not allocate memory so all buffers should be valid before
+// calling any of these.
 #pragma once
-#ifndef oCamera_h
-#define oCamera_h
+#ifndef oSurface_resize_h
+#define oSurface_resize_h
 
-#include <oBasis/oInterface.h>
-#include <oBasis/oMathTypes.h>
 #include <oSurface/surface.h>
 
-interface oCamera : oInterface
-{
-	struct MODE
-	{
-		int2 Dimensions;
-		ouro::surface::format Format;
-		int BitRate;
-	};
+namespace ouro {
+	namespace surface {
 
-	struct DESC
-	{
-		MODE Mode;
-	};
+namespace filter
+{	enum value {
 
-	struct MAPPED
-	{
-		const void* pData;
-		unsigned int RowPitch;
-		unsigned int Frame;
-	};
+	point,
+	box,
+	triangle,
+	lanczos2, // sinc filter
+	lanczos3, // sharper than lancsos2, but adds slight ringing
+	filter_count,
 
-	virtual void GetDesc(DESC* _pDesc) threadsafe = 0;
+};}
 
-	virtual const char* GetName() const threadsafe = 0;
-	virtual unsigned int GetID() const threadsafe = 0;
+void resize(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, filter::value _Filter = filter::lanczos3);
 
-	virtual bool FindClosestMatchingMode(const MODE& _ModeToMatch, MODE* _pClosestMatch) threadsafe = 0;
-	virtual bool GetModeList(unsigned int* _pNumModes, MODE* _pModes) threadsafe = 0;
+void clip(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, int2 _SourceOffset = int2(0, 0));
 
-	virtual float GetFPS() const threadsafe = 0;
+void pad(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, int2 _DestinationOffset = int2(0, 0));
 
-	virtual bool SetMode(const MODE& _Mode) threadsafe = 0;
-
-	virtual bool SetCapturing(bool _Capturing = true) threadsafe = 0;
-	virtual bool IsCapturing() const threadsafe = 0;
-
-	virtual bool Map(MAPPED* _pMapped) threadsafe = 0;
-	virtual void Unmap() threadsafe = 0;
-};
-
-// Enumerate all cameras currently attached to the system. If this fails, 
-// check oErrorGetLast() for more details. If there is a failure it is often
-// because the installed drivers are not up-to-date.
-bool oCameraEnum(unsigned int _Index, threadsafe oCamera** _ppCamera);
+	} // namespace surface
+} // namespace ouro
 
 #endif

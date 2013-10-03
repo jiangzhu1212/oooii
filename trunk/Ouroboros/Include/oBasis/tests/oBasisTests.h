@@ -30,7 +30,7 @@
 #include <oBase/function.h>
 #include <oBase/path.h>
 #include <oBasis/oPlatformFeatures.h>
-#include <oBase/surface.h>
+#include <oSurface/surface.h>
 
 struct oBasisTestServices
 {

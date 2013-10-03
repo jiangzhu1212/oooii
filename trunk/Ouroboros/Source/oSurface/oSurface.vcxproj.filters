@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="oSurface">
+      <UniqueIdentifier>{a1ffddc5-88d1-482c-8241-cdc9d085309f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{b2232d52-2b4a-4733-b54b-bf5c03daa24a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="fill.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="libjpgturbo.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="libpng.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="resize.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="surface.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="buffer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="codec.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="convert.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oSurface\surface.h">
+      <Filter>oSurface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oSurface\buffer.h">
+      <Filter>oSurface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oSurface\codec.h">
+      <Filter>oSurface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oSurface\convert.h">
+      <Filter>oSurface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oSurface\fill.h">
+      <Filter>oSurface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oSurface\resize.h">
+      <Filter>oSurface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oSurface\all.h">
+      <Filter>oSurface</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

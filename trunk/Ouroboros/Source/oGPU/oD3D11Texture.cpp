@@ -24,7 +24,7 @@
  **************************************************************************/
 #include "oD3D11Texture.h"
 #include "oD3D11Device.h"
-#include <oBase/surface.h>
+#include <oSurface/surface.h>
 #include <oPlatform/Windows/oDXGI.h>
 
 using namespace ouro;

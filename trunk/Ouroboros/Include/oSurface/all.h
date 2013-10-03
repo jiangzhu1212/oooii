@@ -22,62 +22,15 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// Convenience "all headers" header for precompiled header files. Do NOT use 
+// this to be lazy when including headers in .cpp files. Be explicit.
 #pragma once
-#ifndef oBase_surface_codec_h
-#define oBase_surface_codec_h
-
-#include <oBase/surface_buffer.h>
-
-namespace ouro {
-	namespace surface {
-
-namespace file_format
-{	enum value {
-
-	unknown,
-	png,
-	jpg,
-
-};}
-
-namespace compression
-{	enum value {
-
-	none,
-  low,
-  medium,
-  high,
-
-};}
-
-namespace alpha_option
-{	enum value {
-
-	preserve,
-	force_alpha,
-	force_no_alpha,
-
-};}
-
-// Analyzes the buffer to determine its file format
-file_format::value get_file_format(const void* _pBuffer, size_t _BufferSize);
-
-// Returns the info from a buffer formatted as a file in memory
-info get_info(const void* _pBuffer, size_t _BufferSize);
-
-// Returns a buffer ready to be written to disk in the specified format.
-std::shared_ptr<char> encode(const buffer* _pBuffer
-	, size_t* _pSize
-	, file_format::value _FileFormat
-	, alpha_option::value _Option = alpha_option::preserve
-	, compression::value _Compression = compression::low);
-
-// Parses the in-memory formatted buffer into a surface.
-std::shared_ptr<buffer> decode(const void* _pBuffer
-	, size_t _BufferSize
-	, alpha_option::value _Option);
-
-	} // namespace surface
-} // namespace ouro
-
+#ifndef oSurface_all_h
+#define oSurface_all_h
+#include <oSurface/buffer.h>
+#include <oSurface/codec.h>
+#include <oSurface/convert.h>
+#include <oSurface/fill.h>
+#include <oSurface/resize.h>
+#include <oSurface/surface.h>
 #endif
