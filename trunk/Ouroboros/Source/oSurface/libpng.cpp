@@ -70,16 +70,6 @@ void user_flush_data(png_structp png_ptr)
 {
 }
 
-//void user_error(png_structp png_ptr, png_const_charp error_msg)
-//{
-//	throw std::exception(error_msg);
-//}
-//
-//void user_warning(png_structp png_ptr, png_const_charp warning_msg)
-//{
-//	throw std::exception(warning_msg);
-//}
-
 namespace ouro {
 	namespace surface {
 

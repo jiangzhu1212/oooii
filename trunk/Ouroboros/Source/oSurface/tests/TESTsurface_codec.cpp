@@ -27,10 +27,12 @@
 #include <oSurface/tests/oSurfaceTestRequirements.h>
 #include <oBase/timer.h>
 
+#include <oCore/filesystem.h>
+
 namespace ouro { 
 	namespace tests {
 
-static void compare_checkboards(const int2& _InDimensions, surface::format _Format, surface::file_format::value _FileFormat)
+static void compare_checkboards(const int2& _InDimensions, surface::format _Format, surface::file_format::value _FileFormat, float _MaxRMS)
 {
 	oTRACE("testing codec %s -> %s", as_string(_Format), as_string(_FileFormat));
 
@@ -75,19 +77,16 @@ static void compare_checkboards(const int2& _InDimensions, surface::format _Form
 		if (known->size() != decoded->size())
 			oTHROW(io_error, "encoded %u but got %u on decode", knownSize, decodedSize);
 
-		surface::shared_lock kn(known);
-		surface::shared_lock dec(decoded);
-
-		// todo: change this to an rms calc and thus be able to support compression
-		// tests with more leeway in error.
-		if (memcmp(kn.mapped.data, dec.mapped.data, decodedSize))
+		float rms = surface::calc_rms(known, decoded);
+		if (rms > _MaxRMS)
 			oTHROW(io_error, "encoded/decoded bytes mismatch");
 	}
 }
 
 void TESTsurface_codec(requirements& _Requirements)
 {
-	compare_checkboards(int2(11,21), surface::b8g8r8a8_unorm, surface::file_format::png);
+	//compare_checkboards(int2(11,21), surface::b8g8r8a8_unorm, surface::file_format::jpg, 3.9f);
+	compare_checkboards(int2(11,21), surface::b8g8r8a8_unorm, surface::file_format::png, 1.0f);
 }
 
 	} // namespace tests

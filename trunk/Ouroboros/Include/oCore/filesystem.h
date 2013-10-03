@@ -275,7 +275,7 @@ unsigned long long write(file_handle _hFile
 
 // Writes the entire buffer to the specified file. Open is specified to allow 
 // text and write v. append specification.
-void save(const path& _Path, const void* _pSource, size_t _SizeofSource, save_option::value _SaveOption = save_option::text_write);
+void save(const path& _Path, const void* _pSource, size_t _SizeofSource, save_option::value _SaveOption);
 
 // Allocates the size of the file, reads it into memory and returns that buffer.
 // If loaded as text, the allocation will be padded and a nul terminator will be

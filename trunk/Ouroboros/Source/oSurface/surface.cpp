@@ -1181,10 +1181,10 @@ static void sum_squared_diff_b8g8r8_to_r8(const void* oRESTRICT _pPixel1, const 
 static void sum_squared_diff_b8g8r8a8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, uint* _pAccum)
 {
 	const uchar* p = (const uchar*)_pPixel1;
-	uchar a = *p++; uchar b = *p++; uchar g = *p++; uchar r = *p++;
+	uchar b = *p++; uchar g = *p++; uchar r = *p++; uchar a = *p++;
 	float L1 = color(r, g, b, a).luminance();
 	p = (const uchar*)_pPixel2;
-	a = *p++; b = *p++; g = *p++; r = *p++;
+	b = *p++; g = *p++; r = *p++; a = *p++; 
 	float L2 = color(r, g, b, a).luminance();
 	uchar absDiff = unorm_to_ubyte(abs(L1 - L2));
 	*(uchar*)_pPixelOut = absDiff;

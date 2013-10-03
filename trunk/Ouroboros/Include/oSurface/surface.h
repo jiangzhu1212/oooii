@@ -591,7 +591,10 @@ inline int calc_subresource(int _MipLevel, int _ArraySliceIndex, int _Subsurface
 // in the mip chain is specified.
 inline void unpack_subresource(int _Subresource, int _NumMips, int _NumArraySlices, int* _pMipLevel, int* _pArraySliceIndex, int* _pSubsurfaceIndex) { *_pMipLevel = _Subresource % _NumMips; *_pArraySliceIndex = (_Subresource / _NumMips) % _NumArraySlices; *_pSubsurfaceIndex = _Subresource / (_NumMips * _NumArraySlices); }
 
-// Returns the info information for a given subresource.
+// Returns the number of all subresources described by the info.
+inline int num_subresources(const info& _SurfaceInfo) { return num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions) * _SurfaceInfo.array_size; }
+
+// Returns the info for a given subresource.
 subresource_info subresource(const info& _SurfaceInfo, int _Subresource);
 
 // Returns a surface_info for the nth subsurfaces miplevel. Optionally also 

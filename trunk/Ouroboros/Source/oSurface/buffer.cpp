@@ -166,5 +166,28 @@ void buffer_impl::swizzle(format _NewFormat)
 	Info.format = _NewFormat;
 }
 
+float calc_rms(const buffer* _pBuffer1, const buffer* _pBuffer2)
+{
+	info si1 = _pBuffer1->get_info();
+	info si2 = _pBuffer2->get_info();
+
+	if (any(si1.dimensions != si2.dimensions)) throw std::invalid_argument("mismatched dimensions");
+	if (si1.format != si2.format) throw std::invalid_argument("mismatched format");
+	if (si1.array_size != si2.array_size) throw std::invalid_argument("mismatched array_size");
+	int n1 = num_subresources(si1);
+	int n2 = num_subresources(si2);
+	if (n1 != n2) throw std::invalid_argument("incompatible layouts");
+
+	float rms = 0.0f;
+	for (int i = 0; i < n1; i++)
+	{
+		shared_lock lock1(_pBuffer1, i);
+		shared_lock lock2(_pBuffer2, i);
+		rms += calc_rms(si1, lock1.mapped, lock2.mapped);
+	}
+
+	return rms / static_cast<float>(n1);
+}
+
 	} // namespace surface
 } // namespace ouro

@@ -108,6 +108,14 @@ private:
 	const buffer* pBuffer;
 };
 
+// Returns the root mean square of the difference between the two surfaces. If
+// the formats or sizes are different, this throws an exception.
+float calc_rms(const buffer* _pBuffer1, const buffer* _pBuffer2);
+inline float calc_rms(std::shared_ptr<const buffer>& _pBuffer1, std::shared_ptr<const buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get()); }
+inline float calc_rms(std::shared_ptr<buffer>& _pBuffer1, std::shared_ptr<const buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get()); }
+inline float calc_rms(std::shared_ptr<const buffer>& _pBuffer1, std::shared_ptr<buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get()); }
+inline float calc_rms(std::shared_ptr<buffer>& _pBuffer1, std::shared_ptr<buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get()); }
+
 	} // namespace surface
 } // namespace ouro
 
