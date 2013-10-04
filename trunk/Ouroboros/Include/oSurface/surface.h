@@ -89,7 +89,7 @@
 
 #include <oBase/byte.h>
 #include <oBase/fourcc.h>
-#include <oBase/types.h>
+#include <oHLSL/oHLSLMath.h>
 #include <oStd/mutex.h>
 #include <functional>
 
@@ -585,7 +585,7 @@ int2 slice_dimensions(const info& _SurfaceInfo, int _SubsurfaceIndex = 0);
 // To simplify the need for much of the above API, interfaces should be 
 // developed that take a subresource id and internally use these API to
 // translate that into the proper byte locations and sizes. 
-inline int calc_subresource(int _MipLevel, int _ArraySliceIndex, int _SubsurfaceIndex, int _NumMips, int _NumArraySlices) { return _MipLevel + (_ArraySliceIndex * _NumMips) + (_SubsurfaceIndex * _NumMips * _NumArraySlices); }
+inline int calc_subresource(int _MipLevel, int _ArraySliceIndex, int _SubsurfaceIndex, int _NumMips, int _NumArraySlices) { return _MipLevel + (_ArraySliceIndex * _NumMips) + (_SubsurfaceIndex * _NumMips * max(1, _NumArraySlices)); }
 
 // Converts _Subresource back to its mip level and slice as long as the num mips
 // in the mip chain is specified.
@@ -725,8 +725,8 @@ float calc_rms(const info& _SurfaceInfoInput
 
 // Fills the specified array with the count of pixels at each luminance value.
 // (lum [0,1] mapped to [0,255] or [0,256]).
-void histogram8(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[256]);
-void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[65536]);
+void histogram8(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, unsigned int _Histogram[256]);
+void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, unsigned int _Histogram[65536]);
 
 	} // namespace surface
 } // namespace ouro

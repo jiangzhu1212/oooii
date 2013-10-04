@@ -78,7 +78,7 @@ void fill_checkerboard(color* _pColors, size_t _RowPitch, const int2& _Dimension
 	}
 }
 
-void fill_gradient(color* _pColors, size_t _RowPitch, const int2& _Dimensions, color _CornerColors[4])
+void fill_gradient(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const color _CornerColors[4])
 {
 	for (int y = 0; y < _Dimensions.y; y++)
 	{

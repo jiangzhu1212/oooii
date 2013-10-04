@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oSurface/tests/oSurfaceTests.h>
 #include <oCore/filesystem.h>
+#include <oPlatform/oImage.h>
 #include "oTestIntegration.h"
 #include <cstdlib>
 
@@ -76,4 +77,5 @@ using namespace ouro::tests;
 
 oTEST_REGISTER_BASE_TEST0(surface);
 oTEST_REGISTER_BASE_TEST(surface_codec);
+oTEST_REGISTER_BASE_TEST(surface_fill);
 oTEST_REGISTER_BASE_TEST(surface_resize);

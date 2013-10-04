@@ -29,6 +29,7 @@
 #define oSurface_fill_h
 
 #include <oBase/color.h>
+#include <oHLSL/oHLSLTypes.h>
 #include <functional>
 
 namespace ouro {
@@ -48,7 +49,7 @@ void fill_checkerboard(color* _pColors, size_t _RowPitch, const int2& _Dimension
 
 // Fills the specified 32-bit BGRA buffer with a gradient that goes between the
 // 4 specified colors at the corners of the image.
-void fill_gradient(color* _pColors, size_t _RowPitch, const int2& _Dimensions, color _CornerColors[4]);
+void fill_gradient(color* _pColors, size_t _RowPitch, const int2& _Dimensions, const color _CornerColors[4]);
 
 // This draws a rectangle at [(0,0),_GridDim-int2(1,1)] in the specified color,
 // thus producing a grid pattern.

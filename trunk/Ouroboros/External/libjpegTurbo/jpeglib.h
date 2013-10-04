@@ -830,10 +830,12 @@ typedef struct jvirt_sarray_control * jvirt_sarray_ptr;
 typedef struct jvirt_barray_control * jvirt_barray_ptr;
 
 /*
-	This is an oooii extension to libjpeg turbo. so we can override the allocator. default allocator calls malloc/free
-	which can serialize parallel code. Just like jpeg_error_mgr you must create this struct yourself, and then call 
-	oooii_jpeg_std_alloc to initialize it before calling any other jpeg function (with the exception of jpeg_std_error which 
-	may be called before or after oooii_jpeg_std_alloc)
+	This is an oooii extension to libjpeg turbo. so we can override the allocator. 
+	default allocator calls malloc/free which can serialize parallel code. Just 
+	like jpeg_error_mgr you must create this struct yourself, and then call 
+	oooii_jpeg_std_alloc to initialize it before calling any other jpeg function 
+	(with the exception of jpeg_std_error which may be called before or after 
+	oooii_jpeg_std_alloc)
 */
 struct oooii_jpeg_memory_alloc {
   /* Method pointers */

@@ -47,34 +47,34 @@
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\Release32.props" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\Common.props" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\pch.props" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\Release32.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\lib.props" />
     <Import Project="libjpegTurbo.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\Debug32.props" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\Common.props" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\pch.props" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\Debug32.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\lib.props" />
     <Import Project="libjpegTurbo.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\Release64.props" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\Common.props" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\pch.props" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\Release64.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\lib.props" />
     <Import Project="libjpegTurbo.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\Debug64.props" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\Common.props" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\pch.props" />
-    <Import Project="..\..\..\..\..\..\Main\SDK\Ouroboros\Source\Build\msvc100\Properties\lib.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\Debug64.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\Common.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\..\..\Source\Build\msvc100\Properties\lib.props" />
     <Import Project="libjpegTurbo.props" />
   </ImportGroup>
   <ImportGroup Label="ExtensionSettings">
@@ -83,6 +83,18 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\lib\$(Platform)\$(oCompilerName)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\..\..\lib\$(Platform)\$(oCompilerName)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\..\lib\$(Platform)\$(oCompilerName)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>..\..\..\lib\$(Platform)\$(oCompilerName)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IntDir>..\..\..\tmp\$(Platform)\$(oCompilerName)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>..\..\..\lib\$(Platform)\$(oCompilerName)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Midl>

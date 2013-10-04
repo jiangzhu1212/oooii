@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
+#include <oPlatform/oImage.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oCore/system.h>
 #include <oBasis/tests/oBasisTests.h>

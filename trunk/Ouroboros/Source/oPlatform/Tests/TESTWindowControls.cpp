@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
+#include <oPlatform/oImage.h>
 #include <oPlatform/oGUIMenu.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oWindow.h>

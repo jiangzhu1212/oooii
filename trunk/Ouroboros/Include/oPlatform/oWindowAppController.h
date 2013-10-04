@@ -27,6 +27,7 @@
 #define oWindowAppController_h
 
 #include <oBasis/oGUI.h>
+#include <oPlatform/oImage.h>
 
 // Provides control of the top level window in
 // another process.

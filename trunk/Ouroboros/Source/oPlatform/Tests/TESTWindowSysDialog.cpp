@@ -27,6 +27,7 @@
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinControlSet.h>
 #include <oPlatform/Windows/oGDI.h>
+#include <oPlatform/oImage.h>
 
 static const bool kInteractiveMode = false;
 

@@ -46,7 +46,7 @@ namespace ouro {
 #define oCHECK_DIM3(_Format, _Dim) if (any(_Dim.xy < min_dimensions(_Format))) throw std::invalid_argument(formatf("invalid dimensions: [%d,%d,%d]", _Dim.x, _Dim.y, _Dim.z));
 #define oCHECK_NOT_PLANAR(_Format) if (is_planar(_Format)) throw std::invalid_argument("Planar formats may not behave well with this API. Review usage in this code and remove this when verified.");
 
-struct bit_size { uchar r,g,b,a; };
+struct bit_size { unsigned char r,g,b,a; };
 struct subformats { enum format format[4]; };
 
 namespace traits
@@ -72,8 +72,8 @@ struct format_info
 	uint size;
 	int2 min_dimensions;
 	struct bit_size bit_size;
-	uchar num_channels;
-	uchar num_subformats;
+	unsigned char num_channels;
+	unsigned char num_subformats;
 	
 	struct subformats subformats;
 	int traits;
@@ -1158,36 +1158,36 @@ typedef void (*rms_enumerator)(const void* oRESTRICT _pPixel1, const void* oREST
 
 static void sum_squared_diff_r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, uint* _pAccum)
 {
-	const uchar* p1 = (const uchar*)_pPixel1;
-	const uchar* p2 = (const uchar*)_pPixel2;
-	uchar absDiff = uchar (abs(*p1 - *p2));
-	*(uchar*)_pPixelOut = absDiff;
+	const unsigned char* p1 = (const unsigned char*)_pPixel1;
+	const unsigned char* p2 = (const unsigned char*)_pPixel2;
+	unsigned char absDiff = unsigned char (abs(*p1 - *p2));
+	*(unsigned char*)_pPixelOut = absDiff;
 	oStd::atomic_fetch_add(_pAccum, uint(absDiff * absDiff));
 }
 
 static void sum_squared_diff_b8g8r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, uint* _pAccum)
 {
-	const uchar* p = (const uchar*)_pPixel1;
-	uchar b = *p++; uchar g = *p++; uchar r = *p++;
+	const unsigned char* p = (const unsigned char*)_pPixel1;
+	unsigned char b = *p++; unsigned char g = *p++; unsigned char r = *p++;
 	float L1 = color(r, g, b, 255).luminance();
-	p = (const uchar*)_pPixel2;
+	p = (const unsigned char*)_pPixel2;
 	b = *p++; g = *p++; r = *p++;
 	float L2 = color(r, g, b, 255).luminance();
-	uchar absDiff = unorm_to_ubyte(abs(L1 - L2));
-	*(uchar*)_pPixelOut = absDiff;
+	unsigned char absDiff = unorm_to_ubyte(abs(L1 - L2));
+	*(unsigned char*)_pPixelOut = absDiff;
 	oStd::atomic_fetch_add(_pAccum, uint(absDiff * absDiff));
 }
 
 static void sum_squared_diff_b8g8r8a8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, uint* _pAccum)
 {
-	const uchar* p = (const uchar*)_pPixel1;
-	uchar b = *p++; uchar g = *p++; uchar r = *p++; uchar a = *p++;
+	const unsigned char* p = (const unsigned char*)_pPixel1;
+	unsigned char b = *p++; unsigned char g = *p++; unsigned char r = *p++; unsigned char a = *p++;
 	float L1 = color(r, g, b, a).luminance();
-	p = (const uchar*)_pPixel2;
+	p = (const unsigned char*)_pPixel2;
 	b = *p++; g = *p++; r = *p++; a = *p++; 
 	float L2 = color(r, g, b, a).luminance();
-	uchar absDiff = unorm_to_ubyte(abs(L1 - L2));
-	*(uchar*)_pPixelOut = absDiff;
+	unsigned char absDiff = unorm_to_ubyte(abs(L1 - L2));
+	*(unsigned char*)_pPixelOut = absDiff;
 	oStd::atomic_fetch_add(_pAccum, uint(absDiff * absDiff));
 }
 
@@ -1250,28 +1250,28 @@ typedef void (*histogram_enumerator)(const void* _pPixel, uint* _Histogram);
 
 static void histogram_r8_unorm_8bit(const void* _pPixel, uint* _Histogram)
 {
-	uchar c = *(const uchar*)_pPixel;
+	unsigned char c = *(const unsigned char*)_pPixel;
 	oStd::atomic_increment(&_Histogram[c]);
 }
 
 static void histogram_b8g8r8a8_unorm_8bit(const void* _pPixel, uint* _Histogram)
 {
-	const uchar* p = (const uchar*)_pPixel;
-	uchar b = *p++; uchar g = *p++; uchar r = *p++;
-	uchar Index = unorm_to_ubyte(color(r, g, b, 255).luminance());
+	const unsigned char* p = (const unsigned char*)_pPixel;
+	unsigned char b = *p++; unsigned char g = *p++; unsigned char r = *p++;
+	unsigned char Index = unorm_to_ubyte(color(r, g, b, 255).luminance());
 	oStd::atomic_increment(&_Histogram[Index]);
 }
 
 static void histogram_r16_unorm_16bit(const void* _pPixel, uint* _Histogram)
 {
-	ushort c = *(const ushort*)_pPixel;
+	unsigned short c = *(const unsigned short*)_pPixel;
 	oStd::atomic_increment(&_Histogram[c]);
 }
 
 static void histogram_r16_float_16bit(const void* _pPixel, uint* _Histogram)
 {
 	half h = saturate(*(const half*)_pPixel);
-	ushort c = static_cast<ushort>(round(65535.0f * h));
+	unsigned short c = static_cast<unsigned short>(round(65535.0f * h));
 	oStd::atomic_increment(&_Histogram[c]);
 }
 

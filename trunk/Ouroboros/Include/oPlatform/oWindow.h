@@ -34,6 +34,7 @@
 #include <oConcurrency/oConcurrency.h>
 #include <oStd/future.h>
 #include <oCore/display.h>
+#include <oPlatform/oImage.h>
 
 interface oImage;
 

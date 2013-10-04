@@ -431,7 +431,6 @@ void oGDIInitializeBMI(const oBMI_DESC& _Desc, BITMAPINFO* _pBMI);
 // 8 bit formats won't render correctly because BITMAPINFO infers palette data 
 // from 8-bit, so allocate enough room for the palette.
 size_t oGDIGetBMISize(ouro::surface::format _Format);
-inline size_t oGDIGetBMISize(oImage::FORMAT _Format) { return oGDIGetBMISize(oImageFormatToSurfaceFormat(_Format)); }
 
 ouro::surface::format oGDIGetFormat(const BITMAPINFOHEADER& _BitmapInfoHeader);
 

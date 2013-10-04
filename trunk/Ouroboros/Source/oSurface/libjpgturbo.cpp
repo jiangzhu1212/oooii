@@ -90,7 +90,7 @@ static oooii_jpeg_memory_alloc s_jalloc =
 	o_init,
 	o_term
 };
-
+#if 0
 static J_COLOR_SPACE to_jcs(format _Format, int* _NumComponens)
 {
 	switch (_Format)
@@ -104,7 +104,7 @@ static J_COLOR_SPACE to_jcs(format _Format, int* _NumComponens)
 	}
 	return JCS_UNKNOWN;
 }
-
+#endif
 static format from_jcs(J_COLOR_SPACE _ColorSpace)
 {
 	switch (_ColorSpace)

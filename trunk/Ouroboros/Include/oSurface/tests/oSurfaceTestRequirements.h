@@ -53,6 +53,30 @@ interface requirements
 		, const surface::const_mapped_subresource& _Source
 		, int _NthTest = 0
 		, float _MaxRMSError = -1.0f) = 0;
+
+	inline void check(const surface::buffer* _pBuffer
+		, int _NthTest = 0
+		, float _MaxRMSError = -1.0f)
+	{
+		surface::shared_lock lock(_pBuffer);
+		check(_pBuffer->get_info(), lock.mapped, _NthTest, _MaxRMSError);
+	}
+
+	inline void check(std::shared_ptr<surface::buffer>& _pBuffer
+		, int _NthTest = 0
+		, float _MaxRMSError = -1.0f)
+	{
+		surface::shared_lock lock(_pBuffer.get());
+		check(_pBuffer->get_info(), lock.mapped, _NthTest, _MaxRMSError);
+	}
+
+	inline void check(std::shared_ptr<const surface::buffer>& _pBuffer
+		, int _NthTest = 0
+		, float _MaxRMSError = -1.0f)
+	{
+		surface::shared_lock lock(_pBuffer.get());
+		check(_pBuffer->get_info(), lock.mapped, _NthTest, _MaxRMSError);
+	}
 };
 
 	} // namespace tests

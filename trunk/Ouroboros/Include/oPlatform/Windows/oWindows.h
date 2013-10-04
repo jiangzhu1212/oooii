@@ -41,7 +41,6 @@
 #include <oBasis/oMathTypes.h>
 #include <oSurface/surface.h>
 #include <oPlatform/oDisplay.h>
-#include <oPlatform/oImage.h>
 #include <oCore/module.h>
 
 // _____________________________________________________________________________

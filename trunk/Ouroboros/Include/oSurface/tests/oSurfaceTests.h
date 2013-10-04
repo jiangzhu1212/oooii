@@ -34,6 +34,7 @@ namespace ouro {
 
 		void TESTsurface();
 		void TESTsurface_codec(requirements& _Requirements);
+		void TESTsurface_fill(requirements& _Requirements);
 		void TESTsurface_resize(requirements& _Requirements);
 
 	} // namespace tests

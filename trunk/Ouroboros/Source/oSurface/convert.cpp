@@ -37,8 +37,8 @@ typedef void (*pixel_convert)(const void* _pSourcePixel, void* _pDestinationPixe
 
 static void r8g8b8a8_unorm_to_r8g8b8_unorm(const void* a, void* b)
 {
-	const uchar* aa = (const uchar*)a;
-	uchar* bb = (uchar*)b;
+	const unsigned char* aa = (const unsigned char*)a;
+	unsigned char* bb = (unsigned char*)b;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
@@ -46,8 +46,8 @@ static void r8g8b8a8_unorm_to_r8g8b8_unorm(const void* a, void* b)
 
 static void r8g8b8_unorm_to_r8g8b8a8_unorm(const void* a, void* b)
 {
-	const uchar* aa = (const uchar*)a;
-	uchar* bb = (uchar*)b;
+	const unsigned char* aa = (const unsigned char*)a;
+	unsigned char* bb = (unsigned char*)b;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
@@ -56,8 +56,8 @@ static void r8g8b8_unorm_to_r8g8b8a8_unorm(const void* a, void* b)
 
 static void b8g8r8a8_unorm_to_b8g8r8_unorm(const void* a, void* b)
 {
-	const uchar* aa = (const uchar*)a;
-	uchar* bb = (uchar*)b;
+	const unsigned char* aa = (const unsigned char*)a;
+	unsigned char* bb = (unsigned char*)b;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
@@ -65,8 +65,8 @@ static void b8g8r8a8_unorm_to_b8g8r8_unorm(const void* a, void* b)
 
 static void b8g8r8_unorm_to_b8g8r8a8_unorm(const void* a, void* b)
 {
-	const uchar* aa = (const uchar*)a;
-	uchar* bb = (uchar*)b;
+	const unsigned char* aa = (const unsigned char*)a;
+	unsigned char* bb = (unsigned char*)b;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
@@ -75,8 +75,8 @@ static void b8g8r8_unorm_to_b8g8r8a8_unorm(const void* a, void* b)
 
 static void swap_red_blue_r8g8b8_unorm(const void* a, void* b)
 {
-	const uchar* aa = (const uchar*)a;
-	uchar* bb = (uchar*)b;
+	const unsigned char* aa = (const unsigned char*)a;
+	unsigned char* bb = (unsigned char*)b;
 	bb[2] = aa[0];
 	bb[1] = aa[1];
 	bb[0] = aa[2];
@@ -84,8 +84,8 @@ static void swap_red_blue_r8g8b8_unorm(const void* a, void* b)
 
 static void swap_red_blue_r8g8b8a8_unorm(const void* a, void* b)
 {
-	const uchar* aa = (const uchar*)a;
-	uchar* bb = (uchar*)b;
+	const unsigned char* aa = (const unsigned char*)a;
+	unsigned char* bb = (unsigned char*)b;
 	bb[2] = aa[0];
 	bb[1] = aa[1];
 	bb[0] = aa[2];
@@ -122,13 +122,13 @@ static void convert_subresource(pixel_convert _Convert, const subresource_info& 
 
 	for (int y = 0; y < _SubresourceInfo.dimensions.y; y++)
 	{
-		const uchar* srow = (const uchar*)_Source.data + (_Source.row_pitch * y);
-		uchar* drow = (uchar*)_pDestination->data + (_pDestination->row_pitch * y);
+		const unsigned char* srow = (const unsigned char*)_Source.data + (_Source.row_pitch * y);
+		unsigned char* drow = (unsigned char*)_pDestination->data + (_pDestination->row_pitch * y);
 
 		for (int x = 0; x < _SubresourceInfo.dimensions.x; x++)
 		{
-			const uchar* spixel = srow + (selSize * x);
-			uchar* dpixel = drow + (delSize * x);
+			const unsigned char* spixel = srow + (selSize * x);
+			unsigned char* dpixel = drow + (delSize * x);
 			_Convert(spixel, dpixel);
 		}
 	}
@@ -176,8 +176,8 @@ typedef void (*pixel_swizzle)(void* _pPixel);
 
 static void sw_red_blue(void* _pPixel)
 {
-	uchar* r = (uchar*)_pPixel;
-	uchar* b = r + 2;
+	unsigned char* r = (unsigned char*)_pPixel;
+	unsigned char* b = r + 2;
 	std::swap(*r, *b);
 }
 
