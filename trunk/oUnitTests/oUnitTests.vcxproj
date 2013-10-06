@@ -172,6 +172,7 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTStd.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurface.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurfaceFill.cpp" />
+    <ClCompile Include="oooii_icon.cpp" />
     <ClCompile Include="oUnitTests.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

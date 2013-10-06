@@ -49,34 +49,19 @@ interface requirements
 	// the test's name suffixed with _NthTest. If _NthTest is 0 then the golden 
 	// image should not have a suffix. If _MaxRMSError is negative a default 
 	// should be used. If the surfaces are not similar this throws an exception.
-	virtual void check(const surface::info& _SourceInfo
-		, const surface::const_mapped_subresource& _Source
+	virtual void check(const surface::buffer* _pBuffer
 		, int _NthTest = 0
 		, float _MaxRMSError = -1.0f) = 0;
-
-	inline void check(const surface::buffer* _pBuffer
-		, int _NthTest = 0
-		, float _MaxRMSError = -1.0f)
-	{
-		surface::shared_lock lock(_pBuffer);
-		check(_pBuffer->get_info(), lock.mapped, _NthTest, _MaxRMSError);
-	}
 
 	inline void check(std::shared_ptr<surface::buffer>& _pBuffer
 		, int _NthTest = 0
 		, float _MaxRMSError = -1.0f)
-	{
-		surface::shared_lock lock(_pBuffer.get());
-		check(_pBuffer->get_info(), lock.mapped, _NthTest, _MaxRMSError);
-	}
+	{ check(_pBuffer.get(), _NthTest, _MaxRMSError); }
 
 	inline void check(std::shared_ptr<const surface::buffer>& _pBuffer
 		, int _NthTest = 0
 		, float _MaxRMSError = -1.0f)
-	{
-		surface::shared_lock lock(_pBuffer.get());
-		check(_pBuffer->get_info(), lock.mapped, _NthTest, _MaxRMSError);
-	}
+	{ check(_pBuffer.get(), _NthTest, _MaxRMSError); }
 };
 
 	} // namespace tests

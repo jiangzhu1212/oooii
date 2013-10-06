@@ -134,7 +134,7 @@ public:
 	void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe override { return Window->Trigger(_Action); }
 	void Post(int _CustomEventCode, uintptr_t _Context) threadsafe override { return Window->Post(_CustomEventCode, _Context); }
 	void Dispatch(const oTASK& _Task) threadsafe override { return Window->Dispatch(_Task); }
-	oStd::future<ouro::intrusive_ptr<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const override { return std::move(Window->CreateSnapshot(_Frame, _IncludeBorder)); }
+	oStd::future<std::shared_ptr<ouro::surface::buffer>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const override { return std::move(Window->CreateSnapshot(_Frame, _IncludeBorder)); }
 	void SetTimer(uintptr_t _Context, unsigned int _RelativeTimeMS) threadsafe override { Window->SetTimer(_Context, _RelativeTimeMS); }
 	void StopTimer(uintptr_t _Context) threadsafe override { return Window->StopTimer(_Context); }
 	void FlushMessages(bool _WaitForNext = false) override { return Window->FlushMessages(_WaitForNext); }

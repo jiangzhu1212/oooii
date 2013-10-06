@@ -46,6 +46,8 @@
 #include <algorithm>
 #include <unordered_map>
 
+#include <oSurface/codec.h>
+
 using namespace ouro;
 
 // Some well-known apps cause grief in the unit tests (including older versions
@@ -68,14 +70,14 @@ static bool oTestTerminateInterferingProcesses(bool _PromptUser = true)
 		"FahCore_a4.exe",
 	};
 
-	fixed_vector<ouro::process::id, oCOUNTOF(sExternalProcessNames)> ActiveProcesses;
+	fixed_vector<process::id, oCOUNTOF(sExternalProcessNames)> ActiveProcesses;
 
 	xlstring Message;
 	snprintf(Message, "The following active processes will interfere with tests either by using resources during benchmark tests or by altering image compares.\n");
 
 	oFORI(i, sExternalProcessNames)
 	{
-		ouro::process::id PID = ouro::process::get_id(sExternalProcessNames[i]);
+		process::id PID = process::get_id(sExternalProcessNames[i]);
 		if (PID)
 		{
 			sncatf(Message, "%s\n", sExternalProcessNames[i]);
@@ -100,13 +102,13 @@ TryAgain:
 		{
 			oFOR(auto PID, ActiveProcesses)
 			{
-				try { ouro::process::terminate(PID, 0x0D1EC0DE); }
+				try { process::terminate(PID, 0x0D1EC0DE); }
 				catch (std::system_error& e)
 				{
 					if (e.code().value() != std::errc::no_such_process)
 					{
 						path Name;
-						try { Name = ouro::process::get_name(PID); }
+						try { Name = process::get_name(PID); }
 						catch (std::exception&)
 						{
 							continue; // might've been a child of another process on the list, so it appears it's no longer around, thus continue.
@@ -147,10 +149,10 @@ static bool oTestNotifyOfAntiVirus(bool _PromptUser)
 		// TODO: Add more AntiVirus processes
 	};
 
-	ouro::process::id AVPID;
+	process::id AVPID;
 	oFORI(i, sAntiVirusProcesses)
 	{
-		AVPID = ouro::process::get_id(sAntiVirusProcesses[i]);
+		AVPID = process::get_id(sAntiVirusProcesses[i]);
 		if (AVPID)
 			break;
 	}
@@ -224,7 +226,7 @@ struct oTestManager_Impl : public oTestManager
 	typedef std::vector<RegisterTestBase*> tests_t;
 	tests_t Tests;
 	DESC Desc;
-	fixed_vector<ouro::adapter::info, 8> DriverDescs;
+	fixed_vector<adapter::info, 8> DriverDescs;
 	bool ShowProgressBar;
 	std::string TestSuiteName;
 	std::string DataPath;
@@ -266,7 +268,7 @@ oTestManagerImplSingleton::oTestManagerImplSingleton()
 {
 	// oTestManager can be instantiated very early in static init, so make sure 
 	// we're tracking memory for it
-	ouro::debugger::report_crt_leaks_on_exit(true);
+	debugger::report_crt_leaks_on_exit(true);
 	pImpl = new oTestManager_Impl();
 }
 
@@ -341,7 +343,7 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 	finally SaveTestBuffer([&]
 	{
 		if (bSaveTestBuffer)
-			ouro::filesystem::save(path(output), _pBuffer, _SizeofBuffer, ouro::filesystem::save_option::binary_write);
+			filesystem::save(path(output), _pBuffer, _SizeofBuffer, filesystem::save_option::binary_write);
 	});
 
 	intrusive_ptr<oBuffer> GoldenBinary;
@@ -385,6 +387,109 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 	{
 		bSaveTestBuffer = true;
 		return oErrorSetLast(std::errc::protocol_error, "Golden binary compare failed because the bytes differ");
+	}
+
+	return true;
+}
+
+static void surface_save(const surface::buffer* _pSurface, surface::alpha_option::value _Option, const path& _Path)
+{
+	size_t size = 0;
+	std::shared_ptr<char> encoded = encode(_pSurface, &size, surface::get_file_format(_Path), _Option);
+	filesystem::save(_Path, encoded.get(), size, filesystem::save_option::binary_write);
+}
+inline void surface_save(std::shared_ptr<const surface::buffer>& _pSurface, surface::alpha_option::value _Option, const path& _Path) { surface_save(_pSurface.get(), _Option, _Path); }
+inline void surface_save(std::shared_ptr<surface::buffer>& _pSurface, surface::alpha_option::value _Option, const path& _Path) { surface_save(_pSurface.get(), _Option, _Path); }
+
+bool oTest::TestImage(const surface::buffer* _pTestImage
+	, const char* _GoldenImagePath
+	, const char* _FailedImagePath
+	, unsigned int _NthImage
+	, int _ColorChannelTolerance
+	, float _MaxRMSError
+	, unsigned int _DiffImageMultiplier
+	, bool _OutputGoldenImage)
+{
+	size_t commonPathLength = cmnroot(_GoldenImagePath, _FailedImagePath);
+	const char* gPath = _GoldenImagePath + commonPathLength;
+	const char* fPath = _FailedImagePath + commonPathLength;
+
+	surface::info si = _pTestImage->get_info();
+
+	const surface::alpha_option::value ao = surface::has_alpha(si.format) ? surface::alpha_option::force_alpha : surface::alpha_option::force_no_alpha;
+
+	std::shared_ptr<surface::buffer> GoldenImage;
+	{
+		size_t bSize = 0;
+		std::shared_ptr<char> b;
+		try { b = filesystem::load(_GoldenImagePath, filesystem::load_option::binary_read, &bSize); }
+		catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Load failed: (Golden)...%s", gPath); }
+
+		try { GoldenImage = surface::decode(b.get(), bSize, ao); }
+		catch (std::exception&) { return oErrorSetLast(std::errc::protocol_error, "Corrupt Image: (Golden)...%s", gPath); }
+	}
+
+	surface::info gsi = GoldenImage->get_info();
+
+	// Compare dimensions/format before going into pixels
+	{
+		if (any(si.dimensions != gsi.dimensions))
+		{
+			try { surface_save(_pTestImage, ao, _FailedImagePath); }
+			catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Output)...%s", fPath); }
+			return oErrorSetLast(std::errc::protocol_error, "Differing dimensions: (Output %dx%d)...%s != (Golden %dx%d)...%s", si.dimensions.x, si.dimensions.y, fPath, gsi.dimensions.x, gsi.dimensions.y, gPath);
+		}
+
+		if (si.format != gsi.format)
+		{
+			try { surface_save(_pTestImage, ao, _FailedImagePath); }
+			catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Output)...%s", fPath); }
+			return oErrorSetLast(std::errc::protocol_error, "Differing formats: (Golden %s)...%s != (Output %s)...%s", as_string(gsi.format), gPath, as_string(si.format), fPath);
+		}
+	}
+
+	// Resolve parameter settings against global settings
+	{
+		oTestManager::DESC TestDesc;
+		oTestManager::Singleton()->GetDesc(&TestDesc);
+
+		if (_MaxRMSError < 0.0f)
+			_MaxRMSError = TestDesc.MaxRMSError;
+		if (_DiffImageMultiplier == oDEFAULT)
+			_DiffImageMultiplier = TestDesc.DiffImageMultiplier;
+	}
+
+	// Do the real test
+	surface::info dsi;
+	dsi.format = surface::r8_unorm;
+	dsi.dimensions = si.dimensions;
+	std::shared_ptr<surface::buffer> diffs = surface::buffer::make(dsi);
+	float RMSError = surface::calc_rms(_pTestImage, GoldenImage.get(), diffs.get(), _DiffImageMultiplier);
+
+	// Save out test image and diffs if there is a non-similar result.
+	if (RMSError > _MaxRMSError)
+	{
+		try { surface_save(_pTestImage, ao, _FailedImagePath); }
+		catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Output)...%s", fPath); }
+
+		path diffPath(_FailedImagePath);
+		diffPath.replace_extension_with_suffix("_diff.png");
+		const char* dPath = diffPath.c_str() + commonPathLength;
+
+		try { surface_save(diffs, ao, diffPath); }
+		catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Diff)...%s", dPath); }
+
+		if (_OutputGoldenImage)
+		{
+			path goldenPath(_FailedImagePath);
+			goldenPath.replace_extension_with_suffix("_golden.png");
+			const char* gPath = goldenPath.c_str() + commonPathLength;
+
+			try { surface_save(GoldenImage, ao, goldenPath); }
+			catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Golden)...%s", gPath); }
+		}
+
+		return oErrorSetLast(std::errc::protocol_error, "Compare failed: %.03f RMS error (threshold %.03f): (Output)...%s != (Golden)...%s", RMSError, _MaxRMSError, fPath, gPath);
 	}
 
 	return true;
@@ -462,7 +567,7 @@ bool oTest::TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const c
 		if (!oImageSave(_pTestImage, oImageIsAlphaFormat(iDesc.Format) ? oImage::FORCE_ALPHA : oImage::FORCE_NO_ALPHA , _FailedImagePath))
 			return oErrorSetLast(std::errc::io_error, "Save failed: (Output)...%s", fPath);
 
-		ouro::path diffPath(_FailedImagePath);
+		path diffPath(_FailedImagePath);
 		diffPath.replace_extension_with_suffix("_diff.png");
 		const char* dPath = diffPath.c_str() + commonPathLength;
 
@@ -471,7 +576,7 @@ bool oTest::TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const c
 
 		if (_OutputGoldenImage)
 		{
-			ouro::path goldenPath(_FailedImagePath);
+			path goldenPath(_FailedImagePath);
 			goldenPath.replace_extension_with_suffix("_golden.png");
 			const char* gPath = goldenPath.c_str() + commonPathLength;
 
@@ -493,7 +598,7 @@ struct DriverPaths
 	path DriverSpecific;
 };
 
-static bool oInitialize(const char* _RootPath, const char* _Filename, const ouro::adapter::info& _DriverDesc, DriverPaths* _pDriverPaths)
+static bool oInitialize(const char* _RootPath, const char* _Filename, const adapter::info& _DriverDesc, DriverPaths* _pDriverPaths)
 {
 	_pDriverPaths->Generic = _RootPath;
 	_pDriverPaths->VendorSpecific = _pDriverPaths->Generic / as_string(_DriverDesc.vendor);
@@ -523,7 +628,7 @@ bool oTest::TestImage(oImage* _pTestImage, unsigned int _NthImage, int _ColorCha
 	oTestManager::DESC TestDesc;
 	oTestManager::Singleton()->GetDesc(&TestDesc);
 
-	const ouro::adapter::info& DriverDesc = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->DriverDescs[0]; // todo: Make this more elegant
+	const adapter::info& DriverDesc = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->DriverDescs[0]; // todo: Make this more elegant
 
 	sstring nthImageBuf;
 	path_string Filename;
@@ -557,25 +662,65 @@ bool oTest::TestImage(oImage* _pTestImage, unsigned int _NthImage, int _ColorCha
 	return oErrorSetLast(std::errc::no_such_file_or_directory, "Not found: (Golden).../%s Test Image saved to %s", Filename, FailurePaths.DriverSpecific.c_str());
 }
 
-bool oSpecialTest::CreateProcess(const char* _SpecialTestName, std::shared_ptr<ouro::process>* _pProcess)
+bool oTest::TestImage(const surface::buffer* _pTestImage, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier)
+{
+	// Check: GoldenDir/CardName/DriverVersion/GoldenImage
+	// Then Check: GoldenDir/CardName/GoldenImage
+	// Then Check: GoldenDir/GoldenImage
+
+	oTestManager::DESC TestDesc;
+	oTestManager::Singleton()->GetDesc(&TestDesc);
+
+	const adapter::info& DriverDesc = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->DriverDescs[0]; // todo: Make this more elegant
+
+	sstring nthImageBuf;
+	path_string Filename;
+	snprintf(Filename, "%s%s.png", GetName(), _NthImage == 0 ? "" : to_string(nthImageBuf, _NthImage));
+
+	DriverPaths GoldenPaths, FailurePaths;
+	oVERIFY(oInitialize(TestDesc.GoldenImagesPath, Filename, DriverDesc, &GoldenPaths));
+	oVERIFY(oInitialize(TestDesc.OutputPath, Filename, DriverDesc, &FailurePaths));
+
+	if (filesystem::exists(GoldenPaths.DriverSpecific))
+		return TestImage(_pTestImage, GoldenPaths.DriverSpecific, FailurePaths.DriverSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
+
+	else if (filesystem::exists(GoldenPaths.VendorSpecific))
+		return TestImage(_pTestImage, GoldenPaths.VendorSpecific, FailurePaths.VendorSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
+
+	else if (filesystem::exists(GoldenPaths.CardSpecific))
+		return TestImage(_pTestImage, GoldenPaths.CardSpecific, FailurePaths.CardSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
+
+	else if (filesystem::exists(GoldenPaths.Generic))
+		return TestImage(_pTestImage, GoldenPaths.Generic, FailurePaths.Generic, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
+
+	surface::info si = _pTestImage->get_info();
+
+	surface::alpha_option::value ao = surface::has_alpha(si.format) ? surface::alpha_option::force_alpha : surface::alpha_option::force_no_alpha;
+	try { surface_save(_pTestImage, ao, FailurePaths.DriverSpecific); }
+	catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Output)%s", FailurePaths.DriverSpecific.c_str()); }
+
+	return oErrorSetLast(std::errc::no_such_file_or_directory, "Not found: (Golden).../%s Test Image saved to %s", Filename, FailurePaths.DriverSpecific.c_str());
+}
+
+bool oSpecialTest::CreateProcess(const char* _SpecialTestName, std::shared_ptr<process>* _pProcess)
 {
 	if (!_SpecialTestName || !_pProcess)
 		return oErrorSetLast(std::errc::invalid_argument);
 
-	xlstring cmdline = ouro::filesystem::app_path(true);
+	xlstring cmdline = filesystem::app_path(true);
 
 	snprintf(cmdline, "%s -s %s", cmdline.c_str(), _SpecialTestName);
 
-	ouro::process::info pi;
+	process::info pi;
 	pi.command_line = cmdline;
 	pi.stdout_buffer_size = oKB(64);
-	*_pProcess = ouro::process::make(pi);
+	*_pProcess = process::make(pi);
 	return true;
 }
 
 //#define DEBUG_SPECIAL_TEST
 
-bool oSpecialTest::Start(ouro::process* _pProcess, char* _StrStatus, size_t _SizeofStrStatus, int* _pExitCode, unsigned int _TimeoutMS)
+bool oSpecialTest::Start(process* _pProcess, char* _StrStatus, size_t _SizeofStrStatus, int* _pExitCode, unsigned int _TimeoutMS)
 {
 	if (!_pProcess || !_StrStatus || !_pExitCode)
 		return oErrorSetLast(std::errc::invalid_argument);
@@ -583,7 +728,7 @@ bool oSpecialTest::Start(ouro::process* _pProcess, char* _StrStatus, size_t _Siz
 	#ifdef DEBUG_SPECIAL_TEST
 		pi.suspended = true;
 	#endif
-	ouro::process::info pi = _pProcess->get_info();
+	process::info pi = _pProcess->get_info();
 	const char* SpecialTestName = rstrstr(pi.command_line, "-s ") + 3;
 	if (!SpecialTestName || !*SpecialTestName)
 		return oErrorSetLast(std::errc::invalid_argument, "Process with an invalid command line for oSpecialTest specified.");
@@ -676,14 +821,14 @@ void oTestManager_Impl::SetDesc(DESC* _pDesc)
 		TestSuiteName = _pDesc->TestSuiteName;
 	else
 	{
-		ouro::module::info mi = ouro::this_module::get_info();
+		module::info mi = this_module::get_info();
 		sstring Ver;
 		TestSuiteName = mi.product_name;
 		TestSuiteName += " ";
 		TestSuiteName += to_string(Ver, mi.version);
 	}
 
-	path_string defaultDataPath = ouro::filesystem::data_path();
+	path_string defaultDataPath = filesystem::data_path();
 	DataPath = _pDesc->DataPath ? _pDesc->DataPath : defaultDataPath;
 	if (_pDesc->ExecutablesPath)
 		ExecutablesPath = _pDesc->ExecutablesPath;
@@ -702,7 +847,7 @@ void oTestManager_Impl::SetDesc(DESC* _pDesc)
 
 	GoldenBinariesPath = _pDesc->GoldenBinariesPath ? _pDesc->GoldenBinariesPath : (DataPath + "GoldenBinaries/");
 	GoldenImagesPath = _pDesc->GoldenImagesPath ? _pDesc->GoldenImagesPath : (DataPath + "GoldenImages/");
-	TempPath = ouro::filesystem::temp_path() / "oUnitTestTemp/";
+	TempPath = filesystem::temp_path() / "oUnitTestTemp/";
 	InputPath = _pDesc->InputPath ? _pDesc->InputPath : DataPath;
 	OutputPath = _pDesc->OutputPath ? _pDesc->OutputPath : (DataPath + "FailedImageCompares/");
 
@@ -731,7 +876,7 @@ void oTestManager_Impl::SetDesc(DESC* _pDesc)
 
 void oTestManager_Impl::PrintDesc()
 {
-	path cwd = ouro::filesystem::current_path();
+	path cwd = filesystem::current_path();
 	path datapath(Desc.DataPath);
 	bool dataPathIsCWD = !_stricmp(cwd, datapath);
 
@@ -750,7 +895,7 @@ void oTestManager_Impl::PrintDesc()
 	for (unsigned int i = 0; i < DriverDescs.size(); i++)
 		Report(oConsoleReporting::INFO, "Video Driver %u: %s v%s\n", i, DriverDescs[i].description.c_str(), to_string2(StrVer, DriverDescs[i].version));
 
-	auto scc = make_scc(scc_protocol::svn, std::bind(ouro::system::spawn, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
+	auto scc = make_scc(scc_protocol::svn, std::bind(system::spawn, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
 
 	bool oSystemExecute(const char* _CommandLine
 		, const oFUNCTION<void(char* _Line)>& _GetLine = nullptr
@@ -758,7 +903,7 @@ void oTestManager_Impl::PrintDesc()
 		, bool _ShowWindow = false
 		, unsigned int _ExecutionTimeout = oInfiniteWait);
 
-	path DevPath = ouro::filesystem::dev_path();
+	path DevPath = filesystem::dev_path();
 	lstring CLStr;
 	uint CL = scc->revision(DevPath);
 	if (CL)
@@ -817,7 +962,7 @@ void oTestManager_Impl::RegisterZombies()
 	}
 }
 
-static bool FindDuplicateProcessInstanceByName(ouro::process::id _ProcessID, ouro::process::id _ParentProcessID, const char* _ProcessExePath, ouro::process::id _IgnorePID, const char* _FindName, ouro::process::id* _pOutPIDs, size_t _NumOutPIDs, size_t* _pCurrentCount)
+static bool FindDuplicateProcessInstanceByName(process::id _ProcessID, process::id _ParentProcessID, const char* _ProcessExePath, process::id _IgnorePID, const char* _FindName, process::id* _pOutPIDs, size_t _NumOutPIDs, size_t* _pCurrentCount)
 {
 	if (_IgnorePID != _ProcessID && !_stricmp(_FindName, _ProcessExePath))
 	{
@@ -833,20 +978,20 @@ static bool FindDuplicateProcessInstanceByName(ouro::process::id _ProcessID, our
 
 bool oTestManager_Impl::KillZombies(const char* _Name)
 {
-	ouro::process::id ThisID = ouro::this_process::get_id();
-	ouro::process::id pids[1024];
+	process::id ThisID = this_process::get_id();
+	process::id pids[1024];
 	size_t npids = 0;
 
-	ouro::process::enumerate(std::bind(FindDuplicateProcessInstanceByName, oBIND1, oBIND2, oBIND3, ThisID, _Name, pids, oCOUNTOF(pids), &npids));
+	process::enumerate(std::bind(FindDuplicateProcessInstanceByName, oBIND1, oBIND2, oBIND3, ThisID, _Name, pids, oCOUNTOF(pids), &npids));
 
 	unsigned int retries = 3;
 	for (size_t i = 0; i < npids; i++)
 	{
-		if (ouro::process::has_debugger_attached(pids[i]))
+		if (process::has_debugger_attached(pids[i]))
 			continue;
 
-		ouro::process::terminate(pids[i], std::errc::operation_canceled);
-		if (!ouro::process::wait_for(pids[i], oSeconds(5)))
+		process::terminate(pids[i], std::errc::operation_canceled);
+		if (!process::wait_for(pids[i], oSeconds(5)))
 		{
 			oMSGBOX_DESC mb;
 			mb.Type = oMSGBOX_WARN;
@@ -889,7 +1034,7 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 
 	srand(Desc.RandomSeed);
 
-	ouro::filesystem::remove(path(TempPath));
+	filesystem::remove(path(TempPath));
 
 	// @oooii-tony: Moving other stuff that are false-positives here so I can see
 	// them all...
@@ -945,11 +1090,11 @@ static void oTraceCPUFeatures()
 	// @oooii-tony: This and the header that is currently printed out is becoming 
 	// large... we should move it somewhere?
 
-	ouro::cpu::info cpu_info = ouro::cpu::get_info();
+	cpu::info cpu_info = cpu::get_info();
 	oTRACE("CPU: %s. %d Processors, %d HWThreads", cpu_info.brand_string.c_str()
 		, cpu_info.processor_count, cpu_info.hardware_thread_count);
 
-	ouro::cpu::enumerate_features([&](const char* _FeatureName, const ouro::cpu::support::value& _Support)->bool
+	cpu::enumerate_features([&](const char* _FeatureName, const cpu::support::value& _Support)->bool
 	{
 		oTRACE(" CPU Feature %s has %s", _FeatureName, as_string(_Support));
 		return true;
@@ -958,7 +1103,7 @@ static void oTraceCPUFeatures()
 
 oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, size_t _SizeofTestFilters)
 {
-	if (!ouro::adapter::all_up_to_date())
+	if (!adapter::all_up_to_date())
 	{
 		oMSGBOX_DESC mb;
 		mb.Type = oMSGBOX_YESNO;
@@ -993,7 +1138,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	std::sort(Tests.begin(), Tests.end(), SortAlphabetically);
 
 	DriverDescs.clear();
-	ouro::adapter::enumerate([&](const ouro::adapter::info& _Info)->bool
+	adapter::enumerate([&](const adapter::info& _Info)->bool
 	{
 		if (*(int*)&_Info.id > oCOUNTOF(DriverDescs))
 		{

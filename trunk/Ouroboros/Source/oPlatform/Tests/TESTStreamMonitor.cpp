@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include <oConcurrency/event.h>
-#include <oPlatform/oStandards.h>
 #include <oPlatform/oStream.h>
 
 //static const char* FolderToMonitor = "file://DATA/Apps/PlayerMediaEncoder/";

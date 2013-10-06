@@ -31,6 +31,9 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurface.cpp">
       <Filter>Source Files\Sub-Platform Tests</Filter>
     </ClCompile>
+    <ClCompile Include="oooii_icon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

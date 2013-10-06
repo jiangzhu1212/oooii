@@ -33,35 +33,33 @@ namespace ouro {
 	namespace tests {
 
 static void TESTsurface_resize_test_size(requirements& _Requirements
-	, const surface::info& _SourceInfo
-	, const surface::const_mapped_subresource& _Source
+	, const surface::buffer* _pBuffer
 	, surface::filter::value _Filter
 	, const int3& _NewSize
 	, int _NthImage)
 {
-	surface::info destInfo = _SourceInfo;
+	surface::info srcInfo = _pBuffer->get_info();
+	surface::info destInfo = srcInfo;
 	destInfo.dimensions = _NewSize;
-	int destMapSize = surface::total_size(destInfo, 0);
-	std::vector<char> destMapData;
-	destMapData.resize(destMapSize);
-	surface::mapped_subresource destMap = surface::get_mapped_subresource(destInfo, 0, 0, destMapData.data());
-
+	std::shared_ptr<surface::buffer> dst = surface::buffer::make(destInfo);
 	{
+		surface::shared_lock lock(_pBuffer);
+		surface::lock_guard lock2(dst);
+
 		scoped_timer timer("resize time");
-		surface::resize(_SourceInfo, _Source, destInfo, &destMap, _Filter);
+		surface::resize(srcInfo, lock.mapped, destInfo, &lock2.mapped, _Filter);
 	}
 
-	_Requirements.check(destInfo, destMap, _NthImage);
+	_Requirements.check(dst, _NthImage);
 }
 
 static void TESTsurface_resize_test_filter(requirements& _Requirements
-	, const surface::info& _SourceInfo
-	, const surface::const_mapped_subresource& _Source
+	, const surface::buffer* _pBuffer
 	, surface::filter::value _Filter
 	, int _NthImage)
 {
-	TESTsurface_resize_test_size(_Requirements, _SourceInfo, _Source, _Filter, _SourceInfo.dimensions * int3(2,2,1), _NthImage);
-	TESTsurface_resize_test_size(_Requirements, _SourceInfo, _Source, _Filter, _SourceInfo.dimensions / int3(2,2,1), _NthImage+1);
+	TESTsurface_resize_test_size(_Requirements, _pBuffer, _Filter, _pBuffer->get_info().dimensions * int3(2,2,1), _NthImage);
+	TESTsurface_resize_test_size(_Requirements, _pBuffer, _Filter, _pBuffer->get_info().dimensions / int3(2,2,1), _NthImage+1);
 }
 
 void TESTsurface_resize(requirements& _Requirements)
@@ -73,8 +71,7 @@ void TESTsurface_resize(requirements& _Requirements)
 	int NthImage = 0;
 	for (int i = 0; i < surface::filter::filter_count; i++, NthImage += 2)
 	{
-		surface::shared_lock lock(s);
-		TESTsurface_resize_test_filter(_Requirements, s->get_info(), lock.mapped, surface::filter::value(i), NthImage);
+		TESTsurface_resize_test_filter(_Requirements, s.get(), surface::filter::value(i), NthImage);
 	}
 }
 

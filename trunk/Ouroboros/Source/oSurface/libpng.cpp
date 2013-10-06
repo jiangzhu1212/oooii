@@ -121,7 +121,6 @@ info get_info_png(const void* _pBuffer, size_t _BufferSize)
 	i.format = to_format(color_type, depth);
 	i.layout = image;
 	i.dimensions = int3(w, h, 1);
-	i.array_size = 1;
 	return i;
 }
 
@@ -277,7 +276,6 @@ std::shared_ptr<buffer> decode_png(const void* _pBuffer, size_t _BufferSize, alp
 	info si;
 	si.layout = image;
 	si.dimensions = int3(w, h, 1);
-	si.array_size = 1;
 	switch (color_type)
 	{
 		case PNG_COLOR_TYPE_GRAY:

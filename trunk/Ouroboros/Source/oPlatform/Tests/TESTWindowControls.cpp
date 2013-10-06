@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oPlatform/oImage.h>
 #include <oPlatform/oGUIMenu.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oWindow.h>
@@ -525,7 +524,7 @@ struct PLATFORM_WindowControls : public oTest
 
 		} while (oTimer() < WaitForSettle);
 
-		oStd::future<ouro::intrusive_ptr<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
+		oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->CreateSnapshot();
 		
 		do
 		{

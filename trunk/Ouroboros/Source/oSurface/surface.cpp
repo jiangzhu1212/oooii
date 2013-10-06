@@ -25,7 +25,6 @@
 #include <oSurface/surface.h>
 #include <oBase/assert.h>
 #include <oBase/byte.h>
-#include <oBase/color.h>
 #include <oBase/memory.h>
 #include <oBase/throw.h>
 #include <oStd/atomic.h>
@@ -39,7 +38,7 @@ namespace ouro {
 
 #define oCHECK_INFO(_Info) \
 	if (any(_Info.dimensions < int3(1,1,1))) throw std::invalid_argument(formatf("invalid dimensions: [%d,%d,%d]", _Info.dimensions.x, _Info.dimensions.y, _Info.dimensions.z)); \
-	if (_Info.array_size != 1 && _Info.dimensions.z != 1) throw std::invalid_argument(formatf("array_size or depth has to be 1 [%d,%d]", _Info.array_size, _Info.dimensions.z));
+	if (max(1, _Info.array_size) != 1 && _Info.dimensions.z != 1) throw std::invalid_argument(formatf("array_size or depth has to be 1 [%d,%d]", _Info.array_size, _Info.dimensions.z));
 
 #define oCHECK_DIM(_Format, _Dim) if (_Dim < min_dimensions(_Format).x) throw std::invalid_argument(formatf("invalid dimension: %d", _Dim));
 #define oCHECK_DIM2(_Format, _Dim) if (any(_Dim < min_dimensions(_Format))) throw std::invalid_argument(formatf("invalid dimensions: [%d,%d]", _Dim.x, _Dim.y));
@@ -68,8 +67,8 @@ namespace traits
 struct format_info
 {
 	const char* string;
-	uint fourcc;
-	uint size;
+	unsigned int fourcc;
+	unsigned int size;
 	int2 min_dimensions;
 	struct bit_size bit_size;
 	unsigned char num_channels;
@@ -302,7 +301,7 @@ bool from_string(surface::format* _pFormat, const char* _StrSource)
 
 	namespace surface {
 
-static bool has_trait(format _Format, uint _Trait)
+static bool has_trait(format _Format, unsigned int _Trait)
 {
 	return ((_Format) < format_count) ? !!(sFormatInfo[_Format].traits & (_Trait)) : false;
 }
@@ -738,13 +737,13 @@ int total_size(const info& _SurfaceInfo, int _SubsurfaceIndex)
 		return size;
 	}
 	
-	return slice_pitch(_SurfaceInfo, _SubsurfaceIndex) * _SurfaceInfo.array_size;
+	return slice_pitch(_SurfaceInfo, _SubsurfaceIndex) * max(_SurfaceInfo.array_size, 1);
 }
 
 int2 dimensions(const info& _SurfaceInfo, int _SubsurfaceIndex)
 {
 	int2 sliceDimensions = slice_dimensions(_SurfaceInfo, _SubsurfaceIndex);
-	return int2(sliceDimensions.x, sliceDimensions.y * _SurfaceInfo.array_size);
+	return int2(sliceDimensions.x, sliceDimensions.y * max(1, _SurfaceInfo.array_size));
 }
 
 int2 slice_dimensions(const info& _SurfaceInfo, int _SubsurfaceIndex)
@@ -802,9 +801,10 @@ subresource_info subresource(const info& _SurfaceInfo, int _Subresource)
 	subresource_info inf;
 	int numMips = num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions);
 	unpack_subresource(_Subresource, numMips, _SurfaceInfo.array_size, &inf.mip_level, &inf.array_slice, &inf.subsurface);
-	if (inf.array_slice >= _SurfaceInfo.array_size) throw std::invalid_argument("Slice index is out of range for the specified surface");
-	if (inf.subsurface >= num_subformats(_SurfaceInfo.format)) throw std::invalid_argument("Subsurface index is out of range for the specified surface");
+	if (_SurfaceInfo.array_size && max(1, inf.array_slice) >= max(1, _SurfaceInfo.array_size)) throw std::invalid_argument("array slice index is out of range");
+	if (inf.subsurface >= num_subformats(_SurfaceInfo.format)) throw std::invalid_argument("subsurface index is out of range for the specified surface");
 	inf.dimensions = dimensions_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions, inf.mip_level, inf.subsurface);
+	inf.format = _SurfaceInfo.format;
 	return inf;
 }
 
@@ -823,9 +823,9 @@ info subsurface(const info& _SurfaceInfo, int _SubsurfaceIndex, int _MipLevel, i
 	return inf;
 }
 
-int subresource_size(const info& _SurfaceInfo, const subresource_info& _SubresourceInfo)
+int subresource_size(const subresource_info& _SubresourceInfo)
 {
-	return mip_size(_SurfaceInfo.format, _SubresourceInfo.dimensions, _SubresourceInfo.subsurface);
+	return mip_size(_SubresourceInfo.format, _SubresourceInfo.dimensions, _SubresourceInfo.subsurface);
 }
 
 int subresource_offset(const info& _SurfaceInfo, int _Subresource, int _DepthIndex)
@@ -877,6 +877,47 @@ void copy(const info& _SurfaceInfo, int _Subresource, int _DepthIndex, const voi
 void copy(const info& _SurfaceInfo, const const_mapped_subresource& _Source, mapped_subresource* _Destination, bool _FlipVertical)
 {
 	memcpy2d(_Destination->data, _Destination->row_pitch, _Source.data, _Source.row_pitch, _SurfaceInfo.dimensions.x*element_size(_SurfaceInfo.format), _SurfaceInfo.dimensions.y, _FlipVertical);
+}
+
+void copy(const subresource_info& _SubresourceInfo, const const_mapped_subresource& _Source, mapped_subresource* _Destination, bool _FlipVertical)
+{
+	memcpy2d(_Destination->data, _Destination->row_pitch, _Source.data, _Source.row_pitch, _SubresourceInfo.dimensions.x*element_size(_SubresourceInfo.format), _SubresourceInfo.dimensions.y, _FlipVertical);
+}
+
+void put(const subresource_info& _SubresourceInfo, mapped_subresource* _Destination, const int2& _Coordinate, color _Color)
+{
+	const int elSize = element_size(format(_SubresourceInfo.format));
+	unsigned char* p = (unsigned char*)_Destination->data + (_Coordinate.y * _Destination->row_pitch) + (_Coordinate.x * elSize);
+	int rr, gg, bb, aa;
+	_Color.decompose(&rr, &gg, &bb, &aa);
+	unsigned char r = (unsigned char)rr, g = (unsigned char)gg, b = (unsigned char)bb, a = (unsigned char)aa;
+	switch (_SubresourceInfo.format)
+	{
+		case r8g8b8a8_unorm: *p++ = r; *p++ = g; *p++ = b; *p++ = a; break;
+		case r8g8b8_unorm: *p++ = r; *p++ = g; *p++ = b; break;
+		case b8g8r8a8_unorm: *p++ = b; *p++ = g; *p++ = r; *p++ = a; break;
+		case b8g8r8_unorm: *p++ = b; *p++ = g; *p++ = r; break;
+		case r8_unorm: *p++ = r; break;
+		default: throw std::invalid_argument("unsupported format");
+	}
+}
+
+color get(const subresource_info& _SubresourceInfo, const const_mapped_subresource& _Source, const int2& _Coordinate)
+{
+	const int elSize = element_size(_SubresourceInfo.format);
+	const unsigned char* p = (const unsigned char*)_Source.data + (_Coordinate.y * _Source.row_pitch) + (_Coordinate.x * elSize);
+	int r=0, g=0, b=0, a=255;
+	switch (_SubresourceInfo.format)
+	{
+		case r8g8b8a8_unorm: r = *p++; g = *p++; b = *p++; a = *p++; break;
+		case r8g8b8_unorm: r = *p++; g = *p++; b = *p++; break;
+		case b8g8r8a8_unorm: b = *p++; g = *p++; r = *p++; a = *p++; break;
+		case b8g8r8_unorm: b = *p++; g = *p++; r = *p++; break;
+		case r8_unorm: r = *p++; g=r; b=r; break;
+		default: break;
+	}
+	
+	return color(r,g,b,a);
 }
 
 // Returns the nth mip where the mip level best-fits into a tile. i.e. several
@@ -1031,7 +1072,7 @@ tile_info get_tile(const info& _SurfaceInfo, const int2& _TileDimensions, int _T
 	int numTilesPerSlice = num_slice_tiles(_SurfaceInfo, _TileDimensions);
 	inf.dimensions = _TileDimensions;
 	inf.array_slice = _TileID / numTilesPerSlice;
-	if (inf.array_slice >= _SurfaceInfo.array_size) throw std::invalid_argument("TileID is out of range for the specified mip dimensions");
+	if (max(1, inf.array_slice) >= max(1, _SurfaceInfo.array_size)) throw std::invalid_argument("TileID is out of range for the specified mip dimensions");
 
 	int firstTileInMip = 0;
 	int3 mipDim = _SurfaceInfo.dimensions;
@@ -1154,18 +1195,18 @@ void enumerate_pixels(const info& _SurfaceInfoInput
 	}
 }
 
-typedef void (*rms_enumerator)(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, uint* _pAccum);
+typedef void (*rms_enumerator)(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, unsigned int* _pAccum);
 
-static void sum_squared_diff_r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, uint* _pAccum)
+static void sum_squared_diff_r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, unsigned int* _pAccum)
 {
 	const unsigned char* p1 = (const unsigned char*)_pPixel1;
 	const unsigned char* p2 = (const unsigned char*)_pPixel2;
 	unsigned char absDiff = unsigned char (abs(*p1 - *p2));
 	*(unsigned char*)_pPixelOut = absDiff;
-	oStd::atomic_fetch_add(_pAccum, uint(absDiff * absDiff));
+	oStd::atomic_fetch_add(_pAccum, unsigned int(absDiff * absDiff));
 }
 
-static void sum_squared_diff_b8g8r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, uint* _pAccum)
+static void sum_squared_diff_b8g8r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, unsigned int* _pAccum)
 {
 	const unsigned char* p = (const unsigned char*)_pPixel1;
 	unsigned char b = *p++; unsigned char g = *p++; unsigned char r = *p++;
@@ -1175,10 +1216,10 @@ static void sum_squared_diff_b8g8r8_to_r8(const void* oRESTRICT _pPixel1, const 
 	float L2 = color(r, g, b, 255).luminance();
 	unsigned char absDiff = unorm_to_ubyte(abs(L1 - L2));
 	*(unsigned char*)_pPixelOut = absDiff;
-	oStd::atomic_fetch_add(_pAccum, uint(absDiff * absDiff));
+	oStd::atomic_fetch_add(_pAccum, unsigned int(absDiff * absDiff));
 }
 
-static void sum_squared_diff_b8g8r8a8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, uint* _pAccum)
+static void sum_squared_diff_b8g8r8a8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, unsigned int* _pAccum)
 {
 	const unsigned char* p = (const unsigned char*)_pPixel1;
 	unsigned char b = *p++; unsigned char g = *p++; unsigned char r = *p++; unsigned char a = *p++;
@@ -1188,7 +1229,7 @@ static void sum_squared_diff_b8g8r8a8_to_r8(const void* oRESTRICT _pPixel1, cons
 	float L2 = color(r, g, b, a).luminance();
 	unsigned char absDiff = unorm_to_ubyte(abs(L1 - L2));
 	*(unsigned char*)_pPixelOut = absDiff;
-	oStd::atomic_fetch_add(_pAccum, uint(absDiff * absDiff));
+	oStd::atomic_fetch_add(_pAccum, unsigned int(absDiff * absDiff));
 }
 
 static rms_enumerator get_rms_enumerator(format _InFormat, format _OutFormat)
@@ -1214,8 +1255,8 @@ float calc_rms(const info& _SurfaceInfo
 	, const const_mapped_subresource& _MappedSubresource2)
 {
 	rms_enumerator en = get_rms_enumerator(_SurfaceInfo.format, r8_unorm);
-	uint SumOfSquares = 0;
-	uint DummyPixelOut[4]; // largest a pixel can ever be currently
+	unsigned int SumOfSquares = 0;
+	unsigned int DummyPixelOut[4]; // largest a pixel can ever be currently
 
 	enumerate_pixels(_SurfaceInfo
 		, _MappedSubresource1
@@ -1234,7 +1275,7 @@ float calc_rms(const info& _SurfaceInfoInput
 	std::function<void(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut)> Fn;
 
 	rms_enumerator en = get_rms_enumerator(_SurfaceInfoInput.format, _SurfaceInfoOutput.format);
-	uint SumOfSquares = 0;
+	unsigned int SumOfSquares = 0;
 
 	enumerate_pixels(_SurfaceInfoInput
 		, _MappedSubresourceInput1
@@ -1246,15 +1287,15 @@ float calc_rms(const info& _SurfaceInfoInput
 	return sqrt(SumOfSquares / float(_SurfaceInfoInput.dimensions.x * _SurfaceInfoInput.dimensions.y));
 }
 
-typedef void (*histogram_enumerator)(const void* _pPixel, uint* _Histogram);
+typedef void (*histogram_enumerator)(const void* _pPixel, unsigned int* _Histogram);
 
-static void histogram_r8_unorm_8bit(const void* _pPixel, uint* _Histogram)
+static void histogram_r8_unorm_8bit(const void* _pPixel, unsigned int* _Histogram)
 {
 	unsigned char c = *(const unsigned char*)_pPixel;
 	oStd::atomic_increment(&_Histogram[c]);
 }
 
-static void histogram_b8g8r8a8_unorm_8bit(const void* _pPixel, uint* _Histogram)
+static void histogram_b8g8r8a8_unorm_8bit(const void* _pPixel, unsigned int* _Histogram)
 {
 	const unsigned char* p = (const unsigned char*)_pPixel;
 	unsigned char b = *p++; unsigned char g = *p++; unsigned char r = *p++;
@@ -1262,13 +1303,13 @@ static void histogram_b8g8r8a8_unorm_8bit(const void* _pPixel, uint* _Histogram)
 	oStd::atomic_increment(&_Histogram[Index]);
 }
 
-static void histogram_r16_unorm_16bit(const void* _pPixel, uint* _Histogram)
+static void histogram_r16_unorm_16bit(const void* _pPixel, unsigned int* _Histogram)
 {
 	unsigned short c = *(const unsigned short*)_pPixel;
 	oStd::atomic_increment(&_Histogram[c]);
 }
 
-static void histogram_r16_float_16bit(const void* _pPixel, uint* _Histogram)
+static void histogram_r16_float_16bit(const void* _pPixel, unsigned int* _Histogram)
 {
 	half h = saturate(*(const half*)_pPixel);
 	unsigned short c = static_cast<unsigned short>(round(65535.0f * h));
@@ -1293,16 +1334,16 @@ histogram_enumerator get_histogram_enumerator(format _Format, int _Bitdepth)
 	#undef IO
 }
 
-void histogram8(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[256])
+void histogram8(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, unsigned int _Histogram[256])
 {
-	memset(_Histogram, 0, sizeof(uint) * 256);
+	memset(_Histogram, 0, sizeof(unsigned int) * 256);
 	histogram_enumerator en = get_histogram_enumerator(_SurfaceInfo.format, 8);
 	enumerate_pixels(_SurfaceInfo, _MappedSubresource, std::bind(en, _1, _Histogram));
 }
 
-void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[65536])
+void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, unsigned int _Histogram[65536])
 {
-	memset(_Histogram, 0, sizeof(uint) * 65536);
+	memset(_Histogram, 0, sizeof(unsigned int) * 65536);
 	histogram_enumerator en = get_histogram_enumerator(_SurfaceInfo.format, 16);
 	enumerate_pixels(_SurfaceInfo, _MappedSubresource, std::bind(en, _1, _Histogram));
 }

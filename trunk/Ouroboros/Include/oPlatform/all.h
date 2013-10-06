@@ -31,7 +31,6 @@
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/oInterprocessEvent.h>
 #include <oPlatform/oGUIMenu.h>
-#include <oPlatform/oImage.h>
 #include <oPlatform/oMirroredArena.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oP4.h>

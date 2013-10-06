@@ -149,7 +149,6 @@ void oKinectGetDesc(NUI_IMAGE_TYPE _Type, NUI_IMAGE_RESOLUTION _Resolution, ouro
 	NuiImageResolutionToSize(_Resolution, (DWORD&)_pInfo->dimensions.x, (DWORD&)_pInfo->dimensions.y);
 	_pInfo->format = oKinectGetFormat(_Type);
 	_pInfo->layout = ouro::surface::image;
-	_pInfo->array_size = 1;
 }
 
 bool oKinectCreateSurface(NUI_IMAGE_TYPE _Type, NUI_IMAGE_RESOLUTION _Resolution, std::shared_ptr<ouro::surface::buffer>* _ppSurface)

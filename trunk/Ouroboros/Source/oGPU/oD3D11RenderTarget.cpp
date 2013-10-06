@@ -251,9 +251,9 @@ void oD3D11RenderTarget::GetDepthTexture(oGPUTexture** _ppTexture)
 	*_ppTexture = DepthStencilTexture;
 }
 
-bool oD3D11RenderTarget::CreateSnapshot(int _MRTIndex, oImage** _ppSnapshot)
+std::shared_ptr<ouro::surface::buffer> oD3D11RenderTarget::CreateSnapshot(int _MRTIndex)
 {
 	if (!Textures[_MRTIndex])		
-		return oErrorSetLast(std::errc::resource_unavailable_try_again, "The render target is minimized or not available for snapshot.");
-	return oD3D11CreateSnapshot(static_cast<oD3D11Texture*>(Textures[_MRTIndex].c_ptr())->Texture, _ppSnapshot);
+		oTHROW(resource_unavailable_try_again, "The render target is minimized or not available for snapshot.");
+	return oD3D11CreateSnapshot(static_cast<oD3D11Texture*>(Textures[_MRTIndex].c_ptr())->Texture);
 }

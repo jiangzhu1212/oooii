@@ -140,13 +140,14 @@ path data_path();
 path current_path();
 void current_path(const path& _Path);
 
+// calls one of the above functions based on _RootName being:
+// [app temp log desktop system os dev data current]
+path root_path(const char* _RootName);
+
 // Returns an absolute path by resolving against system path bases in the 
 // following order: 
-// an authority matching one of: [desktop, temp, system, os, data, app]
-// app path
-// operating system (os) path
-// current path
-// paths listed in the env var %PATH%
+// an authority matching one of: [app current system os desktop data temp]
+// if no above match, then search the environment variable PATH.
 path resolve(const path& _RelativePath);
 
 // Returns the type of the file

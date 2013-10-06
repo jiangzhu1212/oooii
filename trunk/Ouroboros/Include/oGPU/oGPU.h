@@ -126,11 +126,11 @@ interface oGPURenderTarget : oGPUDeviceChild
 	// format.
 	virtual void GetDepthTexture(oGPUTexture** _ppTexture) = 0;
 
-	// Creates an oImage of the contents of the render target. This should be 
+	// Creates a buffer of the contents of the render target. This should be 
 	// called at times when it is known the render target has been fully resolved,
 	// mostly outside of BeginFrame/EndFrame. If this is called on the primary
 	// render target, the back-buffer is captured.
-	virtual bool CreateSnapshot(int _MRTIndex, oImage** _ppSnapshot) = 0;
+	virtual std::shared_ptr<ouro::surface::buffer> CreateSnapshot(int _MRTIndex) = 0;
 };
 
 // {2401B122-EB19-4CEF-B3BE-9543C003B896}

@@ -173,7 +173,6 @@ void TESTsurface()
 
 	surface::info inf;
 	inf.dimensions = int3(512,512,511);
-	inf.array_size = 1;
 	inf.format = surface::r8g8b8a8_unorm;
 	inf.layout = surface::tight;
 	oCHECK(surface::offset(inf, 1)==0x1ff00000, "");

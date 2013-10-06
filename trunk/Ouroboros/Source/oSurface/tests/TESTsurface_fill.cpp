@@ -41,7 +41,6 @@ namespace ouro {
 	si.format = surface::b8g8r8a8_unorm; \
 	si.layout = surface::image; \
 	si.dimensions = int3(_Dimensions, 1); \
-	si.array_size = 1; \
 	std::shared_ptr<surface::buffer> s = surface::buffer::make(si);
 
 std::shared_ptr<surface::buffer> make_numbered_grid(

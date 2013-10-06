@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oPlatform/oImage.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oCore/system.h>
 #include <oBasis/tests/oBasisTests.h>
@@ -45,37 +44,6 @@ static bool ResolvePath(path& _Path, const char* _RelativePath, bool _PathMustEx
 	else return _pTest->BuildPath(_Path, _RelativePath, oTest::DATA);
 }
 
-static bool TestSurface(const char* _Name, const ouro::surface::info& _SourceInfo, const ouro::surface::const_mapped_subresource& _SourceMapped, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier, oTest* _pTest)
-{
-	intrusive_ptr<oImage> image;
-	if (!oImageCreate(_Name, _SourceInfo, &image))
-		return false; // pass through error
-	image->CopyData(_SourceMapped.data, _SourceMapped.row_pitch);
-	return _pTest->TestImage(image, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier);
-}
-
-static bool AllocateAndLoadSurface(void** _pHandle, ouro::surface::info* _pInfo, ouro::surface::const_mapped_subresource* _pMapped, const char* _URIReference)
-{
-	intrusive_ptr<oImage> image;
-	if (!oImageLoad(_URIReference, &image))
-		return false; // pass through error
-
-	*_pInfo = oImageGetSurfaceInfo(image);
-	int imageMapSize = ouro::surface::subresource_size(*_pInfo, 0);
-	std::vector<char>* pBuf = new std::vector<char>();
-	pBuf->resize(imageMapSize);
-	*_pMapped = ouro::surface::get_const_mapped_subresource(*_pInfo, 0, 0, pBuf->data());
-	image->CopyDataTo((void*)_pMapped->data, _pMapped->row_pitch);
-	*_pHandle = pBuf;
-	return true;
-}
-
-static void DeallocateSurface(void* _Handle)
-{
-	std::vector<char>* pBuf = static_cast<std::vector<char>*>(_Handle);
-	delete pBuf;
-}
-
 static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
 {
 	_pServices->ResolvePath = oBIND(ResolvePath, oBIND1, oBIND2, oBIND3, _pTest);
@@ -83,9 +51,6 @@ static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
 	_pServices->DeallocateLoadedBuffer = free;
 	_pServices->Rand = rand;
 	_pServices->GetTotalPhysicalMemory = GetTotalPhysicalMemory;
-	_pServices->AllocateAndLoadSurface = AllocateAndLoadSurface;
-	_pServices->DeallocateSurface = DeallocateSurface;
-	_pServices->TestSurface = oBIND(TestSurface, oBIND1, oBIND2, oBIND3, oBIND4, oBIND5, oBIND6, oBIND7, _pTest);
 }
 
 // Tests from oBasis follow a common form, so as a convenience and 

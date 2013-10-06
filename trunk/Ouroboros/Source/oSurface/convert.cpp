@@ -113,36 +113,62 @@ pixel_convert get_pixel_convert(format _SourceFormat, format _DestinationFormat)
 	#undef IO
 }
 
-static void convert_subresource(pixel_convert _Convert, const subresource_info& _SubresourceInfo
-	, format _SourceFormat, const const_mapped_subresource& _Source
-	, format _DestinationFormat, mapped_subresource* _pDestination)
+static void convert_subresource_scanline(int _HorizontalElementCount
+	, int _NthScanline
+	, pixel_convert _Convert
+	, int SourceElementSize
+	, int DestinationElementSize
+	, const const_mapped_subresource& _Source
+	, mapped_subresource* _pDestination)
 {
-	const int selSize = element_size(_SourceFormat);
-	const int delSize = element_size(_DestinationFormat);
+	const unsigned char* srow = (const unsigned char*)_Source.data + (_Source.row_pitch * _NthScanline);
+	unsigned char* drow = (unsigned char*)_pDestination->data + (_pDestination->row_pitch * _NthScanline);
 
-	for (int y = 0; y < _SubresourceInfo.dimensions.y; y++)
+	for (int x = 0; x < _HorizontalElementCount; x++)
 	{
-		const unsigned char* srow = (const unsigned char*)_Source.data + (_Source.row_pitch * y);
-		unsigned char* drow = (unsigned char*)_pDestination->data + (_pDestination->row_pitch * y);
-
-		for (int x = 0; x < _SubresourceInfo.dimensions.x; x++)
-		{
-			const unsigned char* spixel = srow + (selSize * x);
-			unsigned char* dpixel = drow + (delSize * x);
-			_Convert(spixel, dpixel);
-		}
+		const unsigned char* spixel = srow + (SourceElementSize * x);
+		unsigned char* dpixel = drow + (DestinationElementSize * x);
+		_Convert(spixel, dpixel);
 	}
 }
 
-void convert_subresource(const subresource_info& _SubresourceInfo
-	, format _SourceFormat, const const_mapped_subresource& _Source
-	, format _DestinationFormat, mapped_subresource* _pDestination)
+static void convert_subresource(pixel_convert _Convert
+	, const subresource_info& _SubresourceInfo
+	, const const_mapped_subresource& _Source
+	, format _DestinationFormat
+	, mapped_subresource* _pDestination
+	, bool _FlipVertically)
 {
-	pixel_convert cv = get_pixel_convert(_SourceFormat, _DestinationFormat);
-	convert_subresource(cv, _SubresourceInfo, _SourceFormat, _Source, _DestinationFormat, _pDestination);
+	const int selSize = element_size(_SubresourceInfo.format);
+	const int delSize = element_size(_DestinationFormat);
+	if (_FlipVertically)
+		for (int y = _SubresourceInfo.dimensions.y-1; y >= 0; y--)
+			convert_subresource_scanline(_SubresourceInfo.dimensions.x, y, _Convert, selSize, delSize, _Source, _pDestination);
+	else
+		for (int y = 0; y < _SubresourceInfo.dimensions.y; y++)
+			convert_subresource_scanline(_SubresourceInfo.dimensions.x, y, _Convert, selSize, delSize, _Source, _pDestination);
 }
 
-void convert(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination)
+void convert_subresource(const subresource_info& _SubresourceInfo
+	, const const_mapped_subresource& _Source
+	, format _DestinationFormat
+	, mapped_subresource* _pDestination
+	, bool _FlipVertically)
+{
+	if (_SubresourceInfo.format == _DestinationFormat)
+		copy(_SubresourceInfo, _Source, _pDestination, false);
+	else
+	{
+		pixel_convert cv = get_pixel_convert(_SubresourceInfo.format, _DestinationFormat);
+		convert_subresource(cv, _SubresourceInfo, _Source, _DestinationFormat, _pDestination, _FlipVertically);
+	}
+}
+
+void convert(const info& _SourceInfo
+	, const const_mapped_subresource& _Source
+	, const info& _DestinationInfo
+	, mapped_subresource* _pDestination
+	, bool _FlipVertically)
 {
 	if (any(_SourceInfo.dimensions != _DestinationInfo.dimensions))
 		throw std::invalid_argument("dimensions must be the same");
@@ -167,7 +193,7 @@ void convert(const info& _SourceInfo, const const_mapped_subresource& _Source, c
 			const_mapped_subresource Source = get_const_mapped_subresource(_SourceInfo, Subresource, 0, _Source.data);
 			mapped_subresource Destination = get_mapped_subresource(_DestinationInfo, Subresource, 0, _pDestination->data);
 		
-			convert_subresource(cv, SourceSubresourceInfo, _SourceInfo.format, Source, _DestinationInfo.format, &Destination);
+			convert_subresource(cv, SourceSubresourceInfo, Source, _DestinationInfo.format, &Destination, _FlipVertically);
 		}
 	}
 }

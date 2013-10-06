@@ -36,6 +36,9 @@
     <ClCompile Include="convert.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="bmp.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

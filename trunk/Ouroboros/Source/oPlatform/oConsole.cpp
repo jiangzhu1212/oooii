@@ -29,7 +29,6 @@
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSingleton.h>
-#include <oPlatform/oStandards.h>
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinWindowing.h>
@@ -45,11 +44,7 @@ struct oConsoleContext : public oProcessSingleton<oConsoleContext>
 
 	oConsoleContext()
 		: CtrlHandlerSet(false)
-	{
-		oGDIScopedObject<HICON> hIcon = (HICON)oLoadStandardIcon();
-		oWinSetIconAsync(GetConsoleWindow(), hIcon, false);
-		oWinSetIconAsync(GetConsoleWindow(), hIcon, true);
-	}
+	{}
 
 	BOOL CtrlHandler(DWORD fdwCtrlType);
 

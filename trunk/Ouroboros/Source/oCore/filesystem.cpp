@@ -24,8 +24,10 @@
  **************************************************************************/
 #include <oCore/filesystem.h>
 #include <oCore/process.h>
+#include <oCore/system.h>
 #include <oBase/date.h>
 #include <oBase/macros.h>
+#include <oBase/string.h>
 #include "../oStd/win.h"
 #include <io.h>
 #include <memory>
@@ -241,24 +243,49 @@ void current_path(const path& _Path)
 		oFSTHROWLAST1(_Path);
 }
 
+path root_path(const char* _RootName)
+{
+	if (!_stricmp("data", _RootName)) return std::move(data_path());
+	if (!_stricmp("app", _RootName)) return std::move(app_path());
+	if (!_stricmp("current", _RootName)) return std::move(current_path());
+	if (!_stricmp("desktop", _RootName)) return std::move(desktop_path());
+	if (!_stricmp("temp", _RootName)) return std::move(temp_path());
+	if (!_stricmp("dev", _RootName)) return std::move(dev_path());
+	if (!_stricmp("system", _RootName)) return std::move(system_path());
+	if (!_stricmp("os", _RootName)) return std::move(os_path());
+	if (!_stricmp("log", _RootName)) return std::move(log_path());
+	return "";
+}
+
 path resolve(const path& _RelativePath)
 {
 	#define APPEND() \
 		AbsolutePath /= _RelativePath; \
 		if (exists(AbsolutePath)) return AbsolutePath;
 
-	path AbsolutePath = desktop_path();
+	path AbsolutePath = app_path();
 	APPEND();
-	AbsolutePath = temp_path();
+	AbsolutePath = current_path();
 	APPEND();
 	AbsolutePath = system_path();
 	APPEND();
 	AbsolutePath = os_path();
 	APPEND();
+	AbsolutePath = desktop_path();
+	APPEND();
 	AbsolutePath = data_path();
 	APPEND();
-	AbsolutePath = app_path();
+	AbsolutePath = temp_path();
 	APPEND();
+
+	char PATH[oKB(4)];
+	if (system::getenv(PATH, "PATH"))
+	{
+		char result[512];
+		path CWD = current_path();
+		if (search_path(result, PATH, _RelativePath.c_str(), CWD.c_str(), [&](const char* _Path)->bool { return exists(_Path); }))
+			return result;
+	}
 
 	oFSTHROW01(no_such_file_or_directory, _RelativePath);
 }

@@ -37,29 +37,9 @@ struct GPU_Texture1DMip_App : public oGPUTextureTestApp
 	oGPU_TEST_PIPELINE GetPipeline() override { return oGPU_TEST_TEXTURE_1D; }
 	bool CreateTexture() override
 	{
-		oImage::DESC imageDesc;
-		imageDesc.Dimensions = int2(512, 1);
-		imageDesc.Format = oImage::BGRA32;
-		imageDesc.RowPitch = oImageCalcRowPitch(imageDesc.Format, imageDesc.Dimensions.x);
-		intrusive_ptr<oImage> image;
-		oImageCreate("GPU_Texture1DMip", imageDesc, &image);
-
-		intrusive_ptr<oBuffer> buffer;
-		int surfaceBufferSize = oImageCalcSize(imageDesc.Format, imageDesc.Dimensions);
-		void *pSurfaceBuffer = oBuffer::New(surfaceBufferSize);
-		oBufferCreate("GPU_Texture1DMip buffer", pSurfaceBuffer, surfaceBufferSize, oBuffer::Delete, &buffer);
-
-		static const color sConsoleColors[] = { Black, Navy, Green, Teal, Maroon, Purple, Olive, Silver, Gray, Blue, Lime, Aqua, Red, Fuchsia, Yellow, White };
-
-		color* texture1Ddata = (color*)buffer->GetData();
-		for (int i=0; i<imageDesc.Dimensions.x; ++i)
-		{
-			texture1Ddata[i] = sConsoleColors[i % oCOUNTOF(sConsoleColors)];
-		}
-
-		image->CopyData(buffer->GetData(), imageDesc.RowPitch);
-
-		if (!oGPUCreateTexture(Device, &image, 1, oGPU_TEXTURE_1D_MAP_MIPS, &Texture))
+		auto image = make_1D(512);
+		auto* i = image.get();
+		if (!oGPUCreateTexture(Device, &i, 1, oGPU_TEXTURE_1D_MAP_MIPS, &Texture))
 			return false;
 		return true;
 	}

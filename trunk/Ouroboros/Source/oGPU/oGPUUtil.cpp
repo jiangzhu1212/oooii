@@ -389,25 +389,24 @@ bool oGPUGenerateMips(oGPUDevice* _pDevice, oGPUTexture* _pTexture)
 	return true;
 }
 
-bool oGPUCreateTexture(oGPUDevice* _pDevice, const oImage* const* _ppSourceImages, uint _NumImages, oGPU_TEXTURE_TYPE _Type, oGPUTexture** _ppTexture)
+bool oGPUCreateTexture(oGPUDevice* _pDevice, const ouro::surface::buffer* const* _ppSourceImages, uint _NumImages, oGPU_TEXTURE_TYPE _Type, oGPUTexture** _ppTexture)
 {
 	if (!_NumImages)
 		return oErrorSetLast(std::errc::invalid_argument, "Need at least one source image");
 
-	oImage::DESC id;
-	_ppSourceImages[0]->GetDesc(&id);
+	ouro::surface::info si = _ppSourceImages[0]->get_info();
 
 	intrusive_ptr<oGPUTexture> Texture;
 	oGPUTexture::DESC td;
-	td.Format = oImageFormatToSurfaceFormat(id.Format);
+	td.Format = si.format;
 	td.Type = _Type;
-	td.Dimensions = int3(id.Dimensions, oGPUTextureTypeIs3DMap(_Type) ? _NumImages : 1);
+	td.Dimensions = int3(si.dimensions.xy(), oGPUTextureTypeIs3DMap(_Type) ? _NumImages : 1);
 	td.ArraySize = oGPUTextureTypeIs3DMap(_Type) ? 1 : _NumImages;
 
 	switch (oGPUTextureTypeGetBasicType(_Type))
 	{
 		case oGPU_TEXTURE_1D_MAP:
-			if (id.Dimensions.y != 1)
+			if (si.dimensions.y != 1)
 				return oErrorSetLast(std::errc::invalid_argument, "1D textures cannot have height");
 			break;
 
@@ -420,7 +419,7 @@ bool oGPUCreateTexture(oGPUDevice* _pDevice, const oImage* const* _ppSourceImage
 			break;
 	}
 
-	if (!_pDevice->CreateTexture(_ppSourceImages[0]->GetName(), td, &Texture))
+	if (!_pDevice->CreateTexture("oGPUCreateTexture", td, &Texture))
 		return false; // pass through error
 
 	intrusive_ptr<oGPUCommandList> ICL;
@@ -430,28 +429,23 @@ bool oGPUCreateTexture(oGPUDevice* _pDevice, const oImage* const* _ppSourceImage
 
 	for (uint i = 0; i < _NumImages; i++)
 	{
-		oImage::DESC idslice;
-		_ppSourceImages[i]->GetDesc(&idslice);
-		if (any(idslice.Dimensions != id.Dimensions) || idslice.Format != id.Format)
+		ouro::surface::info sislice = _ppSourceImages[i]->get_info();
+		if (any(sislice.dimensions != si.dimensions) || sislice.format != si.format)
 			return oErrorSetLast(std::errc::invalid_argument, "Source images don't have the same dimensions and/or format");
-
-		ouro::surface::mapped_subresource msr;
-		msr.data = const_cast<void*>(_ppSourceImages[i]->GetData());
-		msr.row_pitch = idslice.RowPitch;
-		msr.depth_pitch = oImageCalcSize(idslice.Format, idslice.Dimensions);
 
 		int RegionFront = oGPUTextureTypeIs3DMap(_Type) ? i : 0;
 
 		ouro::surface::box region;
-		region.right = idslice.Dimensions.x;
-		region.bottom = idslice.Dimensions.y;
+		region.right = sislice.dimensions.x;
+		region.bottom = sislice.dimensions.y;
 		region.front = RegionFront;
 		region.back = region.front + 1;
 
 		int ArraySlice = oGPUTextureTypeIs3DMap(_Type) ? 0 : i;
 
 		int subresource = ouro::surface::calc_subresource(0, ArraySlice, 0, NumMips, td.ArraySize);
-		ICL->Commit(Texture, subresource, msr, region);
+		ouro::surface::shared_lock lock(_ppSourceImages[i]);
+		ICL->Commit(Texture, subresource, lock.mapped, region);
 	}
 
 	if (oGPUTextureTypeHasMips(_Type) && !oGPUGenerateMips(_pDevice, Texture))
@@ -462,7 +456,7 @@ bool oGPUCreateTexture(oGPUDevice* _pDevice, const oImage* const* _ppSourceImage
 	return true;
 }
 
-static bool DEPRECATED_oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _NumImages, oGPUTexture* _pOutputTexture)
+static bool DEPRECATED_oGPUGenerateMips(oGPUDevice* _pDevice, const ouro::surface::buffer** _pMip0Images, uint _NumImages, oGPUTexture* _pOutputTexture)
 {
 	oGPUTexture::DESC td;
 	_pOutputTexture->GetDesc(&td);
@@ -472,15 +466,13 @@ static bool DEPRECATED_oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pM
 		return oErrorSetLast(std::errc::invalid_argument, "Number of mip0 images doesn't match the amount needed in the output texture");
 
 #ifdef _DEBUG
-	oImage::DESC id;
-	_pMip0Images[0]->GetDesc(&id);
+	ouro::surface::info si = _pMip0Images[0]->get_info();
 
 	for (uint imageIndex=0; imageIndex<_NumImages; ++imageIndex)
 	{
-		oImage::DESC idslice;
-		_pMip0Images[imageIndex]->GetDesc(&idslice);
+		ouro::surface::info sislice = _pMip0Images[imageIndex]->get_info();
 
-		if (any(idslice.Dimensions != id.Dimensions) || idslice.Format != id.Format)
+		if (any(sislice.dimensions != si.dimensions) || sislice.format != si.format)
 			return oErrorSetLast(std::errc::invalid_argument, "Source images don't have the same dimensions and/or format");
 	}
 #endif
@@ -501,28 +493,22 @@ static bool DEPRECATED_oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pM
 	_pDevice->GetImmediateCommandList(&ICL);
 
 	int numMipLevels = ouro::surface::num_mips(ouro::surface::tight, td.Dimensions);
-	for (uint imageIndex=0; imageIndex<_NumImages; ++imageIndex)
+	for (uint imageIndex = 0; imageIndex < _NumImages; imageIndex++)
 	{
 		uint sliceIndex = oGPUTextureTypeIs3DMap(td.Type) ? 0 : imageIndex;
 		uint depthIndex = oGPUTextureTypeIs3DMap(td.Type) ? imageIndex : 0;
 
-		oImage::DESC idSlice;
-		_pMip0Images[imageIndex]->GetDesc(&idSlice);
-
 		int subresource = ouro::surface::calc_subresource(0, sliceIndex, 0, numMipLevels, td.ArraySize);
-
 		ouro::surface::mapped_subresource msrImage;
-		msrImage.data = const_cast<void*>(_pMip0Images[imageIndex]->GetData());
-		msrImage.row_pitch = idSlice.RowPitch;
-		msrImage.depth_pitch = oImageCalcSize(idSlice.Format, idSlice.Dimensions); // Shouldn't this simply be rowPitch*Dimensions.y ?
-
+		
 		ouro::surface::box region;
 		region.right = td.Dimensions.x;
 		region.bottom = td.Dimensions.y;
 		region.front = depthIndex;
 		region.back = depthIndex + 1;
 
-		ICL->Commit(Mip0Texture, subresource, msrImage, region);
+		ouro::surface::shared_lock lock(_pMip0Images[imageIndex]);
+		ICL->Commit(Mip0Texture, subresource, lock.mapped, region);
 	}
 
 	ICL->GenerateMips(SurfaceRenderTarget);
@@ -532,7 +518,7 @@ static bool DEPRECATED_oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pM
 	return true;
 }
 
-bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _NumImages, ouro::surface::info& _SurfaceInfo, oGPU_TEXTURE_TYPE _Type, oBuffer* _pMipBuffer)
+bool oGPUGenerateMips(oGPUDevice* _pDevice, const ouro::surface::buffer** _pMip0Images, uint _NumImages, ouro::surface::info& _SurfaceInfo, oGPU_TEXTURE_TYPE _Type, ouro::surface::buffer* _pMipBuffer)
 {
 	oGPUTexture::DESC rbd;
 	rbd.Dimensions = _SurfaceInfo.dimensions;
@@ -557,14 +543,15 @@ bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _N
 
 			int subresource = ouro::surface::calc_subresource(mipLevel, sliceIndex, 0, numMipLevels, _SurfaceInfo.array_size);
 
-			int2 byteDimensions;
-			ouro::surface::mapped_subresource msrMipDest = ouro::surface::get_mapped_subresource(_SurfaceInfo, subresource, depthIndex, _pMipBuffer->GetData(), &byteDimensions);
-
+			ouro::surface::mapped_subresource msrMipDest;
+			ouro::surface::lock_guard lock(_pMipBuffer, subresource);
+			void* dst_data = depth_index_offset(lock.mapped, depthIndex);
+			
 			ouro::surface::mapped_subresource msrMipSrc;
 			_pDevice->MapRead(ReadbackTexture, subresource, &msrMipSrc, true);
 			msrMipSrc.data = ouro::surface::depth_index_offset(msrMipSrc, depthIndex);
 
-			memcpy2d(msrMipDest.data, msrMipDest.row_pitch, msrMipSrc.data, msrMipSrc.row_pitch, byteDimensions.x, byteDimensions.y, false);
+			memcpy2d(dst_data, lock.mapped.row_pitch, msrMipSrc.data, msrMipSrc.row_pitch, lock.byte_dimensions.x, lock.byte_dimensions.y, false);
 
 			_pDevice->UnmapRead(ReadbackTexture, subresource);
 		}
@@ -573,7 +560,7 @@ bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _N
 	return true;
 }
 
-bool oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource, interface oImage** _ppImage)
+std::shared_ptr<ouro::surface::buffer> oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource)
 {
 	intrusive_ptr<oGPUTexture> TextureToSave = _pTexture;
 	
@@ -597,32 +584,19 @@ bool oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource, interface oImage** 
 		ICL->Copy(TextureToSave, _pTexture);
 	}
 
-	ouro::surface::info inf;
-	inf.dimensions = d.Dimensions;
-	inf.format = d.Format;
-	inf.layout = ouro::surface::image;
-	inf.array_size = 1;
+	ouro::surface::info si;
+	si.dimensions = d.Dimensions;
+	si.format = d.Format;
+	si.layout = ouro::surface::image;
 
-	ouro::surface::subresource_info sinf = ouro::surface::subresource(inf, _Subresource);
+	ouro::surface::subresource_info sri = ouro::surface::subresource(si, _Subresource);
+	si.dimensions = sri.dimensions;
+	auto s = ouro::surface::buffer::make(si);
+	ouro::surface::lock_guard lock(s);
+	if (!oGPURead(TextureToSave, _Subresource, lock.mapped, false))
+		oThrowLastError();
 
-	intrusive_ptr<oImage> Image;
-	oImage::DESC idesc;
-	idesc.RowPitch = oImageCalcRowPitch(oImageFormatFromSurfaceFormat(inf.format), sinf.dimensions.x);
-	idesc.Dimensions = sinf.dimensions.xy();
-	idesc.Format = oImageFormatFromSurfaceFormat(inf.format);
-	if (!oImageCreate("Temp Image", idesc, &Image))
-		return false; // pass through error
-
-	ouro::surface::mapped_subresource msr;
-	msr.data = Image->GetData();
-	msr.row_pitch = idesc.RowPitch;
-	msr.depth_pitch = oUInt(Image->GetSize());
-	if (!oGPURead(TextureToSave, _Subresource, msr, false))
-		return false;
-
-	Image->Reference();
-	*_ppImage = Image;
-	return true;
+	return std::move(s);
 }
 
 struct oOBJExtraVertexData

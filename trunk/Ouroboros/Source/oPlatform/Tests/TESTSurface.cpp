@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oSurface/tests/oSurfaceTests.h>
 #include <oCore/filesystem.h>
-#include <oPlatform/oImage.h>
 #include "oTestIntegration.h"
 #include <cstdlib>
 
@@ -48,18 +47,12 @@ struct requirements_implementation : requirements
 		return std::move(filesystem::load(FullPath, filesystem::load_option::binary_read, _pSize));
 	}
 
-	void check(const surface::info& _SourceInfo
-		, const surface::const_mapped_subresource& _Source
+	void check(const surface::buffer* _pBuffer
 		, int _NthTest = 0
 		, float _MaxRMSError = -1.0f)
 	{
-		intrusive_ptr<oImage> image;
-		if (!oImageCreate("check image", _SourceInfo, &image))
-			oThrowLastError();
-		
-		image->CopyData(_Source.data, _Source.row_pitch);
 		extern oTest* g_Test;
-		if (!g_Test->TestImage(image, _NthTest, oDEFAULT, _MaxRMSError, oDEFAULT))
+		if (!g_Test->TestImage(_pBuffer, _NthTest, oDEFAULT, _MaxRMSError, oDEFAULT))
 			oThrowLastError();
 	}
 };

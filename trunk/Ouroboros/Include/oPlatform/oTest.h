@@ -33,6 +33,8 @@
 #include <oPlatform/oSingleton.h> // @oooii-tony: Is it necessary to guarantee a test to be singular? If not this can take a step towards being cross-platform.
 #include <oBase/path.h>
 
+namespace ouro { namespace surface { class buffer; } }
+
 #define oTESTERROR(format, ...) do { snprintf(_StrStatus, _SizeofStrStatus, format, ## __VA_ARGS__); oTRACE("FAILING: %s (oErrorGetLast() == %s (%s))", _StrStatus, oErrorAsString(oErrorGetLast()), oErrorGetLastString()); return oTest::FAILURE; } while(false)
 #define oTESTB(expr, errMsg, ...) do { if (!(expr)) { oTESTERROR(errMsg, ## __VA_ARGS__); } } while(false)
 #define oTESTB0(expr) do { if (!(expr)) { snprintf(_StrStatus, _SizeofStrStatus, "%s: %s", oErrorAsString(oErrorGetLast()), oErrorGetLastString()); return oTest::FAILURE; } } while(false)
@@ -159,6 +161,55 @@ struct oTest : oProcessSingleton<oTest>
 	// policies for image comparisons. If so, _ColorChannelTolerance, 
 	// _MaxRMSError, and _DiffImageMultiplier can be overridden, else the default
 	// values specified here will be replaced with values from oTestManager::DESC.
+	bool oTest::TestImage(const ouro::surface::buffer* _pTestImage
+		, const char* _GoldenImagePath
+		, const char* _FailedImagePath
+		, unsigned int _NthImage
+		, int _ColorChannelTolerance
+		, float _MaxRMSError
+		, unsigned int _DiffImageMultiplier
+		, bool _OutputGoldenImage);
+
+	//inline bool oTest::TestImage(std::shared_ptr<ouro::surface::buffer>& _pTestImage
+	//	, const char* _GoldenImagePath
+	//	, const char* _FailedImagePath
+	//	, unsigned int _NthImage
+	//	, int _ColorChannelTolerance
+	//	, float _MaxRMSError
+	//	, unsigned int _DiffImageMultiplier
+	//	, bool _OutputGoldenImage)
+	//{ return TestImage(_pTestImage.get(), _GoldenImagePath, _FailedImagePath, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, _OutputGoldenImage); }
+
+	//inline bool oTest::TestImage(std::shared_ptr<const ouro::surface::buffer>& _pTestImage
+	//	, const char* _GoldenImagePath
+	//	, const char* _FailedImagePath
+	//	, unsigned int _NthImage
+	//	, int _ColorChannelTolerance
+	//	, float _MaxRMSError
+	//	, unsigned int _DiffImageMultiplier
+	//	, bool _OutputGoldenImage)
+	//{ return TestImage(_pTestImage.get(), _GoldenImagePath, _FailedImagePath, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, _OutputGoldenImage); }
+
+	bool TestImage(const ouro::surface::buffer* _pBuffer
+		, unsigned int _NthImage = 0
+		, int _ColorChannelTolerance = oDEFAULT
+		, float _MaxRMSError = -1.0f
+		, unsigned int _DiffImageMultiplier = oDEFAULT);
+
+	inline bool TestImage(std::shared_ptr<const ouro::surface::buffer> _pBuffer
+		, unsigned int _NthImage = 0
+		, int _ColorChannelTolerance = oDEFAULT
+		, float _MaxRMSError = -1.0f
+		, unsigned int _DiffImageMultiplier = oDEFAULT)
+	{ return TestImage(_pBuffer.get(), _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier); }
+
+	inline bool TestImage(std::shared_ptr<ouro::surface::buffer> _pBuffer
+		, unsigned int _NthImage = 0
+		, int _ColorChannelTolerance = oDEFAULT
+		, float _MaxRMSError = -1.0f
+		, unsigned int _DiffImageMultiplier = oDEFAULT)
+	{ return TestImage(_pBuffer.get(), _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier); }
+
 	bool TestImage(oImage* _pImage, unsigned int _NthImage = 0, int _ColorChannelTolerance = oDEFAULT, float _MaxRMSError = -1.0f, unsigned int _DiffImageMultiplier = oDEFAULT);
 
 	virtual RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) = 0;

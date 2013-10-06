@@ -26,7 +26,6 @@
 #include <oBase/assert.h>
 #include <oBase/byte.h>
 #include <oPlatform/oDisplay.h>
-#include <oPlatform/oImage.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oPlatform/Windows/oDXGI.h>
@@ -1453,7 +1452,7 @@ bool oD3D11CreateTexture(ID3D11Device* _pDevice, const char* _DebugName, const o
 
 		case oGPU_TEXTURE_3D_MAP:
 		{
-			oASSERT(_Desc.ArraySize == 1, "3d textures don't support slices, ArraySize=%d specified", _Desc.ArraySize);
+			oASSERT(_Desc.ArraySize <= 1, "3d textures don't support slices, ArraySize=%d specified", _Desc.ArraySize);
 
 			D3D11_TEXTURE3D_DESC desc;
 			desc.Width = _Desc.Dimensions.x;
@@ -1551,29 +1550,31 @@ bool oD3D11CreateCPUCopy(ID3D11Resource* _pResource, ID3D11Resource** _ppCPUCopy
 	return true;
 }
 
-bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, interface oImage** _ppImage)
+std::shared_ptr<ouro::surface::buffer> oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget)
 {
-	if (!_pRenderTarget || !_ppImage)
-		return oErrorSetLast(std::errc::invalid_argument);
+	if (!_pRenderTarget)
+		throw std::invalid_argument("invalid render target");
 
 	intrusive_ptr<ID3D11Texture2D> CPUTexture;
 	if (!oD3D11CreateCPUCopy(_pRenderTarget, &CPUTexture))
-		return false; // pass through error
+		oThrowLastError();
 
 	D3D11_TEXTURE2D_DESC d;
 	CPUTexture->GetDesc(&d);
 
-	oImage::FORMAT ImageFormat = oImageFormatFromSurfaceFormat(oDXGIToSurfaceFormat(d.Format));
-	if (ImageFormat == oImage::UNKNOWN)
-		return oErrorSetLast(std::errc::invalid_argument, "The specified texture's format %s is not supported by oImage", as_string(d.Format));
+	if (d.Format == DXGI_FORMAT_UNKNOWN)
+		throw std::invalid_argument(ouro::formatf("The specified texture's format %s is not supported by oImage", as_string(d.Format)));
 
-	oImage::DESC idesc;
-	idesc.RowPitch = oImageCalcRowPitch(ImageFormat, d.Width);
-	idesc.Dimensions.x = d.Width;
-	idesc.Dimensions.y = d.Height;
-	idesc.Format = oImage::BGRA32;
-	oVERIFY(oImageCreate("Temp Image", idesc, _ppImage));
-	return oD3D11CopyTo(CPUTexture, 0, (*_ppImage)->GetData(), idesc.RowPitch); // pass error through
+	ouro::surface::info si;
+	si.format = ouro::surface::b8g8r8a8_unorm;
+	si.dimensions = int3(d.Width, d.Height, 1);
+	std::shared_ptr<ouro::surface::buffer> s = ouro::surface::buffer::make(si);
+
+	ouro::surface::lock_guard lock(s);
+	if (!oD3D11CopyTo(CPUTexture, 0, lock.mapped.data, lock.mapped.row_pitch))
+		oThrowLastError();
+
+	return std::move(s);
 }
 
 bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path)
@@ -1620,30 +1621,24 @@ static bool oD3D11Save_PrepareCPUCopy(ID3D11Resource* _pTexture, D3DX11_IMAGE_FI
 	return true;
 }
 
-static bool oD3D11Save_PrepareCPUCopy(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, ID3D11Resource** _ppCPUResource)
+static bool oD3D11Save_PrepareCPUCopy(const ouro::surface::buffer* _pBuffer, D3DX11_IMAGE_FILE_FORMAT _Format, ID3D11Resource** _ppCPUResource)
 {
 	intrusive_ptr<ID3D11Device> D3DDevice;
 	if (!oD3D11CreateDevice(oGPU_DEVICE_INIT("oD3D11Save.Temp"), true, &D3DDevice))
 		return false; // pass through error
 
-	oImage::DESC idesc;
-	_pImage->GetDesc(&idesc);
-
+	ouro::surface::info si = _pBuffer->get_info();
 	oGPU_TEXTURE_DESC desc;
-	desc.Dimensions = int3(idesc.Dimensions, 1);
-	desc.Format = oImageFormatToSurfaceFormat(idesc.Format);
-	desc.ArraySize = 1;
+	desc.Dimensions = si.dimensions;
+	desc.Format = si.format;
+	desc.ArraySize = si.array_size;
 	desc.Type = oGPU_TEXTURE_2D_READBACK;
 
 	if (desc.Format == ouro::surface::unknown)
-		return oErrorSetLast(std::errc::invalid_argument, "Image format %s cannot be saved", as_string(idesc.Format));
+		return oErrorSetLast(std::errc::invalid_argument, "Image format %s cannot be saved", as_string(si.format));
 
-	ouro::surface::const_mapped_subresource msr;
-	msr.data = _pImage->GetData();
-	msr.row_pitch = idesc.RowPitch;
-	msr.depth_pitch = oImageCalcSize(idesc.Format, idesc.Dimensions);
-
-	if (!oD3D11CreateTexture(D3DDevice, "oD3D11Save.Temp", desc, &msr, _ppCPUResource, nullptr))
+	ouro::surface::shared_lock lock(_pBuffer);
+	if (!oD3D11CreateTexture(D3DDevice, "oD3D11Save.Temp", desc, &lock.mapped, _ppCPUResource, nullptr))
 		return false; // pass through error
 
 	return true;
@@ -1681,14 +1676,14 @@ bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, voi
 	return true;
 }
 
-bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer)
+bool oD3D11Save(const ouro::surface::buffer* _pSurface, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer)
 {
 	intrusive_ptr<ID3D11Device> D3DDevice;
 	if (!oD3D11CreateDevice(oGPU_DEVICE_INIT("oD3D11Save Temp Device"), true, &D3DDevice))
 		return false; // pass through error
 
 	intrusive_ptr<ID3D11Resource> CPUCopy;
-	if (!oD3D11Save_PrepareCPUCopy(_pImage, _Format, &CPUCopy))
+	if (!oD3D11Save_PrepareCPUCopy(_pSurface, _Format, &CPUCopy))
 		return false; // pass through error
 
 	return oD3D11Save(CPUCopy, _Format, _pBuffer, _SizeofBuffer); // pass through error
@@ -1710,10 +1705,10 @@ bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, con
 	return true;
 }
 
-bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path)
+bool oD3D11Save(const ouro::surface::buffer* _pSurface, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path)
 {
 	intrusive_ptr<ID3D11Resource> CPUCopy;
-	if (!oD3D11Save_PrepareCPUCopy(_pImage, _Format, &CPUCopy))
+	if (!oD3D11Save_PrepareCPUCopy(_pSurface, _Format, &CPUCopy))
 		return false; // pass through error
 
 	return oD3D11Save(CPUCopy, _Format, _Path); // pass through error

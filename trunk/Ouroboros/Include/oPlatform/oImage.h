@@ -140,7 +140,6 @@ inline ouro::surface::info oImageGetSurfaceInfo(const threadsafe oImage* _pImage
 	_pImage->GetDesc(&IDesc);
 	ouro::surface::info inf;
 	inf.dimensions = int3(IDesc.Dimensions, 1);
-	inf.array_size = 1;
 	inf.format = oImageFormatToSurfaceFormat(IDesc.Format);
 	inf.layout = ouro::surface::image;
 	return inf;

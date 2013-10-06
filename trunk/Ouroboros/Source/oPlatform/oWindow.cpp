@@ -30,6 +30,7 @@
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinStatusBar.h>
 #include <oPlatform/Windows/oWinWindowing.h>
+#include <oSurface/codec.h>
 #include <oConcurrency/event.h>
 #include <oConcurrency/mutex.h>
 #include <oBase/backoff.h>
@@ -150,7 +151,7 @@ struct oWinWindow : oWindow
 	void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe override;
 	void Post(int _CustomEventCode, uintptr_t _Context) threadsafe override;
 	void Dispatch(const oTASK& _Task) threadsafe override;
-	oStd::future<intrusive_ptr<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const override;
+	oStd::future<std::shared_ptr<surface::buffer>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const override;
 	void SetTimer(uintptr_t _Context, unsigned int _RelativeTimeMS) threadsafe override;
 	void StopTimer(uintptr_t _Context) threadsafe override;
 	void FlushMessages(bool _WaitForNext = false) override;
@@ -718,10 +719,10 @@ static bool oWinWaitUntilOpaque(HWND _hWnd, unsigned int _TimeoutMS)
 	return true;
 }
 
-oStd::future<intrusive_ptr<oImage>> oWinWindow::CreateSnapshot(int _Frame, bool _IncludeBorder) threadsafe const
+oStd::future<std::shared_ptr<surface::buffer>> oWinWindow::CreateSnapshot(int _Frame, bool _IncludeBorder) threadsafe const
 {
-	auto PromisedImage = std::make_shared<oStd::promise<intrusive_ptr<oImage>>>();
-	auto Image = PromisedImage->get_future();
+	auto PromisedSnap = std::make_shared<oStd::promise<std::shared_ptr<surface::buffer>>>();
+	auto Image = PromisedSnap->get_future();
 
 	const_cast<threadsafe oWinWindow*>(this)->Dispatch([=]() mutable
 	{
@@ -735,20 +736,20 @@ oStd::future<intrusive_ptr<oImage>> oWinWindow::CreateSnapshot(int _Frame, bool 
 				oASSERT(false, "A non-hidden window timed out waiting to become opaque");
 		}
 
-		intrusive_ptr<oImage> Image;
+		std::shared_ptr<surface::buffer> snap;
 		void* buf = nullptr;
 		size_t size = 0;
 		oWinSetFocus(hWnd); // Windows doesn't do well with hidden contents.
 		if (oGDIScreenCaptureWindow(hWnd, _IncludeBorder, malloc, &buf, &size, false))
 		{
-			oImageCreate("Screen capture", buf, size, &Image);
+			snap = surface::decode(buf, size);
 			free(buf);
 		}
 
-		if (!!Image)
-			PromisedImage->set_value(Image);
+		if (!!snap)
+			PromisedSnap->set_value(snap);
 		else
-			PromisedImage->set_exception(std::make_exception_ptr(std::system_error(std::make_error_code((std::errc::errc)oErrorGetLast()), oErrorGetLastString())));
+			PromisedSnap->set_exception(std::make_exception_ptr(std::system_error(std::make_error_code((std::errc::errc)oErrorGetLast()), oErrorGetLastString())));
 	});
 
 	return Image;

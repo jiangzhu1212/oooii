@@ -27,7 +27,6 @@
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinControlSet.h>
 #include <oPlatform/Windows/oGDI.h>
-#include <oPlatform/oImage.h>
 
 static const bool kInteractiveMode = false;
 
@@ -395,11 +394,14 @@ void oSystemProperties::Show(int _First, int _Last, bool _Show)
 		oWinControlSetVisible(ControlSet[i], _Show);
 }
 
-static void OverwriteVariableColors(oImage* _pImage)
+static void OverwriteVariableColors(ouro::surface::buffer* _pBuffer)
 {
 	static const int2 VarCoords[] = { int2(25,125), int2(26,125), int2(30,125), int2(31,125), int2(32,125), int2(83,125), int2(84,125), int2(135,125), int2(136,125), int2(137,125), int2(173,125), int2(174,125), int2(175,125), };
+
+	ouro::surface::subresource_info sri = ouro::surface::subresource(_pBuffer->get_info(), 0);
+	ouro::surface::lock_guard lock(_pBuffer);
 	oFOR(const int2& c, VarCoords)
-		_pImage->Put(c, ouro::Red);
+		ouro::surface::put(sri, &lock.mapped, c, ouro::Red);
 }
 
 struct PLATFORM_WindowSysDialog : public oTest
@@ -424,7 +426,7 @@ struct PLATFORM_WindowSysDialog : public oTest
 
 		if (!kInteractiveMode)
 		{
-			oStd::future<ouro::intrusive_ptr<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
+			oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->CreateSnapshot();
 			test.GetWindow()->FlushMessages();
 
 			oTESTFI(snapshot);
@@ -441,14 +443,14 @@ struct PLATFORM_WindowSysDialog : public oTest
 				if (i == 3)
 				{
 					oTEST_FUTURE(snapshot);
-					ouro::intrusive_ptr<oImage> image;
+					std::shared_ptr<ouro::surface::buffer> image;
 					try { image = snapshot.get(); }
 					catch (std::exception& e)
 					{
 						oErrorSetLast(e);
 						return oTest::FAILURE;
 					}
-					OverwriteVariableColors(image);
+					OverwriteVariableColors(image.get());
 					oTESTI2(image, i);
 				}
 

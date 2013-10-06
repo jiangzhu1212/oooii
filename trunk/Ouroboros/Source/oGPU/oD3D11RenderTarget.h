@@ -43,7 +43,7 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget, 0x772e2a04, 0x4c2d,
 	void Resize(const int3& _NewDimensions) override;
 	void GetTexture(int _MRTIndex, oGPUTexture** _ppTexture) override;
 	void GetDepthTexture(oGPUTexture** _ppTexture) override;
-	bool CreateSnapshot(int _MRTIndex, oImage** _ppSnapshot) override;
+	std::shared_ptr<ouro::surface::buffer> CreateSnapshot(int _MRTIndex) override;
 
 	inline void Set(ID3D11DeviceContext* _pContext) { _pContext->OMSetRenderTargets(Desc.MRTCount, (ID3D11RenderTargetView* const*)RTVs.data(), DSV); }
 

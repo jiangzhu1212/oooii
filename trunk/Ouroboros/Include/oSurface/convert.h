@@ -35,14 +35,19 @@ namespace ouro {
 
 // Converts the specified subresource into the destination subresource.
 void convert_subresource(const subresource_info& _SubresourceInfo
-	, format _SourceFormat, const const_mapped_subresource& _Source
-	, format _DestinationFormat, mapped_subresource* _pDestination);
+	, const const_mapped_subresource& _Source
+	, format _DestinationFormat
+	, mapped_subresource* _pDestination
+	, bool _FlipVertically = false);
 
 // Converts the specified source into the specified destination. This assumes
 // all memory has been properly allocated. If a conversion is not supported this
 // throws an exception.
-void convert(const info& _SourceInfo, const const_mapped_subresource& _Source
-	, const info& _DestinationInfo, mapped_subresource* _pDestination);
+void convert(const info& _SourceInfo
+	, const const_mapped_subresource& _Source
+	, const info& _DestinationInfo
+	, mapped_subresource* _pDestination
+	, bool _FlipVertically = false);
 
 // This is a conversion in-place for RGB v. BGR and similar permutations.
 void convert_swizzle(const info& _SurfaceInfo, surface::format _NewFormat, mapped_subresource* _pSurface);

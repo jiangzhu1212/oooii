@@ -37,21 +37,22 @@ struct GPU_TextureCube_App : public oGPUTextureTestApp
 	oGPU_TEST_PIPELINE GetPipeline() override { return oGPU_TEST_TEXTURE_CUBE; }
 	bool CreateTexture() override
 	{
-		intrusive_ptr<oImage> images[6];
-		if (!oImageLoad("file://DATA/Test/Textures/CubePosX.png", oImage::FORCE_ALPHA, &images[0]))
-			return false;
-		if (!oImageLoad("file://DATA/Test/Textures/CubeNegX.png", oImage::FORCE_ALPHA, &images[1]))
-			return false;
-		if (!oImageLoad("file://DATA/Test/Textures/CubePosY.png", oImage::FORCE_ALPHA, &images[2]))
-			return false;
-		if (!oImageLoad("file://DATA/Test/Textures/CubeNegY.png", oImage::FORCE_ALPHA, &images[3]))
-			return false;
-		if (!oImageLoad("file://DATA/Test/Textures/CubePosZ.png", oImage::FORCE_ALPHA, &images[4]))
-			return false;
-		if (!oImageLoad("file://DATA/Test/Textures/CubeNegZ.png", oImage::FORCE_ALPHA, &images[5]))
-			return false;
+		auto _0 = surface_load(filesystem::data_path() / "Test/Textures/CubePosX.png", surface::alpha_option::force_alpha);
+		auto _1 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegX.png", surface::alpha_option::force_alpha);
+		auto _2 = surface_load(filesystem::data_path() / "Test/Textures/CubePosY.png", surface::alpha_option::force_alpha);
+		auto _3 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegY.png", surface::alpha_option::force_alpha);
+		auto _4 = surface_load(filesystem::data_path() / "Test/Textures/CubePosZ.png", surface::alpha_option::force_alpha);
+		auto _5 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegZ.png", surface::alpha_option::force_alpha);
 
-		if (!oGPUCreateTexture(Device, (const oImage**)&images[0], oCOUNTOF(images), oGPU_TEXTURE_CUBE_MAP, &Texture))
+		const ouro::surface::buffer* images[6];
+		images[0] = _0.get();
+		images[1] = _1.get();
+		images[2] = _2.get();
+		images[3] = _3.get();
+		images[4] = _4.get();
+		images[5] = _5.get();
+
+		if (!oGPUCreateTexture(Device, images, oCOUNTOF(images), oGPU_TEXTURE_CUBE_MAP, &Texture))
 			return false;
 
 		return true;

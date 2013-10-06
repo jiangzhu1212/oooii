@@ -37,11 +37,9 @@ struct GPU_Texture2DMip_App : public oGPUTextureTestApp
 	oGPU_TEST_PIPELINE GetPipeline() override { return oGPU_TEST_TEXTURE_2D; }
 	bool CreateTexture() override
 	{
-		intrusive_ptr<oImage> image;
-		if (!oImageLoad("file://DATA/Test/Textures/lena_1.png", oImage::FORCE_ALPHA, &image))
-			return false;
-
-		if (!oGPUCreateTexture(Device, &image, 1, oGPU_TEXTURE_2D_MAP_MIPS, &Texture))
+		auto image = surface_load(filesystem::data_path() / "Test/Textures/lena_1.png", surface::alpha_option::force_alpha);
+		auto* p = image.get();
+		if (!oGPUCreateTexture(Device, &p, 1, oGPU_TEXTURE_2D_MAP_MIPS, &Texture))
 			return false;
 
 		return true;

@@ -29,7 +29,7 @@
 #ifndef oSurface_buffer_h
 #define oSurface_buffer_h
 
-#include <oSurface/surface.h>
+#include <oSurface/resize.h>
 
 namespace ouro {
 	namespace surface {
@@ -42,6 +42,11 @@ public:
 
 	virtual info get_info() const = 0;
 	inline size_t size() const { return total_size(get_info()); }
+
+	// Without modifying the data, this updates the Info to be an image layout 
+	// with an array_size of 0. This basically means that saving the buffer to a 
+	// file will save the layout of the entire surface.
+	virtual void flatten() = 0;
 
 	virtual void update_subresource(int _Subresource, const const_mapped_subresource& _Source, bool _FlipVertically = false) = 0;
 	virtual void update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source, bool _FlipVertically = false) = 0;
@@ -60,6 +65,9 @@ public:
 	// Only for compatible types, such as RGB <-> BGR. This is basically an 
 	// in-place conversion.
 	virtual void swizzle(format _NewFormat) = 0;
+
+	// Takes the top-level mip and replaces all other mips with new contents.
+	virtual void generate_mips(filter::value _Filter = filter::lanczos2) = 0;
 };
 
 class lock_guard
@@ -110,11 +118,15 @@ private:
 
 // Returns the root mean square of the difference between the two surfaces. If
 // the formats or sizes are different, this throws an exception.
-float calc_rms(const buffer* _pBuffer1, const buffer* _pBuffer2);
-inline float calc_rms(std::shared_ptr<const buffer>& _pBuffer1, std::shared_ptr<const buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get()); }
-inline float calc_rms(std::shared_ptr<buffer>& _pBuffer1, std::shared_ptr<const buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get()); }
-inline float calc_rms(std::shared_ptr<const buffer>& _pBuffer1, std::shared_ptr<buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get()); }
-inline float calc_rms(std::shared_ptr<buffer>& _pBuffer1, std::shared_ptr<buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get()); }
+float calc_rms(const buffer* _pBuffer1, const buffer* _pBuffer2, buffer* _pDifferences = nullptr, int _DifferenceScale = 1);
+inline float calc_rms(std::shared_ptr<const buffer>& _pBuffer1, std::shared_ptr<const buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), nullptr, 1); }
+inline float calc_rms(std::shared_ptr<buffer>& _pBuffer1, std::shared_ptr<const buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), nullptr, 1); }
+inline float calc_rms(std::shared_ptr<const buffer>& _pBuffer1, std::shared_ptr<buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), nullptr, 1); }
+inline float calc_rms(std::shared_ptr<buffer>& _pBuffer1, std::shared_ptr<buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), nullptr, 1); }
+inline float calc_rms(std::shared_ptr<const buffer>& _pBuffer1, std::shared_ptr<const buffer>& _pBuffer2, std::shared_ptr<buffer>& _pDifferences, int _DifferenceScale = 1) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), _pDifferences.get(), _DifferenceScale); }
+inline float calc_rms(std::shared_ptr<buffer>& _pBuffer1, std::shared_ptr<const buffer>& _pBuffer2, std::shared_ptr<buffer>& _pDifferences, int _DifferenceScale = 1) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), _pDifferences.get(), _DifferenceScale); }
+inline float calc_rms(std::shared_ptr<const buffer>& _pBuffer1, std::shared_ptr<buffer>& _pBuffer2, std::shared_ptr<buffer>& _pDifferences, int _DifferenceScale = 1) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), _pDifferences.get(), _DifferenceScale); }
+inline float calc_rms(std::shared_ptr<buffer>& _pBuffer1, std::shared_ptr<buffer>& _pBuffer2, std::shared_ptr<buffer>& _pDifferences, int _DifferenceScale = 1) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), _pDifferences.get(), _DifferenceScale); }
 
 	} // namespace surface
 } // namespace ouro

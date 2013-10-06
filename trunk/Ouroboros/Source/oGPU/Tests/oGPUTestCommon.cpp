@@ -25,6 +25,7 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 #include <oGPUTestColorPSByteCode.h>
+#include <oCore/filesystem.h>
 
 using namespace ouro;
 
@@ -59,7 +60,7 @@ bool oGPUTestApp::Create(const char* _Title, bool _DevMode, const int* _pSnapsho
 			oThrowLastError();
 	}
 
-	if (!Device->CreatePrimaryRenderTarget(Window, ouro::surface::d24_unorm_s8_uint, true, &PrimaryRenderTarget))
+	if (!Device->CreatePrimaryRenderTarget(Window, surface::d24_unorm_s8_uint, true, &PrimaryRenderTarget))
 		return false; // pass through error
 
 	Device->GetImmediateCommandList(&CommandList);
@@ -83,11 +84,8 @@ bool oGPUTestApp::CheckSnapshot(oTest* _pTest)
 	const int FrameID = Device->GetFrameID();
 	if (SnapshotFrames.end() != find(SnapshotFrames, FrameID))
 	{
-		intrusive_ptr<oImage> Image;
-		if (!PrimaryRenderTarget->CreateSnapshot(0, &Image))
-			return false; // pass through error
-
-		if (!_pTest->TestImage(Image, NthSnapshot))
+		std::shared_ptr<surface::buffer> snap = PrimaryRenderTarget->CreateSnapshot(0);
+		if (!_pTest->TestImage(snap, NthSnapshot))
 		{
 			oTRACEA("%s: Image(%u) %s: %s", _pTest->GetName(), NthSnapshot, oErrorAsString(oErrorGetLast()), oErrorGetLastString());
 			AllSnapshotsSucceeded = false;
@@ -193,4 +191,29 @@ bool oGPUTextureTestApp::Render()
 
 	CommandList->End();
 	return true;
+}
+
+std::shared_ptr<surface::buffer> surface_load(const path& _Path, surface::alpha_option::value _Option)
+{
+	size_t size = 0;
+	auto b = filesystem::load(_Path, filesystem::load_option::binary_read, &size);
+	return surface::decode(b.get(), size, _Option);
+}
+
+std::shared_ptr<ouro::surface::buffer> make_1D(int _Width)
+{
+	surface::info si;
+	si.dimensions = int3(_Width, 1, 1);
+	si.format = surface::b8g8r8a8_unorm;
+	auto s = surface::buffer::make(si);
+
+	{
+		surface::lock_guard lock(s);
+		static const color sConsoleColors[] = { Black, Navy, Green, Teal, Maroon, Purple, Olive, Silver, Gray, Blue, Lime, Aqua, Red, Fuchsia, Yellow, White };
+		color* texture1Ddata = (color*)lock.mapped.data;
+		for (int i = 0; i < si.dimensions.x; i++)
+			texture1Ddata[i] = sConsoleColors[i % oCOUNTOF(sConsoleColors)];
+	}
+
+	return s;
 }

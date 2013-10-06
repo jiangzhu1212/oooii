@@ -27,7 +27,6 @@
 #ifndef oGPUUtil_h
 #define oGPUUtil_h
 
-#include <oPlatform/oImage.h>
 #include <oGPU/oGPU.h>
 
 // _____________________________________________________________________________
@@ -141,14 +140,14 @@ oAPI bool oGPURead(oGPUResource* _pSourceResource, int _Subresource, ouro::surfa
 
 // Creates a texture and fills it with source image data according to the type
 // specified. NOTE: render target and readback not tested.
-oAPI bool oGPUCreateTexture(oGPUDevice* _pDevice, const oImage* const* _ppSourceImages, uint _NumImages, oGPU_TEXTURE_TYPE _Type, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTexture(oGPUDevice* _pDevice, const ouro::surface::buffer* const* _ppSourceImages, uint _NumImages, oGPU_TEXTURE_TYPE _Type, oGPUTexture** _ppTexture);
 
 // Fill in the rest of the mip chain for the specified texture. It's mip0 level
 // should be fully initialized.
 oAPI bool oGPUGenerateMips(oGPUDevice* _pDevice, oGPUTexture* _pTexture);
 
-// Generate mips with the GPU from source oImage(s) to a preallocated oBuffer with oSURFACE_DESC and oGPU_TEXTURE_TYPE
-oAPI bool oGPUGenerateMips(oGPUDevice* _pDevice, const oImage** _pMip0Images, uint _NumImages, ouro::surface::info& _SurfaceInfo, oGPU_TEXTURE_TYPE _Type, oBuffer* _pMipBuffer);
+// Generate mips with the GPU from source image(s) to a preallocated oBuffer with oSURFACE_DESC and oGPU_TEXTURE_TYPE
+oAPI bool oGPUGenerateMips(oGPUDevice* _pDevice, const ouro::surface::buffer** _pMip0Images, uint _NumImages, ouro::surface::info& _SurfaceInfo, oGPU_TEXTURE_TYPE _Type, ouro::surface::buffer* _pMipBuffer);
 
 // Creates a texture with mips from the specified oBuffer, described by an ouro::surface::info.
 oAPI bool oGPUCreateTexture1DMip(oGPUDevice* _pDevice, const ouro::surface::info& _SurfaceInfo, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
@@ -172,7 +171,7 @@ inline void oGPURenderTargetSetShaderResources(oGPUCommandList* _pCommandList, i
 
 // Creates an oImage from the specified texture. If the specified texture is not
 // a readback texture, then a copy is made.
-bool oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource, interface oImage** _ppImage);
+std::shared_ptr<ouro::surface::buffer> oGPUSaveImage(oGPUTexture* _pTexture, int _Subresource);
 
 // Given a list of bytecode buffers create a pipeline. This is most useful when
 // compiling shaders dynamically rather than using the static-compilation path.

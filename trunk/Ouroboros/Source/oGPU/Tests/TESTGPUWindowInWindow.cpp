@@ -209,7 +209,7 @@ struct GPU_WindowInWindow : public oTest
 		{
 			test.FlushMessages();
 			test.Render();
-			oStd::future<intrusive_ptr<oImage>> snapshot = test.GetWindow()->CreateSnapshot();
+			oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->CreateSnapshot();
 			while (!snapshot.is_ready()) { test.FlushMessages(); }
 			oTESTFI(snapshot);
 			test.IncrementClearCounter();

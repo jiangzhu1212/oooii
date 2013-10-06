@@ -29,8 +29,8 @@
 #ifndef oD3D11_h
 #define oD3D11_h
 
+#include <oSurface/buffer.h>
 #include <oBasis/oGPUConcepts.h>
-#include <oPlatform/oImage.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/Windows/oWindows.h>
 #include <vector>
@@ -235,7 +235,7 @@ template<typename TextureT> bool oD3D11CreateCPUCopy(ID3D11Resource* _pTexture, 
 // Texture Serialization API
 
 // Copies the specified render target to the specified image/path
-bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, oImage** _ppImage);
+std::shared_ptr<ouro::surface::buffer> oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget);
 bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path);
 
 // Saves image to the specified memory buffer, which must be allocated large
@@ -245,9 +245,9 @@ bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, D3DX11_IMAGE_FILE_FOR
 // format as a texture, or convert a BC6/7 DDS back to something else and view
 // that result in a tool. Remember, only DDS really supports all surface formats.
 bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer);
-bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer);
+bool oD3D11Save(const ouro::surface::buffer* _pSurface, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer);
 bool oD3D11Save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, const ouro::path& _Path);
-bool oD3D11Save(const oImage* _pImage, D3DX11_IMAGE_FILE_FORMAT _Format, const ouro::path& _Path);
+bool oD3D11Save(const ouro::surface::buffer* _pSurface, D3DX11_IMAGE_FILE_FORMAT _Format, const ouro::path& _Path);
 
 // Creates a new texture by parsing _pBuffer as a D3DX11-supported file format
 // Specify ouro::surface::unknown and oDEFAULT for x, y or ArraySize in the _Desc to 

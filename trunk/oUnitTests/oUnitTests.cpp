@@ -10,6 +10,33 @@
 #include <oBase/opttok.h>
 #include <oBase/scc.h>
 
+#include <oPlatform/Windows/oGDI.h>
+
+void* oLoadIcon(oFUNCTION<void(const char** _ppBufferName, const void** _ppBuffer, size_t* _pSizeofBuffer)> _BufferGetDesc)
+{
+	const char* BufferName = nullptr;
+	const void* pBuffer = nullptr;
+	size_t sizeofBuffer = 0;
+	_BufferGetDesc(&BufferName, &pBuffer, &sizeofBuffer);
+
+	ouro::intrusive_ptr<oImage> ico;
+	oVERIFY(oImageCreate(BufferName, pBuffer, sizeofBuffer, &ico));
+
+	#if defined(_WIN32) || defined (_WIN64)
+		oGDIScopedObject<HBITMAP> hBmp;
+		oVERIFY(oImageCreateBitmap(ico, (HBITMAP*)&hBmp));
+		return oGDIBitmapToIcon(hBmp);
+	#else
+		return nullptr;
+	#endif
+}
+
+void* oLoadStandardIcon()
+{
+	extern void GetDescoooii_ico(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
+	return oLoadIcon(GetDescoooii_ico);
+}
+
 using namespace ouro;
 
 static const char* sTITLE = "OOOii Unit Test Suite";
@@ -79,6 +106,12 @@ void InitEnv()
 		desc.Background = Black;
 		oConsole::SetDesc(&desc);
 	}
+
+#if defined(WIN64) || defined(WIN32)
+	oGDIScopedObject<HICON> hIcon = (HICON)oLoadStandardIcon();
+	oWinSetIconAsync(GetConsoleWindow(), hIcon, false);
+	oWinSetIconAsync(GetConsoleWindow(), hIcon, true);
+#endif
 }
 
 struct PARAMETERS

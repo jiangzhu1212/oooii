@@ -137,7 +137,6 @@ info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
 	si.format = from_jcs(cinfo.jpeg_color_space);
 	si.layout = image;
 	si.dimensions = int3(cinfo.image_width, cinfo.image_height, 1);
-	si.array_size = 1;
 	return std::move(si);
 }
 
@@ -222,7 +221,6 @@ std::shared_ptr<buffer> decode_jpg(const void* _pBuffer, size_t _BufferSize, alp
 	si.format = from_jcs(cinfo.out_color_space);
 	si.layout = image;
 	si.dimensions = int3(cinfo.image_width, cinfo.image_height, 1);
-	si.array_size = 1;
 
 	switch (si.format)
 	{

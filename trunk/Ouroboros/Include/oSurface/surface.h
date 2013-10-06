@@ -88,6 +88,7 @@
 #define oSurface_h
 
 #include <oBase/byte.h>
+#include <oBase/color.h>
 #include <oBase/fourcc.h>
 #include <oHLSL/oHLSLMath.h>
 #include <oStd/mutex.h>
@@ -287,7 +288,7 @@ struct info
 		: layout(image)
 		, format(unknown)
 		, dimensions(0, 0, 0)
-		, array_size(1)
+		, array_size(0)
 	{}
 
 	inline bool operator==(const info& _That) const
@@ -341,7 +342,16 @@ struct box
 
 struct subresource_info
 {
+	subresource_info()
+		: dimensions(0, 0, 0)
+		, format(unknown)
+		, mip_level(0)
+		, array_slice(0)
+		, subsurface(0)
+	{}
+
 	int3 dimensions;
+	enum format format;
 	int mip_level;
 	int array_slice;
 	int subsurface;
@@ -589,7 +599,7 @@ inline int calc_subresource(int _MipLevel, int _ArraySliceIndex, int _Subsurface
 
 // Converts _Subresource back to its mip level and slice as long as the num mips
 // in the mip chain is specified.
-inline void unpack_subresource(int _Subresource, int _NumMips, int _NumArraySlices, int* _pMipLevel, int* _pArraySliceIndex, int* _pSubsurfaceIndex) { *_pMipLevel = _Subresource % _NumMips; *_pArraySliceIndex = (_Subresource / _NumMips) % _NumArraySlices; *_pSubsurfaceIndex = _Subresource / (_NumMips * _NumArraySlices); }
+inline void unpack_subresource(int _Subresource, int _NumMips, int _NumArraySlices, int* _pMipLevel, int* _pArraySliceIndex, int* _pSubsurfaceIndex) { int as = max(1, _NumArraySlices); *_pMipLevel = _Subresource % _NumMips; *_pArraySliceIndex = (_Subresource / _NumMips) % as; *_pSubsurfaceIndex = _Subresource / (_NumMips * as); }
 
 // Returns the number of all subresources described by the info.
 inline int num_subresources(const info& _SurfaceInfo) { return num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions) * _SurfaceInfo.array_size; }
@@ -606,8 +616,8 @@ info subsurface(const info& _SurfaceInfo, int _SubsurfaceIndex, int _MipLevel, i
 // Returns the number of bytes required to contain the subresource (mip level
 // from a particular slice) when what you got is a subresource as returned from
 // calc_subresource().
-int subresource_size(const info& _SurfaceInfo, const subresource_info& _SubresourceInfo);
-inline int subresource_size(const info& _SurfaceInfo, int _Subresource) { return subresource_size(_SurfaceInfo, subresource(_SurfaceInfo, _Subresource)); }
+int subresource_size(const subresource_info& _SubresourceInfo);
+inline int subresource_size(const info& _SurfaceInfo, int _Subresource) { return subresource_size(subresource(_SurfaceInfo, _Subresource)); }
 
 // Returns the offset from a base pointer to the start of the specified 
 // subresource.
@@ -619,8 +629,8 @@ int subresource_offset(const info& _SurfaceInfo, int _Subresource, int _DepthInd
 // different than the height of the surface in pixels/texels. The results of 
 // this function are particularly useful when using oMemcpy2D for the 
 // _SourceRowSize and _NumRows parameters.
-inline int2 byte_dimensions(format _Format, const subresource_info& _SubresourceInfo) { return int2(row_size(_Format, _SubresourceInfo.dimensions.xy(), _SubresourceInfo.subsurface), num_rows(_Format, _SubresourceInfo.dimensions.xy(), _SubresourceInfo.subsurface)); }
-inline int2 byte_dimensions(const info& _SurfaceInfo, int _Subresource) { return byte_dimensions(_SurfaceInfo.format, subresource(_SurfaceInfo, _Subresource)); }
+inline int2 byte_dimensions(const subresource_info& _SubresourceInfo) { return int2(row_size(_SubresourceInfo.format, _SubresourceInfo.dimensions.xy(), _SubresourceInfo.subsurface), num_rows(_SubresourceInfo.format, _SubresourceInfo.dimensions.xy(), _SubresourceInfo.subsurface)); }
+inline int2 byte_dimensions(const info& _SurfaceInfo, int _Subresource) { return byte_dimensions(subresource(_SurfaceInfo, _Subresource)); }
 
 // Given the surface info, a subresource into the surface, and the base pointer
 // to the surface, this will return a populated mapped_subresource or an 
@@ -635,11 +645,17 @@ void update(const info& _SurfaceInfo, int _Subresource, void* _pDestinationSurfa
 
 // Copies from a surface subresource to a specified destination buffer.
 void copy(const info& _SurfaceInfo, int _Subresource, const void* _pSourceSurface, void* _pDestination, size_t _DestinationRowPitch, bool _FlipVertical);
-void copy(const info& _SurfaceInfo, const const_mapped_subresource& _SrcMap, mapped_subresource* _DstMap, bool _FlipVertical);
+void copy(const info& _SurfaceInfo, const const_mapped_subresource& _Source, mapped_subresource* _Destination, bool _FlipVertical);
+void copy(const subresource_info& _SubresourceInfo, const const_mapped_subresource& _Source, mapped_subresource* _Destination, bool _FlipVertical);
 
 // For 3d textures a mapped subresource contains all depth slices at that mip level,
 // this function will output the data pointer adjusted for the requested depth index.
 inline void* depth_index_offset(const mapped_subresource& _MappedSubresource, int _DepthIndex) { return byte_add(_MappedSubresource.data, _MappedSubresource.depth_pitch, _DepthIndex); }
+
+// Single-pixel get/put API. Only use this for debug/non-performant cases. This
+// currently only supports common r rgb and rgba cases.
+void put(const subresource_info& _SubresourceInfo, mapped_subresource* _Destination, const int2& _Coordinate, color _Color);
+color get(const subresource_info& _SubresourceInfo, const const_mapped_subresource& _Source, const int2& _Coordinate);
 
 // _____________________________________________________________________________
 // Tile API

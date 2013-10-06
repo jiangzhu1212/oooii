@@ -39,15 +39,6 @@ struct oBasisTestServices
 	oFUNCTION<void(void* _pBuffer)> DeallocateLoadedBuffer;
 	oFUNCTION<int()> Rand;
 	oFUNCTION<size_t()> GetTotalPhysicalMemory;
-	
-	// Fill pointers with values loaded from the specified _URIReference. _pHandle
-	// receives an opaque state object that will hold the memory that is pointed
-	// at by *_pMapped and should have DeallocateSurface() called on it when 
-	// finished.
-	oFUNCTION<bool(void** _pHandle, ouro::surface::info* _pInfo, ouro::surface::const_mapped_subresource* _pMapped, const char* _URIReference)> AllocateAndLoadSurface;
-	oFUNCTION<void(void* _Handle)> DeallocateSurface;
-
-	oFUNCTION<bool(const char* _Name, const ouro::surface::info& _SourceInfo, const ouro::surface::const_mapped_subresource& _SourceMapped, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier)> TestSurface;
 };
 
 // oBasisTests follows a pattern: all functions return true if successful, false

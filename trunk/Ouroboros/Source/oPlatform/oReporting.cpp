@@ -31,7 +31,6 @@
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSingleton.h>
-#include <oPlatform/oStandards.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/Windows/oWinAsString.h>
 #include "oCRTLeakTracker.h"

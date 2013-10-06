@@ -28,7 +28,6 @@
 #include <oPlatform/oConsole.h>
 #include <oPlatform/oDisplay.h>
 #include <oPlatform/Windows/oGDI.h>
-#include <oPlatform/oImage.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/Windows/oWindows.h>
 #include <oPlatform/oStream.h>
@@ -81,36 +80,6 @@ bool oMoveMouseCursorOffscreen()
 	return !!SetCursorPos(p.x + sz.x, p.y-1);
 }
 
-void* oLoadIcon(oFUNCTION<void(const char** _ppBufferName, const void** _ppBuffer, size_t* _pSizeofBuffer)> _BufferGetDesc)
-{
-	const char* BufferName = nullptr;
-	const void* pBuffer = nullptr;
-	size_t sizeofBuffer = 0;
-	_BufferGetDesc(&BufferName, &pBuffer, &sizeofBuffer);
-
-	intrusive_ptr<oImage> ico;
-	oVERIFY(oImageCreate(BufferName, pBuffer, sizeofBuffer, &ico));
-
-	#if defined(_WIN32) || defined (_WIN64)
-		oGDIScopedObject<HBITMAP> hBmp;
-		oVERIFY(oImageCreateBitmap(ico, (HBITMAP*)&hBmp));
-		return oGDIBitmapToIcon(hBmp);
-	#else
-		return nullptr;
-	#endif
-}
-
-void* oLoadInvisibleIcon()
-{
-	extern void GetDescoInvisible_ico(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
-	return oLoadIcon(GetDescoInvisible_ico);
-}
-
-void* oLoadStandardIcon()
-{
-	extern void GetDescoooii_ico(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
-	return oLoadIcon(GetDescoooii_ico);
-}
 
 bool oINIFindPath( char* _StrDestination, size_t _SizeofStrDestination, const char* _pININame )
 {

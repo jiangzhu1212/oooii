@@ -31,6 +31,8 @@
 #include <oGPU/oGPUUtil.h>
 #include "oGPUTestPipelines.h"
 #include "oGPUTestHLSL.h"
+#include <oSurface/codec.h>
+#include <oCore/filesystem.h>
 
 #define oDEFINE_GPU_TEST(_TestName) \
 	struct _TestName : public oTest \
@@ -119,5 +121,9 @@ protected:
 
 	static const int sSnapshotFrames[2];
 };
+
+std::shared_ptr<ouro::surface::buffer> surface_load(const ouro::path& _Path, ouro::surface::alpha_option::value _Option = ouro::surface::alpha_option::force_alpha);
+
+std::shared_ptr<ouro::surface::buffer> make_1D(int _Width);
 
 #endif

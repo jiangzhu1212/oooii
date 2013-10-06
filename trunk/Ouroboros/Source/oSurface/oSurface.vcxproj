@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="bmp.cpp" />
     <ClCompile Include="buffer.cpp" />
     <ClCompile Include="codec.cpp" />
     <ClCompile Include="convert.cpp" />

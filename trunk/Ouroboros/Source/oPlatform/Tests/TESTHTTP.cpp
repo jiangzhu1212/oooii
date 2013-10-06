@@ -25,10 +25,10 @@
 #include <oPlatform/oTest.h>
 #include <oPlatform/oHTTPClient.h>
 #include <oPlatform/oHTTPServer.h>
-#include <oPlatform/oImage.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oStream.h>
 #include <oBase/finally.h>
+#include <oSurface/codec.h>
 
 #define TEST_FILE "PLATFORM_oHTTP.png"
 
@@ -39,8 +39,7 @@ struct PLATFORM_oHTTP : public oTest
 		if (_Request.RequestLine.Method == oHTTP_POST)
 		{
 			// Check if the image file came through correctly
-			ouro::intrusive_ptr<oImage> image;
-			oImageCreate("http test image", _Request.Content.pData, _Request.Content.Length, &image);
+			std::shared_ptr<ouro::surface::buffer> image = ouro::surface::decode(_Request.Content.pData, _Request.Content.Length);
 			if (TestImage(image))
 			{
 				const char *indexHtmlPage = "<html><head><title>Received Post</title></head><body><p>Image compare successful</p></body></html>";
@@ -174,8 +173,7 @@ struct PLATFORM_oHTTP : public oTest
 			// Test Get: Download and compare the image
 			Client->Get("/" TEST_FILE, &response, imageBuffer->GetData(), (int)imageBuffer->GetSize());
 
-			ouro::intrusive_ptr<oImage> image;
-			oImageCreate("http test image", imageBuffer->GetData(), imageBuffer->GetSize(), &image);
+			std::shared_ptr<ouro::surface::buffer> image = ouro::surface::decode(imageBuffer->GetData(), imageBuffer->GetSize());
 			oTESTB(TestImage(image), "Image compare failed.");
 
 			// Test POST: Sending an image file with POST.  Server will compare the image to the original and returned OK for success and 500 Internal Error for failure

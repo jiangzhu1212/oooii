@@ -39,6 +39,7 @@ namespace file_format
 	unknown,
 	png,
 	jpg,
+	bmp,
 
 };}
 
@@ -60,6 +61,8 @@ namespace alpha_option
 	force_no_alpha,
 
 };}
+
+file_format::value get_file_format(const char* _FilePath);
 
 // Analyzes the buffer to determine its file format
 file_format::value get_file_format(const void* _pBuffer, size_t _BufferSize);

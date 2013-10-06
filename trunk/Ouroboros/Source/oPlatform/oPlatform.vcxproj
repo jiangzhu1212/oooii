@@ -156,7 +156,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oTest.h" />
     <ClInclude Include="..\..\Include\oPlatform\oVTable.h" />
     <ClInclude Include="..\..\Include\oPlatform\oWindow.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oWindowAppController.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oCRTHeap.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oD3D11.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oDXGI.h" />
@@ -212,12 +211,10 @@
     <ClCompile Include="oHTTPServer.cpp" />
     <ClCompile Include="oImage.cpp" />
     <ClCompile Include="oInterprocessEvent.cpp" />
-    <ClCompile Include="oInvisible_ico.cpp" />
     <ClCompile Include="oIOCP.cpp" />
     <ClCompile Include="oMirroredArena.cpp" />
     <ClCompile Include="oMRUManager.cpp" />
     <ClCompile Include="oMsgBox.cpp" />
-    <ClCompile Include="oooii_icon.cpp" />
     <ClCompile Include="oP4.cpp" />
     <ClCompile Include="oProcessHeap.cpp" />
     <ClCompile Include="oProgressBar.cpp" />
@@ -238,7 +235,6 @@
     <ClCompile Include="oWinCursor.cpp" />
     <ClCompile Include="oWinDialog.cpp" />
     <ClCompile Include="oWindow.cpp" />
-    <ClCompile Include="oWindowAppController.cpp" />
     <ClCompile Include="oWindows.cpp" />
     <ClCompile Include="oWinExceptionHandler.cpp" />
     <ClCompile Include="oWinKey.cpp" />

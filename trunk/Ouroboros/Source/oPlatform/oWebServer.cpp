@@ -364,6 +364,9 @@ bool oWebServerImpl::Retrieve(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pR
 	
 	oHTTPAddHeader(_pResponse->HeaderFields, oHTTP_HEADER_CACHE_CONTROL, "no-cache");
 
+	// @tony: disabling this while I strip out FreeImage/oImage dependencies.
+	// The icon should be more configurable anyway, so come back to this.
+#if 0
 	//favicon gets first try
 	if(strncmp(path(uriParts.Path).filename().c_str(), "favicon.ico", 11) == 0)
 	{
@@ -372,6 +375,7 @@ bool oWebServerImpl::Retrieve(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pR
 			_pResponse->StatusLine.StatusCode = oHTTP_UNAUTHORIZED;
 			return false; 
 		}
+		
 		extern void GetDescoooii_ico(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
 
 		const char* name = nullptr;
@@ -387,6 +391,7 @@ bool oWebServerImpl::Retrieve(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pR
 		memcpy(_pResponse->Content.pData, pBuffer, _pResponse->Content.Length);
 		return true;
 	}
+#endif
 
 	//redirect
 	if(strcmp(uriParts.Path, "/") == 0) 

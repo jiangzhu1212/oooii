@@ -25,6 +25,7 @@
 #include <oSurface/codec.h>
 #include <oSurface/convert.h>
 #include <oBase/memory.h>
+#include <oBase/string.h>
 #include <oStd/mutex.h>
 
 namespace ouro {
@@ -35,6 +36,7 @@ const char* as_string(const surface::file_format::value& _FileFormat)
 	{
 		case surface::file_format::png: "PNG";
 		case surface::file_format::jpg: "JPEG";
+		case surface::file_format::bmp: "BMP";
 		default: break;
 	}
 	return "?";
@@ -42,14 +44,22 @@ const char* as_string(const surface::file_format::value& _FileFormat)
 
 	namespace surface {
 
-info get_info_png(const void* _pBuffer, size_t _BufferSize);
-std::shared_ptr<char> encode_png(const buffer* _pBuffer, size_t* _pSize, alpha_option::value _Option, compression::value _Compression);
-std::shared_ptr<buffer> decode_png(const void* _pBuffer, size_t _BufferSize, alpha_option::value _Option);
+file_format::value get_file_format(const char* _FilePath)
+{
+	const char* ext = rstrstr(_FilePath, ".");
+	if (!_stricmp(ext, "png")) return file_format::png;
+	if (!_stricmp(ext, "jpg")) return file_format::jpg;
+	if (!_stricmp(ext, "bmp")) return file_format::bmp;
+	return file_format::unknown;
+}
 
-info get_info_jpg(const void* _pBuffer, size_t _BufferSize);
-std::shared_ptr<char> encode_jpg(const buffer* _pBuffer, size_t* _pSize, alpha_option::value _Option, compression::value _Compression);
-std::shared_ptr<buffer> decode_jpg(const void* _pBuffer, size_t _BufferSize, alpha_option::value _Option);
-		
+#define DEFINE_API(ext) \
+	info get_info_##ext(const void* _pBuffer, size_t _BufferSize); \
+	std::shared_ptr<char> encode_##ext(const buffer* _pBuffer, size_t* _pSize, alpha_option::value _Option, compression::value _Compression); \
+	std::shared_ptr<buffer> decode_##ext(const void* _pBuffer, size_t _BufferSize, alpha_option::value _Option);
+
+DEFINE_API(png) DEFINE_API(jpg) DEFINE_API(bmp)
+
 file_format::value get_file_format(const void* _pBuffer, size_t _BufferSize)
 {
 	static const unsigned char png_sig[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
@@ -62,7 +72,9 @@ file_format::value get_file_format(const void* _pBuffer, size_t _BufferSize)
 			&& !memcmp(jpg_sig1, _pBuffer, sizeof(jpg_sig1)) 
 			&& !memcmp(jpg_sig2, ((char*)_pBuffer) + 6, sizeof(jpg_sig2)))
 			? file_format::jpg
-			: file_format::unknown;
+			: (_BufferSize >= 2 && !memcmp(_pBuffer, "BM", 2))
+				? file_format::bmp
+				: file_format::unknown;
 }
 
 info get_info(const void* _pBuffer, size_t _BufferSize)
@@ -71,6 +83,7 @@ info get_info(const void* _pBuffer, size_t _BufferSize)
 	{
 		case file_format::png: return std::move(get_info_png(_pBuffer, _BufferSize));
 		case file_format::jpg: return std::move(get_info_jpg(_pBuffer, _BufferSize));
+		case file_format::bmp: return std::move(get_info_bmp(_pBuffer, _BufferSize));
 		default: break;
 	}
 	throw std::exception("unknown image encoding");
@@ -86,6 +99,7 @@ std::shared_ptr<char> encode(const buffer* _pBuffer
 	{
 		case file_format::png: return std::move(encode_png(_pBuffer, _pSize, _Option, _Compression));
 		case file_format::jpg: return std::move(encode_jpg(_pBuffer, _pSize, _Option, _Compression));
+		case file_format::bmp: return std::move(encode_bmp(_pBuffer, _pSize, _Option, _Compression));
 		default: break;
 	}
 	throw std::exception("unknown image encoding");
@@ -97,6 +111,7 @@ std::shared_ptr<buffer> decode(const void* _pBuffer, size_t _BufferSize, alpha_o
 	{
 		case file_format::png: return std::move(decode_png(_pBuffer, _BufferSize, _Option));
 		case file_format::jpg: return std::move(decode_jpg(_pBuffer, _BufferSize, _Option));
+		case file_format::bmp: return std::move(decode_bmp(_pBuffer, _BufferSize, _Option));
 		default: break;
 	}
 	throw std::exception("unknown image encoding");

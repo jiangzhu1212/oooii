@@ -37,15 +37,16 @@ struct GPU_Texture3DMip_App : public oGPUTextureTestApp
 	oGPU_TEST_PIPELINE GetPipeline() override { return oGPU_TEST_TEXTURE_3D; }
 	bool CreateTexture() override
 	{
-		intrusive_ptr<oImage> images[3];
-		if (!oImageLoad("file://DATA/Test/Textures/Red.png", oImage::FORCE_ALPHA, &images[0]))
-			return false;
-		if (!oImageLoad("file://DATA/Test/Textures/Green.png", oImage::FORCE_ALPHA, &images[1]))
-			return false;
-		if (!oImageLoad("file://DATA/Test/Textures/Blue.png", oImage::FORCE_ALPHA, &images[2]))
-			return false;
+		auto red = surface_load(filesystem::data_path() / "Test/Textures/Red.png", surface::alpha_option::force_alpha);
+		auto green = surface_load(filesystem::data_path() / "Test/Textures/Green.png", surface::alpha_option::force_alpha);
+		auto blue = surface_load(filesystem::data_path() / "Test/Textures/Blue.png", surface::alpha_option::force_alpha);
 
-		if (!oGPUCreateTexture(Device, (const oImage**)&images[0], oCOUNTOF(images), oGPU_TEXTURE_3D_MAP_MIPS, &Texture))
+		const ouro::surface::buffer* images[3];
+		images[0] = red.get();
+		images[1] = green.get();
+		images[2] = blue.get();
+
+		if (!oGPUCreateTexture(Device, images, oCOUNTOF(images), oGPU_TEXTURE_3D_MAP_MIPS, &Texture))
 			return false;
 
 		return true;

@@ -25,6 +25,7 @@
 #include <oSurface/buffer.h>
 #include <oSurface/convert.h>
 #include <oBase/memory.h>
+#include <oBase/throw.h>
 #include <oStd/mutex.h>
 
 namespace ouro {
@@ -38,6 +39,7 @@ public:
 	~buffer_impl();
 
 	info get_info() const override;
+	void flatten() override;
 	void update_subresource(int _Subresource, const const_mapped_subresource& _Source, bool _FlipVertically = false) override;
 	void update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source, bool _FlipVertically = false) override;
 	void map(int _Subresource, mapped_subresource* _pMapped, int2* _pByteDimensions = nullptr) override;
@@ -47,6 +49,7 @@ public:
 	void copy_to(int _Subresource, mapped_subresource* _pMapped, bool _FlipVertically = false) const override;
 	std::shared_ptr<buffer> convert(const info& _ConvertedInfo) const override;
 	void swizzle(format _NewFormat) override;
+	void generate_mips(filter::value _Filter = filter::lanczos2) override;
 private:
 	void* Data;
 	info Info;
@@ -83,6 +86,18 @@ std::shared_ptr<buffer> buffer::make(const info& _Info, void* _pData)
 info buffer_impl::get_info() const
 {
 	return Info;
+}
+
+void buffer_impl::flatten()
+{
+	if (is_block_compressed(Info.format))
+		oTHROW(not_supported, "block compressed formats not handled yet");
+
+	int rp = row_pitch(Info);
+	size_t sz = size();
+	Info.layout = image;
+	Info.dimensions = int3(rp / element_size(Info.format), int(sz / rp), 1);
+	Info.array_size = 0;
 }
 
 void buffer_impl::update_subresource(int _Subresource, const const_mapped_subresource& _Source, bool _FlipVertically)
@@ -166,12 +181,39 @@ void buffer_impl::swizzle(format _NewFormat)
 	Info.format = _NewFormat;
 }
 
-float calc_rms(const buffer* _pBuffer1, const buffer* _pBuffer2)
+void buffer_impl::generate_mips(filter::value _Filter)
+{
+	oStd::lock_guard<oStd::shared_mutex> lock(Mutex);
+
+	int nMips = num_mips(Info);
+
+	for (int slice = 0; slice < Info.array_size; slice++)
+	{
+		int mip0subresource = calc_subresource(0, slice, 0, nMips, Info.array_size);
+		const_mapped_subresource mip0 = get_const_mapped_subresource(Info, mip0subresource, 0, Data);
+
+		for (int mip = 1; mip < nMips; mip++)
+		{
+			int subresource = calc_subresource(mip, slice, 0, nMips, Info.array_size);
+			mapped_subresource dst = get_mapped_subresource(Info, subresource, 0, Data);
+			subresource_info subinfo = surface::subresource(Info, subresource);
+
+			info di = Info;
+			di.dimensions = subinfo.dimensions;
+			resize(Info, mip0, di, &dst, _Filter);
+		}
+	}
+}
+
+float calc_rms(const buffer* _pBuffer1, const buffer* _pBuffer2, buffer* _pDifferences, int _DifferenceScale)
 {
 	info si1 = _pBuffer1->get_info();
 	info si2 = _pBuffer2->get_info();
+	info dsi;
+	if (_pDifferences)
+		dsi = _pDifferences->get_info();
 
-	if (any(si1.dimensions != si2.dimensions)) throw std::invalid_argument("mismatched dimensions");
+	if (any(si1.dimensions != si2.dimensions) || (_pDifferences && any(si1.dimensions != dsi.dimensions))) throw std::invalid_argument("mismatched dimensions");
 	if (si1.format != si2.format) throw std::invalid_argument("mismatched format");
 	if (si1.array_size != si2.array_size) throw std::invalid_argument("mismatched array_size");
 	int n1 = num_subresources(si1);
@@ -181,9 +223,20 @@ float calc_rms(const buffer* _pBuffer1, const buffer* _pBuffer2)
 	float rms = 0.0f;
 	for (int i = 0; i < n1; i++)
 	{
+		mapped_subresource msr;
+		if (_pDifferences)
+		_pDifferences->map(i, &msr);
+
 		shared_lock lock1(_pBuffer1, i);
 		shared_lock lock2(_pBuffer2, i);
-		rms += calc_rms(si1, lock1.mapped, lock2.mapped);
+	
+		if (_pDifferences)
+			rms += calc_rms(si1, lock1.mapped, lock2.mapped, dsi, msr);
+		else
+			rms += calc_rms(si1, lock1.mapped, lock2.mapped);
+
+		if (_pDifferences)
+			_pDifferences->unmap(i);
 	}
 
 	return rms / static_cast<float>(n1);

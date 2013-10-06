@@ -228,9 +228,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oHTTPHandler.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oWindowAppController.h">
-      <Filter>Headers\UI</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oProcessStatsMonitor.h">
       <Filter>Headers\Concurrency</Filter>
     </ClInclude>
@@ -254,9 +251,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="oooii_icon.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oSocket.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -291,9 +285,6 @@
       <Filter>Source\Windows API Convenience Wrappers</Filter>
     </ClCompile>
     <ClCompile Include="oCRTHeap.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oInvisible_ico.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oWinTray.cpp">
@@ -424,9 +415,6 @@
     </ClCompile>
     <ClCompile Include="oHTTPHandler.cpp">
       <Filter>Source\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="oWindowAppController.cpp">
-      <Filter>Source\UI</Filter>
     </ClCompile>
     <ClCompile Include="oConcurrency.cpp">
       <Filter>Source\Concurrency</Filter>

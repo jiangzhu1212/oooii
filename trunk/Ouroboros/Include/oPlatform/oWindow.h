@@ -34,9 +34,7 @@
 #include <oConcurrency/oConcurrency.h>
 #include <oStd/future.h>
 #include <oCore/display.h>
-#include <oPlatform/oImage.h>
-
-interface oImage;
+#include <oSurface/buffer.h>
 
 // {C590552A-EDCC-434B-AF17-7871FC00B18D}
 oDEFINE_GUID_I(oWindow, 0xc590552a, 0xedcc, 0x434b, 0xaf, 0x17, 0x78, 0x71, 0xfc, 0x0, 0xb1, 0x8d);
@@ -201,7 +199,7 @@ interface oWindow : oInterface
 	// Schedules an oImage to be generated from the oWindow. In the simple case,
 	// _Frame is not used and the front buffer is captured. Due to platform rules
 	// this may involve bringing the specified window to focus.
-	virtual oStd::future<ouro::intrusive_ptr<oImage>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const = 0;
+	virtual oStd::future<std::shared_ptr<ouro::surface::buffer>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const = 0;
 
 	// Causes an oGUI_TIMER event to occur with the specified context after the 
 	// specified time. This will be called every specified millisections until 

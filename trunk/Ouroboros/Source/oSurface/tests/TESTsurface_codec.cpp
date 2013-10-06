@@ -41,7 +41,6 @@ static void compare_checkboards(const int2& _InDimensions, surface::format _Form
 	si.format = _Format;
 	si.layout = surface::image;
 	si.dimensions = int3(_InDimensions, 1);
-	si.array_size = 1;
 	std::shared_ptr<surface::buffer> known = surface::buffer::make(si);
 	size_t knownSize = known->size();
 	{
