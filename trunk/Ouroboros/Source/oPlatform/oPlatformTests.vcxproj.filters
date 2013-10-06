@@ -21,9 +21,6 @@
     <ClCompile Include="Tests\TESTHTTP.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTImage.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTIntersection.cpp">
       <Filter>Source</Filter>
     </ClCompile>

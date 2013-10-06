@@ -1,7 +1,6 @@
 // $(header)
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oConsole.h>
-#include <oPlatform/oImage.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/oStandards.h>
@@ -9,33 +8,8 @@
 #include <oCore/system.h>
 #include <oBase/opttok.h>
 #include <oBase/scc.h>
-
 #include <oPlatform/Windows/oGDI.h>
-
-void* oLoadIcon(oFUNCTION<void(const char** _ppBufferName, const void** _ppBuffer, size_t* _pSizeofBuffer)> _BufferGetDesc)
-{
-	const char* BufferName = nullptr;
-	const void* pBuffer = nullptr;
-	size_t sizeofBuffer = 0;
-	_BufferGetDesc(&BufferName, &pBuffer, &sizeofBuffer);
-
-	ouro::intrusive_ptr<oImage> ico;
-	oVERIFY(oImageCreate(BufferName, pBuffer, sizeofBuffer, &ico));
-
-	#if defined(_WIN32) || defined (_WIN64)
-		oGDIScopedObject<HBITMAP> hBmp;
-		oVERIFY(oImageCreateBitmap(ico, (HBITMAP*)&hBmp));
-		return oGDIBitmapToIcon(hBmp);
-	#else
-		return nullptr;
-	#endif
-}
-
-void* oLoadStandardIcon()
-{
-	extern void GetDescoooii_ico(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
-	return oLoadIcon(GetDescoooii_ico);
-}
+#include "resource.h"
 
 using namespace ouro;
 
@@ -108,7 +82,7 @@ void InitEnv()
 	}
 
 #if defined(WIN64) || defined(WIN32)
-	oGDIScopedObject<HICON> hIcon = (HICON)oLoadStandardIcon();
+	oGDIScopedObject<HICON> hIcon = oGDILoadIcon(IDI_APPICON);
 	oWinSetIconAsync(GetConsoleWindow(), hIcon, false);
 	oWinSetIconAsync(GetConsoleWindow(), hIcon, true);
 #endif

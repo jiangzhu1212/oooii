@@ -148,7 +148,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oTCPServer.h" />
     <ClInclude Include="..\..\Include\oPlatform\oWebAppWindow.h" />
     <ClInclude Include="..\..\Include\oPlatform\oWebServer.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oImage.h" />
     <ClInclude Include="..\..\Include\oPlatform\oP4.h" />
     <ClInclude Include="..\..\Include\oPlatform\oReporting.h" />
     <ClInclude Include="..\..\Include\oPlatform\oSingleton.h" />
@@ -172,7 +171,6 @@
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinStatusBar.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinTray.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinWindowing.h" />
-    <ClInclude Include="FreeImageHelpers.h" />
     <ClInclude Include="oCamera_QEdit.h" />
     <ClInclude Include="oCRTLeakTracker.h" />
     <ClInclude Include="oDispatchQueueConcurrentWTP.h" />
@@ -187,7 +185,6 @@
     <ClInclude Include="SoftLink\oWinsock.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="FreeImageHelpers.cpp" />
     <ClCompile Include="oCamera.cpp" />
     <ClCompile Include="oConcurrency.cpp" />
     <ClCompile Include="oConsole.cpp" />
@@ -209,7 +206,6 @@
     <ClCompile Include="oHTTPHandler.cpp" />
     <ClCompile Include="oHTTPProtocol.cpp" />
     <ClCompile Include="oHTTPServer.cpp" />
-    <ClCompile Include="oImage.cpp" />
     <ClCompile Include="oInterprocessEvent.cpp" />
     <ClCompile Include="oIOCP.cpp" />
     <ClCompile Include="oMirroredArena.cpp" />

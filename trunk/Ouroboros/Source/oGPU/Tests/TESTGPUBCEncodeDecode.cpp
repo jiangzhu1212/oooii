@@ -25,7 +25,6 @@
 #include <oGPU/oGPU.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
-#include <oPlatform/oImage.h>
 #include <oPlatform/oTest.h>
 
 using namespace ouro;
@@ -54,7 +53,7 @@ struct GPU_BCEncodeDecode : public oTest
 		return oTest::SUCCESS;
 	}
 
-	RESULT LoadConvertedAndConvertToImage(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, const char* _ConvertedPath, oImage** _ppConvertedImage)
+	RESULT LoadConvertedAndConvertToImage(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, const char* _ConvertedPath, std::shared_ptr<ouro::surface::buffer>* _ppConvertedImage)
 	{
 		intrusive_ptr<oBuffer> ConvertedFile;
 		oTESTB(oBufferLoad(_ConvertedPath, &ConvertedFile), "Failed to load %s", _ConvertedPath);
@@ -73,22 +72,17 @@ struct GPU_BCEncodeDecode : public oTest
 
 		BGRATexture->GetDesc(&td);
 
-		oImage::DESC d;
-		d.Dimensions = td.Dimensions.xy();
-		d.Format = oImageFormatFromSurfaceFormat(td.Format);
-		d.RowPitch = oImageCalcRowPitch(d.Format, d.Dimensions.x);
-
-		intrusive_ptr<oImage> ConvertedImage;
-		oTESTB(oImageCreate("ConvertedImage", d, &ConvertedImage), "Failed to create a compatible oImage");
+		ouro::surface::info si;
+		si.format = td.Format;
+		si.dimensions = td.Dimensions;
+		std::shared_ptr<ouro::surface::buffer> ConvertedImage = ouro::surface::buffer::make(si);
 
 		ouro::surface::mapped_subresource msrSource;
 		_pDevice->MapRead(BGRATexture, 0, &msrSource, true);
-		int2 ByteDimensions = ouro::surface::byte_dimensions(td.Format, td.Dimensions);
-		memcpy2d(ConvertedImage->GetData(), d.RowPitch, msrSource.data, msrSource.row_pitch, ByteDimensions.x, ByteDimensions.y);
+		ConvertedImage->update_subresource(0, msrSource);
 		_pDevice->UnmapRead(BGRATexture, 0);
 
 		*_ppConvertedImage = ConvertedImage;
-		(*_ppConvertedImage)->Reference();
 		return oTest::SUCCESS;
 	}
 
@@ -111,7 +105,7 @@ struct GPU_BCEncodeDecode : public oTest
 			return res;
 
 		oTRACE("Converting image back from %s (may take a while)...", ouro::as_string(_TargetFormat));
-		intrusive_ptr<oImage> ConvertedImage;
+		std::shared_ptr<ouro::surface::buffer> ConvertedImage;
 		res = LoadConvertedAndConvertToImage(_StrStatus, _SizeofStrStatus, _pDevice, ConvertedPath, &ConvertedImage);
 		if (SUCCESS != res)
 				return res;

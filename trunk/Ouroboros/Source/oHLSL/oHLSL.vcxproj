@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\External\OpenEXR\Half\half.h" />
     <ClInclude Include="..\..\Include\oHLSL\all.h" />
     <ClInclude Include="..\..\Include\oHLSL\oHLSLAtomics.h" />
     <ClInclude Include="..\..\Include\oHLSL\oHLSLBit.h" />
@@ -29,6 +30,9 @@
     <ClInclude Include="..\..\Include\oHLSL\oHLSLSwizzlesOn.h" />
     <ClInclude Include="..\..\Include\oHLSL\oHLSLTypes.h" />
     <ClInclude Include="..\..\Include\oHLSL\oHLSLTypesInternal.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\External\OpenEXR\Half\half.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{AAE3C7D9-8124-4B5A-856C-4C5BF23CDB09}</ProjectGuid>
@@ -60,7 +64,6 @@
     <Import Project="..\Build\msvc100\Properties\Release32.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\lib.props" />
-    <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
@@ -68,7 +71,6 @@
     <Import Project="..\Build\msvc100\Properties\Debug32.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\lib.props" />
-    <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
@@ -76,7 +78,6 @@
     <Import Project="..\Build\msvc100\Properties\Release64.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\lib.props" />
-    <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
@@ -84,7 +85,6 @@
     <Import Project="..\Build\msvc100\Properties\Debug64.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\lib.props" />
-    <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -96,7 +96,7 @@
     <Lib />
     <ClCompile />
     <ClCompile>
-      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -107,7 +107,7 @@
     <Lib />
     <ClCompile />
     <ClCompile>
-      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -115,7 +115,7 @@
     <Lib />
     <ClCompile />
     <ClCompile>
-      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -129,7 +129,7 @@
     <ClCompile />
     <ClCompile />
     <ClCompile>
-      <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

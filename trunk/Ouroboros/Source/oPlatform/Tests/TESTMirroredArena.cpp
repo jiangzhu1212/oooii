@@ -46,8 +46,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 #ifdef o32BIT
 	snprintf(_StrStatus, _SizeofStrStatus, "disabled in 32-bit for now");
 	return oTest::SKIPPED;
-#endif
-
+#else
 	*_StrStatus = 0;
 
 	std::shared_ptr<ouro::process> Client;
@@ -213,6 +212,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 	oTESTB(exitcode == 0, "Exitcode: %d", exitcode);
 
 	return oTest::SUCCESS;
+#endif
 }
 
 #define RUNTEST(_DiffType) do \

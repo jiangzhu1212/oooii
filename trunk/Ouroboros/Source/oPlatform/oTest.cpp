@@ -37,7 +37,6 @@
 #include <oPlatform/oConsole.h>
 #include <oPlatform/oDisplay.h> // to print out driver versions
 #include <oPlatform/oInterprocessEvent.h> // inter-process event required to sync "special tests" as they launch a new process
-#include <oPlatform/oImage.h> // the crux of most tests... going to be hard to get rid of this dependency
 #include <oPlatform/oMsgBox.h> // only used to notify about zombies
 #include <oPlatform/oProgressBar.h> // only really so it itself can be tested, but perhaps this can be moved to a unit test?
 #include <oPlatform/oStandards.h> // standard colors for a console app, maybe this can be callouts? log file path... can be an option?
@@ -495,101 +494,6 @@ bool oTest::TestImage(const surface::buffer* _pTestImage
 	return true;
 }
 
-bool oTest::TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const char* _FailedImagePath, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier, bool _OutputGoldenImage)
-{
-	size_t commonPathLength = cmnroot(_GoldenImagePath, _FailedImagePath);
-	const char* gPath = _GoldenImagePath + commonPathLength;
-	const char* fPath = _FailedImagePath + commonPathLength;
-
-	oImage::DESC iDesc;
-	_pTestImage->GetDesc(&iDesc);
-
-	intrusive_ptr<oImage> GoldenImage;
-	{
-		intrusive_ptr<oBuffer> b;
-		if (!oBufferLoad(_GoldenImagePath, &b))
-			return oErrorSetLast(std::errc::io_error, "Load failed: (Golden)...%s", gPath);
-
-		if (!oImageCreate(_GoldenImagePath, b->GetData(), b->GetSize(), &GoldenImage))
-			return oErrorSetLast(std::errc::protocol_error, "Corrupt Image: (Golden)...%s", gPath);
-
-		bool success = false;
-		if (oImageIsAlphaFormat(iDesc.Format))
-			success = oImageCreate(_GoldenImagePath, b->GetData(), b->GetSize(), oImage::FORCE_ALPHA, &GoldenImage);
-		else
-			success = oImageCreate(_GoldenImagePath, b->GetData(), b->GetSize(), &GoldenImage);
-
-		if (!success)
-			return oErrorSetLast(std::errc::protocol_error, "Corrupt Image: (Golden)...%s", gPath);
-	}
-
-	oImage::DESC gDesc;
-	GoldenImage->GetDesc(&gDesc);
-
-	// Compare dimensions/format before going into pixels
-	{
-		if (any(iDesc.Dimensions != gDesc.Dimensions))
-		{
-			if (!oImageSave(_pTestImage, oImageIsAlphaFormat(iDesc.Format) ? oImage::FORCE_ALPHA : oImage::FORCE_NO_ALPHA, _FailedImagePath))
-				return oErrorSetLast(std::errc::io_error, "Save failed: (Output)...%s", fPath);
-			return oErrorSetLast(std::errc::protocol_error, "Differing dimensions: (Output %dx%d)...%s != (Golden %dx%d)...%s", iDesc.Dimensions.x, iDesc.Dimensions.y, fPath, gDesc.Dimensions.x, gDesc.Dimensions.y, gPath);
-		}
-
-		if (iDesc.Format != gDesc.Format)
-		{
-			if (!oImageSave(_pTestImage, oImageIsAlphaFormat(iDesc.Format) ? oImage::FORCE_ALPHA : oImage::FORCE_NO_ALPHA, _FailedImagePath))
-				return oErrorSetLast(std::errc::io_error, "Save failed: (Output)...%s", fPath);
-			return oErrorSetLast(std::errc::protocol_error, "Differing formats: (Golden %s)...%s != (Output %s)...%s", as_string(gDesc.Format), gPath, as_string(iDesc.Format), fPath);
-		}
-	}
-
-	// Resolve parameter settings against global settings
-	{
-		oTestManager::DESC TestDesc;
-		oTestManager::Singleton()->GetDesc(&TestDesc);
-
-		if (_ColorChannelTolerance == oDEFAULT)
-			_ColorChannelTolerance = TestDesc.ColorChannelTolerance;
-		if (_MaxRMSError < 0.0f)
-			_MaxRMSError = TestDesc.MaxRMSError;
-		if (_DiffImageMultiplier == oDEFAULT)
-			_DiffImageMultiplier = TestDesc.DiffImageMultiplier;
-	}
-
-	// Do the real test
-	intrusive_ptr<oImage> diffs;
-	float RMSError = 0.0f;
-	bool compareSucceeded = oImageCompare(_pTestImage, GoldenImage, _ColorChannelTolerance, &RMSError, &diffs, _DiffImageMultiplier);
-
-	// Save out test image and diffs if there is a non-similar result.
-	if (!compareSucceeded || (RMSError > _MaxRMSError))
-	{
-		if (!oImageSave(_pTestImage, oImageIsAlphaFormat(iDesc.Format) ? oImage::FORCE_ALPHA : oImage::FORCE_NO_ALPHA , _FailedImagePath))
-			return oErrorSetLast(std::errc::io_error, "Save failed: (Output)...%s", fPath);
-
-		path diffPath(_FailedImagePath);
-		diffPath.replace_extension_with_suffix("_diff.png");
-		const char* dPath = diffPath.c_str() + commonPathLength;
-
-		if (diffs && !oImageSave(diffs, oImageIsAlphaFormat(iDesc.Format) ? oImage::FORCE_ALPHA : oImage::FORCE_NO_ALPHA, diffPath))
-			return oErrorSetLast(std::errc::io_error, "Save failed: (Diff)...%s", dPath);
-
-		if (_OutputGoldenImage)
-		{
-			path goldenPath(_FailedImagePath);
-			goldenPath.replace_extension_with_suffix("_golden.png");
-			const char* gPath = goldenPath.c_str() + commonPathLength;
-
-			if (GoldenImage && !oImageSave(GoldenImage, oImageIsAlphaFormat(iDesc.Format) ? oImage::FORCE_ALPHA : oImage::FORCE_NO_ALPHA, goldenPath))
-				return oErrorSetLast(std::errc::io_error, "Save failed: (Golden)...%s", gPath);
-		}
-
-		return oErrorSetLast(std::errc::protocol_error, "Compare failed: %.03f RMS error (threshold %.03f): (Output)...%s != (Golden)...%s", RMSError, _MaxRMSError, fPath, gPath);
-	}
-
-	return true;
-}
-
 struct DriverPaths
 {
 	path Generic;
@@ -617,49 +521,6 @@ static bool oInitialize(const char* _RootPath, const char* _Filename, const adap
 	_pDriverPaths->DriverSpecific /= _Filename;
 
 	return true;
-}
-
-bool oTest::TestImage(oImage* _pTestImage, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier)
-{
-	// Check: GoldenDir/CardName/DriverVersion/GoldenImage
-	// Then Check: GoldenDir/CardName/GoldenImage
-	// Then Check: GoldenDir/GoldenImage
-
-	oTestManager::DESC TestDesc;
-	oTestManager::Singleton()->GetDesc(&TestDesc);
-
-	const adapter::info& DriverDesc = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->DriverDescs[0]; // todo: Make this more elegant
-
-	sstring nthImageBuf;
-	path_string Filename;
-	snprintf(Filename, "%s%s.png", GetName(), _NthImage == 0 ? "" : to_string(nthImageBuf, _NthImage));
-
-	DriverPaths GoldenPaths, FailurePaths;
-	oVERIFY(oInitialize(TestDesc.GoldenImagesPath, Filename, DriverDesc, &GoldenPaths));
-	oVERIFY(oInitialize(TestDesc.OutputPath, Filename, DriverDesc, &FailurePaths));
-
-	// @oooii-tony: Use oStream's search path facility to simplify this and all oTest
-	// search path evaluation.
-
-	if (oStreamExists(GoldenPaths.DriverSpecific))
-		return TestImage(_pTestImage, GoldenPaths.DriverSpecific, FailurePaths.DriverSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
-
-	else if (oStreamExists(GoldenPaths.VendorSpecific))
-		return TestImage(_pTestImage, GoldenPaths.VendorSpecific, FailurePaths.VendorSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
-
-	else if (oStreamExists(GoldenPaths.CardSpecific))
-		return TestImage(_pTestImage, GoldenPaths.CardSpecific, FailurePaths.CardSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
-
-	else if (oStreamExists(GoldenPaths.Generic))
-		return TestImage(_pTestImage, GoldenPaths.Generic, FailurePaths.Generic, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
-
-	oImage::DESC iDesc;
-	_pTestImage->GetDesc(&iDesc);
-
-	if (!oImageSave(_pTestImage, oImageIsAlphaFormat(iDesc.Format) ? oImage::FORCE_ALPHA : oImage::FORCE_NO_ALPHA, FailurePaths.DriverSpecific))
-		return oErrorSetLast(std::errc::io_error, "Save failed: (Output)%s", FailurePaths.DriverSpecific.c_str());
-
-	return oErrorSetLast(std::errc::no_such_file_or_directory, "Not found: (Golden).../%s Test Image saved to %s", Filename, FailurePaths.DriverSpecific.c_str());
 }
 
 bool oTest::TestImage(const surface::buffer* _pTestImage, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier)

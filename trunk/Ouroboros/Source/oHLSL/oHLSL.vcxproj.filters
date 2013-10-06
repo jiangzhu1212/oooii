@@ -4,6 +4,9 @@
     <Filter Include="oHLSL">
       <UniqueIdentifier>{3d630964-46d0-4ddc-8351-069967fda0c3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{7fd93c7c-445f-432e-9d27-35ac305507f4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oHLSL\oHLSLTypesInternal.h">
@@ -36,5 +39,13 @@
     <ClInclude Include="..\..\Include\oHLSL\all.h">
       <Filter>oHLSL</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\External\OpenEXR\Half\half.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\External\OpenEXR\Half\half.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

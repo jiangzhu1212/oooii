@@ -44,10 +44,10 @@ namespace ouro { namespace surface { class buffer; } }
 		if( SUCCESS != Result ) \
 			return Result; \
 	}
-#define oTESTI(oImagePointer) oTESTB0(TestImage(oImagePointer));
+#define oTESTI(SurfaceBufferPointer) oTESTB0(TestImage(SurfaceBufferPointer));
 
-#define oTESTI2(oImagePointer, NthFrame) oTESTB0(TestImage(oImagePointer, NthFrame));
-#define oTESTI_CUSTOM_TOLERANCE(oImagePointer, NthFrame, ColorChannelTolerance, MaxRMSError, DiffImageMultiplier) oTESTB0(TestImage(oImagePointer, NthFrame, ColorChannelTolerance, MaxRMSError, DiffImageMultiplier))
+#define oTESTI2(SurfaceBufferPointer, NthFrame) oTESTB0(TestImage(SurfaceBufferPointer, NthFrame));
+#define oTESTI_CUSTOM_TOLERANCE(SurfaceBufferPointer, NthFrame, ColorChannelTolerance, MaxRMSError, DiffImageMultiplier) oTESTB0(TestImage(SurfaceBufferPointer, NthFrame, ColorChannelTolerance, MaxRMSError, DiffImageMultiplier))
 
 #define oTEST_FUTURE(_Future) do \
 {	try { _Future.wait(); } \
@@ -103,8 +103,6 @@ namespace ouro { namespace surface { class buffer; } }
 
 #define oTEST_REGISTER_PERFTEST(_TestClassName) oTestManager::RegisterTest<_TestClassName> oCONCAT(_TestClassName, _Instance)(1, oTest::PERFTEST)
 
-interface oImage;
-
 struct oTest : oProcessSingleton<oTest>
 {
 	enum RESULT
@@ -153,7 +151,7 @@ struct oTest : oProcessSingleton<oTest>
 	// the golden binary can still be opened from the operating system.
 	bool TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _FileExtension, unsigned int _NthImage = 0);
 
-	// Visual tests should prepare an oImage and then use this API to submit the
+	// Visual tests should prepare an image and then use this API to submit the
 	// test image to be compared against a "golden" image, one that has been 
 	// verified as being correct. If valid, then this returns true. If the images
 	// differ, then the test image that failed will be written to the OutputPath.
@@ -169,26 +167,6 @@ struct oTest : oProcessSingleton<oTest>
 		, float _MaxRMSError
 		, unsigned int _DiffImageMultiplier
 		, bool _OutputGoldenImage);
-
-	//inline bool oTest::TestImage(std::shared_ptr<ouro::surface::buffer>& _pTestImage
-	//	, const char* _GoldenImagePath
-	//	, const char* _FailedImagePath
-	//	, unsigned int _NthImage
-	//	, int _ColorChannelTolerance
-	//	, float _MaxRMSError
-	//	, unsigned int _DiffImageMultiplier
-	//	, bool _OutputGoldenImage)
-	//{ return TestImage(_pTestImage.get(), _GoldenImagePath, _FailedImagePath, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, _OutputGoldenImage); }
-
-	//inline bool oTest::TestImage(std::shared_ptr<const ouro::surface::buffer>& _pTestImage
-	//	, const char* _GoldenImagePath
-	//	, const char* _FailedImagePath
-	//	, unsigned int _NthImage
-	//	, int _ColorChannelTolerance
-	//	, float _MaxRMSError
-	//	, unsigned int _DiffImageMultiplier
-	//	, bool _OutputGoldenImage)
-	//{ return TestImage(_pTestImage.get(), _GoldenImagePath, _FailedImagePath, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, _OutputGoldenImage); }
 
 	bool TestImage(const ouro::surface::buffer* _pBuffer
 		, unsigned int _NthImage = 0
@@ -210,8 +188,6 @@ struct oTest : oProcessSingleton<oTest>
 		, unsigned int _DiffImageMultiplier = oDEFAULT)
 	{ return TestImage(_pBuffer.get(), _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier); }
 
-	bool TestImage(oImage* _pImage, unsigned int _NthImage = 0, int _ColorChannelTolerance = oDEFAULT, float _MaxRMSError = -1.0f, unsigned int _DiffImageMultiplier = oDEFAULT);
-
 	virtual RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) = 0;
 
 	// Always specify resources for read/write as relative paths from the Data 
@@ -225,7 +201,6 @@ struct oTest : oProcessSingleton<oTest>
 
 private:
 	virtual bool BuildPath(ouro::path& _Path, const ouro::path& _RelativePath, PATH_TYPE _PathType, bool _PathMustExist) const;
-	virtual bool TestImage(oImage* _pTestImage, const char* _GoldenImagePath, const char* _FailedImagePath, unsigned int _NthImage, int _ColorChannelTolerance = oDEFAULT, float _MaxRMSError = -1.0f, unsigned int _DiffImageMultiplier = oDEFAULT, bool _OutputGoldenImage = false);
 };
 
 // Special tests are ones that are new processes spawned from a regular test 
