@@ -40,10 +40,10 @@
     </Lib>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>comctl32.lib;d3d11.lib;d3dx11.lib;dbghelp.lib;dwmapi.lib;dxerr.lib;dxgi.lib;msimg32.lib;netapi32.lib;powrprof.lib;psapi.lib;setupapi.lib;shlwapi.lib;version.lib;winmm.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;d3d11.lib;d3dcompiler.lib;d3dx11.lib;d3dx10.lib;dbghelp.lib;dwmapi.lib;dxerr.lib;dxgi.lib;msimg32.lib;netapi32.lib;powrprof.lib;psapi.lib;setupapi.lib;shlwapi.lib;version.lib;winmm.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/PDBALTPATH:%_PDB% /ignore:4199 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalLibraryDirectories>$(ProgramW6432)\Microsoft SDKs\Kinect\v1.7\lib\$(PlatformShortName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <DelayLoadDLLs>comctl32.dll;d3d11.dll;d3dx11_43.dll;dbghelp.dll;dwmapi.dll;dxerr.dll;dxgi.dll;msimg32.dll;netapi32.dll;powrprof.dll;psapi.dll;setupapi.dll;shlwapi.dll;version.dll;winmm.dll;ws2_32.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>comctl32.dll;d3d11.dll;d3dcompiler.dll;d3dx11_43.dll;d3dx10.dll;dbghelp.dll;dwmapi.dll;dxerr.dll;dxgi.dll;msimg32.dll;netapi32.dll;powrprof.dll;psapi.dll;setupapi.dll;shlwapi.dll;version.dll;winmm.dll;ws2_32.dll</DelayLoadDLLs>
     </Link>
     <ProjectReference>
       <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
