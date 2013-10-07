@@ -68,8 +68,8 @@ struct oGfxDrawConstants
 		WorldViewProjection = WorldView * _Projection;
 		Normalized = oCreateNormalizationMatrix(_ObjectBound.Min, _ObjectBound.Max);
 		NormalizedInverse = invert(Normalized);
-		WorldQuaternion = oCreateRotationQ(World);
-		WorldViewQuaternion = oCreateRotationQ(WorldView);
+		WorldQuaternion = make_quaternion(World);
+		WorldViewQuaternion = make_quaternion(WorldView);
 		Scale = max(_ObjectBound.size());
 		ObjectID = _ObjectID;
 		DrawID = _DrawID;

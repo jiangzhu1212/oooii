@@ -29,7 +29,7 @@
 #ifndef oCameraControllerModeler_h
 #define oCameraControllerModeler_h
 
-#include <oBasis/oArcball.h>
+#include <oCompute/arcball.h>
 #include <oBasis/oCameraController.h>
 #include <oBasis/oGUI.h>
 #include <array>
@@ -51,7 +51,7 @@ struct oCAMERA_CONTROLLER_MODELER_DESC
 		: RotationSpeed(0.01f, 0.01f)
 		, PanSpeed(0.05f)
 		, DollySpeed(0.04f)
-		, Constraint(oARCBALL_CONSTRAINT_Y_UP)
+		, Constraint(ouro::arcball::y_up)
 	{
 		// if activation is oGUI_KEY_NONE, then control is always-on.
 		Controls[ACTIVATION] = oGUI_KEY_LALT;
@@ -64,7 +64,7 @@ struct oCAMERA_CONTROLLER_MODELER_DESC
 	float2 RotationSpeed;
 	float2 PanSpeed;
 	float DollySpeed;
-	oARCBALL_CONSTRAINT Constraint;
+	ouro::arcball::constraint_t Constraint;
 };
 
 // {85C0BAD4-D140-48D9-BA97-9E0EE6E2B75C}

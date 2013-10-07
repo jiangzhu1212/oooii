@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oStd/tests/oStdTests.h>
-#include <oPlatform/oProcessStatsMonitor.h>
+#include <oCore/process_stats_monitor.h>
 #include "oTestIntegration.h"
 #include <cstdlib>
 
@@ -36,15 +36,14 @@ struct requirements_implementation : requirements
 
 	void get_cpu_utilization(float* _pAverage, float* _pPeek) override
 	{
-		oPROCESS_CPU_STATS stats;
-		PSM.GetStats(&stats);
-		*_pAverage = stats.AverageUsage;
-		*_pPeek = stats.HighUsage;
+		ouro::process_stats_monitor::info stats = PSM.get_info();
+		*_pAverage = stats.average_usage;
+		*_pPeek = stats.high_usage;
 	}
 
 	void reset_cpu_utilization() override
 	{
-		PSM.Reset();
+		PSM.reset();
 	}
 
 	void vreport(const char* _Format, va_list _Args) override
@@ -53,7 +52,7 @@ struct requirements_implementation : requirements
 		oTRACEA("%s", oErrorGetLastString());
 	}
 
-	oProcessStatsMonitor PSM;
+	ouro::process_stats_monitor PSM;
 };
 
 	} //namespace tests

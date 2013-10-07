@@ -23,13 +23,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oConcurrency/oConcurrency.h>
-#include <oPlatform/oProcessStatsMonitor.h> // @tony: fixme
 #include <oStd/tests/oStdTestRequirements.h>
 #include <oStd/for.h>
 #include <oStd/future.h>
+#include <oCore/process_stats_monitor.h>
 
-#include <oBasis/oStddef.h>
-#include <oBasis/oError.h>
+#define oSTD_THROW(_SystemError, _Message) do { std::error_code ec = std::make_error_code(std::errc::_SystemError); throw std::system_error(ec, _Message); } while(false)
 
 namespace oStd {
 	namespace tests {
@@ -63,7 +62,7 @@ static bool exercise_all_threads()
 static bool fail_and_report()
 {
 	if (1)
-		oTHROW(not_supported, "unsupported call");
+		oSTD_THROW(not_supported, "not supported");
 	return false;
 }
 
@@ -81,12 +80,16 @@ static void test_workstealing(requirements& _Requirements)
 	{
 		float CPUpeak2 = 0.0f;
 		_Requirements.reset_cpu_utilization();
-		oSleep(10000);
+		oStd::this_thread::sleep_for(oStd::chrono::seconds(10));
 		_Requirements.get_cpu_utilization(&CPUavg, &CPUpeak2);
 		if (CPUpeak2 > 5.0f)
-			oTHROW(permission_denied, "There is too much CPU activity currently on the system to properly judge oStdFuture's workstealing capabilities.");
+			oSTD_THROW(permission_denied, "There is too much CPU activity currently on the system to properly judge oStdFuture's workstealing capabilities.");
 		else
-			oTHROW(protocol_error, "Failed to achieve 100%s CPU utilization. Peaked at %.01f%s", "%%", CPUpeak, "%%");
+		{
+			char buf[128];
+			snprintf(buf, "Failed to achieve 100%s CPU utilization. Peaked at %.01f%s", "%%", CPUpeak, "%%");
+			oSTD_THROW(protocol_error, buf);
+		}
 	}
 }
 
@@ -158,16 +161,13 @@ void TESTfuture(requirements& _Requirements)
 
 	// test failure
 	{
-		oErrorSetLast(0, "No error manually set by test");
 		oStd::future<bool> FutureToFail = oStd::async(fail_and_report);
 
 		bool ThisShouldFail = true;
 		try { ThisShouldFail = FutureToFail.get(); }
-		catch (std::exception& e)
+		catch (std::system_error& e)
 		{
-			oErrorSetLast(e);
-			oCHECK(oErrorGetLast() == std::errc::not_supported, "last errno_t not properly set");
-			oCHECK(!strcmp(oErrorGetLastString(), "unsupported call"), "last error string not properly set");
+			oCHECK(e.code() == std::errc::not_supported, "error code not properly set");
 			ThisShouldFail = false;
 		}
 

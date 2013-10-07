@@ -75,11 +75,11 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 	
 	bool Render() override
 	{
-		float4x4 V = oCreateLookAtLH(float3(0.0f, 0.0f, -3.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
+		float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -3.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
 		oGPURenderTarget::DESC RTDesc;
 		PrimaryRenderTarget->GetDesc(&RTDesc);
-		float4x4 P = oCreatePerspectiveLH(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
+		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
 
 		{
 			ouro::surface::mapped_subresource msr;
@@ -90,8 +90,8 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 				pInstances[1].Translation = float3(0.5f, -0.5f, 0.0f);
 
 				float rotationStep = Device->GetFrameID() * 1.0f;
-				pInstances[0].Rotation = oCreateRotationQ(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
-				pInstances[1].Rotation = oCreateRotationQ(float3(radians(rotationStep) * 0.5f, radians(rotationStep), radians(rotationStep) * 0.75f));
+				pInstances[0].Rotation = make_quaternion(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
+				pInstances[1].Rotation = make_quaternion(float3(radians(rotationStep) * 0.5f, radians(rotationStep), radians(rotationStep) * 0.75f));
 			}
 			CommandList->Commit(InstanceList, 0, msr);
 		}

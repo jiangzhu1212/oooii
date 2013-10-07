@@ -27,7 +27,7 @@
 #define oManipulatorRotation_h
 
 #include "oManipulatorBase.h"
-#include <oBasis/oArcball.h>
+#include <oCompute/arcball.h>
 
 // {82C49DF6-FF6C-4246-A932-655E5A513647}
 oDEFINE_GUID_S(oManipulatorRotation, 0x82c49df6, 0xff6c, 0x4246, 0xa9, 0x32, 0x65, 0x5e, 0x5a, 0x51, 0x36, 0x47);
@@ -65,7 +65,7 @@ private:
 	int StartIndex;
 	int CurrentIndex;
 	
-	oArcball Arcball;
+	ouro::arcball Arcball;
 	float Arcballradius;
 };
 

@@ -42,7 +42,7 @@
 
 // @oooii-kevin: FIXME, this is borrowed from bullet, promote this throughout the rest
 // or our code
-inline float3x3 oCreateRotationHLSL( float radians, const float3 unitVec)
+inline float3x3 make_rotationHLSL( float radians, const float3 unitVec)
 {
 	float x, y, z, s, c, oneMinusC, x_y, y_z, z_x;
 	s = sin( radians );
@@ -61,7 +61,7 @@ inline float3x3 oCreateRotationHLSL( float radians, const float3 unitVec)
 		);
 }
 
-inline float3x3 oCreateRotationHLSL(const float3 _NormalizedSrcVec, const float3 _NormalizedDstVec)
+inline float3x3 make_rotationHLSL(const float3 _NormalizedSrcVec, const float3 _NormalizedDstVec)
 {
 	float a = angle(_NormalizedSrcVec, _NormalizedDstVec);
 
@@ -74,7 +74,7 @@ inline float3x3 oCreateRotationHLSL(const float3 _NormalizedSrcVec, const float3
 		return float3x3(-oXAXIS3, -oYAXIS3, -oZAXIS3);
 
 	float3 NormalizedAxis = normalize(cross(_NormalizedSrcVec, _NormalizedDstVec));
-	return oCreateRotationHLSL(a, NormalizedAxis);
+	return make_rotationHLSL(a, NormalizedAxis);
 }
 
 // _____________________________________________________________________________

@@ -48,6 +48,8 @@ const char* as_string(const oManipulator::AXIS& _Axis)
 
 } // namespace ouro
 
+using namespace ouro;
+
 oManipulatorBase::oManipulatorBase(const DESC& _Desc, bool *_pSuccess) : Desc(_Desc), Picking(false)
 {
 	*_pSuccess = false;
@@ -85,13 +87,13 @@ void oManipulatorBase::Update(const float2& _ScreenPosition, const float4x4 &_Wo
 	InvWorldView = invert(WorldView);
 	InvViewProj = invert(View * Proj);
 
-	ViewScale = oCreateScale(oExtractScale(View));
-	ViewTrans = oCreateTranslation(oExtractTranslation(View));
-	ViewRot = oCreateRotation(oExtractRotation(View));
+	ViewScale = make_scale(extract_scale(View));
+	ViewTrans = make_translation(extract_translation(View));
+	ViewRot = make_rotation(extract_rotation(View));
 
-	WorldTranslation = oCreateTranslation(oExtractTranslation(World));
-	WorldRotation = oCreateRotation(oExtractRotation(World));
-	WorldScale = oCreateScale(oExtractScale(World));
+	WorldTranslation = make_translation(extract_translation(World));
+	WorldRotation = make_rotation(extract_rotation(World));
+	WorldScale = make_scale(extract_scale(World));
 
 	UpdateImpl();
 }

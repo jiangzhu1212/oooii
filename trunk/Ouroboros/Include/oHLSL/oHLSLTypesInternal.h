@@ -113,6 +113,7 @@ template<typename T> struct TVEC2
 	template<typename U> explicit TVEC2(U _XY) { x = y = static_cast<T>(_XY); }
 	inline TVEC2(T _XY) : x(_XY), y(_XY) {}
 	inline TVEC2(T _X, T _Y) : x(_X), y(_Y) {}
+	TVEC2 operator-() const { return TVEC2(-x, -y); }
 	oHLSL_SWIZZLE2(T);
 	oHLSL_MELOPTS2();
 	oHLSL_MEMBER_OPS(TVEC2<T>, T);
@@ -135,6 +136,7 @@ template<typename T> struct TVEC3
 	inline TVEC3(T _XYZ) : x(_XYZ), y(_XYZ), z(_XYZ) {}
 	inline TVEC3(T _X, T _Y, T _Z) : x(_X), y(_Y), z(_Z) {}
 	inline TVEC3(const TVEC2<T>& _XY, T _Z) : x(_XY.x), y(_XY.y), z(_Z) {}
+	TVEC3 operator-() const { return TVEC3(-x, -y, -z); }
 	oHLSL_SWIZZLE3(T);
 	oHLSL_MELOPTS3();
 	oHLSL_MEMBER_OPS(TVEC3<T>, T);
@@ -161,6 +163,7 @@ template<typename T> struct TVEC4
 	inline TVEC4(const TVEC2<T>& _XY, const TVEC2<T>& _ZW) : x(_XY.x), y(_XY.y), z(_ZW.x), w(_ZW.y) {}
 	inline TVEC4(T _X, const TVEC3<T>& _YZW) : x(_X), y(_YZW.y), z(_YZW.z), w(_YZW.w) {}
 	inline TVEC4(T _X, T _Y, T _Z, T _W) : x(_X), y(_Y), z(_Z), w(_W) {}
+	TVEC4 operator-() const { return TVEC4(-x, -y, -z, -w); }
 	oHLSL_SWIZZLE4(T);
 	oHLSL_MELOPTS4();
 	inline TVEC3<T>& xyz() { return *(TVEC3<T>*)&x; }

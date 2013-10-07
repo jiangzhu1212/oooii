@@ -22,25 +22,36 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
+// A small class to encapsulate calculating a cumulative moving average
 #pragma once
-#ifndef oPlatform_all_h
-#define oPlatform_all_h
-#include <oPlatform/oConsole.h>
-#include <oPlatform/oDisplay.h>
-#include <oPlatform/oInterprocessEvent.h>
-#include <oPlatform/oGUIMenu.h>
-#include <oPlatform/oMirroredArena.h>
-#include <oPlatform/oMsgBox.h>
-#include <oPlatform/oP4.h>
-#include <oPlatform/oProcessHeap.h>
-#include <oPlatform/oProgressBar.h>
-#include <oPlatform/oRegistry.h>
-#include <oPlatform/oReporting.h>
-#include <oPlatform/oSocket.h>
-#include <oPlatform/oStream.h>
-#include <oPlatform/oStreamUtil.h>
-#include <oPlatform/oTest.h>
-#include <oPlatform/oWindow.h>
+#ifndef oBase_moving_average_h
+#define oBase_moving_average_h
+
+namespace ouro {
+
+template<typename T>
+class moving_average
+{
+public:
+	moving_average()
+		: CA(T(0))
+		, Count(T(0))
+	{}
+
+	// Given the latest sample value, this returns the moving average for all 
+	// values up to the latest specified.
+	T calculate(const T& _Value)
+	{
+		Count += T(1);
+		CA = CA + ((_Value - CA) / Count);
+		return CA;
+	}
+
+private:
+	T CA;
+	T Count;
+};
+
+} // namespace ouro
+
 #endif

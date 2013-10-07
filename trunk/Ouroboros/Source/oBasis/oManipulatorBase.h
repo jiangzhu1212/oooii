@@ -29,7 +29,7 @@
 #include <oStd/for.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oManipulator.h>
-#include <oBasis/oLinearAlgebra.h>
+#include <oCompute/linear_algebra.h>
 #include <deque>
 #include <vector>
 

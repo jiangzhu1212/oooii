@@ -129,16 +129,6 @@ template<typename T, typename TVec> bool oIntersects(const oCompute::aabox<T, TV
 
 bool oCalculateAreaAndCentriod(float* _pArea, float2* _pCentroid, const float2* _pVertices, size_t _VertexStride, size_t _NumVertices);
 
-// Determines a location in 3D space based on 4 reference locations and their distances from the location
-template<typename T> T oTrilaterate(const TVEC3<T> observers[4], const T distances[4], TVEC3<T>* position);
-template<typename T>
-inline T oTrilaterate(const TVEC3<T> observers[4], T distance, TVEC3<T>* position)
-{
-	T distances[4];
-	for(int i = 0; i < 4; ++i)
-		distances[i] = distance;
-	return oTrilaterate(observers, distances, position);	
-}
 // Computes a matrix to move from one coordinate system to another based on 4 known reference locations in the start and end systems assuming uniform units
 template<typename T> bool oCoordinateTransform(const TVEC3<T> startCoords[4], const TVEC3<T> endCoords[4], TMAT4<T> *matrix);
 
@@ -182,37 +172,5 @@ template<typename T> T oOctreeCalcTotalNumNodes(T _Depth)
 		n += oOctreeCalcNumNodesAtLevel(i);
 	return n;
 }
-
-template<typename T> T oSinc(T _Value)
-{
-	if (abs(_Value) > std::numeric_limits<T>::epsilon())
-	{
-		_Value *= T(oPI);
-		return sin(_Value) / _Value;
-	} 
-	return T(1);
-}
-
-// A small class to encapsulate calculating a cumulative moving average
-template<typename T>
-class oMovingAverage
-{
-public:
-	oMovingAverage()
-		: CA(0)
-		, Count(0)
-	{}
-
-	T Calc(const T& _Value)
-	{
-		Count += T(1);
-		CA = CA + ((_Value - CA) / Count);
-		return CA;
-	}
-
-private:
-	T CA;
-	T Count;
-};
 
 #endif

@@ -258,12 +258,6 @@
     <ClInclude Include="..\..\Include\oBasis\oINISerialize.h">
       <Filter>oBasis\Serialization</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oArcball.h">
-      <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oEye.h">
-      <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oBasisRequirements.h">
       <Filter>oBasis</Filter>
     </ClInclude>
@@ -313,9 +307,6 @@
       <Filter>oBasis\3D Math &amp; Graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oMath.h">
-      <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oLinearAlgebra.h">
       <Filter>oBasis\3D Math &amp; Graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oAirKeyboard.h">
@@ -435,9 +426,6 @@
       <Filter>Source\Serialization</Filter>
     </ClCompile>
     <ClCompile Include="oMath.cpp">
-      <Filter>Source\3D Math &amp; Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="oLinearAlgebra.cpp">
       <Filter>Source\3D Math &amp; Graphics</Filter>
     </ClCompile>
     <ClCompile Include="oAirKeyboard.cpp">

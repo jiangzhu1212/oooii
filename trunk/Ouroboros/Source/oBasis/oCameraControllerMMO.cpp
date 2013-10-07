@@ -23,9 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oCameraControllerMMO.h>
-#include <oBasis/oEye.h>
 #include <oBasis/oGUI.h>
 #include <oBasis/oRefCount.h>
+#include <oCompute/eye.h>
 
 struct oCameraControllerMMOImpl : oCameraControllerMMO
 {
@@ -36,10 +36,10 @@ struct oCameraControllerMMOImpl : oCameraControllerMMO
 	int OnAction(const oGUI_ACTION_DESC& _Action) override;
 	void Tick() override { }
 	void OnLostCapture() override;
-	void SetView(const float4x4& _View) override { Eye.SetView(_View); }
+	void SetView(const float4x4& _View) override { Eye.view(_View); }
 	float4x4 GetView(float _DeltaTime = 0.0f) override;
-	void SetLookAt(const float3& _LookAt) override { Eye.SetLookAt(_LookAt); }
-	float3 GetLookAt() const override { return Eye.GetLookAt(); }
+	void SetLookAt(const float3& _LookAt) override { Eye.lookat(_LookAt); }
+	float3 GetLookAt() const override { return Eye.lookat(); }
 	void SetDesc(const oCAMERA_CONTROLLER_MMO_DESC& _Desc) override { Desc = _Desc; }
 	void GetDesc(oCAMERA_CONTROLLER_MMO_DESC* _pDesc) const override { *_pDesc = Desc; }
 
@@ -50,7 +50,7 @@ private:
 	std::array<bool, oCAMERA_CONTROLLER_MMO_DESC::NUM_CONTROLS> KeyStates;
 	float3 PointerPosition;
 	float3 LastPointerPosition;
-	oEye Eye;
+	ouro::eye Eye;
 	bool WasRotating;
 
 private:
@@ -148,7 +148,7 @@ void oCameraControllerMMOImpl::UpdateRotation(float _DeltaTime)
 	else if (KeyStates[oCAMERA_CONTROLLER_MMO_DESC::ROLL_RIGHT])
 		RotationDelta.z -= ScaledRotationSpeed.z;
 
-	Eye.Rotate(RotationDelta);
+	Eye.rotate(RotationDelta);
 }
 
 void oCameraControllerMMOImpl::UpdateTranslation(float _DeltaTime)
@@ -167,7 +167,7 @@ void oCameraControllerMMOImpl::UpdateTranslation(float _DeltaTime)
 	if (!ouro::equal(Translation, float3(0.0f)))
 	{
 		Translation = normalize(Translation) * ScaledTranslationSpeed;
-		Eye.Translate(Translation);
+		Eye.translate(Translation);
 	}
 }
 
@@ -178,5 +178,5 @@ float4x4 oCameraControllerMMOImpl::GetView(float _DeltaTime)
 		UpdateRotation(_DeltaTime);
 		UpdateTranslation(_DeltaTime);
 	}
-	return Eye.GetView();
+	return Eye.view();
 }

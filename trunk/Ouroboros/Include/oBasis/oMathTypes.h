@@ -37,8 +37,8 @@
 #include <oCompute/oPlane.h>
 #include <oCompute/oQuaternion.h>
 #include <oCompute/oSphere.h>
+#include <oCompute/linear_algebra.h>
 #include <oBasis/oTypes.h>
-#include <oBasis/oLinearAlgebra.h>
 
 typedef TVEC2<char> char2; typedef TVEC2<uchar> uchar2;
 typedef TVEC3<char> char3; typedef TVEC3<uchar> uchar3;

@@ -28,6 +28,8 @@
 const float SCALE_CAP_OFFSET = 0.1f;
 const float SCALE_CAP_SCALE = 0.001f;
 
+using namespace ouro;
+
 oManipulatorScale::oManipulatorScale(const DESC& _Desc, bool *_pSuccess) : oManipulatorBase(_Desc, _pSuccess)
 {
 	if(!(*_pSuccess)) //base failed to construct
@@ -59,7 +61,7 @@ float3 oManipulatorScale::CalcScale(float3 _axis)
 {
 	float4x4 WorldRotation = oIDENTITY4x4;
 	if(Desc.Mode == DESC::OBJECT)
-		WorldRotation = oCreateRotation(oExtractRotation(World));
+		WorldRotation = make_rotation(extract_rotation(World));
 
 	float4 nearPlane = InvProj*float4(0,0,0,1);
 	nearPlane /= nearPlane.w; //near plane will now be in z
@@ -146,7 +148,7 @@ void oManipulatorScale::CalcCap(AXIS _Axis, float4 vert, const float4x4 &_capRot
 
 	UnProject(vert);
 
-	CapTransforms[_Axis] = _capRotation*oCreateScale(SCALE_CAP_SCALE)*oCreateTranslation(vert.xyz());
+	CapTransforms[_Axis] = _capRotation*make_scale(SCALE_CAP_SCALE)*make_translation(vert.xyz());
 }
 
 void oManipulatorScale::UpdateImpl()
@@ -165,7 +167,7 @@ void oManipulatorScale::UpdateImpl()
 			axis *= axesMask[PickAxis];
 			axis += axesAdd[PickAxis];
 
-			Transform = oCreateScale(axis);
+			Transform = make_scale(axis);
 		}
 		else if(PickAxis == SCREEN)
 		{
@@ -173,7 +175,7 @@ void oManipulatorScale::UpdateImpl()
 			float3 moveY = CalcScale(axes[Y]);
 			float3 moveZ = CalcScale(axes[Z]);
 			float avg = (moveX.x + moveY.y + moveZ.z)/3;
-			Transform = oCreateScale(float3(avg,avg,avg));
+			Transform = make_scale(float3(avg,avg,avg));
 		}
 	}
 	
@@ -197,10 +199,10 @@ void oManipulatorScale::UpdateImpl()
 	Clipped[Y] = CalcGeometry(Y);
 	Clipped[Z] = CalcGeometry(Z);
 		
-	float4x4 capXRot = oCreateRotation(radians(static_cast<float>(90.0)), float3(0,1,0));
+	float4x4 capXRot = make_rotation(radians(static_cast<float>(90.0)), float3(0,1,0));
 	if(Desc.Mode == DESC::OBJECT)
 		capXRot = capXRot * WorldRotation;
-	float4x4 capYRot = oCreateRotation(radians(static_cast<float>(-90.0)), float3(1,0,0));
+	float4x4 capYRot = make_rotation(radians(static_cast<float>(-90.0)), float3(1,0,0));
 	if(Desc.Mode == DESC::OBJECT)
 		capYRot = capYRot * WorldRotation;
 	float4x4 capZRot = oIDENTITY4x4;

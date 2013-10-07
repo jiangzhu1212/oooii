@@ -557,9 +557,9 @@ namespace RectDetails
 		static const unsigned int kOutlineIndices[8] = { 0,1, 2,3, 0,2, 1,3 };
 		static const unsigned int kTriIndices[6] = { 0,2,1, 1,2,3 };
 
-		float4x4 m = oCreateScale(float3(_Desc.Width, _Desc.Height, 1.0f));
+		float4x4 m = make_scale(float3(_Desc.Width, _Desc.Height, 1.0f));
 		if (_Desc.Centered)
-			m = oCreateTranslation(float3(-0.5f, -0.5f, 0.0f)) * m;
+			m = make_translation(float3(-0.5f, -0.5f, 0.0f)) * m;
 
 		size_t baseVertexIndex = _pGeometry->Positions.size();
 		oFORI(i, kCorners)
@@ -624,7 +624,7 @@ bool oGeometryFactory_Impl::CreateBox(const BOX_DESC& _Desc, const oGeometry::LA
 
 	if (_Desc.FaceType == oGeometry::OUTLINE)
 	{
-		const float4x4 m = oCreateTranslation(float3(_Desc.Bounds.center()));
+		const float4x4 m = make_translation(float3(_Desc.Bounds.center()));
 		float3 positions[] =
 		{
 			float3(-dim.x/2.0f,-dim.y/2.0f,-dim.z/2.0f), //left bottom back
@@ -660,17 +660,17 @@ bool oGeometryFactory_Impl::CreateBox(const BOX_DESC& _Desc, const oGeometry::LA
 	else
 	{
 		float4x4 tx[6];
-		tx[0] = oCalcPlaneMatrix(float4(-1.0f, 0.0f, 0.0f, s*dim.x/2.0f));
-		tx[1] = oCalcPlaneMatrix(float4(1.0f, 0.0f, 0.0f, s*dim.x/2.0f));
-		tx[2] = oCalcPlaneMatrix(float4(0.0f, 1.0f, 0.0f, s*dim.y/2.0f));
-		tx[3] = oCalcPlaneMatrix(float4(0.0f, -1.0f, 0.0f, s*dim.y/2.0f));
-		tx[4] = oCalcPlaneMatrix(float4(0.0f, 0.0f, 1.0f, s*dim.z/2.0f));
-		tx[5] = oCalcPlaneMatrix(float4(0.0f, 0.0f, -1.0f, s*dim.z/2.0f));
+		tx[0] = make_plane(float4(-1.0f, 0.0f, 0.0f, s*dim.x/2.0f));
+		tx[1] = make_plane(float4(1.0f, 0.0f, 0.0f, s*dim.x/2.0f));
+		tx[2] = make_plane(float4(0.0f, 1.0f, 0.0f, s*dim.y/2.0f));
+		tx[3] = make_plane(float4(0.0f, -1.0f, 0.0f, s*dim.y/2.0f));
+		tx[4] = make_plane(float4(0.0f, 0.0f, 1.0f, s*dim.z/2.0f));
+		tx[5] = make_plane(float4(0.0f, 0.0f, -1.0f, s*dim.z/2.0f));
 
 		float boxW[6] = { dim.z, dim.z, dim.x, dim.x, dim.x, dim.x, };
 		float boxH[6] = { dim.y, dim.y, dim.z, dim.z, dim.y, dim.y, };
 
-		const float4x4 m = oCreateTranslation(float3(_Desc.Bounds.center()));
+		const float4x4 m = make_translation(float3(_Desc.Bounds.center()));
 		for (unsigned int i = 0; i < 6; i++)
 		{
 			RECT_DESC d;
@@ -1386,7 +1386,7 @@ bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeomet
 		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : oInvalid))
 			return false;
 
-		float4x4 m = oCreateRotation(radians(90.0f), float3(1.0f, 0.0f, 0.0f));
+		float4x4 m = make_rotation(radians(90.0f), float3(1.0f, 0.0f, 0.0f));
 		pGeometry->Transform(m);
 
 		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : oInvalid))
@@ -1687,7 +1687,7 @@ bool oGeometryFactory_Impl::CreateTorus(const TORUS_DESC& _Desc, const oGeometry
 		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : oInvalid))
 			return false;
 
-		float4x4 m = oCreateRotation(radians(90.0f), float3(1.0f, 0.0f, 0.0f));
+		float4x4 m = make_rotation(radians(90.0f), float3(1.0f, 0.0f, 0.0f));
 		pGeometry->Transform(m);
 
 		//small circles
@@ -1695,25 +1695,25 @@ bool oGeometryFactory_Impl::CreateTorus(const TORUS_DESC& _Desc, const oGeometry
 		unsigned int nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
 		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : oInvalid))
 			return false;
-		m = oCreateTranslation(float3(kCenterRadius, 0.0f, 0.0f));
+		m = make_translation(float3(kCenterRadius, 0.0f, 0.0f));
 		pGeometry->Transform(m,nextCircleIndex);
 
 		nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
 		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : oInvalid))
 			return false;
-		m = oCreateTranslation(float3(-kCenterRadius, 0.0f, 0.0f));
+		m = make_translation(float3(-kCenterRadius, 0.0f, 0.0f));
 		pGeometry->Transform(m,nextCircleIndex);
 
 		nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
 		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : oInvalid))
 			return false;
-		m = oCreateRotation(radians(90.0f), float3(0.0f, 1.0f, 0.0f)) * oCreateTranslation(float3(0.0f, 0.0f, kCenterRadius));
+		m = make_rotation(radians(90.0f), float3(0.0f, 1.0f, 0.0f)) * make_translation(float3(0.0f, 0.0f, kCenterRadius));
 		pGeometry->Transform(m,nextCircleIndex);
 
 		nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
 		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : oInvalid))
 			return false;
-		m = oCreateRotation(radians(90.0f), float3(0.0f, 1.0f, 0.0f)) * oCreateTranslation(float3(0.0f, 0.0f, -kCenterRadius));
+		m = make_rotation(radians(90.0f), float3(0.0f, 1.0f, 0.0f)) * make_translation(float3(0.0f, 0.0f, -kCenterRadius));
 		pGeometry->Transform(m,nextCircleIndex);
 	}
 	else
@@ -1917,7 +1917,7 @@ bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LA
 
 	if (!ouro::equal(s, 1.0f))
 	{
-		float4x4 scale = oCreateScale(s);
+		float4x4 scale = make_scale(s);
 		pGeometry->Transform(scale);
 	}
 

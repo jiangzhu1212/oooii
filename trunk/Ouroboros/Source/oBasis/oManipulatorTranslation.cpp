@@ -29,6 +29,8 @@ const float TRANSLATION_CAP_OFFSET = 0.1f;
 const float TRANSLATION_CAP_SCALE  = 0.001f;
 const float TRANSLATION_CENTER_SCALE = 0.25f;
 
+using namespace ouro;
+
 oManipulatorTranslation::oManipulatorTranslation(const DESC& _Desc, bool *_pSuccess) : oManipulatorBase(_Desc, _pSuccess)
 {
 	if(!(*_pSuccess)) //base failed to construct
@@ -126,7 +128,7 @@ void oManipulatorTranslation::CalcCap(AXIS _Axis, float4 vert, const float4x4 &_
 
 	UnProject(vert);
 
-	CapTransforms[_Axis] = _capRotation*oCreateScale(TRANSLATION_CAP_SCALE)*oCreateTranslation(vert.xyz());
+	CapTransforms[_Axis] = _capRotation*make_scale(TRANSLATION_CAP_SCALE)*make_translation(vert.xyz());
 }
 
 void oManipulatorTranslation::UpdateImpl()
@@ -143,14 +145,14 @@ void oManipulatorTranslation::UpdateImpl()
 			if(Desc.Mode == DESC::OBJECT)
 				axis = WorldRotation*axis;
 
-			Transform = oCreateTranslation(CalcTranslation(axis.xyz()));
+			Transform = make_translation(CalcTranslation(axis.xyz()));
 		}
 		else if(PickAxis == SCREEN)
 		{
 			float3 moveX = CalcTranslation(axes[X]);
 			float3 moveY = CalcTranslation(axes[Y]);
 			float3 moveZ = CalcTranslation(axes[Z]);
-			Transform = oCreateTranslation((moveX+moveY+moveZ));
+			Transform = make_translation((moveX+moveY+moveZ));
 		}
 	}
 
@@ -173,10 +175,10 @@ void oManipulatorTranslation::UpdateImpl()
 	Clipped[Y] = CalcGeometry(Y);
 	Clipped[Z] = CalcGeometry(Z);
 
-	float4x4 capXRot = oCreateRotation(radians(static_cast<float>(90.0)), float3(0,1,0));
+	float4x4 capXRot = make_rotation(radians(static_cast<float>(90.0)), float3(0,1,0));
 	if(Desc.Mode == DESC::OBJECT)
 		capXRot = capXRot * WorldRotation;
-	float4x4 capYRot = oCreateRotation(radians(static_cast<float>(-90.0)), float3(1,0,0));
+	float4x4 capYRot = make_rotation(radians(static_cast<float>(-90.0)), float3(1,0,0));
 	if(Desc.Mode == DESC::OBJECT)
 		capYRot = capYRot * WorldRotation;
 	float4x4 capZRot = oIDENTITY4x4;

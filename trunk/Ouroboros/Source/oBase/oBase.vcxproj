@@ -138,6 +138,7 @@
     <ClInclude Include="..\..\Include\oBase\json.h" />
     <ClInclude Include="..\..\Include\oBase\macros.h" />
     <ClInclude Include="..\..\Include\oBase\memory.h" />
+    <ClInclude Include="..\..\Include\oBase\moving_average.h" />
     <ClInclude Include="..\..\Include\oBase\murmur3.h" />
     <ClInclude Include="..\..\Include\oBase\operators.h" />
     <ClInclude Include="..\..\Include\oBase\opttok.h" />

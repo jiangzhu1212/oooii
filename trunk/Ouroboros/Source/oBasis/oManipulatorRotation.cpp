@@ -30,7 +30,7 @@ using namespace ouro;
 
 oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess) 
 	: oManipulatorBase(_Desc, _pSuccess)
-	, Arcball(oARCBALL_CONSTRAINT_NONE)
+	, Arcball(ouro::arcball::none)
 {
 	if(!(*_pSuccess)) //base failed to construct
 		return;
@@ -81,7 +81,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 
 	for(unsigned int i = 0;i < gdesc.NumIndices;i++)
 	{
-		LineGeometry[i] = float4(oCreateScale(RotationScale)*gmapped.pPositions[gmapped.pIndices[i]],1.0f);
+		LineGeometry[i] = float4(make_scale(RotationScale)*gmapped.pPositions[gmapped.pIndices[i]],1.0f);
 	}
 
 	CircleGeometry->UnmapConst();
@@ -104,7 +104,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 
 	for(unsigned int i = 0;i < gdesc.NumVertices;i++)
 	{
-		AngleGeometryBase[i] = float4(oCreateScale(RotationScale)*gmapped.pPositions[i],1.0f);
+		AngleGeometryBase[i] = float4(make_scale(RotationScale)*gmapped.pPositions[i],1.0f);
 	}
 
 	CircleGeometry->UnmapConst();
@@ -320,28 +320,28 @@ void oManipulatorRotation::UpdateImpl()
 		switch (PickAxis)
 		{
 		case X:
-			Transform = oCreateRotation(angle,float3(1,0,0));
+			Transform = make_rotation(angle,float3(1,0,0));
 			break;
 		case Y:
-			Transform = oCreateRotation(angle,float3(0,-1,0));
+			Transform = make_rotation(angle,float3(0,-1,0));
 			break;
 		case Z:
-			Transform = oCreateRotation(angle,float3(0,0,1));
+			Transform = make_rotation(angle,float3(0,0,1));
 			break;
 		case SCREEN:
 			{
 				if(Desc.Mode == DESC::OBJECT)
-					Transform = oCreateRotation(angle,invert(WorldRotation)*invert(ViewRot)*float3(0,0,1));
+					Transform = make_rotation(angle,invert(WorldRotation)*invert(ViewRot)*float3(0,0,1));
 				else
-					Transform = oCreateRotation(angle,invert(ViewRot)*float3(0,0,1));
+					Transform = make_rotation(angle,invert(ViewRot)*float3(0,0,1));
 			}
 			break;
 		case FREE:
 			{
 				// this delta probably needs to be scaled
 				float2 delta = CurrentTranslation - StartTranslation;
-				Arcball.Rotate(delta);
-				Transform = Arcball.GetView();
+				Arcball.rotate(delta);
+				Transform = Arcball.view();
 			}
 			break;
 		}
@@ -352,10 +352,10 @@ void oManipulatorRotation::UpdateImpl()
 	else
 		WorldTransViewProj = WorldTranslation*View*Proj;
 	
-	float4x4 xTrans = oCreateRotation(radians(static_cast<float>(90.0)),float3(0,1,0))*WorldTransViewProj;
-	float4x4 yTrans = oCreateRotation(radians(static_cast<float>(90.0)),float3(1,0,0))*WorldTransViewProj;
+	float4x4 xTrans = make_rotation(radians(static_cast<float>(90.0)),float3(0,1,0))*WorldTransViewProj;
+	float4x4 yTrans = make_rotation(radians(static_cast<float>(90.0)),float3(1,0,0))*WorldTransViewProj;
 	float4x4 zTrans = WorldTransViewProj;
-	float4x4 cTrans = invert(ViewRot)*oCreateScale(1.2f)*WorldTranslation*View*Proj;
+	float4x4 cTrans = invert(ViewRot)*make_scale(1.2f)*WorldTranslation*View*Proj;
 
 	Clipped[X] = CalcGeometry(X, xTrans);
 	Clipped[Y] = CalcGeometry(Y, yTrans);
@@ -371,10 +371,10 @@ void oManipulatorRotation::UpdateImpl()
 	switch(PickAxis)
 	{
 	case X:
-		clTrans = oCreateRotation(radians(static_cast<float>(90.0)),float3(0,1,0))*clTrans;
+		clTrans = make_rotation(radians(static_cast<float>(90.0)),float3(0,1,0))*clTrans;
 		break;
 	case Y:
-		clTrans = oCreateRotation(radians(static_cast<float>(90.0)),float3(1,0,0))*clTrans;
+		clTrans = make_rotation(radians(static_cast<float>(90.0)),float3(1,0,0))*clTrans;
 		break;
 	case Z:
 		clTrans = clTrans;
@@ -406,11 +406,11 @@ void oManipulatorRotation::UpdateImpl()
 	UnProject(Lines[Z]);
 	UnProject(Lines[SCREEN]);
 
-	xTrans = oCreateRotation(radians(static_cast<float>(90.0)),float3(0,0,1))*WorldTransViewProj;
+	xTrans = make_rotation(radians(static_cast<float>(90.0)),float3(0,0,1))*WorldTransViewProj;
 	yTrans = WorldTransViewProj;
-	zTrans = oCreateRotation(radians(static_cast<float>(90.0)),float3(1,0,0))*WorldTransViewProj;
-	cTrans = invert(ViewRot)*oCreateScale(1.2f)*oCreateRotation(radians(static_cast<float>(90.0)),float3(1,0,0))*WorldTranslation*View*Proj;
-	float4x4 aTrans = oCreateScale(1.0f)*WorldTranslation*ViewScale*ViewTrans*Proj;
+	zTrans = make_rotation(radians(static_cast<float>(90.0)),float3(1,0,0))*WorldTransViewProj;
+	cTrans = invert(ViewRot)*make_scale(1.2f)*make_rotation(radians(static_cast<float>(90.0)),float3(1,0,0))*WorldTranslation*View*Proj;
+	float4x4 aTrans = make_scale(1.0f)*WorldTranslation*ViewScale*ViewTrans*Proj;
 	CalcPickGeometry(PickGeometry[X],xTrans);
 	CalcPickGeometry(PickGeometry[Y],yTrans);
 	CalcPickGeometry(PickGeometry[Z],zTrans);

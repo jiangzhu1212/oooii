@@ -77,7 +77,7 @@ template<typename T> static bool oEqualAtDepth(const TVEC4<T>& a, const TVEC4<T>
 
 static void test_hemisphere_vectors()
 {
-	float3x3 Rot = oCreateRotationHLSL((2.0f*oPIf)/3.0f, float3(0.0f, 0.0f, 1.0f));
+	float3x3 Rot = make_rotationHLSL((2.0f*oPIf)/3.0f, float3(0.0f, 0.0f, 1.0f));
 	float3 TargetAxis = float3(0.0f, 0.0f, 1.0f);
 
 	float3 Hemisphere3Gen[3];

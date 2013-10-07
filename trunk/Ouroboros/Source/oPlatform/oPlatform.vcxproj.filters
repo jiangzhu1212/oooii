@@ -222,9 +222,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oHTTPHandler.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oProcessStatsMonitor.h">
-      <Filter>Headers\Concurrency</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\all.h">
       <Filter>Headers</Filter>
     </ClInclude>

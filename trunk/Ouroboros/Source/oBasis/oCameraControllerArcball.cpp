@@ -23,9 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oCameraControllerArcball.h>
-#include <oBasis/oArcball.h>
 #include <oBasis/oGUI.h>
 #include <oBasis/oRefCount.h>
+#include <oCompute/arcball.h>
 
 struct oCameraControllerArcballImpl : oCameraControllerArcball
 {
@@ -36,10 +36,10 @@ struct oCameraControllerArcballImpl : oCameraControllerArcball
 	int OnAction(const oGUI_ACTION_DESC& _Action) override;
 	void Tick() override {} 
 	void OnLostCapture() override;
-	void SetView(const float4x4& _View) override { Arcball.SetView(_View); }
-	float4x4 GetView(float _DeltaTime = 0.0f) override { return Arcball.GetView(); }
-	void SetLookAt(const float3& _LookAt) override { Arcball.SetLookAt(_LookAt); }
-	float3 GetLookAt() const override { return Arcball.GetLookAt(); }
+	void SetView(const float4x4& _View) override { Arcball.view(_View); }
+	float4x4 GetView(float _DeltaTime = 0.0f) override { return Arcball.view(); }
+	void SetLookAt(const float3& _LookAt) override { Arcball.lookat(_LookAt); }
+	float3 GetLookAt() const override { return Arcball.lookat(); }
 	void SetDesc(const oCAMERA_CONTROLLER_ARCBALL_DESC& _Desc) override { Desc = _Desc; }
 	void GetDesc(oCAMERA_CONTROLLER_ARCBALL_DESC* _pDesc) const override { *_pDesc = Desc; }
 
@@ -52,14 +52,14 @@ private:
 	// transformation calculations because that's already relative. For mouse 
 	// wheel support - use PointerPosition.z as its own delta.
 	float2 LastPointerPosition;
-	oArcball Arcball;
+	ouro::arcball Arcball;
 };
 
 oCameraControllerArcballImpl::oCameraControllerArcballImpl(const oCAMERA_CONTROLLER_ARCBALL_DESC& _Desc, bool* _pSuccess)
 	: Desc(_Desc)
 	, PointerPosition(0.0f)
 	, LastPointerPosition(0.0f)
-	, Arcball(oARCBALL_CONSTRAINT_NONE)
+	, Arcball(ouro::arcball::none)
 {
 	*_pSuccess = false;
 	KeyStates.fill(false);
@@ -88,21 +88,21 @@ int oCameraControllerArcballImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 	if (KeyStates[oCAMERA_CONTROLLER_ARCBALL_DESC::ORBIT])
 	{
 		if (!WasOrbiting)
-			Arcball.BeginRotation();
+			Arcball.begin_rotation();
 
-		Arcball.Rotate(PointerPositionDelta * Desc.RotationSpeed);
+		Arcball.rotate(PointerPositionDelta * Desc.RotationSpeed);
 		Response |= oCAMERA_CONTROLLER_ROTATING_YAW|oCAMERA_CONTROLLER_ROTATING_PITCH|oCAMERA_CONTROLLER_ROTATING_AROUND_COI|oCAMERA_CONTROLLER_LOCK_POINTER;
 	}
 
 	else if (KeyStates[oCAMERA_CONTROLLER_ARCBALL_DESC::PAN])
 	{
-		Arcball.Pan(PointerPositionDelta * Desc.PanSpeed);
+		Arcball.pan(PointerPositionDelta * Desc.PanSpeed);
 		Response |= oCAMERA_CONTROLLER_TRANSLATING_X|oCAMERA_CONTROLLER_TRANSLATING_Y|oCAMERA_CONTROLLER_LOCK_POINTER;
 	}
 
 	else if (KeyStates[oCAMERA_CONTROLLER_ARCBALL_DESC::DOLLY])
 	{
-		Arcball.Dolly(PointerPositionDelta * Desc.DollySpeed);
+		Arcball.dolly(PointerPositionDelta * Desc.DollySpeed);
 		Response |= oCAMERA_CONTROLLER_TRANSLATING_Z|oCAMERA_CONTROLLER_LOCK_POINTER;
 	}
 
@@ -114,7 +114,7 @@ int oCameraControllerArcballImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 		if (!ouro::equal(PointerPosition.z, 0.0f))
 		{
 			float2 delta(PointerPosition.z, 0.0f);
-			Arcball.Dolly(delta * 0.05f * Desc.DollySpeed);
+			Arcball.dolly(delta * 0.05f * Desc.DollySpeed);
 			Response |= oCAMERA_CONTROLLER_TRANSLATING_Z;
 		}
 	}

@@ -25,97 +25,135 @@
 // A small class that spawns a thread to monitor CPU usage by the calling 
 // process.
 #pragma once
-#ifndef oProcessStatsMonitor_h
-#define oProcessStatsMonitor_h
+#ifndef oCore_process_stats_monitor_h
+#define oCore_process_stats_monitor_h
 
-#include <oBasis/oMath.h>
+#include <oCore/debugger.h>
+#include <oCore/process.h>
 #include <oBase/backoff.h>
+#include <oBase/moving_average.h>
 #include <oStd/mutex.h>
 #include <oStd/thread.h>
-#include <oCore/process.h>
-#include <oConcurrency/oConcurrency.h>
 
-struct oPROCESS_CPU_STATS
-{
-	float AverageUsage;
-	float LowUsage;
-	float HighUsage;
-};
+namespace ouro {
 
-class oProcessStatsMonitor
+class process_stats_monitor
 {
 public:
-	inline oProcessStatsMonitor(ouro::process::id _ProcessID = ouro::process::id(), oStd::chrono::milliseconds _PollRate = oStd::chrono::milliseconds(1000))
-		: PID(_ProcessID == ouro::process::id() ? ouro::this_process::get_id() : _ProcessID)
-		, Done(true)
-		, PollRate(_PollRate)
+	struct info
 	{
-		Reset();
-		Thread = std::move(oStd::thread(&oProcessStatsMonitor::Proc, this));
-		ouro::backoff bo;
+		info()
+			: average_usage(0.0f)
+			, low_usage(0.0f)
+			, high_usage(0.0f)
+		{}
+
+		float average_usage;
+		float low_usage;
+		float high_usage;
+	};
+
+	inline process_stats_monitor(process::id _ProcessID = process::id()
+		, oStd::chrono::milliseconds _PollRate = oStd::chrono::milliseconds(1000))
+			: PID(_ProcessID == process::id() ? this_process::get_id() : _ProcessID)
+			, Done(true)
+			, PollRate(_PollRate)
+	{
+		reset();
+		Thread = std::move(oStd::thread(&process_stats_monitor::thread_proc, this));
+		backoff bo;
 		while (Done)
 			bo.pause();
 	}
 
-	inline ~oProcessStatsMonitor()
+	inline process_stats_monitor(process_stats_monitor&& _That)
 	{
-		Join();
+		operator=(std::move(_That));
 	}
 
-	inline void GetStats(oPROCESS_CPU_STATS* _pStats) const
+	inline ~process_stats_monitor()
+	{
+		join();
+	}
+
+	inline process_stats_monitor& operator=(process_stats_monitor&& _That)
+	{
+		if (this != &_That)
+		{
+			Stats = std::move(_That.Stats);
+			PreviousSystemTime = std::move(_That.PreviousSystemTime);
+			PreviousProcessTime = std::move(_That.PreviousProcessTime);
+			MA = std::move(_That.MA);
+			PollRate = std::move(_That.PollRate);
+			PID = std::move(_That.PID);
+			Done = std::move(_That.Done);
+			Thread = std::move(_That.Thread);
+		}
+		return *this;
+	}
+
+	inline info get_info() const
 	{
 		oStd::shared_lock<oStd::shared_mutex> lock(const_cast<oStd::shared_mutex&>(StatsMutex));
-		*_pStats = Stats;
+		return Stats;
 	}
 
-	inline void Reset()
+	inline void reset()
 	{
-		Stats.AverageUsage = 0.0f;
-		Stats.LowUsage = 100.0f;
-		Stats.HighUsage = 0.0f;
-		MA = oMovingAverage<double>();
+		Stats.average_usage = 0.0f;
+		Stats.low_usage = 100.0f;
+		Stats.high_usage = 0.0f;
+		MA = moving_average<double>();
 		PreviousSystemTime = 0;
 		PreviousProcessTime = 0;
 	}
 
 private:
-	inline void Proc()
+	inline void thread_proc()
 	{
-		oConcurrency::begin_thread("oPrcessStatsMonitor");
+		debugger::thread_name("process_stats_monitor");
 		Done = false;
 
-		ouro::process::cpu_usage(PID, &PreviousSystemTime, &PreviousProcessTime);
+		process::cpu_usage(PID, &PreviousSystemTime, &PreviousProcessTime);
 		do
 		{
 			oStd::this_thread::sleep_for(PollRate);
-			double usage = ouro::process::cpu_usage(PID, &PreviousSystemTime, &PreviousProcessTime);
+			double usage = process::cpu_usage(PID, &PreviousSystemTime, &PreviousProcessTime);
 			float usagef = static_cast<float>(usage);
-			float avg = static_cast<float>(MA.Calc(usage));
+			float avg = static_cast<float>(MA.calculate(usage));
 			oStd::lock_guard<oStd::shared_mutex> lock(StatsMutex);
-			Stats.AverageUsage = avg;
-			Stats.LowUsage = __min(Stats.LowUsage, usagef);
-			Stats.HighUsage = __max(Stats.HighUsage, usagef);
+			Stats.average_usage = avg;
+			Stats.low_usage = __min(Stats.low_usage, usagef);
+			Stats.high_usage = __max(Stats.high_usage, usagef);
 
 		} while (!Done);
-
-		oConcurrency::end_thread();
 	}
 
-	inline void Join()
+	inline bool joinable() const
 	{
-		Done = true;
-		Thread.join();
+		return Thread.joinable();
+	}
+
+	inline void join()
+	{
+		if (joinable())
+		{
+			Done = true;
+			Thread.join();
+		}
 	}
 
 	oStd::shared_mutex StatsMutex;
-	oPROCESS_CPU_STATS Stats;
+	info Stats;
 	unsigned long long PreviousSystemTime;
 	unsigned long long PreviousProcessTime;
-	oMovingAverage<double> MA;
+	moving_average<double> MA;
 	oStd::chrono::milliseconds PollRate;
-	ouro::process::id PID;
+	process::id PID;
 	bool Done;
 	oStd::thread Thread;
 };
+
+} // namespace ouro
 
 #endif

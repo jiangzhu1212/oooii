@@ -63,6 +63,15 @@
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\linear_algebra.h">
+      <Filter>oCompute</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\arcball.h">
+      <Filter>oCompute</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\eye.h">
+      <Filter>oCompute</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -71,5 +80,13 @@
     <ClCompile Include="stringize.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="linear_algebra.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="linear_algebra.inl">
+      <Filter>Source</Filter>
+    </None>
   </ItemGroup>
 </Project>

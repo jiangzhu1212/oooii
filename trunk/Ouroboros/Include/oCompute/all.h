@@ -29,6 +29,9 @@
 #endif
 #ifndef oCompute_h
 #define oCompute_h
+#include <oCompute/arcball.h>
+#include <oCompute/eye.h>
+#include <oCompute/linear_algebra.h>
 #include <oCompute/oComputeColor.h>
 #include <oCompute/oComputeConstants.h>
 #include <oCompute/oComputeFilter.h>

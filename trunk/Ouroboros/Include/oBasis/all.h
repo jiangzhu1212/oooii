@@ -30,7 +30,6 @@
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oAllocator.h>
 #include <oBasis/oAllocatorTLSF.h>
-#include <oBasis/oArcball.h>
 #include <oBasis/oBasisRequirements.h>
 #include <oBasis/oBuffer.h>
 #include <oBasis/oBufferPool.h>
@@ -46,7 +45,6 @@
 #include <oBasis/oDispatchQueueGlobal.h>
 #include <oBasis/oDispatchQueuePrivate.h>
 #include <oBasis/oError.h>
-#include <oBasis/oEye.h>
 #include <oBasis/oFilterChain.h>
 #include <oBasis/oGeometry.h>
 #include <oBasis/oGUI.h>

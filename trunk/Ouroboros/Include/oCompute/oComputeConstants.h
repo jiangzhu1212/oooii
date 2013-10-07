@@ -92,7 +92,7 @@ static const quatf oIDENTITYQ = quatf(0.0f, 0.0f, 0.0f, 1.0f);
 	static const double3x3 oIDENTITY3x3D = double3x3(oXAXIS3, oYAXIS3, oZAXIS3);
 	static const double4x4 oIDENTITY4x4D = double4x4(oXAXIS4, oYAXIS4, oZAXIS4, oWAXIS4);
 	static const quatd oIDENTITYQD = quatd(0.0, 0.0, 0.0, 1.0);
-	#endif
+#endif
 
 // _____________________________________________________________________________
 // Other constants

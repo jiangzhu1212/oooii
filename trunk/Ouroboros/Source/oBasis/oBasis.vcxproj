@@ -31,7 +31,6 @@
     <ClInclude Include="..\..\Include\oBasis\oAirKeyboard.h" />
     <ClInclude Include="..\..\Include\oBasis\oAllocator.h" />
     <ClInclude Include="..\..\Include\oBasis\oAllocatorTLSF.h" />
-    <ClInclude Include="..\..\Include\oBasis\oArcball.h" />
     <ClInclude Include="..\..\Include\oBasis\oBasisRequirements.h" />
     <ClInclude Include="..\..\Include\oBasis\oBuffer.h" />
     <ClInclude Include="..\..\Include\oBasis\oBufferPool.h" />
@@ -50,7 +49,6 @@
     <ClInclude Include="..\..\Include\oBasis\oDispatchQueuePrivate.h" />
     <ClInclude Include="..\..\Include\oBasis\oEasing.h" />
     <ClInclude Include="..\..\Include\oBasis\oError.h" />
-    <ClInclude Include="..\..\Include\oBasis\oEye.h" />
     <ClInclude Include="..\..\Include\oBasis\oFilterChain.h" />
     <ClInclude Include="..\..\Include\oBasis\oGeometry.h" />
     <ClInclude Include="..\..\Include\oBasis\oGPUConcepts.h" />
@@ -65,7 +63,6 @@
     <ClInclude Include="..\..\Include\oBasis\oJSONSerialize.h" />
     <ClInclude Include="..\..\Include\oBasis\oLeakTracker.h" />
     <ClInclude Include="..\..\Include\oBasis\oLibc.h" />
-    <ClInclude Include="..\..\Include\oBasis\oLinearAlgebra.h" />
     <ClInclude Include="..\..\Include\oBasis\oLockedPointer.h" />
     <ClInclude Include="..\..\Include\oBasis\oLockThis.h" />
     <ClInclude Include="..\..\Include\oBasis\oLZMA.h" />
@@ -130,7 +127,6 @@
     <ClCompile Include="oInputMapper.cpp" />
     <ClCompile Include="oJSONSerialize.cpp" />
     <ClCompile Include="oLeakTracker.cpp" />
-    <ClCompile Include="oLinearAlgebra.cpp" />
     <ClCompile Include="oLZMA.cpp" />
     <ClCompile Include="oManipulator.cpp" />
     <ClCompile Include="oManipulatorBase.cpp" />

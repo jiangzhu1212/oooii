@@ -25,8 +25,8 @@
 #include <oSurface/resize.h>
 #include <oBase/fixed_vector.h>
 #include <oBase/memory.h>
-#include <oBasis/oMath.h>
 #include <vector>
+#include <float.h>
 
 namespace ouro {
 
@@ -45,6 +45,17 @@ const char* as_string(const surface::filter::value& _Filter)
 }
 
 	namespace surface {
+
+template<typename T> T sinc(T _Value)
+{
+	if (abs(_Value) > std::numeric_limits<T>::epsilon())
+	{
+		static const double PI = 3.1415926535897932384626433832795f;
+		_Value *= T(PI);
+		return sin(_Value) / _Value;
+	} 
+	return T(1);
+}
 
 struct filter_point
 {
@@ -95,7 +106,7 @@ protected:
 		const float invWidth = 1.0f/Width;
 		float absOffset = abs(_Offset);
 		if (absOffset <= Width)
-			return oSinc(_Offset) * oSinc(_Offset*invWidth);
+			return sinc(_Offset) * sinc(_Offset*invWidth);
 		else
 			return 0.0f;
 	}
@@ -110,7 +121,7 @@ protected:
 		const float invWidth = 1.0f/Width;
 		float absOffset = abs(_Offset);
 		if (absOffset <= Width)
-			return oSinc(_Offset) * oSinc(_Offset*invWidth);
+			return sinc(_Offset) * sinc(_Offset*invWidth);
 		else
 			return 0.0f;
 	}
@@ -200,8 +211,8 @@ void resize_horizontal(const info& _SourceInfo, const const_mapped_subresource& 
 
 	for (int y = 0; y < _DestinationInfo.dimensions.y; y++)
 	{
-		const uchar* oRESTRICT srcRow = (uchar*)byte_add(srcData, y*_Source.row_pitch);
-		uchar* oRESTRICT dstRow = (uchar*)byte_add(dstData, y*_pDestination->row_pitch);
+		const unsigned char* oRESTRICT srcRow = (unsigned char*)byte_add(srcData, y*_Source.row_pitch);
+		unsigned char* oRESTRICT dstRow = (unsigned char*)byte_add(dstData, y*_pDestination->row_pitch);
 
 		for (int x = 0; x < _DestinationInfo.dimensions.x; x++)
 		{
@@ -220,7 +231,7 @@ void resize_horizontal(const info& _SourceInfo, const const_mapped_subresource& 
 			}
 			
 			for (int i = 0; i < ELEMENT_SIZE; i++)
-				dstRow[x*ELEMENT_SIZE + i] = static_cast<uchar>(clamp(result[i], 0.0f, 255.0f));
+				dstRow[x*ELEMENT_SIZE + i] = static_cast<unsigned char>(clamp(result[i], 0.0f, 255.0f));
 		}
 	}
 }
@@ -234,12 +245,12 @@ void resize_vertical(const info& _SourceInfo, const const_mapped_subresource& _S
 	FILTER filter;
 	filter.InitFilter(_SourceInfo.dimensions.y, _DestinationInfo.dimensions.y);
 
-	const uchar* oRESTRICT srcData = (uchar*)_Source.data;
-	uchar* oRESTRICT dstData = (uchar*)_pDestination->data;
+	const unsigned char* oRESTRICT srcData = (unsigned char*)_Source.data;
+	unsigned char* oRESTRICT dstData = (unsigned char*)_pDestination->data;
 
 	for(int y = 0; y < _DestinationInfo.dimensions.y; y++)
 	{
-		uchar* oRESTRICT dstRow = byte_add(dstData, y*_pDestination->row_pitch);
+		unsigned char* oRESTRICT dstRow = byte_add(dstData, y*_pDestination->row_pitch);
 
 		for(int x = 0; x < _DestinationInfo.dimensions.x; ++x)
 		{
@@ -252,7 +263,7 @@ void resize_vertical(const info& _SourceInfo, const const_mapped_subresource& _S
 
 			for (int srcY = filterEntry.Left;srcY <= filterEntry.Right; ++srcY)
 			{
-				const uchar* oRESTRICT srcElement = byte_add(srcData, srcY*_Source.row_pitch + x*ELEMENT_SIZE);
+				const unsigned char* oRESTRICT srcElement = byte_add(srcData, srcY*_Source.row_pitch + x*ELEMENT_SIZE);
 
 				for (int i = 0;i < ELEMENT_SIZE; ++i)
 				{
@@ -263,7 +274,7 @@ void resize_vertical(const info& _SourceInfo, const const_mapped_subresource& _S
 			}
 			for (int i = 0;i < ELEMENT_SIZE; ++i)
 			{
-				dstRow[x*ELEMENT_SIZE + i] = static_cast<uchar>(clamp(result[i], 0.0f, 255.0f));
+				dstRow[x*ELEMENT_SIZE + i] = static_cast<unsigned char>(clamp(result[i], 0.0f, 255.0f));
 			}
 		}
 	}

@@ -80,5 +80,8 @@
     <ClInclude Include="..\..\Include\oCore\all.h">
       <Filter>oCore</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\process_stats_monitor.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

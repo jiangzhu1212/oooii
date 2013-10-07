@@ -28,14 +28,16 @@
 #include <oBasis/oError.h>
 #include "oBasisTestCommon.h"
 
+using namespace ouro;
+
 #define oTESTB2(test) do { if (!(test)) return false; } while(false)
 
 bool Test_oEqual()
 {
-	oTESTB(!ouro::equal(1.0f, 1.000001f), "ouro::equal() failed");
-	oTESTB(ouro::equal(1.0f, 1.000001f, 8), "ouro::equal() failed");
-	oTESTB(!ouro::equal(2.0, 1.99999999999997), "ouro::equal failed");
-	oTESTB(ouro::equal(2.0, 1.99999999999997, 135), "ouro::equal failed");
+	oTESTB(!equal(1.0f, 1.000001f), "equal() failed");
+	oTESTB(equal(1.0f, 1.000001f, 8), "equal() failed");
+	oTESTB(!equal(2.0, 1.99999999999997), "equal failed");
+	oTESTB(equal(2.0, 1.99999999999997, 135), "equal failed");
 	oErrorSetLast(0, "");
 	return true;
 }
@@ -44,31 +46,31 @@ bool Test_oAABoxf()
 {
 	oAABoxf box(oAABoxf::min_max, float3(-1.0f), float3(1.0f));
 
-	oTESTB(ouro::equal(box.Min, float3(-1.0f)), "oAABoxf::Min failed");
-	oTESTB(ouro::equal(box.Max, float3(1.0f)), "oAABoxf::Min failed");
+	oTESTB(equal(box.Min, float3(-1.0f)), "oAABoxf::Min failed");
+	oTESTB(equal(box.Max, float3(1.0f)), "oAABoxf::Min failed");
 
 	box.Min = float3(-2.0f);
 	box.Max = float3(2.0f);
-	oTESTB(ouro::equal(box.Min, float3(-2.0f)), "oAABoxf::SetMin() failed");	
-	oTESTB(ouro::equal(box.Max, float3(2.0f)), "oAABoxf::SetMin() failed");
+	oTESTB(equal(box.Min, float3(-2.0f)), "oAABoxf::SetMin() failed");	
+	oTESTB(equal(box.Max, float3(2.0f)), "oAABoxf::SetMin() failed");
 
 	oTESTB(!box.empty(), "oAABoxf::empty() failed (1)");
 	box.clear();
 	oTESTB(box.empty(), "oAABoxf::empty() failed (2)");
 
 	box = oAABoxf(oAABoxf::min_max, float3(0.0f), float3(1.0f, 2.0f, 3.0f));
-	oTESTB(ouro::equal(box.center(), float3(0.5f, 1.0f, 1.5f)), "oAABoxf::GetCenter() failed");
+	oTESTB(equal(box.center(), float3(0.5f, 1.0f, 1.5f)), "oAABoxf::GetCenter() failed");
 
 	float3 dim = box.size();
-	oTESTB(ouro::equal(dim.x, 1.0f) && ouro::equal(dim.y, 2.0f) && ouro::equal(dim.z, 3.0f), "oAABoxf::GetDimensions() failed");
+	oTESTB(equal(dim.x, 1.0f) && equal(dim.y, 2.0f) && equal(dim.z, 3.0f), "oAABoxf::GetDimensions() failed");
 
 	float radius = box.bounding_radius();
-	oTESTB(ouro::equal(radius, 1.87083f, 15), "oAABoxf:bounding_radius() failed");
+	oTESTB(equal(radius, 1.87083f, 15), "oAABoxf:bounding_radius() failed");
 
 	oExtendBy(box, float3(5.0f));
 	oExtendBy(box, float3(-1.0f));
 	dim = box.size();
-	oTESTB(ouro::equal(dim.x, 6.0f) && ouro::equal(dim.y, 6.0f) && ouro::equal(dim.z, 6.0f), "oAABoxf::ExtendBy() failed");
+	oTESTB(equal(dim.x, 6.0f) && equal(dim.y, 6.0f) && equal(dim.z, 6.0f), "oAABoxf::ExtendBy() failed");
 
 	oErrorSetLast(0, "");
 	return true;
@@ -82,17 +84,17 @@ bool Test_decompose()
 
 	// Remember assembly of the matrix must be in the canonical order for the 
 	// same values to come back out through decomposition.
-	float4x4 m = oCreateScale(testScale) * oCreateRotation(radians(testRotDegrees)) * oCreateTranslation(testTx);
+	float4x4 m = make_scale(testScale) * make_rotation(radians(testRotDegrees)) * make_translation(testTx);
 
 	float shearXY, shearXZ, shearZY;
 	float3 scale, rot, tx;
 	float4 persp;
-	oDecompose(m, &scale, &shearXY, &shearXZ, &shearZY, &rot, &tx, &persp);
+	decompose(m, &scale, &shearXY, &shearXZ, &shearZY, &rot, &tx, &persp);
 
 	rot = degrees(rot);
-	oTESTB(ouro::equal(testScale, scale), "Scales are not the same through assembly and decomposition");
-	oTESTB(ouro::equal(testRotDegrees, rot), "Rotations are not the same through assembly and decomposition");
-	oTESTB(ouro::equal(testTx, tx), "Translations are not the same through assembly and decomposition");
+	oTESTB(equal(testScale, scale), "Scales are not the same through assembly and decomposition");
+	oTESTB(equal(testRotDegrees, rot), "Rotations are not the same through assembly and decomposition");
+	oTESTB(equal(testTx, tx), "Translations are not the same through assembly and decomposition");
 
 	oErrorSetLast(0, "");
 	return true;
@@ -123,7 +125,7 @@ bool Test_SplitRectOverlap()
 	for(int i = 0; i < NumberOfRects; ++i)
 		totalWeight += BrokenRectWeights[i];
 
-	oTESTB(ouro::equal(totalWeight, 1.0f, 20), "Test failed to distribute random weight evenly (totalWeight = %f)", totalWeight);
+	oTESTB(equal(totalWeight, 1.0f, 20), "Test failed to distribute random weight evenly (totalWeight = %f)", totalWeight);
 
 	oRECT srcRect;
 	srcRect.Min = 0;
@@ -189,25 +191,25 @@ bool Test_Frustum()
 	const int MAX_ULPS = 1800;
 
 	oPlanef planes[6];
-	float4x4 P = oCreateOrthographicLH(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f);
+	float4x4 P = make_orthographic_lh(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f);
 	oExtractFrustumPlanes(planes, P, false);
 	oFORI(i, EXPECTED_PLANES_LH)
-		oTESTB(ouro::equal(EXPECTED_PLANES_LH[i], planes[i], MAX_ULPS), "orthographic LH %s plane comparison failed", names[i]);
+		oTESTB(equal(EXPECTED_PLANES_LH[i], planes[i], MAX_ULPS), "orthographic LH %s plane comparison failed", names[i]);
 
-	P = oCreateOrthographicRH(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f);
+	P = make_orthographic_rh(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f);
 	oExtractFrustumPlanes(planes, P, false);
 	oFORI(i, EXPECTED_PLANES_RH)
-		oTESTB(ouro::equal(EXPECTED_PLANES_RH[i], planes[i], MAX_ULPS), "orthographic RH %s plane comparison failed", names[i]);
+		oTESTB(equal(EXPECTED_PLANES_RH[i], planes[i], MAX_ULPS), "orthographic RH %s plane comparison failed", names[i]);
 
-	P = oCreatePerspectiveLH(radians(90.0f), 1.0f, 0.1f, 100.0f);
+	P = make_perspective_lh(radians(90.0f), 1.0f, 0.1f, 100.0f);
 	oExtractFrustumPlanes(planes, P, true);
 	oFORI(i, EXPECTED_PERSPECTIVE_PLANES_LH)
-		oTESTB(ouro::equal(EXPECTED_PERSPECTIVE_PLANES_LH[i], planes[i], MAX_ULPS), "perspective LH %s plane comparison failed", names[i]);
+		oTESTB(equal(EXPECTED_PERSPECTIVE_PLANES_LH[i], planes[i], MAX_ULPS), "perspective LH %s plane comparison failed", names[i]);
 
-	P = oCreatePerspectiveRH(radians(90.0f), 1.0f, 0.1f, 100.0f);
+	P = make_perspective_rh(radians(90.0f), 1.0f, 0.1f, 100.0f);
 	oExtractFrustumPlanes(planes, P, true);
 	oFORI(i, EXPECTED_PERSPECTIVE_PLANES_RH)
-		oTESTB(ouro::equal(EXPECTED_PERSPECTIVE_PLANES_RH[i], planes[i], MAX_ULPS), "perspective RH %s plane comparison failed", names[i]);
+		oTESTB(equal(EXPECTED_PERSPECTIVE_PLANES_RH[i], planes[i], MAX_ULPS), "perspective RH %s plane comparison failed", names[i]);
 
 	oErrorSetLast(0, "");
 	return true;
@@ -241,33 +243,33 @@ bool Test_FrustumCalcCorners()
 
 	const int MAX_ULPS = 1800;
 
-	float4x4 P = oCreateOrthographicLH(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f);
+	float4x4 P = make_orthographic_lh(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f);
 	oTESTB(!oHasPerspective(P), "Ortho matrix says it has perspective when it doesn't");
 	oFrustumf f(P);
 	float3 corners[8];
 	oTESTB(oExtractFrustumCorners(f, corners), "oExtractFrustumCorners failed (f)");
 	oFORI(i, EXPECTED_ORTHO_LH)
-		oTESTB(ouro::equal(EXPECTED_ORTHO_LH[i], corners[i], MAX_ULPS), "corner %s mismatch", ouro::as_string((oFRUSTUM_CORNER)i));
+		oTESTB(equal(EXPECTED_ORTHO_LH[i], corners[i], MAX_ULPS), "corner %s mismatch", as_string((oFRUSTUM_CORNER)i));
 
-	P = oCreatePerspectiveLH(radians(90.0f), 1.0f, 0.1f, 100.0f);
-	float4x4 V = oCreateLookAtLH(float3(10.0f, 0.0f, -10.0f), float3(0.0f, 0.0f, -10.0f), float3(0.0f, 1.0f, 0.0f));
+	P = make_perspective_lh(radians(90.0f), 1.0f, 0.1f, 100.0f);
+	float4x4 V = make_lookat_lh(float3(10.0f, 0.0f, -10.0f), float3(0.0f, 0.0f, -10.0f), float3(0.0f, 1.0f, 0.0f));
 	float4x4 VP = V * P;
 	oFrustumf wsf(VP);
 	oTESTB(oExtractFrustumCorners(wsf, corners), "oExtractFrustumCorners failed (wsf)");
 
 	float nearWidth = distance(corners[oFRUSTUM_RIGHT_TOP_NEAR], corners[oFRUSTUM_LEFT_TOP_NEAR]);
 	float farWidth = distance(corners[oFRUSTUM_RIGHT_TOP_FAR], corners[oFRUSTUM_LEFT_TOP_FAR]);
-	oTESTB(ouro::equal(0.2f, nearWidth, MAX_ULPS), "width of near plane incorrect");
-	oTESTB(ouro::equal(200.0f, farWidth, MAX_ULPS), "width of far plane incorrect");
+	oTESTB(equal(0.2f, nearWidth, MAX_ULPS), "width of near plane incorrect");
+	oTESTB(equal(200.0f, farWidth, MAX_ULPS), "width of far plane incorrect");
 	oFORI(i, EXPECTED_VP_PROJ_LH)
-		oTESTB(ouro::equal(EXPECTED_VP_PROJ_LH[i], corners[i], MAX_ULPS), "corner %s mismatch", ouro::as_string((oFRUSTUM_CORNER)i));
+		oTESTB(equal(EXPECTED_VP_PROJ_LH[i], corners[i], MAX_ULPS), "corner %s mismatch", as_string((oFRUSTUM_CORNER)i));
 
 	// Verify world pos extraction math.  This is used in deferred rendering.
 	const float3 TestPos = float3(-30, 25, 41);
 	float3 ComputePos;
 	{
 		oFrustumf psf(P);
-		float3 EyePos = oExtractEye(V);
+		float3 EyePos = extract_eye(V);
 		float EyeZ = mul(V, float4(TestPos, 1.0f)).z;
 		float InverseFarPlaneDistance = 1.0f / distance(wsf.Far, EyePos);
 		float Depth = EyeZ * InverseFarPlaneDistance;
@@ -292,7 +294,7 @@ bool Test_FrustumCalcCorners()
 
 		ComputePos = EyePos + (FarPoint * Depth);
 	}
-	oTESTB(ouro::equal(ComputePos, TestPos, MAX_ULPS), "Computed world pos is incorrect");
+	oTESTB(equal(ComputePos, TestPos, MAX_ULPS), "Computed world pos is incorrect");
 
 	oErrorSetLast(0, "");
 	return true;
@@ -313,9 +315,9 @@ bool Test_MatrixMath()
 	oFORI(i, TargetVecs)
 	{
 		auto Target = TargetVecs[i];
-		float4x4 Rotation = oCreateRotation(TestVec, Target);
+		float4x4 Rotation = make_rotation(TestVec, Target);
 		float3 RotatedVec = mul(Rotation, TestVec);
-		oTESTB(ouro::equal(RotatedVec, Target, MAX_ULPS), "oCreateRotation failed with #%d (%f %f %f)", i, Target.x, Target.y, Target.z);
+		oTESTB(equal(RotatedVec, Target, MAX_ULPS), "make_rotation failed with #%d (%f %f %f)", i, Target.x, Target.y, Target.z);
 	}
 	
 	return true;

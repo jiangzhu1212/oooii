@@ -28,10 +28,12 @@
 #ifndef oStdTestRequirements_h
 #define oStdTestRequirements_h
 
+#include <cstdarg>
+
 namespace oStd {
 	namespace tests {
 
-interface requirements
+struct requirements
 {
 	// Implements a C-standard rand call
 	virtual int rand() = 0;

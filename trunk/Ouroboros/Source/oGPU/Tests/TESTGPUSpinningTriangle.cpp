@@ -60,18 +60,18 @@ public:
 
 	bool Render() override
 	{
-		float4x4 V = oCreateLookAtLH(float3(0.0f, 0.0f, -2.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
+		float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -2.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
 		oGPURenderTarget::DESC RTDesc;
 		PrimaryRenderTarget->GetDesc(&RTDesc);
-		float4x4 P = oCreatePerspectiveLH(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
+		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
 
 		// this is -1 because there was a code change that resulted in BeginFrame()
 		// being moved out of the Render function below so it updated the FrameID
 		// earlier than this code was ready for. If golden images are updated, this
 		// could go away.
 		float rotationRate = (Device->GetFrameID()-1) * 2.0f;
-		float4x4 W = oCreateRotation(float3(0.0f, radians(rotationRate), 0.0f));
+		float4x4 W = make_rotation(float3(0.0f, radians(rotationRate), 0.0f));
 
 		uint DrawID = 0;
 

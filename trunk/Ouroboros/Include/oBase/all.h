@@ -47,6 +47,7 @@
 #include <oBase/intrusive_ptr.h>
 #include <oBase/macros.h>
 #include <oBase/memory.h>
+#include <oBase/moving_average.h>
 #include <oBase/murmur3.h>
 #include <oBase/operators.h>
 #include <oBase/opttok.h>

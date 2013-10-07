@@ -47,6 +47,7 @@
     <ClInclude Include="..\..\Include\oCore\module.h" />
     <ClInclude Include="..\..\Include\oCore\page_allocator.h" />
     <ClInclude Include="..\..\Include\oCore\process.h" />
+    <ClInclude Include="..\..\Include\oCore\process_stats_monitor.h" />
     <ClInclude Include="..\..\Include\oCore\system.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>

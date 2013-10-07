@@ -22,7 +22,6 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-
 // Encapsulate the math for how to interact with a planar pointer (i.e. mouse) 
 // to orbit in a sphere around a particular point. Arcball can be constrained 
 // to two axes or left unconstrained. Unconstrained is the "classic" arcball 
@@ -30,54 +29,50 @@
 // grabbed in its center and rotated. The constrained versions are found in 
 // tools like 3DSMax and Maya.
 #pragma once
-#ifndef oArcball_h
-#define oArcball_h
+#ifndef oCompute_arcball_h
+#define oCompute_arcball_h
 
-#include <oBasis/oLinearAlgebra.h>
-#include <oBase/macros.h>
+#include <oCompute/linear_algebra.h>
 #include <oCompute/oComputeConstants.h>
+#include <oCompute/oQuaternion.h>
+#include <oBase/macros.h>
 
-enum oARCBALL_CONSTRAINT
+namespace ouro {
+
+class arcball
 {
-	oARCBALL_CONSTRAINT_NONE, // classic arcball behavior
-	oARCBALL_CONSTRAINT_Y_UP, // Maya-like, prevents non-explicit roll
-	oARCBALL_CONSTRAINT_Z_UP, // Max-like, prevents non-explicit roll
-};
-
-class oArcball
-{
-	// Emulates the Arcball rotation from Maya where the Y axis always points up 
-	// thus keeping the model level. Converts the euler angles in the X and Y of 
-	// screen space to a quaternion and rotates by that then the collective 
-	// rotation of any prior rotation.
-
 public:
-	oArcball(oARCBALL_CONSTRAINT _Constraint = oARCBALL_CONSTRAINT_NONE)
+	enum constraint_t
+	{
+		none, // classic arcball behavior
+		y_up, // Maya-like, prevents non-explicit roll
+		z_up, // Max-like, prevents non-explicit roll
+	};
+
+	arcball(constraint_t _Constraint = none)
 		: Constraint(_Constraint)
-		, R(oIDENTITYQ) 
+		, R(oIDENTITYQ)
 		, T(oZERO3)
 		, LookAt(oZERO3)
 		, UpsideDownScalar(1.0f)
 	{}
 
-	inline void SetConstraint(oARCBALL_CONSTRAINT _Constraint) { Constraint = _Constraint; }
-	inline oARCBALL_CONSTRAINT GetConstraint() const { return Constraint; }
+	inline void constraint(constraint_t _Constraint) { Constraint = _Constraint; }
+	inline constraint_t constraint() const { return Constraint; }
 
-	inline void SetRotation(const quatf& _Rotation) { R = _Rotation; }
-	inline quatf GetRotation() const { return R; }
+	inline void rotation(const quatf& _Rotation) { R = _Rotation; }
+	inline quatf rotation() const { return R; }
 
-	inline void SetTranslation(const float3& _Translation) { T = _Translation; }
-	inline float3 GetTranslation() const { return T; }
+	inline void translation(const float3& _Translation) { T = _Translation; }
+	inline float3 translation() const { return T; }
 
-	inline void SetLookAt(const float3& _LookAt) { LookAt = _LookAt; }
-	inline float3 GetLookAt() const { return LookAt; }
-
-	inline float4x4 GetView() const { return invert(oCreateMatrix(R, T)); }
+	inline void lookat(const float3& _LookAt) { LookAt = _LookAt; }
+	inline float3 lookat() const { return LookAt; }
 
 	// Pans LookAt as well. _ScreenPointDelta is the amount to pan by in 
 	// screen-space, so a typical calculation might be: 
 	// (LastPos - PointerPos) * SpeedScalar
-	inline void Pan(const float2& _ScreenPointDelta)
+	inline void pan(const float2& _ScreenPointDelta)
 	{
 		float3 LocalDelta = qmul(R, float3(-_ScreenPointDelta.x, _ScreenPointDelta.y, 0.0f));
 		T += LocalDelta;
@@ -87,17 +82,19 @@ public:
 	// Does not zoom/magnify, but moves forward/backward towards (and past) look 
 	// at. _ScreenPointDelta is the amount to dolly by, so a typical 
 	// calculation might be: (LastPos - PointerPos) * SpeedScalar
-	inline void Dolly(const float2& _ScreenPointDelta)
+	inline void dolly(const float2& _ScreenPointDelta)
 	{
 		T += qmul(R, float3(0.0f, 0.0f, _ScreenPointDelta.x + _ScreenPointDelta.y));
 	}
 
-	inline void SetView(const float4x4& _View)
+	inline void view(const float4x4& _View)
 	{
 		float4x4 invView = invert(_View);
-		R = oCreateRotationQ(invView);
-		T = oExtractTranslation(invView);
+		R = make_quaternion(invView);
+		T = extract_translation(invView);
 	}
+
+	inline float4x4 view() const { return invert(make_matrix(R, T)); }
 
 	// Call this on the start of rotation, then call Rotate() on the same frame
 	// and consequent frames of rotation. This addresses Maya-style rules for 
@@ -105,18 +102,18 @@ public:
 	// controls are reversed until you release the mouse and repress, then even
 	// upside down models rotation as expected, matching mouse motion. This is not 
 	// needed when all 3 axes are respected in the non-constrained arcball.
-	inline void BeginRotation()
+	inline void begin_rotation()
 	{
 		// This is invalid for X-up, which is currently not supported... i.e. the
 		// upside-down scalar gets ignored.
 
-		// @oooii-tony: I can't quite wrap my head around where the breakdown is 
-		// occurring, but when using Z-up, the dot-product is rotated 90 degrees.
-		// This might be because we're not fully any-up compatible elsewhere and 
-		// if I switch to Z-up, something gets missed. Come back to this if we 
-		// really need z-up, otherwise we've been assuming y-up.
+		// @tony: I can't quite wrap my head around where the breakdown is occurring, 
+		// but when using Z-up, the dot-product is rotated 90 degrees. This might be 
+		// because we're not fully any-up compatible elsewhere and if I switch to 
+		// Z-up something gets missed. Come back to this if we really need z-up, 
+		// otherwise move forward with y-up like most of the rest of the world.
 
-		float4x4 rotation = oCreateRotation(R);
+		float4x4 rotation = make_rotation(R);
 
 		// If left-handled reverse direction.
 		// If the model is upside-down, reverse rotation directions.
@@ -127,24 +124,24 @@ public:
 	// difference between this and last frame should be done before passing the 
 	// result to this function. (i.e. a typical calculation is: 
 	// (LastPos - PointerPos) * SpeedScalar
-	inline void Rotate(const float2& _ScreenPointDelta)
+	inline void rotate(const float2& _ScreenPointDelta)
 	{
-		if (!ouro::equal(_ScreenPointDelta, oZERO2))
+		if (!equal(_ScreenPointDelta, oZERO2))
 		{
-			float3 OldT = qmul(invert(R), T - LookAt);
+			float3 OldT = qmul(::invert(R), T - LookAt);
 			// Order matters on these multiplies.
 			switch (Constraint)
 			{
-				case oARCBALL_CONSTRAINT_Y_UP:
-					R = qmul(R, oCreateRotationQ(_ScreenPointDelta.y, oXAXIS3));
-					R = qmul(oCreateRotationQ(UpsideDownScalar * _ScreenPointDelta.x, oYAXIS3), R);
+				case y_up:
+					R = qmul(R, make_quaternion(_ScreenPointDelta.y, oXAXIS3));
+					R = qmul(make_quaternion(UpsideDownScalar * _ScreenPointDelta.x, oYAXIS3), R);
 					break;
-				case oARCBALL_CONSTRAINT_Z_UP:
-					R = qmul(R, oCreateRotationQ(_ScreenPointDelta.y, oXAXIS3));
-					R = qmul(oCreateRotationQ(UpsideDownScalar * _ScreenPointDelta.x, oZAXIS3), R);
+				case z_up:
+					R = qmul(R, make_quaternion(_ScreenPointDelta.y, oXAXIS3));
+					R = qmul(make_quaternion(UpsideDownScalar * _ScreenPointDelta.x, oZAXIS3), R);
 					break;
-				case oARCBALL_CONSTRAINT_NONE:
-					R = qmul(R, oCreateRotationQ(float3(_ScreenPointDelta.yx(), 0.0f)));
+				case none:
+					R = qmul(R, make_quaternion(float3(_ScreenPointDelta.yx(), 0.0f)));
 					break;
 				oNODEFAULT;
 			}
@@ -153,11 +150,13 @@ public:
 		}
 	}
 private:
-	oARCBALL_CONSTRAINT Constraint;
+	constraint_t Constraint;
 	quatf R;
 	float3 T;
 	float3 LookAt;
 	float UpsideDownScalar;
 };
+
+} // namespace ouro
 
 #endif

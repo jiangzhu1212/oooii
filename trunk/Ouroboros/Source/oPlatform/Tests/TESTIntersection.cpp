@@ -108,12 +108,12 @@ struct PLATFORM_Intersection : public oTest
 
 		for (size_t p = 0; p < oCOUNTOF(sPerspectives); p++)
 		{
-			float4x4 projection = oCreatePerspectiveLH(sPerspectives[p].FovY, sPerspectives[p].AspectRatio, sPerspectives[p].ZNear, -1.0f);
+			float4x4 projection = ouro::make_perspective_lh(sPerspectives[p].FovY, sPerspectives[p].AspectRatio, sPerspectives[p].ZNear, -1.0f);
 
 			for (size_t e = 0; e < oCOUNTOF(sEyes); e++)
 			{
-				float4x4 view = oCreateLookAtRH(sEyes[e].Position, sEyes[e].LookAtPoint, float3(0.0f, 1.0f, 0.0f));
-				float4x4 projection = oCreateOrthographicRH(-100.0f, 100.0f, -100.0f, 100.0f, 0.01f, 1500.0f);
+				float4x4 view = ouro::make_lookat_rh(sEyes[e].Position, sEyes[e].LookAtPoint, float3(0.0f, 1.0f, 0.0f));
+				float4x4 projection = ouro::make_orthographic_rh(-100.0f, 100.0f, -100.0f, 100.0f, 0.01f, 1500.0f);
 				float4x4 vp = view * projection;
 				oFrustumf frustum(vp);
 

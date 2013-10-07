@@ -138,7 +138,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oMRUManager.h" />
     <ClInclude Include="..\..\Include\oPlatform\oMsgBox.h" />
     <ClInclude Include="..\..\Include\oPlatform\oProcessHeap.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oProcessStatsMonitor.h" />
     <ClInclude Include="..\..\Include\oPlatform\oProgressBar.h" />
     <ClInclude Include="..\..\Include\oPlatform\oRegistry.h" />
     <ClInclude Include="..\..\Include\oPlatform\oSerialCom.h" />
