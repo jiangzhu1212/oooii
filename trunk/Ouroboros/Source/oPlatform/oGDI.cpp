@@ -731,7 +731,7 @@ oGDISelectionBox::oGDISelectionBox()
 	, MouseAt(0,0)
 	, Opacity(0.0f)
 	, Selecting(false)
-	, hNullBrush(oGDICreateBrush(0))
+	, hNullBrush(oGDICreateBrush(ouro::color(0)))
 {
 }
 

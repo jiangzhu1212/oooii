@@ -42,6 +42,12 @@
     <ClCompile Include="cpu.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="camera.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="serial_port.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\filesystem.h">
@@ -81,6 +87,12 @@
       <Filter>oCore</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oCore\process_stats_monitor.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\camera.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\serial_port.h">
       <Filter>oCore</Filter>
     </ClInclude>
   </ItemGroup>

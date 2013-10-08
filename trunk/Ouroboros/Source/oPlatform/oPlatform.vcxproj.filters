@@ -99,9 +99,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oProcessHeap.h">
       <Filter>Headers\Memory</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oSerialCom.h">
-      <Filter>Headers\IO</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oSocket.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
@@ -354,9 +351,6 @@
       <Filter>Source\IO</Filter>
     </ClCompile>
     <ClCompile Include="oP4.cpp">
-      <Filter>Source\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="oSerialCom.cpp">
       <Filter>Source\IO</Filter>
     </ClCompile>
     <ClCompile Include="oStream.cpp">

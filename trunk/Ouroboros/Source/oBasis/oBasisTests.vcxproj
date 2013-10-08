@@ -32,7 +32,6 @@
     <ClCompile Include="Tests\TESTCompression.cpp" />
     <ClCompile Include="Tests\TESTDispatchQueueGlobal.cpp" />
     <ClCompile Include="Tests\TESTDispatchQueuePrivate.cpp" />
-    <ClCompile Include="Tests\TESTEasing.cpp" />
     <ClCompile Include="Tests\TESTFilterChain.cpp" />
     <ClCompile Include="Tests\TESTHash.cpp" />
     <ClCompile Include="Tests\TESTINISerialize.cpp" />

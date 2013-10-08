@@ -303,9 +303,6 @@
     <ClInclude Include="..\..\Include\oBasis\all.h">
       <Filter>oBasis</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oEasing.h">
-      <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oMath.h">
       <Filter>oBasis\3D Math &amp; Graphics</Filter>
     </ClInclude>

@@ -48,7 +48,7 @@
 #else
 
 // Wrap in a namespace so that NoStepInto can be used for VS2010+.
-namespace oCompute {
+namespace ouro {
 	template<typename T> struct plane : public TVEC4<T>
 	{
 		typedef T element_type;
@@ -64,9 +64,9 @@ namespace oCompute {
 		const plane& operator=(const base_type& _That) { *(base_type*)this = _That; return *this; }
 		operator base_type() { return *this; }
 	};
-} // namespace oCompute
+} // namespace ouro
 
-typedef oCompute::plane<float> oPlanef; typedef oCompute::plane<double> oPlaned;
+typedef ouro::plane<float> oPlanef; typedef ouro::plane<double> oPlaned;
 template<> inline bool ouro::equal(const oPlanef& a, const oPlanef& b, unsigned int maxUlps) { return ouro::equal(a.x, b.x, maxUlps) && ouro::equal(a.y, b.y, maxUlps) && ouro::equal(a.z, b.z, maxUlps) && ouro::equal(a.w, b.w, maxUlps); }
 template<> inline bool ouro::equal(const oPlaned& a, const oPlaned& b, unsigned int maxUlps) { return ouro::equal(a.x, b.x, maxUlps) && ouro::equal(a.y, b.y, maxUlps) && ouro::equal(a.z, b.z, maxUlps) && ouro::equal(a.w, b.w, maxUlps); }
 

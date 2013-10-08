@@ -72,6 +72,12 @@
     <ClInclude Include="..\..\Include\oCompute\eye.h">
       <Filter>oCompute</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\cdf97.h">
+      <Filter>oCompute</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCompute\easing.h">
+      <Filter>oCompute</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -81,6 +87,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="linear_algebra.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="cdf97.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

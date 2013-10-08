@@ -208,6 +208,12 @@ void extract_perspective_parameters(const float4x4& _Projection
 	return template_::extract_perspective_parameters<float>(_Projection, _pFovYRadians, _pAspectRatio, _pZNear, _pZFar);
 }
 
+float calcuate_area_and_centroid(float2* _pCentroid
+, const float2* _pVertices, size_t _VertexStride, size_t _NumVertices)
+{
+	return template_::calcuate_area_and_centroid<float>(_pCentroid, _pVertices, _VertexStride, _NumVertices);
+}
+
 float trilaterate(const float3 _ObserversIn[4], const float _DistancesIn[4], float3* _pPosition)
 {
 	return template_::trilaterate<float>(_ObserversIn, _DistancesIn, _pPosition);

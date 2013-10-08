@@ -33,6 +33,7 @@ namespace ouro {
 	namespace tests {
 
 		void TESTadapter(requirements& _Requirements);
+		void TESTcamera(requirements& _Requirements);
 		void TESTcpu(requirements& _Requirements);
 		void TESTdebugger(requirements& _Requirements);
 		void TESTfilesystem();

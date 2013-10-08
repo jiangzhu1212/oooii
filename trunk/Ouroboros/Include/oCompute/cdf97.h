@@ -23,65 +23,17 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oSerialCom_h
-#define oSerialCom_h
+#ifndef oCompute_cdf97_h
+#define oCompute_cdf97_h
 
-#include <oBasis/oInterface.h>
+namespace ouro {
 
-interface oSerialCom : oInterface
-{
-	enum COM
-	{
-		COM1,
-		COM2,
-		COM3,
-		COM4
-	};
+// Forward biorthogonal CDF 9/7 wavelet transform. Transforms in place.
+void cdf97fwd(float* _pValues, size_t _NumValues);
 
-	enum PARITY
-	{
-		NONE,
-		ODD,
-		EVEN,
-		MARK,
-		SPACE
-	};
+// Inverse biorthogonal CDF 9/7 wavelet transform. Transforms in place.
+void cdf97inv(float* _pValues, size_t _NumValues);
 
-	enum STOPBITS
-	{
-		ONE,
-		ONE5,
-		TWO
-	};
-
-
-	struct DESC
-	{
-		DESC()
-			: Com(COM1)
-			, BaudRate(9600)
-			, ByteSize(8)
-			, Parity(NONE)
-			, StopBits(ONE)
-		{}
-		COM Com;
-		unsigned int BaudRate;
-		unsigned char ByteSize;
-		PARITY Parity;
-		STOPBITS StopBits;
-	};
-
-	virtual bool Send(const char* _pString, unsigned int _StrLen) = 0;
-
-	template<unsigned int size> bool Send(char (&_Str)[size])
-	{
-		return Send(_Str, size);
-	}
-
-	virtual int Receive(char *_pString, unsigned int _BufferLength) = 0;
-	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
-};
-
-oAPI bool oSerialComCreate(const oSerialCom::DESC& _Desc, oSerialCom** _ppSerialCom);
+} // namespace ouro
 
 #endif

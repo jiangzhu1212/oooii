@@ -48,9 +48,6 @@
     <ClCompile Include="Tests\TESTWinRegistry.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTCamera.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTCRTLeakTracker.cpp">
       <Filter>Source</Filter>
     </ClCompile>

@@ -53,40 +53,6 @@ float4x4 oFitToView(const float4x4& _View, float _FovYRadians, const oSpheref& _
 	return ouro::fit_to_view(_View, _FovYRadians, _Bounds.xyz(), _Bounds.radius(), _OffsetMultiplier);
 }
 
-bool oCalculateAreaAndCentriod(float* _pArea, float2* _pCentroid, const float2* _pVertices, size_t _VertexStride, size_t _NumVertices)
-{
-	// Bashein, Gerard, Detmer, Paul R. "Graphics Gems IV." 
-	// ed. Paul S. Heckbert. pg 3-6. Academic Press, San Diego, 1994.
-
-	*_pArea = float(0);
-	if (_NumVertices < 3)
-		return false;
-
-	float atmp = float(0), xtmp = float(0), ytmp = float(0);
-	const float2* vj = _pVertices;
-	const float2* vi = byte_add(_pVertices, _VertexStride, _NumVertices-1);
-	const float2* end = byte_add(vi, _VertexStride, 1);
-	while (vj < end)
-	{
-		float ai = vi->x * vj->y - vj->x * vi->y;
-		atmp += ai;
-		xtmp += (vj->x * vi->x) * ai;
-		ytmp += (vj->y * vi->y) * ai;
-
-		vi = vj;
-		vj += _VertexStride;
-	}
-
-	*_pArea = atmp / 2.0f;
-	if (!ouro::equal(atmp, 0.0f))
-	{
-		_pCentroid->x = xtmp / (3.0f * atmp);
-		_pCentroid->y = ytmp / (3.0f * atmp);
-	}
-
-	return true;
-}
-
 inline float lengthSquared(const float3& x) { return dot(x,x); }
 
 bool oIntersects(const float3& _SphereCenter0, float _Radius0, const float3& _SphereCenter1, float _Radius1)
@@ -97,7 +63,7 @@ bool oIntersects(const float3& _SphereCenter0, float _Radius0, const float3& _Sp
 	return distance2 < minDistance2;
 }
 
-template<typename T> static void lookupNP(TVEC3<T>& _N, TVEC3<T>& _P, const oCompute::aabox<T, TVEC3<T>>& _Box, const TVEC4<T>& _Plane)
+template<typename T> static void lookupNP(TVEC3<T>& _N, TVEC3<T>& _P, const ouro::aabox<T, TVEC3<T>>& _Box, const TVEC4<T>& _Plane)
 {
 	/** <citation
 		usage="Paper" 
@@ -123,7 +89,7 @@ template<typename T> static void lookupNP(TVEC3<T>& _N, TVEC3<T>& _P, const oCom
 	#undef NP_ASSIGN_COMPONENT
 }
 
-template<typename T> static oCONTAINMENT oContainsT(const TVEC4<T>* _pPlanes, size_t _NumPlanes, const oCompute::aabox<T, TVEC3<T>>& _Box)
+template<typename T> static oCONTAINMENT oContainsT(const TVEC4<T>* _pPlanes, size_t _NumPlanes, const ouro::aabox<T, TVEC3<T>>& _Box)
 {
 	/** <citation
 		usage="Paper" 
@@ -236,7 +202,7 @@ oCONTAINMENT oContains(const oFrustumf& _Frustum, const oAABoxf& _Box)
 	return oContainsT(&_Frustum.Left, oFRUSTUM_PLANE_COUNT, _Box);
 }
 
-template<typename T> void oFrustCullT(const oCompute::frustum<T>* oRESTRICT _pFrustra, size_t _NumberOfFrusta, const oCompute::aabox<T,TVEC3<T> >* oRESTRICT _pVolumes, size_t _NumberOfVolumes, size_t* _pResults, size_t _MaxNumberOfVolumes, size_t* _pNumResults)
+template<typename T> void oFrustCullT(const ouro::frustum<T>* oRESTRICT _pFrustra, size_t _NumberOfFrusta, const ouro::aabox<T,TVEC3<T> >* oRESTRICT _pVolumes, size_t _NumberOfVolumes, size_t* _pResults, size_t _MaxNumberOfVolumes, size_t* _pNumResults)
 {
 	if (!_NumberOfFrusta || !_NumberOfVolumes)
 		return;
@@ -285,7 +251,7 @@ oCONTAINMENT oContains(const oFrustumf& _Frustum, const float4& _Sphere)
 	return oContainsT(&_Frustum.Left, oFRUSTUM_PLANE_COUNT, _Sphere);
 }
 
-template<typename T> oCONTAINMENT oContainsT(const oCompute::sphere<T>& _Sphere, const oCompute::aabox<T,TVEC3<T>>& _Box)
+template<typename T> oCONTAINMENT oContainsT(const ouro::sphere<T>& _Sphere, const ouro::aabox<T,TVEC3<T>>& _Box)
 {
 	/** <citation
 		usage="Paper" 
@@ -375,121 +341,3 @@ unsigned int SplitRect( const oRECT& _SrcRect, const unsigned int _MaxNumSplits,
 
 	return _MaxNumSplits;
 }
-
-/** <citation
-	usage="Implementation" 
-	reason="9/7 CDF Wavlet transform"
-	author="Gregoire Pau"
-	description="http://www.embl.de/~gpau/misc/dwt97.c"
-	license="*** Assumed Public Domain ***"
-	licenseurl="http://www.embl.de/~gpau/misc/dwt97.c"
-	modification="switched to floating point, renamed variables, removed malloc"
-/>*/
-
-// $(CitedCodeBegin)
-
-void oCDF97Fwd(float* _pValues, size_t _NumValues)
-{
-	float a;
-	size_t i;
-
-	// Predict 1
-	a=-1.586134342f;
-	for (i=1;i<_NumValues-2;i+=2) {
-		_pValues[i]+=a*(_pValues[i-1]+_pValues[i+1]);
-	} 
-	_pValues[_NumValues-1]+=2*a*_pValues[_NumValues-2];
-
-	// Update 1
-	a=-0.05298011854f;
-	for (i=2;i<_NumValues;i+=2) {
-		_pValues[i]+=a*(_pValues[i-1]+_pValues[i+1]);
-	}
-	_pValues[0]+=2.0f*a*_pValues[1];
-
-	// Predict 2
-	a=0.8829110762f;
-	for (i=1;i<_NumValues-2;i+=2) {
-		_pValues[i]+=a*(_pValues[i-1]+_pValues[i+1]);
-	}
-	_pValues[_NumValues-1]+=2*a*_pValues[_NumValues-2];
-
-	// Update 2
-	a=0.4435068522f;
-	for (i=2;i<_NumValues;i+=2) {
-		_pValues[i]+=a*(_pValues[i-1]+_pValues[i+1]);
-	}
-	_pValues[0]+=2*a*_pValues[1];
-
-	// Scale
-	a=1.0f/1.149604398f;
-	for (i=0;i<_NumValues;i++) {
-		if (i%2) _pValues[i]*=a;
-		else _pValues[i]/=a;
-	}
-
-	// Pack
-	float* TempBank = (float*)_alloca(sizeof(float) * _NumValues);
-
-	for (size_t i = 0; i < _NumValues; i++) 
-	{
-		if (i%2==0) 
-			TempBank[i/2]= _pValues[i];
-		else 
-			TempBank[_NumValues/2+i/2] = _pValues[i];
-	}
-
-	for (size_t i = 0; i < _NumValues; i++) 
-		_pValues[i]=TempBank[i];
-}
-
-void oCDF97Inv(float* _pValues, size_t _NumValues) 
-{
-	float a;
-	size_t i;
-
-	// Unpack
-	float* TempBank = (float*)_alloca(sizeof(float) * _NumValues);
-	for (i=0;i<_NumValues/2;i++) {
-		TempBank[i*2]=_pValues[i];
-		TempBank[i*2+1]=_pValues[i+_NumValues/2];
-	}
-	for (i=0;i<_NumValues;i++) _pValues[i]=TempBank[i];
-
-	// Undo scale
-	a=1.149604398f;
-	for (i=0;i<_NumValues;i++) {
-		if (i%2) _pValues[i]*=a;
-		else _pValues[i]/=a;
-	}
-
-	// Undo update 2
-	a=-0.4435068522f;
-	for (i=2;i<_NumValues;i+=2) {
-		_pValues[i]+=a*(_pValues[i-1]+_pValues[i+1]);
-	}
-	_pValues[0]+=2*a*_pValues[1];
-
-	// Undo predict 2
-	a=-0.8829110762f;
-	for (i=1;i<_NumValues-2;i+=2) {
-		_pValues[i]+=a*(_pValues[i-1]+_pValues[i+1]);
-	}
-	_pValues[_NumValues-1]+=2*a*_pValues[_NumValues-2];
-
-	// Undo update 1
-	a=0.05298011854f;
-	for (i=2;i<_NumValues;i+=2) {
-		_pValues[i]+=a*(_pValues[i-1]+_pValues[i+1]);
-	}
-	_pValues[0]+=2*a*_pValues[1];
-
-	// Undo predict 1
-	a=1.586134342f;
-	for (i=1;i<_NumValues-2;i+=2) {
-		_pValues[i]+=a*(_pValues[i-1]+_pValues[i+1]);
-	} 
-	_pValues[_NumValues-1]+=2*a*_pValues[_NumValues-2];
-}
-
-// $(CitedCodeEnd)

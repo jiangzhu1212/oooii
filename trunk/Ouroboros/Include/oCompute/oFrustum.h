@@ -66,7 +66,7 @@ enum oFRUSTUM_PLANE
 };
 
 // Wrap in a namespace so that NoStepInto can be used for VS2010+.
-namespace oCompute {
+namespace ouro {
 	template<typename T> struct frustum
 	{
 		typedef T element_type;
@@ -92,9 +92,9 @@ namespace oCompute {
 		const frustum<T>& operator=(const matrix_type& _Projection) { oExtractFrustumPlanes(&Left, _Projection, true); return *this; }
 		inline const plane_type& GetPlane(oFRUSTUM_CORNER _Corner) const { return (&Left)[_Index]; }
 	};
-} // namespace oCompute
+} // namespace ouro
 
-typedef oCompute::frustum<float> oFrustumf; //typedef TFRUSTUM<double> oFrustumd; // @oooii-tony: Need an oIntersects for double
+typedef ouro::frustum<float> oFrustumf; //typedef TFRUSTUM<double> oFrustumd; // @oooii-tony: Need an oIntersects for double
 
 // Fills the specified array with planes that point inward in the following 
 // order: left, right, top, bottom, near, far. The planes will be in whatever 
@@ -102,7 +102,7 @@ typedef oCompute::frustum<float> oFrustumf; //typedef TFRUSTUM<double> oFrustumd
 // Model -> World -> View -> Projection that a projection matrix returned by
 // oCreatePerspective?H() will be in view space. A View * Projection will be
 // in world space, and a WVP matrix will be in model space.
-template<typename T> void oExtractFrustumPlanes(oCompute::plane<T> _Planes[oFRUSTUM_PLANE_COUNT], const TMAT4<T>& _Projection, bool _Normalize)
+template<typename T> void oExtractFrustumPlanes(ouro::plane<T> _Planes[oFRUSTUM_PLANE_COUNT], const TMAT4<T>& _Projection, bool _Normalize)
 {
 	/** <citation
 		usage="Adaptation" 
@@ -174,7 +174,7 @@ template<typename T> void oExtractFrustumPlanes(oCompute::plane<T> _Planes[oFRUS
 // Fills the specified array with points that represent the 8 corners of the
 // frustum. Index into the array using TFRUSTUM::CORNER. Returns true if values 
 // are valid or false if planes don't meet in 8 corners.
-template<typename T> bool oExtractFrustumCorners(const oCompute::plane<T> _Planes[oFRUSTUM_PLANE_COUNT], TVEC3<T> _Corners[oFRUSTUM_CORNER_COUNT])
+template<typename T> bool oExtractFrustumCorners(const ouro::plane<T> _Planes[oFRUSTUM_PLANE_COUNT], TVEC3<T> _Corners[oFRUSTUM_CORNER_COUNT])
 {
 	// @oooii-tony: TODO implement oIntersects for double
 	bool isect = oIntersects(_Planes[oFRUSTUM_LEFT], _Planes[oFRUSTUM_TOP], _Planes[oFRUSTUM_NEAR], _Corners[oFRUSTUM_LEFT_TOP_NEAR]);
@@ -188,9 +188,9 @@ template<typename T> bool oExtractFrustumCorners(const oCompute::plane<T> _Plane
 	return isect;
 }
 
-template<typename T> bool oExtractFrustumCorners(const oCompute::frustum<T>& _Frustum, TVEC3<T> _Corners[oFRUSTUM_CORNER_COUNT])
+template<typename T> bool oExtractFrustumCorners(const ouro::frustum<T>& _Frustum, TVEC3<T> _Corners[oFRUSTUM_CORNER_COUNT])
 {
-	return oExtractFrustumCorners((const oCompute::plane<T>*)&_Frustum, _Corners);
+	return oExtractFrustumCorners((const ouro::plane<T>*)&_Frustum, _Corners);
 }
 
 #endif

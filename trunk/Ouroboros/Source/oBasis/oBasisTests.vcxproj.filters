@@ -22,9 +22,6 @@
     <ClCompile Include="Tests\TESTDispatchQueuePrivate.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTEasing.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTFilterChain.cpp">
       <Filter>Source</Filter>
     </ClCompile>

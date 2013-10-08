@@ -40,7 +40,7 @@
 #else
 
 // Wrap in a namespace so that NoStepInto can be used for VS2010+.
-namespace oCompute {
+namespace ouro {
 	template<typename T> struct quaternion
 	{
 		typedef T element_type;
@@ -59,10 +59,10 @@ namespace oCompute {
 		inline quaternion<T> operator-() const { return quaternion<T>(-x, -y, -z, -w); }
 		inline quaternion<T> operator*(T _Scalar) const { return quaternion<T>(x * _Scalar, y * _Scalar, z * _Scalar, w * _Scalar); }
 	};
-} // namespace oCompute
+} // namespace ouro
 
-typedef oCompute::quaternion<float> quatf; typedef oCompute::quaternion<double> quatd;
-oHLSL_ELOPT4_VECTOR(oCompute::quaternion, +) oHLSL_ELOPT4_VECTOR(oCompute::quaternion, -) oHLSL_ELOPT4_SCALAR(oCompute::quaternion, *) oHLSL_ELOPT4_SCALAR(oCompute::quaternion, /) oHLSL_ELOPT4_SCALAR(oCompute::quaternion, +) oHLSL_ELOPT4_SCALAR(oCompute::quaternion, -)
+typedef ouro::quaternion<float> quatf; typedef ouro::quaternion<double> quatd;
+oHLSL_ELOPT4_VECTOR(ouro::quaternion, +) oHLSL_ELOPT4_VECTOR(ouro::quaternion, -) oHLSL_ELOPT4_SCALAR(ouro::quaternion, *) oHLSL_ELOPT4_SCALAR(ouro::quaternion, /) oHLSL_ELOPT4_SCALAR(ouro::quaternion, +) oHLSL_ELOPT4_SCALAR(ouro::quaternion, -)
 
 #endif
 #include <oHLSL/oHLSLSwizzlesOn.h> // must be below xyz() and xyzw() definitions for quaternion

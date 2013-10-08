@@ -215,6 +215,8 @@ bool Test_Frustum()
 	return true;
 }
 
+namespace ouro { const char* as_string(const oFRUSTUM_CORNER& _Corner); } // @tony: why is this necessary?
+
 bool Test_FrustumCalcCorners()
 {
 	static const float3 EXPECTED_ORTHO_LH[8] =

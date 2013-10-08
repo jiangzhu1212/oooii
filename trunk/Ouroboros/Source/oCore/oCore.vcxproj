@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="adapter.cpp" />
+    <ClCompile Include="camera.cpp" />
     <ClCompile Include="cpu.cpp" />
     <ClCompile Include="debugger.cpp" />
     <ClCompile Include="display.cpp" />
@@ -34,11 +35,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="process.cpp" />
+    <ClCompile Include="serial_port.cpp" />
     <ClCompile Include="system.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\adapter.h" />
     <ClInclude Include="..\..\Include\oCore\all.h" />
+    <ClInclude Include="..\..\Include\oCore\camera.h" />
     <ClInclude Include="..\..\Include\oCore\cpu.h" />
     <ClInclude Include="..\..\Include\oCore\debugger.h" />
     <ClInclude Include="..\..\Include\oCore\display.h" />
@@ -48,6 +51,7 @@
     <ClInclude Include="..\..\Include\oCore\page_allocator.h" />
     <ClInclude Include="..\..\Include\oCore\process.h" />
     <ClInclude Include="..\..\Include\oCore\process_stats_monitor.h" />
+    <ClInclude Include="..\..\Include\oCore\serial_port.h" />
     <ClInclude Include="..\..\Include\oCore\system.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>

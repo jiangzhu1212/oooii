@@ -28,12 +28,13 @@
 #ifndef oComputeTests_h
 #define oComputeTests_h
 
-namespace oCompute {
+namespace ouro {
 	namespace tests {
 
 		void TESTcompute();
+		void TESTeasing();
 
 	} // namespace tests
-} // namespace oCompute
+} // namespace ouro
 
 #endif

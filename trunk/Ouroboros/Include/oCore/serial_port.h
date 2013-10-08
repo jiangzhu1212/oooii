@@ -22,25 +22,68 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Anything that might want to be consistently controlled by a unit test 
-// infrastructure is separated out into this virtual interface.
+// Serial communication interface
 #pragma once
-#ifndef oCoreTestRequirements_h
-#define oCoreTestRequirements_h
-
-#include <stdarg.h>
+#ifndef oCore_serial_port
+#define oCore_serial_port
 
 namespace ouro {
-	namespace tests {
 
-class requirements
+class serial_port
 {
 public:
-	virtual void vreport(const char* _Format, va_list _Args) = 0;
-	inline void report(const char* _Format, ...) { va_list a; va_start(a, _Format); vreport(_Format, a); va_end(a); }
+	enum port
+	{
+		com1,
+		com2,
+		com3,
+		com4,
+	};
+	
+	enum parity
+	{
+		none,
+		odd,
+		even,
+		mark,
+		space,
+	};
+	
+	enum stop_bits
+	{
+		one,
+		one5,
+		two,
+	};
+	
+	struct info
+	{
+		info()
+			: com_port(com1)
+			, baud(9600)
+			, byte_size(8)
+			, parity(none)
+			, stop_bits(one)
+			, read_timeout_ms(200)
+			, per_byte_read_timeout_ms(10)
+		{}
+		
+		port com_port;
+		int baud;
+		int byte_size;
+		enum parity parity;
+		enum stop_bits stop_bits;
+		unsigned int read_timeout_ms;
+		unsigned int per_byte_read_timeout_ms;
+	};
+	
+	virtual info get_info() const = 0;
+	virtual void send(const void* _pBuffer, size_t _SizeofBuffer) = 0;
+	virtual size_t receive(void* _pBuffer, size_t _SizeofBuffer) = 0;
+
+	static std::shared_ptr<serial_port> make(const info& _Info);
 };
 
-	} // namespace tests
 } // namespace ouro
 
 #endif

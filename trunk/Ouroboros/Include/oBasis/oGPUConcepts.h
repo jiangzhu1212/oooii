@@ -665,7 +665,7 @@ struct oGPU_CLEAR_DESC
 	oGPU_CLEAR_DESC()
 		: DepthClearValue(1.0f)
 		, StencilClearValue(0)
-	{ ClearColor.fill(0); }
+	{ ClearColor.fill(ouro::color(0)); }
 
 	std::array<ouro::color, oGPU_MAX_NUM_MRTS> ClearColor;
 	float DepthClearValue;

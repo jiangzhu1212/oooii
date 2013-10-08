@@ -595,14 +595,12 @@ void oCalcMinMaxPoints(const double3* oRESTRICT _pPoints, size_t _NumberOfPoints
 
 bool oCalcTexcoords(const oAABoxf& _Bound, const unsigned int* _pIndices, unsigned int _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, unsigned int _NumVertices, double* _pSolveTime)
 {
-	// @oooii-tony: I tried integrating OpenNL, but integrating it as-is produced
-	// the same result as their sample, which is to say something that isn't 
-	// generally useful. As I left off it seems that "seaming" or an algo like 
-	// seamster needs to be used as a pre-pass. Other integrations are into tools
-	// that allow a human to specify those seams. So I ran out of eval time and 
-	// removed all the associated code and OpenNL build. It's in my sandbox, so
-	// those with access can go look at that stuff if it needs to be resurrected,
-	// but it's mostly just the sample OOOii-fied.
-
+	// @tony: I tried integrating OpenNL, but integrating it as-is produced the 
+	// same result as their sample, which is to say something that isn't generally 
+	// useful. As I left off it seems that "seaming" or an algo like seamster 
+	// needs to be used as a pre-pass. Other integrations are into tools that 
+	// allow a human to specify those seams. So I ran out of eval time and removed 
+	// all the associated code and OpenNL build. Perhaps I can get back to it 
+	// someday.
 	return oErrorSetLast(std::errc::function_not_supported, "oCalcTexcoords is not yet implemented.");
 }

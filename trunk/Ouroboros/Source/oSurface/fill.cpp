@@ -45,7 +45,7 @@ void fill_solid_masked(color* _pColors, size_t _RowPitch, const int2& _Dimension
 	{
 		color* pScanline = byte_add(_pColors, y * _RowPitch);
 		for (int x = 0; x < _Dimensions.x; x++)
-			pScanline[x] = ((int)_Color & _Mask) | ((int)pScanline[x] & ~_Mask);
+			pScanline[x] = color(((int)_Color & _Mask) | ((int)pScanline[x] & ~_Mask));
 	}
 }
 

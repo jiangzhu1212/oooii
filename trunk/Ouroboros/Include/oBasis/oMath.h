@@ -101,7 +101,7 @@ template<typename T> uint4 oCastAsUint(const TVEC4<T>& value) { return uint4(oCa
 // _____________________________________________________________________________
 // Containment/intersection/base collision
 
-template<typename T> oCompute::aabox<T, TVEC3<T>> oGetBoundingAABox(const oCompute::sphere<T>& _Sphere) { return oCompute::aabox<T, TVEC3<T>>(TVEC3<T>(_Sphere.GetPosition() - _Sphere.radius()), TVEC3<T>(_Sphere.GetPosition() + _Sphere.radius())); }
+template<typename T> ouro::aabox<T, TVEC3<T>> oGetBoundingAABox(const ouro::sphere<T>& _Sphere) { return ouro::aabox<T, TVEC3<T>>(TVEC3<T>(_Sphere.GetPosition() - _Sphere.radius()), TVEC3<T>(_Sphere.GetPosition() + _Sphere.radius())); }
 
 enum oCONTAINMENT
 {
@@ -110,33 +110,22 @@ enum oCONTAINMENT
 	oWHOLLY_CONTAINED,
 };
 
-template<typename T> oCONTAINMENT oContains(const oCompute::frustum<T>& _Frustum, const oCompute::aabox<T,TVEC3<T>>& _Box);
-template<typename T> oCONTAINMENT oContains(const oCompute::frustum<T>& _Frustum, const TVEC4<T>& _Sphere);
-template<typename T> oCONTAINMENT oContains(const oCompute::sphere<T>& _Sphere, const oCompute::aabox<T,TVEC3<T>>& _Box);
-template<typename T, typename TVec> oCONTAINMENT oContains(const oCompute::aabox<T, TVec>& _Box0, const oCompute::aabox<T, TVec>& _Box1);
-template<typename T> oCONTAINMENT oContains(float3 _Point, const oCompute::aabox<T,TVEC3<T>>& _Box);
+template<typename T> oCONTAINMENT oContains(const ouro::frustum<T>& _Frustum, const ouro::aabox<T,TVEC3<T>>& _Box);
+template<typename T> oCONTAINMENT oContains(const ouro::frustum<T>& _Frustum, const TVEC4<T>& _Sphere);
+template<typename T> oCONTAINMENT oContains(const ouro::sphere<T>& _Sphere, const ouro::aabox<T,TVEC3<T>>& _Box);
+template<typename T, typename TVec> oCONTAINMENT oContains(const ouro::aabox<T, TVec>& _Box0, const ouro::aabox<T, TVec>& _Box1);
+template<typename T> oCONTAINMENT oContains(float3 _Point, const ouro::aabox<T,TVEC3<T>>& _Box);
 
-template<typename T> bool oIntersects(const oCompute::frustum<T>& _Frustum, const oCompute::aabox<T,TVEC3<T>>& _Box) { return oNOT_CONTAINED != oContains(_Frustum, _Box); }
-template<typename T> bool oIntersects(const oCompute::frustum<T>& _Frustum, const TVEC4<T>& _Sphere) 
+template<typename T> bool oIntersects(const ouro::frustum<T>& _Frustum, const ouro::aabox<T,TVEC3<T>>& _Box) { return oNOT_CONTAINED != oContains(_Frustum, _Box); }
+template<typename T> bool oIntersects(const ouro::frustum<T>& _Frustum, const TVEC4<T>& _Sphere) 
 { 
   return oNOT_CONTAINED != oContains(_Frustum, _Sphere); 
 }
-template<typename T> bool oIntersects(const oCompute::sphere<T>& _Sphere, const oCompute::aabox<T,TVEC3<T>>& _Box) { return oNOT_CONTAINED != oContains(_Sphere, _Box); }
-template<typename T, typename TVec> bool oIntersects(const oCompute::aabox<T, TVec>& _Box0, const oCompute::aabox<T, TVec>& _Box1) { return oNOT_CONTAINED != oContains(_Box0, _Box1); }
+template<typename T> bool oIntersects(const ouro::sphere<T>& _Sphere, const ouro::aabox<T,TVEC3<T>>& _Box) { return oNOT_CONTAINED != oContains(_Sphere, _Box); }
+template<typename T, typename TVec> bool oIntersects(const ouro::aabox<T, TVec>& _Box0, const ouro::aabox<T, TVec>& _Box1) { return oNOT_CONTAINED != oContains(_Box0, _Box1); }
 
 // _____________________________________________________________________________
 // Miscellaneous
-
-bool oCalculateAreaAndCentriod(float* _pArea, float2* _pCentroid, const float2* _pVertices, size_t _VertexStride, size_t _NumVertices);
-
-// Computes a matrix to move from one coordinate system to another based on 4 known reference locations in the start and end systems assuming uniform units
-template<typename T> bool oCoordinateTransform(const TVEC3<T> startCoords[4], const TVEC3<T> endCoords[4], TMAT4<T> *matrix);
-
-// Computes the gaussian weight of a specific sample in a 1D kernel 
-inline float GaussianWeight(float stdDeviation, int sampleIndex)
-{
-	return (1.0f / (sqrt(2.0f * oPIf) * stdDeviation)) * pow(oEf, -((float)(sampleIndex * sampleIndex) / (2.0f * stdDeviation * stdDeviation)));
-}
 
 template<typename T> oRECT oToRect(const T& _Rect);
 
@@ -146,12 +135,6 @@ template<typename T> oRECT oToRect(const T& _Rect);
 // must be 1.0f and decreasing in size.  SplitRect returns the number of splits
 // it could do (which may be less than _MaxNumSplits when the ratios are too small)
 unsigned int SplitRect(const oRECT& _SrcRect, const unsigned int _MaxNumSplits, const float* _pOrderedSplitRatio, const unsigned int _XMultiple, const unsigned int _YMultiple, oRECT* _pSplitResults);
-
-// Forward biorthogonal CDF 9/7 wavelet transform, transforms in place
-void oCDF97Fwd(float* _pValues, size_t _NumValues);
-
-// Inverse biorthogonal CDF 9/7 wavelet transform, transforms in place
-void oCDF97Inv(float* _pValues, size_t _NumValues);
 
 // _____________________________________________________________________________
 // Basic Octree-related calculations. The depth index of the root is 0, there 

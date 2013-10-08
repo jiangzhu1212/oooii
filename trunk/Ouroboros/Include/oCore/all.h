@@ -28,7 +28,7 @@
 #ifndef oCore_all_h
 #define oCore_all_h
 #include <oCore/adapter.h>
-//#include <oCore/camera.h>
+#include <oCore/camera.h>
 #include <oCore/cpu.h>
 #include <oCore/debugger.h>
 #include <oCore/display.h>

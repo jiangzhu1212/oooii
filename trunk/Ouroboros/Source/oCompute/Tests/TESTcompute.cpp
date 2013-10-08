@@ -28,7 +28,7 @@
 #include <oBase/throw.h>
 #include <vector>
 
-namespace oCompute {
+namespace ouro {
 	namespace tests {
 
 template<typename T> bool equal_eps(const T& a, const T& b, float eps) { return abs(a - b) <= eps; }
@@ -214,4 +214,4 @@ void TESTcompute()
 }
 
 	} // namespace tests
-} // namespace oCompute
+} // namespace ouro

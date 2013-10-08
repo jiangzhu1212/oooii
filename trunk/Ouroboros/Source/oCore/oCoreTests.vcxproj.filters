@@ -21,6 +21,9 @@
     <ClCompile Include="Tests\TESTdebugger.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\TESTcamera.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\tests\oCoreTestRequirements.h">

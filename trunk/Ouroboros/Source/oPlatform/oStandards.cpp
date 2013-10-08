@@ -26,7 +26,6 @@
 #include <oBase/assert.h>
 #include <oStd/chrono.h>
 #include <oPlatform/oConsole.h>
-#include <oPlatform/oDisplay.h>
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/oMsgBox.h>
 #include <oPlatform/Windows/oWindows.h>
@@ -38,10 +37,10 @@ void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list
 {
 	static const color fg[] = 
 	{
-		0,
+		color(0),
 		Lime,
 		White,
-		0,
+		color(0),
 		Yellow,
 		Red,
 		Yellow,
@@ -50,12 +49,12 @@ void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list
 
 	static const color bg[] = 
 	{
-		0,
-		0,
-		0,
-		0,
-		0,
-		0,
+		color(0),
+		color(0),
+		color(0),
+		color(0),
+		color(0),
+		color(0),
 		Red,
 	};
 	static_assert(oCOUNTOF(fg) == NUM_REPORT_TYPES, "");

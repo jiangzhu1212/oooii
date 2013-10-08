@@ -766,7 +766,7 @@ void oTestManager_Impl::PrintDesc()
 
 	path DevPath = filesystem::dev_path();
 	lstring CLStr;
-	uint CL = scc->revision(DevPath);
+	uint CL = 0;//scc->revision(DevPath); //@tony: this takes too long
 	if (CL)
 	{
 		try

@@ -39,7 +39,7 @@
 #else
 
 // Wrap in a namespace so that NoStepInto can be used for VS2010+.
-namespace oCompute {
+namespace ouro {
 	template<typename T, typename TVec> struct aabox
 	{
 		enum ctor_type
@@ -65,13 +65,13 @@ namespace oCompute {
 		TVec Min;
 		TVec Max;
 	};
-} // namespace oCompute
+} // namespace ouro
 
-typedef oCompute::aabox<float, TVEC3<float>> oAABoxf; typedef oCompute::aabox<double, TVEC3<double>> oAABoxd;
-typedef oCompute::aabox<int, TVEC2<int>> oRECT;
-typedef oCompute::aabox<float, TVEC2<float>> oRECTF;
+typedef ouro::aabox<float, TVEC3<float>> oAABoxf; typedef ouro::aabox<double, TVEC3<double>> oAABoxd;
+typedef ouro::aabox<int, TVEC2<int>> oRECT;
+typedef ouro::aabox<float, TVEC2<float>> oRECTF;
 
-template<typename T> void oDecompose(const oCompute::aabox<T, TVEC2<T>>& _Box, TVEC2<T> _Vertices[4])
+template<typename T> void oDecompose(const ouro::aabox<T, TVEC2<T>>& _Box, TVEC2<T> _Vertices[4])
 {
 	const TVEC2<T>& Min = _Box.Min;
 	const TVEC2<T>& Max = _Box.Max;
@@ -82,7 +82,7 @@ template<typename T> void oDecompose(const oCompute::aabox<T, TVEC2<T>>& _Box, T
 }
 
 // Get the eight corners that make up the box
-template<typename T> void oDecompose(const oCompute::aabox<T, TVEC3<T>>& _Box, TVEC3<T> _Vertices[8])
+template<typename T> void oDecompose(const ouro::aabox<T, TVEC3<T>>& _Box, TVEC3<T> _Vertices[8])
 {
 	const TVEC3<T>& Min = _Box.Min;
 	const TVEC3<T>& Max = _Box.Max;
@@ -96,21 +96,21 @@ template<typename T> void oDecompose(const oCompute::aabox<T, TVEC3<T>>& _Box, T
 	_Vertices[7] = Max;
 }
 
-template<typename T, typename TVec> void oExtendBy(oCompute::aabox<T, TVec>& _AABox, const TVec& _Point) { _AABox.Min = min(_AABox.Min, _Point); _AABox.Max = max(_AABox.Max, _Point); }
-template<typename T, typename TVec> void oExtendBy(oCompute::aabox<T, TVec>& _AABox1, const oCompute::aabox<T, TVec>& _AABox2) { oExtendBy(_AABox1, _AABox2.Min); oExtendBy(_AABox1, _AABox2.Max); }
-template<typename T, typename TVec> void oTranslate(oCompute::aabox<T, TVec>& _AABox, const TVec& _Translation) { _AABox.Min += _Translation; _AABox.Max += _Translation; }
-template<typename T, typename TVec> inline bool oContains(const oCompute::aabox<T, TVec>& _Box, const TVec& _Point) { return all(_Point >= _Box.Min) && all(_Point <= _Box.Max); }
+template<typename T, typename TVec> void oExtendBy(ouro::aabox<T, TVec>& _AABox, const TVec& _Point) { _AABox.Min = min(_AABox.Min, _Point); _AABox.Max = max(_AABox.Max, _Point); }
+template<typename T, typename TVec> void oExtendBy(ouro::aabox<T, TVec>& _AABox1, const ouro::aabox<T, TVec>& _AABox2) { oExtendBy(_AABox1, _AABox2.Min); oExtendBy(_AABox1, _AABox2.Max); }
+template<typename T, typename TVec> void oTranslate(ouro::aabox<T, TVec>& _AABox, const TVec& _Translation) { _AABox.Min += _Translation; _AABox.Max += _Translation; }
+template<typename T, typename TVec> inline bool oContains(const ouro::aabox<T, TVec>& _Box, const TVec& _Point) { return all(_Point >= _Box.Min) && all(_Point <= _Box.Max); }
 
 // Axis-aligned boxes/rects are always axis-aligned. An axis-aligned box that 
 // is naively transformed becomes an oriented bounding box. Take the points of
 // an oriented bounding box and calculate the axis-aligned box that contains
 // them to produce a transformed box.
 template<typename T, typename TVec> 
-oCompute::aabox<T, TVec> mul(const TMAT4<T>& _Matrix, const oCompute::aabox<T, TVec>& _Bound)
+ouro::aabox<T, TVec> mul(const TMAT4<T>& _Matrix, const ouro::aabox<T, TVec>& _Bound)
 {
 	TVec verts[8];
 	oDecompose(_Bound, verts);
-	oCompute::aabox<T, TVec> box;
+	ouro::aabox<T, TVec> box;
 	oHLSL_UNROLL
 	for (int i = 0; i < 8; i++)
 	{

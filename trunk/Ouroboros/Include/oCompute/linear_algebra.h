@@ -235,6 +235,15 @@ void extract_perspective_parameters(const float4x4& _Projection
 // _____________________________________________________________________________
 // Misc
 
+float calcuate_area_and_centroid(float2* _pCentroid
+, const float2* _pVertices, size_t _VertexStride, size_t _NumVertices);
+
+// Computes the gaussian weight of a specific sample in a 1D kernel 
+inline float gaussian_weight(float stdDeviation, int sampleIndex)
+{
+	return (1.0f / (sqrt(2.0f * oPIf) * stdDeviation)) * pow(oEf, -((float)(sampleIndex * sampleIndex) / (2.0f * stdDeviation * stdDeviation)));
+}
+
 // Determines a location in 3D space based on 4 reference locations and their 
 // distances from the location.
 float trilaterate(const float3 _ObserversIn[4], const float _DistancesIn[4], float3* _pPosition);

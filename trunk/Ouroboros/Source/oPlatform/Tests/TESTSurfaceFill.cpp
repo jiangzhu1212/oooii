@@ -52,7 +52,7 @@ void PlatformFillGridNumbers(ouro::surface::buffer* _pBuffer
 
 	oGUI_TEXT_DESC td;
 	td.Alignment = oGUI_ALIGNMENT_MIDDLE_CENTER;
-	td.Shadow = 0;
+	td.Shadow = ouro::color(0);
 	td.SingleLine = true;
 
 	ouro::surface::fill_grid_numbers(si.dimensions.xy(), _GridDimensions,

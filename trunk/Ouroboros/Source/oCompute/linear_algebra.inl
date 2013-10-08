@@ -25,6 +25,9 @@
 // template versions of linear_algebra functions to support the occasional 
 // interest in double precision for some tools code.
 
+#include <exception>
+#include <oBase/byte.h>
+
 #define MAT4_IDENTITY TMAT4<T>( \
 			TVEC4<T>(T(1), T(0), T(0), T(0)), \
 			TVEC4<T>(T(0), T(1), T(0), T(0)), \
@@ -489,6 +492,44 @@ void extract_perspective_parameters(const TMAT4<T>& _Projection
 	*_pFovYRadians = atan(T(1) / _Projection.Column1.y) * T(2);
 	*_pAspectRatio = _Projection.Column1.y / _Projection.Column0.x;
 	extract_near_far_distances(_Projection, _pZNear, _pZFar);
+}
+
+// Returns the area, and fills _pCentroid with the center-most point from a 
+// list of 2D vertices.
+template<typename T>
+T calcuate_area_and_centroid(TVEC2<T>* _pCentroid
+	, const TVEC2<T>* _pVertices, size_t _VertexStride, size_t _NumVertices)
+{
+	// Bashein, Gerard, Detmer, Paul R. "Graphics Gems IV." 
+	// ed. Paul S. Heckbert. pg 3-6. Academic Press, San Diego, 1994.
+
+	T area = T(0);
+	if (_NumVertices < 3)
+		throw std::invalid_argument("must be at least 3 vertices");
+
+	T atmp = T(0), xtmp = T(0), ytmp = T(0);
+	const TVEC2<T>* vj = _pVertices;
+	const TVEC2<T>* vi = byte_add(_pVertices, _VertexStride, _NumVertices - 1);
+	const TVEC2<T>* end = byte_add(vi, _VertexStride, 1);
+	while (vj < end)
+	{
+		T ai = vi->x * vj->y - vj->x * vi->y;
+		atmp += ai;
+		xtmp += (vj->x * vi->x) * ai;
+		ytmp += (vj->y * vi->y) * ai;
+
+		vi = vj;
+		vj += _VertexStride;
+	}
+
+	area = atmp / T(2);
+	if (!equal(atmp, T(0)))
+	{
+		_pCentroid->x = xtmp / (T(3) * atmp);
+		_pCentroid->y = ytmp / (T(3) * atmp);
+	}
+
+	return area;
 }
 
 template<typename T>

@@ -149,7 +149,7 @@
 #endif
 
 // Error checking support
-#define oCHECK_SIZE(_WinType, _SizeTValue) if (static_cast<size_t>(static_cast<_WinType>(_SizeTValue)) != (_SizeTValue)) throw std::invalid_argument("out of range: size_t -> " #_WinType);
+#define oCHECK_SIZE(_WinType, _SizeTValue) if (static_cast<size_t>(static_cast<_WinType>(_SizeTValue)) != static_cast<size_t>(_SizeTValue)) throw std::invalid_argument("out of range: size_t -> " #_WinType);
 #define oV(_HRWinFn) do { HRESULT HR__ = _HRWinFn; if (FAILED(HR__)) throw oStd::windows::error(HR__); } while(false)
 #define oVB(_BoolWinFn) do { if (!(_BoolWinFn)) throw oStd::windows::error(); } while(false)
 

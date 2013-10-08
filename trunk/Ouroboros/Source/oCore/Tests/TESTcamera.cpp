@@ -22,21 +22,42 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+#include <oCore/tests/oCoreTestRequirements.h>
+#include <oCore/camera.h>
+#include <oBase/assert.h>
 
-// @oooii-tony: I'm not sure how to automatically test a camera since it could
-// be looking at anything and that's even if there's a camera attached to the
-// computer. So include this function that enumerates all attached cameras and
-// opens an oWindow for each with its video stream for verification/iteration.
+namespace ouro {
 
-#include <oPlatform/oCamera.h>
-#include <oPlatform/Windows/oGDI.h>
-#include <oPlatform/Windows/oWinRect.h>
-#include <oPlatform/oMsgBox.h>
-#include <oPlatform/oTest.h>
-#include <oPlatform/oWindow.h>
+	const char* as_string(const camera::format& _Format); // @tony: why is this necessary?
 
-int ShowAllCameras()
+	namespace tests {
+
+void TESTcamera(requirements& _Requirements)
 {
+	bool reported = false;
+
+	camera::enumerate([&](std::shared_ptr<camera> _Camera)->bool
+	{
+		if (!reported)
+		{
+			_Requirements.report("camera \"%s\" detected. See trace for more info.", _Camera->name());
+			reported = true;
+		}
+
+		oTRACE("oCore::camera \"%s\", supports:", _Camera->name());
+		_Camera->enumerate_modes([&](const camera::mode& _Mode)->bool
+		{
+			oTRACE("- %dx%d %s %d bitrate", _Mode.dimensions.x, _Mode.dimensions.y, as_string(_Mode.format), _Mode.bit_rate);
+			return true;
+		});
+		return true;
+	});
+
+	if (!reported)
+		_Requirements.report("no camera detected.");
+
+#if 0 // @tony: make a simple test app for cameras
+
 	struct CONTEXT
 	{
 		CONTEXT(ouro::intrusive_ptr<threadsafe oCamera> _pCamera)
@@ -187,14 +208,9 @@ int ShowAllCameras()
 	}
 
 	return 0;
+#endif
 }
 
-struct PLATFORM_oCamera : oTest
-{
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
-	{
-		return 0 == ShowAllCameras() ? oTest::SUCCESS : oTest::FAILURE;
-	}
-};
+	} // namespace tests
+} // namespace ouro
 
-//oTEST_REGISTER(PLATFORM_oCamera);

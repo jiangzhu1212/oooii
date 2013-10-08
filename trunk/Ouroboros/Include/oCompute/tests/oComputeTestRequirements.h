@@ -28,7 +28,7 @@
 #ifndef oComputeTestRequirements_h
 #define oComputeTestRequirements_h
 
-namespace oCompute {
+namespace ouro {
 	namespace tests {
 
 // No requirements yet...
@@ -37,6 +37,6 @@ interface requirements
 };
 
 	} // namespace tests
-} // namespace oCompute
+} // namespace ouro
 
 #endif

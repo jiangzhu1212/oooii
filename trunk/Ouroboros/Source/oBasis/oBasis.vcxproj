@@ -47,7 +47,6 @@
     <ClInclude Include="..\..\Include\oBasis\oDispatchQueueGlobal.h" />
     <ClInclude Include="..\..\Include\oBasis\oDispatchQueueGlobalT.h" />
     <ClInclude Include="..\..\Include\oBasis\oDispatchQueuePrivate.h" />
-    <ClInclude Include="..\..\Include\oBasis\oEasing.h" />
     <ClInclude Include="..\..\Include\oBasis\oError.h" />
     <ClInclude Include="..\..\Include\oBasis\oFilterChain.h" />
     <ClInclude Include="..\..\Include\oBasis\oGeometry.h" />

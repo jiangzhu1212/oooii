@@ -42,7 +42,7 @@
 
 #else
 	// Wrap in a namespace so that NoStepInto can be used for VS2010+.
-	namespace oCompute {
+	namespace ouro {
 		template<typename T> struct sphere : public TVEC4<T>
 		{
 			typedef T element_type;
@@ -57,9 +57,9 @@
 			const sphere& operator=(const base_type& _That) { *(base_type*)this = _That; return *this; }
 			operator base_type() { return *this; }
 		};
-	} // namespace oCompute
+	} // namespace ouro
 
-typedef oCompute::sphere<float> oSpheref; typedef oCompute::sphere<double> oSphered;
+typedef ouro::sphere<float> oSpheref; typedef ouro::sphere<double> oSphered;
 
 #endif
 #endif

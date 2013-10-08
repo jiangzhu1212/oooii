@@ -12,6 +12,9 @@
     <ClCompile Include="Tests\TESTcompute.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\TESTeasing.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCompute\tests\oComputeTestRequirements.h">

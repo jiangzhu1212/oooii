@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\TESTadapter.cpp" />
+    <ClCompile Include="Tests\TESTcamera.cpp" />
     <ClCompile Include="Tests\TESTcpu.cpp" />
     <ClCompile Include="Tests\TESTdebugger.cpp" />
     <ClCompile Include="Tests\TESTfilesystem.cpp" />
