@@ -61,7 +61,6 @@
     <ClInclude Include="..\..\Include\oBasis\oInvalid.h" />
     <ClInclude Include="..\..\Include\oBasis\oJSONSerialize.h" />
     <ClInclude Include="..\..\Include\oBasis\oLeakTracker.h" />
-    <ClInclude Include="..\..\Include\oBasis\oLibc.h" />
     <ClInclude Include="..\..\Include\oBasis\oLockedPointer.h" />
     <ClInclude Include="..\..\Include\oBasis\oLockThis.h" />
     <ClInclude Include="..\..\Include\oBasis\oLZMA.h" />
@@ -74,7 +73,6 @@
     <ClInclude Include="..\..\Include\oBasis\oOSC.h" />
     <ClInclude Include="..\..\Include\oBasis\oPlatformFeatures.h" />
     <ClInclude Include="..\..\Include\oBasis\oRefCount.h" />
-    <ClInclude Include="..\..\Include\oBasis\oResizedType.h" />
     <ClInclude Include="..\..\Include\oBasis\oRTTI.h" />
     <ClInclude Include="..\..\Include\oBasis\oRTTIForAtoms.h" />
     <ClInclude Include="..\..\Include\oBasis\oRTTIForCompounds.h" />

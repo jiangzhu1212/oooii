@@ -87,9 +87,6 @@
     <ClInclude Include="..\..\Include\oBasis\oError.h">
       <Filter>oBasis\Language Enhancements</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oLibc.h">
-      <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oRefCount.h">
       <Filter>oBasis\Types</Filter>
     </ClInclude>
@@ -215,9 +212,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oGPUConcepts.h">
       <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oResizedType.h">
-      <Filter>oBasis\Language Enhancements</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oContainer.h">
       <Filter>oBasis</Filter>

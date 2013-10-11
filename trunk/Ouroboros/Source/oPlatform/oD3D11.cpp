@@ -25,7 +25,6 @@
 #include <oPlatform/Windows/oD3D11.h>
 #include <oBase/assert.h>
 #include <oBase/byte.h>
-#include <oPlatform/oDisplay.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oPlatform/Windows/oDXGI.h>
@@ -47,61 +46,6 @@ const oGUID& oGetGUID(threadsafe const ID3D11DeviceContext* threadsafe const*) {
 const oGUID& oGetGUID(threadsafe const ID3D11RenderTargetView* threadsafe const*) { return (const oGUID&)__uuidof(ID3D11RenderTargetView); }
 const oGUID& oGetGUID(threadsafe const ID3D11Texture2D* threadsafe const*) { return (const oGUID&)__uuidof(ID3D11Texture2D); }
 
-static bool oD3D11FindAdapter(int _Index, const int2& _VirtualDesktopPosition, const version& _MinVersion, bool _ExactVersion, IDXGIAdapter** _ppAdapter)
-{
-	bool ForceOneGPU = false;
-	char buf[32];
-	if (ouro::system::getenv(buf, "Ouroboros.D3D11.ForceOneGPU") && from_string(&ForceOneGPU, buf) && ForceOneGPU)
-	{
-		oTRACE("Forcing D3D11Device index %d to 0 because Ouroboros.D3D11.ForceOneGPU is set.", _Index);
-		_Index = 0;
-	}
-
-	intrusive_ptr<IDXGIFactory> Factory;
-	if (!oDXGICreateFactory(&Factory))
-		return oErrorSetLast(std::errc::no_such_device, "Failed to create DXGI factory");
-
-	if (any(_VirtualDesktopPosition == int2(oDEFAULT, oDEFAULT)))
-	{
-		if (_Index < 0)
-			return oErrorSetLast(std::errc::invalid_argument, "An invalid index and an invalid virtual desktop point where specified. One must be valid.");
-
-		if (DXGI_ERROR_NOT_FOUND == Factory->EnumAdapters(_Index, _ppAdapter))
-			return oErrorSetLast(std::errc::no_such_device, "An IDXGIAdapter could not be found at index %d", _Index);
-	}
-
-	else
-	{
-		intrusive_ptr<IDXGIOutput> Output;
-			if (!oDXGIFindOutput(Factory, _VirtualDesktopPosition, &Output))
-				return oErrorSetLast(std::errc::no_such_device, "No output found displaying virtual desktop position %d, %d", _VirtualDesktopPosition.x, _VirtualDesktopPosition.y);
-		oVERIFY(oDXGIGetAdapter(Output, _ppAdapter));
-	}
-
-	int AdapterIndex = oDXGIGetAdapterIndex(*_ppAdapter);
-	if (AdapterIndex == oInvalid)
-		return oErrorSetLast(std::errc::no_such_device, "No GPUIndex could be found from the DXGI adapter found");
-
-	ouro::adapter::info adapter_info = oDXGIGetAdapterDriverInfo(*_ppAdapter);
-	version RequiredVersion = _MinVersion;
-
-	if (RequiredVersion == version())
-		RequiredVersion = ouro::adapter::minimum_version(adapter_info.vendor);
-
-	sstring StrAdd, StrReq;
-
-	if (_ExactVersion)
-	{
-		if (adapter_info.version != RequiredVersion)
-			return oErrorSetLast(std::errc::invalid_argument, "Exact video driver version %s required, but current driver is %s", to_string2(StrReq, RequiredVersion), to_string2(StrAdd, RequiredVersion));
-	}
-
-	else if (adapter_info.version < RequiredVersion)
-		return oErrorSetLast(std::errc::invalid_argument, "Video driver version %s or newer required, but current driver is %s", to_string2(StrReq, RequiredVersion), to_string2(StrAdd, RequiredVersion));
-
-	return true;
-}
-
 bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3D11Device** _ppDevice)
 {
 	if (!_ppDevice || _Init.Version < version(9,0))
@@ -111,8 +55,9 @@ bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3
 
 	if (!_Init.UseSoftwareEmulation)
 	{
-		if (!oD3D11FindAdapter(_Init.AdapterIndex, _Init.VirtualDesktopPosition, _Init.MinDriverVersion, _Init.DriverVersionMustBeExact, &Adapter))
-			return false; // pass through error
+		adapter::info adapter_info = adapter::find(_Init.VirtualDesktopPosition
+			, _Init.MinDriverVersion, _Init.DriverVersionMustBeExact);
+		Adapter = dxgi::get_adapter(adapter_info.id);
 	}
 
 	UINT Flags = 0;
@@ -164,7 +109,7 @@ bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3
 		oTRACE("Debug D3D11 not found: device created in non-debug mode so driver error reporting will not be available.");
 	}
 
-	version D3DVersion = oD3D11GetFeatureVersion(FeatureLevel);
+	version D3DVersion = version((FeatureLevel>>12) & 0xffff, (FeatureLevel>>8) & 0xffff);
 	if (D3DVersion < _Init.Version)
 	{
 		if (*_ppDevice) 
@@ -298,7 +243,7 @@ bool oD3D11DeviceGetDesc(ID3D11Device* _pDevice, bool _IsSoftwareEmulation, oGPU
 
 	DXGI_ADAPTER_DESC ad;
 	Adapter->GetDesc(&ad);
-	ouro::adapter::info adapter_info = oDXGIGetAdapterDriverInfo(Adapter);
+	ouro::adapter::info adapter_info = dxgi::get_info(Adapter);
 
 	_pDesc->DeviceDescription = ad.Description;
 	_pDesc->DriverDescription = adapter_info.description;
@@ -306,9 +251,8 @@ bool oD3D11DeviceGetDesc(ID3D11Device* _pDevice, bool _IsSoftwareEmulation, oGPU
 	_pDesc->DedicatedSystemMemory = ad.DedicatedSystemMemory;
 	_pDesc->SharedSystemMemory = ad.SharedSystemMemory;
 	_pDesc->DriverVersion = adapter_info.version;
-	_pDesc->FeatureVersion = oDXGIGetFeatureLevel(Adapter);
-	_pDesc->InterfaceVersion = oDXGIGetInterfaceVersion(Adapter);
-	_pDesc->AdapterIndex = oDXGIGetAdapterIndex(Adapter);
+	_pDesc->FeatureVersion = adapter_info.feature_level;
+	_pDesc->AdapterIndex = *(int*)&adapter_info.id;
 	_pDesc->API = oGPU_API_D3D;
 	_pDesc->Vendor = adapter_info.vendor;
 	_pDesc->IsSoftwareEmulation = _IsSoftwareEmulation;
@@ -420,20 +364,6 @@ const char* as_string(const D3D11_USAGE& _Usage)
 }
 
 } // namespace ouro
-
-version oD3D11GetFeatureVersion(D3D_FEATURE_LEVEL _Level)
-{
-	switch (_Level)
-	{
-		case D3D_FEATURE_LEVEL_11_0: return version(11,0);
-		case D3D_FEATURE_LEVEL_10_1: return version(10,1);
-		case D3D_FEATURE_LEVEL_10_0: return version(10,0);
-		case D3D_FEATURE_LEVEL_9_3: return version(9,3);
-		case D3D_FEATURE_LEVEL_9_2: return version(9,2);
-		case D3D_FEATURE_LEVEL_9_1: return version(9,1);
-		oNODEFAULT;
-	}
-}
 
 bool oD3D11SetDebugName(ID3D11Device* _pDevice, const char* _Name)
 {
@@ -657,7 +587,7 @@ const char* oD3D11GetShaderProfile(D3D_FEATURE_LEVEL _Level, oGPU_PIPELINE_STAGE
 	const char* profile = profiles[_Stage];
 	if (!profile)
 	{
-		version ver = oD3D11GetFeatureVersion(_Level);
+		version ver = version((_Level>>12) & 0xffff, (_Level>>8) & 0xffff);
 		sstring StrVer;
 		oErrorSetLast(std::errc::not_supported, "Shader profile does not exist for D3D%s's stage %s", to_string2(StrVer, ver), as_string(_Stage));
 	}
@@ -785,7 +715,7 @@ template<typename DescT> static void FillNonDimensions(const DescT& _Desc, oGPU_
 	if (_Desc.MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE)
 		_BasicType = oGPU_TEXTURE_CUBE_MAP;
 
-	_pDesc->Format = oDXGIToSurfaceFormat(_Desc.Format);
+	_pDesc->Format = dxgi::to_surface_format(_Desc.Format);
 
 	_pDesc->Type = _BasicType;
 	if (_Desc.MipLevels > 1)
@@ -831,7 +761,7 @@ static void oD3D11InitBufferDesc(UINT _BindFlags, D3D11_USAGE _Usage, uint _Size
 static void oD3D11InitValues(const oGPU_TEXTURE_DESC& _Desc, DXGI_FORMAT* _pFormat, D3D11_USAGE* _pUsage, UINT* _pCPUAccessFlags, UINT* _pBindFlags, UINT* _pMipLevels, UINT* _pMiscFlags = nullptr)
 {
 	DXGI_FORMAT DSVF, SRVF;
-	oDXGIGetCompatibleFormats(oDXGIFromSurfaceFormat(_Desc.Format), _pFormat, &DSVF, &SRVF);
+	dxgi::get_compatible_formats(dxgi::from_surface_format(_Desc.Format), _pFormat, &DSVF, &SRVF);
 	if (*_pFormat == DXGI_FORMAT_UNKNOWN)
 		*_pFormat = DXGI_FORMAT_FROM_FILE;
 
@@ -864,7 +794,7 @@ static void oD3D11InitValues(const oGPU_TEXTURE_DESC& _Desc, DXGI_FORMAT* _pForm
 		}
 	}
 
-	if (oDXGIIsDepthFormat(*_pFormat))
+	if (surface::is_depth(dxgi::to_surface_format(*_pFormat)))
 	{
 		*_pBindFlags &=~ D3D11_BIND_RENDER_TARGET;
 		*_pBindFlags |= D3D11_BIND_DEPTH_STENCIL;
@@ -1014,7 +944,7 @@ bool oD3D11BufferCreate(ID3D11Device* _pDevice, const char* _DebugName, const oG
 	if (_Desc.Type >= oGPU_BUFFER_UNORDERED_RAW)
 	{
 		D3D11_UNORDERED_ACCESS_VIEW_DESC UAVD;
-		UAVD.Format = oDXGIFromSurfaceFormat(Format);
+		UAVD.Format = dxgi::from_surface_format(Format);
 		UAVD.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 		UAVD.Buffer.FirstElement = 0;
 		UAVD.Buffer.NumElements = _Desc.ArraySize;
@@ -1307,7 +1237,7 @@ void oD3D11GetTextureDesc(ID3D11Resource* _pResource, oGPU_TEXTURE_DESC* _pDesc,
 static void oD3D11InitSRVDesc(const oGPU_TEXTURE_DESC& _Desc, D3D11_RESOURCE_DIMENSION _Type, D3D11_SHADER_RESOURCE_VIEW_DESC* _pSRVDesc)
 {
 	DXGI_FORMAT TF, DSVF;
-	oDXGIGetCompatibleFormats(oDXGIFromSurfaceFormat(_Desc.Format), &TF, &DSVF, &_pSRVDesc->Format);
+	dxgi::get_compatible_formats(dxgi::from_surface_format(_Desc.Format), &TF, &DSVF, &_pSRVDesc->Format);
 
 	// All texture share basically the same memory footprint, so just write once
 	_pSRVDesc->Texture2DArray.MostDetailedMip = 0;
@@ -1360,7 +1290,7 @@ static void oD3D11InitDSVDesc(const oGPU_TEXTURE_DESC& _Desc, D3D11_RESOURCE_DIM
 {
 	oASSERT(_Type == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unsupported resource dimension (%s)", as_string(_Type));
 	DXGI_FORMAT TF, SRVF;
-	oDXGIGetCompatibleFormats(oDXGIFromSurfaceFormat(_Desc.Format), &TF, &_pDSVDesc->Format, &SRVF);
+	dxgi::get_compatible_formats(dxgi::from_surface_format(_Desc.Format), &TF, &_pDSVDesc->Format, &SRVF);
 	_pDSVDesc->ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	_pDSVDesc->Texture2D.MipSlice = 0;
 	_pDSVDesc->Flags = 0;
@@ -1396,7 +1326,7 @@ bool oD3D11CreateUnorderedAccessView(const char* _DebugName, ID3D11Resource* _pT
 	oD3D11GetTextureDesc(_pTexture, &desc);
 
 	D3D11_UNORDERED_ACCESS_VIEW_DESC UAVD;
-	UAVD.Format = oDXGIFromSurfaceFormat(desc.Format);
+	UAVD.Format = dxgi::from_surface_format(desc.Format);
 
 	switch (desc.Type)
 	{
@@ -1989,7 +1919,7 @@ void oD3D11Draw(ID3D11DeviceContext* _pDeviceContext
 		if (!oD3D11BufferGetDesc(_pIndexBuffer, &d))
 			oASSERT(false, "oD3D11Draw: The index buffer passed must have had oD3D11SetBufferDescription on it with appropriate values.");
 
-		_pDeviceContext->IASetIndexBuffer(const_cast<ID3D11Buffer*>(_pIndexBuffer), oDXGIFromSurfaceFormat(d.Format), _IndexOfFirstIndexToDraw * d.StructByteSize);
+		_pDeviceContext->IASetIndexBuffer(const_cast<ID3D11Buffer*>(_pIndexBuffer), dxgi::from_surface_format(d.Format), _IndexOfFirstIndexToDraw * d.StructByteSize);
 
 		if (_NumInstances)
 			_pDeviceContext->DrawIndexedInstanced(_NumElements, _NumInstances, _IndexOfFirstIndexToDraw, _OffsetToAddToEachVertexIndex, _IndexOfFirstInstanceIndexToDraw);

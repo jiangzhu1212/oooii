@@ -42,7 +42,7 @@ static bool oInitializeInputElementDesc(D3D11_INPUT_ELEMENT_DESC* _pInputElement
 		el.SemanticName = s;
 		s += strlen(s) + 1;
 
-		el.Format = oDXGIFromSurfaceFormat(e.Format);
+		el.Format = ouro::dxgi::from_surface_format(e.Format);
 		el.InputSlot = e.InputSlot;
 		el.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
 		el.InputSlotClass = e.Instanced ? D3D11_INPUT_PER_INSTANCE_DATA : D3D11_INPUT_PER_VERTEX_DATA;

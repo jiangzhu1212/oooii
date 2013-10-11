@@ -95,9 +95,6 @@ bool oD3D11DeviceGetDesc(ID3D11Device* _pDevice, bool _IsSoftwareEmulation, oGPU
 // Get the adapter with which the specified device was created
 bool oD3D11GetAdapter(ID3D11Device* _pDevice, IDXGIAdapter** _ppAdapter);
 
-// Converts the specified D3D_FEATURE_LEVEL into an ouro::version.
-ouro::version oD3D11GetFeatureVersion(D3D_FEATURE_LEVEL _Level);
-
 // Returns an IFF based on the extension specified in the file path
 D3DX11_IMAGE_FILE_FORMAT oD3D11GetFormatFromPath(const char* _Path);
 

@@ -30,9 +30,13 @@
 #include <oBase/macros.h>
 #include <oBase/vendor.h>
 #include <oBase/version.h>
+#include <oHLSL/oHLSLTypes.h>
 #include <functional>
 
 namespace ouro {
+
+	namespace display { class id; }
+	
 	namespace adapter {
 
 class id
@@ -55,6 +59,7 @@ struct info
 	mstring plugnplay_id;
 	struct version version;
 	vendor::value vendor;
+	struct version feature_level;
 };
 
 void enumerate(const std::function<bool(const info& _Info)>& _Enumerator);
@@ -75,6 +80,17 @@ inline bool all_up_to_date()
 	});
 	return IsUpToDate;
 }
+
+// Given the specified virtual desktop position, find the adapter responsible
+// for drawing to it. In this way a device can be matched with a specific 
+// screen's adapter. It will also be verified against the specified minimum or 
+// exact version.
+info find(const int2& _VirtualDesktopPosition, 
+	const version& _MinVersion = version(), 
+	bool _ExactVersion = true);
+inline info find(const version& _MinVersion, bool _ExactVersion = true) { return std::move(find(int2(oDEFAULT, oDEFAULT), _MinVersion, _ExactVersion)); }
+
+info find(display::id* _DisplayID);
 
 	} // namespace adapter
 } // namespace ouro

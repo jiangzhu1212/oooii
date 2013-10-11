@@ -347,18 +347,22 @@ bool oD3D11Device::CreatePrimaryRenderTarget(oWindow* _pWindow, ouro::surface::f
 	if (oGUIStyleHasStatusBar(s.Style))
 		return oErrorSetLast(std::errc::invalid_argument, "A window used for rendering must not have a status bar");
 
-	if (!oDXGICreateSwapChain(D3DDevice
-		, false
-		, __max(1, s.ClientSize.x)
-		, __max(1, s.ClientSize.y)
-		, false
-		, DXGI_FORMAT_B8G8R8A8_UNORM
-		, 0
-		, 0
-		, (HWND)_pWindow->GetNativeHandle()
-		, _EnableOSRendering
-		, &SwapChain))
-		return false; // pass through error
+	try
+	{
+		SwapChain = dxgi::make_swap_chain(D3DDevice
+			, false
+			, max(int2(1,1), s.ClientSize)
+			, false
+			, surface::b8g8r8a8_unorm
+			, 0
+			, 0
+			, (HWND)_pWindow->GetNativeHandle()
+			, _EnableOSRendering);
+	}
+	catch (std::exception& e)
+	{
+		return oErrorSetLast(e);
+	}
 
 	sstring RTName;
 	snprintf(RTName, "%s.PrimaryRT", GetName());
@@ -524,19 +528,12 @@ oGUI_DRAW_CONTEXT oD3D11Device::BeginOSFrame()
 		return nullptr;
 	}
 
-	HDC hDeviceDC = nullptr;
-	if (!oDXGIGetDC(SwapChain, &hDeviceDC))
-	{
-		SwapChainMutex.unlock_shared();
-		return nullptr;
-	}
-
-	return (oGUI_DRAW_CONTEXT)hDeviceDC;
+	return (oGUI_DRAW_CONTEXT)dxgi::get_dc(SwapChain);
 }
 
 void oD3D11Device::EndOSFrame()
 {
-	oVERIFY(oDXGIReleaseDC(SwapChain, nullptr));
+	dxgi::release_dc(SwapChain);
 	SwapChainMutex.unlock_shared();
 }
 

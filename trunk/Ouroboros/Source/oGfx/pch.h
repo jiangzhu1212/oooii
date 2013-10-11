@@ -26,7 +26,7 @@
 #ifdef oPCH
 #include <oStd/all.h>
 #include <oBasis/all.h>
-#include <oBasis/oLibc.h>
+#include <oBase/all_libc.h>
 #include <oPlatform/all.h>
 #include <oPlatform/Windows/oWindows.h>
 #endif

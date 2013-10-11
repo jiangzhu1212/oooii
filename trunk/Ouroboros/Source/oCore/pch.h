@@ -26,5 +26,6 @@
 #ifdef oPCH
 #include <oStd/all.h>
 #include <oBase/all.h>
+#include <oBase/all_libc.h>
 #include "../oStd/win.h"
 #endif

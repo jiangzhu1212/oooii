@@ -82,7 +82,7 @@ oD3D11RenderTarget::oD3D11RenderTarget(oGPUDevice* _pDevice, IDXGISwapChain* _pS
 	
 	oWinSetIsRenderTarget(SCD.OutputWindow);
 	Desc.DepthStencilFormat = _DepthStencilFormat;
-	Desc.Format[0] = oDXGIToSurfaceFormat(SCD.BufferDesc.Format);
+	Desc.Format[0] = dxgi::to_surface_format(SCD.BufferDesc.Format);
 	Resize(int3(SCD.BufferDesc.Width, SCD.BufferDesc.Height, 1));
 	*_pSuccess = true;
 }
@@ -122,7 +122,7 @@ void oD3D11RenderTarget::GetDesc(DESC* _pDesc) const threadsafe
 		DXGI_SWAP_CHAIN_DESC d;
 		oV(pThis->SwapChain->GetDesc(&d));
 		_pDesc->Dimensions = int3(oInt(d.BufferDesc.Width), oInt(d.BufferDesc.Height), 1);
-		_pDesc->Format[0] = oDXGIToSurfaceFormat(d.BufferDesc.Format);
+		_pDesc->Format[0] = dxgi::to_surface_format(d.BufferDesc.Format);
 
 		if (pThis->DepthStencilTexture)
 		{
@@ -201,7 +201,7 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 			if (SwapChain)
 			{
 				oASSERT(New.z == 1, "New.z must be set to 1 for primary render target");
-				oVERIFY(oDXGISwapChainResizeBuffers(SwapChain, New.xy()));
+				dxgi::resize_buffers(SwapChain, New.xy());
 				intrusive_ptr<ID3D11Texture2D> SwapChainTexture;
 				oV(SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&SwapChainTexture));
 				bool textureSuccess = false;

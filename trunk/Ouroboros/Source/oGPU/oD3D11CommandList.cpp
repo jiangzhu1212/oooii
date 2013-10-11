@@ -501,7 +501,7 @@ void oD3D11CommandList::SetVertexBuffers(const oGPUBuffer* _pIndexBuffer, int _S
 		b = static_cast<oD3D11Buffer*>(const_cast<oGPUBuffer*>(_pIndexBuffer))->Buffer;
 		oGPU_BUFFER_DESC d;
 		_pIndexBuffer->GetDesc(&d);
-		Format = oDXGIFromSurfaceFormat(d.Format);
+		Format = dxgi::from_surface_format(d.Format);
 		StartByteOffset = d.StructByteSize * _StartIndex;
 	}
 	Context->IASetIndexBuffer(b, Format, StartByteOffset);

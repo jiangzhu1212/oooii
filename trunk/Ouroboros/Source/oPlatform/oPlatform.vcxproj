@@ -123,7 +123,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oPlatform\all.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oCamera.h" />
     <ClInclude Include="..\..\Include\oPlatform\oConsole.h" />
     <ClInclude Include="..\..\Include\oPlatform\oEMail.h" />
     <ClInclude Include="..\..\Include\oPlatform\oFileCache.h" />
@@ -151,7 +150,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oSingleton.h" />
     <ClInclude Include="..\..\Include\oPlatform\oStandards.h" />
     <ClInclude Include="..\..\Include\oPlatform\oTest.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oVTable.h" />
     <ClInclude Include="..\..\Include\oPlatform\oWindow.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oCRTHeap.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oD3D11.h" />
@@ -169,7 +167,6 @@
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinStatusBar.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinTray.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinWindowing.h" />
-    <ClInclude Include="oCamera_QEdit.h" />
     <ClInclude Include="oCRTLeakTracker.h" />
     <ClInclude Include="oDispatchQueueConcurrentWTP.h" />
     <ClInclude Include="oDispatchQueueGlobalIOCP.h" />
@@ -183,7 +180,6 @@
     <ClInclude Include="SoftLink\oWinsock.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="oCamera.cpp" />
     <ClCompile Include="oConcurrency.cpp" />
     <ClCompile Include="oConsole.cpp" />
     <ClCompile Include="oCRTHeap.cpp" />
@@ -220,7 +216,6 @@
     <ClCompile Include="oStream.cpp" />
     <ClCompile Include="oStreamUtil.cpp" />
     <ClCompile Include="oTest.cpp" />
-    <ClCompile Include="oVTable.cpp" />
     <ClCompile Include="oWebAppWindow.cpp" />
     <ClCompile Include="oWebServer.cpp" />
     <ClCompile Include="oWinAsString.cpp" />

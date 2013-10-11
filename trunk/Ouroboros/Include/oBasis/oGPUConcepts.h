@@ -38,7 +38,7 @@
 #ifndef oGPUConcepts_h
 #define oGPUConcepts_h
 
-#include <oBasis/oResizedType.h>
+#include <oBase/resized_type.h>
 #include <oBasis/oRTTI.h>
 #include <oBasis/oStddef.h>
 #include <oBase/vendor.h>
@@ -485,7 +485,7 @@ struct oGPU_VERTEX_ELEMENT
 	ouro::fourcc Semantic;
 
 	// The format of the data, i.e. a float4 would be ouro::surface::r32g32b32a32_float
-	oResizedType<ouro::surface::format, short> Format;
+	ouro::resized_type<ouro::surface::format, short> Format;
 
 	// The input slot this will be bound too. Basically modern pipelines allow
 	// several vertex arrays to be bound, so this specifies from which this 
@@ -784,10 +784,6 @@ struct oGPU_DEVICE_DESC
 	// The feature level the device supports. This depends on the API type being 
 	// used.
 	ouro::version FeatureVersion; 
-
-	// The driver/software interface version that might be different than the 
-	// capabilities of the device. This depends on the API type being used.
-	ouro::version InterfaceVersion;
 
 	// The zero-based index of the adapter. This may be different than what is 
 	// specified in oGPU_DEVICE_INIT in certain debug/development modes.

@@ -26,4 +26,6 @@
 #ifdef oPCH
 #include <oStd/all.h>
 #include <oHLSL/all.h>
+#include <oBase/all.h>
+#include <oBase/all_libc.h>
 #endif

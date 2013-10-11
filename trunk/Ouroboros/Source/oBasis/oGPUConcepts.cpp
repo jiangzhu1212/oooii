@@ -254,7 +254,7 @@ oRTTI_ENUM_END_DESCRIPTION(oGPU_CLEAR)
 
 static_assert(sizeof(oGPU_RANGE) == 16, "unexpected struct packing for oGPU_RANGE");
 static_assert(sizeof(fourcc) == 4, "unexpected struct packing for fourcc");
-static_assert(sizeof(oResizedType<ouro::surface::format, short>) == 2, "unexpected struct packing for oResizedType<ouro::surface::format, short>");
+static_assert(sizeof(ouro::resized_type<ouro::surface::format, short>) == 2, "unexpected struct packing for oResizedType<ouro::surface::format, short>");
 static_assert(sizeof(oGPU_VERTEX_ELEMENT) == 8, "unexpected struct packing for oGPU_VERTEX_ELEMENT");
 
 bool oGPUParseSemantic(const fourcc& _FourCC, char _Name[5], uint* _pIndex)

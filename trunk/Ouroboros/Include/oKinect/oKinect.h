@@ -28,7 +28,6 @@
 #ifndef oKinect_h
 #define oKinect_h
 
-#include <oPlatform/oCamera.h>
 #include <oPlatform/oWindow.h>
 
 #ifdef oHAS_KINECT_SDK

@@ -115,6 +115,7 @@
     <ClInclude Include="..\..\External\smhasher\MurmurHash3.h" />
     <ClInclude Include="..\..\Include\oBase\algorithm.h" />
     <ClInclude Include="..\..\Include\oBase\all.h" />
+    <ClInclude Include="..\..\Include\oBase\all_libc.h" />
     <ClInclude Include="..\..\Include\oBase\assert.h" />
     <ClInclude Include="..\..\Include\oBase\atof.h" />
     <ClInclude Include="..\..\Include\oBase\backoff.h" />
@@ -144,6 +145,7 @@
     <ClInclude Include="..\..\Include\oBase\opttok.h" />
     <ClInclude Include="..\..\Include\oBase\path.h" />
     <ClInclude Include="..\..\Include\oBase\path_traits.h" />
+    <ClInclude Include="..\..\Include\oBase\resized_type.h" />
     <ClInclude Include="..\..\Include\oBase\scc.h" />
     <ClInclude Include="..\..\Include\oBase\string.h" />
     <ClInclude Include="..\..\Include\oBase\stringize.h" />

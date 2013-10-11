@@ -354,6 +354,12 @@
     <ClInclude Include="..\..\Include\oBase\moving_average.h">
       <Filter>oBase</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\resized_type.h">
+      <Filter>oBase\types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\all_libc.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">

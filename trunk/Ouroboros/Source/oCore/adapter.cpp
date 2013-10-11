@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCore/adapter.h>
+#include <oCore/display.h>
 #include <oBase/guid.h>
 #include "../oStd/win.h"
 #include <regex>
@@ -197,16 +198,32 @@ static info get_info(int _AdapterIndex, IDXGIAdapter* _pAdapter)
 	});
 
 	*(int*)&adapter_info.id = _AdapterIndex;
+
+	D3D_FEATURE_LEVEL FeatureLevel;
+	// Note that the out-device is null, thus this isn't that expensive a call
+	if (SUCCEEDED(D3D11CreateDevice(
+		_pAdapter
+		, D3D_DRIVER_TYPE_UNKNOWN
+		, nullptr
+		, 0 // D3D11_CREATE_DEVICE_DEBUG // squelches a _com_error warning
+		, nullptr
+		, 0
+		, D3D11_SDK_VERSION
+		, nullptr
+		, &FeatureLevel
+		, nullptr)))
+		adapter_info.feature_level = version((FeatureLevel>>12) & 0xffff, (FeatureLevel>>8) & 0xffff);
+
 	return std::move(adapter_info);
 }
 
 void enumerate(const std::function<bool(const info& _Info)>& _Enumerator)
 {
 	intrusive_ptr<IDXGIFactory> Factory;
-	intrusive_ptr<IDXGIAdapter> Adapter;
 	oV(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&Factory));
 
 	int AdapterIndex = 0;
+	intrusive_ptr<IDXGIAdapter> Adapter;
 	while (DXGI_ERROR_NOT_FOUND != Factory->EnumAdapters(AdapterIndex, &Adapter))
 	{
 		info adapter_info = std::move(get_info(AdapterIndex, Adapter));
@@ -228,6 +245,98 @@ version minimum_version(vendor::value _Vendor)
 		default: break;
 	}
 	return version();
+}
+
+info find(const int2& _VirtualDesktopPosition, const version& _MinVersion, bool _ExactVersion)
+{
+	intrusive_ptr<IDXGIFactory> Factory;
+	oV(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&Factory));
+
+	const bool LookForOutput = all(_VirtualDesktopPosition != int2(oDEFAULT, oDEFAULT));
+
+	int AdapterIndex = 0;
+	intrusive_ptr<IDXGIOutput> Output;
+	intrusive_ptr<IDXGIAdapter> Adapter;
+	while (DXGI_ERROR_NOT_FOUND != Factory->EnumAdapters(AdapterIndex, &Adapter))
+	{
+		adapter::info adapter_info = get_info(AdapterIndex, Adapter);
+		version RequiredVersion = _MinVersion;
+		if (RequiredVersion == version())
+			RequiredVersion = minimum_version(adapter_info.vendor);
+
+		intrusive_ptr<IDXGIOutput> Output;
+		if (LookForOutput)
+		{
+			int o = 0;
+			while (DXGI_ERROR_NOT_FOUND != Adapter->EnumOutputs(o, &Output))
+			{
+				DXGI_OUTPUT_DESC od;
+				Output->GetDesc(&od);
+				if (_VirtualDesktopPosition.x >= od.DesktopCoordinates.left 
+					&& _VirtualDesktopPosition.x <= od.DesktopCoordinates.right 
+					&& _VirtualDesktopPosition.y >= od.DesktopCoordinates.top 
+					&& _VirtualDesktopPosition.y <= od.DesktopCoordinates.bottom)
+				{
+					sstring StrAdd, StrReq;
+					if (_ExactVersion)
+					{
+						if (adapter_info.version != RequiredVersion)
+							oTHROW(no_such_device, "Exact video driver version %s required, but current driver is %s", to_string2(StrReq, RequiredVersion), to_string2(StrAdd, adapter_info.version));
+					}
+
+					else if (adapter_info.version < RequiredVersion)
+						oTHROW(no_such_device, "Video driver version %s or newer required, but current driver is %s", to_string2(StrReq, RequiredVersion), to_string2(StrAdd, adapter_info.version));
+
+					return std::move(adapter_info);
+				}
+				o++;
+				Output = nullptr;
+			}
+		}
+
+		else if ((_ExactVersion && adapter_info.version == RequiredVersion) || (!_ExactVersion && adapter_info.version >= RequiredVersion))
+			return std::move(adapter_info);
+
+		AdapterIndex++;
+		Adapter = nullptr;
+	}
+
+		sstring StrReq;
+	if (LookForOutput)
+		oTHROW(no_such_device, "no adapter found for the specified virtual desktop coordinates that also matches the %s driver version %s", _ExactVersion ? "exact" : "minimum", to_string2(StrReq, _MinVersion));
+	else
+		oTHROW(no_such_device, "no adapter found matching the %s driver version %s", _ExactVersion ? "exact" : "minimum", to_string2(StrReq, _MinVersion));
+}
+
+info find(const display::id& _DisplayID)
+{
+	display::info di = display::get_info(_DisplayID);
+
+	intrusive_ptr<IDXGIFactory> Factory;
+	oV(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&Factory));
+
+	int AdapterIndex = 0;
+	intrusive_ptr<IDXGIOutput> Output;
+	intrusive_ptr<IDXGIAdapter> Adapter;
+	while (DXGI_ERROR_NOT_FOUND != Factory->EnumAdapters(AdapterIndex, &Adapter))
+	{
+		intrusive_ptr<IDXGIOutput> Output;
+		int o = 0;
+		while (DXGI_ERROR_NOT_FOUND != Adapter->EnumOutputs(o, &Output))
+		{
+			DXGI_OUTPUT_DESC od;
+			Output->GetDesc(&od);
+			if (od.Monitor == (HMONITOR)di.native_handle)
+				return std::move(get_info(AdapterIndex, Adapter));
+			o++;
+			Output = nullptr;
+		}
+
+		AdapterIndex++;
+		Adapter = nullptr;
+	}
+
+	oTHROW(no_such_device, "no adapter matches the specified display id");
 }
 
 	} // namespace adapter

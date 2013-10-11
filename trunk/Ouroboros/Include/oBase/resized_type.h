@@ -22,50 +22,39 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include <oPlatform/oVTable.h>
+// Until we have enum classes, here's a method for making enums and other types
+// use a smaller storage class.
+#ifndef oBase_resized_type_h
+#define oBase_resized_type_h
+#include <oBase/operators.h>
 
-interface VTableFooInterface
+namespace ouro { 
+
+template<typename T, typename StorageT> 
+class resized_type : public oOperators<resized_type<T, StorageT>, T>
 {
-	virtual bool foo(){ return false; }
-	virtual int bar( int a, int b, int c, int d) = 0;
+public:
+	typedef resized_type<T, StorageT> type;
+	typedef T type_type;
+	typedef StorageT storage_type;
+
+	inline resized_type() {}
+	inline resized_type(const T& _X) { operator=(_X); }
+	inline resized_type(const resized_type& _That) { operator=(_That); }
+	inline const resized_type& operator=(const resized_type& _That) { X = _That.X; return *this; }
+	inline const resized_type& operator=(const T& _That) { X = static_cast<StorageT>(_That); return *this; }
+	inline operator T() const { return T(X); }
+
+	inline bool operator==(const resized_type& _That) { return X == _That.X; }
+	inline bool operator<(const resized_type& _That) { return X < _That.X; }
+
+	inline bool operator==(const T& _That) { return (T)X == _That; }
+	inline bool operator<(const T& _That) { return (T)X < _That; }
+
+private:
+	StorageT X;
 };
 
-struct VTableFoo : public VTableFooInterface
-{
-	virtual bool foo()
-	{
-		return true;
-	}
-	virtual int bar( int a, int b, int c, int d)
-	{
-		int res = a * b * c *d;
-		return res * res;
-	}
+} // namespace ouro
 
-	int foobar;
-};
-
-struct PLATFORM_oVTable : public oTest
-{
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
-	{
-		static bool RunOnce = false;
-		if( RunOnce ) // @oooii-kevin: VTAble patching is bootstrap once per-process operation so we can only test it once per run.
-			return SKIPPED;
-
-		RunOnce = true;
-		unsigned char temp[1024];
-		memset( temp, NULL, 1024 );
-
-		VTableFoo aFoo;
-		VTableFooInterface* fooTest = &aFoo;
-		oTESTB( oVTableRemap(fooTest, temp, 1024 ) > 0, "Failed to remap VTable");
-		oVTablePatch(fooTest);
-		fooTest->bar( 2, 3, 3, 2);
-		oTESTB(fooTest->foo(), "Call to derived foo() failed");
-		return SUCCESS;
-	}
-};
-
-oTEST_REGISTER(PLATFORM_oVTable);
+#endif

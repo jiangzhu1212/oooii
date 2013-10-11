@@ -23,8 +23,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oLibc_h
-#define oLibc_h
+#ifndef oBase_all_libc_h
+#define oBase_all_libc_h
 // This header includes system headers that rarely change 
 // and are common enough to include in precompiled headers
 #include <algorithm>

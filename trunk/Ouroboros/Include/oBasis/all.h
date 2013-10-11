@@ -62,7 +62,6 @@
 #include <oBasis/oOSC.h>
 #include <oBasis/oPlatformFeatures.h>
 #include <oBasis/oRefCount.h>
-#include <oBasis/oResizedType.h>
 #include <oBasis/oSnappy.h>
 #include <oBasis/oStddef.h>
 #include <oBasis/oStdStringSupport.h>

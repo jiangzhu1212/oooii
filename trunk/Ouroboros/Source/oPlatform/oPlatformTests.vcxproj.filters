@@ -39,9 +39,6 @@
     <ClCompile Include="Tests\TESTStreamMonitor.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTVTable.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTWindowSendKeys.cpp">
       <Filter>Source</Filter>
     </ClCompile>

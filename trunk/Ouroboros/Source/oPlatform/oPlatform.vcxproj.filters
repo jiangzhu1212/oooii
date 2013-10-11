@@ -28,17 +28,11 @@
     <Filter Include="Headers\Windows API Convenience Wrappers\GUI">
       <UniqueIdentifier>{7bf0d0bb-b4f3-4086-a752-8d5da3faa73c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headers\Devices">
-      <UniqueIdentifier>{c277a74e-1f50-4f61-98ab-f9ddb57745d8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Concurrency">
       <UniqueIdentifier>{f32a1e98-22e8-4b84-a694-54f4e96b05b1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Code Management">
       <UniqueIdentifier>{b5ed6c1c-07b7-4241-a36a-53f1255a5d68}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Devices">
-      <UniqueIdentifier>{d73b9163-4057-40a4-bb68-0b9d6149a6e2}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Memory">
       <UniqueIdentifier>{45248250-dc89-44c5-b6e0-92e5be162ba2}</UniqueIdentifier>
@@ -77,12 +71,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oSingleton.h">
       <Filter>Headers\Code Management</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oVTable.h">
-      <Filter>Headers\Code Management</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oCamera.h">
-      <Filter>Headers\Devices</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oConsole.h">
       <Filter>Headers\UI</Filter>
@@ -197,9 +185,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oRegistry.h">
       <Filter>Headers\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="oCamera_QEdit.h">
-      <Filter>Source\Devices</Filter>
     </ClInclude>
     <ClInclude Include="oHTTPInternal.h">
       <Filter>Source\IO</Filter>
@@ -317,14 +302,8 @@
     <ClCompile Include="oSingleton.cpp">
       <Filter>Source\Code Management</Filter>
     </ClCompile>
-    <ClCompile Include="oVTable.cpp">
-      <Filter>Source\Code Management</Filter>
-    </ClCompile>
     <ClCompile Include="oTest.cpp">
       <Filter>Source\Code Management</Filter>
-    </ClCompile>
-    <ClCompile Include="oCamera.cpp">
-      <Filter>Source\Devices</Filter>
     </ClCompile>
     <ClCompile Include="oMirroredArena.cpp">
       <Filter>Source\Memory</Filter>

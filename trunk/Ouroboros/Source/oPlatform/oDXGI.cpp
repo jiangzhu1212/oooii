@@ -23,484 +23,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/fixed_string.h>
-#include <oPlatform/oDisplay.h>
-#include <oPlatform/oMsgBox.h>
-#include <oPlatform/oSingleton.h>
-#include <oPlatform/Windows/oD3D11.h>
-#include <oPlatform/Windows/oDXGI.h>
-#include <oPlatform/Windows/oWinRect.h>
-#include <oPlatform/Windows/oWinWindowing.h>
-
-using namespace ouro;
-
-#if oDXVER >= oDXVER_10
-
-const oGUID& oGetGUID(threadsafe const IDXGISwapChain* threadsafe const*) { return (const oGUID&)__uuidof(IDXGISwapChain); }
-
-ouro::surface::format oDXGIToSurfaceFormat(DXGI_FORMAT _Format)
-{
-	// @oooii-tony: For now, ouro::surface::format and DXGI_FORMAT are the same thing.
-	return static_cast<ouro::surface::format>(_Format <= DXGI_FORMAT_BC7_UNORM_SRGB ? _Format : DXGI_FORMAT_UNKNOWN);
-}
-
-DXGI_FORMAT oDXGIFromSurfaceFormat(ouro::surface::format _Format)
-{
-	if (_Format <= DXGI_FORMAT_BC7_UNORM_SRGB)
-		return static_cast<DXGI_FORMAT>(_Format);
-
-	if (ouro::surface::is_yuv(_Format) && ouro::surface::num_subformats(_Format) > 1)
-	{
-		// Until DXGI_FORMAT gets its extended YUV formats, assume when using this 
-		// API return the dominant plane (usually plane0).
-		return oDXGIFromSurfaceFormat(ouro::surface::subformat(_Format, 0));
-	}
-
-	return DXGI_FORMAT_UNKNOWN;
-}
-
-bool oDXGICreateFactory(IDXGIFactory** _ppFactory)
-{
-	HRESULT hr = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)_ppFactory); 
-	if (FAILED(hr))
-		return oWinSetLastError(hr);
-	return true;
-}
-
-bool oDXGICreateSwapChain(IUnknown* _pDevice, bool _Fullscreen, UINT _Width, UINT _Height, bool _AutochangeMonitorResolution, DXGI_FORMAT _Format, UINT RefreshRateN, UINT RefreshRateD, HWND _hWnd, bool _EnableGDICompatibility, IDXGISwapChain** _ppSwapChain)
-{
-	if (!_pDevice)
-		return oErrorSetLast(std::errc::invalid_argument);
-
-	DXGI_SWAP_CHAIN_DESC d;
-	d.BufferDesc.Width = _Width;
-	d.BufferDesc.Height = _Height;
-	d.BufferDesc.RefreshRate.Numerator = RefreshRateN;
-	d.BufferDesc.RefreshRate.Denominator = RefreshRateD;
-	d.BufferDesc.Format = _Format;
-	d.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-	d.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	d.SampleDesc.Count = 1;
-	d.SampleDesc.Quality = 0;
-	d.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
-	d.BufferCount = 3;
-	d.OutputWindow = _hWnd;
-	d.Windowed = !_Fullscreen;
-	d.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-	
-	d.Flags = 0;
-	
-	if (_AutochangeMonitorResolution)
-		d.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-
-	if (_EnableGDICompatibility)
-		d.Flags |= DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
-	
-	intrusive_ptr<IDXGIDevice> D3DDevice;
-	oVB_RETURN2(_pDevice->QueryInterface(&D3DDevice));
-
-	intrusive_ptr<IDXGIAdapter> Adapter;
-	oVB_RETURN2(D3DDevice->GetAdapter(&Adapter));
-
-	intrusive_ptr<IDXGIFactory> Factory;
-	oVB_RETURN2(Adapter->GetParent(__uuidof(IDXGIFactory), (void**)&Factory));
-	oVB_RETURN2(Factory->CreateSwapChain(_pDevice, &d, _ppSwapChain));
-	
-	// DXGI_MWA_NO_ALT_ENTER seems bugged from comments at bottom of this link:
-	// http://stackoverflow.com/questions/2353178/disable-alt-enter-in-a-direct3d-directx-application
-	oVB_RETURN2(Factory->MakeWindowAssociation(_hWnd, DXGI_MWA_NO_WINDOW_CHANGES|DXGI_MWA_NO_ALT_ENTER));
-
-	return true;
-}
-
-bool oDXGISwapChainResizeBuffers(IDXGISwapChain* _pSwapChain, const int2& _NewSize, HWND _hErrorMsgParent)
-{
-	DXGI_SWAP_CHAIN_DESC d;
-	_pSwapChain->GetDesc(&d);
-	HRESULT HR = _pSwapChain->ResizeBuffers(d.BufferCount, _NewSize.x, _NewSize.y, d.BufferDesc.Format, d.Flags);
-	_pSwapChain->GetDesc(&d);
-	if (HR == DXGI_ERROR_INVALID_CALL)
-	{
-		oErrorSetLast(std::errc::permission_denied, "Cannot resize DXGISwapChain buffers because there still are dependent resources in client code. Ensure all dependent resources are freed before resize occurs. The application will be terminated now.");
-		oMsgBox(oMSGBOX_DESC(oMSGBOX_ERR, nullptr, (oGUI_WINDOW)_hErrorMsgParent), oErrorGetLastString());
-		// There's no moving past this error, so terminate...
-		std::terminate();
-		//return false;
-	}
-	else if (FAILED(HR))
-		return oWinSetLastError(HR);
-	return true;
-}
-
-struct oSCREEN_MODE
-{
-	int2 Size;
-	int RefreshRate;
-};
-
-bool oDXGIGetDC(ID3D11RenderTargetView* _pRTV, HDC* _phDC)
-{
-	intrusive_ptr<ID3D11Resource> RT;
-	_pRTV->GetResource(&RT);
-	intrusive_ptr<IDXGISurface1> DXGISurface;
-	oVB_RETURN2(RT->QueryInterface(&DXGISurface));
-	oVB_RETURN2(DXGISurface->GetDC(false, _phDC));
-	return true;
-}
-
-bool oDXGIReleaseDC(ID3D11RenderTargetView* _pRTV, RECT* _pDirtyRect)
-{
-	intrusive_ptr<ID3D11Resource> RT;
-	_pRTV->GetResource(&RT);
-	intrusive_ptr<IDXGISurface1> DXGISurface;
-	oVB_RETURN2(RT->QueryInterface(&DXGISurface));
-	oVB_RETURN2(DXGISurface->ReleaseDC(_pDirtyRect));
-	return true;
-}
-
-bool oDXGIGetDC(IDXGISwapChain* _pSwapChain, HDC* _phDC)
-{
-	intrusive_ptr<ID3D11Texture2D> RT;
-	oVB_RETURN2(_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
-	intrusive_ptr<IDXGISurface1> DXGISurface;
-	oVB_RETURN2(RT->QueryInterface(&DXGISurface));
-	//oTRACE("GetDC() exception below (if it happens) cannot be try-catch caught, so ignore it or don't use GDI drawing.");
-	oVB_RETURN2(DXGISurface->GetDC(false, _phDC));
-	return true;
-}
-
-bool oDXGIReleaseDC(IDXGISwapChain* _pSwapChain, RECT* _pDirtyRect)
-{
-	intrusive_ptr<ID3D11Texture2D> RT;
-	oVB_RETURN2(_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
-	intrusive_ptr<IDXGISurface1> DXGISurface;
-	oVB_RETURN2(RT->QueryInterface(&DXGISurface));
-	//oTRACE("ReleaseDC() exception below (if it happens) cannot be try-catch caught, so ignore it or don't use GDI drawing.");
-	oVB_RETURN2(DXGISurface->ReleaseDC(_pDirtyRect));
-	return true;
-}
-
-bool oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter, D3D_FEATURE_LEVEL* _pFeatureLevel)
-{
-#if D3D11_MAJOR_VERSION
-	// @oooii-tony: As of 8/29/2012 I get "Microsoft C++ exception: _com_error 
-	// at memory location" every time CheckInterfaceSupport is called. I 
-	// confirmed this occurs in DirectX sample code. try/catch doesn't quiet it 
-	// either, so just don't call it and take the heavyweight action of creating 
-	// the device an seeing what happens. If that fails, fall back to the no-D3D11 
-	// version.
-	//LARGE_INTEGER li;
-	//if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D11Device), &li))
-	//	return true;
-	// @oooii-jeffrey: Apparently D3D11_CREATE_DEVICE_DEBUG can trigger the 
-	// _com_error if the debug libraries of DirectX are not (or not properly)
-	// installed. Documentation however does not mention the need for this
-	// flag to get the feature level, so passing 0 seems to fix that problem.
-	
-	// Note that the out-device is null, thus this isn't that expensive a call
-	if (FAILED(D3D11CreateDevice(
-		_pAdapter
-		, D3D_DRIVER_TYPE_UNKNOWN
-		, nullptr
-		, 0 // D3D11_CREATE_DEVICE_DEBUG // squelches a warning
-		, nullptr
-		, 0
-		, D3D11_SDK_VERSION
-		, nullptr
-		, _pFeatureLevel
-		, nullptr)))
-		return false;
-	return true;
-#else
-	return false;
-#endif
-}
-
-ouro::adapter::info oDXGIGetAdapterDriverInfo(IDXGIAdapter* _pAdapter)
-{
-	DXGI_ADAPTER_DESC ad;
-	_pAdapter->GetDesc(&ad);
-
-	ouro::adapter::info adapter_info;
-	ouro::adapter::enumerate([&](const ouro::adapter::info& _Info)->bool
-	{
-		mstring vendor, device;
-		snprintf(vendor, "VEN_%X", ad.VendorId);
-		snprintf(device, "DEV_%04X", ad.DeviceId);
-		if (strstr(_Info.plugnplay_id, vendor) && strstr(_Info.plugnplay_id, device))
-		{
-			adapter_info = _Info;
-			return false;
-		}
-		return true;
-	});
-
-	return std::move(adapter_info);
-}
-
-bool oDXGIEnumAdapters(int _AdapterIndex, IDXGIAdapter** _ppAdapter, ouro::adapter::info* _pAdapterInfo)
-{
-	intrusive_ptr<IDXGIFactory> Factory;
-	oDXGICreateFactory(&Factory);
-	if (DXGI_ERROR_NOT_FOUND == Factory->EnumAdapters(_AdapterIndex, _ppAdapter))
-		return oErrorSetLast(std::errc::no_such_device, "Adapter %d", _AdapterIndex);
-	*_pAdapterInfo = std::move(oDXGIGetAdapterDriverInfo(*_ppAdapter));
-	return true;
-}
-
-bool oDXGIEnumAdapters(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAdapter, const ouro::adapter::info& _AdapterInfo)>& _Enumerator, IDXGIFactory* _pFactory)
-{
-	int AdapterIndex = 0;
-	ouro::adapter::info adapter_info;
-	intrusive_ptr<IDXGIAdapter> Adapter;
-	while (oDXGIEnumAdapters(AdapterIndex, &Adapter, &adapter_info))
-	{
-		if (!_Enumerator(AdapterIndex, Adapter, adapter_info))
-			return true;
-		AdapterIndex++;
-		Adapter = nullptr;
-	}
-
-	return true;
-}
-
-int oDXGIGetAdapterIndex(IDXGIAdapter* _pAdapter)
-{
-	intrusive_ptr<IDXGIFactory> Factory;
-	oV(_pAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&Factory));
-
-	DXGI_ADAPTER_DESC ad, testDesc;
-	_pAdapter->GetDesc(&ad);
-	int Index = oInvalid;
-	oDXGIEnumAdapters([&](int _AdapterIndex, IDXGIAdapter* _pTestAdapter, const ouro::adapter::info& _AdapterInfo)->bool
-	{
-		_pTestAdapter->GetDesc(&testDesc);
-		if (!memcmp(&ad.AdapterLuid, &testDesc.AdapterLuid, sizeof(LUID)))
-		{
-			Index = oInt(_AdapterIndex);
-			return false;
-		}
-		return true;
-	}, Factory);
-
-	return Index;
-}
-
-version oDXGIGetInterfaceVersion(IDXGIAdapter* _pAdapter)
-{
-	LARGE_INTEGER li;
-	#if D3D11_MAJOR_VERSION
-		D3D_FEATURE_LEVEL FeatureLevel;
-		if (oDXGIGetFeatureLevel(_pAdapter, &FeatureLevel)) return version(11,0);
-	#endif
-	#ifdef _D3D10_1_CONSTANTS
-		if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D10Device1), &li)) return version(10,1);
-	#endif
-	#ifdef _D3D10_CONSTANTS
-		if (_pAdapter->CheckInterfaceSupport(__uuidof(ID3D10Device), &li)) return version(10,0);
-	#endif
-	return version();
-}
-
-version oDXGIGetFeatureLevel(IDXGIAdapter* _pAdapter)
-{
-#if D3D11_MAJOR_VERSION
-	D3D_FEATURE_LEVEL FeatureLevel;
-	if (oDXGIGetFeatureLevel(_pAdapter, &FeatureLevel))
-		return oD3D11GetFeatureVersion(FeatureLevel);
-#endif
-	return oDXGIGetInterfaceVersion(_pAdapter);
-}
-
-bool oDXGIEnumOutputs(const oFUNCTION<bool(int _AdapterIndex, IDXGIAdapter* _pAdapter, int _OutputIndex, IDXGIOutput* _pOutput)>& _Enumerator, IDXGIFactory* _pFactory)
-{
-	intrusive_ptr<IDXGIFactory> Factory = _pFactory;
-
-	if (!Factory)
-		oDXGICreateFactory(&Factory);
-
-	oDXGIEnumAdapters([&](int _AdapterIndex, IDXGIAdapter* _pAdapter, const ouro::adapter::info& _AdapterInfo)->bool
-	{
-		intrusive_ptr<IDXGIOutput> Output;
-		int o = 0;
-		while (DXGI_ERROR_NOT_FOUND != _pAdapter->EnumOutputs(o, &Output))
-		{
-			if (!_Enumerator(_AdapterIndex, _pAdapter, o, Output))
-				return false;
-			o++;
-		}
-		return true;
-	}, Factory);
-
-	return true;
-}
-
-static bool MatchHMONITOR(int _AdapterIndex, IDXGIAdapter* _pAdapter, int _OutputIndex, IDXGIOutput* _pOutput, HMONITOR _hMonitor, IDXGIOutput** _ppFoundOutput)
-{
-	DXGI_OUTPUT_DESC desc;
-	_pOutput->GetDesc(&desc);
-	if (desc.Monitor == _hMonitor)
-	{
-		_pOutput->AddRef();
-		*_ppFoundOutput = _pOutput;
-		return false;
-	}
-
-	return true;
-}
-
-static bool MatchPosition(int _AdapterIndex, IDXGIAdapter* _pAdapter, int _OutputIndex, IDXGIOutput* _pOutput, const int2& _VirtualDesktopPosition, IDXGIOutput** _ppFoundOutput)
-{
-	DXGI_OUTPUT_DESC desc;
-	_pOutput->GetDesc(&desc);
-	if (oWinRectContains(desc.DesktopCoordinates, _VirtualDesktopPosition))
-	{
-		_pOutput->AddRef();
-		*_ppFoundOutput = _pOutput;
-		return false;
-	}
-
-	return true;
-}
-
-bool oDXGIFindOutput(IDXGIFactory* _pFactory, HMONITOR _hMonitor, IDXGIOutput** _ppOutput)
-{
-	bool result = oDXGIEnumOutputs(oBIND(MatchHMONITOR, oBIND1, oBIND2, oBIND3, oBIND4, _hMonitor, _ppOutput), _pFactory);
-	return result && !!*_ppOutput;
-}
-
-bool oDXGIFindOutput(IDXGIFactory* _pFactory, HWND _hWnd, IDXGIOutput** _ppOutput)
-{
-	return oDXGIFindOutput(_pFactory, MonitorFromWindow(_hWnd, MONITOR_DEFAULTTONEAREST), _ppOutput);
-}
-
-bool oDXGIFindOutput(IDXGIFactory* _pFactory, const int2& _VirtualDesktopPosition, IDXGIOutput** _ppOutput)
-{
-	bool result = oDXGIEnumOutputs(oBIND(MatchPosition, oBIND1, oBIND2, oBIND3, oBIND4, oBINDREF(_VirtualDesktopPosition), _ppOutput), _pFactory);
-#ifdef _DEBUG
-	auto Output = *_ppOutput;
-	if(Output)
-	{
-		DXGI_OUTPUT_DESC OutDesc;
-		Output->GetDesc(&OutDesc);
-		oASSERT(oContains(oRect(OutDesc.DesktopCoordinates), _VirtualDesktopPosition), "oDXGIEnumOutputs Failed to find correct output");
-	}
-#endif
-	return result && !!*_ppOutput;
-}
-
-bool oDXGIGetAdapter(IDXGIObject* _pObject, IDXGIAdapter** _ppAdapter)
-{
-	if (_pObject)
-	{
-		oVB_RETURN2(_pObject->GetParent(__uuidof(IDXGIAdapter), (void**)_ppAdapter));
-		return true;
-	}
-
-	return false;
-}
-
-bool oDXGIGetAdapter(IDXGIObject* _pObject, IDXGIAdapter1** _ppAdapter)
-{
-	if (_pObject)
-	{
-		oVB_RETURN2(_pObject->GetParent(__uuidof(IDXGIAdapter1), (void**)_ppAdapter));
-		return true;
-	}
-
-	return false;
-}
-
-bool oDXGIGetFactory(IDXGIObject* _pObject, IDXGIFactory** _ppFactory)
-{
-	if (_pObject)
-	{
-		oVB_RETURN2(_pObject->GetParent(__uuidof(IDXGIFactory), (void**)_ppFactory));
-		return true;
-	}
-
-	return false;
-}
-
-bool oDXGIGetFactory(IDXGIObject* _pObject, IDXGIFactory1** _ppFactory)
-{
-	if (_pObject)
-	{
-		oVB_RETURN2(_pObject->GetParent(__uuidof(IDXGIFactory1), (void**)_ppFactory));
-		return true;
-	}
-
-	return false;
-}
-
-int oDXGIFindDisplayIndex(IDXGIOutput* _pOutput)
-{
-	DXGI_OUTPUT_DESC odesc;
-	_pOutput->GetDesc(&odesc);
-
-	ouro::display::id ID;
-	try { ID = ouro::display::get_id(odesc.Monitor); }
-	catch (std::exception&) { oErrorSetLast(std::errc::no_such_device); return oInvalid; }
-	
-	return *(int*)&ID;
-}
-
-bool oDXGIIsDepthFormat(DXGI_FORMAT _Format)
-{
-	switch (_Format)
-	{
-		case DXGI_FORMAT_D32_FLOAT:
-		case DXGI_FORMAT_R32_TYPELESS:
-		case DXGI_FORMAT_R24G8_TYPELESS:
-		case DXGI_FORMAT_D24_UNORM_S8_UINT:
-		case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
-		case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
-		case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
-		case DXGI_FORMAT_D16_UNORM:
-		case DXGI_FORMAT_R16_TYPELESS: return true;
-		default: return false;
-	}
-}
-
-void oDXGIGetCompatibleFormats(DXGI_FORMAT _DesiredFormat, DXGI_FORMAT* _pTextureFormat, DXGI_FORMAT* _pDepthStencilViewFormat, DXGI_FORMAT* _pShaderResourceViewFormat)
-{
-	switch (_DesiredFormat)
-	{
-		case DXGI_FORMAT_R24G8_TYPELESS:
-		case DXGI_FORMAT_D24_UNORM_S8_UINT:
-		case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
-			*_pTextureFormat = DXGI_FORMAT_R24G8_TYPELESS;
-			*_pDepthStencilViewFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-			*_pShaderResourceViewFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-			break;
-
-		case DXGI_FORMAT_D32_FLOAT:
-		case DXGI_FORMAT_R32_TYPELESS:
-			*_pTextureFormat = DXGI_FORMAT_R32_TYPELESS;
-			*_pDepthStencilViewFormat = DXGI_FORMAT_D32_FLOAT;
-			*_pShaderResourceViewFormat = DXGI_FORMAT_R32_FLOAT;
-			break;
-
-		case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
-		case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
-			*_pTextureFormat = DXGI_FORMAT_UNKNOWN;
-			*_pDepthStencilViewFormat = DXGI_FORMAT_UNKNOWN;
-			*_pShaderResourceViewFormat = DXGI_FORMAT_UNKNOWN;
-			break;
-
-		case DXGI_FORMAT_D16_UNORM:
-		case DXGI_FORMAT_R16_TYPELESS:
-			*_pTextureFormat = DXGI_FORMAT_R16_TYPELESS;
-			*_pDepthStencilViewFormat = DXGI_FORMAT_D16_UNORM;
-			*_pShaderResourceViewFormat = DXGI_FORMAT_R16_UNORM;
-			break;
-
-		default:
-			*_pTextureFormat = _DesiredFormat;
-			*_pDepthStencilViewFormat = _DesiredFormat;
-			*_pShaderResourceViewFormat = _DesiredFormat;
-			break;
-	}
-}
+//#include "../oStd/win.h"
+//#include <oPlatform/Windows/oDXGI.h>
 
 namespace ouro {
 
@@ -624,10 +148,214 @@ const char* as_string(const DXGI_FORMAT& _Format)
 		//case DXGI_FORMAT_P8: return "DXGI_FORMAT_P8";
 		//case DXGI_FORMAT_A8P8: return "DXGI_FORMAT_A8P8";
 		//case DXGI_FORMAT_B4G4R4A4_UNORM: return "DXGI_FORMAT_B4G4R4A4_UNORM";
-		oNODEFAULT;
+		default: break;
+	}
+	return "?";
+}
+
+	namespace dxgi {
+
+const oGUID& oGetGUID(threadsafe const IDXGISwapChain* threadsafe const*) { return (const oGUID&)__uuidof(IDXGISwapChain); }
+
+surface::format to_surface_format(DXGI_FORMAT _Format)
+{
+	// surface::format and DXGI_FORMAT are mostly the same thing.
+	return static_cast<surface::format>(_Format <= DXGI_FORMAT_BC7_UNORM_SRGB ? _Format : DXGI_FORMAT_UNKNOWN);
+}
+
+DXGI_FORMAT from_surface_format(surface::format _Format)
+{
+	if (_Format <= DXGI_FORMAT_BC7_UNORM_SRGB)
+		return static_cast<DXGI_FORMAT>(_Format);
+
+	if (surface::is_yuv(_Format) && surface::num_subformats(_Format) > 1)
+	{
+		// Until DXGI_FORMAT gets its extended YUV formats, assume when using this 
+		// API return the dominant plane (usually plane0).
+		return from_surface_format(surface::subformat(_Format, 0));
+	}
+
+	return DXGI_FORMAT_UNKNOWN;
+}
+
+intrusive_ptr<IDXGIAdapter> get_adapter(const adapter::id& _AdapterID)
+{
+	intrusive_ptr<IDXGIFactory> Factory;
+	oV(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&Factory));
+
+	intrusive_ptr<IDXGIAdapter> Adapter;
+	if (DXGI_ERROR_NOT_FOUND == Factory->EnumAdapters(*(int*)&_AdapterID, &Adapter))
+		oTHROW(no_such_device, "adapter id=%d not found", *(int*)&_AdapterID);
+	return std::move(Adapter);
+}
+
+adapter::info get_info(IDXGIAdapter* _pAdapter)
+{
+	DXGI_ADAPTER_DESC ad;
+	_pAdapter->GetDesc(&ad);
+
+	adapter::info adapter_info;
+	adapter::enumerate([&](const adapter::info& _Info)->bool
+	{
+		mstring vendor, device;
+		snprintf(vendor, "VEN_%X", ad.VendorId);
+		snprintf(device, "DEV_%04X", ad.DeviceId);
+		if (strstr(_Info.plugnplay_id, vendor) && strstr(_Info.plugnplay_id, device))
+		{
+			adapter_info = _Info;
+			return false;
+		}
+		return true;
+	});
+
+	return std::move(adapter_info);
+}
+
+intrusive_ptr<IDXGISwapChain> make_swap_chain(IUnknown* _pDevice
+	, bool _Fullscreen
+	, const int2& _Dimensions
+	, bool _AutochangeMonitorResolution
+	, surface::format _Format
+	, unsigned int RefreshRateN
+	, unsigned int RefreshRateD
+	, HWND _hWnd
+	, bool _EnableGDICompatibility)
+{
+	if (!_pDevice)
+		throw std::invalid_argument("a valid device must be specified");
+
+	DXGI_SWAP_CHAIN_DESC d;
+	d.BufferDesc.Width = _Dimensions.x;
+	d.BufferDesc.Height = _Dimensions.y;
+	d.BufferDesc.RefreshRate.Numerator = RefreshRateN;
+	d.BufferDesc.RefreshRate.Denominator = RefreshRateD;
+	d.BufferDesc.Format = from_surface_format(_Format);
+	d.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+	d.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+	d.SampleDesc.Count = 1;
+	d.SampleDesc.Quality = 0;
+	d.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
+	d.BufferCount = 3;
+	d.OutputWindow = _hWnd;
+	d.Windowed = !_Fullscreen;
+	d.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	
+	d.Flags = 0;
+	if (_AutochangeMonitorResolution) d.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	if (_EnableGDICompatibility) d.Flags |= DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
+	
+	intrusive_ptr<IDXGIDevice> D3DDevice;
+	oV(_pDevice->QueryInterface(&D3DDevice));
+
+	intrusive_ptr<IDXGIAdapter> Adapter;
+	oV(D3DDevice->GetAdapter(&Adapter));
+
+	intrusive_ptr<IDXGIFactory> Factory;
+	oV(Adapter->GetParent(__uuidof(IDXGIFactory), (void**)&Factory));
+	
+	intrusive_ptr<IDXGISwapChain> SwapChain;
+	oV(Factory->CreateSwapChain(_pDevice, &d, &SwapChain));
+	
+	// DXGI_MWA_NO_ALT_ENTER seems bugged from comments at bottom of this link:
+	// http://stackoverflow.com/questions/2353178/disable-alt-enter-in-a-direct3d-directx-application
+	oV(Factory->MakeWindowAssociation(_hWnd, DXGI_MWA_NO_WINDOW_CHANGES|DXGI_MWA_NO_ALT_ENTER));
+
+	return SwapChain;
+}
+
+void resize_buffers(IDXGISwapChain* _pSwapChain, const int2& _NewSize)
+{
+	DXGI_SWAP_CHAIN_DESC d;
+	_pSwapChain->GetDesc(&d);
+	HRESULT HR = _pSwapChain->ResizeBuffers(d.BufferCount, _NewSize.x, _NewSize.y, d.BufferDesc.Format, d.Flags);
+	if (HR == DXGI_ERROR_INVALID_CALL)
+		oTHROW(permission_denied, "Cannot resize DXGISwapChain buffers because there still are dependent resources in client code. Ensure all dependent resources are freed before resize occurs.");
+	//else if (FAILED(HR))
+		//throw oStd::windows::error(HR);
+}
+
+HDC get_dc(IDXGISwapChain* _pSwapChain)
+{
+	intrusive_ptr<ID3D11Texture2D> RT;
+	oV(_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
+	intrusive_ptr<IDXGISurface1> DXGISurface;
+	oV(RT->QueryInterface(&DXGISurface));
+	//oTRACE("GetDC() exception below (if it happens) cannot be try-catch caught, so ignore it or don't use GDI drawing.");
+	HDC hDC = nullptr;
+	oV(DXGISurface->GetDC(false, &hDC));
+	return hDC;
+}
+
+void release_dc(IDXGISwapChain* _pSwapChain, RECT* _pDirtyRect)
+{
+	intrusive_ptr<ID3D11Texture2D> RT;
+	oV(_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
+	intrusive_ptr<IDXGISurface1> DXGISurface;
+	oV(RT->QueryInterface(&DXGISurface));
+	//oTRACE("ReleaseDC() exception below (if it happens) cannot be try-catch caught, so ignore it or don't use GDI drawing.");
+	oV(DXGISurface->ReleaseDC(_pDirtyRect));
+}
+
+HDC get_dc(ID3D11RenderTargetView* _pRTV)
+{
+	intrusive_ptr<ID3D11Resource> RT;
+	_pRTV->GetResource(&RT);
+	intrusive_ptr<IDXGISurface1> DXGISurface;
+	oV(RT->QueryInterface(&DXGISurface));
+	HDC hDC = nullptr;
+	oV(DXGISurface->GetDC(false, &hDC));
+	return hDC;
+}
+
+void release_dc(ID3D11RenderTargetView* _pRTV, RECT* _pDirtyRect)
+{
+	intrusive_ptr<ID3D11Resource> RT;
+	_pRTV->GetResource(&RT);
+	intrusive_ptr<IDXGISurface1> DXGISurface;
+	oV(RT->QueryInterface(&DXGISurface));
+	oV(DXGISurface->ReleaseDC(_pDirtyRect));
+}
+
+void get_compatible_formats(DXGI_FORMAT _DesiredFormat, DXGI_FORMAT* _pTextureFormat, DXGI_FORMAT* _pDepthStencilViewFormat, DXGI_FORMAT* _pShaderResourceViewFormat)
+{
+	switch (_DesiredFormat)
+	{
+		case DXGI_FORMAT_R24G8_TYPELESS:
+		case DXGI_FORMAT_D24_UNORM_S8_UINT:
+		case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+			*_pTextureFormat = DXGI_FORMAT_R24G8_TYPELESS;
+			*_pDepthStencilViewFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+			*_pShaderResourceViewFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+			break;
+
+		case DXGI_FORMAT_D32_FLOAT:
+		case DXGI_FORMAT_R32_TYPELESS:
+			*_pTextureFormat = DXGI_FORMAT_R32_TYPELESS;
+			*_pDepthStencilViewFormat = DXGI_FORMAT_D32_FLOAT;
+			*_pShaderResourceViewFormat = DXGI_FORMAT_R32_FLOAT;
+			break;
+
+		case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+		case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+			*_pTextureFormat = DXGI_FORMAT_UNKNOWN;
+			*_pDepthStencilViewFormat = DXGI_FORMAT_UNKNOWN;
+			*_pShaderResourceViewFormat = DXGI_FORMAT_UNKNOWN;
+			break;
+
+		case DXGI_FORMAT_D16_UNORM:
+		case DXGI_FORMAT_R16_TYPELESS:
+			*_pTextureFormat = DXGI_FORMAT_R16_TYPELESS;
+			*_pDepthStencilViewFormat = DXGI_FORMAT_D16_UNORM;
+			*_pShaderResourceViewFormat = DXGI_FORMAT_R16_UNORM;
+			break;
+
+		default:
+			*_pTextureFormat = _DesiredFormat;
+			*_pDepthStencilViewFormat = _DesiredFormat;
+			*_pShaderResourceViewFormat = _DesiredFormat;
+			break;
 	}
 }
 
+	} // namespace dxgi
 } // namespace ouro
-
-#endif // oDXVER >= oDXVER_10
