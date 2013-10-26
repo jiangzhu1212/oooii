@@ -282,6 +282,31 @@ void process::enumerate(const std::function<bool(id _ID, id _ParentID, const pat
 	}
 }
 
+void enumerate_threads(process::id _ID, const std::function<bool(oStd::thread::id _ThreadID)>& _Enumerator)
+{
+	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GetCurrentProcessId());
+	if (hSnapshot == INVALID_HANDLE_VALUE)
+		throw windows::error();
+
+	THREADENTRY32 entry;
+	entry.dwSize = sizeof(THREADENTRY32);
+
+	BOOL keepLooking = Thread32First(hSnapshot, &entry);
+
+	if (!keepLooking)
+		oTHROW(no_such_process, "no process threads found");
+
+	while (keepLooking)
+	{
+		if (*((DWORD*)&_ID) == entry.th32OwnerProcessID)
+			if (!_Enumerator(*(oStd::thread::id*)&entry.th32ThreadID))
+				break;
+		keepLooking = Thread32Next(hSnapshot, &entry);
+	}
+
+	oVB(CloseHandle(hSnapshot));
+}
+
 process::id process::get_id(const char* _Name)
 {
 	path Find(_Name);
@@ -523,6 +548,37 @@ process::id get_parent_id()
 	return ParentID;
 }
 
+static bool find_oldest_and_thus_main_thread(oStd::thread::id _ThreadID, ULONGLONG* _pMinCreateTime, oStd::thread::id* _pOutMainThreadID)
+{
+	HANDLE hThread = OpenThread(THREAD_QUERY_INFORMATION, TRUE, *((DWORD*)&_ThreadID));
+	if (hThread)
+	{
+		FILETIME tCreate, tExit, tKernel, tUser;
+
+		if (GetThreadTimes(hThread, &tCreate, &tExit, &tKernel, &tUser))
+		{
+			ULONGLONG createTime = ((ULONGLONG)tCreate.dwHighDateTime << 32) | tCreate.dwLowDateTime;
+			if (createTime && createTime < *_pMinCreateTime)
+			{
+				*_pMinCreateTime = createTime;
+				*_pOutMainThreadID = _ThreadID;
+			}
+		}
+
+		oVB(CloseHandle(hThread));
+	}
+
+	return true;
+}
+
+oStd::thread::id get_main_thread_id()
+{
+	oStd::thread::id id;
+	ULONGLONG minCreateTime = MAXULONGLONG;
+	enumerate_threads(std::bind(find_oldest_and_thus_main_thread, std::placeholders::_1, &minCreateTime, &id));
+	return id;
+}
+
 bool has_debugger_attached()
 {
 	return !!IsDebuggerPresent();
@@ -661,8 +717,21 @@ char* command_line(char* _StrDestination, size_t _SizeofStrDestination, bool _Pa
 	return _StrDestination;
 }
 
-void enumerate_children(const std::function<bool(process::id _ID, process::id _ParentID, const path& _ProcessExePath)>& _Enumerator)
+void enumerate_children(const std::function<bool(process::id _ChildID, const path& _ProcessExePath)>& _Enumerator)
 {
+	process::id Parent = get_id();
+
+	process::enumerate([&](process::id _ID, process::id _ParentID, const path& _ProcessExePath)->bool
+	{
+		if (_ParentID == Parent && !_Enumerator(_ID, _ProcessExePath))
+			return false;
+		return true;
+	});
+}
+
+void enumerate_threads(const std::function<bool(oStd::thread::id _ThreadID)>& _Enumerator)
+{
+	enumerate_threads(get_id(), _Enumerator);
 }
 
 	} // namespace this_process

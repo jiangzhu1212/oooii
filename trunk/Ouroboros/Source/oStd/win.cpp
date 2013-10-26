@@ -54,7 +54,7 @@ const char* as_string(const version::value& _Version)
 	return "?";
 }
 
-errno_t errno_from_hresult(HRESULT _hResult)
+static errno_t errno_from_hresult(HRESULT _hResult)
 {
 	switch (_hResult)
 	{
@@ -323,7 +323,7 @@ public:
 	std::string message(value_type _ErrCode) const
 	{
 		errno_t e = windows::errno_from_hresult((HRESULT)_ErrCode);
-		if (e)
+		if (e && e != ENOTRECOVERABLE)
 			return std::generic_category().message(e);
 		return std::move(oStd::windows::message((HRESULT)_ErrCode));
 	}

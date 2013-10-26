@@ -54,12 +54,35 @@ void oInterprocessEventReset(oHEVENT _hEvent)
 
 bool oInterprocessEventWait(oHEVENT _hEvent, unsigned int _TimeoutMS)
 {
-	return oWaitSingle(_hEvent, _TimeoutMS);
+	return WAIT_OBJECT_0 == ::WaitForSingleObject(_hEvent, _TimeoutMS == oInfiniteWait ? INFINITE : _TimeoutMS);
 }
 
 bool oInterprocessEventWaitMultiple(oHEVENT* _hEvents, size_t _NumEvents, size_t* _pWaitBreakingEventIndex, unsigned int _TimeoutMS)
 {
 	if (_NumEvents >= 64)
-		return oErrorSetLast(std::errc::no_buffer_space, "A maximum of 64 events can be waited on at once");
-	return oWaitMultiple((HANDLE*)_hEvents, _NumEvents, _pWaitBreakingEventIndex, _TimeoutMS);
+		oTHROW(no_buffer_space, "A maximum of 64 events can be waited on at once");
+	
+	DWORD result = ::WaitForMultipleObjects(static_cast<DWORD>(_NumEvents), (const HANDLE*)_hEvents, !_pWaitBreakingEventIndex, _TimeoutMS == oInfiniteWait ? INFINITE : _TimeoutMS);
+
+	if (result == WAIT_FAILED)
+	{
+		oWinSetLastError();
+		return false;
+	}
+
+	else if (result == WAIT_TIMEOUT)
+	{
+		oErrorSetLast(std::errc::timed_out);
+		return false;
+	}
+
+	else if (_pWaitBreakingEventIndex)
+	{
+		if (result >= WAIT_ABANDONED_0) 
+			*_pWaitBreakingEventIndex = result - WAIT_ABANDONED_0;
+		else
+			*_pWaitBreakingEventIndex = result - WAIT_OBJECT_0;
+	}
+
+	return true;
 }

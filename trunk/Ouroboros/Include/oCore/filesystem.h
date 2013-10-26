@@ -255,6 +255,11 @@ void unmap(void* _MappedPointer);
 
 // fopen style API
 typedef FILE* file_handle;
+typedef void* native_file_handle;
+
+// Converts a standard C file handle from fopen to an OS-native handle
+// (HANDLE on Windows)
+native_file_handle get_native(file_handle _hFile);
 
 file_handle open(const path& _Path, open_option::value _OpenOption);
 void close(file_handle _hFile);

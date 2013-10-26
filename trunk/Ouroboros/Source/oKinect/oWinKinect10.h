@@ -78,7 +78,7 @@ struct oWinKinect10 : oProcessSingleton<oWinKinect10>
 
 protected: 
 	ouro::module::id hModule;
-	std::vector<DWORD, oProcessHeapAllocator<DWORD>> TIDs;
+	std::vector<oStd::thread::id, oProcessHeapAllocator<oStd::thread::id>> TIDs;
 	bool TIDsRecorded;
 	bool KinectThreadTerminated;
 	bool NuiSetDeviceStatusCallbackWasCalled;

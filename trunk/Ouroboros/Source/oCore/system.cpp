@@ -26,6 +26,7 @@
 #include <oCore/process.h>
 #include <oBase/date.h>
 #include "../oStd/win.h"
+#include <Shellapi.h>
 
 using namespace oStd;
 
@@ -128,33 +129,25 @@ date to_local(const date& _UTCDate)
 	return std::move(to_date(Out));
 }
 
-static void windows_set_privileges(const char* _privilege)
-{
-	HANDLE hT;
-	TOKEN_PRIVILEGES tkp;
-	oVB(!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hT));
-	windows::scoped_handle hToken(hT);
-	oVB(!LookupPrivilegeValue(nullptr, _privilege, &tkp.Privileges[0].Luid));
-	tkp.PrivilegeCount = 1;      
-	tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED; 
-	oVB(!AdjustTokenPrivileges(hToken, FALSE, &tkp, 0, nullptr, 0));
-	// AdjustTokenPrivileges only fails for invalid parameters. If it fails 
-	// because the app did not have permissions, then it succeeds (result will be 
-	// true), but sets last error to ERROR_NOT_ALL_ASSIGNED.
-	if (GetLastError() != ERROR_SUCCESS)
-		throw windows::error();
-}
-
 void reboot()
 {
-	windows_set_privileges(SE_SHUTDOWN_NAME);
+	set_privilege(may_shutdown);
 	oVB(ExitWindowsEx(EWX_REBOOT, SHTDN_REASON_FLAG_PLANNED));
 }
 
 void shutdown()
 {
-	windows_set_privileges(SE_SHUTDOWN_NAME);
+	set_privilege(may_shutdown);
 	oVB(ExitWindowsEx(EWX_POWEROFF, SHTDN_REASON_FLAG_PLANNED));
+}
+
+void kill_file_browser()
+{
+	if (process::exists("explorer.exe"))
+	{
+		oTRACE("Terminating explorer.exe because the taskbar can interfere with cooperative fullscreen");
+		::system("TASKKILL /F /IM explorer.exe");
+	}
 }
 
 void sleep()
@@ -456,6 +449,41 @@ static size_t line_enumerator(char* _Buffer, size_t _ReadSize
 	return strlcpy(_Buffer, line, _ReadSize);
 }
 
+static const char* privilege_name(privilege _Privilege)
+{
+	switch (_Privilege)
+	{
+		case may_debug: return SE_DEBUG_NAME;
+		case may_shutdown: return SE_SHUTDOWN_NAME;
+		case may_lock_memory: return SE_LOCK_MEMORY_NAME;
+		case may_profile_process: return SE_PROF_SINGLE_PROCESS_NAME;
+		case may_load_driver: return SE_LOAD_DRIVER_NAME;
+		case may_increase_working_set: return SE_INC_WORKING_SET_NAME;
+		case may_increase_process_priority: return SE_INC_BASE_PRIORITY_NAME;
+		default: break;
+	}
+	return "?";
+}
+
+void set_privilege(privilege _Privilege, bool _Enabled)
+{
+	const char* p = privilege_name(_Privilege);
+
+	HANDLE hT;
+	TOKEN_PRIVILEGES tkp;
+	oVB(!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hT));
+	windows::scoped_handle hToken(hT);
+	oVB(!LookupPrivilegeValue(nullptr, p, &tkp.Privileges[0].Luid));
+	tkp.PrivilegeCount = 1;      
+	tkp.Privileges[0].Attributes = _Enabled ? SE_PRIVILEGE_ENABLED : 0; 
+	oVB(!AdjustTokenPrivileges(hToken, FALSE, &tkp, 0, nullptr, 0));
+	// AdjustTokenPrivileges only fails for invalid parameters. If it fails 
+	// because the app did not have permissions, then it succeeds (result will be 
+	// true), but sets last error to ERROR_NOT_ALL_ASSIGNED.
+	if (GetLastError() != ERROR_SUCCESS)
+		throw windows::error();
+}
+
 // starting suspended can BSOD the machine, be careful
 //#define DEBUG_EXECUTED_PROCESS
 int spawn(const char* _CommandLine
@@ -538,6 +566,13 @@ int spawn(const char* _CommandLine
 	, bool _ShowWindow)
 {
 	return spawn(_CommandLine, _GetLine, _ShowWindow, INFINITE);
+}
+
+void spawn_associated_application(const char* _DocumentName, bool _ForEdit)
+{
+	int hr = (int)ShellExecuteA(nullptr, _ForEdit ? "edit" : "open", _DocumentName, nullptr, nullptr, SW_SHOW);
+	if (hr < 32)
+		oTHROW(no_buffer_space, "The operating system is out of memory or resources.");
 }
 
 	} // namespace system

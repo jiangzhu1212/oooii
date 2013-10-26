@@ -32,6 +32,17 @@
 namespace ouro {
 	namespace system {
 
+enum privilege
+{
+	may_debug,
+	may_shutdown,
+	may_lock_memory,
+	may_profile_process,
+	may_load_driver,
+	may_increase_working_set,
+	may_increase_process_priority,
+};
+
 struct heap_info
 {
 	unsigned long long total_used;
@@ -77,6 +88,7 @@ template<typename date1T, typename date2T> bool to_local(const date1T& _UTCDate,
 void reboot();
 void shutdown();
 void sleep();
+void kill_file_browser();
 void allow_sleep(bool _Allow = true);
 void schedule_wakeup(time_t _Time, const std::function<void()>& _OnWake);
 
@@ -127,6 +139,9 @@ char* envstr(char* _StrEnvironment, size_t _SizeofStrEnvironment);
 template<size_t size> char* envstr(char (&_StrEnvironment)[size]) { return envstr(_StrEnvironment, size); }
 template<size_t capacity> char* envstr(fixed_string<char, capacity>& _StrEnvironment) { return envstr(_StrEnvironment, _StrEnvironment.capacity()); }
 
+// Set the specified privilege for this process, if allowed by the system.
+void set_privilege(privilege _Privilege, bool _Enabled = true);
+
 // Spawns a child process to execute the specified command line. For each line
 // emitted to stdout by the process, _GetLine is called so this calling process
 // can react to the child's output. This returns the exit code of the process,
@@ -152,6 +167,10 @@ int spawn(const char* _CommandLine
 int spawn(const char* _CommandLine
 	, const std::function<void(char* _Line)>& _GetLine
 	, bool _ShowWindow);
+
+// Spawns the application associated with the specified _DocumentName by the 
+// operating system and opens or edits that document.
+void spawn_associated_application(const char* _DocumentName, bool _ForEdit = false);
 
 	} // namespace system
 } // namespace ouro

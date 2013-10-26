@@ -44,24 +44,24 @@ const oGUID oWinKinect10::GUID = { 0x88a26003, 0x9f51, 0x4828, { 0x9c, 0x8f, 0x7
 
 void oWinKinect10::RecordPreKinectThreads()
 {
-	oVERIFY(oEnumProcessThreads(GetCurrentProcessId(), [&](DWORD _ThreadID, DWORD _ParentProcessID)->bool
+	ouro::this_process::enumerate_threads([&](oStd::thread::id _ThreadID)->bool
 	{
 		TIDs.push_back(_ThreadID);
 		return true;
-	}));
+	});
 }
 
 void oWinKinect10::RecordKinectWorkerThreads()
 {
-	std::vector<DWORD, oProcessHeapAllocator<DWORD>> BeforeTIDs = TIDs;
+	std::vector<oStd::thread::id, oProcessHeapAllocator<oStd::thread::id>> BeforeTIDs = TIDs;
 	TIDs.clear();
-	oEnumProcessThreads(GetCurrentProcessId(), [&](DWORD _ThreadID, DWORD _ParentProcessID)->bool
+	ouro::this_process::enumerate_threads([&](oStd::thread::id _ThreadID)->bool
 	{
 		TIDs.push_back(_ThreadID);
 		return true;
 	});
 
-	oFOR(DWORD TID, BeforeTIDs)
+	oFOR(oStd::thread::id TID, BeforeTIDs)
 	{
 		auto it = find(TIDs, TID);
 		if (it != TIDs.end())
@@ -112,9 +112,9 @@ oWinKinect10::~oWinKinect10()
 	if (KinectThreadTerminated)
 		oTRACE("A Kinect thread needed to be terminated. Kinect SDK may report errors. Ignore the errors or unplug/replug the Kinect to address this reporting.");
 
-	oFOR(DWORD TID, TIDs)
+	oFOR(oStd::thread::id TID, TIDs)
 	{
-		HANDLE hThread = OpenThread(THREAD_TERMINATE, FALSE, TID);
+		HANDLE hThread = OpenThread(THREAD_TERMINATE, FALSE, *((DWORD*)&TID));
 		if (hThread)
 		{
 			try { TerminateThread(hThread, 0xdeadc0de); }

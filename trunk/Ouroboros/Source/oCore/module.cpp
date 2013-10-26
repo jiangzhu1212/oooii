@@ -170,6 +170,38 @@ static type::value get_type(const VS_FIXEDFILEINFO& _FFI)
 	return type::unknown;
 }
 
+#if 0 // not needed yet
+static void get_type(const module::type::value _Type, DWORD* _pType, DWORD* _pSubtype)
+{
+	*_pType = VFT_UNKNOWN;
+	*_pSubtype = VFT2_UNKNOWN;
+
+	switch (_Type)
+	{
+		case module::type::app: *_pType = VFT_APP; break;
+		case module::type::dll: *_pType = VFT_DLL; break;
+		case module::type::lib: *_pType = VFT_STATIC_LIB; break;
+		case module::type::font_unknown: *_pType = VFT_FONT; break;
+		case module::type::font_raster: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_RASTER; break;
+		case module::type::font_truetype: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_TRUETYPE; break;
+		case module::type::font_vector: *_pType = VFT_FONT; *_pSubtype = VFT2_FONT_VECTOR; break;
+		case module::type::virtual_device: *_pType = VFT_VXD; break;
+		case module::type::drv_unknown: *_pType = VFT_DRV; break;
+		case module::type::drv_comm: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_COMM; break;
+		case module::type::drv_display: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_DISPLAY; break;
+		case module::type::drv_installable: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_INSTALLABLE; break;
+		case module::type::drv_keyboard: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_KEYBOARD; break;
+		case module::type::drv_language: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_LANGUAGE; break;
+		case module::type::drv_mouse: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_MOUSE; break;
+		case module::type::drv_network: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_NETWORK; break;
+		case module::type::drv_printer: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_PRINTER; break;
+		case module::type::drv_sound: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_SOUND; break;
+		case module::type::drv_system: *_pType = VFT_DRV; *_pSubtype = VFT2_DRV_SYSTEM; break;
+		default: break;
+	}
+}
+#endif
+
 static bool is_64bit()
 {
 	if (sizeof(void*) != 4) // If ptr size is larger than 32-bit we must be on 64-bit windows

@@ -28,7 +28,9 @@
 #define oCore_process_h
 
 #include <oStd/chrono.h>
+#include <oStd/thread.h>
 #include <oBase/path.h>
+#include <functional>
 
 namespace ouro {
 
@@ -139,7 +141,14 @@ public:
 
 	static std::shared_ptr<process> make(const info& _Info);
 
+	// Calls the specified function on each process active on the system. Return
+	// false to exit early.
 	static void enumerate(const std::function<bool(id _ID, id _ParentID, const path& _ProcessExePath)>& _Enumerator);
+
+	// Calls the specified function on each thread associated with the specified
+	// process. Return false to exit early.
+	static void enumerate_threads(id _ID, const std::function<bool(oStd::thread::id _ThreadID)>& _Enumerator);
+
 	static id get_id(const char* _Name);
 	static inline bool exists(const char* _Name) { return process::id() != get_id(_Name); }
 	static bool has_debugger_attached(id _ID);
@@ -183,6 +192,10 @@ protected:
 process::id get_id();
 process::id get_parent_id();
 inline bool is_child() { return get_parent_id() != process::id(); }
+
+// Returns the id of the main thread of this process
+oStd::thread::id get_main_thread_id();
+
 bool has_debugger_attached();
 
 inline double cpu_usage(unsigned long long* _pPreviousSystemTime, unsigned long long* _pPreviousProcessTime) { return ouro::process::cpu_usage(get_id(), _pPreviousSystemTime, _pPreviousProcessTime); }
@@ -196,10 +209,12 @@ template<size_t capacity> char* command_line(fixed_string<char, capacity>& _StrD
 
 // Call the specified function for each of the child processes of the current
 // process. The function should return true to keep enumerating, or false to
-// exit early. This function returns false if there is a failure, check 
-// oErrorGetLast() for more information. The error can be 
-// std::errc::no_child_process if there are no child processes.
-void enumerate_children(const std::function<bool(process::id _ID, process::id _ParentID, const path& _ProcessExePath)>& _Enumerator);
+// exit early.
+void enumerate_children(const std::function<bool(process::id _ChildID, const path& _ProcessExePath)>& _Enumerator);
+
+// Calls the specified function on each thread associated with this process.
+// Return false to exit early.
+void enumerate_threads(const std::function<bool(oStd::thread::id _ThreadID)>& _Enumerator);
 
 	} // namespace this_process
 } // namespace ouro

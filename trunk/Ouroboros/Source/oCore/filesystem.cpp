@@ -615,6 +615,11 @@ void unmap(void* _MappedPointer)
 		oFSTHROWLAST();
 }
 
+native_file_handle get_native(file_handle _hFile)
+{
+	return (native_file_handle)_get_osfhandle(_fileno(_hFile));
+}
+
 file_handle open(const path& _Path, open_option::value _OpenOption)
 {
 	static char* opt = "rwa";

@@ -184,8 +184,6 @@
 	#define INTERFACE_DEFINED
 #endif
 
-#include <oCore/process.h>
-
 // _____________________________________________________________________________
 // Raw Input (WM_INPUT support) These are not defined anywhere I can find in
 // Windows headers.
@@ -357,13 +355,6 @@ inline void intrusive_ptr_release(IUnknown* unk) { unk->Release(); }
 
 inline const oGUID& oGetGUID(const GUID& _WinGUID) { return *reinterpret_cast<const oGUID*>(&_WinGUID); }
 
-// An ASCII version of CommandLineToArgvW. Use oWinCommandLineToArgvAFree() to
-// free the buffer returned by this function.
-const char** oWinCommandLineToArgvA(bool _ExePathAsArg0, const char* pCmdLine, int* _pArgc);
-
-// Frees a buffer returned by oWinCommandLineToArgvA
-void oWinCommandLineToArgvAFree(const char** _pArgv);
-
 inline float oPointToDIP(float _Point) { return 96.0f * _Point / 72.0f; }
 inline float oDIPToPoint(float _DIP) { return 72.0f * _DIP / 96.0f; }
 
@@ -380,26 +371,6 @@ ouro::version oWinGetVersion(DWORD _VersionMS, DWORD _VersionLS);
 // protect against deadlocks.
 HMODULE oThreadsafeLoadLibrary(LPCTSTR _lpFileName);
 BOOL oThreadsafeFreeLibrary(HMODULE _hModule);
-
-// returns true if wait finished successfully, or false if
-// timed out or otherwise errored out.
-bool oWaitSingle(HANDLE _Handle, unsigned int _TimeoutMS = oInfiniteWait);
-
-// If _pWaitBreakingIndex is nullptr, this waits for all handles to be 
-// unblocked. If a valid pointer, then it is filled with the index of the handle
-// that unblocked the wait.
-bool oWaitMultiple(HANDLE* _pHandles, size_t _NumberOfHandles, size_t* _pWaitBreakingIndex = nullptr, unsigned int _TimeoutMS = oInfiniteWait);
-
-bool oWaitSingle(DWORD _ThreadID, unsigned int _Timeout = oInfiniteWait);
-bool oWaitMultiple(DWORD* _pThreadIDs, size_t _NumberOfThreadIDs, size_t* _pWaitBreakingIndex = nullptr, unsigned int _TimeoutMS = oInfiniteWait);
-
-template<typename GetNativeHandleT> inline bool oTWaitMultiple(threadsafe GetNativeHandleT** _ppWaitable, size_t _NumWaitables, size_t* _pWaitBreakingIndex = nullptr, unsigned int _TimeoutMS = oInfiniteWait)
-{
-	HANDLE handles[64]; // 64 is a windows limit
-	for (size_t i = 0; i < _NumWaitables; i++)
-		handles[i] = static_cast<HANDLE>(_ppWaitable[i]->GetNativeHandle());
-	return oWaitMultiple(handles, _NumWaitables, _pWaitBreakingIndex, _TimeoutMS);
-}
 
 // _____________________________________________________________________________
 // Window utilties
@@ -490,39 +461,6 @@ LPDLGTEMPLATE oDlgNewTemplate(const oWINDOWS_DIALOG_DESC& _Desc);
 void oDlgDeleteTemplate(LPDLGTEMPLATE _lpDlgTemplate);
 
 // _____________________________________________________________________________
-// System API - dealing with Windows as a whole
-
-// Returns the resolved path to the binary that is the running service
-bool oWinGetServiceBinaryPath(char* _StrDestination, size_t _SizeofStrDestination, SC_HANDLE _hSCManager, const char* _ServiceName);
-
-// Spawns the application associated with the specified _DocumentName and opens
-// that document. For example: open a text file using Notepad or a URL using 
-// Explorer.
-bool oWinSystemOpenDocument(const char* _DocumentName, bool _ForEdit = false);
-
-// Retrieves the HWND of the top level window owned by the specified process and
-// the ID of the thread that services this window.  Since a process can have more
-// than one top level window an optional name can also be specified to make certain
-// the correct window is returned
-bool oWinGetProcessTopWindowAndThread(ouro::process::id _ProcessID, HWND* _pHWND, unsigned int* _pThreadID, const char* _pOptionalWindowName = nullptr);
-
-// _____________________________________________________________________________
-// Identification/ID Conversion API
-
-// Converts a standard C file handle from fopen to a windows handle
-HANDLE oGetFileHandle(FILE* _File);
-
-// Call the specified function for each thread in the current process. The 
-// function should return true to keep enumerating, or false to exit early. This
-// function returns false if there is a failure, check oErrorGetLast() for more
-// information.
-bool oEnumProcessThreads(DWORD _ProcessID, oFUNCTION<bool(DWORD _ThreadID, DWORD _ParentProcessID)> _Function);
-
-// Call the specified function for each of the top level windows on the system. 
-// The function should return true to keep searching or false to exit early.
-bool oWinEnumWindows(oFUNCTION<bool(HWND _Hwnd)> _Function);
-
-// _____________________________________________________________________________
 // Hardware device APIs
 struct oWINDOWS_HID_DESC
 {
@@ -546,13 +484,6 @@ bool oWinEnumInputDevices(bool _EnumerateAll, const oFUNCTION<void(const oWINDOW
 // _____________________________________________________________________________
 // Misc
 
-// Explorer will auto-restart if terminated programmatically, so use a 
-// more heavy-handed approach.
-void oWinKillExplorer();
-
-// Adjusts privileges and calls ExitWindowsEx with the specified parameters
-bool oWinExitWindows(UINT _uFlags, DWORD _dwReason);
-
 void oGetScreenDPIScale(float* _pScaleX, float* _pScaleY);
 
 // Returns the display index as used by EnumDisplayDevices and the populated
@@ -563,23 +494,8 @@ void oGetVirtualDisplayRect(RECT* _pRect);
 
 inline POINT oAsPOINT(const int2& _P) { POINT p; p.x = _P.x; p.y = _P.y; return p; }
 
-// You can't allocate large memory pages by default. You have to enable privileges. This will fail if the app does not have permission in the local security policy, 
-// You will probably have to run with uac disabled, or run the app with elevated privileges as well.
-bool oWinAddLargePagePrivileges();
-
-bool oWinSetPrivilege(HANDLE _hProcessToken, LPCTSTR _PrivilegeName, bool _Enabled);
-
-// Call this to allow this process to be debugged
-bool oWinEnableDebugPrivilege(bool _Enabled);
-
 // Call this to dump the stack and potentially throw up an error message if so enabled by oReporting.  See oReporting for more information on stack dumps.
 void oWinDumpAndTerminate(EXCEPTION_POINTERS* _pExceptionPtrs, const char* _pUserErrorMessage);
-
-// value to set for FILEFLAGS in a resource script (.rc)
-long oWinRCGetFileFlags(const ouro::module::info& _Info);
-
-// Returns the values for FILETYPE and FILESUBTYPE in a resource script (.rc)
-void oWinRCGetFileType(const ouro::module::type::value _Type, DWORD* _pType, DWORD* _pSubtype);
 
 #else
 	#error Unsupported platform

@@ -311,7 +311,7 @@ void oProcessHeapContextImpl::ReportLeaks()
 				const ENTRY& e = it->second;
 
 				char TLBuf[128];
-				snprintf(TLBuf, " (thread_local in thread 0x%x%s)", *(unsigned int*)&e.InitThreadID, oConcurrency::main_thread::get_id() == e.InitThreadID ? " (main)" : "");
+				snprintf(TLBuf, " (thread_local in thread 0x%x%s)", *(unsigned int*)&e.InitThreadID, ouro::this_process::get_main_thread_id() == e.InitThreadID ? " (main)" : "");
 				char GUIDStr[128];
 				snprintf(buf, "%s %s%s\n", to_string(GUIDStr, e.GUID), oSAFESTRN(e.DebugName), e.IsThreadLocal ? TLBuf : "");
 				OutputDebugStringA(buf); // use non-threadsafe version because that could alloc the mutex

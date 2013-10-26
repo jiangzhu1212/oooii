@@ -139,7 +139,7 @@ private:
 
 	void AssertIsMain()
 	{
-		oASSERT(oConcurrency::main_thread::get_id() == oStd::this_thread::get_id(), "Must be called from main thread");
+		oASSERT(ouro::this_process::get_main_thread_id() == oStd::this_thread::get_id(), "Must be called from main thread");
 	}
 };
 

@@ -113,11 +113,6 @@ void end_thread();
 void thread_at_exit(const oTASK& _AtExit);
 oDEFINE_CALLABLE_WRAPPERS(thread_at_exit,, thread_at_exit);
 
-// get_id() for the main thread (like this_thread::get_id())
-namespace main_thread {
-	oStd::thread::id get_id();
-}
-
 // _____________________________________________________________________________
 // Exception support
 

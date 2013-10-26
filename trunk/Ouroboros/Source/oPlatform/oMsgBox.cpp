@@ -387,7 +387,7 @@ oMSGBOX_RESULT oMsgBoxV(const oMSGBOX_DESC& _Desc, const char* _Format, va_list 
 	HICON hIcon = nullptr;
 
 	HWND hWnd = (HWND)_Desc.hParent;
-	unsigned int ThreadID;
+	oStd::thread::id ThreadID;
 
 	if (!hWnd)
 		oWinGetProcessTopWindowAndThread(ouro::this_process::get_id(), &hWnd, &ThreadID);

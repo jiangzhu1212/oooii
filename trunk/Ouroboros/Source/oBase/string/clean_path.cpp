@@ -106,7 +106,7 @@ char* clean_path(char* _StrDestination, size_t _SizeofStrDestination, const char
 
 		else if (issep(*r))
 		{
-			*w++ = '/';
+			*w++ = _FileSeparator;
 			do { r++; } while (*r && issep(*r));
 		}
 

@@ -220,8 +220,74 @@ static bool oWinTranslateDeviceChange(HWND _hWnd, WPARAM _wParam, LPARAM _lParam
 	return true;
 }
 
-// @oooii-tony: Confirmation of hWnd being on the specified thread is disabled
-// for now... I think it might be trying to access the HWND before it's fully
+static BOOL CALLBACK oWinEnumWindowsProc(HWND _hWnd, LPARAM _lParam)
+{
+	return (*(std::function<bool(HWND _hWnd)>*)_lParam)(_hWnd) ? TRUE : FALSE;
+}
+
+void oWinEnumWindows(const std::function<bool(HWND _hWnd)>& _Enumerator)
+{
+	EnumWindows(oWinEnumWindowsProc, (LPARAM)&_Enumerator);
+}
+
+bool oWinGetProcessTopWindowAndThread(ouro::process::id _ProcessID
+	, HWND* _pHWND
+	, oStd::thread::id* _pThreadID
+	, const char* _pWindowName)
+{
+	HWND Hwnd = 0;
+	unsigned int ThreadID = 0;
+
+	unsigned int PID = *(unsigned int*)&_ProcessID;
+
+	oWinEnumWindows(
+		[&](HWND _Hwnd)->bool
+	{
+		unsigned int HWNDProcessID;
+		auto NewThreadID = GetWindowThreadProcessId(_Hwnd, (DWORD*)&HWNDProcessID);
+
+		if (HWNDProcessID != PID)
+			return true;
+
+		// Look for windows that might get injected into our process that we would never want to target
+		const char* WindowsToSkip[] = {"Default IME", "MSCTFIME UI"};
+		ouro::mstring WindowText;
+		// For some reason in release builds Default IME can take a while to respond to this. so wait longer unless the app appears to be hung.
+		if (SendMessageTimeout(_Hwnd, WM_GETTEXT, ouro::mstring::Capacity - 1, (LPARAM)WindowText.c_str(), SMTO_ABORTIFHUNG, 2000, nullptr) == 0)
+		{
+			WindowText = "";
+		}
+
+		if (!WindowText.empty())
+		{
+			oFORI(i, WindowsToSkip)
+			{
+				if( 0 == strcmp(WindowText.c_str(), WindowsToSkip[i]) )
+				{
+					return true;
+				}
+			}
+		}
+
+		// If the caller specified a window name make certain this is the right window or else keep searching
+		if(_pWindowName && 0 != strcmp(_pWindowName, WindowText))
+			return true;
+
+		Hwnd = _Hwnd;
+		ThreadID = NewThreadID;
+		return false;
+	});
+
+	if(!Hwnd)
+		return oErrorSetLast(std::errc::no_such_process);
+
+	*_pHWND = Hwnd;
+	*((unsigned int*)_pThreadID) = ThreadID;
+	return true;
+}
+
+// @tony: Confirmation of hWnd being on the specified thread is disabled for 
+// now... I think it might be trying to access the HWND before it's fully
 // constructed. First get the massive integration done, then come back to this.
 
 #define oWINVP(_hWnd) \
@@ -1976,7 +2042,7 @@ bool oWinControlDefaultOnNotify(HWND _hControl, const NMHDR& _NotifyMessageHeade
 			{
 				const NMLINK& NMLink = (const NMLINK&)_NotifyMessageHeader;
 				xlstring asMultiByte(NMLink.item.szUrl);
-				oVERIFY(oWinSystemOpenDocument(asMultiByte));
+				ouro::system::spawn_associated_application(asMultiByte);
 			}
 
 			ShortCircuit = true;

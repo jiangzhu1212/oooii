@@ -145,6 +145,19 @@ enum oWM
 // window is set up to consume and convert native registered messages.
 UINT oWinGetNativeRegisteredMessage(oWM _RegisteredMessage);
 
+// Call the specified function for each of the top level windows on the system. 
+// The function should return true to keep searching or false to exit early.
+void oWinEnumWindows(const std::function<bool(HWND _hWnd)>& _Enumerator);
+
+// Retrieves the HWND of the top level window owned by the specified process and
+// the ID of its message pump thread. Since a process can have more than one top 
+// level window an optional name can also be specified to make certain the 
+// correct window is returned.
+bool oWinGetProcessTopWindowAndThread(ouro::process::id _ProcessID
+	, HWND* _pHWND
+	, oStd::thread::id* _pThreadID
+	, const char* _pWindowName = nullptr);
+
 // _____________________________________________________________________________
 // Basic Top-Level Window Creation, Lifetime and Message Processing
 

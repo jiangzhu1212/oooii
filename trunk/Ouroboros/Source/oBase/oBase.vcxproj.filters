@@ -196,6 +196,9 @@
     <ClCompile Include="uri.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
+    <ClCompile Include="string\argtok.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\finally.h">

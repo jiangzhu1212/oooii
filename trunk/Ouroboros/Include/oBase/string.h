@@ -429,6 +429,16 @@ char* search_path(char (&_StrDestination)[size]
 	return search_path(_StrDestination, size, _SearchPaths, _RelativePath, _DotPath, _PathExists);
 }
 
+// Parses a single string of typical command line parameters into an argv-style
+// array of strings. This uses the specified allocator, or malloc if nullptr is 
+// specified. If _AppPath is non-null, it will be copied into the 0th element of 
+// the returned argv. If that isn't desired, or the app path is already in 
+// _CommandLine, pass nullptr for _AppPath. The number of arguments will be 
+// returned in _pNumArgs. On Windows this can be used similarly to 
+// CommandLineToArgvW and serves as an implementation of CommandLineToArgvA that
+// Windows does not provide.
+const char** argtok(void* (*_Allocate)(size_t), const char* _AppPath, const char* _CommandLine, int* _pNumArgs);
+
 } // namespace ouro
 
 // The macros below are an inner-loop optimization with 5+% performance 

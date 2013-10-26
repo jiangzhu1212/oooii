@@ -2097,8 +2097,8 @@ size_t oD3D11GetHLSLByteCodeSize(const void* _pByteCode)
 bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, const char* _ShaderSource, oBuffer** _ppBuffer)
 {
 	int argc = 0;
-	const char** argv = oWinCommandLineToArgvA(false, _CommandLineOptions, &argc);
-	finally OSCFreeArgv([&] { oWinCommandLineToArgvAFree(argv); });
+	const char** argv = ouro::argtok(malloc, nullptr, _CommandLineOptions, &argc);
+	finally OSCFreeArgv([&] { if (argv) free(argv); });
 
 	std::string UnsupportedOptions("Unsupported options: ");
 	size_t UnsupportedOptionsEmptyLen = UnsupportedOptions.size();
