@@ -50,8 +50,7 @@ interface oWindow : oInterface
 
 	virtual oGUI_WINDOW GetNativeHandle() const threadsafe = 0;
 	
-	// Returns an index fit for use with oDisplay API based on the center of the
-	// window's client area.
+	// Returns the display that contains the center of the window's client area.
 	virtual ouro::display::id GetDisplayId() const = 0;
 	virtual bool IsWindowThread() const threadsafe = 0;
 

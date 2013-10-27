@@ -392,9 +392,7 @@ oAPI bool oWinExists(HWND _hWnd);
 // and is in a steady visual state.
 oAPI bool oWinIsOpaque(HWND _hWnd);
 
-// Gets the index of the display that is most closely associated with the 
-// specified window. NOTE: This is an oDisplay-style index compatible with 
-// oDisplayEnum(), not a DirectX index.
+// Returns the display that contains the center of the window's client area.
 oAPI ouro::display::id oWinGetDisplayId(HWND _hWnd);
 
 // Returns true if the specified _hWnd is valid and has focus
