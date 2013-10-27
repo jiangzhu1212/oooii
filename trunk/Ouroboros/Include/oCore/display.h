@@ -111,6 +111,8 @@ void reset_mode(id _ID);
 
 void virtual_rect(int* _pX, int* _pY, int* _pWidth, int* _pHeight);
 
+void taskbar_rect(int* _pX, int* _pY, int* _pWidth, int* _pHeight);
+
 // turns all monitors on or sets them to a low-power state
 void set_power_on(bool _On = true);
 

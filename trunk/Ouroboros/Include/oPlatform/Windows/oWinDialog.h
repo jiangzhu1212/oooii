@@ -24,11 +24,11 @@
  **************************************************************************/
 // Utilities for working with Window's common dialogs.
 #pragma once
-#ifndef oWinDialog_h
-#define oWinDialog_h
+#ifndef oWinCommonDialog_h
+#define oWinCommonDialog_h
 
 #include <oBasis/oGUI.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 
 // Filter pairs are delimited by '|' and are the description, and the wildcard:
 // i.e. "Text Files|*.txt|Bitmap Files|*.bmp"

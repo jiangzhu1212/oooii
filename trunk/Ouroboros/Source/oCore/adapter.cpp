@@ -26,7 +26,13 @@
 #include <oCore/display.h>
 #include <oBase/guid.h>
 #include "../oStd/win.h"
+#include <Wbemidl.h>
+#include <d3d11.h>
+#include <dxgi.h>
 #include <regex>
+
+// Some GPU drivers have bugs in newer features that we use, so ensure we're at
+// least on this version and hope there aren't regressions.
 
 #define oNVVER_MAJOR 285
 #define oNVVER_MINOR 62

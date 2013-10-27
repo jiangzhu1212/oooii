@@ -28,7 +28,7 @@
 #define oWinRect_h
 
 #include <oBasis/oGUI.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 
 inline oRECT oRect(const RECT& _Rect) { oRECT r; r.Min = int2(_Rect.left, _Rect.top); r.Max = int2(_Rect.right, _Rect.bottom); return r; }
 inline RECT oWinRect(const oRECT& _Rect) { RECT r; r.left = _Rect.Min.x; r.top = _Rect.Min.y; r.right = _Rect.Max.x; r.bottom = _Rect.Max.y; return r; }

@@ -48,14 +48,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Query)
 			static_assert(oCOUNTOF(sQueryDescs) <= oCOUNTOF(Queries), "subqueries array cannot hold timer subqueries");
 
 			for (int i = 0; i < oCOUNTOF(sQueryDescs); i++)
-			{
-				if (FAILED(D3DDevice->CreateQuery(&sQueryDescs[i], &Queries[i])))
-				{
-					oWinSetLastError();
-					return;
-				}
-			}
-
+				oV(D3DDevice->CreateQuery(&sQueryDescs[i], &Queries[i]));
 			break;
 		}
 

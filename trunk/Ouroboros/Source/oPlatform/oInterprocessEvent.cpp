@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oPlatform/oInterprocessEvent.h>
 #include <oBase/assert.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 
 const oInterprocessEvent::AutoReset_t oInterprocessEvent::AutoReset;
 
@@ -33,7 +33,7 @@ oHEVENT oInterprocessEventCreate(bool _AutoReset, const char* _InterprocessName)
 	char windowsInterProcessName[1024];
 	snprintf(windowsInterProcessName, "Global\\%s", oSAFESTR(_InterprocessName));
 	HANDLE hEvent = CreateEvent(0, _AutoReset ? FALSE : TRUE, FALSE, _InterprocessName ? windowsInterProcessName : nullptr);
-	if (!hEvent) oWinSetLastError();
+	if (!hEvent) throw oStd::windows::error();
 	return (oHEVENT)hEvent;
 }
 
@@ -65,10 +65,7 @@ bool oInterprocessEventWaitMultiple(oHEVENT* _hEvents, size_t _NumEvents, size_t
 	DWORD result = ::WaitForMultipleObjects(static_cast<DWORD>(_NumEvents), (const HANDLE*)_hEvents, !_pWaitBreakingEventIndex, _TimeoutMS == oInfiniteWait ? INFINITE : _TimeoutMS);
 
 	if (result == WAIT_FAILED)
-	{
-		oWinSetLastError();
-		return false;
-	}
+		throw oStd::windows::error();
 
 	else if (result == WAIT_TIMEOUT)
 	{

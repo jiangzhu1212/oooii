@@ -26,7 +26,7 @@ using namespace ouro;
 
 #include <oPlatform/oMsgBox.h>
 //#include <oPlatform/oVersionUpdate.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 
 static option sCmdOptions[] = 
 {
@@ -113,7 +113,7 @@ int oLauncherMain(int argc, const char* argv[])
 	return 0;
 }
 
-oMAIN()
+int main(int argc, const char* argv[])
 {
 	oASSERT(false, "Disabled until version update is resurrected");
 

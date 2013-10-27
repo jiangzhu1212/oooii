@@ -28,7 +28,7 @@
 #define oWinCursor_h
 
 #include <oBasis/oGUI.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 
 // Modifies the default cursor associated with the client area of a Window
 HCURSOR oWinGetCursor(HWND _hWnd);

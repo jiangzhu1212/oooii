@@ -27,6 +27,7 @@
 #include <oBase/finally.h>
 #include <oBase/throw.h>
 #include "../oStd/win.h"
+#include <DShow.h>
 #include "winqedit.h"
 
 using namespace oStd;
@@ -698,9 +699,12 @@ bool directshow_camera::BufferCB(double _SampleTime, void* _pBuffer, size_t _Siz
 		int WriteIndex = (RingBufferReadIndex + 1) % oCOUNTOF(RingBuffer);
 	
 		frame& f = RingBuffer[WriteIndex];
-		oCRTASSERT(_SizeofBuffer == f.Data.size(), "Mismatched buffer size. Got %u bytes, expected %u bytes", _SizeofBuffer, f.Data.size());
+		if (_SizeofBuffer != f.Data.size())
+			oTHROW(no_buffer_space, "Mismatched buffer size. Got %u bytes, expected %u bytes", _SizeofBuffer, f.Data.size());
+		
 		if (_SizeofBuffer != size(f.Data))
 			return false;
+		
 		f.Frame = MonotonicCounter++;
 		f.SampleTime = _SampleTime;
 		

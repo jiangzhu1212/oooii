@@ -298,8 +298,13 @@ bool oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 	TextDesc.ID = ID_FLOATBOX;
 	Controls[ID_FLOATBOX] = oWinControlCreate(TextDesc);
 
-	oWinControlSetText(Controls[ID_FLOATBOX], "1.234");
-	oWinControlSetText(Controls[ID_FLOATBOX], "Hello!"); // should not show up
+	oWinControlSetValue(Controls[ID_FLOATBOX], 1.234f);
+
+	try
+	{
+		oWinControlSetText(Controls[ID_FLOATBOX], "Error!"); // should not show up
+	}
+	catch (std::exception&) {}
 
 	TextDesc.Type = oGUI_CONTROL_FLOATBOX_SPINNER;
 	TextDesc.Position.y += 40;

@@ -78,12 +78,12 @@ bool IOCPCompletionRoutine(HANDLE _hIOCP, unsigned int _TimeoutMS = INFINITE)
 	ULONG_PTR key;
 	oIOCPOp* pSocketOp;
 
-	if(GetQueuedCompletionStatus(_hIOCP, &numberOfBytes, &key, (WSAOVERLAPPED**)&pSocketOp, _TimeoutMS))
+	if (GetQueuedCompletionStatus(_hIOCP, &numberOfBytes, &key, (WSAOVERLAPPED**)&pSocketOp, _TimeoutMS))
 	{
 		// Ignore all input if the Socket is trying to shut down. The callbacks may no longer exist.
-		if(key == IOCPKEY_SHUTDOWN)
+		if (key == IOCPKEY_SHUTDOWN)
 			return false;
-		else if(key == IOCPKEY_USER_TASK)
+		else if (key == IOCPKEY_USER_TASK)
 			oIOCPContext::CallBackUserTask(pSocketOp);
 		else
 			oIOCPContext::CallBackUser(pSocketOp);
@@ -161,7 +161,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 
 		hIOCP = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, NumThreads);
 
-		if(!hIOCP)
+		if (!hIOCP)
 		{
 			oErrorSetLast(std::errc::invalid_argument, "Could not create I/O Completion Port with NumThreads=%i", NumThreads);
 			return;
@@ -187,7 +187,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 		oFOR(oStd::thread& Thread, WorkerThreads)
 			Thread.join();
 
-		if(INVALID_HANDLE_VALUE != hIOCP)
+		if (INVALID_HANDLE_VALUE != hIOCP)
 			CloseHandle(hIOCP);
 
 		oFOR(oIOCPOrphan& orphan, OrphanedContexts)
@@ -238,18 +238,15 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 		++OutstandingContextCount;
 		CheckForOrphans();
 
-		if(_Handle == INVALID_HANDLE_VALUE)
+		if (_Handle == INVALID_HANDLE_VALUE)
 			return NewIOCPContext(_pIOCP);
 
 		ULONG_PTR key = reinterpret_cast<ULONG_PTR>(_Handle);
-		//HACK: if a socket is a recycled socket, then this can fail with ERROR_INVALID_PARAMETER. HAve not currently found a way
-		//	to check with windows if a handle is already associated with iocp. So for now just assume that if we get this error back
-		//	it is because we are recycling a socket, and therefore everything is ok.
-		if(hIOCP != CreateIoCompletionPort(_Handle, hIOCP, key, oUInt(WorkerThreads.size())) && GetLastError() != ERROR_INVALID_PARAMETER)
-		{
-			oWinSetLastError();
-			return nullptr;
-		}
+		// HACK: if a socket is a recycled socket, then this can fail with ERROR_INVALID_PARAMETER. HAve not currently found a way
+		// to check with windows if a handle is already associated with iocp. So for now just assume that if we get this error back
+		// it is because we are recycling a socket, and therefore everything is ok.
+		if (hIOCP != CreateIoCompletionPort(_Handle, hIOCP, key, oUInt(WorkerThreads.size())) && GetLastError() != ERROR_INVALID_PARAMETER)
+			throw oStd::windows::error();
 		return NewIOCPContext(_pIOCP);
 	}
 
@@ -263,7 +260,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 		do
 		{
 			CheckForOrphans();
-		}while(OrphanedContexts.size() == OrphanedContexts.capacity());
+		} while(OrphanedContexts.size() == OrphanedContexts.capacity());
 	
 		--OutstandingContextCount;
 	}
@@ -288,7 +285,7 @@ private:
 		for(tOrphanList::iterator o = OrphanedContexts.begin(); o != OrphanedContexts.end();)
 		{
 			double ReleaseTime = o->TimeReleased;
-			if(_Force || Time - o->TimeReleased > DEAD_SOCKET_OP_TIMEOUT_SECONDS)
+			if (_Force || Time - o->TimeReleased > DEAD_SOCKET_OP_TIMEOUT_SECONDS)
 			{
 #ifdef DEBUG_IOCP_ALLOCATIONS
 				o->pContext->~oIOCPContext();
@@ -461,14 +458,14 @@ oIOCP_Impl::oIOCP_Impl(const DESC& _Desc, oTASK _ParentDestructionTask, bool* _p
 	: Desc(_Desc)
 	, ParentDestructionTask(_ParentDestructionTask)
 {
-	if(!Desc.IOCompletionRoutine && Desc.Handle != INVALID_HANDLE_VALUE)
+	if (!Desc.IOCompletionRoutine && Desc.Handle != INVALID_HANDLE_VALUE)
 	{
 		oErrorSetLast(std::errc::invalid_argument, "No IOCompletionRoutine specified, only supported if only issuing oTask's to iocp");
 		return;
 	}
 
 	pContext = oIOCP_Singleton::Singleton()->RegisterIOCP(Desc.Handle, this);
-	if(nullptr == pContext)
+	if (nullptr == pContext)
 	{
 		oErrorSetLast(std::errc::invalid_argument, "Failed to create IOCP context");
 		return;
@@ -489,7 +486,7 @@ void oIOCP_Impl::ReturnOp(oIOCPOp* _pIOCPOp)
 void oIOCP_Impl::DispatchIOTask(oTASK&& _Task)
 {
 	oIOCPOp* pIOCPOp = AcquireSocketOp();
-	if(!pIOCPOp)
+	if (!pIOCPOp)
 	{
 		oErrorSetLast(std::errc::no_buffer_space, "IOCPOpPool is empty, you're sending too fast.");
 		// need someway to let user know. 

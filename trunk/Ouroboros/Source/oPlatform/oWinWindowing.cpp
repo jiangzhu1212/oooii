@@ -23,21 +23,54 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oWinWindowing.h>
-#include <oBase/assert.h>
-#include <oBase/fixed_string.h>
-#include <oStd/chrono.h>
-#include <oConcurrency/mutex.h>
-#include <oPlatform/oDisplay.h>
+
+//#include <oBase/assert.h>
+//#include <oBase/fixed_string.h>
+//#include <oStd/chrono.h>
+//#include <oConcurrency/mutex.h>
+//#include <oPlatform/oDisplay.h>
+
+#include <oPlatform/Windows/oWinKey.h>
 #include <oPlatform/Windows/oGDI.h>
-#include <oPlatform/Windows/oWinAsString.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/Windows/oWinStatusBar.h>
-#include <WindowsX.h>
-#include <CdErr.h>
-#include <Shellapi.h>
+
+#include <SetupAPI.h>
 #include <Shlwapi.h>
+#include <devguid.h>
+#include <devpkey.h>
 
 using namespace ouro;
+
+// Raw Input (WM_INPUT support) These are not defined anywhere I can find in
+// Windows headers.
+
+enum oUS_USAGE_PAGE_VALUES
+{
+	oUS_USAGE_PAGE_GENERIC_DESKTOP = 1,
+	oUS_USAGE_PAGE_SIMULATION = 2,
+	oUS_USAGE_PAGE_VIRTUAL_REALITY = 3,
+	oUS_USAGE_PAGE_SPORT = 4,
+	oUS_USAGE_PAGE_GAME = 5,
+	oUS_USAGE_PAGE_GENERIC_DEVICE = 6,
+	oUS_USAGE_PAGE_KEYBOARD = 7,
+	oUS_USAGE_PAGE_LEDS = 8,
+	oUS_USAGE_PAGE_BUTTON = 9,
+};
+
+enum oUS_USAGE
+{
+	oUS_USAGE_UNDEFINED = 0,
+	oUS_USAGE_POINTER = 1,
+	oUS_USAGE_MOUSE = 2,
+	oUS_USAGE_RESERVED = 3,
+	oUS_USAGE_JOYSTICK = 4,
+	oUS_USAGE_GAMEPAD = 5,
+	oUS_USAGE_KEYBOARD = 6,
+	oUS_USAGE_KEYPAD = 7,
+	oUS_USAGE_MULTIAXIS_CONTROLLER = 8,
+	oUS_USAGE_TABLET_CONTROLS = 9,
+};
 
 #define oWIN_CHECK(_hWnd) do \
 	{	if (!oWinExists(_hWnd)) return oErrorSetLast(std::errc::invalid_argument, "Invalid HWND 0x%x specified", _hWnd); \
@@ -84,6 +117,240 @@ UINT oWinGetNativeRegisteredMessage(oWM _RegisteredMessage)
 	return RegisterWindowMessage(kRegisteredWindowMessages[_RegisteredMessage - oWM_REGISTERED_FIRST]);
 }
 
+// copy from DEVPKEY.H
+static const DEVPROPKEY oDEVPKEY_Device_DeviceDesc = { { 0xa45c254e, 0xdf1c, 0x4efd, { 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0 } }, 2 };
+static const DEVPROPKEY oDEVPKEY_Device_HardwareIds = { { 0xa45c254e, 0xdf1c, 0x4efd, { 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0 } }, 3 };
+static const DEVPROPKEY oDEVPKEY_Device_Class = { { 0xa45c254e, 0xdf1c, 0x4efd, { 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0 } }, 9 };
+static const DEVPROPKEY oDEVPKEY_Device_PDOName = { { 0xa45c254e, 0xdf1c, 0x4efd, { 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0 } }, 16 };
+static const DEVPROPKEY oDEVPKEY_Device_Parent = { { 0x4340a6c5, 0x93fa, 0x4706, { 0x97, 0x2c, 0x7b, 0x64, 0x80, 0x08, 0xa5, 0xa7 } }, 8 }; 
+static const DEVPROPKEY oDEVPKEY_Device_InstanceId = { { 0x78c34fc8, 0x104a, 0x4aca, { 0x9e, 0xa4, 0x52, 0x4d, 0x52, 0x99, 0x6e, 0x57 } }, 256 };
+static const DEVPROPKEY oDEVPKEY_Device_Siblings = { { 0x4340a6c5, 0x93fa, 0x4706, { 0x97, 0x2c, 0x7b, 0x64, 0x80, 0x08, 0xa5, 0xa7 } }, 10 };
+
+#if 0
+// if _EnumerateAll is false, then only existing/plugged in devices are searched.
+// A single PnP device can support multiple device types, so this sets the 
+// array of types the PnP device represents.
+
+static char* oWinPnPEnumeratorToSetupClass(char* _StrDestination, size_t _SizeofStrDestination, const char* _PnPEnumerator)
+{
+	if (strlen(_PnPEnumerator) <= 4) return nullptr;
+	size_t len = strlcpy(_StrDestination, _PnPEnumerator + 4, _SizeofStrDestination);
+	if (len >= _SizeofStrDestination) return nullptr;
+	char* hash = strrchr(_StrDestination, '#');
+	if (!hash) return nullptr;
+	*hash = '\0';
+	char* end = _StrDestination + len;
+	ouro::transform(_StrDestination, end, _StrDestination, [=](char c) { return (c == '#') ? '\\' : c; });
+	ouro::transform(_StrDestination, end, _StrDestination, ouro::toupper<const char&>);
+	char* first_slash = strchr(_StrDestination, '\\');
+	if (!first_slash) return nullptr;
+	*first_slash = '\0';
+	return _StrDestination;
+}
+
+template<size_t size> char* oWinPnPEnumeratorToSetupClass(char (&_StrDestination)[size], const char* _PnPEnumerator) { return oWinPnPEnumeratorToSetupClass(_StrDestination, size, _PnPEnumerator); }
+template<typename charT, size_t capacity> char* oWinPnPEnumeratorToSetupClass(ouro::fixed_string<charT, capacity>& _StrDestination, const char* _PnPEnumerator) { return oWinPnPEnumeratorToSetupClass(_StrDestination, _StrDestination.capacity(), _PnPEnumerator); }
+#endif
+
+oGUI_INPUT_DEVICE_TYPE oWinGetDeviceTypeFromClass(const char* _Class)
+{
+	static const char* DeviceClass[oGUI_INPUT_DEVICE_TYPE_COUNT] = 
+	{
+		"Unknown",
+		"Keyboard",
+		"Mouse",
+		"Controller",
+		"Control", // won't ever get this from HW config
+		"Skeleton",
+		"Voice",
+		"Touch", // not sure what this is called generically
+	};
+	static_assert(oCOUNTOF(DeviceClass) == oGUI_INPUT_DEVICE_TYPE_COUNT, "array mismatch");
+	for (int i = 0; i < oCOUNTOF(DeviceClass); i++)
+		if (!strcmp(DeviceClass[i], _Class))
+			return (oGUI_INPUT_DEVICE_TYPE)i;
+	return oGUI_INPUT_DEVICE_UNKNOWN;
+}
+
+static bool oWinSetupGetString(ouro::mstring& _StrDestination, HDEVINFO _hDevInfo, SP_DEVINFO_DATA* _pSPDID, const DEVPROPKEY* _pPropKey)
+{
+	DEVPROPTYPE dpType;
+	DWORD size = 0;
+	SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, nullptr, 0, &size, 0);
+	if (size)
+	{
+		ouro::mwstring buffer;
+		oASSERT(buffer.capacity() > (size / sizeof(ouro::mwstring::char_type)), "");
+		if (!SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) || dpType != DEVPROP_TYPE_STRING)
+			throw oStd::windows::error();
+		_StrDestination = buffer;
+	}
+	else
+		_StrDestination.clear();
+
+	return true;
+}
+
+// _NumStrings must be initialized to maximum capacity
+static bool oWinSetupGetStringList(ouro::mstring* _StrDestination, size_t& _NumStrings, HDEVINFO _hDevInfo, SP_DEVINFO_DATA* _pSPDID, const DEVPROPKEY* _pPropKey)
+{
+	DEVPROPTYPE dpType;
+	DWORD size = 0;
+	SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, nullptr, 0, &size, 0);
+	if (size)
+	{
+		ouro::xlwstring buffer;
+		oASSERT(buffer.capacity() > size, "");
+		if (!SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) || dpType != DEVPROP_TYPE_STRING_LIST)
+			throw oStd::windows::error();
+
+		const wchar_t* c = buffer.c_str();
+		size_t i = 0;
+		for (; i < _NumStrings; i++)
+		{
+			_StrDestination[i] = c;
+			c += wcslen(c) + 1;
+
+			if (!*c)
+			{
+				_NumStrings = i + 1;
+				break;
+			}
+		}
+
+		if (i > _NumStrings)
+		{
+			while (*c)
+			{
+				c += wcslen(c) + 1;
+				i++;
+			}
+
+			_NumStrings = i + 1;
+			return oErrorSetLast(std::errc::no_buffer_space, "not enough strings");
+		}
+	}
+	else
+		_NumStrings = 0;
+
+	return true;
+}
+
+struct oWINDOWS_HID_DESC
+{
+	oWINDOWS_HID_DESC()
+		: Type(oGUI_INPUT_DEVICE_UNKNOWN)
+		, DevInst(0)
+	{}
+
+	oGUI_INPUT_DEVICE_TYPE Type;
+	DWORD DevInst;
+	ouro::mstring ParentDeviceInstancePath;
+	ouro::mstring DeviceInstancePath;
+};
+
+static bool oWinEnumInputDevices(bool _EnumerateAll, const char* _Enumerator, const oFUNCTION<void(const oWINDOWS_HID_DESC& _HIDDesc)>& _Visitor)
+{
+	if (!_Visitor)
+		return oErrorSetLast(std::errc::invalid_argument, "Must specify a visitor.");
+
+	HDEVINFO hDevInfo = INVALID_HANDLE_VALUE;
+	ouro::finally([=]
+	{ 
+		if (hDevInfo != INVALID_HANDLE_VALUE) 
+			SetupDiDestroyDeviceInfoList(hDevInfo);
+	});
+
+	DWORD dwFlag = DIGCF_ALLCLASSES;
+	if (!_EnumerateAll)
+		dwFlag |= DIGCF_PRESENT;
+
+	hDevInfo = SetupDiGetClassDevsA(nullptr, _Enumerator, nullptr, dwFlag);
+	if (INVALID_HANDLE_VALUE == hDevInfo)
+		throw oStd::windows::error();
+
+	SP_DEVINFO_DATA SPDID;
+	memset(&SPDID, 0, sizeof(SPDID));
+	SPDID.cbSize = sizeof(SPDID);
+	int DeviceIndex = 0;
+	bool KnownTypeFound = false;
+
+	oWINDOWS_HID_DESC HIDDesc;
+
+	ouro::mstring KinectCameraSibling;
+	ouro::mstring KinectCameraParent;
+
+	while (SetupDiEnumDeviceInfo(hDevInfo, DeviceIndex, &SPDID))
+	{
+		DeviceIndex++;
+
+		ouro::mstring ClassValue;
+		if (!oWinSetupGetString(ClassValue, hDevInfo, &SPDID, &oDEVPKEY_Device_Class))
+			return false; // pass through error
+
+		if (!oWinSetupGetString(HIDDesc.ParentDeviceInstancePath, hDevInfo, &SPDID, &oDEVPKEY_Device_Parent))
+			return false; // pass through error
+
+		// Fall back on generic desc string for Kinect, which apparently is in a 
+		// class by itself at the moment.
+		if (!strcmp("Microsoft Kinect", ClassValue))
+		{
+			if (!oWinSetupGetString(ClassValue, hDevInfo, &SPDID, &oDEVPKEY_Device_DeviceDesc))
+				return false; // pass through error
+
+			if (strstr(ClassValue, "Camera"))
+			{
+				ClassValue = "Skeleton";
+				HIDDesc.DeviceInstancePath = HIDDesc.ParentDeviceInstancePath;
+
+				ouro::mstring Strings[2];
+				size_t Capacity = oCOUNTOF(Strings);
+				if (!oWinSetupGetStringList(Strings, Capacity, hDevInfo, &SPDID, &oDEVPKEY_Device_Siblings) || Capacity != 1)
+					return false; // pass through error
+
+				KinectCameraSibling = Strings[0];
+				KinectCameraParent = HIDDesc.ParentDeviceInstancePath;
+			}
+
+			else if (strstr(ClassValue, "Audio"))
+			{
+				ClassValue = "Voice";
+				if (HIDDesc.ParentDeviceInstancePath == KinectCameraSibling)
+					HIDDesc.DeviceInstancePath = KinectCameraParent;
+
+				else
+					HIDDesc.DeviceInstancePath = HIDDesc.ParentDeviceInstancePath;
+			}
+			else
+				ClassValue = "Unknown";
+		}
+
+		else
+		{
+			if (!oWinSetupGetString(HIDDesc.DeviceInstancePath, hDevInfo, &SPDID, &oDEVPKEY_Device_InstanceId))
+				return false; // pass through error
+		}
+
+		// There are often meta-classes to be ignored, so don't flag unknown unless
+		// every other type is not present.
+		HIDDesc.Type = oWinGetDeviceTypeFromClass(ClassValue);
+		HIDDesc.DevInst = SPDID.DevInst;
+
+		_Visitor(HIDDesc);
+	}
+
+	return true;
+}
+
+// Translate a PnP enumerator name (DEV_BROADCAST_DEVICEINTERFACE_A::dbcc_name)
+// to one or more unique names based on the oGUI_INPUT_DEVICE_TYPEs represented
+// by the device. Devices now are often hybrid, such as a KB/mouse combo USB or 
+// a voice/skeleton Kinect device. This uses SetupAPI to do the discovery.
+static bool oWinEnumInputDevices(bool _EnumerateAll, const oFUNCTION<void(const oWINDOWS_HID_DESC& _HIDDesc)>& _Visitor)
+{
+	return oWinEnumInputDevices(_EnumerateAll, "HID", _Visitor) && oWinEnumInputDevices(_EnumerateAll, "USB", _Visitor);
+}
+
 struct oWIN_DEVICE_CHANGE_CONTEXT
 {
 	oWIN_DEVICE_CHANGE_CONTEXT()
@@ -106,8 +373,7 @@ static bool oWinRegisterDeviceChangeEvents(HWND _hWnd)
 		{ oUS_USAGE_PAGE_GENERIC_DESKTOP, oUS_USAGE_KEYBOARD, RIDEV_DEVNOTIFY, _hWnd },
 		{ oUS_USAGE_PAGE_GENERIC_DESKTOP, oUS_USAGE_MOUSE, RIDEV_DEVNOTIFY, _hWnd },
 	};
-	if (!RegisterRawInputDevices(RID, oCOUNTOF(RID), sizeof(RAWINPUTDEVICE)))
-		return oWinSetLastError();
+	oVB(RegisterRawInputDevices(RID, oCOUNTOF(RID), sizeof(RAWINPUTDEVICE)));
 
 	// Windows sends KB and mouse device notifications automatically, so make up the
 	// difference here.
@@ -392,10 +658,7 @@ HWND oWinCreate(HWND _hParent
 	wc.hCursor = LoadCursor(0, IDC_ARROW);
 	wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
 	if (0 == RegisterClassEx(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
-	{
-		oWinSetLastError();
-		return nullptr;
-	}
+		throw oStd::windows::error();
 
 	// Resolve initial position and size
 	int2 NewPosition = _ClientPosition;
@@ -415,12 +678,7 @@ HWND oWinCreate(HWND _hParent
 	const DWORD dwInitialStyle = oWinGetStyle(_Style, false);
 
 	RECT rWindow = oWinRectWH(NewPosition, NewSize);
-	if (!AdjustWindowRectEx(&rWindow, dwInitialStyle, false, dwInitialStyleEx))
-	{
-		oWinSetLastError();
-		return nullptr;
-	}
-
+	oVB(AdjustWindowRectEx(&rWindow, dwInitialStyle, false, dwInitialStyleEx));
 	oWIN_CREATESTRUCT wcs;
 	wcs.Shape.State = oGUI_WINDOW_HIDDEN;
 	wcs.Shape.Style = _Style;
@@ -448,10 +706,9 @@ HWND oWinCreate(HWND _hParent
 	if (!hWnd)
 	{
 		if (GetLastError() == S_OK)
-			oErrorSetLast(std::errc::protocol_error, "CreateWindowEx returned a null HWND (failure condition) for '%s' but GetLastError is S_OK. This implies that user handling of a WM_CREATE message failed, so start looking there.", oSAFESTRN(_Title));
+			oTHROW(protocol_error, "CreateWindowEx returned a null HWND (failure condition) for '%s' but GetLastError is S_OK. This implies that user handling of a WM_CREATE message failed, so start looking there.", oSAFESTRN(_Title));
 		else
-			oWinSetLastError();
-		return nullptr;
+			throw oStd::windows::error();
 	}
 
 	// only top-level windows should be allowed to quit the message loop
@@ -701,8 +958,8 @@ bool oWinIsOpaque(HWND _hWnd)
 bool oWinRegisterTouchEvents(HWND _hWnd, bool _Registered)
 {
 	#ifdef oWINDOWS_HAS_REGISTERTOUCHWINDOW
-		oWINDOWS_VERSION v = oGetWindowsVersion();
-		if (v >= oWINDOWS_7)
+		oStd::windows::version::value v = oStd::windows::get_version();
+		if (v >= oStd::windows::version::win7)
 		{
 			if (_Registered)
 				oVB(RegisterTouchWindow(_hWnd, 0));
@@ -954,8 +1211,7 @@ bool oWinShowMenu(HWND _hWnd, bool _Show)
 	if (0 == GetMenuItemCount(hMenu))
 		return oErrorSetLast(std::errc::operation_not_permitted, "empty top-level windows do not draw anything, and thus the client rectangle is inappropriately calculated so don't show empty menus");
 
-	if (!::SetMenu(_hWnd, _Show ? hMenu : nullptr))
-		return oWinSetLastError();
+	oVB(::SetMenu(_hWnd, _Show ? hMenu : nullptr));
 	return true;
 }
 
@@ -977,8 +1233,7 @@ bool oWinShowStatusBar(HWND _hWnd, bool _Show)
 	HWND hStatusBar = oWinGetStatusBar(_hWnd);
 	oVERIFY_R(hStatusBar);
 	if (!ShowWindow(hStatusBar, _Show ? SW_SHOWNOACTIVATE : SW_HIDE))
-		if (!RedrawWindow(hStatusBar, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW))
-			return oWinSetLastError();
+		oVB(RedrawWindow(hStatusBar, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW));
 	return true;
 }
 
@@ -997,7 +1252,7 @@ bool oWinSetOwner(HWND _hWnd, HWND _hOwner)
 	// http://msdn.microsoft.com/en-us/library/windows/desktop/ms633591(v=vs.85).aspx
 	SetLastError(S_OK);
 	if (!SetWindowLongPtr(_hWnd, GWLP_HWNDPARENT, (LONG_PTR)_hOwner) && GetLastError() != S_OK)
-		return oWinSetLastError();
+		throw oStd::windows::error();
 	return true;
 }
 
@@ -1150,7 +1405,7 @@ bool oWinSetFocus(HWND _hWnd, bool _Focus)
 bool oWinIsEnabled(HWND _hWnd)
 {
 	oWIN_CHECK(_hWnd);
-	oVB_RETURN(IsWindowEnabled(_hWnd));
+	oVB(IsWindowEnabled(_hWnd));
 	return true;
 }
 
@@ -1171,7 +1426,7 @@ bool oWinSetAlwaysOnTop(HWND _hWnd, bool _AlwaysOnTop)
 {
 	oWIN_CHECK(_hWnd);
 	RECT r;
-	oVB_RETURN(GetWindowRect(_hWnd, &r));
+	oVB(GetWindowRect(_hWnd, &r));
 	return !!::SetWindowPos(_hWnd, _AlwaysOnTop ? HWND_TOPMOST : HWND_TOP, r.left, r.top, oWinRectW(r), oWinRectH(r), IsWindowVisible(_hWnd) ? SWP_SHOWWINDOW : SWP_HIDEWINDOW);
 }
 
@@ -1183,19 +1438,19 @@ bool oWinGetClientRect(HWND _hWnd, RECT* _pRect)
 		return oErrorSetLast(std::errc::invalid_argument);
 
 	// Discount status bar from dimensions
-	oVB_RETURN(GetClientRect(_hWnd, _pRect));
+	oVB(GetClientRect(_hWnd, _pRect));
 	_pRect->bottom = __max(_pRect->top, _pRect->bottom - oWinGetStatusBarHeight(_hWnd));
 
 	// Translate to proper offset
 	POINT p = { _pRect->left, _pRect->top };
 	HWND hParent = GetParent(_hWnd);
 	if (!hParent)
-		oVB_RETURN(ClientToScreen(_hWnd, &p));
+		oVB(ClientToScreen(_hWnd, &p));
 	else
 	{
-		SetLastError(0); // differentiate between 0-means-failure, and 0,0 adjustment
+		SetLastError(S_OK); // differentiate between 0-means-failure, and 0,0 adjustment
 		if (!MapWindowPoints(_hWnd, hParent, &p, 1) && GetLastError() != S_OK)
-			return oWinSetLastError();
+			throw oStd::windows::error();
 	}
 	
 	*_pRect = oWinRectTranslate(*_pRect, p);
@@ -1422,13 +1677,13 @@ bool oWinSetShape(HWND _hWnd, const oGUI_WINDOW_SHAPE_DESC& _Shape)
 		dwAllFlags &=~ WS_MINIMIZE;
 
 	// Transform the rectangle to with-border values for the new style
-	oVB_RETURN(AdjustWindowRect(&r, dwAllFlags, !!GetMenu(_hWnd)));
+	oVB(AdjustWindowRect(&r, dwAllFlags, !!GetMenu(_hWnd)));
 
 	// Update the flagging of the new style. This won't do anything without a call 
 	// to SetWindowPos.
 	SetLastError(0); // http://msdn.microsoft.com/en-us/library/ms644898(VS.85).aspx
 	oWinSetTempChange(_hWnd, true);
-	oVB_RETURN(SetWindowLongPtr(_hWnd, GWL_STYLE, dwAllFlags));
+	oVB(SetWindowLongPtr(_hWnd, GWL_STYLE, dwAllFlags));
 	oWinSetTempChange(_hWnd, false);
 
 	// Allow the system to calculate minimized/maximized sizes for us, so don't
@@ -1438,7 +1693,7 @@ bool oWinSetShape(HWND _hWnd, const oGUI_WINDOW_SHAPE_DESC& _Shape)
 		UINT uFlags = SWP_NOZORDER|SWP_FRAMECHANGED;
 		if (New.State == oGUI_WINDOW_MINIMIZED || New.State == oGUI_WINDOW_MAXIMIZED)
 			uFlags |= SWP_NOMOVE|SWP_NOSIZE;
-		oVB_RETURN(SetWindowPos(_hWnd, 0, r.left, r.top, oWinRectW(r), oWinRectH(r), uFlags));
+		oVB(SetWindowPos(_hWnd, 0, r.left, r.top, oWinRectW(r), oWinRectH(r), uFlags));
 	}
 
 	// Now handle visibility, min/max/restore
@@ -1465,7 +1720,7 @@ bool oWinSetShape(HWND _hWnd, const oGUI_WINDOW_SHAPE_DESC& _Shape)
 				WP.rcNormalPosition = r;
 				break;
 		}
-		oVB_RETURN(SetWindowPlacement(_hWnd, &WP));
+		oVB(SetWindowPlacement(_hWnd, &WP));
 	}
 
 	return true;
@@ -1529,8 +1784,8 @@ bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex)
 	switch (type)
 	{
 		case oGUI_CONTROL_COMBOTEXTBOX:
-			if (_SubItemIndex == oInvalid && !SetWindowText(_hWnd, _Text))
-				return oWinSetLastError();
+			if (_SubItemIndex == oInvalid)
+				oVB(SetWindowText(_hWnd, _Text));
 			// pass through
 		case oGUI_CONTROL_COMBOBOX:
 			if (_SubItemIndex != oInvalid)
@@ -1546,20 +1801,16 @@ bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex)
 			memset(&tci, 0, sizeof(tci));
 			tci.dwStateMask = TCIF_TEXT;
 			tci.pszText = (LPSTR)_Text;
-
-			if (!TabCtrl_SetItem(_hWnd, _SubItemIndex, &tci))
-				return oWinSetLastError();
-
+			oVB(TabCtrl_SetItem(_hWnd, _SubItemIndex, &tci));
 			break;
 		}
 
 		case oGUI_CONTROL_FLOATBOX:
 		case oGUI_CONTROL_FLOATBOX_SPINNER:
-			return oErrorSetLast(std::errc::invalid_argument, "For FloatBoxes and FloatBoxSpinners, use oWinControlSetValue instead.");
+			throw std::invalid_argument("For FloatBoxes and FloatBoxSpinners, use oWinControlSetValue instead.");
 
 		default: 
-			if (!SetWindowText(_hWnd, _Text))
-				return oWinSetLastError();
+			oVB(SetWindowText(_hWnd, _Text));
 	}
 
 	return true;
@@ -1655,23 +1906,13 @@ char* oWinGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWn
 			item.mask = TCIF_TEXT;
 			item.pszText = (LPSTR)_StrDestination;
 			item.cchTextMax = oInt(_SizeofStrDestination);
-			if (TabCtrl_GetItem(_hWnd, _SubItemIndex, &item))
-				return _StrDestination;
-			else
-			{
-				oWinSetLastError();
-				return nullptr;
-			}
+			oVB(TabCtrl_GetItem(_hWnd, _SubItemIndex, &item));
+			return _StrDestination;
 		}
 
 		default:
-			if (GetWindowText(_hWnd, _StrDestination, oInt(_SizeofStrDestination)))
-				return _StrDestination;
-			else
-			{
-				oWinSetLastError();
-				return nullptr;
-			}
+			oVB(GetWindowText(_hWnd, _StrDestination, oInt(_SizeofStrDestination)));
+			return _StrDestination;
 	}
 }
 
@@ -1902,7 +2143,7 @@ static bool OnCreateFloatBoxSpinner(HWND _hControl, const oGUI_CONTROL_DESC& _De
 	}
 
 	else
-		return oWinSetLastError();
+		throw oStd::windows::error();
 
 	return true;
 }
@@ -2009,7 +2250,7 @@ HWND oWinControlCreate(const oGUI_CONTROL_DESC& _Desc)
 	}
 
 	else
-		oWinSetLastError();
+		throw oStd::windows::error();
 
 	return hWnd;
 }
@@ -2168,7 +2409,7 @@ bool oWinControlIsVisible(HWND _hControl)
 bool oWinControlSetVisible(HWND _hControl, bool _Visible)
 {
 	if (!ShowWindow(_hControl, _Visible ? SW_SHOWNA : SW_HIDE))
-		oVB_RETURN(RedrawWindow(_hControl, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW));
+		oVB(RedrawWindow(_hControl, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW));
 	return true;
 }
 
@@ -2195,8 +2436,7 @@ bool oWinControlClearSubItems(HWND _hControl)
 			ComboBox_ResetContent(_hControl);
 			return true;
 		case oGUI_CONTROL_TAB:
-			if (!TabCtrl_DeleteAllItems(_hControl))
-				return oWinSetLastError();
+			oVB(TabCtrl_DeleteAllItems(_hControl));
 			return true;
 		default:
 				break;
@@ -2559,42 +2799,38 @@ char* oWinControlGetSelectedText(char* _StrDestination, size_t _SizeofStrDestina
 	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-	case oGUI_CONTROL_FLOATBOX_SPINNER:
-		_hControl = oWinControlGetBuddy(_hControl);
-		// pass through
-	case oGUI_CONTROL_TEXTBOX:
-	case oGUI_CONTROL_TEXTBOX_SCROLLABLE:
-	case oGUI_CONTROL_COMBOTEXTBOX:
-	case oGUI_CONTROL_FLOATBOX:
-	{
+		case oGUI_CONTROL_FLOATBOX_SPINNER:
+			_hControl = oWinControlGetBuddy(_hControl);
+			// pass through
+		case oGUI_CONTROL_TEXTBOX:
+		case oGUI_CONTROL_TEXTBOX_SCROLLABLE:
+		case oGUI_CONTROL_COMBOTEXTBOX:
+		case oGUI_CONTROL_FLOATBOX:
+		{
 			uint start = 0, end = 0;
 			SendMessage(_hControl, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
 			size_t len = end - start;
-	if (len >= _SizeofStrDestination)
-	{
-		oErrorSetLast(std::errc::no_buffer_space, "Buffer too small to receive string");
-		return nullptr;
-	}
+			if (len >= _SizeofStrDestination)
+			{
+				oErrorSetLast(std::errc::no_buffer_space, "Buffer too small to receive string");
+				return nullptr;
+			}
 
-			if (!GetWindowText(_hControl, _StrDestination, oInt(_SizeofStrDestination)))
-	{
-		oWinSetLastError();
-		return nullptr;
-	}
+			oVB(GetWindowText(_hControl, _StrDestination, oInt(_SizeofStrDestination)));
 
 			if (start != end)
-	{
-		if (start)
-			strlcpy(_StrDestination, _StrDestination + start, _SizeofStrDestination);
-		_StrDestination[len] = 0;
-	}
+			{
+				if (start)
+					strlcpy(_StrDestination, _StrDestination + start, _SizeofStrDestination);
+				_StrDestination[len] = 0;
+			}
 
-	return _StrDestination;
+			return _StrDestination;
 		}
 
 		default:
-		oErrorSetLastBadType(_hControl, type);
-		return nullptr;
+			oErrorSetLastBadType(_hControl, type);
+			return nullptr;
 	}
 }
 

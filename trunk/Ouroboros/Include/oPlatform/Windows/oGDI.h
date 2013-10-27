@@ -30,7 +30,8 @@
 #include <oStd/atomic.h>
 #include <oBase/color.h>
 #include <oBasis/oGUI.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
+
 #include <oPlatform/Windows/oWinWindowing.h>
 #include <oPlatform/Windows/oWinRect.h>
 
@@ -476,7 +477,12 @@ bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize,
 // _____________________________________________________________________________
 // Other APIs
 
+inline float oPointToDIP(float _Point) { return 96.0f * _Point / 72.0f; }
+inline float oDIPToPoint(float _DIP) { return 72.0f * _DIP / 96.0f; }
+
 int2 oGDIGetDimensions(HDC _hDC);
+
+float2 oGDIGetDPIScale(HDC _hDC);
 
 bool oGDIDrawLine(HDC _hDC, const int2& _P0, const int2& _P1);
 

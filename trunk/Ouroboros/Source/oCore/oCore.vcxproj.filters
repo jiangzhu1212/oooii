@@ -48,6 +48,9 @@
     <ClCompile Include="serial_port.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="winmain.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\filesystem.h">

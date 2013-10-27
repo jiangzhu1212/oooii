@@ -27,7 +27,7 @@
 #ifndef oWinTray_h
 #define oWinTray_h
 
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 
 // Return the HWND of the "system tray" or "notification area"
 HWND oTrayGetHwnd();

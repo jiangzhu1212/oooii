@@ -26,8 +26,8 @@
 #include <oCore/filesystem.h>
 #include <oBase/date.h>
 #include "../oStd/win.h"
-#include <intrin.h>
-#include <math.h>
+#include <TlHelp32.h>
+#include <Psapi.h>
 #include <set>
 
 #define oCLOSE(hHandle) do { if (hHandle && hHandle != INVALID_HANDLE_VALUE) ::CloseHandle(hHandle); } while(false)

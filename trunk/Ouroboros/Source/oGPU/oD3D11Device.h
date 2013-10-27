@@ -27,7 +27,7 @@
 #define oD3D11Device_h
 
 #include <oGPU/oGPU.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 #include <oPlatform/Windows/oD3D11.h>
 #include <oConcurrency/mutex.h>
 #include <vector>

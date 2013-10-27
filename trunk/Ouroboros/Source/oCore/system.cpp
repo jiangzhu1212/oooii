@@ -26,7 +26,9 @@
 #include <oCore/process.h>
 #include <oBase/date.h>
 #include "../oStd/win.h"
-#include <Shellapi.h>
+#include <PowrProf.h>
+#include <Dwmapi.h>
+#include <Lm.h>
 
 using namespace oStd;
 

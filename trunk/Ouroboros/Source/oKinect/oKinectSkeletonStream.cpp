@@ -109,7 +109,7 @@ bool oKinectSkeletonStream::Initialize(INuiSensor* _pSensor, threadsafe oWindow*
 	}
 
 	if (_pSensor->NuiInitializationFlags() & NUI_INITIALIZE_FLAG_USES_SKELETON)
-		oVB_RETURN2(_pSensor->NuiSkeletonTrackingEnable(_hEvent, oKinectGetSkeletonInitFlags(_KinectFeatures)));
+		oV(_pSensor->NuiSkeletonTrackingEnable(_hEvent, oKinectGetSkeletonInitFlags(_KinectFeatures)));
 
 	oFOR(auto& s, oThreadsafe(Skeletons))
 		s->Invalidate();

@@ -23,8 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/fixed_string.h>
-//#include "../oStd/win.h"
-//#include <oPlatform/Windows/oDXGI.h>
+#include <d3d11.h>
 
 namespace ouro {
 

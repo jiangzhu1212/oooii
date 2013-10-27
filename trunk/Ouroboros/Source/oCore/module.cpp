@@ -25,6 +25,7 @@
 #include <oCore/module.h>
 #include <oCore/filesystem.h>
 #include "../oStd/win.h"
+#include <Dbghelp.h>
 
 namespace ouro {
 

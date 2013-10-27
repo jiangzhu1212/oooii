@@ -1101,10 +1101,9 @@ bool oWinWindow::HandleInput(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPa
 						oGUI_ACTION_DESC a((oGUI_WINDOW)_hWnd, Timestamp, oGUI_ACTION_KEY_DOWN, oGUI_INPUT_DEVICE_TOUCH, 0);
 						for (UINT i = 0; i < nTouches; i++)
 						{
-							// @oooii-tony: Maybe touch doesn't need to pollute X11? The idea
-							// one day is to support wacky interface devices through RFB 
-							// protocol which forces all boolean things down X11... should 
-							// this comply?
+							// @tony: Maybe touch doesn't need to pollute X11? The idea one 
+							// day is to support wacky interface devices through RFB protocol 
+							// which forces all boolean things down X11... should this comply?
 							a.DeviceID = i;
 							a.Key = (oGUI_KEY)(oGUI_KEY_TOUCH1 + i);
 							a.Position = float4(inputs[i].x / 100.0f, inputs[i].y / 100.0f, 0.0f, 0.0f);

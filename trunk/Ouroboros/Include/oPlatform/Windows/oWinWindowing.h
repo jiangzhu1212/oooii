@@ -24,7 +24,7 @@
  **************************************************************************/
 // Utilities for working with HWND objects. It's amazing how inconsistent much 
 // of the Windows API is, so prefer using the more consistent, centralized API 
-// here over native calls, a seemingly simply wrappers might call several 
+// here over native calls, a seemingly simple wrappers might call several 
 // carefully-ordered win32 API.
 
 // Windows GUI handling is single-threaded. All multi-threaded calls can be 
@@ -41,7 +41,11 @@
 #include <oStd/thread.h>
 #include <oCore/display.h>
 #include <oBasis/oGUI.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
+
+#if (defined(NTDDI_WIN7) && (NTDDI_VERSION >= NTDDI_WIN7))
+	#define oWINDOWS_HAS_REGISTERTOUCHWINDOW
+#endif
 
 // _____________________________________________________________________________
 // Custom messages

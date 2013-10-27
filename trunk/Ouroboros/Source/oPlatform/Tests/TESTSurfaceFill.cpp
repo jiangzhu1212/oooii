@@ -47,8 +47,8 @@ void PlatformFillGridNumbers(ouro::surface::buffer* _pBuffer
 
 	oGDIScopedObject<HFONT> hFont(oGDICreateFont(fd));
 
-	oGDIScopedSelect SelectBmp(hDC, hBmp);
-	oGDIScopedSelect SelectFont(hDC, hFont);
+	oGDIScopedSelect ScopedSelectBmp(hDC, hBmp);
+	oGDIScopedSelect ScopedSelectFont(hDC, hFont);
 
 	oGUI_TEXT_DESC td;
 	td.Alignment = oGUI_ALIGNMENT_MIDDLE_CENTER;

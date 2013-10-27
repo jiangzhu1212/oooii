@@ -29,7 +29,11 @@
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/Windows/oWinWindowing.h>
 #include <shellapi.h>
-#include <Windowsx.h>
+
+#if (defined(NTDDI_WIN7) && (NTDDI_VERSION >= NTDDI_WIN7))
+	#define oWINDOWS_HAS_TRAY_NOTIFYICONIDENTIFIER
+	#define oWINDOWS_HAS_TRAY_QUIETTIME
+#endif
 
 using namespace ouro;
 
@@ -313,11 +317,11 @@ bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const
 	if (!oTrayGetIconRect(_hWnd, _ID, &r))
 	{
 		UINT timeout = 0;
-		switch (oGetWindowsVersion())
+		switch (oStd::windows::get_version())
 		{
-			case oWINDOWS_2000:
-			case oWINDOWS_XP:
-			case oWINDOWS_SERVER_2003:
+			case oStd::windows::version::win2000:
+			case oStd::windows::version::xp:
+			case oStd::windows::version::server_2003:
 				timeout = nid.uTimeout;
 				break;
 			default:
@@ -334,9 +338,7 @@ bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const
 			oTrayScheduleIconHide(_hWnd, _ID, timeout);
 	}
 
-	if (!Shell_NotifyIcon(NIM_MODIFY, &nid))
-		return oWinSetLastError();
-
+	oVB(Shell_NotifyIcon(NIM_MODIFY, &nid));
 	return true;
 }
 

@@ -24,7 +24,7 @@
  **************************************************************************/
 #include "oP4ChangelistBuilder.h"
 #include <oPlatform/oWebAppWindow.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 #include <oBasis/oINISerialize.h>
 #include <oBasis/oJSONSerialize.h>
 #include <oBasis/oURIQuerySerialize.h>
@@ -409,7 +409,7 @@ void OnNewVersion(oSTREAM_EVENT _Event, const uri_string& _ChangedURI, oWebAppWi
 #endif
 }
 
-oMAINA()
+int main(int argc, const char* argv[])
 {
 	if (!oP4IsAvailable()) 
 	{

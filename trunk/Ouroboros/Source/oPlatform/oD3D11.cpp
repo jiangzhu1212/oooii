@@ -94,7 +94,7 @@ bool oD3D11CreateDevice(const oGPU_DEVICE_INIT& _Init, bool _SingleThreaded, ID3
 		Flags &=~ D3D11_CREATE_DEVICE_DEBUG;
 		UsingDebug = false;
 
-		oVB_RETURN2(D3D11CreateDevice(
+		oV(D3D11CreateDevice(
 			Adapter
 			, _Init.UseSoftwareEmulation ? D3D_DRIVER_TYPE_REFERENCE : D3D_DRIVER_TYPE_UNKNOWN
 			, 0
@@ -266,7 +266,7 @@ bool oD3D11GetAdapter(ID3D11Device* _pDevice, IDXGIAdapter** _ppAdapter)
 		return oErrorSetLast(std::errc::invalid_argument);
 
 	intrusive_ptr<IDXGIDevice> DXGIDevice;
-	oVB_RETURN2(_pDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)&DXGIDevice));
+	oV(_pDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)&DXGIDevice));
 
 	DXGIDevice->GetAdapter(_ppAdapter);
 	return true;
@@ -369,15 +369,9 @@ bool oD3D11SetDebugName(ID3D11Device* _pDevice, const char* _Name)
 {
 	if (!_pDevice || !_Name)
 		return oErrorSetLast(std::errc::invalid_argument);
-
 	UINT CreationFlags = _pDevice->GetCreationFlags();
 	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
-	{
-		HRESULT hr = _pDevice->SetPrivateData(oWKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(_Name) + 1), _Name);
-		if (FAILED(hr))
-			return oWinSetLastError(hr);
-	}
-
+		oV(_pDevice->SetPrivateData(oWKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(_Name) + 1), _Name));
 	return true;
 }
 
@@ -408,9 +402,7 @@ bool oD3D11SetDebugName(ID3D11DeviceChild* _pDeviceChild, const char* _Name)
 	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
 	{
 		uri_string tmp(_Name);
-		HRESULT hr = _pDeviceChild->SetPrivateData(oWKPDID_D3DDebugObjectName, oUInt(tmp.capacity()), tmp.c_str());
-		if (FAILED(hr))
-			return oWinSetLastError(hr);
+		oV(_pDeviceChild->SetPrivateData(oWKPDID_D3DDebugObjectName, oUInt(tmp.capacity()), tmp.c_str()));
 	}
 
 	return true;
@@ -476,9 +468,7 @@ bool oD3D11SetContainerBackPointer(ID3D11DeviceChild* _pChild, oInterface* _pCon
 bool oD3D11GetContainerBackPointer(const ID3D11DeviceChild* _pChild, oInterface** _ppContainer)
 {
 	UINT size = sizeof(oInterface*);
-	HRESULT hr = const_cast<ID3D11DeviceChild*>(_pChild)->GetPrivateData(oWKPDID_oBackPointer, &size, _ppContainer);
-	if (FAILED(hr))
-		return oWinSetLastError(hr);
+	oV(const_cast<ID3D11DeviceChild*>(_pChild)->GetPrivateData(oWKPDID_oBackPointer, &size, _ppContainer));
 	(*_ppContainer)->Reference();
 	return true;
 }
@@ -823,7 +813,7 @@ static bool oD3D11DeviceIsMutingInfosOrStateCreation(ID3D11Device* _pDevice)
 
 #define oDEBUG_CHECK_BUFFER(fnName, ppOut) \
 	if (FAILED(hr)) \
-	{	return oWinSetLastError(oDEFAULT, #fnName " failed: "); \
+	{	throw oStd::windows::error(hr); \
 	} \
 	else if (_DebugName && *_DebugName) \
 	{	oD3D11SetDebugName(*ppOut, _DebugName); \
@@ -993,7 +983,7 @@ bool oD3D11CreateUnflaggedUAV(ID3D11UnorderedAccessView* _pSourceUAV, ID3D11Unor
 		Resource->GetDevice(&Device);
 
 		UAVD.Buffer.Flags = 0;
-		oVB_RETURN2(Device->CreateUnorderedAccessView(Resource, &UAVD, _ppUnflaggedUAV));
+		oV(Device->CreateUnorderedAccessView(Resource, &UAVD, _ppUnflaggedUAV));
 
 		return true;
 	}
@@ -1023,10 +1013,7 @@ bool oD3D11CopyTo(ID3D11Resource* _pTexture, uint _Subresource, void* _pDestinat
 	}
 
 	D3D11_MAPPED_SUBRESOURCE source;
-	HRESULT hr = D3DDeviceContext->Map(_pTexture, _Subresource, D3D11_MAP_READ, 0, &source);
-	if (FAILED(hr))
-		return oWinSetLastError(hr);
-
+	oV(D3DDeviceContext->Map(_pTexture, _Subresource, D3D11_MAP_READ, 0, &source));
 	int2 ByteDimensions = ouro::surface::byte_dimensions(desc.Format, desc.Dimensions);
 	memcpy2d(_pDestination, _DestinationRowPitch, source.pData, source.RowPitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
 	D3DDeviceContext->Unmap(_pTexture, _Subresource);
@@ -1648,14 +1635,12 @@ bool oD3D11Load(ID3D11Device* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const pa
 {
 	D3DX11_IMAGE_LOAD_INFO li;
 	oD3D11GetImageLoadInfo(_Desc, &li);
-	HRESULT hr = D3DX11CreateTextureFromFile(_pDevice
+	oV(D3DX11CreateTextureFromFile(_pDevice
 		, _Path
 		, &li
 		, nullptr
 		, _ppTexture
-		, nullptr);
-	if (FAILED(hr))
-		return oWinSetLastError(hr);
+		, nullptr));
 	oVB(oD3D11SetDebugName(*_ppTexture, _DebugName));
 	return true;
 }
@@ -1664,15 +1649,13 @@ bool oD3D11Load(ID3D11Device* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const ch
 {
 	D3DX11_IMAGE_LOAD_INFO li;
 	oD3D11GetImageLoadInfo(_Desc, &li);
-	HRESULT hr = D3DX11CreateTextureFromMemory(_pDevice
+	oV(D3DX11CreateTextureFromMemory(_pDevice
 		, _pBuffer
 		, _SizeofBuffer
 		, &li
 		, nullptr
 		, _ppTexture
-		, nullptr);
-	if (FAILED(hr))
-		return oWinSetLastError(hr);
+		, nullptr));
 	oVB(oD3D11SetDebugName(*_ppTexture, _DebugName));
 	return true;
 }
@@ -1751,10 +1734,7 @@ bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, ouro::surface::format _NewF
 
 	intrusive_ptr<ID3D11DeviceContext> D3DContext;
 	D3DDevice->GetImmediateContext(&D3DContext);
-	HRESULT hr = D3DX11LoadTextureFromTexture(D3DContext, _pSourceTexture, nullptr, NewTexture);
-	if (FAILED(hr))
-		return oWinSetLastError(hr);
-
+	oV(D3DX11LoadTextureFromTexture(D3DContext, _pSourceTexture, nullptr, NewTexture));
 	*_ppDestinationTexture = NewTexture;
 	(*_ppDestinationTexture)->AddRef();
 
@@ -2094,6 +2074,7 @@ size_t oD3D11GetHLSLByteCodeSize(const void* _pByteCode)
 	return _pByteCode ? ((const unsigned int*)_pByteCode)[6] : 0;
 }
 
+#include <d3dcompiler.h>
 bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, const char* _ShaderSource, oBuffer** _ppBuffer)
 {
 	int argc = 0;

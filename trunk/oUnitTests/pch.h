@@ -7,5 +7,5 @@
 #include <oSurface/all.h>
 #include <oCore/all.h>
 #include <oBasis/all.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 #endif

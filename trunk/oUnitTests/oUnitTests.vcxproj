@@ -104,6 +104,9 @@
     </ClCompile>
     <Link />
     <PostBuildEvent />
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PreBuildEvent />
@@ -124,6 +127,9 @@
     </ClCompile>
     <Link />
     <PostBuildEvent />
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <PreBuildEvent />
@@ -141,6 +147,9 @@
     </ClCompile>
     <Link />
     <PostBuildEvent />
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PreBuildEvent />
@@ -162,6 +171,9 @@
     <Link />
     <PostBuildEvent />
     <Link />
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTBase.cpp" />

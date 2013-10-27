@@ -30,7 +30,7 @@
 #ifndef oWinsock_h
 #define oWinsock_h
 
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 #include <oPlatform/oSingleton.h>
 #include <oCore/module.h>
 #include <Winsock.h>

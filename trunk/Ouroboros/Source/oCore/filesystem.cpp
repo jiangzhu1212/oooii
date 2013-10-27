@@ -29,6 +29,7 @@
 #include <oBase/macros.h>
 #include <oBase/string.h>
 #include "../oStd/win.h"
+#include <Shlobj.h>
 #include <io.h>
 #include <memory>
 

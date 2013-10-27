@@ -22,11 +22,25 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#pragma once
-#ifdef oPCH
-#include <oStd/all.h>
-#include <oBasis/all.h>
-#include <oBase/all_libc.h>
-#include <oPlatform/all.h>
+#include <oBase/string.h>
+#include <oCore/filesystem.h>
 #include "../Source/oStd/win.h"
-#endif
+
+// Have a standard WinMain just call out to the normal 
+// int main(int argc, const char* argv[]).
+static void* argv_alloc(size_t _Size) { return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, _Size); }
+int main(int argc, const char* argv[]);
+int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+	const char** argv = nullptr;
+	int argc = 0;
+	{
+		ouro::path AppPath = ouro::filesystem::app_path(true);
+		argv = ouro::argtok(argv_alloc, AppPath.c_str(), lpCmdLine, &argc);
+	}
+
+	int result = main(argc, argv);
+	HeapFree(GetProcessHeap(), 0, argv);
+
+	return result;
+}

@@ -95,8 +95,9 @@ bool oKinectImpl::Reinitialize()
 		HRESULT hr = oWinKinect10::Singleton()->SafeNuiCreateSensorByIndex(Desc.Index, &NUISensor); 
 		if (hr == E_NUI_BADIINDEX)
 			return oErrorSetLast(std::errc::no_such_device);
-		else 
-			oVB_RETURN2(hr);
+		else if (FAILED(hr))
+			throw oStd::windows::error(hr);
+
 		oASSERT(NUISensor->NuiInstanceIndex() == Desc.Index, "");
 		Desc.ID = NUISensor->NuiDeviceConnectionId();
 		oTRACE("oKinect 0x%p reinitialized with ConnectionId %s", this, Desc.ID.c_str());
@@ -109,8 +110,8 @@ bool oKinectImpl::Reinitialize()
 		HRESULT hr = oWinKinect10::Singleton()->SafeNuiCreateSensorById(wID, &NUISensor); 
 		if (hr == E_NUI_BADIINDEX)
 			return oErrorSetLast(std::errc::no_such_device);
-		else 
-			oVB_RETURN2(hr);
+		else if (FAILED(hr))
+			throw oStd::windows::error(hr);
 		Desc.Index = NUISensor->NuiInstanceIndex();
 	}
 
@@ -119,7 +120,7 @@ bool oKinectImpl::Reinitialize()
 		return oErrorSetLast(oKinectGetErrcFromStatus(s), oKinectGetErrcStringFromStatus(s));
 
 	const DWORD InitFlags = oKinectGetInitFlags(Desc.Features);
-	oVB_RETURN2(NUISensor->NuiInitialize(InitFlags));
+	oV(NUISensor->NuiInitialize(InitFlags));
 	try
 	{
 		if (InitFlags & NUI_INITIALIZE_FLAG_USES_COLOR)
@@ -127,7 +128,7 @@ bool oKinectImpl::Reinitialize()
 			if (!Color)
 				oVERIFY(oKinectCreateSurface(NUI_IMAGE_TYPE_COLOR, kResolution, &Color));
 			if (!hColorStream)
-				oVB_RETURN2(NUISensor->NuiImageStreamOpen(NUI_IMAGE_TYPE_COLOR, kResolution, 0, oKINECT_MAX_CACHED_FRAMES, hEvents[oKINECT_EVENT_COLOR_FRAME], &hColorStream));
+				oV(NUISensor->NuiImageStreamOpen(NUI_IMAGE_TYPE_COLOR, kResolution, 0, oKINECT_MAX_CACHED_FRAMES, hEvents[oKINECT_EVENT_COLOR_FRAME], &hColorStream));
 		}
 
 		if ((InitFlags & NUI_INITIALIZE_FLAG_USES_DEPTH) || (InitFlags & NUI_INITIALIZE_FLAG_USES_DEPTH_AND_PLAYER_INDEX))
@@ -139,7 +140,7 @@ bool oKinectImpl::Reinitialize()
 			if (!Depth)
 				oVERIFY(oKinectCreateSurface(Type, kResolution, &Depth));
 			if (!hDepthStream)
-				oVB_RETURN2(NUISensor->NuiImageStreamOpen(Type, kResolution, 0, oKINECT_MAX_CACHED_FRAMES, hEvents[oKINECT_EVENT_DEPTH_FRAME], &hDepthStream));
+				oV(NUISensor->NuiImageStreamOpen(Type, kResolution, 0, oKINECT_MAX_CACHED_FRAMES, hEvents[oKINECT_EVENT_DEPTH_FRAME], &hDepthStream));
 		}
 
 		if (InitFlags & NUI_INITIALIZE_FLAG_USES_SKELETON)

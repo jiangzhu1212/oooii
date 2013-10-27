@@ -158,11 +158,11 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oSock
 
 bool from_string(oSocket::PROTOCOL* _Protocol, const char* _StrSource)
 {
-	if(strncmp(_StrSource, "tcp", 3) == 0)
+	if (strncmp(_StrSource, "tcp", 3) == 0)
 	{
 		*_Protocol = oSocket::TCP;
 	}
-	else if(strncmp(_StrSource, "udp", 3) == 0)
+	else if (strncmp(_StrSource, "udp", 3) == 0)
 	{
 		*_Protocol = oSocket::UDP;
 	}
@@ -215,7 +215,7 @@ oSocket::size_t oWinsockRecvFromBlocking(SOCKET hSocket, void* _pData, oSocket::
 
 	oSocket::size_t TotalReceived = 0;
 	
-	if(oInfiniteWait == _Timeout)
+	if (oInfiniteWait == _Timeout)
 		_Timeout = SaneMaxTimout; // oInfiniteWait doesn't seem to work with setsockopt, so use a sane max
 
 	if (SOCKET_ERROR == ws->setsockopt(hSocket, SOL_SOCKET, SO_RCVTIMEO,(char *)&_Timeout, sizeof(unsigned int))) 
@@ -223,7 +223,7 @@ oSocket::size_t oWinsockRecvFromBlocking(SOCKET hSocket, void* _pData, oSocket::
 
 	int AddrSize = sizeof(_RecvAddr);
 	TotalReceived = ws->recvfrom(hSocket, (char*)_pData, _szReceive, _Flags, (sockaddr*)const_cast<SOCKADDR_IN*>(&_RecvAddr)/*const_cast for bad windows API*/, &AddrSize);
-	if(SOCKET_ERROR == TotalReceived) 
+	if (SOCKET_ERROR == TotalReceived) 
 		goto error;
 	
 	return TotalReceived;
@@ -248,7 +248,7 @@ struct oSocketImpl
 	int Reference() threadsafe
 	{ 
 		oConcurrency::shared_lock<oConcurrency::shared_mutex> Lock(DescMutex);
-		if( pIOCP ) 
+		if ( pIOCP ) 
 			return pIOCP->Reference(); 
 		else
 			return (Refcount).Reference() - 1;
@@ -259,7 +259,7 @@ struct oSocketImpl
 		DescMutex.lock_shared();
 		auto lockedThis = thread_cast<oSocketImpl*>(this); // Safe because of Mutex
 
-		if( pIOCP ) 
+		if ( pIOCP ) 
 		{
 			// Unlock prior to releasing via IOCP in case it causes the destruction task
 			// to fire.
@@ -267,7 +267,7 @@ struct oSocketImpl
 			pIOCP->Release(); //may inderectly trigger the proxyDeleter
 			return;
 		}
-		else if( Refcount.Release())
+		else if ( Refcount.Release())
 		{
 			// Unlock prior to deleting
 			DescMutex.unlock_shared();
@@ -366,10 +366,10 @@ bool oSocketImpl::Initialize(const oSocket::DESC& _Desc, oSocket* _Proxy, ProxyD
 		oNetAddrToSockAddr(lockedThis->Desc.Addr, &Saddr);
 		lockedThis->DefaultAndRecvAddr = Saddr;
 
-		if(INVALID_SOCKET == hSocket)
+		if (INVALID_SOCKET == hSocket)
 		{
 			unsigned int Options = oWINSOCK_REUSE_ADDRESS | (Desc.Style == oSocket::BLOCKING ? oWINSOCK_BLOCKING : 0);
-			if(oSocket::UDP == Desc.Protocol)
+			if (oSocket::UDP == Desc.Protocol)
 			{
 				// For un-connected receives (UDP) it is necessary that we bind to a local address and port
 				// so bind to INADDR_ANY and keep the port
@@ -384,7 +384,7 @@ bool oSocketImpl::Initialize(const oSocket::DESC& _Desc, oSocket* _Proxy, ProxyD
 			}
 		}
 		if (hSocket == INVALID_SOCKET)
-			return oWinSetLastError();
+			throw oStd::windows::error();
 	}
 
 	{
@@ -393,11 +393,11 @@ bool oSocketImpl::Initialize(const oSocket::DESC& _Desc, oSocket* _Proxy, ProxyD
 	}
 
 	auto lockelessThis = thread_cast<oSocketImpl*>(this); //in init, not available yet
-	if(oSocket::ASYNC == lockelessThis->Desc.Style)
+	if (oSocket::ASYNC == lockelessThis->Desc.Style)
 	{
 		// Clear the style so GoAsynchronous works
 		Desc.Style = oSocket::BLOCKING;
-		if(!GoAsynchronous(lockelessThis->Desc.AsyncSettings))
+		if (!GoAsynchronous(lockelessThis->Desc.AsyncSettings))
 			return false;
 	}
 	
@@ -424,7 +424,7 @@ void oSocketImpl::RunProxyDeleter() threadsafe
 		deleter = lockedThis->ProxyDeleter; //in case it where to change while deleter is executing. i.e. it may disable this very object.
 	}
 
-	if(deleter) 
+	if (deleter) 
 		deleter(); 
 }
 
@@ -441,19 +441,19 @@ bool oSocketImpl::GoAsynchronous(const oSocket::ASYNC_SETTINGS& _Settings) threa
 	#endif
 
 	oASSERT(!Disabled, "Should never call functions on disabled sockets");
-	if(Disabled)
+	if (Disabled)
 		return false;
 
-	if(oSocket::ASYNC == lockedThis->Desc.Style)
+	if (oSocket::ASYNC == lockedThis->Desc.Style)
 		return oErrorSetLast(std::errc::operation_in_progress, "Socket is already asynchronous");
 
-	if(Encryptor)
+	if (Encryptor)
 		return oErrorSetLast(std::errc::invalid_argument, "Socket is encrypted, cannot go asynchronous");
 
-	if(!_Settings.Callback)
+	if (!_Settings.Callback)
 		return oErrorSetLast(std::errc::invalid_argument, "No valid callback specified");
 
-	if(!lockedThis->pIOCP) //if this socket is being reused, it may already be registered with windows iocp, but this should still be null, as it need to be re-registered with our iocp
+	if (!lockedThis->pIOCP) //if this socket is being reused, it may already be registered with windows iocp, but this should still be null, as it need to be re-registered with our iocp
 	{
 		oIOCP::DESC IOCPDesc;
 		IOCPDesc.Handle = reinterpret_cast<oHandle>(lockedThis->hSocket);
@@ -461,7 +461,7 @@ bool oSocketImpl::GoAsynchronous(const oSocket::ASYNC_SETTINGS& _Settings) threa
 		IOCPDesc.MaxOperations = _Settings.MaxSimultaneousMessages;
 		IOCPDesc.PrivateDataSize = sizeof(Operation);
 
-		if(!oIOCPCreate(IOCPDesc, [lockedThis]()
+		if (!oIOCPCreate(IOCPDesc, [lockedThis]()
 		{ 
 			oASSERT(lockedThis->Proxy, "What happened to the proxy?");
 			lockedThis->RunProxyDeleter(); 
@@ -492,10 +492,10 @@ bool oSocketImpl::GoAsynchronous(const oSocket::ASYNC_SETTINGS& _Settings) threa
 bool oSocketImpl::Send(const void* _pData, oSocket::size_t _Size, const void* _pBody, oSocket::size_t _SizeBody) threadsafe
 {
 	oASSERT(!Disabled, "Should never call functions on disabled sockets");
-	if(Disabled)
+	if (Disabled)
 		return false;
 
-	if(oSocket::UDP == Desc.Protocol)
+	if (oSocket::UDP == Desc.Protocol)
 		return oErrorSetLast(std::errc::invalid_argument, "Socket is connectionless.  Send is invalid");
 
 	auto locklessThis = thread_cast<oSocketImpl*>(this);
@@ -506,10 +506,10 @@ bool oSocketImpl::Send(const void* _pData, oSocket::size_t _Size, const void* _p
 bool oSocketImpl::SendTo(const void* _pData, oSocket::size_t _Size, const oNetAddr& _Destination, const void* _pBody, oSocket::size_t _SizeBody) threadsafe
 {
 	oASSERT(!Disabled, "Should never call functions on disabled sockets");
-	if(Disabled)
+	if (Disabled)
 		return false;
 
-	if(oSocket::UDP != Desc.Protocol)
+	if (oSocket::UDP != Desc.Protocol)
 		return oErrorSetLast(std::errc::invalid_argument, "Socket is connected.  SendTo is invalid");
 
 	SOCKADDR_IN Saddr;
@@ -523,12 +523,12 @@ bool oSocketImpl::SendToInternal(const void* _pHeader, oSocket::size_t _SizeHead
 	auto lockedThis = oLockThis(DescMutex);
 
 	oASSERT(!Disabled, "Should never call functions on disabled sockets");
-	if(Disabled)
+	if (Disabled)
 		return false;
 
 	const auto &CurDesc = lockedThis->Desc;
 
-	if(oSocket::BLOCKING == CurDesc.Style)
+	if (oSocket::BLOCKING == CurDesc.Style)
 	{
 		unsigned int _TimeoutMS = CurDesc.BlockingSettings.SendTimeout;
 
@@ -538,13 +538,13 @@ bool oSocketImpl::SendToInternal(const void* _pHeader, oSocket::size_t _SizeHead
 		if (SOCKET_ERROR == ws->setsockopt(hSocket, SOL_SOCKET, SO_SNDTIMEO,(char *)&_TimeoutMS, sizeof(unsigned int)))
 			return false;
 
-		if(!oWinsockSend(hSocket, _pHeader, _SizeHeader, &_Destination))
+		if (!oWinsockSend(hSocket, _pHeader, _SizeHeader, &_Destination))
 		{
 			oWINSOCK_SETLASTERROR("Send");
 			return false;
 		}
 
-		if(_pBody &&  (!oWinsockSend(hSocket, _pBody, _SizeBody, &_Destination)))
+		if (_pBody &&  (!oWinsockSend(hSocket, _pBody, _SizeBody, &_Destination)))
 		{
 			oWINSOCK_SETLASTERROR("Send");
 			return false;
@@ -554,7 +554,7 @@ bool oSocketImpl::SendToInternal(const void* _pHeader, oSocket::size_t _SizeHead
 	{
 		oWinsock* ws = oWinsock::Singleton();
 		oIOCPOp* pIOCPOp = pIOCP->AcquireSocketOp();
-		if(!pIOCPOp)
+		if (!pIOCPOp)
 			return oErrorSetLast(std::errc::no_buffer_space, "IOCPOpPool is empty, you're sending too fast.");
 
 		Operation* pOp;
@@ -571,7 +571,7 @@ bool oSocketImpl::SendToInternal(const void* _pHeader, oSocket::size_t _SizeHead
 		WSABUF* pBuff = pOp->Payload;
 		unsigned int BuffCount = _pBody ? 2 : 1;
 
-		if(0 != ws->WSASendTo(hSocket, pBuff, BuffCount, &bytesSent, 0, (SOCKADDR*)&pOp->SockAddr, sizeof(sockaddr_in), (WSAOVERLAPPED*)pIOCPOp, nullptr))
+		if (0 != ws->WSASendTo(hSocket, pBuff, BuffCount, &bytesSent, 0, (SOCKADDR*)&pOp->SockAddr, sizeof(sockaddr_in), (WSAOVERLAPPED*)pIOCPOp, nullptr))
 		{
 			int lastError = ws->WSAGetLastError();
 			if (lastError != WSA_IO_PENDING)
@@ -587,12 +587,12 @@ oSocket::size_t oSocketImpl::Recv(void* _pBuffer, oSocket::size_t _Size) threads
 	auto lockedThis = oLockThis(DescMutex);
 
 	oASSERT(!Disabled, "Should never call functions on disabled sockets");
-	if(Disabled)
+	if (Disabled)
 		return false;
 
 	const auto &CurDesc = lockedThis->Desc;
 
-	if(oSocket::BLOCKING == CurDesc.Style)
+	if (oSocket::BLOCKING == CurDesc.Style)
 	{
 		return oWinsockRecvFromBlocking(lockedThis->hSocket, _pBuffer, _Size, CurDesc.BlockingSettings.RecvTimeout, lockedThis->DefaultAndRecvAddr);
 	}
@@ -601,7 +601,7 @@ oSocket::size_t oSocketImpl::Recv(void* _pBuffer, oSocket::size_t _Size) threads
 		oWinsock* ws = oWinsock::Singleton();
 
 		oIOCPOp* pIOCPOp = pIOCP->AcquireSocketOp();
-		if(!pIOCPOp)
+		if (!pIOCPOp)
 		{
 			oErrorSetLast(std::errc::no_buffer_space, "IOCPOpPool is empty, you're sending too fast.");
 			return 0;
@@ -630,11 +630,11 @@ bool oSocketImpl::SendEncrypted(const void* _pData, oSocket::size_t _Size) threa
 	auto lockedThis = oLockThis(DescMutex);
 
 	oASSERT(!Disabled, "Should never call functions on disabled sockets");
-	if(Disabled)
+	if (Disabled)
 		return false;
 
 	const auto &CurDesc = lockedThis->Desc;
-	if(oSocket::ASYNC == CurDesc.Style)
+	if (oSocket::ASYNC == CurDesc.Style)
 		return oErrorSetLast(std::errc::operation_would_block, "Socket is asynchronous");
 
 	int ret = 0;
@@ -658,7 +658,7 @@ bool oSocketImpl::SendEncrypted(const void* _pData, oSocket::size_t _Size) threa
 oSocket::size_t oSocketImpl::RecvEncrypted(void* _pBuffer, oSocket::size_t _Size) threadsafe
 {
 	oASSERT(!Disabled, "Should never call functions on disabled sockets");
-	if(Disabled)
+	if (Disabled)
 		return false;
 
 	if (Encryptor.c_ptr())
@@ -670,7 +670,7 @@ oSocket::size_t oSocketImpl::RecvEncrypted(void* _pBuffer, oSocket::size_t _Size
 
 void oSocketImpl::IOCPCallback(oIOCPOp* pIOCPOp)
 {
-	if(Disabled) //probably sitting in a reuse pool and got a late callback from iocp
+	if (Disabled) //probably sitting in a reuse pool and got a late callback from iocp
 		return;
 
 	oNetAddr address;
@@ -701,11 +701,11 @@ void oSocketImpl::IOCPCallback(oIOCPOp* pIOCPOp)
 	switch(Type)
 	{
 	case Operation::Op_Recv:
-		if(InternalCallback)
+		if (InternalCallback)
 			InternalCallback->ProcessSocketReceive(pHeader, szData, address, Proxy);
 		break;
 	case Operation::Op_Send:
-		if(InternalCallback)
+		if (InternalCallback)
 			InternalCallback->ProcessSocketSend(pHeader, pBody, szData, address, Proxy);
 		break;
 	default:
@@ -727,7 +727,7 @@ const char* oSocketImpl::GetDebugName() const threadsafe
 bool oSocketImpl::IsConnected() const threadsafe 
 {
 	oASSERT(!Disabled, "Should never call functions on disabled sockets");
-	if(Disabled)
+	if (Disabled)
 		return false;
 
 	return oWinsockIsConnected(hSocket);
@@ -736,7 +736,7 @@ bool oSocketImpl::IsConnected() const threadsafe
 bool oSocketImpl::GetHostname( char* _OutHostname, size_t _SizeofOutHostname, char* _OutIPAddress, size_t _SizeofOutIPAddress, char* _OutPort, size_t _SizeofOutPort ) const threadsafe 
 {
 	oASSERT(!Disabled, "Should never call functions on disabled sockets");
-	if(Disabled)
+	if (Disabled)
 		return false;
 
 	return oWinsockGetHostname(_OutHostname, _SizeofOutHostname, _OutIPAddress, _SizeofOutIPAddress, _OutPort, _SizeofOutPort, hSocket);
@@ -745,7 +745,7 @@ bool oSocketImpl::GetHostname( char* _OutHostname, size_t _SizeofOutHostname, ch
 bool oSocketImpl::GetPeername( char* _OutHostname, size_t _SizeofOutHostname, char* _OutIPAddress, size_t _SizeofOutIPAddress, char* _OutPort, size_t _SizeofOutPort ) const threadsafe 
 {
 	oASSERT(!Disabled, "Should never call functions on disabled sockets");
-	if(Disabled)
+	if (Disabled)
 		return false;
 
 	return oWinsockGetPeername(_OutHostname, _SizeofOutHostname, _OutIPAddress, _SizeofOutIPAddress, _OutPort, _SizeofOutPort, hSocket);
@@ -754,7 +754,7 @@ bool oSocketImpl::GetPeername( char* _OutHostname, size_t _SizeofOutHostname, ch
 bool oSocketImpl::SetKeepAlive(unsigned int _TimeoutMS, unsigned int _IntervalMS) const threadsafe
 {
 	oASSERT(!Disabled, "Should never call functions on disabled sockets");
-	if(Disabled)
+	if (Disabled)
 		return false;
 
 	return oWinsockSetKeepAlive(hSocket, _TimeoutMS, _IntervalMS);
@@ -811,7 +811,7 @@ private:
 oSocketImplProxy::oSocketImplProxy(const char* _DebugName, const DESC& _Desc, SOCKET _hTarget, bool* _pSuccess)
 {
 	Socket = std::make_shared<oSocketImpl>(_DebugName, _hTarget, _pSuccess);
-	if(*_pSuccess)
+	if (*_pSuccess)
 		*_pSuccess = Socket->Initialize(_Desc, this, [this](){delete this;});
 }
 
@@ -923,13 +923,13 @@ bool oSocketImplProxy::SetKeepAlive(unsigned int _TimeoutMS, unsigned int _Inter
 
 oSocket* oSocketCreateFromServer(const char* _DebugName, SOCKET _hTarget, oSocket::DESC _Desc, bool* _pSuccess)
 {
-	if(oSocket::BLOCKING == _Desc.Style)
+	if (oSocket::BLOCKING == _Desc.Style)
 	{
 		// Place the socket into non-blocking mode by first clearing the event then disabling FIONBIO
 		{
 			oWinsock* ws = oWinsock::Singleton();
 
-			if(SOCKET_ERROR == ws->WSAEventSelect(_hTarget, NULL, NULL)) return nullptr;
+			if (SOCKET_ERROR == ws->WSAEventSelect(_hTarget, NULL, NULL)) return nullptr;
 
 			u_long nonBlocking = 0;
 			if (SOCKET_ERROR == ws->ioctlsocket(_hTarget, FIONBIO, &nonBlocking)) return nullptr;
@@ -1169,13 +1169,13 @@ bool SocketServer_Impl::WaitForConnection(const oSocket::ASYNC_SETTINGS& _AsyncS
 
 oSocket* oSocketCreateFromServer2(std::shared_ptr<oSocketImpl> _Target, oSocket::DESC _Desc, bool* _pSuccess)
 {
-	if(oSocket::BLOCKING == _Desc.Style)
+	if (oSocket::BLOCKING == _Desc.Style)
 	{
 		// Place the socket into non-blocking mode by first clearing the event then disabling FIONBIO
 		{
 			oWinsock* ws = oWinsock::Singleton();
 
-			if(SOCKET_ERROR == ws->WSAEventSelect(_Target->GetHandle(), NULL, NULL)) return nullptr;
+			if (SOCKET_ERROR == ws->WSAEventSelect(_Target->GetHandle(), NULL, NULL)) return nullptr;
 
 			u_long nonBlocking = 0;
 			if (SOCKET_ERROR == ws->ioctlsocket(_Target->GetHandle(), FIONBIO, &nonBlocking)) return nullptr;
@@ -1277,7 +1277,7 @@ void SocketServerPool::ReturnSocket(oSocketImpl* _Socket)
 
 void SocketServerPool::RouteDisconnect(oSocketImpl* _Socket)
 {
-	if(ServerDisconnectFn)
+	if (ServerDisconnectFn)
 		ServerDisconnectFn(_Socket);
 	else //wont be able to be reused, this should only happen when gathering up stragglers after the socket server is closed
 		_Socket->Disable();
@@ -1371,7 +1371,7 @@ SocketServer2_Impl::SocketServer2_Impl(const char* _DebugName, const DESC& _Desc
 		return; // leave last error from inside oWinsockCreate
 	
 	SocketPool = intrusive_ptr<SocketServerPool>(new SocketServerPool(oBIND(&SocketServer2_Impl::Disconnect, this, oBIND1) , _pSuccess), false);
-	if(!(*_pSuccess))
+	if (!(*_pSuccess))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "Failed to create the socket pool.");
 		return;
@@ -1387,7 +1387,7 @@ SocketServer2_Impl::SocketServer2_Impl(const char* _DebugName, const DESC& _Desc
 	IOCPDesc.MaxOperations = DesiredAccepts*ExtraSocketOpsMultiplier;
 	IOCPDesc.PrivateDataSize = sizeof(Operation);
 
-	if(!oIOCPCreate(IOCPDesc, [&](){
+	if (!oIOCPCreate(IOCPDesc, [&](){
 		delete this;
 	}, &pIOCP))
 	{
@@ -1405,7 +1405,7 @@ SocketServer2_Impl::SocketServer2_Impl(const char* _DebugName, const DESC& _Desc
 
 SocketServer2_Impl::~SocketServer2_Impl()
 {
-	if(SocketPool)
+	if (SocketPool)
 		SocketPool->ServerClosed();
 
 	if (INVALID_SOCKET != hListenSocket)
@@ -1419,7 +1419,7 @@ int SocketServer2_Impl::Reference() threadsafe
 
 void SocketServer2_Impl::Release() threadsafe 
 { 
-	if(pIOCP)
+	if (pIOCP)
 		pIOCP->Release();
 	else
 		delete this;
@@ -1432,7 +1432,7 @@ const char* SocketServer2_Impl::GetDebugName() const threadsafe
 
 void SocketServer2_Impl::Accept()
 {
-	if(IssuedAcceptCount > DesiredAccepts)
+	if (IssuedAcceptCount > DesiredAccepts)
 	{
 		return;
 	}
@@ -1440,7 +1440,7 @@ void SocketServer2_Impl::Accept()
 	oSocketImpl* socket = SocketPool->GetSocket();
 	
 	oIOCPOp* iocpOp = pIOCP->AcquireSocketOp();
-	if(!iocpOp)
+	if (!iocpOp)
 	{
 		//just ignore the call in this case. only way this happens if there are a bunch of disconnects in the chain.
 		//disconnects will restart the accept chain
@@ -1455,7 +1455,7 @@ void SocketServer2_Impl::Accept()
 	myop->Socket = socket;
 
 	oWINSOCK_ASYNC_RESULT result = oWinsockAsyncAccept(hListenSocket, socket->GetHandle(), myop->AcceptAddressesBuffer, iocpOp);
-	if(result == oWINSOCK_FAILED)
+	if (result == oWINSOCK_FAILED)
 	{
 		oASSERT(false, "Not really expecting the asyncex call to fail");
 
@@ -1465,7 +1465,7 @@ void SocketServer2_Impl::Accept()
 
 		return;
 	}
-	else if(result == oWINSOCK_COMPLETED) //handle very rare case where accept is completed synchronously
+	else if (result == oWINSOCK_COMPLETED) //handle very rare case where accept is completed synchronously
 	{
 		pIOCP->DispatchManualCompletion((oHandle)hListenSocket, iocpOp);
 	}
@@ -1475,7 +1475,7 @@ void SocketServer2_Impl::Accept()
 void SocketServer2_Impl::Disconnect(oSocketImpl* _Socket)
 {
 	oIOCPOp* iocpOp = pIOCP->AcquireSocketOp();
-	if(!iocpOp)
+	if (!iocpOp)
 	{
 		PendingDisconnects.push(_Socket); //ran out of socket ops, save for later
 		return;
@@ -1486,12 +1486,12 @@ void SocketServer2_Impl::Disconnect(oSocketImpl* _Socket)
 	myop->Socket = _Socket;
 
 	oWINSOCK_ASYNC_RESULT result = oWinsockAsyncAcceptPrepForReuse(hListenSocket, _Socket->GetHandle(), iocpOp);
-	if(result == oWINSOCK_FAILED)
+	if (result == oWINSOCK_FAILED)
 	{
 		oASSERT(false, "not expecting disconectex to fail, if it is, can't recyle these sockets");
 		pIOCP->ReturnOp(iocpOp);
 	}
-	else if(result == oWINSOCK_COMPLETED) //handle very rare case where Disconnect is completed synchronously
+	else if (result == oWINSOCK_COMPLETED) //handle very rare case where Disconnect is completed synchronously
 	{
 		pIOCP->DispatchManualCompletion((oHandle)hListenSocket, iocpOp);
 	}
@@ -1530,7 +1530,7 @@ void SocketServer2_Impl::IOCPCallback(oIOCPOp* _pSocketOp)
 	Operation* pOp;
 	_pSocketOp->GetPrivateData(&pOp);
 
-	if(pOp->OpType == Operation::ACCEPT_REQUEST)
+	if (pOp->OpType == Operation::ACCEPT_REQUEST)
 	{
 		oSocket::DESC desc;
 		desc.Style = oSocket::BLOCKING;
@@ -1549,7 +1549,7 @@ void SocketServer2_Impl::IOCPCallback(oIOCPOp* _pSocketOp)
 
 		intrusive_ptr<oSocket> socket = nullptr;
 		intrusive_ptr<SocketServerPool> sPool = SocketPool;
-		if(success)
+		if (success)
 		{
 			auto deleter = [sPool](oSocketImpl* _socket) mutable {
 				_socket->Disable();
@@ -1560,12 +1560,12 @@ void SocketServer2_Impl::IOCPCallback(oIOCPOp* _pSocketOp)
 			socket = intrusive_ptr<oSocket>(oSocketCreateFromServer2(socketPtr, desc, &success), false);
 		}
 
-		if(success)
+		if (success)
 			Desc.NewConnectionCallback(socket);
 
 		// FIXME: Hack for socket recycling.  For DisconectEx to work properly the socket has to be asyncrhonous
 		// therefore if the user isn't holding onto the socket ensure we've forced it to asyncrhonous before letting go
-		if(1 == socket->Reference())
+		if (1 == socket->Reference())
 		{
 			oSocket::ASYNC_SETTINGS Settings;
 			Settings.Callback = &oSocketAsyncCallbackNOPInstance;
@@ -1578,7 +1578,7 @@ void SocketServer2_Impl::IOCPCallback(oIOCPOp* _pSocketOp)
 		--IssuedAcceptCount;
 		Accept(); //note that this is not guaranteed to actually start an accept. that can happen if accepts are starved by disconnects, or there are just too many issued already.
 	}
-	else if(pOp->OpType == Operation::DISCONNECT_REQUEST) 
+	else if (pOp->OpType == Operation::DISCONNECT_REQUEST) 
 	{
 		//socket should be ready for reuse now
 		SocketPool->ReturnSocket(pOp->Socket);
@@ -1586,7 +1586,7 @@ void SocketServer2_Impl::IOCPCallback(oIOCPOp* _pSocketOp)
 
 		--IssuedAcceptCount;
 		oSocketImpl* socketToDis;
-		if(PendingDisconnects.try_pop(socketToDis))
+		if (PendingDisconnects.try_pop(socketToDis))
 		{
 			Disconnect(socketToDis);
 		}

@@ -28,7 +28,7 @@
 #include <oBasis/oInitOnce.h>
 #include <oBasis/oRefCount.h>
 #include <oConcurrency/block_allocator.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 
 #if defined(_WIN32) || defined(_WIN64)
 

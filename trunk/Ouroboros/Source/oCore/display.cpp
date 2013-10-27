@@ -233,6 +233,17 @@ void virtual_rect(int* _pX, int* _pY, int* _pWidth, int* _pHeight)
 	*_pHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 }
 
+void taskbar_rect(int* _pX, int* _pY, int* _pWidth, int* _pHeight)
+{
+	APPBARDATA abd;
+	abd.cbSize = sizeof(abd);
+	SHAppBarMessage(ABM_GETTASKBARPOS, &abd);
+	*_pX = abd.rc.left;
+	*_pY = abd.rc.top;
+	*_pWidth = abd.rc.right - abd.rc.left;
+	*_pHeight = abd.rc.bottom - abd.rc.top;
+}
+
 void set_power_on(bool _On)
 {
 	static const LPARAM OFF = 2;

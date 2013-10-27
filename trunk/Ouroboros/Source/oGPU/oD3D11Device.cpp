@@ -486,8 +486,7 @@ bool oD3D11Device::MapRead(oGPUResource* _pReadbackResource, int _Subresource, o
 	HRESULT hr = ImmediateContext->Map(r, D3DSubresourceIndex, D3D11_MAP_READ, _bBlocking ? 0 : D3D11_MAP_FLAG_DO_NOT_WAIT, &msr);
 	if (!_bBlocking && hr == DXGI_ERROR_WAS_STILL_DRAWING)
 		return oErrorSetLast(std::errc::operation_would_block);
-	if (FAILED(hr))
-		return oWinSetLastError();
+	oV(hr);
 	_pMappedSubresource->data = msr.pData;
 	_pMappedSubresource->row_pitch = msr.RowPitch;
 	_pMappedSubresource->depth_pitch = msr.DepthPitch;

@@ -23,15 +23,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oWinRegistry.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 
 using namespace ouro;
 
 // The return values of Reg* is NOT an HRESULT, but can be parsed in the same
 // manner. FAILED() does not work because the error results for Reg* are >0.
-
-#define oREG_CHECK(fn) do { long ERR__ = fn; if (ERR__) { return oWinSetLastError(ERR__, #fn " failed:\n"); } } while(false)
-#define oREG_CHECKP(fn) do { long ERR__ = fn; if (ERR__) { oWinSetLastError(ERR__, #fn " failed:\n"); return nullptr; } } while(false)
 
 static HKEY sRoots[] = { HKEY_CLASSES_ROOT, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, HKEY_USERS, HKEY_PERFORMANCE_DATA, HKEY_PERFORMANCE_TEXT, HKEY_PERFORMANCE_NLSTEXT, HKEY_CURRENT_CONFIG, HKEY_DYN_DATA, HKEY_CURRENT_USER_LOCAL_SETTINGS };
 
@@ -40,9 +37,9 @@ bool oWinRegistrySetValue(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const 
 	path_string KP;
 	replace(KP, _KeyPath, "/", "\\");
 	HKEY hKey = nullptr;
-	oREG_CHECK(RegCreateKeyEx(sRoots[_Root], KP, 0, 0, 0, KEY_SET_VALUE, 0, &hKey, 0));
+	oV(RegCreateKeyEx(sRoots[_Root], KP, 0, 0, 0, KEY_SET_VALUE, 0, &hKey, 0));
 	finally close([&](){ RegCloseKey(hKey); });
-	oREG_CHECK(RegSetValueEx(hKey, _ValueName, 0, REG_SZ, (BYTE*)_Value, (DWORD) (strlen(_Value) + 1))); // +1 for null terminating, the null character must also be counted
+	oV(RegSetValueEx(hKey, _ValueName, 0, REG_SZ, (BYTE*)_Value, (DWORD) (strlen(_Value) + 1))); // +1 for null terminating, the null character must also be counted
 	return true;
 }
 
@@ -52,7 +49,7 @@ char* oWinRegistryGetValue(char* _StrDestination, size_t _SizeofStrDestination, 
 	replace(KP, _KeyPath, "/", "\\");
 
 	DWORD type = 0;
-	oREG_CHECKP(RegGetValue(sRoots[_Root], KP, _ValueName, RRF_RT_ANY, &type, _StrDestination, (LPDWORD)&_SizeofStrDestination));
+	oV(RegGetValue(sRoots[_Root], KP, _ValueName, RRF_RT_ANY, &type, _StrDestination, (LPDWORD)&_SizeofStrDestination));
 
 	switch (type)
 	{
@@ -83,9 +80,9 @@ bool oWinRegistryDeleteValue(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, con
 	path_string KP;
 	replace(KP, _KeyPath, "/", "\\");
 	HKEY hKey = nullptr;
-	oREG_CHECK(RegOpenKeyEx(sRoots[_Root], KP, 0, KEY_ALL_ACCESS, &hKey));
+	oV(RegOpenKeyEx(sRoots[_Root], KP, 0, KEY_ALL_ACCESS, &hKey));
 	finally close([&](){ RegCloseKey(hKey); });
-	oREG_CHECK(RegDeleteValue(hKey, _ValueName));
+	oV(RegDeleteValue(hKey, _ValueName));
 	return true;
 }
 
@@ -97,10 +94,10 @@ bool oWinRegistryDeleteKey(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, bool 
 	if (err)
 	{
 		if (!_Recursive)
-			oREG_CHECK(err);
+			oV(err);
 
 		HKEY hKey = nullptr;
-		oREG_CHECK(RegOpenKeyEx(sRoots[_Root], KP, 0, KEY_READ, &hKey));
+		oV(RegOpenKeyEx(sRoots[_Root], KP, 0, KEY_READ, &hKey));
 		finally close([&](){ RegCloseKey(hKey); });
 		if (KP[KP.length()-1] != '\\')
 			strlcat(KP, "\\");
@@ -118,7 +115,7 @@ bool oWinRegistryDeleteKey(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, bool 
 
 		KP[KPLen] = 0;
 		// try again to delete original
-		oREG_CHECK(RegDeleteKey(sRoots[_Root], KP));
+		oV(RegDeleteKey(sRoots[_Root], KP));
 	}
 
 	return true;

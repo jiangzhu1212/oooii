@@ -194,11 +194,11 @@ HWND oWinControlSet::CreateControl(const XML_CONTEXT& _XmlContext, const CONTROL
 	d.Position += _ParentOffset;
 	HWND hControl = oWinControlCreate(d);
 	if (!hControl)
-		return (HWND)oWinSetLastError();
+		throw oStd::windows::error();
 
-	// @oooii-tony: there still might be some redraw issues if this is the last 
-	// control that may justify moving visible and enabled into control creation
-	// to take advantage of first-draw
+	// @tony: there still might be some redraw issues if this is the last control 
+	// that may justify moving visible and enabled into control creation to take 
+	// advantage of first-draw
 
 	if (!enabled)
 		oWinControlEnable(hControl, false);

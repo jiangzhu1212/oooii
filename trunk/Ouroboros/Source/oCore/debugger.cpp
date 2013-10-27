@@ -25,6 +25,7 @@
 #include <oCore/debugger.h>
 #include <oCore/filesystem.h>
 #include "../oStd/win.h"
+#include <DbgHelp.h>
 
 using namespace oStd;
 

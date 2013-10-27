@@ -30,7 +30,7 @@
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oInputMapper.h>
 
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 #include "resource.h"
 
 using namespace ouro;
@@ -448,8 +448,8 @@ bool oGestureManagerImpl::GDIDrawKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _Cli
 		HDC hDC = (HDC)_hDC;
 		const RECT rTarget = oWinRect(oGUIResolveRect(oRECT(oRECT::pos_size, int2(0,0), _ClientSize), VizDesc.Position, VizDesc.Size, VizDesc.Alignment, true));
 			
-		oGDIScopedSelect SelectBrush(hDC, hBoneBrush);
-		oGDIScopedSelect SelectPen(hDC, hBonePen);
+		oGDIScopedSelect ScopedSelectBrush(hDC, hBoneBrush);
+		oGDIScopedSelect ScopedSelectPen(hDC, hBonePen);
 
 		oGDIDrawBox(hDC, oWinRect(rTarget.left, rTarget.top, rTarget.right + 1, rTarget.bottom + 1));
 		oGDIScopedClipRegion SelectClipRegion(hDC, rTarget);
@@ -499,14 +499,14 @@ void oGestureManagerImpl::GDIDrawNoKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _C
 	const RECT rTarget = oWinRect(oGUIResolveRect(oRECT(oRECT::pos_size, int2(0,0), _ClientSize), VizDesc.Position, VizDesc.Size, VizDesc.Alignment, true));
 
 	{
-		oGDIScopedSelect SelectBrush(hDC, hBlankBG);
+		oGDIScopedSelect ScopedSelectBrush(hDC, hBlankBG);
 		oGDIDrawBox(hDC, oWinRect(rTarget.left, rTarget.top, rTarget.right + 1, rTarget.bottom + 1));
 	}
 
 	oGDIScopedClipRegion SelectClipRegion(hDC, rTarget);
-	oGDIScopedSelect SelectBrush(hDC, hBoneBrush);
-	oGDIScopedSelect SelectPen(hDC, hBonePen);
-	oGDIScopedSelect SelFont(hDC, hFont);
+	oGDIScopedSelect ScopedSelectBrush(hDC, hBoneBrush);
+	oGDIScopedSelect ScopedSelectPen(hDC, hBonePen);
+	oGDIScopedSelect ScopedSelFont(hDC, hFont);
 
 	oGUI_TEXT_DESC td;
 	td.Position = float2(oWinRectPosition(rTarget));

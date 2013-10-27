@@ -646,7 +646,7 @@ void oGPUWindowTestApp::Run()
 	}
 }
 
-oMAINA()
+int main(int argc, const char* argv[])
 {
 	oGPUWindowTestApp App;
 	App.Run();

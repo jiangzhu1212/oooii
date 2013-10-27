@@ -37,6 +37,7 @@
     <ClCompile Include="process.cpp" />
     <ClCompile Include="serial_port.cpp" />
     <ClCompile Include="system.cpp" />
+    <ClCompile Include="winmain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\adapter.h" />

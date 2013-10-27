@@ -29,6 +29,9 @@
 
 #include <oCore/adapter.h>
 #include <oSurface/surface.h>
+#include "../Source/oStd/win.h"
+#include <d3d11.h>
+#include <dxgi.h>
 
 namespace ouro {
 	namespace dxgi {

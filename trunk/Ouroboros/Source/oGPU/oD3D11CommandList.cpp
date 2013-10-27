@@ -156,8 +156,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, CommandList)
 			else
 				snprintf(err, "Failed to create oGPUDeviceContext %u: ", _Desc.DrawOrder);
 
-			oWinSetLastError(hr, err);
-			return;
+			throw oStd::windows::error(hr, err);
 		}
 		oDEVICE_REGISTER_THIS();
 	}

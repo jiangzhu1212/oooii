@@ -240,9 +240,7 @@ unsigned int oKinectUpdate(INuiSensor* _pSensor, HANDLE _hStream, ouro::surface:
 	oKinectCopyBits(NIF, Mapped);
 	_pSurface->unmap(0);
 
-	oWIN_CHECK_HR(_pSensor->NuiImageStreamReleaseFrame(_hStream, &NIF)
-		, "failed to release frame");
-
+	oV(_pSensor->NuiImageStreamReleaseFrame(_hStream, &NIF));
 	return FrameNumber;
 }
 

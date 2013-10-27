@@ -231,10 +231,9 @@ struct oFileReaderImpl : public oStreamReader
 		hFile = CreateFile(Path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, Unbuffered ? FILE_FLAG_NO_BUFFERING : 0, NULL);
 		if (hFile == INVALID_HANDLE_VALUE)
 		{
-			oWinSetLastError();
-			switch (oErrorGetLast())
+			switch (GetLastError())
 			{
-				case std::errc::no_such_file_or_directory:
+				case ERROR_FILE_NOT_FOUND:
 				{
 					uri_string URIRef;
 					oVERIFY(oURIRecompose(URIRef, _URIParts));
@@ -242,7 +241,7 @@ struct oFileReaderImpl : public oStreamReader
 					break;
 				}
 
-				case std::errc::invalid_argument:
+				case ERROR_INVALID_NAME:
 				{
 					uri_string URIRef;
 					oVERIFY(oURIRecompose(URIRef, _URIParts));
@@ -329,8 +328,7 @@ struct oFileReaderImpl : public oStreamReader
 
 		SetFilePointer(hFile, offsetLow, &offsetHigh, FILE_BEGIN);
 		EoF = false; // because of file pointer move
-		if (!ReadFile(hFile, _StreamRead.pData, oUInt(_StreamRead.Range.Size), &numBytesRead, nullptr))
-			return oWinSetLastError();
+		oVB(ReadFile(hFile, _StreamRead.pData, oUInt(_StreamRead.Range.Size), &numBytesRead, nullptr));
 		EoF = (numBytesRead == 0);
 
 		// Unbuffered io is inconsistent on what it returns for these numbers and 
@@ -403,17 +401,13 @@ struct oFileWriterImpl : public oStreamWriter
 		// code per-sae relies on this behavior.
 		hFile = CreateFile(*ResolvedPath, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0/* FILE_FLAG_OVERLAPPED*/, NULL);
 		if (hFile == INVALID_HANDLE_VALUE)
-		{
-			oWinSetLastError();
-			return;
-		}
+			throw oStd::windows::error();
 		else if (_SupportAsyncWrites)
 		{
 			if (!oDispatchQueueCreateGlobalIOCP("File writer dispatch queue", 16, &WriteQueue))
 			{
 				CloseHandle(hFile);
-				oErrorSetLast(std::errc::invalid_argument, "Could not create IOCP dispatch queue.");
-				return;
+				throw std::invalid_argument("Could not create IOCP dispatch queue.");
 			}
 		}
 
@@ -468,11 +462,10 @@ struct oFileWriterImpl : public oStreamWriter
 			SetFilePointer(hFile, offsetLow, &offsetHigh, FILE_BEGIN);
 		}
 
-		if (!WriteFile(hFile, _Write.pData, oUInt(_Write.Range.Size), &numBytesWritten, nullptr))
-			return oWinSetLastError();
+		oVB(WriteFile(hFile, _Write.pData, oUInt(_Write.Range.Size), &numBytesWritten, nullptr));
 
 		if (numBytesWritten != _Write.Range.Size) // happens when trying to read past end of file, but ReadFile itself still succeeds
-			return oErrorSetLast(std::errc::io_error, "Failed to write data to disk.");
+			oTHROW(io_error, "Failed to write data to disk.");
 
 		return true;
 	}
@@ -548,10 +541,7 @@ struct oFileMonitorImpl : public oStreamMonitor
 		Accessibles.reserve(16);
 
 		if (!hTimerQueue)
-		{
-			oWinSetLastError();
-			return;
-		}
+			throw oStd::windows::error();
 
 		path_string Path;
 		if (!oSystemURIPartsToPath(Path, _URIParts))
@@ -584,7 +574,7 @@ struct oFileMonitorImpl : public oStreamMonitor
 		Desc.Initialize(fd);
 
 		HANDLE hTimer = nullptr;
-		if (!CreateTimerQueueTimer(
+		oVB(CreateTimerQueueTimer(
 			&hTimer
 			, hTimerQueue
 			, oFileMonitorImpl::WaitOrTimerCallback
@@ -592,19 +582,12 @@ struct oFileMonitorImpl : public oStreamMonitor
 			, MDesc.AccessibilityCheckMS
 			, MDesc.AccessibilityCheckMS
 			, WT_EXECUTEDEFAULT
-			))
-		{
-			oWinSetLastError();
-			return;
-		}
+			));
 
 		hMonitor = (oHandle)CreateFile(Path, FILE_LIST_DIRECTORY, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED, nullptr);
 
 		if (hMonitor == INVALID_HANDLE_VALUE)
-		{
-			oWinSetLastError();
-			return;
-		}
+			throw oStd::windows::error();
 
 		MonitorPath.Initialize(Path);
 

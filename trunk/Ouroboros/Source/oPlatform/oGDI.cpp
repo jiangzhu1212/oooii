@@ -318,8 +318,7 @@ bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, o
 	oGDIInitializeBMI(bmid, pBMI);
 
 	oGDIScopedBltMode Mode(_hDC, HALFTONE);
-	if (!StretchDIBits(_hDC, _DestRect.left, _DestRect.top, oWinRectW(_DestRect), oWinRectH(_DestRect), 0, 0, _SourceSize.x, _SourceSize.y, _pSourceBits, pBMI, DIB_RGB_COLORS, SRCCOPY))
-		return oWinSetLastError();
+	oVB(StretchDIBits(_hDC, _DestRect.left, _DestRect.top, oWinRectW(_DestRect), oWinRectH(_DestRect), 0, 0, _SourceSize.x, _SourceSize.y, _pSourceBits, pBMI, DIB_RGB_COLORS, SRCCOPY));
 	return true;
 }
 
@@ -360,10 +359,15 @@ int2 oGDIGetDimensions(HDC _hDC)
 	return int2(BI.bmWidth, BI.bmHeight);
 }
 
+float2 oGDIGetDPIScale(HDC _hDC)
+{
+	return float2(GetDeviceCaps(_hDC, LOGPIXELSX) / 96.0f, GetDeviceCaps(_hDC, LOGPIXELSY) / 96.0f);
+}
+
 bool oGDIDrawLine(HDC _hDC, const int2& _P0, const int2& _P1)
 {
-	oVB_RETURN(MoveToEx(_hDC, _P0.x, _P0.y, nullptr));
-	oVB_RETURN(LineTo(_hDC, _P1.x, _P1.y));
+	oVB(MoveToEx(_hDC, _P0.x, _P0.y, nullptr));
+	oVB(LineTo(_hDC, _P1.x, _P1.y));
 	return true;
 }
 
@@ -372,12 +376,9 @@ bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness, float _Alpha)
 	if (ouro::equal(_Alpha, 1.0f))
 	{
 		if (_EdgeRoundness)
-		{
-			if (!RoundRect(_hDC, _rBox.left, _rBox.top, _rBox.right, _rBox.bottom, _EdgeRoundness, _EdgeRoundness))
-				return oWinSetLastError();
-		}
-		else if (!Rectangle(_hDC, _rBox.left, _rBox.top, _rBox.right, _rBox.bottom))
-			return oWinSetLastError();
+			oVB(RoundRect(_hDC, _rBox.left, _rBox.top, _rBox.right, _rBox.bottom, _EdgeRoundness, _EdgeRoundness));
+		else
+			oVB(Rectangle(_hDC, _rBox.left, _rBox.top, _rBox.right, _rBox.bottom));
 		return true;
 	}
 
@@ -395,9 +396,9 @@ bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness, float _Alpha)
 	HDC hDCBitmap = CreateCompatibleDC(_hDC);
 	oGDIScopedObject<HBITMAP> hBmp(CreateDIBSection(hDCBitmap, (BITMAPINFO*)&bmi, DIB_RGB_COLORS, nullptr, nullptr, 0));
 
-	oGDIScopedSelect SelectBmp(hDCBitmap, hBmp);
-	oGDIScopedSelect SelectPen(hDCBitmap, oGDIGetPen(_hDC));
-	oGDIScopedSelect SelectBrush(hDCBitmap, oGDIGetBrush(_hDC));
+	oGDIScopedSelect ScopedSelectBmp(hDCBitmap, hBmp);
+	oGDIScopedSelect ScopedSelectPen(hDCBitmap, oGDIGetPen(_hDC));
+	oGDIScopedSelect ScopedSelectBrush(hDCBitmap, oGDIGetBrush(_hDC));
 
 	// Resolve areas around the curved corners so we can to the blend directly
 	// later on. But just do the minimum necessary, don't copy the interior that
@@ -414,25 +415,20 @@ bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness, float _Alpha)
 		BitBlt(hDCBitmap, bmi.bmiHeader.biWidth - dist, 0, dist, dist, _hDC, _rBox.right - dist, _rBox.top, SRCCOPY);
 		BitBlt(hDCBitmap, 0, bmi.bmiHeader.biHeight - dist, dist, dist, _hDC, _rBox.left, _rBox.bottom - dist, SRCCOPY);
 		BitBlt(hDCBitmap, bmi.bmiHeader.biWidth - dist, bmi.bmiHeader.biHeight - dist, dist, dist, _hDC, _rBox.right - dist, _rBox.bottom - dist, SRCCOPY);
-		if (!RoundRect(hDCBitmap, 0, 0, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, _EdgeRoundness, _EdgeRoundness))
-			return oWinSetLastError();
+		oVB(RoundRect(hDCBitmap, 0, 0, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, _EdgeRoundness, _EdgeRoundness));
 	}
 
 	else
-	{
-		if (!Rectangle(hDCBitmap, 0, 0, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight))
-			return oWinSetLastError();
-	}
+		oVB(Rectangle(hDCBitmap, 0, 0, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight));
 
 	BLENDFUNCTION blend = { AC_SRC_OVER, 0, (BYTE)(static_cast<int>(_Alpha * 255.0f) & 0xff), 0 };
-	if (!AlphaBlend(_hDC, _rBox.left, _rBox.top, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, hDCBitmap, 0, 0, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, blend))
-		return oWinSetLastError();
+	oVB(AlphaBlend(_hDC, _rBox.left, _rBox.top, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, hDCBitmap, 0, 0, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, blend));
 	return true;
 }
 
 bool oGDIDrawEllipse(HDC _hDC, const RECT& _rBox)
 {
-	oVB_RETURN(Ellipse(_hDC, _rBox.left, _rBox.top, _rBox.right, _rBox.bottom));
+	oVB(Ellipse(_hDC, _rBox.left, _rBox.top, _rBox.right, _rBox.bottom));
 	return true;
 }
 

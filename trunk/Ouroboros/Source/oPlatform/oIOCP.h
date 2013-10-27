@@ -28,7 +28,7 @@
 
 #include <oStd/chrono.h>
 #include <oBasis/oInterface.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 
 typedef HANDLE oHandle;
 

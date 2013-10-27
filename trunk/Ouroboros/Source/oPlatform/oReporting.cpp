@@ -144,7 +144,7 @@ protected:
 	bool bDialogBoxesEnabled;
 };
 
-// From oWindows.h
+// Expose for oGSReport.cpp for now.
 void oWinDumpAndTerminate(EXCEPTION_POINTERS* _pExceptionPtrs, const char* _pUserErrorMessage)
 {
 	return oReportingContext::Singleton()->DumpAndTerminate(_pExceptionPtrs, _pUserErrorMessage);

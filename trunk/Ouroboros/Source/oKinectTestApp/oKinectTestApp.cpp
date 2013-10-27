@@ -26,7 +26,7 @@
 #include <oKinect/oKinect.h>
 #include <oKinect/oKinectGDI.h>
 #include <oPlatform/Windows/oGDI.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 #include <oPlatform/Windows/oWinSkeleton.h>
 #include <oPlatform/Windows/oWinRect.h>
 #include <oPlatform/oStream.h>
@@ -361,8 +361,8 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 {
 	const RECT rTarget = oWinRectWH(int2(0,0), _ClientSize);
 	oGDIScopedOffscreen hDC(_hWnd);
-	oGDIScopedSelect SelectBrush(hDC, hKinectBrush);
-	oGDIScopedSelect SelectPen(hDC, hKinectPen);
+	oGDIScopedSelect ScopedSelectBrush(hDC, hKinectBrush);
+	oGDIScopedSelect ScopedSelectPen(hDC, hKinectPen);
 	oGDIDrawKinect(hDC, rTarget, oKINECT_FRAME_COLOR, oGDI_KINECT_DRAW_SKELETON|oGDI_KINECT_DRAW_CLIPPING, _pKinect);
 
 	// Draw boxes and some HUD info
@@ -596,7 +596,7 @@ void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const uri_string& _Chang
 	}
 }
 
-oMAINA()
+int main(int argc, const char* argv[])
 {
 	oKinectTestApp App;
 	App.Run();

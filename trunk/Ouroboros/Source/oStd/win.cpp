@@ -23,9 +23,15 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "win.h"
+#include <dxerr.h>
+#include <d3d11.h>
+#include <d3dx11.h>
+#include <DShow.h>
+
+// Use the Windows Vista UI look. If this causes issues or the dialog not to appear, try other values from processorAchitecture { x86 ia64 amd64 * }
+#pragma comment(linker, "\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 namespace oStd {
-
 	namespace windows {
 
 const char* as_string(const version::value& _Version)

@@ -26,6 +26,7 @@
 #include <oBase/assert.h>
 #include <oBasis/oError.h>
 #include <oPlatform/oReporting.h>
+#include <oPlatform/oMsgBox.h>
 #include <cerrno>
 
 using namespace ouro;
@@ -192,7 +193,11 @@ oSINGLETON_REGISTER(oWinsock);
 
 oWinsock::oWinsock()
 {
-	oVerifyMinimumWindowsVersion(oWINDOWS_7_SP1); // SP 1 required for WSA_FLAG_NO_HANDLE_INHERIT
+	if (oStd::windows::get_version() < oStd::windows::version::win7_sp1)
+	{
+		oMsgBox(oMSGBOX_DESC(oMSGBOX_ERR, "Invalid Windows Version"), "%s or greater required.  Application will now terminate.", ouro::as_string(oStd::windows::version::win7_sp1));
+		std::terminate();
+	}
 
 	oTRACE_WINSOCK_LIFETIME("initializing...");
 

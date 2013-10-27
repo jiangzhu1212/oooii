@@ -85,7 +85,7 @@ DECLSPEC_SELECTANY UINT_PTR __security_cookie_complement = (UINT_PTR)~(DEFAULT_S
 *
 *******************************************************************************/
 
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 
 #if defined (_CRTBLD) && !defined (_SYSCRT)
 #include <dbgint.h>     /* needed for _CRT_DEBUGGER_HOOK */
@@ -331,6 +331,7 @@ __declspec(noreturn) void __cdecl __report_gsfailure(ULONGLONG StackCookie)
 
 #if 1
 	// OOOii hook so we can dump
+	void oWinDumpAndTerminate(EXCEPTION_POINTERS* _pExceptionPtrs, const char* _pUserErrorMessage);
 	oWinDumpAndTerminate((EXCEPTION_POINTERS *)&GS_ExceptionPointers, "Buffer overrun detected!");
 #else
 #if defined (_CRTBLD) && !defined (_SYSCRT)

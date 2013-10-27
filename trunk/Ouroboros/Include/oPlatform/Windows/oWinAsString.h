@@ -28,7 +28,7 @@
 #ifndef oWinAsString_h
 #define oWinAsString_h
 
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 #include <oPlatform/Windows/oWinKey.h>
 
 const char* oWinAsStringHT(int _HTCode);
@@ -45,7 +45,7 @@ const char* oWinAsStringGWL(int _GWLCode);
 const char* oWinAsStringGWLP(int _GWLPCode);
 const char* oWinAsStringTCN(int _TCNCode);
 const char* oWinAsStringCDERR(int _CDERRCode); // common dialog errors
-const char* oWinAsStringExceptionCode(int _ExceptionCode);
+//const char* oWinAsStringExceptionCode(int _ExceptionCode);
 const char* oWinAsStringDBT(int _DBTEvent);
 const char* oWinAsStringDBTDT(int _DBTDevType);
 const char* oWinAsStringSPDRP(int _SPDRPValue);

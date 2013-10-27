@@ -28,7 +28,7 @@
 #include <oPlatform/oConsole.h>
 #include <oPlatform/Windows/oGDI.h>
 #include <oPlatform/oMsgBox.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 #include <oPlatform/oStream.h>
 
 using namespace ouro;

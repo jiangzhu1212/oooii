@@ -34,7 +34,7 @@
 #define oWinStatusBar_h
 
 #include <oBasis/oGUI.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 
 HWND oWinStatusBarCreate(HWND _hParent, HMENU _ID, int _MinHeight = oDEFAULT);
 bool oWinIsStatusBar(HWND _hStatusBar);

@@ -98,6 +98,7 @@
     <PostBuildEvent />
     <Link>
       <OptimizeReferences>true</OptimizeReferences>
+      <SubSystem>Console</SubSystem>
     </Link>
     <PreBuildEvent />
     <PreBuildEvent />
@@ -124,6 +125,7 @@
     <Link />
     <Link>
       <OptimizeReferences>true</OptimizeReferences>
+      <SubSystem>Console</SubSystem>
     </Link>
     <PreBuildEvent />
     <PreBuildEvent />
@@ -145,6 +147,7 @@
     <PostBuildEvent />
     <Link>
       <OptimizeReferences>true</OptimizeReferences>
+      <SubSystem>Console</SubSystem>
     </Link>
     <PreBuildEvent />
     <PreBuildEvent />
@@ -169,6 +172,7 @@
     <PostBuildEvent />
     <Link>
       <OptimizeReferences>true</OptimizeReferences>
+      <SubSystem>Console</SubSystem>
     </Link>
     <PreBuildEvent />
     <PreBuildEvent />

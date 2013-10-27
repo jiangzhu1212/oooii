@@ -413,7 +413,7 @@ void oWindowTestApp::Run()
 	Window->FlushMessages(true);
 }
 
-oMAINA()
+int main(int argc, const char* argv[])
 {
 	oWindowTestApp App;
 	App.Run();

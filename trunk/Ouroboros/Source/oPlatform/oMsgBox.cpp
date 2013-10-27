@@ -30,10 +30,96 @@
 #include <oPlatform/Windows/oWinTray.h>
 #include <oPlatform/Windows/oWinWindowing.h>
 
-#if defined(_WIN32) || defined(_WIN64)
-	// Use the Windows Vista UI look. If this causes issues or the dialog not to appear, try other values from processorAchitecture { x86 ia64 amd64 * }
-	#pragma comment(linker, "\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#endif
+#include <oPlatform/Windows/oWindows.h>
+
+// Secret function that is not normally exposed in headers.
+// Typically pass 0 for wLanguageId, and specify a timeout
+// for the dialog in milliseconds, returns MB_TIMEDOUT if
+// the timeout is reached.
+int MessageBoxTimeoutA(IN HWND hWnd, IN LPCSTR lpText, IN LPCSTR lpCaption, IN UINT uType, IN WORD wLanguageId, IN DWORD dwMilliseconds);
+int MessageBoxTimeoutW(IN HWND hWnd, IN LPCWSTR lpText, IN LPCWSTR lpCaption, IN UINT uType, IN WORD wLanguageId, IN DWORD dwMilliseconds);
+
+#ifdef UNICODE
+	#define MessageBoxTimeout MessageBoxTimeoutW
+#else
+	#define MessageBoxTimeout MessageBoxTimeoutA
+#endif 
+
+#define MB_TIMEDOUT 32000
+
+// Link to MessageBoxTimeout based on code from:
+// http://www.codeproject.com/KB/cpp/MessageBoxTimeout.aspx
+
+//Functions & other definitions required-->
+typedef int (__stdcall *MSGBOXAAPI)(IN HWND hWnd, 
+        IN LPCSTR lpText, IN LPCSTR lpCaption, 
+        IN UINT uType, IN WORD wLanguageId, IN DWORD dwMilliseconds);
+typedef int (__stdcall *MSGBOXWAPI)(IN HWND hWnd, 
+        IN LPCWSTR lpText, IN LPCWSTR lpCaption, 
+        IN UINT uType, IN WORD wLanguageId, IN DWORD dwMilliseconds);
+
+int MessageBoxTimeoutA(HWND hWnd, LPCSTR lpText, 
+    LPCSTR lpCaption, UINT uType, WORD wLanguageId, 
+    DWORD dwMilliseconds)
+{
+    static MSGBOXAAPI MsgBoxTOA = nullptr;
+
+    if (!MsgBoxTOA)
+    {
+        HMODULE hUser32 = GetModuleHandle("user32.dll");
+        if (hUser32)
+        {
+            MsgBoxTOA = (MSGBOXAAPI)GetProcAddress(hUser32, 
+                                      "MessageBoxTimeoutA");
+            //fall through to 'if (MsgBoxTOA)...'
+        }
+        else
+        {
+            //stuff happened, add code to handle it here 
+            //(possibly just call MessageBox())
+            return 0;
+        }
+    }
+
+    if (MsgBoxTOA)
+    {
+        return MsgBoxTOA(hWnd, lpText, lpCaption, 
+              uType, wLanguageId, dwMilliseconds);
+    }
+
+    return 0;
+}
+
+int MessageBoxTimeoutW(HWND hWnd, LPCWSTR lpText, 
+    LPCWSTR lpCaption, UINT uType, WORD wLanguageId, DWORD dwMilliseconds)
+{
+    static MSGBOXWAPI MsgBoxTOW = nullptr;
+
+    if (!MsgBoxTOW)
+    {
+        HMODULE hUser32 = GetModuleHandle("user32.dll");
+        if (hUser32)
+        {
+            MsgBoxTOW = (MSGBOXWAPI)GetProcAddress(hUser32, 
+                                      "MessageBoxTimeoutW");
+            //fall through to 'if (MsgBoxTOW)...'
+        }
+        else
+        {
+            //stuff happened, add code to handle it here 
+            //(possibly just call MessageBox())
+            return 0;
+        }
+    }
+
+    if (MsgBoxTOW)
+    {
+        return MsgBoxTOW(hWnd, lpText, lpCaption, 
+               uType, wLanguageId, dwMilliseconds);
+    }
+
+    return 0;
+}
 
 #define IDMESSAGE 20
 #define IDCOPYTOCLIPBOARD 21

@@ -38,11 +38,15 @@
 	#define NOMINMAX
 #endif
 
+// GUI/drawing
+//#define NODRAWTEXT
+//#define NOMENUS
+//#define NORASTEROPS
+
 #define NOATOM
 #define NOCOMM
 #define NOCRYPT
 #define NODEFERWINDOWPOS
-#define NODRAWTEXT
 #define NOGDICAPMASKS
 #define NOHELP
 #define NOIMAGE
@@ -50,12 +54,10 @@
 #define NOKERNEL
 #define NOMCX
 #define NOMEMMGR
-#define NOMENUS
 #define NOMETAFILE
 #define NOOPENFILE
 #define NOPROFILER
 #define NOPROXYSTUB
-#define NORASTEROPS
 #define NORPC
 #define NOSCROLL
 //#define NOSERVICE // used below by services queries
@@ -80,69 +82,48 @@
 #pragma warning (default:4985)
 
 #include <windows.h>
-#include <DShow.h>
-#include <shlobj.h>
-#define _NO_CVCONST_H
+#include <windowsx.h>
+#include <winsock2.h>
+//#define _NO_CVCONST_H
 #include <comutil.h>
-#include <DbgHelp.h>
-#include <Dwmapi.h>
-#include <tlhelp32.h>
-#include <Wbemidl.h>
-#include <psapi.h>
-#include <PowrProf.h>
-#include <lm.h>
+#include <Shellapi.h>
 
-#if (defined(NTDDI_WIN7) && (NTDDI_VERSION >= NTDDI_WIN7))
-	#define oWINDOWS_HAS_TRAY_NOTIFYICONIDENTIFIER
-	#define oWINDOWS_HAS_TRAY_QUIETTIME
-	#define oWINDOWS_HAS_SHMUTEX_TRYLOCK
-	#define oWINDOWS_HAS_REGISTERTOUCHWINDOW
-#endif
-
-// Define something like WINVER, but for DX functionality
-#define oDXVER_9a 0x0900
-#define oDXVER_9b 0x0901
-#define oDXVER_9c 0x0902
-#define oDXVER_10 0x1000
-#define oDXVER_10_1 0x1001
-#define oDXVER_11 0x1100
-#define oDXVER_11_1 0x1101
-#define oDXVER_12 0x1200
-#define oDXVER_12_1 0x1201
-#define oDXVER_13 0x1300
-#define oDXVER_13_1 0x1301
-
-#if (defined(NTDDI_WIN7) && (NTDDI_VERSION >= NTDDI_WIN7))
-	#define oDXVER oDXVER_11
-#elif (defined(NTDDI_LONGHORN) && (NTDDI_VERSION >= NTDDI_LONGHORN)) || (defined(NTDDI_VISTA) && (NTDDI_VERSION >= NTDDI_VISTA))
-	#define oDXVER oDXVER_11 //oDXVER_10_1
-#else
-	#define oDXVER oDXVER_9c
-#endif
-
-#if oDXVER >= oDXVER_10
-	#include <dxerr.h>
-	#include <d3d11.h>
-	#include <d3dx11.h>
-	#include <d3dcompiler.h>
-	#include <dxgi.h>
-	#include <d2d1.h>
-	#include <dwrite.h>
-#endif
+//#include <Dwmapi.h>
+//#include <tlhelp32.h>
+//#include <Wbemidl.h>
+//#include <psapi.h>
+//#include <PowrProf.h>
+//#include <lm.h>
 
 #ifdef interface
 	#define INTERFACE_DEFINED
 #endif
 
-// Define a low-level assertion here separate from oAssert.h because:
-// A. it protects against any complexities in user implementations of oASSERT
-// B. When oStd code is replaced compiler-standard libs we won't have control 
-//    anyway.
+// _____________________________________________________________________________
+// Debug CRT support
 
 #ifdef _DEBUG
 	#include <crtdbg.h>
 	#define oCRTASSERT(expr, msg, ...) if (!(expr)) { if (1 == _CrtDbgReport(_CRT_ASSERT, __FILE__, __LINE__, "Ouroboros Debug Library", #expr "\n\n" msg, ## __VA_ARGS__)) __debugbreak(); }
 	#define oCRTTRACE(msg, ...) do { _CrtDbgReport(_CRT_WARN, __FILE__, __LINE__, "Ouroboros Debug Library", msg "\n", ## __VA_ARGS__); } while(false)
+
+	// Convenience wrapper for quick scoped leak checking
+	class oLeakCheck
+	{
+		const char* Name;
+		_CrtMemState StartState;
+	public:
+		oLeakCheck(const char* _ConstantName = "") : Name(_ConstantName ? _ConstantName : "(unnamed)") { _CrtMemCheckpoint(&StartState); }
+		~oLeakCheck()
+		{
+			_CrtMemState endState, stateDiff;
+			_CrtMemCheckpoint(&endState);
+			_CrtMemDifference(&stateDiff, &StartState, &endState);
+			oCRTTRACE("---- Mem diff for %s ----", Name);
+			_CrtMemDumpStatistics(&stateDiff);
+		}
+	};
+
 #else
 	#define oCRTASSERT(expr, msg, ...) __noop
 	#define oCRTTRACE(msg, ...) __noop

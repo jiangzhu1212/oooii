@@ -26,7 +26,7 @@
 #include <oBase/memory.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oRefCount.h>
-#include <oPlatform/Windows/oWindows.h>
+#include "../Source/oStd/win.h"
 #include <algorithm>
 #include <map>
 #include "oCRTLeakTracker.h"
@@ -502,16 +502,10 @@ void oProcessHeapContextImpl::CreatePrimodialSingletons()
 	// support API such as oAtThreadExit and oThreadlocalMalloc are ready.
 	void oThreadlocalRegistryCreate();
 	oThreadlocalRegistryCreate();
-
-	void oLoadLibrarySingletonCreate();
-	oLoadLibrarySingletonCreate();
 }
 
 void oProcessHeapContextImpl::DestroyPrimodialSingletons()
 {
-	void oLoadLibrarySingletonDestroy();
-	oLoadLibrarySingletonDestroy();
-
 	void oThreadlocalRegistryDestroy();
 	oThreadlocalRegistryDestroy();
 }
