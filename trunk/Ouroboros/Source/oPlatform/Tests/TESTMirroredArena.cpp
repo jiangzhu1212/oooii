@@ -149,7 +149,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 	oTESTB(MirroredArenaServer->RetrieveChanges(ouro::data(transitBuffer), ouro::size(transitBuffer), &changeSize) && changeSize == sizeRequired, "RetreiveChanges failed");
 	oTESTB(MirroredArenaServer->IsInChanges(test1, sizeof(TEST1), ouro::data(transitBuffer)), "test1 cannot be confirmed in the changes");
 	
-	// @oooii-tony: It'd be nice to test what happens if the pages are non-
+	// @tony: It'd be nice to test what happens if the pages are non-
 	// contiguous but I think Allocate either writes a 0xdeadbeef type pattern to
 	// memory or the allocator might dirty a portion of a page under these small
 	// allocation conditions. Really more of this test should be expanded to ensure

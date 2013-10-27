@@ -48,5 +48,5 @@ void TESToDispatchQueueConcurrentWTP(oConcurrency::tests::requirements& _Require
 	oConcurrency::tests::TESTthreadpool_performance_impl<oDQCWTP_impl>(_Requirements);
 }
 
-using namespace oConcurrency::tests; // @oooii-tony: macros should be more explicit but other refactor is going on right now
+using namespace oConcurrency::tests; // @tony: macros should be more explicit but other refactor is going on right now
 oTEST_THROWS_REGISTER(oCONCAT(PLATFORM_, oDispatchQueueConcurrentWTP), oCONCAT(TEST, oDispatchQueueConcurrentWTP));

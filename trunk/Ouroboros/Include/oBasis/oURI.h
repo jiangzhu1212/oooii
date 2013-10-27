@@ -51,7 +51,7 @@ struct oURIParts
 	inline void Clear() { *Scheme = *Authority = *Path = *Query = *Fragment = 0; }
 
 	// one of the good practices from http://www.textuality.com/tag/uri-comp-2.html
-	// @oooii-tony: How do case-sensitive file systems work with this?
+	// @tony: How do case-sensitive file systems work with this?
 	inline void ToLower() { ouro::tolower(Scheme); ouro::tolower(Authority); ouro::tolower(Path);  ouro::tolower(Query); ouro::tolower(Fragment); }
 	inline bool Empty() const { return Scheme.empty() && Authority.empty() && Path.empty() && Query.empty() && Fragment.empty(); }
 
@@ -175,7 +175,7 @@ public:
 	inline bool Valid() const { return !Empty(); }
 	inline bool IsRelativeReference() const { return !IsAbsolute(); }
 
-	// @oooii-tony: This fragment test is iffy, read section 4.3 in 
+	// @tony: This fragment test is iffy, read section 4.3 in 
 	// http://tools.ietf.org/html/rfc3986#section-4.3. The absolute-URI = ...
 	// part is different than the verbiage, so go with the pseudo-code.
 	inline bool IsAbsolute() const { return oURIIsAbsolute(URIParts); }

@@ -128,7 +128,7 @@ oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ouro_uri, ouro_uri, -1)
 
 namespace ouro {
 
-// @oooii-tony: Can/should these be moved to a header? (string's alloc may eval 
+// @tony: Can/should these be moved to a header? (string's alloc may eval 
 // differently than what's passed in v. code used in this CPP to execute). 
 // Perhaps oStdStringSupport.h?
 bool from_string(std::string* _pValue, const char* _StrSource)

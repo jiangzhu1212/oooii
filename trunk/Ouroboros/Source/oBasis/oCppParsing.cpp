@@ -96,7 +96,7 @@ bool oIsStdBindImplementationDetail(const char* _Symbol)
 	return false;
 }
 
-static regex reInclude("#[ \\t]*include[ \\t]+(<|\")([^>\"]+)(?:>|\")", std::tr1::regex_constants::optimize); // @oooii-tony: ok static (duplication won't affect correctness)
+static regex reInclude("#[ \\t]*include[ \\t]+(<|\")([^>\"]+)(?:>|\")", std::tr1::regex_constants::optimize); // @tony: ok static (duplication won't affect correctness)
 
 bool oGetNextInclude(char* _StrDestination, size_t _SizeofStrDestination, const char** _ppContext)
 {

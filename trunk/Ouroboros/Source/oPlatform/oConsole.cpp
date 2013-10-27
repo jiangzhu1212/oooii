@@ -60,7 +60,7 @@ struct oConsoleContext : public oProcessSingleton<oConsoleContext>
 const oGUID oConsoleContext::GUID = { 0x145728a4, 0x3a9a, 0x47fd, { 0xbf, 0x88, 0x8b, 0x61, 0xa1, 0xec, 0x14, 0xab } };
 oSINGLETON_REGISTER(oConsoleContext);
 
-static oConsoleContext::Run sInstantiateConsoleContext; // @oooii-tony: safe static, just meant to make sure singleton is instantiated
+static oConsoleContext::Run sInstantiateConsoleContext; // @tony: safe static, just meant to make sure singleton is instantiated
 
 static BOOL WINAPI StaticCtrlHandler(DWORD fdwCtrlType)
 {

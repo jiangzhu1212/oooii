@@ -48,5 +48,5 @@ void TESToDispatchQueueConcurrent(oConcurrency::tests::requirements& _Requiremen
 	oConcurrency::tests::TESTthreadpool_performance_impl<oDQC_impl>(_Requirements);
 }
 
-using namespace oConcurrency::tests; // @oooii-tony: macros should be more explicit but other refactor is going on right now
+using namespace oConcurrency::tests; // @tony: macros should be more explicit but other refactor is going on right now
 oTEST_THROWS_REGISTER(oCONCAT(PLATFORM_, oDispatchQueueConcurrent), oCONCAT(TEST, oDispatchQueueConcurrent));

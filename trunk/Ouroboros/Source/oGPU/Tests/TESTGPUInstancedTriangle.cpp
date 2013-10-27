@@ -62,7 +62,7 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 		// Create geometry off the non-instanced version, i.e. the one without
 		// the instanced channel.
 
-		// @oooii-tony: Maybe there should be a util that can recognize and skip
+		// @tony: Maybe there should be a util that can recognize and skip
 		// instanced elements?
 		if (!oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE, &pld))
 			return false;

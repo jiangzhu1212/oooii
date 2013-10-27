@@ -1092,7 +1092,7 @@ struct oGUI_TEXT_DESC
 	bool SingleLine;
 };
 
-// @oooii-tony: Can oInputMapper replace this?
+// @tony: Can oInputMapper replace this?
 // A utility function to analyze the specified action and compare it for keydown
 // and keyup events from keys specified in the keys array. If there's a match,
 // the corresponding keystate is marked as true if down, and false if up. NOTE:

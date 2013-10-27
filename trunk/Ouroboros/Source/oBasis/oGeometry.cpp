@@ -124,7 +124,7 @@ template<typename T> static unsigned int oFindOrCreateMidpointT(unsigned int _In
 	return midpoint;
 } 
 
-// @oooii-tony: TODO: subdivide is fairly generic. Clean it
+// @tony: TODO: subdivide is fairly generic. Clean it
 // up to a higher-level static function in this same .cpp,
 // but try to use it for:
 // 4. CreateFrustum(): support a Divide param in the desc
@@ -437,7 +437,7 @@ void oGeometry_Impl::FillMapped(MAPPED* _pMapped) const
 void oGeometry_Impl::GetDesc(DESC* _pDesc) const
 {
 	//oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
-	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @oooii-tony: safe because we locked above
+	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @tony: safe because we locked above
 
 	_pDesc->NumRanges = static_cast<unsigned int>(pLockedThis->Ranges.size());
 	_pDesc->NumVertices = static_cast<unsigned int>(pLockedThis->Positions.size());
@@ -456,7 +456,7 @@ void oGeometry_Impl::GetDesc(DESC* _pDesc) const
 void oGeometry_Impl::Transform(const float4x4& _Matrix)
 {
 	//oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
-	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @oooii-tony: safe because we locked above
+	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @tony: safe because we locked above
 	Bounds.clear();
 	pLockedThis->Transform(_Matrix, 0);
 }
@@ -488,7 +488,7 @@ void oGeometry_Impl::Transform(const float4x4& _Matrix, unsigned int _BaseVertex
 bool oGeometry_Impl::Map(MAPPED* _pMapped)
 {
 	//Mutex.Lock();
-	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @oooii-tony: safe because we locked above
+	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @tony: safe because we locked above
 	pLockedThis->FillMapped(_pMapped);
 	return true;
 }
@@ -501,7 +501,7 @@ void oGeometry_Impl::Unmap()
 bool oGeometry_Impl::MapConst(CONST_MAPPED* _pMapped) const
 {
 	//Mutex.LockRead();
-	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @oooii-tony: safe because we locked above
+	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @tony: safe because we locked above
 	pLockedThis->FillMapped((MAPPED*)_pMapped);
 	return true;
 }
@@ -1127,7 +1127,7 @@ bool oGeometryFactory_Impl::CreateWasher(const WASHER_DESC& _Desc, const oGeomet
 
 void Clip(const oPlanef& _Plane, bool _Clip, oGeometry_Impl* _pGeometry)
 {
-	// @oooii-tony: FIXME: I just wanted this for a skydome, where 
+	// @tony: FIXME: I just wanted this for a skydome, where 
 	// the horizon is hidden anyway, so don't be too smart, just cut 
 	// out most of the triangles.
 	oASSERT(/*"core.geometry", */!_Clip, "clipping not yet implemented");
@@ -1136,14 +1136,14 @@ void Clip(const oPlanef& _Plane, bool _Clip, oGeometry_Impl* _pGeometry)
 	std::vector<unsigned int>::iterator it = _pGeometry->Indices.begin();
 	while (it != _pGeometry->Indices.end())
 	{
-		// @oooii-tony: FIXME: I've been making things more consistent WRT handedness
+		// @tony: FIXME: I've been making things more consistent WRT handedness
 		// and which way normals point, so this sdistance test should be reconfirmed.
 
 		const float3& a = _pGeometry->Positions[*it];
 		const float3& b = _pGeometry->Positions[*(it+1)];
 		const float3& c = _pGeometry->Positions[*(it+2)];
 
-		oASSERT(false, "@oooii-tony: I flipped signs in sdistance(), so verify sanity here...");
+		oASSERT(false, "@tony: I flipped signs in sdistance(), so verify sanity here...");
     // @oooii-doug: I flipped it back to positive.
 
 		float A = sdistance(_Plane, a);
@@ -1269,7 +1269,7 @@ const static float3 sOctahedronVerts[] =
 	float3( 0.0f, -1.0f, 0.0f ),	// 5 near
 	float3( 1.0f, 0.0f, 0.0f ),		// 6 right
 	
-	// @oooii-tony: FIXME: Gah! after all this time
+	// @tony: FIXME: Gah! after all this time
 	// I still can't get this texturing right...
 	// so hack it with a redundant vert.
 	float3( 0.0f, 1.0f, 0.0f ),		// 7 far
@@ -1304,7 +1304,7 @@ const static unsigned int sOctahedronNumEdges = 12;
 // http://www.classes.cs.uchicago.edu/archive/2003/fall/23700/docs/handout-04.pdf
 
 
-// @oooii-tony: FIXME: Find a rotation that produces a single vert at z = +1 and another single vert at z = -1
+// @tony: FIXME: Find a rotation that produces a single vert at z = +1 and another single vert at z = -1
 
 
 // OK I hate math, but here we go:

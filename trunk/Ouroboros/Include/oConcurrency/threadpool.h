@@ -76,7 +76,7 @@ protected:
 	std::vector<oStd::thread::id> WorkerIDs;
 	static thread_local concurrent_worklist<oTASK, allocator_type>* pLocalQueue;
 
-	// @oooii-tony: Due to a bug in VS2010, instead of declaring work() with a 
+	// @tony: Due to a bug in VS2010, instead of declaring work() with a 
 	// task group as a parameter and passing null for worker threads and this for
 	// task-stealing task groups, I had to work around the issue by setting up a 
 	// 'global' variable. The bug has to do with std::bind and seems to affect

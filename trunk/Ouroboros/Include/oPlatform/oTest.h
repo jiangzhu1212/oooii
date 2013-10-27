@@ -30,7 +30,7 @@
 
 #include <oBasis/oFilterChain.h>
 #include <oBasis/oStddef.h>
-#include <oPlatform/oSingleton.h> // @oooii-tony: Is it necessary to guarantee a test to be singular? If not this can take a step towards being cross-platform.
+#include <oPlatform/oSingleton.h> // @tony: Is it necessary to guarantee a test to be singular? If not this can take a step towards being cross-platform.
 #include <oBase/path.h>
 #include <oCore/process.h>
 
@@ -316,7 +316,7 @@ interface oTestManager
 		bool Exhaustive; // allow time consuming tests to run. Tests should have a fast mode, and check this flag to see if its ok to run in slow mode.
 		bool AutomatedMode; // Don't prompt the user for action, do something sensible for running this on an automated test server
 		bool EnableOutputGoldenImages;
-		// @oooii-tony: todo: Add redirect status, redirect printf
+		// @tony: todo: Add redirect status, redirect printf
 	};
 
 	static oTestManager* Singleton();

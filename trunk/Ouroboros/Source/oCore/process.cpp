@@ -584,127 +584,16 @@ bool has_debugger_attached()
 	return !!IsDebuggerPresent();
 }
 
-static const char** oCommandLineToArgvA(bool _ExePathAsArg0, const char* CmdLine, int* _argc)
-{
-	/** <citation
-		usage="Implementation" 
-		reason="Need an ASCII version of CommandLineToArgvW" 
-		author="Alexander A. Telyatnikov"
-		description="http://alter.org.ua/docs/win/args/"
-		license="*** Assumed Public Domain ***"
-		licenseurl="http://alter.org.ua/docs/win/args/"
-		modification="Changed allocator, changes to get it to compile, add _ExePathAsArg0 functionality"
-	/>*/
-	// $(CitedCodeBegin)
-
-	PCHAR* argv;
-	PCHAR  _argv;
-	ULONG   len;
-	ULONG   argc;
-	CHAR   a;
-	ULONG   i, j;
-
-	BOOLEAN  in_QM;
-	BOOLEAN  in_TEXT;
-	BOOLEAN  in_SPACE;
-
-	len = (ULONG)strlen(CmdLine);
-	if (_ExePathAsArg0) // @oooii
-		len += MAX_PATH * sizeof(CHAR);
-
-	i = ((len+2)/2)*sizeof(PVOID) + sizeof(PVOID);
-	if (_ExePathAsArg0) // @oooii
-		i += sizeof(PVOID);
-	
-	// @oooii-tony: change allocator from original code
-	argv = (PCHAR*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, i + (len+2)*sizeof(CHAR));
-
-	_argv = (PCHAR)(((PUCHAR)argv)+i);
-
-	argc = 0;
-	argv[argc] = _argv;
-	in_QM = FALSE;
-	in_TEXT = FALSE;
-	in_SPACE = TRUE;
-	i = 0;
-	j = 0;
-
-	// Optionally insert exe path so this is exactly like argc/argv
-	if (_ExePathAsArg0)
-	{
-		path AppPath = filesystem::app_path(true);
-		clean_path(argv[argc], MAX_PATH, AppPath, '\\');
-		j = (ULONG)strlen(argv[argc]) + 1;
-		argc++;
-		argv[argc] = _argv+strlen(argv[0]) + 1;
-	}
-
-	while( (a = CmdLine[i]) != 0 ) {
-		if(in_QM) {
-			if(a == '\"') {
-				in_QM = FALSE;
-			} else {
-				_argv[j] = a;
-				j++;
-			}
-		} else {
-			switch(a) {
-			case '\"':
-				in_QM = TRUE;
-				in_TEXT = TRUE;
-				if(in_SPACE) {
-					argv[argc] = _argv+j;
-					argc++;
-				}
-				in_SPACE = FALSE;
-				break;
-			case ' ':
-			case '\t':
-			case '\n':
-			case '\r':
-				if(in_TEXT) {
-					_argv[j] = '\0';
-					j++;
-				}
-				in_TEXT = FALSE;
-				in_SPACE = TRUE;
-				break;
-			default:
-				in_TEXT = TRUE;
-				if(in_SPACE) {
-					argv[argc] = _argv+j;
-					argc++;
-				}
-				_argv[j] = a;
-				j++;
-				in_SPACE = FALSE;
-				break;
-			}
-		}
-		i++;
-	}
-	_argv[j] = '\0';
-	argv[argc] = nullptr;
-
-	(*_argc) = argc;
-	return (const char**)argv;
-}
-
-static void oCommandLineToArgvAFree(const char** _pArgv)
-{
-	HeapFree(GetProcessHeap(), 0, _pArgv);
-}
-
 char* command_line(char* _StrDestination, size_t _SizeofStrDestination, bool _ParametersOnly)
 {
 	const char* p = GetCommandLineA();
 	if (_ParametersOnly)
 	{
 		// find the start
-
 		int argc = 0;
-		const char** argv = oCommandLineToArgvA(true, p, &argc);
-		finally freeArgv([&] { if (argv) oCommandLineToArgvAFree(argv); });
+		ouro::path AppPath = ouro::filesystem::app_path(true);
+		const char** argv = ouro::argtok(malloc, AppPath, p, &argc);
+		finally freeArgv([&] { if (argv) free(argv); });
 
 		const char* exe = strstr(p, argv[0]);
 		p = exe + strlen(argv[0]);

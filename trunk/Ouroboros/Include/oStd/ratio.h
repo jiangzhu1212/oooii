@@ -33,7 +33,7 @@ namespace oStd {
 
 template<unsigned long long N, unsigned long long D = 1> class ratio
 {
-	// @oooii-tony: This is not even close to the standards requirement of 
+	// @tony: This is not even close to the standards requirement of 
 	// reduction of terms or sign conservation and doesn't support any of the 
 	// meta-math yet.
 

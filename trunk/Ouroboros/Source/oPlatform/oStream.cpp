@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oStream.h> // @oooii-tony: honestly only in oPlatform for oSingleton usage
+#include <oPlatform/oStream.h> // @tony: honestly only in oPlatform for oSingleton usage
 #include <oPlatform/oSingleton.h>
 
 #include <oBase/algorithm.h>
@@ -32,7 +32,7 @@
 #include <oBasis/oRefCount.h>
 #include <vector>
 
-#include <oPlatform/oFileSchemeHandler.h> // @oooii-tony: hacky, see ctor comment below
+#include <oPlatform/oFileSchemeHandler.h> // @tony: hacky, see ctor comment below
 
 using namespace ouro;
 
@@ -55,7 +55,7 @@ struct oStreamContext : public oProcessSingleton<oStreamContext>
 	oStreamContext()
 	{
 		{
-			// @oooii-tony: HACK!!! I wish self-registration can occur even in a static 
+			// @tony: HACK!!! I wish self-registration can occur even in a static 
 			// lib, but until we can solve that issue, how can we guarantee we at least
 			// have a file system?
 			intrusive_ptr<threadsafe oFileSchemeHandler> SHFile;
@@ -531,7 +531,7 @@ utf_type::value oStreamGetUTFType(const char* _URIReference)
 	// containing null in the first block is considered a binary file."
 
 	static const size_t BLOCK_SIZE = 512;
-	static const float PERCENTAGE_THRESHOLD_TO_BE_BINARY = 0.10f; // 0.30f; // @oooii-tony: 30% seems too high to me.
+	static const float PERCENTAGE_THRESHOLD_TO_BE_BINARY = 0.10f; // 0.30f; // @tony: 30% seems too high to me.
 
 	intrusive_ptr<threadsafe oStreamReader> Reader;
 	if (!oStreamReaderCreate(_URIReference, &Reader))

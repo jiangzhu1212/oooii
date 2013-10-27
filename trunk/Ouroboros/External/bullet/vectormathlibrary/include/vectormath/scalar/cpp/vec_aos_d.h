@@ -27,7 +27,7 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 
-// @oooii-tony: Modified to use doubles
+// @tony: Modified to use doubles
 
 #ifndef _VECTORMATH_VEC_AOS_D_CPP_H
 #define _VECTORMATH_VEC_AOS_D_CPP_H

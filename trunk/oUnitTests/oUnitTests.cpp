@@ -49,7 +49,7 @@ void InitEnv()
 	// so disable static init of TBB and force initialization here in a 
 	// function known to execute on the main thread.
 	//
-	// @oooii-tony: TODO: FIND OUT - why can DllMain execute in a not-main thread?
+	// @tony: TODO: FIND OUT - why can DllMain execute in a not-main thread?
 
 	oConcurrency::init_task_scheduler();
 
@@ -350,7 +350,7 @@ void SetTestManagerDesc(const PARAMETERS* _pParameters)
 	else
 		dataPath = ouro::filesystem::data_path();
 
-	// @oooii-tony: This is important to be here for now because it touches the 
+	// @tony: This is important to be here for now because it touches the 
 	// underlying singleton so it doesn't appear in unit tests as a leak. Also
 	// this should become where the paths to all source data should be registered
 	// and thus each test can be simpler and remove BuildPath and other weird

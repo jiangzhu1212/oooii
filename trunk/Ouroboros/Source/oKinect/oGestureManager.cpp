@@ -197,7 +197,7 @@ oGestureManagerImpl::oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, thr
 	if (!oInputMapperCreate(&InputMapper))
 		return; // pass through error
 
-	// @oooii-tony: todo: make this respect oStream's path stuff.
+	// @tony: todo: make this respect oStream's path stuff.
 	// !!! un-hard-code the paths to oPlayer2 stuff !!!
 	{
 		uri_string dev_uri(ouro::filesystem::dev_path());

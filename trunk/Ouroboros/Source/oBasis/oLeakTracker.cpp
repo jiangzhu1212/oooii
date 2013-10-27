@@ -164,7 +164,7 @@ bool oLeakTracker::ShouldReport(const ALLOCATION_DESC& _Desc, bool _CurrentConte
 
 bool oLeakTracker::FindAllocation(uintptr_t _AllocationID, ALLOCATION_DESC* _pDesc) threadsafe
 {
-	// @oooii-tony: Should this return false for blacklisted/out-of-context allocs?
+	// @tony: Should this return false for blacklisted/out-of-context allocs?
 
 	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
 	allocations_t::const_iterator it = This()->Allocations.find(_AllocationID);

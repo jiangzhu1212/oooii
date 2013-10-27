@@ -31,7 +31,7 @@
 #include <oPlatform/oSingleton.h>
 #include <unordered_map>
 
-// @oooii-tony: This is not well-designed. The underlying oLeakTracker part is
+// @tony: This is not well-designed. The underlying oLeakTracker part is
 // a bit better, but this is just the clunky bridge/glue code that binds it to
 // the system malloc. I'm not wholly sure what the best way to make it work is,
 // so until then I won't bother describing it. If you want to use this class

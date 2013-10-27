@@ -55,7 +55,7 @@ struct oKinectImpl : oKinect
 	bool GetSkeletonByIndex(int _PlayerIndex, oGUI_BONE_DESC* _pSkeleton) const threadsafe override;
 	bool GetSkeletonByID(unsigned int _ID, oGUI_BONE_DESC* _pSkeleton) const threadsafe override;
 
-	// @oooii-tony: These should become threadsafe...
+	// @tony: These should become threadsafe...
 
 	// Soft-restarts this object based off the same Desc as originally passed to
 	// oKinectCreate.

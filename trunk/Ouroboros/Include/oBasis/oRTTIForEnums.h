@@ -29,7 +29,7 @@
 // @oooii-jeff: We could also add support for "simple enums" (enums that don't have sparse values) 
 // with perhaps a separate type, so that they can be to-/from-stringed faster (and validated as a bonus too)?
 
-// @oooii-tony: Enums I like to think about:
+// @tony: Enums I like to think about:
 // Array Enums: Start at zero, has oMY_ENUM_COUNT to use for array alloc/
 //              asserting indexed data size. There could be an "invalid" value,
 //              but perhaps oMY_ENUM_INVALID == oMY_ENUM_COUNT as a standard.

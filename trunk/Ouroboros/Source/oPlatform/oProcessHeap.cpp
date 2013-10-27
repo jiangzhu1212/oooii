@@ -252,14 +252,14 @@ bool oProcessHeapContextImpl::IsTBBEntry(container_t::const_iterator it)
 
 bool oProcessHeapContextImpl::ShouldConsider(container_t::const_iterator it)
 {
-	// @oooii-tony: I just cannot get TBB to play ball. It lets threads 
+	// @tony: I just cannot get TBB to play ball. It lets threads 
 	// disappear whenever with no user callback. According to another guy 
 	// who likes to build software in teams and produce products, freeing
 	// any threadlocal resources just doesn't seem possible...
 	// http://software.intel.com/en-us/forums/showthread.php?t=68825
 	// So for now, just don't report anything that comes from TBB.
 
-	// @oooii-tony: I've decided to blacklist all oThreadlocalMallocs because 
+	// @tony: I've decided to blacklist all oThreadlocalMallocs because 
 	// there are several 3rd-party problem-makers, not just TBB, so for now that
 	// seems to clean all the leaks. However running code in different orders
 	// makes different things appear, so don't remove this quite yet, we may need

@@ -317,7 +317,7 @@ oAPI HICON oWinGetIcon(HWND _hWnd, bool _BigIcon = false);
 // std::errc::operation_not_permitted.
 oAPI bool oWinSetIconAsync(HWND _hWnd, HICON _hIcon, bool _BigIcon = false);
 
-// @oooii-tony: I am still unclear about lifetime management... I don't see leak
+// @tony: I am still unclear about lifetime management... I don't see leak
 // reports in current usage, so I've not have something to fully trace through...
 // Let me know if you see leaks relating to HICONs.
 oAPI bool oWinSetIcon(HWND _hWnd, HICON _hIcon, bool _BigIcon = false);
@@ -779,7 +779,7 @@ oAPI bool oWinControlGetErrorState(HWND _hControl);
 oAPI bool oWinControlClampPositionToSelected(HWND _hControl);
 
 // _____________________________________________________________________________
-// @oooii-tony: Dialog-related stuff. I still don't quite understand the 
+// @tony: Dialog-related stuff. I still don't quite understand the 
 // difference between a window and a dialog - it seems like dialogs were once a 
 // simple idea that benefited from some simplification, but it seems that time
 // has gone away. Experiment more with creating various "simple" dialogs and 

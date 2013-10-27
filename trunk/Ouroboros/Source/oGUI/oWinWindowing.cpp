@@ -823,7 +823,7 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 				// As a child window, the status bar is implicitly destroyed.
 
 				// minimizes "randomly set focus to some window other than parent"
-				// @oooii-tony: Revisit this: this causes a child window to be reset in 
+				// @tony: Revisit this: this causes a child window to be reset in 
 				// position and looks ugly. It may be true that position needs to be 
 				// set here as well.
 				//oWinSetOwner(_hWnd, nullptr);
@@ -1111,7 +1111,7 @@ static bool oIsDialogMessageEx(HWND _hWnd, MSG* _pMsg)
 		bool ShiftDown = (GetKeyState(VK_LSHIFT) & 0x1000) || (GetKeyState(VK_RSHIFT) & 0x1000);
 		if (CtrlDown)
 		{
-			// @oooii-tony: Hmm, this won't behave well with multiple tab controls in
+			// @tony: Hmm, this won't behave well with multiple tab controls in
 			// a single window
 			HWND hTab = FindWindowEx(_hWnd, nullptr, WC_TABCONTROL, nullptr);
 			while (hTab && (!IsWindowEnabled(hTab) || !IsWindowVisible(hTab)))
@@ -1123,7 +1123,7 @@ static bool oIsDialogMessageEx(HWND _hWnd, MSG* _pMsg)
 				n.hwndFrom = hTab;
 				n.idFrom = GetDlgCtrlID(hTab);
 				n.code = TCN_SELCHANGING;
-				// @oooii-tony: Not sure what this should be because the docs say it 
+				// @tony: Not sure what this should be because the docs say it 
 				// isn't the case that n.idFrom is the ID to use, but I always observe 
 				// the values being the same in debug spew
 				WPARAM w = n.idFrom;
@@ -1381,7 +1381,7 @@ bool oWinHasFocus(HWND _hWnd)
 bool oWinSetFocus(HWND _hWnd, bool _Focus)
 {
 	// @oooii-kevin: Technically this can be called from other threads as we can give focus to another window
-	// @oooii-tony: This shouldn't be true, there's several calls below so thus
+	// @tony: This shouldn't be true, there's several calls below so thus
 	// this isn't atomic. See who complains by reenabling the check here.
 	oWIN_CHECK(_hWnd);
 	if (_Focus)
@@ -1663,7 +1663,7 @@ bool oWinSetShape(HWND _hWnd, const oGUI_WINDOW_SHAPE_DESC& _Shape)
 	if (oGUIStyleHasStatusBar(New.Style))
 		r.bottom += StatusBarHeight;
 
-	// @oooii-tony: are these bit-clears needed?
+	// @tony: are these bit-clears needed?
 	if (New.State != oGUI_WINDOW_MAXIMIZED)
 		dwAllFlags &=~ WS_MAXIMIZE;
 
@@ -1818,7 +1818,7 @@ size_t oWinGetTruncatedLength(HWND _hWnd, const char* _StrSource)
 	GetClientRect(_hWnd, &rClient);
 	oGDIScopedGetDC hDC(_hWnd);
 
-	if (!PathCompactPathA(hDC, temp, oWinRectW(rClient) + 70)) // @oooii-tony: This constant was measured empirically. I think this should work without the +70, but truncation happens too aggressively.
+	if (!PathCompactPathA(hDC, temp, oWinRectW(rClient) + 70)) // @tony: This constant was measured empirically. I think this should work without the +70, but truncation happens too aggressively.
 	{
 		oErrorSetLast(std::errc::no_buffer_space, "Buffer must be at least MAX_PATH (%u) chars big", MAX_PATH);
 		return 0;
@@ -1861,7 +1861,7 @@ char* oWinTruncatePath(char* _StrDestination, size_t _SizeofStrDestination, HWND
 	GetClientRect(_hWnd, &rClient);
 	oGDIScopedGetDC hDC(_hWnd);
 
-	if (!PathCompactPathA(hDC, _StrDestination, oWinRectW(rClient) + 70)) // @oooii-tony: This constant was measured empirically. I think this should work without the +70, but truncation happens too aggressively.
+	if (!PathCompactPathA(hDC, _StrDestination, oWinRectW(rClient) + 70)) // @tony: This constant was measured empirically. I think this should work without the +70, but truncation happens too aggressively.
 	{
 		oErrorSetLast(std::errc::no_buffer_space, "Buffer must be at least MAX_PATH (%u) chars big", MAX_PATH);
 		return nullptr;

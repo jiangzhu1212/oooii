@@ -26,10 +26,10 @@
 #include <oStd/future.h>
 #include "../oCRTLeakTracker.h"
 
-// @oooii-tony: This test has removed so many platform dependencies, it proves 
+// @tony: This test has removed so many platform dependencies, it proves 
 // that refactoring oCRTLeakTracker into a better location/API may be worthwhile.
 
-// @oooii-tony: If this test can be moved to oBasis, unify this with 
+// @tony: If this test can be moved to oBasis, unify this with 
 // oBasisTestCommon.h (maybe make that more public?) (_P for Platform)
 #define oTESTB0_P(test) do { if (!(test)) return false; } while(false) // pass through error
 #define oTESTB_P(test, msg, ...) do { if (!(test)) return oErrorSetLast(std::errc::protocol_error, msg, ## __VA_ARGS__); } while(false)

@@ -205,7 +205,7 @@ inline oRGBf oPhongShadeBase(oIN(float4, _Lit), oPHONG_BASE_PARAMETERS)
 	const float Cs = _Lit.z;
 	const float Catt = _Ksh * _Attenuation;
 	oRGBf rgb = Ca*_Ka + _Ke + Catt * _Kl * (Cd*_Kd + Cs*_Ks);
-	// @oooii-tony: TODO: add transmissive and reflective
+	// @tony: TODO: add transmissive and reflective
 	return rgb;
 }
 

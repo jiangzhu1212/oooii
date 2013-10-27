@@ -36,7 +36,7 @@
 using namespace ouro;
 using namespace ouro::page_allocator;
 
-// @oooii-tony: Note on future/potential cross-platform support. I admit it, I 
+// @tony: Note on future/potential cross-platform support. I admit it, I 
 // don't know linux other than it does have virtual memory and it can do some
 // interesting things. What I don't see from my 10 minutes of Googling, is if
 // Linux has the concept of a GUARD page like Windows does. I think I'd have 
@@ -47,7 +47,7 @@ using namespace ouro::page_allocator;
 
 uintptr_t oBitShiftLeft(unsigned int _BitIndex)
 {
-	// @oooii-tony: 1 << 63 == 1 << 31 :(  1LL << 63 is what you want.
+	// @tony: 1 << 63 == 1 << 31 :(  1LL << 63 is what you want.
 	return uintptr_t(1) << _BitIndex;
 }
 
@@ -56,7 +56,7 @@ namespace detail {
 	static const size_t NUM_WORD_BITS = 8 * sizeof(void*);
 	static const size_t PAGE_SIZE = page_size();
 
-	// @oooii-tony: We want to efficiently tell what arena we're in from the global 
+	// @tony: We want to efficiently tell what arena we're in from the global 
 	// exception handler. To facilitate this, we'll assume some things about the
 	// arena's structure. Those assumptions are:
 	// 1. All oMirroredArenas must be aligned to some power of two. This way 
@@ -140,7 +140,7 @@ namespace detail {
 
 		GetBookkeepingPointers(_pUserPointer, &pBookkeepingHeader, &pDirtyBits);
 
-		// @oooii-tony: 
+		// @tony: 
 		// !!!!!!!!!!!!!!!!!!!!!!!! IF YOU GET A CRASH HERE !!!!!!!!!!!!!!!!!!!!!!!!
 		// oMirroredArena uses advanced features of VirtualAlloc to use access 
 		// violations to tell what pages of memory have been touched. This means the
@@ -261,7 +261,7 @@ namespace detail {
 				oLockedPointer<oAccessViolationHandler> pLockedHandler(Singleton());
 
 				#ifdef _DEBUG
-					// @oooii-tony: In release, any unhandled exception is fatal, so favor 
+					// @tony: In release, any unhandled exception is fatal, so favor 
 					// performance over safety, but in debug make unexpected exceptions 
 					// behave well.
 
@@ -363,7 +363,7 @@ size_t oMirroredArena::GetMaxSize()
 
 size_t oMirroredArena::GetChangeBufferSize(const void* _pChangeBuffer)
 {
-	// @oooii-tony: Hmm, this makes me think that the change buffer format, which
+	// @tony: Hmm, this makes me think that the change buffer format, which
 	// is a cross-platform concept, should be further isolated from the platform-
 	// specific nature of VirtualAlloc().
 	const oMirroredArena_Impl::CHANGE_HEADER* pChangeHeader = reinterpret_cast<const oMirroredArena_Impl::CHANGE_HEADER*>(_pChangeBuffer);
@@ -579,7 +579,7 @@ bool oMirroredArena_Impl::DIFFRetrieveChanges(void* _pChangeBuffer, size_t _Size
 	void* pVoidDirtyBits = 0;
 	::detail::GetBookkeepingPointers(Desc.BaseAddress, &pBookkeepingHeader, &pVoidDirtyBits);
 
-	// @oooii-tony: Do I need to lock here against other pages being dirtied?
+	// @tony: Do I need to lock here against other pages being dirtied?
 	const size_t requiredSize = pBookkeepingHeader->NumDirtyPages * (sizeof(DIFF_HEADER) + ::detail::PAGE_SIZE);
 
 	if (_pSizeRetrieved)
@@ -606,7 +606,7 @@ bool oMirroredArena_Impl::DIFFRetrieveChanges(void* _pChangeBuffer, size_t _Size
 
 	void* pCurrent = pChangeHeader + 1;
 
-	// @oooii-tony: TODO: This can be optimized by special-casing full-word, or
+	// @tony: TODO: This can be optimized by special-casing full-word, or
 	// even half-word runs. For example, if this is 0xffff...ffff, then one big
 	// memcpy could be done rather than 32 or 64 small memcpys.
 
@@ -707,7 +707,7 @@ bool oMirroredArena_Impl::DIFFApplyChanges(const void* _pChangeBuffer)
 	const void* pPageDiffs = pChangeHeader + 1;
 	const void* pEnd = byte_add(pPageDiffs, (size_t)pChangeHeader->Size);
 
-	// @oooii-tony: Is it more efficient to mark the whole arena, or just the pages
+	// @tony: Is it more efficient to mark the whole arena, or just the pages
 	// that changed? It's probably dependent on how much the arena has changed, so
 	// really we should take a look at the page count and do both depending on some
 	// magic trade-off threshold.

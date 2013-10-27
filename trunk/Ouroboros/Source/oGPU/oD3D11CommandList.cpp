@@ -32,7 +32,7 @@
 
 using namespace ouro;
 
-// @oooii-tony: Now that prim topo is exposed through oGPUPipeline, should we
+// @tony: Now that prim topo is exposed through oGPUPipeline, should we
 // move some of the tricky overrides to oGPUUtil?
 class oD3D11OverrideIAPrimitiveTopology
 {

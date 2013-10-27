@@ -431,7 +431,7 @@ void oSocketImpl::RunProxyDeleter() threadsafe
 
 bool oSocketImpl::GoAsynchronous(const oSocket::ASYNC_SETTINGS& _Settings) threadsafe
 {
-	// @oooii-tony: can't replace this lock-and-cast with oLockThis because it
+	// @tony: can't replace this lock-and-cast with oLockThis because it
 	// causes type problems with calling the member oFUNCTION RunProxyDeleter().
 	// Someone with more meta-magic fingers should take another look at this.
 	#if 1

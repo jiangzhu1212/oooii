@@ -195,7 +195,7 @@ void oD3D11CopySubresourceRegion2D(ID3D11DeviceContext* _pDeviceContext, ID3D11R
 // _____________________________________________________________________________
 // Texture API
 
-// @oooii-tony: This should probably be generalized to oGPU_TEXTURE_DESC, but
+// @tony: This should probably be generalized to oGPU_TEXTURE_DESC, but
 // this goes to the original source in case there's a bug in translation.
 void oD3D11DebugTraceTexture2DDesc(D3D11_TEXTURE2D_DESC _Desc, const char* _Prefix = "\t");
 
@@ -267,7 +267,7 @@ bool oD3D11Convert(ID3D11Device* _pDevice, ouro::surface::mapped_subresource& _D
 
 // These functions repeated from <oBC6HBC7EncoderDecoder.h> in External so as
 // not to require extra path info in build settings to get at that header. 
-// @oooii-tony: Probably it'd be better to rename these in that header and wrap
+// @tony: Probably it'd be better to rename these in that header and wrap
 // an impl and leave these as the "public" api.
 bool oD3D11EncodeBC7(ID3D11Texture2D* _pSourceTexture, bool _UseGPU, ID3D11Texture2D** _ppCompressedTexture);
 bool oD3D11EncodeBC6HS(ID3D11Texture2D* _pSourceTexture, bool _UseGPU, ID3D11Texture2D** _ppCompressedTexture);

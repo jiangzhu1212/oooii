@@ -122,7 +122,7 @@ char* oURIPercentEncode(char* _StrDestination, size_t _SizeofStrDestination, con
 				return nullptr;
 			}
 
-			// @oooii-tony: This assumes ascii-in... no UTF-8 support here.
+			// @tony: This assumes ascii-in... no UTF-8 support here.
 			*d++ = '%';
 			snprintf(d, std::distance(d, end), "%02x", *s++); // use lower-case escaping http://www.textuality.com/tag/uri-comp-2.html
 			d += 2;
@@ -143,7 +143,7 @@ char* oURIPercentEncode(char* _StrDestination, size_t _SizeofStrDestination, con
 }
 
 // http://tools.ietf.org/html/rfc3986#appendix-B
-static regex reURI("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?", std::tr1::regex_constants::optimize); // @oooii-tony: ok static (duplication in DLLs won't affect correctness)
+static regex reURI("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?", std::tr1::regex_constants::optimize); // @tony: ok static (duplication in DLLs won't affect correctness)
 bool oURIDecompose(const char* _URIReference, char* _Scheme, size_t _SizeofScheme, char* _Authority, size_t _SizeofAuthority, char* _Path, size_t _SizeofPath, char* _Query, size_t _SizeofQuery, char* _Fragment, size_t _SizeofFragment)
 {
 	if (_URIReference)
@@ -450,7 +450,7 @@ bool from_string(oURIParts* _pURIParts, const char* _StrSource)
 
 } // namespace ouro
 
-static std::regex QueryRegex("(.+?)=(.+?)&", std::tr1::regex_constants::optimize); // @oooii-tony: ok static (duplication in DLLs won't affect correctness)
+static std::regex QueryRegex("(.+?)=(.+?)&", std::tr1::regex_constants::optimize); // @tony: ok static (duplication in DLLs won't affect correctness)
 void oURIQueryEnumKeyValuePairs(const char* _URIQuery, oFUNCTION<void(const char* _Key, const char* _Value)> _Enumerator)
 {
 	const std::cregex_token_iterator end;
@@ -470,7 +470,7 @@ void oURIQueryEnumKeyValuePairs(const char* _URIQuery, oFUNCTION<void(const char
 
 const oURI& oURI::operator=(const char* _That)
 {
-	// @oooii-tony: start with KISS... optimize if this shows up on benchmarks
+	// @tony: start with KISS... optimize if this shows up on benchmarks
 	// basically ensure the memory pattern is the same so that we can blindly
 	// run the hash through the whole mess.
 	memset(this, 0, sizeof(*this));

@@ -457,7 +457,7 @@ oAPI bool oGPUCompileShader(
 	, oBuffer** _ppByteCode // if successful, this is a buffer of byte code
 	, oBuffer** _ppErrors); // if failure this is filled with an error string
 
-// @oooii-tony: I'm not sure if these APIs belong here at all, in oGPU, or 
+// @tony: I'm not sure if these APIs belong here at all, in oGPU, or 
 // oGPUUtil. I do know they don't belong where they were before, which was 
 // nowhere.
 // Basically rendering at oooii grew up on D3D and D3DX, which have very robust
@@ -488,7 +488,7 @@ oAPI bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, ouro::surface::format
 // Loads a texture from disk. The _Desc specifies certain conversions/resizes
 // that can occur on load. Use oDEFAULT or ouro::surface::unknown to use values as 
 // they are found in the specified image resource/buffer.
-// @oooii-tony: At this time the implementation does NOT use oImage loading 
+// @tony: At this time the implementation does NOT use oImage loading 
 // code plus a simple call to call oGPUCreateTexture(). Because this API 
 // supports conversion for any ouro::surface::format, at this time we defer to 
 // DirectX's .dds support for advanced formats like BC6 and BC7 as well as their

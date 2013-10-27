@@ -141,9 +141,9 @@ void oStd::thread::join()
 		while (oThreadIsJoinable(LocalContext->hThread))
 		{
 			static const DWORD dwTimeoutMS = 5000;//INFINITE;
-			oStd::thread* pThis = this; // @oooii-tony: This is a weird one...
+			oStd::thread* pThis = this; // @tony: This is a weird one...
 			DWORD dwResult = WaitForSingleObject(LocalContext->hThread, dwTimeoutMS);
-			// @oooii-tony: Wow. WaitForSingleObject can stomp on the this pointer! 
+			// @tony: Wow. WaitForSingleObject can stomp on the this pointer! 
 			// This has been going on elsewhere for a while, but hasn't affected much.
 			// What am I doing wrong here? I tried pThis->hThread = 0 below, but that 
 			// causes other corruption. This might be some weird cross-DLL issue?

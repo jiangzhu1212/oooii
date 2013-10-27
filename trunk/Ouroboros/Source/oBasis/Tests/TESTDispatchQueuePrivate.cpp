@@ -104,7 +104,7 @@ bool oBasisTest_oDispatchQueuePrivate()
 		bool Notified = false;
 		q->Dispatch(&NotifyAll, oBINDREF(FinishedMutex), oBINDREF(Finished), &ExecutionThreadID, &Notified, &WrongThread);
 
-		// @oooii-tony: there's a race here because the notify can happen before we settle into the wait, so the notify never comes through.
+		// @tony: there's a race here because the notify can happen before we settle into the wait, so the notify never comes through.
 
 		unique_lock<mutex> FinishedLock(FinishedMutex);
 		while (!Notified)

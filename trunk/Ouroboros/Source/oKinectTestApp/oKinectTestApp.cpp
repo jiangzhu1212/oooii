@@ -114,7 +114,7 @@ public:
 
 	void Run()
 	{
-		// @oooii-tony: TODO: There was a big refactor of how oWindow worked, so 
+		// @tony: TODO: There was a big refactor of how oWindow worked, so 
 		// these shouldn't need to all be on the same thread anymore. Revisit moving
 		// each window to its own thread once all integration is done.
 		while (1)
@@ -200,7 +200,7 @@ private:
 	void MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index);
 	void MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index);
 
-	// @oooii-tony: Maybe each window should get its own air keyboard / input?
+	// @tony: Maybe each window should get its own air keyboard / input?
 	void BroadcastActions(const oGUI_ACTION_DESC& _Action)
 	{
 		// pass through to oWindows.

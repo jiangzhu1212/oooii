@@ -59,7 +59,7 @@ static char* oStrTokToSwitches(char* _StrDestination, size_t _SizeofStrDestinati
 template<size_t size> char* oStrTokToSwitches(char (&_StrDestination)[size], const char* _Switch, const char* _Tokens, const char* _Separator) { return oStrTokToSwitches(_StrDestination, size, _Switch, _Tokens, _Separator); }
 template<size_t capacity> char* oStrTokToSwitches(ouro::fixed_string<char, capacity>& _StrDestination, const char* _Switch, const char* _Tokens, const char* _Separator) { return oStrTokToSwitches(_StrDestination, _StrDestination.capacity(), _Switch, _Tokens, _Separator); }
 
-// @oooii-tony: Here's a flavor that works on a pre-loaded source since we want 
+// @tony: Here's a flavor that works on a pre-loaded source since we want 
 // to support more than one shader entry. Right now to keep it simple, the 
 // include system still hits the file system for each header. How can we get 
 // around that? Until we can, loading source from a buffer doesn't add too much 

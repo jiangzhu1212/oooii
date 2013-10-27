@@ -57,7 +57,7 @@ Version 3.0
 #ifndef SAFEINT_HPP
 #define SAFEINT_HPP
 
-#include <oBasis/oInvalid.h> // @oooii-tony: Add ctor support for this common usage pattern
+#include <oBasis/oInvalid.h> // @tony: Add ctor support for this common usage pattern
 
 // Enable compiling with /Wall under VC 
 #if !defined __GNUC__
@@ -5432,7 +5432,7 @@ template < typename T, typename E = SafeIntDefaultExceptionHandler > class SafeI
 {
 public:
 
-		// @oooii-tony: Add a ctor for conversion from oInvalid_t to an int.
+		// @tony: Add a ctor for conversion from oInvalid_t to an int.
     SafeInt( const oInvalid_t& i ) throw()
     {
 			C_ASSERT( NumericType< T >::isInt );
@@ -6934,7 +6934,7 @@ SafeInt< T, E > operator |( U lhs, SafeInt< T, E > rhs ) throw()
     return SafeInt< T, E >( BinaryOrHelper< T, U, BinaryMethod< T, U >::method >::Or( (T)rhs, lhs ) );
 }
 
-// @oooii-tony: Add oInvalid comparisons.
+// @tony: Add oInvalid comparisons.
 template<typename T> bool operator==(const SafeInt<T>& _Value, const oInvalid_t& _Invalid) { return (T)_Invalid == _Value; }
 template<typename T> bool operator==(const oInvalid_t& _Invalid, const SafeInt<T>& _Value) { return (T)_Invalid == _Value; }
 template<typename T> bool operator!=(const SafeInt<T>& _Value, const oInvalid_t& _Invalid) { return !(_Invalid == _Value); }

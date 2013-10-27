@@ -25,7 +25,7 @@
 #include <oBasis/oMath.h>
 #include <oPlatform/oTest.h>
 
-// @oooii-tony: This should be moved to oBasis, or deleted. I dropped bring-up
+// @tony: This should be moved to oBasis, or deleted. I dropped bring-up
 // of a robust frust cull solution for a project, and have not gotten back to
 // it, so this looks like I was setting up the test, but right now this doesn't
 // do anything, so just plain removing this is as valid as any other option.
@@ -117,7 +117,7 @@ struct PLATFORM_Intersection : public oTest
 				float4x4 vp = view * projection;
 				oFrustumf frustum(vp);
 
-				// @oooii-tony: Assume the scalar frustcull works to get 'correct' answers
+				// @tony: Assume the scalar frustcull works to get 'correct' answers
 				for (size_t b = 0; b < Boxes.size(); b++)
 					Results[b] = oContains(frustum, Boxes[b]);
 

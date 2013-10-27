@@ -482,7 +482,7 @@ void oCalcEdges(size_t _NumberOfVertices, const unsigned int* _pIndices, size_t 
 
 	size_t numEdges = static_cast<size_t>(TerathonEdges::BuildEdges(static_cast<long>(_NumberOfVertices), static_cast<long>(numTriangles), (const TerathonEdges::Triangle *)_pIndices, edgeArray));
 
-	// @oooii-tony: Should the allocator be exposed?
+	// @tony: Should the allocator be exposed?
 	*_ppEdges = new unsigned int[numEdges * 2];
 
 	for (size_t i = 0; i < numEdges; i++)

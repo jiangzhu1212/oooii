@@ -68,7 +68,7 @@ namespace ouro {
 	#define IF_SHOULD_USE_GREGORIAN2(_JDN) if (true)
 #else
 	//#define IF_SHOULD_USE_GREGORIAN(_Date) if (_oDATE > oDATE_JULIAN_EPOCH_END)
-	#define IF_SHOULD_USE_GREGORIAN(_oDATE) if (_oDATE > date(-2000, month::January, 1)) // @oooii-tony: I have no justification for this choice, but the EPOCH is simply not calculated using Gregorian, but 2 BCE starts failing using Julian...
+	#define IF_SHOULD_USE_GREGORIAN(_oDATE) if (_oDATE > date(-2000, month::January, 1)) // @tony: I have no justification for this choice, but the EPOCH is simply not calculated using Gregorian, but 2 BCE starts failing using Julian...
 	#define IF_SHOULD_USE_GREGORIAN2(_JDN) if (_JDN > 730500) // 2000 * 365 + 2000/4
 #endif
 

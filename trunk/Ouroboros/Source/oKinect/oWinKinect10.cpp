@@ -122,7 +122,7 @@ oWinKinect10::~oWinKinect10()
 		}
 	}
 
-	// @oooii-tony: this is pretty frustrating: If NuiSetDeviceStatusCallback is
+	// @tony: this is pretty frustrating: If NuiSetDeviceStatusCallback is
 	// called in any capacity, even with nullptrs, then there's an exception 
 	// thrown when the module is unlinked. So in the case that this API was called
 	// don't unlink the DLL to avoid the hang/exception/crash.

@@ -67,7 +67,7 @@
 		#define oHAS_BAD_DOUBLE_TO_ULLONG_CONVERSION
 	#endif
 
-	// @oooii-tony: there needs to be more #ifdef'ing of when this is true, but I 
+	// @tony: there needs to be more #ifdef'ing of when this is true, but I 
 	// don't have test platforms at the moment to ensure this is pre-vista 
 	// compatible (and I don't have an answer of what to do when I don't have 
 	// 64-bit atomics yet)

@@ -220,7 +220,7 @@ namespace future_detail {
 			State.HasExceptionAtThreadExit = true;
 		}
 
-		// @oooii-tony: packaged_task needs to schedule the task, so expose this, 
+		// @tony: packaged_task needs to schedule the task, so expose this, 
 		// though it is an implementation detail. (but then all of oCommitment is an 
 		// implementation detail of promise/future/packaged_task)
 		void commit_to_task(const std::function<void()>& _Task)
@@ -592,7 +592,7 @@ namespace future_detail {
 		const BaseT* This() const { return static_cast<const BaseT*>(this); }
 	};
 
-	// @oooii-tony: The spec says there are no copy-constructors... but I really
+	// @tony: The spec says there are no copy-constructors... but I really
 	// need to pass this to a std::bind. There is a bug in MSVC2010 that disallows 
 	// std::move through std::bind:
 	// http://connect.microsoft.com/VisualStudio/feedback/details/649274/std-bind-and-std-function-are-not-move-aware 
@@ -652,7 +652,7 @@ template<typename T> class future : public future_detail::future_state_interface
 public:
 	oDEFINE_FUTURE_CTORS();
 	// Sets last error if this fails, but then continues to move the commitment
-	// value as the return value. @oooii-tony: This is not elegant as throwing an 
+	// value as the return value. @tony: This is not elegant as throwing an 
 	// exception, but the codebase isn't quite there.
 	T get() { oFUTURE_THROW(valid(), no_state); return Commitment->move_value(); }
 };
@@ -809,7 +809,7 @@ namespace future_detail {
 	oCALLABLE_PROPAGATE(oPACKAGEDTASK)
 #endif
 
-// @oooii-tony: I don't quite understand the launch policies yet because 
+// @tony: I don't quite understand the launch policies yet because 
 // current implementations are very poor, so punt on that interface for now and
 // always do the right thing, which is to hand the task over to the scheduler.
 

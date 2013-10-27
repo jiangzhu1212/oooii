@@ -100,7 +100,7 @@ private:
 	void fix_list(pointer_t _Tail, pointer_t _Head) threadsafe;
 };
 
-// @oooii-tony: TODO: Respect _Capacity
+// @tony: TODO: Respect _Capacity
 template<typename T>
 concurrent_queue_opt<T>::concurrent_queue_opt()
 {

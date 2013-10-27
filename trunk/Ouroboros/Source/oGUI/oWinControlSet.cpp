@@ -105,7 +105,7 @@ bool oWinControlSet::CreateFontsSibling(const xml& _XML, fonts_t* _pFonts)
 	return true;
 }
 
-// @oooii-tony: Should this be promoted to somewhere more generic?
+// @tony: Should this be promoted to somewhere more generic?
 #define oXML_GETVALUE(_XML, _hNode, _pDestStruct, _FieldName) _XML.find_attr_value(_hNode, #_FieldName, &_pDestStruct->_FieldName);
 
 bool oWinControlSet::ParseFontDesc(const xml& _XML, xml::node _hNode, oGUI_FONT_DESC* _pDesc)

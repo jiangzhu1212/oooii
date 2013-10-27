@@ -54,7 +54,7 @@ using namespace ouro;
 // is false, this will assume the user wants to terminate all processes.
 static bool oTestTerminateInterferingProcesses(bool _PromptUser = true)
 {
-	// @oooii-tony: This should turn into a custom dialog box that contains a 
+	// @tony: This should turn into a custom dialog box that contains a 
 	// listbox with a list of all matched processes that could cause problems and
 	// have buttons for terminating selected, or terminating all. Also, it should
 	// refresh in case the user decided to terminate the processes external to the 
@@ -896,7 +896,7 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 
 	filesystem::remove(path(TempPath));
 
-	// @oooii-tony: Moving other stuff that are false-positives here so I can see
+	// @tony: Moving other stuff that are false-positives here so I can see
 	// them all...
 	oCRTLeakTracker::Singleton()->NewContext();
 
@@ -908,7 +908,7 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 
 	// obug_1763: We need to forcefully flushIOCP to ensure it doesn't report 
 	// memory leaks.
-	// @oooii-tony: This isn't the only culprit. Maybe we should move all these
+	// @tony: This isn't the only culprit. Maybe we should move all these
 	// into oCRTLeakTracker so the dependency on reporting seems explicit.
 	extern void FlushIOCP();
 	FlushIOCP();
@@ -947,7 +947,7 @@ static bool SortAlphabetically(oTestManager::RegisterTestBase* _Test1, oTestMana
 
 static void oTraceCPUFeatures()
 {
-	// @oooii-tony: This and the header that is currently printed out is becoming 
+	// @tony: This and the header that is currently printed out is becoming 
 	// large... we should move it somewhere?
 
 	cpu::info cpu_info = cpu::get_info();
@@ -1023,7 +1023,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	bool fcSuccess = false;
 	oFilterChain filterChain(_pTestFilters, _SizeofTestFilters, fcErr, oCOUNTOF(fcErr), &fcSuccess);
 
-	// @oooii-tony: For testing progress bar functionality. If we like this as
+	// @tony: For testing progress bar functionality. If we like this as
 	// a feature of the unit test, we should expose it through the DESC.
 	//ShowProgressBar = true;
 

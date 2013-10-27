@@ -394,7 +394,7 @@ struct oFileWriterImpl : public oStreamWriter
 		
 		ouro::filesystem::create_directories(path(*ResolvedPath).parent_path());
 
-		// @oooii-tony:
+		// @tony:
 		// FILE_SHARE_READ added here for a sole purpose: so a programmer can open
 		// a log file and see stuff written so far while the log is still being 
 		// appended to. If this causes problems, take this out immediately as no 

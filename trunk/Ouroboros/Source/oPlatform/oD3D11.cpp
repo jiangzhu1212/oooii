@@ -897,7 +897,7 @@ bool oD3D11BufferCreate(ID3D11Device* _pDevice, const char* _DebugName, const oG
 		oNODEFAULT;
 	}
 
-	// @oooii-tony: why oh why do I need to do things this way? IBs/VBs seem fine,
+	// @tony: why oh why do I need to do things this way? IBs/VBs seem fine,
 	// but constant buffers seem affected by this.
 	if (BindFlags != D3D11_BIND_INDEX_BUFFER && BindFlags != D3D11_BIND_VERTEX_BUFFER)
 	{
@@ -922,7 +922,7 @@ bool oD3D11BufferCreate(ID3D11Device* _pDevice, const char* _DebugName, const oG
 	
 	// Add this mainly for index buffers so they can describe their own 
 	// StructureByteStride.
-	// @oooii-tony: Is this becoming defunct? This is meant so that D3D11 objects 
+	// @tony: Is this becoming defunct? This is meant so that D3D11 objects 
 	// can be self-describing, but with a clean and not-D3D11 oGPU_BUFFER_DESC, 
 	// does that hold all the info needed and we just ensure it always gets 
 	// populated as expected (unlike D3D11's StructByteSize)? Probably, but this
@@ -1317,7 +1317,7 @@ bool oD3D11CreateUnorderedAccessView(const char* _DebugName, ID3D11Resource* _pT
 
 	switch (desc.Type)
 	{
-		// @oooii-tony: When adding more cases to this, try to use oGPU_TEXTURE_DESC's
+		// @tony: When adding more cases to this, try to use oGPU_TEXTURE_DESC's
 		// ArraySize.
 
 		case oGPU_TEXTURE_2D_MAP_UNORDERED:
@@ -1726,7 +1726,7 @@ bool oD3D11Convert(ID3D11Texture2D* _pSourceTexture, ouro::surface::format _NewF
 	NewDesc.Dimensions = int3(oInt(desc.Width), oInt(desc.Height), 1);
 	NewDesc.ArraySize = oInt(desc.ArraySize);
 	NewDesc.Format = _NewFormat;
-	NewDesc.Type = oGPUTextureTypeGetReadbackType(NewDesc.Type); // @oooii-tony: this should probably come from somewhere better.
+	NewDesc.Type = oGPUTextureTypeGetReadbackType(NewDesc.Type); // @tony: this should probably come from somewhere better.
 
 	intrusive_ptr<ID3D11Texture2D> NewTexture;
 	if (!oD3D11CreateTexture(D3DDevice, "oD3D11Convert.Temp", NewDesc, nullptr, &NewTexture))
@@ -2043,7 +2043,7 @@ HRESULT oD3DInclude::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOI
 			snprintf(Path, "%s/%s", p, pFileName);
 			exists = oStreamExists(Path);
 			if (exists)
-				goto hack_break; // @oooii-tony: oFOR uses a double-for loop, so one break isn't enough. We should fix this!
+				goto hack_break; // @tony: oFOR uses a double-for loop, so one break isn't enough. We should fix this!
 		}
 	}
 

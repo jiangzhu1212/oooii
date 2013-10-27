@@ -49,7 +49,7 @@ oGFX_GBUFFER_FRAGMENT main(oGFX_VS_OUT_LIT In)
 	oGfxLight Light = oGfxGetLight(0);
 	float3 WSLightVector = normalize(Light.WSPosition - In.WSPosition);
 
-	// @oooii-tony: It'd be good to add a detail normal map as well, but will that
+	// @tony: It'd be good to add a detail normal map as well, but will that
 	// need a separate mask from the color detail map? Maybe it's just part of a 
 	// detail material.
   float3 WSUnnormalizedNormal = oDecodeTSNormal(
@@ -89,7 +89,7 @@ oGFX_GBUFFER_FRAGMENT main(oGFX_VS_OUT_LIT In)
 	Out.VSNormalXY = oFullToHalfSphere(normalize(In.VSNormal));
 	Out.LinearDepth = In.VSDepth;
 
-	// @oooii-tony: this is not proving to be all that useful...
+	// @tony: this is not proving to be all that useful...
 	Out.LinearDepth_DDX_DDY = float2(abs(100* max(ddx(In.Texcoord))), abs(100 * max(ddy(In.Texcoord))));
 	Out.Mask0 = float4(0,0,0,0); // outline mask is off by default
 

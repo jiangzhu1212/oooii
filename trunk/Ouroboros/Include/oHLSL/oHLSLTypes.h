@@ -45,7 +45,7 @@
 		#include <half.h>
 		namespace std {
 			template<> struct is_floating_point<half> : true_type {};
-			// @oooii-tony: Should we spoof is_class to false here?
+			// @tony: Should we spoof is_class to false here?
 		}
 	#endif
 

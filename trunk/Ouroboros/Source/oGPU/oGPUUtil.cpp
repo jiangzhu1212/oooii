@@ -349,7 +349,7 @@ bool oGPURead(oGPUResource* _pSourceResource, int _Subresource, ouro::surface::m
 		break;
 	}
 
-	oGPUDevice* pDevice = thread_cast<oGPUDevice*>(Device.c_ptr()); // @oooii-tony: review this one...
+	oGPUDevice* pDevice = thread_cast<oGPUDevice*>(Device.c_ptr()); // @tony: review this one...
 
 	ouro::surface::mapped_subresource source;
 	if (!pDevice->MapRead(_pSourceResource, _Subresource, &source))

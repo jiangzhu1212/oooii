@@ -55,7 +55,7 @@ inline bool isdenorm(const float& a)
 
 template<typename T> inline T zerodenorm(const T& a)
 {
-	// @oooii-tony: This constant probably isn't correct for doubles, but doing 
+	// @tony: This constant probably isn't correct for doubles, but doing 
 	// the template thing means it works for vector types.
 	const T ANTI_DENORM(1e-18f);
 	// http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.20.1348&rep=rep1&type=pdf

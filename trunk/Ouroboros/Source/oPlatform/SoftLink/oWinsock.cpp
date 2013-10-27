@@ -617,7 +617,7 @@ bool oWinsockClose(SOCKET _hSocket)
 	// Specifically read the community comment that says the main article doesn't 
 	// work...
 
-	// @oooii-tony: Ignore WSAENOTCONN since we're closing this socket anyway. It 
+	// @tony: Ignore WSAENOTCONN since we're closing this socket anyway. It 
 	// means the other side is detached already.
 
 	if (_hSocket)
@@ -677,7 +677,7 @@ bool oWinsockSetKeepAlive(SOCKET _hSocket, unsigned int _TimeoutMS, unsigned int
 
 bool oWinsockWaitMultiple(WSAEVENT* _pHandles, size_t _NumberOfHandles, bool _WaitAll, bool _Alertable, unsigned int _TimeoutMS)
 {
-	// @oooii-tony: there is something called "spurious wakeups" (Google it for 
+	// @tony: there is something called "spurious wakeups" (Google it for 
 	// more info) that can signal an event though no user-space event has been 
 	// triggered. My reading was that it only applied to the mask in 
 	// WSANETWORKEVENTS, so if you're not using that then this doesn't matter, but

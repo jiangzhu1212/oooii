@@ -78,7 +78,7 @@ static const oGPU_VERTEX_ELEMENT oGPU_TEST_POSITION_TEXCOORD3D_VERTEX[] =
 
 bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDesc)
 {
-	// @oooii-tony: Can some of these be converted to oGPU_UTIL_DEFAULT_PIPELINE?
+	// @tony: Can some of these be converted to oGPU_UTIL_DEFAULT_PIPELINE?
 
 	switch (_Pipeline)
 	{

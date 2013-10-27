@@ -152,7 +152,7 @@ bool oKinectImpl::Reinitialize()
 		return oErrorSetLast(e);
 	}
 
-	// @oooii-tony: We could roll all event handling into the single window thread
+	// @tony: We could roll all event handling into the single window thread
 	// with this style API... but it would alter some of the setup in the util 
 	// code. It's worth a look.
 	// DWORD dwEvent = MsgWaitForMultipleObjects(eventCount, hEvents, FALSE, INFINITE, QS_ALLINPUT);

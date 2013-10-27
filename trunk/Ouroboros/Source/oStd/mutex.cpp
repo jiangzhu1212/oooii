@@ -124,7 +124,7 @@ oStd::mutex::native_handle_type oStd::mutex::native_handle()
 
 void oStd::mutex::lock()
 {
-	// @oooii-tony: Based on what I've observed, the low bit of the word that is
+	// @tony: Based on what I've observed, the low bit of the word that is
 	// the slim RW lock is 1 when locked and 0 when not locked, so test for that...
 	oCRTASSERT(!Footprint || ThreadID != oStd::this_thread::get_id(), "mutex is non-recursive and already locked on this thread. This could result in a deadlock.");
 	AcquireSRWLockExclusive((PSRWLOCK)&Footprint);
@@ -209,7 +209,7 @@ oStd::shared_mutex::native_handle_type oStd::shared_mutex::native_handle()
 
 void oStd::shared_mutex::lock()
 {
-	// @oooii-tony: Based on what I've observed, the low bit of the word that is
+	// @tony: Based on what I've observed, the low bit of the word that is
 	// the slim RW lock is 1 when locked and 0 when not locked, so test for that...
 	oCRTASSERT(!Footprint || ThreadID != oStd::this_thread::get_id(), "shared_mutex is non-recursive and already read/shared locked on this thread. This could result in a deadlock.");
 	AcquireSRWLockExclusive((PSRWLOCK)&Footprint);
@@ -237,7 +237,7 @@ void oStd::shared_mutex::unlock()
 
 void oStd::shared_mutex::lock_shared()
 {
-	// @oooii-tony: Based on what I've observed, the low bit of the word that is
+	// @tony: Based on what I've observed, the low bit of the word that is
 	// the slim RW lock is 1 when locked and 0 when not locked, so test for that...
 	oCRTASSERT(!Footprint || ThreadID != oStd::this_thread::get_id(), "shared_mutex is non-recursive and already read/shared locked on this thread. This could result in a deadlock.");
 	AcquireSRWLockShared((PSRWLOCK)&Footprint);

@@ -88,7 +88,7 @@ oDispatchQueueConcurrentWTP::oDispatchQueueConcurrentWTP(const char* _DebugName,
 	, AllowEnqueue(true)
 	, IsJoinable(true)
 {
-	// @oooii-tony: I don't see a way of hinting to WTP the _InitialTaskCapacity value... do you?
+	// @tony: I don't see a way of hinting to WTP the _InitialTaskCapacity value... do you?
 
 	DebugName.Initialize(_DebugName);
 

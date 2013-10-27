@@ -232,7 +232,7 @@ void oGPUWindowThread::Run()
 			Init.ActionHook = OnAction;
 			Init.EventHook = oBIND(&oGPUWindowThread::OnEvent, this, oBIND1);
 			Init.Shape.ClientPosition = int2(0, 0); // important to think client-relative for this
-			Init.Shape.ClientSize = int2(256, 256); // @oooii-tony: Try making this 1,1 and see if a resize takes over
+			Init.Shape.ClientSize = int2(256, 256); // @tony: Try making this 1,1 and see if a resize takes over
 			Init.Shape.State = oGUI_WINDOW_HIDDEN; // don't show the window before it is child-ized
 			Init.Shape.Style = oGUI_WINDOW_BORDERLESS;
 			Init.ClientCursorState = oGUI_CURSOR_HAND;

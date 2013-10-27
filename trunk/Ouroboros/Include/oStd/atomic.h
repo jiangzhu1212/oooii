@@ -30,13 +30,13 @@
 #include <cstddef> // ptrdiff_t
 #include <type_traits>
 
-// @oooii-tony: I don't fully understand all the strong v. weak and memory_order 
+// @tony: I don't fully understand all the strong v. weak and memory_order 
 // semantics. I'm sure it has to do with Acq and Rel versions of _Interlocked,
 // but I don't want to look up the mapping right now, so just do something basic.
 
 namespace oStd {
 
-	// @oooii-tony: These are not the standard. I haven't yet understood easily 
+	// @tony: These are not the standard. I haven't yet understood easily 
 	// how these map. Why can't people just use the words read and read-write so
 	// that anyone who has every opened a file understands the behavior??
 

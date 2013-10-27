@@ -31,7 +31,7 @@
 // intrusion of "gesture" into application code and keep all its goings-on 
 // separate and thus portable and consistent across applications.
 
-// @oooii-tony: REFACTOR NOTE: This really ought be in oFramework, the yet-
+// @tony: REFACTOR NOTE: This really ought be in oFramework, the yet-
 // unrealized library that sits on top of oPlatform where code is generic but 
 // uses platform API. The gesture system should not be particularly dependent
 // on Kinect, but Kinect is currently the only implementation at a shippable 

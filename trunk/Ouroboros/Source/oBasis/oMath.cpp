@@ -197,7 +197,7 @@ oCONTAINMENT oContains(float3 _Point, const oAABoxf& _Box)
 
 oCONTAINMENT oContains(const oFrustumf& _Frustum, const oAABoxf& _Box)
 {
-	// @oooii-tony: A reasonable optimization might be to set 6 to 5, thus ignoring
+	// @tony: A reasonable optimization might be to set 6 to 5, thus ignoring
 	// far plane clipping. When do we limit view distances these days?
 	return oContainsT(&_Frustum.Left, oFRUSTUM_PLANE_COUNT, _Box);
 }

@@ -100,7 +100,7 @@ void TESTxml()
 	}
 	 
 	// Test xref
-	// @oooii-tony: WTF: if this is xml::node n = ... then all kinds of havok 
+	// @tony: WTF: if this is xml::node n = ... then all kinds of havok 
 	// happens. I traced it through the register moves on the function return, and
 	// it's all ok until it gets moved... to a wrong location! Somehow VC is 
 	// confused and thinks this is still the xml::node n from above in the for

@@ -476,7 +476,7 @@ int dimension_npot(format _Format, int _Mip0Dimension, int _MipLevel, int _Subsu
 	format NthSurfaceFormat = subformat(_Format, _SubsurfaceIndex);
 	const int MipLevelBias = subsample_bias(_Format, _SubsurfaceIndex);
 	
-	// @oooii-tony: This was added while merging oYUVSurface functionality into 
+	// @tony: This was added while merging oYUVSurface functionality into 
 	// oSurface, so we recognize that the int2 values may not be the same and 
 	// won't be for formats like YUV9, but first get the lion's share of the code
 	// across and revisit this once the main algo is vetted.

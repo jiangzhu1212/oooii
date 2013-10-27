@@ -94,7 +94,7 @@ namespace ouro {
 	};
 } // namespace ouro
 
-typedef ouro::frustum<float> oFrustumf; //typedef TFRUSTUM<double> oFrustumd; // @oooii-tony: Need an oIntersects for double
+typedef ouro::frustum<float> oFrustumf; //typedef TFRUSTUM<double> oFrustumd; // @tony: Need an oIntersects for double
 
 // Fills the specified array with planes that point inward in the following 
 // order: left, right, top, bottom, near, far. The planes will be in whatever 
@@ -176,7 +176,7 @@ template<typename T> void oExtractFrustumPlanes(ouro::plane<T> _Planes[oFRUSTUM_
 // are valid or false if planes don't meet in 8 corners.
 template<typename T> bool oExtractFrustumCorners(const ouro::plane<T> _Planes[oFRUSTUM_PLANE_COUNT], TVEC3<T> _Corners[oFRUSTUM_CORNER_COUNT])
 {
-	// @oooii-tony: TODO implement oIntersects for double
+	// @tony: TODO implement oIntersects for double
 	bool isect = oIntersects(_Planes[oFRUSTUM_LEFT], _Planes[oFRUSTUM_TOP], _Planes[oFRUSTUM_NEAR], _Corners[oFRUSTUM_LEFT_TOP_NEAR]);
 	isect = isect && oIntersects(_Planes[oFRUSTUM_LEFT], _Planes[oFRUSTUM_TOP], _Planes[oFRUSTUM_FAR], _Corners[oFRUSTUM_LEFT_TOP_FAR]);
 	isect = isect && oIntersects(_Planes[oFRUSTUM_LEFT], _Planes[oFRUSTUM_BOTTOM], _Planes[oFRUSTUM_NEAR], _Corners[oFRUSTUM_LEFT_BOTTOM_NEAR]);

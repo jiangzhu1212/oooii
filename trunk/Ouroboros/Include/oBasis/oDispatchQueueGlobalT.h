@@ -86,7 +86,7 @@ struct oDispatchQueueGlobalT : public oDispatchQueueGlobal, T
 
 template<typename T>
 oDispatchQueueGlobalT<T>::oDispatchQueueGlobalT(const char* _DebugName, size_t _InitialTaskCapacity, bool* _pSuccess)
-	: Tasks() // @oooii-tony: TODO _TaskCapacity cannot be done trivially with std::list/queue/deque... a new allocator needs to be made... so do that later.
+	: Tasks() // @tony: TODO _TaskCapacity cannot be done trivially with std::list/queue/deque... a new allocator needs to be made... so do that later.
 	, DebugName(_DebugName)
 	, IsJoinable(true)
 	, ExecuteKey(0)

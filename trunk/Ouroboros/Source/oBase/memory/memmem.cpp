@@ -29,7 +29,7 @@ namespace ouro {
 
 void* memmem(void* _pBuffer, size_t _SizeofBuffer, const void* _pFind, size_t _SizeofFind)
 {
-	// @oooii-tony: This could be parallel-for'ed, but you'd have to check any 
+	// @tony: This could be parallel-for'ed, but you'd have to check any 
 	// buffer that might straddle splits, including if splits are smaller than the 
 	// sizeof find (where it straddles 3 or more splits).
 

@@ -31,7 +31,7 @@
 using namespace ouro;
 using namespace oConcurrency;
 
-// @oooii-tony: Singletons are useful concepts and really cross-platform. It is
+// @tony: Singletons are useful concepts and really cross-platform. It is
 // unfortunate that on at least Windows it requires important platform API calls
 // to enforce true singleness across DLL boundaries. Because it would be really
 // nice to promote this to oBasis, encapsulate all platform calls here in this
@@ -172,7 +172,7 @@ oThreadlocalRegistry::oThreadlocalRegistry()
 	, AtExits(0, atexits_t::hasher(), atexits_t::key_equal(), oStdUserAllocator<atexits_t::value_type>(untracked_malloc, untracked_free))
 {}
 
-// @oooii-tony: External declared elsewhere for some lifetime timing hackin'
+// @tony: External declared elsewhere for some lifetime timing hackin'
 void oThreadlocalRegistryCreate()
 {
 	oThreadlocalRegistry::Singleton();
@@ -296,7 +296,7 @@ void oThreadlocalRegistry::EndThread()
 
 void oThreadlocalMalloc(const oGUID& _GUID, const oLIFETIME_TASK& _Create, const oLIFETIME_TASK& _Destroy, size_t _Size, void** _ppAllocation)
 {
-	// @oooii-tony: Because this can be called from system threads, driver threads,
+	// @tony: Because this can be called from system threads, driver threads,
 	// and 3rd-party libs that don't care about your application's reporting (TBB)
 	// just punt on reporting these at leaks.
 	if (oProcessHeapFindOrAllocate(_GUID, true, false, _Size, nullptr, "oThreadlocalMalloc", _ppAllocation))

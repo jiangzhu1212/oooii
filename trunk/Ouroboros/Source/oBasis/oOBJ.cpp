@@ -174,7 +174,7 @@ static const char* oOBJParseFLine(const char* _F, oOBJ_ELEMENTS* _pElements)
 		int element = oOBJ_POSITIONS;
 		do
 		{
-			// @oooii-tony: GAH! This is relative to the vertex parsing up to this 
+			// @tony: GAH! This is relative to the vertex parsing up to this 
 			// point, not absolute from the end. /sigh...
 
 			unsigned int ZeroBasedIndexFromFile = 0;
@@ -509,7 +509,7 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 
 		else if (!DegenerateNormals.empty())
 		{
-			// @oooii-tony: Is there a way to calculate only the degenerates?
+			// @tony: Is there a way to calculate only the degenerates?
 			oTRACE("oOBJ: %u degenerate normals in %s...", DegenerateNormals.size(), _OBJPath);
 			CalcNormals = true;
 		}
@@ -777,7 +777,7 @@ static bool oOBJParseTextureDesc(const char* _TextureLine, oOBJ_TEXTURE* _pTextu
 	return false;
 }
 
-// @oooii-tony: NOTE: _MTLPath is not used yet, but leave this in case we need
+// @tony: NOTE: _MTLPath is not used yet, but leave this in case we need
 // to report better errors.
 static bool oMTLParse(const char* _MTLPath, const char* _MTLString, std::vector<oOBJ_MATERIAL>* _pMTLLibrary)
 {

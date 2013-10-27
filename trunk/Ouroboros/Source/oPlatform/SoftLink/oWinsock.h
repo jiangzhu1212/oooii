@@ -202,7 +202,7 @@ public:
 	//int (__stdcall *WSASetSocketSecurity)(SOCKET Socket, const SOCKET_SECURITY_SETTINGS *SecuritySettings, ULONG SecuritySettingsLen, LPWSAOVERLAPPED Overlapped, LPWSAOVERLAPPED_COMPLETION_ROUTINE CompletionRoutine);
 
 	// WSAIoctl API
-	// @oooii-tony: What a bizzarre API - why do I need a socket to get a function
+	// @tony: What a bizzarre API - why do I need a socket to get a function
 	// pointer. I guess that means it's only safe to call on the socket specified?
 	// If these fail, use WSAGetLastError() to determine error.
 

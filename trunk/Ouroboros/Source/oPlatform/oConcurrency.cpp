@@ -219,7 +219,7 @@ typedef oProcessHeapAllocator<oTASK> allocator_t;
 				// is important, such as in situations where latency of response is more 
 				// important than efficient throughput.
 
-				// @oooii-tony: This can report a false-positive leak with the Microsoft CRT 
+				// @tony: This can report a false-positive leak with the Microsoft CRT 
 				// leak reporter if task::allocate_root() is called in the middle of a memory
 				// state check block. (working with _CrtMemState elsewhere). See oBug_1856
 				// for more information.
