@@ -24,7 +24,7 @@
  **************************************************************************/
 using namespace ouro;
 
-#include <oPlatform/oMsgBox.h>
+#include <oGUI/oMsgBox.h>
 //#include <oPlatform/oVersionUpdate.h>
 #include "../Source/oStd/win.h"
 

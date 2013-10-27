@@ -175,8 +175,8 @@ namespace ouro {
 	TSTR char* format_commas(STRT& _StrDestination, int _Number) { return format_commas(_StrDestination, _StrDestination.capacity(), _Number); }
 	TSTR char* format_commas(STRT& _StrDestination, unsigned int _Number) { return format_commas(_StrDestination, _StrDestination.capacity(), _Number); }
 
-	TSTR struct equal_to<STRT> { bool operator()(const ouro::STRT& x, const STRT& y) const { return !strcmp(x, y); } };
-	TSTR struct equal_to_case_insensitive<STRT> { bool operator()(const ouro::STRT& x, const STRT& y) const { return !_stricmp(x, y); } };
+	TSTR struct equal_to<STRT> { bool operator()(const STRT& x, const STRT& y) const { return !strcmp(x, y); } };
+	TSTR struct equal_to_case_insensitive<STRT> { bool operator()(const STRT& x, const STRT& y) const { return !_stricmp(x, y); } };
 
 	TSTR struct less<STRT> { bool operator()(const STRT& x, const STRT& y) const { return strcmp(x.c_str(), y.c_str()) < 0; } };
 	TSTR struct less_case_insensitive<STRT> { bool operator()(const STRT& x, const STRT& y) const { return _stricmp(x, y) < 0; } };

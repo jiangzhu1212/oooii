@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Declarations of oStd unit tests. These throw on failure.
+// Declarations of oBase unit tests. These throw on failure.
 #pragma once
 #ifndef oBaseTests_h
 #define oBaseTests_h

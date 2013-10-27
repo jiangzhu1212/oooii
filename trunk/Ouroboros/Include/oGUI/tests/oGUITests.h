@@ -22,81 +22,20 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// Declarations of oGUI unit tests. These throw on failure.
 #pragma once
-#ifndef oKeyState_h
-#define oKeyState_h
+#ifndef oGUITests_h
+#define oGUITests_h
 
-// Useful threadsafe storage for an array of keys/buttons like for keyboards
-// and mice.
+#include <oGUI/tests/oGUITestRequirements.h>
 
-#include <oStd/atomic.h>
+namespace ouro {
+	namespace tests {
 
-template<size_t size> class oKeyState
-{
-	int State[size];
-public:
-	enum STATE
-	{
-		UP,
-		RELEASED,
-		PRESSED,
-		DOWN,
-		REPEATED,
-	};
+		void TESTWindowControls(requirements& _Requirements);
+		void TESTSysDialog(requirements& _Requirements);
 
-	oKeyState()
-	{
-		memset(State, 0, sizeof(State));
-	}
-
-	void PromoteReleasedPressedToUpDown() threadsafe
-	{
-		oFORI(i, State)
-		{
-			int oldState, newState;
-			do
-			{
-				oldState = State[i];
-				if (oldState == PRESSED || oldState == REPEATED)
-					newState = DOWN;
-				else if (oldState == RELEASED)
-					newState = UP;
-				else
-					break;
-
-			} while (!oStd::atomic_compare_exchange(&State[i], newState, oldState));
-		}
-	}
-
-	void RecordUpDown(int _Index, bool _IsDown) threadsafe
-	{
-		if (_Index >= oCOUNTOF(State))
-			return;
-
-		int oldState, newState;
-		do
-		{
-			oldState = State[_Index];
-
-			if (!_IsDown)
-				newState = (State[_Index] >= PRESSED) ? RELEASED : UP;
-			else 
-				newState = (State[_Index] >= PRESSED) ? REPEATED : PRESSED;
-		} while (!oStd::atomic_compare_exchange(&State[_Index], newState, oldState));
-	}
-
-	int FindFirstPressed(int _Start = 0) const threadsafe
-	{
-		for (int i = _Start; i < oCOUNTOF(State); i++)
-			if (IsPressed(i))
-				return i;
-		return -1;
-	}
-
-	bool IsUp(int _Index) const threadsafe { return State[_Index] == UP || State[_Index] == RELEASED; }
-	bool IsReleased(int _Index) const threadsafe { return State[_Index] == RELEASED; }
-	bool IsDown(int _Index) const threadsafe { return State[_Index] >= PRESSED; }
-	bool IsPressed(int _Index) const threadsafe { return State[_Index] == PRESSED || State[_Index] == REPEATED; }
-};
+	} // namespace tests
+} // namespace ouro
 
 #endif

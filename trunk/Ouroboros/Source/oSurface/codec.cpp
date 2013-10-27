@@ -47,9 +47,9 @@ const char* as_string(const surface::file_format::value& _FileFormat)
 file_format::value get_file_format(const char* _FilePath)
 {
 	const char* ext = rstrstr(_FilePath, ".");
-	if (!_stricmp(ext, "png")) return file_format::png;
-	if (!_stricmp(ext, "jpg")) return file_format::jpg;
-	if (!_stricmp(ext, "bmp")) return file_format::bmp;
+	if (!_stricmp(ext, ".png")) return file_format::png;
+	if (!_stricmp(ext, ".jpg")) return file_format::jpg;
+	if (!_stricmp(ext, ".bmp")) return file_format::bmp;
 	return file_format::unknown;
 }
 

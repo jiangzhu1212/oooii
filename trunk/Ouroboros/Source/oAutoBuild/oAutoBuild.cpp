@@ -31,6 +31,7 @@
 #include <oPlatform/oHTTPHandler.h>
 #include <oPlatform/oWebServer.h>
 #include <oPlatform/oStandards.h>
+#include <oGUI/oMsgBox.h>
 
 using namespace ouro;
 
@@ -552,7 +553,7 @@ int main(int argc, const char* argv[])
 		}
 
 		// After the specified timeout try to build the next build
-		uint CurrentTimeMS = oTimerMS();
+		uint CurrentTimeMS = ouro::timer::now_ms();
 		if ((CurrentTimeMS - LastP4CheckMS) > (Settings.NewBuildCheckSeconds * 1000))
 		{
 			LastP4CheckMS = CurrentTimeMS;

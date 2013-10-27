@@ -23,13 +23,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oWindow.h>
-#include <oPlatform/oGUIMenu.h>
-#include <oPlatform/Windows/oGDI.h>
+#include <oGUI/oGUIMenu.h>
+#include <oGUI/Windows/oGDI.h>
 #include <oPlatform/Windows/oWinAsString.h>
-#include <oPlatform/Windows/oWinCursor.h>
-#include <oPlatform/Windows/oWinRect.h>
-#include <oPlatform/Windows/oWinStatusBar.h>
-#include <oPlatform/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oWinCursor.h>
+#include <oGUI/Windows/oWinRect.h>
+#include <oGUI/Windows/oWinStatusBar.h>
+#include <oGUI/Windows/oWinWindowing.h>
 #include <oSurface/codec.h>
 #include <oConcurrency/event.h>
 #include <oConcurrency/mutex.h>
@@ -706,12 +706,12 @@ void oWinWindow::Dispatch(const oTASK& _Task) threadsafe
 static bool oWinWaitUntilOpaque(HWND _hWnd, unsigned int _TimeoutMS)
 {
 	backoff bo;
-	unsigned int Now = oTimerMS();
+	unsigned int Now = ouro::timer::now_ms();
 	unsigned int Then = Now + _TimeoutMS;
 	while (!oWinIsOpaque(_hWnd))
 	{
 		bo.pause();
-		Now = oTimerMS();
+		Now = ouro::timer::now_ms();
 		if (_TimeoutMS != oInfiniteWait && Now > Then)
 			return oErrorSetLast(std::errc::timed_out);
 	}

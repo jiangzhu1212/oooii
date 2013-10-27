@@ -22,11 +22,16 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
+#include <oGUI/tests/oGUITestRequirements.h>
+#include <oGUI/Windows/oWinRect.h>
 #include <oPlatform/oWindow.h>
-#include <oPlatform/Windows/oWinRect.h>
-#include <oPlatform/Windows/oWinControlSet.h>
-#include <oPlatform/Windows/oGDI.h>
+#include <oGUI/Windows/oWinControlSet.h>
+#include <oGUI/Windows/oGDI.h>
+#include <oCore/system.h>
+#include <oStd/for.h>
+
+namespace ouro {
+	namespace tests {
 
 static const bool kInteractiveMode = false;
 
@@ -152,9 +157,9 @@ private:
 	void ActionHook(const oGUI_ACTION_DESC& _Action);
 };
 
-namespace ouro {
+} // namespace tests
 
-bool from_string(oSystemProperties::CONTROL* _pControl, const char* _StrSource)
+bool from_string(tests::oSystemProperties::CONTROL* _pControl, const char* _StrSource)
 {
 	static const char* sStrings[] = 
 	{
@@ -223,12 +228,12 @@ bool from_string(oSystemProperties::CONTROL* _pControl, const char* _StrSource)
 		"ID_CANCEL",
 		"ID_APPLY",
 	};
-	static_assert(oCOUNTOF(sStrings) == oSystemProperties::NUM_CONTROLS, "Mismatched Control enum");
+	static_assert(oCOUNTOF(sStrings) == tests::oSystemProperties::NUM_CONTROLS, "Mismatched Control enum");
 	for (size_t i = 0; i < oCOUNTOF(sStrings); i++)
 	{
 		if (!strcmp(_StrSource, sStrings[i]))
 		{
-			*_pControl = (oSystemProperties::CONTROL)i;
+			*_pControl = (tests::oSystemProperties::CONTROL)i;
 			return true;
 		}
 	}
@@ -236,7 +241,7 @@ bool from_string(oSystemProperties::CONTROL* _pControl, const char* _StrSource)
 	return false;
 }
 
-} // namespace ouro
+namespace tests {
 
 oSystemProperties::oSystemProperties(bool* _pSuccess)
 	: Running(true)
@@ -404,63 +409,48 @@ static void OverwriteVariableColors(ouro::surface::buffer* _pBuffer)
 		ouro::surface::put(sri, &lock.mapped, c, ouro::Red);
 }
 
-struct PLATFORM_WindowSysDialog : public oTest
+void TESTSysDialog(requirements& _Requirements)
 {
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus)
-	{
-		if (ouro::system::is_remote_session())
-		{
-			snprintf(_StrStatus, _SizeofStrStatus, "Detected remote session: differing text anti-aliasing will cause bad image compares");
-			return SKIPPED;
-		}
+	if (ouro::system::is_remote_session())
+		oTHROW(permission_denied, "Detected remote session: differing text anti-aliasing will cause bad image compares");
 
-		bool success = false;
-		oSystemProperties test(&success);
-		oTESTB0(success);
+	bool success = false;
+	oSystemProperties test(&success);
+	if (!success)
+		oTHROW(protocol_error, "failed to construct test window");
 		
-		do
+	do
+	{
+		test.GetWindow()->FlushMessages();
+
+	} while (kInteractiveMode && test.GetRunning());
+
+	if (!kInteractiveMode)
+	{
+		oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->CreateSnapshot();
+		test.GetWindow()->FlushMessages();
+
+		std::shared_ptr<ouro::surface::buffer> s = snapshot.get();
+		_Requirements.check(s, 0);
+
+		for (int i = 0; i < 5; i++)
 		{
+			test.ShowTab(i);
+			snapshot = test.GetWindow()->CreateSnapshot();
 			test.GetWindow()->FlushMessages();
-
-		} while (kInteractiveMode && test.GetRunning());
-
-		if (!kInteractiveMode)
-		{
-			oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->CreateSnapshot();
-			test.GetWindow()->FlushMessages();
-
-			oTESTFI(snapshot);
-
-			for (int i = 0; i < 5; i++)
-			{
-				test.ShowTab(i);
-				snapshot = test.GetWindow()->CreateSnapshot();
-				test.GetWindow()->FlushMessages();
+			s = snapshot.get();
 				
-				// special-case instance that returns 4 pixels off due to what seems to
-				// be indeterminate behavior in win32 rendering (clear type) that cannot
-				// be turned off dynamically.
-				if (i == 3)
-				{
-					oTEST_FUTURE(snapshot);
-					std::shared_ptr<ouro::surface::buffer> image;
-					try { image = snapshot.get(); }
-					catch (std::exception& e)
-					{
-						oErrorSetLast(e);
-						return oTest::FAILURE;
-					}
-					OverwriteVariableColors(image.get());
-					oTESTI2(image, i);
-				}
+			// special-case instance that returns 4 pixels off due to what seems to
+			// be indeterminate behavior in win32 rendering (clear type) that cannot
+			// be turned off dynamically.
+			if (i == 3)
+				OverwriteVariableColors(s.get());
 
-				else
-					oTESTFI2(snapshot, i);
-			}
+			_Requirements.check(s, i);
 		}
-
-		return SUCCESS;
 	}
-};
+}
 
-oTEST_REGISTER(PLATFORM_WindowSysDialog);
+	} // namespace tests
+} // namespace ouro
+

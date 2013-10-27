@@ -30,10 +30,8 @@
 #include <oStd/atomic.h>
 #include <oBase/color.h>
 #include <oBasis/oGUI.h>
-#include "../Source/oStd/win.h"
-
-#include <oPlatform/Windows/oWinWindowing.h>
-#include <oPlatform/Windows/oWinRect.h>
+#include <oGUI/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oWinRect.h>
 
 // For functions that take logical height. Point size is like what appears in 
 // most Windows API.

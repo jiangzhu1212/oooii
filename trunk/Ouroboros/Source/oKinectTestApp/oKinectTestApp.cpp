@@ -25,13 +25,13 @@
 
 #include <oKinect/oKinect.h>
 #include <oKinect/oKinectGDI.h>
-#include <oPlatform/Windows/oGDI.h>
+#include <oGUI/Windows/oGDI.h>
 #include "../Source/oStd/win.h"
 #include <oPlatform/Windows/oWinSkeleton.h>
-#include <oPlatform/Windows/oWinRect.h>
+#include <oGUI/Windows/oWinRect.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
-#include <oPlatform/oMsgBox.h>
+#include <oGUI/oMsgBox.h>
 #include <oPlatform/oWindow.h>
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oInputMapper.h>

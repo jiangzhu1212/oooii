@@ -255,7 +255,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 		oConcurrency::lock_guard<oConcurrency::mutex> lock(Mutex);
 		oIOCPOrphan Context;
 		Context.pContext = _pContext;
-		Context.TimeReleased = oTimer();
+		Context.TimeReleased = ouro::timer::now();
 		OrphanedContexts.push_back(Context);
 		do
 		{
@@ -281,7 +281,7 @@ private:
 
 	void CheckForOrphans(bool _Force = false)
 	{
-		double Time = oTimer();
+		double Time = ouro::timer::now();
 		for(tOrphanList::iterator o = OrphanedContexts.begin(); o != OrphanedContexts.end();)
 		{
 			double ReleaseTime = o->TimeReleased;

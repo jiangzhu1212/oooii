@@ -22,12 +22,12 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/Windows/oWinTray.h>
+#include <oGUI/Windows/oWinTray.h>
 #include <oConcurrency/mutex.h>
 #include <oStd/thread.h>
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oSingleton.h>
-#include <oPlatform/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oWinWindowing.h>
 #include <shellapi.h>
 
 #if (defined(NTDDI_WIN7) && (NTDDI_VERSION >= NTDDI_WIN7))
@@ -266,7 +266,7 @@ void oTraySetFocus()
 
 // Because this can call a timeout value that can occur after a synchronous 
 // report leaks, ensure we wait for it before reporting a false positive...
-#include "oCRTLeakTracker.h"
+#include "../Source/oPlatform/oCRTLeakTracker.h" // FIXME
 
 static void DeferredHideIcon(HWND _hWnd, UINT _ID, unsigned int _TimeoutMS)
 {

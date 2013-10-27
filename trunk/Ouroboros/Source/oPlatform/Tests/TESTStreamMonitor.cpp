@@ -59,7 +59,7 @@ struct PLATFORM_oStreamMonitor : public oTest
 		oStreamDelete(NonZeroFile);
 		oStreamDelete(ZeroFile);
 
-		double startTime = oTimer();
+		double startTime = ouro::timer::now();
 
 		oSTREAM_MONITOR_DESC md;
 		md.Monitor = FolderToMonitor;
@@ -73,7 +73,7 @@ struct PLATFORM_oStreamMonitor : public oTest
 			// callbacks once the test is finished.
 			[startTime, Events](oSTREAM_EVENT _Event, const ouro::uri_string& _ChangedURI)
 			{
-				int timeMS = static_cast<int>((oTimer() - startTime) * 1000);
+				int timeMS = static_cast<int>((ouro::timer::now() - startTime) * 1000);
 				switch (_Event)
 				{
 					case oSTREAM_ADDED:
@@ -101,7 +101,7 @@ struct PLATFORM_oStreamMonitor : public oTest
 					}
 				}
 
-				Events->LastEventTimestamp = oTimer();
+				Events->LastEventTimestamp = ouro::timer::now();
 				oTRACE("Events->LastEventTimestamp = %f", Events->LastEventTimestamp);
 			},
 		&Monitor));

@@ -114,7 +114,7 @@ oWinKinect10::~oWinKinect10()
 
 	oFOR(oStd::thread::id TID, TIDs)
 	{
-		HANDLE hThread = OpenThread(THREAD_TERMINATE, FALSE, *((DWORD*)&TID));
+		HANDLE hThread = OpenThread(THREAD_TERMINATE, FALSE, asdword(TID));
 		if (hThread)
 		{
 			try { TerminateThread(hThread, 0xdeadc0de); }

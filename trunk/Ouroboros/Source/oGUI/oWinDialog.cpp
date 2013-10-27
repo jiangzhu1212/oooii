@@ -22,9 +22,9 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/Windows/oWindows.h>
-#include <oPlatform/Windows/oWinRect.h>
-#include <oPlatform/oMsgBox.h>
+#include <oGUI/Windows/oWinDialog.h>
+#include <oGUI/Windows/oWinRect.h>
+#include <oGUI/oMsgBox.h>
 
 static WORD oDlgGetClass(oWINDOWS_DIALOG_ITEM_TYPE _Type)
 {

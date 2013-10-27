@@ -632,7 +632,7 @@ struct oFileMonitorImpl : public oStreamMonitor
 	void OnDirectoryChanges(FILE_NOTIFY_INFORMATION* _pNotify)
 	{
 		FILE_NOTIFY_INFORMATION* n = _pNotify;
-		double Now = oTimer();
+		double Now = ouro::timer::now();
 		do
 		{
 			oSTREAM_EVENT e = oAsStreamEvent(n->Action);

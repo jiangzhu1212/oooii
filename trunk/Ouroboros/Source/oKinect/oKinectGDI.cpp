@@ -27,7 +27,7 @@
 
 #ifdef oHAS_KINECT_SDK
 
-#include <oPlatform/Windows/oWinRect.h>
+#include <oGUI/Windows/oWinRect.h>
 #include <NuiApi.h>
 
 using namespace ouro;

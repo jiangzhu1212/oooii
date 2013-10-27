@@ -22,20 +22,44 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/Windows/oWinRect.h>
+// Anything that might want to be consistently controlled by a unit test 
+// infrastructure is separated out into this virtual interface.
+#pragma once
+#ifndef oGUITestRequirements_h
+#define oGUITestRequirements_h
 
-RECT oWinRectResolve(const int2& _Anchor, const int2& _Size, oGUI_ALIGNMENT _Alignment)
+#include <oBase/config.h>
+#include <oSurface/buffer.h>
+#include <stdarg.h>
+
+namespace ouro {
+	namespace tests {
+
+interface requirements
 {
-	int2 offset(0,0);
-	int2 code = int2(_Alignment % 3, _Alignment / 3);
+	virtual void vreport(const char* _Format, va_list _Args) = 0;
+	inline void report(const char* _Format, ...) { va_list a; va_start(a, _Format); vreport(_Format, a); va_end(a); }
 
-	// center/middle
-	if (code.x == 1) offset.x = -_Size.x / 2;
-	if (code.y == 1) offset.y = -_Size.y / 2;
+	// This function compares the specified surface to a golden image named after
+	// the test's name suffixed with _NthTest. If _NthTest is 0 then the golden 
+	// image should not have a suffix. If _MaxRMSError is negative a default 
+	// should be used. If the surfaces are not similar this throws an exception.
+	virtual void check(const surface::buffer* _pBuffer
+		, int _NthTest = 0
+		, float _MaxRMSError = -1.0f) = 0;
 
-	// right/bottom
-	if (code.x == 2) offset.x = -_Size.x;
-	if (code.y == 2) offset.y = -_Size.y;
+	inline void check(std::shared_ptr<surface::buffer>& _pBuffer
+		, int _NthTest = 0
+		, float _MaxRMSError = -1.0f)
+	{ check(_pBuffer.get(), _NthTest, _MaxRMSError); }
 
-	return oWinRectTranslate(oWinRectWH(_Anchor, _Size), offset);
-}
+	inline void check(std::shared_ptr<const surface::buffer>& _pBuffer
+		, int _NthTest = 0
+		, float _MaxRMSError = -1.0f)
+	{ check(_pBuffer.get(), _NthTest, _MaxRMSError); }
+};
+
+	} // namespace tests
+} // namespace ouro
+
+#endif

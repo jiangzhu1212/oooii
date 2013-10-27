@@ -22,83 +22,13 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oStandards.h>
-#include <oBase/assert.h>
-#include <oStd/chrono.h>
-#include <oPlatform/oConsole.h>
-#include <oGUI/Windows/oGDI.h>
-#include <oGUI/oMsgBox.h>
+#pragma once
+#ifdef oPCH
+#include <oStd/all.h>
+#include <oBase/all.h>
+#include <oBase/all_libc.h>
+#include <oCore/all.h>
+#include <oHLSL/all.h>
+#include <oSurface/all.h>
 #include "../Source/oStd/win.h"
-#include <oPlatform/oStream.h>
-
-using namespace ouro;
-
-void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list _Args )
-{
-	static const color fg[] = 
-	{
-		color(0),
-		Lime,
-		White,
-		color(0),
-		Yellow,
-		Red,
-		Yellow,
-	};
-	static_assert(oCOUNTOF(fg) == NUM_REPORT_TYPES, "");
-
-	static const color bg[] = 
-	{
-		color(0),
-		color(0),
-		color(0),
-		color(0),
-		color(0),
-		color(0),
-		Red,
-	};
-	static_assert(oCOUNTOF(fg) == NUM_REPORT_TYPES, "");
-
-	if (_Type == HEADING)
-	{
-		char msg[2048];
-		vsnprintf(msg, _Format, _Args);
-		toupper(msg);
-		oConsole::fprintf(stdout, fg[_Type], bg[_Type], msg);
-	}
-	else
-	{
-		oConsole::vfprintf(stdout,fg[_Type], bg[_Type], _Format, _Args );
-	}
-}
-
-bool oMoveMouseCursorOffscreen()
-{
-	int2 p, sz;
-	ouro::display::virtual_rect(&p.x, &p.y, &sz.x, &sz.y);
-	return !!SetCursorPos(p.x + sz.x, p.y-1);
-}
-
-
-bool oINIFindPath( char* _StrDestination, size_t _SizeofStrDestination, const char* _pININame )
-{
-	snprintf(_StrDestination, _SizeofStrDestination, "../%s", _pININame);
-	if(oStreamExists(_StrDestination))
-		return true;
-
-	path AppDir = ouro::filesystem::app_path();
-
-	snprintf(_StrDestination, _SizeofStrDestination, "%s/../%s", AppDir, _pININame);
-	if(oStreamExists(_StrDestination))
-		return true;
-
-	snprintf(_StrDestination, _SizeofStrDestination, "%s", _pININame);
-	if(oStreamExists(_StrDestination))
-		return true;
-
-	snprintf(_StrDestination, _SizeofStrDestination, "%s/%s", AppDir, _pININame);
-	if(oStreamExists(_StrDestination))
-		return true;
-
-	return oErrorSetLast(std::errc::no_such_file_or_directory, "No ini file %s found.", _pININame);
-}
+#endif

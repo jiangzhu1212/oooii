@@ -24,7 +24,7 @@
  **************************************************************************/
 #include "oKinectSkeleton.h"
 #include <oPlatform/Windows/oWinSkeleton.h>
-#include <oPlatform/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oWinWindowing.h>
 
 #ifdef oHAS_KINECT_SDK
 
@@ -68,7 +68,7 @@ void oKinectSkeleton::Cache(HWND _hWnd, const NUI_SKELETON_DATA& _NSD) threadsaf
 {
 	if (_NSD.eTrackingState == NUI_SKELETON_TRACKED)
 	{
-		LastTrackedTimestamp = oTimer();
+		LastTrackedTimestamp = ouro::timer::now();
 
 		if (!Skeleton.SourceID)
 		{
@@ -105,7 +105,7 @@ void oKinectSkeleton::Cache(HWND _hWnd, const NUI_SKELETON_DATA& _NSD) threadsaf
 
 void oKinectSkeleton::CheckTrackingTimeout(HWND _hWnd, double _TimeoutThresholdInSeconds) threadsafe
 {
-	if (Skeleton.SourceID && (oTimer() - LastTrackedTimestamp) > _TimeoutThresholdInSeconds)
+	if (Skeleton.SourceID && (ouro::timer::now() - LastTrackedTimestamp) > _TimeoutThresholdInSeconds)
 	{
 		Invalidate();
 		PostMessage(_hWnd, oWM_USER_LOST, Skeleton.SourceID, 0);

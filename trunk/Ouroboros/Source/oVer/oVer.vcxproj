@@ -194,6 +194,9 @@
     <ProjectReference Include="..\oCore\oCore.vcxproj">
       <Project>{7dc758b0-32cf-4bbc-abde-0eb53b9ef93c}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\oGUI\oGUI.vcxproj">
+      <Project>{5461da23-f040-4979-a492-e23b26d87163}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\oHLSL\oHLSL.vcxproj">
       <Project>{aae3c7d9-8124-4b5a-856c-4c5bf23cdb09}</Project>
     </ProjectReference>

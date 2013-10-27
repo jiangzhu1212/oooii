@@ -29,9 +29,9 @@
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSingleton.h>
-#include <oPlatform/Windows/oGDI.h>
-#include <oPlatform/Windows/oWinRect.h>
-#include <oPlatform/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oGDI.h>
+#include <oGUI/Windows/oWinRect.h>
+#include <oGUI/Windows/oWinWindowing.h>
 #include <oPlatform/oStream.h>
 
 using namespace ouro;

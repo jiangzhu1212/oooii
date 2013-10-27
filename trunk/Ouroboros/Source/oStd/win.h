@@ -139,6 +139,9 @@ inline ULONG ref_count(IUnknown* unk) { ULONG r = unk->AddRef()-1; unk->Release(
 inline void intrusive_ptr_add_ref(IUnknown* unk) { unk->AddRef(); }
 inline void intrusive_ptr_release(IUnknown* unk) { unk->Release(); }
 
+// primarily intended for id classes
+template<typename T> DWORD asdword(const T& _ID) { return *((DWORD*)&_ID); }
+
 namespace oStd {
 	namespace windows {
 

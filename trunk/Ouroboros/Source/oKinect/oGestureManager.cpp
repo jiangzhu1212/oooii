@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oKinect/oGestureManager.h>
 #include <oPlatform/oStreamUtil.h>
-#include <oPlatform/Windows/oGDI.h>
+#include <oGUI/Windows/oGDI.h>
 #include <oPlatform/Windows/oWinSkeleton.h>
 #include <oKinect/oKinectGDI.h>
 #include <oBasis/oAirKeyboard.h>

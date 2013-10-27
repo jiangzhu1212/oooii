@@ -24,11 +24,12 @@
  **************************************************************************/
 #include <oBasis/oOBJ.h>
 #include <oBasis/oError.h>
-#include <oBase/finally.h>
-#include <oBasis/oTimer.h>
 #include <oBasis/tests/oBasisTests.h>
 #include "oBasisTestCommon.h"
 #include "oBasisTestOBJ.h"
+
+#include <oBase/finally.h>
+#include <oBase/timer.h>
 
 using namespace ouro;
 
@@ -75,7 +76,7 @@ static bool oBasisTest_oOBJLoad(const oBasisTestServices& _Services, const char*
 	intrusive_ptr<threadsafe oOBJ> obj;
 	char* pOBJBuffer = nullptr;
 	size_t Size = 0;
-	double start = oTimer();
+	double start = ouro::timer::now();
 	if (!_Services.AllocateAndLoadBuffer((void**)&pOBJBuffer, &Size, path, true))
 		return false;
 
@@ -87,7 +88,7 @@ static bool oBasisTest_oOBJLoad(const oBasisTestServices& _Services, const char*
 		return false;
 
 	if (_pLoadTime)
-		*_pLoadTime = oTimer() - start;
+		*_pLoadTime = ouro::timer::now() - start;
 
 	return true;
 }

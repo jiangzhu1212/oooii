@@ -25,8 +25,8 @@
 #include "oKinectSkeletonStream.h"
 
 #ifdef oHAS_KINECT_SDK
-#include <oPlatform/Windows/oGDI.h>
-#include <oPlatform/Windows/oWinRect.h>
+#include <oGUI/Windows/oGDI.h>
+#include <oGUI/Windows/oWinRect.h>
 #include "oWinKinect10.h"
 #include <oKinect/oKinectUtil.h>
 

@@ -28,7 +28,7 @@
 #include <oBasis/oLockThis.h>
 #include <oPlatform/Windows/oD3D11.h>
 #include <oPlatform/Windows/oDXGI.h>
-#include <oPlatform/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oWinWindowing.h>
 
 #include "oD3D11Buffer.h"
 #include "oD3D11Pipeline.h"

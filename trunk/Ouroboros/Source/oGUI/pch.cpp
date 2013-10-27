@@ -22,41 +22,4 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Utilities for drawing Kinect visualizations with GDI.
-#pragma once
-#ifndef oKinectGDI_h
-#define oKinectGDI_h
-
-#include <oBasis/oAirKeyboard.h>
-#include <oKinect/oKinect.h>
-#include <oGUI/Windows/oGDI.h>
-
-static const int oGDI_KINECT_DRAW_SKELETON = 1;
-static const int oGDI_KINECT_DRAW_CLIPPING = 2;
-static const int oGDI_KINECT_DRAW_BONE_NAMES = 4;
-
-// Given a bone position, draw text in screen space at the specified offset 
-// from the specified anchor point of the text's bounding box.
-void oGDIDrawBoneText(
-	HDC _hDC
-	, const RECT& _rTarget
-	, const float4& _BonePosition
-	, oGUI_ALIGNMENT _Anchor
-	, const int2& _Offset
-	, oGUI_ALIGNMENT _Alignment
-	, const char* _Text
-	);
-
-// Draws a rectangle filled with one of the frame types with an optional 
-// skeleton overlay based on the current state of the specified Kinect device.
-void oGDIDrawKinect(HDC _hDC, const RECT& _rTarget, oKINECT_FRAME_TYPE _Type, int _Flags, const threadsafe oKinect* _pKinect);
-
-static const int oGDI_AIR_KEY_DRAW_RECT = 0;
-static const int oGDI_AIR_KEY_DRAW_BOX = 1;
-static const int oGDI_AIR_KEY_DRAW_KEY = 2;
-static const int oGDI_AIR_KEY_DRAW_MIN = 4;
-static const int oGDI_AIR_KEY_DRAW_MAX = 8;
-
-void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& _Key, oGUI_ACTION _LastAction, const oGUI_BONE_DESC& _Skeleton);
-
-#endif
+#include "pch.h"

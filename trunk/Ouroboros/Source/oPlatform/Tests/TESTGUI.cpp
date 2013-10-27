@@ -22,83 +22,44 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oStandards.h>
-#include <oBase/assert.h>
-#include <oStd/chrono.h>
-#include <oPlatform/oConsole.h>
-#include <oGUI/Windows/oGDI.h>
-#include <oGUI/oMsgBox.h>
-#include "../Source/oStd/win.h"
-#include <oPlatform/oStream.h>
+#include <oGUI/tests/oGUITests.h>
+#include <oCore/filesystem.h>
+#include "oTestIntegration.h"
+#include <cstdlib>
 
-using namespace ouro;
+namespace ouro {
+	namespace tests {
+		namespace gui {
 
-void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list _Args )
+struct requirements_implementation : requirements
 {
-	static const color fg[] = 
+	void vreport(const char* _Format, va_list _Args) override
 	{
-		color(0),
-		Lime,
-		White,
-		color(0),
-		Yellow,
-		Red,
-		Yellow,
-	};
-	static_assert(oCOUNTOF(fg) == NUM_REPORT_TYPES, "");
-
-	static const color bg[] = 
-	{
-		color(0),
-		color(0),
-		color(0),
-		color(0),
-		color(0),
-		color(0),
-		Red,
-	};
-	static_assert(oCOUNTOF(fg) == NUM_REPORT_TYPES, "");
-
-	if (_Type == HEADING)
-	{
-		char msg[2048];
-		vsnprintf(msg, _Format, _Args);
-		toupper(msg);
-		oConsole::fprintf(stdout, fg[_Type], bg[_Type], msg);
+		oErrorSetLastV(0, _Format, _Args);
+		oTRACEA("%s", oErrorGetLastString());
 	}
-	else
+
+	void check(const surface::buffer* _pBuffer
+		, int _NthTest = 0
+		, float _MaxRMSError = -1.0f)
 	{
-		oConsole::vfprintf(stdout,fg[_Type], bg[_Type], _Format, _Args );
+		extern oTest* g_Test;
+		if (!g_Test->TestImage(_pBuffer, _NthTest, oDEFAULT, _MaxRMSError, oDEFAULT))
+			oThrowLastError();
 	}
-}
+};
 
-bool oMoveMouseCursorOffscreen()
-{
-	int2 p, sz;
-	ouro::display::virtual_rect(&p.x, &p.y, &sz.x, &sz.y);
-	return !!SetCursorPos(p.x + sz.x, p.y-1);
-}
+		} // namespace gui
+	} // namespace tests
+} // namespace ouro
 
+using namespace ouro::tests::gui;
 
-bool oINIFindPath( char* _StrDestination, size_t _SizeofStrDestination, const char* _pININame )
-{
-	snprintf(_StrDestination, _SizeofStrDestination, "../%s", _pININame);
-	if(oStreamExists(_StrDestination))
-		return true;
+#define oTEST_REGISTER_GUI_TEST0(_Name) oTEST_THROWS_REGISTER0(oCONCAT(oGUI_, _Name), oCONCAT(TEST, _Name))
+#define oTEST_REGISTER_GUI_TEST(_Name) oTEST_THROWS_REGISTER(oCONCAT(oGUI_, _Name), oCONCAT(TEST, _Name))
 
-	path AppDir = ouro::filesystem::app_path();
+#define oTEST_REGISTER_GUI_TEST_BUGGED0(_Name) oTEST_THROWS_REGISTER_BUGGED0(oCONCAT(oGUI_, _Name), oCONCAT(TEST, _Name))
+#define oTEST_REGISTER_GUI_TEST_BUGGED(_Name) oTEST_THROWS_REGISTER_BUGGED(oCONCAT(oGUI_, _Name), oCONCAT(TEST, _Name))
 
-	snprintf(_StrDestination, _SizeofStrDestination, "%s/../%s", AppDir, _pININame);
-	if(oStreamExists(_StrDestination))
-		return true;
-
-	snprintf(_StrDestination, _SizeofStrDestination, "%s", _pININame);
-	if(oStreamExists(_StrDestination))
-		return true;
-
-	snprintf(_StrDestination, _SizeofStrDestination, "%s/%s", AppDir, _pININame);
-	if(oStreamExists(_StrDestination))
-		return true;
-
-	return oErrorSetLast(std::errc::no_such_file_or_directory, "No ini file %s found.", _pININame);
-}
+oTEST_REGISTER_GUI_TEST(WindowControls);
+oTEST_REGISTER_GUI_TEST(SysDialog);

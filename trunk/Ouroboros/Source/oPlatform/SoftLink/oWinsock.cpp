@@ -25,8 +25,9 @@
 #include "oWinsock.h"
 #include <oBase/assert.h>
 #include <oBasis/oError.h>
+#include <oBasis/oTimer.h>
 #include <oPlatform/oReporting.h>
-#include <oPlatform/oMsgBox.h>
+#include <oGUI/oMsgBox.h>
 #include <cerrno>
 
 using namespace ouro;

@@ -23,9 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oSurface/fill.h>
-#include <oPlatform/Windows/oGDI.h>
+#include <oGUI/Windows/oGDI.h>
 #include <oPlatform/oTest.h>
-#include <oPlatform/Windows/oWinRect.h>
+#include <oGUI/Windows/oWinRect.h>
 
 void PlatformFillGridNumbers(ouro::surface::buffer* _pBuffer
 	, const int2& _GridDimensions, ouro::color _NumberColor)

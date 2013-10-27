@@ -23,9 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 
-#include <oPlatform/Windows/oGDI.h>
-#include <oPlatform/oGUIMenu.h>
-#include <oPlatform/oMsgBox.h>
+#include <oGUI/Windows/oGDI.h>
+#include <oGUI/oGUIMenu.h>
+#include <oGUI/oMsgBox.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oWindow.h>
 #include "resource.h"

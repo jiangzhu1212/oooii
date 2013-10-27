@@ -22,18 +22,12 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/Windows/oWinWindowing.h>
-
-//#include <oBase/assert.h>
-//#include <oBase/fixed_string.h>
-//#include <oStd/chrono.h>
-//#include <oConcurrency/mutex.h>
-//#include <oPlatform/oDisplay.h>
-
-#include <oPlatform/Windows/oWinKey.h>
-#include <oPlatform/Windows/oGDI.h>
-#include <oPlatform/Windows/oWinRect.h>
-#include <oPlatform/Windows/oWinStatusBar.h>
+#include <oGUI/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oWinKey.h>
+#include <oGUI/Windows/oGDI.h>
+#include <oGUI/Windows/oWinRect.h>
+#include <oGUI/Windows/oWinStatusBar.h>
+#include <oBase/timer.h>
 
 #include <SetupAPI.h>
 #include <Shlwapi.h>
@@ -74,12 +68,12 @@ enum oUS_USAGE
 
 #define oWIN_CHECK(_hWnd) do \
 	{	if (!oWinExists(_hWnd)) return oErrorSetLast(std::errc::invalid_argument, "Invalid HWND 0x%x specified", _hWnd); \
-		if (!oWinIsWindowThread(_hWnd)) return oErrorSetLast(std::errc::operation_not_permitted, "This function must be called on the window thread %d for HWND 0x%x", oConcurrency::asuint(oStd::this_thread::get_id()), _hWnd); \
+		if (!oWinIsWindowThread(_hWnd)) return oErrorSetLast(std::errc::operation_not_permitted, "This function must be called on the window thread %d for HWND 0x%x", asdword(oStd::this_thread::get_id()), _hWnd); \
 	} while (false)
 
 #define oWIN_CHECK0(_hWnd) do \
 	{	if (!oWinExists(_hWnd)) { oErrorSetLast(std::errc::invalid_argument, "Invalid HWND 0x%x specified", _hWnd); return 0; } \
-		if (!oWinIsWindowThread(_hWnd)) { oErrorSetLast(std::errc::operation_not_permitted, "This function must be called on the window thread %d for HWND 0x%x", oConcurrency::asuint(oStd::this_thread::get_id()), _hWnd); return 0; } \
+		if (!oWinIsWindowThread(_hWnd)) { oErrorSetLast(std::errc::operation_not_permitted, "This function must be called on the window thread %d for HWND 0x%x", asdword(oStd::this_thread::get_id()), _hWnd); return 0; } \
 	} while (false)
 
 static const char* kRegisteredWindowMessages[] = 
@@ -559,7 +553,7 @@ bool oWinGetProcessTopWindowAndThread(ouro::process::id _ProcessID
 #define oWINVP(_hWnd) \
 	if (!oWinExists(_hWnd)) \
 		{ oErrorSetLast(std::errc::invalid_argument, "Invalid HWND %p specified", _hWnd); return nullptr; } \
-	oASSERT(oWinIsWindowThread(_hWnd), "This function must be called on the window thread %d for %p", oConcurrency::asuint(oStd::this_thread::get_id()), _hWnd)
+	oASSERT(oWinIsWindowThread(_hWnd), "This function must be called on the window thread %d for %p", asdword(oStd::this_thread::get_id()), _hWnd)
 
 inline bool oErrorSetLastBadType(HWND _hControl, oGUI_CONTROL_TYPE _Type) { return oErrorSetLast(std::errc::invalid_argument, "The specified %s %p (%d) is not valid for this operation", as_string(_Type), _hControl, GetDlgCtrlID(_hControl)); }
 
@@ -717,8 +711,8 @@ HWND oWinCreate(HWND _hParent
 	oTRACE("HWND 0x%x '%s' running on thread %d (0x%x)"
 		, hWnd
 		, oSAFESTRN(_Title)
-		, oConcurrency::asuint(oStd::this_thread::get_id())
-		, oConcurrency::asuint(oStd::this_thread::get_id()));
+		, asdword(oStd::this_thread::get_id())
+		, asdword(oStd::this_thread::get_id()));
 
 	oVERIFY(oWinRegisterDeviceChangeEvents(hWnd));
 
@@ -894,7 +888,7 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 			case WM_WINDOWPOSCHANGED:
 			{
 				if (IsWindowVisible(_hWnd))
-					SetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP, (ULONG_PTR)oTimerMS());
+					SetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP, (ULONG_PTR)ouro::timer::now_ms());
 				else
 					SetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP, (ULONG_PTR)-1);
 				break;
@@ -944,14 +938,14 @@ oStd::thread::id oWinGetWindowThread(HWND _hWnd)
 
 bool oWinIsOpaque(HWND _hWnd)
 {
-	// @oooii-tony: I can't find API to ask about the opacity of an HWND, so just
-	// wait for a while.
+	// @tony: I can't find API to ask about the opacity of an HWND, so just wait 
+	// for a while.
 	oWIN_CHECK(_hWnd);
 	static const intptr_t kFadeInTime = 200;
 	intptr_t LastShowTimestamp = (intptr_t)GetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP);
 	if (LastShowTimestamp < 0)
 		return false;
-	intptr_t Now = oTimerMS();
+	intptr_t Now = ouro::timer::now_ms();
 	return (LastShowTimestamp + kFadeInTime) < Now;
 }
 
@@ -2519,15 +2513,13 @@ bool oWinControlAddSubItems(HWND _hControl, const char* _DelimitedString, char _
 	oWIN_CHECK(_hControl);
 	char delim[2] = { _Delimiter, 0 };
 	char* ctx = nullptr;
-	const char* tok = oStrTok(_DelimitedString, delim, &ctx);
+	std::string copy(_DelimitedString);
+	const char* tok = strtok_r((char*)copy.c_str(), delim, &ctx);
 	while (tok)
 	{
 		oWinControlInsertSubItem(_hControl, tok, oInvalid);
-		tok = oStrTok(nullptr, delim, &ctx);
+		tok = strtok_r(nullptr, delim, &ctx);
 	}
-
-	if (!oStrTokFinishedSuccessfully(&ctx))
-		return oErrorSetLast(std::errc::protocol_error, "Failed to parse tokenized string for combobox values");
 	return true;
 }
 

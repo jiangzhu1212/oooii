@@ -142,9 +142,6 @@
     <ClCompile Include="Tests\TESTSocketAsync.cpp" />
     <ClCompile Include="Tests\TESTSocketBlocking.cpp" />
     <ClCompile Include="Tests\TESTStreamMonitor.cpp" />
-    <ClCompile Include="Tests\TESTWindowControls.cpp" />
-    <ClCompile Include="Tests\TESTWindowSysDialog.cpp" />
-    <ClCompile Include="Tests\TESTWindowSysDialog_UI.cpp" />
     <ClCompile Include="Tests\TESTWinRegistry.cpp" />
   </ItemGroup>
   <ItemGroup>

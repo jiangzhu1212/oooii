@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/Windows/oWinKey.h>
+#include <oGUI/Windows/oWinKey.h>
 
 DWORD oWinKeyTranslate(DWORD _vkCode, oWINKEY_CONTROL_STATE* _pState)
 {
@@ -682,7 +682,7 @@ void oWinKeySend(HWND _hWnd, const char* _String)
 
 
 #else
-#include <oPlatform/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oWinWindowing.h>
 void AppendKey(short int _Key, bool _KeyUp, INPUT** _ppInput)
 {
 	auto& pInput = *_ppInput;
@@ -699,10 +699,8 @@ void AppendKey(short int _Key, bool _KeyUp, INPUT** _ppInput)
 void oWinKeySend(HWND _hWnd, oGUI_KEY _Key, bool _IsDown, const int2& _MousePosition)
 {
 	INPUT Input;
-
-	const DWORD TID = oConcurrency::asuint(oWinGetWindowThread(_hWnd));
-
-	AttachThreadInput(GetCurrentThreadId(), TID, true);
+	oStd::thread::id tid = oWinGetWindowThread(_hWnd);
+	AttachThreadInput(GetCurrentThreadId(), asdword(tid), true);
 	
 	switch (oGUIDeviceFromKey(_Key))
 	{
@@ -754,7 +752,7 @@ void oWinKeySend(HWND _hWnd, oGUI_KEY _Key, bool _IsDown, const int2& _MousePosi
 		oNODEFAULT;
 	}
 	
-	AttachThreadInput(GetCurrentThreadId(), TID, false);
+	AttachThreadInput(GetCurrentThreadId(), asdword(tid), false);
 }
 
 bool oWinSendKeys(HWND _hWnd, unsigned int _ThreadID, short int* _pVKeys, int _NumberKeys)

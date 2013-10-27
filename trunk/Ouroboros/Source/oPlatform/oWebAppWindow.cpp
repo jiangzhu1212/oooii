@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oPlatform/oWebAppWindow.h>
 #include <oBasis/oLockThis.h>
-#include <oPlatform/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oWinWindowing.h>
 
 enum OWEB_APP_WINDOW_CONTROLS
 {
@@ -74,12 +74,12 @@ public:
 	void Close() threadsafe override { Running = false; }
 	bool WaitUntilClosed(unsigned int _TimeoutMS = oInfiniteWait) threadsafe
 	{
-		unsigned int TimedOut = oTimerMS() + _TimeoutMS;
+		unsigned int TimedOut = ouro::timer::now_ms() + _TimeoutMS;
 		bool IsTimedOut = false;
 		while (Running && !IsTimedOut)
 		{
 			Window->FlushMessages();
-			IsTimedOut = (_TimeoutMS != oInfiniteWait) && (oTimerMS() > TimedOut);
+			IsTimedOut = (_TimeoutMS != oInfiniteWait) && (ouro::timer::now_ms() > TimedOut);
 		}
 
 		return !IsTimedOut;

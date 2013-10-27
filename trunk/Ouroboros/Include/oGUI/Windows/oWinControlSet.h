@@ -109,9 +109,9 @@ An example XML:
 #ifndef oWinControlSet_h
 #define oWinControlSet_h
 
-#include <oBasis/oContainer.h>
 #include <oBasis/oGUI.h>
-#include <oPlatform/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oWinWindowing.h>
+#include <oBase/fixed_string.h>
 #include <oBase/xml.h>
 #include <map>
 #include <string>
@@ -133,7 +133,7 @@ public:
 	inline HWND operator[](int _Index) const { return GetControl(_Index); }
 
 private:
-	typedef std::map<ouro::mstring, HFONT, oStdLessI<ouro::mstring>> fonts_t;
+	typedef std::map<ouro::mstring, HFONT, ouro::less_case_insensitive<ouro::mstring>> fonts_t;
 
 	struct CONTROL_CONTEXT
 	{

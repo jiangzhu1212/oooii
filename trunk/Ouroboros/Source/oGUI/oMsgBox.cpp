@@ -22,15 +22,13 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oMsgBox.h>
+#include <oGUI/oMsgBox.h>
 #include <oBase/byte.h>
-#include <oPlatform/Windows/oWinAsString.h>
-#include <oPlatform/Windows/oWinCursor.h>
-#include <oPlatform/Windows/oWinRect.h>
-#include <oPlatform/Windows/oWinTray.h>
-#include <oPlatform/Windows/oWinWindowing.h>
-
-#include <oPlatform/Windows/oWindows.h>
+#include <oGUI/Windows/oWinCursor.h>
+#include <oGUI/Windows/oWinDialog.h>
+#include <oGUI/Windows/oWinRect.h>
+#include <oGUI/Windows/oWinTray.h>
+#include <oGUI/Windows/oWinWindowing.h>
 
 // Secret function that is not normally exposed in headers.
 // Typically pass 0 for wLanguageId, and specify a timeout
@@ -362,9 +360,8 @@ oMSGBOX_RESULT AssertDialog(oMSGBOX_TYPE _Type, const char* _Caption, const char
 
 	if (int_ptr == -1)
 	{
-		char err[512];
-		oWinParseHRESULT(err, GetLastError());
-		oTRACE("DialogBoxIndirectParam failed. %s\n", err);
+		std::string msg = oStd::windows::message(GetLastError());
+		oTRACE("DialogBoxIndirectParam failed. %s\n", msg.c_str());
 		__debugbreak(); // debug msgbox called from oASSERTs, so don't recurse into it
 	}
 

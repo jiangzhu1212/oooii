@@ -40,6 +40,7 @@
 
 #include <oStd/thread.h>
 #include <oCore/display.h>
+#include <oCore/process.h>
 #include <oBasis/oGUI.h>
 #include "../Source/oStd/win.h"
 

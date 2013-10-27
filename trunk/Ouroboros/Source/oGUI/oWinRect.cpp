@@ -22,41 +22,20 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Utilities for drawing Kinect visualizations with GDI.
-#pragma once
-#ifndef oKinectGDI_h
-#define oKinectGDI_h
+#include <oGUI/Windows/oWinRect.h>
 
-#include <oBasis/oAirKeyboard.h>
-#include <oKinect/oKinect.h>
-#include <oGUI/Windows/oGDI.h>
+RECT oWinRectResolve(const int2& _Anchor, const int2& _Size, oGUI_ALIGNMENT _Alignment)
+{
+	int2 offset(0,0);
+	int2 code = int2(_Alignment % 3, _Alignment / 3);
 
-static const int oGDI_KINECT_DRAW_SKELETON = 1;
-static const int oGDI_KINECT_DRAW_CLIPPING = 2;
-static const int oGDI_KINECT_DRAW_BONE_NAMES = 4;
+	// center/middle
+	if (code.x == 1) offset.x = -_Size.x / 2;
+	if (code.y == 1) offset.y = -_Size.y / 2;
 
-// Given a bone position, draw text in screen space at the specified offset 
-// from the specified anchor point of the text's bounding box.
-void oGDIDrawBoneText(
-	HDC _hDC
-	, const RECT& _rTarget
-	, const float4& _BonePosition
-	, oGUI_ALIGNMENT _Anchor
-	, const int2& _Offset
-	, oGUI_ALIGNMENT _Alignment
-	, const char* _Text
-	);
+	// right/bottom
+	if (code.x == 2) offset.x = -_Size.x;
+	if (code.y == 2) offset.y = -_Size.y;
 
-// Draws a rectangle filled with one of the frame types with an optional 
-// skeleton overlay based on the current state of the specified Kinect device.
-void oGDIDrawKinect(HDC _hDC, const RECT& _rTarget, oKINECT_FRAME_TYPE _Type, int _Flags, const threadsafe oKinect* _pKinect);
-
-static const int oGDI_AIR_KEY_DRAW_RECT = 0;
-static const int oGDI_AIR_KEY_DRAW_BOX = 1;
-static const int oGDI_AIR_KEY_DRAW_KEY = 2;
-static const int oGDI_AIR_KEY_DRAW_MIN = 4;
-static const int oGDI_AIR_KEY_DRAW_MAX = 8;
-
-void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& _Key, oGUI_ACTION _LastAction, const oGUI_BONE_DESC& _Skeleton);
-
-#endif
+	return oWinRectTranslate(oWinRectWH(_Anchor, _Size), offset);
+}

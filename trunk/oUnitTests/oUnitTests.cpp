@@ -1,19 +1,19 @@
 // $(header)
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oConsole.h>
-#include <oPlatform/oMsgBox.h>
+#include <oGUI/oMsgBox.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/oStandards.h>
 #include <oPlatform/oStream.h>
 #include <oCore/system.h>
 #include <oBase/opttok.h>
 #include <oBase/scc.h>
-#include <oPlatform/Windows/oGDI.h>
+#include <oGUI/Windows/oGDI.h>
 #include "resource.h"
 
 using namespace ouro;
 
-static const char* sTITLE = "OOOii Unit Test Suite";
+static const char* sTITLE = "Ouroboros Unit Test Suite";
 
 static const option sCmdLineOptions[] = 
 {

@@ -298,7 +298,7 @@ void enumerate_threads(process::id _ID, const std::function<bool(oStd::thread::i
 
 	while (keepLooking)
 	{
-		if (*((DWORD*)&_ID) == entry.th32OwnerProcessID)
+		if (asdword(_ID) == entry.th32OwnerProcessID)
 			if (!_Enumerator(*(oStd::thread::id*)&entry.th32ThreadID))
 				break;
 		keepLooking = Thread32Next(hSnapshot, &entry);
@@ -327,7 +327,7 @@ bool process::has_debugger_attached(id _ID)
 {
 	if (_ID != id() && _ID != ouro::this_process::get_id())
 	{
-		HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ|PROCESS_DUP_HANDLE, FALSE, *(DWORD*)&_ID);
+		HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ|PROCESS_DUP_HANDLE, FALSE, asdword(_ID));
 		if (hProcess)
 		{
 			BOOL present = FALSE;
@@ -353,7 +353,7 @@ void process::wait(id _ID)
 
 bool process::wait_for_ms(id _ID, unsigned int _TimeoutMS)
 {
-	windows::scoped_handle hProcess = OpenProcess(SYNCHRONIZE, FALSE, *(DWORD*)&_ID);
+	windows::scoped_handle hProcess = OpenProcess(SYNCHRONIZE, FALSE, asdword(_ID));
 	bool result = true; // No process means it's exited
 	if (hProcess)
 		result = WAIT_OBJECT_0 == ::WaitForSingleObject(hProcess, _TimeoutMS);
@@ -395,7 +395,7 @@ static void terminate_internal(process::id _ID
 		process::enumerate(std::bind(terminate_child, _1, _2, _3, _ID, _ExitCode
 			, _AllChildProcessesToo, std::ref(_HandledProcessIDs)));
 
-	windows::scoped_handle hProcess = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, *(DWORD*)&_ID);
+	windows::scoped_handle hProcess = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, asdword(_ID));
 	if (!hProcess)
 		oTHROW0(no_such_process);
 
@@ -420,7 +420,7 @@ void process::terminate_children(id _ID, int _ExitCode, bool _AllChildProcessesT
 
 path process::get_name(id _ID)
 {
-	windows::scoped_handle hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, *(DWORD*)&_ID);
+	windows::scoped_handle hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, asdword(_ID));
 	path_string Temp;
 	oCHECK_SIZE(unsigned int, Temp.capacity());
 	oVB(GetModuleFileNameExA(hProcess, nullptr, Temp.c_str(), static_cast<unsigned int>(Temp.capacity())));
@@ -433,7 +433,7 @@ process::memory_info process::get_memory_info(id _ID)
 	memset(&m, 0, sizeof(m));
 	m.cb = sizeof(m);
 
-	windows::scoped_handle hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, *(DWORD*)&_ID);
+	windows::scoped_handle hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, asdword(_ID));
 	if (hProcess)
 		oVB(GetProcessMemoryInfo(hProcess, (PROCESS_MEMORY_COUNTERS*)&m, m.cb));
 	else
@@ -454,7 +454,7 @@ process::time_info process::get_time_info(id _ID)
 {
 	FILETIME c, e, k, u;
 	{
-		windows::scoped_handle hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, *(DWORD*)&_ID);
+		windows::scoped_handle hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, asdword(_ID));
 		if (!hProcess)
 			oTHROW0(no_such_process);
 		oVB(GetProcessTimes(hProcess, &c, &e, &k, &u));
@@ -550,7 +550,7 @@ process::id get_parent_id()
 
 static bool find_oldest_and_thus_main_thread(oStd::thread::id _ThreadID, ULONGLONG* _pMinCreateTime, oStd::thread::id* _pOutMainThreadID)
 {
-	HANDLE hThread = OpenThread(THREAD_QUERY_INFORMATION, TRUE, *((DWORD*)&_ThreadID));
+	HANDLE hThread = OpenThread(THREAD_QUERY_INFORMATION, TRUE, asdword(_ThreadID));
 	if (hThread)
 	{
 		FILETIME tCreate, tExit, tKernel, tUser;

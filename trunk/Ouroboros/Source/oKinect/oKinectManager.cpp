@@ -28,7 +28,7 @@
 
 #include <oKinect/oKinectUtil.h>
 #include <oPlatform/oSingleton.h>
-#include "oPlatform/Windows/oWinWindowing.h"
+#include "oGUI/Windows/oWinWindowing.h"
 #include "oWinKinect10.h"
 #include "oKinectInternal.h"
 

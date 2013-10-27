@@ -440,7 +440,7 @@ bool oP4ChangelistBuilderImpl::WasChangelistAlreadyAdded(int _Changelist, bool _
 {
 	if (_IsDaily)
 	{
-		uint CurrentTimeMS = oTimerMS();
+		uint CurrentTimeMS = ouro::timer::now_ms();
 		return (0 != LastDailyBuildMS && ((CurrentTimeMS - LastDailyBuildMS) < (2 * 60 * 60 * 1000/*2 hours ms*/)));
 	}
 	else
@@ -497,7 +497,7 @@ void oP4ChangelistBuilderImpl::TryAddingChangelist(int _Changelist, bool _IsDail
 
 		oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(Mutex);
 		NextBuildInfos.push_back(NextBuild);
-		LastDailyBuildMS = oTimerMS();
+		LastDailyBuildMS = ouro::timer::now_ms();
 	}
 	else
 	{
@@ -551,7 +551,7 @@ oP4ChangelistBuilder::ChangeInfo* oP4ChangelistBuilderImpl::GetNextBuild()
 {
 	oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(Mutex);
 	oASSERT(!NextBuildInfos.empty(), "Popping an empty list");
-	StartBuildMS = oTimerMS();
+	StartBuildMS = ouro::timer::now_ms();
 	CurrentBuildInfo = std::move(NextBuildInfos.front());
 	CurrentBuildInfoValid = true;
 	NextBuildInfos.pop_front();
@@ -568,7 +568,7 @@ void oP4ChangelistBuilderImpl::UpdateBuildProgress(oP4ChangelistBuilder::ChangeI
 void oP4ChangelistBuilderImpl::FinishBuild(oP4ChangelistBuilder::ChangeInfo* _pBuild)
 {
 	oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(Mutex);
-	LastBuildMS = (oTimerMS() - StartBuildMS);
+	LastBuildMS = (ouro::timer::now_ms() - StartBuildMS);
 
 	if (_pBuild->IsDaily)
 	{
@@ -687,7 +687,7 @@ void oP4ChangelistBuilderImpl::ReportWorking(oFUNCTION<void(const oP4ChangelistB
 	oConcurrency::shared_lock<oConcurrency::shared_mutex> Lock(Mutex);
 
 	// First calculate the time left for the current build
-	int TimePastMS = oTimerMS() - StartBuildMS;
+	int TimePastMS = ouro::timer::now_ms() - StartBuildMS;
 	int RemainingMS = 0;
 	if (CurrentBuildInfoValid)
 		RemainingMS = (CurrentBuildInfo.IsDaily ? AverageDailyBuildTimeMS : AverageBuildTimeMS) - TimePastMS;

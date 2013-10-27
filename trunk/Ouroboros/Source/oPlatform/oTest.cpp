@@ -35,10 +35,9 @@
 // that lib too (without shims)...
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oConsole.h>
-#include <oPlatform/oDisplay.h> // to print out driver versions
 #include <oPlatform/oInterprocessEvent.h> // inter-process event required to sync "special tests" as they launch a new process
-#include <oPlatform/oMsgBox.h> // only used to notify about zombies
-#include <oPlatform/oProgressBar.h> // only really so it itself can be tested, but perhaps this can be moved to a unit test?
+#include <oGUI/oMsgBox.h> // only used to notify about zombies
+#include <oGUI/oProgressBar.h> // only really so it itself can be tested, but perhaps this can be moved to a unit test?
 #include <oPlatform/oStandards.h> // standard colors for a console app, maybe this can be callouts? log file path... can be an option?
 #include <oPlatform/oStream.h> // oStreamExists
 #include <oPlatform/oStreamUtil.h> // used for loading buffers
@@ -508,7 +507,7 @@ static bool oInitialize(const char* _RootPath, const char* _Filename, const adap
 	_pDriverPaths->VendorSpecific = _pDriverPaths->Generic / as_string(_DriverDesc.vendor);
 
 	path_string tmp, tmp2;
-	snprintf(tmp, "%s%s/", _pDriverPaths->VendorSpecific.c_str(), _DriverDesc.description.c_str());
+	tmp = _pDriverPaths->VendorSpecific / _DriverDesc.description.c_str();
 	replace(tmp2, tmp, " ", "_");
 	_pDriverPaths->CardSpecific = tmp2; 
 
@@ -1081,7 +1080,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	oCRTLeakTracker::Singleton()->CaptureCallstack(Desc.CaptureCallstackForTestLeaks);
 
 	xlstring timeMessage;
-	double allIterationsStartTime = oTimer();
+	double allIterationsStartTime = ouro::timer::now();
 	for (size_t r = 0; r < Desc.NumRunIterations; r++)
 	{
 		size_t Count[oTest::NUM_TEST_RESULTS];
@@ -1116,7 +1115,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 			Report(oConsoleReporting::HEADING, messageSpec, "Status Message");
 		}
 
-		double totalTestStartTime = oTimer();
+		double totalTestStartTime = ouro::timer::now();
 		oFOR(auto pRTB, Tests)
 		{
 			if (pRTB && !pRTB->IsSpecialTest())
@@ -1145,9 +1144,9 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 						}
 
 						oTRACE("========== Begin %s Run %u ==========", TestName.c_str(), r+1);
-						double testStart = oTimer();
+						double testStart = ouro::timer::now();
 						result = RunTest(pRTB, statusMessage.c_str(), statusMessage.capacity());
-						testDuration = oTimer() - testStart;
+						testDuration = ouro::timer::now() - testStart;
 						oTRACE("========== End %s Run %u (%s) ==========", TestName.c_str(), r+1, as_string(result));
 						Count[result]++;
 
@@ -1234,7 +1233,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 		size_t NumLeaks = Count[oTest::LEAKS]; 
 		size_t NumSkipped = Count[oTest::SKIPPED] + Count[oTest::FILTERED] + Count[oTest::BUGGED] + Count[oTest::NOTREADY];
 
-		format_duration(timeMessage, round(oTimer() - totalTestStartTime));
+		format_duration(timeMessage, round(ouro::timer::now() - totalTestStartTime));
     if ((NumSucceeded + NumFailed + NumLeaks) == 0)
   		Report(oConsoleReporting::ERR, "========== Unit Tests: ERROR NO TESTS RUN ==========\n");
     else
@@ -1254,7 +1253,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	
 	if (Desc.NumRunIterations != 1) // != so we report if somehow a 0 got through to here
 	{
-		format_duration(timeMessage, round(oTimer() - allIterationsStartTime));
+		format_duration(timeMessage, round(ouro::timer::now() - allIterationsStartTime));
 		Report(oConsoleReporting::INFO, "========== %u Iterations: %u succeeded, %u failed, %u leaked, %u skipped in %s ==========\n", Desc.NumRunIterations, TotalNumSucceeded, TotalNumFailed, TotalNumLeaks, TotalNumSkipped, timeMessage.c_str());
 	}
 

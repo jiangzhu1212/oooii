@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include <oPlatform/oWindow.h>
-#include <oPlatform/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oWinWindowing.h>
 #include <oCore/system.h>
 #include <oGPU/oGPU.h>
 

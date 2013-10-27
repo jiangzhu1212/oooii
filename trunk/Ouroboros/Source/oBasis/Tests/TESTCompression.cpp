@@ -26,7 +26,6 @@
 #include <oBasis/oGZip.h>
 #include <oBasis/oLZMA.h>
 #include <oBasis/oSnappy.h>
-#include <oBasis/oTimer.h>
 #include <oBase/finally.h>
 #include <oBase/timer.h>
 #include "oBasisTestCommon.h"

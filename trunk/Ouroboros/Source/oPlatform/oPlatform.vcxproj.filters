@@ -25,9 +25,6 @@
     <Filter Include="Headers\Windows API Convenience Wrappers">
       <UniqueIdentifier>{f82bf6e4-b459-4db5-ba1a-e7c2198b4cb3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headers\Windows API Convenience Wrappers\GUI">
-      <UniqueIdentifier>{7bf0d0bb-b4f3-4086-a752-8d5da3faa73c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Concurrency">
       <UniqueIdentifier>{f32a1e98-22e8-4b84-a694-54f4e96b05b1}</UniqueIdentifier>
     </Filter>
@@ -46,17 +43,11 @@
     <Filter Include="Source\Windows API Convenience Wrappers">
       <UniqueIdentifier>{4f23875d-6e9f-491f-b4bb-c2e3d3d000b5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Windows API Convenience Wrappers\GUI">
-      <UniqueIdentifier>{79fcfe36-cad0-4413-b448-1fa7bfd20b85}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Windows API Convenience Wrappers\SoftLink">
       <UniqueIdentifier>{eaaf7035-5cb6-4a99-92f0-e23a3137abc8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="oKeyState.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
     </ClInclude>
@@ -73,12 +64,6 @@
       <Filter>Headers\Code Management</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oConsole.h">
-      <Filter>Headers\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oMsgBox.h">
-      <Filter>Headers\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oProgressBar.h">
       <Filter>Headers\UI</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oMirroredArena.h">
@@ -123,30 +108,6 @@
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinAsString.h">
       <Filter>Headers\Windows API Convenience Wrappers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWindows.h">
-      <Filter>Headers\Windows API Convenience Wrappers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oGDI.h">
-      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinCursor.h">
-      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinDialog.h">
-      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinRect.h">
-      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinStatusBar.h">
-      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinTray.h">
-      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinWindowing.h">
-      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oStream.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
@@ -177,12 +138,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oStreamUtil.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oMRUManager.h">
-      <Filter>Headers\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oGUIMenu.h">
-      <Filter>Headers\UI</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oRegistry.h">
       <Filter>Headers\Concurrency</Filter>
     </ClInclude>
@@ -207,20 +162,14 @@
     <ClInclude Include="..\..\Include\oPlatform\all.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinKey.h">
-      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinControlSet.h">
-      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oWindow.h">
       <Filter>Headers\UI</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinSkeleton.h">
-      <Filter>Headers\Windows API Convenience Wrappers\GUI</Filter>
-    </ClInclude>
     <ClInclude Include="oWinExceptionHandler.h">
       <Filter>Source\Windows API Convenience Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinSkeleton.h">
+      <Filter>Headers\Windows API Convenience Wrappers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -242,16 +191,10 @@
     <ClCompile Include="oIOCP.cpp">
       <Filter>Source\Windows API Convenience Wrappers</Filter>
     </ClCompile>
-    <ClCompile Include="oWindows.cpp">
-      <Filter>Source\Windows API Convenience Wrappers</Filter>
-    </ClCompile>
     <ClCompile Include="oD3D11.cpp">
       <Filter>Source\Windows</Filter>
     </ClCompile>
     <ClCompile Include="oDXGI.cpp">
-      <Filter>Source\Windows API Convenience Wrappers</Filter>
-    </ClCompile>
-    <ClCompile Include="oGDI.cpp">
       <Filter>Source\Windows API Convenience Wrappers</Filter>
     </ClCompile>
     <ClCompile Include="oWinAsString.cpp">
@@ -260,26 +203,11 @@
     <ClCompile Include="oCRTHeap.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oWinTray.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="oWinWindowing.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="oWinStatusBar.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
-    </ClCompile>
     <ClCompile Include="SoftLink\oWinsock.cpp">
       <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClCompile>
     <ClCompile Include="SoftLink\oOpenSSL.cpp">
       <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClCompile>
-    <ClCompile Include="oWinCursor.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="oWinDialog.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
     </ClCompile>
     <ClCompile Include="oDispatchQueueConcurrentWTP.cpp">
       <Filter>Source</Filter>
@@ -341,21 +269,6 @@
     <ClCompile Include="oConsole.cpp">
       <Filter>Source\UI</Filter>
     </ClCompile>
-    <ClCompile Include="oMRUManager.cpp">
-      <Filter>Source\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="oGUIMenu.cpp">
-      <Filter>Source\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="oMsgBox.cpp">
-      <Filter>Source\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="oProgressBar.cpp">
-      <Filter>Source\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="oWinRect.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
-    </ClCompile>
     <ClCompile Include="oReporting.cpp">
       <Filter>Source\Code Management</Filter>
     </ClCompile>
@@ -377,19 +290,13 @@
     <ClCompile Include="oConcurrency.cpp">
       <Filter>Source\Concurrency</Filter>
     </ClCompile>
-    <ClCompile Include="oWinKey.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="oWinControlSet.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
-    </ClCompile>
     <ClCompile Include="oWindow.cpp">
       <Filter>Source\UI</Filter>
     </ClCompile>
-    <ClCompile Include="oWinSkeleton.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\GUI</Filter>
-    </ClCompile>
     <ClCompile Include="oWinExceptionHandler.cpp">
+      <Filter>Source\Windows API Convenience Wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinSkeleton.cpp">
       <Filter>Source\Windows API Convenience Wrappers</Filter>
     </ClCompile>
   </ItemGroup>

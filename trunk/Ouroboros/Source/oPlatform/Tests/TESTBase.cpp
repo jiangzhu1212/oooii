@@ -49,7 +49,7 @@ struct requirements_implementation : requirements
 };
 
 	} // namespace tests
-} // namespace oStd
+} // namespace ouro
 
 using namespace ouro::tests;
 

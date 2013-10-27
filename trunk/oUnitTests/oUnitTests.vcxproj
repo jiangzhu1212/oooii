@@ -181,6 +181,7 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCompute.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrency.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCore.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTGUI.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTStd.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurface.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurfaceFill.cpp" />
@@ -238,6 +239,12 @@
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oGPU\oGPUTests.vcxproj">
       <Project>{4a47dd9b-03e2-4f97-ab66-1222148f9af1}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oGUI\oGUI.vcxproj">
+      <Project>{5461da23-f040-4979-a492-e23b26d87163}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oGUI\oGUITests.vcxproj">
+      <Project>{3982ddf0-20f5-4181-97b7-cd20212ecdf4}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oHLSL\oHLSL.vcxproj">
       <Project>{aae3c7d9-8124-4b5a-856c-4c5bf23cdb09}</Project>

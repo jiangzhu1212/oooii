@@ -22,13 +22,18 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include <oPlatform/oGUIMenu.h>
-#include <oPlatform/oMsgBox.h>
+#include <oGUI/tests/oGUITestRequirements.h>
+#include <oGUI/oGUIMenu.h>
+#include <oGUI/oMsgBox.h>
+#include <oBase/timer.h>
 #include <oPlatform/oWindow.h>
-#include <oPlatform/Windows/oGDI.h>
-#include <oPlatform/Windows/oWinDialog.h>
-#include <oPlatform/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oGDI.h>
+#include <oGUI/Windows/oWinCommonDialog.h>
+#include <oGUI/Windows/oWinWindowing.h>
+#include <oCore/system.h>
+
+namespace ouro {
+	namespace tests {
 
 static const bool kInteractiveMode = false;
 
@@ -508,38 +513,34 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 	oTRACE("Exit is %sabled", oGUIMenuIsEnabled(hFileMenu, MENU_FILE_EXIT) ? "en" : "dis");
 }
 
-struct PLATFORM_WindowControls : public oTest
+void TESTWindowControls(requirements& _Requirements)
 {
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus)
+	if (ouro::system::is_remote_session())
+		oTHROW(permission_denied, "Detected remote session: differing text anti-aliasing will cause bad image compares");
+
+	bool success = false;
+	oWindowUITest test(&success);
+	if (!success)
+		oTHROW(protocol_error, "failed to construct test window");
+
+	double WaitForSettle = ouro::timer::now() + 1.0;
+	do
 	{
-		if (ouro::system::is_remote_session())
-		{
-			snprintf(_StrStatus, _SizeofStrStatus, "Detected remote session: differing text anti-aliasing will cause bad image compares");
-			return SKIPPED;
-		}
+		test.GetWindow()->FlushMessages();
 
-		bool success = false;
-		oWindowUITest test(&success);
-		oTESTB0(success);
+	} while (ouro::timer::now() < WaitForSettle);
 
-		double WaitForSettle = oTimer() + 1.0;
-		do
-		{
-			test.GetWindow()->FlushMessages();
-
-		} while (oTimer() < WaitForSettle);
-
-		oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->CreateSnapshot();
+	oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->CreateSnapshot();
 		
-		do
-		{
-			test.GetWindow()->FlushMessages();
+	do
+	{
+		test.GetWindow()->FlushMessages();
 		
-		} while ((kInteractiveMode && test.GetRunning()) || !snapshot.is_ready());
+	} while ((kInteractiveMode && test.GetRunning()) || !snapshot.is_ready());
 
-		oTESTFI(snapshot);
-		return SUCCESS;
-	}
-};
+	std::shared_ptr<ouro::surface::buffer> s = snapshot.get();
+	_Requirements.check(s, 0);
+}
 
-oTEST_REGISTER(PLATFORM_WindowControls);
+	} // namespace tests
+} // namespace ouro

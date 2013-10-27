@@ -33,14 +33,6 @@
 #include <oStd/chrono.h>
 #include <oBasis/oInvalid.h>
 
-// returns system ticks as seconds since the std (Unix) epoch.
-inline double oTimer() { return oStd::chrono::high_resolution_clock::now().time_since_epoch().count(); }
-
-// oTimer, but in in milliseconds (double, float and int)
-inline double oTimerMSD() { return oTimer()*1000.0; }
-inline float oTimerMSF() { return (float)oTimer()*1000.0f; }
-inline unsigned int oTimerMS() { return static_cast<unsigned int>(oTimerMSF()); }
-
 // _____________________________________________________________________________
 // Generic inline utilities for making common timing problems more 
 // self-documenting. These use the above API.

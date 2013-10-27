@@ -26,6 +26,7 @@
 #include <oBasis/oLockThis.h>
 #include <oConcurrency/mutex.h>
 #include <oBasis/oRefCount.h>
+#include <oBasis/oTimer.h>
 #include <oConcurrency/concurrent_queue.h>
 #include <oPlatform/oSocket.h>
 #include "oIOCP.h"

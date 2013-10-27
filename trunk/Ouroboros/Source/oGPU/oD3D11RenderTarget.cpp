@@ -28,8 +28,8 @@
 #include <oBasis/oLockThis.h>
 #include <oSurface/surface.h>
 #include <oPlatform/Windows/oDXGI.h>
-#include <oPlatform/Windows/oWinRect.h>
-#include <oPlatform/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oWinRect.h>
+#include <oGUI/Windows/oWinWindowing.h>
 
 using namespace ouro;
 

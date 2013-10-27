@@ -18,16 +18,25 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Include\oGUI\tests\oGUITestRequirements.h" />
+    <ClInclude Include="..\..\Include\oGUI\tests\oGUITests.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="tests\TESTWindowControls.cpp" />
+    <ClCompile Include="tests\TESTWindowSysDialog.cpp" />
+    <ClCompile Include="tests\TESTWindowSysDialog_UI.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{8EB33511-EED5-48AC-99F9-EFA2A34BB2DD}</ProjectGuid>
-    <RootNamespace>oPlatform</RootNamespace>
+    <ProjectGuid>{3982DDF0-20F5-4181-97B7-CD20212ECDF4}</ProjectGuid>
+    <RootNamespace>oGUITests
+    </RootNamespace>
     <SccProjectName>
     </SccProjectName>
     <SccLocalPath>
     </SccLocalPath>
     <SccProvider>
     </SccProvider>
-    <ProjectName>oPlatform</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -43,13 +52,11 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings" />
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Build\msvc100\Properties\Release32.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\lib.props" />
-    <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
@@ -57,7 +64,6 @@
     <Import Project="..\Build\msvc100\Properties\Debug32.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\lib.props" />
-    <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
@@ -65,7 +71,6 @@
     <Import Project="..\Build\msvc100\Properties\Release64.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\lib.props" />
-    <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
@@ -73,7 +78,6 @@
     <Import Project="..\Build\msvc100\Properties\Debug64.props" />
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\lib.props" />
-    <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -121,97 +125,5 @@
       <DisableSpecificWarnings>%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\Include\oPlatform\all.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oConsole.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oEMail.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oFileCache.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oFileSchemeHandler.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oHTTP.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oHTTPClient.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oHTTPHandler.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oHTTPServer.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oInterprocessEvent.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oMirroredArena.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oProcessHeap.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oRegistry.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oSocket.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oStream.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oStreamUtil.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oTCPServer.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oWebAppWindow.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oWebServer.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oP4.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oReporting.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oSingleton.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oStandards.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oTest.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oWindow.h" />
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oCRTHeap.h" />
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oD3D11.h" />
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oDXGI.h" />
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinAsString.h" />
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinRegistry.h" />
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinSkeleton.h" />
-    <ClInclude Include="oCRTLeakTracker.h" />
-    <ClInclude Include="oDispatchQueueConcurrentWTP.h" />
-    <ClInclude Include="oDispatchQueueGlobalIOCP.h" />
-    <ClInclude Include="oHTTPInternal.h" />
-    <ClInclude Include="oIOCP.h" />
-    <ClInclude Include="oStaticMutex.h" />
-    <ClInclude Include="oWinExceptionHandler.h" />
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="SoftLink\oOpenSSL.h" />
-    <ClInclude Include="SoftLink\oWinsock.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="oConcurrency.cpp" />
-    <ClCompile Include="oConsole.cpp" />
-    <ClCompile Include="oCRTHeap.cpp" />
-    <ClCompile Include="oCRTLeakTracker.cpp" />
-    <ClCompile Include="oD3D11.cpp" />
-    <ClCompile Include="oDispatchQueueConcurrentWTP.cpp" />
-    <ClCompile Include="oDispatchQueueGlobalIOCP.cpp" />
-    <ClCompile Include="oDXGI.cpp" />
-    <ClCompile Include="oEMail.cpp" />
-    <ClCompile Include="oFileCache.cpp" />
-    <ClCompile Include="oFileCacheMonitoring.cpp" />
-    <ClCompile Include="oFileSchemeHandler.cpp" />
-    <ClCompile Include="oGSReport.cpp" />
-    <ClCompile Include="oHTTP.cpp" />
-    <ClCompile Include="oHTTPClient.cpp" />
-    <ClCompile Include="oHTTPHandler.cpp" />
-    <ClCompile Include="oHTTPProtocol.cpp" />
-    <ClCompile Include="oHTTPServer.cpp" />
-    <ClCompile Include="oInterprocessEvent.cpp" />
-    <ClCompile Include="oIOCP.cpp" />
-    <ClCompile Include="oMirroredArena.cpp" />
-    <ClCompile Include="oP4.cpp" />
-    <ClCompile Include="oProcessHeap.cpp" />
-    <ClCompile Include="oRegistry.cpp" />
-    <ClCompile Include="oReporting.cpp" />
-    <ClCompile Include="oSingleton.cpp" />
-    <ClCompile Include="oSocket.cpp" />
-    <ClCompile Include="oStandards.cpp" />
-    <ClCompile Include="oStream.cpp" />
-    <ClCompile Include="oStreamUtil.cpp" />
-    <ClCompile Include="oTest.cpp" />
-    <ClCompile Include="oWebAppWindow.cpp" />
-    <ClCompile Include="oWebServer.cpp" />
-    <ClCompile Include="oWinAsString.cpp" />
-    <ClCompile Include="oWindow.cpp" />
-    <ClCompile Include="oWinExceptionHandler.cpp" />
-    <ClCompile Include="oWinRegistry.cpp" />
-    <ClCompile Include="oWinSkeleton.cpp" />
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="SoftLink\oOpenSSL.cpp" />
-    <ClCompile Include="SoftLink\oWinsock.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets" />
 </Project>

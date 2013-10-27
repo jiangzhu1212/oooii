@@ -29,7 +29,7 @@
 #define oWinAsString_h
 
 #include "../Source/oStd/win.h"
-#include <oPlatform/Windows/oWinKey.h>
+#include <oGUI/Windows/oWinKey.h>
 
 const char* oWinAsStringHT(int _HTCode);
 const char* oWinAsStringSC(int _SCCode);

@@ -66,7 +66,6 @@
 #include <oBasis/oStddef.h>
 #include <oBasis/oStdStringSupport.h>
 #include <oBasis/oStrTok.h>
-#include <oBasis/oTimer.h>
 #include <oBasis/oTypeID.h>
 #include <oBasis/oTypes.h>
 #include <oBasis/oURI.h>

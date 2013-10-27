@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="oGUI">
+      <UniqueIdentifier>{f293e392-eed8-404f-b6b8-34b19eb664b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{738fd2f4-8442-49be-a036-f8420af8850b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oGUI\Windows">
+      <UniqueIdentifier>{9349255d-99ed-4a49-b288-6c010172bb17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Windows">
+      <UniqueIdentifier>{3fc1f6df-cb31-422d-bf48-98bd6f02fa02}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Include\oGUI\oGUIMenu.h">
+      <Filter>oGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\oMRUManager.h">
+      <Filter>oGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\oMsgBox.h">
+      <Filter>oGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\oProgressBar.h">
+      <Filter>oGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\oGDI.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\oWinCommonDialog.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\oWinControlSet.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\oWinCursor.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\oWinDialog.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\oWinKey.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\oWinRect.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\oWinStatusBar.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\oWinTray.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\oWinWindowing.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\all.h">
+      <Filter>oGUI</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="oGUIMenu.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oMRUManager.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oMsgBox.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oProgressBar.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oGDI.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinWindowing.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinCommonDialog.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinControlSet.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinCursor.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinDialog.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinKey.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinRect.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinStatusBar.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinTray.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

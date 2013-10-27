@@ -715,7 +715,8 @@ void save(const path& _Path, const void* _pSource, size_t _SizeofSource, save_op
 		case save_option::binary_append: OpenOption = open_option::binary_append; break;
 		oNODEFAULT;
 	}
-
+	
+	create_directories(_Path.parent_path());
 	file_handle f = open(_Path, OpenOption);
 	finally CloseFile([&] { close(f); });
 	write(f, _pSource, _SizeofSource);

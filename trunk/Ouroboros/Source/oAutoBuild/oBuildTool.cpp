@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oBuildTool.h"
+#include <oBasis/oTimer.h>
 
 using namespace ouro;
 
@@ -129,7 +130,7 @@ bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const c
 
 bool oRunPackagingStage(const oBUILD_TOOL_PACKAGING_SETTINGS& _Settings, oPackagingResults* _pResults)
 {
-	float PackageStart = oTimerMSF();
+	float PackageStart = ouro::timer::nowf_ms();
 	if (!_Settings.CommandLines.empty())
 	{
 		// FIXME: With CL 23502 the process will hang because of /S on Xcopy. Not capturing STDOUT fixes it
@@ -141,6 +142,6 @@ bool oRunPackagingStage(const oBUILD_TOOL_PACKAGING_SETTINGS& _Settings, oPackag
 				return false;
 		}
 	}
-	_pResults->PackagingTimeSeconds = (oTimerMSF() - PackageStart) / 1000.0f;
+	_pResults->PackagingTimeSeconds = (ouro::timer::nowf_ms() - PackageStart) / 1000.0f;
 	return true;
 }

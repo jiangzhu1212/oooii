@@ -22,9 +22,9 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/Windows/oWinCursor.h>
-#include <oPlatform/Windows/oWinRect.h>
-#include <oPlatform/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oWinCursor.h>
+#include <oGUI/Windows/oWinRect.h>
+#include <oGUI/Windows/oWinWindowing.h>
 
 #define oWINV(_hWnd) \
 	if (!oWinExists(_hWnd)) \

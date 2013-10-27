@@ -22,11 +22,10 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/Windows/oGDI.h>
+#include <oGUI/Windows/oGDI.h>
 #include <oBase/byte.h>
-#include <oPlatform/oDisplay.h>
-#include <oPlatform/Windows/oWinRect.h>
-#include <oPlatform/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oWinRect.h>
+#include <oGUI/Windows/oWinWindowing.h>
 
 using namespace ouro;
 

@@ -22,9 +22,12 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oMRUManager.h>
-#include <oPlatform/oGUIMenu.h>
+#include <oGUI/oMRUManager.h>
+#include <oGUI/oGUIMenu.h>
+
+ // FIXME
 #include <oPlatform/Windows/oWinRegistry.h>
+#include <oBasis/oRefCount.h>
 
 using namespace ouro;
 

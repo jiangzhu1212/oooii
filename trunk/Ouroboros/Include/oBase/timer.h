@@ -37,13 +37,20 @@ class timer
 	// Encapsulates marking a starting point and using time since that 
 	// starting point.
 public:
+
+	// Convenience wrapper around the lengthy std API - returns system ticks as 
+	// seconds since the std (Unix) epoch.
+	static inline double now() { return oStd::chrono::high_resolution_clock::now().time_since_epoch().count(); }
+	static inline float nowf() { return static_cast<float>(now()); }
+	static inline float nowf_ms() { return nowf() * 1000.0f; }
+	static inline unsigned int now_ms() { return static_cast<unsigned int>(nowf_ms()); }
+
 	timer() { reset(); }
 	inline void reset() { Start = now(); }
 	inline double seconds() const { return now() - Start; }
 	inline double milliseconds() const { return (now() - Start) * 1000.0; }
 private:
 	double Start;
-	double now() const { return oStd::chrono::high_resolution_clock::now().time_since_epoch().count(); }
 };
 
 class local_timeout
@@ -55,10 +62,9 @@ class local_timeout
 public:
 	local_timeout(double _Timeout) { reset(_Timeout); }
 	local_timeout(unsigned int _TimeoutMS) { reset(_TimeoutMS / 1000.0); }
-	inline void reset(double _Timeout) { End = now() + _Timeout; }
+	inline void reset(double _Timeout) { End = timer::now() + _Timeout; }
 	inline void reset(unsigned int _TimeoutMS) { reset(_TimeoutMS / 1000.0); }
-	inline bool timed_out() const { return now() >= End; }
-	double now() const { return oStd::chrono::high_resolution_clock::now().time_since_epoch().count(); }
+	inline bool timed_out() const { return timer::now() >= End; }
 };
 
 class scoped_timer : public timer

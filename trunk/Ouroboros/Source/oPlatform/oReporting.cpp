@@ -28,7 +28,7 @@
 #include <oBase/fixed_vector.h>
 #include <oCore/debugger.h>
 #include <oBasis/oError.h>
-#include <oPlatform/oMsgBox.h>
+#include <oGUI/oMsgBox.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oStream.h>
