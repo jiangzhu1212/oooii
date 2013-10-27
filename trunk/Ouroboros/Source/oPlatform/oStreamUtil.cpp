@@ -196,7 +196,7 @@ bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ
 std::shared_ptr<csv> oCSVLoad(const char* _URIReference)
 {
 	LOAD_BUFFER
-	try { return std::move(std::make_shared<csv>(_URIReference, (char*)pBuffer, FreeString)); }
+	try { return std::make_shared<csv>(_URIReference, (char*)pBuffer, FreeString); }
 	catch (std::exception& e)
 	{
 		oErrorSetLast(e);
@@ -207,7 +207,7 @@ std::shared_ptr<csv> oCSVLoad(const char* _URIReference)
 std::shared_ptr<ini> oINILoad(const char* _URIReference)
 {
 	LOAD_BUFFER
-	try { return std::move(std::make_shared<ini>(_URIReference, (char*)pBuffer, FreeString)); }
+	try { return std::make_shared<ini>(_URIReference, (char*)pBuffer, FreeString); }
 	catch (std::exception& e)
 	{
 		oErrorSetLast(e);
@@ -218,7 +218,7 @@ std::shared_ptr<ini> oINILoad(const char* _URIReference)
 std::shared_ptr<xml> oXMLLoad(const char* _URIReference)
 {
 	LOAD_BUFFER
-	try { return std::move(std::make_shared<xml>(_URIReference, (char*)pBuffer, FreeString)); }
+	try { return std::make_shared<xml>(_URIReference, (char*)pBuffer, FreeString); }
 	catch (std::exception& e)
 	{
 		oErrorSetLast(e);

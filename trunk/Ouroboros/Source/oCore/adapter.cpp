@@ -220,7 +220,7 @@ static info get_info(int _AdapterIndex, IDXGIAdapter* _pAdapter)
 		, nullptr)))
 		adapter_info.feature_level = version((FeatureLevel>>12) & 0xffff, (FeatureLevel>>8) & 0xffff);
 
-	return std::move(adapter_info);
+	return adapter_info;
 }
 
 void enumerate(const std::function<bool(const info& _Info)>& _Enumerator)
@@ -293,7 +293,7 @@ info find(const int2& _VirtualDesktopPosition, const version& _MinVersion, bool 
 					else if (adapter_info.version < RequiredVersion)
 						oTHROW(no_such_device, "Video driver version %s or newer required, but current driver is %s", to_string2(StrReq, RequiredVersion), to_string2(StrAdd, adapter_info.version));
 
-					return std::move(adapter_info);
+					return adapter_info;
 				}
 				o++;
 				Output = nullptr;
@@ -301,7 +301,7 @@ info find(const int2& _VirtualDesktopPosition, const version& _MinVersion, bool 
 		}
 
 		else if ((_ExactVersion && adapter_info.version == RequiredVersion) || (!_ExactVersion && adapter_info.version >= RequiredVersion))
-			return std::move(adapter_info);
+			return adapter_info;
 
 		AdapterIndex++;
 		Adapter = nullptr;
@@ -333,7 +333,7 @@ info find(const display::id& _DisplayID)
 			DXGI_OUTPUT_DESC od;
 			Output->GetDesc(&od);
 			if (od.Monitor == (HMONITOR)di.native_handle)
-				return std::move(get_info(AdapterIndex, Adapter));
+				return get_info(AdapterIndex, Adapter);
 			o++;
 			Output = nullptr;
 		}

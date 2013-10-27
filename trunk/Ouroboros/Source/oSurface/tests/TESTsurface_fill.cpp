@@ -60,7 +60,7 @@ std::shared_ptr<surface::buffer> make_numbered_grid(
 	}
 	
 	PlatformFillGridNumbers(s.get(), _GridDimensions, _NumberColor);
-	return std::move(s);
+	return s;
 }
 
 static std::shared_ptr<surface::buffer> make_checkerboard(
@@ -73,7 +73,7 @@ static std::shared_ptr<surface::buffer> make_checkerboard(
 	surface::lock_guard lock(s);
 	surface::fill_checkerboard((color*)lock.mapped.data, lock.mapped.row_pitch
 		, si.dimensions.xy(), int2(64, 64), _Color0, _Color1);
-	return std::move(s);
+	return s;
 }
 
 static std::shared_ptr<surface::buffer> make_solid(const int2& _Dimensions, color _Color)
@@ -81,7 +81,7 @@ static std::shared_ptr<surface::buffer> make_solid(const int2& _Dimensions, colo
 	SETUP_AND_MAKE();
 	surface::lock_guard lock(s);
 	surface::fill_solid((color*)lock.mapped.data, lock.mapped.row_pitch, si.dimensions.xy(), _Color);
-	return std::move(s);
+	return s;
 }
 
 void TESTsurface_fill(requirements& _Requirements)

@@ -60,7 +60,7 @@ public:
 	virtual void copy_to(int _Subresource, mapped_subresource* _pMapped, bool _FlipVertically = false) const = 0;
 
 	virtual std::shared_ptr<buffer> convert(const info& _ConvertedInfo) const = 0;
-	inline std::shared_ptr<buffer> convert(format _NewFormat) const { info si = get_info(); si.format = _NewFormat; return std::move(convert(si)); }
+	inline std::shared_ptr<buffer> convert(format _NewFormat) const { info si = get_info(); si.format = _NewFormat; return convert(si); }
 
 	// Only for compatible types, such as RGB <-> BGR. This is basically an 
 	// in-place conversion.

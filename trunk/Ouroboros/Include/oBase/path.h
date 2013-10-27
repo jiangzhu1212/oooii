@@ -112,7 +112,7 @@ public:
 	basic_path operator/(const basic_path& _That) const
 	{
 		basic_path p(*this);
-		return std::move(p /= _That);
+		return p /= _That;
 	}
 
 	basic_path& operator/=(const char_type* _That)

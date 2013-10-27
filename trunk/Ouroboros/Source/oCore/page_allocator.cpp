@@ -78,7 +78,7 @@ range get_range(void* _Base)
 	r.status = get_status(mbi.State);
 	r.read_write = (mbi.AllocationProtect & PAGE_EXECUTE_READWRITE) || (mbi.AllocationProtect & PAGE_READWRITE);
 	r.is_private = mbi.Type == MEM_PRIVATE;
-	return std::move(r);
+	return r;
 }
 
 /* enum class */ namespace allocation_type

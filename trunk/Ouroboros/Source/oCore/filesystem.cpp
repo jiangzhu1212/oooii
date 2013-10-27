@@ -246,15 +246,15 @@ void current_path(const path& _Path)
 
 path root_path(const char* _RootName)
 {
-	if (!_stricmp("data", _RootName)) return std::move(data_path());
-	if (!_stricmp("app", _RootName)) return std::move(app_path());
-	if (!_stricmp("current", _RootName)) return std::move(current_path());
-	if (!_stricmp("desktop", _RootName)) return std::move(desktop_path());
-	if (!_stricmp("temp", _RootName)) return std::move(temp_path());
-	if (!_stricmp("dev", _RootName)) return std::move(dev_path());
-	if (!_stricmp("system", _RootName)) return std::move(system_path());
-	if (!_stricmp("os", _RootName)) return std::move(os_path());
-	if (!_stricmp("log", _RootName)) return std::move(log_path());
+	if (!_stricmp("data", _RootName)) return data_path();
+	if (!_stricmp("app", _RootName)) return app_path();
+	if (!_stricmp("current", _RootName)) return current_path();
+	if (!_stricmp("desktop", _RootName)) return desktop_path();
+	if (!_stricmp("temp", _RootName)) return temp_path();
+	if (!_stricmp("dev", _RootName)) return dev_path();
+	if (!_stricmp("system", _RootName)) return system_path();
+	if (!_stricmp("os", _RootName)) return os_path();
+	if (!_stricmp("log", _RootName)) return log_path();
 	return "";
 }
 
@@ -769,7 +769,7 @@ std::shared_ptr<char> load(const path& _Path, load_option::value _LoadOption, si
 		}
 	}
 
-	return std::move(buffer);
+	return buffer;
 }
 
 	} // namespace filesystem

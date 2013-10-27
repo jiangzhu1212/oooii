@@ -49,7 +49,7 @@ namespace ouro {
 
 std::shared_ptr<scc> make_scc_svn(const scc_spawn& _Spawn)
 {
-	return std::move(std::make_shared<scc_svn>(_Spawn));
+	return std::make_shared<scc_svn>(_Spawn);
 }
 
 static bool svn_is_error(const char* _StdOut)

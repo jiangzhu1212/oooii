@@ -137,7 +137,7 @@ info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
 	si.format = from_jcs(cinfo.jpeg_color_space);
 	si.layout = image;
 	si.dimensions = int3(cinfo.image_width, cinfo.image_height, 1);
-	return std::move(si);
+	return si;
 }
 
 std::shared_ptr<char> encode_jpg(const buffer* _pBuffer
@@ -196,7 +196,7 @@ std::shared_ptr<char> encode_jpg(const buffer* _pBuffer
 	pCompressed = nullptr; // prevent garbage collection
 	if (_pSize)
 		*_pSize = CompressedSize;
-	return std::move(buffer);
+	return buffer;
 #else
 	throw std::exception("jpg code disabled until freeimage can be removed or reconciled with ver 80");
 #endif
@@ -256,7 +256,7 @@ std::shared_ptr<buffer> decode_jpg(const void* _pBuffer, size_t _BufferSize, alp
 	}
 
 	jpeg_finish_decompress(&cinfo);
-	return std::move(b);
+	return b;
 #else
 	throw std::exception("jpg code disabled until freeimage can be removed or reconciled with ver 80");
 #endif

@@ -236,7 +236,7 @@ std::shared_ptr<char> encode_png(const buffer* _pBuffer
 	std::shared_ptr<char> buffer((char*)ws.data, free);
 	if (_pSize)
 		*_pSize = ws.size;
-	return std::move(buffer);
+	return buffer;
 }
 
 std::shared_ptr<buffer> decode_png(const void* _pBuffer, size_t _BufferSize, alpha_option::value _Option)
@@ -322,7 +322,7 @@ std::shared_ptr<buffer> decode_png(const void* _pBuffer, size_t _BufferSize, alp
 
 		png_read_image(png_ptr, rows.data());
 	}
-	return std::move(b);
+	return b;
 }
 
 	} // namespace surface

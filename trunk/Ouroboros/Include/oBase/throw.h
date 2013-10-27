@@ -49,7 +49,7 @@ inline std::string formatf(const char* _Format, ...)
 	va_list a; va_start(a, _Format);
 	std::string s = vformatf(_Format, a);
 	va_end(a);
-	return std::move(s);
+	return s;
 }
 
 } // namespace ouro

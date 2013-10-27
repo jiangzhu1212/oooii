@@ -140,7 +140,7 @@ static info get_info(int _Index, const DISPLAY_DEVICE& _DisplayDevice)
 	BOOL isOn = FALSE;
 	GetDevicePowerState((HMONITOR)di.native_handle, &isOn);
 	di.is_power_on = !!isOn;
-	return std::move(di);
+	return di;
 }
 
 info get_info(id _ID)
@@ -149,7 +149,7 @@ info get_info(id _ID)
 	dev.cb = sizeof(dev);
 	if (!EnumDisplayDevices(0, *(int*)&_ID, &dev, 0))
 		oTHROW0(no_such_device);
-	return std::move(get_info(*(int*)&_ID, dev));
+	return get_info(*(int*)&_ID, dev);
 }
 
 void enumerate(const std::function<bool(const info& _Info)>& _Enumerator)

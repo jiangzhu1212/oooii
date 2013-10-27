@@ -136,7 +136,7 @@ typedef oProcessHeapAllocator<oTASK> allocator_t;
 		oConcurrency::enable_leak_tracking_threadlocal(false);
 		std::shared_ptr<oConcurrency::task_group> g = std::move(std::make_shared<task_group_impl>());
 		oConcurrency::enable_leak_tracking_threadlocal(true);
-		return std::move(g);
+		return g;
 	}
 
 	bool oDispatchQueueCreateConcurrent(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueueConcurrent** _ppQueue)
@@ -150,7 +150,7 @@ typedef oProcessHeapAllocator<oTASK> allocator_t;
 
 	std::shared_ptr<oConcurrency::task_group> oConcurrency::make_task_group()
 	{
-		return std::move(std::make_shared<task_group_t>());
+		return std::make_shared<task_group_t>();
 	}
 
 	bool oDispatchQueueCreateConcurrent(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueueConcurrent** _ppQueue)
@@ -351,7 +351,7 @@ namespace oStd {
 			oConcurrency::enable_leak_tracking_threadlocal(false);
 			std::shared_ptr<waitable_task> p = std::move(std::make_shared<waitable_task_impl>(_Task));
 			oConcurrency::enable_leak_tracking_threadlocal(true);
-			return std::move(p);
+			return p;
 		}
 
 	} // namespace future_requirements

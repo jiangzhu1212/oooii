@@ -124,7 +124,7 @@ serial_port_impl::serial_port_impl(const info& _Info)
 
 std::shared_ptr<serial_port> serial_port::make(const serial_port_impl::info& _Info)
 {
-	return std::move(std::make_shared<serial_port_impl>(_Info));
+	return std::make_shared<serial_port_impl>(_Info);
 }
 
 serial_port_impl::~serial_port_impl()
@@ -135,7 +135,7 @@ serial_port_impl::~serial_port_impl()
 
 serial_port_impl::info serial_port_impl::get_info() const
 {
-	return std::move(Info);
+	return Info;
 }
 
 void serial_port_impl::send(const void* _pBuffer, size_t _SizeofBuffer)

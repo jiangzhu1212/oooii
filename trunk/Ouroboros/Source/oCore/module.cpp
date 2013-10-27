@@ -116,7 +116,7 @@ path get_path(id _ModuleID)
 	if (len+1 == p.capacity() && GetLastError())
 		oTHROW0(no_buffer_space);
 
-	return std::move(path(p));
+	return path(p);
 }
 
 static version get_version(DWORD _VersionMS, DWORD _VersionLS)
@@ -326,12 +326,12 @@ info get_info(const path& _Path)
 		*m[j].Dest = pVal;
 	}
 
-	return std::move(i);
+	return i;
 }
 
 info get_info(id _ModuleID)
 {
-	return std::move(get_info(get_path(_ModuleID)));
+	return get_info(get_path(_ModuleID));
 }
 
 	} // namespace module
@@ -340,12 +340,12 @@ info get_info(id _ModuleID)
 
 ouro::path path()
 {
-	return std::move(module::get_path(module::id()));
+	return module::get_path(module::id());
 }
 
 module::info get_info()
 {
-	return std::move(module::get_info(module::id()));
+	return module::get_info(module::id());
 }
 
 module::id get_id()

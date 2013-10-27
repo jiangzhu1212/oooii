@@ -44,7 +44,7 @@ struct requirements_implementation : requirements
 	{
 		path FullPath = filesystem::data_path() / _Path;
 
-		return std::move(filesystem::load(FullPath, filesystem::load_option::binary_read, _pSize));
+		return filesystem::load(FullPath, filesystem::load_option::binary_read, _pSize);
 	}
 };
 

@@ -75,12 +75,12 @@ buffer_impl::~buffer_impl()
 
 std::shared_ptr<buffer> buffer::make(const info& _Info)
 {
-	return std::move(std::make_shared<buffer_impl>(_Info));
+	return std::make_shared<buffer_impl>(_Info);
 }
 
 std::shared_ptr<buffer> buffer::make(const info& _Info, void* _pData)
 {
-	return std::move(std::make_shared<buffer_impl>(_Info, _pData));
+	return std::make_shared<buffer_impl>(_Info, _pData);
 }
 
 info buffer_impl::get_info() const

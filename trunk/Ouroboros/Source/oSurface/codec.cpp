@@ -81,9 +81,9 @@ info get_info(const void* _pBuffer, size_t _BufferSize)
 {
 	switch (get_file_format(_pBuffer, _BufferSize))
 	{
-		case file_format::png: return std::move(get_info_png(_pBuffer, _BufferSize));
-		case file_format::jpg: return std::move(get_info_jpg(_pBuffer, _BufferSize));
-		case file_format::bmp: return std::move(get_info_bmp(_pBuffer, _BufferSize));
+		case file_format::png: return get_info_png(_pBuffer, _BufferSize);
+		case file_format::jpg: return get_info_jpg(_pBuffer, _BufferSize);
+		case file_format::bmp: return get_info_bmp(_pBuffer, _BufferSize);
 		default: break;
 	}
 	throw std::exception("unknown image encoding");
@@ -97,9 +97,9 @@ std::shared_ptr<char> encode(const buffer* _pBuffer
 {
 	switch (_FileFormat)
 	{
-		case file_format::png: return std::move(encode_png(_pBuffer, _pSize, _Option, _Compression));
-		case file_format::jpg: return std::move(encode_jpg(_pBuffer, _pSize, _Option, _Compression));
-		case file_format::bmp: return std::move(encode_bmp(_pBuffer, _pSize, _Option, _Compression));
+		case file_format::png: return encode_png(_pBuffer, _pSize, _Option, _Compression);
+		case file_format::jpg: return encode_jpg(_pBuffer, _pSize, _Option, _Compression);
+		case file_format::bmp: return encode_bmp(_pBuffer, _pSize, _Option, _Compression);
 		default: break;
 	}
 	throw std::exception("unknown image encoding");
@@ -109,9 +109,9 @@ std::shared_ptr<buffer> decode(const void* _pBuffer, size_t _BufferSize, alpha_o
 {
 	switch (get_file_format(_pBuffer, _BufferSize))
 	{
-		case file_format::png: return std::move(decode_png(_pBuffer, _BufferSize, _Option));
-		case file_format::jpg: return std::move(decode_jpg(_pBuffer, _BufferSize, _Option));
-		case file_format::bmp: return std::move(decode_bmp(_pBuffer, _BufferSize, _Option));
+		case file_format::png: return decode_png(_pBuffer, _BufferSize, _Option);
+		case file_format::jpg: return decode_jpg(_pBuffer, _BufferSize, _Option);
+		case file_format::bmp: return decode_bmp(_pBuffer, _BufferSize, _Option);
 		default: break;
 	}
 	throw std::exception("unknown image encoding");

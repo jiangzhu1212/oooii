@@ -185,7 +185,7 @@ intrusive_ptr<IDXGIAdapter> get_adapter(const adapter::id& _AdapterID)
 	intrusive_ptr<IDXGIAdapter> Adapter;
 	if (DXGI_ERROR_NOT_FOUND == Factory->EnumAdapters(*(int*)&_AdapterID, &Adapter))
 		oTHROW(no_such_device, "adapter id=%d not found", *(int*)&_AdapterID);
-	return std::move(Adapter);
+	return Adapter;
 }
 
 adapter::info get_info(IDXGIAdapter* _pAdapter)
@@ -207,7 +207,7 @@ adapter::info get_info(IDXGIAdapter* _pAdapter)
 		return true;
 	});
 
-	return std::move(adapter_info);
+	return adapter_info;
 }
 
 intrusive_ptr<IDXGISwapChain> make_swap_chain(IUnknown* _pDevice

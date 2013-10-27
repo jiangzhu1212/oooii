@@ -93,7 +93,7 @@ static sstring get_cpu_string()
 	*((int*)(s.c_str()+4)) = CPUInfo[3];
 	*((int*)(s.c_str()+8)) = CPUInfo[2];
 	s.c_str()[12] = '\0';
-	return std::move(s);
+	return s;
 }
 
 static sstring get_cpu_brand_string()
@@ -107,7 +107,7 @@ static sstring get_cpu_brand_string()
 	__cpuid(CPUInfo, 0x80000004);
 	memcpy(s.c_str() + 2*sizeof(CPUInfo), CPUInfo, sizeof(CPUInfo));
 	clean_whitespace(s, s);
-	return std::move(s);
+	return s;
 }
 
 		} // namespace detail
@@ -194,7 +194,7 @@ info get_info()
 		cpu_info.brand_string = detail::get_cpu_brand_string();
 	}
 
-	return std::move(cpu_info);
+	return cpu_info;
 }
 
 static const char* feature_name(int _FeatureIndex)

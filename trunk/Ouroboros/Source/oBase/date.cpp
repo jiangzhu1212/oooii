@@ -169,7 +169,7 @@ template<> ntp_date date_cast<ntp_date>(const date& _Date)
 	ntp_date d;
 	d.DataMS = (static_cast<unsigned long long>(*(unsigned int*)&Era) << 32) | Timestamp;
 	d.DataLS = fractional_second64(duration_cast<fractional_second64>(milliseconds(_Date.millisecond))).count();
-	return std::move(d);
+	return d;
 }
 
 template<> time_t date_cast<time_t>(const date& _Date)
@@ -192,7 +192,7 @@ template<> file_time_t date_cast<file_time_t>(const date& _Date)
 	seconds s(oDateCalcNumSeconds(JDN - kFileTimeEpochJDN, _Date));
 	file_time whole = duration_cast<file_time>(s);
 	file_time fractional = duration_cast<file_time>(milliseconds(_Date.millisecond));
-	return std::move(file_time_t((whole + fractional).count()));
+	return file_time_t((whole + fractional).count());
 }
 
 // _____________________________________________________________________________
@@ -232,7 +232,7 @@ template<> file_time_t date_cast<file_time_t>(const ntp_date& _Date)
 		oDATE_OUT_OF_RANGE(file_time_t);
 	file_time whole = duration_cast<file_time>(s);
 	file_time fractional = duration_cast<file_time>(fractional_second64(_Date.DataLS));
-	return std::move(file_time_t((whole + fractional).count()));
+	return file_time_t((whole + fractional).count());
 }
 
 template<> date date_cast<date>(const ntp_date& _Date)
@@ -243,7 +243,7 @@ template<> date date_cast<date>(const ntp_date& _Date)
 	oDateCalcFromJulianDayNumber(JDN, &d);
 	oDateCalcHMS(s, &d);
 	d.millisecond = static_cast<int>(duration_cast<milliseconds>(fractional_second64(_Date.DataLS)).count());
-	return std::move(d);
+	return d;
 }
 
 template<> date date_cast<date>(const date& _Date)
@@ -266,7 +266,7 @@ template<> ntp_date date_cast<ntp_date>(const ntp_timestamp& _Date)
 	ntp_date d;
 	d.DataMS = static_cast<unsigned int>(_Date >> 32ull);
 	d.DataLS = duration_cast<fractional_second64>(fractional_second32(_Date & ~0u)).count();
-	return std::move(d);
+	return d;
 }
 
 template<> time_t date_cast<time_t>(const ntp_timestamp& _Date)
@@ -292,7 +292,7 @@ template<> date date_cast<date>(const ntp_timestamp& _Date)
 	oDateCalcFromJulianDayNumber(JDN, &d);
 	oDateCalcHMS(s, &d);
 	d.millisecond = static_cast<int>(duration_cast<milliseconds>(fractional_second32(_Date & ~0u)).count());
-	return std::move(d);
+	return d;
 }
 
 // _____________________________________________________________________________
@@ -309,7 +309,7 @@ template<> ntp_date date_cast<ntp_date>(const ntp_time& _Date)
 	ntp_date d;
 	d.DataMS = _Date >> 16;
 	d.DataLS = duration_cast<fractional_second64>(fractional_second16(_Date & 0xffff)).count();
-	return std::move(d);
+	return d;
 }
 
 template<> time_t date_cast<time_t>(const ntp_time& _Date)
@@ -336,7 +336,7 @@ template<> date date_cast<date>(const ntp_time& _Date)
 	d.day = 1;
 	oDateCalcHMS((_Date >> 16), &d);
 	d.millisecond = static_cast<int>(duration_cast<milliseconds>(fractional_second16(_Date & 0xffff)).count());
-	return std::move(d);
+	return d;
 }
 
 // _____________________________________________________________________________
@@ -353,7 +353,7 @@ template<> ntp_date date_cast<ntp_date>(const time_t& _Date)
 	ntp_date d;
 	d.DataMS = _Date + kSecondsFrom1900To1970;
 	d.DataLS = 0;
-	return std::move(d);
+	return d;
 }
 
 template<> time_t date_cast<time_t>(const time_t& _Date)
@@ -363,7 +363,7 @@ template<> time_t date_cast<time_t>(const time_t& _Date)
 
 template<> file_time_t date_cast<file_time_t>(const time_t& _Date)
 {
-	return std::move(file_time_t(duration_cast<file_time>(seconds(_Date + kSecondsFrom1601To1900 + kSecondsFrom1900To1970)).count()));
+	return file_time_t(duration_cast<file_time>(seconds(_Date + kSecondsFrom1601To1900 + kSecondsFrom1900To1970)).count());
 }
 
 template<> date date_cast<date>(const time_t& _Date)
@@ -373,7 +373,7 @@ template<> date date_cast<date>(const time_t& _Date)
 	oDateCalcFromJulianDayNumber(JDN, &d);
 	oDateCalcHMS(_Date, &d);
 	d.millisecond = 0;
-	return std::move(d);
+	return d;
 }
 
 // _____________________________________________________________________________
@@ -395,7 +395,7 @@ template<> ntp_date date_cast<ntp_date>(const file_time_t& _Date)
 	ntp_date d;
 	d.DataMS = (usec / oStd::micro::den) - kSecondsFrom1601To1900;
 	d.DataLS = duration_cast<fractional_second64>(file_time((long long)_Date % file_time::period::den)).count();
-	return std::move(d);
+	return d;
 }
 
 template<> time_t date_cast<time_t>(const file_time_t& _Date)

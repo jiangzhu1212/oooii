@@ -103,7 +103,7 @@ static std::shared_ptr<xml> InitXML(const char* _pXMLString)
 	char* pBuffer = (char*)malloc(size);
 	strlcpy(pBuffer, _pXMLString, size);
 
-	try { return std::move(std::make_shared<xml>("Test XML Document", (char*)pBuffer, [](const char* _pXMLString){ free((void*)_pXMLString); }, 100000)); }
+	try { return std::make_shared<xml>("Test XML Document", (char*)pBuffer, [](const char* _pXMLString){ free((void*)_pXMLString); }, 100000); }
 	catch (std::exception& e)
 	{
 		oErrorSetLast(e);

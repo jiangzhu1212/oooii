@@ -245,7 +245,7 @@ std::string message(HRESULT _hResult)
 	else
 		msg = pMessage;
 
-	return std::move(msg);
+	return msg;
 }
 
 const char* as_string_display_code(UINT _DISPCode)
@@ -331,7 +331,7 @@ public:
 		errno_t e = windows::errno_from_hresult((HRESULT)_ErrCode);
 		if (e && e != ENOTRECOVERABLE)
 			return std::generic_category().message(e);
-		return std::move(oStd::windows::message((HRESULT)_ErrCode));
+		return oStd::windows::message((HRESULT)_ErrCode);
 	}
 };
 

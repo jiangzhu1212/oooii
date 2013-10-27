@@ -157,7 +157,7 @@ public:
 
 	info get_info() const override
 	{
-		return std::move(Info);
+		return Info;
 	}
 
 	void start() override
@@ -259,7 +259,7 @@ private:
 
 std::shared_ptr<process> process::make(const info& _Info)
 {
-	return std::move(std::make_shared<windows_process>(_Info));
+	return std::make_shared<windows_process>(_Info);
 }
 
 void process::enumerate(const std::function<bool(id _ID, id _ParentID, const path& _ProcessExePath)>& _Enumerator)
@@ -447,7 +447,7 @@ process::memory_info process::get_memory_info(id _ID)
 	mi.pagefile_usage_peak = m.PeakPagefileUsage;
 	mi.page_fault_count = m.PageFaultCount;
 
-	return std::move(mi);
+	return mi;
 }
 
 process::time_info process::get_time_info(id _ID)
@@ -478,7 +478,7 @@ process::time_info process::get_time_info(id _ID)
 	li.HighPart = u.dwHighDateTime;
 	ti.user = chrono::duration_cast<chrono::seconds>(file_time(li.QuadPart)).count();
 
-	return std::move(ti);
+	return ti;
 }
 
 double process::cpu_usage(id _ID, unsigned long long* _pPreviousSystemTime, unsigned long long* _pPreviousProcessTime)

@@ -318,7 +318,7 @@ symbol_info translate(symbol _Symbol)
 		si.char_offset = 0;
 	}
 
-	return std::move(si);
+	return si;
 }
 
 static bool is_std_bind_impl_detail(const char* _Symbol)

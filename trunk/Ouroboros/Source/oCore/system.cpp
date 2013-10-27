@@ -54,7 +54,7 @@ heap_info get_heap_info()
 	hi.total_virtual_process = ms.ullTotalVirtual;
 	hi.avail_paged = ms.ullAvailPageFile;
 	hi.total_paged = ms.ullTotalPageFile;
-	return std::move(hi);
+	return hi;
 }
 
 static void now(FILETIME* _pFileTime, bool _IsUTC)
@@ -101,7 +101,7 @@ static date to_date(const SYSTEMTIME& _SystemTime)
 	d.minute = _SystemTime.wMinute;
 	d.second = _SystemTime.wSecond;
 	d.millisecond = _SystemTime.wMilliseconds;
-	return std::move(d);
+	return d;
 }
 
 static void from_date(const date& _Date, SYSTEMTIME* _pSystemTime)
@@ -120,7 +120,7 @@ date from_local(const date& _LocalDate)
 	SYSTEMTIME In, Out;
 	from_date(_LocalDate, &In);
 	oVB(!SystemTimeToTzSpecificLocalTime(nullptr, &In, &Out));
-	return std::move(to_date(Out));
+	return to_date(Out);
 }
 
 date to_local(const date& _UTCDate)
@@ -128,7 +128,7 @@ date to_local(const date& _UTCDate)
 	SYSTEMTIME In, Out;
 	from_date(_UTCDate, &In);
 	oVB(!SystemTimeToTzSpecificLocalTime(nullptr, &In, &Out));
-	return std::move(to_date(Out));
+	return to_date(Out);
 }
 
 void reboot()

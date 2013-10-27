@@ -1491,7 +1491,7 @@ std::shared_ptr<ouro::surface::buffer> oD3D11CreateSnapshot(ID3D11Texture2D* _pR
 	if (!oD3D11CopyTo(CPUTexture, 0, lock.mapped.data, lock.mapped.row_pitch))
 		oThrowLastError();
 
-	return std::move(s);
+	return s;
 }
 
 bool oD3D11CreateSnapshot(ID3D11Texture2D* _pRenderTarget, D3DX11_IMAGE_FILE_FORMAT _Format, const char* _Path)

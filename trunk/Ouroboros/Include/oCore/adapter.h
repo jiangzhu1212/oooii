@@ -88,7 +88,7 @@ inline bool all_up_to_date()
 info find(const int2& _VirtualDesktopPosition, 
 	const version& _MinVersion = version(), 
 	bool _ExactVersion = true);
-inline info find(const version& _MinVersion, bool _ExactVersion = true) { return std::move(find(int2(oDEFAULT, oDEFAULT), _MinVersion, _ExactVersion)); }
+inline info find(const version& _MinVersion, bool _ExactVersion = true) { return find(int2(oDEFAULT, oDEFAULT), _MinVersion, _ExactVersion); }
 
 info find(display::id* _DisplayID);
 

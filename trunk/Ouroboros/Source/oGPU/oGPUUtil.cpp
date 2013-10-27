@@ -596,7 +596,7 @@ std::shared_ptr<ouro::surface::buffer> oGPUSaveImage(oGPUTexture* _pTexture, int
 	if (!oGPURead(TextureToSave, _Subresource, lock.mapped, false))
 		oThrowLastError();
 
-	return std::move(s);
+	return s;
 }
 
 struct oOBJExtraVertexData
