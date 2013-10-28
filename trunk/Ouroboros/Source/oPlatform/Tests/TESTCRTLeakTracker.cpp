@@ -71,7 +71,7 @@ bool oPlatformTest_oCRTLeakTracker()
 		oTESTB_P(pTracker->ReportLeaks(), "Tracker failed to detect char leak from different thread");
 		delete pCharAllocThreaded;
 
-		oErrorSetLast(0);
+		oErrorSetLast(0, "");
 		return true;
 	#else
 		oErrorSetLast(std::errc::permission_denied, "Leak tracker not available in release builds");
@@ -81,40 +81,9 @@ bool oPlatformTest_oCRTLeakTracker()
 
 struct PLATFORM_oCRTLeakTracker : public oTest
 {
-	// Test is wrapped in RunTest so we can properly unwind on failure
-	RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus)
-	{
-		#ifdef _DEBUG
-			oCRTLeakTracker* pTracker = oCRTLeakTracker::Singleton();
-			oTESTB(!pTracker->ReportLeaks(), "Outstanding leaks detected at start of test");
-
-			char* pCharAlloc = new char;
-			oTESTB(pTracker->ReportLeaks(), "Tracker failed to detect char leak");
-			delete pCharAlloc;
-
-			oStd::future<void> check = oStd::async([=] {});
-			check.wait();
-			check = oStd::future<void>(); // zero-out the future because it makes an alloc
-		
-			oTESTB(!pTracker->ReportLeaks(), "Tracker erroneously detected leak from a different thread");
-
-			char* pCharAllocThreaded = nullptr;
-
-			check = oStd::async([&]() { pCharAllocThreaded = new char; });
-
-			check.wait();
-			oTESTB(pTracker->ReportLeaks(), "Tracker failed to detect char leak from different thread");
-			delete pCharAllocThreaded;
-		#else
-			snprintf(_StrStatus, _SizeofStrStatus, "Not available in Release");
-		#endif
-		return SUCCESS;
-	}
-
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oTESTB(oPlatformTest_oCRTLeakTracker(), "%s", oErrorGetLastString());
-		snprintf(_StrStatus, _SizeofStrStatus, "%s: %s", oErrorAsString(oErrorGetLast()), oErrorGetLastString());
 		return SUCCESS;
 	}
 };

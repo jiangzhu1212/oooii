@@ -273,12 +273,12 @@ symbol_info translate(symbol _Symbol)
 	module.SizeOfStruct = sizeof(module);
 
 	symbol_info si;
-	si.address = reinterpret_cast<unsigned long long>(_Symbol);
+	si.address = _Symbol;
 	
-	if (!SymGetModuleInfo64(GetCurrentProcess(), reinterpret_cast<unsigned long long>(_Symbol), &module))
+	if (!SymGetModuleInfo64(GetCurrentProcess(), _Symbol, &module))
 	{
 		init_dbghelp(nullptr, false, nullptr, nullptr, 0);
-		oVB(SymGetModuleInfo64(GetCurrentProcess(), reinterpret_cast<unsigned long long>(_Symbol), &module));
+		oVB(SymGetModuleInfo64(GetCurrentProcess(), _Symbol, &module));
 	}
 	
 	si.module = module.ModuleName;
@@ -289,7 +289,7 @@ symbol_info translate(symbol _Symbol)
 	symbolInfo->MaxNameLength = static_cast<DWORD>(si.name.capacity());
 
 	DWORD64 displacement = 0;
-	oVB(SymGetSymFromAddr64(GetCurrentProcess(), reinterpret_cast<unsigned long long>(_Symbol), &displacement, symbolInfo));
+	oVB(SymGetSymFromAddr64(GetCurrentProcess(), _Symbol, &displacement, symbolInfo));
 
 	// symbolInfo just contains the first 512 characters and doesn't guarantee
 	// they will be null-terminated, so copy the buffer and ensure there's some
@@ -304,7 +304,7 @@ symbol_info translate(symbol _Symbol)
 	line.SizeOfStruct = sizeof(line);
 
 	DWORD disp = 0;
-	if (SymGetLineFromAddr64(GetCurrentProcess(), reinterpret_cast<unsigned long long>(_Symbol), &disp, &line))
+	if (SymGetLineFromAddr64(GetCurrentProcess(), _Symbol, &disp, &line))
 	{
 		si.filename = line.FileName;
 		si.line = line.LineNumber;

@@ -132,20 +132,20 @@
 // semantics are enforced, so this works properly in all but the most contrived 
 // cases.
 
-template<typename T> struct oStdUserAllocator
+template<typename T> struct std_user_allocator
 {
-	oDEFINE_STD_ALLOCATOR_BOILERPLATE(oStdUserAllocator)
-	oStdUserAllocator() : UserAllocate(malloc), UserDeallocate(free) {}
-	oStdUserAllocator(void* (*alloc)(size_t size), void (*dealloc)(void* p)) : UserAllocate(alloc), UserDeallocate(dealloc) {}
-	template<typename U> oStdUserAllocator(oStdUserAllocator<U> const& other) : UserAllocate(other.UserAllocate), UserDeallocate(other.UserDeallocate) {}
+	oDEFINE_STD_ALLOCATOR_BOILERPLATE(std_user_allocator)
+	std_user_allocator() : UserAllocate(malloc), UserDeallocate(free) {}
+	std_user_allocator(void* (*alloc)(size_t size), void (*dealloc)(void* p)) : UserAllocate(alloc), UserDeallocate(dealloc) {}
+	template<typename U> std_user_allocator(std_user_allocator<U> const& other) : UserAllocate(other.UserAllocate), UserDeallocate(other.UserDeallocate) {}
 	inline pointer allocate(size_type count, const_pointer hint = 0) { return static_cast<pointer>(UserAllocate(sizeof(T) * count)); }
 	inline void deallocate(pointer p, size_type count) { UserDeallocate(p); }
-	inline const oStdUserAllocator& operator=(const oStdUserAllocator& other) { UserAllocate = other.UserAllocate; UserDeallocate = other.UserDeallocate; return *this; }
+	inline const std_user_allocator& operator=(const std_user_allocator& other) { UserAllocate = other.UserAllocate; UserDeallocate = other.UserDeallocate; return *this; }
 	void* (*UserAllocate)(size_t size);
 	void (*UserDeallocate)(void* p);
 };
 
-oDEFINE_STD_ALLOCATOR_VOID_INSTANTIATION(oStdUserAllocator)
-oDEFINE_STD_ALLOCATOR_OPERATOR_EQUAL(oStdUserAllocator) { return a.UserAllocate == b.UserAllocate && a.UserDeallocate == b.UserDeallocate; }
+oDEFINE_STD_ALLOCATOR_VOID_INSTANTIATION(std_user_allocator)
+oDEFINE_STD_ALLOCATOR_OPERATOR_EQUAL(std_user_allocator) { return a.UserAllocate == b.UserAllocate && a.UserDeallocate == b.UserDeallocate; }
 
 #endif

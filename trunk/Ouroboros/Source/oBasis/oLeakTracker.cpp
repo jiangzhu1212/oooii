@@ -23,255 +23,158 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oLeakTracker.h>
-#include <oBase/algorithm.h>
-#include <oBasis/oBasisRequirements.h>
-#include <oBasis/oLockThis.h>
-#include <oStd/for.h>
-#include <oStd/atomic.h>
-#include <oStd/chrono.h>
-#include <cassert>
 
-using namespace ouro;
+namespace ouro {
 
-// use lowest-level assert in case this is inside a more robust assert implementation
-#define oLEAK_ASSERT(_Expression, _Message) assert((_Expression) && _Message);
-
-oLeakTracker::oLeakTracker(GetCallstackFn _GetCallstack, GetCallstackSymbolStringFn _GetCallstackSymbolString, PrintFn _Print, bool _ReportHexAllocationID, bool _CaptureCallstack, allocations_t::allocator_type _Allocator)
-	: InInternalProcesses(false)
-	, Allocations(0, allocations_t::hasher(), allocations_t::key_equal(), allocations_t::key_less(), _Allocator)
-	, DelayLatch(1)
-	, CurrentContext(0)
+size_t leak_tracker::num_outstanding_allocations(bool _CurrentContextOnly)
 {
-	Desc.GetCallstack = _GetCallstack;
-	Desc.GetCallstackSymbolString = _GetCallstackSymbolString;
-	Desc.Print = _Print;
-	Desc.ReportAllocationIDAsHex = _ReportHexAllocationID;
-	Desc.CaptureCallstack = _CaptureCallstack;
-}
-
-oLeakTracker::oLeakTracker(const DESC& _Desc, allocations_t::allocator_type _Allocator)
-	: Desc(_Desc)
-	, InInternalProcesses(false)
-	, Allocations(0, allocations_t::hasher(), allocations_t::key_equal(), allocations_t::key_less(), _Allocator)
-	, DelayLatch(1)
-	, CurrentContext(0)
-{
-}
-
-oLeakTracker::~oLeakTracker()
-{
-}
-
-void oLeakTracker::CaptureCallstack(bool _Capture) threadsafe
-{
-	oStd::atomic_exchange(&Desc.CaptureCallstack, _Capture);
-}
-
-void oLeakTracker::NewContext() threadsafe
-{
-	oStd::atomic_increment(&CurrentContext);
-}
-
-static int& GetThreadlocalTrackingEnabled()
-{
-	// has to be a pointer so for multi-module support (all instances of this from
-	// a DLL perspective must point to the same bool value)
-	thread_local static int* pThreadlocalTrackingEnabled = nullptr;
-	// {410D255E-F3B1-4A37-B511-521627F7341E}
-	static const guid GUIDEnabled = { 0x410d255e, 0xf3b1, 0x4a37, { 0xb5, 0x11, 0x52, 0x16, 0x27, 0xf7, 0x34, 0x1e } };
-	if (!pThreadlocalTrackingEnabled)
+	size_t n = 0;
+	lock_t Lock(Mutex);
+	oFOR(const allocations_t::value_type& pair, Allocations)
 	{
-		oThreadlocalMalloc(GUIDEnabled
-			, [&](void* _pMemory) { *(int*)_pMemory = 1; } // tracking is on by default
-			, oLIFETIME_TASK()
-			, &pThreadlocalTrackingEnabled);
+		const entry& e = pair.second;
+		if (e.tracked && (!_CurrentContextOnly || e.context == CurrentContext))
+			n++;
 	}
-
-	return *pThreadlocalTrackingEnabled;
+	return n;
 }
 
-void oLeakTracker::EnableThreadlocalTracking(bool _Enabled) threadsafe
-{
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
-	InInternalProcesses = true;
-	int& enabled_counter = GetThreadlocalTrackingEnabled();
-	if (_Enabled)
-		enabled_counter += 1;
-	else
-		enabled_counter -= 1;
-	oASSERT(enabled_counter <= 1, "EnableThreadlocalTracking(true) should only be called after calling EnableThreadlocalTracking(false)");
-	InInternalProcesses = false;
-};
-
-void oLeakTracker::OnAllocation(uintptr_t _AllocationID, size_t _Size, const char* _Path, unsigned int _Line, uintptr_t _OldAllocationID) threadsafe
-{
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
-	if (!InInternalProcesses)
-	{
-		InInternalProcesses = true;
-
-		#if oENABLE_RELEASE_ASSERTS == 1 || oENABLE_ASSERTS == 1
-			bool erased = 
-		#endif
-		find_and_erase((allocations_t::map_type&)This()->Allocations, _OldAllocationID);
-		oASSERT(_OldAllocationID || !erased, "Address already tracked, and this event type is not a reallocation");
-
-		ALLOCATION_DESC d;
-		d.AllocationID = _AllocationID;
-		d.Size = _Size;
-		d.Path = _Path;
-		d.Line = _Line;
-		d.Context = CurrentContext;
-		d.Tracked = GetThreadlocalTrackingEnabled() > 0;
-		memset(d.StackTrace, 0, sizeof(d.StackTrace));
-		if (Desc.CaptureCallstack && This()->Desc.GetCallstack)
-			d.NumStackEntries = static_cast<unsigned int>(This()->Desc.GetCallstack(d.StackTrace, oCOUNTOF(d.StackTrace), STACK_TRACE_OFFSET));
-		else
-			d.NumStackEntries = 0;
-
-		This()->Allocations[_AllocationID] = d;
-		InInternalProcesses = false;
-	}
-}
-
-void oLeakTracker::OnDeallocation(uintptr_t _AllocationID) threadsafe
-{
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
-	if (!InInternalProcesses)
-	{
-		InInternalProcesses = true;
-		// there may be existing allocs before tracking was enabled, so we're going 
-		// to have to ignore those since they weren't captured
-		find_and_erase(This()->Allocations, _AllocationID);
-		InInternalProcesses = false;
-	}
-}
-
-unsigned int oLeakTracker::GetNumAllocations() const threadsafe
-{
-	return static_cast<unsigned int>(This()->Allocations.size()); // cast is ok because this is an instantaneous sampling
-}
-
-void oLeakTracker::Reset() threadsafe
-{
-	oLockThis(Mutex)->Allocations.clear();
-}
-
-bool oLeakTracker::ShouldReport(const ALLOCATION_DESC& _Desc, bool _CurrentContextOnly) const
-{
-	return _Desc.Tracked && (!_CurrentContextOnly || _Desc.Context == CurrentContext);
-}
-
-bool oLeakTracker::FindAllocation(uintptr_t _AllocationID, ALLOCATION_DESC* _pDesc) threadsafe
-{
-	// @tony: Should this return false for blacklisted/out-of-context allocs?
-
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
-	allocations_t::const_iterator it = This()->Allocations.find(_AllocationID);
-	if (it != This()->Allocations.end())
-	{
-		*_pDesc = it->second;
-		return true;
-	}
-
-	return false;
-}
-
-unsigned int oLeakTracker::InternalReportLeaks(bool _TraceReport, bool _WaitForAsyncAllocs, bool _CurrentContextOnly) const threadsafe
+size_t leak_tracker::report(bool _CurrentContextOnly)
 {
 	xlstring buf;
 	sstring memsize;
 
-	This()->DelayLatch.release(); // inherently threadsafe API
-	if (oStd::cv_status::timeout == This()->DelayLatch.wait_for(oStd::chrono::milliseconds(5000))) // some delayed frees might be in threads that get stomped on (thus no exit code runs) during static deinit, so don't wait forever
+	release_delay();
+	if (oStd::cv_status::timeout == DelayLatch.wait_for(oStd::chrono::milliseconds(Info.expected_delay_ms))) // some delayed frees might be in threads that get stomped on (thus no exit code runs) during static deinit, so don't wait forever
 		oTRACE("WARNING: a delay on the leak report count was added, but has yet to be released. The timeout has been reached, so this report will include delayed releases that haven't (yet) occurred.");
 
-	bool RecoveredFromAsyncLeaks = false;
 	// Some 3rd party task systems (TBB) may not have good API for ensuring they
 	// are in a steady-state going into a leak report. To limit the number of 
 	// false-positives, check again if there are leaks.
-	if (_WaitForAsyncAllocs)
+	bool RecoveredFromAsyncLeaks = false;
+	size_t CheckedNumLeaks = num_outstanding_allocations(_CurrentContextOnly);
+	if (CheckedNumLeaks > 0)
 	{
-		unsigned int CheckedNumLeaks = InternalReportLeaks(false, false, _CurrentContextOnly);
-		if (CheckedNumLeaks > 0)
-		{
-			oTRACE("There are potentially %u leaks(s), sleeping and checking again to eliminate async false positives...", CheckedNumLeaks);
-			oStd::this_thread::sleep_for(oStd::chrono::milliseconds(1000));
-			RecoveredFromAsyncLeaks = true;
-		}
+		oTRACE("There are potentially %u leaks(s), sleeping and checking again to eliminate async false positives...", CheckedNumLeaks);
+		oStd::this_thread::sleep_for(oStd::chrono::milliseconds(Info.unexpected_delay_ms));
+		RecoveredFromAsyncLeaks = true;
 	}
 
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(This()->Mutex);
-	unsigned int nLeaks = 0;
-
-	if (This()->Desc.Print)
+	lock_t Lock(Mutex);
+	size_t nLeaks = 0;
+	bool headerPrinted = false;
+	size_t totalLeakBytes = 0;
+	oFOR(const allocations_t::value_type& pair, Allocations)
 	{
-		bool headerPrinted = false;
-		size_t totalLeakBytes = 0;
-		oFOR(const allocations_t::value_type& pair, This()->Allocations)
+		const entry& e = pair.second;
+		if (e.tracked && (!_CurrentContextOnly || e.context == CurrentContext))
 		{
-			const ALLOCATION_DESC& d = pair.second;
-			if (!This()->ShouldReport(d, _CurrentContextOnly))
-				continue;
-
-			if (!headerPrinted && _TraceReport)
+			if (!headerPrinted)
 			{
 				mstring Header;
-				snprintf(Header, "========== Leak Report%s ==========\n", RecoveredFromAsyncLeaks ? " (recovered from async false positives)" : "");
-				This()->Desc.Print(Header);
+				snprintf(Header, "========== Leak Report%s ==========\n"
+					, RecoveredFromAsyncLeaks ? " (recovered from async false positives)" : "");
+				Info.print(Header);
 				headerPrinted = true;
 			}
 			
 			nLeaks++;
-			totalLeakBytes += d.Size;
+			totalLeakBytes += e.size;
 
-			if (_TraceReport)
+			format_bytes(memsize, e.size, 2);
+
+			if (Info.use_hex_for_alloc_id)
 			{
-				format_bytes(memsize, d.Size, 2);
-
-				if (Desc.ReportAllocationIDAsHex)
-				{
-					if (d.Path && *d.Path)
-						snprintf(buf, "%s(%u) : {0x%p} %s\n", d.Path, d.Line, d.AllocationID, memsize.c_str());
-					else
-						snprintf(buf, "<no filename> : {0x%p} %s (probably a call to ::new(size_t))\n", d.AllocationID, memsize.c_str());
-				}
-
+				if (e.source.empty())
+					snprintf(buf, "<no filename> : {0x%p} %s (probably a call to ::new(size_t))\n", e.id, memsize.c_str());
 				else
-				{
-					if (d.Path && *d.Path)
-						snprintf(buf, "%s(%u) : {%d} %s\n", d.Path, d.Line, d.AllocationID, memsize);
-					else
-						snprintf(buf, "<no filename> : {%d} %s (probably a call to ::new(size_t))\n", d.AllocationID, memsize.c_str());
-				}
-
-				This()->Desc.Print(buf);
-
-				const bool FilterStdBind = true;
-
-				bool IsStdBind = false;
-				for (size_t i = 0; i < d.NumStackEntries; i++)
-				{
-					bool WasStdBind = IsStdBind;
-					This()->Desc.GetCallstackSymbolString(buf, buf.capacity(), d.StackTrace[i], "  ", &IsStdBind);
-					if (!WasStdBind && IsStdBind) // skip a number of the internal wrappers
-						i += 5;
-
-					This()->Desc.Print(buf);
-				}
+					snprintf(buf, "%s(%u) : {0x%p} %s\n", e.source.c_str(), e.line, e.id, memsize.c_str());
 			}
-		}
 
-		if (nLeaks && _TraceReport)
-		{
-			sstring strTotalLeakBytes;
-			mstring Footer;
-			format_bytes(strTotalLeakBytes, totalLeakBytes, 2);
-			snprintf(Footer, "========== Leak Report: %u Leak(s) %s%s ==========\n", nLeaks, strTotalLeakBytes.c_str(), _WaitForAsyncAllocs ? " (recovered from async false positives)" : "");
-			This()->Desc.Print(Footer);
+			else
+			{
+				if (e.source.empty())
+					snprintf(buf, "<no filename> : {%d} %s (probably a call to ::new(size_t))\n", e.id, memsize.c_str());
+				else
+					snprintf(buf, "%s(%u) : {%d} %s\n", e.source.c_str(), e.line, e.id, memsize);
+			}
+
+			Info.print(buf);
+
+			bool IsStdBind = false;
+			for (size_t i = 0; i < e.num_stack_entries; i++)
+			{
+				bool WasStdBind = IsStdBind;
+				Info.format(buf, buf.capacity(), e.stack[i], "  ", &IsStdBind);
+				if (!WasStdBind && IsStdBind) // skip a number of the internal wrappers
+					i += std_bind_internal_offset;
+				Info.print(buf);
+			}
 		}
 	}
 
-	This()->DelayLatch.reset(1);
+	if (nLeaks)
+	{
+		sstring strTotalLeakBytes;
+		mstring Footer;
+		format_bytes(strTotalLeakBytes, totalLeakBytes, 2);
+		snprintf(Footer, "========== Leak Report: %u Leak(s) %s%s ==========\n"
+			, nLeaks
+			, strTotalLeakBytes.c_str()
+			, RecoveredFromAsyncLeaks ? " (recovered from async false positives)" : "");
+		Info.print(Footer);
+	}
+
+	DelayLatch.reset(1);
 	return nLeaks;
 }
+
+void leak_tracker::on_allocate(unsigned int _AllocationID, size_t _Size, const char* _Path, unsigned int _Line, unsigned int _OldAllocationID)
+{
+	lock_t Lock(Mutex);
+	if (!Internal) // prevent infinite recursion
+	{
+		Internal = true;
+
+		#if oENABLE_RELEASE_ASSERTS == 1 || oENABLE_ASSERTS == 1
+			bool erased = 
+		#endif
+		find_and_erase(Allocations, _OldAllocationID);
+		oASSERT(_OldAllocationID || !erased, "Address already tracked, and this event type is not a reallocation");
+
+		entry e;
+		e.id = _AllocationID;
+		e.size = _Size;
+		e.source = _Path;
+		e.line = static_cast<unsigned short>(_Line);
+		e.context = CurrentContext;
+		e.tracked = Info.thread_local_tracking_enabled();
+		memset(e.stack, 0, sizeof(e.stack));
+		e.num_stack_entries = Info.capture_callstack ? static_cast<unsigned char>(Info.callstack(e.stack, stack_trace_max_depth, stack_trace_offset)) : 0;
+		Allocations[_AllocationID] = e;
+		Internal = false;
+	}
+}
+
+void leak_tracker::on_deallocate(unsigned int _AllocationID)
+{
+	lock_t Lock(Mutex);
+	if (!Internal)
+	{
+		Internal = true;
+		// there may be existing allocs before tracking was enabled, so we're going 
+		// to have to ignore those since they weren't captured
+		find_and_erase(Allocations, _AllocationID);
+		Internal = false;
+	}
+}
+
+void leak_tracker::thread_local_tracking(bool _Enabled)
+{
+	oStd::lock_guard<oStd::recursive_mutex> Lock(Mutex);
+	Internal = true;
+	Info.thread_local_tracking_enabled() = _Enabled;
+	Internal = false;
+}
+
+} // namespace ouro

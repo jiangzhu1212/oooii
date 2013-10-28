@@ -363,6 +363,12 @@
     <ClInclude Include="..\..\Include\oBase\all_libc.h">
       <Filter>oBase</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\linear_allocator.h">
+      <Filter>oBase\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\countdown_latch.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">

@@ -156,11 +156,11 @@ protected:
 	oConcurrency::recursive_mutex Mutex;
 
 	typedef fixed_vector<oSingletonBase*, 32> thread_singletons_t;
-	typedef std::unordered_map<oStd::thread::id, thread_singletons_t, std::hash<oStd::thread::id>, std::equal_to<oStd::thread::id>, oStdUserAllocator<std::pair<const oStd::thread::id, thread_singletons_t>>> singletons_t;
+	typedef std::unordered_map<oStd::thread::id, thread_singletons_t, std::hash<oStd::thread::id>, std::equal_to<oStd::thread::id>, std_user_allocator<std::pair<const oStd::thread::id, thread_singletons_t>>> singletons_t;
 	singletons_t Singletons;
 
 	typedef fixed_vector<oFUNCTION<void()>, 32> atexitlist_t;
-	typedef std::unordered_map<oStd::thread::id, atexitlist_t, std::hash<oStd::thread::id>, std::equal_to<oStd::thread::id>, oStdUserAllocator<std::pair<const oStd::thread::id, atexitlist_t>>> atexits_t;
+	typedef std::unordered_map<oStd::thread::id, atexitlist_t, std::hash<oStd::thread::id>, std::equal_to<oStd::thread::id>, std_user_allocator<std::pair<const oStd::thread::id, atexitlist_t>>> atexits_t;
 	atexits_t AtExits;
 };
 
@@ -168,8 +168,8 @@ protected:
 const oGUID oThreadlocalRegistry::GUID = { 0xcbc5c6d4, 0x7c46, 0x4d05, { 0x91, 0x43, 0xa0, 0x43, 0x41, 0x8c, 0xb, 0x3a } };
 
 oThreadlocalRegistry::oThreadlocalRegistry()
-	: Singletons(0, singletons_t::hasher(), singletons_t::key_equal(), oStdUserAllocator<singletons_t::value_type>(untracked_malloc, untracked_free))
-	, AtExits(0, atexits_t::hasher(), atexits_t::key_equal(), oStdUserAllocator<atexits_t::value_type>(untracked_malloc, untracked_free))
+	: Singletons(0, singletons_t::hasher(), singletons_t::key_equal(), std_user_allocator<singletons_t::value_type>(untracked_malloc, untracked_free))
+	, AtExits(0, atexits_t::hasher(), atexits_t::key_equal(), std_user_allocator<atexits_t::value_type>(untracked_malloc, untracked_free))
 {}
 
 // @tony: External declared elsewhere for some lifetime timing hackin'

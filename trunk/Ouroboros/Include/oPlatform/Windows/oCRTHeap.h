@@ -85,7 +85,7 @@ unsigned int oCRTHeapGetAllocationLine(void* _Pointer);
 // Returns a unqiue identifier for the specified allocation. This can be the
 // pointer itself, but that is not always the case. This assumes the specifed 
 // pointer is valid.
-uintptr_t oCRTHeapGetAllocationID(void* _Pointer);
+unsigned int oCRTHeapGetAllocationID(void* _Pointer);
 
 // Causes execution to break into the debugger when the specified allocation
 // occurs.

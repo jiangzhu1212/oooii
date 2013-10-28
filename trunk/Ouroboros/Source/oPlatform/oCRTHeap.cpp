@@ -123,9 +123,9 @@ unsigned int oCRTHeapGetAllocationLine(void* _Pointer)
 	return static_cast<unsigned int>(pHdr(_Pointer)->nLine);
 }
 
-uintptr_t oCRTHeapGetAllocationID(void* _Pointer)
+unsigned int oCRTHeapGetAllocationID(void* _Pointer)
 {
-	return static_cast<uintptr_t>(pHdr(_Pointer)->lRequest);
+	return static_cast<unsigned int>(pHdr(_Pointer)->lRequest);
 }
 
 void oCRTHeapBreakOnAllocation(uintptr_t _AllocationID)

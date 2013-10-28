@@ -22,57 +22,66 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oConcurrency/countdown_latch.h>
-#include <oBase/finally.h>
-#include <oStd/for.h>
-#include <oStd/atomic.h>
-#include <oStd/future.h>
-#include <oBase/throw.h>
-#include <vector>
+// Simple non-threadsafe linear allocator
+#pragma once
+#ifndef oBase_linear_allocator_h
+#define oBase_linear_allocator_h
 
-namespace oConcurrency {
-	namespace tests {
+#include <oBase/byte.h>
 
-static bool test(int _Count)
+namespace ouro {
+
+class linear_allocator
 {
-	int latchCount = _Count;
-	int count = 0;
-	countdown_latch latch(latchCount);
-	
-	// NOTE: This pattern is only for testing purposes of countdown latch. In 
-	// applications, it's better to async() a task that will then do other tasks
-	// and wait on the future of that first async() call... such as async()'ing a 
-	// parallel_for. Again, this pattern here is to purposefully exacerbate 
-	// and test countdown_latch, thus sync'ing on the futures wouldn't do much 
-	// good.
+public:
+	static const size_t default_alignment = 16;
 
-	std::vector<oStd::future<void>> Futures;
-
-	for (int i = 0; i < _Count; i++)
+	linear_allocator() : pHead(nullptr), pTail(nullptr), pEnd(nullptr) {}
+	linear_allocator(void* _pArena, size_t _Size) { initialize(_pArena, _Size); }
+	linear_allocator(linear_allocator&& _That) { operator=(std::move(_That)); }
+	linear_allocator& operator=(linear_allocator&& _That)
 	{
-		oStd::future<void> f = oStd::async([&,i]
+		if (this != &_That)
 		{
-			oStd::this_thread::sleep_for(oStd::chrono::milliseconds(100 * (i + 1))); // stagger the sleeps to simulate doing work that takes a variable amount of time
-			oStd::atomic_increment(&count);
-			latch.release();
-		});
-
-		Futures.push_back(std::move(f));
+			pHead = _That.pHead; _That.pHead = nullptr;
+			pTail = _That.pTail; _That.pTail = nullptr;
+			pEnd = _That.pEnd; _That.pEnd = nullptr;
+		}
+		return *this;
 	}
 
-	latch.wait();
+	void initialize(void* _pArena, size_t _Size) 
+	{
+		pHead = _pArena;
+		pTail = _pArena;
+		pEnd = byte_add(_pArena, _Size);
+	}
 
-	oFOR(oStd::future<void>& f, Futures)
-		f.wait();
+	void* allocate(size_t _Size, size_t _Alignment = default_alignment)
+	{ 
+		void* p = byte_align(pTail, _Alignment);
+		void* pNewTail = byte_add(p, _Size);
+		if (pNewTail <= pEnd)
+		{
+			pTail = pNewTail;
+			return p;
+		}
+		return nullptr;
+	}
 
-	return count == latchCount;
-}
+	void reset() { pTail = pHead; }
+	bool valid(void* _Pointer) const { return _Pointer >= pHead && _Pointer < pTail; }
+	size_t bytes_free() const { return byte_diff(pTail, pEnd); }
 
-void TESTcountdown_latch()
-{
-	oCHECK(test(5), "countdown_latch failed to wait properly.");
-	oCHECK(test(1), "countdown_latch failed to wait properly.");
-}
+private:
+	void* pHead;
+	void* pTail;
+	void* pEnd;
 
-	} // namespace tests
-} // namespace oConcurrency
+	linear_allocator(const linear_allocator&); /* = delete */
+	const linear_allocator& operator=(const linear_allocator&); /* = delete */
+};
+
+} // namespace ouro
+
+#endif

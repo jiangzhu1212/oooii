@@ -81,6 +81,11 @@ oConcurrency      <== Implementation of concurrency containers and sync objects
                       systems.
 oConcurrencyTests <== Unit tests for oConcurrency.
 oCore             <== platform/OS concepts like files, debugger, adapters, cpus.
+oGUI              <== graphical user interface concepts, often not abstracted or 
+                      cross-platform - this isn't intended to be QT or WxWidgets,
+                      but just the very basics until it's worth bringing in a 
+                      heavyweight middleware.
+oGUITests         <== Unit tests for oGUI.
 oBasis            <== Basic algorithms, types and structures that have no platform 
                       dependencies (but perhaps lightweight compiler dependencies).
 oBasisTests       <== Unit tests for oBasis.

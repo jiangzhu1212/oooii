@@ -29,151 +29,161 @@
 #ifndef oLeakTracker_h
 #define oLeakTracker_h
 
-#include <oConcurrency/countdown_latch.h>
-#include <oConcurrency/mutex.h>
-#include <oCore/debugger.h>
+#include <oStd/for.h>
+#include <oStd/mutex.h>
+#include <oBase/algorithm.h>
+#include <oBase/assert.h>
+#include <oBase/countdown_latch.h>
 #include <oBase/fixed_string.h>
-#include <oBasis/oStdLinearAllocator.h>
-#include <oBase/unordered_map.h>
-#include <oBase/fnv1a.h>
-#include <oBase/function.h>
+#include <oBase/macros.h>
 
-class oLeakTracker
+namespace ouro {
+
+class leak_tracker
 {
 public:
-	static const size_t STACK_TRACE_DEPTH = 32;
-	static const size_t STACK_TRACE_OFFSET = 8;
+	static const size_t stack_trace_max_depth = 32; // how many entries to savfe
+	static const size_t stack_trace_offset = 8; // start at nth entry (bypass common infrastructure code)
+	static const size_t std_bind_internal_offset = 5; // number of symbols internal to std::bind to skip
 
-	// Function returns the number of callstack symbols retrieved. _StartingOffset
-	// allows ignoring a number of entries just before the call location since
-	// typically a higher-level malloc call might have a known number of 
-	// sub-functions it calls. _pSymbols receives the values up to _MaxNumSymbols.
-	typedef std::function<size_t(ouro::debugger::symbol* _pSymbols, size_t _MaxNumSymbols, size_t _StartingOffset)> GetCallstackFn;
+	typedef unsigned long long symbol_t;
 
-	// Function that behaves like snprintf but converts the specified symbol into
-	// a string fit for the PrintFn below. The function should concatenate the
-	// specified string after the specified _PrefixString so indentation can 
-	// occur. The function should be able to identify std::bind internal 
-	// symbols and fill the specified bool with true if it matches or false if it
-	// doesn't and the function should noop if the value is true going in, that
-	// way long callstacks of std::bind internals can be shortened.
-	typedef std::function<int(char* _Buffer, size_t _SizeofBuffer, ouro::debugger::symbol _Symbol, const char* _PrefixString, bool* _pIsStdBind)> GetCallstackSymbolStringFn;
+	// Used to allocate and deallocate tracking entries. These allocations them-
+	// selves will not be tracked.
+	typedef void* (*allocate_fn)(size_t _Size);
+	typedef void (*deallocate_fn)(void* _Pointer);
 
-	// Print a fixed string to some underlying destination. This makes no 
-	// assumptions about the string itself, and should add nothing to the string,
-	// such as an automatic newline or the like.
-	typedef std::function<void(const char* _String)> PrintFn;
+	// Tracking can come from 3rd party libraries with their own idea of timing
+	// when freeing memory. For example TBB keeps its threads around in a way that 
+	// cannot be determined from the outside, so provide a per-thread bool value
+	// to allow per-thread enabling/disabling for such allocations. This is not 
+	// just a thread_local value because DLLs can have their own copies and thus
+	// create not only racy leaks, but also ones that only occur when called in a
+	// certain order from different DLLs.
+	typedef bool& (*thread_local_tracking_enabled_fn)();
 
-	struct DESC
+	// Returns the number of symbols retreived into _pSymbols. _Offset allows
+	// the capture to ignore internal details of the capture.
+	typedef size_t (*callstack_fn)(symbol_t* _pSymbols, size_t _NumSymbols, size_t _Offset);
+
+	// snprintf to the specified destination the decoded symbol_t with optional
+	// prefix. This should also be able to detect if the symbol_t is a std::bind
+	// detail and set the optional bool accordingly, optionally skipping the 
+	// noisy inner details of std::bind.
+	typedef int (*format_fn)(char* _StrDestination, size_t _SizeofStrDestination
+		, symbol_t _Symbol, const char* _Prefix, bool* _pIsStdBind);
+
+	// Print a fixed string to some destination
+	typedef void (*print_fn)(const char* _String);
+
+	struct info
 	{
-		// The cross-platform logic in this class requires several platform calls to 
-		// effectively track memory allocations, so rather than pollute too much of
-		// this code with only a little platform dependencies, encapsulate those 
-		// requirements in these calls here.
+		info()
+			: allocate(nullptr)
+			, deallocate(nullptr)
+			, thread_local_tracking_enabled(nullptr)
+			, callstack(nullptr)
+			, format(nullptr)
+			, print(nullptr)
+			, expected_delay_ms(5000)
+			, unexpected_delay_ms(2000)
+			, use_hex_for_alloc_id(false)
+			, capture_callstack(false)
+		{}
 
-		bool ReportAllocationIDAsHex;
-		bool CaptureCallstack; // this can be modified later with CaptureCallstack()
-		GetCallstackFn GetCallstack;
-		GetCallstackSymbolStringFn GetCallstackSymbolString;
-		PrintFn Print;
+		allocate_fn allocate;
+		deallocate_fn deallocate;
+		thread_local_tracking_enabled_fn thread_local_tracking_enabled;
+		callstack_fn callstack;
+		format_fn format;
+		print_fn print;
+
+		unsigned int expected_delay_ms;
+		unsigned int unexpected_delay_ms;
+		bool use_hex_for_alloc_id;
+		bool capture_callstack;
 	};
 
-	struct ALLOCATION_DESC
+	struct entry
 	{
-		uintptr_t AllocationID;
-		size_t Size;
-		ouro::debugger::symbol StackTrace[STACK_TRACE_DEPTH];
-		unsigned int NumStackEntries;
-		unsigned int Line;
-		unsigned int Context;
-		ouro::path_string	Path;
-		bool Tracked; // true if the allocation occurred when tracking wasn't enabled
-		inline bool operator==(const ALLOCATION_DESC& _Other) { return AllocationID == _Other.AllocationID; }
+		unsigned int id;
+		size_t size;
+		symbol_t stack[stack_trace_max_depth];
+		unsigned char num_stack_entries;
+		bool tracked; // true if the allocation occurred when tracking wasn't enabled
+		unsigned short line;
+		unsigned short context;
+		ouro::path_string source;
+		bool operator==(const entry& _That) { return id == _That.id; }
+		bool operator<(const entry& _That) { return id < _That.id; }
 	};
 
-	// Type of container exposed so we can pass in an allocator.
-	static struct HashAllocation { size_t operator()(uintptr_t _AllocationID) const { return ouro::fnv1a<size_t>(&_AllocationID, sizeof(_AllocationID)); } };
-	
-	typedef std::pair<const uintptr_t, ALLOCATION_DESC> pair_type;
-	typedef oStdLinearAllocator<pair_type> allocator_type;
-	typedef ouro::unordered_map<uintptr_t, ALLOCATION_DESC, HashAllocation, std::equal_to<uintptr_t>, std::less<uintptr_t>, allocator_type> allocations_t;
+	leak_tracker(const info& _Info)
+		: Info(_Info)
+		, Allocations(0, allocations_t::hasher(), allocations_t::key_equal(), allocations_t::key_less(), allocator_t(_Info.allocate, _Info.deallocate))
+		, DelayLatch(1)
+		, CurrentContext(0)
+		, Internal(false)
+	{}
 
-	oLeakTracker(const DESC& _Desc, allocations_t::allocator_type _Allocator /*= allocations_t::allocator_type()*/);
-	oLeakTracker(GetCallstackFn _GetCallstack, GetCallstackSymbolStringFn _GetCallstackSymbolString, PrintFn _Print, bool _ReportHexAllocationID, bool _CaptureCallstack, allocations_t::allocator_type _Allocator /*= allocations_t::allocator_type()*/);
-	~oLeakTracker();
+	void thread_local_tracking(bool _Enabled);
+	bool thread_local_tracking() const { return Info.thread_local_tracking_enabled(); }
 
-	allocations_t::allocator_type GetAllocator() { return Allocations.get_allocator(); }
+	// Slow! but will pinpoint exactly where a leak was allocated.
+	void capture_callstack(bool _Enabled) { Info.capture_callstack = _Enabled; }
+	bool capture_callstack() const { return Info.capture_callstack; }
 
-	// Capturing the callstack for each alloc can be slow, so provide a way to
-	// turn it on or off. An effective use would be to start an application up to 
-	// a point where leaks are likely, bypassing an expensive capture for static 
-	// init and asset loading. Then in the suspected area start logging more 
-	// explicit data.
-	void CaptureCallstack(bool _Capture = true) threadsafe;
+	// Some operations are asynchronous and allocate memory. If such operations 
+	// occur near the end of the application's life, then there is an opportunity
+	// to delay the report a bit waiting for the operation to complete. A memory 
+	// user in such a case can call add_delay() and when its memory is freed then 
+	// release_delay(). This only delays reporting - because the thread allocating 
+	// memory could be terminated, this will only block for a time - not forever.
+	void add_delay() { DelayLatch.reference(); }
+	void release_delay() { DelayLatch.release(); }
 
-	// Call this when an allocation occurs. If a realloc, pass the ID of the 
+	// Only allocations within a context are reported as leaks. This is to get 
+	// around bootstrap allocations for localized reporting. For example in a unit 
+	// test infrastructure, this allows only leak detection for each specific test.
+	void new_context() { oStd::atomic_increment(&CurrentContext); }
+
+	// Clears all allocation tracking.
+	void reset() { lock_t Lock(Mutex); Allocations.clear(); }
+
+	// Reports all allocations currently tracked to the debugger print function.
+	// If _CurrentContextOnly is true, then only the allocations since the last 
+	// call to new_context() will be reported. If _CurrentContextOnly is false, 
+	// all allocations since the start of tracking will be reported. This returns 
+	// the number of leaks reported.
+	size_t report(bool _CurrentContextOnly = true);
+
+	// Call this when an allocation occurs. If a realloc, pass the id of the 
 	// original pointer to _OldAllocationID.
-	void OnAllocation(uintptr_t _AllocationID, size_t _Size, const char* _Path, unsigned int _Line, uintptr_t _OldAllocationID = 0) threadsafe;
+	void on_allocate(unsigned int _AllocationID, size_t _Size, const char* _Path, unsigned int _Line, unsigned int _OldAllocationID = 0);
 
 	// Call this when a deallocation occurs
-	void OnDeallocation(uintptr_t _AllocationID) threadsafe;
-
-	// Returns the number of allocations at the time of the calls.
-	unsigned int GetNumAllocations() const threadsafe;
-
-	// Clears tracked allocations. This can be useful when doing targetted 
-	// debugging of a leak known to be in a specific area. However this is not
-	// context-based: this will erase all prior history.
-	void Reset() threadsafe;
-
-	// Returns true if _pDesc was filled with valid information, false if the 
-	// allocation was not found as being recorded.
-	bool FindAllocation(uintptr_t _AllocationID, ALLOCATION_DESC* _pDesc) threadsafe;
-
-	// Use the specified function to iterate through all outstanding allocations
-	// and print useful information about the leak. If _pTotalLeakedBytes is 
-	// valid, it will be filled with the sum total of all bytes leaked. This 
-	// returns true if there are any leaks, false if there are no leaks.
-
-	// Iterates all allocations and returns the number of tracked leaks detected.
-	// If _CurrentContextOnly is true, then only the allocations since the last 
-	// call to NewContext() will be reported. If _CurrentContextOnly is false, all 
-	// allocations since the start of tracking will be reported.
-	unsigned int CalculateNumLeaks(bool _CurrentContextOnly = true) const threadsafe { return InternalReportLeaks(false, true, _CurrentContextOnly); }
-
-	// Iterates all allocations and reports to the Print function each tracked 
-	// allocation. If _CurrentContextOnly is true, then only the allocations since
-	// the last call to NewContext() will be reported. If _CurrentContextOnly is 
-	// false, all allocations since the start of tracking will be reported. This 
-	// returns the number of leaks reported.
-	unsigned int Report(bool _CurrentContextOnly = true) const threadsafe { return InternalReportLeaks(true, true, _CurrentContextOnly); }
-
-	// Enables (or disables) memory tracking for the calling thread. This can be
-	// useful in shutting down any tracking done during calls to 3rd party APIs
-	// (lookin' at you TBB!).
-	void EnableThreadlocalTracking(bool _Enabled = true) threadsafe;
-
-	// Useful in tracking leaks around known points in the code, such as between
-	// unit tests or level loads.
-	void NewContext() threadsafe;
-
-	void ReferenceDelay() const threadsafe { This()->DelayLatch.reference(); }
-	void ReleaseDelay() const threadsafe { This()->DelayLatch.release(); }
+	void on_deallocate(unsigned int _AllocationID);
 
 private:
+	typedef oStd::recursive_mutex mutex_t;
+	typedef oStd::lock_guard<mutex_t> lock_t;
+
+	static struct hasher { size_t operator()(unsigned int _AllocationID) const { return _AllocationID; } };
+	typedef std::pair<const unsigned int, entry> pair_t;
+	typedef std_user_allocator<pair_t> allocator_t;
+	typedef ouro::unordered_map<unsigned int, entry, hasher
+		, std::equal_to<unsigned int>, std::less<unsigned int>, allocator_t> allocations_t;
+
+	info Info;
+	mutex_t Mutex;
 	allocations_t Allocations;
+	countdown_latch DelayLatch;
+	unsigned short CurrentContext;
+	bool Internal;
 
-	bool InInternalProcesses; // don't track allocations this object itself makes just to do the tracking (trust that this won't leak too!)
-	DESC Desc;
-	oConcurrency::recursive_mutex Mutex;
-	oConcurrency::countdown_latch DelayLatch;
-	unsigned int CurrentContext;
-
-	// Returns false for a blacklisted or out-of-context allocation 
-	bool ShouldReport(const ALLOCATION_DESC& _Desc, bool _CurrentContextOnly = true) const;
-	inline oLeakTracker* This() const threadsafe { return thread_cast<oLeakTracker*>(this); }
-
-	unsigned int InternalReportLeaks(bool _TraceReport, bool _WaitForAsyncAllocs, bool _CurrentContextOnly) const threadsafe;
+	size_t num_outstanding_allocations(bool _CurrentContextOnly);
 };
+
+} // namespace ouro
 
 #endif

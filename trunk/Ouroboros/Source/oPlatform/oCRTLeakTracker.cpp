@@ -38,6 +38,24 @@ static void untracked_free(void* _Pointer) { oProcessHeapDeallocate(_Pointer); }
 
 const static size_t kTrackingInternalReserve = oMB(4);
 
+static bool& GetThreadlocalTrackingEnabled()
+{
+	// has to be a pointer so for multi-module support (all instances of this from
+	// a DLL perspective must point to the same bool value)
+	thread_local static bool* pThreadlocalTrackingEnabled = nullptr;
+	// {410D255E-F3B1-4A37-B511-521627F7341E}
+	static const guid GUIDEnabled = { 0x410d255e, 0xf3b1, 0x4a37, { 0xb5, 0x11, 0x52, 0x16, 0x27, 0xf7, 0x34, 0x1e } };
+	if (!pThreadlocalTrackingEnabled)
+	{
+		oThreadlocalMalloc(GUIDEnabled
+			, [&](void* _pMemory) { *(bool*)_pMemory = true; } // tracking is on by default
+			, oLIFETIME_TASK()
+			, &pThreadlocalTrackingEnabled);
+	}
+
+	return *pThreadlocalTrackingEnabled;
+}
+
 oCRTLeakTracker::oCRTLeakTracker()
 	: NonLinearBytes(0)
 	, Enabled(false)
@@ -45,9 +63,14 @@ oCRTLeakTracker::oCRTLeakTracker()
 {
 	oReportingReference(); // reporting keeps a log file... don't track that
 
-	pLeakTracker = new oLeakTracker(ouro::debugger::callstack, ouro::debugger::format, ouro::debugger::print, false, false
-		, oStdLinearAllocator<oLeakTracker::allocations_t::value_type>(untracked_malloc(kTrackingInternalReserve)
-			, kTrackingInternalReserve, &NonLinearBytes, untracked_malloc, untracked_free));
+	ouro::leak_tracker::info lti;
+	lti.allocate = untracked_malloc;
+	lti.deallocate = untracked_free;
+	lti.thread_local_tracking_enabled = GetThreadlocalTrackingEnabled;
+	lti.callstack = ouro::debugger::callstack;
+	lti.format = ouro::debugger::format;
+	lti.print = ouro::debugger::print;
+	pLeakTracker = new ouro::leak_tracker(lti);
 
 	sInstanceForDeferredRelease = this;
 	Reference(); // keep an extra references to ourselves so that malloc is always hooked
@@ -58,10 +81,6 @@ oCRTLeakTracker::~oCRTLeakTracker()
 {
 	ReportLeaks(false);
 	_CrtSetAllocHook(OriginalAllocHook);
-
-	oLeakTracker::allocations_t::allocator_type a = pLeakTracker->GetAllocator();
-	delete pLeakTracker;
-	untracked_free(a.pAllocator);
 
 	if (NonLinearBytes)
 	{
@@ -110,12 +129,12 @@ bool oCRTLeakTracker::IsReportEnabled() const
 
 bool oCRTLeakTracker::ReportLeaks(bool _CurrentContextOnly)
 {
-	unsigned int nLeaks = 0;
+	size_t nLeaks = 0;
 	if (ReportEnabled)
 	{
 		bool OldValue = IsEnabled();
 		Enable(false);
-		nLeaks = pLeakTracker->Report(_CurrentContextOnly);
+		nLeaks = pLeakTracker->report(_CurrentContextOnly);
 		Enable(OldValue);
 	}
 
@@ -135,13 +154,13 @@ int oCRTLeakTracker::OnMallocEvent(int _AllocationType, void* _UserData, size_t 
 		switch (_AllocationType)
 		{
 			case _HOOK_ALLOC:
-				pLeakTracker->OnAllocation(static_cast<uintptr_t>(_RequestNumber), _Size, (const char*)_Path, _Line);
+				pLeakTracker->on_allocate(static_cast<unsigned int>(_RequestNumber), _Size, (const char*)_Path, _Line);
 				break;
 			case _HOOK_REALLOC:
-				pLeakTracker->OnAllocation(static_cast<uintptr_t>(_RequestNumber), _Size, (const char*)_Path, _Line, oCRTHeapGetAllocationID(_UserData));
+				pLeakTracker->on_allocate(static_cast<unsigned int>(_RequestNumber), _Size, (const char*)_Path, _Line, oCRTHeapGetAllocationID(_UserData));
 				break;
 			case _HOOK_FREE:
-				pLeakTracker->OnDeallocation(oCRTHeapGetAllocationID(_UserData));
+				pLeakTracker->on_deallocate(oCRTHeapGetAllocationID(_UserData));
 				break;
 			default:
 				__assume(0);
@@ -167,7 +186,7 @@ int oCRTLeakTracker::MallocHook(int _AllocationType, void* _UserData, size_t _Si
 
 void oCRTLeakTracker::UntrackAllocation(void* _Pointer)
 {
-	pLeakTracker->OnDeallocation(oCRTHeapGetAllocationID(_Pointer));
+	pLeakTracker->on_deallocate(oCRTHeapGetAllocationID(_Pointer));
 }
 
 void oConcurrency::enable_leak_tracking_threadlocal(bool _Enabled)

@@ -33,6 +33,7 @@ namespace ouro {
 	namespace tests {
 
 		void TESTatof(requirements& _Requirements);
+		void TESTcountdown_latch();
 		void TESTcsv();
 		void TESTdate(requirements& _Requirements);
 		void TESTini();

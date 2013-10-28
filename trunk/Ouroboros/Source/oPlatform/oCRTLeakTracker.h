@@ -43,10 +43,11 @@ struct oCRTLeakTracker : oProcessSingleton<oCRTLeakTracker>
 	oCRTLeakTracker();
 	~oCRTLeakTracker();
 
-	inline void NewContext() threadsafe { pLeakTracker->NewContext(); }
-	inline void CaptureCallstack(bool _Capture = true) threadsafe { pLeakTracker->CaptureCallstack(_Capture); }
-	inline void Reset() threadsafe { pLeakTracker->Reset(); }
-	inline void EnableThreadlocalTracking(bool _Enabled = true) threadsafe { pLeakTracker->EnableThreadlocalTracking(_Enabled); }
+	inline void NewContext() threadsafe { pLeakTracker->new_context(); }
+	inline void CaptureCallstack(bool _Capture = true) threadsafe { pLeakTracker->capture_callstack(_Capture); }
+	inline void Reset() threadsafe { pLeakTracker->reset(); }
+	
+	inline void EnableThreadlocalTracking(bool _Enabled = true) threadsafe { pLeakTracker->thread_local_tracking(_Enabled); }
 
 	void Enable(bool _Enabled = true);
 	bool IsEnabled() const;
@@ -66,15 +67,15 @@ struct oCRTLeakTracker : oProcessSingleton<oCRTLeakTracker>
 
 	static const oGUID GUID;
 
-	inline void ReferenceDelay() threadsafe { pLeakTracker->ReferenceDelay(); }
-	inline void ReleaseDelay() threadsafe { pLeakTracker->ReleaseDelay(); }
+	inline void ReferenceDelay() threadsafe { pLeakTracker->add_delay(); }
+	inline void ReleaseDelay() threadsafe { pLeakTracker->release_delay(); }
 
 protected:
 
 	static int MallocHook(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line);
 
 	oConcurrency::mutex Mutex;
-	oLeakTracker* pLeakTracker;
+	ouro::leak_tracker* pLeakTracker;
 	size_t NonLinearBytes;
 	_CRT_ALLOC_HOOK OriginalAllocHook;
 	bool Enabled;

@@ -22,8 +22,8 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// A wrapper for oStd::event that adds only threadsafe keywording. For primary
-// documentation, see oStd::event.h.
+// A wrapper for oBase::event that adds only threadsafe keywording. For primary
+// documentation, see oBase/event.h.
 #pragma once
 #ifndef oConcurrency_event_h
 #define oConcurrency_event_h

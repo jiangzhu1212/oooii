@@ -22,49 +22,57 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
-#pragma once
-#ifndef oBase_all_h
-#define oBase_all_h
-#include <oBase/algorithm.h>
-#include <oBase/assert.h>
-#include <oBase/atof.h>
-#include <oBase/byte.h>
-#include <oBase/color.h>
 #include <oBase/countdown_latch.h>
-#include <oBase/date.h>
-#include <oBase/djb2.h>
-#include <oBase/endian.h>
-#include <oBase/equal.h>
-#include <oBase/event.h>
 #include <oBase/finally.h>
-#include <oBase/fixed_string.h>
-#include <oBase/fixed_vector.h>
-#include <oBase/fnv1a.h>
-#include <oBase/fourcc.h>
-#include <oBase/guid.h>
-#include <oBase/ini.h>
-#include <oBase/intrusive_ptr.h>
-#include <oBase/linear_allocator.h>
-#include <oBase/macros.h>
-#include <oBase/memory.h>
-#include <oBase/moving_average.h>
-#include <oBase/murmur3.h>
-#include <oBase/operators.h>
-#include <oBase/opttok.h>
-#include <oBase/path.h>
-#include <oBase/path_traits.h>
-#include <oBase/scc.h>
-#include <oBase/string.h>
-#include <oBase/string_traits.h>
-#include <oBase/text_document.h>
+#include <oStd/for.h>
+#include <oStd/atomic.h>
+#include <oStd/future.h>
 #include <oBase/throw.h>
-#include <oBase/timer.h>
-#include <oBase/type_info.h>
-#include <oBase/types.h>
-#include <oBase/uint128.h>
-#include <oBase/unordered_map.h>
-#include <oBase/uri.h>
-#include <oBase/xml.h>
-#endif
+#include <vector>
+
+namespace ouro {
+	namespace tests {
+
+static bool test(int _Count)
+{
+	int latchCount = _Count;
+	int count = 0;
+	countdown_latch latch(latchCount);
+	
+	// NOTE: This pattern is only for testing purposes of countdown latch. In 
+	// applications, it's better to async() a task that will then do other tasks
+	// and wait on the future of that first async() call... such as async()'ing a 
+	// parallel_for. Again, this pattern here is to purposefully exacerbate 
+	// and test countdown_latch, thus sync'ing on the futures wouldn't do much 
+	// good.
+
+	std::vector<oStd::future<void>> Futures;
+
+	for (int i = 0; i < _Count; i++)
+	{
+		oStd::future<void> f = oStd::async([&,i]
+		{
+			oStd::this_thread::sleep_for(oStd::chrono::milliseconds(100 * (i + 1))); // stagger the sleeps to simulate doing work that takes a variable amount of time
+			oStd::atomic_increment(&count);
+			latch.release();
+		});
+
+		Futures.push_back(std::move(f));
+	}
+
+	latch.wait();
+
+	oFOR(oStd::future<void>& f, Futures)
+		f.wait();
+
+	return count == latchCount;
+}
+
+void TESTcountdown_latch()
+{
+	oCHECK(test(5), "countdown_latch failed to wait properly.");
+	oCHECK(test(1), "countdown_latch failed to wait properly.");
+}
+
+	} // namespace tests
+} // namespace ouro

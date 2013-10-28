@@ -8,15 +8,25 @@ future.
 
 This is where things that get replaced by a full C++11 implementation will go.
 
+
 == Base == 
 
 This is where things that ought to be in C++ go such as POSIX elements, more 
 robust string and memory parsing, and simple ubiquitous file formats and types.
 
+
 == Surface ==
 
 Everything to work with textures and images and all the advanced formats 
 supported by compute/GPU devices.
+
+
+== oGUI ==
+
+A dumping ground for all the Windows widgets needed during use of Ouroboros.
+There isn't an intent to be another QT or WxWidgets, but there also isn't enough 
+need for bringing in such large middlewares either, so leave stuff somewhat 
+unapologetically Windows-specific and have it all in this one lib for GUI stuff.
 
 == Computation (oHLSL, oCompute) ==
 

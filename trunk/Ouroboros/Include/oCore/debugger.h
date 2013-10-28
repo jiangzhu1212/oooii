@@ -69,9 +69,11 @@ namespace ouro {
 
 };}
 
+typedef unsigned long long symbol;
+
 struct symbol_info
 {
-	unsigned long long address;
+	symbol address;
 	path module;
 	path filename;
 	mstring name;
@@ -79,8 +81,6 @@ struct symbol_info
 	unsigned int line;
 	unsigned int char_offset;
 };
-
-typedef void* symbol;
 
 // Sets the name of the specified thread in the debugger's UI. If the default id 
 // value is specified then the id of this_thread is used.

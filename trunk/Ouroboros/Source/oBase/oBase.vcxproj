@@ -123,6 +123,7 @@
     <ClInclude Include="..\..\Include\oBase\byte.h" />
     <ClInclude Include="..\..\Include\oBase\color.h" />
     <ClInclude Include="..\..\Include\oBase\config.h" />
+    <ClInclude Include="..\..\Include\oBase\countdown_latch.h" />
     <ClInclude Include="..\..\Include\oBase\csv.h" />
     <ClInclude Include="..\..\Include\oBase\date.h" />
     <ClInclude Include="..\..\Include\oBase\djb2.h" />
@@ -138,6 +139,7 @@
     <ClInclude Include="..\..\Include\oBase\ini.h" />
     <ClInclude Include="..\..\Include\oBase\intrusive_ptr.h" />
     <ClInclude Include="..\..\Include\oBase\json.h" />
+    <ClInclude Include="..\..\Include\oBase\linear_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\macros.h" />
     <ClInclude Include="..\..\Include\oBase\memory.h" />
     <ClInclude Include="..\..\Include\oBase\moving_average.h" />

@@ -752,6 +752,7 @@ static void oD3D11InitValues(const oGPU_TEXTURE_DESC& _Desc, DXGI_FORMAT* _pForm
 {
 	DXGI_FORMAT DSVF, SRVF;
 	dxgi::get_compatible_formats(dxgi::from_surface_format(_Desc.Format), _pFormat, &DSVF, &SRVF);
+
 	if (*_pFormat == DXGI_FORMAT_UNKNOWN)
 		*_pFormat = DXGI_FORMAT_FROM_FILE;
 
@@ -784,7 +785,7 @@ static void oD3D11InitValues(const oGPU_TEXTURE_DESC& _Desc, DXGI_FORMAT* _pForm
 		}
 	}
 
-	if (surface::is_depth(dxgi::to_surface_format(*_pFormat)))
+	if (*_pFormat != DXGI_FORMAT_FROM_FILE && surface::is_depth(dxgi::to_surface_format(*_pFormat)))
 	{
 		*_pBindFlags &=~ D3D11_BIND_RENDER_TARGET;
 		*_pBindFlags |= D3D11_BIND_DEPTH_STENCIL;
