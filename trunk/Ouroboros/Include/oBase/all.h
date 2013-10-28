@@ -46,6 +46,7 @@
 #include <oBase/guid.h>
 #include <oBase/ini.h>
 #include <oBase/intrusive_ptr.h>
+#include <oBase/leak_tracker.h>
 #include <oBase/linear_allocator.h>
 #include <oBase/macros.h>
 #include <oBase/memory.h>

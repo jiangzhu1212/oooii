@@ -199,6 +199,9 @@
     <ClCompile Include="string\argtok.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
+    <ClCompile Include="leak_tracker.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\finally.h">
@@ -367,6 +370,9 @@
       <Filter>oBase\memory</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\countdown_latch.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\leak_tracker.h">
       <Filter>oBase</Filter>
     </ClInclude>
   </ItemGroup>

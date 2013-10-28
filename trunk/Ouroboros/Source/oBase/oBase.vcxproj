@@ -47,6 +47,7 @@
     <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp" />
     <ClCompile Include="color.cpp" />
     <ClCompile Include="date.cpp" />
+    <ClCompile Include="leak_tracker.cpp" />
     <ClCompile Include="memory\dtoull.cpp" />
     <ClCompile Include="memory\is_ascii.cpp" />
     <ClCompile Include="memory\memcmp4.cpp" />
@@ -139,6 +140,7 @@
     <ClInclude Include="..\..\Include\oBase\ini.h" />
     <ClInclude Include="..\..\Include\oBase\intrusive_ptr.h" />
     <ClInclude Include="..\..\Include\oBase\json.h" />
+    <ClInclude Include="..\..\Include\oBase\leak_tracker.h" />
     <ClInclude Include="..\..\Include\oBase\linear_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\macros.h" />
     <ClInclude Include="..\..\Include\oBase\memory.h" />

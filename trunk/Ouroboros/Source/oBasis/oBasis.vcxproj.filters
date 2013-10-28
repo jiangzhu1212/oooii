@@ -120,9 +120,6 @@
     <ClInclude Include="..\..\Include\oBasis\oPlatformFeatures.h">
       <Filter>oBasis</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oLeakTracker.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oTypes.h">
       <Filter>oBasis\Types</Filter>
     </ClInclude>
@@ -324,9 +321,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oBufferPool.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oLeakTracker.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oTimer.cpp">

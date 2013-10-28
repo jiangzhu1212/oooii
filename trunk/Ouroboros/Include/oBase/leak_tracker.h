@@ -26,13 +26,11 @@
 // deallocation and report the file line and callstack of where the allocation
 // occurred.
 #pragma once
-#ifndef oLeakTracker_h
-#define oLeakTracker_h
+#ifndef oBase_leak_tracker_h
+#define oBase_leak_tracker_h
 
-#include <oStd/for.h>
 #include <oStd/mutex.h>
 #include <oBase/algorithm.h>
-#include <oBase/assert.h>
 #include <oBase/countdown_latch.h>
 #include <oBase/fixed_string.h>
 #include <oBase/macros.h>

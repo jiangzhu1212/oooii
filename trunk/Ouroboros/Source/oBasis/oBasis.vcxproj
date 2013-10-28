@@ -60,7 +60,6 @@
     <ClInclude Include="..\..\Include\oBasis\oInterface.h" />
     <ClInclude Include="..\..\Include\oBasis\oInvalid.h" />
     <ClInclude Include="..\..\Include\oBasis\oJSONSerialize.h" />
-    <ClInclude Include="..\..\Include\oBasis\oLeakTracker.h" />
     <ClInclude Include="..\..\Include\oBasis\oLockedPointer.h" />
     <ClInclude Include="..\..\Include\oBasis\oLockThis.h" />
     <ClInclude Include="..\..\Include\oBasis\oLZMA.h" />
@@ -123,7 +122,6 @@
     <ClCompile Include="oINISerialize.cpp" />
     <ClCompile Include="oInputMapper.cpp" />
     <ClCompile Include="oJSONSerialize.cpp" />
-    <ClCompile Include="oLeakTracker.cpp" />
     <ClCompile Include="oLZMA.cpp" />
     <ClCompile Include="oManipulator.cpp" />
     <ClCompile Include="oManipulatorBase.cpp" />
