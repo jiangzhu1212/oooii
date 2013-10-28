@@ -22,33 +22,25 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// std::chrono is often too obtuse to provide a significant ROI to used directly 
-// so here is oTimer, some syntactic sugar on the 99% usage case we seem to have
-// in the codebase.
+// Sometimes it is necessary to call a system function that takes a timeout
+// value in a loop. So from interface/user space we'd like the calling function
+// to respect the timeout we gave, even if the lower-level code does something
+// less elegant. To encapsulate this common pattern, here is a scoped timeout
+// object that decrements a timeout value as code within it's scope executes.
+// Often usage of this object implies careful application of {} braces, which 
+// is still cleaner code than maintaining timer calls.
+// NOTE: If your loop may not take much time to execute, consider creating the
+// instance of this class outside the loop and calling UpdateTimeout.
 #pragma once
-#ifndef oTimer_h
-#define oTimer_h
+#ifndef oScopedPartialTimeout_h
+#define oScopedPartialTimeout_h
 
 #include <oBase/assert.h>
 #include <oStd/chrono.h>
 #include <oBasis/oInvalid.h>
 
-// _____________________________________________________________________________
-// Generic inline utilities for making common timing problems more 
-// self-documenting. These use the above API.
-
 class oScopedPartialTimeout
 {
-	// Sometimes it is necessary to call a system function that takes a timeout
-	// value in a loop. So from interface/user space we'd like the calling function
-	// to respect the timeout we gave, even if the lower-level code does something
-	// less elegant. To encapsulate this common pattern, here is a scoped timeout
-	// object that decrements a timeout value as code within it's scope executes.
-	// Often usage of this object implies careful application of {} braces, which 
-	// is still cleaner code than maintaining timer calls.
-	// NOTE: If your loop may not take much time to execute, consider creating the
-	// instance of this class outside the loop and calling UpdateTimeout.
-
 public:
 	// Pointer to a timeout value to update. The value should be initialized to 
 	// the user-specified total timeout initially and then allowed to be updated 

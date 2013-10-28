@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oBuildTool.h"
-#include <oBasis/oTimer.h>
+#include <oBasis/oScopedPartialTimeout.h>
 
 using namespace ouro;
 

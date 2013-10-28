@@ -29,7 +29,7 @@
 #define oWinSkeleton_h
 
 #include <oBase/macros.h>
-#include <oBase/function.h>
+#include <oBasis/oFunction.h>
 
 // Handle used in window messages to identify a particular skeleton
 oDECLARE_HANDLE(HSKELETON);

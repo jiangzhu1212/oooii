@@ -30,7 +30,7 @@
 
 #include <oBasis/oMathTypes.h>
 #include <oBase/color.h>
-#include <oBase/function.h>
+#include <oBasis/oFunction.h>
 #include <oBase/path.h>
 #include <stdarg.h>
 #include <stdio.h>

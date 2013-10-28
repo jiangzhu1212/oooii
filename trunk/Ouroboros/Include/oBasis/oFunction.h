@@ -25,8 +25,8 @@
 // Convenience shorthands for std::bind and std::function, but also serves as an
 // abstraction between std::tr1, std::, and boost::
 #pragma once
-#ifndef oBase_function_h
-#define oBase_function_h
+#ifndef oFunction_h
+#define oFunction_h
 
 #include <functional>
 

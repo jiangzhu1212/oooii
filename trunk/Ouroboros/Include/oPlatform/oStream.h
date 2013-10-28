@@ -28,7 +28,7 @@
 #ifndef oStream_h
 #define oStream_h
 
-#include <oBase/function.h>
+#include <oBasis/oFunction.h>
 #include <oBase/memory.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oURI.h>

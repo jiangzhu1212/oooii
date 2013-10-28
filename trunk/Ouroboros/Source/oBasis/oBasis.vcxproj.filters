@@ -102,9 +102,6 @@
     <ClInclude Include="..\..\Include\oBasis\oOSC.h">
       <Filter>oBasis\String Parsing</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oTimer.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oAllocator.h">
       <Filter>oBasis\Allocators</Filter>
     </ClInclude>
@@ -315,15 +312,18 @@
     <ClInclude Include="..\..\Include\oBasis\oStrTok.h">
       <Filter>oBasis\String Parsing</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oFunction.h">
+      <Filter>oBasis\Language Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oScopedPartialTimeout.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oBuffer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oBufferPool.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oTimer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oMIME.cpp">
@@ -435,6 +435,9 @@
       <Filter>Source\String Parsing</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oScopedPartialTimeout.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

@@ -34,7 +34,7 @@
 #ifndef oBuffer_h
 #define oBuffer_h
 
-#include <oBase/function.h>
+#include <oBasis/oFunction.h>
 #include <oBasis/oInterface.h>
 
 // {714C9432-EBF6-4232-9E2E-90692C294B8B}

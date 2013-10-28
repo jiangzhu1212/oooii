@@ -33,7 +33,7 @@
 #define oProcessHeap_h
 
 #include <oBase/guid.h>
-#include <oBase/function.h>
+#include <oBasis/oFunction.h>
 
 // Allocate from the process-global heap directly. This memory is page-aligned.
 void* oProcessHeapAllocate(size_t _Size);

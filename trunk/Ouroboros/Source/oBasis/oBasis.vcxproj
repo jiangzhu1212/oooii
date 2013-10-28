@@ -49,6 +49,7 @@
     <ClInclude Include="..\..\Include\oBasis\oDispatchQueuePrivate.h" />
     <ClInclude Include="..\..\Include\oBasis\oError.h" />
     <ClInclude Include="..\..\Include\oBasis\oFilterChain.h" />
+    <ClInclude Include="..\..\Include\oBasis\oFunction.h" />
     <ClInclude Include="..\..\Include\oBasis\oGeometry.h" />
     <ClInclude Include="..\..\Include\oBasis\oGPUConcepts.h" />
     <ClInclude Include="..\..\Include\oBasis\oGUI.h" />
@@ -81,12 +82,12 @@
     <ClInclude Include="..\..\Include\oBasis\oRTTIForPointers.h" />
     <ClInclude Include="..\..\Include\oBasis\oRTTIStructs.h" />
     <ClInclude Include="..\..\Include\oBasis\oRTTITypedefs.h" />
+    <ClInclude Include="..\..\Include\oBasis\oScopedPartialTimeout.h" />
     <ClInclude Include="..\..\Include\oBasis\oSnappy.h" />
     <ClInclude Include="..\..\Include\oBasis\oStddef.h" />
     <ClInclude Include="..\..\Include\oBasis\oStdLinearAllocator.h" />
     <ClInclude Include="..\..\Include\oBasis\oStdStringSupport.h" />
     <ClInclude Include="..\..\Include\oBasis\oStrTok.h" />
-    <ClInclude Include="..\..\Include\oBasis\oTimer.h" />
     <ClInclude Include="..\..\Include\oBasis\oTypeID.h" />
     <ClInclude Include="..\..\Include\oBasis\oTypes.h" />
     <ClInclude Include="..\..\Include\oBasis\oURI.h" />
@@ -134,9 +135,9 @@
     <ClCompile Include="oOBJ.cpp" />
     <ClCompile Include="oOSC.cpp" />
     <ClCompile Include="oRTTI.cpp" />
+    <ClCompile Include="oScopedPartialTimeout.cpp" />
     <ClCompile Include="oSnappy.cpp" />
     <ClCompile Include="oStrTok.cpp" />
-    <ClCompile Include="oTimer.cpp" />
     <ClCompile Include="oTypeID.cpp" />
     <ClCompile Include="oURI.cpp" />
     <ClCompile Include="oURIQuerySerialize.cpp" />

@@ -25,7 +25,7 @@
 #include "oWinsock.h"
 #include <oBase/assert.h>
 #include <oBasis/oError.h>
-#include <oBasis/oTimer.h>
+#include <oBasis/oScopedPartialTimeout.h>
 #include <oPlatform/oReporting.h>
 #include <oGUI/oMsgBox.h>
 #include <cerrno>

@@ -29,7 +29,7 @@
 #ifndef oCppParsing_h
 #define oCppParsing_h
 
-#include <oBase/function.h>
+#include <oBasis/oFunction.h>
 #include <ctype.h> // isalnum
 
 // returns true for [A-Za-z0-9_]

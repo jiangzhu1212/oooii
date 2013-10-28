@@ -28,7 +28,7 @@
 
 #include <oBase/byte.h>
 #include <oBase/fixed_string.h>
-#include <oBase/function.h>
+#include <oBasis/oFunction.h>
 
 typedef oRTTI_DATA_COMPOUND<oRTTI_OBJECT>::ATTR oRTTI_ATTR_BASE;
 struct oRTTI_ATTR : oRTTI_ATTR_BASE

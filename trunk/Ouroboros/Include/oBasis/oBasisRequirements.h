@@ -30,7 +30,7 @@
 #ifndef oBasisRequirements_h
 #define oBasisRequirements_h
 
-#include <oBase/function.h>
+#include <oBasis/oFunction.h>
 #include <oBase/guid.h>
 
 typedef oFUNCTION<void(void* _pMemory)> oLIFETIME_TASK;

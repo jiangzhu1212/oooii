@@ -29,7 +29,7 @@
 #include <oBase/finally.h>
 #include <oBase/assert.h>
 #include <oStd/for.h>
-#include <oBase/function.h>
+#include <oBasis/oFunction.h>
 #include <oStd/atomic.h>
 #include <oStd/thread.h>
 #include <oBase/throw.h>
