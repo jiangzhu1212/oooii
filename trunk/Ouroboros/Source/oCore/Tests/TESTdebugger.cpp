@@ -23,12 +23,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCore/debugger.h>
-#include <oCore/tests/oCoreTestRequirements.h>
+
+#include "../../test_services.h"
 
 namespace ouro {
 	namespace tests {
 
-void TESTdebugger(requirements& _Requirements)
+void TESTdebugger(test_services& _Services)
 {
 	// inlining results in validly differing stack traces
 	#ifdef _DEBUG
@@ -76,7 +77,7 @@ void TESTdebugger(requirements& _Requirements)
 		#else
 			// There's nothing incorrect AFAICT, so I think this stuff just doesn't 
 			// work in 32-bit.
-			_Requirements.report("No debug stack in release for WIN32");
+			_Services.report("No debug stack in release for WIN32");
 		#endif
 
 	#endif

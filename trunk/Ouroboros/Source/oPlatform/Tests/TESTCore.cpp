@@ -24,22 +24,6 @@
  **************************************************************************/
 #include <oCore/tests/oCoreTests.h>
 #include "oTestIntegration.h"
-#include <cstdlib>
-
-namespace ouro {
-	namespace tests {
-
-struct requirements_implementation : requirements
-{
-	void vreport(const char* _Format, va_list _Args) override
-	{
-		oErrorSetLastV(0, _Format, _Args);
-		oTRACEA("%s", oErrorGetLastString());
-	}
-};
-
-	} //namespace tests
-} // namespace ouro
 
 using namespace ouro::tests;
 

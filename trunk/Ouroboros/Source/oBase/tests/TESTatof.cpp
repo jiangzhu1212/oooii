@@ -30,12 +30,13 @@
 #include <oBase/throw.h>
 #include <oBase/timer.h>
 #include <vector>
-#include <oBase/tests/oBaseTestRequirements.h>
+
+#include "../../test_services.h"
 
 namespace ouro {
 	namespace tests {
 
-void TESTatof(requirements& _Requirements)
+void TESTatof(test_services& _Services)
 {
 	static const char* FloatStrings[] = 
 	{
@@ -75,7 +76,7 @@ void TESTatof(requirements& _Requirements)
 	char* end = fstr + size(buf);
 	for (size_t i = 0; i < kNumFloats; i++)
 	{
-		float rand01 = (_Requirements.rand() % RAND_MAX) / static_cast<float>(RAND_MAX - 1);
+		float rand01 = (_Services.rand() % RAND_MAX) / static_cast<float>(RAND_MAX - 1);
 		float f = -1000.0f + (2000.0f * rand01);
 		size_t len = snprintf(fstr, std::distance(fstr, end), "%f\n", f);
 		fstr += len + 1;
@@ -114,7 +115,7 @@ void TESTatof(requirements& _Requirements)
 		
 	double oAtofDuration = t.milliseconds();
 	oTRACEA("atof() %.02f ms", oAtofDuration);
-	_Requirements.report("%.02f v. %.02f ms for %u floats (%.02fx improvement)", atofDuration, oAtofDuration, kNumFloats, atofDuration / oAtofDuration);
+	_Services.report("%.02f v. %.02f ms for %u floats (%.02fx improvement)", atofDuration, oAtofDuration, kNumFloats, atofDuration / oAtofDuration);
 }
 
 	} // namespace tests

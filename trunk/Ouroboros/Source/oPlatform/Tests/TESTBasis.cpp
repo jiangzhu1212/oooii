@@ -27,7 +27,6 @@
 #include <oCore/system.h>
 #include <oBasis/tests/oBasisTests.h>
 #include "oTestIntegration.h"
-#include "TESTConcurrencyRequirements.h"
 
 using namespace ouro;
 

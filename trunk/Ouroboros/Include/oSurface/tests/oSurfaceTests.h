@@ -22,20 +22,21 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Declarations of oStd unit tests. These throw on failure.
+// Declarations of oSurface unit tests. These throw on failure.
 #pragma once
 #ifndef oSurfaceTests_h
 #define oSurfaceTests_h
 
-#include <oSurface/tests/oSurfaceTestRequirements.h>
-
 namespace ouro {
+
+	class test_services;
+
 	namespace tests {
 
 		void TESTsurface();
-		void TESTsurface_codec(requirements& _Requirements);
-		void TESTsurface_fill(requirements& _Requirements);
-		void TESTsurface_resize(requirements& _Requirements);
+		void TESTsurface_codec(test_services& _Requirements);
+		void TESTsurface_fill(test_services& _Requirements);
+		void TESTsurface_resize(test_services& _Services);
 
 	} // namespace tests
 } // namespace ouro

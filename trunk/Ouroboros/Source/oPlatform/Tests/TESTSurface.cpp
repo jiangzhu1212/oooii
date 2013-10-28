@@ -23,42 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oSurface/tests/oSurfaceTests.h>
-#include <oCore/filesystem.h>
 #include "oTestIntegration.h"
-#include <cstdlib>
-
-namespace ouro {
-	namespace tests {
-
-struct requirements_implementation : requirements
-{
-	int rand() override { return ::rand(); }
-
-	void vreport(const char* _Format, va_list _Args) override
-	{
-		oErrorSetLastV(0, _Format, _Args);
-		oTRACEA("%s", oErrorGetLastString());
-	}
-
-	std::shared_ptr<char> load_buffer(const path& _Path, size_t* _pSize = nullptr)
-	{
-		path FullPath = filesystem::data_path() / _Path;
-
-		return filesystem::load(FullPath, filesystem::load_option::binary_read, _pSize);
-	}
-
-	void check(const surface::buffer* _pBuffer
-		, int _NthTest = 0
-		, float _MaxRMSError = -1.0f)
-	{
-		extern oTest* g_Test;
-		if (!g_Test->TestImage(_pBuffer, _NthTest, oDEFAULT, _MaxRMSError, oDEFAULT))
-			oThrowLastError();
-	}
-};
-
-	} // namespace tests
-} // namespace ouro
 
 using namespace ouro::tests;
 

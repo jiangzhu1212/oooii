@@ -17,9 +17,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oCompute\tests\oComputeTestRequirements.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oCompute\tests\oComputeTests.h">
       <Filter>Headers</Filter>
     </ClInclude>

@@ -22,11 +22,8 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oConcurrency/tests/oConcurrencyTestRequirements.h>
 #include <oConcurrency/tests/oConcurrencyTests.h>
-#include <oPlatform/oTest.h>
 #include "oTestIntegration.h"
-#include "TESTConcurrencyRequirements.h"
 
 using namespace oConcurrency::tests;
 

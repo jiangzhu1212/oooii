@@ -27,13 +27,14 @@
 #ifndef oGUITests_h
 #define oGUITests_h
 
-#include <oGUI/tests/oGUITestRequirements.h>
-
 namespace ouro {
+
+	class test_services;
+
 	namespace tests {
 
-		void TESTWindowControls(requirements& _Requirements);
-		void TESTSysDialog(requirements& _Requirements);
+		void TESTWindowControls(test_services& _Services);
+		void TESTSysDialog(test_services& _Services);
 
 	} // namespace tests
 } // namespace ouro

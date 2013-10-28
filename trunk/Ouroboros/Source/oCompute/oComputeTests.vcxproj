@@ -23,7 +23,6 @@
     <ClCompile Include="Tests\TESTeasing.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oCompute\tests\oComputeTestRequirements.h" />
     <ClInclude Include="..\..\Include\oCompute\tests\oComputeTests.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

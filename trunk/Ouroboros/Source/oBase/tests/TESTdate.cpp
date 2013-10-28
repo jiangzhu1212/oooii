@@ -24,7 +24,8 @@
  **************************************************************************/
 #include <oBase/date.h>
 #include <oBase/throw.h>
-#include <oBase/tests/oBaseTestRequirements.h>
+
+#include "../../test_services.h"
 
 namespace ouro {
 	namespace tests {
@@ -202,13 +203,13 @@ static void test_ntp_timestamp(const oNTPDATE_TEST& _Test, int _ExpectedMillisec
 	oTESTDATEMILLI(_Test, _ExpectedMilliseconds, MS);
 }
 
-static void test_date_ntp(requirements& _Requirements)
+static void test_date_ntp(test_services& _Services)
 {
 	oFORI(i, sNTPTests)
 	{
 		const oNTPDATE_TEST& T = sNTPTests[i];
 		date d = T.Date;
-		d.millisecond = _Requirements.rand() % 1000;
+		d.millisecond = _Services.rand() % 1000;
 		
 		ntp_date NTPDateNoMS = date_cast<ntp_date>(T.Date);
 		ntp_date NTPDate = date_cast<ntp_date>(d);
@@ -288,10 +289,10 @@ static void test_date_ntp(requirements& _Requirements)
 	}
 }
 
-void TESTdate(requirements& _Requirements)
+void TESTdate(test_services& _Services)
 {
 	test_date_julian();
-	test_date_ntp(_Requirements);
+	test_date_ntp(_Services);
 	test_date_unix_time();
 	test_date_file_time();
 }

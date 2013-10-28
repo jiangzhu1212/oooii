@@ -28,14 +28,15 @@
 #ifndef oConcurrencyTests_h
 #define oConcurrencyTests_h
 
-#include <oConcurrency/tests/oConcurrencyTestRequirements.h>
 #include <oBase/finally.h>
+
+namespace ouro { class test_services; }
 
 namespace oConcurrency {
 	namespace tests {
 
 		void TESTbasic_threadpool();
-		void TESTbasic_threadpool_perf(requirements& _Requirements);
+		void TESTbasic_threadpool_perf(ouro::test_services& _Services);
 		void TESTblock_allocator();
 		void TESTconcurrent_index_allocator();
 		void TESTconcurrent_linear_allocator();
@@ -52,20 +53,44 @@ namespace oConcurrency {
 		void TESTparallel_for();
 		void TESTtask_group();
 		void TESTthreadpool();
-		void TESTthreadpool_perf(requirements& _Requirements);
+		void TESTthreadpool_perf(ouro::test_services& _Services);
 
 		// Utility functions, do not register these as tests.
 
+		interface test_threadpool
+		{
+		public:
+
+			// returns the name used to identify this threadpool for test's report.
+			virtual const char* name() const threadsafe = 0;
+
+			// dispatches a single task for execution on any thread. There is no execution
+			// order guarantee.
+			virtual void dispatch(const oTASK& _Task) threadsafe = 0;
+
+			// parallel_for basically breaks up some dispatch calls to be executed on 
+			// worker threads. If the underlying threadpool does not support parallel_for,
+			// this should return false.
+			virtual bool parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task) threadsafe = 0;
+
+			// waits for the threadpool to be empty. The threadpool must be reusable after
+			// this call (this is not join()).
+			virtual void flush() threadsafe = 0;
+
+			// Release the threadpool reference obtained by enumerate_threadpool below.
+			virtual void release() threadsafe = 0;
+		};
+
 		// This can be used to do an apples-to-apples benchmark with various 
 		// threadpools, just implement test_threadpool and pass it to this test.
-		void TESTthreadpool_performance(requirements& _Requirements, test_threadpool& _Threadpool);
+		void TESTthreadpool_performance(ouro::test_services& _Services, test_threadpool& _Threadpool);
 
 		// Implement this inside a TESTMyThreadpool() function.
-		template<typename test_threadpool_impl_t> void TESTthreadpool_performance_impl(requirements& _Requirements)
+		template<typename test_threadpool_impl_t> void TESTthreadpool_performance_impl(ouro::test_services& _Services)
 		{
 			test_threadpool_impl_t tp;
 			ouro::finally Release([&] { tp.release(); });
-			TESTthreadpool_performance(_Requirements, tp);
+			TESTthreadpool_performance(_Services, tp);
 		}
 
 	} // namespace tests

@@ -24,15 +24,16 @@
  **************************************************************************/
 #include <oSurface/resize.h>
 #include <oSurface/codec.h>
-#include <oSurface/tests/oSurfaceTestRequirements.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
 #include <vector>
 
+#include "../../test_services.h"
+
 namespace ouro { 
 	namespace tests {
 
-static void TESTsurface_resize_test_size(requirements& _Requirements
+static void TESTsurface_resize_test_size(test_services& _Services
 	, const surface::buffer* _pBuffer
 	, surface::filter::value _Filter
 	, const int3& _NewSize
@@ -50,28 +51,28 @@ static void TESTsurface_resize_test_size(requirements& _Requirements
 		surface::resize(srcInfo, lock.mapped, destInfo, &lock2.mapped, _Filter);
 	}
 
-	_Requirements.check(dst, _NthImage);
+	_Services.check(dst, _NthImage);
 }
 
-static void TESTsurface_resize_test_filter(requirements& _Requirements
+static void TESTsurface_resize_test_filter(test_services& _Services
 	, const surface::buffer* _pBuffer
 	, surface::filter::value _Filter
 	, int _NthImage)
 {
-	TESTsurface_resize_test_size(_Requirements, _pBuffer, _Filter, _pBuffer->get_info().dimensions * int3(2,2,1), _NthImage);
-	TESTsurface_resize_test_size(_Requirements, _pBuffer, _Filter, _pBuffer->get_info().dimensions / int3(2,2,1), _NthImage+1);
+	TESTsurface_resize_test_size(_Services, _pBuffer, _Filter, _pBuffer->get_info().dimensions * int3(2,2,1), _NthImage);
+	TESTsurface_resize_test_size(_Services, _pBuffer, _Filter, _pBuffer->get_info().dimensions / int3(2,2,1), _NthImage+1);
 }
 
-void TESTsurface_resize(requirements& _Requirements)
+void TESTsurface_resize(test_services& _Services)
 {
 	size_t Size = 0;
-	std::shared_ptr<char> b = _Requirements.load_buffer(path("Test/Textures/lena_1.png"), &Size);
+	std::shared_ptr<char> b = _Services.load_buffer("Test/Textures/lena_1.png", &Size);
 	std::shared_ptr<surface::buffer> s = surface::decode(b.get(), Size);
 
 	int NthImage = 0;
 	for (int i = 0; i < surface::filter::filter_count; i++, NthImage += 2)
 	{
-		TESTsurface_resize_test_filter(_Requirements, s.get(), surface::filter::value(i), NthImage);
+		TESTsurface_resize_test_filter(_Services, s.get(), surface::filter::value(i), NthImage);
 	}
 }
 

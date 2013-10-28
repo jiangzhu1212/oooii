@@ -29,9 +29,11 @@
 #include <oStd/atomic.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
-#include <oConcurrency/tests/oConcurrencyTestRequirements.h>
 #include <oConcurrency/basic_threadpool.h>
 #include <oConcurrency/threadpool.h>
+#include <oConcurrency/tests/oConcurrencyTests.h>
+
+#include "../../test_services.h"
 
 using namespace ouro;
 
@@ -213,7 +215,7 @@ static void MandelbrotTask(size_t _Index, void* _pData, double _FX, double _FY, 
 
 } // namespace RatcliffJobSwarm
 
-void TESTthreadpool_performance(requirements& _Requirements, test_threadpool& _Threadpool)
+void TESTthreadpool_performance(ouro::test_services& _Services, test_threadpool& _Threadpool)
 {
 	const unsigned int taskRow = TILE_SIZE;
 	const unsigned int taskCount = taskRow*taskRow;
@@ -246,14 +248,14 @@ void TESTthreadpool_performance(requirements& _Requirements, test_threadpool& _T
 		, oBIND(RatcliffJobSwarm::MandelbrotTask, oBIND1, fractal.data(), x1, y1, xscale, yscale));
 
 	double parallel_for_time = t.seconds();
-	const char* DebuggerDisclaimer = _Requirements.is_debugger_attached() ? "(DEBUGGER ATTACHED: Non-authoritive) " : "";
+	const char* DebuggerDisclaimer = _Services.is_debugger_attached() ? "(DEBUGGER ATTACHED: Non-authoritive) " : "";
 
 	sstring st, et, pt;
 	format_duration(st, scheduling_time, true, true);
 	format_duration(et, execution_time, true, true);
 	format_duration(pt, parallel_for_time, true, true);
 
-	_Requirements.report(DEBUG_DISCLAIMER 
+	_Services.report(DEBUG_DISCLAIMER 
 		"%s%s: dispatch %s (%s sched), parallel_for %s"
 		, DebuggerDisclaimer, n, et.c_str(), st.c_str(), DidParallelFor ? pt.c_str() : "not supported");
 }
@@ -287,25 +289,25 @@ struct threadpool_impl : test_threadpool
 
 namespace {
 	// Implement this inside a TESTMyThreadpool() function.
-	template<typename test_threadpool_impl_t> void TESTthreadpool_performance_impl1(requirements& _Requirements)
+	template<typename test_threadpool_impl_t> void TESTthreadpool_performance_impl1(test_services& _Services)
 	{
 		test_threadpool_impl_t tp;
 		ouro::finally Release([&] { tp.release(); });
-		TESTthreadpool_performance(_Requirements, tp);
+		TESTthreadpool_performance(_Services, tp);
 	}
 }
 
-void TESTbasic_threadpool_perf(requirements& _Requirements)
+void TESTbasic_threadpool_perf(test_services& _Services)
 {
-	TESTthreadpool_performance_impl1<basic_threadpool_impl>(_Requirements);
+	TESTthreadpool_performance_impl1<basic_threadpool_impl>(_Services);
 }
 
-void TESTthreadpool_perf(requirements& _Requirements)
+void TESTthreadpool_perf(test_services& _Services)
 {
 	#ifdef _DEBUG
 		oTHROW(permission_denied, "This is slow in debug, and pointless as a benchmark.");
 	#else
-		TESTthreadpool_performance_impl1<threadpool_impl>(_Requirements);
+		TESTthreadpool_performance_impl1<threadpool_impl>(_Services);
 	#endif
 }
 

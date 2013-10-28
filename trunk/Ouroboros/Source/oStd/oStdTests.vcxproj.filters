@@ -14,9 +14,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oStd\tests\oStdTestRequirements.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oStd\tests\oStdTests.h">
       <Filter>Headers</Filter>
     </ClInclude>

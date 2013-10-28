@@ -24,10 +24,10 @@
  **************************************************************************/
 #include <oSurface/codec.h>
 #include <oSurface/fill.h>
-#include <oSurface/tests/oSurfaceTestRequirements.h>
 #include <oBase/timer.h>
-
 #include <oCore/filesystem.h>
+
+#include "../../test_services.h"
 
 namespace ouro { 
 	namespace tests {
@@ -82,7 +82,7 @@ static void compare_checkboards(const int2& _InDimensions, surface::format _Form
 	}
 }
 
-void TESTsurface_codec(requirements& _Requirements)
+void TESTsurface_codec(test_services& _Services)
 {
 	//compare_checkboards(int2(11,21), surface::b8g8r8a8_unorm, surface::file_format::jpg, 3.9f);
 	compare_checkboards(int2(11,21), surface::b8g8r8a8_unorm, surface::file_format::png, 1.0f);

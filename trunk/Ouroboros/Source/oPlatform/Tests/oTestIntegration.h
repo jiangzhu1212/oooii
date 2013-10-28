@@ -28,7 +28,57 @@
 #ifndef oTestIntegration_h
 #define oTestIntegration_h
 
+#include <oBasis/oError.h>
 #include <oPlatform/oTest.h>
+
+#include "../../test_services.h"
+
+#include <oBase/assert.h>
+#include <oCore/process.h>
+#include <oCore/process_stats_monitor.h>
+
+namespace ouro {
+	
+class test_services_implementation : public test_services
+{
+public:
+	int rand() override { return ::rand(); }
+	
+	void vreport(const char* _Format, va_list _Args) override
+	{
+		oErrorSetLastV(0, _Format, _Args);
+		oTRACEA("%s", oErrorGetLastString());
+	}
+
+	std::shared_ptr<char> load_buffer(const char* _Path, size_t* _pSize = nullptr) override
+	{
+		path FullPath = filesystem::data_path() / _Path;
+		return filesystem::load(FullPath, filesystem::load_option::binary_read, _pSize);
+	}
+
+	bool is_debugger_attached() const override { return this_process::has_debugger_attached(); }
+
+	void get_cpu_utilization(float* _pAverage, float* _pPeek) override
+	{
+		ouro::process_stats_monitor::info stats = PSM.get_info();
+		*_pAverage = stats.average_usage;
+		*_pPeek = stats.high_usage;
+	}
+
+	void reset_cpu_utilization() override { PSM.reset(); }
+	
+	void check(const surface::buffer* _pBuffer, int _NthTest = 0, float _MaxRMSError = -1.0f)
+	{
+		extern oTest* g_Test;
+		if (!g_Test->TestImage(_pBuffer, _NthTest, oDEFAULT, _MaxRMSError, oDEFAULT))
+			oThrowLastError();
+	}
+
+private:
+	ouro::process_stats_monitor PSM;
+};
+
+} // namespace ouro
 
 // _____________________________________________________________________________
 // oTest wrapper/integration
@@ -53,7 +103,7 @@
 	} while (false)
 
 #define oTEST_THROWS0(fn) oTEST_BEGIN__ try { fn(); } oTEST_END__
-#define oTEST_THROWS(fn) oTEST_BEGIN__ try { requirements_implementation R; fn(R); } oTEST_END__
+#define oTEST_THROWS(fn) oTEST_BEGIN__ try { ouro::test_services_implementation S; fn(S); } oTEST_END__
 
 #define oTEST_THROWS_WRAPPER__(_Macro, _NameInUnitTests, _ActualUnitTestName) \
 	struct _NameInUnitTests : oTest \

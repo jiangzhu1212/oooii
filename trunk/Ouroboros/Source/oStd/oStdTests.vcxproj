@@ -22,7 +22,6 @@
     <ClCompile Include="Tests\TESTfuture.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oStd\tests\oStdTestRequirements.h" />
     <ClInclude Include="..\..\Include\oStd\tests\oStdTests.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -23,15 +23,16 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCore/adapter.h>
-#include <oCore/tests/oCoreTestRequirements.h>
 #include <oBase/assert.h>
+
+#include "../../test_services.h"
 
 using namespace oStd;
 
 namespace ouro {
 	namespace tests {
 
-void TESTadapter(requirements& _Requirements)
+void TESTadapter(test_services& _Services)
 {
 	adapter::info inf;
 	int nAdapters = 0;
@@ -41,7 +42,7 @@ void TESTadapter(requirements& _Requirements)
 		sstring StrVer;
 		version min_ver = adapter::minimum_version(_Info.vendor);
 		if (nAdapters == 0)
-			_Requirements.report("%s v%s%s", _Info.description.c_str(), to_string2(StrVer, _Info.version), _Info.version >= min_ver ? " (meets version requirements)" : "below min requirments");
+			_Services.report("%s v%s%s", _Info.description.c_str(), to_string2(StrVer, _Info.version), _Info.version >= min_ver ? " (meets version requirements)" : "below min requirments");
 		oTRACE("%s v%s%s", _Info.description.c_str(), to_string2(StrVer, _Info.version), _Info.version >= min_ver ? " (meets version requirements)" : "below min requirments");
 		nAdapters++;
 		return true;

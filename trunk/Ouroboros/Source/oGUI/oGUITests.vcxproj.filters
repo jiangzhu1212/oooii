@@ -12,9 +12,6 @@
     <ClInclude Include="..\..\Include\oGUI\tests\oGUITests.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGUI\tests\oGUITestRequirements.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="tests\TESTWindowControls.cpp">

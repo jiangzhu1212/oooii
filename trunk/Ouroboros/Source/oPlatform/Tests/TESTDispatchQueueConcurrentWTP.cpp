@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include "../oDispatchQueueConcurrentWTP.h"
-#include "TESTConcurrencyRequirements.h"
 #include "oTestIntegration.h"
 #include <oConcurrency/tests/oConcurrencyTests.h>
 
@@ -43,9 +42,9 @@ struct oDQCWTP_impl : oConcurrency::tests::test_threadpool
 	void release() threadsafe override { t->Join(); t = nullptr; }
 };
 
-void TESToDispatchQueueConcurrentWTP(oConcurrency::tests::requirements& _Requirements)
+void TESToDispatchQueueConcurrentWTP(ouro::test_services& _Services)
 {
-	oConcurrency::tests::TESTthreadpool_performance_impl<oDQCWTP_impl>(_Requirements);
+	oConcurrency::tests::TESTthreadpool_performance_impl<oDQCWTP_impl>(_Services);
 }
 
 using namespace oConcurrency::tests; // @tony: macros should be more explicit but other refactor is going on right now

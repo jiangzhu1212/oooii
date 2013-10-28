@@ -22,20 +22,21 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Declarations of oStd unit tests. These throw on failure.
+// Declarations of oCore unit tests. These throw on failure.
 #pragma once
 #ifndef oCoreTests_h
 #define oCoreTests_h
 
-#include <oCore/tests/oCoreTestRequirements.h>
-
 namespace ouro {
+
+	class test_services;
+
 	namespace tests {
 
-		void TESTadapter(requirements& _Requirements);
-		void TESTcamera(requirements& _Requirements);
-		void TESTcpu(requirements& _Requirements);
-		void TESTdebugger(requirements& _Requirements);
+		void TESTadapter(test_services& _Services);
+		void TESTcamera(test_services& _Services);
+		void TESTcpu(test_services& _Services);
+		void TESTdebugger(test_services& _Services);
 		void TESTfilesystem();
 
 	} // namespace tests

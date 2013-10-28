@@ -22,9 +22,10 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oCore/tests/oCoreTestRequirements.h>
 #include <oCore/camera.h>
 #include <oBase/assert.h>
+
+#include "../../test_services.h"
 
 namespace ouro {
 
@@ -32,7 +33,7 @@ namespace ouro {
 
 	namespace tests {
 
-void TESTcamera(requirements& _Requirements)
+void TESTcamera(test_services& _Services)
 {
 	bool reported = false;
 
@@ -40,7 +41,7 @@ void TESTcamera(requirements& _Requirements)
 	{
 		if (!reported)
 		{
-			_Requirements.report("camera \"%s\" detected. See trace for more info.", _Camera->name());
+			_Services.report("camera \"%s\" detected. See trace for more info.", _Camera->name());
 			reported = true;
 		}
 
@@ -54,7 +55,7 @@ void TESTcamera(requirements& _Requirements)
 	});
 
 	if (!reported)
-		_Requirements.report("no camera detected.");
+		_Services.report("no camera detected.");
 
 #if 0 // @tony: make a simple test app for cameras
 

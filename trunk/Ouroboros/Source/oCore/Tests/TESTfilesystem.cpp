@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCore/filesystem.h>
-#include <oCore/tests/oCoreTestRequirements.h>
 #include <oBase/assert.h>
 #include <oBase/finally.h>
 

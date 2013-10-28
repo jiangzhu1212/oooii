@@ -31,7 +31,6 @@
     <ClCompile Include="Tests\TESTxml.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oBase\tests\oBaseTestRequirements.h" />
     <ClInclude Include="..\..\Include\oBase\tests\oBaseTests.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

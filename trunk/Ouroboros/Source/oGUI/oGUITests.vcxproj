@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oGUI\tests\oGUITestRequirements.h" />
     <ClInclude Include="..\..\Include\oGUI\tests\oGUITests.h" />
   </ItemGroup>
   <ItemGroup>

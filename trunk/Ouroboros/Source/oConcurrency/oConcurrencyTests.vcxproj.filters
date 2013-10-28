@@ -41,8 +41,5 @@
     <ClInclude Include="..\..\Include\oConcurrency\tests\oConcurrencyTests.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\tests\oConcurrencyTestRequirements.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

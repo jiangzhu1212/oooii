@@ -23,37 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGUI/tests/oGUITests.h>
-#include <oCore/filesystem.h>
 #include "oTestIntegration.h"
-#include <cstdlib>
 
-namespace ouro {
-	namespace tests {
-		namespace gui {
-
-struct requirements_implementation : requirements
-{
-	void vreport(const char* _Format, va_list _Args) override
-	{
-		oErrorSetLastV(0, _Format, _Args);
-		oTRACEA("%s", oErrorGetLastString());
-	}
-
-	void check(const surface::buffer* _pBuffer
-		, int _NthTest = 0
-		, float _MaxRMSError = -1.0f)
-	{
-		extern oTest* g_Test;
-		if (!g_Test->TestImage(_pBuffer, _NthTest, oDEFAULT, _MaxRMSError, oDEFAULT))
-			oThrowLastError();
-	}
-};
-
-		} // namespace gui
-	} // namespace tests
-} // namespace ouro
-
-using namespace ouro::tests::gui;
+using namespace ouro::tests;
 
 #define oTEST_REGISTER_GUI_TEST0(_Name) oTEST_THROWS_REGISTER0(oCONCAT(oGUI_, _Name), oCONCAT(TEST, _Name))
 #define oTEST_REGISTER_GUI_TEST(_Name) oTEST_THROWS_REGISTER(oCONCAT(oGUI_, _Name), oCONCAT(TEST, _Name))

@@ -24,11 +24,12 @@
  **************************************************************************/
 #include <oSurface/fill.h>
 #include <oSurface/codec.h>
-#include <oSurface/tests/oSurfaceTestRequirements.h>
 #include <oBase/color.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
 #include <vector>
+
+#include "../../test_services.h"
 
 void PlatformFillGridNumbers(ouro::surface::buffer* _pBuffer
 	, const int2& _GridDimensions, ouro::color _NumberColor);
@@ -84,19 +85,19 @@ static std::shared_ptr<surface::buffer> make_solid(const int2& _Dimensions, colo
 	return s;
 }
 
-void TESTsurface_fill(requirements& _Requirements)
+void TESTsurface_fill(test_services& _Services)
 {
 	static const color gradiantColors0[4] = { Blue, Purple, Lime, Orange};
 	static const color gradiantColors1[4] = { MidnightBlue, DarkSlateBlue, Green, Chocolate };
 	std::shared_ptr<surface::buffer> s;
 	s = make_numbered_grid(int2(256,256), int2(64,64), Black, Black, gradiantColors0);
-	_Requirements.check(s, 0);
+	_Services.check(s, 0);
 	s = make_numbered_grid(int2(512,512), int2(32,32), Gray, White, gradiantColors1);
-	_Requirements.check(s, 1);
+	_Services.check(s, 1);
 	s = make_checkerboard(int2(256,256), int2(32,32), Cyan, Pink);
-	_Requirements.check(s, 2);
+	_Services.check(s, 2);
 	s = make_solid(int2(256,256), TangentSpaceNormalBlue);
-	_Requirements.check(s, 3);
+	_Services.check(s, 3);
 }
 
 	} // namespace tests

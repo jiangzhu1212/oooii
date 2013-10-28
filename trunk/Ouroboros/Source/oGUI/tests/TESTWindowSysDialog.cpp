@@ -22,13 +22,14 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oGUI/tests/oGUITestRequirements.h>
 #include <oGUI/Windows/oWinRect.h>
 #include <oPlatform/oWindow.h>
 #include <oGUI/Windows/oWinControlSet.h>
 #include <oGUI/Windows/oGDI.h>
 #include <oCore/system.h>
 #include <oStd/for.h>
+
+#include "../../test_services.h"
 
 namespace ouro {
 	namespace tests {
@@ -409,7 +410,7 @@ static void OverwriteVariableColors(ouro::surface::buffer* _pBuffer)
 		ouro::surface::put(sri, &lock.mapped, c, ouro::Red);
 }
 
-void TESTSysDialog(requirements& _Requirements)
+void TESTSysDialog(test_services& _Services)
 {
 	if (ouro::system::is_remote_session())
 		oTHROW(permission_denied, "Detected remote session: differing text anti-aliasing will cause bad image compares");
@@ -431,7 +432,7 @@ void TESTSysDialog(requirements& _Requirements)
 		test.GetWindow()->FlushMessages();
 
 		std::shared_ptr<ouro::surface::buffer> s = snapshot.get();
-		_Requirements.check(s, 0);
+		_Services.check(s, 0);
 
 		for (int i = 0; i < 5; i++)
 		{
@@ -446,7 +447,7 @@ void TESTSysDialog(requirements& _Requirements)
 			if (i == 3)
 				OverwriteVariableColors(s.get());
 
-			_Requirements.check(s, i);
+			_Services.check(s, i);
 		}
 	}
 }

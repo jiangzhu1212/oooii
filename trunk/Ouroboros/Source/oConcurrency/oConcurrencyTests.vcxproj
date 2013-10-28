@@ -30,7 +30,6 @@
     <ClCompile Include="Tests\TESTthreadpool.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oConcurrency\tests\oConcurrencyTestRequirements.h" />
     <ClInclude Include="..\..\Include\oConcurrency\tests\oConcurrencyTests.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

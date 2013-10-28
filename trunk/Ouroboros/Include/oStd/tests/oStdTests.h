@@ -27,12 +27,12 @@
 #ifndef oStdTests_h
 #define oStdTests_h
 
-#include <oStd/tests/oStdTestRequirements.h>
+namespace ouro { class test_services; }
 
 namespace oStd {
 	namespace tests {
 
-		void TESTfuture(requirements& _Requirements);
+		void TESTfuture(ouro::test_services& _Services);
 
 	} // namespace tests
 } // namespace oStd

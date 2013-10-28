@@ -23,9 +23,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oSurface\tests\oSurfaceTestRequirements.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oSurface\tests\oSurfaceTests.h">
       <Filter>Headers</Filter>
     </ClInclude>

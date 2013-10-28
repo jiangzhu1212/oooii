@@ -23,10 +23,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oConcurrency/oConcurrency.h>
-#include <oStd/tests/oStdTestRequirements.h>
 #include <oStd/for.h>
 #include <oStd/future.h>
 #include <oCore/process_stats_monitor.h>
+
+#include "../../test_services.h"
 
 #define oSTD_THROW(_SystemError, _Message) do { std::error_code ec = std::make_error_code(std::errc::_SystemError); throw std::system_error(ec, _Message); } while(false)
 
@@ -66,7 +67,7 @@ static bool fail_and_report()
 	return false;
 }
 
-static void test_workstealing(requirements& _Requirements)
+static void test_workstealing(ouro::test_services& _Services)
 {
 	float CPUavg = 0.0f, CPUpeak = 0.0f;
 	oStd::future<bool> Result = oStd::async(exercise_all_threads);
@@ -75,13 +76,13 @@ static void test_workstealing(requirements& _Requirements)
 	bool r = Result.get();
 	oCHECK(r, "future returned, but the algo returned the wrong result");
 
-	_Requirements.get_cpu_utilization(&CPUavg, &CPUpeak);
+	_Services.get_cpu_utilization(&CPUavg, &CPUpeak);
 	if (CPUpeak <= 99.0f)
 	{
 		float CPUpeak2 = 0.0f;
-		_Requirements.reset_cpu_utilization();
+		_Services.reset_cpu_utilization();
 		oStd::this_thread::sleep_for(oStd::chrono::seconds(10));
-		_Requirements.get_cpu_utilization(&CPUavg, &CPUpeak2);
+		_Services.get_cpu_utilization(&CPUavg, &CPUpeak2);
 		if (CPUpeak2 > 5.0f)
 			oSTD_THROW(permission_denied, "There is too much CPU activity currently on the system to properly judge oStdFuture's workstealing capabilities.");
 		else
@@ -93,7 +94,7 @@ static void test_workstealing(requirements& _Requirements)
 	}
 }
 
-void TESTfuture(requirements& _Requirements)
+void TESTfuture(ouro::test_services& _Services)
 {
 	// Test packaged_task with void return type
 	{
@@ -174,7 +175,7 @@ void TESTfuture(requirements& _Requirements)
 		oCHECK(ThisShouldFail == false, "Error reporting failed");
 	}
 
-	test_workstealing(_Requirements);
+	test_workstealing(_Services);
 };
 
 	} // namespace tests

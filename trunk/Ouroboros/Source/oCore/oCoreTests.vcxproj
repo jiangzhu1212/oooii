@@ -26,7 +26,6 @@
     <ClCompile Include="Tests\TESTfilesystem.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oCore\tests\oCoreTestRequirements.h" />
     <ClInclude Include="..\..\Include\oCore\tests\oCoreTests.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

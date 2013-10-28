@@ -22,7 +22,6 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oGUI/tests/oGUITestRequirements.h>
 #include <oGUI/oGUIMenu.h>
 #include <oGUI/oMsgBox.h>
 #include <oBase/timer.h>
@@ -31,6 +30,8 @@
 #include <oGUI/Windows/oWinCommonDialog.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oCore/system.h>
+
+#include "../../test_services.h"
 
 namespace ouro {
 	namespace tests {
@@ -513,7 +514,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 	oTRACE("Exit is %sabled", oGUIMenuIsEnabled(hFileMenu, MENU_FILE_EXIT) ? "en" : "dis");
 }
 
-void TESTWindowControls(requirements& _Requirements)
+void TESTWindowControls(test_services& _Services)
 {
 	if (ouro::system::is_remote_session())
 		oTHROW(permission_denied, "Detected remote session: differing text anti-aliasing will cause bad image compares");
@@ -539,7 +540,7 @@ void TESTWindowControls(requirements& _Requirements)
 	} while ((kInteractiveMode && test.GetRunning()) || !snapshot.is_ready());
 
 	std::shared_ptr<ouro::surface::buffer> s = snapshot.get();
-	_Requirements.check(s, 0);
+	_Services.check(s, 0);
 }
 
 	} // namespace tests

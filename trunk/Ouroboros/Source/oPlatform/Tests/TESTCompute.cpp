@@ -22,9 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oCompute/tests/oComputeTestRequirements.h>
 #include <oCompute/tests/oComputeTests.h>
-#include <oPlatform/oTest.h>
 #include "oTestIntegration.h"
 
 using namespace ouro::tests;

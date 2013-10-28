@@ -23,6 +23,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "oGPUTests", "Ouroboros\Source\oGPU\oGPUTests.vcxproj", "{4A47DD9B-03E2-4F97-AB66-1222148F9AF1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Unit Tests", "Unit Tests", "{61FA4EB1-7485-4903-80D6-631E7349C627}"
+	ProjectSection(SolutionItems) = preProject
+		Ouroboros\Source\test_services.h = Ouroboros\Source\test_services.h
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "oPlatformTests", "Ouroboros\Source\oPlatform\oPlatformTests.vcxproj", "{86158613-24C5-4B25-A043-88DD2EAD644C}"
 EndProject

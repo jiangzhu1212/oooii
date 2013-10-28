@@ -27,21 +27,22 @@
 #ifndef oBaseTests_h
 #define oBaseTests_h
 
-#include <oBase/tests/oBaseTestRequirements.h>
-
 namespace ouro {
+
+	class test_services;
+
 	namespace tests {
 
-		void TESTatof(requirements& _Requirements);
+		void TESTatof(test_services& _Services);
 		void TESTcountdown_latch();
 		void TESTcsv();
-		void TESTdate(requirements& _Requirements);
+		void TESTdate(test_services& _Services);
 		void TESTini();
 		void TESTfourcc();
 		void TESTpath();
 		void TESTsurface();
-		void TESTsurface_codec(requirements& _Requirements);
-		void TESTsurface_resize(requirements& _Requirements);
+		void TESTsurface_codec(test_services& _Services);
+		void TESTsurface_resize(test_services& _Services);
 		void TESTuri();
 		void TESTxml();
 
