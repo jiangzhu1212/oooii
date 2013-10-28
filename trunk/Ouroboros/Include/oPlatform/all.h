@@ -28,7 +28,6 @@
 #ifndef oPlatform_all_h
 #define oPlatform_all_h
 #include <oPlatform/oConsole.h>
-#include <oPlatform/oInterprocessEvent.h>
 #include <oPlatform/oMirroredArena.h>
 #include <oPlatform/oP4.h>
 #include <oPlatform/oProcessHeap.h>

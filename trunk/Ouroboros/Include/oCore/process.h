@@ -50,6 +50,46 @@ public:
 		unsigned int Handle;
 	};
 
+	enum autoreset_t { autoreset };
+	
+	class event
+	{
+		// A named event whose intent is to synchronize between processes
+		// Usage: A name for the event is unique for all processes and any process
+		// that attempts to create an event with the same name as another will get 
+		// that very event.
+	public:
+		typedef void* native_handle_type;
+
+		event(const char* _Name);
+		event(autoreset_t _AutoReset, const char* _Name);
+		~event();
+		inline native_handle_type native_handle() { return e; }
+		void set();
+		void reset();
+		void wait();
+
+		template <typename Clock, typename Duration>
+		bool wait_until(const oStd::chrono::time_point<Clock, Duration>& _AbsoluteTime)
+		{
+			oStd::chrono::high_resolution_clock::duration duration = oStd::chrono::time_point_cast<oStd::chrono::high_resolution_clock::time_point>(_AbsoluteTime) - oStd::chrono::high_resolution_clock::now();
+			return wait_for(duration);
+		}
+
+		template <typename Rep, typename Period>
+		bool wait_for(const oStd::chrono::duration<Rep, Period>& _RelativeTime)
+		{
+			oStd::chrono::milliseconds ms = oStd::chrono::duration_cast<oStd::chrono::milliseconds>(_RelativeTime);
+			return wait_for_ms(static_cast<unsigned int>(ms.count()));
+		}
+
+	private:
+		native_handle_type e;
+		bool wait_for_ms(unsigned int _TimeoutMS);
+		const event& operator=(const event&); /* = delete; */
+		event(const event&); /* = delete; */
+	};
+
 	enum show_type
 	{
 		hide,

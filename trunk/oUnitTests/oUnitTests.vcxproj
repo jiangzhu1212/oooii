@@ -196,7 +196,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Ouroboros\Source\oPlatform\Tests\oTestIntegration.h" />
-    <ClInclude Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrencyRequirements.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

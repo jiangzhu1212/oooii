@@ -243,9 +243,6 @@
     <ClInclude Include="..\..\Include\oBase\config.h">
       <Filter>oBase</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\function.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\all.h">
       <Filter>oBase</Filter>
     </ClInclude>

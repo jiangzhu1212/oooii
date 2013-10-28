@@ -28,6 +28,7 @@
 #include <oBasis/oError.h>
 #include <oBasis/oLockedPointer.h>
 #include <oBase/scc.h>
+#include <oCore/process.h>
 
 #include <oConcurrency/event.h>
 
@@ -35,7 +36,6 @@
 // that lib too (without shims)...
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oConsole.h>
-#include <oPlatform/oInterprocessEvent.h> // inter-process event required to sync "special tests" as they launch a new process
 #include <oGUI/oMsgBox.h> // only used to notify about zombies
 #include <oGUI/oProgressBar.h> // only really so it itself can be tested, but perhaps this can be moved to a unit test?
 #include <oPlatform/oStandards.h> // standard colors for a console app, maybe this can be callouts? log file path... can be an option?
@@ -595,8 +595,8 @@ bool oSpecialTest::Start(process* _pProcess, char* _StrStatus, size_t _SizeofStr
 
 	mstring interprocessName;
 	snprintf(interprocessName, "oTest.%s.Started", SpecialTestName);
-	oInterprocessEvent Started(interprocessName);
-	oASSERTA(!Started.Wait(0), "Started event set when it shouldn't be (before start).");
+	ouro::process::event Started(interprocessName);
+	oASSERTA(!Started.wait_for(oStd::chrono::milliseconds(0)), "Started event set when it shouldn't be (before start).");
 	#ifdef DEBUG_SPECIAL_TEST
 		_pProcess->Start();
 	#endif
@@ -606,7 +606,7 @@ bool oSpecialTest::Start(process* _pProcess, char* _StrStatus, size_t _SizeofStr
 
 	if (testingDesc.EnableSpecialTestTimeouts)
 	{
-		if (!Started.Wait(_TimeoutMS))
+		if (!Started.wait_for(oStd::chrono::milliseconds(_TimeoutMS)))
 		{
 			snprintf(_StrStatus, _SizeofStrStatus, "Timed out waiting for %s to start.", SpecialTestName);
 			oTRACE("*** SPECIAL MODE UNIT TEST %s timed out waiting for Started event. (Ensure the special mode test sets the started event when appropriate.) ***", SpecialTestName);
@@ -619,7 +619,7 @@ bool oSpecialTest::Start(process* _pProcess, char* _StrStatus, size_t _SizeofStr
 	}
 
 	else
-		Started.Wait();
+		Started.wait();
 
 	// If we timeout on ending, that's good, it means the app is still running
 	if ((_pProcess->wait_for(oStd::chrono::milliseconds(200)) && _pProcess->exit_code(_pExitCode)))
@@ -640,9 +640,9 @@ void oSpecialTest::NotifyReady()
 	mstring interprocessName;
 	const char* testName = type_name(typeid(*this).name());
 	snprintf(interprocessName, "oTest.%s.Started", testName);
-	oInterprocessEvent Ready(interprocessName);
-	oASSERTA(!Ready.Wait(0), "Ready event set when it shouldn't be (in NotifyReady).");
-	Ready.Set();
+	ouro::process::event Ready(interprocessName);
+	oASSERTA(!Ready.wait_for(oStd::chrono::milliseconds(0)), "Ready event set when it shouldn't be (in NotifyReady).");
+	Ready.set();
 }
 
 oTestManager::RegisterTestBase::RegisterTestBase(unsigned int _BugNumber, oTest::RESULT _BugResult, const char* _PotentialZombieProcesses)

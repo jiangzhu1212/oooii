@@ -25,7 +25,7 @@
 #include <oBasis/oError.h>
 #include <oBasis/oRefCount.h>
 #include <oConcurrency/event.h>
-#include <oPlatform/oInterprocessEvent.h>
+#include <oCore/process.h>
 #include <oPlatform/oSocket.h>
 #include <oPlatform/oTest.h>
 

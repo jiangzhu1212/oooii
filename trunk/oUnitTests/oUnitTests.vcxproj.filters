@@ -45,9 +45,6 @@
     <ClInclude Include="resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrencyRequirements.h">
-      <Filter>Source Files\Sub-Platform Tests</Filter>
-    </ClInclude>
     <ClInclude Include="..\Ouroboros\Source\oPlatform\Tests\oTestIntegration.h">
       <Filter>Source Files\Sub-Platform Tests</Filter>
     </ClInclude>

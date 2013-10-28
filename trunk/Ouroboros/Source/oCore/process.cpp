@@ -42,6 +42,48 @@ bool from_string(process::id* _pProcessID, const char* _String)
 	return from_string((unsigned int*)_pProcessID, _String);
 }
 
+static HANDLE oCreateEvent(bool _AutoReset, const char* _Name)
+{
+	ouro::lstring n;
+	snprintf(n, "Global\\%s", oSAFESTR(_Name));
+	HANDLE e = CreateEventA(0, _AutoReset ? FALSE : TRUE, FALSE, n);
+	if (!e) throw oStd::windows::error();
+	return e;
+}
+
+process::event::event(const char* _Name)
+	: e(oCreateEvent(false, _Name))
+{}
+
+process::event::event(process::autoreset_t _AutoReset, const char* _Name)
+	: e(oCreateEvent(true, _Name))
+{}
+
+process::event::~event()
+{
+	CloseHandle(HANDLE(e));
+}
+
+void process::event::set()
+{
+	SetEvent(HANDLE(e));
+}
+
+void process::event::reset()
+{
+	ResetEvent(HANDLE(e));
+}
+
+void process::event::wait()
+{
+	wait_for_ms(INFINITE);
+}
+
+bool process::event::wait_for_ms(unsigned int _TimeoutMS)
+{
+	return WAIT_OBJECT_0 == ::WaitForSingleObject(HANDLE(e), _TimeoutMS);
+}
+
 class windows_process : public process
 {
 public:

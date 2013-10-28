@@ -7,9 +7,6 @@
     <Filter Include="Source">
       <UniqueIdentifier>{e9fa3a3c-463d-4016-bdc6-781a07097559}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headers\Concurrency">
-      <UniqueIdentifier>{31998618-549c-44a1-b5e8-5e00ce54d8ae}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Headers\Code Management">
       <UniqueIdentifier>{a28a7d3f-9307-4cf6-a02b-30891ba61398}</UniqueIdentifier>
     </Filter>
@@ -24,9 +21,6 @@
     </Filter>
     <Filter Include="Headers\Windows API Convenience Wrappers">
       <UniqueIdentifier>{f82bf6e4-b459-4db5-ba1a-e7c2198b4cb3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Concurrency">
-      <UniqueIdentifier>{f32a1e98-22e8-4b84-a694-54f4e96b05b1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Code Management">
       <UniqueIdentifier>{b5ed6c1c-07b7-4241-a36a-53f1255a5d68}</UniqueIdentifier>
@@ -93,9 +87,6 @@
     <ClInclude Include="SoftLink\oOpenSSL.h">
       <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oInterprocessEvent.h">
-      <Filter>Headers\Concurrency</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\Windows\oCRTHeap.h">
       <Filter>Headers\Windows API Convenience Wrappers</Filter>
     </ClInclude>
@@ -138,9 +129,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oStreamUtil.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oRegistry.h">
-      <Filter>Headers\Concurrency</Filter>
-    </ClInclude>
     <ClInclude Include="oHTTPInternal.h">
       <Filter>Source\IO</Filter>
     </ClInclude>
@@ -170,6 +158,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinSkeleton.h">
       <Filter>Headers\Windows API Convenience Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oRegistry.h">
+      <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -220,12 +211,6 @@
     </ClCompile>
     <ClCompile Include="oGSReport.cpp">
       <Filter>Source\Windows API Convenience Wrappers</Filter>
-    </ClCompile>
-    <ClCompile Include="oRegistry.cpp">
-      <Filter>Source\Concurrency</Filter>
-    </ClCompile>
-    <ClCompile Include="oInterprocessEvent.cpp">
-      <Filter>Source\Concurrency</Filter>
     </ClCompile>
     <ClCompile Include="oSingleton.cpp">
       <Filter>Source\Code Management</Filter>
@@ -287,9 +272,6 @@
     <ClCompile Include="oHTTPHandler.cpp">
       <Filter>Source\IO</Filter>
     </ClCompile>
-    <ClCompile Include="oConcurrency.cpp">
-      <Filter>Source\Concurrency</Filter>
-    </ClCompile>
     <ClCompile Include="oWindow.cpp">
       <Filter>Source\UI</Filter>
     </ClCompile>
@@ -298,6 +280,12 @@
     </ClCompile>
     <ClCompile Include="oWinSkeleton.cpp">
       <Filter>Source\Windows API Convenience Wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="oRegistry.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oConcurrency.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -131,7 +131,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oHTTPClient.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHTTPHandler.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHTTPServer.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oInterprocessEvent.h" />
     <ClInclude Include="..\..\Include\oPlatform\oMirroredArena.h" />
     <ClInclude Include="..\..\Include\oPlatform\oProcessHeap.h" />
     <ClInclude Include="..\..\Include\oPlatform\oRegistry.h" />
@@ -183,7 +182,6 @@
     <ClCompile Include="oHTTPHandler.cpp" />
     <ClCompile Include="oHTTPProtocol.cpp" />
     <ClCompile Include="oHTTPServer.cpp" />
-    <ClCompile Include="oInterprocessEvent.cpp" />
     <ClCompile Include="oIOCP.cpp" />
     <ClCompile Include="oMirroredArena.cpp" />
     <ClCompile Include="oP4.cpp" />
