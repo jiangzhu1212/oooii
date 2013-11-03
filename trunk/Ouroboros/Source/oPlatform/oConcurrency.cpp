@@ -68,7 +68,7 @@ const char* oConcurrency::task_scheduler_name()
 		#endif
 }
 
-typedef oProcessHeapAllocator<oTASK> allocator_t;
+typedef ouro::process_heap::std_allocator<oTASK> allocator_t;
 
 #if oHAS_oCONCURRENCY
 	#include <oConcurrency/threadpool.h>

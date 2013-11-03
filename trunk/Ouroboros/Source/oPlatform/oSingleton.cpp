@@ -39,8 +39,8 @@ using namespace oConcurrency;
 
 //#define oENABLE_SINGLETON_TRACE
 
-static void* untracked_malloc(size_t _Size) { return oProcessHeapAllocate(_Size); }
-static void untracked_free(void* _Pointer) { oProcessHeapDeallocate(_Pointer); }
+static void* untracked_malloc(size_t _Size) { return process_heap::allocate(_Size); }
+static void untracked_free(void* _Pointer) { process_heap::deallocate(_Pointer); }
 
 namespace oSingletonPlatform
 {
@@ -99,13 +99,21 @@ bool oConstructOnceV(void* volatile* _pPointer, void* (*_New)())
 	
 // {7F15EF8E-3AA2-43D8-B802-06A3E195E21C}
 static const oGUID IID_oSingletonCtors = { 0x7f15ef8e, 0x3aa2, 0x43d8, { 0xb8, 0x2, 0x6, 0xa3, 0xe1, 0x95, 0xe2, 0x1c } };
-typedef std::unordered_map<oGUID, type_info_default_constructor, std::hash<oGUID>, std::equal_to<oGUID>, oProcessHeapAllocator<std::pair<oGUID, type_info_default_constructor>>> oSingletonCtors;
+typedef std::unordered_map<oGUID, type_info_default_constructor, std::hash<oGUID>, std::equal_to<oGUID>, process_heap::std_allocator<std::pair<oGUID, type_info_default_constructor>>> oSingletonCtors;
 void oPlacementNewSingletonCtor(void* _Pointer) { new(_Pointer) oSingletonCtors(); }
 
 void* oSingletonCtorRegistryCreate()
 {
 	void* p = nullptr;
-	oProcessHeapFindOrAllocate(IID_oSingletonCtors, false, false, sizeof(oSingletonCtors), oPlacementNewSingletonCtor, "oSingletonCtors", &p);
+
+	sstring StrGUID;
+	process_heap::find_or_allocate(sizeof(oSingletonCtors)
+		, to_string(StrGUID, IID_oSingletonCtors)
+		, process_heap::per_process
+		, process_heap::none
+		, oPlacementNewSingletonCtor
+		, &p);
+	
 	return p;
 }
 
@@ -133,17 +141,25 @@ public:
 	static oThreadlocalRegistry* Singleton()
 	{
 		oThreadlocalRegistry* p = nullptr;
-		oProcessHeapFindOrAllocate(GUID, false, true, sizeof(oThreadlocalRegistry), ouro::type_info<oThreadlocalRegistry>::default_construct, "oThreadlocalRegistry", (void**)&p);
+		sstring StrGUID;
+		process_heap::find_or_allocate(
+			sizeof(oThreadlocalRegistry)
+			, to_string(StrGUID, GUID)
+			, process_heap::per_process
+			, process_heap::leak_tracked
+			, ouro::type_info<oThreadlocalRegistry>::default_construct
+			, (void**)&p);
 		return p;
 	}
 
 	static void Destroy()
 	{
 		oThreadlocalRegistry* p = nullptr;
-		if (oProcessHeapFind(GUID, false, (void**)&p))
+		sstring StrGUID;
+		if (process_heap::find(to_string(StrGUID, GUID), process_heap::per_process, (void**)&p))
 		{
 			p->~oThreadlocalRegistry();
-			oProcessHeapDeallocate(p);
+			process_heap::deallocate(p);
 		}
 	}
 
@@ -214,7 +230,7 @@ void oSingletonBase::Release() threadsafe
 			oASSERT(hModule == *(void**)&id, "Singleton being freed by a module different than the one creating it.");
 		#endif
 		this->~oSingletonBase();
-		oProcessHeapDeallocate(thread_cast<oSingletonBase*>(this)); // safe because we're not using this anymore
+		process_heap::deallocate(thread_cast<oSingletonBase*>(this)); // safe because we're not using this anymore
 	}
 }
 	
@@ -223,7 +239,8 @@ void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, type_info_de
 	type_info_default_constructor PlacementNew = _Ctor;
 
 	oSingletonCtors* ctors = nullptr;
-	if (oProcessHeapFind(IID_oSingletonCtors, _IsThreadLocal, (void**)&ctors))
+	sstring StrGUID;
+	if (process_heap::find(to_string(StrGUID, IID_oSingletonCtors), process_heap::per_process, (void**)&ctors))
 	{
 		auto it = ctors->find(_GUID);
 		oASSERT(it != ctors->end(), "%s ctor not found (did you use forget oSINGLETON_REGISTER?)", _TypeInfoName);
@@ -231,7 +248,13 @@ void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, type_info_de
 	}
 
 	oSingletonBase* p = nullptr;
-	if (oProcessHeapFindOrAllocate(_GUID, _IsThreadLocal, true, _Size, PlacementNew, type_name(_TypeInfoName), (void**)&p))
+	if (process_heap::find_or_allocate(
+		_Size
+		, to_string(StrGUID, _GUID)
+		, _IsThreadLocal ? process_heap::per_thread : process_heap::per_process
+		, process_heap::leak_tracked
+		, PlacementNew
+		, (void**)&p))
 	{
 		p->Name = type_name(_TypeInfoName);
 		oSINGLETON_TRACE(_TypeInfoName, "%ssingleton initialized using %s ctor", _IsThreadLocal ? "threadlocal " : "", !ctors ? "module-local" : "prime-module");
@@ -296,10 +319,17 @@ void oThreadlocalRegistry::EndThread()
 
 void oThreadlocalMalloc(const oGUID& _GUID, const oLIFETIME_TASK& _Create, const oLIFETIME_TASK& _Destroy, size_t _Size, void** _ppAllocation)
 {
-	// @tony: Because this can be called from system threads, driver threads,
-	// and 3rd-party libs that don't care about your application's reporting (TBB)
-	// just punt on reporting these at leaks.
-	if (oProcessHeapFindOrAllocate(_GUID, true, false, _Size, nullptr, "oThreadlocalMalloc", _ppAllocation))
+	// Because this can be called from system threads, driver threads, and 3rd-
+	// party libs that don't care about your application's reporting (TBB) just 
+	// punt on reporting these at leaks.
+	sstring StrGUID;
+	if (process_heap::find_or_allocate(
+		_Size
+		, to_string(StrGUID, _GUID)
+		, process_heap::per_thread
+		, process_heap::none
+		, nullptr
+		, _ppAllocation))
 	{
 		if (_Create)
 			_Create(*_ppAllocation);
@@ -307,7 +337,7 @@ void oThreadlocalMalloc(const oGUID& _GUID, const oLIFETIME_TASK& _Create, const
 		if (_Destroy)
 			oConcurrency::thread_at_exit(oBIND(_Destroy, *_ppAllocation));
 		
-		oConcurrency::thread_at_exit(oProcessHeapDeallocate, *_ppAllocation);
+		oConcurrency::thread_at_exit(process_heap::deallocate, *_ppAllocation);
 	}
 }
 

@@ -75,7 +75,7 @@ struct oWinSkeletonContext : oProcessSingleton<oWinSkeletonContext>
 	std::map<HSKELETON
 		, oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>
 		, std::less<HSKELETON>
-		, oProcessHeapAllocator<std::pair<HSKELETON, oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>>>> 
+		, ouro::process_heap::std_allocator<std::pair<HSKELETON, oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>>>> 
 	Sources;
 };
 

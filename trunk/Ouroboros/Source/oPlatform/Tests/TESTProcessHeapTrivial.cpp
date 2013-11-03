@@ -22,38 +22,60 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+#include <oPlatform/oProcessHeap.h>
+#include "../../test_services.h"
+
+namespace ouro {
+	namespace tests {
+
+struct TestStaticContext
+{
+	TestStaticContext()
+		: Counter(1234)
+	{}
+
+	int Counter;
+
+	static void Ctor(void* _Memory) { new (_Memory) TestStaticContext(); }
+};
+
+void TESTprocess_heap(/*test_services& _Services*/)
+{
+	TestStaticContext* c = 0;
+	bool allocated = process_heap::find_or_allocate(
+		sizeof(TestStaticContext)
+		, typeid(TestStaticContext).name()
+		, process_heap::per_process
+		, process_heap::leak_tracked
+		, TestStaticContext::Ctor, (void**)&c);
+	
+	oCHECK(allocated && c && c->Counter == 1234, "Failed to construct context");
+	
+	c->Counter = 4321;
+	allocated = process_heap::find_or_allocate(
+		sizeof(TestStaticContext)
+		, typeid(TestStaticContext).name()
+		, process_heap::per_process
+		, process_heap::leak_tracked
+		, TestStaticContext::Ctor, (void**)&c);
+	oCHECK(!allocated && c && c->Counter == 4321, "Failed to attach context");
+
+	process_heap::deallocate(c);
+}
+
+	} // namespace tests
+} // namespace ouro
+
 #include <oBasis/oBuffer.h>
 #include <oBasis/oLockedPointer.h>
-#include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oTest.h>
-
-// {0BC98B60-0F99-4688-A028-F49B0271A237}
-static const oGUID GUIDTestBuffer = { 0xbc98b60, 0xf99, 0x4688, { 0xa0, 0x28, 0xf4, 0x9b, 0x2, 0x71, 0xa2, 0x37 } };
 
 struct PLATFORM_oProcessHeapTrivial : public oTest
 {
-	struct TestStaticContext
-	{
-		TestStaticContext()
-			: Counter(1234)
-		{}
-
-		int Counter;
-
-		static void Ctor(void* _Memory) { new (_Memory) TestStaticContext(); }
-	};
-
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		TestStaticContext* c = 0;
-		bool allocated = oProcessHeapFindOrAllocate(GUIDTestBuffer, false, true, sizeof(TestStaticContext), TestStaticContext::Ctor, "TestBuffer", (void**)&c);
-		oTESTB(allocated && c && c->Counter == 1234, "Failed to construct context");
-		c->Counter = 4321;
-
-		allocated = oProcessHeapFindOrAllocate(GUIDTestBuffer, false, true, sizeof(TestStaticContext), TestStaticContext::Ctor, "TestBuffer", (void**)&c);
-		oTESTB(!allocated && c && c->Counter == 4321, "Failed to attach context");
-
-		oProcessHeapDeallocate(c);
+		try { ouro::tests::TESTprocess_heap(); }
+		catch (std::exception&) { return FAILURE; }
 		return SUCCESS;
 	}
 };

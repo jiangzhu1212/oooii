@@ -48,8 +48,15 @@ protected:
 	{
 		if (!pInternal)
 		{
-			if (oProcessHeapFindOrAllocate(GUID, false, true, sizeof(MutexT), NewMutex, ouro::type_name(typeid(*this).name()), (void**)&pInternal))
-				atexit(DeleteMutex);
+			ouro::sstring StrGUID;
+			if (ouro::process_heap::find_or_allocate(
+				sizeof(MutexT)
+				, to_string(StrGUID, GUID)
+				, ouro::process_heap::per_process
+				, ouro::process_heap::leak_tracked
+				, NewMutex
+				, (void**)&pInternal))
+					atexit(DeleteMutex);
 		}
 
 		return pInternal;
@@ -61,7 +68,7 @@ protected:
 		MutexT* pTemp = pInternal;
 		oStd::atomic_exchange(&pInternal, nullptr);
 		pTemp->~MutexT();
-		oProcessHeapDeallocate(pTemp);
+		ouro::process_heap::deallocate(pTemp);
 	}
 
 	static const oGUID GUID;

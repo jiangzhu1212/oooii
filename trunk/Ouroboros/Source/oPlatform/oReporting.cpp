@@ -82,7 +82,7 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 		static bool once = false;
 		if (!once)
 		{
-			oProcessHeapEnsureRunning();
+			process_heap::ensure_initialized();
 			once = true;
 		}
 
@@ -563,7 +563,7 @@ struct InstallExceptionHandler
 {
 	InstallExceptionHandler()
 	{
-		oProcessHeapEnsureRunning(); // ensure the process heap is instantiated before the Singleton below so it is tracked
+		process_heap::ensure_initialized(); // ensure the process heap is instantiated before the Singleton below so it is tracked
 		oSINGLETON_REGISTER(oWinExceptionHandler);
 		oWinExceptionHandler::Singleton()->SetHandler(DumpAndTerminate);
 	}

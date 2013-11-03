@@ -33,8 +33,8 @@ using namespace ouro;
 const oGUID oCRTLeakTracker::GUID = { 0xf253ea65, 0x29fc, 0x47d0, { 0x9e, 0x2e, 0x40, 0xd, 0xac, 0x41, 0xd8, 0x61 } };
 oSINGLETON_REGISTER(oCRTLeakTracker);
 
-static void* untracked_malloc(size_t _Size) { return oProcessHeapAllocate(_Size); }
-static void untracked_free(void* _Pointer) { oProcessHeapDeallocate(_Pointer); }
+static void* untracked_malloc(size_t _Size) { return process_heap::allocate(_Size); }
+static void untracked_free(void* _Pointer) { process_heap::deallocate(_Pointer); }
 
 const static size_t kTrackingInternalReserve = oMB(4);
 
@@ -47,6 +47,16 @@ static bool& GetThreadlocalTrackingEnabled()
 	static const guid GUIDEnabled = { 0x410d255e, 0xf3b1, 0x4a37, { 0xb5, 0x11, 0x52, 0x16, 0x27, 0xf7, 0x34, 0x1e } };
 	if (!pThreadlocalTrackingEnabled)
 	{
+		//if (process_heap::find_or_allocate(sizeof(bool)
+		//	, "threadlocal_tracking_enabled"
+		//	, process_heap::per_thread
+		//	, process_heap::none
+		//	, init_true
+		//	, (void**)&pThreadlocalTrackingEnabled))
+		//{
+		//	process_heap::deallocate_at_thread_exit(nullptr, pThreadlocalTrackingEnabled);
+		//}
+
 		oThreadlocalMalloc(GUIDEnabled
 			, [&](void* _pMemory) { *(bool*)_pMemory = true; } // tracking is on by default
 			, oLIFETIME_TASK()

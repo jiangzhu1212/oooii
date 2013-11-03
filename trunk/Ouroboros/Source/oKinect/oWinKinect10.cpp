@@ -53,7 +53,7 @@ void oWinKinect10::RecordPreKinectThreads()
 
 void oWinKinect10::RecordKinectWorkerThreads()
 {
-	std::vector<oStd::thread::id, oProcessHeapAllocator<oStd::thread::id>> BeforeTIDs = TIDs;
+	auto BeforeTIDs = TIDs;
 	TIDs.clear();
 	ouro::this_process::enumerate_threads([&](oStd::thread::id _ThreadID)->bool
 	{

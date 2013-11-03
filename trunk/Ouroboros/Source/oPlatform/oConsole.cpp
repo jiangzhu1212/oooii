@@ -40,7 +40,7 @@ using namespace ouro;
 
 struct oConsoleContext : public oProcessSingleton<oConsoleContext>
 {
-	struct Run { Run() { oProcessHeapEnsureRunning(); oConsoleContext::Singleton(); } };
+	struct Run { Run() { process_heap::ensure_initialized(); oConsoleContext::Singleton(); } };
 
 	oConsoleContext()
 		: CtrlHandlerSet(false)
