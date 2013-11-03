@@ -162,7 +162,7 @@ private:
 
 	// Main container of all pointers allocated from the process heap
 	typedef std::map<size_t, entry, std::less<size_t>, process_heap::std_allocator<std::pair<size_t, entry>>> container_t;
-	container_t* pPointers;
+	container_t Pointers;
 
 	//thread_context ThreadContext;
 
@@ -178,7 +178,6 @@ context::context()
 	extern void oGSReportInstaller();
 	oGSReportInstaller();
 
-	pPointers = new(HeapAlloc(hHeap, 0, sizeof(container_t))) container_t();
 	sAtExitInstance = this;
 	atexit(at_exit);
 	valid = true;
@@ -223,10 +222,6 @@ void context::release()
 	if (0 == oStd::atomic_decrement(&RefCount))
 	{
 		valid = false;
-		pPointers->~container_t();
-		memset4(pPointers, 0xfeeefeee, sizeof(container_t));
-		HeapFree(hHeap, 0, pPointers);
-		pPointers = nullptr;
 		this->~context();
 		VirtualFreeEx(GetCurrentProcess(), this, 0, MEM_RELEASE);
 	}
@@ -246,8 +241,8 @@ void context::deallocate(void* _Pointer)
 
 		if (valid)
 		{
-			auto it = std::find_if(pPointers->begin(), pPointers->end(), matches(_Pointer));
-			if (it == pPointers->end())
+			auto it = std::find_if(Pointers.begin(), Pointers.end(), matches(_Pointer));
+			if (it == Pointers.end())
  				HeapFree(hHeap, 0, _Pointer);
 			else
 			{
@@ -256,7 +251,7 @@ void context::deallocate(void* _Pointer)
 				// we release first we risk destroying the heap and then still needing 
 				// to access it.
 				HeapFree(hHeap, 0, it->second.pointer);
-				pPointers->erase(it);
+				Pointers.erase(it);
 				DoRelease = true;
 			}
 		}
@@ -301,10 +296,10 @@ bool context::find_or_allocate(size_t _Size
 	// that entry.
 	{
 		oStd::lock_guard<oStd::recursive_mutex> lock(Mutex);
-		auto it = pPointers->find(h);
-		if (it == pPointers->end())
+		auto it = Pointers.find(h);
+		if (it == Pointers.end())
 		{
-			entry& eref = (*pPointers)[h];
+			entry& eref = Pointers[h];
 			e = &eref;
 			e->lock();
 		}
@@ -350,8 +345,8 @@ bool context::find(const char* _Name, scope _Scope, void** _pPointer)
 	*_pPointer = nullptr;
 	size_t h = hash(_Name, _Scope);
 	oStd::lock_guard<oStd::recursive_mutex> lock(Mutex);
-	auto it = pPointers->find(h);
-	if (it != pPointers->end())
+	auto it = Pointers.find(h);
+	if (it != Pointers.end())
 		*_pPointer = it->second.pointer;
 	return !!*_pPointer;
 }
@@ -368,7 +363,7 @@ void context::report()
 
 	unsigned int nLeaks = 0;
 	unsigned int nIgnoredLeaks = 0;
-	for (container_t::const_iterator it = pPointers->begin(); it != pPointers->end(); ++it)
+	for (container_t::const_iterator it = Pointers.begin(); it != Pointers.end(); ++it)
 	{
 		if (it->second.tracking == process_heap::leak_tracked)
 			nLeaks++;
@@ -385,7 +380,7 @@ void context::report()
 		mstring exec;
 		snprintf(buf, "========== Process Heap Leak Report %s (Module %s) ==========\n", system::exec_path(exec), moduleName.c_str());
 		debugger::print(buf);
-		for (container_t::const_iterator it = pPointers->begin(); it != pPointers->end(); ++it)
+		for (container_t::const_iterator it = Pointers.begin(); it != Pointers.end(); ++it)
 		{
 			if (it->second.tracking == process_heap::leak_tracked)
 			{
