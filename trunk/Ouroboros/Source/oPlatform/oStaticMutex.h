@@ -55,6 +55,7 @@ protected:
 				, ouro::process_heap::per_process
 				, ouro::process_heap::leak_tracked
 				, NewMutex
+				, nullptr
 				, (void**)&pInternal))
 					atexit(DeleteMutex);
 		}

@@ -30,7 +30,6 @@
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oAllocator.h>
 #include <oBasis/oAllocatorTLSF.h>
-#include <oBasis/oBasisRequirements.h>
 #include <oBasis/oBuffer.h>
 #include <oBasis/oBufferPool.h>
 #include <oBasis/oCameraController.h>

@@ -56,15 +56,9 @@ void* allocate(size_t _Size);
 // matter how many times find_or_allocate evaluates to a pre-existing pointer, 
 // this deallocate will free the memory, potentially leaving dangling 
 // pointers. It is up to the user to retain control of when the memory 
-// actually gets freed. Also remember this does not call a destructor, so like 
-// regular placement new the user is expected to handle the call to any 
-// destructor explicitly.
+// actually gets freed. If a destructor was specified in find_or_allocate then 
+// it is called before the actual freeing of the memory.
 void deallocate(void* _Pointer);
-
-// Enqueues the specified pointer for later processing. When thread_exit() is 
-// called, all destructors on associated pointers will be called for the calling
-// thread and then deallocate will be called.
-void deallocate_at_thread_exit(const std::function<void(void* _Pointer)>& _Destructor, void* _Pointer);
 
 // Call this at the end of a thread to free all thread-local memory.
 void exit_thread();
@@ -84,7 +78,18 @@ bool find_or_allocate(size_t _Size
 	, scope _Scope
 	, tracking _Tracking
 	, const std::function<void(void* _Pointer)>& _PlacementConstructor
+	, const std::function<void(void* _Pointer)>& _Destructor
 	, void** _pPointer);
+
+template<typename T>
+bool find_or_allocate(
+	const char* _Name
+	, scope _Scope
+	, tracking _Tracking
+	, const std::function<void(void* _Pointer)>& _PlacementConstructor
+	, const std::function<void(void* _Pointer)>& _Destructor
+	, T** _pPointer)
+{	return find_or_allocate(sizeof(T), _Name, _Scope, _Tracking, _PlacementConstructor, _Destructor, (void**)_pPointer); }
 
 // Returns true if the specified allocation already exists and *_pPointer is 
 // valid and false if the allocation does not exist.

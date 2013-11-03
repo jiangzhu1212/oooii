@@ -47,7 +47,9 @@ void TESTprocess_heap(/*test_services& _Services*/)
 		, typeid(TestStaticContext).name()
 		, process_heap::per_process
 		, process_heap::leak_tracked
-		, TestStaticContext::Ctor, (void**)&c);
+		, TestStaticContext::Ctor
+		, nullptr
+		, (void**)&c);
 	
 	oCHECK(allocated && c && c->Counter == 1234, "Failed to construct context");
 	
@@ -57,7 +59,9 @@ void TESTprocess_heap(/*test_services& _Services*/)
 		, typeid(TestStaticContext).name()
 		, process_heap::per_process
 		, process_heap::leak_tracked
-		, TestStaticContext::Ctor, (void**)&c);
+		, TestStaticContext::Ctor
+		, nullptr
+		, (void**)&c);
 	oCHECK(!allocated && c && c->Counter == 4321, "Failed to attach context");
 
 	process_heap::deallocate(c);

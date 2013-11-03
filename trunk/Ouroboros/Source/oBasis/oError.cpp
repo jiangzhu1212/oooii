@@ -23,9 +23,10 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oError.h>
-#include <oBasis/oBasisRequirements.h>
 #include <oBase/fixed_string.h>
 #include <oBase/macros.h>
+
+#include <oPlatform/oProcessHeap.h>
 
 using namespace ouro;
 
@@ -87,6 +88,12 @@ struct ERROR_CONTEXT
 {
 	static const size_t ERROR_STRING_BUFFER_SIZE = 2048;
 
+	ERROR_CONTEXT()
+		: ErrorCount(0)
+		, Error(0)
+		, UseDefaultString(false)
+	{ ErrorString[0] = '\0'; }
+
 	size_t ErrorCount;
 	errno_t Error;
 	char ErrorString[ERROR_STRING_BUFFER_SIZE];
@@ -96,31 +103,15 @@ struct ERROR_CONTEXT
 ERROR_CONTEXT* GetErrorContext()
 {
 	static thread_local ERROR_CONTEXT* pErrorContext = nullptr;
-	if(!pErrorContext)
+	if (!pErrorContext)
 	{
-		// add ctor to ERROR_CONTEXT
-		//if (process_heap::find_or_allocate(sizeof(bool)
-		//	, "ERROR_CONTEXT"
-		//	, process_heap::per_thread
-		//	, process_heap::none
-		//	, [=](void* _pMemory) { new (_pMemory) ERROR_CONTEXT(); }
-		//	, (void**)&pErrorContext))
-		//{
-		//	process_heap::deallocate_at_thread_exit(nullptr, pErrorContext);
-		//}
-
-		// {99091828-104D-4320-92C9-FD41810C352D}
-		static const guid GUIDErrorContext = { 0x99091828, 0x104d, 0x4320, { 0x92, 0xc9, 0xfd, 0x41, 0x81, 0xc, 0x35, 0x2d } };
-
-		oThreadlocalMalloc(GUIDErrorContext, [=](void* _pMemory)
-		{
-			ERROR_CONTEXT* ctx = (ERROR_CONTEXT*)_pMemory;
-			ctx->ErrorCount = 0;
-			ctx->Error = 0;
-			ctx->ErrorString[0] = 0;
-			ctx->UseDefaultString = false;
-		}
-		, oLIFETIME_TASK(), &pErrorContext);
+		process_heap::find_or_allocate(
+			"ERROR_CONTEXT"
+			, process_heap::per_thread
+			, process_heap::none
+			, [=](void* _pMemory) { new (_pMemory) ERROR_CONTEXT(); }
+			, nullptr
+			, &pErrorContext);
 	}
 
 	return pErrorContext;

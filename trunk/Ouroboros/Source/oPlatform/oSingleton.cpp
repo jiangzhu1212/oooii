@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oSingleton.h>
-#include <oBasis/oBasisRequirements.h>
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oProcessHeap.h>
 #include <oBase/backoff.h>
@@ -112,6 +111,7 @@ void* oSingletonCtorRegistryCreate()
 		, process_heap::per_process
 		, process_heap::none
 		, oPlacementNewSingletonCtor
+		, nullptr
 		, &p);
 	
 	return p;
@@ -148,6 +148,7 @@ public:
 			, process_heap::per_process
 			, process_heap::leak_tracked
 			, ouro::type_info<oThreadlocalRegistry>::default_construct
+			, nullptr
 			, (void**)&p);
 		return p;
 	}
@@ -254,6 +255,7 @@ void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, type_info_de
 		, _IsThreadLocal ? process_heap::per_thread : process_heap::per_process
 		, process_heap::leak_tracked
 		, PlacementNew
+		, nullptr
 		, (void**)&p))
 	{
 		p->Name = type_name(_TypeInfoName);
@@ -317,30 +319,6 @@ void oThreadlocalRegistry::EndThread()
 	}
 }
 
-void oThreadlocalMalloc(const oGUID& _GUID, const oLIFETIME_TASK& _Create, const oLIFETIME_TASK& _Destroy, size_t _Size, void** _ppAllocation)
-{
-	// Because this can be called from system threads, driver threads, and 3rd-
-	// party libs that don't care about your application's reporting (TBB) just 
-	// punt on reporting these at leaks.
-	sstring StrGUID;
-	if (process_heap::find_or_allocate(
-		_Size
-		, to_string(StrGUID, _GUID)
-		, process_heap::per_thread
-		, process_heap::none
-		, nullptr
-		, _ppAllocation))
-	{
-		if (_Create)
-			_Create(*_ppAllocation);
-		
-		if (_Destroy)
-			oConcurrency::thread_at_exit(oBIND(_Destroy, *_ppAllocation));
-		
-		oConcurrency::thread_at_exit(process_heap::deallocate, *_ppAllocation);
-	}
-}
-
 void oConcurrency::thread_at_exit(const std::function<void()>& _AtExit)
 {
 	oThreadlocalRegistry::Singleton()->RegisterAtExit(_AtExit);
@@ -348,5 +326,7 @@ void oConcurrency::thread_at_exit(const std::function<void()>& _AtExit)
 
 void oConcurrency::end_thread()
 {
+	process_heap::exit_thread();
+
 	oThreadlocalRegistry::Singleton()->EndThread();
 }

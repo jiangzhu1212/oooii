@@ -47,19 +47,12 @@ static bool& GetThreadlocalTrackingEnabled()
 	static const guid GUIDEnabled = { 0x410d255e, 0xf3b1, 0x4a37, { 0xb5, 0x11, 0x52, 0x16, 0x27, 0xf7, 0x34, 0x1e } };
 	if (!pThreadlocalTrackingEnabled)
 	{
-		//if (process_heap::find_or_allocate(sizeof(bool)
-		//	, "threadlocal_tracking_enabled"
-		//	, process_heap::per_thread
-		//	, process_heap::none
-		//	, init_true
-		//	, (void**)&pThreadlocalTrackingEnabled))
-		//{
-		//	process_heap::deallocate_at_thread_exit(nullptr, pThreadlocalTrackingEnabled);
-		//}
-
-		oThreadlocalMalloc(GUIDEnabled
-			, [&](void* _pMemory) { *(bool*)_pMemory = true; } // tracking is on by default
-			, oLIFETIME_TASK()
+		process_heap::find_or_allocate(
+			"threadlocal_tracking_enabled"
+			, process_heap::per_thread
+			, process_heap::none
+			, [=](void* _pMemory) { *(bool*)_pMemory = true; }
+			, nullptr
 			, &pThreadlocalTrackingEnabled);
 	}
 

@@ -246,9 +246,6 @@
     <ClInclude Include="..\..\Include\oBasis\oINISerialize.h">
       <Filter>oBasis\Serialization</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oBasisRequirements.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oDispatchQueue.h">
       <Filter>oBasis\Concurrency</Filter>
     </ClInclude>

@@ -99,13 +99,12 @@ public:
 		, scope _Scope
 		, tracking _Tracking
 		, const std::function<void(void* _Pointer)>& _PlacementConstructor
+		, const std::function<void(void* _Pointer)>& _Destructor
 		, void** _pPointer);
 
 	bool find(const char* _Name, scope _Scope, void** _pPointer);
 
-	//void deallocate_at_thread_exit(const std::function<void(void* _Pointer)>& _Destructor, void* _Pointer);
-
-	//void exit_thread();
+	void exit_thread();
 
 	void report();
 
@@ -268,27 +267,34 @@ void context::deallocate(void* _Pointer)
 		release();
 }
 
-//void context::deallocate_at_thread_exit(const std::function<void(void* _Pointer)>& _Destructor, void* _Pointer)
-//{
-//	ThreadContext.deallocate_at_thread_exit(_Destructor, _Pointer);
-//}
-//
-//void context::exit_thread()
-//{
-//	ThreadContext.exit_thread();
-//}
-//
+void context::exit_thread()
+{
+	fixed_vector<void*, 32> allocs;
+	{
+		oStd::thread::id tid = oStd::this_thread::get_id();
+		oStd::lock_guard<oStd::recursive_mutex> lock(Mutex);
+		for (container_t::const_iterator it = Pointers.begin(); it != Pointers.end(); ++it)
+			if (it->second.scope == process_heap::per_thread && tid == it->second.init)
+				allocs.push_back(it->second.pointer);
+	}
+
+	oFOR(void* p, allocs)
+		context::deallocate(p);
+}
+
 bool context::find_or_allocate(size_t _Size
 	, const char* _Name
 	, scope _Scope
 	, tracking _Tracking
 	, const std::function<void(void* _Pointer)>& _PlacementConstructor
+	, const std::function<void(void* _Pointer)>& _Destructor
 	, void** _pPointer)
 {
 	if (!_Size || !_pPointer)
 		throw std::invalid_argument("invalid argument");
 	size_t h = hash(_Name, _Scope);
-	entry* e = nullptr;
+	bool Allocated = false;
+	bool CallCtor = false;
 
 	// the constructor for this new object could call back into FindOrAllocate 
 	// when creating its members. This can cause a deadlock so release the primary 
@@ -299,43 +305,43 @@ bool context::find_or_allocate(size_t _Size
 		auto it = Pointers.find(h);
 		if (it == Pointers.end())
 		{
-			entry& eref = Pointers[h];
-			e = &eref;
-			e->lock();
+			entry& e = Pointers[h];
+			*_pPointer = e.pointer = allocate(_Size);
+			e.init = oStd::this_thread::get_id();
+			e.name = _Name;
+			e.scope = _Scope;
+			e.tracking = _Tracking;
+			e.num_stack_entries = debugger::callstack(e.stack, 3);
+			reference();
+
+			Allocated = true;
+			if (_PlacementConstructor)
+			{
+				CallCtor = true;
+				AcquireSRWLockExclusive(&e.mutex);
+			}
 		}
 		else
 		{
-			it->second.lock_shared(); // may exist but not be constructed yet
+			AcquireSRWLockShared(&it->second.mutex); // may exist but not be constructed yet
 			*_pPointer = it->second.pointer;
-			it->second.unlock_shared();
+			ReleaseSRWLockShared(&it->second.mutex);
 		}
 	}
 
-	if (e)
+	if (CallCtor)
 	{
 		// Entry is already locked
-		*_pPointer = allocate(_Size);
-		
-		if (_PlacementConstructor)
-			_PlacementConstructor(*_pPointer);
+		_PlacementConstructor(*_pPointer);
 
-		e->pointer = *_pPointer;
-		e->init = oStd::this_thread::get_id();
-		e->name = _Name;
-		e->scope = _Scope;
-		e->tracking = _Tracking;
-		e->num_stack_entries = 0;
-		memset(e->stack, 0, sizeof(e->stack));
-
-		static bool CaptureCallstack = true;
-		if (CaptureCallstack)
-			e->num_stack_entries = debugger::callstack(e->stack, 3);
-
-		reference();
-		e->unlock();
+		// unlock the entry - how else can I do this!? I can't keep a pointer to the
+		// entry because it can be moved around, so I need to safely reevaluate it.
+		oStd::lock_guard<oStd::recursive_mutex> lock(Mutex);
+		auto it = Pointers.find(h);
+		ReleaseSRWLockExclusive(&it->second.mutex);
 	}
 	
-	return !!e;
+	return Allocated;
 }
 
 bool context::find(const char* _Name, scope _Scope, void** _pPointer)
@@ -477,7 +483,7 @@ context& context::singleton()
 			oCRTLeakTracker::Singleton();
 
 			// Because threads could start up during static init, ensure thread_local
-			// support API such as oAtThreadExit and oThreadlocalMalloc are ready.
+			// support API such as oAtThreadExit are ready.
 			void oThreadlocalRegistryCreate();
 			oThreadlocalRegistryCreate();
 		}
@@ -503,25 +509,21 @@ void deallocate(void* _Pointer)
 	context::singleton().deallocate(_Pointer);
 }
 
-//void deallocate_at_thread_exit(const std::function<void(void* _Pointer)>& _Destructor, void* _Pointer)
-//{
-//	context::singleton().deallocate_at_thread_exit(_Destructor, _Pointer);
-//}
-//
-//void exit_thread()
-//{
-//	context::singleton().exit_thread();
-//}
-//
+void exit_thread()
+{
+	context::singleton().exit_thread();
+}
+
 bool find_or_allocate(size_t _Size
 	, const char* _Name
 	, scope _Scope
 	, tracking _Tracking
 	, const std::function<void(void* _Pointer)>& _PlacementConstructor
+	, const std::function<void(void* _Pointer)>& _Destructor
 	, void** _pPointer)
 {
 	return context::singleton().find_or_allocate(_Size, _Name, _Scope, _Tracking
-		, _PlacementConstructor, _pPointer);
+		, _PlacementConstructor, _Destructor, _pPointer);
 }
 
 bool find(const char* _Name, scope _Scope, void** _pPointer)
