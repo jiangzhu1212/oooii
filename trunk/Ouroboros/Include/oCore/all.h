@@ -33,10 +33,10 @@
 #include <oCore/debugger.h>
 #include <oCore/display.h>
 #include <oCore/filesystem.h>
-#include <oCore/filesystem_error.h>
 #include <oCore/module.h>
 #include <oCore/page_allocator.h>
 #include <oCore/process.h>
+#include <oCore/process_heap.h>
 #include <oCore/process_stats_monitor.h>
 #include <oCore/system.h>
 #endif

@@ -63,9 +63,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oMirroredArena.h">
       <Filter>Headers\Memory</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oProcessHeap.h">
-      <Filter>Headers\Memory</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oSocket.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
@@ -219,9 +216,6 @@
       <Filter>Source\Code Management</Filter>
     </ClCompile>
     <ClCompile Include="oMirroredArena.cpp">
-      <Filter>Source\Memory</Filter>
-    </ClCompile>
-    <ClCompile Include="oProcessHeap.cpp">
       <Filter>Source\Memory</Filter>
     </ClCompile>
     <ClCompile Include="oEMail.cpp">

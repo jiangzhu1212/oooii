@@ -31,7 +31,7 @@
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oReporting.h>
-#include <oPlatform/oProcessHeap.h>
+#include <oCore/process_heap.h>
 
 using namespace ouro;
 

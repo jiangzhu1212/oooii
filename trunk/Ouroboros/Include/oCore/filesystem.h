@@ -27,13 +27,77 @@
 #ifndef oCore_filesystem_h
 #define oCore_filesystem_h
 
-#include <oCore/filesystem_error.h>
+#include <oBase/path.h>
 #include <functional>
-#include <stdio.h>
+#include <cstdio>
 #include <memory>
+#include <system_error>
 
 namespace ouro {
 	namespace filesystem {
+
+template<typename charT, typename TraitsT = default_posix_path_traits<charT>>
+class basic_filesystem_error : public std::system_error
+{
+public:
+	typedef basic_path<charT, TraitsT> path_type;
+
+	basic_filesystem_error() {}
+	~basic_filesystem_error() {}
+	basic_filesystem_error(const basic_filesystem_error<charT, TraitsT>& _That)
+		: std::system_error(_That)
+		, Path1(_That.Path1)
+		, Path2(_That.Path2)
+	{}
+
+	basic_filesystem_error(std::error_code _ErrorCode)
+		: system_error(_ErrorCode, _ErrorCode.message())
+	{}
+
+	basic_filesystem_error(const path_type& _Path1, std::error_code _ErrorCode)
+		: system_error(_ErrorCode, _ErrorCode.message())
+		, Path1(_Path1)
+	{}
+
+	basic_filesystem_error(const path_type& _Path1, const path_type& _Path2, std::error_code _ErrorCode)
+		: system_error(_ErrorCode, _ErrorCode.message())
+		, Path1(_Path1)
+		, Path2(_Path2)
+	{}
+
+	basic_filesystem_error(const char* _Message, std::error_code _ErrorCode)
+		: system_error(_ErrorCode, _Message)
+	{}
+
+	basic_filesystem_error(const char* _Message, const path_type& _Path1, std::error_code _ErrorCode)
+		: system_error(_ErrorCode, _Message)
+		, Path1(_Path1)
+	{}
+
+	basic_filesystem_error(const char* _Message, const path_type& _Path1, const path_type& _Path2, std::error_code _ErrorCode)
+		: system_error(_ErrorCode, _Message)
+		, Path1(_Path1)
+		, Path2(_Path2)
+	{}
+	
+	inline const path_type& path1() const { return Path1; }
+	inline const path_type& path2() const { return Path2; }
+
+private:
+	path_type Path1;
+	path_type Path2;
+};
+
+typedef basic_filesystem_error<char> filesystem_error;
+typedef basic_filesystem_error<wchar_t> wfilesystem_error;
+
+typedef basic_filesystem_error<char, default_windows_path_traits<char>> windows_filesystem_error;
+typedef basic_filesystem_error<wchar_t, default_windows_path_traits<wchar_t>> windows_wfilesystem_error;
+
+const std::error_category& filesystem_category();
+
+/*constexpr*/ inline std::error_code make_error_code(std::errc::errc _Errc) { return std::error_code(static_cast<int>(_Errc), filesystem_category()); }
+/*constexpr*/ inline std::error_condition make_error_condition(std::errc::errc _Errc) { return std::error_condition(static_cast<int>(_Errc), filesystem_category()); }
 
 /* enum class */ namespace open_option
 { enum value {

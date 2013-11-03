@@ -26,7 +26,7 @@
 #include <oBase/fixed_string.h>
 #include <oBase/macros.h>
 
-#include <oPlatform/oProcessHeap.h>
+#include <oCore/process_heap.h>
 
 using namespace ouro;
 

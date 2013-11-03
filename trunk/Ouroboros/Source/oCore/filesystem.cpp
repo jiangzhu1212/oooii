@@ -99,6 +99,25 @@ using namespace oStd;
 
 namespace ouro {
 	namespace filesystem {
+		namespace detail {
+
+class filesystem_category_impl : public std::error_category
+{
+public:
+	const char* name() const override { return "filesystem"; }
+	std::string message(value_type _ErrCode) const override
+	{
+		return std::generic_category().message(_ErrCode);
+	}
+};
+
+		} // namespace detail
+
+const std::error_category& filesystem_category()
+{
+	static detail::filesystem_category_impl sSingleton;
+	return sSingleton;
+}
 
 static bool is_dot(const char* _Filename)
 {

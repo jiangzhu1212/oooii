@@ -30,7 +30,6 @@
 #include <oPlatform/oConsole.h>
 #include <oPlatform/oMirroredArena.h>
 #include <oPlatform/oP4.h>
-#include <oPlatform/oProcessHeap.h>
 #include <oPlatform/oRegistry.h>
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oSocket.h>

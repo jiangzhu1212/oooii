@@ -25,7 +25,7 @@
 #include <oConcurrency/mutex.h>
 #include <oPlatform/Windows/oWinSkeleton.h>
 #include <oPlatform/oSingleton.h>
-#include <oPlatform/oProcessHeap.h>
+#include <oCore/process_heap.h>
 
 using namespace oConcurrency;
 

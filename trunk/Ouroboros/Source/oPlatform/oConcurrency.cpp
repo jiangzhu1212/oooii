@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oConcurrency/oConcurrency.h>
 #include <oBasis/oDispatchQueueConcurrent.h>
-#include <oPlatform/oProcessHeap.h>
+#include <oCore/process_heap.h>
 #include <oPlatform/oSingleton.h>
 
 // NOTE: Some of the concurrency requirements are actually requirements on the

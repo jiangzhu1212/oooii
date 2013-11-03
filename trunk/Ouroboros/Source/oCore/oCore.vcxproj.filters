@@ -15,9 +15,6 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="filesystem_error.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="module.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -51,12 +48,12 @@
     <ClCompile Include="winmain.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="process_heap.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\filesystem.h">
-      <Filter>oCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCore\filesystem_error.h">
       <Filter>oCore</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">
@@ -96,6 +93,9 @@
       <Filter>oCore</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oCore\serial_port.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\process_heap.h">
       <Filter>oCore</Filter>
     </ClInclude>
   </ItemGroup>

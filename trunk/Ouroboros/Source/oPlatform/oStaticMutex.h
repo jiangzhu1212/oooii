@@ -27,7 +27,7 @@
 #define oStaticMutex_h
 
 #include <oConcurrency/mutex.h>
-#include <oPlatform/oProcessHeap.h>
+#include <oCore/process_heap.h>
 
 template<typename MutexT, typename UniqueType>
 class oStaticMutex

@@ -27,7 +27,7 @@
 #include <oBasis/oError.h>
 #include <oBase/fixed_string.h>
 #include <oConcurrency/mutex.h>
-#include <oPlatform/oProcessHeap.h>
+#include <oCore/process_heap.h>
 #include <oPlatform/oSingleton.h>
 #include <oGUI/Windows/oGDI.h>
 #include <oGUI/Windows/oWinRect.h>

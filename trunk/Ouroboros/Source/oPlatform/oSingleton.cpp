@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oPlatform/oSingleton.h>
 #include <oConcurrency/mutex.h>
-#include <oPlatform/oProcessHeap.h>
+#include <oCore/process_heap.h>
 #include <oBase/backoff.h>
 
 using namespace ouro;

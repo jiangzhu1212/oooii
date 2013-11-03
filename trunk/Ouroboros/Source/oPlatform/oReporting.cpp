@@ -29,7 +29,7 @@
 #include <oCore/debugger.h>
 #include <oBasis/oError.h>
 #include <oGUI/oMsgBox.h>
-#include <oPlatform/oProcessHeap.h>
+#include <oCore/process_heap.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/Windows/oWinAsString.h>

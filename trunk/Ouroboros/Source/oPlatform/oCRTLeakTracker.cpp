@@ -24,7 +24,7 @@
  **************************************************************************/
 #include "oCRTLeakTracker.h"
 #include <oPlatform/Windows/oCRTHeap.h>
-#include <oPlatform/oProcessHeap.h>
+#include <oCore/process_heap.h>
 #include <oPlatform/oReporting.h>
 
 using namespace ouro;

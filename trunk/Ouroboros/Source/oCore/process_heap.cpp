@@ -22,11 +22,14 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oProcessHeap.h>
+#include <oCore/process_heap.h>
+#include <oCore/debugger.h>
+#include <oCore/module.h>
+#include <oCore/process.h>
+#include <oCore/system.h>
 #include <oBase/guid.h>
 #include <oBase/fnv1a.h>
 #include <oStd/mutex.h>
-#include "oCRTLeakTracker.h"
 
 namespace ouro {
 	namespace process_heap {

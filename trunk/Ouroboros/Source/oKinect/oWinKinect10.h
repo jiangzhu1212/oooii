@@ -29,7 +29,7 @@
 #ifdef oHAS_KINECT_SDK
 
 #include <NuiApi.h>
-#include <oPlatform/oProcessHeap.h>
+#include <oCore/process_heap.h>
 #include <oPlatform/oModuleUtil.h>
 
 struct oWinKinect10 : oProcessSingleton<oWinKinect10>
