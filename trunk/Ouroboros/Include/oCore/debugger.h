@@ -124,6 +124,7 @@ symbol_info translate(symbol _Symbol);
 // runs of std::bind code can be reduced to just one line.
 int format(char* _StrDestination, size_t _SizeofStrDestination, symbol _Symbol, const char* _Prefix, bool* _pIsStdBind = nullptr);
 template<size_t size> int format(char (&_StrDestination)[size], symbol _Symbol, const char* _Prefix, bool* _pIsStdBind = nullptr) { return format(_StrDestination, size, _Symbol, _Prefix, _pIsStdBind); }
+template<size_t capacity> int format(fixed_string<char, capacity>& _StrDestination, symbol _Symbol, const char* _Prefix, bool* _pIsStdBind = nullptr) { return format(_StrDestination, _StrDestination.capacity(), _Symbol, _Prefix, _pIsStdBind); }
 
 // Saves a file containing debug information that can be used to do postmortem 
 // debugging. Exceptions is the platform-specific context during exception
