@@ -24,6 +24,9 @@
     <ClCompile Include="Tests\TESTcamera.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\TESTprocess_heap.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\tests\oCoreTests.h">

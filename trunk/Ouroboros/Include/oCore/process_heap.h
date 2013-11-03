@@ -31,6 +31,9 @@
 #ifndef oCore_process_heap_h
 #define oCore_process_heap_h
 
+#include <oBase/macros.h>
+#include <functional>
+
 namespace ouro {
 	namespace process_heap {
 

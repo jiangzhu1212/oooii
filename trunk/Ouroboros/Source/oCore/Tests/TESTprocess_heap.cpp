@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oCore/process_heap.h>
 #include "../../test_services.h"
+#include <oBase/throw.h>
 
 namespace ouro {
 	namespace tests {
@@ -39,7 +40,7 @@ struct TestStaticContext
 	static void Ctor(void* _Memory) { new (_Memory) TestStaticContext(); }
 };
 
-void TESTprocess_heap(/*test_services& _Services*/)
+void TESTprocess_heap()
 {
 	TestStaticContext* c = 0;
 	bool allocated = process_heap::find_or_allocate(
@@ -69,19 +70,3 @@ void TESTprocess_heap(/*test_services& _Services*/)
 
 	} // namespace tests
 } // namespace ouro
-
-#include <oBasis/oBuffer.h>
-#include <oBasis/oLockedPointer.h>
-#include <oPlatform/oTest.h>
-
-struct PLATFORM_oProcessHeapTrivial : public oTest
-{
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
-	{
-		try { ouro::tests::TESTprocess_heap(); }
-		catch (std::exception&) { return FAILURE; }
-		return SUCCESS;
-	}
-};
-
-oTEST_REGISTER(PLATFORM_oProcessHeapTrivial);

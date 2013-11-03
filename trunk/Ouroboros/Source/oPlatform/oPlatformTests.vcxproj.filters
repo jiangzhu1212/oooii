@@ -27,9 +27,6 @@
     <ClCompile Include="Tests\TESTMirroredArena.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTProcessHeapTrivial.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTSocketAsync.cpp">
       <Filter>Source</Filter>
     </ClCompile>

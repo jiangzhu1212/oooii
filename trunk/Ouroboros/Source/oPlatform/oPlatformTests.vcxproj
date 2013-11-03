@@ -138,7 +138,6 @@
     <ClCompile Include="Tests\TESTHTTP.cpp" />
     <ClCompile Include="Tests\TESTIntersection.cpp" />
     <ClCompile Include="Tests\TESTMirroredArena.cpp" />
-    <ClCompile Include="Tests\TESTProcessHeapTrivial.cpp" />
     <ClCompile Include="Tests\TESTSocketAsync.cpp" />
     <ClCompile Include="Tests\TESTSocketBlocking.cpp" />
     <ClCompile Include="Tests\TESTStreamMonitor.cpp" />

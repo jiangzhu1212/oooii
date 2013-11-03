@@ -24,6 +24,7 @@
     <ClCompile Include="Tests\TESTcpu.cpp" />
     <ClCompile Include="Tests\TESTdebugger.cpp" />
     <ClCompile Include="Tests\TESTfilesystem.cpp" />
+    <ClCompile Include="Tests\TESTprocess_heap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\tests\oCoreTests.h" />
