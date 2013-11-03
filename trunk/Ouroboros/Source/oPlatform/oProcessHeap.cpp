@@ -42,45 +42,6 @@ inline size_t hash(const char* _Name, process_heap::scope _Scope)
 	return h;
 }
 
-#if 0
-class thread_context
-{
-public:
-	void deallocate_at_thread_exit(const std::function<void(void* _Pointer)>& _Destructor, void* _Pointer)
-	{
-		oStd::lock_guard<oStd::recursive_mutex> lock(Mutex);
-		thread_local_deallocates_t& deallocates = Deallocates[oStd::this_thread::get_id()];
-		deallocates.push_back(pair_t(_Destructor, _Pointer));
-	}
-
-	void exit_thread()
-	{
-		oStd::lock_guard<oStd::recursive_mutex> lock(Mutex);
-		auto it = Deallocates.find(oStd::this_thread::get_id());
-		if (it != Deallocates.end())
-		{
-			oFOR(const pair_t& Destroy, it->second)
-			{
-				if (Destroy.first)
-					Destroy.first(Destroy.second);
-				process_heap::deallocate(Destroy.second);
-			}
-			it->second.clear();
-		}
-	}
-
-private:
-	// queue of thread_local destructors for thread_local allocations
-	oStd::recursive_mutex Mutex;
-
-	typedef std::pair<std::function<void(void* _Pointer)>, void*> pair_t;
-	typedef fixed_vector<pair_t, 32> thread_local_deallocates_t;
-	
-	typedef std::unordered_map<oStd::thread::id, thread_local_deallocates_t, std::hash<oStd::thread::id>, std::equal_to<oStd::thread::id>
-		, std_allocator<std::pair<const oStd::thread::id, thread_local_deallocates_t>>> deallocates_t;
-	deallocates_t Deallocates;
-};
-#endif
 class context
 {
 public:
@@ -163,8 +124,6 @@ private:
 	typedef std::map<size_t, entry, std::less<size_t>, process_heap::std_allocator<std::pair<size_t, entry>>> container_t;
 	container_t Pointers;
 
-	//thread_context ThreadContext;
-
 	static void report_footer(size_t _NumLeaks);
 	static void at_exit();
 };
@@ -201,9 +160,7 @@ void context::report_footer(size_t _NumLeaks)
 
 void context::at_exit()
 {
-	// Destroy primordial singleton
-	void oThreadlocalRegistryDestroy();
-	oThreadlocalRegistryDestroy();
+	context::singleton().exit_thread();
 
 	if (valid)
 		context::singleton().report();
@@ -228,8 +185,7 @@ void context::release()
 
 void* context::allocate(size_t _Size)
 {
-	void* p = HeapAlloc(hHeap, 0, _Size);
-	return p;
+	return HeapAlloc(hHeap, 0, _Size);
 }
 
 void context::deallocate(void* _Pointer)
@@ -475,17 +431,6 @@ context& context::singleton()
 			file->instance = sInstance;
 			file->guid = GUID_ProcessHeap;
 			file->pid = this_process::get_id();
-
-			// Create primordial singletons
-
-			// Because all allocations from start to end should be tracked, start tracking
-			// ASAP.
-			oCRTLeakTracker::Singleton();
-
-			// Because threads could start up during static init, ensure thread_local
-			// support API such as oAtThreadExit are ready.
-			void oThreadlocalRegistryCreate();
-			oThreadlocalRegistryCreate();
 		}
 
 		UnmapViewOfFile(file);

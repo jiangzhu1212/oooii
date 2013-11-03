@@ -38,9 +38,6 @@ using namespace oConcurrency;
 
 //#define oENABLE_SINGLETON_TRACE
 
-static void* untracked_malloc(size_t _Size) { return process_heap::allocate(_Size); }
-static void untracked_free(void* _Pointer) { process_heap::deallocate(_Pointer); }
-
 namespace oSingletonPlatform
 {
 #ifdef oENABLE_SINGLETON_TRACE
@@ -127,6 +124,7 @@ oSingletonRegister::oSingletonRegister(const char* _SingletonName, const oGUID& 
 	}
 }
 
+#if 0
 class oThreadlocalRegistry
 {
 public:
@@ -184,6 +182,9 @@ protected:
 // {CBC5C6D4-7C46-4D05-9143-A043418C0B3A}
 const oGUID oThreadlocalRegistry::GUID = { 0xcbc5c6d4, 0x7c46, 0x4d05, { 0x91, 0x43, 0xa0, 0x43, 0x41, 0x8c, 0xb, 0x3a } };
 
+static void* untracked_malloc(size_t _Size) { return process_heap::allocate(_Size); }
+static void untracked_free(void* _Pointer) { process_heap::deallocate(_Pointer); }
+
 oThreadlocalRegistry::oThreadlocalRegistry()
 	: Singletons(0, singletons_t::hasher(), singletons_t::key_equal(), std_user_allocator<singletons_t::value_type>(untracked_malloc, untracked_free))
 	, AtExits(0, atexits_t::hasher(), atexits_t::key_equal(), std_user_allocator<atexits_t::value_type>(untracked_malloc, untracked_free))
@@ -199,6 +200,7 @@ void oThreadlocalRegistryDestroy()
 {
 	oThreadlocalRegistry::Destroy();
 }
+#endif
 
 oSingletonBase::oSingletonBase(int _InitialRefCount)
 	: Name("")
@@ -263,7 +265,8 @@ void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, type_info_de
 
 		if (_IsThreadLocal)
 		{
-			oThreadlocalRegistry::Singleton()->RegisterThreadlocalSingleton(p);
+			oASSERT(false, "deprecated");
+			//oThreadlocalRegistry::Singleton()->RegisterThreadlocalSingleton(p);
 			p->Release();
 		}
 	}
@@ -274,6 +277,7 @@ void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, type_info_de
 	return p;
 }
 
+#if 0
 void oThreadlocalRegistry::RegisterThreadlocalSingleton(oSingletonBase* _pSingleton) threadsafe
 {
 	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
@@ -318,15 +322,14 @@ void oThreadlocalRegistry::EndThread()
 		}
 	}
 }
+#endif
 
 void oConcurrency::thread_at_exit(const std::function<void()>& _AtExit)
 {
-	oThreadlocalRegistry::Singleton()->RegisterAtExit(_AtExit);
+	oASSERT(false, "not supported");
 }
 
 void oConcurrency::end_thread()
 {
 	process_heap::exit_thread();
-
-	oThreadlocalRegistry::Singleton()->EndThread();
 }

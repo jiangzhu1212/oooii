@@ -49,30 +49,28 @@ enum tracking
 // This ensures the process heap has been initialized
 void ensure_initialized();
 
-// Allocate paged-aligned memory from the process-global heap directly.
+// Allocate memory from the process-global heap directly.
 void* allocate(size_t _Size);
 
 // Deallocate memory allocated from allocate() or find_or_allocate(). No 
 // matter how many times find_or_allocate evaluates to a pre-existing pointer, 
-// this deallocate will free the memory, potentially leaving dangling 
-// pointers. It is up to the user to retain control of when the memory 
-// actually gets freed. If a destructor was specified in find_or_allocate then 
-// it is called before the actual freeing of the memory.
+// this deallocate will free the memory, potentially leaving dangling pointers. 
+// It is up to the user to retain control of when the memory actually gets 
+// freed. If a destructor was specified in find_or_allocate then it is called 
+// before the actual freeing of the memory.
 void deallocate(void* _Pointer);
 
 // Call this at the end of a thread to free all thread-local memory.
 void exit_thread();
 
-// Allocate from the process-global heap using allocate(), unless this 
-// allocation has already been done by another call in the same process. If 
-// so, the pointer will be filled with that previous allocation thus allowing
-// multiple modules to always get the same value. If there was an allocation,
-// this returns true. If there was a match this returns false. Because this 
-// can resolve to a prior-allocated objects, atomicity must be preserved 
-// across not only the raw allocation but any constructor necessary to create 
-// a valid object. To facilitate this pass a std::function that reduces to 
-// calling placement new on the void* parameter. For raw allocations that are
-// valid in and of themselves, pass a noop function.
+// If the specified named allocation has already been allocated, this will fill 
+// _pPointer with that pointer and return false. If the name is unrecognized or 
+// in a different scope a new allocation will be made, the specified 
+// _PlacementConstructor will be run and this will return true. Use deallocate 
+// to free the memory, at which time the specified _Destructor will be run first 
+// to finalize the object. A call to exit_thread() will deallocate all 
+// allocations for its calling thread, so for per_thread allocations explicit
+// calls to deallocate is not necessary if exit_thread is called.
 bool find_or_allocate(size_t _Size
 	, const char* _Name
 	, scope _Scope

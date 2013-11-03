@@ -43,8 +43,6 @@ static bool& GetThreadlocalTrackingEnabled()
 	// has to be a pointer so for multi-module support (all instances of this from
 	// a DLL perspective must point to the same bool value)
 	thread_local static bool* pThreadlocalTrackingEnabled = nullptr;
-	// {410D255E-F3B1-4A37-B511-521627F7341E}
-	static const guid GUIDEnabled = { 0x410d255e, 0xf3b1, 0x4a37, { 0xb5, 0x11, 0x52, 0x16, 0x27, 0xf7, 0x34, 0x1e } };
 	if (!pThreadlocalTrackingEnabled)
 	{
 		process_heap::find_or_allocate(
@@ -66,14 +64,14 @@ oCRTLeakTracker::oCRTLeakTracker()
 {
 	oReportingReference(); // reporting keeps a log file... don't track that
 
-	ouro::leak_tracker::info lti;
+	leak_tracker::info lti;
 	lti.allocate = untracked_malloc;
 	lti.deallocate = untracked_free;
 	lti.thread_local_tracking_enabled = GetThreadlocalTrackingEnabled;
-	lti.callstack = ouro::debugger::callstack;
-	lti.format = ouro::debugger::format;
-	lti.print = ouro::debugger::print;
-	pLeakTracker = new ouro::leak_tracker(lti);
+	lti.callstack = debugger::callstack;
+	lti.format = debugger::format;
+	lti.print = debugger::print;
+	pLeakTracker = new leak_tracker(lti);
 
 	sInstanceForDeferredRelease = this;
 	Reference(); // keep an extra references to ourselves so that malloc is always hooked
