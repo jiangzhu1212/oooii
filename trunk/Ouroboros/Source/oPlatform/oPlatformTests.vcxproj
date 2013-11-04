@@ -136,7 +136,6 @@
     <ClCompile Include="Tests\TESTFileAsync.cpp" />
     <ClCompile Include="Tests\TESTFileSync.cpp" />
     <ClCompile Include="Tests\TESTHTTP.cpp" />
-    <ClCompile Include="Tests\TESTIntersection.cpp" />
     <ClCompile Include="Tests\TESTMirroredArena.cpp" />
     <ClCompile Include="Tests\TESTSocketAsync.cpp" />
     <ClCompile Include="Tests\TESTSocketBlocking.cpp" />
