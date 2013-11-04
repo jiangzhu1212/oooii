@@ -649,10 +649,14 @@ file_handle open(const path& _Path, open_option::value _OpenOption)
 	open[1] = _OpenOption >= open_option::text_read ? 't' : 'b';
 	open[2] = '\0';
 
-	file_handle hfile = nullptr;
-	errno_t err = fopen_s((FILE**)&hfile, _Path, open);
-	if (err)
+	_set_errno(0);
+	file_handle hfile = (file_handle)_fsopen(_Path, open, _SH_DENYNO);
+	if (!hfile)
+	{
+		errno_t err = 0;
+		_get_errno(&err);
 		oFSTHROW_FOPEN(err, _Path);
+	}
 	return hfile;
 }
 

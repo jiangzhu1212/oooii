@@ -22,94 +22,95 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-
-// Interface for working with an attached command line display
+// Interface for working with a console in a GUI environment
 #pragma once
-#ifndef oConsole_h
-#define oConsole_h
+#ifndef oGUI_console_h
+#define oGUI_console_h
 
-#include <oBasis/oMathTypes.h>
 #include <oBase/color.h>
-#include <oBasis/oFunction.h>
-#include <oBase/path.h>
-#include <stdarg.h>
-#include <stdio.h>
+#include <oBasis/oGUI.h>
+#include <cstdarg>
+#include <functional>
 
-namespace oConsole
+namespace ouro { 
+	namespace console {
+
+static const int use_default = 0x8000;
+
+enum signal
 {
-	const unsigned short DEFAULT = 0x8000;
-
-	// Return true to short-circuit any default action. Return false to defer
-	// to default behavior.
-	typedef oFUNCTION<bool()> EventFn;
-
-	enum EVENT
-	{
-		CTRLC,
-		CTRLBREAK,
-		CLOSE, // you've got 5-sec on Windows before it force-closes
-		LOGOFF,
-		SHUTDOWN,
-	};
-	
-	struct DESC
-	{
-		DESC()
-			: BufferWidth(DEFAULT)
-			, BufferHeight(DEFAULT)
-			, Top(DEFAULT)
-			, Left(DEFAULT)
-			, Width(DEFAULT)
-			, Height(DEFAULT)
-			, Foreground(0)
-			, Background(0)
-			, Show(true)
-		{}
-
-		// NOTE: BufferWidth/Height must be the same size or larger than Width/Height
-
-		unsigned short BufferWidth; // in characters
-		unsigned short BufferHeight;  // in characters
-		unsigned short Top; // in pixels
-		unsigned short Left;  // in pixels
-		unsigned short Width;  // in characters
-		unsigned short Height;  // in characters
-		ouro::color Foreground; // 0 means don't set color
-		ouro::color Background; // 0 means don't set color
-		bool Show;
-	
-		// If specified and a valid, accessible file path, all output through this 
-		// console will be written to the specified file. 
-		ouro::path LogFilePath;
-	};
-
-	void* GetNativeHandle(); // returns HWND on Windows
-
-	// Get the pixel width/height of the console window
-	int2 GetSizeInPixels();
-	int2 GetSizeInCharacters();
-
-	void SetDesc(const DESC* _pDesc);
-	void GetDesc(DESC* _pDesc);
-	void SetTitle(const char* _Title);
-	char* GetTitle(char* _StrDestination, size_t _SizeofStrDestination);
-	template<size_t size> char*GetTitle(char (&_StrDestination)[size]) { return GetTitle(_StrDestination, size); }
-	template<size_t capacity> char*GetTitle(ouro::fixed_string<char, capacity>& _StrDestination) { return GetTitle(_StrDestination, _StrDestination.capacity()); }
-
-	// If you specify DEFAULT for one of these, then it will be whatever it was
-	// before.
-	void SetCursorPosition(const int2& _Position);
-	int2 GetCursorPosition();
-
-	void Clear();
-
-	bool HasFocus();
-
-	int vfprintf(FILE* _pStream, ouro::color _Foreground, ouro::color _Background, const char* _Format, va_list _Args);
-	inline int fprintf(FILE* _pStream, ouro::color _Foreground, ouro::color _Background, const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(_pStream, _Foreground, _Background, _Format, args); va_end(args); return n; }
-	inline int printf(ouro::color _Foreground, ouro::color _Background, const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(stdout, _Foreground, _Background, _Format, args); va_end(args); return n; }
-
-	void HookEvent(EVENT _Event, EventFn _Function);
+  ctrl_c,
+  ctrl_break,
+  close,
+  logoff,
+  shutdown,
 };
+
+struct info
+{
+	info()
+		: window_position(use_default, use_default)
+		, window_size(use_default, use_default)
+		, buffer_size(use_default, use_default)
+		, foreground(0)
+		, background(0)
+		, show(true)
+	{}
+
+  int2 window_position;
+  int2 window_size;
+  int2 buffer_size;
+  color foreground;
+  color background;
+	bool show;
+};
+  
+oGUI_WINDOW native_handle();
+  
+info get_info();
+void set_info(const info& _Info);
+  
+inline int2 position() { info i = get_info(); return i.window_position; }
+inline void position(const int2& _Position) { info i = get_info(); i.window_position = _Position; set_info(i); }
+  
+inline int2 size() { info i = get_info(); return i.window_size; }
+inline void size(const int2& _Size) { info i = get_info(); i.window_size = _Size; set_info(i); }
+        
+void set_title(const char* _Title);
+char* get_title(char* _StrDestination, size_t _SizeofStrDestination);
+template<size_t size> char* get_title(char (&_StrDestination)[size]) { return get_title(_StrDestination, size); }
+template<size_t capacity> char* get_title(fixed_string<char, capacity>& _StrDestination) { return get_title(_StrDestination, _StrDestination.capacity()); }
+
+// Set to the empty string to disable logging
+void set_log(const path& _Path);
+path get_log();
+
+void icon(oGUI_ICON _hIcon);
+oGUI_ICON icon();
+  
+void focus(bool _Focus);
+bool has_focus();
+  
+int2 size_pixels();
+int2 size_characters();
+  
+void cursor_position(const int2& _Position);
+int2 cursor_position();
+  
+// The handler should return true to short-circuit any default behavior, or 
+// false to allow default behavior to continue.
+void set_handler(signal _Signal, const std::function<bool()>& _Handler);
+  
+void clear();
+  
+int vfprintf(FILE* _pStream, color _Foreground, color _Background, const char* _Format, va_list _Args);
+inline int vfprintf(FILE* _pStream, const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(_pStream, color(0), color(0), _Format, args); va_end(args); return n; }
+inline int fprintf(FILE* _pStream, color _Foreground, color _Background, const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(_pStream, _Foreground, _Background, _Format, args); va_end(args); return n; }
+inline int fprintf(FILE* _pStream, const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(_pStream, _Format, args); va_end(args); return n; }
+inline int printf(color _Foreground, color _Background, const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(stdout, _Foreground, _Background, _Format, args); va_end(args); return n; }
+inline int printf(const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(stdout, _Format, args); va_end(args); return n; }
+
+	} // namespace console
+} // namespace ouro
 
 #endif

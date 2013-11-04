@@ -64,11 +64,11 @@ void oConsoleReporting::VReport( REPORT_TYPE _Type, const char* _Format, va_list
 		char msg[2048];
 		vsnprintf(msg, _Format, _Args);
 		toupper(msg);
-		oConsole::fprintf(stdout, fg[_Type], bg[_Type], msg);
+		ouro::console::fprintf(stdout, fg[_Type], bg[_Type], msg);
 	}
 	else
 	{
-		oConsole::vfprintf(stdout,fg[_Type], bg[_Type], _Format, _Args );
+		ouro::console::vfprintf(stdout,fg[_Type], bg[_Type], _Format, _Args );
 	}
 }
 

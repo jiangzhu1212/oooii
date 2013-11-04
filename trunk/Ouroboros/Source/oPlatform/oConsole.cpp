@@ -23,67 +23,14 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oConsole.h>
-#include <oBase/assert.h>
-#include <oBasis/oError.h>
-#include <oBase/fixed_string.h>
-#include <oConcurrency/mutex.h>
-#include <oCore/process_heap.h>
-#include <oPlatform/oSingleton.h>
-#include <oGUI/Windows/oGDI.h>
-#include <oGUI/Windows/oWinRect.h>
+#include <oStd/mutex.h>
+
 #include <oGUI/Windows/oWinWindowing.h>
-#include <oPlatform/oStream.h>
+#include <oGUI/Windows/oWinRect.h>
 
-using namespace ouro;
-
-// TODO: Add GetConsoleMode support
-
-struct oConsoleContext : public oProcessSingleton<oConsoleContext>
-{
-	struct Run { Run() { process_heap::ensure_initialized(); oConsoleContext::Singleton(); } };
-
-	oConsoleContext()
-		: CtrlHandlerSet(false)
-	{}
-
-	BOOL CtrlHandler(DWORD fdwCtrlType);
-
-	static const oGUID GUID;
-	oConcurrency::recursive_mutex ConsoleLock;
-	bool CtrlHandlerSet;
-	oConsole::EventFn Functions[5];
-	path LogFilePath;
-	intrusive_ptr<threadsafe oStreamWriter> LogFile;
-};
-
-// {145728A4-3A9A-47FD-BF88-8B61A1EC14AB}
-const oGUID oConsoleContext::GUID = { 0x145728a4, 0x3a9a, 0x47fd, { 0xbf, 0x88, 0x8b, 0x61, 0xa1, 0xec, 0x14, 0xab } };
-oSINGLETON_REGISTER(oConsoleContext);
-
-static oConsoleContext::Run sInstantiateConsoleContext; // @tony: safe static, just meant to make sure singleton is instantiated
-
-static BOOL WINAPI StaticCtrlHandler(DWORD fdwCtrlType)
-{
-	return oConsoleContext::Singleton()->CtrlHandler(fdwCtrlType);
-}
-
-BOOL oConsoleContext::CtrlHandler(DWORD fdwCtrlType)
-{
-	switch (fdwCtrlType)
-	{
-		// Handle the CTRL-C signal. 
-		case CTRL_C_EVENT: if (Functions[oConsole::CTRLC]) return Functions[oConsole::CTRLC]();
-		case CTRL_BREAK_EVENT: if (Functions[oConsole::CTRLBREAK]) return Functions[oConsole::CTRLBREAK]();
-		case CTRL_CLOSE_EVENT: if (Functions[oConsole::CLOSE]) return Functions[oConsole::CLOSE]();
-		case CTRL_LOGOFF_EVENT: if (Functions[oConsole::LOGOFF]) return Functions[oConsole::LOGOFF]();
-		case CTRL_SHUTDOWN_EVENT: if (Functions[oConsole::SHUTDOWN]) return Functions[oConsole::SHUTDOWN]();
-		default: break;
-	}
-	
-	return FALSE;
-}
-
-static void GetColor(WORD _wAttributes, color* _pForeground, color* _pBackground)
+namespace ouro {
+	namespace console {
+static void get_color(WORD _wAttributes, color* _pForeground, color* _pBackground)
 {
 	{
 		float r = 0.0f, g = 0.0f, b = 0.0f;
@@ -93,7 +40,7 @@ static void GetColor(WORD _wAttributes, color* _pForeground, color* _pBackground
 		if (_wAttributes & FOREGROUND_BLUE) b = intense ? 1.0f : 0.5f;
 		*_pForeground = color(r, g, b, 1.0f);
 	}
-		
+
 	{
 		float r = 0.0f, g = 0.0f, b = 0.0f;
 		bool intense = !!(_wAttributes & BACKGROUND_INTENSITY);
@@ -110,7 +57,7 @@ static void GetColor(WORD _wAttributes, color* _pForeground, color* _pBackground
 #define BACKGROUND_MASK (BACKGROUND_INTENSITY|BACKGROUND_GRAY)
 
 // returns prior wAttributes
-static WORD SetConsoleColor(HANDLE _hStream, color _Foreground, color _Background)
+static WORD set_console_color(HANDLE _hStream, color _Foreground, color _Background)
 {
 	#define RED__ FOREGROUND_RED|BACKGROUND_RED
 	#define GREEN__ FOREGROUND_GREEN|BACKGROUND_GREEN
@@ -139,209 +86,222 @@ static WORD SetConsoleColor(HANDLE _hStream, color _Foreground, color _Backgroun
 	return wOriginalAttributes;
 }
 
-void* oConsole::GetNativeHandle()
+class context
 {
-	return GetConsoleWindow();
+public:
+	context()
+		: CtrlHandlerSet(false)
+		, hLog(nullptr)
+	{}
+
+	~context()
+	{
+		if (hLog)
+			filesystem::close(hLog);
+	}
+
+	static context& singleton();
+
+	oGUI_WINDOW native_handle() const { return (oGUI_WINDOW)GetConsoleWindow(); }
+  info get_info() const;
+  void set_info(const info& _Info);
+	void set_title(const char* _Title) { oVB(SetConsoleTitle(_Title)); }
+  char* get_title(char* _StrDestination, size_t _SizeofStrDestination) const
+	{
+		if (!GetConsoleTitle(_StrDestination, static_cast<DWORD>(_SizeofStrDestination)))
+			return nullptr;
+		return _StrDestination;
+	}
+
+	void set_log(const path& _Path);
+	path get_log() const;
+
+	void icon(oGUI_ICON _hIcon) { oWinSetIcon(GetConsoleWindow(), (HICON)_hIcon); }
+	oGUI_ICON icon() const { return (oGUI_ICON)oWinGetIcon(GetConsoleWindow()); }
+	void focus(bool _Focus) { oWinSetFocus(GetConsoleWindow()); }
+	bool has_focus() const { return oWinHasFocus(GetConsoleWindow()); }
+  int2 size_pixels() const { RECT r; GetWindowRect(GetConsoleWindow(), &r); return int2(r.right - r.left, r.bottom - r.top); }
+  int2 size_characters() const 
+	{
+		CONSOLE_SCREEN_BUFFER_INFO info;
+		oVB(GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info));
+		return int2(info.dwSize.X, info.dwSize.Y);
+	}
+
+	void cursor_position(const int2& _Position);
+  int2 cursor_position() const;
+  void set_handler(signal _Signal, const std::function<bool()>& _Handler);
+	void clear() { ::system("cls"); }
+  int vfprintf(FILE* _pStream, color _Foreground, color _Background, const char* _Format, va_list _Args);
+private:
+	oStd::recursive_mutex Mutex;
+	std::function<bool()> Handlers[5];
+	bool CtrlHandlerSet;
+
+	path LogPath;
+	filesystem::file_handle hLog;
+	
+	BOOL ctrl_handler(DWORD fdwCtrlType);
+	static BOOL CALLBACK static_ctrl_handler(DWORD fdwCtrlType) { return singleton().ctrl_handler(fdwCtrlType); }
+};
+
+context& context::singleton()
+{
+	static context* sInstance = nullptr;
+	if (!sInstance)
+	{
+		process_heap::find_or_allocate(
+			"console window"
+			, process_heap::per_process
+			, process_heap::leak_tracked
+			, [=](void* _pMemory) { new (_pMemory) context(); }
+			, [=](void* _pMemory) { ((context*)_pMemory)->~context(); }
+			, &sInstance);
+	}
+
+	return *sInstance;
 }
 
-int2 oConsole::GetSizeInPixels()
+console::info context::get_info() const
 {
-	RECT r;
-	GetWindowRect(GetConsoleWindow(), &r);
-	return oWinRectSize(r);
-}
-
-int2 oConsole::GetSizeInCharacters()
-{
-	CONSOLE_SCREEN_BUFFER_INFO info;
-	oVB(GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info));
-	return int2(info.dwSize.X, info.dwSize.Y);
-}
-
-void oConsole::GetDesc(DESC* _pDesc)
-{
-	oConsoleContext* c = oConsoleContext::Singleton();
-
-	// Set LogFilePath first, in case the standard pipes are captured
-	// GetConsoleScreenBufferInfo may error out because there is no window.
-	_pDesc->LogFilePath = c->LogFilePath;
-
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> lock(c->ConsoleLock);
-	CONSOLE_SCREEN_BUFFER_INFO info;
+	oStd::lock_guard<oStd::recursive_mutex> lock(const_cast<oStd::recursive_mutex&>(Mutex));
+	CONSOLE_SCREEN_BUFFER_INFO sbi;
 	oASSERT(GetStdHandle(STD_OUTPUT_HANDLE) != INVALID_HANDLE_VALUE, "");
 
-	if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info))
+	if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &sbi))
 	{
-		if (GetLastError() == ERROR_INVALID_HANDLE && ouro::this_process::is_child())
-		{
-			oErrorSetLast(std::errc::permission_denied, "Failed to access console because this is a child process.");
-			return;
-		}
+		if (GetLastError() == ERROR_INVALID_HANDLE && this_process::is_child())
+			oTHROW(permission_denied, "Failed to access console because this is a child process.");
 	}
 
-	_pDesc->BufferWidth = info.dwSize.X;
-	_pDesc->BufferHeight = info.dwSize.Y;
-	_pDesc->Left = info.srWindow.Left;
-	_pDesc->Top = info.srWindow.Top;
-	_pDesc->Width = info.srWindow.Right - info.srWindow.Left;
-	_pDesc->Height = info.srWindow.Bottom - info.srWindow.Top;
-	GetColor(info.wAttributes, &_pDesc->Foreground, &_pDesc->Background);
-	_pDesc->Show = !!IsWindowVisible(GetConsoleWindow());
+	info i;
+	i.window_position = int2(sbi.srWindow.Left, sbi.srWindow.Top);
+	i.window_size = int2(sbi.srWindow.Right - sbi.srWindow.Left, sbi.srWindow.Bottom - sbi.srWindow.Top);
+	i.buffer_size = int2(sbi.dwSize.X, sbi.dwSize.Y);
+	get_color(sbi.wAttributes, &i.foreground, &i.background);
+	i.show = !!IsWindowVisible(GetConsoleWindow());
+	return i;
 }
 
-void oConsole::SetDesc(const DESC* _pDesc)
+void context::set_info(const info& _Info)
 {
-	oConsoleContext* c = oConsoleContext::Singleton();
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> lock(c->ConsoleLock);
+	oStd::lock_guard<oStd::recursive_mutex> lock(Mutex);
 
-	// Set LogFilePath first, in case the standard pipes are captured
-	// GetConsoleScreenBufferInfo may error out because there is no window.
-	path_string OldLogPath = c->LogFilePath;
-	if (!_pDesc->LogFilePath.empty())
-	{
-		c->LogFilePath = _pDesc->LogFilePath;
-		if (0 != _stricmp(OldLogPath, c->LogFilePath))
-		{
-			c->LogFile = nullptr;
-			if (!oStreamLogWriterCreate(c->LogFilePath, &c->LogFile))
-			{
-				oTRACE("WARNING: Failed to open log file \"%s\"\n%s: %s", c->LogFilePath.c_str(), oErrorAsString(oErrorGetLast()), oErrorGetLastString());
-				c->LogFilePath.clear();
-			}
-		}
-	}
-	else
-		c->LogFile = nullptr;
-
-	DESC desc;
-	GetDesc(&desc);
-	#define DEF(x) if (_pDesc->x != DEFAULT) desc.x = _pDesc->x
-	DEF(BufferWidth);
-	DEF(BufferHeight);
-	DEF(Left);
-	DEF(Top);
-	DEF(Width);
-	DEF(Height);
-	desc.Foreground = _pDesc->Foreground;
-	desc.Background = _pDesc->Background;
+	info i = get_info();
+	#define DEF(x) if (_Info.x != use_default) i.x = _Info.x
+	DEF(buffer_size.x);
+	DEF(buffer_size.y);
+	DEF(window_position.x);
+	DEF(window_position.y);
+	DEF(window_size.x);
+	DEF(window_size.y);
+	i.foreground = _Info.foreground;
+	i.background = _Info.background;
+	i.show = _Info.show;
 	#undef DEF
 
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	COORD bufferDimension;
-	bufferDimension.X = (SHORT)desc.BufferWidth;
-	bufferDimension.Y = (SHORT)desc.BufferHeight;
+	COORD bufferDimension = { static_cast<SHORT>(i.buffer_size.x), static_cast<SHORT>(i.buffer_size.y) };
 	if (!SetConsoleScreenBufferSize(hConsole, bufferDimension))
 	{
 		if (GetLastError() == ERROR_INVALID_HANDLE && ouro::this_process::is_child())
-		{
-			oErrorSetLast(std::errc::permission_denied, "Failed to access console because this is a child process.");
-			return;
-		}
+			oTHROW(permission_denied, "Failed to access console because this is a child process.");
 	}
 
 	SMALL_RECT r;
 	r.Left = 0;
 	r.Top = 0;
-	r.Right = (SHORT)(r.Left + desc.Width);
-	r.Bottom = (SHORT)(r.Top + desc.Height);
+	r.Right = static_cast<SHORT>(r.Left + i.window_size.x);
+	r.Bottom = static_cast<SHORT>(r.Top + i.window_size.y);
 
 	// Clamp to max size.
-	CONSOLE_SCREEN_BUFFER_INFO info;
-	oVB(GetConsoleScreenBufferInfo(hConsole, &info));
-	if (r.Right >= info.dwMaximumWindowSize.X)
+	CONSOLE_SCREEN_BUFFER_INFO sbi;
+	oVB(GetConsoleScreenBufferInfo(hConsole, &sbi));
+	if (r.Right >= sbi.dwMaximumWindowSize.X)
 	{
-		r.Right = info.dwMaximumWindowSize.X-1;
-		if (bufferDimension.X <= desc.Width)
-			oTRACE("Clamping console width (%d) to system max of %d due to a specified buffer width (%d) smaller than screen width", desc.Width, r.Right, bufferDimension.X);
+		r.Right = sbi.dwMaximumWindowSize.X - 1;
+		if (bufferDimension.X <= i.window_size.x)
+			oTRACE("Clamping console width (%d) to system max of %d due to a specified buffer width (%d) larger than screen width", i.buffer_size.x, r.Right, bufferDimension.X);
 		else
-			oTRACE("Clamping console width (%d) to system max of %d", desc.Width, r.Right);
+			oTRACE("Clamping console width (%d) to system max of %d", i.buffer_size.x, r.Right);
 	}
 
-	if (r.Bottom >= info.dwMaximumWindowSize.Y)
+	if (r.Bottom >= sbi.dwMaximumWindowSize.Y)
 	{
-		r.Bottom = info.dwMaximumWindowSize.Y-4; // take a bit more off for the taskbar
-		if (bufferDimension.Y <= desc.Height)
-			oTRACE("Clamping console height (%d) to system max of %d due to a specified buffer width (%d) smaller than screen width", desc.Height, r.Bottom, bufferDimension.Y);
+		r.Bottom = sbi.dwMaximumWindowSize.Y - 4; // take a bit more off for the taskbar
+		if (bufferDimension.Y <= i.window_size.y)
+			oTRACE("Clamping console height (%d) to system max of %d due to a specified buffer width (%d) larger than screen width", i.buffer_size.y, r.Bottom, bufferDimension.Y);
 		else
-			oTRACE("Clamping console height (%d) to system max of %d", desc.Height, r.Bottom);
+			oTRACE("Clamping console height (%d) to system max of %d", i.buffer_size.y, r.Bottom);
 	}
 
 	oVB(SetConsoleWindowInfo(hConsole, TRUE, &r));
-	UINT show = desc.Show ? SWP_SHOWWINDOW : SWP_HIDEWINDOW;
-	oVB(SetWindowPos(GetConsoleWindow(), HWND_TOP, desc.Left, desc.Top, 0, 0, SWP_NOSIZE|SWP_NOZORDER|show));
-	SetConsoleColor(hConsole, _pDesc->Foreground, _pDesc->Background);
+	UINT show = i.show ? SWP_SHOWWINDOW : SWP_HIDEWINDOW;
+	oVB(SetWindowPos(GetConsoleWindow(), HWND_TOP, i.window_position.x, i.window_position.y, 0, 0, SWP_NOSIZE|SWP_NOZORDER|show));
+	set_console_color(hConsole, _Info.foreground, _Info.background);
 }
 
-void oConsole::SetTitle(const char* _Title)
+void context::set_log(const path& _Path)
 {
-	oVB(SetConsoleTitle(_Title));
-}
-
-char* oConsole::GetTitle(char* _StrDestination, size_t _SizeofStrDestination)
-{
-	if (!GetConsoleTitle(_StrDestination, static_cast<DWORD>(_SizeofStrDestination)))
-		return nullptr;
-	return _StrDestination;
-}
-
-void oConsole::SetCursorPosition(const int2& _Position)
-{
-	COORD c = { oUShort(_Position.x), oUShort(_Position.y) };
-	if (c.X == DEFAULT || c.Y == DEFAULT)
+	if (hLog)
 	{
-		int2 p = GetCursorPosition();
-		if (c.X == DEFAULT) c.X = oUShort(p.x);
-		if (c.Y == DEFAULT) c.Y = oUShort(p.y);
+		filesystem::close(hLog);
+		hLog = nullptr;
+	}
+
+	LogPath = _Path;
+	if (!LogPath.empty())
+		hLog = filesystem::open(LogPath, filesystem::open_option::text_append);
+}
+
+path context::get_log() const
+{
+	oStd::lock_guard<oStd::recursive_mutex> lock(const_cast<oStd::recursive_mutex&>(Mutex));
+	return LogPath;
+}
+
+void context::cursor_position(const int2& _Position)
+{
+	COORD c = { static_cast<unsigned short>(_Position.x), static_cast<unsigned short>(_Position.y) };
+	if (c.X == use_default || c.Y == use_default)
+	{
+		int2 p = cursor_position();
+		if (c.X == use_default) c.X = static_cast<unsigned short>(p.x);
+		if (c.Y == use_default) c.Y = static_cast<unsigned short>(p.y);
 	}
 
 	oVB(SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c));
 }
 
-int2 oConsole::GetCursorPosition()
+int2 context::cursor_position() const
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
 	return int2(csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y);
 }
 
-void oConsole::Clear()
-{
-	::system("cls");
-}
-
-bool oConsole::HasFocus()
-{
-	return oWinHasFocus(GetConsoleWindow());
-}
-
-int oConsole::vfprintf(FILE* _pStream, color _Foreground, color _Background, const char* _Format, va_list _Args)
+int context::vfprintf(FILE* _pStream, color _Foreground, color _Background, const char* _Format, va_list _Args)
 {
 	HANDLE hConsole = 0;
 	WORD wOriginalAttributes = 0;
 
-	oConsoleContext* c = oConsoleContext::Singleton();
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> lock(c->ConsoleLock);
+	oStd::lock_guard<oStd::recursive_mutex> lock(Mutex);
 
 	if (_pStream == stdout || _pStream == stderr)
 	{
 		hConsole = GetStdHandle(_pStream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
-		wOriginalAttributes = SetConsoleColor(hConsole, _Foreground, _Background);
+		wOriginalAttributes = set_console_color(hConsole, _Foreground, _Background);
 	}
 
-	char msg[oKB(8)];
+	xlstring msg;
 	vsnprintf(msg, _Format, _Args);
 
 	// Always print any message to _pStream
 	int n = ::fprintf(_pStream, msg);
 
 	// And to log file
-	if (c->LogFile)
-	{
-		oSTREAM_WRITE w;
-		w.pData = msg;
-		w.Range = oSTREAM_RANGE(oSTREAM_APPEND, strlen(msg));
-		c->LogFile->Write(w);
-	}
+	if (hLog)
+		filesystem::write(hLog, msg, strlen(msg), true);
 
 	if (hConsole)
 		SetConsoleTextAttribute(hConsole, wOriginalAttributes);
@@ -349,16 +309,122 @@ int oConsole::vfprintf(FILE* _pStream, color _Foreground, color _Background, con
 	return n;
 }
 
-void oConsole::HookEvent(EVENT _Event, EventFn _Function)
+BOOL context::ctrl_handler(DWORD fdwCtrlType)
 {
-	oConsoleContext* c = oConsoleContext::Singleton();
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> lock(c->ConsoleLock);
-
-	c->Functions[_Event] = _Function;
-
-	if (!c->CtrlHandlerSet)
+	switch (fdwCtrlType)
 	{
-		oVB(SetConsoleCtrlHandler(StaticCtrlHandler, TRUE));
-		c->CtrlHandlerSet = true;
+		// Handle the CTRL-C signal. 
+		case CTRL_C_EVENT: if (Handlers[ctrl_c]) return Handlers[ctrl_c]();
+		case CTRL_BREAK_EVENT: if (Handlers[ctrl_break]) return Handlers[ctrl_break]();
+		case CTRL_CLOSE_EVENT: if (Handlers[close]) return Handlers[close]();
+		case CTRL_LOGOFF_EVENT: if (Handlers[logoff]) return Handlers[logoff]();
+		case CTRL_SHUTDOWN_EVENT: if (Handlers[shutdown]) return Handlers[shutdown]();
+		default: break;
+	}
+	
+	return FALSE;
+}
+
+void context::set_handler(signal _Signal, const std::function<bool()>& _Handler)
+{
+	oStd::lock_guard<oStd::recursive_mutex> lock(Mutex);
+	Handlers[_Signal] = _Handler;
+	if (!CtrlHandlerSet)
+	{
+		oVB(SetConsoleCtrlHandler(static_ctrl_handler, TRUE));
+		CtrlHandlerSet = true;
 	}
 }
+
+oGUI_WINDOW native_handle()
+{
+	return context::singleton().native_handle();
+}
+  
+info get_info()
+{
+	return context::singleton().get_info();
+}
+
+void set_info(const info& _Info)
+{
+	context::singleton().set_info(_Info);
+}
+
+void set_title(const char* _Title)
+{
+	context::singleton().set_title(_Title);
+}
+
+char* get_title(char* _StrDestination, size_t _SizeofStrDestination)
+{
+	return context::singleton().get_title(_StrDestination, _SizeofStrDestination);
+}
+
+void set_log(const path& _Path)
+{
+	context::singleton().set_log(_Path);
+}
+
+path get_log()
+{
+	return context::singleton().get_log();
+}
+
+void icon(oGUI_ICON _hIcon)
+{
+	context::singleton().icon(_hIcon);
+}
+
+oGUI_ICON icon()
+{
+	return context::singleton().icon();
+}
+
+void focus(bool _Focus)
+{
+	context::singleton().focus(_Focus);
+}
+
+bool has_focus()
+{
+	return context::singleton().has_focus();
+}
+
+int2 size_pixels()
+{
+	return context::singleton().size_pixels();
+}
+
+int2 size_characters()
+{
+	return context::singleton().size_characters();
+}
+
+void cursor_position(const int2& _Position)
+{
+	context::singleton().cursor_position(_Position);
+}
+
+int2 cursor_position()
+{
+	return context::singleton().cursor_position();
+}
+
+void set_handler(signal _Signal, const std::function<bool()>& _Handler)
+{
+	context::singleton().set_handler(_Signal, _Handler);
+}
+
+void clear()
+{
+	context::singleton().clear();
+}
+
+int vfprintf(FILE* _pStream, color _Foreground, color _Background, const char* _Format, va_list _Args)
+{
+	return context::singleton().vfprintf(_pStream, _Foreground, _Background, _Format, _Args);
+}
+
+	} // namespace console
+} // namespace ouro

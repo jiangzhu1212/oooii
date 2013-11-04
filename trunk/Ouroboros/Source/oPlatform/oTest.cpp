@@ -1048,7 +1048,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 		{
 			oConcurrency::begin_thread("Progress Bar Thread");
 			xlstring title;
-			oConsole::GetTitle(title);
+			console::get_title(title);
 			intrusive_ptr<oProgressBar> ProgressBar;
 			oVERIFY(oProgressBarCreate([&] { ShouldStop = true; }, title, &ProgressBar));
 			pProgressBar = ProgressBar;
