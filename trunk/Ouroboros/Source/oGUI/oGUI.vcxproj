@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oGUI\all.h" />
+    <ClInclude Include="..\..\Include\oGUI\console.h" />
     <ClInclude Include="..\..\Include\oGUI\oGUIMenu.h" />
     <ClInclude Include="..\..\Include\oGUI\oMRUManager.h" />
     <ClInclude Include="..\..\Include\oGUI\oMsgBox.h" />
@@ -37,6 +38,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="console.cpp" />
     <ClCompile Include="oGDI.cpp" />
     <ClCompile Include="oGUIMenu.cpp" />
     <ClCompile Include="oMRUManager.cpp" />

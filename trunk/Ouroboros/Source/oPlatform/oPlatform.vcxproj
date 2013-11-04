@@ -123,7 +123,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oPlatform\all.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oConsole.h" />
     <ClInclude Include="..\..\Include\oPlatform\oEMail.h" />
     <ClInclude Include="..\..\Include\oPlatform\oFileCache.h" />
     <ClInclude Include="..\..\Include\oPlatform\oFileSchemeHandler.h" />
@@ -164,7 +163,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oConcurrency.cpp" />
-    <ClCompile Include="oConsole.cpp" />
     <ClCompile Include="oCRTHeap.cpp" />
     <ClCompile Include="oCRTLeakTracker.cpp" />
     <ClCompile Include="oD3D11.cpp" />

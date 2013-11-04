@@ -57,9 +57,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oSingleton.h">
       <Filter>Headers\Code Management</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oConsole.h">
-      <Filter>Headers\UI</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oMirroredArena.h">
       <Filter>Headers\Memory</Filter>
     </ClInclude>
@@ -244,9 +241,6 @@
     </ClCompile>
     <ClCompile Include="oStreamUtil.cpp">
       <Filter>Source\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="oConsole.cpp">
-      <Filter>Source\UI</Filter>
     </ClCompile>
     <ClCompile Include="oReporting.cpp">
       <Filter>Source\Code Management</Filter>

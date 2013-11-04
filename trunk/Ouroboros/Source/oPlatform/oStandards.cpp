@@ -25,7 +25,7 @@
 #include <oPlatform/oStandards.h>
 #include <oBase/assert.h>
 #include <oStd/chrono.h>
-#include <oPlatform/oConsole.h>
+#include <oGUI/console.h>
 #include <oGUI/Windows/oGDI.h>
 #include <oGUI/oMsgBox.h>
 #include "../Source/oStd/win.h"

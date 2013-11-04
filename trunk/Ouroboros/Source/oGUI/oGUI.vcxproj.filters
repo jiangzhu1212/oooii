@@ -63,6 +63,9 @@
     <ClInclude Include="..\..\Include\oGUI\all.h">
       <Filter>oGUI</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\console.h">
+      <Filter>oGUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oGUIMenu.cpp">
@@ -108,6 +111,9 @@
       <Filter>Source\Windows</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="console.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

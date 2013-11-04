@@ -1,6 +1,6 @@
 // $(header)
 #include <oPlatform/oReporting.h>
-#include <oPlatform/oConsole.h>
+#include <oGUI/console.h>
 #include <oGUI/oMsgBox.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/oStandards.h>

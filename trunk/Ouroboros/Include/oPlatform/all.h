@@ -27,7 +27,7 @@
 #pragma once
 #ifndef oPlatform_all_h
 #define oPlatform_all_h
-#include <oPlatform/oConsole.h>
+#include <oGUI/console.h>
 #include <oPlatform/oMirroredArena.h>
 #include <oPlatform/oP4.h>
 #include <oPlatform/oRegistry.h>

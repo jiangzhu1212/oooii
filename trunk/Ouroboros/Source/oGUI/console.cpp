@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oConsole.h>
+#include <oGUI/console.h>
 #include <oStd/mutex.h>
 
 #include <oGUI/Windows/oWinWindowing.h>
