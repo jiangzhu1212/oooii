@@ -107,7 +107,7 @@ public:
 	void Run();
 
 private:
-	intrusive_ptr<oWindow> Window;
+	std::shared_ptr<window> Window;
 	oGUI_MENU Menus[oWMENU_COUNT];
 	oWindowTestAppPulseContext PulseContext;
 	oGUIMenuEnumRadioListHandler MERL; 
@@ -131,30 +131,30 @@ oWindowTestApp::oWindowTestApp()
 	, PreFullscreenState(oGUI_WINDOW_HIDDEN)
 	, hButton(nullptr)
 {
-	oWINDOW_INIT Init;
-	Init.Title = "oWindowTestApp";
-	Init.hIcon = (oGUI_ICON)oGDILoadIcon(IDI_APPICON);
-	Init.ActionHook = oBIND(&oWindowTestApp::ActionHook, this, oBIND1);
-	Init.EventHook = oBIND(&oWindowTestApp::EventHook, this, oBIND1);
-	Init.Shape.ClientSize = int2(320, 240);
-	Init.Shape.State = oGUI_WINDOW_HIDDEN;
-	Init.Shape.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
-	Init.AltF4Closes = true;
-	Init.ClientCursorState = oGUI_CURSOR_HAND;
+	window::init i;
+	i.title = "oWindowTestApp";
+	i.icon = (oGUI_ICON)oGDILoadIcon(IDI_APPICON);
+	i.action_hook = oBIND(&oWindowTestApp::ActionHook, this, oBIND1);
+	i.event_hook = oBIND(&oWindowTestApp::EventHook, this, oBIND1);
+	i.shape.ClientSize = int2(320, 240);
+	i.shape.State = oGUI_WINDOW_HIDDEN;
+	i.shape.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
+	i.alt_f4_closes = true;
+	i.cursor_state = oGUI_CURSOR_HAND;
 
-	oVERIFY(oWindowCreate(Init, &Window));
+	Window = window::make(i);
 
-	Window->SetHotKeys(HotKeys);
+	Window->set_hotkeys(HotKeys);
 
 	const int sSections[] = { 85, 120, 100 };
-	Window->SetNumStatusSections(sSections, oCOUNTOF(sSections));
-	Window->SetStatusText(0, "Timer: 0");
-	Window->SetStatusText(1, "F3 for default style");
-	Window->SetStatusText(2, "Easy: 0");
+	Window->set_num_status_sections(sSections, oCOUNTOF(sSections));
+	Window->set_status_text(0, "Timer: 0");
+	Window->set_status_text(1, "F3 for default style");
+	Window->set_status_text(2, "Easy: 0");
 
-	Window->SetTimer((uintptr_t)&PulseContext, 2000);
+	Window->start_timer((uintptr_t)&PulseContext, 2000);
 
-	Window->Show();
+	Window->show();
 }
 
 bool oWindowTestApp::CreateMenu(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
@@ -174,13 +174,13 @@ bool oWindowTestApp::CreateMenu(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 	oGUIMenuAppendEnumItems(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, oRTTI_OF(oGUI_WINDOW_STYLE), _CreateEvent.Shape.Style);
 	MERL.Register(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, [=](int _BorderStyle)
 	{
-		Window->SetStyle((oGUI_WINDOW_STYLE)_BorderStyle);
+		Window->style((oGUI_WINDOW_STYLE)_BorderStyle);
 	});
 
 	oGUIMenuAppendEnumItems(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, oRTTI_OF(oGUI_WINDOW_STATE), _CreateEvent.Shape.State);
 	MERL.Register(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, [=](int _State)
 	{
-		Window->Show((oGUI_WINDOW_STATE)_State);
+		Window->show((oGUI_WINDOW_STATE)_State);
 	});
 
 	oGUIMenuAppendItem(Menus[oWMENU_HELP], oWMI_HELP_ABOUT, "&About...");
@@ -225,7 +225,7 @@ void oWindowTestApp::EventHook(const oGUI_EVENT_DESC& _Event)
 			if (_Event.AsTimer().Context == (uintptr_t)&PulseContext)
 			{
 				PulseContext.Count++;
-				Window->SetStatusText(0, "Timer: %d", PulseContext.Count);
+				Window->set_status_text(0, "Timer: %d", PulseContext.Count);
 			}
 			else
 				oTRACE("oGUI_TIMER");
@@ -278,7 +278,7 @@ void oWindowTestApp::EventHook(const oGUI_EVENT_DESC& _Event)
 		}
 		case oGUI_CLOSING:
 			oTRACE("oGUI_CLOSING");
-			Window->Quit();
+			Window->quit();
 			break;
 		case oGUI_CLOSED:
 			oTRACE("oGUI_CLOSED");
@@ -313,7 +313,7 @@ void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 			switch (_Action.DeviceID)
 			{
 				case oWMI_FILE_EXIT:
-					Window->Quit();
+					Window->quit();
 					break;
 				case oWMI_HELP_ABOUT:
 				{
@@ -335,11 +335,11 @@ void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 				case oWCTL_EASY_BUTTON:
 				{
 					sstring text;
-					Window->GetStatusText(text, 2);
+					Window->get_status_text(text, 2);
 					int n = 0;
 					from_string(&n, text.c_str() + 6);
 					n++;
-					Window->SetStatusText(2, "Easy: %d", n);
+					Window->set_status_text(2, "Easy: %d", n);
 					break;
 				}
 				default:
@@ -362,22 +362,22 @@ void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 				case oWHK_DEFAULT_STYLE:
 				{
 					oGUI_WINDOW_SHAPE_DESC s;
-					s.State = Window->GetState();
+					s.State = Window->state();
 					if (s.State == oGUI_WINDOW_FULLSCREEN)
 						s.State = oGUI_WINDOW_RESTORED;
 					s.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
-					Window->SetShape(s);
+					Window->shape(s);
 					break;
 				}
 				case oWHK_TOGGLE_FULLSCREEN:
-					if (Window->GetState() != oGUI_WINDOW_FULLSCREEN)
+					if (Window->state() != oGUI_WINDOW_FULLSCREEN)
 					{
-						PreFullscreenState = Window->GetState();
-						Window->SetState(oGUI_WINDOW_FULLSCREEN);
+						PreFullscreenState = Window->state();
+						Window->state(oGUI_WINDOW_FULLSCREEN);
 					}
 					else
 					{
-						Window->SetState(PreFullscreenState);
+						Window->state(PreFullscreenState);
 					}
 					break;
 				default:
@@ -410,7 +410,7 @@ void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 
 void oWindowTestApp::Run()
 {
-	Window->FlushMessages(true);
+	Window->flush_messages(true);
 }
 
 int main(int argc, const char* argv[])

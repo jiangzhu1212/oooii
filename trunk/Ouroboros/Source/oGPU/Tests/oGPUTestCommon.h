@@ -69,7 +69,7 @@ public:
 
 	bool Run(oTest* _pTest);
 
-	threadsafe oWindow* GetWindow() { return Window; }
+	ouro::window* GetWindow() { return Window.get(); }
 	oGPUDevice* GetDevice() { return Device; }
 	oGPUCommandList* GetCommandList() { return CommandList; }
 	oGPURenderTarget* GetPrimaryRenderTarget() { return PrimaryRenderTarget; }
@@ -93,7 +93,7 @@ private:
 	bool AllSnapshotsSucceeded;
 
 protected:
-	ouro::intrusive_ptr<oWindow> Window;
+	std::shared_ptr<ouro::window> Window;
 	ouro::intrusive_ptr<oGPUDevice> Device;
 	ouro::intrusive_ptr<oGPUCommandList> CommandList;
 	ouro::intrusive_ptr<oGPURenderTarget> PrimaryRenderTarget;

@@ -44,15 +44,14 @@ public:
 		// Create the parent:
 
 		{
-			oWINDOW_INIT init;
-			init.Title = "Window-In-Window Test";
-			init.EventHook = oBIND(&WindowInWindow::ParentEventHook, this, oBIND1);
-			init.Shape.State = oGUI_WINDOW_HIDDEN;
-			init.Shape.Style = oGUI_WINDOW_SIZABLE;
-			init.Shape.ClientSize = int2(640, 480);
-
-			if (!oWindowCreate(init, &ParentWindow))
-				return; // pass through error
+			window::init i;
+			i.title = "Window-In-Window Test";
+			i.event_hook = oBIND(&WindowInWindow::ParentEventHook, this, oBIND1);
+			i.shape.State = oGUI_WINDOW_HIDDEN;
+			i.shape.Style = oGUI_WINDOW_SIZABLE;
+			i.shape.ClientSize = int2(640, 480);
+			try { ParentWindow = window::make(i); }
+			catch (std::exception& e) { oErrorSetLast(e); return; }
 		}
 
 		oGPUDevice::INIT DevInit;
@@ -69,21 +68,21 @@ public:
 			return; // pass through error
 
 		{
-			oWINDOW_INIT init;
-			init.Shape.State = oGUI_WINDOW_RESTORED;
-			init.Shape.Style = oGUI_WINDOW_BORDERLESS;
-			init.Shape.ClientPosition = int2(20,20);
-			init.Shape.ClientSize = int2(600,480-65);
-			init.EventHook = oBIND(&WindowInWindow::GPUWindowEventHook, this, oBIND1);
+			window::init i;
+			i.shape.State = oGUI_WINDOW_RESTORED;
+			i.shape.Style = oGUI_WINDOW_BORDERLESS;
+			i.shape.ClientPosition = int2(20,20);
+			i.shape.ClientSize = int2(600,480-65);
+			i.event_hook = std::bind(&WindowInWindow::GPUWindowEventHook, this, std::placeholders::_1);
 
-			if (!oWindowCreate(init, &GPUWindow))
-				return; // pass through error
-
-			Device->CreatePrimaryRenderTarget(GPUWindow, ouro::surface::unknown, true, &PrimaryRenderTarget);
-			GPUWindow->SetParent(ParentWindow);
+			try { GPUWindow = window::make(i); }
+			catch (std::exception& e) { oErrorSetLast(e); return; }
+			
+			Device->CreatePrimaryRenderTarget(GPUWindow.get(), surface::unknown, true, &PrimaryRenderTarget);
+			GPUWindow->parent(ParentWindow);
 		}
 
-		ParentWindow->Show();
+		ParentWindow->show();
 		*_pSuccess = true;
 	}
 
@@ -135,7 +134,7 @@ public:
 			case oGUI_SIZED:
 			{
 				if (GPUWindow)
-					GPUWindow->SetClientSize(_Event.AsShape().Shape.ClientSize - int2(40,65));
+					GPUWindow->client_size(_Event.AsShape().Shape.ClientSize - int2(40,65));
 
 				if (PrimaryRenderTarget)
 					PrimaryRenderTarget->Resize(int3(_Event.AsShape().Shape.ClientSize - int2(40,65), 1));
@@ -153,20 +152,20 @@ public:
 	{
 	}
 
-	oWindow* GetWindow() threadsafe { return ParentWindow; }
+	window* GetWindow() { return ParentWindow.get(); }
 
-	void FlushMessages()
+	void flush_messages()
 	{
-		GPUWindow->FlushMessages();
-		ParentWindow->FlushMessages();
+		GPUWindow->flush_messages();
+		ParentWindow->flush_messages();
 	}
 
 	void IncrementClearCounter() { Counter++; }
 
 private:
 	intrusive_ptr<oGPUDevice> Device;
-	intrusive_ptr<oWindow> ParentWindow;
-	intrusive_ptr<oWindow> GPUWindow;
+	std::shared_ptr<window> ParentWindow;
+	std::shared_ptr<window> GPUWindow;
 	intrusive_ptr<oGPUCommandList> CommandList;
 	intrusive_ptr<oGPURenderTarget> PrimaryRenderTarget;
 
@@ -196,7 +195,7 @@ struct GPU_WindowInWindow : public oTest
 		{
 			while (test.IsRunning())
 			{
-				test.FlushMessages();
+				test.flush_messages();
 
 				oSleep(1000);
 				test.IncrementClearCounter();
@@ -207,16 +206,16 @@ struct GPU_WindowInWindow : public oTest
 
 		else
 		{
-			test.FlushMessages();
+			test.flush_messages();
 			test.Render();
-			oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->CreateSnapshot();
-			while (!snapshot.is_ready()) { test.FlushMessages(); }
+			oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->snapshot();
+			while (!snapshot.is_ready()) { test.flush_messages(); }
 			oTESTFI(snapshot);
 			test.IncrementClearCounter();
-			test.FlushMessages();
+			test.flush_messages();
 			test.Render();
-			snapshot = test.GetWindow()->CreateSnapshot();
-			while (!snapshot.is_ready()) { test.FlushMessages(); }
+			snapshot = test.GetWindow()->snapshot();
+			while (!snapshot.is_ready()) { test.flush_messages(); }
 			oTESTFI2(snapshot, 1);
 		}
 

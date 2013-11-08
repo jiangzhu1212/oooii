@@ -171,6 +171,6 @@ interface oGestureManager : oInterface
 	virtual bool OnFileChange(oSTREAM_EVENT _Event, const ouro::uri_string& _ChangedURI) = 0;
 };
 
-bool oGestureManagerCreate(const oGESTURE_MANAGER_INIT& _Init, threadsafe oWindow* _pWindow, oGestureManager** _ppGestureManager);
+bool oGestureManagerCreate(const oGESTURE_MANAGER_INIT& _Init, const std::shared_ptr<ouro::window>& _Window, oGestureManager** _ppGestureManager);
 
 #endif

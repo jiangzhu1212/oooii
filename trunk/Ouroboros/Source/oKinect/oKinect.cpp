@@ -165,9 +165,9 @@ bool oKinectImpl::Reinitialize()
 	return true;
 }
 
-oKinectImpl::oKinectImpl(const oKINECT_DESC& _Desc, threadsafe oWindow* _pWindow, bool* _pSuccess)
+oKinectImpl::oKinectImpl(const oKINECT_DESC& _Desc, const std::shared_ptr<ouro::window>& _Window, bool* _pSuccess)
 	: Desc(_Desc)
-	, Window(_pWindow)
+	, Window(_Window)
 	, hColorStream(nullptr)
 	, hDepthStream(nullptr)
 	, NewPitch(oDEFAULT)
@@ -411,10 +411,10 @@ int oKinectGetCount()
 	return Count;
 }
 
-bool oKinectCreate(const oKINECT_DESC& _Desc, threadsafe oWindow* _pWindow, threadsafe oKinect** _ppKinect)
+bool oKinectCreate(const oKINECT_DESC& _Desc, const std::shared_ptr<ouro::window>& _Window, threadsafe oKinect** _ppKinect)
 {
 	bool success = false;
-	oCONSTRUCT(_ppKinect, oKinectImpl(_Desc, _pWindow, &success));
+	oCONSTRUCT(_ppKinect, oKinectImpl(_Desc, _Window, &success));
 	return success;
 }
 
@@ -426,7 +426,7 @@ int oKinectGetCount()
 	return oInvalid;
 }
 
-bool oKinectCreate(const oKINECT_DESC& _Desc, threadsafe oWindow* _pWindow, threadsafe oKinect** _ppKinect)
+bool oKinectCreate(const oKINECT_DESC& _Desc, const std::shared_ptr<ouro::window>& _Window, threadsafe oKinect** _ppKinect)
 {
 	return oErrorSetLast(std::errc::no_such_device, "library not compiled with Kinect support");
 }

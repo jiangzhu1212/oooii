@@ -48,7 +48,7 @@ public:
 	oKinectSkeletonStream();
 
 	// Call this any time the sensor gets its initialize called.
-	bool Initialize(INuiSensor* _pSensor, threadsafe oWindow* _pWindow, double _TrackingTimeoutSeconds, oKINECT_FEATURES _KinectFeatures, HANDLE _hEvent) threadsafe;
+	bool Initialize(INuiSensor* _pSensor, const std::shared_ptr<ouro::window>& _Window, double _TrackingTimeoutSeconds, oKINECT_FEATURES _KinectFeatures, HANDLE _hEvent) threadsafe;
 
 	void CacheNextFrame(INuiSensor* _pSensor) threadsafe;
 
@@ -61,7 +61,7 @@ public:
 
 private:
 	double TrackingTimeoutSeconds;
-	ouro::intrusive_ptr<threadsafe oWindow> Window;
+	std::shared_ptr<ouro::window> Window;
 
 	std::array<int, NUI_SKELETON_MAX_TRACKED_COUNT> ClosestSkeletonIndices;
 	std::array<ouro::intrusive_ptr<threadsafe oKinectSkeleton>, NUI_SKELETON_COUNT> Skeletons;

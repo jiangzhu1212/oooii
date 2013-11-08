@@ -95,10 +95,10 @@ static int2 oKinectSkeletonToScreen(const Vector4& _SkeletonPosition, const int2
 	return Screen;
 }
 
-bool oKinectSkeletonStream::Initialize(INuiSensor* _pSensor, threadsafe oWindow* _pWindow, double _TrackingTimeoutSeconds, oKINECT_FEATURES _KinectFeatures, HANDLE _hEvent) threadsafe
+bool oKinectSkeletonStream::Initialize(INuiSensor* _pSensor, const std::shared_ptr<ouro::window>& _Window, double _TrackingTimeoutSeconds, oKINECT_FEATURES _KinectFeatures, HANDLE _hEvent) threadsafe
 {
 	TrackingTimeoutSeconds = _TrackingTimeoutSeconds;
-	Window = _pWindow;
+	oThreadsafe(this)->Window = _Window;
 
 	oThreadsafe(ClosestSkeletonIndices).fill(0);
 
@@ -131,10 +131,10 @@ void oKinectSkeletonStream::CacheNextFrame(INuiSensor* _pSensor) threadsafe
 	{
 		_pSensor->NuiTransformSmooth(&NSF, nullptr);
 
-		if (Window)
+		if (oThreadsafe(this)->Window)
 		{
 			oFORI(i, NSF.SkeletonData)
-				pThis->Skeletons[i]->Cache((HWND)Window->GetNativeHandle(), NSF.SkeletonData[i]);
+				pThis->Skeletons[i]->Cache((HWND)oThreadsafe(this)->Window->native_handle(), NSF.SkeletonData[i]);
 		}
 
 		TrackClosestSkeletons(_pSensor, NSF);
@@ -155,10 +155,10 @@ void oKinectSkeletonStream::TrackClosestSkeletons(INuiSensor* _pSensor, const NU
 void oKinectSkeletonStream::CheckTrackingTimeouts() threadsafe
 {
 	oGUI_WINDOW hWnd = nullptr;
-	if (Window)
+	if (oThreadsafe(this)->Window)
 	{
 		oFOR(auto& S, oThreadsafe(this)->Skeletons)
-			S->CheckTrackingTimeout((HWND)Window->GetNativeHandle(), TrackingTimeoutSeconds);
+			S->CheckTrackingTimeout((HWND)oThreadsafe(this)->Window->native_handle(), TrackingTimeoutSeconds);
 	}
 }
 

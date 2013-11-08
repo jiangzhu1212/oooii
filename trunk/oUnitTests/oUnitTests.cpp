@@ -80,7 +80,7 @@ void InitEnv()
 	}
 	catch (std::exception& e)
 	{
-		oTRACE("console::set_info failed: %s", e.what());
+		oTRACEA("console::set_info failed: %s", e.what());
 	}
 
 #if defined(WIN64) || defined(WIN32)

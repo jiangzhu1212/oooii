@@ -31,17 +31,15 @@
 #include <oGUI/Windows/oWinStatusBar.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oSurface/codec.h>
-#include <oConcurrency/event.h>
-#include <oConcurrency/mutex.h>
 #include <oBase/backoff.h>
 #include <vector>
 #include <windowsx.h>
 
-using namespace ouro;
+namespace ouro {
 
 static bool kForceDebug = false;
 
-#define DISPATCH(_SimpleFunction) do { DispatchInternal(std::move([=] { _SimpleFunction; })); } while(false)
+#define DISPATCH(_SimpleFunction) do { dispatch_internal(std::move([=] { _SimpleFunction; })); } while(false)
 
 template<typename HookT, typename ParamT>
 class HookManager
@@ -49,27 +47,27 @@ class HookManager
 public:
 	typedef HookT hook_type;
 	typedef ParamT param_type;
-	typedef oConcurrency::recursive_mutex mutex_t;
-	typedef oConcurrency::lock_guard<mutex_t> lock_t;
+	typedef oStd::recursive_mutex mutex_t;
+	typedef oStd::lock_guard<mutex_t> lock_t;
 
 	HookManager() { Hooks.reserve(8); }
 
-	int Hook(const hook_type& _Hook) threadsafe
+	int Hook(const hook_type& _Hook)
 	{
 		lock_t lock(HooksMutex);
-		return static_cast<int>(sparse_set(oThreadsafe(Hooks), _Hook));
+		return static_cast<int>(sparse_set(Hooks, _Hook));
 	}
 
-	void Unhook(int _hHook) threadsafe
+	void Unhook(int _hHook)
 	{
 		lock_t lock(HooksMutex);
-		ranged_set(oThreadsafe(Hooks), _hHook, nullptr);
+		ranged_set(Hooks, _hHook, nullptr);
 	}
 
-	void Visit(const param_type& _Param) threadsafe
+	void Visit(const param_type& _Param)
 	{
 		lock_t lock(HooksMutex);
-		oFOR(hook_type& hook, oThreadsafe(Hooks))
+		oFOR(hook_type& hook, Hooks)
 			if (hook)
 				hook(_Param);
 	}
@@ -79,83 +77,82 @@ private:
 	std::vector<hook_type> Hooks;
 };
 
-struct oWinWindow : oWindow
+struct window_impl : window
 {
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_NOOP_QUERYINTERFACE();
-	oDECLARE_WNDPROC(oWinWindow);
+	oDECLARE_WNDPROC(window_impl);
 
-	oWinWindow(const oWINDOW_INIT& _Init, bool* _pSuccess);
-	~oWinWindow();
+	window_impl(const init& _Init);
+	~window_impl();
 	
-	// Basic API
-	oGUI_WINDOW GetNativeHandle() const threadsafe override;
-	ouro::display::id GetDisplayId() const override;
-	bool IsWindowThread() const threadsafe override;
+	// environmental API
+	oGUI_WINDOW native_handle() const override;
+	display::id display_id() const override;
+	bool is_window_thread() const override;
+	void debug(bool _Debug = true) override;
+	bool debug() const override;
+	void flush_messages(bool _WaitForNext = false) override;
+	void quit() override;
 
-	// Client Position/Size API
-	void SetShape(const oGUI_WINDOW_SHAPE_DESC& _Shape) threadsafe override;
-	oGUI_WINDOW_SHAPE_DESC GetShape() const override;
 
-	// Border/Decoration API
-	void SetIcon(oGUI_ICON _hIcon) threadsafe override;
-	oGUI_ICON GetIcon() const override;
-	void SetUserCursor(oGUI_CURSOR _hCursor) threadsafe override;
-	oGUI_CURSOR GetUserCursor() const override;
-	void SetClientCursorState(oGUI_CURSOR_STATE _State) threadsafe override;
-	oGUI_CURSOR_STATE GetClientCursorState() const override;
-	void SetTitleV(const char* _Format, va_list _Args) threadsafe override;
-	char* GetTitle(char* _StrDestination, size_t _SizeofStrDestination) const override;
-	void SetNumStatusSections(const int* _pStatusSectionWidths, size_t _NumStatusSections) threadsafe override;
-	int GetNumStatusSections(int* _pStatusSectionWidths = nullptr, size_t _MaxNumStatusSectionWidths = 0) const override;
-	void SetStatusTextV(int _StatusSectionIndex, const char* _Format, va_list _Args) threadsafe override;
-	char* GetStatusText(char* _StrDestination, size_t _SizeofStrDestination, int _StatusSectionIndex) const override;
-	void SetStatusIcon(int _StatusSectionIndex, oGUI_ICON _hIcon) threadsafe override;
-	oGUI_ICON GetStatusIcon(int _StatusSectionIndex) const override;
+	// shape API
+	void shape(const oGUI_WINDOW_SHAPE_DESC& _Shape) override;
+	oGUI_WINDOW_SHAPE_DESC shape() const override;
+
+	// border/decoration API
+	void icon(oGUI_ICON _hIcon) override;
+	oGUI_ICON icon() const override;
+	void user_cursor(oGUI_CURSOR _hCursor) override;
+	oGUI_CURSOR user_cursor() const override;
+	void client_cursor_state(oGUI_CURSOR_STATE _State) override;
+	oGUI_CURSOR_STATE client_cursor_state() const override;
+	void set_titlev(const char* _Format, va_list _Args) override;
+	char* get_title(char* _StrDestination, size_t _SizeofStrDestination) const override;
+	void set_num_status_sections(const int* _pStatusSectionWidths, size_t _NumStatusSections) override;
+	int get_num_status_sections(int* _pStatusSectionWidths = nullptr, size_t _MaxNumStatusSectionWidths = 0) const override;
+	void set_status_textv(int _StatusSectionIndex, const char* _Format, va_list _Args) override;
+	char* get_status_text(char* _StrDestination, size_t _SizeofStrDestination, int _StatusSectionIndex) const override;
+	void status_icon(int _StatusSectionIndex, oGUI_ICON _hIcon) override;
+	oGUI_ICON status_icon(int _StatusSectionIndex) const override;
 
 	// Draw Order/Dependency API
-	void SetParent(oWindow* _pParent) threadsafe override;
-	oWindow* GetParent() const override;
-	void SetOwner(oWindow* _pOwner) threadsafe override;
-	oWindow* GetOwner() const override;
-	void SetSortOrder(oGUI_WINDOW_SORT_ORDER _SortOrder) threadsafe override;
-	oGUI_WINDOW_SORT_ORDER GetSortOrder() const override;
-	void SetFocus(bool _Focus = true) threadsafe override;
-	bool HasFocus() const override;
+	void parent(const std::shared_ptr<basic_window>& _Parent) override;
+	std::shared_ptr<basic_window> parent() const override;
+	void owner(const std::shared_ptr<basic_window>& _Owner) override;
+	std::shared_ptr<basic_window> owner() const override;
+	void sort_order(oGUI_WINDOW_SORT_ORDER _SortOrder) override;
+	oGUI_WINDOW_SORT_ORDER sort_order() const override;
+	void focus(bool _Focus = true) override;
+	bool has_focus() const override;
 
 
 	// Extended Input API
 	
-	void SetDebug(bool _Debug = true) threadsafe override;
-	bool GetDebug() const override;
-	void SetAllowTouchActions(bool _Allow = true) threadsafe override;
-	bool GetAllowTouchActions() const override;
-	void SetClientDragToMove(bool _DragMoves = true) threadsafe override;
-	bool GetClientDragToMove() const override;
-	void SetAltF4Closes(bool _AltF4Closes = true) threadsafe override;
-	bool GetAltF4Closes() const override;
-	void SetEnabled(bool _Enabled) threadsafe override;
-	bool GetEnabled() const override;
-	void SetCapture(bool _Capture) threadsafe override;
-	bool HasCapture() const override;
-	void SetHotKeys(const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys) threadsafe override;
-	int GetHotKeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const override;
+	void allow_touch_actions(bool _Allow = true) override;
+	bool allow_touch_actions() const override;
+	void client_drag_to_move(bool _DragMoves = true) override;
+	bool client_drag_to_move() const override;
+	void alt_f4_closes(bool _AltF4Closes = true) override;
+	bool alt_f4_closes() const override;
+	void enabled(bool _Enabled) override;
+	bool enabled() const override;
+	void capture(bool _Capture) override;
+	bool has_capture() const override;
+	void set_hotkeys(const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys) override;
+	int get_hotkeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const override;
 
 	// Observer API
-	int HookActions(const oGUI_ACTION_HOOK& _Hook) threadsafe override;
-	void UnhookActions(int _ActionHookID) threadsafe override;
-	int HookEvents(const oGUI_EVENT_HOOK& _Hook) threadsafe override;
-	void UnhookEvents(int _EventHookID) threadsafe override;
+	int hook_actions(const oGUI_ACTION_HOOK& _Hook) override;
+	void unhook_actions(int _ActionHookID) override;
+	int hook_events(const oGUI_EVENT_HOOK& _Hook) override;
+	void unhook_events(int _EventHookID) override;
 
 	// Execution API
-	void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe override;
-	void Post(int _CustomEventCode, uintptr_t _Context) threadsafe override;
-	void Dispatch(const oTASK& _Task) threadsafe override;
-	oStd::future<std::shared_ptr<surface::buffer>> CreateSnapshot(int _Frame = oInvalid, bool _IncludeBorder = false) threadsafe const override;
-	void SetTimer(uintptr_t _Context, unsigned int _RelativeTimeMS) threadsafe override;
-	void StopTimer(uintptr_t _Context) threadsafe override;
-	void FlushMessages(bool _WaitForNext = false) override;
-	void Quit() threadsafe override;
+	void trigger(const oGUI_ACTION_DESC& _Action) override;
+	void post(int _CustomEventCode, uintptr_t _Context) override;
+	void dispatch(const oTASK& _Task) override;
+	oStd::future<std::shared_ptr<surface::buffer>> snapshot(int _Frame = oInvalid, bool _IncludeBorder = false) const override;
+	void start_timer(uintptr_t _Context, unsigned int _RelativeTimeMS) override;
+	void stop_timer(uintptr_t _Context) override;
 
 private:
 
@@ -181,15 +178,14 @@ private:
 	ActionManager_t ActionHooks;
 	EventManager_t EventHooks;
 
-	oConcurrency::event Destroyed;
-	oRefCount RefCount;
+	event Destroyed;
 
-	intrusive_ptr<oWindow> Owner;
-	intrusive_ptr<oWindow> Parent;
+	std::shared_ptr<basic_window> Owner;
+	std::shared_ptr<basic_window> Parent;
 
 private:
 
-	void DispatchInternal(oTASK&& _Task) threadsafe const { PostMessage(hWnd, oWM_DISPATCH, 0, (LPARAM)const_cast<threadsafe oWinWindow*>(this)->New<oTASK>(std::move(_Task))); }
+	void dispatch_internal(oTASK&& _Task) const { PostMessage(hWnd, oWM_DISPATCH, 0, (LPARAM)const_cast<window_impl*>(this)->new_object<oTASK>(std::move(_Task))); }
 
 	struct oScopedHeapLock
 	{
@@ -199,16 +195,16 @@ private:
 	};
 
 	template<typename T>
-	T* New(const T& _Object) threadsafe { oScopedHeapLock lock(hHeap); return new (HeapAlloc(hHeap, HEAP_GENERATE_EXCEPTIONS, sizeof(T))) T(_Object); }
+	T* new_object(const T& _Object) { oScopedHeapLock lock(hHeap); return new (HeapAlloc(hHeap, HEAP_GENERATE_EXCEPTIONS, sizeof(T))) T(_Object); }
 	
 	template<typename T>
-	T* New(T&& _Object) threadsafe { oScopedHeapLock lock(hHeap); return new (HeapAlloc(hHeap, HEAP_GENERATE_EXCEPTIONS, sizeof(T))) T(std::move(_Object)); }
+	T* new_object(T&& _Object) { oScopedHeapLock lock(hHeap); return new (HeapAlloc(hHeap, HEAP_GENERATE_EXCEPTIONS, sizeof(T))) T(std::move(_Object)); }
 
 	template<typename T>
-	void Delete(T* _pObject) threadsafe { _pObject->~T(); oScopedHeapLock lock(hHeap); HeapFree(hHeap, HEAP_GENERATE_EXCEPTIONS, _pObject); }
+	void delete_object(T* _pObject) { _pObject->~T(); oScopedHeapLock lock(hHeap); HeapFree(hHeap, HEAP_GENERATE_EXCEPTIONS, _pObject); }
 
 	template<typename T>
-	T* NewArray(size_t _NumObjects) threadsafe
+	T* new_array(size_t _NumObjects)
 	{
 		void* p = nullptr;
 		{
@@ -224,7 +220,7 @@ private:
 	}
 
 	template<typename T>
-	void DeleteArray(T* _pObjects) threadsafe
+	void delete_array(T* _pObjects)
 	{
 		size_t* pNumObjects = (size_t*)(byte_sub(_pObjects, sizeof(size_t)));
 		*pNumObjects;
@@ -234,7 +230,7 @@ private:
 		HeapFree(hHeap, HEAP_GENERATE_EXCEPTIONS, pNumObjects);
 	}
 
-	char* NewString(const char* _Format, va_list _Args) threadsafe
+	char* new_string(const char* _Format, va_list _Args)
 	{
 		const static size_t kStartLength = 64;
 		char* s = nullptr;
@@ -247,7 +243,7 @@ private:
 		if (len >= kStartLength)
 		{
 			oScopedHeapLock lock(hHeap);
-			Delete(s);
+			delete_object(s);
 			s = (char*)HeapAlloc(hHeap, HEAP_GENERATE_EXCEPTIONS, len + 1);
 			ouro::vsnprintf(s, len + 1, _Format, _Args);
 		}
@@ -255,79 +251,71 @@ private:
 		return s;
 	}
 
-	void DeleteString(char* _String) threadsafe
+	void delete_string(char* _String)
 	{
 		oScopedHeapLock lock(hHeap);
 		HeapFree(hHeap, HEAP_GENERATE_EXCEPTIONS, _String);
 	}
 
-	bool InitWindow(const oWINDOW_INIT& _Init);
-	void TriggerGenericEvent(oGUI_EVENT _Event, oGUI_WINDOW_SHAPE_DESC* _pShape = nullptr);
-	void SetCursor();
-	bool HandleInput(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult);
-	bool HandleSizing(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult);
-	bool HandleMisc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult);
-	bool HandleLifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult);
+	void init_window(const init& _Init);
+	void trigger_generic_event(oGUI_EVENT _Event, oGUI_WINDOW_SHAPE_DESC* _pShape = nullptr);
+	void set_cursor();
+	bool handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult);
+	bool handle_sizing(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult);
+	bool handle_misc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult);
+	bool handle_lifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult);
 };
 
-bool oWinWindow::InitWindow(const oWINDOW_INIT& _Init)
+void window_impl::init_window(const init& _Init)
 {
 	// this->hWnd assigned in WM_CREATE
-	if (!oWinCreate(nullptr, _Init.Title, _Init.Shape.Style, _Init.Shape.ClientPosition, _Init.Shape.ClientSize, StaticWndProc, (void*)&_Init, this))
-		return false; // pass through error
+	if (!oWinCreate(nullptr, _Init.title, _Init.shape.Style, _Init.shape.ClientPosition, _Init.shape.ClientSize, StaticWndProc, (void*)&_Init, this))
+		oThrowLastError();
 	
 	PriorShape = oWinGetShape(hWnd);
 
 	// Initialize decoration
 
-	if (_Init.hIcon)
-		oWinSetIcon(hWnd, (HICON)_Init.hIcon);
+	if (_Init.icon)
+		oWinSetIcon(hWnd, (HICON)_Init.icon);
 
 	// Still have to set style here since oWinCreate is still unaware of menu/status bar
 	oGUI_WINDOW_SHAPE_DESC InitShape;
-	InitShape.State = _Init.Shape.State;
-	InitShape.Style = _Init.Shape.Style;
+	InitShape.State = _Init.shape.State;
+	InitShape.Style = _Init.shape.Style;
 
 	if (!oWinSetShape(hWnd, InitShape))
-		return false; // pass through error
-
-	return true;
+		oThrowLastError();
 }
 
-oWinWindow::oWinWindow(const oWINDOW_INIT& _Init, bool* _pSuccess)
+window_impl::window_impl(const init& _Init)
 	: hWnd(nullptr)
 	, hAccel(nullptr)
 	, hHeap(HeapCreate(HEAP_GENERATE_EXCEPTIONS, oMB(1), 0))
 	, hUserCursor(nullptr)
-	, ClientCursorState(_Init.ClientCursorState)
-	, SortOrder(_Init.SortOrder)
+	, ClientCursorState(_Init.cursor_state)
+	, SortOrder(_Init.sort_order)
 	, Captured(false)
 	, ClientDragToMove(false)
 	, Debug(false)
 	, AllowTouch(false)
 	, CursorClientPosAtMouseDown(oDEFAULT, oDEFAULT)
 {
-	*_pSuccess = false;
+	if (_Init.action_hook)
+		ActionHooks.Hook(_Init.action_hook);
 
-	if (_Init.ActionHook)
-		ActionHooks.Hook(_Init.ActionHook);
+	if (_Init.event_hook)
+		EventHooks.Hook(_Init.event_hook);
 
-	if (_Init.EventHook)
-		EventHooks.Hook(_Init.EventHook);
-
-	if (!InitWindow(_Init))
-		return; // pass through error
-
-	oWinWindow::SetSortOrder(SortOrder);
-	oWinWindow::SetDebug(_Init.Debug);
-	oWinWindow::SetAllowTouchActions(_Init.AllowTouch);
-	oWinWindow::SetClientDragToMove(_Init.ClientDragToMove);
-	oWinWindow::SetAltF4Closes(_Init.AltF4Closes);
-
-	*_pSuccess = true;
+	init_window(_Init);
+	window_impl::sort_order(SortOrder);
+	window_impl::debug(_Init.debug);
+	window_impl::allow_touch_actions(_Init.allow_touch);
+	window_impl::client_drag_to_move(_Init.client_drag_to_move);
+	window_impl::alt_f4_closes(_Init.alt_f4_closes);
 }
 
-oWinWindow::~oWinWindow()
+window_impl::~window_impl()
 {
 	if (hWnd)
 	{
@@ -339,57 +327,55 @@ oWinWindow::~oWinWindow()
 		HeapDestroy(hHeap);
 }
 
-bool oWindowCreate(const oWINDOW_INIT& _Init, oWindow** _ppWindow)
+std::shared_ptr<window> window::make(const init& _Init)
 {
-	bool success = false;
-	oCONSTRUCT(_ppWindow, oWinWindow(_Init, &success));
-	return success;
+	return std::make_shared<window_impl>(_Init);
 }
 
-oGUI_WINDOW oWinWindow::GetNativeHandle() const threadsafe
+oGUI_WINDOW window_impl::native_handle() const
 {
 	return (oGUI_WINDOW)hWnd;
 }
 
-ouro::display::id oWinWindow::GetDisplayId() const
+ouro::display::id window_impl::display_id() const
 {
-	oGUI_WINDOW_SHAPE_DESC s = GetShape();
+	oGUI_WINDOW_SHAPE_DESC s = shape();
 	int2 center = s.ClientPosition + s.ClientSize / 2;
 	return ouro::display::find(center.x, center.y);
 }
 
-bool oWinWindow::IsWindowThread() const threadsafe
+bool window_impl::is_window_thread() const
 {
 	return oWinIsWindowThread(hWnd);
 }
 
-void oWinWindow::SetShape(const oGUI_WINDOW_SHAPE_DESC& _Shape) threadsafe
+void window_impl::shape(const oGUI_WINDOW_SHAPE_DESC& _Shape)
 {
-	DispatchInternal(std::move([=]
+	dispatch_internal(std::move([=]
 	{
 		if (!oWinSetShape(hWnd, _Shape))
 			oTRACE("ERROR: oWinSetShape: %s", oErrorGetLastString());
 	}));
 }
 
-oGUI_WINDOW_SHAPE_DESC oWinWindow::GetShape() const
+oGUI_WINDOW_SHAPE_DESC window_impl::shape() const
 {
 	return oWinGetShape(hWnd);
 }
 
-void oWinWindow::SetIcon(oGUI_ICON _hIcon) threadsafe
+void window_impl::icon(oGUI_ICON _hIcon)
 {
 	DISPATCH(oWinSetIcon(hWnd, (HICON)_hIcon));
 }
 
-oGUI_ICON oWinWindow::GetIcon() const
+oGUI_ICON window_impl::icon() const
 {
 	return (oGUI_ICON)oWinGetIcon(hWnd);
 }
 
-void oWinWindow::SetUserCursor(oGUI_CURSOR _hCursor) threadsafe
+void window_impl::user_cursor(oGUI_CURSOR _hCursor)
 {
-	DispatchInternal(std::move([=]
+	dispatch_internal(std::move([=]
 	{
 		if (hUserCursor)
 			DestroyCursor((HCURSOR)hUserCursor);
@@ -397,71 +383,71 @@ void oWinWindow::SetUserCursor(oGUI_CURSOR _hCursor) threadsafe
 	}));
 }
 
-oGUI_CURSOR oWinWindow::GetUserCursor() const
+oGUI_CURSOR window_impl::user_cursor() const
 {
 	return (oGUI_CURSOR)hUserCursor;
 }
 
-void oWinWindow::SetClientCursorState(oGUI_CURSOR_STATE _State) threadsafe
+void window_impl::client_cursor_state(oGUI_CURSOR_STATE _State)
 {
 	DISPATCH(ClientCursorState = _State);
 }
 
-oGUI_CURSOR_STATE oWinWindow::GetClientCursorState() const
+oGUI_CURSOR_STATE window_impl::client_cursor_state() const
 {
 	return ClientCursorState;
 }
 
-void oWinWindow::SetTitleV(const char* _Format, va_list _Args) threadsafe
+void window_impl::set_titlev(const char* _Format, va_list _Args)
 {
-	char* pString = NewString(_Format, _Args);
-	DispatchInternal(std::move([=]
+	char* pString = new_string(_Format, _Args);
+	dispatch_internal(std::move([=]
 	{
 		oWinSetText(hWnd, pString);
 		if (pString)
-			DeleteString(pString);
+			delete_string(pString);
 	}));
 }
 
-char* oWinWindow::GetTitle(char* _StrDestination, size_t _SizeofStrDestination) const
+char* window_impl::get_title(char* _StrDestination, size_t _SizeofStrDestination) const
 {
 	return oWinGetText(_StrDestination, _SizeofStrDestination, hWnd);
 }
 
-void oWinWindow::SetNumStatusSections(const int* _pStatusSectionWidths, size_t _NumStatusSections) threadsafe
+void window_impl::set_num_status_sections(const int* _pStatusSectionWidths, size_t _NumStatusSections)
 {
-	oWinWindow* w = const_cast<oWinWindow*>(this);
-	int* pCopy = w->NewArray<int>(_NumStatusSections);
+	window_impl* w = const_cast<window_impl*>(this);
+	int* pCopy = w->new_array<int>(_NumStatusSections);
 	memcpy(pCopy, _pStatusSectionWidths, _NumStatusSections * sizeof(int));
-	DispatchInternal(std::move([=]
+	dispatch_internal(std::move([=]
 	{
 		oWinStatusBarSetNumItems(oWinGetStatusBar(hWnd), pCopy, _NumStatusSections);
 		if (pCopy)
-			DeleteArray(pCopy);
+			delete_array(pCopy);
 	}));
 }
 
-int oWinWindow::GetNumStatusSections(int* _pStatusSectionWidths, size_t _MaxNumStatusSectionWidths) const
+int window_impl::get_num_status_sections(int* _pStatusSectionWidths, size_t _MaxNumStatusSectionWidths) const
 {
 	return oWinStatusBarGetNumItems(oWinGetStatusBar(hWnd), _pStatusSectionWidths, _MaxNumStatusSectionWidths);
 }
 
-void oWinWindow::SetStatusTextV(int _StatusSectionIndex, const char* _Format, va_list _Args) threadsafe
+void window_impl::set_status_textv(int _StatusSectionIndex, const char* _Format, va_list _Args)
 {
-	char* pString = NewString(_Format, _Args);
-	DispatchInternal(std::move([=]
+	char* pString = new_string(_Format, _Args);
+	dispatch_internal(std::move([=]
 	{
 		oWinStatusBarSetText(oWinGetStatusBar(hWnd), _StatusSectionIndex, oGUI_BORDER_FLAT, pString);
 		if (pString)
-			DeleteString(pString);
+			delete_string(pString);
 	}));
 }
 
-char* oWinWindow::GetStatusText(char* _StrDestination, size_t _SizeofStrDestination, int _StatusSectionIndex) const
+char* window_impl::get_status_text(char* _StrDestination, size_t _SizeofStrDestination, int _StatusSectionIndex) const
 {
 	size_t len = 0;
-	oWinWindow* w = const_cast<oWinWindow*>(this);
-	oTASK* pTask = w->New<oTASK>(std::move([=,&len]
+	window_impl* w = const_cast<window_impl*>(this);
+	oTASK* pTask = w->new_object<oTASK>(std::move([=,&len]
 	{
 		if (oWinStatusBarGetText(_StrDestination, _SizeofStrDestination, oWinGetStatusBar(hWnd), _StatusSectionIndex))
 			len = strlen(_StrDestination);
@@ -471,54 +457,49 @@ char* oWinWindow::GetStatusText(char* _StrDestination, size_t _SizeofStrDestinat
 	return (len && len <= _SizeofStrDestination) ? _StrDestination : nullptr;
 }
 
-void oWinWindow::SetStatusIcon(int _StatusSectionIndex, oGUI_ICON _hIcon) threadsafe
+void window_impl::status_icon(int _StatusSectionIndex, oGUI_ICON _hIcon)
 {
 	DISPATCH(oWinStatusBarSetIcon(oWinGetStatusBar(hWnd), _StatusSectionIndex, (HICON)_hIcon));
 }
 
-oGUI_ICON oWinWindow::GetStatusIcon(int _StatusSectionIndex) const
+oGUI_ICON window_impl::status_icon(int _StatusSectionIndex) const
 {
 	return (oGUI_ICON)oWinStatusBarGetIcon(oWinGetStatusBar(hWnd), _StatusSectionIndex);
 }
 
-void oWinWindow::SetParent(oWindow* _pParent) threadsafe
+void window_impl::parent(const std::shared_ptr<basic_window>& _Parent)
 {
-	if (_pParent)
-		_pParent->Reference();
-
-	DispatchInternal(std::move([=]
+	dispatch_internal(std::move([=]
 	{
-		oASSERT(!Owner, "Can't have owner at same time as parent");
-		Parent = std::move(intrusive_ptr<oWindow>(_pParent, false));
-		oVERIFY(oWinSetParent(hWnd, _pParent ? (HWND)_pParent->GetNativeHandle() : nullptr));
+		oCHECK(!Owner, "Can't have owner at same time as parent");
+		Parent = _Parent;
+		oVERIFY(oWinSetParent(hWnd, Parent ? (HWND)Parent->native_handle() : nullptr));
 	}));
 }
 
-oWindow* oWinWindow::GetParent() const
+std::shared_ptr<basic_window> window_impl::parent() const
 {
-	return const_cast<oWinWindow*>(this)->Parent;
+	return const_cast<window_impl*>(this)->Parent;
 }
 
-void oWinWindow::SetOwner(oWindow* _pOwner) threadsafe
+void window_impl::owner(const std::shared_ptr<basic_window>& _Owner)
 {
-	if (_pOwner)
-		_pOwner->Reference();
-	DispatchInternal(std::move([=]
+	dispatch_internal(std::move([=]
 	{
-		oASSERT(!Parent, "Can't have parent at same time as owner");
-		Owner = std::move(intrusive_ptr<oWindow>(_pOwner, false));
-		oWinSetOwner(hWnd, _pOwner ? (HWND)_pOwner->GetNativeHandle() : nullptr);
+		oCHECK(!Parent, "Can't have parent at same time as owner");
+		Owner = _Owner;
+		oWinSetOwner(hWnd, Owner ? (HWND)Owner->native_handle() : nullptr);
 	}));
 }
 
-oWindow* oWinWindow::GetOwner() const
+std::shared_ptr<basic_window> window_impl::owner() const
 {
-	return const_cast<oWinWindow*>(this)->Owner;
+	return const_cast<window_impl*>(this)->Owner;
 }
 
-void oWinWindow::SetSortOrder(oGUI_WINDOW_SORT_ORDER _SortOrder) threadsafe
+void window_impl::sort_order(oGUI_WINDOW_SORT_ORDER _SortOrder)
 {
-	DispatchInternal(std::move([=]
+	dispatch_internal(std::move([=]
 	{
 		this->SortOrder = _SortOrder;
 		oVERIFY(oWinSetAlwaysOnTop(hWnd, _SortOrder != oGUI_WINDOW_SORTED));
@@ -529,78 +510,78 @@ void oWinWindow::SetSortOrder(oGUI_WINDOW_SORT_ORDER _SortOrder) threadsafe
 	}));
 }
 
-oGUI_WINDOW_SORT_ORDER oWinWindow::GetSortOrder() const
+oGUI_WINDOW_SORT_ORDER window_impl::sort_order() const
 {
 	return SortOrder;
 }
 
-void oWinWindow::SetFocus(bool _Focus) threadsafe
+void window_impl::focus(bool _Focus)
 {
 	DISPATCH(oWinSetFocus(hWnd));
 }
 
-bool oWinWindow::HasFocus() const
+bool window_impl::has_focus() const
 {
 	return oWinHasFocus(hWnd);
 }
 
-void oWinWindow::SetDebug(bool _Debug) threadsafe
+void window_impl::debug(bool _Debug)
 {
-	DispatchInternal([=] { Debug = _Debug; });
+	dispatch_internal([=] { Debug = _Debug; });
 }
 
-bool oWinWindow::GetDebug() const
+bool window_impl::debug() const
 {
 	return Debug;
 }
 
-void oWinWindow::SetAllowTouchActions(bool _Allow) threadsafe
+void window_impl::allow_touch_actions(bool _Allow)
 {
-	DispatchInternal([=]
+	dispatch_internal([=]
 	{
 		oVERIFY(oWinRegisterTouchEvents(hWnd, _Allow));
 		AllowTouch = _Allow;
 	});
 }
 
-bool oWinWindow::GetAllowTouchActions() const
+bool window_impl::allow_touch_actions() const
 {
 	return AllowTouch;
 }
 
-void oWinWindow::SetClientDragToMove(bool _DragMoves) threadsafe
+void window_impl::client_drag_to_move(bool _DragMoves)
 {
-	DispatchInternal([=] { ClientDragToMove = _DragMoves; });
+	dispatch_internal([=] { ClientDragToMove = _DragMoves; });
 }
 
-bool oWinWindow::GetClientDragToMove() const
+bool window_impl::client_drag_to_move() const
 {
 	return ClientDragToMove;
 }
 
-void oWinWindow::SetAltF4Closes(bool _AltF4Closes) threadsafe
+void window_impl::alt_f4_closes(bool _AltF4Closes)
 {
 	DISPATCH(oVERIFY(oWinAltF4Enable(hWnd, _AltF4Closes)));
 }
 
-bool oWinWindow::GetAltF4Closes() const
+bool window_impl::alt_f4_closes() const
 {
 	return oWinAltF4IsEnabled(hWnd);
 }
 
-void oWinWindow::SetEnabled(bool _Enabled) threadsafe
+void window_impl::enabled(bool _Enabled)
 {
 	DISPATCH(oWinEnable(hWnd, _Enabled));
 }
 
-bool oWinWindow::GetEnabled() const
+bool window_impl::enabled() const
 {
 	return oWinIsEnabled(hWnd);
 }
 
-void oWinWindow::SetCapture(bool _Capture) threadsafe
+void window_impl::capture(bool _Capture)
 {
-	DispatchInternal([=]
+	dispatch_internal([=]
 	{
 		if (_Capture)
 			::SetCapture(hWnd);
@@ -609,21 +590,21 @@ void oWinWindow::SetCapture(bool _Capture) threadsafe
 	});
 }
 
-bool oWinWindow::HasCapture() const
+bool window_impl::has_capture() const
 {
 	return hWnd == GetCapture();
 }
 
-void oWinWindow::SetHotKeys(const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys) threadsafe
+void window_impl::set_hotkeys(const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys)
 {
 	oGUI_HOTKEY_DESC_NO_CTOR* pCopy = nullptr;
 	if (_pHotKeys && _NumHotKeys)
 	{
-		pCopy = NewArray<oGUI_HOTKEY_DESC_NO_CTOR>(_NumHotKeys);
+		pCopy = new_array<oGUI_HOTKEY_DESC_NO_CTOR>(_NumHotKeys);
 		memcpy(pCopy, _pHotKeys, sizeof(oGUI_HOTKEY_DESC_NO_CTOR) * _NumHotKeys);
 	}
 
-	DispatchInternal(std::move([=]
+	dispatch_internal(std::move([=]
 	{
 		// Be explicit in member values because these are to modify values at time
 		// of message processing, not message dispatch
@@ -635,29 +616,29 @@ void oWinWindow::SetHotKeys(const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _N
 
 		if (pCopy)
 		{
-			ACCEL* pAccels = this->NewArray<ACCEL>(_NumHotKeys);
+			ACCEL* pAccels = this->new_array<ACCEL>(_NumHotKeys);
 			oWinAccelFromHotKeys(pAccels, pCopy, _NumHotKeys);
 			this->hAccel = CreateAcceleratorTable((LPACCEL)pAccels, oUInt(_NumHotKeys));
-			this->DeleteArray(pAccels);
-			this->DeleteArray(pCopy);
+			this->delete_array(pAccels);
+			this->delete_array(pCopy);
 		}
 	}));
 }
 
-int oWinWindow::GetHotKeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const
+int window_impl::get_hotkeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const
 {
 	int N = 0;
-	oWinWindow* w = const_cast<oWinWindow*>(this);
-	oTASK* pTask = w->New<oTASK>(std::move([=,&N]
+	window_impl* w = const_cast<window_impl*>(this);
+	oTASK* pTask = w->new_object<oTASK>(std::move([=,&N]
 	{
 		if (hAccel && _pHotKeys && _MaxNumHotKeys)
 		{
 			int nHotKeys = CopyAcceleratorTable(hAccel, nullptr, 0);
-			ACCEL* pAccels = w->NewArray<ACCEL>(nHotKeys);
+			ACCEL* pAccels = w->new_array<ACCEL>(nHotKeys);
 			CopyAcceleratorTable(hAccel, pAccels, nHotKeys);
 			int NumCopied = __min(nHotKeys, oInt(_MaxNumHotKeys));
 			oWinAccelToHotKeys(_pHotKeys, pAccels, NumCopied);
-			w->DeleteArray(pAccels);
+			w->delete_array(pAccels);
 			N = NumCopied;
 		}
 	}));
@@ -666,40 +647,40 @@ int oWinWindow::GetHotKeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHo
 	return N;
 }
 
-int oWinWindow::HookActions(const oGUI_ACTION_HOOK& _Hook) threadsafe
+int window_impl::hook_actions(const oGUI_ACTION_HOOK& _Hook)
 {
 	return ActionHooks.Hook(_Hook);
 }
 
-void oWinWindow::UnhookActions(int _ActionHookID) threadsafe
+void window_impl::unhook_actions(int _ActionHookID)
 {
 	ActionHooks.Unhook(_ActionHookID);
 }
 
-int oWinWindow::HookEvents(const oGUI_EVENT_HOOK& _Hook) threadsafe
+int window_impl::hook_events(const oGUI_EVENT_HOOK& _Hook)
 {
 	return EventHooks.Hook(_Hook);
 }
 
-void oWinWindow::UnhookEvents(int _EventHookID) threadsafe
+void window_impl::unhook_events(int _EventHookID)
 {
 	EventHooks.Unhook(_EventHookID);
 }
 
-void oWinWindow::Trigger(const oGUI_ACTION_DESC& _Action) threadsafe
+void window_impl::trigger(const oGUI_ACTION_DESC& _Action)
 {
-	DispatchInternal(std::move(oBIND(&ActionManager_t::Visit, &ActionHooks, _Action))); // bind by copy
+	dispatch_internal(std::move(oBIND(&ActionManager_t::Visit, &ActionHooks, _Action))); // bind by copy
 }
 
-void oWinWindow::Post(int _CustomEventCode, uintptr_t _Context) threadsafe
+void window_impl::post(int _CustomEventCode, uintptr_t _Context)
 {
 	oGUI_EVENT_CUSTOM_DESC e((oGUI_WINDOW)hWnd, _CustomEventCode, _Context);
-	DispatchInternal(oBIND(&EventManager_t::Visit, &EventHooks, e)); // bind by copy
+	dispatch_internal(oBIND(&EventManager_t::Visit, &EventHooks, e)); // bind by copy
 }
 
-void oWinWindow::Dispatch(const oTASK& _Task) threadsafe
+void window_impl::dispatch(const oTASK& _Task)
 {
-	oTASK* pTask = New<oTASK>(_Task);
+	oTASK* pTask = new_object<oTASK>(_Task);
 	PostMessage(hWnd, oWM_DISPATCH, 0, (LPARAM)pTask);
 }
 
@@ -719,12 +700,12 @@ static bool oWinWaitUntilOpaque(HWND _hWnd, unsigned int _TimeoutMS)
 	return true;
 }
 
-oStd::future<std::shared_ptr<surface::buffer>> oWinWindow::CreateSnapshot(int _Frame, bool _IncludeBorder) threadsafe const
+oStd::future<std::shared_ptr<surface::buffer>> window_impl::snapshot(int _Frame, bool _IncludeBorder) const
 {
 	auto PromisedSnap = std::make_shared<oStd::promise<std::shared_ptr<surface::buffer>>>();
 	auto Image = PromisedSnap->get_future();
 
-	const_cast<threadsafe oWinWindow*>(this)->Dispatch([=]() mutable
+	const_cast<window_impl*>(this)->dispatch([=]() mutable
 	{
 		bool success = oWinWaitUntilOpaque(hWnd, 20000);
 		if (!success)
@@ -755,17 +736,17 @@ oStd::future<std::shared_ptr<surface::buffer>> oWinWindow::CreateSnapshot(int _F
 	return Image;
 }
 
-void oWinWindow::SetTimer(uintptr_t _Context, unsigned int _RelativeTimeMS) threadsafe
+void window_impl::start_timer(uintptr_t _Context, unsigned int _RelativeTimeMS)
 {
 	DISPATCH(::SetTimer(hWnd, (UINT_PTR)_Context, _RelativeTimeMS, nullptr));
 }
 
-void oWinWindow::StopTimer(uintptr_t _Context) threadsafe
+void window_impl::stop_timer(uintptr_t _Context)
 {
 	DISPATCH(::KillTimer(hWnd, (UINT_PTR)_Context));
 }
 
-void oWinWindow::FlushMessages(bool _WaitForNext)
+void window_impl::flush_messages(bool _WaitForNext)
 {
 	while (hWnd)
 	{
@@ -787,12 +768,12 @@ void oWinWindow::FlushMessages(bool _WaitForNext)
 	}
 }
 
-void oWinWindow::Quit() threadsafe
+void window_impl::quit()
 {
-	DispatchInternal([=] { PostQuitMessage(0); });
+	dispatch_internal([=] { PostQuitMessage(0); });
 };
 
-void oWinWindow::TriggerGenericEvent(oGUI_EVENT _Event, oGUI_WINDOW_SHAPE_DESC* _pShape)
+void window_impl::trigger_generic_event(oGUI_EVENT _Event, oGUI_WINDOW_SHAPE_DESC* _pShape)
 {
 	oGUI_EVENT_SHAPE_DESC e((oGUI_WINDOW)hWnd, _Event, oWinGetShape(hWnd));
 	EventHooks.Visit(e);
@@ -800,7 +781,7 @@ void oWinWindow::TriggerGenericEvent(oGUI_EVENT _Event, oGUI_WINDOW_SHAPE_DESC* 
 		*_pShape = e.Shape;
 }
 
-void oWinWindow::SetCursor()
+void window_impl::set_cursor()
 {
 	oGUI_CURSOR_STATE NewState = ClientCursorState;
 	HCURSOR hCursor = oWinGetCursor(NewState, (HCURSOR)hUserCursor);
@@ -808,7 +789,7 @@ void oWinWindow::SetCursor()
 	oWinCursorSetVisible(NewState != oGUI_CURSOR_NONE);
 }
 
-bool oWinWindow::HandleLifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult)
+bool window_impl::handle_lifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult)
 {
 	switch (_uMsg)
 	{
@@ -816,12 +797,12 @@ bool oWinWindow::HandleLifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 		{
 			CREATESTRUCTA* cs = (CREATESTRUCTA*)_lParam;
 			oWIN_CREATESTRUCT* wcs = (oWIN_CREATESTRUCT*)cs->lpCreateParams;
-			const oWINDOW_INIT* pInit = (const oWINDOW_INIT*)wcs->pInit;
+			const init* pInit = (const init*)wcs->pInit;
 			oASSERT(pInit, "invalid init struct");
 
 			// this is a bit dangerous because it's not really true this hWnd is 
 			// ready for use, but we need to expose it consistently as a valid 
-			// return value from GetNativeHandle() so it can be accessed from 
+			// return value from native_handle() so it can be accessed from 
 			// oGUI_CREATING, where it's known to be only semi-ready.
 			hWnd = _hWnd;
 
@@ -849,7 +830,7 @@ bool oWinWindow::HandleLifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 
 		case WM_DESTROY:
 		{
-			TriggerGenericEvent(oGUI_CLOSED);
+			trigger_generic_event(oGUI_CLOSED);
 			hWnd = nullptr;
 
 			if (hAccel)
@@ -867,14 +848,14 @@ bool oWinWindow::HandleLifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 	return false;
 }
 
-bool oWinWindow::HandleMisc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult)
+bool window_impl::handle_misc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult)
 {
 	switch (_uMsg)
 	{
 		case WM_SETCURSOR:
 			if (LOWORD(_lParam) == HTCLIENT)
 			{
-				SetCursor();
+				set_cursor();
 				*_pLResult = TRUE;
 				return true;
 			}
@@ -887,24 +868,24 @@ bool oWinWindow::HandleMisc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 			return true;
 
 		case WM_ACTIVATE:
-			TriggerGenericEvent((_wParam == WA_INACTIVE) ? oGUI_DEACTIVATED : oGUI_ACTIVATED);
+			trigger_generic_event((_wParam == WA_INACTIVE) ? oGUI_DEACTIVATED : oGUI_ACTIVATED);
 			break;
 
 		// All these should be treated the same if there's any reason to override 
 		// painting.
 		case WM_PAINT: case WM_PRINT: case WM_PRINTCLIENT:
-			TriggerGenericEvent(oGUI_PAINT);
+			trigger_generic_event(oGUI_PAINT);
 			break;
 
 		case WM_DISPLAYCHANGE:
-			TriggerGenericEvent(oGUI_DISPLAY_CHANGED);
+			trigger_generic_event(oGUI_DISPLAY_CHANGED);
 			break;
 
 		case oWM_DISPATCH:
 		{
 			oTASK* pTask = (oTASK*)_lParam;
 			(*pTask)();
-			Delete(pTask);
+			delete_object(pTask);
 			*_pLResult = 0;
 			return true;
 		}
@@ -929,14 +910,14 @@ bool oWinWindow::HandleMisc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 	return false;
 }
 
-bool oWinWindow::HandleSizing(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult)
+bool window_impl::handle_sizing(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult)
 {
 	*_pLResult = 0;
 
 	switch (_uMsg)
 	{
 		case WM_ENTERSIZEMOVE:
-			TriggerGenericEvent((_wParam == SC_MOVE) ? oGUI_MOVING : oGUI_SIZING);
+			trigger_generic_event((_wParam == SC_MOVE) ? oGUI_MOVING : oGUI_SIZING);
 			return true;
 
 		case WM_MOVE:
@@ -944,7 +925,7 @@ bool oWinWindow::HandleSizing(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lP
 			//oTRACE("HWND 0x%x WM_MOVE: %dx%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam));
 
 			oGUI_WINDOW_SHAPE_DESC s;
-			TriggerGenericEvent(oGUI_MOVED, &s);
+			trigger_generic_event(oGUI_MOVED, &s);
 			PriorShape.ClientPosition = s.ClientPosition;
 			return true;
 		}
@@ -973,7 +954,7 @@ bool oWinWindow::HandleSizing(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lP
 	return false;
 }
 
-bool oWinWindow::HandleInput(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult)
+bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult)
 {
 	*_pLResult = 0;
 	unsigned int Timestamp = (unsigned int)GetMessageTime();
@@ -1022,7 +1003,7 @@ bool oWinWindow::HandleInput(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPa
 				GetClientRect(_hWnd, &rClient);
 				int2 P(GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam));
 				if (all(P >= int2(0,0)) && all(P <= oWinRectSize(rClient)))
-					SetCursor();
+					set_cursor();
 			}
 
 			if (ClientDragToMove && CursorClientPosAtMouseDown.x != oDEFAULT)
@@ -1045,7 +1026,7 @@ bool oWinWindow::HandleInput(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPa
 			if (GetCapture() == hWnd)
 			{
 				ReleaseCapture();
-				TriggerGenericEvent(oGUI_LOST_CAPTURE);
+				trigger_generic_event(oGUI_LOST_CAPTURE);
 			}
 			break;
 		}
@@ -1056,7 +1037,7 @@ bool oWinWindow::HandleInput(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPa
 			{
 				if (GetCapture() == hWnd)
 					ReleaseCapture();
-				TriggerGenericEvent(oGUI_LOST_CAPTURE);
+				trigger_generic_event(oGUI_LOST_CAPTURE);
 			}
 			break;
 		}
@@ -1139,7 +1120,7 @@ bool oWinWindow::HandleInput(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPa
 	return false;
 }
 
-LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
+LRESULT window_impl::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
 {
 	if ((Debug || kForceDebug))
 	{
@@ -1148,17 +1129,19 @@ LRESULT oWinWindow::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 	}
 
 	LRESULT lResult = -1;
-	if (HandleInput(_hWnd, _uMsg, _wParam, _lParam, &lResult))
+	if (handle_input(_hWnd, _uMsg, _wParam, _lParam, &lResult))
 		return lResult;
 
-	if (HandleSizing(_hWnd, _uMsg, _wParam, _lParam, &lResult))
+	if (handle_sizing(_hWnd, _uMsg, _wParam, _lParam, &lResult))
 		return lResult;
 
-	if (HandleMisc(_hWnd, _uMsg, _wParam, _lParam, &lResult))
+	if (handle_misc(_hWnd, _uMsg, _wParam, _lParam, &lResult))
 		return lResult;
 
-	if (HandleLifetime(_hWnd, _uMsg, _wParam, _lParam, &lResult))
+	if (handle_lifetime(_hWnd, _uMsg, _wParam, _lParam, &lResult))
 		return lResult;
 
 	return DefWindowProc(_hWnd, _uMsg, _wParam, _lParam);
 }
+
+} // namespace ouro

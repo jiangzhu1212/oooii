@@ -124,18 +124,18 @@ public:
 public:
 	oSystemProperties(bool* _pSuccess);
 
-	oWindow* GetWindow() { return Window; }
+	window* GetWindow() { return Window.get(); }
 	bool GetRunning() const { return Running; }
 
 	void ShowTab(int _TabIndex)
 	{
-		oASSERT(Window->IsWindowThread(), "wrong thread");
+		oASSERT(Window->is_window_thread(), "wrong thread");
 		oWinControlSelectSubItem(ControlSet[ID_TAB], _TabIndex);
 	}
 
 private:
 	oWinControlSet ControlSet;
-	ouro::intrusive_ptr<oWindow> Window;
+	std::shared_ptr<window> Window;
 	bool Running;
 
 	bool Reload(HWND _hParent, const int2& _ClientSize);
@@ -249,29 +249,29 @@ oSystemProperties::oSystemProperties(bool* _pSuccess)
 {
 	*_pSuccess = false;
 
-	oWINDOW_INIT init;
-	init.Title = "TESTWindowSysDialog";
-	init.EventHook = oBIND(&oSystemProperties::EventHook, this, oBIND1);
-	init.ActionHook = oBIND(&oSystemProperties::ActionHook, this, oBIND1);
-	init.Shape.Style = oGUI_WINDOW_DIALOG;
-	init.Shape.State = oGUI_WINDOW_RESTORED;
-	init.Shape.ClientSize = int2(410,436);
+	window::init i;
+	i.title = "TESTWindowSysDialog";
+	i.event_hook = std::bind(&oSystemProperties::EventHook, this, std::placeholders::_1);
+	i.action_hook = std::bind(&oSystemProperties::ActionHook, this, std::placeholders::_1);
+	i.shape.Style = oGUI_WINDOW_DIALOG;
+	i.shape.State = oGUI_WINDOW_RESTORED;
+	i.shape.ClientSize = int2(410,436);
 
-	if (!oWindowCreate(init, &Window))
-		return;
+	try { Window = window::make(i); }
+	catch (std::exception& e) { oErrorSetLast(e); return; }
 
 	{
 		#if oENABLE_ASSERTS
-			HWND hWnd = (HWND)Window->GetNativeHandle();
+			HWND hWnd = (HWND)Window->native_handle();
 			RECT rClient;
 			GetClientRect(hWnd, &rClient);
-			oASSERT(all(oWinRectSize(rClient) == init.Shape.ClientSize), "Client size mismatch");
+			oASSERT(all(oWinRectSize(rClient) == i.shape.ClientSize), "Client size mismatch");
 		#endif
 
 		// Disable anti-aliasing since on Windows ClearType seems to be non-deterministic
-		Window->Dispatch([&]
+		Window->dispatch([&]
 		{
-			HWND hWnd = (HWND)Window->GetNativeHandle();
+			HWND hWnd = (HWND)Window->native_handle();
 
 			oGUI_FONT_DESC fd;
 			HFONT hCurrent = oWinGetFont(hWnd);
@@ -289,7 +289,7 @@ oSystemProperties::oSystemProperties(bool* _pSuccess)
 			{ oGUI_KEY_F3, ID_RELOAD_UI, false, false, false },
 		};
 
-		Window->SetHotKeys(HotKeys);
+		Window->set_hotkeys(HotKeys);
 	}
 	
 	*_pSuccess = true;
@@ -387,7 +387,7 @@ void oSystemProperties::ActionHook(const oGUI_ACTION_DESC& _Action)
 		case oGUI_ACTION_HOTKEY:
 		{
 			if (_Action.DeviceID == ID_RELOAD_UI)
-				oVERIFY(Reload((HWND)Window->GetNativeHandle(), Window->GetClientSize()));
+				oVERIFY(Reload((HWND)Window->native_handle(), Window->client_size()));
 			
 			break;
 		}
@@ -422,14 +422,14 @@ void TESTSysDialog(test_services& _Services)
 		
 	do
 	{
-		test.GetWindow()->FlushMessages();
+		test.GetWindow()->flush_messages();
 
 	} while (kInteractiveMode && test.GetRunning());
 
 	if (!kInteractiveMode)
 	{
-		oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->CreateSnapshot();
-		test.GetWindow()->FlushMessages();
+		oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->snapshot();
+		test.GetWindow()->flush_messages();
 
 		std::shared_ptr<ouro::surface::buffer> s = snapshot.get();
 		_Services.check(s, 0);
@@ -437,8 +437,8 @@ void TESTSysDialog(test_services& _Services)
 		for (int i = 0; i < 5; i++)
 		{
 			test.ShowTab(i);
-			snapshot = test.GetWindow()->CreateSnapshot();
-			test.GetWindow()->FlushMessages();
+			snapshot = test.GetWindow()->snapshot();
+			test.GetWindow()->flush_messages();
 			s = snapshot.get();
 				
 			// special-case instance that returns 4 pixels off due to what seems to

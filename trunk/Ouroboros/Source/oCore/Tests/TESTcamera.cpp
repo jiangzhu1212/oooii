@@ -147,12 +147,12 @@ void TESTcamera(test_services& _Services)
 		ouro::lstring Title;
 		snprintf(Title, "%s (%dx%d %s)", Contexts[i].Camera->GetName(), cd.Mode.Dimensions.x, cd.Mode.Dimensions.y, ouro::as_string(cd.Mode.Format));
 
-		oWINDOW_INIT init;
-		init.Shape.ClientSize = cd.Mode.Dimensions;
-		init.Shape.ClientPosition = int2(30, 30) * int2(oUInt(i + 1), oUInt(i + 1));
-		init.Title = Title;
-		init.EventHook = oBIND(&CONTEXT::OnEvent, &Contexts[i], oBIND1);
-		oVERIFY(oWindowCreate(init, &Contexts[i].Window));
+		window::init init;
+		init.shape.ClientSize = cd.Mode.Dimensions;
+		init.shape.ClientPosition = int2(30, 30) * int2(oUInt(i + 1), oUInt(i + 1));
+		init.title = Title;
+		init.event_hook = oBIND(&CONTEXT::OnEvent, &Contexts[i], oBIND1);
+		Contexts[i].Window = window::make(init);
 	}
 
 	int OpenWindowCount = 0;

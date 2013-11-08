@@ -395,7 +395,7 @@ interface oGPUDevice : oInterface
 	// (though timing and order differences are likely).
 	virtual void GetImmediateCommandList(oGPUCommandList** _ppCommandList) = 0;
 
-	virtual bool CreatePrimaryRenderTarget(oWindow* _pWindow, ouro::surface::format _DepthStencilFormat, bool _EnableOSRendering, oGPURenderTarget** _ppPrimaryRenderTarget) = 0;
+	virtual bool CreatePrimaryRenderTarget(ouro::window* _pWindow, ouro::surface::format _DepthStencilFormat, bool _EnableOSRendering, oGPURenderTarget** _ppPrimaryRenderTarget) = 0;
 
 	virtual bool CreateCommandList(const char* _Name, const oGPUCommandList::DESC& _Desc, oGPUCommandList** _ppCommandList) = 0;
 	virtual bool CreatePipeline(const char* _Name, const oGPUPipeline::DESC& _Desc, oGPUPipeline** _ppPipeline) = 0;

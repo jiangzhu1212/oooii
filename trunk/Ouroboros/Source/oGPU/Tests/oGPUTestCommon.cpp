@@ -49,18 +49,17 @@ bool oGPUTestApp::Create(const char* _Title, bool _DevMode, const int* _pSnapsho
 	}
 
 	{
-		oWINDOW_INIT init;
-		init.Title = _Title;
-		init.AltF4Closes = true;
-		init.EventHook = oBIND(&oGPUTestApp::OnEvent, this, oBIND1);
-		init.Shape.State = DevMode ? oGUI_WINDOW_RESTORED : oGUI_WINDOW_HIDDEN;
-		init.Shape.Style = oGUI_WINDOW_SIZABLE;
-		init.Shape.ClientSize = _Size;
-		if (!oWindowCreate(init, &Window))
-			oThrowLastError();
+		ouro::window::init i;
+		i.title = _Title;
+		i.alt_f4_closes = true;
+		i.event_hook = std::bind(&oGPUTestApp::OnEvent, this, std::placeholders::_1);
+		i.shape.State = DevMode ? oGUI_WINDOW_RESTORED : oGUI_WINDOW_HIDDEN;
+		i.shape.Style = oGUI_WINDOW_SIZABLE;
+		i.shape.ClientSize = _Size;
+		Window = ouro::window::make(i);
 	}
 
-	if (!Device->CreatePrimaryRenderTarget(Window, surface::d24_unorm_s8_uint, true, &PrimaryRenderTarget))
+	if (!Device->CreatePrimaryRenderTarget(Window.get(), surface::d24_unorm_s8_uint, true, &PrimaryRenderTarget))
 		return false; // pass through error
 
 	Device->GetImmediateCommandList(&CommandList);
@@ -98,18 +97,18 @@ bool oGPUTestApp::CheckSnapshot(oTest* _pTest)
 
 bool oGPUTestApp::Run(oTest* _pTest)
 {
-	oASSERT(Window->IsWindowThread(), "Run must be called from same thread that created the window");
+	oASSERT(Window->is_window_thread(), "Run must be called from same thread that created the window");
 	bool AllFramesSucceeded = true;
 
 	// Flush window init
-	Window->FlushMessages();
+	Window->flush_messages();
 
 	if (!Initialize())
 		return false; // pass through error
 
 	while (Running && DevMode)
 	{
-		Window->FlushMessages();
+		Window->flush_messages();
 		if (!Device->BeginFrame())
 			return false; // pass through error
 

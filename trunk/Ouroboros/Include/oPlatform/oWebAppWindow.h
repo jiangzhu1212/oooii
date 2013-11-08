@@ -30,13 +30,13 @@
 
 // Simple window that reports work load through a "job count"
 // and CPU utilizaton.  Includes a link that opens http://localhost:_ServerPort
-interface oWebAppWindow : oWindow
+interface oWebAppWindow : public oInterface, ouro::window
 {
-	virtual void SetCurrentJobCount(uint _JobCount) threadsafe = 0;
+	virtual void SetCurrentJobCount(uint _JobCount) = 0;
 
-	virtual bool IsRunning() const threadsafe = 0;
-	virtual void Close() threadsafe = 0;
-	virtual bool WaitUntilClosed(unsigned int _TimeoutMS = oInfiniteWait) threadsafe = 0;
+	virtual bool IsRunning() const = 0;
+	virtual void Close() = 0;
+	virtual bool WaitUntilClosed(unsigned int _TimeoutMS = oInfiniteWait) = 0;
 };	
 
 bool oWebAppWindowCreate(const char* _pTitle, unsigned short _ServerPort, oWebAppWindow** _ppWebAppWindow);

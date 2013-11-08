@@ -124,7 +124,7 @@ public:
 	// owning/parent application windows since it is pretty much as child thread 
 	// and thus is created after the main thread (app window) and must be joined 
 	// before the app/thread exits.
-	threadsafe oWindow* Start(oWindow* _pParent, const oGUI_ACTION_HOOK& _OnAction, const oTASK& _OnThreadExit);
+	window* Start(const std::shared_ptr<window>& _Parent, const oGUI_ACTION_HOOK& _OnAction, const oTASK& _OnThreadExit);
 	void Stop();
 
 	oGPUDevice* GetDevice() { return Device; }
@@ -136,14 +136,14 @@ private:
 	void Render();
 
 private:
-	intrusive_ptr<oWindow> Parent;
+	std::shared_ptr<window> Parent;
 	intrusive_ptr<oGPUDevice> Device;
 	intrusive_ptr<oGPUCommandList> CommandList;
 	intrusive_ptr<oGPURenderTarget> WindowRenderTarget;
 	intrusive_ptr<oGPUPipeline> Pipeline;
 	intrusive_ptr<oGPUUtilMesh> Mesh;
 
-	oWindow* pGPUWindow;
+	window* pGPUWindow;
 	oStd::thread Thread;
 	bool Running;
 
@@ -178,9 +178,9 @@ oGPUWindowThread::~oGPUWindowThread()
 	Thread.join();
 }
 
-threadsafe oWindow* oGPUWindowThread::Start(oWindow* _pParent, const oGUI_ACTION_HOOK& _OnAction, const oTASK& _OnThreadExit)
+window* oGPUWindowThread::Start(const std::shared_ptr<window>& _Parent, const oGUI_ACTION_HOOK& _OnAction, const oTASK& _OnThreadExit)
 {
-	Parent = _pParent;
+	Parent = _Parent;
 	OnAction = _OnAction;
 	OnThreadExit = _OnThreadExit;
 	Thread = std::move(oStd::thread(&oGPUWindowThread::Run, this));
@@ -220,36 +220,36 @@ void oGPUWindowThread::Run()
 {
 	oConcurrency::begin_thread("Window Render Target Thread");
 	{
-		intrusive_ptr<oWindow> GPUWindow;
+		std::shared_ptr<window> GPUWindow;
 
 		// Set up child window as a render target (this allows other client-area 
 		// controls to be drawn by parent since the primary render target consumes 
 		// the entire client area).
 		{
-			oWINDOW_INIT Init;
-			Init.Title = "Render Target Window";
-			Init.hIcon = (oGUI_ICON)oGDILoadIcon(IDI_APPICON);
-			Init.ActionHook = OnAction;
-			Init.EventHook = oBIND(&oGPUWindowThread::OnEvent, this, oBIND1);
-			Init.Shape.ClientPosition = int2(0, 0); // important to think client-relative for this
-			Init.Shape.ClientSize = int2(256, 256); // @tony: Try making this 1,1 and see if a resize takes over
-			Init.Shape.State = oGUI_WINDOW_HIDDEN; // don't show the window before it is child-ized
-			Init.Shape.Style = oGUI_WINDOW_BORDERLESS;
-			Init.ClientCursorState = oGUI_CURSOR_HAND;
-			Init.AltF4Closes = true;
-			oVERIFY(oWindowCreate(Init, &GPUWindow));
-			GPUWindow->SetHotKeys(HotKeys);
-			oVERIFY(Device->CreatePrimaryRenderTarget(GPUWindow, ouro::surface::d24_unorm_s8_uint, true, &WindowRenderTarget));
-			GPUWindow->SetParent(Parent);
-			GPUWindow->Show(); // now that the window is a child, show it (it will only show when parent shows)
-			pGPUWindow = GPUWindow;
+			window::init i;
+			i.title = "Render Target Window";
+			i.icon = (oGUI_ICON)oGDILoadIcon(IDI_APPICON);
+			i.action_hook = OnAction;
+			i.event_hook = oBIND(&oGPUWindowThread::OnEvent, this, oBIND1);
+			i.shape.ClientPosition = int2(0, 0); // important to think client-relative for this
+			i.shape.ClientSize = int2(256, 256); // @tony: Try making this 1,1 and see if a resize takes over
+			i.shape.State = oGUI_WINDOW_HIDDEN; // don't show the window before it is child-ized
+			i.shape.Style = oGUI_WINDOW_BORDERLESS;
+			i.cursor_state = oGUI_CURSOR_HAND;
+			i.alt_f4_closes = true;
+			GPUWindow = window::make(i);
+			GPUWindow->set_hotkeys(HotKeys);
+			oVERIFY(Device->CreatePrimaryRenderTarget(GPUWindow.get(), ouro::surface::d24_unorm_s8_uint, true, &WindowRenderTarget));
+			GPUWindow->parent(Parent);
+			GPUWindow->show(); // now that the window is a child, show it (it will only show when parent shows)
+			pGPUWindow = GPUWindow.get();
 		}
 
 		try
 		{
 			while (Running)
 			{
-				GPUWindow->FlushMessages();
+				GPUWindow->flush_messages();
 				Render();
 			}
 		}
@@ -297,8 +297,8 @@ public:
 	void Run();
 
 private:
-	intrusive_ptr<oWindow> AppWindow;
-	threadsafe oWindow* pGPUWindow;
+	std::shared_ptr<window> AppWindow;
+	window* pGPUWindow;
 	oGPUWindowThread GPUWindow;
 
 	oGUI_MENU Menus[oWMENU_COUNT];
@@ -317,7 +317,7 @@ private:
 	void EnableStatusBarStyles(bool _Enabled);
 	void SetUIModeInternal(bool _UIMode, const oGUI_WINDOW_SHAPE_DESC& _CurrentAppShape, const oGUI_WINDOW_SHAPE_DESC& _CurrentGPUShape);
 	void SetUIMode(bool _UIMode);
-	void ToggleFullscreenCooperative(oWindow* _pWindow);
+	void ToggleFullscreenCooperative(window* _pWindow);
 	void Render();
 };
 
@@ -331,31 +331,31 @@ oGPUWindowTestApp::oGPUWindowTestApp()
 {
 	// Set up application window
 	{
-		oWINDOW_INIT Init;
-		Init.Title = "oGPUWindowTestApp";
-		Init.hIcon = (oGUI_ICON)oGDILoadIcon(IDI_APPICON);
-		Init.ActionHook = oBIND(&oGPUWindowTestApp::ActionHook, this, oBIND1);
-		Init.EventHook = oBIND(&oGPUWindowTestApp::AppEventHook, this, oBIND1);
-		Init.Shape.ClientSize = int2(256, 256);
-		Init.Shape.State = oGUI_WINDOW_HIDDEN;
-		Init.Shape.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
-		Init.AltF4Closes = true;
-		Init.ClientCursorState = oGUI_CURSOR_ARROW;
-		oVERIFY(oWindowCreate(Init, &AppWindow));
-		AppWindow->SetHotKeys(HotKeys);
-		AppWindow->SetTimer((uintptr_t)&ClearToggle, 1000);
+		window::init i;
+		i.title = "oGPUWindowTestApp";
+		i.icon = (oGUI_ICON)oGDILoadIcon(IDI_APPICON);
+		i.action_hook = std::bind(&oGPUWindowTestApp::ActionHook, this, std::placeholders::_1);
+		i.event_hook = std::bind(&oGPUWindowTestApp::AppEventHook, this, std::placeholders::_1);
+		i.shape.ClientSize = int2(256, 256);
+		i.shape.State = oGUI_WINDOW_HIDDEN;
+		i.shape.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
+		i.alt_f4_closes = true;
+		i.cursor_state = oGUI_CURSOR_ARROW;
+		AppWindow = window::make(i);
+		AppWindow->set_hotkeys(HotKeys);
+		AppWindow->start_timer((uintptr_t)&ClearToggle, 1000);
 
 		const int sSections[] = { 120, -1 };
-		AppWindow->SetNumStatusSections(sSections, oCOUNTOF(sSections));
-		AppWindow->SetStatusText(0, "F3 for default style");
-		AppWindow->SetStatusText(1, "Fullscreen cooperative");
+		AppWindow->set_num_status_sections(sSections, oCOUNTOF(sSections));
+		AppWindow->set_status_text(0, "F3 for default style");
+		AppWindow->set_status_text(1, "Fullscreen cooperative");
 	}
 
 	// Now set up separate child thread for rendering. This allows UI to be 
 	// detached from potentially slow rendering.
 	pGPUWindow = GPUWindow.Start(AppWindow, oBIND(&oGPUWindowTestApp::ActionHook, this, oBIND1), [&] { Running = false; });
 	GPUWindow.GetRenderTarget()->SetClearColor(ClearToggle.Color[0]);
-	AppWindow->Show();
+	AppWindow->show();
 }
 
 void oGPUWindowTestApp::CheckState(oGUI_WINDOW_STATE _State)
@@ -383,11 +383,11 @@ void oGPUWindowTestApp::SetUIModeInternal(bool _UIMode, const oGUI_WINDOW_SHAPE_
 {
 	oGUI_WINDOW_SHAPE_DESC CurAppShape(_CurrentAppShape), CurGPUShape(_CurrentGPUShape);
 
-	if (AppWindow->IsWindowThread())
-		CurAppShape = AppWindow->GetShape();
+	if (AppWindow->is_window_thread())
+		CurAppShape = AppWindow->shape();
 
-	else if (pGPUWindow->IsWindowThread())
-		CurGPUShape = thread_cast<oWindow*>(pGPUWindow)->GetShape();
+	else if (pGPUWindow->is_window_thread())
+		CurGPUShape = pGPUWindow->shape();
 
 	if (_UIMode)
 	{
@@ -396,21 +396,21 @@ void oGPUWindowTestApp::SetUIModeInternal(bool _UIMode, const oGUI_WINDOW_SHAPE_
 		GPUShape.Style = oGUI_WINDOW_BORDERLESS;
 		GPUShape.ClientPosition = int2(0, 0);
 		GPUShape.ClientSize = CurAppShape.ClientSize;
-		pGPUWindow->SetShape(GPUShape);
-		pGPUWindow->SetParent(AppWindow);
-		pGPUWindow->Show();
-		AppWindow->Show(CurGPUShape.State);
-		AppWindow->SetFocus();
+		pGPUWindow->shape(GPUShape);
+		pGPUWindow->parent(AppWindow);
+		pGPUWindow->show();
+		AppWindow->show(CurGPUShape.State);
+		AppWindow->focus(true);
 	}
 
 	else
 	{
-		AppWindow->Hide();
+		AppWindow->hide();
 		oGUI_WINDOW_SHAPE_DESC GPUShape(CurAppShape);
 		if (oGUIStyleHasStatusBar(GPUShape.Style))
 			GPUShape.Style = oGUI_WINDOW_STYLE(GPUShape.Style - 2);
-		pGPUWindow->SetParent(nullptr);
-		pGPUWindow->SetShape(GPUShape);
+		pGPUWindow->parent(nullptr);
+		pGPUWindow->shape(GPUShape);
 	}
 
 	UIMode = _UIMode;
@@ -423,32 +423,32 @@ void oGPUWindowTestApp::SetUIMode(bool _UIMode)
 
 	oGUI_WINDOW_SHAPE_DESC AppShape, GPUShape;
 
-	if (AppWindow->IsWindowThread())
+	if (AppWindow->is_window_thread())
 	{
-		AppShape = AppWindow->GetShape();
+		AppShape = AppWindow->shape();
 	
-		pGPUWindow->Dispatch([=] { SetUIModeInternal(_UIMode, AppShape, GPUShape); });
+		pGPUWindow->dispatch([=] { SetUIModeInternal(_UIMode, AppShape, GPUShape); });
 	}
 
-	else if (pGPUWindow->IsWindowThread())
+	else if (pGPUWindow->is_window_thread())
 	{
-		GPUShape = thread_cast<oWindow*>(pGPUWindow)->GetShape();
+		GPUShape = pGPUWindow->shape();
 
-		AppWindow->Dispatch([=] { SetUIModeInternal(_UIMode, AppShape, GPUShape); });
+		AppWindow->dispatch([=] { SetUIModeInternal(_UIMode, AppShape, GPUShape); });
 	}
 }
 
-void oGPUWindowTestApp::ToggleFullscreenCooperative(oWindow* _pWindow)
+void oGPUWindowTestApp::ToggleFullscreenCooperative(window* _pWindow)
 {
-	if (_pWindow->GetState() != oGUI_WINDOW_FULLSCREEN)
+	if (_pWindow->state() != oGUI_WINDOW_FULLSCREEN)
 	{
-		PreFullscreenState = _pWindow->GetState();
-		_pWindow->SetState(oGUI_WINDOW_FULLSCREEN);
+		PreFullscreenState = _pWindow->state();
+		_pWindow->state(oGUI_WINDOW_FULLSCREEN);
 		AllowUIModeChange = false;
 	}
 	else
 	{
-		_pWindow->SetState(PreFullscreenState);
+		_pWindow->state(PreFullscreenState);
 		AllowUIModeChange = true;
 	}
 }
@@ -475,12 +475,12 @@ bool oGPUWindowTestApp::CreateMenus(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 	oVERIFY_R(oGUIMenuAppendEnumItems(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, oRTTI_OF(oGUI_WINDOW_STYLE), _CreateEvent.Shape.Style));
 	EnableStatusBarStyles(true);
 
-	MERL.Register(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, [=](int _BorderStyle) { AppWindow->SetStyle((oGUI_WINDOW_STYLE)_BorderStyle); });
+	MERL.Register(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, [=](int _BorderStyle) { AppWindow->style((oGUI_WINDOW_STYLE)_BorderStyle); });
 	oGUIMenuCheckRadio(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST
 		, oWMI_VIEW_STYLE_FIRST + oGUI_WINDOW_SIZABLE_WITH_MENU);
 
 	oVERIFY_R(oGUIMenuAppendEnumItems(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, oRTTI_OF(oGUI_WINDOW_STATE), _CreateEvent.Shape.State));
-	MERL.Register(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, [=](int _State) { AppWindow->Show((oGUI_WINDOW_STATE)_State); });
+	MERL.Register(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, [=](int _State) { AppWindow->show((oGUI_WINDOW_STATE)_State); });
 
 	oGUIMenuAppendItem(Menus[oWMENU_VIEW], oWMI_VIEW_EXCLUSIVE, "Fullscreen E&xclusive");
 
@@ -528,7 +528,7 @@ void oGPUWindowTestApp::AppEventHook(const oGUI_EVENT_DESC& _Event)
 		{
 			oTRACE("oGUI_SIZED %s %dx%d", ouro::as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
 			if (pGPUWindow)
-				pGPUWindow->SetClientSize(_Event.AsShape().Shape.ClientSize);
+				pGPUWindow->client_size(_Event.AsShape().Shape.ClientSize);
 			CheckState(_Event.AsShape().Shape.State);
 			CheckStyle(_Event.AsShape().Shape.Style);
 			break;
@@ -557,7 +557,7 @@ void oGPUWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 				{
 					const bool checked = oGUIMenuIsChecked(Menus[oWMENU_VIEW], _Action.DeviceID);
 					oGUIMenuCheck(Menus[oWMENU_VIEW], _Action.DeviceID, !checked);
-					AppWindow->SetStatusText(1, "Fullscreen %s", !checked ? "exclusive" : "cooperative");
+					AppWindow->set_status_text(1, "Fullscreen %s", !checked ? "exclusive" : "cooperative");
 					break;
 				}
 				case oWMI_HELP_ABOUT:
@@ -589,18 +589,18 @@ void oGPUWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 					if (UIMode)
 					{
 						oGUI_WINDOW_SHAPE_DESC s;
-						s.State = AppWindow->GetState();
+						s.State = AppWindow->state();
 						if (s.State == oGUI_WINDOW_FULLSCREEN)
 							s.State = oGUI_WINDOW_RESTORED;
 						s.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
-						AppWindow->SetShape(s);
+						AppWindow->shape(s);
 					}
 					break;
 				}
 				case oWHK_TOGGLE_FULLSCREEN:
 				{
 					if (UIMode)
-						ToggleFullscreenCooperative(AppWindow);
+						ToggleFullscreenCooperative(AppWindow.get());
 					else
 					{
 						const bool checked = oGUIMenuIsChecked(Menus[oWMENU_VIEW], oWMI_VIEW_EXCLUSIVE);
@@ -612,7 +612,7 @@ void oGPUWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 							AllowUIModeChange = !GoFullscreen;
 						}
 						else
-							ToggleFullscreenCooperative(thread_cast<oWindow*>(pGPUWindow));
+							ToggleFullscreenCooperative(pGPUWindow);
 					}
 					break;
 				}
@@ -634,7 +634,7 @@ void oGPUWindowTestApp::Run()
 	try
 	{
 		while (Running)
-			AppWindow->FlushMessages();
+			AppWindow->flush_messages();
 	}
 	catch (std::exception& e)
 	{

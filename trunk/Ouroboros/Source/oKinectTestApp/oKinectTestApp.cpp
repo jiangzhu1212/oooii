@@ -124,10 +124,10 @@ public:
 			{
 				if (w.Window && w.Running)
 				{
-					w.Window->FlushMessages();
+					w.Window->flush_messages();
 					count++;
 
-					OnPaint((HWND)w.Window->GetNativeHandle(), w.Window->GetClientSize(), w.hFont, w.Kinect, w.ComboMessage);
+					OnPaint((HWND)w.Window->native_handle(), w.Window->client_size(), w.hFont, w.Kinect, w.ComboMessage);
 				}
 			}
 
@@ -163,7 +163,7 @@ private:
 			return *this;
 		}
 
-		intrusive_ptr<oWindow> Window;
+		std::shared_ptr<window> Window;
 		intrusive_ptr<threadsafe oKinect> Kinect;
 		intrusive_ptr<threadsafe oInputMapper> InputMapper;
 		
@@ -194,8 +194,8 @@ private:
 
 	bool Ready;
 
-	void UpdateStatusBar(threadsafe oWindow* _pWindow, const oGUI_BONE_DESC& _Skeleton, const char* _GestureName);
-	void UpdateStatusBar(threadsafe oWindow* _pWindow, const char* _GestureName);
+	void UpdateStatusBar(window* _pWindow, const oGUI_BONE_DESC& _Skeleton, const char* _GestureName);
+	void UpdateStatusBar(window* _pWindow, const char* _GestureName);
 
 	void MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index);
 	void MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index);
@@ -206,7 +206,7 @@ private:
 		// pass through to oWindows.
 		oFOR(auto& w, KinectWindows)
 			if (w.Window)
-			w.Window->Trigger(_Action);
+			w.Window->trigger(_Action);
 	}
 
 	void OnFileChange(oSTREAM_EVENT _Event, const uri_string& _ChangedURI);
@@ -226,31 +226,31 @@ oKinectTestApp::oKinectTestApp()
 	int nKinects = oKinectGetCount();
 	if (nKinects && nKinects != oInvalid)
 	{
-		oWINDOW_INIT init;
+		window::init winit;
 
 		// hide while everything is initialized
-		init.hIcon = (oGUI_ICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APPICON), IMAGE_ICON, 0, 0, 0);
-		init.ClientDragToMove = true;
-		init.Shape.State = oGUI_WINDOW_HIDDEN;
-		init.Shape.Style = oGUI_WINDOW_SIZABLE_WITH_STATUSBAR;
-		init.Shape.ClientSize = int2(640, 480);
+		winit.icon = (oGUI_ICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APPICON), IMAGE_ICON, 0, 0, 0);
+		winit.client_drag_to_move = true;
+		winit.shape.State = oGUI_WINDOW_HIDDEN;
+		winit.shape.Style = oGUI_WINDOW_SIZABLE_WITH_STATUSBAR;
+		winit.shape.ClientSize = int2(640, 480);
 
 		KinectWindows.resize(nKinects);
 		for (int i = 0; i < nKinects; i++)
 		{
 			auto& w = KinectWindows[i];
-			init.Title = "New Window";
+			winit.title = "New Window";
 
-			init.EventHook = oBIND(&oKinectTestApp::MainEventHook, this, oBIND1, i);
-			init.ActionHook = oBIND(&oKinectTestApp::MainActionHook, this, oBIND1, i);
+			winit.event_hook = std::bind(&oKinectTestApp::MainEventHook, this, std::placeholders::_1, i);
+			winit.action_hook = std::bind(&oKinectTestApp::MainActionHook, this, std::placeholders::_1, i);
 
-			oVERIFY(oWindowCreate(init, &w.Window));
+			w.Window = window::make(winit);
 
 			int SectionWidths[4] = { kCoordSpace, kCoordSpace, kCoordSpace, oInvalid };
-			w.Window->SetNumStatusSections(SectionWidths);
+			w.Window->set_num_status_sections(SectionWidths);
 
 			oGUI_BONE_DESC s;
-			UpdateStatusBar(w.Window, s, "<Gesture>");
+			UpdateStatusBar(w.Window.get(), s, "<Gesture>");
 		}
 
 		intrusive_ptr<threadsafe oKinect> Kinect;
@@ -278,7 +278,7 @@ oKinectTestApp::oKinectTestApp()
 				mstring Name;
 				snprintf(Name, "Kinect[%d] ID=%s", kd.Index, kd.ID.c_str());
 
-				KinectWindows[kd.Index].Window->SetTitle(Name);
+				KinectWindows[kd.Index].Window->set_title(Name);
 			}
 			else
 				KinectWindows[kd.Index].Window = nullptr;
@@ -288,7 +288,7 @@ oKinectTestApp::oKinectTestApp()
 
 		oFOR(auto& w, KinectWindows)
 			if (w.Window)
-				w.Window->Show();
+				w.Window->show();
 	}
 	
 	else if (nKinects == 0)
@@ -334,23 +334,23 @@ oKinectTestApp::oKinectTestApp()
 	Ready = true;
 }
 
-void oKinectTestApp::UpdateStatusBar(threadsafe oWindow* _pWindow, const oGUI_BONE_DESC& _Skeleton, const char* _GestureName)
+void oKinectTestApp::UpdateStatusBar(window* _pWindow, const oGUI_BONE_DESC& _Skeleton, const char* _GestureName)
 {
 	// this doesn't differentiate between multiple skeletons yet...
 	#define kCoordFormat "%c: %.02f %.02f %.02f"
 	const float4& H = _Skeleton.Positions[oGUI_BONE_HEAD];
 	const float4& L = _Skeleton.Positions[oGUI_BONE_HAND_LEFT];
 	const float4& R = _Skeleton.Positions[oGUI_BONE_HAND_RIGHT];
-	_pWindow->SetStatusText(0, kCoordFormat, 'H', H.x, H.y, H.z);
-	_pWindow->SetStatusText(1, kCoordFormat, 'L', L.x, L.y, L.z);
-	_pWindow->SetStatusText(2, kCoordFormat, 'R', R.x, R.y, R.z);
+	_pWindow->set_status_text(0, kCoordFormat, 'H', H.x, H.y, H.z);
+	_pWindow->set_status_text(1, kCoordFormat, 'L', L.x, L.y, L.z);
+	_pWindow->set_status_text(2, kCoordFormat, 'R', R.x, R.y, R.z);
 	UpdateStatusBar(_pWindow, _GestureName);
 }
 
-void oKinectTestApp::UpdateStatusBar(threadsafe oWindow* _pWindow, const char* _GestureName)
+void oKinectTestApp::UpdateStatusBar(window* _pWindow, const char* _GestureName)
 {
 	if (oSTRVALID(_GestureName))
-		_pWindow->SetStatusText(3, "%c: %s", 'G', _GestureName);
+		_pWindow->set_status_text(3, "%c: %s", 'G', _GestureName);
 }
 
 void oKinectTestApp::OnPaint(HWND _hWnd
@@ -412,7 +412,7 @@ void oKinectTestApp::MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index)
 	{
 		case oGUI_SIZED:
 		{
-			ouro::display::info di = ouro::display::get_info(kw.Window->GetDisplayId());
+			display::info di = display::get_info(kw.Window->display_id());
 			float2 Ratio = float2(_Event.AsShape().Shape.ClientSize) / float2(int2(di.mode.width, di.mode.height));
 			float R = max(Ratio);
 			oGUI_FONT_DESC fd;
@@ -457,7 +457,7 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 		{
 			sstring text;
 			snprintf(text, "Skeleton[%d] activated", _Action.DeviceID);
-			UpdateStatusBar(kw.Window, text);
+			UpdateStatusBar(kw.Window.get(), text);
 			AirKeyboard->AddSkeleton(_Action.DeviceID);
 			break;
 		}
@@ -466,7 +466,7 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 		{
 			sstring text;
 			snprintf(text, "Skeleton[%d] deactivated", _Action.DeviceID);
-			UpdateStatusBar(kw.Window, text);
+			UpdateStatusBar(kw.Window.get(), text);
 			AirKeyboard->RemoveSkeleton(_Action.DeviceID);
 			break;
 		}
@@ -478,19 +478,19 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 				{
 					case oMEDIA_INPUT_PLAY_PAUSE:
 						kw.Playing = !kw.Playing;
-						UpdateStatusBar(kw.Window, kw.Playing ? "Playing" : "Paused");
+						UpdateStatusBar(kw.Window.get(), kw.Playing ? "Playing" : "Paused");
 						kw.ComboMessage[0] = kw.Playing ? "Playing" : "Paused";
-						kw.Window->SetTimer(0, 2000);
+						kw.Window->start_timer(0, 2000);
 						break;
 					case oMEDIA_INPUT_TRACK_NEXT:
-						UpdateStatusBar(kw.Window, "Next");
+						UpdateStatusBar(kw.Window.get(), "Next");
 						kw.ComboMessage[0] = "Next";
-						kw.Window->SetTimer(0, 2000);
+						kw.Window->start_timer(0, 2000);
 						break;
 					case oMEDIA_INPUT_TRACK_PREV:
-						UpdateStatusBar(kw.Window, "Prev");
+						UpdateStatusBar(kw.Window.get(), "Prev");
 						kw.ComboMessage[0] = "Prev";
-						kw.Window->SetTimer(0, 2000);
+						kw.Window->start_timer(0, 2000);
 						break;
 				}
 			#else
@@ -498,7 +498,7 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 				{
 					case oSIMPLE_INPUT_WAVE:
 						kw.ComboMessage[0] = "Wave";
-						kw.Window->SetTimer(0, 2000);
+						kw.Window->start_timer(0, 2000);
 						break;
 					default:
 						break;
@@ -523,7 +523,7 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 			AirKeyboard->Update(Skeleton, _Action.TimestampMS);
 
 			// this doesn't differentiate between multiple skeletons yet...
-			UpdateStatusBar(kw.Window, Skeleton, nullptr);
+			UpdateStatusBar(kw.Window.get(), Skeleton, nullptr);
 			break;
 		}
 

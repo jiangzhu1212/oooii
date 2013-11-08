@@ -41,7 +41,7 @@ struct oKinectImpl : oKinect
 	
 	bool QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe override;
 
-	oKinectImpl(const oKINECT_DESC& _Desc, threadsafe oWindow* _pWindow, bool* _pSuccess);
+	oKinectImpl(const oKINECT_DESC& _Desc, const std::shared_ptr<ouro::window>& _Window, bool* _pSuccess);
 	~oKinectImpl();
 
 	void GetDesc(oKINECT_DESC* _pDesc) const threadsafe override;
@@ -67,7 +67,7 @@ struct oKinectImpl : oKinect
 
 protected:
 	ouro::intrusive_ptr<INuiSensor> NUISensor;
-	ouro::intrusive_ptr<threadsafe oWindow> Window;
+	std::shared_ptr<ouro::window> Window;
 	oKINECT_DESC Desc;
 	oConcurrency::condition_variable PitchCV;
 	oConcurrency::mutex PitchMutex;

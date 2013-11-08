@@ -26,37 +26,61 @@
 #include <oGUI/Windows/oWinRect.h>
 #include <oGUI/Windows/oWinWindowing.h>
 
-// FIXME
-#include <oBasis/oRefCount.h>
+namespace ouro {
 
-
-using namespace ouro;
-
-struct oWinProgressBar : oProgressBar
+class progress_bar_impl : public progress_bar
 {
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_NOOP_QUERYINTERFACE();
+public:
+	progress_bar_impl(const char* _Title, oGUI_ICON _hIcon
+		, const std::function<void()>& _OnStop);
 
-	oWinProgressBar(const oTASK& _OnStopPressed, const char* _Title = "", oGUI_ICON _hIcon = nullptr);
-	void ShowStop(bool _Show = true) threadsafe override { Window->Dispatch([=] { oWinControlSetVisible(Get(PB_BUTTON), _Show); }); }
-	bool StopShown() const override { return oWinControlIsVisible(Get(PB_BUTTON)); }
-	void SetStopped(bool _Stopped = true) threadsafe override;
-	bool GetStopped() const override { return oWinControlGetErrorState(Get(PB_PROGRESS)); }
-	void SetTextV(const char* _Format, va_list _Args) threadsafe override;
-	char* GetText(char* _StrDestination, size_t _SizeofStrDestination) const override { return oWinControlGetText(_StrDestination, _SizeofStrDestination, Get(PB_TEXT)); }
-	void SetSubtextV(const char* _Format, va_list _Args) threadsafe override;
-	char* GetSubtext(char* _StrDestination, size_t _SizeofStrDestination) const override { return oWinControlGetText(_StrDestination, _SizeofStrDestination, Get(PB_SUBTEXT)); }
-	void SetPercentage(int _Percentage) threadsafe override { Window->Dispatch([=] { oThreadsafe(this)->SetPercentageInternal(_Percentage); }); }
-	void AddPercentage(int _Percentage) threadsafe override { Window->Dispatch([=] { oThreadsafe(this)->SetPercentageInternal(oThreadsafe(this)->GetPercentage() + _Percentage); }); }
-	int GetPercentage() const override { return oWinControlGetRangePosition(Get(PB_PROGRESS)); }
-	const threadsafe oWindow* GetWindow() const threadsafe override { return Window; }
-	threadsafe oWindow* GetWindow() threadsafe override { return Window; }
-	const oWindow* GetWindow() const override { return Window; }
-	oWindow* GetWindow() override { return Window; }
 
+	// basic_window API
+	oGUI_WINDOW native_handle() const override { return Window->native_handle(); }
+	display::id display_id() const override { return Window->display_id(); }
+	bool is_window_thread() const override { return Window->is_window_thread(); }
+	void flush_messages(bool _WaitForNext = false) override { Window->flush_messages(_WaitForNext); }
+	void quit() override { Window->quit(); }
+	void debug(bool _Debug) override { Window->debug(_Debug); }
+	bool debug() const override { return Window->debug(); }
+	void state(oGUI_WINDOW_STATE _State) override { Window->state(_State); }
+	oGUI_WINDOW_STATE state() const override { return Window->state(); }
+	void client_position(const int2& _ClientPosition) override { Window->client_position(_ClientPosition); }
+	int2 client_position() const override { return Window->client_position(); }
+	int2 client_size() const override { return Window->client_size(); }
+	void icon(oGUI_ICON _hIcon) override { Window->icon(_hIcon); }
+	oGUI_ICON icon() const override { return Window->icon(); }
+	void user_cursor(oGUI_CURSOR _hCursor) override { Window->user_cursor(_hCursor); }
+	oGUI_CURSOR user_cursor() const override { return Window->user_cursor(); }
+	void client_cursor_state(oGUI_CURSOR_STATE _State) override { Window->client_cursor_state(_State); }
+	oGUI_CURSOR_STATE client_cursor_state() const override { return Window->client_cursor_state(); }
+	void set_titlev(const char* _Format, va_list _Args) override { Window->set_titlev(_Format, _Args); }
+	char* get_title(char* _StrDestination, size_t _SizeofStrDestination) const override { return Window->get_title(_StrDestination, _SizeofStrDestination); }
+	void parent(const std::shared_ptr<basic_window>& _Parent) override { Window->parent(_Parent); }
+	std::shared_ptr<basic_window> parent() const override { return Window->parent(); }
+	void owner(const std::shared_ptr<basic_window>& _Owner) override { Window->owner(_Owner); }
+	std::shared_ptr<basic_window> owner() const override { return Window->owner(); }
+	void sort_order(oGUI_WINDOW_SORT_ORDER _SortOrder) override { Window->sort_order(_SortOrder); }
+	oGUI_WINDOW_SORT_ORDER sort_order() const override { return Window->sort_order(); }
+	void focus(bool _Focus) override { Window->focus(_Focus); }
+	bool has_focus() const override { return Window->has_focus(); }
+
+	// progress_bar API
+	void stop_button(bool _Show) override { Window->dispatch([=] { oWinControlSetVisible(get(PB_BUTTON), _Show); }); }
+	bool stop_button() const override { return oWinControlIsVisible(get(PB_BUTTON)); }
+	void stopped(bool _Stopped = true) override;
+	bool stopped() const override { return oWinControlGetErrorState(get(PB_PROGRESS)); }
+	void set_textv(const char* _Format, va_list _Args) override;
+	char* get_text(char* _StrDestination, size_t _SizeofStrDestination) const override { return oWinControlGetText(_StrDestination, _SizeofStrDestination, get(PB_TEXT)); }
+	void set_subtextv(const char* _Format, va_list _Args) override;
+	char* get_subtext(char* _StrDestination, size_t _SizeofStrDestination) const override { return oWinControlGetText(_StrDestination, _SizeofStrDestination, get(PB_SUBTEXT)); }
+	void set_percentage(int _Percentage) override { Window->dispatch([=] { set_percentage_internal(_Percentage); }); }
+	void add_percentage(int _Percentage) override { Window->dispatch([=] { set_percentage_internal(percentage() + _Percentage); }); }
+	int percentage() const override { return oWinControlGetRangePosition(get(PB_PROGRESS)); }
+	
 private:
-	intrusive_ptr<oWindow> Window;
-	oTASK OnStopPressed;
+	std::shared_ptr<window> Window;
+	std::function<void()> OnStop;
 
 	enum PB_CONTROL
 	{
@@ -70,46 +94,40 @@ private:
 	};
 
 	std::array<oGUI_WINDOW, PB_CONTROL_COUNT> Controls;
-	oRefCount RefCount;
 	int Percentage;
 
 private:
-	void OnEvent(const oGUI_EVENT_DESC& _Event);
-	void OnAction(const oGUI_ACTION_DESC& _Action);
-	bool CreateControls(const oGUI_EVENT_CREATE_DESC& _CreateEvent);
-	HWND Get(PB_CONTROL _Control) const threadsafe { return (HWND)oThreadsafe(this)->Controls[_Control]; }
-	void SetPercentageInternal(HWND _hProgress, HWND _hMarquee, HWND _hPercent, int _Percentage);
-	void SetPercentageInternal(int _Percentage) { SetPercentageInternal(Get(PB_PROGRESS), Get(PB_MARQUEE), Get(PB_PERCENT), _Percentage); }
+	void on_event(const oGUI_EVENT_DESC& _Event);
+	void on_action(const oGUI_ACTION_DESC& _Action);
+	bool make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent);
+	HWND get(PB_CONTROL _Control) const { return (HWND)oThreadsafe(this)->Controls[_Control]; }
+	void set_percentage_internal(HWND _hProgress, HWND _hMarquee, HWND _hPercent, int _Percentage);
+	void set_percentage_internal(int _Percentage) { set_percentage_internal(get(PB_PROGRESS), get(PB_MARQUEE), get(PB_PERCENT), _Percentage); }
 };
 
-oWinProgressBar::oWinProgressBar(const oTASK& _OnStopPressed, const char* _Title, oGUI_ICON _hIcon)
-	: OnStopPressed(_OnStopPressed)
+progress_bar_impl::progress_bar_impl(const char* _Title, oGUI_ICON _hIcon, const std::function<void()>& _OnStop)
+	: OnStop(_OnStop)
 	, Percentage(-1)
 {
 	Controls.fill(nullptr);
-
-	oWINDOW_INIT Init;
-	Init.Title = _Title;
-	Init.hIcon = _hIcon;
-	Init.ActionHook = oBIND(&oWinProgressBar::OnAction, this, oBIND1);
-	Init.EventHook = oBIND(&oWinProgressBar::OnEvent, this, oBIND1);
-	Init.Shape.ClientSize = int2(320, 106);
-	Init.Shape.State = oGUI_WINDOW_HIDDEN;
-	Init.Shape.Style = oGUI_WINDOW_FIXED;
-	if (!oWindowCreate(Init, &Window))
-		oThrowLastError();
-
-	SetPercentageInternal(-1);
+	window::init i;
+	i.title = _Title;
+	i.icon = _hIcon;
+	i.action_hook = std::bind(&progress_bar_impl::on_action, this, std::placeholders::_1);
+	i.event_hook = std::bind(&progress_bar_impl::on_event, this, std::placeholders::_1);
+	i.shape.ClientSize = int2(320, 106);
+	i.shape.State = oGUI_WINDOW_HIDDEN;
+	i.shape.Style = oGUI_WINDOW_FIXED;
+	Window = window::make(i);
+	set_percentage_internal(-1);
 }
 
-bool oProgressBarCreate(const oTASK& _OnStopPressed, const char* _Title, oGUI_ICON _hIcon, oProgressBar** _ppProgressBar)
+std::shared_ptr<progress_bar> progress_bar::make(const char* _Title, oGUI_ICON _hIcon, const std::function<void()>& _OnStop)
 {
-	try { *_ppProgressBar = new oWinProgressBar(_OnStopPressed, _Title, _hIcon); }
-	catch (std::exception& e) { *_ppProgressBar = nullptr; return oErrorSetLast(e); }
-	return true;
+	return std::make_shared<progress_bar_impl>(_Title, _hIcon, _OnStop);
 }
 
-bool oWinProgressBar::CreateControls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
+bool progress_bar_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 {
 	const int2 ProgressBarSize(270, 22);
 	const int2 ButtonSize(75, 23);
@@ -173,13 +191,13 @@ bool oWinProgressBar::CreateControls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 	return true;
 }
 
-void oWinProgressBar::OnEvent(const oGUI_EVENT_DESC& _Event)
+void progress_bar_impl::on_event(const oGUI_EVENT_DESC& _Event)
 {
 	switch (_Event.Type)
 	{
 		case oGUI_CREATING:
 		{
-			if (!CreateControls(_Event.AsCreate()))
+			if (!make_controls(_Event.AsCreate()))
 				oThrowLastError();
 			break;
 		}
@@ -189,25 +207,25 @@ void oWinProgressBar::OnEvent(const oGUI_EVENT_DESC& _Event)
 	}
 }
 
-void oWinProgressBar::OnAction(const oGUI_ACTION_DESC& _Action)
+void progress_bar_impl::on_action(const oGUI_ACTION_DESC& _Action)
 {
-	if (_Action.Action == oGUI_ACTION_CONTROL_ACTIVATED && _Action.DeviceID == PB_BUTTON && OnStopPressed)
+	if (_Action.Action == oGUI_ACTION_CONTROL_ACTIVATED && _Action.DeviceID == PB_BUTTON && OnStop)
 	{
-		SetStopped(true);
-		OnStopPressed();
+		stopped(true);
+		OnStop();
 	}
 }
 
-void oWinProgressBar::SetStopped(bool _Stopped) threadsafe
+void progress_bar_impl::stopped(bool _Stopped)
 {
-	Window->Dispatch([=]
+	Window->dispatch([=]
 	{
-		oWinControlSetErrorState(Get(PB_PROGRESS), _Stopped);
-		oWinControlSetErrorState(Get(PB_MARQUEE), _Stopped);
+		oWinControlSetErrorState(get(PB_PROGRESS), _Stopped);
+		oWinControlSetErrorState(get(PB_MARQUEE), _Stopped);
 	});
 }
 
-void oWinProgressBar::SetTextV(const char* _Format, va_list _Args) threadsafe
+void progress_bar_impl::set_textv(const char* _Format, va_list _Args)
 {
 	lstring s;
 	if (-1 == vsnprintf(s, _Format, _Args))
@@ -215,10 +233,10 @@ void oWinProgressBar::SetTextV(const char* _Format, va_list _Args) threadsafe
 		ellipsize(s);
 		oTHROW0(no_buffer_space);
 	}
-	Window->Dispatch([=] { oWinControlSetText(Get(PB_TEXT), s.c_str()); });
+	Window->dispatch([=] { oWinControlSetText(get(PB_TEXT), s.c_str()); });
 }
 
-void oWinProgressBar::SetSubtextV(const char* _Format, va_list _Args) threadsafe
+void progress_bar_impl::set_subtextv(const char* _Format, va_list _Args)
 {
 	lstring s;
 	if (-1 == vsnprintf(s, _Format, _Args))
@@ -226,28 +244,28 @@ void oWinProgressBar::SetSubtextV(const char* _Format, va_list _Args) threadsafe
 		ellipsize(s);
 		oTHROW0(no_buffer_space);
 	}
-	Window->Dispatch([=] { oWinControlSetText(Get(PB_SUBTEXT), s.c_str()); });
+	Window->dispatch([=] { oWinControlSetText(get(PB_SUBTEXT), s.c_str()); });
 }
 
-static void EnsureVisible(HWND _hControl)
+static void ensure_visible(HWND _hControl)
 {
 	if (!oWinControlIsVisible(_hControl))
 		oWinControlSetVisible(_hControl);
 }
 
-static void EnsureHidden(HWND _hControl)
+static void ensure_hidden(HWND _hControl)
 {
 	if (oWinControlIsVisible(_hControl))
 		oWinControlSetVisible(_hControl, false);
 }
 
-void oWinProgressBar::SetPercentageInternal(HWND _hProgress, HWND _hMarquee, HWND _hPercent, int _Percentage)
+void progress_bar_impl::set_percentage_internal(HWND _hProgress, HWND _hMarquee, HWND _hPercent, int _Percentage)
 {
 	if (_Percentage < 0)
 	{
-		EnsureHidden(_hProgress);
-		EnsureHidden(_hPercent);
-		EnsureVisible(_hMarquee);
+		ensure_hidden(_hProgress);
+		ensure_hidden(_hPercent);
+		ensure_visible(_hMarquee);
 	}
 
 	else
@@ -260,10 +278,12 @@ void oWinProgressBar::SetPercentageInternal(HWND _hProgress, HWND _hMarquee, HWN
 		ellipsize(buf);
 		oVERIFY(oWinControlSetText(_hPercent, buf));
 
-		EnsureHidden(_hMarquee);
-		EnsureVisible(_hProgress);
-		EnsureVisible(_hPercent);
+		ensure_hidden(_hMarquee);
+		ensure_visible(_hProgress);
+		ensure_visible(_hPercent);
 	}
 
 	Percentage = _Percentage;
 }
+
+} // namespace ouro

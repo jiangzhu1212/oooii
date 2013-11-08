@@ -43,11 +43,11 @@ class oWindowUITest
 public:
 	oWindowUITest(bool* _pSuccess);
 
-	oWindow* GetWindow() { return Window; }
+	window* GetWindow() { return Window.get(); }
 	bool GetRunning() const { return Running; }
 
 private:
-	ouro::intrusive_ptr<oWindow> Window;
+	std::shared_ptr<window> Window;
 	bool Running;
 
 	enum
@@ -149,7 +149,7 @@ void oWindowUITest::ActionHook(const oGUI_ACTION_DESC& _Action)
 			break;
 		case oGUI_ACTION_POINTER_MOVE:
 			if (kInteractiveMode)
-				Window->SetStatusText(0, "Cursor: %dx%d", (int)_Action.Position.x, (int)_Action.Position.y);
+				Window->set_status_text(0, "Cursor: %dx%d", (int)_Action.Position.x, (int)_Action.Position.y);
 			break;
 		default:
 			break;
@@ -241,24 +241,24 @@ oWindowUITest::oWindowUITest(bool* _pSuccess)
 {
 	*_pSuccess = false;
 
-	oWINDOW_INIT init;
-	init.Title = "TESTWindowControls";
-	init.EventHook = oBIND(&oWindowUITest::EventHook, this, oBIND1);
-	init.ActionHook = oBIND(&oWindowUITest::ActionHook, this, oBIND1);
-	init.Shape.State = oGUI_WINDOW_RESTORED;
-	init.Shape.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
-	init.Shape.ClientSize = int2(640,480);
+	window::init i;
+	i.title = "TESTWindowControls";
+	i.event_hook = std::bind(&oWindowUITest::EventHook, this, std::placeholders::_1);
+	i.action_hook = std::bind(&oWindowUITest::ActionHook, this, std::placeholders::_1);
+	i.shape.State = oGUI_WINDOW_RESTORED;
+	i.shape.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
+	i.shape.ClientSize = int2(640,480);
 
-	if (!oWindowCreate(init , &Window))
-		return;
+	try { Window = window::make(i); }
+	catch (std::exception& e) { oErrorSetLast(e); return; }
 
 	int Widths[2] = { 100, oInvalid };
-	Window->SetNumStatusSections(Widths);
+	Window->set_num_status_sections(Widths);
 
 	// Disable anti-aliasing since on Windows ClearType seems to be non-deterministic
-	Window->Dispatch([&]
+	Window->dispatch([&]
 	{
-		HWND hWnd = (HWND)Window->GetNativeHandle();
+		HWND hWnd = (HWND)Window->native_handle();
 		oGUI_FONT_DESC fd;
 		HFONT hCurrent = oWinGetFont(hWnd);
 		oGDIGetFontDesc(hCurrent, &fd);
@@ -267,8 +267,8 @@ oWindowUITest::oWindowUITest(bool* _pSuccess)
 		oWinSetFont(hWnd, hNew);
 	});
 
-	Window->SetStatusText(0, "OK");
-	Window->SetStatusText(1, "Solid");
+	Window->set_status_text(0, "OK");
+	Window->set_status_text(1, "Solid");
 
 	oGUI_HOTKEY_DESC_NO_CTOR HotKeys[] = 
 	{
@@ -276,7 +276,7 @@ oWindowUITest::oWindowUITest(bool* _pSuccess)
 		{ oGUI_KEY_S, MENU_VIEW_SOLID, false, true, false },
 	};
 
-	Window->SetHotKeys(HotKeys);
+	Window->set_hotkeys(HotKeys);
 
 	*_pSuccess = true;
 }
@@ -481,13 +481,13 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			oGUIMenuCheck(hViewMenu, MENU_VIEW_SOLID, true);
 			oGUIMenuCheck(hViewMenu, MENU_VIEW_WIREFRAME, false);
 			oGUIMenuEnable(hFileMenu, MENU_FILE_EXIT);
-			Window->SetStatusText(1, "Solid");
+			Window->set_status_text(1, "Solid");
 			break;
 		case MENU_VIEW_WIREFRAME:
 			oGUIMenuCheck(hViewMenu, MENU_VIEW_SOLID, false);
 			oGUIMenuCheck(hViewMenu, MENU_VIEW_WIREFRAME, true);
 			oGUIMenuEnable(hFileMenu, MENU_FILE_EXIT, false);
-			Window->SetStatusText(1, "Wireframe");
+			Window->set_status_text(1, "Wireframe");
 			break;
 		case MENU_VIEW_SHOW_STATUSBAR:
 		{
@@ -495,7 +495,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			oGUIMenuCheck(hViewMenu, MENU_VIEW_SHOW_STATUSBAR, NewState);
 			oGUI_WINDOW_SHAPE_DESC s;
 			s.Style = NewState ? oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR : oGUI_WINDOW_SIZABLE_WITH_MENU;
-			Window->SetShape(s);
+			Window->shape(s);
 			break;
 		}
 		case MENU_HELP_ABOUT:
@@ -527,15 +527,15 @@ void TESTWindowControls(test_services& _Services)
 	double WaitForSettle = ouro::timer::now() + 1.0;
 	do
 	{
-		test.GetWindow()->FlushMessages();
+		test.GetWindow()->flush_messages();
 
 	} while (ouro::timer::now() < WaitForSettle);
 
-	oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->CreateSnapshot();
+	oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->snapshot();
 		
 	do
 	{
-		test.GetWindow()->FlushMessages();
+		test.GetWindow()->flush_messages();
 		
 	} while ((kInteractiveMode && test.GetRunning()) || !snapshot.is_ready());
 

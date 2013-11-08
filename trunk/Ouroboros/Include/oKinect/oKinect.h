@@ -117,6 +117,6 @@ int oKinectGetCount();
 
 // If the specified index does not exist, this will return false with last error 
 // of no_such_device.
-bool oKinectCreate(const oKINECT_DESC& _Desc, threadsafe oWindow* _pWindow, threadsafe oKinect** _ppKinect);
+bool oKinectCreate(const oKINECT_DESC& _Desc, const std::shared_ptr<ouro::window>& _Window, threadsafe oKinect** _ppKinect);
 
 #endif

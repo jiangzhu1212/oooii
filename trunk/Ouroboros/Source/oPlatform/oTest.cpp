@@ -1030,14 +1030,14 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	oStd::thread ProgressBarThread;
 	bool ShouldStop = false;
 	oConcurrency::event Ready;
-	threadsafe oProgressBar* pProgressBar = nullptr;
+	progress_bar* pProgressBar = nullptr;
 	finally StopProgressBar([&]
 	{
 		if (ShowProgressBar)
 			Ready.wait();
 		
 		if (pProgressBar)
-			pProgressBar->Quit();
+			pProgressBar->quit();
 		
 		ProgressBarThread.join();
 	});
@@ -1049,11 +1049,10 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 			oConcurrency::begin_thread("Progress Bar Thread");
 			xlstring title;
 			console::get_title(title);
-			intrusive_ptr<oProgressBar> ProgressBar;
-			oVERIFY(oProgressBarCreate([&] { ShouldStop = true; }, title, &ProgressBar));
-			pProgressBar = ProgressBar;
+			std::shared_ptr<progress_bar> ProgressBar = progress_bar::make(title, console::icon(), [&] { ShouldStop = true; });
+			pProgressBar = ProgressBar.get();
 			Ready.set();
-			ProgressBar->FlushMessages(true);
+			ProgressBar->flush_messages(true);
 			pProgressBar = nullptr;
 			oConcurrency::end_thread();
 		}));
@@ -1065,8 +1064,8 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	size_t ProgressNumTestsSoFar = 0;
 	if (ShowProgressBar)
 	{
-		pProgressBar->SetText("Calculating the number of tests...");
-		pProgressBar->Restore();
+		pProgressBar->set_text("Calculating the number of tests...");
+		pProgressBar->restore();
 
 		ProgressTotalNumTests = CalculateNumTests(Desc, &filterChain);
 		if (ShouldStop)
@@ -1140,7 +1139,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 							if (ShouldStop)
 								break;
 
-							pProgressBar->SetText(TestName);
+							pProgressBar->set_text(TestName);
 						}
 
 						oTRACE("========== Begin %s Run %u ==========", TestName.c_str(), r+1);
@@ -1153,7 +1152,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 						if (ShowProgressBar)
 						{
 							ProgressNumTestsSoFar++;
-							pProgressBar->SetPercentage(static_cast<int>((100 * (ProgressNumTestsSoFar+1)) / ProgressTotalNumTests));
+							pProgressBar->set_percentage(static_cast<int>((100 * (ProgressNumTestsSoFar+1)) / ProgressTotalNumTests));
 						}
 					}
 

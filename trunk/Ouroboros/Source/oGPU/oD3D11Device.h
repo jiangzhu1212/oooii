@@ -62,7 +62,7 @@ struct oD3D11Device : oGPUDevice
 
 	void GetImmediateCommandList(oGPUCommandList** _ppCommandList) override;
 	
-	bool CreatePrimaryRenderTarget(oWindow* _pWindow, ouro::surface::format _DepthStencilFormat, bool _EnableOSRendering, oGPURenderTarget** _ppPrimaryRenderTarget) override;
+	bool CreatePrimaryRenderTarget(ouro::window* _pWindow, ouro::surface::format _DepthStencilFormat, bool _EnableOSRendering, oGPURenderTarget** _ppPrimaryRenderTarget) override;
 
 	bool CreateCommandList(const char* _Name, const oGPUCommandList::DESC& _Desc, oGPUCommandList** _ppCommandList) override;
 	bool CreatePipeline(const char* _Name, const oGPUPipeline::DESC& _Desc, oGPUPipeline** _ppPipeline) override;

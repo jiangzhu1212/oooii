@@ -539,10 +539,10 @@ int main(int argc, const char* argv[])
 
 	int WorkCountUILast = -1;
 	uint LastP4CheckMS = 0;
-	Window->Show();
+	Window->show();
 	while(Window->IsRunning())
 	{
-		Window->FlushMessages();
+		Window->flush_messages();
 
 		// Update UI
 		int WorkCount = CLManager->GetCount();

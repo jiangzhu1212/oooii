@@ -75,7 +75,7 @@ struct oGestureManagerImpl : oGestureManager
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_NOOP_QUERYINTERFACE();
 
-	oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, threadsafe oWindow* _pWindow, bool* _pSuccess);
+	oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, const std::shared_ptr<ouro::window>& _Window, bool* _pSuccess);
 	~oGestureManagerImpl();
 
 	void GetDesc(oGESTURE_MANAGER_DESC* _pDesc) override;
@@ -102,7 +102,7 @@ private:
 
 	// Generic elements
 	
-	intrusive_ptr<threadsafe oWindow> Window;
+	std::shared_ptr<ouro::window> Window;
 	intrusive_ptr<threadsafe oKinect> Kinect;
 	intrusive_ptr<threadsafe oAirKeyboard> AirKeyboard;
 	intrusive_ptr<threadsafe oInputMapper> InputMapper;
@@ -163,8 +163,8 @@ private:
 	bool ReloadInputs(const uri_string& _Inputs_xml);
 };
 
-oGestureManagerImpl::oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, threadsafe oWindow* _pWindow, bool* _pSuccess)
-	: Window(_pWindow)
+oGestureManagerImpl::oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, const std::shared_ptr<ouro::window>& _Window, bool* _pSuccess)
+	: Window(_Window)
 	, VizDesc(_Init.VizDesc)
 	, DeviceVizDesc(_Init.DeviceVizDesc)
 	, hBonePen(oGDICreatePen(OOOiiGreen, 2))
@@ -230,10 +230,10 @@ oGestureManagerImpl::~oGestureManagerImpl()
 		DestroyIcon((HICON)DeviceVizDesc.hNotOverlay);
 }
 
-bool oGestureManagerCreate(const oGESTURE_MANAGER_INIT& _Init, threadsafe oWindow* _pWindow, oGestureManager** _ppGestureManager)
+bool oGestureManagerCreate(const oGESTURE_MANAGER_INIT& _Init, const std::shared_ptr<ouro::window>& _Window, oGestureManager** _ppGestureManager)
 {
 	bool success = false;
-	oCONSTRUCT(_ppGestureManager, oGestureManagerImpl(_Init, _pWindow, &success));
+	oCONSTRUCT(_ppGestureManager, oGestureManagerImpl(_Init, _Window, &success));
 	return success;
 }
 
@@ -241,14 +241,28 @@ void oGestureManagerImpl::HookWindow(bool _Hooked)
 {
 	if (_Hooked)
 	{
-		hookAirKeys = AirKeyboard->HookActions(oBIND(&oWindow::Trigger, Window.c_ptr(), oBIND1));
-		hookInputMaps = InputMapper->HookActions(oBIND(&oWindow::Trigger, Window.c_ptr(), oBIND1));
-		hookEvents = Window->HookEvents(oBIND(&oGestureManagerImpl::OnEvent, this, oBIND1));
-		hookActions = Window->HookActions(oBIND(&oGestureManagerImpl::OnAction, this, oBIND1));
+		hookAirKeys = AirKeyboard->HookActions(oBIND(&ouro::window::trigger, Window.get(), oBIND1));
+		hookInputMaps = InputMapper->HookActions(oBIND(&ouro::window::trigger, Window.get(), oBIND1));
+		hookEvents = Window->hook_events(oBIND(&oGestureManagerImpl::OnEvent, this, oBIND1));
+		hookActions = Window->hook_actions(oBIND(&oGestureManagerImpl::OnAction, this, oBIND1));
 	}
 
 	else
 	{
+		#define oSAFE_UNHOOKE(_OBJ, _HookID) do \
+		{	if (_HookID != oInvalid) \
+			{	_OBJ->unhook_events(_HookID); \
+				_HookID = oInvalid; \
+			} \
+		} while (false)
+
+		#define oSAFE_UNHOOKA(_OBJ, _HookID) do \
+		{	if (_HookID != oInvalid) \
+				{	_OBJ->unhook_actions(_HookID); \
+				_HookID = oInvalid; \
+			} \
+		} while (false)
+
 		#define SAFE_UNHOOKE(_OBJ, _HookID) do \
 		{	if (_HookID != oInvalid) \
 			{	_OBJ->UnhookEvents(_HookID); \
@@ -263,8 +277,8 @@ void oGestureManagerImpl::HookWindow(bool _Hooked)
 			} \
 		} while (false)
 
-		SAFE_UNHOOKE(Window, hookEvents);
-		SAFE_UNHOOKA(Window, hookActions);
+		oSAFE_UNHOOKE(Window, hookEvents);
+		oSAFE_UNHOOKA(Window, hookActions);
 		SAFE_UNHOOKA(InputMapper, hookInputMaps);
 		SAFE_UNHOOKA(AirKeyboard, hookAirKeys);
 
@@ -559,7 +573,7 @@ void oGestureManagerImpl::GDIDrawKinectStatus(oGUI_DRAW_CONTEXT _hDC, const int2
 			{
 				LastSetTimerState = KinectDrawState;
 				TimerMessageVersion++;
-				Window->SetTimer(MAKE_TIMER_MSG(TimerMessageVersion, oGESTURE_TIMER_DRAW_INITIALIZING_2, 0), DeviceVizDesc.BlinkTimeoutMS);
+				Window->start_timer(MAKE_TIMER_MSG(TimerMessageVersion, oGESTURE_TIMER_DRAW_INITIALIZING_2, 0), DeviceVizDesc.BlinkTimeoutMS);
 			}
 			break;
 
@@ -570,7 +584,7 @@ void oGestureManagerImpl::GDIDrawKinectStatus(oGUI_DRAW_CONTEXT _hDC, const int2
 			{
 				LastSetTimerState = KinectDrawState;
 				TimerMessageVersion++;
-				Window->SetTimer(MAKE_TIMER_MSG(TimerMessageVersion, oGESTURE_TIMER_DRAW_INITIALIZING_1, 0), DeviceVizDesc.BlinkTimeoutMS);
+				Window->start_timer(MAKE_TIMER_MSG(TimerMessageVersion, oGESTURE_TIMER_DRAW_INITIALIZING_1, 0), DeviceVizDesc.BlinkTimeoutMS);
 			}
 			break;
 
@@ -580,7 +594,7 @@ void oGestureManagerImpl::GDIDrawKinectStatus(oGUI_DRAW_CONTEXT _hDC, const int2
 			{
 				LastSetTimerState = KinectDrawState;
 				TimerMessageVersion++;
-				Window->SetTimer(MAKE_TIMER_MSG(TimerMessageVersion, oGESTURE_TIMER_DRAW_NONE, 0), DeviceVizDesc.ShowTimeoutMS);
+				Window->start_timer(MAKE_TIMER_MSG(TimerMessageVersion, oGESTURE_TIMER_DRAW_NONE, 0), DeviceVizDesc.ShowTimeoutMS);
 			}
 			break;
 
@@ -665,7 +679,7 @@ int oGestureManagerImpl::SetHeadMessageV(int _SkeletonIndex, const char* _Format
 	int l = vsnprintf(ComboMessage[_SkeletonIndex], _Format, _Args);
 	//TimerMessageVersion++; // don't respect this because it is separate from
 													 // kinect status timer
-	Window->SetTimer(MAKE_TIMER_MSG(TimerMessageVersion, oGESTURE_TIMER_HEAD_MESSAGE, _SkeletonIndex), Desc.HeadMessageTimeoutMS);
+	Window->start_timer(MAKE_TIMER_MSG(TimerMessageVersion, oGESTURE_TIMER_HEAD_MESSAGE, _SkeletonIndex), Desc.HeadMessageTimeoutMS);
 	return l;
 }
 

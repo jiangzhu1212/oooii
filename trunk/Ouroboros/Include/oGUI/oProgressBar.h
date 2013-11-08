@@ -38,84 +38,47 @@
 
 #include <oPlatform/oWindow.h>
 
-// {1357E33D-DCED-4DE1-9E02-9A0A492AE1FE}
-oDEFINE_GUID_I(oProgressBar, 0x1357e33d, 0xdced, 0x4de1, 0x9e, 0x2, 0x9a, 0xa, 0x49, 0x2a, 0xe1, 0xfe);
-interface oProgressBar : oInterface
+namespace ouro {
+
+class progress_bar : public basic_window
 {
 public:
-	// Allowable interface from oWindow
-	inline oGUI_WINDOW GetNativeHandle() const threadsafe { return GetWindow()->GetNativeHandle(); }
-	inline int GetDisplayId() const { return GetWindow()->GetDisplayId(); }
-	inline bool IsWindowThread() const threadsafe { return GetWindow()->IsWindowThread(); }
-	inline oGUI_WINDOW_STATE GetState() const { oGUI_WINDOW_SHAPE_DESC s = GetWindow()->GetShape(); return s.State; }
-	inline void Hide() threadsafe { GetWindow()->SetState(oGUI_WINDOW_HIDDEN); }
-	inline void Minimize() threadsafe { GetWindow()->SetState(oGUI_WINDOW_MINIMIZED); }
-	inline void Restore() threadsafe { GetWindow()->SetState(oGUI_WINDOW_RESTORED); }
-	inline void SetClientPosition(const int2& _ClientPosition) threadsafe { oGUI_WINDOW_SHAPE_DESC s; s.ClientPosition = _ClientPosition; GetWindow()->SetShape(s); }
-	inline int2 GetClientPosition() const { oGUI_WINDOW_SHAPE_DESC s = GetWindow()->GetShape(); return s.ClientPosition; }
-	inline int2 GetClientSize() const { oGUI_WINDOW_SHAPE_DESC s = GetWindow()->GetShape(); return s.ClientSize; }
-	inline void SetIcon(oGUI_ICON _hIcon) threadsafe { GetWindow()->SetIcon(_hIcon); }
-	inline oGUI_ICON GetIcon() const { return GetWindow()->GetIcon(); }
-	inline void SetParent(oWindow* _pParent) threadsafe { GetWindow()->SetParent(_pParent); }
-	inline oWindow* GetParent() const { GetWindow()->GetParent(); }
-	void SetOwner(oWindow* _pOwner) threadsafe { GetWindow()->SetOwner(_pOwner); }
-	oWindow* GetOwner() const { return GetWindow()->GetOwner(); }
-	void SetSortOrder(oGUI_WINDOW_SORT_ORDER _SortOrder) threadsafe { GetWindow()->SetSortOrder(_SortOrder); }
-	oGUI_WINDOW_SORT_ORDER GetSortOrder() const { return GetWindow()->GetSortOrder(); }
-	void SetFocus(bool _Focus = true) threadsafe { GetWindow()->SetFocus(_Focus); }
-	bool HasFocus() const { return GetWindow()->HasFocus(); }
-	void SetTitleV(const char* _Format, va_list _Args) threadsafe { return GetWindow()->SetTitleV(_Format, _Args); }
-	char* GetTitle(char* _StrDestination, size_t _SizeofStrDestination) const { return GetWindow()->GetTitle(_StrDestination, _SizeofStrDestination); }
-	inline void SetTitle(const char* _Format, ...) threadsafe { va_list args; va_start(args, _Format); SetTitleV(_Format, args); va_end(args); }
-	template<size_t size> char* GetTitle(char (&_StrDestination)[size]) const { return GetTitle(_StrDestination, size); }
-	template<size_t capacity> char* GetTitle(ouro::fixed_string<char, capacity>& _StrDestination) const { return GetTitle(_StrDestination, _StrDestination.capacity()); }
-	inline void FlushMessages(bool _WaitForNext = false) { GetWindow()->FlushMessages(_WaitForNext); }
-	inline void Quit() threadsafe { GetWindow()->Quit(); }
-	// Unique to oProgressBar
+	static std::shared_ptr<progress_bar> make(const char* _Title
+		, oGUI_ICON _hIcon, const std::function<void()>& _OnStop);
 
-	virtual void ShowStop(bool _Show = true) threadsafe = 0;
-	virtual bool StopShown() const = 0;
+  virtual void stop_button(bool _Show) = 0;
+  virtual bool stop_button() const = 0;
 
-	virtual void SetStopped(bool _Stopped = true) threadsafe = 0;
-	virtual bool GetStopped() const = 0;
+  virtual void stopped(bool _Stopped) = 0;
+  virtual bool stopped() const = 0;
 
-	virtual void SetTextV(const char* _Format, va_list _Args) threadsafe = 0;
-	virtual char* GetText(char* _StrDestination, size_t _SizeofStrDestination) const = 0;
+  virtual void set_textv(const char* _Format, va_list _Args) = 0;
+  virtual char* get_text(char* _StrDestination, size_t _SizeofStrDestination) const = 0;
 
-	inline void SetText(const char* _Format, ...) threadsafe { va_list args; va_start(args, _Format); SetTextV(_Format, args); va_end(args); }
-	template<size_t size> char* GetText(char (&_StrDestination)[size]) const { return GetText(_StrDestination, size); }
-	template<size_t capacity> char* GetText(ouro::fixed_string<char, capacity>& _StrDestination) const { return GetText(_StrDestination, _StrDestination.capacity()); }
+  inline void set_text(const char* _Format, ...) { va_list args; va_start(args, _Format); set_textv(_Format, args); va_end(args); }
+  template<size_t size> char* get_text(char (&_StrDestination)[size]) const { return get_text(_StrDestination, size); }
+  template<size_t capacity> char* get_text(ouro::fixed_string<char, capacity>& _StrDestination) const { return get_text(_StrDestination, _StrDestination.capacity()); }
 
-	virtual void SetSubtextV(const char* _Format, va_list _Args) threadsafe = 0;
-	virtual char* GetSubtext(char* _StrDestination, size_t _SizeofStrDestination) const = 0;
+  virtual void set_subtextv(const char* _Format, va_list _Args) = 0;
+  virtual char* get_subtext(char* _StrDestination, size_t _SizeofStrDestination) const = 0;
 
-	inline void SetSubtext(const char* _Format, ...) threadsafe { va_list args; va_start(args, _Format); SetSubtextV(_Format, args); va_end(args); }
-	template<size_t size> char* GetSubtext(char (&_StrDestination)[size]) const { return GetSubtext(_StrDestination, size); }
-	template<size_t capacity> char* GetSubtext(ouro::fixed_string<char, capacity>& _StrDestination) const { return GetSubtext(_StrDestination, _StrDestination.capacity()); }
+  inline void set_subtext(const char* _Format, ...) { va_list args; va_start(args, _Format); set_subtextv(_Format, args); va_end(args); }
+  template<size_t size> char* get_subtext(char (&_StrDestination)[size]) const { return get_subtext(_StrDestination, size); }
+  template<size_t capacity> char* get_subtext(ouro::fixed_string<char, capacity>& _StrDestination) const { return get_subtext(_StrDestination, _StrDestination.capacity()); }
 
-	// Sets the percentage complete. This value is internally clamped to [0,100], 
-	// unless set to a negative value in which case an unknown progress display is
-	// shown (marquee).
-	virtual void SetPercentage(int _Percentage) threadsafe = 0;
+  // Sets the percentage complete. This value is internally clamped to [0,100], 
+  // unless set to a negative value in which case an unknown progress display is
+  // shown (marquee).
+  virtual void set_percentage(int _Percentage) = 0;
+  virtual int percentage() const = 0; 
 
-	// Adds the amount (clamps total [0,100]). This way several threads can pre-
-	// calculate their individual contribution and asynchronously add it to the
-	// progress. If this number goes negative then an unknown progress display is
-	// shown (marquee).
-	virtual void AddPercentage(int _Percentage) threadsafe = 0;
-
-	virtual int GetPercentage() const = 0;
-
-private:
-	virtual const threadsafe oWindow* GetWindow() const threadsafe = 0;
-	virtual threadsafe oWindow* GetWindow() threadsafe = 0;
-	virtual const oWindow* GetWindow() const = 0;
-	virtual oWindow* GetWindow() = 0;
+  // Adds the amount (clamps total [0,100]). This way several threads can pre-
+  // calculate their individual contribution and asynchronously add it to the
+  // progress. If this number goes negative then an unknown progress display is
+  // shown (marquee).
+  virtual void add_percentage(int _Percentage) = 0;
 };
 
-bool oProgressBarCreate(const oTASK& _OnStopPressed, const char* _Title, oGUI_ICON _hIcon, oProgressBar** _ppProgressBar);
-inline bool oProgressBarCreate(const oTASK& _OnStopPressed, const char* _Title, oProgressBar** _ppProgressBar) { return oProgressBarCreate(_OnStopPressed, _Title, nullptr, _ppProgressBar); }
-inline bool oProgressBarCreate(const oTASK& _OnStopPressed, oGUI_ICON _hIcon, oProgressBar** _ppProgressBar) { return oProgressBarCreate(_OnStopPressed, nullptr, _hIcon, _ppProgressBar); }
-inline bool oProgressBarCreate(const oTASK& _OnStopPressed, oProgressBar** _ppProgressBar) { return oProgressBarCreate(_OnStopPressed, nullptr, nullptr, _ppProgressBar); }
+} // namespace ouro
 
 #endif

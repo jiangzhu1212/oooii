@@ -338,12 +338,12 @@ void oD3D11Device::GetImmediateCommandList(oGPUCommandList** _ppCommandList)
 	oVERIFY(oD3D11Device::CreateCommandList("Immediate", CLDesc, _ppCommandList));
 }
 
-bool oD3D11Device::CreatePrimaryRenderTarget(oWindow* _pWindow, ouro::surface::format _DepthStencilFormat, bool _EnableOSRendering, oGPURenderTarget** _ppPrimaryRenderTarget)
+bool oD3D11Device::CreatePrimaryRenderTarget(ouro::window* _pWindow, ouro::surface::format _DepthStencilFormat, bool _EnableOSRendering, oGPURenderTarget** _ppPrimaryRenderTarget)
 {
 	if (SwapChain)
 		return oErrorSetLast(std::errc::protocol_error, "There already exists a primary render target, only one can exist for a given device at a time.");
 
-	oGUI_WINDOW_SHAPE_DESC s = _pWindow->GetShape();
+	oGUI_WINDOW_SHAPE_DESC s = _pWindow->shape();
 	if (oGUIStyleHasStatusBar(s.Style))
 		return oErrorSetLast(std::errc::invalid_argument, "A window used for rendering must not have a status bar");
 
@@ -356,7 +356,7 @@ bool oD3D11Device::CreatePrimaryRenderTarget(oWindow* _pWindow, ouro::surface::f
 			, surface::b8g8r8a8_unorm
 			, 0
 			, 0
-			, (HWND)_pWindow->GetNativeHandle()
+			, (HWND)_pWindow->native_handle()
 			, _EnableOSRendering);
 	}
 	catch (std::exception& e)
