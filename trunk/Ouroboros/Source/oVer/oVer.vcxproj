@@ -51,7 +51,6 @@
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
-    <Import Project="..\Build\msvc100\Properties\OuroborosCommonRCGen.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -59,7 +58,6 @@
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
-    <Import Project="..\Build\msvc100\Properties\OuroborosCommonRCGen.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -67,7 +65,6 @@
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
-    <Import Project="..\Build\msvc100\Properties\OuroborosCommonRCGen.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -75,7 +72,6 @@
     <Import Project="..\Build\msvc100\Properties\Common.props" />
     <Import Project="..\Build\msvc100\Properties\pch.props" />
     <Import Project="..\Build\msvc100\Properties\OuroborosPrivateExternalDependencies.props" />
-    <Import Project="..\Build\msvc100\Properties\OuroborosCommonRCGen.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
