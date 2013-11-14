@@ -27,6 +27,7 @@
 #include <oGUI/Windows/oGDI.h>
 #include <oPlatform/Windows/oWinAsString.h>
 #include <oGUI/Windows/oWinCursor.h>
+#include <oGUI/Windows/oWinKey.h>
 #include <oGUI/Windows/oWinRect.h>
 #include <oGUI/Windows/oWinStatusBar.h>
 #include <oGUI/Windows/oWinWindowing.h>

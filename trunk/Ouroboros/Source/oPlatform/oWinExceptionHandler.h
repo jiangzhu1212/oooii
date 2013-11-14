@@ -33,6 +33,7 @@
 #include <oBase/guid.h>
 #include <oStd/mutex.h>
 #include <functional>
+#include <string>
 
 namespace windows_exception_type
 {	enum value {
@@ -57,7 +58,7 @@ struct oWinCppException
 
 	windows_exception_type::value Type;
 	const char* TypeName;
-	const char* What;
+	std::string What;
 	union
 	{
 		std::exception* StdException;

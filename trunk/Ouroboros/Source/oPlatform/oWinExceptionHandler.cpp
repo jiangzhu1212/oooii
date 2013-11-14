@@ -198,7 +198,7 @@ static oWinCppException oWinVEHGetException(const EXCEPTION_RECORD& _Record)
 			if (strstr(e.TypeName, "_com_error"))
 			{
 				e.Type = windows_exception_type::com;
-				e.What = oWinAsStringHR_DX11(e.ComError->Error());
+				e.What = oStd::windows::category().message(e.ComError->Error());
 			}
 			
 			else if (strstr(e.TypeName, "CAtlException"))
@@ -238,7 +238,7 @@ LONG oWinExceptionHandler::OnException(EXCEPTION_POINTERS* _pExceptionPointers)
 		case oEXCEPTION_CPP:
 		{
 			CppException = oWinVEHGetException(*pRecord);
-			if (oSTRVALID(CppException.What))
+			if (!CppException.What.empty())
 			{
 				xlstring msg;
 				path ModulePath = std::move(ouro::this_module::path());
@@ -249,7 +249,7 @@ LONG oWinExceptionHandler::OnException(EXCEPTION_POINTERS* _pExceptionPointers)
 				#endif
 
 				snprintf(msg, "First-chance exception at 0x" LOWER_CASE_PTR_FMT ": in %s: %s: %s\n"
-					, pRecord->ExceptionAddress, ModulePath.filename().c_str(), CppException.TypeName, CppException.What);
+					, pRecord->ExceptionAddress, ModulePath.filename().c_str(), CppException.TypeName, CppException.What.c_str());
 				OutputDebugStringA(msg);
 			}
 			break;

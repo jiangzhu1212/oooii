@@ -45,7 +45,6 @@ const char* oWinAsStringGWL(int _GWLCode);
 const char* oWinAsStringGWLP(int _GWLPCode);
 const char* oWinAsStringTCN(int _TCNCode);
 const char* oWinAsStringCDERR(int _CDERRCode); // common dialog errors
-//const char* oWinAsStringExceptionCode(int _ExceptionCode);
 const char* oWinAsStringDBT(int _DBTEvent);
 const char* oWinAsStringDBTDT(int _DBTDevType);
 const char* oWinAsStringSPDRP(int _SPDRPValue);
@@ -59,18 +58,10 @@ char* oWinParseSWPFlags(char* _StrDestination, size_t _SizeofStrDestination, UIN
 char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oWINKEY_CONTROL_STATE* _pState, HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam);
 inline char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oWINKEY_CONTROL_STATE* _pState, const CWPSTRUCT* _pCWPStruct) { return oWinParseWMMessage(_StrDestination, _SizeofStrDestination, _pState, _pCWPStruct->hwnd, _pCWPStruct->message, _pCWPStruct->wParam, _pCWPStruct->lParam); }
 
-const char* oWinAsStringHR(HRESULT _hResult);
-const char* oWinAsStringHR_DXGI(HRESULT _hResult);
-const char* oWinAsStringHR_DX11(HRESULT _hResult);
-const char* oWinAsStringHR_VFW(HRESULT _hResult);
-const char* oWinAsStringDISP(UINT _DISPCode);
-
-bool oWinParseHRESULT(char* _StrDestination, size_t _SizeofStrDestination, HRESULT _hResult);
-
 template<size_t size> inline char* oWinParseStyleFlags(char (&_StrDestination)[size], UINT _WSFlags) { return oWinParseStyleFlags(_StrDestination, size, _WSFlags); }
 template<size_t size> inline char* oWinParseStyleExFlags(char (&_StrDestination)[size], UINT _WSEXFlags) { return oWinParseStyleExFlags(_StrDestination, size, _WSEXFlags); }
 template<size_t size> inline char* oWinParseSWPFlags(char (&_StrDestination)[size], UINT _SWPFlags) { return oWinParseSWPFlags(_StrDestination, size, _SWPFlags); }
 template<size_t size> inline char* oWinParseWMMessage(char (&_StrDestination)[size], HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam) { return oWinParseWMMessage(_StrDestination, size, _hWnd, _uMsg, _wParam, _lParam); }
 template<size_t size> inline char* oWinParseWMMessage(char (&_StrDestination)[size], const CWPSTRUCT* _pCWPStruct) { return oWinParseWMMessage(_StrDestination, size, _pCWPStruct); }
-template<size_t size> inline bool oWinParseHRESULT(char (&_StrDestination)[size], HRESULT _hResult) { return oWinParseHRESULT(_StrDestination, size, _hResult); }
+
 #endif
