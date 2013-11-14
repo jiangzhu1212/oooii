@@ -46,37 +46,37 @@ public:
 	static std::shared_ptr<progress_bar> make(const char* _Title
 		, oGUI_ICON _hIcon, const std::function<void()>& _OnStop);
 
-  virtual void stop_button(bool _Show) = 0;
-  virtual bool stop_button() const = 0;
+	virtual void stop_button(bool _Show) = 0;
+	virtual bool stop_button() const = 0;
 
-  virtual void stopped(bool _Stopped) = 0;
-  virtual bool stopped() const = 0;
+	virtual void stopped(bool _Stopped) = 0;
+	virtual bool stopped() const = 0;
 
-  virtual void set_textv(const char* _Format, va_list _Args) = 0;
-  virtual char* get_text(char* _StrDestination, size_t _SizeofStrDestination) const = 0;
+	virtual void set_textv(const char* _Format, va_list _Args) = 0;
+	virtual char* get_text(char* _StrDestination, size_t _SizeofStrDestination) const = 0;
 
-  inline void set_text(const char* _Format, ...) { va_list args; va_start(args, _Format); set_textv(_Format, args); va_end(args); }
-  template<size_t size> char* get_text(char (&_StrDestination)[size]) const { return get_text(_StrDestination, size); }
-  template<size_t capacity> char* get_text(ouro::fixed_string<char, capacity>& _StrDestination) const { return get_text(_StrDestination, _StrDestination.capacity()); }
+	inline void set_text(const char* _Format, ...) { va_list args; va_start(args, _Format); set_textv(_Format, args); va_end(args); }
+	template<size_t size> char* get_text(char (&_StrDestination)[size]) const { return get_text(_StrDestination, size); }
+	template<size_t capacity> char* get_text(ouro::fixed_string<char, capacity>& _StrDestination) const { return get_text(_StrDestination, _StrDestination.capacity()); }
 
-  virtual void set_subtextv(const char* _Format, va_list _Args) = 0;
-  virtual char* get_subtext(char* _StrDestination, size_t _SizeofStrDestination) const = 0;
+	virtual void set_subtextv(const char* _Format, va_list _Args) = 0;
+	virtual char* get_subtext(char* _StrDestination, size_t _SizeofStrDestination) const = 0;
 
-  inline void set_subtext(const char* _Format, ...) { va_list args; va_start(args, _Format); set_subtextv(_Format, args); va_end(args); }
-  template<size_t size> char* get_subtext(char (&_StrDestination)[size]) const { return get_subtext(_StrDestination, size); }
-  template<size_t capacity> char* get_subtext(ouro::fixed_string<char, capacity>& _StrDestination) const { return get_subtext(_StrDestination, _StrDestination.capacity()); }
+	inline void set_subtext(const char* _Format, ...) { va_list args; va_start(args, _Format); set_subtextv(_Format, args); va_end(args); }
+	template<size_t size> char* get_subtext(char (&_StrDestination)[size]) const { return get_subtext(_StrDestination, size); }
+	template<size_t capacity> char* get_subtext(ouro::fixed_string<char, capacity>& _StrDestination) const { return get_subtext(_StrDestination, _StrDestination.capacity()); }
 
-  // Sets the percentage complete. This value is internally clamped to [0,100], 
-  // unless set to a negative value in which case an unknown progress display is
-  // shown (marquee).
-  virtual void set_percentage(int _Percentage) = 0;
-  virtual int percentage() const = 0; 
+	// Sets the percentage complete. This value is internally clamped to [0,100], 
+	// unless set to a negative value in which case an unknown progress display is
+	// shown (marquee).
+	virtual void set_percentage(int _Percentage) = 0;
+	virtual int percentage() const = 0; 
 
-  // Adds the amount (clamps total [0,100]). This way several threads can pre-
-  // calculate their individual contribution and asynchronously add it to the
-  // progress. If this number goes negative then an unknown progress display is
-  // shown (marquee).
-  virtual void add_percentage(int _Percentage) = 0;
+	// Adds the amount (clamps total [0,100]). This way several threads can pre-
+	// calculate their individual contribution and asynchronously add it to the
+	// progress. If this number goes negative then an unknown progress display is
+	// shown (marquee).
+	virtual void add_percentage(int _Percentage) = 0;
 };
 
 } // namespace ouro
