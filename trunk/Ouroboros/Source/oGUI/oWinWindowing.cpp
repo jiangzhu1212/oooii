@@ -1912,7 +1912,7 @@ char* oWinGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWn
 
 HICON oWinGetIcon(HWND _hWnd, bool _BigIcon)
 {
-	oWINVP(_hWnd);
+	//oWINVP(_hWnd);
 	oGUI_CONTROL_TYPE type = oWinControlGetType(_hWnd);
 	switch (type)
 	{
