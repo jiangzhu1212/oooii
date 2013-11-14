@@ -202,6 +202,9 @@
     <ClCompile Include="leak_tracker.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="index_allocator_base.cpp">
+      <Filter>Source\allocator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\finally.h">
@@ -363,14 +366,26 @@
     <ClInclude Include="..\..\Include\oBase\all_libc.h">
       <Filter>oBase</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\linear_allocator.h">
-      <Filter>oBase\memory</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\countdown_latch.h">
       <Filter>oBase</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\leak_tracker.h">
       <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\concurrent_index_allocator.h">
+      <Filter>oBase\allocator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\index_allocator.h">
+      <Filter>oBase\allocator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\index_allocator_base.h">
+      <Filter>oBase\allocator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\linear_allocator.h">
+      <Filter>oBase\allocator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\concurrent_linear_allocator.h">
+      <Filter>oBase\allocator</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -421,6 +436,12 @@
     </Filter>
     <Filter Include="oBase\memory">
       <UniqueIdentifier>{531d9ca9-e272-4b70-9390-6852f1d9c924}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBase\allocator">
+      <UniqueIdentifier>{9190ebc5-6f1d-4b15-b235-6b392510c3bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\allocator">
+      <UniqueIdentifier>{9894e0ad-b396-4c37-9e08-db792ce0fd10}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

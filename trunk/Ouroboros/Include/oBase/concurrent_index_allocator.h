@@ -22,61 +22,62 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// implementation of index_allocator using atomics.
 #pragma once
-#ifndef oConcurrency_index_allocator_base_h
-#define oConcurrency_index_allocator_base_h
+#ifndef oBase_concurrent_index_allocator_h
+#define oBase_concurrent_index_allocator_h
 
-#include <oConcurrency/thread_safe.h>
+#include <oBase/index_allocator_base.h>
+#include <oStd/atomic.h>
 
-namespace oConcurrency {
+namespace ouro {
 
-	class index_allocator_base
+class concurrent_index_allocator : public index_allocator_base
+{
+	static const unsigned int tag_one = (1u << 31) >> (tag_bits - 1);
+public:
+	// It is client code's responsibility to free _pArena after this class has
+	// been destroyed.
+	concurrent_index_allocator(void* _pArena, size_t _SizeofArena);
+
+	// return an index reserved until it is made available by deallocate
+	unsigned int allocate();
+	
+	// make index available again
+	void deallocate(unsigned int _Index);
+};
+
+inline concurrent_index_allocator::concurrent_index_allocator(void* _pArena, size_t _SizeofArena) 
+	: index_allocator_base(_pArena, _SizeofArena)
+{
+}
+
+inline unsigned int concurrent_index_allocator::allocate()
+{
+	unsigned int oldI, newI, allocatedIndex;
+	do
 	{
-	protected:
-		static const unsigned int tag_bits = 8;
-		static const unsigned int tag_mask = 0xff000000;
-		static const unsigned int tagged_invalid_index = ~tag_mask;
-		static const unsigned int tagged_max_index = ~tag_mask & (tagged_invalid_index - 1);
+		oldI = Freelist;
+		allocatedIndex = oldI & ~tag_mask;
+		if (allocatedIndex == tagged_invalid_index)
+			return invalid_index;
+		newI = (static_cast<unsigned int*>(Arena)[allocatedIndex]) | ((oldI + tag_one) & tag_mask);
+	} while (!oStd::atomic_compare_exchange(&Freelist, newI, oldI));
 
-	public:
-		static const unsigned int invalid_index = tagged_invalid_index;
-		static const size_t index_size = sizeof(unsigned int);
+	return allocatedIndex;
+}
 
-		// deallocate all indices
-		void reset();
+inline void concurrent_index_allocator::deallocate(unsigned int _Index)
+{
+	unsigned int oldI, newI;
+	do
+	{
+		oldI = Freelist;
+		static_cast<unsigned int*>(Arena)[_Index] = oldI & ~tag_mask;
+		newI = _Index | ((oldI + tag_one) & tag_mask);
+	} while (!oStd::atomic_compare_exchange(&Freelist, newI, oldI));
+}
 
-		inline bool valid() const { return Arena != 0; }
-		inline bool empty() const { return size() == 0; } // (SLOW! see size())
-
-		// number of indices allocated (SLOW! this loops through entire freelist 
-		// each call)
-		size_t size() const;
-
-		size_t capacity() const threadsafe;
-
-		// This can be used to get the pointer passed to the constructor so it can
-		// be freed if client code did not keep any other reference.
-		void* const get_arena() const { return Arena; }
-
-	protected:
-		void* Arena;
-		size_t ArenaBytes;
-		unsigned int Freelist;
-
-		size_t count_free(unsigned int _CurrentIndex, unsigned int _InvalidIndex) const;
-
-		// size in bytes, not # of indices
-		index_allocator_base(void* _pArena, size_t _SizeofArena);
-		virtual ~index_allocator_base();
-
-	private:
-		index_allocator_base(const index_allocator_base&); /* = delete; */
-		const index_allocator_base& operator=(index_allocator_base&); /* = delete; */
-
-		index_allocator_base(index_allocator_base&&); /* = delete; */
-		index_allocator_base& operator=(index_allocator_base&&); /* = delete; */
-	};
-
-} // namespace oConcurrency
+} // namespace ouro
 
 #endif

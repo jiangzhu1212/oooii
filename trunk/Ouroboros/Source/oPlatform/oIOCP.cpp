@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oIOCP.h"
-#include <oConcurrency/concurrent_index_allocator.h>
+#include <oBase/concurrent_index_allocator.h>
 #include <oBase/backoff.h>
 #include <oBase/fixed_string.h>
 #include <oBasis/oRefCount.h>
@@ -67,7 +67,7 @@ private:
 
 	oIOCPOp* pSocketOps;
 	unsigned int* pSocketIndices;
-	oConcurrency::concurrent_index_allocator* pSocketAllocator;
+	concurrent_index_allocator* pSocketAllocator;
 	struct oIOCP_Impl* pParent;
 	oRefCount ParentRefCount;
 };
@@ -344,7 +344,7 @@ bool oIOCPCreate(const oIOCP::DESC& _Desc, oTASK _ParentDestructionTask, oIOCP**
 oIOCPOp* oIOCPContext::GetOp()
 {
 	unsigned int AllocIndex = pSocketAllocator->allocate();
-	if (AllocIndex == oConcurrency::index_allocator_base::invalid_index)
+	if (AllocIndex == index_allocator_base::invalid_index)
 		return nullptr;
 
 	return &pSocketOps[AllocIndex];
@@ -373,7 +373,7 @@ oIOCPContext::oIOCPContext(struct oIOCP_Impl* _pParent)
 #else
 	pSocketOps = new oIOCPOp[Desc.MaxOperations];
 	pSocketIndices = new unsigned int[Desc.MaxOperations];
-	pSocketAllocator = new oConcurrency::concurrent_index_allocator(pSocketIndices, Desc.MaxOperations * sizeof(unsigned int));
+	pSocketAllocator = new concurrent_index_allocator(pSocketIndices, Desc.MaxOperations * sizeof(unsigned int));
 #endif
 
 

@@ -35,15 +35,14 @@
 //
 // Allocation is O(1) and a single CAS is used to protect concurrency.
 #pragma once
-#ifndef oConcurrency_concurrent_linear_allocator_h
-#define oConcurrency_concurrent_linear_allocator_h
+#ifndef oBase_concurrent_linear_allocator_h
+#define oBase_concurrent_linear_allocator_h
 
-#include <oConcurrency/thread_safe.h>
 #include <oBase/byte.h>
 #include <oBase/config.h>
 #include <oStd/atomic.h>
 
-namespace oConcurrency {
+namespace ouro {
 
 class concurrent_linear_allocator
 {
@@ -58,28 +57,28 @@ public:
 	void initialize(size_t _ArenaSize);
 
 	// Allocates the specified number of bytes
-	inline void* allocate(size_t _Size) threadsafe;
+	inline void* allocate(size_t _Size);
 
 	// Allocates an object-sized buffer
 	template<typename T>
-	T* allocate(size_t _Size = sizeof(T)) threadsafe;
+	T* allocate(size_t _Size = sizeof(T));
 
 	// Resets the allocator to be empty. This might leave client code pointers
 	// dangling.
-	void reset() threadsafe;
+	void reset();
 
 	// Returns true if the specified pointer is in the range of this object's 
 	// arena.
-	bool valid(void* _Pointer) const threadsafe;
+	bool valid(void* _Pointer) const;
 
 	// Returns how many bytes are left to be allocated.
-	size_t bytes_available() const threadsafe;
+	size_t bytes_available() const;
 
 private:
 	void* Head;
 	void* End;
 
-	void* begin() threadsafe const { return (void*)(this+1); }
+	void* begin() const { return (void*)(this+1); }
 };
 
 inline concurrent_linear_allocator::concurrent_linear_allocator()
@@ -89,46 +88,46 @@ inline concurrent_linear_allocator::concurrent_linear_allocator()
 
 inline void concurrent_linear_allocator::initialize(size_t _ArenaSize)
 {
-	End = ouro::byte_add(this, _ArenaSize);
+	End = byte_add(this, _ArenaSize);
 	reset();
 }
 
-inline void* concurrent_linear_allocator::allocate(size_t _Size) threadsafe
+inline void* concurrent_linear_allocator::allocate(size_t _Size)
 {
 	void* New, *Old;
 	do
 	{
 		Old = Head;
-		New = ouro::byte_add(Old, _Size);
+		New = byte_add(Old, _Size);
 		if (New > End)
 			return nullptr;
-		New = ouro::byte_align(New, oDEFAULT_MEMORY_ALIGNMENT);
+		New = byte_align(New, oDEFAULT_MEMORY_ALIGNMENT);
 	} while (!oStd::atomic_compare_exchange(&Head, New, Old));
 	return Old;
 }
 
 template<typename T>
-inline T* concurrent_linear_allocator::allocate(size_t _Size) threadsafe
+inline T* concurrent_linear_allocator::allocate(size_t _Size)
 {
 	return reinterpret_cast<T*>(allocate(_Size));
 }
 
-inline void concurrent_linear_allocator::reset() threadsafe
+inline void concurrent_linear_allocator::reset()
 {
 	oStd::atomic_exchange(&Head, begin());
 }
 
-inline bool concurrent_linear_allocator::valid(void* _Pointer) const threadsafe
+inline bool concurrent_linear_allocator::valid(void* _Pointer) const
 {
-	return ouro::in_range(_Pointer, begin(), Head);
+	return in_range(_Pointer, begin(), Head);
 }
 
-inline size_t concurrent_linear_allocator::bytes_available() const threadsafe
+inline size_t concurrent_linear_allocator::bytes_available() const
 {
-	ptrdiff_t diff = ouro::byte_diff(End, Head);
+	ptrdiff_t diff = byte_diff(End, Head);
 	return diff > 0 ? diff : 0;
 }
 
-} // namespace oConcurrency
+} // namespace ouro
 
 #endif

@@ -32,6 +32,8 @@
 #include <oBase/atof.h>
 #include <oBase/byte.h>
 #include <oBase/color.h>
+#include <oBase/concurrent_index_allocator.h>
+#include <oBase/concurrent_linear_allocator.h>
 #include <oBase/countdown_latch.h>
 #include <oBase/date.h>
 #include <oBase/djb2.h>
@@ -44,6 +46,8 @@
 #include <oBase/fnv1a.h>
 #include <oBase/fourcc.h>
 #include <oBase/guid.h>
+#include <oBase/index_allocator.h>
+#include <oBase/index_allocator_base.h>
 #include <oBase/ini.h>
 #include <oBase/intrusive_ptr.h>
 #include <oBase/leak_tracker.h>

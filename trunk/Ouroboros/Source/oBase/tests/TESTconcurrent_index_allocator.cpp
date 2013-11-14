@@ -22,62 +22,53 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Threadsafe implementation of oIndexAllocator using atomics.
-#pragma once
-#ifndef oConcurrency_concurrent_index_allocator_h
-#define oConcurrency_concurrent_index_allocator_h
+#include <oBase/concurrent_index_allocator.h>
+#include <oBase/index_allocator.h>
+#include <oBase/macros.h>
+#include <oBase/throw.h>
+#include <vector>
 
-#include <oConcurrency/index_allocator.h>
-#include <oStd/atomic.h>
+namespace ouro {
+	namespace tests {
 
-namespace oConcurrency {
-
-class concurrent_index_allocator : public index_allocator_base
+template<typename IndexAllocatorT>
+static void test_index_allocator()
 {
-	static const unsigned int tag_one = (1u << 31) >> (tag_bits - 1);
-public:
-	// It is client code's responsibility to free _pArena after this class has
-	// been destroyed.
-	concurrent_index_allocator(void* _pArena, size_t _SizeofArena);
+	const size_t CAPACITY = 4;
+	const size_t ARENA_BYTES = CAPACITY * IndexAllocatorT::index_size;
+	std::vector<char> buffer(1024, 0xcc);
 
-	// return an index reserved until it is made available by deallocate
-	unsigned int allocate() threadsafe;
-	
-	// make index available again
-	void deallocate(unsigned int _Index) threadsafe;
-};
+	IndexAllocatorT a(&buffer[0], ARENA_BYTES);
 
-inline concurrent_index_allocator::concurrent_index_allocator(void* _pArena, size_t _SizeofArena) 
-	: index_allocator_base(_pArena, _SizeofArena)
-{
+	oCHECK(a.empty(), "index_allocator did not initialize correctly.");
+	oCHECK(a.capacity() == CAPACITY, "Capacity mismatch.");
+
+	unsigned int index[4];
+	oFORI(i, index)
+		index[i] = a.allocate();
+
+	oCHECK(index_allocator::invalid_index == a.allocate(), "allocate succeed past allocator capacity");
+
+	oFORI(i, index)
+		oCHECK(index[i] == static_cast<unsigned int>(i), "Allocation mismatch %u.", i);
+
+	a.deallocate(index[1]);
+	a.deallocate(index[0]);
+	a.deallocate(index[2]);
+	a.deallocate(index[3]);
+
+	oCHECK(a.empty(), "A deallocate failed.");
 }
 
-inline unsigned int concurrent_index_allocator::allocate() threadsafe
+void TESTindex_allocator()
 {
-	unsigned int oldI, newI, allocatedIndex;
-	do
-	{
-		oldI = Freelist;
-		allocatedIndex = oldI & ~tag_mask;
-		if (allocatedIndex == tagged_invalid_index)
-			return invalid_index;
-		newI = (static_cast<unsigned int*>(Arena)[allocatedIndex]) | ((oldI + tag_one) & tag_mask);
-	} while (!oStd::atomic_compare_exchange(&Freelist, newI, oldI));
-
-	return allocatedIndex;
+	test_index_allocator<index_allocator>();
 }
 
-inline void concurrent_index_allocator::deallocate(unsigned int _Index) threadsafe
+void TESTconcurrent_index_allocator()
 {
-	unsigned int oldI, newI;
-	do
-	{
-		oldI = Freelist;
-		static_cast<unsigned int*>(Arena)[_Index] = oldI & ~tag_mask;
-		newI = _Index | ((oldI + tag_one) & tag_mask);
-	} while (!oStd::atomic_compare_exchange(&Freelist, newI, oldI));
+	test_index_allocator<concurrent_index_allocator>();
 }
 
-} // namespace oConcurrency
-
-#endif
+	} // namespace tests
+} // namespace ouro

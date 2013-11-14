@@ -29,8 +29,6 @@
 #define oConcurrency_all_h
 #include <oConcurrency/basic_threadpool.h>
 #include <oConcurrency/block_allocator.h>
-#include <oConcurrency/concurrent_index_allocator.h>
-#include <oConcurrency/concurrent_linear_allocator.h>
 #include <oConcurrency/concurrent_queue.h>
 #include <oConcurrency/concurrent_queue_base.h>
 #include <oConcurrency/concurrent_queue_opt.h>
@@ -40,8 +38,6 @@
 #include <oConcurrency/countdown_latch.h>
 #include <oConcurrency/event.h>
 #include <oConcurrency/fixed_block_allocator.h>
-#include <oConcurrency/index_allocator.h>
-#include <oConcurrency/index_allocator_base.h>
 #include <oConcurrency/joinable_threadpool_base.h>
 #include <oConcurrency/lock_free_queue.h>
 #include <oConcurrency/mutex.h>

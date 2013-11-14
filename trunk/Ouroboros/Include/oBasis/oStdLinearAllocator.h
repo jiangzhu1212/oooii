@@ -40,8 +40,7 @@
 #define oLinearAllocator_h
 
 #include <oBasis/oPlatformFeatures.h>
-#include <oConcurrency/concurrent_linear_allocator.h>
-#include <oConcurrency/thread_safe.h>
+#include <oBase/concurrent_linear_allocator.h>
 #include <oBase/macros.h>
 
 template<typename T> struct oStdLinearAllocator
@@ -57,7 +56,7 @@ template<typename T> struct oStdLinearAllocator
 		, size_t* _pPlatformBytesAllocated = nullptr
 		, void* (*_PlatformMalloc)(size_t _Size) = malloc
 		, void (*_PlatformFree)(void* _Pointer) = free)
-		: pAllocator(reinterpret_cast<oConcurrency::concurrent_linear_allocator*>(_Arena))
+		: pAllocator(reinterpret_cast<ouro::concurrent_linear_allocator*>(_Arena))
 		, PlatformMalloc(_PlatformMalloc)
 		, PlatformFree(_PlatformFree)
 		, pPlatformBytesAllocated(_pPlatformBytesAllocated)
@@ -108,7 +107,7 @@ template<typename T> struct oStdLinearAllocator
 		return *this;
 	}
 	
-	oConcurrency::concurrent_linear_allocator* pAllocator;
+	ouro::concurrent_linear_allocator* pAllocator;
 	void* (*PlatformMalloc)(size_t _Size);
 	void (*PlatformFree)(void* _Pointer);
 	size_t* pPlatformBytesAllocated;

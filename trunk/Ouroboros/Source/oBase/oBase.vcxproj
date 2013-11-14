@@ -47,6 +47,7 @@
     <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp" />
     <ClCompile Include="color.cpp" />
     <ClCompile Include="date.cpp" />
+    <ClCompile Include="index_allocator_base.cpp" />
     <ClCompile Include="leak_tracker.cpp" />
     <ClCompile Include="memory\dtoull.cpp" />
     <ClCompile Include="memory\is_ascii.cpp" />
@@ -123,6 +124,8 @@
     <ClInclude Include="..\..\Include\oBase\backoff.h" />
     <ClInclude Include="..\..\Include\oBase\byte.h" />
     <ClInclude Include="..\..\Include\oBase\color.h" />
+    <ClInclude Include="..\..\Include\oBase\concurrent_index_allocator.h" />
+    <ClInclude Include="..\..\Include\oBase\concurrent_linear_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\config.h" />
     <ClInclude Include="..\..\Include\oBase\countdown_latch.h" />
     <ClInclude Include="..\..\Include\oBase\csv.h" />
@@ -136,6 +139,8 @@
     <ClInclude Include="..\..\Include\oBase\fixed_vector.h" />
     <ClInclude Include="..\..\Include\oBase\fnv1a.h" />
     <ClInclude Include="..\..\Include\oBase\guid.h" />
+    <ClInclude Include="..\..\Include\oBase\index_allocator.h" />
+    <ClInclude Include="..\..\Include\oBase\index_allocator_base.h" />
     <ClInclude Include="..\..\Include\oBase\ini.h" />
     <ClInclude Include="..\..\Include\oBase\intrusive_ptr.h" />
     <ClInclude Include="..\..\Include\oBase\json.h" />

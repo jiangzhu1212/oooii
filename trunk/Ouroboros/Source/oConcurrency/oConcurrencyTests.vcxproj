@@ -20,8 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\TESTblock_allocator.cpp" />
-    <ClCompile Include="Tests\TESTconcurrent_index_allocator.cpp" />
-    <ClCompile Include="Tests\TESTconcurrent_linear_allocator.cpp" />
     <ClCompile Include="Tests\TESTconcurrent_queues.cpp" />
     <ClCompile Include="Tests\TESTconcurrent_stack.cpp" />
     <ClCompile Include="Tests\TESTcoroutine.cpp" />

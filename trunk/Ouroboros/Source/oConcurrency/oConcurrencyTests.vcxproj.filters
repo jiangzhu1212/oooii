@@ -21,12 +21,6 @@
     <ClCompile Include="Tests\TESTconcurrent_stack.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTconcurrent_index_allocator.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Tests\TESTconcurrent_linear_allocator.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTcoroutine.cpp">
       <Filter>Source</Filter>
     </ClCompile>

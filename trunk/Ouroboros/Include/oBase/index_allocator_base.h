@@ -22,52 +22,60 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oConcurrency/concurrent_index_allocator.h>
-#include <oBase/macros.h>
-#include <oBase/throw.h>
-#include <vector>
+// Code common to thread local and concurrent index allocators
+#pragma once
+#ifndef oBase_index_allocator_base_h
+#define oBase_index_allocator_base_h
 
-namespace oConcurrency {
-	namespace tests {
+namespace ouro {
 
-template<typename IndexAllocatorT>
-static void test_index_allocator()
+class index_allocator_base
 {
-	const size_t CAPACITY = 4;
-	const size_t ARENA_BYTES = CAPACITY * IndexAllocatorT::index_size;
-	std::vector<char> buffer(1024, 0xcc);
+protected:
+	static const unsigned int tag_bits = 8;
+	static const unsigned int tag_mask = 0xff000000;
+	static const unsigned int tagged_invalid_index = ~tag_mask;
+	static const unsigned int tagged_max_index = ~tag_mask & (tagged_invalid_index - 1);
 
-	IndexAllocatorT a(&buffer[0], ARENA_BYTES);
+public:
+	static const unsigned int invalid_index = tagged_invalid_index;
+	static const size_t index_size = sizeof(unsigned int);
 
-	oCHECK(a.empty(), "index_allocator did not initialize correctly.");
-	oCHECK(a.capacity() == CAPACITY, "Capacity mismatch.");
+	// deallocate all indices
+	void reset();
 
-	unsigned int index[4];
-	oFORI(i, index)
-		index[i] = a.allocate();
+	inline bool valid() const { return Arena != 0; }
+	inline bool empty() const { return size() == 0; } // (SLOW! see size())
 
-	oCHECK(index_allocator::invalid_index == a.allocate(), "allocate succeed past allocator capacity");
+	// number of indices allocated (SLOW! this loops through entire freelist 
+	// each call)
+	size_t size() const;
 
-	oFORI(i, index)
-		oCHECK(index[i] == static_cast<unsigned int>(i), "Allocation mismatch %u.", i);
+	size_t capacity() const;
 
-	a.deallocate(index[1]);
-	a.deallocate(index[0]);
-	a.deallocate(index[2]);
-	a.deallocate(index[3]);
+	// This can be used to get the pointer passed to the constructor so it can
+	// be freed if client code did not keep any other reference.
+	void* const get_arena() const { return Arena; }
 
-	oCHECK(a.empty(), "A deallocate failed.");
-}
+protected:
+	void* Arena;
+	size_t ArenaBytes;
+	unsigned int Freelist;
 
-void TESTindex_allocator()
-{
-	test_index_allocator<oConcurrency::index_allocator>();
-}
+	size_t count_free(unsigned int _CurrentIndex, unsigned int _InvalidIndex) const;
 
-void TESTconcurrent_index_allocator()
-{
-	test_index_allocator<oConcurrency::concurrent_index_allocator>();
-}
+	// size in bytes, not # of indices
+	index_allocator_base(void* _pArena, size_t _SizeofArena);
+	virtual ~index_allocator_base();
 
-	} // namespace tests
-} // namespace oConcurrency
+private:
+	index_allocator_base(const index_allocator_base&); /* = delete; */
+	const index_allocator_base& operator=(index_allocator_base&); /* = delete; */
+
+	index_allocator_base(index_allocator_base&&); /* = delete; */
+	index_allocator_base& operator=(index_allocator_base&&); /* = delete; */
+};
+
+} // namespace ouro
+
+#endif

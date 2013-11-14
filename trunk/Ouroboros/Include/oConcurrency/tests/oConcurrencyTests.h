@@ -38,8 +38,6 @@ namespace oConcurrency {
 		void TESTbasic_threadpool();
 		void TESTbasic_threadpool_perf(ouro::test_services& _Services);
 		void TESTblock_allocator();
-		void TESTconcurrent_index_allocator();
-		void TESTconcurrent_linear_allocator();
 		void TESTconcurrent_queue();
 		void TESTconcurrent_queue_concrt();
 		void TESTconcurrent_queue_opt();

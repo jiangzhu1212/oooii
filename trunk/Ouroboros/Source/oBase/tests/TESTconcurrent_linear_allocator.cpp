@@ -22,22 +22,20 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oConcurrency/concurrent_linear_allocator.h>
+#include <oBase/concurrent_linear_allocator.h>
 #include <oBase/byte.h>
 #include <oBase/macros.h>
 #include <oStd/future.h>
 #include <oBase/throw.h>
 #include <vector>
 
-using namespace ouro;
-
-namespace oConcurrency {
+namespace ouro {
 	namespace tests {
 
 static void test_basics()
 {
 	std::vector<char> buffer(1024, 0xcc);
-	oConcurrency::concurrent_linear_allocator* pAllocator = reinterpret_cast<oConcurrency::concurrent_linear_allocator*>(&buffer[0]);
+	concurrent_linear_allocator* pAllocator = reinterpret_cast<concurrent_linear_allocator*>(&buffer[0]);
 	pAllocator->initialize(buffer.size());
 
 	static const size_t kAllocSize = 30;
@@ -58,7 +56,7 @@ static void test_basics()
 	char* c5 = pAllocator->allocate<char>(1024);
 	oCHECK(!c5, "Too large an allocation should have failed, but succeeded");
 
-	size_t nFree = 1024 - byte_align(sizeof(oConcurrency::concurrent_linear_allocator), oDEFAULT_MEMORY_ALIGNMENT);
+	size_t nFree = 1024 - byte_align(sizeof(concurrent_linear_allocator), oDEFAULT_MEMORY_ALIGNMENT);
 	nFree -= 4 * byte_align(kAllocSize, oDEFAULT_MEMORY_ALIGNMENT);
 
 	oCHECK(pAllocator->bytes_available() == nFree, "Bytes available is incorrect");
@@ -69,7 +67,7 @@ static void test_basics()
 	oCHECK(c6, "Should've been able to allocate a large allocation after reset");
 }
 
-static size_t* AllocAndAssign(oConcurrency::concurrent_linear_allocator* _pAllocator, int _Int)
+static size_t* AllocAndAssign(concurrent_linear_allocator* _pAllocator, int _Int)
 {
 	size_t* p = (size_t*)_pAllocator->allocate(1024);
 	if (p)
@@ -81,8 +79,8 @@ static void test_concurrency()
 {
 	static const size_t nAllocs = 100;
 
-	std::vector<char> buffer(sizeof(oConcurrency::concurrent_linear_allocator) + oKB(90), 0);
-	oConcurrency::concurrent_linear_allocator* pAllocator = reinterpret_cast<oConcurrency::concurrent_linear_allocator*>(&buffer[0]);
+	std::vector<char> buffer(sizeof(concurrent_linear_allocator) + oKB(90), 0);
+	concurrent_linear_allocator* pAllocator = reinterpret_cast<concurrent_linear_allocator*>(&buffer[0]);
 	pAllocator->initialize(buffer.size());
 
 	void* ptr[nAllocs];
@@ -123,4 +121,4 @@ void TESTconcurrent_linear_allocator()
 }
 
 	} // namespace tests
-} // namespace oConcurrency
+} // namespace ouro

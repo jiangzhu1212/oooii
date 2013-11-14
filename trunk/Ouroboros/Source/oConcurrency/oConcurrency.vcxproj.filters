@@ -21,9 +21,6 @@
     <ClCompile Include="fixed_block_allocator.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="index_allocator_base.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oConcurrency.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -66,18 +63,6 @@
       <Filter>oConcurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\threadpool.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\concurrent_linear_allocator.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\concurrent_index_allocator.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\index_allocator_base.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\index_allocator.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\joinable_threadpool_base.h">

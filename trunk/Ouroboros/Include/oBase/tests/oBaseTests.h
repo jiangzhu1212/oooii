@@ -34,15 +34,15 @@ namespace ouro {
 	namespace tests {
 
 		void TESTatof(test_services& _Services);
+		void TESTconcurrent_index_allocator();
+		void TESTconcurrent_linear_allocator();
 		void TESTcountdown_latch();
 		void TESTcsv();
 		void TESTdate(test_services& _Services);
-		void TESTini();
 		void TESTfourcc();
+		void TESTindex_allocator();
+		void TESTini();
 		void TESTpath();
-		void TESTsurface();
-		void TESTsurface_codec(test_services& _Services);
-		void TESTsurface_resize(test_services& _Services);
 		void TESTuri();
 		void TESTxml();
 

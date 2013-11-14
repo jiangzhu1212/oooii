@@ -22,75 +22,51 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oConcurrency/index_allocator_base.h>
+// Allocates indices which can be used for fixed-size pool management. The 
+// allocated arena will contain a linked list of free indices so it must be 
+// sized to contain the number of indices desired, so 
+// NumIndices * sizeof(unsigned int). This class is not. See 
+// concurrent_index_allocator for a implementation.
+#pragma once
+#ifndef oBase_index_allocator_h
+#define oBase_index_allocator_h
 
-using namespace oConcurrency;
+#include <oBase/index_allocator_base.h>
 
-index_allocator_base::index_allocator_base(void* _pArena, size_t _SizeofArena)
-	: Arena(_pArena)
-	, ArenaBytes(_SizeofArena)
-	, Freelist(invalid_index)
+namespace ouro {
+
+class index_allocator : public index_allocator_base
 {
-	if (capacity() > tagged_max_index)
-		throw std::invalid_argument(
-		"cannot index entire specified arena because several bits are reserved for "
-		"tagging to address concurrency ABA issues.");
+public:
+	index_allocator(void* _pArena, size_t _SizeofArena);
+	
+	// return an index reserved until it is made available by deallocate
+	unsigned int allocate();
 
-	reset();
+	// make index available again
+	void deallocate(unsigned int _Index);
+};
+
+inline index_allocator::index_allocator(void* _pArena, size_t _SizeofArena) 
+	: index_allocator_base(_pArena, _SizeofArena) 
+{
 }
 
-index_allocator_base::~index_allocator_base()
+inline unsigned int index_allocator::allocate()
 {
-	if (valid())
-	{
-		if (!empty())
-			throw std::runtime_error("an index allocator has outstanding allocations");
-		Arena = nullptr;
-		ArenaBytes = 0;
-	}
+	if (Freelist == invalid_index)
+		return invalid_index;
+	unsigned int allocatedIndex = Freelist;
+	Freelist = static_cast<unsigned int*>(Arena)[Freelist];
+	return allocatedIndex;
 }
 
-size_t index_allocator_base::capacity() const threadsafe
+inline void index_allocator::deallocate(unsigned int _Index)
 {
-	return ArenaBytes / index_size;
+	static_cast<unsigned int*>(Arena)[_Index] = Freelist;
+	Freelist = _Index;
 }
 
-void index_allocator_base::reset()
-{
-	// Seed list with next free index (like a next pointer in an slist)
-	unsigned int* indices = static_cast<unsigned int*>(Arena);
-	const size_t cap = capacity();
-	for (unsigned int i = 0; i < cap; i++)
-		indices[i] = i+1;
-	indices[cap-1] = invalid_index; // last node has no next
-	Freelist = 0;
-}
+} // namespace ouro
 
-size_t index_allocator_base::count_free(unsigned int _CurrentIndex, unsigned int _InvalidIndex) const
-{
-	size_t nFree = 0;
-	while (_CurrentIndex != _InvalidIndex)
-	{
-		nFree++;
-		if (nFree > capacity())
-			throw std::runtime_error("num free is more than the capacity");
-
-		if (_CurrentIndex >= capacity())
-			throw std::runtime_error(
-			"while following the freelist, an index is "
-			"present that is greater than the capacity");
-
-		_CurrentIndex = static_cast<unsigned int*>(Arena)[_CurrentIndex];
-	}
-
-	return nFree;
-}
-
-size_t index_allocator_base::size() const
-{
-	size_t nFree = 0;
-	if (capacity())
-		nFree = count_free(Freelist & ~tag_mask, tagged_invalid_index);
-	return capacity() - nFree;
-}
-
+#endif
