@@ -51,17 +51,15 @@ template<typename T> struct oStdLinearAllocator
 	// were allocated from platform Malloc so that the arena size can be adjusted.
 
 	oDEFINE_STD_ALLOCATOR_BOILERPLATE(oStdLinearAllocator)
-	oStdLinearAllocator(void* _Arena
-		, size_t _SizeofArena
+	oStdLinearAllocator(ouro::concurrent_linear_allocator* _pAllocator
 		, size_t* _pPlatformBytesAllocated = nullptr
 		, void* (*_PlatformMalloc)(size_t _Size) = malloc
 		, void (*_PlatformFree)(void* _Pointer) = free)
-		: pAllocator(reinterpret_cast<ouro::concurrent_linear_allocator*>(_Arena))
-		, PlatformMalloc(_PlatformMalloc)
-		, PlatformFree(_PlatformFree)
-		, pPlatformBytesAllocated(_pPlatformBytesAllocated)
+			: pAllocator(_pAllocator)
+			, PlatformMalloc(_PlatformMalloc)
+			, PlatformFree(_PlatformFree)
+			, pPlatformBytesAllocated(_pPlatformBytesAllocated)
 	{
-		pAllocator->initialize(_SizeofArena);
 		if (pPlatformBytesAllocated)
 			*pPlatformBytesAllocated = 0;
 	}

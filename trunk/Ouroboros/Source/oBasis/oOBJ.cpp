@@ -464,9 +464,11 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 	// etc. so free this stuff up rather than leaving it all around.
 	
 	{
-		void* pIndexAllocatorArena = malloc(kInitialReserve);
-		finally FreeArena([&] { if (pIndexAllocatorArena) free(pIndexAllocatorArena); });
-		index_map_t IndexMap(0, index_map_t::hasher(), index_map_t::key_equal(), std::less<key_t>(), allocator_type(pIndexAllocatorArena, kInitialReserve, &IndexMapMallocBytes));
+		void* pArena = malloc(kInitialReserve);
+		finally FreeArena([&] { if (pArena) free(pArena); });
+		concurrent_linear_allocator Allocator(pArena, kInitialReserve);
+		index_map_t IndexMap(0, index_map_t::hasher(), index_map_t::key_equal(), std::less<key_t>()
+			, allocator_type(&Allocator, &IndexMapMallocBytes));
 
 		// OBJ files don't contain a same-sized vertex streams for each elements, 
 		// and indexing occurs uniquely between vertex elements. Eventually we will 

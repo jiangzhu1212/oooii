@@ -35,35 +35,34 @@ namespace ouro {
 static void test_basics()
 {
 	std::vector<char> buffer(1024, 0xcc);
-	concurrent_linear_allocator* pAllocator = reinterpret_cast<concurrent_linear_allocator*>(&buffer[0]);
-	pAllocator->initialize(buffer.size());
+	concurrent_linear_allocator Allocator(&buffer[0], buffer.size());
 
 	static const size_t kAllocSize = 30;
 
-	char* c1 = pAllocator->allocate<char>(kAllocSize);
+	char* c1 = Allocator.allocate<char>(kAllocSize);
 	oCHECK(c1, "Allocation failed (1)");
-	char* c2 = pAllocator->allocate<char>(kAllocSize);
+	char* c2 = Allocator.allocate<char>(kAllocSize);
 	oCHECK(c2, "Allocation failed (2)");
-	char* c3 = pAllocator->allocate<char>(kAllocSize);
+	char* c3 = Allocator.allocate<char>(kAllocSize);
 	oCHECK(c3, "Allocation failed (3)");
-	char* c4 = pAllocator->allocate<char>(kAllocSize);
+	char* c4 = Allocator.allocate<char>(kAllocSize);
 	oCHECK(c4, "Allocation failed (4)");
 
 	memset(c1, 0, kAllocSize);
 	memset(c3, 0, kAllocSize);
 	oCHECK(!memcmp(c2, c4, kAllocSize), "Allocation failed (5)");
 
-	char* c5 = pAllocator->allocate<char>(1024);
+	char* c5 = Allocator.allocate<char>(1024);
 	oCHECK(!c5, "Too large an allocation should have failed, but succeeded");
 
 	size_t nFree = 1024 - byte_align(sizeof(concurrent_linear_allocator), oDEFAULT_MEMORY_ALIGNMENT);
 	nFree -= 4 * byte_align(kAllocSize, oDEFAULT_MEMORY_ALIGNMENT);
 
-	oCHECK(pAllocator->bytes_available() == nFree, "Bytes available is incorrect");
+	oCHECK(Allocator.bytes_free() == nFree, "Bytes available is incorrect");
 
-	pAllocator->reset();
+	Allocator.reset();
 
-	char* c6 = pAllocator->allocate<char>(880);
+	char* c6 = Allocator.allocate<char>(880);
 	oCHECK(c6, "Should've been able to allocate a large allocation after reset");
 }
 
@@ -80,8 +79,7 @@ static void test_concurrency()
 	static const size_t nAllocs = 100;
 
 	std::vector<char> buffer(sizeof(concurrent_linear_allocator) + oKB(90), 0);
-	concurrent_linear_allocator* pAllocator = reinterpret_cast<concurrent_linear_allocator*>(&buffer[0]);
-	pAllocator->initialize(buffer.size());
+	concurrent_linear_allocator Allocator(&buffer[0], buffer.size());
 
 	void* ptr[nAllocs];
 	memset(ptr, 0, nAllocs);
@@ -90,7 +88,7 @@ static void test_concurrency()
 	
 	for (int i = 0; i < nAllocs; i++)
 	{
-		oStd::future<size_t*> f = oStd::async(AllocAndAssign, pAllocator, i);
+		oStd::future<size_t*> f = oStd::async(AllocAndAssign, &Allocator, i);
 		FuturePointers.push_back(std::move(f));
 	}
 

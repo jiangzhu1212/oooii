@@ -22,110 +22,56 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Simple allocator that has a fixed arena of memory and increments an index 
-// with each allocation until all memory is used up. There is no deallocate(), 
-// but reset() will set the index back to zero. This is useful for containers
-// such as std::maps that are built up and searched and whose data is simple
-// (i.e. no ref counting or handles/pointers that need to be cleaned up). Use of 
-// this allocator can alleviate long destructor times in such containers where
-// there's not a lot of use to the destruction because of the simple types.
-//
-// This uses the oversized-allocation pattern where the full arena is allocated
-// and this class is overlaid on top of it to manage the buffer.
-//
-// Allocation is O(1) and a single CAS is used to protect concurrency.
+// Simple concurrent lienar allocator using atomics
 #pragma once
 #ifndef oBase_concurrent_linear_allocator_h
 #define oBase_concurrent_linear_allocator_h
 
-#include <oBase/byte.h>
-#include <oBase/config.h>
+#include <oBase/linear_allocator_base.h>
 #include <oStd/atomic.h>
 
 namespace ouro {
 
-class concurrent_linear_allocator
+class concurrent_linear_allocator : public linear_allocator_base
 {
+	// NOTE: None of the inherited APIs are thread safe - only allocate() and 
+	// reset() are thread safe.
+
 public:
-
-	// This does not do much, since this object assumes it owns memory beyond 
-	// sizeof(T). Call initialize to validate this object.
-	concurrent_linear_allocator();
+	concurrent_linear_allocator() {}
+	concurrent_linear_allocator(void* _pArena, size_t _Size) : linear_allocator_base(_pArena, _Size) {}
+	concurrent_linear_allocator(concurrent_linear_allocator&& _That) : linear_allocator_base(std::move(_That)) {}
+	concurrent_linear_allocator& operator=(concurrent_linear_allocator&& _That)
+	{
+		linear_allocator_base::operator=(std::move((linear_allocator_base&&)_That));
+		return *this;
+	}
 	
-	// Sets this allocator to track allocations for the specified number of bytes
-	// beyond the this pointer.
-	void initialize(size_t _ArenaSize);
+	// Allocates memory or nullptr if out of memory.
+	void* allocate(size_t _Size, size_t _Alignment = default_alignment);
+	template<typename T> T* allocate(size_t _Size = sizeof(T), size_t _Alignment = default_alignment) { return (T*)allocate(_Size, _Alignment); }
 
-	// Allocates the specified number of bytes
-	inline void* allocate(size_t _Size);
-
-	// Allocates an object-sized buffer
-	template<typename T>
-	T* allocate(size_t _Size = sizeof(T));
-
-	// Resets the allocator to be empty. This might leave client code pointers
-	// dangling.
+	// Reset the linear allocator to full availability
 	void reset();
-
-	// Returns true if the specified pointer is in the range of this object's 
-	// arena.
-	bool valid(void* _Pointer) const;
-
-	// Returns how many bytes are left to be allocated.
-	size_t bytes_available() const;
-
-private:
-	void* Head;
-	void* End;
-
-	void* begin() const { return (void*)(this+1); }
 };
 
-inline concurrent_linear_allocator::concurrent_linear_allocator()
-	: Head(nullptr)
-	, End(nullptr)
-{}
-
-inline void concurrent_linear_allocator::initialize(size_t _ArenaSize)
+inline void* concurrent_linear_allocator::allocate(size_t _Size, size_t _Alignment)
 {
-	End = byte_add(this, _ArenaSize);
-	reset();
-}
-
-inline void* concurrent_linear_allocator::allocate(size_t _Size)
-{
-	void* New, *Old;
+	void* pNew, *pOld, *pAligned;
 	do
 	{
-		Old = Head;
-		New = byte_add(Old, _Size);
-		if (New > End)
+		pOld = pTail;
+		pAligned = byte_align(pOld, _Alignment);
+		pNew = byte_add(pAligned, _Size);
+		if (pNew > pEnd)
 			return nullptr;
-		New = byte_align(New, oDEFAULT_MEMORY_ALIGNMENT);
-	} while (!oStd::atomic_compare_exchange(&Head, New, Old));
-	return Old;
-}
-
-template<typename T>
-inline T* concurrent_linear_allocator::allocate(size_t _Size)
-{
-	return reinterpret_cast<T*>(allocate(_Size));
+	} while (!oStd::atomic_compare_exchange(&pTail, pNew, pOld));
+	return pAligned;
 }
 
 inline void concurrent_linear_allocator::reset()
 {
-	oStd::atomic_exchange(&Head, begin());
-}
-
-inline bool concurrent_linear_allocator::valid(void* _Pointer) const
-{
-	return in_range(_Pointer, begin(), Head);
-}
-
-inline size_t concurrent_linear_allocator::bytes_available() const
-{
-	ptrdiff_t diff = byte_diff(End, Head);
-	return diff > 0 ? diff : 0;
+	oStd::atomic_exchange(&pTail, pHead);
 }
 
 } // namespace ouro

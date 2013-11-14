@@ -22,51 +22,67 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Simple non-threadsafe linear allocator
+// Code common to thread local and concurrent linear allocators
 #pragma once
-#ifndef oBase_linear_allocator_h
-#define oBase_linear_allocator_h
+#ifndef oBase_linear_allocator_base_h
+#define oBase_linear_allocator_base_h
 
-#include <oBase/linear_allocator_base.h>
+#include <oBase/byte.h>
+#include <oBase/config.h>
 
 namespace ouro {
 
-class linear_allocator : public linear_allocator_base
+class linear_allocator_base
 {
 public:
-	linear_allocator() {}
-	linear_allocator(void* _pArena, size_t _Size) : linear_allocator_base(_pArena, _Size) {}
-	linear_allocator(linear_allocator&& _That) : linear_allocator_base(std::move(_That)) {}
-	linear_allocator& operator=(linear_allocator&& _That)
+	static const size_t default_alignment = oDEFAULT_MEMORY_ALIGNMENT;
+
+	linear_allocator_base() : pHead(nullptr), pTail(nullptr), pEnd(nullptr) {}
+	linear_allocator_base(void* _pArena, size_t _Size) { initialize(_pArena, _Size); }
+	linear_allocator_base(linear_allocator_base&& _That) { operator=(std::move(_That)); }
+	linear_allocator_base& operator=(linear_allocator_base&& _That)
 	{
-		linear_allocator_base::operator=(std::move((linear_allocator_base&&)_That));
+		if (this != &_That)
+		{
+			pHead = _That.pHead;
+			pTail = _That.pTail;
+			pEnd = _That.pEnd;
+			_That.deinitialize();
+		}
 		return *this;
 	}
-	
-	// Allocates memory or nullptr if out of memory.
-	void* allocate(size_t _Size, size_t _Alignment = default_alignment);
-	template<typename T> T* allocate(size_t _Size = sizeof(T), size_t _Alignment = default_alignment) { return (T*)allocate(_Size, _Alignment); }
 
-	// Reset the linear allocator to full availability
-	void reset();
-};
+	// Returns the area used to initialize this instance
+	void* get_arena() const { return pHead; }
 
-inline void* linear_allocator::allocate(size_t _Size, size_t _Alignment)
-{ 
-	void* p = byte_align(pTail, _Alignment);
-	void* pNewTail = byte_add(p, _Size);
-	if (pNewTail <= pEnd)
+	// Associated the specified area with this allocator to be managed
+	void initialize(void* _pArena, size_t _Size) 
 	{
-		pTail = pNewTail;
-		return p;
+		pHead = _pArena;
+		pTail = _pArena;
+		pEnd = byte_add(_pArena, _Size);
 	}
-	return nullptr;
-}
 
-inline void linear_allocator::reset()
-{
-	pTail = pHead;
-}
+	// Eviscerates this instance
+	void deinitialize()
+	{
+		pHead = pTail = pEnd = nullptr;
+	}
+
+	// tests if a pointer is in the arena of this instance
+	bool valid(void* _Pointer) const { return _Pointer >= pHead && _Pointer < pEnd; }
+
+	// returns the number of bytes available
+	size_t bytes_free() const { return byte_diff(pTail, pEnd); }
+
+protected:
+	void* pHead;
+	void* pTail;
+	void* pEnd;
+
+	linear_allocator_base(const linear_allocator_base&); /* = delete */
+	const linear_allocator_base& operator=(const linear_allocator_base&); /* = delete */
+};
 
 } // namespace ouro
 
