@@ -27,7 +27,7 @@
 #include <oGUI/oGUIMenu.h>
 #include <oGUI/oMsgBox.h>
 #include <oPlatform/oStream.h>
-#include <oPlatform/oWindow.h>
+#include <oGUI/window.h>
 #include "resource.h"
 
 using namespace ouro;

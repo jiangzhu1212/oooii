@@ -36,5 +36,4 @@
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oPlatform/oTest.h>
-#include <oPlatform/oWindow.h>
 #endif

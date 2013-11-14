@@ -30,5 +30,6 @@
 #include <oGUI/oGUIMenu.h>
 #include <oGUI/oMRUManager.h>
 #include <oGUI/oMsgBox.h>
-#include <oGUI/oProgressBar.h>
+#include <oGUI/progress_bar.h>
+#include <oGUI/window.h>
 #endif

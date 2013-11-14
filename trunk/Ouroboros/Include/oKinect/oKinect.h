@@ -28,7 +28,7 @@
 #ifndef oKinect_h
 #define oKinect_h
 
-#include <oPlatform/oWindow.h>
+#include <oGUI/window.h>
 
 #ifdef oHAS_KINECT_SDK
 	#define oKINECT_SDK_MAJOR 1

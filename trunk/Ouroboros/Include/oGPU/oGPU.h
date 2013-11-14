@@ -31,7 +31,7 @@
 #include <oBasis/oGPUConcepts.h>
 #include <oBasis/oBuffer.h>
 #include <oSurface/surface.h>
-#include <oPlatform/oWindow.h>
+#include <oGUI/window.h>
 
 // Main SW abstraction for a graphics processor
 interface oGPUDevice;

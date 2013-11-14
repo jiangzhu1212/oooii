@@ -32,7 +32,7 @@
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oGUI/oMsgBox.h>
-#include <oPlatform/oWindow.h>
+#include <oGUI/window.h>
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oInputMapper.h>
 #include <oBase/color.h>

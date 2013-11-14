@@ -33,10 +33,10 @@
 // There's a good starting point at:
 // http://msdn.microsoft.com/en-us/library/aa511486.aspx
 #pragma once
-#ifndef oProgressBar_h
-#define oProgressBar_h
+#ifndef oGUI_progress_bar_h
+#define oGUI_progress_bar_h
 
-#include <oPlatform/oWindow.h>
+#include <oGUI/window.h>
 
 namespace ouro {
 

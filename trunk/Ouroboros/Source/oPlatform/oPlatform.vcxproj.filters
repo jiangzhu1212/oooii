@@ -90,9 +90,6 @@
     <ClInclude Include="..\..\Include\oPlatform\Windows\oDXGI.h">
       <Filter>Headers\Windows API Convenience Wrappers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinAsString.h">
-      <Filter>Headers\Windows API Convenience Wrappers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oStream.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
@@ -144,9 +141,6 @@
     <ClInclude Include="..\..\Include\oPlatform\all.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oWindow.h">
-      <Filter>Headers\UI</Filter>
-    </ClInclude>
     <ClInclude Include="oWinExceptionHandler.h">
       <Filter>Source\Windows API Convenience Wrappers</Filter>
     </ClInclude>
@@ -180,9 +174,6 @@
       <Filter>Source\Windows</Filter>
     </ClCompile>
     <ClCompile Include="oDXGI.cpp">
-      <Filter>Source\Windows API Convenience Wrappers</Filter>
-    </ClCompile>
-    <ClCompile Include="oWinAsString.cpp">
       <Filter>Source\Windows API Convenience Wrappers</Filter>
     </ClCompile>
     <ClCompile Include="oCRTHeap.cpp">
@@ -259,9 +250,6 @@
     </ClCompile>
     <ClCompile Include="oHTTPHandler.cpp">
       <Filter>Source\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="oWindow.cpp">
-      <Filter>Source\UI</Filter>
     </ClCompile>
     <ClCompile Include="oWinExceptionHandler.cpp">
       <Filter>Source\Windows API Convenience Wrappers</Filter>

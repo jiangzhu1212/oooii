@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGUI/Windows/oWinRect.h>
-#include <oPlatform/oWindow.h>
+#include <oGUI/window.h>
 #include <oGUI/Windows/oWinControlSet.h>
 #include <oGUI/Windows/oGDI.h>
 #include <oCore/system.h>

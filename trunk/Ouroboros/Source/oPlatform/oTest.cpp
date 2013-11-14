@@ -37,7 +37,7 @@
 #include <oPlatform/oReporting.h>
 #include <oGUI/console.h>
 #include <oGUI/oMsgBox.h> // only used to notify about zombies
-#include <oGUI/oProgressBar.h> // only really so it itself can be tested, but perhaps this can be moved to a unit test?
+#include <oGUI/progress_bar.h> // only really so it itself can be tested, but perhaps this can be moved to a unit test?
 #include <oPlatform/oStandards.h> // standard colors for a console app, maybe this can be callouts? log file path... can be an option?
 #include <oPlatform/oStream.h> // oStreamExists
 #include <oPlatform/oStreamUtil.h> // used for loading buffers

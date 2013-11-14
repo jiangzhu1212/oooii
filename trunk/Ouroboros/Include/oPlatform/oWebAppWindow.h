@@ -26,7 +26,7 @@
 #ifndef oWebAppWindow_h
 #define oWebAppWindow_h
 
-#include <oPlatform/oWindow.h>
+#include <oGUI/window.h>
 
 // Simple window that reports work load through a "job count"
 // and CPU utilizaton.  Includes a link that opens http://localhost:_ServerPort

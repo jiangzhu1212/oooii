@@ -26,7 +26,6 @@
 #include <oBase/string.h>
 #include <new.h>
 #include <signal.h>
-#include <oPlatform/Windows/oWinAsString.h>
 #include <oBase/type_info.h>
 #include <comdef.h>
 

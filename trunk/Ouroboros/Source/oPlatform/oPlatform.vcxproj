@@ -143,11 +143,9 @@
     <ClInclude Include="..\..\Include\oPlatform\oSingleton.h" />
     <ClInclude Include="..\..\Include\oPlatform\oStandards.h" />
     <ClInclude Include="..\..\Include\oPlatform\oTest.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oWindow.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oCRTHeap.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oD3D11.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oDXGI.h" />
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinAsString.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinRegistry.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinSkeleton.h" />
     <ClInclude Include="oCRTLeakTracker.h" />
@@ -192,8 +190,6 @@
     <ClCompile Include="oTest.cpp" />
     <ClCompile Include="oWebAppWindow.cpp" />
     <ClCompile Include="oWebServer.cpp" />
-    <ClCompile Include="oWinAsString.cpp" />
-    <ClCompile Include="oWindow.cpp" />
     <ClCompile Include="oWinExceptionHandler.cpp" />
     <ClCompile Include="oWinRegistry.cpp" />
     <ClCompile Include="oWinSkeleton.cpp" />

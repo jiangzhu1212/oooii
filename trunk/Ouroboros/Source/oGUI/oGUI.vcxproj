@@ -24,8 +24,10 @@
     <ClInclude Include="..\..\Include\oGUI\oGUIMenu.h" />
     <ClInclude Include="..\..\Include\oGUI\oMRUManager.h" />
     <ClInclude Include="..\..\Include\oGUI\oMsgBox.h" />
-    <ClInclude Include="..\..\Include\oGUI\oProgressBar.h" />
+    <ClInclude Include="..\..\Include\oGUI\progress_bar.h" />
+    <ClInclude Include="..\..\Include\oGUI\window.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oGDI.h" />
+    <ClInclude Include="..\..\Include\oGUI\Windows\oWinAsString.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinCommonDialog.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinControlSet.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinCursor.h" />
@@ -43,7 +45,7 @@
     <ClCompile Include="oGUIMenu.cpp" />
     <ClCompile Include="oMRUManager.cpp" />
     <ClCompile Include="oMsgBox.cpp" />
-    <ClCompile Include="oProgressBar.cpp" />
+    <ClCompile Include="oWinAsString.cpp" />
     <ClCompile Include="oWinCommonDialog.cpp" />
     <ClCompile Include="oWinControlSet.cpp" />
     <ClCompile Include="oWinCursor.cpp" />
@@ -59,6 +61,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="progress_bar.cpp" />
+    <ClCompile Include="window.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{5461DA23-F040-4979-A492-E23B26D87163}</ProjectGuid>

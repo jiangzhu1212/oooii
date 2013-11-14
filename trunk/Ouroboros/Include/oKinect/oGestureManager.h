@@ -44,7 +44,7 @@
 #define oGestureManager_h
 
 #include <oPlatform/oStream.h>
-#include <oPlatform/oWindow.h>
+#include <oGUI/window.h>
 
 enum oGESTURE_VISUALIZATION
 {

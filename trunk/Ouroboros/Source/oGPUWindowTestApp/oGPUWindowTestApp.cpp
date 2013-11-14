@@ -28,7 +28,7 @@
 #include <oGUI/Windows/oGDI.h>
 #include <oGUI/oGUIMenu.h>
 #include <oPlatform/oStream.h>
-#include <oPlatform/oWindow.h>
+#include <oGUI/window.h>
 #include "resource.h"
 
 // Whereas oGPU is an abstraction of modern hardware-accelerated graphics APIs,

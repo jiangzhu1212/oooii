@@ -24,9 +24,6 @@
     <ClInclude Include="..\..\Include\oGUI\oMsgBox.h">
       <Filter>oGUI</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGUI\oProgressBar.h">
-      <Filter>oGUI</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oGUI\Windows\oGDI.h">
       <Filter>oGUI\Windows</Filter>
     </ClInclude>
@@ -66,6 +63,15 @@
     <ClInclude Include="..\..\Include\oGUI\console.h">
       <Filter>oGUI</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\progress_bar.h">
+      <Filter>oGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\window.h">
+      <Filter>oGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\oWinAsString.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oGUIMenu.cpp">
@@ -75,9 +81,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oMsgBox.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oProgressBar.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oGDI.cpp">
@@ -114,6 +117,15 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="console.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oWinAsString.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="window.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="progress_bar.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

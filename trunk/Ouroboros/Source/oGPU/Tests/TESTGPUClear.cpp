@@ -29,7 +29,7 @@
 #include <oGUI/Windows/oGDI.h>
 #include <oGUI/Windows/oWinRect.h>
 
-#include <oPlatform/oWindow.h>
+#include <oGUI/window.h>
 
 using namespace ouro;
 

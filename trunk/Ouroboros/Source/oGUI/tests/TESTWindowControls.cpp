@@ -25,7 +25,7 @@
 #include <oGUI/oGUIMenu.h>
 #include <oGUI/oMsgBox.h>
 #include <oBase/timer.h>
-#include <oPlatform/oWindow.h>
+#include <oGUI/window.h>
 #include <oGUI/Windows/oGDI.h>
 #include <oGUI/Windows/oWinCommonDialog.h>
 #include <oGUI/Windows/oWinWindowing.h>

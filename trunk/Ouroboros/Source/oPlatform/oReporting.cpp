@@ -32,7 +32,7 @@
 #include <oCore/process_heap.h>
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oStream.h>
-#include <oPlatform/Windows/oWinAsString.h>
+#include <oGUI/Windows/oWinAsString.h>
 #include "oCRTLeakTracker.h"
 #include "oWinExceptionHandler.h"
 

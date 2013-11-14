@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oPlatform/oWindow.h>
+#include <oGUI/window.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oCore/system.h>
 #include <oGPU/oGPU.h>
