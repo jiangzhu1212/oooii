@@ -133,7 +133,7 @@ public:
 	inline HWND operator[](int _Index) const { return GetControl(_Index); }
 
 private:
-	typedef std::map<ouro::mstring, HFONT, ouro::less_case_insensitive<ouro::mstring>> fonts_t;
+	typedef std::map<ouro::mstring, HFONT, ouro::less_i<ouro::mstring>> fonts_t;
 
 	struct CONTROL_CONTEXT
 	{

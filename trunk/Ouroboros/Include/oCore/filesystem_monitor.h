@@ -22,55 +22,55 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
+// Object that redirects file lifetime events to a functor.
 #pragma once
-#ifndef oBase_all_h
-#define oBase_all_h
-#include <oBase/algorithm.h>
-#include <oBase/assert.h>
-#include <oBase/atof.h>
-#include <oBase/byte.h>
-#include <oBase/color.h>
-#include <oBase/concurrent_index_allocator.h>
-#include <oBase/concurrent_linear_allocator.h>
-#include <oBase/concurrent_object_pool.h>
-#include <oBase/countdown_latch.h>
-#include <oBase/date.h>
-#include <oBase/djb2.h>
-#include <oBase/endian.h>
-#include <oBase/equal.h>
-#include <oBase/event.h>
-#include <oBase/finally.h>
-#include <oBase/fixed_string.h>
-#include <oBase/fixed_vector.h>
-#include <oBase/fnv1a.h>
-#include <oBase/fourcc.h>
-#include <oBase/guid.h>
-#include <oBase/index_allocator.h>
-#include <oBase/index_allocator_base.h>
-#include <oBase/ini.h>
-#include <oBase/intrusive_ptr.h>
-#include <oBase/leak_tracker.h>
-#include <oBase/linear_allocator.h>
-#include <oBase/macros.h>
-#include <oBase/memory.h>
-#include <oBase/moving_average.h>
-#include <oBase/murmur3.h>
-#include <oBase/operators.h>
-#include <oBase/opttok.h>
+#ifndef oCore_filesystem_monitor_h
+#define oCore_filesystem_monitor_h
+
 #include <oBase/path.h>
-#include <oBase/path_traits.h>
-#include <oBase/scc.h>
-#include <oBase/string.h>
-#include <oBase/string_traits.h>
-#include <oBase/text_document.h>
-#include <oBase/throw.h>
-#include <oBase/timer.h>
-#include <oBase/type_info.h>
-#include <oBase/types.h>
-#include <oBase/uint128.h>
-#include <oBase/unordered_map.h>
-#include <oBase/uri.h>
-#include <oBase/xml.h>
+
+namespace ouro {
+	namespace filesystem {
+
+/* enum class */ namespace file_event
+{	enum value {
+
+	unsupported,
+	added,
+	removed,
+	modified,
+	accessible,
+
+};}
+
+class monitor
+{
+public:
+	// A file can get an added or modified event before all work on the file is 
+	// complete, so there is a polling to check if the file has settled and is 
+	// ready for access by another client system.
+  struct info
+  {
+    unsigned int accessibility_poll_rate_ms;
+    unsigned int accessibility_timeout_ms;
+  };
+
+  static std::shared_ptr<monitor> make(const info& _Info, const std::function<void (file_event::value _Event, const path& _Path)>& _OnEvent);
+
+  virtual info get_info() const = 0;
+  
+  // The specified path can be a wildcard. _BufferSize is how much watch data
+	// to buffer between sampling calls. This size is doubled to enable double-
+	// buffering and better concurrency.
+  virtual void watch(const path& _Path, size_t _BufferSize, bool _Recursive) = 0; 
+  
+  // If a parent to the specified path is recursively watching, it will 
+  // continue watching. This only removes entries that were previously
+  // registered with watch() or watch_recursive().
+  virtual void unwatch(const path& _Path) = 0;
+};
+
+	} // namespace filesystem
+} // namespace ouro
+
 #endif

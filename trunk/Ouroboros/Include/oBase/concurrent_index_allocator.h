@@ -38,7 +38,14 @@ class concurrent_index_allocator : public index_allocator_base
 public:
 	// It is client code's responsibility to free _pArena after this class has
 	// been destroyed.
+	concurrent_index_allocator() {}
 	concurrent_index_allocator(void* _pArena, size_t _SizeofArena);
+	concurrent_index_allocator(concurrent_index_allocator&& _That) { operator=(std::move(_That)); }
+	concurrent_index_allocator& operator=(concurrent_index_allocator&& _That)
+	{
+		index_allocator_base::operator=(std::move((index_allocator_base&&)_That));
+		return *this;
+	}
 
 	// return an index reserved until it is made available by deallocate
 	unsigned int allocate();
@@ -61,7 +68,7 @@ inline unsigned int concurrent_index_allocator::allocate()
 		allocatedIndex = oldI & ~tag_mask;
 		if (allocatedIndex == tagged_invalid_index)
 			return invalid_index;
-		newI = (static_cast<unsigned int*>(Arena)[allocatedIndex]) | ((oldI + tag_one) & tag_mask);
+		newI = (static_cast<unsigned int*>(pArena)[allocatedIndex]) | ((oldI + tag_one) & tag_mask);
 	} while (!oStd::atomic_compare_exchange(&Freelist, newI, oldI));
 
 	return allocatedIndex;
@@ -73,7 +80,7 @@ inline void concurrent_index_allocator::deallocate(unsigned int _Index)
 	do
 	{
 		oldI = Freelist;
-		static_cast<unsigned int*>(Arena)[_Index] = oldI & ~tag_mask;
+		static_cast<unsigned int*>(pArena)[_Index] = oldI & ~tag_mask;
 		newI = _Index | ((oldI + tag_one) & tag_mask);
 	} while (!oStd::atomic_compare_exchange(&Freelist, newI, oldI));
 }

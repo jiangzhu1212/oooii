@@ -261,7 +261,7 @@ private:
 	oInitOnce<oHandlerEntry> HTTPHandlers;
 	oHandlerEntry BuildHandlers; //temporary, used while building pages.
 
-	typedef std::unordered_map<sstring, intrusive_ptr<oHTTPURICapture>, oStdHash<sstring>, ouro::equal_to<sstring>> URICaptureHandlers_t;
+	typedef std::unordered_map<sstring, intrusive_ptr<oHTTPURICapture>, oStdHash<sstring>, ouro::same<sstring>> URICaptureHandlers_t;
 	oInitOnce<URICaptureHandlers_t> URICaptureHandlers;
 	URICaptureHandlers_t BuildURICaptureHandlers; //temporary, used while building pages.
 

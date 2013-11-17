@@ -33,6 +33,7 @@
 #include <oCore/debugger.h>
 #include <oCore/display.h>
 #include <oCore/filesystem.h>
+#include <oCore/filesystem_monitor.h>
 #include <oCore/module.h>
 #include <oCore/page_allocator.h>
 #include <oCore/process.h>

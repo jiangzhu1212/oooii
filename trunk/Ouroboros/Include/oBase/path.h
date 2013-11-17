@@ -33,12 +33,12 @@
 
 namespace ouro {
 
-template<typename charT, typename TraitsT = default_posix_path_traits<charT>>
+template<typename charT, typename traitsT = default_posix_path_traits<charT>>
 class basic_path
 {
 public:
 	static const size_t Capacity = _MAX_PATH;
-	typedef typename TraitsT traits;
+	typedef typename traitsT traits;
 	typedef typename traits::char_type char_type;
 	typedef size_t size_type;
 	typedef path_string string_type;
@@ -271,7 +271,7 @@ public:
 	bool has_root_directory() const { return RootDirOffset != npos; }
 	bool has_relative_path() const { return !p.empty() && has_root_directory() && !traits::is_sep(p[0]) && !p[1]; }
 	bool has_parent_path() const { return ParentEndOffset != 0 && ParentEndOffset != npos; }
-	bool has_filename() const { return !p.empty(); }
+	bool has_filename() const { return has_basename() || has_extension(); }
 
 	bool is_absolute() const { return (has_root_directory() && !traits::posix && has_root_name());  }
 	bool is_windows_absolute() const { return is_absolute() || base_path_traits<char_type, false>::has_vol(p);  } // it is too annoying to live without this
@@ -394,21 +394,29 @@ typedef basic_path<wchar_t, default_windows_path_traits<wchar_t>> windows_wpath;
 typedef posix_path path;
 typedef posix_wpath wpath;
 
-template<typename charT, typename TraitsT>
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const basic_path<charT, TraitsT>& _Value)
+template<typename charT, typename traitsT>
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const basic_path<charT, traitsT>& _Value)
 {
-	try { ((const basic_path<charT, TraitsT>::string_type&)_Value).copy_to(_StrDestination, _SizeofStrDestination); }
+	try { ((const basic_path<charT, traitsT>::string_type&)_Value).copy_to(_StrDestination, _SizeofStrDestination); }
 	catch (std::exception&) { return nullptr; }
 	return _StrDestination;
 }
 
-template<typename charT, typename TraitsT>
-bool from_string(basic_path<charT, TraitsT>* _pValue, const char* _StrSource)
+template<typename charT, typename traitsT>
+bool from_string(basic_path<charT, traitsT>* _pValue, const char* _StrSource)
 {
 	try { *_pValue = _StrSource; }
 	catch (std::exception&) { return false; }
 	return true;
 }
+
+// _____________________________________________________________________________
+// standard container support
+
+template<typename charT, typename traitsT> struct less<basic_path<charT, traitsT>> { int operator()(const basic_path<charT, traitsT>& x, const basic_path<charT, traitsT>& y) const { return strcmp(x.c_str(), y.c_str()) < 0; } };
+template<typename charT, typename traitsT> struct less_i<basic_path<charT, traitsT>> { bool operator()(const basic_path<charT, traitsT>& x, const basic_path<charT, traitsT>& y) const { return _stricmp(x.c_str(), y.c_str()) < 0; } };
+template<typename charT, typename traitsT> struct same<basic_path<charT, traitsT>> { int operator()(const basic_path<charT, traitsT>& x, const basic_path<charT, traitsT>& y) const { return !strcmp(x.c_str(), y.c_str()); } };
+template<typename charT, typename traitsT> struct same_i<basic_path<charT, traitsT>> { bool operator()(const basic_path<charT, traitsT>& x, const basic_path<charT, traitsT>& y) const { return !_stricmp(x.c_str(), y.c_str()); } };
 
 } // namespace ouro
 

@@ -27,6 +27,8 @@
 #ifndef oBase_index_allocator_base_h
 #define oBase_index_allocator_base_h
 
+#include <utility>
+
 namespace ouro {
 
 class index_allocator_base
@@ -44,7 +46,7 @@ public:
 	// deallocate all indices
 	void reset();
 
-	inline bool valid() const { return Arena != 0; }
+	inline bool valid() const { return !!pArena; }
 	inline bool empty() const { return size() == 0; } // (SLOW! see size())
 
 	// number of indices allocated (SLOW! this loops through entire freelist 
@@ -55,14 +57,18 @@ public:
 
 	// This can be used to get the pointer passed to the constructor so it can
 	// be freed if client code did not keep any other reference.
-	void* const get_arena() const { return Arena; }
+	void* const get_arena() const { return pArena; }
 
 protected:
-	void* Arena;
+	void* pArena;
 	size_t ArenaBytes;
 	unsigned int Freelist;
 
 	size_t count_free(unsigned int _CurrentIndex, unsigned int _InvalidIndex) const;
+
+	index_allocator_base();
+	index_allocator_base(index_allocator_base&& _That);
+	index_allocator_base& operator=(index_allocator_base&& _That);
 
 	// size in bytes, not # of indices
 	index_allocator_base(void* _pArena, size_t _SizeofArena);
@@ -71,9 +77,6 @@ protected:
 private:
 	index_allocator_base(const index_allocator_base&); /* = delete; */
 	const index_allocator_base& operator=(index_allocator_base&); /* = delete; */
-
-	index_allocator_base(index_allocator_base&&); /* = delete; */
-	index_allocator_base& operator=(index_allocator_base&&); /* = delete; */
 };
 
 } // namespace ouro

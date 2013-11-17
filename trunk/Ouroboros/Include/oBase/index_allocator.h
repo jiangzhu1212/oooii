@@ -38,8 +38,15 @@ namespace ouro {
 class index_allocator : public index_allocator_base
 {
 public:
+	index_allocator() {}
 	index_allocator(void* _pArena, size_t _SizeofArena);
-	
+	index_allocator(concurrent_index_allocator&& _That) { operator=(std::move(_That)); }
+	index_allocator& operator=(index_allocator&& _That)
+	{
+		index_allocator_base::operator=(std::move((index_allocator_base&&)_That));
+		return *this;
+	}
+
 	// return an index reserved until it is made available by deallocate
 	unsigned int allocate();
 
@@ -57,13 +64,13 @@ inline unsigned int index_allocator::allocate()
 	if (Freelist == invalid_index)
 		return invalid_index;
 	unsigned int allocatedIndex = Freelist;
-	Freelist = static_cast<unsigned int*>(Arena)[Freelist];
+	Freelist = static_cast<unsigned int*>(pArena)[Freelist];
 	return allocatedIndex;
 }
 
 inline void index_allocator::deallocate(unsigned int _Index)
 {
-	static_cast<unsigned int*>(Arena)[_Index] = Freelist;
+	static_cast<unsigned int*>(pArena)[_Index] = Freelist;
 	Freelist = _Index;
 }
 

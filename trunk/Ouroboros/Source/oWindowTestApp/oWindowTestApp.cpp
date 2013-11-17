@@ -30,6 +30,8 @@
 #include <oGUI/window.h>
 #include "resource.h"
 
+#include <oCore/filesystem_monitor.h>
+
 using namespace ouro;
 
 enum oWMENU
@@ -117,6 +119,8 @@ private:
 	// This gets deleted by parent window automatically.
 	HWND hButton;
 
+	std::shared_ptr<filesystem::monitor> DirWatcher;
+
 private:
 	void ActionHook(const oGUI_ACTION_DESC& _Action);
 	void EventHook(const oGUI_EVENT_DESC& _Event);
@@ -124,6 +128,7 @@ private:
 	bool CreateControls(const oGUI_EVENT_CREATE_DESC& _CreateEvent);
 	void CheckState(oGUI_WINDOW_STATE _State);
 	void CheckStyle(oGUI_WINDOW_STYLE _Style);
+	void OnDirectoryEvent(filesystem::file_event::value _Event, const path& _Path);
 };
 
 oWindowTestApp::oWindowTestApp()
@@ -131,18 +136,33 @@ oWindowTestApp::oWindowTestApp()
 	, PreFullscreenState(oGUI_WINDOW_HIDDEN)
 	, hButton(nullptr)
 {
-	window::init i;
-	i.title = "oWindowTestApp";
-	i.icon = (oGUI_ICON)oGDILoadIcon(IDI_APPICON);
-	i.action_hook = oBIND(&oWindowTestApp::ActionHook, this, oBIND1);
-	i.event_hook = oBIND(&oWindowTestApp::EventHook, this, oBIND1);
-	i.shape.ClientSize = int2(320, 240);
-	i.shape.State = oGUI_WINDOW_HIDDEN;
-	i.shape.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
-	i.alt_f4_closes = true;
-	i.cursor_state = oGUI_CURSOR_HAND;
+	{
+		filesystem::monitor::info i;
+		i.accessibility_poll_rate_ms = 2000;
+		i.accessibility_timeout_ms = 5000;
+		DirWatcher = filesystem::monitor::make(i, std::bind(&oWindowTestApp::OnDirectoryEvent, this, std::placeholders::_1, std::placeholders::_2));
+	}
 
-	Window = window::make(i);
+	{
+		path watched = filesystem::desktop_path() / "test/";
+		try { DirWatcher->watch(watched, oKB(64), true); }
+		catch (std::exception& e) { oTRACEA("Cannot watch %s: %s", watched.c_str(), e.what()); }
+	}
+
+	{
+		window::init i;
+		i.title = "oWindowTestApp";
+		i.icon = (oGUI_ICON)oGDILoadIcon(IDI_APPICON);
+		i.action_hook = oBIND(&oWindowTestApp::ActionHook, this, oBIND1);
+		i.event_hook = oBIND(&oWindowTestApp::EventHook, this, oBIND1);
+		i.shape.ClientSize = int2(320, 240);
+		i.shape.State = oGUI_WINDOW_HIDDEN;
+		i.shape.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
+		i.alt_f4_closes = true;
+		i.cursor_state = oGUI_CURSOR_HAND;
+
+		Window = window::make(i);
+	}
 
 	Window->set_hotkeys(HotKeys);
 
@@ -217,6 +237,22 @@ void oWindowTestApp::CheckStyle(oGUI_WINDOW_STYLE _Style)
 	, oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, oWMI_VIEW_STYLE_FIRST + _Style);
 }
 
+void oWindowTestApp::OnDirectoryEvent(filesystem::file_event::value _Event, const path& _Path)
+{
+	static int counter = 0;
+
+	if (_Event == filesystem::file_event::added && !filesystem::is_directory(_Path))
+	{
+		int old = oStd::atomic_increment(&counter);
+		oTRACE("%s: %s (%d)", as_string(_Event), _Path.c_str(), old + 1);
+	}
+
+	else
+	{
+		oTRACE("%s: %s", as_string(_Event), _Path.c_str());
+	}
+}
+
 void oWindowTestApp::EventHook(const oGUI_EVENT_DESC& _Event)
 {
 	switch (_Event.Type)
@@ -258,11 +294,11 @@ void oWindowTestApp::EventHook(const oGUI_EVENT_DESC& _Event)
 			oTRACE("oGUI_MOVED %dx%d", _Event.AsShape().Shape.ClientPosition.x, _Event.AsShape().Shape.ClientPosition.y);
 			break;
 		case oGUI_SIZING:
-			oTRACE("oGUI_SIZING %s %dx%d", ouro::as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
+			oTRACE("oGUI_SIZING %s %dx%d", as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
 			break;
 		case oGUI_SIZED:
 		{
-			oTRACE("oGUI_SIZED %s %dx%d", ouro::as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
+			oTRACE("oGUI_SIZED %s %dx%d", as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
 			CheckState(_Event.AsShape().Shape.State);
 			CheckStyle(_Event.AsShape().Shape.Style);
 
@@ -296,7 +332,7 @@ void oWindowTestApp::EventHook(const oGUI_EVENT_DESC& _Event)
 			oTRACE("oGUI_DROP_FILES (at %d,%d starting with %s)", _Event.AsDrop().ClientDropPosition.x, _Event.AsDrop().ClientDropPosition.y, _Event.AsDrop().pPaths[0]);
 			break;
 		case oGUI_INPUT_DEVICE_CHANGED:
-			oTRACE("oGUI_INPUT_DEVICE_CHANGED %s %s %s", ouro::as_string(_Event.AsInputDevice().Type), ouro::as_string(_Event.AsInputDevice().Status), _Event.AsInputDevice().InstanceName);
+			oTRACE("oGUI_INPUT_DEVICE_CHANGED %s %s %s", as_string(_Event.AsInputDevice().Type), as_string(_Event.AsInputDevice().Status), _Event.AsInputDevice().InstanceName);
 			break;
 		oNODEFAULT;
 	}
@@ -387,10 +423,10 @@ void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 			
 			break;
 		case oGUI_ACTION_KEY_DOWN:
-			oTRACE("oGUI_ACTION_KEY_DOWN %s", ouro::as_string(_Action.Key));
+			oTRACE("oGUI_ACTION_KEY_DOWN %s", as_string(_Action.Key));
 			break;
 		case oGUI_ACTION_KEY_UP:
-			oTRACE("oGUI_ACTION_KEY_UP %s", ouro::as_string(_Action.Key));
+			oTRACE("oGUI_ACTION_KEY_UP %s", as_string(_Action.Key));
 			break;
 		case oGUI_ACTION_POINTER_MOVE:
 			//oTRACE("oGUI_ACTION_POINTER_MOVE");

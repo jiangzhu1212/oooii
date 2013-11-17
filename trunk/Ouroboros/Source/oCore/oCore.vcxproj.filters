@@ -51,6 +51,12 @@
     <ClCompile Include="process_heap.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="iocp.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="filesystem_monitor.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\filesystem.h">
@@ -96,6 +102,12 @@
       <Filter>oCore</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oCore\process_heap.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="iocp.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\filesystem_monitor.h">
       <Filter>oCore</Filter>
     </ClInclude>
   </ItemGroup>

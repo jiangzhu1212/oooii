@@ -802,7 +802,7 @@ private:
 	};
 
 	mutex CheckAccessibleMutex;
-	std::map<uri_string, oEVENT_RECORD, less_case_insensitive<uri_string>> EventRecords;
+	std::map<uri_string, oEVENT_RECORD, less_i<uri_string>> EventRecords;
 	std::vector<uri_string> Accessibles;
 	HANDLE hTimerQueue;
 

@@ -25,6 +25,8 @@
     <ClCompile Include="debugger.cpp" />
     <ClCompile Include="display.cpp" />
     <ClCompile Include="filesystem.cpp" />
+    <ClCompile Include="filesystem_monitor.cpp" />
+    <ClCompile Include="iocp.cpp" />
     <ClCompile Include="module.cpp" />
     <ClCompile Include="page_allocator.cpp" />
     <ClCompile Include="pch.cpp">
@@ -47,6 +49,7 @@
     <ClInclude Include="..\..\Include\oCore\debugger.h" />
     <ClInclude Include="..\..\Include\oCore\display.h" />
     <ClInclude Include="..\..\Include\oCore\filesystem.h" />
+    <ClInclude Include="..\..\Include\oCore\filesystem_monitor.h" />
     <ClInclude Include="..\..\Include\oCore\module.h" />
     <ClInclude Include="..\..\Include\oCore\page_allocator.h" />
     <ClInclude Include="..\..\Include\oCore\process.h" />
@@ -54,6 +57,7 @@
     <ClInclude Include="..\..\Include\oCore\process_stats_monitor.h" />
     <ClInclude Include="..\..\Include\oCore\serial_port.h" />
     <ClInclude Include="..\..\Include\oCore\system.h" />
+    <ClInclude Include="iocp.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -78,7 +78,7 @@ static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, o
 	int ConfigHead = snprintf(CommandLine, "%s %s /p:Configuration=", ToolName, _Settings.Solution);
 
 	o_msbuild_stdout_t StdOutDrain;
-	std::unordered_map<uri_string, std::shared_ptr<ouro::process>, oStdHash<uri_string>, ouro::equal_to<uri_string>> BuildProcesses;
+	std::unordered_map<uri_string, std::shared_ptr<ouro::process>, oStdHash<uri_string>, ouro::same<uri_string>> BuildProcesses;
 	oFOR(auto& Config, _Settings.Configurations)
 	{
 		int PlatformHead = ConfigHead + snprintf(CommandLine.c_str() + ConfigHead, CommandLine.capacity() - ConfigHead, "%s /p:Platform=", Config);
@@ -174,7 +174,7 @@ private:
 
 bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _LogFolder, const oConcurrency::event& _CancelEvent, oMSBuildResults* _pResults)
 {
-	std::unordered_map<uri_string, LogContext, oStdHash<uri_string>, ouro::equal_to<uri_string>> BuildLogs;
+	std::unordered_map<uri_string, LogContext, oStdHash<uri_string>, ouro::same<uri_string>> BuildLogs;
 
 	_pResults->CleanSucceeded = true;
 	_pResults->CleanTimeSeconds = 0.0f;

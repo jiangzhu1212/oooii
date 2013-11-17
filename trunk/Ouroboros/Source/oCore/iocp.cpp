@@ -1,0 +1,284 @@
+/**************************************************************************
+ * The MIT License                                                        *
+ * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * arciuolo@gmail.com                                                     *
+ *                                                                        *
+ * Permission is hereby granted, free of charge, to any person obtaining  *
+ * a copy of this software and associated documentation files (the        *
+ * "Software"), to deal in the Software without restriction, including    *
+ * without limitation the rights to use, copy, modify, merge, publish,    *
+ * distribute, sublicense, and/or sell copies of the Software, and to     *
+ * permit persons to whom the Software is furnished to do so, subject to  *
+ * the following conditions:                                              *
+ *                                                                        *
+ * The above copyright notice and this permission notice shall be         *
+ * included in all copies or substantial portions of the Software.        *
+ *                                                                        *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
+ **************************************************************************/
+#include "iocp.h"
+#include "../oStd/win.h"
+#include <oBase/backoff.h>
+#include <oBase/concurrent_object_pool.h>
+#include <oCore/debugger.h>
+#include <oCore/process_heap.h>
+#include <oStd/thread.h>
+#include <vector>
+
+#include <oPlatform/oReporting.h> // fixme
+
+#define oSHUTDOWN 1
+#define oCOMPLETION 2
+
+using namespace oStd;
+
+namespace ouro {
+	namespace windows {
+
+struct iocp_overlapped : public OVERLAPPED
+{
+	iocp_overlapped() { clear(); }
+
+	inline void clear() { memset(this, 0, sizeof(OVERLAPPED)); hFile = nullptr; Task = nullptr; }
+
+	HANDLE hFile;
+	std::function<void(size_t _NumBytes)> Task;
+};
+
+class iocp_threadpool
+{
+public:
+	static unsigned int io_concurrency();
+
+	static iocp_threadpool& singleton();
+
+	// Waits for all work to be completed
+	void wait() { wait_for(~0u); }
+	bool wait_for(unsigned int _TimeoutMS);
+
+	OVERLAPPED* associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion);
+	void disassociate(OVERLAPPED* _pOverlapped);
+
+private:
+	iocp_threadpool() : hIoPort(nullptr), NumRunningThreads(0), NumAssociations(0) {}
+	iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers = 0);
+	~iocp_threadpool();
+	iocp_threadpool(iocp_threadpool&& _That) { operator=(std::move(_That)); }
+	iocp_threadpool& operator=(iocp_threadpool&& _That);
+
+	void work();
+
+	HANDLE hIoPort;
+	std::vector<oStd::thread> Workers;
+	size_t NumRunningThreads;
+	size_t NumAssociations;
+
+	concurrent_object_pool<iocp_overlapped> pool;
+
+	iocp_threadpool(const iocp_threadpool&); /* = delete; */
+	const iocp_threadpool& operator=(const iocp_threadpool&); /* = delete; */
+};
+
+unsigned int iocp_threadpool::io_concurrency()
+{
+	return oStd::thread::hardware_concurrency();
+}
+
+void iocp_threadpool::work()
+{
+	debugger::thread_name("iocp worker");
+	atomic_increment(&NumRunningThreads);
+	while (true)
+	{
+		DWORD nBytes = 0;
+		ULONG_PTR key = 0;
+		iocp_overlapped* ol = nullptr;
+		if (GetQueuedCompletionStatus(hIoPort, &nBytes, &key, (OVERLAPPED**)&ol, INFINITE))
+		{
+			if (oSHUTDOWN == key)
+				break;
+			else if (oCOMPLETION == key)
+			{
+				if (ol->Task)
+					ol->Task(nBytes);
+			}
+
+			else
+				oTHROW(operation_not_supported, "CompletionKey %p not supported", key);
+		}
+		else if (ol)
+		{
+			if (ol->Task)
+				ol->Task(0);
+		}
+	}
+	atomic_decrement(&NumRunningThreads);
+}
+
+iocp_threadpool& iocp_threadpool::singleton()
+{
+	static iocp_threadpool* sInstance = nullptr;
+	if (!sInstance)
+	{
+		process_heap::find_or_allocate(
+			"iocp"
+			, process_heap::per_process
+			, process_heap::leak_tracked
+			, [=](void* _pMemory) { new (_pMemory) iocp_threadpool(oKB(512)); }
+			, [=](void* _pMemory) { ((iocp_threadpool*)_pMemory)->~iocp_threadpool(); }
+			, &sInstance);
+	}
+	return *sInstance;
+}
+
+iocp_threadpool::iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers)
+	: hIoPort(nullptr)
+	, NumRunningThreads(0)
+	, NumAssociations(0)
+	, pool(_OverlappedCapacity)
+{
+	oReportingReference();
+
+	const size_t NumWorkers = _NumWorkers ? _NumWorkers : thread::hardware_concurrency();
+	hIoPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr, 0, static_cast<DWORD>(NumWorkers));
+	if (!hIoPort)
+		throw oStd::windows::error();
+
+	Workers.resize(NumWorkers);
+	auto worker = std::bind(&iocp_threadpool::work, this);
+	NumRunningThreads = 0;
+	oFOR(auto& w, Workers)
+		w = std::move(thread(worker));
+
+	backoff bo;
+	while (NumRunningThreads != Workers.size())
+		bo.pause();
+}
+
+iocp_threadpool::~iocp_threadpool()
+{
+	if (!wait_for(20000))
+		throw std::runtime_error("timed out waiting for iocp completion");
+
+	oFOR(auto& w, Workers)
+		PostQueuedCompletionStatus(hIoPort, 0, oSHUTDOWN, nullptr);
+
+	oFOR(auto& w, Workers)
+		w.join();
+
+	if (INVALID_HANDLE_VALUE != hIoPort)
+	{
+		CloseHandle(hIoPort);
+	
+		oReportingRelease();
+	}
+}
+
+iocp_threadpool& iocp_threadpool::operator=(iocp_threadpool&& _That)
+{
+	if (this != &_That)
+	{
+		hIoPort = _That.hIoPort; _That.hIoPort = INVALID_HANDLE_VALUE;
+		Workers = std::move(_That.Workers);
+		NumRunningThreads = _That.NumRunningThreads; _That.NumRunningThreads = 0;
+		NumAssociations = _That.NumAssociations; _That.NumAssociations = 0;
+		pool = std::move(_That.pool);
+	}
+	return *this;
+}
+
+bool iocp_threadpool::wait_for(unsigned int _TimeoutMS)
+{
+	backoff bo;
+
+	unsigned int start = ouro::timer::now_ms();
+
+	#ifdef _DEBUG
+		local_timeout to(5.0);
+	#endif
+
+	while (NumAssociations > 0)
+	{ 
+		if (_TimeoutMS != ~0u && ouro::timer::now_ms() >= (start + _TimeoutMS))
+			return false;
+
+		bo.pause();
+
+		#ifdef _DEBUG
+			if (to.timed_out())
+			{
+				oTRACE("Waiting for %u outstanding iocp associations to finish...", NumAssociations);
+				to.reset(5.0);
+			}
+		#endif
+	}
+
+	return true;
+}
+
+OVERLAPPED* iocp_threadpool::associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion)
+{
+	atomic_increment(&NumAssociations);
+	iocp_overlapped* ol = pool.allocate();
+	if (ol)
+	{
+		if (hIoPort != CreateIoCompletionPort(_Handle, hIoPort, oCOMPLETION, static_cast<DWORD>(Workers.size())))
+		{
+			disassociate(ol);
+			throw oStd::windows::error();
+		}
+
+		ol->hFile = _Handle;
+		ol->Task = _OnCompletion;
+	}
+
+	else
+		atomic_decrement(&NumAssociations);
+
+	return ol;
+}
+
+void iocp_threadpool::disassociate(OVERLAPPED* _pOverlapped)
+{
+	iocp_overlapped* ol = static_cast<iocp_overlapped*>(_pOverlapped);
+	ol->clear();
+	pool.deallocate(ol);
+	atomic_decrement(&NumAssociations);
+}
+
+namespace iocp {
+
+unsigned int io_concurrency()
+{
+	return iocp_threadpool::io_concurrency();
+}
+
+OVERLAPPED* associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion)
+{
+	return iocp_threadpool::singleton().associate(_Handle, _OnCompletion);
+}
+
+void disassociate(OVERLAPPED* _pOverlapped)
+{
+	iocp_threadpool::singleton().disassociate(_pOverlapped);
+}
+
+void wait()
+{
+	iocp_threadpool::singleton().wait();
+}
+
+bool wait_for(unsigned int _TimeoutMS)
+{
+	return iocp_threadpool::singleton().wait_for(_TimeoutMS);
+}
+
+		} // namespace iocp
+	} // namespace windows
+} // namespace ouro

@@ -26,8 +26,37 @@
 
 namespace ouro {
 
+index_allocator_base::index_allocator_base()
+	: pArena(nullptr)
+	, ArenaBytes(0)
+	, Freelist(invalid_index)
+{
+}
+
+index_allocator_base::index_allocator_base(index_allocator_base&& _That)
+{
+	operator=(std::move(_That));
+}
+
+index_allocator_base& index_allocator_base::operator=(index_allocator_base&& _That)
+{
+	if (this != &_That)
+	{
+		if (valid())
+		{
+			if (!empty())
+				throw std::runtime_error("an index allocator has outstanding allocations");
+		}
+
+		pArena = _That.pArena; _That.pArena = nullptr;
+		ArenaBytes = _That.ArenaBytes; _That.ArenaBytes = 0;
+		Freelist = _That.Freelist; _That.Freelist = invalid_index;
+	}
+	return *this;
+}
+
 index_allocator_base::index_allocator_base(void* _pArena, size_t _SizeofArena)
-	: Arena(_pArena)
+	: pArena(_pArena)
 	, ArenaBytes(_SizeofArena)
 	, Freelist(invalid_index)
 {
@@ -45,7 +74,7 @@ index_allocator_base::~index_allocator_base()
 	{
 		if (!empty())
 			throw std::runtime_error("an index allocator has outstanding allocations");
-		Arena = nullptr;
+		pArena = nullptr;
 		ArenaBytes = 0;
 	}
 }
@@ -58,7 +87,7 @@ size_t index_allocator_base::capacity() const
 void index_allocator_base::reset()
 {
 	// Seed list with next free index (like a next pointer in an slist)
-	unsigned int* indices = static_cast<unsigned int*>(Arena);
+	unsigned int* indices = static_cast<unsigned int*>(pArena);
 	const size_t cap = capacity();
 	for (unsigned int i = 0; i < cap; i++)
 		indices[i] = i+1;
@@ -80,7 +109,7 @@ size_t index_allocator_base::count_free(unsigned int _CurrentIndex, unsigned int
 			"while following the freelist, an index is "
 			"present that is greater than the capacity");
 
-		_CurrentIndex = static_cast<unsigned int*>(Arena)[_CurrentIndex];
+		_CurrentIndex = static_cast<unsigned int*>(pArena)[_CurrentIndex];
 	}
 
 	return nFree;

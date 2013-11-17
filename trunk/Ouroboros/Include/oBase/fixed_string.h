@@ -130,7 +130,7 @@ namespace ouro {
 		operator char_type*() { return s; }
 		operator const char_type*() const { return s; }
 
-		// @ooii-tony: FIXME this was supposed to make coding easier because 99% of
+		// @tony: FIXME this was supposed to make coding easier because 99% of
 		// fixed strings returned from a const threadsafe/volatile API are 
 		// immutable, but there's no guarantee. Fix this once other refactoring is 
 		// done.
@@ -165,21 +165,10 @@ namespace ouro {
 	typedef lwstring path_wstring;
 	typedef lwstring uri_wstring;
 
-	template<typename T> struct equal_to {};
-	template<typename T> struct equal_to_case_insensitive {};
-	template<typename T> struct less {};
-	template<typename T> struct less_case_insensitive {};
-
 	TSTR int format_duration(STRT& _StrDestination, double _TimeInSeconds, bool _Abbreviated = false, bool _IncludeMS = true) { return format_duration(_StrDestination, Capacity, _TimeInSeconds, _Abbreviated, _IncludeMS); }
 	TSTR int format_bytes(STRT& _StrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits) { return format_bytes(_StrDestination, _StrDestination.capacity(), _NumBytes, _NumPrecisionDigits); }
 	TSTR char* format_commas(STRT& _StrDestination, int _Number) { return format_commas(_StrDestination, _StrDestination.capacity(), _Number); }
 	TSTR char* format_commas(STRT& _StrDestination, unsigned int _Number) { return format_commas(_StrDestination, _StrDestination.capacity(), _Number); }
-
-	TSTR struct equal_to<STRT> { bool operator()(const STRT& x, const STRT& y) const { return !strcmp(x, y); } };
-	TSTR struct equal_to_case_insensitive<STRT> { bool operator()(const STRT& x, const STRT& y) const { return !_stricmp(x, y); } };
-
-	TSTR struct less<STRT> { bool operator()(const STRT& x, const STRT& y) const { return strcmp(x.c_str(), y.c_str()) < 0; } };
-	TSTR struct less_case_insensitive<STRT> { bool operator()(const STRT& x, const STRT& y) const { return _stricmp(x, y) < 0; } };
 
 	template<size_t capacity> char* ellipsize(fixed_string<char, capacity>& _StrDestination) { return ellipsize(_StrDestination.c_str(), _StrDestination.capacity()); }
 	template<size_t capacity> wchar_t* ellipsize(fixed_string<wchar_t, capacity>& _StrDestination) { return wcsellipsize(_StrDestination.c_str(), _StrDestination.capacity()); }

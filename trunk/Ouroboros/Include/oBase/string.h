@@ -29,6 +29,7 @@
 
 #include <oBase/config.h>
 #include <oBase/macros.h>
+#include <oBase/container_support.h>
 #include <functional>
 
 // The most-standard (but not standard) secure strcpy/strcats. The 3rd parameter
@@ -438,6 +439,15 @@ char* search_path(char (&_StrDestination)[size]
 // CommandLineToArgvW and serves as an implementation of CommandLineToArgvA that
 // Windows does not provide.
 const char** argtok(void* (*_Allocate)(size_t), const char* _AppPath, const char* _CommandLine, int* _pNumArgs);
+
+// _____________________________________________________________________________
+// standard container support
+
+template<> struct less<const char*> { int operator()(const char* x, const char* y) const { return strcmp(x, y) < 0; } };
+template<> struct less_i<const char*> { bool operator()(const char* x, const char* y) const { return _stricmp(x, y) < 0; } };
+
+template<> struct same<const char*> { int operator()(const char* x, const char* y) const { return !strcmp(x, y); } };
+template<> struct same_i<const char*> { bool operator()(const char* x, const char* y) const { return !_stricmp(x, y); } };
 
 } // namespace ouro
 

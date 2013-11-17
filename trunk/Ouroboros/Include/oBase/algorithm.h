@@ -435,8 +435,6 @@ OutputIterator transform(InputIterator _First, InputIterator _Last, OutputIterat
 	return _Result;
 }
 
-
-
 } // namespace ouro
 
 #endif
