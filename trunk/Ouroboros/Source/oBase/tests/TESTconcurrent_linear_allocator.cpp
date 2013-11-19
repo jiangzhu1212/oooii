@@ -55,8 +55,8 @@ static void test_basics()
 	char* c5 = Allocator.allocate<char>(1024);
 	oCHECK(!c5, "Too large an allocation should have failed, but succeeded");
 
-	size_t nFree = 1024 - byte_align(sizeof(concurrent_linear_allocator), oDEFAULT_MEMORY_ALIGNMENT);
-	nFree -= 4 * byte_align(kAllocSize, oDEFAULT_MEMORY_ALIGNMENT);
+	size_t nFree = 1024;
+	nFree -= 4 * byte_align(kAllocSize, oDEFAULT_MEMORY_ALIGNMENT) - 2;
 
 	oCHECK(Allocator.bytes_free() == nFree, "Bytes available is incorrect");
 

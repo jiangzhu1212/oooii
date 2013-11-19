@@ -73,7 +73,7 @@ public:
 	bool valid(void* _Pointer) const { return _Pointer >= pHead && _Pointer < pEnd; }
 
 	// returns the number of bytes available
-	size_t bytes_free() const { return byte_diff(pTail, pEnd); }
+	size_t bytes_free() const { return byte_diff(pEnd, pTail); }
 
 protected:
 	void* pHead;
