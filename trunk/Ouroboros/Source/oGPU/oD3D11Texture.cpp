@@ -25,9 +25,10 @@
 #include "oD3D11Texture.h"
 #include "oD3D11Device.h"
 #include <oSurface/surface.h>
-#include <oPlatform/Windows/oDXGI.h>
+#include "dxgi_util.h"
 
 using namespace ouro;
+using namespace ouro::d3d11;
 
 static bool CreateSecondTexture(oGPUDevice* _pDevice, const char* _Texture1Name, const oGPU_TEXTURE_DESC& _Texture1Desc, oGPUTexture** _ppTexture2)
 {
@@ -50,24 +51,34 @@ static bool CreateSecondTexture(oGPUDevice* _pDevice, const char* _Texture1Name,
 }
 
 oDEFINE_GPUDEVICE_CREATE(oD3D11, Texture);
-oD3D11Texture::oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess, ID3D11Texture2D* _pTexture)
+oD3D11Texture::oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess, ID3D11Resource* _pTexture)
 	: oGPUResourceMixin(_pDevice, _Desc, _Name)
-	, Texture(_pTexture)
+	, Texture((ID3D11Texture2D*)_pTexture)
 {
 	// NOTE: The desc might be garbage or incorrect if a D3D texture is specified
 	// explicitly, so sync them up here.
 
 	if (_pTexture)
 	{
-		oD3D11GetTextureDesc(_pTexture, &Desc);
-		oD3D11SetDebugName(_pTexture, _Name);
+		Desc = get_texture_info(_pTexture);
+
+		if (!oGPUTextureTypeIs2DMap(Desc.Type))
+		{
+			oErrorSetLast(std::errc::invalid_argument, "the specified texture must be 2D");
+			return;
+		}
+
+		debug_name(_pTexture, _Name);
 		*_pSuccess = true;
 	}
 
 	else
 	{
 		oD3D11DEVICE();
-		*_pSuccess = oD3D11CreateTexture(D3DDevice, _Name, _Desc, nullptr, &Texture, &SRV);
+		new_texture New = make_texture(D3DDevice, _Name, _Desc);
+		Texture = New.pTexture2D;
+		SRV = New.pSRV;
+		*_pSuccess = true;
 	}
 
 	if (*_pSuccess)
@@ -78,15 +89,11 @@ oD3D11Texture::oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char
 			{
 				mstring name;
 				snprintf(name, "%s.SRV", _Name);
-				if (!oD3D11CreateShaderResourceView(name, Texture, &SRV))
-					*_pSuccess = false; // pass through error
+				SRV = make_srv(name, Texture);
 			}
 
 			if (*_pSuccess && oGPUTextureTypeIsUnordered(_Desc.Type))
-			{
-				if (!oD3D11CreateUnorderedAccessView(_Name, Texture, 0, 0, &UAV))
-					*_pSuccess = false;
-			}
+				UAV = make_uav(_Name, Texture, 0, 0);
 		}
 
 		*_pSuccess = CreateSecondTexture(_pDevice, _Name, _Desc, (oGPUTexture**)&Texture2);

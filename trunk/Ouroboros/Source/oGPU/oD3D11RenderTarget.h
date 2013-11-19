@@ -27,7 +27,7 @@
 #define oD3D11RenderTarget2_h
 
 #include "oGPUCommon.h"
-#include <oPlatform/Windows/oD3D11.h>
+#include "d3d11.h"
 #include <oConcurrency/mutex.h>
 
 // {772E2A04-4C2D-447A-8DA8-91F258EFA68C}

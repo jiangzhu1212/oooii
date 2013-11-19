@@ -34,6 +34,12 @@
     <ClCompile Include="oD3D11Query.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
+    <ClCompile Include="d3d11_util.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="dxgi_util.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="oGPUCommon.h">
@@ -74,6 +80,12 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h">
       <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d11_util.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="dxgi_util.h">
+      <Filter>Source\D3D11</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

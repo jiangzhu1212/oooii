@@ -9,7 +9,7 @@
       <PreprocessorDefinitions>FREEIMAGE_LIB;__TBB_NO_IMPLICIT_LINKAGE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libjpegTurbo$(oBuildSuffix).lib;libpng$(oBuildSuffix).lib;D3DX11.lib;wininet.lib;tbb$(oBuildSuffix).lib;tlsf$(oBuildSuffix).lib;BC6HBC7EncoderDecoder11$(oBuildSuffix).lib;snappymt$(oBuildSuffix).lib;lzmamt$(oBuildSuffix).lib;zlibmt$(oBuildSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libjpegTurbo$(oBuildSuffix).lib;libpng$(oBuildSuffix).lib;wininet.lib;tbb$(oBuildSuffix).lib;tlsf$(oBuildSuffix).lib;BC6HBC7EncoderDecoder11$(oBuildSuffix).lib;snappymt$(oBuildSuffix).lib;lzmamt$(oBuildSuffix).lib;zlibmt$(oBuildSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>tbb$(oBuildSuffix).dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <ResourceCompile>

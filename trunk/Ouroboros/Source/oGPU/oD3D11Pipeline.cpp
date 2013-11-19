@@ -24,7 +24,9 @@
  **************************************************************************/
 #include "oD3D11Pipeline.h"
 #include "oD3D11Device.h"
-#include <oPlatform/Windows/oDXGI.h>
+#include "dxgi_util.h"
+
+using namespace ouro::d3d11;
 
 static bool oInitializeInputElementDesc(D3D11_INPUT_ELEMENT_DESC* _pInputElementDescs, size_t _MaxNumInputElementDescs, char* _SemanticBuffer, const oGPU_VERTEX_ELEMENT* _pVertexElements, size_t _NumVertexElements)
 {
@@ -110,37 +112,37 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Pipeline)
 	oD3D11DEVICE();
 	if (_Desc.NumElements)
 	{
-		oV(D3DDevice->CreateInputLayout(Elements, NumElements, _Desc.pVertexShader, oD3D11GetHLSLByteCodeSize(_Desc.pVertexShader), &InputLayout));
+		oV(D3DDevice->CreateInputLayout(Elements, NumElements, _Desc.pVertexShader, byte_code_size(_Desc.pVertexShader), &InputLayout));
 	}
 
 	if (_Desc.pVertexShader)
 	{
-		oV(D3DDevice->CreateVertexShader(_Desc.pVertexShader, oD3D11GetHLSLByteCodeSize(_Desc.pVertexShader), 0, &VertexShader));
-		oVERIFY(oD3D11SetDebugName(VertexShader, _Desc.DebugName));
+		oV(D3DDevice->CreateVertexShader(_Desc.pVertexShader, byte_code_size(_Desc.pVertexShader), 0, &VertexShader));
+		debug_name(VertexShader, _Desc.DebugName);
 	}
 
 	if (_Desc.pHullShader)
 	{
-		oV(D3DDevice->CreateHullShader(_Desc.pHullShader, oD3D11GetHLSLByteCodeSize(_Desc.pHullShader), 0, &HullShader));
-		oVERIFY(oD3D11SetDebugName(HullShader, _Desc.DebugName));
+		oV(D3DDevice->CreateHullShader(_Desc.pHullShader, byte_code_size(_Desc.pHullShader), 0, &HullShader));
+		debug_name(HullShader, _Desc.DebugName);
 	}
 
 	if (_Desc.pDomainShader)
 	{
-		oV(D3DDevice->CreateDomainShader(_Desc.pDomainShader, oD3D11GetHLSLByteCodeSize(_Desc.pDomainShader), 0, &DomainShader));
-		oVERIFY(oD3D11SetDebugName(DomainShader, _Desc.DebugName));
+		oV(D3DDevice->CreateDomainShader(_Desc.pDomainShader, byte_code_size(_Desc.pDomainShader), 0, &DomainShader));
+		debug_name(DomainShader, _Desc.DebugName);
 	}
 
 	if (_Desc.pGeometryShader)
 	{
-		oV(D3DDevice->CreateGeometryShader(_Desc.pGeometryShader, oD3D11GetHLSLByteCodeSize(_Desc.pGeometryShader), 0, &GeometryShader));
-		oVERIFY(oD3D11SetDebugName(GeometryShader, _Desc.DebugName));
+		oV(D3DDevice->CreateGeometryShader(_Desc.pGeometryShader, byte_code_size(_Desc.pGeometryShader), 0, &GeometryShader));
+		debug_name(GeometryShader, _Desc.DebugName);
 	}
 
 	if (_Desc.pPixelShader)
 	{
-		oV(D3DDevice->CreatePixelShader(_Desc.pPixelShader, oD3D11GetHLSLByteCodeSize(_Desc.pPixelShader), 0, &PixelShader));
-		oVERIFY(oD3D11SetDebugName(PixelShader, _Desc.DebugName));
+		oV(D3DDevice->CreatePixelShader(_Desc.pPixelShader, byte_code_size(_Desc.pPixelShader), 0, &PixelShader));
+		debug_name(PixelShader, _Desc.DebugName);
 	}
 
 	*_pSuccess = true;

@@ -144,8 +144,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oStandards.h" />
     <ClInclude Include="..\..\Include\oPlatform\oTest.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oCRTHeap.h" />
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oD3D11.h" />
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oDXGI.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinRegistry.h" />
     <ClInclude Include="..\..\Include\oPlatform\Windows\oWinSkeleton.h" />
     <ClInclude Include="oCRTLeakTracker.h" />
@@ -163,10 +161,8 @@
     <ClCompile Include="oConcurrency.cpp" />
     <ClCompile Include="oCRTHeap.cpp" />
     <ClCompile Include="oCRTLeakTracker.cpp" />
-    <ClCompile Include="oD3D11.cpp" />
     <ClCompile Include="oDispatchQueueConcurrentWTP.cpp" />
     <ClCompile Include="oDispatchQueueGlobalIOCP.cpp" />
-    <ClCompile Include="oDXGI.cpp" />
     <ClCompile Include="oEMail.cpp" />
     <ClCompile Include="oFileCache.cpp" />
     <ClCompile Include="oFileCacheMonitoring.cpp" />

@@ -706,6 +706,7 @@ struct oGPU_DEVICE_INIT
 		, VirtualDesktopPosition(oDEFAULT, oDEFAULT)
 		, UseSoftwareEmulation(false)
 		, DriverVersionMustBeExact(false)
+		, MultiThreaded(true)
 	{}
 
 	// Name associated with this device in debug output
@@ -742,6 +743,9 @@ struct oGPU_DEVICE_INIT
 	// If true, == is used to match MinDriverVersion to the specified GPU's 
 	// driver. If false, CurVer >= MinDriverVersion is used.
 	bool DriverVersionMustBeExact;
+
+	// If true, the device is thread-safe.
+	bool MultiThreaded;
 };
 
 struct oGPU_DEVICE_DESC

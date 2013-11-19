@@ -23,14 +23,20 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPU/oGPU.h>
-#include <oPlatform/Windows/oD3D11.h>
+#include "d3d11.h"
 #include <oCore/filesystem.h>
 #include "oD3D11Texture.h"
 #include "oD3D11Device.h"
 
 using namespace ouro;
+using namespace ouro::d3d11;
 
-static char* oStrTokToSwitches(char* _StrDestination, size_t _SizeofStrDestination, const char* _Switch, const char* _Tokens, const char* _Separator)
+#if 0
+static char* oStrTokToSwitches(char* _StrDestination
+	, size_t _SizeofStrDestination
+	, const char* _Switch
+	, const char* _Tokens
+	, const char* _Separator)
 {
 	size_t len = strlen(_StrDestination);
 	_StrDestination += len;
@@ -58,7 +64,7 @@ static char* oStrTokToSwitches(char* _StrDestination, size_t _SizeofStrDestinati
 }
 template<size_t size> char* oStrTokToSwitches(char (&_StrDestination)[size], const char* _Switch, const char* _Tokens, const char* _Separator) { return oStrTokToSwitches(_StrDestination, size, _Switch, _Tokens, _Separator); }
 template<size_t capacity> char* oStrTokToSwitches(ouro::fixed_string<char, capacity>& _StrDestination, const char* _Switch, const char* _Tokens, const char* _Separator) { return oStrTokToSwitches(_StrDestination, _StrDestination.capacity(), _Switch, _Tokens, _Separator); }
-
+#endif
 // @tony: Here's a flavor that works on a pre-loaded source since we want 
 // to support more than one shader entry. Right now to keep it simple, the 
 // include system still hits the file system for each header. How can we get 
@@ -76,6 +82,10 @@ bool oGPUCompileShader(
 	, oBuffer** _ppByteCode
 	, oBuffer** _ppErrors)
 {
+#if 1
+	return oErrorSetLast(std::errc::not_supported);
+#else
+
 	xxlstring IncludeSwitches, DefineSwitches;
 
 	if (_IncludePaths && !oStrTokToSwitches(IncludeSwitches, " /I", _IncludePaths, ";"))
@@ -87,11 +97,9 @@ bool oGPUCompileShader(
 	if (_SpecificDefines && !oStrTokToSwitches(DefineSwitches, " /D", _SpecificDefines, ";"))
 		return false; // pass through error
 
-	D3D_FEATURE_LEVEL TargetFeatureLevel = D3D_FEATURE_LEVEL_10_0;
-	if (!oD3D11GetFeatureLevel(_TargetShaderModel, &TargetFeatureLevel))
-		return oErrorSetLast(std::errc::protocol_error, "Could not determine feature level from shader model %d.%d", _TargetShaderModel.major, _TargetShaderModel.minor);
+	D3D_FEATURE_LEVEL TargetFeatureLevel = feature_level(_TargetShaderModel);
 
-	const char* Profile = oD3D11GetShaderProfile(TargetFeatureLevel, _Stage);
+	const char* Profile = shader_profile(TargetFeatureLevel, _Stage);
 	if (!Profile)
 	{
 		sstring StrVer;
@@ -123,6 +131,7 @@ bool oGPUCompileShader(
 	*_ppErrors = nullptr;
 
 	return true;
+#endif
 }
 
 bool oGPUSurfaceConvert(
@@ -136,11 +145,14 @@ bool oGPUSurfaceConvert(
 {
 	oGPU_DEVICE_INIT DeviceInit("oGPUSurfaceConvert Temp Device");
 	intrusive_ptr<ID3D11Device> D3DDevice;
-	if (!oD3D11CreateDevice(DeviceInit, true, &D3DDevice))
+	try
+	{
+		D3DDevice = make_device(DeviceInit);
+	}
+	catch (std::exception&)
 	{
 		DeviceInit.UseSoftwareEmulation = true;
-		if (!oD3D11CreateDevice(DeviceInit, true, &D3DDevice))
-			return false; // pass through error
+		D3DDevice = make_device(DeviceInit);
 	}
 
 	ouro::surface::mapped_subresource Destination;
@@ -152,20 +164,19 @@ bool oGPUSurfaceConvert(
 	Source.data = _pSource;
 	Source.row_pitch = oULLong(_SourceRowPitch);
 	Source.depth_pitch = 0;
-	return oD3D11Convert(D3DDevice, Destination, _DestinationFormat, Source, _SourceFormat, _MipDimensions);
+	convert(D3DDevice, Destination, _DestinationFormat, Source, _SourceFormat, _MipDimensions);
+	return true;
 }
 
 bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, ouro::surface::format _NewFormat, oGPUTexture** _ppDestinationTexture)
 {
 	intrusive_ptr<ID3D11Texture2D> D3DDestinationTexture;
-	if (!oD3D11Convert(static_cast<oD3D11Texture*>(_pSourceTexture)->Texture, _NewFormat, &D3DDestinationTexture))
-		return false; // pass through error
+	convert(static_cast<oD3D11Texture*>(_pSourceTexture)->Texture, _NewFormat, &D3DDestinationTexture);
 
 	intrusive_ptr<oGPUDevice> Device;
 	_pSourceTexture->GetDevice(&Device);
 
-	oGPUTexture::DESC d;
-	oD3D11GetTextureDesc(D3DDestinationTexture, &d);
+	oGPUTexture::DESC d = get_texture_info(D3DDestinationTexture);
 
 	bool success = false;
 	oCONSTRUCT(_ppDestinationTexture, oD3D11Texture(Device, d, _pSourceTexture->GetName(), &success, D3DDestinationTexture));
@@ -186,9 +197,7 @@ bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const
 	intrusive_ptr<ID3D11Device> D3DDevice;
 	oVERIFY(_pDevice->QueryInterface(&D3DDevice));
 
-	intrusive_ptr<ID3D11Texture2D> D3DTexture;
-	if (!oD3D11Load(D3DDevice, _Desc, p, _DebugName, (ID3D11Resource**)&D3DTexture))
-		return false;
+	intrusive_ptr<ID3D11Resource> D3DTexture = load(D3DDevice, _Desc, _DebugName, p);
 
 	bool success = false;
 	oCONSTRUCT(_ppTexture, oD3D11Texture(_pDevice, (const oGPUTexture::DESC&)_Desc, _URIReference, &success, D3DTexture));
@@ -199,11 +208,7 @@ bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const
 {
 	intrusive_ptr<ID3D11Device> D3DDevice;
 	oVERIFY(_pDevice->QueryInterface(&D3DDevice));
-
-	intrusive_ptr<ID3D11Texture2D> D3DTexture;
-	if (!oD3D11Load(D3DDevice, _Desc, _DebugName, _pBuffer, _SizeofBuffer, (ID3D11Resource**)&D3DTexture))
-		return false;
-
+	intrusive_ptr<ID3D11Resource> D3DTexture = load(D3DDevice, _Desc, _DebugName, _pBuffer, _SizeofBuffer);
 	bool success = false;
 	oCONSTRUCT(_ppTexture, oD3D11Texture(_pDevice, (const oGPUTexture::DESC&)_Desc, _DebugName, &success, D3DTexture));
 	return success;
@@ -222,10 +227,12 @@ D3DX11_IMAGE_FILE_FORMAT oD3D11IFFFromFileFormat(oGPU_FILE_FORMAT _Format)
 
 bool oGPUTextureSave(oGPUTexture* _pTexture, oGPU_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer)
 {
-	return oD3D11Save(static_cast<oD3D11Texture*>(_pTexture)->Texture, oD3D11IFFFromFileFormat(_Format), _pBuffer, _SizeofBuffer);
+	save(static_cast<oD3D11Texture*>(_pTexture)->Texture, oD3D11IFFFromFileFormat(_Format), _pBuffer, _SizeofBuffer);
+	return true;
 }
 
 bool oGPUTextureSave(oGPUTexture* _pTexture, oGPU_FILE_FORMAT _Format, const char* _Path)
 {
-	return oD3D11Save(static_cast<oD3D11Texture*>(_pTexture)->Texture, oD3D11IFFFromFileFormat(_Format), _Path);
+	save(static_cast<oD3D11Texture*>(_pTexture)->Texture, _Path);
+	return true;
 }

@@ -27,7 +27,7 @@
 #define oD3D11ComputeShader_h
 
 #include "oGPUCommon.h"
-#include <oPlatform/Windows/oD3D11.h>
+#include "d3d11.h"
 
 // {17749C8B-0641-4A8B-A4A5-8456C6B7D586}
 oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, ComputeShader, 0x17749c8b, 0x641, 0x4a8b, 0xa4, 0xa5, 0x84, 0x56, 0xc6, 0xb7, 0xd5, 0x86)

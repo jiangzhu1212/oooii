@@ -28,11 +28,12 @@
 #include "oD3D11Pipeline.h"
 #include "oD3D11Texture.h"
 #include "oD3D11Query.h"
-#include <oPlatform/Windows/oDXGI.h>
+#include "dxgi_util.h"
 
 using namespace ouro;
+using namespace ouro::d3d11;
 
-// @tony: Now that prim topo is exposed through oGPUPipeline, should we
+// @oooii-tony: Now that prim topo is exposed through oGPUPipeline, should we
 // move some of the tricky overrides to oGPUUtil?
 class oD3D11OverrideIAPrimitiveTopology
 {
@@ -190,14 +191,14 @@ static void SetViewports(ID3D11DeviceContext* _pDeviceContext, const int2& _Targ
 	if (_NumViewports && _pViewports)
 	{
 		for (int i = 0; i < _NumViewports; i++)
-			oD3D11ToViewport(_pViewports[i], &Viewports[i]);
+			Viewports[i] = to_viewport(_pViewports[i]);
 		_pDeviceContext->RSSetViewports(static_cast<uint>(_NumViewports), Viewports);
 	}
 
 	else
 	{
 		_NumViewports = 1;
-		oD3D11ToViewport(_TargetDimensions, &Viewports[0]);
+		Viewports[0] = to_viewport(_TargetDimensions);
 	}
 
 	_pDeviceContext->RSSetViewports(oUInt(_NumViewports), Viewports);
@@ -402,7 +403,7 @@ void oD3D11CommandList::SetSamplers(int _StartSlot, int _NumStates, const oGPU_S
 	for (int i = 0; i < _NumStates; i++)
 		Samplers[i] = D3DDevice()->SamplerStates[_pSamplerState[i]];
 	
-	oD3D11SetSamplers(Context, oUInt(_StartSlot), oUInt(_NumStates), Samplers);
+	set_samplers(Context, oUInt(_StartSlot), oUInt(_NumStates), Samplers);
 }
 
 void oD3D11CommandList::SetShaderResources(int _StartSlot, int _NumResources, const oGPUResource* const* _ppResources)
@@ -425,7 +426,7 @@ void oD3D11CommandList::SetShaderResources(int _StartSlot, int _NumResources, co
 		SetSecondaries = true;
 	}
 
-	oD3D11SetShaderResourceViews(Context, _StartSlot, InternalNumResources, SRVs);
+	set_srvs(Context, _StartSlot, InternalNumResources, SRVs);
 
 	// Primarily for YUV emulation: bind a secondary buffer (i.e. AY is in the
 	// primary, UV is in the secondary) backing from the end of the resource
@@ -435,7 +436,7 @@ void oD3D11CommandList::SetShaderResources(int _StartSlot, int _NumResources, co
 		for (int i = 0, j = _NumResources-1; i < _NumResources; i++, j--)
 			SRVs[j] = _ppResources[i] ? oD3D11GetSRV(_ppResources[i], 0, 0, 1) : nullptr;
 
-		oD3D11SetShaderResourceViews(Context, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - _NumResources - _StartSlot, _NumResources, SRVs);
+		set_srvs(Context, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - _NumResources - _StartSlot, _NumResources, SRVs);
 	}
 }
 
@@ -454,7 +455,7 @@ void oD3D11CommandList::SetBuffers(int _StartSlot, int _NumBuffers, const oGPUBu
 		for (int i = 0; i < _NumBuffers; i++)
 			CBs[i] = nullptr;
 
-	oD3D11SetConstantBuffers(Context, _StartSlot, _NumBuffers, CBs);
+	set_constant_buffers(Context, _StartSlot, _NumBuffers, CBs);
 }
 
 void oD3D11CommandList::Clear(oGPURenderTarget* _pRenderTarget, oGPU_CLEAR _Clear)
@@ -548,8 +549,8 @@ void oD3D11CommandList::Draw(const oGPUBuffer* _pIndices, int _StartSlot, int _N
 	}
 	#endif
 
-	const uint NumElements = oD3D11GetNumElements(PrimitiveTopology, _NumPrimitives);
-	const uint StartElement = oD3D11GetNumElements(PrimitiveTopology, _StartPrimitive);
+	const uint NumElements = num_elements(PrimitiveTopology, _NumPrimitives);
+	const uint StartElement = num_elements(PrimitiveTopology, _StartPrimitive);
 
 	if (!!_pIndices)
 	{
@@ -630,8 +631,8 @@ void oD3D11CommandList::Dispatch(oGPUComputeShader* _pComputeShader, oGPUBuffer*
 		// D3D is quiet about it, so do the check here...
 
 		ID3D11Buffer* pBuffer = static_cast<oD3D11Buffer*>(_pThreadGroupCountBuffer)->Buffer;
-		oD3D11CheckBoundRTAndUAV(Context, 1, &pBuffer);
-		oD3D11CheckBoundCSSetUAV(Context, 1, &pBuffer);
+		check_bound_rts_and_uavs(Context, 1, &pBuffer);
+		check_bound_cs_uavs(Context, 1, &pBuffer);
 	#endif
 	Context->CSSetShader(static_cast<oD3D11ComputeShader*>(_pComputeShader)->ComputeShader, nullptr, 0);
 	Context->DispatchIndirect(static_cast<oD3D11Buffer*>(_pThreadGroupCountBuffer)->Buffer, _AlignedByteOffsetToThreadGroupCount);

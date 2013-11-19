@@ -46,9 +46,10 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Query)
 				{ D3D11_QUERY_TIMESTAMP_DISJOINT, 0 },
 			};
 			static_assert(oCOUNTOF(sQueryDescs) <= oCOUNTOF(Queries), "subqueries array cannot hold timer subqueries");
-
+			
 			for (int i = 0; i < oCOUNTOF(sQueryDescs); i++)
 				oV(D3DDevice->CreateQuery(&sQueryDescs[i], &Queries[i]));
+			
 			break;
 		}
 

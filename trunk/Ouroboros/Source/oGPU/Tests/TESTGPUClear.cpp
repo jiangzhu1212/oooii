@@ -25,7 +25,6 @@
 #include <oPlatform/oTest.h>
 #include "oGPUTestCommon.h"
 
-#include <oPlatform/Windows/oDXGI.h>
 #include <oGUI/Windows/oGDI.h>
 #include <oGUI/Windows/oWinRect.h>
 

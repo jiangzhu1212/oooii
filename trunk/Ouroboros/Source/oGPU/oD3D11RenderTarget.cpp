@@ -27,11 +27,11 @@
 #include "oD3D11Texture.h"
 #include <oBasis/oLockThis.h>
 #include <oSurface/surface.h>
-#include <oPlatform/Windows/oDXGI.h>
-#include <oGUI/Windows/oWinRect.h>
+#include "dxgi_util.h"
 #include <oGUI/Windows/oWinWindowing.h>
 
 using namespace ouro;
+using namespace ouro::d3d11;
 
 bool oD3D11CreateRenderTarget(oGPUDevice* _pDevice, const char* _Name, IDXGISwapChain* _pSwapChain, ouro::surface::format _DepthStencilFormat, oGPURenderTarget** _ppRenderTarget)
 {
@@ -164,9 +164,9 @@ void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
 		d.ArraySize = 1;
 		d.Format = Desc.DepthStencilFormat;
 		d.Type = oGPU_TEXTURE_2D_RENDER_TARGET;
-
-		intrusive_ptr<ID3D11Texture2D> Depth;
-		oVERIFY(oD3D11CreateTexture(D3DDevice, name, d, nullptr, &Depth, nullptr, &DSV));
+		new_texture New = make_texture(D3DDevice, name, d, nullptr);
+		intrusive_ptr<ID3D11Texture2D> Depth = New.pTexture2D;
+		DSV = New.pDSV;
 		bool textureSuccess = false;
 		DepthStencilTexture = intrusive_ptr<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, Depth), false);
 		oASSERT(textureSuccess, "Creation of oD3D11Texture failed from ID3D11Texture2D: %s", oErrorGetLastString());
@@ -187,7 +187,7 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 		{
 			DXGI_OUTPUT_DESC OD;
 			Output->GetDesc(&OD);
-			New = int3(oWinRectSize(OD.DesktopCoordinates), 1);
+			New = int3(OD.DesktopCoordinates.right - OD.DesktopCoordinates.left, OD.DesktopCoordinates.bottom - OD.DesktopCoordinates.top, 1);
 		}
 	}
 
@@ -207,7 +207,7 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 				bool textureSuccess = false;
 				Textures[0] = intrusive_ptr<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, SwapChainTexture), false);
 				oVERIFY(textureSuccess);
-				oVERIFY(oD3D11CreateRenderTargetView(GetName(), SwapChainTexture, (ID3D11View**)&RTVs[0]));
+				make_rtv(GetName(), SwapChainTexture, RTVs[0]);
 				Desc.ArraySize = 1;
 				Desc.MRTCount = 1;
 				Desc.Type = oGPU_TEXTURE_2D_RENDER_TARGET;
@@ -225,7 +225,7 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 					d.ArraySize = Desc.ArraySize;
 					d.Type = oGPUTextureTypeGetRenderTargetType(Desc.Type);
 					oVERIFY(Device->CreateTexture(name, d, &Textures[i]));
-					oVERIFY(oD3D11CreateRenderTargetView(name, static_cast<oD3D11Texture*>(Textures[i].c_ptr())->Texture, &RTVs[i]));
+					make_rtv(GetName(), static_cast<oD3D11Texture*>(Textures[i].c_ptr())->Texture, RTVs[0]);
 				}
 			}
 
@@ -255,5 +255,5 @@ std::shared_ptr<ouro::surface::buffer> oD3D11RenderTarget::CreateSnapshot(int _M
 {
 	if (!Textures[_MRTIndex])		
 		oTHROW(resource_unavailable_try_again, "The render target is minimized or not available for snapshot.");
-	return oD3D11CreateSnapshot(static_cast<oD3D11Texture*>(Textures[_MRTIndex].c_ptr())->Texture);
+	return make_snapshot(static_cast<oD3D11Texture*>(Textures[_MRTIndex].c_ptr())->Texture);
 }

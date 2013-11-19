@@ -28,14 +28,14 @@
 
 #include <oGPU/oGPU.h>
 #include "oGPUCommon.h"
-#include <oPlatform/Windows/oD3D11.h>
+#include "d3d11.h"
 
 // {75D2C3FA-A10C-48C2-ABCA-4CB84F4C447B}
 oDECLARE_GPURESOURCE_IMPLEMENTATION(oD3D11, Texture, oGPU_TEXTURE, 0x75d2c3fa, 0xa10c, 0x48c2, 0xab, 0xca, 0x4c, 0xb8, 0x4f, 0x4c, 0x44, 0x7b)
 {
 	oDEFINE_GPURESOURCE_INTERFACE();
 	//oDECLARE_GPURESOURCE_CTOR(oD3D11, Texture);
-	oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess, ID3D11Texture2D* _pTexture = nullptr);
+	oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess, ID3D11Resource* _pTexture = nullptr);
 
 	ouro::intrusive_ptr<ID3D11Texture2D> Texture;
 	ouro::intrusive_ptr<ID3D11ShaderResourceView> SRV;

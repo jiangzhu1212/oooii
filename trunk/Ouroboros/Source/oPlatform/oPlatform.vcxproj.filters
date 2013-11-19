@@ -84,12 +84,6 @@
     <ClInclude Include="..\..\Include\oPlatform\Windows\oCRTHeap.h">
       <Filter>Headers\Windows API Convenience Wrappers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oD3D11.h">
-      <Filter>Headers\Windows API Convenience Wrappers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oDXGI.h">
-      <Filter>Headers\Windows API Convenience Wrappers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oStream.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
@@ -161,9 +155,6 @@
     <ClCompile Include="oStandards.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oD3D11.cpp">
-      <Filter>Source\Windows API Convenience Wrappers</Filter>
-    </ClCompile>
     <ClCompile Include="oCRTLeakTracker.cpp">
       <Filter>Source\Windows API Convenience Wrappers</Filter>
     </ClCompile>
@@ -172,9 +163,6 @@
     </ClCompile>
     <ClCompile Include="oD3D11.cpp">
       <Filter>Source\Windows</Filter>
-    </ClCompile>
-    <ClCompile Include="oDXGI.cpp">
-      <Filter>Source\Windows API Convenience Wrappers</Filter>
     </ClCompile>
     <ClCompile Include="oCRTHeap.cpp">
       <Filter>Source</Filter>

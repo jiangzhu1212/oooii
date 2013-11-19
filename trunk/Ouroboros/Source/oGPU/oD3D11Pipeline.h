@@ -27,7 +27,7 @@
 #define oD3D11Pipline_h
 
 #include "oGPUCommon.h"
-#include <oPlatform/Windows/oD3D11.h>
+#include "d3d11.h"
 
 // {772E2A04-4C2D-447A-8DA8-91F258EFA68C}
 oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, Pipeline, 0x772e2a04, 0x4c2d, 0x447a, 0x8d, 0xa8, 0x91, 0xf2, 0x58, 0xef, 0xa6, 0x8c)

@@ -25,6 +25,8 @@
 #include "oD3D11ComputeShader.h"
 #include "oD3D11Device.h"
 
+using namespace ouro::d3d11;
+
 oDEFINE_GPUDEVICE_CREATE(oD3D11, ComputeShader);
 oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, ComputeShader)
 	, DebugName(_Desc.DebugName)
@@ -37,8 +39,8 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, ComputeShader)
 	}
 
 	oD3D11DEVICE();
-	oV(D3DDevice->CreateComputeShader(_Desc.pComputeShader, oD3D11GetHLSLByteCodeSize(_Desc.pComputeShader), nullptr, &ComputeShader));
-	oVERIFY(oD3D11SetDebugName(ComputeShader, _Desc.DebugName));
+	oV(D3DDevice->CreateComputeShader(_Desc.pComputeShader, byte_code_size(_Desc.pComputeShader), nullptr, &ComputeShader));
+	debug_name(ComputeShader, _Desc.DebugName);
 	*_pSuccess = true;
 }
 

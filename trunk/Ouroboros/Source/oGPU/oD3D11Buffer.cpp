@@ -25,23 +25,18 @@
 #include "oD3D11Buffer.h"
 #include "oD3D11Device.h"
 
+using namespace ouro::d3d11;
+
 oDEFINE_GPUDEVICE_CREATE(oD3D11, Buffer);
 oBEGIN_DEFINE_GPURESOURCE_CTOR(oD3D11, Buffer)
 {
 	oD3D11DEVICE();
-
-	ID3D11UnorderedAccessView** ppUAV = &UAV;
+	ID3D11UnorderedAccessView** ppUAV = _Desc.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND ? &UAVAppend : &UAV;
+	Buffer = make_buffer(D3DDevice, _Name, _Desc, nullptr, ppUAV, &SRV);
+	Desc = get_info(Buffer);
 	if (_Desc.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND)
-		ppUAV = &UAVAppend;
-
-	*_pSuccess = oD3D11BufferCreate(D3DDevice, _Name, _Desc, nullptr, &Buffer, ppUAV, &SRV);
-	
-	// get updated data (will ensure StructByteSize is sync'ed with format)
-	if (*_pSuccess)
-		*_pSuccess = oD3D11BufferGetDesc(Buffer, &Desc);
-
-	if (*_pSuccess && _Desc.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND)
-		*_pSuccess = oD3D11CreateUnflaggedUAV(*ppUAV, &UAV);
+		UAV = make_unflagged_copy(*ppUAV);
+	*_pSuccess = true;
 }
 
 int2 oD3D11Buffer::GetByteDimensions(int _Subresource) const threadsafe

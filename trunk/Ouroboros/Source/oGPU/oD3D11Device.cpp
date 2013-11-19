@@ -26,9 +26,12 @@
 #include "oD3D11CommandList.h"
 #include <oStd/for.h>
 #include <oBasis/oLockThis.h>
-#include <oPlatform/Windows/oD3D11.h>
-#include <oPlatform/Windows/oDXGI.h>
 #include <oGUI/Windows/oWinWindowing.h>
+#include "d3d11_util.h"
+#include "dxgi_util.h"
+#include <../Source/oStd/win.h>
+
+//#include <oPlatform/Windows/oWinWindowing.h>
 
 #include "oD3D11Buffer.h"
 #include "oD3D11Pipeline.h"
@@ -38,6 +41,7 @@
 #include "NoopCSByteCode.h"
 
 using namespace ouro;
+using namespace ouro::d3d11;
 
 struct DrawOrderEqual
 {
@@ -66,8 +70,8 @@ bool ByDrawOrder(const oGPUCommandList* _pCommandList1, const oGPUCommandList* _
 bool oGPUDeviceCreate(const oGPU_DEVICE_INIT& _Init, oGPUDevice** _ppDevice)
 {
 	intrusive_ptr<ID3D11Device> Device;
-	if (!oD3D11CreateDevice(_Init, false, &Device))
-		return false; // pass through error
+	try { Device = make_device(_Init); }
+	catch (std::exception& e) { return oErrorSetLast(e); }
 
 	bool success = false;
 	oCONSTRUCT(_ppDevice, oD3D11Device(Device, _Init, &success));
@@ -90,8 +94,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 {
 	*_pSuccess = false;
 
-	if (!oD3D11DeviceGetDesc(_pDevice, IsSoftwareEmulation, &Desc.Initialize()))
-		return; // pass through error
+	Desc = get_info(_pDevice, IsSoftwareEmulation);
 
 	HeapAllocations.reserve(500);
 
@@ -128,7 +131,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 			if (!StateExists(i, BlendStates))
 			{
 				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), ouro::as_string((oGPU_BLEND_STATE)i));
-				oV(oD3D11SetDebugName(BlendStates[i], StateName));
+				debug_name(BlendStates[i], StateName);
 			}
 		}
 	}
@@ -147,7 +150,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 			if (!StateExists(i, DepthStencilStates))
 			{
 				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), ouro::as_string((oGPU_DEPTH_STENCIL_STATE)i));
-				oV(oD3D11SetDebugName(DepthStencilStates[i], StateName));
+				debug_name(DepthStencilStates[i], StateName);
 			}
 		}
 	}
@@ -189,7 +192,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 			if (!StateExists(i, SurfaceStates))
 			{
 				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), ouro::as_string((oGPU_SURFACE_STATE)i));
-				oV(oD3D11SetDebugName(SurfaceStates[i], StateName));
+				debug_name(SurfaceStates[i], StateName);
 			}
 		}
 	}
@@ -248,7 +251,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 
 				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), ouro::as_string(oGPU_SAMPLER_STATE(NUM_ADDRESS_STATES * bias + state)));
 				oV(_pDevice->CreateSamplerState(&desc, &SamplerStates[i]));
-				oV(oD3D11SetDebugName(SamplerStates[i], StateName));
+				debug_name(SamplerStates[i], StateName);
 				i++;
 			}
 		}
@@ -268,12 +271,12 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 
 	// Set up a noop compute shader to flush for SetCounter()
 	{
-		oV(D3DDevice->CreateComputeShader(NoopCSByteCode, oD3D11GetHLSLByteCodeSize(NoopCSByteCode), nullptr, &NoopCS));
+		oV(D3DDevice->CreateComputeShader(NoopCSByteCode, byte_code_size(NoopCSByteCode), nullptr, &NoopCS));
 
 		sstring CSName;
-		oD3D11GetDebugName(CSName, _pDevice);
+		debug_name(CSName, _pDevice);
 		sncatf(CSName, "NoopCS");
-		oVERIFY(oD3D11SetDebugName(NoopCS, CSName));
+		debug_name(NoopCS, CSName);
 	}
 
 	*_pSuccess = true;
@@ -417,8 +420,7 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 		uint StructureByteStride = 1;
 		if (type == oGPU_BUFFER)
 		{
-			oGPU_BUFFER_DESC d;
-			oD3D11BufferGetDesc(static_cast<ID3D11Buffer*>(pD3DResource), &d);
+			oGPU_BUFFER_DESC d = get_info(static_cast<ID3D11Buffer*>(pD3DResource));
 			StructureByteStride = __max(1, d.StructByteSize);
 			oASSERT(_Subregion.top == 0 && _Subregion.bottom == 1, "Buffer subregion must have top == 0 and bottom == 1");
 		}
@@ -432,7 +434,8 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 		pBox = &box;
 	}
 
-	oD3D11UpdateSubresource(_pDeviceContext, pD3DResource, D3DSubresource, pBox, _Source.data, _Source.row_pitch, _Source.depth_pitch);
+	update_subresource(_pDeviceContext, pD3DResource, D3DSubresource, pBox, _Source);
+
 	HeapLock(hHeap);
 	if (find_and_erase(thread_cast<oD3D11Device*>(this)->HeapAllocations, _Source.data)) // safe because vector is protected with HeapLock
 		HeapFree(hHeap, 0, _Source.data);
@@ -483,10 +486,7 @@ bool oD3D11Device::MapRead(oGPUResource* _pReadbackResource, int _Subresource, o
 	ID3D11Resource* r = oD3D11GetSubresource(_pReadbackResource, _Subresource, &D3DSubresourceIndex);
 
 	D3D11_MAPPED_SUBRESOURCE msr;
-	HRESULT hr = ImmediateContext->Map(r, D3DSubresourceIndex, D3D11_MAP_READ, _bBlocking ? 0 : D3D11_MAP_FLAG_DO_NOT_WAIT, &msr);
-	if (!_bBlocking && hr == DXGI_ERROR_WAS_STILL_DRAWING)
-		return oErrorSetLast(std::errc::operation_would_block);
-	oV(hr);
+	oV(ImmediateContext->Map(r, D3DSubresourceIndex, D3D11_MAP_READ, _bBlocking ? 0 : D3D11_MAP_FLAG_DO_NOT_WAIT, &msr));
 	_pMappedSubresource->data = msr.pData;
 	_pMappedSubresource->row_pitch = msr.RowPitch;
 	_pMappedSubresource->depth_pitch = msr.DepthPitch;

@@ -28,7 +28,7 @@
 
 #include <oGPU/oGPU.h>
 #include "oGPUCommon.h"
-#include <oPlatform/Windows/oD3D11.h>
+#include "d3d11.h"
 
 // {47A1C5E7-D484-414C-9B23-1587E875F97F}
 oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, Query, 0x47a1c5e7, 0xd484, 0x414c, 0x9b, 0x23, 0x15, 0x87, 0xe8, 0x75, 0xf9, 0x7f)

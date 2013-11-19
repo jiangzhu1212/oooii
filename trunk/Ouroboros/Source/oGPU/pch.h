@@ -32,6 +32,5 @@
 #include <oSurface/all.h>
 
 #include <oBasis/all.h>
-#include <oPlatform/all.h>
-#include "../Source/oStd/win.h"
+#include "../oStd/win.h"
 #endif

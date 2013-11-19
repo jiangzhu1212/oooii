@@ -27,6 +27,7 @@
 #include <d3d11.h>
 #include <d3dx11.h>
 #include <DShow.h>
+#include <stdio.h>
 
 // Use the Windows Vista UI look. If this causes issues or the dialog not to appear, try other values from processorAchitecture { x86 ia64 amd64 * }
 #pragma comment(linker, "\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -226,21 +227,14 @@ std::string message(HRESULT _hResult)
 	FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM, 0, static_cast<DWORD>(_hResult), 0, (LPTSTR)&pMessage, 16, 0);
 	scoped_local_alloc Message(pMessage);
 
-	if (!*pMessage || !memcmp(pMessage, "???", 3))
+	if (!pMessage || !*pMessage || !memcmp(pMessage, "???", 3))
 	{
+		char buf[512];
 		const char* s = as_string_HR_DX11(_hResult);
 		if (*s == '?') s = as_string_HR_VFW(_hResult);
-		if (*s == '?')
-		{
-			#if oDXVER >= oDXVER_9a
-				msg = DXGetErrorStringA(_hResult);
-			#else
-				msg = std::move(oStd::formatf("unrecognized error code 0x%08x", _hResult));
-			#endif
-		}
-
-		else
-			msg = pMessage;
+		if (*s == '?') s = DXGetErrorStringA(_hResult);
+		if (*s == '?') { _snprintf_s(buf, sizeof(buf), "unrecognized error code 0x%08x", _hResult); s = buf; }
+		else msg = s;
 	}
 	else
 		msg = pMessage;

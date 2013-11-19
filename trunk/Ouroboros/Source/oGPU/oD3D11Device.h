@@ -27,10 +27,11 @@
 #define oD3D11Device_h
 
 #include <oGPU/oGPU.h>
-#include "../Source/oStd/win.h"
-#include <oPlatform/Windows/oD3D11.h>
+#include "d3d11_util.h"
 #include <oConcurrency/mutex.h>
+#include <oGUI/window.h>
 #include <vector>
+#include "../oStd/win.h"
 
 #define oD3D11DEVICE() \
 	ouro::intrusive_ptr<ID3D11Device> D3DDevice; \
