@@ -75,9 +75,6 @@
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="oWinHeaders.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oFilterChain.h">
       <Filter>oBasis</Filter>
     </ClInclude>

@@ -25,6 +25,8 @@
 #include <oBasis/oLZMA.h>
 #include <oBasis/oError.h>
 #include <oBase/byte.h>
+
+#undef interface
 #include <Lzma/C/LzmaLib.h>
 
 using namespace ouro;

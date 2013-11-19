@@ -98,7 +98,6 @@
     <ClInclude Include="oManipulatorRotation.h" />
     <ClInclude Include="oManipulatorScale.h" />
     <ClInclude Include="oManipulatorTranslation.h" />
-    <ClInclude Include="oWinHeaders.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
