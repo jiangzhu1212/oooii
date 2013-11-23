@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oStd/condition_variable.h>
 #include <oStd/thread.h>
-#include "win.h"
+#include "crt_assert.h"
 
 oStd::condition_variable::condition_variable()
 {

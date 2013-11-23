@@ -28,6 +28,7 @@
 
 #ifdef oHAS_KINECT_SDK
 
+#include <windows.h>
 #include <NuiApi.h>
 #include <oCore/process_heap.h>
 #include <oPlatform/oModuleUtil.h>

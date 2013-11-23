@@ -22,44 +22,21 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "win.h"
+#include <oCore/windows/win_error.h>
+#include <cstdio>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <dxerr.h>
 #include <d3d11.h>
 #include <d3dx11.h>
 #include <DShow.h>
-#include <stdio.h>
 
 // Use the Windows Vista UI look. If this causes issues or the dialog not to appear, try other values from processorAchitecture { x86 ia64 amd64 * }
 #pragma comment(linker, "\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
-namespace oStd {
+namespace ouro {
 	namespace windows {
-
-const char* as_string(const version::value& _Version)
-{
-	switch (_Version)
-	{
-		case oStd::windows::version::win2000: return "Windows 2000";
-		case oStd::windows::version::xp: return "Windows XP";
-		case oStd::windows::version::xp_pro_64bit: return "Windows XP Pro 64-bit";
-		case oStd::windows::version::server_2003: return "Windows Server 2003";
-		case oStd::windows::version::home_server: return "Windows Home Server";
-		case oStd::windows::version::server_2003r2: return "Windows Server 2003R2";
-		case oStd::windows::version::vista: return "Windows Vista";
-		case oStd::windows::version::server_2008: return "Windows Server 2008";
-		case oStd::windows::version::server_2008r2: return "Windows Server 2008R2";
-		case oStd::windows::version::win7: return "Windows 7";
-		case oStd::windows::version::win7_sp1: return "Windows 7 SP1";
-		case oStd::windows::version::win8: return "Windows 8";
-		case oStd::windows::version::server_2012: "Windows Server 2012";
-		case oStd::windows::version::win8_1: return "Windows 8.1";
-		case oStd::windows::version::server_2012_sp1: "Windows Server 2012 SP1";
-		case oStd::windows::version::unknown:
-		default: break;
-	}
-
-	return "?";
-}
 
 static errno_t errno_from_hresult(HRESULT _hResult)
 {
@@ -213,14 +190,13 @@ const char* as_string_HR_VFW(HRESULT _hResult)
 class scoped_local_alloc
 {
 public:
-	scoped_local_alloc() : p(nullptr) {}
 	scoped_local_alloc(void* _Pointer) : p(_Pointer) {}
 	~scoped_local_alloc() { if (p) LocalFree(p); }
 private:
 	void* p;
 };
 
-std::string message(HRESULT _hResult)
+static std::string message(HRESULT _hResult)
 {
 	std::string msg;
 	char* pMessage = nullptr;
@@ -242,98 +218,24 @@ std::string message(HRESULT _hResult)
 	return msg;
 }
 
-const char* as_string_display_code(UINT _DISPCode)
-{
-	switch (_DISPCode)
-	{
-		case DISP_CHANGE_BADDUALVIEW: return "DISP_CHANGE_BADDUALVIEW";
-		case DISP_CHANGE_BADFLAGS: return "DISP_CHANGE_BADFLAGS";
-		case DISP_CHANGE_BADMODE: return "DISP_CHANGE_BADMODE";
-		case DISP_CHANGE_BADPARAM: return "DISP_CHANGE_BADPARAM";
-		case DISP_CHANGE_FAILED: return "DISP_CHANGE_FAILED";
-		case DISP_CHANGE_NOTUPDATED: return "DISP_CHANGE_NOTUPDATED";
-		case DISP_CHANGE_RESTART: return "DISP_CHANGE_RESTART";
-		case DISP_CHANGE_SUCCESSFUL: return "DISP_CHANGE_SUCCESSFUL";
-		default: return "?";
-	}
-}
-
-version::value get_version()
-{
-	OSVERSIONINFOEX osvi;
-	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-	if (GetVersionEx((OSVERSIONINFO*)&osvi))
-	{
-		if (osvi.dwMajorVersion == 6)
-		{
-			if (osvi.dwMinorVersion == 2)
-			{
-				if (osvi.wServicePackMajor == 1)
-					return osvi.wProductType == VER_NT_WORKSTATION ? version::win8_1 : version::server_2012_sp1;
-				else if (osvi.wServicePackMajor == 0)
-					return osvi.wProductType == VER_NT_WORKSTATION ? version::win8 : version::server_2012;
-			}
-
-			else if (osvi.dwMinorVersion == 1)
-			{
-				if (osvi.wServicePackMajor == 0)
-					return osvi.wProductType == VER_NT_WORKSTATION ? version::win7 : version::server_2008r2;
-				else if (osvi.wServicePackMajor == 1)
-					return osvi.wProductType == VER_NT_WORKSTATION ? version::win7_sp1 : version::server_2008r2_sp1;
-			}
-			else if (osvi.dwMinorVersion == 0)
-			{
-				if (osvi.wServicePackMajor == 2)
-					return osvi.wProductType == VER_NT_WORKSTATION ? version::vista_sp2 : version::server_2008_sp2;
-				else if (osvi.wServicePackMajor == 1)
-					return osvi.wProductType == VER_NT_WORKSTATION ? version::vista_sp1 : version::server_2008_sp1;
-				else if (osvi.wServicePackMajor == 0)
-					return osvi.wProductType == VER_NT_WORKSTATION ? version::vista : version::server_2008;
-			}
-		}
-
-		else if (osvi.dwMajorVersion == 5)
-		{
-			if (osvi.dwMinorVersion == 2)
-			{
-				SYSTEM_INFO si;
-				GetSystemInfo(&si);
-				if ((osvi.wProductType == VER_NT_WORKSTATION) && (si.wProcessorArchitecture==PROCESSOR_ARCHITECTURE_AMD64))
-					return version::xp_pro_64bit;
-				else if (osvi.wSuiteMask & 0x00008000 /*VER_SUITE_WH_SERVER*/)
-					return version::home_server;
-				else
-					return GetSystemMetrics(SM_SERVERR2) ? version::server_2003r2 : version::server_2003;
-			}
-
-			else if (osvi.dwMinorVersion == 1)
-				return version::xp;
-			else if (osvi.dwMinorVersion == 0)
-				return version::win2000;
-		}
-	}
-
-	return version::unknown;
-}
-
 class category_impl : public std::error_category
 {
 public:
 	const char* name() const { return "windows"; }
 	std::string message(value_type _ErrCode) const
 	{
-		errno_t e = windows::errno_from_hresult((HRESULT)_ErrCode);
+		errno_t e = errno_from_hresult((HRESULT)_ErrCode);
 		if (e && e != ENOTRECOVERABLE)
 			return std::generic_category().message(e);
-		return oStd::windows::message((HRESULT)_ErrCode);
+		return windows::message((HRESULT)_ErrCode);
 	}
 };
 
 const std::error_category& category()
 {
-	static windows::category_impl sSingleton;
-	return sSingleton;
+	static windows::category_impl sInstance;
+	return sInstance;
 }
 
 	} // namespace windows
-} // namespace oStd
+} // namespace ouro

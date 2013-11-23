@@ -25,6 +25,8 @@
 #include <oGfx/oGfxPipelines.h>
 #include <oGfx/oGfxVertexElements.h>
 
+typedef unsigned char BYTE;
+
 #include <oGfxColorPS4ByteCode.h>
 #include <oGfxGridPS4ByteCode.h>
 #include <oGfxHeroPS4ByteCode.h>

@@ -31,7 +31,10 @@
 
 #include <oKinect/oKinect.h>
 #include <oSurface/buffer.h>
-#include "../Source/oStd/win.h"
+
+#undef interface
+#undef INTERFACE_DEFINED
+#include <windows.h>
 #include <NuiApi.h>
 
 // From Kinect SDK 1.7 KinectExplorer NuiImageBuffer.cpp

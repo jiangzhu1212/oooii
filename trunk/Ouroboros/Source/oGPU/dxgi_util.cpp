@@ -23,7 +23,14 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "dxgi_util.h"
+
 #include <oBase/fixed_string.h>
+#include <oCore/windows/win_error.h>
+#include <oCore/windows/win_util.h>
+
+typedef ouro::guid oGUID;
+#define threadsafe volatile
+const oGUID& oGetGUID(threadsafe const IDXGISwapChain* threadsafe const*) { return (const oGUID&)__uuidof(IDXGISwapChain); }
 
 namespace ouro {
 
@@ -153,8 +160,6 @@ const char* as_string(const DXGI_FORMAT& _Format)
 }
 
 	namespace dxgi {
-
-const oGUID& oGetGUID(threadsafe const IDXGISwapChain* threadsafe const*) { return (const oGUID&)__uuidof(IDXGISwapChain); }
 
 surface::format to_surface_format(DXGI_FORMAT _Format)
 {

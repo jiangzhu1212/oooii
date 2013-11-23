@@ -30,6 +30,7 @@
 #define oReporting_h
 
 #include <oConcurrency/thread_safe.h>
+#include <oBasis/oInterface.h>
 #include <oBase/assert.h>
 #include <oBase/path.h>
 

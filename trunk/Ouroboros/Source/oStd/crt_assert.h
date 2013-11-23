@@ -23,40 +23,18 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oCore_iocp
-#define oCore_iocp
-
-#include <functional>
+#ifndef oStd_crt_assert_h
+#define oStd_crt_assert_h
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-namespace ouro {
-	namespace windows {
-		namespace iocp {
-
-unsigned int io_concurrency();
-
-// Retrieve an OVERLAPPED structure configured for an async call using IO 
-// completion ports (IOCP). This should be used for all async operations on the
-// handle until the handle is closed. The specified completion function and 
-// anything it references will live as long as the association does. One the 
-// file is closed call disassociate to free the OVERLAPPED object.
-OVERLAPPED* associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion);
-void disassociate(OVERLAPPED* _pOverlapped);
-
-// Waits until all associated IO operations have completed
-void wait();
-bool wait_for(unsigned int _TimeoutMS);
-
-// returns if IO threads are running
-bool joinable();
-
-// waits for all associated IO operations to complete then joins all IO threads.
-void join();
-
-		} // namespace iocp
-	} // namespace windows
-} // namespace ouro
+#ifdef _DEBUG
+	#define oCRTASSERT(expr, msg, ...) do { if (!(expr)) { if (1 == _CrtDbgReport(_CRT_ASSERT, __FILE__, __LINE__, "Ouroboros Debug Library", #expr "\n\n" msg, ## __VA_ARGS__)) __debugbreak(); } } while(false)
+	#define oCRTTRACE(msg, ...) do { _CrtDbgReport(_CRT_WARN, __FILE__, __LINE__, "Ouroboros Debug Library", msg "\n", ## __VA_ARGS__); } while(false)
+#else
+	#define oCRTASSERT(expr, msg, ...) __noop
+	#define oCRTTRACE(msg, ...) __noop
+#endif
 
 #endif

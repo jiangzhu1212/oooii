@@ -24,6 +24,9 @@
  **************************************************************************/
 // Bringing this in from the c runtime so we can direct __report_gsfailure to 
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 
 /***
 *gs_cookie.c - defines buffer overrun security cookie
@@ -45,8 +48,6 @@
 *       is called.
 *
 *******************************************************************************/
-
-#include <windows.h>
 
 /*
  * Default value used for the global /GS security cookie, defined here and
@@ -84,8 +85,6 @@ DECLSPEC_SELECTANY UINT_PTR __security_cookie_complement = (UINT_PTR)~(DEFAULT_S
 *            __report_gsfailure
 *
 *******************************************************************************/
-
-#include "../Source/oStd/win.h"
 
 #if defined (_CRTBLD) && !defined (_SYSCRT)
 #include <dbgint.h>     /* needed for _CRT_DEBUGGER_HOOK */

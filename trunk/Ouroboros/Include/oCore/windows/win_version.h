@@ -23,39 +23,44 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oCore_iocp
-#define oCore_iocp
-
-#include <functional>
+#ifndef oCore_win_version_h
+#define oCore_win_version_h
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 namespace ouro {
 	namespace windows {
-		namespace iocp {
 
-unsigned int io_concurrency();
+/* enum class */ namespace version
+{	enum value {
 
-// Retrieve an OVERLAPPED structure configured for an async call using IO 
-// completion ports (IOCP). This should be used for all async operations on the
-// handle until the handle is closed. The specified completion function and 
-// anything it references will live as long as the association does. One the 
-// file is closed call disassociate to free the OVERLAPPED object.
-OVERLAPPED* associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion);
-void disassociate(OVERLAPPED* _pOverlapped);
+	unknown,
+	win2000,
+	xp,
+	xp_pro_64bit,
+	server_2003,
+	home_server,
+	server_2003r2,
+	vista,
+	server_2008,
+	vista_sp1,
+	server_2008_sp1,
+	vista_sp2,
+	server_2008_sp2,
+	win7,
+	server_2008r2,
+	win7_sp1,
+	server_2008r2_sp1,
+	win8,
+	server_2012,
+	win8_1,
+	server_2012_sp1,
 
-// Waits until all associated IO operations have completed
-void wait();
-bool wait_for(unsigned int _TimeoutMS);
+};}
 
-// returns if IO threads are running
-bool joinable();
+version::value get_version();
 
-// waits for all associated IO operations to complete then joins all IO threads.
-void join();
-
-		} // namespace iocp
 	} // namespace windows
 } // namespace ouro
 

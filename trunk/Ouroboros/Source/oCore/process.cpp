@@ -24,8 +24,12 @@
  **************************************************************************/
 #include <oCore/process.h>
 #include <oCore/filesystem.h>
+#include <oCore/windows/win_util.h>
 #include <oBase/date.h>
-#include "../oStd/win.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 #include <TlHelp32.h>
 #include <Psapi.h>
 #include <set>
@@ -47,7 +51,7 @@ static HANDLE oCreateEvent(bool _AutoReset, const char* _Name)
 	ouro::lstring n;
 	snprintf(n, "Global\\%s", oSAFESTR(_Name));
 	HANDLE e = CreateEventA(0, _AutoReset ? FALSE : TRUE, FALSE, n);
-	if (!e) throw oStd::windows::error();
+	oVB(e);
 	return e;
 }
 
@@ -327,8 +331,7 @@ void process::enumerate(const std::function<bool(id _ID, id _ParentID, const pat
 void enumerate_threads(process::id _ID, const std::function<bool(oStd::thread::id _ThreadID)>& _Enumerator)
 {
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GetCurrentProcessId());
-	if (hSnapshot == INVALID_HANDLE_VALUE)
-		throw windows::error();
+	oVB(hSnapshot != INVALID_HANDLE_VALUE);
 
 	THREADENTRY32 entry;
 	entry.dwSize = sizeof(THREADENTRY32);
@@ -443,8 +446,7 @@ static void terminate_internal(process::id _ID
 
 	path ProcessName = process::get_name(_ID);
 	oTRACE("Terminating process %u (%s) with ExitCode %u", *(unsigned int*)&_ID, ProcessName.c_str(), _ExitCode);
-	if (!TerminateProcess(hProcess, _ExitCode))
-		throw windows::error();
+	oVB(TerminateProcess(hProcess, _ExitCode));
 }
 
 void process::terminate(id _ID, int _ExitCode, bool _AllChildProcessesToo)

@@ -29,7 +29,9 @@
 
 #include <oCore/adapter.h>
 #include <oSurface/surface.h>
-#include "../oStd/win.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <dxgi.h>
 #include <d3d11.h>
 

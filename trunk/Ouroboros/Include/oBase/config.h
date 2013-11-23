@@ -93,19 +93,6 @@
 	#define override
 #endif
 
-#ifdef interface
-	#define INTERFACE_DEFINED
-#endif
-
-#ifndef INTERFACE_DEFINED
-	#ifdef _MSC_VER
-		#define interface struct __declspec(novtable)
-	#else
-		#define interface struct
-	#endif
-	#define INTERFACE_DEFINED
-#endif
-
 #ifndef oHAS_NULLPTR
 	#define nullptr NULL
 #endif

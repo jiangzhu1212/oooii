@@ -29,8 +29,9 @@
 #include <oKinect/oKinectGDI.h>
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oInputMapper.h>
+#include <oBasis/oRefCount.h>
+#include <oCore/windows/win_error.h>
 
-#include "../Source/oStd/win.h"
 #include "resource.h"
 
 using namespace ouro;

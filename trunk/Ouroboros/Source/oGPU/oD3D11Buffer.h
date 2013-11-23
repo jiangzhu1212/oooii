@@ -28,7 +28,6 @@
 
 #include <oGPU/oGPU.h>
 #include "oGPUCommon.h"
-#include "d3d11.h"
 
 // {6CB53116-9751-4EB0-864C-A87D3E66AEB0}
 oDECLARE_GPURESOURCE_IMPLEMENTATION(oD3D11, Buffer, oGPU_BUFFER, 0x6cb53116, 0x9751, 0x4eb0, 0x86, 0x4c, 0xa8, 0x7d, 0x3e, 0x66, 0xae, 0xb0)

@@ -38,6 +38,12 @@
 #include <oBase/fixed_string.h>
 #include <oBase/fnv1a.h>
 
+#if defined(WIN32) || defined(WIN64)
+#undef interface
+#include <oCore/windows/win_util.h>
+#include <d3d11.h>
+#endif
+
 // Use this instead of "struct oMyDerivedClass" to enforce naming consistency 
 // and allow for any shared code changes to happen in a central place. If the 
 // type is derived from oGPUResource, use the other version below.

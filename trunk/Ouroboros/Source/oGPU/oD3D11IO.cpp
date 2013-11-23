@@ -23,8 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPU/oGPU.h>
-#include "d3d11.h"
 #include <oCore/filesystem.h>
+#include "oGPUCommon.h"
+#include <d3d11.h>
 #include "oD3D11Texture.h"
 #include "oD3D11Device.h"
 

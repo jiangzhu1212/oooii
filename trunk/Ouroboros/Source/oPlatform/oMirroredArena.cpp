@@ -31,7 +31,11 @@
 #include <oBasis/oLockedPointer.h>
 #include <oConcurrency/mutex.h>
 #include <oBasis/oRefCount.h>
-#include "../Source/oStd/win.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+#include <oCore/windows/win_error.h>
 
 using namespace ouro;
 using namespace ouro::page_allocator;
@@ -541,7 +545,7 @@ bool oMirroredArena_Impl::DINERetrieveChanges(void* _pChangeBuffer, size_t _Size
 	ULONG_PTR nDirtyPages = DirtyPagesCapacity;
 	DWORD Flags = (_pChangeBuffer && _SizeofChangeBuffer) ? WRITE_WATCH_FLAG_RESET : 0; // only reset if we're really going to write out diffs
 	if (0 != GetWriteWatch(Flags, Desc.BaseAddress, Desc.Size, ppDirtyPages, &nDirtyPages, &pageSize))
-		throw oStd::windows::error();
+		throw ouro::windows::error();
 
 	oASSERT(page_size() == pageSize, "Page size is different from WriteWatch than from GetPageSize()");
 

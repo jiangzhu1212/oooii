@@ -23,7 +23,10 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCore/page_allocator.h>
-#include "../oStd/win.h"
+#include <oCore/windows/win_error.h>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 using namespace oStd;
 

@@ -30,6 +30,8 @@
 #include <oGUI/oMsgBox.h>
 #include <cerrno>
 
+#include <oCore/windows/win_version.h>
+
 using namespace ouro;
 
 namespace detail {
@@ -194,9 +196,9 @@ oSINGLETON_REGISTER(oWinsock);
 
 oWinsock::oWinsock()
 {
-	if (oStd::windows::get_version() < oStd::windows::version::win7_sp1)
+	if (ouro::windows::get_version() < ouro::windows::version::win7_sp1)
 	{
-		oMsgBox(oMSGBOX_DESC(oMSGBOX_ERR, "Invalid Windows Version"), "%s or greater required.  Application will now terminate.", ouro::as_string(oStd::windows::version::win7_sp1));
+		oMsgBox(oMSGBOX_DESC(oMSGBOX_ERR, "Invalid Windows Version"), "%s or greater required.  Application will now terminate.", ouro::as_string(ouro::windows::version::win7_sp1));
 		std::terminate();
 	}
 

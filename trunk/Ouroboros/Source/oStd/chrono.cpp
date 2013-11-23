@@ -24,7 +24,9 @@
  **************************************************************************/
 #include <oStd/chrono.h>
 #include <ctime>
-#include "win.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 oStd::chrono::high_resolution_clock::time_point oStd::chrono::high_resolution_clock::now()
 {

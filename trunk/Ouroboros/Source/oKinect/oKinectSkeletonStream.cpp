@@ -29,6 +29,7 @@
 #include <oGUI/Windows/oWinRect.h>
 #include "oWinKinect10.h"
 #include <oKinect/oKinectUtil.h>
+#include <oCore/windows/win_error.h>
 
 static DWORD oKinectGetSkeletonInitFlags(oKINECT_FEATURES _Features)
 {

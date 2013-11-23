@@ -27,7 +27,10 @@
 #include <cassert>
 #include <ctime>
 #include <calfaq/calfaq.h>
-#include "../oStd/win.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 // NTP v4
 
 using namespace oStd::chrono;

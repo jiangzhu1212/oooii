@@ -24,6 +24,8 @@
  **************************************************************************/
 #include "oWinExceptionHandler.h"
 #include <oBase/string.h>
+#include <oCore/windows/win_error.h>
+
 #include <new.h>
 #include <signal.h>
 #include <oBase/type_info.h>
@@ -197,7 +199,7 @@ static oWinCppException oWinVEHGetException(const EXCEPTION_RECORD& _Record)
 			if (strstr(e.TypeName, "_com_error"))
 			{
 				e.Type = windows_exception_type::com;
-				e.What = oStd::windows::category().message(e.ComError->Error());
+				e.What = windows::category().message(e.ComError->Error());
 			}
 			
 			else if (strstr(e.TypeName, "CAtlException"))

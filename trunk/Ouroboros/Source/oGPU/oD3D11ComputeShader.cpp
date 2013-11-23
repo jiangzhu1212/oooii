@@ -24,6 +24,7 @@
  **************************************************************************/
 #include "oD3D11ComputeShader.h"
 #include "oD3D11Device.h"
+#include <oCore/windows/win_util.h>
 
 using namespace ouro::d3d11;
 

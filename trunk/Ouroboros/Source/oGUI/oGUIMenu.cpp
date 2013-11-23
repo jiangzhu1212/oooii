@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oGUI/oGUIMenu.h>
 #include <oBase/assert.h>
+#include <oCore/windows/win_error.h>
 
 using namespace ouro;
 

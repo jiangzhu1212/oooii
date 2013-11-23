@@ -24,6 +24,10 @@
  **************************************************************************/
 #include <oGUI/Windows/oWinKey.h>
 
+#undef interface
+#include <oCore/windows/win_util.h>
+#include <windowsx.h>
+
 DWORD oWinKeyTranslate(DWORD _vkCode, oWINKEY_CONTROL_STATE* _pState)
 {
 	#define TEST_DOWN_SIDE(Side, Key, KEY) do \

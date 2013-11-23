@@ -29,6 +29,7 @@
 
 #include <xstddef> // for unary_function, binary_function, etc.
 #include <oBase/murmur3.h>
+#include <oBasis/oInterface.h>
 
 // _____________________________________________________________________________
 // Predicates. Structs with an 'I' on the end are case-insensitive

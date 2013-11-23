@@ -25,6 +25,8 @@
 #include <oGUI/Windows/oWinAsString.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oBasis/oError.h>
+
+#undef interface
 #include <Windowsx.h>
 #include <DShow.h>
 #include <Shellapi.h>

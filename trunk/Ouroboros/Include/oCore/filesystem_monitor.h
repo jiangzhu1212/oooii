@@ -51,11 +51,16 @@ public:
 	// ready for access by another client system.
   struct info
   {
+		info()
+			: accessibility_poll_rate_ms(2000)
+			, accessibility_timeout_ms(5000)
+		{}
+
     unsigned int accessibility_poll_rate_ms;
     unsigned int accessibility_timeout_ms;
   };
 
-  static std::shared_ptr<monitor> make(const info& _Info, const std::function<void (file_event::value _Event, const path& _Path)>& _OnEvent);
+  static std::shared_ptr<monitor> make(const info& _Info, const std::function<void(file_event::value _Event, const path& _Path)>& _OnEvent);
 
   virtual info get_info() const = 0;
   

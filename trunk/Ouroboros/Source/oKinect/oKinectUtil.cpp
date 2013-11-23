@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oKinect/oKinectUtil.h>
+#include <oCore/windows/win_error.h>
 
 #ifdef oHAS_KINECT_SDK
 

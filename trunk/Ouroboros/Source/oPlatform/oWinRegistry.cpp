@@ -23,7 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/Windows/oWinRegistry.h>
-#include "../Source/oStd/win.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <oCore/windows/win_error.h>
 
 using namespace ouro;
 
@@ -49,7 +51,8 @@ char* oWinRegistryGetValue(char* _StrDestination, size_t _SizeofStrDestination, 
 	replace(KP, _KeyPath, "/", "\\");
 
 	DWORD type = 0;
-	oV(RegGetValue(sRoots[_Root], KP, _ValueName, RRF_RT_ANY, &type, _StrDestination, (LPDWORD)&_SizeofStrDestination));
+	if (FAILED(RegGetValue(sRoots[_Root], KP, _ValueName, RRF_RT_ANY, &type, _StrDestination, (LPDWORD)&_SizeofStrDestination)))
+		return nullptr;
 
 	switch (type)
 	{

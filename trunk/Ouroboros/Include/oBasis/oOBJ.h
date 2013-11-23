@@ -29,6 +29,7 @@
 #define oOBJ_h
 
 #include <oBasis/oGPUConcepts.h>
+#include <oBasis/oInterface.h>
 #include <oCompute/oComputeColor.h>
 
 // http://local.wasp.uwa.edu.au/~pbourke/dataformats/mtl/

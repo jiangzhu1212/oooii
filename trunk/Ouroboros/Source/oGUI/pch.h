@@ -30,5 +30,6 @@
 #include <oCore/all.h>
 #include <oHLSL/all.h>
 #include <oSurface/all.h>
-#include "../Source/oStd/win.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #endif

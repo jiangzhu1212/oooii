@@ -27,7 +27,9 @@
 #define oVKToX11Keyboard_h
 
 #include <oBasis/oGUI.h>
-#include "../Source/oStd/win.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 struct oWINKEY_CONTROL_STATE
 {

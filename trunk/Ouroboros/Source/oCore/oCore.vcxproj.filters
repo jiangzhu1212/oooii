@@ -7,6 +7,12 @@
     <Filter Include="Source">
       <UniqueIdentifier>{32c14ac9-03be-4703-8322-80cc06f18ef6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="oCore\windows">
+      <UniqueIdentifier>{86d9acb6-e693-4455-baa1-c8089a3c7e7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\windows">
+      <UniqueIdentifier>{a8c7da9a-ea8f-4014-95d4-ba7e8e3e9ee1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="filesystem.cpp">
@@ -56,6 +62,12 @@
     </ClCompile>
     <ClCompile Include="filesystem_monitor.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="win_version.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="win_error.cpp">
+      <Filter>Source\windows</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -109,6 +121,15 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oCore\filesystem_monitor.h">
       <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\windows\win_error.h">
+      <Filter>oCore\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\windows\win_util.h">
+      <Filter>oCore\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\windows\win_version.h">
+      <Filter>oCore\windows</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

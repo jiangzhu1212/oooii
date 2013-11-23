@@ -24,7 +24,10 @@
  **************************************************************************/
 #include <oCore/module.h>
 #include <oCore/filesystem.h>
-#include "../oStd/win.h"
+#include <oCore/windows/win_error.h>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <Dbghelp.h>
 
 namespace ouro {

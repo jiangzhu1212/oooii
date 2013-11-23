@@ -25,32 +25,36 @@
 #include <oCore/filesystem.h>
 #include <oCore/process.h>
 #include <oCore/system.h>
+#include <oCore/windows/win_error.h>
 #include <oBase/date.h>
 #include <oBase/macros.h>
 #include <oBase/string.h>
-#include "../oStd/win.h"
-#include <Shlobj.h>
+
 #include <io.h>
 #include <memory>
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <Shlobj.h>
+
 namespace ouro {
 
-const char* as_string(const ouro::filesystem::file_type::value& _Type)
+const char* as_string(const filesystem::file_type::value& _Type)
 {
 	switch (_Type)
 	{
-		case ouro::filesystem::file_type::block_file: return "block_file";
-		case ouro::filesystem::file_type::character_file: return "character_file";
-		case ouro::filesystem::file_type::directory_file: return "directory_file";
-		case ouro::filesystem::file_type::fifo_file: return "fifo_file";
-		case ouro::filesystem::file_type::file_not_found: return "file_not_found";
-		case ouro::filesystem::file_type::regular_file: return "regular_file";
-		case ouro::filesystem::file_type::socket_file: return "socket_file";
-		case ouro::filesystem::file_type::status_unknown: return "status_unknown";
-		case ouro::filesystem::file_type::symlink_file: return "symlink_file";
-		case ouro::filesystem::file_type::type_unknown: return "type_unknown";
-		case ouro::filesystem::file_type::read_only_directory_file: return "read_only_directory_file";
-		case ouro::filesystem::file_type::read_only_file: return "read_only_file";
+		case filesystem::file_type::block_file: return "block_file";
+		case filesystem::file_type::character_file: return "character_file";
+		case filesystem::file_type::directory_file: return "directory_file";
+		case filesystem::file_type::fifo_file: return "fifo_file";
+		case filesystem::file_type::file_not_found: return "file_not_found";
+		case filesystem::file_type::regular_file: return "regular_file";
+		case filesystem::file_type::socket_file: return "socket_file";
+		case filesystem::file_type::status_unknown: return "status_unknown";
+		case filesystem::file_type::symlink_file: return "symlink_file";
+		case filesystem::file_type::type_unknown: return "type_unknown";
+		case filesystem::file_type::read_only_directory_file: return "read_only_directory_file";
+		case filesystem::file_type::read_only_file: return "read_only_file";
 		default: break;
 	}
 	return "?";
@@ -153,8 +157,7 @@ path temp_path(bool _IncludeFilename)
 	char Path[MAX_PATH+1];
 	if (!GetTempPathA(oCOUNTOF(Path), Path))
 		oTHROW0(operation_not_permitted);
-	if (_IncludeFilename && !GetTempFileNameA(Path, "tmp", 0, Path))
-			oFSTHROWLAST();
+	oVB(!_IncludeFilename || !GetTempFileNameA(Path, "tmp", 0, Path));
 	return Path;
 }
 
@@ -259,7 +262,7 @@ path current_path()
 
 void current_path(const path& _Path)
 {
-	if (!SetCurrentDirectory(_Path))
+	oVB_MSG(SetCurrentDirectory(_Path), "Path: %s", _Path.c_str());
 		oFSTHROWLAST1(_Path);
 }
 

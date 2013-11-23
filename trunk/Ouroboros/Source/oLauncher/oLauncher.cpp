@@ -26,7 +26,9 @@ using namespace ouro;
 
 #include <oGUI/oMsgBox.h>
 //#include <oPlatform/oVersionUpdate.h>
-#include "../Source/oStd/win.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 static option sCmdOptions[] = 
 {

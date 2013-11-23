@@ -27,5 +27,8 @@
 #include <oStd/all.h>
 #include <oBase/all.h>
 #include <oBase/all_libc.h>
-#include "../oStd/win.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <DbgHelp.h>
+#include <Shellapi.h>
 #endif

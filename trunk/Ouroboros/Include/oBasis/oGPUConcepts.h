@@ -40,7 +40,6 @@
 
 #include <oBase/resized_type.h>
 #include <oBasis/oRTTI.h>
-#include <oBasis/oStddef.h>
 #include <oBase/vendor.h>
 #include <oBase/version.h>
 #include <oSurface/surface.h>
@@ -520,8 +519,8 @@ oAPI bool oGPUParseSemantic(const ouro::fourcc& _FourCC, char _Name[5], uint* _p
 
 // Returns the size in bytes of the sum of all vertex elements for the specified 
 // input slot.
-oAPI uint oGPUCalcVertexSize(const threadsafe oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, uint _InputSlot);
-template<size_t size> uint oGPUCalcVertexSize(const threadsafe oGPU_VERTEX_ELEMENT (&_pElements)[size], uint _InputSlot) { return oGPUCalcVertexSize(_pElements, size, _InputSlot); }
+oAPI uint oGPUCalcVertexSize(const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, uint _InputSlot);
+template<size_t size> uint oGPUCalcVertexSize(const oGPU_VERTEX_ELEMENT (&_pElements)[size], uint _InputSlot) { return oGPUCalcVertexSize(_pElements, size, _InputSlot); }
 
 // Returns the number of input slots used by the specified vertex elements.
 oAPI uint oGPUCalcNumInputSlots(const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements);

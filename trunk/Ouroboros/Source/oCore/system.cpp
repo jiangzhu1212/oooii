@@ -24,21 +24,20 @@
  **************************************************************************/
 #include <oCore/system.h>
 #include <oCore/process.h>
+#include <oCore/windows/win_util.h>
+#include <oCore/windows/win_version.h>
 #include <oBase/date.h>
-#include "../oStd/win.h"
-#include <PowrProf.h>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <Dwmapi.h>
 #include <Lm.h>
+#include <PowrProf.h>
+#include <Shellapi.h>
 
 using namespace oStd;
 
 namespace ouro {
-
-	const char* as_string(const oStd::windows::version::value& _Version)
-	{
-		return oStd::windows::as_string(_Version);
-	}
-
 	namespace system {
 
 heap_info get_heap_info()
@@ -246,15 +245,13 @@ void wait_idle(const std::function<bool()>& _ContinueWaiting)
 void windows_enumerate_services(const std::function<bool(SC_HANDLE _hSCManager, const ENUM_SERVICE_STATUS_PROCESS& _Status)>& _Enumerator)
 {
 	SC_HANDLE hSCManager = OpenSCManager(nullptr, nullptr, SC_MANAGER_ENUMERATE_SERVICE);
-	if (!hSCManager)
-		throw windows::error();
+	oVB(hSCManager);
 	finally closeSCManager([&] { oVB(CloseServiceHandle(hSCManager)); });
 
 	DWORD requiredBytes = 0;
 	DWORD nServices = 0;
 	EnumServicesStatusEx(hSCManager, SC_ENUM_PROCESS_INFO, SERVICE_TYPE_ALL, SERVICE_STATE_ALL, nullptr, 0, &requiredBytes, &nServices, nullptr, nullptr);
-	if (GetLastError() != ERROR_MORE_DATA)
-		throw windows::error();
+	oVB(GetLastError() == ERROR_MORE_DATA);
 
 	ENUM_SERVICE_STATUS_PROCESS* lpServices = (ENUM_SERVICE_STATUS_PROCESS*)malloc(requiredBytes);
 	finally freeServices([&] { free(lpServices); });
@@ -382,8 +379,7 @@ char* workgroup_name(char* _StrDestination, size_t _SizeofStrDestination)
 
 	nStatus = NetWkstaGetInfo(nullptr, 102, (LPBYTE *)&pInfo);
 	finally OSCFreeBuffer([&] { if (pInfo) NetApiBufferFree(pInfo); });
-	if (nStatus != NERR_Success)
-		throw oStd::windows::error();
+	oVB(nStatus == NERR_Success);
 	
 	WideCharToMultiByte(CP_ACP, 0, pInfo->wki102_langroup, -1, _StrDestination, static_cast<int>(_SizeofStrDestination), 0, 0);
 	return _StrDestination;
@@ -482,8 +478,7 @@ void set_privilege(privilege _Privilege, bool _Enabled)
 	// AdjustTokenPrivileges only fails for invalid parameters. If it fails 
 	// because the app did not have permissions, then it succeeds (result will be 
 	// true), but sets last error to ERROR_NOT_ALL_ASSIGNED.
-	if (GetLastError() != ERROR_SUCCESS)
-		throw windows::error();
+	oVB(GetLastError() == ERROR_SUCCESS);
 }
 
 // starting suspended can BSOD the machine, be careful

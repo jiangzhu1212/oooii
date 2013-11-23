@@ -31,6 +31,9 @@
 #include <oBase/fnv1a.h>
 #include <oStd/mutex.h>
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 namespace ouro {
 	namespace process_heap {
 
@@ -108,6 +111,7 @@ private:
 		enum tracking tracking;
 		debugger::symbol stack[max_stack_depth];
 		size_t num_stack_entries;
+		std::function<void(void* _Pointer)> dtor;
 		SRWLOCK mutex; // std::mutex can't support copy or move, so need to use platform type directly
 
 		void lock() { AcquireSRWLockExclusive(&mutex); }
@@ -208,6 +212,8 @@ void context::deallocate(void* _Pointer)
 				// first, remove it from the list, exit the mutex and then release. If 
 				// we release first we risk destroying the heap and then still needing 
 				// to access it.
+				if (it->second.dtor)
+					it->second.dtor(it->second.pointer);
 				HeapFree(hHeap, 0, it->second.pointer);
 				Pointers.erase(it);
 				DoRelease = true;
@@ -271,6 +277,7 @@ bool context::find_or_allocate(size_t _Size
 			e.scope = _Scope;
 			e.tracking = _Tracking;
 			e.num_stack_entries = debugger::callstack(e.stack, 3);
+			e.dtor = _Destructor;
 			reference();
 
 			Allocated = true;

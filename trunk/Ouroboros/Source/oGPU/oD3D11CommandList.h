@@ -29,7 +29,7 @@
 #include "oGPUCommon.h"
 #include "oD3D11RenderTarget.h"
 #include "oD3D11Device.h"
-#include "d3d11.h"
+#include <d3d11.h>
 
 ID3D11Resource* oD3D11GetSubresource(oGPUResource* _pResource, int _Subresource, int* _pD3DSubresourceIndex);
 

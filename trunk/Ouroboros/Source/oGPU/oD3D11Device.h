@@ -27,11 +27,15 @@
 #define oD3D11Device_h
 
 #include <oGPU/oGPU.h>
+
+#include "oGPUCommon.h"
 #include "d3d11_util.h"
 #include <oConcurrency/mutex.h>
+#include <oCore/windows/win_util.h>
 #include <oGUI/window.h>
 #include <vector>
-#include "../oStd/win.h"
+
+#include <oBasis/oRefCount.h>
 
 #define oD3D11DEVICE() \
 	ouro::intrusive_ptr<ID3D11Device> D3DDevice; \
@@ -147,7 +151,7 @@ struct oD3D11Device : oGPUDevice
 	std::vector<void*> HeapAllocations;
 	HANDLE hHeap;
 
-	oInitOnce<DESC> Desc;
+	DESC Desc;
 	oRefCount RefCount;
 	uint FrameID;
 

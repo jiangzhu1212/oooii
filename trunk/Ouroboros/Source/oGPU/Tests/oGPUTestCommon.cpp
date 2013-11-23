@@ -27,6 +27,8 @@
 #include <oGPUTestColorPSByteCode.h>
 #include <oCore/filesystem.h>
 
+#include <oBasis/oMath.h>
+
 using namespace ouro;
 
 bool oGPUTestApp::Create(const char* _Title, bool _DevMode, const int* _pSnapshotFrameIDs, size_t _NumSnapshotFrameIDs, const int2& _Size)

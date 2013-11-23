@@ -28,11 +28,13 @@
 
 #include <oStd/chrono.h>
 #include <oBasis/oInterface.h>
-#include "../Source/oStd/win.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 typedef HANDLE oHandle;
 
-struct oIOCPOp : public WSAOVERLAPPED
+struct oIOCPOp : public OVERLAPPED
 {
 public:
 	oIOCPOp()
@@ -41,7 +43,7 @@ public:
 	}
 	void Reset()
 	{
-		memset(this, 0, sizeof(WSAOVERLAPPED));
+		memset(this, 0, sizeof(OVERLAPPED));
 	}
 
 	// Each oIOCP needs a certain amount of private data depending upon the operation type (socket/fileIO...)

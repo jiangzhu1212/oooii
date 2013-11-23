@@ -70,6 +70,9 @@ const char* oConcurrency::task_scheduler_name()
 
 typedef ouro::process_heap::std_allocator<oTASK> allocator_t;
 
+#undef interface
+#undef INTERFACE_DEFINED
+
 #if oHAS_oCONCURRENCY
 	#include <oConcurrency/threadpool.h>
 	using namespace oConcurrency;

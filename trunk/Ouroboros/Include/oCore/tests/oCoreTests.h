@@ -38,6 +38,7 @@ namespace ouro {
 		void TESTcpu(test_services& _Services);
 		void TESTdebugger(test_services& _Services);
 		void TESTfilesystem();
+		void TESTfilesystem_monitor();
 		void TESTprocess_heap();
 
 	} // namespace tests

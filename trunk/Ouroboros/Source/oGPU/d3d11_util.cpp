@@ -25,8 +25,7 @@
 #include "d3d11_util.h"
 #include <oBase/assert.h>
 #include <oBase/byte.h>
-#include <oPlatform/oStream.h>
-#include <oPlatform/oStreamUtil.h>
+#include <oCore/windows/win_util.h>
 #include "dxgi_util.h"
 #include <cerrno>
 
@@ -39,6 +38,8 @@
 	} \
 } while (false)
 
+typedef ouro::guid oGUID;
+#define threadsafe volatile
 const oGUID& oGetGUID(threadsafe const ID3D11Device* threadsafe const*) { return (const oGUID&)__uuidof(ID3D11Device); }
 const oGUID& oGetGUID(threadsafe const ID3D11DeviceContext* threadsafe const*) { return (const oGUID&)__uuidof(ID3D11DeviceContext); }
 const oGUID& oGetGUID(threadsafe const ID3D11RenderTargetView* threadsafe const*) { return (const oGUID&)__uuidof(ID3D11RenderTargetView); }
@@ -1326,7 +1327,7 @@ void convert(ID3D11Texture2D* _pSourceTexture, surface::format _NewFormat
 
 		intrusive_ptr<ID3D11Texture2D> NewTexture;
 		if (!oD3D11DecodeBC6orBC7(CPUAccessible, true, &NewTexture))
-			oThrowLastError();
+			throw std::exception("oD3D11DecodeBC6orBC7 failed");
 
 		NewTexture->GetDesc(&desc);
 		if (_NewFormat == desc.Format)

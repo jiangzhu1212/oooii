@@ -55,7 +55,7 @@ namespace oConcurrency {
 
 		// Utility functions, do not register these as tests.
 
-		interface test_threadpool
+		struct test_threadpool
 		{
 		public:
 

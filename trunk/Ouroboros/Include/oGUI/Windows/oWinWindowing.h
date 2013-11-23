@@ -42,7 +42,9 @@
 #include <oCore/display.h>
 #include <oCore/process.h>
 #include <oBasis/oGUI.h>
-#include "../Source/oStd/win.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 #if (defined(NTDDI_WIN7) && (NTDDI_VERSION >= NTDDI_WIN7))
 	#define oWINDOWS_HAS_REGISTERTOUCHWINDOW

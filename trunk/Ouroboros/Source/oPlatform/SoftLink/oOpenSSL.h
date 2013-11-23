@@ -27,6 +27,10 @@
 #define oOPENSSL_h
 
 #include <oPlatform/oModuleUtil.h>
+
+#include "oWinsock.h"
+#undef interface
+#undef INTERFACE_DEFINED
 #include <openssl/ssl.h>
 
 oDECLARE_DLL_SINGLETON_BEGIN(oOpenSSL)
@@ -47,6 +51,7 @@ oDECLARE_DLL_SINGLETON_BEGIN(oOpenSSL)
 	int (*SSL_pending)(const SSL *s);
 oDECLARE_DLL_SINGLETON_END()
 
+#define interface struct __declspec(novtable)
 interface oSocketEncryptor : oInterface
 {
 	static bool Create(oSocketEncryptor** _ppEncryptor);

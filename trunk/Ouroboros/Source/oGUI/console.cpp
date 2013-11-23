@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oGUI/console.h>
 #include <oStd/mutex.h>
-
+#include <oCore/windows/win_error.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oGUI/Windows/oWinRect.h>
 
@@ -251,7 +251,10 @@ void context::set_log(const path& _Path)
 
 	LogPath = _Path;
 	if (!LogPath.empty())
+	{
+		filesystem::create_directories(_Path.parent_path());
 		hLog = filesystem::open(LogPath, filesystem::open_option::text_append);
+	}
 }
 
 path context::get_log() const

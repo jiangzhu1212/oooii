@@ -32,6 +32,8 @@
 #include "oWinKinect10.h"
 #include "oKinectInternal.h"
 
+#include <oCore/windows/win_error.h>
+
 using namespace ouro;
 using namespace oConcurrency;
 

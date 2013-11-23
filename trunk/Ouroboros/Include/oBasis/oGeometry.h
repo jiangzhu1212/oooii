@@ -29,6 +29,7 @@
 #define oGeometry_h
 
 #include <oBasis/oGPUConcepts.h>
+#include <oBasis/oInterface.h>
 
 // {7BA30462-0899-489a-87A8-D897D1CE929E}
 oDEFINE_GUID_I(oGeometry, 0x7ba30462, 0x899, 0x489a, 0x87, 0xa8, 0xd8, 0x97, 0xd1, 0xce, 0x92, 0x9e);

@@ -27,7 +27,8 @@
 #ifndef oWinDialog_h
 #define oWinDialog_h
 
-#include "../Source/oStd/win.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 enum oWINDOWS_DIALOG_ITEM_TYPE
 {

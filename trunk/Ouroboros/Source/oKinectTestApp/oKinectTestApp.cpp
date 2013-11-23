@@ -26,7 +26,6 @@
 #include <oKinect/oKinect.h>
 #include <oKinect/oKinectGDI.h>
 #include <oGUI/Windows/oGDI.h>
-#include "../Source/oStd/win.h"
 #include <oPlatform/Windows/oWinSkeleton.h>
 #include <oGUI/Windows/oWinRect.h>
 #include <oPlatform/oStream.h>
@@ -39,6 +38,9 @@
 #include "resource.h"
 
 #include <oConcurrency/mutex.h>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 using namespace ouro;
 using namespace oConcurrency;

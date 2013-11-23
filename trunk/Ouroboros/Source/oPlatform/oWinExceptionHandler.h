@@ -35,6 +35,10 @@
 #include <functional>
 #include <string>
 
+#undef interface
+#undef INTERFACE_DEFINED
+#include <windows.h>
+
 namespace windows_exception_type
 {	enum value {
 

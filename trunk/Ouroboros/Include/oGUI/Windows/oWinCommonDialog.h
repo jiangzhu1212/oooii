@@ -28,7 +28,9 @@
 #define oWinCommonDialog_h
 
 #include <oBasis/oGUI.h>
-#include "../Source/oStd/win.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 // Filter pairs are delimited by '|' and are the description, and the wildcard:
 // i.e. "Text Files|*.txt|Bitmap Files|*.bmp"

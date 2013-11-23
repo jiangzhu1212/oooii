@@ -23,8 +23,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oStd/mutex.h>
+#include "crt_assert.h"
 
-#include "win.h"
 #if NTDDI_VERSION >= NTDDI_WIN7
 	#define oHAS_SLIM_TRY_LOCK
 #endif

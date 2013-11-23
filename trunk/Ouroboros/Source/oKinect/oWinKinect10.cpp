@@ -24,6 +24,7 @@
  **************************************************************************/
 #include "oWinKinect10.h"
 #include <oBase/assert.h>
+#include <oCore/windows/win_util.h>
 
 #ifdef oHAS_KINECT_SDK
 

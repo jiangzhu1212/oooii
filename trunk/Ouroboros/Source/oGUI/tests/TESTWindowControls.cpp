@@ -30,6 +30,7 @@
 #include <oGUI/Windows/oWinCommonDialog.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oCore/system.h>
+#include <oCore/windows/win_error.h>
 
 #include "../../test_services.h"
 

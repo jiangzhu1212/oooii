@@ -24,7 +24,6 @@
  **************************************************************************/
 #include "oP4ChangelistBuilder.h"
 #include <oPlatform/oWebAppWindow.h>
-#include "../Source/oStd/win.h"
 #include <oBasis/oINISerialize.h>
 #include <oBasis/oJSONSerialize.h>
 #include <oBasis/oURIQuerySerialize.h>
@@ -32,6 +31,9 @@
 #include <oPlatform/oWebServer.h>
 #include <oPlatform/oStandards.h>
 #include <oGUI/oMsgBox.h>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 using namespace ouro;
 

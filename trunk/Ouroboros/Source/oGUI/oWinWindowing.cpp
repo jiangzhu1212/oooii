@@ -29,10 +29,16 @@
 #include <oGUI/Windows/oWinStatusBar.h>
 #include <oBase/timer.h>
 
+#undef interface
+#include <oCore/windows/win_error.h>
+#include <oCore/windows/win_util.h>
+#include <oCore/windows/win_version.h>
+
 #include <SetupAPI.h>
 #include <Shlwapi.h>
 #include <devguid.h>
 #include <devpkey.h>
+#include <windowsx.h>
 
 using namespace ouro;
 
@@ -175,8 +181,7 @@ static bool oWinSetupGetString(ouro::mstring& _StrDestination, HDEVINFO _hDevInf
 	{
 		ouro::mwstring buffer;
 		oASSERT(buffer.capacity() > (size / sizeof(ouro::mwstring::char_type)), "");
-		if (!SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) || dpType != DEVPROP_TYPE_STRING)
-			throw oStd::windows::error();
+		oVB(SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) && dpType == DEVPROP_TYPE_STRING);
 		_StrDestination = buffer;
 	}
 	else
@@ -195,8 +200,7 @@ static bool oWinSetupGetStringList(ouro::mstring* _StrDestination, size_t& _NumS
 	{
 		ouro::xlwstring buffer;
 		oASSERT(buffer.capacity() > size, "");
-		if (!SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) || dpType != DEVPROP_TYPE_STRING_LIST)
-			throw oStd::windows::error();
+		oVB(SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) && dpType != DEVPROP_TYPE_STRING_LIST);
 
 		const wchar_t* c = buffer.c_str();
 		size_t i = 0;
@@ -260,8 +264,7 @@ static bool oWinEnumInputDevices(bool _EnumerateAll, const char* _Enumerator, co
 		dwFlag |= DIGCF_PRESENT;
 
 	hDevInfo = SetupDiGetClassDevsA(nullptr, _Enumerator, nullptr, dwFlag);
-	if (INVALID_HANDLE_VALUE == hDevInfo)
-		throw oStd::windows::error();
+	oVB(INVALID_HANDLE_VALUE != hDevInfo);
 
 	SP_DEVINFO_DATA SPDID;
 	memset(&SPDID, 0, sizeof(SPDID));
@@ -651,8 +654,7 @@ HWND oWinCreate(HWND _hParent
 	wc.style = CS_BYTEALIGNCLIENT|CS_HREDRAW|CS_VREDRAW|CS_OWNDC|CS_DBLCLKS;
 	wc.hCursor = LoadCursor(0, IDC_ARROW);
 	wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
-	if (0 == RegisterClassEx(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
-		throw oStd::windows::error();
+	oVB(0 != RegisterClassEx(&wc) || GetLastError() == ERROR_CLASS_ALREADY_EXISTS);
 
 	// Resolve initial position and size
 	int2 NewPosition = _ClientPosition;
@@ -702,7 +704,7 @@ HWND oWinCreate(HWND _hParent
 		if (GetLastError() == S_OK)
 			oTHROW(protocol_error, "CreateWindowEx returned a null HWND (failure condition) for '%s' but GetLastError is S_OK. This implies that user handling of a WM_CREATE message failed, so start looking there.", oSAFESTRN(_Title));
 		else
-			throw oStd::windows::error();
+			throw ouro::windows::error();
 	}
 
 	// only top-level windows should be allowed to quit the message loop
@@ -952,8 +954,8 @@ bool oWinIsOpaque(HWND _hWnd)
 bool oWinRegisterTouchEvents(HWND _hWnd, bool _Registered)
 {
 	#ifdef oWINDOWS_HAS_REGISTERTOUCHWINDOW
-		oStd::windows::version::value v = oStd::windows::get_version();
-		if (v >= oStd::windows::version::win7)
+		ouro::windows::version::value v = ouro::windows::get_version();
+		if (v >= ouro::windows::version::win7)
 		{
 			if (_Registered)
 				oVB(RegisterTouchWindow(_hWnd, 0));
@@ -1245,8 +1247,7 @@ bool oWinSetOwner(HWND _hWnd, HWND _hOwner)
 	// Yes, you've read this right... Check the community add-ons:
 	// http://msdn.microsoft.com/en-us/library/windows/desktop/ms633591(v=vs.85).aspx
 	SetLastError(S_OK);
-	if (!SetWindowLongPtr(_hWnd, GWLP_HWNDPARENT, (LONG_PTR)_hOwner) && GetLastError() != S_OK)
-		throw oStd::windows::error();
+	oVB(SetWindowLongPtr(_hWnd, GWLP_HWNDPARENT, (LONG_PTR)_hOwner) || GetLastError() == S_OK);
 	return true;
 }
 
@@ -1443,8 +1444,7 @@ bool oWinGetClientRect(HWND _hWnd, RECT* _pRect)
 	else
 	{
 		SetLastError(S_OK); // differentiate between 0-means-failure, and 0,0 adjustment
-		if (!MapWindowPoints(_hWnd, hParent, &p, 1) && GetLastError() != S_OK)
-			throw oStd::windows::error();
+		oVB(MapWindowPoints(_hWnd, hParent, &p, 1) || GetLastError() == S_OK);
 	}
 	
 	*_pRect = oWinRectTranslate(*_pRect, p);
@@ -2130,15 +2130,9 @@ static bool OnCreateFloatBoxSpinner(HWND _hControl, const oGUI_CONTROL_DESC& _De
 	oGUI_CONTROL_DESC ActualFloatBoxDesc = _Desc;
 	ActualFloatBoxDesc.Type = oGUI_CONTROL_FLOATBOX;
 	HWND hActualFloatBox = oWinControlCreate(ActualFloatBoxDesc);
-	if (hActualFloatBox)
-	{
-		SendMessage(_hControl, UDM_SETBUDDY, (WPARAM)hActualFloatBox, 0);
-		SendMessage(_hControl, UDM_SETRANGE32, (WPARAM)std::numeric_limits<int>::lowest(), (LPARAM)std::numeric_limits<int>::max());
-	}
-
-	else
-		throw oStd::windows::error();
-
+	oVB(hActualFloatBox);
+	SendMessage(_hControl, UDM_SETBUDDY, (WPARAM)hActualFloatBox, 0);
+	SendMessage(_hControl, UDM_SETRANGE32, (WPARAM)std::numeric_limits<int>::lowest(), (LPARAM)std::numeric_limits<int>::max());
 	return true;
 }
 
@@ -2230,21 +2224,17 @@ HWND oWinControlCreate(const oGUI_CONTROL_DESC& _Desc)
 		, nullptr
 		, nullptr);
 
-	if (hWnd)
+	oVB(hWnd);
+
+	oWinControlSetFont(hWnd, (HFONT)_Desc.hFont);
+	if (CCDesc.FinishCreation)
 	{
-		oWinControlSetFont(hWnd, (HFONT)_Desc.hFont);
-		if (CCDesc.FinishCreation)
+		if (!CCDesc.FinishCreation(hWnd, _Desc))
 		{
-			if (!CCDesc.FinishCreation(hWnd, _Desc))
-			{
-				DestroyWindow(hWnd);
-				hWnd = nullptr;
-			}
+			DestroyWindow(hWnd);
+			hWnd = nullptr;
 		}
 	}
-
-	else
-		throw oStd::windows::error();
 
 	return hWnd;
 }

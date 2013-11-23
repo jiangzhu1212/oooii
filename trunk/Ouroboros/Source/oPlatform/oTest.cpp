@@ -912,6 +912,10 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 	// into oCRTLeakTracker so the dependency on reporting seems explicit.
 	extern void FlushIOCP();
 	FlushIOCP();
+
+	extern void iocp_join();
+	iocp_join();
+
 	bool Leaks = oCRTLeakTracker::Singleton()->ReportLeaks();
 	if (result != oTest::FAILURE && Leaks)
 	{

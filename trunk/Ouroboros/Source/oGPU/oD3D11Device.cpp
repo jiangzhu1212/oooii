@@ -25,11 +25,13 @@
 #include "oD3D11Device.h"
 #include "oD3D11CommandList.h"
 #include <oStd/for.h>
+#include <oCore/windows/win_util.h>
+
 #include <oBasis/oLockThis.h>
 #include <oGUI/Windows/oWinWindowing.h>
+
 #include "d3d11_util.h"
 #include "dxgi_util.h"
-#include <../Source/oStd/win.h>
 
 //#include <oPlatform/Windows/oWinWindowing.h>
 
@@ -321,12 +323,12 @@ bool oD3D11Device::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _
 
 void oD3D11Device::GetDesc(DESC* _pDesc) const threadsafe
 {
-	*_pDesc = *Desc;
+	*_pDesc = thread_cast<DESC&>(Desc);
 }
 
 const char* oD3D11Device::GetName() const threadsafe
 {
-	return Desc->DebugName;
+	return Desc.DebugName;
 }
 
 uint oD3D11Device::GetFrameID() const threadsafe

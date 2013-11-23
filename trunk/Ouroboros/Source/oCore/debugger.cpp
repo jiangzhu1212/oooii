@@ -24,7 +24,10 @@
  **************************************************************************/
 #include <oCore/debugger.h>
 #include <oCore/filesystem.h>
-#include "../oStd/win.h"
+#include <oCore/windows/win_util.h>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <DbgHelp.h>
 
 using namespace oStd;

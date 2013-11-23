@@ -28,10 +28,10 @@
 #include <oBase/all.h>
 #include <oBase/all_libc.h>
 #include <oCore/all.h>
-#include <oBasis/all.h>
-#include <oPlatform/all.h>
-#include "../Source/oStd/win.h"
-#ifdef CreateProcess
-	#undef CreateProcess
-#endif
+//#include <oPlatform/all.h>
+//#define WIN32_LEAN_AND_MEAN
+//#include <windows.h>
+//#ifdef CreateProcess
+//	#undef CreateProcess
+//#endif
 #endif

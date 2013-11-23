@@ -28,5 +28,4 @@
 #include <oBasis/all.h>
 #include <oBase/all_libc.h>
 #include <oPlatform/all.h>
-#include "../Source/oStd/win.h"
 #endif

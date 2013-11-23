@@ -139,7 +139,6 @@
     <ClCompile Include="Tests\TESTMirroredArena.cpp" />
     <ClCompile Include="Tests\TESTSocketAsync.cpp" />
     <ClCompile Include="Tests\TESTSocketBlocking.cpp" />
-    <ClCompile Include="Tests\TESTStreamMonitor.cpp" />
     <ClCompile Include="Tests\TESTWinRegistry.cpp" />
   </ItemGroup>
   <ItemGroup>

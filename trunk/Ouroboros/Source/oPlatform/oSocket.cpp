@@ -29,9 +29,11 @@
 #include <oBasis/oScopedPartialTimeout.h>
 #include <oConcurrency/concurrent_queue.h>
 #include <oPlatform/oSocket.h>
-#include "oIOCP.h"
 #include "SoftLink/oWinsock.h"
+#include "oIOCP.h"
 #include "SoftLink/oOpenSSL.h"
+
+#include <oCore/windows/win_error.h>
 
 using namespace ouro;
 
@@ -385,7 +387,7 @@ bool oSocketImpl::Initialize(const oSocket::DESC& _Desc, oSocket* _Proxy, ProxyD
 			}
 		}
 		if (hSocket == INVALID_SOCKET)
-			throw oStd::windows::error();
+			throw ouro::windows::error();
 	}
 
 	{

@@ -24,7 +24,9 @@
  **************************************************************************/
 #include <oBase/string.h>
 #include <oCore/filesystem.h>
-#include "../Source/oStd/win.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 // Have a standard WinMain just call out to the normal 
 // int main(int argc, const char* argv[]).

@@ -24,12 +24,16 @@
  **************************************************************************/
 #include <oCore/adapter.h>
 #include <oCore/display.h>
+#include <oCore/windows/win_util.h>
 #include <oBase/guid.h>
-#include "../oStd/win.h"
-#include <Wbemidl.h>
+#include <regex>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <comutil.h>
 #include <d3d11.h>
 #include <dxgi.h>
-#include <regex>
+#include <Wbemidl.h>
 
 // Some GPU drivers have bugs in newer features that we use, so ensure we're at
 // least on this version and hope there aren't regressions.

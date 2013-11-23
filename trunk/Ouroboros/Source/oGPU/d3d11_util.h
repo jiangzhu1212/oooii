@@ -29,9 +29,9 @@
 
 #include <oSurface/buffer.h>
 #include <oBasis/oGPUConcepts.h>
-#include <oPlatform/oSingleton.h>
 #include <vector>
-#include "../oStd/win.h"
+
+#include <oCore/windows/win_error.h>
 #include <d3d11.h>
 #include <d3dx11.h>
 
@@ -56,7 +56,7 @@ template<size_t capacity> char* debug_name(fixed_string<char, capacity>& _StrDes
 
 // Use ID3D11InfoQueue::AddApplicationMessage to trace user errors.
 int vtrace(ID3D11InfoQueue* _pInfoQueue, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args);
-inline int vtrace(ID3D11Device* _pDevice, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args) { intrusive_ptr<ID3D11InfoQueue> InfoQueue; oVERIFY(_pDevice->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&InfoQueue)); return vtrace(InfoQueue, _Severity, _Format, _Args); }
+inline int vtrace(ID3D11Device* _pDevice, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args) { intrusive_ptr<ID3D11InfoQueue> InfoQueue; oV(_pDevice->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&InfoQueue)); return vtrace(InfoQueue, _Severity, _Format, _Args); }
 inline int vtrace(ID3D11DeviceContext* _pDeviceContext, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args) { intrusive_ptr<ID3D11Device> Device; _pDeviceContext->GetDevice(&Device); return vtrace(Device, _Severity, _Format, _Args); }
 inline int trace(ID3D11InfoQueue* _pInfoQueue, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, ...) { va_list args; va_start(args, _Format); int len = vtrace(_pInfoQueue, _Severity, _Format, args); va_end(args); return len; }
 inline int trace(ID3D11Device* _pDevice, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, ...) { va_list args; va_start(args, _Format); int len = vtrace(_pDevice, _Severity, _Format, args); va_end(args); return len; }

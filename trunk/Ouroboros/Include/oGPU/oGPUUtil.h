@@ -29,6 +29,9 @@
 
 #include <oGPU/oGPU.h>
 
+#include <oBasis/oGeometry.h>
+#include <oBasis/oOBJ.h>
+
 // _____________________________________________________________________________
 // Buffer convenience functions
 

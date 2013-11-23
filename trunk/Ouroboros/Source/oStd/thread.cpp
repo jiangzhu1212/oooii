@@ -25,7 +25,7 @@
 #include <oStd/thread.h>
 #include <oStd/atomic.h>
 #include <process.h> // _beginthread/_endthread
-#include "win.h"
+#include "crt_assert.h"
 
 oStd::thread::id oStd::this_thread::get_id()
 {

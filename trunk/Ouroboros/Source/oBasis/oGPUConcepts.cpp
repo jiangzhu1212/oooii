@@ -290,7 +290,7 @@ bool oGPUParseSemantic(const fourcc& _FourCC, char _Name[5], uint* _pIndex)
 	return true;
 }
 
-uint oGPUCalcVertexSize(const threadsafe oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, uint _InputSlot)
+uint oGPUCalcVertexSize(const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, uint _InputSlot)
 {
 	bool IsFirstRun = true;
 	bool IsInstanceList = false;
@@ -309,7 +309,7 @@ uint oGPUCalcVertexSize(const threadsafe oGPU_VERTEX_ELEMENT* _pElements, uint _
 			else
 				oASSERT(IsInstanceList == _pElements[i].Instanced, "Elements in the same slot must either be all instanced or all not instanced.");
 
-			size += ouro::surface::element_size(thread_cast<const oGPU_VERTEX_ELEMENT*>(_pElements)[i].Format); // ok thread_cast, the array is immutable
+			size += ouro::surface::element_size(_pElements[i].Format);
 		}
 	}
 

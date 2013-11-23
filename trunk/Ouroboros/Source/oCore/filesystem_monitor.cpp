@@ -24,8 +24,8 @@
  **************************************************************************/
 #include <oCore/filesystem_monitor.h>
 #include <oCore/filesystem.h>
+#include <oCore/windows/win_error.h>
 #include <oBase/backoff.h>
-#include "../oStd/win.h"
 #include "iocp.h"
 
 using namespace oStd;
@@ -102,6 +102,7 @@ private:
 	path Directory;
 	sstring Filename;
 	bool Recursive;
+	bool Watching;
 	char BufferIndex;
 
 	void process(FILE_NOTIFY_INFORMATION* _pNotify);
@@ -160,6 +161,7 @@ watcher::watcher(monitor_impl* _pMonitor, const path& _Path, bool _Recursive, si
 	, BufferSize(static_cast<DWORD>(_BufferSize))
 	, BufferIndex(0)
 	, Recursive(_Recursive)
+	, Watching(true)
 {
 	oCHECK_SIZE(DWORD, _BufferSize);
 
@@ -186,8 +188,7 @@ watcher::watcher(monitor_impl* _pMonitor, const path& _Path, bool _Recursive, si
 		, FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED
 		, nullptr);
 
-	if (hDirectory == INVALID_HANDLE_VALUE)
-		throw oStd::windows::error();
+	oVB(hDirectory != INVALID_HANDLE_VALUE);
 
 	pOverlapped = windows::iocp::associate
 		(hDirectory, std::bind(&watcher::on_complete, this, std::placeholders::_1));
@@ -219,33 +220,41 @@ watcher::~watcher()
 
 void watcher::watch_changes()
 {
-	if (!ReadDirectoryChangesW(hDirectory
+	oVB(ReadDirectoryChangesW(hDirectory
 				, pBuffer[BufferIndex]
 				, static_cast<DWORD>(BufferSize)
 				, Recursive
 				, FILE_NOTIFY_CHANGE_LAST_WRITE|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_FILE_NAME
 				, nullptr
 				, pOverlapped
-				, nullptr))
-		throw oStd::windows::error();
+				, nullptr));
 }
 
 void watcher::unwatch_changes()
 {
+	{
+		lock_guard<mutex> lock(ProcessMutex);
+		Watching = false;
+	}
 	CancelIoEx(hDirectory, pOverlapped);
 }
 
 void watcher::on_complete(size_t _NumBytes)
 {
+	bool DeleteThis = _NumBytes == 0;
 	if (_NumBytes)
 	{
 		ProcessMutex.lock();
 		int OldIndex = BufferIndex;
 		BufferIndex = (BufferIndex + 1) & 0x1;
-		watch_changes();
+		if (Watching)
+			watch_changes();
+		else
+			DeleteThis = true;
 		process((FILE_NOTIFY_INFORMATION*)pBuffer[OldIndex]);
 	}
-	else
+	
+	if (DeleteThis)
 	{
 		monitor_impl* m = pMonitor;
 		delete this;
@@ -319,9 +328,7 @@ monitor_impl::monitor_impl(const info& _Info, const std::function<void (file_eve
 		, hTimerQueueTimer(nullptr)
 		, NumActiveWatches(false)
 {
-	if (!hTimerQueue)
-		throw oStd::windows::error();
-
+	oVB(hTimerQueue);
 	HANDLE hTimer = nullptr;
 	oVB(CreateTimerQueueTimer(
 	&hTimerQueueTimer

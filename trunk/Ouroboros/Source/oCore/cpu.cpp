@@ -23,8 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCore/cpu.h>
+#include <oCore/windows/win_error.h>
+#include <oCore/windows/win_version.h>
 #include <oHLSL/oHLSLBit.h>
-#include "../oStd/win.h"
 
 namespace ouro {
 
@@ -66,22 +67,22 @@ struct cpu_feature
 	const char* name;
 	int index;
 	int check_bit;
-	oStd::windows::version::value min_version;
+	windows::version::value min_version;
 };
 
 static const cpu_feature sFeatures[] = 
 {
-	{ "X87FPU", 3, 0, oStd::windows::version::unknown },
-	{ "Hyperthreading", 3, 28, oStd::windows::version::unknown },
-	{ "8ByteAtomicSwap", 3, 8, oStd::windows::version::unknown },
-	{ "SSE1", 2, 25, oStd::windows::version::unknown },
-	{ "SSE2", 3, 26, oStd::windows::version::unknown },
-	{ "SSE3", 2, 0, oStd::windows::version::unknown },
-	{ "SSE4.1", 2, 19,  oStd::windows::version::unknown },
-	{ "SSE4.2", 2, 20, oStd::windows::version::unknown },
-	{ "XSAVE/XSTOR", 2, 26, oStd::windows::version::win7_sp1 },
-	{ "OSXSAVE", 2, 27, oStd::windows::version::win7_sp1 },
-	{ "AVX1", -1, 0, oStd::windows::version::win7_sp1 }, // AVX detection is a special-case
+	{ "X87FPU", 3, 0, windows::version::unknown },
+	{ "Hyperthreading", 3, 28, windows::version::unknown },
+	{ "8ByteAtomicSwap", 3, 8, windows::version::unknown },
+	{ "SSE1", 2, 25, windows::version::unknown },
+	{ "SSE2", 3, 26, windows::version::unknown },
+	{ "SSE3", 2, 0, windows::version::unknown },
+	{ "SSE4.1", 2, 19,  windows::version::unknown },
+	{ "SSE4.2", 2, 20, windows::version::unknown },
+	{ "XSAVE/XSTOR", 2, 26, windows::version::win7_sp1 },
+	{ "OSXSAVE", 2, 27, windows::version::win7_sp1 },
+	{ "AVX1", -1, 0, windows::version::win7_sp1 }, // AVX detection is a special-case
 };
 
 static sstring get_cpu_string()

@@ -25,7 +25,11 @@
 #include <oCore/serial_port.h>
 #include <oBase/finally.h>
 #include <oBase/throw.h>
-#include "../oStd/win.h"
+
+#include <oCore/windows/win_error.h>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 using namespace oStd;
 
@@ -95,8 +99,7 @@ serial_port_impl::serial_port_impl(const info& _Info)
 
 	DCB dcb = {0};
 	dcb.DCBlength = sizeof(DCB);
-	if (!GetCommState(hNewFile, &dcb))
-		throw windows::error();
+	oVB(GetCommState(hNewFile, &dcb));
 
 	oCHECK_SIZE(BYTE, Info.byte_size);
 	dcb.BaudRate = Info.baud;
@@ -104,19 +107,16 @@ serial_port_impl::serial_port_impl(const info& _Info)
 	dcb.StopBits = get_stop_bits(Info.stop_bits);
 	dcb.Parity = get_parity(Info.parity);
 
-	if (!SetCommState(hNewFile, &dcb))
-		throw windows::error();
+	oVB(SetCommState(hNewFile, &dcb));
 
 	COMMTIMEOUTS cto;
-	if (!GetCommTimeouts(hNewFile, &cto))
-		throw windows::error();
+	oVB(GetCommTimeouts(hNewFile, &cto));
 
 	cto.ReadIntervalTimeout = Info.read_timeout_ms;
 	cto.ReadTotalTimeoutConstant = Info.read_timeout_ms;
 	cto.ReadTotalTimeoutMultiplier = Info.per_byte_read_timeout_ms;
 
-	if (!SetCommTimeouts(hNewFile, &cto))
-		throw windows::error();
+	oVB(SetCommTimeouts(hNewFile, &cto));
 
 	hFile = hNewFile;
 	hNewFile = INVALID_HANDLE_VALUE; // prevent finally from killing the successful file
@@ -141,8 +141,7 @@ serial_port_impl::info serial_port_impl::get_info() const
 void serial_port_impl::send(const void* _pBuffer, size_t _SizeofBuffer)
 {
 	DWORD written = 0;
-	if (!WriteFile(hFile, _pBuffer, static_cast<DWORD>(_SizeofBuffer), &written, nullptr))
-		throw windows::error();
+	oVB(WriteFile(hFile, _pBuffer, static_cast<DWORD>(_SizeofBuffer), &written, nullptr));
 	if (written != static_cast<DWORD>(_SizeofBuffer))
 	{
 		sstring b1, b2;
@@ -155,8 +154,7 @@ void serial_port_impl::send(const void* _pBuffer, size_t _SizeofBuffer)
 size_t serial_port_impl::receive(void* _pBuffer, size_t _SizeofBuffer)
 {
 	DWORD read = 0;
-	if (!ReadFile(hFile, _pBuffer, static_cast<DWORD>(_SizeofBuffer), &read, nullptr))
-		throw windows::error();
+	oVB(ReadFile(hFile, _pBuffer, static_cast<DWORD>(_SizeofBuffer), &read, nullptr));
 	return read;
 }
 

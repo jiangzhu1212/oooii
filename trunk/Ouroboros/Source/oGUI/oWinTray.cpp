@@ -22,13 +22,18 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oGUI/Windows/oWinTray.h>
 #include <oConcurrency/mutex.h>
 #include <oStd/thread.h>
 #include <oPlatform/oReporting.h>
 #include <oPlatform/oSingleton.h>
+
+#undef interface
 #include <oGUI/Windows/oWinWindowing.h>
+#include <oGUI/Windows/oWinTray.h>
+#include <oCore/windows/win_error.h>
+#include <oCore/windows/win_version.h>
 #include <shellapi.h>
+#include <windowsx.h>
 
 #if (defined(NTDDI_WIN7) && (NTDDI_VERSION >= NTDDI_WIN7))
 	#define oWINDOWS_HAS_TRAY_NOTIFYICONIDENTIFIER
@@ -317,11 +322,11 @@ bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const
 	if (!oTrayGetIconRect(_hWnd, _ID, &r))
 	{
 		UINT timeout = 0;
-		switch (oStd::windows::get_version())
+		switch (ouro::windows::get_version())
 		{
-			case oStd::windows::version::win2000:
-			case oStd::windows::version::xp:
-			case oStd::windows::version::server_2003:
+			case ouro::windows::version::win2000:
+			case ouro::windows::version::xp:
+			case ouro::windows::version::server_2003:
 				timeout = nid.uTimeout;
 				break;
 			default:

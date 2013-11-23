@@ -30,7 +30,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="thread.cpp" />
-    <ClCompile Include="win.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oStd\all.h" />
@@ -43,8 +42,8 @@
     <ClInclude Include="..\..\Include\oStd\mutex.h" />
     <ClInclude Include="..\..\Include\oStd\ratio.h" />
     <ClInclude Include="..\..\Include\oStd\thread.h" />
+    <ClInclude Include="crt_assert.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="win.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6C467BDD-EEA7-4FF6-B594-26A760DF179F}</ProjectGuid>

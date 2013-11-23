@@ -23,39 +23,61 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oCore_iocp
-#define oCore_iocp
+#ifndef oCore_win_util_h
+#define oCore_win_util_h
 
-#include <functional>
+#include <oCore/windows/win_error.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <comutil.h>
+
+// primarily intended for id classes
+template<typename T> DWORD asdword(const T& _ID) { return *((DWORD*)&_ID); }
+
+// intrusive_ptr support
+inline ULONG ref_count(IUnknown* unk) { ULONG r = unk->AddRef()-1; unk->Release(); return r; }
+inline void intrusive_ptr_add_ref(IUnknown* unk) { unk->AddRef(); }
+inline void intrusive_ptr_release(IUnknown* unk) { unk->Release(); }
 
 namespace ouro {
 	namespace windows {
-		namespace iocp {
 
-unsigned int io_concurrency();
+class scoped_handle
+{
+	scoped_handle(scoped_handle&);
+	const scoped_handle& operator=(scoped_handle&);
 
-// Retrieve an OVERLAPPED structure configured for an async call using IO 
-// completion ports (IOCP). This should be used for all async operations on the
-// handle until the handle is closed. The specified completion function and 
-// anything it references will live as long as the association does. One the 
-// file is closed call disassociate to free the OVERLAPPED object.
-OVERLAPPED* associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion);
-void disassociate(OVERLAPPED* _pOverlapped);
+public:
+	scoped_handle() : h(nullptr) {}
+	scoped_handle(HANDLE _Handle) : h(_Handle) { oVB(h != INVALID_HANDLE_VALUE); }
+	scoped_handle(scoped_handle&& _That) { operator=(std::move(_That)); }
+	const scoped_handle& operator=(scoped_handle&& _That)
+	{
+		if (this != &_That)
+		{
+			close();
+			h = _That.h;
+			_That.h = nullptr;
+		}
+		return *this;
+	}
 
-// Waits until all associated IO operations have completed
-void wait();
-bool wait_for(unsigned int _TimeoutMS);
+	const scoped_handle& operator=(HANDLE _That)
+	{
+		close();
+		h = _That;
+	}
 
-// returns if IO threads are running
-bool joinable();
+	~scoped_handle() { close(); }
 
-// waits for all associated IO operations to complete then joins all IO threads.
-void join();
+	operator HANDLE() { return h; }
 
-		} // namespace iocp
+private:
+	HANDLE h;
+	void close() { if (h && h != INVALID_HANDLE_VALUE) { ::CloseHandle(h); h = nullptr; } }
+};
+
 	} // namespace windows
 } // namespace ouro
 

@@ -28,8 +28,10 @@
 #ifndef oWinAsString_h
 #define oWinAsString_h
 
-#include "../Source/oStd/win.h"
 #include <oGUI/Windows/oWinKey.h>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 const char* oWinAsStringHT(int _HTCode);
 const char* oWinAsStringSC(int _SCCode);

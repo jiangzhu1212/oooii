@@ -36,6 +36,19 @@
 #include <oBasis/oError.h>
 #include <oConcurrency/thread_safe.h>
 
+#ifdef interface
+	#define INTERFACE_DEFINED
+#endif
+
+#ifndef INTERFACE_DEFINED
+	#ifdef _MSC_VER
+		#define interface struct __declspec(novtable)
+	#else
+		#define interface struct
+	#endif
+	#define INTERFACE_DEFINED
+#endif
+
 typedef ouro::guid oGUID;
 
 template<typename T> const oGUID& oGetGUID(volatile const T* volatile const* = 0);

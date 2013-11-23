@@ -24,9 +24,12 @@
  **************************************************************************/
 #include <oCore/camera.h>
 #include <oCore/module.h>
+#include <oCore/windows/win_util.h>
 #include <oBase/finally.h>
 #include <oBase/throw.h>
-#include "../oStd/win.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <DShow.h>
 #include "winqedit.h"
 

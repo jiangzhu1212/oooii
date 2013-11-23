@@ -23,9 +23,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGUI/Windows/oWinControlSet.h>
+#include <oCore/windows/win_error.h>
 #include <oBase/algorithm.h>
 #include <oGUI/Windows/oGDI.h>
 #include <oGUI/Windows/oWinRect.h>
+
 
 using namespace ouro;
 
@@ -193,8 +195,7 @@ HWND oWinControlSet::CreateControl(const XML_CONTEXT& _XmlContext, const CONTROL
 
 	d.Position += _ParentOffset;
 	HWND hControl = oWinControlCreate(d);
-	if (!hControl)
-		throw oStd::windows::error();
+	oVB(hControl);
 
 	// @tony: there still might be some redraw issues if this is the last control 
 	// that may justify moving visible and enabled into control creation to take 

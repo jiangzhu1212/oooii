@@ -35,6 +35,7 @@
 #include <oBase/backoff.h>
 #include <vector>
 #include <windowsx.h>
+#include <Shellapi.h>
 
 namespace ouro {
 

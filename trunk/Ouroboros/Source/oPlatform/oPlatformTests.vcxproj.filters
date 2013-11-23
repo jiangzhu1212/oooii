@@ -30,9 +30,6 @@
     <ClCompile Include="Tests\TESTSocketBlocking.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTStreamMonitor.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTWinRegistry.cpp">
       <Filter>Source</Filter>
     </ClCompile>

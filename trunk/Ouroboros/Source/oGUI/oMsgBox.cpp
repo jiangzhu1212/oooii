@@ -29,6 +29,7 @@
 #include <oGUI/Windows/oWinRect.h>
 #include <oGUI/Windows/oWinTray.h>
 #include <oGUI/Windows/oWinWindowing.h>
+#include <oCore/windows/win_error.h>
 
 // Secret function that is not normally exposed in headers.
 // Typically pass 0 for wLanguageId, and specify a timeout
@@ -360,7 +361,7 @@ oMSGBOX_RESULT AssertDialog(oMSGBOX_TYPE _Type, const char* _Caption, const char
 
 	if (int_ptr == -1)
 	{
-		std::string msg = oStd::windows::message(GetLastError());
+		std::string msg = ouro::windows::category().message(GetLastError());
 		oTRACE("DialogBoxIndirectParam failed. %s\n", msg.c_str());
 		__debugbreak(); // debug msgbox called from oASSERTs, so don't recurse into it
 	}

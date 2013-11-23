@@ -23,11 +23,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "iocp.h"
-#include "../oStd/win.h"
 #include <oBase/backoff.h>
 #include <oBase/concurrent_object_pool.h>
 #include <oCore/debugger.h>
 #include <oCore/process_heap.h>
+#include <oCore/windows/win_error.h>
 #include <oStd/thread.h>
 #include <vector>
 
@@ -57,10 +57,12 @@ public:
 	static unsigned int io_concurrency();
 
 	static iocp_threadpool& singleton();
+	static void* find_instance();
 
 	// Waits for all work to be completed
 	void wait() { wait_for(~0u); }
 	bool wait_for(unsigned int _TimeoutMS);
+	void join();
 
 	OVERLAPPED* associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion);
 	void disassociate(OVERLAPPED* _pOverlapped);
@@ -137,6 +139,13 @@ iocp_threadpool& iocp_threadpool::singleton()
 	return *sInstance;
 }
 
+void* iocp_threadpool::find_instance()
+{
+	void* pInstance = nullptr;
+	process_heap::find("iocp", process_heap::per_process, &pInstance);
+	return pInstance;
+}
+
 iocp_threadpool::iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers)
 	: hIoPort(nullptr)
 	, NumRunningThreads(0)
@@ -147,8 +156,7 @@ iocp_threadpool::iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers)
 
 	const size_t NumWorkers = _NumWorkers ? _NumWorkers : thread::hardware_concurrency();
 	hIoPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr, 0, static_cast<DWORD>(NumWorkers));
-	if (!hIoPort)
-		throw oStd::windows::error();
+	oVB(hIoPort);
 
 	Workers.resize(NumWorkers);
 	auto worker = std::bind(&iocp_threadpool::work, this);
@@ -222,6 +230,13 @@ bool iocp_threadpool::wait_for(unsigned int _TimeoutMS)
 	return true;
 }
 
+void iocp_threadpool::join()
+{
+	void* pInstance = find_instance();
+	if (pInstance)
+		process_heap::deallocate(pInstance);
+}
+
 OVERLAPPED* iocp_threadpool::associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion)
 {
 	atomic_increment(&NumAssociations);
@@ -231,7 +246,7 @@ OVERLAPPED* iocp_threadpool::associate(HANDLE _Handle, const std::function<void(
 		if (hIoPort != CreateIoCompletionPort(_Handle, hIoPort, oCOMPLETION, static_cast<DWORD>(Workers.size())))
 		{
 			disassociate(ol);
-			throw oStd::windows::error();
+			oVB(false);
 		}
 
 		ol->hFile = _Handle;
@@ -279,6 +294,21 @@ bool wait_for(unsigned int _TimeoutMS)
 	return iocp_threadpool::singleton().wait_for(_TimeoutMS);
 }
 
+bool joinable()
+{
+	return !!iocp_threadpool::find_instance();
+}
+
+void join()
+{
+	return iocp_threadpool::singleton().join();
+}
+
 		} // namespace iocp
 	} // namespace windows
 } // namespace ouro
+
+void iocp_join()
+{
+	ouro::windows::iocp::join();
+}

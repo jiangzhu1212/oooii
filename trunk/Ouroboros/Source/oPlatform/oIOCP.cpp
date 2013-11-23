@@ -32,6 +32,9 @@
 #include <oPlatform/oSingleton.h>
 #include <oPlatform/oReporting.h>
 #include <oCore/process_heap.h>
+#include <winsock2.h>
+
+#include <oCore/windows/win_error.h>
 
 using namespace ouro;
 
@@ -246,7 +249,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 		// to check with windows if a handle is already associated with iocp. So for now just assume that if we get this error back
 		// it is because we are recycling a socket, and therefore everything is ok.
 		if (hIOCP != CreateIoCompletionPort(_Handle, hIOCP, key, oUInt(WorkerThreads.size())) && GetLastError() != ERROR_INVALID_PARAMETER)
-			throw oStd::windows::error();
+			throw ouro::windows::error();
 		return NewIOCPContext(_pIOCP);
 	}
 

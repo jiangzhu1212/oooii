@@ -34,6 +34,10 @@
 #include <oBasis/oGUI.h>
 #include <oBasis/oRefCount.h>
 #include <oConcurrency/mutex.h>
+
+#undef interface
+#undef INTERFACE_DEFINED
+#include <windows.h>
 #include <NuiApi.h>
 
 class oKinectSkeleton

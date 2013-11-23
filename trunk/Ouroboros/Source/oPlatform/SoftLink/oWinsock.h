@@ -30,10 +30,11 @@
 #ifndef oWinsock_h
 #define oWinsock_h
 
-#include "../Source/oStd/win.h"
 #include <oPlatform/oSingleton.h>
 #include <oCore/module.h>
-#include <Winsock.h>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <winsock2.h>
 #include <Mstcpip.h>
 #include <Mswsock.h>

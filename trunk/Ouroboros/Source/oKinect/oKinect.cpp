@@ -66,6 +66,9 @@ oRTTI_COMPOUND_END_DESCRIPTION(oKINECT_DESC)
 #include "oWinKinect10.h"
 #include "oKinectManager.h"
 
+#undef interface
+#include <oCore/windows/win_util.h>
+
 using namespace ouro;
 
 static const NUI_IMAGE_RESOLUTION kResolution = NUI_IMAGE_RESOLUTION_640x480;
@@ -96,7 +99,7 @@ bool oKinectImpl::Reinitialize()
 		if (hr == E_NUI_BADIINDEX)
 			return oErrorSetLast(std::errc::no_such_device);
 		else if (FAILED(hr))
-			throw oStd::windows::error(hr);
+			throw ouro::windows::error(hr);
 
 		oASSERT(NUISensor->NuiInstanceIndex() == Desc.Index, "");
 		Desc.ID = NUISensor->NuiDeviceConnectionId();
@@ -111,7 +114,7 @@ bool oKinectImpl::Reinitialize()
 		if (hr == E_NUI_BADIINDEX)
 			return oErrorSetLast(std::errc::no_such_device);
 		else if (FAILED(hr))
-			throw oStd::windows::error(hr);
+			throw ouro::windows::error(hr);
 		Desc.Index = NUISensor->NuiInstanceIndex();
 	}
 

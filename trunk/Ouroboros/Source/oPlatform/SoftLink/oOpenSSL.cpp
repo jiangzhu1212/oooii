@@ -24,7 +24,6 @@
  **************************************************************************/
 #include "oOpenSSL.h"
 #include <oBase/assert.h>
-#include "oWinsock.h"
 
 static const char* sExportedAPIs[] = 
 {

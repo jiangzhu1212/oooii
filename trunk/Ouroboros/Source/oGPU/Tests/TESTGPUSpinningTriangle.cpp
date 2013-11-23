@@ -26,6 +26,8 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
+#include <oBasis/oMath.h>
+
 using namespace ouro;
 
 static const int sSnapshotFrames[] = { 0, 2, 4, 6 };

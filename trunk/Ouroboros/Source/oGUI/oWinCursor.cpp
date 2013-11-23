@@ -25,6 +25,7 @@
 #include <oGUI/Windows/oWinCursor.h>
 #include <oGUI/Windows/oWinRect.h>
 #include <oGUI/Windows/oWinWindowing.h>
+#include <oCore/windows/win_error.h>
 
 #define oWINV(_hWnd) \
 	if (!oWinExists(_hWnd)) \

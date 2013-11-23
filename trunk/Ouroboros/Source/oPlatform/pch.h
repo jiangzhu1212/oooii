@@ -29,8 +29,9 @@
 #include <oBase/all_libc.h>
 #include <oCore/all.h>
 #include <oBasis/all.h>
-#include "../Source/oStd/win.h"
-#ifdef CreateProcess
-	#undef CreateProcess
-#endif
+//#define WIN32_LEAN_AND_MEAN
+//#include <windows.h>
+//#ifdef CreateProcess
+//	#undef CreateProcess
+//#endif
 #endif
