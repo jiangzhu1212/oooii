@@ -50,6 +50,12 @@ const char* as_string(const assert_type::value& _Type)
 	}
 }
 
+namespace windows {
+
+	void dump_and_terminate(void* _Exceptions, const char* _Message);
+
+	} // namespace windows
+
 } // namespace ouro
 
 void ReportErrorAndExit()
@@ -440,7 +446,7 @@ assert_action::value oReportingContext::DefaultVPrint(const assert_context& _Ass
 			}
 
 			#ifndef _DEBUG
-				oReportingContext::Singleton()->DumpAndTerminate(nullptr, nullptr);
+				windows::dump_and_terminate(nullptr, nullptr);
 			#endif
 
 			break;
@@ -464,7 +470,7 @@ static void DumpAndTerminate(const char* _ErrorMessage, const windows::cpp_excep
 				oASSERT(false, "%s", _ErrorMessage);
 				//Mutex.unlock(); // No need to unlock when DumpAndTerminate is called as the app will exit
 			#else
-				oReportingContext::Singleton()->DumpAndTerminate(pExceptionPointers, _ErrorMessage);
+				windows::dump_and_terminate(pExceptionPointers, _ErrorMessage);
 			#endif
 		}
 	}
