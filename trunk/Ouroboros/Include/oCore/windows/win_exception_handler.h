@@ -29,8 +29,7 @@
 #ifndef oCore_win_exception_handler_h
 #define oCore_win_exception_handler_h
 
-#include <oBase/guid.h>
-#include <oStd/mutex.h>
+#include <oBase/path.h>
 #include <functional>
 #include <string>
 
@@ -88,6 +87,20 @@ public:
 	static exceptions& singleton();
 
 	inline void set_handler(const exception_handler& _Handler) { Handler = _Handler; }
+
+	// Specify a directory where mini/full dumps will be written. Dump filenames 
+	// will be generated with a timestamp at the time of exception.
+	inline void mini_dump_path(const path& _MiniDumpPath) { MiniDump = _MiniDumpPath; }
+	inline const path& mini_dump_path() const { return MiniDump; }
+
+	inline void full_dump_path(const path& _FullDumpPath) { FullDump = _FullDumpPath; }
+	inline const path& full_dump_path() const { return FullDump; }
+
+	inline void post_dump_command(const char* _Command) { PostDumpCommand = _Command; }
+	inline const char* post_dump_command() const { return PostDumpCommand; }
+
+	inline void prompt_after_dump(bool _Prompt) { PromptAfterDump = _Prompt; }
+	inline bool prompt_after_dump() const { return PromptAfterDump; }
 	
 private:
 	exceptions();
@@ -98,8 +111,12 @@ private:
 	static LONG static_on_exception(EXCEPTION_POINTERS* _pExceptionPointers);
 	LONG on_exception(EXCEPTION_POINTERS* _pExceptionPointers);
 
-	oStd::recursive_mutex HandlerMutex;
 	exception_handler Handler;
+
+	path MiniDump;
+	path FullDump;
+	xlstring PostDumpCommand;
+	bool PromptAfterDump;
 };
 
 	} // namespace windows

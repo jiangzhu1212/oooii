@@ -41,6 +41,7 @@
     <ClCompile Include="winmain.cpp" />
     <ClCompile Include="win_error.cpp" />
     <ClCompile Include="win_exception_handler.cpp" />
+    <ClCompile Include="win_gsreport.cpp" />
     <ClCompile Include="win_iocp.cpp" />
     <ClCompile Include="win_version.cpp" />
   </ItemGroup>

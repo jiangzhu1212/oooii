@@ -176,9 +176,6 @@
     <ClCompile Include="oWinRegistry.cpp">
       <Filter>Source\Windows API Convenience Wrappers</Filter>
     </ClCompile>
-    <ClCompile Include="oGSReport.cpp">
-      <Filter>Source\Windows API Convenience Wrappers</Filter>
-    </ClCompile>
     <ClCompile Include="oSingleton.cpp">
       <Filter>Source\Code Management</Filter>
     </ClCompile>

@@ -166,7 +166,6 @@
     <ClCompile Include="oFileCache.cpp" />
     <ClCompile Include="oFileCacheMonitoring.cpp" />
     <ClCompile Include="oFileSchemeHandler.cpp" />
-    <ClCompile Include="oGSReport.cpp" />
     <ClCompile Include="oHTTP.cpp" />
     <ClCompile Include="oHTTPClient.cpp" />
     <ClCompile Include="oHTTPHandler.cpp" />

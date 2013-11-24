@@ -72,6 +72,9 @@
     <ClCompile Include="win_exception_handler.cpp">
       <Filter>Source\windows</Filter>
     </ClCompile>
+    <ClCompile Include="win_gsreport.cpp">
+      <Filter>Source\windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\filesystem.h">

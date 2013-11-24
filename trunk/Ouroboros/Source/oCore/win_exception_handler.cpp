@@ -24,8 +24,10 @@
  **************************************************************************/
 #include <oCore/windows/win_exception_handler.h>
 #include <oCore/windows/win_error.h>
+#include <oCore/debugger.h>
 #include <oCore/module.h>
 #include <oCore/process_heap.h>
+#include <oCore/system.h>
 #include <oBase/string.h>
 
 #include <new.h>
@@ -239,7 +241,7 @@ LONG exceptions::on_exception(EXCEPTION_POINTERS* _pExceptionPointers)
 			if (!CppException.what.empty())
 			{
 				xlstring msg;
-				path ModulePath = std::move(ouro::this_module::path());
+				path ModulePath = std::move(this_module::path());
 				#ifdef _WIN64
 					#define LOWER_CASE_PTR_FMT "%016llx"
 				#else
@@ -327,5 +329,67 @@ exceptions& exceptions::singleton()
 	return *sInstance;
 }
 
+static sstring make_dump_filename()
+{
+	sstring DumpFilename = this_module::path().basename();
+	DumpFilename += "_v";
+	
+	module::info mi = this_module::get_info();
+	to_string(&DumpFilename[1], DumpFilename.capacity() - 1, mi.version);
+	DumpFilename += "D";
+
+	ntp_date now;
+	system::now(&now);
+	sstring StrNow;
+	strftime(DumpFilename.c_str() + DumpFilename.length()
+		, DumpFilename.capacity() - DumpFilename.length()
+		, syslog_local_date_format
+		, now
+		, date_conversion::to_local);
+
+	replace(StrNow, DumpFilename, ":", "_");
+	replace(DumpFilename, StrNow, ".", "_");
+
+	return DumpFilename;
+}
+
+void dump_and_terminate(void* _Exceptions, const char* _Message)
+{
+	sstring DumpFilename = make_dump_filename();
+
+	bool Mini = false;
+	bool Full = false;
+
+	path_string DumpPath;
+	const path& MiniDumpPath = exceptions::singleton().mini_dump_path();
+	if (!MiniDumpPath.empty())
+	{
+		snprintf(DumpPath, "%s%s.dmp", MiniDumpPath.c_str(), DumpFilename.c_str());
+		Mini = debugger::dump(path(DumpPath), false, _Exceptions);
+	}
+
+	const path& FullDumpPath = exceptions::singleton().full_dump_path();
+	if (!FullDumpPath.empty())
+	{
+		snprintf(DumpPath, "%s%s.dmp", FullDumpPath.c_str(), DumpFilename.c_str());
+		Full = debugger::dump(path(DumpPath), true, _Exceptions);
+	}
+
+	const char* PostDumpCommand = exceptions::singleton().post_dump_command();
+
+	if (PostDumpCommand && *PostDumpCommand)
+		::system(PostDumpCommand);
+
+	if (exceptions::singleton().prompt_after_dump())
+	{
+		xlstring msg;
+		snprintf(msg, "%s\n\nThe program will now exit.%s"
+			, _Message
+			, Mini || Full ? "\n\nA .dmp file has been written." : "");
+
+		MessageBox(NULL, msg.c_str(), this_module::path().c_str(), MB_ICONERROR|MB_OK|MB_TASKMODAL); 
+	}
+	std::exit(-1);
+}
 	} // namespace windows
 } // namespace ouro

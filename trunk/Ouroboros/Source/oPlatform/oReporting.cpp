@@ -89,53 +89,8 @@ struct oReportingContext : oProcessSingleton<oReportingContext>
 		return oProcessSingleton<oReportingContext>::Singleton();
 	}
 
-	void DumpAndTerminate(EXCEPTION_POINTERS* _pExceptionPtrs, const char* _pUserErrorMessage)
-	{
-		sstring DumpStamp = VersionString;
-
-		ouro::ntp_date now;
-		ouro::system::now(&now);
-		sstring StrNow;
-		strftime(DumpStamp.c_str() + DumpStamp.length(), DumpStamp.capacity() - DumpStamp.length(), ouro::syslog_local_date_format, now, ouro::date_conversion::to_local);
-		replace(StrNow, DumpStamp, ":", "_");
-		replace(DumpStamp, StrNow, ".", "_");
-
-		bool Mini = false;
-		bool Full = false;
-
-		path_string DumpPath;
-		if (!Desc.MiniDumpBase.empty())
-		{
-			snprintf(DumpPath, "%s%s.dmp", Desc.MiniDumpBase, DumpStamp.c_str());
-			Mini = ouro::debugger::dump(path(DumpPath), false, _pExceptionPtrs);
-		}
-
-		if (!Desc.FullDumpBase.empty())
-		{
-			snprintf(DumpPath, "%s%s.dmp", Desc.FullDumpBase, DumpStamp.c_str());
-			Full = ouro::debugger::dump(path(DumpPath), true, _pExceptionPtrs);
-		}
-
-		if(!Desc.PostDumpExecution.empty())
-		{
-			// Use raw system command to avoid code complexity during dump
-			::system(Desc.PostDumpExecution.c_str());
-		}
-
-		if(Desc.PromptAfterDump)
-		{
-			oMSGBOX_DESC d;
-			path Name = ouro::this_module::path();
-			d.Title = Name;
-			d.Type = oMSGBOX_ERR;
-			oMsgBox(d, "%s\n\nThe program will now exit.%s", _pUserErrorMessage, Mini || Full ? "\n\nA .dmp file has been written." : "\n\n.dmp file was not written.");
-		}
-		std::exit(-1);
-	}
-
 protected:
 	intrusive_ptr<threadsafe oStreamWriter> LogFile;
-	sstring VersionString;
 	oREPORTING_DESC Desc;
 	typedef fixed_vector<size_t, 256> array_t;
 	array_t FilteredMessages;
@@ -143,12 +98,6 @@ protected:
 	oConcurrency::recursive_mutex Mutex;
 	bool bDialogBoxesEnabled;
 };
-
-// Expose for oGSReport.cpp for now.
-void oWinDumpAndTerminate(EXCEPTION_POINTERS* _pExceptionPtrs, const char* _pUserErrorMessage)
-{
-	return oReportingContext::Singleton()->DumpAndTerminate(_pExceptionPtrs, _pUserErrorMessage);
-}
 
 // {338D483B-7793-4BE1-90B1-4BB986B3EC2D}
 const oGUID oReportingContext::GUID = { 0x338d483b, 0x7793, 0x4be1, { 0x90, 0xb1, 0x4b, 0xb9, 0x86, 0xb3, 0xec, 0x2d } };
@@ -159,14 +108,6 @@ oReportingContext::oReportingContext()
 {
 	PushReporter(DefaultVPrint);
 	std::set_terminate(ReportErrorAndExit);
-
-	// Cache the version string now in case we have to dump later (so we don't call complicated module code)
-	{
-		ouro::module::info mi = ouro::this_module::get_info();
-		VersionString[0] = 'V';
-		to_string(&VersionString[1], VersionString.capacity() - 1, mi.version);
-		sncatf(VersionString, "D");
-	}
 }
 
 oReportingContext::~oReportingContext()
