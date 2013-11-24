@@ -22,9 +22,11 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "oWinExceptionHandler.h"
-#include <oBase/string.h>
+#include <oCore/windows/win_exception_handler.h>
 #include <oCore/windows/win_error.h>
+#include <oCore/module.h>
+#include <oCore/process_heap.h>
+#include <oBase/string.h>
 
 #include <new.h>
 #include <signal.h>

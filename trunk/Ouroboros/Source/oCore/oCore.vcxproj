@@ -40,6 +40,7 @@
     <ClCompile Include="system.cpp" />
     <ClCompile Include="winmain.cpp" />
     <ClCompile Include="win_error.cpp" />
+    <ClCompile Include="win_exception_handler.cpp" />
     <ClCompile Include="win_iocp.cpp" />
     <ClCompile Include="win_version.cpp" />
   </ItemGroup>
@@ -60,6 +61,7 @@
     <ClInclude Include="..\..\Include\oCore\serial_port.h" />
     <ClInclude Include="..\..\Include\oCore\system.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_error.h" />
+    <ClInclude Include="..\..\Include\oCore\windows\win_exception_handler.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_iocp.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_util.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_version.h" />

@@ -34,7 +34,7 @@
 #include <oPlatform/oStream.h>
 #include <oGUI/Windows/oWinAsString.h>
 #include "oCRTLeakTracker.h"
-#include "oWinExceptionHandler.h"
+#include <oCore/windows/win_exception_handler.h>
 
 using namespace ouro;
 
