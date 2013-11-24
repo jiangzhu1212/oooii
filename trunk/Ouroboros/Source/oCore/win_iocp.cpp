@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "iocp.h"
+#include <oCore/windows/win_iocp.h>
 #include <oBase/backoff.h>
 #include <oBase/concurrent_object_pool.h>
 #include <oCore/debugger.h>
@@ -54,7 +54,7 @@ struct iocp_overlapped : public OVERLAPPED
 class iocp_threadpool
 {
 public:
-	static unsigned int io_concurrency();
+	static unsigned int concurrency();
 
 	static iocp_threadpool& singleton();
 	static void* find_instance();
@@ -87,7 +87,7 @@ private:
 	const iocp_threadpool& operator=(const iocp_threadpool&); /* = delete; */
 };
 
-unsigned int iocp_threadpool::io_concurrency()
+unsigned int iocp_threadpool::concurrency()
 {
 	return oStd::thread::hardware_concurrency();
 }
@@ -269,9 +269,9 @@ void iocp_threadpool::disassociate(OVERLAPPED* _pOverlapped)
 
 namespace iocp {
 
-unsigned int io_concurrency()
+unsigned int concurrency()
 {
-	return iocp_threadpool::io_concurrency();
+	return iocp_threadpool::concurrency();
 }
 
 OVERLAPPED* associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion)
@@ -307,8 +307,3 @@ void join()
 		} // namespace iocp
 	} // namespace windows
 } // namespace ouro
-
-void iocp_join()
-{
-	ouro::windows::iocp::join();
-}

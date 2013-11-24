@@ -26,7 +26,6 @@
     <ClCompile Include="display.cpp" />
     <ClCompile Include="filesystem.cpp" />
     <ClCompile Include="filesystem_monitor.cpp" />
-    <ClCompile Include="iocp.cpp" />
     <ClCompile Include="module.cpp" />
     <ClCompile Include="page_allocator.cpp" />
     <ClCompile Include="pch.cpp">
@@ -41,6 +40,7 @@
     <ClCompile Include="system.cpp" />
     <ClCompile Include="winmain.cpp" />
     <ClCompile Include="win_error.cpp" />
+    <ClCompile Include="win_iocp.cpp" />
     <ClCompile Include="win_version.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -60,9 +60,9 @@
     <ClInclude Include="..\..\Include\oCore\serial_port.h" />
     <ClInclude Include="..\..\Include\oCore\system.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_error.h" />
+    <ClInclude Include="..\..\Include\oCore\windows\win_iocp.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_util.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_version.h" />
-    <ClInclude Include="iocp.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -23,8 +23,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oCore_iocp
-#define oCore_iocp
+#ifndef oCore_win_iocp_h
+#define oCore_win_iocp_h
 
 #include <functional>
 
@@ -35,7 +35,7 @@ namespace ouro {
 	namespace windows {
 		namespace iocp {
 
-unsigned int io_concurrency();
+unsigned int concurrency();
 
 // Retrieve an OVERLAPPED structure configured for an async call using IO 
 // completion ports (IOCP). This should be used for all async operations on the

@@ -57,16 +57,16 @@
     <ClCompile Include="process_heap.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="iocp.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="filesystem_monitor.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="win_version.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="win_error.cpp">
+      <Filter>Source\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="win_iocp.cpp">
+      <Filter>Source\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="win_version.cpp">
       <Filter>Source\windows</Filter>
     </ClCompile>
   </ItemGroup>
@@ -116,9 +116,6 @@
     <ClInclude Include="..\..\Include\oCore\process_heap.h">
       <Filter>oCore</Filter>
     </ClInclude>
-    <ClInclude Include="iocp.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oCore\filesystem_monitor.h">
       <Filter>oCore</Filter>
     </ClInclude>
@@ -129,6 +126,9 @@
       <Filter>oCore\windows</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oCore\windows\win_version.h">
+      <Filter>oCore\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\windows\win_iocp.h">
       <Filter>oCore\windows</Filter>
     </ClInclude>
   </ItemGroup>

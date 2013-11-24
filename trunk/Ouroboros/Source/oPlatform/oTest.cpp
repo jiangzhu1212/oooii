@@ -881,6 +881,7 @@ bool oTestManager_Impl::KillZombies()
 
 // @tony: hack for some macro glue as the codebase gets converted to exceptions.
 oTest* g_Test = nullptr;
+namespace ouro { namespace windows { namespace iocp { extern void join(); } } }
 
 oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, char* _StatusMessage, size_t _SizeofStatusMessage)
 {
@@ -913,8 +914,7 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 	extern void FlushIOCP();
 	FlushIOCP();
 
-	extern void iocp_join();
-	iocp_join();
+	ouro::windows::iocp::join();
 
 	bool Leaks = oCRTLeakTracker::Singleton()->ReportLeaks();
 	if (result != oTest::FAILURE && Leaks)
