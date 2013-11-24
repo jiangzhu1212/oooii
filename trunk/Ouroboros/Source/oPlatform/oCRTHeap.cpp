@@ -59,6 +59,10 @@ typedef struct _CrtMemBlockHeader
 #define pHdr(pbData) (((_CrtMemBlockHeader *)pbData)-1)
 // _____________________________________________________________________________
 
+namespace ouro {
+	namespace windows {
+		namespace crt_heap {
+
 _CrtMemBlockHeader* GetHead()
 {
 	// New blocks are added to the head of the list
@@ -68,87 +72,83 @@ _CrtMemBlockHeader* GetHead()
 	return hdr;
 }
 
-bool oCRTHeapIsValidPointer(void* _Pointer)
+bool is_valid(void* _Pointer)
 {
 	return !!_CrtIsValidHeapPointer(_Pointer);
 }
 
-void* oCRTHeapGetPointer(struct _CrtMemBlockHeader* _pMemBlockHeader)
+void* get_pointer(struct _CrtMemBlockHeader* _pMemBlockHeader)
 {
 	return (void*)(_pMemBlockHeader+1);
 }
 
-void* oCRTHeapGetNextPointer(void* _Pointer)
+void* next_pointer(void* _Pointer)
 {
-	return oCRTHeapGetPointer(pHdr(_Pointer)->pBlockHeaderNext);
+	return get_pointer(pHdr(_Pointer)->pBlockHeaderNext);
 }
 
-size_t oCRTHeapGetSize(void* _Pointer)
+size_t size(void* _Pointer)
 {
 	return _Pointer ? pHdr(_Pointer)->nDataSize : 0;
 }
 
-bool oCRTHeapIsFree(void* _Pointer)
+bool is_free(void* _Pointer)
 {
 	return pHdr(_Pointer)->nBlockUse == _FREE_BLOCK;
 }
 
-bool oCRTHeapIsNormal(void* _Pointer)
+bool is_normal(void* _Pointer)
 {
 	return pHdr(_Pointer)->nBlockUse == _NORMAL_BLOCK;
 }
 
-bool oCRTHeapIsCRT(void* _Pointer)
+bool is_crt(void* _Pointer)
 {
 	return pHdr(_Pointer)->nBlockUse == _CRT_BLOCK;
 }
 
-bool oCRTHeapIsIgnore(void* _Pointer)
+bool is_ignore(void* _Pointer)
 {
 	return pHdr(_Pointer)->nBlockUse == _IGNORE_BLOCK;
 }
 
-bool oCRTHeapIsClient(void* _Pointer)
+bool is_client(void* _Pointer)
 {
 	return pHdr(_Pointer)->nBlockUse == _CLIENT_BLOCK;
 }
 
-const char* oCRTHeapGetAllocationFilename(void* _Pointer)
+const char* allocation_filename(void* _Pointer)
 {
 	return pHdr(_Pointer)->szFileName;
 }
 
-unsigned int oCRTHeapGetAllocationLine(void* _Pointer)
+unsigned int allocation_line(void* _Pointer)
 {
 	return static_cast<unsigned int>(pHdr(_Pointer)->nLine);
 }
 
-unsigned int oCRTHeapGetAllocationID(void* _Pointer)
+unsigned int allocation_id(void* _Pointer)
 {
 	return static_cast<unsigned int>(pHdr(_Pointer)->lRequest);
 }
 
-void oCRTHeapBreakOnAllocation(uintptr_t _AllocationID)
+void break_on_allocation(uintptr_t _AllocationID)
 {
 	_CrtSetBreakAlloc((long)_AllocationID);
 }
 
-// {50063038-C83F-4C13-9DC3-9D2F299AD4CB}
-static const oGUID guid = { 0x50063038, 0xc83f, 0x4c13, { 0x9d, 0xc3, 0x9d, 0x2f, 0x29, 0x9a, 0xd4, 0xcb } };
-oDEFINE_STATIC_MUTEX(oConcurrency::mutex, sCRTReportLeakMutex, GUID);
-
-void oCRTHeapEnableAtExitLeakReport(bool _Enable)
+void enable_at_exit_leak_report(bool _Enable)
 {
-	oConcurrency::lock_guard<oStaticMutex<oConcurrency::mutex, sCRTReportLeakMutex_t>> Lock(sCRTReportLeakMutex);
-
 	int flags = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
 	_CrtSetDbgFlag(_Enable ? (flags | _CRTDBG_LEAK_CHECK_DF) : (flags &~ _CRTDBG_LEAK_CHECK_DF));
 }
 
-bool oCRTHeapEnableMemoryTracking(bool _Enable)
+bool enable_memory_tracking(bool _Enable)
 {
-	oConcurrency::lock_guard<oStaticMutex<oConcurrency::mutex, sCRTReportLeakMutex_t>> Lock(sCRTReportLeakMutex);
 	int flags = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
 	_CrtSetDbgFlag(_Enable ? (flags | _CRTDBG_ALLOC_MEM_DF) : (flags &~ _CRTDBG_ALLOC_MEM_DF));
 	return (flags & _CRTDBG_ALLOC_MEM_DF) == _CRTDBG_ALLOC_MEM_DF;
 }
+		} // namespace crt_heap
+	} // namespace windows
+} // namespace ouro

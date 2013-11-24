@@ -154,17 +154,10 @@ int oCRTLeakTracker::OnMallocEvent(int _AllocationType, void* _UserData, size_t 
 	{
 		switch (_AllocationType)
 		{
-			case _HOOK_ALLOC:
-				pLeakTracker->on_allocate(static_cast<unsigned int>(_RequestNumber), _Size, (const char*)_Path, _Line);
-				break;
-			case _HOOK_REALLOC:
-				pLeakTracker->on_allocate(static_cast<unsigned int>(_RequestNumber), _Size, (const char*)_Path, _Line, oCRTHeapGetAllocationID(_UserData));
-				break;
-			case _HOOK_FREE:
-				pLeakTracker->on_deallocate(oCRTHeapGetAllocationID(_UserData));
-				break;
-			default:
-				__assume(0);
+			case _HOOK_ALLOC: pLeakTracker->on_allocate(static_cast<unsigned int>(_RequestNumber), _Size, (const char*)_Path, _Line); break;
+			case _HOOK_REALLOC: pLeakTracker->on_allocate(static_cast<unsigned int>(_RequestNumber), _Size, (const char*)_Path, _Line, windows::crt_heap::allocation_id(_UserData)); break;
+			case _HOOK_FREE: pLeakTracker->on_deallocate(windows::crt_heap::allocation_id(_UserData)); break;
+			default: __assume(0);
 		}
 	}
 
@@ -187,7 +180,7 @@ int oCRTLeakTracker::MallocHook(int _AllocationType, void* _UserData, size_t _Si
 
 void oCRTLeakTracker::UntrackAllocation(void* _Pointer)
 {
-	pLeakTracker->on_deallocate(oCRTHeapGetAllocationID(_Pointer));
+	pLeakTracker->on_deallocate(windows::crt_heap::allocation_id(_Pointer));
 }
 
 void oConcurrency::enable_leak_tracking_threadlocal(bool _Enabled)
