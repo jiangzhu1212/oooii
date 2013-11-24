@@ -41,6 +41,7 @@
 #include <oPlatform/oStandards.h> // standard colors for a console app, maybe this can be callouts? log file path... can be an option?
 #include <oPlatform/oStream.h> // oStreamExists
 #include <oPlatform/oStreamUtil.h> // used for loading buffers
+#include <oPlatform/Windows/oCRTHeap.h>
 #include <algorithm>
 #include <unordered_map>
 
@@ -254,7 +255,6 @@ struct oTestManagerImplSingleton : oProcessSingleton<oTestManagerImplSingleton>
 	oTestManager_Impl* pImpl;
 
 	static const oGUID GUID;
-	intrusive_ptr<oCRTLeakTracker> CRTLeakTracker;
 };
 
 // {97E7D7DD-B3B6-4691-A383-6D9F88C034C6}
@@ -262,11 +262,10 @@ const oGUID oTestManagerImplSingleton::GUID = { 0x97e7d7dd, 0xb3b6, 0x4691, { 0x
 oSINGLETON_REGISTER(oTestManagerImplSingleton);
 
 oTestManagerImplSingleton::oTestManagerImplSingleton()
-	: CRTLeakTracker(oCRTLeakTracker::Singleton())
 {
 	// oTestManager can be instantiated very early in static init, so make sure 
 	// we're tracking memory for it
-	debugger::report_crt_leaks_on_exit(true);
+	//ouro::windows::crt_heap::enable_at_exit_leak_report(true);
 	pImpl = new oTestManager_Impl();
 }
 
@@ -899,7 +898,7 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 
 	// @tony: Moving other stuff that are false-positives here so I can see
 	// them all...
-	oCRTLeakTracker::Singleton()->NewContext();
+	windows::crt_leak_tracker::new_context();
 
 	oTest* pTest = _pRegisterTestBase->New();
 	g_Test = pTest;
@@ -916,7 +915,7 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 
 	ouro::windows::iocp::join();
 
-	bool Leaks = oCRTLeakTracker::Singleton()->ReportLeaks();
+	bool Leaks = windows::crt_leak_tracker::report();
 	if (result != oTest::FAILURE && Leaks)
 	{
 		result = oTest::LEAKS;
@@ -1079,8 +1078,8 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 		}
 	}
 
-	oCRTLeakTracker::Singleton()->Enable(Desc.EnableLeakTracking);
-	oCRTLeakTracker::Singleton()->CaptureCallstack(Desc.CaptureCallstackForTestLeaks);
+	windows::crt_leak_tracker::enable(Desc.EnableLeakTracking);
+	windows::crt_leak_tracker::capture_callstack(Desc.CaptureCallstackForTestLeaks);
 
 	xlstring timeMessage;
 	double allIterationsStartTime = ouro::timer::now();

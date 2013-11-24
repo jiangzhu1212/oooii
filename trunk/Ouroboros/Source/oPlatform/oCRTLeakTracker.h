@@ -22,67 +22,60 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// Tracks CRT allocations. Mainly this is glue code linking oBase/leak_tracker
+// to libcrt malloc.
 #pragma once
-#ifndef oCRTLeakTracker_h
-#define oCRTLeakTracker_h
+#ifndef oCore_win_crt_leak_tracker_h
+#define oCore_win_crt_leak_tracker_h
 
 #include <oBase/leak_tracker.h>
-#include <oConcurrency/mutex.h>
-#include <oPlatform/oSingleton.h>
+#include <oStd/mutex.h>
 #include <unordered_map>
 
-// @tony: This is not well-designed. The underlying oLeakTracker part is
-// a bit better, but this is just the clunky bridge/glue code that binds it to
-// the system malloc. I'm not wholly sure what the best way to make it work is,
-// so until then I won't bother describing it. If you want to use this class
-// more explicitly that it's automagical current integration into the code, come
-// find me until I really make this a first-class object.
+namespace ouro {
+	namespace windows {
+		namespace crt_leak_tracker {
 
-struct oCRTLeakTracker : oProcessSingleton<oCRTLeakTracker>
-{
-	oCRTLeakTracker();
-	~oCRTLeakTracker();
+// This ensures the crt_leak_tracker has been initialized
+void ensure_initialized();
 
-	inline void NewContext() threadsafe { pLeakTracker->new_context(); }
-	inline void CaptureCallstack(bool _Capture = true) threadsafe { pLeakTracker->capture_callstack(_Capture); }
-	inline void Reset() threadsafe { pLeakTracker->reset(); }
-	
-	inline void EnableThreadlocalTracking(bool _Enabled = true) threadsafe { pLeakTracker->thread_local_tracking(_Enabled); }
+void enable(bool _Enable);
+bool enabled();
 
-	void Enable(bool _Enabled = true);
-	bool IsEnabled() const;
+void enable_report(bool _Enable);
+bool enable_report();
 
-	void Report(bool _Report = true);
-	bool IsReportEnabled() const;
+// All outstanding allocations are cleared as if they never happened. This is
+// useful in unit test situations where even though a test leaked, leaks should 
+// not be reported for subsequent tests.
+void new_context();
 
-	bool ReportLeaks(bool _CurrentContextOnly = true);
+// For each allocation the callstack leading to malloc is recorded. This is very
+// slow, but can easily identify the source of memory leaks.
+void capture_callstack(bool _Capture);
+bool capture_callstack();
 
-	int OnMallocEvent(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line);
+void thread_local_tracking(bool _Enable);
+bool thread_local_tracking();
 
-	// In rare low-level systems that need to persist after leaks have been 
-	// reported, it is helpful not to report those allocations as a leak. For 
-	// example a log file that is going to retain the leak report itself should
-	// not be reported as a leak. DO NOT USE THIS TO JUST FIX LEAK REPORTS!
-	void UntrackAllocation(void* _Pointer);
+// Returns true if there were leaks or false if there were none.
+bool report(bool _CurrentContextOnly = true);
 
-	static const oGUID GUID;
+// Reset all tracking bookkeeping
+void reset();
 
-	inline void ReferenceDelay() threadsafe { pLeakTracker->add_delay(); }
-	inline void ReleaseDelay() threadsafe { pLeakTracker->release_delay(); }
+// In rare low-level systems that need to persist after leaks have been 
+// reported it is helpful not to report those allocations as a leak. For example 
+// a log file that is going to retain the leak report itself should not be 
+// reported as a leak.
+void ignore(void* _Pointer);
 
-protected:
+// See oBase/leak_tracker for more details
+void add_delay();
+void release_delay();
 
-	static int MallocHook(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line);
-
-	oConcurrency::mutex Mutex;
-	ouro::leak_tracker* pLeakTracker;
-	size_t NonLinearBytes;
-	_CRT_ALLOC_HOOK OriginalAllocHook;
-	bool Enabled;
-	bool ReportEnabled;
-
-	static oCRTLeakTracker* sInstanceForDeferredRelease;
-	static void AtExit();
-};
+		} // namespace crt_leak_tracker
+	} // namespace windows
+} // namespace ouro
 
 #endif

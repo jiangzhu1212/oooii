@@ -24,125 +24,156 @@
  **************************************************************************/
 #include "oCRTLeakTracker.h"
 #include <oPlatform/Windows/oCRTHeap.h>
+#include <oCore/debugger.h>
 #include <oCore/process_heap.h>
 #include <oPlatform/oReporting.h>
 
-using namespace ouro;
-
-// {F253EA65-29FC-47D0-9E2E-400DAC41D861}
-const oGUID oCRTLeakTracker::GUID = { 0xf253ea65, 0x29fc, 0x47d0, { 0x9e, 0x2e, 0x40, 0xd, 0xac, 0x41, 0xd8, 0x61 } };
-oSINGLETON_REGISTER(oCRTLeakTracker);
+namespace ouro {
+	namespace windows {
+		namespace crt_leak_tracker {
 
 static void* untracked_malloc(size_t _Size) { return process_heap::allocate(_Size); }
 static void untracked_free(void* _Pointer) { process_heap::deallocate(_Pointer); }
 
 const static size_t kTrackingInternalReserve = oMB(4);
 
-static bool& GetThreadlocalTrackingEnabled()
+static bool& thread_local_tracking_enabled()
 {
 	// has to be a pointer so for multi-module support (all instances of this from
 	// a DLL perspective must point to the same bool value)
-	thread_local static bool* pThreadlocalTrackingEnabled = nullptr;
-	if (!pThreadlocalTrackingEnabled)
+	thread_local static bool* pEnabled = nullptr;
+	if (!pEnabled)
 	{
 		process_heap::find_or_allocate(
-			"threadlocal_tracking_enabled"
+			"thread_local_tracking_enabled"
 			, process_heap::per_thread
 			, process_heap::none
 			, [=](void* _pMemory) { *(bool*)_pMemory = true; }
 			, nullptr
-			, &pThreadlocalTrackingEnabled);
+			, &pEnabled);
 	}
 
-	return *pThreadlocalTrackingEnabled;
+	return *pEnabled;
 }
 
-oCRTLeakTracker::oCRTLeakTracker()
+class context
+{
+public:
+	static context& singleton();
+
+	void enable(bool _Enable);
+	inline bool enabled() const { return Enabled; }
+
+	inline void enable_report(bool _Enable) { ReportEnabled = _Enable; }
+	inline bool enable_report() { return ReportEnabled; }
+
+	inline void new_context() { pLeakTracker->new_context(); }
+
+	inline void capture_callstack(bool _Capture) { pLeakTracker->capture_callstack(_Capture); }
+	inline bool capture_callstack() const { return pLeakTracker->capture_callstack(); }
+
+	void thread_local_tracking(bool _Enable) { pLeakTracker->thread_local_tracking(_Enable); }
+	bool thread_local_tracking() { return pLeakTracker->thread_local_tracking(); }
+
+	bool report(bool _CurrentContextOnly);
+	inline void reset() { pLeakTracker->reset(); }
+	inline void ignore(void* _Pointer) { pLeakTracker->on_deallocate(crt_heap::allocation_id(_Pointer)); }
+	
+	inline void add_delay() { pLeakTracker->add_delay(); }
+	inline void release_delay() { pLeakTracker->release_delay(); }
+
+	int on_malloc_event(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line);
+
+protected:
+	context();
+	~context();
+
+	static int malloc_hook(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line);
+
+	oStd::mutex Mutex;
+	ouro::leak_tracker* pLeakTracker;
+	size_t NonLinearBytes;
+	_CRT_ALLOC_HOOK OriginalAllocHook;
+	bool Enabled;
+	bool ReportEnabled;
+};
+
+context::context()
 	: NonLinearBytes(0)
 	, Enabled(false)
 	, OriginalAllocHook(nullptr)
 {
-	oReportingReference(); // reporting keeps a log file... don't track that
+	oReportingReference(); // reporting keeps a log file - don't track that
 
 	leak_tracker::info lti;
 	lti.allocate = untracked_malloc;
 	lti.deallocate = untracked_free;
-	lti.thread_local_tracking_enabled = GetThreadlocalTrackingEnabled;
+	lti.thread_local_tracking_enabled = thread_local_tracking_enabled;
 	lti.callstack = debugger::callstack;
 	lti.format = debugger::format;
 	lti.print = debugger::print;
 	pLeakTracker = new leak_tracker(lti);
-
-	sInstanceForDeferredRelease = this;
-	Reference(); // keep an extra references to ourselves so that malloc is always hooked
-	atexit(AtExit); // then free it at the very end
 }
 
-oCRTLeakTracker::~oCRTLeakTracker()
+context::~context()
 {
-	ReportLeaks(false);
+	report(false);
 	_CrtSetAllocHook(OriginalAllocHook);
 
 	if (NonLinearBytes)
 	{
 		mstring buf;
 		format_bytes(buf, NonLinearBytes, 2);
-		oTRACE("CRT Leak Tracker: Allocated %s beyond the internal reserve. Increase kTrackingInternalReserve to improve performance, especially on shutdown.", buf.c_str());
+		oTRACE("CRT leak tracker: Allocated %s beyond the internal reserve. Increase kTrackingInternalReserve to improve performance, especially on shutdown.", buf.c_str());
 	}
 
 	oReportingRelease();
 }
 
-oCRTLeakTracker* oCRTLeakTracker::sInstanceForDeferredRelease = nullptr;
-void oCRTLeakTracker::AtExit()
+context& context::singleton()
 {
-	if (sInstanceForDeferredRelease)
-		sInstanceForDeferredRelease->Release();
+	static context* sInstance = nullptr;
+	if (!sInstance)
+	{
+		process_heap::find_or_allocate(
+			"crt_leak_tracker context"
+			, process_heap::per_process
+			, process_heap::none
+			, [=](void* _pMemory) { new (_pMemory) context(); }
+			, [=](void* _pMemory) { ((context*)_pMemory)->~context(); }
+			, &sInstance);
+	}
+	return *sInstance;
 }
 
-void oCRTLeakTracker::Enable(bool _Enabled)
+void context::enable(bool _Enable)
 {
-	if (_Enabled && !Enabled)
-		OriginalAllocHook = _CrtSetAllocHook(MallocHook);
-	else if (!_Enabled && Enabled)
+	if (_Enable && !Enabled)
+		OriginalAllocHook = _CrtSetAllocHook(malloc_hook);
+	else if (!_Enable && Enabled)
 	{
 		_CrtSetAllocHook(OriginalAllocHook);
 		OriginalAllocHook = nullptr;
 	}
 
-	Enabled = _Enabled;
+	Enabled = _Enable;
 }
 
-bool oCRTLeakTracker::IsEnabled() const
-{
-	return Enabled;
-}
-
-void oCRTLeakTracker::Report(bool _Report)
-{
-	ReportEnabled = _Report;
-}
-
-bool oCRTLeakTracker::IsReportEnabled() const
-{
-	return ReportEnabled;
-}
-
-bool oCRTLeakTracker::ReportLeaks(bool _CurrentContextOnly)
+bool context::report(bool _CurrentContextOnly)
 {
 	size_t nLeaks = 0;
 	if (ReportEnabled)
 	{
-		bool OldValue = IsEnabled();
-		Enable(false);
+		bool OldValue = enabled();
+		enable(false);
 		nLeaks = pLeakTracker->report(_CurrentContextOnly);
-		Enable(OldValue);
+		enable(OldValue);
 	}
 
 	return nLeaks > 0;
 }
 
-int oCRTLeakTracker::OnMallocEvent(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line)
+int context::on_malloc_event(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line)
 {
 	int allowAllocationToProceed = 1;
 
@@ -164,26 +195,91 @@ int oCRTLeakTracker::OnMallocEvent(int _AllocationType, void* _UserData, size_t 
 	return allowAllocationToProceed;
 }
 
-int oCRTLeakTracker::MallocHook(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line)
+int context::malloc_hook(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line)
 {
-	// Use this deferred copy rather than Singleton() because that static pointer
-	// can be destroyed.
-	if (!sInstanceForDeferredRelease)
-	{
-		sInstanceForDeferredRelease = Singleton();
-		sInstanceForDeferredRelease->Reference();
-		atexit(AtExit);
-	}
-
-	return sInstanceForDeferredRelease->OnMallocEvent(_AllocationType, _UserData, _Size, _BlockType, _RequestNumber, _Path, _Line);
+	return context::singleton().on_malloc_event(_AllocationType, _UserData, _Size, _BlockType, _RequestNumber, _Path, _Line);
 }
 
-void oCRTLeakTracker::UntrackAllocation(void* _Pointer)
+void ensure_initialized()
 {
-	pLeakTracker->on_deallocate(windows::crt_heap::allocation_id(_Pointer));
+	context::singleton();
 }
+ 
+void enable(bool _Enable)
+{
+	context::singleton().enable(_Enable);
+}
+ 
+bool enabled()
+{
+	return context::singleton().enabled();
+}
+
+void enable_report(bool _Enable)
+{
+	context::singleton().enable_report(_Enable);
+}
+
+bool enable_report()
+{
+	return context::singleton().enable_report();
+}
+
+void new_context()
+{
+	context::singleton().new_context();
+}
+
+void capture_callstack(bool _Capture)
+{
+	context::singleton().capture_callstack(_Capture);
+}
+
+bool capture_callstack()
+{
+	return context::singleton().capture_callstack();
+}
+
+void thread_local_tracking(bool _Enable)
+{
+	context::singleton().thread_local_tracking(_Enable);
+}
+
+bool thread_local_tracking()
+{
+	return context::singleton().thread_local_tracking();
+}
+
+bool report(bool _CurrentContextOnly)
+{
+	return context::singleton().report(_CurrentContextOnly);
+}
+
+void reset()
+{
+	context::singleton().reset();
+}
+
+void ignore(void* _Pointer)
+{
+	context::singleton().ignore(_Pointer);
+}
+
+void add_delay()
+{
+	context::singleton().add_delay();
+}
+
+void release_delay()
+{
+	context::singleton().release_delay();
+}
+
+		} // namespace crt_leak_tracker
+	} // namespace windows
+} // namespace ouro
 
 void oConcurrency::enable_leak_tracking_threadlocal(bool _Enabled)
 {
-	oCRTLeakTracker::Singleton()->EnableThreadlocalTracking(_Enabled);
+	ouro::windows::crt_leak_tracker::thread_local_tracking(_Enabled);
 }

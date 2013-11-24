@@ -280,12 +280,13 @@ static void DeferredHideIcon(HWND _hWnd, UINT _ID, unsigned int _TimeoutMS)
 	oTrayShowIcon(_hWnd, _ID, 0, 0, false);
 
 	oTrayCleanup::Singleton()->Unregister(oStd::this_thread::get_id());
-	oCRTLeakTracker::Singleton()->ReleaseDelay();
+
+	windows::crt_leak_tracker::release_delay();
 }
 
 static void oTrayScheduleIconHide(HWND _hWnd, UINT _ID, unsigned int _TimeoutMS)
 {
-	oCRTLeakTracker::Singleton()->ReferenceDelay();
+	windows::crt_leak_tracker::add_delay();
 	oStd::thread t(DeferredHideIcon, _hWnd, _ID, _TimeoutMS);
 	oTrayCleanup::Singleton()->Register(std::move(t));
 }

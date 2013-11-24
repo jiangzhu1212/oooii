@@ -89,10 +89,6 @@ void thread_name(const char* _Name, oStd::thread::id _ID = oStd::thread::id());
 // Print the specified string to a debug window
 void print(const char* _String);
 
-// uses print() to produce a summary of memory that is still allocated from the 
-// crt heap when the program exists.
-void report_crt_leaks_on_exit(bool _Enable = true);
-
 // Breaks in the debugger when the specified allocation occurs. The id can be
 // determined from the output of a leak report.
 void break_on_alloc(uintptr_t _AllocationID);

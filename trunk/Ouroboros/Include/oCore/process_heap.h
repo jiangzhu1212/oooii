@@ -45,8 +45,9 @@ enum scope
 
 enum tracking
 {
-	none,
-	leak_tracked,
+	none, // the allocation is not reported as a leak
+	leak_tracked, // if still allocated, this is reported
+	garbage_collected, // process_heap calls deallocate on object
 };
 
 // This ensures the process heap has been initialized

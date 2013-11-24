@@ -73,6 +73,8 @@ public:
 
 	void exit_thread();
 
+	void collect_garbage();
+
 	void report();
 
 private:
@@ -82,6 +84,7 @@ private:
 	static context* sAtExitInstance;
 
 	HANDLE hHeap;
+	size_t DtorOrdinal;
 	oStd::recursive_mutex Mutex;
 	int RefCount;
 
@@ -96,8 +99,18 @@ private:
 	{
 		entry()
 			: pointer(nullptr)
+			, scope(process_heap::per_process)
+			, tracking(process_heap::leak_tracked)
+			, num_stack_entries(0)
+			, dtor_ordinal(0)
 		{
 			InitializeSRWLock(&mutex);
+		}
+
+		// compare so that most recent goes first in list and eldest goes last (LIFO)
+		bool operator<(const entry& _That) const
+		{
+			return _That.dtor_ordinal < dtor_ordinal;
 		}
 
 		// The allocated pointer
@@ -111,6 +124,7 @@ private:
 		enum tracking tracking;
 		debugger::symbol stack[max_stack_depth];
 		size_t num_stack_entries;
+		size_t dtor_ordinal;
 		std::function<void(void* _Pointer)> dtor;
 		SRWLOCK mutex; // std::mutex can't support copy or move, so need to use platform type directly
 
@@ -138,6 +152,7 @@ private:
 context::context()
 	: hHeap(GetProcessHeap())
 	, RefCount(1)
+	, DtorOrdinal(0)
 {
 	// From oGSReport.cpp: This touches the CPP file ensuring our __report_gsfailure is installed
 	extern void oGSReportInstaller();
@@ -170,9 +185,29 @@ void context::at_exit()
 	context::singleton().exit_thread();
 
 	if (valid)
+	{
+		context::singleton().collect_garbage();
 		context::singleton().report();
+	}
 	else
 		report_footer(0);
+}
+
+void context::collect_garbage()
+{
+	// Free any allocations flagged for auto-deallocations.
+	std::vector<void*> frees;
+	frees.reserve(Pointers.size());
+
+	oFOR(auto& pair, Pointers)
+		if (pair.second.tracking == process_heap::garbage_collected)
+			frees.push_back(pair.second.pointer);
+
+	// in LIFO order
+	std::sort(std::begin(frees), std::end(frees));
+
+	oFOR(void* p, frees)
+		deallocate(p);
 }
 
 void context::reference()
@@ -277,6 +312,7 @@ bool context::find_or_allocate(size_t _Size
 			e.scope = _Scope;
 			e.tracking = _Tracking;
 			e.num_stack_entries = debugger::callstack(e.stack, 3);
+			e.dtor_ordinal = DtorOrdinal++;
 			e.dtor = _Destructor;
 			reference();
 

@@ -321,7 +321,7 @@ exceptions& exceptions::singleton()
 		process_heap::find_or_allocate(
 			"windows::exceptions"
 			, process_heap::per_process
-			, process_heap::leak_tracked
+			, process_heap::garbage_collected
 			, [=](void* _pMemory) { new (_pMemory) exceptions(); }
 			, [=](void* _pMemory) { ((exceptions*)_pMemory)->~exceptions(); }
 			, &sInstance);

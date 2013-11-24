@@ -34,41 +34,42 @@
 #define oTESTB0_P(test) do { if (!(test)) return false; } while(false) // pass through error
 #define oTESTB_P(test, msg, ...) do { if (!(test)) return oErrorSetLast(std::errc::protocol_error, msg, ## __VA_ARGS__); } while(false)
 
-bool oPlatformTest_oCRTLeakTracker()
+using namespace ouro;
+using namespace windows::crt_leak_tracker;
+
+bool TESTcrt_leak_tracker()
 {
 	#ifdef _DEBUG
 		oTRACE("THIS TESTS THE LEAK REPORTING CODE, SO THIS WILL INTENTIONALLY REPORT LEAKS IN THE OUTPUT AS PART OF THAT TEST.");
 	
-		oCRTLeakTracker* pTracker = oCRTLeakTracker::Singleton();
+		finally OSEDisableTracking;
 
-		ouro::finally OSEDisableTracking;
-
-		if (!pTracker->IsEnabled())
+		if (!enabled())
 		{
-			OSEDisableTracking = ouro::finally([&] { pTracker->Enable(false); });
-			pTracker->Enable(true);
+			OSEDisableTracking = finally([&] { enable(false); });
+			enable(true);
 		}
 
-		pTracker->Reset();
+		reset();
 
-		oTESTB_P(!pTracker->ReportLeaks(), "Outstanding leaks detected at start of test");
+		oTESTB_P(!report(), "Outstanding leaks detected at start of test");
 
 		char* pCharAlloc = new char;
-		oTESTB_P(pTracker->ReportLeaks(), "Tracker failed to detect char leak");
+		oTESTB_P(report(), "Tracker failed to detect char leak");
 		delete pCharAlloc;
 
 		oStd::future<void> check = oStd::async([=] {});
 		check.wait();
 		check = oStd::future<void>(); // zero-out the future because it makes an alloc
 
-		oTESTB_P(!pTracker->ReportLeaks(), "Tracker erroneously detected leak from a different thread");
+		oTESTB_P(!report(), "Tracker erroneously detected leak from a different thread");
 
 		char* pCharAllocThreaded = nullptr;
 
 		check = oStd::async([&]() { pCharAllocThreaded = new char; });
 
 		check.wait();
-		oTESTB_P(pTracker->ReportLeaks(), "Tracker failed to detect char leak from different thread");
+		oTESTB_P(report(), "Tracker failed to detect char leak from different thread");
 		delete pCharAllocThreaded;
 
 		oErrorSetLast(0, "");
@@ -83,7 +84,7 @@ struct PLATFORM_oCRTLeakTracker : public oTest
 {
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
-		oTESTB(oPlatformTest_oCRTLeakTracker(), "%s", oErrorGetLastString());
+		oTESTB(TESTcrt_leak_tracker(), "%s", oErrorGetLastString());
 		return SUCCESS;
 	}
 };

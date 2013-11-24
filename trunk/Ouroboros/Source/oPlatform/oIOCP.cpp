@@ -526,7 +526,7 @@ void oIOCP_Impl::CallBackUserTask(oIOCPOp* _pOP)
 #include "oCRTLeakTracker.h"
 void InitializeIOCP()
 {
-	oCRTLeakTracker::Singleton();
+	ouro::windows::crt_leak_tracker::ensure_initialized();
 
 	oIOCP_Singleton::Singleton();
 }

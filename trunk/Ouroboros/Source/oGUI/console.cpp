@@ -153,7 +153,7 @@ context& context::singleton()
 		process_heap::find_or_allocate(
 			"console window"
 			, process_heap::per_process
-			, process_heap::leak_tracked
+			, process_heap::garbage_collected
 			, [=](void* _pMemory) { new (_pMemory) context(); }
 			, [=](void* _pMemory) { ((context*)_pMemory)->~context(); }
 			, &sInstance);

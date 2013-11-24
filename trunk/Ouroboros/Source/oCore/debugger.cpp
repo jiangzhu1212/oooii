@@ -67,10 +67,6 @@ void print(const char* _String)
 	OutputDebugStringA(_String);
 }
 
-void report_crt_leaks_on_exit(bool _Enable)
-{
-}
-
 void break_on_alloc(uintptr_t _AllocationID)
 {
 	_CrtSetBreakAlloc((long)_AllocationID);

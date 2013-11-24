@@ -35,6 +35,7 @@
 #include <oGUI/Windows/oWinAsString.h>
 #include "oCRTLeakTracker.h"
 #include <oCore/windows/win_exception_handler.h>
+#include <oConcurrency/mutex.h>
 
 using namespace ouro;
 
@@ -156,7 +157,7 @@ void oReportingContext::SetDesc(const oREPORTING_DESC& _Desc)
 				oTRACE("WARNING: Failed to open log file \"%s\"\n%s: %s", Desc.LogFilePath.c_str(), oErrorAsString(oErrorGetLast()), oErrorGetLastString());
 				Desc.LogFilePath.clear();
 			}
-			oCRTLeakTracker::Singleton()->UntrackAllocation(thread_cast<oStreamWriter*>(LogFile.c_ptr())); // thread cast ok, we're still in initialization
+			windows::crt_leak_tracker::ignore(thread_cast<oStreamWriter*>(LogFile.c_ptr())); // thread cast ok, we're still in initialization
 		}
 	}
 	else
