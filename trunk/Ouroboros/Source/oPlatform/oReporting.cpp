@@ -510,7 +510,7 @@ assert_action::value oReportingContext::DefaultVPrint(const assert_context& _Ass
 	return action;
 }
 
-static void DumpAndTerminate(const char* _ErrorMessage, const oWinCppException& _CppException, uintptr_t _ExceptionContext)
+static void DumpAndTerminate(const char* _ErrorMessage, const windows::cpp_exception& _CppException, uintptr_t _ExceptionContext)
 {
 	EXCEPTION_POINTERS* pExceptionPointers = (EXCEPTION_POINTERS*) _ExceptionContext;
 
@@ -564,8 +564,7 @@ struct InstallExceptionHandler
 	InstallExceptionHandler()
 	{
 		process_heap::ensure_initialized(); // ensure the process heap is instantiated before the Singleton below so it is tracked
-		oSINGLETON_REGISTER(oWinExceptionHandler);
-		oWinExceptionHandler::Singleton()->SetHandler(DumpAndTerminate);
+		ouro::windows::exceptions::singleton().set_handler(DumpAndTerminate);
 	}
 };
 

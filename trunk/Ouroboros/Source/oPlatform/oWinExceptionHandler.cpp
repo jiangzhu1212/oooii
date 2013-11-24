@@ -31,24 +31,6 @@
 #include <oBase/type_info.h>
 #include <comdef.h>
 
-using namespace ouro;
-
-namespace ouro
-{
-	const char* as_string(const windows_exception_type::value& _Type)
-	{
-		switch (_Type)
-		{
-			case windows_exception_type::unknown: return "unknown exception";
-			case windows_exception_type::std: return "std::exception";
-			case windows_exception_type::com: return "_com_error";
-			case windows_exception_type::atl: return "ATL::CAtlException";
-			default: break;
-		}
-		return "unrecognized windows exception type";
-	}
-}
-
 // Additional exceptions. Some here are user-defined to use with RaiseException
 // from a condition handler to redirect everything to one path.
 #define oEXCEPTION_CPP 0xe06d7363
@@ -64,7 +46,24 @@ namespace ouro
 #define oEXCEPTION_SIGINT 0xc0de0005
 #define oEXCEPTION_SIGTERM 0xc0de0006
 
-const char* oWinAsStringExceptionCode(int _ExceptionCode)
+namespace ouro {
+
+	const char* as_string(const windows::exception_type::value& _Type)
+	{
+		switch (_Type)
+		{
+			case windows::exception_type::unknown: return "unknown exception";
+			case windows::exception_type::std: return "std::exception";
+			case windows::exception_type::com: return "_com_error";
+			case windows::exception_type::atl: return "ATL::CAtlException";
+			default: break;
+		}
+		return "?";
+	}
+
+	namespace windows {
+
+const char* as_string_exception_code(int _ExceptionCode)
 {
 	switch (_ExceptionCode)
 	{
@@ -109,64 +108,60 @@ const char* oWinAsStringExceptionCode(int _ExceptionCode)
 	return "unrecognized Exception Code";
 }
 
-// {9840E986-9ADE-4D11-AFCE-AB2D8AC530C0}
-const guid oWinExceptionHandler::GUID = { 0x9840e986, 0x9ade, 0x4d11, { 0xaf, 0xce, 0xab, 0x2d, 0x8a, 0xc5, 0x30, 0xc0 } };
-oSINGLETON_REGISTER(oWinExceptionHandler);
-
-static void PureVirtualCallHandler()
+static void pure_virtual_call_handler()
 {
 	RaiseException(oEXCEPTION_PURE_VIRTUAL_CALL, EXCEPTION_NONCONTINUABLE, 0, nullptr);
 }
 
-static int NewHandler(size_t _Size)
+static int new_handler(size_t _Size)
 {
 	ULONG_PTR sz = (ULONG_PTR)_Size;
 	RaiseException(oEXCEPTION_NEW, EXCEPTION_NONCONTINUABLE, 1, &sz);
 	return 0;
 }
 
-static void InvalidParameterHandler(const wchar_t* _Expression, const wchar_t* _Function, const wchar_t* _File, unsigned int _Line, uintptr_t _pReserved)
+static void invalid_parameter_handler(const wchar_t* _Expression, const wchar_t* _Function, const wchar_t* _File, unsigned int _Line, uintptr_t _pReserved)
 {
 	ULONG_PTR params[5] = { (ULONG_PTR)_Expression,(ULONG_PTR) _Function, (ULONG_PTR)_File, (ULONG_PTR)_Line, (ULONG_PTR)_pReserved };
 	RaiseException(oEXCEPTION_NEW, EXCEPTION_NONCONTINUABLE, 5, params);
 }
 
-static void SigabrtHandler(int _SigValue)
+static void sigabrt_handler(int _SigValue)
 {
 	ULONG_PTR v = (ULONG_PTR)_SigValue;
 	//RaiseException(oEXCEPTION_SIGABRT, EXCEPTION_NONCONTINUABLE, 1, &v);
 }
 
-static void SigintHandler(int _SigValue)
+static void sigint_handler(int _SigValue)
 {
 	ULONG_PTR v = (ULONG_PTR)_SigValue;
 	RaiseException(oEXCEPTION_SIGINT, EXCEPTION_NONCONTINUABLE, 1, &v);
 }
 
-static void SigtermHandler(int _SigValue)
+static void sigterm_handler(int _SigValue)
 {
 	ULONG_PTR v = (ULONG_PTR)_SigValue;
 	RaiseException(oEXCEPTION_SIGTERM, EXCEPTION_NONCONTINUABLE, 1, &v);
 }
 
-static void UnexpectedHandler()
+static void unexpected_handler()
 {
 	RaiseException(oEXCEPTION_UNEXPECTED, EXCEPTION_NONCONTINUABLE, 0, nullptr);
 }
 
-static void RedirectOtherHandlersToExceptions()
+static void redirect_handlers_to_exceptions()
 {
-	_set_purecall_handler(PureVirtualCallHandler);
-	_set_new_handler(NewHandler);
-	set_unexpected(UnexpectedHandler);
-	_set_invalid_parameter_handler(InvalidParameterHandler); 
+	_set_purecall_handler(pure_virtual_call_handler);
+	_set_new_handler(new_handler);
+	set_unexpected(unexpected_handler);
+	_set_invalid_parameter_handler(invalid_parameter_handler); 
 	_set_abort_behavior(_CALL_REPORTFAULT, _CALL_REPORTFAULT);
-	signal(SIGABRT, SigabrtHandler);
-	signal(SIGINT, SigintHandler);
-	signal(SIGTERM, SigtermHandler);
+	signal(SIGABRT, sigabrt_handler);
+	signal(SIGINT, sigint_handler);
+	signal(SIGTERM, sigterm_handler);
 }
 
-static const ::type_info* oWinVEHGetTypeInfo(const EXCEPTION_RECORD& _Record)
+static const ::type_info* get_veh_type_info(const EXCEPTION_RECORD& _Record)
 {
 	// http://blogs.msdn.com/b/oldnewthing/archive/2010/07/30/10044061.aspx
 	if (_Record.ExceptionCode != oEXCEPTION_CPP)
@@ -183,34 +178,34 @@ static const ::type_info* oWinVEHGetTypeInfo(const EXCEPTION_RECORD& _Record)
 	return (::type_info*)byte_add(hModule, C);
 }
 
-static oWinCppException oWinVEHGetException(const EXCEPTION_RECORD& _Record)
+static cpp_exception get_veh_exception(const EXCEPTION_RECORD& _Record)
 {
-	oWinCppException e;
+	cpp_exception e;
 	if (_Record.ExceptionCode == oEXCEPTION_CPP)
 	{
-		e.VoidException = (void*)_Record.ExceptionInformation[1];
-		const ::type_info* ti = oWinVEHGetTypeInfo(_Record);
+		e.void_exception = (void*)_Record.ExceptionInformation[1];
+		const ::type_info* ti = get_veh_type_info(_Record);
 		if (ti)
 		{
-			e.TypeName = type_name(ti->name());
+			e.type_name = type_name(ti->name());
 			// how can this deal with exceptions derived from std::exception?
 			// Weak answer for now: assume it's either namespaced in std:: or
 			// it is postfixed with _exception.
-			if (strstr(e.TypeName, "_com_error"))
+			if (strstr(e.type_name, "_com_error"))
 			{
-				e.Type = windows_exception_type::com;
-				e.What = windows::category().message(e.ComError->Error());
+				e.type = exception_type::com;
+				e.what = category().message(e.com_error->Error());
 			}
 			
-			else if (strstr(e.TypeName, "CAtlException"))
+			else if (strstr(e.type_name, "CAtlException"))
 			{
-				e.Type = windows_exception_type::atl;
+				e.type = exception_type::atl;
 			}
 			
-			else if (strstr(e.TypeName, "std::") || strstr(e.TypeName, "_exception"))
+			else if (strstr(e.type_name, "std::") || strstr(e.type_name, "_exception"))
 			{
-				e.Type = windows_exception_type::std;
-				e.What = e.StdException->what();
+				e.type = exception_type::std;
+				e.what = e.std_exception->what();
 			}
 		}
 	}
@@ -218,10 +213,10 @@ static oWinCppException oWinVEHGetException(const EXCEPTION_RECORD& _Record)
 }
 
 // Allows us to break execution when an access violation occurs
-LONG oWinExceptionHandler::OnException(EXCEPTION_POINTERS* _pExceptionPointers)
+LONG exceptions::on_exception(EXCEPTION_POINTERS* _pExceptionPointers)
 {
 	EXCEPTION_RECORD* pRecord = _pExceptionPointers->ExceptionRecord;
-	oWinCppException CppException;
+	cpp_exception CppException;
 	switch (pRecord->ExceptionCode)
 	{
 		case EXCEPTION_ACCESS_VIOLATION:
@@ -238,8 +233,8 @@ LONG oWinExceptionHandler::OnException(EXCEPTION_POINTERS* _pExceptionPointers)
 		// don't get in the way of that.
 		case oEXCEPTION_CPP:
 		{
-			CppException = oWinVEHGetException(*pRecord);
-			if (!CppException.What.empty())
+			CppException = get_veh_exception(*pRecord);
+			if (!CppException.what.empty())
 			{
 				xlstring msg;
 				path ModulePath = std::move(ouro::this_module::path());
@@ -250,7 +245,7 @@ LONG oWinExceptionHandler::OnException(EXCEPTION_POINTERS* _pExceptionPointers)
 				#endif
 
 				snprintf(msg, "First-chance exception at 0x" LOWER_CASE_PTR_FMT ": in %s: %s: %s\n"
-					, pRecord->ExceptionAddress, ModulePath.filename().c_str(), CppException.TypeName, CppException.What.c_str());
+					, pRecord->ExceptionAddress, ModulePath.filename().c_str(), CppException.type_name, CppException.what.c_str());
 				OutputDebugStringA(msg);
 			}
 			break;
@@ -288,7 +283,7 @@ LONG oWinExceptionHandler::OnException(EXCEPTION_POINTERS* _pExceptionPointers)
 		case oEXCEPTION_PROCEDURE_NOT_FOUND:
 		case oEXCEPTION_SIGINT:
 		case oEXCEPTION_SIGTERM:
-			Handler(oWinAsStringExceptionCode(pRecord->ExceptionCode), CppException, (uintptr_t)_pExceptionPointers);
+			Handler(as_string_exception_code(pRecord->ExceptionCode), CppException, (uintptr_t)_pExceptionPointers);
 			break;
 
 		default:
@@ -298,13 +293,37 @@ LONG oWinExceptionHandler::OnException(EXCEPTION_POINTERS* _pExceptionPointers)
 	return EXCEPTION_CONTINUE_SEARCH;
 }
 
-oWinExceptionHandler::oWinExceptionHandler() 
+LONG exceptions::static_on_exception(EXCEPTION_POINTERS* _pExceptionPointers)
 {
-	AddVectoredExceptionHandler(0, StaticOnException);
-	RedirectOtherHandlersToExceptions();
+	return exceptions::singleton().on_exception(_pExceptionPointers);
 }
 
-oWinExceptionHandler::~oWinExceptionHandler()
+exceptions::exceptions() 
 {
-	RemoveVectoredExceptionHandler(StaticOnException);
+	AddVectoredExceptionHandler(0, static_on_exception);
+	redirect_handlers_to_exceptions();
 }
+
+exceptions::~exceptions()
+{
+	RemoveVectoredExceptionHandler(static_on_exception);
+}
+
+exceptions& exceptions::singleton()
+{
+	exceptions* sInstance = nullptr;
+	if (!sInstance)
+	{
+		process_heap::find_or_allocate(
+			"windows::exceptions"
+			, process_heap::per_process
+			, process_heap::leak_tracked
+			, [=](void* _pMemory) { new (_pMemory) exceptions(); }
+			, [=](void* _pMemory) { ((exceptions*)_pMemory)->~exceptions(); }
+			, &sInstance);
+	}
+	return *sInstance;
+}
+
+	} // namespace windows
+} // namespace ouro

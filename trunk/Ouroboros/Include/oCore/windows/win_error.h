@@ -36,7 +36,7 @@ unsigned long __declspec(dllimport) GetLastError();
 
 } // extern "C"
 
-	namespace ouro {
+namespace ouro {
 	namespace windows {
 
 const std::error_category& category();

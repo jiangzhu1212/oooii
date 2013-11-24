@@ -26,10 +26,9 @@
 // A vectored exception handler that redirects some other handlers to the 
 // main exception path and calls to the handler when an exception occurs.
 #pragma once
-#ifndef oWinExceptionHandler_h
-#define oWinExceptionHandler_h
+#ifndef oCore_win_exception_handler_h
+#define oCore_win_exception_handler_h
 
-#include <oPlatform/oSingleton.h>
 #include <oBase/guid.h>
 #include <oStd/mutex.h>
 #include <functional>
@@ -37,9 +36,17 @@
 
 #undef interface
 #undef INTERFACE_DEFINED
+
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-namespace windows_exception_type
+namespace ATL { struct CAtlException; }
+class _com_error;
+
+namespace ouro {
+	namespace windows {
+
+namespace exception_type
 {	enum value {
 
 	unknown,
@@ -49,50 +56,53 @@ namespace windows_exception_type
 
 };}
 
-namespace ATL { struct CAtlException; }
-class _com_error;
-
-struct oWinCppException
+struct cpp_exception
 {
-	oWinCppException()
-		: Type(windows_exception_type::unknown)
-		, TypeName("")
-		, What("")
-	{ VoidException = nullptr; }
+	cpp_exception()
+		: type(exception_type::unknown)
+		, type_name("")
+		, what("")
+	{ void_exception = nullptr; }
 
-	windows_exception_type::value Type;
-	const char* TypeName;
-	std::string What;
+	exception_type::value type;
+	const char* type_name;
+	std::string what;
 	union
 	{
-		std::exception* StdException;
-		_com_error* ComError;
-		ATL::CAtlException* AtlException;
-		void* VoidException;
+		std::exception* std_exception;
+		_com_error* com_error;
+		ATL::CAtlException* atl_exception;
+		void* void_exception;
 	};
 };
 
 // NOTE: _pStdException may be nullptr if the exception is not derived from 
 // std::exception.
-typedef std::function<void(const char* _Message, const oWinCppException& _CppException, uintptr_t _ExceptionContext)> oExceptionHandler;
+typedef std::function<void(const char* _Message
+	, const cpp_exception& _CppException
+	, uintptr_t _ExceptionContext)> exception_handler;
 
-class oWinExceptionHandler : public oProcessSingleton<oWinExceptionHandler>
+class exceptions
 {
 public:
-	static const ouro::guid GUID;
-	oWinExceptionHandler();
-	~oWinExceptionHandler();
+	static exceptions& singleton();
 
-	inline void SetHandler(const oExceptionHandler& _Handler) { Handler = _Handler; }
+	inline void set_handler(const exception_handler& _Handler) { Handler = _Handler; }
 	
 private:
-	static const type_info* GetTypeInfo(const EXCEPTION_RECORD& _Record);
-	static const void* GetException(const EXCEPTION_RECORD& _Record);
-	static LONG CALLBACK StaticOnException(EXCEPTION_POINTERS* _pExceptionPointers) { return Singleton()->OnException(_pExceptionPointers); }
-	LONG OnException(EXCEPTION_POINTERS* _pExceptionPointers);
+	exceptions();
+	~exceptions();
+
+	static const ::type_info* get_type_info(const EXCEPTION_RECORD& _Record);
+	static const void* get_exception(const EXCEPTION_RECORD& _Record);
+	static LONG static_on_exception(EXCEPTION_POINTERS* _pExceptionPointers);
+	LONG on_exception(EXCEPTION_POINTERS* _pExceptionPointers);
 
 	oStd::recursive_mutex HandlerMutex;
-	oExceptionHandler Handler;
+	exception_handler Handler;
 };
+
+	} // namespace windows
+} // namespace ouro
 
 #endif
