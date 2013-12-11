@@ -24,7 +24,7 @@
  **************************************************************************/
 // Bringing this in from the c runtime so we can direct __report_gsfailure to 
 
-namespace ouro { namespace windows { void dump_and_terminate(void* _Exceptions, const char* _Message); } }
+namespace ouro { namespace debugger { void dump_and_terminate(void* _Exceptions, const char* _Message); } }
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -331,7 +331,7 @@ __declspec(noreturn) void __cdecl __report_gsfailure(ULONGLONG StackCookie)
     cookie[1] = __security_cookie_complement;
 
 #if 1
-	ouro::windows::dump_and_terminate((void*)&GS_ExceptionPointers, "Buffer overrun detected!");
+	ouro::debugger::dump_and_terminate((void*)&GS_ExceptionPointers, "Buffer overrun detected!");
 #else
 #if defined (_CRTBLD) && !defined (_SYSCRT)
     DebuggerWasPresent = IsDebuggerPresent();

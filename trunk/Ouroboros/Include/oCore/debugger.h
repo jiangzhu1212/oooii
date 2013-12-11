@@ -69,7 +69,7 @@ namespace ouro {
 
 };}
 
-typedef unsigned long long symbol;
+typedef size_t symbol;
 
 struct symbol_info
 {
@@ -122,10 +122,19 @@ int format(char* _StrDestination, size_t _SizeofStrDestination, symbol _Symbol, 
 template<size_t size> int format(char (&_StrDestination)[size], symbol _Symbol, const char* _Prefix, bool* _pIsStdBind = nullptr) { return format(_StrDestination, size, _Symbol, _Prefix, _pIsStdBind); }
 template<size_t capacity> int format(fixed_string<char, capacity>& _StrDestination, symbol _Symbol, const char* _Prefix, bool* _pIsStdBind = nullptr) { return format(_StrDestination, _StrDestination.capacity(), _Symbol, _Prefix, _pIsStdBind); }
 
+// Uses snprintf for format the entire current callstack starting at _Offset to 
+// _StrDestination. If _FilterStdBind is true, std::bind internal functions will 
+// be skipped over for a more compact callstack.
+void print_callstack(char* _StrDestination, size_t _SizeofStrDestination, size_t _Offset, bool _FilterStdBind);
+
 // Saves a file containing debug information that can be used to do postmortem 
 // debugging. Exceptions is the platform-specific context during exception
 // handling.
 bool dump(const path& _Path, bool _Full, void* _Exceptions);
+
+// Optionally prompts the user, writes a dump file and terminates the process.
+// Settings can be configured with win_exception_handler.
+void dump_and_terminate(void* _exception, const char* _Message);
 
 	} // namespace debugger
 } // namespace ouro

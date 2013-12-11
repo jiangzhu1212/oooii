@@ -24,20 +24,17 @@
  **************************************************************************/
 #include <oPlatform/oReporting.h>
 #include <oBase/algorithm.h>
-#include <oBase/fixed_string.h>
+#include <oBase/fnv1a.h>
 #include <oBase/fixed_vector.h>
 #include <oCore/debugger.h>
-#include <oBasis/oError.h>
-#include <oGUI/oMsgBox.h>
+#include <oCore/filesystem.h>
+#include <oCore/process.h>
 #include <oCore/process_heap.h>
-#include <oPlatform/oSingleton.h>
-#include <oPlatform/oStream.h>
-#include <oGUI/Windows/oWinAsString.h>
-#include "oCRTLeakTracker.h"
 #include <oCore/windows/win_exception_handler.h>
-#include <oConcurrency/mutex.h>
+#include <oStd/for.h>
+#include <oStd/mutex.h>
 
-using namespace ouro;
+#include <oGUI/oMsgBox.h>
 
 namespace ouro {
 
@@ -47,220 +44,34 @@ const char* as_string(const assert_type::value& _Type)
 	{
 		case assert_type::trace: return "Trace";
 		case assert_type::assertion: return "Error";
-		oNODEFAULT;
+		default: break;
 	}
+	return "?";
 }
 
-namespace windows {
+	namespace reporting {
 
-	void dump_and_terminate(void* _Exceptions, const char* _Message);
-
-	} // namespace windows
-
-} // namespace ouro
-
-void ReportErrorAndExit()
+void report_and_exit()
 {
 	oTRACEA("std::terminate called");
 	oASSERT(false, "std::terminate called");
 }
 
-struct oReportingContext : oProcessSingleton<oReportingContext>
+void emit_debugger(const assert_context& _Assertion, const char* _Message)
 {
-	oReportingContext();
-	~oReportingContext();
-
-	void SetDesc(const oREPORTING_DESC& _Desc);
-	inline void GetDesc(oREPORTING_DESC* _pDesc) { *_pDesc = Desc; }
-	bool PushReporter(oReportingVPrint _Reporter);
-	oReportingVPrint PopReporter();
-	inline void AddFilter(size_t _AssertionID) { push_back_unique(FilteredMessages, _AssertionID); }
-	inline void RemoveFilter(size_t _AssertionID) { find_and_erase(FilteredMessages, _AssertionID); }
-	assert_action::value VPrint(const assert_context& _Assertion, const char* _Format, va_list _Args);
-	static assert_action::value DefaultVPrint(const assert_context& _Assertion, threadsafe oStreamWriter* _pLogFile, const char* _Format, va_list _Args);
-	static const oGUID GUID;
-	void EnableErrorDialogBoxes(bool _bValue);
-	bool AreDialogBoxesEnabled() const { return bDialogBoxesEnabled; }
-	static oReportingContext* Singleton()
-	{
-		// Construction of a singleton currently goes ProcessHeap->CRTLeakTracker->ReportingContext,
-		// so if this is the first time through, then we'll get a circular reference to an uninit'ed Singleton
-		// So the first time, ensure we construct everything below this before really going in.
-		static bool once = false;
-		if (!once)
-		{
-			process_heap::ensure_initialized();
-			once = true;
-		}
-
-		return oProcessSingleton<oReportingContext>::Singleton();
-	}
-
-protected:
-	intrusive_ptr<threadsafe oStreamWriter> LogFile;
-	oREPORTING_DESC Desc;
-	typedef fixed_vector<size_t, 256> array_t;
-	array_t FilteredMessages;
-	fixed_vector<oReportingVPrint, 8> VPrintStack;
-	oConcurrency::recursive_mutex Mutex;
-	bool bDialogBoxesEnabled;
-};
-
-// {338D483B-7793-4BE1-90B1-4BB986B3EC2D}
-const oGUID oReportingContext::GUID = { 0x338d483b, 0x7793, 0x4be1, { 0x90, 0xb1, 0x4b, 0xb9, 0x86, 0xb3, 0xec, 0x2d } };
-oSINGLETON_REGISTER(oReportingContext);
-
-oReportingContext::oReportingContext()
-	: bDialogBoxesEnabled(true)
-{
-	PushReporter(DefaultVPrint);
-	std::set_terminate(ReportErrorAndExit);
+	debugger::print(_Message);
 }
 
-oReportingContext::~oReportingContext()
+void emit_log(const assert_context& _Assertion, const char* _Message, filesystem::file_handle _hFile)
 {
+	if (_hFile)
+		filesystem::write(_hFile, _Message, strlen(_Message), true);
 }
 
-void oReportingContext::EnableErrorDialogBoxes(bool _bValue)
-{
-	bDialogBoxesEnabled = _bValue;
-	if (_bValue)
-	{
-		// Enable asserts and error dialogs
-		_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_WNDW );
-		_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_WNDW );
-	}
-	else
-	{
-		// Disable all crt asserts and error dialogs 
-		_CrtSetReportFile(_CRT_ASSERT, stderr);
-		_CrtSetReportFile(_CRT_ERROR, stderr);
-		_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
-		_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_FILE);
-	}
-}
+// _____________________________________________________________________________
+// Nove this code out of this module so as not to depend on oGUI.
 
-void oReportingContext::SetDesc(const oREPORTING_DESC& _Desc)
-{
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
-
-	path OldLogPath(Desc.LogFilePath);
-	Desc = _Desc;
-	if (Desc.LogFilePath)
-	{
-		Desc.LogFilePath = _Desc.LogFilePath;
-		if (_stricmp(OldLogPath, Desc.LogFilePath))
-		{
-			LogFile = nullptr;
-			if (!oStreamLogWriterCreate(Desc.LogFilePath, &LogFile))
-			{
-				oTRACE("WARNING: Failed to open log file \"%s\"\n%s: %s", Desc.LogFilePath.c_str(), oErrorAsString(oErrorGetLast()), oErrorGetLastString());
-				Desc.LogFilePath.clear();
-			}
-			windows::crt_leak_tracker::ignore(thread_cast<oStreamWriter*>(LogFile.c_ptr())); // thread cast ok, we're still in initialization
-		}
-	}
-	else
-		LogFile = nullptr;
-}
-
-bool oReportingContext::PushReporter(oReportingVPrint _Reporter)
-{
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
-
-	if (VPrintStack.size() >= VPrintStack.capacity())
-		return false;
-	VPrintStack.push_back(_Reporter);
-	return true;
-}
-
-oReportingVPrint oReportingContext::PopReporter()
-{
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
-
-	oReportingVPrint fn = nullptr;
-	if (!VPrintStack.empty())
-	{
-		fn = VPrintStack.back();
-		VPrintStack.pop_back();
-	}
-	return fn;
-}
-
-assert_action::value oReportingContext::VPrint(const assert_context& _Assertion, const char* _Format, va_list _Args)
-{
-	size_t ID = fnv1a<size_t>(_Format);
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
-
-	if (!contains(FilteredMessages, ID) && !VPrintStack.empty())
-	{
-		oReportingVPrint VPrintMessage = VPrintStack.back();
-		return VPrintMessage(_Assertion, LogFile, _Format, _Args);
-	}
-
-	return assert_action::ignore;
-}
-
-void oReportingReference()
-{
-	// If this crashes due to a null reference, it means there's a bad teardown
-	// order in client code. Don't fix here, fix the ordering.
-	intrusive_ptr_add_ref(oReportingContext::Singleton());
-}
-
-void oReportingRelease()
-{
-	// If this crashes due to a null reference, it means there's a bad teardown
-	// order in client code. Don't fix here, fix the ordering.
-	intrusive_ptr_release(oReportingContext::Singleton());
-}
-
-bool oReportingAreDialogBoxesEnabled()
-{
-	return oReportingContext::Singleton()->AreDialogBoxesEnabled();
-}
-void oReportingEnableErrorDialogBoxes(bool _bValue)
-{
-	oReportingContext::Singleton()->EnableErrorDialogBoxes(_bValue);
-}
-void oReportingSetDesc(const oREPORTING_DESC& _Desc)
-{
-	oReportingContext::Singleton()->SetDesc(_Desc);
-}
-
-void oReportingGetDesc(oREPORTING_DESC* _pDesc)
-{
-	oReportingContext::Singleton()->GetDesc(_pDesc);
-}
-
-bool oReportingPushReporter(oReportingVPrint _Reporter)
-{
-	return oReportingContext::Singleton()->PushReporter(_Reporter);
-}
-
-oReportingVPrint oReportingPopReporter()
-{
-	return oReportingContext::Singleton()->PopReporter();
-}
-
-void oReportingAddFilter(size_t _AssertionID)
-{
-	oReportingContext::Singleton()->AddFilter(_AssertionID);
-}
-
-void oReportingRemoveFilter(size_t _AssertionID)
-{
-	oReportingContext::Singleton()->RemoveFilter(_AssertionID);
-}
-
-namespace ouro {
-	assert_action::value vtracef(const assert_context& _Assertion, const char* _Format, va_list _Args)
-	{
-		return oReportingContext::Singleton()->VPrint(_Assertion, _Format, _Args);
-	}
-} // namespace ouro
-
-static assert_action::value GetAction(oMSGBOX_RESULT _Result)
+static assert_action::value to_action(oMSGBOX_RESULT _Result)
 {
 	switch (_Result)
 	{
@@ -273,122 +84,202 @@ static assert_action::value GetAction(oMSGBOX_RESULT _Result)
 	return assert_action::ignore;
 }
 
-static assert_action::value ShowMsgBox(const assert_context& _Assertion, oMSGBOX_TYPE _Type, const char* _String)
+static assert_action::value show_msgbox(const assert_context& _Assertion, oMSGBOX_TYPE _Type, const char* _String)
 {
-#ifdef _DEBUG
-	static const char* MESSAGE_PREFIX = "Debug %s!\n\n";
-	static const char* DIALOG_BOX_TITLE = "OOOii Debug Library";
-#else
-	static const char* MESSAGE_PREFIX = "Release %s!\n\n";
-	static const char* DIALOG_BOX_TITLE = "OOOii Release Library";
-#endif
+	#ifdef _DEBUG
+		#define MSGBOX_BUILD_TYPE "Debug"
+	#else
+		#define MSGBOX_BUILD_TYPE "Release"
+	#endif
+	static const char* DIALOG_BOX_TITLE = "Ouroboros " MSGBOX_BUILD_TYPE " Library";
 
-	char format[32 * 1024];
+	char format[oKB(16)];
+	char cmdline[oKB(2)];
 	*format = 0;
 	char* end = format + sizeof(format);
 	char* cur = format;
-	cur += snprintf(format, MESSAGE_PREFIX, _Type == oMSGBOX_WARN ? "Warning" : "Error");
-	
-	if (oSTRVALID(_Assertion.Expression))
-		cur += snprintf(cur, std::distance(cur, end), "%s\n", _Assertion.Expression);
+	cur += snprintf(format, MSGBOX_BUILD_TYPE " %s!\nFile: %s(%d)\nCommand Line: %s\n"
+		, _Type == oMSGBOX_WARN ? "Warning" : "Error"
+		, _Assertion.filename
+		, _Assertion.line
+		, this_process::command_line(cmdline)
+		, _Assertion.expression);
+
+	if (oSTRVALID(_Assertion.expression))
+		cur += snprintf(cur, std::distance(cur, end), "Expression: %s\n", _Assertion.expression);
+
+	*cur++ = '\n';
 
 	strlcpy(cur, _String, std::distance(cur, end));
 
 	path AppPath = ouro::filesystem::app_path(true);
-	char title[1024];
+	char title[64];
 	snprintf(title, "%s (%s)", DIALOG_BOX_TITLE, AppPath.c_str());
 
 	oMSGBOX_DESC mb;
 	mb.Type = _Type;
 	mb.Title = title;
-	return GetAction(oMsgBox(mb, "%s", format));
+	return to_action(oMsgBox(mb, "%s", format));
 }
 
-#define oACCUM_PRINTF(_Format, ...) do \
+assert_action::value prompt_msgbox(const assert_context& _Assertion, const char* _Message)
+{
+	// Output message
+	assert_action::value action = _Assertion.default_response;
+	switch (_Assertion.type)
+	{
+		default:
+		case assert_type::trace:
+			break;
+
+		case assert_type::assertion:
+			action = show_msgbox(_Assertion, oMSGBOX_DEBUG, _Message);
+			break;
+	}
+
+	return action;
+}
+
+// End of code to possibly move
+// _____________________________________________________________________________
+
+#define LOCK() oStd::lock_guard<oStd::recursive_mutex> lock(Mutex)
+
+class context
+{
+public:
+	static context& singleton();
+
+	inline void set_info(const info& _Info) { LOCK(); Info = _Info; }
+	inline info get_info() const { LOCK(); return Info; }
+
+	assert_action::value vformatf(
+		const assert_context& _Assertion
+		, const char* _Format
+		, va_list _Args) const;
+
+	inline int add_emitter(const emitter& _Emitter) { LOCK(); return (int)sparse_set(Emitters, _Emitter); }
+	inline void remove_emitter(int _Emitter) { LOCK(); safe_set(Emitters, _Emitter, 0); }
+	void set_log(const path& _Path);
+	inline path get_log() const { return filesystem::get_path(Log); }
+	inline void set_prompter(const prompter& _Prompter) { LOCK(); Prompter = _Prompter; }
+	inline void add_filter(unsigned int _ID) { LOCK(); push_back_unique(Filters, _ID); }
+	inline void remove_filter(unsigned int _ID) { LOCK(); find_and_erase(Filters, _ID); }
+
+private:
+	context();
+	~context();
+
+	info Info;
+	mutable oStd::recursive_mutex Mutex;
+
+	fixed_vector<unsigned int, 256> Filters;
+	fixed_vector<emitter, 16> Emitters;
+	prompter Prompter;
+	filesystem::scoped_file Log;
+	int LogEmitter;
+};
+
+context::context()
+	: LogEmitter(-1)
+{
+	std::set_terminate(report_and_exit);
+	set_info(Info);
+
+	set_prompter(prompt_msgbox);
+	add_emitter(emit_debugger);
+}
+
+context::~context()
+{
+}
+
+context& context::singleton()
+{
+	context* sInstance = nullptr;
+	if (!sInstance)
+	{
+		process_heap::find_or_allocate(
+			"ouro::reporting"
+			, process_heap::per_process
+			, process_heap::garbage_collected
+			, [=](void* _pMemory) { new (_pMemory) context(); }
+			, [=](void* _pMemory) { ((context*)_pMemory)->~context(); }
+			, &sInstance);
+	}
+	return *sInstance;
+}
+
+// Returns a pointer to the nul terminator of _StrDestination, or beyond its 
+// size if filled.
+static char* format_message(char* _StrDestination
+	, size_t _SizeofStrDestination
+	, const assert_context& _Assertion
+	, const info& _Info
+	, char** _pUserMessageStart // points into _StrDestination at end of prefix info
+	, const char* _Format
+	, va_list _Args)
+{
+	if (_pUserMessageStart)
+		*_pUserMessageStart = _StrDestination;
+
+	#define oACCUMF(_Format, ...) do \
 	{	res = snprintf(_StrDestination + len, _SizeofStrDestination - len - 1, _Format, ## __VA_ARGS__); \
 		if (res == -1) goto TRUNCATION; \
 		len += res; \
 	} while(false)
 
-#define oACCUM_VPRINTF(_Format, _Args) do \
+	#define oVACCUMF(_Format, _Args) do \
 	{	res = ouro::vsnprintf(_StrDestination + len, _SizeofStrDestination - len - 1, _Format, _Args); \
 		if (res == -1) goto TRUNCATION; \
 		len += res; \
 	} while(false)
 
-void PrintCallStackToString(char* _StrDestination, size_t _SizeofStrDestination, bool _FilterStdBind)
-{
+	*_StrDestination = '\0';
+
 	int res = 0;
 	size_t len = 0;
-
-	size_t offset = 6; // Start offset from where assert occurred, skipping any debug handling code
-	size_t nSymbols = 0;
-	*_StrDestination = 0;
-	ouro::debugger::symbol address = 0;
-	bool IsStdBind = false;
-	while (ouro::debugger::callstack(&address, 1, offset++))
+	if (_Info.prefix_file_line)
 	{
-		if (nSymbols++ == 0) // if we have a callstack, label it
-		{
-			res = _snprintf_s(_StrDestination, _SizeofStrDestination, _TRUNCATE, "\nCall Stack:\n");
-			if (res == -1) goto TRUNCATION;
-			len += res;
-		}
-
-		bool WasStdBind = IsStdBind;
-		res = ouro::debugger::format(&_StrDestination[len], _SizeofStrDestination - len - 1, address, "", &IsStdBind);
-		if (res == -1) goto TRUNCATION;
-		len += res;
-
-		if (!WasStdBind && IsStdBind) // skip a number of the internal wrappers
-			offset += 5;
-	}
-
-	return;
-
-	TRUNCATION:
-		static const char* kStackTooLargeMessage = "\n... truncated ...";
-		size_t TLMLength = strlen(kStackTooLargeMessage);
-		snprintf(_StrDestination + _SizeofStrDestination - 1 - TLMLength, TLMLength + 1, kStackTooLargeMessage);
-}
-
-char* FormatAssertMessage(char* _StrDestination, size_t _SizeofStrDestination, const oREPORTING_DESC& _Desc, const assert_context& _Assertion, const char* _Format, va_list _Args)
-{
-	int res = 0;
-	size_t len = 0;
-	if (_Desc.PrefixFileLine)
-	{
-		#ifdef oCLICKABLE_OUTPUT_REQUIRES_SPACE_COLON
+		#if _MSC_VER < 1600
 			static const char* kClickableFileLineFormat = "%s(%u) : ";
 		#else
 			static const char* kClickableFileLineFormat = "%s(%u): ";
 		#endif
-		oACCUM_PRINTF(kClickableFileLineFormat, _Assertion.Filename, _Assertion.Line);
+		oACCUMF(kClickableFileLineFormat, _Assertion.filename, _Assertion.line);
 	}
 
-	if (_Desc.PrefixTimestamp)
+	if (_Info.prefix_timestamp)
 	{
-		ouro::ntp_timestamp now = 0;
+		ntp_timestamp now = 0;
 		system::now(&now);
-		res = (int)ouro::strftime(_StrDestination + len, _SizeofStrDestination - len - 1, ouro::sortable_date_ms_format, now, ouro::date_conversion::to_local);
-		oACCUM_PRINTF(" ");
+		res = (int)ouro::strftime(_StrDestination + len
+			, _SizeofStrDestination - len - 1
+			, sortable_date_ms_format
+			, now
+			, date_conversion::to_local);
+		oACCUMF(" ");
 		if (res == 0) goto TRUNCATION;
 		len += res;
 	}
 
-	if (_Desc.PrefixMsgType)
-		oACCUM_PRINTF("%s ", as_string(_Assertion.Type));
+	if (_Info.prefix_type)
+		oACCUMF("%s: ", as_string(_Assertion.type));
 
-	if (_Desc.PrefixThreadId)
+	if (_Info.prefix_thread_id)
 	{
 		mstring exec;
-		oACCUM_PRINTF("%s ", ouro::system::exec_path(exec));
+		oACCUMF("%s ", system::exec_path(exec));
 	}
 
-	if (_Desc.PrefixMsgId)
-		oACCUM_PRINTF("{0x%08x} ", fnv1a<unsigned int>(_Format));
+	if (_Info.prefix_id)
+		oACCUMF("{0x%08x} ", fnv1a<unsigned int>(_Format));
 
-	oACCUM_VPRINTF(_Format, _Args);
+	if (_pUserMessageStart)
+		*_pUserMessageStart = _StrDestination + len;
+
+	oVACCUMF(_Format, _Args);
+
 	return _StrDestination + len;
 
 TRUNCATION:
@@ -396,124 +287,160 @@ TRUNCATION:
 	size_t TLMLength = strlen(kStackTooLargeMessage);
 	snprintf(_StrDestination + _SizeofStrDestination - 1 - TLMLength, TLMLength + 1, kStackTooLargeMessage);
 	return _StrDestination + _SizeofStrDestination;
+
+	#undef oACCUMF
+	#undef oVACCUMF
 }
 
-template<size_t size> inline char* FormatAssertMessage(char (&_StrDestination)[size], const oREPORTING_DESC& _Desc, const assert_context& _Assertion, const char* _Format, va_list _Args) { return FormatAssertMessage(_StrDestination, size, _Desc, _Assertion, _Format, _Args); }
-
-assert_action::value oReportingContext::DefaultVPrint(const assert_context& _Assertion, threadsafe oStreamWriter* _pLogFile, const char* _Format, va_list _Args)
+assert_action::value context::vformatf(const assert_context& _Assertion
+	, const char* _Format
+	, va_list _Args) const
 {
-	oREPORTING_DESC desc;
-	oReportingGetDesc(&desc);
+	assert_action::value action = _Assertion.default_response;
 
-	bool addCallStack = desc.PrintCallstack && (_Assertion.Type == assert_type::assertion);
-
-	// add prefixes to original message
-	char msg[oKB(8)];
-	char* cur = FormatAssertMessage(msg, desc, _Assertion, _Format, _Args);
-	char* end = msg + sizeof(msg);
-
-	if (addCallStack)
-		PrintCallStackToString(cur, std::distance(cur, end), true);
-
-	// Always print any message to the debugger output
-	ouro::debugger::print(msg);
-
-	// And to log file
-	if (_pLogFile)
 	{
-		oSTREAM_WRITE w;
-		w.pData = msg;
-		w.Range = oSTREAM_RANGE(oSTREAM_APPEND, strlen(msg));
-		_pLogFile->Write(w);
+		unsigned int ID = fnv1a<unsigned int>(_Format);
+		LOCK();
+		if (contains(Filters, ID))
+			return action;
 	}
 
-	// Output message
-	assert_action::value action = _Assertion.DefaultResponse;
-	switch (_Assertion.Type)
+	char msg[oKB(8)];
+	char* usr = nullptr;
+	char* cur = format_message(msg, sizeof(msg), _Assertion, Info, &usr, _Format, _Args);
+	char* end = msg + sizeof(msg);
+
+	if (Info.callstack && _Assertion.type == assert_type::assertion)
+		debugger::print_callstack(cur, std::distance(cur, end), 6, true);
+
 	{
-		case assert_type::trace:
-			break;
+		LOCK();
 
-		case assert_type::assertion:
-			if (oReportingAreDialogBoxesEnabled())
-			{
-				if (desc.PromptAsserts)
-					action = ShowMsgBox(_Assertion, oMSGBOX_DEBUG, msg);
-			}
-			else
-			{
-				oTRACE("%s (%i): %s", _Assertion.Filename, _Assertion.Line, msg);
-				abort();
-			}
+		oFOR(auto& e, Emitters)
+			if (e) e(_Assertion, msg);
 
-			#ifndef _DEBUG
-				windows::dump_and_terminate(nullptr, nullptr);
-			#endif
+		if (Prompter)
+			action = Prompter(_Assertion, usr);
+	}
 
-			break;
-
-		oNODEFAULT;
+	if (_Assertion.type == assert_type::assertion)
+	{
+		oTRACE("%s (%i): %s", _Assertion.filename, _Assertion.line, msg);
+		if (!this_process::has_debugger_attached())
+			debugger::dump_and_terminate(nullptr, nullptr);
 	}
 
 	return action;
 }
 
-static void DumpAndTerminate(const char* _ErrorMessage, const windows::cpp_exception& _CppException, uintptr_t _ExceptionContext)
+void context::set_log(const path& _Path)
 {
-	EXCEPTION_POINTERS* pExceptionPointers = (EXCEPTION_POINTERS*) _ExceptionContext;
-
-	//if (Mutex.try_lock())
+	if (LogEmitter >= 0)
 	{
-		if (!ouro::this_process::has_debugger_attached())
-		{
-			#ifdef _DEBUG
-				oASSERT_TRACE(assert_type::assertion, assert_action::abort, "", "%s", _ErrorMessage);
-				oASSERT(false, "%s", _ErrorMessage);
-				//Mutex.unlock(); // No need to unlock when DumpAndTerminate is called as the app will exit
-			#else
-				windows::dump_and_terminate(pExceptionPointers, _ErrorMessage);
-			#endif
-		}
+		remove_emitter(LogEmitter);
+		LogEmitter = -1;
+	}
+
+	Log = std::move(filesystem::scoped_file(_Path, filesystem::open_option::text_append));
+	if (Log)
+		LogEmitter = add_emitter(std::bind(emit_log, std::placeholders::_1, std::placeholders::_2, (filesystem::file_handle)Log));
+}
+
+void ensure_initialized()
+{
+	context::singleton();
+}
+
+void set_info(const info& _Info)
+{
+	context::singleton().set_info(_Info);
+}
+
+info get_info()
+{
+	return context::singleton().get_info();
+}
+
+void vformatf(
+	const assert_context& _Assertion
+	, const char* _Format
+	, va_list _Args)
+{
+	context::singleton().vformatf(_Assertion, _Format, _Args);
+}
+
+int add_emitter(const emitter& _Emitter)
+{
+	return context::singleton().add_emitter(_Emitter);
+}
+
+void remove_emitter(int _Emitter)
+{
+	context::singleton().remove_emitter(_Emitter);
+}
+
+void set_log(const path& _Path)
+{
+	context::singleton().set_log(_Path);
+}
+
+path get_log()
+{
+	return context::singleton().get_log();
+}
+
+void set_prompter(const prompter& _Prompter)
+{
+	context::singleton().set_prompter(_Prompter);
+}
+
+void add_filter(unsigned int _ID)
+{
+	context::singleton().add_filter(_ID);
+}
+
+void remove_filter(unsigned int _ID)
+{
+	context::singleton().remove_filter(_ID);
+}
+
+#if defined(_WIN32) || defined(_WIN64)
+
+static void handle_exception(const char* _ErrorMessage
+	, const windows::exception::cpp_exception& _CppException
+	, uintptr_t _ExceptionContext)
+{
+	if (!this_process::has_debugger_attached())
+	{
+		#ifdef _DEBUG
+			oASSERT_TRACE(assert_type::assertion, assert_action::abort, "", "%s", _ErrorMessage);
+			oASSERT(false, "%s", _ErrorMessage);
+		#else
+			debugger::dump_and_terminate((void*)_ExceptionContext, _ErrorMessage);
+		#endif
 	}
 };
 
-#if 0
-static void ReportException(const char* _ErrorMessage, const oWinCppException& _CppException, uintptr_t _ExceptionContext)
+struct install_exception_handler
 {
-	const char* eType = "";
-	if (_pStdException)
+	install_exception_handler()
 	{
-		eType = type_name(typeid(*_pStdException).name());
-		const char* n = rstrstr(eType, "::");
-		if (n)
-			eType = n + 2;
+		// ensure the process heap is instantiated before the singleton below so it 
+		// is tracked
+		process_heap::ensure_initialized();
+		windows::exception::set_handler(handle_exception);
 	}
+};
 
-	if (oProcessHasDebuggerAttached())
-	{
-		if (_pStdException)
-			oASSERT_TRACE(assert_type::assertion, assert_action::abort, "", "%s: %s", eType, _pStdException->what());
-		else
-			oASSERT_TRACE(assert_type::assertion, assert_action::abort, "", "%s", _ErrorMessage);
-	}
-	else
-	{
-		EXCEPTION_POINTERS* pExceptionPointers = (EXCEPTION_POINTERS*)_ExceptionContext;
-		lstring msg(_ErrorMessage);
-		if (_pStdException)
-			snprintf(msg, "unhandled %s exception\n\n%s", eType, _pStdException->what());
-		oReportingContext::Singleton()->DumpAndTerminate(pExceptionPointers, msg);
-	}
-}
+static install_exception_handler InstallExceptionHandler;
 #endif
 
-struct InstallExceptionHandler
-{
-	InstallExceptionHandler()
-	{
-		process_heap::ensure_initialized(); // ensure the process heap is instantiated before the Singleton below so it is tracked
-		ouro::windows::exceptions::singleton().set_handler(DumpAndTerminate);
-	}
-};
+	} // namespace reporting
 
-static InstallExceptionHandler GInstalledExceptionHandler; // ok static, used to register a singleton
+// attach to callback in assert.h
+assert_action::value vtracef(const assert_context& _Assertion, const char* _Format, va_list _Args)
+{
+	return reporting::context::singleton().vformatf(_Assertion, _Format, _Args);
+}
+
+} // namespace ouro

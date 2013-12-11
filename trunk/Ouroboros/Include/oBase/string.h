@@ -252,7 +252,7 @@ void end_strtok(char** _Context);
 
 // This function takes a single value (usually an enum value) and returns a 
 // constant string representation of it.
-typedef const char* (*as_string_fn)(int _SingleFlag);
+typedef const char* (*as_string_fn)(const int& _SingleFlag);
 
 // Fill _StrDestination with a string representation of _Flags by going through
 // each bit set and calling _AsString on that value. If no bits are set, 

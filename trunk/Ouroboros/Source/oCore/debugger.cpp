@@ -24,7 +24,11 @@
  **************************************************************************/
 #include <oCore/debugger.h>
 #include <oCore/filesystem.h>
+#include <oCore/module.h>
+#include <oCore/process_heap.h>
+#include <oCore/system.h>
 #include <oCore/windows/win_util.h>
+#include <oCore/windows/win_exception_handler.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -267,28 +271,46 @@ static HMODULE init_dbghelp(HANDLE _hProcess
 
 symbol_info translate(symbol _Symbol)
 {
-	IMAGEHLP_MODULE64 module;
-	memset(&module, 0, sizeof(module));
-	module.SizeOfStruct = sizeof(module);
+	#ifdef _WIN64
+		#define oIMAGEHLP_MODULE IMAGEHLP_MODULE64
+		#define oIMAGEHLP_SYMBOL IMAGEHLP_SYMBOL64
+		#define oIMAGEHLP_LINE IMAGEHLP_LINE64
+		#define oSymGetModuleInfo SymGetModuleInfo64
+		#define oSymGetSymFromAddr SymGetSymFromAddr64
+		#define oSymGetLineFromAddr SymGetLineFromAddr64
+		#define oDWORD DWORD64
+	#else
+		#define oIMAGEHLP_MODULE IMAGEHLP_MODULE
+		#define oIMAGEHLP_SYMBOL IMAGEHLP_SYMBOL
+		#define oIMAGEHLP_LINE IMAGEHLP_LINE
+		#define oSymGetModuleInfo SymGetModuleInfo
+		#define oSymGetSymFromAddr SymGetSymFromAddr
+		#define oSymGetLineFromAddr SymGetLineFromAddr
+		#define oDWORD DWORD
+	#endif
 
 	symbol_info si;
 	si.address = _Symbol;
-	
-	if (!SymGetModuleInfo64(GetCurrentProcess(), _Symbol, &module))
+
+	oIMAGEHLP_MODULE module;
+	memset(&module, 0, sizeof(module));
+	module.SizeOfStruct = sizeof(module);
+
+	if (!oSymGetModuleInfo(GetCurrentProcess(), _Symbol, &module))
 	{
 		init_dbghelp(nullptr, false, nullptr, nullptr, 0);
-		oVB(SymGetModuleInfo64(GetCurrentProcess(), _Symbol, &module));
+		oVB(oSymGetModuleInfo(GetCurrentProcess(), _Symbol, &module));
 	}
 	
 	si.module = module.ModuleName;
 	BYTE buf[sizeof(IMAGEHLP_SYMBOL64) + mstring::Capacity * sizeof(TCHAR)];
-	IMAGEHLP_SYMBOL64* symbolInfo = (IMAGEHLP_SYMBOL64*)buf;
-	memset(buf, 0, sizeof(IMAGEHLP_SYMBOL64));
-	symbolInfo->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
+	oIMAGEHLP_SYMBOL* symbolInfo = (oIMAGEHLP_SYMBOL*)buf;
+	memset(buf, 0, sizeof(oIMAGEHLP_SYMBOL));
+	symbolInfo->SizeOfStruct = sizeof(oIMAGEHLP_SYMBOL);
 	symbolInfo->MaxNameLength = static_cast<DWORD>(si.name.capacity());
 
-	DWORD64 displacement = 0;
-	oVB(SymGetSymFromAddr64(GetCurrentProcess(), _Symbol, &displacement, symbolInfo));
+	oDWORD displacement = 0;
+	oVB(oSymGetSymFromAddr(GetCurrentProcess(), _Symbol, &displacement, symbolInfo));
 
 	// symbolInfo just contains the first 512 characters and doesn't guarantee
 	// they will be null-terminated, so copy the buffer and ensure there's some
@@ -298,12 +320,12 @@ symbol_info translate(symbol _Symbol)
 	ellipsize(si.name);
 	si.symbol_offset = static_cast<unsigned int>(displacement);
 
- 	IMAGEHLP_LINE64 line;
+ 	oIMAGEHLP_LINE line;
 	memset(&line, 0, sizeof(line));
 	line.SizeOfStruct = sizeof(line);
 
 	DWORD disp = 0;
-	if (SymGetLineFromAddr64(GetCurrentProcess(), _Symbol, &disp, &line))
+	if (oSymGetLineFromAddr(GetCurrentProcess(), _Symbol, &disp, &line))
 	{
 		si.filename = line.FileName;
 		si.line = line.LineNumber;
@@ -363,6 +385,41 @@ int format(char* _StrDestination, size_t _SizeofStrDestination, symbol _Symbol, 
 	return rv;
 }
 
+void print_callstack(char* _StrDestination, size_t _SizeofStrDestination, size_t _Offset, bool _FilterStdBind)
+{
+	int res = 0;
+	size_t len = 0;
+
+	size_t nSymbols = 0;
+	*_StrDestination = 0;
+	symbol address = 0;
+	bool IsStdBind = false;
+	while (callstack(&address, 1, _Offset++))
+	{
+		if (nSymbols++ == 0) // if we have a callstack, label it
+		{
+			res = _snprintf_s(_StrDestination, _SizeofStrDestination, _TRUNCATE, "\nCall Stack:\n");
+			if (res == -1) goto TRUNCATION;
+			len += res;
+		}
+
+		bool WasStdBind = IsStdBind;
+		res = format(&_StrDestination[len], _SizeofStrDestination - len - 1, address, "", &IsStdBind);
+		if (res == -1) goto TRUNCATION;
+		len += res;
+
+		if (!WasStdBind && IsStdBind) // skip a number of the internal wrappers
+			_Offset += 5;
+	}
+
+	return;
+
+TRUNCATION:
+	static const char* kStackTooLargeMessage = "\n... truncated ...";
+	size_t TLMLength = strlen(kStackTooLargeMessage);
+	snprintf(_StrDestination + _SizeofStrDestination - 1 - TLMLength, TLMLength + 1, kStackTooLargeMessage);
+}
+
 static int write_dump_file(MINIDUMP_TYPE _Type, HANDLE _hFile, bool* _pSuccess, EXCEPTION_POINTERS* _pExceptionPointers)
 {
 	_MINIDUMP_EXCEPTION_INFORMATION ExInfo;
@@ -403,6 +460,69 @@ bool dump(const path& _Path, bool _Full, void* _Exceptions)
 
 	CloseHandle(hFile);
 	return success;
+}
+
+static sstring make_dump_filename()
+{
+	sstring DumpFilename = this_module::path().basename();
+	DumpFilename += "_v";
+	
+	module::info mi = this_module::get_info();
+	to_string(&DumpFilename[1], DumpFilename.capacity() - 1, mi.version);
+	DumpFilename += "D";
+
+	ntp_date now;
+	system::now(&now);
+	sstring StrNow;
+	strftime(DumpFilename.c_str() + DumpFilename.length()
+		, DumpFilename.capacity() - DumpFilename.length()
+		, syslog_local_date_format
+		, now
+		, date_conversion::to_local);
+
+	replace(StrNow, DumpFilename, ":", "_");
+	replace(DumpFilename, StrNow, ".", "_");
+
+	return DumpFilename;
+}
+
+void dump_and_terminate(void* _exception, const char* _Message)
+{
+	sstring DumpFilename = make_dump_filename();
+
+	bool Mini = false;
+	bool Full = false;
+
+	path_string DumpPath;
+	const path& MiniDumpPath = windows::exception::mini_dump_path();
+	if (!MiniDumpPath.empty())
+	{
+		snprintf(DumpPath, "%s%s.dmp", MiniDumpPath.c_str(), DumpFilename.c_str());
+		Mini = dump(path(DumpPath), false, _exception);
+	}
+
+	const path& FullDumpPath = windows::exception::full_dump_path();
+	if (!FullDumpPath.empty())
+	{
+		snprintf(DumpPath, "%s%s.dmp", FullDumpPath.c_str(), DumpFilename.c_str());
+		Full = dump(path(DumpPath), true, _exception);
+	}
+
+	const char* PostDumpCommand = windows::exception::post_dump_command();
+
+	if (PostDumpCommand && *PostDumpCommand)
+		::system(PostDumpCommand);
+
+	if (windows::exception::prompt_after_dump())
+	{
+		xlstring msg;
+		snprintf(msg, "%s\n\nThe program will now exit.%s"
+			, _Message
+			, Mini || Full ? "\n\nA .dmp file has been written." : "");
+
+		MessageBox(NULL, msg.c_str(), this_module::path().c_str(), MB_ICONERROR|MB_OK|MB_TASKMODAL); 
+	}
+	std::exit(-1);
 }
 
 	} // namespace debugger

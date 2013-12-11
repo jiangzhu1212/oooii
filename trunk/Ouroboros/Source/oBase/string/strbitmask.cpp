@@ -28,19 +28,22 @@ namespace ouro {
 
 char* strbitmask(char* _StrDestination, size_t _SizeofStrDestination, int _Flags, const char* _AllZerosValue, as_string_fn _AsString)
 {
-	if (!_Flags && strlcpy(_StrDestination, _AllZerosValue, _SizeofStrDestination) >= _SizeofStrDestination)
-		return nullptr;
-
-	*_StrDestination = 0;
-	unsigned int Mask = 0x80000000;
-	while (Mask)
+	if (_Flags)
 	{
-		int v = _Flags & Mask;
-		if (v)
-			sncatf(_StrDestination, _SizeofStrDestination, "%s%s", *_StrDestination == 0 ? "" : "|", _AsString(v));
-		Mask >>= 1;
+		*_StrDestination = 0;
+		unsigned int Mask = 0x80000000;
+		while (Mask)
+		{
+			int v = _Flags & Mask;
+			if (v)
+				sncatf(_StrDestination, _SizeofStrDestination, "%s%s", *_StrDestination == 0 ? "" : "|", _AsString(v));
+			Mask >>= 1;
+		}
 	}
 
+	else if (strlcpy(_StrDestination, _AllZerosValue, _SizeofStrDestination) >= _SizeofStrDestination)
+		return nullptr;
+	
 	return _StrDestination;
 }
 

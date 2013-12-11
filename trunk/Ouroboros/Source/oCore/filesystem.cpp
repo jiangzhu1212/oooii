@@ -175,15 +175,16 @@ path log_path(bool _IncludeFilename, const char* _ExeSuffix)
 		tm t;
 		localtime_s(&t, &theTime);
 
-		ouro::path_string StrLogFilename;
-		char* p = StrLogFilename.c_str();
-		p += ::strftime(StrLogFilename, StrLogFilename.capacity(), "%Y-%m-%d-%H-%M-%S_", &t);
-		snprintf(p, StrLogFilename.capacity() - std::distance(StrLogFilename.c_str(), p)
-			, "%s%s%s_%u.txt"
+		sstring StrTime;
+		::strftime(StrTime, StrTime.capacity(), "%Y%m%d%H%M%S", &t);
+
+		path_string StrLogFilename;
+		snprintf(StrLogFilename, "%s-%s-%u%s%s.txt"
 			, Basename.c_str()
-			, _ExeSuffix ? "_" : ""
-			, _ExeSuffix ? _ExeSuffix : ""
-			, ouro::this_process::get_id());
+			, StrTime.c_str()
+			, this_process::get_id()
+			, _ExeSuffix ? "-" : ""
+			, _ExeSuffix ? _ExeSuffix : "");
 
 		Path.replace_filename(StrLogFilename);
 	}
@@ -674,6 +675,17 @@ void close(file_handle _hFile)
 bool at_end(file_handle _hFile)
 {
 	return !!feof((FILE*)_hFile);
+}
+
+path get_path(file_handle _hFile)
+{
+	#if WINVER < 0x0600 // NTDDI_VISTA
+		#error this function is implemented only for Windows Vista and later.
+	#endif
+	HANDLE f = get_native(_hFile);
+	path_string str;
+	oVB(GetFinalPathNameByHandleA(f, str.c_str(), static_cast<DWORD>(str.capacity()), 0));
+	return path(str);
 }
 
 void last_write_time(file_handle _hFile, time_t _Time)

@@ -152,7 +152,7 @@ iocp_threadpool::iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers)
 	, NumAssociations(0)
 	, pool(_OverlappedCapacity)
 {
-	oReportingReference();
+	reporting::ensure_initialized();
 
 	const size_t NumWorkers = _NumWorkers ? _NumWorkers : thread::hardware_concurrency();
 	hIoPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr, 0, static_cast<DWORD>(NumWorkers));
@@ -183,8 +183,6 @@ iocp_threadpool::~iocp_threadpool()
 	if (INVALID_HANDLE_VALUE != hIoPort)
 	{
 		CloseHandle(hIoPort);
-	
-		oReportingRelease();
 	}
 }
 
@@ -272,6 +270,11 @@ namespace iocp {
 unsigned int concurrency()
 {
 	return iocp_threadpool::concurrency();
+}
+
+void ensure_initialized()
+{
+	iocp_threadpool::singleton();
 }
 
 OVERLAPPED* associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion)

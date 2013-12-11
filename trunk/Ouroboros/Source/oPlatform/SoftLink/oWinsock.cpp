@@ -204,7 +204,7 @@ oWinsock::oWinsock()
 
 	oTRACE_WINSOCK_LIFETIME("initializing...");
 
-	oReportingReference();
+	reporting::ensure_initialized();
 
 	hWs2_32 = ouro::module::link("ws2_32.dll", ::detail::ws2_32_dll_Functions, (void**)&accept);
 	oASSERT(hWs2_32, "Failed to load and link ws2_32.dll");
@@ -236,8 +236,6 @@ oWinsock::~oWinsock()
 	ouro::module::close(hMswsock);
 
 	ouro::module::close(hWs2_32);
-
-	oReportingRelease();
 }
 
 struct WSA_ERR

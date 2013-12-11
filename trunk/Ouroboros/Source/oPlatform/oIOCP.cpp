@@ -158,7 +158,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 	oIOCP_Singleton()
 		: OutstandingContextCount(0)
 	{
-		oReportingReference();
+		reporting::ensure_initialized();
 
 		unsigned int NumThreads = oIOCPThreadCount();
 
@@ -197,8 +197,6 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 		{
 			delete orphan.pContext;
 		}
-
-		oReportingRelease();
 	}
 
 	void Flush()

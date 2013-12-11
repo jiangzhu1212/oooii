@@ -23,8 +23,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 
-// OOOii Math Library. This math library attempts to conform to HLSL (SM5) as 
-// closely as possible. To reduce typing, templates and macros are used 
+// Ouroboros Math Library. This math library attempts to conform to HLSL (SM5) 
+// as closely as possible. To reduce typing, templates and macros are used 
 // extensively, but the code should still be simpler than the alternative.
 // There are additional APIs as well that extend beyond HLSL as well, but try to 
 // keep the spirit of hlsl in mind.

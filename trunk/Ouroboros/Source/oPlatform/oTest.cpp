@@ -29,6 +29,8 @@
 #include <oBasis/oLockedPointer.h>
 #include <oBase/scc.h>
 #include <oCore/process.h>
+#include <oCore/windows/win_iocp.h>
+#undef CreateProcess
 
 #include <oConcurrency/event.h>
 
@@ -880,7 +882,6 @@ bool oTestManager_Impl::KillZombies()
 
 // @tony: hack for some macro glue as the codebase gets converted to exceptions.
 oTest* g_Test = nullptr;
-namespace ouro { namespace windows { namespace iocp { extern void join(); } } }
 
 oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, char* _StatusMessage, size_t _SizeofStatusMessage)
 {
@@ -895,6 +896,9 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 	srand(Desc.RandomSeed);
 
 	filesystem::remove(path(TempPath));
+
+	// Initialize iocp before leak tracking flags it as a leak
+	windows::iocp::ensure_initialized();
 
 	// @tony: Moving other stuff that are false-positives here so I can see
 	// them all...
@@ -913,7 +917,8 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 	extern void FlushIOCP();
 	FlushIOCP();
 
-	ouro::windows::iocp::join();
+	if (!windows::iocp::wait_for(20000))
+		oTRACE("iocp wait timed out");
 
 	bool Leaks = windows::crt_leak_tracker::report();
 	if (result != oTest::FAILURE && Leaks)

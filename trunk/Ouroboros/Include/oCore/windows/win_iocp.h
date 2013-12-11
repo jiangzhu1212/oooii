@@ -37,6 +37,8 @@ namespace ouro {
 
 unsigned int concurrency();
 
+void ensure_initialized();
+
 // Retrieve an OVERLAPPED structure configured for an async call using IO 
 // completion ports (IOCP). This should be used for all async operations on the
 // handle until the handle is closed. The specified completion function and 

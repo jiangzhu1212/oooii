@@ -33,9 +33,16 @@
 #include <new.h>
 #include <signal.h>
 #include <oBase/type_info.h>
+
+#undef interface
+#undef INTERFACE_DEFINED
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 #include <comdef.h>
 
-// Additional exceptions. Some here are user-defined to use with RaiseException
+// Additional exception. Some here are user-defined to use with RaiseException
 // from a condition handler to redirect everything to one path.
 #define oEXCEPTION_CPP 0xe06d7363
 #define oEXCEPTION_DLL_NOT_FOUND 0xc0000135
@@ -52,20 +59,21 @@
 
 namespace ouro {
 
-	const char* as_string(const windows::exception_type::value& _Type)
+	const char* as_string(const windows::exception::type::value& _Type)
 	{
 		switch (_Type)
 		{
-			case windows::exception_type::unknown: return "unknown exception";
-			case windows::exception_type::std: return "std::exception";
-			case windows::exception_type::com: return "_com_error";
-			case windows::exception_type::atl: return "ATL::CAtlException";
+			case windows::exception::type::unknown: return "unknown exception";
+			case windows::exception::type::std: return "std::exception";
+			case windows::exception::type::com: return "_com_error";
+			case windows::exception::type::atl: return "ATL::CAtlException";
 			default: break;
 		}
 		return "?";
 	}
 
 	namespace windows {
+		namespace exception {
 
 const char* as_string_exception_code(int _ExceptionCode)
 {
@@ -153,7 +161,7 @@ static void unexpected_handler()
 	RaiseException(oEXCEPTION_UNEXPECTED, EXCEPTION_NONCONTINUABLE, 0, nullptr);
 }
 
-static void redirect_handlers_to_exceptions()
+static void redirect_handlers_to_exception()
 {
 	_set_purecall_handler(pure_virtual_call_handler);
 	_set_new_handler(new_handler);
@@ -192,23 +200,23 @@ static cpp_exception get_veh_exception(const EXCEPTION_RECORD& _Record)
 		if (ti)
 		{
 			e.type_name = type_name(ti->name());
-			// how can this deal with exceptions derived from std::exception?
+			// how can this deal with exception derived from std::exception?
 			// Weak answer for now: assume it's either namespaced in std:: or
 			// it is postfixed with _exception.
 			if (strstr(e.type_name, "_com_error"))
 			{
-				e.type = exception_type::com;
+				e.type = exception::type::com;
 				e.what = category().message(e.com_error->Error());
 			}
 			
 			else if (strstr(e.type_name, "CAtlException"))
 			{
-				e.type = exception_type::atl;
+				e.type = exception::type::atl;
 			}
 			
 			else if (strstr(e.type_name, "std::") || strstr(e.type_name, "_exception"))
 			{
-				e.type = exception_type::std;
+				e.type = exception::type::std;
 				e.what = e.std_exception->what();
 			}
 		}
@@ -216,8 +224,46 @@ static cpp_exception get_veh_exception(const EXCEPTION_RECORD& _Record)
 	return e;
 }
 
+class context
+{
+public:
+	static context& singleton();
+
+	inline void set_handler(const handler& _Handler) { Handler = _Handler; }
+
+	// Specify a directory where mini/full dumps will be written. Dump filenames 
+	// will be generated with a timestamp at the time of exception.
+	inline void mini_dump_path(const path& _MiniDumpPath) { MiniDump = _MiniDumpPath; }
+	inline const path& mini_dump_path() const { return MiniDump; }
+
+	inline void full_dump_path(const path& _FullDumpPath) { FullDump = _FullDumpPath; }
+	inline const path& full_dump_path() const { return FullDump; }
+
+	inline void post_dump_command(const char* _Command) { PostDumpCommand = _Command; }
+	inline const char* post_dump_command() const { return PostDumpCommand; }
+
+	inline void prompt_after_dump(bool _Prompt) { PromptAfterDump = _Prompt; }
+	inline bool prompt_after_dump() const { return PromptAfterDump; }
+	
+private:
+	context();
+	~context();
+
+	static const ::type_info* get_type_info(const EXCEPTION_RECORD& _Record);
+	static const void* get_exception(const EXCEPTION_RECORD& _Record);
+	static LONG WINAPI static_on_exception(EXCEPTION_POINTERS* _pExceptionPointers);
+	LONG on_exception(EXCEPTION_POINTERS* _pExceptionPointers);
+
+	handler Handler;
+
+	path MiniDump;
+	path FullDump;
+	xlstring PostDumpCommand;
+	bool PromptAfterDump;
+};
+
 // Allows us to break execution when an access violation occurs
-LONG exceptions::on_exception(EXCEPTION_POINTERS* _pExceptionPointers)
+LONG context::on_exception(EXCEPTION_POINTERS* _pExceptionPointers)
 {
 	EXCEPTION_RECORD* pRecord = _pExceptionPointers->ExceptionRecord;
 	cpp_exception CppException;
@@ -256,7 +302,7 @@ LONG exceptions::on_exception(EXCEPTION_POINTERS* _pExceptionPointers)
 		}
 
 		// Ensure any exception that is to be handled is listed explicitly. There
-		// are some working-as-intended uses of exceptions by Windows that should 
+		// are some working-as-intended uses of exception by Windows that should 
 		// not terminate execution, but instead should be passed through.
 		case EXCEPTION_DATATYPE_MISALIGNMENT:
 		case EXCEPTION_BREAKPOINT:
@@ -297,99 +343,99 @@ LONG exceptions::on_exception(EXCEPTION_POINTERS* _pExceptionPointers)
 	return EXCEPTION_CONTINUE_SEARCH;
 }
 
-LONG exceptions::static_on_exception(EXCEPTION_POINTERS* _pExceptionPointers)
+LONG context::static_on_exception(EXCEPTION_POINTERS* _pExceptionPointers)
 {
-	return exceptions::singleton().on_exception(_pExceptionPointers);
+	return context::singleton().on_exception(_pExceptionPointers);
 }
 
-exceptions::exceptions() 
+context::context() 
 {
 	AddVectoredExceptionHandler(0, static_on_exception);
-	redirect_handlers_to_exceptions();
+	redirect_handlers_to_exception();
 }
 
-exceptions::~exceptions()
+context::~context()
 {
 	RemoveVectoredExceptionHandler(static_on_exception);
 }
 
-exceptions& exceptions::singleton()
+context& context::singleton()
 {
-	exceptions* sInstance = nullptr;
+	context* sInstance = nullptr;
 	if (!sInstance)
 	{
 		process_heap::find_or_allocate(
-			"windows::exceptions"
+			"windows::exception::context"
 			, process_heap::per_process
 			, process_heap::garbage_collected
-			, [=](void* _pMemory) { new (_pMemory) exceptions(); }
-			, [=](void* _pMemory) { ((exceptions*)_pMemory)->~exceptions(); }
+			, [=](void* _pMemory) { new (_pMemory) context(); }
+			, [=](void* _pMemory) { ((context*)_pMemory)->~context(); }
 			, &sInstance);
 	}
 	return *sInstance;
 }
 
-static sstring make_dump_filename()
+void set_handler(const handler& _Handler)
 {
-	sstring DumpFilename = this_module::path().basename();
-	DumpFilename += "_v";
-	
-	module::info mi = this_module::get_info();
-	to_string(&DumpFilename[1], DumpFilename.capacity() - 1, mi.version);
-	DumpFilename += "D";
-
-	ntp_date now;
-	system::now(&now);
-	sstring StrNow;
-	strftime(DumpFilename.c_str() + DumpFilename.length()
-		, DumpFilename.capacity() - DumpFilename.length()
-		, syslog_local_date_format
-		, now
-		, date_conversion::to_local);
-
-	replace(StrNow, DumpFilename, ":", "_");
-	replace(DumpFilename, StrNow, ".", "_");
-
-	return DumpFilename;
+	context::singleton().set_handler(_Handler);
 }
 
-void dump_and_terminate(void* _Exceptions, const char* _Message)
+void mini_dump_path(const path& _MiniDumpPath)
 {
-	sstring DumpFilename = make_dump_filename();
-
-	bool Mini = false;
-	bool Full = false;
-
-	path_string DumpPath;
-	const path& MiniDumpPath = exceptions::singleton().mini_dump_path();
-	if (!MiniDumpPath.empty())
-	{
-		snprintf(DumpPath, "%s%s.dmp", MiniDumpPath.c_str(), DumpFilename.c_str());
-		Mini = debugger::dump(path(DumpPath), false, _Exceptions);
-	}
-
-	const path& FullDumpPath = exceptions::singleton().full_dump_path();
-	if (!FullDumpPath.empty())
-	{
-		snprintf(DumpPath, "%s%s.dmp", FullDumpPath.c_str(), DumpFilename.c_str());
-		Full = debugger::dump(path(DumpPath), true, _Exceptions);
-	}
-
-	const char* PostDumpCommand = exceptions::singleton().post_dump_command();
-
-	if (PostDumpCommand && *PostDumpCommand)
-		::system(PostDumpCommand);
-
-	if (exceptions::singleton().prompt_after_dump())
-	{
-		xlstring msg;
-		snprintf(msg, "%s\n\nThe program will now exit.%s"
-			, _Message
-			, Mini || Full ? "\n\nA .dmp file has been written." : "");
-
-		MessageBox(NULL, msg.c_str(), this_module::path().c_str(), MB_ICONERROR|MB_OK|MB_TASKMODAL); 
-	}
-	std::exit(-1);
+	context::singleton().mini_dump_path(_MiniDumpPath);
 }
+
+const path& mini_dump_path()
+{
+	return context::singleton().mini_dump_path();
+}
+
+void full_dump_path(const path& _FullDumpPath)
+{
+	context::singleton().full_dump_path(_FullDumpPath);
+}
+
+const path& full_dump_path()
+{
+	return context::singleton().full_dump_path();
+}
+
+void post_dump_command(const char* _Command)
+{
+	context::singleton().post_dump_command(_Command);
+}
+
+const char* post_dump_command()
+{
+	return context::singleton().post_dump_command();
+}
+
+void prompt_after_dump(bool _Prompt)
+{
+	context::singleton().prompt_after_dump(_Prompt);
+}
+
+bool prompt_after_dump()
+{
+	return context::singleton().prompt_after_dump();
+}
+
+void enable_dialogs(bool _Enable)
+{
+	if (_Enable)
+	{
+		_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_WNDW);
+		_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_WNDW);
+	}
+
+	else
+	{
+		_CrtSetReportFile(_CRT_ASSERT, stderr);
+		_CrtSetReportFile(_CRT_ERROR, stderr);
+		_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
+		_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_FILE);
+	}
+}
+		} // namespace exception
 	} // namespace windows
 } // namespace ouro

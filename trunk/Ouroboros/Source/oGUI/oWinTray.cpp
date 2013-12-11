@@ -138,7 +138,7 @@ struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
 	oTrayCleanup()
 		: AllowInteraction(true)
 	{
-		oReportingReference();
+		ouro::reporting::ensure_initialized();
 	}
 
 	~oTrayCleanup()
@@ -166,8 +166,6 @@ struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
 			oTrayShowIcon(Removes[i].hWnd, Removes[i].ID, 0, 0, false);
 
 		Removes.clear();
-
-		oReportingRelease();
 	}
 
 	void Register(HWND _hWnd, UINT _ID)

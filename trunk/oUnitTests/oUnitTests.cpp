@@ -11,6 +11,8 @@
 #include <oGUI/Windows/oGDI.h>
 #include "resource.h"
 
+#include <oCore/windows/win_exception_handler.h>
+
 using namespace ouro;
 
 static const char* sTITLE = "Ouroboros Unit Test Suite";
@@ -309,32 +311,38 @@ void DeleteOldLogFiles(const char* _SpecialModeName)
 void EnableLogFile(const char* _SpecialModeName, const char* _LogFileName)
 {
 	path logFilePath = _LogFileName ? _LogFileName : filesystem::log_path(true, _SpecialModeName);
-	oREPORTING_DESC desc;
-	oReportingGetDesc(&desc);
-	desc.LogFilePath = logFilePath;
-
-	// insert .stderr at end of filebasename
-	auto ext = desc.LogFilePath.extension();
-	desc.LogFilePath.replace_extension(".stderr");
-	desc.LogFilePath.append(ext, false);
-
-	ext = logFilePath.extension();
-	logFilePath.replace_extension(".stdout");
-	logFilePath.append(ext, false);
-	console::set_log(logFilePath);
-
-	path DumpBase = filesystem::app_path(true);
-	DumpBase.replace_extension();
-	if (_SpecialModeName)
+	auto logFileExt = logFilePath.extension();
+	
+	// Log stdout (that which is printed to the console TTY)
 	{
-		sstring suffix;
-		snprintf(suffix, "-%s", _SpecialModeName);
-		DumpBase /= suffix;
+		path logStdout(logFilePath);
+		logStdout.replace_extension(".stdout");
+		logStdout.append(logFileExt, false);
+		console::set_log(logStdout);
 	}
 
-	desc.MiniDumpBase = DumpBase;
-	desc.PromptAfterDump = false;
-	oReportingSetDesc(desc);
+	// Log stderr (that which is printed to the debug TTY)
+	{
+		path logStderr(logFilePath);
+		logStderr.replace_extension(".stderr");
+		logStderr.append(logFileExt, false);
+		reporting::set_log(logStderr);
+	}
+
+	// Create a place for the dump file
+	{
+		path DumpBase = filesystem::app_path(true);
+		DumpBase.replace_extension();
+		if (_SpecialModeName)
+		{
+			sstring suffix;
+			snprintf(suffix, "-%s", _SpecialModeName);
+			DumpBase /= suffix;
+		}
+
+		windows::exception::mini_dump_path(DumpBase);
+		windows::exception::prompt_after_dump(false);
+	}
 }
 
 void SetTestManagerDesc(const PARAMETERS* _pParameters)
@@ -460,7 +468,13 @@ int main(int argc, const char* argv[])
 	DeleteOldLogFiles(parameters.SpecialMode);
 	EnableLogFile(parameters.SpecialMode, parameters.LogFilePath);
 	if (parameters.EnableAutomatedMode)
-		oReportingEnableErrorDialogBoxes(false);
+		windows::exception::enable_dialogs(false);
+
+	{
+		reporting::info ri;
+		ri.prefix_thread_id = false;
+		reporting::set_info(ri);
+	}
 
 	int result = 0;
 

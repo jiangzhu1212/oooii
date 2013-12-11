@@ -33,19 +33,14 @@
 #include <functional>
 #include <string>
 
-#undef interface
-#undef INTERFACE_DEFINED
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-
 namespace ATL { struct CAtlException; }
 class _com_error;
 
 namespace ouro {
 	namespace windows {
+		namespace exception {
 
-namespace exception_type
+namespace type
 {	enum value {
 
 	unknown,
@@ -58,12 +53,12 @@ namespace exception_type
 struct cpp_exception
 {
 	cpp_exception()
-		: type(exception_type::unknown)
+		: type(type::unknown)
 		, type_name("")
 		, what("")
 	{ void_exception = nullptr; }
 
-	exception_type::value type;
+	type::value type;
 	const char* type_name;
 	std::string what;
 	union
@@ -79,46 +74,28 @@ struct cpp_exception
 // std::exception.
 typedef std::function<void(const char* _Message
 	, const cpp_exception& _CppException
-	, uintptr_t _ExceptionContext)> exception_handler;
+	, uintptr_t _ExceptionContext)> handler;
 
-class exceptions
-{
-public:
-	static exceptions& singleton();
+void set_handler(const handler& _Handler);
 
-	inline void set_handler(const exception_handler& _Handler) { Handler = _Handler; }
+// Specify a directory where mini/full dumps will be written. Dump filenames 
+// will be generated with a timestamp at the time of exception.
+void mini_dump_path(const path& _MiniDumpPath);
+const path& mini_dump_path();
 
-	// Specify a directory where mini/full dumps will be written. Dump filenames 
-	// will be generated with a timestamp at the time of exception.
-	inline void mini_dump_path(const path& _MiniDumpPath) { MiniDump = _MiniDumpPath; }
-	inline const path& mini_dump_path() const { return MiniDump; }
+void full_dump_path(const path& _FullDumpPath);
+const path& full_dump_path();
 
-	inline void full_dump_path(const path& _FullDumpPath) { FullDump = _FullDumpPath; }
-	inline const path& full_dump_path() const { return FullDump; }
+void post_dump_command(const char* _Command);
+const char* post_dump_command();
 
-	inline void post_dump_command(const char* _Command) { PostDumpCommand = _Command; }
-	inline const char* post_dump_command() const { return PostDumpCommand; }
+void prompt_after_dump(bool _Prompt);
+bool prompt_after_dump();
 
-	inline void prompt_after_dump(bool _Prompt) { PromptAfterDump = _Prompt; }
-	inline bool prompt_after_dump() const { return PromptAfterDump; }
-	
-private:
-	exceptions();
-	~exceptions();
+// Set the enable state of debug CRT asserts and errors
+void enable_dialogs(bool _Enable);
 
-	static const ::type_info* get_type_info(const EXCEPTION_RECORD& _Record);
-	static const void* get_exception(const EXCEPTION_RECORD& _Record);
-	static LONG static_on_exception(EXCEPTION_POINTERS* _pExceptionPointers);
-	LONG on_exception(EXCEPTION_POINTERS* _pExceptionPointers);
-
-	exception_handler Handler;
-
-	path MiniDump;
-	path FullDump;
-	xlstring PostDumpCommand;
-	bool PromptAfterDump;
-};
-
+		} // namespace exception
 	} // namespace windows
 } // namespace ouro
 

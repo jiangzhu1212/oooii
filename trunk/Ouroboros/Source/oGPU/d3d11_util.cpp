@@ -61,8 +61,9 @@ const char* as_string(const D3D11_BIND_FLAG& _Flag)
 		case D3D11_BIND_UNORDERED_ACCESS: return "D3D11_BIND_UNORDERED_ACCESS";
 		//case D3D11_BIND_DECODER: return "D3D11_BIND_DECODER";
 		//case D3D11_BIND_VIDEO_ENCODER: return "D3D11_BIND_VIDEO_ENCODER";
-		oNODEFAULT;
+		default: break;
 	}
+	return "?";
 }
 
 const char* as_string(const D3D11_CPU_ACCESS_FLAG& _Flag)
@@ -71,8 +72,9 @@ const char* as_string(const D3D11_CPU_ACCESS_FLAG& _Flag)
 	{
 		case D3D11_CPU_ACCESS_WRITE: return "D3D11_CPU_ACCESS_WRITE";
 		case D3D11_CPU_ACCESS_READ: return "D3D11_CPU_ACCESS_READ";
-		oNODEFAULT;
+		default: break;
 	}
+	return "?";
 }
 
 const char* as_string(const D3D11_RESOURCE_MISC_FLAG& _Flag)
@@ -92,8 +94,9 @@ const char* as_string(const D3D11_RESOURCE_MISC_FLAG& _Flag)
 		//case D3D11_RESOURCE_MISC_RESTRICTED_CONTENT: return "D3D11_RESOURCE_MISC_RESTRICTED_CONTENT";
 		//case D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE: return "D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE";
 		//case D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE_DRIVER: return "D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE_DRIVER";
-		oNODEFAULT;
+		default: break;
 	}
+	return "?";
 }
 
 const char* as_string(const D3D11_RESOURCE_DIMENSION& _Type)
@@ -105,8 +108,9 @@ const char* as_string(const D3D11_RESOURCE_DIMENSION& _Type)
 		case D3D11_RESOURCE_DIMENSION_TEXTURE1D: return "D3D11_RESOURCE_DIMENSION_TEXTURE1D	=";
 		case D3D11_RESOURCE_DIMENSION_TEXTURE2D: return "D3D11_RESOURCE_DIMENSION_TEXTURE2D	=";
 		case D3D11_RESOURCE_DIMENSION_TEXTURE3D: return "D3D11_RESOURCE_DIMENSION_TEXTURE3D	=";
-		oNODEFAULT;
+		default: break;
 	}
+	return "?";
 }
 
 const char* as_string(const D3D11_UAV_DIMENSION& _Type)
@@ -120,8 +124,9 @@ const char* as_string(const D3D11_UAV_DIMENSION& _Type)
 		case D3D11_UAV_DIMENSION_TEXTURE2D: return "D3D11_UAV_DIMENSION_TEXTURE2D";
 		case D3D11_UAV_DIMENSION_TEXTURE2DARRAY: return "D3D11_UAV_DIMENSION_TEXTURE2DARRAY";
 		case D3D11_UAV_DIMENSION_TEXTURE3D: return "D3D11_UAV_DIMENSION_TEXTURE3D";
-		oNODEFAULT;
+		default: break;
 	}
+	return "?";
 }
 
 const char* as_string(const D3D11_USAGE& _Usage)
@@ -132,8 +137,32 @@ const char* as_string(const D3D11_USAGE& _Usage)
 		case D3D11_USAGE_IMMUTABLE: return "D3D11_USAGE_IMMUTABLE";
 		case D3D11_USAGE_DYNAMIC: return "D3D11_USAGE_DYNAMIC";
 		case D3D11_USAGE_STAGING: return "D3D11_USAGE_STAGING";
-		oNODEFAULT;
+		default: break;
 	}
+	return "?";
+}
+
+const char* as_string(const D3DX11_FILTER_FLAG& _Flag)
+{
+	switch (_Flag)
+	{
+		case D3DX11_FILTER_NONE: return "D3DX11_FILTER_NONE";
+		case D3DX11_FILTER_POINT: return "D3DX11_FILTER_POINT";
+		case D3DX11_FILTER_LINEAR: return "D3DX11_FILTER_LINEAR";
+		case D3DX11_FILTER_TRIANGLE: return "D3DX11_FILTER_TRIANGLE";
+		case D3DX11_FILTER_BOX: return "D3DX11_FILTER_BOX";
+		case D3DX11_FILTER_MIRROR_U: return "D3DX11_FILTER_MIRROR_U";
+		case D3DX11_FILTER_MIRROR_V: return "D3DX11_FILTER_MIRROR_V";
+		case D3DX11_FILTER_MIRROR_W: return "D3DX11_FILTER_MIRROR_W";
+		case D3DX11_FILTER_MIRROR: return "D3DX11_FILTER_MIRROR";
+		case D3DX11_FILTER_DITHER: return "D3DX11_FILTER_DITHER";
+		case D3DX11_FILTER_DITHER_DIFFUSION: return "D3DX11_FILTER_DITHER_DIFFUSION";
+		case D3DX11_FILTER_SRGB_IN: return "D3DX11_FILTER_SRGB_IN";
+		case D3DX11_FILTER_SRGB_OUT: return "D3DX11_FILTER_SRGB_OUT";
+		case D3DX11_FILTER_SRGB: return "D3DX11_FILTER_SRGB";
+		default: break;
+	}
+	return "?";
 }
 
 	namespace d3d11 {
@@ -747,23 +776,65 @@ void update_subresource(ID3D11DeviceContext* _pDeviceContext
 	}
 }
 
-void trace_texture2d_desc(D3D11_TEXTURE2D_DESC _Desc, const char* _Prefix)
-{
-	#define oD3D11_TRACE_uint(x) oTRACE("%s" #x "=%u", oSAFESTR(_Prefix), _Desc.x)
-	#define oD3D11_TRACE_ENUM(x) oTRACE("%s" #x "=%s", oSAFESTR(_Prefix), as_string(_Desc.x))
-	#define oD3D11_TRACE_FLAGS(_FlagEnumType, _FlagsVar, _AllZeroString) do { char buf[512]; strbitmask(buf, _Desc._FlagsVar, _AllZeroString, as_string<_FlagEnumType>); oTRACE("%s" #_FlagsVar "=%s", oSAFESTR(_Prefix), buf); } while(false)
+#define oD3D11_TRACE_UINT_S(struct_, x) oTRACE("%s" #x "=%u", oSAFESTR(_Prefix), struct_.x)
+#define oD3D11_TRACE_ENUM_S(struct_, x) oTRACE("%s" #x "=%s", oSAFESTR(_Prefix), as_string(struct_.x))
+#define oD3D11_TRACE_FLAGS_S(_FlagEnumType, struct_, _FlagsVar, _AllZeroString) do { char buf[512]; strbitmask(buf, struct_._FlagsVar, _AllZeroString, as_string<_FlagEnumType>); oTRACE("%s" #_FlagsVar "=%s", oSAFESTR(_Prefix), buf); } while(false)
 
-	oD3D11_TRACE_uint(Width);
-	oD3D11_TRACE_uint(Height);
-	oD3D11_TRACE_uint(MipLevels);
-	oD3D11_TRACE_uint(ArraySize);
+void trace_texture2d_desc(const D3D11_TEXTURE2D_DESC& _Desc, const char* _Prefix)
+{
+	#define oD3D11_TRACE_UINT(x) oD3D11_TRACE_UINT_S(_Desc, x)
+	#define oD3D11_TRACE_ENUM(x) oD3D11_TRACE_ENUM_S(_Desc, x)
+	#define oD3D11_TRACE_FLAGS(_FlagEnumType, _FlagsVar, _AllZeroString) oD3D11_TRACE_FLAGS_S(_FlagEnumType, _Desc, _FlagsVar, _AllZeroString)
+
+	oD3D11_TRACE_UINT(Width);
+	oD3D11_TRACE_UINT(Height);
+	oD3D11_TRACE_UINT(MipLevels);
+	oD3D11_TRACE_UINT(ArraySize);
 	oD3D11_TRACE_ENUM(Format);
-	oD3D11_TRACE_uint(SampleDesc.Count);
-	oD3D11_TRACE_uint(SampleDesc.Quality);
+	oD3D11_TRACE_UINT(SampleDesc.Count);
+	oD3D11_TRACE_UINT(SampleDesc.Quality);
 	oD3D11_TRACE_ENUM(Usage);
 	oD3D11_TRACE_FLAGS(D3D11_BIND_FLAG, BindFlags, "(none)");
 	oD3D11_TRACE_FLAGS(D3D11_CPU_ACCESS_FLAG, CPUAccessFlags, "(none)");
 	oD3D11_TRACE_FLAGS(D3D11_RESOURCE_MISC_FLAG, MiscFlags, "(none)");
+
+	#undef oD3D11_TRACE_UINT
+	#undef oD3D11_TRACE_ENUM
+	#undef oD3D11_TRACE_FLAGS
+}
+
+void trace_image_load_info(const D3DX11_IMAGE_LOAD_INFO& _ImageLoadInfo, const char* _Prefix)
+{
+	#define oD3D11_TRACE_UINT(x) do \
+	{	if (_ImageLoadInfo.x == D3DX11_DEFAULT) oTRACE("%s" #x "=D3DX11_DEFAULT", oSAFESTR(_Prefix)); \
+		else if (_ImageLoadInfo.x == D3DX11_FROM_FILE) oTRACE("%s" #x "=D3DX11_FROM_FILE", oSAFESTR(_Prefix)); \
+		else oD3D11_TRACE_UINT_S(_ImageLoadInfo, x); \
+	} while(false)
+	#define oD3D11_TRACE_ENUM(x) oD3D11_TRACE_ENUM_S(_ImageLoadInfo, x)
+	#define oD3D11_TRACE_FLAGS(_FlagEnumType, _FlagsVar, _AllZeroString) oD3D11_TRACE_FLAGS_S(_FlagEnumType, _ImageLoadInfo, _FlagsVar, _AllZeroString)
+	
+	oD3D11_TRACE_UINT(Width);
+	oD3D11_TRACE_UINT(Height);
+	oD3D11_TRACE_UINT(Depth);
+	oD3D11_TRACE_UINT(FirstMipLevel);
+	oD3D11_TRACE_UINT(MipLevels);
+
+	oD3D11_TRACE_ENUM(Usage);
+	oD3D11_TRACE_FLAGS(D3D11_BIND_FLAG, BindFlags, "(none)");
+	oD3D11_TRACE_FLAGS(D3D11_CPU_ACCESS_FLAG, CpuAccessFlags, "(none)");
+	oD3D11_TRACE_FLAGS(D3D11_RESOURCE_MISC_FLAG, MiscFlags, "(none)");
+
+	if (_ImageLoadInfo.Format == DXGI_FORMAT_FROM_FILE)
+		oTRACE("%sFormat=DXGI_FORMAT_FROM_FILE", oSAFESTR(_Prefix));
+	else
+		oD3D11_TRACE_ENUM(Format);
+
+	oD3D11_TRACE_FLAGS(D3DX11_FILTER_FLAG, Filter, "(none)");
+	oD3D11_TRACE_FLAGS(D3DX11_FILTER_FLAG, MipFilter, "(none)");
+
+	#undef oD3D11_TRACE_UINT
+	#undef oD3D11_TRACE_ENUM
+	#undef oD3D11_TRACE_FLAGS
 }
 
 template<typename DescT> static void fill_non_dimensions(const DescT& _Desc, oGPU_TEXTURE_TYPE _BasicType, oGPU_TEXTURE_DESC* _pDesc)
@@ -1019,7 +1090,7 @@ static void init_values(const oGPU_TEXTURE_DESC& _Desc, DXGI_FORMAT* _pFormat, D
 		}
 	}
 
-	if (surface::is_depth(dxgi::to_surface_format(*_pFormat)))
+	if (surface::is_depth(dxgi::to_surface_format(*_pFormat)) && *_pFormat != DXGI_FORMAT_FROM_FILE)
 	{
 		*_pBindFlags &=~ D3D11_BIND_RENDER_TARGET;
 		*_pBindFlags |= D3D11_BIND_DEPTH_STENCIL;
@@ -1251,12 +1322,13 @@ void save(const surface::buffer* _pSurface, D3DX11_IMAGE_FILE_FORMAT _Format, vo
 static D3DX11_IMAGE_LOAD_INFO get_image_load_info(const oGPU_TEXTURE_DESC& _Desc)
 {
 	D3DX11_IMAGE_LOAD_INFO ili;
-	ili.Width = _Desc.Dimensions.x <= 0 ? D3DX11_DEFAULT : _Desc.Dimensions.x;
-	ili.Height = _Desc.Dimensions.y <= 0 ? D3DX11_DEFAULT : _Desc.Dimensions.y;
-	ili.Depth = _Desc.ArraySize <= 0 ? D3DX11_DEFAULT : _Desc.ArraySize;
+	ili.Width = _Desc.Dimensions.x <= 0 ? D3DX11_FROM_FILE : _Desc.Dimensions.x;
+	ili.Height = _Desc.Dimensions.y <= 0 ? D3DX11_FROM_FILE : _Desc.Dimensions.y;
+	ili.Depth = _Desc.ArraySize <= 0 ? D3DX11_FROM_FILE : _Desc.ArraySize;
 	ili.FirstMipLevel = D3DX11_DEFAULT;
-	ili.Filter = D3DX11_DEFAULT;
-	ili.MipFilter = D3DX11_DEFAULT;
+	ili.MiscFlags = 0;
+	ili.Filter = D3DX11_FILTER_TRIANGLE;
+	ili.MipFilter = D3DX11_FILTER_TRIANGLE;
 	ili.pSrcInfo = nullptr;
 	init_values(_Desc, &ili.Format, &ili.Usage, &ili.CpuAccessFlags, &ili.BindFlags, &ili.MipLevels);
 	return ili;

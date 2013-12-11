@@ -31,8 +31,14 @@
 
 extern "C" {
 
-void __declspec(dllimport) OutputDebugStringA(const char*);
-unsigned long __declspec(dllimport) GetLastError();
+#ifdef _WIN32
+	#define WINERR_APICALL __stdcall
+#else
+	#define WINERR_APICALL
+#endif
+
+void __declspec(dllimport) WINERR_APICALL OutputDebugStringA(const char*);
+unsigned long __declspec(dllimport) WINERR_APICALL GetLastError();
 
 } // extern "C"
 

@@ -75,29 +75,33 @@ void TESTdebugger(test_services& _Services)
 				"RtlUserThreadStart",
 			};
 		#else
-			// There's nothing incorrect AFAICT, so I think this stuff just doesn't 
-			// work in 32-bit.
-			_Services.report("No debug stack in release for WIN32");
+			static const char* sExpectedStack[] = 
+			{
+				"ouro::tests::TESTdebugger",
+				"oCore_debugger::Run",
+				"oTestManager_Impl::RunTest",
+				"oTestManager_Impl::RunTests",
+				"main",
+				"__tmainCRTStartup",
+				"BaseThreadInitThunk",
+				"RtlInitializeExceptionChain",
+				"RtlInitializeExceptionChain",
+			};
 		#endif
 
 	#endif
 
-	#if defined(_WIN64) || defined(_DEBUG)
+	debugger::symbol addresses[32];
+	size_t nAddresses = debugger::callstack(addresses, 0);
 
-			debugger::symbol addresses[32];
-			size_t nAddresses = debugger::callstack(addresses, 0);
-
-			for (size_t i = 0; i < nAddresses; i++)
-			{
-				debugger::symbol_info sym = debugger::translate(addresses[i]);
-				//printf("%u: %s\n", i, sym.Name);
-				if (strcmp(sym.name, sExpectedStack[i]))
-					throw std::exception(ouro::formatf("Mismatch on stack trace at level %u", i).c_str());
-			}
-
-	#endif
+	for (size_t i = 0; i < nAddresses; i++)
+	{
+		debugger::symbol_info sym = debugger::translate(addresses[i]);
+		//printf("%u: %s\n", i, sym.Name);
+		if (strcmp(sym.name, sExpectedStack[i]))
+			throw std::exception(ouro::formatf("Mismatch on stack trace at level %u", i).c_str());
+	}
 }
-
 
 	} // namespace debugger
 } // namespace ouro

@@ -328,6 +328,7 @@ native_file_handle get_native(file_handle _hFile);
 file_handle open(const path& _Path, open_option::value _OpenOption);
 void close(file_handle _hFile);
 bool at_end(file_handle _hFile);
+path get_path(file_handle _hFile);
 void last_write_time(file_handle _hFile, time_t _Time);
 void seek(file_handle _hFile, long long _Offset, seek_origin::value _Origin);
 unsigned long long tell(file_handle _hFile);
@@ -351,6 +352,31 @@ void save(const path& _Path, const void* _pSource, size_t _SizeofSource, save_op
 // If loaded as text, the allocation will be padded and a nul terminator will be
 // added so the buffer can immediately be used as a string.
 std::shared_ptr<char> load(const path& _Path, load_option::value _LoadOption, size_t* _pSize = nullptr);
+
+class scoped_file
+{
+public:
+	scoped_file() : h(nullptr) {}
+	scoped_file(const path& _Path, open_option::value _OpenOption) : h(nullptr) { if (!_Path.empty()) h = open(_Path, _OpenOption); }
+	scoped_file(file_handle _hFile) : h(_hFile) {}
+	scoped_file(scoped_file&& _That) { operator=(std::move(_That)); }
+	scoped_file& operator=(scoped_file&& _That)
+	{
+		if (this != &_That) { if (h) close(h); h = _That.h; _That.h = nullptr; }
+		return *this;
+	}
+
+	~scoped_file() { if (h) close(h); }
+
+	operator bool() const { return !!h; }
+	operator file_handle() const { return h; }
+
+private:
+	file_handle h;
+
+	scoped_file(const scoped_file&);
+	const scoped_file& operator=(const scoped_file&);
+};
 
 	} // namespace filesystem
 } // namespace ouro

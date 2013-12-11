@@ -61,12 +61,12 @@ namespace ouro {
 
 	struct assert_context
 	{
-		const char* Expression;
-		const char* Function;
-		const char* Filename;
-		int Line;
-		assert_type::value Type;
-		assert_action::value DefaultResponse;
+		const char* expression;
+		const char* function;
+		const char* filename;
+		int line;
+		assert_type::value type;
+		assert_action::value default_response;
 	};
 
 	// This function is inserted by oAssert macros.
@@ -83,7 +83,7 @@ namespace ouro {
 	#define oASSERT_TRACE(_Type, _DefaultResponse, _StrCondition, _Format, ...) do \
 	{	static bool oAssert_IgnoreFuture = false; \
 		if (!oAssert_IgnoreFuture) \
-		{	ouro::assert_context assertion__; assertion__.Expression = _StrCondition; assertion__.Function = __FUNCTION__; assertion__.Filename = __FILE__; assertion__.Line = __LINE__; assertion__.Type = _Type; assertion__.DefaultResponse = _DefaultResponse; \
+		{	ouro::assert_context assertion__; assertion__.expression = _StrCondition; assertion__.function = __FUNCTION__; assertion__.filename = __FILE__; assertion__.line = __LINE__; assertion__.type = _Type; assertion__.default_response = _DefaultResponse; \
 			ouro::assert_action::value action__ = ouro::tracef(assertion__, _Format "\n", ## __VA_ARGS__); \
 			switch (action__) { case ouro::assert_action::abort: abort(); break; case ouro::assert_action::debug: oDEBUG_BREAK(); break; case ouro::assert_action::ignore_always: oAssert_IgnoreFuture = true; break; default: break; } \
 		} \

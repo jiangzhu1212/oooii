@@ -103,7 +103,7 @@ context::context()
 	, Enabled(false)
 	, OriginalAllocHook(nullptr)
 {
-	oReportingReference(); // reporting keeps a log file - don't track that
+	ouro::reporting::ensure_initialized();
 
 	leak_tracker::info lti;
 	lti.allocate = untracked_malloc;
@@ -126,8 +126,6 @@ context::~context()
 		format_bytes(buf, NonLinearBytes, 2);
 		oTRACE("CRT leak tracker: Allocated %s beyond the internal reserve. Increase kTrackingInternalReserve to improve performance, especially on shutdown.", buf.c_str());
 	}
-
-	oReportingRelease();
 }
 
 context& context::singleton()

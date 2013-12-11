@@ -173,7 +173,8 @@ void update_index_buffer(ID3D11DeviceContext* _pDeviceContext
 // Texture API
 
 // Uses oTRACE to display the fields of the specified desc.
-void trace_texture2d_desc(D3D11_TEXTURE2D_DESC _Desc, const char* _Prefix = "\t");
+void trace_texture2d_desc(const D3D11_TEXTURE2D_DESC& _Desc, const char* _Prefix = "\t");
+void trace_image_load_info(const D3DX11_IMAGE_LOAD_INFO& _ImageLoadInfo, const char* _Prefix = "\t");
 
 // Fills the specified oGPU_TEXTURE_DESC with the description from the 
 // specified resource. The resource can be: ID3D11Texture1D, ID3D11Texture2D

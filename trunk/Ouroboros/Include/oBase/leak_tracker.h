@@ -44,7 +44,7 @@ public:
 	static const size_t stack_trace_offset = 8; // start at nth entry (bypass common infrastructure code)
 	static const size_t std_bind_internal_offset = 5; // number of symbols internal to std::bind to skip
 
-	typedef unsigned long long symbol_t;
+	typedef size_t symbol_t;
 
 	// Used to allocate and deallocate tracking entries. These allocations them-
 	// selves will not be tracked.
