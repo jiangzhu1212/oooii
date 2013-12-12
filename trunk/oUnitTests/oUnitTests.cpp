@@ -1,10 +1,10 @@
 // $(header)
-#include <oPlatform/oReporting.h>
 #include <oGUI/console.h>
 #include <oGUI/oMsgBox.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/oStandards.h>
 #include <oPlatform/oStream.h>
+#include <oCore/reporting.h>
 #include <oCore/system.h>
 #include <oBase/opttok.h>
 #include <oBase/scc.h>

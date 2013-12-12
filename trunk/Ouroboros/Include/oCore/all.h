@@ -39,5 +39,6 @@
 #include <oCore/process.h>
 #include <oCore/process_heap.h>
 #include <oCore/process_stats_monitor.h>
+#include <oCore/reporting.h>
 #include <oCore/system.h>
 #endif

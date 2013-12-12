@@ -26,7 +26,7 @@
 #include <oBase/assert.h>
 #include <oBasis/oError.h>
 #include <oBasis/oScopedPartialTimeout.h>
-#include <oPlatform/oReporting.h>
+#include <oCore/reporting.h>
 #include <oGUI/oMsgBox.h>
 #include <cerrno>
 

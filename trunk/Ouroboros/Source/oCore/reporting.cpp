@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oReporting.h>
+#include <oCore/reporting.h>
 #include <oBase/algorithm.h>
 #include <oBase/fnv1a.h>
 #include <oBase/fixed_vector.h>
@@ -30,6 +30,7 @@
 #include <oCore/filesystem.h>
 #include <oCore/process.h>
 #include <oCore/process_heap.h>
+#include <oCore/system.h>
 #include <oCore/windows/win_exception_handler.h>
 #include <oStd/for.h>
 #include <oStd/mutex.h>
@@ -112,7 +113,7 @@ static assert_action::value show_msgbox(const assert_context& _Assertion, oMSGBO
 
 	strlcpy(cur, _String, std::distance(cur, end));
 
-	path AppPath = ouro::filesystem::app_path(true);
+	path AppPath = filesystem::app_path(true);
 	char title[64];
 	snprintf(title, "%s (%s)", DIALOG_BOX_TITLE, AppPath.c_str());
 
@@ -253,7 +254,7 @@ static char* format_message(char* _StrDestination
 	{
 		ntp_timestamp now = 0;
 		system::now(&now);
-		res = (int)ouro::strftime(_StrDestination + len
+		res = (int)strftime(_StrDestination + len
 			, _SizeofStrDestination - len - 1
 			, sortable_date_ms_format
 			, now
@@ -403,37 +404,6 @@ void remove_filter(unsigned int _ID)
 {
 	context::singleton().remove_filter(_ID);
 }
-
-#if defined(_WIN32) || defined(_WIN64)
-
-static void handle_exception(const char* _ErrorMessage
-	, const windows::exception::cpp_exception& _CppException
-	, uintptr_t _ExceptionContext)
-{
-	if (!this_process::has_debugger_attached())
-	{
-		#ifdef _DEBUG
-			oASSERT_TRACE(assert_type::assertion, assert_action::abort, "", "%s", _ErrorMessage);
-			oASSERT(false, "%s", _ErrorMessage);
-		#else
-			debugger::dump_and_terminate((void*)_ExceptionContext, _ErrorMessage);
-		#endif
-	}
-};
-
-struct install_exception_handler
-{
-	install_exception_handler()
-	{
-		// ensure the process heap is instantiated before the singleton below so it 
-		// is tracked
-		process_heap::ensure_initialized();
-		windows::exception::set_handler(handle_exception);
-	}
-};
-
-static install_exception_handler InstallExceptionHandler;
-#endif
 
 	} // namespace reporting
 

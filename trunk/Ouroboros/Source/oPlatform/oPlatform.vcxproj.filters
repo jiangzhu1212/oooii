@@ -7,9 +7,6 @@
     <Filter Include="Source">
       <UniqueIdentifier>{e9fa3a3c-463d-4016-bdc6-781a07097559}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headers\Code Management">
-      <UniqueIdentifier>{a28a7d3f-9307-4cf6-a02b-30891ba61398}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Headers\IO">
       <UniqueIdentifier>{f2e9a500-bf70-4551-a87c-16ccf6b58983}</UniqueIdentifier>
     </Filter>
@@ -21,9 +18,6 @@
     </Filter>
     <Filter Include="Headers\Windows API Convenience Wrappers">
       <UniqueIdentifier>{f82bf6e4-b459-4db5-ba1a-e7c2198b4cb3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Code Management">
-      <UniqueIdentifier>{b5ed6c1c-07b7-4241-a36a-53f1255a5d68}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Memory">
       <UniqueIdentifier>{45248250-dc89-44c5-b6e0-92e5be162ba2}</UniqueIdentifier>
@@ -51,12 +45,6 @@
     <ClInclude Include="oIOCP.h">
       <Filter>Headers\Windows API Convenience Wrappers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oReporting.h">
-      <Filter>Headers\Code Management</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oSingleton.h">
-      <Filter>Headers\Code Management</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oMirroredArena.h">
       <Filter>Headers\Memory</Filter>
     </ClInclude>
@@ -65,9 +53,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oP4.h">
       <Filter>Headers\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oTest.h">
-      <Filter>Headers\Code Management</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oStandards.h">
       <Filter>Headers</Filter>
@@ -141,6 +126,12 @@
     <ClInclude Include="..\..\Include\oPlatform\oRegistry.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oSingleton.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oPlatform\oTest.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oSocket.cpp">
@@ -176,12 +167,6 @@
     <ClCompile Include="oWinRegistry.cpp">
       <Filter>Source\Windows API Convenience Wrappers</Filter>
     </ClCompile>
-    <ClCompile Include="oSingleton.cpp">
-      <Filter>Source\Code Management</Filter>
-    </ClCompile>
-    <ClCompile Include="oTest.cpp">
-      <Filter>Source\Code Management</Filter>
-    </ClCompile>
     <ClCompile Include="oMirroredArena.cpp">
       <Filter>Source\Memory</Filter>
     </ClCompile>
@@ -212,9 +197,6 @@
     <ClCompile Include="oStreamUtil.cpp">
       <Filter>Source\IO</Filter>
     </ClCompile>
-    <ClCompile Include="oReporting.cpp">
-      <Filter>Source\Code Management</Filter>
-    </ClCompile>
     <ClCompile Include="oWebAppWindow.cpp">
       <Filter>Source\UI</Filter>
     </ClCompile>
@@ -237,6 +219,12 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oConcurrency.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oSingleton.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oTest.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

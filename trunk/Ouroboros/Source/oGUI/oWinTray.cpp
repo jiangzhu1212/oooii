@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oConcurrency/mutex.h>
 #include <oStd/thread.h>
-#include <oPlatform/oReporting.h>
+#include <oCore/reporting.h>
 #include <oPlatform/oSingleton.h>
 
 #undef interface

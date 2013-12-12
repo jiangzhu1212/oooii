@@ -36,6 +36,7 @@
     </ClCompile>
     <ClCompile Include="process.cpp" />
     <ClCompile Include="process_heap.cpp" />
+    <ClCompile Include="reporting.cpp" />
     <ClCompile Include="serial_port.cpp" />
     <ClCompile Include="system.cpp" />
     <ClCompile Include="winmain.cpp" />
@@ -59,6 +60,7 @@
     <ClInclude Include="..\..\Include\oCore\process.h" />
     <ClInclude Include="..\..\Include\oCore\process_heap.h" />
     <ClInclude Include="..\..\Include\oCore\process_stats_monitor.h" />
+    <ClInclude Include="..\..\Include\oCore\reporting.h" />
     <ClInclude Include="..\..\Include\oCore\serial_port.h" />
     <ClInclude Include="..\..\Include\oCore\system.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_error.h" />

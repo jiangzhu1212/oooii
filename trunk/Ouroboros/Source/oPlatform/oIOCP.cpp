@@ -30,8 +30,7 @@
 #include <oConcurrency/countdown_latch.h>
 #include <oConcurrency/mutex.h>
 #include <oPlatform/oSingleton.h>
-#include <oPlatform/oReporting.h>
-#include <oCore/process_heap.h>
+#include <oCore/reporting.h>
 #include <winsock2.h>
 
 #include <oCore/windows/win_error.h>

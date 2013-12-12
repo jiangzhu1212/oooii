@@ -29,6 +29,7 @@
 #include <oBasis/oLockedPointer.h>
 #include <oBase/scc.h>
 #include <oCore/process.h>
+#include <oCore/reporting.h>
 #include <oCore/windows/win_iocp.h>
 #undef CreateProcess
 
@@ -36,7 +37,6 @@
 
 // Wouldn't it be nice if oTesting logic were oBasis so it can be used with
 // that lib too (without shims)...
-#include <oPlatform/oReporting.h>
 #include <oGUI/console.h>
 #include <oGUI/oMsgBox.h> // only used to notify about zombies
 #include <oGUI/progress_bar.h> // only really so it itself can be tested, but perhaps this can be moved to a unit test?

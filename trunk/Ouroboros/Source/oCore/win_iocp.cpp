@@ -27,11 +27,10 @@
 #include <oBase/concurrent_object_pool.h>
 #include <oCore/debugger.h>
 #include <oCore/process_heap.h>
+#include <oCore/reporting.h>
 #include <oCore/windows/win_error.h>
 #include <oStd/thread.h>
 #include <vector>
-
-#include <oPlatform/oReporting.h> // fixme
 
 #define oSHUTDOWN 1
 #define oCOMPLETION 2

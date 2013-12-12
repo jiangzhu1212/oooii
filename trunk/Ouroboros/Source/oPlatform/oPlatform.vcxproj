@@ -139,7 +139,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oWebAppWindow.h" />
     <ClInclude Include="..\..\Include\oPlatform\oWebServer.h" />
     <ClInclude Include="..\..\Include\oPlatform\oP4.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oReporting.h" />
     <ClInclude Include="..\..\Include\oPlatform\oSingleton.h" />
     <ClInclude Include="..\..\Include\oPlatform\oStandards.h" />
     <ClInclude Include="..\..\Include\oPlatform\oTest.h" />
@@ -175,7 +174,6 @@
     <ClCompile Include="oMirroredArena.cpp" />
     <ClCompile Include="oP4.cpp" />
     <ClCompile Include="oRegistry.cpp" />
-    <ClCompile Include="oReporting.cpp" />
     <ClCompile Include="oSingleton.cpp" />
     <ClCompile Include="oSocket.cpp" />
     <ClCompile Include="oStandards.cpp" />

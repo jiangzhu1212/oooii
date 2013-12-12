@@ -26,6 +26,7 @@
 #include <oCore/windows/win_error.h>
 #include <oCore/debugger.h>
 #include <oCore/module.h>
+#include <oCore/process.h>
 #include <oCore/process_heap.h>
 #include <oCore/system.h>
 #include <oBase/string.h>
@@ -436,6 +437,35 @@ void enable_dialogs(bool _Enable)
 		_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_FILE);
 	}
 }
+
+static void handle_exception(const char* _ErrorMessage
+	, const cpp_exception& _CppException
+	, uintptr_t _ExceptionContext)
+{
+	if (!this_process::has_debugger_attached())
+	{
+		#ifdef _DEBUG
+			oASSERT_TRACE(assert_type::assertion, assert_action::abort, "", "%s", _ErrorMessage);
+			oASSERT(false, "%s", _ErrorMessage);
+		#else
+			debugger::dump_and_terminate((void*)_ExceptionContext, _ErrorMessage);
+		#endif
+	}
+};
+
+struct install_exception_handler
+{
+	install_exception_handler()
+	{
+		// ensure the process heap is instantiated before the singleton below so it 
+		// is tracked
+		process_heap::ensure_initialized();
+		windows::exception::set_handler(handle_exception);
+	}
+};
+
+static install_exception_handler InstallExceptionHandler;
+
 		} // namespace exception
 	} // namespace windows
 } // namespace ouro

@@ -26,7 +26,7 @@
 #include <oPlatform/Windows/oCRTHeap.h>
 #include <oCore/debugger.h>
 #include <oCore/process_heap.h>
-#include <oPlatform/oReporting.h>
+#include <oCOre/reporting.h>
 
 namespace ouro {
 	namespace windows {
