@@ -22,51 +22,66 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// Allocator implementation using the two-level segregated fit allocation 
+// algorithm. This is a wrapper for the excellent allocator found at 
+// http://tlsf.baisoku.org/.
 #pragma once
-#ifndef AllocatorTLSF_Impl_h
-#define AllocatorTLSF_Impl_h
+#ifndef oBase_tlsf_allocator_h
+#define oBase_tlsf_allocator_h
 
-#include <oBasis/oAllocatorTLSF.h>
-#include <oBasis/oInitOnce.h>
-#include <oBasis/oRefCount.h>
-#include <oBase/fixed_string.h>
+#include <functional>
 
-// {5CFA8784-E09D-40e3-8C7A-C4809577F02F}
-oDEFINE_GUID_S(oAllocatorTLSF, 0x5cfa8784, 0xe09d, 0x40e3, 0x8c, 0x7a, 0xc4, 0x80, 0x95, 0x77, 0xf0, 0x2f);
-struct oAllocatorTLSF : public oAllocator
+namespace ouro {
+
+class tlsf_allocator
 {
-	// Always allocate memory for this struct in the arena specified by the user
-	void* operator new(size_t _Size) { return 0; }
-	void* operator new[](size_t si_Size) { return 0; }
-	void operator delete(void* _Pointer) {}
-	void operator delete[](void* _Pointer) {}
 public:
-	void* operator new(size_t _Size, void* _pMemory) { return _pMemory; }
-	void operator delete(void* _Pointer, void* _pMemory) {}
+	static const size_t kDefaultAlignment = 16;
 
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_TRIVIAL_QUERYINTERFACE(oAllocatorTLSF);
+	struct stats
+	{
+		stats()
+			: num_allocations(0)
+			, bytes_allocated(0)
+			, bytes_allocated_peak(0)
+			, bytes_free(0)
+		{}
 
-	oAllocatorTLSF(const char* _DebugName, const DESC& _Desc, bool* _pSuccess);
-	~oAllocatorTLSF();
+		size_t num_allocations;
+		size_t bytes_allocated;
+		size_t bytes_allocated_peak;
+		size_t bytes_free;
+	};
 
-	void GetDesc(DESC* _pDesc) override;
-	void GetStats(STATS* _pStats) override;
-	const char* GetDebugName() const threadsafe override;
-	const char* GetType() const threadsafe override;
-	bool IsValid() override;
-	void* Allocate(size_t _NumBytes, size_t _Alignment = oDEFAULT_MEMORY_ALIGNMENT) override;
-	void* Reallocate(void* _Pointer, size_t _NumBytes) override;
-	void Deallocate(void* _Pointer) override;
-	size_t GetBlockSize(void* _Pointer) override;
-	void Reset() override;
-	void WalkHeap(oFUNCTION<void(void* _Pointer, size_t _Size, bool _Used)> _HeapWalker) override;
+	tlsf_allocator();
+	tlsf_allocator(void* _pArena, size_t _Size);
+	~tlsf_allocator();
 
-	DESC Desc;
-	STATS Stats;
-	oRefCount RefCount;
-	void* hPool;
-	oInitOnce<ouro::sstring> DebugName;
+	tlsf_allocator(tlsf_allocator&& _That);
+	tlsf_allocator& operator=(tlsf_allocator&& _That);
+
+	inline const void* arena() const { return pArena; }
+	inline size_t arena_size() const { return Size; }
+	inline stats get_stats() const { return Stats; }
+	void* allocate(size_t _Size, size_t _Alignment = kDefaultAlignment);
+	void* reallocate(void* _Pointer, size_t _Size);
+	void deallocate(void* _Pointer);
+	size_t size(void* _Pointer) const;
+	bool in_range(void* _Pointer) const;
+	bool valid() const;
+	void reset();
+	void walk_heap(const std::function<void(void* _Pointer, size_t _Size, bool _Used)>& _Enumerator);
+
+private:
+	tlsf_allocator(const tlsf_allocator&);
+	const tlsf_allocator& operator=(const tlsf_allocator&);
+
+	void* hHeap;
+	void* pArena;
+	size_t Size;
+	stats Stats;
 };
+
+} // namespace ouro
 
 #endif

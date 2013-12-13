@@ -37,6 +37,7 @@
 #define Ouroboros_test_services_h
 
 #include <cstdarg>
+#include <memory>
 
 namespace ouro {
 
@@ -59,6 +60,8 @@ public:
 	virtual std::shared_ptr<char> load_buffer(const char* _Path, size_t* _pSize = nullptr) = 0;
 
 	virtual bool is_debugger_attached() const = 0;
+
+	virtual size_t total_physical_memory() const = 0;
 
 	// Returns the average and peek percent usage of the CPU by this process
 	virtual void get_cpu_utilization(float* _pAverage, float* _pPeek) = 0;

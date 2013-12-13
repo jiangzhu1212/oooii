@@ -45,12 +45,6 @@ struct oBasisTestServices
 // if not successful. In either case oErrorSetLast is used to set a string as
 // to what occurred. In success the last error is set to 0.
 
-// The oFUNCTION parameter should return how much physical RAM the platform has
-// because using up the whole physical memory block can be very slow on paging
-// operating systems and impossible on non-paging systems, so this tries to be
-// a bit smart about running the test.
-oAPI bool oBasisTest_oAllocatorTLSF(const oBasisTestServices& _Services);
-
 oAPI bool oBasisTest_oBuffer(const oBasisTestServices& _Services);
 oAPI bool oBasisTest_oCompression(const oBasisTestServices& _Services);
 oAPI bool oBasisTest_oCoroutine();

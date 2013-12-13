@@ -109,6 +109,7 @@
     <ClCompile Include="string\zero_ifdefs.cpp" />
     <ClCompile Include="string\zero_line_comments.cpp" />
     <ClCompile Include="text_document.cpp" />
+    <ClCompile Include="tlsf_allocator.cpp" />
     <ClCompile Include="uri.cpp" />
     <ClCompile Include="vendor.cpp" />
     <ClCompile Include="version.cpp" />
@@ -165,6 +166,7 @@
     <ClInclude Include="..\..\Include\oBase\text_document.h" />
     <ClInclude Include="..\..\Include\oBase\throw.h" />
     <ClInclude Include="..\..\Include\oBase\timer.h" />
+    <ClInclude Include="..\..\Include\oBase\tlsf_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\types.h" />
     <ClInclude Include="..\..\Include\oBase\type_info.h" />
     <ClInclude Include="..\..\Include\oBase\uint128.h" />

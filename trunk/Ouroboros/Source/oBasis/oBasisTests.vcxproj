@@ -27,7 +27,6 @@
   <ItemGroup>
     <ClCompile Include="Tests\oBasisTestOBJ.cpp" />
     <ClCompile Include="Tests\oBasisTestStruct.cpp" />
-    <ClCompile Include="Tests\TESTAllocatorTLSF.cpp" />
     <ClCompile Include="Tests\TESTBuffer.cpp" />
     <ClCompile Include="Tests\TESTCompression.cpp" />
     <ClCompile Include="Tests\TESTDispatchQueueGlobal.cpp" />

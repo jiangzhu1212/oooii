@@ -28,8 +28,6 @@
 #ifndef oBasis_all_h
 #define oBasis_all_h
 #include <oBasis/oAirKeyboard.h>
-#include <oBasis/oAllocator.h>
-#include <oBasis/oAllocatorTLSF.h>
 #include <oBasis/oBuffer.h>
 #include <oBasis/oBufferPool.h>
 #include <oBasis/oCameraController.h>

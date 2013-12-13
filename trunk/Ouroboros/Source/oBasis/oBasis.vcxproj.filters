@@ -10,9 +10,6 @@
     <Filter Include="oBasis\Concurrency">
       <UniqueIdentifier>{320b6a2d-fc14-4a41-897c-bf272e90a82e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="oBasis\Allocators">
-      <UniqueIdentifier>{97c96529-0f01-4436-949a-df83f37c1d28}</UniqueIdentifier>
-    </Filter>
     <Filter Include="oBasis\String Parsing">
       <UniqueIdentifier>{d77a4985-cdb4-44e3-9573-80500f36c46d}</UniqueIdentifier>
     </Filter>
@@ -48,9 +45,6 @@
     </Filter>
     <Filter Include="Source\Concurrency">
       <UniqueIdentifier>{ae304858-be37-4332-948a-f8f83ee11fa8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Allocators">
-      <UniqueIdentifier>{62680c7b-fb7c-49c3-9164-c008d08ed50b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Language Enhancements">
       <UniqueIdentifier>{8b57e10e-8a96-4ab9-b54e-7c60a5bef5d3}</UniqueIdentifier>
@@ -98,12 +92,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oOSC.h">
       <Filter>oBasis\String Parsing</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oAllocator.h">
-      <Filter>oBasis\Allocators</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oAllocatorTLSF.h">
-      <Filter>oBasis\Allocators</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oBuffer.h">
       <Filter>oBasis</Filter>
@@ -219,9 +207,6 @@
     <ClInclude Include="..\..\Include\oBasis\oCppParsing.h">
       <Filter>oBasis\String Parsing</Filter>
     </ClInclude>
-    <ClInclude Include="oAllocatorTLSF.h">
-      <Filter>Source\Allocators</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oCameraControllerArcball.h">
       <Filter>oBasis\3D Math &amp; Graphics\Camera Controllers</Filter>
     </ClInclude>
@@ -270,9 +255,6 @@
     <ClInclude Include="..\..\Include\oBasis\oLockThis.h">
       <Filter>oBasis\Concurrency</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oStdLinearAllocator.h">
-      <Filter>oBasis\Allocators</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oStdStringSupport.h">
       <Filter>oBasis\String Parsing</Filter>
     </ClInclude>
@@ -310,6 +292,9 @@
       <Filter>oBasis\Language Enhancements</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oScopedPartialTimeout.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oStdLinearAllocator.h">
       <Filter>oBasis</Filter>
     </ClInclude>
   </ItemGroup>
@@ -358,9 +343,6 @@
     </ClCompile>
     <ClCompile Include="oDispatchQueueGlobal.cpp">
       <Filter>Source\Concurrency</Filter>
-    </ClCompile>
-    <ClCompile Include="oAllocatorTLSF.cpp">
-      <Filter>Source\Allocators</Filter>
     </ClCompile>
     <ClCompile Include="oCppParsing.cpp">
       <Filter>Source\String Parsing</Filter>

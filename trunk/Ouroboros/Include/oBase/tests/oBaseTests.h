@@ -43,6 +43,7 @@ namespace ouro {
 		void TESTindex_allocator();
 		void TESTini();
 		void TESTpath();
+		void TESTtlsf_allocator(test_services& _Services);
 		void TESTuri();
 		void TESTxml();
 

@@ -29,8 +29,6 @@
     <ClInclude Include="..\..\External\bullet\vectormathlibrary\include\vectormath\scalar\cpp\vec_aos_d.h" />
     <ClInclude Include="..\..\Include\oBasis\all.h" />
     <ClInclude Include="..\..\Include\oBasis\oAirKeyboard.h" />
-    <ClInclude Include="..\..\Include\oBasis\oAllocator.h" />
-    <ClInclude Include="..\..\Include\oBasis\oAllocatorTLSF.h" />
     <ClInclude Include="..\..\Include\oBasis\oBuffer.h" />
     <ClInclude Include="..\..\Include\oBasis\oBufferPool.h" />
     <ClInclude Include="..\..\Include\oBasis\oCameraController.h" />
@@ -93,7 +91,6 @@
     <ClInclude Include="..\..\Include\oBasis\oURIQuerySerialize.h" />
     <ClInclude Include="..\..\Include\oBasis\oXMLSerialize.h" />
     <ClInclude Include="..\..\Include\oBasis\SafeInt3.h" />
-    <ClInclude Include="oAllocatorTLSF.h" />
     <ClInclude Include="oManipulatorBase.h" />
     <ClInclude Include="oManipulatorRotation.h" />
     <ClInclude Include="oManipulatorScale.h" />
@@ -102,7 +99,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oAirKeyboard.cpp" />
-    <ClCompile Include="oAllocatorTLSF.cpp" />
     <ClCompile Include="oBuffer.cpp" />
     <ClCompile Include="oBufferPool.cpp" />
     <ClCompile Include="oCameraController.cpp" />

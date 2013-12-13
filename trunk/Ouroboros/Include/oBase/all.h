@@ -67,6 +67,7 @@
 #include <oBase/text_document.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
+#include <oBase/tlsf_allocator.h>
 #include <oBase/type_info.h>
 #include <oBase/types.h>
 #include <oBase/uint128.h>

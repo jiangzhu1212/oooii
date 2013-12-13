@@ -29,6 +29,7 @@
     <ClCompile Include="Tests\TESTini.cpp" />
     <ClCompile Include="Tests\TESTjson.cpp" />
     <ClCompile Include="Tests\TESTpath.cpp" />
+    <ClCompile Include="tests\TESTtlsf_allocator.cpp" />
     <ClCompile Include="Tests\TESTuri.cpp" />
     <ClCompile Include="Tests\TESTxml.cpp" />
   </ItemGroup>

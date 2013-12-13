@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oAllocatorTLSF.h>
+#include <oBase/tlsf_allocator.h>
 #include <oBase/byte.h>
 #include <oCore/page_allocator.h>
 #include <oBasis/oError.h>
@@ -97,24 +97,18 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 
 	ouro::memset4(BASE_ADDRESS, 0xdeadbeef, ARENA_SIZE);
 
-	ouro::intrusive_ptr<oAllocator> AllocatorServer;
-	{
-		oAllocator::DESC desc;
-		desc.pArena = BASE_ADDRESS;
-		desc.ArenaSize = ARENA_SIZE;
-		oTRACE("SERVER: creating TLSF allocator...");
-		oTESTB(oAllocatorCreateTLSF("MirroredArenaServer", desc, &AllocatorServer), "Failed to create allocator for server");
-		oTRACE("SERVER: TLSF allocator created.");
-	}
+	oTRACE("SERVER: creating TLSF allocator...");
+	ouro::tlsf_allocator AllocatorServer(BASE_ADDRESS, ARENA_SIZE);
+	oTRACE("SERVER: TLSF allocator created.");
 
 	// Copy some test data into the server heap
 
-	unsigned int* test1 = static_cast<unsigned int*>(AllocatorServer->Allocate(sizeof(TEST1)));
+	unsigned int* test1 = static_cast<unsigned int*>(AllocatorServer.allocate(sizeof(TEST1)));
 
 	// Ignore asserts about leaving dangling memory because if that's so, it's 
 	// probably because the test failed somewhere else, so have THAT error come
 	// through, not the fact that we aborted before fully tidying up.
-	ouro::finally OSEReset([&] { AllocatorServer->Reset(); } );
+	ouro::finally OSEReset([&] { AllocatorServer.reset(); } );
 
 	oTRACE("SERVER: writing to shared memory...");
 
@@ -125,14 +119,14 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 	// gap.
 	static const size_t kPad = page_size() * 2;
 
-	char** test2Strings = static_cast<char**>(AllocatorServer->Allocate(kPad + oCOUNTOF(TEST2) * sizeof(char*)));
+	char** test2Strings = static_cast<char**>(AllocatorServer.allocate(kPad + oCOUNTOF(TEST2) * sizeof(char*)));
 	oTESTB(test2Strings, "test2Strings allocation failed");
 	test2Strings += kPad;
 
 	for (size_t i = 0; i < oCOUNTOF(TEST2); i++)
 	{
 		size_t bufferSize = 1 + strlen(TEST2[i]);
-		test2Strings[i] = static_cast<char*>(AllocatorServer->Allocate(sizeof(char) * bufferSize));
+		test2Strings[i] = static_cast<char*>(AllocatorServer.allocate(sizeof(char) * bufferSize));
 		oTESTB(test2Strings[i], "test2Strings[%u] allocation failed", i);
 		strlcpy(test2Strings[i], TEST2[i], bufferSize);
 	}
@@ -191,7 +185,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 
 	oTRACE("SERVER: all sends complete.");
 
-	AllocatorServer->Reset(); // blow away the memory, buffer is in flight
+	AllocatorServer.reset(); // blow away the memory, buffer is in flight
 
 	oTRACE("SERVER: waiting for client process to exit.");
 	oTESTB(Client->wait_for(oSeconds(10)), "Client did not close cleanly");

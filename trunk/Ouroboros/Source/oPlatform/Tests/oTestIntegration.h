@@ -36,6 +36,7 @@
 #include <oBase/assert.h>
 #include <oCore/process.h>
 #include <oCore/process_stats_monitor.h>
+#include <oCore/system.h>
 
 namespace ouro {
 	
@@ -57,6 +58,12 @@ public:
 	}
 
 	bool is_debugger_attached() const override { return this_process::has_debugger_attached(); }
+
+	size_t total_physical_memory() const override
+	{
+		system::heap_info hi = system::get_heap_info();
+		return static_cast<size_t>(hi.total_physical);
+	}
 
 	void get_cpu_utilization(float* _pAverage, float* _pPeek) override
 	{
